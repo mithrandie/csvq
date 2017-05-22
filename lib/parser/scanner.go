@@ -10,8 +10,6 @@ import (
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
-const whitespace = 1<<'\t' | 1<<'\n' | 1<<'\r' | 1<<' '
-
 const (
 	EOF = -(iota + 1)
 	UNCATEGORIZED
@@ -225,7 +223,7 @@ func (s *Scanner) escapedTokenString() string {
 func (s *Scanner) Scan() (int, string, bool, error) {
 	ch := s.peek()
 
-	for whitespace&(1<<uint(ch)) != 0 {
+	for s.isWhiteSpace(ch) {
 		s.next()
 		ch = s.peek()
 	}
@@ -284,6 +282,14 @@ func (s *Scanner) Scan() (int, string, bool, error) {
 	}
 
 	return int(token), literal, quoted, s.err
+}
+
+func (s *Scanner) isWhiteSpace(ch rune) bool {
+	switch ch {
+	case '\t', '\n', '\r', ' ':
+		return true
+	}
+	return false
 }
 
 func (s *Scanner) scanString(quote rune) {

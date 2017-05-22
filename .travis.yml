@@ -10,7 +10,21 @@ install:
   - make deps
 
 script:
-  - make testallcov
+  - make test-all-cov
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
+
+before_deploy:
+  - make build-all
+  - make dist
+
+deploy:
+  provider: releases
+  api_key: $GITHUB_API_TOKEN
+  skip_cleanup: true
+  file_glob: true
+  prerelease: true
+  file: 'dist/*.{tar.gz, zip}'
+  on:
+    tags: true
