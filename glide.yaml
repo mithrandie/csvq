@@ -1,0 +1,4 @@
+package: .
+import:
+- package: github.com/urfave/cli
+  version: ^1.19.1

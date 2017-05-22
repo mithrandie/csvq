@@ -1,0 +1,1419 @@
+package query
+
+import (
+	"os"
+	"path"
+	"reflect"
+	"testing"
+
+	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/ternary"
+)
+
+var filterEvaluateTests = []struct {
+	Name   string
+	Filter Filter
+	Expr   parser.Expression
+	Result parser.Primary
+	Error  string
+}{
+	{
+		Name:   "nil",
+		Expr:   nil,
+		Result: parser.NewTernary(ternary.TRUE),
+	},
+	{
+		Name:   "Primary",
+		Expr:   parser.NewString("str"),
+		Result: parser.NewString("str"),
+	},
+	{
+		Name: "Parentheses",
+		Expr: parser.Parentheses{
+			Expr: parser.NewString("str"),
+		},
+		Result: parser.NewString("str"),
+	},
+	{
+		Name: "Identifier",
+		Filter: []FilterRecord{
+			{
+				View: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					Records: []Record{
+						NewRecord([]parser.Primary{
+							parser.NewInteger(1),
+							parser.NewString("str"),
+						}),
+						NewRecord([]parser.Primary{
+							parser.NewInteger(2),
+							parser.NewString("strstr"),
+						}),
+					},
+				},
+				RecordIndex: 1,
+			},
+		},
+		Expr:   parser.Identifier{Literal: "column2"},
+		Result: parser.NewString("strstr"),
+	},
+	{
+		Name: "Identifier ColumnNotExist Error",
+		Filter: []FilterRecord{
+			{
+				View: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					Records: []Record{
+						NewRecord([]parser.Primary{
+							parser.NewInteger(1),
+							parser.NewString("str"),
+						}),
+						NewRecord([]parser.Primary{
+							parser.NewInteger(2),
+							parser.NewString("strstr"),
+						}),
+					},
+				},
+				RecordIndex: 1,
+			},
+		},
+		Expr:  parser.Identifier{Literal: "column3"},
+		Error: "identifier = column3: field does not exist",
+	},
+	{
+		Name: "Identifier FieldAmbigous Error",
+		Filter: []FilterRecord{
+			{
+				View: &View{
+					Header: NewHeader("table1", []string{"column1", "column1"}),
+					Records: []Record{
+						NewRecord([]parser.Primary{
+							parser.NewInteger(1),
+							parser.NewString("str"),
+						}),
+						NewRecord([]parser.Primary{
+							parser.NewInteger(2),
+							parser.NewString("strstr"),
+						}),
+					},
+				},
+				RecordIndex: 1,
+			},
+		},
+		Expr:  parser.Identifier{Literal: "column1"},
+		Error: "identifier = column1: field is ambiguous",
+	},
+	{
+		Name: "Identifier Not Group Key Error",
+		Filter: []FilterRecord{
+			{
+				View: &View{
+					Header: []HeaderField{
+						{
+							Reference: "table1",
+							Column:    "column1",
+						},
+						{
+							Reference: "table1",
+							Column:    "column2",
+						},
+					},
+					Records: []Record{
+						{
+							NewGroupCell([]parser.Primary{
+								parser.NewInteger(1),
+								parser.NewInteger(2),
+							}),
+						},
+						{
+							NewGroupCell([]parser.Primary{
+								parser.NewString("str1"),
+								parser.NewString("str2"),
+							}),
+						},
+					},
+					isGrouped: true,
+				},
+				RecordIndex: 0,
+			},
+		},
+		Expr:  parser.Identifier{Literal: "column1"},
+		Error: "identifier = column1: field is not a group key",
+	},
+	{
+		Name: "Identifier FieldNotExist Error with Multiple Tables",
+		Filter: []FilterRecord{
+			{
+				View: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					Records: []Record{
+						NewRecord([]parser.Primary{
+							parser.NewInteger(1),
+							parser.NewString("str"),
+						}),
+						NewRecord([]parser.Primary{
+							parser.NewInteger(2),
+							parser.NewString("strstr"),
+						}),
+					},
+				},
+				RecordIndex: 1,
+			},
+			{
+				View: &View{
+					Header: NewHeader("table2", []string{"column1", "column2"}),
+					Records: []Record{
+						NewRecord([]parser.Primary{
+							parser.NewInteger(1),
+							parser.NewString("str"),
+						}),
+						NewRecord([]parser.Primary{
+							parser.NewInteger(2),
+							parser.NewString("strstr"),
+						}),
+					},
+				},
+				RecordIndex: 1,
+			},
+		},
+		Expr:  parser.Identifier{Literal: "column1"},
+		Error: "identifier = column1: field is ambiguous",
+	},
+	{
+		Name:  "Identifier FieldRef Error",
+		Expr:  parser.Identifier{Literal: "table1.table2.column1"},
+		Error: "field identifier = table1.table2.column1, incorrect format",
+	},
+	{
+		Name: "Arithmetic",
+		Expr: parser.Arithmetic{
+			LHS:      parser.NewInteger(1),
+			RHS:      parser.NewInteger(2),
+			Operator: '+',
+		},
+		Result: parser.NewInteger(3),
+	},
+	{
+		Name: "Arithmetic LHS Error",
+		Expr: parser.Arithmetic{
+			LHS:      parser.Identifier{Literal: "notexist"},
+			RHS:      parser.NewInteger(2),
+			Operator: '+',
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "Arithmetic RHS Error",
+		Expr: parser.Arithmetic{
+			LHS:      parser.NewInteger(1),
+			RHS:      parser.Identifier{Literal: "notexist"},
+			Operator: '+',
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "Concat",
+		Expr: parser.Concat{
+			Items: []parser.Expression{
+				parser.NewString("a"),
+				parser.NewString("b"),
+				parser.NewString("c"),
+			},
+		},
+		Result: parser.NewString("abc"),
+	},
+	{
+		Name: "Concat FieldNotExist Error",
+		Expr: parser.Concat{
+			Items: []parser.Expression{
+				parser.NewString("a"),
+				parser.NewString("b"),
+				parser.Identifier{Literal: "notexist"},
+			},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "Concat Including Null",
+		Expr: parser.Concat{
+			Items: []parser.Expression{
+				parser.NewString("a"),
+				parser.NewNull(),
+				parser.NewString("c"),
+			},
+		},
+		Result: parser.NewNull(),
+	},
+	{
+		Name: "Comparison",
+		Expr: parser.Comparison{
+			LHS:      parser.NewInteger(1),
+			RHS:      parser.NewInteger(2),
+			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+		},
+		Result: parser.NewTernary(ternary.FALSE),
+	},
+	{
+		Name: "Comparison LHS Error",
+		Expr: parser.Comparison{
+			LHS:      parser.Identifier{Literal: "notexist"},
+			RHS:      parser.NewInteger(2),
+			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "Comparison RHS Error",
+		Expr: parser.Comparison{
+			LHS:      parser.NewInteger(1),
+			RHS:      parser.Identifier{Literal: "notexist"},
+			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "Is",
+		Expr: parser.Is{
+			LHS:      parser.NewInteger(1),
+			RHS:      parser.NewNull(),
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Result: parser.NewTernary(ternary.TRUE),
+	},
+	{
+		Name: "Is LHS Error",
+		Expr: parser.Is{
+			LHS:      parser.Identifier{Literal: "notexist"},
+			RHS:      parser.NewNull(),
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "Is RHS Error",
+		Expr: parser.Is{
+			LHS:      parser.NewInteger(1),
+			RHS:      parser.Identifier{Literal: "notexist"},
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "Between",
+		Expr: parser.Between{
+			LHS:      parser.NewInteger(2),
+			Low:      parser.NewInteger(1),
+			High:     parser.NewInteger(3),
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Result: parser.NewTernary(ternary.FALSE),
+	},
+	{
+		Name: "Between LHS Error",
+		Expr: parser.Between{
+			LHS:      parser.Identifier{Literal: "notexist"},
+			Low:      parser.NewInteger(1),
+			High:     parser.NewInteger(3),
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "Between Low Error",
+		Expr: parser.Between{
+			LHS:      parser.NewInteger(2),
+			Low:      parser.Identifier{Literal: "notexist"},
+			High:     parser.NewInteger(3),
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "Between High Error",
+		Expr: parser.Between{
+			LHS:      parser.NewInteger(2),
+			Low:      parser.NewInteger(1),
+			High:     parser.Identifier{Literal: "notexist"},
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "In",
+		Expr: parser.In{
+			LHS: parser.NewInteger(2),
+			List: []parser.Expression{
+				parser.NewInteger(1),
+				parser.NewInteger(2),
+				parser.NewInteger(3),
+			},
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Result: parser.NewTernary(ternary.FALSE),
+	},
+	{
+		Name: "In LHS Error",
+		Expr: parser.In{
+			LHS: parser.Identifier{Literal: "notexist"},
+			List: []parser.Expression{
+				parser.NewInteger(1),
+				parser.NewInteger(2),
+				parser.NewInteger(3),
+			},
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "In List Error",
+		Expr: parser.In{
+			LHS: parser.NewInteger(2),
+			List: []parser.Expression{
+				parser.NewInteger(1),
+				parser.Identifier{Literal: "notexist"},
+				parser.NewInteger(3),
+			},
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "In Subquery",
+		Filter: []FilterRecord{
+			{
+				View: &View{
+					Header: NewHeader("table2", []string{"column3", "column4"}),
+					Records: []Record{
+						NewRecord([]parser.Primary{
+							parser.NewInteger(1),
+							parser.NewString("str2"),
+						}),
+					},
+				},
+				RecordIndex: 0,
+			},
+		},
+		Expr: parser.In{
+			LHS: parser.NewInteger(2),
+			Query: parser.Subquery{
+				Query: parser.SelectQuery{
+					SelectClause: parser.SelectClause{
+						Select: "select",
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+						},
+					},
+					FromClause: parser.FromClause{
+						Tables: []parser.Expression{
+							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						},
+					},
+					WhereClause: parser.WhereClause{
+						Filter: parser.Comparison{
+							LHS:      parser.Identifier{Literal: "column2"},
+							RHS:      parser.Identifier{Literal: "table2.column4"},
+							Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+						},
+					},
+				},
+			},
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Result: parser.NewTernary(ternary.FALSE),
+	},
+	{
+		Name: "In Subquery Execution Error",
+		Expr: parser.In{
+			LHS: parser.NewInteger(2),
+			Query: parser.Subquery{
+				Query: parser.SelectQuery{
+					SelectClause: parser.SelectClause{
+						Select: "select",
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+						},
+					},
+					FromClause: parser.FromClause{
+						Tables: []parser.Expression{
+							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						},
+					},
+					WhereClause: parser.WhereClause{
+						Filter: parser.Comparison{
+							LHS:      parser.Identifier{Literal: "notexist"},
+							RHS:      parser.Identifier{Literal: "table2.column4"},
+							Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+						},
+					},
+				},
+			},
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "In Subquery Too Many Fields Error",
+		Expr: parser.In{
+			LHS: parser.NewInteger(2),
+			Query: parser.Subquery{
+				Query: parser.SelectQuery{
+					SelectClause: parser.SelectClause{
+						Select: "select",
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+							parser.Field{Object: parser.Identifier{Literal: "column2"}},
+						},
+					},
+					FromClause: parser.FromClause{
+						Tables: []parser.Expression{
+							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						},
+					},
+				},
+			},
+		},
+		Error: "subquery contains too many fields, should be only one field",
+	},
+	{
+		Name: "In Subquery No Record",
+		Expr: parser.In{
+			LHS: parser.NewInteger(2),
+			Query: parser.Subquery{
+				Query: parser.SelectQuery{
+					SelectClause: parser.SelectClause{
+						Select: "select",
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+						},
+					},
+					FromClause: parser.FromClause{
+						Tables: []parser.Expression{
+							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						},
+					},
+					WhereClause: parser.WhereClause{
+						Filter: parser.NewTernary(ternary.FALSE),
+					},
+				},
+			},
+		},
+		Result: parser.NewTernary(ternary.FALSE),
+	},
+	{
+		Name: "Any",
+		Expr: parser.Any{
+			LHS: parser.NewInteger(5),
+			Query: parser.Subquery{
+				Query: parser.SelectQuery{
+					SelectClause: parser.SelectClause{
+						Select: "select",
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+						},
+					},
+					FromClause: parser.FromClause{
+						Tables: []parser.Expression{
+							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						},
+					},
+				},
+			},
+			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<>"},
+		},
+		Result: parser.NewTernary(ternary.TRUE),
+	}, {
+		Name: "Any LHS Error",
+		Expr: parser.Any{
+			LHS: parser.Identifier{Literal: "notexist"},
+			Query: parser.Subquery{
+				Query: parser.SelectQuery{
+					SelectClause: parser.SelectClause{
+						Select: "select",
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+						},
+					},
+					FromClause: parser.FromClause{
+						Tables: []parser.Expression{
+							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						},
+					},
+				},
+			},
+			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<>"},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+
+	{
+		Name: "Any Query Execution Error",
+		Expr: parser.Any{
+			LHS: parser.NewInteger(2),
+			Query: parser.Subquery{
+				Query: parser.SelectQuery{
+					SelectClause: parser.SelectClause{
+						Select: "select",
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+						},
+					},
+					FromClause: parser.FromClause{
+						Tables: []parser.Expression{
+							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						},
+					},
+					WhereClause: parser.WhereClause{
+						Filter: parser.Comparison{
+							LHS:      parser.Identifier{Literal: "notexist"},
+							RHS:      parser.Identifier{Literal: "table2.column4"},
+							Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+						},
+					},
+				},
+			},
+			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<>"},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "All",
+		Expr: parser.All{
+			LHS: parser.NewInteger(5),
+			Query: parser.Subquery{
+				Query: parser.SelectQuery{
+					SelectClause: parser.SelectClause{
+						Select: "select",
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+						},
+					},
+					FromClause: parser.FromClause{
+						Tables: []parser.Expression{
+							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						},
+					},
+				},
+			},
+			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: ">"},
+		},
+		Result: parser.NewTernary(ternary.TRUE),
+	}, {
+		Name: "All LHS Error",
+		Expr: parser.All{
+			LHS: parser.Identifier{Literal: "notexist"},
+			Query: parser.Subquery{
+				Query: parser.SelectQuery{
+					SelectClause: parser.SelectClause{
+						Select: "select",
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+						},
+					},
+					FromClause: parser.FromClause{
+						Tables: []parser.Expression{
+							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						},
+					},
+				},
+			},
+			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: ">"},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+
+	{
+		Name: "All Query Execution Error",
+		Expr: parser.All{
+			LHS: parser.NewInteger(5),
+			Query: parser.Subquery{
+				Query: parser.SelectQuery{
+					SelectClause: parser.SelectClause{
+						Select: "select",
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+						},
+					},
+					FromClause: parser.FromClause{
+						Tables: []parser.Expression{
+							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						},
+					},
+					WhereClause: parser.WhereClause{
+						Filter: parser.Comparison{
+							LHS:      parser.Identifier{Literal: "notexist"},
+							RHS:      parser.Identifier{Literal: "table2.column4"},
+							Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+						},
+					},
+				},
+			},
+			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: ">"},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "Like",
+		Expr: parser.Like{
+			LHS:      parser.NewString("abcdefg"),
+			Pattern:  parser.NewString("_bc%"),
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Result: parser.NewTernary(ternary.FALSE),
+	},
+	{
+		Name: "Like LHS Error",
+		Expr: parser.Like{
+			LHS:      parser.Identifier{Literal: "notexist"},
+			Pattern:  parser.NewString("_bc%"),
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "Like Pattern Error",
+		Expr: parser.Like{
+			LHS:      parser.NewString("abcdefg"),
+			Pattern:  parser.Identifier{Literal: "notexist"},
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "Exists",
+		Filter: []FilterRecord{
+			{
+				View: &View{
+					Header: NewHeader("table2", []string{"column3", "column4"}),
+					Records: []Record{
+						NewRecord([]parser.Primary{
+							parser.NewInteger(1),
+							parser.NewString("str2"),
+						}),
+					},
+				},
+				RecordIndex: 0,
+			},
+		},
+		Expr: parser.Exists{
+			Query: parser.Subquery{
+				Query: parser.SelectQuery{
+					SelectClause: parser.SelectClause{
+						Select: "select",
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+						},
+					},
+					FromClause: parser.FromClause{
+						Tables: []parser.Expression{
+							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						},
+					},
+					WhereClause: parser.WhereClause{
+						Filter: parser.Comparison{
+							LHS:      parser.Identifier{Literal: "column2"},
+							RHS:      parser.Identifier{Literal: "table2.column4"},
+							Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+						},
+					},
+				},
+			},
+		},
+		Result: parser.NewTernary(ternary.TRUE),
+	},
+	{
+		Name: "Exists No Record",
+		Expr: parser.Exists{
+			Query: parser.Subquery{
+				Query: parser.SelectQuery{
+					SelectClause: parser.SelectClause{
+						Select: "select",
+						Fields: []parser.Expression{
+							//parser.Field{Object: parser.NewInteger(1)},
+							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+						},
+					},
+					FromClause: parser.FromClause{
+						Tables: []parser.Expression{
+							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						},
+					},
+					WhereClause: parser.WhereClause{
+						Filter: parser.NewTernary(ternary.FALSE),
+					},
+				},
+			},
+		},
+		Result: parser.NewTernary(ternary.FALSE),
+	},
+	{
+		Name: "Exists Query Execution Error",
+		Expr: parser.Exists{
+			Query: parser.Subquery{
+				Query: parser.SelectQuery{
+					SelectClause: parser.SelectClause{
+						Select: "select",
+						Fields: []parser.Expression{
+							//parser.Field{Object: parser.NewInteger(1)},
+							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+						},
+					},
+					FromClause: parser.FromClause{
+						Tables: []parser.Expression{
+							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						},
+					},
+					WhereClause: parser.WhereClause{
+						Filter: parser.Comparison{
+							LHS:      parser.Identifier{Literal: "noexist"},
+							RHS:      parser.NewString("str2"),
+							Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+						},
+					},
+				},
+			},
+		},
+		Error: "identifier = noexist: field does not exist",
+	},
+	{
+		Name: "Subquery",
+		Filter: []FilterRecord{
+			{
+				View: &View{
+					Header: NewHeader("table2", []string{"column3", "column4"}),
+					Records: []Record{
+						NewRecord([]parser.Primary{
+							parser.NewInteger(1),
+							parser.NewString("str2"),
+						}),
+					},
+				},
+				RecordIndex: 0,
+			},
+		},
+		Expr: parser.Subquery{
+			Query: parser.SelectQuery{
+				SelectClause: parser.SelectClause{
+					Select: "select",
+					Fields: []parser.Expression{
+						parser.Field{Object: parser.Identifier{Literal: "column1"}},
+					},
+				},
+				FromClause: parser.FromClause{
+					Tables: []parser.Expression{
+						parser.Table{Object: parser.Identifier{Literal: "table1"}},
+					},
+				},
+				WhereClause: parser.WhereClause{
+					Filter: parser.Comparison{
+						LHS:      parser.Identifier{Literal: "column2"},
+						RHS:      parser.Identifier{Literal: "table2.column4"},
+						Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+					},
+				},
+				LimitClause: parser.LimitClause{
+					Number: 1,
+				},
+			},
+		},
+		Result: parser.NewString("2"),
+	},
+	{
+		Name: "Subquery No Record",
+		Expr: parser.Subquery{
+			Query: parser.SelectQuery{
+				SelectClause: parser.SelectClause{
+					Select: "select",
+					Fields: []parser.Expression{
+						parser.Field{Object: parser.NewInteger(1)},
+					},
+				},
+				FromClause: parser.FromClause{
+					Tables: []parser.Expression{
+						parser.Table{Object: parser.Identifier{Literal: "table1"}},
+					},
+				},
+				WhereClause: parser.WhereClause{
+					Filter: parser.NewTernary(ternary.FALSE),
+				},
+				LimitClause: parser.LimitClause{
+					Number: 1,
+				},
+			},
+		},
+		Result: parser.NewNull(),
+	},
+	{
+		Name: "Subquery Execution Error",
+		Expr: parser.Subquery{
+			Query: parser.SelectQuery{
+				SelectClause: parser.SelectClause{
+					Select: "select",
+					Fields: []parser.Expression{
+						parser.Field{Object: parser.Identifier{Literal: "noexist"}},
+					},
+				},
+				FromClause: parser.FromClause{
+					Tables: []parser.Expression{
+						parser.Table{Object: parser.Identifier{Literal: "table1"}},
+					},
+				},
+			},
+		},
+		Error: "identifier = noexist: field does not exist",
+	},
+	{
+		Name: "Subquery Too Many Records Error",
+		Expr: parser.Subquery{
+			Query: parser.SelectQuery{
+				SelectClause: parser.SelectClause{
+					Select: "select",
+					Fields: []parser.Expression{
+						parser.Field{Object: parser.Identifier{Literal: "column1"}},
+					},
+				},
+				FromClause: parser.FromClause{
+					Tables: []parser.Expression{
+						parser.Table{Object: parser.Identifier{Literal: "table1"}},
+					},
+				},
+			},
+		},
+		Error: "subquery returns too many records, should be only one record",
+	},
+	{
+		Name: "Subquery Too Many Fields Error",
+		Expr: parser.Subquery{
+			Query: parser.SelectQuery{
+				SelectClause: parser.SelectClause{
+					Select: "select",
+					Fields: []parser.Expression{
+						parser.Field{Object: parser.Identifier{Literal: "column1"}},
+						parser.Field{Object: parser.Identifier{Literal: "column2"}},
+					},
+				},
+				FromClause: parser.FromClause{
+					Tables: []parser.Expression{
+						parser.Table{Object: parser.Identifier{Literal: "table1"}},
+					},
+				},
+				LimitClause: parser.LimitClause{
+					Number: 1,
+				},
+			},
+		},
+		Error: "subquery contains too many fields, should be only one field",
+	},
+	{
+		Name: "Function",
+		Expr: parser.Function{
+			Name: "coalesce",
+			Option: parser.Option{
+				Args: []parser.Expression{
+					parser.NewNull(),
+					parser.NewString("str"),
+				},
+			},
+		},
+		Result: parser.NewString("str"),
+	},
+	{
+		Name: "Function Is Not Exist",
+		Expr: parser.Function{
+			Name: "notexist",
+			Option: parser.Option{
+				Args: []parser.Expression{
+					parser.NewNull(),
+					parser.NewString("str"),
+				},
+			},
+		},
+		Error: "function notexist is not exist",
+	},
+	{
+		Name: "Function Option Error",
+		Expr: parser.Function{
+			Name: "coalesce",
+			Option: parser.Option{
+				Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
+				Args: []parser.Expression{
+					parser.NewNull(),
+					parser.NewString("str"),
+				},
+			},
+		},
+		Error: "syntax error: unexpected distinct",
+	},
+	{
+		Name: "Function Argument Error",
+		Expr: parser.Function{
+			Name: "coalesce",
+			Option: parser.Option{
+				Args: []parser.Expression{
+					parser.AllColumns{},
+				},
+			},
+		},
+		Error: "syntax error: unexpected *",
+	},
+	{
+		Name: "Aggregate Function",
+		Filter: []FilterRecord{
+			{
+				View: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					Records: []Record{
+						{
+							NewGroupCell([]parser.Primary{
+								parser.NewInteger(1),
+								parser.NewNull(),
+								parser.NewInteger(3),
+							}),
+							NewGroupCell([]parser.Primary{
+								parser.NewString("str1"),
+								parser.NewString("str2"),
+								parser.NewString("str3"),
+							}),
+						},
+					},
+					isGrouped: true,
+				},
+				RecordIndex: 0,
+			},
+		},
+		Expr: parser.Function{
+			Name: "avg",
+			Option: parser.Option{
+				Args: []parser.Expression{
+					parser.Identifier{Literal: "column1"},
+				},
+			},
+		},
+		Result: parser.NewInteger(2),
+	},
+	{
+		Name: "Aggregate Function Not Grouped Error",
+		Filter: []FilterRecord{
+			{
+				View: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					Records: []Record{
+						NewRecord([]parser.Primary{
+							parser.NewInteger(1),
+							parser.NewString("str2"),
+						}),
+					},
+				},
+				RecordIndex: 0,
+			},
+		},
+		Expr: parser.Function{
+			Name: "avg",
+			Option: parser.Option{
+				Args: []parser.Expression{
+					parser.Identifier{Literal: "column1"},
+				},
+			},
+		},
+		Error: "function avg: records are not grouped",
+	},
+	{
+		Name: "Aggregate Function No Argument Error",
+		Filter: []FilterRecord{
+			{
+				View: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					Records: []Record{
+						{
+							NewGroupCell([]parser.Primary{
+								parser.NewInteger(1),
+								parser.NewNull(),
+								parser.NewInteger(3),
+							}),
+							NewGroupCell([]parser.Primary{
+								parser.NewString("str1"),
+								parser.NewString("str2"),
+								parser.NewString("str3"),
+							}),
+						},
+					},
+					isGrouped: true,
+				},
+				RecordIndex: 0,
+			},
+		},
+		Expr: parser.Function{
+			Name: "avg",
+			Option: parser.Option{
+				Args: []parser.Expression{},
+			},
+		},
+		Error: "function avg requires 1 argument",
+	},
+	{
+		Name: "Aggregate Function Too Many Arguments Error",
+		Filter: []FilterRecord{
+			{
+				View: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					Records: []Record{
+						{
+							NewGroupCell([]parser.Primary{
+								parser.NewInteger(1),
+								parser.NewNull(),
+								parser.NewInteger(3),
+							}),
+							NewGroupCell([]parser.Primary{
+								parser.NewString("str1"),
+								parser.NewString("str2"),
+								parser.NewString("str3"),
+							}),
+						},
+					},
+					isGrouped: true,
+				},
+				RecordIndex: 0,
+			},
+		},
+		Expr: parser.Function{
+			Name: "avg",
+			Option: parser.Option{
+				Args: []parser.Expression{
+					parser.Identifier{Literal: "column1"},
+					parser.Identifier{Literal: "column2"},
+				},
+			},
+		},
+		Error: "function avg has too many arguments",
+	},
+	{
+		Name: "Aggregate Function Unpermitted AllColumns",
+		Filter: []FilterRecord{
+			{
+				View: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					Records: []Record{
+						{
+							NewGroupCell([]parser.Primary{
+								parser.NewInteger(1),
+								parser.NewNull(),
+								parser.NewInteger(3),
+							}),
+							NewGroupCell([]parser.Primary{
+								parser.NewString("str1"),
+								parser.NewString("str2"),
+								parser.NewString("str3"),
+							}),
+						},
+					},
+					isGrouped: true,
+				},
+				RecordIndex: 0,
+			},
+		},
+		Expr: parser.Function{
+			Name: "avg",
+			Option: parser.Option{
+				Args: []parser.Expression{
+					parser.AllColumns{},
+				},
+			},
+		},
+		Error: "syntax error: avg(*)",
+	},
+	{
+		Name: "Aggregate Function Duplicate Error",
+		Filter: []FilterRecord{
+			{
+				View: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					Records: []Record{
+						{
+							NewGroupCell([]parser.Primary{
+								parser.NewInteger(1),
+								parser.NewNull(),
+								parser.NewInteger(3),
+							}),
+							NewGroupCell([]parser.Primary{
+								parser.NewString("str1"),
+								parser.NewString("str2"),
+								parser.NewString("str3"),
+							}),
+						},
+					},
+					isGrouped: true,
+				},
+				RecordIndex: 0,
+			},
+		},
+		Expr: parser.Function{
+			Name: "avg",
+			Option: parser.Option{
+				Args: []parser.Expression{
+					parser.Function{
+						Name: "avg",
+						Option: parser.Option{
+							Args: []parser.Expression{
+								parser.Identifier{Literal: "column1"},
+							},
+						},
+					},
+				},
+			},
+		},
+		Error: "syntax error: avg(avg(column1))",
+	},
+	{
+		Name: "Aggregate Function Count With AllColumns",
+		Filter: []FilterRecord{
+			{
+				View: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					Records: []Record{
+						{
+							NewGroupCell([]parser.Primary{
+								parser.NewInteger(1),
+								parser.NewNull(),
+								parser.NewInteger(3),
+							}),
+							NewGroupCell([]parser.Primary{
+								parser.NewString("str1"),
+								parser.NewString("str2"),
+								parser.NewString("str3"),
+							}),
+						},
+					},
+					isGrouped: true,
+				},
+				RecordIndex: 0,
+			},
+		},
+		Expr: parser.Function{
+			Name: "count",
+			Option: parser.Option{
+				Args: []parser.Expression{
+					parser.AllColumns{},
+				},
+			},
+		},
+		Result: parser.NewInteger(3),
+	},
+	{
+		Name: "Case Comparison",
+		Expr: parser.Case{
+			Value: parser.NewInteger(2),
+			When: []parser.Expression{
+				parser.CaseWhen{
+					Condition: parser.NewInteger(1),
+					Result:    parser.NewString("A"),
+				},
+				parser.CaseWhen{
+					Condition: parser.NewInteger(2),
+					Result:    parser.NewString("B"),
+				},
+			},
+		},
+		Result: parser.NewString("B"),
+	},
+	{
+		Name: "Case Filter",
+		Expr: parser.Case{
+			When: []parser.Expression{
+				parser.CaseWhen{
+					Condition: parser.Comparison{
+						LHS:      parser.NewInteger(2),
+						RHS:      parser.NewInteger(1),
+						Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+					},
+					Result: parser.NewString("A"),
+				},
+				parser.CaseWhen{
+					Condition: parser.Comparison{
+						LHS:      parser.NewInteger(2),
+						RHS:      parser.NewInteger(2),
+						Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+					},
+					Result: parser.NewString("B"),
+				},
+			},
+		},
+		Result: parser.NewString("B"),
+	},
+	{
+		Name: "Case Else",
+		Expr: parser.Case{
+			Value: parser.NewInteger(0),
+			When: []parser.Expression{
+				parser.CaseWhen{
+					Condition: parser.NewInteger(1),
+					Result:    parser.NewString("A"),
+				},
+				parser.CaseWhen{
+					Condition: parser.NewInteger(2),
+					Result:    parser.NewString("B"),
+				},
+			},
+			Else: parser.CaseElse{
+				Result: parser.NewString("C"),
+			},
+		},
+		Result: parser.NewString("C"),
+	},
+	{
+		Name: "Case No Else",
+		Expr: parser.Case{
+			Value: parser.NewInteger(0),
+			When: []parser.Expression{
+				parser.CaseWhen{
+					Condition: parser.NewInteger(1),
+					Result:    parser.NewString("A"),
+				},
+				parser.CaseWhen{
+					Condition: parser.NewInteger(2),
+					Result:    parser.NewString("B"),
+				},
+			},
+		},
+		Result: parser.NewNull(),
+	},
+	{
+		Name: "Case Value Error",
+		Expr: parser.Case{
+			Value: parser.Identifier{Literal: "notexist"},
+			When: []parser.Expression{
+				parser.CaseWhen{
+					Condition: parser.NewInteger(1),
+					Result:    parser.NewString("A"),
+				},
+				parser.CaseWhen{
+					Condition: parser.NewInteger(2),
+					Result:    parser.NewString("B"),
+				},
+			},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "Case When Condition Error",
+		Expr: parser.Case{
+			Value: parser.NewInteger(2),
+			When: []parser.Expression{
+				parser.CaseWhen{
+					Condition: parser.NewInteger(1),
+					Result:    parser.NewString("A"),
+				},
+				parser.CaseWhen{
+					Condition: parser.Identifier{Literal: "notexist"},
+					Result:    parser.NewString("B"),
+				},
+			},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "Case When Result Error",
+		Expr: parser.Case{
+			Value: parser.NewInteger(2),
+			When: []parser.Expression{
+				parser.CaseWhen{
+					Condition: parser.NewInteger(1),
+					Result:    parser.NewString("A"),
+				},
+				parser.CaseWhen{
+					Condition: parser.NewInteger(2),
+					Result:    parser.Identifier{Literal: "notexist"},
+				},
+			},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "Case Else Result Error",
+		Expr: parser.Case{
+			Value: parser.NewInteger(0),
+			When: []parser.Expression{
+				parser.CaseWhen{
+					Condition: parser.NewInteger(1),
+					Result:    parser.NewString("A"),
+				},
+				parser.CaseWhen{
+					Condition: parser.NewInteger(2),
+					Result:    parser.NewString("B"),
+				},
+			},
+			Else: parser.CaseElse{
+				Result: parser.Identifier{Literal: "notexist"},
+			},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "Logic AND",
+		Expr: parser.Logic{
+			LHS:      parser.NewTernary(ternary.TRUE),
+			RHS:      parser.NewTernary(ternary.FALSE),
+			Operator: parser.Token{Token: parser.AND, Literal: "and"},
+		},
+		Result: parser.NewTernary(ternary.FALSE),
+	},
+	{
+		Name: "Logic OR",
+		Expr: parser.Logic{
+			LHS:      parser.NewTernary(ternary.TRUE),
+			RHS:      parser.NewTernary(ternary.FALSE),
+			Operator: parser.Token{Token: parser.OR, Literal: "or"},
+		},
+		Result: parser.NewTernary(ternary.TRUE),
+	},
+	{
+		Name: "Logic NOT",
+		Expr: parser.Logic{
+			RHS:      parser.NewTernary(ternary.FALSE),
+			Operator: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Result: parser.NewTernary(ternary.TRUE),
+	},
+	{
+		Name: "Logic LHS Error",
+		Expr: parser.Logic{
+			LHS:      parser.Identifier{Literal: "notexist"},
+			RHS:      parser.NewTernary(ternary.FALSE),
+			Operator: parser.Token{Token: parser.AND, Literal: "and"},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "Logic RHS Error",
+		Expr: parser.Logic{
+			LHS:      parser.NewTernary(ternary.FALSE),
+			RHS:      parser.Identifier{Literal: "notexist"},
+			Operator: parser.Token{Token: parser.AND, Literal: "and"},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+}
+
+func TestFilter_Evaluate(t *testing.T) {
+	tf := cmd.GetFlags()
+	dir, _ := os.Getwd()
+	tf.Repository = path.Join(dir, "..", "..", "testdata", "csv")
+
+	for _, v := range filterEvaluateTests {
+		result, err := v.Filter.Evaluate(v.Expr)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(result, v.Result) {
+			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+		}
+	}
+}

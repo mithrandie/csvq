@@ -1,0 +1,2598 @@
+
+state 0
+	$accept: .program $end 
+	program: .    (1)
+
+	SELECT  shift 6
+	.  reduce 1 (src line 91)
+
+	program  goto 1
+	statement  goto 2
+	expression  goto 3
+	select_query  goto 4
+	select_clause  goto 5
+
+state 1
+	$accept:  program.$end 
+
+	$end  accept
+	.  error
+
+
+state 2
+	program:  statement.program 
+	program: .    (1)
+
+	SELECT  shift 6
+	.  reduce 1 (src line 91)
+
+	program  goto 7
+	statement  goto 2
+	expression  goto 3
+	select_query  goto 4
+	select_clause  goto 5
+
+state 3
+	statement:  expression.statement_terminal 
+	statement_terminal: .    (127)
+
+	';'  shift 9
+	.  reduce 127 (src line 724)
+
+	statement_terminal  goto 8
+
+state 4
+	expression:  select_query.    (4)
+
+	.  reduce 4 (src line 109)
+
+
+state 5
+	select_query:  select_clause.from_clause where_clause group_by_clause having_clause order_by_clause limit_clause 
+	from_clause: .    (7)
+
+	FROM  shift 11
+	.  reduce 7 (src line 135)
+
+	from_clause  goto 10
+
+state 6
+	select_clause:  SELECT.distinct fields 
+	distinct: .    (115)
+
+	DISTINCT  shift 13
+	.  reduce 115 (src line 666)
+
+	distinct  goto 12
+
+state 7
+	program:  statement program.    (2)
+
+	.  reduce 2 (src line 97)
+
+
+state 8
+	statement:  expression statement_terminal.    (3)
+
+	.  reduce 3 (src line 103)
+
+
+state 9
+	statement_terminal:  ';'.    (128)
+
+	.  reduce 128 (src line 729)
+
+
+state 10
+	select_query:  select_clause from_clause.where_clause group_by_clause having_clause order_by_clause limit_clause 
+	where_clause: .    (10)
+
+	WHERE  shift 15
+	.  reduce 10 (src line 149)
+
+	where_clause  goto 14
+
+state 11
+	from_clause:  FROM.DUAL 
+	from_clause:  FROM.tables 
+
+	IDENTIFIER  shift 22
+	DUAL  shift 16
+	'('  shift 23
+	.  error
+
+	subquery  goto 20
+	table  goto 18
+	join  goto 21
+	tables  goto 17
+	identifier  goto 19
+
+state 12
+	select_clause:  SELECT distinct.fields 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	EXISTS  shift 39
+	NOT  shift 40
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'*'  shift 28
+	'('  shift 32
+	.  error
+
+	primary  goto 33
+	value  goto 29
+	subquery  goto 36
+	string_operation  goto 35
+	comparison  goto 30
+	arithmetic  goto 34
+	logic  goto 31
+	filter  goto 27
+	function  goto 37
+	field_object  goto 26
+	field  goto 25
+	case  goto 38
+	fields  goto 24
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 13
+	distinct:  DISTINCT.    (116)
+
+	.  reduce 116 (src line 671)
+
+
+state 14
+	select_query:  select_clause from_clause where_clause.group_by_clause having_clause order_by_clause limit_clause 
+	group_by_clause: .    (12)
+
+	GROUP  shift 56
+	.  reduce 12 (src line 159)
+
+	group_by_clause  goto 55
+
+state 15
+	where_clause:  WHERE.filter 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	EXISTS  shift 39
+	NOT  shift 40
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'('  shift 32
+	.  error
+
+	primary  goto 33
+	value  goto 29
+	subquery  goto 36
+	string_operation  goto 35
+	comparison  goto 30
+	arithmetic  goto 34
+	logic  goto 31
+	filter  goto 57
+	function  goto 37
+	case  goto 38
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 16
+	from_clause:  FROM DUAL.    (8)
+
+	.  reduce 8 (src line 140)
+
+
+state 17
+	from_clause:  FROM tables.    (9)
+
+	.  reduce 9 (src line 144)
+
+
+ 18: reduce/reduce conflict  (red'ns 119 and 123) on JOIN
+state 18
+	join:  table.join_inner JOIN table join_condition 
+	join:  table.NATURAL join_inner JOIN table 
+	join:  table.join_direction join_outer JOIN table join_condition 
+	join:  table.NATURAL join_direction join_outer JOIN table 
+	join:  table.CROSS JOIN table 
+	tables:  table.    (99)
+	tables:  table.',' tables 
+	join_inner: .    (119)
+	join_direction: .    (123)
+
+	JOIN  reduce 119 (src line 686)
+	INNER  shift 63
+	OUTER  reduce 123 (src line 706)
+	LEFT  shift 64
+	RIGHT  shift 65
+	FULL  shift 66
+	CROSS  shift 61
+	NATURAL  shift 59
+	','  shift 62
+	.  reduce 99 (src line 580)
+
+	join_inner  goto 58
+	join_direction  goto 60
+
+state 19
+	table:  identifier.    (69)
+	table:  identifier.identifier 
+	table:  identifier.AS identifier 
+
+	IDENTIFIER  shift 22
+	AS  shift 68
+	.  reduce 69 (src line 438)
+
+	identifier  goto 67
+
+state 20
+	table:  subquery.    (72)
+	table:  subquery.identifier 
+	table:  subquery.AS identifier 
+
+	IDENTIFIER  shift 22
+	AS  shift 70
+	.  reduce 72 (src line 451)
+
+	identifier  goto 69
+
+state 21
+	table:  join.    (75)
+
+	.  reduce 75 (src line 463)
+
+
+state 22
+	identifier:  IDENTIFIER.    (107)
+
+	.  reduce 107 (src line 620)
+
+
+state 23
+	subquery:  '('.select_query ')' 
+
+	SELECT  shift 6
+	.  error
+
+	select_query  goto 71
+	select_clause  goto 5
+
+state 24
+	select_clause:  SELECT distinct fields.    (6)
+
+	.  reduce 6 (src line 129)
+
+
+state 25
+	fields:  field.    (103)
+	fields:  field.',' fields 
+
+	','  shift 72
+	.  reduce 103 (src line 600)
+
+
+state 26
+	field:  field_object.    (86)
+	field:  field_object.AS identifier 
+
+	AS  shift 73
+	.  reduce 86 (src line 514)
+
+
+state 27
+	logic:  filter.OR filter 
+	logic:  filter.AND filter 
+	field_object:  filter.    (84)
+
+	AND  shift 75
+	OR  shift 74
+	.  reduce 84 (src line 504)
+
+
+state 28
+	field_object:  '*'.    (85)
+
+	.  reduce 85 (src line 509)
+
+
+state 29
+	string_operation:  value.STRING_OP value 
+	comparison:  value.COMPARISON_OP value 
+	comparison:  value.IS negation ternary 
+	comparison:  value.IS negation null 
+	comparison:  value.negation BETWEEN value AND value 
+	comparison:  value.negation IN '(' values ')' 
+	comparison:  value.negation IN subquery 
+	comparison:  value.negation LIKE value 
+	comparison:  value.COMPARISON_OP ANY subquery 
+	comparison:  value.COMPARISON_OP ALL subquery 
+	arithmetic:  value.'+' value 
+	arithmetic:  value.'-' value 
+	arithmetic:  value.'*' value 
+	arithmetic:  value.'/' value 
+	arithmetic:  value.'%' value 
+	filter:  value.    (61)
+	negation: .    (117)
+
+	IN  reduce 117 (src line 676)
+	NOT  shift 85
+	BETWEEN  reduce 117 (src line 676)
+	LIKE  reduce 117 (src line 676)
+	IS  shift 78
+	COMPARISON_OP  shift 77
+	STRING_OP  shift 76
+	'+'  shift 80
+	'-'  shift 81
+	'*'  shift 82
+	'/'  shift 83
+	'%'  shift 84
+	.  reduce 61 (src line 400)
+
+	negation  goto 79
+
+state 30
+	filter:  comparison.    (62)
+
+	.  reduce 62 (src line 405)
+
+
+state 31
+	filter:  logic.    (63)
+
+	.  reduce 63 (src line 409)
+
+
+state 32
+	value:  '('.value ')' 
+	subquery:  '('.select_query ')' 
+	filter:  '('.filter ')' 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	SELECT  shift 6
+	EXISTS  shift 39
+	NOT  shift 40
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'('  shift 32
+	.  error
+
+	select_query  goto 71
+	select_clause  goto 5
+	primary  goto 33
+	value  goto 86
+	subquery  goto 36
+	string_operation  goto 35
+	comparison  goto 30
+	arithmetic  goto 34
+	logic  goto 31
+	filter  goto 87
+	function  goto 37
+	case  goto 38
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 33
+	value:  primary.    (27)
+
+	.  reduce 27 (src line 229)
+
+
+state 34
+	value:  arithmetic.    (28)
+
+	.  reduce 28 (src line 234)
+
+
+state 35
+	value:  string_operation.    (29)
+
+	.  reduce 29 (src line 238)
+
+
+state 36
+	value:  subquery.    (30)
+
+	.  reduce 30 (src line 242)
+
+
+state 37
+	value:  function.    (31)
+
+	.  reduce 31 (src line 246)
+
+
+state 38
+	value:  case.    (32)
+
+	.  reduce 32 (src line 250)
+
+
+state 39
+	comparison:  EXISTS.subquery 
+
+	'('  shift 23
+	.  error
+
+	subquery  goto 88
+
+state 40
+	logic:  NOT.filter 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	EXISTS  shift 39
+	NOT  shift 40
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'('  shift 32
+	.  error
+
+	primary  goto 33
+	value  goto 29
+	subquery  goto 36
+	string_operation  goto 35
+	comparison  goto 30
+	arithmetic  goto 34
+	logic  goto 31
+	filter  goto 89
+	function  goto 37
+	case  goto 38
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 41
+	primary:  identifier.    (20)
+	function:  identifier.'(' option ')' 
+
+	'('  shift 90
+	.  reduce 20 (src line 199)
+
+
+state 42
+	primary:  text.    (21)
+
+	.  reduce 21 (src line 204)
+
+
+state 43
+	primary:  integer.    (22)
+
+	.  reduce 22 (src line 208)
+
+
+state 44
+	primary:  float.    (23)
+
+	.  reduce 23 (src line 212)
+
+
+state 45
+	primary:  ternary.    (24)
+
+	.  reduce 24 (src line 216)
+
+
+state 46
+	primary:  DATETIME.    (25)
+
+	.  reduce 25 (src line 220)
+
+
+state 47
+	primary:  null.    (26)
+
+	.  reduce 26 (src line 224)
+
+
+state 48
+	case:  CASE.case_value case_when case_else END 
+	case_value: .    (89)
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'('  shift 93
+	.  reduce 89 (src line 530)
+
+	primary  goto 33
+	value  goto 92
+	subquery  goto 36
+	string_operation  goto 35
+	arithmetic  goto 34
+	function  goto 37
+	case  goto 38
+	case_value  goto 91
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 49
+	text:  STRING.    (108)
+
+	.  reduce 108 (src line 626)
+
+
+state 50
+	integer:  INTEGER.    (109)
+
+	.  reduce 109 (src line 632)
+
+
+state 51
+	integer:  '-'.integer 
+	float:  '-'.float 
+
+	INTEGER  shift 50
+	FLOAT  shift 52
+	'-'  shift 51
+	.  error
+
+	integer  goto 94
+	float  goto 95
+
+state 52
+	float:  FLOAT.    (111)
+
+	.  reduce 111 (src line 643)
+
+
+state 53
+	ternary:  TERNARY.    (113)
+
+	.  reduce 113 (src line 654)
+
+
+state 54
+	null:  NULL.    (114)
+
+	.  reduce 114 (src line 660)
+
+
+state 55
+	select_query:  select_clause from_clause where_clause group_by_clause.having_clause order_by_clause limit_clause 
+	having_clause: .    (14)
+
+	HAVING  shift 97
+	.  reduce 14 (src line 169)
+
+	having_clause  goto 96
+
+state 56
+	group_by_clause:  GROUP.BY group_items 
+
+	BY  shift 98
+	.  error
+
+
+state 57
+	where_clause:  WHERE filter.    (11)
+	logic:  filter.OR filter 
+	logic:  filter.AND filter 
+
+	AND  shift 75
+	OR  shift 74
+	.  reduce 11 (src line 154)
+
+
+state 58
+	join:  table join_inner.JOIN table join_condition 
+
+	JOIN  shift 99
+	.  error
+
+
+ 59: reduce/reduce conflict  (red'ns 119 and 123) on JOIN
+state 59
+	join:  table NATURAL.join_inner JOIN table 
+	join:  table NATURAL.join_direction join_outer JOIN table 
+	join_inner: .    (119)
+	join_direction: .    (123)
+
+	INNER  shift 63
+	OUTER  reduce 123 (src line 706)
+	LEFT  shift 64
+	RIGHT  shift 65
+	FULL  shift 66
+	.  reduce 119 (src line 686)
+
+	join_inner  goto 100
+	join_direction  goto 101
+
+state 60
+	join:  table join_direction.join_outer JOIN table join_condition 
+	join_outer: .    (121)
+
+	OUTER  shift 103
+	.  reduce 121 (src line 696)
+
+	join_outer  goto 102
+
+state 61
+	join:  table CROSS.JOIN table 
+
+	JOIN  shift 104
+	.  error
+
+
+state 62
+	tables:  table ','.tables 
+
+	IDENTIFIER  shift 22
+	'('  shift 23
+	.  error
+
+	subquery  goto 20
+	table  goto 18
+	join  goto 21
+	tables  goto 105
+	identifier  goto 19
+
+state 63
+	join_inner:  INNER.    (120)
+
+	.  reduce 120 (src line 691)
+
+
+state 64
+	join_direction:  LEFT.    (124)
+
+	.  reduce 124 (src line 711)
+
+
+state 65
+	join_direction:  RIGHT.    (125)
+
+	.  reduce 125 (src line 715)
+
+
+state 66
+	join_direction:  FULL.    (126)
+
+	.  reduce 126 (src line 719)
+
+
+state 67
+	table:  identifier identifier.    (70)
+
+	.  reduce 70 (src line 443)
+
+
+state 68
+	table:  identifier AS.identifier 
+
+	IDENTIFIER  shift 22
+	.  error
+
+	identifier  goto 106
+
+state 69
+	table:  subquery identifier.    (73)
+
+	.  reduce 73 (src line 455)
+
+
+state 70
+	table:  subquery AS.identifier 
+
+	IDENTIFIER  shift 22
+	.  error
+
+	identifier  goto 107
+
+state 71
+	subquery:  '(' select_query.')' 
+
+	')'  shift 108
+	.  error
+
+
+state 72
+	fields:  field ','.fields 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	EXISTS  shift 39
+	NOT  shift 40
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'*'  shift 28
+	'('  shift 32
+	.  error
+
+	primary  goto 33
+	value  goto 29
+	subquery  goto 36
+	string_operation  goto 35
+	comparison  goto 30
+	arithmetic  goto 34
+	logic  goto 31
+	filter  goto 27
+	function  goto 37
+	field_object  goto 26
+	field  goto 25
+	case  goto 38
+	fields  goto 109
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 73
+	field:  field_object AS.identifier 
+
+	IDENTIFIER  shift 22
+	.  error
+
+	identifier  goto 110
+
+state 74
+	logic:  filter OR.filter 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	EXISTS  shift 39
+	NOT  shift 40
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'('  shift 32
+	.  error
+
+	primary  goto 33
+	value  goto 29
+	subquery  goto 36
+	string_operation  goto 35
+	comparison  goto 30
+	arithmetic  goto 34
+	logic  goto 31
+	filter  goto 111
+	function  goto 37
+	case  goto 38
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 75
+	logic:  filter AND.filter 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	EXISTS  shift 39
+	NOT  shift 40
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'('  shift 32
+	.  error
+
+	primary  goto 33
+	value  goto 29
+	subquery  goto 36
+	string_operation  goto 35
+	comparison  goto 30
+	arithmetic  goto 34
+	logic  goto 31
+	filter  goto 112
+	function  goto 37
+	case  goto 38
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 76
+	string_operation:  value STRING_OP.value 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'('  shift 93
+	.  error
+
+	primary  goto 33
+	value  goto 113
+	subquery  goto 36
+	string_operation  goto 35
+	arithmetic  goto 34
+	function  goto 37
+	case  goto 38
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 77
+	comparison:  value COMPARISON_OP.value 
+	comparison:  value COMPARISON_OP.ANY subquery 
+	comparison:  value COMPARISON_OP.ALL subquery 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	ALL  shift 116
+	ANY  shift 115
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'('  shift 93
+	.  error
+
+	primary  goto 33
+	value  goto 114
+	subquery  goto 36
+	string_operation  goto 35
+	arithmetic  goto 34
+	function  goto 37
+	case  goto 38
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 78
+	comparison:  value IS.negation ternary 
+	comparison:  value IS.negation null 
+	negation: .    (117)
+
+	NOT  shift 85
+	.  reduce 117 (src line 676)
+
+	negation  goto 117
+
+state 79
+	comparison:  value negation.BETWEEN value AND value 
+	comparison:  value negation.IN '(' values ')' 
+	comparison:  value negation.IN subquery 
+	comparison:  value negation.LIKE value 
+
+	IN  shift 119
+	BETWEEN  shift 118
+	LIKE  shift 120
+	.  error
+
+
+state 80
+	arithmetic:  value '+'.value 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'('  shift 93
+	.  error
+
+	primary  goto 33
+	value  goto 121
+	subquery  goto 36
+	string_operation  goto 35
+	arithmetic  goto 34
+	function  goto 37
+	case  goto 38
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 81
+	arithmetic:  value '-'.value 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'('  shift 93
+	.  error
+
+	primary  goto 33
+	value  goto 122
+	subquery  goto 36
+	string_operation  goto 35
+	arithmetic  goto 34
+	function  goto 37
+	case  goto 38
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 82
+	arithmetic:  value '*'.value 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'('  shift 93
+	.  error
+
+	primary  goto 33
+	value  goto 123
+	subquery  goto 36
+	string_operation  goto 35
+	arithmetic  goto 34
+	function  goto 37
+	case  goto 38
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 83
+	arithmetic:  value '/'.value 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'('  shift 93
+	.  error
+
+	primary  goto 33
+	value  goto 124
+	subquery  goto 36
+	string_operation  goto 35
+	arithmetic  goto 34
+	function  goto 37
+	case  goto 38
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 84
+	arithmetic:  value '%'.value 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'('  shift 93
+	.  error
+
+	primary  goto 33
+	value  goto 125
+	subquery  goto 36
+	string_operation  goto 35
+	arithmetic  goto 34
+	function  goto 37
+	case  goto 38
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 85
+	negation:  NOT.    (118)
+
+	.  reduce 118 (src line 681)
+
+
+86: shift/reduce conflict (shift 126(0), red'n 61(0)) on ')'
+state 86
+	value:  '(' value.')' 
+	string_operation:  value.STRING_OP value 
+	comparison:  value.COMPARISON_OP value 
+	comparison:  value.IS negation ternary 
+	comparison:  value.IS negation null 
+	comparison:  value.negation BETWEEN value AND value 
+	comparison:  value.negation IN '(' values ')' 
+	comparison:  value.negation IN subquery 
+	comparison:  value.negation LIKE value 
+	comparison:  value.COMPARISON_OP ANY subquery 
+	comparison:  value.COMPARISON_OP ALL subquery 
+	arithmetic:  value.'+' value 
+	arithmetic:  value.'-' value 
+	arithmetic:  value.'*' value 
+	arithmetic:  value.'/' value 
+	arithmetic:  value.'%' value 
+	filter:  value.    (61)
+	negation: .    (117)
+
+	AND  reduce 61 (src line 400)
+	OR  reduce 61 (src line 400)
+	NOT  shift 85
+	IS  shift 78
+	COMPARISON_OP  shift 77
+	STRING_OP  shift 76
+	'+'  shift 80
+	'-'  shift 81
+	'*'  shift 82
+	'/'  shift 83
+	')'  shift 126
+	'%'  shift 84
+	.  reduce 117 (src line 676)
+
+	negation  goto 79
+
+state 87
+	logic:  filter.OR filter 
+	logic:  filter.AND filter 
+	filter:  '(' filter.')' 
+
+	AND  shift 75
+	OR  shift 74
+	')'  shift 127
+	.  error
+
+
+state 88
+	comparison:  EXISTS subquery.    (52)
+
+	.  reduce 52 (src line 359)
+
+
+state 89
+	logic:  filter.OR filter 
+	logic:  filter.AND filter 
+	logic:  NOT filter.    (60)
+
+	.  reduce 60 (src line 395)
+
+
+state 90
+	function:  identifier '('.option ')' 
+	option: .    (66)
+	distinct: .    (115)
+
+	DISTINCT  shift 13
+	')'  reduce 66 (src line 424)
+	.  reduce 115 (src line 666)
+
+	option  goto 128
+	distinct  goto 129
+
+state 91
+	case:  CASE case_value.case_when case_else END 
+
+	WHEN  shift 131
+	.  error
+
+	case_when  goto 130
+
+state 92
+	string_operation:  value.STRING_OP value 
+	arithmetic:  value.'+' value 
+	arithmetic:  value.'-' value 
+	arithmetic:  value.'*' value 
+	arithmetic:  value.'/' value 
+	arithmetic:  value.'%' value 
+	case_value:  value.    (90)
+
+	STRING_OP  shift 76
+	'+'  shift 80
+	'-'  shift 81
+	'*'  shift 82
+	'/'  shift 83
+	'%'  shift 84
+	.  reduce 90 (src line 535)
+
+
+state 93
+	value:  '('.value ')' 
+	subquery:  '('.select_query ')' 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	SELECT  shift 6
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'('  shift 93
+	.  error
+
+	select_query  goto 71
+	select_clause  goto 5
+	primary  goto 33
+	value  goto 132
+	subquery  goto 36
+	string_operation  goto 35
+	arithmetic  goto 34
+	function  goto 37
+	case  goto 38
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 94
+	integer:  '-' integer.    (110)
+
+	.  reduce 110 (src line 637)
+
+
+state 95
+	float:  '-' float.    (112)
+
+	.  reduce 112 (src line 648)
+
+
+state 96
+	select_query:  select_clause from_clause where_clause group_by_clause having_clause.order_by_clause limit_clause 
+	order_by_clause: .    (16)
+
+	ORDER  shift 134
+	.  reduce 16 (src line 179)
+
+	order_by_clause  goto 133
+
+state 97
+	having_clause:  HAVING.filter 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	EXISTS  shift 39
+	NOT  shift 40
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'('  shift 32
+	.  error
+
+	primary  goto 33
+	value  goto 29
+	subquery  goto 36
+	string_operation  goto 35
+	comparison  goto 30
+	arithmetic  goto 34
+	logic  goto 31
+	filter  goto 135
+	function  goto 37
+	case  goto 38
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 98
+	group_by_clause:  GROUP BY.group_items 
+
+	IDENTIFIER  shift 22
+	.  error
+
+	group_item  goto 137
+	function  goto 139
+	group_items  goto 136
+	identifier  goto 138
+
+state 99
+	join:  table join_inner JOIN.table join_condition 
+
+	IDENTIFIER  shift 22
+	'('  shift 23
+	.  error
+
+	subquery  goto 20
+	table  goto 140
+	join  goto 21
+	identifier  goto 19
+
+state 100
+	join:  table NATURAL join_inner.JOIN table 
+
+	JOIN  shift 141
+	.  error
+
+
+state 101
+	join:  table NATURAL join_direction.join_outer JOIN table 
+	join_outer: .    (121)
+
+	OUTER  shift 103
+	.  reduce 121 (src line 696)
+
+	join_outer  goto 142
+
+state 102
+	join:  table join_direction join_outer.JOIN table join_condition 
+
+	JOIN  shift 143
+	.  error
+
+
+state 103
+	join_outer:  OUTER.    (122)
+
+	.  reduce 122 (src line 701)
+
+
+state 104
+	join:  table CROSS JOIN.table 
+
+	IDENTIFIER  shift 22
+	'('  shift 23
+	.  error
+
+	subquery  goto 20
+	table  goto 144
+	join  goto 21
+	identifier  goto 19
+
+state 105
+	tables:  table ',' tables.    (100)
+
+	.  reduce 100 (src line 585)
+
+
+state 106
+	table:  identifier AS identifier.    (71)
+
+	.  reduce 71 (src line 447)
+
+
+state 107
+	table:  subquery AS identifier.    (74)
+
+	.  reduce 74 (src line 459)
+
+
+state 108
+	subquery:  '(' select_query ')'.    (41)
+
+	.  reduce 41 (src line 293)
+
+
+state 109
+	fields:  field ',' fields.    (104)
+
+	.  reduce 104 (src line 605)
+
+
+state 110
+	field:  field_object AS identifier.    (87)
+
+	.  reduce 87 (src line 519)
+
+
+state 111
+	logic:  filter.OR filter 
+	logic:  filter OR filter.    (58)
+	logic:  filter.AND filter 
+
+	AND  shift 75
+	.  reduce 58 (src line 386)
+
+
+state 112
+	logic:  filter.OR filter 
+	logic:  filter.AND filter 
+	logic:  filter AND filter.    (59)
+
+	.  reduce 59 (src line 391)
+
+
+113: shift/reduce conflict (shift 84(0), red'n 42(4)) on '%'
+state 113
+	string_operation:  value.STRING_OP value 
+	string_operation:  value STRING_OP value.    (42)
+	arithmetic:  value.'+' value 
+	arithmetic:  value.'-' value 
+	arithmetic:  value.'*' value 
+	arithmetic:  value.'/' value 
+	arithmetic:  value.'%' value 
+
+	'+'  shift 80
+	'-'  shift 81
+	'*'  shift 82
+	'/'  shift 83
+	'%'  shift 84
+	.  reduce 42 (src line 299)
+
+
+state 114
+	string_operation:  value.STRING_OP value 
+	comparison:  value COMPARISON_OP value.    (43)
+	arithmetic:  value.'+' value 
+	arithmetic:  value.'-' value 
+	arithmetic:  value.'*' value 
+	arithmetic:  value.'/' value 
+	arithmetic:  value.'%' value 
+
+	STRING_OP  shift 76
+	'+'  shift 80
+	'-'  shift 81
+	'*'  shift 82
+	'/'  shift 83
+	'%'  shift 84
+	.  reduce 43 (src line 322)
+
+
+state 115
+	comparison:  value COMPARISON_OP ANY.subquery 
+
+	'('  shift 23
+	.  error
+
+	subquery  goto 145
+
+state 116
+	comparison:  value COMPARISON_OP ALL.subquery 
+
+	'('  shift 23
+	.  error
+
+	subquery  goto 146
+
+state 117
+	comparison:  value IS negation.ternary 
+	comparison:  value IS negation.null 
+
+	TERNARY  shift 53
+	NULL  shift 54
+	.  error
+
+	ternary  goto 147
+	null  goto 148
+
+state 118
+	comparison:  value negation BETWEEN.value AND value 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'('  shift 93
+	.  error
+
+	primary  goto 33
+	value  goto 149
+	subquery  goto 36
+	string_operation  goto 35
+	arithmetic  goto 34
+	function  goto 37
+	case  goto 38
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 119
+	comparison:  value negation IN.'(' values ')' 
+	comparison:  value negation IN.subquery 
+
+	'('  shift 150
+	.  error
+
+	subquery  goto 151
+
+state 120
+	comparison:  value negation LIKE.value 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'('  shift 93
+	.  error
+
+	primary  goto 33
+	value  goto 152
+	subquery  goto 36
+	string_operation  goto 35
+	arithmetic  goto 34
+	function  goto 37
+	case  goto 38
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+121: shift/reduce conflict (shift 84(0), red'n 53(5)) on '%'
+state 121
+	string_operation:  value.STRING_OP value 
+	arithmetic:  value.'+' value 
+	arithmetic:  value '+' value.    (53)
+	arithmetic:  value.'-' value 
+	arithmetic:  value.'*' value 
+	arithmetic:  value.'/' value 
+	arithmetic:  value.'%' value 
+
+	'*'  shift 82
+	'/'  shift 83
+	'%'  shift 84
+	.  reduce 53 (src line 364)
+
+
+122: shift/reduce conflict (shift 84(0), red'n 54(5)) on '%'
+state 122
+	string_operation:  value.STRING_OP value 
+	arithmetic:  value.'+' value 
+	arithmetic:  value.'-' value 
+	arithmetic:  value '-' value.    (54)
+	arithmetic:  value.'*' value 
+	arithmetic:  value.'/' value 
+	arithmetic:  value.'%' value 
+
+	'*'  shift 82
+	'/'  shift 83
+	'%'  shift 84
+	.  reduce 54 (src line 369)
+
+
+123: shift/reduce conflict (shift 84(0), red'n 55(6)) on '%'
+state 123
+	string_operation:  value.STRING_OP value 
+	arithmetic:  value.'+' value 
+	arithmetic:  value.'-' value 
+	arithmetic:  value.'*' value 
+	arithmetic:  value '*' value.    (55)
+	arithmetic:  value.'/' value 
+	arithmetic:  value.'%' value 
+
+	'%'  shift 84
+	.  reduce 55 (src line 373)
+
+
+124: shift/reduce conflict (shift 84(0), red'n 56(6)) on '%'
+state 124
+	string_operation:  value.STRING_OP value 
+	arithmetic:  value.'+' value 
+	arithmetic:  value.'-' value 
+	arithmetic:  value.'*' value 
+	arithmetic:  value.'/' value 
+	arithmetic:  value '/' value.    (56)
+	arithmetic:  value.'%' value 
+
+	'%'  shift 84
+	.  reduce 56 (src line 377)
+
+
+125: shift/reduce conflict (shift 76(4), red'n 57(0)) on STRING_OP
+125: shift/reduce conflict (shift 80(5), red'n 57(0)) on '+'
+125: shift/reduce conflict (shift 81(5), red'n 57(0)) on '-'
+125: shift/reduce conflict (shift 82(6), red'n 57(0)) on '*'
+125: shift/reduce conflict (shift 83(6), red'n 57(0)) on '/'
+125: shift/reduce conflict (shift 84(0), red'n 57(0)) on '%'
+state 125
+	string_operation:  value.STRING_OP value 
+	arithmetic:  value.'+' value 
+	arithmetic:  value.'-' value 
+	arithmetic:  value.'*' value 
+	arithmetic:  value.'/' value 
+	arithmetic:  value.'%' value 
+	arithmetic:  value '%' value.    (57)
+
+	STRING_OP  shift 76
+	'+'  shift 80
+	'-'  shift 81
+	'*'  shift 82
+	'/'  shift 83
+	'%'  shift 84
+	.  reduce 57 (src line 381)
+
+
+state 126
+	value:  '(' value ')'.    (33)
+
+	.  reduce 33 (src line 254)
+
+
+state 127
+	filter:  '(' filter ')'.    (64)
+
+	.  reduce 64 (src line 413)
+
+
+state 128
+	function:  identifier '(' option.')' 
+
+	')'  shift 153
+	.  error
+
+
+state 129
+	option:  distinct.'*' 
+	option:  distinct.values 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'*'  shift 154
+	'('  shift 93
+	.  error
+
+	primary  goto 33
+	value  goto 156
+	subquery  goto 36
+	string_operation  goto 35
+	arithmetic  goto 34
+	function  goto 37
+	case  goto 38
+	values  goto 155
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 130
+	case:  CASE case_value case_when.case_else END 
+	case_when:  case_when.case_when 
+	case_else: .    (91)
+
+	WHEN  shift 131
+	ELSE  shift 159
+	.  reduce 91 (src line 540)
+
+	case_else  goto 157
+	case_when  goto 158
+
+state 131
+	case_when:  WHEN.value THEN value 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'('  shift 93
+	.  error
+
+	primary  goto 33
+	value  goto 160
+	subquery  goto 36
+	string_operation  goto 35
+	arithmetic  goto 34
+	function  goto 37
+	case  goto 38
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 132
+	value:  '(' value.')' 
+	string_operation:  value.STRING_OP value 
+	arithmetic:  value.'+' value 
+	arithmetic:  value.'-' value 
+	arithmetic:  value.'*' value 
+	arithmetic:  value.'/' value 
+	arithmetic:  value.'%' value 
+
+	STRING_OP  shift 76
+	'+'  shift 80
+	'-'  shift 81
+	'*'  shift 82
+	'/'  shift 83
+	')'  shift 126
+	'%'  shift 84
+	.  error
+
+
+state 133
+	select_query:  select_clause from_clause where_clause group_by_clause having_clause order_by_clause.limit_clause 
+	limit_clause: .    (18)
+
+	LIMIT  shift 162
+	.  reduce 18 (src line 189)
+
+	limit_clause  goto 161
+
+state 134
+	order_by_clause:  ORDER.BY order_items 
+
+	BY  shift 163
+	.  error
+
+
+state 135
+	having_clause:  HAVING filter.    (15)
+	logic:  filter.OR filter 
+	logic:  filter.AND filter 
+
+	AND  shift 75
+	OR  shift 74
+	.  reduce 15 (src line 174)
+
+
+state 136
+	group_by_clause:  GROUP BY group_items.    (13)
+
+	.  reduce 13 (src line 164)
+
+
+state 137
+	group_items:  group_item.    (95)
+	group_items:  group_item.',' group_items 
+
+	','  shift 164
+	.  reduce 95 (src line 560)
+
+
+state 138
+	group_item:  identifier.    (34)
+	function:  identifier.'(' option ')' 
+
+	'('  shift 90
+	.  reduce 34 (src line 259)
+
+
+state 139
+	group_item:  function.    (35)
+
+	.  reduce 35 (src line 264)
+
+
+ 140: reduce/reduce conflict  (red'ns 119 and 81) on JOIN
+140: shift/reduce conflict (shift 63(0), red'n 81(0)) on INNER
+140: shift/reduce conflict (shift 64(0), red'n 81(0)) on LEFT
+140: shift/reduce conflict (shift 65(0), red'n 81(0)) on RIGHT
+140: shift/reduce conflict (shift 66(0), red'n 81(0)) on FULL
+140: shift/reduce conflict (shift 61(0), red'n 81(0)) on CROSS
+140: shift/reduce conflict (shift 166(0), red'n 81(0)) on ON
+140: shift/reduce conflict (shift 167(0), red'n 81(0)) on USING
+140: shift/reduce conflict (shift 59(0), red'n 81(0)) on NATURAL
+ 140: reduce/reduce conflict  (red'ns 81 and 123) on JOIN
+ 140: reduce/reduce conflict  (red'ns 81 and 123) on OUTER
+state 140
+	join:  table.join_inner JOIN table join_condition 
+	join:  table join_inner JOIN table.join_condition 
+	join:  table.NATURAL join_inner JOIN table 
+	join:  table.join_direction join_outer JOIN table join_condition 
+	join:  table.NATURAL join_direction join_outer JOIN table 
+	join:  table.CROSS JOIN table 
+	join_inner: .    (119)
+	join_condition: .    (81)
+	join_direction: .    (123)
+
+	INNER  shift 63
+	LEFT  shift 64
+	RIGHT  shift 65
+	FULL  shift 66
+	CROSS  shift 61
+	ON  shift 166
+	USING  shift 167
+	NATURAL  shift 59
+	.  reduce 81 (src line 490)
+
+	join_condition  goto 165
+	join_inner  goto 58
+	join_direction  goto 60
+
+state 141
+	join:  table NATURAL join_inner JOIN.table 
+
+	IDENTIFIER  shift 22
+	'('  shift 23
+	.  error
+
+	subquery  goto 20
+	table  goto 168
+	join  goto 21
+	identifier  goto 19
+
+state 142
+	join:  table NATURAL join_direction join_outer.JOIN table 
+
+	JOIN  shift 169
+	.  error
+
+
+state 143
+	join:  table join_direction join_outer JOIN.table join_condition 
+
+	IDENTIFIER  shift 22
+	'('  shift 23
+	.  error
+
+	subquery  goto 20
+	table  goto 170
+	join  goto 21
+	identifier  goto 19
+
+144: shift/reduce conflict (shift 63(0), red'n 80(0)) on INNER
+144: shift/reduce conflict (shift 64(0), red'n 80(0)) on LEFT
+144: shift/reduce conflict (shift 65(0), red'n 80(0)) on RIGHT
+144: shift/reduce conflict (shift 66(0), red'n 80(0)) on FULL
+144: shift/reduce conflict (shift 61(0), red'n 80(0)) on CROSS
+144: shift/reduce conflict (shift 59(0), red'n 80(0)) on NATURAL
+ 144: reduce/reduce conflict  (red'ns 80 and 119) on JOIN
+ 144: reduce/reduce conflict  (red'ns 80 and 123) on JOIN
+ 144: reduce/reduce conflict  (red'ns 80 and 123) on OUTER
+state 144
+	join:  table.join_inner JOIN table join_condition 
+	join:  table.NATURAL join_inner JOIN table 
+	join:  table.join_direction join_outer JOIN table join_condition 
+	join:  table.NATURAL join_direction join_outer JOIN table 
+	join:  table.CROSS JOIN table 
+	join:  table CROSS JOIN table.    (80)
+	join_inner: .    (119)
+	join_direction: .    (123)
+
+	INNER  shift 63
+	LEFT  shift 64
+	RIGHT  shift 65
+	FULL  shift 66
+	CROSS  shift 61
+	NATURAL  shift 59
+	.  reduce 80 (src line 485)
+
+	join_inner  goto 58
+	join_direction  goto 60
+
+state 145
+	comparison:  value COMPARISON_OP ANY subquery.    (50)
+
+	.  reduce 50 (src line 351)
+
+
+state 146
+	comparison:  value COMPARISON_OP ALL subquery.    (51)
+
+	.  reduce 51 (src line 355)
+
+
+state 147
+	comparison:  value IS negation ternary.    (44)
+
+	.  reduce 44 (src line 327)
+
+
+state 148
+	comparison:  value IS negation null.    (45)
+
+	.  reduce 45 (src line 331)
+
+
+state 149
+	string_operation:  value.STRING_OP value 
+	comparison:  value negation BETWEEN value.AND value 
+	arithmetic:  value.'+' value 
+	arithmetic:  value.'-' value 
+	arithmetic:  value.'*' value 
+	arithmetic:  value.'/' value 
+	arithmetic:  value.'%' value 
+
+	AND  shift 171
+	STRING_OP  shift 76
+	'+'  shift 80
+	'-'  shift 81
+	'*'  shift 82
+	'/'  shift 83
+	'%'  shift 84
+	.  error
+
+
+state 150
+	subquery:  '('.select_query ')' 
+	comparison:  value negation IN '('.values ')' 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	SELECT  shift 6
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'('  shift 93
+	.  error
+
+	select_query  goto 71
+	select_clause  goto 5
+	primary  goto 33
+	value  goto 156
+	subquery  goto 36
+	string_operation  goto 35
+	arithmetic  goto 34
+	function  goto 37
+	case  goto 38
+	values  goto 172
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 151
+	comparison:  value negation IN subquery.    (48)
+
+	.  reduce 48 (src line 343)
+
+
+state 152
+	string_operation:  value.STRING_OP value 
+	comparison:  value negation LIKE value.    (49)
+	arithmetic:  value.'+' value 
+	arithmetic:  value.'-' value 
+	arithmetic:  value.'*' value 
+	arithmetic:  value.'/' value 
+	arithmetic:  value.'%' value 
+
+	STRING_OP  shift 76
+	'+'  shift 80
+	'-'  shift 81
+	'*'  shift 82
+	'/'  shift 83
+	'%'  shift 84
+	.  reduce 49 (src line 347)
+
+
+state 153
+	function:  identifier '(' option ')'.    (65)
+
+	.  reduce 65 (src line 418)
+
+
+state 154
+	option:  distinct '*'.    (67)
+
+	.  reduce 67 (src line 429)
+
+
+state 155
+	option:  distinct values.    (68)
+
+	.  reduce 68 (src line 433)
+
+
+state 156
+	string_operation:  value.STRING_OP value 
+	arithmetic:  value.'+' value 
+	arithmetic:  value.'-' value 
+	arithmetic:  value.'*' value 
+	arithmetic:  value.'/' value 
+	arithmetic:  value.'%' value 
+	values:  value.    (93)
+	values:  value.',' values 
+
+	STRING_OP  shift 76
+	'+'  shift 80
+	'-'  shift 81
+	'*'  shift 82
+	'/'  shift 83
+	'%'  shift 84
+	','  shift 173
+	.  reduce 93 (src line 550)
+
+
+state 157
+	case:  CASE case_value case_when case_else.END 
+
+	END  shift 174
+	.  error
+
+
+158: shift/reduce conflict (shift 131(0), red'n 106(0)) on WHEN
+state 158
+	case_when:  case_when.case_when 
+	case_when:  case_when case_when.    (106)
+
+	WHEN  shift 131
+	.  reduce 106 (src line 615)
+
+	case_when  goto 158
+
+state 159
+	case_else:  ELSE.value 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'('  shift 93
+	.  error
+
+	primary  goto 33
+	value  goto 175
+	subquery  goto 36
+	string_operation  goto 35
+	arithmetic  goto 34
+	function  goto 37
+	case  goto 38
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 160
+	string_operation:  value.STRING_OP value 
+	arithmetic:  value.'+' value 
+	arithmetic:  value.'-' value 
+	arithmetic:  value.'*' value 
+	arithmetic:  value.'/' value 
+	arithmetic:  value.'%' value 
+	case_when:  WHEN value.THEN value 
+
+	THEN  shift 176
+	STRING_OP  shift 76
+	'+'  shift 80
+	'-'  shift 81
+	'*'  shift 82
+	'/'  shift 83
+	'%'  shift 84
+	.  error
+
+
+state 161
+	select_query:  select_clause from_clause where_clause group_by_clause having_clause order_by_clause limit_clause.    (5)
+
+	.  reduce 5 (src line 115)
+
+
+state 162
+	limit_clause:  LIMIT.integer 
+
+	INTEGER  shift 50
+	'-'  shift 178
+	.  error
+
+	integer  goto 177
+
+state 163
+	order_by_clause:  ORDER BY.order_items 
+
+	IDENTIFIER  shift 22
+	.  error
+
+	order_item  goto 180
+	function  goto 182
+	order_items  goto 179
+	identifier  goto 181
+
+state 164
+	group_items:  group_item ','.group_items 
+
+	IDENTIFIER  shift 22
+	.  error
+
+	group_item  goto 137
+	function  goto 139
+	group_items  goto 183
+	identifier  goto 138
+
+state 165
+	join:  table join_inner JOIN table join_condition.    (76)
+
+	.  reduce 76 (src line 468)
+
+
+state 166
+	join_condition:  ON.filter 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	EXISTS  shift 39
+	NOT  shift 40
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'('  shift 32
+	.  error
+
+	primary  goto 33
+	value  goto 29
+	subquery  goto 36
+	string_operation  goto 35
+	comparison  goto 30
+	arithmetic  goto 34
+	logic  goto 31
+	filter  goto 184
+	function  goto 37
+	case  goto 38
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 167
+	join_condition:  USING.'(' using_fields ')' 
+
+	'('  shift 185
+	.  error
+
+
+168: shift/reduce conflict (shift 63(0), red'n 77(0)) on INNER
+168: shift/reduce conflict (shift 64(0), red'n 77(0)) on LEFT
+168: shift/reduce conflict (shift 65(0), red'n 77(0)) on RIGHT
+168: shift/reduce conflict (shift 66(0), red'n 77(0)) on FULL
+168: shift/reduce conflict (shift 61(0), red'n 77(0)) on CROSS
+168: shift/reduce conflict (shift 59(0), red'n 77(0)) on NATURAL
+ 168: reduce/reduce conflict  (red'ns 77 and 119) on JOIN
+ 168: reduce/reduce conflict  (red'ns 77 and 123) on JOIN
+ 168: reduce/reduce conflict  (red'ns 77 and 123) on OUTER
+state 168
+	join:  table.join_inner JOIN table join_condition 
+	join:  table.NATURAL join_inner JOIN table 
+	join:  table NATURAL join_inner JOIN table.    (77)
+	join:  table.join_direction join_outer JOIN table join_condition 
+	join:  table.NATURAL join_direction join_outer JOIN table 
+	join:  table.CROSS JOIN table 
+	join_inner: .    (119)
+	join_direction: .    (123)
+
+	INNER  shift 63
+	LEFT  shift 64
+	RIGHT  shift 65
+	FULL  shift 66
+	CROSS  shift 61
+	NATURAL  shift 59
+	.  reduce 77 (src line 473)
+
+	join_inner  goto 58
+	join_direction  goto 60
+
+state 169
+	join:  table NATURAL join_direction join_outer JOIN.table 
+
+	IDENTIFIER  shift 22
+	'('  shift 23
+	.  error
+
+	subquery  goto 20
+	table  goto 186
+	join  goto 21
+	identifier  goto 19
+
+ 170: reduce/reduce conflict  (red'ns 119 and 123) on JOIN
+ 170: reduce/reduce conflict  (red'ns 119 and 81) on JOIN
+170: shift/reduce conflict (shift 63(0), red'n 81(0)) on INNER
+ 170: reduce/reduce conflict  (red'ns 123 and 81) on OUTER
+170: shift/reduce conflict (shift 64(0), red'n 81(0)) on LEFT
+170: shift/reduce conflict (shift 65(0), red'n 81(0)) on RIGHT
+170: shift/reduce conflict (shift 66(0), red'n 81(0)) on FULL
+170: shift/reduce conflict (shift 61(0), red'n 81(0)) on CROSS
+170: shift/reduce conflict (shift 166(0), red'n 81(0)) on ON
+170: shift/reduce conflict (shift 167(0), red'n 81(0)) on USING
+170: shift/reduce conflict (shift 59(0), red'n 81(0)) on NATURAL
+state 170
+	join:  table.join_inner JOIN table join_condition 
+	join:  table.NATURAL join_inner JOIN table 
+	join:  table.join_direction join_outer JOIN table join_condition 
+	join:  table join_direction join_outer JOIN table.join_condition 
+	join:  table.NATURAL join_direction join_outer JOIN table 
+	join:  table.CROSS JOIN table 
+	join_inner: .    (119)
+	join_direction: .    (123)
+	join_condition: .    (81)
+
+	INNER  shift 63
+	LEFT  shift 64
+	RIGHT  shift 65
+	FULL  shift 66
+	CROSS  shift 61
+	ON  shift 166
+	USING  shift 167
+	NATURAL  shift 59
+	.  reduce 81 (src line 490)
+
+	join_condition  goto 187
+	join_inner  goto 58
+	join_direction  goto 60
+
+state 171
+	comparison:  value negation BETWEEN value AND.value 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'('  shift 93
+	.  error
+
+	primary  goto 33
+	value  goto 188
+	subquery  goto 36
+	string_operation  goto 35
+	arithmetic  goto 34
+	function  goto 37
+	case  goto 38
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 172
+	comparison:  value negation IN '(' values.')' 
+
+	')'  shift 189
+	.  error
+
+
+state 173
+	values:  value ','.values 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'('  shift 93
+	.  error
+
+	primary  goto 33
+	value  goto 156
+	subquery  goto 36
+	string_operation  goto 35
+	arithmetic  goto 34
+	function  goto 37
+	case  goto 38
+	values  goto 190
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 174
+	case:  CASE case_value case_when case_else END.    (88)
+
+	.  reduce 88 (src line 524)
+
+
+state 175
+	string_operation:  value.STRING_OP value 
+	arithmetic:  value.'+' value 
+	arithmetic:  value.'-' value 
+	arithmetic:  value.'*' value 
+	arithmetic:  value.'/' value 
+	arithmetic:  value.'%' value 
+	case_else:  ELSE value.    (92)
+
+	STRING_OP  shift 76
+	'+'  shift 80
+	'-'  shift 81
+	'*'  shift 82
+	'/'  shift 83
+	'%'  shift 84
+	.  reduce 92 (src line 545)
+
+
+state 176
+	case_when:  WHEN value THEN.value 
+
+	IDENTIFIER  shift 22
+	STRING  shift 49
+	INTEGER  shift 50
+	FLOAT  shift 52
+	TERNARY  shift 53
+	DATETIME  shift 46
+	NULL  shift 54
+	CASE  shift 48
+	'-'  shift 51
+	'('  shift 93
+	.  error
+
+	primary  goto 33
+	value  goto 191
+	subquery  goto 36
+	string_operation  goto 35
+	arithmetic  goto 34
+	function  goto 37
+	case  goto 38
+	identifier  goto 41
+	text  goto 42
+	integer  goto 43
+	float  goto 44
+	ternary  goto 45
+	null  goto 47
+
+state 177
+	limit_clause:  LIMIT integer.    (19)
+
+	.  reduce 19 (src line 194)
+
+
+state 178
+	integer:  '-'.integer 
+
+	INTEGER  shift 50
+	'-'  shift 178
+	.  error
+
+	integer  goto 94
+
+state 179
+	order_by_clause:  ORDER BY order_items.    (17)
+
+	.  reduce 17 (src line 184)
+
+
+state 180
+	order_items:  order_item.    (97)
+	order_items:  order_item.',' order_items 
+
+	','  shift 192
+	.  reduce 97 (src line 570)
+
+
+state 181
+	order_item:  identifier.order_direction 
+	function:  identifier.'(' option ')' 
+	order_direction: .    (38)
+
+	ASC  shift 194
+	DESC  shift 195
+	'('  shift 90
+	.  reduce 38 (src line 279)
+
+	order_direction  goto 193
+
+state 182
+	order_item:  function.order_direction 
+	order_direction: .    (38)
+
+	ASC  shift 194
+	DESC  shift 195
+	.  reduce 38 (src line 279)
+
+	order_direction  goto 196
+
+state 183
+	group_items:  group_item ',' group_items.    (96)
+
+	.  reduce 96 (src line 565)
+
+
+state 184
+	logic:  filter.OR filter 
+	logic:  filter.AND filter 
+	join_condition:  ON filter.    (82)
+
+	AND  shift 75
+	OR  shift 74
+	.  reduce 82 (src line 495)
+
+
+state 185
+	join_condition:  USING '('.using_fields ')' 
+
+	IDENTIFIER  shift 22
+	.  error
+
+	using_fields  goto 197
+	identifier  goto 198
+
+186: shift/reduce conflict (shift 63(0), red'n 79(0)) on INNER
+186: shift/reduce conflict (shift 64(0), red'n 79(0)) on LEFT
+186: shift/reduce conflict (shift 65(0), red'n 79(0)) on RIGHT
+186: shift/reduce conflict (shift 66(0), red'n 79(0)) on FULL
+186: shift/reduce conflict (shift 61(0), red'n 79(0)) on CROSS
+186: shift/reduce conflict (shift 59(0), red'n 79(0)) on NATURAL
+ 186: reduce/reduce conflict  (red'ns 79 and 119) on JOIN
+ 186: reduce/reduce conflict  (red'ns 79 and 123) on JOIN
+ 186: reduce/reduce conflict  (red'ns 79 and 123) on OUTER
+state 186
+	join:  table.join_inner JOIN table join_condition 
+	join:  table.NATURAL join_inner JOIN table 
+	join:  table.join_direction join_outer JOIN table join_condition 
+	join:  table.NATURAL join_direction join_outer JOIN table 
+	join:  table NATURAL join_direction join_outer JOIN table.    (79)
+	join:  table.CROSS JOIN table 
+	join_inner: .    (119)
+	join_direction: .    (123)
+
+	INNER  shift 63
+	LEFT  shift 64
+	RIGHT  shift 65
+	FULL  shift 66
+	CROSS  shift 61
+	NATURAL  shift 59
+	.  reduce 79 (src line 481)
+
+	join_inner  goto 58
+	join_direction  goto 60
+
+state 187
+	join:  table join_direction join_outer JOIN table join_condition.    (78)
+
+	.  reduce 78 (src line 477)
+
+
+state 188
+	string_operation:  value.STRING_OP value 
+	comparison:  value negation BETWEEN value AND value.    (46)
+	arithmetic:  value.'+' value 
+	arithmetic:  value.'-' value 
+	arithmetic:  value.'*' value 
+	arithmetic:  value.'/' value 
+	arithmetic:  value.'%' value 
+
+	STRING_OP  shift 76
+	'+'  shift 80
+	'-'  shift 81
+	'*'  shift 82
+	'/'  shift 83
+	'%'  shift 84
+	.  reduce 46 (src line 335)
+
+
+state 189
+	comparison:  value negation IN '(' values ')'.    (47)
+
+	.  reduce 47 (src line 339)
+
+
+state 190
+	values:  value ',' values.    (94)
+
+	.  reduce 94 (src line 555)
+
+
+state 191
+	string_operation:  value.STRING_OP value 
+	arithmetic:  value.'+' value 
+	arithmetic:  value.'-' value 
+	arithmetic:  value.'*' value 
+	arithmetic:  value.'/' value 
+	arithmetic:  value.'%' value 
+	case_when:  WHEN value THEN value.    (105)
+
+	STRING_OP  shift 76
+	'+'  shift 80
+	'-'  shift 81
+	'*'  shift 82
+	'/'  shift 83
+	'%'  shift 84
+	.  reduce 105 (src line 610)
+
+
+state 192
+	order_items:  order_item ','.order_items 
+
+	IDENTIFIER  shift 22
+	.  error
+
+	order_item  goto 180
+	function  goto 182
+	order_items  goto 199
+	identifier  goto 181
+
+state 193
+	order_item:  identifier order_direction.    (36)
+
+	.  reduce 36 (src line 269)
+
+
+state 194
+	order_direction:  ASC.    (39)
+
+	.  reduce 39 (src line 284)
+
+
+state 195
+	order_direction:  DESC.    (40)
+
+	.  reduce 40 (src line 288)
+
+
+state 196
+	order_item:  function order_direction.    (37)
+
+	.  reduce 37 (src line 274)
+
+
+state 197
+	join_condition:  USING '(' using_fields.')' 
+
+	')'  shift 200
+	.  error
+
+
+state 198
+	using_fields:  identifier.    (101)
+	using_fields:  identifier.',' using_fields 
+
+	','  shift 201
+	.  reduce 101 (src line 590)
+
+
+state 199
+	order_items:  order_item ',' order_items.    (98)
+
+	.  reduce 98 (src line 575)
+
+
+state 200
+	join_condition:  USING '(' using_fields ')'.    (83)
+
+	.  reduce 83 (src line 499)
+
+
+state 201
+	using_fields:  identifier ','.using_fields 
+
+	IDENTIFIER  shift 22
+	.  error
+
+	using_fields  goto 202
+	identifier  goto 198
+
+state 202
+	using_fields:  identifier ',' using_fields.    (102)
+
+	.  reduce 102 (src line 595)
+
+
+76 terminals, 52 nonterminals
+129 grammar rules, 203/8000 states
+47 shift/reduce, 17 reduce/reduce conflicts reported
+101 working sets used
+memory: parser 756/120000
+254 extra closures
+543 shift entries, 10 exceptions
+139 goto entries
+369 entries saved by goto default
+Optimizer space used: output 384/120000
+384 table entries, 10 zero
+maximum spread: 76, maximum offset: 201
