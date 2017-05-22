@@ -10,4 +10,7 @@ install:
   - make deps
 
 script:
-  - go test $(glide novendor)
+  - make testallcov
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
