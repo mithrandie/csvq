@@ -1,0 +1,13 @@
+language: go
+sudo: false
+
+go:
+  - 1.8.x
+
+install:
+  - go get -v github.com/Masterminds/glide
+  - cd $GOPATH/src/github.com/Masterminds/glide && git checkout 84607742b10f492430762d038e954236bbaf23f7 && go install && cd -
+  - make deps
+
+script:
+  - go test $(glide novendor)
