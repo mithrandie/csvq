@@ -67,7 +67,7 @@ dist:
 
 .PHONY: release
 release:
-ifeq ($(shell git describe --tags 2>/dev/null),)
+ifeq ($(shell git tag --contains 2>/dev/null),)
 	$(error HEAD commit is not tagged)
 else
 	git push origin $(VERSION)
