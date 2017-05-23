@@ -15,6 +15,7 @@ var encodeTests = []struct {
 	View          *query.View
 	Count         int
 	Format        cmd.Format
+	LineBreak     cmd.LineBreak
 	WithoutHeader bool
 	Result        string
 	Error         string
@@ -108,6 +109,25 @@ var encodeTests = []struct {
 			"34567890,\" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"\"jk\n\",",
 	},
 	{
+		Name: "CSV Line Break CRLF",
+		Stmt: query.SELECT,
+		View: &query.View{
+			Header: query.NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
+			Records: []query.Record{
+				query.NewRecord([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
+				query.NewRecord([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01 16:00:00.123456"), parser.NewString("abcdef")}),
+				query.NewRecord([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
+			},
+		},
+		Count:     3,
+		Format:    cmd.CSV,
+		LineBreak: cmd.CRLF,
+		Result: "\"c1\",\"c2\r\nsecond line\",\"c3\"\r\n" +
+			"-1,false,true\r\n" +
+			"2.0123,2016-02-01 16:00:00.123456,\"abcdef\"\r\n" +
+			"34567890,\" abcdefghijklmnopqrstuvwxyzabcdefg\r\nhi\"\"jk\r\n\",",
+	},
+	{
 		Name: "JSON",
 		Stmt: query.SELECT,
 		View: &query.View{
@@ -144,6 +164,12 @@ func TestEncode(t *testing.T) {
 	flags := cmd.GetFlags()
 
 	for _, v := range encodeTests {
+		flags.Format = v.Format
+
+		flags.LineBreak = cmd.LF
+		if v.LineBreak != "" && v.LineBreak != cmd.LF {
+			flags.LineBreak = v.LineBreak
+		}
 		flags.WithoutHeader = false
 		if v.WithoutHeader {
 			flags.WithoutHeader = true
@@ -155,7 +181,19 @@ func TestEncode(t *testing.T) {
 			Count:     v.Count,
 		}
 
-		s := Encode(v.Format, result)
+		s, err := Encode(result)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
 		if s != v.Result {
 			t.Errorf("%s, result = %q, want %q", v.Name, s, v.Result)
 		}

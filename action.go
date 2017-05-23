@@ -16,7 +16,10 @@ func Write(input string) error {
 
 	var out string
 	for _, result := range results {
-		s := output.Encode(flags.Format, result)
+		s, err := output.Encode(result)
+		if err != nil {
+			return err
+		}
 		out += s
 	}
 

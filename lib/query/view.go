@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/csv"
@@ -18,7 +19,6 @@ import (
 
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
-	"strings"
 )
 
 type View struct {
@@ -145,7 +145,7 @@ func loadViewFromFile(filename string, reference string) (*View, error) {
 	}
 
 	if delimiter == cmd.UNDEF {
-		if strings.ToUpper(path.Ext(filepath)) == ".TSV" {
+		if strings.ToUpper(path.Ext(filepath)) == strings.ToUpper(cmd.TSV_EXT) {
 			delimiter = '\t'
 		} else {
 			delimiter = ','

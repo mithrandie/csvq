@@ -2,14 +2,19 @@ package output
 
 import (
 	"fmt"
+	"io/ioutil"
+	"reflect"
 	"strconv"
 	"strings"
-
 	"unicode/utf8"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
+
+	"golang.org/x/text/encoding"
+	"golang.org/x/text/encoding/japanese"
+	"golang.org/x/text/transform"
 )
 
 type textField struct {
@@ -17,23 +22,56 @@ type textField struct {
 	sign  int
 }
 
-func Encode(format cmd.Format, result query.Result) string {
+func Encode(result query.Result) (string, error) {
 	var s string
+	var err error
+	flags := cmd.GetFlags()
 
 	switch result.Statement {
 	case query.SELECT:
-		switch format {
+		switch flags.Format {
 		case cmd.TEXT:
 			s = encodeText(result)
 		case cmd.CSV:
-			s = encodeCSV(result, ",")
+			s = encodeCSV(result, ",", flags.WithoutHeader)
 		case cmd.TSV:
-			s = encodeCSV(result, "\t")
+			s = encodeCSV(result, "\t", flags.WithoutHeader)
 		case cmd.JSON:
 			s = encodeJson(result)
 		}
 	}
-	return s
+
+	if flags.WriteEncoding != cmd.UTF8 {
+		s, err = encodeCharacterCode(s, flags.WriteEncoding)
+		if err != nil {
+			return "", err
+		}
+	}
+	if flags.LineBreak != cmd.LF {
+		s = convertLineBreak(s, flags.LineBreak)
+	}
+
+	return s, nil
+}
+
+func encodeCharacterCode(str string, enc cmd.Encoding) (string, error) {
+	var e *encoding.Encoder
+
+	switch enc {
+	case cmd.SJIS:
+		e = japanese.ShiftJIS.NewEncoder()
+	}
+
+	r := transform.NewReader(strings.NewReader(str), e)
+	bytes, err := ioutil.ReadAll(r)
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
+}
+
+func convertLineBreak(str string, lb cmd.LineBreak) string {
+	return strings.Replace(str, "\n", reflect.ValueOf(lb).String(), -1)
 }
 
 func encodeText(result query.Result) string {
@@ -167,12 +205,11 @@ func formatTextCell(c query.Cell) textField {
 	return textField{value: s, sign: sign}
 }
 
-func encodeCSV(result query.Result, delimiter string) string {
+func encodeCSV(result query.Result, delimiter string, withoutHeader bool) string {
 	view := result.View
-	flags := cmd.GetFlags()
 
 	var header string
-	if !flags.WithoutHeader {
+	if !withoutHeader {
 		h := make([]string, view.FieldLen())
 		for i := range view.Header {
 			h[i] = quote(escapeCSVString(view.Header[i].Label()))
@@ -190,7 +227,7 @@ func encodeCSV(result query.Result, delimiter string) string {
 	}
 
 	s := strings.Join(records, "\n")
-	if !flags.WithoutHeader {
+	if !withoutHeader {
 		s = header + "\n" + s
 	}
 	return s
