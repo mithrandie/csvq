@@ -10,13 +10,14 @@ import (
 )
 
 var encodeTests = []struct {
-	Name   string
-	Stmt   query.Statement
-	View   *query.View
-	Count  int
-	Format cmd.Format
-	Result string
-	Error  string
+	Name          string
+	Stmt          query.Statement
+	View          *query.View
+	Count         int
+	Format        cmd.Format
+	WithoutHeader bool
+	Result        string
+	Error         string
 }{
 	{
 		Name: "Text Empty",
@@ -89,6 +90,24 @@ var encodeTests = []struct {
 			"34567890\t\" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"\"jk\n\"\t",
 	},
 	{
+		Name: "CSV WithoutHeader",
+		Stmt: query.SELECT,
+		View: &query.View{
+			Header: query.NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
+			Records: []query.Record{
+				query.NewRecord([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
+				query.NewRecord([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01 16:00:00.123456"), parser.NewString("abcdef")}),
+				query.NewRecord([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
+			},
+		},
+		Count:         3,
+		Format:        cmd.CSV,
+		WithoutHeader: true,
+		Result: "-1,false,true\n" +
+			"2.0123,2016-02-01 16:00:00.123456,\"abcdef\"\n" +
+			"34567890,\" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"\"jk\n\",",
+	},
+	{
 		Name: "JSON",
 		Stmt: query.SELECT,
 		View: &query.View{
@@ -122,7 +141,14 @@ var encodeTests = []struct {
 }
 
 func TestEncode(t *testing.T) {
+	flags := cmd.GetFlags()
+
 	for _, v := range encodeTests {
+		flags.WithoutHeader = false
+		if v.WithoutHeader {
+			flags.WithoutHeader = true
+		}
+
 		result := query.Result{
 			Statement: v.Stmt,
 			View:      v.View,

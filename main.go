@@ -68,6 +68,10 @@ func main() {
 					Name:  "format, f",
 					Usage: "output format. one of: csv|tsv|jsonc|text",
 				},
+				cli.BoolFlag{
+					Name:  "without-header",
+					Usage: "when format is specified as csv or tsv, write without header line",
+				},
 			},
 			Before: func(c *cli.Context) error {
 				return setWriteFlags(c)
@@ -141,6 +145,9 @@ func setWriteFlags(c *cli.Context) error {
 		return err
 	}
 	if err := cmd.SetFormat(c.String("format")); err != nil {
+		return err
+	}
+	if err := cmd.SetWithoutHeader(c.Bool("without-header")); err != nil {
 		return err
 	}
 	return nil

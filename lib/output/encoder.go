@@ -169,23 +169,31 @@ func formatTextCell(c query.Cell) textField {
 
 func encodeCSV(result query.Result, delimiter string) string {
 	view := result.View
-	records := make([]string, view.RecordLen()+1)
+	flags := cmd.GetFlags()
 
-	header := make([]string, view.FieldLen())
-	for i := range view.Header {
-		header[i] = quote(escapeCSVString(view.Header[i].Label()))
+	var header string
+	if !flags.WithoutHeader {
+		h := make([]string, view.FieldLen())
+		for i := range view.Header {
+			h[i] = quote(escapeCSVString(view.Header[i].Label()))
+		}
+		header = strings.Join(h, delimiter)
 	}
-	records[0] = strings.Join(header, delimiter)
 
+	records := make([]string, view.RecordLen())
 	for i, record := range view.Records {
 		cells := make([]string, view.FieldLen())
 		for j, cell := range record {
 			cells[j] = formatCSVCell(cell)
 		}
-		records[i+1] = strings.Join(cells, delimiter)
+		records[i] = strings.Join(cells, delimiter)
 	}
 
-	return strings.Join(records, "\n")
+	s := strings.Join(records, "\n")
+	if !flags.WithoutHeader {
+		s = header + "\n" + s
+	}
+	return s
 }
 
 func formatCSVCell(c query.Cell) string {

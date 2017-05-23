@@ -219,6 +219,15 @@ func TestSetFormat(t *testing.T) {
 	}
 }
 
+func TestSetWithoutHeader(t *testing.T) {
+	flags := GetFlags()
+
+	SetWithoutHeader(true)
+	if !flags.NoHeader {
+		t.Errorf("without-header = %t, expect to set %t", flags.WithoutHeader, true)
+	}
+}
+
 func TestParseEncoding(t *testing.T) {
 	e, err := ParseEncoding("")
 	if err != nil {

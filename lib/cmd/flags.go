@@ -50,6 +50,7 @@ type Flags struct {
 	LineBreak     LineBreak
 	OutFile       string
 	Format        Format
+	WithoutHeader bool
 }
 
 var (
@@ -69,6 +70,7 @@ func GetFlags() *Flags {
 			LineBreak:     LF,
 			OutFile:       "",
 			Format:        TEXT,
+			WithoutHeader: false,
 		}
 	})
 	return flags
@@ -207,6 +209,12 @@ func SetFormat(s string) error {
 	}
 
 	f.Format = fm
+	return nil
+}
+
+func SetWithoutHeader(b bool) error {
+	f := GetFlags()
+	f.WithoutHeader = b
 	return nil
 }
 
