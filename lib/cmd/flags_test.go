@@ -169,7 +169,25 @@ func TestSetFormat(t *testing.T) {
 
 	SetFormat("")
 	if flags.Format != TEXT {
-		t.Errorf("format = %s, expect to set %s for %q", flags.Format, TEXT, "")
+		t.Errorf("format = %s, expect to set %s for empty string", flags.Format, TEXT)
+	}
+
+	SetOut("foo.csv")
+	SetFormat("")
+	if flags.Format != CSV {
+		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, CSV, "foo.csv")
+	}
+
+	SetOut("foo.tsv")
+	SetFormat("")
+	if flags.Format != TSV {
+		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, TSV, "foo.tsv")
+	}
+
+	SetOut("foo.json")
+	SetFormat("")
+	if flags.Format != JSON {
+		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, JSON, "foo.json")
 	}
 
 	SetFormat("csv")

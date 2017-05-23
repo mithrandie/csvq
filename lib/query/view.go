@@ -18,6 +18,7 @@ import (
 
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
+	"strings"
 )
 
 type View struct {
@@ -144,7 +145,11 @@ func loadViewFromFile(filename string, reference string) (*View, error) {
 	}
 
 	if delimiter == cmd.UNDEF {
-		delimiter = ','
+		if strings.ToUpper(path.Ext(filepath)) == ".TSV" {
+			delimiter = '\t'
+		} else {
+			delimiter = ','
+		}
 	}
 
 	f, err := os.Open(filepath)

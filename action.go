@@ -14,9 +14,16 @@ func Write(input string) error {
 
 	flags := cmd.GetFlags()
 
+	var out string
 	for _, result := range results {
-		out := output.Encode(flags.Format, result)
-		output.Write(flags.OutFile, out)
+		s := output.Encode(flags.Format, result)
+		out += s
 	}
+
+	err = output.Write(flags.OutFile, out)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

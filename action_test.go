@@ -64,10 +64,8 @@ func ExampleWrite() {
 	tf.OutFile = ""
 	tf.Format = cmd.TEXT
 
-	Write("select 1 from dual where false")
 	Write("select 1 from dual")
 	//OUTPUT:
-	//Empty
 	//+---+
 	//| 1 |
 	//+---+

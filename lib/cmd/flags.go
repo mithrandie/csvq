@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"os"
+	"path"
 	"strings"
 	"sync"
 )
@@ -178,12 +179,21 @@ func SetOut(s string) error {
 }
 
 func SetFormat(s string) error {
-	if len(s) < 1 {
-		return nil
-	}
-
 	var fm Format
+	f := GetFlags()
+
 	switch strings.ToUpper(s) {
+	case "":
+		switch strings.ToUpper(path.Ext(f.OutFile)) {
+		case ".CSV":
+			fm = CSV
+		case ".TSV":
+			fm = TSV
+		case ".JSON":
+			fm = JSON
+		default:
+			return nil
+		}
 	case "CSV":
 		fm = CSV
 	case "TSV":
@@ -196,7 +206,6 @@ func SetFormat(s string) error {
 		return errors.New("format must be one of csv|tsv|json|text")
 	}
 
-	f := GetFlags()
 	f.Format = fm
 	return nil
 }
