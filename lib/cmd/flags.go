@@ -27,7 +27,7 @@ const (
 type Format int
 
 const (
-	STDOUT Format = iota
+	TEXT Format = iota
 	CSV
 	TSV
 	JSON
@@ -68,7 +68,7 @@ func GetFlags() *Flags {
 			WriteEncoding: UTF8,
 			LineBreak:     LF,
 			OutFile:       "",
-			Format:        STDOUT,
+			Format:        TEXT,
 		}
 	})
 	return flags
@@ -193,8 +193,8 @@ func SetFormat(s string) error {
 		fm = JSON
 	case "INSERT":
 		fm = INSERT
-	case "STDOUT":
-		fm = STDOUT
+	case "TEXT":
+		fm = TEXT
 	default:
 		return errors.New("format must be one of csv|tsv|json|insert|stdout")
 	}

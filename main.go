@@ -66,7 +66,7 @@ func main() {
 				},
 				cli.StringFlag{
 					Name:  "format, f",
-					Usage: "output format. one of: csv|tsv|json|insert",
+					Usage: "output format. one of: csv|tsv|json|insert|text",
 				},
 			},
 			Before: func(c *cli.Context) error {

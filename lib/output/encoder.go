@@ -1,4 +1,4 @@
-package stdout
+package output
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 
 	"unicode/utf8"
 
+	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
 )
@@ -16,7 +17,26 @@ type field struct {
 	sign  int
 }
 
-func Format(view *query.View) string {
+func Encode(format cmd.Format, result query.Result) string {
+	var s string
+
+	switch result.Statement {
+	case query.SELECT:
+		switch format {
+		case cmd.TEXT:
+			s = encodeText(result)
+		}
+	}
+	return s
+}
+
+func encodeText(result query.Result) string {
+	if result.Count < 1 {
+		return "Empty\n"
+	}
+
+	view := result.View
+
 	header := make([]field, view.FieldLen())
 	for i := range view.Header {
 		header[i] = field{value: view.Header[i].Label(), sign: -1}
@@ -57,10 +77,6 @@ func Format(view *query.View) string {
 
 	s[len(s)-1] = formatHR(fieldLens)
 	return strings.Join(s, "")
-}
-
-func Write(s string) {
-	fmt.Print(s)
 }
 
 func formatHR(lens []int) string {

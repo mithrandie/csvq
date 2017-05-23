@@ -1,14 +1,25 @@
-package stdout
+package output
 
 import (
 	"testing"
 
+	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
-func TestFormat(t *testing.T) {
+func TestEncode(t *testing.T) {
+	result := query.Result{
+		Count: 0,
+	}
+
+	expect := "Empty\n"
+	s := Encode(cmd.TEXT, result)
+	if s != expect {
+		t.Errorf("result = %q, want %q for empty view", result, expect)
+	}
+
 	header := []string{"c1", "c2\nsecond line", "c3"}
 	values := [][]parser.Primary{
 		{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)},
@@ -23,7 +34,12 @@ func TestFormat(t *testing.T) {
 		view.Records[i] = query.NewRecord(v)
 	}
 
-	expect := `+----------+-----------------------------------+--------+
+	result = query.Result{
+		View:  view,
+		Count: 3,
+	}
+
+	expect = `+----------+-----------------------------------+--------+
 | c1       | c2                                | c3     |
 |          | second line                       |        |
 +----------+-----------------------------------+--------+
@@ -34,15 +50,9 @@ func TestFormat(t *testing.T) {
 +----------+-----------------------------------+--------+
 `
 
-	result := Format(view)
+	s = Encode(cmd.TEXT, result)
 
-	if result != expect {
+	if s != expect {
 		t.Errorf("result = %q, want %q for %s", result, expect, view)
 	}
-}
-
-func ExampleWrite() {
-	Write("write test")
-	//Output:
-	//write test
 }

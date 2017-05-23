@@ -168,8 +168,8 @@ func TestSetFormat(t *testing.T) {
 	flags := GetFlags()
 
 	SetFormat("")
-	if flags.Format != STDOUT {
-		t.Errorf("format = %s, expect to set %s for %q", flags.Format, STDOUT, "")
+	if flags.Format != TEXT {
+		t.Errorf("format = %s, expect to set %s for %q", flags.Format, TEXT, "")
 	}
 
 	SetFormat("csv")
@@ -192,9 +192,9 @@ func TestSetFormat(t *testing.T) {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, INSERT, "insert")
 	}
 
-	SetFormat("stdout")
-	if flags.Format != STDOUT {
-		t.Errorf("format = %s, expect to set %s for %s", flags.Format, STDOUT, "stdout")
+	SetFormat("text")
+	if flags.Format != TEXT {
+		t.Errorf("format = %s, expect to set %s for %s", flags.Format, TEXT, "text")
 	}
 
 	expectErr := "format must be one of csv|tsv|json|insert|stdout"

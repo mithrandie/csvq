@@ -25,7 +25,7 @@ func initFlags() {
 	tf := cmd.GetFlags()
 	tf.Repository = "."
 	tf.OutFile = ""
-	tf.Format = cmd.STDOUT
+	tf.Format = cmd.TEXT
 }
 
 func TestWrite(t *testing.T) {
@@ -62,7 +62,7 @@ func ExampleWrite() {
 	initFlags()
 	tf := cmd.GetFlags()
 	tf.OutFile = ""
-	tf.Format = cmd.STDOUT
+	tf.Format = cmd.TEXT
 
 	Write("select 1 from dual where false")
 	Write("select 1 from dual")
