@@ -31,7 +31,6 @@ const (
 	CSV
 	TSV
 	JSON
-	INSERT
 )
 
 const (
@@ -191,12 +190,10 @@ func SetFormat(s string) error {
 		fm = TSV
 	case "JSON":
 		fm = JSON
-	case "INSERT":
-		fm = INSERT
 	case "TEXT":
 		fm = TEXT
 	default:
-		return errors.New("format must be one of csv|tsv|json|insert|stdout")
+		return errors.New("format must be one of csv|tsv|json|text")
 	}
 
 	f := GetFlags()

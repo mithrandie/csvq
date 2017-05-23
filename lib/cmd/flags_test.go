@@ -187,17 +187,12 @@ func TestSetFormat(t *testing.T) {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, JSON, "json")
 	}
 
-	SetFormat("insert")
-	if flags.Format != INSERT {
-		t.Errorf("format = %s, expect to set %s for %s", flags.Format, INSERT, "insert")
-	}
-
 	SetFormat("text")
 	if flags.Format != TEXT {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, TEXT, "text")
 	}
 
-	expectErr := "format must be one of csv|tsv|json|insert|stdout"
+	expectErr := "format must be one of csv|tsv|json|text"
 	err := SetFormat("error")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "error")

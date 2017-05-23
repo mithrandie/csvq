@@ -12,7 +12,7 @@ import (
 	"github.com/mithrandie/csvq/lib/query"
 )
 
-type field struct {
+type textField struct {
 	value string
 	sign  int
 }
@@ -25,6 +25,12 @@ func Encode(format cmd.Format, result query.Result) string {
 		switch format {
 		case cmd.TEXT:
 			s = encodeText(result)
+		case cmd.CSV:
+			s = encodeCSV(result, ",")
+		case cmd.TSV:
+			s = encodeCSV(result, "\t")
+		case cmd.JSON:
+			s = encodeJson(result)
 		}
 	}
 	return s
@@ -37,16 +43,16 @@ func encodeText(result query.Result) string {
 
 	view := result.View
 
-	header := make([]field, view.FieldLen())
+	header := make([]textField, view.FieldLen())
 	for i := range view.Header {
-		header[i] = field{value: view.Header[i].Label(), sign: -1}
+		header[i] = textField{value: view.Header[i].Label(), sign: -1}
 	}
 
-	records := make([][]field, view.RecordLen())
+	records := make([][]textField, view.RecordLen())
 	for i, record := range view.Records {
-		records[i] = make([]field, view.FieldLen())
+		records[i] = make([]textField, view.FieldLen())
 		for j, cell := range record {
-			records[i][j] = formatCell(cell)
+			records[i][j] = formatTextCell(cell)
 		}
 	}
 
@@ -88,7 +94,7 @@ func formatHR(lens []int) string {
 	return strings.Join(s, "")
 }
 
-func formatRecord(record []field, fieldLens []int) string {
+func formatRecord(record []textField, fieldLens []int) string {
 	row := make([][]string, len(record))
 	for i, f := range record {
 		row[i] = strings.Split(f.value, "\n")
@@ -120,7 +126,7 @@ func formatRecord(record []field, fieldLens []int) string {
 	return strings.Join(s, "")
 }
 
-func countRunes(f field) int {
+func countRunes(f textField) int {
 	i := 0
 	lines := strings.Split(f.value, "\n")
 	for _, line := range lines {
@@ -132,31 +138,135 @@ func countRunes(f field) int {
 	return i
 }
 
-func formatCell(c query.Cell) field {
+func formatTextCell(c query.Cell) textField {
 	primary := c.Primary()
 
-	var value string
+	var s string
 	var sign int
 
 	sign = 1
 	switch primary.(type) {
 	case parser.String:
-		value = strings.TrimSpace(primary.(parser.String).Value())
+		s = strings.TrimSpace(primary.(parser.String).Value())
 		sign = -1
 	case parser.Integer:
-		value = parser.Int64ToStr(primary.(parser.Integer).Value())
+		s = parser.Int64ToStr(primary.(parser.Integer).Value())
 	case parser.Float:
-		value = parser.Float64ToStr(primary.(parser.Float).Value())
+		s = parser.Float64ToStr(primary.(parser.Float).Value())
 	case parser.Boolean:
-		value = strconv.FormatBool(primary.(parser.Boolean).Bool())
+		s = strconv.FormatBool(primary.(parser.Boolean).Bool())
 	case parser.Ternary:
-		value = primary.(parser.Ternary).Ternary().String()
+		s = primary.(parser.Ternary).Ternary().String()
 	case parser.Datetime:
-		value = primary.(parser.Datetime).Value().Format("2006-01-02 15:04:05.999999999")
+		s = primary.(parser.Datetime).Value().Format("2006-01-02 15:04:05.999999999")
 		sign = -1
 	case parser.Null:
-		value = primary.String()
+		s = primary.String()
 	}
 
-	return field{value: value, sign: sign}
+	return textField{value: s, sign: sign}
+}
+
+func encodeCSV(result query.Result, delimiter string) string {
+	view := result.View
+	records := make([]string, view.RecordLen()+1)
+
+	header := make([]string, view.FieldLen())
+	for i := range view.Header {
+		header[i] = quote(escapeCSVString(view.Header[i].Label()))
+	}
+	records[0] = strings.Join(header, delimiter)
+
+	for i, record := range view.Records {
+		cells := make([]string, view.FieldLen())
+		for j, cell := range record {
+			cells[j] = formatCSVCell(cell)
+		}
+		records[i+1] = strings.Join(cells, delimiter)
+	}
+
+	return strings.Join(records, "\n")
+}
+
+func formatCSVCell(c query.Cell) string {
+	primary := c.Primary()
+
+	var s string
+
+	switch primary.(type) {
+	case parser.String:
+		s = quote(escapeCSVString(primary.(parser.String).Value()))
+	case parser.Integer:
+		s = parser.Int64ToStr(primary.(parser.Integer).Value())
+	case parser.Float:
+		s = parser.Float64ToStr(primary.(parser.Float).Value())
+	case parser.Boolean:
+		s = strconv.FormatBool(primary.(parser.Boolean).Bool())
+	case parser.Ternary:
+		s = strconv.FormatBool(primary.(parser.Ternary).Bool())
+	case parser.Datetime:
+		s = primary.(parser.Datetime).Value().Format("2006-01-02 15:04:05.999999999")
+	case parser.Null:
+		s = ""
+	}
+
+	return s
+}
+
+func escapeCSVString(s string) string {
+	return strings.Replace(s, "\"", "\"\"", -1)
+}
+
+func encodeJson(result query.Result) string {
+	view := result.View
+	records := make([]string, view.RecordLen())
+
+	for i, record := range view.Records {
+		cells := make([]string, view.FieldLen())
+		for j, cell := range record {
+			cells[j] = quote(escapeJsonString(view.Header[j].Label())) + ":" + formatJsonCell(cell)
+		}
+		records[i] = "{" + strings.Join(cells, ",") + "}"
+	}
+
+	return "[" + strings.Join(records, ",") + "]"
+}
+
+func formatJsonCell(c query.Cell) string {
+	primary := c.Primary()
+
+	var s string
+
+	switch primary.(type) {
+	case parser.String:
+		s = quote(escapeJsonString(primary.(parser.String).Value()))
+	case parser.Integer:
+		s = parser.Int64ToStr(primary.(parser.Integer).Value())
+	case parser.Float:
+		s = parser.Float64ToStr(primary.(parser.Float).Value())
+	case parser.Boolean:
+		s = strconv.FormatBool(primary.(parser.Boolean).Bool())
+	case parser.Ternary:
+		s = strconv.FormatBool(primary.(parser.Ternary).Bool())
+	case parser.Datetime:
+		s = quote(primary.(parser.Datetime).Value().Format("2006-01-02 15:04:05.999999999"))
+	case parser.Null:
+		s = "null"
+	}
+
+	return s
+}
+
+func escapeJsonString(s string) string {
+	s = strings.Replace(s, "\\", "\\\\", -1)
+	s = strings.Replace(s, "\"", "\\\"", -1)
+	s = strings.Replace(s, "/", "\\/", -1)
+	s = strings.Replace(s, "\n", "\\n", -1)
+	s = strings.Replace(s, "\r", "\\r", -1)
+	s = strings.Replace(s, "\t", "\\t", -1)
+	return s
+}
+
+func quote(s string) string {
+	return "\"" + s + "\""
 }

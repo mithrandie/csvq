@@ -66,7 +66,7 @@ func main() {
 				},
 				cli.StringFlag{
 					Name:  "format, f",
-					Usage: "output format. one of: csv|tsv|json|insert|text",
+					Usage: "output format. one of: csv|tsv|jsonc|text",
 				},
 			},
 			Before: func(c *cli.Context) error {
@@ -98,7 +98,10 @@ func main() {
 			return cli.ShowAppHelp(c)
 		}
 
-		if err := app.Command("write").Run(c); err != nil {
+		q := c.Args().First()
+
+		err := Write(q)
+		if err != nil {
 			return cli.NewExitError(err.Error(), 1)
 		}
 
