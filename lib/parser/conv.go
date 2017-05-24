@@ -11,7 +11,13 @@ import (
 )
 
 func StrToTime(s string) (time.Time, error) {
-	if t, e := time.ParseInLocation("2006-01-02 15:04:05.999999999", s, time.Local); e == nil {
+	if t, e := time.ParseInLocation(DATETIME_FORMAT, s, time.Local); e == nil {
+		return t, nil
+	} else if t, e := time.Parse(DATETIME_FORMAT+" MST", s); e == nil {
+		return t, nil
+	} else if t, e := time.Parse(time.RFC822, s); e == nil {
+		return t, nil
+	} else if t, e := time.Parse(time.RFC822Z, s); e == nil {
 		return t, nil
 	} else if t, e := time.Parse(time.RFC3339Nano, s); e == nil {
 		return t, nil

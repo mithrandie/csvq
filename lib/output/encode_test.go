@@ -69,7 +69,7 @@ var encodeTests = []struct {
 		Format: cmd.CSV,
 		Result: "\"c1\",\"c2\nsecond line\",\"c3\"\n" +
 			"-1,false,true\n" +
-			"2.0123,2016-02-01 16:00:00.123456,\"abcdef\"\n" +
+			"2.0123,\"2016-02-01 16:00:00.123456\",\"abcdef\"\n" +
 			"34567890,\" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"\"jk\n\",",
 	},
 	{
@@ -87,7 +87,7 @@ var encodeTests = []struct {
 		Format: cmd.TSV,
 		Result: "\"c1\"\t\"c2\nsecond line\"\t\"c3\"\n" +
 			"-1\tfalse\ttrue\n" +
-			"2.0123\t2016-02-01 16:00:00.123456\t\"abcdef\"\n" +
+			"2.0123\t\"2016-02-01 16:00:00.123456\"\t\"abcdef\"\n" +
 			"34567890\t\" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"\"jk\n\"\t",
 	},
 	{
@@ -105,7 +105,7 @@ var encodeTests = []struct {
 		Format:        cmd.CSV,
 		WithoutHeader: true,
 		Result: "-1,false,true\n" +
-			"2.0123,2016-02-01 16:00:00.123456,\"abcdef\"\n" +
+			"2.0123,\"2016-02-01 16:00:00.123456\",\"abcdef\"\n" +
 			"34567890,\" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"\"jk\n\",",
 	},
 	{
@@ -124,7 +124,7 @@ var encodeTests = []struct {
 		LineBreak: cmd.CRLF,
 		Result: "\"c1\",\"c2\r\nsecond line\",\"c3\"\r\n" +
 			"-1,false,true\r\n" +
-			"2.0123,2016-02-01 16:00:00.123456,\"abcdef\"\r\n" +
+			"2.0123,\"2016-02-01 16:00:00.123456\",\"abcdef\"\r\n" +
 			"34567890,\" abcdefghijklmnopqrstuvwxyzabcdefg\r\nhi\"\"jk\r\n\",",
 	},
 	{

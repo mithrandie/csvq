@@ -196,7 +196,7 @@ func formatTextCell(c query.Cell) textField {
 	case parser.Ternary:
 		s = primary.(parser.Ternary).Ternary().String()
 	case parser.Datetime:
-		s = primary.(parser.Datetime).Value().Format("2006-01-02 15:04:05.999999999")
+		s = primary.(parser.Datetime).Format()
 		sign = -1
 	case parser.Null:
 		s = primary.String()
@@ -250,7 +250,7 @@ func formatCSVCell(c query.Cell) string {
 	case parser.Ternary:
 		s = strconv.FormatBool(primary.(parser.Ternary).Bool())
 	case parser.Datetime:
-		s = primary.(parser.Datetime).Value().Format("2006-01-02 15:04:05.999999999")
+		s = quote(escapeCSVString(primary.(parser.Datetime).Format()))
 	case parser.Null:
 		s = ""
 	}
@@ -294,7 +294,7 @@ func formatJsonCell(c query.Cell) string {
 	case parser.Ternary:
 		s = strconv.FormatBool(primary.(parser.Ternary).Bool())
 	case parser.Datetime:
-		s = quote(primary.(parser.Datetime).Value().Format("2006-01-02 15:04:05.999999999"))
+		s = quote(escapeJsonString(primary.(parser.Datetime).Format()))
 	case parser.Null:
 		s = "null"
 	}

@@ -13,6 +13,7 @@ import (
 )
 
 const TOKEN_UNDEFINED = 0
+const DATETIME_FORMAT = "2006-01-02 15:04:05.999999999"
 
 func IsPrimary(e Expression) bool {
 	if e == nil {
@@ -207,6 +208,7 @@ func (t Ternary) Ternary() ternary.Value {
 type Datetime struct {
 	literal string
 	value   time.Time
+	format  string
 }
 
 func NewDatetimeFromString(s string) Datetime {
@@ -214,6 +216,7 @@ func NewDatetimeFromString(s string) Datetime {
 	return Datetime{
 		literal: s,
 		value:   t,
+		format:  DATETIME_FORMAT,
 	}
 }
 
@@ -221,6 +224,7 @@ func NewDatetime(t time.Time) Datetime {
 	return Datetime{
 		literal: t.Format(time.RFC3339Nano),
 		value:   t,
+		format:  DATETIME_FORMAT,
 	}
 }
 
@@ -238,6 +242,86 @@ func (dt Datetime) Bool() bool {
 
 func (dt Datetime) Ternary() ternary.Value {
 	return ternary.ParseBool(dt.Bool())
+}
+
+func (dt Datetime) Format() string {
+	return dt.value.Format(dt.format)
+}
+
+func (dt *Datetime) SetFormat(format string) {
+	runes := []rune(format)
+	gofmt := []rune{}
+
+	escaped := false
+	for _, r := range runes {
+		if !escaped {
+			switch r {
+			case '%':
+				escaped = true
+			default:
+				gofmt = append(gofmt, r)
+			}
+			continue
+		}
+
+		switch r {
+		case 'a':
+			gofmt = append(gofmt, []rune("Mon")...)
+		case 'b':
+			gofmt = append(gofmt, []rune("Jan")...)
+		case 'c':
+			gofmt = append(gofmt, []rune("1")...)
+		case 'd':
+			gofmt = append(gofmt, []rune("02")...)
+		case 'E':
+			gofmt = append(gofmt, []rune("_2")...)
+		case 'e':
+			gofmt = append(gofmt, []rune("2")...)
+		case 'F':
+			gofmt = append(gofmt, []rune(".999999")...)
+		case 'f':
+			gofmt = append(gofmt, []rune(".000000")...)
+		case 'H':
+			gofmt = append(gofmt, []rune("15")...)
+		case 'h':
+			gofmt = append(gofmt, []rune("03")...)
+		case 'i':
+			gofmt = append(gofmt, []rune("04")...)
+		case 'l':
+			gofmt = append(gofmt, []rune("3")...)
+		case 'M':
+			gofmt = append(gofmt, []rune("January")...)
+		case 'm':
+			gofmt = append(gofmt, []rune("01")...)
+		case 'N':
+			gofmt = append(gofmt, []rune(".999999999")...)
+		case 'n':
+			gofmt = append(gofmt, []rune(".000000000")...)
+		case 'p':
+			gofmt = append(gofmt, []rune("PM")...)
+		case 'r':
+			gofmt = append(gofmt, []rune("03:04:05 PM")...)
+		case 's':
+			gofmt = append(gofmt, []rune("05")...)
+		case 'T':
+			gofmt = append(gofmt, []rune("15:04:05")...)
+		case 'W':
+			gofmt = append(gofmt, []rune("Monday")...)
+		case 'Y':
+			gofmt = append(gofmt, []rune("2006")...)
+		case 'y':
+			gofmt = append(gofmt, []rune("06")...)
+		case 'Z':
+			gofmt = append(gofmt, []rune("Z07:00")...)
+		case 'z':
+			gofmt = append(gofmt, []rune("MST")...)
+		default:
+			gofmt = append(gofmt, r)
+		}
+		escaped = false
+	}
+
+	dt.format = string(gofmt)
 }
 
 type Null struct {

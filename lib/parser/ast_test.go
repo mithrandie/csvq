@@ -254,6 +254,132 @@ func TestDatetime_Ternary(t *testing.T) {
 	}
 }
 
+func TestDatetime_Format(t *testing.T) {
+	dtstring := "2012-08-01T04:03:05.123-08:00"
+	dt := NewDatetimeFromString(dtstring)
+	expect := "2012-08-01 04:03:05.123"
+	if dt.Format() != expect {
+		t.Errorf("result = %q, want %q for %q ", dt.Format(), expect, dtstring)
+	}
+}
+
+var datetimeSetFormatTests = []struct {
+	Datetime string
+	Format   string
+	Result   string
+}{
+	{
+		Datetime: "2012-08-01T04:03:05.123-08:00",
+		Format:   "datetime: %Y-%m-%d %H:%i:%s %% %g",
+		Result:   "datetime: 2012-08-01 04:03:05 % g",
+	},
+	{
+		Datetime: "2012-08-01T04:03:05.123-08:00",
+		Format:   "%a",
+		Result:   "Wed",
+	},
+	{
+		Datetime: "2012-08-01T04:03:05.123-08:00",
+		Format:   "%b",
+		Result:   "Aug",
+	},
+	{
+		Datetime: "2012-08-01T04:03:05.123-08:00",
+		Format:   "%c",
+		Result:   "8",
+	},
+	{
+		Datetime: "2012-08-01T04:03:05.123-08:00",
+		Format:   "%E",
+		Result:   " 1",
+	},
+	{
+		Datetime: "2012-08-01T04:03:05.123-08:00",
+		Format:   "%e",
+		Result:   "1",
+	},
+	{
+		Datetime: "2012-08-01T04:03:05.123-08:00",
+		Format:   "%F",
+		Result:   ".123",
+	},
+	{
+		Datetime: "2012-08-01T04:03:05.123-08:00",
+		Format:   "%f",
+		Result:   ".123000",
+	},
+	{
+		Datetime: "2012-08-01T04:03:05.123-08:00",
+		Format:   "%h",
+		Result:   "04",
+	},
+	{
+		Datetime: "2012-08-01T04:03:05.123-08:00",
+		Format:   "%l",
+		Result:   "4",
+	},
+	{
+		Datetime: "2012-08-01T04:03:05.123-08:00",
+		Format:   "%M",
+		Result:   "August",
+	},
+	{
+		Datetime: "2012-08-01T04:03:05.123-08:00",
+		Format:   "%N",
+		Result:   ".123",
+	},
+	{
+		Datetime: "2012-08-01T04:03:05.123-08:00",
+		Format:   "%n",
+		Result:   ".123000000",
+	},
+	{
+		Datetime: "2012-08-01T04:03:05.123-08:00",
+		Format:   "%p",
+		Result:   "AM",
+	},
+	{
+		Datetime: "2012-08-01T04:03:05.123-08:00",
+		Format:   "%r",
+		Result:   "04:03:05 AM",
+	},
+	{
+		Datetime: "2012-08-01T04:03:05.123-08:00",
+		Format:   "%T",
+		Result:   "04:03:05",
+	},
+	{
+		Datetime: "2012-08-01T04:03:05.123-08:00",
+		Format:   "%W",
+		Result:   "Wednesday",
+	},
+	{
+		Datetime: "2012-08-01T04:03:05.123-08:00",
+		Format:   "%y",
+		Result:   "12",
+	},
+	{
+		Datetime: "2012-08-01T04:03:05.123-08:00",
+		Format:   "%Z",
+		Result:   "-08:00",
+	},
+	{
+		Datetime: "2012-08-01 04:03:05.123 PDT",
+		Format:   "%z",
+		Result:   "PDT",
+	},
+}
+
+func TestDatetime_SetFormat(t *testing.T) {
+	for _, v := range datetimeSetFormatTests {
+		dt := NewDatetimeFromString(v.Datetime)
+		dt.SetFormat(v.Format)
+		if dt.Format() != v.Result {
+			t.Errorf("result = %q, want %q for %q with %q", dt.Format(), v.Result, v.Format, v.Datetime)
+		}
+	}
+}
+
 func TestNull_String(t *testing.T) {
 	s := "null"
 	p := NewNullFromString(s)
