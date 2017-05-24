@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"github.com/mithrandie/csvq/lib/ternary"
 	"reflect"
 	"testing"
 )
@@ -22,16 +23,75 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select 1 from dual",
+		Input: "select 1 as a from dual",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
-				FromClause:   FromClause{From: "from", Tables: []Expression{Dual{Dual: "dual"}}},
+				SelectClause: SelectClause{
+					Select: "select",
+					Fields: []Expression{
+						Field{
+							Object: NewIntegerFromString("1"),
+							As:     Token{Token: AS, Literal: "as"},
+							Alias:  Identifier{Literal: "a"},
+						},
+					},
+				},
+				FromClause: FromClause{From: "from", Tables: []Expression{Dual{Dual: "dual"}}},
 			},
 		},
 	},
 	{
-		Input: "select 1 from table1 as alias, (select 2 from dual)",
+		Input: "select 1 from table1, (select 2 from dual)",
+		Output: []Statement{
+			SelectQuery{
+				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+				FromClause: FromClause{
+					From: "from",
+					Tables: []Expression{
+						Table{
+							Object: Identifier{Literal: "table1"},
+						},
+						Table{
+							Object: Subquery{
+								Query: SelectQuery{
+									SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("2")}}},
+									FromClause:   FromClause{From: "from", Tables: []Expression{Dual{Dual: "dual"}}},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 from table1 alias, (select 2 from dual) alias2",
+		Output: []Statement{
+			SelectQuery{
+				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+				FromClause: FromClause{
+					From: "from",
+					Tables: []Expression{
+						Table{
+							Object: Identifier{Literal: "table1"},
+							Alias:  Identifier{Literal: "alias"},
+						},
+						Table{
+							Object: Subquery{
+								Query: SelectQuery{
+									SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("2")}}},
+									FromClause:   FromClause{From: "from", Tables: []Expression{Dual{Dual: "dual"}}},
+								},
+							},
+							Alias: Identifier{Literal: "alias2"},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 from table1 as alias, (select 2 from dual) as alias2",
 		Output: []Statement{
 			SelectQuery{
 				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
@@ -50,6 +110,8 @@ var parseTests = []struct {
 									FromClause:   FromClause{From: "from", Tables: []Expression{Dual{Dual: "dual"}}},
 								},
 							},
+							As:    Token{Token: AS, Literal: "as"},
+							Alias: Identifier{Literal: "alias2"},
 						},
 					},
 				},
@@ -62,7 +124,7 @@ var parseTests = []struct {
 			" where 1 = 1" +
 			" group by column1, column2 " +
 			" having 1 > 1 " +
-			" order by column4, column5 desc " +
+			" order by column4, column5 desc, column6 asc " +
 			" limit 10 ",
 		Output: []Statement{
 			SelectQuery{
@@ -96,6 +158,7 @@ var parseTests = []struct {
 					Items: []Expression{
 						OrderItem{Item: Identifier{Literal: "column4"}},
 						OrderItem{Item: Identifier{Literal: "column5"}, Direction: Token{Token: DESC, Literal: "desc"}},
+						OrderItem{Item: Identifier{Literal: "column6"}, Direction: Token{Token: ASC, Literal: "asc"}},
 					},
 				},
 				LimitClause: LimitClause{
@@ -121,7 +184,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select ident, 'foo', 1, -1, 1.234, -1.234, true, '2010-01-01 12:00:00', null from dual",
+		Input: "select ident, 'foo', 1, -1, 1.234, -1.234, true, '2010-01-01 12:00:00', null, ('bar') from dual",
 		Output: []Statement{
 			SelectQuery{
 				SelectClause: SelectClause{
@@ -136,6 +199,7 @@ var parseTests = []struct {
 						Field{Object: NewTernaryFromString("true")},
 						Field{Object: NewDatetimeFromString("2010-01-01 12:00:00")},
 						Field{Object: NewNullFromString("null")},
+						Field{Object: Parentheses{Expr: NewString("bar")}},
 					},
 				},
 				FromClause: FromClause{From: "from", Tables: []Expression{Dual{Dual: "dual"}}},
@@ -143,7 +207,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select ident || 'foo'",
+		Input: "select ident || 'foo' || 'bar'",
 		Output: []Statement{
 			SelectQuery{
 				SelectClause: SelectClause{
@@ -152,6 +216,7 @@ var parseTests = []struct {
 						Field{Object: Concat{Items: []Expression{
 							Identifier{Literal: "ident"},
 							NewString("foo"),
+							NewString("bar"),
 						}}},
 					},
 				},
@@ -474,6 +539,29 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select true or (false and false)",
+		Output: []Statement{
+			SelectQuery{
+				SelectClause: SelectClause{
+					Select: "select",
+					Fields: []Expression{
+						Field{Object: Logic{
+							LHS:      NewTernaryFromString("true"),
+							Operator: Token{Token: OR, Literal: "or"},
+							RHS: Parentheses{
+								Expr: Logic{
+									LHS:      NewTernaryFromString("false"),
+									Operator: Token{Token: AND, Literal: "and"},
+									RHS:      NewTernaryFromString("false"),
+								},
+							},
+						}},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "select true and true or false and not false",
 		Output: []Statement{
 			SelectQuery{
@@ -493,6 +581,36 @@ var parseTests = []struct {
 								RHS: Logic{
 									Operator: Token{Token: NOT, Literal: "not"},
 									RHS:      NewTernaryFromString("false"),
+								},
+							},
+						}},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select case when true then 'A' when false then 'B' end",
+		Output: []Statement{
+			SelectQuery{
+				SelectClause: SelectClause{
+					Select: "select",
+					Fields: []Expression{
+						Field{Object: Case{
+							Case: "case",
+							End:  "end",
+							When: []Expression{
+								CaseWhen{
+									When:      "when",
+									Then:      "then",
+									Condition: Ternary{literal: "true", value: ternary.TRUE},
+									Result:    NewString("A"),
+								},
+								CaseWhen{
+									When:      "when",
+									Then:      "then",
+									Condition: Ternary{literal: "false", value: ternary.FALSE},
+									Result:    NewString("B"),
 								},
 							},
 						}},
@@ -614,6 +732,27 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select 1 from table1 inner join table2",
+		Output: []Statement{
+			SelectQuery{
+				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+				FromClause: FromClause{
+					From: "from",
+					Tables: []Expression{
+						Table{
+							Object: Join{
+								Join:      "join",
+								Table:     Table{Object: Identifier{Literal: "table1"}},
+								JoinTable: Table{Object: Identifier{Literal: "table2"}},
+								JoinType:  Token{Token: INNER, Literal: "inner"},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "select 1 from table1 join table2 on table1.id = table2.id",
 		Output: []Statement{
 			SelectQuery{
@@ -690,7 +829,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select 1 from table1 natural left outer join table2",
+		Input: "select 1 from table1 natural outer join table2",
 		Output: []Statement{
 			SelectQuery{
 				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
@@ -704,7 +843,48 @@ var parseTests = []struct {
 								JoinTable: Table{Object: Identifier{Literal: "table2"}},
 								Natural:   Token{Token: NATURAL, Literal: "natural"},
 								JoinType:  Token{Token: OUTER, Literal: "outer"},
-								Direction: Token{Token: LEFT, Literal: "left"},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 from table1 right join table2",
+		Output: []Statement{
+			SelectQuery{
+				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+				FromClause: FromClause{
+					From: "from",
+					Tables: []Expression{
+						Table{
+							Object: Join{
+								Join:      "join",
+								Table:     Table{Object: Identifier{Literal: "table1"}},
+								JoinTable: Table{Object: Identifier{Literal: "table2"}},
+								Direction: Token{Token: RIGHT, Literal: "right"},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 from table1 full join table2",
+		Output: []Statement{
+			SelectQuery{
+				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+				FromClause: FromClause{
+					From: "from",
+					Tables: []Expression{
+						Table{
+							Object: Join{
+								Join:      "join",
+								Table:     Table{Object: Identifier{Literal: "table1"}},
+								JoinTable: Table{Object: Identifier{Literal: "table2"}},
+								Direction: Token{Token: FULL, Literal: "full"},
 							},
 						},
 					},

@@ -12,6 +12,7 @@ package parser
     integer     Integer
     float       Float
     ternary     Ternary
+    datetime    Datetime
     null        Null
     token       Token
 }
@@ -58,6 +59,7 @@ package parser
 %type<integer>     integer
 %type<float>       float
 %type<ternary>     ternary
+%type<datetime>    datetime
 %type<null>        null
 %type<token>       distinct
 %type<token>       negation
@@ -216,9 +218,9 @@ primary
     {
         $$ = $1
     }
-    | DATETIME
+    | datetime
     {
-        $$ = NewDatetimeFromString($1.Literal)
+        $$ = $1
     }
     | null
     {
@@ -640,6 +642,12 @@ ternary
     : TERNARY
     {
         $$ = NewTernaryFromString($1.Literal)
+    }
+
+datetime
+    : DATETIME
+    {
+        $$ = NewDatetimeFromString($1.Literal)
     }
 
 null
