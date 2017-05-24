@@ -29,7 +29,6 @@ package parser
 %type<expression>  limit_clause
 %type<expression>  primary
 %type<expression>  value
-%type<expression>  group_item
 %type<expression>  order_item
 %type<expression>  subquery
 %type<expression>  string_operation
@@ -48,7 +47,7 @@ package parser
 %type<expression>  case_value
 %type<expression>  case_else
 %type<expressions> values
-%type<expressions> group_items
+%type<expressions> filters
 %type<expressions> order_items
 %type<expressions> tables
 %type<expressions> using_fields
@@ -161,7 +160,7 @@ group_by_clause
     {
         $$ = nil
     }
-    | GROUP BY group_items
+    | GROUP BY values
     {
         $$ = GroupByClause{GroupBy: $1.Literal + " " + $2.Literal, Items: $3}
     }
@@ -256,22 +255,8 @@ value
         $$ = Parentheses{Expr: $2}
     }
 
-group_item
-    : identifier
-    {
-        $$ = $1
-    }
-    | function
-    {
-        $$ = $1
-    }
-
 order_item
-    : identifier order_direction
-    {
-        $$ = OrderItem{Item: $1, Direction: $2}
-    }
-    | function order_direction
+    : value order_direction
     {
         $$ = OrderItem{Item: $1, Direction: $2}
     }
@@ -430,7 +415,7 @@ option
     {
         $$ = Option{Distinct: $1, Args: []Expression{AllColumns{}}}
     }
-    | distinct values
+    | distinct filters
     {
         $$ = Option{Distinct: $1, Args: $2}
     }
@@ -557,12 +542,12 @@ values
         $$ = append([]Expression{$1}, $3...)
     }
 
-group_items
-    : group_item
+filters
+    : filter
     {
         $$ = []Expression{$1}
     }
-    | group_item ',' group_items
+    | filter ',' filters
     {
         $$ = append([]Expression{$1}, $3...)
     }
@@ -608,7 +593,7 @@ fields
     }
 
 case_when
-    : WHEN value THEN value
+    : WHEN filter THEN value
     {
         $$ = []Expression{CaseWhen{When: $1.Literal, Then: $3.Literal, Condition: $2, Result: $4}}
     }

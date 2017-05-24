@@ -169,7 +169,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.y:734
+//line parser.y:719
 
 func SetDebugLevel(level int, verbose bool) {
 	yyDebug = level
@@ -189,184 +189,181 @@ var yyExca = [...]int{
 	1, -1,
 	-2, 0,
 	-1, 18,
-	34, 119,
-	36, 123,
-	-2, 99,
+	34, 116,
+	36, 120,
+	-2, 96,
 	-1, 29,
-	48, 117,
-	52, 117,
-	53, 117,
-	-2, 61,
+	48, 114,
+	52, 114,
+	53, 114,
+	-2, 58,
 	-1, 59,
-	36, 123,
-	-2, 119,
+	36, 120,
+	-2, 116,
 	-1, 86,
-	49, 61,
-	50, 61,
-	-2, 117,
+	49, 58,
+	50, 58,
+	-2, 114,
 	-1, 90,
-	73, 66,
-	-2, 115,
+	73, 63,
+	-2, 112,
 }
 
 const yyPrivate = 57344
 
-const yyLast = 384
+const yyLast = 390
 
 var yyAct = [...]int{
 
-	41, 197, 37, 29, 179, 193, 43, 165, 155, 136,
-	47, 18, 19, 102, 36, 158, 9, 12, 45, 201,
-	67, 69, 85, 192, 176, 78, 20, 27, 76, 80,
-	81, 82, 83, 79, 164, 84, 86, 77, 76, 80,
-	81, 82, 83, 57, 126, 84, 76, 80, 81, 82,
-	83, 72, 92, 84, 88, 82, 83, 84, 94, 84,
-	87, 200, 189, 19, 80, 81, 82, 83, 89, 106,
-	84, 107, 75, 74, 110, 85, 153, 20, 78, 108,
-	113, 114, 194, 195, 121, 122, 123, 124, 125, 22,
-	77, 76, 80, 81, 82, 83, 127, 132, 84, 138,
-	19, 139, 111, 112, 22, 19, 16, 130, 129, 185,
-	90, 140, 117, 150, 20, 142, 144, 24, 23, 20,
-	174, 131, 149, 90, 152, 135, 50, 52, 148, 50,
-	145, 146, 13, 156, 151, 160, 147, 131, 17, 159,
-	60, 53, 19, 63, 19, 64, 65, 66, 61, 85,
-	75, 59, 103, 168, 156, 170, 20, 23, 20, 172,
-	75, 74, 169, 175, 181, 138, 182, 139, 58, 177,
-	19, 143, 23, 141, 183, 188, 104, 156, 187, 44,
-	191, 186, 190, 62, 20, 94, 198, 54, 196, 51,
-	109, 99, 178, 181, 184, 182, 162, 199, 194, 195,
-	101, 105, 198, 202, 22, 49, 50, 52, 163, 53,
-	46, 22, 49, 50, 52, 98, 53, 46, 6, 97,
-	22, 49, 50, 52, 56, 53, 46, 22, 100, 134,
-	73, 95, 22, 49, 50, 52, 15, 53, 46, 22,
-	49, 50, 52, 70, 53, 46, 6, 39, 22, 11,
-	6, 40, 119, 22, 39, 54, 118, 120, 40, 8,
-	42, 48, 54, 39, 68, 157, 91, 40, 48, 51,
-	28, 54, 32, 116, 115, 38, 51, 48, 63, 32,
-	64, 65, 66, 54, 1, 51, 25, 7, 32, 48,
-	54, 76, 80, 81, 82, 83, 48, 51, 84, 173,
-	93, 26, 21, 128, 51, 171, 31, 93, 22, 49,
-	50, 52, 34, 53, 46, 22, 49, 50, 52, 30,
-	53, 46, 35, 76, 80, 81, 82, 83, 180, 137,
-	84, 76, 80, 81, 82, 83, 33, 126, 84, 161,
-	63, 133, 64, 65, 66, 61, 166, 167, 59, 63,
-	96, 64, 65, 66, 61, 71, 4, 59, 4, 54,
-	55, 14, 10, 5, 3, 48, 54, 2, 0, 0,
-	0, 0, 48, 51, 154, 0, 93, 0, 0, 0,
-	51, 0, 0, 93,
+	41, 193, 29, 177, 153, 43, 27, 18, 47, 45,
+	163, 156, 19, 36, 102, 12, 9, 197, 79, 189,
+	67, 69, 57, 72, 136, 20, 85, 84, 196, 78,
+	76, 80, 81, 82, 83, 86, 182, 84, 162, 87,
+	186, 77, 76, 80, 81, 82, 83, 89, 126, 84,
+	151, 92, 108, 88, 82, 83, 172, 94, 84, 24,
+	22, 148, 63, 19, 64, 65, 66, 61, 23, 106,
+	59, 107, 90, 22, 110, 85, 20, 16, 78, 113,
+	114, 111, 112, 121, 122, 123, 124, 125, 131, 50,
+	77, 76, 80, 81, 82, 83, 132, 117, 84, 17,
+	19, 137, 62, 130, 135, 19, 129, 138, 80, 81,
+	82, 83, 142, 20, 84, 131, 140, 157, 20, 75,
+	74, 147, 13, 150, 75, 74, 146, 145, 23, 143,
+	144, 60, 109, 149, 50, 52, 154, 85, 158, 53,
+	19, 23, 19, 75, 74, 171, 75, 166, 127, 168,
+	103, 137, 176, 20, 58, 20, 167, 174, 141, 44,
+	173, 139, 105, 104, 179, 137, 175, 99, 19, 75,
+	74, 181, 185, 170, 160, 183, 187, 188, 154, 184,
+	161, 20, 94, 194, 119, 54, 98, 180, 118, 120,
+	97, 101, 179, 195, 56, 134, 73, 51, 194, 198,
+	22, 49, 50, 52, 15, 53, 46, 22, 49, 50,
+	52, 95, 53, 46, 100, 63, 22, 64, 65, 66,
+	22, 49, 50, 52, 22, 53, 46, 6, 22, 11,
+	6, 8, 70, 22, 49, 50, 52, 190, 53, 46,
+	68, 71, 4, 39, 4, 1, 42, 40, 7, 155,
+	39, 54, 91, 38, 40, 25, 26, 48, 54, 21,
+	128, 37, 31, 39, 48, 51, 152, 40, 32, 34,
+	30, 54, 51, 28, 35, 32, 39, 48, 178, 33,
+	40, 159, 133, 96, 54, 51, 191, 192, 32, 55,
+	48, 22, 49, 50, 52, 14, 53, 46, 51, 10,
+	5, 32, 3, 22, 49, 50, 52, 2, 53, 46,
+	6, 0, 22, 49, 50, 52, 169, 53, 46, 0,
+	0, 0, 76, 80, 81, 82, 83, 0, 0, 84,
+	0, 0, 116, 115, 76, 80, 81, 82, 83, 0,
+	0, 84, 54, 76, 80, 81, 82, 83, 48, 126,
+	84, 0, 0, 0, 54, 0, 51, 0, 0, 93,
+	48, 0, 63, 54, 64, 65, 66, 61, 51, 48,
+	59, 93, 76, 80, 81, 82, 83, 51, 0, 84,
+	93, 63, 0, 64, 65, 66, 61, 164, 165, 59,
 }
 var yyPact = [...]int{
 
-	239, -1000, 239, -60, -1000, 237, 76, -1000, -1000, -1000,
-	220, 85, 200, -1000, 196, 216, -1000, -1000, 108, 244,
-	223, -1000, -1000, 239, -1000, -24, 210, 111, -1000, 24,
-	-1000, -1000, 207, -1000, -1000, -1000, -1000, -1000, -1000, 46,
-	216, 38, -1000, -1000, -1000, -1000, -1000, -1000, 311, -1000,
-	-1000, 120, -1000, -1000, -1000, 190, 185, 111, 157, 243,
-	116, 142, 100, -1000, -1000, -1000, -1000, -1000, 249, -1000,
-	249, 6, 200, 249, 216, 216, 311, 228, 98, 204,
-	311, 311, 311, 311, 311, -1000, -29, 23, -1000, -1000,
-	76, 59, -21, 235, -1000, -1000, 202, 216, 249, 100,
-	139, 116, 137, -1000, 100, -1000, -1000, -1000, -1000, -1000,
-	-1000, 101, -1000, -4, -21, 46, 46, 132, 311, 41,
-	311, -15, -15, -17, -17, -21, -1000, -1000, 3, 304,
-	75, 311, 264, 163, 178, 111, -1000, -41, 38, -1000,
-	305, 100, 128, 100, 314, -1000, -1000, -1000, -1000, 256,
-	235, -1000, -21, -1000, -1000, -1000, 224, 55, 59, 311,
-	-39, -1000, 123, 249, 249, -1000, 216, 37, 314, 100,
-	305, 311, -11, 311, -1000, -21, 311, -1000, 123, -1000,
-	-52, 51, 167, -1000, 111, 249, 314, -1000, -21, -1000,
-	-1000, -21, 249, -1000, -1000, -1000, -1000, -12, -56, -1000,
-	-1000, 249, -1000,
+	219, -1000, 219, -60, -1000, 217, 66, -1000, -1000, -1000,
+	188, 56, 203, -1000, 166, 229, -1000, -1000, 27, 220,
+	212, -1000, -1000, 219, -1000, -52, 176, 120, -1000, 24,
+	-1000, -1000, 216, -1000, -1000, -1000, -1000, -1000, -1000, -4,
+	229, 0, -1000, -1000, -1000, -1000, -1000, -1000, 308, -1000,
+	-1000, 128, -1000, -1000, -1000, 161, 156, 120, 133, 180,
+	114, 129, 69, -1000, -1000, -1000, -1000, -1000, 224, -1000,
+	224, -21, 203, 224, 229, 229, 308, 287, 86, 136,
+	308, 308, 308, 308, 308, -1000, -25, 75, -1000, -1000,
+	66, 26, 305, 299, -1000, -1000, 168, 229, 308, 69,
+	127, 114, 124, -1000, 69, -1000, -1000, -1000, -1000, -1000,
+	-1000, 97, -1000, 40, 305, -4, -4, 130, 308, -11,
+	308, -16, -16, -47, -47, 305, -1000, -1000, -23, 196,
+	53, 229, 276, 141, 150, 120, -1000, -37, 346, 69,
+	122, 69, 327, -1000, -1000, -1000, -1000, 267, 299, -1000,
+	305, -1000, -1000, -1000, 70, -9, 26, 308, 94, -1000,
+	83, 308, 308, -1000, 229, -36, 327, 69, 346, 308,
+	-33, 229, -1000, 305, 308, -1000, 83, -1000, -56, 255,
+	-1000, 120, 224, 327, -1000, 305, -1000, -1000, 305, 308,
+	-1000, -1000, -1000, -45, -58, -1000, -1000, 224, -1000,
 }
 var yyPgo = [...]int{
 
-	0, 284, 367, 364, 355, 363, 362, 361, 360, 350,
-	341, 339, 336, 3, 329, 328, 14, 322, 319, 312,
-	306, 27, 2, 303, 11, 302, 7, 301, 286, 275,
-	266, 265, 8, 9, 4, 138, 1, 117, 15, 0,
-	260, 6, 179, 18, 10, 17, 33, 5, 168, 13,
-	140, 259,
+	0, 245, 307, 302, 241, 300, 299, 295, 289, 283,
+	282, 281, 279, 2, 278, 13, 274, 270, 269, 262,
+	6, 261, 260, 7, 259, 10, 256, 255, 253, 252,
+	249, 24, 4, 3, 99, 1, 59, 11, 0, 246,
+	5, 159, 9, 8, 15, 18, 237, 154, 14, 131,
+	231,
 }
 var yyR1 = [...]int{
 
 	0, 1, 1, 2, 3, 4, 5, 6, 6, 6,
 	7, 7, 8, 8, 9, 9, 10, 10, 11, 11,
 	12, 12, 12, 12, 12, 12, 12, 13, 13, 13,
-	13, 13, 13, 13, 14, 14, 15, 15, 47, 47,
-	47, 16, 17, 18, 18, 18, 18, 18, 18, 18,
-	18, 18, 18, 19, 19, 19, 19, 19, 20, 20,
-	20, 21, 21, 21, 21, 22, 23, 23, 23, 24,
-	24, 24, 24, 24, 24, 24, 25, 25, 25, 25,
-	25, 26, 26, 26, 27, 27, 28, 28, 29, 30,
-	30, 31, 31, 32, 32, 33, 33, 34, 34, 35,
-	35, 36, 36, 37, 37, 38, 38, 39, 40, 41,
-	41, 42, 42, 43, 44, 45, 45, 46, 46, 48,
-	48, 49, 49, 50, 50, 50, 50, 51, 51,
+	13, 13, 13, 13, 14, 46, 46, 46, 15, 16,
+	17, 17, 17, 17, 17, 17, 17, 17, 17, 17,
+	18, 18, 18, 18, 18, 19, 19, 19, 20, 20,
+	20, 20, 21, 22, 22, 22, 23, 23, 23, 23,
+	23, 23, 23, 24, 24, 24, 24, 24, 25, 25,
+	25, 26, 26, 27, 27, 28, 29, 29, 30, 30,
+	31, 31, 32, 32, 33, 33, 34, 34, 35, 35,
+	36, 36, 37, 37, 38, 39, 40, 40, 41, 41,
+	42, 43, 44, 44, 45, 45, 47, 47, 48, 48,
+	49, 49, 49, 49, 50, 50,
 }
 var yyR2 = [...]int{
 
 	0, 0, 2, 2, 1, 7, 3, 0, 2, 2,
 	0, 2, 0, 3, 0, 2, 0, 3, 0, 2,
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-	1, 1, 1, 3, 1, 1, 2, 2, 0, 1,
-	1, 3, 3, 3, 4, 4, 6, 6, 4, 4,
-	4, 4, 2, 3, 3, 3, 3, 3, 3, 3,
-	2, 1, 1, 1, 3, 4, 0, 2, 2, 1,
-	2, 3, 1, 2, 3, 1, 5, 5, 6, 6,
-	4, 0, 2, 4, 1, 1, 1, 3, 5, 0,
-	1, 0, 2, 1, 3, 1, 3, 1, 3, 1,
-	3, 1, 3, 1, 3, 4, 2, 1, 1, 1,
-	2, 1, 2, 1, 1, 0, 1, 0, 1, 0,
-	1, 0, 1, 0, 1, 1, 1, 0, 1,
+	1, 1, 1, 3, 2, 0, 1, 1, 3, 3,
+	3, 4, 4, 6, 6, 4, 4, 4, 4, 2,
+	3, 3, 3, 3, 3, 3, 3, 2, 1, 1,
+	1, 3, 4, 0, 2, 2, 1, 2, 3, 1,
+	2, 3, 1, 5, 5, 6, 6, 4, 0, 2,
+	4, 1, 1, 1, 3, 5, 0, 1, 0, 2,
+	1, 3, 1, 3, 1, 3, 1, 3, 1, 3,
+	1, 3, 4, 2, 1, 1, 1, 2, 1, 2,
+	1, 1, 0, 1, 0, 1, 0, 1, 0, 1,
+	0, 1, 1, 1, 0, 1,
 }
 var yyChk = [...]int{
 
-	-1000, -1, -2, -3, -4, -5, 11, -1, -51, 76,
-	-6, 12, -45, 56, -7, 16, 21, -35, -24, -39,
-	-16, -25, 4, 72, -37, -28, -27, -21, 70, -13,
-	-18, -20, 72, -12, -19, -17, -16, -22, -29, 47,
-	51, -39, -40, -41, -42, -43, 10, -44, 61, 5,
-	6, 69, 7, 9, 55, -8, 28, -21, -48, 43,
-	-50, 40, 75, 35, 37, 38, 39, -39, 20, -39,
-	20, -4, 75, 20, 50, 49, 67, 66, 54, -46,
-	68, 69, 70, 71, 74, 51, -13, -21, -16, -21,
-	72, -30, -13, 72, -41, -42, -9, 29, 30, 34,
-	-48, -50, -49, 36, 34, -35, -39, -39, 73, -37,
-	-39, -21, -21, -13, -13, 46, 45, -46, 52, 48,
-	53, -13, -13, -13, -13, -13, 73, 73, -23, -45,
-	-38, 62, -13, -10, 27, -21, -33, -14, -39, -22,
-	-24, 34, -49, 34, -24, -16, -16, -43, -44, -13,
-	72, -16, -13, 73, 70, -32, -13, -31, -38, 64,
-	-13, -11, 33, 30, 75, -26, 41, 42, -24, 34,
-	-24, 49, -32, 75, 65, -13, 63, -41, 69, -34,
-	-15, -39, -22, -33, -21, 72, -24, -26, -13, 73,
-	-32, -13, 75, -47, 31, 32, -47, -36, -39, -34,
-	73, 75, -36,
+	-1000, -1, -2, -3, -4, -5, 11, -1, -50, 76,
+	-6, 12, -44, 56, -7, 16, 21, -34, -23, -38,
+	-15, -24, 4, 72, -36, -27, -26, -20, 70, -13,
+	-17, -19, 72, -12, -18, -16, -15, -21, -28, 47,
+	51, -38, -39, -40, -41, -42, 10, -43, 61, 5,
+	6, 69, 7, 9, 55, -8, 28, -20, -47, 43,
+	-49, 40, 75, 35, 37, 38, 39, -38, 20, -38,
+	20, -4, 75, 20, 50, 49, 67, 66, 54, -45,
+	68, 69, 70, 71, 74, 51, -13, -20, -15, -20,
+	72, -29, -13, 72, -40, -41, -9, 29, 30, 34,
+	-47, -49, -48, 36, 34, -34, -38, -38, 73, -36,
+	-38, -20, -20, -13, -13, 46, 45, -45, 52, 48,
+	53, -13, -13, -13, -13, -13, 73, 73, -22, -44,
+	-37, 62, -13, -10, 27, -20, -31, -13, -23, 34,
+	-48, 34, -23, -15, -15, -42, -43, -13, 72, -15,
+	-13, 73, 70, -32, -20, -30, -37, 64, -20, -11,
+	33, 30, 75, -25, 41, 42, -23, 34, -23, 49,
+	-31, 75, 65, -13, 63, -40, 69, -33, -14, -13,
+	-31, -20, 72, -23, -25, -13, 73, -32, -13, 75,
+	-46, 31, 32, -35, -38, -33, 73, 75, -35,
 }
 var yyDef = [...]int{
 
-	1, -2, 1, 127, 4, 7, 115, 2, 3, 128,
-	10, 0, 0, 116, 12, 0, 8, 9, -2, 69,
-	72, 75, 107, 0, 6, 103, 86, 84, 85, -2,
-	62, 63, 0, 27, 28, 29, 30, 31, 32, 0,
-	0, 20, 21, 22, 23, 24, 25, 26, 89, 108,
-	109, 0, 111, 113, 114, 14, 0, 11, 0, -2,
-	121, 0, 0, 120, 124, 125, 126, 70, 0, 73,
-	0, 0, 0, 0, 0, 0, 0, 0, 117, 0,
-	0, 0, 0, 0, 0, 118, -2, 0, 52, 60,
-	-2, 0, 90, 0, 110, 112, 16, 0, 0, 0,
-	0, 121, 0, 122, 0, 100, 71, 74, 41, 104,
-	87, 58, 59, 42, 43, 0, 0, 0, 0, 0,
-	0, 53, 54, 55, 56, 57, 33, 64, 0, 0,
-	91, 0, 0, 18, 0, 15, 13, 95, 34, 35,
-	81, 0, 0, 0, 80, 50, 51, 44, 45, 0,
-	0, 48, 49, 65, 67, 68, 93, 0, 106, 0,
-	0, 5, 0, 0, 0, 76, 0, 0, 77, 0,
-	81, 0, 0, 0, 88, 92, 0, 19, 0, 17,
-	97, 38, 38, 96, 82, 0, 79, 78, 46, 47,
-	94, 105, 0, 36, 39, 40, 37, 0, 101, 98,
-	83, 0, 102,
+	1, -2, 1, 124, 4, 7, 112, 2, 3, 125,
+	10, 0, 0, 113, 12, 0, 8, 9, -2, 66,
+	69, 72, 104, 0, 6, 100, 83, 81, 82, -2,
+	59, 60, 0, 27, 28, 29, 30, 31, 32, 0,
+	0, 20, 21, 22, 23, 24, 25, 26, 86, 105,
+	106, 0, 108, 110, 111, 14, 0, 11, 0, -2,
+	118, 0, 0, 117, 121, 122, 123, 67, 0, 70,
+	0, 0, 0, 0, 0, 0, 0, 0, 114, 0,
+	0, 0, 0, 0, 0, 115, -2, 0, 49, 57,
+	-2, 0, 87, 0, 107, 109, 16, 0, 0, 0,
+	0, 118, 0, 119, 0, 97, 68, 71, 38, 101,
+	84, 55, 56, 39, 40, 0, 0, 0, 0, 0,
+	0, 50, 51, 52, 53, 54, 33, 61, 0, 0,
+	88, 0, 0, 18, 0, 15, 13, 90, 78, 0,
+	0, 0, 77, 47, 48, 41, 42, 0, 0, 45,
+	46, 62, 64, 65, 92, 0, 103, 0, 0, 5,
+	0, 0, 0, 73, 0, 0, 74, 0, 78, 0,
+	0, 0, 85, 89, 0, 19, 0, 17, 94, 35,
+	91, 79, 0, 76, 75, 43, 44, 93, 102, 0,
+	34, 36, 37, 0, 98, 95, 80, 0, 99,
 }
 var yyTok1 = [...]int{
 
@@ -730,33 +727,33 @@ yydefault:
 
 	case 1:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:93
+		//line parser.y:92
 		{
 			yyVAL.program = nil
 			yylex.(*Lexer).program = yyVAL.program
 		}
 	case 2:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:98
+		//line parser.y:97
 		{
 			yyVAL.program = append([]Statement{yyDollar[1].statement}, yyDollar[2].program...)
 			yylex.(*Lexer).program = yyVAL.program
 		}
 	case 3:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:105
+		//line parser.y:104
 		{
 			yyVAL.statement = yyDollar[1].expression
 		}
 	case 4:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:111
+		//line parser.y:110
 		{
 			yyVAL.expression = yyDollar[1].expression
 		}
 	case 5:
 		yyDollar = yyS[yypt-7 : yypt+1]
-		//line parser.y:117
+		//line parser.y:116
 		{
 			yyVAL.expression = SelectQuery{
 				SelectClause:  yyDollar[1].expression,
@@ -770,223 +767,205 @@ yydefault:
 		}
 	case 6:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:131
+		//line parser.y:130
 		{
 			yyVAL.expression = SelectClause{Select: yyDollar[1].token.Literal, Distinct: yyDollar[2].token, Fields: yyDollar[3].expressions}
 		}
 	case 7:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:137
+		//line parser.y:136
 		{
 			yyVAL.expression = nil
 		}
 	case 8:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:141
+		//line parser.y:140
 		{
 			yyVAL.expression = FromClause{From: yyDollar[1].token.Literal, Tables: []Expression{Dual{Dual: yyDollar[2].token.Literal}}}
 		}
 	case 9:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:145
+		//line parser.y:144
 		{
 			yyVAL.expression = FromClause{From: yyDollar[1].token.Literal, Tables: yyDollar[2].expressions}
 		}
 	case 10:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:151
+		//line parser.y:150
 		{
 			yyVAL.expression = nil
 		}
 	case 11:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:155
+		//line parser.y:154
 		{
 			yyVAL.expression = WhereClause{Where: yyDollar[1].token.Literal, Filter: yyDollar[2].expression}
 		}
 	case 12:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:161
+		//line parser.y:160
 		{
 			yyVAL.expression = nil
 		}
 	case 13:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:165
+		//line parser.y:164
 		{
 			yyVAL.expression = GroupByClause{GroupBy: yyDollar[1].token.Literal + " " + yyDollar[2].token.Literal, Items: yyDollar[3].expressions}
 		}
 	case 14:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:171
+		//line parser.y:170
 		{
 			yyVAL.expression = nil
 		}
 	case 15:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:175
+		//line parser.y:174
 		{
 			yyVAL.expression = HavingClause{Having: yyDollar[1].token.Literal, Filter: yyDollar[2].expression}
 		}
 	case 16:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:181
+		//line parser.y:180
 		{
 			yyVAL.expression = nil
 		}
 	case 17:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:185
+		//line parser.y:184
 		{
 			yyVAL.expression = OrderByClause{OrderBy: yyDollar[1].token.Literal + " " + yyDollar[2].token.Literal, Items: yyDollar[3].expressions}
 		}
 	case 18:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:191
+		//line parser.y:190
 		{
 			yyVAL.expression = nil
 		}
 	case 19:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:195
+		//line parser.y:194
 		{
 			yyVAL.expression = LimitClause{Limit: yyDollar[1].token.Literal, Number: yyDollar[2].integer.Value()}
 		}
 	case 20:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:201
+		//line parser.y:200
 		{
 			yyVAL.expression = yyDollar[1].identifier
 		}
 	case 21:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:205
+		//line parser.y:204
 		{
 			yyVAL.expression = yyDollar[1].text
 		}
 	case 22:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:209
+		//line parser.y:208
 		{
 			yyVAL.expression = yyDollar[1].integer
 		}
 	case 23:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:213
+		//line parser.y:212
 		{
 			yyVAL.expression = yyDollar[1].float
 		}
 	case 24:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:217
+		//line parser.y:216
 		{
 			yyVAL.expression = yyDollar[1].ternary
 		}
 	case 25:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:221
+		//line parser.y:220
 		{
 			yyVAL.expression = NewDatetimeFromString(yyDollar[1].token.Literal)
 		}
 	case 26:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:225
+		//line parser.y:224
 		{
 			yyVAL.expression = yyDollar[1].null
 		}
 	case 27:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:231
+		//line parser.y:230
 		{
 			yyVAL.expression = yyDollar[1].expression
 		}
 	case 28:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:235
+		//line parser.y:234
 		{
 			yyVAL.expression = yyDollar[1].expression
 		}
 	case 29:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:239
+		//line parser.y:238
 		{
 			yyVAL.expression = yyDollar[1].expression
 		}
 	case 30:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:243
+		//line parser.y:242
 		{
 			yyVAL.expression = yyDollar[1].expression
 		}
 	case 31:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:247
+		//line parser.y:246
 		{
 			yyVAL.expression = yyDollar[1].expression
 		}
 	case 32:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:251
+		//line parser.y:250
 		{
 			yyVAL.expression = yyDollar[1].expression
 		}
 	case 33:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:255
+		//line parser.y:254
 		{
 			yyVAL.expression = Parentheses{Expr: yyDollar[2].expression}
 		}
 	case 34:
-		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:261
-		{
-			yyVAL.expression = yyDollar[1].identifier
-		}
-	case 35:
-		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:265
-		{
-			yyVAL.expression = yyDollar[1].expression
-		}
-	case 36:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:271
-		{
-			yyVAL.expression = OrderItem{Item: yyDollar[1].identifier, Direction: yyDollar[2].token}
-		}
-	case 37:
-		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:275
+		//line parser.y:260
 		{
 			yyVAL.expression = OrderItem{Item: yyDollar[1].expression, Direction: yyDollar[2].token}
 		}
-	case 38:
+	case 35:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:281
+		//line parser.y:266
 		{
 			yyVAL.token = Token{}
 		}
-	case 39:
+	case 36:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:285
+		//line parser.y:270
 		{
 			yyVAL.token = yyDollar[1].token
 		}
-	case 40:
+	case 37:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:289
+		//line parser.y:274
 		{
 			yyVAL.token = yyDollar[1].token
 		}
-	case 41:
+	case 38:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:295
+		//line parser.y:280
 		{
 			yyVAL.expression = Subquery{Query: yyDollar[2].expression.(SelectQuery)}
 		}
-	case 42:
+	case 39:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:301
+		//line parser.y:286
 		{
 			var item1 []Expression
 			var item2 []Expression
@@ -1007,521 +986,521 @@ yydefault:
 
 			yyVAL.expression = Concat{Items: append(item1, item2...)}
 		}
-	case 43:
+	case 40:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:324
+		//line parser.y:309
 		{
 			yyVAL.expression = Comparison{LHS: yyDollar[1].expression, Operator: yyDollar[2].token, RHS: yyDollar[3].expression}
 		}
-	case 44:
+	case 41:
 		yyDollar = yyS[yypt-4 : yypt+1]
-		//line parser.y:328
+		//line parser.y:313
 		{
 			yyVAL.expression = Is{Is: yyDollar[2].token.Literal, LHS: yyDollar[1].expression, RHS: yyDollar[4].ternary, Negation: yyDollar[3].token}
 		}
-	case 45:
+	case 42:
 		yyDollar = yyS[yypt-4 : yypt+1]
-		//line parser.y:332
+		//line parser.y:317
 		{
 			yyVAL.expression = Is{Is: yyDollar[2].token.Literal, LHS: yyDollar[1].expression, RHS: yyDollar[4].null, Negation: yyDollar[3].token}
 		}
-	case 46:
+	case 43:
 		yyDollar = yyS[yypt-6 : yypt+1]
-		//line parser.y:336
+		//line parser.y:321
 		{
 			yyVAL.expression = Between{Between: yyDollar[3].token.Literal, And: yyDollar[5].token.Literal, LHS: yyDollar[1].expression, Low: yyDollar[4].expression, High: yyDollar[6].expression, Negation: yyDollar[2].token}
 		}
-	case 47:
+	case 44:
 		yyDollar = yyS[yypt-6 : yypt+1]
-		//line parser.y:340
+		//line parser.y:325
 		{
 			yyVAL.expression = In{In: yyDollar[3].token.Literal, LHS: yyDollar[1].expression, List: yyDollar[5].expressions, Negation: yyDollar[2].token}
 		}
-	case 48:
+	case 45:
 		yyDollar = yyS[yypt-4 : yypt+1]
-		//line parser.y:344
+		//line parser.y:329
 		{
 			yyVAL.expression = In{In: yyDollar[3].token.Literal, LHS: yyDollar[1].expression, Query: yyDollar[4].expression.(Subquery), Negation: yyDollar[2].token}
 		}
-	case 49:
+	case 46:
 		yyDollar = yyS[yypt-4 : yypt+1]
-		//line parser.y:348
+		//line parser.y:333
 		{
 			yyVAL.expression = Like{Like: yyDollar[3].token.Literal, LHS: yyDollar[1].expression, Pattern: yyDollar[4].expression, Negation: yyDollar[2].token}
 		}
-	case 50:
+	case 47:
 		yyDollar = yyS[yypt-4 : yypt+1]
-		//line parser.y:352
+		//line parser.y:337
 		{
 			yyVAL.expression = Any{Any: yyDollar[3].token.Literal, LHS: yyDollar[1].expression, Operator: yyDollar[2].token, Query: yyDollar[4].expression.(Subquery)}
 		}
-	case 51:
+	case 48:
 		yyDollar = yyS[yypt-4 : yypt+1]
-		//line parser.y:356
+		//line parser.y:341
 		{
 			yyVAL.expression = All{All: yyDollar[3].token.Literal, LHS: yyDollar[1].expression, Operator: yyDollar[2].token, Query: yyDollar[4].expression.(Subquery)}
 		}
-	case 52:
+	case 49:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:360
+		//line parser.y:345
 		{
 			yyVAL.expression = Exists{Exists: yyDollar[1].token.Literal, Query: yyDollar[2].expression.(Subquery)}
 		}
-	case 53:
+	case 50:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:366
+		//line parser.y:351
 		{
 			yyVAL.expression = Arithmetic{LHS: yyDollar[1].expression, Operator: int('+'), RHS: yyDollar[3].expression}
 		}
-	case 54:
+	case 51:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:370
+		//line parser.y:355
 		{
 			yyVAL.expression = Arithmetic{LHS: yyDollar[1].expression, Operator: int('-'), RHS: yyDollar[3].expression}
 		}
-	case 55:
+	case 52:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:374
+		//line parser.y:359
 		{
 			yyVAL.expression = Arithmetic{LHS: yyDollar[1].expression, Operator: int('*'), RHS: yyDollar[3].expression}
 		}
-	case 56:
+	case 53:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:378
+		//line parser.y:363
 		{
 			yyVAL.expression = Arithmetic{LHS: yyDollar[1].expression, Operator: int('/'), RHS: yyDollar[3].expression}
 		}
-	case 57:
+	case 54:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:382
+		//line parser.y:367
 		{
 			yyVAL.expression = Arithmetic{LHS: yyDollar[1].expression, Operator: int('%'), RHS: yyDollar[3].expression}
 		}
-	case 58:
+	case 55:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:388
+		//line parser.y:373
 		{
 			yyVAL.expression = Logic{LHS: yyDollar[1].expression, Operator: yyDollar[2].token, RHS: yyDollar[3].expression}
 		}
-	case 59:
+	case 56:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:392
+		//line parser.y:377
 		{
 			yyVAL.expression = Logic{LHS: yyDollar[1].expression, Operator: yyDollar[2].token, RHS: yyDollar[3].expression}
 		}
-	case 60:
+	case 57:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:396
+		//line parser.y:381
 		{
 			yyVAL.expression = Logic{LHS: nil, Operator: yyDollar[1].token, RHS: yyDollar[2].expression}
 		}
+	case 58:
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.y:387
+		{
+			yyVAL.expression = yyDollar[1].expression
+		}
+	case 59:
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.y:391
+		{
+			yyVAL.expression = yyDollar[1].expression
+		}
+	case 60:
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.y:395
+		{
+			yyVAL.expression = yyDollar[1].expression
+		}
 	case 61:
-		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:402
-		{
-			yyVAL.expression = yyDollar[1].expression
-		}
-	case 62:
-		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:406
-		{
-			yyVAL.expression = yyDollar[1].expression
-		}
-	case 63:
-		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:410
-		{
-			yyVAL.expression = yyDollar[1].expression
-		}
-	case 64:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:414
+		//line parser.y:399
 		{
 			yyVAL.expression = Parentheses{Expr: yyDollar[2].expression}
 		}
-	case 65:
+	case 62:
 		yyDollar = yyS[yypt-4 : yypt+1]
-		//line parser.y:420
+		//line parser.y:405
 		{
 			yyVAL.expression = Function{Name: yyDollar[1].identifier.Literal, Option: yyDollar[3].expression.(Option)}
 		}
-	case 66:
+	case 63:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:426
+		//line parser.y:411
 		{
 			yyVAL.expression = Option{}
 		}
-	case 67:
+	case 64:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:430
+		//line parser.y:415
 		{
 			yyVAL.expression = Option{Distinct: yyDollar[1].token, Args: []Expression{AllColumns{}}}
 		}
-	case 68:
+	case 65:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:434
+		//line parser.y:419
 		{
 			yyVAL.expression = Option{Distinct: yyDollar[1].token, Args: yyDollar[2].expressions}
 		}
-	case 69:
+	case 66:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:440
+		//line parser.y:425
 		{
 			yyVAL.expression = Table{Object: yyDollar[1].identifier}
 		}
-	case 70:
+	case 67:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:444
+		//line parser.y:429
 		{
 			yyVAL.expression = Table{Object: yyDollar[1].identifier, Alias: yyDollar[2].identifier}
 		}
-	case 71:
+	case 68:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:448
+		//line parser.y:433
 		{
 			yyVAL.expression = Table{Object: yyDollar[1].identifier, As: yyDollar[2].token, Alias: yyDollar[3].identifier}
 		}
+	case 69:
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.y:437
+		{
+			yyVAL.expression = Table{Object: yyDollar[1].expression}
+		}
+	case 70:
+		yyDollar = yyS[yypt-2 : yypt+1]
+		//line parser.y:441
+		{
+			yyVAL.expression = Table{Object: yyDollar[1].expression, Alias: yyDollar[2].identifier}
+		}
+	case 71:
+		yyDollar = yyS[yypt-3 : yypt+1]
+		//line parser.y:445
+		{
+			yyVAL.expression = Table{Object: yyDollar[1].expression, As: yyDollar[2].token, Alias: yyDollar[3].identifier}
+		}
 	case 72:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:452
+		//line parser.y:449
 		{
 			yyVAL.expression = Table{Object: yyDollar[1].expression}
 		}
 	case 73:
-		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:456
-		{
-			yyVAL.expression = Table{Object: yyDollar[1].expression, Alias: yyDollar[2].identifier}
-		}
-	case 74:
-		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:460
-		{
-			yyVAL.expression = Table{Object: yyDollar[1].expression, As: yyDollar[2].token, Alias: yyDollar[3].identifier}
-		}
-	case 75:
-		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:464
-		{
-			yyVAL.expression = Table{Object: yyDollar[1].expression}
-		}
-	case 76:
 		yyDollar = yyS[yypt-5 : yypt+1]
-		//line parser.y:470
+		//line parser.y:455
 		{
 			yyVAL.expression = Join{Join: yyDollar[3].token.Literal, Table: yyDollar[1].expression.(Table), JoinTable: yyDollar[4].expression.(Table), Natural: Token{}, JoinType: yyDollar[2].token, Condition: yyDollar[5].expression}
 		}
-	case 77:
+	case 74:
 		yyDollar = yyS[yypt-5 : yypt+1]
-		//line parser.y:474
+		//line parser.y:459
 		{
 			yyVAL.expression = Join{Join: yyDollar[4].token.Literal, Table: yyDollar[1].expression.(Table), JoinTable: yyDollar[5].expression.(Table), Natural: yyDollar[2].token, JoinType: yyDollar[3].token, Condition: nil}
 		}
-	case 78:
+	case 75:
 		yyDollar = yyS[yypt-6 : yypt+1]
-		//line parser.y:478
+		//line parser.y:463
 		{
 			yyVAL.expression = Join{Join: yyDollar[4].token.Literal, Table: yyDollar[1].expression.(Table), JoinTable: yyDollar[5].expression.(Table), Natural: Token{}, JoinType: yyDollar[3].token, Direction: yyDollar[2].token, Condition: yyDollar[6].expression}
 		}
-	case 79:
+	case 76:
 		yyDollar = yyS[yypt-6 : yypt+1]
-		//line parser.y:482
+		//line parser.y:467
 		{
 			yyVAL.expression = Join{Join: yyDollar[5].token.Literal, Table: yyDollar[1].expression.(Table), JoinTable: yyDollar[6].expression.(Table), Natural: yyDollar[2].token, JoinType: yyDollar[4].token, Direction: yyDollar[3].token, Condition: nil}
 		}
-	case 80:
+	case 77:
 		yyDollar = yyS[yypt-4 : yypt+1]
-		//line parser.y:486
+		//line parser.y:471
 		{
 			yyVAL.expression = Join{Join: yyDollar[3].token.Literal, Table: yyDollar[1].expression.(Table), JoinTable: yyDollar[4].expression.(Table), Natural: Token{}, JoinType: yyDollar[2].token, Condition: nil}
 		}
-	case 81:
+	case 78:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:492
+		//line parser.y:477
 		{
 			yyVAL.expression = nil
 		}
-	case 82:
+	case 79:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:496
+		//line parser.y:481
 		{
 			yyVAL.expression = JoinCondition{Literal: yyDollar[1].token.Literal, On: yyDollar[2].expression}
 		}
-	case 83:
+	case 80:
 		yyDollar = yyS[yypt-4 : yypt+1]
-		//line parser.y:500
+		//line parser.y:485
 		{
 			yyVAL.expression = JoinCondition{Literal: yyDollar[1].token.Literal, Using: yyDollar[3].expressions}
 		}
-	case 84:
+	case 81:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:506
+		//line parser.y:491
 		{
 			yyVAL.expression = yyDollar[1].expression
 		}
-	case 85:
+	case 82:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:510
+		//line parser.y:495
 		{
 			yyVAL.expression = AllColumns{}
 		}
-	case 86:
+	case 83:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:516
+		//line parser.y:501
 		{
 			yyVAL.expression = Field{Object: yyDollar[1].expression}
 		}
-	case 87:
+	case 84:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:520
+		//line parser.y:505
 		{
 			yyVAL.expression = Field{Object: yyDollar[1].expression, As: yyDollar[2].token, Alias: yyDollar[3].identifier}
 		}
-	case 88:
+	case 85:
 		yyDollar = yyS[yypt-5 : yypt+1]
-		//line parser.y:526
+		//line parser.y:511
 		{
 			yyVAL.expression = Case{Case: yyDollar[1].token.Literal, End: yyDollar[5].token.Literal, Value: yyDollar[2].expression, When: yyDollar[3].expressions, Else: yyDollar[4].expression}
 		}
-	case 89:
+	case 86:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:532
+		//line parser.y:517
 		{
 			yyVAL.expression = nil
 		}
-	case 90:
+	case 87:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:536
+		//line parser.y:521
 		{
 			yyVAL.expression = yyDollar[1].expression
 		}
-	case 91:
+	case 88:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:542
+		//line parser.y:527
 		{
 			yyVAL.expression = nil
 		}
-	case 92:
+	case 89:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:546
+		//line parser.y:531
 		{
 			yyVAL.expression = CaseElse{Else: yyDollar[1].token.Literal, Result: yyDollar[2].expression}
 		}
-	case 93:
+	case 90:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:552
+		//line parser.y:537
 		{
 			yyVAL.expressions = []Expression{yyDollar[1].expression}
+		}
+	case 91:
+		yyDollar = yyS[yypt-3 : yypt+1]
+		//line parser.y:541
+		{
+			yyVAL.expressions = append([]Expression{yyDollar[1].expression}, yyDollar[3].expressions...)
+		}
+	case 92:
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.y:547
+		{
+			yyVAL.expressions = []Expression{yyDollar[1].expression}
+		}
+	case 93:
+		yyDollar = yyS[yypt-3 : yypt+1]
+		//line parser.y:551
+		{
+			yyVAL.expressions = append([]Expression{yyDollar[1].expression}, yyDollar[3].expressions...)
 		}
 	case 94:
-		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:556
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.y:557
 		{
-			yyVAL.expressions = append([]Expression{yyDollar[1].expression}, yyDollar[3].expressions...)
+			yyVAL.expressions = []Expression{yyDollar[1].expression}
 		}
 	case 95:
-		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:562
+		yyDollar = yyS[yypt-3 : yypt+1]
+		//line parser.y:561
 		{
-			yyVAL.expressions = []Expression{yyDollar[1].expression}
+			yyVAL.expressions = append([]Expression{yyDollar[1].expression}, yyDollar[3].expressions...)
 		}
 	case 96:
-		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:566
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.y:567
 		{
-			yyVAL.expressions = append([]Expression{yyDollar[1].expression}, yyDollar[3].expressions...)
+			yyVAL.expressions = []Expression{yyDollar[1].expression}
 		}
 	case 97:
-		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:572
+		yyDollar = yyS[yypt-3 : yypt+1]
+		//line parser.y:571
 		{
-			yyVAL.expressions = []Expression{yyDollar[1].expression}
+			yyVAL.expressions = append([]Expression{yyDollar[1].expression}, yyDollar[3].expressions...)
 		}
 	case 98:
-		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:576
-		{
-			yyVAL.expressions = append([]Expression{yyDollar[1].expression}, yyDollar[3].expressions...)
-		}
-	case 99:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:582
-		{
-			yyVAL.expressions = []Expression{yyDollar[1].expression}
-		}
-	case 100:
-		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:586
-		{
-			yyVAL.expressions = append([]Expression{yyDollar[1].expression}, yyDollar[3].expressions...)
-		}
-	case 101:
-		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:592
+		//line parser.y:577
 		{
 			yyVAL.expressions = []Expression{yyDollar[1].identifier}
 		}
-	case 102:
+	case 99:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:596
+		//line parser.y:581
 		{
 			yyVAL.expressions = append([]Expression{yyDollar[1].identifier}, yyDollar[3].expressions...)
 		}
-	case 103:
+	case 100:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:602
+		//line parser.y:587
 		{
 			yyVAL.expressions = []Expression{yyDollar[1].expression}
 		}
-	case 104:
+	case 101:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:606
+		//line parser.y:591
 		{
 			yyVAL.expressions = append([]Expression{yyDollar[1].expression}, yyDollar[3].expressions...)
 		}
-	case 105:
+	case 102:
 		yyDollar = yyS[yypt-4 : yypt+1]
-		//line parser.y:612
+		//line parser.y:597
 		{
 			yyVAL.expressions = []Expression{CaseWhen{When: yyDollar[1].token.Literal, Then: yyDollar[3].token.Literal, Condition: yyDollar[2].expression, Result: yyDollar[4].expression}}
 		}
-	case 106:
+	case 103:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:616
+		//line parser.y:601
 		{
 			yyVAL.expressions = append(yyDollar[1].expressions, yyDollar[2].expressions...)
 		}
-	case 107:
+	case 104:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:622
+		//line parser.y:607
 		{
 			yyVAL.identifier = Identifier{Literal: yyDollar[1].token.Literal, Quoted: yyDollar[1].token.Quoted}
 		}
-	case 108:
+	case 105:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:628
+		//line parser.y:613
 		{
 			yyVAL.text = NewString(yyDollar[1].token.Literal)
 		}
-	case 109:
+	case 106:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:634
+		//line parser.y:619
 		{
 			yyVAL.integer = NewIntegerFromString(yyDollar[1].token.Literal)
 		}
-	case 110:
+	case 107:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:638
+		//line parser.y:623
 		{
 			i := yyDollar[2].integer.Value() * -1
 			yyVAL.integer = NewInteger(i)
 		}
-	case 111:
+	case 108:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:645
+		//line parser.y:630
 		{
 			yyVAL.float = NewFloatFromString(yyDollar[1].token.Literal)
 		}
-	case 112:
+	case 109:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:649
+		//line parser.y:634
 		{
 			f := yyDollar[2].float.Value() * -1
 			yyVAL.float = NewFloat(f)
 		}
-	case 113:
+	case 110:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:656
+		//line parser.y:641
 		{
 			yyVAL.ternary = NewTernaryFromString(yyDollar[1].token.Literal)
 		}
-	case 114:
+	case 111:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:662
+		//line parser.y:647
 		{
 			yyVAL.null = NewNullFromString(yyDollar[1].token.Literal)
 		}
-	case 115:
+	case 112:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:668
+		//line parser.y:653
 		{
 			yyVAL.token = Token{}
+		}
+	case 113:
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.y:657
+		{
+			yyVAL.token = yyDollar[1].token
+		}
+	case 114:
+		yyDollar = yyS[yypt-0 : yypt+1]
+		//line parser.y:663
+		{
+			yyVAL.token = Token{}
+		}
+	case 115:
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.y:667
+		{
+			yyVAL.token = yyDollar[1].token
 		}
 	case 116:
-		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:672
+		yyDollar = yyS[yypt-0 : yypt+1]
+		//line parser.y:673
 		{
-			yyVAL.token = yyDollar[1].token
+			yyVAL.token = Token{}
 		}
 	case 117:
-		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:678
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.y:677
 		{
-			yyVAL.token = Token{}
+			yyVAL.token = yyDollar[1].token
 		}
 	case 118:
-		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:682
+		yyDollar = yyS[yypt-0 : yypt+1]
+		//line parser.y:683
 		{
-			yyVAL.token = yyDollar[1].token
+			yyVAL.token = Token{}
 		}
 	case 119:
-		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:688
-		{
-			yyVAL.token = Token{}
-		}
-	case 120:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:692
+		//line parser.y:687
 		{
 			yyVAL.token = yyDollar[1].token
 		}
-	case 121:
+	case 120:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:698
+		//line parser.y:693
 		{
 			yyVAL.token = Token{}
+		}
+	case 121:
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.y:697
+		{
+			yyVAL.token = yyDollar[1].token
 		}
 	case 122:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:702
+		//line parser.y:701
 		{
 			yyVAL.token = yyDollar[1].token
 		}
 	case 123:
-		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:708
-		{
-			yyVAL.token = Token{}
-		}
-	case 124:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:712
+		//line parser.y:705
 		{
 			yyVAL.token = yyDollar[1].token
+		}
+	case 124:
+		yyDollar = yyS[yypt-0 : yypt+1]
+		//line parser.y:711
+		{
+			yyVAL.token = Token{}
 		}
 	case 125:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:716
-		{
-			yyVAL.token = yyDollar[1].token
-		}
-	case 126:
-		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:720
-		{
-			yyVAL.token = yyDollar[1].token
-		}
-	case 127:
-		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:726
-		{
-			yyVAL.token = Token{}
-		}
-	case 128:
-		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:730
+		//line parser.y:715
 		{
 			yyVAL.token = Token{Token: ';', Literal: string(';')}
 		}
