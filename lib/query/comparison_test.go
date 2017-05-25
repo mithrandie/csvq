@@ -39,18 +39,18 @@ var compareCombinedlyTests = []struct {
 		Result: GREATER,
 	},
 	{
-		LHS:    parser.NewDatetimeFromString("2006-01-02 15:04:05"),
-		RHS:    parser.NewDatetimeFromString("2006-01-02 15:04:05"),
+		LHS:    parser.NewDatetimeFromString("2006-01-02T15:04:05-07:00"),
+		RHS:    parser.NewDatetimeFromString("2006-01-02T15:04:05-07:00"),
 		Result: EQUAL,
 	},
 	{
-		LHS:    parser.NewDatetimeFromString("2006-01-02 15:04:05"),
-		RHS:    parser.NewDatetimeFromString("2006-02-02 15:04:05"),
+		LHS:    parser.NewDatetimeFromString("2006-01-02T15:04:05-07:00"),
+		RHS:    parser.NewDatetimeFromString("2006-02-02T15:04:05-07:00"),
 		Result: LESS,
 	},
 	{
-		LHS:    parser.NewDatetimeFromString("2006-02-02 15:04:05"),
-		RHS:    parser.NewDatetimeFromString("2006-01-02 15:04:05"),
+		LHS:    parser.NewDatetimeFromString("2006-02-02T15:04:05-07:00"),
+		RHS:    parser.NewDatetimeFromString("2006-01-02T15:04:05-07:00"),
 		Result: GREATER,
 	},
 	{

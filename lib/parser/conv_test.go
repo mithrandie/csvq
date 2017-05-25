@@ -55,6 +55,29 @@ func TestFloat64ToPrimary(t *testing.T) {
 	}
 }
 
+func TestPrimaryToInteger(t *testing.T) {
+	var p Primary
+	var i Primary
+
+	p = NewInteger(1)
+	i = PrimaryToInteger(p)
+	if _, ok := i.(Integer); !ok {
+		t.Errorf("primary type = %T, want Integer for %#v", i, p)
+	}
+
+	p = NewString("1")
+	i = PrimaryToInteger(p)
+	if _, ok := i.(Integer); !ok {
+		t.Errorf("primary type = %T, want Integer for %#v", i, p)
+	}
+
+	p = NewString("error")
+	i = PrimaryToInteger(p)
+	if _, ok := i.(Null); !ok {
+		t.Errorf("primary type = %T, want Integer for %#v", i, p)
+	}
+}
+
 func TestPrimaryToFloat(t *testing.T) {
 	var p Primary
 	var f Primary

@@ -51,6 +51,10 @@ type Flags struct {
 	OutFile       string
 	Format        Format
 	WithoutHeader bool
+
+	//Use in tests
+	Location string
+	Now      string
 }
 
 var (
@@ -71,6 +75,8 @@ func GetFlags() *Flags {
 			OutFile:       "",
 			Format:        TEXT,
 			WithoutHeader: false,
+			Location:      "Local",
+			Now:           "",
 		}
 	})
 	return flags
