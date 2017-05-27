@@ -276,7 +276,7 @@ func (f Filter) evalSubquery(expr parser.Subquery) (parser.Primary, error) {
 func (f Filter) evalFunction(expr parser.Function) (parser.Primary, error) {
 	name := strings.ToUpper(expr.Name)
 	if _, ok := AggregateFunctions[name]; ok {
-		return f.evalAggreaateFunction(expr)
+		return f.evalAggregateFunction(expr)
 	}
 
 	fn, ok := Functions[name]
@@ -300,7 +300,7 @@ func (f Filter) evalFunction(expr parser.Function) (parser.Primary, error) {
 	return fn(args)
 }
 
-func (f Filter) evalAggreaateFunction(expr parser.Function) (parser.Primary, error) {
+func (f Filter) evalAggregateFunction(expr parser.Function) (parser.Primary, error) {
 	if !f[0].View.isGrouped {
 		return nil, &NotGroupedError{
 			Function: expr.Name,
