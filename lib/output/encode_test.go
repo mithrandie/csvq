@@ -10,15 +10,16 @@ import (
 )
 
 var encodeTests = []struct {
-	Name          string
-	Stmt          query.Statement
-	View          *query.View
-	Count         int
-	Format        cmd.Format
-	LineBreak     cmd.LineBreak
-	WithoutHeader bool
-	Result        string
-	Error         string
+	Name           string
+	Stmt           query.Statement
+	View           *query.View
+	Count          int
+	Format         cmd.Format
+	LineBreak      cmd.LineBreak
+	WriteDelimiter rune
+	WithoutHeader  bool
+	Result         string
+	Error          string
 }{
 	{
 		Name: "Text Empty",
@@ -83,8 +84,9 @@ var encodeTests = []struct {
 				query.NewRecord([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
 			},
 		},
-		Count:  3,
-		Format: cmd.TSV,
+		Count:          3,
+		Format:         cmd.TSV,
+		WriteDelimiter: '\t',
 		Result: "\"c1\"\t\"c2\nsecond line\"\t\"c3\"\n" +
 			"-1\tfalse\ttrue\n" +
 			"2.0123\t\"2016-02-01 16:00:00.123456\"\t\"abcdef\"\n" +
@@ -173,6 +175,10 @@ func TestEncode(t *testing.T) {
 		flags.WithoutHeader = false
 		if v.WithoutHeader {
 			flags.WithoutHeader = true
+		}
+		flags.WriteDelimiter = ','
+		if v.WriteDelimiter != 0 {
+			flags.WriteDelimiter = v.WriteDelimiter
 		}
 
 		result := query.Result{

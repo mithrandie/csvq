@@ -40,19 +40,22 @@ const (
 )
 
 type Flags struct {
+	// Global Options
 	Delimiter   rune
 	Encoding    Encoding
 	Repository  string
 	NoHeader    bool
 	WithoutNull bool
 
-	WriteEncoding Encoding
-	LineBreak     LineBreak
-	OutFile       string
-	Format        Format
-	WithoutHeader bool
+	// Write Subcommand Options
+	WriteEncoding  Encoding
+	LineBreak      LineBreak
+	OutFile        string
+	Format         Format
+	WriteDelimiter rune
+	WithoutHeader  bool
 
-	//Use in tests
+	// Use in tests
 	Location string
 	Now      string
 }
@@ -65,18 +68,19 @@ var (
 func GetFlags() *Flags {
 	getFlags.Do(func() {
 		flags = &Flags{
-			Delimiter:     UNDEF,
-			Encoding:      UTF8,
-			Repository:    ".",
-			NoHeader:      false,
-			WithoutNull:   false,
-			WriteEncoding: UTF8,
-			LineBreak:     LF,
-			OutFile:       "",
-			Format:        TEXT,
-			WithoutHeader: false,
-			Location:      "Local",
-			Now:           "",
+			Delimiter:      UNDEF,
+			Encoding:       UTF8,
+			Repository:     ".",
+			NoHeader:       false,
+			WithoutNull:    false,
+			WriteEncoding:  UTF8,
+			LineBreak:      LF,
+			OutFile:        "",
+			Format:         TEXT,
+			WriteDelimiter: ',',
+			WithoutHeader:  false,
+			Location:       "Local",
+			Now:            "",
 		}
 	})
 	return flags
@@ -215,6 +219,25 @@ func SetFormat(s string) error {
 	}
 
 	f.Format = fm
+	return nil
+}
+
+func SetWriteDelimiter(s string) error {
+	f := GetFlags()
+
+	if len(s) < 1 {
+		if f.Format == TSV {
+			f.WriteDelimiter = '\t'
+		}
+		return nil
+	}
+
+	runes := []rune(s)
+	if 1 < len(runes) {
+		return errors.New("write-delimiter must be 1 character")
+	}
+
+	f.WriteDelimiter = runes[0]
 	return nil
 }
 

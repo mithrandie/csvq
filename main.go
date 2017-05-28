@@ -25,7 +25,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "delimiter, d",
 			Value: ",",
-			Usage: "field delimiter (exam: , for comma, \"\\t\" for tab)",
+			Usage: "field delimiter (exam: \",\" for comma, \"\\t\" for tab)",
 		},
 		cli.StringFlag{
 			Name:  "encoding, e",
@@ -68,6 +68,11 @@ func main() {
 				cli.StringFlag{
 					Name:  "format, f",
 					Usage: "output format. one of: csv|tsv|json|text",
+				},
+				cli.StringFlag{
+					Name:  "write-delimiter, D",
+					Value: ",",
+					Usage: "field delimiter for csv or tsv (exam: \",\" for comma, \"\\t\" for tab)",
 				},
 				cli.BoolFlag{
 					Name:  "without-header",
@@ -146,6 +151,9 @@ func setWriteFlags(c *cli.Context) error {
 		return err
 	}
 	if err := cmd.SetFormat(c.String("format")); err != nil {
+		return err
+	}
+	if err := cmd.SetWriteDelimiter(c.String("write-delimiter")); err != nil {
 		return err
 	}
 	if err := cmd.SetWithoutHeader(c.Bool("without-header")); err != nil {

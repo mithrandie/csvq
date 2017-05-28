@@ -219,6 +219,35 @@ func TestSetFormat(t *testing.T) {
 	}
 }
 
+func TestSetWriteDelimiter(t *testing.T) {
+	flags := GetFlags()
+
+	flags.Format = CSV
+	SetWriteDelimiter("")
+	if flags.WriteDelimiter != ',' {
+		t.Errorf("write-delimiter = %q, expect to set %q for %q, format = %s", string(flags.WriteDelimiter), ',', "", flags.Format)
+	}
+
+	flags.Format = TSV
+	SetWriteDelimiter("")
+	if flags.WriteDelimiter != '\t' {
+		t.Errorf("write-delimiter = %q, expect to set %q for %q, format = %s", string(flags.WriteDelimiter), '\t', "", flags.Format)
+	}
+
+	SetWriteDelimiter("\t")
+	if flags.WriteDelimiter != '\t' {
+		t.Errorf("write-delimiter = %q, expect to set %q for %q", string(flags.WriteDelimiter), "\t", "\t")
+	}
+
+	expectErr := "write-delimiter must be 1 character"
+	err := SetWriteDelimiter("//")
+	if err == nil {
+		t.Errorf("no error, want error %q for %s", expectErr, "//")
+	} else if err.Error() != expectErr {
+		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "//")
+	}
+}
+
 func TestSetWithoutHeader(t *testing.T) {
 	flags := GetFlags()
 

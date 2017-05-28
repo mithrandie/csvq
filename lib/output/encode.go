@@ -32,10 +32,8 @@ func Encode(result query.Result) (string, error) {
 		switch flags.Format {
 		case cmd.TEXT:
 			s = encodeText(result)
-		case cmd.CSV:
-			s = encodeCSV(result, ",", flags.WithoutHeader)
-		case cmd.TSV:
-			s = encodeCSV(result, "\t", flags.WithoutHeader)
+		case cmd.CSV, cmd.TSV:
+			s = encodeCSV(result, string(flags.WriteDelimiter), flags.WithoutHeader)
 		case cmd.JSON:
 			s = encodeJson(result)
 		}
