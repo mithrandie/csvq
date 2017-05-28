@@ -78,6 +78,8 @@ var tokenLiterals = map[int]string{
 	THEN:          "THEN",
 	ELSE:          "ELSE",
 	END:           "END",
+	GROUP_CONCAT:  "GROUP_CONCAT",
+	SEPARATOR:     "SEPARATOR",
 	COMPARISON_OP: "COMPARISON_OP",
 	STRING_OP:     "STRING_OP",
 }
@@ -135,6 +137,8 @@ var keywords = []int{
 	THEN,
 	ELSE,
 	END,
+	GROUP_CONCAT,
+	SEPARATOR,
 }
 
 var comparisonOperators = []string{

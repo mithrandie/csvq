@@ -56,6 +56,8 @@ func (f Filter) Evaluate(expr parser.Expression) (parser.Primary, error) {
 			primary, err = f.evalSubquery(expr.(parser.Subquery))
 		case parser.Function:
 			primary, err = f.evalFunction(expr.(parser.Function))
+		case parser.GroupConcat:
+			primary, err = f.evalGroupConcat(expr.(parser.GroupConcat))
 		case parser.Case:
 			primary, err = f.evalCase(expr.(parser.Case))
 		case parser.Logic:
@@ -341,6 +343,67 @@ func (f Filter) evalAggregateFunction(expr parser.Function) (parser.Primary, err
 	name := strings.ToUpper(expr.Name)
 	fn, _ := AggregateFunctions[name]
 	return fn(expr.Option.IsDistinct(), list), nil
+}
+
+func (f Filter) evalGroupConcat(expr parser.GroupConcat) (parser.Primary, error) {
+	var in = func(list []string, item string) bool {
+		for _, v := range list {
+			if v == item {
+				return true
+			}
+		}
+		return false
+	}
+
+	if !f[0].View.isGrouped {
+		return nil, &NotGroupedError{
+			Function: expr.GroupConcat,
+			Err:      ErrNotGrouped,
+		}
+	}
+
+	if len(expr.Option.Args) != 1 {
+		return nil, errors.New(fmt.Sprintf("function %s takes 1 argument", expr.GroupConcat))
+	}
+
+	arg := expr.Option.Args[0]
+	if _, ok := arg.(parser.AllColumns); ok {
+		return nil, errors.New(fmt.Sprintf("syntax error: %s", expr))
+	}
+
+	fr := f[0]
+	view := NewViewFromGroupedRecord(fr)
+	if expr.OrderBy != nil {
+		err := view.OrderBy(expr.OrderBy.(parser.OrderByClause))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	list := []string{}
+	for i := 0; i < view.RecordLen(); i++ {
+		var filter Filter = []FilterRecord{{View: view, RecordIndex: i}}
+		p, err := filter.Evaluate(arg)
+		if err != nil {
+			if _, ok := err.(*NotGroupedError); ok {
+				err = errors.New(fmt.Sprintf("syntax error: %s", expr))
+			}
+			return nil, err
+		}
+		s := parser.PrimaryToString(p)
+		if parser.IsNull(s) {
+			continue
+		}
+		if expr.Option.IsDistinct() && in(list, s.(parser.String).Value()) {
+			continue
+		}
+		list = append(list, s.(parser.String).Value())
+	}
+
+	if len(list) < 1 {
+		return parser.NewNull(), nil
+	}
+	return parser.NewString(strings.Join(list, expr.Separator)), nil
 }
 
 func (f Filter) evalCase(expr parser.Case) (parser.Primary, error) {

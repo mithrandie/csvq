@@ -1199,6 +1199,265 @@ var filterEvaluateTests = []struct {
 		Result: parser.NewInteger(3),
 	},
 	{
+		Name: "GroupConcat Function",
+		Filter: []FilterRecord{
+			{
+				View: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					Records: []Record{
+						{
+							NewGroupCell([]parser.Primary{
+								parser.NewInteger(1),
+								parser.NewInteger(2),
+								parser.NewInteger(3),
+								parser.NewInteger(4),
+							}),
+							NewGroupCell([]parser.Primary{
+								parser.NewString("str2"),
+								parser.NewString("str1"),
+								parser.NewNull(),
+								parser.NewString("str2"),
+							}),
+						},
+					},
+					isGrouped: true,
+				},
+				RecordIndex: 0,
+			},
+		},
+		Expr: parser.GroupConcat{
+			GroupConcat: "group_concat",
+			Option: parser.Option{
+				Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
+				Args: []parser.Expression{
+					parser.Identifier{Literal: "column2"},
+				},
+			},
+			OrderBy: parser.OrderByClause{
+				Items: []parser.Expression{
+					parser.OrderItem{Item: parser.Identifier{Literal: "column2"}},
+				},
+			},
+			Separator: ",",
+		},
+		Result: parser.NewString("str1,str2"),
+	},
+	{
+		Name: "GroupConcat Function Null",
+		Filter: []FilterRecord{
+			{
+				View: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					Records: []Record{
+						{
+							NewGroupCell([]parser.Primary{
+								parser.NewInteger(1),
+								parser.NewInteger(2),
+								parser.NewInteger(3),
+								parser.NewInteger(4),
+							}),
+							NewGroupCell([]parser.Primary{
+								parser.NewNull(),
+								parser.NewNull(),
+								parser.NewNull(),
+								parser.NewNull(),
+							}),
+						},
+					},
+					isGrouped: true,
+				},
+				RecordIndex: 0,
+			},
+		},
+		Expr: parser.GroupConcat{
+			Option: parser.Option{
+				Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
+				Args: []parser.Expression{
+					parser.Identifier{Literal: "column2"},
+				},
+			},
+		},
+		Result: parser.NewNull(),
+	},
+	{
+		Name: "GroupConcat Function Not Grouped Error",
+		Filter: []FilterRecord{
+			{
+				View: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					Records: []Record{
+						NewRecord([]parser.Primary{
+							parser.NewInteger(1),
+							parser.NewString("str2"),
+						}),
+					},
+				},
+				RecordIndex: 0,
+			},
+		},
+		Expr: parser.GroupConcat{
+			GroupConcat: "group_concat",
+			Option: parser.Option{
+				Args: []parser.Expression{},
+			},
+		},
+		Error: "function group_concat: records are not grouped",
+	},
+	{
+		Name: "GroupConcat Function Argument Error",
+		Filter: []FilterRecord{
+			{
+				View: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					Records: []Record{
+						{
+							NewGroupCell([]parser.Primary{
+								parser.NewInteger(1),
+								parser.NewNull(),
+								parser.NewInteger(3),
+							}),
+							NewGroupCell([]parser.Primary{
+								parser.NewString("str1"),
+								parser.NewString("str2"),
+								parser.NewString("str3"),
+							}),
+						},
+					},
+					isGrouped: true,
+				},
+				RecordIndex: 0,
+			},
+		},
+		Expr: parser.GroupConcat{
+			GroupConcat: "group_concat",
+			Option: parser.Option{
+				Args: []parser.Expression{},
+			},
+		},
+		Error: "function group_concat takes 1 argument",
+	},
+	{
+		Name: "GroupConcat Function AllColumns",
+		Filter: []FilterRecord{
+			{
+				View: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					Records: []Record{
+						{
+							NewGroupCell([]parser.Primary{
+								parser.NewInteger(1),
+								parser.NewNull(),
+								parser.NewInteger(3),
+							}),
+							NewGroupCell([]parser.Primary{
+								parser.NewString("str1"),
+								parser.NewString("str2"),
+								parser.NewString("str3"),
+							}),
+						},
+					},
+					isGrouped: true,
+				},
+				RecordIndex: 0,
+			},
+		},
+		Expr: parser.GroupConcat{
+			GroupConcat: "group_concat",
+			Option: parser.Option{
+				Args: []parser.Expression{
+					parser.AllColumns{},
+				},
+			},
+		},
+		Error: "syntax error: group_concat(*)",
+	},
+	{
+		Name: "GroupConcat Function Identification Error",
+		Filter: []FilterRecord{
+			{
+				View: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					Records: []Record{
+						{
+							NewGroupCell([]parser.Primary{
+								parser.NewInteger(1),
+								parser.NewInteger(2),
+								parser.NewInteger(3),
+								parser.NewInteger(4),
+							}),
+							NewGroupCell([]parser.Primary{
+								parser.NewString("str2"),
+								parser.NewString("str1"),
+								parser.NewNull(),
+								parser.NewString("str2"),
+							}),
+						},
+					},
+					isGrouped: true,
+				},
+				RecordIndex: 0,
+			},
+		},
+		Expr: parser.GroupConcat{
+			GroupConcat: "group_concat",
+			Option: parser.Option{
+				Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
+				Args: []parser.Expression{
+					parser.Identifier{Literal: "column2"},
+				},
+			},
+			OrderBy: parser.OrderByClause{
+				Items: []parser.Expression{
+					parser.OrderItem{Item: parser.Identifier{Literal: "notexist"}},
+				},
+			},
+			Separator: ",",
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "GroupConcat Function Duplicate Error",
+		Filter: []FilterRecord{
+			{
+				View: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					Records: []Record{
+						{
+							NewGroupCell([]parser.Primary{
+								parser.NewInteger(1),
+								parser.NewNull(),
+								parser.NewInteger(3),
+							}),
+							NewGroupCell([]parser.Primary{
+								parser.NewString("str1"),
+								parser.NewString("str2"),
+								parser.NewString("str3"),
+							}),
+						},
+					},
+					isGrouped: true,
+				},
+				RecordIndex: 0,
+			},
+		},
+		Expr: parser.GroupConcat{
+			GroupConcat: "group_concat",
+			Option: parser.Option{
+				Args: []parser.Expression{
+					parser.Function{
+						Name: "avg",
+						Option: parser.Option{
+							Args: []parser.Expression{
+								parser.Identifier{Literal: "column1"},
+							},
+						},
+					},
+				},
+			},
+		},
+		Error: "syntax error: group_concat(avg(column1))",
+	},
+	{
 		Name: "Case Comparison",
 		Expr: parser.Case{
 			Value: parser.NewInteger(2),

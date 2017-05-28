@@ -39,6 +39,7 @@ package parser
 %type<expression>  filter
 %type<expression>  function
 %type<expression>  option
+%type<expression>  group_concat
 %type<expression>  table
 %type<expression>  join
 %type<expression>  join_condition
@@ -78,6 +79,7 @@ package parser
 %token<token> DISTINCT WITH
 %token<token> TRUE FALSE UNKNOWN
 %token<token> CASE WHEN THEN ELSE END
+%token<token> GROUP_CONCAT SEPARATOR
 %token<token> COMPARISON_OP STRING_OP
 
 %left OR
@@ -407,6 +409,10 @@ function
     {
         $$ = Function{Name: $1.Literal, Option: $3.(Option)}
     }
+    | group_concat
+    {
+        $$ = $1
+    }
 
 option
     :
@@ -420,6 +426,16 @@ option
     | distinct filters
     {
         $$ = Option{Distinct: $1, Args: $2}
+    }
+
+group_concat
+    : GROUP_CONCAT '(' option order_by_clause ')'
+    {
+        $$ = GroupConcat{GroupConcat: $1.Literal, Option: $3.(Option), OrderBy: $4}
+    }
+    | GROUP_CONCAT '(' option order_by_clause SEPARATOR text ')'
+    {
+        $$ = GroupConcat{GroupConcat: $1.Literal, Option: $3.(Option), OrderBy: $4, SeparatorLit: $5.Literal, Separator: $6.Value()}
     }
 
 table

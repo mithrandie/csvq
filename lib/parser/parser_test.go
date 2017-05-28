@@ -711,6 +711,46 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select group_concat(column1 order by column1)",
+		Output: []Statement{
+			SelectQuery{
+				SelectClause: SelectClause{
+					Select: "select",
+					Fields: []Expression{
+						Field{Object: GroupConcat{
+							GroupConcat: "group_concat",
+							Option:      Option{Args: []Expression{Identifier{Literal: "column1"}}},
+							OrderBy: OrderByClause{
+								OrderBy: "order by",
+								Items: []Expression{
+									OrderItem{Item: Identifier{Literal: "column1"}},
+								},
+							},
+						}},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select group_concat(column1 separator ',')",
+		Output: []Statement{
+			SelectQuery{
+				SelectClause: SelectClause{
+					Select: "select",
+					Fields: []Expression{
+						Field{Object: GroupConcat{
+							GroupConcat:  "group_concat",
+							Option:       Option{Args: []Expression{Identifier{Literal: "column1"}}},
+							SeparatorLit: "separator",
+							Separator:    ",",
+						}},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "select 1 from table1 cross join table2",
 		Output: []Statement{
 			SelectQuery{

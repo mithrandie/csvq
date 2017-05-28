@@ -878,6 +878,33 @@ func (ce CaseElse) String() string {
 	return joinWithSpace(s)
 }
 
+type GroupConcat struct {
+	GroupConcat  string
+	Option       Option
+	OrderBy      Expression
+	SeparatorLit string
+	Separator    string
+}
+
+func (gc GroupConcat) String() string {
+	s := []string{}
+
+	op := gc.Option.String()
+	if 0 < len(op) {
+		s = append(s, op)
+	}
+	if gc.OrderBy != nil {
+		s = append(s, gc.OrderBy.String())
+	}
+	if 0 < len(gc.SeparatorLit) {
+		s = append(s, gc.SeparatorLit)
+	}
+	if 0 < len(gc.Separator) {
+		s = append(s, quoteString(gc.Separator))
+	}
+	return gc.GroupConcat + "(" + joinWithSpace(s) + ")"
+}
+
 func putParentheses(s string) string {
 	return "(" + s + ")"
 }

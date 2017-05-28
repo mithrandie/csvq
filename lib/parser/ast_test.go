@@ -1226,3 +1226,20 @@ func TestCaseElse_String(t *testing.T) {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 }
+
+func TestGroupConcat_String(t *testing.T) {
+	e := GroupConcat{
+		GroupConcat: "group_concat",
+		Option:      Option{Args: []Expression{Identifier{Literal: "column1"}}},
+		OrderBy: OrderByClause{
+			OrderBy: "order by",
+			Items:   []Expression{Identifier{Literal: "column1"}},
+		},
+		SeparatorLit: "separator",
+		Separator:    ",",
+	}
+	expect := "group_concat(column1 order by column1 separator ',')"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
