@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"github.com/mithrandie/csvq/lib/action"
 	"github.com/mithrandie/csvq/lib/cmd"
 
 	"github.com/urfave/cli"
@@ -83,7 +84,7 @@ func main() {
 
 				q := c.Args().First()
 
-				err := Write(q)
+				err := action.Write(q)
 				if err != nil {
 					return cli.NewExitError(err.Error(), 1)
 				}
@@ -104,7 +105,7 @@ func main() {
 
 		q := c.Args().First()
 
-		err := Write(q)
+		err := action.Write(q)
 		if err != nil {
 			return cli.NewExitError(err.Error(), 1)
 		}

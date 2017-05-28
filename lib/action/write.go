@@ -1,4 +1,4 @@
-package main
+package action
 
 import (
 	"github.com/mithrandie/csvq/lib/cmd"
