@@ -3,7 +3,6 @@ package output
 import (
 	"fmt"
 	"io/ioutil"
-	"reflect"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -69,7 +68,7 @@ func encodeCharacterCode(str string, enc cmd.Encoding) (string, error) {
 }
 
 func convertLineBreak(str string, lb cmd.LineBreak) string {
-	return strings.Replace(str, "\n", reflect.ValueOf(lb).String(), -1)
+	return strings.Replace(str, "\n", lb.Value(), -1)
 }
 
 func encodeText(result query.Result) string {

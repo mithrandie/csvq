@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path"
+	"reflect"
 	"strings"
 	"sync"
 )
@@ -24,6 +25,10 @@ const (
 	LF   LineBreak = "\n"
 	CRLF LineBreak = "\r\n"
 )
+
+func (lb LineBreak) Value() string {
+	return reflect.ValueOf(lb).String()
+}
 
 type Format int
 

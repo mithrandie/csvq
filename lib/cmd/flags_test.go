@@ -5,6 +5,13 @@ import (
 	"testing"
 )
 
+func TestLineBreak_Value(t *testing.T) {
+	lb := CRLF
+	if lb.Value() != "\r\n" {
+		t.Errorf("value = %q, want %q for %s", lb.Value(), "\\r\\n", "CRLF")
+	}
+}
+
 func TestSetDelimiter(t *testing.T) {
 	flags := GetFlags()
 
