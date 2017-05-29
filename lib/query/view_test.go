@@ -613,7 +613,7 @@ var viewWhereTests = []struct {
 	Name   string
 	View   *View
 	Where  parser.WhereClause
-	Result []Record
+	Result []int
 	Error  string
 }{
 	{
@@ -642,12 +642,7 @@ var viewWhereTests = []struct {
 				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 			},
 		},
-		Result: []Record{
-			NewRecord([]parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
-			}),
-		},
+		Result: []int{1},
 	},
 	{
 		Name: "Where Filter Error",
@@ -694,8 +689,8 @@ func TestView_Where(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(v.View.Records, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, v.View.Records, v.Result)
+		if !reflect.DeepEqual(v.View.filteredIndices, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, v.View.filteredIndices, v.Result)
 		}
 	}
 }
@@ -802,7 +797,8 @@ var viewHavingTests = []struct {
 	Name   string
 	View   *View
 	Having parser.HavingClause
-	Result []Record
+	Result []int
+	Record []Record
 	Error  string
 }{
 	{
@@ -852,13 +848,7 @@ var viewHavingTests = []struct {
 				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: ">"},
 			},
 		},
-		Result: []Record{
-			{
-				NewGroupCell([]parser.Primary{parser.NewString("2"), parser.NewString("4")}),
-				NewGroupCell([]parser.Primary{parser.NewString("str2"), parser.NewString("str4")}),
-				NewGroupCell([]parser.Primary{parser.NewString("group2"), parser.NewString("group2")}),
-			},
-		},
+		Result: []int{1},
 	},
 	{
 		Name: "Having Filter Error",
@@ -938,7 +928,8 @@ var viewHavingTests = []struct {
 				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: ">"},
 			},
 		},
-		Result: []Record{
+		Result: []int{0},
+		Record: []Record{
 			{
 				NewGroupCell([]parser.Primary{parser.NewString("2"), parser.NewString("4")}),
 				NewGroupCell([]parser.Primary{parser.NewString("str2"), parser.NewString("str4")}),
@@ -963,8 +954,13 @@ func TestView_Having(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(v.View.Records, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, v.View.Records, v.Result)
+		if !reflect.DeepEqual(v.View.filteredIndices, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, v.View.filteredIndices, v.Result)
+		}
+		if v.Record != nil {
+			if !reflect.DeepEqual(v.View.Records, v.Record) {
+				t.Errorf("%s: result = %s, want %s", v.Name, v.View.Records, v.Record)
+			}
 		}
 	}
 }
@@ -1057,7 +1053,7 @@ var viewSelectTests = []struct {
 					parser.NewInteger(1),
 				}),
 			},
-			selectIndices: []int{1, 0, 1, 2, 3, 4},
+			selectFields: []int{1, 0, 1, 2, 3, 4},
 		},
 	},
 	{
@@ -1118,7 +1114,7 @@ var viewSelectTests = []struct {
 					parser.NewInteger(1),
 				}),
 			},
-			selectIndices: []int{0, 1},
+			selectFields: []int{0, 1},
 		},
 	},
 	{
@@ -1164,7 +1160,7 @@ var viewSelectTests = []struct {
 					NewCell(parser.NewInteger(3)),
 				},
 			},
-			selectIndices: []int{2},
+			selectFields: []int{2},
 		},
 	},
 }
@@ -1190,8 +1186,8 @@ func TestView_Select(t *testing.T) {
 		if !reflect.DeepEqual(v.View.Records, v.Result.Records) {
 			t.Errorf("%s: records = %s, want %s", v.Name, v.View.Records, v.Result.Records)
 		}
-		if !reflect.DeepEqual(v.View.selectIndices, v.Result.selectIndices) {
-			t.Errorf("%s: select indices = %s, want %s", v.Name, v.View.selectIndices, v.Result.selectIndices)
+		if !reflect.DeepEqual(v.View.selectFields, v.Result.selectFields) {
+			t.Errorf("%s: select indices = %s, want %s", v.Name, v.View.selectFields, v.Result.selectFields)
 		}
 	}
 }
@@ -1388,7 +1384,7 @@ func TestView_Fix(t *testing.T) {
 				parser.NewString("str1"),
 			}),
 		},
-		selectIndices: []int{1},
+		selectFields: []int{1},
 	}
 	expect := &View{
 		Header: []HeaderField{
@@ -1402,7 +1398,7 @@ func TestView_Fix(t *testing.T) {
 				parser.NewString("str1"),
 			}),
 		},
-		selectIndices: []int(nil),
+		selectFields: []int(nil),
 	}
 
 	view.Fix()

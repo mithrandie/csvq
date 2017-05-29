@@ -65,6 +65,7 @@ func executeSelect(query parser.SelectQuery, parentFilter Filter) (*View, error)
 		if err := view.Where(query.WhereClause.(parser.WhereClause)); err != nil {
 			return nil, err
 		}
+		view.Extract()
 	}
 
 	if query.GroupByClause != nil {
@@ -77,6 +78,7 @@ func executeSelect(query parser.SelectQuery, parentFilter Filter) (*View, error)
 		if err := view.Having(query.HavingClause.(parser.HavingClause)); err != nil {
 			return nil, err
 		}
+		view.Extract()
 	}
 
 	if err := view.Select(query.SelectClause.(parser.SelectClause)); err != nil {

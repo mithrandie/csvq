@@ -69,9 +69,11 @@ type View struct {
 
 	FileInfo *FileInfo
 
-	selectIndices []int
-	isGrouped     bool
-	parentFilter  Filter
+	selectFields []int
+	isGrouped    bool
+	parentFilter Filter
+
+	filteredIndices []int
 
 	sortIndices    []int
 	sortDirections []int
@@ -242,7 +244,7 @@ func (view *View) Where(clause parser.WhereClause) error {
 		return err
 	}
 
-	view.extract(indices)
+	view.filteredIndices = indices
 	return nil
 }
 
@@ -261,12 +263,13 @@ func (view *View) filter(condition parser.Expression) ([]int, error) {
 	return indices, nil
 }
 
-func (view *View) extract(indices []int) {
-	records := make([]Record, len(indices))
-	for i, idx := range indices {
+func (view *View) Extract() {
+	records := make([]Record, len(view.filteredIndices))
+	for i, idx := range view.filteredIndices {
 		records[i] = view.Records[idx]
 	}
 	view.Records = records
+	view.filteredIndices = nil
 }
 
 func (view *View) GroupBy(clause parser.GroupByClause) error {
@@ -363,7 +366,7 @@ func (view *View) Having(clause parser.HavingClause) error {
 		}
 	}
 
-	view.extract(indices)
+	view.filteredIndices = indices
 	return nil
 }
 
@@ -437,17 +440,17 @@ func (view *View) Select(clause parser.SelectClause) error {
 		}
 	}
 
-	view.selectIndices = make([]int, len(fields))
+	view.selectFields = make([]int, len(fields))
 	addIndex := view.FieldLen()
 	for i, f := range fields {
 		field := f.(parser.Field)
 		if ident, ok := field.Object.(parser.Identifier); ok {
 			ref, field, _ := ident.FieldRef()
 			idx, _ := view.Header.Contains(ref, field)
-			view.selectIndices[i] = idx
+			view.selectFields[i] = idx
 		} else {
 			view.Header = AddHeaderField(view.Header, field.Name())
-			view.selectIndices[i] = addIndex
+			view.selectFields[i] = addIndex
 			addIndex++
 		}
 	}
@@ -459,12 +462,12 @@ func (view *View) Select(clause parser.SelectClause) error {
 	}
 
 	if clause.IsDistinct() {
-		hfields := NewEmptyHeader(len(view.selectIndices))
+		hfields := NewEmptyHeader(len(view.selectFields))
 		distinguished := []Record{}
 
 		for _, v := range view.Records {
-			record := make(Record, len(view.selectIndices))
-			for i, idx := range view.selectIndices {
+			record := make(Record, len(view.selectFields))
+			for i, idx := range view.selectFields {
 				record[i] = v[idx]
 			}
 
@@ -473,9 +476,9 @@ func (view *View) Select(clause parser.SelectClause) error {
 			}
 		}
 
-		for i, idx := range view.selectIndices {
+		for i, idx := range view.selectFields {
 			hfields[i] = view.Header[idx]
-			view.selectIndices[i] = i
+			view.selectFields[i] = i
 		}
 
 		view.Header = hfields
@@ -542,25 +545,25 @@ func (view *View) Limit(clause parser.LimitClause) {
 }
 
 func (view *View) Fix() {
-	hfields := NewEmptyHeader(len(view.selectIndices))
+	hfields := NewEmptyHeader(len(view.selectFields))
 	records := make([]Record, view.RecordLen())
 
 	for i, v := range view.Records {
-		record := make(Record, len(view.selectIndices))
-		for j, idx := range view.selectIndices {
+		record := make(Record, len(view.selectFields))
+		for j, idx := range view.selectFields {
 			record[j] = v[idx]
 		}
 
 		records[i] = record
 	}
 
-	for i, idx := range view.selectIndices {
+	for i, idx := range view.selectFields {
 		hfields[i] = view.Header[idx]
 	}
 
 	view.Header = hfields
 	view.Records = records
-	view.selectIndices = []int(nil)
+	view.selectFields = []int(nil)
 	view.isGrouped = false
 	view.parentFilter = Filter(nil)
 	view.sortIndices = []int(nil)
