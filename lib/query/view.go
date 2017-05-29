@@ -1,10 +1,8 @@
 package query
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path"
 	"reflect"
@@ -16,9 +14,6 @@ import (
 	"github.com/mithrandie/csvq/lib/csv"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
-
-	"golang.org/x/text/encoding/japanese"
-	"golang.org/x/text/transform"
 )
 
 type FileInfo struct {
@@ -170,12 +165,7 @@ func loadViewFromFile(filename string, reference string) (*View, error) {
 	}
 	defer f.Close()
 
-	var r io.Reader
-	if flags.Encoding == cmd.SJIS {
-		r = transform.NewReader(f, japanese.ShiftJIS.NewDecoder())
-	} else {
-		r = bufio.NewReader(f)
-	}
+	r := cmd.GetReader(f, flags.Encoding)
 
 	view := new(View)
 

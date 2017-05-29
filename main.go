@@ -97,6 +97,24 @@ func main() {
 				return nil
 			},
 		},
+		{
+			Name:  "fields",
+			Usage: "Show fields in file",
+			Action: func(c *cli.Context) error {
+				if c.NArg() != 1 {
+					return cli.ShowSubcommandHelp(c)
+				}
+
+				table := c.Args().First()
+
+				err := action.ShowFields(table)
+				if err != nil {
+					return cli.NewExitError(err.Error(), 1)
+				}
+
+				return nil
+			},
+		},
 	}
 
 	app.Before = func(c *cli.Context) error {

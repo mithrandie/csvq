@@ -10,10 +10,6 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
-
-	"golang.org/x/text/encoding"
-	"golang.org/x/text/encoding/japanese"
-	"golang.org/x/text/transform"
 )
 
 type textField struct {
@@ -52,14 +48,7 @@ func Encode(result query.Result) (string, error) {
 }
 
 func encodeCharacterCode(str string, enc cmd.Encoding) (string, error) {
-	var e *encoding.Encoder
-
-	switch enc {
-	case cmd.SJIS:
-		e = japanese.ShiftJIS.NewEncoder()
-	}
-
-	r := transform.NewReader(strings.NewReader(str), e)
+	r := cmd.GetReader(strings.NewReader(str), enc)
 	bytes, err := ioutil.ReadAll(r)
 	if err != nil {
 		return "", err

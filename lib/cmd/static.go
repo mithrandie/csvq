@@ -1,9 +1,14 @@
 package cmd
 
 import (
+	"bufio"
+	"io"
 	"math/rand"
 	"sync"
 	"time"
+
+	"golang.org/x/text/encoding/japanese"
+	"golang.org/x/text/transform"
 )
 
 var (
@@ -42,4 +47,11 @@ func Now() time.Time {
 		}
 	})
 	return now
+}
+
+func GetReader(r io.Reader, enc Encoding) io.Reader {
+	if enc == SJIS {
+		return transform.NewReader(r, japanese.ShiftJIS.NewDecoder())
+	}
+	return bufio.NewReader(r)
 }

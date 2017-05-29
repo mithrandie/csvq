@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"os"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -30,5 +32,19 @@ func TestNow(t *testing.T) {
 
 	if !t1.Equal(t2) {
 		t.Errorf("function Now() returns different time")
+	}
+}
+
+func TestGetReader(t *testing.T) {
+	fp := os.Stdout
+
+	r := GetReader(fp, UTF8)
+	if reflect.TypeOf(r).String() != "*bufio.Reader" {
+		t.Errorf("reader = %q, want %q", reflect.TypeOf(r).String(), "*bufio.Reader")
+	}
+
+	r = GetReader(fp, SJIS)
+	if reflect.TypeOf(r).String() != "*transform.Reader" {
+		t.Errorf("reader = %q, want %q", reflect.TypeOf(r).String(), "*transform.Reader")
 	}
 }
