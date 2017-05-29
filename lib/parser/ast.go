@@ -3,6 +3,7 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"path"
 	"path/filepath"
 	"reflect"
 	"strconv"
@@ -731,7 +732,7 @@ func (t *Table) Name() string {
 	}
 
 	if file, ok := t.Object.(Identifier); ok {
-		return strings.TrimSuffix(file.Literal, filepath.Ext(file.Literal))
+		return strings.TrimSuffix(path.Base(file.Literal), filepath.Ext(file.Literal))
 	}
 
 	return t.Object.String()

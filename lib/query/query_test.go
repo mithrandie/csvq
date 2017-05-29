@@ -55,6 +55,10 @@ var executeTests = []struct {
 							NewCell(parser.NewString("1")),
 						},
 					},
+					FileInfo: &FileInfo{
+						Path:      "table1.csv",
+						Delimiter: ',',
+					},
 				},
 				Count: 1,
 			},
@@ -108,6 +112,19 @@ func TestExecute(t *testing.T) {
 		if 0 < len(v.Error) {
 			t.Errorf("no error, want error %q for %q", v.Error, v.Input)
 			continue
+		}
+
+		for i, result := range results {
+			if result.View.FileInfo != nil {
+				if path.Base(result.View.FileInfo.Path) != v.Result[i].View.FileInfo.Path {
+					t.Errorf("filepath = %s, want %s for %q", path.Base(result.View.FileInfo.Path), v.Result[i].View.FileInfo.Path, v.Input)
+				}
+				if result.View.FileInfo.Delimiter != v.Result[i].View.FileInfo.Delimiter {
+					t.Errorf("delimiter = %q, want %q for %q", result.View.FileInfo.Delimiter, v.Result[i].View.FileInfo.Delimiter, v.Input)
+				}
+			}
+			result.View.FileInfo = nil
+			v.Result[i].View.FileInfo = nil
 		}
 		if !reflect.DeepEqual(results, v.Result) {
 			t.Errorf("results = %q, want %q for %q", results, v.Result, v.Input)

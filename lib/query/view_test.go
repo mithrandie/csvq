@@ -10,6 +10,78 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
+var fileInfoTests = []struct {
+	Name       string
+	FilePath   string
+	Repository string
+	Delimiter  rune
+	Result     *FileInfo
+	Error      string
+}{
+	{
+		Name:       "CSV",
+		FilePath:   "table1",
+		Repository: path.Join("..", "..", "testdata", "csv"),
+		Delimiter:  cmd.UNDEF,
+		Result: &FileInfo{
+			Path:      "table1.csv",
+			Delimiter: ',',
+		},
+	},
+	{
+		Name:       "TSV",
+		FilePath:   "table3",
+		Repository: path.Join("..", "..", "testdata", "csv"),
+		Delimiter:  cmd.UNDEF,
+		Result: &FileInfo{
+			Path:      "table3.tsv",
+			Delimiter: '\t',
+		},
+	},
+	{
+		Name:      "Not Exist Error",
+		FilePath:  "notexist",
+		Delimiter: cmd.UNDEF,
+		Error:     "file notexist does not exist",
+	},
+	{
+		Name:      "Directory Error",
+		FilePath:  "/",
+		Delimiter: cmd.UNDEF,
+		Error:     "/ is a directory",
+	},
+}
+
+func TestNewFileInfo(t *testing.T) {
+	for _, v := range fileInfoTests {
+		repo := v.Repository
+		if 0 < len(repo) {
+			dir, _ := os.Getwd()
+			repo = path.Join(dir, repo)
+		}
+
+		fileInfo, err := NewFileInfo(v.FilePath, repo, v.Delimiter)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if path.Base(fileInfo.Path) != v.Result.Path {
+			t.Errorf("%s: filepath = %s, want %s", v.Name, path.Base(fileInfo.Path), v.Result.Path)
+		}
+		if fileInfo.Delimiter != v.Result.Delimiter {
+			t.Errorf("%s: delimiter = %q, want %q", v.Name, fileInfo.Delimiter, v.Result.Delimiter)
+		}
+	}
+}
+
 var newViewTests = []struct {
 	Name     string
 	Encoding cmd.Encoding
@@ -60,6 +132,10 @@ var newViewTests = []struct {
 					parser.NewString("str3"),
 				}),
 			},
+			FileInfo: &FileInfo{
+				Path:      "table1.csv",
+				Delimiter: ',',
+			},
 		},
 	},
 	{
@@ -72,29 +148,6 @@ var newViewTests = []struct {
 			},
 		},
 		Error: "file notexist does not exist",
-	},
-	{
-		Name: "Load TSV File",
-		From: parser.FromClause{
-			Tables: []parser.Expression{
-				parser.Table{
-					Object: parser.Identifier{Literal: "table3"},
-				},
-			},
-		},
-		Result: &View{
-			Header: NewHeader("table3", []string{"column5", "column6"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
-				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
-				}),
-			},
-		},
 	},
 	{
 		Name:     "Load SJIS File",
@@ -511,6 +564,17 @@ func TestNewView(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
+
+		if v.Result.FileInfo != nil {
+			if path.Base(result.FileInfo.Path) != v.Result.FileInfo.Path {
+				t.Errorf("%s: filepath = %s, want %s", v.Name, path.Base(result.FileInfo.Path), v.Result.FileInfo.Path)
+			}
+			if result.FileInfo.Delimiter != v.Result.FileInfo.Delimiter {
+				t.Errorf("%s: delimiter = %q, want %q", v.Name, result.FileInfo.Delimiter, v.Result.FileInfo.Delimiter)
+			}
+		}
+		result.FileInfo = nil
+		v.Result.FileInfo = nil
 		if !reflect.DeepEqual(result, v.Result) {
 			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
 		}

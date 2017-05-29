@@ -21,9 +21,53 @@ import (
 	"golang.org/x/text/transform"
 )
 
+type FileInfo struct {
+	Path      string
+	Delimiter rune
+}
+
+func NewFileInfo(filename string, repository string, delimiter rune) (*FileInfo, error) {
+	filepath := filename
+	if !path.IsAbs(filepath) {
+		filepath = path.Join(repository, filepath)
+	}
+
+	var info os.FileInfo
+	var err error
+
+	if info, err = os.Stat(filepath); err != nil {
+		if info, err = os.Stat(filepath + cmd.CSV_EXT); err == nil {
+			filepath = filepath + cmd.CSV_EXT
+		} else if info, err = os.Stat(filepath + cmd.TSV_EXT); err == nil {
+			filepath = filepath + cmd.TSV_EXT
+		} else {
+			return nil, errors.New(fmt.Sprintf("file %s does not exist", filename))
+		}
+	}
+
+	if info.IsDir() {
+		return nil, errors.New(fmt.Sprintf("%s is a directory", filename))
+	}
+
+	if delimiter == cmd.UNDEF {
+		if strings.ToUpper(path.Ext(filepath)) == strings.ToUpper(cmd.TSV_EXT) {
+			delimiter = '\t'
+		} else {
+			delimiter = ','
+		}
+	}
+
+	return &FileInfo{
+		Path:      filepath,
+		Delimiter: delimiter,
+	}, nil
+}
+
 type View struct {
 	Header  Header
 	Records []Record
+
+	FileInfo *FileInfo
 
 	selectIndices []int
 	isGrouped     bool
@@ -111,48 +155,14 @@ func loadView(table parser.Table, parentFilter Filter) (*View, error) {
 }
 
 func loadViewFromFile(filename string, reference string) (*View, error) {
-	var exists = func(path string, delimiter rune) (string, rune, error) {
-		if _, err := os.Stat(path); os.IsNotExist(err) {
-			if _, err := os.Stat(path + cmd.CSV_EXT); err == nil {
-				path = path + cmd.CSV_EXT
-				if delimiter == cmd.UNDEF {
-					delimiter = ','
-				}
-			} else if _, err := os.Stat(path + cmd.TSV_EXT); err == nil {
-				path = path + cmd.TSV_EXT
-				if delimiter == cmd.UNDEF {
-					delimiter = '\t'
-				}
-			} else {
-				return path, delimiter, errors.New(fmt.Sprintf("file %s does not exist", filename))
-			}
-		}
-		return path, delimiter, nil
-	}
-
 	flags := cmd.GetFlags()
 
-	filepath := path.Join(flags.Repository, filename)
-	delimiter := flags.Delimiter
-
-	filepath, delimiter, err := exists(filepath, delimiter)
+	fileInfo, err := NewFileInfo(filename, flags.Repository, flags.Delimiter)
 	if err != nil {
-		filepath = filename
-		filepath, delimiter, err = exists(filepath, delimiter)
-		if err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
 
-	if delimiter == cmd.UNDEF {
-		if strings.ToUpper(path.Ext(filepath)) == strings.ToUpper(cmd.TSV_EXT) {
-			delimiter = '\t'
-		} else {
-			delimiter = ','
-		}
-	}
-
-	f, err := os.Open(filepath)
+	f, err := os.Open(fileInfo.Path)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +178,7 @@ func loadViewFromFile(filename string, reference string) (*View, error) {
 	view := new(View)
 
 	reader := csv.NewReader(r)
-	reader.Delimiter = delimiter
+	reader.Delimiter = fileInfo.Delimiter
 	reader.WithoutNull = flags.WithoutNull
 
 	var header []string
@@ -195,6 +205,8 @@ func loadViewFromFile(filename string, reference string) (*View, error) {
 		}
 	}
 	view.Header = NewHeader(reference, header)
+
+	view.FileInfo = fileInfo
 
 	return view, nil
 }

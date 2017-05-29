@@ -991,7 +991,7 @@ func TestTable_Name(t *testing.T) {
 	}
 
 	e = Table{
-		Object: Identifier{Literal: "table.csv"},
+		Object: Identifier{Literal: "/path/to/table.csv"},
 	}
 	expect = "table"
 	if e.Name() != expect {
