@@ -96,6 +96,10 @@ func SetDelimiter(s string) error {
 		return nil
 	}
 
+	if s == "\\t" {
+		s = "\t"
+	}
+
 	runes := []rune(s)
 	if 1 < len(runes) {
 		return errors.New("delimiter must be 1 character")
@@ -235,6 +239,10 @@ func SetWriteDelimiter(s string) error {
 			f.WriteDelimiter = '\t'
 		}
 		return nil
+	}
+
+	if s == "\\t" {
+		s = "\t"
 	}
 
 	runes := []rune(s)

@@ -17,12 +17,12 @@ func TestSetDelimiter(t *testing.T) {
 
 	SetDelimiter("")
 	if flags.Delimiter != UNDEF {
-		t.Errorf("delimiter = %q, expect to set %q for %q", string(flags.Delimiter), UNDEF, "")
+		t.Errorf("delimiter = %q, expect to set %q for %q", flags.Delimiter, UNDEF, "")
 	}
 
-	SetDelimiter("\t")
+	SetDelimiter("\\t")
 	if flags.Delimiter != '\t' {
-		t.Errorf("delimiter = %q, expect to set %q for %q", string(flags.Delimiter), "\t", "\t")
+		t.Errorf("delimiter = %q, expect to set %q for %q", flags.Delimiter, "\t", "\t")
 	}
 
 	expectErr := "delimiter must be 1 character"
@@ -232,18 +232,19 @@ func TestSetWriteDelimiter(t *testing.T) {
 	flags.Format = CSV
 	SetWriteDelimiter("")
 	if flags.WriteDelimiter != ',' {
-		t.Errorf("write-delimiter = %q, expect to set %q for %q, format = %s", string(flags.WriteDelimiter), ',', "", flags.Format)
+		t.Errorf("write-delimiter = %q, expect to set %q for %q, format = %s", flags.WriteDelimiter, ',', "", flags.Format)
 	}
 
 	flags.Format = TSV
 	SetWriteDelimiter("")
 	if flags.WriteDelimiter != '\t' {
-		t.Errorf("write-delimiter = %q, expect to set %q for %q, format = %s", string(flags.WriteDelimiter), '\t', "", flags.Format)
+		t.Errorf("write-delimiter = %q, expect to set %q for %q, format = %s", flags.WriteDelimiter, '\t', "", flags.Format)
 	}
 
-	SetWriteDelimiter("\t")
+	flags.WriteDelimiter = ','
+	SetWriteDelimiter("\\t")
 	if flags.WriteDelimiter != '\t' {
-		t.Errorf("write-delimiter = %q, expect to set %q for %q", string(flags.WriteDelimiter), "\t", "\t")
+		t.Errorf("write-delimiter = %q, expect to set %q for %q", flags.WriteDelimiter, "\t", "\t")
 	}
 
 	expectErr := "write-delimiter must be 1 character"
