@@ -105,6 +105,7 @@ var Functions = map[string]func([]parser.Primary) (parser.Primary, error){
 	"ADD_NANO":        AddNano,
 	"DATE_DIFF":       DateDiff,
 	"TIME_DIFF":       TimeDiff,
+	"AUTO_INCREMENT":  AutoIncrement,
 	"STRING":          String,
 	"INTEGER":         Integer,
 	"FLOAT":           Float,
@@ -1055,6 +1056,22 @@ func TimeDiff(args []parser.Primary) (parser.Primary, error) {
 	dur := dt1.Sub(dt2)
 
 	return parser.NewFloat(dur.Seconds()), nil
+}
+
+func AutoIncrement(args []parser.Primary) (parser.Primary, error) {
+	if 1 < len(args) {
+		return nil, errors.New("function AUTO_INCREMENT takes at most 1 argument")
+	}
+
+	var initialVal int64 = 1
+
+	if 0 < len(args) {
+		if i := parser.PrimaryToInteger(args[0]); !parser.IsNull(i) {
+			initialVal = i.(parser.Integer).Value()
+		}
+	}
+
+	return Variable.Increment(AUTO_INCREMENT_KEY, initialVal), nil
 }
 
 func String(args []parser.Primary) (parser.Primary, error) {

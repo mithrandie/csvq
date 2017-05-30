@@ -590,6 +590,35 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select @var",
+		Output: []Statement{
+			SelectQuery{
+				SelectClause: SelectClause{
+					Select: "select",
+					Fields: []Expression{
+						Field{Object: Variable{Name: "@var"}},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select @var := 1",
+		Output: []Statement{
+			SelectQuery{
+				SelectClause: SelectClause{
+					Select: "select",
+					Fields: []Expression{
+						Field{Object: VariableSubstitution{
+							Variable: Variable{Name: "@var"},
+							Value:    NewInteger(1),
+						}},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "select case when true then 'A' when false then 'B' end",
 		Output: []Statement{
 			SelectQuery{
@@ -929,6 +958,29 @@ var parseTests = []struct {
 						},
 					},
 				},
+			},
+		},
+	},
+	{
+		Input: "var @var1, @var2 := 2; @var1 := 1;",
+		Output: []Statement{
+			VariableDeclaration{
+				Var: "var",
+				Assignments: []Expression{
+					VariableAssignment{
+						Name: "@var1",
+					},
+					VariableAssignment{
+						Name:  "@var2",
+						Value: NewInteger(2),
+					},
+				},
+			},
+			VariableSubstitution{
+				Variable: Variable{
+					Name: "@var1",
+				},
+				Value: NewInteger(1),
 			},
 		},
 	},

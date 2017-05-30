@@ -906,6 +906,44 @@ func (gc GroupConcat) String() string {
 	return gc.GroupConcat + "(" + joinWithSpace(s) + ")"
 }
 
+type Variable struct {
+	Name string
+}
+
+func (v Variable) String() string {
+	return v.Name
+}
+
+type VariableSubstitution struct {
+	Variable Variable
+	Value    Expression
+}
+
+func (vs VariableSubstitution) String() string {
+	return joinWithSpace([]string{vs.Variable.String(), ":=", vs.Value.String()})
+}
+
+type VariableAssignment struct {
+	Name  string
+	Value Expression
+}
+
+func (va VariableAssignment) String() string {
+	if va.Value == nil {
+		return va.Name
+	}
+	return joinWithSpace([]string{va.Name, "=", va.Value.String()})
+}
+
+type VariableDeclaration struct {
+	Var         string
+	Assignments []Expression
+}
+
+func (vd VariableDeclaration) String() string {
+	return joinWithSpace([]string{vd.Var, listExpressions(vd.Assignments)})
+}
+
 func putParentheses(s string) string {
 	return "(" + s + ")"
 }

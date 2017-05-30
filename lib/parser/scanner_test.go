@@ -108,6 +108,16 @@ var scanTests = []struct {
 		},
 	},
 	{
+		Name:  "Variable",
+		Input: "@var",
+		Output: []scanResult{
+			{
+				Token:   VARIABLE,
+				Literal: "@var",
+			},
+		},
+	},
+	{
 		Name:  "ComparisonOperator",
 		Input: "=",
 		Output: []scanResult{
@@ -124,6 +134,16 @@ var scanTests = []struct {
 			{
 				Token:   STRING_OP,
 				Literal: "||",
+			},
+		},
+	},
+	{
+		Name:  "SubstitutionOperator",
+		Input: ":=",
+		Output: []scanResult{
+			{
+				Token:   SUBSTITUTION_OP,
+				Literal: ":=",
 			},
 		},
 	},

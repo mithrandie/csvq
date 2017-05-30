@@ -16,14 +16,14 @@ var executeTests = []struct {
 	Error  string
 }{
 	{
-		Input: "select 1",
+		Input: "var @var1; @var1 := 1; select @var1 as var1",
 		Result: []Result{
 			{
 				Statement: SELECT,
 				View: &View{
 					Header: []HeaderField{
 						{
-							Alias: "1",
+							Alias: "var1",
 						},
 					},
 					Records: []Record{
@@ -35,6 +35,14 @@ var executeTests = []struct {
 				Count: 1,
 			},
 		},
+	},
+	{
+		Input: "var @var1 := 0;",
+		Error: "variable @var1 is redeclared",
+	},
+	{
+		Input: "@var2 := 0;",
+		Error: "variable @var2 is undefined",
 	},
 	{
 		Input: "select column1 from table1 where column1 = 1 group by column1 having sum(column1) > 0 order by column1 limit 10",
@@ -95,6 +103,8 @@ var executeTests = []struct {
 }
 
 func TestExecute(t *testing.T) {
+	Variable = map[string]parser.Primary{}
+
 	tf := cmd.GetFlags()
 	dir, _ := os.Getwd()
 	tf.Repository = path.Join(dir, "..", "..", "testdata", "csv")

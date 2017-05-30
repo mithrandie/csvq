@@ -1799,6 +1799,36 @@ func TestTimeDiff(t *testing.T) {
 	testFunction(t, TimeDiff, timeDiffTests)
 }
 
+var autoIncrementTests = []functionTest{
+	{
+		Name: "AutoIncrement Arguments Error",
+		Args: []parser.Primary{
+			parser.NewInteger(10),
+			parser.NewInteger(10),
+		},
+		Error: "function AUTO_INCREMENT takes at most 1 argument",
+	},
+	{
+		Name: "AutoIncrement First Time",
+		Args: []parser.Primary{
+			parser.NewInteger(10),
+		},
+		Result: parser.NewInteger(10),
+	},
+	{
+		Name: "AutoIncrement Second Time",
+		Args: []parser.Primary{
+			parser.NewInteger(10),
+		},
+		Result: parser.NewInteger(11),
+	},
+}
+
+func TestAutoIncrement(t *testing.T) {
+	Variable.ClearAutoIncrement()
+	testFunction(t, AutoIncrement, autoIncrementTests)
+}
+
 var stringTests = []functionTest{
 	{
 		Name: "String from Integer",

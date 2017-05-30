@@ -1,9 +1,6 @@
 package query
 
 import (
-	"errors"
-	"fmt"
-
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
@@ -30,8 +27,18 @@ func Execute(input string) ([]Result, error) {
 
 	for _, stmt := range program {
 		switch stmt.(type) {
+		case parser.VariableDeclaration:
+			if err := Variable.Decrare(stmt.(parser.VariableDeclaration), nil); err != nil {
+				return nil, err
+			}
+		case parser.VariableSubstitution:
+			if _, err := Variable.Substitute(stmt.(parser.VariableSubstitution), nil); err != nil {
+				return nil, err
+			}
 		case parser.SelectQuery:
-			view, err := executeSelect(stmt.(parser.SelectQuery), nil)
+			Variable.ClearAutoIncrement()
+
+			view, err := ExecuteSelect(stmt.(parser.SelectQuery), nil)
 			if err != nil {
 				return nil, err
 			}
@@ -40,15 +47,13 @@ func Execute(input string) ([]Result, error) {
 				View:      view,
 				Count:     view.RecordLen(),
 			})
-		default:
-			return nil, errors.New(fmt.Sprintf("%T is not a executable statement", stmt))
 		}
 	}
 
 	return results, nil
 }
 
-func executeSelect(query parser.SelectQuery, parentFilter Filter) (*View, error) {
+func ExecuteSelect(query parser.SelectQuery, parentFilter Filter) (*View, error) {
 	var view *View
 
 	if query.FromClause == nil {

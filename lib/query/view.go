@@ -142,7 +142,7 @@ func loadView(table parser.Table, parentFilter Filter) (*View, error) {
 		}
 	case parser.Subquery:
 		subquery := table.Object.(parser.Subquery)
-		view, err = executeSelect(subquery.Query, parentFilter)
+		view, err = ExecuteSelect(subquery.Query, parentFilter)
 	}
 
 	if err != nil {

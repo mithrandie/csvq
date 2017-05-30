@@ -1243,3 +1243,66 @@ func TestGroupConcat_String(t *testing.T) {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 }
+
+func TestVariable_String(t *testing.T) {
+	e := Variable{
+		Name: "@var",
+	}
+	expect := "@var"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestVariableSubstitution_String(t *testing.T) {
+	e := VariableSubstitution{
+		Variable: Variable{
+			Name: "@var",
+		},
+		Value: NewInteger(1),
+	}
+	expect := "@var := 1"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestVariableAssignment_String(t *testing.T) {
+	e := VariableAssignment{
+		Name:  "@var",
+		Value: NewInteger(1),
+	}
+	expect := "@var = 1"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+
+	e = VariableAssignment{
+		Name:  "@var",
+		Value: nil,
+	}
+	expect = "@var"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestVariableDeclaration_String(t *testing.T) {
+	e := VariableDeclaration{
+		Var: "var",
+		Assignments: []Expression{
+			VariableAssignment{
+				Name:  "@var1",
+				Value: NewInteger(1),
+			},
+			VariableAssignment{
+				Name:  "@var2",
+				Value: nil,
+			},
+		},
+	}
+	expect := "var @var1 = 1, @var2"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}

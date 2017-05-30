@@ -7,6 +7,7 @@ package parser
     statement   Statement
     expression  Expression
     expressions []Expression
+    primary     Primary
     identifier  Identifier
     text        String
     integer     Integer
@@ -14,6 +15,7 @@ package parser
     ternary     Ternary
     datetime    Datetime
     null        Null
+    variable    Variable
     token       Token
 }
 
@@ -28,7 +30,7 @@ package parser
 %type<expression>  having_clause
 %type<expression>  order_by_clause
 %type<expression>  limit_clause
-%type<expression>  primary
+%type<primary>     primary
 %type<expression>  value
 %type<expression>  order_item
 %type<expression>  subquery
@@ -36,7 +38,6 @@ package parser
 %type<expression>  comparison
 %type<expression>  arithmetic
 %type<expression>  logic
-%type<expression>  filter
 %type<expression>  function
 %type<expression>  option
 %type<expression>  group_concat
@@ -49,7 +50,6 @@ package parser
 %type<expression>  case_value
 %type<expression>  case_else
 %type<expressions> values
-%type<expressions> filters
 %type<expressions> order_items
 %type<expressions> tables
 %type<expressions> using_fields
@@ -62,6 +62,11 @@ package parser
 %type<ternary>     ternary
 %type<datetime>    datetime
 %type<null>        null
+%type<variable>    variable
+%type<expression>  variable_substitution
+%type<expression>  variable_assignment
+%type<expression>  variable_declaration
+%type<expressions> variable_assignments
 %type<token>       distinct
 %type<token>       negation
 %type<token>       order_direction
@@ -69,7 +74,7 @@ package parser
 %type<token>       join_outer
 %type<token>       join_direction
 %type<token>       statement_terminal
-%token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME
+%token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME VARIABLE
 %token<token> SELECT FROM UPDATE SET DELETE WHERE INSERT INTO VALUES AS DUAL
 %token<token> CREATE DROP ALTER TABLE COLUMN
 %token<token> ORDER GROUP HAVING BY ASC DESC LIMIT
@@ -80,14 +85,16 @@ package parser
 %token<token> TRUE FALSE UNKNOWN
 %token<token> CASE WHEN THEN ELSE END
 %token<token> GROUP_CONCAT SEPARATOR
-%token<token> COMPARISON_OP STRING_OP
+%token<token> VAR
+%token<token> COMPARISON_OP STRING_OP SUBSTITUTION_OP
 
+%right SUBSTITUTION_OP
 %left OR
 %left AND
 %left NOT
 %left COMPARISON_OP STRING_OP
 %left '+' '-'
-%left '*' '/'
+%left '*' '/' '%'
 
 %%
 
@@ -111,6 +118,14 @@ statement
 
 expression
     : select_query
+    {
+        $$ = $1
+    }
+    | variable_declaration
+    {
+        $$ = $1
+    }
+    | variable_substitution
     {
         $$ = $1
     }
@@ -154,7 +169,7 @@ where_clause
     {
         $$ = nil
     }
-    | WHERE filter
+    | WHERE value
     {
         $$ = WhereClause{Where: $1.Literal, Filter: $2}
     }
@@ -174,7 +189,7 @@ having_clause
     {
         $$ = nil
     }
-    | HAVING filter
+    | HAVING value
     {
         $$ = HavingClause{Having: $1.Literal, Filter: $2}
     }
@@ -200,11 +215,7 @@ limit_clause
     }
 
 primary
-    : identifier
-    {
-        $$ = $1
-    }
-    | text
+    : text
     {
         $$ = $1
     }
@@ -230,7 +241,11 @@ primary
     }
 
 value
-    : primary
+    : identifier
+    {
+        $$ = $1
+    }
+    | primary
     {
         $$ = $1
     }
@@ -251,6 +266,22 @@ value
         $$ = $1
     }
     | case
+    {
+        $$ = $1
+    }
+    | comparison
+    {
+        $$ = $1
+    }
+    | logic
+    {
+        $$ = $1
+    }
+    | variable
+    {
+        $$ = $1
+    }
+    | variable_substitution
     {
         $$ = $1
     }
@@ -373,35 +404,17 @@ arithmetic
     }
 
 logic
-    : filter OR filter
+    : value OR value
     {
         $$ = Logic{LHS: $1, Operator: $2, RHS: $3}
     }
-    | filter AND filter
+    | value AND value
     {
         $$ = Logic{LHS: $1, Operator: $2, RHS: $3}
     }
-    | NOT filter
+    | NOT value
     {
         $$ = Logic{LHS: nil, Operator: $1, RHS: $2}
-    }
-
-filter
-    : value
-    {
-        $$ = $1
-    }
-    | comparison
-    {
-        $$ = $1
-    }
-    | logic
-    {
-        $$ = $1
-    }
-    | '(' filter ')'
-    {
-        $$ = Parentheses{Expr: $2}
     }
 
 function
@@ -423,7 +436,7 @@ option
     {
         $$ = Option{Distinct: $1, Args: []Expression{AllColumns{}}}
     }
-    | distinct filters
+    | distinct values
     {
         $$ = Option{Distinct: $1, Args: $2}
     }
@@ -433,9 +446,9 @@ group_concat
     {
         $$ = GroupConcat{GroupConcat: $1.Literal, Option: $3.(Option), OrderBy: $4}
     }
-    | GROUP_CONCAT '(' option order_by_clause SEPARATOR text ')'
+    | GROUP_CONCAT '(' option order_by_clause SEPARATOR STRING ')'
     {
-        $$ = GroupConcat{GroupConcat: $1.Literal, Option: $3.(Option), OrderBy: $4, SeparatorLit: $5.Literal, Separator: $6.Value()}
+        $$ = GroupConcat{GroupConcat: $1.Literal, Option: $3.(Option), OrderBy: $4, SeparatorLit: $5.Literal, Separator: $6.Literal}
     }
 
 table
@@ -495,7 +508,7 @@ join_condition
     {
         $$ = nil
     }
-    | ON filter
+    | ON value
     {
         $$ = JoinCondition{Literal:$1.Literal, On: $2}
     }
@@ -505,7 +518,7 @@ join_condition
     }
 
 field_object
-    : filter
+    : value
     {
         $$ = $1
     }
@@ -560,16 +573,6 @@ values
         $$ = append([]Expression{$1}, $3...)
     }
 
-filters
-    : filter
-    {
-        $$ = []Expression{$1}
-    }
-    | filter ',' filters
-    {
-        $$ = append([]Expression{$1}, $3...)
-    }
-
 order_items
     : order_item
     {
@@ -611,7 +614,7 @@ fields
     }
 
 case_when
-    : WHEN filter THEN value
+    : WHEN value THEN value
     {
         $$ = []Expression{CaseWhen{When: $1.Literal, Then: $3.Literal, Condition: $2, Result: $4}}
     }
@@ -670,6 +673,44 @@ null
     : NULL
     {
         $$ = NewNullFromString($1.Literal)
+    }
+
+variable
+    : VARIABLE
+    {
+        $$ = Variable{Name:$1.Literal}
+    }
+
+variable_substitution
+    : variable SUBSTITUTION_OP value
+    {
+        $$ = VariableSubstitution{Variable:$1, Value:$3}
+    }
+
+variable_assignment
+    : VARIABLE
+    {
+        $$ = VariableAssignment{Name:$1.Literal}
+    }
+    | VARIABLE SUBSTITUTION_OP value
+    {
+        $$ = VariableAssignment{Name: $1.Literal, Value: $3}
+    }
+
+variable_declaration
+    : VAR variable_assignments
+    {
+        $$ = VariableDeclaration{Var:$1.Literal, Assignments:$2}
+    }
+
+variable_assignments
+    : variable_assignment
+    {
+        $$ = []Expression{$1}
+    }
+    | variable_assignment ',' variable_assignments
+    {
+        $$ = append([]Expression{$1}, $3...)
     }
 
 distinct

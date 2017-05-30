@@ -62,6 +62,10 @@ func (f Filter) Evaluate(expr parser.Expression) (parser.Primary, error) {
 			primary, err = f.evalCase(expr.(parser.Case))
 		case parser.Logic:
 			primary, err = f.evalLogic(expr.(parser.Logic))
+		case parser.Variable:
+			primary, err = f.evalVariable(expr.(parser.Variable))
+		case parser.VariableSubstitution:
+			primary, err = f.evalVariableSubstitution(expr.(parser.VariableSubstitution))
 		default:
 			return nil, errors.New(fmt.Sprintf("syntax error: unexpected %s", expr))
 		}
@@ -261,7 +265,7 @@ func (f Filter) evalLike(expr parser.Like) (parser.Primary, error) {
 }
 
 func (f Filter) evalExists(expr parser.Exists) (parser.Primary, error) {
-	view, err := executeSelect(expr.Query.Query, f)
+	view, err := ExecuteSelect(expr.Query.Query, f)
 	if err != nil {
 		return nil, err
 	}
@@ -472,6 +476,14 @@ func (f Filter) evalLogic(expr parser.Logic) (parser.Primary, error) {
 	return parser.NewTernary(t), nil
 }
 
+func (f Filter) evalVariable(expr parser.Variable) (parser.Primary, error) {
+	return Variable.Get(expr.Name)
+}
+
+func (f Filter) evalVariableSubstitution(expr parser.VariableSubstitution) (parser.Primary, error) {
+	return Variable.Substitute(expr, f)
+}
+
 func (f Filter) evalList(exprs []parser.Expression) ([]parser.Primary, error) {
 	list := make([]parser.Primary, len(exprs))
 	for i, v := range exprs {
@@ -485,7 +497,7 @@ func (f Filter) evalList(exprs []parser.Expression) ([]parser.Primary, error) {
 }
 
 func (f Filter) evalSubqueryForList(query parser.SelectQuery) ([]parser.Primary, error) {
-	view, err := executeSelect(query, f)
+	view, err := ExecuteSelect(query, f)
 	if err != nil {
 		return nil, err
 	}
@@ -507,7 +519,7 @@ func (f Filter) evalSubqueryForList(query parser.SelectQuery) ([]parser.Primary,
 }
 
 func (f Filter) evalSubqueryForSingleValue(query parser.SelectQuery) (parser.Primary, error) {
-	view, err := executeSelect(query, f)
+	view, err := ExecuteSelect(query, f)
 	if err != nil {
 		return nil, err
 	}

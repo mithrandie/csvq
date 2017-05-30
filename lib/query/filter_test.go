@@ -1650,9 +1650,43 @@ var filterEvaluateTests = []struct {
 		},
 		Error: "identifier = notexist: field does not exist",
 	},
+	{
+		Name: "Variable",
+		Expr: parser.Variable{
+			Name: "var1",
+		},
+		Result: parser.NewInteger(1),
+	},
+	{
+		Name: "Variable Undefined Error",
+		Expr: parser.Variable{
+			Name: "undefined",
+		},
+		Error: "variable undefined is undefined",
+	},
+	{
+		Name: "Variable Substitution",
+		Expr: parser.VariableSubstitution{
+			Variable: parser.Variable{Name: "var1"},
+			Value:    parser.NewInteger(2),
+		},
+		Result: parser.NewInteger(2),
+	},
+	{
+		Name: "Variable Substitution Undefined Error",
+		Expr: parser.VariableSubstitution{
+			Variable: parser.Variable{Name: "undefined"},
+			Value:    parser.NewInteger(2),
+		},
+		Error: "variable undefined is undefined",
+	},
 }
 
 func TestFilter_Evaluate(t *testing.T) {
+	Variable = map[string]parser.Primary{
+		"var1": parser.NewInteger(1),
+	}
+
 	tf := cmd.GetFlags()
 	dir, _ := os.Getwd()
 	tf.Repository = path.Join(dir, "..", "..", "testdata", "csv")
