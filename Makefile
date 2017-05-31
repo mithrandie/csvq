@@ -54,7 +54,7 @@ endif
 
 .PHONY: build-all
 build-all: gox
-	gox -output="dist/{{.OS}}-{{.Arch}}/{{.Dir}}"
+	gox $(LDFLAGS) -output="dist/{{.OS}}-{{.Arch}}/{{.Dir}}"
 
 .PHONY: dist
 dist:
