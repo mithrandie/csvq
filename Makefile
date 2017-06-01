@@ -54,15 +54,14 @@ endif
 
 .PHONY: build-all
 build-all: gox
-	gox $(LDFLAGS) -output="dist/{{.OS}}-{{.Arch}}/{{.Dir}}"
+	gox $(LDFLAGS) -output="dist/${BINARY}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}"
 
 .PHONY: dist
 dist:
 	cd dist && \
 	$(DIST_DIRS) cp ../LICENSE {} \; && \
 	$(DIST_DIRS) cp ../README.md {} \; && \
-	$(DIST_DIRS) tar -zcf ${BINARY}-${VERSION}-{}.tar.gz {} \; && \
-	$(DIST_DIRS) zip -r ${BINARY}-${VERSION}-{}.zip {} \; && \
+	$(DIST_DIRS) tar -zcf {}.tar.gz {} \; && \
 	cd ..
 
 .PHONY: release
