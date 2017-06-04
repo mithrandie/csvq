@@ -48,3 +48,12 @@ func TestGetReader(t *testing.T) {
 		t.Errorf("reader = %q, want %q", reflect.TypeOf(r).String(), "*transform.Reader")
 	}
 }
+
+func TestUnescapeString(t *testing.T) {
+	str := "\\a\\b\\f\\n\\r\\t\\v\\\\\\\""
+	expect := "\a\b\f\n\r\t\v\\\""
+	unescaped := UnescapeString(str)
+	if unescaped != expect {
+		t.Errorf("unescaped string = %q, want %q", unescaped, expect)
+	}
+}

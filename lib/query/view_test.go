@@ -87,6 +87,7 @@ var newViewTests = []struct {
 	Encoding cmd.Encoding
 	NoHeader bool
 	From     parser.FromClause
+	Stdin    string
 	Filter   Filter
 	Result   *View
 	Error    string
@@ -95,7 +96,7 @@ var newViewTests = []struct {
 		Name: "Dual View",
 		From: parser.FromClause{
 			Tables: []parser.Expression{
-				parser.Dual{},
+				parser.Table{Object: parser.Dual{}},
 			},
 		},
 		Result: &View{
@@ -137,6 +138,34 @@ var newViewTests = []struct {
 				Delimiter: ',',
 			},
 		},
+	},
+	{
+		Name:  "Load From Stdin",
+		From:  parser.FromClause{},
+		Stdin: "column1,column2\n1,\"str1\"",
+		Result: &View{
+			Header: NewHeader("stdin", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecord([]parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Delimiter: ',',
+			},
+		},
+	},
+	{
+		Name: "Stdin Empty Error",
+		From: parser.FromClause{
+			Tables: []parser.Expression{
+				parser.Table{
+					Object: parser.Stdin{Stdin: "stdin"},
+				},
+			},
+		},
+		Error: "stdin is empty",
 	},
 	{
 		Name: "Load File Error",
@@ -551,7 +580,21 @@ func TestNewView(t *testing.T) {
 			tf.Encoding = cmd.UTF8
 		}
 
+		var oldStdin *os.File
+		if 0 < len(v.Stdin) {
+			oldStdin = os.Stdin
+			r, w, _ := os.Pipe()
+			w.WriteString(v.Stdin)
+			w.Close()
+			os.Stdin = r
+		}
+
 		result, err := NewView(v.From, v.Filter)
+
+		if 0 < len(v.Stdin) {
+			os.Stdin = oldStdin
+		}
+
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -566,8 +609,8 @@ func TestNewView(t *testing.T) {
 		}
 
 		if v.Result.FileInfo != nil {
-			if path.Base(result.FileInfo.Path) != v.Result.FileInfo.Path {
-				t.Errorf("%s: filepath = %s, want %s", v.Name, path.Base(result.FileInfo.Path), v.Result.FileInfo.Path)
+			if path.Base(result.FileInfo.Path) != path.Base(v.Result.FileInfo.Path) {
+				t.Errorf("%s: filepath = %q, want %q", v.Name, path.Base(result.FileInfo.Path), path.Base(v.Result.FileInfo.Path))
 			}
 			if result.FileInfo.Delimiter != v.Result.FileInfo.Delimiter {
 				t.Errorf("%s: delimiter = %q, want %q", v.Name, result.FileInfo.Delimiter, v.Result.FileInfo.Delimiter)

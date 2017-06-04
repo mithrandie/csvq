@@ -22,7 +22,7 @@ var encodeTests = []struct {
 	Error          string
 }{
 	{
-		Name: "Text Empty",
+		Name: "Empty Records",
 		Stmt: query.SELECT,
 		View: &query.View{
 			Header:  query.NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
@@ -30,7 +30,20 @@ var encodeTests = []struct {
 		},
 		Count:  0,
 		Format: cmd.TEXT,
-		Result: "Empty\n",
+		Result: "Empty Records\n",
+	},
+	{
+		Name: "Empty Fields",
+		Stmt: query.SELECT,
+		View: &query.View{
+			Header: query.NewHeader("", []string{}),
+			Records: []query.Record{
+				query.NewRecord([]parser.Primary{parser.NewNull()}),
+			},
+		},
+		Count:  1,
+		Format: cmd.TEXT,
+		Result: "Empty Fields\n",
 	},
 	{
 		Name: "Text",

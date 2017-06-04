@@ -96,9 +96,7 @@ func SetDelimiter(s string) error {
 		return nil
 	}
 
-	if s == "\\t" {
-		s = "\t"
-	}
+	s = UnescapeString(s)
 
 	runes := []rune(s)
 	if 1 < len(runes) {
@@ -241,9 +239,7 @@ func SetWriteDelimiter(s string) error {
 		return nil
 	}
 
-	if s == "\\t" {
-		s = "\t"
-	}
+	s = UnescapeString(s)
 
 	runes := []rune(s)
 	if 1 < len(runes) {
