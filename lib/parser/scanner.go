@@ -7,6 +7,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
@@ -211,7 +212,7 @@ func (s *Scanner) literal() string {
 	return string(s.runes())
 }
 
-func (s *Scanner) escapedTokenString() string {
+func (s *Scanner) unescapeTokenString() string {
 	runes := s.runes()
 	quote := runes[0]
 	switch quote {
@@ -287,15 +288,16 @@ func (s *Scanner) Scan() (int, string, bool, error) {
 			break
 		case '"', '\'':
 			s.scanString(ch)
-			literal = s.escapedTokenString()
+			literal = s.unescapeTokenString()
 			if _, e := StrToTime(literal); e == nil {
 				token = DATETIME
 			} else {
 				token = STRING
+				literal = cmd.UnescapeString(literal)
 			}
 		case '`':
 			s.scanString(ch)
-			literal = s.escapedTokenString()
+			literal = s.unescapeTokenString()
 			token = IDENTIFIER
 			quoted = true
 		}
