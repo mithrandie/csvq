@@ -821,6 +821,14 @@ func (d Dual) String() string {
 	return d.Dual
 }
 
+type Stdin struct {
+	Stdin string
+}
+
+func (si Stdin) String() string {
+	return si.Stdin
+}
+
 type OrderItem struct {
 	Item      Expression
 	Direction Token

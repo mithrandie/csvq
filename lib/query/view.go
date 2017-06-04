@@ -45,7 +45,7 @@ func NewFileInfo(filename string, repository string, delimiter rune) (*FileInfo,
 	}
 
 	if delimiter == cmd.UNDEF {
-		if strings.ToUpper(path.Ext(filepath)) == strings.ToUpper(cmd.TSV_EXT) {
+		if strings.EqualFold(path.Ext(filepath), cmd.TSV_EXT) {
 			delimiter = '\t'
 		} else {
 			delimiter = ','
@@ -56,6 +56,14 @@ func NewFileInfo(filename string, repository string, delimiter rune) (*FileInfo,
 		Path:      filepath,
 		Delimiter: delimiter,
 	}, nil
+}
+
+func isReadableFromStdin() bool {
+	fi, err := os.Stdin.Stat()
+	if err == nil && (fi.Mode()&os.ModeNamedPipe != 0 || 0 < fi.Size()) {
+		return true
+	}
+	return false
 }
 
 type View struct {
@@ -75,10 +83,14 @@ type View struct {
 }
 
 func NewView(clause parser.FromClause, parentFilter Filter) (*View, error) {
-	if len(clause.Tables) < 2 {
-		if _, ok := clause.Tables[0].(parser.Dual); ok {
-			return NewDualView(), nil
+	if clause.Tables == nil {
+		var obj parser.Expression
+		if isReadableFromStdin() {
+			obj = parser.Stdin{Stdin: "stdin"}
+		} else {
+			obj = parser.Dual{}
 		}
+		clause.Tables = []parser.Expression{parser.Table{Object: obj}}
 	}
 
 	views := make([]*View, len(clause.Tables))
@@ -107,9 +119,36 @@ func loadView(table parser.Table, parentFilter Filter) (*View, error) {
 	var err error
 
 	switch table.Object.(type) {
+	case parser.Dual:
+		view = NewDualView()
+	case parser.Stdin:
+		if !isReadableFromStdin() {
+			return nil, errors.New("stdin is empty")
+		}
+
+		file := os.Stdin
+		defer file.Close()
+		delimiter := cmd.GetFlags().Delimiter
+		if delimiter == cmd.UNDEF {
+			delimiter = ','
+		}
+		fileInfo := &FileInfo{
+			Delimiter: delimiter,
+		}
+		view, err = loadViewFromFile(file, fileInfo, table.Name())
 	case parser.Identifier:
-		file := table.Object.(parser.Identifier)
-		view, err = loadViewFromFile(file.Literal, table.Name())
+		flags := cmd.GetFlags()
+		fileInfo, err := NewFileInfo(table.Object.(parser.Identifier).Literal, flags.Repository, flags.Delimiter)
+		if err != nil {
+			return nil, err
+		}
+
+		file, err := os.Open(fileInfo.Path)
+		if err != nil {
+			return nil, err
+		}
+		defer file.Close()
+		view, err = loadViewFromFile(file, fileInfo, table.Name())
 	case parser.Join:
 		join := table.Object.(parser.Join)
 		view1, err := loadView(join.Table, parentFilter)
@@ -151,21 +190,10 @@ func loadView(table parser.Table, parentFilter Filter) (*View, error) {
 	return view, nil
 }
 
-func loadViewFromFile(filename string, reference string) (*View, error) {
+func loadViewFromFile(file *os.File, fileInfo *FileInfo, reference string) (*View, error) {
 	flags := cmd.GetFlags()
 
-	fileInfo, err := NewFileInfo(filename, flags.Repository, flags.Delimiter)
-	if err != nil {
-		return nil, err
-	}
-
-	f, err := os.Open(fileInfo.Path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	r := cmd.GetReader(f, flags.Encoding)
+	r := cmd.GetReader(file, flags.Encoding)
 
 	view := new(View)
 
@@ -173,10 +201,11 @@ func loadViewFromFile(filename string, reference string) (*View, error) {
 	reader.Delimiter = fileInfo.Delimiter
 	reader.WithoutNull = flags.WithoutNull
 
+	var err error
 	var header []string
 	if !flags.NoHeader {
 		header, err = reader.ReadHeader()
-		if err != nil {
+		if err != nil && err != csv.EOF {
 			return nil, err
 		}
 	}
@@ -436,7 +465,10 @@ func (view *View) Select(clause parser.SelectClause) error {
 		field := f.(parser.Field)
 		if ident, ok := field.Object.(parser.Identifier); ok {
 			ref, field, _ := ident.FieldRef()
-			idx, _ := view.Header.Contains(ref, field)
+			idx, err := view.Header.Contains(ref, field)
+			if err != nil {
+				return err
+			}
 			view.selectFields[i] = idx
 		} else {
 			view.Header = AddHeaderField(view.Header, field.Name())

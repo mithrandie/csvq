@@ -41,6 +41,7 @@ package parser
 %type<expression>  function
 %type<expression>  option
 %type<expression>  group_concat
+%type<expression>  identified_table
 %type<expression>  table
 %type<expression>  join
 %type<expression>  join_condition
@@ -75,7 +76,7 @@ package parser
 %type<token>       join_direction
 %type<token>       statement_terminal
 %token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME VARIABLE
-%token<token> SELECT FROM UPDATE SET DELETE WHERE INSERT INTO VALUES AS DUAL
+%token<token> SELECT FROM UPDATE SET DELETE WHERE INSERT INTO VALUES AS DUAL STDIN
 %token<token> CREATE DROP ALTER TABLE COLUMN
 %token<token> ORDER GROUP HAVING BY ASC DESC LIMIT
 %token<token> JOIN INNER OUTER LEFT RIGHT FULL CROSS ON USING NATURAL UNION
@@ -154,10 +155,6 @@ from_clause
     :
     {
         $$ = nil
-    }
-    | FROM DUAL
-    {
-        $$ = FromClause{From: $1.Literal, Tables: []Expression{Dual{Dual: $2.Literal}}}
     }
     | FROM tables
     {
@@ -451,34 +448,40 @@ group_concat
         $$ = GroupConcat{GroupConcat: $1.Literal, Option: $3.(Option), OrderBy: $4, SeparatorLit: $5.Literal, Separator: $6.Literal}
     }
 
-table
+identified_table
     : identifier
     {
-        $$ = Table{Object: $1}
-    }
-    | identifier identifier
-    {
-        $$ = Table{Object: $1, Alias: $2}
-    }
-    | identifier AS identifier
-    {
-        $$ = Table{Object: $1, As: $2, Alias: $3}
+        $$ = $1
     }
     | subquery
     {
+        $$ = $1
+    }
+    | STDIN
+    {
+        $$ = Stdin{Stdin: $1.Literal}
+    }
+
+table
+    : identified_table
+    {
         $$ = Table{Object: $1}
     }
-    | subquery identifier
+    | identified_table identifier
     {
         $$ = Table{Object: $1, Alias: $2}
     }
-    | subquery AS identifier
+    | identified_table AS identifier
     {
         $$ = Table{Object: $1, As: $2, Alias: $3}
     }
     | join
     {
         $$ = Table{Object: $1}
+    }
+    | DUAL
+    {
+        $$ = Table{Object: Dual{Dual: $1.Literal}}
     }
 
 join

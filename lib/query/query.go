@@ -54,16 +54,12 @@ func Execute(input string) ([]Result, error) {
 }
 
 func ExecuteSelect(query parser.SelectQuery, parentFilter Filter) (*View, error) {
-	var view *View
-
 	if query.FromClause == nil {
-		view = NewDualView()
-	} else {
-		v, err := NewView(query.FromClause.(parser.FromClause), parentFilter)
-		if err != nil {
-			return nil, err
-		}
-		view = v
+		query.FromClause = parser.FromClause{}
+	}
+	view, err := NewView(query.FromClause.(parser.FromClause), parentFilter)
+	if err != nil {
+		return nil, err
 	}
 
 	if query.WhereClause != nil {

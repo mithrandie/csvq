@@ -1135,6 +1135,14 @@ func TestDual_String(t *testing.T) {
 	}
 }
 
+func TestStdin_String(t *testing.T) {
+	s := "stdin"
+	e := Stdin{Stdin: s}
+	if e.String() != s {
+		t.Errorf("string = %q, want %q for %#v", e.String(), s, e)
+	}
+}
+
 func TestOrderItem_String(t *testing.T) {
 	e := OrderItem{
 		Item:      Identifier{Literal: "column"},
