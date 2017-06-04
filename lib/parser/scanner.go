@@ -149,7 +149,6 @@ var keywords = []int{
 }
 
 var comparisonOperators = []string{
-	"=",
 	">",
 	"<",
 	">=",

@@ -244,6 +244,40 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select column1 = 1",
+		Output: []Statement{
+			SelectQuery{
+				SelectClause: SelectClause{
+					Select: "select",
+					Fields: []Expression{
+						Field{Object: Comparison{
+							LHS:      Identifier{Literal: "column1"},
+							Operator: Token{Token: COMPARISON_OP, Literal: "="},
+							RHS:      NewInteger(1),
+						}},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select column1 < 1",
+		Output: []Statement{
+			SelectQuery{
+				SelectClause: SelectClause{
+					Select: "select",
+					Fields: []Expression{
+						Field{Object: Comparison{
+							LHS:      Identifier{Literal: "column1"},
+							Operator: Token{Token: COMPARISON_OP, Literal: "<"},
+							RHS:      NewInteger(1),
+						}},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "select column1 is not null",
 		Output: []Statement{
 			SelectQuery{

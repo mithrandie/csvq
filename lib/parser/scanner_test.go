@@ -118,12 +118,22 @@ var scanTests = []struct {
 		},
 	},
 	{
-		Name:  "ComparisonOperator",
+		Name:  "EqualSign",
 		Input: "=",
 		Output: []scanResult{
 			{
-				Token:   COMPARISON_OP,
+				Token:   '=',
 				Literal: "=",
+			},
+		},
+	},
+	{
+		Name:  "ComparisonOperator",
+		Input: "<=",
+		Output: []scanResult{
+			{
+				Token:   COMPARISON_OP,
+				Literal: "<=",
 			},
 		},
 	},

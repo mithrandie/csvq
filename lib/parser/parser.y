@@ -74,6 +74,7 @@ package parser
 %type<token>       join_inner
 %type<token>       join_outer
 %type<token>       join_direction
+%type<token>       comparison_operator
 %type<token>       statement_terminal
 %token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME VARIABLE
 %token<token> SELECT FROM UPDATE SET DELETE WHERE INSERT INTO VALUES AS DUAL STDIN
@@ -93,7 +94,7 @@ package parser
 %left OR
 %left AND
 %left NOT
-%left COMPARISON_OP STRING_OP
+%left '=' COMPARISON_OP STRING_OP
 %left '+' '-'
 %left '*' '/' '%'
 
@@ -337,7 +338,7 @@ string_operation
     }
 
 comparison
-    : value COMPARISON_OP value
+    : value comparison_operator value
     {
         $$ = Comparison{LHS: $1, Operator: $2, RHS: $3}
     }
@@ -365,11 +366,11 @@ comparison
     {
         $$ = Like{Like: $3.Literal, LHS: $1, Pattern: $4, Negation: $2}
     }
-    | value COMPARISON_OP ANY subquery
+    | value comparison_operator ANY subquery
     {
         $$ = Any{Any: $3.Literal, LHS: $1, Operator: $2, Query: $4.(Subquery)}
     }
-    | value COMPARISON_OP ALL subquery
+    | value comparison_operator ALL subquery
     {
         $$ = All{All: $3.Literal, LHS: $1, Operator: $2, Query: $4.(Subquery)}
     }
@@ -772,6 +773,16 @@ join_direction
     | FULL
     {
         $$ = $1
+    }
+
+comparison_operator
+    : COMPARISON_OP
+    {
+        $$ = $1
+    }
+    | '='
+    {
+        $$ = Token{Token:COMPARISON_OP, Literal:string('=')}
     }
 
 statement_terminal
