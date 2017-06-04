@@ -61,8 +61,11 @@ func convertLineBreak(str string, lb cmd.LineBreak) string {
 }
 
 func encodeText(result query.Result) string {
-	if result.Count < 1 {
-		return "Empty\n"
+	if result.View.FieldLen() < 1 {
+		return "Empty Fields\n"
+	}
+	if result.View.RecordLen() < 1 {
+		return "Empty Records\n"
 	}
 
 	view := result.View

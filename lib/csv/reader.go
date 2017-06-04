@@ -9,6 +9,8 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
+var EOF error = io.EOF
+
 type Reader struct {
 	Delimiter   rune
 	WithoutNull bool
@@ -62,7 +64,7 @@ func (r *Reader) ReadAll() ([][]parser.Primary, error) {
 
 	for {
 		record, err := r.Read()
-		if err == io.EOF {
+		if err == EOF {
 			break
 		}
 		if err != nil {
@@ -89,9 +91,9 @@ func (r *Reader) parseRecord(withoutNull bool) ([]parser.Primary, error) {
 		}
 
 		field, eol, err := r.parseField(withoutNull)
-		if err == io.EOF {
+		if err == EOF {
 			if fieldIndex < 1 {
-				return nil, err
+				return nil, EOF
 			}
 		} else if err != nil {
 			return nil, err
@@ -138,7 +140,7 @@ Read:
 				return nil, eol, r.newError("extraneous \" in field")
 			}
 
-			eof = err
+			eof = EOF
 			eol = true
 			break
 		}

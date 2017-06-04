@@ -30,13 +30,33 @@ var parseTests = []struct {
 					Select: "select",
 					Fields: []Expression{
 						Field{
-							Object: NewIntegerFromString("1"),
+							Object: NewInteger(1),
 							As:     Token{Token: AS, Literal: "as"},
 							Alias:  Identifier{Literal: "a"},
 						},
 					},
 				},
-				FromClause: FromClause{From: "from", Tables: []Expression{Dual{Dual: "dual"}}},
+				FromClause: FromClause{From: "from", Tables: []Expression{
+					Table{Object: Dual{Dual: "dual"}},
+				}},
+			},
+		},
+	},
+	{
+		Input: "select c1 from stdin",
+		Output: []Statement{
+			SelectQuery{
+				SelectClause: SelectClause{
+					Select: "select",
+					Fields: []Expression{
+						Field{
+							Object: Identifier{Literal: "c1"},
+						},
+					},
+				},
+				FromClause: FromClause{From: "from", Tables: []Expression{
+					Table{Object: Stdin{Stdin: "stdin"}},
+				}},
 			},
 		},
 	},
@@ -55,7 +75,7 @@ var parseTests = []struct {
 							Object: Subquery{
 								Query: SelectQuery{
 									SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("2")}}},
-									FromClause:   FromClause{From: "from", Tables: []Expression{Dual{Dual: "dual"}}},
+									FromClause:   FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
 								},
 							},
 						},
@@ -80,7 +100,7 @@ var parseTests = []struct {
 							Object: Subquery{
 								Query: SelectQuery{
 									SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("2")}}},
-									FromClause:   FromClause{From: "from", Tables: []Expression{Dual{Dual: "dual"}}},
+									FromClause:   FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
 								},
 							},
 							Alias: Identifier{Literal: "alias2"},
@@ -107,7 +127,7 @@ var parseTests = []struct {
 							Object: Subquery{
 								Query: SelectQuery{
 									SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("2")}}},
-									FromClause:   FromClause{From: "from", Tables: []Expression{Dual{Dual: "dual"}}},
+									FromClause:   FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
 								},
 							},
 							As:    Token{Token: AS, Literal: "as"},
@@ -129,7 +149,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
-				FromClause:   FromClause{From: "from", Tables: []Expression{Dual{Dual: "dual"}}},
+				FromClause:   FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
 				WhereClause: WhereClause{
 					Where: "where",
 					Filter: Comparison{
@@ -179,7 +199,7 @@ var parseTests = []struct {
 						Field{Object: AllColumns{}},
 					},
 				},
-				FromClause: FromClause{From: "from", Tables: []Expression{Dual{Dual: "dual"}}},
+				FromClause: FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
 			},
 		},
 	},
@@ -202,7 +222,7 @@ var parseTests = []struct {
 						Field{Object: Parentheses{Expr: NewString("bar")}},
 					},
 				},
-				FromClause: FromClause{From: "from", Tables: []Expression{Dual{Dual: "dual"}}},
+				FromClause: FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
 			},
 		},
 	},
