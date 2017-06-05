@@ -216,7 +216,7 @@ func loadViewFromFile(file *os.File, fileInfo *FileInfo, reference string) (*Vie
 	}
 	view.Records = make([]Record, len(records))
 	for i, v := range records {
-		view.Records[i] = NewRecord(v)
+		view.Records[i] = NewRecord(i, v)
 	}
 
 	if header == nil {

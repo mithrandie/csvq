@@ -14,7 +14,15 @@ func ParseJoinCondition(join parser.Join, view *View, joinView *View) parser.Exp
 
 	if !join.Natural.IsEmpty() {
 		for _, f1 := range view.Header {
+			if f1.Column == INTERNAL_ID_FIELD {
+				continue
+			}
+
 			for _, f2 := range joinView.Header {
+				if f2.Column == INTERNAL_ID_FIELD {
+					continue
+				}
+
 				if f1.Column == f2.Column {
 					using = append(using, parser.Identifier{Literal: f1.Column})
 				}

@@ -25,7 +25,7 @@ var encodeTests = []struct {
 		Name: "Empty Records",
 		Stmt: query.SELECT,
 		View: &query.View{
-			Header:  query.NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
+			Header:  query.NewHeaderWithoutId("test", []string{"c1", "c2\nsecond line", "c3"}),
 			Records: []query.Record{},
 		},
 		Count:  0,
@@ -36,9 +36,9 @@ var encodeTests = []struct {
 		Name: "Empty Fields",
 		Stmt: query.SELECT,
 		View: &query.View{
-			Header: query.NewHeader("", []string{}),
+			Header: query.NewHeaderWithoutId("", []string{}),
 			Records: []query.Record{
-				query.NewRecord([]parser.Primary{parser.NewNull()}),
+				query.NewRecordWithoutId([]parser.Primary{parser.NewNull()}),
 			},
 		},
 		Count:  1,
@@ -49,11 +49,11 @@ var encodeTests = []struct {
 		Name: "Text",
 		Stmt: query.SELECT,
 		View: &query.View{
-			Header: query.NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
+			Header: query.NewHeaderWithoutId("test", []string{"c1", "c2\nsecond line", "c3"}),
 			Records: []query.Record{
-				query.NewRecord([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
-				query.NewRecord([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01 16:00:00.123456"), parser.NewString("abcdef")}),
-				query.NewRecord([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
+				query.NewRecordWithoutId([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
+				query.NewRecordWithoutId([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01 16:00:00.123456"), parser.NewString("abcdef")}),
+				query.NewRecordWithoutId([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
 			},
 		},
 		Count:  3,
@@ -72,11 +72,11 @@ var encodeTests = []struct {
 		Name: "CSV",
 		Stmt: query.SELECT,
 		View: &query.View{
-			Header: query.NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
+			Header: query.NewHeaderWithoutId("test", []string{"c1", "c2\nsecond line", "c3"}),
 			Records: []query.Record{
-				query.NewRecord([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
-				query.NewRecord([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01 16:00:00.123456"), parser.NewString("abcdef")}),
-				query.NewRecord([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
+				query.NewRecordWithoutId([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
+				query.NewRecordWithoutId([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01 16:00:00.123456"), parser.NewString("abcdef")}),
+				query.NewRecordWithoutId([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
 			},
 		},
 		Count:  3,
@@ -90,11 +90,11 @@ var encodeTests = []struct {
 		Name: "TSV",
 		Stmt: query.SELECT,
 		View: &query.View{
-			Header: query.NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
+			Header: query.NewHeaderWithoutId("test", []string{"c1", "c2\nsecond line", "c3"}),
 			Records: []query.Record{
-				query.NewRecord([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
-				query.NewRecord([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01 16:00:00.123456"), parser.NewString("abcdef")}),
-				query.NewRecord([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
+				query.NewRecordWithoutId([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
+				query.NewRecordWithoutId([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01 16:00:00.123456"), parser.NewString("abcdef")}),
+				query.NewRecordWithoutId([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
 			},
 		},
 		Count:          3,
@@ -109,11 +109,11 @@ var encodeTests = []struct {
 		Name: "CSV WithoutHeader",
 		Stmt: query.SELECT,
 		View: &query.View{
-			Header: query.NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
+			Header: query.NewHeaderWithoutId("test", []string{"c1", "c2\nsecond line", "c3"}),
 			Records: []query.Record{
-				query.NewRecord([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
-				query.NewRecord([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01 16:00:00.123456"), parser.NewString("abcdef")}),
-				query.NewRecord([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
+				query.NewRecordWithoutId([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
+				query.NewRecordWithoutId([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01 16:00:00.123456"), parser.NewString("abcdef")}),
+				query.NewRecordWithoutId([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
 			},
 		},
 		Count:         3,
@@ -127,11 +127,11 @@ var encodeTests = []struct {
 		Name: "CSV Line Break CRLF",
 		Stmt: query.SELECT,
 		View: &query.View{
-			Header: query.NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
+			Header: query.NewHeaderWithoutId("test", []string{"c1", "c2\nsecond line", "c3"}),
 			Records: []query.Record{
-				query.NewRecord([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
-				query.NewRecord([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01 16:00:00.123456"), parser.NewString("abcdef")}),
-				query.NewRecord([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
+				query.NewRecordWithoutId([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
+				query.NewRecordWithoutId([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01 16:00:00.123456"), parser.NewString("abcdef")}),
+				query.NewRecordWithoutId([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
 			},
 		},
 		Count:     3,
@@ -146,11 +146,11 @@ var encodeTests = []struct {
 		Name: "JSON",
 		Stmt: query.SELECT,
 		View: &query.View{
-			Header: query.NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
+			Header: query.NewHeaderWithoutId("test", []string{"c1", "c2\nsecond line", "c3"}),
 			Records: []query.Record{
-				query.NewRecord([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
-				query.NewRecord([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01 16:00:00.123456"), parser.NewString("abcdef")}),
-				query.NewRecord([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abc\\defghi/jklmn\topqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
+				query.NewRecordWithoutId([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
+				query.NewRecordWithoutId([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01 16:00:00.123456"), parser.NewString("abcdef")}),
+				query.NewRecordWithoutId([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abc\\defghi/jklmn\topqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
 			},
 		},
 		Count:  3,
