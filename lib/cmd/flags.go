@@ -188,8 +188,8 @@ func SetOut(s string) error {
 	}
 
 	_, err := os.Stat(s)
-	if err == nil || !os.IsNotExist(err) {
-		return errors.New("file passed in out option is already exist")
+	if err == nil {
+		return errors.New("file passed in out option already exists")
 	}
 
 	f := GetFlags()

@@ -162,7 +162,7 @@ func TestSetOut(t *testing.T) {
 		t.Errorf("unexpected error %q for %q", err.Error(), "")
 	}
 
-	expectErr := "file passed in out option is already exist"
+	expectErr := "file passed in out option already exists"
 	err = SetOut("flags_test.go")
 	if err == nil {
 		t.Errorf("no error, want error %q for %q", expectErr, "flags_test.go")

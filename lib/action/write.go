@@ -23,7 +23,7 @@ func Write(input string) error {
 		out += s
 	}
 
-	err = output.Write(flags.OutFile, out)
+	err = output.Create(flags.OutFile, out)
 	if err != nil {
 		return err
 	}
