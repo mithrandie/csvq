@@ -1314,3 +1314,259 @@ func TestVariableDeclaration_String(t *testing.T) {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 }
+
+func TestInsertQuery_String(t *testing.T) {
+	e := InsertQuery{
+		Insert: "insert",
+		Into:   "into",
+		Table:  Identifier{Literal: "table1"},
+		Fields: []Expression{
+			Identifier{Literal: "column1"},
+			Identifier{Literal: "column2"},
+		},
+		Values: "values",
+		ValuesList: []Expression{
+			InsertValues{
+				Values: []Expression{
+					NewInteger(1),
+					NewInteger(2),
+				},
+			},
+			InsertValues{
+				Values: []Expression{
+					NewInteger(3),
+					NewInteger(4),
+				},
+			},
+		},
+	}
+	expect := "insert into table1 (column1, column2) values (1, 2), (3, 4)"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+
+	e = InsertQuery{
+		Insert: "insert",
+		Into:   "into",
+		Table:  Identifier{Literal: "table1"},
+		Fields: []Expression{
+			Identifier{Literal: "column1"},
+			Identifier{Literal: "column2"},
+		},
+		Query: SelectQuery{
+			SelectClause: SelectClause{
+				Select: "select",
+				Fields: []Expression{
+					NewInteger(1),
+					NewInteger(2),
+				},
+			},
+		},
+	}
+	expect = "insert into table1 (column1, column2) select 1, 2"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestInsertValues_String(t *testing.T) {
+	e := InsertValues{
+		Values: []Expression{
+			NewInteger(1),
+			NewInteger(2),
+		},
+	}
+	expect := "(1, 2)"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestUpdateQuery_String(t *testing.T) {
+	e := UpdateQuery{
+		Update: "update",
+		Tables: []Expression{
+			Table{
+				Object: Identifier{Literal: "table1"},
+			},
+		},
+		Set: "set",
+		SetList: []Expression{
+			UpdateSet{
+				Field: Identifier{Literal: "column1"},
+				Value: NewInteger(1),
+			},
+			UpdateSet{
+				Field: Identifier{Literal: "column2"},
+				Value: NewInteger(2),
+			},
+		},
+		FromClause: FromClause{
+			From: "from",
+			Tables: []Expression{
+				Table{
+					Object: Identifier{Literal: "table1"},
+				},
+			},
+		},
+		WhereClause: WhereClause{
+			Where: "where",
+			Filter: Comparison{
+				LHS:      Identifier{Literal: "column3"},
+				Operator: Token{Token: COMPARISON_OP, Literal: "="},
+				RHS:      NewInteger(3),
+			},
+		},
+	}
+	expect := "update table1 set column1 = 1, column2 = 2 from table1 where column3 = 3"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestUpdateSet_String(t *testing.T) {
+	e := UpdateSet{
+		Field: Identifier{Literal: "column1"},
+		Value: NewInteger(1),
+	}
+	expect := "column1 = 1"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestDeleteQuery_String(t *testing.T) {
+	e := DeleteQuery{
+		Delete: "delete",
+		Tables: []Expression{
+			Table{
+				Object: Identifier{Literal: "table1"},
+			},
+		},
+		FromClause: FromClause{
+			From: "from",
+			Tables: []Expression{
+				Table{
+					Object: Identifier{Literal: "table1"},
+				},
+			},
+		},
+		WhereClause: WhereClause{
+			Where: "where",
+			Filter: Comparison{
+				LHS:      Identifier{Literal: "column1"},
+				Operator: Token{Token: COMPARISON_OP, Literal: "="},
+				RHS:      NewInteger(1),
+			},
+		},
+	}
+	expect := "delete table1 from table1 where column1 = 1"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestCreateTable_String(t *testing.T) {
+	e := CreateTable{
+		CreateTable: "create table",
+		Table:       Identifier{Literal: "newtable"},
+		Fields: []Expression{
+			Identifier{Literal: "column1"},
+			Identifier{Literal: "column2"},
+		},
+	}
+	expect := "create table newtable (column1, column2)"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestAddColumns_String(t *testing.T) {
+	e := AddColumns{
+		AlterTable: "alter table",
+		Table:      Identifier{Literal: "table1"},
+		Add:        "add",
+		Columns: []Expression{
+			ColumnDefault{
+				Column: Identifier{Literal: "newcolumn"},
+			},
+			ColumnDefault{
+				Column:  Identifier{Literal: "newcolumn2"},
+				Default: "default",
+				Value:   Null{literal: "null"},
+			},
+		},
+		Position: ColumnPosition{
+			Position: Token{Token: FIRST, Literal: "first"},
+		},
+	}
+	expect := "alter table table1 add (newcolumn, newcolumn2 default null) first"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestColumnDefault_String(t *testing.T) {
+	e := ColumnDefault{
+		Column:  Identifier{Literal: "column1"},
+		Default: "default",
+		Value:   Null{literal: "null"},
+	}
+	expect := "column1 default null"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestColumnPosition_String(t *testing.T) {
+	e := ColumnPosition{
+		Position: Token{Token: AFTER, Literal: "after"},
+		Column:   Identifier{Literal: "column1"},
+	}
+	expect := "after column1"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestDropColumns_String(t *testing.T) {
+	e := DropColumns{
+		AlterTable: "alter table",
+		Table:      Identifier{Literal: "table1"},
+		Drop:       "drop",
+		Columns: []Expression{
+			Identifier{Literal: "column1"},
+			Identifier{Literal: "column2"},
+		},
+	}
+	expect := "alter table table1 drop (column1, column2)"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestRenameColumn_String(t *testing.T) {
+	e := RenameColumn{
+		AlterTable: "alter table",
+		Table:      Identifier{Literal: "table1"},
+		Rename:     "rename",
+		Old:        Identifier{Literal: "oldcolumn"},
+		To:         "to",
+		New:        Identifier{Literal: "newcolumn"},
+	}
+	expect := "alter table table1 rename oldcolumn to newcolumn"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestPrint_String(t *testing.T) {
+	e := Print{
+		Print: "print",
+		Value: NewString("foo"),
+	}
+	expect := "print 'foo'"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}

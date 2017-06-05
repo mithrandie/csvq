@@ -21,7 +21,6 @@ package parser
 
 %type<program>     program
 %type<statement>   statement
-%type<expression>  expression
 %type<expression>  select_query
 %type<expression>  select_clause
 %type<expression>  from_clause
@@ -42,6 +41,7 @@ package parser
 %type<expression>  option
 %type<expression>  group_concat
 %type<expression>  identified_table
+%type<expression>  virtual_table
 %type<expression>  table
 %type<expression>  join
 %type<expression>  join_condition
@@ -53,9 +53,25 @@ package parser
 %type<expressions> values
 %type<expressions> order_items
 %type<expressions> tables
+%type<expressions> identified_tables
 %type<expressions> using_fields
 %type<expressions> fields
 %type<expressions> case_when
+%type<expression>  insert_query
+%type<expression>  insert_values
+%type<expressions> insert_values_list
+%type<expression>  update_query
+%type<expression>  update_set
+%type<expressions> update_set_list
+%type<expression>  delete_query
+%type<expression>  create_table
+%type<expression>  add_columns
+%type<expression>  column_default
+%type<expressions> column_defaults
+%type<expression>  column_position
+%type<expression>  drop_columns
+%type<expression>  rename_column
+%type<expression>  print
 %type<identifier>  identifier
 %type<text>        text
 %type<integer>     integer
@@ -78,22 +94,22 @@ package parser
 %type<token>       statement_terminal
 %token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME VARIABLE
 %token<token> SELECT FROM UPDATE SET DELETE WHERE INSERT INTO VALUES AS DUAL STDIN
-%token<token> CREATE DROP ALTER TABLE COLUMN
+%token<token> CREATE ADD DROP ALTER TABLE FIRST LAST AFTER BEFORE DEFAULT RENAME TO
 %token<token> ORDER GROUP HAVING BY ASC DESC LIMIT
 %token<token> JOIN INNER OUTER LEFT RIGHT FULL CROSS ON USING NATURAL UNION
 %token<token> ALL ANY EXISTS IN
 %token<token> AND OR NOT BETWEEN LIKE IS NULL
 %token<token> DISTINCT WITH
-%token<token> TRUE FALSE UNKNOWN
 %token<token> CASE WHEN THEN ELSE END
 %token<token> GROUP_CONCAT SEPARATOR
+%token<token> PRINT
 %token<token> VAR
 %token<token> COMPARISON_OP STRING_OP SUBSTITUTION_OP
 
 %right SUBSTITUTION_OP
 %left OR
 %left AND
-%left NOT
+%right NOT
 %left '=' COMPARISON_OP STRING_OP
 %left '+' '-'
 %left '*' '/' '%'
@@ -113,21 +129,47 @@ program
     }
 
 statement
-    : expression statement_terminal
+    : select_query statement_terminal
     {
         $$ = $1
     }
-
-expression
-    : select_query
+    | insert_query statement_terminal
     {
         $$ = $1
     }
-    | variable_declaration
+    | update_query statement_terminal
     {
         $$ = $1
     }
-    | variable_substitution
+    | delete_query statement_terminal
+    {
+        $$ = $1
+    }
+    | create_table statement_terminal
+    {
+        $$ = $1
+    }
+    | add_columns statement_terminal
+    {
+        $$ = $1
+    }
+    | drop_columns statement_terminal
+    {
+        $$ = $1
+    }
+    | rename_column statement_terminal
+    {
+        $$ = $1
+    }
+    | variable_declaration statement_terminal
+    {
+        $$ = $1
+    }
+    | variable_substitution statement_terminal
+    {
+        $$ = $1
+    }
+    | print statement_terminal
     {
         $$ = $1
     }
@@ -452,9 +494,19 @@ group_concat
 identified_table
     : identifier
     {
-        $$ = $1
+        $$ = Table{Object: $1}
     }
-    | subquery
+    | identifier identifier
+    {
+        $$ = Table{Object: $1, Alias: $2}
+    }
+    | identifier AS identifier
+    {
+        $$ = Table{Object: $1, As: $2, Alias: $3}
+    }
+
+virtual_table
+    : subquery
     {
         $$ = $1
     }
@@ -466,13 +518,17 @@ identified_table
 table
     : identified_table
     {
+        $$ = $1
+    }
+    | virtual_table
+    {
         $$ = Table{Object: $1}
     }
-    | identified_table identifier
+    | virtual_table identifier
     {
         $$ = Table{Object: $1, Alias: $2}
     }
-    | identified_table AS identifier
+    | virtual_table AS identifier
     {
         $$ = Table{Object: $1, As: $2, Alias: $3}
     }
@@ -597,6 +653,16 @@ tables
         $$ = append([]Expression{$1}, $3...)
     }
 
+identified_tables
+    : identified_table
+    {
+        $$ = []Expression{$1}
+    }
+    | identified_table ',' identified_tables
+    {
+        $$ = append([]Expression{$1}, $3...)
+    }
+
 using_fields
     : identifier
     {
@@ -625,6 +691,154 @@ case_when
     | case_when case_when
     {
         $$ = append($1, $2...)
+    }
+
+insert_query
+    : INSERT INTO identifier VALUES insert_values_list
+    {
+        $$ = InsertQuery{Insert: $1.Literal, Into: $2.Literal, Table: $3, Values: $4.Literal, ValuesList: $5}
+    }
+    | INSERT INTO identifier '(' using_fields ')' VALUES insert_values_list
+    {
+        $$ = InsertQuery{Insert: $1.Literal, Into: $2.Literal, Table: $3, Fields: $5, Values: $7.Literal, ValuesList: $8}
+    }
+    | INSERT INTO identifier select_query
+    {
+        $$ = InsertQuery{Insert: $1.Literal, Into: $2.Literal, Table: $3, Query: $4.(SelectQuery)}
+    }
+    | INSERT INTO identifier '(' using_fields ')' select_query
+    {
+        $$ = InsertQuery{Insert: $1.Literal, Into: $2.Literal, Table: $3, Fields: $5, Query: $7.(SelectQuery)}
+    }
+
+insert_values
+    : '(' values ')'
+    {
+        $$ = InsertValues{Values: $2}
+    }
+
+insert_values_list
+    : insert_values
+    {
+        $$ = []Expression{$1}
+    }
+    | insert_values ',' insert_values_list
+    {
+        $$ = append([]Expression{$1}, $3...)
+    }
+
+update_query
+    : UPDATE identified_tables SET update_set_list from_clause where_clause
+    {
+        $$ = UpdateQuery{Update: $1.Literal, Tables: $2, Set: $3.Literal, SetList: $4, FromClause: $5, WhereClause: $6}
+    }
+
+update_set
+    : identifier '=' value
+    {
+        $$ = UpdateSet{Field: $1, Value: $3}
+    }
+
+update_set_list
+    : update_set
+    {
+        $$ = []Expression{$1}
+    }
+    | update_set ',' update_set_list
+    {
+        $$ = append([]Expression{$1}, $3...)
+    }
+
+delete_query
+    : DELETE FROM tables where_clause
+    {
+        from := FromClause{From: $2.Literal, Tables: $3}
+        $$ = DeleteQuery{Delete: $1.Literal, FromClause: from, WhereClause: $4}
+    }
+    | DELETE identified_tables FROM tables where_clause
+    {
+        from := FromClause{From: $3.Literal, Tables: $4}
+        $$ = DeleteQuery{Delete: $1.Literal, Tables: $2, FromClause: from, WhereClause: $5}
+    }
+
+create_table
+    : CREATE TABLE identifier '(' using_fields ')'
+    {
+        $$ = CreateTable{CreateTable: $1.Literal + " " + $2.Literal, Table: $3, Fields: $5}
+    }
+
+add_columns
+    : ALTER TABLE identifier ADD column_default column_position
+    {
+        $$ = AddColumns{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Add: $4.Literal, Columns: []Expression{$5}, Position: $6}
+    }
+    | ALTER TABLE identifier ADD '(' column_defaults ')' column_position
+    {
+        $$ = AddColumns{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Add: $4.Literal, Columns: $6, Position: $8}
+    }
+
+column_default
+    : identifier
+    {
+        $$ = ColumnDefault{Column: $1}
+    }
+    | identifier DEFAULT value
+    {
+        $$ = ColumnDefault{Column: $1, Default: $2.Literal, Value: $3}
+    }
+
+column_defaults
+    : column_default
+    {
+        $$ = []Expression{$1}
+    }
+    | column_default ',' column_defaults
+    {
+        $$ = append([]Expression{$1}, $3...)
+    }
+
+column_position
+    :
+    {
+        $$ = nil
+    }
+    | FIRST
+    {
+        $$ = ColumnPosition{Position: $1}
+    }
+    | LAST
+    {
+        $$ = ColumnPosition{Position: $1}
+    }
+    | AFTER identifier
+    {
+        $$ = ColumnPosition{Position: $1, Column: $2}
+    }
+    | BEFORE identifier
+    {
+        $$ = ColumnPosition{Position: $1, Column: $2}
+    }
+
+drop_columns
+    : ALTER TABLE identifier DROP identifier
+    {
+        $$ = DropColumns{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Drop: $4.Literal, Columns: []Expression{$5}}
+    }
+    | ALTER TABLE identifier DROP '(' using_fields ')'
+    {
+        $$ = DropColumns{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Drop: $4.Literal, Columns: $6}
+    }
+
+rename_column
+    : ALTER TABLE identifier RENAME identifier TO identifier
+    {
+        $$ = RenameColumn{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Rename: $4.Literal, Old: $5, To: $6.Literal, New: $7}
+    }
+
+print
+    : PRINT value
+    {
+        $$ = Print{Print: $1.Literal, Value: $2}
     }
 
 identifier

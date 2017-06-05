@@ -1038,6 +1038,314 @@ var parseTests = []struct {
 			},
 		},
 	},
+	{
+		Input: "insert into table1 values (1, 'str1'), (2, 'str2')",
+		Output: []Statement{
+			InsertQuery{
+				Insert: "insert",
+				Into:   "into",
+				Table:  Identifier{Literal: "table1"},
+				Values: "values",
+				ValuesList: []Expression{
+					InsertValues{
+						Values: []Expression{
+							NewInteger(1),
+							NewString("str1"),
+						},
+					},
+					InsertValues{
+						Values: []Expression{
+							NewInteger(2),
+							NewString("str2"),
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "insert into table1 (column1, column2) values (1, 'str1'), (2, 'str2')",
+		Output: []Statement{
+			InsertQuery{
+				Insert: "insert",
+				Into:   "into",
+				Table:  Identifier{Literal: "table1"},
+				Fields: []Expression{
+					Identifier{Literal: "column1"},
+					Identifier{Literal: "column2"},
+				},
+				Values: "values",
+				ValuesList: []Expression{
+					InsertValues{
+						Values: []Expression{
+							NewInteger(1),
+							NewString("str1"),
+						},
+					},
+					InsertValues{
+						Values: []Expression{
+							NewInteger(2),
+							NewString("str2"),
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "insert into table1 select 1, 2",
+		Output: []Statement{
+			InsertQuery{
+				Insert: "insert",
+				Into:   "into",
+				Table:  Identifier{Literal: "table1"},
+				Query: SelectQuery{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: NewInteger(1)},
+							Field{Object: NewInteger(2)},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "insert into table1 (column1, column2) select 1, 2",
+		Output: []Statement{
+			InsertQuery{
+				Insert: "insert",
+				Into:   "into",
+				Table:  Identifier{Literal: "table1"},
+				Fields: []Expression{
+					Identifier{Literal: "column1"},
+					Identifier{Literal: "column2"},
+				},
+				Query: SelectQuery{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: NewInteger(1)},
+							Field{Object: NewInteger(2)},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "update table1 set column1 = 1, column2 = 2 from table1 where true",
+		Output: []Statement{
+			UpdateQuery{
+				Update: "update",
+				Tables: []Expression{
+					Table{Object: Identifier{Literal: "table1"}},
+				},
+				Set: "set",
+				SetList: []Expression{
+					UpdateSet{Field: Identifier{Literal: "column1"}, Value: NewInteger(1)},
+					UpdateSet{Field: Identifier{Literal: "column2"}, Value: NewInteger(2)},
+				},
+				FromClause: FromClause{
+					From: "from",
+					Tables: []Expression{
+						Table{Object: Identifier{Literal: "table1"}},
+					},
+				},
+				WhereClause: WhereClause{
+					Where:  "where",
+					Filter: Ternary{literal: "true", value: ternary.TRUE},
+				},
+			},
+		},
+	},
+	{
+		Input: "delete from table1",
+		Output: []Statement{
+			DeleteQuery{
+				Delete: "delete",
+				FromClause: FromClause{
+					From: "from",
+					Tables: []Expression{
+						Table{Object: Identifier{Literal: "table1"}},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "delete table1 from table1 where true",
+		Output: []Statement{
+			DeleteQuery{
+				Delete: "delete",
+				Tables: []Expression{
+					Table{Object: Identifier{Literal: "table1"}},
+				},
+				FromClause: FromClause{
+					From: "from",
+					Tables: []Expression{
+						Table{Object: Identifier{Literal: "table1"}},
+					},
+				},
+				WhereClause: WhereClause{
+					Where:  "where",
+					Filter: Ternary{literal: "true", value: ternary.TRUE},
+				},
+			},
+		},
+	},
+	{
+		Input: "create table newtable (column1, column2)",
+		Output: []Statement{
+			CreateTable{
+				CreateTable: "create table",
+				Table:       Identifier{Literal: "newtable"},
+				Fields: []Expression{
+					Identifier{Literal: "column1"},
+					Identifier{Literal: "column2"},
+				},
+			},
+		},
+	},
+	{
+		Input: "alter table table1 add column1",
+		Output: []Statement{
+			AddColumns{
+				AlterTable: "alter table",
+				Table:      Identifier{Literal: "table1"},
+				Add:        "add",
+				Columns: []Expression{
+					ColumnDefault{
+						Column: Identifier{Literal: "column1"},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "alter table table1 add (column1, column2 default 1) first",
+		Output: []Statement{
+			AddColumns{
+				AlterTable: "alter table",
+				Table:      Identifier{Literal: "table1"},
+				Add:        "add",
+				Columns: []Expression{
+					ColumnDefault{
+						Column: Identifier{Literal: "column1"},
+					},
+					ColumnDefault{
+						Column:  Identifier{Literal: "column2"},
+						Default: "default",
+						Value:   NewInteger(1),
+					},
+				},
+				Position: ColumnPosition{
+					Position: Token{Token: FIRST, Literal: "first"},
+				},
+			},
+		},
+	},
+	{
+		Input: "alter table table1 add column1 last",
+		Output: []Statement{
+			AddColumns{
+				AlterTable: "alter table",
+				Table:      Identifier{Literal: "table1"},
+				Add:        "add",
+				Columns: []Expression{
+					ColumnDefault{
+						Column: Identifier{Literal: "column1"},
+					},
+				},
+				Position: ColumnPosition{
+					Position: Token{Token: LAST, Literal: "last"},
+				},
+			},
+		},
+	},
+	{
+		Input: "alter table table1 add column1 after column2",
+		Output: []Statement{
+			AddColumns{
+				AlterTable: "alter table",
+				Table:      Identifier{Literal: "table1"},
+				Add:        "add",
+				Columns: []Expression{
+					ColumnDefault{
+						Column: Identifier{Literal: "column1"},
+					},
+				},
+				Position: ColumnPosition{
+					Position: Token{Token: AFTER, Literal: "after"},
+					Column:   Identifier{Literal: "column2"},
+				},
+			},
+		},
+	},
+	{
+		Input: "alter table table1 add column1 before column2",
+		Output: []Statement{
+			AddColumns{
+				AlterTable: "alter table",
+				Table:      Identifier{Literal: "table1"},
+				Add:        "add",
+				Columns: []Expression{
+					ColumnDefault{
+						Column: Identifier{Literal: "column1"},
+					},
+				},
+				Position: ColumnPosition{
+					Position: Token{Token: BEFORE, Literal: "before"},
+					Column:   Identifier{Literal: "column2"},
+				},
+			},
+		},
+	},
+	{
+		Input: "alter table table1 drop column1",
+		Output: []Statement{
+			DropColumns{
+				AlterTable: "alter table",
+				Table:      Identifier{Literal: "table1"},
+				Drop:       "drop",
+				Columns:    []Expression{Identifier{Literal: "column1"}},
+			},
+		},
+	},
+	{
+		Input: "alter table table1 drop (column1, column2)",
+		Output: []Statement{
+			DropColumns{
+				AlterTable: "alter table",
+				Table:      Identifier{Literal: "table1"},
+				Drop:       "drop",
+				Columns:    []Expression{Identifier{Literal: "column1"}, Identifier{Literal: "column2"}},
+			},
+		},
+	},
+	{
+		Input: "alter table table1 rename column1 to column2",
+		Output: []Statement{
+			RenameColumn{
+				AlterTable: "alter table",
+				Table:      Identifier{Literal: "table1"},
+				Rename:     "rename",
+				Old:        Identifier{Literal: "column1"},
+				To:         "to",
+				New:        Identifier{Literal: "column2"},
+			},
+		},
+	},
+	{
+		Input: "print 'foo'",
+		Output: []Statement{
+			Print{
+				Print: "print",
+				Value: NewString("foo"),
+			},
+		},
+	},
 }
 
 func TestParse(t *testing.T) {
@@ -1097,6 +1405,10 @@ func TestParse(t *testing.T) {
 				}
 				if !reflect.DeepEqual(parsedStmt.LimitClause, expectStmt.LimitClause) {
 					t.Errorf("limit clause = %#v, want %#v for %q", parsedStmt.LimitClause, expectStmt.LimitClause, v.Input)
+				}
+			default:
+				if !reflect.DeepEqual(stmt, expect) {
+					t.Errorf("output = %#v, want %#v for %q", stmt, expect, v.Input)
 				}
 			}
 		}

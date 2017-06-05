@@ -952,6 +952,197 @@ func (vd VariableDeclaration) String() string {
 	return joinWithSpace([]string{vd.Var, listExpressions(vd.Assignments)})
 }
 
+type InsertQuery struct {
+	Insert     string
+	Into       string
+	Table      Identifier
+	Fields     []Expression
+	Values     string
+	ValuesList []Expression
+	Query      Expression
+}
+
+func (iq InsertQuery) String() string {
+	s := []string{iq.Insert, iq.Into, iq.Table.String()}
+	if iq.Fields != nil {
+		s = append(s, putParentheses(listExpressions(iq.Fields)))
+	}
+	if iq.ValuesList != nil {
+		s = append(s, iq.Values)
+		s = append(s, listExpressions(iq.ValuesList))
+	} else {
+		s = append(s, iq.Query.String())
+	}
+	return joinWithSpace(s)
+}
+
+type InsertValues struct {
+	Values []Expression
+}
+
+func (iv InsertValues) String() string {
+	return putParentheses(listExpressions(iv.Values))
+}
+
+type UpdateQuery struct {
+	Update      string
+	Tables      []Expression
+	Set         string
+	SetList     []Expression
+	FromClause  Expression
+	WhereClause Expression
+}
+
+func (uq UpdateQuery) String() string {
+	s := []string{uq.Update, listExpressions(uq.Tables), uq.Set, listExpressions(uq.SetList)}
+	if uq.FromClause != nil {
+		s = append(s, uq.FromClause.String())
+	}
+	if uq.WhereClause != nil {
+		s = append(s, uq.WhereClause.String())
+	}
+	return joinWithSpace(s)
+}
+
+type UpdateSet struct {
+	Field Identifier
+	Value Expression
+}
+
+func (us UpdateSet) String() string {
+	return joinWithSpace([]string{us.Field.String(), "=", us.Value.String()})
+}
+
+type DeleteQuery struct {
+	Delete      string
+	Tables      []Expression
+	FromClause  Expression
+	WhereClause Expression
+}
+
+func (dq DeleteQuery) String() string {
+	s := []string{dq.Delete}
+	if dq.Tables != nil {
+		s = append(s, listExpressions(dq.Tables))
+	}
+	s = append(s, dq.FromClause.String())
+	if dq.WhereClause != nil {
+		s = append(s, dq.WhereClause.String())
+	}
+	return joinWithSpace(s)
+}
+
+type CreateTable struct {
+	CreateTable string
+	Table       Identifier
+	Fields      []Expression
+}
+
+func (e CreateTable) String() string {
+	s := []string{
+		e.CreateTable,
+		e.Table.String(),
+		putParentheses(listExpressions(e.Fields)),
+	}
+	return joinWithSpace(s)
+}
+
+type AddColumns struct {
+	AlterTable string
+	Table      Identifier
+	Add        string
+	Columns    []Expression
+	Position   Expression
+}
+
+func (e AddColumns) String() string {
+	s := []string{
+		e.AlterTable,
+		e.Table.String(),
+		e.Add,
+		putParentheses(listExpressions(e.Columns)),
+	}
+	if e.Position != nil {
+		s = append(s, e.Position.String())
+	}
+	return joinWithSpace(s)
+}
+
+type ColumnDefault struct {
+	Column  Identifier
+	Default string
+	Value   Expression
+}
+
+func (e ColumnDefault) String() string {
+	s := []string{e.Column.String()}
+	if e.Value != nil {
+		s = append(s, e.Default, e.Value.String())
+	}
+	return joinWithSpace(s)
+}
+
+type ColumnPosition struct {
+	Position Token
+	Column   Expression
+}
+
+func (e ColumnPosition) String() string {
+	s := []string{e.Position.Literal}
+	if e.Column != nil {
+		s = append(s, e.Column.String())
+	}
+	return joinWithSpace(s)
+}
+
+type DropColumns struct {
+	AlterTable string
+	Table      Identifier
+	Drop       string
+	Columns    []Expression
+}
+
+func (e DropColumns) String() string {
+	s := []string{
+		e.AlterTable,
+		e.Table.String(),
+		e.Drop,
+		putParentheses(listExpressions(e.Columns)),
+	}
+	return joinWithSpace(s)
+}
+
+type RenameColumn struct {
+	AlterTable string
+	Table      Identifier
+	Rename     string
+	Old        Identifier
+	To         string
+	New        Identifier
+}
+
+func (e RenameColumn) String() string {
+	s := []string{
+		e.AlterTable,
+		e.Table.String(),
+		e.Rename,
+		e.Old.String(),
+		e.To,
+		e.New.String(),
+	}
+	return joinWithSpace(s)
+}
+
+type Print struct {
+	Print string
+	Value Expression
+}
+
+func (e Print) String() string {
+	s := []string{e.Print, e.Value.String()}
+	return joinWithSpace(s)
+}
+
 func putParentheses(s string) string {
 	return "(" + s + ")"
 }
