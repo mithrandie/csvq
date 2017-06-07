@@ -80,6 +80,8 @@ type View struct {
 
 	sortIndices    []int
 	sortDirections []int
+
+	OperatedRecords int
 }
 
 func NewView(clause parser.FromClause, parentFilter Filter) (*View, error) {
@@ -181,7 +183,7 @@ func loadView(table parser.Table, parentFilter Filter) (*View, error) {
 		}
 	case parser.Subquery:
 		subquery := table.Object.(parser.Subquery)
-		view, err = ExecuteSelect(subquery.Query, parentFilter)
+		view, err = Select(subquery.Query, parentFilter)
 	}
 
 	if err != nil {
@@ -363,8 +365,7 @@ func (view *View) group(items []parser.Expression) error {
 	view.isGrouped = true
 	for _, item := range items {
 		if ident, ok := item.(parser.Identifier); ok {
-			ref, field, _ := ident.FieldRef()
-			idx, _ := view.Header.Contains(ref, field)
+			idx, _ := view.FieldIndex(ident)
 			view.Header[idx].IsGroupKey = true
 		}
 	}
@@ -460,7 +461,6 @@ func (view *View) Select(clause parser.SelectClause) error {
 	}
 
 	view.selectFields = make([]int, len(fields))
-	addIndex := view.FieldLen()
 	for i, f := range fields {
 		field := f.(parser.Field)
 		if ident, ok := field.Object.(parser.Identifier); ok {
@@ -471,9 +471,7 @@ func (view *View) Select(clause parser.SelectClause) error {
 			}
 			view.selectFields[i] = idx
 		} else {
-			view.Header = AddHeaderField(view.Header, field.Name())
-			view.selectFields[i] = addIndex
-			addIndex++
+			view.Header, view.selectFields[i] = AddHeaderField(view.Header, field.Name())
 		}
 	}
 
@@ -517,18 +515,13 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 		oi := v.(parser.OrderItem)
 		switch oi.Item.(type) {
 		case parser.Identifier:
-			item := oi.Item.(parser.Identifier)
-			ref, column, err := item.FieldRef()
-			if err != nil {
-				return err
-			}
-			idx, err := view.Header.Contains(ref, column)
+			idx, err := view.FieldIndex(oi.Item.(parser.Identifier))
 			if err != nil {
 				return err
 			}
 			view.sortIndices = append(view.sortIndices, idx)
 		default:
-			idx, err := view.Header.Contains("", oi.String())
+			idx, err := view.Header.Contains("", oi.Item.String())
 			if err != nil {
 				for i := range view.Records {
 					var filter Filter = append([]FilterRecord{{View: view, RecordIndex: i}}, view.parentFilter...)
@@ -539,8 +532,7 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 					}
 					view.Records[i] = append(view.Records[i], NewCell(primary))
 				}
-				view.Header = AddHeaderField(view.Header, oi.String())
-				idx = view.FieldLen() - 1
+				view.Header, idx = AddHeaderField(view.Header, oi.Item.String())
 			}
 			view.sortIndices = append(view.sortIndices, idx)
 		}
@@ -564,6 +556,86 @@ func (view *View) Limit(clause parser.LimitClause) {
 	if clause.Number < int64(len(view.Records)) {
 		view.Records = view.Records[:clause.Number]
 	}
+}
+
+func (view *View) InsertValues(fields []parser.Expression, list []parser.Expression) error {
+	var filter Filter
+	var err error
+	valuesList := make([][]parser.Primary, len(list))
+
+	for i, item := range list {
+		row := item.(parser.InsertValues)
+		if len(fields) != len(row.Values) {
+			return errors.New("field length does not match value length")
+		}
+
+		values := make([]parser.Primary, len(row.Values))
+		for j, v := range row.Values {
+			values[j], err = filter.Evaluate(v)
+			if err != nil {
+				return err
+			}
+		}
+		valuesList[i] = values
+	}
+
+	return view.insert(fields, valuesList)
+}
+
+func (view *View) InsertFromQuery(fields []parser.Expression, query parser.SelectQuery) error {
+	insertView, err := Select(query, nil)
+	if err != nil {
+		return err
+	}
+	if len(fields) != insertView.FieldLen() {
+		return errors.New("field length does not match value length")
+	}
+
+	valuesList := make([][]parser.Primary, insertView.RecordLen())
+
+	for i, record := range insertView.Records {
+		values := make([]parser.Primary, insertView.FieldLen())
+		for j, cell := range record {
+			values[j] = cell.Primary()
+		}
+		valuesList[i] = values
+	}
+
+	return view.insert(fields, valuesList)
+}
+
+func (view *View) insert(fields []parser.Expression, valuesList [][]parser.Primary) error {
+	var valueIndex = func(i int, list []int) int {
+		for j, v := range list {
+			if i == v {
+				return j
+			}
+		}
+		return -1
+	}
+
+	fieldIndices, err := view.FieldIndices(fields)
+	if err != nil {
+		return err
+	}
+
+	records := make([]Record, len(valuesList))
+	for i, values := range valuesList {
+		record := make(Record, view.FieldLen())
+		for j := 0; j < view.FieldLen(); j++ {
+			idx := valueIndex(j, fieldIndices)
+			if idx < 0 {
+				record[j] = NewCell(parser.NewNull())
+			} else {
+				record[j] = NewCell(values[idx])
+			}
+		}
+		records[i] = record
+	}
+
+	view.Records = append(view.Records, records...)
+	view.OperatedRecords = len(valuesList)
+	return nil
 }
 
 func (view *View) Fix() {
@@ -590,6 +662,26 @@ func (view *View) Fix() {
 	view.parentFilter = Filter(nil)
 	view.sortIndices = []int(nil)
 	view.sortDirections = []int(nil)
+}
+
+func (view *View) FieldIndex(ident parser.Identifier) (int, error) {
+	ref, field, err := ident.FieldRef()
+	if err != nil {
+		return -1, err
+	}
+	return view.Header.Contains(ref, field)
+}
+
+func (view *View) FieldIndices(fields []parser.Expression) ([]int, error) {
+	indices := make([]int, len(fields))
+	for i, v := range fields {
+		idx, err := view.FieldIndex(v.(parser.Identifier))
+		if err != nil {
+			return nil, err
+		}
+		indices[i] = idx
+	}
+	return indices, nil
 }
 
 func (view *View) FieldLen() int {

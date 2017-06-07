@@ -1,8 +1,6 @@
 package query
 
 import (
-	"os"
-	"path"
 	"reflect"
 	"testing"
 
@@ -1705,8 +1703,7 @@ func TestFilter_Evaluate(t *testing.T) {
 	}
 
 	tf := cmd.GetFlags()
-	dir, _ := os.Getwd()
-	tf.Repository = path.Join(dir, "..", "..", "testdata", "csv")
+	tf.Repository = TestDataDir
 
 	for _, v := range filterEvaluateTests {
 		result, err := v.Filter.Evaluate(v.Expr)

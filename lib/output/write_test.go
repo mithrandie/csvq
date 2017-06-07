@@ -48,11 +48,12 @@ func TestCreate(t *testing.T) {
 			r, w, _ := os.Pipe()
 			os.Stdout = w
 
-			Create(v.Filename, v.Content)
-			buf, _ := ioutil.ReadAll(r)
+			ToStdout(v.Content)
 
 			w.Close()
 			os.Stdout = oldStdout
+
+			buf, _ := ioutil.ReadAll(r)
 			if string(buf) != v.Result {
 				t.Errorf("%s: content = %q, want %q", v.Name, string(buf), v.Result)
 			}

@@ -4,16 +4,17 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
-type Statement int
+type StatementType int
 
 const (
-	SELECT Statement = iota
+	SELECT StatementType = iota
+	INSERT
 )
 
 type Result struct {
-	Statement Statement
-	View      *View
-	Count     int
+	Type  StatementType
+	View  *View
+	Count int
 }
 
 func Execute(input string) ([]Result, error) {
@@ -26,6 +27,8 @@ func Execute(input string) ([]Result, error) {
 	}
 
 	for _, stmt := range program {
+		Variable.ClearAutoIncrement()
+
 		switch stmt.(type) {
 		case parser.VariableDeclaration:
 			if err := Variable.Decrare(stmt.(parser.VariableDeclaration), nil); err != nil {
@@ -36,16 +39,24 @@ func Execute(input string) ([]Result, error) {
 				return nil, err
 			}
 		case parser.SelectQuery:
-			Variable.ClearAutoIncrement()
-
-			view, err := ExecuteSelect(stmt.(parser.SelectQuery), nil)
+			view, err := Select(stmt.(parser.SelectQuery), nil)
 			if err != nil {
 				return nil, err
 			}
 			results = append(results, Result{
-				Statement: SELECT,
-				View:      view,
-				Count:     view.RecordLen(),
+				Type:  SELECT,
+				View:  view,
+				Count: view.RecordLen(),
+			})
+		case parser.InsertQuery:
+			view, err := Insert(stmt.(parser.InsertQuery))
+			if err != nil {
+				return nil, err
+			}
+			results = append(results, Result{
+				Type:  INSERT,
+				View:  view,
+				Count: view.OperatedRecords,
 			})
 		}
 	}
@@ -53,7 +64,7 @@ func Execute(input string) ([]Result, error) {
 	return results, nil
 }
 
-func ExecuteSelect(query parser.SelectQuery, parentFilter Filter) (*View, error) {
+func Select(query parser.SelectQuery, parentFilter Filter) (*View, error) {
 	if query.FromClause == nil {
 		query.FromClause = parser.FromClause{}
 	}
@@ -96,6 +107,44 @@ func ExecuteSelect(query parser.SelectQuery, parentFilter Filter) (*View, error)
 		view.Limit(query.LimitClause.(parser.LimitClause))
 	}
 
+	view.Fix()
+
+	return view, nil
+}
+
+func Insert(query parser.InsertQuery) (*View, error) {
+	fromClause := parser.FromClause{
+		Tables: []parser.Expression{
+			parser.Table{Object: query.Table},
+		},
+	}
+	selectClause := parser.SelectClause{
+		Fields: []parser.Expression{
+			parser.Field{Object: parser.AllColumns{}},
+		},
+	}
+
+	view, err := NewView(fromClause, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	fields := query.Fields
+	if fields == nil {
+		fields = view.Header.TableColumns()
+	}
+
+	if query.ValuesList != nil {
+		if err := view.InsertValues(fields, query.ValuesList); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := view.InsertFromQuery(fields, query.Query.(parser.SelectQuery)); err != nil {
+			return nil, err
+		}
+	}
+
+	view.Select(selectClause)
 	view.Fix()
 
 	return view, nil

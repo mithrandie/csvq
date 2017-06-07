@@ -19,7 +19,7 @@ func ShowFields(input string) error {
 	}
 
 	out := formatFields(fields)
-	output.Create("", out)
+	output.ToStdout(out)
 	return nil
 }
 

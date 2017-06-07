@@ -61,10 +61,12 @@ func MergeHeader(h1 Header, h2 Header) Header {
 	return append(h1, h2...)
 }
 
-func AddHeaderField(h Header, alias string) Header {
-	return append(h, HeaderField{
+func AddHeaderField(h Header, alias string) (header Header, index int) {
+	header = append(h, HeaderField{
 		Alias: alias,
 	})
+	index = header.Len() - 1
+	return
 }
 
 func (h Header) Len() int {

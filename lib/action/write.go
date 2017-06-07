@@ -1,6 +1,8 @@
 package action
 
 import (
+	"fmt"
+
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/output"
 	"github.com/mithrandie/csvq/lib/query"
@@ -13,19 +15,46 @@ func Write(input string) error {
 	}
 
 	flags := cmd.GetFlags()
-
 	var out string
+
+	defer func() {
+		if 0 < len(out) {
+			output.ToStdout(out)
+		}
+	}()
+
 	for _, result := range results {
-		s, err := output.Encode(result)
+		switch result.Type {
+		case query.INSERT:
+			flags.WriteDelimiter = result.View.FileInfo.Delimiter
+			flags.WriteEncoding = flags.Encoding
+			flags.WithoutHeader = flags.NoHeader
+			flags.Format = cmd.CSV
+		}
+
+		s, err := output.EncodeView(result.View)
 		if err != nil {
 			return err
 		}
-		out += s
+
+		switch result.Type {
+		case query.INSERT:
+			err = output.Update(result.View.FileInfo.Path, s)
+			if err != nil {
+				return err
+			}
+			out += fmt.Sprintf("%d record(s) inserted on %q\n", result.Count, result.View.FileInfo.Path)
+		default:
+			out += s
+		}
 	}
 
-	err = output.Create(flags.OutFile, out)
-	if err != nil {
-		return err
+	if 0 < len(flags.OutFile) {
+		err = output.Create(flags.OutFile, out)
+		if err != nil {
+			return err
+		}
+		out = ""
 	}
 
 	return nil

@@ -1,7 +1,6 @@
 package query
 
 import (
-	"os"
 	"path"
 	"reflect"
 	"testing"
@@ -19,7 +18,7 @@ var executeTests = []struct {
 		Input: "var @var1; @var1 := 1; select @var1 as var1",
 		Result: []Result{
 			{
-				Statement: SELECT,
+				Type: SELECT,
 				View: &View{
 					Header: []HeaderField{
 						{
@@ -48,7 +47,7 @@ var executeTests = []struct {
 		Input: "select column1 from table1 where column1 = 1 group by column1 having sum(column1) > 0 order by column1 limit 10",
 		Result: []Result{
 			{
-				Statement: SELECT,
+				Type: SELECT,
 				View: &View{
 					Header: []HeaderField{
 						{
@@ -64,7 +63,7 @@ var executeTests = []struct {
 						},
 					},
 					FileInfo: &FileInfo{
-						Path:      "table1.csv",
+						Path:      path.Join(TestDir, "table1.csv"),
 						Delimiter: ',',
 					},
 				},
@@ -100,14 +99,56 @@ var executeTests = []struct {
 		Input: "select notexist",
 		Error: "identifier = notexist: field does not exist",
 	},
+	{
+		Input: "insert into table1 (column1, column2) values (4, 'str4'), (5, 'str5')",
+		Result: []Result{
+			{
+				Type: INSERT,
+				View: &View{
+					Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+					Records: []Record{
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("1"),
+							parser.NewString("str1"),
+						}),
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("2"),
+							parser.NewString("str2"),
+						}),
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("3"),
+							parser.NewString("str3"),
+						}),
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewInteger(4),
+							parser.NewString("str4"),
+						}),
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewInteger(5),
+							parser.NewString("str5"),
+						}),
+					},
+					FileInfo: &FileInfo{
+						Path:      path.Join(TestDir, "table1.csv"),
+						Delimiter: ',',
+					},
+					OperatedRecords: 2,
+				},
+				Count: 2,
+			},
+		},
+	},
+	{
+		Input: "insert into table1 (column1) values (4, 'str4')",
+		Error: "field length does not match value length",
+	},
 }
 
 func TestExecute(t *testing.T) {
 	Variable = map[string]parser.Primary{}
 
 	tf := cmd.GetFlags()
-	dir, _ := os.Getwd()
-	tf.Repository = path.Join(dir, "..", "..", "testdata", "csv")
+	tf.Repository = TestDir
 
 	for _, v := range executeTests {
 		results, err := Execute(v.Input)
@@ -124,20 +165,281 @@ func TestExecute(t *testing.T) {
 			continue
 		}
 
-		for i, result := range results {
-			if result.View.FileInfo != nil {
-				if path.Base(result.View.FileInfo.Path) != v.Result[i].View.FileInfo.Path {
-					t.Errorf("filepath = %s, want %s for %q", path.Base(result.View.FileInfo.Path), v.Result[i].View.FileInfo.Path, v.Input)
-				}
-				if result.View.FileInfo.Delimiter != v.Result[i].View.FileInfo.Delimiter {
-					t.Errorf("delimiter = %q, want %q for %q", result.View.FileInfo.Delimiter, v.Result[i].View.FileInfo.Delimiter, v.Input)
-				}
-			}
-			result.View.FileInfo = nil
-			v.Result[i].View.FileInfo = nil
-		}
 		if !reflect.DeepEqual(results, v.Result) {
 			t.Errorf("results = %q, want %q for %q", results, v.Result, v.Input)
+		}
+	}
+}
+
+var insertTests = []struct {
+	Name   string
+	Query  parser.InsertQuery
+	Result *View
+	Error  string
+}{
+	{
+		Name: "Insert Query",
+		Query: parser.InsertQuery{
+			Insert: "insert",
+			Into:   "into",
+			Table:  parser.Identifier{Literal: "table1"},
+			Fields: []parser.Expression{
+				parser.Identifier{Literal: "column1"},
+			},
+			Values: "values",
+			ValuesList: []parser.Expression{
+				parser.InsertValues{
+					Values: []parser.Expression{
+						parser.NewInteger(4),
+					},
+				},
+				parser.InsertValues{
+					Values: []parser.Expression{
+						parser.NewInteger(5),
+					},
+				},
+			},
+		},
+		Result: &View{
+			FileInfo: &FileInfo{
+				Path:      path.Join(TestDir, "table1.csv"),
+				Delimiter: ',',
+			},
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("3"),
+					parser.NewString("str3"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewInteger(4),
+					parser.NewNull(),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewInteger(5),
+					parser.NewNull(),
+				}),
+			},
+			OperatedRecords: 2,
+		},
+	},
+	{
+		Name: "Insert Query All Columns",
+		Query: parser.InsertQuery{
+			Insert: "insert",
+			Into:   "into",
+			Table:  parser.Identifier{Literal: "table1"},
+			Values: "values",
+			ValuesList: []parser.Expression{
+				parser.InsertValues{
+					Values: []parser.Expression{
+						parser.NewInteger(4),
+						parser.NewString("str4"),
+					},
+				},
+				parser.InsertValues{
+					Values: []parser.Expression{
+						parser.NewInteger(5),
+						parser.NewString("str5"),
+					},
+				},
+			},
+		},
+		Result: &View{
+			FileInfo: &FileInfo{
+				Path:      path.Join(TestDir, "table1.csv"),
+				Delimiter: ',',
+			},
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("3"),
+					parser.NewString("str3"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewInteger(4),
+					parser.NewString("str4"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewInteger(5),
+					parser.NewString("str5"),
+				}),
+			},
+			OperatedRecords: 2,
+		},
+	},
+	{
+		Name: "Insert Query File Does Not Exist Error",
+		Query: parser.InsertQuery{
+			Insert: "insert",
+			Into:   "into",
+			Table:  parser.Identifier{Literal: "notexist"},
+			Fields: []parser.Expression{
+				parser.Identifier{Literal: "column1"},
+			},
+			Values: "values",
+			ValuesList: []parser.Expression{
+				parser.InsertValues{
+					Values: []parser.Expression{
+						parser.NewInteger(4),
+					},
+				},
+				parser.InsertValues{
+					Values: []parser.Expression{
+						parser.NewInteger(5),
+					},
+				},
+			},
+		},
+		Error: "file notexist does not exist",
+	},
+	{
+		Name: "Insert Query Field Does Not Exist Error",
+		Query: parser.InsertQuery{
+			Insert: "insert",
+			Into:   "into",
+			Table:  parser.Identifier{Literal: "table1"},
+			Fields: []parser.Expression{
+				parser.Identifier{Literal: "notexist"},
+			},
+			Values: "values",
+			ValuesList: []parser.Expression{
+				parser.InsertValues{
+					Values: []parser.Expression{
+						parser.NewInteger(4),
+					},
+				},
+				parser.InsertValues{
+					Values: []parser.Expression{
+						parser.NewInteger(5),
+					},
+				},
+			},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "Insert Select Query",
+		Query: parser.InsertQuery{
+			Insert: "insert",
+			Into:   "into",
+			Table:  parser.Identifier{Literal: "table1"},
+			Fields: []parser.Expression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "column2"},
+			},
+			Query: parser.SelectQuery{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.Expression{
+						parser.Field{Object: parser.Identifier{Literal: "column3"}},
+						parser.Field{Object: parser.Identifier{Literal: "column4"}},
+					},
+				},
+				FromClause: parser.FromClause{
+					Tables: []parser.Expression{
+						parser.Table{Object: parser.Identifier{Literal: "table2"}},
+					},
+				},
+			},
+		},
+		Result: &View{
+			FileInfo: &FileInfo{
+				Path:      path.Join(TestDir, "table1.csv"),
+				Delimiter: ',',
+			},
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("3"),
+					parser.NewString("str3"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str22"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("3"),
+					parser.NewString("str33"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("4"),
+					parser.NewString("str44"),
+				}),
+			},
+			OperatedRecords: 3,
+		},
+	},
+	{
+		Name: "Insert Query Field Does Not Exist Error",
+		Query: parser.InsertQuery{
+			Insert: "insert",
+			Into:   "into",
+			Table:  parser.Identifier{Literal: "table1"},
+			Fields: []parser.Expression{
+				parser.Identifier{Literal: "notexist"},
+			},
+			Values: "values",
+			ValuesList: []parser.Expression{
+				parser.InsertValues{
+					Values: []parser.Expression{
+						parser.NewInteger(4),
+					},
+				},
+				parser.InsertValues{
+					Values: []parser.Expression{
+						parser.NewInteger(5),
+					},
+				},
+			},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+}
+
+func TestInsert(t *testing.T) {
+	tf := cmd.GetFlags()
+	tf.Repository = TestDir
+
+	for _, v := range insertTests {
+		result, err := Insert(v.Query)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(result, v.Result) {
+			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
 		}
 	}
 }

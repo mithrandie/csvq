@@ -633,8 +633,7 @@ var newViewTests = []struct {
 
 func TestNewView(t *testing.T) {
 	tf := cmd.GetFlags()
-	dir, _ := os.Getwd()
-	tf.Repository = path.Join(dir, "..", "..", "testdata", "csv")
+	tf.Repository = TestDataDir
 
 	for _, v := range newViewTests {
 		tf.Delimiter = cmd.UNDEF
@@ -1533,6 +1532,244 @@ func TestView_Limit(t *testing.T) {
 	}
 }
 
+var viewInsertValuesTests = []struct {
+	Name       string
+	Fields     []parser.Expression
+	ValuesList []parser.Expression
+	Result     *View
+	Error      string
+}{
+	{
+		Name: "InsertValues",
+		Fields: []parser.Expression{
+			parser.Identifier{Literal: "column1"},
+		},
+		ValuesList: []parser.Expression{
+			parser.InsertValues{
+				Values: []parser.Expression{
+					parser.NewInteger(3),
+				},
+			},
+			parser.InsertValues{
+				Values: []parser.Expression{
+					parser.NewInteger(4),
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewInteger(1),
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewInteger(2),
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewNull(),
+					parser.NewInteger(3),
+					parser.NewNull(),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewNull(),
+					parser.NewInteger(4),
+					parser.NewNull(),
+				}),
+			},
+			OperatedRecords: 2,
+		},
+	},
+	{
+		Name: "InsertValues Field Length Does Not Match Error",
+		Fields: []parser.Expression{
+			parser.Identifier{Literal: "column1"},
+			parser.Identifier{Literal: "column2"},
+		},
+		ValuesList: []parser.Expression{
+			parser.InsertValues{
+				Values: []parser.Expression{
+					parser.NewInteger(3),
+				},
+			},
+		},
+		Error: "field length does not match value length",
+	},
+	{
+		Name: "InsertValues Value Evaluation Error",
+		Fields: []parser.Expression{
+			parser.Identifier{Literal: "column1"},
+		},
+		ValuesList: []parser.Expression{
+			parser.InsertValues{
+				Values: []parser.Expression{
+					parser.Identifier{Literal: "notexist"},
+				},
+			},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "InsertValues Field Does Not Exist Error",
+		Fields: []parser.Expression{
+			parser.Identifier{Literal: "notexist"},
+		},
+		ValuesList: []parser.Expression{
+			parser.InsertValues{
+				Values: []parser.Expression{
+					parser.NewInteger(3),
+				},
+			},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+}
+
+func TestView_InsertValues(t *testing.T) {
+	view := &View{
+		Header: NewHeader("table1", []string{"column1", "column2"}),
+		Records: []Record{
+			NewRecord(1, []parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+			NewRecord(2, []parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+		},
+	}
+
+	for _, v := range viewInsertValuesTests {
+		err := view.InsertValues(v.Fields, v.ValuesList)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(view, v.Result) {
+			t.Errorf("%s: result = %q, want %q", v.Name, view, v.Result)
+		}
+	}
+}
+
+var viewInsertFromQueryTests = []struct {
+	Name   string
+	Fields []parser.Expression
+	Query  parser.SelectQuery
+	Result *View
+	Error  string
+}{
+	{
+		Name: "InsertFromQuery",
+		Fields: []parser.Expression{
+			parser.Identifier{Literal: "column1"},
+		},
+		Query: parser.SelectQuery{
+			SelectClause: parser.SelectClause{
+				Fields: []parser.Expression{
+					parser.Field{Object: parser.NewInteger(3)},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewInteger(1),
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewInteger(2),
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewNull(),
+					parser.NewInteger(3),
+					parser.NewNull(),
+				}),
+			},
+			OperatedRecords: 1,
+		},
+	},
+	{
+		Name: "InsertFromQuery Field Lenght Does Not Match Error",
+		Fields: []parser.Expression{
+			parser.Identifier{Literal: "column1"},
+			parser.Identifier{Literal: "column2"},
+		},
+		Query: parser.SelectQuery{
+			SelectClause: parser.SelectClause{
+				Fields: []parser.Expression{
+					parser.Field{Object: parser.NewInteger(3)},
+				},
+			},
+		},
+		Error: "field length does not match value length",
+	},
+	{
+		Name: "Insert Values Query Exuecution Error",
+		Fields: []parser.Expression{
+			parser.Identifier{Literal: "column1"},
+		},
+		Query: parser.SelectQuery{
+			SelectClause: parser.SelectClause{
+				Fields: []parser.Expression{
+					parser.Field{Object: parser.Identifier{Literal: "notexist"}},
+				},
+			},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+}
+
+func TestView_InsertFromQuery(t *testing.T) {
+	view := &View{
+		Header: NewHeader("table1", []string{"column1", "column2"}),
+		Records: []Record{
+			NewRecord(1, []parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+			NewRecord(2, []parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+		},
+	}
+
+	for _, v := range viewInsertFromQueryTests {
+		err := view.InsertFromQuery(v.Fields, v.Query)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(view, v.Result) {
+			t.Errorf("%s: result = %q, want %q", v.Name, view, v.Result)
+		}
+	}
+}
+
 func TestView_Fix(t *testing.T) {
 	view := &View{
 		Header: []HeaderField{
@@ -1570,5 +1807,57 @@ func TestView_Fix(t *testing.T) {
 	view.Fix()
 	if !reflect.DeepEqual(view, expect) {
 		t.Errorf("fix: view = %s, want %s", view, expect)
+	}
+}
+
+func TestView_FieldIndex(t *testing.T) {
+	view := &View{
+		Header: []HeaderField{
+			{Reference: "table1", Column: "column1", FromTable: true},
+			{Reference: "table1", Column: "column2", FromTable: true},
+		},
+	}
+	ident := parser.Identifier{Literal: "column1"}
+	expect := 0
+
+	idx, _ := view.FieldIndex(ident)
+	if idx != expect {
+		t.Errorf("field index = %d, want %d", idx, expect)
+	}
+
+	ident = parser.Identifier{Literal: "table1.column2.column2"}
+	expectError := "field identifier = table1.column2.column2, incorrect format"
+	_, err := view.FieldIndex(ident)
+	if err.Error() != expectError {
+		t.Errorf("error = %q, want error %q", err, expectError)
+	}
+}
+
+func TestView_FieldIndices(t *testing.T) {
+	view := &View{
+		Header: []HeaderField{
+			{Reference: "table1", Column: "column1", FromTable: true},
+			{Reference: "table1", Column: "column2", FromTable: true},
+		},
+	}
+	fields := []parser.Expression{
+		parser.Identifier{Literal: "column2"},
+		parser.Identifier{Literal: "column1"},
+	}
+	expect := []int{1, 0}
+
+	indices, _ := view.FieldIndices(fields)
+	if !reflect.DeepEqual(indices, expect) {
+		t.Errorf("field indices = %d, want %d", indices, expect)
+	}
+
+	fields = []parser.Expression{
+		parser.Identifier{Literal: "table1.column2.column2"},
+		parser.Identifier{Literal: "column1"},
+	}
+	expectError := "field identifier = table1.column2.column2, incorrect format"
+	_, err := view.FieldIndices(fields)
+	if err.Error() != expectError {
+		t.Errorf("error = %q, want error %q", err, expectError)
 	}
 }

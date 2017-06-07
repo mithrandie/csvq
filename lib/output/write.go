@@ -7,6 +7,10 @@ import (
 	"os"
 )
 
+func ToStdout(s string) error {
+	return Create("", s)
+}
+
 func Create(file string, s string) error {
 	var fp *os.File
 	var err error
@@ -21,9 +25,8 @@ func Create(file string, s string) error {
 		if err != nil {
 			return err
 		}
+		defer fp.Close()
 	}
-
-	defer fp.Close()
 
 	w := bufio.NewWriter(fp)
 	_, err = w.WriteString(s)

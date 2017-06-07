@@ -1,16 +1,18 @@
-package query
+package action
 
 import (
 	"io"
 	"os"
 	"path"
 	"testing"
-
-	"github.com/mithrandie/csvq/lib/cmd"
 )
 
-var TestDir = path.Join(os.TempDir(), "csvq_query_test")
+var TestDir = path.Join(os.TempDir(), "csvq_action_test")
 var TestDataDir string
+
+func GetTestFilePath(filename string) string {
+	return path.Join(TestDir, filename)
+}
 
 func TestMain(m *testing.M) {
 	setup()
@@ -20,22 +22,14 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-	flags := cmd.GetFlags()
-	flags.Location = "America/Los_Angeles"
-	flags.Now = "2012-02-03 09:18:15"
-
 	wdir, _ := os.Getwd()
 	TestDataDir = path.Join(wdir, "..", "..", "testdata", "csv")
-
-	r, _ := os.Open(path.Join(TestDataDir, "empty.txt"))
-	os.Stdin = r
 
 	if _, err := os.Stat(TestDir); os.IsNotExist(err) {
 		os.Mkdir(TestDir, 0755)
 	}
 
-	copyfile(path.Join(TestDir, "table1.csv"), path.Join(TestDataDir, "table1.csv"))
-	copyfile(path.Join(TestDir, "table2.csv"), path.Join(TestDataDir, "table2.csv"))
+	copyfile(path.Join(TestDir, "insert_query.csv"), path.Join(TestDataDir, "table1.csv"))
 }
 
 func teardown() {

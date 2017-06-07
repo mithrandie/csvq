@@ -17,21 +17,18 @@ type textField struct {
 	sign  int
 }
 
-func Encode(result query.Result) (string, error) {
+func EncodeView(view *query.View) (string, error) {
 	var s string
 	var err error
 	flags := cmd.GetFlags()
 
-	switch result.Statement {
-	case query.SELECT:
-		switch flags.Format {
-		case cmd.TEXT:
-			s = encodeText(result)
-		case cmd.CSV, cmd.TSV:
-			s = encodeCSV(result, string(flags.WriteDelimiter), flags.WithoutHeader)
-		case cmd.JSON:
-			s = encodeJson(result)
-		}
+	switch flags.Format {
+	case cmd.TEXT:
+		s = encodeText(view)
+	case cmd.CSV, cmd.TSV:
+		s = encodeCSV(view, string(flags.WriteDelimiter), flags.WithoutHeader)
+	case cmd.JSON:
+		s = encodeJson(view)
 	}
 
 	if flags.WriteEncoding != cmd.UTF8 {
@@ -60,15 +57,13 @@ func convertLineBreak(str string, lb cmd.LineBreak) string {
 	return strings.Replace(str, "\n", lb.Value(), -1)
 }
 
-func encodeText(result query.Result) string {
-	if result.View.FieldLen() < 1 {
+func encodeText(view *query.View) string {
+	if view.FieldLen() < 1 {
 		return "Empty Fields\n"
 	}
-	if result.View.RecordLen() < 1 {
+	if view.RecordLen() < 1 {
 		return "Empty Records\n"
 	}
-
-	view := result.View
 
 	header := make([]textField, view.FieldLen())
 	for i := range view.Header {
@@ -194,9 +189,7 @@ func formatTextCell(c query.Cell) textField {
 	return textField{value: s, sign: sign}
 }
 
-func encodeCSV(result query.Result, delimiter string, withoutHeader bool) string {
-	view := result.View
-
+func encodeCSV(view *query.View, delimiter string, withoutHeader bool) string {
 	var header string
 	if !withoutHeader {
 		h := make([]string, view.FieldLen())
@@ -251,8 +244,7 @@ func escapeCSVString(s string) string {
 	return strings.Replace(s, "\"", "\"\"", -1)
 }
 
-func encodeJson(result query.Result) string {
-	view := result.View
+func encodeJson(view *query.View) string {
 	records := make([]string, view.RecordLen())
 
 	for i, record := range view.Records {
