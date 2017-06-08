@@ -12,6 +12,7 @@ const (
 	SELECT StatementType = iota
 	INSERT
 	UPDATE
+	DELETE
 )
 
 type Result struct {
@@ -70,6 +71,18 @@ func Execute(input string) ([]Result, error) {
 			for _, view := range views {
 				results = append(results, Result{
 					Type:  UPDATE,
+					View:  view,
+					Count: view.OperatedRecords,
+				})
+			}
+		case parser.DeleteQuery:
+			views, err := Delete(stmt.(parser.DeleteQuery))
+			if err != nil {
+				return nil, err
+			}
+			for _, view := range views {
+				results = append(results, Result{
+					Type:  DELETE,
 					View:  view,
 					Count: view.OperatedRecords,
 				})
@@ -201,7 +214,10 @@ func Update(query parser.UpdateQuery) ([]*View, error) {
 				return nil, err
 			}
 
-			internalId, _ := view.InternalRecordId(viewref, i)
+			internalId, err := view.InternalRecordId(viewref, i)
+			if err != nil {
+				return nil, errors.New("record to update is ambiguous")
+			}
 
 			if InIntArray(internalId, updatedIndices[viewref]) {
 				return nil, errors.New("record to update is ambiguous")
@@ -222,6 +238,74 @@ func Update(query parser.UpdateQuery) ([]*View, error) {
 
 		v.Fix()
 		v.OperatedRecords = len(updatedIndices[k])
+		views = append(views, v)
+	}
+
+	return views, nil
+}
+
+func Delete(query parser.DeleteQuery) ([]*View, error) {
+	fromClause := query.FromClause.(parser.FromClause)
+	if query.Tables == nil {
+		table := fromClause.Tables[0].(parser.Table)
+		if _, ok := table.Object.(parser.Identifier); !ok || 1 < len(fromClause.Tables) {
+			return nil, errors.New("update file is not specified")
+		}
+		query.Tables = []parser.Expression{table}
+	}
+
+	view, err := NewView(query.FromClause.(parser.FromClause), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if query.WhereClause != nil {
+		if err := view.Where(query.WhereClause.(parser.WhereClause)); err != nil {
+			return nil, err
+		}
+		view.Extract()
+	}
+
+	viewsToDelete := make(map[string]*View)
+	deletedIndices := make(map[string][]int)
+	for _, v := range query.Tables {
+		table := v.(parser.Table)
+		if viewsToDelete[table.Name()], err = ViewCache.Get(table.Name()); err != nil {
+			return nil, err
+		}
+		deletedIndices[table.Name()] = []int{}
+	}
+
+	for i := range view.Records {
+		for viewref := range viewsToDelete {
+			internalId, err := view.InternalRecordId(viewref, i)
+			if err != nil {
+				continue
+			}
+			if InIntArray(internalId, deletedIndices[viewref]) {
+				continue
+			}
+			deletedIndices[viewref] = append(deletedIndices[viewref], internalId)
+		}
+	}
+
+	views := []*View{}
+	for k, v := range viewsToDelete {
+		filterdIndices := []int{}
+		for i := range v.Records {
+			if !InIntArray(i, deletedIndices[k]) {
+				filterdIndices = append(filterdIndices, i)
+			}
+		}
+		v.filteredIndices = filterdIndices
+		v.Extract()
+
+		if err := v.SelectAllColumns(); err != nil {
+			return nil, err
+		}
+
+		v.Fix()
+		v.OperatedRecords = len(deletedIndices[k])
 		views = append(views, v)
 	}
 

@@ -743,7 +743,10 @@ func (view *View) InternalRecordId(ref string, recordIndex int) (int, error) {
 	if err != nil {
 		return -1, errors.New("internal record id does not exist")
 	}
-	internalId := view.Records[recordIndex][idx].Primary().(parser.Integer)
+	internalId, ok := view.Records[recordIndex][idx].Primary().(parser.Integer)
+	if !ok {
+		return -1, errors.New("internal record id is empty")
+	}
 	return int(internalId.Value()), nil
 }
 

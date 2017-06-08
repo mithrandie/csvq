@@ -66,6 +66,20 @@ var executeTests = []struct {
 		Output: fmt.Sprintf("no record updated on %q\n", GetTestFilePath("update_query.csv")),
 	},
 	{
+		Name:       "Delete Query",
+		Input:      "delete from delete_query where column1 = 2",
+		Output:     fmt.Sprintf("%d record(s) deleted on %q\n", 1, GetTestFilePath("delete_query.csv")),
+		UpdateFile: GetTestFilePath("delete_query.csv"),
+		Content: "\"column1\",\"column2\"\n" +
+			"\"1\",\"str1\"\n" +
+			"\"3\",\"str3\"",
+	},
+	{
+		Name:   "Delete Query No Record Deleted",
+		Input:  "delete from delete_query where false",
+		Output: fmt.Sprintf("no record deleted on %q\n", GetTestFilePath("delete_query.csv")),
+	},
+	{
 		Name:  "Query Execution Error",
 		Input: "select from",
 		Error: "syntax error: unexpected FROM",

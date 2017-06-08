@@ -1903,14 +1903,21 @@ func TestView_InternalRecordId(t *testing.T) {
 		t.Errorf("field internal id = %d, want %d", id, expect)
 	}
 
+	view.Records[1][0] = NewCell(parser.NewNull())
+	expectError := "internal record id is empty"
+	_, err := view.InternalRecordId(ref, recordIndex)
+	if err.Error() != expectError {
+		t.Errorf("error = %q, want error %q", err, expectError)
+	}
+
 	view = &View{
 		Header: []HeaderField{
 			{Reference: "table1", Column: "column1", FromTable: true},
 			{Reference: "table2", Column: "column2", FromTable: true},
 		},
 	}
-	expectError := "internal record id does not exist"
-	_, err := view.InternalRecordId(ref, recordIndex)
+	expectError = "internal record id does not exist"
+	_, err = view.InternalRecordId(ref, recordIndex)
 	if err.Error() != expectError {
 		t.Errorf("error = %q, want error %q", err, expectError)
 	}

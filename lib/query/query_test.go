@@ -177,6 +177,37 @@ var executeTests = []struct {
 		Input: "update table1 set column2 = 'update' from table1 as t1 join table2 as t2",
 		Error: "file table1 is not loaded",
 	},
+	{
+		Input: "delete from table1 where column1 = 2",
+		Result: []Result{
+			{
+				Type: DELETE,
+				View: &View{
+					FileInfo: &FileInfo{
+						Path:      path.Join(TestDir, "table1.csv"),
+						Delimiter: ',',
+					},
+					Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+					Records: []Record{
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("1"),
+							parser.NewString("str1"),
+						}),
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("3"),
+							parser.NewString("str3"),
+						}),
+					},
+					OperatedRecords: 1,
+				},
+				Count: 1,
+			},
+		},
+	},
+	{
+		Input: "delete from notexist where column1 = 2",
+		Error: "file notexist does not exist",
+	},
 }
 
 func TestExecute(t *testing.T) {
@@ -643,7 +674,7 @@ var updateTests = []struct {
 		Error: "identifier = notexist: field does not exist",
 	},
 	{
-		Name: "Update Query Update Is Not Loaded Error",
+		Name: "Update Query File Is Not Loaded Error",
 		Query: parser.UpdateQuery{
 			Update: "update",
 			Tables: []parser.Expression{
@@ -769,6 +800,226 @@ func TestUpdate(t *testing.T) {
 	for _, v := range updateTests {
 		ViewCache.Clear()
 		result, err := Update(v.Query)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(result, v.Result) {
+			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+		}
+	}
+}
+
+var deleteTests = []struct {
+	Name   string
+	Query  parser.DeleteQuery
+	Result []*View
+	Error  string
+}{
+	{
+		Name: "Delete Query",
+		Query: parser.DeleteQuery{
+			Delete: "delete",
+			FromClause: parser.FromClause{
+				Tables: []parser.Expression{
+					parser.Table{
+						Object: parser.Identifier{Literal: "table1"},
+					},
+				},
+			},
+			WhereClause: parser.WhereClause{
+				Filter: parser.Comparison{
+					LHS:      parser.Identifier{Literal: "column1"},
+					RHS:      parser.NewInteger(2),
+					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+				},
+			},
+		},
+		Result: []*View{
+			{
+				FileInfo: &FileInfo{
+					Path:      path.Join(TestDir, "table1.csv"),
+					Delimiter: ',',
+				},
+				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+				Records: []Record{
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("1"),
+						parser.NewString("str1"),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("3"),
+						parser.NewString("str3"),
+					}),
+				},
+				OperatedRecords: 1,
+			},
+		},
+	},
+	{
+		Name: "Delete Query Multiple Table",
+		Query: parser.DeleteQuery{
+			Delete: "delete",
+			Tables: []parser.Expression{
+				parser.Table{Object: parser.Identifier{Literal: "t1"}},
+			},
+			FromClause: parser.FromClause{
+				Tables: []parser.Expression{
+					parser.Table{Object: parser.Join{
+						Table: parser.Table{
+							Object: parser.Identifier{Literal: "table1"},
+							Alias:  parser.Identifier{Literal: "t1"},
+						},
+						JoinTable: parser.Table{
+							Object: parser.Identifier{Literal: "table2"},
+							Alias:  parser.Identifier{Literal: "t2"},
+						},
+						Condition: parser.JoinCondition{
+							On: parser.Comparison{
+								LHS:      parser.Identifier{Literal: "column1"},
+								RHS:      parser.Identifier{Literal: "column3"},
+								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+							},
+						},
+					}},
+				},
+			},
+		},
+		Result: []*View{
+			{
+				FileInfo: &FileInfo{
+					Path:      path.Join(TestDir, "table1.csv"),
+					Delimiter: ',',
+				},
+				Header: NewHeaderWithoutId("t1", []string{"column1", "column2"}),
+				Records: []Record{
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("1"),
+						parser.NewString("str1"),
+					}),
+				},
+				OperatedRecords: 2,
+			},
+		},
+	},
+	{
+		Name: "Delete Query File Is Not Specified Error",
+		Query: parser.DeleteQuery{
+			Delete: "delete",
+			FromClause: parser.FromClause{
+				Tables: []parser.Expression{
+					parser.Table{Object: parser.Join{
+						Table: parser.Table{
+							Object: parser.Identifier{Literal: "table1"},
+							Alias:  parser.Identifier{Literal: "t1"},
+						},
+						JoinTable: parser.Table{
+							Object: parser.Identifier{Literal: "table2"},
+							Alias:  parser.Identifier{Literal: "t2"},
+						},
+						Condition: parser.JoinCondition{
+							On: parser.Comparison{
+								LHS:      parser.Identifier{Literal: "column1"},
+								RHS:      parser.Identifier{Literal: "column3"},
+								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+							},
+						},
+					}},
+				},
+			},
+		},
+		Error: "update file is not specified",
+	},
+	{
+		Name: "Delete Query File Does Not Exist Error",
+		Query: parser.DeleteQuery{
+			Delete: "delete",
+			FromClause: parser.FromClause{
+				Tables: []parser.Expression{
+					parser.Table{
+						Object: parser.Identifier{Literal: "notexist"},
+					},
+				},
+			},
+			WhereClause: parser.WhereClause{
+				Filter: parser.Comparison{
+					LHS:      parser.Identifier{Literal: "column1"},
+					RHS:      parser.NewInteger(2),
+					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+				},
+			},
+		},
+		Error: "file notexist does not exist",
+	},
+	{
+		Name: "Delete Query Filter Error",
+		Query: parser.DeleteQuery{
+			Delete: "delete",
+			FromClause: parser.FromClause{
+				Tables: []parser.Expression{
+					parser.Table{
+						Object: parser.Identifier{Literal: "table1"},
+					},
+				},
+			},
+			WhereClause: parser.WhereClause{
+				Filter: parser.Comparison{
+					LHS:      parser.Identifier{Literal: "column1"},
+					RHS:      parser.Identifier{Literal: "notexist"},
+					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+				},
+			},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "Delete Query File Is Not Loaded Error",
+		Query: parser.DeleteQuery{
+			Delete: "delete",
+			Tables: []parser.Expression{
+				parser.Table{Object: parser.Identifier{Literal: "table1"}},
+			},
+			FromClause: parser.FromClause{
+				Tables: []parser.Expression{
+					parser.Table{Object: parser.Join{
+						Table: parser.Table{
+							Object: parser.Identifier{Literal: "table1"},
+							Alias:  parser.Identifier{Literal: "t1"},
+						},
+						JoinTable: parser.Table{
+							Object: parser.Identifier{Literal: "table2"},
+							Alias:  parser.Identifier{Literal: "t2"},
+						},
+						Condition: parser.JoinCondition{
+							On: parser.Comparison{
+								LHS:      parser.Identifier{Literal: "column1"},
+								RHS:      parser.Identifier{Literal: "column3"},
+								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+							},
+						},
+					}},
+				},
+			},
+		},
+		Error: "file table1 is not loaded",
+	},
+}
+
+func TestDelete(t *testing.T) {
+	tf := cmd.GetFlags()
+	tf.Repository = TestDir
+
+	for _, v := range deleteTests {
+		ViewCache.Clear()
+		result, err := Delete(v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
