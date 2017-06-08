@@ -35,6 +35,13 @@ func NewEmptyRecord(len int) Record {
 	return record
 }
 
-func (record Record) GroupLen() int {
-	return record[0].Len()
+func (r Record) GroupLen() int {
+	return r[0].Len()
+}
+
+func (r Record) Copy() Record {
+	record := make(Record, len(r))
+	copy(record, r)
+	return record
+
 }

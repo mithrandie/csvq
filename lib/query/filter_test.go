@@ -1706,6 +1706,7 @@ func TestFilter_Evaluate(t *testing.T) {
 	tf.Repository = TestDataDir
 
 	for _, v := range filterEvaluateTests {
+		ViewCache.Clear()
 		result, err := v.Filter.Evaluate(v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {

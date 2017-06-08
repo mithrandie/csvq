@@ -25,7 +25,7 @@ func Write(input string) error {
 
 	for _, result := range results {
 		switch result.Type {
-		case query.INSERT:
+		case query.INSERT, query.UPDATE:
 			flags.WriteDelimiter = result.View.FileInfo.Delimiter
 			flags.WriteEncoding = flags.Encoding
 			flags.WithoutHeader = flags.NoHeader
@@ -39,19 +39,26 @@ func Write(input string) error {
 
 		switch result.Type {
 		case query.INSERT:
-			err = output.Update(result.View.FileInfo.Path, s)
-			if err != nil {
+			if err = output.Update(result.View.FileInfo.Path, s); err != nil {
 				return err
 			}
 			out += fmt.Sprintf("%d record(s) inserted on %q\n", result.Count, result.View.FileInfo.Path)
+		case query.UPDATE:
+			if 0 < result.Count {
+				if err = output.Update(result.View.FileInfo.Path, s); err != nil {
+					return err
+				}
+				out += fmt.Sprintf("%d record(s) updated on %q\n", result.Count, result.View.FileInfo.Path)
+			} else {
+				out += fmt.Sprintf("no record updated on %q\n", result.View.FileInfo.Path)
+			}
 		default:
 			out += s
 		}
 	}
 
 	if 0 < len(flags.OutFile) {
-		err = output.Create(flags.OutFile, out)
-		if err != nil {
+		if err = output.Create(flags.OutFile, out); err != nil {
 			return err
 		}
 		out = ""

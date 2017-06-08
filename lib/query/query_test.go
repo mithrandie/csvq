@@ -142,6 +142,41 @@ var executeTests = []struct {
 		Input: "insert into table1 (column1) values (4, 'str4')",
 		Error: "field length does not match value length",
 	},
+	{
+		Input: "update table1 set column2 = 'update' where column1 = 2",
+		Result: []Result{
+			{
+				Type: UPDATE,
+				View: &View{
+					FileInfo: &FileInfo{
+						Path:      path.Join(TestDir, "table1.csv"),
+						Delimiter: ',',
+					},
+					Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+					Records: []Record{
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("1"),
+							parser.NewString("str1"),
+						}),
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("2"),
+							parser.NewString("update"),
+						}),
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("3"),
+							parser.NewString("str3"),
+						}),
+					},
+					OperatedRecords: 1,
+				},
+				Count: 1,
+			},
+		},
+	},
+	{
+		Input: "update table1 set column2 = 'update' from table1 as t1 join table2 as t2",
+		Error: "file table1 is not loaded",
+	},
 }
 
 func TestExecute(t *testing.T) {
@@ -425,7 +460,315 @@ func TestInsert(t *testing.T) {
 	tf.Repository = TestDir
 
 	for _, v := range insertTests {
+		ViewCache.Clear()
 		result, err := Insert(v.Query)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(result, v.Result) {
+			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+		}
+	}
+}
+
+var updateTests = []struct {
+	Name   string
+	Query  parser.UpdateQuery
+	Result []*View
+	Error  string
+}{
+	{
+		Name: "Update Query",
+		Query: parser.UpdateQuery{
+			Update: "update",
+			Tables: []parser.Expression{
+				parser.Table{Object: parser.Identifier{Literal: "table1"}},
+			},
+			Set: "set",
+			SetList: []parser.Expression{
+				parser.UpdateSet{
+					Field: parser.Identifier{Literal: "column2"},
+					Value: parser.NewString("update"),
+				},
+			},
+			WhereClause: parser.WhereClause{
+				Filter: parser.Comparison{
+					LHS:      parser.Identifier{Literal: "column1"},
+					RHS:      parser.NewInteger(2),
+					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+				},
+			},
+		},
+		Result: []*View{
+			{
+				FileInfo: &FileInfo{
+					Path:      path.Join(TestDir, "table1.csv"),
+					Delimiter: ',',
+				},
+				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+				Records: []Record{
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("1"),
+						parser.NewString("str1"),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("2"),
+						parser.NewString("update"),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("3"),
+						parser.NewString("str3"),
+					}),
+				},
+				OperatedRecords: 1,
+			},
+		},
+	},
+	{
+		Name: "Update Query Multiple Table",
+		Query: parser.UpdateQuery{
+			Update: "update",
+			Tables: []parser.Expression{
+				parser.Table{Object: parser.Identifier{Literal: "t1"}},
+			},
+			Set: "set",
+			SetList: []parser.Expression{
+				parser.UpdateSet{
+					Field: parser.Identifier{Literal: "column2"},
+					Value: parser.Identifier{Literal: "column4"},
+				},
+			},
+			FromClause: parser.FromClause{
+				Tables: []parser.Expression{
+					parser.Table{Object: parser.Join{
+						Table: parser.Table{
+							Object: parser.Identifier{Literal: "table1"},
+							Alias:  parser.Identifier{Literal: "t1"},
+						},
+						JoinTable: parser.Table{
+							Object: parser.Identifier{Literal: "table2"},
+							Alias:  parser.Identifier{Literal: "t2"},
+						},
+						Condition: parser.JoinCondition{
+							On: parser.Comparison{
+								LHS:      parser.Identifier{Literal: "column1"},
+								RHS:      parser.Identifier{Literal: "column3"},
+								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+							},
+						},
+					}},
+				},
+			},
+		},
+		Result: []*View{
+			{
+				FileInfo: &FileInfo{
+					Path:      path.Join(TestDir, "table1.csv"),
+					Delimiter: ',',
+				},
+				Header: NewHeaderWithoutId("t1", []string{"column1", "column2"}),
+				Records: []Record{
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("1"),
+						parser.NewString("str1"),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("2"),
+						parser.NewString("str22"),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("3"),
+						parser.NewString("str33"),
+					}),
+				},
+				OperatedRecords: 2,
+			},
+		},
+	},
+	{
+		Name: "Update Query File Does Not Exist Error",
+		Query: parser.UpdateQuery{
+			Update: "update",
+			Tables: []parser.Expression{
+				parser.Table{Object: parser.Identifier{Literal: "notexist"}},
+			},
+			Set: "set",
+			SetList: []parser.Expression{
+				parser.UpdateSet{
+					Field: parser.Identifier{Literal: "column2"},
+					Value: parser.NewString("update"),
+				},
+			},
+			WhereClause: parser.WhereClause{
+				Filter: parser.Comparison{
+					LHS:      parser.Identifier{Literal: "column1"},
+					RHS:      parser.NewInteger(2),
+					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+				},
+			},
+		},
+		Error: "file notexist does not exist",
+	},
+	{
+		Name: "Update Query Filter Error",
+		Query: parser.UpdateQuery{
+			Update: "update",
+			Tables: []parser.Expression{
+				parser.Table{Object: parser.Identifier{Literal: "table1"}},
+			},
+			Set: "set",
+			SetList: []parser.Expression{
+				parser.UpdateSet{
+					Field: parser.Identifier{Literal: "column1"},
+					Value: parser.NewString("update"),
+				},
+			},
+			WhereClause: parser.WhereClause{
+				Filter: parser.Comparison{
+					LHS:      parser.Identifier{Literal: "notexist"},
+					RHS:      parser.NewInteger(2),
+					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+				},
+			},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "Update Query Update Is Not Loaded Error",
+		Query: parser.UpdateQuery{
+			Update: "update",
+			Tables: []parser.Expression{
+				parser.Table{Object: parser.Identifier{Literal: "table1"}},
+			},
+			Set: "set",
+			SetList: []parser.Expression{
+				parser.UpdateSet{
+					Field: parser.Identifier{Literal: "column2"},
+					Value: parser.Identifier{Literal: "column4"},
+				},
+			},
+			FromClause: parser.FromClause{
+				Tables: []parser.Expression{
+					parser.Table{Object: parser.Join{
+						Table: parser.Table{
+							Object: parser.Identifier{Literal: "table1"},
+							Alias:  parser.Identifier{Literal: "t1"},
+						},
+						JoinTable: parser.Table{
+							Object: parser.Identifier{Literal: "table2"},
+							Alias:  parser.Identifier{Literal: "t2"},
+						},
+						Condition: parser.JoinCondition{
+							On: parser.Comparison{
+								LHS:      parser.Identifier{Literal: "column1"},
+								RHS:      parser.Identifier{Literal: "column3"},
+								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+							},
+						},
+					}},
+				},
+			},
+		},
+		Error: "file table1 is not loaded",
+	},
+	{
+		Name: "Update Query Update Field Error",
+		Query: parser.UpdateQuery{
+			Update: "update",
+			Tables: []parser.Expression{
+				parser.Table{Object: parser.Identifier{Literal: "table1"}},
+			},
+			Set: "set",
+			SetList: []parser.Expression{
+				parser.UpdateSet{
+					Field: parser.Identifier{Literal: "notexist"},
+					Value: parser.NewString("update"),
+				},
+			},
+			WhereClause: parser.WhereClause{
+				Filter: parser.Comparison{
+					LHS:      parser.Identifier{Literal: "column1"},
+					RHS:      parser.NewInteger(2),
+					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+				},
+			},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "Update Query Update Value Error",
+		Query: parser.UpdateQuery{
+			Update: "update",
+			Tables: []parser.Expression{
+				parser.Table{Object: parser.Identifier{Literal: "table1"}},
+			},
+			Set: "set",
+			SetList: []parser.Expression{
+				parser.UpdateSet{
+					Field: parser.Identifier{Literal: "column1"},
+					Value: parser.Identifier{Literal: "notexist"},
+				},
+			},
+			WhereClause: parser.WhereClause{
+				Filter: parser.Comparison{
+					LHS:      parser.Identifier{Literal: "column1"},
+					RHS:      parser.NewInteger(2),
+					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+				},
+			},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "Update Query Record Is Ambiguous Error",
+		Query: parser.UpdateQuery{
+			Update: "update",
+			Tables: []parser.Expression{
+				parser.Table{Object: parser.Identifier{Literal: "t1"}},
+			},
+			Set: "set",
+			SetList: []parser.Expression{
+				parser.UpdateSet{
+					Field: parser.Identifier{Literal: "column2"},
+					Value: parser.Identifier{Literal: "column4"},
+				},
+			},
+			FromClause: parser.FromClause{
+				Tables: []parser.Expression{
+					parser.Table{Object: parser.Join{
+						Table: parser.Table{
+							Object: parser.Identifier{Literal: "table1"},
+							Alias:  parser.Identifier{Literal: "t1"},
+						},
+						JoinTable: parser.Table{
+							Object: parser.Identifier{Literal: "table2"},
+							Alias:  parser.Identifier{Literal: "t2"},
+						},
+						JoinType: parser.Token{Token: parser.CROSS, Literal: "cross"},
+					}},
+				},
+			},
+		},
+		Error: "record to update is ambiguous",
+	},
+}
+
+func TestUpdate(t *testing.T) {
+	tf := cmd.GetFlags()
+	tf.Repository = TestDir
+
+	for _, v := range updateTests {
+		ViewCache.Clear()
+		result, err := Update(v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

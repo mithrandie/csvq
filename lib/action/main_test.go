@@ -30,6 +30,7 @@ func setup() {
 	}
 
 	copyfile(path.Join(TestDir, "insert_query.csv"), path.Join(TestDataDir, "table1.csv"))
+	copyfile(path.Join(TestDir, "update_query.csv"), path.Join(TestDataDir, "table1.csv"))
 }
 
 func teardown() {

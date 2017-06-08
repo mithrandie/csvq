@@ -51,6 +51,21 @@ var executeTests = []struct {
 			"5,\"str5\"",
 	},
 	{
+		Name:       "Update Query",
+		Input:      "update update_query set column2 = 'update' where column1 = 2",
+		Output:     fmt.Sprintf("%d record(s) updated on %q\n", 1, GetTestFilePath("update_query.csv")),
+		UpdateFile: GetTestFilePath("update_query.csv"),
+		Content: "\"column1\",\"column2\"\n" +
+			"\"1\",\"str1\"\n" +
+			"\"2\",\"update\"\n" +
+			"\"3\",\"str3\"",
+	},
+	{
+		Name:   "Update Query No Record Updated",
+		Input:  "update update_query set column2 = 'update' where false",
+		Output: fmt.Sprintf("no record updated on %q\n", GetTestFilePath("update_query.csv")),
+	},
+	{
 		Name:  "Query Execution Error",
 		Input: "select from",
 		Error: "syntax error: unexpected FROM",

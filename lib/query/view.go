@@ -16,6 +16,27 @@ import (
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
+type ViewMap map[string]*View
+
+func (m ViewMap) Get(s string) (*View, error) {
+	if view, ok := ViewCache[s]; ok {
+		return view.Copy(), nil
+	}
+	return nil, errors.New(fmt.Sprintf("file %s is not loaded", s))
+}
+
+func (m ViewMap) Set(s string, view *View) {
+	ViewCache[s] = view.Copy()
+}
+
+func (m ViewMap) Clear() {
+	for k := range m {
+		delete(m, k)
+	}
+}
+
+var ViewCache = ViewMap{}
+
 type FileInfo struct {
 	Path      string
 	Delimiter rune
@@ -116,6 +137,16 @@ func NewView(clause parser.FromClause, parentFilter Filter) (*View, error) {
 	return joinedView, nil
 }
 
+func NewViewFromIdentifier(table parser.Identifier, parentFilter Filter) (*View, error) {
+	fromClause := parser.FromClause{
+		Tables: []parser.Expression{
+			parser.Table{Object: table},
+		},
+	}
+
+	return NewView(fromClause, parentFilter)
+}
+
 func loadView(table parser.Table, parentFilter Filter) (*View, error) {
 	var view *View
 	var err error
@@ -139,6 +170,10 @@ func loadView(table parser.Table, parentFilter Filter) (*View, error) {
 		}
 		view, err = loadViewFromFile(file, fileInfo, table.Name())
 	case parser.Identifier:
+		if view, err := ViewCache.Get(table.Name()); err == nil {
+			return view, nil
+		}
+
 		flags := cmd.GetFlags()
 		fileInfo, err := NewFileInfo(table.Object.(parser.Identifier).Literal, flags.Repository, flags.Delimiter)
 		if err != nil {
@@ -151,6 +186,8 @@ func loadView(table parser.Table, parentFilter Filter) (*View, error) {
 		}
 		defer file.Close()
 		view, err = loadViewFromFile(file, fileInfo, table.Name())
+
+		ViewCache.Set(table.Name(), view)
 	case parser.Join:
 		join := table.Object.(parser.Join)
 		view1, err := loadView(join.Table, parentFilter)
@@ -508,6 +545,15 @@ func (view *View) Select(clause parser.SelectClause) error {
 	return nil
 }
 
+func (view *View) SelectAllColumns() error {
+	selectClause := parser.SelectClause{
+		Fields: []parser.Expression{
+			parser.Field{Object: parser.AllColumns{}},
+		},
+	}
+	return view.Select(selectClause)
+}
+
 func (view *View) OrderBy(clause parser.OrderByClause) error {
 	view.sortIndices = []int{}
 
@@ -684,6 +730,23 @@ func (view *View) FieldIndices(fields []parser.Expression) ([]int, error) {
 	return indices, nil
 }
 
+func (view *View) FieldRef(ident parser.Identifier) (string, error) {
+	idx, err := view.FieldIndex(ident)
+	if err != nil {
+		return "", err
+	}
+	return view.Header[idx].Reference, nil
+}
+
+func (view *View) InternalRecordId(ref string, recordIndex int) (int, error) {
+	idx, err := view.Header.Contains(ref, INTERNAL_ID_FIELD)
+	if err != nil {
+		return -1, errors.New("internal record id does not exist")
+	}
+	internalId := view.Records[recordIndex][idx].Primary().(parser.Integer)
+	return int(internalId.Value()), nil
+}
+
 func (view *View) FieldLen() int {
 	return view.Header.Len()
 }
@@ -728,4 +791,19 @@ func (view *View) Less(i, j int) bool {
 		}
 	}
 	return false
+}
+
+func (view *View) Copy() *View {
+	header := view.Header.Copy()
+
+	records := make([]Record, view.RecordLen())
+	for i, v := range view.Records {
+		records[i] = v.Copy()
+	}
+
+	return &View{
+		Header:   header,
+		Records:  records,
+		FileInfo: view.FileInfo,
+	}
 }

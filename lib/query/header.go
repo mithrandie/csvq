@@ -129,3 +129,10 @@ func (h Header) newError(identifier string, err error) error {
 		Err:        err,
 	}
 }
+
+func (h Header) Copy() Header {
+	header := make(Header, h.Len())
+	copy(header, h)
+	return header
+
+}

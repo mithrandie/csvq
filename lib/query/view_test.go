@@ -1861,3 +1861,57 @@ func TestView_FieldIndices(t *testing.T) {
 		t.Errorf("error = %q, want error %q", err, expectError)
 	}
 }
+
+func TestView_FieldRef(t *testing.T) {
+	view := &View{
+		Header: []HeaderField{
+			{Reference: "table1", Column: "column1", FromTable: true},
+			{Reference: "table2", Column: "column2", FromTable: true},
+		},
+	}
+	ident := parser.Identifier{Literal: "column1"}
+	expect := "table1"
+
+	ref, _ := view.FieldRef(ident)
+	if ref != expect {
+		t.Errorf("field reference = %s, want %s", ref, expect)
+	}
+
+	ident = parser.Identifier{Literal: "table1.column2.column2"}
+	expectError := "field identifier = table1.column2.column2, incorrect format"
+	_, err := view.FieldRef(ident)
+	if err.Error() != expectError {
+		t.Errorf("error = %q, want error %q", err, expectError)
+	}
+}
+
+func TestView_InternalRecordId(t *testing.T) {
+	view := &View{
+		Header: NewHeader("table1", []string{"column1", "column2"}),
+		Records: []Record{
+			NewRecord(0, []parser.Primary{parser.NewInteger(1), parser.NewString("str1")}),
+			NewRecord(1, []parser.Primary{parser.NewInteger(2), parser.NewString("str2")}),
+			NewRecord(2, []parser.Primary{parser.NewInteger(3), parser.NewString("str3")}),
+		},
+	}
+	ref := "table1"
+	recordIndex := 1
+	expect := 1
+
+	id, _ := view.InternalRecordId(ref, recordIndex)
+	if id != expect {
+		t.Errorf("field internal id = %d, want %d", id, expect)
+	}
+
+	view = &View{
+		Header: []HeaderField{
+			{Reference: "table1", Column: "column1", FromTable: true},
+			{Reference: "table2", Column: "column2", FromTable: true},
+		},
+	}
+	expectError := "internal record id does not exist"
+	_, err := view.InternalRecordId(ref, recordIndex)
+	if err.Error() != expectError {
+		t.Errorf("error = %q, want error %q", err, expectError)
+	}
+}
