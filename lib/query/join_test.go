@@ -189,9 +189,9 @@ func TestCrossJoin(t *testing.T) {
 		},
 	}
 
-	joined := CrossJoin(view, joinView)
-	if !reflect.DeepEqual(joined, expect) {
-		t.Errorf("cross join: result = %q, want %q", joined, expect)
+	CrossJoin(view, joinView)
+	if !reflect.DeepEqual(view, expect) {
+		t.Errorf("cross join: result = %q, want %q", view, expect)
 	}
 }
 
@@ -301,7 +301,7 @@ var innerJoinTests = []struct {
 
 func TestInnerJoin(t *testing.T) {
 	for _, v := range innerJoinTests {
-		result, err := InnerJoin(v.View, v.JoinView, v.Condition, v.Filter)
+		err := InnerJoin(v.View, v.JoinView, v.Condition, v.Filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -314,8 +314,8 @@ func TestInnerJoin(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(result, v.Result) {
-			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+		if !reflect.DeepEqual(v.View, v.Result) {
+			t.Errorf("%s: result = %q, want %q", v.Name, v.View, v.Result)
 		}
 	}
 }
@@ -702,7 +702,7 @@ var outerJoinTests = []struct {
 
 func TestOuterJoin(t *testing.T) {
 	for _, v := range outerJoinTests {
-		result, err := OuterJoin(v.View, v.JoinView, v.Condition, v.Direction, v.Filter)
+		err := OuterJoin(v.View, v.JoinView, v.Condition, v.Direction, v.Filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -715,8 +715,8 @@ func TestOuterJoin(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(result, v.Result) {
-			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+		if !reflect.DeepEqual(v.View, v.Result) {
+			t.Errorf("%s: result = %q, want %q", v.Name, v.View, v.Result)
 		}
 	}
 }

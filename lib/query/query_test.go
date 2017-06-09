@@ -30,6 +30,8 @@ var executeTests = []struct {
 							NewCell(parser.NewInteger(1)),
 						},
 					},
+					UseCache:      true,
+					UseInternalId: true,
 				},
 				Count: 1,
 			},
@@ -66,6 +68,8 @@ var executeTests = []struct {
 						Path:      path.Join(TestDir, "table1.csv"),
 						Delimiter: ',',
 					},
+					UseCache:      true,
+					UseInternalId: true,
 				},
 				Count: 1,
 			},
@@ -207,6 +211,143 @@ var executeTests = []struct {
 	{
 		Input: "delete from notexist where column1 = 2",
 		Error: "file notexist does not exist",
+	},
+	{
+		Input: "create table newtable.csv (column1, column2)",
+		Result: []Result{
+			{
+				Type: CREATE_TABLE,
+				View: &View{
+					FileInfo: &FileInfo{
+						Path:      path.Join(TestDir, "newtable.csv"),
+						Delimiter: ',',
+					},
+					Header: NewHeaderWithoutId("newtable", []string{"column1", "column2"}),
+				},
+			},
+		},
+	},
+	{
+		Input: "create table newtable.csv (column1, column1)",
+		Error: "field column1 is duplicate",
+	},
+	{
+		Input: "alter table table1 add column3",
+		Result: []Result{
+			{
+				Type: ADD_COLUMNS,
+				View: &View{
+					FileInfo: &FileInfo{
+						Path:      path.Join(TestDir, "table1.csv"),
+						Delimiter: ',',
+					},
+					Header: NewHeaderWithoutId("table1", []string{"column1", "column2", "column3"}),
+					Records: []Record{
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("1"),
+							parser.NewString("str1"),
+							parser.NewNull(),
+						}),
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("2"),
+							parser.NewString("str2"),
+							parser.NewNull(),
+						}),
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("3"),
+							parser.NewString("str3"),
+							parser.NewNull(),
+						}),
+					},
+					OperatedFields: 1,
+				},
+				Count: 1,
+			},
+		},
+	},
+	{
+		Input: "alter table table1 add column1",
+		Error: "field column1 is duplicate",
+	},
+	{
+		Input: "alter table table1 drop column1",
+		Result: []Result{
+			{
+				Type: DROP_COLUMNS,
+				View: &View{
+					FileInfo: &FileInfo{
+						Path:      path.Join(TestDir, "table1.csv"),
+						Delimiter: ',',
+					},
+					Header: NewHeaderWithoutId("table1", []string{"column2"}),
+					Records: []Record{
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("str1"),
+						}),
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("str2"),
+						}),
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("str3"),
+						}),
+					},
+					OperatedFields: 1,
+				},
+				Count: 1,
+			},
+		},
+	},
+	{
+		Input: "alter table table1 drop notexist",
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Input: "alter table table1 rename column1 to newcolumn",
+		Result: []Result{
+			{
+				Type: RENAME_COLUMN,
+				View: &View{
+					FileInfo: &FileInfo{
+						Path:      path.Join(TestDir, "table1.csv"),
+						Delimiter: ',',
+					},
+					Header: NewHeaderWithoutId("table1", []string{"newcolumn", "column2"}),
+					Records: []Record{
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("1"),
+							parser.NewString("str1"),
+						}),
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("2"),
+							parser.NewString("str2"),
+						}),
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("3"),
+							parser.NewString("str3"),
+						}),
+					},
+					OperatedFields: 1,
+				},
+				Count: 1,
+			},
+		},
+	},
+	{
+		Input: "alter table table1 rename notexist to newcolumn",
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Input: "print 12345",
+		Result: []Result{
+			{
+				Type: PRINT,
+				Log:  "12345",
+			},
+		},
+	},
+	{
+		Input: "print @undefined",
+		Error: "variable @undefined is undefined",
 	},
 }
 
@@ -1020,6 +1161,565 @@ func TestDelete(t *testing.T) {
 	for _, v := range deleteTests {
 		ViewCache.Clear()
 		result, err := Delete(v.Query)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(result, v.Result) {
+			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+		}
+	}
+}
+
+var createTableTests = []struct {
+	Name   string
+	Query  parser.CreateTable
+	Result *View
+	Error  string
+}{
+	{
+		Name: "Create Table",
+		Query: parser.CreateTable{
+			Table: parser.Identifier{Literal: "create_table.csv"},
+			Fields: []parser.Expression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "column2"},
+			},
+		},
+		Result: &View{
+			FileInfo: &FileInfo{
+				Path:      path.Join(TestDir, "create_table.csv"),
+				Delimiter: ',',
+			},
+			Header: NewHeaderWithoutId("create_table", []string{"column1", "column2"}),
+		},
+	},
+	{
+		Name: "Create Table Field Duplicate Error",
+		Query: parser.CreateTable{
+			Table: parser.Identifier{Literal: "create_table.csv"},
+			Fields: []parser.Expression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "column1"},
+			},
+		},
+		Error: "field column1 is duplicate",
+	},
+}
+
+func TestCreateTable(t *testing.T) {
+	tf := cmd.GetFlags()
+	tf.Repository = TestDir
+
+	for _, v := range createTableTests {
+		ViewCache.Clear()
+		result, err := CreateTable(v.Query)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(result, v.Result) {
+			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+		}
+	}
+}
+
+var addColumnsTests = []struct {
+	Name   string
+	Query  parser.AddColumns
+	Result *View
+	Error  string
+}{
+	{
+		Name: "Add Columns",
+		Query: parser.AddColumns{
+			Table: parser.Identifier{Literal: "table1.csv"},
+			Columns: []parser.Expression{
+				parser.ColumnDefault{
+					Column: parser.Identifier{Literal: "column3"},
+				},
+				parser.ColumnDefault{
+					Column: parser.Identifier{Literal: "column4"},
+				},
+			},
+		},
+		Result: &View{
+			FileInfo: &FileInfo{
+				Path:      path.Join(TestDir, "table1.csv"),
+				Delimiter: ',',
+			},
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2", "column3", "column4"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+					parser.NewNull(),
+					parser.NewNull(),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+					parser.NewNull(),
+					parser.NewNull(),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("3"),
+					parser.NewString("str3"),
+					parser.NewNull(),
+					parser.NewNull(),
+				}),
+			},
+			OperatedFields: 2,
+		},
+	},
+	{
+		Name: "Add Columns First",
+		Query: parser.AddColumns{
+			Table: parser.Identifier{Literal: "table1.csv"},
+			Columns: []parser.Expression{
+				parser.ColumnDefault{
+					Column: parser.Identifier{Literal: "column3"},
+					Value:  parser.Function{Name: "auto_increment"},
+				},
+				parser.ColumnDefault{
+					Column: parser.Identifier{Literal: "column4"},
+					Value:  parser.NewInteger(1),
+				},
+			},
+			Position: parser.ColumnPosition{
+				Position: parser.Token{Token: parser.FIRST},
+			},
+		},
+		Result: &View{
+			FileInfo: &FileInfo{
+				Path:      path.Join(TestDir, "table1.csv"),
+				Delimiter: ',',
+			},
+			Header: NewHeaderWithoutId("table1", []string{"column3", "column4", "column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewInteger(1),
+					parser.NewInteger(1),
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewInteger(2),
+					parser.NewInteger(1),
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewInteger(3),
+					parser.NewInteger(1),
+					parser.NewString("3"),
+					parser.NewString("str3"),
+				}),
+			},
+			OperatedFields: 2,
+		},
+	},
+	{
+		Name: "Add Columns After",
+		Query: parser.AddColumns{
+			Table: parser.Identifier{Literal: "table1.csv"},
+			Columns: []parser.Expression{
+				parser.ColumnDefault{
+					Column: parser.Identifier{Literal: "column3"},
+				},
+				parser.ColumnDefault{
+					Column: parser.Identifier{Literal: "column4"},
+					Value:  parser.NewInteger(1),
+				},
+			},
+			Position: parser.ColumnPosition{
+				Position: parser.Token{Token: parser.AFTER},
+				Column:   parser.Identifier{Literal: "column1"},
+			},
+		},
+		Result: &View{
+			FileInfo: &FileInfo{
+				Path:      path.Join(TestDir, "table1.csv"),
+				Delimiter: ',',
+			},
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column3", "column4", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("1"),
+					parser.NewNull(),
+					parser.NewInteger(1),
+					parser.NewString("str1"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("2"),
+					parser.NewNull(),
+					parser.NewInteger(1),
+					parser.NewString("str2"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("3"),
+					parser.NewNull(),
+					parser.NewInteger(1),
+					parser.NewString("str3"),
+				}),
+			},
+			OperatedFields: 2,
+		},
+	},
+	{
+		Name: "Add Columns Before",
+		Query: parser.AddColumns{
+			Table: parser.Identifier{Literal: "table1.csv"},
+			Columns: []parser.Expression{
+				parser.ColumnDefault{
+					Column: parser.Identifier{Literal: "column3"},
+				},
+				parser.ColumnDefault{
+					Column: parser.Identifier{Literal: "column4"},
+					Value:  parser.NewInteger(1),
+				},
+			},
+			Position: parser.ColumnPosition{
+				Position: parser.Token{Token: parser.BEFORE},
+				Column:   parser.Identifier{Literal: "column2"},
+			},
+		},
+		Result: &View{
+			FileInfo: &FileInfo{
+				Path:      path.Join(TestDir, "table1.csv"),
+				Delimiter: ',',
+			},
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column3", "column4", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("1"),
+					parser.NewNull(),
+					parser.NewInteger(1),
+					parser.NewString("str1"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("2"),
+					parser.NewNull(),
+					parser.NewInteger(1),
+					parser.NewString("str2"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("3"),
+					parser.NewNull(),
+					parser.NewInteger(1),
+					parser.NewString("str3"),
+				}),
+			},
+			OperatedFields: 2,
+		},
+	},
+	{
+		Name: "Add Columns Load Error",
+		Query: parser.AddColumns{
+			Table: parser.Identifier{Literal: "notexist"},
+			Columns: []parser.Expression{
+				parser.ColumnDefault{
+					Column: parser.Identifier{Literal: "column3"},
+				},
+				parser.ColumnDefault{
+					Column: parser.Identifier{Literal: "column4"},
+				},
+			},
+		},
+		Error: "file notexist does not exist",
+	},
+	{
+		Name: "Add Columns Position Column Does Not Exist Error",
+		Query: parser.AddColumns{
+			Table: parser.Identifier{Literal: "table1.csv"},
+			Columns: []parser.Expression{
+				parser.ColumnDefault{
+					Column: parser.Identifier{Literal: "column3"},
+				},
+				parser.ColumnDefault{
+					Column: parser.Identifier{Literal: "column2"},
+					Value:  parser.NewInteger(1),
+				},
+			},
+			Position: parser.ColumnPosition{
+				Position: parser.Token{Token: parser.BEFORE},
+				Column:   parser.Identifier{Literal: "notexist"},
+			},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "Add Columns Field Duplicate Error",
+		Query: parser.AddColumns{
+			Table: parser.Identifier{Literal: "table1.csv"},
+			Columns: []parser.Expression{
+				parser.ColumnDefault{
+					Column: parser.Identifier{Literal: "column3"},
+				},
+				parser.ColumnDefault{
+					Column: parser.Identifier{Literal: "column1"},
+					Value:  parser.NewInteger(1),
+				},
+			},
+		},
+		Error: "field column1 is duplicate",
+	},
+	{
+		Name: "Add Columns Default Value Error",
+		Query: parser.AddColumns{
+			Table: parser.Identifier{Literal: "table1.csv"},
+			Columns: []parser.Expression{
+				parser.ColumnDefault{
+					Column: parser.Identifier{Literal: "column3"},
+				},
+				parser.ColumnDefault{
+					Column: parser.Identifier{Literal: "column4"},
+					Value:  parser.Identifier{Literal: "notexist.column1"},
+				},
+			},
+		},
+		Error: "identifier = notexist.column1: field does not exist",
+	},
+}
+
+func TestAddColumns(t *testing.T) {
+	tf := cmd.GetFlags()
+	tf.Repository = TestDir
+
+	for _, v := range addColumnsTests {
+		ViewCache.Clear()
+		result, err := AddColumns(v.Query)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(result, v.Result) {
+			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+		}
+	}
+}
+
+var dropColumnsTests = []struct {
+	Name   string
+	Query  parser.DropColumns
+	Result *View
+	Error  string
+}{
+	{
+		Name: "Drop Columns",
+		Query: parser.DropColumns{
+			Table: parser.Identifier{Literal: "table1"},
+			Columns: []parser.Expression{
+				parser.Identifier{Literal: "column2"},
+			},
+		},
+		Result: &View{
+			FileInfo: &FileInfo{
+				Path:      path.Join(TestDir, "table1.csv"),
+				Delimiter: ',',
+			},
+			Header: NewHeaderWithoutId("table1", []string{"column1"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("1"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("2"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("3"),
+				}),
+			},
+			OperatedFields: 1,
+		},
+	},
+	{
+		Name: "Drop Columns Load Error",
+		Query: parser.DropColumns{
+			Table: parser.Identifier{Literal: "notexist"},
+			Columns: []parser.Expression{
+				parser.Identifier{Literal: "column2"},
+			},
+		},
+		Error: "file notexist does not exist",
+	},
+	{
+		Name: "Drop Columns Field Does Not Exist Error",
+		Query: parser.DropColumns{
+			Table: parser.Identifier{Literal: "table1"},
+			Columns: []parser.Expression{
+				parser.Identifier{Literal: "notexist"},
+			},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+}
+
+func TestDropColumns(t *testing.T) {
+	tf := cmd.GetFlags()
+	tf.Repository = TestDir
+
+	for _, v := range dropColumnsTests {
+		ViewCache.Clear()
+		result, err := DropColumns(v.Query)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(result, v.Result) {
+			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+		}
+	}
+}
+
+var renameColumnTests = []struct {
+	Name   string
+	Query  parser.RenameColumn
+	Result *View
+	Error  string
+}{
+	{
+		Name: "Rename Column",
+		Query: parser.RenameColumn{
+			Table: parser.Identifier{Literal: "table1"},
+			Old:   parser.Identifier{Literal: "column2"},
+			New:   parser.Identifier{Literal: "newcolumn"},
+		},
+		Result: &View{
+			FileInfo: &FileInfo{
+				Path:      path.Join(TestDir, "table1.csv"),
+				Delimiter: ',',
+			},
+			Header: NewHeaderWithoutId("table1", []string{"column1", "newcolumn"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("3"),
+					parser.NewString("str3"),
+				}),
+			},
+			OperatedFields: 1,
+		},
+	},
+	{
+		Name: "Rename Column Load Error",
+		Query: parser.RenameColumn{
+			Table: parser.Identifier{Literal: "notexist"},
+			Old:   parser.Identifier{Literal: "column2"},
+			New:   parser.Identifier{Literal: "newcolumn"},
+		},
+		Error: "file notexist does not exist",
+	},
+	{
+		Name: "Rename Column Field Duplicate Error",
+		Query: parser.RenameColumn{
+			Table: parser.Identifier{Literal: "table1"},
+			Old:   parser.Identifier{Literal: "column2"},
+			New:   parser.Identifier{Literal: "column1"},
+		},
+		Error: "field column1 is duplicate",
+	},
+	{
+		Name: "Rename Column Field Does Not Exist Error",
+		Query: parser.RenameColumn{
+			Table: parser.Identifier{Literal: "table1"},
+			Old:   parser.Identifier{Literal: "notexist"},
+			New:   parser.Identifier{Literal: "newcolumn"},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+}
+
+func TestRenameColumn(t *testing.T) {
+	tf := cmd.GetFlags()
+	tf.Repository = TestDir
+
+	for _, v := range renameColumnTests {
+		result, err := RenameColumn(v.Query)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(result, v.Result) {
+			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+		}
+	}
+}
+
+var printTests = []struct {
+	Name   string
+	Query  parser.Print
+	Result string
+	Error  string
+}{
+	{
+		Name: "Print",
+		Query: parser.Print{
+			Value: parser.NewString("foo"),
+		},
+		Result: "'foo'",
+	},
+	{
+		Name: "Print Error",
+		Query: parser.Print{
+			Value: parser.Variable{
+				Name: "var",
+			},
+		},
+		Error: "variable var is undefined",
+	},
+}
+
+func TestPrint(t *testing.T) {
+	for _, v := range printTests {
+		result, err := Print(v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

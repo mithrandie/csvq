@@ -103,9 +103,20 @@ type View struct {
 	sortDirections []int
 
 	OperatedRecords int
+	OperatedFields  int
+
+	UseCache      bool
+	UseInternalId bool
 }
 
-func NewView(clause parser.FromClause, parentFilter Filter) (*View, error) {
+func NewView() *View {
+	return &View{
+		UseCache:      true,
+		UseInternalId: true,
+	}
+}
+
+func (view *View) Load(clause parser.FromClause, parentFilter Filter) error {
 	if clause.Tables == nil {
 		var obj parser.Expression
 		if isReadableFromStdin() {
@@ -118,42 +129,45 @@ func NewView(clause parser.FromClause, parentFilter Filter) (*View, error) {
 
 	views := make([]*View, len(clause.Tables))
 	for i, v := range clause.Tables {
-		view, err := loadView(v.(parser.Table), parentFilter)
+		view, err := loadView(v.(parser.Table), parentFilter, view.UseCache, view.UseInternalId)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		views[i] = view
 	}
 
-	joinedView := views[0]
+	view.Header = views[0].Header
+	view.Records = views[0].Records
+	view.FileInfo = views[0].FileInfo
 
 	for i := 1; i < len(views); i++ {
-		joinedView = CrossJoin(joinedView, views[i])
+		CrossJoin(view, views[i])
 	}
 
 	if parentFilter != nil {
-		joinedView.parentFilter = parentFilter
+		view.parentFilter = parentFilter
 	}
-	return joinedView, nil
+	return nil
 }
 
-func NewViewFromIdentifier(table parser.Identifier, parentFilter Filter) (*View, error) {
+func (view *View) LoadFromIdentifier(table parser.Identifier) error {
 	fromClause := parser.FromClause{
 		Tables: []parser.Expression{
 			parser.Table{Object: table},
 		},
 	}
+	var filter Filter
 
-	return NewView(fromClause, parentFilter)
+	return view.Load(fromClause, filter)
 }
 
-func loadView(table parser.Table, parentFilter Filter) (*View, error) {
+func loadView(table parser.Table, parentFilter Filter, useCache bool, useInternalId bool) (*View, error) {
 	var view *View
 	var err error
 
 	switch table.Object.(type) {
 	case parser.Dual:
-		view = NewDualView()
+		view = loadDualView()
 	case parser.Stdin:
 		if !isReadableFromStdin() {
 			return nil, errors.New("stdin is empty")
@@ -168,10 +182,12 @@ func loadView(table parser.Table, parentFilter Filter) (*View, error) {
 		fileInfo := &FileInfo{
 			Delimiter: delimiter,
 		}
-		view, err = loadViewFromFile(file, fileInfo, table.Name())
+		view, err = loadViewFromFile(file, fileInfo, table.Name(), useInternalId)
 	case parser.Identifier:
-		if view, err := ViewCache.Get(table.Name()); err == nil {
-			return view, nil
+		if useCache && useInternalId {
+			if view, err := ViewCache.Get(table.Name()); err == nil {
+				return view, nil
+			}
 		}
 
 		flags := cmd.GetFlags()
@@ -185,21 +201,23 @@ func loadView(table parser.Table, parentFilter Filter) (*View, error) {
 			return nil, err
 		}
 		defer file.Close()
-		view, err = loadViewFromFile(file, fileInfo, table.Name())
+		view, err = loadViewFromFile(file, fileInfo, table.Name(), useInternalId)
 
-		ViewCache.Set(table.Name(), view)
+		if useCache && useInternalId {
+			ViewCache.Set(table.Name(), view)
+		}
 	case parser.Join:
 		join := table.Object.(parser.Join)
-		view1, err := loadView(join.Table, parentFilter)
+		view, err = loadView(join.Table, parentFilter, useCache, useInternalId)
 		if err != nil {
 			return nil, err
 		}
-		view2, err := loadView(join.JoinTable, parentFilter)
+		view2, err := loadView(join.JoinTable, parentFilter, useCache, useInternalId)
 		if err != nil {
 			return nil, err
 		}
 
-		condition := ParseJoinCondition(join, view1, view2)
+		condition := ParseJoinCondition(join, view, view2)
 
 		joinType := join.JoinType.Token
 		if join.JoinType.IsEmpty() {
@@ -212,11 +230,11 @@ func loadView(table parser.Table, parentFilter Filter) (*View, error) {
 
 		switch joinType {
 		case parser.CROSS:
-			view = CrossJoin(view1, view2)
+			CrossJoin(view, view2)
 		case parser.INNER:
-			view, err = InnerJoin(view1, view2, condition, parentFilter)
+			err = InnerJoin(view, view2, condition, parentFilter)
 		case parser.OUTER:
-			view, err = OuterJoin(view1, view2, condition, join.Direction.Token, parentFilter)
+			err = OuterJoin(view, view2, condition, join.Direction.Token, parentFilter)
 		}
 	case parser.Subquery:
 		subquery := table.Object.(parser.Subquery)
@@ -229,7 +247,7 @@ func loadView(table parser.Table, parentFilter Filter) (*View, error) {
 	return view, nil
 }
 
-func loadViewFromFile(file *os.File, fileInfo *FileInfo, reference string) (*View, error) {
+func loadViewFromFile(file *os.File, fileInfo *FileInfo, reference string, useInternalId bool) (*View, error) {
 	flags := cmd.GetFlags()
 
 	r := cmd.GetReader(file, flags.Encoding)
@@ -253,9 +271,14 @@ func loadViewFromFile(file *os.File, fileInfo *FileInfo, reference string) (*Vie
 	if err != nil {
 		return nil, err
 	}
+
 	view.Records = make([]Record, len(records))
 	for i, v := range records {
-		view.Records[i] = NewRecord(i, v)
+		if useInternalId {
+			view.Records[i] = NewRecord(i, v)
+		} else {
+			view.Records[i] = NewRecordWithoutId(v)
+		}
 	}
 
 	if header == nil {
@@ -264,14 +287,18 @@ func loadViewFromFile(file *os.File, fileInfo *FileInfo, reference string) (*Vie
 			header[i] = "c" + strconv.Itoa(i+1)
 		}
 	}
-	view.Header = NewHeader(reference, header)
+	if useInternalId {
+		view.Header = NewHeader(reference, header)
+	} else {
+		view.Header = NewHeaderWithoutId(reference, header)
+	}
 
 	view.FileInfo = fileInfo
 
 	return view, nil
 }
 
-func NewDualView() *View {
+func loadDualView() *View {
 	view := View{
 		Header:  NewDualHeader(),
 		Records: make([]Record, 1),

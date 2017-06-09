@@ -9,6 +9,10 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 )
 
+func GetTestFilePath(filename string) string {
+	return path.Join(TestDir, filename)
+}
+
 var TestDir = path.Join(os.TempDir(), "csvq_query_test")
 var TestDataDir string
 

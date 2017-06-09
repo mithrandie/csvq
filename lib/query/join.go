@@ -72,7 +72,7 @@ func ParseJoinCondition(join parser.Join, view *View, joinView *View) parser.Exp
 	return logic
 }
 
-func CrossJoin(view *View, joinView *View) *View {
+func CrossJoin(view *View, joinView *View) {
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 	records := make([]Record, view.RecordLen()*joinView.RecordLen())
 
@@ -84,13 +84,12 @@ func CrossJoin(view *View, joinView *View) *View {
 		}
 	}
 
-	return &View{
-		Header:  mergedHeader,
-		Records: records,
-	}
+	view.Header = mergedHeader
+	view.Records = records
+	view.FileInfo = nil
 }
 
-func InnerJoin(view *View, joinView *View, condition parser.Expression, parentFilter Filter) (*View, error) {
+func InnerJoin(view *View, joinView *View, condition parser.Expression, parentFilter Filter) error {
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 
 	records := []Record{}
@@ -102,7 +101,7 @@ func InnerJoin(view *View, joinView *View, condition parser.Expression, parentFi
 			}, parentFilter...)
 			primary, err := filter.Evaluate(condition)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			if primary.Ternary() == ternary.TRUE {
 				record := append(viewRecord, joinViewRecord...)
@@ -111,13 +110,13 @@ func InnerJoin(view *View, joinView *View, condition parser.Expression, parentFi
 		}
 	}
 
-	return &View{
-		Header:  mergedHeader,
-		Records: records,
-	}, nil
+	view.Header = mergedHeader
+	view.Records = records
+	view.FileInfo = nil
+	return nil
 }
 
-func OuterJoin(view *View, joinView *View, condition parser.Expression, direction int, parentFilter Filter) (*View, error) {
+func OuterJoin(view *View, joinView *View, condition parser.Expression, direction int, parentFilter Filter) error {
 	if direction == parser.TOKEN_UNDEFINED {
 		direction = parser.LEFT
 	}
@@ -139,7 +138,7 @@ func OuterJoin(view *View, joinView *View, condition parser.Expression, directio
 			}, parentFilter...)
 			primary, err := filter.Evaluate(condition)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			if primary.Ternary() == ternary.TRUE {
 				var record Record
@@ -181,8 +180,12 @@ func OuterJoin(view *View, joinView *View, condition parser.Expression, directio
 		}
 	}
 
-	return &View{
-		Header:  mergedHeader,
-		Records: records,
-	}, nil
+	if direction == parser.RIGHT {
+		view, joinView = joinView, view
+	}
+
+	view.Header = mergedHeader
+	view.Records = records
+	view.FileInfo = nil
+	return nil
 }

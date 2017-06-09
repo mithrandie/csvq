@@ -3,6 +3,8 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -131,4 +133,8 @@ func float64ToTime(f float64) time.Time {
 		nsec, _ = strconv.ParseInt(ns[1]+strings.Repeat("0", 9-len(ns[1])), 10, 64)
 	}
 	return time.Unix(sec, nsec)
+}
+
+func FormatTableName(s string) string {
+	return strings.TrimSuffix(path.Base(s), filepath.Ext(s))
 }

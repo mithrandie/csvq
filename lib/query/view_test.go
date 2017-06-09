@@ -82,7 +82,7 @@ func TestNewFileInfo(t *testing.T) {
 	}
 }
 
-var newViewTests = []struct {
+var viewLoadTests = []struct {
 	Name     string
 	Encoding cmd.Encoding
 	NoHeader bool
@@ -106,6 +106,8 @@ var newViewTests = []struct {
 					NewCell(parser.NewNull()),
 				},
 			},
+			UseCache:      true,
+			UseInternalId: true,
 		},
 	},
 	{
@@ -137,6 +139,8 @@ var newViewTests = []struct {
 				Path:      "table1.csv",
 				Delimiter: ',',
 			},
+			UseCache:      true,
+			UseInternalId: true,
 		},
 	},
 	{
@@ -154,6 +158,8 @@ var newViewTests = []struct {
 			FileInfo: &FileInfo{
 				Delimiter: ',',
 			},
+			UseCache:      true,
+			UseInternalId: true,
 		},
 	},
 	{
@@ -200,6 +206,8 @@ var newViewTests = []struct {
 					parser.NewString("str"),
 				}),
 			},
+			UseCache:      true,
+			UseInternalId: true,
 		},
 	},
 	{
@@ -224,6 +232,8 @@ var newViewTests = []struct {
 					parser.NewString("str2"),
 				}),
 			},
+			UseCache:      true,
+			UseInternalId: true,
 		},
 	},
 	{
@@ -321,6 +331,8 @@ var newViewTests = []struct {
 					parser.NewString("str44"),
 				}),
 			},
+			UseCache:      true,
+			UseInternalId: true,
 		},
 	},
 	{
@@ -423,6 +435,8 @@ var newViewTests = []struct {
 					parser.NewString("str44"),
 				}),
 			},
+			UseCache:      true,
+			UseInternalId: true,
 		},
 	},
 	{
@@ -475,6 +489,8 @@ var newViewTests = []struct {
 					parser.NewString("str33"),
 				}),
 			},
+			UseCache:      true,
+			UseInternalId: true,
 		},
 	},
 	{
@@ -536,6 +552,8 @@ var newViewTests = []struct {
 					parser.NewString("str33"),
 				}),
 			},
+			UseCache:      true,
+			UseInternalId: true,
 		},
 	},
 	{
@@ -627,15 +645,17 @@ var newViewTests = []struct {
 					parser.NewString("str3"),
 				}),
 			},
+			UseCache:      true,
+			UseInternalId: true,
 		},
 	},
 }
 
-func TestNewView(t *testing.T) {
+func TestView_Load(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDataDir
 
-	for _, v := range newViewTests {
+	for _, v := range viewLoadTests {
 		tf.Delimiter = cmd.UNDEF
 		tf.NoHeader = v.NoHeader
 		if v.Encoding != 0 {
@@ -653,7 +673,8 @@ func TestNewView(t *testing.T) {
 			os.Stdin = r
 		}
 
-		result, err := NewView(v.From, v.Filter)
+		view := NewView()
+		err := view.Load(v.From, v.Filter)
 
 		if 0 < len(v.Stdin) {
 			os.Stdin = oldStdin
@@ -673,17 +694,17 @@ func TestNewView(t *testing.T) {
 		}
 
 		if v.Result.FileInfo != nil {
-			if path.Base(result.FileInfo.Path) != path.Base(v.Result.FileInfo.Path) {
-				t.Errorf("%s: filepath = %q, want %q", v.Name, path.Base(result.FileInfo.Path), path.Base(v.Result.FileInfo.Path))
+			if path.Base(view.FileInfo.Path) != path.Base(v.Result.FileInfo.Path) {
+				t.Errorf("%s: filepath = %q, want %q", v.Name, path.Base(view.FileInfo.Path), path.Base(v.Result.FileInfo.Path))
 			}
-			if result.FileInfo.Delimiter != v.Result.FileInfo.Delimiter {
-				t.Errorf("%s: delimiter = %q, want %q", v.Name, result.FileInfo.Delimiter, v.Result.FileInfo.Delimiter)
+			if view.FileInfo.Delimiter != v.Result.FileInfo.Delimiter {
+				t.Errorf("%s: delimiter = %q, want %q", v.Name, view.FileInfo.Delimiter, v.Result.FileInfo.Delimiter)
 			}
 		}
-		result.FileInfo = nil
+		view.FileInfo = nil
 		v.Result.FileInfo = nil
-		if !reflect.DeepEqual(result, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
+		if !reflect.DeepEqual(view, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, view, v.Result)
 		}
 	}
 }

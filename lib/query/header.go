@@ -91,6 +91,17 @@ func (h Header) TableColumns() []parser.Expression {
 	return columns
 }
 
+func (h Header) TableColumnNames() []string {
+	names := []string{}
+	for _, f := range h {
+		if !f.FromTable {
+			continue
+		}
+		names = append(names, f.Column)
+	}
+	return names
+}
+
 func (h Header) Contains(ref string, column string) (int, error) {
 	identifier := column
 	if 0 < len(ref) {

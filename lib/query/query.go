@@ -2,7 +2,11 @@ package query
 
 import (
 	"errors"
+	"fmt"
+	"path"
+	"strings"
 
+	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
@@ -13,12 +17,18 @@ const (
 	INSERT
 	UPDATE
 	DELETE
+	CREATE_TABLE
+	ADD_COLUMNS
+	DROP_COLUMNS
+	RENAME_COLUMN
+	PRINT
 )
 
 type Result struct {
 	Type  StatementType
 	View  *View
 	Count int
+	Log   string
 }
 
 func Execute(input string) ([]Result, error) {
@@ -87,6 +97,54 @@ func Execute(input string) ([]Result, error) {
 					Count: view.OperatedRecords,
 				})
 			}
+		case parser.CreateTable:
+			view, err := CreateTable(stmt.(parser.CreateTable))
+			if err != nil {
+				return nil, err
+			}
+			results = append(results, Result{
+				Type: CREATE_TABLE,
+				View: view,
+			})
+		case parser.AddColumns:
+			view, err := AddColumns(stmt.(parser.AddColumns))
+			if err != nil {
+				return nil, err
+			}
+			results = append(results, Result{
+				Type:  ADD_COLUMNS,
+				View:  view,
+				Count: view.OperatedFields,
+			})
+		case parser.DropColumns:
+			view, err := DropColumns(stmt.(parser.DropColumns))
+			if err != nil {
+				return nil, err
+			}
+			results = append(results, Result{
+				Type:  DROP_COLUMNS,
+				View:  view,
+				Count: view.OperatedFields,
+			})
+		case parser.RenameColumn:
+			view, err := RenameColumn(stmt.(parser.RenameColumn))
+			if err != nil {
+				return nil, err
+			}
+			results = append(results, Result{
+				Type:  RENAME_COLUMN,
+				View:  view,
+				Count: view.OperatedFields,
+			})
+		case parser.Print:
+			log, err := Print(stmt.(parser.Print))
+			if err != nil {
+				return nil, err
+			}
+			results = append(results, Result{
+				Type: PRINT,
+				Log:  log,
+			})
 		}
 	}
 
@@ -97,7 +155,8 @@ func Select(query parser.SelectQuery, parentFilter Filter) (*View, error) {
 	if query.FromClause == nil {
 		query.FromClause = parser.FromClause{}
 	}
-	view, err := NewView(query.FromClause.(parser.FromClause), parentFilter)
+	view := NewView()
+	err := view.Load(query.FromClause.(parser.FromClause), parentFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +201,10 @@ func Select(query parser.SelectQuery, parentFilter Filter) (*View, error) {
 }
 
 func Insert(query parser.InsertQuery) (*View, error) {
-	view, err := NewViewFromIdentifier(query.Table, nil)
+	view := NewView()
+	view.UseCache = false
+	view.UseInternalId = false
+	err := view.LoadFromIdentifier(query.Table)
 	if err != nil {
 		return nil, err
 	}
@@ -162,12 +224,6 @@ func Insert(query parser.InsertQuery) (*View, error) {
 		}
 	}
 
-	if err := view.SelectAllColumns(); err != nil {
-		return nil, err
-	}
-
-	view.Fix()
-
 	return view, nil
 }
 
@@ -176,7 +232,8 @@ func Update(query parser.UpdateQuery) ([]*View, error) {
 		query.FromClause = parser.FromClause{Tables: query.Tables}
 	}
 
-	view, err := NewView(query.FromClause.(parser.FromClause), nil)
+	view := NewView()
+	err := view.Load(query.FromClause.(parser.FromClause), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -219,7 +276,7 @@ func Update(query parser.UpdateQuery) ([]*View, error) {
 				return nil, errors.New("record to update is ambiguous")
 			}
 
-			if InIntArray(internalId, updatedIndices[viewref]) {
+			if InIntSlice(internalId, updatedIndices[viewref]) {
 				return nil, errors.New("record to update is ambiguous")
 			}
 
@@ -254,7 +311,8 @@ func Delete(query parser.DeleteQuery) ([]*View, error) {
 		query.Tables = []parser.Expression{table}
 	}
 
-	view, err := NewView(query.FromClause.(parser.FromClause), nil)
+	view := NewView()
+	err := view.Load(query.FromClause.(parser.FromClause), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -282,7 +340,7 @@ func Delete(query parser.DeleteQuery) ([]*View, error) {
 			if err != nil {
 				continue
 			}
-			if InIntArray(internalId, deletedIndices[viewref]) {
+			if InIntSlice(internalId, deletedIndices[viewref]) {
 				continue
 			}
 			deletedIndices[viewref] = append(deletedIndices[viewref], internalId)
@@ -293,7 +351,7 @@ func Delete(query parser.DeleteQuery) ([]*View, error) {
 	for k, v := range viewsToDelete {
 		filterdIndices := []int{}
 		for i := range v.Records {
-			if !InIntArray(i, deletedIndices[k]) {
+			if !InIntSlice(i, deletedIndices[k]) {
 				filterdIndices = append(filterdIndices, i)
 			}
 		}
@@ -310,4 +368,203 @@ func Delete(query parser.DeleteQuery) ([]*View, error) {
 	}
 
 	return views, nil
+}
+
+func CreateTable(query parser.CreateTable) (*View, error) {
+	fields := make([]string, len(query.Fields))
+	for i, v := range query.Fields {
+		f, _ := v.(parser.Identifier)
+		if InStrSlice(f.Literal, fields) {
+			return nil, errors.New(fmt.Sprintf("field %s is duplicate", f))
+		}
+		fields[i] = f.Literal
+	}
+
+	flags := cmd.GetFlags()
+	filepath := query.Table.Literal
+	if !path.IsAbs(filepath) {
+		filepath = path.Join(flags.Repository, filepath)
+	}
+	delimiter := flags.Delimiter
+	if delimiter == cmd.UNDEF {
+		if strings.EqualFold(path.Ext(filepath), cmd.TSV_EXT) {
+			delimiter = '\t'
+		} else {
+			delimiter = ','
+		}
+	}
+
+	header := NewHeaderWithoutId(parser.FormatTableName(query.Table.Literal), fields)
+	view := &View{
+		Header: header,
+		FileInfo: &FileInfo{
+			Path:      filepath,
+			Delimiter: delimiter,
+		},
+	}
+	return view, nil
+}
+
+func AddColumns(query parser.AddColumns) (*View, error) {
+	if query.Position == nil {
+		query.Position = parser.ColumnPosition{
+			Position: parser.Token{Token: parser.LAST, Literal: parser.TokenLiteral(parser.LAST)},
+		}
+	}
+
+	view := NewView()
+	view.UseCache = false
+	view.UseInternalId = false
+	err := view.LoadFromIdentifier(query.Table)
+	if err != nil {
+		return nil, err
+	}
+
+	var insertPos int
+	pos, _ := query.Position.(parser.ColumnPosition)
+	switch pos.Position.Token {
+	case parser.FIRST:
+		insertPos = 0
+	case parser.LAST:
+		insertPos = view.FieldLen()
+	default:
+		idx, err := view.FieldIndex(pos.Column.(parser.Identifier))
+		if err != nil {
+			return nil, err
+		}
+		switch pos.Position.Token {
+		case parser.BEFORE:
+			insertPos = idx
+		default: //parser.AFTER
+			insertPos = idx + 1
+		}
+	}
+
+	columnNames := view.Header.TableColumnNames()
+	fields := make([]string, len(query.Columns))
+	defaults := make([]parser.Expression, len(query.Columns))
+	for i, v := range query.Columns {
+		col := v.(parser.ColumnDefault)
+		if InStrSlice(col.Column.Literal, columnNames) || InStrSlice(col.Column.Literal, fields) {
+			return nil, errors.New(fmt.Sprintf("field %s is duplicate", col.Column))
+		}
+		fields[i] = col.Column.Literal
+		defaults[i] = col.Value
+	}
+	newFieldLen := view.FieldLen() + len(query.Columns)
+
+	addHeader := NewHeaderWithoutId(parser.FormatTableName(query.Table.Literal), fields)
+	header := make(Header, newFieldLen)
+	for i, v := range view.Header {
+		var idx int
+		if i < insertPos {
+			idx = i
+		} else {
+			idx = i + len(fields)
+		}
+		header[idx] = v
+	}
+	for i, v := range addHeader {
+		header[i+insertPos] = v
+	}
+
+	records := make([]Record, view.RecordLen())
+	for i, v := range view.Records {
+		record := make(Record, newFieldLen)
+		for j, cell := range v {
+			var idx int
+			if j < insertPos {
+				idx = j
+			} else {
+				idx = j + len(fields)
+			}
+			record[idx] = cell
+		}
+
+		var filter Filter = []FilterRecord{{View: view, RecordIndex: i}}
+		for j, v := range defaults {
+			if v == nil {
+				v = parser.NewNull()
+			}
+			val, err := filter.Evaluate(v)
+			if err != nil {
+				return nil, err
+			}
+			record[j+insertPos] = NewCell(val)
+		}
+
+		records[i] = record
+	}
+
+	view.Header = header
+	view.Records = records
+	view.OperatedFields = len(fields)
+
+	return view, nil
+}
+
+func DropColumns(query parser.DropColumns) (*View, error) {
+	view := NewView()
+	view.UseCache = false
+	view.UseInternalId = false
+	err := view.LoadFromIdentifier(query.Table)
+	if err != nil {
+		return nil, err
+	}
+
+	dropIndices := make([]int, len(query.Columns))
+	for i, v := range query.Columns {
+		idx, err := view.FieldIndex(v.(parser.Identifier))
+		if err != nil {
+			return nil, err
+		}
+		dropIndices[i] = idx
+	}
+
+	view.selectFields = []int{}
+	for i := 0; i < view.FieldLen(); i++ {
+		if view.Header[i].FromTable && !InIntSlice(i, dropIndices) {
+			view.selectFields = append(view.selectFields, i)
+		}
+	}
+
+	view.Fix()
+	view.OperatedFields = len(dropIndices)
+
+	return view, nil
+
+}
+
+func RenameColumn(query parser.RenameColumn) (*View, error) {
+	view := NewView()
+	view.UseCache = false
+	view.UseInternalId = false
+	err := view.LoadFromIdentifier(query.Table)
+	if err != nil {
+		return nil, err
+	}
+
+	columnNames := view.Header.TableColumnNames()
+	if InStrSlice(query.New.Literal, columnNames) {
+		return nil, errors.New(fmt.Sprintf("field %s is duplicate", query.New))
+	}
+
+	idx, err := view.FieldIndex(query.Old)
+	if err != nil {
+		return nil, err
+	}
+
+	view.Header[idx].Column = query.New.Literal
+	view.OperatedFields = 1
+
+	return view, nil
+}
+
+func Print(query parser.Print) (string, error) {
+	var filter Filter
+	p, err := filter.Evaluate(query.Value)
+	if err != nil {
+		return "", err
+	}
+	return p.String(), err
 }

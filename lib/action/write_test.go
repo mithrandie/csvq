@@ -80,6 +80,48 @@ var executeTests = []struct {
 		Output: fmt.Sprintf("no record deleted on %q\n", GetTestFilePath("delete_query.csv")),
 	},
 	{
+		Name:       "Create Table",
+		Input:      "create table create_table.csv (column1, column2)",
+		Output:     fmt.Sprintf("file %q is created\n", GetTestFilePath("create_table.csv")),
+		UpdateFile: GetTestFilePath("create_table.csv"),
+		Content:    "\"column1\",\"column2\"\n",
+	},
+	{
+		Name:       "Add Columns",
+		Input:      "alter table add_columns add column3",
+		Output:     fmt.Sprintf("%d field(s) added on %q\n", 1, GetTestFilePath("add_columns.csv")),
+		UpdateFile: GetTestFilePath("add_columns.csv"),
+		Content: "\"column1\",\"column2\",\"column3\"\n" +
+			"\"1\",\"str1\",\n" +
+			"\"2\",\"str2\",\n" +
+			"\"3\",\"str3\",",
+	},
+	{
+		Name:       "Drop Columns",
+		Input:      "alter table drop_columns drop column1",
+		Output:     fmt.Sprintf("%d field(s) dropped on %q\n", 1, GetTestFilePath("drop_columns.csv")),
+		UpdateFile: GetTestFilePath("drop_columns.csv"),
+		Content: "\"column2\"\n" +
+			"\"str1\"\n" +
+			"\"str2\"\n" +
+			"\"str3\"",
+	},
+	{
+		Name:       "Rename Column",
+		Input:      "alter table rename_column rename column1 to newcolumn",
+		Output:     fmt.Sprintf("%d field(s) renamed on %q\n", 1, GetTestFilePath("rename_column.csv")),
+		UpdateFile: GetTestFilePath("rename_column.csv"),
+		Content: "\"newcolumn\",\"column2\"\n" +
+			"\"1\",\"str1\"\n" +
+			"\"2\",\"str2\"\n" +
+			"\"3\",\"str3\"",
+	},
+	{
+		Name:   "Print",
+		Input:  "var @a := 1; print @a;",
+		Output: "1\n",
+	},
+	{
 		Name:  "Query Execution Error",
 		Input: "select from",
 		Error: "syntax error: unexpected FROM",
