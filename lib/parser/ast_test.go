@@ -1590,3 +1590,15 @@ func TestRollback_String(t *testing.T) {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 }
+
+func TestSetFlag_String(t *testing.T) {
+	e := SetFlag{
+		Set:   "set",
+		Name:  "@@delimiter",
+		Value: NewString(","),
+	}
+	expect := "set @@delimiter = ','"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}

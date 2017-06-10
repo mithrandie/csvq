@@ -108,6 +108,16 @@ var scanTests = []struct {
 		},
 	},
 	{
+		Name:  "Flag",
+		Input: "@@flag",
+		Output: []scanResult{
+			{
+				Token:   FLAG,
+				Literal: "@@flag",
+			},
+		},
+	},
+	{
 		Name:  "Variable",
 		Input: "@var",
 		Output: []scanResult{
@@ -202,6 +212,56 @@ var scanTests = []struct {
 			{
 				Token:   int(','),
 				Literal: ",",
+			},
+			{
+				Token:   INTEGER,
+				Literal: "1",
+			},
+			{
+				Token:   int('-'),
+				Literal: "-",
+			},
+			{
+				Token:   INTEGER,
+				Literal: "2",
+			},
+		},
+	},
+	{
+		Name:  "Comment",
+		Input: "identifier/* 'string', \n 1*/-2",
+		Output: []scanResult{
+			{
+				Token:   IDENTIFIER,
+				Literal: "identifier",
+			},
+			{
+				Token:   int('-'),
+				Literal: "-",
+			},
+			{
+				Token:   INTEGER,
+				Literal: "2",
+			},
+		},
+	},
+	{
+		Name:  "CommentNotTerminated",
+		Input: "identifier/* 'string', \n 1-2",
+		Output: []scanResult{
+			{
+				Token:   IDENTIFIER,
+				Literal: "identifier",
+			},
+		},
+	},
+	{
+		Name:  "LineComment",
+		Input: "identifier-- comment 'string', \n 1-2",
+		Output: []scanResult{
+			{
+				Token:   IDENTIFIER,
+				Literal: "identifier",
 			},
 			{
 				Token:   INTEGER,

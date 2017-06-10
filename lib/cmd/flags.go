@@ -11,12 +11,16 @@ import (
 
 const UNDEF = -1
 
-type Encoding int
+type Encoding string
 
 const (
-	UTF8 Encoding = iota
-	SJIS
+	UTF8 Encoding = "UTF8"
+	SJIS Encoding = "SJIS"
 )
+
+func (e Encoding) String() string {
+	return reflect.ValueOf(e).String()
+}
 
 type LineBreak string
 

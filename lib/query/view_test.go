@@ -587,7 +587,7 @@ func TestView_Load(t *testing.T) {
 
 		tf.Delimiter = cmd.UNDEF
 		tf.NoHeader = v.NoHeader
-		if v.Encoding != 0 {
+		if v.Encoding != "" {
 			tf.Encoding = v.Encoding
 		} else {
 			tf.Encoding = cmd.UTF8

@@ -1362,6 +1362,16 @@ var parseTests = []struct {
 			},
 		},
 	},
+	{
+		Input: "set @@delimiter = ','",
+		Output: []Statement{
+			SetFlag{
+				Set:   "set",
+				Name:  "@@delimiter",
+				Value: NewString(","),
+			},
+		},
+	},
 }
 
 func TestParse(t *testing.T) {

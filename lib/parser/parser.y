@@ -74,6 +74,7 @@ package parser
 %type<expression>  commit
 %type<expression>  rollback
 %type<expression>  print
+%type<expression>  set_flag
 %type<identifier>  identifier
 %type<text>        text
 %type<integer>     integer
@@ -94,7 +95,7 @@ package parser
 %type<token>       join_direction
 %type<token>       comparison_operator
 %type<token>       statement_terminal
-%token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME VARIABLE
+%token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME VARIABLE FLAG
 %token<token> SELECT FROM UPDATE SET DELETE WHERE INSERT INTO VALUES AS DUAL STDIN
 %token<token> CREATE ADD DROP ALTER TABLE FIRST LAST AFTER BEFORE DEFAULT RENAME TO
 %token<token> ORDER GROUP HAVING BY ASC DESC LIMIT
@@ -181,6 +182,10 @@ statement
         $$ = $1
     }
     | print statement_terminal
+    {
+        $$ = $1
+    }
+    | set_flag statement_terminal
     {
         $$ = $1
     }
@@ -862,6 +867,12 @@ print
     : PRINT value
     {
         $$ = Print{Print: $1.Literal, Value: $2}
+    }
+
+set_flag
+    : SET FLAG '=' primary
+    {
+        $$ = SetFlag{Set: $1.Literal, Name: $2.Literal, Value: $4}
     }
 
 identifier

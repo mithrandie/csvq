@@ -1153,6 +1153,17 @@ type Rollback struct {
 	Literal string
 }
 
+type SetFlag struct {
+	Set   string
+	Name  string
+	Value Primary
+}
+
+func (e SetFlag) String() string {
+	s := []string{e.Set, e.Name, "=", e.Value.String()}
+	return joinWithSpace(s)
+}
+
 func (e Rollback) String() string {
 	return e.Literal
 }

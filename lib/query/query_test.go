@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -158,6 +159,13 @@ var executeStatementTests = []struct {
 	Result []Result
 	Error  string
 }{
+	{
+		Input: parser.SetFlag{
+			Name:  "@@invalid",
+			Value: parser.NewString("\t"),
+		},
+		Error: "invalid flag name: @@invalid",
+	},
 	{
 		Input: parser.VariableDeclaration{
 			Assignments: []parser.Expression{
@@ -1901,6 +1909,128 @@ func TestPrint(t *testing.T) {
 		}
 		if !reflect.DeepEqual(result, v.Result) {
 			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+		}
+	}
+}
+
+var setFlagTests = []struct {
+	Name            string
+	Query           parser.SetFlag
+	ResultFlag      string
+	ResultStlValue  string
+	ResultBoolValue bool
+	Error           string
+}{
+	{
+		Name: "Set Delimiter",
+		Query: parser.SetFlag{
+			Name:  "@@delimiter",
+			Value: parser.NewString("\t"),
+		},
+		ResultFlag:     "delimiter",
+		ResultStlValue: "\t",
+	},
+	{
+		Name: "Set Encoding",
+		Query: parser.SetFlag{
+			Name:  "@@encoding",
+			Value: parser.NewString("SJIS"),
+		},
+		ResultFlag:     "encoding",
+		ResultStlValue: "SJIS",
+	},
+	{
+		Name: "Set Repository",
+		Query: parser.SetFlag{
+			Name:  "@@repository",
+			Value: parser.NewString(TestDir),
+		},
+		ResultFlag:     "repository",
+		ResultStlValue: TestDir,
+	},
+	{
+		Name: "Set NoHeader",
+		Query: parser.SetFlag{
+			Name:  "@@no-header",
+			Value: parser.NewBoolean(true),
+		},
+		ResultFlag:      "no-header",
+		ResultBoolValue: true,
+	},
+	{
+		Name: "Set WithoutNull",
+		Query: parser.SetFlag{
+			Name:  "@@without-null",
+			Value: parser.NewBoolean(true),
+		},
+		ResultFlag:      "without-null",
+		ResultBoolValue: true,
+	},
+	{
+		Name: "Set Delimiter Value Error",
+		Query: parser.SetFlag{
+			Name:  "@@delimiter",
+			Value: parser.NewBoolean(true),
+		},
+		Error: "invalid flag value: @@delimiter = true",
+	},
+	{
+		Name: "Set WithoutNull Value Error",
+		Query: parser.SetFlag{
+			Name:  "@@without-null",
+			Value: parser.NewString("string"),
+		},
+		Error: "invalid flag value: @@without-null = 'string'",
+	},
+	{
+		Name: "Invalid Flag Error",
+		Query: parser.SetFlag{
+			Name:  "@@invalid",
+			Value: parser.NewString("string"),
+		},
+		Error: "invalid flag name: @@invalid",
+	},
+}
+
+func TestSetFlag(t *testing.T) {
+	flags := cmd.GetFlags()
+
+	for _, v := range setFlagTests {
+		err := SetFlag(v.Query)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+
+		switch strings.ToUpper(v.ResultFlag) {
+		case "DELIMITER":
+			if string(flags.Delimiter) != v.ResultStlValue {
+				t.Errorf("%s: delimiter = %q, want %q", v.Name, string(flags.Delimiter), v.ResultStlValue)
+			}
+		case "ENCODING":
+			if flags.Encoding.String() != v.ResultStlValue {
+				t.Errorf("%s: encoding = %q, want %q", v.Name, flags.Encoding.String(), v.ResultStlValue)
+			}
+		case "REPOSITORY":
+			if flags.Repository != v.ResultStlValue {
+				t.Errorf("%s: repository = %q, want %q", v.Name, flags.Repository, v.ResultStlValue)
+			}
+		case "NO-HEADER":
+			if flags.NoHeader != v.ResultBoolValue {
+				t.Errorf("%s: no-header = %t, want %t", v.Name, flags.NoHeader, v.ResultBoolValue)
+			}
+		case "WITHOUT-NULL":
+			if flags.WithoutNull != v.ResultBoolValue {
+				t.Errorf("%s: without-null = %t, want %t", v.Name, flags.WithoutNull, v.ResultBoolValue)
+			}
 		}
 	}
 }

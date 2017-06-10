@@ -68,6 +68,8 @@ func ExecuteStatement(stmt parser.Statement) (string, error) {
 	var printstr string
 
 	switch stmt.(type) {
+	case parser.SetFlag:
+		err = SetFlag(stmt.(parser.SetFlag))
 	case parser.VariableDeclaration:
 		err = Variable.Decrare(stmt.(parser.VariableDeclaration), nil)
 	case parser.VariableSubstitution:
@@ -688,4 +690,39 @@ func Print(query parser.Print) (string, error) {
 		return "", err
 	}
 	return p.String(), err
+}
+
+func SetFlag(query parser.SetFlag) error {
+	var err error
+
+	var p parser.Primary
+
+	switch strings.ToUpper(query.Name) {
+	case "@@DELIMITER", "@@ENCODING", "@@REPOSITORY":
+		p = parser.PrimaryToString(query.Value)
+		if parser.IsNull(p) {
+			return errors.New(fmt.Sprintf("invalid flag value: %s = %s", query.Name, query.Value))
+		}
+	case "@@NO-HEADER", "@@WITHOUT-NULL":
+		p = parser.PrimaryToBoolean(query.Value)
+		if parser.IsNull(p) {
+			return errors.New(fmt.Sprintf("invalid flag value: %s = %s", query.Name, query.Value))
+		}
+	}
+
+	switch strings.ToUpper(query.Name) {
+	case "@@DELIMITER":
+		err = cmd.SetDelimiter(p.(parser.String).Value())
+	case "@@ENCODING":
+		err = cmd.SetEncoding(p.(parser.String).Value())
+	case "@@REPOSITORY":
+		err = cmd.SetRepository(p.(parser.String).Value())
+	case "@@NO-HEADER":
+		err = cmd.SetNoHeader(p.(parser.Boolean).Bool())
+	case "@@WITHOUT-NULL":
+		err = cmd.SetWithoutNull(p.(parser.Boolean).Bool())
+	default:
+		err = errors.New(fmt.Sprintf("invalid flag name: %s", query.Name))
+	}
+	return err
 }

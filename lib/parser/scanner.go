@@ -23,6 +23,11 @@ const (
 	KEYWORD_TO   = VAR
 )
 
+const (
+	SUBSTITUTION_LITERAL = ":="
+	VARIABLE_RUNE        = '@'
+)
+
 var comparisonOperators = []string{
 	">",
 	"<",
@@ -34,10 +39,6 @@ var comparisonOperators = []string{
 
 var stringOperators = []string{
 	"||",
-}
-
-var substitutionOperators = []string{
-	":=",
 }
 
 func TokenLiteral(token int) string {
@@ -147,15 +148,30 @@ func (s *Scanner) Scan() (int, string, bool, error) {
 			token = COMPARISON_OP
 		} else if e := s.searchStringOperators(literal); e == nil {
 			token = STRING_OP
-		} else if e := s.searchSubstitutionOperators(literal); e == nil {
+		} else if literal == SUBSTITUTION_LITERAL {
 			token = SUBSTITUTION_OP
 		} else if 1 < len(literal) {
 			token = UNCATEGORIZED
 		}
+	case s.isFlagRune(ch):
+		s.scanIdentifier()
+		s.scanIdentifier()
+		literal = s.literal()
+		token = FLAG
 	case s.isVariableRune(ch):
 		s.scanIdentifier()
 		literal = s.literal()
 		token = VARIABLE
+	case s.isCommentRune(ch):
+		s.scanComment()
+		var tok int
+		tok, literal, quoted, _ = s.Scan()
+		token = rune(tok)
+	case s.isLineCommentRune(ch):
+		s.scanLineComment()
+		var tok int
+		tok, literal, quoted, _ = s.Scan()
+		token = rune(tok)
 	default:
 		switch ch {
 		case EOF:
@@ -181,11 +197,7 @@ func (s *Scanner) Scan() (int, string, bool, error) {
 }
 
 func (s *Scanner) isWhiteSpace(ch rune) bool {
-	switch ch {
-	case '\t', '\n', '\r', ' ':
-		return true
-	}
-	return false
+	return unicode.IsSpace(ch)
 }
 
 func (s *Scanner) scanString(quote rune) {
@@ -230,8 +242,16 @@ func (s *Scanner) isOperatorRune(ch rune) bool {
 	return false
 }
 
+func (s *Scanner) isFlagRune(ch rune) bool {
+	if ch == VARIABLE_RUNE && s.peek() == VARIABLE_RUNE {
+		s.next()
+		return true
+	}
+	return false
+}
+
 func (s *Scanner) isVariableRune(ch rune) bool {
-	if ch == '@' {
+	if ch == VARIABLE_RUNE {
 		return true
 	}
 	return false
@@ -264,11 +284,44 @@ func (s *Scanner) searchStringOperators(str string) error {
 	return errors.New(fmt.Sprintf("%q is not a string operator", str))
 }
 
-func (s *Scanner) searchSubstitutionOperators(str string) error {
-	for _, v := range substitutionOperators {
-		if v == str {
-			return nil
+func (s *Scanner) isCommentRune(ch rune) bool {
+	if ch == '/' && s.peek() == '*' {
+		s.next()
+		return true
+	}
+	return false
+}
+
+func (s *Scanner) scanComment() {
+	for {
+		ch := s.next()
+		if ch == EOF {
+			break
+		} else if ch == '*' {
+			if s.peek() == '/' {
+				s.next()
+				break
+			}
 		}
 	}
-	return errors.New(fmt.Sprintf("%q is not a substitution operator", str))
+	return
+}
+
+func (s *Scanner) isLineCommentRune(ch rune) bool {
+	if ch == '-' && s.peek() == '-' {
+		s.next()
+		return true
+	}
+	return false
+}
+
+func (s *Scanner) scanLineComment() {
+	for {
+		ch := s.peek()
+		if ch == '\r' || ch == '\n' || ch == EOF {
+			break
+		}
+		s.next()
+	}
+	return
 }
