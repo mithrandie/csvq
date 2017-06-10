@@ -3,6 +3,8 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -17,6 +19,8 @@ func StrToTime(s string) (time.Time, error) {
 	} else if t, e := time.ParseInLocation(DATETIME_FORMAT, s, cmd.GetLocation()); e == nil {
 		return t, nil
 	} else if t, e := time.Parse(DATETIME_FORMAT+" MST", s); e == nil {
+		return t, nil
+	} else if t, e := time.Parse("2006-01-02", s); e == nil {
 		return t, nil
 	} else if t, e := time.Parse(time.RFC822, s); e == nil {
 		return t, nil
@@ -131,4 +135,8 @@ func float64ToTime(f float64) time.Time {
 		nsec, _ = strconv.ParseInt(ns[1]+strings.Repeat("0", 9-len(ns[1])), 10, 64)
 	}
 	return time.Unix(sec, nsec)
+}
+
+func FormatTableName(s string) string {
+	return strings.TrimSuffix(path.Base(s), filepath.Ext(s))
 }

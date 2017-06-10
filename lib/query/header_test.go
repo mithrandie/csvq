@@ -137,3 +137,47 @@ func TestHeader_Contains(t *testing.T) {
 		}
 	}
 }
+
+func TestNewHeader(t *testing.T) {
+	ref := "table1"
+	words := []string{"column1", "column2"}
+	var expect Header = []HeaderField{
+		{
+			Reference: "table1",
+			Column:    INTERNAL_ID_FIELD,
+		},
+		{
+			Reference: "table1",
+			Column:    "column1",
+			FromTable: true,
+		},
+		{
+			Reference: "table1",
+			Column:    "column2",
+			FromTable: true,
+		},
+	}
+	if !reflect.DeepEqual(NewHeader(ref, words), expect) {
+		t.Errorf("header = %s, want %s", NewHeader(ref, words), expect)
+	}
+}
+
+func TestNewHeaderWithoutId(t *testing.T) {
+	ref := "table1"
+	words := []string{"column1", "column2"}
+	var expect Header = []HeaderField{
+		{
+			Reference: "table1",
+			Column:    "column1",
+			FromTable: true,
+		},
+		{
+			Reference: "table1",
+			Column:    "column2",
+			FromTable: true,
+		},
+	}
+	if !reflect.DeepEqual(NewHeaderWithoutId(ref, words), expect) {
+		t.Errorf("header = %s, want %s", NewHeaderWithoutId(ref, words), expect)
+	}
+}

@@ -2,6 +2,8 @@ package query
 
 import "github.com/mithrandie/csvq/lib/parser"
 
+const INTERNAL_ID_FIELD = "@__internal_id"
+
 type HeaderField struct {
 	Reference  string
 	Column     string
@@ -25,6 +27,21 @@ func NewDualHeader() Header {
 }
 
 func NewHeader(ref string, words []string) Header {
+	h := make([]HeaderField, len(words)+1)
+
+	h[0].Reference = ref
+	h[0].Column = INTERNAL_ID_FIELD
+
+	for i, v := range words {
+		h[i+1].Reference = ref
+		h[i+1].Column = v
+		h[i+1].FromTable = true
+	}
+
+	return h
+}
+
+func NewHeaderWithoutId(ref string, words []string) Header {
 	h := make([]HeaderField, len(words))
 
 	for i, v := range words {
@@ -44,10 +61,12 @@ func MergeHeader(h1 Header, h2 Header) Header {
 	return append(h1, h2...)
 }
 
-func AddHeaderField(h Header, alias string) Header {
-	return append(h, HeaderField{
+func AddHeaderField(h Header, alias string) (header Header, index int) {
+	header = append(h, HeaderField{
 		Alias: alias,
 	})
+	index = header.Len() - 1
+	return
 }
 
 func (h Header) Len() int {
@@ -70,6 +89,17 @@ func (h Header) TableColumns() []parser.Expression {
 		columns = append(columns, parser.Identifier{Literal: lit})
 	}
 	return columns
+}
+
+func (h Header) TableColumnNames() []string {
+	names := []string{}
+	for _, f := range h {
+		if !f.FromTable {
+			continue
+		}
+		names = append(names, f.Column)
+	}
+	return names
 }
 
 func (h Header) Contains(ref string, column string) (int, error) {
@@ -109,4 +139,11 @@ func (h Header) newError(identifier string, err error) error {
 		Identifier: identifier,
 		Err:        err,
 	}
+}
+
+func (h Header) Copy() Header {
+	header := make(Header, h.Len())
+	copy(header, h)
+	return header
+
 }

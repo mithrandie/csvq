@@ -11,12 +11,16 @@ import (
 
 const UNDEF = -1
 
-type Encoding int
+type Encoding string
 
 const (
-	UTF8 Encoding = iota
-	SJIS
+	UTF8 Encoding = "UTF8"
+	SJIS Encoding = "SJIS"
 )
+
+func (e Encoding) String() string {
+	return reflect.ValueOf(e).String()
+}
 
 type LineBreak string
 
@@ -49,6 +53,7 @@ type Flags struct {
 	Delimiter   rune
 	Encoding    Encoding
 	Repository  string
+	Source      string
 	NoHeader    bool
 	WithoutNull bool
 
@@ -76,6 +81,7 @@ func GetFlags() *Flags {
 			Delimiter:      UNDEF,
 			Encoding:       UTF8,
 			Repository:     ".",
+			Source:         "",
 			NoHeader:       false,
 			WithoutNull:    false,
 			WriteEncoding:  UTF8,
@@ -137,6 +143,24 @@ func SetRepository(s string) error {
 	return nil
 }
 
+func SetSource(s string) error {
+	if len(s) < 1 {
+		return nil
+	}
+
+	stat, err := os.Stat(s)
+	if err != nil {
+		return errors.New("source file does not exist")
+	}
+	if stat.IsDir() {
+		return errors.New("source file must be a readable file")
+	}
+
+	f := GetFlags()
+	f.Source = s
+	return nil
+}
+
 func SetNoHeader(b bool) error {
 	f := GetFlags()
 	f.NoHeader = b
@@ -188,8 +212,8 @@ func SetOut(s string) error {
 	}
 
 	_, err := os.Stat(s)
-	if err == nil || !os.IsNotExist(err) {
-		return errors.New("file passed in out option is already exist")
+	if err == nil {
+		return errors.New("file passed in out option already exists")
 	}
 
 	f := GetFlags()

@@ -12,6 +12,11 @@ func TestStrToTime(t *testing.T) {
 		t.Errorf("unexpected error %q for %q", err, s)
 	}
 
+	s = "2006-01-02"
+	if _, err := StrToTime(s); err != nil {
+		t.Errorf("unexpected error %q for %q", err, s)
+	}
+
 	s = "2006-01-02 15:04:05 PDT"
 	if _, err := StrToTime(s); err != nil {
 		t.Errorf("unexpected error %q for %q", err, s)
