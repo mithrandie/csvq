@@ -1,4 +1,4 @@
-package output
+package cmd
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ type writeTest struct {
 	Error    string
 }
 
-var createTests = []writeTest{
+var createFileTests = []writeTest{
 	{
 		Name:     "Create",
 		Filename: "create.txt",
@@ -41,8 +41,8 @@ var createTests = []writeTest{
 	},
 }
 
-func TestCreate(t *testing.T) {
-	for _, v := range createTests {
+func TestCreateFile(t *testing.T) {
+	for _, v := range createFileTests {
 		if len(v.Filename) < 1 {
 			oldStdout := os.Stdout
 			r, w, _ := os.Pipe()
@@ -59,7 +59,7 @@ func TestCreate(t *testing.T) {
 			}
 		} else {
 			filename := GetTestFilePath(v.Filename)
-			err := Create(filename, v.Content)
+			err := CreateFile(filename, v.Content)
 			if err != nil {
 				if len(v.Error) < 1 {
 					t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -82,7 +82,7 @@ func TestCreate(t *testing.T) {
 	}
 }
 
-var updateTests = []writeTest{
+var updateFileTests = []writeTest{
 	{
 		Name:     "Update",
 		Filename: "create.txt",
@@ -96,10 +96,10 @@ var updateTests = []writeTest{
 	},
 }
 
-func TestUpdate(t *testing.T) {
-	for _, v := range updateTests {
+func TestUpdateFile(t *testing.T) {
+	for _, v := range updateFileTests {
 		filename := GetTestFilePath(v.Filename)
-		err := Update(filename, v.Content)
+		err := UpdateFile(filename, v.Content)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

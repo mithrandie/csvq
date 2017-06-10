@@ -1,4 +1,4 @@
-package output
+package query
 
 import (
 	"fmt"
@@ -9,7 +9,6 @@ import (
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
-	"github.com/mithrandie/csvq/lib/query"
 )
 
 type textField struct {
@@ -17,28 +16,27 @@ type textField struct {
 	sign  int
 }
 
-func EncodeView(view *query.View) (string, error) {
+func EncodeView(view *View, format cmd.Format, delimiter rune, withoutHeader bool, encoding cmd.Encoding, lineBreak cmd.LineBreak) (string, error) {
 	var s string
 	var err error
-	flags := cmd.GetFlags()
 
-	switch flags.Format {
+	switch format {
 	case cmd.TEXT:
 		s = encodeText(view)
 	case cmd.CSV, cmd.TSV:
-		s = encodeCSV(view, string(flags.WriteDelimiter), flags.WithoutHeader)
+		s = encodeCSV(view, string(delimiter), withoutHeader)
 	case cmd.JSON:
 		s = encodeJson(view)
 	}
 
-	if flags.WriteEncoding != cmd.UTF8 {
-		s, err = encodeCharacterCode(s, flags.WriteEncoding)
+	if encoding != cmd.UTF8 {
+		s, err = encodeCharacterCode(s, encoding)
 		if err != nil {
 			return "", err
 		}
 	}
-	if flags.LineBreak != cmd.LF {
-		s = convertLineBreak(s, flags.LineBreak)
+	if lineBreak != cmd.LF {
+		s = convertLineBreak(s, lineBreak)
 	}
 
 	return s, nil
@@ -57,7 +55,7 @@ func convertLineBreak(str string, lb cmd.LineBreak) string {
 	return strings.Replace(str, "\n", lb.Value(), -1)
 }
 
-func encodeText(view *query.View) string {
+func encodeText(view *View) string {
 	if view.FieldLen() < 1 {
 		return "Empty Fields\n"
 	}
@@ -160,7 +158,7 @@ func countRunes(f textField) int {
 	return i
 }
 
-func formatTextCell(c query.Cell) textField {
+func formatTextCell(c Cell) textField {
 	primary := c.Primary()
 
 	var s string
@@ -189,7 +187,7 @@ func formatTextCell(c query.Cell) textField {
 	return textField{value: s, sign: sign}
 }
 
-func encodeCSV(view *query.View, delimiter string, withoutHeader bool) string {
+func encodeCSV(view *View, delimiter string, withoutHeader bool) string {
 	var header string
 	if !withoutHeader {
 		h := make([]string, view.FieldLen())
@@ -215,7 +213,7 @@ func encodeCSV(view *query.View, delimiter string, withoutHeader bool) string {
 	return s
 }
 
-func formatCSVCell(c query.Cell) string {
+func formatCSVCell(c Cell) string {
 	primary := c.Primary()
 
 	var s string
@@ -244,7 +242,7 @@ func escapeCSVString(s string) string {
 	return strings.Replace(s, "\"", "\"\"", -1)
 }
 
-func encodeJson(view *query.View) string {
+func encodeJson(view *View) string {
 	records := make([]string, view.RecordLen())
 
 	for i, record := range view.Records {
@@ -258,7 +256,7 @@ func encodeJson(view *query.View) string {
 	return "[" + strings.Join(records, ",") + "]"
 }
 
-func formatJsonCell(c query.Cell) string {
+func formatJsonCell(c Cell) string {
 	primary := c.Primary()
 
 	var s string

@@ -25,130 +25,240 @@ const (
 )
 
 type Result struct {
-	Type  StatementType
-	View  *View
-	Count int
-	Log   string
+	Type StatementType
+	View *View
+	Log  string
 }
 
-func Execute(input string) ([]Result, error) {
-	results := []Result{}
+var ResultSet = []Result{}
+
+func Execute(input string) (string, error) {
+	var out string
 
 	parser.SetDebugLevel(0, true)
 	program, err := parser.Parse(input)
 	if err != nil {
-		return nil, err
+		return out, err
 	}
 
 	for _, stmt := range program {
-		Variable.ClearAutoIncrement()
-		ViewCache.Clear()
-
-		switch stmt.(type) {
-		case parser.VariableDeclaration:
-			if err := Variable.Decrare(stmt.(parser.VariableDeclaration), nil); err != nil {
-				return nil, err
-			}
-		case parser.VariableSubstitution:
-			if _, err := Variable.Substitute(stmt.(parser.VariableSubstitution), nil); err != nil {
-				return nil, err
-			}
-		case parser.SelectQuery:
-			view, err := Select(stmt.(parser.SelectQuery), nil)
-			if err != nil {
-				return nil, err
-			}
-			results = append(results, Result{
-				Type:  SELECT,
-				View:  view,
-				Count: view.RecordLen(),
-			})
-		case parser.InsertQuery:
-			view, err := Insert(stmt.(parser.InsertQuery))
-			if err != nil {
-				return nil, err
-			}
-			results = append(results, Result{
-				Type:  INSERT,
-				View:  view,
-				Count: view.OperatedRecords,
-			})
-		case parser.UpdateQuery:
-			views, err := Update(stmt.(parser.UpdateQuery))
-			if err != nil {
-				return nil, err
-			}
-			for _, view := range views {
-				results = append(results, Result{
-					Type:  UPDATE,
-					View:  view,
-					Count: view.OperatedRecords,
-				})
-			}
-		case parser.DeleteQuery:
-			views, err := Delete(stmt.(parser.DeleteQuery))
-			if err != nil {
-				return nil, err
-			}
-			for _, view := range views {
-				results = append(results, Result{
-					Type:  DELETE,
-					View:  view,
-					Count: view.OperatedRecords,
-				})
-			}
-		case parser.CreateTable:
-			view, err := CreateTable(stmt.(parser.CreateTable))
-			if err != nil {
-				return nil, err
-			}
-			results = append(results, Result{
-				Type: CREATE_TABLE,
-				View: view,
-			})
-		case parser.AddColumns:
-			view, err := AddColumns(stmt.(parser.AddColumns))
-			if err != nil {
-				return nil, err
-			}
-			results = append(results, Result{
-				Type:  ADD_COLUMNS,
-				View:  view,
-				Count: view.OperatedFields,
-			})
-		case parser.DropColumns:
-			view, err := DropColumns(stmt.(parser.DropColumns))
-			if err != nil {
-				return nil, err
-			}
-			results = append(results, Result{
-				Type:  DROP_COLUMNS,
-				View:  view,
-				Count: view.OperatedFields,
-			})
-		case parser.RenameColumn:
-			view, err := RenameColumn(stmt.(parser.RenameColumn))
-			if err != nil {
-				return nil, err
-			}
-			results = append(results, Result{
-				Type:  RENAME_COLUMN,
-				View:  view,
-				Count: view.OperatedFields,
-			})
-		case parser.Print:
-			log, err := Print(stmt.(parser.Print))
-			if err != nil {
-				return nil, err
-			}
-			results = append(results, Result{
-				Type: PRINT,
-				Log:  log,
-			})
+		log, err := ExecuteStatement(stmt)
+		out += log
+		if err != nil {
+			return out, err
 		}
 	}
 
-	return results, nil
+	log, err := Commit(false)
+	out += log
+
+	return out, err
+}
+
+func ExecuteStatement(stmt parser.Statement) (string, error) {
+	Variable.ClearAutoIncrement()
+	ViewCache.ClearAliases()
+
+	var log string
+	var err error
+
+	var results []Result
+	var view *View
+	var views []*View
+	var printstr string
+
+	switch stmt.(type) {
+	case parser.VariableDeclaration:
+		err = Variable.Decrare(stmt.(parser.VariableDeclaration), nil)
+	case parser.VariableSubstitution:
+		_, err = Variable.Substitute(stmt.(parser.VariableSubstitution), nil)
+	case parser.SelectQuery:
+		if view, err = Select(stmt.(parser.SelectQuery), nil); err == nil {
+			results = []Result{
+				{
+					Type: SELECT,
+					View: view,
+				},
+			}
+		}
+	case parser.InsertQuery:
+		if view, err = Insert(stmt.(parser.InsertQuery)); err == nil {
+			results = []Result{
+				{
+					Type: INSERT,
+					View: view,
+					Log:  fmt.Sprintf("%s inserted on %q", formatCount(view.OperatedRecords, "record"), view.FileInfo.Path),
+				},
+			}
+		}
+	case parser.UpdateQuery:
+		if views, err = Update(stmt.(parser.UpdateQuery)); err == nil {
+			results = make([]Result, len(views))
+			for i, v := range views {
+				results[i] = Result{
+					Type: UPDATE,
+					View: v,
+					Log:  fmt.Sprintf("%s updated on %q", formatCount(v.OperatedRecords, "record"), v.FileInfo.Path),
+				}
+			}
+		}
+	case parser.DeleteQuery:
+		if views, err = Delete(stmt.(parser.DeleteQuery)); err == nil {
+			results = make([]Result, len(views))
+			for i, v := range views {
+				results[i] = Result{
+					Type: DELETE,
+					View: v,
+					Log:  fmt.Sprintf("%s deleted on %q", formatCount(v.OperatedRecords, "record"), v.FileInfo.Path),
+				}
+			}
+		}
+	case parser.CreateTable:
+		if view, err = CreateTable(stmt.(parser.CreateTable)); err == nil {
+			results = []Result{
+				{
+					Type: CREATE_TABLE,
+					View: view,
+					Log:  fmt.Sprintf("file %q is created", view.FileInfo.Path),
+				},
+			}
+		}
+	case parser.AddColumns:
+		if view, err = AddColumns(stmt.(parser.AddColumns)); err == nil {
+			results = []Result{
+				{
+					Type: ADD_COLUMNS,
+					View: view,
+					Log:  fmt.Sprintf("%s added on %q", formatCount(view.OperatedFields, "field"), view.FileInfo.Path),
+				},
+			}
+		}
+	case parser.DropColumns:
+		if view, err = DropColumns(stmt.(parser.DropColumns)); err == nil {
+			results = []Result{
+				{
+					Type: DROP_COLUMNS,
+					View: view,
+					Log:  fmt.Sprintf("%s dropped on %q", formatCount(view.OperatedFields, "field"), view.FileInfo.Path),
+				},
+			}
+		}
+	case parser.RenameColumn:
+		if view, err = RenameColumn(stmt.(parser.RenameColumn)); err == nil {
+			results = []Result{
+				{
+					Type: RENAME_COLUMN,
+					View: view,
+					Log:  fmt.Sprintf("%s renamed on %q", formatCount(view.OperatedFields, "field"), view.FileInfo.Path),
+				},
+			}
+		}
+	case parser.Commit:
+		log, err = Commit(true)
+	case parser.Rollback:
+		log = Rollback()
+	case parser.Print:
+		if printstr, err = Print(stmt.(parser.Print)); err == nil {
+			results = []Result{
+				{
+					Type: PRINT,
+					Log:  printstr,
+				},
+			}
+		}
+	}
+
+	if results != nil {
+		ResultSet = append(ResultSet, results...)
+	}
+
+	return log, err
+}
+
+func formatCount(i int, obj string) string {
+	var s string
+	if i == 0 {
+		s = fmt.Sprintf("no %s", obj)
+	} else if i == 1 {
+		s = fmt.Sprintf("%d %s", i, obj)
+	} else {
+		s = fmt.Sprintf("%d %ss", i, obj)
+	}
+	return s
+}
+
+func Commit(expressly bool) (string, error) {
+	flags := cmd.GetFlags()
+	var out string
+	var modified bool
+
+	for _, result := range ResultSet {
+		if result.View != nil {
+			var format cmd.Format
+			var delimiter rune
+			var withoutHeader bool
+			var encoding cmd.Encoding
+
+			switch result.Type {
+			case SELECT:
+				format = flags.Format
+				delimiter = flags.WriteDelimiter
+				withoutHeader = flags.WithoutHeader
+				encoding = flags.WriteEncoding
+			default:
+				format = cmd.CSV
+				delimiter = result.View.FileInfo.Delimiter
+				withoutHeader = flags.NoHeader
+				encoding = flags.Encoding
+			}
+
+			viewstr, err := EncodeView(result.View, format, delimiter, withoutHeader, encoding, flags.LineBreak)
+			if err != nil {
+				return out, err
+			}
+
+			switch result.Type {
+			case SELECT:
+				out += viewstr
+			case CREATE_TABLE:
+				if err = cmd.CreateFile(result.View.FileInfo.Path, viewstr); err != nil {
+					return out, err
+				}
+				if !modified {
+					modified = true
+				}
+			default:
+				if 0 < result.View.OperatedFields || 0 < result.View.OperatedRecords {
+					if err = cmd.UpdateFile(result.View.FileInfo.Path, viewstr); err != nil {
+						return out, err
+					}
+					if !modified {
+						modified = true
+					}
+				}
+			}
+		}
+
+		if 0 < len(result.Log) {
+			out += result.Log + "\n"
+		}
+	}
+
+	ResultSet = []Result{}
+	ViewCache.Clear()
+
+	if expressly && modified {
+		out += "Committed.\n"
+	}
+
+	return out, nil
+}
+
+func Rollback() string {
+	ResultSet = []Result{}
+	ViewCache.Clear()
+
+	return "Rolled back.\n"
 }
 
 func Select(query parser.SelectQuery, parentFilter Filter) (*View, error) {
@@ -202,8 +312,6 @@ func Select(query parser.SelectQuery, parentFilter Filter) (*View, error) {
 
 func Insert(query parser.InsertQuery) (*View, error) {
 	view := NewView()
-	view.UseCache = false
-	view.UseInternalId = false
 	err := view.LoadFromIdentifier(query.Table)
 	if err != nil {
 		return nil, err
@@ -224,6 +332,8 @@ func Insert(query parser.InsertQuery) (*View, error) {
 		}
 	}
 
+	ViewCache.Update(view)
+
 	return view, nil
 }
 
@@ -233,6 +343,7 @@ func Update(query parser.UpdateQuery) ([]*View, error) {
 	}
 
 	view := NewView()
+	view.UseInternalId = true
 	err := view.Load(query.FromClause.(parser.FromClause), nil)
 	if err != nil {
 		return nil, err
@@ -295,6 +406,9 @@ func Update(query parser.UpdateQuery) ([]*View, error) {
 
 		v.Fix()
 		v.OperatedRecords = len(updatedIndices[k])
+
+		ViewCache.Update(v)
+
 		views = append(views, v)
 	}
 
@@ -312,6 +426,7 @@ func Delete(query parser.DeleteQuery) ([]*View, error) {
 	}
 
 	view := NewView()
+	view.UseInternalId = true
 	err := view.Load(query.FromClause.(parser.FromClause), nil)
 	if err != nil {
 		return nil, err
@@ -364,6 +479,9 @@ func Delete(query parser.DeleteQuery) ([]*View, error) {
 
 		v.Fix()
 		v.OperatedRecords = len(deletedIndices[k])
+
+		ViewCache.Update(v)
+
 		views = append(views, v)
 	}
 
@@ -402,6 +520,9 @@ func CreateTable(query parser.CreateTable) (*View, error) {
 			Delimiter: delimiter,
 		},
 	}
+
+	ViewCache.Set(view, parser.FormatTableName(view.FileInfo.Path))
+
 	return view, nil
 }
 
@@ -413,8 +534,6 @@ func AddColumns(query parser.AddColumns) (*View, error) {
 	}
 
 	view := NewView()
-	view.UseCache = false
-	view.UseInternalId = false
 	err := view.LoadFromIdentifier(query.Table)
 	if err != nil {
 		return nil, err
@@ -500,13 +619,13 @@ func AddColumns(query parser.AddColumns) (*View, error) {
 	view.Records = records
 	view.OperatedFields = len(fields)
 
+	ViewCache.Update(view)
+
 	return view, nil
 }
 
 func DropColumns(query parser.DropColumns) (*View, error) {
 	view := NewView()
-	view.UseCache = false
-	view.UseInternalId = false
 	err := view.LoadFromIdentifier(query.Table)
 	if err != nil {
 		return nil, err
@@ -531,14 +650,14 @@ func DropColumns(query parser.DropColumns) (*View, error) {
 	view.Fix()
 	view.OperatedFields = len(dropIndices)
 
+	ViewCache.Update(view)
+
 	return view, nil
 
 }
 
 func RenameColumn(query parser.RenameColumn) (*View, error) {
 	view := NewView()
-	view.UseCache = false
-	view.UseInternalId = false
 	err := view.LoadFromIdentifier(query.Table)
 	if err != nil {
 		return nil, err
@@ -556,6 +675,8 @@ func RenameColumn(query parser.RenameColumn) (*View, error) {
 
 	view.Header[idx].Column = query.New.Literal
 	view.OperatedFields = 1
+
+	ViewCache.Update(view)
 
 	return view, nil
 }

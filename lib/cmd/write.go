@@ -1,4 +1,4 @@
-package output
+package cmd
 
 import (
 	"bufio"
@@ -8,10 +8,10 @@ import (
 )
 
 func ToStdout(s string) error {
-	return Create("", s)
+	return CreateFile("", s)
 }
 
-func Create(file string, s string) error {
+func CreateFile(file string, s string) error {
 	var fp *os.File
 	var err error
 
@@ -38,7 +38,7 @@ func Create(file string, s string) error {
 	return nil
 }
 
-func Update(file string, s string) error {
+func UpdateFile(file string, s string) error {
 	var fp *os.File
 	var err error
 

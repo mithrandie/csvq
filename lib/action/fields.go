@@ -8,7 +8,6 @@ import (
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/csv"
-	"github.com/mithrandie/csvq/lib/output"
 	"github.com/mithrandie/csvq/lib/query"
 )
 
@@ -19,7 +18,7 @@ func ShowFields(input string) error {
 	}
 
 	out := formatFields(fields)
-	output.ToStdout(out)
+	cmd.ToStdout(out)
 	return nil
 }
 

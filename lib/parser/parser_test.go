@@ -1338,6 +1338,22 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "commit",
+		Output: []Statement{
+			Commit{
+				Literal: "commit",
+			},
+		},
+	},
+	{
+		Input: "rollback",
+		Output: []Statement{
+			Rollback{
+				Literal: "rollback",
+			},
+		},
+	},
+	{
 		Input: "print 'foo'",
 		Output: []Statement{
 			Print{

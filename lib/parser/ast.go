@@ -1141,6 +1141,22 @@ func (e Print) String() string {
 	return joinWithSpace(s)
 }
 
+type Commit struct {
+	Literal string
+}
+
+func (e Commit) String() string {
+	return e.Literal
+}
+
+type Rollback struct {
+	Literal string
+}
+
+func (e Rollback) String() string {
+	return e.Literal
+}
+
 func putParentheses(s string) string {
 	return "(" + s + ")"
 }

@@ -1,4 +1,4 @@
-package output
+package cmd
 
 import (
 	"os"
@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-var TestDir = path.Join(os.TempDir(), "csvq_output_test")
+var TestDir = path.Join(os.TempDir(), "csvq_cmd_test")
 
 func GetTestFilePath(filename string) string {
 	return path.Join(TestDir, filename)

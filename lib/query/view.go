@@ -16,26 +16,105 @@ import (
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
-type ViewMap map[string]*View
-
-func (m ViewMap) Get(s string) (*View, error) {
-	if view, ok := ViewCache[s]; ok {
-		return view.Copy(), nil
-	}
-	return nil, errors.New(fmt.Sprintf("file %s is not loaded", s))
+type ViewMap struct {
+	views map[string]*View
+	alias map[string]string
 }
 
-func (m ViewMap) Set(s string, view *View) {
-	ViewCache[s] = view.Copy()
-}
-
-func (m ViewMap) Clear() {
-	for k := range m {
-		delete(m, k)
+func NewViewMap() *ViewMap {
+	return &ViewMap{
+		views: make(map[string]*View),
+		alias: make(map[string]string),
 	}
 }
 
-var ViewCache = ViewMap{}
+func (m *ViewMap) Exists(filepath string) (string, bool) {
+	if _, ok := m.views[filepath]; ok {
+		return filepath, true
+	}
+	if substance, ok := m.alias[filepath]; ok {
+		if _, ok := m.views[substance]; ok {
+			return substance, true
+		}
+	}
+	return "", false
+}
+
+func (m *ViewMap) HasAlias(alias string) (string, bool) {
+	if filepath, ok := m.alias[alias]; ok {
+		return filepath, true
+	}
+	return "", false
+}
+
+func (m *ViewMap) Get(filepath string) (*View, error) {
+	if filepath, ok := m.Exists(filepath); ok {
+		return m.views[filepath].Copy(), nil
+	}
+	return nil, errors.New(fmt.Sprintf("file %s is not loaded", filepath))
+}
+
+func (m *ViewMap) GetWithInternalId(filepath string) (*View, error) {
+	if filepath, ok := m.Exists(filepath); ok {
+		ret := m.views[filepath].Copy()
+
+		if 0 < ret.FieldLen() {
+			ret.Header = MergeHeader(NewHeader(ret.Header[0].Reference, []string{}), ret.Header)
+
+			for i, v := range ret.Records {
+				ret.Records[i] = append(Record{NewCell(parser.NewInteger(int64(i)))}, v...)
+			}
+		}
+
+		return ret, nil
+
+	}
+	return nil, errors.New(fmt.Sprintf("file %s is not loaded", filepath))
+}
+
+func (m *ViewMap) Set(view *View, alias string) error {
+	if view.FileInfo == nil || len(view.FileInfo.Path) < 1 {
+		return errors.New("view cache failed")
+	}
+	if _, ok := m.alias[alias]; ok {
+		return errors.New("duplicate alias")
+	}
+	m.views[view.FileInfo.Path] = view.Copy()
+	m.alias[alias] = view.FileInfo.Path
+	return nil
+}
+
+func (m *ViewMap) SetAlias(alias string, filepath string) error {
+	if _, ok := m.alias[alias]; ok {
+		return errors.New("duplicate alias")
+	}
+	m.alias[alias] = filepath
+	return nil
+}
+
+func (m *ViewMap) Update(view *View) error {
+	if filepath, ok := m.Exists(view.FileInfo.Path); ok {
+		m.views[filepath] = view.Copy()
+	}
+	return errors.New(fmt.Sprintf("file %s is not loaded", view.FileInfo.Path))
+}
+
+func (m *ViewMap) Clear() {
+	for k := range m.views {
+		delete(m.views, k)
+	}
+	for k := range m.alias {
+		delete(m.alias, k)
+	}
+}
+
+func (m *ViewMap) ClearAliases() {
+	for k := range m.alias {
+		delete(m.alias, k)
+	}
+}
+
+var ViewCache = NewViewMap()
 
 type FileInfo struct {
 	Path      string
@@ -105,14 +184,12 @@ type View struct {
 	OperatedRecords int
 	OperatedFields  int
 
-	UseCache      bool
 	UseInternalId bool
 }
 
 func NewView() *View {
 	return &View{
-		UseCache:      true,
-		UseInternalId: true,
+		UseInternalId: false,
 	}
 }
 
@@ -129,7 +206,7 @@ func (view *View) Load(clause parser.FromClause, parentFilter Filter) error {
 
 	views := make([]*View, len(clause.Tables))
 	for i, v := range clause.Tables {
-		view, err := loadView(v.(parser.Table), parentFilter, view.UseCache, view.UseInternalId)
+		view, err := loadView(v.(parser.Table), parentFilter, view.UseInternalId)
 		if err != nil {
 			return err
 		}
@@ -161,7 +238,7 @@ func (view *View) LoadFromIdentifier(table parser.Identifier) error {
 	return view.Load(fromClause, filter)
 }
 
-func loadView(table parser.Table, parentFilter Filter, useCache bool, useInternalId bool) (*View, error) {
+func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*View, error) {
 	var view *View
 	var err error
 
@@ -173,46 +250,64 @@ func loadView(table parser.Table, parentFilter Filter, useCache bool, useInterna
 			return nil, errors.New("stdin is empty")
 		}
 
-		file := os.Stdin
-		defer file.Close()
 		delimiter := cmd.GetFlags().Delimiter
 		if delimiter == cmd.UNDEF {
 			delimiter = ','
 		}
 		fileInfo := &FileInfo{
+			Path:      "__stdin",
 			Delimiter: delimiter,
 		}
-		view, err = loadViewFromFile(file, fileInfo, table.Name(), useInternalId)
-	case parser.Identifier:
-		if useCache && useInternalId {
-			if view, err := ViewCache.Get(table.Name()); err == nil {
-				return view, nil
+
+		if _, ok := ViewCache.Exists(fileInfo.Path); !ok {
+			file := os.Stdin
+			defer file.Close()
+			err = loadViewFromFile(file, fileInfo, table.Name())
+		} else {
+			if _, ok := ViewCache.HasAlias(table.Name()); !ok {
+				ViewCache.SetAlias(table.Name(), fileInfo.Path)
 			}
 		}
-
+		if err == nil {
+			if useInternalId {
+				view, _ = ViewCache.GetWithInternalId(fileInfo.Path)
+			} else {
+				view, _ = ViewCache.Get(fileInfo.Path)
+			}
+		}
+	case parser.Identifier:
 		flags := cmd.GetFlags()
 		fileInfo, err := NewFileInfo(table.Object.(parser.Identifier).Literal, flags.Repository, flags.Delimiter)
 		if err != nil {
 			return nil, err
 		}
 
-		file, err := os.Open(fileInfo.Path)
-		if err != nil {
-			return nil, err
+		if _, ok := ViewCache.Exists(fileInfo.Path); !ok {
+			file, err := os.Open(fileInfo.Path)
+			if err != nil {
+				return nil, err
+			}
+			defer file.Close()
+			err = loadViewFromFile(file, fileInfo, table.Name())
+		} else {
+			if _, ok := ViewCache.HasAlias(table.Name()); !ok {
+				ViewCache.SetAlias(table.Name(), fileInfo.Path)
+			}
 		}
-		defer file.Close()
-		view, err = loadViewFromFile(file, fileInfo, table.Name(), useInternalId)
-
-		if useCache && useInternalId {
-			ViewCache.Set(table.Name(), view)
+		if err == nil {
+			if useInternalId {
+				view, _ = ViewCache.GetWithInternalId(fileInfo.Path)
+			} else {
+				view, _ = ViewCache.Get(fileInfo.Path)
+			}
 		}
 	case parser.Join:
 		join := table.Object.(parser.Join)
-		view, err = loadView(join.Table, parentFilter, useCache, useInternalId)
+		view, err = loadView(join.Table, parentFilter, useInternalId)
 		if err != nil {
 			return nil, err
 		}
-		view2, err := loadView(join.JoinTable, parentFilter, useCache, useInternalId)
+		view2, err := loadView(join.JoinTable, parentFilter, useInternalId)
 		if err != nil {
 			return nil, err
 		}
@@ -247,7 +342,7 @@ func loadView(table parser.Table, parentFilter Filter, useCache bool, useInterna
 	return view, nil
 }
 
-func loadViewFromFile(file *os.File, fileInfo *FileInfo, reference string, useInternalId bool) (*View, error) {
+func loadViewFromFile(file *os.File, fileInfo *FileInfo, reference string) error {
 	flags := cmd.GetFlags()
 
 	r := cmd.GetReader(file, flags.Encoding)
@@ -263,22 +358,18 @@ func loadViewFromFile(file *os.File, fileInfo *FileInfo, reference string, useIn
 	if !flags.NoHeader {
 		header, err = reader.ReadHeader()
 		if err != nil && err != csv.EOF {
-			return nil, err
+			return err
 		}
 	}
 
 	records, err := reader.ReadAll()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	view.Records = make([]Record, len(records))
 	for i, v := range records {
-		if useInternalId {
-			view.Records[i] = NewRecord(i, v)
-		} else {
-			view.Records[i] = NewRecordWithoutId(v)
-		}
+		view.Records[i] = NewRecordWithoutId(v)
 	}
 
 	if header == nil {
@@ -287,15 +378,10 @@ func loadViewFromFile(file *os.File, fileInfo *FileInfo, reference string, useIn
 			header[i] = "c" + strconv.Itoa(i+1)
 		}
 	}
-	if useInternalId {
-		view.Header = NewHeader(reference, header)
-	} else {
-		view.Header = NewHeaderWithoutId(reference, header)
-	}
-
+	view.Header = NewHeaderWithoutId(reference, header)
 	view.FileInfo = fileInfo
-
-	return view, nil
+	ViewCache.Set(view, reference)
+	return nil
 }
 
 func loadDualView() *View {

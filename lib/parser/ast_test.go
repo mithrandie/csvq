@@ -1570,3 +1570,23 @@ func TestPrint_String(t *testing.T) {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 }
+
+func TestCommit_String(t *testing.T) {
+	e := Commit{
+		Literal: "commit",
+	}
+	expect := "commit"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestRollback_String(t *testing.T) {
+	e := Rollback{
+		Literal: "rollback",
+	}
+	expect := "rollback"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}

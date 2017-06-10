@@ -71,6 +71,8 @@ package parser
 %type<expression>  column_position
 %type<expression>  drop_columns
 %type<expression>  rename_column
+%type<expression>  commit
+%type<expression>  rollback
 %type<expression>  print
 %type<identifier>  identifier
 %type<text>        text
@@ -102,6 +104,7 @@ package parser
 %token<token> DISTINCT WITH
 %token<token> CASE WHEN THEN ELSE END
 %token<token> GROUP_CONCAT SEPARATOR
+%token<token> COMMIT ROLLBACK
 %token<token> PRINT
 %token<token> VAR
 %token<token> COMPARISON_OP STRING_OP SUBSTITUTION_OP
@@ -166,6 +169,14 @@ statement
         $$ = $1
     }
     | variable_substitution statement_terminal
+    {
+        $$ = $1
+    }
+    | commit statement_terminal
+    {
+        $$ = $1
+    }
+    | rollback statement_terminal
     {
         $$ = $1
     }
@@ -833,6 +844,18 @@ rename_column
     : ALTER TABLE identifier RENAME identifier TO identifier
     {
         $$ = RenameColumn{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Rename: $4.Literal, Old: $5, To: $6.Literal, New: $7}
+    }
+
+commit
+    : COMMIT
+    {
+        $$ = Commit{Literal: $1.Literal}
+    }
+
+rollback
+    : ROLLBACK
+    {
+        $$ = Rollback{Literal: $1.Literal}
     }
 
 print

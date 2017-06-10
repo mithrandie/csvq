@@ -106,8 +106,6 @@ var viewLoadTests = []struct {
 					NewCell(parser.NewNull()),
 				},
 			},
-			UseCache:      true,
-			UseInternalId: true,
 		},
 	},
 	{
@@ -120,17 +118,17 @@ var viewLoadTests = []struct {
 			},
 		},
 		Result: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecord(0, []parser.Primary{
+				NewRecordWithoutId([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(1, []parser.Primary{
+				NewRecordWithoutId([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithoutId([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 				}),
@@ -139,8 +137,6 @@ var viewLoadTests = []struct {
 				Path:      "table1.csv",
 				Delimiter: ',',
 			},
-			UseCache:      true,
-			UseInternalId: true,
 		},
 	},
 	{
@@ -148,18 +144,17 @@ var viewLoadTests = []struct {
 		From:  parser.FromClause{},
 		Stdin: "column1,column2\n1,\"str1\"",
 		Result: &View{
-			Header: NewHeader("stdin", []string{"column1", "column2"}),
+			Header: NewHeaderWithoutId("stdin", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecord(0, []parser.Primary{
+				NewRecordWithoutId([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
 			},
 			FileInfo: &FileInfo{
+				Path:      "__stdin",
 				Delimiter: ',',
 			},
-			UseCache:      true,
-			UseInternalId: true,
 		},
 	},
 	{
@@ -195,19 +190,17 @@ var viewLoadTests = []struct {
 			},
 		},
 		Result: &View{
-			Header: NewHeader("table_sjis", []string{"column1", "column2"}),
+			Header: NewHeaderWithoutId("table_sjis", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecord(0, []parser.Primary{
+				NewRecordWithoutId([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("日本語"),
 				}),
-				NewRecord(1, []parser.Primary{
+				NewRecordWithoutId([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str"),
 				}),
 			},
-			UseCache:      true,
-			UseInternalId: true,
 		},
 	},
 	{
@@ -221,19 +214,17 @@ var viewLoadTests = []struct {
 			},
 		},
 		Result: &View{
-			Header: NewHeader("table_noheader", []string{"c1", "c2"}),
+			Header: NewHeaderWithoutId("table_noheader", []string{"c1", "c2"}),
 			Records: []Record{
-				NewRecord(0, []parser.Primary{
+				NewRecordWithoutId([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(1, []parser.Primary{
+				NewRecordWithoutId([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
 			},
-			UseCache:      true,
-			UseInternalId: true,
 		},
 	},
 	{
@@ -250,89 +241,67 @@ var viewLoadTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_FIELD},
 				{Reference: "table1", Column: "column1", FromTable: true},
 				{Reference: "table1", Column: "column2", FromTable: true},
-				{Reference: "table2", Column: INTERNAL_ID_FIELD},
 				{Reference: "table2", Column: "column3", FromTable: true},
 				{Reference: "table2", Column: "column4", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(0),
 					parser.NewString("1"),
 					parser.NewString("str1"),
-					parser.NewInteger(0),
 					parser.NewString("2"),
 					parser.NewString("str22"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(0),
 					parser.NewString("1"),
 					parser.NewString("str1"),
-					parser.NewInteger(1),
 					parser.NewString("3"),
 					parser.NewString("str33"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(0),
 					parser.NewString("1"),
 					parser.NewString("str1"),
-					parser.NewInteger(2),
 					parser.NewString("4"),
 					parser.NewString("str44"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(1),
 					parser.NewString("2"),
 					parser.NewString("str2"),
-					parser.NewInteger(0),
 					parser.NewString("2"),
 					parser.NewString("str22"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(1),
 					parser.NewString("2"),
 					parser.NewString("str2"),
-					parser.NewInteger(1),
 					parser.NewString("3"),
 					parser.NewString("str33"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(1),
 					parser.NewString("2"),
 					parser.NewString("str2"),
-					parser.NewInteger(2),
 					parser.NewString("4"),
 					parser.NewString("str44"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(2),
 					parser.NewString("3"),
 					parser.NewString("str3"),
-					parser.NewInteger(0),
 					parser.NewString("2"),
 					parser.NewString("str22"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(2),
 					parser.NewString("3"),
 					parser.NewString("str3"),
-					parser.NewInteger(1),
 					parser.NewString("3"),
 					parser.NewString("str33"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(2),
 					parser.NewString("3"),
 					parser.NewString("str3"),
-					parser.NewInteger(2),
 					parser.NewString("4"),
 					parser.NewString("str44"),
 				}),
 			},
-			UseCache:      true,
-			UseInternalId: true,
 		},
 	},
 	{
@@ -354,89 +323,67 @@ var viewLoadTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_FIELD},
 				{Reference: "table1", Column: "column1", FromTable: true},
 				{Reference: "table1", Column: "column2", FromTable: true},
-				{Reference: "table2", Column: INTERNAL_ID_FIELD},
 				{Reference: "table2", Column: "column3", FromTable: true},
 				{Reference: "table2", Column: "column4", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(0),
 					parser.NewString("1"),
 					parser.NewString("str1"),
-					parser.NewInteger(0),
 					parser.NewString("2"),
 					parser.NewString("str22"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(0),
 					parser.NewString("1"),
 					parser.NewString("str1"),
-					parser.NewInteger(1),
 					parser.NewString("3"),
 					parser.NewString("str33"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(0),
 					parser.NewString("1"),
 					parser.NewString("str1"),
-					parser.NewInteger(2),
 					parser.NewString("4"),
 					parser.NewString("str44"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(1),
 					parser.NewString("2"),
 					parser.NewString("str2"),
-					parser.NewInteger(0),
 					parser.NewString("2"),
 					parser.NewString("str22"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(1),
 					parser.NewString("2"),
 					parser.NewString("str2"),
-					parser.NewInteger(1),
 					parser.NewString("3"),
 					parser.NewString("str33"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(1),
 					parser.NewString("2"),
 					parser.NewString("str2"),
-					parser.NewInteger(2),
 					parser.NewString("4"),
 					parser.NewString("str44"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(2),
 					parser.NewString("3"),
 					parser.NewString("str3"),
-					parser.NewInteger(0),
 					parser.NewString("2"),
 					parser.NewString("str22"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(2),
 					parser.NewString("3"),
 					parser.NewString("str3"),
-					parser.NewInteger(1),
 					parser.NewString("3"),
 					parser.NewString("str33"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(2),
 					parser.NewString("3"),
 					parser.NewString("str3"),
-					parser.NewInteger(2),
 					parser.NewString("4"),
 					parser.NewString("str44"),
 				}),
 			},
-			UseCache:      true,
-			UseInternalId: true,
 		},
 	},
 	{
@@ -464,33 +411,25 @@ var viewLoadTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_FIELD},
 				{Reference: "table1", Column: "column1", FromTable: true},
 				{Reference: "table1", Column: "column2", FromTable: true},
-				{Reference: "table2", Column: INTERNAL_ID_FIELD},
 				{Reference: "table2", Column: "column3", FromTable: true},
 				{Reference: "table2", Column: "column4", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(1),
 					parser.NewString("2"),
 					parser.NewString("str2"),
-					parser.NewInteger(0),
 					parser.NewString("2"),
 					parser.NewString("str22"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(2),
 					parser.NewString("3"),
 					parser.NewString("str3"),
-					parser.NewInteger(1),
 					parser.NewString("3"),
 					parser.NewString("str33"),
 				}),
 			},
-			UseCache:      true,
-			UseInternalId: true,
 		},
 	},
 	{
@@ -519,41 +458,31 @@ var viewLoadTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_FIELD},
 				{Reference: "table1", Column: "column1", FromTable: true},
 				{Reference: "table1", Column: "column2", FromTable: true},
-				{Reference: "table2", Column: INTERNAL_ID_FIELD},
 				{Reference: "table2", Column: "column3", FromTable: true},
 				{Reference: "table2", Column: "column4", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(0),
 					parser.NewString("1"),
 					parser.NewString("str1"),
 					parser.NewNull(),
 					parser.NewNull(),
-					parser.NewNull(),
 				}),
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(1),
 					parser.NewString("2"),
 					parser.NewString("str2"),
-					parser.NewInteger(0),
 					parser.NewString("2"),
 					parser.NewString("str22"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(2),
 					parser.NewString("3"),
 					parser.NewString("str3"),
-					parser.NewInteger(1),
 					parser.NewString("3"),
 					parser.NewString("str33"),
 				}),
 			},
-			UseCache:      true,
-			UseInternalId: true,
 		},
 	},
 	{
@@ -645,8 +574,6 @@ var viewLoadTests = []struct {
 					parser.NewString("str3"),
 				}),
 			},
-			UseCache:      true,
-			UseInternalId: true,
 		},
 	},
 }
@@ -656,6 +583,8 @@ func TestView_Load(t *testing.T) {
 	tf.Repository = TestDataDir
 
 	for _, v := range viewLoadTests {
+		ViewCache.Clear()
+
 		tf.Delimiter = cmd.UNDEF
 		tf.NoHeader = v.NoHeader
 		if v.Encoding != 0 {

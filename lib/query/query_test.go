@@ -1,7 +1,9 @@
 package query
 
 import (
-	"path"
+	"fmt"
+	"io/ioutil"
+	"os"
 	"reflect"
 	"testing"
 
@@ -10,12 +12,180 @@ import (
 )
 
 var executeTests = []struct {
-	Input  string
+	Name       string
+	Input      string
+	Output     string
+	UpdateFile string
+	Content    string
+	Error      string
+}{
+	{
+		Name:  "Select Query",
+		Input: "select 1 from dual",
+		Output: "+---+\n" +
+			"| 1 |\n" +
+			"+---+\n" +
+			"| 1 |\n" +
+			"+---+\n",
+	},
+	{
+		Name:       "Insert Query",
+		Input:      "insert into insert_query values (4, 'str4'), (5, 'str5')",
+		Output:     fmt.Sprintf("%d records inserted on %q\n", 2, GetTestFilePath("insert_query.csv")),
+		UpdateFile: GetTestFilePath("insert_query.csv"),
+		Content: "\"column1\",\"column2\"\n" +
+			"\"1\",\"str1\"\n" +
+			"\"2\",\"str2\"\n" +
+			"\"3\",\"str3\"\n" +
+			"4,\"str4\"\n" +
+			"5,\"str5\"",
+	},
+	{
+		Name:       "Update Query",
+		Input:      "update update_query set column2 = 'update' where column1 = 2",
+		Output:     fmt.Sprintf("%d record updated on %q\n", 1, GetTestFilePath("update_query.csv")),
+		UpdateFile: GetTestFilePath("update_query.csv"),
+		Content: "\"column1\",\"column2\"\n" +
+			"\"1\",\"str1\"\n" +
+			"\"2\",\"update\"\n" +
+			"\"3\",\"str3\"",
+	},
+	{
+		Name:   "Update Query No Record Updated",
+		Input:  "update update_query set column2 = 'update' where false",
+		Output: fmt.Sprintf("no record updated on %q\n", GetTestFilePath("update_query.csv")),
+	},
+	{
+		Name:       "Delete Query",
+		Input:      "delete from delete_query where column1 = 2",
+		Output:     fmt.Sprintf("%d record deleted on %q\n", 1, GetTestFilePath("delete_query.csv")),
+		UpdateFile: GetTestFilePath("delete_query.csv"),
+		Content: "\"column1\",\"column2\"\n" +
+			"\"1\",\"str1\"\n" +
+			"\"3\",\"str3\"",
+	},
+	{
+		Name:   "Delete Query No Record Deleted",
+		Input:  "delete from delete_query where false",
+		Output: fmt.Sprintf("no record deleted on %q\n", GetTestFilePath("delete_query.csv")),
+	},
+	{
+		Name:       "Create Table",
+		Input:      "create table create_table.csv (column1, column2)",
+		Output:     fmt.Sprintf("file %q is created\n", GetTestFilePath("create_table.csv")),
+		UpdateFile: GetTestFilePath("create_table.csv"),
+		Content:    "\"column1\",\"column2\"\n",
+	},
+	{
+		Name:       "Add Columns",
+		Input:      "alter table add_columns add column3",
+		Output:     fmt.Sprintf("%d field added on %q\n", 1, GetTestFilePath("add_columns.csv")),
+		UpdateFile: GetTestFilePath("add_columns.csv"),
+		Content: "\"column1\",\"column2\",\"column3\"\n" +
+			"\"1\",\"str1\",\n" +
+			"\"2\",\"str2\",\n" +
+			"\"3\",\"str3\",",
+	},
+	{
+		Name:       "Drop Columns",
+		Input:      "alter table drop_columns drop column1",
+		Output:     fmt.Sprintf("%d field dropped on %q\n", 1, GetTestFilePath("drop_columns.csv")),
+		UpdateFile: GetTestFilePath("drop_columns.csv"),
+		Content: "\"column2\"\n" +
+			"\"str1\"\n" +
+			"\"str2\"\n" +
+			"\"str3\"",
+	},
+	{
+		Name:       "Rename Column",
+		Input:      "alter table rename_column rename column1 to newcolumn",
+		Output:     fmt.Sprintf("%d field renamed on %q\n", 1, GetTestFilePath("rename_column.csv")),
+		UpdateFile: GetTestFilePath("rename_column.csv"),
+		Content: "\"newcolumn\",\"column2\"\n" +
+			"\"1\",\"str1\"\n" +
+			"\"2\",\"str2\"\n" +
+			"\"3\",\"str3\"",
+	},
+	{
+		Name:   "Print",
+		Input:  "var @a := 1; print @a;",
+		Output: "1\n",
+	},
+	{
+		Name:  "Query Execution Error",
+		Input: "select from",
+		Error: "syntax error: unexpected FROM",
+	},
+}
+
+func TestExecute(t *testing.T) {
+	tf := cmd.GetFlags()
+	tf.Format = cmd.TEXT
+	tf.Repository = TestDir
+
+	for _, v := range executeTests {
+		out, err := Execute(v.Input)
+
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+
+		if out != v.Output {
+			t.Errorf("%s: output = %q, want %q", v.Name, out, v.Output)
+		}
+
+		if 0 < len(v.UpdateFile) {
+			fp, _ := os.Open(v.UpdateFile)
+			buf, _ := ioutil.ReadAll(fp)
+			if string(buf) != v.Content {
+				t.Errorf("%s: content = %q, want %q", v.Name, string(buf), v.Content)
+			}
+		}
+	}
+}
+
+var executeStatementTests = []struct {
+	Input  parser.Statement
 	Result []Result
 	Error  string
 }{
 	{
-		Input: "var @var1; @var1 := 1; select @var1 as var1",
+		Input: parser.VariableDeclaration{
+			Assignments: []parser.Expression{
+				parser.VariableAssignment{
+					Name: "@var1",
+				},
+			},
+		},
+		Result: []Result{},
+	},
+	{
+		Input: parser.VariableSubstitution{
+			Variable: parser.Variable{Name: "@var1"},
+			Value:    parser.NewInteger(1),
+		},
+		Result: []Result{},
+	},
+	{
+		Input: parser.SelectQuery{
+			SelectClause: parser.SelectClause{
+				Fields: []parser.Expression{
+					parser.Field{
+						Object: parser.Variable{Name: "@var1"},
+						Alias:  parser.Identifier{Literal: "var1"},
+					},
+				},
+			},
+		},
 		Result: []Result{
 			{
 				Type: SELECT,
@@ -30,81 +200,49 @@ var executeTests = []struct {
 							NewCell(parser.NewInteger(1)),
 						},
 					},
-					UseCache:      true,
-					UseInternalId: true,
 				},
-				Count: 1,
 			},
 		},
 	},
 	{
-		Input: "var @var1 := 0;",
+		Input: parser.VariableDeclaration{
+			Assignments: []parser.Expression{
+				parser.VariableAssignment{
+					Name: "@var1",
+				},
+			},
+		},
 		Error: "variable @var1 is redeclared",
 	},
 	{
-		Input: "@var2 := 0;",
+		Input: parser.VariableSubstitution{
+			Variable: parser.Variable{Name: "@var2"},
+			Value:    parser.NewInteger(1),
+		},
 		Error: "variable @var2 is undefined",
 	},
 	{
-		Input: "select column1 from table1 where column1 = 1 group by column1 having sum(column1) > 0 order by column1 limit 10",
-		Result: []Result{
-			{
-				Type: SELECT,
-				View: &View{
-					Header: []HeaderField{
-						{
-							Reference:  "table1",
-							Column:     "column1",
-							FromTable:  true,
-							IsGroupKey: true,
-						},
+		Input: parser.InsertQuery{
+			Table: parser.Identifier{Literal: "table1"},
+			Fields: []parser.Expression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "column2"},
+			},
+			ValuesList: []parser.Expression{
+				parser.InsertValues{
+					Values: []parser.Expression{
+						parser.NewInteger(4),
+						parser.NewString("str4"),
 					},
-					Records: []Record{
-						{
-							NewCell(parser.NewString("1")),
-						},
-					},
-					FileInfo: &FileInfo{
-						Path:      path.Join(TestDir, "table1.csv"),
-						Delimiter: ',',
-					},
-					UseCache:      true,
-					UseInternalId: true,
 				},
-				Count: 1,
+				parser.InsertValues{
+					Values: []parser.Expression{
+						parser.NewInteger(5),
+						parser.NewString("str5"),
+					},
+				},
 			},
 		},
-	},
-	{
-		Input: "select from notexist",
-		Error: "syntax error: unexpected FROM",
-	},
-	{
-		Input: "select column1 from notexist",
-		Error: "file notexist does not exist",
-	},
-	{
-		Input: "select column1 from table1 where notexist = 1",
-		Error: "identifier = notexist: field does not exist",
-	},
-	{
-		Input: "select column1 from table1 group by notexist",
-		Error: "identifier = notexist: field does not exist",
-	},
-	{
-		Input: "select column1 from table1 having notexist",
-		Error: "identifier = notexist: field does not exist",
-	},
-	{
-		Input: "select column1 from table1 order by notexist",
-		Error: "identifier = notexist: field does not exist",
-	},
-	{
-		Input: "select notexist",
-		Error: "identifier = notexist: field does not exist",
-	},
-	{
-		Input: "insert into table1 (column1, column2) values (4, 'str4'), (5, 'str5')",
 		Result: []Result{
 			{
 				Type: INSERT,
@@ -133,27 +271,40 @@ var executeTests = []struct {
 						}),
 					},
 					FileInfo: &FileInfo{
-						Path:      path.Join(TestDir, "table1.csv"),
+						Path:      GetTestFilePath("table1.csv"),
 						Delimiter: ',',
 					},
 					OperatedRecords: 2,
 				},
-				Count: 2,
+				Log: fmt.Sprintf("2 records inserted on %q", GetTestFilePath("table1.csv")),
 			},
 		},
 	},
 	{
-		Input: "insert into table1 (column1) values (4, 'str4')",
-		Error: "field length does not match value length",
-	},
-	{
-		Input: "update table1 set column2 = 'update' where column1 = 2",
+		Input: parser.UpdateQuery{
+			Tables: []parser.Expression{
+				parser.Table{Object: parser.Identifier{Literal: "table1"}},
+			},
+			SetList: []parser.Expression{
+				parser.UpdateSet{
+					Field: parser.Identifier{Literal: "column2"},
+					Value: parser.NewString("update"),
+				},
+			},
+			WhereClause: parser.WhereClause{
+				Filter: parser.Comparison{
+					LHS:      parser.Identifier{Literal: "column1"},
+					RHS:      parser.NewInteger(2),
+					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+				},
+			},
+		},
 		Result: []Result{
 			{
 				Type: UPDATE,
 				View: &View{
 					FileInfo: &FileInfo{
-						Path:      path.Join(TestDir, "table1.csv"),
+						Path:      GetTestFilePath("table1.csv"),
 						Delimiter: ',',
 					},
 					Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
@@ -173,22 +324,33 @@ var executeTests = []struct {
 					},
 					OperatedRecords: 1,
 				},
-				Count: 1,
+				Log: fmt.Sprintf("1 record updated on %q", GetTestFilePath("table1.csv")),
 			},
 		},
 	},
 	{
-		Input: "update table1 set column2 = 'update' from table1 as t1 join table2 as t2",
-		Error: "file table1 is not loaded",
-	},
-	{
-		Input: "delete from table1 where column1 = 2",
+		Input: parser.DeleteQuery{
+			FromClause: parser.FromClause{
+				Tables: []parser.Expression{
+					parser.Table{
+						Object: parser.Identifier{Literal: "table1"},
+					},
+				},
+			},
+			WhereClause: parser.WhereClause{
+				Filter: parser.Comparison{
+					LHS:      parser.Identifier{Literal: "column1"},
+					RHS:      parser.NewInteger(2),
+					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+				},
+			},
+		},
 		Result: []Result{
 			{
 				Type: DELETE,
 				View: &View{
 					FileInfo: &FileInfo{
-						Path:      path.Join(TestDir, "table1.csv"),
+						Path:      GetTestFilePath("table1.csv"),
 						Delimiter: ',',
 					},
 					Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
@@ -204,41 +366,47 @@ var executeTests = []struct {
 					},
 					OperatedRecords: 1,
 				},
-				Count: 1,
+				Log: fmt.Sprintf("1 record deleted on %q", GetTestFilePath("table1.csv")),
 			},
 		},
 	},
 	{
-		Input: "delete from notexist where column1 = 2",
-		Error: "file notexist does not exist",
-	},
-	{
-		Input: "create table newtable.csv (column1, column2)",
+		Input: parser.CreateTable{
+			Table: parser.Identifier{Literal: "newtable.csv"},
+			Fields: []parser.Expression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "column2"},
+			},
+		},
 		Result: []Result{
 			{
 				Type: CREATE_TABLE,
 				View: &View{
 					FileInfo: &FileInfo{
-						Path:      path.Join(TestDir, "newtable.csv"),
+						Path:      GetTestFilePath("newtable.csv"),
 						Delimiter: ',',
 					},
 					Header: NewHeaderWithoutId("newtable", []string{"column1", "column2"}),
 				},
+				Log: fmt.Sprintf("file %q is created", GetTestFilePath("newtable.csv")),
 			},
 		},
 	},
 	{
-		Input: "create table newtable.csv (column1, column1)",
-		Error: "field column1 is duplicate",
-	},
-	{
-		Input: "alter table table1 add column3",
+		Input: parser.AddColumns{
+			Table: parser.Identifier{Literal: "table1.csv"},
+			Columns: []parser.Expression{
+				parser.ColumnDefault{
+					Column: parser.Identifier{Literal: "column3"},
+				},
+			},
+		},
 		Result: []Result{
 			{
 				Type: ADD_COLUMNS,
 				View: &View{
 					FileInfo: &FileInfo{
-						Path:      path.Join(TestDir, "table1.csv"),
+						Path:      GetTestFilePath("table1.csv"),
 						Delimiter: ',',
 					},
 					Header: NewHeaderWithoutId("table1", []string{"column1", "column2", "column3"}),
@@ -261,22 +429,23 @@ var executeTests = []struct {
 					},
 					OperatedFields: 1,
 				},
-				Count: 1,
+				Log: fmt.Sprintf("1 field added on %q", GetTestFilePath("table1.csv")),
 			},
 		},
 	},
 	{
-		Input: "alter table table1 add column1",
-		Error: "field column1 is duplicate",
-	},
-	{
-		Input: "alter table table1 drop column1",
+		Input: parser.DropColumns{
+			Table: parser.Identifier{Literal: "table1"},
+			Columns: []parser.Expression{
+				parser.Identifier{Literal: "column1"},
+			},
+		},
 		Result: []Result{
 			{
 				Type: DROP_COLUMNS,
 				View: &View{
 					FileInfo: &FileInfo{
-						Path:      path.Join(TestDir, "table1.csv"),
+						Path:      GetTestFilePath("table1.csv"),
 						Delimiter: ',',
 					},
 					Header: NewHeaderWithoutId("table1", []string{"column2"}),
@@ -293,22 +462,22 @@ var executeTests = []struct {
 					},
 					OperatedFields: 1,
 				},
-				Count: 1,
+				Log: fmt.Sprintf("1 field dropped on %q", GetTestFilePath("table1.csv")),
 			},
 		},
 	},
 	{
-		Input: "alter table table1 drop notexist",
-		Error: "identifier = notexist: field does not exist",
-	},
-	{
-		Input: "alter table table1 rename column1 to newcolumn",
+		Input: parser.RenameColumn{
+			Table: parser.Identifier{Literal: "table1"},
+			Old:   parser.Identifier{Literal: "column1"},
+			New:   parser.Identifier{Literal: "newcolumn"},
+		},
 		Result: []Result{
 			{
 				Type: RENAME_COLUMN,
 				View: &View{
 					FileInfo: &FileInfo{
-						Path:      path.Join(TestDir, "table1.csv"),
+						Path:      GetTestFilePath("table1.csv"),
 						Delimiter: ',',
 					},
 					Header: NewHeaderWithoutId("table1", []string{"newcolumn", "column2"}),
@@ -328,16 +497,14 @@ var executeTests = []struct {
 					},
 					OperatedFields: 1,
 				},
-				Count: 1,
+				Log: fmt.Sprintf("1 field renamed on %q", GetTestFilePath("table1.csv")),
 			},
 		},
 	},
 	{
-		Input: "alter table table1 rename notexist to newcolumn",
-		Error: "identifier = notexist: field does not exist",
-	},
-	{
-		Input: "print 12345",
+		Input: parser.Print{
+			Value: parser.NewInteger(12345),
+		},
 		Result: []Result{
 			{
 				Type: PRINT,
@@ -345,20 +512,19 @@ var executeTests = []struct {
 			},
 		},
 	},
-	{
-		Input: "print @undefined",
-		Error: "variable @undefined is undefined",
-	},
 }
 
-func TestExecute(t *testing.T) {
+func TestExecuteStatement(t *testing.T) {
 	Variable = map[string]parser.Primary{}
 
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
-	for _, v := range executeTests {
-		results, err := Execute(v.Input)
+	for _, v := range executeStatementTests {
+		ViewCache.Clear()
+		ResultSet = []Result{}
+
+		_, err := ExecuteStatement(v.Input)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("unexpected error %q for %q", err, v.Input)
@@ -372,8 +538,8 @@ func TestExecute(t *testing.T) {
 			continue
 		}
 
-		if !reflect.DeepEqual(results, v.Result) {
-			t.Errorf("results = %q, want %q for %q", results, v.Result, v.Input)
+		if !reflect.DeepEqual(ResultSet, v.Result) {
+			t.Errorf("results = %q, want %q for %q", ResultSet, v.Result, v.Input)
 		}
 	}
 }
@@ -409,7 +575,7 @@ var insertTests = []struct {
 		},
 		Result: &View{
 			FileInfo: &FileInfo{
-				Path:      path.Join(TestDir, "table1.csv"),
+				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
 			},
 			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
@@ -462,7 +628,7 @@ var insertTests = []struct {
 		},
 		Result: &View{
 			FileInfo: &FileInfo{
-				Path:      path.Join(TestDir, "table1.csv"),
+				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
 			},
 			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
@@ -567,7 +733,7 @@ var insertTests = []struct {
 		},
 		Result: &View{
 			FileInfo: &FileInfo{
-				Path:      path.Join(TestDir, "table1.csv"),
+				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
 			},
 			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
@@ -683,7 +849,7 @@ var updateTests = []struct {
 		Result: []*View{
 			{
 				FileInfo: &FileInfo{
-					Path:      path.Join(TestDir, "table1.csv"),
+					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 				},
 				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
@@ -744,7 +910,7 @@ var updateTests = []struct {
 		Result: []*View{
 			{
 				FileInfo: &FileInfo{
-					Path:      path.Join(TestDir, "table1.csv"),
+					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 				},
 				Header: NewHeaderWithoutId("t1", []string{"column1", "column2"}),
@@ -987,7 +1153,7 @@ var deleteTests = []struct {
 		Result: []*View{
 			{
 				FileInfo: &FileInfo{
-					Path:      path.Join(TestDir, "table1.csv"),
+					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 				},
 				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
@@ -1037,7 +1203,7 @@ var deleteTests = []struct {
 		Result: []*View{
 			{
 				FileInfo: &FileInfo{
-					Path:      path.Join(TestDir, "table1.csv"),
+					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 				},
 				Header: NewHeaderWithoutId("t1", []string{"column1", "column2"}),
@@ -1196,7 +1362,7 @@ var createTableTests = []struct {
 		},
 		Result: &View{
 			FileInfo: &FileInfo{
-				Path:      path.Join(TestDir, "create_table.csv"),
+				Path:      GetTestFilePath("create_table.csv"),
 				Delimiter: ',',
 			},
 			Header: NewHeaderWithoutId("create_table", []string{"column1", "column2"}),
@@ -1261,7 +1427,7 @@ var addColumnsTests = []struct {
 		},
 		Result: &View{
 			FileInfo: &FileInfo{
-				Path:      path.Join(TestDir, "table1.csv"),
+				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
 			},
 			Header: NewHeaderWithoutId("table1", []string{"column1", "column2", "column3", "column4"}),
@@ -1308,7 +1474,7 @@ var addColumnsTests = []struct {
 		},
 		Result: &View{
 			FileInfo: &FileInfo{
-				Path:      path.Join(TestDir, "table1.csv"),
+				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
 			},
 			Header: NewHeaderWithoutId("table1", []string{"column3", "column4", "column1", "column2"}),
@@ -1355,7 +1521,7 @@ var addColumnsTests = []struct {
 		},
 		Result: &View{
 			FileInfo: &FileInfo{
-				Path:      path.Join(TestDir, "table1.csv"),
+				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
 			},
 			Header: NewHeaderWithoutId("table1", []string{"column1", "column3", "column4", "column2"}),
@@ -1402,7 +1568,7 @@ var addColumnsTests = []struct {
 		},
 		Result: &View{
 			FileInfo: &FileInfo{
-				Path:      path.Join(TestDir, "table1.csv"),
+				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
 			},
 			Header: NewHeaderWithoutId("table1", []string{"column1", "column3", "column4", "column2"}),
@@ -1539,7 +1705,7 @@ var dropColumnsTests = []struct {
 		},
 		Result: &View{
 			FileInfo: &FileInfo{
-				Path:      path.Join(TestDir, "table1.csv"),
+				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
 			},
 			Header: NewHeaderWithoutId("table1", []string{"column1"}),
@@ -1619,7 +1785,7 @@ var renameColumnTests = []struct {
 		},
 		Result: &View{
 			FileInfo: &FileInfo{
-				Path:      path.Join(TestDir, "table1.csv"),
+				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
 			},
 			Header: NewHeaderWithoutId("table1", []string{"column1", "newcolumn"}),
@@ -1674,6 +1840,7 @@ func TestRenameColumn(t *testing.T) {
 	tf.Repository = TestDir
 
 	for _, v := range renameColumnTests {
+		ViewCache.Clear()
 		result, err := RenameColumn(v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
