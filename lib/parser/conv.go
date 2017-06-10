@@ -20,6 +20,8 @@ func StrToTime(s string) (time.Time, error) {
 		return t, nil
 	} else if t, e := time.Parse(DATETIME_FORMAT+" MST", s); e == nil {
 		return t, nil
+	} else if t, e := time.Parse("2006-01-02", s); e == nil {
+		return t, nil
 	} else if t, e := time.Parse(time.RFC822, s); e == nil {
 		return t, nil
 	} else if t, e := time.Parse(time.RFC822Z, s); e == nil {

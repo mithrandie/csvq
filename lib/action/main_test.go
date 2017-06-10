@@ -1,7 +1,6 @@
 package action
 
 import (
-	"io"
 	"os"
 	"path"
 	"testing"
@@ -29,37 +28,12 @@ func setup() {
 		os.Mkdir(TestDir, 0755)
 	}
 
-	copyfile(path.Join(TestDir, "insert_query.csv"), path.Join(TestDataDir, "table1.csv"))
-	copyfile(path.Join(TestDir, "update_query.csv"), path.Join(TestDataDir, "table1.csv"))
-	copyfile(path.Join(TestDir, "delete_query.csv"), path.Join(TestDataDir, "table1.csv"))
-	copyfile(path.Join(TestDir, "add_columns.csv"), path.Join(TestDataDir, "table1.csv"))
-	copyfile(path.Join(TestDir, "drop_columns.csv"), path.Join(TestDataDir, "table1.csv"))
-	copyfile(path.Join(TestDir, "rename_column.csv"), path.Join(TestDataDir, "table1.csv"))
+	r, _ := os.Open(path.Join(TestDataDir, "empty.txt"))
+	os.Stdin = r
 }
 
 func teardown() {
 	if _, err := os.Stat(TestDir); err == nil {
 		os.RemoveAll(TestDir)
 	}
-}
-
-func copyfile(dstfile string, srcfile string) error {
-	src, err := os.Open(srcfile)
-	if err != nil {
-		return err
-	}
-	defer src.Close()
-
-	dst, err := os.Create(dstfile)
-	if err != nil {
-		return err
-	}
-	defer dst.Close()
-
-	_, err = io.Copy(dst, src)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
