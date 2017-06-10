@@ -265,7 +265,7 @@ func (f Filter) evalLike(expr parser.Like) (parser.Primary, error) {
 }
 
 func (f Filter) evalExists(expr parser.Exists) (parser.Primary, error) {
-	view, err := ExecuteSelect(expr.Query.Query, f)
+	view, err := Select(expr.Query.Query, f)
 	if err != nil {
 		return nil, err
 	}
@@ -497,7 +497,7 @@ func (f Filter) evalList(exprs []parser.Expression) ([]parser.Primary, error) {
 }
 
 func (f Filter) evalSubqueryForList(query parser.SelectQuery) ([]parser.Primary, error) {
-	view, err := ExecuteSelect(query, f)
+	view, err := Select(query, f)
 	if err != nil {
 		return nil, err
 	}
@@ -519,7 +519,7 @@ func (f Filter) evalSubqueryForList(query parser.SelectQuery) ([]parser.Primary,
 }
 
 func (f Filter) evalSubqueryForSingleValue(query parser.SelectQuery) (parser.Primary, error) {
-	view, err := ExecuteSelect(query, f)
+	view, err := Select(query, f)
 	if err != nil {
 		return nil, err
 	}

@@ -16,140 +16,19 @@ const (
 	UNCATEGORIZED
 )
 
-var tokenLiterals = map[int]string{
-	IDENTIFIER:      "IDENTIFIER",
-	STRING:          "STRING",
-	INTEGER:         "INTEGER",
-	FLOAT:           "FLOAT",
-	BOOLEAN:         "BOOLEAN",
-	TERNARY:         "TERNARY",
-	DATETIME:        "DATETIME",
-	VARIABLE:        "VARIABLE",
-	SELECT:          "SELECT",
-	FROM:            "FROM",
-	UPDATE:          "UPDATE",
-	SET:             "SET",
-	DELETE:          "DELETE",
-	WHERE:           "WHERE",
-	INSERT:          "INSERT",
-	INTO:            "INTO",
-	VALUES:          "VLLUES",
-	AS:              "AS",
-	DUAL:            "DUAL",
-	STDIN:           "STDIN",
-	CREATE:          "CREATE",
-	DROP:            "DROP",
-	ALTER:           "ALTER",
-	TABLE:           "TABLE",
-	COLUMN:          "COLUMN",
-	ORDER:           "ORDER",
-	GROUP:           "GROUP",
-	HAVING:          "HAVING",
-	BY:              "BY",
-	ASC:             "ASC",
-	DESC:            "DESC",
-	LIMIT:           "LIMIT",
-	JOIN:            "JOIN",
-	INNER:           "INNER",
-	OUTER:           "OUTER",
-	LEFT:            "LEFT",
-	RIGHT:           "RIGHT",
-	FULL:            "FULL",
-	CROSS:           "CROSS",
-	ON:              "ON",
-	USING:           "USING",
-	NATURAL:         "NATURAL",
-	UNION:           "UNION",
-	ALL:             "ALL",
-	ANY:             "ANY",
-	EXISTS:          "EXISTS",
-	IN:              "IN",
-	AND:             "AND",
-	OR:              "OR",
-	NOT:             "NOT",
-	BETWEEN:         "BETWEEN",
-	LIKE:            "LIKE",
-	IS:              "IS",
-	NULL:            "NULL",
-	DISTINCT:        "DISTINCT",
-	WITH:            "WITH",
-	TRUE:            "TRUE",
-	FALSE:           "FALSE",
-	UNKNOWN:         "UNKNOWN",
-	CASE:            "CASE",
-	WHEN:            "WHEN",
-	THEN:            "THEN",
-	ELSE:            "ELSE",
-	END:             "END",
-	GROUP_CONCAT:    "GROUP_CONCAT",
-	SEPARATOR:       "SEPARATOR",
-	VAR:             "VAR",
-	COMPARISON_OP:   "COMPARISON_OP",
-	STRING_OP:       "STRING_OP",
-	SUBSTITUTION_OP: "SUBSTITUTION_OP",
-}
+const (
+	TOKEN_FROM   = IDENTIFIER
+	TOKEN_TO     = SUBSTITUTION_OP
+	KEYWORD_FROM = SELECT
+	KEYWORD_TO   = VAR
+)
 
-var keywords = []int{
-	SELECT,
-	FROM,
-	UPDATE,
-	SET,
-	DELETE,
-	WHERE,
-	INSERT,
-	INTO,
-	VALUES,
-	AS,
-	DUAL,
-	STDIN,
-	CREATE,
-	DROP,
-	ALTER,
-	TABLE,
-	COLUMN,
-	ORDER,
-	GROUP,
-	HAVING,
-	BY,
-	ASC,
-	DESC,
-	LIMIT,
-	JOIN,
-	INNER,
-	OUTER,
-	LEFT,
-	RIGHT,
-	FULL,
-	CROSS,
-	ON,
-	USING,
-	NATURAL,
-	UNION,
-	ALL,
-	ANY,
-	EXISTS,
-	IN,
-	AND,
-	OR,
-	NOT,
-	BETWEEN,
-	LIKE,
-	IS,
-	NULL,
-	DISTINCT,
-	WITH,
-	CASE,
-	WHEN,
-	THEN,
-	ELSE,
-	END,
-	GROUP_CONCAT,
-	SEPARATOR,
-	VAR,
-}
+const (
+	SUBSTITUTION_LITERAL = ":="
+	VARIABLE_RUNE        = '@'
+)
 
 var comparisonOperators = []string{
-	"=",
 	">",
 	"<",
 	">=",
@@ -162,13 +41,9 @@ var stringOperators = []string{
 	"||",
 }
 
-var substitutionOperators = []string{
-	":=",
-}
-
 func TokenLiteral(token int) string {
-	if val, ok := tokenLiterals[token]; ok {
-		return val
+	if TOKEN_FROM <= token && token <= TOKEN_TO {
+		return yyToknames[token-TOKEN_FROM+3]
 	}
 	return string(token)
 }
@@ -273,15 +148,30 @@ func (s *Scanner) Scan() (int, string, bool, error) {
 			token = COMPARISON_OP
 		} else if e := s.searchStringOperators(literal); e == nil {
 			token = STRING_OP
-		} else if e := s.searchSubstitutionOperators(literal); e == nil {
+		} else if literal == SUBSTITUTION_LITERAL {
 			token = SUBSTITUTION_OP
 		} else if 1 < len(literal) {
 			token = UNCATEGORIZED
 		}
+	case s.isFlagRune(ch):
+		s.scanIdentifier()
+		s.scanIdentifier()
+		literal = s.literal()
+		token = FLAG
 	case s.isVariableRune(ch):
 		s.scanIdentifier()
 		literal = s.literal()
 		token = VARIABLE
+	case s.isCommentRune(ch):
+		s.scanComment()
+		var tok int
+		tok, literal, quoted, _ = s.Scan()
+		token = rune(tok)
+	case s.isLineCommentRune(ch):
+		s.scanLineComment()
+		var tok int
+		tok, literal, quoted, _ = s.Scan()
+		token = rune(tok)
 	default:
 		switch ch {
 		case EOF:
@@ -307,11 +197,7 @@ func (s *Scanner) Scan() (int, string, bool, error) {
 }
 
 func (s *Scanner) isWhiteSpace(ch rune) bool {
-	switch ch {
-	case '\t', '\n', '\r', ' ':
-		return true
-	}
-	return false
+	return unicode.IsSpace(ch)
 }
 
 func (s *Scanner) scanString(quote rune) {
@@ -356,17 +242,25 @@ func (s *Scanner) isOperatorRune(ch rune) bool {
 	return false
 }
 
+func (s *Scanner) isFlagRune(ch rune) bool {
+	if ch == VARIABLE_RUNE && s.peek() == VARIABLE_RUNE {
+		s.next()
+		return true
+	}
+	return false
+}
+
 func (s *Scanner) isVariableRune(ch rune) bool {
-	if ch == '@' {
+	if ch == VARIABLE_RUNE {
 		return true
 	}
 	return false
 }
 
 func (s *Scanner) searchKeyword(str string) (int, error) {
-	for _, v := range keywords {
-		if strings.EqualFold(TokenLiteral(v), str) {
-			return v, nil
+	for i := KEYWORD_FROM; i <= KEYWORD_TO; i++ {
+		if strings.EqualFold(TokenLiteral(i), str) {
+			return i, nil
 		}
 	}
 	return IDENTIFIER, errors.New(fmt.Sprintf("%q is not a keyword", str))
@@ -390,11 +284,44 @@ func (s *Scanner) searchStringOperators(str string) error {
 	return errors.New(fmt.Sprintf("%q is not a string operator", str))
 }
 
-func (s *Scanner) searchSubstitutionOperators(str string) error {
-	for _, v := range substitutionOperators {
-		if v == str {
-			return nil
+func (s *Scanner) isCommentRune(ch rune) bool {
+	if ch == '/' && s.peek() == '*' {
+		s.next()
+		return true
+	}
+	return false
+}
+
+func (s *Scanner) scanComment() {
+	for {
+		ch := s.next()
+		if ch == EOF {
+			break
+		} else if ch == '*' {
+			if s.peek() == '/' {
+				s.next()
+				break
+			}
 		}
 	}
-	return errors.New(fmt.Sprintf("%q is not a substitution operator", str))
+	return
+}
+
+func (s *Scanner) isLineCommentRune(ch rune) bool {
+	if ch == '-' && s.peek() == '-' {
+		s.next()
+		return true
+	}
+	return false
+}
+
+func (s *Scanner) scanLineComment() {
+	for {
+		ch := s.peek()
+		if ch == '\r' || ch == '\n' || ch == EOF {
+			break
+		}
+		s.next()
+	}
+	return
 }

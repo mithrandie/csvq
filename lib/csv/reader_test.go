@@ -73,6 +73,13 @@ var readAllTests = []struct {
 		},
 	},
 	{
+		Name:  "SingleValue",
+		Input: "a",
+		Output: [][]parser.Primary{
+			{parser.NewString("a")},
+		},
+	},
+	{
 		Name:  "ExtraneousQuote",
 		Input: "a,\"b\",\"ccc\ncc\nd,e,",
 		Error: "line 3, column 5: extraneous \" in field",

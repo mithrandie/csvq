@@ -92,7 +92,7 @@ func (r *Reader) parseRecord(withoutNull bool) ([]parser.Primary, error) {
 
 		field, eol, err := r.parseField(withoutNull)
 		if err == EOF {
-			if fieldIndex < 1 {
+			if fieldIndex < 1 && (parser.IsNull(field) || len(field.(parser.String).Value()) < 1) {
 				return nil, EOF
 			}
 		} else if err != nil {

@@ -47,7 +47,7 @@ func Parse(s string) (Value, error) {
 	case "UNKNOWN", "0":
 		return UNKNOWN, nil
 	}
-	return -1, errors.New(fmt.Sprintf("parsing %q: invalid syntax", s))
+	return FALSE, errors.New(fmt.Sprintf("parsing %q: invalid syntax", s))
 }
 
 func ParseBool(b bool) Value {

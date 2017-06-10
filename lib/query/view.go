@@ -16,6 +16,106 @@ import (
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
+type ViewMap struct {
+	views map[string]*View
+	alias map[string]string
+}
+
+func NewViewMap() *ViewMap {
+	return &ViewMap{
+		views: make(map[string]*View),
+		alias: make(map[string]string),
+	}
+}
+
+func (m *ViewMap) Exists(filepath string) (string, bool) {
+	if _, ok := m.views[filepath]; ok {
+		return filepath, true
+	}
+	if substance, ok := m.alias[filepath]; ok {
+		if _, ok := m.views[substance]; ok {
+			return substance, true
+		}
+	}
+	return "", false
+}
+
+func (m *ViewMap) HasAlias(alias string) (string, bool) {
+	if filepath, ok := m.alias[alias]; ok {
+		return filepath, true
+	}
+	return "", false
+}
+
+func (m *ViewMap) Get(filepath string) (*View, error) {
+	if filepath, ok := m.Exists(filepath); ok {
+		return m.views[filepath].Copy(), nil
+	}
+	return nil, errors.New(fmt.Sprintf("file %s is not loaded", filepath))
+}
+
+func (m *ViewMap) GetWithInternalId(filepath string) (*View, error) {
+	if filepath, ok := m.Exists(filepath); ok {
+		ret := m.views[filepath].Copy()
+
+		if 0 < ret.FieldLen() {
+			ret.Header = MergeHeader(NewHeader(ret.Header[0].Reference, []string{}), ret.Header)
+
+			for i, v := range ret.Records {
+				ret.Records[i] = append(Record{NewCell(parser.NewInteger(int64(i)))}, v...)
+			}
+		}
+
+		return ret, nil
+
+	}
+	return nil, errors.New(fmt.Sprintf("file %s is not loaded", filepath))
+}
+
+func (m *ViewMap) Set(view *View, alias string) error {
+	if view.FileInfo == nil || len(view.FileInfo.Path) < 1 {
+		return errors.New("view cache failed")
+	}
+	if _, ok := m.alias[alias]; ok {
+		return errors.New("duplicate alias")
+	}
+	m.views[view.FileInfo.Path] = view.Copy()
+	m.alias[alias] = view.FileInfo.Path
+	return nil
+}
+
+func (m *ViewMap) SetAlias(alias string, filepath string) error {
+	if _, ok := m.alias[alias]; ok {
+		return errors.New("duplicate alias")
+	}
+	m.alias[alias] = filepath
+	return nil
+}
+
+func (m *ViewMap) Update(view *View) error {
+	if filepath, ok := m.Exists(view.FileInfo.Path); ok {
+		m.views[filepath] = view.Copy()
+	}
+	return errors.New(fmt.Sprintf("file %s is not loaded", view.FileInfo.Path))
+}
+
+func (m *ViewMap) Clear() {
+	for k := range m.views {
+		delete(m.views, k)
+	}
+	for k := range m.alias {
+		delete(m.alias, k)
+	}
+}
+
+func (m *ViewMap) ClearAliases() {
+	for k := range m.alias {
+		delete(m.alias, k)
+	}
+}
+
+var ViewCache = NewViewMap()
+
 type FileInfo struct {
 	Path      string
 	Delimiter rune
@@ -80,9 +180,20 @@ type View struct {
 
 	sortIndices    []int
 	sortDirections []int
+
+	OperatedRecords int
+	OperatedFields  int
+
+	UseInternalId bool
 }
 
-func NewView(clause parser.FromClause, parentFilter Filter) (*View, error) {
+func NewView() *View {
+	return &View{
+		UseInternalId: false,
+	}
+}
+
+func (view *View) Load(clause parser.FromClause, parentFilter Filter) error {
 	if clause.Tables == nil {
 		var obj parser.Expression
 		if isReadableFromStdin() {
@@ -95,47 +206,75 @@ func NewView(clause parser.FromClause, parentFilter Filter) (*View, error) {
 
 	views := make([]*View, len(clause.Tables))
 	for i, v := range clause.Tables {
-		view, err := loadView(v.(parser.Table), parentFilter)
+		view, err := loadView(v.(parser.Table), parentFilter, view.UseInternalId)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		views[i] = view
 	}
 
-	joinedView := views[0]
+	view.Header = views[0].Header
+	view.Records = views[0].Records
+	view.FileInfo = views[0].FileInfo
 
 	for i := 1; i < len(views); i++ {
-		joinedView = CrossJoin(joinedView, views[i])
+		CrossJoin(view, views[i])
 	}
 
 	if parentFilter != nil {
-		joinedView.parentFilter = parentFilter
+		view.parentFilter = parentFilter
 	}
-	return joinedView, nil
+	return nil
 }
 
-func loadView(table parser.Table, parentFilter Filter) (*View, error) {
+func (view *View) LoadFromIdentifier(table parser.Identifier) error {
+	fromClause := parser.FromClause{
+		Tables: []parser.Expression{
+			parser.Table{Object: table},
+		},
+	}
+	var filter Filter
+
+	return view.Load(fromClause, filter)
+}
+
+func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*View, error) {
 	var view *View
 	var err error
 
 	switch table.Object.(type) {
 	case parser.Dual:
-		view = NewDualView()
+		view = loadDualView()
 	case parser.Stdin:
 		if !isReadableFromStdin() {
 			return nil, errors.New("stdin is empty")
 		}
 
-		file := os.Stdin
-		defer file.Close()
 		delimiter := cmd.GetFlags().Delimiter
 		if delimiter == cmd.UNDEF {
 			delimiter = ','
 		}
 		fileInfo := &FileInfo{
+			Path:      "__stdin",
 			Delimiter: delimiter,
 		}
-		view, err = loadViewFromFile(file, fileInfo, table.Name())
+
+		if _, ok := ViewCache.Exists(fileInfo.Path); !ok {
+			file := os.Stdin
+			defer file.Close()
+			err = loadViewFromFile(file, fileInfo, table.Name())
+		} else {
+			if _, ok := ViewCache.HasAlias(table.Name()); !ok {
+				ViewCache.SetAlias(table.Name(), fileInfo.Path)
+			}
+		}
+		if err == nil {
+			if useInternalId {
+				view, _ = ViewCache.GetWithInternalId(fileInfo.Path)
+			} else {
+				view, _ = ViewCache.Get(fileInfo.Path)
+			}
+		}
 	case parser.Identifier:
 		flags := cmd.GetFlags()
 		fileInfo, err := NewFileInfo(table.Object.(parser.Identifier).Literal, flags.Repository, flags.Delimiter)
@@ -143,24 +282,37 @@ func loadView(table parser.Table, parentFilter Filter) (*View, error) {
 			return nil, err
 		}
 
-		file, err := os.Open(fileInfo.Path)
-		if err != nil {
-			return nil, err
+		if _, ok := ViewCache.Exists(fileInfo.Path); !ok {
+			file, err := os.Open(fileInfo.Path)
+			if err != nil {
+				return nil, err
+			}
+			defer file.Close()
+			err = loadViewFromFile(file, fileInfo, table.Name())
+		} else {
+			if _, ok := ViewCache.HasAlias(table.Name()); !ok {
+				ViewCache.SetAlias(table.Name(), fileInfo.Path)
+			}
 		}
-		defer file.Close()
-		view, err = loadViewFromFile(file, fileInfo, table.Name())
+		if err == nil {
+			if useInternalId {
+				view, _ = ViewCache.GetWithInternalId(fileInfo.Path)
+			} else {
+				view, _ = ViewCache.Get(fileInfo.Path)
+			}
+		}
 	case parser.Join:
 		join := table.Object.(parser.Join)
-		view1, err := loadView(join.Table, parentFilter)
+		view, err = loadView(join.Table, parentFilter, useInternalId)
 		if err != nil {
 			return nil, err
 		}
-		view2, err := loadView(join.JoinTable, parentFilter)
+		view2, err := loadView(join.JoinTable, parentFilter, useInternalId)
 		if err != nil {
 			return nil, err
 		}
 
-		condition := ParseJoinCondition(join, view1, view2)
+		condition := ParseJoinCondition(join, view, view2)
 
 		joinType := join.JoinType.Token
 		if join.JoinType.IsEmpty() {
@@ -173,15 +325,15 @@ func loadView(table parser.Table, parentFilter Filter) (*View, error) {
 
 		switch joinType {
 		case parser.CROSS:
-			view = CrossJoin(view1, view2)
+			CrossJoin(view, view2)
 		case parser.INNER:
-			view, err = InnerJoin(view1, view2, condition, parentFilter)
+			err = InnerJoin(view, view2, condition, parentFilter)
 		case parser.OUTER:
-			view, err = OuterJoin(view1, view2, condition, join.Direction.Token, parentFilter)
+			err = OuterJoin(view, view2, condition, join.Direction.Token, parentFilter)
 		}
 	case parser.Subquery:
 		subquery := table.Object.(parser.Subquery)
-		view, err = ExecuteSelect(subquery.Query, parentFilter)
+		view, err = Select(subquery.Query, parentFilter)
 	}
 
 	if err != nil {
@@ -190,7 +342,7 @@ func loadView(table parser.Table, parentFilter Filter) (*View, error) {
 	return view, nil
 }
 
-func loadViewFromFile(file *os.File, fileInfo *FileInfo, reference string) (*View, error) {
+func loadViewFromFile(file *os.File, fileInfo *FileInfo, reference string) error {
 	flags := cmd.GetFlags()
 
 	r := cmd.GetReader(file, flags.Encoding)
@@ -206,17 +358,18 @@ func loadViewFromFile(file *os.File, fileInfo *FileInfo, reference string) (*Vie
 	if !flags.NoHeader {
 		header, err = reader.ReadHeader()
 		if err != nil && err != csv.EOF {
-			return nil, err
+			return err
 		}
 	}
 
 	records, err := reader.ReadAll()
 	if err != nil {
-		return nil, err
+		return err
 	}
+
 	view.Records = make([]Record, len(records))
 	for i, v := range records {
-		view.Records[i] = NewRecord(v)
+		view.Records[i] = NewRecordWithoutId(v)
 	}
 
 	if header == nil {
@@ -225,14 +378,13 @@ func loadViewFromFile(file *os.File, fileInfo *FileInfo, reference string) (*Vie
 			header[i] = "c" + strconv.Itoa(i+1)
 		}
 	}
-	view.Header = NewHeader(reference, header)
-
+	view.Header = NewHeaderWithoutId(reference, header)
 	view.FileInfo = fileInfo
-
-	return view, nil
+	ViewCache.Set(view, reference)
+	return nil
 }
 
-func NewDualView() *View {
+func loadDualView() *View {
 	view := View{
 		Header:  NewDualHeader(),
 		Records: make([]Record, 1),
@@ -363,8 +515,7 @@ func (view *View) group(items []parser.Expression) error {
 	view.isGrouped = true
 	for _, item := range items {
 		if ident, ok := item.(parser.Identifier); ok {
-			ref, field, _ := ident.FieldRef()
-			idx, _ := view.Header.Contains(ref, field)
+			idx, _ := view.FieldIndex(ident)
 			view.Header[idx].IsGroupKey = true
 		}
 	}
@@ -460,7 +611,6 @@ func (view *View) Select(clause parser.SelectClause) error {
 	}
 
 	view.selectFields = make([]int, len(fields))
-	addIndex := view.FieldLen()
 	for i, f := range fields {
 		field := f.(parser.Field)
 		if ident, ok := field.Object.(parser.Identifier); ok {
@@ -471,9 +621,7 @@ func (view *View) Select(clause parser.SelectClause) error {
 			}
 			view.selectFields[i] = idx
 		} else {
-			view.Header = AddHeaderField(view.Header, field.Name())
-			view.selectFields[i] = addIndex
-			addIndex++
+			view.Header, view.selectFields[i] = AddHeaderField(view.Header, field.Name())
 		}
 	}
 
@@ -510,6 +658,15 @@ func (view *View) Select(clause parser.SelectClause) error {
 	return nil
 }
 
+func (view *View) SelectAllColumns() error {
+	selectClause := parser.SelectClause{
+		Fields: []parser.Expression{
+			parser.Field{Object: parser.AllColumns{}},
+		},
+	}
+	return view.Select(selectClause)
+}
+
 func (view *View) OrderBy(clause parser.OrderByClause) error {
 	view.sortIndices = []int{}
 
@@ -517,18 +674,13 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 		oi := v.(parser.OrderItem)
 		switch oi.Item.(type) {
 		case parser.Identifier:
-			item := oi.Item.(parser.Identifier)
-			ref, column, err := item.FieldRef()
-			if err != nil {
-				return err
-			}
-			idx, err := view.Header.Contains(ref, column)
+			idx, err := view.FieldIndex(oi.Item.(parser.Identifier))
 			if err != nil {
 				return err
 			}
 			view.sortIndices = append(view.sortIndices, idx)
 		default:
-			idx, err := view.Header.Contains("", oi.String())
+			idx, err := view.Header.Contains("", oi.Item.String())
 			if err != nil {
 				for i := range view.Records {
 					var filter Filter = append([]FilterRecord{{View: view, RecordIndex: i}}, view.parentFilter...)
@@ -539,8 +691,7 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 					}
 					view.Records[i] = append(view.Records[i], NewCell(primary))
 				}
-				view.Header = AddHeaderField(view.Header, oi.String())
-				idx = view.FieldLen() - 1
+				view.Header, idx = AddHeaderField(view.Header, oi.Item.String())
 			}
 			view.sortIndices = append(view.sortIndices, idx)
 		}
@@ -564,6 +715,86 @@ func (view *View) Limit(clause parser.LimitClause) {
 	if clause.Number < int64(len(view.Records)) {
 		view.Records = view.Records[:clause.Number]
 	}
+}
+
+func (view *View) InsertValues(fields []parser.Expression, list []parser.Expression) error {
+	var filter Filter
+	var err error
+	valuesList := make([][]parser.Primary, len(list))
+
+	for i, item := range list {
+		row := item.(parser.InsertValues)
+		if len(fields) != len(row.Values) {
+			return errors.New("field length does not match value length")
+		}
+
+		values := make([]parser.Primary, len(row.Values))
+		for j, v := range row.Values {
+			values[j], err = filter.Evaluate(v)
+			if err != nil {
+				return err
+			}
+		}
+		valuesList[i] = values
+	}
+
+	return view.insert(fields, valuesList)
+}
+
+func (view *View) InsertFromQuery(fields []parser.Expression, query parser.SelectQuery) error {
+	insertView, err := Select(query, nil)
+	if err != nil {
+		return err
+	}
+	if len(fields) != insertView.FieldLen() {
+		return errors.New("field length does not match value length")
+	}
+
+	valuesList := make([][]parser.Primary, insertView.RecordLen())
+
+	for i, record := range insertView.Records {
+		values := make([]parser.Primary, insertView.FieldLen())
+		for j, cell := range record {
+			values[j] = cell.Primary()
+		}
+		valuesList[i] = values
+	}
+
+	return view.insert(fields, valuesList)
+}
+
+func (view *View) insert(fields []parser.Expression, valuesList [][]parser.Primary) error {
+	var valueIndex = func(i int, list []int) int {
+		for j, v := range list {
+			if i == v {
+				return j
+			}
+		}
+		return -1
+	}
+
+	fieldIndices, err := view.FieldIndices(fields)
+	if err != nil {
+		return err
+	}
+
+	records := make([]Record, len(valuesList))
+	for i, values := range valuesList {
+		record := make(Record, view.FieldLen())
+		for j := 0; j < view.FieldLen(); j++ {
+			idx := valueIndex(j, fieldIndices)
+			if idx < 0 {
+				record[j] = NewCell(parser.NewNull())
+			} else {
+				record[j] = NewCell(values[idx])
+			}
+		}
+		records[i] = record
+	}
+
+	view.Records = append(view.Records, records...)
+	view.OperatedRecords = len(valuesList)
+	return nil
 }
 
 func (view *View) Fix() {
@@ -590,6 +821,46 @@ func (view *View) Fix() {
 	view.parentFilter = Filter(nil)
 	view.sortIndices = []int(nil)
 	view.sortDirections = []int(nil)
+}
+
+func (view *View) FieldIndex(ident parser.Identifier) (int, error) {
+	ref, field, err := ident.FieldRef()
+	if err != nil {
+		return -1, err
+	}
+	return view.Header.Contains(ref, field)
+}
+
+func (view *View) FieldIndices(fields []parser.Expression) ([]int, error) {
+	indices := make([]int, len(fields))
+	for i, v := range fields {
+		idx, err := view.FieldIndex(v.(parser.Identifier))
+		if err != nil {
+			return nil, err
+		}
+		indices[i] = idx
+	}
+	return indices, nil
+}
+
+func (view *View) FieldRef(ident parser.Identifier) (string, error) {
+	idx, err := view.FieldIndex(ident)
+	if err != nil {
+		return "", err
+	}
+	return view.Header[idx].Reference, nil
+}
+
+func (view *View) InternalRecordId(ref string, recordIndex int) (int, error) {
+	idx, err := view.Header.Contains(ref, INTERNAL_ID_FIELD)
+	if err != nil {
+		return -1, errors.New("internal record id does not exist")
+	}
+	internalId, ok := view.Records[recordIndex][idx].Primary().(parser.Integer)
+	if !ok {
+		return -1, errors.New("internal record id is empty")
+	}
+	return int(internalId.Value()), nil
 }
 
 func (view *View) FieldLen() int {
@@ -636,4 +907,19 @@ func (view *View) Less(i, j int) bool {
 		}
 	}
 	return false
+}
+
+func (view *View) Copy() *View {
+	header := view.Header.Copy()
+
+	records := make([]Record, view.RecordLen())
+	for i, v := range view.Records {
+		records[i] = v.Copy()
+	}
+
+	return &View{
+		Header:   header,
+		Records:  records,
+		FileInfo: view.FileInfo,
+	}
 }

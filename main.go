@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"io/ioutil"
 	"os"
 
 	"github.com/mithrandie/csvq/lib/action"
@@ -35,6 +37,10 @@ func main() {
 		cli.StringFlag{
 			Name:  "repository, r",
 			Usage: "directory path where files are located",
+		},
+		cli.StringFlag{
+			Name:  "source, s",
+			Usage: "load query from `FILE`",
 		},
 		cli.BoolFlag{
 			Name:  "no-header",
@@ -83,13 +89,12 @@ func main() {
 				return setWriteFlags(c)
 			},
 			Action: func(c *cli.Context) error {
-				if c.NArg() != 1 {
-					return cli.ShowSubcommandHelp(c)
+				query, err := readQuery(c)
+				if err != nil {
+					return cli.NewExitError(err.Error(), 1)
 				}
 
-				q := c.Args().First()
-
-				err := action.Write(q)
+				err = action.Write(query)
 				if err != nil {
 					return cli.NewExitError(err.Error(), 1)
 				}
@@ -102,12 +107,29 @@ func main() {
 			Usage: "Show fields in file",
 			Action: func(c *cli.Context) error {
 				if c.NArg() != 1 {
-					return cli.ShowSubcommandHelp(c)
+					return cli.NewExitError("table is not specified", 1)
 				}
 
 				table := c.Args().First()
 
 				err := action.ShowFields(table)
+				if err != nil {
+					return cli.NewExitError(err.Error(), 1)
+				}
+
+				return nil
+			},
+		},
+		{
+			Name:  "calc",
+			Usage: "Calculate value from stdin",
+			Action: func(c *cli.Context) error {
+				if c.NArg() != 1 {
+					return cli.NewExitError("expression is empty", 1)
+				}
+
+				expr := c.Args().First()
+				err := action.Calc(expr)
 				if err != nil {
 					return cli.NewExitError(err.Error(), 1)
 				}
@@ -122,13 +144,12 @@ func main() {
 	}
 
 	app.Action = func(c *cli.Context) error {
-		if c.NArg() != 1 {
-			return cli.ShowAppHelp(c)
+		query, err := readQuery(c)
+		if err != nil {
+			return cli.NewExitError(err.Error(), 1)
 		}
 
-		q := c.Args().First()
-
-		err := action.Write(q)
+		err = action.Write(query)
 		if err != nil {
 			return cli.NewExitError(err.Error(), 1)
 		}
@@ -139,6 +160,33 @@ func main() {
 	app.Run(os.Args)
 }
 
+func readQuery(c *cli.Context) (string, error) {
+	var query string
+
+	flags := cmd.GetFlags()
+	if 0 < len(flags.Source) {
+		fp, err := os.Open(flags.Source)
+		if err != nil {
+			return query, err
+		}
+		defer fp.Close()
+
+		buf, err := ioutil.ReadAll(fp)
+		if err != nil {
+			return query, err
+		}
+		query = string(buf)
+
+	} else {
+		if c.NArg() != 1 {
+			return query, errors.New("query is empty")
+		}
+		query = c.Args().First()
+	}
+
+	return query, nil
+}
+
 func setGlobalFlags(c *cli.Context) error {
 	if err := cmd.SetDelimiter(c.GlobalString("delimiter")); err != nil {
 		return err
@@ -147,6 +195,9 @@ func setGlobalFlags(c *cli.Context) error {
 		return err
 	}
 	if err := cmd.SetRepository(c.GlobalString("repository")); err != nil {
+		return err
+	}
+	if err := cmd.SetSource(c.GlobalString("source")); err != nil {
 		return err
 	}
 	if err := cmd.SetNoHeader(c.GlobalBool("no-header")); err != nil {
