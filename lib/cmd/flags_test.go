@@ -82,6 +82,34 @@ func TestSetRepository(t *testing.T) {
 	}
 }
 
+func TestSetSource(t *testing.T) {
+	flags := GetFlags()
+
+	s := path.Join("..", "..", "lib", "cmd", "flags_test.go")
+	SetSource(s)
+	if flags.Source != s {
+		t.Errorf("source = %s, expect to set %s for %s", flags.Source, s, s)
+	}
+
+	s = path.Join("..", "..", "lib", "cmd", "notexist")
+	expectErr := "source file does not exist"
+	err := SetSource(s)
+	if err == nil {
+		t.Errorf("no error, want error %q for %s", expectErr, "error")
+	} else if err.Error() != expectErr {
+		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "notexists")
+	}
+
+	s = path.Join("..", "..", "lib", "cmd")
+	expectErr = "source file must be a readable file"
+	err = SetSource(s)
+	if err == nil {
+		t.Errorf("no error, want error %q for %s", expectErr, "error")
+	} else if err.Error() != expectErr {
+		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "notexists")
+	}
+}
+
 func TestSetNoHeader(t *testing.T) {
 	flags := GetFlags()
 

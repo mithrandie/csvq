@@ -49,6 +49,7 @@ type Flags struct {
 	Delimiter   rune
 	Encoding    Encoding
 	Repository  string
+	Source      string
 	NoHeader    bool
 	WithoutNull bool
 
@@ -76,6 +77,7 @@ func GetFlags() *Flags {
 			Delimiter:      UNDEF,
 			Encoding:       UTF8,
 			Repository:     ".",
+			Source:         "",
 			NoHeader:       false,
 			WithoutNull:    false,
 			WriteEncoding:  UTF8,
@@ -134,6 +136,24 @@ func SetRepository(s string) error {
 
 	f := GetFlags()
 	f.Repository = s
+	return nil
+}
+
+func SetSource(s string) error {
+	if len(s) < 1 {
+		return nil
+	}
+
+	stat, err := os.Stat(s)
+	if err != nil {
+		return errors.New("source file does not exist")
+	}
+	if stat.IsDir() {
+		return errors.New("source file must be a readable file")
+	}
+
+	f := GetFlags()
+	f.Source = s
 	return nil
 }
 
