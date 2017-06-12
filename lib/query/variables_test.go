@@ -62,7 +62,7 @@ var variablesDeclareTests = []variableTests{
 			Assignments: []parser.Expression{
 				parser.VariableAssignment{
 					Name:  "var3",
-					Value: parser.Identifier{Literal: "notexist"},
+					Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 				},
 			},
 		},
@@ -116,7 +116,7 @@ var variablesSubstituteTests = []variableTests{
 		Name: "Substitute Variable Filter Error",
 		Expr: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "var1"},
-			Value:    parser.Identifier{Literal: "notexist"},
+			Value:    parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 		},
 		Error: "identifier = notexist: field does not exist",
 	},

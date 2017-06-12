@@ -72,7 +72,7 @@ var executeTests = []struct {
 	},
 	{
 		Name:       "Create Table",
-		Input:      "create table create_table.csv (column1, column2)",
+		Input:      "create table `create_table.csv` (column1, column2)",
 		Output:     fmt.Sprintf("file %q is created\n", GetTestFilePath("create_table.csv")),
 		UpdateFile: GetTestFilePath("create_table.csv"),
 		Content:    "\"column1\",\"column2\"\n",
@@ -233,8 +233,8 @@ var executeStatementTests = []struct {
 		Input: parser.InsertQuery{
 			Table: parser.Identifier{Literal: "table1"},
 			Fields: []parser.Expression{
-				parser.Identifier{Literal: "column1"},
-				parser.Identifier{Literal: "column2"},
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 			ValuesList: []parser.Expression{
 				parser.InsertValues{
@@ -295,13 +295,13 @@ var executeStatementTests = []struct {
 			},
 			SetList: []parser.Expression{
 				parser.UpdateSet{
-					Field: parser.Identifier{Literal: "column2"},
+					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 					Value: parser.NewString("update"),
 				},
 			},
 			WhereClause: parser.WhereClause{
 				Filter: parser.Comparison{
-					LHS:      parser.Identifier{Literal: "column1"},
+					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					RHS:      parser.NewInteger(2),
 					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 				},
@@ -347,7 +347,7 @@ var executeStatementTests = []struct {
 			},
 			WhereClause: parser.WhereClause{
 				Filter: parser.Comparison{
-					LHS:      parser.Identifier{Literal: "column1"},
+					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					RHS:      parser.NewInteger(2),
 					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 				},
@@ -445,7 +445,7 @@ var executeStatementTests = []struct {
 		Input: parser.DropColumns{
 			Table: parser.Identifier{Literal: "table1"},
 			Columns: []parser.Expression{
-				parser.Identifier{Literal: "column1"},
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 		},
 		Result: []Result{
@@ -477,7 +477,7 @@ var executeStatementTests = []struct {
 	{
 		Input: parser.RenameColumn{
 			Table: parser.Identifier{Literal: "table1"},
-			Old:   parser.Identifier{Literal: "column1"},
+			Old:   parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			New:   parser.Identifier{Literal: "newcolumn"},
 		},
 		Result: []Result{
@@ -565,7 +565,7 @@ var insertTests = []struct {
 			Into:   "into",
 			Table:  parser.Identifier{Literal: "table1"},
 			Fields: []parser.Expression{
-				parser.Identifier{Literal: "column1"},
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 			Values: "values",
 			ValuesList: []parser.Expression{
@@ -672,7 +672,7 @@ var insertTests = []struct {
 			Into:   "into",
 			Table:  parser.Identifier{Literal: "notexist"},
 			Fields: []parser.Expression{
-				parser.Identifier{Literal: "column1"},
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 			Values: "values",
 			ValuesList: []parser.Expression{
@@ -697,7 +697,7 @@ var insertTests = []struct {
 			Into:   "into",
 			Table:  parser.Identifier{Literal: "table1"},
 			Fields: []parser.Expression{
-				parser.Identifier{Literal: "notexist"},
+				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 			Values: "values",
 			ValuesList: []parser.Expression{
@@ -722,14 +722,14 @@ var insertTests = []struct {
 			Into:   "into",
 			Table:  parser.Identifier{Literal: "table1"},
 			Fields: []parser.Expression{
-				parser.Identifier{Literal: "column1"},
-				parser.Identifier{Literal: "column2"},
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 			Query: parser.SelectQuery{
 				SelectClause: parser.SelectClause{
 					Fields: []parser.Expression{
-						parser.Field{Object: parser.Identifier{Literal: "column3"}},
-						parser.Field{Object: parser.Identifier{Literal: "column4"}},
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column3"}}},
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}}},
 					},
 				},
 				FromClause: parser.FromClause{
@@ -775,29 +775,29 @@ var insertTests = []struct {
 		},
 	},
 	{
-		Name: "Insert Query Field Does Not Exist Error",
+		Name: "Insert Select Query Field Does Not Exist Error",
 		Query: parser.InsertQuery{
 			Insert: "insert",
 			Into:   "into",
 			Table:  parser.Identifier{Literal: "table1"},
 			Fields: []parser.Expression{
-				parser.Identifier{Literal: "notexist"},
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
-			Values: "values",
-			ValuesList: []parser.Expression{
-				parser.InsertValues{
-					Values: []parser.Expression{
-						parser.NewInteger(4),
+			Query: parser.SelectQuery{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.Expression{
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column3"}}},
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}}},
 					},
 				},
-				parser.InsertValues{
-					Values: []parser.Expression{
-						parser.NewInteger(5),
+				FromClause: parser.FromClause{
+					Tables: []parser.Expression{
+						parser.Table{Object: parser.Identifier{Literal: "table2"}},
 					},
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field length does not match value length",
 	},
 }
 
@@ -842,13 +842,13 @@ var updateTests = []struct {
 			Set: "set",
 			SetList: []parser.Expression{
 				parser.UpdateSet{
-					Field: parser.Identifier{Literal: "column2"},
+					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 					Value: parser.NewString("update"),
 				},
 			},
 			WhereClause: parser.WhereClause{
 				Filter: parser.Comparison{
-					LHS:      parser.Identifier{Literal: "column1"},
+					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					RHS:      parser.NewInteger(2),
 					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 				},
@@ -889,8 +889,8 @@ var updateTests = []struct {
 			Set: "set",
 			SetList: []parser.Expression{
 				parser.UpdateSet{
-					Field: parser.Identifier{Literal: "column2"},
-					Value: parser.Identifier{Literal: "column4"},
+					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+					Value: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}},
 				},
 			},
 			FromClause: parser.FromClause{
@@ -906,8 +906,8 @@ var updateTests = []struct {
 						},
 						Condition: parser.JoinCondition{
 							On: parser.Comparison{
-								LHS:      parser.Identifier{Literal: "column1"},
-								RHS:      parser.Identifier{Literal: "column3"},
+								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+								RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
 								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 							},
 						},
@@ -950,7 +950,7 @@ var updateTests = []struct {
 			Set: "set",
 			SetList: []parser.Expression{
 				parser.UpdateSet{
-					Field: parser.Identifier{Literal: "column2"},
+					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 					Value: parser.NewString("update"),
 				},
 			},
@@ -974,13 +974,13 @@ var updateTests = []struct {
 			Set: "set",
 			SetList: []parser.Expression{
 				parser.UpdateSet{
-					Field: parser.Identifier{Literal: "column1"},
+					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					Value: parser.NewString("update"),
 				},
 			},
 			WhereClause: parser.WhereClause{
 				Filter: parser.Comparison{
-					LHS:      parser.Identifier{Literal: "notexist"},
+					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 					RHS:      parser.NewInteger(2),
 					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 				},
@@ -998,8 +998,8 @@ var updateTests = []struct {
 			Set: "set",
 			SetList: []parser.Expression{
 				parser.UpdateSet{
-					Field: parser.Identifier{Literal: "column2"},
-					Value: parser.Identifier{Literal: "column4"},
+					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+					Value: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}},
 				},
 			},
 			FromClause: parser.FromClause{
@@ -1015,8 +1015,8 @@ var updateTests = []struct {
 						},
 						Condition: parser.JoinCondition{
 							On: parser.Comparison{
-								LHS:      parser.Identifier{Literal: "column1"},
-								RHS:      parser.Identifier{Literal: "column3"},
+								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+								RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
 								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 							},
 						},
@@ -1036,13 +1036,13 @@ var updateTests = []struct {
 			Set: "set",
 			SetList: []parser.Expression{
 				parser.UpdateSet{
-					Field: parser.Identifier{Literal: "notexist"},
+					Field: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 					Value: parser.NewString("update"),
 				},
 			},
 			WhereClause: parser.WhereClause{
 				Filter: parser.Comparison{
-					LHS:      parser.Identifier{Literal: "column1"},
+					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					RHS:      parser.NewInteger(2),
 					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 				},
@@ -1060,13 +1060,13 @@ var updateTests = []struct {
 			Set: "set",
 			SetList: []parser.Expression{
 				parser.UpdateSet{
-					Field: parser.Identifier{Literal: "column1"},
-					Value: parser.Identifier{Literal: "notexist"},
+					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 				},
 			},
 			WhereClause: parser.WhereClause{
 				Filter: parser.Comparison{
-					LHS:      parser.Identifier{Literal: "column1"},
+					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					RHS:      parser.NewInteger(2),
 					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 				},
@@ -1084,8 +1084,8 @@ var updateTests = []struct {
 			Set: "set",
 			SetList: []parser.Expression{
 				parser.UpdateSet{
-					Field: parser.Identifier{Literal: "column2"},
-					Value: parser.Identifier{Literal: "column4"},
+					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+					Value: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}},
 				},
 			},
 			FromClause: parser.FromClause{
@@ -1152,7 +1152,7 @@ var deleteTests = []struct {
 			},
 			WhereClause: parser.WhereClause{
 				Filter: parser.Comparison{
-					LHS:      parser.Identifier{Literal: "column1"},
+					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					RHS:      parser.NewInteger(2),
 					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 				},
@@ -1199,8 +1199,8 @@ var deleteTests = []struct {
 						},
 						Condition: parser.JoinCondition{
 							On: parser.Comparison{
-								LHS:      parser.Identifier{Literal: "column1"},
-								RHS:      parser.Identifier{Literal: "column3"},
+								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+								RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
 								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 							},
 						},
@@ -1242,8 +1242,8 @@ var deleteTests = []struct {
 						},
 						Condition: parser.JoinCondition{
 							On: parser.Comparison{
-								LHS:      parser.Identifier{Literal: "column1"},
-								RHS:      parser.Identifier{Literal: "column3"},
+								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+								RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
 								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 							},
 						},
@@ -1266,7 +1266,7 @@ var deleteTests = []struct {
 			},
 			WhereClause: parser.WhereClause{
 				Filter: parser.Comparison{
-					LHS:      parser.Identifier{Literal: "column1"},
+					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					RHS:      parser.NewInteger(2),
 					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 				},
@@ -1287,8 +1287,8 @@ var deleteTests = []struct {
 			},
 			WhereClause: parser.WhereClause{
 				Filter: parser.Comparison{
-					LHS:      parser.Identifier{Literal: "column1"},
-					RHS:      parser.Identifier{Literal: "notexist"},
+					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 				},
 			},
@@ -1315,8 +1315,8 @@ var deleteTests = []struct {
 						},
 						Condition: parser.JoinCondition{
 							On: parser.Comparison{
-								LHS:      parser.Identifier{Literal: "column1"},
-								RHS:      parser.Identifier{Literal: "column3"},
+								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+								RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
 								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 							},
 						},
@@ -1524,7 +1524,7 @@ var addColumnsTests = []struct {
 			},
 			Position: parser.ColumnPosition{
 				Position: parser.Token{Token: parser.AFTER},
-				Column:   parser.Identifier{Literal: "column1"},
+				Column:   parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 		},
 		Result: &View{
@@ -1571,7 +1571,7 @@ var addColumnsTests = []struct {
 			},
 			Position: parser.ColumnPosition{
 				Position: parser.Token{Token: parser.BEFORE},
-				Column:   parser.Identifier{Literal: "column2"},
+				Column:   parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 		},
 		Result: &View{
@@ -1633,7 +1633,7 @@ var addColumnsTests = []struct {
 			},
 			Position: parser.ColumnPosition{
 				Position: parser.Token{Token: parser.BEFORE},
-				Column:   parser.Identifier{Literal: "notexist"},
+				Column:   parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
 		Error: "identifier = notexist: field does not exist",
@@ -1664,11 +1664,11 @@ var addColumnsTests = []struct {
 				},
 				parser.ColumnDefault{
 					Column: parser.Identifier{Literal: "column4"},
-					Value:  parser.Identifier{Literal: "notexist.column1"},
+					Value:  parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 				},
 			},
 		},
-		Error: "identifier = notexist.column1: field does not exist",
+		Error: "identifier = notexist: field does not exist",
 	},
 }
 
@@ -1708,7 +1708,7 @@ var dropColumnsTests = []struct {
 		Query: parser.DropColumns{
 			Table: parser.Identifier{Literal: "table1"},
 			Columns: []parser.Expression{
-				parser.Identifier{Literal: "column2"},
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 		},
 		Result: &View{
@@ -1736,7 +1736,7 @@ var dropColumnsTests = []struct {
 		Query: parser.DropColumns{
 			Table: parser.Identifier{Literal: "notexist"},
 			Columns: []parser.Expression{
-				parser.Identifier{Literal: "column2"},
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 		},
 		Error: "file notexist does not exist",
@@ -1746,7 +1746,7 @@ var dropColumnsTests = []struct {
 		Query: parser.DropColumns{
 			Table: parser.Identifier{Literal: "table1"},
 			Columns: []parser.Expression{
-				parser.Identifier{Literal: "notexist"},
+				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
 		Error: "identifier = notexist: field does not exist",
@@ -1788,7 +1788,7 @@ var renameColumnTests = []struct {
 		Name: "Rename Column",
 		Query: parser.RenameColumn{
 			Table: parser.Identifier{Literal: "table1"},
-			Old:   parser.Identifier{Literal: "column2"},
+			Old:   parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			New:   parser.Identifier{Literal: "newcolumn"},
 		},
 		Result: &View{
@@ -1818,7 +1818,7 @@ var renameColumnTests = []struct {
 		Name: "Rename Column Load Error",
 		Query: parser.RenameColumn{
 			Table: parser.Identifier{Literal: "notexist"},
-			Old:   parser.Identifier{Literal: "column2"},
+			Old:   parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			New:   parser.Identifier{Literal: "newcolumn"},
 		},
 		Error: "file notexist does not exist",
@@ -1827,7 +1827,7 @@ var renameColumnTests = []struct {
 		Name: "Rename Column Field Duplicate Error",
 		Query: parser.RenameColumn{
 			Table: parser.Identifier{Literal: "table1"},
-			Old:   parser.Identifier{Literal: "column2"},
+			Old:   parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			New:   parser.Identifier{Literal: "column1"},
 		},
 		Error: "field column1 is duplicate",
@@ -1836,7 +1836,7 @@ var renameColumnTests = []struct {
 		Name: "Rename Column Field Does Not Exist Error",
 		Query: parser.RenameColumn{
 			Table: parser.Identifier{Literal: "table1"},
-			Old:   parser.Identifier{Literal: "notexist"},
+			Old:   parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			New:   parser.Identifier{Literal: "newcolumn"},
 		},
 		Error: "identifier = notexist: field does not exist",

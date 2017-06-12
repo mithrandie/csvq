@@ -514,8 +514,8 @@ func (view *View) group(items []parser.Expression) error {
 	view.Records = records
 	view.isGrouped = true
 	for _, item := range items {
-		if ident, ok := item.(parser.Identifier); ok {
-			idx, _ := view.FieldIndex(ident)
+		if fieldRef, ok := item.(parser.FieldReference); ok {
+			idx, _ := view.FieldIndex(fieldRef)
 			view.Header[idx].IsGroupKey = true
 		}
 	}
@@ -578,7 +578,7 @@ func (view *View) Select(clause parser.SelectClause) error {
 				if err != nil {
 					return nil, err
 				}
-				if _, ok := field.Object.(parser.Identifier); !ok {
+				if _, ok := field.Object.(parser.FieldReference); !ok {
 					record = append(record, NewCell(primary))
 				}
 			}
@@ -613,9 +613,8 @@ func (view *View) Select(clause parser.SelectClause) error {
 	view.selectFields = make([]int, len(fields))
 	for i, f := range fields {
 		field := f.(parser.Field)
-		if ident, ok := field.Object.(parser.Identifier); ok {
-			ref, field, _ := ident.FieldRef()
-			idx, err := view.Header.Contains(ref, field)
+		if fieldRef, ok := field.Object.(parser.FieldReference); ok {
+			idx, err := view.Header.Contains(fieldRef)
 			if err != nil {
 				return err
 			}
@@ -673,14 +672,14 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 	for _, v := range clause.Items {
 		oi := v.(parser.OrderItem)
 		switch oi.Item.(type) {
-		case parser.Identifier:
-			idx, err := view.FieldIndex(oi.Item.(parser.Identifier))
+		case parser.FieldReference:
+			idx, err := view.FieldIndex(oi.Item.(parser.FieldReference))
 			if err != nil {
 				return err
 			}
 			view.sortIndices = append(view.sortIndices, idx)
 		default:
-			idx, err := view.Header.Contains("", oi.Item.String())
+			idx, err := view.Header.ContainsAlias(oi.Item.String())
 			if err != nil {
 				for i := range view.Records {
 					var filter Filter = append([]FilterRecord{{View: view, RecordIndex: i}}, view.parentFilter...)
@@ -823,18 +822,14 @@ func (view *View) Fix() {
 	view.sortDirections = []int(nil)
 }
 
-func (view *View) FieldIndex(ident parser.Identifier) (int, error) {
-	ref, field, err := ident.FieldRef()
-	if err != nil {
-		return -1, err
-	}
-	return view.Header.Contains(ref, field)
+func (view *View) FieldIndex(fieldRef parser.FieldReference) (int, error) {
+	return view.Header.Contains(fieldRef)
 }
 
 func (view *View) FieldIndices(fields []parser.Expression) ([]int, error) {
 	indices := make([]int, len(fields))
 	for i, v := range fields {
-		idx, err := view.FieldIndex(v.(parser.Identifier))
+		idx, err := view.FieldIndex(v.(parser.FieldReference))
 		if err != nil {
 			return nil, err
 		}
@@ -843,8 +838,8 @@ func (view *View) FieldIndices(fields []parser.Expression) ([]int, error) {
 	return indices, nil
 }
 
-func (view *View) FieldRef(ident parser.Identifier) (string, error) {
-	idx, err := view.FieldIndex(ident)
+func (view *View) FieldViewName(fieldRef parser.FieldReference) (string, error) {
+	idx, err := view.FieldIndex(fieldRef)
 	if err != nil {
 		return "", err
 	}
@@ -852,7 +847,11 @@ func (view *View) FieldRef(ident parser.Identifier) (string, error) {
 }
 
 func (view *View) InternalRecordId(ref string, recordIndex int) (int, error) {
-	idx, err := view.Header.Contains(ref, INTERNAL_ID_FIELD)
+	fieldRef := parser.FieldReference{
+		View:   parser.Identifier{Literal: ref},
+		Column: parser.Identifier{Literal: INTERNAL_ID_COLUMN},
+	}
+	idx, err := view.Header.Contains(fieldRef)
 	if err != nil {
 		return -1, errors.New("internal record id does not exist")
 	}

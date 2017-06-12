@@ -421,23 +421,22 @@ func TestIdentifier_String(t *testing.T) {
 	}
 }
 
-func TestIdentifier_ColumnRef(t *testing.T) {
-	i := Identifier{Literal: "tbl.column.column2"}
-	_, _, err := i.FieldRef()
-	if err == nil {
-		t.Errorf("column ref: no errors, want error %q for %#v", "incorrect format", i)
+func TestFieldReference_String(t *testing.T) {
+	e := FieldReference{
+		View:   Identifier{Literal: "table1"},
+		Column: Identifier{Literal: "column1"},
+	}
+	expect := "table1.column1"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 
-	i = Identifier{Literal: "tbl.column"}
-	ref, column, err := i.FieldRef()
-	if ref != "tbl" || column != "column" {
-		t.Errorf("column ref: reference = %q, column = %q, want reference = %q, column = %q for %#v", ref, column, "tbl", "column", i)
+	e = FieldReference{
+		Column: Identifier{Literal: "column1"},
 	}
-
-	i = Identifier{Literal: "column"}
-	ref, column, err = i.FieldRef()
-	if ref != "" || column != "column" {
-		t.Errorf("column ref: reference = %q, column = %q, want reference = %q, column = %q for %#v", ref, column, "tbl", "column", i)
+	expect = "column1"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 }
 
@@ -1393,11 +1392,11 @@ func TestUpdateQuery_String(t *testing.T) {
 		Set: "set",
 		SetList: []Expression{
 			UpdateSet{
-				Field: Identifier{Literal: "column1"},
+				Field: FieldReference{Column: Identifier{Literal: "column1"}},
 				Value: NewInteger(1),
 			},
 			UpdateSet{
-				Field: Identifier{Literal: "column2"},
+				Field: FieldReference{Column: Identifier{Literal: "column2"}},
 				Value: NewInteger(2),
 			},
 		},
@@ -1426,7 +1425,7 @@ func TestUpdateQuery_String(t *testing.T) {
 
 func TestUpdateSet_String(t *testing.T) {
 	e := UpdateSet{
-		Field: Identifier{Literal: "column1"},
+		Field: FieldReference{Column: Identifier{Literal: "column1"}},
 		Value: NewInteger(1),
 	}
 	expect := "column1 = 1"
@@ -1550,7 +1549,7 @@ func TestRenameColumn_String(t *testing.T) {
 		AlterTable: "alter table",
 		Table:      Identifier{Literal: "table1"},
 		Rename:     "rename",
-		Old:        Identifier{Literal: "oldcolumn"},
+		Old:        FieldReference{Column: Identifier{Literal: "oldcolumn"}},
 		To:         "to",
 		New:        Identifier{Literal: "newcolumn"},
 	}

@@ -30,6 +30,7 @@ package parser
 %type<expression>  order_by_clause
 %type<expression>  limit_clause
 %type<primary>     primary
+%type<expression>  field_reference
 %type<expression>  value
 %type<expression>  order_item
 %type<expression>  subquery
@@ -50,6 +51,7 @@ package parser
 %type<expression>  case
 %type<expression>  case_value
 %type<expression>  case_else
+%type<expressions> field_references
 %type<expressions> values
 %type<expressions> order_items
 %type<expressions> tables
@@ -296,8 +298,18 @@ primary
         $$ = $1
     }
 
-value
+field_reference
     : identifier
+    {
+        $$ = FieldReference{Column: $1}
+    }
+    | identifier '.' identifier
+    {
+        $$ = FieldReference{View: $1, Column: $3}
+    }
+
+value
+    : field_reference
     {
         $$ = $1
     }
@@ -639,6 +651,16 @@ case_else
         $$ = CaseElse{Else: $1.Literal, Result: $2}
     }
 
+field_references
+    : field_reference
+    {
+        $$ = []Expression{$1}
+    }
+    | field_reference ',' field_references
+    {
+        $$ = append([]Expression{$1}, $3...)
+    }
+
 values
     : value
     {
@@ -714,7 +736,7 @@ insert_query
     {
         $$ = InsertQuery{Insert: $1.Literal, Into: $2.Literal, Table: $3, Values: $4.Literal, ValuesList: $5}
     }
-    | INSERT INTO identifier '(' using_fields ')' VALUES insert_values_list
+    | INSERT INTO identifier '(' field_references ')' VALUES insert_values_list
     {
         $$ = InsertQuery{Insert: $1.Literal, Into: $2.Literal, Table: $3, Fields: $5, Values: $7.Literal, ValuesList: $8}
     }
@@ -722,7 +744,7 @@ insert_query
     {
         $$ = InsertQuery{Insert: $1.Literal, Into: $2.Literal, Table: $3, Query: $4.(SelectQuery)}
     }
-    | INSERT INTO identifier '(' using_fields ')' select_query
+    | INSERT INTO identifier '(' field_references ')' select_query
     {
         $$ = InsertQuery{Insert: $1.Literal, Into: $2.Literal, Table: $3, Fields: $5, Query: $7.(SelectQuery)}
     }
@@ -750,9 +772,9 @@ update_query
     }
 
 update_set
-    : identifier '=' value
+    : field_reference '=' value
     {
-        $$ = UpdateSet{Field: $1, Value: $3}
+        $$ = UpdateSet{Field: $1.(FieldReference), Value: $3}
     }
 
 update_set_list
@@ -826,29 +848,29 @@ column_position
     {
         $$ = ColumnPosition{Position: $1}
     }
-    | AFTER identifier
+    | AFTER field_reference
     {
         $$ = ColumnPosition{Position: $1, Column: $2}
     }
-    | BEFORE identifier
+    | BEFORE field_reference
     {
         $$ = ColumnPosition{Position: $1, Column: $2}
     }
 
 drop_columns
-    : ALTER TABLE identifier DROP identifier
+    : ALTER TABLE identifier DROP field_reference
     {
         $$ = DropColumns{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Drop: $4.Literal, Columns: []Expression{$5}}
     }
-    | ALTER TABLE identifier DROP '(' using_fields ')'
+    | ALTER TABLE identifier DROP '(' field_references ')'
     {
         $$ = DropColumns{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Drop: $4.Literal, Columns: $6}
     }
 
 rename_column
-    : ALTER TABLE identifier RENAME identifier TO identifier
+    : ALTER TABLE identifier RENAME field_reference TO identifier
     {
-        $$ = RenameColumn{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Rename: $4.Literal, Old: $5, To: $6.Literal, New: $7}
+        $$ = RenameColumn{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Rename: $4.Literal, Old: $5.(FieldReference), To: $6.Literal, New: $7}
     }
 
 commit

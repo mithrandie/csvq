@@ -15,10 +15,10 @@ var parseTests = []struct {
 		Input: "select foo; select bar;",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: Identifier{Literal: "foo"}}}},
+				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: FieldReference{Column: Identifier{Literal: "foo"}}}}},
 			},
 			SelectQuery{
-				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: Identifier{Literal: "bar"}}}},
+				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: FieldReference{Column: Identifier{Literal: "bar"}}}}},
 			},
 		},
 	},
@@ -50,7 +50,7 @@ var parseTests = []struct {
 					Select: "select",
 					Fields: []Expression{
 						Field{
-							Object: Identifier{Literal: "c1"},
+							Object: FieldReference{Column: Identifier{Literal: "c1"}},
 						},
 					},
 				},
@@ -161,8 +161,8 @@ var parseTests = []struct {
 				GroupByClause: GroupByClause{
 					GroupBy: "group by",
 					Items: []Expression{
-						Identifier{Literal: "column1"},
-						Identifier{Literal: "column2"},
+						FieldReference{Column: Identifier{Literal: "column1"}},
+						FieldReference{Column: Identifier{Literal: "column2"}},
 					},
 				},
 				HavingClause: HavingClause{
@@ -176,9 +176,9 @@ var parseTests = []struct {
 				OrderByClause: OrderByClause{
 					OrderBy: "order by",
 					Items: []Expression{
-						OrderItem{Item: Identifier{Literal: "column4"}},
-						OrderItem{Item: Identifier{Literal: "column5"}, Direction: Token{Token: DESC, Literal: "desc"}},
-						OrderItem{Item: Identifier{Literal: "column6"}, Direction: Token{Token: ASC, Literal: "asc"}},
+						OrderItem{Item: FieldReference{Column: Identifier{Literal: "column4"}}},
+						OrderItem{Item: FieldReference{Column: Identifier{Literal: "column5"}}, Direction: Token{Token: DESC, Literal: "desc"}},
+						OrderItem{Item: FieldReference{Column: Identifier{Literal: "column6"}}, Direction: Token{Token: ASC, Literal: "asc"}},
 					},
 				},
 				LimitClause: LimitClause{
@@ -210,7 +210,7 @@ var parseTests = []struct {
 				SelectClause: SelectClause{
 					Select: "select",
 					Fields: []Expression{
-						Field{Object: Identifier{Literal: "ident"}},
+						Field{Object: FieldReference{Column: Identifier{Literal: "ident"}}},
 						Field{Object: NewString("foo")},
 						Field{Object: NewIntegerFromString("1")},
 						Field{Object: NewIntegerFromString("-1")},
@@ -234,7 +234,7 @@ var parseTests = []struct {
 					Select: "select",
 					Fields: []Expression{
 						Field{Object: Concat{Items: []Expression{
-							Identifier{Literal: "ident"},
+							FieldReference{Column: Identifier{Literal: "ident"}},
 							NewString("foo"),
 							NewString("bar"),
 						}}},
@@ -251,7 +251,7 @@ var parseTests = []struct {
 					Select: "select",
 					Fields: []Expression{
 						Field{Object: Comparison{
-							LHS:      Identifier{Literal: "column1"},
+							LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
 							Operator: Token{Token: COMPARISON_OP, Literal: "="},
 							RHS:      NewInteger(1),
 						}},
@@ -268,7 +268,7 @@ var parseTests = []struct {
 					Select: "select",
 					Fields: []Expression{
 						Field{Object: Comparison{
-							LHS:      Identifier{Literal: "column1"},
+							LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
 							Operator: Token{Token: COMPARISON_OP, Literal: "<"},
 							RHS:      NewInteger(1),
 						}},
@@ -286,7 +286,7 @@ var parseTests = []struct {
 					Fields: []Expression{
 						Field{Object: Is{
 							Is:       "is",
-							LHS:      Identifier{Literal: "column1"},
+							LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
 							RHS:      NewNullFromString("null"),
 							Negation: Token{Token: NOT, Literal: "not"},
 						}},
@@ -304,7 +304,7 @@ var parseTests = []struct {
 					Fields: []Expression{
 						Field{Object: Is{
 							Is:  "is",
-							LHS: Identifier{Literal: "column1"},
+							LHS: FieldReference{Column: Identifier{Literal: "column1"}},
 							RHS: NewTernaryFromString("true"),
 						}},
 					},
@@ -322,7 +322,7 @@ var parseTests = []struct {
 						Field{Object: Between{
 							Between:  "between",
 							And:      "and",
-							LHS:      Identifier{Literal: "column1"},
+							LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
 							Low:      NewIntegerFromString("-10"),
 							High:     NewIntegerFromString("10"),
 							Negation: Token{Token: NOT, Literal: "not"},
@@ -341,7 +341,7 @@ var parseTests = []struct {
 					Fields: []Expression{
 						Field{Object: In{
 							In:  "in",
-							LHS: Identifier{Literal: "column1"},
+							LHS: FieldReference{Column: Identifier{Literal: "column1"}},
 							List: []Expression{
 								NewIntegerFromString("1"),
 								NewIntegerFromString("2"),
@@ -363,7 +363,7 @@ var parseTests = []struct {
 					Fields: []Expression{
 						Field{Object: In{
 							In:  "in",
-							LHS: Identifier{Literal: "column1"},
+							LHS: FieldReference{Column: Identifier{Literal: "column1"}},
 							Query: Subquery{
 								Query: SelectQuery{
 									SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
@@ -384,7 +384,7 @@ var parseTests = []struct {
 					Fields: []Expression{
 						Field{Object: Like{
 							Like:     "like",
-							LHS:      Identifier{Literal: "column1"},
+							LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
 							Pattern:  String{literal: "pattern"},
 							Negation: Token{Token: NOT, Literal: "not"},
 						}},
@@ -402,7 +402,7 @@ var parseTests = []struct {
 					Fields: []Expression{
 						Field{Object: Any{
 							Any:      "any",
-							LHS:      Identifier{Literal: "column1"},
+							LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
 							Operator: Token{Token: COMPARISON_OP, Literal: "="},
 							Query: Subquery{
 								Query: SelectQuery{
@@ -424,7 +424,7 @@ var parseTests = []struct {
 					Fields: []Expression{
 						Field{Object: All{
 							All:      "all",
-							LHS:      Identifier{Literal: "column1"},
+							LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
 							Operator: Token{Token: COMPARISON_OP, Literal: "="},
 							Query: Subquery{
 								Query: SelectQuery{
@@ -465,7 +465,7 @@ var parseTests = []struct {
 					Select: "select",
 					Fields: []Expression{
 						Field{Object: Arithmetic{
-							LHS:      Identifier{Literal: "column1"},
+							LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
 							Operator: int('+'),
 							RHS:      NewIntegerFromString("1"),
 						}},
@@ -482,7 +482,7 @@ var parseTests = []struct {
 					Select: "select",
 					Fields: []Expression{
 						Field{Object: Arithmetic{
-							LHS:      Identifier{Literal: "column1"},
+							LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
 							Operator: int('-'),
 							RHS:      NewIntegerFromString("1"),
 						}},
@@ -499,7 +499,7 @@ var parseTests = []struct {
 					Select: "select",
 					Fields: []Expression{
 						Field{Object: Arithmetic{
-							LHS:      Identifier{Literal: "column1"},
+							LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
 							Operator: int('*'),
 							RHS:      NewIntegerFromString("1"),
 						}},
@@ -516,7 +516,7 @@ var parseTests = []struct {
 					Select: "select",
 					Fields: []Expression{
 						Field{Object: Arithmetic{
-							LHS:      Identifier{Literal: "column1"},
+							LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
 							Operator: int('/'),
 							RHS:      NewIntegerFromString("1"),
 						}},
@@ -533,7 +533,7 @@ var parseTests = []struct {
 					Select: "select",
 					Fields: []Expression{
 						Field{Object: Arithmetic{
-							LHS:      Identifier{Literal: "column1"},
+							LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
 							Operator: int('%'),
 							RHS:      NewIntegerFromString("1"),
 						}},
@@ -712,7 +712,7 @@ var parseTests = []struct {
 						Field{Object: Case{
 							Case:  "case",
 							End:   "end",
-							Value: Identifier{Literal: "column1"},
+							Value: FieldReference{Column: Identifier{Literal: "column1"}},
 							When: []Expression{
 								CaseWhen{
 									When:      "when",
@@ -783,8 +783,8 @@ var parseTests = []struct {
 							Name: "count",
 							Option: Option{
 								Args: []Expression{
-									Identifier{Literal: "column1"},
-									Identifier{Literal: "column2"},
+									FieldReference{Column: Identifier{Literal: "column1"}},
+									FieldReference{Column: Identifier{Literal: "column2"}},
 								},
 							},
 						}},
@@ -802,11 +802,11 @@ var parseTests = []struct {
 					Fields: []Expression{
 						Field{Object: GroupConcat{
 							GroupConcat: "group_concat",
-							Option:      Option{Args: []Expression{Identifier{Literal: "column1"}}},
+							Option:      Option{Args: []Expression{FieldReference{Column: Identifier{Literal: "column1"}}}},
 							OrderBy: OrderByClause{
 								OrderBy: "order by",
 								Items: []Expression{
-									OrderItem{Item: Identifier{Literal: "column1"}},
+									OrderItem{Item: FieldReference{Column: Identifier{Literal: "column1"}}},
 								},
 							},
 						}},
@@ -824,7 +824,7 @@ var parseTests = []struct {
 					Fields: []Expression{
 						Field{Object: GroupConcat{
 							GroupConcat:  "group_concat",
-							Option:       Option{Args: []Expression{Identifier{Literal: "column1"}}},
+							Option:       Option{Args: []Expression{FieldReference{Column: Identifier{Literal: "column1"}}}},
 							SeparatorLit: "separator",
 							Separator:    ",",
 						}},
@@ -891,9 +891,9 @@ var parseTests = []struct {
 								Condition: JoinCondition{
 									Literal: "on",
 									On: Comparison{
-										LHS:      Identifier{Literal: "table1.id"},
+										LHS:      FieldReference{View: Identifier{Literal: "table1"}, Column: Identifier{Literal: "id"}},
 										Operator: Token{Token: COMPARISON_OP, Literal: "="},
-										RHS:      Identifier{Literal: "table2.id"},
+										RHS:      FieldReference{View: Identifier{Literal: "table2"}, Column: Identifier{Literal: "id"}},
 									},
 								},
 							},
@@ -1071,8 +1071,8 @@ var parseTests = []struct {
 				Into:   "into",
 				Table:  Identifier{Literal: "table1"},
 				Fields: []Expression{
-					Identifier{Literal: "column1"},
-					Identifier{Literal: "column2"},
+					FieldReference{Column: Identifier{Literal: "column1"}},
+					FieldReference{Column: Identifier{Literal: "column2"}},
 				},
 				Values: "values",
 				ValuesList: []Expression{
@@ -1119,8 +1119,8 @@ var parseTests = []struct {
 				Into:   "into",
 				Table:  Identifier{Literal: "table1"},
 				Fields: []Expression{
-					Identifier{Literal: "column1"},
-					Identifier{Literal: "column2"},
+					FieldReference{Column: Identifier{Literal: "column1"}},
+					FieldReference{Column: Identifier{Literal: "column2"}},
 				},
 				Query: SelectQuery{
 					SelectClause: SelectClause{
@@ -1144,8 +1144,8 @@ var parseTests = []struct {
 				},
 				Set: "set",
 				SetList: []Expression{
-					UpdateSet{Field: Identifier{Literal: "column1"}, Value: NewInteger(1)},
-					UpdateSet{Field: Identifier{Literal: "column2"}, Value: NewInteger(2)},
+					UpdateSet{Field: FieldReference{Column: Identifier{Literal: "column1"}}, Value: NewInteger(1)},
+					UpdateSet{Field: FieldReference{Column: Identifier{Literal: "column2"}}, Value: NewInteger(2)},
 				},
 				FromClause: FromClause{
 					From: "from",
@@ -1278,7 +1278,7 @@ var parseTests = []struct {
 				},
 				Position: ColumnPosition{
 					Position: Token{Token: AFTER, Literal: "after"},
-					Column:   Identifier{Literal: "column2"},
+					Column:   FieldReference{Column: Identifier{Literal: "column2"}},
 				},
 			},
 		},
@@ -1297,7 +1297,7 @@ var parseTests = []struct {
 				},
 				Position: ColumnPosition{
 					Position: Token{Token: BEFORE, Literal: "before"},
-					Column:   Identifier{Literal: "column2"},
+					Column:   FieldReference{Column: Identifier{Literal: "column2"}},
 				},
 			},
 		},
@@ -1309,7 +1309,7 @@ var parseTests = []struct {
 				AlterTable: "alter table",
 				Table:      Identifier{Literal: "table1"},
 				Drop:       "drop",
-				Columns:    []Expression{Identifier{Literal: "column1"}},
+				Columns:    []Expression{FieldReference{Column: Identifier{Literal: "column1"}}},
 			},
 		},
 	},
@@ -1320,7 +1320,10 @@ var parseTests = []struct {
 				AlterTable: "alter table",
 				Table:      Identifier{Literal: "table1"},
 				Drop:       "drop",
-				Columns:    []Expression{Identifier{Literal: "column1"}, Identifier{Literal: "column2"}},
+				Columns: []Expression{
+					FieldReference{Column: Identifier{Literal: "column1"}},
+					FieldReference{Column: Identifier{Literal: "column2"}},
+				},
 			},
 		},
 	},
@@ -1331,7 +1334,7 @@ var parseTests = []struct {
 				AlterTable: "alter table",
 				Table:      Identifier{Literal: "table1"},
 				Rename:     "rename",
-				Old:        Identifier{Literal: "column1"},
+				Old:        FieldReference{Column: Identifier{Literal: "column1"}},
 				To:         "to",
 				New:        Identifier{Literal: "column2"},
 			},

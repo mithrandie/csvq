@@ -379,7 +379,7 @@ func Update(query parser.UpdateQuery) ([]*View, error) {
 				return nil, err
 			}
 
-			viewref, err := view.FieldRef(uset.Field)
+			viewref, err := view.FieldViewName(uset.Field)
 			if err != nil {
 				return nil, err
 			}
@@ -549,7 +549,7 @@ func AddColumns(query parser.AddColumns) (*View, error) {
 	case parser.LAST:
 		insertPos = view.FieldLen()
 	default:
-		idx, err := view.FieldIndex(pos.Column.(parser.Identifier))
+		idx, err := view.FieldIndex(pos.Column.(parser.FieldReference))
 		if err != nil {
 			return nil, err
 		}
@@ -635,7 +635,7 @@ func DropColumns(query parser.DropColumns) (*View, error) {
 
 	dropIndices := make([]int, len(query.Columns))
 	for i, v := range query.Columns {
-		idx, err := view.FieldIndex(v.(parser.Identifier))
+		idx, err := view.FieldIndex(v.(parser.FieldReference))
 		if err != nil {
 			return nil, err
 		}

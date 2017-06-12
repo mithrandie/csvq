@@ -34,7 +34,7 @@ var filterEvaluateTests = []struct {
 		Result: parser.NewString("str"),
 	},
 	{
-		Name: "Identifier",
+		Name: "FieldReference",
 		Filter: []FilterRecord{
 			{
 				View: &View{
@@ -53,11 +53,11 @@ var filterEvaluateTests = []struct {
 				RecordIndex: 1,
 			},
 		},
-		Expr:   parser.Identifier{Literal: "column2"},
+		Expr:   parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 		Result: parser.NewString("strstr"),
 	},
 	{
-		Name: "Identifier ColumnNotExist Error",
+		Name: "FieldReference ColumnNotExist Error",
 		Filter: []FilterRecord{
 			{
 				View: &View{
@@ -76,11 +76,11 @@ var filterEvaluateTests = []struct {
 				RecordIndex: 1,
 			},
 		},
-		Expr:  parser.Identifier{Literal: "column3"},
+		Expr:  parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
 		Error: "identifier = column3: field does not exist",
 	},
 	{
-		Name: "Identifier FieldAmbigous Error",
+		Name: "FieldReference FieldAmbigous Error",
 		Filter: []FilterRecord{
 			{
 				View: &View{
@@ -99,11 +99,11 @@ var filterEvaluateTests = []struct {
 				RecordIndex: 1,
 			},
 		},
-		Expr:  parser.Identifier{Literal: "column1"},
+		Expr:  parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 		Error: "identifier = column1: field is ambiguous",
 	},
 	{
-		Name: "Identifier Not Group Key Error",
+		Name: "FieldReference Not Group Key Error",
 		Filter: []FilterRecord{
 			{
 				View: &View{
@@ -136,11 +136,11 @@ var filterEvaluateTests = []struct {
 				RecordIndex: 0,
 			},
 		},
-		Expr:  parser.Identifier{Literal: "column1"},
+		Expr:  parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 		Error: "identifier = column1: field is not a group key",
 	},
 	{
-		Name: "Identifier FieldNotExist Error with Multiple Tables",
+		Name: "FieldReference Fields Ambiguous Error with Multiple Tables",
 		Filter: []FilterRecord{
 			{
 				View: &View{
@@ -175,13 +175,8 @@ var filterEvaluateTests = []struct {
 				RecordIndex: 1,
 			},
 		},
-		Expr:  parser.Identifier{Literal: "column1"},
+		Expr:  parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 		Error: "identifier = column1: field is ambiguous",
-	},
-	{
-		Name:  "Identifier FieldRef Error",
-		Expr:  parser.Identifier{Literal: "table1.table2.column1"},
-		Error: "field identifier = table1.table2.column1, incorrect format",
 	},
 	{
 		Name: "Arithmetic",
@@ -195,7 +190,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Arithmetic LHS Error",
 		Expr: parser.Arithmetic{
-			LHS:      parser.Identifier{Literal: "notexist"},
+			LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			RHS:      parser.NewInteger(2),
 			Operator: '+',
 		},
@@ -205,7 +200,7 @@ var filterEvaluateTests = []struct {
 		Name: "Arithmetic RHS Error",
 		Expr: parser.Arithmetic{
 			LHS:      parser.NewInteger(1),
-			RHS:      parser.Identifier{Literal: "notexist"},
+			RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Operator: '+',
 		},
 		Error: "identifier = notexist: field does not exist",
@@ -227,7 +222,7 @@ var filterEvaluateTests = []struct {
 			Items: []parser.Expression{
 				parser.NewString("a"),
 				parser.NewString("b"),
-				parser.Identifier{Literal: "notexist"},
+				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
 		Error: "identifier = notexist: field does not exist",
@@ -255,7 +250,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Comparison LHS Error",
 		Expr: parser.Comparison{
-			LHS:      parser.Identifier{Literal: "notexist"},
+			LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			RHS:      parser.NewInteger(2),
 			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 		},
@@ -265,7 +260,7 @@ var filterEvaluateTests = []struct {
 		Name: "Comparison RHS Error",
 		Expr: parser.Comparison{
 			LHS:      parser.NewInteger(1),
-			RHS:      parser.Identifier{Literal: "notexist"},
+			RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 		},
 		Error: "identifier = notexist: field does not exist",
@@ -282,7 +277,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Is LHS Error",
 		Expr: parser.Is{
-			LHS:      parser.Identifier{Literal: "notexist"},
+			LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			RHS:      parser.NewNull(),
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
@@ -292,7 +287,7 @@ var filterEvaluateTests = []struct {
 		Name: "Is RHS Error",
 		Expr: parser.Is{
 			LHS:      parser.NewInteger(1),
-			RHS:      parser.Identifier{Literal: "notexist"},
+			RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
 		Error: "identifier = notexist: field does not exist",
@@ -310,7 +305,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Between LHS Error",
 		Expr: parser.Between{
-			LHS:      parser.Identifier{Literal: "notexist"},
+			LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Low:      parser.NewInteger(1),
 			High:     parser.NewInteger(3),
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
@@ -321,7 +316,7 @@ var filterEvaluateTests = []struct {
 		Name: "Between Low Error",
 		Expr: parser.Between{
 			LHS:      parser.NewInteger(2),
-			Low:      parser.Identifier{Literal: "notexist"},
+			Low:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			High:     parser.NewInteger(3),
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
@@ -332,7 +327,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Between{
 			LHS:      parser.NewInteger(2),
 			Low:      parser.NewInteger(1),
-			High:     parser.Identifier{Literal: "notexist"},
+			High:     parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
 		Error: "identifier = notexist: field does not exist",
@@ -353,7 +348,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "In LHS Error",
 		Expr: parser.In{
-			LHS: parser.Identifier{Literal: "notexist"},
+			LHS: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			List: []parser.Expression{
 				parser.NewInteger(1),
 				parser.NewInteger(2),
@@ -369,7 +364,7 @@ var filterEvaluateTests = []struct {
 			LHS: parser.NewInteger(2),
 			List: []parser.Expression{
 				parser.NewInteger(1),
-				parser.Identifier{Literal: "notexist"},
+				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 				parser.NewInteger(3),
 			},
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
@@ -399,7 +394,7 @@ var filterEvaluateTests = []struct {
 					SelectClause: parser.SelectClause{
 						Select: "select",
 						Fields: []parser.Expression{
-							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 						},
 					},
 					FromClause: parser.FromClause{
@@ -409,8 +404,8 @@ var filterEvaluateTests = []struct {
 					},
 					WhereClause: parser.WhereClause{
 						Filter: parser.Comparison{
-							LHS:      parser.Identifier{Literal: "column2"},
-							RHS:      parser.Identifier{Literal: "table2.column4"},
+							LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+							RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column4"}},
 							Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 						},
 					},
@@ -439,8 +434,8 @@ var filterEvaluateTests = []struct {
 					},
 					WhereClause: parser.WhereClause{
 						Filter: parser.Comparison{
-							LHS:      parser.Identifier{Literal: "notexist"},
-							RHS:      parser.Identifier{Literal: "table2.column4"},
+							LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+							RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column4"}},
 							Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 						},
 					},
@@ -459,8 +454,8 @@ var filterEvaluateTests = []struct {
 					SelectClause: parser.SelectClause{
 						Select: "select",
 						Fields: []parser.Expression{
-							parser.Field{Object: parser.Identifier{Literal: "column1"}},
-							parser.Field{Object: parser.Identifier{Literal: "column2"}},
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 						},
 					},
 					FromClause: parser.FromClause{
@@ -482,7 +477,7 @@ var filterEvaluateTests = []struct {
 					SelectClause: parser.SelectClause{
 						Select: "select",
 						Fields: []parser.Expression{
-							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 						},
 					},
 					FromClause: parser.FromClause{
@@ -507,7 +502,7 @@ var filterEvaluateTests = []struct {
 					SelectClause: parser.SelectClause{
 						Select: "select",
 						Fields: []parser.Expression{
-							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 						},
 					},
 					FromClause: parser.FromClause{
@@ -523,13 +518,13 @@ var filterEvaluateTests = []struct {
 	}, {
 		Name: "Any LHS Error",
 		Expr: parser.Any{
-			LHS: parser.Identifier{Literal: "notexist"},
+			LHS: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Query: parser.Subquery{
 				Query: parser.SelectQuery{
 					SelectClause: parser.SelectClause{
 						Select: "select",
 						Fields: []parser.Expression{
-							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 						},
 					},
 					FromClause: parser.FromClause{
@@ -553,7 +548,7 @@ var filterEvaluateTests = []struct {
 					SelectClause: parser.SelectClause{
 						Select: "select",
 						Fields: []parser.Expression{
-							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 						},
 					},
 					FromClause: parser.FromClause{
@@ -563,8 +558,8 @@ var filterEvaluateTests = []struct {
 					},
 					WhereClause: parser.WhereClause{
 						Filter: parser.Comparison{
-							LHS:      parser.Identifier{Literal: "notexist"},
-							RHS:      parser.Identifier{Literal: "table2.column4"},
+							LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+							RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column4"}},
 							Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 						},
 					},
@@ -583,7 +578,7 @@ var filterEvaluateTests = []struct {
 					SelectClause: parser.SelectClause{
 						Select: "select",
 						Fields: []parser.Expression{
-							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 						},
 					},
 					FromClause: parser.FromClause{
@@ -599,13 +594,13 @@ var filterEvaluateTests = []struct {
 	}, {
 		Name: "All LHS Error",
 		Expr: parser.All{
-			LHS: parser.Identifier{Literal: "notexist"},
+			LHS: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Query: parser.Subquery{
 				Query: parser.SelectQuery{
 					SelectClause: parser.SelectClause{
 						Select: "select",
 						Fields: []parser.Expression{
-							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 						},
 					},
 					FromClause: parser.FromClause{
@@ -629,7 +624,7 @@ var filterEvaluateTests = []struct {
 					SelectClause: parser.SelectClause{
 						Select: "select",
 						Fields: []parser.Expression{
-							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 						},
 					},
 					FromClause: parser.FromClause{
@@ -639,8 +634,8 @@ var filterEvaluateTests = []struct {
 					},
 					WhereClause: parser.WhereClause{
 						Filter: parser.Comparison{
-							LHS:      parser.Identifier{Literal: "notexist"},
-							RHS:      parser.Identifier{Literal: "table2.column4"},
+							LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+							RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column4"}},
 							Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 						},
 					},
@@ -662,7 +657,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Like LHS Error",
 		Expr: parser.Like{
-			LHS:      parser.Identifier{Literal: "notexist"},
+			LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Pattern:  parser.NewString("_bc%"),
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
@@ -672,7 +667,7 @@ var filterEvaluateTests = []struct {
 		Name: "Like Pattern Error",
 		Expr: parser.Like{
 			LHS:      parser.NewString("abcdefg"),
-			Pattern:  parser.Identifier{Literal: "notexist"},
+			Pattern:  parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
 		Error: "identifier = notexist: field does not exist",
@@ -699,7 +694,7 @@ var filterEvaluateTests = []struct {
 					SelectClause: parser.SelectClause{
 						Select: "select",
 						Fields: []parser.Expression{
-							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 						},
 					},
 					FromClause: parser.FromClause{
@@ -709,8 +704,8 @@ var filterEvaluateTests = []struct {
 					},
 					WhereClause: parser.WhereClause{
 						Filter: parser.Comparison{
-							LHS:      parser.Identifier{Literal: "column2"},
-							RHS:      parser.Identifier{Literal: "table2.column4"},
+							LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+							RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column4"}},
 							Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 						},
 					},
@@ -727,8 +722,7 @@ var filterEvaluateTests = []struct {
 					SelectClause: parser.SelectClause{
 						Select: "select",
 						Fields: []parser.Expression{
-							//parser.Field{Object: parser.NewInteger(1)},
-							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 						},
 					},
 					FromClause: parser.FromClause{
@@ -752,8 +746,7 @@ var filterEvaluateTests = []struct {
 					SelectClause: parser.SelectClause{
 						Select: "select",
 						Fields: []parser.Expression{
-							//parser.Field{Object: parser.NewInteger(1)},
-							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 						},
 					},
 					FromClause: parser.FromClause{
@@ -763,7 +756,7 @@ var filterEvaluateTests = []struct {
 					},
 					WhereClause: parser.WhereClause{
 						Filter: parser.Comparison{
-							LHS:      parser.Identifier{Literal: "noexist"},
+							LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 							RHS:      parser.NewString("str2"),
 							Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 						},
@@ -771,7 +764,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = noexist: field does not exist",
+		Error: "identifier = notexist: field does not exist",
 	},
 	{
 		Name: "Subquery",
@@ -794,7 +787,7 @@ var filterEvaluateTests = []struct {
 				SelectClause: parser.SelectClause{
 					Select: "select",
 					Fields: []parser.Expression{
-						parser.Field{Object: parser.Identifier{Literal: "column1"}},
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 					},
 				},
 				FromClause: parser.FromClause{
@@ -804,8 +797,8 @@ var filterEvaluateTests = []struct {
 				},
 				WhereClause: parser.WhereClause{
 					Filter: parser.Comparison{
-						LHS:      parser.Identifier{Literal: "column2"},
-						RHS:      parser.Identifier{Literal: "table2.column4"},
+						LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+						RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column4"}},
 						Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 					},
 				},
@@ -848,7 +841,7 @@ var filterEvaluateTests = []struct {
 				SelectClause: parser.SelectClause{
 					Select: "select",
 					Fields: []parser.Expression{
-						parser.Field{Object: parser.Identifier{Literal: "noexist"}},
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
 					},
 				},
 				FromClause: parser.FromClause{
@@ -858,7 +851,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = noexist: field does not exist",
+		Error: "identifier = notexist: field does not exist",
 	},
 	{
 		Name: "Subquery Too Many Records Error",
@@ -867,7 +860,7 @@ var filterEvaluateTests = []struct {
 				SelectClause: parser.SelectClause{
 					Select: "select",
 					Fields: []parser.Expression{
-						parser.Field{Object: parser.Identifier{Literal: "column1"}},
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 					},
 				},
 				FromClause: parser.FromClause{
@@ -886,8 +879,8 @@ var filterEvaluateTests = []struct {
 				SelectClause: parser.SelectClause{
 					Select: "select",
 					Fields: []parser.Expression{
-						parser.Field{Object: parser.Identifier{Literal: "column1"}},
-						parser.Field{Object: parser.Identifier{Literal: "column2"}},
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 					},
 				},
 				FromClause: parser.FromClause{
@@ -988,7 +981,7 @@ var filterEvaluateTests = []struct {
 			Name: "avg",
 			Option: parser.Option{
 				Args: []parser.Expression{
-					parser.Identifier{Literal: "column1"},
+					parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 				},
 			},
 		},
@@ -1014,7 +1007,7 @@ var filterEvaluateTests = []struct {
 			Name: "avg",
 			Option: parser.Option{
 				Args: []parser.Expression{
-					parser.Identifier{Literal: "column1"},
+					parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 				},
 			},
 		},
@@ -1082,8 +1075,8 @@ var filterEvaluateTests = []struct {
 			Name: "avg",
 			Option: parser.Option{
 				Args: []parser.Expression{
-					parser.Identifier{Literal: "column1"},
-					parser.Identifier{Literal: "column2"},
+					parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				},
 			},
 		},
@@ -1157,7 +1150,7 @@ var filterEvaluateTests = []struct {
 						Name: "avg",
 						Option: parser.Option{
 							Args: []parser.Expression{
-								parser.Identifier{Literal: "column1"},
+								parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 							},
 						},
 					},
@@ -1239,12 +1232,12 @@ var filterEvaluateTests = []struct {
 			Option: parser.Option{
 				Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 				Args: []parser.Expression{
-					parser.Identifier{Literal: "column2"},
+					parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				},
 			},
 			OrderBy: parser.OrderByClause{
 				Items: []parser.Expression{
-					parser.OrderItem{Item: parser.Identifier{Literal: "column2"}},
+					parser.OrderItem{Item: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 				},
 			},
 			Separator: ",",
@@ -1288,7 +1281,7 @@ var filterEvaluateTests = []struct {
 			Option: parser.Option{
 				Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 				Args: []parser.Expression{
-					parser.Identifier{Literal: "column2"},
+					parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				},
 			},
 		},
@@ -1418,12 +1411,12 @@ var filterEvaluateTests = []struct {
 			Option: parser.Option{
 				Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 				Args: []parser.Expression{
-					parser.Identifier{Literal: "column2"},
+					parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				},
 			},
 			OrderBy: parser.OrderByClause{
 				Items: []parser.Expression{
-					parser.OrderItem{Item: parser.Identifier{Literal: "notexist"}},
+					parser.OrderItem{Item: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
 				},
 			},
 			Separator: ",",
@@ -1463,7 +1456,7 @@ var filterEvaluateTests = []struct {
 						Name: "avg",
 						Option: parser.Option{
 							Args: []parser.Expression{
-								parser.Identifier{Literal: "column1"},
+								parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 							},
 						},
 					},
@@ -1553,7 +1546,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Case Value Error",
 		Expr: parser.Case{
-			Value: parser.Identifier{Literal: "notexist"},
+			Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			When: []parser.Expression{
 				parser.CaseWhen{
 					Condition: parser.NewInteger(1),
@@ -1577,7 +1570,7 @@ var filterEvaluateTests = []struct {
 					Result:    parser.NewString("A"),
 				},
 				parser.CaseWhen{
-					Condition: parser.Identifier{Literal: "notexist"},
+					Condition: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 					Result:    parser.NewString("B"),
 				},
 			},
@@ -1595,7 +1588,7 @@ var filterEvaluateTests = []struct {
 				},
 				parser.CaseWhen{
 					Condition: parser.NewInteger(2),
-					Result:    parser.Identifier{Literal: "notexist"},
+					Result:    parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 				},
 			},
 		},
@@ -1616,7 +1609,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 			Else: parser.CaseElse{
-				Result: parser.Identifier{Literal: "notexist"},
+				Result: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
 		Error: "identifier = notexist: field does not exist",
@@ -1650,7 +1643,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Logic LHS Error",
 		Expr: parser.Logic{
-			LHS:      parser.Identifier{Literal: "notexist"},
+			LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			RHS:      parser.NewTernary(ternary.FALSE),
 			Operator: parser.Token{Token: parser.AND, Literal: "and"},
 		},
@@ -1660,7 +1653,7 @@ var filterEvaluateTests = []struct {
 		Name: "Logic RHS Error",
 		Expr: parser.Logic{
 			LHS:      parser.NewTernary(ternary.FALSE),
-			RHS:      parser.Identifier{Literal: "notexist"},
+			RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Operator: parser.Token{Token: parser.AND, Literal: "and"},
 		},
 		Error: "identifier = notexist: field does not exist",

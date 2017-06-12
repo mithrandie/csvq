@@ -1,8 +1,6 @@
 package parser
 
 import (
-	"errors"
-	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -364,19 +362,17 @@ func (i Identifier) String() string {
 	return i.Literal
 }
 
-func (i *Identifier) FieldRef() (string, string, error) {
-	words := strings.Split(i.Literal, ".")
-	ref := ""
-	field := ""
-	if 2 < len(words) {
-		return "", "", errors.New(fmt.Sprintf("field identifier = %s, incorrect format", i.Literal))
-	} else if len(words) < 2 {
-		field = words[0]
-	} else {
-		ref = words[0]
-		field = words[1]
+type FieldReference struct {
+	View   Expression
+	Column Identifier
+}
+
+func (e FieldReference) String() string {
+	s := e.Column.String()
+	if e.View != nil {
+		s = e.View.(Identifier).String() + "." + s
 	}
-	return ref, field, nil
+	return s
 }
 
 type Parentheses struct {
@@ -1003,7 +999,7 @@ func (uq UpdateQuery) String() string {
 }
 
 type UpdateSet struct {
-	Field Identifier
+	Field FieldReference
 	Value Expression
 }
 
@@ -1114,7 +1110,7 @@ type RenameColumn struct {
 	AlterTable string
 	Table      Identifier
 	Rename     string
-	Old        Identifier
+	Old        FieldReference
 	To         string
 	New        Identifier
 }

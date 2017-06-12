@@ -14,12 +14,12 @@ func ParseJoinCondition(join parser.Join, view *View, joinView *View) parser.Exp
 
 	if !join.Natural.IsEmpty() {
 		for _, f1 := range view.Header {
-			if f1.Column == INTERNAL_ID_FIELD {
+			if f1.Column == INTERNAL_ID_COLUMN {
 				continue
 			}
 
 			for _, f2 := range joinView.Header {
-				if f2.Column == INTERNAL_ID_FIELD {
+				if f2.Column == INTERNAL_ID_COLUMN {
 					continue
 				}
 

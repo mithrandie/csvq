@@ -30,8 +30,8 @@ func (f Filter) Evaluate(expr parser.Expression) (parser.Primary, error) {
 		switch expr.(type) {
 		case parser.Parentheses:
 			primary, err = f.Evaluate(expr.(parser.Parentheses).Expr)
-		case parser.Identifier:
-			primary, err = f.evalIdentifier(expr.(parser.Identifier))
+		case parser.FieldReference:
+			primary, err = f.evalFieldReference(expr.(parser.FieldReference))
 		case parser.Arithmetic:
 			primary, err = f.evalArithmetic(expr.(parser.Arithmetic))
 		case parser.Concat:
@@ -74,14 +74,10 @@ func (f Filter) Evaluate(expr parser.Expression) (parser.Primary, error) {
 	return primary, err
 }
 
-func (f Filter) evalIdentifier(expr parser.Identifier) (parser.Primary, error) {
-	ref, field, err := expr.FieldRef()
-	if err != nil {
-		return nil, err
-	}
+func (f Filter) evalFieldReference(expr parser.FieldReference) (parser.Primary, error) {
 	var p parser.Primary
 	for _, v := range f {
-		idx, err := v.View.Header.Contains(ref, field)
+		idx, err := v.View.Header.Contains(expr)
 		if err != nil {
 			switch err.(type) {
 			case *IdentificationError:
@@ -94,8 +90,8 @@ func (f Filter) evalIdentifier(expr parser.Identifier) (parser.Primary, error) {
 		}
 		if p != nil {
 			return nil, &IdentificationError{
-				Identifier: expr.String(),
-				Err:        ErrFieldAmbiguous,
+				Field: expr,
+				Err:   ErrFieldAmbiguous,
 			}
 		}
 		if v.View.isGrouped && !v.View.Header[idx].IsGroupKey {
@@ -105,8 +101,8 @@ func (f Filter) evalIdentifier(expr parser.Identifier) (parser.Primary, error) {
 	}
 	if p == nil {
 		return nil, &IdentificationError{
-			Identifier: expr.String(),
-			Err:        ErrFieldNotExist,
+			Field: expr,
+			Err:   ErrFieldNotExist,
 		}
 	}
 	return p, nil
