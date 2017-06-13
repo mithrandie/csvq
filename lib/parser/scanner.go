@@ -3,7 +3,6 @@ package parser
 import (
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 	"unicode"
 
@@ -24,8 +23,9 @@ const (
 )
 
 const (
-	SUBSTITUTION_LITERAL = ":="
-	VARIABLE_RUNE        = '@'
+	SUBSTITUTION_OPERATOR = ":="
+
+	VARIABLE_SIGN = '@'
 )
 
 var comparisonOperators = []string{
@@ -125,15 +125,14 @@ func (s *Scanner) Scan() (int, string, bool, error) {
 	quoted := false
 
 	switch {
+	case s.isDecimal(ch):
+		token = s.scanNumber(ch)
+		literal = s.literal()
 	case s.isIdentRune(ch):
 		s.scanIdentifier()
 
 		literal = s.literal()
-		if _, e := strconv.ParseInt(literal, 10, 64); e == nil {
-			token = INTEGER
-		} else if _, e := strconv.ParseFloat(literal, 64); e == nil {
-			token = FLOAT
-		} else if _, e := ternary.Parse(literal); e == nil {
+		if _, e := ternary.Parse(literal); e == nil {
 			token = TERNARY
 		} else if t, e := s.searchKeyword(literal); e == nil {
 			token = rune(t)
@@ -148,20 +147,20 @@ func (s *Scanner) Scan() (int, string, bool, error) {
 			token = COMPARISON_OP
 		} else if e := s.searchStringOperators(literal); e == nil {
 			token = STRING_OP
-		} else if literal == SUBSTITUTION_LITERAL {
+		} else if literal == SUBSTITUTION_OPERATOR {
 			token = SUBSTITUTION_OP
 		} else if 1 < len(literal) {
 			token = UNCATEGORIZED
 		}
-	case s.isFlagRune(ch):
-		s.scanIdentifier()
+	case s.isVariableSign(ch):
+		if s.isVariableSign(s.peek()) {
+			s.next()
+			token = FLAG
+		} else {
+			token = VARIABLE
+		}
 		s.scanIdentifier()
 		literal = s.literal()
-		token = FLAG
-	case s.isVariableRune(ch):
-		s.scanIdentifier()
-		literal = s.literal()
-		token = VARIABLE
 	case s.isCommentRune(ch):
 		s.scanComment()
 		var tok int
@@ -224,7 +223,27 @@ func (s *Scanner) scanIdentifier() {
 }
 
 func (s *Scanner) isIdentRune(ch rune) bool {
-	return ch == '_' || ch == '$' || ch == '.' || unicode.IsLetter(ch) || unicode.IsDigit(ch)
+	return ch == '_' || ch == '$' || unicode.IsLetter(ch) || unicode.IsDigit(ch)
+}
+
+func (s *Scanner) isDecimal(ch rune) bool {
+	return '0' <= ch && ch <= '9'
+}
+
+func (s *Scanner) scanNumber(ch rune) rune {
+	for s.isDecimal(s.peek()) {
+		s.next()
+	}
+
+	if s.peek() == '.' {
+		s.next()
+		for s.isDecimal(s.peek()) {
+			s.next()
+		}
+		return FLOAT
+	}
+
+	return INTEGER
 }
 
 func (s *Scanner) scanOperator() {
@@ -242,16 +261,8 @@ func (s *Scanner) isOperatorRune(ch rune) bool {
 	return false
 }
 
-func (s *Scanner) isFlagRune(ch rune) bool {
-	if ch == VARIABLE_RUNE && s.peek() == VARIABLE_RUNE {
-		s.next()
-		return true
-	}
-	return false
-}
-
-func (s *Scanner) isVariableRune(ch rune) bool {
-	if ch == VARIABLE_RUNE {
+func (s *Scanner) isVariableSign(ch rune) bool {
+	if ch == VARIABLE_SIGN {
 		return true
 	}
 	return false

@@ -3,15 +3,16 @@ package query
 import (
 	"errors"
 	"fmt"
+	"github.com/mithrandie/csvq/lib/parser"
 )
 
 type IdentificationError struct {
-	Identifier string
-	Err        error
+	Field parser.FieldReference
+	Err   error
 }
 
 func (e IdentificationError) Error() string {
-	return fmt.Sprintf("identifier = %s: %s", e.Identifier, e.Err)
+	return fmt.Sprintf("identifier = %s: %s", e.Field.String(), e.Err)
 }
 
 type NotGroupedError struct {

@@ -13,8 +13,6 @@ const (
 
 type Variables map[string]parser.Primary
 
-var Variable = Variables{}
-
 func (v Variables) Add(key string, value parser.Primary) error {
 	if _, ok := v[key]; ok {
 		return errors.New(fmt.Sprintf("variable %s is redeclared", key))

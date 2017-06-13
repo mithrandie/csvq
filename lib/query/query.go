@@ -8,6 +8,7 @@ import (
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/ternary"
 )
 
 type StatementType int
@@ -23,6 +24,20 @@ const (
 	RENAME_COLUMN
 	PRINT
 )
+
+type StatementFlow int
+
+const (
+	TERMINATE StatementFlow = iota
+	ERROR
+	EXIT
+	BREAK
+	CONTINUE
+)
+
+var GlobalVars = Variables{}
+var ViewCache = NewViewMap()
+var Cursors = CursorMap{}
 
 type Result struct {
 	Type StatementType
@@ -41,22 +56,39 @@ func Execute(input string) (string, error) {
 		return out, err
 	}
 
-	for _, stmt := range program {
-		log, err := ExecuteStatement(stmt)
-		out += log
-		if err != nil {
-			return out, err
-		}
-	}
-
-	log, err := Commit(false)
+	flow, log, err := ExecuteProgram(program)
 	out += log
+
+	if flow == TERMINATE {
+		log, err = Commit(false)
+		out += log
+	}
 
 	return out, err
 }
 
-func ExecuteStatement(stmt parser.Statement) (string, error) {
-	Variable.ClearAutoIncrement()
+func ExecuteProgram(program []parser.Statement) (StatementFlow, string, error) {
+	flow := TERMINATE
+
+	var out string
+	for _, stmt := range program {
+		f, log, err := ExecuteStatement(stmt)
+		out += log
+		if err != nil {
+			return f, out, err
+		}
+		if f != TERMINATE {
+			flow = f
+			break
+		}
+	}
+	return flow, out, nil
+}
+
+func ExecuteStatement(stmt parser.Statement) (StatementFlow, string, error) {
+	flow := TERMINATE
+
+	GlobalVars.ClearAutoIncrement()
 	ViewCache.ClearAliases()
 
 	var log string
@@ -71,9 +103,21 @@ func ExecuteStatement(stmt parser.Statement) (string, error) {
 	case parser.SetFlag:
 		err = SetFlag(stmt.(parser.SetFlag))
 	case parser.VariableDeclaration:
-		err = Variable.Decrare(stmt.(parser.VariableDeclaration), nil)
+		err = GlobalVars.Decrare(stmt.(parser.VariableDeclaration), nil)
 	case parser.VariableSubstitution:
-		_, err = Variable.Substitute(stmt.(parser.VariableSubstitution), nil)
+		_, err = GlobalVars.Substitute(stmt.(parser.VariableSubstitution), nil)
+	case parser.CursorDeclaration:
+		decl := stmt.(parser.CursorDeclaration)
+		err = Cursors.Add(decl.Cursor.Literal, decl.Query)
+	case parser.OpenCursor:
+		err = Cursors.Open(stmt.(parser.OpenCursor).Cursor.Literal)
+	case parser.CloseCursor:
+		err = Cursors.Close(stmt.(parser.CloseCursor).Cursor.Literal)
+	case parser.DisposeCursor:
+		Cursors.Dispose(stmt.(parser.DisposeCursor).Cursor.Literal)
+	case parser.FetchCursor:
+		fetch := stmt.(parser.FetchCursor)
+		_, err = FetchCursor(fetch.Cursor.Literal, fetch.Variables)
 	case parser.SelectQuery:
 		if view, err = Select(stmt.(parser.SelectQuery), nil); err == nil {
 			results = []Result{
@@ -155,10 +199,28 @@ func ExecuteStatement(stmt parser.Statement) (string, error) {
 				},
 			}
 		}
-	case parser.Commit:
-		log, err = Commit(true)
-	case parser.Rollback:
-		log = Rollback()
+	case parser.TransactionControl:
+		switch stmt.(parser.TransactionControl).Token {
+		case parser.COMMIT:
+			log, err = Commit(true)
+		case parser.ROLLBACK:
+			log = Rollback()
+		}
+	case parser.FlowControl:
+		switch stmt.(parser.FlowControl).Token {
+		case parser.CONTINUE:
+			flow = CONTINUE
+		case parser.BREAK:
+			flow = BREAK
+		case parser.EXIT:
+			flow = EXIT
+		}
+	case parser.If:
+		flow, log, err = IfStmt(stmt.(parser.If))
+	case parser.While:
+		flow, log, err = While(stmt.(parser.While))
+	case parser.WhileInCursor:
+		flow, log, err = WhileInCursor(stmt.(parser.WhileInCursor))
 	case parser.Print:
 		if printstr, err = Print(stmt.(parser.Print)); err == nil {
 			results = []Result{
@@ -174,7 +236,120 @@ func ExecuteStatement(stmt parser.Statement) (string, error) {
 		ResultSet = append(ResultSet, results...)
 	}
 
-	return log, err
+	if err != nil {
+		flow = ERROR
+	}
+	return flow, log, err
+}
+
+func IfStmt(stmt parser.If) (StatementFlow, string, error) {
+	stmts := make([]parser.ElseIf, len(stmt.ElseIf)+1)
+	stmts[0] = parser.ElseIf{
+		Condition:  stmt.Condition,
+		Statements: stmt.Statements,
+	}
+	for i, v := range stmt.ElseIf {
+		stmts[i+1] = v.(parser.ElseIf)
+	}
+
+	var filter Filter
+	for _, v := range stmts {
+		p, err := filter.Evaluate(v.Condition)
+		if err != nil {
+			return ERROR, "", err
+		}
+		if p.Ternary() == ternary.TRUE {
+			return ExecuteProgram(v.Statements)
+		}
+	}
+
+	if stmt.Else != nil {
+		return ExecuteProgram(stmt.Else.(parser.Else).Statements)
+	}
+	return TERMINATE, "", nil
+}
+
+func While(stmt parser.While) (StatementFlow, string, error) {
+	var out string
+
+	var filter Filter
+	for {
+		p, err := filter.Evaluate(stmt.Condition)
+		if err != nil {
+			return ERROR, out, err
+		}
+		if p.Ternary() != ternary.TRUE {
+			break
+		}
+		f, s, err := ExecuteProgram(stmt.Statements)
+		out += s
+		if err != nil {
+			return ERROR, out, err
+		}
+
+		if f == BREAK {
+			return TERMINATE, out, nil
+		}
+		if f == EXIT {
+			return EXIT, out, nil
+		}
+	}
+	return TERMINATE, out, nil
+}
+
+func WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, string, error) {
+	var out string
+
+	for {
+		success, err := FetchCursor(stmt.Cursor.Literal, stmt.Variables)
+		if err != nil {
+			return ERROR, out, err
+		}
+		if !success {
+			break
+		}
+
+		f, s, err := ExecuteProgram(stmt.Statements)
+		out += s
+		if err != nil {
+			return ERROR, out, err
+		}
+
+		if f == BREAK {
+			return TERMINATE, out, nil
+		}
+		if f == EXIT {
+			return EXIT, out, nil
+		}
+	}
+
+	return TERMINATE, out, nil
+}
+
+func FetchCursor(name string, vars []parser.Variable) (bool, error) {
+	primaries, err := Cursors.Fetch(name)
+	if err != nil {
+		return false, err
+	}
+	if primaries == nil {
+		return false, nil
+	}
+	if len(vars) != len(primaries) {
+		return false, errors.New(fmt.Sprintf("cursor %s field length does not match variables number", name))
+	}
+
+	var filter Filter
+	for i, v := range vars {
+		substitution := parser.VariableSubstitution{
+			Variable: v,
+			Value:    primaries[i],
+		}
+		_, err := GlobalVars.Substitute(substitution, filter)
+		if err != nil {
+			return false, err
+		}
+	}
+	return true, nil
 }
 
 func formatCount(i int, obj string) string {
@@ -379,7 +554,7 @@ func Update(query parser.UpdateQuery) ([]*View, error) {
 				return nil, err
 			}
 
-			viewref, err := view.FieldRef(uset.Field)
+			viewref, err := view.FieldViewName(uset.Field)
 			if err != nil {
 				return nil, err
 			}
@@ -549,7 +724,7 @@ func AddColumns(query parser.AddColumns) (*View, error) {
 	case parser.LAST:
 		insertPos = view.FieldLen()
 	default:
-		idx, err := view.FieldIndex(pos.Column.(parser.Identifier))
+		idx, err := view.FieldIndex(pos.Column.(parser.FieldReference))
 		if err != nil {
 			return nil, err
 		}
@@ -635,7 +810,7 @@ func DropColumns(query parser.DropColumns) (*View, error) {
 
 	dropIndices := make([]int, len(query.Columns))
 	for i, v := range query.Columns {
-		idx, err := view.FieldIndex(v.(parser.Identifier))
+		idx, err := view.FieldIndex(v.(parser.FieldReference))
 		if err != nil {
 			return nil, err
 		}
@@ -683,34 +858,31 @@ func RenameColumn(query parser.RenameColumn) (*View, error) {
 	return view, nil
 }
 
-func Print(query parser.Print) (string, error) {
+func Print(stmt parser.Print) (string, error) {
 	var filter Filter
-	p, err := filter.Evaluate(query.Value)
+	p, err := filter.Evaluate(stmt.Value)
 	if err != nil {
 		return "", err
 	}
 	return p.String(), err
 }
 
-func SetFlag(query parser.SetFlag) error {
+func SetFlag(stmt parser.SetFlag) error {
 	var err error
 
 	var p parser.Primary
 
-	switch strings.ToUpper(query.Name) {
+	switch strings.ToUpper(stmt.Name) {
 	case "@@DELIMITER", "@@ENCODING", "@@REPOSITORY":
-		p = parser.PrimaryToString(query.Value)
-		if parser.IsNull(p) {
-			return errors.New(fmt.Sprintf("invalid flag value: %s = %s", query.Name, query.Value))
-		}
+		p = parser.PrimaryToString(stmt.Value)
 	case "@@NO-HEADER", "@@WITHOUT-NULL":
-		p = parser.PrimaryToBoolean(query.Value)
-		if parser.IsNull(p) {
-			return errors.New(fmt.Sprintf("invalid flag value: %s = %s", query.Name, query.Value))
-		}
+		p = parser.PrimaryToBoolean(stmt.Value)
+	}
+	if parser.IsNull(p) {
+		return errors.New(fmt.Sprintf("invalid flag value: %s = %s", stmt.Name, stmt.Value))
 	}
 
-	switch strings.ToUpper(query.Name) {
+	switch strings.ToUpper(stmt.Name) {
 	case "@@DELIMITER":
 		err = cmd.SetDelimiter(p.(parser.String).Value())
 	case "@@ENCODING":
@@ -722,7 +894,7 @@ func SetFlag(query parser.SetFlag) error {
 	case "@@WITHOUT-NULL":
 		err = cmd.SetWithoutNull(p.(parser.Boolean).Bool())
 	default:
-		err = errors.New(fmt.Sprintf("invalid flag name: %s", query.Name))
+		err = errors.New(fmt.Sprintf("invalid flag name: %s", stmt.Name))
 	}
 	return err
 }
