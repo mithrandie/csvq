@@ -21,6 +21,7 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
+	"os/exec"
 )
 
 var Functions = map[string]func([]parser.Primary) (parser.Primary, error){
@@ -1071,7 +1072,7 @@ func AutoIncrement(args []parser.Primary) (parser.Primary, error) {
 		}
 	}
 
-	return Variable.Increment(AUTO_INCREMENT_KEY, initialVal), nil
+	return GlobalVars.Increment(AUTO_INCREMENT_KEY, initialVal), nil
 }
 
 func String(args []parser.Primary) (parser.Primary, error) {
@@ -1142,4 +1143,38 @@ func Datetime(args []parser.Primary) (parser.Primary, error) {
 	}
 
 	return parser.PrimaryToDatetime(args[0]), nil
+}
+
+func Call(args []parser.Primary) (parser.Primary, error) {
+	if len(args) < 1 {
+		return nil, errors.New("function CALL takes at least 1 argument")
+	}
+
+	cmdargs := make([]string, len(args))
+	for i, v := range args {
+		var s string
+		switch v.(type) {
+		case parser.String:
+			s = v.(parser.String).Value()
+		case parser.Integer:
+			s = parser.Int64ToStr(v.(parser.Integer).Value())
+		case parser.Float:
+			s = parser.Float64ToStr(v.(parser.Float).Value())
+		case parser.Boolean:
+			s = strconv.FormatBool(v.(parser.Boolean).Bool())
+		case parser.Ternary:
+			s = strconv.FormatBool(v.(parser.Ternary).Bool())
+		case parser.Datetime:
+			s = v.(parser.Datetime).Format()
+		case parser.Null:
+			s = ""
+		}
+		cmdargs[i] = s
+	}
+
+	buf, err := exec.Command(cmdargs[0], cmdargs[1:]...).Output()
+	if err != nil {
+		return nil, err
+	}
+	return parser.NewString(string(buf)), nil
 }

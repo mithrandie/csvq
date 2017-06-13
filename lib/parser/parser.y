@@ -7,6 +7,8 @@ package parser
     statement   Statement
     expression  Expression
     expressions []Expression
+    procexpr    ProcExpr
+    procexprs   []ProcExpr
     primary     Primary
     identifier  Identifier
     text        String
@@ -16,11 +18,20 @@ package parser
     datetime    Datetime
     null        Null
     variable    Variable
+    variables   []Variable
     token       Token
 }
 
 %type<program>     program
+%type<program>     in_loop_program
 %type<statement>   statement
+%type<statement>   in_loop_statement
+%type<statement>   variable_statement
+%type<statement>   transaction_statement
+%type<statement>   cursor_statement
+%type<statement>   flow_control_statement
+%type<statement>   in_loop_flow_control_statement
+%type<statement>   command_statement
 %type<expression>  select_query
 %type<expression>  select_clause
 %type<expression>  from_clause
@@ -30,6 +41,7 @@ package parser
 %type<expression>  order_by_clause
 %type<expression>  limit_clause
 %type<primary>     primary
+%type<expression>  field_reference
 %type<expression>  value
 %type<expression>  order_item
 %type<expression>  subquery
@@ -50,6 +62,7 @@ package parser
 %type<expression>  case
 %type<expression>  case_value
 %type<expression>  case_else
+%type<expressions> field_references
 %type<expressions> values
 %type<expressions> order_items
 %type<expressions> tables
@@ -71,10 +84,10 @@ package parser
 %type<expression>  column_position
 %type<expression>  drop_columns
 %type<expression>  rename_column
-%type<expression>  commit
-%type<expression>  rollback
-%type<expression>  print
-%type<expression>  set_flag
+%type<procexprs>   elseif
+%type<procexpr>    else
+%type<procexprs>   in_loop_elseif
+%type<procexpr>    in_loop_else
 %type<identifier>  identifier
 %type<text>        text
 %type<integer>     integer
@@ -83,9 +96,9 @@ package parser
 %type<datetime>    datetime
 %type<null>        null
 %type<variable>    variable
+%type<variables>   variables
 %type<expression>  variable_substitution
 %type<expression>  variable_assignment
-%type<expression>  variable_declaration
 %type<expressions> variable_assignments
 %type<token>       distinct
 %type<token>       negation
@@ -103,9 +116,11 @@ package parser
 %token<token> ALL ANY EXISTS IN
 %token<token> AND OR NOT BETWEEN LIKE IS NULL
 %token<token> DISTINCT WITH
-%token<token> CASE WHEN THEN ELSE END
+%token<token> CASE IF ELSEIF WHILE WHEN THEN ELSE DO END
+%token<token> DECLARE CURSOR FOR FETCH OPEN CLOSE DISPOSE
 %token<token> GROUP_CONCAT SEPARATOR
 %token<token> COMMIT ROLLBACK
+%token<token> CONTINUE BREAK EXIT
 %token<token> PRINT
 %token<token> VAR
 %token<token> COMPARISON_OP STRING_OP SUBSTITUTION_OP
@@ -127,6 +142,18 @@ program
         yylex.(*Lexer).program = $$
     }
     | statement program
+    {
+        $$ = append([]Statement{$1}, $2...)
+        yylex.(*Lexer).program = $$
+    }
+
+in_loop_program
+    :
+    {
+        $$ = nil
+        yylex.(*Lexer).program = $$
+    }
+    | in_loop_statement in_loop_program
     {
         $$ = append([]Statement{$1}, $2...)
         yylex.(*Lexer).program = $$
@@ -165,29 +192,127 @@ statement
     {
         $$ = $1
     }
-    | variable_declaration statement_terminal
+    | variable_statement
     {
         $$ = $1
+    }
+    | transaction_statement
+    {
+        $$ = $1
+    }
+    | cursor_statement
+    {
+        $$ = $1
+    }
+    | flow_control_statement
+    {
+        $$ = $1
+    }
+    | command_statement
+    {
+        $$ = $1
+    }
+
+in_loop_statement
+    : statement
+    {
+        $$ = $1
+    }
+    | in_loop_flow_control_statement
+    {
+        $$ = $1
+    }
+
+variable_statement
+    : VAR variable_assignments statement_terminal
+    {
+        $$ = VariableDeclaration{Assignments:$2}
     }
     | variable_substitution statement_terminal
     {
         $$ = $1
     }
-    | commit statement_terminal
+
+transaction_statement
+    : COMMIT statement_terminal
     {
-        $$ = $1
+        $$ = TransactionControl{Token: $1.Token}
     }
-    | rollback statement_terminal
+    | ROLLBACK statement_terminal
     {
-        $$ = $1
+        $$ = TransactionControl{Token: $1.Token}
     }
-    | print statement_terminal
+
+cursor_statement
+    : DECLARE identifier CURSOR FOR select_query statement_terminal
     {
-        $$ = $1
+        $$ = CursorDeclaration{Cursor:$2, Query: $5.(SelectQuery)}
     }
-    | set_flag statement_terminal
+    | OPEN identifier statement_terminal
     {
-        $$ = $1
+        $$ = OpenCursor{Cursor: $2}
+    }
+    | CLOSE identifier statement_terminal
+    {
+        $$ = CloseCursor{Cursor: $2}
+    }
+    | DISPOSE identifier statement_terminal
+    {
+        $$ = DisposeCursor{Cursor: $2}
+    }
+    | FETCH identifier INTO variables statement_terminal
+    {
+        $$ = FetchCursor{Cursor: $2, Variables: $4}
+    }
+
+flow_control_statement
+    : IF value THEN program else END IF statement_terminal
+    {
+        $$ = If{Condition: $2, Statements: $4, Else: $5}
+    }
+    | IF value THEN program elseif else END IF statement_terminal
+    {
+        $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
+    }
+    | WHILE value DO in_loop_program END WHILE statement_terminal
+    {
+        $$ = While{Condition: $2, Statements: $4}
+    }
+    | WHILE variables IN identifier DO in_loop_program END WHILE statement_terminal
+    {
+        $$ = WhileInCursor{Variables: $2, Cursor: $4, Statements: $6}
+    }
+    | EXIT statement_terminal
+    {
+        $$ = FlowControl{Token: $1.Token}
+    }
+
+in_loop_flow_control_statement
+    : IF value THEN in_loop_program in_loop_else END IF statement_terminal
+    {
+        $$ = If{Condition: $2, Statements: $4, Else: $5}
+    }
+    | IF value THEN in_loop_program in_loop_elseif in_loop_else END IF statement_terminal
+    {
+        $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
+    }
+    | CONTINUE statement_terminal
+    {
+        $$ = FlowControl{Token: $1.Token}
+    }
+    | BREAK statement_terminal
+    {
+        $$ = FlowControl{Token: $1.Token}
+    }
+
+command_statement
+    : SET FLAG '=' primary statement_terminal
+    {
+        $$ = SetFlag{Name: $2.Literal, Value: $4}
+    }
+    | PRINT value statement_terminal
+    {
+        $$ = Print{Value: $2}
     }
 
 select_query
@@ -296,8 +421,18 @@ primary
         $$ = $1
     }
 
-value
+field_reference
     : identifier
+    {
+        $$ = FieldReference{Column: $1}
+    }
+    | identifier '.' identifier
+    {
+        $$ = FieldReference{View: $1, Column: $3}
+    }
+
+value
+    : field_reference
     {
         $$ = $1
     }
@@ -639,6 +774,16 @@ case_else
         $$ = CaseElse{Else: $1.Literal, Result: $2}
     }
 
+field_references
+    : field_reference
+    {
+        $$ = []Expression{$1}
+    }
+    | field_reference ',' field_references
+    {
+        $$ = append([]Expression{$1}, $3...)
+    }
+
 values
     : value
     {
@@ -714,7 +859,7 @@ insert_query
     {
         $$ = InsertQuery{Insert: $1.Literal, Into: $2.Literal, Table: $3, Values: $4.Literal, ValuesList: $5}
     }
-    | INSERT INTO identifier '(' using_fields ')' VALUES insert_values_list
+    | INSERT INTO identifier '(' field_references ')' VALUES insert_values_list
     {
         $$ = InsertQuery{Insert: $1.Literal, Into: $2.Literal, Table: $3, Fields: $5, Values: $7.Literal, ValuesList: $8}
     }
@@ -722,7 +867,7 @@ insert_query
     {
         $$ = InsertQuery{Insert: $1.Literal, Into: $2.Literal, Table: $3, Query: $4.(SelectQuery)}
     }
-    | INSERT INTO identifier '(' using_fields ')' select_query
+    | INSERT INTO identifier '(' field_references ')' select_query
     {
         $$ = InsertQuery{Insert: $1.Literal, Into: $2.Literal, Table: $3, Fields: $5, Query: $7.(SelectQuery)}
     }
@@ -750,9 +895,9 @@ update_query
     }
 
 update_set
-    : identifier '=' value
+    : field_reference '=' value
     {
-        $$ = UpdateSet{Field: $1, Value: $3}
+        $$ = UpdateSet{Field: $1.(FieldReference), Value: $3}
     }
 
 update_set_list
@@ -826,53 +971,69 @@ column_position
     {
         $$ = ColumnPosition{Position: $1}
     }
-    | AFTER identifier
+    | AFTER field_reference
     {
         $$ = ColumnPosition{Position: $1, Column: $2}
     }
-    | BEFORE identifier
+    | BEFORE field_reference
     {
         $$ = ColumnPosition{Position: $1, Column: $2}
     }
 
 drop_columns
-    : ALTER TABLE identifier DROP identifier
+    : ALTER TABLE identifier DROP field_reference
     {
         $$ = DropColumns{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Drop: $4.Literal, Columns: []Expression{$5}}
     }
-    | ALTER TABLE identifier DROP '(' using_fields ')'
+    | ALTER TABLE identifier DROP '(' field_references ')'
     {
         $$ = DropColumns{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Drop: $4.Literal, Columns: $6}
     }
 
 rename_column
-    : ALTER TABLE identifier RENAME identifier TO identifier
+    : ALTER TABLE identifier RENAME field_reference TO identifier
     {
-        $$ = RenameColumn{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Rename: $4.Literal, Old: $5, To: $6.Literal, New: $7}
+        $$ = RenameColumn{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Rename: $4.Literal, Old: $5.(FieldReference), To: $6.Literal, New: $7}
     }
 
-commit
-    : COMMIT
+elseif
+    : ELSEIF value THEN program
     {
-        $$ = Commit{Literal: $1.Literal}
+        $$ = []ProcExpr{ElseIf{Condition: $2, Statements: $4}}
+    }
+    | elseif elseif
+    {
+        $$ = append($1, $2...)
     }
 
-rollback
-    : ROLLBACK
+else
+    :
     {
-        $$ = Rollback{Literal: $1.Literal}
+        $$ = nil
+    }
+    | ELSE program
+    {
+        $$ = Else{Statements: $2}
     }
 
-print
-    : PRINT value
+in_loop_elseif
+    : ELSEIF value THEN in_loop_program
     {
-        $$ = Print{Print: $1.Literal, Value: $2}
+        $$ = []ProcExpr{ElseIf{Condition: $2, Statements: $4}}
+    }
+    | in_loop_elseif in_loop_elseif
+    {
+        $$ = append($1, $2...)
     }
 
-set_flag
-    : SET FLAG '=' primary
+in_loop_else
+    :
     {
-        $$ = SetFlag{Set: $1.Literal, Name: $2.Literal, Value: $4}
+        $$ = nil
+    }
+    | ELSE in_loop_program
+    {
+        $$ = Else{Statements: $2}
     }
 
 identifier
@@ -933,6 +1094,16 @@ variable
         $$ = Variable{Name:$1.Literal}
     }
 
+variables
+    : variable
+    {
+        $$ = []Variable{$1}
+    }
+    | variable ',' variables
+    {
+        $$ = append([]Variable{$1}, $3...)
+    }
+
 variable_substitution
     : variable SUBSTITUTION_OP value
     {
@@ -947,12 +1118,6 @@ variable_assignment
     | VARIABLE SUBSTITUTION_OP value
     {
         $$ = VariableAssignment{Name: $1.Literal, Value: $3}
-    }
-
-variable_declaration
-    : VAR variable_assignments
-    {
-        $$ = VariableDeclaration{Var:$1.Literal, Assignments:$2}
     }
 
 variable_assignments

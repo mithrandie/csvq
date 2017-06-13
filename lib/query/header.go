@@ -2,7 +2,7 @@ package query
 
 import "github.com/mithrandie/csvq/lib/parser"
 
-const INTERNAL_ID_FIELD = "@__internal_id"
+const INTERNAL_ID_COLUMN = "@__internal_id"
 
 type HeaderField struct {
 	Reference  string
@@ -30,7 +30,7 @@ func NewHeader(ref string, words []string) Header {
 	h := make([]HeaderField, len(words)+1)
 
 	h[0].Reference = ref
-	h[0].Column = INTERNAL_ID_FIELD
+	h[0].Column = INTERNAL_ID_COLUMN
 
 	for i, v := range words {
 		h[i+1].Reference = ref
@@ -80,13 +80,14 @@ func (h Header) TableColumns() []parser.Expression {
 			continue
 		}
 
-		var lit string
-		if 0 < len(f.Reference) {
-			lit = f.Reference + "." + f.Column
-		} else {
-			lit = f.Column
+		fieldRef := parser.FieldReference{
+			Column: parser.Identifier{Literal: f.Column},
 		}
-		columns = append(columns, parser.Identifier{Literal: lit})
+		if 0 < len(f.Reference) {
+			fieldRef.View = parser.Identifier{Literal: f.Reference}
+		}
+
+		columns = append(columns, fieldRef)
 	}
 	return columns
 }
@@ -102,11 +103,19 @@ func (h Header) TableColumnNames() []string {
 	return names
 }
 
-func (h Header) Contains(ref string, column string) (int, error) {
-	identifier := column
-	if 0 < len(ref) {
-		identifier = ref + "." + column
+func (h Header) ContainsAlias(alias string) (int, error) {
+	fieldRef := parser.FieldReference{
+		Column: parser.Identifier{Literal: alias},
 	}
+	return h.Contains(fieldRef)
+}
+
+func (h Header) Contains(fieldRef parser.FieldReference) (int, error) {
+	var ref string
+	if fieldRef.View != nil {
+		ref = fieldRef.View.(parser.Identifier).Literal
+	}
+	column := fieldRef.Column.Literal
 
 	idx := -1
 
@@ -122,22 +131,22 @@ func (h Header) Contains(ref string, column string) (int, error) {
 		}
 
 		if -1 < idx {
-			return -1, h.newError(identifier, ErrFieldAmbiguous)
+			return -1, h.newError(fieldRef, ErrFieldAmbiguous)
 		}
 		idx = i
 	}
 
 	if idx < 0 {
-		return -1, h.newError(identifier, ErrFieldNotExist)
+		return -1, h.newError(fieldRef, ErrFieldNotExist)
 	}
 
 	return idx, nil
 }
 
-func (h Header) newError(identifier string, err error) error {
+func (h Header) newError(field parser.FieldReference, err error) error {
 	return &IdentificationError{
-		Identifier: identifier,
-		Err:        err,
+		Field: field,
+		Err:   err,
 	}
 }
 

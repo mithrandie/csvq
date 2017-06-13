@@ -400,8 +400,8 @@ var viewLoadTests = []struct {
 						},
 						Condition: parser.JoinCondition{
 							On: parser.Comparison{
-								LHS:      parser.Identifier{Literal: "table1.column1"},
-								RHS:      parser.Identifier{Literal: "table2.column3"},
+								LHS:      parser.FieldReference{View: parser.Identifier{Literal: "table1"}, Column: parser.Identifier{Literal: "column1"}},
+								RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column3"}},
 								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 							},
 						},
@@ -447,8 +447,8 @@ var viewLoadTests = []struct {
 						Direction: parser.Token{Token: parser.LEFT, Literal: "left"},
 						Condition: parser.JoinCondition{
 							On: parser.Comparison{
-								LHS:      parser.Identifier{Literal: "table1.column1"},
-								RHS:      parser.Identifier{Literal: "table2.column3"},
+								LHS:      parser.FieldReference{View: parser.Identifier{Literal: "table1"}, Column: parser.Identifier{Literal: "column1"}},
+								RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column3"}},
 								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 							},
 						},
@@ -533,8 +533,8 @@ var viewLoadTests = []struct {
 							SelectClause: parser.SelectClause{
 								Select: "select",
 								Fields: []parser.Expression{
-									parser.Field{Object: parser.Identifier{Literal: "column1"}},
-									parser.Field{Object: parser.Identifier{Literal: "column2"}},
+									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 								},
 							},
 							FromClause: parser.FromClause{
@@ -695,7 +695,7 @@ var viewWhereTests = []struct {
 		},
 		Where: parser.WhereClause{
 			Filter: parser.Comparison{
-				LHS:      parser.Identifier{Literal: "column1"},
+				LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 				RHS:      parser.NewInteger(2),
 				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 			},
@@ -723,7 +723,7 @@ var viewWhereTests = []struct {
 		},
 		Where: parser.WhereClause{
 			Filter: parser.Comparison{
-				LHS:      parser.Identifier{Literal: "notexist"},
+				LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 				RHS:      parser.NewInteger(2),
 				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 			},
@@ -791,14 +791,14 @@ var viewGroupByTests = []struct {
 		},
 		GroupBy: parser.GroupByClause{
 			Items: []parser.Expression{
-				parser.Identifier{Literal: "column3"},
+				parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
 			},
 		},
 		Result: &View{
 			Header: []HeaderField{
 				{
 					Reference: "table1",
-					Column:    INTERNAL_ID_FIELD,
+					Column:    INTERNAL_ID_COLUMN,
 				},
 				{
 					Reference: "table1",
@@ -871,7 +871,7 @@ var viewHavingTests = []struct {
 			Header: []HeaderField{
 				{
 					Reference: "table1",
-					Column:    INTERNAL_ID_FIELD,
+					Column:    INTERNAL_ID_COLUMN,
 				},
 				{
 					Reference: "table1",
@@ -911,7 +911,7 @@ var viewHavingTests = []struct {
 				LHS: parser.Function{
 					Name: "sum",
 					Option: parser.Option{
-						Args: []parser.Expression{parser.Identifier{Literal: "column1"}},
+						Args: []parser.Expression{parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 					},
 				},
 				RHS:      parser.NewInteger(5),
@@ -926,7 +926,7 @@ var viewHavingTests = []struct {
 			Header: []HeaderField{
 				{
 					Reference: "table1",
-					Column:    INTERNAL_ID_FIELD,
+					Column:    INTERNAL_ID_COLUMN,
 				},
 				{
 					Reference: "table1",
@@ -966,7 +966,7 @@ var viewHavingTests = []struct {
 				LHS: parser.Function{
 					Name: "sum",
 					Option: parser.Option{
-						Args: []parser.Expression{parser.Identifier{Literal: "notexist"}},
+						Args: []parser.Expression{parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
 					},
 				},
 				RHS:      parser.NewInteger(5),
@@ -997,7 +997,7 @@ var viewHavingTests = []struct {
 				LHS: parser.Function{
 					Name: "sum",
 					Option: parser.Option{
-						Args: []parser.Expression{parser.Identifier{Literal: "column1"}},
+						Args: []parser.Expression{parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 					},
 				},
 				RHS:      parser.NewInteger(5),
@@ -1053,10 +1053,10 @@ var viewSelectTests = []struct {
 		Name: "Select",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_FIELD},
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table1", Column: "column1", FromTable: true},
 				{Reference: "table1", Column: "column2", FromTable: true},
-				{Reference: "table2", Column: INTERNAL_ID_FIELD},
+				{Reference: "table2", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table2", Column: "column3", FromTable: true},
 				{Reference: "table2", Column: "column4", FromTable: true},
 			},
@@ -1097,17 +1097,17 @@ var viewSelectTests = []struct {
 		},
 		Select: parser.SelectClause{
 			Fields: []parser.Expression{
-				parser.Field{Object: parser.Identifier{Literal: "column2"}},
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 				parser.Field{Object: parser.AllColumns{}},
 				parser.Field{Object: parser.NewInteger(1), Alias: parser.Identifier{Literal: "a"}},
 			},
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_FIELD},
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table1", Column: "column1", FromTable: true},
 				{Reference: "table1", Column: "column2", FromTable: true},
-				{Reference: "table2", Column: INTERNAL_ID_FIELD},
+				{Reference: "table2", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table2", Column: "column3", FromTable: true},
 				{Reference: "table2", Column: "column4", FromTable: true},
 				{Alias: "a"},
@@ -1157,10 +1157,10 @@ var viewSelectTests = []struct {
 		Name: "Select Distinct",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_FIELD},
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table1", Column: "column1", FromTable: true},
 				{Reference: "table1", Column: "column2", FromTable: true},
-				{Reference: "table2", Column: INTERNAL_ID_FIELD},
+				{Reference: "table2", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table2", Column: "column3", FromTable: true},
 				{Reference: "table2", Column: "column4", FromTable: true},
 			},
@@ -1202,7 +1202,7 @@ var viewSelectTests = []struct {
 		Select: parser.SelectClause{
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			Fields: []parser.Expression{
-				parser.Field{Object: parser.Identifier{Literal: "column1"}},
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 				parser.Field{Object: parser.NewInteger(1), Alias: parser.Identifier{Literal: "a"}},
 			},
 		},
@@ -1228,7 +1228,7 @@ var viewSelectTests = []struct {
 		Name: "Select Aggregate Function",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_FIELD},
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table1", Column: "column1", FromTable: true},
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
@@ -1249,7 +1249,7 @@ var viewSelectTests = []struct {
 					Object: parser.Function{
 						Name: "sum",
 						Option: parser.Option{
-							Args: []parser.Expression{parser.Identifier{Literal: "column1"}},
+							Args: []parser.Expression{parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 						},
 					},
 				},
@@ -1257,7 +1257,7 @@ var viewSelectTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_FIELD},
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table1", Column: "column1", FromTable: true},
 				{Reference: "table1", Column: "column2", FromTable: true},
 				{Alias: "sum(column1)"},
@@ -1313,7 +1313,7 @@ var viewOrderByTests = []struct {
 		Name: "Order By",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_FIELD},
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table1", Column: "column1", FromTable: true},
 				{Reference: "table1", Column: "column2", FromTable: true},
 				{Reference: "table1", Column: "column3", FromTable: true},
@@ -1365,7 +1365,7 @@ var viewOrderByTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_FIELD},
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table1", Column: "column1", FromTable: true},
 				{Reference: "table1", Column: "column2", FromTable: true},
 				{Reference: "table1", Column: "column3", FromTable: true},
@@ -1434,7 +1434,7 @@ func TestView_OrderBy(t *testing.T) {
 func TestView_Limit(t *testing.T) {
 	view := &View{
 		Header: []HeaderField{
-			{Reference: "table1", Column: INTERNAL_ID_FIELD},
+			{Reference: "table1", Column: INTERNAL_ID_COLUMN},
 			{Reference: "table1", Column: "column1", FromTable: true},
 			{Reference: "table1", Column: "column2", FromTable: true},
 		},
@@ -1460,7 +1460,7 @@ func TestView_Limit(t *testing.T) {
 	limit := parser.LimitClause{Number: 2}
 	expect := &View{
 		Header: []HeaderField{
-			{Reference: "table1", Column: INTERNAL_ID_FIELD},
+			{Reference: "table1", Column: INTERNAL_ID_COLUMN},
 			{Reference: "table1", Column: "column1", FromTable: true},
 			{Reference: "table1", Column: "column2", FromTable: true},
 		},
@@ -1492,7 +1492,7 @@ var viewInsertValuesTests = []struct {
 	{
 		Name: "InsertValues",
 		Fields: []parser.Expression{
-			parser.Identifier{Literal: "column1"},
+			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 		},
 		ValuesList: []parser.Expression{
 			parser.InsertValues{
@@ -1536,8 +1536,8 @@ var viewInsertValuesTests = []struct {
 	{
 		Name: "InsertValues Field Length Does Not Match Error",
 		Fields: []parser.Expression{
-			parser.Identifier{Literal: "column1"},
-			parser.Identifier{Literal: "column2"},
+			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 		},
 		ValuesList: []parser.Expression{
 			parser.InsertValues{
@@ -1551,12 +1551,12 @@ var viewInsertValuesTests = []struct {
 	{
 		Name: "InsertValues Value Evaluation Error",
 		Fields: []parser.Expression{
-			parser.Identifier{Literal: "column1"},
+			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 		},
 		ValuesList: []parser.Expression{
 			parser.InsertValues{
 				Values: []parser.Expression{
-					parser.Identifier{Literal: "notexist"},
+					parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 				},
 			},
 		},
@@ -1565,7 +1565,7 @@ var viewInsertValuesTests = []struct {
 	{
 		Name: "InsertValues Field Does Not Exist Error",
 		Fields: []parser.Expression{
-			parser.Identifier{Literal: "notexist"},
+			parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 		},
 		ValuesList: []parser.Expression{
 			parser.InsertValues{
@@ -1623,7 +1623,7 @@ var viewInsertFromQueryTests = []struct {
 	{
 		Name: "InsertFromQuery",
 		Fields: []parser.Expression{
-			parser.Identifier{Literal: "column1"},
+			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 		},
 		Query: parser.SelectQuery{
 			SelectClause: parser.SelectClause{
@@ -1657,8 +1657,8 @@ var viewInsertFromQueryTests = []struct {
 	{
 		Name: "InsertFromQuery Field Lenght Does Not Match Error",
 		Fields: []parser.Expression{
-			parser.Identifier{Literal: "column1"},
-			parser.Identifier{Literal: "column2"},
+			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 		},
 		Query: parser.SelectQuery{
 			SelectClause: parser.SelectClause{
@@ -1672,12 +1672,12 @@ var viewInsertFromQueryTests = []struct {
 	{
 		Name: "Insert Values Query Exuecution Error",
 		Fields: []parser.Expression{
-			parser.Identifier{Literal: "column1"},
+			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 		},
 		Query: parser.SelectQuery{
 			SelectClause: parser.SelectClause{
 				Fields: []parser.Expression{
-					parser.Field{Object: parser.Identifier{Literal: "notexist"}},
+					parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
 				},
 			},
 		},
@@ -1723,7 +1723,7 @@ func TestView_InsertFromQuery(t *testing.T) {
 func TestView_Fix(t *testing.T) {
 	view := &View{
 		Header: []HeaderField{
-			{Reference: "table1", Column: INTERNAL_ID_FIELD},
+			{Reference: "table1", Column: INTERNAL_ID_COLUMN},
 			{Reference: "table1", Column: "column1", FromTable: true},
 			{Reference: "table1", Column: "column2", FromTable: true},
 		},
@@ -1767,19 +1767,14 @@ func TestView_FieldIndex(t *testing.T) {
 			{Reference: "table1", Column: "column2", FromTable: true},
 		},
 	}
-	ident := parser.Identifier{Literal: "column1"}
+	fieldRef := parser.FieldReference{
+		Column: parser.Identifier{Literal: "column1"},
+	}
 	expect := 0
 
-	idx, _ := view.FieldIndex(ident)
+	idx, _ := view.FieldIndex(fieldRef)
 	if idx != expect {
 		t.Errorf("field index = %d, want %d", idx, expect)
-	}
-
-	ident = parser.Identifier{Literal: "table1.column2.column2"}
-	expectError := "field identifier = table1.column2.column2, incorrect format"
-	_, err := view.FieldIndex(ident)
-	if err.Error() != expectError {
-		t.Errorf("error = %q, want error %q", err, expectError)
 	}
 }
 
@@ -1791,8 +1786,8 @@ func TestView_FieldIndices(t *testing.T) {
 		},
 	}
 	fields := []parser.Expression{
-		parser.Identifier{Literal: "column2"},
-		parser.Identifier{Literal: "column1"},
+		parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+		parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 	}
 	expect := []int{1, 0}
 
@@ -1800,38 +1795,23 @@ func TestView_FieldIndices(t *testing.T) {
 	if !reflect.DeepEqual(indices, expect) {
 		t.Errorf("field indices = %d, want %d", indices, expect)
 	}
-
-	fields = []parser.Expression{
-		parser.Identifier{Literal: "table1.column2.column2"},
-		parser.Identifier{Literal: "column1"},
-	}
-	expectError := "field identifier = table1.column2.column2, incorrect format"
-	_, err := view.FieldIndices(fields)
-	if err.Error() != expectError {
-		t.Errorf("error = %q, want error %q", err, expectError)
-	}
 }
 
-func TestView_FieldRef(t *testing.T) {
+func TestView_FieldViewName(t *testing.T) {
 	view := &View{
 		Header: []HeaderField{
 			{Reference: "table1", Column: "column1", FromTable: true},
 			{Reference: "table2", Column: "column2", FromTable: true},
 		},
 	}
-	ident := parser.Identifier{Literal: "column1"}
+	fieldRef := parser.FieldReference{
+		Column: parser.Identifier{Literal: "column1"},
+	}
 	expect := "table1"
 
-	ref, _ := view.FieldRef(ident)
+	ref, _ := view.FieldViewName(fieldRef)
 	if ref != expect {
 		t.Errorf("field reference = %s, want %s", ref, expect)
-	}
-
-	ident = parser.Identifier{Literal: "table1.column2.column2"}
-	expectError := "field identifier = table1.column2.column2, incorrect format"
-	_, err := view.FieldRef(ident)
-	if err.Error() != expectError {
-		t.Errorf("error = %q, want error %q", err, expectError)
 	}
 }
 

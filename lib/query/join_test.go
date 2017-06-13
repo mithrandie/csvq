@@ -146,10 +146,10 @@ func TestCrossJoin(t *testing.T) {
 	}
 	expect := &View{
 		Header: []HeaderField{
-			{Reference: "table1", Column: INTERNAL_ID_FIELD},
+			{Reference: "table1", Column: INTERNAL_ID_COLUMN},
 			{Reference: "table1", Column: "column1", FromTable: true},
 			{Reference: "table1", Column: "column2", FromTable: true},
-			{Reference: "table2", Column: INTERNAL_ID_FIELD},
+			{Reference: "table2", Column: INTERNAL_ID_COLUMN},
 			{Reference: "table2", Column: "column3", FromTable: true},
 			{Reference: "table2", Column: "column4", FromTable: true},
 		},
@@ -237,16 +237,16 @@ var innerJoinTests = []struct {
 			},
 		},
 		Condition: parser.Comparison{
-			LHS:      parser.Identifier{Literal: "table1.column1"},
-			RHS:      parser.Identifier{Literal: "table2.column1"},
+			LHS:      parser.FieldReference{View: parser.Identifier{Literal: "table1"}, Column: parser.Identifier{Literal: "column1"}},
+			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column1"}},
 			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_FIELD},
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table1", Column: "column1", FromTable: true},
 				{Reference: "table1", Column: "column2", FromTable: true},
-				{Reference: "table2", Column: INTERNAL_ID_FIELD},
+				{Reference: "table2", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table2", Column: "column1", FromTable: true},
 				{Reference: "table2", Column: "column3", FromTable: true},
 			},
@@ -291,8 +291,8 @@ var innerJoinTests = []struct {
 			},
 		},
 		Condition: parser.Comparison{
-			LHS:      parser.Identifier{Literal: "table1.column1"},
-			RHS:      parser.Identifier{Literal: "table2.notexist"},
+			LHS:      parser.FieldReference{View: parser.Identifier{Literal: "table1"}, Column: parser.Identifier{Literal: "column1"}},
+			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "notexist"}},
 			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 		},
 		Error: "identifier = table2.notexist: field does not exist",
@@ -367,17 +367,17 @@ var outerJoinTests = []struct {
 			},
 		},
 		Condition: parser.Comparison{
-			LHS:      parser.Identifier{Literal: "table1.column1"},
-			RHS:      parser.Identifier{Literal: "table2.column1"},
+			LHS:      parser.FieldReference{View: parser.Identifier{Literal: "table1"}, Column: parser.Identifier{Literal: "column1"}},
+			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column1"}},
 			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 		},
 		Direction: parser.LEFT,
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_FIELD},
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table1", Column: "column1", FromTable: true},
 				{Reference: "table1", Column: "column2", FromTable: true},
-				{Reference: "table2", Column: INTERNAL_ID_FIELD},
+				{Reference: "table2", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table2", Column: "column1", FromTable: true},
 				{Reference: "table2", Column: "column3", FromTable: true},
 			},
@@ -446,17 +446,17 @@ var outerJoinTests = []struct {
 			},
 		},
 		Condition: parser.Comparison{
-			LHS:      parser.Identifier{Literal: "table1.column1"},
-			RHS:      parser.Identifier{Literal: "table2.column1"},
+			LHS:      parser.FieldReference{View: parser.Identifier{Literal: "table1"}, Column: parser.Identifier{Literal: "column1"}},
+			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column1"}},
 			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 		},
 		Direction: parser.RIGHT,
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_FIELD},
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table1", Column: "column1", FromTable: true},
 				{Reference: "table1", Column: "column2", FromTable: true},
-				{Reference: "table2", Column: INTERNAL_ID_FIELD},
+				{Reference: "table2", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table2", Column: "column1", FromTable: true},
 				{Reference: "table2", Column: "column3", FromTable: true},
 			},
@@ -525,17 +525,17 @@ var outerJoinTests = []struct {
 			},
 		},
 		Condition: parser.Comparison{
-			LHS:      parser.Identifier{Literal: "table1.column1"},
-			RHS:      parser.Identifier{Literal: "table2.column1"},
+			LHS:      parser.FieldReference{View: parser.Identifier{Literal: "table1"}, Column: parser.Identifier{Literal: "column1"}},
+			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column1"}},
 			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 		},
 		Direction: parser.FULL,
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_FIELD},
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table1", Column: "column1", FromTable: true},
 				{Reference: "table1", Column: "column2", FromTable: true},
-				{Reference: "table2", Column: INTERNAL_ID_FIELD},
+				{Reference: "table2", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table2", Column: "column1", FromTable: true},
 				{Reference: "table2", Column: "column3", FromTable: true},
 			},
@@ -612,8 +612,8 @@ var outerJoinTests = []struct {
 			},
 		},
 		Condition: parser.Comparison{
-			LHS:      parser.Identifier{Literal: "table1.notexist"},
-			RHS:      parser.Identifier{Literal: "table2.column1"},
+			LHS:      parser.FieldReference{View: parser.Identifier{Literal: "table1"}, Column: parser.Identifier{Literal: "notexist"}},
+			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column1"}},
 			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 		},
 		Direction: parser.LEFT,
@@ -656,17 +656,17 @@ var outerJoinTests = []struct {
 			},
 		},
 		Condition: parser.Comparison{
-			LHS:      parser.Identifier{Literal: "table1.column1"},
-			RHS:      parser.Identifier{Literal: "table2.column1"},
+			LHS:      parser.FieldReference{View: parser.Identifier{Literal: "table1"}, Column: parser.Identifier{Literal: "column1"}},
+			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column1"}},
 			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 		},
 		Direction: parser.TOKEN_UNDEFINED,
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_FIELD},
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table1", Column: "column1", FromTable: true},
 				{Reference: "table1", Column: "column2", FromTable: true},
-				{Reference: "table2", Column: INTERNAL_ID_FIELD},
+				{Reference: "table2", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table2", Column: "column1", FromTable: true},
 				{Reference: "table2", Column: "column3", FromTable: true},
 			},

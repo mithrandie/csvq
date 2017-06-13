@@ -1825,7 +1825,7 @@ var autoIncrementTests = []functionTest{
 }
 
 func TestAutoIncrement(t *testing.T) {
-	Variable.ClearAutoIncrement()
+	GlobalVars.ClearAutoIncrement()
 	testFunction(t, AutoIncrement, autoIncrementTests)
 }
 
@@ -1983,4 +1983,31 @@ var datetimeTests = []functionTest{
 
 func TestDatetime(t *testing.T) {
 	testFunction(t, Datetime, datetimeTests)
+}
+
+var callTests = []functionTest{
+	{
+		Name: "Call",
+		Args: []parser.Primary{
+			parser.NewString("echo"),
+			parser.NewString("foo"),
+		},
+		Result: parser.NewString("foo\n"),
+	},
+	{
+		Name:  "Call Argument Error",
+		Args:  []parser.Primary{},
+		Error: "function CALL takes at least 1 argument",
+	},
+	{
+		Name: "Call Command Error",
+		Args: []parser.Primary{
+			parser.NewString("notexistcommand"),
+		},
+		Error: "exec: \"notexistcommand\": executable file not found in $PATH",
+	},
+}
+
+func TestCall(t *testing.T) {
+	testFunction(t, Call, callTests)
 }

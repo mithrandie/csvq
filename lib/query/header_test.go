@@ -48,8 +48,8 @@ func TestHeader_TableColumns(t *testing.T) {
 		},
 	}
 	expect := []parser.Expression{
-		parser.Identifier{Literal: "t1.c1"},
-		parser.Identifier{Literal: "c3"},
+		parser.FieldReference{View: parser.Identifier{Literal: "t1"}, Column: parser.Identifier{Literal: "c1"}},
+		parser.FieldReference{Column: parser.Identifier{Literal: "c3"}},
 	}
 
 	result := h.TableColumns()
@@ -59,31 +59,40 @@ func TestHeader_TableColumns(t *testing.T) {
 }
 
 var headerContainsTests = []struct {
-	Ref    string
-	Column string
+	Ref    parser.FieldReference
 	Result int
 	Error  string
 }{
 	{
-		Ref:    "t2",
-		Column: "c1",
+		Ref: parser.FieldReference{
+			View:   parser.Identifier{Literal: "t2"},
+			Column: parser.Identifier{Literal: "c1"},
+		},
 		Result: 3,
 	},
 	{
-		Column: "a2",
+		Ref: parser.FieldReference{
+			Column: parser.Identifier{Literal: "a2"},
+		},
 		Result: 1,
 	},
 	{
-		Column: "c2",
+		Ref: parser.FieldReference{
+			Column: parser.Identifier{Literal: "c2"},
+		},
 		Result: 1,
 	},
 	{
-		Column: "c1",
-		Error:  "identifier = c1: field is ambiguous",
+		Ref: parser.FieldReference{
+			Column: parser.Identifier{Literal: "c1"},
+		},
+		Error: "identifier = c1: field is ambiguous",
 	},
 	{
-		Column: "d1",
-		Error:  "identifier = d1: field does not exist",
+		Ref: parser.FieldReference{
+			Column: parser.Identifier{Literal: "d1"},
+		},
+		Error: "identifier = d1: field does not exist",
 	},
 }
 
@@ -114,26 +123,21 @@ func TestHeader_Contains(t *testing.T) {
 	}
 
 	for _, v := range headerContainsTests {
-		identifier := v.Column
-		if 0 < len(v.Ref) {
-			identifier = v.Ref + "." + identifier
-		}
-
-		result, err := h.Contains(v.Ref, v.Column)
+		result, err := h.Contains(v.Ref)
 		if err != nil {
 			if len(v.Error) < 1 {
-				t.Errorf("%s: unexpected error %q", identifier, err)
+				t.Errorf("%s: unexpected error %q", v.Ref.String(), err)
 			} else if err.Error() != v.Error {
-				t.Errorf("%s: error %q, want error %q", identifier, err, v.Error)
+				t.Errorf("%s: error %q, want error %q", v.Ref.String(), err, v.Error)
 			}
 			continue
 		}
 		if 0 < len(v.Error) {
-			t.Errorf("%s: no error, want error %q", identifier, v.Error)
+			t.Errorf("%s: no error, want error %q", v.Ref.String(), v.Error)
 			continue
 		}
 		if result != v.Result {
-			t.Errorf("%s: index = %d, want %d", identifier, result, v.Result)
+			t.Errorf("%s: index = %d, want %d", v.Ref.String(), result, v.Result)
 		}
 	}
 }
@@ -144,7 +148,7 @@ func TestNewHeader(t *testing.T) {
 	var expect Header = []HeaderField{
 		{
 			Reference: "table1",
-			Column:    INTERNAL_ID_FIELD,
+			Column:    INTERNAL_ID_COLUMN,
 		},
 		{
 			Reference: "table1",
