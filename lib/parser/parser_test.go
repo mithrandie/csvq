@@ -1019,7 +1019,6 @@ var parseTests = []struct {
 		Input: "var @var1, @var2 := 2; @var1 := 1;",
 		Output: []Statement{
 			VariableDeclaration{
-				Var: "var",
 				Assignments: []Expression{
 					VariableAssignment{
 						Name: "@var1",
@@ -1343,16 +1342,16 @@ var parseTests = []struct {
 	{
 		Input: "commit",
 		Output: []Statement{
-			Commit{
-				Literal: "commit",
+			TransactionControl{
+				Token: COMMIT,
 			},
 		},
 	},
 	{
 		Input: "rollback",
 		Output: []Statement{
-			Rollback{
-				Literal: "rollback",
+			TransactionControl{
+				Token: ROLLBACK,
 			},
 		},
 	},
@@ -1360,7 +1359,6 @@ var parseTests = []struct {
 		Input: "print 'foo'",
 		Output: []Statement{
 			Print{
-				Print: "print",
 				Value: NewString("foo"),
 			},
 		},
@@ -1369,9 +1367,238 @@ var parseTests = []struct {
 		Input: "set @@delimiter = ','",
 		Output: []Statement{
 			SetFlag{
-				Set:   "set",
 				Name:  "@@delimiter",
 				Value: NewString(","),
+			},
+		},
+	},
+	{
+		Input: "declare cur cursor for select 1",
+		Output: []Statement{
+			CursorDeclaration{
+				Cursor: Identifier{Literal: "cur"},
+				Query: SelectQuery{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: NewInteger(1)},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "open cur",
+		Output: []Statement{
+			OpenCursor{
+				Cursor: Identifier{Literal: "cur"},
+			},
+		},
+	},
+	{
+		Input: "close cur",
+		Output: []Statement{
+			CloseCursor{
+				Cursor: Identifier{Literal: "cur"},
+			},
+		},
+	},
+	{
+		Input: "dispose cur",
+		Output: []Statement{
+			DisposeCursor{
+				Cursor: Identifier{Literal: "cur"},
+			},
+		},
+	},
+	{
+		Input: "fetch cur into @var1, @var2",
+		Output: []Statement{
+			FetchCursor{
+				Cursor: Identifier{Literal: "cur"},
+				Variables: []Variable{
+					{Name: "@var1"},
+					{Name: "@var2"},
+				},
+			},
+		},
+	},
+	{
+		Input: "if @var1 = 1 then print 1; end if",
+		Output: []Statement{
+			If{
+				Condition: Comparison{
+					LHS:      Variable{Name: "@var1"},
+					RHS:      NewInteger(1),
+					Operator: Token{Token: COMPARISON_OP, Literal: "="},
+				},
+				Statements: []Statement{
+					Print{Value: NewInteger(1)},
+				},
+			},
+		},
+	},
+	{
+		Input: "if @var1 = 1 then print 1; elseif @var1 = 2 then print 2; elseif @var1 = 3 then print 3; else print 4; end if",
+		Output: []Statement{
+			If{
+				Condition: Comparison{
+					LHS:      Variable{Name: "@var1"},
+					RHS:      NewInteger(1),
+					Operator: Token{Token: COMPARISON_OP, Literal: "="},
+				},
+				Statements: []Statement{
+					Print{Value: NewInteger(1)},
+				},
+				ElseIf: []ProcExpr{
+					ElseIf{
+						Condition: Comparison{
+							LHS:      Variable{Name: "@var1"},
+							RHS:      NewInteger(2),
+							Operator: Token{Token: COMPARISON_OP, Literal: "="},
+						},
+						Statements: []Statement{
+							Print{Value: NewInteger(2)},
+						},
+					},
+					ElseIf{
+						Condition: Comparison{
+							LHS:      Variable{Name: "@var1"},
+							RHS:      NewInteger(3),
+							Operator: Token{Token: COMPARISON_OP, Literal: "="},
+						},
+						Statements: []Statement{
+							Print{Value: NewInteger(3)},
+						},
+					},
+				},
+				Else: Else{
+					Statements: []Statement{
+						Print{Value: NewInteger(4)},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "while @var1 do print @var1 end while",
+		Output: []Statement{
+			While{
+				Condition: Variable{Name: "@var1"},
+				Statements: []Statement{
+					Print{Value: Variable{Name: "@var1"}},
+				},
+			},
+		},
+	},
+	{
+		Input: "while @var1, @var2 in cur do print @var1 end while",
+		Output: []Statement{
+			WhileInCursor{
+				Variables: []Variable{
+					{Name: "@var1"},
+					{Name: "@var2"},
+				},
+				Cursor: Identifier{Literal: "cur"},
+				Statements: []Statement{
+					Print{Value: Variable{Name: "@var1"}},
+				},
+			},
+		},
+	},
+	{
+		Input: "exit",
+		Output: []Statement{
+			FlowControl{Token: EXIT},
+		},
+	},
+	{
+		Input: "while true do continue end while",
+		Output: []Statement{
+			While{
+				Condition: Ternary{literal: "true", value: ternary.TRUE},
+				Statements: []Statement{
+					FlowControl{Token: CONTINUE},
+				},
+			},
+		},
+	},
+	{
+		Input: "while true do break end while",
+		Output: []Statement{
+			While{
+				Condition: Ternary{literal: "true", value: ternary.TRUE},
+				Statements: []Statement{
+					FlowControl{Token: BREAK},
+				},
+			},
+		},
+	},
+	{
+		Input: "while true do if @var1 = 1 then continue; end if; end while",
+		Output: []Statement{
+			While{
+				Condition: Ternary{literal: "true", value: ternary.TRUE},
+				Statements: []Statement{
+					If{
+						Condition: Comparison{
+							LHS:      Variable{Name: "@var1"},
+							RHS:      NewInteger(1),
+							Operator: Token{Token: COMPARISON_OP, Literal: "="},
+						},
+						Statements: []Statement{
+							FlowControl{Token: CONTINUE},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "while true do if @var1 = 1 then continue; elseif @var1 = 2 then break; elseif @var1 = 3 then exit; else continue; end if; end while",
+		Output: []Statement{
+			While{
+				Condition: Ternary{literal: "true", value: ternary.TRUE},
+				Statements: []Statement{
+					If{
+						Condition: Comparison{
+							LHS:      Variable{Name: "@var1"},
+							RHS:      NewInteger(1),
+							Operator: Token{Token: COMPARISON_OP, Literal: "="},
+						},
+						Statements: []Statement{
+							FlowControl{Token: CONTINUE},
+						},
+						ElseIf: []ProcExpr{
+							ElseIf{
+								Condition: Comparison{
+									LHS:      Variable{Name: "@var1"},
+									RHS:      NewInteger(2),
+									Operator: Token{Token: COMPARISON_OP, Literal: "="},
+								},
+								Statements: []Statement{
+									FlowControl{Token: BREAK},
+								},
+							},
+							ElseIf{
+								Condition: Comparison{
+									LHS:      Variable{Name: "@var1"},
+									RHS:      NewInteger(3),
+									Operator: Token{Token: COMPARISON_OP, Literal: "="},
+								},
+								Statements: []Statement{
+									FlowControl{Token: EXIT},
+								},
+							},
+						},
+						Else: Else{
+							Statements: []Statement{
+								FlowControl{Token: CONTINUE},
+							},
+						},
+					},
+				},
 			},
 		},
 	},
@@ -1390,12 +1617,12 @@ func TestParse(t *testing.T) {
 		prog, err := Parse(v.Input)
 		if err != nil {
 			t.Errorf("unexpected error %q at %q", err.Error(), v.Input)
-			return
+			continue
 		}
 
 		if len(v.Output) != len(prog) {
 			t.Errorf("parsed program has %d statement(s), want %d statement(s) for %q", len(prog), len(v.Output), v.Input)
-			return
+			continue
 		}
 
 		for i, stmt := range prog {

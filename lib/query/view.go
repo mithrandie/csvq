@@ -114,8 +114,6 @@ func (m *ViewMap) ClearAliases() {
 	}
 }
 
-var ViewCache = NewViewMap()
-
 type FileInfo struct {
 	Path      string
 	Delimiter rune

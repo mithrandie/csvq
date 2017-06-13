@@ -10,6 +10,7 @@ import (
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/ternary"
 )
 
 var executeTests = []struct {
@@ -523,7 +524,7 @@ var executeStatementTests = []struct {
 }
 
 func TestExecuteStatement(t *testing.T) {
-	Variable = map[string]parser.Primary{}
+	GlobalVars = map[string]parser.Primary{}
 
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
@@ -532,7 +533,8 @@ func TestExecuteStatement(t *testing.T) {
 		ViewCache.Clear()
 		ResultSet = []Result{}
 
-		_, err := ExecuteStatement(v.Input)
+		//TODO
+		_, _, err := ExecuteStatement(v.Input)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("unexpected error %q for %q", err, v.Input)
@@ -548,6 +550,700 @@ func TestExecuteStatement(t *testing.T) {
 
 		if !reflect.DeepEqual(ResultSet, v.Result) {
 			t.Errorf("results = %q, want %q for %q", ResultSet, v.Result, v.Input)
+		}
+	}
+}
+
+var ifStmtTests = []struct {
+	Name       string
+	Stmt       parser.If
+	ResultFlow StatementFlow
+	Result     string
+	Error      string
+}{
+	{
+		Name: "If Statement",
+		Stmt: parser.If{
+			Condition: parser.NewTernary(ternary.TRUE),
+			Statements: []parser.Statement{
+				parser.Print{Value: parser.NewString("1")},
+				parser.TransactionControl{Token: parser.COMMIT},
+			},
+		},
+		ResultFlow: TERMINATE,
+		Result:     "'1'\n",
+	},
+	{
+		Name: "If Statement Execute Nothing",
+		Stmt: parser.If{
+			Condition: parser.NewTernary(ternary.FALSE),
+			Statements: []parser.Statement{
+				parser.Print{Value: parser.NewString("1")},
+				parser.TransactionControl{Token: parser.COMMIT},
+			},
+		},
+		ResultFlow: TERMINATE,
+		Result:     "",
+	},
+	{
+		Name: "If Statement Execute ElseIf",
+		Stmt: parser.If{
+			Condition: parser.NewTernary(ternary.FALSE),
+			Statements: []parser.Statement{
+				parser.Print{Value: parser.NewString("1")},
+				parser.TransactionControl{Token: parser.COMMIT},
+			},
+			ElseIf: []parser.ProcExpr{
+				parser.ElseIf{
+					Condition: parser.NewTernary(ternary.TRUE),
+					Statements: []parser.Statement{
+						parser.Print{Value: parser.NewString("2")},
+						parser.TransactionControl{Token: parser.COMMIT},
+					},
+				},
+				parser.ElseIf{
+					Condition: parser.NewTernary(ternary.FALSE),
+					Statements: []parser.Statement{
+						parser.Print{Value: parser.NewString("3")},
+						parser.TransactionControl{Token: parser.COMMIT},
+					},
+				},
+			},
+			Else: parser.Else{
+				Statements: []parser.Statement{
+					parser.Print{Value: parser.NewString("4")},
+					parser.TransactionControl{Token: parser.COMMIT},
+				},
+			},
+		},
+		ResultFlow: TERMINATE,
+		Result:     "'2'\n",
+	},
+	{
+		Name: "If Statement Execute Else",
+		Stmt: parser.If{
+			Condition: parser.NewTernary(ternary.FALSE),
+			Statements: []parser.Statement{
+				parser.Print{Value: parser.NewString("1")},
+				parser.TransactionControl{Token: parser.COMMIT},
+			},
+			ElseIf: []parser.ProcExpr{
+				parser.ElseIf{
+					Condition: parser.NewTernary(ternary.FALSE),
+					Statements: []parser.Statement{
+						parser.Print{Value: parser.NewString("2")},
+						parser.TransactionControl{Token: parser.COMMIT},
+					},
+				},
+				parser.ElseIf{
+					Condition: parser.NewTernary(ternary.FALSE),
+					Statements: []parser.Statement{
+						parser.Print{Value: parser.NewString("3")},
+						parser.TransactionControl{Token: parser.COMMIT},
+					},
+				},
+			},
+			Else: parser.Else{
+				Statements: []parser.Statement{
+					parser.Print{Value: parser.NewString("4")},
+					parser.TransactionControl{Token: parser.COMMIT},
+				},
+			},
+		},
+		ResultFlow: TERMINATE,
+		Result:     "'4'\n",
+	},
+	{
+		Name: "If Statement Filter Error",
+		Stmt: parser.If{
+			Condition: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+			Statements: []parser.Statement{
+				parser.Print{Value: parser.NewString("1")},
+				parser.TransactionControl{Token: parser.COMMIT},
+			},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+}
+
+func TestIfStmt(t *testing.T) {
+	for _, v := range ifStmtTests {
+		Rollback()
+
+		flow, result, err := IfStmt(v.Stmt)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if flow != v.ResultFlow {
+			t.Errorf("%s: result flow = %q, want %q", v.Name, flow, v.ResultFlow)
+		}
+		if result != v.Result {
+			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+		}
+	}
+}
+
+var whileTests = []struct {
+	Name       string
+	Stmt       parser.While
+	ResultFlow StatementFlow
+	Result     string
+	Error      string
+}{
+	{
+		Name: "While Statement",
+		Stmt: parser.While{
+			Condition: parser.Comparison{
+				LHS:      parser.Variable{Name: "@while_test"},
+				RHS:      parser.NewInteger(3),
+				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
+			},
+			Statements: []parser.Statement{
+				parser.VariableSubstitution{
+					Variable: parser.Variable{Name: "@while_test"},
+					Value: parser.Arithmetic{
+						LHS:      parser.Variable{Name: "@while_test"},
+						RHS:      parser.NewInteger(1),
+						Operator: '+',
+					},
+				},
+				parser.Print{Value: parser.Variable{Name: "@while_test"}},
+				parser.TransactionControl{Token: parser.COMMIT},
+			},
+		},
+		ResultFlow: TERMINATE,
+		Result:     "1\n2\n3\n",
+	},
+	{
+		Name: "While Statement Continue",
+		Stmt: parser.While{
+			Condition: parser.Comparison{
+				LHS:      parser.Variable{Name: "@while_test_count"},
+				RHS:      parser.NewInteger(3),
+				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
+			},
+			Statements: []parser.Statement{
+				parser.VariableSubstitution{
+					Variable: parser.Variable{Name: "@while_test_count"},
+					Value: parser.Arithmetic{
+						LHS:      parser.Variable{Name: "@while_test_count"},
+						RHS:      parser.NewInteger(1),
+						Operator: '+',
+					},
+				},
+				parser.VariableSubstitution{
+					Variable: parser.Variable{Name: "@while_test"},
+					Value: parser.Arithmetic{
+						LHS:      parser.Variable{Name: "@while_test"},
+						RHS:      parser.NewInteger(1),
+						Operator: '+',
+					},
+				},
+				parser.If{
+					Condition: parser.Comparison{
+						LHS:      parser.Variable{Name: "@while_test_count"},
+						RHS:      parser.NewInteger(2),
+						Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+					},
+					Statements: []parser.Statement{
+						parser.FlowControl{Token: parser.CONTINUE},
+					},
+				},
+				parser.Print{Value: parser.Variable{Name: "@while_test"}},
+				parser.TransactionControl{Token: parser.COMMIT},
+			},
+		},
+		ResultFlow: TERMINATE,
+		Result:     "1\n3\n",
+	},
+	{
+		Name: "While Statement Break",
+		Stmt: parser.While{
+			Condition: parser.Comparison{
+				LHS:      parser.Variable{Name: "@while_test_count"},
+				RHS:      parser.NewInteger(3),
+				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
+			},
+			Statements: []parser.Statement{
+				parser.VariableSubstitution{
+					Variable: parser.Variable{Name: "@while_test_count"},
+					Value: parser.Arithmetic{
+						LHS:      parser.Variable{Name: "@while_test_count"},
+						RHS:      parser.NewInteger(1),
+						Operator: '+',
+					},
+				},
+				parser.VariableSubstitution{
+					Variable: parser.Variable{Name: "@while_test"},
+					Value: parser.Arithmetic{
+						LHS:      parser.Variable{Name: "@while_test"},
+						RHS:      parser.NewInteger(1),
+						Operator: '+',
+					},
+				},
+				parser.If{
+					Condition: parser.Comparison{
+						LHS:      parser.Variable{Name: "@while_test_count"},
+						RHS:      parser.NewInteger(2),
+						Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+					},
+					Statements: []parser.Statement{
+						parser.FlowControl{Token: parser.BREAK},
+					},
+				},
+				parser.Print{Value: parser.Variable{Name: "@while_test"}},
+				parser.TransactionControl{Token: parser.COMMIT},
+			},
+		},
+		ResultFlow: TERMINATE,
+		Result:     "1\n",
+	},
+	{
+		Name: "While Statement Exit",
+		Stmt: parser.While{
+			Condition: parser.Comparison{
+				LHS:      parser.Variable{Name: "@while_test_count"},
+				RHS:      parser.NewInteger(3),
+				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
+			},
+			Statements: []parser.Statement{
+				parser.VariableSubstitution{
+					Variable: parser.Variable{Name: "@while_test_count"},
+					Value: parser.Arithmetic{
+						LHS:      parser.Variable{Name: "@while_test_count"},
+						RHS:      parser.NewInteger(1),
+						Operator: '+',
+					},
+				},
+				parser.VariableSubstitution{
+					Variable: parser.Variable{Name: "@while_test"},
+					Value: parser.Arithmetic{
+						LHS:      parser.Variable{Name: "@while_test"},
+						RHS:      parser.NewInteger(1),
+						Operator: '+',
+					},
+				},
+				parser.If{
+					Condition: parser.Comparison{
+						LHS:      parser.Variable{Name: "@while_test_count"},
+						RHS:      parser.NewInteger(2),
+						Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+					},
+					Statements: []parser.Statement{
+						parser.FlowControl{Token: parser.EXIT},
+					},
+				},
+				parser.Print{Value: parser.Variable{Name: "@while_test"}},
+				parser.TransactionControl{Token: parser.COMMIT},
+			},
+		},
+		ResultFlow: EXIT,
+		Result:     "1\n",
+	},
+	{
+		Name: "While Statement Filter Error",
+		Stmt: parser.While{
+			Condition: parser.Comparison{
+				LHS:      parser.Variable{Name: "@while_test"},
+				RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
+			},
+			Statements: []parser.Statement{
+				parser.VariableSubstitution{
+					Variable: parser.Variable{Name: "@while_test"},
+					Value: parser.Arithmetic{
+						LHS:      parser.Variable{Name: "@while_test"},
+						RHS:      parser.NewInteger(1),
+						Operator: '+',
+					},
+				},
+				parser.Print{Value: parser.Variable{Name: "@while_test"}},
+				parser.TransactionControl{Token: parser.COMMIT},
+			},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+	{
+		Name: "While Statement Execution Error",
+		Stmt: parser.While{
+			Condition: parser.Comparison{
+				LHS:      parser.Variable{Name: "@while_test"},
+				RHS:      parser.NewInteger(3),
+				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
+			},
+			Statements: []parser.Statement{
+				parser.VariableSubstitution{
+					Variable: parser.Variable{Name: "@while_test"},
+					Value: parser.Arithmetic{
+						LHS:      parser.Variable{Name: "@while_test"},
+						RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+						Operator: '+',
+					},
+				},
+				parser.Print{Value: parser.Variable{Name: "@while_test"}},
+				parser.TransactionControl{Token: parser.COMMIT},
+			},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+}
+
+func TestWhile(t *testing.T) {
+	for _, v := range whileTests {
+		Rollback()
+		if _, err := GlobalVars.Get("@while_test"); err != nil {
+			GlobalVars.Add("@while_test", parser.NewInteger(0))
+		}
+		GlobalVars.Set("@while_test", parser.NewInteger(0))
+
+		if _, err := GlobalVars.Get("@while_test_count"); err != nil {
+			GlobalVars.Add("@while_test_count", parser.NewInteger(0))
+		}
+		GlobalVars.Set("@while_test_count", parser.NewInteger(0))
+
+		flow, result, err := While(v.Stmt)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if flow != v.ResultFlow {
+			t.Errorf("%s: result flow = %q, want %q", v.Name, flow, v.ResultFlow)
+		}
+		if result != v.Result {
+			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+		}
+	}
+}
+
+var whileInCursorTests = []struct {
+	Name       string
+	Stmt       parser.WhileInCursor
+	ResultFlow StatementFlow
+	Result     string
+	Error      string
+}{
+	{
+		Name: "While In Cursor",
+		Stmt: parser.WhileInCursor{
+			Variables: []parser.Variable{
+				{Name: "@var1"},
+				{Name: "@var2"},
+			},
+			Cursor: parser.Identifier{Literal: "cur"},
+			Statements: []parser.Statement{
+				parser.Print{Value: parser.Variable{Name: "@var1"}},
+				parser.TransactionControl{Token: parser.COMMIT},
+			},
+		},
+		ResultFlow: TERMINATE,
+		Result:     "'1'\n'2'\n'3'\n",
+	},
+	{
+		Name: "While In Cursor Continue",
+		Stmt: parser.WhileInCursor{
+			Variables: []parser.Variable{
+				{Name: "@var1"},
+				{Name: "@var2"},
+			},
+			Cursor: parser.Identifier{Literal: "cur"},
+			Statements: []parser.Statement{
+				parser.If{
+					Condition: parser.Comparison{
+						LHS:      parser.Variable{Name: "@var1"},
+						RHS:      parser.NewInteger(2),
+						Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+					},
+					Statements: []parser.Statement{
+						parser.FlowControl{Token: parser.CONTINUE},
+					},
+				},
+				parser.Print{Value: parser.Variable{Name: "@var1"}},
+				parser.TransactionControl{Token: parser.COMMIT},
+			},
+		},
+		ResultFlow: TERMINATE,
+		Result:     "'1'\n'3'\n",
+	},
+	{
+		Name: "While In Cursor Break",
+		Stmt: parser.WhileInCursor{
+			Variables: []parser.Variable{
+				{Name: "@var1"},
+				{Name: "@var2"},
+			},
+			Cursor: parser.Identifier{Literal: "cur"},
+			Statements: []parser.Statement{
+				parser.If{
+					Condition: parser.Comparison{
+						LHS:      parser.Variable{Name: "@var1"},
+						RHS:      parser.NewInteger(2),
+						Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+					},
+					Statements: []parser.Statement{
+						parser.FlowControl{Token: parser.BREAK},
+					},
+				},
+				parser.Print{Value: parser.Variable{Name: "@var1"}},
+				parser.TransactionControl{Token: parser.COMMIT},
+			},
+		},
+		ResultFlow: TERMINATE,
+		Result:     "'1'\n",
+	},
+	{
+		Name: "While In Cursor Exit",
+		Stmt: parser.WhileInCursor{
+			Variables: []parser.Variable{
+				{Name: "@var1"},
+				{Name: "@var2"},
+			},
+			Cursor: parser.Identifier{Literal: "cur"},
+			Statements: []parser.Statement{
+				parser.If{
+					Condition: parser.Comparison{
+						LHS:      parser.Variable{Name: "@var1"},
+						RHS:      parser.NewInteger(2),
+						Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+					},
+					Statements: []parser.Statement{
+						parser.FlowControl{Token: parser.EXIT},
+					},
+				},
+				parser.Print{Value: parser.Variable{Name: "@var1"}},
+				parser.TransactionControl{Token: parser.COMMIT},
+			},
+		},
+		ResultFlow: EXIT,
+		Result:     "'1'\n",
+	},
+	{
+		Name: "While In Cursor Fetch Error",
+		Stmt: parser.WhileInCursor{
+			Variables: []parser.Variable{
+				{Name: "@var1"},
+				{Name: "@var3"},
+			},
+			Cursor: parser.Identifier{Literal: "cur"},
+			Statements: []parser.Statement{
+				parser.Print{Value: parser.Variable{Name: "@var1"}},
+				parser.TransactionControl{Token: parser.COMMIT},
+			},
+		},
+		Error: "variable @var3 is undefined",
+	},
+	{
+		Name: "While In Cursor Statement Execution Error",
+		Stmt: parser.WhileInCursor{
+			Variables: []parser.Variable{
+				{Name: "@var1"},
+				{Name: "@var2"},
+			},
+			Cursor: parser.Identifier{Literal: "cur"},
+			Statements: []parser.Statement{
+				parser.If{
+					Condition: parser.Comparison{
+						LHS:      parser.Variable{Name: "@var1"},
+						RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+						Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+					},
+					Statements: []parser.Statement{
+						parser.FlowControl{Token: parser.BREAK},
+					},
+				},
+				parser.Print{Value: parser.Variable{Name: "@var1"}},
+				parser.TransactionControl{Token: parser.COMMIT},
+			},
+		},
+		Error: "identifier = notexist: field does not exist",
+	},
+}
+
+func TestWhileInCursor(t *testing.T) {
+	tf := cmd.GetFlags()
+	tf.Repository = TestDir
+
+	for _, v := range whileInCursorTests {
+		Cursors = CursorMap{
+			"cur": &Cursor{
+				name:  "cur",
+				query: selectQueryForCursorTest,
+			},
+		}
+		Cursors.Open("cur")
+
+		GlobalVars = Variables{
+			"@var1": parser.NewNull(),
+			"@var2": parser.NewNull(),
+		}
+
+		flow, result, err := WhileInCursor(v.Stmt)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if flow != v.ResultFlow {
+			t.Errorf("%s: result flow = %q, want %q", v.Name, flow, v.ResultFlow)
+		}
+		if result != v.Result {
+			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+		}
+	}
+}
+
+var fetchCursorTests = []struct {
+	Name       string
+	CurName    string
+	Variables  []parser.Variable
+	Success    bool
+	ResultVars Variables
+	Error      string
+}{
+	{
+		Name:    "Fetch Cursor First Time",
+		CurName: "cur",
+		Variables: []parser.Variable{
+			{Name: "@var1"},
+			{Name: "@var2"},
+		},
+		Success: true,
+		ResultVars: Variables{
+			"@var1": parser.NewString("1"),
+			"@var2": parser.NewString("str1"),
+		},
+	},
+	{
+		Name:    "Fetch Cursor Second Time",
+		CurName: "cur",
+		Variables: []parser.Variable{
+			{Name: "@var1"},
+			{Name: "@var2"},
+		},
+		Success: true,
+		ResultVars: Variables{
+			"@var1": parser.NewString("2"),
+			"@var2": parser.NewString("str2"),
+		},
+	},
+	{
+		Name:    "Fetch Cursor Third Time",
+		CurName: "cur",
+		Variables: []parser.Variable{
+			{Name: "@var1"},
+			{Name: "@var2"},
+		},
+		Success: true,
+		ResultVars: Variables{
+			"@var1": parser.NewString("3"),
+			"@var2": parser.NewString("str3"),
+		},
+	},
+	{
+		Name:    "Fetch Cursor Forth Time",
+		CurName: "cur",
+		Variables: []parser.Variable{
+			{Name: "@var1"},
+			{Name: "@var2"},
+		},
+		Success: false,
+		ResultVars: Variables{
+			"@var1": parser.NewString("3"),
+			"@var2": parser.NewString("str3"),
+		},
+	},
+	{
+		Name:    "Fetch Cursor Fetch Error",
+		CurName: "notexist",
+		Variables: []parser.Variable{
+			{Name: "@var1"},
+			{Name: "@var2"},
+		},
+		Error: "cursor notexist does not exist",
+	},
+	{
+		Name:    "Fetch Cursor Not Match Number Error",
+		CurName: "cur2",
+		Variables: []parser.Variable{
+			{Name: "@var1"},
+		},
+		Error: "cursor cur2 field length does not match variables number",
+	},
+	{
+		Name:    "Fetch Cursor Substitution Error",
+		CurName: "cur2",
+		Variables: []parser.Variable{
+			{Name: "@var1"},
+			{Name: "@notexist"},
+		},
+		Error: "variable @notexist is undefined",
+	},
+}
+
+func TestFetchCursor(t *testing.T) {
+	tf := cmd.GetFlags()
+	tf.Repository = TestDir
+
+	Cursors = CursorMap{
+		"cur": &Cursor{
+			name:  "cur",
+			query: selectQueryForCursorTest,
+		},
+		"cur2": &Cursor{
+			name:  "cur2",
+			query: selectQueryForCursorTest,
+		},
+	}
+	Cursors.Open("cur")
+	Cursors.Open("cur2")
+
+	GlobalVars = Variables{
+		"@var1": parser.NewNull(),
+		"@var2": parser.NewNull(),
+	}
+
+	for _, v := range fetchCursorTests {
+		success, err := FetchCursor(v.CurName, v.Variables)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if success != v.Success {
+			t.Errorf("%s: success = %t, want %t", v.Name, success, v.Success)
+		}
+		if !reflect.DeepEqual(GlobalVars, v.ResultVars) {
+			t.Errorf("%s: global vars = %q, want %q", v.Name, GlobalVars, v.ResultVars)
 		}
 	}
 }
@@ -1907,7 +2603,7 @@ func TestPrint(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(result, v.Result) {
+		if result != v.Result {
 			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
 		}
 	}

@@ -473,11 +473,11 @@ func (f Filter) evalLogic(expr parser.Logic) (parser.Primary, error) {
 }
 
 func (f Filter) evalVariable(expr parser.Variable) (parser.Primary, error) {
-	return Variable.Get(expr.Name)
+	return GlobalVars.Get(expr.Name)
 }
 
 func (f Filter) evalVariableSubstitution(expr parser.VariableSubstitution) (parser.Primary, error) {
-	return Variable.Substitute(expr, f)
+	return GlobalVars.Substitute(expr, f)
 }
 
 func (f Filter) evalList(exprs []parser.Expression) ([]parser.Primary, error) {

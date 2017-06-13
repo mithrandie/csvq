@@ -9,7 +9,7 @@ import (
 
 type variableTests struct {
 	Name   string
-	Expr   parser.Expression
+	Expr   parser.ProcExpr
 	Filter Filter
 	Result Variables
 	Error  string

@@ -29,6 +29,8 @@ func IsNull(v Primary) bool {
 
 type Statement interface{}
 
+type ProcExpr interface{}
+
 type Expression interface {
 	String() string
 }
@@ -938,12 +940,7 @@ func (va VariableAssignment) String() string {
 }
 
 type VariableDeclaration struct {
-	Var         string
 	Assignments []Expression
-}
-
-func (vd VariableDeclaration) String() string {
-	return joinWithSpace([]string{vd.Var, listExpressions(vd.Assignments)})
 }
 
 type InsertQuery struct {
@@ -1128,40 +1125,69 @@ func (e RenameColumn) String() string {
 }
 
 type Print struct {
-	Print string
 	Value Expression
 }
 
-func (e Print) String() string {
-	s := []string{e.Print, e.Value.String()}
-	return joinWithSpace(s)
-}
-
-type Commit struct {
-	Literal string
-}
-
-func (e Commit) String() string {
-	return e.Literal
-}
-
-type Rollback struct {
-	Literal string
-}
-
 type SetFlag struct {
-	Set   string
 	Name  string
 	Value Primary
 }
 
-func (e SetFlag) String() string {
-	s := []string{e.Set, e.Name, "=", e.Value.String()}
-	return joinWithSpace(s)
+type If struct {
+	Condition  Expression
+	Statements []Statement
+	ElseIf     []ProcExpr
+	Else       ProcExpr
 }
 
-func (e Rollback) String() string {
-	return e.Literal
+type ElseIf struct {
+	Condition  Expression
+	Statements []Statement
+}
+
+type Else struct {
+	Statements []Statement
+}
+
+type While struct {
+	Condition  Expression
+	Statements []Statement
+}
+
+type WhileInCursor struct {
+	Variables  []Variable
+	Cursor     Identifier
+	Statements []Statement
+}
+
+type CursorDeclaration struct {
+	Cursor Identifier
+	Query  SelectQuery
+}
+
+type OpenCursor struct {
+	Cursor Identifier
+}
+
+type CloseCursor struct {
+	Cursor Identifier
+}
+
+type DisposeCursor struct {
+	Cursor Identifier
+}
+
+type FetchCursor struct {
+	Cursor    Identifier
+	Variables []Variable
+}
+
+type TransactionControl struct {
+	Token int
+}
+
+type FlowControl struct {
+	Token int
 }
 
 func putParentheses(s string) string {

@@ -1691,7 +1691,7 @@ var filterEvaluateTests = []struct {
 }
 
 func TestFilter_Evaluate(t *testing.T) {
-	Variable = map[string]parser.Primary{
+	GlobalVars = map[string]parser.Primary{
 		"var1": parser.NewInteger(1),
 	}
 

@@ -1294,26 +1294,6 @@ func TestVariableAssignment_String(t *testing.T) {
 	}
 }
 
-func TestVariableDeclaration_String(t *testing.T) {
-	e := VariableDeclaration{
-		Var: "var",
-		Assignments: []Expression{
-			VariableAssignment{
-				Name:  "@var1",
-				Value: NewInteger(1),
-			},
-			VariableAssignment{
-				Name:  "@var2",
-				Value: nil,
-			},
-		},
-	}
-	expect := "var @var1 = 1, @var2"
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-}
-
 func TestInsertQuery_String(t *testing.T) {
 	e := InsertQuery{
 		Insert: "insert",
@@ -1554,49 +1534,6 @@ func TestRenameColumn_String(t *testing.T) {
 		New:        Identifier{Literal: "newcolumn"},
 	}
 	expect := "alter table table1 rename oldcolumn to newcolumn"
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-}
-
-func TestPrint_String(t *testing.T) {
-	e := Print{
-		Print: "print",
-		Value: NewString("foo"),
-	}
-	expect := "print 'foo'"
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-}
-
-func TestCommit_String(t *testing.T) {
-	e := Commit{
-		Literal: "commit",
-	}
-	expect := "commit"
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-}
-
-func TestRollback_String(t *testing.T) {
-	e := Rollback{
-		Literal: "rollback",
-	}
-	expect := "rollback"
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-}
-
-func TestSetFlag_String(t *testing.T) {
-	e := SetFlag{
-		Set:   "set",
-		Name:  "@@delimiter",
-		Value: NewString(","),
-	}
-	expect := "set @@delimiter = ','"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
