@@ -113,6 +113,7 @@ var Functions = map[string]func([]parser.Primary) (parser.Primary, error){
 	"BOOLEAN":         Boolean,
 	"TERNARY":         Ternary,
 	"DATETIME":        Datetime,
+	"CALL":            Call,
 }
 
 func Coalesce(args []parser.Primary) (parser.Primary, error) {
