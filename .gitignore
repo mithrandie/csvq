@@ -5,6 +5,13 @@ vendor/
 csvq
 
 ################################
+# Jekyll
+################################
+_site/
+.sass-cache/
+.jekyll-metadata
+
+################################
 # Go
 ################################
 # Binaries for programs and plugins
