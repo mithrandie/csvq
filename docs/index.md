@@ -11,18 +11,18 @@ You can read, update, delete CSV records with SQL like query.
 ## Features
 
 * CSV File Operation
-  * Select Query
-  * Insert Query
-  * Update Query
-  * Delete Query
-  * Create Table Query
-  * Alter Table Query
+  * [Select Query]({{ '/reference/select-query.html' | relative_url }})
+  * [Insert Query]({{ '/reference/insert-query.html' | relative_url }})
+  * [Update Query]({{ '/reference/update-query.html' | relative_url }})
+  * [Delete Query]({{ '/reference/delete-query.html' | relative_url }})
+  * [Create Table Query]({{ '/reference/create-table-query.html' | relative_url }})
+  * [Alter Table Query]({{ '/reference/alter-table-query.html' | relative_url }})
 * Control Flow
-  * Variable
-  * Cursor
-  * If Statement
-  * While Statement
-* Transaction Management
+  * [Variable]({{ '/reference/variable.html' | relative_url }})
+  * [Cursor]({{ '/reference/cursor.html' | relative_url }})
+  * [If Statement]({{ '/reference/control-flow.html' | relative_url }})
+  * [While Statement]({{ '/reference/control-flow.html' | relative_url }})
+* [Transaction Management]({{ '/reference/transaction.html' | relative_url }})
 * Support loading from standard input as a CSV
 * Support output a result of select query in JSON format 
 * Support following file encodings
