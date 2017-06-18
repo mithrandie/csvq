@@ -1,0 +1,144 @@
+$text-color: color("blue-grey", "darken-3");
+
+h1, h2, h3, h4, h5, h6 {
+    color: $primary-color;
+}
+
+h1 {
+    font-weight: 100;
+    font-size: 2.4em;
+}
+
+h2 {
+    font-weight: 100;
+    font-size: 2em;
+}
+
+h3 {
+    font-weight: 300;
+    font-size: 1.6em;
+}
+
+h4 {
+    font-weight: 300;
+    font-size: 1.4em;
+}
+
+h5 {
+    font-weight: 300;
+    font-size: 1.25em;
+}
+
+h6 {
+    font-weight: 400;
+}
+
+.z-depth-1, .z-depth-1-half, nav, .card-panel, .card, .toast, .btn, .btn-large, .btn-floating, .collapsible, .hoverable, .hoverable:hover {
+    box-shadow: none;
+}
+
+body {
+    color: $text-color;
+    background-color: #ffffff;
+}
+
+header {
+    .site-title {
+        font-weight: 300;
+        font-size: 1em;
+    }
+
+    .logo {
+        font-weight: 100;
+        font-size: 3em;
+        margin: 0.2em;
+
+        a {
+            color: $primary-color;
+            text-decoration: none;
+        }
+    }
+}
+
+nav {
+    background-color: #eceff1;
+
+    a.button-collapse {
+        display: inline;
+    }
+    i.material-icons {
+        font-size: 36px;
+        color: $primary-color;
+    }
+}
+
+.side-nav {
+    li.map-title {
+        text-align: center;
+        color: $primary-color;
+        font-weight: 300;
+        font-size: 1.6em;
+        line-height: 56px;
+    }
+
+    li > a {
+        padding: 0 16px;
+        color: $text-color;
+    }
+
+    li > a > i.material-icons {
+        float: right;
+        margin: 0;
+        font-size: 24px;
+        color: $primary-color;
+    }
+
+    li > a > i.low-profile {
+        color: $secondary-color;
+    }
+
+    .collapsible-body li a {
+        padding-left: 32px;
+    }
+
+    .collapsible-second-class li a {
+        padding-left: 48px;
+    }
+}
+
+main {
+    a {
+        text-decoration: underline;
+    }
+
+    ul {
+        @extend .collection;
+    }
+
+    li {
+        @extend .collection-item;
+        padding: 8px 15px;
+    }
+
+    table {
+        @extend .striped;
+    }
+
+    td, th {
+        padding: 8px 5px;
+    }
+
+    dt {
+        font-weight: bold;
+    }
+}
+
+footer {
+    .maintained-by {
+        padding: 12px;
+        text-align: center;
+        font-weight: 400;
+        font-size: 0.8em;
+        color: #455a64;
+    }
+}

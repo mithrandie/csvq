@@ -2,22 +2,57 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>{{ site.title }} - {{ site.description }}</title>
-  <link type="text/css" rel="stylesheet" href="assets/css/materialize.min.css"  media="screen,projection"/>
+  <title>{{ page.title }}</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="{{ '/assets/css/style.css?v=' | append: site.github.build_revision | relative_url }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  {% include favicon.html %}
 </head>
 <body>
 
-<nav>
-  <div class="nav-wrapper">
-    <a href="#" class="brand-logo">csvq</a>
+<header>
+  <nav>
+    <div class="container">
+      <div class="nav-wrapper">
+        {% include side_menu.html %}
+
+        <ul class="right">
+          <li><a href="https://github.com/mithrandie/csvq" class="waves-effect waves-light btn">VIEW ON GITHUB</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <div class="site-title center">
+    <div class="container blue-grey-text text-darken-3">
+      <div class="logo"><a href="{{ '/' | relative_url }}" class="brand-logo center">{{ site.title }}</a></div>
+      {{ site.description }}
+    </div>
   </div>
-</nav>
+</header>
 
-<div class="container">
-  {{ content }}
-</div>
+<main>
+  <div class="container">
+    {{ content }}
+  </div>
+</main>
 
-<script type="text/javascript" src="assets/js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="assets/js/materialize.min.js"></script>
+<footer>
+  <div class="container maintained-by">
+    Project maintained by <a href="https://github.com/mithrandie">Mithrandie</a>
+  </div>
+</footer>
+
+<script src="{{ '/assets/js/jquery-3.2.1.min.js' | relative_url }}"></script>
+<script src="{{ '/assets/js/materialize.min.js' | relative_url }}"></script>
+<script src="{{ '/assets/js/csvq.js?v=' | append: site.github.build_revision | relative_url }}"></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', '{{ site.google_analytics }}', 'auto');
+  ga('send', 'pageview');
+</script>
 </body>
 </html>
