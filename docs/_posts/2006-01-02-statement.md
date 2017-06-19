@@ -27,11 +27,11 @@ If you want to execute a sigle query, you can omit a terminal semicolon.
 $ csvq "SELECT id, name FROM user"
 
 # Execute statements
-$ csvq "var @id := 0; SELECT @id := @id + 1 AS id, name FROM user;"
+$ csvq "VAR @id := 0; SELECT @id := @id + 1 AS id, name FROM user;"
 
 # Load statements from file
 $ cat statements.sql
-var @id := 0;
+VAR @id := 0;
 SELECT @id := @id + 1 AS id,
        name
   FROM user;
@@ -47,7 +47,7 @@ Identifier
 : A identifier is a word starting with a character \[a-z\|A-Z\|\_\], contains any of characters \[a-z\|A-Z\|0-9\|\_\].
   You cannot use [reserved words](#reserved_words) as identifier.
 
-  Notwithstanding above naming restriction, you can use most characters as identifier by enclusing in back quotes.
+  Notwithstanding above naming restriction, you can use most characters as identifier by enclosing in back quotes.
   
   Identifiers represent tables, columns or cursors. 
   
@@ -62,7 +62,7 @@ Float
 : A float is a word contains only \[0-9\] with a decimal point.
 
 Ternary
-: A ternary is represented by any one keyword of \[TRUE\|FALSE\|UNKNOWN\].
+: A ternary is represented by any one keyword of TRUE, FALSE or UNKNOWN.
 
 Datetime
 : A datetime is a string formatted as datetime.
@@ -81,13 +81,27 @@ Datetime
   | RFC822 with Numeric Zone | 03 Mar 12 12:03 -0700 |
 
 Null
-: A null is represented by a keyword "NULL"
+: A null is represented by a keyword NULL.
 
 Variable
 : A variable is a word starting with "@", contains any of characters \[a-z\|A-Z\|0-9\|\_\]
 
 Flag
 : A flag is a word starting with "@@", contains any of characters \[a-z\|A-Z\|0-9\|\_\]
+
+```sql
+abcde                 -- identifier
+`ab+cde`              -- identifier
+'abcd\'e'             -- string
+"abcd\"e"             -- string
+123                   -- integer
+123.456               -- float
+true                  -- ternary
+'2012-03-15 12:03:01' -- datetime
+null                  -- null
+@var                  -- variable
+@@flag                -- flag
+```
 
 ## Comments
 {: #comments}
@@ -103,7 +117,7 @@ Block Comment
 /*
  * Multi Line Comment
  */
-var @id /* In-line Comment */ := 0;
+VAR @id /* In Line Comment */ := 0;
 
 -- Line Comment
 SELECT @id := @id + 1 AS id, -- Line Comment
@@ -114,11 +128,24 @@ SELECT @id := @id + 1 AS id, -- Line Comment
 ## Reserved Words
 {: #reserved_words}
 
-IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME VARIABLE FLAG
-SELECT FROM UPDATE SET DELETE WHERE INSERT INTO VALUES AS DUAL STDIN
-CREATE ADD DROP ALTER TABLE FIRST LAST AFTER BEFORE DEFAULT RENAME TO
-ORDER GROUP HAVING BY ASC DESC LIMIT JOIN INNER OUTER LEFT RIGHT FULL
-CROSS ON USING NATURAL UNION ALL ANY EXISTS IN AND OR NOT BETWEEN LIKE
-IS NULL DISTINCT WITH CASE IF ELSEIF WHILE WHEN THEN ELSE DO END
-DECLARE CURSOR FOR FETCH OPEN CLOSE DISPOSE GROUP_CONCAT SEPARATOR
-COMMIT ROLLBACK CONTINUE BREAK EXIT PRINT VAR
+ADD AFTER ALTER ALL AND ANY AS ASC
+BEFORE BETWEEN BOOLEAN BREAK BY
+CASE COMMIT CREATE CLOSE CONTINUE CROSS CURSOR
+DATETIME DECLARE DEFAULT DELETE DESC DISPOSE DISTINCT DO DROP DUAL
+ELSE ELSEIF END EXISTS EXIT
+FETCH FIRST FLAG FLOAT FOR FROM FULL
+GROUP GROUP_CONCAT
+HAVING
+IDENTIFIER IF IN INNER INSERT INTEGER INTO IS
+JOIN
+LAST LEFT LIKE LIMIT
+NATURAL NOT NULL
+ON OPEN OR ORDER OUTER
+PRINT
+RENAME RIGHT ROLLBACK
+SELECT SET SEPARATOR STDIN STRING
+TABLE TERNARY THEN TO
+UNION UPDATE USING
+VALUES VAR VARIABLE
+WHEN WHERE WHILE WITH
+
