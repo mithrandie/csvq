@@ -7,7 +7,8 @@ title: Reference Manual - csvq
 
 * [Install]({{ '/reference/install.html' | relative_url }})
 * [Command Usage]({{ '/reference/command.html' | relative_url }})
-* Statements
+* [Statements]({{ '/reference/statement.html' | relative_url }})
+* Syntax
   * [Value]({{ '/reference/value.html' | relative_url }})
   * [Select Query]({{ '/reference/select-query.html' | relative_url }})
   * [Insert Query]({{ '/reference/insert-query.html' | relative_url }})

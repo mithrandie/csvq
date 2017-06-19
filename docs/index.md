@@ -34,6 +34,10 @@ You can read, update, delete CSV records with SQL like query.
 
 [Install - Reference Manual - csvq]({{ '/reference/install.html' | relative_url }})
 
+## Command Usage
+
+[Command Usage - Reference Manual - csvq]({{ '/reference/command.html' | relative_url }})
+
 ## Reference Manual
 
 [Reference Manual - csvq]({{ '/reference.html' | relative_url }})
