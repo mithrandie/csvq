@@ -9,7 +9,7 @@ category: reference
 Aggregate functions calculate groupd records retrieved by a select query.
 If records are not grouped, all records are dealt with as one group.
 
-If distinct option is specified, aggregate functions calculate only different values.
+If distinct option is specified, aggregate functions calculate only unique values.
 
 | name | description |
 | :- | :- |

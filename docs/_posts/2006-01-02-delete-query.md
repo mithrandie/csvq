@@ -6,8 +6,37 @@ category: reference
 
 # Delete Query
 
-```
-DELETE FROM table_name [where_clause]
+Delete query is used to delete records on csv files.
 
-DELETE table_name, [table_name, ...] FROM from_clause [where_clause]
+## Delete on a sigle file.
+
+```sql
+DELETE
+  FROM table_name
+  [where_clause]
 ```
+
+_table_name_
+: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+
+_where_clause_
+: [Where Clause]({{ '/reference/select-query.html#where_clause' | relative_url }})
+
+## Delete on multiple files
+
+```sql
+DELETE table_name [, table_name ...]
+  from_clause
+  [where_clause]
+```
+
+_table_name_
+: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+  
+  _table_name_ is not a file path, it is any one of table name aliases specified in _from_clause_. 
+
+_from_clause_
+: [From Clause]({{ '/reference/select-query.html#from_clause' | relative_url }})
+
+_where_clause_
+: [Where Clause]({{ '/reference/select-query.html#where_clause' | relative_url }})

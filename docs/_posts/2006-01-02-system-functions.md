@@ -28,6 +28,6 @@ AUTO_INCREMENT(init integer) return integer
 {: #call}
 
 ```
-CALL(command string, [value, ...]) return string
+CALL(command string [, value ...]) return string
 ```
 

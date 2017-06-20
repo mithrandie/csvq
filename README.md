@@ -59,3 +59,5 @@ csvq write -o new_user.csv "select id, name from user"
 # Show help
 csvq -h
 ```
+
+More details >> [https://mithrandie.github.io/csvq](https://mithrandie.github.io/csvq)
