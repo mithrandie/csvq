@@ -24,6 +24,8 @@ If the statements execution is normally terminated, commit all of the changes au
 
 If some errors occurred in the statements execution, roll all of the changes back automatically.
 
+If the statements execution is exited by [EXIT statement]({{ '/reference/control-flow.html#exit' | relative_url }}), roll all of the changes back automatically.
+
 ### Commit Statement
 
 A commit statement writes all of the changes to files.
