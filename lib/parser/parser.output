@@ -2190,7 +2190,6 @@ state 161
 	.  reduce 89 (src line 571)
 
 
-162: shift/reduce conflict (shift 143(0), red'n 97(3)) on IS
  162: reduce/reduce conflict  (red'ns 97 and 204) on IN
  162: reduce/reduce conflict  (red'ns 97 and 204) on BETWEEN
  162: reduce/reduce conflict  (red'ns 97 and 204) on LIKE
@@ -2421,7 +2420,7 @@ state 175
 176: shift/reduce conflict (shift 151(2), red'n 197(0)) on AND
 176: shift/reduce conflict (shift 150(1), red'n 197(0)) on OR
 176: shift/reduce conflict (shift 154(3), red'n 197(0)) on NOT
-176: shift/reduce conflict (shift 143(0), red'n 197(0)) on IS
+176: shift/reduce conflict (shift 143(4), red'n 197(0)) on IS
 176: shift/reduce conflict (shift 152(4), red'n 197(0)) on COMPARISON_OP
 176: shift/reduce conflict (shift 141(5), red'n 197(0)) on STRING_OP
 176: shift/reduce conflict (shift 153(4), red'n 197(0)) on '='
@@ -2833,7 +2832,6 @@ state 211
 	elseif  goto 278
 	else  goto 277
 
-212: shift/reduce conflict (shift 143(0), red'n 79(5)) on IS
  212: reduce/reduce conflict  (red'ns 79 and 204) on IN
  212: reduce/reduce conflict  (red'ns 79 and 204) on BETWEEN
  212: reduce/reduce conflict  (red'ns 79 and 204) on LIKE
@@ -2858,7 +2856,6 @@ state 212
 	logic:  value.AND value 
 	negation: .    (204)
 
-	IS  shift 143
 	'+'  shift 145
 	'-'  shift 146
 	'*'  shift 147
@@ -2872,7 +2869,7 @@ state 212
 213: shift/reduce conflict (shift 151(2), red'n 80(0)) on AND
 213: shift/reduce conflict (shift 150(1), red'n 80(0)) on OR
 213: shift/reduce conflict (shift 154(3), red'n 80(0)) on NOT
-213: shift/reduce conflict (shift 143(0), red'n 80(0)) on IS
+213: shift/reduce conflict (shift 143(4), red'n 80(0)) on IS
 213: shift/reduce conflict (shift 152(4), red'n 80(0)) on COMPARISON_OP
 213: shift/reduce conflict (shift 141(5), red'n 80(0)) on STRING_OP
 213: shift/reduce conflict (shift 153(4), red'n 80(0)) on '='
@@ -3038,7 +3035,6 @@ state 219
 	variable  goto 81
 	variable_substitution  goto 82
 
-220: shift/reduce conflict (shift 143(0), red'n 90(6)) on IS
  220: reduce/reduce conflict  (red'ns 90 and 204) on IN
  220: reduce/reduce conflict  (red'ns 90 and 204) on BETWEEN
  220: reduce/reduce conflict  (red'ns 90 and 204) on LIKE
@@ -3063,7 +3059,6 @@ state 220
 	logic:  value.AND value 
 	negation: .    (204)
 
-	IS  shift 143
 	'*'  shift 147
 	'/'  shift 148
 	'%'  shift 149
@@ -3072,7 +3067,6 @@ state 220
 	negation  goto 144
 	comparison_operator  goto 142
 
-221: shift/reduce conflict (shift 143(0), red'n 91(6)) on IS
  221: reduce/reduce conflict  (red'ns 91 and 204) on IN
  221: reduce/reduce conflict  (red'ns 91 and 204) on BETWEEN
  221: reduce/reduce conflict  (red'ns 91 and 204) on LIKE
@@ -3097,7 +3091,6 @@ state 221
 	logic:  value.AND value 
 	negation: .    (204)
 
-	IS  shift 143
 	'*'  shift 147
 	'/'  shift 148
 	'%'  shift 149
@@ -3106,7 +3099,6 @@ state 221
 	negation  goto 144
 	comparison_operator  goto 142
 
-222: shift/reduce conflict (shift 143(0), red'n 92(7)) on IS
  222: reduce/reduce conflict  (red'ns 92 and 204) on IN
  222: reduce/reduce conflict  (red'ns 92 and 204) on BETWEEN
  222: reduce/reduce conflict  (red'ns 92 and 204) on LIKE
@@ -3131,13 +3123,11 @@ state 222
 	logic:  value.AND value 
 	negation: .    (204)
 
-	IS  shift 143
 	.  reduce 92 (src line 585)
 
 	negation  goto 144
 	comparison_operator  goto 142
 
-223: shift/reduce conflict (shift 143(0), red'n 93(7)) on IS
  223: reduce/reduce conflict  (red'ns 93 and 204) on IN
  223: reduce/reduce conflict  (red'ns 93 and 204) on BETWEEN
  223: reduce/reduce conflict  (red'ns 93 and 204) on LIKE
@@ -3162,13 +3152,11 @@ state 223
 	logic:  value.AND value 
 	negation: .    (204)
 
-	IS  shift 143
 	.  reduce 93 (src line 589)
 
 	negation  goto 144
 	comparison_operator  goto 142
 
-224: shift/reduce conflict (shift 143(0), red'n 94(7)) on IS
  224: reduce/reduce conflict  (red'ns 94 and 204) on IN
  224: reduce/reduce conflict  (red'ns 94 and 204) on BETWEEN
  224: reduce/reduce conflict  (red'ns 94 and 204) on LIKE
@@ -3193,13 +3181,11 @@ state 224
 	logic:  value.AND value 
 	negation: .    (204)
 
-	IS  shift 143
 	.  reduce 94 (src line 593)
 
 	negation  goto 144
 	comparison_operator  goto 142
 
-225: shift/reduce conflict (shift 143(0), red'n 95(1)) on IS
  225: reduce/reduce conflict  (red'ns 95 and 204) on IN
  225: reduce/reduce conflict  (red'ns 95 and 204) on BETWEEN
  225: reduce/reduce conflict  (red'ns 95 and 204) on LIKE
@@ -3240,7 +3226,6 @@ state 225
 	negation  goto 144
 	comparison_operator  goto 142
 
-226: shift/reduce conflict (shift 143(0), red'n 96(2)) on IS
  226: reduce/reduce conflict  (red'ns 96 and 204) on IN
  226: reduce/reduce conflict  (red'ns 96 and 204) on BETWEEN
  226: reduce/reduce conflict  (red'ns 96 and 204) on LIKE
@@ -4213,18 +4198,6 @@ state 287
 	.  reduce 85 (src line 555)
 
 
-288: shift/reduce conflict (shift 151(2), red'n 86(0)) on AND
-288: shift/reduce conflict (shift 150(1), red'n 86(0)) on OR
-288: shift/reduce conflict (shift 154(3), red'n 86(0)) on NOT
-288: shift/reduce conflict (shift 143(0), red'n 86(0)) on IS
-288: shift/reduce conflict (shift 152(4), red'n 86(0)) on COMPARISON_OP
-288: shift/reduce conflict (shift 141(5), red'n 86(0)) on STRING_OP
-288: shift/reduce conflict (shift 153(4), red'n 86(0)) on '='
-288: shift/reduce conflict (shift 145(6), red'n 86(0)) on '+'
-288: shift/reduce conflict (shift 146(6), red'n 86(0)) on '-'
-288: shift/reduce conflict (shift 147(7), red'n 86(0)) on '*'
-288: shift/reduce conflict (shift 148(7), red'n 86(0)) on '/'
-288: shift/reduce conflict (shift 149(7), red'n 86(0)) on '%'
  288: reduce/reduce conflict  (red'ns 86 and 204) on IN
  288: reduce/reduce conflict  (red'ns 86 and 204) on BETWEEN
  288: reduce/reduce conflict  (red'ns 86 and 204) on LIKE
@@ -4249,13 +4222,10 @@ state 288
 	logic:  value.AND value 
 	negation: .    (204)
 
-	AND  shift 151
-	OR  shift 150
-	NOT  shift 154
-	IS  shift 143
-	COMPARISON_OP  shift 152
+	IS  error
+	COMPARISON_OP  error
 	STRING_OP  shift 141
-	'='  shift 153
+	'='  error
 	'+'  shift 145
 	'-'  shift 146
 	'*'  shift 147
@@ -5659,13 +5629,11 @@ state 376
 	variable  goto 37
 	variable_substitution  goto 23
 
-377: shift/reduce conflict (shift 143(0), red'n 83(2)) on IS
  377: reduce/reduce conflict  (red'ns 83 and 96) on IN
  377: reduce/reduce conflict  (red'ns 83 and 96) on AND
  377: reduce/reduce conflict  (red'ns 83 and 96) on OR
  377: reduce/reduce conflict  (red'ns 83 and 96) on BETWEEN
  377: reduce/reduce conflict  (red'ns 83 and 96) on LIKE
-377: shift/reduce conflict (shift 143(0), red'n 96(2)) on IS
  377: reduce/reduce conflict  (red'ns 83 and 204) on IN
  377: reduce/reduce conflict  (red'ns 83 and 204) on BETWEEN
  377: reduce/reduce conflict  (red'ns 83 and 204) on LIKE
@@ -6438,13 +6406,13 @@ state 427
 
 106 terminals, 87 nonterminals
 218 grammar rules, 428/8000 states
-104 shift/reduce, 68 reduce/reduce conflicts reported
+81 shift/reduce, 68 reduce/reduce conflicts reported
 136 working sets used
 memory: parser 1972/120000
 475 extra closures
-1472 shift entries, 45 exceptions
+1460 shift entries, 48 exceptions
 318 goto entries
 1041 entries saved by goto default
 Optimizer space used: output 1012/120000
-1012 table entries, 227 zero
+1012 table entries, 224 zero
 maximum spread: 106, maximum offset: 425

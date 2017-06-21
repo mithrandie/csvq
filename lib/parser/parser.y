@@ -129,7 +129,7 @@ package parser
 %left OR
 %left AND
 %right NOT
-%nonassoc '=' COMPARISON_OP
+%nonassoc '=' COMPARISON_OP IS BETWEEN IN LIKE ANY ALL
 %left STRING_OP
 %left '+' '-'
 %left '*' '/' '%'
