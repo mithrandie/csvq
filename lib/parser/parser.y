@@ -108,6 +108,7 @@ package parser
 %type<token>       join_direction
 %type<token>       comparison_operator
 %type<token>       statement_terminal
+
 %token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME VARIABLE FLAG
 %token<token> SELECT FROM UPDATE SET DELETE WHERE INSERT INTO VALUES AS DUAL STDIN
 %token<token> CREATE ADD DROP ALTER TABLE FIRST LAST AFTER BEFORE DEFAULT RENAME TO
@@ -125,11 +126,11 @@ package parser
 %token<token> VAR
 %token<token> COMPARISON_OP STRING_OP SUBSTITUTION_OP
 
-%right SUBSTITUTION_OP
 %left OR
 %left AND
 %right NOT
-%left '=' COMPARISON_OP STRING_OP
+%nonassoc '=' COMPARISON_OP
+%left STRING_OP
 %left '+' '-'
 %left '*' '/' '%'
 
