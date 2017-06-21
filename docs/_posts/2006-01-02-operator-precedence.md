@@ -8,7 +8,7 @@ category: reference
 
 The following table list operators from highest precedence to lowest.
 
-| precedence | operators | Associativity |
+| precedence | operators | associativity |
 | :- | :- | :- |
 | 1 | [*]({{ '/reference/arithmetic-operators.html' | relative_url }})       | Left-to-right | 
 |   | [/]({{ '/reference/arithmetic-operators.html' | relative_url }})       | Left-to-right | 

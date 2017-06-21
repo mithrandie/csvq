@@ -38,8 +38,8 @@ value operator value
 _value_
 : [value]({{ '/reference/value.html' | relative_url }})
 
-At first, a relational operator attempt to convert both of operands to float values, and if convertion is successful compare them.
-If it failed, next a relational operater attempt to convert to datetime, and next to boolean, at last to string.
+At first, a relational operator attempt to convert both of operands to float values, and if convertions is successful then compare them.
+If conversions failed, next a relational operater attempt to convert to datetime, and next to boolean, at last to string.
 
 If either of operands is null or all conversion failed, return UNKNOWN.
 
@@ -97,7 +97,7 @@ _value_
 _select_query_
 : [Select Query]({{ '/reference/select-query.html' | relative_url }})
 
-Check if a _value_ is in within a set of _values_ or a result set of _select_query_
+Check if a _value_ is in within a set of _values_ or a result set of _select_query_.
 
 The IN operation with subquery is equivalent to following ANY operation.
 ```sql
