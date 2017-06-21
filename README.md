@@ -7,14 +7,14 @@ SQL like query language for csv
 
 ## Install
 
-### Binary
+### Install executable binary
 
 1. Download an archive file from [release page](https://github.com/mithrandie/csvq/releases).
 2. Extract the downloaded archive and add a binary file in it to your path.
 
 ### Build from source
 
-1. Install Go. (ref. [Getting Started - The Go Programming Language](https://golang.org/doc/install))
+0. Install Go. (ref. [Getting Started - The Go Programming Language](https://golang.org/doc/install))
 
 #### Use go get
 
@@ -59,3 +59,5 @@ csvq write -o new_user.csv "select id, name from user"
 # Show help
 csvq -h
 ```
+
+More details >> [https://mithrandie.github.io/csvq](https://mithrandie.github.io/csvq)
