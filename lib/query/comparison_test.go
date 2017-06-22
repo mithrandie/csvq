@@ -377,6 +377,31 @@ var likeTests = []struct {
 		Pattern: parser.NewString("%def%_abc%"),
 		Result:  ternary.TRUE,
 	},
+	{
+		LHS:     parser.NewString("abcde"),
+		Pattern: parser.NewString("abc\\_e"),
+		Result:  ternary.FALSE,
+	},
+	{
+		LHS:     parser.NewString("abc_e"),
+		Pattern: parser.NewString("abc\\_e"),
+		Result:  ternary.TRUE,
+	},
+	{
+		LHS:     parser.NewString("abcde"),
+		Pattern: parser.NewString("abc\\%e"),
+		Result:  ternary.FALSE,
+	},
+	{
+		LHS:     parser.NewString("a\\bc%e"),
+		Pattern: parser.NewString("a\\bc\\%e"),
+		Result:  ternary.TRUE,
+	},
+	{
+		LHS:     parser.NewString("abcde\\"),
+		Pattern: parser.NewString("abcde\\"),
+		Result:  ternary.TRUE,
+	},
 }
 
 func TestLike(t *testing.T) {

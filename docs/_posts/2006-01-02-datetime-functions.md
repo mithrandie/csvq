@@ -97,6 +97,7 @@ Format the _datetime_ according to the string _format_.
 | %y | Year in two digits |
 | %Z | Time zone in time difference |
 | %z | Abbreviation of Time zone name |
+| %% | '%' |
 
 > You can also use [the Time Layout of the Go Lang](https://golang.org/pkg/time/#Time.Format) as a format.
 

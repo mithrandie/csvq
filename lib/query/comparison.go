@@ -231,8 +231,21 @@ func stringPattern(pattern []rune, position int) (int, int, string, int) {
 	search := []rune{}
 	returnPostion := position
 
+	escaped := false
 	for i := position; i < len(pattern); i++ {
 		r := pattern[i]
+
+		if escaped {
+			switch r {
+			case '%', '_':
+				search = append(search, r)
+			default:
+				search = append(search, '\\', r)
+			}
+			returnPostion++
+			escaped = false
+			continue
+		}
 
 		if (r == '%' || r == '_') && 0 < len(search) {
 			break
@@ -247,9 +260,14 @@ func stringPattern(pattern []rune, position int) (int, int, string, int) {
 			if -1 < anyRunesMaxLen {
 				anyRunesMaxLen++
 			}
+		case '\\':
+			escaped = true
 		default:
 			search = append(search, r)
 		}
+	}
+	if escaped {
+		search = append(search, '\\')
 	}
 
 	return anyRunesMinLen, anyRunesMaxLen, string(search), returnPostion

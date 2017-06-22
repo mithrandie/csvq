@@ -799,6 +799,12 @@ func (f *Field) Name() string {
 	if f.Alias != nil {
 		return f.Alias.(Identifier).Literal
 	}
+	if s, ok := f.Object.(String); ok {
+		return s.Value()
+	}
+	if dt, ok := f.Object.(Datetime); ok {
+		return dt.literal
+	}
 	return f.Object.String()
 }
 

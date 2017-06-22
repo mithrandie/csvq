@@ -1117,6 +1117,22 @@ func TestField_Name(t *testing.T) {
 	if e.Name() != expect {
 		t.Errorf("name = %q, want %q for %#v", e.Name(), expect, e)
 	}
+
+	e = Field{
+		Object: String{literal: "foo"},
+	}
+	expect = "foo"
+	if e.Name() != expect {
+		t.Errorf("name = %q, want %q for %#v", e.Name(), expect, e)
+	}
+
+	e = Field{
+		Object: NewDatetimeFromString("2012-01-01"),
+	}
+	expect = "2012-01-01"
+	if e.Name() != expect {
+		t.Errorf("name = %q, want %q for %#v", e.Name(), expect, e)
+	}
 }
 
 func TestAllColumns_String(t *testing.T) {
