@@ -2,10 +2,9 @@
 <ul id="slide-out" class="side-nav">
   <li class="no-padding map-title">Site Map</li>
   <li class="no-padding bold"><a href="{{ '/' | relative_url }}">Home</a></li>
-  <li class="folder bold">Reference Manual
+  <li class="folder bold"><a href="{{ '/reference.html' | relative_url }}">Reference Manual</a>
     <div>
       <ul>
-        <li><a href="{{ '/reference.html' | relative_url }}">Reference Index</a></li>
         <li><a href="{{ '/reference/install.html' | relative_url }}">Install</a></li>
         <li><a href="{{ '/reference/command.html' | relative_url }}">Command Usage</a></li>
         <li><a href="{{ '/reference/statement.html' | relative_url }}">Statements</a></li>
@@ -34,6 +33,21 @@
         </li>
         <li>
           <ul class="collapsible">
+            <li class="bold"><a class="collapsible-header waves-effect waves-light">Operators<i class="material-icons">arrow_drop_down</i></a>
+              <div class="collapsible-body">
+                <ul>
+                  <li><a href="{{ '/reference/operator-precedence.html' | relative_url }}">Operator Precedence</a></li>
+                  <li><a href="{{ '/reference/arithmetic-operators.html' | relative_url }}">Arithmetic Operators</a></li>
+                  <li><a href="{{ '/reference/comparison-operators.html' | relative_url }}">Comparison Operators</a></li>
+                  <li><a href="{{ '/reference/logic-operators.html' | relative_url }}">Logic Operators</a></li>
+                  <li><a href="{{ '/reference/string-operators.html' | relative_url }}">String Operators</a></li>
+                </ul>
+              </div>
+            </li>
+          </ul>
+        </li>
+        <li>
+          <ul class="collapsible">
             <li class="bold"><a class="collapsible-header waves-effect waves-light">Functions<i class="material-icons">arrow_drop_down</i></a>
               <div class="collapsible-body">
                 <ul>
@@ -45,21 +59,6 @@
                   <li><a href="{{ '/reference/cryptographic-hash-functions.html' | relative_url }}">Cryptographic Hash Functions</a></li>
                   <li><a href="{{ '/reference/cast-functions.html' | relative_url }}">Cast Functions</a></li>
                   <li><a href="{{ '/reference/system-functions.html' | relative_url }}">System Functions</a></li>
-                </ul>
-              </div>
-            </li>
-          </ul>
-        </li>
-        <li>
-          <ul class="collapsible">
-            <li class="bold"><a class="collapsible-header waves-effect waves-light">Operators<i class="material-icons">arrow_drop_down</i></a>
-              <div class="collapsible-body">
-                <ul>
-                  <li><a href="{{ '/reference/operator-precedence.html' | relative_url }}">Operator Precedence</a></li>
-                  <li><a href="{{ '/reference/arithmetic-operators.html' | relative_url }}">Arithmetic Operators</a></li>
-                  <li><a href="{{ '/reference/comparison-operators.html' | relative_url }}">Comparison Operators</a></li>
-                  <li><a href="{{ '/reference/logic-operators.html' | relative_url }}">Logic Operators</a></li>
-                  <li><a href="{{ '/reference/string-operators.html' | relative_url }}">String Operators</a></li>
                 </ul>
               </div>
             </li>
