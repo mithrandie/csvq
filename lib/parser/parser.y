@@ -129,7 +129,7 @@ package parser
 %left OR
 %left AND
 %right NOT
-%nonassoc '=' COMPARISON_OP IS BETWEEN IN LIKE ANY ALL
+%nonassoc '=' COMPARISON_OP IS BETWEEN IN LIKE
 %left STRING_OP
 %left '+' '-'
 %left '*' '/' '%'
@@ -532,9 +532,13 @@ string_operation
     }
 
 comparison
-    : value comparison_operator value
+    : value COMPARISON_OP value
     {
         $$ = Comparison{LHS: $1, Operator: $2, RHS: $3}
+    }
+    | value '=' value
+    {
+        $$ = Comparison{LHS: $1, Operator: Token{Token: COMPARISON_OP, Literal: "="}, RHS: $3}
     }
     | value IS negation ternary
     {

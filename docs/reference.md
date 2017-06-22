@@ -32,6 +32,7 @@ title: Reference Manual - csvq
   * [Cast Functions]({{ '/reference/cast-functions.html' | relative_url }})
   * [System Functions]({{ '/reference/system-functions.html' | relative_url }})
 * Operators
+  * [Operator Precedence]({{ '/reference/operator-precedence.html' | relative_url }})
   * [Arithmetic Operators]({{ '/reference/arithmetic-operators.html' | relative_url }})
   * [Comparison Operators]({{ '/reference/comparison-operators.html' | relative_url }})
   * [Logic Operators]({{ '/reference/logic-operators.html' | relative_url }})

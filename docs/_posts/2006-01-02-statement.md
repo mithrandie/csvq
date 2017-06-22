@@ -14,9 +14,9 @@ category: reference
 ## Basics
 {: #basics}
 
-You can pass a query or Statements as a csvq command argument or source file.
+You can pass a query or statements(it's also called procedure) as a csvq command argument or source file.
 
-Statements are terminated with semicolons. 
+A statements is terminated with a semicolon. 
 Stetaments are processed sequentially for each statement.
 In statements, character case is ignored.
 

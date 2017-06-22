@@ -30,31 +30,61 @@ category: reference
 {: #trim}
 
 ```
-TRIM(str string) return string
+TRIM(str)
 ```
 
-Returns the string str with all leading and trailing white space removed
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Returns the string _str_ with all leading and trailing white space removed.
 
 ```
-TRIM(str string, charset string) return string
+TRIM(str, charset)
 ```
 
-Returns the string str with all leading and trailing character contained in charset removed
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_charset_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Returns the string _str_ with all leading and trailing character contained in _charset_ removed.
 
 ### LTRIM
 {: #ltrim}
 
 ```
-LTRIM(str string) return string
+LTRIM(str)
 ```
 
-Returns the string str with all leading white space removed
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Returns the string _str_ with all leading white space removed.
 
 ```
-LTRIM(str string, charset string) return string
+LTRIM(str, charset)
 ```
 
-Returns the string str with all leading character contained in charset removed
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_charset_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Returns the string _str_ with all leading character contained in _charset_ removed.
 
 
 ### RTRIM
@@ -63,128 +93,249 @@ Returns the string str with all leading character contained in charset removed
 {: #trim}
 
 ```
-RTRIM(str string) return string
+RTRIM(str)
 ```
 
-Returns the string str with all trailing white space removed
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Returns the string _str_ with all trailing white space removed.
 
 ```
-RTRIM(str string, charset string) return string
+RTRIM(str, charset)
 ```
 
-Returns the string str with all trailing character contained in charset removed
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_charset_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Returns the string _str_ with all trailing character contained in _charset_ removed.
 
 ### UPPER
 {: #upper}
 
 ```
-UPPER(str string) return string
+UPPER(str)
 ```
 
-Returns the string str with all characters mapped to their upper case. 
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Returns the string _str_ with all characters mapped to their upper case. 
 
 ### LOWER
 {: #lower}
 
 ```
-LOWER(str string) return string
+LOWER(str)
 ```
 
-Returns the string str with all characters mapped to their lower case. 
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Returns the string _str_ with all characters mapped to their lower case. 
 
 ### BASE64_ENCODE
 {: #base64_encode}
 
 ```
-BASE64_ENCODE(str string) return string
+BASE64_ENCODE(str)
 ```
 
-Return the base64 encoding of string str.
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Return the base64 encoding of string _str_.
 
 ### BASE64_DECODE
 {: #base64_decode}
 
 ```
-BASE64_DECODE(str string) return string
+BASE64_DECODE(str)
 ```
 
-Return the string represented by the base64 string str.
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Return the string represented by the base64 string _str_.
 
 ### HEX_ENCODE
 {: #hex_encode}
 
 ```
-HEX_ENCODE(str string) return string
+HEX_ENCODE(str)
 ```
 
-Return the hexadecimal encoding of string str.
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Return the hexadecimal encoding of string _str_.
 
 ### HEX_DECODE
 {: #hex_decode}
 
 ```
-HEX_DECODE(str string) return string
+HEX_DECODE(str)
 ```
 
-Return the string represented by the hexadecimal string str.
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Return the string represented by the hexadecimal string _str_.
 
 ### LEN
 {: #len}
 
 ```
-LEN(str string) return integer
+LEN(str)
 ```
 
-Return the character length of the string str.
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_return_
+: [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+Return the character length of the string _str_.
 
 ### BYTE_LEN
 {: #byte_len}
 
 ```
-BYTE_LEN(str string) return integer
+BYTE_LEN(str)
 ```
 
-Return the byte length in utf-8 encoding of the string str.
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_return_
+: [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+Return the byte length in utf-8 encoding of the string _str_.
 
 ### LPAD
 {: #lpad}
 
 ```
-LPAD(str string, len integer, padstr string) return string
+LPAD(str, len, padstr)
 ```
 
-Return the string str padded with leading string padstr to a length specified by len.
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_len_
+: [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+_padstr_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Return the string _str_ padded with leading _padstr_ to a length specified by _len_.
 
 ### RPAD
 {: #rpad}
 
 ```
-RPAD(str string, len integer, padstr string) return string
+RPAD(str, len, padstr)
 ```
 
-Return the string str padded with trailing string padstr to a length specified by len.
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_len_
+: [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+_padstr_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Return the string _str_ padded with trailing _padstr_ to a length specified by _len_.
 
 ### SUBSTR
 {: #substr}
 
 ```
-SUBSTR(str string, pos integer) return string
+SUBSTR(str, position)
 ```
 
-Return a substring of the string str from at position pos to the end.
-If pos is negative, starting position is pos from the end of the str.
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_position_
+: [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Return a substring of the string _str_ from at _position_ to the end.
+If _position_ is negative, starting position is _position_ from the end of the str.
 
 ```
-SUBSTR(str string, pos integer, len integer) return string
+SUBSTR(str, position, len)
 ```
 
-Return a len characters substring of the string str from at position pos.
-if len is less than the length from pos to the end, return a substring from pos to the end. 
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_position_
+: [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+_len_
+: [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Return a _len_ characters substring of the string _str_ from at _position_.
+if _len_ is less than the length from _position_ to the end, return a substring from _position_ to the end. 
 
 ### REPLACE
 {: #replace}
 
 ```
-REPLACE(str string, old string, new string) return string
+REPLACE(str, old, new)
 ```
-Return the string str with all occurrences of the string old replaced by the string new.
+
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_old_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_new_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Return the string _str_ with all occurrences of the string _old_ replaced by the string _new_.

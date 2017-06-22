@@ -81,6 +81,13 @@ nav {
         line-height: 56px;
     }
 
+    li.folder{
+        padding: 0 16px;
+        color: $text-color;
+        font-size: $sidenav-font-size;
+        font-weight: 500;
+    }
+
     li > a {
         padding: 0 16px;
         color: $text-color;
@@ -95,14 +102,6 @@ nav {
 
     li > a > i.low-profile {
         color: $secondary-color;
-    }
-
-    .collapsible-body li a {
-        padding-left: 32px;
-    }
-
-    .collapsible-second-class li a {
-        padding-left: 48px;
     }
 }
 

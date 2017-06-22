@@ -12,7 +12,6 @@ category: reference
 | [IF](#if) | Return a value by condition |
 | [IFNULL](#ifnull) | Return a value whether passed value is null |
 | [NULLIF](#nullif) | Return null wheter passed values are equal |
-| [CASE](#case) |  |
 
 ## Definitions
 
@@ -20,45 +19,71 @@ category: reference
 {: #coalesce}
 
 ```
-COALESCE(value, ...) return value
+COALESCE(value [, value ...])
 ```
 
-Return the first non-null value in arguments. If there are no non-null value, return null.
+_value_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+_return_
+: [primitive type]({{ '/reference/value.html#primitive_types' | relative_url }})
+
+Return the first non-null _value_ in arguments. If there are no non-null _value_, return null.
 
 ### IF
 {: #if}
 
 ```
-IF(condition, value1, value2) return value
+IF(condition, value1, value2)
 ```
 
-If condition is TRUE, returns value1. Otherwise returns value2.
+_condition_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+_value1_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+_value2_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+_return_
+: [primitive type]({{ '/reference/value.html#primitive_types' | relative_url }})
+
+If _condition_ is TRUE, returns _value1_. Otherwise returns _value2_.
 
 ### IFNULL
 {: #ifnull}
 
 ```
-IFNULL(value1, value2) return value
+IFNULL(value1, value2)
 ```
 
-If value1 is null, return value2. Otherwise return value1.
+_value1_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+_value2_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+_return_
+: [primitive type]({{ '/reference/value.html#primitive_types' | relative_url }})
+
+If _value1_ is null, return _value2_. Otherwise return _value1_.
 
 ### NULLIF
 {: #nullif}
 
 ```
-NULLIF(value1, value2) return value
+NULLIF(value1, value2)
 ```
 
-If value1 is equal to value2, return null. Otherwise return value1.
+_value1_
+: [value]({{ '/reference/value.html' | relative_url }})
 
-### CASE
-{: #case}
+_value2_
+: [value]({{ '/reference/value.html' | relative_url }})
 
-```
-CASE value WHEN value THEN value [WHEN value THE value ...] [ELSE value] END
-```
+_return_
+: [primitive type]({{ '/reference/value.html#primitive_types' | relative_url }})
 
-```
-CASE WHEN condition THEN value [WHEN condition THE value ...] [ELSE value] END
-```
+If _value1_ is equal to _value2_, return null. Otherwise return _value1_.
+
