@@ -39,7 +39,7 @@ _str_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Returns the string _str_ with all leading and trailing white space removed
+Returns the string _str_ with all leading and trailing white space removed.
 
 ```
 TRIM(str, charset)
@@ -54,7 +54,7 @@ _charset_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Returns the string _str_ with all leading and trailing character contained in _charset_ removed
+Returns the string _str_ with all leading and trailing character contained in _charset_ removed.
 
 ### LTRIM
 {: #ltrim}
@@ -69,7 +69,7 @@ _str_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Returns the string _str_ with all leading white space removed
+Returns the string _str_ with all leading white space removed.
 
 ```
 LTRIM(str, charset)
@@ -84,7 +84,7 @@ _charset_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Returns the string _str_ with all leading character contained in _charset_ removed
+Returns the string _str_ with all leading character contained in _charset_ removed.
 
 
 ### RTRIM
@@ -102,7 +102,7 @@ _str_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Returns the string _str_ with all trailing white space removed
+Returns the string _str_ with all trailing white space removed.
 
 ```
 RTRIM(str, charset)
@@ -117,7 +117,7 @@ _charset_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Returns the string _str_ with all trailing character contained in _charset_ removed
+Returns the string _str_ with all trailing character contained in _charset_ removed.
 
 ### UPPER
 {: #upper}

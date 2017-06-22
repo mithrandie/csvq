@@ -2,75 +2,71 @@
 <ul id="slide-out" class="side-nav">
   <li class="no-padding map-title">Site Map</li>
   <li class="no-padding bold"><a href="{{ '/' | relative_url }}">Home</a></li>
-  <li class="no-padding">
-    <ul class="collapsible">
-      <li class="bold"><a class="collapsible-header waves-effect waves-light">Reference Manual<i class="material-icons">arrow_drop_down</i></a>
-        <div class="collapsible-body">
-          <ul>
-            <li><a href="{{ '/reference.html' | relative_url }}">Reference Index</a></li>
-            <li><a href="{{ '/reference/install.html' | relative_url }}">Install</a></li>
-            <li><a href="{{ '/reference/command.html' | relative_url }}">Command Usage</a></li>
-            <li><a href="{{ '/reference/statement.html' | relative_url }}">Statements</a></li>
-            <li><a href="{{ '/reference/value.html' | relative_url }}">Value Types</a></li>
-            <li class="no-padding">
-              <ul class="collapsible">
-                <li class="bold"><a class="collapsible-header waves-effect waves-light">Syntax<i class="material-icons">arrow_drop_down</i></a>
-                  <div class="collapsible-body collapsible-second-class">
-                    <ul>
-                      <li><a href="{{ '/reference/select-query.html' | relative_url }}">Select Query</a></li>
-                      <li><a href="{{ '/reference/insert-query.html' | relative_url }}">Insert Query</a></li>
-                      <li><a href="{{ '/reference/update-query.html' | relative_url }}">Update Query</a></li>
-                      <li><a href="{{ '/reference/delete-query.html' | relative_url }}">Delete Query</a></li>
-                      <li><a href="{{ '/reference/create-table-query.html' | relative_url }}">Create Table Query</a></li>
-                      <li><a href="{{ '/reference/alter-table-query.html' | relative_url }}">Alter Table Query</a></li>
-                      <li><a href="{{ '/reference/variable.html' | relative_url }}">Variable</a></li>
-                      <li><a href="{{ '/reference/cursor.html' | relative_url }}">Cursor</a></li>
-                      <li><a href="{{ '/reference/control-flow.html' | relative_url }}">Control Flow</a></li>
-                      <li><a href="{{ '/reference/transaction.html' | relative_url }}">Transaction Management</a></li>
-                      <li><a href="{{ '/reference/built-in.html' | relative_url }}">Built-in Commands</a></li>
-                      <li><a href="{{ '/reference/flag.html' | relative_url }}">Flag</a></li>
-                    </ul>
-                  </div>
-                </li>
-              </ul>
-            </li>
-            <li class="no-padding">
-              <ul class="collapsible">
-                <li class="bold"><a class="collapsible-header waves-effect waves-light">Functions<i class="material-icons">arrow_drop_down</i></a>
-                  <div class="collapsible-body collapsible-second-class">
-                    <ul>
-                      <li><a href="{{ '/reference/aggregate-functions.html' | relative_url }}">Aggregate Functions</a></li>
-                      <li><a href="{{ '/reference/logical-functions.html' | relative_url }}">Logical Functions</a></li>
-                      <li><a href="{{ '/reference/string-functions.html' | relative_url }}">String Functions</a></li>
-                      <li><a href="{{ '/reference/numeric-functions.html' | relative_url }}">Numeric Functions</a></li>
-                      <li><a href="{{ '/reference/datetime-functions.html' | relative_url }}">Datetime Functions</a></li>
-                      <li><a href="{{ '/reference/cryptographic-hash-functions.html' | relative_url }}">Cryptographic Hash Functions</a></li>
-                      <li><a href="{{ '/reference/cast-functions.html' | relative_url }}">Cast Functions</a></li>
-                      <li><a href="{{ '/reference/system-functions.html' | relative_url }}">System Functions</a></li>
-                    </ul>
-                  </div>
-                </li>
-              </ul>
-            </li>
-            <li class="no-padding">
-              <ul class="collapsible">
-                <li class="bold"><a class="collapsible-header waves-effect waves-light">Operators<i class="material-icons">arrow_drop_down</i></a>
-                  <div class="collapsible-body collapsible-second-class">
-                    <ul>
-                      <li><a href="{{ '/reference/operator-precedence.html' | relative_url }}">Operator Precedence</a></li>
-                      <li><a href="{{ '/reference/arithmetic-operators.html' | relative_url }}">Arithmetic Operators</a></li>
-                      <li><a href="{{ '/reference/comparison-operators.html' | relative_url }}">Comparison Operators</a></li>
-                      <li><a href="{{ '/reference/logic-operators.html' | relative_url }}">Logic Operators</a></li>
-                      <li><a href="{{ '/reference/string-operators.html' | relative_url }}">String Operators</a></li>
-                    </ul>
-                  </div>
-                </li>
-              </ul>
+  <li class="folder bold">Reference Manual
+    <div>
+      <ul>
+        <li><a href="{{ '/reference.html' | relative_url }}">Reference Index</a></li>
+        <li><a href="{{ '/reference/install.html' | relative_url }}">Install</a></li>
+        <li><a href="{{ '/reference/command.html' | relative_url }}">Command Usage</a></li>
+        <li><a href="{{ '/reference/statement.html' | relative_url }}">Statements</a></li>
+        <li><a href="{{ '/reference/value.html' | relative_url }}">Value Types</a></li>
+        <li>
+          <ul class="collapsible">
+            <li class="bold"><a class="collapsible-header waves-effect waves-light">Syntax<i class="material-icons">arrow_drop_down</i></a>
+              <div class="collapsible-body">
+                <ul>
+                  <li><a href="{{ '/reference/select-query.html' | relative_url }}">Select Query</a></li>
+                  <li><a href="{{ '/reference/insert-query.html' | relative_url }}">Insert Query</a></li>
+                  <li><a href="{{ '/reference/update-query.html' | relative_url }}">Update Query</a></li>
+                  <li><a href="{{ '/reference/delete-query.html' | relative_url }}">Delete Query</a></li>
+                  <li><a href="{{ '/reference/create-table-query.html' | relative_url }}">Create Table Query</a></li>
+                  <li><a href="{{ '/reference/alter-table-query.html' | relative_url }}">Alter Table Query</a></li>
+                  <li><a href="{{ '/reference/variable.html' | relative_url }}">Variable</a></li>
+                  <li><a href="{{ '/reference/cursor.html' | relative_url }}">Cursor</a></li>
+                  <li><a href="{{ '/reference/control-flow.html' | relative_url }}">Control Flow</a></li>
+                  <li><a href="{{ '/reference/transaction.html' | relative_url }}">Transaction Management</a></li>
+                  <li><a href="{{ '/reference/built-in.html' | relative_url }}">Built-in Commands</a></li>
+                  <li><a href="{{ '/reference/flag.html' | relative_url }}">Flag</a></li>
+                </ul>
+              </div>
             </li>
           </ul>
-        </div>
-      </li>
-    </ul>
+        </li>
+        <li>
+          <ul class="collapsible">
+            <li class="bold"><a class="collapsible-header waves-effect waves-light">Functions<i class="material-icons">arrow_drop_down</i></a>
+              <div class="collapsible-body">
+                <ul>
+                  <li><a href="{{ '/reference/aggregate-functions.html' | relative_url }}">Aggregate Functions</a></li>
+                  <li><a href="{{ '/reference/logical-functions.html' | relative_url }}">Logical Functions</a></li>
+                  <li><a href="{{ '/reference/string-functions.html' | relative_url }}">String Functions</a></li>
+                  <li><a href="{{ '/reference/numeric-functions.html' | relative_url }}">Numeric Functions</a></li>
+                  <li><a href="{{ '/reference/datetime-functions.html' | relative_url }}">Datetime Functions</a></li>
+                  <li><a href="{{ '/reference/cryptographic-hash-functions.html' | relative_url }}">Cryptographic Hash Functions</a></li>
+                  <li><a href="{{ '/reference/cast-functions.html' | relative_url }}">Cast Functions</a></li>
+                  <li><a href="{{ '/reference/system-functions.html' | relative_url }}">System Functions</a></li>
+                </ul>
+              </div>
+            </li>
+          </ul>
+        </li>
+        <li>
+          <ul class="collapsible">
+            <li class="bold"><a class="collapsible-header waves-effect waves-light">Operators<i class="material-icons">arrow_drop_down</i></a>
+              <div class="collapsible-body">
+                <ul>
+                  <li><a href="{{ '/reference/operator-precedence.html' | relative_url }}">Operator Precedence</a></li>
+                  <li><a href="{{ '/reference/arithmetic-operators.html' | relative_url }}">Arithmetic Operators</a></li>
+                  <li><a href="{{ '/reference/comparison-operators.html' | relative_url }}">Comparison Operators</a></li>
+                  <li><a href="{{ '/reference/logic-operators.html' | relative_url }}">Logic Operators</a></li>
+                  <li><a href="{{ '/reference/string-operators.html' | relative_url }}">String Operators</a></li>
+                </ul>
+              </div>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
   </li>
   <li class="bold"><a href="{{ '/license.html' | relative_url }}">License</a></li>
 </ul>

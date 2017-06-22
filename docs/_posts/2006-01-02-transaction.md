@@ -13,18 +13,18 @@ A transaction is a atomic unit, so you get the result of either all of the chang
 
 ### Start Transaction
 
-A transaction is started automatically when the statements execution is started, or after a commit or rollback statement is executed.
+A transaction is started automatically when the procedure execution is started, or after a commit or rollback statement is executed.
 
 
 ### Terminate Transaction
 
 A transaction is terminated when a commit or rollback statement is executed.
 
-If the statements execution is normally terminated, commit all of the changes automatically.
+If the procedure is normally terminated, then commit all of the changes automatically.
 
-If some errors occurred in the statements execution, roll all of the changes back automatically.
+If some errors occurred in the procedure, then roll all of the changes back automatically.
 
-If the statements execution is exited by [EXIT statement]({{ '/reference/control-flow.html#exit' | relative_url }}), roll all of the changes back automatically.
+If the procedure is exited by [EXIT statement]({{ '/reference/control-flow.html#exit' | relative_url }}), then roll all of the changes back automatically.
 
 ### Commit Statement
 

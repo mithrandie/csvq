@@ -413,7 +413,7 @@ Convert a string _bin_ representing a binary number to a integer.
 {: #oct_to_dec}
 
 ```
-BIN_TO_DEC(oct)
+OCT_TO_DEC(oct)
 ```
 
 _oct_
@@ -428,7 +428,7 @@ Convert a string _hex_ representing a octal number to a integer.
 {: #hex_to_dec}
 
 ```
-BIN_TO_DEC(hex)
+HEX_TO_DEC(hex)
 ```
 
 _hex_
