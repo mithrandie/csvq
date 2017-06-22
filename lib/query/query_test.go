@@ -2647,19 +2647,19 @@ var setFlagTests = []struct {
 	{
 		Name: "Set NoHeader",
 		Query: parser.SetFlag{
-			Name:  "@@no-header",
+			Name:  "@@no_header",
 			Value: parser.NewBoolean(true),
 		},
-		ResultFlag:      "no-header",
+		ResultFlag:      "no_header",
 		ResultBoolValue: true,
 	},
 	{
 		Name: "Set WithoutNull",
 		Query: parser.SetFlag{
-			Name:  "@@without-null",
+			Name:  "@@without_null",
 			Value: parser.NewBoolean(true),
 		},
-		ResultFlag:      "without-null",
+		ResultFlag:      "without_null",
 		ResultBoolValue: true,
 	},
 	{
@@ -2673,10 +2673,10 @@ var setFlagTests = []struct {
 	{
 		Name: "Set WithoutNull Value Error",
 		Query: parser.SetFlag{
-			Name:  "@@without-null",
+			Name:  "@@without_null",
 			Value: parser.NewString("string"),
 		},
-		Error: "invalid flag value: @@without-null = 'string'",
+		Error: "invalid flag value: @@without_null = 'string'",
 	},
 	{
 		Name: "Invalid Flag Error",

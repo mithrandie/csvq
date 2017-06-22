@@ -875,7 +875,7 @@ func SetFlag(stmt parser.SetFlag) error {
 	switch strings.ToUpper(stmt.Name) {
 	case "@@DELIMITER", "@@ENCODING", "@@REPOSITORY":
 		p = parser.PrimaryToString(stmt.Value)
-	case "@@NO-HEADER", "@@WITHOUT-NULL":
+	case "@@NO_HEADER", "@@WITHOUT_NULL":
 		p = parser.PrimaryToBoolean(stmt.Value)
 	}
 	if parser.IsNull(p) {
@@ -889,9 +889,9 @@ func SetFlag(stmt parser.SetFlag) error {
 		err = cmd.SetEncoding(p.(parser.String).Value())
 	case "@@REPOSITORY":
 		err = cmd.SetRepository(p.(parser.String).Value())
-	case "@@NO-HEADER":
+	case "@@NO_HEADER":
 		err = cmd.SetNoHeader(p.(parser.Boolean).Bool())
-	case "@@WITHOUT-NULL":
+	case "@@WITHOUT_NULL":
 		err = cmd.SetWithoutNull(p.(parser.Boolean).Bool())
 	default:
 		err = errors.New(fmt.Sprintf("invalid flag name: %s", stmt.Name))
