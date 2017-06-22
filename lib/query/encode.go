@@ -181,7 +181,7 @@ func formatTextCell(c Cell) textField {
 		s = primary.(parser.Datetime).Format()
 		sign = -1
 	case parser.Null:
-		s = primary.String()
+		s = "NULL"
 	}
 
 	return textField{value: s, sign: sign}

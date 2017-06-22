@@ -3,7 +3,6 @@ package cmd
 import (
 	"bufio"
 	"io"
-	"strings"
 
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
@@ -17,14 +16,48 @@ func GetReader(r io.Reader, enc Encoding) io.Reader {
 }
 
 func UnescapeString(s string) string {
-	s = strings.Replace(s, "\\a", "\a", -1)
-	s = strings.Replace(s, "\\b", "\b", -1)
-	s = strings.Replace(s, "\\f", "\f", -1)
-	s = strings.Replace(s, "\\n", "\n", -1)
-	s = strings.Replace(s, "\\r", "\r", -1)
-	s = strings.Replace(s, "\\t", "\t", -1)
-	s = strings.Replace(s, "\\v", "\v", -1)
-	s = strings.Replace(s, "\\\"", "\"", -1)
-	s = strings.Replace(s, "\\\\", "\\", -1)
-	return s
+	runes := []rune(s)
+	unescaped := []rune{}
+
+	escaped := false
+	for _, r := range runes {
+		if escaped {
+			switch r {
+			case 'a':
+				unescaped = append(unescaped, '\a')
+			case 'b':
+				unescaped = append(unescaped, '\b')
+			case 'f':
+				unescaped = append(unescaped, '\f')
+			case 'n':
+				unescaped = append(unescaped, '\n')
+			case 'r':
+				unescaped = append(unescaped, '\r')
+			case 't':
+				unescaped = append(unescaped, '\t')
+			case 'v':
+				unescaped = append(unescaped, '\v')
+			case '"':
+				unescaped = append(unescaped, '"')
+			case '\\':
+				unescaped = append(unescaped, '\\')
+			default:
+				unescaped = append(unescaped, '\\', r)
+			}
+			escaped = false
+			continue
+		}
+
+		if r == '\\' {
+			escaped = true
+			continue
+		}
+
+		unescaped = append(unescaped, r)
+	}
+	if escaped {
+		unescaped = append(unescaped, '\\')
+	}
+
+	return string(unescaped)
 }

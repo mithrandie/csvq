@@ -21,8 +21,8 @@ func TestGetReader(t *testing.T) {
 }
 
 func TestUnescapeString(t *testing.T) {
-	str := "\\a\\b\\f\\n\\r\\t\\v\\\\\\\""
-	expect := "\a\b\f\n\r\t\v\\\""
+	str := "fo\\o\\a\\b\\f\\n\\r\\t\\v\\\\\\\"bar\\"
+	expect := "fo\\o\a\b\f\n\r\t\v\\\"bar\\"
 	unescaped := UnescapeString(str)
 	if unescaped != expect {
 		t.Errorf("unescaped string = %q, want %q", unescaped, expect)
