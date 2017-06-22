@@ -97,4 +97,4 @@ A Break statement stops statements execution in loop, then exit from current loo
 EXIT;
 ```
 
-A Exit statement stops statements execution, then terminates current program without commit.
+A Exit statement stops statements execution, then terminates the executing procedure without commit.
