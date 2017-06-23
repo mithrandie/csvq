@@ -149,6 +149,9 @@ var cursorMapOpenTests = []struct {
 					FileInfo: &FileInfo{
 						Path:      GetTestFilePath("table1.csv"),
 						Delimiter: ',',
+						NoHeader:  false,
+						Encoding:  cmd.UTF8,
+						LineBreak: cmd.LF,
 					},
 				},
 				index: 0,

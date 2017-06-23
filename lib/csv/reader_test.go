@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
@@ -13,6 +14,7 @@ var readAllTests = []struct {
 	Delimiter rune
 	Input     string
 	Output    [][]parser.Primary
+	LineBreak cmd.LineBreak
 	Error     string
 }{
 	{
@@ -22,6 +24,7 @@ var readAllTests = []struct {
 			{parser.NewString("a"), parser.NewString("b"), parser.NewString("c")},
 			{parser.NewString("d"), parser.NewString("e"), parser.NewString("f")},
 		},
+		LineBreak: cmd.LF,
 	},
 	{
 		Name:  "NewLineCR",
@@ -30,6 +33,7 @@ var readAllTests = []struct {
 			{parser.NewString("a"), parser.NewString("b"), parser.NewString("c")},
 			{parser.NewString("d"), parser.NewString("e"), parser.NewString("f")},
 		},
+		LineBreak: cmd.CR,
 	},
 	{
 		Name:  "NewLineCRLF",
@@ -38,6 +42,7 @@ var readAllTests = []struct {
 			{parser.NewString("a"), parser.NewString("b"), parser.NewString("c")},
 			{parser.NewString("d"), parser.NewString("e"), parser.NewString("f")},
 		},
+		LineBreak: cmd.CRLF,
 	},
 	{
 		Name:      "TabDelimiter",
@@ -47,6 +52,7 @@ var readAllTests = []struct {
 			{parser.NewString("a"), parser.NewString("b"), parser.NewString("c")},
 			{parser.NewString("d"), parser.NewString("e"), parser.NewString("f")},
 		},
+		LineBreak: cmd.LF,
 	},
 	{
 		Name:  "QuotedString",
@@ -55,6 +61,7 @@ var readAllTests = []struct {
 			{parser.NewString("a"), parser.NewString("b"), parser.NewString("ccc\ncc")},
 			{parser.NewString("d"), parser.NewString("e"), parser.NewNull()},
 		},
+		LineBreak: cmd.LF,
 	},
 	{
 		Name:  "EscapeDoubleQuote",
@@ -63,6 +70,7 @@ var readAllTests = []struct {
 			{parser.NewString("a"), parser.NewString("b"), parser.NewString("ccc\"cc")},
 			{parser.NewString("d"), parser.NewString("e"), parser.NewString("")},
 		},
+		LineBreak: cmd.LF,
 	},
 	{
 		Name:  "DoubleQuoteInNoQuoteField",
@@ -71,6 +79,7 @@ var readAllTests = []struct {
 			{parser.NewString("a"), parser.NewString("b"), parser.NewString("ccc\"cc")},
 			{parser.NewString("d"), parser.NewString("e"), parser.NewNull()},
 		},
+		LineBreak: cmd.LF,
 	},
 	{
 		Name:  "SingleValue",
@@ -78,6 +87,7 @@ var readAllTests = []struct {
 		Output: [][]parser.Primary{
 			{parser.NewString("a")},
 		},
+		LineBreak: "",
 	},
 	{
 		Name:  "ExtraneousQuote",
@@ -122,6 +132,10 @@ func TestReader_ReadAll(t *testing.T) {
 
 		if !reflect.DeepEqual(records, v.Output) {
 			t.Errorf("%s: records = %q, want %q", v.Name, records, v.Output)
+		}
+
+		if r.LineBreak != v.LineBreak {
+			t.Errorf("%s: line break = %q, want %q", v.Name, r.LineBreak, v.LineBreak)
 		}
 	}
 }

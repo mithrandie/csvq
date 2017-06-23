@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"reflect"
 	"sort"
 	"strconv"
@@ -28,11 +29,11 @@ func NewViewMap() *ViewMap {
 	}
 }
 
-func (m *ViewMap) Exists(filepath string) (string, bool) {
-	if _, ok := m.views[filepath]; ok {
-		return filepath, true
+func (m *ViewMap) Exists(fpath string) (string, bool) {
+	if _, ok := m.views[fpath]; ok {
+		return fpath, true
 	}
-	if substance, ok := m.alias[filepath]; ok {
+	if substance, ok := m.alias[fpath]; ok {
 		if _, ok := m.views[substance]; ok {
 			return substance, true
 		}
@@ -41,22 +42,22 @@ func (m *ViewMap) Exists(filepath string) (string, bool) {
 }
 
 func (m *ViewMap) HasAlias(alias string) (string, bool) {
-	if filepath, ok := m.alias[alias]; ok {
-		return filepath, true
+	if fpath, ok := m.alias[alias]; ok {
+		return fpath, true
 	}
 	return "", false
 }
 
-func (m *ViewMap) Get(filepath string) (*View, error) {
-	if filepath, ok := m.Exists(filepath); ok {
-		return m.views[filepath].Copy(), nil
+func (m *ViewMap) Get(fpath string) (*View, error) {
+	if pt, ok := m.Exists(fpath); ok {
+		return m.views[pt].Copy(), nil
 	}
-	return nil, errors.New(fmt.Sprintf("file %s is not loaded", filepath))
+	return nil, errors.New(fmt.Sprintf("file %s is not loaded", fpath))
 }
 
-func (m *ViewMap) GetWithInternalId(filepath string) (*View, error) {
-	if filepath, ok := m.Exists(filepath); ok {
-		ret := m.views[filepath].Copy()
+func (m *ViewMap) GetWithInternalId(fpath string) (*View, error) {
+	if pt, ok := m.Exists(fpath); ok {
+		ret := m.views[pt].Copy()
 
 		if 0 < ret.FieldLen() {
 			ret.Header = MergeHeader(NewHeader(ret.Header[0].Reference, []string{}), ret.Header)
@@ -69,7 +70,7 @@ func (m *ViewMap) GetWithInternalId(filepath string) (*View, error) {
 		return ret, nil
 
 	}
-	return nil, errors.New(fmt.Sprintf("file %s is not loaded", filepath))
+	return nil, errors.New(fmt.Sprintf("file %s is not loaded", fpath))
 }
 
 func (m *ViewMap) Set(view *View, alias string) error {
@@ -84,17 +85,17 @@ func (m *ViewMap) Set(view *View, alias string) error {
 	return nil
 }
 
-func (m *ViewMap) SetAlias(alias string, filepath string) error {
+func (m *ViewMap) SetAlias(alias string, fpath string) error {
 	if _, ok := m.alias[alias]; ok {
 		return errors.New("duplicate alias")
 	}
-	m.alias[alias] = filepath
+	m.alias[alias] = fpath
 	return nil
 }
 
-func (m *ViewMap) Update(view *View) error {
-	if filepath, ok := m.Exists(view.FileInfo.Path); ok {
-		m.views[filepath] = view.Copy()
+func (m *ViewMap) Replace(view *View) error {
+	if pt, ok := m.Exists(view.FileInfo.Path); ok {
+		m.views[pt] = view
 	}
 	return errors.New(fmt.Sprintf("file %s is not loaded", view.FileInfo.Path))
 }
@@ -117,25 +118,33 @@ func (m *ViewMap) ClearAliases() {
 type FileInfo struct {
 	Path      string
 	Delimiter rune
+	NoHeader  bool
+	Encoding  cmd.Encoding
+	LineBreak cmd.LineBreak
 }
 
 func NewFileInfo(filename string, repository string, delimiter rune) (*FileInfo, error) {
-	filepath := filename
-	if !path.IsAbs(filepath) {
-		filepath = path.Join(repository, filepath)
+	fpath := filename
+	if !path.IsAbs(fpath) {
+		fpath = path.Join(repository, fpath)
 	}
 
 	var info os.FileInfo
 	var err error
 
-	if info, err = os.Stat(filepath); err != nil {
-		if info, err = os.Stat(filepath + cmd.CSV_EXT); err == nil {
-			filepath = filepath + cmd.CSV_EXT
-		} else if info, err = os.Stat(filepath + cmd.TSV_EXT); err == nil {
-			filepath = filepath + cmd.TSV_EXT
+	if info, err = os.Stat(fpath); err != nil {
+		if info, err = os.Stat(fpath + cmd.CSV_EXT); err == nil {
+			fpath = fpath + cmd.CSV_EXT
+		} else if info, err = os.Stat(fpath + cmd.TSV_EXT); err == nil {
+			fpath = fpath + cmd.TSV_EXT
 		} else {
 			return nil, errors.New(fmt.Sprintf("file %s does not exist", filename))
 		}
+	}
+
+	fpath, err = filepath.Abs(fpath)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("file %s does not exist", filename))
 	}
 
 	if info.IsDir() {
@@ -143,7 +152,7 @@ func NewFileInfo(filename string, repository string, delimiter rune) (*FileInfo,
 	}
 
 	if delimiter == cmd.UNDEF {
-		if strings.EqualFold(path.Ext(filepath), cmd.TSV_EXT) {
+		if strings.EqualFold(path.Ext(fpath), cmd.TSV_EXT) {
 			delimiter = '\t'
 		} else {
 			delimiter = ','
@@ -151,7 +160,7 @@ func NewFileInfo(filename string, repository string, delimiter rune) (*FileInfo,
 	}
 
 	return &FileInfo{
-		Path:      filepath,
+		Path:      fpath,
 		Delimiter: delimiter,
 	}, nil
 }
@@ -376,6 +385,14 @@ func loadViewFromFile(file *os.File, fileInfo *FileInfo, reference string) error
 			header[i] = "c" + strconv.Itoa(i+1)
 		}
 	}
+
+	fileInfo.NoHeader = flags.NoHeader
+	fileInfo.Encoding = flags.Encoding
+	fileInfo.LineBreak = reader.LineBreak
+	if fileInfo.LineBreak == "" {
+		fileInfo.LineBreak = flags.LineBreak
+	}
+
 	view.Header = NewHeaderWithoutId(reference, header)
 	view.FileInfo = fileInfo
 	ViewCache.Set(view, reference)

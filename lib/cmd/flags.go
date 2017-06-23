@@ -52,6 +52,7 @@ type Flags struct {
 	// Global Options
 	Delimiter   rune
 	Encoding    Encoding
+	LineBreak   LineBreak
 	Repository  string
 	Source      string
 	NoHeader    bool
@@ -59,7 +60,6 @@ type Flags struct {
 
 	// Write Subcommand Options
 	WriteEncoding  Encoding
-	LineBreak      LineBreak
 	OutFile        string
 	Format         Format
 	WriteDelimiter rune
@@ -80,12 +80,12 @@ func GetFlags() *Flags {
 		flags = &Flags{
 			Delimiter:      UNDEF,
 			Encoding:       UTF8,
+			LineBreak:      LF,
 			Repository:     ".",
 			Source:         "",
 			NoHeader:       false,
 			WithoutNull:    false,
 			WriteEncoding:  UTF8,
-			LineBreak:      LF,
 			OutFile:        "",
 			Format:         TEXT,
 			WriteDelimiter: ',',
