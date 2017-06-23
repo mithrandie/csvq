@@ -31,9 +31,10 @@ var executeTests = []struct {
 			"+---+\n",
 	},
 	{
-		Name:       "Insert Query",
-		Input:      "insert into insert_query values (4, 'str4'), (5, 'str5')",
-		Output:     fmt.Sprintf("%d records inserted on %q\n", 2, GetTestFilePath("insert_query.csv")),
+		Name:  "Insert Query",
+		Input: "insert into insert_query values (4, 'str4'), (5, 'str5')",
+		Output: fmt.Sprintf("%d records inserted on %q\n", 2, GetTestFilePath("insert_query.csv")) +
+			fmt.Sprintf("Commit: file %q is updated.\n", GetTestFilePath("insert_query.csv")),
 		UpdateFile: GetTestFilePath("insert_query.csv"),
 		Content: "\"column1\",\"column2\"\n" +
 			"\"1\",\"str1\"\n" +
@@ -43,9 +44,10 @@ var executeTests = []struct {
 			"5,\"str5\"",
 	},
 	{
-		Name:       "Update Query",
-		Input:      "update update_query set column2 = 'update' where column1 = 2",
-		Output:     fmt.Sprintf("%d record updated on %q\n", 1, GetTestFilePath("update_query.csv")),
+		Name:  "Update Query",
+		Input: "update update_query set column2 = 'update' where column1 = 2",
+		Output: fmt.Sprintf("%d record updated on %q\n", 1, GetTestFilePath("update_query.csv")) +
+			fmt.Sprintf("Commit: file %q is updated.\n", GetTestFilePath("update_query.csv")),
 		UpdateFile: GetTestFilePath("update_query.csv"),
 		Content: "\"column1\",\"column2\"\n" +
 			"\"1\",\"str1\"\n" +
@@ -58,9 +60,10 @@ var executeTests = []struct {
 		Output: fmt.Sprintf("no record updated on %q\n", GetTestFilePath("update_query.csv")),
 	},
 	{
-		Name:       "Delete Query",
-		Input:      "delete from delete_query where column1 = 2",
-		Output:     fmt.Sprintf("%d record deleted on %q\n", 1, GetTestFilePath("delete_query.csv")),
+		Name:  "Delete Query",
+		Input: "delete from delete_query where column1 = 2",
+		Output: fmt.Sprintf("%d record deleted on %q\n", 1, GetTestFilePath("delete_query.csv")) +
+			fmt.Sprintf("Commit: file %q is updated.\n", GetTestFilePath("delete_query.csv")),
 		UpdateFile: GetTestFilePath("delete_query.csv"),
 		Content: "\"column1\",\"column2\"\n" +
 			"\"1\",\"str1\"\n" +
@@ -72,16 +75,18 @@ var executeTests = []struct {
 		Output: fmt.Sprintf("no record deleted on %q\n", GetTestFilePath("delete_query.csv")),
 	},
 	{
-		Name:       "Create Table",
-		Input:      "create table `create_table.csv` (column1, column2)",
-		Output:     fmt.Sprintf("file %q is created\n", GetTestFilePath("create_table.csv")),
+		Name:  "Create Table",
+		Input: "create table `create_table.csv` (column1, column2)",
+		Output: fmt.Sprintf("file %q is created\n", GetTestFilePath("create_table.csv")) +
+			fmt.Sprintf("Commit: file %q is created.\n", GetTestFilePath("create_table.csv")),
 		UpdateFile: GetTestFilePath("create_table.csv"),
 		Content:    "\"column1\",\"column2\"\n",
 	},
 	{
-		Name:       "Add Columns",
-		Input:      "alter table add_columns add column3",
-		Output:     fmt.Sprintf("%d field added on %q\n", 1, GetTestFilePath("add_columns.csv")),
+		Name:  "Add Columns",
+		Input: "alter table add_columns add column3",
+		Output: fmt.Sprintf("%d field added on %q\n", 1, GetTestFilePath("add_columns.csv")) +
+			fmt.Sprintf("Commit: file %q is updated.\n", GetTestFilePath("add_columns.csv")),
 		UpdateFile: GetTestFilePath("add_columns.csv"),
 		Content: "\"column1\",\"column2\",\"column3\"\n" +
 			"\"1\",\"str1\",\n" +
@@ -89,9 +94,10 @@ var executeTests = []struct {
 			"\"3\",\"str3\",",
 	},
 	{
-		Name:       "Drop Columns",
-		Input:      "alter table drop_columns drop column1",
-		Output:     fmt.Sprintf("%d field dropped on %q\n", 1, GetTestFilePath("drop_columns.csv")),
+		Name:  "Drop Columns",
+		Input: "alter table drop_columns drop column1",
+		Output: fmt.Sprintf("%d field dropped on %q\n", 1, GetTestFilePath("drop_columns.csv")) +
+			fmt.Sprintf("Commit: file %q is updated.\n", GetTestFilePath("drop_columns.csv")),
 		UpdateFile: GetTestFilePath("drop_columns.csv"),
 		Content: "\"column2\"\n" +
 			"\"str1\"\n" +
@@ -99,9 +105,10 @@ var executeTests = []struct {
 			"\"str3\"",
 	},
 	{
-		Name:       "Rename Column",
-		Input:      "alter table rename_column rename column1 to newcolumn",
-		Output:     fmt.Sprintf("%d field renamed on %q\n", 1, GetTestFilePath("rename_column.csv")),
+		Name:  "Rename Column",
+		Input: "alter table rename_column rename column1 to newcolumn",
+		Output: fmt.Sprintf("%d field renamed on %q\n", 1, GetTestFilePath("rename_column.csv")) +
+			fmt.Sprintf("Commit: file %q is updated.\n", GetTestFilePath("rename_column.csv")),
 		UpdateFile: GetTestFilePath("rename_column.csv"),
 		Content: "\"newcolumn\",\"column2\"\n" +
 			"\"1\",\"str1\"\n" +
@@ -255,37 +262,15 @@ var executeStatementTests = []struct {
 		Result: []Result{
 			{
 				Type: INSERT,
-				View: &View{
-					Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
-					Records: []Record{
-						NewRecordWithoutId([]parser.Primary{
-							parser.NewString("1"),
-							parser.NewString("str1"),
-						}),
-						NewRecordWithoutId([]parser.Primary{
-							parser.NewString("2"),
-							parser.NewString("str2"),
-						}),
-						NewRecordWithoutId([]parser.Primary{
-							parser.NewString("3"),
-							parser.NewString("str3"),
-						}),
-						NewRecordWithoutId([]parser.Primary{
-							parser.NewInteger(4),
-							parser.NewString("str4"),
-						}),
-						NewRecordWithoutId([]parser.Primary{
-							parser.NewInteger(5),
-							parser.NewString("str5"),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:      GetTestFilePath("table1.csv"),
-						Delimiter: ',',
-					},
-					OperatedRecords: 2,
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  cmd.UTF8,
+					LineBreak: cmd.LF,
 				},
-				Log: fmt.Sprintf("2 records inserted on %q", GetTestFilePath("table1.csv")),
+				OperatedCount: 2,
+				Log:           fmt.Sprintf("2 records inserted on %q", GetTestFilePath("table1.csv")),
 			},
 		},
 	},
@@ -311,29 +296,15 @@ var executeStatementTests = []struct {
 		Result: []Result{
 			{
 				Type: UPDATE,
-				View: &View{
-					FileInfo: &FileInfo{
-						Path:      GetTestFilePath("table1.csv"),
-						Delimiter: ',',
-					},
-					Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
-					Records: []Record{
-						NewRecordWithoutId([]parser.Primary{
-							parser.NewString("1"),
-							parser.NewString("str1"),
-						}),
-						NewRecordWithoutId([]parser.Primary{
-							parser.NewString("2"),
-							parser.NewString("update"),
-						}),
-						NewRecordWithoutId([]parser.Primary{
-							parser.NewString("3"),
-							parser.NewString("str3"),
-						}),
-					},
-					OperatedRecords: 1,
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  cmd.UTF8,
+					LineBreak: cmd.LF,
 				},
-				Log: fmt.Sprintf("1 record updated on %q", GetTestFilePath("table1.csv")),
+				OperatedCount: 1,
+				Log:           fmt.Sprintf("1 record updated on %q", GetTestFilePath("table1.csv")),
 			},
 		},
 	},
@@ -357,25 +328,15 @@ var executeStatementTests = []struct {
 		Result: []Result{
 			{
 				Type: DELETE,
-				View: &View{
-					FileInfo: &FileInfo{
-						Path:      GetTestFilePath("table1.csv"),
-						Delimiter: ',',
-					},
-					Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
-					Records: []Record{
-						NewRecordWithoutId([]parser.Primary{
-							parser.NewString("1"),
-							parser.NewString("str1"),
-						}),
-						NewRecordWithoutId([]parser.Primary{
-							parser.NewString("3"),
-							parser.NewString("str3"),
-						}),
-					},
-					OperatedRecords: 1,
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  cmd.UTF8,
+					LineBreak: cmd.LF,
 				},
-				Log: fmt.Sprintf("1 record deleted on %q", GetTestFilePath("table1.csv")),
+				OperatedCount: 1,
+				Log:           fmt.Sprintf("1 record deleted on %q", GetTestFilePath("table1.csv")),
 			},
 		},
 	},
@@ -390,12 +351,12 @@ var executeStatementTests = []struct {
 		Result: []Result{
 			{
 				Type: CREATE_TABLE,
-				View: &View{
-					FileInfo: &FileInfo{
-						Path:      GetTestFilePath("newtable.csv"),
-						Delimiter: ',',
-					},
-					Header: NewHeaderWithoutId("newtable", []string{"column1", "column2"}),
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("newtable.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  cmd.UTF8,
+					LineBreak: cmd.LF,
 				},
 				Log: fmt.Sprintf("file %q is created", GetTestFilePath("newtable.csv")),
 			},
@@ -413,32 +374,15 @@ var executeStatementTests = []struct {
 		Result: []Result{
 			{
 				Type: ADD_COLUMNS,
-				View: &View{
-					FileInfo: &FileInfo{
-						Path:      GetTestFilePath("table1.csv"),
-						Delimiter: ',',
-					},
-					Header: NewHeaderWithoutId("table1", []string{"column1", "column2", "column3"}),
-					Records: []Record{
-						NewRecordWithoutId([]parser.Primary{
-							parser.NewString("1"),
-							parser.NewString("str1"),
-							parser.NewNull(),
-						}),
-						NewRecordWithoutId([]parser.Primary{
-							parser.NewString("2"),
-							parser.NewString("str2"),
-							parser.NewNull(),
-						}),
-						NewRecordWithoutId([]parser.Primary{
-							parser.NewString("3"),
-							parser.NewString("str3"),
-							parser.NewNull(),
-						}),
-					},
-					OperatedFields: 1,
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  cmd.UTF8,
+					LineBreak: cmd.LF,
 				},
-				Log: fmt.Sprintf("1 field added on %q", GetTestFilePath("table1.csv")),
+				OperatedCount: 1,
+				Log:           fmt.Sprintf("1 field added on %q", GetTestFilePath("table1.csv")),
 			},
 		},
 	},
@@ -452,26 +396,15 @@ var executeStatementTests = []struct {
 		Result: []Result{
 			{
 				Type: DROP_COLUMNS,
-				View: &View{
-					FileInfo: &FileInfo{
-						Path:      GetTestFilePath("table1.csv"),
-						Delimiter: ',',
-					},
-					Header: NewHeaderWithoutId("table1", []string{"column2"}),
-					Records: []Record{
-						NewRecordWithoutId([]parser.Primary{
-							parser.NewString("str1"),
-						}),
-						NewRecordWithoutId([]parser.Primary{
-							parser.NewString("str2"),
-						}),
-						NewRecordWithoutId([]parser.Primary{
-							parser.NewString("str3"),
-						}),
-					},
-					OperatedFields: 1,
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  cmd.UTF8,
+					LineBreak: cmd.LF,
 				},
-				Log: fmt.Sprintf("1 field dropped on %q", GetTestFilePath("table1.csv")),
+				OperatedCount: 1,
+				Log:           fmt.Sprintf("1 field dropped on %q", GetTestFilePath("table1.csv")),
 			},
 		},
 	},
@@ -484,29 +417,15 @@ var executeStatementTests = []struct {
 		Result: []Result{
 			{
 				Type: RENAME_COLUMN,
-				View: &View{
-					FileInfo: &FileInfo{
-						Path:      GetTestFilePath("table1.csv"),
-						Delimiter: ',',
-					},
-					Header: NewHeaderWithoutId("table1", []string{"newcolumn", "column2"}),
-					Records: []Record{
-						NewRecordWithoutId([]parser.Primary{
-							parser.NewString("1"),
-							parser.NewString("str1"),
-						}),
-						NewRecordWithoutId([]parser.Primary{
-							parser.NewString("2"),
-							parser.NewString("str2"),
-						}),
-						NewRecordWithoutId([]parser.Primary{
-							parser.NewString("3"),
-							parser.NewString("str3"),
-						}),
-					},
-					OperatedFields: 1,
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  cmd.UTF8,
+					LineBreak: cmd.LF,
 				},
-				Log: fmt.Sprintf("1 field renamed on %q", GetTestFilePath("table1.csv")),
+				OperatedCount: 1,
+				Log:           fmt.Sprintf("1 field renamed on %q", GetTestFilePath("table1.csv")),
 			},
 		},
 	},
@@ -1281,6 +1200,9 @@ var insertTests = []struct {
 			FileInfo: &FileInfo{
 				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
+				NoHeader:  false,
+				Encoding:  cmd.UTF8,
+				LineBreak: cmd.LF,
 			},
 			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
 			Records: []Record{
@@ -1334,6 +1256,9 @@ var insertTests = []struct {
 			FileInfo: &FileInfo{
 				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
+				NoHeader:  false,
+				Encoding:  cmd.UTF8,
+				LineBreak: cmd.LF,
 			},
 			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
 			Records: []Record{
@@ -1439,6 +1364,9 @@ var insertTests = []struct {
 			FileInfo: &FileInfo{
 				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
+				NoHeader:  false,
+				Encoding:  cmd.UTF8,
+				LineBreak: cmd.LF,
 			},
 			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
 			Records: []Record{
@@ -1555,6 +1483,9 @@ var updateTests = []struct {
 				FileInfo: &FileInfo{
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  cmd.UTF8,
+					LineBreak: cmd.LF,
 				},
 				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
 				Records: []Record{
@@ -1616,6 +1547,9 @@ var updateTests = []struct {
 				FileInfo: &FileInfo{
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  cmd.UTF8,
+					LineBreak: cmd.LF,
 				},
 				Header: NewHeaderWithoutId("t1", []string{"column1", "column2"}),
 				Records: []Record{
@@ -1859,6 +1793,9 @@ var deleteTests = []struct {
 				FileInfo: &FileInfo{
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  cmd.UTF8,
+					LineBreak: cmd.LF,
 				},
 				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
 				Records: []Record{
@@ -1909,6 +1846,9 @@ var deleteTests = []struct {
 				FileInfo: &FileInfo{
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  cmd.UTF8,
+					LineBreak: cmd.LF,
 				},
 				Header: NewHeaderWithoutId("t1", []string{"column1", "column2"}),
 				Records: []Record{
@@ -2068,6 +2008,9 @@ var createTableTests = []struct {
 			FileInfo: &FileInfo{
 				Path:      GetTestFilePath("create_table.csv"),
 				Delimiter: ',',
+				NoHeader:  false,
+				Encoding:  cmd.UTF8,
+				LineBreak: cmd.LF,
 			},
 			Header: NewHeaderWithoutId("create_table", []string{"column1", "column2"}),
 		},
@@ -2133,6 +2076,9 @@ var addColumnsTests = []struct {
 			FileInfo: &FileInfo{
 				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
+				NoHeader:  false,
+				Encoding:  cmd.UTF8,
+				LineBreak: cmd.LF,
 			},
 			Header: NewHeaderWithoutId("table1", []string{"column1", "column2", "column3", "column4"}),
 			Records: []Record{
@@ -2180,6 +2126,9 @@ var addColumnsTests = []struct {
 			FileInfo: &FileInfo{
 				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
+				NoHeader:  false,
+				Encoding:  cmd.UTF8,
+				LineBreak: cmd.LF,
 			},
 			Header: NewHeaderWithoutId("table1", []string{"column3", "column4", "column1", "column2"}),
 			Records: []Record{
@@ -2227,6 +2176,9 @@ var addColumnsTests = []struct {
 			FileInfo: &FileInfo{
 				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
+				NoHeader:  false,
+				Encoding:  cmd.UTF8,
+				LineBreak: cmd.LF,
 			},
 			Header: NewHeaderWithoutId("table1", []string{"column1", "column3", "column4", "column2"}),
 			Records: []Record{
@@ -2274,6 +2226,9 @@ var addColumnsTests = []struct {
 			FileInfo: &FileInfo{
 				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
+				NoHeader:  false,
+				Encoding:  cmd.UTF8,
+				LineBreak: cmd.LF,
 			},
 			Header: NewHeaderWithoutId("table1", []string{"column1", "column3", "column4", "column2"}),
 			Records: []Record{
@@ -2411,6 +2366,9 @@ var dropColumnsTests = []struct {
 			FileInfo: &FileInfo{
 				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
+				NoHeader:  false,
+				Encoding:  cmd.UTF8,
+				LineBreak: cmd.LF,
 			},
 			Header: NewHeaderWithoutId("table1", []string{"column1"}),
 			Records: []Record{
@@ -2491,6 +2449,9 @@ var renameColumnTests = []struct {
 			FileInfo: &FileInfo{
 				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
+				NoHeader:  false,
+				Encoding:  cmd.UTF8,
+				LineBreak: cmd.LF,
 			},
 			Header: NewHeaderWithoutId("table1", []string{"column1", "newcolumn"}),
 			Records: []Record{

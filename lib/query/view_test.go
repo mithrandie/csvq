@@ -3,6 +3,7 @@ package query
 import (
 	"os"
 	"path"
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -73,8 +74,10 @@ func TestNewFileInfo(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if path.Base(fileInfo.Path) != v.Result.Path {
-			t.Errorf("%s: filepath = %s, want %s", v.Name, path.Base(fileInfo.Path), v.Result.Path)
+
+		abs, _ := filepath.Abs(path.Join(repo, v.Result.Path))
+		if fileInfo.Path != abs {
+			t.Errorf("%s: filepath = %s, want %s", v.Name, path.Base(fileInfo.Path), abs)
 		}
 		if fileInfo.Delimiter != v.Result.Delimiter {
 			t.Errorf("%s: delimiter = %q, want %q", v.Name, fileInfo.Delimiter, v.Result.Delimiter)

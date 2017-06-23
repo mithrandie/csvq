@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
@@ -21,6 +22,8 @@ type Reader struct {
 	column int
 
 	FieldsPerRecords int
+
+	LineBreak cmd.LineBreak
 }
 
 func NewReader(r io.Reader) *Reader {
@@ -221,11 +224,20 @@ func (r *Reader) isNewLine(r1 rune) bool {
 	case '\r':
 		r2, _, _ := r.reader.ReadRune()
 		if r2 == '\n' {
+			if r.LineBreak == "" {
+				r.LineBreak = cmd.CRLF
+			}
 			return true
 		}
 		r.reader.UnreadRune()
+		if r.LineBreak == "" {
+			r.LineBreak = cmd.CR
+		}
 		return true
 	case '\n':
+		if r.LineBreak == "" {
+			r.LineBreak = cmd.LF
+		}
 		return true
 	}
 	return false

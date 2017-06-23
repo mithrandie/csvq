@@ -11,7 +11,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var version = "v0.1.8"
+var version = "v0.2.0"
 
 func main() {
 	cli.AppHelpTemplate = appHHelpTemplate
@@ -35,6 +35,11 @@ func main() {
 			Usage: "file encoding. one of: utf8|sjis",
 		},
 		cli.StringFlag{
+			Name:  "line-break, l",
+			Value: "lf",
+			Usage: "line break. one of: crlf|lf|cr",
+		},
+		cli.StringFlag{
 			Name:  "repository, r",
 			Usage: "directory path where files are located",
 		},
@@ -43,11 +48,11 @@ func main() {
 			Usage: "load query from `FILE`",
 		},
 		cli.BoolFlag{
-			Name:  "no-header",
+			Name:  "no-header, n",
 			Usage: "import first line as a record",
 		},
 		cli.BoolFlag{
-			Name:  "without-null",
+			Name:  "without-null, a",
 			Usage: "parse empty field as empty string",
 		},
 	}
@@ -63,11 +68,6 @@ func main() {
 					Usage: "file encoding. one of: utf8|sjis",
 				},
 				cli.StringFlag{
-					Name:  "line-break, l",
-					Value: "lf",
-					Usage: "line break. one of: crlf|lf|cr",
-				},
-				cli.StringFlag{
 					Name:  "out, o",
 					Usage: "write output to `FILE`",
 				},
@@ -81,7 +81,7 @@ func main() {
 					Usage: "field delimiter for csv or tsv (exam: \",\" for comma, \"\\t\" for tab)",
 				},
 				cli.BoolFlag{
-					Name:  "without-header",
+					Name:  "without-header, N",
 					Usage: "when format is specified as csv or tsv, write without header line",
 				},
 			},
@@ -194,6 +194,9 @@ func setGlobalFlags(c *cli.Context) error {
 	if err := cmd.SetEncoding(c.GlobalString("encoding")); err != nil {
 		return err
 	}
+	if err := cmd.SetLineBreak(c.String("line-break")); err != nil {
+		return err
+	}
 	if err := cmd.SetRepository(c.GlobalString("repository")); err != nil {
 		return err
 	}
@@ -211,9 +214,6 @@ func setGlobalFlags(c *cli.Context) error {
 
 func setWriteFlags(c *cli.Context) error {
 	if err := cmd.SetWriteEncoding(c.String("write-encoding")); err != nil {
-		return err
-	}
-	if err := cmd.SetLineBreak(c.String("line-break")); err != nil {
 		return err
 	}
 	if err := cmd.SetOut(c.String("out")); err != nil {

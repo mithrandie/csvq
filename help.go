@@ -2,6 +2,9 @@ package main
 
 var appHHelpTemplate = `NAME:
    {{.Name}} - {{.Usage}}
+
+     https://mithrandie.github.io/csvq
+
 USAGE:
    {{.HelpName}} {{if .VisibleFlags}}[global options]{{end}}{{if .Commands}} [command [command options]]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}["query"]{{end}}
    {{if len .Authors}}
