@@ -24,7 +24,6 @@ deploy:
   api_key: $GITHUB_API_TOKEN
   skip_cleanup: true
   file_glob: true
-  prerelease: true
   file: 'dist/*.{tar.gz, zip}'
   on:
     tags: true
