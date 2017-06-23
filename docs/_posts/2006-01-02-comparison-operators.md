@@ -7,7 +7,7 @@ category: reference
 # Comparison Operators
 
 | name | description |
-| :-: | :- |
+| :- | :- |
 | [Relational Operators](#relational_operators) | Compare values |
 | [IS](#is)           | Compare a value with ternary value |
 | [BETWEEN](#between) | Check if a value is with in a range of values |

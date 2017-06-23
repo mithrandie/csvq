@@ -467,36 +467,8 @@ func Rollback() string {
 }
 
 func Select(query parser.SelectQuery, parentFilter Filter) (*View, error) {
-	if query.FromClause == nil {
-		query.FromClause = parser.FromClause{}
-	}
-	view := NewView()
-	err := view.Load(query.FromClause.(parser.FromClause), parentFilter)
+	view, err := selectEntity(query.SelectEntity, parentFilter)
 	if err != nil {
-		return nil, err
-	}
-
-	if query.WhereClause != nil {
-		if err := view.Where(query.WhereClause.(parser.WhereClause)); err != nil {
-			return nil, err
-		}
-		view.Extract()
-	}
-
-	if query.GroupByClause != nil {
-		if err := view.GroupBy(query.GroupByClause.(parser.GroupByClause)); err != nil {
-			return nil, err
-		}
-	}
-
-	if query.HavingClause != nil {
-		if err := view.Having(query.HavingClause.(parser.HavingClause)); err != nil {
-			return nil, err
-		}
-		view.Extract()
-	}
-
-	if err := view.Select(query.SelectClause.(parser.SelectClause)); err != nil {
 		return nil, err
 	}
 
@@ -513,6 +485,79 @@ func Select(query parser.SelectQuery, parentFilter Filter) (*View, error) {
 	view.Fix()
 
 	return view, nil
+}
+
+func selectEntity(expr parser.Expression, parentFilter Filter) (*View, error) {
+	entity, ok := expr.(parser.SelectEntity)
+	if !ok {
+		return selectSet(expr.(parser.SelectSet), parentFilter)
+	}
+
+	if entity.FromClause == nil {
+		entity.FromClause = parser.FromClause{}
+	}
+	view := NewView()
+	err := view.Load(entity.FromClause.(parser.FromClause), parentFilter)
+	if err != nil {
+		return nil, err
+	}
+
+	if entity.WhereClause != nil {
+		if err := view.Where(entity.WhereClause.(parser.WhereClause)); err != nil {
+			return nil, err
+		}
+		view.Extract()
+	}
+
+	if entity.GroupByClause != nil {
+		if err := view.GroupBy(entity.GroupByClause.(parser.GroupByClause)); err != nil {
+			return nil, err
+		}
+	}
+
+	if entity.HavingClause != nil {
+		if err := view.Having(entity.HavingClause.(parser.HavingClause)); err != nil {
+			return nil, err
+		}
+		view.Extract()
+	}
+
+	if err := view.Select(entity.SelectClause.(parser.SelectClause)); err != nil {
+		return nil, err
+	}
+
+	return view, nil
+}
+
+func selectSet(set parser.SelectSet, parentFilter Filter) (*View, error) {
+	lview, err := selectEntity(set.LHS, parentFilter)
+	if err != nil {
+		return nil, err
+	}
+	lview.Fix()
+
+	rview, err := selectEntity(set.RHS, parentFilter)
+	if err != nil {
+		return nil, err
+	}
+	rview.Fix()
+
+	if lview.FieldLen() != rview.FieldLen() {
+		return nil, errors.New(fmt.Sprintf("%s: field length does not match", parser.TokenLiteral(set.Operator.Token)))
+	}
+
+	switch set.Operator.Token {
+	case parser.UNION:
+		lview.Union(rview, !set.All.IsEmpty())
+	case parser.EXCEPT:
+		lview.Except(rview, !set.All.IsEmpty())
+	case parser.INTERSECT:
+		lview.Intersect(rview, !set.All.IsEmpty())
+	}
+
+	lview.SelectAllColumns()
+
+	return lview, nil
 }
 
 func Insert(query parser.InsertQuery) (*View, error) {

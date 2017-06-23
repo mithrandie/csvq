@@ -6,7 +6,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -175,7 +174,7 @@ func isReadableFromStdin() bool {
 
 type View struct {
 	Header  Header
-	Records []Record
+	Records Records
 
 	FileInfo *FileInfo
 
@@ -341,6 +340,11 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 	case parser.Subquery:
 		subquery := table.Object.(parser.Subquery)
 		view, err = Select(subquery.Query, parentFilter)
+		if err == nil {
+			for i := range view.Header {
+				view.Header[i].Reference = table.Name()
+			}
+		}
 	}
 
 	if err != nil {
@@ -602,15 +606,6 @@ func (view *View) Select(clause parser.SelectClause) error {
 		return records, nil
 	}
 
-	var isDuplicate = func(records []Record, record Record) bool {
-		for _, w := range records {
-			if reflect.DeepEqual(record, w) {
-				return true
-			}
-		}
-		return false
-	}
-
 	fields := parseAllColumns(view, clause.Fields)
 	records, err := evalFields(view, fields)
 	if err != nil {
@@ -646,30 +641,40 @@ func (view *View) Select(clause parser.SelectClause) error {
 	}
 
 	if clause.IsDistinct() {
-		hfields := NewEmptyHeader(len(view.selectFields))
-		distinguished := []Record{}
-
-		for _, v := range view.Records {
+		records := make(Records, view.RecordLen())
+		for i, v := range view.Records {
 			record := make(Record, len(view.selectFields))
-			for i, idx := range view.selectFields {
-				record[i] = v[idx]
+			for j, idx := range view.selectFields {
+				record[j] = v[idx]
 			}
-
-			if !isDuplicate(distinguished, record) {
-				distinguished = append(distinguished, record)
-			}
+			records[i] = record
 		}
 
+		hfields := NewEmptyHeader(len(view.selectFields))
 		for i, idx := range view.selectFields {
 			hfields[i] = view.Header[idx]
 			view.selectFields[i] = i
 		}
 
 		view.Header = hfields
-		view.Records = distinguished
+		view.Records = records
+
+		view.Distinct()
 	}
 
 	return nil
+}
+
+func (view *View) Distinct() {
+	distinguished := Records{}
+
+	for _, record := range view.Records {
+		if !distinguished.Contains(record) {
+			distinguished = append(distinguished, record)
+		}
+	}
+
+	view.Records = distinguished
 }
 
 func (view *View) SelectAllColumns() error {
@@ -818,7 +823,11 @@ func (view *View) Fix() {
 	for i, v := range view.Records {
 		record := make(Record, len(view.selectFields))
 		for j, idx := range view.selectFields {
-			record[j] = v[idx]
+			if 1 < v.GroupLen() {
+				record[j] = NewCell(v[idx].Primary())
+			} else {
+				record[j] = v[idx]
+			}
 		}
 
 		records[i] = record
@@ -826,6 +835,8 @@ func (view *View) Fix() {
 
 	for i, idx := range view.selectFields {
 		hfields[i] = view.Header[idx]
+		hfields[i].FromTable = true
+		hfields[i].IsGroupKey = false
 	}
 
 	view.Header = hfields
@@ -835,6 +846,49 @@ func (view *View) Fix() {
 	view.parentFilter = Filter(nil)
 	view.sortIndices = []int(nil)
 	view.sortDirections = []int(nil)
+}
+
+func (view *View) Union(calcView *View, all bool) {
+	view.Records = append(view.Records, calcView.Records...)
+	view.FileInfo = nil
+
+	if !all {
+		view.Distinct()
+	}
+}
+
+func (view *View) Except(calcView *View, all bool) {
+	indices := []int{}
+	for i, record := range view.Records {
+		if !calcView.Records.Contains(record) {
+			indices = append(indices, i)
+		}
+	}
+	view.filteredIndices = indices
+	view.Extract()
+
+	view.FileInfo = nil
+
+	if !all {
+		view.Distinct()
+	}
+}
+
+func (view *View) Intersect(calcView *View, all bool) {
+	indices := []int{}
+	for i, record := range view.Records {
+		if calcView.Records.Contains(record) {
+			indices = append(indices, i)
+		}
+	}
+	view.filteredIndices = indices
+	view.Extract()
+
+	view.FileInfo = nil
+
+	if !all {
+		view.Distinct()
+	}
 }
 
 func (view *View) FieldIndex(fieldRef parser.FieldReference) (int, error) {

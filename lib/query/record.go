@@ -1,6 +1,20 @@
 package query
 
-import "github.com/mithrandie/csvq/lib/parser"
+import (
+	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/ternary"
+)
+
+type Records []Record
+
+func (r Records) Contains(record Record) bool {
+	for _, v := range r {
+		if v.IsEqualTo(record) {
+			return true
+		}
+	}
+	return false
+}
 
 type Record []Cell
 
@@ -33,6 +47,20 @@ func NewEmptyRecord(len int) Record {
 	}
 
 	return record
+}
+
+func (r Record) IsEqualTo(record Record) bool {
+	if len(r) != len(record) {
+		return false
+	}
+
+	for i, cell := range r {
+		if EquivalentTo(cell.Primary(), record[i].Primary()) != ternary.TRUE {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (r Record) GroupLen() int {

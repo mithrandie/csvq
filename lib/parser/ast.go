@@ -386,34 +386,59 @@ func (p Parentheses) String() string {
 }
 
 type SelectQuery struct {
+	SelectEntity  Expression
+	OrderByClause Expression
+	LimitClause   Expression
+}
+
+func (e SelectQuery) String() string {
+	s := []string{e.SelectEntity.String()}
+	if e.OrderByClause != nil {
+		s = append(s, e.OrderByClause.String())
+	}
+	if e.LimitClause != nil {
+		s = append(s, e.LimitClause.String())
+	}
+	return joinWithSpace(s)
+}
+
+type SelectSet struct {
+	LHS      Expression
+	Operator Token
+	All      Token
+	RHS      Expression
+}
+
+func (e SelectSet) String() string {
+	s := []string{e.LHS.String(), e.Operator.Literal}
+	if !e.All.IsEmpty() {
+		s = append(s, e.All.Literal)
+	}
+	s = append(s, e.RHS.String())
+	return joinWithSpace(s)
+}
+
+type SelectEntity struct {
 	SelectClause  Expression
 	FromClause    Expression
 	WhereClause   Expression
 	GroupByClause Expression
 	HavingClause  Expression
-	OrderByClause Expression
-	LimitClause   Expression
 }
 
-func (sq SelectQuery) String() string {
-	s := []string{sq.SelectClause.String()}
-	if sq.FromClause != nil {
-		s = append(s, sq.FromClause.String())
+func (e SelectEntity) String() string {
+	s := []string{e.SelectClause.String()}
+	if e.FromClause != nil {
+		s = append(s, e.FromClause.String())
 	}
-	if sq.WhereClause != nil {
-		s = append(s, sq.WhereClause.String())
+	if e.WhereClause != nil {
+		s = append(s, e.WhereClause.String())
 	}
-	if sq.GroupByClause != nil {
-		s = append(s, sq.GroupByClause.String())
+	if e.GroupByClause != nil {
+		s = append(s, e.GroupByClause.String())
 	}
-	if sq.HavingClause != nil {
-		s = append(s, sq.HavingClause.String())
-	}
-	if sq.OrderByClause != nil {
-		s = append(s, sq.OrderByClause.String())
-	}
-	if sq.LimitClause != nil {
-		s = append(s, sq.LimitClause.String())
+	if e.HavingClause != nil {
+		s = append(s, e.HavingClause.String())
 	}
 	return joinWithSpace(s)
 }

@@ -216,6 +216,9 @@ func Like(p1 parser.Primary, p2 parser.Primary) ternary.Value {
 		}
 
 		if len(patternRunes) <= patternPos {
+			if len(anyString+search) < len(s) {
+				return ternary.FALSE
+			}
 			break
 		}
 

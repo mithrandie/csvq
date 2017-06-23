@@ -391,22 +391,24 @@ var filterEvaluateTests = []struct {
 			LHS: parser.NewInteger(2),
 			Query: parser.Subquery{
 				Query: parser.SelectQuery{
-					SelectClause: parser.SelectClause{
-						Select: "select",
-						Fields: []parser.Expression{
-							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+					SelectEntity: parser.SelectEntity{
+						SelectClause: parser.SelectClause{
+							Select: "select",
+							Fields: []parser.Expression{
+								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+							},
 						},
-					},
-					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
-							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						FromClause: parser.FromClause{
+							Tables: []parser.Expression{
+								parser.Table{Object: parser.Identifier{Literal: "table1"}},
+							},
 						},
-					},
-					WhereClause: parser.WhereClause{
-						Filter: parser.Comparison{
-							LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-							RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column4"}},
-							Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+						WhereClause: parser.WhereClause{
+							Filter: parser.Comparison{
+								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+								RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column4"}},
+								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+							},
 						},
 					},
 				},
@@ -421,22 +423,24 @@ var filterEvaluateTests = []struct {
 			LHS: parser.NewInteger(2),
 			Query: parser.Subquery{
 				Query: parser.SelectQuery{
-					SelectClause: parser.SelectClause{
-						Select: "select",
-						Fields: []parser.Expression{
-							parser.Field{Object: parser.Identifier{Literal: "column1"}},
+					SelectEntity: parser.SelectEntity{
+						SelectClause: parser.SelectClause{
+							Select: "select",
+							Fields: []parser.Expression{
+								parser.Field{Object: parser.Identifier{Literal: "column1"}},
+							},
 						},
-					},
-					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
-							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						FromClause: parser.FromClause{
+							Tables: []parser.Expression{
+								parser.Table{Object: parser.Identifier{Literal: "table1"}},
+							},
 						},
-					},
-					WhereClause: parser.WhereClause{
-						Filter: parser.Comparison{
-							LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-							RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column4"}},
-							Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+						WhereClause: parser.WhereClause{
+							Filter: parser.Comparison{
+								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+								RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column4"}},
+								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+							},
 						},
 					},
 				},
@@ -451,16 +455,18 @@ var filterEvaluateTests = []struct {
 			LHS: parser.NewInteger(2),
 			Query: parser.Subquery{
 				Query: parser.SelectQuery{
-					SelectClause: parser.SelectClause{
-						Select: "select",
-						Fields: []parser.Expression{
-							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
-							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+					SelectEntity: parser.SelectEntity{
+						SelectClause: parser.SelectClause{
+							Select: "select",
+							Fields: []parser.Expression{
+								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+							},
 						},
-					},
-					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
-							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						FromClause: parser.FromClause{
+							Tables: []parser.Expression{
+								parser.Table{Object: parser.Identifier{Literal: "table1"}},
+							},
 						},
 					},
 				},
@@ -474,19 +480,21 @@ var filterEvaluateTests = []struct {
 			LHS: parser.NewInteger(2),
 			Query: parser.Subquery{
 				Query: parser.SelectQuery{
-					SelectClause: parser.SelectClause{
-						Select: "select",
-						Fields: []parser.Expression{
-							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+					SelectEntity: parser.SelectEntity{
+						SelectClause: parser.SelectClause{
+							Select: "select",
+							Fields: []parser.Expression{
+								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+							},
 						},
-					},
-					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
-							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						FromClause: parser.FromClause{
+							Tables: []parser.Expression{
+								parser.Table{Object: parser.Identifier{Literal: "table1"}},
+							},
 						},
-					},
-					WhereClause: parser.WhereClause{
-						Filter: parser.NewTernary(ternary.FALSE),
+						WhereClause: parser.WhereClause{
+							Filter: parser.NewTernary(ternary.FALSE),
+						},
 					},
 				},
 			},
@@ -499,15 +507,17 @@ var filterEvaluateTests = []struct {
 			LHS: parser.NewInteger(5),
 			Query: parser.Subquery{
 				Query: parser.SelectQuery{
-					SelectClause: parser.SelectClause{
-						Select: "select",
-						Fields: []parser.Expression{
-							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+					SelectEntity: parser.SelectEntity{
+						SelectClause: parser.SelectClause{
+							Select: "select",
+							Fields: []parser.Expression{
+								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+							},
 						},
-					},
-					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
-							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						FromClause: parser.FromClause{
+							Tables: []parser.Expression{
+								parser.Table{Object: parser.Identifier{Literal: "table1"}},
+							},
 						},
 					},
 				},
@@ -521,15 +531,17 @@ var filterEvaluateTests = []struct {
 			LHS: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Query: parser.Subquery{
 				Query: parser.SelectQuery{
-					SelectClause: parser.SelectClause{
-						Select: "select",
-						Fields: []parser.Expression{
-							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+					SelectEntity: parser.SelectEntity{
+						SelectClause: parser.SelectClause{
+							Select: "select",
+							Fields: []parser.Expression{
+								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+							},
 						},
-					},
-					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
-							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						FromClause: parser.FromClause{
+							Tables: []parser.Expression{
+								parser.Table{Object: parser.Identifier{Literal: "table1"}},
+							},
 						},
 					},
 				},
@@ -545,22 +557,24 @@ var filterEvaluateTests = []struct {
 			LHS: parser.NewInteger(2),
 			Query: parser.Subquery{
 				Query: parser.SelectQuery{
-					SelectClause: parser.SelectClause{
-						Select: "select",
-						Fields: []parser.Expression{
-							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+					SelectEntity: parser.SelectEntity{
+						SelectClause: parser.SelectClause{
+							Select: "select",
+							Fields: []parser.Expression{
+								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+							},
 						},
-					},
-					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
-							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						FromClause: parser.FromClause{
+							Tables: []parser.Expression{
+								parser.Table{Object: parser.Identifier{Literal: "table1"}},
+							},
 						},
-					},
-					WhereClause: parser.WhereClause{
-						Filter: parser.Comparison{
-							LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-							RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column4"}},
-							Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+						WhereClause: parser.WhereClause{
+							Filter: parser.Comparison{
+								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+								RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column4"}},
+								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+							},
 						},
 					},
 				},
@@ -575,15 +589,17 @@ var filterEvaluateTests = []struct {
 			LHS: parser.NewInteger(5),
 			Query: parser.Subquery{
 				Query: parser.SelectQuery{
-					SelectClause: parser.SelectClause{
-						Select: "select",
-						Fields: []parser.Expression{
-							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+					SelectEntity: parser.SelectEntity{
+						SelectClause: parser.SelectClause{
+							Select: "select",
+							Fields: []parser.Expression{
+								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+							},
 						},
-					},
-					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
-							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						FromClause: parser.FromClause{
+							Tables: []parser.Expression{
+								parser.Table{Object: parser.Identifier{Literal: "table1"}},
+							},
 						},
 					},
 				},
@@ -597,15 +613,17 @@ var filterEvaluateTests = []struct {
 			LHS: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Query: parser.Subquery{
 				Query: parser.SelectQuery{
-					SelectClause: parser.SelectClause{
-						Select: "select",
-						Fields: []parser.Expression{
-							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+					SelectEntity: parser.SelectEntity{
+						SelectClause: parser.SelectClause{
+							Select: "select",
+							Fields: []parser.Expression{
+								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+							},
 						},
-					},
-					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
-							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						FromClause: parser.FromClause{
+							Tables: []parser.Expression{
+								parser.Table{Object: parser.Identifier{Literal: "table1"}},
+							},
 						},
 					},
 				},
@@ -621,22 +639,24 @@ var filterEvaluateTests = []struct {
 			LHS: parser.NewInteger(5),
 			Query: parser.Subquery{
 				Query: parser.SelectQuery{
-					SelectClause: parser.SelectClause{
-						Select: "select",
-						Fields: []parser.Expression{
-							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+					SelectEntity: parser.SelectEntity{
+						SelectClause: parser.SelectClause{
+							Select: "select",
+							Fields: []parser.Expression{
+								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+							},
 						},
-					},
-					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
-							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						FromClause: parser.FromClause{
+							Tables: []parser.Expression{
+								parser.Table{Object: parser.Identifier{Literal: "table1"}},
+							},
 						},
-					},
-					WhereClause: parser.WhereClause{
-						Filter: parser.Comparison{
-							LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-							RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column4"}},
-							Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+						WhereClause: parser.WhereClause{
+							Filter: parser.Comparison{
+								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+								RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column4"}},
+								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+							},
 						},
 					},
 				},
@@ -691,22 +711,24 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Exists{
 			Query: parser.Subquery{
 				Query: parser.SelectQuery{
-					SelectClause: parser.SelectClause{
-						Select: "select",
-						Fields: []parser.Expression{
-							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+					SelectEntity: parser.SelectEntity{
+						SelectClause: parser.SelectClause{
+							Select: "select",
+							Fields: []parser.Expression{
+								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+							},
 						},
-					},
-					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
-							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						FromClause: parser.FromClause{
+							Tables: []parser.Expression{
+								parser.Table{Object: parser.Identifier{Literal: "table1"}},
+							},
 						},
-					},
-					WhereClause: parser.WhereClause{
-						Filter: parser.Comparison{
-							LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-							RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column4"}},
-							Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+						WhereClause: parser.WhereClause{
+							Filter: parser.Comparison{
+								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+								RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column4"}},
+								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+							},
 						},
 					},
 				},
@@ -719,19 +741,21 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Exists{
 			Query: parser.Subquery{
 				Query: parser.SelectQuery{
-					SelectClause: parser.SelectClause{
-						Select: "select",
-						Fields: []parser.Expression{
-							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+					SelectEntity: parser.SelectEntity{
+						SelectClause: parser.SelectClause{
+							Select: "select",
+							Fields: []parser.Expression{
+								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+							},
 						},
-					},
-					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
-							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						FromClause: parser.FromClause{
+							Tables: []parser.Expression{
+								parser.Table{Object: parser.Identifier{Literal: "table1"}},
+							},
 						},
-					},
-					WhereClause: parser.WhereClause{
-						Filter: parser.NewTernary(ternary.FALSE),
+						WhereClause: parser.WhereClause{
+							Filter: parser.NewTernary(ternary.FALSE),
+						},
 					},
 				},
 			},
@@ -743,22 +767,24 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Exists{
 			Query: parser.Subquery{
 				Query: parser.SelectQuery{
-					SelectClause: parser.SelectClause{
-						Select: "select",
-						Fields: []parser.Expression{
-							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+					SelectEntity: parser.SelectEntity{
+						SelectClause: parser.SelectClause{
+							Select: "select",
+							Fields: []parser.Expression{
+								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+							},
 						},
-					},
-					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
-							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						FromClause: parser.FromClause{
+							Tables: []parser.Expression{
+								parser.Table{Object: parser.Identifier{Literal: "table1"}},
+							},
 						},
-					},
-					WhereClause: parser.WhereClause{
-						Filter: parser.Comparison{
-							LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-							RHS:      parser.NewString("str2"),
-							Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+						WhereClause: parser.WhereClause{
+							Filter: parser.Comparison{
+								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+								RHS:      parser.NewString("str2"),
+								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+							},
 						},
 					},
 				},
@@ -784,22 +810,24 @@ var filterEvaluateTests = []struct {
 		},
 		Expr: parser.Subquery{
 			Query: parser.SelectQuery{
-				SelectClause: parser.SelectClause{
-					Select: "select",
-					Fields: []parser.Expression{
-						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+				SelectEntity: parser.SelectEntity{
+					SelectClause: parser.SelectClause{
+						Select: "select",
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+						},
 					},
-				},
-				FromClause: parser.FromClause{
-					Tables: []parser.Expression{
-						parser.Table{Object: parser.Identifier{Literal: "table1"}},
+					FromClause: parser.FromClause{
+						Tables: []parser.Expression{
+							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						},
 					},
-				},
-				WhereClause: parser.WhereClause{
-					Filter: parser.Comparison{
-						LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-						RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column4"}},
-						Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+					WhereClause: parser.WhereClause{
+						Filter: parser.Comparison{
+							LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+							RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column4"}},
+							Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+						},
 					},
 				},
 				LimitClause: parser.LimitClause{
@@ -813,19 +841,21 @@ var filterEvaluateTests = []struct {
 		Name: "Subquery No Record",
 		Expr: parser.Subquery{
 			Query: parser.SelectQuery{
-				SelectClause: parser.SelectClause{
-					Select: "select",
-					Fields: []parser.Expression{
-						parser.Field{Object: parser.NewInteger(1)},
+				SelectEntity: parser.SelectEntity{
+					SelectClause: parser.SelectClause{
+						Select: "select",
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.NewInteger(1)},
+						},
 					},
-				},
-				FromClause: parser.FromClause{
-					Tables: []parser.Expression{
-						parser.Table{Object: parser.Identifier{Literal: "table1"}},
+					FromClause: parser.FromClause{
+						Tables: []parser.Expression{
+							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						},
 					},
-				},
-				WhereClause: parser.WhereClause{
-					Filter: parser.NewTernary(ternary.FALSE),
+					WhereClause: parser.WhereClause{
+						Filter: parser.NewTernary(ternary.FALSE),
+					},
 				},
 				LimitClause: parser.LimitClause{
 					Number: 1,
@@ -838,15 +868,17 @@ var filterEvaluateTests = []struct {
 		Name: "Subquery Execution Error",
 		Expr: parser.Subquery{
 			Query: parser.SelectQuery{
-				SelectClause: parser.SelectClause{
-					Select: "select",
-					Fields: []parser.Expression{
-						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
+				SelectEntity: parser.SelectEntity{
+					SelectClause: parser.SelectClause{
+						Select: "select",
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
+						},
 					},
-				},
-				FromClause: parser.FromClause{
-					Tables: []parser.Expression{
-						parser.Table{Object: parser.Identifier{Literal: "table1"}},
+					FromClause: parser.FromClause{
+						Tables: []parser.Expression{
+							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						},
 					},
 				},
 			},
@@ -857,15 +889,17 @@ var filterEvaluateTests = []struct {
 		Name: "Subquery Too Many Records Error",
 		Expr: parser.Subquery{
 			Query: parser.SelectQuery{
-				SelectClause: parser.SelectClause{
-					Select: "select",
-					Fields: []parser.Expression{
-						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+				SelectEntity: parser.SelectEntity{
+					SelectClause: parser.SelectClause{
+						Select: "select",
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+						},
 					},
-				},
-				FromClause: parser.FromClause{
-					Tables: []parser.Expression{
-						parser.Table{Object: parser.Identifier{Literal: "table1"}},
+					FromClause: parser.FromClause{
+						Tables: []parser.Expression{
+							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						},
 					},
 				},
 			},
@@ -876,16 +910,18 @@ var filterEvaluateTests = []struct {
 		Name: "Subquery Too Many Fields Error",
 		Expr: parser.Subquery{
 			Query: parser.SelectQuery{
-				SelectClause: parser.SelectClause{
-					Select: "select",
-					Fields: []parser.Expression{
-						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
-						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+				SelectEntity: parser.SelectEntity{
+					SelectClause: parser.SelectClause{
+						Select: "select",
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+						},
 					},
-				},
-				FromClause: parser.FromClause{
-					Tables: []parser.Expression{
-						parser.Table{Object: parser.Identifier{Literal: "table1"}},
+					FromClause: parser.FromClause{
+						Tables: []parser.Expression{
+							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						},
 					},
 				},
 				LimitClause: parser.LimitClause{

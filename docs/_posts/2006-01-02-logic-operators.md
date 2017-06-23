@@ -7,7 +7,7 @@ category: reference
 # Logic Operators
 
 | name | description |
-| :-: | :- |
+| :- | :- |
 | [AND](#and) | Logical AND |
 | [OR](#or)   | Logical OR |
 | [NOT](#not) | Logical NOT |
