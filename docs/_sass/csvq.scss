@@ -82,10 +82,11 @@ nav {
     }
 
     li.folder{
-        padding: 0 16px;
-        color: $text-color;
-        font-size: $sidenav-font-size;
-        font-weight: 500;
+        padding: 0 0 0 16px;
+    }
+
+    li.folder > a {
+        padding: 0;
     }
 
     li > a {

@@ -22,6 +22,12 @@ title: Reference Manual - csvq
   * [Transaction Management]({{ '/reference/transaction.html' | relative_url }})
   * [Built-in Commands]({{ '/reference/built-in.html' | relative_url }})
   * [Flag]({{ '/reference/flag.html' | relative_url }})
+* Operators
+  * [Operator Precedence]({{ '/reference/operator-precedence.html' | relative_url }})
+  * [Arithmetic Operators]({{ '/reference/arithmetic-operators.html' | relative_url }})
+  * [Comparison Operators]({{ '/reference/comparison-operators.html' | relative_url }})
+  * [Logic Operators]({{ '/reference/logic-operators.html' | relative_url }})
+  * [String Operators]({{ '/reference/string-operators.html' | relative_url }})
 * Functions
   * [Aggregate Functions]({{ '/reference/aggregate-functions.html' | relative_url }})
   * [Logical Functions]({{ '/reference/logical-functions.html' | relative_url }})
@@ -31,9 +37,3 @@ title: Reference Manual - csvq
   * [Cryptographic Hash Functions]({{ '/reference/cryptographic-hash-functions.html' | relative_url }})
   * [Cast Functions]({{ '/reference/cast-functions.html' | relative_url }})
   * [System Functions]({{ '/reference/system-functions.html' | relative_url }})
-* Operators
-  * [Operator Precedence]({{ '/reference/operator-precedence.html' | relative_url }})
-  * [Arithmetic Operators]({{ '/reference/arithmetic-operators.html' | relative_url }})
-  * [Comparison Operators]({{ '/reference/comparison-operators.html' | relative_url }})
-  * [Logic Operators]({{ '/reference/logic-operators.html' | relative_url }})
-  * [String Operators]({{ '/reference/string-operators.html' | relative_url }})
