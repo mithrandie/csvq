@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"testing"
+	"time"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 )
@@ -15,6 +16,12 @@ func GetTestFilePath(filename string) string {
 
 var TestDir = path.Join(os.TempDir(), "csvq_query_test")
 var TestDataDir string
+var TestLocation = "America/Los_Angeles"
+
+func GetTestLocation() *time.Location {
+	l, _ := time.LoadLocation(TestLocation)
+	return l
+}
 
 func TestMain(m *testing.M) {
 	setup()
@@ -25,7 +32,7 @@ func TestMain(m *testing.M) {
 
 func setup() {
 	flags := cmd.GetFlags()
-	flags.Location = "America/Los_Angeles"
+	flags.Location = TestLocation
 	flags.Now = "2012-02-03 09:18:15"
 
 	wdir, _ := os.Getwd()
