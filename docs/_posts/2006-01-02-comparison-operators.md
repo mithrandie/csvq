@@ -23,7 +23,7 @@ A comparison operator returns a ternary value.
 {: #relational_operators}
 
 | name | description |
-| :-: | :- |
+| :- | :- |
 | \=      | Equal |
 | <       | Less than |
 | <\=     | Less than or equal |
@@ -36,7 +36,7 @@ value operator value
 ```
 
 _value_
-: [value]({{ '/reference/value.html' | relative_url }})
+: [value]({{ '/resference/value.html' | relative_url }})
 
 At first, a relational operator attempt to convert both of operands to float values, and if both convertions are successful then compare them.
 If conversions failed, next a relational operater attempt to convert to datetime, and next to boolean, at last to string.
