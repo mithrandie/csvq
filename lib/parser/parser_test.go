@@ -52,6 +52,26 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select 1 union (select 2)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectSet{
+					LHS: SelectEntity{
+						SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
+					},
+					Operator: Token{Token: UNION, Literal: "union"},
+					RHS: Subquery{
+						Query: SelectQuery{
+							SelectEntity: SelectEntity{
+								SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewInteger(2)}}},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "select 1 as a from dual",
 		Output: []Statement{
 			SelectQuery{

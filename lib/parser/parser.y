@@ -34,6 +34,7 @@ package parser
 %type<statement>   command_statement
 %type<expression>  select_query
 %type<expression>  select_entity
+%type<expression>  select_set_entity
 %type<expression>  select_clause
 %type<expression>  from_clause
 %type<expression>  where_clause
@@ -342,7 +343,7 @@ select_entity
             HavingClause:  $5,
         }
     }
-    | select_entity UNION all select_entity
+    | select_set_entity UNION all select_set_entity
     {
         $$ = SelectSet{
             LHS:      $1,
@@ -351,7 +352,7 @@ select_entity
             RHS:      $4,
         }
     }
-    | select_entity INTERSECT all select_entity
+    | select_set_entity INTERSECT all select_set_entity
     {
         $$ = SelectSet{
             LHS:      $1,
@@ -360,7 +361,7 @@ select_entity
             RHS:      $4,
         }
     }
-    | select_entity EXCEPT all select_entity
+    | select_set_entity EXCEPT all select_set_entity
     {
         $$ = SelectSet{
             LHS:      $1,
@@ -368,6 +369,16 @@ select_entity
             All:      $3,
             RHS:      $4,
         }
+    }
+
+select_set_entity
+    : select_entity
+    {
+        $$ = $1
+    }
+    | subquery
+    {
+        $$ = $1
     }
 
 select_clause
