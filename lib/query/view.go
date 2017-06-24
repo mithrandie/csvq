@@ -730,9 +730,23 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 	return nil
 }
 
+func (view *View) Offset(clause parser.OffsetClause) {
+	if int64(len(view.Records)) <= clause.Number {
+		view.Records = Records{}
+	} else {
+		view.Records = view.Records[clause.Number:]
+		records := make(Records, len(view.Records))
+		copy(records, view.Records)
+		view.Records = records
+	}
+}
+
 func (view *View) Limit(clause parser.LimitClause) {
 	if clause.Number < int64(len(view.Records)) {
 		view.Records = view.Records[:clause.Number]
+		records := make(Records, len(view.Records))
+		copy(records, view.Records)
+		view.Records = records
 	}
 }
 

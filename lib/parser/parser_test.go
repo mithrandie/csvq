@@ -210,7 +210,8 @@ var parseTests = []struct {
 			" group by column1, column2 " +
 			" having 1 > 1 " +
 			" order by column4, column5 desc, column6 asc " +
-			" limit 10 ",
+			" limit 10 " +
+			" offset 10 ",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -250,6 +251,10 @@ var parseTests = []struct {
 				},
 				LimitClause: LimitClause{
 					Limit:  "limit",
+					Number: 10,
+				},
+				OffsetClause: OffsetClause{
+					Offset: "offset",
 					Number: 10,
 				},
 			},
