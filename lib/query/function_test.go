@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
 )
@@ -1310,7 +1311,7 @@ func TestSha512Hmac(t *testing.T) {
 var nowTests = []functionTest{
 	{
 		Name:   "Now",
-		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, time.Local)),
+		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, cmd.GetLocation())),
 	},
 	{
 		Name: "Now Arguments Error",
@@ -1329,7 +1330,7 @@ var datetimeFormatTests = []functionTest{
 	{
 		Name: "DatetimeFormat",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, cmd.GetLocation())),
 			parser.NewString("%Y-%m-%d"),
 		},
 		Result: parser.NewString("2012-02-03"),
@@ -1345,7 +1346,7 @@ var datetimeFormatTests = []functionTest{
 	{
 		Name: "DatetimeFormat Format is Null",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, cmd.GetLocation())),
 			parser.NewNull(),
 		},
 		Result: parser.NewNull(),
@@ -1353,7 +1354,7 @@ var datetimeFormatTests = []functionTest{
 	{
 		Name: "DatetimeFormat Arguments Error",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, cmd.GetLocation())),
 		},
 		Error: "function DATETIME_FORMAT takes 2 arguments",
 	},
@@ -1367,7 +1368,7 @@ var yearTests = []functionTest{
 	{
 		Name: "Year",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, cmd.GetLocation())),
 		},
 		Result: parser.NewInteger(2012),
 	},
@@ -1393,7 +1394,7 @@ var monthTests = []functionTest{
 	{
 		Name: "Month",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, cmd.GetLocation())),
 		},
 		Result: parser.NewInteger(2),
 	},
@@ -1407,7 +1408,7 @@ var dayTests = []functionTest{
 	{
 		Name: "Day",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, cmd.GetLocation())),
 		},
 		Result: parser.NewInteger(3),
 	},
@@ -1421,7 +1422,7 @@ var hourTests = []functionTest{
 	{
 		Name: "Hour",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, cmd.GetLocation())),
 		},
 		Result: parser.NewInteger(9),
 	},
@@ -1435,7 +1436,7 @@ var minuteTests = []functionTest{
 	{
 		Name: "Minute",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, cmd.GetLocation())),
 		},
 		Result: parser.NewInteger(18),
 	},
@@ -1449,7 +1450,7 @@ var secondTests = []functionTest{
 	{
 		Name: "Second",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, cmd.GetLocation())),
 		},
 		Result: parser.NewInteger(15),
 	},
@@ -1463,7 +1464,7 @@ var millisecondTests = []functionTest{
 	{
 		Name: "Millisecond",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, cmd.GetLocation())),
 		},
 		Result: parser.NewInteger(123),
 	},
@@ -1477,7 +1478,7 @@ var microsecondTests = []functionTest{
 	{
 		Name: "Microsecond",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, cmd.GetLocation())),
 		},
 		Result: parser.NewInteger(123457),
 	},
@@ -1491,7 +1492,7 @@ var nanosecondTests = []functionTest{
 	{
 		Name: "Nanosecond",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, cmd.GetLocation())),
 		},
 		Result: parser.NewInteger(123456789),
 	},
@@ -1505,7 +1506,7 @@ var weekdayTests = []functionTest{
 	{
 		Name: "Weekday",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, cmd.GetLocation())),
 		},
 		Result: parser.NewInteger(5),
 	},
@@ -1519,7 +1520,7 @@ var unixTimeTests = []functionTest{
 	{
 		Name: "UnixTime",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, cmd.GetLocation())),
 		},
 		Result: parser.NewInteger(1328228295),
 	},
@@ -1533,7 +1534,7 @@ var unixNanoTimeTests = []functionTest{
 	{
 		Name: "UnixNanoTime",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, cmd.GetLocation())),
 		},
 		Result: parser.NewInteger(1328228295123456789),
 	},
@@ -1547,7 +1548,7 @@ var dayOfYearTests = []functionTest{
 	{
 		Name: "DayOfYear",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, cmd.GetLocation())),
 		},
 		Result: parser.NewInteger(34),
 	},
@@ -1561,7 +1562,7 @@ var weekOfYearTests = []functionTest{
 	{
 		Name: "WeekOfYear",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, cmd.GetLocation())),
 		},
 		Result: parser.NewInteger(5),
 	},
@@ -1575,10 +1576,10 @@ var addYearTests = []functionTest{
 	{
 		Name: "AddYear",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, cmd.GetLocation())),
 			parser.NewInteger(2),
 		},
-		Result: parser.NewDatetime(time.Date(2014, 2, 3, 9, 18, 15, 123456789, time.Local)),
+		Result: parser.NewDatetime(time.Date(2014, 2, 3, 9, 18, 15, 123456789, cmd.GetLocation())),
 	},
 	{
 		Name: "AddYear Datetime is Null",
@@ -1591,7 +1592,7 @@ var addYearTests = []functionTest{
 	{
 		Name: "AddYear Duration is Null",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, cmd.GetLocation())),
 			parser.NewNull(),
 		},
 		Result: parser.NewNull(),
@@ -1611,10 +1612,10 @@ var addMonthTests = []functionTest{
 	{
 		Name: "AddMonth",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, cmd.GetLocation())),
 			parser.NewInteger(2),
 		},
-		Result: parser.NewDatetime(time.Date(2012, 4, 3, 9, 18, 15, 123456789, time.Local)),
+		Result: parser.NewDatetime(time.Date(2012, 4, 3, 9, 18, 15, 123456789, cmd.GetLocation())),
 	},
 }
 
@@ -1626,10 +1627,10 @@ var addDayTests = []functionTest{
 	{
 		Name: "AddDay",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, cmd.GetLocation())),
 			parser.NewInteger(2),
 		},
-		Result: parser.NewDatetime(time.Date(2012, 2, 5, 9, 18, 15, 123456789, time.Local)),
+		Result: parser.NewDatetime(time.Date(2012, 2, 5, 9, 18, 15, 123456789, cmd.GetLocation())),
 	},
 }
 
@@ -1641,10 +1642,10 @@ var addHourTests = []functionTest{
 	{
 		Name: "AddHour",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, cmd.GetLocation())),
 			parser.NewInteger(2),
 		},
-		Result: parser.NewDatetime(time.Date(2012, 2, 3, 11, 18, 15, 123456789, time.Local)),
+		Result: parser.NewDatetime(time.Date(2012, 2, 3, 11, 18, 15, 123456789, cmd.GetLocation())),
 	},
 }
 
@@ -1656,10 +1657,10 @@ var addMinuteTests = []functionTest{
 	{
 		Name: "AddMinute",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, cmd.GetLocation())),
 			parser.NewInteger(2),
 		},
-		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 20, 15, 123456789, time.Local)),
+		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 20, 15, 123456789, cmd.GetLocation())),
 	},
 }
 
@@ -1671,10 +1672,10 @@ var addSecondTests = []functionTest{
 	{
 		Name: "AddSecond",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, cmd.GetLocation())),
 			parser.NewInteger(2),
 		},
-		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 17, 123456789, time.Local)),
+		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 17, 123456789, cmd.GetLocation())),
 	},
 }
 
@@ -1686,10 +1687,10 @@ var addMilliTests = []functionTest{
 	{
 		Name: "AddMilli",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, cmd.GetLocation())),
 			parser.NewInteger(2),
 		},
-		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 125456789, time.Local)),
+		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 125456789, cmd.GetLocation())),
 	},
 }
 
@@ -1701,10 +1702,10 @@ var addMicroTests = []functionTest{
 	{
 		Name: "AddMicro",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, cmd.GetLocation())),
 			parser.NewInteger(2),
 		},
-		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123458789, time.Local)),
+		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123458789, cmd.GetLocation())),
 	},
 }
 
@@ -1716,10 +1717,10 @@ var addNanoTests = []functionTest{
 	{
 		Name: "AddNano",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, cmd.GetLocation())),
 			parser.NewInteger(2),
 		},
-		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456791, time.Local)),
+		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456791, cmd.GetLocation())),
 	},
 }
 
@@ -1731,8 +1732,8 @@ var dateDiffTests = []functionTest{
 	{
 		Name: "DateDiff",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, time.Local)),
-			parser.NewDatetime(time.Date(2012, 2, 5, 1, 18, 55, 123456789, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, cmd.GetLocation())),
+			parser.NewDatetime(time.Date(2012, 2, 5, 1, 18, 55, 123456789, cmd.GetLocation())),
 		},
 		Result: parser.NewInteger(-2),
 	},
@@ -1740,14 +1741,14 @@ var dateDiffTests = []functionTest{
 		Name: "DateDiff Datetime1 is Null",
 		Args: []parser.Primary{
 			parser.NewNull(),
-			parser.NewDatetime(time.Date(2012, 2, 5, 1, 18, 55, 123456789, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 5, 1, 18, 55, 123456789, cmd.GetLocation())),
 		},
 		Result: parser.NewNull(),
 	},
 	{
 		Name: "DateDiff Datetime2 is Null",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, cmd.GetLocation())),
 			parser.NewNull(),
 		},
 		Result: parser.NewNull(),
@@ -1767,8 +1768,8 @@ var timeDiffTests = []functionTest{
 	{
 		Name: "TimeDiff",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, time.Local)),
-			parser.NewDatetime(time.Date(2012, 2, 3, 1, 18, 55, 123000000, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, cmd.GetLocation())),
+			parser.NewDatetime(time.Date(2012, 2, 3, 1, 18, 55, 123000000, cmd.GetLocation())),
 		},
 		Result: parser.NewFloat(28760.000456789),
 	},
@@ -1776,14 +1777,14 @@ var timeDiffTests = []functionTest{
 		Name: "TimeDiff Datetime1 is Null",
 		Args: []parser.Primary{
 			parser.NewNull(),
-			parser.NewDatetime(time.Date(2012, 2, 5, 1, 18, 55, 123456789, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 5, 1, 18, 55, 123456789, cmd.GetLocation())),
 		},
 		Result: parser.NewNull(),
 	},
 	{
 		Name: "TimeDiff Datetime2 is Null",
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, time.Local)),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, cmd.GetLocation())),
 			parser.NewNull(),
 		},
 		Result: parser.NewNull(),
@@ -1972,7 +1973,7 @@ var datetimeTests = []functionTest{
 		Args: []parser.Primary{
 			parser.NewString("2012-02-03 09:18:15"),
 		},
-		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, time.Local)),
+		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, cmd.GetLocation())),
 	},
 	{
 		Name:  "Datetime Arguments Error",
