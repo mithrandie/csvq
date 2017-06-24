@@ -44,7 +44,7 @@ var encodeViewTests = []struct {
 			Header: NewHeaderWithoutId("test", []string{"c1", "c2\nsecond line", "c3"}),
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
-				NewRecordWithoutId([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01 16:00:00.123456"), parser.NewString("abcdef")}),
+				NewRecordWithoutId([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), parser.NewString("abcdef")}),
 				NewRecordWithoutId([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
 			},
 		},
@@ -65,7 +65,7 @@ var encodeViewTests = []struct {
 			Header: NewHeaderWithoutId("test", []string{"c1", "c2\nsecond line", "c3"}),
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
-				NewRecordWithoutId([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01 16:00:00.123456"), parser.NewString("abcdef")}),
+				NewRecordWithoutId([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), parser.NewString("abcdef")}),
 				NewRecordWithoutId([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
 			},
 		},
@@ -81,7 +81,7 @@ var encodeViewTests = []struct {
 			Header: NewHeaderWithoutId("test", []string{"c1", "c2\nsecond line", "c3"}),
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
-				NewRecordWithoutId([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01 16:00:00.123456"), parser.NewString("abcdef")}),
+				NewRecordWithoutId([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), parser.NewString("abcdef")}),
 				NewRecordWithoutId([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
 			},
 		},
@@ -98,7 +98,7 @@ var encodeViewTests = []struct {
 			Header: NewHeaderWithoutId("test", []string{"c1", "c2\nsecond line", "c3"}),
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
-				NewRecordWithoutId([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01 16:00:00.123456"), parser.NewString("abcdef")}),
+				NewRecordWithoutId([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), parser.NewString("abcdef")}),
 				NewRecordWithoutId([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
 			},
 		},
@@ -114,7 +114,7 @@ var encodeViewTests = []struct {
 			Header: NewHeaderWithoutId("test", []string{"c1", "c2\nsecond line", "c3"}),
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
-				NewRecordWithoutId([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01 16:00:00.123456"), parser.NewString("abcdef")}),
+				NewRecordWithoutId([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), parser.NewString("abcdef")}),
 				NewRecordWithoutId([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
 			},
 		},
@@ -131,7 +131,7 @@ var encodeViewTests = []struct {
 			Header: NewHeaderWithoutId("test", []string{"c1", "c2\nsecond line", "c3"}),
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
-				NewRecordWithoutId([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01 16:00:00.123456"), parser.NewString("abcdef")}),
+				NewRecordWithoutId([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), parser.NewString("abcdef")}),
 				NewRecordWithoutId([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abc\\defghi/jklmn\topqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
 			},
 		},
