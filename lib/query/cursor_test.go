@@ -9,33 +9,37 @@ import (
 )
 
 var selectQueryForCursorTest parser.SelectQuery = parser.SelectQuery{
-	SelectClause: parser.SelectClause{
-		Select: "select",
-		Fields: []parser.Expression{
-			parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
-			parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+	SelectEntity: parser.SelectEntity{
+		SelectClause: parser.SelectClause{
+			Select: "select",
+			Fields: []parser.Expression{
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+			},
 		},
-	},
-	FromClause: parser.FromClause{
-		From: "from",
-		Tables: []parser.Expression{
-			parser.Table{Object: parser.Identifier{Literal: "table1"}},
+		FromClause: parser.FromClause{
+			From: "from",
+			Tables: []parser.Expression{
+				parser.Table{Object: parser.Identifier{Literal: "table1"}},
+			},
 		},
 	},
 }
 
 var selectQueryForCursorQueryErrorTest parser.SelectQuery = parser.SelectQuery{
-	SelectClause: parser.SelectClause{
-		Select: "select",
-		Fields: []parser.Expression{
-			parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
-			parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+	SelectEntity: parser.SelectEntity{
+		SelectClause: parser.SelectClause{
+			Select: "select",
+			Fields: []parser.Expression{
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+			},
 		},
-	},
-	FromClause: parser.FromClause{
-		From: "from",
-		Tables: []parser.Expression{
-			parser.Table{Object: parser.Identifier{Literal: "table1"}},
+		FromClause: parser.FromClause{
+			From: "from",
+			Tables: []parser.Expression{
+				parser.Table{Object: parser.Identifier{Literal: "table1"}},
+			},
 		},
 	},
 }

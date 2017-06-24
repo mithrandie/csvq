@@ -7,7 +7,7 @@ category: reference
 # Arithmetic Operators
 
 | name | description |
-| :-: | :- |
+| :- | :- |
 | +  | Addition |
 | \- | Subtraction |
 | *  | Multiplication |

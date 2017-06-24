@@ -30,4 +30,7 @@ The following table list operators from highest precedence to lowest.
 | 5 | [NOT]({{ '/reference/logic-operators.html#not' | relative_url }})     | Right-to-left | 
 | 6 | [AND]({{ '/reference/logic-operators.html#and' | relative_url }})     | Left-to-right | 
 | 7 | [OR]({{ '/reference/logic-operators.html#or' | relative_url }})       | Left-to-right | 
+| 8 | [INTERSECT]({{ '/reference/set-operators.html#intersect' | relative_url }}) | Left-to-right | 
+| 9 | [UNION]({{ '/reference/set-operators.html#union' | relative_url }})         | Left-to-right | 
+|   | [EXCEPT]({{ '/reference/set-operators.html#except' | relative_url }})       | Left-to-right | 
 

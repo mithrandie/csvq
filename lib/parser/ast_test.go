@@ -451,6 +451,60 @@ func TestParentheses_String(t *testing.T) {
 
 func TestSelectQuery_String(t *testing.T) {
 	e := SelectQuery{
+		SelectEntity: SelectEntity{
+			SelectClause: SelectClause{
+				Select: "select",
+				Fields: []Expression{Field{Object: Identifier{Literal: "column"}}},
+			},
+			FromClause: FromClause{
+				From:   "from",
+				Tables: []Expression{Table{Object: Identifier{Literal: "table"}}},
+			},
+		},
+		OrderByClause: OrderByClause{
+			OrderBy: "order by",
+			Items: []Expression{
+				OrderItem{
+					Item: Identifier{Literal: "column"},
+				},
+			},
+		},
+		LimitClause: LimitClause{
+			Limit:  "limit",
+			Number: 10,
+		},
+	}
+	expect := "select column from table order by column limit 10"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestSelectSet_String(t *testing.T) {
+	e := SelectSet{
+		LHS: SelectEntity{
+			SelectClause: SelectClause{
+				Select: "select",
+				Fields: []Expression{Field{Object: NewInteger(1)}},
+			},
+		},
+		Operator: Token{Token: UNION, Literal: "union"},
+		All:      Token{Token: ALL, Literal: "all"},
+		RHS: SelectEntity{
+			SelectClause: SelectClause{
+				Select: "select",
+				Fields: []Expression{Field{Object: NewInteger(2)}},
+			},
+		},
+	}
+	expect := "select 1 union all select 2"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestSelectEntity_String(t *testing.T) {
+	e := SelectEntity{
 		SelectClause: SelectClause{
 			Select: "select",
 			Fields: []Expression{Field{Object: Identifier{Literal: "column"}}},
@@ -481,20 +535,9 @@ func TestSelectQuery_String(t *testing.T) {
 				RHS:      Integer{literal: "1"},
 			},
 		},
-		OrderByClause: OrderByClause{
-			OrderBy: "order by",
-			Items: []Expression{
-				OrderItem{
-					Item: Identifier{Literal: "column"},
-				},
-			},
-		},
-		LimitClause: LimitClause{
-			Limit:  "limit",
-			Number: 10,
-		},
 	}
-	expect := "select column from table where column > 1 group by column1 having column > 1 order by column limit 10"
+
+	expect := "select column from table where column > 1 group by column1 having column > 1"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -621,16 +664,18 @@ func TestLimitClause_String(t *testing.T) {
 func TestSubquery_String(t *testing.T) {
 	e := Subquery{
 		Query: SelectQuery{
-			SelectClause: SelectClause{
-				Select: "select",
-				Fields: []Expression{
-					Integer{literal: "1"},
+			SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					Select: "select",
+					Fields: []Expression{
+						Integer{literal: "1"},
+					},
 				},
-			},
-			FromClause: FromClause{
-				From: "from",
-				Tables: []Expression{
-					Dual{Dual: "dual"},
+				FromClause: FromClause{
+					From: "from",
+					Tables: []Expression{
+						Dual{Dual: "dual"},
+					},
 				},
 			},
 		},
@@ -737,16 +782,18 @@ func TestIn_String(t *testing.T) {
 		LHS: Identifier{Literal: "column"},
 		Query: Subquery{
 			Query: SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Integer{literal: "1"},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Integer{literal: "1"},
+						},
 					},
-				},
-				FromClause: FromClause{
-					From: "from",
-					Tables: []Expression{
-						Dual{Dual: "dual"},
+					FromClause: FromClause{
+						From: "from",
+						Tables: []Expression{
+							Dual{Dual: "dual"},
+						},
 					},
 				},
 			},
@@ -765,16 +812,18 @@ func TestAll_String(t *testing.T) {
 		Operator: Token{Token: COMPARISON_OP, Literal: ">"},
 		Query: Subquery{
 			Query: SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Integer{literal: "1"},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Integer{literal: "1"},
+						},
 					},
-				},
-				FromClause: FromClause{
-					From: "from",
-					Tables: []Expression{
-						Dual{Dual: "dual"},
+					FromClause: FromClause{
+						From: "from",
+						Tables: []Expression{
+							Dual{Dual: "dual"},
+						},
 					},
 				},
 			},
@@ -793,16 +842,18 @@ func TestAny_String(t *testing.T) {
 		Operator: Token{Token: COMPARISON_OP, Literal: ">"},
 		Query: Subquery{
 			Query: SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Integer{literal: "1"},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Integer{literal: "1"},
+						},
 					},
-				},
-				FromClause: FromClause{
-					From: "from",
-					Tables: []Expression{
-						Dual{Dual: "dual"},
+					FromClause: FromClause{
+						From: "from",
+						Tables: []Expression{
+							Dual{Dual: "dual"},
+						},
 					},
 				},
 			},
@@ -844,16 +895,18 @@ func TestExists_String(t *testing.T) {
 		Exists: "exists",
 		Query: Subquery{
 			Query: SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Integer{literal: "1"},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Integer{literal: "1"},
+						},
 					},
-				},
-				FromClause: FromClause{
-					From: "from",
-					Tables: []Expression{
-						Dual{Dual: "dual"},
+					FromClause: FromClause{
+						From: "from",
+						Tables: []Expression{
+							Dual{Dual: "dual"},
+						},
 					},
 				},
 			},
@@ -1000,16 +1053,18 @@ func TestTable_Name(t *testing.T) {
 	e = Table{
 		Object: Subquery{
 			Query: SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Integer{literal: "1"},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Integer{literal: "1"},
+						},
 					},
-				},
-				FromClause: FromClause{
-					From: "from",
-					Tables: []Expression{
-						Dual{Dual: "dual"},
+					FromClause: FromClause{
+						From: "from",
+						Tables: []Expression{
+							Dual{Dual: "dual"},
+						},
 					},
 				},
 			},
@@ -1349,11 +1404,13 @@ func TestInsertQuery_String(t *testing.T) {
 			Identifier{Literal: "column2"},
 		},
 		Query: SelectQuery{
-			SelectClause: SelectClause{
-				Select: "select",
-				Fields: []Expression{
-					NewInteger(1),
-					NewInteger(2),
+			SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					Select: "select",
+					Fields: []Expression{
+						NewInteger(1),
+						NewInteger(2),
+					},
 				},
 			},
 		},

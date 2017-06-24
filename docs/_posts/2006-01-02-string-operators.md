@@ -7,7 +7,7 @@ category: reference
 # String Operators
 
 | name | description |
-| :-: | :- |
+| :- | :- |
 | \|\| | Concatnation |
 
 ## Syntax

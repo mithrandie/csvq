@@ -28,6 +28,7 @@ title: Reference Manual - csvq
   * [Comparison Operators]({{ '/reference/comparison-operators.html' | relative_url }})
   * [Logic Operators]({{ '/reference/logic-operators.html' | relative_url }})
   * [String Operators]({{ '/reference/string-operators.html' | relative_url }})
+  * [Set Operators]({{ '/reference/set-operators.html' | relative_url }})
 * Functions
   * [Aggregate Functions]({{ '/reference/aggregate-functions.html' | relative_url }})
   * [Logical Functions]({{ '/reference/logical-functions.html' | relative_url }})
