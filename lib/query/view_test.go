@@ -533,32 +533,35 @@ var viewLoadTests = []struct {
 				parser.Table{
 					Object: parser.Subquery{
 						Query: parser.SelectQuery{
-							SelectClause: parser.SelectClause{
-								Select: "select",
-								Fields: []parser.Expression{
-									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
-									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+							SelectEntity: parser.SelectEntity{
+								SelectClause: parser.SelectClause{
+									Select: "select",
+									Fields: []parser.Expression{
+										parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+										parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+									},
 								},
-							},
-							FromClause: parser.FromClause{
-								Tables: []parser.Expression{
-									parser.Table{Object: parser.Identifier{Literal: "table1"}},
+								FromClause: parser.FromClause{
+									Tables: []parser.Expression{
+										parser.Table{Object: parser.Identifier{Literal: "table1"}},
+									},
 								},
 							},
 						},
 					},
+					Alias: parser.Identifier{Literal: "alias"},
 				},
 			},
 		},
 		Result: &View{
 			Header: []HeaderField{
 				{
-					Reference: "table1",
+					Reference: "alias",
 					Column:    "column1",
 					FromTable: true,
 				},
 				{
-					Reference: "table1",
+					Reference: "alias",
 					Column:    "column2",
 					FromTable: true,
 				},
@@ -865,7 +868,7 @@ var viewHavingTests = []struct {
 	View   *View
 	Having parser.HavingClause
 	Result []int
-	Record []Record
+	Record Records
 	Error  string
 }{
 	{
@@ -1629,9 +1632,11 @@ var viewInsertFromQueryTests = []struct {
 			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 		},
 		Query: parser.SelectQuery{
-			SelectClause: parser.SelectClause{
-				Fields: []parser.Expression{
-					parser.Field{Object: parser.NewInteger(3)},
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.Expression{
+						parser.Field{Object: parser.NewInteger(3)},
+					},
 				},
 			},
 		},
@@ -1664,9 +1669,11 @@ var viewInsertFromQueryTests = []struct {
 			parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 		},
 		Query: parser.SelectQuery{
-			SelectClause: parser.SelectClause{
-				Fields: []parser.Expression{
-					parser.Field{Object: parser.NewInteger(3)},
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.Expression{
+						parser.Field{Object: parser.NewInteger(3)},
+					},
 				},
 			},
 		},
@@ -1678,9 +1685,11 @@ var viewInsertFromQueryTests = []struct {
 			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 		},
 		Query: parser.SelectQuery{
-			SelectClause: parser.SelectClause{
-				Fields: []parser.Expression{
-					parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.Expression{
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
+					},
 				},
 			},
 		},
@@ -1760,6 +1769,357 @@ func TestView_Fix(t *testing.T) {
 	view.Fix()
 	if !reflect.DeepEqual(view, expect) {
 		t.Errorf("fix: view = %s, want %s", view, expect)
+	}
+}
+
+func TestView_Union(t *testing.T) {
+	view := &View{
+		Header: []HeaderField{
+			{Reference: "table1", Column: "column1", FromTable: true},
+			{Reference: "table1", Column: "column2", FromTable: true},
+		},
+		Records: Records{
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+		},
+	}
+
+	calcView := &View{
+		Header: []HeaderField{
+			{Reference: "table2", Column: "column3", FromTable: true},
+			{Reference: "table2", Column: "column4", FromTable: true},
+		},
+		Records: Records{
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("3"),
+				parser.NewString("str3"),
+			}),
+		},
+	}
+
+	expect := &View{
+		Header: []HeaderField{
+			{Reference: "table1", Column: "column1", FromTable: true},
+			{Reference: "table1", Column: "column2", FromTable: true},
+		},
+		Records: Records{
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("3"),
+				parser.NewString("str3"),
+			}),
+		},
+	}
+
+	view.Union(calcView, false)
+	if !reflect.DeepEqual(view, expect) {
+		t.Errorf("union: view = %s, want %s", view, expect)
+	}
+
+	view = &View{
+		Header: []HeaderField{
+			{Reference: "table1", Column: "column1", FromTable: true},
+			{Reference: "table1", Column: "column2", FromTable: true},
+		},
+		Records: Records{
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+		},
+	}
+
+	expect = &View{
+		Header: []HeaderField{
+			{Reference: "table1", Column: "column1", FromTable: true},
+			{Reference: "table1", Column: "column2", FromTable: true},
+		},
+		Records: Records{
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("3"),
+				parser.NewString("str3"),
+			}),
+		},
+	}
+
+	view.Union(calcView, true)
+	if !reflect.DeepEqual(view, expect) {
+		t.Errorf("union all: view = %s, want %s", view, expect)
+	}
+}
+
+func TestView_Except(t *testing.T) {
+	view := &View{
+		Header: []HeaderField{
+			{Reference: "table1", Column: "column1", FromTable: true},
+			{Reference: "table1", Column: "column2", FromTable: true},
+		},
+		Records: Records{
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+		},
+	}
+
+	calcView := &View{
+		Header: []HeaderField{
+			{Reference: "table2", Column: "column3", FromTable: true},
+			{Reference: "table2", Column: "column4", FromTable: true},
+		},
+		Records: Records{
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("3"),
+				parser.NewString("str3"),
+			}),
+		},
+	}
+
+	expect := &View{
+		Header: []HeaderField{
+			{Reference: "table1", Column: "column1", FromTable: true},
+			{Reference: "table1", Column: "column2", FromTable: true},
+		},
+		Records: Records{
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+		},
+	}
+
+	view.Except(calcView, false)
+	if !reflect.DeepEqual(view, expect) {
+		t.Errorf("except: view = %s, want %s", view, expect)
+	}
+
+	view = &View{
+		Header: []HeaderField{
+			{Reference: "table1", Column: "column1", FromTable: true},
+			{Reference: "table1", Column: "column2", FromTable: true},
+		},
+		Records: Records{
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+		},
+	}
+
+	expect = &View{
+		Header: []HeaderField{
+			{Reference: "table1", Column: "column1", FromTable: true},
+			{Reference: "table1", Column: "column2", FromTable: true},
+		},
+		Records: Records{
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+		},
+	}
+
+	view.Except(calcView, true)
+	if !reflect.DeepEqual(view, expect) {
+		t.Errorf("except all: view = %s, want %s", view, expect)
+	}
+}
+
+func TestView_Intersect(t *testing.T) {
+	view := &View{
+		Header: []HeaderField{
+			{Reference: "table1", Column: "column1", FromTable: true},
+			{Reference: "table1", Column: "column2", FromTable: true},
+		},
+		Records: Records{
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+		},
+	}
+
+	calcView := &View{
+		Header: []HeaderField{
+			{Reference: "table2", Column: "column3", FromTable: true},
+			{Reference: "table2", Column: "column4", FromTable: true},
+		},
+		Records: Records{
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("3"),
+				parser.NewString("str3"),
+			}),
+		},
+	}
+
+	expect := &View{
+		Header: []HeaderField{
+			{Reference: "table1", Column: "column1", FromTable: true},
+			{Reference: "table1", Column: "column2", FromTable: true},
+		},
+		Records: Records{
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+		},
+	}
+
+	view.Intersect(calcView, false)
+	if !reflect.DeepEqual(view, expect) {
+		t.Errorf("intersect: view = %s, want %s", view, expect)
+	}
+
+	view = &View{
+		Header: []HeaderField{
+			{Reference: "table1", Column: "column1", FromTable: true},
+			{Reference: "table1", Column: "column2", FromTable: true},
+		},
+		Records: Records{
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+		},
+	}
+
+	expect = &View{
+		Header: []HeaderField{
+			{Reference: "table1", Column: "column1", FromTable: true},
+			{Reference: "table1", Column: "column2", FromTable: true},
+		},
+		Records: Records{
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+			NewRecordWithoutId([]parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+		},
+	}
+
+	view.Intersect(calcView, true)
+	if !reflect.DeepEqual(view, expect) {
+		t.Errorf("intersect all: view = %s, want %s", view, expect)
 	}
 }
 

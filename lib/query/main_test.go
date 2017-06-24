@@ -40,6 +40,8 @@ func setup() {
 
 	copyfile(path.Join(TestDir, "table1.csv"), path.Join(TestDataDir, "table1.csv"))
 	copyfile(path.Join(TestDir, "table2.csv"), path.Join(TestDataDir, "table2.csv"))
+	copyfile(path.Join(TestDir, "table4.csv"), path.Join(TestDataDir, "table4.csv"))
+	copyfile(path.Join(TestDir, "group_table.csv"), path.Join(TestDataDir, "group_table.csv"))
 	copyfile(path.Join(TestDir, "insert_query.csv"), path.Join(TestDataDir, "table1.csv"))
 	copyfile(path.Join(TestDir, "update_query.csv"), path.Join(TestDataDir, "table1.csv"))
 	copyfile(path.Join(TestDir, "delete_query.csv"), path.Join(TestDataDir, "table1.csv"))

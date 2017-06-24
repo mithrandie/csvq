@@ -398,9 +398,14 @@ var likeTests = []struct {
 		Result:  ternary.TRUE,
 	},
 	{
-		LHS:     parser.NewString("abcde\\"),
+		LHS:     parser.NewString("abcdef"),
 		Pattern: parser.NewString("abcde\\"),
-		Result:  ternary.TRUE,
+		Result:  ternary.FALSE,
+	},
+	{
+		LHS:     parser.NewString("abcde"),
+		Pattern: parser.NewString("abc"),
+		Result:  ternary.FALSE,
 	},
 }
 

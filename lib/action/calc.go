@@ -19,15 +19,15 @@ func Calc(expr string) error {
 	if err != nil {
 		return err
 	}
-	selectQuery, _ := program[0].(parser.SelectQuery)
+	selectEntity, _ := program[0].(parser.SelectQuery).SelectEntity.(parser.SelectEntity)
 
 	view := query.NewView()
-	err = view.Load(selectQuery.FromClause.(parser.FromClause), nil)
+	err = view.Load(selectEntity.FromClause.(parser.FromClause), nil)
 	if err != nil {
 		return err
 	}
 
-	clause := selectQuery.SelectClause.(parser.SelectClause)
+	clause := selectEntity.SelectClause.(parser.SelectClause)
 
 	var filter query.Filter = []query.FilterRecord{{View: view, RecordIndex: 0}}
 	values := make([]string, len(clause.Fields))

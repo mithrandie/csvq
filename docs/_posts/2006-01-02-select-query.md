@@ -9,22 +9,43 @@ category: reference
 Select query is used to retrieve data from csv files.
 
 ```
-select_clause
-  [from_clause]
-  [where_clause]
-  [group_by_clause]
-  [having_clause]
-  [order_by_clause]
-  [limit_clause]
+select_query
+  : select_entity
+      [order_by_clause]
+      [limit_clause]
+
+select_entity
+  : select_clause
+      [from_clause]
+      [where_clause]
+      [group_by_clause]
+      [having_clause]
+  | select_entity set_operator [ALL] select_entity 
 ```
 
-* [Select Clause](#select_clause)
-* [From Clause](#from_clause)
-* [Where Clause](#where_clause)
-* [Group By Clause](#group_by_clause)
-* [Having Clause](#having_clause)
-* [Order By Clause](#order_by_clause)
-* [Limit Clause](#limit_clause)
+_select_clause_
+: [Select Clause](#select_clause)
+
+_from_clause_
+: [From Clause](#from_clause)
+
+_where_clause_
+: [Where Clause](#where_clause)
+
+_group_by_clause_
+: [Group By Clause](#group_by_clause)
+
+_having_clause_
+: [Having Clause](#having_clause)
+
+_order_by_clause_
+: [Order By Clause](#order_by_clause)
+
+_limit_clause_
+: [Limit Clause](#limit_clause)
+
+_set_operator_
+: [Set Operators]({{ '/reference/set-operators.html' | relative_url }})
 
 
 ## Select Clause

@@ -33,6 +33,7 @@ package parser
 %type<statement>   in_loop_flow_control_statement
 %type<statement>   command_statement
 %type<expression>  select_query
+%type<expression>  select_entity
 %type<expression>  select_clause
 %type<expression>  from_clause
 %type<expression>  where_clause
@@ -106,6 +107,7 @@ package parser
 %type<token>       join_inner
 %type<token>       join_outer
 %type<token>       join_direction
+%type<token>       all
 %type<token>       comparison_operator
 %type<token>       statement_terminal
 
@@ -113,7 +115,8 @@ package parser
 %token<token> SELECT FROM UPDATE SET DELETE WHERE INSERT INTO VALUES AS DUAL STDIN
 %token<token> CREATE ADD DROP ALTER TABLE FIRST LAST AFTER BEFORE DEFAULT RENAME TO
 %token<token> ORDER GROUP HAVING BY ASC DESC LIMIT
-%token<token> JOIN INNER OUTER LEFT RIGHT FULL CROSS ON USING NATURAL UNION
+%token<token> JOIN INNER OUTER LEFT RIGHT FULL CROSS ON USING NATURAL
+%token<token> UNION INTERSECT EXCEPT
 %token<token> ALL ANY EXISTS IN
 %token<token> AND OR NOT BETWEEN LIKE IS NULL
 %token<token> DISTINCT WITH
@@ -126,6 +129,8 @@ package parser
 %token<token> VAR
 %token<token> COMPARISON_OP STRING_OP SUBSTITUTION_OP
 
+%left UNION EXCEPT
+%left INTERSECT
 %left OR
 %left AND
 %right NOT
@@ -317,16 +322,51 @@ command_statement
     }
 
 select_query
-    : select_clause from_clause where_clause group_by_clause having_clause order_by_clause limit_clause
+    : select_entity order_by_clause limit_clause
     {
         $$ = SelectQuery{
+            SelectEntity:  $1,
+            OrderByClause: $2,
+            LimitClause:   $3,
+        }
+    }
+
+select_entity
+    : select_clause from_clause where_clause group_by_clause having_clause
+    {
+        $$ = SelectEntity{
             SelectClause:  $1,
             FromClause:    $2,
             WhereClause:   $3,
             GroupByClause: $4,
             HavingClause:  $5,
-            OrderByClause: $6,
-            LimitClause:   $7,
+        }
+    }
+    | select_entity UNION all select_entity
+    {
+        $$ = SelectSet{
+            LHS:      $1,
+            Operator: $2,
+            All:      $3,
+            RHS:      $4,
+        }
+    }
+    | select_entity INTERSECT all select_entity
+    {
+        $$ = SelectSet{
+            LHS:      $1,
+            Operator: $2,
+            All:      $3,
+            RHS:      $4,
+        }
+    }
+    | select_entity EXCEPT all select_entity
+    {
+        $$ = SelectSet{
+            LHS:      $1,
+            Operator: $2,
+            All:      $3,
+            RHS:      $4,
         }
     }
 
@@ -1189,6 +1229,16 @@ join_direction
         $$ = $1
     }
     | FULL
+    {
+        $$ = $1
+    }
+
+all
+    :
+    {
+        $$ = Token{}
+    }
+    | ALL
     {
         $$ = $1
     }

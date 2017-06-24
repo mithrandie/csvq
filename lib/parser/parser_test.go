@@ -14,11 +14,40 @@ var parseTests = []struct {
 	{
 		Input: "select foo; select bar;",
 		Output: []Statement{
-			SelectQuery{
+			SelectQuery{SelectEntity: SelectEntity{
 				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: FieldReference{Column: Identifier{Literal: "foo"}}}}},
-			},
-			SelectQuery{
+			}},
+			SelectQuery{SelectEntity: SelectEntity{
 				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: FieldReference{Column: Identifier{Literal: "bar"}}}}},
+			}},
+		},
+	},
+	{
+		Input: "select 1 union all select 2 intersect select 3 except select 4",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectSet{
+					LHS: SelectSet{
+						LHS: SelectEntity{
+							SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
+						},
+						Operator: Token{Token: UNION, Literal: "union"},
+						All:      Token{Token: ALL, Literal: "all"},
+						RHS: SelectSet{
+							LHS: SelectEntity{
+								SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewInteger(2)}}},
+							},
+							Operator: Token{Token: INTERSECT, Literal: "intersect"},
+							RHS: SelectEntity{
+								SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewInteger(3)}}},
+							},
+						},
+					},
+					Operator: Token{Token: EXCEPT, Literal: "except"},
+					RHS: SelectEntity{
+						SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewInteger(4)}}},
+					},
+				},
 			},
 		},
 	},
@@ -26,19 +55,21 @@ var parseTests = []struct {
 		Input: "select 1 as a from dual",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{
-							Object: NewInteger(1),
-							As:     Token{Token: AS, Literal: "as"},
-							Alias:  Identifier{Literal: "a"},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{
+								Object: NewInteger(1),
+								As:     Token{Token: AS, Literal: "as"},
+								Alias:  Identifier{Literal: "a"},
+							},
 						},
 					},
+					FromClause: FromClause{From: "from", Tables: []Expression{
+						Table{Object: Dual{Dual: "dual"}},
+					}},
 				},
-				FromClause: FromClause{From: "from", Tables: []Expression{
-					Table{Object: Dual{Dual: "dual"}},
-				}},
 			},
 		},
 	},
@@ -46,17 +77,19 @@ var parseTests = []struct {
 		Input: "select c1 from stdin",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{
-							Object: FieldReference{Column: Identifier{Literal: "c1"}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{
+								Object: FieldReference{Column: Identifier{Literal: "c1"}},
+							},
 						},
 					},
+					FromClause: FromClause{From: "from", Tables: []Expression{
+						Table{Object: Stdin{Stdin: "stdin"}},
+					}},
 				},
-				FromClause: FromClause{From: "from", Tables: []Expression{
-					Table{Object: Stdin{Stdin: "stdin"}},
-				}},
 			},
 		},
 	},
@@ -64,18 +97,22 @@ var parseTests = []struct {
 		Input: "select 1 from table1, (select 2 from dual)",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
-				FromClause: FromClause{
-					From: "from",
-					Tables: []Expression{
-						Table{
-							Object: Identifier{Literal: "table1"},
-						},
-						Table{
-							Object: Subquery{
-								Query: SelectQuery{
-									SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("2")}}},
-									FromClause:   FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+					FromClause: FromClause{
+						From: "from",
+						Tables: []Expression{
+							Table{
+								Object: Identifier{Literal: "table1"},
+							},
+							Table{
+								Object: Subquery{
+									Query: SelectQuery{
+										SelectEntity: SelectEntity{
+											SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("2")}}},
+											FromClause:   FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
+										},
+									},
 								},
 							},
 						},
@@ -88,22 +125,26 @@ var parseTests = []struct {
 		Input: "select 1 from table1 alias, (select 2 from dual) alias2",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
-				FromClause: FromClause{
-					From: "from",
-					Tables: []Expression{
-						Table{
-							Object: Identifier{Literal: "table1"},
-							Alias:  Identifier{Literal: "alias"},
-						},
-						Table{
-							Object: Subquery{
-								Query: SelectQuery{
-									SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("2")}}},
-									FromClause:   FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
-								},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+					FromClause: FromClause{
+						From: "from",
+						Tables: []Expression{
+							Table{
+								Object: Identifier{Literal: "table1"},
+								Alias:  Identifier{Literal: "alias"},
 							},
-							Alias: Identifier{Literal: "alias2"},
+							Table{
+								Object: Subquery{
+									Query: SelectQuery{
+										SelectEntity: SelectEntity{
+											SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("2")}}},
+											FromClause:   FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
+										},
+									},
+								},
+								Alias: Identifier{Literal: "alias2"},
+							},
 						},
 					},
 				},
@@ -114,24 +155,28 @@ var parseTests = []struct {
 		Input: "select 1 from table1 as alias, (select 2 from dual) as alias2",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
-				FromClause: FromClause{
-					From: "from",
-					Tables: []Expression{
-						Table{
-							Object: Identifier{Literal: "table1"},
-							As:     Token{Token: AS, Literal: "as"},
-							Alias:  Identifier{Literal: "alias"},
-						},
-						Table{
-							Object: Subquery{
-								Query: SelectQuery{
-									SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("2")}}},
-									FromClause:   FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
-								},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+					FromClause: FromClause{
+						From: "from",
+						Tables: []Expression{
+							Table{
+								Object: Identifier{Literal: "table1"},
+								As:     Token{Token: AS, Literal: "as"},
+								Alias:  Identifier{Literal: "alias"},
 							},
-							As:    Token{Token: AS, Literal: "as"},
-							Alias: Identifier{Literal: "alias2"},
+							Table{
+								Object: Subquery{
+									Query: SelectQuery{
+										SelectEntity: SelectEntity{
+											SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("2")}}},
+											FromClause:   FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
+										},
+									},
+								},
+								As:    Token{Token: AS, Literal: "as"},
+								Alias: Identifier{Literal: "alias2"},
+							},
 						},
 					},
 				},
@@ -148,29 +193,31 @@ var parseTests = []struct {
 			" limit 10 ",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
-				FromClause:   FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
-				WhereClause: WhereClause{
-					Where: "where",
-					Filter: Comparison{
-						LHS:      NewIntegerFromString("1"),
-						Operator: Token{Token: COMPARISON_OP, Literal: "="},
-						RHS:      NewIntegerFromString("1"),
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+					FromClause:   FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
+					WhereClause: WhereClause{
+						Where: "where",
+						Filter: Comparison{
+							LHS:      NewIntegerFromString("1"),
+							Operator: Token{Token: COMPARISON_OP, Literal: "="},
+							RHS:      NewIntegerFromString("1"),
+						},
 					},
-				},
-				GroupByClause: GroupByClause{
-					GroupBy: "group by",
-					Items: []Expression{
-						FieldReference{Column: Identifier{Literal: "column1"}},
-						FieldReference{Column: Identifier{Literal: "column2"}},
+					GroupByClause: GroupByClause{
+						GroupBy: "group by",
+						Items: []Expression{
+							FieldReference{Column: Identifier{Literal: "column1"}},
+							FieldReference{Column: Identifier{Literal: "column2"}},
+						},
 					},
-				},
-				HavingClause: HavingClause{
-					Having: "having",
-					Filter: Comparison{
-						LHS:      NewIntegerFromString("1"),
-						Operator: Token{Token: COMPARISON_OP, Literal: ">"},
-						RHS:      NewIntegerFromString("1"),
+					HavingClause: HavingClause{
+						Having: "having",
+						Filter: Comparison{
+							LHS:      NewIntegerFromString("1"),
+							Operator: Token{Token: COMPARISON_OP, Literal: ">"},
+							RHS:      NewIntegerFromString("1"),
+						},
 					},
 				},
 				OrderByClause: OrderByClause{
@@ -192,14 +239,16 @@ var parseTests = []struct {
 		Input: "select distinct * from dual",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select:   "select",
-					Distinct: Token{Token: DISTINCT, Literal: "distinct"},
-					Fields: []Expression{
-						Field{Object: AllColumns{}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select:   "select",
+						Distinct: Token{Token: DISTINCT, Literal: "distinct"},
+						Fields: []Expression{
+							Field{Object: AllColumns{}},
+						},
 					},
+					FromClause: FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
 				},
-				FromClause: FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
 			},
 		},
 	},
@@ -207,22 +256,24 @@ var parseTests = []struct {
 		Input: "select ident, 'foo', 1, -1, 1.234, -1.234, true, '2010-01-01 12:00:00', null, ('bar') from dual",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: FieldReference{Column: Identifier{Literal: "ident"}}},
-						Field{Object: NewString("foo")},
-						Field{Object: NewIntegerFromString("1")},
-						Field{Object: NewIntegerFromString("-1")},
-						Field{Object: NewFloatFromString("1.234")},
-						Field{Object: NewFloatFromString("-1.234")},
-						Field{Object: NewTernaryFromString("true")},
-						Field{Object: NewDatetimeFromString("2010-01-01 12:00:00")},
-						Field{Object: NewNullFromString("null")},
-						Field{Object: Parentheses{Expr: NewString("bar")}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: FieldReference{Column: Identifier{Literal: "ident"}}},
+							Field{Object: NewString("foo")},
+							Field{Object: NewIntegerFromString("1")},
+							Field{Object: NewIntegerFromString("-1")},
+							Field{Object: NewFloatFromString("1.234")},
+							Field{Object: NewFloatFromString("-1.234")},
+							Field{Object: NewTernaryFromString("true")},
+							Field{Object: NewDatetimeFromString("2010-01-01 12:00:00")},
+							Field{Object: NewNullFromString("null")},
+							Field{Object: Parentheses{Expr: NewString("bar")}},
+						},
 					},
+					FromClause: FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
 				},
-				FromClause: FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
 			},
 		},
 	},
@@ -230,14 +281,16 @@ var parseTests = []struct {
 		Input: "select ident || 'foo' || 'bar'",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Concat{Items: []Expression{
-							FieldReference{Column: Identifier{Literal: "ident"}},
-							NewString("foo"),
-							NewString("bar"),
-						}}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Concat{Items: []Expression{
+								FieldReference{Column: Identifier{Literal: "ident"}},
+								NewString("foo"),
+								NewString("bar"),
+							}}},
+						},
 					},
 				},
 			},
@@ -247,14 +300,16 @@ var parseTests = []struct {
 		Input: "select column1 = 1",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Comparison{
-							LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
-							Operator: Token{Token: COMPARISON_OP, Literal: "="},
-							RHS:      NewInteger(1),
-						}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Comparison{
+								LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
+								Operator: Token{Token: COMPARISON_OP, Literal: "="},
+								RHS:      NewInteger(1),
+							}},
+						},
 					},
 				},
 			},
@@ -264,14 +319,16 @@ var parseTests = []struct {
 		Input: "select column1 < 1",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Comparison{
-							LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
-							Operator: Token{Token: COMPARISON_OP, Literal: "<"},
-							RHS:      NewInteger(1),
-						}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Comparison{
+								LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
+								Operator: Token{Token: COMPARISON_OP, Literal: "<"},
+								RHS:      NewInteger(1),
+							}},
+						},
 					},
 				},
 			},
@@ -281,15 +338,17 @@ var parseTests = []struct {
 		Input: "select column1 is not null",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Is{
-							Is:       "is",
-							LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
-							RHS:      NewNullFromString("null"),
-							Negation: Token{Token: NOT, Literal: "not"},
-						}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Is{
+								Is:       "is",
+								LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
+								RHS:      NewNullFromString("null"),
+								Negation: Token{Token: NOT, Literal: "not"},
+							}},
+						},
 					},
 				},
 			},
@@ -299,14 +358,16 @@ var parseTests = []struct {
 		Input: "select column1 is true",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Is{
-							Is:  "is",
-							LHS: FieldReference{Column: Identifier{Literal: "column1"}},
-							RHS: NewTernaryFromString("true"),
-						}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Is{
+								Is:  "is",
+								LHS: FieldReference{Column: Identifier{Literal: "column1"}},
+								RHS: NewTernaryFromString("true"),
+							}},
+						},
 					},
 				},
 			},
@@ -316,17 +377,19 @@ var parseTests = []struct {
 		Input: "select column1 not between -10 and 10",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Between{
-							Between:  "between",
-							And:      "and",
-							LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
-							Low:      NewIntegerFromString("-10"),
-							High:     NewIntegerFromString("10"),
-							Negation: Token{Token: NOT, Literal: "not"},
-						}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Between{
+								Between:  "between",
+								And:      "and",
+								LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
+								Low:      NewIntegerFromString("-10"),
+								High:     NewIntegerFromString("10"),
+								Negation: Token{Token: NOT, Literal: "not"},
+							}},
+						},
 					},
 				},
 			},
@@ -336,19 +399,21 @@ var parseTests = []struct {
 		Input: "select column1 not in (1, 2, 3)",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: In{
-							In:  "in",
-							LHS: FieldReference{Column: Identifier{Literal: "column1"}},
-							List: []Expression{
-								NewIntegerFromString("1"),
-								NewIntegerFromString("2"),
-								NewIntegerFromString("3"),
-							},
-							Negation: Token{Token: NOT, Literal: "not"},
-						}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: In{
+								In:  "in",
+								LHS: FieldReference{Column: Identifier{Literal: "column1"}},
+								List: []Expression{
+									NewIntegerFromString("1"),
+									NewIntegerFromString("2"),
+									NewIntegerFromString("3"),
+								},
+								Negation: Token{Token: NOT, Literal: "not"},
+							}},
+						},
 					},
 				},
 			},
@@ -358,18 +423,22 @@ var parseTests = []struct {
 		Input: "select column1 in (select 1)",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: In{
-							In:  "in",
-							LHS: FieldReference{Column: Identifier{Literal: "column1"}},
-							Query: Subquery{
-								Query: SelectQuery{
-									SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: In{
+								In:  "in",
+								LHS: FieldReference{Column: Identifier{Literal: "column1"}},
+								Query: Subquery{
+									Query: SelectQuery{
+										SelectEntity: SelectEntity{
+											SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+										},
+									},
 								},
-							},
-						}},
+							}},
+						},
 					},
 				},
 			},
@@ -379,15 +448,17 @@ var parseTests = []struct {
 		Input: "select column1 not like 'pattern'",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Like{
-							Like:     "like",
-							LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
-							Pattern:  String{literal: "pattern"},
-							Negation: Token{Token: NOT, Literal: "not"},
-						}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Like{
+								Like:     "like",
+								LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
+								Pattern:  String{literal: "pattern"},
+								Negation: Token{Token: NOT, Literal: "not"},
+							}},
+						},
 					},
 				},
 			},
@@ -397,19 +468,23 @@ var parseTests = []struct {
 		Input: "select column1 = any (select 1)",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Any{
-							Any:      "any",
-							LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
-							Operator: Token{Token: COMPARISON_OP, Literal: "="},
-							Query: Subquery{
-								Query: SelectQuery{
-									SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Any{
+								Any:      "any",
+								LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
+								Operator: Token{Token: COMPARISON_OP, Literal: "="},
+								Query: Subquery{
+									Query: SelectQuery{
+										SelectEntity: SelectEntity{
+											SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+										},
+									},
 								},
-							},
-						}},
+							}},
+						},
 					},
 				},
 			},
@@ -419,19 +494,23 @@ var parseTests = []struct {
 		Input: "select column1 = all (select 1)",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: All{
-							All:      "all",
-							LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
-							Operator: Token{Token: COMPARISON_OP, Literal: "="},
-							Query: Subquery{
-								Query: SelectQuery{
-									SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: All{
+								All:      "all",
+								LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
+								Operator: Token{Token: COMPARISON_OP, Literal: "="},
+								Query: Subquery{
+									Query: SelectQuery{
+										SelectEntity: SelectEntity{
+											SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+										},
+									},
 								},
-							},
-						}},
+							}},
+						},
 					},
 				},
 			},
@@ -441,17 +520,21 @@ var parseTests = []struct {
 		Input: "select exists (select 1)",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Exists{
-							Exists: "exists",
-							Query: Subquery{
-								Query: SelectQuery{
-									SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Exists{
+								Exists: "exists",
+								Query: Subquery{
+									Query: SelectQuery{
+										SelectEntity: SelectEntity{
+											SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+										},
+									},
 								},
-							},
-						}},
+							}},
+						},
 					},
 				},
 			},
@@ -461,14 +544,16 @@ var parseTests = []struct {
 		Input: "select column1 + 1",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Arithmetic{
-							LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
-							Operator: int('+'),
-							RHS:      NewIntegerFromString("1"),
-						}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Arithmetic{
+								LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
+								Operator: int('+'),
+								RHS:      NewIntegerFromString("1"),
+							}},
+						},
 					},
 				},
 			},
@@ -478,14 +563,16 @@ var parseTests = []struct {
 		Input: "select column1 - 1",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Arithmetic{
-							LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
-							Operator: int('-'),
-							RHS:      NewIntegerFromString("1"),
-						}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Arithmetic{
+								LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
+								Operator: int('-'),
+								RHS:      NewIntegerFromString("1"),
+							}},
+						},
 					},
 				},
 			},
@@ -495,14 +582,16 @@ var parseTests = []struct {
 		Input: "select column1 * 1",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Arithmetic{
-							LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
-							Operator: int('*'),
-							RHS:      NewIntegerFromString("1"),
-						}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Arithmetic{
+								LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
+								Operator: int('*'),
+								RHS:      NewIntegerFromString("1"),
+							}},
+						},
 					},
 				},
 			},
@@ -512,14 +601,16 @@ var parseTests = []struct {
 		Input: "select column1 / 1",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Arithmetic{
-							LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
-							Operator: int('/'),
-							RHS:      NewIntegerFromString("1"),
-						}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Arithmetic{
+								LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
+								Operator: int('/'),
+								RHS:      NewIntegerFromString("1"),
+							}},
+						},
 					},
 				},
 			},
@@ -529,14 +620,16 @@ var parseTests = []struct {
 		Input: "select column1 % 1",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Arithmetic{
-							LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
-							Operator: int('%'),
-							RHS:      NewIntegerFromString("1"),
-						}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Arithmetic{
+								LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
+								Operator: int('%'),
+								RHS:      NewIntegerFromString("1"),
+							}},
+						},
 					},
 				},
 			},
@@ -546,14 +639,16 @@ var parseTests = []struct {
 		Input: "select true and false",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Logic{
-							LHS:      NewTernaryFromString("true"),
-							Operator: Token{Token: AND, Literal: "and"},
-							RHS:      NewTernaryFromString("false"),
-						}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Logic{
+								LHS:      NewTernaryFromString("true"),
+								Operator: Token{Token: AND, Literal: "and"},
+								RHS:      NewTernaryFromString("false"),
+							}},
+						},
 					},
 				},
 			},
@@ -563,14 +658,16 @@ var parseTests = []struct {
 		Input: "select true or false",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Logic{
-							LHS:      NewTernaryFromString("true"),
-							Operator: Token{Token: OR, Literal: "or"},
-							RHS:      NewTernaryFromString("false"),
-						}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Logic{
+								LHS:      NewTernaryFromString("true"),
+								Operator: Token{Token: OR, Literal: "or"},
+								RHS:      NewTernaryFromString("false"),
+							}},
+						},
 					},
 				},
 			},
@@ -580,13 +677,15 @@ var parseTests = []struct {
 		Input: "select not false",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Logic{
-							Operator: Token{Token: NOT, Literal: "not"},
-							RHS:      NewTernaryFromString("false"),
-						}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Logic{
+								Operator: Token{Token: NOT, Literal: "not"},
+								RHS:      NewTernaryFromString("false"),
+							}},
+						},
 					},
 				},
 			},
@@ -596,20 +695,22 @@ var parseTests = []struct {
 		Input: "select true or (false and false)",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Logic{
-							LHS:      NewTernaryFromString("true"),
-							Operator: Token{Token: OR, Literal: "or"},
-							RHS: Parentheses{
-								Expr: Logic{
-									LHS:      NewTernaryFromString("false"),
-									Operator: Token{Token: AND, Literal: "and"},
-									RHS:      NewTernaryFromString("false"),
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Logic{
+								LHS:      NewTernaryFromString("true"),
+								Operator: Token{Token: OR, Literal: "or"},
+								RHS: Parentheses{
+									Expr: Logic{
+										LHS:      NewTernaryFromString("false"),
+										Operator: Token{Token: AND, Literal: "and"},
+										RHS:      NewTernaryFromString("false"),
+									},
 								},
-							},
-						}},
+							}},
+						},
 					},
 				},
 			},
@@ -619,25 +720,27 @@ var parseTests = []struct {
 		Input: "select true and true or false and not false",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Logic{
-							LHS: Logic{
-								LHS:      NewTernaryFromString("true"),
-								Operator: Token{Token: AND, Literal: "and"},
-								RHS:      NewTernaryFromString("true"),
-							},
-							Operator: Token{Token: OR, Literal: "or"},
-							RHS: Logic{
-								LHS:      NewTernaryFromString("false"),
-								Operator: Token{Token: AND, Literal: "and"},
-								RHS: Logic{
-									Operator: Token{Token: NOT, Literal: "not"},
-									RHS:      NewTernaryFromString("false"),
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Logic{
+								LHS: Logic{
+									LHS:      NewTernaryFromString("true"),
+									Operator: Token{Token: AND, Literal: "and"},
+									RHS:      NewTernaryFromString("true"),
 								},
-							},
-						}},
+								Operator: Token{Token: OR, Literal: "or"},
+								RHS: Logic{
+									LHS:      NewTernaryFromString("false"),
+									Operator: Token{Token: AND, Literal: "and"},
+									RHS: Logic{
+										Operator: Token{Token: NOT, Literal: "not"},
+										RHS:      NewTernaryFromString("false"),
+									},
+								},
+							}},
+						},
 					},
 				},
 			},
@@ -647,10 +750,12 @@ var parseTests = []struct {
 		Input: "select @var",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Variable{Name: "@var"}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Variable{Name: "@var"}},
+						},
 					},
 				},
 			},
@@ -660,13 +765,15 @@ var parseTests = []struct {
 		Input: "select @var := 1",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: VariableSubstitution{
-							Variable: Variable{Name: "@var"},
-							Value:    NewInteger(1),
-						}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: VariableSubstitution{
+								Variable: Variable{Name: "@var"},
+								Value:    NewInteger(1),
+							}},
+						},
 					},
 				},
 			},
@@ -676,27 +783,29 @@ var parseTests = []struct {
 		Input: "select case when true then 'A' when false then 'B' end",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Case{
-							Case: "case",
-							End:  "end",
-							When: []Expression{
-								CaseWhen{
-									When:      "when",
-									Then:      "then",
-									Condition: Ternary{literal: "true", value: ternary.TRUE},
-									Result:    NewString("A"),
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Case{
+								Case: "case",
+								End:  "end",
+								When: []Expression{
+									CaseWhen{
+										When:      "when",
+										Then:      "then",
+										Condition: Ternary{literal: "true", value: ternary.TRUE},
+										Result:    NewString("A"),
+									},
+									CaseWhen{
+										When:      "when",
+										Then:      "then",
+										Condition: Ternary{literal: "false", value: ternary.FALSE},
+										Result:    NewString("B"),
+									},
 								},
-								CaseWhen{
-									When:      "when",
-									Then:      "then",
-									Condition: Ternary{literal: "false", value: ternary.FALSE},
-									Result:    NewString("B"),
-								},
-							},
-						}},
+							}},
+						},
 					},
 				},
 			},
@@ -706,32 +815,34 @@ var parseTests = []struct {
 		Input: "select case column1 when 1 then 'A' when 2 then 'B' else 'C' end",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Case{
-							Case:  "case",
-							End:   "end",
-							Value: FieldReference{Column: Identifier{Literal: "column1"}},
-							When: []Expression{
-								CaseWhen{
-									When:      "when",
-									Then:      "then",
-									Condition: NewIntegerFromString("1"),
-									Result:    NewString("A"),
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Case{
+								Case:  "case",
+								End:   "end",
+								Value: FieldReference{Column: Identifier{Literal: "column1"}},
+								When: []Expression{
+									CaseWhen{
+										When:      "when",
+										Then:      "then",
+										Condition: NewIntegerFromString("1"),
+										Result:    NewString("A"),
+									},
+									CaseWhen{
+										When:      "when",
+										Then:      "then",
+										Condition: NewIntegerFromString("2"),
+										Result:    NewString("B"),
+									},
 								},
-								CaseWhen{
-									When:      "when",
-									Then:      "then",
-									Condition: NewIntegerFromString("2"),
-									Result:    NewString("B"),
+								Else: CaseElse{
+									Else:   "else",
+									Result: NewString("C"),
 								},
-							},
-							Else: CaseElse{
-								Else:   "else",
-								Result: NewString("C"),
-							},
-						}},
+							}},
+						},
 					},
 				},
 			},
@@ -741,13 +852,15 @@ var parseTests = []struct {
 		Input: "select count()",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Function{
-							Name:   "count",
-							Option: Option{},
-						}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Function{
+								Name:   "count",
+								Option: Option{},
+							}},
+						},
 					},
 				},
 			},
@@ -757,16 +870,18 @@ var parseTests = []struct {
 		Input: "select count(distinct *)",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Function{
-							Name: "count",
-							Option: Option{
-								Distinct: Token{Token: DISTINCT, Literal: "distinct"},
-								Args:     []Expression{AllColumns{}},
-							},
-						}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Function{
+								Name: "count",
+								Option: Option{
+									Distinct: Token{Token: DISTINCT, Literal: "distinct"},
+									Args:     []Expression{AllColumns{}},
+								},
+							}},
+						},
 					},
 				},
 			},
@@ -776,18 +891,20 @@ var parseTests = []struct {
 		Input: "select count(column1, column2)",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: Function{
-							Name: "count",
-							Option: Option{
-								Args: []Expression{
-									FieldReference{Column: Identifier{Literal: "column1"}},
-									FieldReference{Column: Identifier{Literal: "column2"}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Function{
+								Name: "count",
+								Option: Option{
+									Args: []Expression{
+										FieldReference{Column: Identifier{Literal: "column1"}},
+										FieldReference{Column: Identifier{Literal: "column2"}},
+									},
 								},
-							},
-						}},
+							}},
+						},
 					},
 				},
 			},
@@ -797,19 +914,21 @@ var parseTests = []struct {
 		Input: "select group_concat(column1 order by column1)",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: GroupConcat{
-							GroupConcat: "group_concat",
-							Option:      Option{Args: []Expression{FieldReference{Column: Identifier{Literal: "column1"}}}},
-							OrderBy: OrderByClause{
-								OrderBy: "order by",
-								Items: []Expression{
-									OrderItem{Item: FieldReference{Column: Identifier{Literal: "column1"}}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: GroupConcat{
+								GroupConcat: "group_concat",
+								Option:      Option{Args: []Expression{FieldReference{Column: Identifier{Literal: "column1"}}}},
+								OrderBy: OrderByClause{
+									OrderBy: "order by",
+									Items: []Expression{
+										OrderItem{Item: FieldReference{Column: Identifier{Literal: "column1"}}},
+									},
 								},
-							},
-						}},
+							}},
+						},
 					},
 				},
 			},
@@ -819,15 +938,17 @@ var parseTests = []struct {
 		Input: "select group_concat(column1 separator ',')",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						Field{Object: GroupConcat{
-							GroupConcat:  "group_concat",
-							Option:       Option{Args: []Expression{FieldReference{Column: Identifier{Literal: "column1"}}}},
-							SeparatorLit: "separator",
-							Separator:    ",",
-						}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: GroupConcat{
+								GroupConcat:  "group_concat",
+								Option:       Option{Args: []Expression{FieldReference{Column: Identifier{Literal: "column1"}}}},
+								SeparatorLit: "separator",
+								Separator:    ",",
+							}},
+						},
 					},
 				},
 			},
@@ -837,16 +958,18 @@ var parseTests = []struct {
 		Input: "select 1 from table1 cross join table2",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
-				FromClause: FromClause{
-					From: "from",
-					Tables: []Expression{
-						Table{
-							Object: Join{
-								Join:      "join",
-								Table:     Table{Object: Identifier{Literal: "table1"}},
-								JoinTable: Table{Object: Identifier{Literal: "table2"}},
-								JoinType:  Token{Token: CROSS, Literal: "cross"},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+					FromClause: FromClause{
+						From: "from",
+						Tables: []Expression{
+							Table{
+								Object: Join{
+									Join:      "join",
+									Table:     Table{Object: Identifier{Literal: "table1"}},
+									JoinTable: Table{Object: Identifier{Literal: "table2"}},
+									JoinType:  Token{Token: CROSS, Literal: "cross"},
+								},
 							},
 						},
 					},
@@ -858,16 +981,18 @@ var parseTests = []struct {
 		Input: "select 1 from table1 inner join table2",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
-				FromClause: FromClause{
-					From: "from",
-					Tables: []Expression{
-						Table{
-							Object: Join{
-								Join:      "join",
-								Table:     Table{Object: Identifier{Literal: "table1"}},
-								JoinTable: Table{Object: Identifier{Literal: "table2"}},
-								JoinType:  Token{Token: INNER, Literal: "inner"},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+					FromClause: FromClause{
+						From: "from",
+						Tables: []Expression{
+							Table{
+								Object: Join{
+									Join:      "join",
+									Table:     Table{Object: Identifier{Literal: "table1"}},
+									JoinTable: Table{Object: Identifier{Literal: "table2"}},
+									JoinType:  Token{Token: INNER, Literal: "inner"},
+								},
 							},
 						},
 					},
@@ -879,21 +1004,23 @@ var parseTests = []struct {
 		Input: "select 1 from table1 join table2 on table1.id = table2.id",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
-				FromClause: FromClause{
-					From: "from",
-					Tables: []Expression{
-						Table{
-							Object: Join{
-								Join:      "join",
-								Table:     Table{Object: Identifier{Literal: "table1"}},
-								JoinTable: Table{Object: Identifier{Literal: "table2"}},
-								Condition: JoinCondition{
-									Literal: "on",
-									On: Comparison{
-										LHS:      FieldReference{View: Identifier{Literal: "table1"}, Column: Identifier{Literal: "id"}},
-										Operator: Token{Token: COMPARISON_OP, Literal: "="},
-										RHS:      FieldReference{View: Identifier{Literal: "table2"}, Column: Identifier{Literal: "id"}},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+					FromClause: FromClause{
+						From: "from",
+						Tables: []Expression{
+							Table{
+								Object: Join{
+									Join:      "join",
+									Table:     Table{Object: Identifier{Literal: "table1"}},
+									JoinTable: Table{Object: Identifier{Literal: "table2"}},
+									Condition: JoinCondition{
+										Literal: "on",
+										On: Comparison{
+											LHS:      FieldReference{View: Identifier{Literal: "table1"}, Column: Identifier{Literal: "id"}},
+											Operator: Token{Token: COMPARISON_OP, Literal: "="},
+											RHS:      FieldReference{View: Identifier{Literal: "table2"}, Column: Identifier{Literal: "id"}},
+										},
 									},
 								},
 							},
@@ -907,16 +1034,18 @@ var parseTests = []struct {
 		Input: "select 1 from table1 natural join table2",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
-				FromClause: FromClause{
-					From: "from",
-					Tables: []Expression{
-						Table{
-							Object: Join{
-								Join:      "join",
-								Table:     Table{Object: Identifier{Literal: "table1"}},
-								JoinTable: Table{Object: Identifier{Literal: "table2"}},
-								Natural:   Token{Token: NATURAL, Literal: "natural"},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+					FromClause: FromClause{
+						From: "from",
+						Tables: []Expression{
+							Table{
+								Object: Join{
+									Join:      "join",
+									Table:     Table{Object: Identifier{Literal: "table1"}},
+									JoinTable: Table{Object: Identifier{Literal: "table2"}},
+									Natural:   Token{Token: NATURAL, Literal: "natural"},
+								},
 							},
 						},
 					},
@@ -928,20 +1057,22 @@ var parseTests = []struct {
 		Input: "select 1 from table1 left join table2 using(id)",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
-				FromClause: FromClause{
-					From: "from",
-					Tables: []Expression{
-						Table{
-							Object: Join{
-								Join:      "join",
-								Table:     Table{Object: Identifier{Literal: "table1"}},
-								JoinTable: Table{Object: Identifier{Literal: "table2"}},
-								Direction: Token{Token: LEFT, Literal: "left"},
-								Condition: JoinCondition{
-									Literal: "using",
-									Using: []Expression{
-										Identifier{Literal: "id"},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+					FromClause: FromClause{
+						From: "from",
+						Tables: []Expression{
+							Table{
+								Object: Join{
+									Join:      "join",
+									Table:     Table{Object: Identifier{Literal: "table1"}},
+									JoinTable: Table{Object: Identifier{Literal: "table2"}},
+									Direction: Token{Token: LEFT, Literal: "left"},
+									Condition: JoinCondition{
+										Literal: "using",
+										Using: []Expression{
+											Identifier{Literal: "id"},
+										},
 									},
 								},
 							},
@@ -955,17 +1086,19 @@ var parseTests = []struct {
 		Input: "select 1 from table1 natural outer join table2",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
-				FromClause: FromClause{
-					From: "from",
-					Tables: []Expression{
-						Table{
-							Object: Join{
-								Join:      "join",
-								Table:     Table{Object: Identifier{Literal: "table1"}},
-								JoinTable: Table{Object: Identifier{Literal: "table2"}},
-								Natural:   Token{Token: NATURAL, Literal: "natural"},
-								JoinType:  Token{Token: OUTER, Literal: "outer"},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+					FromClause: FromClause{
+						From: "from",
+						Tables: []Expression{
+							Table{
+								Object: Join{
+									Join:      "join",
+									Table:     Table{Object: Identifier{Literal: "table1"}},
+									JoinTable: Table{Object: Identifier{Literal: "table2"}},
+									Natural:   Token{Token: NATURAL, Literal: "natural"},
+									JoinType:  Token{Token: OUTER, Literal: "outer"},
+								},
 							},
 						},
 					},
@@ -977,16 +1110,18 @@ var parseTests = []struct {
 		Input: "select 1 from table1 right join table2",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
-				FromClause: FromClause{
-					From: "from",
-					Tables: []Expression{
-						Table{
-							Object: Join{
-								Join:      "join",
-								Table:     Table{Object: Identifier{Literal: "table1"}},
-								JoinTable: Table{Object: Identifier{Literal: "table2"}},
-								Direction: Token{Token: RIGHT, Literal: "right"},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+					FromClause: FromClause{
+						From: "from",
+						Tables: []Expression{
+							Table{
+								Object: Join{
+									Join:      "join",
+									Table:     Table{Object: Identifier{Literal: "table1"}},
+									JoinTable: Table{Object: Identifier{Literal: "table2"}},
+									Direction: Token{Token: RIGHT, Literal: "right"},
+								},
 							},
 						},
 					},
@@ -998,16 +1133,18 @@ var parseTests = []struct {
 		Input: "select 1 from table1 full join table2",
 		Output: []Statement{
 			SelectQuery{
-				SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
-				FromClause: FromClause{
-					From: "from",
-					Tables: []Expression{
-						Table{
-							Object: Join{
-								Join:      "join",
-								Table:     Table{Object: Identifier{Literal: "table1"}},
-								JoinTable: Table{Object: Identifier{Literal: "table2"}},
-								Direction: Token{Token: FULL, Literal: "full"},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+					FromClause: FromClause{
+						From: "from",
+						Tables: []Expression{
+							Table{
+								Object: Join{
+									Join:      "join",
+									Table:     Table{Object: Identifier{Literal: "table1"}},
+									JoinTable: Table{Object: Identifier{Literal: "table2"}},
+									Direction: Token{Token: FULL, Literal: "full"},
+								},
 							},
 						},
 					},
@@ -1099,11 +1236,13 @@ var parseTests = []struct {
 				Into:   "into",
 				Table:  Identifier{Literal: "table1"},
 				Query: SelectQuery{
-					SelectClause: SelectClause{
-						Select: "select",
-						Fields: []Expression{
-							Field{Object: NewInteger(1)},
-							Field{Object: NewInteger(2)},
+					SelectEntity: SelectEntity{
+						SelectClause: SelectClause{
+							Select: "select",
+							Fields: []Expression{
+								Field{Object: NewInteger(1)},
+								Field{Object: NewInteger(2)},
+							},
 						},
 					},
 				},
@@ -1122,11 +1261,13 @@ var parseTests = []struct {
 					FieldReference{Column: Identifier{Literal: "column2"}},
 				},
 				Query: SelectQuery{
-					SelectClause: SelectClause{
-						Select: "select",
-						Fields: []Expression{
-							Field{Object: NewInteger(1)},
-							Field{Object: NewInteger(2)},
+					SelectEntity: SelectEntity{
+						SelectClause: SelectClause{
+							Select: "select",
+							Fields: []Expression{
+								Field{Object: NewInteger(1)},
+								Field{Object: NewInteger(2)},
+							},
 						},
 					},
 				},
@@ -1378,10 +1519,12 @@ var parseTests = []struct {
 			CursorDeclaration{
 				Cursor: Identifier{Literal: "cur"},
 				Query: SelectQuery{
-					SelectClause: SelectClause{
-						Select: "select",
-						Fields: []Expression{
-							Field{Object: NewInteger(1)},
+					SelectEntity: SelectEntity{
+						SelectClause: SelectClause{
+							Select: "select",
+							Fields: []Expression{
+								Field{Object: NewInteger(1)},
+							},
 						},
 					},
 				},
@@ -1641,21 +1784,38 @@ func TestParse(t *testing.T) {
 				expectStmt := expect.(SelectQuery)
 				parsedStmt := stmt.(SelectQuery)
 
-				if !reflect.DeepEqual(parsedStmt.SelectClause, expectStmt.SelectClause) {
-					t.Errorf("select clause = %#v, want %#v for %q", parsedStmt.SelectClause, expectStmt.SelectClause, v.Input)
+				if entity, ok := parsedStmt.SelectEntity.(SelectEntity); ok {
+					expectEntity, ok := expectStmt.SelectEntity.(SelectEntity)
+					if !ok {
+						t.Errorf("entity = %#v, want %#v for %q", entity, expectEntity, v.Input)
+					}
+
+					if !reflect.DeepEqual(entity.SelectClause, expectEntity.SelectClause) {
+						t.Errorf("select clause = %#v, want %#v for %q", entity.SelectClause, expectEntity.SelectClause, v.Input)
+					}
+					if !reflect.DeepEqual(entity.FromClause, expectEntity.FromClause) {
+						t.Errorf("from clause = %#v, want %#v for %q", entity.FromClause, expectEntity.FromClause, v.Input)
+					}
+					if !reflect.DeepEqual(entity.WhereClause, expectEntity.WhereClause) {
+						t.Errorf("where clause = %#v, want %#v for %q", entity.WhereClause, expectEntity.WhereClause, v.Input)
+					}
+					if !reflect.DeepEqual(entity.GroupByClause, expectEntity.GroupByClause) {
+						t.Errorf("group by clause = %#v, want %#v for %q", entity.GroupByClause, expectEntity.GroupByClause, v.Input)
+					}
+					if !reflect.DeepEqual(entity.HavingClause, expectEntity.HavingClause) {
+						t.Errorf("having clause = %#v, want %#v for %q", entity.HavingClause, expectEntity.HavingClause, v.Input)
+					}
+				} else if set, ok := parsedStmt.SelectEntity.(SelectSet); ok {
+					expectSet, ok := expectStmt.SelectEntity.(SelectSet)
+					if !ok {
+						t.Errorf("set = %#v, want %#v for %q", set, expectSet, v.Input)
+					}
+
+					if !reflect.DeepEqual(set, expectSet) {
+						t.Errorf("set = %#v, want %#v for %q", set, expectSet, v.Input)
+					}
 				}
-				if !reflect.DeepEqual(parsedStmt.FromClause, expectStmt.FromClause) {
-					t.Errorf("from clause = %#v, want %#v for %q", parsedStmt.FromClause, expectStmt.FromClause, v.Input)
-				}
-				if !reflect.DeepEqual(parsedStmt.WhereClause, expectStmt.WhereClause) {
-					t.Errorf("where clause = %#v, want %#v for %q", parsedStmt.WhereClause, expectStmt.WhereClause, v.Input)
-				}
-				if !reflect.DeepEqual(parsedStmt.GroupByClause, expectStmt.GroupByClause) {
-					t.Errorf("group by clause = %#v, want %#v for %q", parsedStmt.GroupByClause, expectStmt.GroupByClause, v.Input)
-				}
-				if !reflect.DeepEqual(parsedStmt.HavingClause, expectStmt.HavingClause) {
-					t.Errorf("having clause = %#v, want %#v for %q", parsedStmt.HavingClause, expectStmt.HavingClause, v.Input)
-				}
+
 				if !reflect.DeepEqual(parsedStmt.OrderByClause, expectStmt.OrderByClause) {
 					t.Errorf("order by clause = %#v, want %#v for %q", parsedStmt.OrderByClause, expectStmt.OrderByClause, v.Input)
 				}
