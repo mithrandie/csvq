@@ -473,8 +473,12 @@ func TestSelectQuery_String(t *testing.T) {
 			Limit:  "limit",
 			Number: 10,
 		},
+		OffsetClause: OffsetClause{
+			Offset: "offset",
+			Number: 10,
+		},
 	}
-	expect := "select column from table order by column limit 10"
+	expect := "select column from table order by column limit 10 offset 10"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -656,6 +660,14 @@ func TestOrderByClause_String(t *testing.T) {
 func TestLimitClause_String(t *testing.T) {
 	e := LimitClause{Limit: "limit", Number: 10}
 	expect := "limit 10"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestOffsetClause_String(t *testing.T) {
+	e := OffsetClause{Offset: "offset", Number: 10}
+	expect := "offset 10"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}

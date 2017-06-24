@@ -478,6 +478,10 @@ func Select(query parser.SelectQuery, parentFilter Filter) (*View, error) {
 		}
 	}
 
+	if query.OffsetClause != nil {
+		view.Offset(query.OffsetClause.(parser.OffsetClause))
+	}
+
 	if query.LimitClause != nil {
 		view.Limit(query.LimitClause.(parser.LimitClause))
 	}

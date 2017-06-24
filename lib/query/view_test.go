@@ -1488,6 +1488,95 @@ func TestView_Limit(t *testing.T) {
 	}
 }
 
+func TestView_Offset(t *testing.T) {
+	view := &View{
+		Header: []HeaderField{
+			{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+			{Reference: "table1", Column: "column1", FromTable: true},
+			{Reference: "table1", Column: "column2", FromTable: true},
+		},
+		Records: []Record{
+			NewRecord(1, []parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+			NewRecord(2, []parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+			NewRecord(3, []parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+			NewRecord(4, []parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+		},
+	}
+
+	offset := parser.OffsetClause{Number: 3}
+	expect := &View{
+		Header: []HeaderField{
+			{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+			{Reference: "table1", Column: "column1", FromTable: true},
+			{Reference: "table1", Column: "column2", FromTable: true},
+		},
+		Records: []Record{
+			NewRecord(4, []parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+		},
+	}
+
+	view.Offset(offset)
+	if !reflect.DeepEqual(view, expect) {
+		t.Errorf("offset: view = %s, want %s", view, expect)
+	}
+
+	view = &View{
+		Header: []HeaderField{
+			{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+			{Reference: "table1", Column: "column1", FromTable: true},
+			{Reference: "table1", Column: "column2", FromTable: true},
+		},
+		Records: []Record{
+			NewRecord(1, []parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+			NewRecord(2, []parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+			NewRecord(3, []parser.Primary{
+				parser.NewString("1"),
+				parser.NewString("str1"),
+			}),
+			NewRecord(4, []parser.Primary{
+				parser.NewString("2"),
+				parser.NewString("str2"),
+			}),
+		},
+	}
+
+	offset = parser.OffsetClause{Number: 4}
+	expect = &View{
+		Header: []HeaderField{
+			{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+			{Reference: "table1", Column: "column1", FromTable: true},
+			{Reference: "table1", Column: "column2", FromTable: true},
+		},
+		Records: []Record{},
+	}
+
+	view.Offset(offset)
+	if !reflect.DeepEqual(view, expect) {
+		t.Errorf("offset: view = %s, want %s", view, expect)
+	}
+}
+
 var viewInsertValuesTests = []struct {
 	Name       string
 	Fields     []parser.Expression

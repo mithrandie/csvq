@@ -38,6 +38,11 @@ func Float64ToStr(f float64) string {
 	return strconv.FormatFloat(f, 'f', -1, 64)
 }
 
+func StrToInt64(s string) int64 {
+	i, _ := strconv.ParseInt(s, 10, 64)
+	return i
+}
+
 func Float64ToPrimary(f float64) Primary {
 	s := Float64ToStr(f)
 	if i, e := strconv.ParseInt(s, 10, 64); e == nil {

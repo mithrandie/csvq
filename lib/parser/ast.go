@@ -389,6 +389,7 @@ type SelectQuery struct {
 	SelectEntity  Expression
 	OrderByClause Expression
 	LimitClause   Expression
+	OffsetClause  Expression
 }
 
 func (e SelectQuery) String() string {
@@ -398,6 +399,9 @@ func (e SelectQuery) String() string {
 	}
 	if e.LimitClause != nil {
 		s = append(s, e.LimitClause.String())
+	}
+	if e.OffsetClause != nil {
+		s = append(s, e.OffsetClause.String())
 	}
 	return joinWithSpace(s)
 }
@@ -519,6 +523,16 @@ type LimitClause struct {
 
 func (l LimitClause) String() string {
 	s := []string{l.Limit, strconv.FormatInt(l.Number, 10)}
+	return joinWithSpace(s)
+}
+
+type OffsetClause struct {
+	Offset string
+	Number int64
+}
+
+func (e OffsetClause) String() string {
+	s := []string{e.Offset, strconv.FormatInt(e.Number, 10)}
 	return joinWithSpace(s)
 }
 

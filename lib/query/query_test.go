@@ -1219,6 +1219,9 @@ var selectTests = []struct {
 			LimitClause: parser.LimitClause{
 				Number: 5,
 			},
+			OffsetClause: parser.OffsetClause{
+				Number: 0,
+			},
 		},
 		Result: &View{
 			FileInfo: &FileInfo{

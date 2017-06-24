@@ -42,6 +42,7 @@ package parser
 %type<expression>  having_clause
 %type<expression>  order_by_clause
 %type<expression>  limit_clause
+%type<expression>  offset_clause
 %type<primary>     primary
 %type<expression>  field_reference
 %type<expression>  value
@@ -115,7 +116,7 @@ package parser
 %token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME VARIABLE FLAG
 %token<token> SELECT FROM UPDATE SET DELETE WHERE INSERT INTO VALUES AS DUAL STDIN
 %token<token> CREATE ADD DROP ALTER TABLE FIRST LAST AFTER BEFORE DEFAULT RENAME TO
-%token<token> ORDER GROUP HAVING BY ASC DESC LIMIT
+%token<token> ORDER GROUP HAVING BY ASC DESC LIMIT OFFSET
 %token<token> JOIN INNER OUTER LEFT RIGHT FULL CROSS ON USING NATURAL
 %token<token> UNION INTERSECT EXCEPT
 %token<token> ALL ANY EXISTS IN
@@ -323,12 +324,13 @@ command_statement
     }
 
 select_query
-    : select_entity order_by_clause limit_clause
+    : select_entity order_by_clause limit_clause offset_clause
     {
         $$ = SelectQuery{
             SelectEntity:  $1,
             OrderByClause: $2,
             LimitClause:   $3,
+            OffsetClause:  $4,
         }
     }
 
@@ -442,9 +444,19 @@ limit_clause
     {
         $$ = nil
     }
-    | LIMIT integer
+    | LIMIT INTEGER
     {
-        $$ = LimitClause{Limit: $1.Literal, Number: $2.Value()}
+        $$ = LimitClause{Limit: $1.Literal, Number: StrToInt64($2.Literal)}
+    }
+
+offset_clause
+    :
+    {
+        $$ = nil
+    }
+    | OFFSET INTEGER
+    {
+        $$ = OffsetClause{Offset: $1.Literal, Number: StrToInt64($2.Literal)}
     }
 
 primary
