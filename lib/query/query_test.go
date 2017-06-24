@@ -1430,6 +1430,76 @@ var selectTests = []struct {
 		},
 	},
 	{
+		Name: "Union with SubQuery",
+		Query: parser.SelectQuery{
+			SelectEntity: parser.SelectSet{
+				LHS: parser.Subquery{
+					Query: parser.SelectQuery{
+						SelectEntity: parser.SelectEntity{
+							SelectClause: parser.SelectClause{
+								Fields: []parser.Expression{
+									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+								},
+							},
+							FromClause: parser.FromClause{
+								Tables: []parser.Expression{
+									parser.Table{Object: parser.Identifier{Literal: "table1"}},
+								},
+							},
+						},
+					},
+				},
+				Operator: parser.Token{Token: parser.UNION, Literal: "union"},
+				RHS: parser.SelectEntity{
+					SelectClause: parser.SelectClause{
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column3"}}},
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}}},
+						},
+					},
+					FromClause: parser.FromClause{
+						Tables: []parser.Expression{
+							parser.Table{Object: parser.Identifier{Literal: "table4"}},
+						},
+					},
+				},
+			},
+		},
+		Result: &View{
+			Header: []HeaderField{
+				{
+					Reference: "table1",
+					Column:    "column1",
+					FromTable: true,
+				},
+				{
+					Reference: "table1",
+					Column:    "column2",
+					FromTable: true,
+				},
+			},
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("3"),
+					parser.NewString("str3"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("4"),
+					parser.NewString("str4"),
+				}),
+			},
+		},
+	},
+	{
 		Name: "Union Field Length Error",
 		Query: parser.SelectQuery{
 			SelectEntity: parser.SelectSet{

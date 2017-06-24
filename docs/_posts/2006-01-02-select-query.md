@@ -20,7 +20,11 @@ select_entity
       [where_clause]
       [group_by_clause]
       [having_clause]
-  | select_entity set_operator [ALL] select_entity 
+  | select_set_entity set_operator [ALL] select_set_entity 
+
+select_set_entity
+  : select_entity
+  | (select_query)
 ```
 
 _select_clause_
