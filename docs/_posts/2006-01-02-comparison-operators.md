@@ -32,23 +32,32 @@ A comparison operator returns a ternary value.
 | <>, !\= | Not equal |
 
 ```sql
-value operator value
+relational_operation
+  : value operator value
+  | row_value operator row_value
 ```
 
 _value_
 : [value]({{ '/resference/value.html' | relative_url }})
+
+_row_value_
+: [Row Value]({{ '/resference/row-value.html' | relative_url }})
 
 At first, a relational operator attempt to convert both of operands to float values, and if both convertions are successful then compare them.
 If conversions failed, next a relational operater attempt to convert to datetime, and next to boolean, at last to string.
 
 If either of operands is null or all conversion failed, return UNKNOWN.
 
+In case of _row_values_ comparison, both of _row_values_ must be tha same lengths.
+Values at the same indices are compared, and the result is decided by [AND]({{ '/reference/logic-operators.html#and' | relative_url }}) condition of each comparisons
+
 ## IS
 {: #is}
 
 ```sql
-value IS [NOT] ternary
-value IS [NOT] NULL
+is_operation
+  : value IS [NOT] ternary
+  | value IS [NOT] NULL
 ```
 
 _value_
@@ -63,7 +72,9 @@ Evaluate the ternary value of _value_ and check if the ternary value is equal to
 {: #between}
 
 ```sql
-value [NOT] BETWEEN low AND high
+between_operation
+  : value [NOT] BETWEEN low AND high
+  | row_value [NOT] BETWEEN row_value_low AND row_value_high
 ```
 
 _value_
@@ -74,6 +85,15 @@ _low_
 
 _high_
 : [value]({{ '/reference/value.html' | relative_url }})
+
+_row_value_
+: [Row Value]({{ '/resference/row-value.html' | relative_url }})
+
+_row_value_low_
+: [Row Value]({{ '/resference/row-value.html' | relative_url }})
+
+_row_value_high_
+: [Row Value]({{ '/resference/row-value.html' | relative_url }})
 
 Check a _value_ is greater than or equal to _low_ and less than or equal to _high_.
 
@@ -87,22 +107,24 @@ NOT (low <= value AND value <= high)
 {: #in}
 
 ```sql
-value [NOT] IN (value [, value ...])
-value [NOT] IN (select_query)
+in_operation
+  : value [NOT] IN row_value
+  | row_value [NOT] IN (row_value [, row_value ...])
+  | row_value [NOT] IN (select_query)
 ```
 
 _value_
 : [value]({{ '/reference/value.html' | relative_url }})
 
+_row_value_
+: [Row Value]({{ '/resference/row-value.html' | relative_url }})
+
 _select_query_
 : [Select Query]({{ '/reference/select-query.html' | relative_url }})
 
-Check if a _value_ is in within a set of _values_ or a result set of _select_query_.
+Check if a _value_ or _row_value_ is in within a set of _values_ or a result set of _select_query_.
 
-The IN operation with subquery is equivalent to following ANY operation.
-```sql
-value = ANY (select_query)
-```
+A IN operation is equivalent to a ANY operation that operator is specified as "=".
 
 ## LIKE
 {: #like}
@@ -132,11 +154,17 @@ _
 {: #any}
 
 ```sql
-value relational_operator ANY (select_query)
+any_operation
+  : value relational_operator ANY row_value
+  | row_value relational_operator ANY (row_value [, row_value ...])
+  | row_value relational_operator ANY (select_query)
 ```
 
 _value_
 : [value]({{ '/reference/value.html' | relative_url }})
+
+_row_value_
+: [Row Value]({{ '/resference/row-value.html' | relative_url }})
 
 _relational_operator_
 : [relational operator](#relational_operators)
@@ -144,7 +172,7 @@ _relational_operator_
 _select_query_
 : [Select Query]({{ '/reference/select-query.html' | relative_url }})
 
-Compare a _value_ to each values retrieved by _select_query_.
+Compare a _value_ or _row_value_ to each listed _values_ or values retrieved by _select_query_.
 If any of comparison results is TRUE, return TRUE.
 If there is no TRUE result and there is at least one UNKNOWN result, return UNKNOWN.
 Otherwise return FALSE.
@@ -155,11 +183,17 @@ If _select_query_ returns no values, return FALSE.
 {: #all}
 
 ```sql
-value relational_operator ALL (select_query)
+all_operation
+  : value relational_operator ALL row_value
+  | row_value relational_operator ALL (row_value [, row_value ...])
+  | row_value relational_operator ALL (select_query)
 ```
 
 _value_
 : [value]({{ '/reference/value.html' | relative_url }})
+
+_row_value_
+: [Row Value]({{ '/resference/row-value.html' | relative_url }})
 
 _relational_operator_
 : [relational operator](#relational_operators)
@@ -167,7 +201,7 @@ _relational_operator_
 _select_query_
 : [Select Query]({{ '/reference/select-query.html' | relative_url }})
 
-Compare a _value_ to every values retrieved by _select_query_.
+Compare a _value_ or _row_value_ to every listed _values_ or values retrieved by _select_query_.
 If any of comparison results is FALSE, return FALSE.
 If there is no FALSE result and there is at least one UNKNOWN result, return UNKNOWN.
 Otherwise return TRUE.

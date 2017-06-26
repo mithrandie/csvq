@@ -86,3 +86,25 @@ func Or(v1 Value, v2 Value) Value {
 	}
 	return FALSE
 }
+
+func All(values []Value) Value {
+	t := TRUE
+	if 0 < len(values) {
+		t = values[0]
+	}
+	for i := 1; i < len(values); i++ {
+		t = And(t, values[i])
+	}
+	return t
+}
+
+func Any(values []Value) Value {
+	t := FALSE
+	if 0 < len(values) {
+		t = values[0]
+	}
+	for i := 1; i < len(values); i++ {
+		t = Or(t, values[i])
+	}
+	return t
+}

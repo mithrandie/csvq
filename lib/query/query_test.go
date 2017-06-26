@@ -248,16 +248,20 @@ var executeStatementTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 			ValuesList: []parser.Expression{
-				parser.InsertValues{
-					Values: []parser.Expression{
-						parser.NewInteger(4),
-						parser.NewString("str4"),
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.Expression{
+							parser.NewInteger(4),
+							parser.NewString("str4"),
+						},
 					},
 				},
-				parser.InsertValues{
-					Values: []parser.Expression{
-						parser.NewInteger(5),
-						parser.NewString("str5"),
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.Expression{
+							parser.NewInteger(5),
+							parser.NewString("str5"),
+						},
 					},
 				},
 			},
@@ -1650,14 +1654,18 @@ var insertTests = []struct {
 			},
 			Values: "values",
 			ValuesList: []parser.Expression{
-				parser.InsertValues{
-					Values: []parser.Expression{
-						parser.NewInteger(4),
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.Expression{
+							parser.NewInteger(4),
+						},
 					},
 				},
-				parser.InsertValues{
-					Values: []parser.Expression{
-						parser.NewInteger(5),
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.Expression{
+							parser.NewInteger(5),
+						},
 					},
 				},
 			},
@@ -1704,16 +1712,20 @@ var insertTests = []struct {
 			Table:  parser.Identifier{Literal: "table1"},
 			Values: "values",
 			ValuesList: []parser.Expression{
-				parser.InsertValues{
-					Values: []parser.Expression{
-						parser.NewInteger(4),
-						parser.NewString("str4"),
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.Expression{
+							parser.NewInteger(4),
+							parser.NewString("str4"),
+						},
 					},
 				},
-				parser.InsertValues{
-					Values: []parser.Expression{
-						parser.NewInteger(5),
-						parser.NewString("str5"),
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.Expression{
+							parser.NewInteger(5),
+							parser.NewString("str5"),
+						},
 					},
 				},
 			},
@@ -1763,14 +1775,18 @@ var insertTests = []struct {
 			},
 			Values: "values",
 			ValuesList: []parser.Expression{
-				parser.InsertValues{
-					Values: []parser.Expression{
-						parser.NewInteger(4),
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.Expression{
+							parser.NewInteger(4),
+						},
 					},
 				},
-				parser.InsertValues{
-					Values: []parser.Expression{
-						parser.NewInteger(5),
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.Expression{
+							parser.NewInteger(5),
+						},
 					},
 				},
 			},
@@ -1788,14 +1804,18 @@ var insertTests = []struct {
 			},
 			Values: "values",
 			ValuesList: []parser.Expression{
-				parser.InsertValues{
-					Values: []parser.Expression{
-						parser.NewInteger(4),
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.Expression{
+							parser.NewInteger(4),
+						},
 					},
 				},
-				parser.InsertValues{
-					Values: []parser.Expression{
-						parser.NewInteger(5),
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.Expression{
+							parser.NewInteger(5),
+						},
 					},
 				},
 			},
