@@ -38,10 +38,10 @@ relational_operation
 ```
 
 _value_
-: [value]({{ '/resference/value.html' | relative_url }})
+: [value]({{ '/reference/value.html' | relative_url }})
 
 _row_value_
-: [Row Value]({{ '/resference/row-value.html' | relative_url }})
+: [Row Value]({{ '/reference/row-value.html' | relative_url }})
 
 At first, a relational operator attempt to convert both of operands to float values, and if both convertions are successful then compare them.
 If conversions failed, next a relational operater attempt to convert to datetime, and next to boolean, at last to string.
@@ -87,13 +87,13 @@ _high_
 : [value]({{ '/reference/value.html' | relative_url }})
 
 _row_value_
-: [Row Value]({{ '/resference/row-value.html' | relative_url }})
+: [Row Value]({{ '/reference/row-value.html' | relative_url }})
 
 _row_value_low_
-: [Row Value]({{ '/resference/row-value.html' | relative_url }})
+: [Row Value]({{ '/reference/row-value.html' | relative_url }})
 
 _row_value_high_
-: [Row Value]({{ '/resference/row-value.html' | relative_url }})
+: [Row Value]({{ '/reference/row-value.html' | relative_url }})
 
 Check a _value_ is greater than or equal to _low_ and less than or equal to _high_.
 
@@ -117,7 +117,7 @@ _value_
 : [value]({{ '/reference/value.html' | relative_url }})
 
 _row_value_
-: [Row Value]({{ '/resference/row-value.html' | relative_url }})
+: [Row Value]({{ '/reference/row-value.html' | relative_url }})
 
 _select_query_
 : [Select Query]({{ '/reference/select-query.html' | relative_url }})
@@ -164,7 +164,7 @@ _value_
 : [value]({{ '/reference/value.html' | relative_url }})
 
 _row_value_
-: [Row Value]({{ '/resference/row-value.html' | relative_url }})
+: [Row Value]({{ '/reference/row-value.html' | relative_url }})
 
 _relational_operator_
 : [relational operator](#relational_operators)
@@ -193,7 +193,7 @@ _value_
 : [value]({{ '/reference/value.html' | relative_url }})
 
 _row_value_
-: [Row Value]({{ '/resference/row-value.html' | relative_url }})
+: [Row Value]({{ '/reference/row-value.html' | relative_url }})
 
 _relational_operator_
 : [relational operator](#relational_operators)
