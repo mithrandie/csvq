@@ -14,13 +14,17 @@ SQL like query language for csv
 
 ### Build from source
 
-0. Install Go. (ref. [Getting Started - The Go Programming Language](https://golang.org/doc/install))
+#### Requirements
 
-#### Use go get
+Go tools (ref. [Getting Started - The Go Programming Language](https://golang.org/doc/install))
+
+#### Build with either of the following two ways
+
+##### Use go get
 
 2. ```$ go get -u github.com/mithrandie/csvq```
 
-#### Build with strict dependencies
+##### Build with strict dependencies
 
 2. Install GNU Make
 3. ```$ go get -d github.com/mithrandie/csvq```
