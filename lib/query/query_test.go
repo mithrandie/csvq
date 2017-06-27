@@ -248,16 +248,20 @@ var executeStatementTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 			ValuesList: []parser.Expression{
-				parser.InsertValues{
-					Values: []parser.Expression{
-						parser.NewInteger(4),
-						parser.NewString("str4"),
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.Expression{
+							parser.NewInteger(4),
+							parser.NewString("str4"),
+						},
 					},
 				},
-				parser.InsertValues{
-					Values: []parser.Expression{
-						parser.NewInteger(5),
-						parser.NewString("str5"),
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.Expression{
+							parser.NewInteger(5),
+							parser.NewString("str5"),
+						},
 					},
 				},
 			},
@@ -1219,6 +1223,9 @@ var selectTests = []struct {
 			LimitClause: parser.LimitClause{
 				Number: 5,
 			},
+			OffsetClause: parser.OffsetClause{
+				Number: 0,
+			},
 		},
 		Result: &View{
 			FileInfo: &FileInfo{
@@ -1430,6 +1437,76 @@ var selectTests = []struct {
 		},
 	},
 	{
+		Name: "Union with SubQuery",
+		Query: parser.SelectQuery{
+			SelectEntity: parser.SelectSet{
+				LHS: parser.Subquery{
+					Query: parser.SelectQuery{
+						SelectEntity: parser.SelectEntity{
+							SelectClause: parser.SelectClause{
+								Fields: []parser.Expression{
+									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+								},
+							},
+							FromClause: parser.FromClause{
+								Tables: []parser.Expression{
+									parser.Table{Object: parser.Identifier{Literal: "table1"}},
+								},
+							},
+						},
+					},
+				},
+				Operator: parser.Token{Token: parser.UNION, Literal: "union"},
+				RHS: parser.SelectEntity{
+					SelectClause: parser.SelectClause{
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column3"}}},
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}}},
+						},
+					},
+					FromClause: parser.FromClause{
+						Tables: []parser.Expression{
+							parser.Table{Object: parser.Identifier{Literal: "table4"}},
+						},
+					},
+				},
+			},
+		},
+		Result: &View{
+			Header: []HeaderField{
+				{
+					Reference: "table1",
+					Column:    "column1",
+					FromTable: true,
+				},
+				{
+					Reference: "table1",
+					Column:    "column2",
+					FromTable: true,
+				},
+			},
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("3"),
+					parser.NewString("str3"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("4"),
+					parser.NewString("str4"),
+				}),
+			},
+		},
+	},
+	{
 		Name: "Union Field Length Error",
 		Query: parser.SelectQuery{
 			SelectEntity: parser.SelectSet{
@@ -1577,14 +1654,18 @@ var insertTests = []struct {
 			},
 			Values: "values",
 			ValuesList: []parser.Expression{
-				parser.InsertValues{
-					Values: []parser.Expression{
-						parser.NewInteger(4),
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.Expression{
+							parser.NewInteger(4),
+						},
 					},
 				},
-				parser.InsertValues{
-					Values: []parser.Expression{
-						parser.NewInteger(5),
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.Expression{
+							parser.NewInteger(5),
+						},
 					},
 				},
 			},
@@ -1631,16 +1712,20 @@ var insertTests = []struct {
 			Table:  parser.Identifier{Literal: "table1"},
 			Values: "values",
 			ValuesList: []parser.Expression{
-				parser.InsertValues{
-					Values: []parser.Expression{
-						parser.NewInteger(4),
-						parser.NewString("str4"),
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.Expression{
+							parser.NewInteger(4),
+							parser.NewString("str4"),
+						},
 					},
 				},
-				parser.InsertValues{
-					Values: []parser.Expression{
-						parser.NewInteger(5),
-						parser.NewString("str5"),
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.Expression{
+							parser.NewInteger(5),
+							parser.NewString("str5"),
+						},
 					},
 				},
 			},
@@ -1690,14 +1775,18 @@ var insertTests = []struct {
 			},
 			Values: "values",
 			ValuesList: []parser.Expression{
-				parser.InsertValues{
-					Values: []parser.Expression{
-						parser.NewInteger(4),
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.Expression{
+							parser.NewInteger(4),
+						},
 					},
 				},
-				parser.InsertValues{
-					Values: []parser.Expression{
-						parser.NewInteger(5),
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.Expression{
+							parser.NewInteger(5),
+						},
 					},
 				},
 			},
@@ -1715,14 +1804,18 @@ var insertTests = []struct {
 			},
 			Values: "values",
 			ValuesList: []parser.Expression{
-				parser.InsertValues{
-					Values: []parser.Expression{
-						parser.NewInteger(4),
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.Expression{
+							parser.NewInteger(4),
+						},
 					},
 				},
-				parser.InsertValues{
-					Values: []parser.Expression{
-						parser.NewInteger(5),
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.Expression{
+							parser.NewInteger(5),
+						},
 					},
 				},
 			},

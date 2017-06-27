@@ -478,6 +478,10 @@ func Select(query parser.SelectQuery, parentFilter Filter) (*View, error) {
 		}
 	}
 
+	if query.OffsetClause != nil {
+		view.Offset(query.OffsetClause.(parser.OffsetClause))
+	}
+
 	if query.LimitClause != nil {
 		view.Limit(query.LimitClause.(parser.LimitClause))
 	}
@@ -529,18 +533,29 @@ func selectEntity(expr parser.Expression, parentFilter Filter) (*View, error) {
 	return view, nil
 }
 
-func selectSet(set parser.SelectSet, parentFilter Filter) (*View, error) {
-	lview, err := selectEntity(set.LHS, parentFilter)
-	if err != nil {
-		return nil, err
+func selectSetEntity(expr parser.Expression, parentFilter Filter) (*View, error) {
+	if subquery, ok := expr.(parser.Subquery); ok {
+		return Select(subquery.Query, parentFilter)
 	}
-	lview.Fix()
 
-	rview, err := selectEntity(set.RHS, parentFilter)
+	view, err := selectEntity(expr, parentFilter)
 	if err != nil {
 		return nil, err
 	}
-	rview.Fix()
+	view.Fix()
+	return view, nil
+}
+
+func selectSet(set parser.SelectSet, parentFilter Filter) (*View, error) {
+	lview, err := selectSetEntity(set.LHS, parentFilter)
+	if err != nil {
+		return nil, err
+	}
+
+	rview, err := selectSetEntity(set.RHS, parentFilter)
+	if err != nil {
+		return nil, err
+	}
 
 	if lview.FieldLen() != rview.FieldLen() {
 		return nil, errors.New(fmt.Sprintf("%s: field length does not match", parser.TokenLiteral(set.Operator.Token)))

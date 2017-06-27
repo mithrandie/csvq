@@ -23,7 +23,7 @@ select_query UNION [ALL] select_query
 ```
 
 _select_query_
-: [select_entity]({{ '/reference/select-query.html' | relative_url }})
+: [select_set_entity]({{ '/reference/select-query.html' | relative_url }})
 
 Return all records of both result sets.
 
@@ -35,7 +35,7 @@ select_query EXCEPT [ALL] select_query
 ```
 
 _select_query_
-: [select_entity]({{ '/reference/select-query.html' | relative_url }})
+: [select_set_entity]({{ '/reference/select-query.html' | relative_url }})
 
 Return records of a first result set that do not appear in a second result set.
 
@@ -47,6 +47,6 @@ select_query INTERSECT [ALL] select_query
 ```
 
 _select_query_
-: [select_entity]({{ '/reference/select-query.html' | relative_url }})
+: [select_set_entity]({{ '/reference/select-query.html' | relative_url }})
 
 Return only records that appear in both result sets.

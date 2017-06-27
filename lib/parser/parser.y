@@ -34,6 +34,7 @@ package parser
 %type<statement>   command_statement
 %type<expression>  select_query
 %type<expression>  select_entity
+%type<expression>  select_set_entity
 %type<expression>  select_clause
 %type<expression>  from_clause
 %type<expression>  where_clause
@@ -41,9 +42,12 @@ package parser
 %type<expression>  having_clause
 %type<expression>  order_by_clause
 %type<expression>  limit_clause
+%type<expression>  offset_clause
 %type<primary>     primary
 %type<expression>  field_reference
 %type<expression>  value
+%type<expression>  row_value
+%type<expressions> row_values
 %type<expression>  order_item
 %type<expression>  subquery
 %type<expression>  string_operation
@@ -72,8 +76,6 @@ package parser
 %type<expressions> fields
 %type<expressions> case_when
 %type<expression>  insert_query
-%type<expression>  insert_values
-%type<expressions> insert_values_list
 %type<expression>  update_query
 %type<expression>  update_set
 %type<expressions> update_set_list
@@ -114,7 +116,7 @@ package parser
 %token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME VARIABLE FLAG
 %token<token> SELECT FROM UPDATE SET DELETE WHERE INSERT INTO VALUES AS DUAL STDIN
 %token<token> CREATE ADD DROP ALTER TABLE FIRST LAST AFTER BEFORE DEFAULT RENAME TO
-%token<token> ORDER GROUP HAVING BY ASC DESC LIMIT
+%token<token> ORDER GROUP HAVING BY ASC DESC LIMIT OFFSET
 %token<token> JOIN INNER OUTER LEFT RIGHT FULL CROSS ON USING NATURAL
 %token<token> UNION INTERSECT EXCEPT
 %token<token> ALL ANY EXISTS IN
@@ -322,12 +324,13 @@ command_statement
     }
 
 select_query
-    : select_entity order_by_clause limit_clause
+    : select_entity order_by_clause limit_clause offset_clause
     {
         $$ = SelectQuery{
             SelectEntity:  $1,
             OrderByClause: $2,
             LimitClause:   $3,
+            OffsetClause:  $4,
         }
     }
 
@@ -342,7 +345,7 @@ select_entity
             HavingClause:  $5,
         }
     }
-    | select_entity UNION all select_entity
+    | select_set_entity UNION all select_set_entity
     {
         $$ = SelectSet{
             LHS:      $1,
@@ -351,7 +354,7 @@ select_entity
             RHS:      $4,
         }
     }
-    | select_entity INTERSECT all select_entity
+    | select_set_entity INTERSECT all select_set_entity
     {
         $$ = SelectSet{
             LHS:      $1,
@@ -360,7 +363,7 @@ select_entity
             RHS:      $4,
         }
     }
-    | select_entity EXCEPT all select_entity
+    | select_set_entity EXCEPT all select_set_entity
     {
         $$ = SelectSet{
             LHS:      $1,
@@ -368,6 +371,16 @@ select_entity
             All:      $3,
             RHS:      $4,
         }
+    }
+
+select_set_entity
+    : select_entity
+    {
+        $$ = $1
+    }
+    | subquery
+    {
+        $$ = $1
     }
 
 select_clause
@@ -431,9 +444,19 @@ limit_clause
     {
         $$ = nil
     }
-    | LIMIT integer
+    | LIMIT INTEGER
     {
-        $$ = LimitClause{Limit: $1.Literal, Number: $2.Value()}
+        $$ = LimitClause{Limit: $1.Literal, Number: StrToInt64($2.Literal)}
+    }
+
+offset_clause
+    :
+    {
+        $$ = nil
+    }
+    | OFFSET INTEGER
+    {
+        $$ = OffsetClause{Offset: $1.Literal, Number: StrToInt64($2.Literal)}
     }
 
 primary
@@ -522,6 +545,26 @@ value
         $$ = Parentheses{Expr: $2}
     }
 
+row_value
+    : '(' values ')'
+    {
+        $$ = RowValue{Value: ValueList{Values: $2}}
+    }
+    | subquery
+    {
+        $$ = RowValue{Value: $1}
+    }
+
+row_values
+    : row_value
+    {
+        $$ = []Expression{$1}
+    }
+    | row_value ',' row_values
+    {
+        $$ = append([]Expression{$1}, $3...)
+    }
+
 order_item
     : value order_direction
     {
@@ -576,7 +619,15 @@ comparison
     {
         $$ = Comparison{LHS: $1, Operator: $2, RHS: $3}
     }
+    | row_value COMPARISON_OP row_value
+    {
+        $$ = Comparison{LHS: $1, Operator: $2, RHS: $3}
+    }
     | value '=' value
+    {
+        $$ = Comparison{LHS: $1, Operator: Token{Token: COMPARISON_OP, Literal: "="}, RHS: $3}
+    }
+    | row_value '=' row_value
     {
         $$ = Comparison{LHS: $1, Operator: Token{Token: COMPARISON_OP, Literal: "="}, RHS: $3}
     }
@@ -592,25 +643,49 @@ comparison
     {
         $$ = Between{Between: $3.Literal, And: $5.Literal, LHS: $1, Low: $4, High: $6, Negation: $2}
     }
-    | value negation IN '(' values ')'
+    | row_value negation BETWEEN row_value AND row_value
     {
-        $$ = In{In: $3.Literal, LHS: $1, List: $5, Negation: $2}
+        $$ = Between{Between: $3.Literal, And: $5.Literal, LHS: $1, Low: $4, High: $6, Negation: $2}
     }
-    | value negation IN subquery
+    | value negation IN row_value
     {
-        $$ = In{In: $3.Literal, LHS: $1, Query: $4.(Subquery), Negation: $2}
+        $$ = In{In: $3.Literal, LHS: $1, Values: $4, Negation: $2}
+    }
+    | row_value negation IN '(' row_values ')'
+    {
+        $$ = In{In: $3.Literal, LHS: $1, Values: RowValueList{RowValues: $5}, Negation: $2}
+    }
+    | row_value negation IN subquery
+    {
+        $$ = In{In: $3.Literal, LHS: $1, Values: $4, Negation: $2}
     }
     | value negation LIKE value
     {
         $$ = Like{Like: $3.Literal, LHS: $1, Pattern: $4, Negation: $2}
     }
-    | value comparison_operator ANY subquery
+    | value comparison_operator ANY row_value
     {
-        $$ = Any{Any: $3.Literal, LHS: $1, Operator: $2, Query: $4.(Subquery)}
+        $$ = Any{Any: $3.Literal, LHS: $1, Operator: $2, Values: $4}
     }
-    | value comparison_operator ALL subquery
+    | row_value comparison_operator ANY '(' row_values ')'
     {
-        $$ = All{All: $3.Literal, LHS: $1, Operator: $2, Query: $4.(Subquery)}
+        $$ = Any{Any: $3.Literal, LHS: $1, Operator: $2, Values: RowValueList{RowValues: $5}}
+    }
+    | row_value comparison_operator ANY subquery
+    {
+        $$ = Any{Any: $3.Literal, LHS: $1, Operator: $2, Values: $4}
+    }
+    | value comparison_operator ALL row_value
+    {
+        $$ = All{All: $3.Literal, LHS: $1, Operator: $2, Values: $4}
+    }
+    | row_value comparison_operator ALL '(' row_values ')'
+    {
+        $$ = All{All: $3.Literal, LHS: $1, Operator: $2, Values: RowValueList{RowValues: $5}}
+    }
+    | row_value comparison_operator ALL subquery
+    {
+        $$ = All{All: $3.Literal, LHS: $1, Operator: $2, Values: $4}
     }
     | EXISTS subquery
     {
@@ -900,11 +975,11 @@ case_when
     }
 
 insert_query
-    : INSERT INTO identifier VALUES insert_values_list
+    : INSERT INTO identifier VALUES row_values
     {
         $$ = InsertQuery{Insert: $1.Literal, Into: $2.Literal, Table: $3, Values: $4.Literal, ValuesList: $5}
     }
-    | INSERT INTO identifier '(' field_references ')' VALUES insert_values_list
+    | INSERT INTO identifier '(' field_references ')' VALUES row_values
     {
         $$ = InsertQuery{Insert: $1.Literal, Into: $2.Literal, Table: $3, Fields: $5, Values: $7.Literal, ValuesList: $8}
     }
@@ -915,22 +990,6 @@ insert_query
     | INSERT INTO identifier '(' field_references ')' select_query
     {
         $$ = InsertQuery{Insert: $1.Literal, Into: $2.Literal, Table: $3, Fields: $5, Query: $7.(SelectQuery)}
-    }
-
-insert_values
-    : '(' values ')'
-    {
-        $$ = InsertValues{Values: $2}
-    }
-
-insert_values_list
-    : insert_values
-    {
-        $$ = []Expression{$1}
-    }
-    | insert_values ',' insert_values_list
-    {
-        $$ = append([]Expression{$1}, $3...)
     }
 
 update_query

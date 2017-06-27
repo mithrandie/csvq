@@ -730,30 +730,39 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 	return nil
 }
 
+func (view *View) Offset(clause parser.OffsetClause) {
+	if int64(len(view.Records)) <= clause.Number {
+		view.Records = Records{}
+	} else {
+		view.Records = view.Records[clause.Number:]
+		records := make(Records, len(view.Records))
+		copy(records, view.Records)
+		view.Records = records
+	}
+}
+
 func (view *View) Limit(clause parser.LimitClause) {
 	if clause.Number < int64(len(view.Records)) {
 		view.Records = view.Records[:clause.Number]
+		records := make(Records, len(view.Records))
+		copy(records, view.Records)
+		view.Records = records
 	}
 }
 
 func (view *View) InsertValues(fields []parser.Expression, list []parser.Expression) error {
 	var filter Filter
-	var err error
 	valuesList := make([][]parser.Primary, len(list))
 
 	for i, item := range list {
-		row := item.(parser.InsertValues)
-		if len(fields) != len(row.Values) {
+		values, err := filter.evalRowValue(item.(parser.RowValue))
+		if err != nil {
+			return err
+		}
+		if len(fields) != len(values) {
 			return errors.New("field length does not match value length")
 		}
 
-		values := make([]parser.Primary, len(row.Values))
-		for j, v := range row.Values {
-			values[j], err = filter.Evaluate(v)
-			if err != nil {
-				return err
-			}
-		}
 		valuesList[i] = values
 	}
 

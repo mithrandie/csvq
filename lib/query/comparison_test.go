@@ -219,6 +219,101 @@ func TestCompare(t *testing.T) {
 	}
 }
 
+var compareRowValuesTests = []struct {
+	LHS    []parser.Primary
+	RHS    []parser.Primary
+	Op     string
+	Result ternary.Value
+	Error  string
+}{
+	{
+		LHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		RHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		Op:     "=",
+		Result: ternary.TRUE,
+	},
+	{
+		LHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		RHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewNull(),
+			parser.NewInteger(3),
+		},
+		Op:     "=",
+		Result: ternary.UNKNOWN,
+	},
+	{
+		LHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		RHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(9),
+			parser.NewInteger(3),
+		},
+		Op:     "=",
+		Result: ternary.FALSE,
+	},
+	{
+		LHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		RHS:    []parser.Primary(nil),
+		Op:     "=",
+		Result: ternary.UNKNOWN,
+	},
+	{
+		LHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		RHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(3),
+		},
+		Op:    "=",
+		Error: "row value length does not match",
+	},
+}
+
+func TestCompareRowValues(t *testing.T) {
+	for _, v := range compareRowValuesTests {
+		r, err := CompareRowValues(v.LHS, v.RHS, v.Op)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("unexpected error %q for (%s %s %s)", err, v.LHS, v.Op, v.RHS)
+			} else if err.Error() != v.Error {
+				t.Errorf("error %q, want error %q for (%s %s %s)", err.Error(), v.Error, v.LHS, v.Op, v.RHS)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("no error, want error %q for (%s %s %s)", v.Error, v.LHS, v.Op, v.RHS)
+			continue
+		}
+		if r != v.Result {
+			t.Errorf("result = %s, want %s for (%s %s %s)", r, v.Result, v.LHS, v.Op, v.RHS)
+		}
+	}
+}
+
 var equivalentToTests = []struct {
 	LHS    parser.Primary
 	RHS    parser.Primary
@@ -272,47 +367,6 @@ func TestIs(t *testing.T) {
 		r := Is(v.LHS, v.RHS)
 		if r != v.Result {
 			t.Errorf("result = %s, want %s for (%s is %s)", r, v.Result, v.LHS, v.RHS)
-		}
-	}
-}
-
-var betweenTests = []struct {
-	LHS    parser.Primary
-	Low    parser.Primary
-	High   parser.Primary
-	Result ternary.Value
-}{
-	{
-		LHS:    parser.NewInteger(2),
-		Low:    parser.NewInteger(1),
-		High:   parser.NewInteger(3),
-		Result: ternary.TRUE,
-	},
-	{
-		LHS:    parser.NewInteger(2),
-		Low:    parser.NewInteger(3),
-		High:   parser.NewInteger(1),
-		Result: ternary.FALSE,
-	},
-	{
-		LHS:    parser.NewInteger(2),
-		Low:    parser.NewInteger(2),
-		High:   parser.NewInteger(2),
-		Result: ternary.TRUE,
-	},
-	{
-		LHS:    parser.NewInteger(2),
-		Low:    parser.NewInteger(1),
-		High:   parser.NewNull(),
-		Result: ternary.UNKNOWN,
-	},
-}
-
-func TestBetween(t *testing.T) {
-	for _, v := range betweenTests {
-		r := Between(v.LHS, v.Low, v.High)
-		if r != v.Result {
-			t.Errorf("result = %s, want %s for (%s between %s and %s)", r, v.Result, v.LHS, v.Low, v.High)
 		}
 	}
 }
@@ -418,108 +472,98 @@ func TestLike(t *testing.T) {
 	}
 }
 
-var anyTests = []struct {
-	LHS      parser.Primary
-	List     []parser.Primary
+var inRowValueListTests = []struct {
+	LHS      []parser.Primary
+	List     [][]parser.Primary
+	Type     int
 	Operator string
 	Result   ternary.Value
+	Error    string
 }{
 	{
-		LHS: parser.NewInteger(3),
-		List: []parser.Primary{
+		LHS: []parser.Primary{
 			parser.NewInteger(1),
 			parser.NewInteger(2),
 			parser.NewInteger(3),
 		},
+		List: [][]parser.Primary{
+			{
+				parser.NewInteger(1),
+				parser.NewInteger(2),
+				parser.NewInteger(3),
+			},
+			{
+				parser.NewInteger(4),
+				parser.NewInteger(5),
+				parser.NewInteger(6),
+			},
+		},
+		Type:     parser.ANY,
 		Operator: "=",
 		Result:   ternary.TRUE,
 	},
 	{
-		LHS: parser.NewInteger(5),
-		List: []parser.Primary{
-			parser.NewInteger(1),
-			parser.NewNull(),
-			parser.NewInteger(3),
-		},
-		Operator: "=",
-		Result:   ternary.UNKNOWN,
-	},
-	{
-		LHS: parser.NewInteger(5),
-		List: []parser.Primary{
+		LHS: []parser.Primary{
 			parser.NewInteger(1),
 			parser.NewInteger(2),
 			parser.NewInteger(3),
 		},
+		List: [][]parser.Primary{
+			{
+				parser.NewInteger(1),
+				parser.NewInteger(2),
+				parser.NewInteger(3),
+			},
+			{
+				parser.NewInteger(1),
+				parser.NewInteger(2),
+				parser.NewInteger(3),
+			},
+		},
+		Type:     parser.ALL,
 		Operator: "=",
-		Result:   ternary.FALSE,
+		Result:   ternary.TRUE,
 	},
 	{
-		LHS:      parser.NewInteger(5),
-		List:     nil,
+		LHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		List: [][]parser.Primary{
+			{
+				parser.NewInteger(1),
+				parser.NewInteger(2),
+				parser.NewInteger(3),
+			},
+			{
+				parser.NewInteger(1),
+				parser.NewInteger(3),
+			},
+		},
+		Type:     parser.ALL,
 		Operator: "=",
-		Result:   ternary.FALSE,
+		Error:    "row value length does not match",
 	},
 }
 
-func TestAny(t *testing.T) {
-	for _, v := range anyTests {
-		r := Any(v.LHS, v.List, v.Operator)
-		if r != v.Result {
-			t.Errorf("result = %s, want %s for (%s %s any (%s))", r, v.Result, v.LHS, v.Operator, v.List)
+func TestInRowValueList(t *testing.T) {
+	for _, v := range inRowValueListTests {
+		r, err := InRowValueList(v.LHS, v.List, v.Type, v.Operator)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("unexpected error %q for (%s %s %s %s)", err, v.LHS, v.Operator, parser.TokenLiteral(v.Type), v.List)
+			} else if err.Error() != v.Error {
+				t.Errorf("error %q, want error %q for (%s %s %s %s)", err.Error(), v.Error, v.LHS, v.Operator, parser.TokenLiteral(v.Type), v.List)
+			}
+			continue
 		}
-	}
-}
-
-var allTests = []struct {
-	LHS      parser.Primary
-	List     []parser.Primary
-	Operator string
-	Result   ternary.Value
-}{
-	{
-		LHS: parser.NewInteger(5),
-		List: []parser.Primary{
-			parser.NewInteger(1),
-			parser.NewInteger(2),
-			parser.NewInteger(3),
-		},
-		Operator: ">",
-		Result:   ternary.TRUE,
-	},
-	{
-		LHS: parser.NewInteger(5),
-		List: []parser.Primary{
-			parser.NewInteger(1),
-			parser.NewNull(),
-			parser.NewInteger(3),
-		},
-		Operator: ">",
-		Result:   ternary.UNKNOWN,
-	},
-	{
-		LHS: parser.NewInteger(3),
-		List: []parser.Primary{
-			parser.NewInteger(1),
-			parser.NewInteger(2),
-			parser.NewInteger(3),
-		},
-		Operator: ">",
-		Result:   ternary.FALSE,
-	},
-	{
-		LHS:      parser.NewInteger(5),
-		List:     nil,
-		Operator: "=",
-		Result:   ternary.TRUE,
-	},
-}
-
-func TestAll(t *testing.T) {
-	for _, v := range allTests {
-		r := All(v.LHS, v.List, v.Operator)
+		if 0 < len(v.Error) {
+			t.Errorf("no error, want error %q for (%s %s %s %s)", v.Error, v.LHS, v.Operator, parser.TokenLiteral(v.Type), v.List)
+			continue
+		}
 		if r != v.Result {
-			t.Errorf("result = %s, want %s for (%s %s all (%s))", r, v.Result, v.LHS, v.Operator, v.List)
+			t.Errorf("result = %s, want %s for (%s %s %s %s)", r, v.Result, v.LHS, v.Operator, parser.TokenLiteral(v.Type), v.List)
 		}
 	}
 }

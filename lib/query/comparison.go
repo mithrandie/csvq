@@ -1,6 +1,7 @@
 package query
 
 import (
+	"errors"
 	"strings"
 	"unicode/utf8"
 
@@ -152,6 +153,22 @@ func Compare(p1 parser.Primary, p2 parser.Primary, operator string) ternary.Valu
 	}
 }
 
+func CompareRowValues(v1 []parser.Primary, v2 []parser.Primary, operator string) (ternary.Value, error) {
+	if v1 == nil || v2 == nil {
+		return ternary.UNKNOWN, nil
+	}
+
+	if len(v1) != len(v2) {
+		return ternary.FALSE, errors.New("row value length does not match")
+	}
+
+	results := make([]ternary.Value, len(v2))
+	for i := 0; i < len(v1); i++ {
+		results[i] = Compare(v1[i], v2[i], operator)
+	}
+	return ternary.All(results), nil
+}
+
 func EquivalentTo(p1 parser.Primary, p2 parser.Primary) ternary.Value {
 	if parser.IsNull(p1) && parser.IsNull(p2) {
 		return ternary.TRUE
@@ -161,11 +178,6 @@ func EquivalentTo(p1 parser.Primary, p2 parser.Primary) ternary.Value {
 
 func Is(p1 parser.Primary, p2 parser.Primary) ternary.Value {
 	return p1.Ternary().EqualTo(p2.Ternary())
-}
-
-func Between(p parser.Primary, low parser.Primary, high parser.Primary) ternary.Value {
-	return ternary.And(GreaterThanOrEqualTo(p, low), LessThanOrEqualTo(p, high))
-
 }
 
 func Like(p1 parser.Primary, p2 parser.Primary) ternary.Value {
@@ -276,34 +288,29 @@ func stringPattern(pattern []rune, position int) (int, int, string, int) {
 	return anyRunesMinLen, anyRunesMaxLen, string(search), returnPostion
 }
 
-func Any(p parser.Primary, list []parser.Primary, operator string) ternary.Value {
-	result := ternary.FALSE
+func InRowValueList(value []parser.Primary, list [][]parser.Primary, matchType int, operator string) (ternary.Value, error) {
+	results := make([]ternary.Value, len(list))
+	var err error
 
-	for _, v := range list {
-		r := Compare(p, v, operator)
-		if r == ternary.TRUE {
-			result = ternary.TRUE
-			break
-		}
-		if result == ternary.FALSE && r == ternary.UNKNOWN {
-			result = ternary.UNKNOWN
+	for i, v := range list {
+		results[i], err = CompareRowValues(value, v, operator)
+		if err != nil {
+			return ternary.FALSE, err
 		}
 	}
-	return result
+
+	switch matchType {
+	case parser.ANY:
+		return ternary.Any(results), nil
+	default: // parser.ALL
+		return ternary.All(results), nil
+	}
 }
 
-func All(p parser.Primary, list []parser.Primary, operator string) ternary.Value {
-	result := ternary.TRUE
+func Any(value []parser.Primary, list [][]parser.Primary, operator string) (ternary.Value, error) {
+	return InRowValueList(value, list, parser.ANY, operator)
+}
 
-	for _, v := range list {
-		r := Compare(p, v, operator)
-		if r == ternary.FALSE {
-			result = ternary.FALSE
-			break
-		}
-		if result == ternary.TRUE && r == ternary.UNKNOWN {
-			result = ternary.UNKNOWN
-		}
-	}
-	return result
+func All(value []parser.Primary, list [][]parser.Primary, operator string) (ternary.Value, error) {
+	return InRowValueList(value, list, parser.ALL, operator)
 }

@@ -449,6 +449,57 @@ func TestParentheses_String(t *testing.T) {
 	}
 }
 
+func TestRowValue_String(t *testing.T) {
+	e := RowValue{
+		Value: ValueList{
+			Values: []Expression{
+				NewInteger(1),
+				NewInteger(2),
+			},
+		},
+	}
+	expect := "(1, 2)"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestValueList_String(t *testing.T) {
+	e := ValueList{
+		Values: []Expression{
+			NewInteger(1),
+			NewInteger(2),
+		},
+	}
+	expect := "(1, 2)"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestRowValueList_String(t *testing.T) {
+	e := RowValueList{
+		RowValues: []Expression{
+			ValueList{
+				Values: []Expression{
+					NewInteger(1),
+					NewInteger(2),
+				},
+			},
+			ValueList{
+				Values: []Expression{
+					NewInteger(3),
+					NewInteger(4),
+				},
+			},
+		},
+	}
+	expect := "((1, 2), (3, 4))"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
 func TestSelectQuery_String(t *testing.T) {
 	e := SelectQuery{
 		SelectEntity: SelectEntity{
@@ -473,8 +524,12 @@ func TestSelectQuery_String(t *testing.T) {
 			Limit:  "limit",
 			Number: 10,
 		},
+		OffsetClause: OffsetClause{
+			Offset: "offset",
+			Number: 10,
+		},
 	}
-	expect := "select column from table order by column limit 10"
+	expect := "select column from table order by column limit 10 offset 10"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -661,6 +716,14 @@ func TestLimitClause_String(t *testing.T) {
 	}
 }
 
+func TestOffsetClause_String(t *testing.T) {
+	e := OffsetClause{Offset: "offset", Number: 10}
+	expect := "offset 10"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
 func TestSubquery_String(t *testing.T) {
 	e := Subquery{
 		Query: SelectQuery{
@@ -766,9 +829,13 @@ func TestIn_String(t *testing.T) {
 	e := In{
 		In:  "in",
 		LHS: Identifier{Literal: "column"},
-		List: []Expression{
-			Integer{literal: "1"},
-			Integer{literal: "2"},
+		Values: RowValue{
+			Value: ValueList{
+				Values: []Expression{
+					Integer{literal: "1"},
+					Integer{literal: "2"},
+				},
+			},
 		},
 		Negation: Token{Token: NOT, Literal: "not"},
 	}
@@ -776,41 +843,21 @@ func TestIn_String(t *testing.T) {
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
-
-	e = In{
-		In:  "in",
-		LHS: Identifier{Literal: "column"},
-		Query: Subquery{
-			Query: SelectQuery{
-				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{
-						Select: "select",
-						Fields: []Expression{
-							Integer{literal: "1"},
-						},
-					},
-					FromClause: FromClause{
-						From: "from",
-						Tables: []Expression{
-							Dual{Dual: "dual"},
-						},
-					},
-				},
-			},
-		},
-	}
-	expect = "column in (select 1 from dual)"
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
 }
 
 func TestAll_String(t *testing.T) {
 	e := All{
-		All:      "all",
-		LHS:      Identifier{Literal: "column"},
+		All: "all",
+		LHS: RowValue{
+			Value: ValueList{
+				Values: []Expression{
+					Identifier{Literal: "column1"},
+					Identifier{Literal: "column2"},
+				},
+			},
+		},
 		Operator: Token{Token: COMPARISON_OP, Literal: ">"},
-		Query: Subquery{
+		Values: Subquery{
 			Query: SelectQuery{
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
@@ -829,7 +876,7 @@ func TestAll_String(t *testing.T) {
 			},
 		},
 	}
-	expect := "column > all (select 1 from dual)"
+	expect := "(column1, column2) > all (select 1 from dual)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -837,10 +884,17 @@ func TestAll_String(t *testing.T) {
 
 func TestAny_String(t *testing.T) {
 	e := Any{
-		Any:      "any",
-		LHS:      Identifier{Literal: "column"},
+		Any: "any",
+		LHS: RowValue{
+			Value: ValueList{
+				Values: []Expression{
+					Identifier{Literal: "column1"},
+					Identifier{Literal: "column2"},
+				},
+			},
+		},
 		Operator: Token{Token: COMPARISON_OP, Literal: ">"},
-		Query: Subquery{
+		Values: Subquery{
 			Query: SelectQuery{
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
@@ -859,7 +913,7 @@ func TestAny_String(t *testing.T) {
 			},
 		},
 	}
-	expect := "column > any (select 1 from dual)"
+	expect := "(column1, column2) > any (select 1 from dual)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1376,16 +1430,20 @@ func TestInsertQuery_String(t *testing.T) {
 		},
 		Values: "values",
 		ValuesList: []Expression{
-			InsertValues{
-				Values: []Expression{
-					NewInteger(1),
-					NewInteger(2),
+			RowValue{
+				ValueList{
+					Values: []Expression{
+						NewInteger(1),
+						NewInteger(2),
+					},
 				},
 			},
-			InsertValues{
-				Values: []Expression{
-					NewInteger(3),
-					NewInteger(4),
+			RowValue{
+				ValueList{
+					Values: []Expression{
+						NewInteger(3),
+						NewInteger(4),
+					},
 				},
 			},
 		},
@@ -1416,19 +1474,6 @@ func TestInsertQuery_String(t *testing.T) {
 		},
 	}
 	expect = "insert into table1 (column1, column2) select 1, 2"
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-}
-
-func TestInsertValues_String(t *testing.T) {
-	e := InsertValues{
-		Values: []Expression{
-			NewInteger(1),
-			NewInteger(2),
-		},
-	}
-	expect := "(1, 2)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}

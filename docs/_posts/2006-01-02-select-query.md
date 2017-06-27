@@ -13,6 +13,7 @@ select_query
   : select_entity
       [order_by_clause]
       [limit_clause]
+      [offset_clause]
 
 select_entity
   : select_clause
@@ -20,7 +21,11 @@ select_entity
       [where_clause]
       [group_by_clause]
       [having_clause]
-  | select_entity set_operator [ALL] select_entity 
+  | select_set_entity set_operator [ALL] select_set_entity 
+
+select_set_entity
+  : select_entity
+  | (select_query)
 ```
 
 _select_clause_
@@ -43,6 +48,9 @@ _order_by_clause_
 
 _limit_clause_
 : [Limit Clause](#limit_clause)
+
+_offset_clause_
+: [Offset Clause](#offsetma_clause)
 
 _set_operator_
 : [Set Operators]({{ '/reference/set-operators.html' | relative_url }})
@@ -239,6 +247,19 @@ The Limit clause is used to specify the maximum number of records to return.
 
 ```sql
 LIMIT number
+```
+
+_number_
+: [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+
+## Offset Clause
+{: #offset_clause}
+
+The Offset clause is used to exclude the first set of records.
+
+```sql
+OFFSET number
 ```
 
 _number_
