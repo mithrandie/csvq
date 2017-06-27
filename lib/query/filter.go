@@ -138,16 +138,37 @@ func (f Filter) evalConcat(expr parser.Concat) (parser.Primary, error) {
 }
 
 func (f Filter) evalComparison(expr parser.Comparison) (parser.Primary, error) {
-	lhs, err := f.Evaluate(expr.LHS)
-	if err != nil {
-		return nil, err
-	}
-	rhs, err := f.Evaluate(expr.RHS)
-	if err != nil {
-		return nil, err
-	}
+	var t ternary.Value
 
-	t := Compare(lhs, rhs, expr.Operator.Literal)
+	switch expr.LHS.(type) {
+	case parser.RowValue:
+		lhs, err := f.evalRowValue(expr.LHS.(parser.RowValue))
+		if err != nil {
+			return nil, err
+		}
+
+		rhs, err := f.evalRowValue(expr.RHS.(parser.RowValue))
+		if err != nil {
+			return nil, err
+		}
+
+		t, err = CompareRowValues(lhs, rhs, expr.Operator.Literal)
+		if err != nil {
+			return nil, err
+		}
+
+	default:
+		lhs, err := f.Evaluate(expr.LHS)
+		if err != nil {
+			return nil, err
+		}
+		rhs, err := f.Evaluate(expr.RHS)
+		if err != nil {
+			return nil, err
+		}
+
+		t = Compare(lhs, rhs, expr.Operator.Literal)
+	}
 	return parser.NewTernary(t), nil
 }
 
@@ -169,46 +190,114 @@ func (f Filter) evalIs(expr parser.Is) (parser.Primary, error) {
 }
 
 func (f Filter) evalBetween(expr parser.Between) (parser.Primary, error) {
-	lhs, err := f.Evaluate(expr.LHS)
-	if err != nil {
-		return nil, err
-	}
-	low, err := f.Evaluate(expr.Low)
-	if err != nil {
-		return nil, err
-	}
-	high, err := f.Evaluate(expr.High)
-	if err != nil {
-		return nil, err
+	var t ternary.Value
+
+	switch expr.LHS.(type) {
+	case parser.RowValue:
+		lhs, err := f.evalRowValue(expr.LHS.(parser.RowValue))
+		if err != nil {
+			return nil, err
+		}
+
+		low, err := f.evalRowValue(expr.Low.(parser.RowValue))
+		if err != nil {
+			return nil, err
+		}
+
+		high, err := f.evalRowValue(expr.High.(parser.RowValue))
+		if err != nil {
+			return nil, err
+		}
+
+		t1, err := CompareRowValues(lhs, low, ">=")
+		if err != nil {
+			return nil, err
+		}
+		t2, err := CompareRowValues(lhs, high, "<=")
+		if err != nil {
+			return nil, err
+		}
+
+		t = ternary.And(t1, t2)
+	default:
+		lhs, err := f.Evaluate(expr.LHS)
+		if err != nil {
+			return nil, err
+		}
+		low, err := f.Evaluate(expr.Low)
+		if err != nil {
+			return nil, err
+		}
+		high, err := f.Evaluate(expr.High)
+		if err != nil {
+			return nil, err
+		}
+
+		t = ternary.And(GreaterThanOrEqualTo(lhs, low), LessThanOrEqualTo(lhs, high))
 	}
 
-	t := Between(lhs, low, high)
 	if expr.IsNegated() {
 		t = ternary.Not(t)
 	}
 	return parser.NewTernary(t), nil
 }
 
+func (f Filter) valuesForRowValueListComparison(lhs parser.Expression, values parser.Expression) ([]parser.Primary, [][]parser.Primary, error) {
+	var value []parser.Primary
+	var list [][]parser.Primary
+	var err error
+
+	switch lhs.(type) {
+	case parser.RowValue:
+		value, err = f.evalRowValue(lhs.(parser.RowValue))
+		if err != nil {
+			return nil, nil, err
+		}
+
+		list, err = f.evalRowValues(values)
+		if err != nil {
+			return nil, nil, err
+		}
+
+	default:
+		lhs, err := f.Evaluate(lhs)
+		if err != nil {
+			return nil, nil, err
+		}
+		value = []parser.Primary{lhs}
+
+		rowValue := values.(parser.RowValue)
+		switch rowValue.Value.(type) {
+		case parser.Subquery:
+			list, err = f.evalSubqueryForRowValues(rowValue.Value.(parser.Subquery))
+			if err != nil {
+				return nil, nil, err
+			}
+		case parser.ValueList:
+			values, err := f.evalValueList(rowValue.Value.(parser.ValueList))
+			if err != nil {
+				return nil, nil, err
+			}
+			list = make([][]parser.Primary, len(values))
+			for i, v := range values {
+				list[i] = []parser.Primary{v}
+			}
+		}
+	}
+	return value, list, nil
+}
+
 func (f Filter) evalIn(expr parser.In) (parser.Primary, error) {
-	lhs, err := f.Evaluate(expr.LHS)
+	value, list, err := f.valuesForRowValueListComparison(expr.LHS, expr.Values)
 	if err != nil {
 		return nil, err
 	}
 
-	var list []parser.Primary
-	if expr.List != nil {
-		list, err = f.evalList(expr.List)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		list, err = f.evalSubqueryForList(expr.Query.Query)
-		if err != nil {
-			return nil, err
-		}
+	t, err := Any(value, list, "=")
+	if err != nil {
+		return nil, err
 	}
 
-	t := Any(lhs, list, "=")
 	if expr.IsNegated() {
 		t = ternary.Not(t)
 	}
@@ -216,30 +305,28 @@ func (f Filter) evalIn(expr parser.In) (parser.Primary, error) {
 }
 
 func (f Filter) evalAny(expr parser.Any) (parser.Primary, error) {
-	lhs, err := f.Evaluate(expr.LHS)
-	if err != nil {
-		return nil, err
-	}
-	list, err := f.evalSubqueryForList(expr.Query.Query)
+	value, list, err := f.valuesForRowValueListComparison(expr.LHS, expr.Values)
 	if err != nil {
 		return nil, err
 	}
 
-	t := Any(lhs, list, expr.Operator.Literal)
+	t, err := Any(value, list, expr.Operator.Literal)
+	if err != nil {
+		return nil, err
+	}
 	return parser.NewTernary(t), nil
 }
 
 func (f Filter) evalAll(expr parser.All) (parser.Primary, error) {
-	lhs, err := f.Evaluate(expr.LHS)
-	if err != nil {
-		return nil, err
-	}
-	list, err := f.evalSubqueryForList(expr.Query.Query)
+	value, list, err := f.valuesForRowValueListComparison(expr.LHS, expr.Values)
 	if err != nil {
 		return nil, err
 	}
 
-	t := All(lhs, list, expr.Operator.Literal)
+	t, err := All(value, list, expr.Operator.Literal)
+	if err != nil {
+		return nil, err
+	}
 	return parser.NewTernary(t), nil
 }
 
@@ -480,9 +567,20 @@ func (f Filter) evalVariableSubstitution(expr parser.VariableSubstitution) (pars
 	return GlobalVars.Substitute(expr, f)
 }
 
-func (f Filter) evalList(exprs []parser.Expression) ([]parser.Primary, error) {
-	list := make([]parser.Primary, len(exprs))
-	for i, v := range exprs {
+func (f Filter) evalRowValue(expr parser.RowValue) (values []parser.Primary, err error) {
+	switch expr.Value.(type) {
+	case parser.Subquery:
+		values, err = f.evalSubqueryForRowValue(expr.Value.(parser.Subquery))
+	case parser.ValueList:
+		values, err = f.evalValueList(expr.Value.(parser.ValueList))
+	}
+
+	return
+}
+
+func (f Filter) evalValueList(expr parser.ValueList) ([]parser.Primary, error) {
+	list := make([]parser.Primary, len(expr.Values))
+	for i, v := range expr.Values {
 		s, err := f.Evaluate(v)
 		if err != nil {
 			return nil, err
@@ -492,23 +590,68 @@ func (f Filter) evalList(exprs []parser.Expression) ([]parser.Primary, error) {
 	return list, nil
 }
 
-func (f Filter) evalSubqueryForList(query parser.SelectQuery) ([]parser.Primary, error) {
-	view, err := Select(query, f)
-	if err != nil {
-		return nil, err
+func (f Filter) evalRowValueList(expr parser.RowValueList) ([][]parser.Primary, error) {
+	list := make([][]parser.Primary, len(expr.RowValues))
+	for i, v := range expr.RowValues {
+		values, err := f.evalRowValue(v.(parser.RowValue))
+		if err != nil {
+			return nil, err
+		}
+		list[i] = values
+	}
+	return list, nil
+}
+
+func (f Filter) evalRowValues(expr parser.Expression) (values [][]parser.Primary, err error) {
+	switch expr.(type) {
+	case parser.Subquery:
+		values, err = f.evalSubqueryForRowValues(expr.(parser.Subquery))
+	case parser.RowValueList:
+		values, err = f.evalRowValueList(expr.(parser.RowValueList))
 	}
 
-	if 1 < view.FieldLen() {
-		return nil, errors.New("subquery contains too many fields, should be only one field")
+	return
+}
+
+func (f Filter) evalSubqueryForRowValue(expr parser.Subquery) ([]parser.Primary, error) {
+	view, err := Select(expr.Query, f)
+	if err != nil {
+		return nil, err
 	}
 
 	if view.RecordLen() < 1 {
 		return nil, nil
 	}
 
-	list := make([]parser.Primary, view.RecordLen())
-	for i, v := range view.Records {
-		list[i] = v[0].Primary()
+	if 1 < view.RecordLen() {
+		return nil, errors.New("subquery returns too many records, should be only one record")
+	}
+
+	values := make([]parser.Primary, view.FieldLen())
+	for i, cell := range view.Records[0] {
+		values[i] = cell.Primary()
+	}
+
+	return values, nil
+}
+
+func (f Filter) evalSubqueryForRowValues(expr parser.Subquery) ([][]parser.Primary, error) {
+	view, err := Select(expr.Query, f)
+	if err != nil {
+		return nil, err
+	}
+
+	if view.RecordLen() < 1 {
+		return nil, nil
+	}
+
+	list := make([][]parser.Primary, view.RecordLen())
+	for i, r := range view.Records {
+		values := make([]parser.Primary, view.FieldLen())
+		for j, cell := range r {
+			values[j] = cell.Primary()
+		}
+		list[i] = values
 	}
 
 	return list, nil
@@ -521,7 +664,7 @@ func (f Filter) evalSubqueryForSingleValue(query parser.SelectQuery) (parser.Pri
 	}
 
 	if 1 < view.FieldLen() {
-		return nil, errors.New("subquery contains too many fields, should be only one field")
+		return nil, errors.New("subquery returns too many fields, should be only one field")
 	}
 
 	if 1 < view.RecordLen() {

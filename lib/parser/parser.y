@@ -46,6 +46,8 @@ package parser
 %type<primary>     primary
 %type<expression>  field_reference
 %type<expression>  value
+%type<expression>  row_value
+%type<expressions> row_values
 %type<expression>  order_item
 %type<expression>  subquery
 %type<expression>  string_operation
@@ -74,8 +76,6 @@ package parser
 %type<expressions> fields
 %type<expressions> case_when
 %type<expression>  insert_query
-%type<expression>  insert_values
-%type<expressions> insert_values_list
 %type<expression>  update_query
 %type<expression>  update_set
 %type<expressions> update_set_list
@@ -545,6 +545,26 @@ value
         $$ = Parentheses{Expr: $2}
     }
 
+row_value
+    : '(' values ')'
+    {
+        $$ = RowValue{Value: ValueList{Values: $2}}
+    }
+    | subquery
+    {
+        $$ = RowValue{Value: $1}
+    }
+
+row_values
+    : row_value
+    {
+        $$ = []Expression{$1}
+    }
+    | row_value ',' row_values
+    {
+        $$ = append([]Expression{$1}, $3...)
+    }
+
 order_item
     : value order_direction
     {
@@ -599,7 +619,15 @@ comparison
     {
         $$ = Comparison{LHS: $1, Operator: $2, RHS: $3}
     }
+    | row_value COMPARISON_OP row_value
+    {
+        $$ = Comparison{LHS: $1, Operator: $2, RHS: $3}
+    }
     | value '=' value
+    {
+        $$ = Comparison{LHS: $1, Operator: Token{Token: COMPARISON_OP, Literal: "="}, RHS: $3}
+    }
+    | row_value '=' row_value
     {
         $$ = Comparison{LHS: $1, Operator: Token{Token: COMPARISON_OP, Literal: "="}, RHS: $3}
     }
@@ -615,25 +643,49 @@ comparison
     {
         $$ = Between{Between: $3.Literal, And: $5.Literal, LHS: $1, Low: $4, High: $6, Negation: $2}
     }
-    | value negation IN '(' values ')'
+    | row_value negation BETWEEN row_value AND row_value
     {
-        $$ = In{In: $3.Literal, LHS: $1, List: $5, Negation: $2}
+        $$ = Between{Between: $3.Literal, And: $5.Literal, LHS: $1, Low: $4, High: $6, Negation: $2}
     }
-    | value negation IN subquery
+    | value negation IN row_value
     {
-        $$ = In{In: $3.Literal, LHS: $1, Query: $4.(Subquery), Negation: $2}
+        $$ = In{In: $3.Literal, LHS: $1, Values: $4, Negation: $2}
+    }
+    | row_value negation IN '(' row_values ')'
+    {
+        $$ = In{In: $3.Literal, LHS: $1, Values: RowValueList{RowValues: $5}, Negation: $2}
+    }
+    | row_value negation IN subquery
+    {
+        $$ = In{In: $3.Literal, LHS: $1, Values: $4, Negation: $2}
     }
     | value negation LIKE value
     {
         $$ = Like{Like: $3.Literal, LHS: $1, Pattern: $4, Negation: $2}
     }
-    | value comparison_operator ANY subquery
+    | value comparison_operator ANY row_value
     {
-        $$ = Any{Any: $3.Literal, LHS: $1, Operator: $2, Query: $4.(Subquery)}
+        $$ = Any{Any: $3.Literal, LHS: $1, Operator: $2, Values: $4}
     }
-    | value comparison_operator ALL subquery
+    | row_value comparison_operator ANY '(' row_values ')'
     {
-        $$ = All{All: $3.Literal, LHS: $1, Operator: $2, Query: $4.(Subquery)}
+        $$ = Any{Any: $3.Literal, LHS: $1, Operator: $2, Values: RowValueList{RowValues: $5}}
+    }
+    | row_value comparison_operator ANY subquery
+    {
+        $$ = Any{Any: $3.Literal, LHS: $1, Operator: $2, Values: $4}
+    }
+    | value comparison_operator ALL row_value
+    {
+        $$ = All{All: $3.Literal, LHS: $1, Operator: $2, Values: $4}
+    }
+    | row_value comparison_operator ALL '(' row_values ')'
+    {
+        $$ = All{All: $3.Literal, LHS: $1, Operator: $2, Values: RowValueList{RowValues: $5}}
+    }
+    | row_value comparison_operator ALL subquery
+    {
+        $$ = All{All: $3.Literal, LHS: $1, Operator: $2, Values: $4}
     }
     | EXISTS subquery
     {
@@ -923,11 +975,11 @@ case_when
     }
 
 insert_query
-    : INSERT INTO identifier VALUES insert_values_list
+    : INSERT INTO identifier VALUES row_values
     {
         $$ = InsertQuery{Insert: $1.Literal, Into: $2.Literal, Table: $3, Values: $4.Literal, ValuesList: $5}
     }
-    | INSERT INTO identifier '(' field_references ')' VALUES insert_values_list
+    | INSERT INTO identifier '(' field_references ')' VALUES row_values
     {
         $$ = InsertQuery{Insert: $1.Literal, Into: $2.Literal, Table: $3, Fields: $5, Values: $7.Literal, ValuesList: $8}
     }
@@ -938,22 +990,6 @@ insert_query
     | INSERT INTO identifier '(' field_references ')' select_query
     {
         $$ = InsertQuery{Insert: $1.Literal, Into: $2.Literal, Table: $3, Fields: $5, Query: $7.(SelectQuery)}
-    }
-
-insert_values
-    : '(' values ')'
-    {
-        $$ = InsertValues{Values: $2}
-    }
-
-insert_values_list
-    : insert_values
-    {
-        $$ = []Expression{$1}
-    }
-    | insert_values ',' insert_values_list
-    {
-        $$ = append([]Expression{$1}, $3...)
     }
 
 update_query

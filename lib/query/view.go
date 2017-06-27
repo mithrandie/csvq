@@ -752,22 +752,17 @@ func (view *View) Limit(clause parser.LimitClause) {
 
 func (view *View) InsertValues(fields []parser.Expression, list []parser.Expression) error {
 	var filter Filter
-	var err error
 	valuesList := make([][]parser.Primary, len(list))
 
 	for i, item := range list {
-		row := item.(parser.InsertValues)
-		if len(fields) != len(row.Values) {
+		values, err := filter.evalRowValue(item.(parser.RowValue))
+		if err != nil {
+			return err
+		}
+		if len(fields) != len(values) {
 			return errors.New("field length does not match value length")
 		}
 
-		values := make([]parser.Primary, len(row.Values))
-		for j, v := range row.Values {
-			values[j], err = filter.Evaluate(v)
-			if err != nil {
-				return err
-			}
-		}
 		valuesList[i] = values
 	}
 

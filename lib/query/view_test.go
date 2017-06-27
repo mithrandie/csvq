@@ -1590,14 +1590,18 @@ var viewInsertValuesTests = []struct {
 			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 		},
 		ValuesList: []parser.Expression{
-			parser.InsertValues{
-				Values: []parser.Expression{
-					parser.NewInteger(3),
+			parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.Expression{
+						parser.NewInteger(3),
+					},
 				},
 			},
-			parser.InsertValues{
-				Values: []parser.Expression{
-					parser.NewInteger(4),
+			parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.Expression{
+						parser.NewInteger(4),
+					},
 				},
 			},
 		},
@@ -1635,9 +1639,11 @@ var viewInsertValuesTests = []struct {
 			parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 		},
 		ValuesList: []parser.Expression{
-			parser.InsertValues{
-				Values: []parser.Expression{
-					parser.NewInteger(3),
+			parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.Expression{
+						parser.NewInteger(3),
+					},
 				},
 			},
 		},
@@ -1649,9 +1655,11 @@ var viewInsertValuesTests = []struct {
 			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 		},
 		ValuesList: []parser.Expression{
-			parser.InsertValues{
-				Values: []parser.Expression{
-					parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+			parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+					},
 				},
 			},
 		},
@@ -1663,9 +1671,11 @@ var viewInsertValuesTests = []struct {
 			parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 		},
 		ValuesList: []parser.Expression{
-			parser.InsertValues{
-				Values: []parser.Expression{
-					parser.NewInteger(3),
+			parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.Expression{
+						parser.NewInteger(3),
+					},
 				},
 			},
 		},

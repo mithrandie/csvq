@@ -13,7 +13,7 @@ Insert query is used to insert records to a csv file.
 ```sql
 INSERT INTO table_name
   [(column_name [, column_name ...])]
-  VALUES (value [, value ...]) [, (value [, value ...]) ...]
+  VALUES row_value [, row_value ...]
 ```
 
 _table_name_
@@ -22,8 +22,8 @@ _table_name_
 _column_name_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
 
-_value_
-: [value]({{ '/reference/value.html' | relative_url }})
+_row_value_
+: [Row Value]({{ '/reference/row-value.html' | relative_url }})
 
 ## Insert From Select Query
 

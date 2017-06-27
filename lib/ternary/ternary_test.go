@@ -266,3 +266,65 @@ func TestOr(t *testing.T) {
 		}
 	}
 }
+
+var allTests = []struct {
+	ValueList []Value
+	Result    Value
+}{
+	{
+		ValueList: []Value{TRUE, TRUE, TRUE},
+		Result:    TRUE,
+	},
+	{
+		ValueList: []Value{TRUE, UNKNOWN, TRUE},
+		Result:    UNKNOWN,
+	},
+	{
+		ValueList: []Value{TRUE, UNKNOWN, FALSE},
+		Result:    FALSE,
+	},
+	{
+		ValueList: []Value{},
+		Result:    TRUE,
+	},
+}
+
+func TestAll(t *testing.T) {
+	for _, test := range allTests {
+		v := All(test.ValueList)
+		if v != test.Result {
+			t.Errorf("ternary = %s, want %s for all \"%s\"", v, test.Result, test.ValueList)
+		}
+	}
+}
+
+var anyTests = []struct {
+	ValueList []Value
+	Result    Value
+}{
+	{
+		ValueList: []Value{TRUE, UNKNOWN, FALSE},
+		Result:    TRUE,
+	},
+	{
+		ValueList: []Value{FALSE, UNKNOWN, FALSE},
+		Result:    UNKNOWN,
+	},
+	{
+		ValueList: []Value{FALSE, FALSE, FALSE},
+		Result:    FALSE,
+	},
+	{
+		ValueList: []Value{},
+		Result:    FALSE,
+	},
+}
+
+func TestAny(t *testing.T) {
+	for _, test := range anyTests {
+		v := Any(test.ValueList)
+		if v != test.Result {
+			t.Errorf("ternary = %s, want %s for any \"%s\"", v, test.Result, test.ValueList)
+		}
+	}
+}

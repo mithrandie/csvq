@@ -341,6 +341,39 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select (column1, column2) = (1, 2)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Comparison{
+								LHS: RowValue{
+									Value: ValueList{
+										Values: []Expression{
+											FieldReference{Column: Identifier{Literal: "column1"}},
+											FieldReference{Column: Identifier{Literal: "column2"}},
+										},
+									},
+								},
+								Operator: Token{Token: COMPARISON_OP, Literal: "="},
+								RHS: RowValue{
+									Value: ValueList{
+										Values: []Expression{
+											NewInteger(1),
+											NewInteger(2),
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "select column1 < 1",
 		Output: []Statement{
 			SelectQuery{
@@ -352,6 +385,46 @@ var parseTests = []struct {
 								LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
 								Operator: Token{Token: COMPARISON_OP, Literal: "<"},
 								RHS:      NewInteger(1),
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select (column1, column2) < (select 1, 2)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Comparison{
+								LHS: RowValue{
+									Value: ValueList{
+										Values: []Expression{
+											FieldReference{Column: Identifier{Literal: "column1"}},
+											FieldReference{Column: Identifier{Literal: "column2"}},
+										},
+									},
+								},
+								Operator: Token{Token: COMPARISON_OP, Literal: "<"},
+								RHS: RowValue{
+									Value: Subquery{
+										Query: SelectQuery{
+											SelectEntity: SelectEntity{
+												SelectClause: SelectClause{
+													Select: "select",
+													Fields: []Expression{
+														Field{Object: NewInteger(1)},
+														Field{Object: NewInteger(2)},
+													},
+												},
+											},
+										},
+									},
+								},
 							}},
 						},
 					},
@@ -421,6 +494,48 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select (column1, column2) between (1, 2) and (3, 4)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Between{
+								Between: "between",
+								And:     "and",
+								LHS: RowValue{
+									Value: ValueList{
+										Values: []Expression{
+											FieldReference{Column: Identifier{Literal: "column1"}},
+											FieldReference{Column: Identifier{Literal: "column2"}},
+										},
+									},
+								},
+								Low: RowValue{
+									Value: ValueList{
+										Values: []Expression{
+											NewInteger(1),
+											NewInteger(2),
+										},
+									},
+								},
+								High: RowValue{
+									Value: ValueList{
+										Values: []Expression{
+											NewInteger(3),
+											NewInteger(4),
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "select column1 not in (1, 2, 3)",
 		Output: []Statement{
 			SelectQuery{
@@ -431,10 +546,14 @@ var parseTests = []struct {
 							Field{Object: In{
 								In:  "in",
 								LHS: FieldReference{Column: Identifier{Literal: "column1"}},
-								List: []Expression{
-									NewIntegerFromString("1"),
-									NewIntegerFromString("2"),
-									NewIntegerFromString("3"),
+								Values: RowValue{
+									Value: ValueList{
+										Values: []Expression{
+											NewIntegerFromString("1"),
+											NewIntegerFromString("2"),
+											NewIntegerFromString("3"),
+										},
+									},
 								},
 								Negation: Token{Token: NOT, Literal: "not"},
 							}},
@@ -445,7 +564,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select column1 in (select 1)",
+		Input: "select (column1, column2) not in ((1, 2), (3, 4))",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -453,9 +572,62 @@ var parseTests = []struct {
 						Select: "select",
 						Fields: []Expression{
 							Field{Object: In{
-								In:  "in",
-								LHS: FieldReference{Column: Identifier{Literal: "column1"}},
-								Query: Subquery{
+								In: "in",
+								LHS: RowValue{
+									Value: ValueList{
+										Values: []Expression{
+											FieldReference{Column: Identifier{Literal: "column1"}},
+											FieldReference{Column: Identifier{Literal: "column2"}},
+										},
+									},
+								},
+								Values: RowValueList{
+									RowValues: []Expression{
+										RowValue{
+											Value: ValueList{
+												Values: []Expression{
+													NewInteger(1),
+													NewInteger(2),
+												},
+											},
+										},
+										RowValue{
+											Value: ValueList{
+												Values: []Expression{
+													NewInteger(3),
+													NewInteger(4),
+												},
+											},
+										},
+									},
+								},
+								Negation: Token{Token: NOT, Literal: "not"},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select (column1, column2) in (select 1)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: In{
+								In: "in",
+								LHS: RowValue{
+									Value: ValueList{
+										Values: []Expression{
+											FieldReference{Column: Identifier{Literal: "column1"}},
+											FieldReference{Column: Identifier{Literal: "column2"}},
+										},
+									},
+								},
+								Values: Subquery{
 									Query: SelectQuery{
 										SelectEntity: SelectEntity{
 											SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
@@ -501,7 +673,88 @@ var parseTests = []struct {
 								Any:      "any",
 								LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
 								Operator: Token{Token: COMPARISON_OP, Literal: "="},
-								Query: Subquery{
+								Values: RowValue{
+									Value: Subquery{
+										Query: SelectQuery{
+											SelectEntity: SelectEntity{
+												SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+											},
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select (column1, column2) = any ((1, 2), (3, 4))",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Any{
+								Any: "any",
+								LHS: RowValue{
+									Value: ValueList{
+										Values: []Expression{
+											FieldReference{Column: Identifier{Literal: "column1"}},
+											FieldReference{Column: Identifier{Literal: "column2"}},
+										},
+									},
+								},
+								Operator: Token{Token: COMPARISON_OP, Literal: "="},
+								Values: RowValueList{
+									RowValues: []Expression{
+										RowValue{
+											Value: ValueList{
+												Values: []Expression{
+													NewInteger(1),
+													NewInteger(2),
+												},
+											},
+										},
+										RowValue{
+											Value: ValueList{
+												Values: []Expression{
+													NewInteger(3),
+													NewInteger(4),
+												},
+											},
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select (column1, column2) = any (select 1)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Any{
+								Any: "any",
+								LHS: RowValue{
+									Value: ValueList{
+										Values: []Expression{
+											FieldReference{Column: Identifier{Literal: "column1"}},
+											FieldReference{Column: Identifier{Literal: "column2"}},
+										},
+									},
+								},
+								Operator: Token{Token: COMPARISON_OP, Literal: "="},
+								Values: Subquery{
 									Query: SelectQuery{
 										SelectEntity: SelectEntity{
 											SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
@@ -527,7 +780,88 @@ var parseTests = []struct {
 								All:      "all",
 								LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
 								Operator: Token{Token: COMPARISON_OP, Literal: "="},
-								Query: Subquery{
+								Values: RowValue{
+									Subquery{
+										Query: SelectQuery{
+											SelectEntity: SelectEntity{
+												SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+											},
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select (column1, column2) = all ((1, 2), (3, 4))",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: All{
+								All: "all",
+								LHS: RowValue{
+									Value: ValueList{
+										Values: []Expression{
+											FieldReference{Column: Identifier{Literal: "column1"}},
+											FieldReference{Column: Identifier{Literal: "column2"}},
+										},
+									},
+								},
+								Operator: Token{Token: COMPARISON_OP, Literal: "="},
+								Values: RowValueList{
+									RowValues: []Expression{
+										RowValue{
+											Value: ValueList{
+												Values: []Expression{
+													NewInteger(1),
+													NewInteger(2),
+												},
+											},
+										},
+										RowValue{
+											Value: ValueList{
+												Values: []Expression{
+													NewInteger(3),
+													NewInteger(4),
+												},
+											},
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select (column1, column2) = all (select 1)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: All{
+								All: "all",
+								LHS: RowValue{
+									Value: ValueList{
+										Values: []Expression{
+											FieldReference{Column: Identifier{Literal: "column1"}},
+											FieldReference{Column: Identifier{Literal: "column2"}},
+										},
+									},
+								},
+								Operator: Token{Token: COMPARISON_OP, Literal: "="},
+								Values: Subquery{
 									Query: SelectQuery{
 										SelectEntity: SelectEntity{
 											SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
@@ -1208,16 +1542,20 @@ var parseTests = []struct {
 				Table:  Identifier{Literal: "table1"},
 				Values: "values",
 				ValuesList: []Expression{
-					InsertValues{
-						Values: []Expression{
-							NewInteger(1),
-							NewString("str1"),
+					RowValue{
+						Value: ValueList{
+							Values: []Expression{
+								NewInteger(1),
+								NewString("str1"),
+							},
 						},
 					},
-					InsertValues{
-						Values: []Expression{
-							NewInteger(2),
-							NewString("str2"),
+					RowValue{
+						Value: ValueList{
+							Values: []Expression{
+								NewInteger(2),
+								NewString("str2"),
+							},
 						},
 					},
 				},
@@ -1237,16 +1575,20 @@ var parseTests = []struct {
 				},
 				Values: "values",
 				ValuesList: []Expression{
-					InsertValues{
-						Values: []Expression{
-							NewInteger(1),
-							NewString("str1"),
+					RowValue{
+						Value: ValueList{
+							Values: []Expression{
+								NewInteger(1),
+								NewString("str1"),
+							},
 						},
 					},
-					InsertValues{
-						Values: []Expression{
-							NewInteger(2),
-							NewString("str2"),
+					RowValue{
+						Value: ValueList{
+							Values: []Expression{
+								NewInteger(2),
+								NewString("str2"),
+							},
 						},
 					},
 				},

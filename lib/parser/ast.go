@@ -385,6 +385,30 @@ func (p Parentheses) String() string {
 	return putParentheses(p.Expr.String())
 }
 
+type RowValue struct {
+	Value Expression
+}
+
+func (e RowValue) String() string {
+	return e.Value.String()
+}
+
+type ValueList struct {
+	Values []Expression
+}
+
+func (e ValueList) String() string {
+	return putParentheses(listExpressions(e.Values))
+}
+
+type RowValueList struct {
+	RowValues []Expression
+}
+
+func (e RowValueList) String() string {
+	return putParentheses(listExpressions(e.RowValues))
+}
+
 type SelectQuery struct {
 	SelectEntity  Expression
 	OrderByClause Expression
@@ -600,8 +624,7 @@ func (b Between) String() string {
 type In struct {
 	In       string
 	LHS      Expression
-	List     []Expression
-	Query    Subquery
+	Values   Expression
 	Negation Token
 }
 
@@ -614,12 +637,7 @@ func (i In) String() string {
 	if i.IsNegated() {
 		s = append(s, i.Negation.Literal)
 	}
-	s = append(s, i.In)
-	if i.List != nil {
-		s = append(s, putParentheses(listExpressions(i.List)))
-	} else {
-		s = append(s, i.Query.String())
-	}
+	s = append(s, i.In, i.Values.String())
 	return joinWithSpace(s)
 }
 
@@ -627,11 +645,11 @@ type All struct {
 	All      string
 	LHS      Expression
 	Operator Token
-	Query    Subquery
+	Values   Expression
 }
 
 func (a All) String() string {
-	s := []string{a.LHS.String(), a.Operator.Literal, a.All, a.Query.String()}
+	s := []string{a.LHS.String(), a.Operator.Literal, a.All, a.Values.String()}
 	return joinWithSpace(s)
 }
 
@@ -639,11 +657,11 @@ type Any struct {
 	Any      string
 	LHS      Expression
 	Operator Token
-	Query    Subquery
+	Values   Expression
 }
 
 func (a Any) String() string {
-	s := []string{a.LHS.String(), a.Operator.Literal, a.Any, a.Query.String()}
+	s := []string{a.LHS.String(), a.Operator.Literal, a.Any, a.Values.String()}
 	return joinWithSpace(s)
 }
 
@@ -1010,14 +1028,6 @@ func (iq InsertQuery) String() string {
 		s = append(s, iq.Query.String())
 	}
 	return joinWithSpace(s)
-}
-
-type InsertValues struct {
-	Values []Expression
-}
-
-func (iv InsertValues) String() string {
-	return putParentheses(listExpressions(iv.Values))
 }
 
 type UpdateQuery struct {
