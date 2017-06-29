@@ -184,8 +184,9 @@ type View struct {
 
 	filteredIndices []int
 
-	sortIndices    []int
-	sortDirections []int
+	sortIndices       []int
+	sortDirections    []int
+	sortNullPositions []int
 
 	OperatedRecords int
 	OperatedFields  int
@@ -687,9 +688,11 @@ func (view *View) SelectAllColumns() error {
 }
 
 func (view *View) OrderBy(clause parser.OrderByClause) error {
-	view.sortIndices = []int{}
+	view.sortIndices = make([]int, len(clause.Items))
+	view.sortDirections = make([]int, len(clause.Items))
+	view.sortNullPositions = make([]int, len(clause.Items))
 
-	for _, v := range clause.Items {
+	for i, v := range clause.Items {
 		oi := v.(parser.OrderItem)
 		switch oi.Item.(type) {
 		case parser.FieldReference:
@@ -697,32 +700,39 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 			if err != nil {
 				return err
 			}
-			view.sortIndices = append(view.sortIndices, idx)
+			view.sortIndices[i] = idx
 		default:
 			idx, err := view.Header.ContainsAlias(oi.Item.String())
 			if err != nil {
-				for i := range view.Records {
-					var filter Filter = append([]FilterRecord{{View: view, RecordIndex: i}}, view.parentFilter...)
+				for j := range view.Records {
+					var filter Filter = append([]FilterRecord{{View: view, RecordIndex: j}}, view.parentFilter...)
 
 					primary, err := filter.Evaluate(oi.Item)
 					if err != nil {
 						return err
 					}
-					view.Records[i] = append(view.Records[i], NewCell(primary))
+					view.Records[j] = append(view.Records[j], NewCell(primary))
 				}
 				view.Header, idx = AddHeaderField(view.Header, oi.Item.String())
 			}
-			view.sortIndices = append(view.sortIndices, idx)
+			view.sortIndices[i] = idx
 		}
-		view.sortDirections = append(view.sortDirections, oi.Direction.Token)
-	}
 
-	direction := parser.ASC
-	for i := len(view.sortDirections) - 1; i >= 0; i-- {
-		if view.sortDirections[i] == parser.ASC || view.sortDirections[i] == parser.DESC {
-			direction = view.sortDirections[i]
+		if oi.Direction.IsEmpty() {
+			view.sortDirections[i] = parser.ASC
 		} else {
-			view.sortDirections[i] = direction
+			view.sortDirections[i] = oi.Direction.Token
+		}
+
+		if oi.Position.IsEmpty() {
+			switch view.sortDirections[i] {
+			case parser.ASC:
+				view.sortNullPositions[i] = parser.FIRST
+			default: //parser.DESC
+				view.sortNullPositions[i] = parser.LAST
+			}
+		} else {
+			view.sortNullPositions[i] = oi.Position.Token
 		}
 	}
 
@@ -855,6 +865,7 @@ func (view *View) Fix() {
 	view.parentFilter = Filter(nil)
 	view.sortIndices = []int(nil)
 	view.sortDirections = []int(nil)
+	view.sortNullPositions = []int(nil)
 }
 
 func (view *View) Union(calcView *View, all bool) {
@@ -967,9 +978,17 @@ func (view *View) Less(i, j int) bool {
 			continue
 		case ternary.UNKNOWN:
 			if parser.IsNull(pi) {
-				t = ternary.TRUE
+				if view.sortNullPositions[k] == parser.FIRST {
+					return true
+				} else {
+					return false
+				}
 			} else if parser.IsNull(pj) {
-				t = ternary.FALSE
+				if view.sortNullPositions[k] == parser.FIRST {
+					return false
+				} else {
+					return true
+				}
 			} else {
 				continue
 			}

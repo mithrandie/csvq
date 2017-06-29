@@ -1378,6 +1378,12 @@ var viewOrderByTests = []struct {
 				{Alias: "1"},
 			},
 			Records: []Record{
+				NewRecord(5, []parser.Primary{
+					parser.NewNull(),
+					parser.NewString("2"),
+					parser.NewString("4"),
+					parser.NewInteger(1),
+				}),
 				NewRecord(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("4"),
@@ -1402,11 +1408,78 @@ var viewOrderByTests = []struct {
 					parser.NewString("2"),
 					parser.NewInteger(1),
 				}),
-				NewRecord(5, []parser.Primary{
+			},
+		},
+	},
+	{
+		Name: "Order By With Null Positions",
+		View: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("2"),
+				}),
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("2"),
+				}),
+				NewRecord(3, []parser.Primary{
 					parser.NewNull(),
 					parser.NewString("2"),
-					parser.NewString("4"),
-					parser.NewInteger(1),
+				}),
+				NewRecord(4, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewNull(),
+				}),
+				NewRecord(5, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("2"),
+				}),
+			},
+		},
+		OrderBy: parser.OrderByClause{
+			Items: []parser.Expression{
+				parser.OrderItem{
+					Item:     parser.Identifier{Literal: "column1"},
+					Position: parser.Token{Token: parser.LAST, Literal: "last"},
+				},
+				parser.OrderItem{
+					Item:     parser.Identifier{Literal: "column2"},
+					Position: parser.Token{Token: parser.FIRST, Literal: "first"},
+				},
+			},
+		},
+		Result: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(4, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewNull(),
+				}),
+				NewRecord(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("2"),
+				}),
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("2"),
+				}),
+				NewRecord(5, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("2"),
+				}),
+				NewRecord(3, []parser.Primary{
+					parser.NewNull(),
+					parser.NewString("2"),
 				}),
 			},
 		},

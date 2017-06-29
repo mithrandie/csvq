@@ -891,12 +891,17 @@ func (si Stdin) String() string {
 type OrderItem struct {
 	Item      Expression
 	Direction Token
+	Nulls     string
+	Position  Token
 }
 
-func (oi OrderItem) String() string {
-	s := []string{oi.Item.String()}
-	if !oi.Direction.IsEmpty() {
-		s = append(s, oi.Direction.Literal)
+func (e OrderItem) String() string {
+	s := []string{e.Item.String()}
+	if !e.Direction.IsEmpty() {
+		s = append(s, e.Direction.Literal)
+	}
+	if 0 < len(e.Nulls) {
+		s = append(s, e.Nulls, e.Position.Literal)
 	}
 	return joinWithSpace(s)
 }

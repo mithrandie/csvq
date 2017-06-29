@@ -1284,6 +1284,16 @@ func TestOrderItem_String(t *testing.T) {
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
+
+	e = OrderItem{
+		Item:     Identifier{Literal: "column"},
+		Nulls:    "nulls",
+		Position: Token{Token: FIRST, Literal: "first"},
+	}
+	expect = "column nulls first"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
 }
 
 func TestCase_String(t *testing.T) {

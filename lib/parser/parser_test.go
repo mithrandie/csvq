@@ -209,7 +209,7 @@ var parseTests = []struct {
 			" where 1 = 1" +
 			" group by column1, column2 " +
 			" having 1 > 1 " +
-			" order by column4, column5 desc, column6 asc " +
+			" order by column4, column5 desc, column6 asc, column7 nulls first, column8 desc nulls last " +
 			" limit 10 " +
 			" offset 10 ",
 		Output: []Statement{
@@ -247,6 +247,8 @@ var parseTests = []struct {
 						OrderItem{Item: FieldReference{Column: Identifier{Literal: "column4"}}},
 						OrderItem{Item: FieldReference{Column: Identifier{Literal: "column5"}}, Direction: Token{Token: DESC, Literal: "desc"}},
 						OrderItem{Item: FieldReference{Column: Identifier{Literal: "column6"}}, Direction: Token{Token: ASC, Literal: "asc"}},
+						OrderItem{Item: FieldReference{Column: Identifier{Literal: "column7"}}, Nulls: "nulls", Position: Token{Token: FIRST, Literal: "first"}},
+						OrderItem{Item: FieldReference{Column: Identifier{Literal: "column8"}}, Direction: Token{Token: DESC, Literal: "desc"}, Nulls: "nulls", Position: Token{Token: LAST, Literal: "last"}},
 					},
 				},
 				LimitClause: LimitClause{

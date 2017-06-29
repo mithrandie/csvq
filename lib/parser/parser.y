@@ -48,7 +48,10 @@ package parser
 %type<expression>  value
 %type<expression>  row_value
 %type<expressions> row_values
+%type<expressions> order_items
 %type<expression>  order_item
+%type<token>       order_direction
+%type<token>       order_null_position
 %type<expression>  subquery
 %type<expression>  string_operation
 %type<expression>  comparison
@@ -69,7 +72,6 @@ package parser
 %type<expression>  case_else
 %type<expressions> field_references
 %type<expressions> values
-%type<expressions> order_items
 %type<expressions> tables
 %type<expressions> identified_tables
 %type<expressions> using_fields
@@ -105,7 +107,6 @@ package parser
 %type<expressions> variable_assignments
 %type<token>       distinct
 %type<token>       negation
-%type<token>       order_direction
 %type<token>       join_inner
 %type<token>       join_outer
 %type<token>       join_direction
@@ -120,7 +121,7 @@ package parser
 %token<token> JOIN INNER OUTER LEFT RIGHT FULL CROSS ON USING NATURAL
 %token<token> UNION INTERSECT EXCEPT
 %token<token> ALL ANY EXISTS IN
-%token<token> AND OR NOT BETWEEN LIKE IS NULL
+%token<token> AND OR NOT BETWEEN LIKE IS NULL NULLS
 %token<token> DISTINCT WITH
 %token<token> CASE IF ELSEIF WHILE WHEN THEN ELSE DO END
 %token<token> DECLARE CURSOR FOR FETCH OPEN CLOSE DISPOSE
@@ -565,10 +566,24 @@ row_values
         $$ = append([]Expression{$1}, $3...)
     }
 
+order_items
+    : order_item
+    {
+        $$ = []Expression{$1}
+    }
+    | order_item ',' order_items
+    {
+        $$ = append([]Expression{$1}, $3...)
+    }
+
 order_item
     : value order_direction
     {
         $$ = OrderItem{Item: $1, Direction: $2}
+    }
+    | value order_direction NULLS order_null_position
+    {
+        $$ = OrderItem{Item: $1, Direction: $2, Nulls: $3.Literal, Position: $4}
     }
 
 order_direction
@@ -581,6 +596,16 @@ order_direction
         $$ = $1
     }
     | DESC
+    {
+        $$ = $1
+    }
+
+order_null_position
+    : FIRST
+    {
+        $$ = $1
+    }
+    | LAST
     {
         $$ = $1
     }
@@ -910,16 +935,6 @@ values
         $$ = []Expression{$1}
     }
     | value ',' values
-    {
-        $$ = append([]Expression{$1}, $3...)
-    }
-
-order_items
-    : order_item
-    {
-        $$ = []Expression{$1}
-    }
-    | order_item ',' order_items
     {
         $$ = append([]Expression{$1}, $3...)
     }

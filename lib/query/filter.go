@@ -433,15 +433,6 @@ func (f Filter) evalAggregateFunction(expr parser.Function) (parser.Primary, err
 }
 
 func (f Filter) evalGroupConcat(expr parser.GroupConcat) (parser.Primary, error) {
-	var in = func(list []string, item string) bool {
-		for _, v := range list {
-			if v == item {
-				return true
-			}
-		}
-		return false
-	}
-
 	if !f[0].View.isGrouped {
 		return nil, &NotGroupedError{
 			Function: expr.GroupConcat,
@@ -481,7 +472,7 @@ func (f Filter) evalGroupConcat(expr parser.GroupConcat) (parser.Primary, error)
 		if parser.IsNull(s) {
 			continue
 		}
-		if expr.Option.IsDistinct() && in(list, s.(parser.String).Value()) {
+		if expr.Option.IsDistinct() && InStrSlice(s.(parser.String).Value(), list) {
 			continue
 		}
 		list = append(list, s.(parser.String).Value())
