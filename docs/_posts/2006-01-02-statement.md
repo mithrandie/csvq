@@ -14,7 +14,7 @@ category: reference
 ## Basics
 {: #basics}
 
-You can pass a query or statements(it's also called procedure) as a csvq command argument or source file.
+You can pass a query or statements(it's also called procedure) as a csvq command argument or a source file.
 
 A statements is terminated with a semicolon. 
 Stetaments are processed sequentially for each statement.
@@ -44,7 +44,7 @@ $ csvq -s statements.sql
 You can use following types in statements.
 
 Identifier
-: A identifier is a word starting with a character \[a-z\|A-Z\|\_\], contains any of characters \[a-z\|A-Z\|0-9\|\_\].
+: A identifier is a word starting with any one of the characters \[a-z\|A-Z\|\_\] and followed by a character string that contains \[a-z\|A-Z\|0-9\|\_\].
   You cannot use [reserved words](#reserved_words) as identifier.
 
   Notwithstanding above naming restriction, you can use most characters as identifier by enclosing in back quotes.
@@ -53,13 +53,13 @@ Identifier
   
 String
 : A string is a character string enclosed in single quotes or double quotes.
-  In a string, single quotes or double quotes are escaped by back slash.
+  In a string, single quotes or double quotes are escaped by back slashes.
 
 Integer
-: A integer is a word contains only \[0-9\].
+: A integer is a word that contains only \[0-9\].
 
 Float
-: A float is a word contains only \[0-9\] with a decimal point.
+: A float is a word that contains only \[0-9\] with a decimal point.
 
 Ternary
 : A ternary is represented by any one keyword of TRUE, FALSE or UNKNOWN.
@@ -84,10 +84,10 @@ Null
 : A null is represented by a keyword NULL.
 
 Variable
-: A variable is a word starting with "@", contains any of characters \[a-z\|A-Z\|0-9\|\_\]
+: A variable is a word starting with "@" and followed by a character string that contains \[a-z\|A-Z\|0-9\|\_\].
 
 Flag
-: A flag is a word starting with "@@", contains any of characters \[a-z\|A-Z\|0-9\|\_\]
+: A flag is a word starting with "@@" and and followed by a character string that contains \[a-z\|A-Z\|0-9\|\_\].
 
 ```sql
 abcde                 -- identifier
@@ -107,10 +107,10 @@ null                  -- null
 {: #comments}
 
 Line Comment
-: A single line comment starts with a string "--", ends with a line-break character. 
+: A single line comment starts with a string "--" and ends with a line-break character. 
 
 Block Comment
-: A block comment starts with a string "/\*", ends with a string "\*/"
+: A block comment starts with a string "/\*" and ends with a string "\*/".
 
 
 ```sql

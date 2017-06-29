@@ -31,13 +31,13 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "encoding, e",
-			Value: "utf8",
-			Usage: "file encoding. one of: utf8|sjis",
+			Value: "UTF8",
+			Usage: "file encoding. one of: UTF8|SJIS",
 		},
 		cli.StringFlag{
 			Name:  "line-break, l",
-			Value: "lf",
-			Usage: "line break. one of: crlf|lf|cr",
+			Value: "LF",
+			Usage: "line break. one of: CRLF|LF|CR",
 		},
 		cli.StringFlag{
 			Name:  "repository, r",
@@ -49,23 +49,23 @@ func main() {
 		},
 		cli.BoolFlag{
 			Name:  "no-header, n",
-			Usage: "import first line as a record",
+			Usage: "import the first line as a record",
 		},
 		cli.BoolFlag{
 			Name:  "without-null, a",
-			Usage: "parse empty field as empty string",
+			Usage: "parse empty fields as empty strings",
 		},
 	}
 
 	app.Commands = []cli.Command{
 		{
 			Name:  "write",
-			Usage: "Write output to file",
+			Usage: "Write output to a file",
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "write-encoding, E",
-					Value: "utf8",
-					Usage: "file encoding. one of: utf8|sjis",
+					Value: "UTF8",
+					Usage: "file encoding. one of: UTF8|SJIS",
 				},
 				cli.StringFlag{
 					Name:  "out, o",
@@ -73,16 +73,17 @@ func main() {
 				},
 				cli.StringFlag{
 					Name:  "format, f",
-					Usage: "output format. one of: csv|tsv|json|text",
+					Value: "TEXT",
+					Usage: "output format. one of: CSV|TSV|JSON|TEXT",
 				},
 				cli.StringFlag{
 					Name:  "write-delimiter, D",
 					Value: ",",
-					Usage: "field delimiter for csv or tsv (exam: \",\" for comma, \"\\t\" for tab)",
+					Usage: "field delimiter for CSV or TSV (exam: \",\" for comma, \"\\t\" for tab)",
 				},
 				cli.BoolFlag{
 					Name:  "without-header, N",
-					Usage: "when format is specified as csv or tsv, write without header line",
+					Usage: "when the file format is specified as CSV or TSV, write without the header line",
 				},
 			},
 			Before: func(c *cli.Context) error {
@@ -104,7 +105,7 @@ func main() {
 		},
 		{
 			Name:  "fields",
-			Usage: "Show fields in file",
+			Usage: "Show fields in a file",
 			Action: func(c *cli.Context) error {
 				if c.NArg() != 1 {
 					return cli.NewExitError("table is not specified", 1)
@@ -122,7 +123,7 @@ func main() {
 		},
 		{
 			Name:  "calc",
-			Usage: "Calculate value from stdin",
+			Usage: "Calculate a value from stdin",
 			Action: func(c *cli.Context) error {
 				if c.NArg() != 1 {
 					return cli.NewExitError("expression is empty", 1)

@@ -38,10 +38,10 @@ relational_operation
 ```
 
 _value_
-: [value]({{ '/resference/value.html' | relative_url }})
+: [value]({{ '/reference/value.html' | relative_url }})
 
 _row_value_
-: [Row Value]({{ '/resference/row-value.html' | relative_url }})
+: [Row Value]({{ '/reference/row-value.html' | relative_url }})
 
 At first, a relational operator attempt to convert both of operands to float values, and if both convertions are successful then compare them.
 If conversions failed, next a relational operater attempt to convert to datetime, and next to boolean, at last to string.
@@ -87,13 +87,13 @@ _high_
 : [value]({{ '/reference/value.html' | relative_url }})
 
 _row_value_
-: [Row Value]({{ '/resference/row-value.html' | relative_url }})
+: [Row Value]({{ '/reference/row-value.html' | relative_url }})
 
 _row_value_low_
-: [Row Value]({{ '/resference/row-value.html' | relative_url }})
+: [Row Value]({{ '/reference/row-value.html' | relative_url }})
 
 _row_value_high_
-: [Row Value]({{ '/resference/row-value.html' | relative_url }})
+: [Row Value]({{ '/reference/row-value.html' | relative_url }})
 
 Check a _value_ is greater than or equal to _low_ and less than or equal to _high_.
 
@@ -108,19 +108,23 @@ NOT (low <= value AND value <= high)
 
 ```sql
 in_operation
-  : value [NOT] IN row_value
+  : value [NOT] IN (value [, value ...])
+  | value [NOT] IN single_field_subquery
   | row_value [NOT] IN (row_value [, row_value ...])
-  | row_value [NOT] IN (select_query)
+  | row_value [NOT] IN multiple_fields_subquery
 ```
 
 _value_
 : [value]({{ '/reference/value.html' | relative_url }})
 
 _row_value_
-: [Row Value]({{ '/resference/row-value.html' | relative_url }})
+: [Row Value]({{ '/reference/row-value.html' | relative_url }})
 
-_select_query_
-: [Select Query]({{ '/reference/select-query.html' | relative_url }})
+_single_field_subquery_
+: [subquery]({{ '/reference/value.html#subquery' | relative_url }})
+
+_multiple_fields_subquery_
+: [subquery]({{ '/reference/value.html#subquery' | relative_url }})
 
 Check if a _value_ or _row_value_ is in within a set of _values_ or a result set of _select_query_.
 
@@ -155,24 +159,28 @@ _
 
 ```sql
 any_operation
-  : value relational_operator ANY row_value
+  : value relational_operator ANY (value [, value ...])
+  | value relational_operator ANY single_field_subquery
   | row_value relational_operator ANY (row_value [, row_value ...])
-  | row_value relational_operator ANY (select_query)
+  | row_value relational_operator ANY multiple_fields_subquery
 ```
 
 _value_
 : [value]({{ '/reference/value.html' | relative_url }})
 
 _row_value_
-: [Row Value]({{ '/resference/row-value.html' | relative_url }})
+: [Row Value]({{ '/reference/row-value.html' | relative_url }})
 
 _relational_operator_
 : [relational operator](#relational_operators)
 
-_select_query_
-: [Select Query]({{ '/reference/select-query.html' | relative_url }})
+_single_field_subquery_
+: [subquery]({{ '/reference/value.html#subquery' | relative_url }})
 
-Compare a _value_ or _row_value_ to each listed _values_ or values retrieved by _select_query_.
+_multiple_fields_subquery_
+: [subquery]({{ '/reference/value.html#subquery' | relative_url }})
+
+Compare a _value_ or _row_value_ to each listed _values_ or each records retrieved by _select_query_.
 If any of comparison results is TRUE, return TRUE.
 If there is no TRUE result and there is at least one UNKNOWN result, return UNKNOWN.
 Otherwise return FALSE.
@@ -184,24 +192,28 @@ If _select_query_ returns no values, return FALSE.
 
 ```sql
 all_operation
-  : value relational_operator ALL row_value
+  : value relational_operator ALL (value [, value ...])
+  | value relational_operator ALL single_field_subquery
   | row_value relational_operator ALL (row_value [, row_value ...])
-  | row_value relational_operator ALL (select_query)
+  | row_value relational_operator ALL multiple_fields_subquery
 ```
 
 _value_
 : [value]({{ '/reference/value.html' | relative_url }})
 
 _row_value_
-: [Row Value]({{ '/resference/row-value.html' | relative_url }})
+: [Row Value]({{ '/reference/row-value.html' | relative_url }})
 
 _relational_operator_
 : [relational operator](#relational_operators)
 
-_select_query_
-: [Select Query]({{ '/reference/select-query.html' | relative_url }})
+_single_field_subquery_
+: [subquery]({{ '/reference/value.html#subquery' | relative_url }})
 
-Compare a _value_ or _row_value_ to every listed _values_ or values retrieved by _select_query_.
+_multiple_fields_subquery_
+: [subquery]({{ '/reference/value.html#subquery' | relative_url }})
+
+Compare a _value_ or _row_value_ to every listed _values_ or each records retrieved by _select_query_.
 If any of comparison results is FALSE, return FALSE.
 If there is no FALSE result and there is at least one UNKNOWN result, return UNKNOWN.
 Otherwise return TRUE.
@@ -218,4 +230,4 @@ EXISTS (select_query)
 _select_query_
 : [Select Query]({{ '/reference/select-query.html' | relative_url }})
 
-Return TRUE if a _select_query_ returns at least one row, otherwise return FALSE.
+Return TRUE if a _select_query_ returns at least one record, otherwise return FALSE.
