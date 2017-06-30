@@ -69,7 +69,7 @@ _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
 Round _number_ up to _place_ decimal place.
-If _place_ is negative number, _place_ representing a place in integer part, 
+If _place_ is a negative number, _place_ representing a place in the integer part. 
 
 ### FLOOR
 {: #floor}
@@ -100,7 +100,7 @@ _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
 Round _number_ down to _place_ decimal place.
-If _place_ is negative number, _place_ representing a place in integer part, 
+If _place_ is a negative number, _place_ representing a place in the integer part. 
 
 ### ROUND
 {: #round}
@@ -131,7 +131,7 @@ _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
 Round _number_ to _place_ decimal place.
-If _place_ is negative number, _place_ representing a place in integer part, 
+If _place_ is a negative number, _place_ representing a place in the integer part. 
 
 ### ABS
 {: #abs}

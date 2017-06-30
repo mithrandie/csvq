@@ -6,7 +6,7 @@ category: reference
 
 # Logic Operators
 
-| name | description |
+| operator | description |
 | :- | :- |
 | [AND](#and) | Logical AND |
 | [OR](#or)   | Logical OR |

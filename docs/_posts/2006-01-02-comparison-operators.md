@@ -6,7 +6,7 @@ category: reference
 
 # Comparison Operators
 
-| name | description |
+| operator | description |
 | :- | :- |
 | [Relational Operators](#relational_operators) | Compare values |
 | [IS](#is)           | Compare a value with ternary value |
@@ -22,7 +22,7 @@ A comparison operator returns a ternary value.
 ## Relational Operators
 {: #relational_operators}
 
-| name | description |
+| operator | description |
 | :- | :- |
 | \=      | Equal |
 | <       | Less than |
@@ -128,7 +128,7 @@ _multiple_fields_subquery_
 
 Check if a _value_ or _row_value_ is in within a set of _values_ or a result set of _select_query_.
 
-A IN operation is equivalent to a ANY operation that operator is specified as "=".
+A IN operation is equivalent to a [ANY](#any) operation that _relational_operator_ is specified as "=".
 
 ## LIKE
 {: #like}
@@ -185,7 +185,7 @@ If any of comparison results is TRUE, return TRUE.
 If there is no TRUE result and there is at least one UNKNOWN result, return UNKNOWN.
 Otherwise return FALSE.
 
-If _select_query_ returns no values, return FALSE.
+If _select_query_ returns no record, return FALSE.
 
 ## ALL
 {: #all}
@@ -218,7 +218,7 @@ If any of comparison results is FALSE, return FALSE.
 If there is no FALSE result and there is at least one UNKNOWN result, return UNKNOWN.
 Otherwise return TRUE.
 
-If _select_query_ returns no values, return TRUE.
+If _select_query_ returns no record, return TRUE.
 
 ## Exists
 {: #exists}

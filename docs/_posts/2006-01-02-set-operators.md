@@ -6,7 +6,7 @@ category: reference
 
 # Set Operators
 
-| name | description |
+| operator | description |
 | :- | :- |
 | [UNION](#union) | Return the union of result sets |
 | [EXCEPT](#except)   | Return the relative complement of result sets  |
