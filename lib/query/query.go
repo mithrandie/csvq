@@ -479,11 +479,15 @@ func Select(query parser.SelectQuery, parentFilter Filter) (*View, error) {
 	}
 
 	if query.OffsetClause != nil {
-		view.Offset(query.OffsetClause.(parser.OffsetClause))
+		if err := view.Offset(query.OffsetClause.(parser.OffsetClause)); err != nil {
+			return nil, err
+		}
 	}
 
 	if query.LimitClause != nil {
-		view.Limit(query.LimitClause.(parser.LimitClause))
+		if err := view.Limit(query.LimitClause.(parser.LimitClause)); err != nil {
+			return nil, err
+		}
 	}
 
 	view.Fix()

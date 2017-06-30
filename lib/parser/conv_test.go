@@ -70,16 +70,34 @@ func TestPrimaryToInteger(t *testing.T) {
 		t.Errorf("primary type = %T, want Integer for %#v", i, p)
 	}
 
+	p = NewFloat(1)
+	i = PrimaryToInteger(p)
+	if _, ok := i.(Integer); !ok {
+		t.Errorf("primary type = %T, want Integer for %#v", i, p)
+	}
+
+	p = NewFloat(1.6)
+	i = PrimaryToInteger(p)
+	if _, ok := i.(Null); !ok {
+		t.Errorf("primary type = %T, want Null for %#v", i, p)
+	}
+
 	p = NewString("1")
 	i = PrimaryToInteger(p)
 	if _, ok := i.(Integer); !ok {
 		t.Errorf("primary type = %T, want Integer for %#v", i, p)
 	}
 
+	p = NewString("1.5")
+	i = PrimaryToInteger(p)
+	if _, ok := i.(Null); !ok {
+		t.Errorf("primary type = %T, want Null for %#v", i, p)
+	}
+
 	p = NewString("error")
 	i = PrimaryToInteger(p)
 	if _, ok := i.(Null); !ok {
-		t.Errorf("primary type = %T, want Integer for %#v", i, p)
+		t.Errorf("primary type = %T, want Null for %#v", i, p)
 	}
 }
 

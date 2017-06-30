@@ -252,12 +252,48 @@ var parseTests = []struct {
 					},
 				},
 				LimitClause: LimitClause{
-					Limit:  "limit",
-					Number: 10,
+					Limit: "limit",
+					Value: NewInteger(10),
 				},
 				OffsetClause: OffsetClause{
 					Offset: "offset",
-					Number: 10,
+					Value:  NewInteger(10),
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 " +
+			" from dual " +
+			" limit 10 percent",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+					FromClause:   FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
+				},
+				LimitClause: LimitClause{
+					Limit:   "limit",
+					Value:   NewInteger(10),
+					Percent: "percent",
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 " +
+			" from dual " +
+			" limit 10 with ties",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+					FromClause:   FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
+				},
+				LimitClause: LimitClause{
+					Limit: "limit",
+					Value: NewInteger(10),
+					With:  LimitWith{With: "with", Type: Token{Token: TIES, Literal: "ties"}},
 				},
 			},
 		},

@@ -3,6 +3,7 @@ package query
 import (
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"path"
 	"path/filepath"
@@ -187,6 +188,8 @@ type View struct {
 	sortIndices       []int
 	sortDirections    []int
 	sortNullPositions []int
+
+	offset int
 
 	OperatedRecords int
 	OperatedFields  int
@@ -740,24 +743,83 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 	return nil
 }
 
-func (view *View) Offset(clause parser.OffsetClause) {
-	if int64(len(view.Records)) <= clause.Number {
+func (view *View) Offset(clause parser.OffsetClause) error {
+	var filter Filter
+	value, err := filter.Evaluate(clause.Value)
+	if err != nil {
+		return err
+	}
+	number := parser.PrimaryToInteger(value)
+	if parser.IsNull(number) {
+		return errors.New("offset number is not an integer")
+	}
+	view.offset = int(number.(parser.Integer).Value())
+	if view.offset < 0 {
+		view.offset = 0
+	}
+
+	if view.RecordLen() <= view.offset {
 		view.Records = Records{}
 	} else {
-		view.Records = view.Records[clause.Number:]
+		view.Records = view.Records[view.offset:]
 		records := make(Records, len(view.Records))
 		copy(records, view.Records)
 		view.Records = records
 	}
+	return nil
 }
 
-func (view *View) Limit(clause parser.LimitClause) {
-	if clause.Number < int64(len(view.Records)) {
-		view.Records = view.Records[:clause.Number]
-		records := make(Records, len(view.Records))
-		copy(records, view.Records)
-		view.Records = records
+func (view *View) Limit(clause parser.LimitClause) error {
+	var filter Filter
+	value, err := filter.Evaluate(clause.Value)
+	if err != nil {
+		return err
 	}
+
+	var limit int
+	if clause.IsPercentage() {
+		number := parser.PrimaryToFloat(value)
+		if parser.IsNull(number) {
+			return errors.New("limit percentage is not a float value")
+		}
+		percentage := number.(parser.Float).Value()
+		if 100 < percentage {
+			limit = 100
+		} else if percentage < 0 {
+			limit = 0
+		} else {
+			limit = int(math.Ceil(float64(view.RecordLen()+view.offset) * percentage / 100))
+		}
+	} else {
+		number := parser.PrimaryToInteger(value)
+		if parser.IsNull(number) {
+			return errors.New("limit number of records is not an integer value")
+		}
+		limit = int(number.(parser.Integer).Value())
+		if limit < 0 {
+			limit = 0
+		}
+	}
+
+	if view.RecordLen() <= limit {
+		return nil
+	}
+
+	if clause.IsWithTies() && 0 < len(view.sortIndices) {
+		bottomRecord := view.Records[limit-1]
+		for limit < view.RecordLen() {
+			if !bottomRecord.Match(view.Records[limit], view.sortIndices) {
+				break
+			}
+			limit++
+		}
+	}
+
+	view.Records = view.Records[:limit]
+	records := make(Records, view.RecordLen())
+	copy(records, view.Records)
+	view.Records = records
+	return nil
 }
 
 func (view *View) InsertValues(fields []parser.Expression, list []parser.Expression) error {
@@ -866,6 +928,7 @@ func (view *View) Fix() {
 	view.sortIndices = []int(nil)
 	view.sortDirections = []int(nil)
 	view.sortNullPositions = []int(nil)
+	view.offset = 0
 }
 
 func (view *View) Union(calcView *View, all bool) {

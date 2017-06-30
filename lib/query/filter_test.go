@@ -1454,7 +1454,7 @@ var filterEvaluateTests = []struct {
 					},
 				},
 				LimitClause: parser.LimitClause{
-					Number: 1,
+					Value: parser.NewInteger(1),
 				},
 			},
 		},
@@ -1481,7 +1481,7 @@ var filterEvaluateTests = []struct {
 					},
 				},
 				LimitClause: parser.LimitClause{
-					Number: 1,
+					Value: parser.NewInteger(1),
 				},
 			},
 		},
@@ -1548,7 +1548,7 @@ var filterEvaluateTests = []struct {
 					},
 				},
 				LimitClause: parser.LimitClause{
-					Number: 1,
+					Value: parser.NewInteger(1),
 				},
 			},
 		},

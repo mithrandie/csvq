@@ -42,6 +42,7 @@ package parser
 %type<expression>  having_clause
 %type<expression>  order_by_clause
 %type<expression>  limit_clause
+%type<expression>  limit_with
 %type<expression>  offset_clause
 %type<primary>     primary
 %type<expression>  field_reference
@@ -117,7 +118,7 @@ package parser
 %token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME VARIABLE FLAG
 %token<token> SELECT FROM UPDATE SET DELETE WHERE INSERT INTO VALUES AS DUAL STDIN
 %token<token> CREATE ADD DROP ALTER TABLE FIRST LAST AFTER BEFORE DEFAULT RENAME TO
-%token<token> ORDER GROUP HAVING BY ASC DESC LIMIT OFFSET
+%token<token> ORDER GROUP HAVING BY ASC DESC LIMIT OFFSET TIES PERCENT
 %token<token> JOIN INNER OUTER LEFT RIGHT FULL CROSS ON USING NATURAL
 %token<token> UNION INTERSECT EXCEPT
 %token<token> ALL ANY EXISTS IN
@@ -445,9 +446,23 @@ limit_clause
     {
         $$ = nil
     }
-    | LIMIT INTEGER
+    | LIMIT value limit_with
     {
-        $$ = LimitClause{Limit: $1.Literal, Number: StrToInt64($2.Literal)}
+        $$ = LimitClause{Limit: $1.Literal, Value: $2, With: $3}
+    }
+    | LIMIT value PERCENT limit_with
+    {
+        $$ = LimitClause{Limit: $1.Literal, Value: $2, Percent: $3.Literal, With: $4}
+    }
+
+limit_with
+    :
+    {
+        $$ = nil
+    }
+    | WITH TIES
+    {
+        $$ = LimitWith{With: $1.Literal, Type: $2}
     }
 
 offset_clause
@@ -455,9 +470,9 @@ offset_clause
     {
         $$ = nil
     }
-    | OFFSET INTEGER
+    | OFFSET value
     {
-        $$ = OffsetClause{Offset: $1.Literal, Number: StrToInt64($2.Literal)}
+        $$ = OffsetClause{Offset: $1.Literal, Value: $2}
     }
 
 primary

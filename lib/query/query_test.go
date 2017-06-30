@@ -1221,10 +1221,10 @@ var selectTests = []struct {
 				},
 			},
 			LimitClause: parser.LimitClause{
-				Number: 5,
+				Value: parser.NewInteger(5),
 			},
 			OffsetClause: parser.OffsetClause{
-				Number: 0,
+				Value: parser.NewInteger(0),
 			},
 		},
 		Result: &View{

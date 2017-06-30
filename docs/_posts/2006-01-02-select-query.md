@@ -246,12 +246,21 @@ _null_position_
 The Limit clause is used to specify the maximum number of records to return.
 
 ```sql
-LIMIT number
+limit_clause
+  : LIMIT number_of_records [WITH TIES]
+  | LIMIT percent PERCENT [WITH TIES]
 ```
 
-_number_
+_number_of_records_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
+_percent_
+: [float]({{ '/reference/value.html#integer' | relative_url }})
+
+If _PERCENT_ keyword is specified, maximum number of records is _percent_ percent of the result set that includes the excluded records by _Offset Clause_. 
+
+If _WITH TIES_ keywords are specified, all records that have the same sort keys specified by _Order By Clause_ as the last record of the limited records are included in the records to return.
+If there is no _Order By Clause_ in the query, _WITH TIES_ keywords are ignored.
 
 ## Offset Clause
 {: #offset_clause}

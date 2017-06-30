@@ -521,12 +521,12 @@ func TestSelectQuery_String(t *testing.T) {
 			},
 		},
 		LimitClause: LimitClause{
-			Limit:  "limit",
-			Number: 10,
+			Limit: "limit",
+			Value: NewInteger(10),
 		},
 		OffsetClause: OffsetClause{
 			Offset: "offset",
-			Number: 10,
+			Value:  NewInteger(10),
 		},
 	}
 	expect := "select column from table order by column limit 10 offset 10"
@@ -709,15 +709,53 @@ func TestOrderByClause_String(t *testing.T) {
 }
 
 func TestLimitClause_String(t *testing.T) {
-	e := LimitClause{Limit: "limit", Number: 10}
-	expect := "limit 10"
+	e := LimitClause{Limit: "limit", Value: NewInteger(10), With: LimitWith{With: "with", Type: Token{Token: TIES, Literal: "ties"}}}
+	expect := "limit 10 with ties"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+
+	e = LimitClause{Limit: "limit", Value: NewInteger(10), Percent: "percent"}
+	expect = "limit 10 percent"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestLimitClause_IsPercentage(t *testing.T) {
+	e := LimitClause{Limit: "limit", Value: NewInteger(10)}
+	if e.IsPercentage() {
+		t.Errorf("percentage = %t, want %t for %#v", e.IsPercentage(), false, e)
+	}
+
+	e = LimitClause{Limit: "limit", Value: NewInteger(10), Percent: "percent"}
+	if !e.IsPercentage() {
+		t.Errorf("percentage = %t, want %t for %#v", e.IsPercentage(), true, e)
+	}
+}
+
+func TestLimitClause_IsWithTies(t *testing.T) {
+	e := LimitClause{Limit: "limit", Value: NewInteger(10)}
+	if e.IsWithTies() {
+		t.Errorf("with ties = %t, want %t for %#v", e.IsWithTies(), false, e)
+	}
+
+	e = LimitClause{Limit: "limit", Value: NewInteger(10), With: LimitWith{With: "with", Type: Token{Token: TIES, Literal: "ties"}}}
+	if !e.IsWithTies() {
+		t.Errorf("with ties = %t, want %t for %#v", e.IsWithTies(), true, e)
+	}
+}
+
+func TestLimitWith_String(t *testing.T) {
+	e := LimitWith{With: "with", Type: Token{Token: TIES, Literal: "ties"}}
+	expect := "with ties"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 }
 
 func TestOffsetClause_String(t *testing.T) {
-	e := OffsetClause{Offset: "offset", Number: 10}
+	e := OffsetClause{Offset: "offset", Value: NewInteger(10)}
 	expect := "offset 10"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)

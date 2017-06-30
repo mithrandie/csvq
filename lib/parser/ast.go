@@ -541,22 +541,51 @@ func (ob OrderByClause) String() string {
 }
 
 type LimitClause struct {
-	Limit  string
-	Number int64
+	Limit   string
+	Value   Expression
+	Percent string
+	With    Expression
 }
 
-func (l LimitClause) String() string {
-	s := []string{l.Limit, strconv.FormatInt(l.Number, 10)}
+func (e LimitClause) String() string {
+	s := []string{e.Limit, e.Value.String()}
+	if e.IsPercentage() {
+		s = append(s, e.Percent)
+	}
+	if e.With != nil {
+		s = append(s, e.With.String())
+	}
+	return joinWithSpace(s)
+}
+
+func (e LimitClause) IsPercentage() bool {
+	return 0 < len(e.Percent)
+}
+
+func (e LimitClause) IsWithTies() bool {
+	if e.With == nil {
+		return false
+	}
+	return e.With.(LimitWith).Type.Token == TIES
+}
+
+type LimitWith struct {
+	With string
+	Type Token
+}
+
+func (e LimitWith) String() string {
+	s := []string{e.With, e.Type.Literal}
 	return joinWithSpace(s)
 }
 
 type OffsetClause struct {
 	Offset string
-	Number int64
+	Value  Expression
 }
 
 func (e OffsetClause) String() string {
-	s := []string{e.Offset, strconv.FormatInt(e.Number, 10)}
+	s := []string{e.Offset, e.Value.String()}
 	return joinWithSpace(s)
 }
 
