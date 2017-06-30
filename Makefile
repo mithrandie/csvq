@@ -27,6 +27,18 @@ ifeq ($(shell command -v glide 2>/dev/null),)
 	curl https://glide.sh/get | sh
 endif
 
+.PHONY: goyacc
+goyacc:
+ifeq ($(shell command -v goyacc 2>/dev/null),)
+	go get -u github.com/cznic/goyacc
+endif
+
+.PHONY: yacc
+yacc: goyacc
+	cd lib/parser && \
+	goyacc -o parser.go -v parser.output parser.y && \
+	cd ../..
+
 .PHONY: test
 test:
 	go test -cover `glide novendor`
