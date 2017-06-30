@@ -95,7 +95,7 @@ func (f Filter) evalFieldReference(expr parser.FieldReference) (parser.Primary, 
 			}
 		}
 		if v.View.isGrouped && !v.View.Header[idx].IsGroupKey {
-			return nil, errors.New(fmt.Sprintf("identifier = %s: field is not a group key", expr))
+			return nil, errors.New(fmt.Sprintf("field %s is not a group key", expr))
 		}
 		p = v.View.Records[v.RecordIndex][idx].Primary()
 	}

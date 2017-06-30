@@ -1,6 +1,10 @@
 package query
 
-import "github.com/mithrandie/csvq/lib/parser"
+import (
+	"strings"
+
+	"github.com/mithrandie/csvq/lib/parser"
+)
 
 const INTERNAL_ID_COLUMN = "@__internal_id"
 
@@ -61,9 +65,10 @@ func MergeHeader(h1 Header, h2 Header) Header {
 	return append(h1, h2...)
 }
 
-func AddHeaderField(h Header, alias string) (header Header, index int) {
+func AddHeaderField(h Header, column string, alias string) (header Header, index int) {
 	header = append(h, HeaderField{
-		Alias: alias,
+		Column: column,
+		Alias:  alias,
 	})
 	index = header.Len() - 1
 	return
@@ -103,9 +108,9 @@ func (h Header) TableColumnNames() []string {
 	return names
 }
 
-func (h Header) ContainsAlias(alias string) (int, error) {
+func (h Header) ContainsObject(obj parser.Expression) (int, error) {
 	fieldRef := parser.FieldReference{
-		Column: parser.Identifier{Literal: alias},
+		Column: parser.Identifier{Literal: obj.String()},
 	}
 	return h.Contains(fieldRef)
 }
@@ -121,11 +126,11 @@ func (h Header) Contains(fieldRef parser.FieldReference) (int, error) {
 
 	for i, f := range h {
 		if 0 < len(ref) {
-			if f.Reference != ref || f.Column != column {
+			if !strings.EqualFold(f.Reference, ref) || !strings.EqualFold(f.Column, column) {
 				continue
 			}
 		} else {
-			if f.Column != column && f.Alias != column {
+			if !strings.EqualFold(f.Column, column) && !strings.EqualFold(f.Alias, column) {
 				continue
 			}
 		}

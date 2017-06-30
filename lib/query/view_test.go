@@ -734,7 +734,7 @@ var viewWhereTests = []struct {
 				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
@@ -979,7 +979,7 @@ var viewHavingTests = []struct {
 				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: ">"},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Having Not Grouped",
@@ -1116,7 +1116,7 @@ var viewSelectTests = []struct {
 				{Reference: "table2", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table2", Column: "column3", FromTable: true},
 				{Reference: "table2", Column: "column4", FromTable: true},
-				{Alias: "a"},
+				{Column: "1", Alias: "a"},
 			},
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
@@ -1215,7 +1215,7 @@ var viewSelectTests = []struct {
 		Result: &View{
 			Header: []HeaderField{
 				{Reference: "table1", Column: "column1", FromTable: true},
-				{Alias: "a"},
+				{Column: "1", Alias: "a"},
 			},
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
@@ -1266,7 +1266,7 @@ var viewSelectTests = []struct {
 				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table1", Column: "column1", FromTable: true},
 				{Reference: "table1", Column: "column2", FromTable: true},
-				{Alias: "sum(column1)"},
+				{Column: "sum(column1)", Alias: "sum(column1)"},
 			},
 			Records: []Record{
 				{
@@ -1375,7 +1375,7 @@ var viewOrderByTests = []struct {
 				{Reference: "table1", Column: "column1", FromTable: true},
 				{Reference: "table1", Column: "column2", FromTable: true},
 				{Reference: "table1", Column: "column3", FromTable: true},
-				{Alias: "1"},
+				{Column: "1"},
 			},
 			Records: []Record{
 				NewRecord(5, []parser.Primary{
@@ -2230,7 +2230,7 @@ var viewInsertValuesTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "InsertValues Field Does Not Exist Error",
@@ -2246,7 +2246,7 @@ var viewInsertValuesTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
@@ -2359,7 +2359,7 @@ var viewInsertFromQueryTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 

@@ -589,58 +589,30 @@ func (view *View) Select(clause parser.SelectClause) error {
 		return append(append(fields[:insertIdx], insert...), fields[insertIdx+1:]...)
 	}
 
-	var evalFields = func(view *View, fields []parser.Expression) ([]Record, error) {
-		records := make([]Record, view.RecordLen())
-		for i := range view.Records {
-			var record Record
-			var filter Filter = append([]FilterRecord{{View: view, RecordIndex: i}}, view.parentFilter...)
-
-			for _, f := range fields {
-				field := f.(parser.Field)
-				primary, err := filter.Evaluate(field.Object)
-				if err != nil {
-					return nil, err
-				}
-				if _, ok := field.Object.(parser.FieldReference); !ok {
-					record = append(record, NewCell(primary))
-				}
+	var evalFields = func(view *View, fields []parser.Expression) error {
+		view.selectFields = make([]int, len(fields))
+		for i, f := range fields {
+			field := f.(parser.Field)
+			idx, err := view.evalColumn(field.Object, field.Object.String(), field.Name())
+			if err != nil {
+				return err
 			}
-			records[i] = record
+			view.selectFields[i] = idx
 		}
-		return records, nil
+		return nil
 	}
 
 	fields := parseAllColumns(view, clause.Fields)
-	records, err := evalFields(view, fields)
+	err := evalFields(view, fields)
 	if err != nil {
 		if _, ok := err.(*NotGroupedError); ok {
 			view.group(nil)
-			records, err = evalFields(view, fields)
+			err = evalFields(view, fields)
 			if err != nil {
 				return err
 			}
 		} else {
 			return err
-		}
-	}
-
-	view.selectFields = make([]int, len(fields))
-	for i, f := range fields {
-		field := f.(parser.Field)
-		if fieldRef, ok := field.Object.(parser.FieldReference); ok {
-			idx, err := view.Header.Contains(fieldRef)
-			if err != nil {
-				return err
-			}
-			view.selectFields[i] = idx
-		} else {
-			view.Header, view.selectFields[i] = AddHeaderField(view.Header, field.Name())
-		}
-	}
-
-	for i := range view.Records {
-		if 0 < len(records[i]) {
-			view.Records[i] = append(view.Records[i], records[i]...)
 		}
 	}
 
@@ -697,29 +669,11 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 
 	for i, v := range clause.Items {
 		oi := v.(parser.OrderItem)
-		switch oi.Item.(type) {
-		case parser.FieldReference:
-			idx, err := view.FieldIndex(oi.Item.(parser.FieldReference))
-			if err != nil {
-				return err
-			}
-			view.sortIndices[i] = idx
-		default:
-			idx, err := view.Header.ContainsAlias(oi.Item.String())
-			if err != nil {
-				for j := range view.Records {
-					var filter Filter = append([]FilterRecord{{View: view, RecordIndex: j}}, view.parentFilter...)
-
-					primary, err := filter.Evaluate(oi.Item)
-					if err != nil {
-						return err
-					}
-					view.Records[j] = append(view.Records[j], NewCell(primary))
-				}
-				view.Header, idx = AddHeaderField(view.Header, oi.Item.String())
-			}
-			view.sortIndices[i] = idx
+		idx, err := view.evalColumn(oi.Item, oi.Item.String(), "")
+		if err != nil {
+			return err
 		}
+		view.sortIndices[i] = idx
 
 		if oi.Direction.IsEmpty() {
 			view.sortDirections[i] = parser.ASC
@@ -741,6 +695,32 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 
 	sort.Sort(view)
 	return nil
+}
+
+func (view *View) evalColumn(obj parser.Expression, column string, alias string) (idx int, err error) {
+	switch obj.(type) {
+	case parser.FieldReference:
+		idx, err = view.FieldIndex(obj.(parser.FieldReference))
+	default:
+		idx, err = view.Header.ContainsObject(obj)
+		if err != nil {
+			err = nil
+
+			var filter Filter = append([]FilterRecord{{View: view, RecordIndex: 0}}, view.parentFilter...)
+			for i := range view.Records {
+				var primary parser.Primary
+				filter[0].RecordIndex = i
+
+				primary, err = filter.Evaluate(obj)
+				if err != nil {
+					return
+				}
+				view.Records[i] = append(view.Records[i], NewCell(primary))
+			}
+			view.Header, idx = AddHeaderField(view.Header, column, alias)
+		}
+	}
+	return
 }
 
 func (view *View) Offset(clause parser.OffsetClause) error {

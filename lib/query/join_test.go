@@ -295,7 +295,7 @@ var innerJoinTests = []struct {
 			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "notexist"}},
 			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 		},
-		Error: "identifier = table2.notexist: field does not exist",
+		Error: "field table2.notexist does not exist",
 	},
 }
 
@@ -617,7 +617,7 @@ var outerJoinTests = []struct {
 			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 		},
 		Direction: parser.LEFT,
-		Error:     "identifier = table1.notexist: field does not exist",
+		Error:     "field table1.notexist does not exist",
 	},
 	{
 		Name: "Outer Join Direction Undefined",

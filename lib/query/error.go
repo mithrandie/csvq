@@ -12,7 +12,7 @@ type IdentificationError struct {
 }
 
 func (e IdentificationError) Error() string {
-	return fmt.Sprintf("identifier = %s: %s", e.Field.String(), e.Err)
+	return fmt.Sprintf(e.Err.Error(), e.Field.String())
 }
 
 type NotGroupedError struct {
@@ -25,7 +25,7 @@ func (e NotGroupedError) Error() string {
 }
 
 var (
-	ErrFieldAmbiguous = errors.New("field is ambiguous")
-	ErrFieldNotExist  = errors.New("field does not exist")
+	ErrFieldAmbiguous = errors.New("field %s is ambiguous")
+	ErrFieldNotExist  = errors.New("field %s does not exist")
 	ErrNotGrouped     = errors.New("records are not grouped")
 )
