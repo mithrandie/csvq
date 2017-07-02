@@ -42,13 +42,18 @@ package parser
 %type<expression>  having_clause
 %type<expression>  order_by_clause
 %type<expression>  limit_clause
+%type<expression>  limit_with
 %type<expression>  offset_clause
 %type<primary>     primary
 %type<expression>  field_reference
 %type<expression>  value
 %type<expression>  row_value
 %type<expressions> row_values
+%type<expressions> order_items
 %type<expression>  order_item
+%type<expression>  order_value
+%type<token>       order_direction
+%type<token>       order_null_position
 %type<expression>  subquery
 %type<expression>  string_operation
 %type<expression>  comparison
@@ -57,6 +62,9 @@ package parser
 %type<expression>  function
 %type<expression>  option
 %type<expression>  group_concat
+%type<expression>  analytic_function
+%type<expression>  analytic_clause
+%type<expression>  partition
 %type<expression>  identified_table
 %type<expression>  virtual_table
 %type<expression>  table
@@ -69,7 +77,6 @@ package parser
 %type<expression>  case_else
 %type<expressions> field_references
 %type<expressions> values
-%type<expressions> order_items
 %type<expressions> tables
 %type<expressions> identified_tables
 %type<expressions> using_fields
@@ -105,7 +112,6 @@ package parser
 %type<expressions> variable_assignments
 %type<token>       distinct
 %type<token>       negation
-%type<token>       order_direction
 %type<token>       join_inner
 %type<token>       join_outer
 %type<token>       join_direction
@@ -116,15 +122,15 @@ package parser
 %token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME VARIABLE FLAG
 %token<token> SELECT FROM UPDATE SET DELETE WHERE INSERT INTO VALUES AS DUAL STDIN
 %token<token> CREATE ADD DROP ALTER TABLE FIRST LAST AFTER BEFORE DEFAULT RENAME TO
-%token<token> ORDER GROUP HAVING BY ASC DESC LIMIT OFFSET
+%token<token> ORDER GROUP HAVING BY ASC DESC LIMIT OFFSET TIES PERCENT
 %token<token> JOIN INNER OUTER LEFT RIGHT FULL CROSS ON USING NATURAL
 %token<token> UNION INTERSECT EXCEPT
 %token<token> ALL ANY EXISTS IN
-%token<token> AND OR NOT BETWEEN LIKE IS NULL
+%token<token> AND OR NOT BETWEEN LIKE IS NULL NULLS
 %token<token> DISTINCT WITH
 %token<token> CASE IF ELSEIF WHILE WHEN THEN ELSE DO END
 %token<token> DECLARE CURSOR FOR FETCH OPEN CLOSE DISPOSE
-%token<token> GROUP_CONCAT SEPARATOR
+%token<token> GROUP_CONCAT SEPARATOR PARTITION OVER
 %token<token> COMMIT ROLLBACK
 %token<token> CONTINUE BREAK EXIT
 %token<token> PRINT
@@ -444,9 +450,23 @@ limit_clause
     {
         $$ = nil
     }
-    | LIMIT INTEGER
+    | LIMIT value limit_with
     {
-        $$ = LimitClause{Limit: $1.Literal, Number: StrToInt64($2.Literal)}
+        $$ = LimitClause{Limit: $1.Literal, Value: $2, With: $3}
+    }
+    | LIMIT value PERCENT limit_with
+    {
+        $$ = LimitClause{Limit: $1.Literal, Value: $2, Percent: $3.Literal, With: $4}
+    }
+
+limit_with
+    :
+    {
+        $$ = nil
+    }
+    | WITH TIES
+    {
+        $$ = LimitWith{With: $1.Literal, Type: $2}
     }
 
 offset_clause
@@ -454,9 +474,9 @@ offset_clause
     {
         $$ = nil
     }
-    | OFFSET INTEGER
+    | OFFSET value
     {
-        $$ = OffsetClause{Offset: $1.Literal, Number: StrToInt64($2.Literal)}
+        $$ = OffsetClause{Offset: $1.Literal, Value: $2}
     }
 
 primary
@@ -565,10 +585,34 @@ row_values
         $$ = append([]Expression{$1}, $3...)
     }
 
-order_item
-    : value order_direction
+order_items
+    : order_item
     {
-        $$ = OrderItem{Item: $1, Direction: $2}
+        $$ = []Expression{$1}
+    }
+    | order_item ',' order_items
+    {
+        $$ = append([]Expression{$1}, $3...)
+    }
+
+order_item
+    : order_value order_direction
+    {
+        $$ = OrderItem{Value: $1, Direction: $2}
+    }
+    | order_value order_direction NULLS order_null_position
+    {
+        $$ = OrderItem{Value: $1, Direction: $2, Nulls: $3.Literal, Position: $4}
+    }
+
+order_value
+    : value
+    {
+        $$ = $1
+    }
+    | analytic_function
+    {
+        $$ = $1
     }
 
 order_direction
@@ -581,6 +625,16 @@ order_direction
         $$ = $1
     }
     | DESC
+    {
+        $$ = $1
+    }
+
+order_null_position
+    : FIRST
+    {
+        $$ = $1
+    }
+    | LAST
     {
         $$ = $1
     }
@@ -762,6 +816,28 @@ group_concat
         $$ = GroupConcat{GroupConcat: $1.Literal, Option: $3.(Option), OrderBy: $4, SeparatorLit: $5.Literal, Separator: $6.Literal}
     }
 
+analytic_function
+    : identifier '(' option ')' OVER '(' analytic_clause ')'
+    {
+        $$ = AnalyticFunction{Name: $1.Literal, Option: $3.(Option), Over: $5.Literal, AnalyticClause: $7.(AnalyticClause)}
+    }
+
+analytic_clause
+    : partition order_by_clause
+    {
+        $$ = AnalyticClause{Partition: $1, OrderByClause: $2}
+    }
+
+partition
+    :
+    {
+        $$ = nil
+    }
+    | PARTITION BY values
+    {
+        $$ = Partition{PartitionBy: $1.Literal + " " + $2.Literal, Values: $3}
+    }
+
 identified_table
     : identifier
     {
@@ -853,6 +929,10 @@ field_object
     {
         $$ = $1
     }
+    | analytic_function
+    {
+        $$ = $1
+    }
     | '*'
     {
         $$ = AllColumns{}
@@ -910,16 +990,6 @@ values
         $$ = []Expression{$1}
     }
     | value ',' values
-    {
-        $$ = append([]Expression{$1}, $3...)
-    }
-
-order_items
-    : order_item
-    {
-        $$ = []Expression{$1}
-    }
-    | order_item ',' order_items
     {
         $$ = append([]Expression{$1}, $3...)
     }

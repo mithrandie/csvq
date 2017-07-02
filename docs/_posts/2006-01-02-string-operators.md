@@ -6,7 +6,7 @@ category: reference
 
 # String Operators
 
-| name | description |
+| operator | description |
 | :- | :- |
 | \|\| | Concatnation |
 

@@ -39,3 +39,4 @@ title: Reference Manual - csvq
   * [Cryptographic Hash Functions]({{ '/reference/cryptographic-hash-functions.html' | relative_url }})
   * [Cast Functions]({{ '/reference/cast-functions.html' | relative_url }})
   * [System Functions]({{ '/reference/system-functions.html' | relative_url }})
+  * [Analytic Functions]({{ '/reference/analytic-functions.html' | relative_url }})

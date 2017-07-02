@@ -734,7 +734,7 @@ var viewWhereTests = []struct {
 				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
@@ -979,7 +979,7 @@ var viewHavingTests = []struct {
 				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: ">"},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Having Not Grouped",
@@ -1116,7 +1116,7 @@ var viewSelectTests = []struct {
 				{Reference: "table2", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table2", Column: "column3", FromTable: true},
 				{Reference: "table2", Column: "column4", FromTable: true},
-				{Alias: "a"},
+				{Column: "1", Alias: "a"},
 			},
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
@@ -1215,7 +1215,7 @@ var viewSelectTests = []struct {
 		Result: &View{
 			Header: []HeaderField{
 				{Reference: "table1", Column: "column1", FromTable: true},
-				{Alias: "a"},
+				{Column: "1", Alias: "a"},
 			},
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
@@ -1266,7 +1266,7 @@ var viewSelectTests = []struct {
 				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table1", Column: "column1", FromTable: true},
 				{Reference: "table1", Column: "column2", FromTable: true},
-				{Alias: "sum(column1)"},
+				{Column: "sum(column1)", Alias: "sum(column1)"},
 			},
 			Records: []Record{
 				{
@@ -1278,6 +1278,333 @@ var viewSelectTests = []struct {
 			},
 			selectFields: []int{3},
 		},
+	},
+	{
+		Name: "Select Analytic Function",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(3),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(5),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(4),
+				}),
+			},
+		},
+		Select: parser.SelectClause{
+			Fields: []parser.Expression{
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+				parser.Field{
+					Object: parser.AnalyticFunction{
+						Name: "row_number",
+						Over: "over",
+						AnalyticClause: parser.AnalyticClause{
+							Partition: parser.Partition{
+								PartitionBy: "partition by",
+								Values: []parser.Expression{
+									parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+								},
+							},
+							OrderByClause: parser.OrderByClause{
+								OrderBy: "order by",
+								Items: []parser.Expression{
+									parser.OrderItem{
+										Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+									},
+								},
+							},
+						},
+					},
+					Alias: parser.Identifier{Literal: "rownum"},
+				},
+			},
+		},
+		Result: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+				{Column: "row_number() over (partition by column1 order by column2)", Alias: "rownum"},
+			},
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(3),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(4),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(5),
+					parser.NewInteger(3),
+				}),
+			},
+			selectFields: []int{0, 1, 2},
+		},
+	},
+	{
+		Name: "Select Analytic Function Not Exist Error",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(3),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(5),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(4),
+				}),
+			},
+		},
+		Select: parser.SelectClause{
+			Fields: []parser.Expression{
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+				parser.Field{
+					Object: parser.AnalyticFunction{
+						Name: "notexist",
+						Over: "over",
+						AnalyticClause: parser.AnalyticClause{
+							Partition: parser.Partition{
+								PartitionBy: "partition by",
+								Values: []parser.Expression{
+									parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+								},
+							},
+							OrderByClause: parser.OrderByClause{
+								OrderBy: "order by",
+								Items: []parser.Expression{
+									parser.OrderItem{
+										Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+									},
+								},
+							},
+						},
+					},
+					Alias: parser.Identifier{Literal: "rownum"},
+				},
+			},
+		},
+		Error: "function notexist does not exist",
+	},
+	{
+		Name: "Select Analytic Function Option Error",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(3),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(5),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(4),
+				}),
+			},
+		},
+		Select: parser.SelectClause{
+			Fields: []parser.Expression{
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+				parser.Field{
+					Object: parser.AnalyticFunction{
+						Name: "row_number",
+						Option: parser.Option{
+							Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
+						},
+						Over: "over",
+						AnalyticClause: parser.AnalyticClause{
+							Partition: parser.Partition{
+								PartitionBy: "partition by",
+								Values: []parser.Expression{
+									parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+								},
+							},
+							OrderByClause: parser.OrderByClause{
+								OrderBy: "order by",
+								Items: []parser.Expression{
+									parser.OrderItem{
+										Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+									},
+								},
+							},
+						},
+					},
+					Alias: parser.Identifier{Literal: "rownum"},
+				},
+			},
+		},
+		Error: "syntax error: unexpected distinct",
+	},
+	{
+		Name: "Select Analytic Function Order Error",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(3),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(5),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(4),
+				}),
+			},
+		},
+		Select: parser.SelectClause{
+			Fields: []parser.Expression{
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+				parser.Field{
+					Object: parser.AnalyticFunction{
+						Name: "row_number",
+						Over: "over",
+						AnalyticClause: parser.AnalyticClause{
+							Partition: parser.Partition{
+								PartitionBy: "partition by",
+								Values: []parser.Expression{
+									parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+								},
+							},
+							OrderByClause: parser.OrderByClause{
+								OrderBy: "order by",
+								Items: []parser.Expression{
+									parser.OrderItem{
+										Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+									},
+								},
+							},
+						},
+					},
+					Alias: parser.Identifier{Literal: "rownum"},
+				},
+			},
+		},
+		Error: "field notexist does not exist",
+	},
+	{
+		Name: "Select Analytic Function Partition Value Error",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(3),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(5),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(4),
+				}),
+			},
+		},
+		Select: parser.SelectClause{
+			Fields: []parser.Expression{
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+				parser.Field{
+					Object: parser.AnalyticFunction{
+						Name: "row_number",
+						Over: "over",
+						AnalyticClause: parser.AnalyticClause{
+							Partition: parser.Partition{
+								PartitionBy: "partition by",
+								Values: []parser.Expression{
+									parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+								},
+							},
+							OrderByClause: parser.OrderByClause{
+								OrderBy: "order by",
+								Items: []parser.Expression{
+									parser.OrderItem{
+										Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+									},
+								},
+							},
+						},
+					},
+					Alias: parser.Identifier{Literal: "rownum"},
+				},
+			},
+		},
+		Error: "field notexist does not exist",
 	},
 }
 
@@ -1355,17 +1682,17 @@ var viewOrderByTests = []struct {
 		OrderBy: parser.OrderByClause{
 			Items: []parser.Expression{
 				parser.OrderItem{
-					Item: parser.Identifier{Literal: "column1"},
+					Value: parser.Identifier{Literal: "column1"},
 				},
 				parser.OrderItem{
-					Item:      parser.Identifier{Literal: "column2"},
+					Value:     parser.Identifier{Literal: "column2"},
 					Direction: parser.Token{Token: parser.DESC, Literal: "desc"},
 				},
 				parser.OrderItem{
-					Item: parser.Identifier{Literal: "column3"},
+					Value: parser.Identifier{Literal: "column3"},
 				},
 				parser.OrderItem{
-					Item: parser.NewInteger(1),
+					Value: parser.NewInteger(1),
 				},
 			},
 		},
@@ -1375,9 +1702,15 @@ var viewOrderByTests = []struct {
 				{Reference: "table1", Column: "column1", FromTable: true},
 				{Reference: "table1", Column: "column2", FromTable: true},
 				{Reference: "table1", Column: "column3", FromTable: true},
-				{Alias: "1"},
+				{Column: "1"},
 			},
 			Records: []Record{
+				NewRecord(5, []parser.Primary{
+					parser.NewNull(),
+					parser.NewString("2"),
+					parser.NewString("4"),
+					parser.NewInteger(1),
+				}),
 				NewRecord(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("4"),
@@ -1402,11 +1735,78 @@ var viewOrderByTests = []struct {
 					parser.NewString("2"),
 					parser.NewInteger(1),
 				}),
-				NewRecord(5, []parser.Primary{
+			},
+		},
+	},
+	{
+		Name: "Order By With Null Positions",
+		View: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("2"),
+				}),
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("2"),
+				}),
+				NewRecord(3, []parser.Primary{
 					parser.NewNull(),
 					parser.NewString("2"),
-					parser.NewString("4"),
-					parser.NewInteger(1),
+				}),
+				NewRecord(4, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewNull(),
+				}),
+				NewRecord(5, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("2"),
+				}),
+			},
+		},
+		OrderBy: parser.OrderByClause{
+			Items: []parser.Expression{
+				parser.OrderItem{
+					Value:    parser.Identifier{Literal: "column1"},
+					Position: parser.Token{Token: parser.LAST, Literal: "last"},
+				},
+				parser.OrderItem{
+					Value:    parser.Identifier{Literal: "column2"},
+					Position: parser.Token{Token: parser.FIRST, Literal: "first"},
+				},
+			},
+		},
+		Result: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(4, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewNull(),
+				}),
+				NewRecord(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("2"),
+				}),
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("2"),
+				}),
+				NewRecord(5, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("2"),
+				}),
+				NewRecord(3, []parser.Primary{
+					parser.NewNull(),
+					parser.NewString("2"),
 				}),
 			},
 		},
@@ -1437,143 +1837,637 @@ func TestView_OrderBy(t *testing.T) {
 	}
 }
 
-func TestView_Limit(t *testing.T) {
-	view := &View{
-		Header: []HeaderField{
-			{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table1", Column: "column2", FromTable: true},
+var viewLimitTests = []struct {
+	Name   string
+	View   *View
+	Limit  parser.LimitClause
+	Result *View
+	Error  string
+}{
+	{
+		Name: "Limit",
+		View: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(3, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(4, []parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+				NewRecord(4, []parser.Primary{
+					parser.NewString("3"),
+					parser.NewString("str3"),
+				}),
+			},
 		},
-		Records: []Record{
-			NewRecord(1, []parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
-			}),
-			NewRecord(2, []parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
-			}),
-			NewRecord(3, []parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
-			}),
-			NewRecord(4, []parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
-			}),
+		Limit: parser.LimitClause{Value: parser.NewInteger(2)},
+		Result: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+			},
 		},
-	}
-	limit := parser.LimitClause{Number: 2}
-	expect := &View{
-		Header: []HeaderField{
-			{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table1", Column: "column2", FromTable: true},
+	},
+	{
+		Name: "Limit With Ties",
+		View: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(3, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(4, []parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+				NewRecord(4, []parser.Primary{
+					parser.NewString("3"),
+					parser.NewString("str3"),
+				}),
+			},
+			sortIndices: []int{1, 2},
 		},
-		Records: []Record{
-			NewRecord(1, []parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
-			}),
-			NewRecord(2, []parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
-			}),
+		Limit: parser.LimitClause{Value: parser.NewInteger(2), With: parser.LimitWith{Type: parser.Token{Token: parser.TIES}}},
+		Result: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(3, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+			},
+			sortIndices: []int{1, 2},
 		},
-	}
+	},
+	{
+		Name: "Limit By Percentage",
+		View: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(3, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(4, []parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+				NewRecord(4, []parser.Primary{
+					parser.NewString("3"),
+					parser.NewString("str3"),
+				}),
+			},
+			offset: 1,
+		},
+		Limit: parser.LimitClause{Value: parser.NewFloat(50.5), Percent: "percent"},
+		Result: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(3, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(4, []parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+			},
+			offset: 1,
+		},
+	},
+	{
+		Name: "Limit By Over 100 Percentage",
+		View: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(3, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(4, []parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+				NewRecord(4, []parser.Primary{
+					parser.NewString("3"),
+					parser.NewString("str3"),
+				}),
+			},
+		},
+		Limit: parser.LimitClause{Value: parser.NewFloat(150), Percent: "percent"},
+		Result: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(3, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(4, []parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+				NewRecord(4, []parser.Primary{
+					parser.NewString("3"),
+					parser.NewString("str3"),
+				}),
+			},
+		},
+	},
+	{
+		Name: "Limit By Negative Percentage",
+		View: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(3, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(4, []parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+				NewRecord(4, []parser.Primary{
+					parser.NewString("3"),
+					parser.NewString("str3"),
+				}),
+			},
+		},
+		Limit: parser.LimitClause{Value: parser.NewFloat(-10), Percent: "percent"},
+		Result: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{},
+		},
+	},
+	{
+		Name: "Limit Greater Than Records",
+		View: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+			},
+		},
+		Limit: parser.LimitClause{Value: parser.NewInteger(5)},
+		Result: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+			},
+		},
+	},
+	{
+		Name: "Limit Evaluate Error",
+		View: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+			},
+		},
+		Limit: parser.LimitClause{Value: parser.Variable{Name: "notexist"}},
+		Error: "variable notexist is undefined",
+	},
+	{
+		Name: "Limit Value Error",
+		View: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+			},
+		},
+		Limit: parser.LimitClause{Value: parser.NewString("str")},
+		Error: "limit number of records is not an integer value",
+	},
+	{
+		Name: "Limit Negative Value",
+		View: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+			},
+		},
+		Limit: parser.LimitClause{Value: parser.NewInteger(-1)},
+		Result: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{},
+		},
+	},
+	{
+		Name: "Limit By Percentage Value Error",
+		View: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+			},
+		},
+		Limit: parser.LimitClause{Value: parser.NewString("str"), Percent: "percent"},
+		Error: "limit percentage is not a float value",
+	},
+}
 
-	view.Limit(limit)
-	if !reflect.DeepEqual(view, expect) {
-		t.Errorf("limit: view = %s, want %s", view, expect)
+func TestView_Limit(t *testing.T) {
+	for _, v := range viewLimitTests {
+		err := v.View.Limit(v.Limit)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(v.View, v.Result) {
+			t.Errorf("%s: view = %s, want %s", v.Name, v.View, v.Result)
+		}
 	}
 }
 
+var viewOffsetTests = []struct {
+	Name   string
+	View   *View
+	Offset parser.OffsetClause
+	Result *View
+	Error  string
+}{
+	{
+		Name: "Offset",
+		View: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(3, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(4, []parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+			},
+		},
+		Offset: parser.OffsetClause{Value: parser.NewInteger(3)},
+		Result: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(4, []parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+			},
+			offset: 3,
+		},
+	},
+	{
+		Name: "Offset Equal To Record Length",
+		View: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(3, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(4, []parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+			},
+		},
+		Offset: parser.OffsetClause{Value: parser.NewInteger(4)},
+		Result: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{},
+			offset:  4,
+		},
+	},
+	{
+		Name: "Offset Evaluate Error",
+		View: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(3, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(4, []parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+			},
+		},
+		Offset: parser.OffsetClause{Value: parser.Variable{Name: "notexist"}},
+		Error:  "variable notexist is undefined",
+	},
+	{
+		Name: "Offset Value Error",
+		View: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(3, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(4, []parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+			},
+		},
+		Offset: parser.OffsetClause{Value: parser.NewString("str")},
+		Error:  "offset number is not an integer",
+	},
+	{
+		Name: "Offset Negative Number",
+		View: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+			},
+		},
+		Offset: parser.OffsetClause{Value: parser.NewInteger(-3)},
+		Result: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+			},
+			offset: 0,
+		},
+	},
+}
+
 func TestView_Offset(t *testing.T) {
-	view := &View{
-		Header: []HeaderField{
-			{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table1", Column: "column2", FromTable: true},
-		},
-		Records: []Record{
-			NewRecord(1, []parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
-			}),
-			NewRecord(2, []parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
-			}),
-			NewRecord(3, []parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
-			}),
-			NewRecord(4, []parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
-			}),
-		},
-	}
-
-	offset := parser.OffsetClause{Number: 3}
-	expect := &View{
-		Header: []HeaderField{
-			{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table1", Column: "column2", FromTable: true},
-		},
-		Records: []Record{
-			NewRecord(4, []parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
-			}),
-		},
-	}
-
-	view.Offset(offset)
-	if !reflect.DeepEqual(view, expect) {
-		t.Errorf("offset: view = %s, want %s", view, expect)
-	}
-
-	view = &View{
-		Header: []HeaderField{
-			{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table1", Column: "column2", FromTable: true},
-		},
-		Records: []Record{
-			NewRecord(1, []parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
-			}),
-			NewRecord(2, []parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
-			}),
-			NewRecord(3, []parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
-			}),
-			NewRecord(4, []parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
-			}),
-		},
-	}
-
-	offset = parser.OffsetClause{Number: 4}
-	expect = &View{
-		Header: []HeaderField{
-			{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table1", Column: "column2", FromTable: true},
-		},
-		Records: []Record{},
-	}
-
-	view.Offset(offset)
-	if !reflect.DeepEqual(view, expect) {
-		t.Errorf("offset: view = %s, want %s", view, expect)
+	for _, v := range viewOffsetTests {
+		err := v.View.Offset(v.Offset)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(v.View, v.Result) {
+			t.Errorf("%s: view = %s, want %s", v.Name, v.View, v.Result)
+		}
 	}
 }
 
@@ -1663,7 +2557,7 @@ var viewInsertValuesTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "InsertValues Field Does Not Exist Error",
@@ -1679,7 +2573,7 @@ var viewInsertValuesTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
@@ -1792,7 +2686,7 @@ var viewInsertFromQueryTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 

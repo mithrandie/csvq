@@ -77,7 +77,7 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Expr:  parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
-		Error: "identifier = column3: field does not exist",
+		Error: "field column3 does not exist",
 	},
 	{
 		Name: "FieldReference FieldAmbigous Error",
@@ -100,7 +100,7 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Expr:  parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-		Error: "identifier = column1: field is ambiguous",
+		Error: "field column1 is ambiguous",
 	},
 	{
 		Name: "FieldReference Not Group Key Error",
@@ -137,7 +137,7 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Expr:  parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-		Error: "identifier = column1: field is not a group key",
+		Error: "field column1 is not a group key",
 	},
 	{
 		Name: "FieldReference Fields Ambiguous Error with Multiple Tables",
@@ -176,7 +176,7 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Expr:  parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-		Error: "identifier = column1: field is ambiguous",
+		Error: "field column1 is ambiguous",
 	},
 	{
 		Name: "Arithmetic",
@@ -194,7 +194,7 @@ var filterEvaluateTests = []struct {
 			RHS:      parser.NewInteger(2),
 			Operator: '+',
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Arithmetic RHS Error",
@@ -203,7 +203,7 @@ var filterEvaluateTests = []struct {
 			RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Operator: '+',
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Concat",
@@ -225,7 +225,7 @@ var filterEvaluateTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Concat Including Null",
@@ -254,7 +254,7 @@ var filterEvaluateTests = []struct {
 			RHS:      parser.NewInteger(2),
 			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Comparison RHS Error",
@@ -263,7 +263,7 @@ var filterEvaluateTests = []struct {
 			RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Comparison with Row Values",
@@ -351,7 +351,7 @@ var filterEvaluateTests = []struct {
 			},
 			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Comparison with Row Value and Subquery Returns No Record",
@@ -424,7 +424,7 @@ var filterEvaluateTests = []struct {
 			},
 			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Comparison with Row Values RHS Error",
@@ -498,7 +498,7 @@ var filterEvaluateTests = []struct {
 			RHS:      parser.NewNull(),
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Is RHS Error",
@@ -507,7 +507,7 @@ var filterEvaluateTests = []struct {
 			RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Between",
@@ -527,7 +527,7 @@ var filterEvaluateTests = []struct {
 			High:     parser.NewInteger(3),
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Between Low Error",
@@ -537,7 +537,7 @@ var filterEvaluateTests = []struct {
 			High:     parser.NewInteger(3),
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Between High Error",
@@ -547,7 +547,7 @@ var filterEvaluateTests = []struct {
 			High:     parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Between with Row Values",
@@ -607,7 +607,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Between with Row Values Low Error",
@@ -637,7 +637,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Between with Row Values High Error",
@@ -667,7 +667,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Between with Row Values Low Comparison Error",
@@ -759,7 +759,7 @@ var filterEvaluateTests = []struct {
 			},
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "In List Error",
@@ -776,7 +776,7 @@ var filterEvaluateTests = []struct {
 			},
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "In Subquery",
@@ -858,7 +858,7 @@ var filterEvaluateTests = []struct {
 			},
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "In Subquery Returns No Record",
@@ -987,7 +987,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "In with Row Values Values Error",
@@ -1021,7 +1021,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "In with Row Values Length Not Match Error ",
@@ -1108,7 +1108,7 @@ var filterEvaluateTests = []struct {
 			},
 			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<>"},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Any Query Execution Error",
@@ -1142,7 +1142,7 @@ var filterEvaluateTests = []struct {
 			},
 			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<>"},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Any Row Value Length Not Match Error",
@@ -1224,7 +1224,7 @@ var filterEvaluateTests = []struct {
 			},
 			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: ">"},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "All Query Execution Error",
@@ -1258,7 +1258,7 @@ var filterEvaluateTests = []struct {
 			},
 			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: ">"},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "All Row Value Length Not Match Error",
@@ -1304,7 +1304,7 @@ var filterEvaluateTests = []struct {
 			Pattern:  parser.NewString("_bc%"),
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Like Pattern Error",
@@ -1313,7 +1313,7 @@ var filterEvaluateTests = []struct {
 			Pattern:  parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Exists",
@@ -1413,7 +1413,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Subquery",
@@ -1454,7 +1454,7 @@ var filterEvaluateTests = []struct {
 					},
 				},
 				LimitClause: parser.LimitClause{
-					Number: 1,
+					Value: parser.NewInteger(1),
 				},
 			},
 		},
@@ -1481,7 +1481,7 @@ var filterEvaluateTests = []struct {
 					},
 				},
 				LimitClause: parser.LimitClause{
-					Number: 1,
+					Value: parser.NewInteger(1),
 				},
 			},
 		},
@@ -1506,7 +1506,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Subquery Too Many Records Error",
@@ -1548,7 +1548,7 @@ var filterEvaluateTests = []struct {
 					},
 				},
 				LimitClause: parser.LimitClause{
-					Number: 1,
+					Value: parser.NewInteger(1),
 				},
 			},
 		},
@@ -1568,7 +1568,7 @@ var filterEvaluateTests = []struct {
 		Result: parser.NewString("str"),
 	},
 	{
-		Name: "Function Is Not Exist",
+		Name: "Function Not Exist Error",
 		Expr: parser.Function{
 			Name: "notexist",
 			Option: parser.Option{
@@ -1578,7 +1578,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Error: "function notexist is not exist",
+		Error: "function notexist does not exist",
 	},
 	{
 		Name: "Function Option Error",
@@ -1896,7 +1896,7 @@ var filterEvaluateTests = []struct {
 			},
 			OrderBy: parser.OrderByClause{
 				Items: []parser.Expression{
-					parser.OrderItem{Item: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+					parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 				},
 			},
 			Separator: ",",
@@ -2075,12 +2075,12 @@ var filterEvaluateTests = []struct {
 			},
 			OrderBy: parser.OrderByClause{
 				Items: []parser.Expression{
-					parser.OrderItem{Item: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
+					parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
 				},
 			},
 			Separator: ",",
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "GroupConcat Function Duplicate Error",
@@ -2217,7 +2217,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Case When Condition Error",
@@ -2234,7 +2234,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Case When Result Error",
@@ -2251,7 +2251,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Case Else Result Error",
@@ -2271,7 +2271,7 @@ var filterEvaluateTests = []struct {
 				Result: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Logic AND",
@@ -2306,7 +2306,7 @@ var filterEvaluateTests = []struct {
 			RHS:      parser.NewTernary(ternary.FALSE),
 			Operator: parser.Token{Token: parser.AND, Literal: "and"},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Logic RHS Error",
@@ -2315,7 +2315,7 @@ var filterEvaluateTests = []struct {
 			RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Operator: parser.Token{Token: parser.AND, Literal: "and"},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Variable",

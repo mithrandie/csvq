@@ -209,7 +209,7 @@ var parseTests = []struct {
 			" where 1 = 1" +
 			" group by column1, column2 " +
 			" having 1 > 1 " +
-			" order by column4, column5 desc, column6 asc " +
+			" order by column4, column5 desc, column6 asc, column7 nulls first, column8 desc nulls last, avg() over () " +
 			" limit 10 " +
 			" offset 10 ",
 		Output: []Statement{
@@ -244,18 +244,65 @@ var parseTests = []struct {
 				OrderByClause: OrderByClause{
 					OrderBy: "order by",
 					Items: []Expression{
-						OrderItem{Item: FieldReference{Column: Identifier{Literal: "column4"}}},
-						OrderItem{Item: FieldReference{Column: Identifier{Literal: "column5"}}, Direction: Token{Token: DESC, Literal: "desc"}},
-						OrderItem{Item: FieldReference{Column: Identifier{Literal: "column6"}}, Direction: Token{Token: ASC, Literal: "asc"}},
+						OrderItem{Value: FieldReference{Column: Identifier{Literal: "column4"}}},
+						OrderItem{Value: FieldReference{Column: Identifier{Literal: "column5"}}, Direction: Token{Token: DESC, Literal: "desc"}},
+						OrderItem{Value: FieldReference{Column: Identifier{Literal: "column6"}}, Direction: Token{Token: ASC, Literal: "asc"}},
+						OrderItem{Value: FieldReference{Column: Identifier{Literal: "column7"}}, Nulls: "nulls", Position: Token{Token: FIRST, Literal: "first"}},
+						OrderItem{Value: FieldReference{Column: Identifier{Literal: "column8"}}, Direction: Token{Token: DESC, Literal: "desc"}, Nulls: "nulls", Position: Token{Token: LAST, Literal: "last"}},
+						OrderItem{Value: AnalyticFunction{
+							Name:   "avg",
+							Option: Option{},
+							Over:   "over",
+							AnalyticClause: AnalyticClause{
+								Partition:     nil,
+								OrderByClause: nil,
+							},
+						}},
 					},
 				},
 				LimitClause: LimitClause{
-					Limit:  "limit",
-					Number: 10,
+					Limit: "limit",
+					Value: NewInteger(10),
 				},
 				OffsetClause: OffsetClause{
 					Offset: "offset",
-					Number: 10,
+					Value:  NewInteger(10),
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 " +
+			" from dual " +
+			" limit 10 percent",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+					FromClause:   FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
+				},
+				LimitClause: LimitClause{
+					Limit:   "limit",
+					Value:   NewInteger(10),
+					Percent: "percent",
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 " +
+			" from dual " +
+			" limit 10 with ties",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewIntegerFromString("1")}}},
+					FromClause:   FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
+				},
+				LimitClause: LimitClause{
+					Limit: "limit",
+					Value: NewInteger(10),
+					With:  LimitWith{With: "with", Type: Token{Token: TIES, Literal: "ties"}},
 				},
 			},
 		},
@@ -1283,7 +1330,7 @@ var parseTests = []struct {
 								OrderBy: OrderByClause{
 									OrderBy: "order by",
 									Items: []Expression{
-										OrderItem{Item: FieldReference{Column: Identifier{Literal: "column1"}}},
+										OrderItem{Value: FieldReference{Column: Identifier{Literal: "column1"}}},
 									},
 								},
 							}},
@@ -1306,6 +1353,64 @@ var parseTests = []struct {
 								Option:       Option{Args: []Expression{FieldReference{Column: Identifier{Literal: "column1"}}}},
 								SeparatorLit: "separator",
 								Separator:    ",",
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select rank() over (partition by column1 order by column2)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: AnalyticFunction{
+								Name:   "rank",
+								Option: Option{},
+								Over:   "over",
+								AnalyticClause: AnalyticClause{
+									Partition: Partition{
+										PartitionBy: "partition by",
+										Values: []Expression{
+											FieldReference{Column: Identifier{Literal: "column1"}},
+										},
+									},
+									OrderByClause: OrderByClause{
+										OrderBy: "order by",
+										Items: []Expression{
+											OrderItem{
+												Value: FieldReference{Column: Identifier{Literal: "column2"}},
+											},
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select avg() over ()",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: AnalyticFunction{
+								Name:   "avg",
+								Option: Option{},
+								Over:   "over",
+								AnalyticClause: AnalyticClause{
+									Partition:     nil,
+									OrderByClause: nil,
+								},
 							}},
 						},
 					},

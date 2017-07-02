@@ -6,7 +6,7 @@ category: reference
 
 # Arithmetic Operators
 
-| name | description |
+| operator | description |
 | :- | :- |
 | +  | Addition |
 | \- | Subtraction |
@@ -26,4 +26,4 @@ _float_
 An arithmetic operator calculate float values, and return a integer or float value.
 If each of operands is not a float value, the value is converted to a float value.
 
-If either of operands is null or conversion to float failed, return null.
+If either of operands is null or conversions to float failed, return null.

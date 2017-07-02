@@ -179,7 +179,7 @@ var cursorMapOpenTests = []struct {
 	{
 		Name:  "CursorMap Open Query Error",
 		Key:   "cur2",
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 

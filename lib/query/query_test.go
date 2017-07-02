@@ -210,6 +210,7 @@ var executeStatementTests = []struct {
 				View: &View{
 					Header: []HeaderField{
 						{
+							Column:    "@var1",
 							Alias:     "var1",
 							FromTable: true,
 						},
@@ -588,7 +589,7 @@ var ifStmtTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
@@ -796,7 +797,7 @@ var whileTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "While Statement Execution Error",
@@ -819,7 +820,7 @@ var whileTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
@@ -997,7 +998,7 @@ var whileInCursorTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
@@ -1217,14 +1218,14 @@ var selectTests = []struct {
 			},
 			OrderByClause: parser.OrderByClause{
 				Items: []parser.Expression{
-					parser.OrderItem{Item: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+					parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 				},
 			},
 			LimitClause: parser.LimitClause{
-				Number: 5,
+				Value: parser.NewInteger(5),
 			},
 			OffsetClause: parser.OffsetClause{
-				Number: 0,
+				Value: parser.NewInteger(0),
 			},
 		},
 		Result: &View{
@@ -1242,6 +1243,7 @@ var selectTests = []struct {
 					FromTable: true,
 				},
 				{
+					Column:    "count(*)",
 					Alias:     "count(*)",
 					FromTable: true,
 				},
@@ -1573,7 +1575,7 @@ var selectTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Union RHS Error",
@@ -1608,7 +1610,7 @@ var selectTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
@@ -1820,7 +1822,7 @@ var insertTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Insert Select Query",
@@ -2106,7 +2108,7 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Update Query File Is Not Loaded Error",
@@ -2168,7 +2170,7 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Update Query Update Value Error",
@@ -2192,7 +2194,7 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Update Query Record Is Ambiguous Error",
@@ -2419,7 +2421,7 @@ var deleteTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Delete Query File Is Not Loaded Error",
@@ -2777,7 +2779,7 @@ var addColumnsTests = []struct {
 				Column:   parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Add Columns Field Duplicate Error",
@@ -2809,7 +2811,7 @@ var addColumnsTests = []struct {
 				},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
@@ -2893,7 +2895,7 @@ var dropColumnsTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
@@ -2986,7 +2988,7 @@ var renameColumnTests = []struct {
 			Old:   parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			New:   parser.Identifier{Literal: "newcolumn"},
 		},
-		Error: "identifier = notexist: field does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 

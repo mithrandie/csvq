@@ -6,7 +6,7 @@ category: reference
 
 # Set Operators
 
-| name | description |
+| operator | description |
 | :- | :- |
 | [UNION](#union) | Return the union of result sets |
 | [EXCEPT](#except)   | Return the relative complement of result sets  |
@@ -37,7 +37,7 @@ select_query EXCEPT [ALL] select_query
 _select_query_
 : [select_set_entity]({{ '/reference/select-query.html' | relative_url }})
 
-Return records of a first result set that do not appear in a second result set.
+Return records of the result set of the left-hand side query that do not appear in the result set of the right-hand side query.
 
 ## INTERSECT
 {: #intersect}

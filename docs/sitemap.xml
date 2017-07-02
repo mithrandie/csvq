@@ -10,7 +10,7 @@
 </url>
 <url>
   <loc>https://mithrandie.github.io/csvq/reference.html</loc>
-  <lastmod>2017-06-29T17:08:49+00:00</lastmod>
+  <lastmod>2017-07-02T23:29:47+00:00</lastmod>
 </url>
 <url>
   <loc>https://mithrandie.github.io/csvq/reference/install.html</loc>
@@ -22,15 +22,15 @@
 </url>
 <url>
   <loc>https://mithrandie.github.io/csvq/reference/statement.html</loc>
-  <lastmod>2017-06-29T17:08:49+00:00</lastmod>
+  <lastmod>2017-06-30T04:36:43+00:00</lastmod>
 </url>
 <url>
   <loc>https://mithrandie.github.io/csvq/reference/value.html</loc>
-  <lastmod>2017-06-29T17:08:49+00:00</lastmod>
+  <lastmod>2017-07-02T23:29:47+00:00</lastmod>
 </url>
 <url>
   <loc>https://mithrandie.github.io/csvq/reference/select-query.html</loc>
-  <lastmod>2017-06-29T17:08:49+00:00</lastmod>
+  <lastmod>2017-06-30T04:36:43+00:00</lastmod>
 </url>
 <url>
   <loc>https://mithrandie.github.io/csvq/reference/insert-query.html</loc>
@@ -86,23 +86,23 @@
 </url>
 <url>
   <loc>https://mithrandie.github.io/csvq/reference/arithmetic-operators.html</loc>
-  <lastmod>2017-06-29T17:08:49+00:00</lastmod>
+  <lastmod>2017-06-30T20:24:07+00:00</lastmod>
 </url>
 <url>
   <loc>https://mithrandie.github.io/csvq/reference/comparison-operators.html</loc>
-  <lastmod>2017-06-29T17:08:49+00:00</lastmod>
+  <lastmod>2017-06-30T20:24:07+00:00</lastmod>
 </url>
 <url>
   <loc>https://mithrandie.github.io/csvq/reference/logic-operators.html</loc>
-  <lastmod>2017-06-29T17:08:49+00:00</lastmod>
+  <lastmod>2017-06-30T20:24:07+00:00</lastmod>
 </url>
 <url>
   <loc>https://mithrandie.github.io/csvq/reference/string-operators.html</loc>
-  <lastmod>2017-06-29T17:08:49+00:00</lastmod>
+  <lastmod>2017-06-30T20:24:07+00:00</lastmod>
 </url>
 <url>
   <loc>https://mithrandie.github.io/csvq/reference/set-operators.html</loc>
-  <lastmod>2017-06-29T17:08:49+00:00</lastmod>
+  <lastmod>2017-06-30T20:24:07+00:00</lastmod>
 </url>
 <url>
   <loc>https://mithrandie.github.io/csvq/reference/aggregate-functions.html</loc>
@@ -118,11 +118,11 @@
 </url>
 <url>
   <loc>https://mithrandie.github.io/csvq/reference/numeric-functions.html</loc>
-  <lastmod>2017-06-29T17:08:49+00:00</lastmod>
+  <lastmod>2017-06-30T20:24:07+00:00</lastmod>
 </url>
 <url>
   <loc>https://mithrandie.github.io/csvq/reference/datetime-functions.html</loc>
-  <lastmod>2017-06-29T17:08:49+00:00</lastmod>
+  <lastmod>2017-06-30T20:24:07+00:00</lastmod>
 </url>
 <url>
   <loc>https://mithrandie.github.io/csvq/reference/cryptographic-hash-functions.html</loc>
@@ -135,6 +135,10 @@
 <url>
   <loc>https://mithrandie.github.io/csvq/reference/system-functions.html</loc>
   <lastmod>2017-06-29T17:08:49+00:00</lastmod>
+</url>
+<url>
+  <loc>https://mithrandie.github.io/csvq/reference/analytic-functions.html</loc>
+  <lastmod>2017-07-02T23:29:47+00:00</lastmod>
 </url>
 <url>
   <loc>https://mithrandie.github.io/csvq/license.html</loc>

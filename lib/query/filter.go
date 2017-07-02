@@ -95,7 +95,7 @@ func (f Filter) evalFieldReference(expr parser.FieldReference) (parser.Primary, 
 			}
 		}
 		if v.View.isGrouped && !v.View.Header[idx].IsGroupKey {
-			return nil, errors.New(fmt.Sprintf("identifier = %s: field is not a group key", expr))
+			return nil, errors.New(fmt.Sprintf("field %s is not a group key", expr))
 		}
 		p = v.View.Records[v.RecordIndex][idx].Primary()
 	}
@@ -370,7 +370,7 @@ func (f Filter) evalFunction(expr parser.Function) (parser.Primary, error) {
 
 	fn, ok := Functions[name]
 	if !ok {
-		return nil, errors.New(fmt.Sprintf("function %s is not exist", expr.Name))
+		return nil, errors.New(fmt.Sprintf("function %s does not exist", expr.Name))
 	}
 
 	if expr.Option.IsDistinct() {
@@ -433,15 +433,6 @@ func (f Filter) evalAggregateFunction(expr parser.Function) (parser.Primary, err
 }
 
 func (f Filter) evalGroupConcat(expr parser.GroupConcat) (parser.Primary, error) {
-	var in = func(list []string, item string) bool {
-		for _, v := range list {
-			if v == item {
-				return true
-			}
-		}
-		return false
-	}
-
 	if !f[0].View.isGrouped {
 		return nil, &NotGroupedError{
 			Function: expr.GroupConcat,
@@ -481,7 +472,7 @@ func (f Filter) evalGroupConcat(expr parser.GroupConcat) (parser.Primary, error)
 		if parser.IsNull(s) {
 			continue
 		}
-		if expr.Option.IsDistinct() && in(list, s.(parser.String).Value()) {
+		if expr.Option.IsDistinct() && InStrSlice(s.(parser.String).Value(), list) {
 			continue
 		}
 		list = append(list, s.(parser.String).Value())
@@ -578,16 +569,20 @@ func (f Filter) evalRowValue(expr parser.RowValue) (values []parser.Primary, err
 	return
 }
 
-func (f Filter) evalValueList(expr parser.ValueList) ([]parser.Primary, error) {
-	list := make([]parser.Primary, len(expr.Values))
-	for i, v := range expr.Values {
-		s, err := f.Evaluate(v)
+func (f Filter) evalValues(exprs []parser.Expression) ([]parser.Primary, error) {
+	values := make([]parser.Primary, len(exprs))
+	for i, v := range exprs {
+		value, err := f.Evaluate(v)
 		if err != nil {
 			return nil, err
 		}
-		list[i] = s
+		values[i] = value
 	}
-	return list, nil
+	return values, nil
+}
+
+func (f Filter) evalValueList(expr parser.ValueList) ([]parser.Primary, error) {
+	return f.evalValues(expr.Values)
 }
 
 func (f Filter) evalRowValueList(expr parser.RowValueList) ([][]parser.Primary, error) {

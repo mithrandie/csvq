@@ -3,6 +3,7 @@ package query
 import (
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"path"
 	"path/filepath"
@@ -184,8 +185,11 @@ type View struct {
 
 	filteredIndices []int
 
-	sortIndices    []int
-	sortDirections []int
+	sortIndices       []int
+	sortDirections    []int
+	sortNullPositions []int
+
+	offset int
 
 	OperatedRecords int
 	OperatedFields  int
@@ -585,58 +589,30 @@ func (view *View) Select(clause parser.SelectClause) error {
 		return append(append(fields[:insertIdx], insert...), fields[insertIdx+1:]...)
 	}
 
-	var evalFields = func(view *View, fields []parser.Expression) ([]Record, error) {
-		records := make([]Record, view.RecordLen())
-		for i := range view.Records {
-			var record Record
-			var filter Filter = append([]FilterRecord{{View: view, RecordIndex: i}}, view.parentFilter...)
-
-			for _, f := range fields {
-				field := f.(parser.Field)
-				primary, err := filter.Evaluate(field.Object)
-				if err != nil {
-					return nil, err
-				}
-				if _, ok := field.Object.(parser.FieldReference); !ok {
-					record = append(record, NewCell(primary))
-				}
+	var evalFields = func(view *View, fields []parser.Expression) error {
+		view.selectFields = make([]int, len(fields))
+		for i, f := range fields {
+			field := f.(parser.Field)
+			idx, err := view.evalColumn(field.Object, field.Object.String(), field.Name())
+			if err != nil {
+				return err
 			}
-			records[i] = record
+			view.selectFields[i] = idx
 		}
-		return records, nil
+		return nil
 	}
 
 	fields := parseAllColumns(view, clause.Fields)
-	records, err := evalFields(view, fields)
+	err := evalFields(view, fields)
 	if err != nil {
 		if _, ok := err.(*NotGroupedError); ok {
 			view.group(nil)
-			records, err = evalFields(view, fields)
+			err = evalFields(view, fields)
 			if err != nil {
 				return err
 			}
 		} else {
 			return err
-		}
-	}
-
-	view.selectFields = make([]int, len(fields))
-	for i, f := range fields {
-		field := f.(parser.Field)
-		if fieldRef, ok := field.Object.(parser.FieldReference); ok {
-			idx, err := view.Header.Contains(fieldRef)
-			if err != nil {
-				return err
-			}
-			view.selectFields[i] = idx
-		} else {
-			view.Header, view.selectFields[i] = AddHeaderField(view.Header, field.Name())
-		}
-	}
-
-	for i := range view.Records {
-		if 0 < len(records[i]) {
-			view.Records[i] = append(view.Records[i], records[i]...)
 		}
 	}
 
@@ -687,42 +663,33 @@ func (view *View) SelectAllColumns() error {
 }
 
 func (view *View) OrderBy(clause parser.OrderByClause) error {
-	view.sortIndices = []int{}
+	view.sortIndices = make([]int, len(clause.Items))
+	view.sortDirections = make([]int, len(clause.Items))
+	view.sortNullPositions = make([]int, len(clause.Items))
 
-	for _, v := range clause.Items {
+	for i, v := range clause.Items {
 		oi := v.(parser.OrderItem)
-		switch oi.Item.(type) {
-		case parser.FieldReference:
-			idx, err := view.FieldIndex(oi.Item.(parser.FieldReference))
-			if err != nil {
-				return err
-			}
-			view.sortIndices = append(view.sortIndices, idx)
-		default:
-			idx, err := view.Header.ContainsAlias(oi.Item.String())
-			if err != nil {
-				for i := range view.Records {
-					var filter Filter = append([]FilterRecord{{View: view, RecordIndex: i}}, view.parentFilter...)
-
-					primary, err := filter.Evaluate(oi.Item)
-					if err != nil {
-						return err
-					}
-					view.Records[i] = append(view.Records[i], NewCell(primary))
-				}
-				view.Header, idx = AddHeaderField(view.Header, oi.Item.String())
-			}
-			view.sortIndices = append(view.sortIndices, idx)
+		idx, err := view.evalColumn(oi.Value, oi.Value.String(), "")
+		if err != nil {
+			return err
 		}
-		view.sortDirections = append(view.sortDirections, oi.Direction.Token)
-	}
+		view.sortIndices[i] = idx
 
-	direction := parser.ASC
-	for i := len(view.sortDirections) - 1; i >= 0; i-- {
-		if view.sortDirections[i] == parser.ASC || view.sortDirections[i] == parser.DESC {
-			direction = view.sortDirections[i]
+		if oi.Direction.IsEmpty() {
+			view.sortDirections[i] = parser.ASC
 		} else {
-			view.sortDirections[i] = direction
+			view.sortDirections[i] = oi.Direction.Token
+		}
+
+		if oi.Position.IsEmpty() {
+			switch view.sortDirections[i] {
+			case parser.ASC:
+				view.sortNullPositions[i] = parser.FIRST
+			default: //parser.DESC
+				view.sortNullPositions[i] = parser.LAST
+			}
+		} else {
+			view.sortNullPositions[i] = oi.Position.Token
 		}
 	}
 
@@ -730,24 +697,158 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 	return nil
 }
 
-func (view *View) Offset(clause parser.OffsetClause) {
-	if int64(len(view.Records)) <= clause.Number {
-		view.Records = Records{}
-	} else {
-		view.Records = view.Records[clause.Number:]
-		records := make(Records, len(view.Records))
-		copy(records, view.Records)
-		view.Records = records
+func (view *View) evalColumn(obj parser.Expression, column string, alias string) (idx int, err error) {
+	switch obj.(type) {
+	case parser.FieldReference:
+		idx, err = view.FieldIndex(obj.(parser.FieldReference))
+	default:
+		idx, err = view.Header.ContainsObject(obj)
+		if err != nil {
+			err = nil
+
+			if analyticFunction, ok := obj.(parser.AnalyticFunction); ok {
+				err = view.evalAnalyticFunction(analyticFunction)
+				if err != nil {
+					return
+				}
+			} else {
+				var filter Filter = append([]FilterRecord{{View: view, RecordIndex: 0}}, view.parentFilter...)
+				for i := range view.Records {
+					var primary parser.Primary
+					filter[0].RecordIndex = i
+
+					primary, err = filter.Evaluate(obj)
+					if err != nil {
+						return
+					}
+					view.Records[i] = append(view.Records[i], NewCell(primary))
+				}
+			}
+			view.Header, idx = AddHeaderField(view.Header, column, alias)
+		}
 	}
+	return
 }
 
-func (view *View) Limit(clause parser.LimitClause) {
-	if clause.Number < int64(len(view.Records)) {
-		view.Records = view.Records[:clause.Number]
+func (view *View) evalAnalyticFunction(expr parser.AnalyticFunction) error {
+	name := strings.ToUpper(expr.Name)
+	fn, ok := AnalyticFunctions[name]
+	if !ok {
+		return errors.New(fmt.Sprintf("function %s does not exist", expr.Name))
+	}
+
+	if expr.Option.IsDistinct() {
+		return errors.New(fmt.Sprintf("syntax error: unexpected %s", expr.Option.Distinct.Literal))
+	}
+
+	if expr.AnalyticClause.OrderByClause != nil {
+		err := view.OrderBy(expr.AnalyticClause.OrderByClause.(parser.OrderByClause))
+		if err != nil {
+			return err
+		}
+	}
+
+	partitionList := make([]partitionValue, view.RecordLen())
+
+	var filter Filter = append([]FilterRecord{{View: view, RecordIndex: 0}}, view.parentFilter...)
+	for i := range view.Records {
+		filter[0].RecordIndex = i
+		values, err := filter.evalValues(expr.AnalyticClause.PartitionValues())
+		if err != nil {
+			return err
+		}
+
+		orderValues, err := filter.evalValues(expr.AnalyticClause.OrderValues())
+		if err != nil {
+			return err
+		}
+
+		partitionList[i] = partitionValue{
+			values:      values,
+			orderValues: orderValues,
+		}
+	}
+
+	return fn(view, expr.Option.Args, partitionList)
+}
+
+func (view *View) Offset(clause parser.OffsetClause) error {
+	var filter Filter
+	value, err := filter.Evaluate(clause.Value)
+	if err != nil {
+		return err
+	}
+	number := parser.PrimaryToInteger(value)
+	if parser.IsNull(number) {
+		return errors.New("offset number is not an integer")
+	}
+	view.offset = int(number.(parser.Integer).Value())
+	if view.offset < 0 {
+		view.offset = 0
+	}
+
+	if view.RecordLen() <= view.offset {
+		view.Records = Records{}
+	} else {
+		view.Records = view.Records[view.offset:]
 		records := make(Records, len(view.Records))
 		copy(records, view.Records)
 		view.Records = records
 	}
+	return nil
+}
+
+func (view *View) Limit(clause parser.LimitClause) error {
+	var filter Filter
+	value, err := filter.Evaluate(clause.Value)
+	if err != nil {
+		return err
+	}
+
+	var limit int
+	if clause.IsPercentage() {
+		number := parser.PrimaryToFloat(value)
+		if parser.IsNull(number) {
+			return errors.New("limit percentage is not a float value")
+		}
+		percentage := number.(parser.Float).Value()
+		if 100 < percentage {
+			limit = 100
+		} else if percentage < 0 {
+			limit = 0
+		} else {
+			limit = int(math.Ceil(float64(view.RecordLen()+view.offset) * percentage / 100))
+		}
+	} else {
+		number := parser.PrimaryToInteger(value)
+		if parser.IsNull(number) {
+			return errors.New("limit number of records is not an integer value")
+		}
+		limit = int(number.(parser.Integer).Value())
+		if limit < 0 {
+			limit = 0
+		}
+	}
+
+	if view.RecordLen() <= limit {
+		return nil
+	}
+
+	if clause.IsWithTies() && 0 < len(view.sortIndices) {
+		bottomRecord := view.Records[limit-1]
+		for limit < view.RecordLen() {
+			if !bottomRecord.Match(view.Records[limit], view.sortIndices) {
+				break
+			}
+			limit++
+		}
+	}
+
+	view.Records = view.Records[:limit]
+	records := make(Records, view.RecordLen())
+	copy(records, view.Records)
+	view.Records = records
+	return nil
 }
 
 func (view *View) InsertValues(fields []parser.Expression, list []parser.Expression) error {
@@ -855,6 +956,8 @@ func (view *View) Fix() {
 	view.parentFilter = Filter(nil)
 	view.sortIndices = []int(nil)
 	view.sortDirections = []int(nil)
+	view.sortNullPositions = []int(nil)
+	view.offset = 0
 }
 
 func (view *View) Union(calcView *View, all bool) {
@@ -967,9 +1070,17 @@ func (view *View) Less(i, j int) bool {
 			continue
 		case ternary.UNKNOWN:
 			if parser.IsNull(pi) {
-				t = ternary.TRUE
+				if view.sortNullPositions[k] == parser.FIRST {
+					return true
+				} else {
+					return false
+				}
 			} else if parser.IsNull(pj) {
-				t = ternary.FALSE
+				if view.sortNullPositions[k] == parser.FIRST {
+					return false
+				} else {
+					return true
+				}
 			} else {
 				continue
 			}

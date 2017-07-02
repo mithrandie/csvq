@@ -218,27 +218,27 @@ ORDER BY order_item [, order_item ...]
 
 ```sql
 order_item
-  : field_name
-  | field_name [ASC|DESC]
+  : field_name [order_direction] [null_position]
+  
+order_direction
+  : {ASC|DESC}
+  
+null_position
+  : NULLS {FIRST|LAST}
 ```
 
 _field_name_
 : [value]({{ '/reference/value.html' | relative_url }})
   
-  If DISTINCT keyword is specified in the select clause, you can use only enumerated fields in the select clause as _field_name_. 
+  If DISTINCT keyword is specified in the select clause, you can use only enumerated fields in the select clause as _field_name_.
 
-Default order direction is ASC.
-If order direction is not specified, the next order_item's direction is applied.
+_order_direction_
+: _ASC_ sorts records in ascending order. _DESC_ sorts in descending order. _ASC_ is the default.
 
-```sql
--- Following expressions return same results
-ORDER BY column1, column2
-ORDER BY column1 ASC, column2 ASC
+_null_position_
+: _FIRST_ puts null values first. _LAST_ puts null values last. 
+  If _order_direction_ is specified as _ASC_ then _FIRST_ is the default, otherwise _LAST_ is the default.
 
--- Following expressions return same results
-ORDER BY column1, column2 ASC, column3, column4 DESC
-ORDER BY column1 ASC, column2 ASC, column3 DESC, column4 DESC
-```
 
 ## Limit Clause
 {: #limit_clause}
@@ -246,12 +246,21 @@ ORDER BY column1 ASC, column2 ASC, column3 DESC, column4 DESC
 The Limit clause is used to specify the maximum number of records to return.
 
 ```sql
-LIMIT number
+limit_clause
+  : LIMIT number_of_records [WITH TIES]
+  | LIMIT percent PERCENT [WITH TIES]
 ```
 
-_number_
+_number_of_records_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
+_percent_
+: [float]({{ '/reference/value.html#integer' | relative_url }})
+
+If _PERCENT_ keyword is specified, maximum number of records is _percent_ percent of the result set that includes the excluded records by _Offset Clause_. 
+
+If _WITH TIES_ keywords are specified, all records that have the same sort keys specified by _Order By Clause_ as the last record of the limited records are included in the records to return.
+If there is no _Order By Clause_ in the query, _WITH TIES_ keywords are ignored.
 
 ## Offset Clause
 {: #offset_clause}

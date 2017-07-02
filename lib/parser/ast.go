@@ -541,22 +541,51 @@ func (ob OrderByClause) String() string {
 }
 
 type LimitClause struct {
-	Limit  string
-	Number int64
+	Limit   string
+	Value   Expression
+	Percent string
+	With    Expression
 }
 
-func (l LimitClause) String() string {
-	s := []string{l.Limit, strconv.FormatInt(l.Number, 10)}
+func (e LimitClause) String() string {
+	s := []string{e.Limit, e.Value.String()}
+	if e.IsPercentage() {
+		s = append(s, e.Percent)
+	}
+	if e.With != nil {
+		s = append(s, e.With.String())
+	}
+	return joinWithSpace(s)
+}
+
+func (e LimitClause) IsPercentage() bool {
+	return 0 < len(e.Percent)
+}
+
+func (e LimitClause) IsWithTies() bool {
+	if e.With == nil {
+		return false
+	}
+	return e.With.(LimitWith).Type.Token == TIES
+}
+
+type LimitWith struct {
+	With string
+	Type Token
+}
+
+func (e LimitWith) String() string {
+	s := []string{e.With, e.Type.Literal}
 	return joinWithSpace(s)
 }
 
 type OffsetClause struct {
 	Offset string
-	Number int64
+	Value  Expression
 }
 
 func (e OffsetClause) String() string {
-	s := []string{e.Offset, strconv.FormatInt(e.Number, 10)}
+	s := []string{e.Offset, e.Value.String()}
 	return joinWithSpace(s)
 }
 
@@ -889,14 +918,19 @@ func (si Stdin) String() string {
 }
 
 type OrderItem struct {
-	Item      Expression
+	Value     Expression
 	Direction Token
+	Nulls     string
+	Position  Token
 }
 
-func (oi OrderItem) String() string {
-	s := []string{oi.Item.String()}
-	if !oi.Direction.IsEmpty() {
-		s = append(s, oi.Direction.Literal)
+func (e OrderItem) String() string {
+	s := []string{e.Value.String()}
+	if !e.Direction.IsEmpty() {
+		s = append(s, e.Direction.Literal)
+	}
+	if 0 < len(e.Nulls) {
+		s = append(s, e.Nulls, e.Position.Literal)
 	}
 	return joinWithSpace(s)
 }
@@ -971,6 +1005,68 @@ func (gc GroupConcat) String() string {
 		s = append(s, quoteString(gc.Separator))
 	}
 	return gc.GroupConcat + "(" + joinWithSpace(s) + ")"
+}
+
+type AnalyticFunction struct {
+	Name           string
+	Option         Option
+	Over           string
+	AnalyticClause AnalyticClause
+}
+
+func (e AnalyticFunction) String() string {
+	s := []string{
+		e.Name + "(" + e.Option.String() + ")",
+		e.Over,
+		"(" + e.AnalyticClause.String() + ")",
+	}
+	return joinWithSpace(s)
+}
+
+type AnalyticClause struct {
+	Partition     Expression
+	OrderByClause Expression
+}
+
+func (e AnalyticClause) String() string {
+	s := []string{}
+	if e.Partition != nil {
+		s = append(s, e.Partition.String())
+	}
+	if e.OrderByClause != nil {
+		s = append(s, e.OrderByClause.String())
+	}
+	return joinWithSpace(s)
+}
+
+func (e AnalyticClause) PartitionValues() []Expression {
+	if e.Partition == nil {
+		return nil
+	}
+	return e.Partition.(Partition).Values
+}
+
+func (e AnalyticClause) OrderValues() []Expression {
+	if e.OrderByClause == nil {
+		return nil
+	}
+
+	items := e.OrderByClause.(OrderByClause).Items
+	result := make([]Expression, len(items))
+	for i, v := range items {
+		result[i] = v.(OrderItem).Value
+	}
+	return result
+}
+
+type Partition struct {
+	PartitionBy string
+	Values      []Expression
+}
+
+func (e Partition) String() string {
+	s := []string{e.PartitionBy, listExpressions(e.Values)}
+	return joinWithSpace(s)
 }
 
 type Variable struct {

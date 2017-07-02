@@ -8,7 +8,7 @@ category: reference
 
 | name | description |
 | :- | :- |
-| [NOW](#now) | Return current date and time |
+| [NOW](#now) | Return a datetime value of current date and time |
 | [DATETIME_FORMAT](#datetime_format) | Format a datetime |
 | [YEAR](#year) | Return year of a datetime |
 | [MONTH](#month) | Return month of a datetime |
@@ -48,7 +48,7 @@ NOW()
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Return current date and time.
+Return a datetime value of current date and time.
 
 ### DATETIME_FORMAT
 {: #datetime_format}
