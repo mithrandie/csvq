@@ -1279,6 +1279,333 @@ var viewSelectTests = []struct {
 			selectFields: []int{3},
 		},
 	},
+	{
+		Name: "Select Analytic Function",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(3),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(5),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(4),
+				}),
+			},
+		},
+		Select: parser.SelectClause{
+			Fields: []parser.Expression{
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+				parser.Field{
+					Object: parser.AnalyticFunction{
+						Name: "row_number",
+						Over: "over",
+						AnalyticClause: parser.AnalyticClause{
+							Partition: parser.Partition{
+								PartitionBy: "partition by",
+								Values: []parser.Expression{
+									parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+								},
+							},
+							OrderByClause: parser.OrderByClause{
+								OrderBy: "order by",
+								Items: []parser.Expression{
+									parser.OrderItem{
+										Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+									},
+								},
+							},
+						},
+					},
+					Alias: parser.Identifier{Literal: "rownum"},
+				},
+			},
+		},
+		Result: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+				{Column: "row_number() over (partition by column1 order by column2)", Alias: "rownum"},
+			},
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(3),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(4),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(5),
+					parser.NewInteger(3),
+				}),
+			},
+			selectFields: []int{0, 1, 2},
+		},
+	},
+	{
+		Name: "Select Analytic Function Not Exist Error",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(3),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(5),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(4),
+				}),
+			},
+		},
+		Select: parser.SelectClause{
+			Fields: []parser.Expression{
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+				parser.Field{
+					Object: parser.AnalyticFunction{
+						Name: "notexist",
+						Over: "over",
+						AnalyticClause: parser.AnalyticClause{
+							Partition: parser.Partition{
+								PartitionBy: "partition by",
+								Values: []parser.Expression{
+									parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+								},
+							},
+							OrderByClause: parser.OrderByClause{
+								OrderBy: "order by",
+								Items: []parser.Expression{
+									parser.OrderItem{
+										Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+									},
+								},
+							},
+						},
+					},
+					Alias: parser.Identifier{Literal: "rownum"},
+				},
+			},
+		},
+		Error: "function notexist does not exist",
+	},
+	{
+		Name: "Select Analytic Function Option Error",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(3),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(5),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(4),
+				}),
+			},
+		},
+		Select: parser.SelectClause{
+			Fields: []parser.Expression{
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+				parser.Field{
+					Object: parser.AnalyticFunction{
+						Name: "row_number",
+						Option: parser.Option{
+							Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
+						},
+						Over: "over",
+						AnalyticClause: parser.AnalyticClause{
+							Partition: parser.Partition{
+								PartitionBy: "partition by",
+								Values: []parser.Expression{
+									parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+								},
+							},
+							OrderByClause: parser.OrderByClause{
+								OrderBy: "order by",
+								Items: []parser.Expression{
+									parser.OrderItem{
+										Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+									},
+								},
+							},
+						},
+					},
+					Alias: parser.Identifier{Literal: "rownum"},
+				},
+			},
+		},
+		Error: "syntax error: unexpected distinct",
+	},
+	{
+		Name: "Select Analytic Function Order Error",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(3),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(5),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(4),
+				}),
+			},
+		},
+		Select: parser.SelectClause{
+			Fields: []parser.Expression{
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+				parser.Field{
+					Object: parser.AnalyticFunction{
+						Name: "row_number",
+						Over: "over",
+						AnalyticClause: parser.AnalyticClause{
+							Partition: parser.Partition{
+								PartitionBy: "partition by",
+								Values: []parser.Expression{
+									parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+								},
+							},
+							OrderByClause: parser.OrderByClause{
+								OrderBy: "order by",
+								Items: []parser.Expression{
+									parser.OrderItem{
+										Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+									},
+								},
+							},
+						},
+					},
+					Alias: parser.Identifier{Literal: "rownum"},
+				},
+			},
+		},
+		Error: "field notexist does not exist",
+	},
+	{
+		Name: "Select Analytic Function Partition Value Error",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(3),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(5),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(4),
+				}),
+			},
+		},
+		Select: parser.SelectClause{
+			Fields: []parser.Expression{
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+				parser.Field{
+					Object: parser.AnalyticFunction{
+						Name: "row_number",
+						Over: "over",
+						AnalyticClause: parser.AnalyticClause{
+							Partition: parser.Partition{
+								PartitionBy: "partition by",
+								Values: []parser.Expression{
+									parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+								},
+							},
+							OrderByClause: parser.OrderByClause{
+								OrderBy: "order by",
+								Items: []parser.Expression{
+									parser.OrderItem{
+										Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+									},
+								},
+							},
+						},
+					},
+					Alias: parser.Identifier{Literal: "rownum"},
+				},
+			},
+		},
+		Error: "field notexist does not exist",
+	},
 }
 
 func TestView_Select(t *testing.T) {
@@ -1355,17 +1682,17 @@ var viewOrderByTests = []struct {
 		OrderBy: parser.OrderByClause{
 			Items: []parser.Expression{
 				parser.OrderItem{
-					Item: parser.Identifier{Literal: "column1"},
+					Value: parser.Identifier{Literal: "column1"},
 				},
 				parser.OrderItem{
-					Item:      parser.Identifier{Literal: "column2"},
+					Value:     parser.Identifier{Literal: "column2"},
 					Direction: parser.Token{Token: parser.DESC, Literal: "desc"},
 				},
 				parser.OrderItem{
-					Item: parser.Identifier{Literal: "column3"},
+					Value: parser.Identifier{Literal: "column3"},
 				},
 				parser.OrderItem{
-					Item: parser.NewInteger(1),
+					Value: parser.NewInteger(1),
 				},
 			},
 		},
@@ -1445,11 +1772,11 @@ var viewOrderByTests = []struct {
 		OrderBy: parser.OrderByClause{
 			Items: []parser.Expression{
 				parser.OrderItem{
-					Item:     parser.Identifier{Literal: "column1"},
+					Value:    parser.Identifier{Literal: "column1"},
 					Position: parser.Token{Token: parser.LAST, Literal: "last"},
 				},
 				parser.OrderItem{
-					Item:     parser.Identifier{Literal: "column2"},
+					Value:    parser.Identifier{Literal: "column2"},
 					Position: parser.Token{Token: parser.FIRST, Literal: "first"},
 				},
 			},

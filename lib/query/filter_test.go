@@ -1568,7 +1568,7 @@ var filterEvaluateTests = []struct {
 		Result: parser.NewString("str"),
 	},
 	{
-		Name: "Function Is Not Exist",
+		Name: "Function Not Exist Error",
 		Expr: parser.Function{
 			Name: "notexist",
 			Option: parser.Option{
@@ -1578,7 +1578,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Error: "function notexist is not exist",
+		Error: "function notexist does not exist",
 	},
 	{
 		Name: "Function Option Error",
@@ -1896,7 +1896,7 @@ var filterEvaluateTests = []struct {
 			},
 			OrderBy: parser.OrderByClause{
 				Items: []parser.Expression{
-					parser.OrderItem{Item: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+					parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 				},
 			},
 			Separator: ",",
@@ -2075,7 +2075,7 @@ var filterEvaluateTests = []struct {
 			},
 			OrderBy: parser.OrderByClause{
 				Items: []parser.Expression{
-					parser.OrderItem{Item: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
+					parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
 				},
 			},
 			Separator: ",",

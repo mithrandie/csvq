@@ -669,7 +669,7 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 
 	for i, v := range clause.Items {
 		oi := v.(parser.OrderItem)
-		idx, err := view.evalColumn(oi.Item, oi.Item.String(), "")
+		idx, err := view.evalColumn(oi.Value, oi.Value.String(), "")
 		if err != nil {
 			return err
 		}
@@ -706,21 +706,70 @@ func (view *View) evalColumn(obj parser.Expression, column string, alias string)
 		if err != nil {
 			err = nil
 
-			var filter Filter = append([]FilterRecord{{View: view, RecordIndex: 0}}, view.parentFilter...)
-			for i := range view.Records {
-				var primary parser.Primary
-				filter[0].RecordIndex = i
-
-				primary, err = filter.Evaluate(obj)
+			if analyticFunction, ok := obj.(parser.AnalyticFunction); ok {
+				err = view.evalAnalyticFunction(analyticFunction)
 				if err != nil {
 					return
 				}
-				view.Records[i] = append(view.Records[i], NewCell(primary))
+			} else {
+				var filter Filter = append([]FilterRecord{{View: view, RecordIndex: 0}}, view.parentFilter...)
+				for i := range view.Records {
+					var primary parser.Primary
+					filter[0].RecordIndex = i
+
+					primary, err = filter.Evaluate(obj)
+					if err != nil {
+						return
+					}
+					view.Records[i] = append(view.Records[i], NewCell(primary))
+				}
 			}
 			view.Header, idx = AddHeaderField(view.Header, column, alias)
 		}
 	}
 	return
+}
+
+func (view *View) evalAnalyticFunction(expr parser.AnalyticFunction) error {
+	name := strings.ToUpper(expr.Name)
+	fn, ok := AnalyticFunctions[name]
+	if !ok {
+		return errors.New(fmt.Sprintf("function %s does not exist", expr.Name))
+	}
+
+	if expr.Option.IsDistinct() {
+		return errors.New(fmt.Sprintf("syntax error: unexpected %s", expr.Option.Distinct.Literal))
+	}
+
+	if expr.AnalyticClause.OrderByClause != nil {
+		err := view.OrderBy(expr.AnalyticClause.OrderByClause.(parser.OrderByClause))
+		if err != nil {
+			return err
+		}
+	}
+
+	partitionList := make([]partitionValue, view.RecordLen())
+
+	var filter Filter = append([]FilterRecord{{View: view, RecordIndex: 0}}, view.parentFilter...)
+	for i := range view.Records {
+		filter[0].RecordIndex = i
+		values, err := filter.evalValues(expr.AnalyticClause.PartitionValues())
+		if err != nil {
+			return err
+		}
+
+		orderValues, err := filter.evalValues(expr.AnalyticClause.OrderValues())
+		if err != nil {
+			return err
+		}
+
+		partitionList[i] = partitionValue{
+			values:      values,
+			orderValues: orderValues,
+		}
+	}
+
+	return fn(view, expr.Option.Args, partitionList)
 }
 
 func (view *View) Offset(clause parser.OffsetClause) error {

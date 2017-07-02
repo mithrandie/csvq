@@ -370,7 +370,7 @@ func (f Filter) evalFunction(expr parser.Function) (parser.Primary, error) {
 
 	fn, ok := Functions[name]
 	if !ok {
-		return nil, errors.New(fmt.Sprintf("function %s is not exist", expr.Name))
+		return nil, errors.New(fmt.Sprintf("function %s does not exist", expr.Name))
 	}
 
 	if expr.Option.IsDistinct() {
@@ -569,16 +569,20 @@ func (f Filter) evalRowValue(expr parser.RowValue) (values []parser.Primary, err
 	return
 }
 
-func (f Filter) evalValueList(expr parser.ValueList) ([]parser.Primary, error) {
-	list := make([]parser.Primary, len(expr.Values))
-	for i, v := range expr.Values {
-		s, err := f.Evaluate(v)
+func (f Filter) evalValues(exprs []parser.Expression) ([]parser.Primary, error) {
+	values := make([]parser.Primary, len(exprs))
+	for i, v := range exprs {
+		value, err := f.Evaluate(v)
 		if err != nil {
 			return nil, err
 		}
-		list[i] = s
+		values[i] = value
 	}
-	return list, nil
+	return values, nil
+}
+
+func (f Filter) evalValueList(expr parser.ValueList) ([]parser.Primary, error) {
+	return f.evalValues(expr.Values)
 }
 
 func (f Filter) evalRowValueList(expr parser.RowValueList) ([][]parser.Primary, error) {

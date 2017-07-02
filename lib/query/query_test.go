@@ -1218,7 +1218,7 @@ var selectTests = []struct {
 			},
 			OrderByClause: parser.OrderByClause{
 				Items: []parser.Expression{
-					parser.OrderItem{Item: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+					parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 				},
 			},
 			LimitClause: parser.LimitClause{

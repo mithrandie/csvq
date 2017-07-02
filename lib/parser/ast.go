@@ -918,14 +918,14 @@ func (si Stdin) String() string {
 }
 
 type OrderItem struct {
-	Item      Expression
+	Value     Expression
 	Direction Token
 	Nulls     string
 	Position  Token
 }
 
 func (e OrderItem) String() string {
-	s := []string{e.Item.String()}
+	s := []string{e.Value.String()}
 	if !e.Direction.IsEmpty() {
 		s = append(s, e.Direction.Literal)
 	}
@@ -1005,6 +1005,68 @@ func (gc GroupConcat) String() string {
 		s = append(s, quoteString(gc.Separator))
 	}
 	return gc.GroupConcat + "(" + joinWithSpace(s) + ")"
+}
+
+type AnalyticFunction struct {
+	Name           string
+	Option         Option
+	Over           string
+	AnalyticClause AnalyticClause
+}
+
+func (e AnalyticFunction) String() string {
+	s := []string{
+		e.Name + "(" + e.Option.String() + ")",
+		e.Over,
+		"(" + e.AnalyticClause.String() + ")",
+	}
+	return joinWithSpace(s)
+}
+
+type AnalyticClause struct {
+	Partition     Expression
+	OrderByClause Expression
+}
+
+func (e AnalyticClause) String() string {
+	s := []string{}
+	if e.Partition != nil {
+		s = append(s, e.Partition.String())
+	}
+	if e.OrderByClause != nil {
+		s = append(s, e.OrderByClause.String())
+	}
+	return joinWithSpace(s)
+}
+
+func (e AnalyticClause) PartitionValues() []Expression {
+	if e.Partition == nil {
+		return nil
+	}
+	return e.Partition.(Partition).Values
+}
+
+func (e AnalyticClause) OrderValues() []Expression {
+	if e.OrderByClause == nil {
+		return nil
+	}
+
+	items := e.OrderByClause.(OrderByClause).Items
+	result := make([]Expression, len(items))
+	for i, v := range items {
+		result[i] = v.(OrderItem).Value
+	}
+	return result
+}
+
+type Partition struct {
+	PartitionBy string
+	Values      []Expression
+}
+
+func (e Partition) String() string {
+	s := []string{e.PartitionBy, listExpressions(e.Values)}
+	return joinWithSpace(s)
 }
 
 type Variable struct {

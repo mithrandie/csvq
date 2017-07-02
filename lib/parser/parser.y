@@ -51,6 +51,7 @@ package parser
 %type<expressions> row_values
 %type<expressions> order_items
 %type<expression>  order_item
+%type<expression>  order_value
 %type<token>       order_direction
 %type<token>       order_null_position
 %type<expression>  subquery
@@ -61,6 +62,9 @@ package parser
 %type<expression>  function
 %type<expression>  option
 %type<expression>  group_concat
+%type<expression>  analytic_function
+%type<expression>  analytic_clause
+%type<expression>  partition
 %type<expression>  identified_table
 %type<expression>  virtual_table
 %type<expression>  table
@@ -126,7 +130,7 @@ package parser
 %token<token> DISTINCT WITH
 %token<token> CASE IF ELSEIF WHILE WHEN THEN ELSE DO END
 %token<token> DECLARE CURSOR FOR FETCH OPEN CLOSE DISPOSE
-%token<token> GROUP_CONCAT SEPARATOR
+%token<token> GROUP_CONCAT SEPARATOR PARTITION OVER
 %token<token> COMMIT ROLLBACK
 %token<token> CONTINUE BREAK EXIT
 %token<token> PRINT
@@ -592,13 +596,23 @@ order_items
     }
 
 order_item
-    : value order_direction
+    : order_value order_direction
     {
-        $$ = OrderItem{Item: $1, Direction: $2}
+        $$ = OrderItem{Value: $1, Direction: $2}
     }
-    | value order_direction NULLS order_null_position
+    | order_value order_direction NULLS order_null_position
     {
-        $$ = OrderItem{Item: $1, Direction: $2, Nulls: $3.Literal, Position: $4}
+        $$ = OrderItem{Value: $1, Direction: $2, Nulls: $3.Literal, Position: $4}
+    }
+
+order_value
+    : value
+    {
+        $$ = $1
+    }
+    | analytic_function
+    {
+        $$ = $1
     }
 
 order_direction
@@ -802,6 +816,28 @@ group_concat
         $$ = GroupConcat{GroupConcat: $1.Literal, Option: $3.(Option), OrderBy: $4, SeparatorLit: $5.Literal, Separator: $6.Literal}
     }
 
+analytic_function
+    : identifier '(' option ')' OVER '(' analytic_clause ')'
+    {
+        $$ = AnalyticFunction{Name: $1.Literal, Option: $3.(Option), Over: $5.Literal, AnalyticClause: $7.(AnalyticClause)}
+    }
+
+analytic_clause
+    : partition order_by_clause
+    {
+        $$ = AnalyticClause{Partition: $1, OrderByClause: $2}
+    }
+
+partition
+    :
+    {
+        $$ = nil
+    }
+    | PARTITION BY values
+    {
+        $$ = Partition{PartitionBy: $1.Literal + " " + $2.Literal, Values: $3}
+    }
+
 identified_table
     : identifier
     {
@@ -890,6 +926,10 @@ join_condition
 
 field_object
     : value
+    {
+        $$ = $1
+    }
+    | analytic_function
     {
         $$ = $1
     }
