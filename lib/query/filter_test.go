@@ -35,22 +35,24 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "FieldReference",
-		Filter: []FilterRecord{
-			{
-				View: &View{
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					Records: []Record{
-						NewRecord(1, []parser.Primary{
-							parser.NewInteger(1),
-							parser.NewString("str"),
-						}),
-						NewRecord(2, []parser.Primary{
-							parser.NewInteger(2),
-							parser.NewString("strstr"),
-						}),
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							NewRecord(1, []parser.Primary{
+								parser.NewInteger(1),
+								parser.NewString("str"),
+							}),
+							NewRecord(2, []parser.Primary{
+								parser.NewInteger(2),
+								parser.NewString("strstr"),
+							}),
+						},
 					},
+					RecordIndex: 1,
 				},
-				RecordIndex: 1,
 			},
 		},
 		Expr:   parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
@@ -58,22 +60,24 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "FieldReference ColumnNotExist Error",
-		Filter: []FilterRecord{
-			{
-				View: &View{
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					Records: []Record{
-						NewRecord(1, []parser.Primary{
-							parser.NewInteger(1),
-							parser.NewString("str"),
-						}),
-						NewRecord(2, []parser.Primary{
-							parser.NewInteger(2),
-							parser.NewString("strstr"),
-						}),
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							NewRecord(1, []parser.Primary{
+								parser.NewInteger(1),
+								parser.NewString("str"),
+							}),
+							NewRecord(2, []parser.Primary{
+								parser.NewInteger(2),
+								parser.NewString("strstr"),
+							}),
+						},
 					},
+					RecordIndex: 1,
 				},
-				RecordIndex: 1,
 			},
 		},
 		Expr:  parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
@@ -81,22 +85,24 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "FieldReference FieldAmbigous Error",
-		Filter: []FilterRecord{
-			{
-				View: &View{
-					Header: NewHeader("table1", []string{"column1", "column1"}),
-					Records: []Record{
-						NewRecord(1, []parser.Primary{
-							parser.NewInteger(1),
-							parser.NewString("str"),
-						}),
-						NewRecord(2, []parser.Primary{
-							parser.NewInteger(2),
-							parser.NewString("strstr"),
-						}),
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column1"}),
+						Records: []Record{
+							NewRecord(1, []parser.Primary{
+								parser.NewInteger(1),
+								parser.NewString("str"),
+							}),
+							NewRecord(2, []parser.Primary{
+								parser.NewInteger(2),
+								parser.NewString("strstr"),
+							}),
+						},
 					},
+					RecordIndex: 1,
 				},
-				RecordIndex: 1,
 			},
 		},
 		Expr:  parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
@@ -104,36 +110,38 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "FieldReference Not Group Key Error",
-		Filter: []FilterRecord{
-			{
-				View: &View{
-					Header: []HeaderField{
-						{
-							Reference: "table1",
-							Column:    "column1",
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: []HeaderField{
+							{
+								Reference: "table1",
+								Column:    "column1",
+							},
+							{
+								Reference: "table1",
+								Column:    "column2",
+							},
 						},
-						{
-							Reference: "table1",
-							Column:    "column2",
+						Records: []Record{
+							{
+								NewGroupCell([]parser.Primary{
+									parser.NewInteger(1),
+									parser.NewInteger(2),
+								}),
+							},
+							{
+								NewGroupCell([]parser.Primary{
+									parser.NewString("str1"),
+									parser.NewString("str2"),
+								}),
+							},
 						},
+						isGrouped: true,
 					},
-					Records: []Record{
-						{
-							NewGroupCell([]parser.Primary{
-								parser.NewInteger(1),
-								parser.NewInteger(2),
-							}),
-						},
-						{
-							NewGroupCell([]parser.Primary{
-								parser.NewString("str1"),
-								parser.NewString("str2"),
-							}),
-						},
-					},
-					isGrouped: true,
+					RecordIndex: 0,
 				},
-				RecordIndex: 0,
 			},
 		},
 		Expr:  parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
@@ -141,38 +149,40 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "FieldReference Fields Ambiguous Error with Multiple Tables",
-		Filter: []FilterRecord{
-			{
-				View: &View{
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					Records: []Record{
-						NewRecord(1, []parser.Primary{
-							parser.NewInteger(1),
-							parser.NewString("str"),
-						}),
-						NewRecord(2, []parser.Primary{
-							parser.NewInteger(2),
-							parser.NewString("strstr"),
-						}),
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							NewRecord(1, []parser.Primary{
+								parser.NewInteger(1),
+								parser.NewString("str"),
+							}),
+							NewRecord(2, []parser.Primary{
+								parser.NewInteger(2),
+								parser.NewString("strstr"),
+							}),
+						},
 					},
+					RecordIndex: 1,
 				},
-				RecordIndex: 1,
-			},
-			{
-				View: &View{
-					Header: NewHeader("table2", []string{"column1", "column2"}),
-					Records: []Record{
-						NewRecord(1, []parser.Primary{
-							parser.NewInteger(1),
-							parser.NewString("str"),
-						}),
-						NewRecord(2, []parser.Primary{
-							parser.NewInteger(2),
-							parser.NewString("strstr"),
-						}),
+				{
+					View: &View{
+						Header: NewHeader("table2", []string{"column1", "column2"}),
+						Records: []Record{
+							NewRecord(1, []parser.Primary{
+								parser.NewInteger(1),
+								parser.NewString("str"),
+							}),
+							NewRecord(2, []parser.Primary{
+								parser.NewInteger(2),
+								parser.NewString("strstr"),
+							}),
+						},
 					},
+					RecordIndex: 1,
 				},
-				RecordIndex: 1,
 			},
 		},
 		Expr:  parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
@@ -780,18 +790,20 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "In Subquery",
-		Filter: []FilterRecord{
-			{
-				View: &View{
-					Header: NewHeader("table2", []string{"column3", "column4"}),
-					Records: []Record{
-						NewRecord(1, []parser.Primary{
-							parser.NewInteger(1),
-							parser.NewString("str2"),
-						}),
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table2", []string{"column3", "column4"}),
+						Records: []Record{
+							NewRecord(1, []parser.Primary{
+								parser.NewInteger(1),
+								parser.NewString("str2"),
+							}),
+						},
 					},
+					RecordIndex: 0,
 				},
-				RecordIndex: 0,
 			},
 		},
 		Expr: parser.In{
@@ -1317,18 +1329,20 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Exists",
-		Filter: []FilterRecord{
-			{
-				View: &View{
-					Header: NewHeader("table2", []string{"column3", "column4"}),
-					Records: []Record{
-						NewRecord(1, []parser.Primary{
-							parser.NewInteger(1),
-							parser.NewString("str2"),
-						}),
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table2", []string{"column3", "column4"}),
+						Records: []Record{
+							NewRecord(1, []parser.Primary{
+								parser.NewInteger(1),
+								parser.NewString("str2"),
+							}),
+						},
 					},
+					RecordIndex: 0,
 				},
-				RecordIndex: 0,
 			},
 		},
 		Expr: parser.Exists{
@@ -1417,18 +1431,20 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Subquery",
-		Filter: []FilterRecord{
-			{
-				View: &View{
-					Header: NewHeader("table2", []string{"column3", "column4"}),
-					Records: []Record{
-						NewRecord(1, []parser.Primary{
-							parser.NewInteger(1),
-							parser.NewString("str2"),
-						}),
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table2", []string{"column3", "column4"}),
+						Records: []Record{
+							NewRecord(1, []parser.Primary{
+								parser.NewInteger(1),
+								parser.NewString("str2"),
+							}),
+						},
 					},
+					RecordIndex: 0,
 				},
-				RecordIndex: 0,
 			},
 		},
 		Expr: parser.Subquery{
@@ -1608,32 +1624,34 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function",
-		Filter: []FilterRecord{
-			{
-				View: &View{
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					Records: []Record{
-						{
-							NewGroupCell([]parser.Primary{
-								parser.NewInteger(1),
-								parser.NewInteger(2),
-								parser.NewInteger(3),
-							}),
-							NewGroupCell([]parser.Primary{
-								parser.NewInteger(1),
-								parser.NewNull(),
-								parser.NewInteger(3),
-							}),
-							NewGroupCell([]parser.Primary{
-								parser.NewString("str1"),
-								parser.NewString("str2"),
-								parser.NewString("str3"),
-							}),
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							{
+								NewGroupCell([]parser.Primary{
+									parser.NewInteger(1),
+									parser.NewInteger(2),
+									parser.NewInteger(3),
+								}),
+								NewGroupCell([]parser.Primary{
+									parser.NewInteger(1),
+									parser.NewNull(),
+									parser.NewInteger(3),
+								}),
+								NewGroupCell([]parser.Primary{
+									parser.NewString("str1"),
+									parser.NewString("str2"),
+									parser.NewString("str3"),
+								}),
+							},
 						},
+						isGrouped: true,
 					},
-					isGrouped: true,
+					RecordIndex: 0,
 				},
-				RecordIndex: 0,
 			},
 		},
 		Expr: parser.Function{
@@ -1648,18 +1666,20 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function Not Grouped Error",
-		Filter: []FilterRecord{
-			{
-				View: &View{
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					Records: []Record{
-						NewRecord(1, []parser.Primary{
-							parser.NewInteger(1),
-							parser.NewString("str2"),
-						}),
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							NewRecord(1, []parser.Primary{
+								parser.NewInteger(1),
+								parser.NewString("str2"),
+							}),
+						},
 					},
+					RecordIndex: 0,
 				},
-				RecordIndex: 0,
 			},
 		},
 		Expr: parser.Function{
@@ -1674,27 +1694,29 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function No Argument Error",
-		Filter: []FilterRecord{
-			{
-				View: &View{
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					Records: []Record{
-						{
-							NewGroupCell([]parser.Primary{
-								parser.NewInteger(1),
-								parser.NewNull(),
-								parser.NewInteger(3),
-							}),
-							NewGroupCell([]parser.Primary{
-								parser.NewString("str1"),
-								parser.NewString("str2"),
-								parser.NewString("str3"),
-							}),
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							{
+								NewGroupCell([]parser.Primary{
+									parser.NewInteger(1),
+									parser.NewNull(),
+									parser.NewInteger(3),
+								}),
+								NewGroupCell([]parser.Primary{
+									parser.NewString("str1"),
+									parser.NewString("str2"),
+									parser.NewString("str3"),
+								}),
+							},
 						},
+						isGrouped: true,
 					},
-					isGrouped: true,
+					RecordIndex: 0,
 				},
-				RecordIndex: 0,
 			},
 		},
 		Expr: parser.Function{
@@ -1707,27 +1729,29 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function Too Many Arguments Error",
-		Filter: []FilterRecord{
-			{
-				View: &View{
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					Records: []Record{
-						{
-							NewGroupCell([]parser.Primary{
-								parser.NewInteger(1),
-								parser.NewNull(),
-								parser.NewInteger(3),
-							}),
-							NewGroupCell([]parser.Primary{
-								parser.NewString("str1"),
-								parser.NewString("str2"),
-								parser.NewString("str3"),
-							}),
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							{
+								NewGroupCell([]parser.Primary{
+									parser.NewInteger(1),
+									parser.NewNull(),
+									parser.NewInteger(3),
+								}),
+								NewGroupCell([]parser.Primary{
+									parser.NewString("str1"),
+									parser.NewString("str2"),
+									parser.NewString("str3"),
+								}),
+							},
 						},
+						isGrouped: true,
 					},
-					isGrouped: true,
+					RecordIndex: 0,
 				},
-				RecordIndex: 0,
 			},
 		},
 		Expr: parser.Function{
@@ -1743,27 +1767,29 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function Unpermitted AllColumns",
-		Filter: []FilterRecord{
-			{
-				View: &View{
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					Records: []Record{
-						{
-							NewGroupCell([]parser.Primary{
-								parser.NewInteger(1),
-								parser.NewNull(),
-								parser.NewInteger(3),
-							}),
-							NewGroupCell([]parser.Primary{
-								parser.NewString("str1"),
-								parser.NewString("str2"),
-								parser.NewString("str3"),
-							}),
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							{
+								NewGroupCell([]parser.Primary{
+									parser.NewInteger(1),
+									parser.NewNull(),
+									parser.NewInteger(3),
+								}),
+								NewGroupCell([]parser.Primary{
+									parser.NewString("str1"),
+									parser.NewString("str2"),
+									parser.NewString("str3"),
+								}),
+							},
 						},
+						isGrouped: true,
 					},
-					isGrouped: true,
+					RecordIndex: 0,
 				},
-				RecordIndex: 0,
 			},
 		},
 		Expr: parser.Function{
@@ -1778,27 +1804,29 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function Duplicate Error",
-		Filter: []FilterRecord{
-			{
-				View: &View{
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					Records: []Record{
-						{
-							NewGroupCell([]parser.Primary{
-								parser.NewInteger(1),
-								parser.NewNull(),
-								parser.NewInteger(3),
-							}),
-							NewGroupCell([]parser.Primary{
-								parser.NewString("str1"),
-								parser.NewString("str2"),
-								parser.NewString("str3"),
-							}),
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							{
+								NewGroupCell([]parser.Primary{
+									parser.NewInteger(1),
+									parser.NewNull(),
+									parser.NewInteger(3),
+								}),
+								NewGroupCell([]parser.Primary{
+									parser.NewString("str1"),
+									parser.NewString("str2"),
+									parser.NewString("str3"),
+								}),
+							},
 						},
+						isGrouped: true,
 					},
-					isGrouped: true,
+					RecordIndex: 0,
 				},
-				RecordIndex: 0,
 			},
 		},
 		Expr: parser.Function{
@@ -1820,27 +1848,29 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function Count With AllColumns",
-		Filter: []FilterRecord{
-			{
-				View: &View{
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					Records: []Record{
-						{
-							NewGroupCell([]parser.Primary{
-								parser.NewInteger(1),
-								parser.NewNull(),
-								parser.NewInteger(3),
-							}),
-							NewGroupCell([]parser.Primary{
-								parser.NewString("str1"),
-								parser.NewString("str2"),
-								parser.NewString("str3"),
-							}),
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							{
+								NewGroupCell([]parser.Primary{
+									parser.NewInteger(1),
+									parser.NewNull(),
+									parser.NewInteger(3),
+								}),
+								NewGroupCell([]parser.Primary{
+									parser.NewString("str1"),
+									parser.NewString("str2"),
+									parser.NewString("str3"),
+								}),
+							},
 						},
+						isGrouped: true,
 					},
-					isGrouped: true,
+					RecordIndex: 0,
 				},
-				RecordIndex: 0,
 			},
 		},
 		Expr: parser.Function{
@@ -1855,35 +1885,37 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "GroupConcat Function",
-		Filter: []FilterRecord{
-			{
-				View: &View{
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					Records: []Record{
-						{
-							NewGroupCell([]parser.Primary{
-								parser.NewInteger(1),
-								parser.NewInteger(2),
-								parser.NewInteger(3),
-								parser.NewInteger(4),
-							}),
-							NewGroupCell([]parser.Primary{
-								parser.NewInteger(1),
-								parser.NewInteger(2),
-								parser.NewInteger(3),
-								parser.NewInteger(4),
-							}),
-							NewGroupCell([]parser.Primary{
-								parser.NewString("str2"),
-								parser.NewString("str1"),
-								parser.NewNull(),
-								parser.NewString("str2"),
-							}),
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							{
+								NewGroupCell([]parser.Primary{
+									parser.NewInteger(1),
+									parser.NewInteger(2),
+									parser.NewInteger(3),
+									parser.NewInteger(4),
+								}),
+								NewGroupCell([]parser.Primary{
+									parser.NewInteger(1),
+									parser.NewInteger(2),
+									parser.NewInteger(3),
+									parser.NewInteger(4),
+								}),
+								NewGroupCell([]parser.Primary{
+									parser.NewString("str2"),
+									parser.NewString("str1"),
+									parser.NewNull(),
+									parser.NewString("str2"),
+								}),
+							},
 						},
+						isGrouped: true,
 					},
-					isGrouped: true,
+					RecordIndex: 0,
 				},
-				RecordIndex: 0,
 			},
 		},
 		Expr: parser.GroupConcat{
@@ -1905,35 +1937,37 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "GroupConcat Function Null",
-		Filter: []FilterRecord{
-			{
-				View: &View{
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					Records: []Record{
-						{
-							NewGroupCell([]parser.Primary{
-								parser.NewInteger(1),
-								parser.NewInteger(2),
-								parser.NewInteger(3),
-								parser.NewInteger(4),
-							}),
-							NewGroupCell([]parser.Primary{
-								parser.NewInteger(1),
-								parser.NewInteger(2),
-								parser.NewInteger(3),
-								parser.NewInteger(4),
-							}),
-							NewGroupCell([]parser.Primary{
-								parser.NewNull(),
-								parser.NewNull(),
-								parser.NewNull(),
-								parser.NewNull(),
-							}),
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							{
+								NewGroupCell([]parser.Primary{
+									parser.NewInteger(1),
+									parser.NewInteger(2),
+									parser.NewInteger(3),
+									parser.NewInteger(4),
+								}),
+								NewGroupCell([]parser.Primary{
+									parser.NewInteger(1),
+									parser.NewInteger(2),
+									parser.NewInteger(3),
+									parser.NewInteger(4),
+								}),
+								NewGroupCell([]parser.Primary{
+									parser.NewNull(),
+									parser.NewNull(),
+									parser.NewNull(),
+									parser.NewNull(),
+								}),
+							},
 						},
+						isGrouped: true,
 					},
-					isGrouped: true,
+					RecordIndex: 0,
 				},
-				RecordIndex: 0,
 			},
 		},
 		Expr: parser.GroupConcat{
@@ -1948,18 +1982,20 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "GroupConcat Function Not Grouped Error",
-		Filter: []FilterRecord{
-			{
-				View: &View{
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					Records: []Record{
-						NewRecord(1, []parser.Primary{
-							parser.NewInteger(1),
-							parser.NewString("str2"),
-						}),
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							NewRecord(1, []parser.Primary{
+								parser.NewInteger(1),
+								parser.NewString("str2"),
+							}),
+						},
 					},
+					RecordIndex: 0,
 				},
-				RecordIndex: 0,
 			},
 		},
 		Expr: parser.GroupConcat{
@@ -1972,27 +2008,29 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "GroupConcat Function Argument Error",
-		Filter: []FilterRecord{
-			{
-				View: &View{
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					Records: []Record{
-						{
-							NewGroupCell([]parser.Primary{
-								parser.NewInteger(1),
-								parser.NewNull(),
-								parser.NewInteger(3),
-							}),
-							NewGroupCell([]parser.Primary{
-								parser.NewString("str1"),
-								parser.NewString("str2"),
-								parser.NewString("str3"),
-							}),
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							{
+								NewGroupCell([]parser.Primary{
+									parser.NewInteger(1),
+									parser.NewNull(),
+									parser.NewInteger(3),
+								}),
+								NewGroupCell([]parser.Primary{
+									parser.NewString("str1"),
+									parser.NewString("str2"),
+									parser.NewString("str3"),
+								}),
+							},
 						},
+						isGrouped: true,
 					},
-					isGrouped: true,
+					RecordIndex: 0,
 				},
-				RecordIndex: 0,
 			},
 		},
 		Expr: parser.GroupConcat{
@@ -2005,27 +2043,29 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "GroupConcat Function AllColumns",
-		Filter: []FilterRecord{
-			{
-				View: &View{
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					Records: []Record{
-						{
-							NewGroupCell([]parser.Primary{
-								parser.NewInteger(1),
-								parser.NewNull(),
-								parser.NewInteger(3),
-							}),
-							NewGroupCell([]parser.Primary{
-								parser.NewString("str1"),
-								parser.NewString("str2"),
-								parser.NewString("str3"),
-							}),
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							{
+								NewGroupCell([]parser.Primary{
+									parser.NewInteger(1),
+									parser.NewNull(),
+									parser.NewInteger(3),
+								}),
+								NewGroupCell([]parser.Primary{
+									parser.NewString("str1"),
+									parser.NewString("str2"),
+									parser.NewString("str3"),
+								}),
+							},
 						},
+						isGrouped: true,
 					},
-					isGrouped: true,
+					RecordIndex: 0,
 				},
-				RecordIndex: 0,
 			},
 		},
 		Expr: parser.GroupConcat{
@@ -2040,29 +2080,31 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "GroupConcat Function Identification Error",
-		Filter: []FilterRecord{
-			{
-				View: &View{
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					Records: []Record{
-						{
-							NewGroupCell([]parser.Primary{
-								parser.NewInteger(1),
-								parser.NewInteger(2),
-								parser.NewInteger(3),
-								parser.NewInteger(4),
-							}),
-							NewGroupCell([]parser.Primary{
-								parser.NewString("str2"),
-								parser.NewString("str1"),
-								parser.NewNull(),
-								parser.NewString("str2"),
-							}),
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							{
+								NewGroupCell([]parser.Primary{
+									parser.NewInteger(1),
+									parser.NewInteger(2),
+									parser.NewInteger(3),
+									parser.NewInteger(4),
+								}),
+								NewGroupCell([]parser.Primary{
+									parser.NewString("str2"),
+									parser.NewString("str1"),
+									parser.NewNull(),
+									parser.NewString("str2"),
+								}),
+							},
 						},
+						isGrouped: true,
 					},
-					isGrouped: true,
+					RecordIndex: 0,
 				},
-				RecordIndex: 0,
 			},
 		},
 		Expr: parser.GroupConcat{
@@ -2084,27 +2126,29 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "GroupConcat Function Duplicate Error",
-		Filter: []FilterRecord{
-			{
-				View: &View{
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					Records: []Record{
-						{
-							NewGroupCell([]parser.Primary{
-								parser.NewInteger(1),
-								parser.NewNull(),
-								parser.NewInteger(3),
-							}),
-							NewGroupCell([]parser.Primary{
-								parser.NewString("str1"),
-								parser.NewString("str2"),
-								parser.NewString("str3"),
-							}),
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							{
+								NewGroupCell([]parser.Primary{
+									parser.NewInteger(1),
+									parser.NewNull(),
+									parser.NewInteger(3),
+								}),
+								NewGroupCell([]parser.Primary{
+									parser.NewString("str1"),
+									parser.NewString("str2"),
+									parser.NewString("str3"),
+								}),
+							},
 						},
+						isGrouped: true,
 					},
-					isGrouped: true,
+					RecordIndex: 0,
 				},
-				RecordIndex: 0,
 			},
 		},
 		Expr: parser.GroupConcat{

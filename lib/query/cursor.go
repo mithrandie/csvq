@@ -65,7 +65,7 @@ func (c *Cursor) Open() error {
 		return errors.New(fmt.Sprintf("cursor %s is already open", c.name))
 	}
 
-	view, err := Select(c.query, nil)
+	view, err := Select(c.query)
 	if err != nil {
 		return err
 	}

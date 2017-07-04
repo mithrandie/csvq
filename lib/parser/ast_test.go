@@ -503,6 +503,25 @@ func TestRowValueList_String(t *testing.T) {
 
 func TestSelectQuery_String(t *testing.T) {
 	e := SelectQuery{
+		CommonTableClause: CommonTableClause{
+			With: "with",
+			CommonTables: []Expression{
+				CommonTable{
+					Name: Identifier{Literal: "ct"},
+					As:   "as",
+					Query: SelectQuery{
+						SelectEntity: SelectEntity{
+							SelectClause: SelectClause{
+								Select: "select",
+								Fields: []Expression{
+									Field{Object: NewInteger(1)},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 		SelectEntity: SelectEntity{
 			SelectClause: SelectClause{
 				Select: "select",
@@ -530,7 +549,7 @@ func TestSelectQuery_String(t *testing.T) {
 			Value:  NewInteger(10),
 		},
 	}
-	expect := "select column from table order by column limit 10 offset 10"
+	expect := "with ct as (select 1) select column from table order by column limit 10 offset 10"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -760,6 +779,111 @@ func TestOffsetClause_String(t *testing.T) {
 	expect := "offset 10"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestCommonTableClause_String(t *testing.T) {
+	e := CommonTableClause{
+		With: "with",
+		CommonTables: []Expression{
+			CommonTable{
+				Name: Identifier{Literal: "alias1"},
+				As:   "as",
+				Query: SelectQuery{
+					SelectEntity: SelectEntity{
+						SelectClause: SelectClause{
+							Select: "select",
+							Fields: []Expression{
+								NewInteger(1),
+							},
+						},
+					},
+				},
+			},
+			CommonTable{
+				Recursive: Token{Token: RECURSIVE, Literal: "recursive"},
+				Name:      Identifier{Literal: "alias2"},
+				As:        "as",
+				Query: SelectQuery{
+					SelectEntity: SelectEntity{
+						SelectClause: SelectClause{
+							Select: "select",
+							Fields: []Expression{
+								NewInteger(2),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	expect := "with alias1 as (select 1), recursive alias2 as (select 2)"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestCommonTable_String(t *testing.T) {
+	e := CommonTable{
+		Recursive: Token{Token: RECURSIVE, Literal: "recursive"},
+		Name:      Identifier{Literal: "alias"},
+		Columns: []Expression{
+			Identifier{Literal: "column1"},
+		},
+		As: "as",
+		Query: SelectQuery{
+			SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					Select: "select",
+					Fields: []Expression{
+						NewInteger(1),
+					},
+				},
+			},
+		},
+	}
+	expect := "recursive alias (column1) as (select 1)"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestCommonTable_IsRecursive(t *testing.T) {
+	e := CommonTable{
+		Recursive: Token{Token: RECURSIVE, Literal: "recursive"},
+		Name:      Identifier{Literal: "alias"},
+		As:        "as",
+		Query: SelectQuery{
+			SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					Select: "select",
+					Fields: []Expression{
+						NewInteger(1),
+					},
+				},
+			},
+		},
+	}
+	if e.IsRecursive() != true {
+		t.Errorf("IsRecursive = %t, want %t for %#v", e.IsRecursive(), true, e)
+	}
+
+	e = CommonTable{
+		Name: Identifier{Literal: "alias"},
+		As:   "as",
+		Query: SelectQuery{
+			SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					Select: "select",
+					Fields: []Expression{
+						NewInteger(1),
+					},
+				},
+			},
+		},
+	}
+	if e.IsRecursive() != false {
+		t.Errorf("IsRecursive = %t, want %t for %#v", e.IsRecursive(), false, e)
 	}
 }
 
@@ -1585,6 +1709,25 @@ func TestVariableAssignment_String(t *testing.T) {
 
 func TestInsertQuery_String(t *testing.T) {
 	e := InsertQuery{
+		CommonTableClause: CommonTableClause{
+			With: "with",
+			CommonTables: []Expression{
+				CommonTable{
+					Name: Identifier{Literal: "ct"},
+					As:   "as",
+					Query: SelectQuery{
+						SelectEntity: SelectEntity{
+							SelectClause: SelectClause{
+								Select: "select",
+								Fields: []Expression{
+									Field{Object: NewInteger(1)},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 		Insert: "insert",
 		Into:   "into",
 		Table:  Identifier{Literal: "table1"},
@@ -1612,7 +1755,7 @@ func TestInsertQuery_String(t *testing.T) {
 			},
 		},
 	}
-	expect := "insert into table1 (column1, column2) values (1, 2), (3, 4)"
+	expect := "with ct as (select 1) insert into table1 (column1, column2) values (1, 2), (3, 4)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1645,6 +1788,25 @@ func TestInsertQuery_String(t *testing.T) {
 
 func TestUpdateQuery_String(t *testing.T) {
 	e := UpdateQuery{
+		CommonTableClause: CommonTableClause{
+			With: "with",
+			CommonTables: []Expression{
+				CommonTable{
+					Name: Identifier{Literal: "ct"},
+					As:   "as",
+					Query: SelectQuery{
+						SelectEntity: SelectEntity{
+							SelectClause: SelectClause{
+								Select: "select",
+								Fields: []Expression{
+									Field{Object: NewInteger(1)},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 		Update: "update",
 		Tables: []Expression{
 			Table{
@@ -1679,7 +1841,7 @@ func TestUpdateQuery_String(t *testing.T) {
 			},
 		},
 	}
-	expect := "update table1 set column1 = 1, column2 = 2 from table1 where column3 = 3"
+	expect := "with ct as (select 1) update table1 set column1 = 1, column2 = 2 from table1 where column3 = 3"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1698,6 +1860,25 @@ func TestUpdateSet_String(t *testing.T) {
 
 func TestDeleteQuery_String(t *testing.T) {
 	e := DeleteQuery{
+		CommonTableClause: CommonTableClause{
+			With: "with",
+			CommonTables: []Expression{
+				CommonTable{
+					Name: Identifier{Literal: "ct"},
+					As:   "as",
+					Query: SelectQuery{
+						SelectEntity: SelectEntity{
+							SelectClause: SelectClause{
+								Select: "select",
+								Fields: []Expression{
+									Field{Object: NewInteger(1)},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 		Delete: "delete",
 		Tables: []Expression{
 			Table{
@@ -1721,7 +1902,7 @@ func TestDeleteQuery_String(t *testing.T) {
 			},
 		},
 	}
-	expect := "delete table1 from table1 where column1 = 1"
+	expect := "with ct as (select 1) delete table1 from table1 where column1 = 1"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}

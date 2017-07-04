@@ -10,7 +10,8 @@ Select query is used to retrieve data from csv files.
 
 ```
 select_query
-  : select_entity
+  : [common_table_clause]
+      select_entity
       [order_by_clause]
       [limit_clause]
       [offset_clause]
@@ -27,6 +28,9 @@ select_set_entity
   : select_entity
   | (select_query)
 ```
+
+_common_table_clause_
+: [Common Table Clause]({{ '/reference/common-table.html' | relative_url }})
 
 _select_clause_
 : [Select Clause](#select_clause)
