@@ -13,7 +13,7 @@ category: reference
 | [INTERSECT](#intersect) | Return the intersection of result sets |
 
 A set operation combines result sets retrieved by select queries into a single result set.
-If the ALL keyword is specified, the result is distinguished.
+If the ALL keyword is not specified, the result is distinguished.
 
 ## UNION
 {: #union}

@@ -20,7 +20,7 @@ A statements is terminated with a semicolon.
 Stetaments are processed sequentially for each statement.
 In statements, character case is ignored.
 
-If you want to execute a sigle query, you can omit a terminal semicolon.  
+If you want to execute a single query, you can omit the terminal semicolon.  
 
 ```bash
 # Execute a single query
