@@ -731,6 +731,8 @@ func (view *View) evalColumn(obj parser.Expression, column string, alias string)
 }
 
 func (view *View) evalAnalyticFunction(expr parser.AnalyticFunction) error {
+	DefineAnalyticFunctions()
+
 	name := strings.ToUpper(expr.Name)
 	fn, ok := AnalyticFunctions[name]
 	if !ok {
@@ -748,28 +750,7 @@ func (view *View) evalAnalyticFunction(expr parser.AnalyticFunction) error {
 		}
 	}
 
-	partitionList := make([]partitionValue, view.RecordLen())
-
-	var filter Filter = append([]FilterRecord{{View: view, RecordIndex: 0}}, view.parentFilter...)
-	for i := range view.Records {
-		filter[0].RecordIndex = i
-		values, err := filter.evalValues(expr.AnalyticClause.PartitionValues())
-		if err != nil {
-			return err
-		}
-
-		orderValues, err := filter.evalValues(expr.AnalyticClause.OrderValues())
-		if err != nil {
-			return err
-		}
-
-		partitionList[i] = partitionValue{
-			values:      values,
-			orderValues: orderValues,
-		}
-	}
-
-	return fn(view, expr.Option.Args, partitionList)
+	return fn(view, expr.Option.Args, expr.AnalyticClause)
 }
 
 func (view *View) Offset(clause parser.OffsetClause) error {
