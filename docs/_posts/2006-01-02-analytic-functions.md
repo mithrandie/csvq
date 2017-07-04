@@ -36,7 +36,7 @@ _order_by_clause_
 : [Order By Clause]({{ '/reference/select_query.html#order_by_clause' | relative_url }})
 
 Analytic Functions sort the result set by _order_by_clause_ and calculate values within each of groups partitioned by _partition_clause_.
-If there is no _partition_clause_, then all records of result set are dealt with as one group. 
+If there is no _partition_clause_, then all records of the result set are dealt with as one group. 
 
 ## Definitions
 
@@ -69,7 +69,7 @@ _partition_clause_
 _order_by_clause_
 : [Order By Clause]({{ '/reference/select_query.html#order_by_clause' | relative_url }})
 
-Returns ranks of records in a group.
+Return ranks of records in a group.
 
 
 ### DENSE_RANK
@@ -85,5 +85,5 @@ _partition_clause_
 _order_by_clause_
 : [Order By Clause]({{ '/reference/select_query.html#order_by_clause' | relative_url }})
 
-Returns ranks of records without any gaps in the ranking in a group.
+Return ranks of records without any gaps in the ranking in a group.
 
