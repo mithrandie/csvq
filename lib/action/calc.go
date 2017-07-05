@@ -22,14 +22,21 @@ func Calc(expr string) error {
 	selectEntity, _ := program[0].(parser.SelectQuery).SelectEntity.(parser.SelectEntity)
 
 	view := query.NewView()
-	err = view.Load(selectEntity.FromClause.(parser.FromClause), nil)
+	err = view.Load(selectEntity.FromClause.(parser.FromClause), query.Filter{})
 	if err != nil {
 		return err
 	}
 
 	clause := selectEntity.SelectClause.(parser.SelectClause)
 
-	var filter query.Filter = []query.FilterRecord{{View: view, RecordIndex: 0}}
+	filter := query.Filter{
+		Records: []query.FilterRecord{
+			{
+				View:        view,
+				RecordIndex: 0,
+			},
+		},
+	}
 	values := make([]string, len(clause.Fields))
 	for i, v := range clause.Fields {
 		field := v.(parser.Field)

@@ -11,10 +11,13 @@ Delete query is used to delete records on csv files.
 ## Delete on a sigle file.
 
 ```sql
-DELETE
+[common_table_clause] DELETE
   FROM table_name
   [where_clause]
 ```
+
+_common_table_clause_
+: [Common Table Clause]({{ '/reference/common-table.html' | relative_url }})
 
 _table_name_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
@@ -25,10 +28,13 @@ _where_clause_
 ## Delete on multiple files
 
 ```sql
-DELETE table_name [, table_name ...]
+[common_table_clause] DELETE table_name [, table_name ...]
   from_clause
   [where_clause]
 ```
+
+_common_table_clause_
+: [Common Table Clause]({{ '/reference/common-table.html' | relative_url }})
 
 _table_name_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})

@@ -17,6 +17,8 @@ import (
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
+const STDIN_VIRTUAL_FILE_PATH = ";;__STDIN__;;"
+
 type ViewMap struct {
 	views map[string]*View
 	alias map[string]string
@@ -78,7 +80,7 @@ func (m *ViewMap) Set(view *View, alias string) error {
 		return errors.New("view cache failed")
 	}
 	if _, ok := m.alias[alias]; ok {
-		return errors.New("duplicate alias")
+		return errors.New(fmt.Sprintf("table name %s is duplicated", alias))
 	}
 	m.views[view.FileInfo.Path] = view.Copy()
 	m.alias[alias] = view.FileInfo.Path
@@ -87,7 +89,7 @@ func (m *ViewMap) Set(view *View, alias string) error {
 
 func (m *ViewMap) SetAlias(alias string, fpath string) error {
 	if _, ok := m.alias[alias]; ok {
-		return errors.New("duplicate alias")
+		return errors.New(fmt.Sprintf("table name %s is duplicated", alias))
 	}
 	m.alias[alias] = fpath
 	return nil
@@ -181,7 +183,7 @@ type View struct {
 
 	selectFields []int
 	isGrouped    bool
-	parentFilter Filter
+	ParentFilter Filter
 
 	filteredIndices []int
 
@@ -231,21 +233,22 @@ func (view *View) Load(clause parser.FromClause, parentFilter Filter) error {
 		CrossJoin(view, views[i])
 	}
 
-	if parentFilter != nil {
-		view.parentFilter = parentFilter
-	}
+	view.ParentFilter = parentFilter
 	return nil
 }
 
 func (view *View) LoadFromIdentifier(table parser.Identifier) error {
+	return view.LoadFromIdentifierWithCommonTables(table, Filter{})
+}
+
+func (view *View) LoadFromIdentifierWithCommonTables(table parser.Identifier, parentFilter Filter) error {
 	fromClause := parser.FromClause{
 		Tables: []parser.Expression{
 			parser.Table{Object: table},
 		},
 	}
-	var filter Filter
 
-	return view.Load(fromClause, filter)
+	return view.Load(fromClause, parentFilter)
 }
 
 func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*View, error) {
@@ -265,7 +268,7 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 			delimiter = ','
 		}
 		fileInfo := &FileInfo{
-			Path:      "__stdin",
+			Path:      STDIN_VIRTUAL_FILE_PATH,
 			Delimiter: delimiter,
 		}
 
@@ -286,29 +289,40 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 			}
 		}
 	case parser.Identifier:
-		flags := cmd.GetFlags()
-		fileInfo, err := NewFileInfo(table.Object.(parser.Identifier).Literal, flags.Repository, flags.Delimiter)
-		if err != nil {
-			return nil, err
-		}
+		tableIdentifier := table.Object.(parser.Identifier).Literal
+		if strings.EqualFold(tableIdentifier, parentFilter.RecursiveTable.Name.Literal) && parentFilter.RecursiveTmpView != nil {
+			view = parentFilter.RecursiveTmpView
+		} else if ct, err := parentFilter.CommonTables.Get(tableIdentifier); err == nil {
+			view = ct
+		} else if _, err := parentFilter.CommonTables.Get(table.Name()); err == nil {
+			err = errors.New(fmt.Sprintf("table name %s is duplicated", table.Name()))
+		} else {
 
-		if _, ok := ViewCache.Exists(fileInfo.Path); !ok {
-			file, err := os.Open(fileInfo.Path)
+			flags := cmd.GetFlags()
+
+			fileInfo, err := NewFileInfo(tableIdentifier, flags.Repository, flags.Delimiter)
 			if err != nil {
 				return nil, err
 			}
-			defer file.Close()
-			err = loadViewFromFile(file, fileInfo, table.Name())
-		} else {
-			if _, ok := ViewCache.HasAlias(table.Name()); !ok {
-				ViewCache.SetAlias(table.Name(), fileInfo.Path)
-			}
-		}
-		if err == nil {
-			if useInternalId {
-				view, _ = ViewCache.GetWithInternalId(fileInfo.Path)
+
+			if _, ok := ViewCache.Exists(fileInfo.Path); !ok {
+				file, err := os.Open(fileInfo.Path)
+				if err != nil {
+					return nil, err
+				}
+				defer file.Close()
+				err = loadViewFromFile(file, fileInfo, table.Name())
 			} else {
-				view, _ = ViewCache.Get(fileInfo.Path)
+				if _, ok := ViewCache.HasAlias(table.Name()); !ok {
+					ViewCache.SetAlias(table.Name(), fileInfo.Path)
+				}
+			}
+			if err == nil {
+				if useInternalId {
+					view, _ = ViewCache.GetWithInternalId(fileInfo.Path)
+				} else {
+					view, _ = ViewCache.Get(fileInfo.Path)
+				}
 			}
 		}
 	case parser.Join:
@@ -343,11 +357,9 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 		}
 	case parser.Subquery:
 		subquery := table.Object.(parser.Subquery)
-		view, err = Select(subquery.Query, parentFilter)
+		view, err = SelectAsSubquery(subquery.Query, parentFilter)
 		if err == nil {
-			for i := range view.Header {
-				view.Header[i].Reference = table.Name()
-			}
+			view.UpdateHeader(table.Name(), nil)
 		}
 	}
 
@@ -416,10 +428,10 @@ func loadDualView() *View {
 	return &view
 }
 
-func NewViewFromGroupedRecord(fr FilterRecord) *View {
+func NewViewFromGroupedRecord(filterRecord FilterRecord) *View {
 	view := new(View)
-	view.Header = fr.View.Header
-	record := fr.View.Records[fr.RecordIndex]
+	view.Header = filterRecord.View.Header
+	record := filterRecord.View.Records[filterRecord.RecordIndex]
 
 	view.Records = make([]Record, record.GroupLen())
 	for i := 0; i < record.GroupLen(); i++ {
@@ -445,7 +457,7 @@ func (view *View) Where(clause parser.WhereClause) error {
 func (view *View) filter(condition parser.Expression) ([]int, error) {
 	indices := []int{}
 	for i := range view.Records {
-		var filter Filter = append([]FilterRecord{{View: view, RecordIndex: i}}, view.parentFilter...)
+		filter := NewFilterForRecord(view, i, view.ParentFilter)
 		primary, err := filter.Evaluate(condition)
 		if err != nil {
 			return nil, err
@@ -492,7 +504,7 @@ func (view *View) group(items []parser.Expression) error {
 	var groups []group
 
 	for i := 0; i < view.RecordLen(); i++ {
-		var filter Filter = append([]FilterRecord{{View: view, RecordIndex: i}}, view.parentFilter...)
+		filter := NewFilterForRecord(view, i, view.ParentFilter)
 
 		keys := make([]parser.Primary, len(items))
 		for j, item := range items {
@@ -712,10 +724,10 @@ func (view *View) evalColumn(obj parser.Expression, column string, alias string)
 					return
 				}
 			} else {
-				var filter Filter = append([]FilterRecord{{View: view, RecordIndex: 0}}, view.parentFilter...)
+				filter := NewFilterForRecord(view, 0, view.ParentFilter)
 				for i := range view.Records {
 					var primary parser.Primary
-					filter[0].RecordIndex = i
+					filter.Records[0].RecordIndex = i
 
 					primary, err = filter.Evaluate(obj)
 					if err != nil {
@@ -832,8 +844,7 @@ func (view *View) Limit(clause parser.LimitClause) error {
 	return nil
 }
 
-func (view *View) InsertValues(fields []parser.Expression, list []parser.Expression) error {
-	var filter Filter
+func (view *View) InsertValues(fields []parser.Expression, list []parser.Expression, filter Filter) error {
 	valuesList := make([][]parser.Primary, len(list))
 
 	for i, item := range list {
@@ -851,8 +862,8 @@ func (view *View) InsertValues(fields []parser.Expression, list []parser.Express
 	return view.insert(fields, valuesList)
 }
 
-func (view *View) InsertFromQuery(fields []parser.Expression, query parser.SelectQuery) error {
-	insertView, err := Select(query, nil)
+func (view *View) InsertFromQuery(fields []parser.Expression, query parser.SelectQuery, filter Filter) error {
+	insertView, err := SelectAsSubquery(query, filter)
 	if err != nil {
 		return err
 	}
@@ -934,7 +945,7 @@ func (view *View) Fix() {
 	view.Records = records
 	view.selectFields = []int(nil)
 	view.isGrouped = false
-	view.parentFilter = Filter(nil)
+	view.ParentFilter = Filter{}
 	view.sortIndices = []int(nil)
 	view.sortDirections = []int(nil)
 	view.sortNullPositions = []int(nil)
@@ -1022,6 +1033,23 @@ func (view *View) InternalRecordId(ref string, recordIndex int) (int, error) {
 		return -1, errors.New("internal record id is empty")
 	}
 	return int(internalId.Value()), nil
+}
+
+func (view *View) UpdateHeader(reference string, fields []parser.Expression) error {
+	if fields != nil && len(fields) != view.FieldLen() {
+		return errors.New(fmt.Sprintf("common table %s: field length does not match", reference))
+	}
+
+	for i := range view.Header {
+		view.Header[i].Reference = reference
+		if fields != nil {
+			view.Header[i].Column = fields[i].(parser.Identifier).Literal
+		} else if 0 < len(view.Header[i].Alias) {
+			view.Header[i].Column = view.Header[i].Alias
+		}
+		view.Header[i].Alias = ""
+	}
+	return nil
 }
 
 func (view *View) FieldLen() int {

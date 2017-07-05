@@ -44,6 +44,9 @@ package parser
 %type<expression>  limit_clause
 %type<expression>  limit_with
 %type<expression>  offset_clause
+%type<expression>  common_table_clause
+%type<expression>  common_table
+%type<expressions> common_tables
 %type<primary>     primary
 %type<expression>  field_reference
 %type<expression>  value
@@ -79,7 +82,7 @@ package parser
 %type<expressions> values
 %type<expressions> tables
 %type<expressions> identified_tables
-%type<expressions> using_fields
+%type<expressions> identifiers
 %type<expressions> fields
 %type<expressions> case_when
 %type<expression>  insert_query
@@ -116,11 +119,13 @@ package parser
 %type<token>       join_outer
 %type<token>       join_direction
 %type<token>       all
+%type<token>       recursive
 %type<token>       comparison_operator
 %type<token>       statement_terminal
 
 %token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME VARIABLE FLAG
 %token<token> SELECT FROM UPDATE SET DELETE WHERE INSERT INTO VALUES AS DUAL STDIN
+%token<token> RECURSIVE
 %token<token> CREATE ADD DROP ALTER TABLE FIRST LAST AFTER BEFORE DEFAULT RENAME TO
 %token<token> ORDER GROUP HAVING BY ASC DESC LIMIT OFFSET TIES PERCENT
 %token<token> JOIN INNER OUTER LEFT RIGHT FULL CROSS ON USING NATURAL
@@ -330,13 +335,14 @@ command_statement
     }
 
 select_query
-    : select_entity order_by_clause limit_clause offset_clause
+    : common_table_clause select_entity order_by_clause limit_clause offset_clause
     {
         $$ = SelectQuery{
-            SelectEntity:  $1,
-            OrderByClause: $2,
-            LimitClause:   $3,
-            OffsetClause:  $4,
+            CommonTableClause: $1,
+            SelectEntity:      $2,
+            OrderByClause:     $3,
+            LimitClause:       $4,
+            OffsetClause:      $5,
         }
     }
 
@@ -477,6 +483,36 @@ offset_clause
     | OFFSET value
     {
         $$ = OffsetClause{Offset: $1.Literal, Value: $2}
+    }
+
+common_table_clause
+    :
+    {
+        $$ = nil
+    }
+    | WITH common_tables
+    {
+        $$ = CommonTableClause{With: $1.Literal, CommonTables: $2}
+    }
+
+common_table
+    : recursive identifier AS '(' select_query ')'
+    {
+        $$ = CommonTable{Recursive: $1, Name: $2, As: $3.Literal, Query: $5.(SelectQuery)}
+    }
+    | recursive identifier '(' identifiers ')' AS '(' select_query ')'
+    {
+        $$ = CommonTable{Recursive: $1, Name: $2, Columns: $4, As: $6.Literal, Query: $8.(SelectQuery)}
+    }
+
+common_tables
+    : common_table
+    {
+        $$ = []Expression{$1}
+    }
+    | common_table ',' common_tables
+    {
+        $$ = append([]Expression{$1}, $3...)
     }
 
 primary
@@ -919,7 +955,7 @@ join_condition
     {
         $$ = JoinCondition{Literal:$1.Literal, On: $2}
     }
-    | USING '(' using_fields ')'
+    | USING '(' identifiers ')'
     {
         $$ = JoinCondition{Literal:$1.Literal, Using: $3}
     }
@@ -1014,12 +1050,12 @@ identified_tables
         $$ = append([]Expression{$1}, $3...)
     }
 
-using_fields
+identifiers
     : identifier
     {
         $$ = []Expression{$1}
     }
-    | identifier ',' using_fields
+    | identifier ',' identifiers
     {
         $$ = append([]Expression{$1}, $3...)
     }
@@ -1045,27 +1081,27 @@ case_when
     }
 
 insert_query
-    : INSERT INTO identifier VALUES row_values
+    : common_table_clause INSERT INTO identifier VALUES row_values
     {
-        $$ = InsertQuery{Insert: $1.Literal, Into: $2.Literal, Table: $3, Values: $4.Literal, ValuesList: $5}
+        $$ = InsertQuery{CommonTableClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Values: $5.Literal, ValuesList: $6}
     }
-    | INSERT INTO identifier '(' field_references ')' VALUES row_values
+    | common_table_clause INSERT INTO identifier '(' field_references ')' VALUES row_values
     {
-        $$ = InsertQuery{Insert: $1.Literal, Into: $2.Literal, Table: $3, Fields: $5, Values: $7.Literal, ValuesList: $8}
+        $$ = InsertQuery{CommonTableClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Fields: $6, Values: $8.Literal, ValuesList: $9}
     }
-    | INSERT INTO identifier select_query
+    | common_table_clause INSERT INTO identifier select_query
     {
-        $$ = InsertQuery{Insert: $1.Literal, Into: $2.Literal, Table: $3, Query: $4.(SelectQuery)}
+        $$ = InsertQuery{CommonTableClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Query: $5.(SelectQuery)}
     }
-    | INSERT INTO identifier '(' field_references ')' select_query
+    | common_table_clause INSERT INTO identifier '(' field_references ')' select_query
     {
-        $$ = InsertQuery{Insert: $1.Literal, Into: $2.Literal, Table: $3, Fields: $5, Query: $7.(SelectQuery)}
+        $$ = InsertQuery{CommonTableClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Fields: $6, Query: $8.(SelectQuery)}
     }
 
 update_query
-    : UPDATE identified_tables SET update_set_list from_clause where_clause
+    : common_table_clause UPDATE identified_tables SET update_set_list from_clause where_clause
     {
-        $$ = UpdateQuery{Update: $1.Literal, Tables: $2, Set: $3.Literal, SetList: $4, FromClause: $5, WhereClause: $6}
+        $$ = UpdateQuery{CommonTableClause: $1, Update: $2.Literal, Tables: $3, Set: $4.Literal, SetList: $5, FromClause: $6, WhereClause: $7}
     }
 
 update_set
@@ -1085,19 +1121,19 @@ update_set_list
     }
 
 delete_query
-    : DELETE FROM tables where_clause
-    {
-        from := FromClause{From: $2.Literal, Tables: $3}
-        $$ = DeleteQuery{Delete: $1.Literal, FromClause: from, WhereClause: $4}
-    }
-    | DELETE identified_tables FROM tables where_clause
+    : common_table_clause DELETE FROM tables where_clause
     {
         from := FromClause{From: $3.Literal, Tables: $4}
-        $$ = DeleteQuery{Delete: $1.Literal, Tables: $2, FromClause: from, WhereClause: $5}
+        $$ = DeleteQuery{CommonTableClause: $1, Delete: $2.Literal, FromClause: from, WhereClause: $5}
+    }
+    | common_table_clause DELETE identified_tables FROM tables where_clause
+    {
+        from := FromClause{From: $4.Literal, Tables: $5}
+        $$ = DeleteQuery{CommonTableClause: $1, Delete: $2.Literal, Tables: $3, FromClause: from, WhereClause: $6}
     }
 
 create_table
-    : CREATE TABLE identifier '(' using_fields ')'
+    : CREATE TABLE identifier '(' identifiers ')'
     {
         $$ = CreateTable{CreateTable: $1.Literal + " " + $2.Literal, Table: $3, Fields: $5}
     }
@@ -1371,6 +1407,17 @@ all
     {
         $$ = $1
     }
+
+recursive
+    :
+    {
+        $$ = Token{}
+    }
+    | RECURSIVE
+    {
+        $$ = $1
+    }
+
 
 comparison_operator
     : COMPARISON_OP

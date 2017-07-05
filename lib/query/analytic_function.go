@@ -63,9 +63,9 @@ func RowNumber(view *View, args []parser.Expression, clause parser.AnalyticClaus
 
 	partitions := partitionValues{}
 
-	var filter Filter = append([]FilterRecord{{View: view, RecordIndex: 0}}, view.parentFilter...)
+	filter := NewFilterForLoop(view, view.ParentFilter)
 	for i := range view.Records {
-		filter[0].RecordIndex = i
+		filter.Records[0].RecordIndex = i
 		partitionValues, err := filter.evalValues(clause.PartitionValues())
 		if err != nil {
 			return err
@@ -97,9 +97,9 @@ func Rank(view *View, args []parser.Expression, clause parser.AnalyticClause) er
 
 	partitions := partitionValues{}
 
-	var filter Filter = append([]FilterRecord{{View: view, RecordIndex: 0}}, view.parentFilter...)
+	filter := NewFilterForLoop(view, view.ParentFilter)
 	for i := range view.Records {
-		filter[0].RecordIndex = i
+		filter.Records[0].RecordIndex = i
 		partitionValues, err := filter.evalValues(clause.PartitionValues())
 		if err != nil {
 			return err
@@ -141,9 +141,9 @@ func DenseRank(view *View, args []parser.Expression, clause parser.AnalyticClaus
 
 	partitions := partitionValues{}
 
-	var filter Filter = append([]FilterRecord{{View: view, RecordIndex: 0}}, view.parentFilter...)
+	filter := NewFilterForLoop(view, view.ParentFilter)
 	for i := range view.Records {
-		filter[0].RecordIndex = i
+		filter.Records[0].RecordIndex = i
 		partitionValues, err := filter.evalValues(clause.PartitionValues())
 		if err != nil {
 			return err

@@ -325,6 +325,132 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "with ct as (select 1) select * from ct",
+		Output: []Statement{
+			SelectQuery{
+				CommonTableClause: CommonTableClause{
+					With: "with",
+					CommonTables: []Expression{
+						CommonTable{
+							Name: Identifier{Literal: "ct"},
+							As:   "as",
+							Query: SelectQuery{
+								SelectEntity: SelectEntity{
+									SelectClause: SelectClause{
+										Select: "select",
+										Fields: []Expression{
+											Field{Object: NewInteger(1)},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{Field{Object: AllColumns{}}},
+					},
+					FromClause: FromClause{
+						From:   "from",
+						Tables: []Expression{Table{Object: Identifier{Literal: "ct"}}},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "with ct (column1) as (select 1) select * from ct",
+		Output: []Statement{
+			SelectQuery{
+				CommonTableClause: CommonTableClause{
+					With: "with",
+					CommonTables: []Expression{
+						CommonTable{
+							Name: Identifier{Literal: "ct"},
+							Columns: []Expression{
+								Identifier{Literal: "column1"},
+							},
+							As: "as",
+							Query: SelectQuery{
+								SelectEntity: SelectEntity{
+									SelectClause: SelectClause{
+										Select: "select",
+										Fields: []Expression{
+											Field{Object: NewInteger(1)},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{Field{Object: AllColumns{}}},
+					},
+					FromClause: FromClause{
+						From:   "from",
+						Tables: []Expression{Table{Object: Identifier{Literal: "ct"}}},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "with recursive ct as (select 1), ct2 as (select 2) select * from ct",
+		Output: []Statement{
+			SelectQuery{
+				CommonTableClause: CommonTableClause{
+					With: "with",
+					CommonTables: []Expression{
+						CommonTable{
+							Name:      Identifier{Literal: "ct"},
+							Recursive: Token{Token: RECURSIVE, Literal: "recursive"},
+							As:        "as",
+							Query: SelectQuery{
+								SelectEntity: SelectEntity{
+									SelectClause: SelectClause{
+										Select: "select",
+										Fields: []Expression{
+											NewInteger(1),
+										},
+									},
+								},
+							},
+						},
+						CommonTable{
+							Name: Identifier{Literal: "ct2"},
+							As:   "as",
+							Query: SelectQuery{
+								SelectEntity: SelectEntity{
+									SelectClause: SelectClause{
+										Select: "select",
+										Fields: []Expression{
+											NewInteger(2),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{Field{Object: AllColumns{}}},
+					},
+					FromClause: FromClause{
+						From:   "from",
+						Tables: []Expression{Table{Object: Identifier{Literal: "ct"}}},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "select ident, 'foo', 1, -1, 1.234, -1.234, true, '2010-01-01 12:00:00', null, ('bar') from dual",
 		Output: []Statement{
 			SelectQuery{
@@ -1639,9 +1765,28 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "insert into table1 values (1, 'str1'), (2, 'str2')",
+		Input: "with ct as (select 1) insert into table1 values (1, 'str1'), (2, 'str2')",
 		Output: []Statement{
 			InsertQuery{
+				CommonTableClause: CommonTableClause{
+					With: "with",
+					CommonTables: []Expression{
+						CommonTable{
+							Name: Identifier{Literal: "ct"},
+							As:   "as",
+							Query: SelectQuery{
+								SelectEntity: SelectEntity{
+									SelectClause: SelectClause{
+										Select: "select",
+										Fields: []Expression{
+											Field{Object: NewInteger(1)},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
 				Insert: "insert",
 				Into:   "into",
 				Table:  Identifier{Literal: "table1"},
@@ -1747,9 +1892,28 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "update table1 set column1 = 1, column2 = 2 from table1 where true",
+		Input: "with ct as (select 1) update table1 set column1 = 1, column2 = 2 from table1 where true",
 		Output: []Statement{
 			UpdateQuery{
+				CommonTableClause: CommonTableClause{
+					With: "with",
+					CommonTables: []Expression{
+						CommonTable{
+							Name: Identifier{Literal: "ct"},
+							As:   "as",
+							Query: SelectQuery{
+								SelectEntity: SelectEntity{
+									SelectClause: SelectClause{
+										Select: "select",
+										Fields: []Expression{
+											Field{Object: NewInteger(1)},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
 				Update: "update",
 				Tables: []Expression{
 					Table{Object: Identifier{Literal: "table1"}},
@@ -1773,9 +1937,28 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "delete from table1",
+		Input: "with ct as (select 1) delete from table1",
 		Output: []Statement{
 			DeleteQuery{
+				CommonTableClause: CommonTableClause{
+					With: "with",
+					CommonTables: []Expression{
+						CommonTable{
+							Name: Identifier{Literal: "ct"},
+							As:   "as",
+							Query: SelectQuery{
+								SelectEntity: SelectEntity{
+									SelectClause: SelectClause{
+										Select: "select",
+										Fields: []Expression{
+											Field{Object: NewInteger(1)},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
 				Delete: "delete",
 				FromClause: FromClause{
 					From: "from",

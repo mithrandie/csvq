@@ -155,7 +155,7 @@ var viewLoadTests = []struct {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:      "__stdin",
+				Path:      STDIN_VIRTUAL_FILE_PATH,
 				Delimiter: ',',
 			},
 		},
@@ -2593,7 +2593,7 @@ func TestView_InsertValues(t *testing.T) {
 	}
 
 	for _, v := range viewInsertValuesTests {
-		err := view.InsertValues(v.Fields, v.ValuesList)
+		err := view.InsertValues(v.Fields, v.ValuesList, Filter{})
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2706,7 +2706,7 @@ func TestView_InsertFromQuery(t *testing.T) {
 	}
 
 	for _, v := range viewInsertFromQueryTests {
-		err := view.InsertFromQuery(v.Fields, v.Query)
+		err := view.InsertFromQuery(v.Fields, v.Query, Filter{})
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -3206,5 +3206,91 @@ func TestView_InternalRecordId(t *testing.T) {
 	_, err = view.InternalRecordId(ref, recordIndex)
 	if err.Error() != expectError {
 		t.Errorf("error = %q, want error %q", err, expectError)
+	}
+}
+
+func TestView_UpdateHeader(t *testing.T) {
+	view := &View{
+		Header: []HeaderField{
+			{
+				Reference: "table1",
+				Column:    "column1",
+				Alias:     "alias1",
+			},
+			{
+				Reference: "table1",
+				Column:    "column2",
+				Alias:     "alias2",
+			},
+		},
+		Records: []Record{},
+	}
+
+	reference := "ref1"
+	fields := []parser.Expression(nil)
+	expect := &View{
+		Header: []HeaderField{
+			{
+				Reference: "ref1",
+				Column:    "alias1",
+			},
+			{
+				Reference: "ref1",
+				Column:    "alias2",
+			},
+		},
+		Records: []Record{},
+	}
+	view.UpdateHeader(reference, fields)
+	if !reflect.DeepEqual(view, expect) {
+		t.Errorf("view = %s, want %s for UpdateHeader(%s, %s)", view, expect, reference, fields)
+	}
+
+	view = &View{
+		Header: []HeaderField{
+			{
+				Reference: "table1",
+				Column:    "column1",
+				Alias:     "alias1",
+			},
+			{
+				Reference: "table1",
+				Column:    "column2",
+				Alias:     "alias2",
+			},
+		},
+		Records: []Record{},
+	}
+
+	reference = "ref1"
+	fields = []parser.Expression{
+		parser.Identifier{Literal: "alias3"},
+		parser.Identifier{Literal: "alias4"},
+	}
+	expect = &View{
+		Header: []HeaderField{
+			{
+				Reference: "ref1",
+				Column:    "alias3",
+			},
+			{
+				Reference: "ref1",
+				Column:    "alias4",
+			},
+		},
+		Records: []Record{},
+	}
+	view.UpdateHeader(reference, fields)
+	if !reflect.DeepEqual(view, expect) {
+		t.Errorf("view = %s, want %s for UpdateHeader(%s, %s)", view, expect, reference, fields)
+	}
+
+	fields = []parser.Expression{
+		parser.Identifier{Literal: "alias3"},
+	}
+	expectError := "common table ref1: field length does not match"
+	err := view.UpdateHeader(reference, fields)
+	if err.Error() != expectError {
+		t.Errorf("error = %q, want error %q for UpdateHeader(%s, %s)", err, expectError, reference, fields)
 	}
 }
