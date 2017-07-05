@@ -410,14 +410,19 @@ func (e RowValueList) String() string {
 }
 
 type SelectQuery struct {
-	SelectEntity  Expression
-	OrderByClause Expression
-	LimitClause   Expression
-	OffsetClause  Expression
+	CommonTableClause Expression
+	SelectEntity      Expression
+	OrderByClause     Expression
+	LimitClause       Expression
+	OffsetClause      Expression
 }
 
 func (e SelectQuery) String() string {
-	s := []string{e.SelectEntity.String()}
+	s := []string{}
+	if e.CommonTableClause != nil {
+		s = append(s, e.CommonTableClause.String())
+	}
+	s = append(s, e.SelectEntity.String())
 	if e.OrderByClause != nil {
 		s = append(s, e.OrderByClause.String())
 	}
@@ -587,6 +592,41 @@ type OffsetClause struct {
 func (e OffsetClause) String() string {
 	s := []string{e.Offset, e.Value.String()}
 	return joinWithSpace(s)
+}
+
+type CommonTableClause struct {
+	With         string
+	CommonTables []Expression
+}
+
+func (e CommonTableClause) String() string {
+	s := []string{e.With, listExpressions(e.CommonTables)}
+	return joinWithSpace(s)
+}
+
+type CommonTable struct {
+	Recursive Token
+	Name      Identifier
+	Columns   []Expression
+	As        string
+	Query     SelectQuery
+}
+
+func (e CommonTable) String() string {
+	s := []string{}
+	if !e.Recursive.IsEmpty() {
+		s = append(s, e.Recursive.Literal)
+	}
+	s = append(s, e.Name.String())
+	if e.Columns != nil {
+		s = append(s, putParentheses(listExpressions(e.Columns)))
+	}
+	s = append(s, e.As, putParentheses(e.Query.String()))
+	return joinWithSpace(s)
+}
+
+func (e CommonTable) IsRecursive() bool {
+	return !e.Recursive.IsEmpty()
 }
 
 type Subquery struct {
@@ -1103,45 +1143,55 @@ type VariableDeclaration struct {
 }
 
 type InsertQuery struct {
-	Insert     string
-	Into       string
-	Table      Identifier
-	Fields     []Expression
-	Values     string
-	ValuesList []Expression
-	Query      Expression
+	CommonTableClause Expression
+	Insert            string
+	Into              string
+	Table             Identifier
+	Fields            []Expression
+	Values            string
+	ValuesList        []Expression
+	Query             Expression
 }
 
-func (iq InsertQuery) String() string {
-	s := []string{iq.Insert, iq.Into, iq.Table.String()}
-	if iq.Fields != nil {
-		s = append(s, putParentheses(listExpressions(iq.Fields)))
+func (e InsertQuery) String() string {
+	s := []string{}
+	if e.CommonTableClause != nil {
+		s = append(s, e.CommonTableClause.String())
 	}
-	if iq.ValuesList != nil {
-		s = append(s, iq.Values)
-		s = append(s, listExpressions(iq.ValuesList))
+	s = append(s, e.Insert, e.Into, e.Table.String())
+	if e.Fields != nil {
+		s = append(s, putParentheses(listExpressions(e.Fields)))
+	}
+	if e.ValuesList != nil {
+		s = append(s, e.Values)
+		s = append(s, listExpressions(e.ValuesList))
 	} else {
-		s = append(s, iq.Query.String())
+		s = append(s, e.Query.String())
 	}
 	return joinWithSpace(s)
 }
 
 type UpdateQuery struct {
-	Update      string
-	Tables      []Expression
-	Set         string
-	SetList     []Expression
-	FromClause  Expression
-	WhereClause Expression
+	CommonTableClause Expression
+	Update            string
+	Tables            []Expression
+	Set               string
+	SetList           []Expression
+	FromClause        Expression
+	WhereClause       Expression
 }
 
-func (uq UpdateQuery) String() string {
-	s := []string{uq.Update, listExpressions(uq.Tables), uq.Set, listExpressions(uq.SetList)}
-	if uq.FromClause != nil {
-		s = append(s, uq.FromClause.String())
+func (e UpdateQuery) String() string {
+	s := []string{}
+	if e.CommonTableClause != nil {
+		s = append(s, e.CommonTableClause.String())
 	}
-	if uq.WhereClause != nil {
-		s = append(s, uq.WhereClause.String())
+	s = append(s, e.Update, listExpressions(e.Tables), e.Set, listExpressions(e.SetList))
+	if e.FromClause != nil {
+		s = append(s, e.FromClause.String())
+	}
+	if e.WhereClause != nil {
+		s = append(s, e.WhereClause.String())
 	}
 	return joinWithSpace(s)
 }
@@ -1156,20 +1206,25 @@ func (us UpdateSet) String() string {
 }
 
 type DeleteQuery struct {
-	Delete      string
-	Tables      []Expression
-	FromClause  Expression
-	WhereClause Expression
+	CommonTableClause Expression
+	Delete            string
+	Tables            []Expression
+	FromClause        Expression
+	WhereClause       Expression
 }
 
-func (dq DeleteQuery) String() string {
-	s := []string{dq.Delete}
-	if dq.Tables != nil {
-		s = append(s, listExpressions(dq.Tables))
+func (e DeleteQuery) String() string {
+	s := []string{}
+	if e.CommonTableClause != nil {
+		s = append(s, e.CommonTableClause.String())
 	}
-	s = append(s, dq.FromClause.String())
-	if dq.WhereClause != nil {
-		s = append(s, dq.WhereClause.String())
+	s = append(s, e.Delete)
+	if e.Tables != nil {
+		s = append(s, listExpressions(e.Tables))
+	}
+	s = append(s, e.FromClause.String())
+	if e.WhereClause != nil {
+		s = append(s, e.WhereClause.String())
 	}
 	return joinWithSpace(s)
 }

@@ -1612,6 +1612,219 @@ var selectTests = []struct {
 		},
 		Error: "field notexist does not exist",
 	},
+	{
+		Name: "Common Tables",
+		Query: parser.SelectQuery{
+			CommonTableClause: parser.CommonTableClause{
+				With: "with",
+				CommonTables: []parser.Expression{
+					parser.CommonTable{
+						Name: parser.Identifier{Literal: "ct"},
+						Columns: []parser.Expression{
+							parser.Identifier{Literal: "c1"},
+						},
+						As: "as",
+						Query: parser.SelectQuery{
+							SelectEntity: parser.SelectEntity{
+								SelectClause: parser.SelectClause{
+									Select: "select",
+									Fields: []parser.Expression{
+										parser.Field{Object: parser.NewInteger(2)},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.Expression{
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "c1"}}},
+					},
+				},
+				FromClause: parser.FromClause{
+					Tables: []parser.Expression{
+						parser.Table{Object: parser.Identifier{Literal: "ct"}},
+					},
+				},
+			},
+		},
+		Result: &View{
+			Header: []HeaderField{
+				{
+					Reference: "ct",
+					Column:    "c1",
+					FromTable: true,
+				},
+			},
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewInteger(2),
+				}),
+			},
+		},
+	},
+	{
+		Name: "Common Tables Recursion",
+		Query: parser.SelectQuery{
+			CommonTableClause: parser.CommonTableClause{
+				With: "with",
+				CommonTables: []parser.Expression{
+					parser.CommonTable{
+						Recursive: parser.Token{Token: parser.RECURSIVE, Literal: "recursive"},
+						Name:      parser.Identifier{Literal: "ct"},
+						Columns: []parser.Expression{
+							parser.Identifier{Literal: "n"},
+						},
+						As: "as",
+						Query: parser.SelectQuery{
+							SelectEntity: parser.SelectSet{
+								LHS: parser.SelectEntity{
+									SelectClause: parser.SelectClause{
+										Select: "select",
+										Fields: []parser.Expression{
+											parser.Field{Object: parser.NewInteger(1)},
+										},
+									},
+								},
+								Operator: parser.Token{Token: parser.UNION, Literal: "union"},
+								RHS: parser.SelectEntity{
+									SelectClause: parser.SelectClause{
+										Select: "select",
+										Fields: []parser.Expression{
+											parser.Field{
+												Object: parser.Arithmetic{
+													LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
+													RHS:      parser.NewInteger(1),
+													Operator: '+',
+												},
+											},
+										},
+									},
+									FromClause: parser.FromClause{
+										Tables: []parser.Expression{
+											parser.Table{Object: parser.Identifier{Literal: "ct"}},
+										},
+									},
+									WhereClause: parser.WhereClause{
+										Filter: parser.Comparison{
+											LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
+											RHS:      parser.NewInteger(3),
+											Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.Expression{
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "n"}}},
+					},
+				},
+				FromClause: parser.FromClause{
+					Tables: []parser.Expression{
+						parser.Table{Object: parser.Identifier{Literal: "ct"}},
+					},
+				},
+			},
+		},
+		Result: &View{
+			Header: []HeaderField{
+				{
+					Reference: "ct",
+					Column:    "n",
+					FromTable: true,
+				},
+			},
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewInteger(3),
+				}),
+			},
+		},
+	},
+	{
+		Name: "Common Tables Recursion Field Length Error",
+		Query: parser.SelectQuery{
+			CommonTableClause: parser.CommonTableClause{
+				With: "with",
+				CommonTables: []parser.Expression{
+					parser.CommonTable{
+						Recursive: parser.Token{Token: parser.RECURSIVE, Literal: "recursive"},
+						Name:      parser.Identifier{Literal: "ct"},
+						Columns: []parser.Expression{
+							parser.Identifier{Literal: "n"},
+						},
+						As: "as",
+						Query: parser.SelectQuery{
+							SelectEntity: parser.SelectSet{
+								LHS: parser.SelectEntity{
+									SelectClause: parser.SelectClause{
+										Select: "select",
+										Fields: []parser.Expression{
+											parser.Field{Object: parser.NewInteger(1)},
+										},
+									},
+								},
+								Operator: parser.Token{Token: parser.UNION, Literal: "union"},
+								RHS: parser.SelectEntity{
+									SelectClause: parser.SelectClause{
+										Select: "select",
+										Fields: []parser.Expression{
+											parser.Field{
+												Object: parser.Arithmetic{
+													LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
+													RHS:      parser.NewInteger(1),
+													Operator: '+',
+												},
+											},
+											parser.Field{Object: parser.NewInteger(2)},
+										},
+									},
+									FromClause: parser.FromClause{
+										Tables: []parser.Expression{
+											parser.Table{Object: parser.Identifier{Literal: "ct"}},
+										},
+									},
+									WhereClause: parser.WhereClause{
+										Filter: parser.Comparison{
+											LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
+											RHS:      parser.NewInteger(3),
+											Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.Expression{
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "n"}}},
+					},
+				},
+				FromClause: parser.FromClause{
+					Tables: []parser.Expression{
+						parser.Table{Object: parser.Identifier{Literal: "ct"}},
+					},
+				},
+			},
+		},
+		Error: "UNION: field length does not match",
+	},
 }
 
 func TestSelect(t *testing.T) {
@@ -1620,7 +1833,7 @@ func TestSelect(t *testing.T) {
 
 	for _, v := range selectTests {
 		ViewCache.Clear()
-		result, err := Select(v.Query, nil)
+		result, err := Select(v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

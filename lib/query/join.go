@@ -92,13 +92,20 @@ func CrossJoin(view *View, joinView *View) {
 func InnerJoin(view *View, joinView *View, condition parser.Expression, parentFilter Filter) error {
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 
+	filter := Filter{
+		Records: []FilterRecord{
+			{View: view},
+			{View: joinView},
+		},
+		CommonTables: CommonTables{},
+	}
+	filter = filter.Merge(parentFilter)
+
 	records := []Record{}
 	for i, viewRecord := range view.Records {
 		for j, joinViewRecord := range joinView.Records {
-			var filter Filter = append([]FilterRecord{
-				{View: view, RecordIndex: i},
-				{View: joinView, RecordIndex: j},
-			}, parentFilter...)
+			filter.Records[0].RecordIndex = i
+			filter.Records[1].RecordIndex = j
 			primary, err := filter.Evaluate(condition)
 			if err != nil {
 				return err
@@ -127,15 +134,22 @@ func OuterJoin(view *View, joinView *View, condition parser.Expression, directio
 		view, joinView = joinView, view
 	}
 
+	filter := Filter{
+		Records: []FilterRecord{
+			{View: view},
+			{View: joinView},
+		},
+		CommonTables: CommonTables{},
+	}
+	filter = filter.Merge(parentFilter)
+
 	records := []Record{}
 	joinViewMatches := make([]bool, len(joinView.Records))
 	for i, viewRecord := range view.Records {
 		match := false
 		for j, joinViewRecord := range joinView.Records {
-			var filter Filter = append([]FilterRecord{
-				{View: view, RecordIndex: i},
-				{View: joinView, RecordIndex: j},
-			}, parentFilter...)
+			filter.Records[0].RecordIndex = i
+			filter.Records[1].RecordIndex = j
 			primary, err := filter.Evaluate(condition)
 			if err != nil {
 				return err
