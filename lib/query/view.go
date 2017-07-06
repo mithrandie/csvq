@@ -218,11 +218,11 @@ func (view *View) Load(clause parser.FromClause, parentFilter Filter) error {
 
 	views := make([]*View, len(clause.Tables))
 	for i, v := range clause.Tables {
-		view, err := loadView(v.(parser.Table), parentFilter, view.UseInternalId)
+		loaded, err := loadView(v.(parser.Table), parentFilter, view.UseInternalId)
 		if err != nil {
 			return err
 		}
-		views[i] = view
+		views[i] = loaded
 	}
 
 	view.Header = views[0].Header

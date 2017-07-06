@@ -2001,3 +2001,29 @@ func TestRenameColumn_String(t *testing.T) {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 }
+
+func TestFetchPosition_String(t *testing.T) {
+	e := FetchPosition{
+		Position: Token{Token: ABSOLUTE, Literal: "absolute"},
+		Number:   NewInteger(1),
+	}
+	expect := "absolute 1"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestCursorStatus_String(t *testing.T) {
+	e := CursorStatus{
+		CursorLit: "cursor",
+		Cursor:    Identifier{Literal: "cur"},
+		Is:        "is",
+		Negation:  Token{Token: NOT, Literal: "not"},
+		Type:      RANGE,
+		TypeLit:   "in range",
+	}
+	expect := "cursor cur is not in range"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}

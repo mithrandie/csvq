@@ -6,6 +6,7 @@ import (
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/ternary"
 )
 
 var selectQueryForCursorTest parser.SelectQuery = parser.SelectQuery{
@@ -158,7 +159,7 @@ var cursorMapOpenTests = []struct {
 						LineBreak: cmd.LF,
 					},
 				},
-				index: 0,
+				index: -1,
 			},
 			"cur2": &Cursor{
 				name:  "cur2",
@@ -274,49 +275,118 @@ func TestCursorMap_Close(t *testing.T) {
 }
 
 var cursorMapFetchTests = []struct {
-	Name   string
-	Key    string
-	Result []parser.Primary
-	Error  string
+	Name     string
+	Key      string
+	Position int
+	Number   int
+	Result   []parser.Primary
+	Error    string
 }{
 	{
-		Name: "CursorMap Fetch First Time",
-		Key:  "cur",
+		Name:     "CursorMap Fetch First Time",
+		Key:      "cur",
+		Position: parser.NEXT,
 		Result: []parser.Primary{
 			parser.NewString("1"),
 			parser.NewString("str1"),
 		},
 	},
 	{
-		Name: "CursorMap Fetch Second Time",
-		Key:  "cur",
+		Name:     "CursorMap Fetch Second Time",
+		Key:      "cur",
+		Position: parser.NEXT,
 		Result: []parser.Primary{
 			parser.NewString("2"),
 			parser.NewString("str2"),
 		},
 	},
 	{
-		Name: "CursorMap Fetch Third Time",
-		Key:  "cur",
+		Name:     "CursorMap Fetch Third Time",
+		Key:      "cur",
+		Position: parser.NEXT,
 		Result: []parser.Primary{
 			parser.NewString("3"),
 			parser.NewString("str3"),
 		},
 	},
 	{
-		Name:   "CursorMap Fetch Fourth Time",
-		Key:    "cur",
-		Result: nil,
+		Name:     "CursorMap Fetch Fourth Time",
+		Key:      "cur",
+		Position: parser.NEXT,
+		Result:   nil,
 	},
 	{
-		Name:  "CursorMap Fetch Not Exist Error",
-		Key:   "notexist",
-		Error: "cursor notexist does not exist",
+		Name:     "CursorMap Fetch First",
+		Key:      "cur",
+		Position: parser.FIRST,
+		Result: []parser.Primary{
+			parser.NewString("1"),
+			parser.NewString("str1"),
+		},
 	},
 	{
-		Name:  "CursorMap Fetch Closed Error",
-		Key:   "cur2",
-		Error: "cursor cur2 is closed",
+		Name:     "CursorMap Fetch Last",
+		Key:      "cur",
+		Position: parser.LAST,
+		Result: []parser.Primary{
+			parser.NewString("3"),
+			parser.NewString("str3"),
+		},
+	},
+	{
+		Name:     "CursorMap Fetch Prior",
+		Key:      "cur",
+		Position: parser.PRIOR,
+		Result: []parser.Primary{
+			parser.NewString("2"),
+			parser.NewString("str2"),
+		},
+	},
+	{
+		Name:     "CursorMap Fetch Absolute",
+		Key:      "cur",
+		Position: parser.ABSOLUTE,
+		Number:   1,
+		Result: []parser.Primary{
+			parser.NewString("2"),
+			parser.NewString("str2"),
+		},
+	},
+	{
+		Name:     "CursorMap Fetch Relative",
+		Key:      "cur",
+		Position: parser.RELATIVE,
+		Number:   -1,
+		Result: []parser.Primary{
+			parser.NewString("1"),
+			parser.NewString("str1"),
+		},
+	},
+	{
+		Name:     "CursorMap Fetch Prior to Last",
+		Key:      "cur",
+		Position: parser.ABSOLUTE,
+		Number:   -2,
+		Result:   nil,
+	},
+	{
+		Name:     "CursorMap Fetch Later than Last",
+		Key:      "cur",
+		Position: parser.ABSOLUTE,
+		Number:   100,
+		Result:   nil,
+	},
+	{
+		Name:     "CursorMap Fetch Not Exist Error",
+		Key:      "notexist",
+		Position: parser.NEXT,
+		Error:    "cursor notexist does not exist",
+	},
+	{
+		Name:     "CursorMap Fetch Closed Error",
+		Key:      "cur2",
+		Position: parser.NEXT,
+		Error:    "cursor cur2 is closed",
 	},
 }
 
@@ -337,7 +407,7 @@ func TestCursorMap_Fetch(t *testing.T) {
 	cursors.Open("cur")
 
 	for _, v := range cursorMapFetchTests {
-		result, err := cursors.Fetch(v.Key)
+		result, err := cursors.Fetch(v.Key, v.Position, v.Number)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -351,6 +421,146 @@ func TestCursorMap_Fetch(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(result, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
+		}
+	}
+}
+
+var cursorMapIsOpenTests = []struct {
+	Name   string
+	Key    string
+	Result ternary.Value
+	Error  string
+}{
+	{
+		Name:   "CursorMap IsOpen TRUE",
+		Key:    "cur",
+		Result: ternary.TRUE,
+	},
+	{
+		Name:   "CursorMap IsOpen FALSE",
+		Key:    "cur2",
+		Result: ternary.FALSE,
+	},
+	{
+		Name:  "CursorMap IsOpen Not Exist Error",
+		Key:   "notexist",
+		Error: "cursor notexist does not exist",
+	},
+}
+
+func TestCursorMap_IsOpen(t *testing.T) {
+	tf := cmd.GetFlags()
+	tf.Repository = TestDir
+
+	cursors := CursorMap{
+		"cur": &Cursor{
+			name:  "cur",
+			query: selectQueryForCursorTest,
+		},
+		"cur2": &Cursor{
+			name:  "cur2",
+			query: selectQueryForCursorTest,
+		},
+	}
+	cursors.Open("cur")
+
+	for _, v := range cursorMapIsOpenTests {
+		result, err := cursors.IsOpen(v.Key)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if result != v.Result {
+			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
+		}
+	}
+}
+
+var cursorMapIsInRangeTests = []struct {
+	Name   string
+	Key    string
+	Index  int
+	Result ternary.Value
+	Error  string
+}{
+	{
+		Name:   "CursorMap Is In Range UNKNOWN",
+		Key:    "cur",
+		Result: ternary.UNKNOWN,
+	},
+	{
+		Name:   "CursorMap Is In Range TRUE",
+		Key:    "cur2",
+		Index:  1,
+		Result: ternary.TRUE,
+	},
+	{
+		Name:   "CursorMap Is In Range FALSE",
+		Key:    "cur2",
+		Index:  -1,
+		Result: ternary.FALSE,
+	},
+	{
+		Name:  "CursorMap Is In Range Not Open Error",
+		Key:   "cur3",
+		Error: "cursor cur3 is closed",
+	},
+	{
+		Name:  "CursorMap Is In Range Not Exist Error",
+		Key:   "notexist",
+		Error: "cursor notexist does not exist",
+	},
+}
+
+func TestCursorMap_IsInRange(t *testing.T) {
+	tf := cmd.GetFlags()
+	tf.Repository = TestDir
+
+	cursors := CursorMap{
+		"cur": &Cursor{
+			name:  "cur",
+			query: selectQueryForCursorTest,
+		},
+		"cur2": &Cursor{
+			name:  "cur2",
+			query: selectQueryForCursorTest,
+		},
+		"cur3": &Cursor{
+			name:  "cur3",
+			query: selectQueryForCursorTest,
+		},
+	}
+	cursors.Open("cur")
+	cursors.Open("cur2")
+	cursors.Fetch("cur2", parser.NEXT, 0)
+
+	for _, v := range cursorMapIsInRangeTests {
+		if 0 != v.Index {
+			cursors["cur2"].index = v.Index
+		}
+		result, err := cursors.IsInRange(v.Key)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if result != v.Result {
 			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
 		}
 	}

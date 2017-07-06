@@ -117,6 +117,8 @@ func (f Filter) Evaluate(expr parser.Expression) (parser.Primary, error) {
 			primary, err = f.evalVariable(expr.(parser.Variable))
 		case parser.VariableSubstitution:
 			primary, err = f.evalVariableSubstitution(expr.(parser.VariableSubstitution))
+		case parser.CursorStatus:
+			primary, err = f.evalCursorStatus(expr.(parser.CursorStatus))
 		default:
 			return nil, errors.New(fmt.Sprintf("syntax error: unexpected %s", expr))
 		}
@@ -607,6 +609,29 @@ func (f Filter) evalVariable(expr parser.Variable) (parser.Primary, error) {
 
 func (f Filter) evalVariableSubstitution(expr parser.VariableSubstitution) (parser.Primary, error) {
 	return GlobalVars.Substitute(expr, f)
+}
+
+func (f Filter) evalCursorStatus(expr parser.CursorStatus) (parser.Primary, error) {
+	var t ternary.Value
+	var err error
+
+	switch expr.Type {
+	case parser.OPEN:
+		t, err = Cursors.IsOpen(expr.Cursor.Literal)
+		if err != nil {
+			return nil, err
+		}
+	case parser.RANGE:
+		t, err = Cursors.IsInRange(expr.Cursor.Literal)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if !expr.Negation.IsEmpty() {
+		t = ternary.Not(t)
+	}
+	return parser.NewTernary(t), nil
 }
 
 func (f Filter) evalRowValue(expr parser.RowValue) (values []parser.Primary, err error) {

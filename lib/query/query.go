@@ -119,7 +119,7 @@ func ExecuteStatement(stmt parser.Statement) (StatementFlow, string, error) {
 		Cursors.Dispose(stmt.(parser.DisposeCursor).Cursor.Literal)
 	case parser.FetchCursor:
 		fetch := stmt.(parser.FetchCursor)
-		_, err = FetchCursor(fetch.Cursor.Literal, fetch.Variables)
+		_, err = FetchCursor(fetch.Cursor.Literal, fetch.Position, fetch.Variables)
 	case parser.SelectQuery:
 		if view, err = Select(stmt.(parser.SelectQuery)); err == nil {
 			results = []Result{
@@ -316,7 +316,7 @@ func WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, string, error) {
 	var out string
 
 	for {
-		success, err := FetchCursor(stmt.Cursor.Literal, stmt.Variables)
+		success, err := FetchCursor(stmt.Cursor.Literal, nil, stmt.Variables)
 		if err != nil {
 			return ERROR, out, err
 		}
@@ -341,8 +341,27 @@ func WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, string, error) {
 	return TERMINATE, out, nil
 }
 
-func FetchCursor(name string, vars []parser.Variable) (bool, error) {
-	primaries, err := Cursors.Fetch(name)
+func FetchCursor(name string, fetchPosition parser.Expression, vars []parser.Variable) (bool, error) {
+	position := parser.NEXT
+	number := -1
+	if fetchPosition != nil {
+		fp := fetchPosition.(parser.FetchPosition)
+		position = fp.Position.Token
+		if fp.Number != nil {
+			var filter Filter
+			p, err := filter.Evaluate(fp.Number)
+			if err != nil {
+				return false, err
+			}
+			i := parser.PrimaryToInteger(p)
+			if parser.IsNull(i) {
+				return false, errors.New(fmt.Sprintf("fetch position %s is not a integer", fp.Number))
+			}
+			number = int(i.(parser.Integer).Value())
+		}
+	}
+
+	primaries, err := Cursors.Fetch(name, position, number)
 	if err != nil {
 		return false, err
 	}

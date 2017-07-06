@@ -2391,6 +2391,51 @@ var filterEvaluateTests = []struct {
 		},
 		Error: "variable undefined is undefined",
 	},
+	{
+		Name: "Cursor Status Is Not Open",
+		Expr: parser.CursorStatus{
+			CursorLit: "cursor",
+			Cursor:    parser.Identifier{Literal: "cur"},
+			Is:        "is",
+			Negation:  parser.Token{Token: parser.NOT, Literal: "not"},
+			Type:      parser.OPEN,
+			TypeLit:   "open",
+		},
+		Result: parser.NewTernary(ternary.FALSE),
+	},
+	{
+		Name: "Cursor Status Is In Range",
+		Expr: parser.CursorStatus{
+			CursorLit: "cursor",
+			Cursor:    parser.Identifier{Literal: "cur"},
+			Is:        "is",
+			Type:      parser.RANGE,
+			TypeLit:   "in range",
+		},
+		Result: parser.NewTernary(ternary.TRUE),
+	},
+	{
+		Name: "Cursor Status Open Error",
+		Expr: parser.CursorStatus{
+			CursorLit: "cursor",
+			Cursor:    parser.Identifier{Literal: "notexist"},
+			Is:        "is",
+			Type:      parser.OPEN,
+			TypeLit:   "open",
+		},
+		Error: "cursor notexist does not exist",
+	},
+	{
+		Name: "Cursor Status In Range Error",
+		Expr: parser.CursorStatus{
+			CursorLit: "cursor",
+			Cursor:    parser.Identifier{Literal: "notexist"},
+			Is:        "is",
+			Type:      parser.RANGE,
+			TypeLit:   "in range",
+		},
+		Error: "cursor notexist does not exist",
+	},
 }
 
 func TestFilter_Evaluate(t *testing.T) {
@@ -2400,6 +2445,16 @@ func TestFilter_Evaluate(t *testing.T) {
 
 	tf := cmd.GetFlags()
 	tf.Repository = TestDataDir
+
+	Cursors = CursorMap{
+		"cur": &Cursor{
+			name:  "cur",
+			query: selectQueryForCursorTest,
+		},
+	}
+	ViewCache.Clear()
+	Cursors.Open("cur")
+	Cursors.Fetch("cur", parser.NEXT, 0)
 
 	for _, v := range filterEvaluateTests {
 		ViewCache.Clear()
