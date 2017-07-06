@@ -504,7 +504,7 @@ _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
 Return the difference of days between two _datetime_ values.
-The time parts are ignored in the calculation. 
+The time and nanoseconds are ignored in the calculation. 
 
 ### TIME_DIFF
 {: #time_diff}
