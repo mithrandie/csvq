@@ -29,6 +29,8 @@ package parser
 %type<statement>   variable_statement
 %type<statement>   transaction_statement
 %type<statement>   cursor_statement
+%type<expression>  fetch_position
+%type<expression>  cursor_status
 %type<statement>   flow_control_statement
 %type<statement>   in_loop_flow_control_statement
 %type<statement>   command_statement
@@ -135,6 +137,7 @@ package parser
 %token<token> DISTINCT WITH
 %token<token> CASE IF ELSEIF WHILE WHEN THEN ELSE DO END
 %token<token> DECLARE CURSOR FOR FETCH OPEN CLOSE DISPOSE
+%token<token> NEXT PRIOR ABSOLUTE RELATIVE RANGE
 %token<token> GROUP_CONCAT SEPARATOR PARTITION OVER
 %token<token> COMMIT ROLLBACK
 %token<token> CONTINUE BREAK EXIT
@@ -279,9 +282,49 @@ cursor_statement
     {
         $$ = DisposeCursor{Cursor: $2}
     }
-    | FETCH identifier INTO variables statement_terminal
+    | FETCH fetch_position identifier INTO variables statement_terminal
     {
-        $$ = FetchCursor{Cursor: $2, Variables: $4}
+        $$ = FetchCursor{Position: $2, Cursor: $3, Variables: $5}
+    }
+
+fetch_position
+    :
+    {
+        $$ = nil
+    }
+    | NEXT
+    {
+        $$ = FetchPosition{Position: $1}
+    }
+    | PRIOR
+    {
+        $$ = FetchPosition{Position: $1}
+    }
+    | FIRST
+    {
+        $$ = FetchPosition{Position: $1}
+    }
+    | LAST
+    {
+        $$ = FetchPosition{Position: $1}
+    }
+    | ABSOLUTE value
+    {
+        $$ = FetchPosition{Position: $1, Number: $2}
+    }
+    | RELATIVE value
+    {
+        $$ = FetchPosition{Position: $1, Number: $2}
+    }
+
+cursor_status
+    : CURSOR identifier IS negation OPEN
+    {
+        $$ = CursorStatus{CursorLit: $1.Literal, Cursor: $2, Is: $3.Literal, Negation: $4, Type: $5.Token, TypeLit: $5.Literal}
+    }
+    | CURSOR identifier IS negation IN RANGE
+    {
+        $$ = CursorStatus{CursorLit: $1.Literal, Cursor: $2, Is: $3.Literal, Negation: $4, Type: $6.Token, TypeLit: $5.Literal + " " + $6.Literal}
     }
 
 flow_control_statement
@@ -593,6 +636,10 @@ value
         $$ = $1
     }
     | variable_substitution
+    {
+        $$ = $1
+    }
+    | cursor_status
     {
         $$ = $1
     }

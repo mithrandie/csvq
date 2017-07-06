@@ -1384,8 +1384,40 @@ type DisposeCursor struct {
 }
 
 type FetchCursor struct {
+	Position  Expression
 	Cursor    Identifier
 	Variables []Variable
+}
+
+type FetchPosition struct {
+	Position Token
+	Number   Expression
+}
+
+func (e FetchPosition) String() string {
+	s := []string{e.Position.Literal}
+	if e.Number != nil {
+		s = append(s, e.Number.String())
+	}
+	return joinWithSpace(s)
+}
+
+type CursorStatus struct {
+	CursorLit string
+	Cursor    Identifier
+	Is        string
+	Negation  Token
+	Type      int
+	TypeLit   string
+}
+
+func (e CursorStatus) String() string {
+	s := []string{e.CursorLit, e.Cursor.String(), e.Is}
+	if !e.Negation.IsEmpty() {
+		s = append(s, e.Negation.Literal)
+	}
+	s = append(s, e.TypeLit)
+	return joinWithSpace(s)
 }
 
 type TransactionControl struct {

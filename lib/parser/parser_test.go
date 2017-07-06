@@ -1487,6 +1487,50 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select cursor cur is not open",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: CursorStatus{
+								CursorLit: "cursor",
+								Cursor:    Identifier{Literal: "cur"},
+								Is:        "is",
+								Negation:  Token{Token: NOT, Literal: "not"},
+								Type:      OPEN,
+								TypeLit:   "open",
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select cursor cur is not in range",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: CursorStatus{
+								CursorLit: "cursor",
+								Cursor:    Identifier{Literal: "cur"},
+								Is:        "is",
+								Negation:  Token{Token: NOT, Literal: "not"},
+								Type:      RANGE,
+								TypeLit:   "in range",
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "select rank() over (partition by column1 order by column2)",
 		Output: []Statement{
 			SelectQuery{
@@ -2218,6 +2262,92 @@ var parseTests = []struct {
 				Variables: []Variable{
 					{Name: "@var1"},
 					{Name: "@var2"},
+				},
+			},
+		},
+	},
+	{
+		Input: "fetch next cur into @var1",
+		Output: []Statement{
+			FetchCursor{
+				Cursor: Identifier{Literal: "cur"},
+				Position: FetchPosition{
+					Position: Token{Token: NEXT, Literal: "next"},
+				},
+				Variables: []Variable{
+					{Name: "@var1"},
+				},
+			},
+		},
+	},
+	{
+		Input: "fetch prior cur into @var1",
+		Output: []Statement{
+			FetchCursor{
+				Cursor: Identifier{Literal: "cur"},
+				Position: FetchPosition{
+					Position: Token{Token: PRIOR, Literal: "prior"},
+				},
+				Variables: []Variable{
+					{Name: "@var1"},
+				},
+			},
+		},
+	},
+	{
+		Input: "fetch first cur into @var1",
+		Output: []Statement{
+			FetchCursor{
+				Cursor: Identifier{Literal: "cur"},
+				Position: FetchPosition{
+					Position: Token{Token: FIRST, Literal: "first"},
+				},
+				Variables: []Variable{
+					{Name: "@var1"},
+				},
+			},
+		},
+	},
+	{
+		Input: "fetch last cur into @var1",
+		Output: []Statement{
+			FetchCursor{
+				Cursor: Identifier{Literal: "cur"},
+				Position: FetchPosition{
+					Position: Token{Token: LAST, Literal: "last"},
+				},
+				Variables: []Variable{
+					{Name: "@var1"},
+				},
+			},
+		},
+	},
+	{
+		Input: "fetch absolute 1 cur into @var1",
+		Output: []Statement{
+			FetchCursor{
+				Cursor: Identifier{Literal: "cur"},
+				Position: FetchPosition{
+					Position: Token{Token: ABSOLUTE, Literal: "absolute"},
+					Number:   NewInteger(1),
+				},
+				Variables: []Variable{
+					{Name: "@var1"},
+				},
+			},
+		},
+	},
+	{
+		Input: "fetch relative 1 cur into @var1",
+		Output: []Statement{
+			FetchCursor{
+				Cursor: Identifier{Literal: "cur"},
+				Position: FetchPosition{
+					Position: Token{Token: RELATIVE, Literal: "relative"},
+					Number:   NewInteger(1),
+				},
+				Variables: []Variable{
+					{Name: "@var1"},
 				},
 			},
 		},

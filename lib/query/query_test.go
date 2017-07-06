@@ -460,7 +460,6 @@ func TestExecuteStatement(t *testing.T) {
 		ViewCache.Clear()
 		ResultSet = []Result{}
 
-		//TODO
 		_, _, err := ExecuteStatement(v.Input)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -1043,12 +1042,13 @@ func TestWhileInCursor(t *testing.T) {
 }
 
 var fetchCursorTests = []struct {
-	Name       string
-	CurName    string
-	Variables  []parser.Variable
-	Success    bool
-	ResultVars Variables
-	Error      string
+	Name          string
+	CurName       string
+	FetchPosition parser.Expression
+	Variables     []parser.Variable
+	Success       bool
+	ResultVars    Variables
+	Error         string
 }{
 	{
 		Name:    "Fetch Cursor First Time",
@@ -1103,6 +1103,23 @@ var fetchCursorTests = []struct {
 		},
 	},
 	{
+		Name:    "Fetch Cursor Absolute",
+		CurName: "cur",
+		FetchPosition: parser.FetchPosition{
+			Position: parser.Token{Token: parser.ABSOLUTE, Literal: "absolute"},
+			Number:   parser.NewInteger(1),
+		},
+		Variables: []parser.Variable{
+			{Name: "@var1"},
+			{Name: "@var2"},
+		},
+		Success: true,
+		ResultVars: Variables{
+			"@var1": parser.NewString("2"),
+			"@var2": parser.NewString("str2"),
+		},
+	},
+	{
 		Name:    "Fetch Cursor Fetch Error",
 		CurName: "notexist",
 		Variables: []parser.Variable{
@@ -1127,6 +1144,32 @@ var fetchCursorTests = []struct {
 			{Name: "@notexist"},
 		},
 		Error: "variable @notexist is undefined",
+	},
+	{
+		Name:    "Fetch Cursor Number Value Error",
+		CurName: "cur",
+		FetchPosition: parser.FetchPosition{
+			Position: parser.Token{Token: parser.ABSOLUTE, Literal: "absolute"},
+			Number:   parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+		},
+		Variables: []parser.Variable{
+			{Name: "@var1"},
+			{Name: "@var2"},
+		},
+		Error: "field notexist does not exist",
+	},
+	{
+		Name:    "Fetch Cursor Number Not Integer Error",
+		CurName: "cur",
+		FetchPosition: parser.FetchPosition{
+			Position: parser.Token{Token: parser.ABSOLUTE, Literal: "absolute"},
+			Number:   parser.NewNull(),
+		},
+		Variables: []parser.Variable{
+			{Name: "@var1"},
+			{Name: "@var2"},
+		},
+		Error: "fetch position NULL is not a integer",
 	},
 }
 
@@ -1153,7 +1196,7 @@ func TestFetchCursor(t *testing.T) {
 	}
 
 	for _, v := range fetchCursorTests {
-		success, err := FetchCursor(v.CurName, v.Variables)
+		success, err := FetchCursor(v.CurName, v.FetchPosition, v.Variables)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
