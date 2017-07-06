@@ -140,11 +140,11 @@ _subquery_
 {: #special_tables}
 
 DUAL
-: The dual table have one column and one record, and the only field is empty.
+: The dual table has one column and one record, and the only field is empty.
   This table is used to retrieve pseudo columns.
 
 STDIN
-: The stdin table is use data from the standard input as a csv data.
+: The stdin table loads data from the standard input as a csv data.
 
 ### join syntax
 

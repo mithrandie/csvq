@@ -87,7 +87,7 @@ Variable
 : A variable is a word starting with "@" and followed by a character string that contains \[a-z\|A-Z\|0-9\|\_\].
 
 Flag
-: A flag is a word starting with "@@" and and followed by a character string that contains \[a-z\|A-Z\|0-9\|\_\].
+: A flag is a word starting with "@@" and followed by a character string that contains \[a-z\|A-Z\|0-9\|\_\].
 
 ```sql
 abcde                 -- identifier

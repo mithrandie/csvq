@@ -30,7 +30,7 @@ _select_query_
 
 ### Recursion
 
-If you specified a RECURSIVE keyword, the _select_query_ in the common table clause can retrieve the result recursively.
+If you specified a RECURSIVE keyword, the _select_query_ in the _common_table_clause_ can retrieve the result recursively.
 A RECURSIVE keyword is usually used with a [UNION]({{ '/reference/set-operators.html#union' | relative_url }}) operator.
 
 ```sql
@@ -45,7 +45,7 @@ WITH
 
 At first, the result set of the _base_select_query_ is stored in the _temporary view_ for recursion.
 Next, the _recursive_select_query_ that reference the _temporary view_ is excuted and the _temporary view_ is replaced by the result set of the _recursive_select_query_.
-The execution of the _recursive_select_query is iterated until the result set is empty.
+The execution of the _recursive_select_query_ is iterated until the result set is empty.
 All the result sets are combined by the [UNION]({{ '/reference/set-operators.html#union' | relative_url }}) operator.
 
 Example:
