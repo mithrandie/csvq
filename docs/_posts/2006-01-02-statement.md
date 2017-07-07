@@ -67,7 +67,7 @@ Ternary
 Datetime
 : A datetime is a string formatted as datetime.
 
-  **Datetime format:**
+  Strings of following forms or the form passed by the ["datetime-format" option]({{ '/reference/command.html#global_options' | relative_url }}) can be converted to datetime values.
   
   | Format | Example |
   | :- | :- |
@@ -75,6 +75,10 @@ Datetime
   | YYYY-MM-DD HH:mi:ss | 2012-03-15 12:03:01 |
   | YYYY-MM-DD HH:mi:ss.Nano | 2012-03-15 12:03:01.123456789 |
   | YYYY-MM-DD HH:mi:ss TZ | 2012-03-15 12:03:01 PST |
+  | YYYY/MM/DD | 2012/03/15 |
+  | YYYY/MM/DD HH:mi:ss | 2012/03/15 12:03:01 |
+  | YYYY/MM/DD HH:mi:ss.Nano | 2012/03/15 12:03:01.123456789 |
+  | YYYY/MM/DD HH:mi:ss TZ | 2012/03/15 12:03:01 PST |
   | RFC3339 | 2012-03-15T12:03:01-07:00 |
   | RFC3339 with Nano Seconds | 2012-03-15T12:03:01.123456789-07:00 |
   | RFC822 | 03 Mar 12 12:03 PST |
