@@ -5,15 +5,65 @@ import (
 	"io/ioutil"
 	"strconv"
 	"strings"
-	"unicode/utf8"
+	"unicode"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
+var fullWidthTable = &unicode.RangeTable{
+	R16: []unicode.Range16{
+		{0x1100, 0x11ff, 1}, //Hangul Jamo
+		{0x3040, 0x309f, 1}, //Hiragana
+		{0x30a0, 0x30ff, 1}, //Katakana
+		{0x3100, 0x312f, 1}, //Bopomofo
+		{0x3190, 0x319f, 1}, //Ideographic Annotations
+		{0x31a0, 0x31bf, 1}, //Bopomofo Extended
+		{0x31f0, 0x31ff, 1}, //Phonetic extensions for Ainu
+		{0x3400, 0x4dbf, 1}, //CJK Unified Ideographs Extension A
+		{0x4e00, 0x9fff, 1}, //CJK Unified Ideographs
+		{0xac00, 0xd7af, 1}, //Hangul Syllables
+		{0xff01, 0xff60, 1}, //FullWidth ASCII variants
+		{0xffe0, 0xffe6, 1}, //FullWidth Symbol variants
+	},
+	R32: []unicode.Range32{
+		{0x1b000, 0x1b0ff, 1}, //Historic Kana
+		{0x20000, 0x2a6df, 1}, //CJK Unified Ideographs Extension B
+		{0x2a700, 0x2b73f, 1}, //CJK Unified Ideographs Extension C
+		{0x2b740, 0x2b81f, 1}, //CJK Unified Ideographs Extension D
+		{0x2b820, 0x2ceaf, 1}, //CJK Unified Ideographs Extension E
+	},
+}
+
 type textField struct {
-	value string
-	sign  int
+	values []string
+	widths []int
+	sign   int
+}
+
+func (tf textField) width() int {
+	w := 0
+	for _, v := range tf.widths {
+		if w < v {
+			w = v
+		}
+	}
+	return w
+}
+
+func NewTextField(s string, sign int) textField {
+	values := strings.Split(s, "\n")
+	widths := make([]int, len(values))
+
+	for i, v := range values {
+		widths[i] = stringWidth(v)
+	}
+
+	return textField{
+		values: values,
+		widths: widths,
+		sign:   sign,
+	}
 }
 
 func EncodeView(view *View, format cmd.Format, delimiter rune, withoutHeader bool, encoding cmd.Encoding, lineBreak cmd.LineBreak) (string, error) {
@@ -65,7 +115,7 @@ func encodeText(view *View) string {
 
 	header := make([]textField, view.FieldLen())
 	for i := range view.Header {
-		header[i] = textField{value: view.Header[i].Label(), sign: -1}
+		header[i] = NewTextField(view.Header[i].Label(), -1)
 	}
 
 	records := make([][]textField, view.RecordLen())
@@ -76,32 +126,32 @@ func encodeText(view *View) string {
 		}
 	}
 
-	fieldLens := make([]int, len(header))
+	fieldWidths := make([]int, len(header))
 
 	for i, f := range header {
-		fieldLens[i] = countRunes(f)
+		fieldWidths[i] = f.width()
 	}
 	for _, record := range records {
 		for i, f := range record {
-			flen := countRunes(f)
-			if fieldLens[i] < flen {
-				fieldLens[i] = flen
+			flen := f.width()
+			if fieldWidths[i] < flen {
+				fieldWidths[i] = flen
 			}
 		}
 	}
 
 	s := make([]string, len(records)+4)
-	s[0] = formatHR(fieldLens)
+	s[0] = formatHR(fieldWidths)
 
-	s[1] = formatRecord(header, fieldLens)
+	s[1] = formatRecord(header, fieldWidths)
 
-	s[2] = formatHR(fieldLens)
+	s[2] = formatHR(fieldWidths)
 
 	for i, record := range records {
-		s[i+3] = formatRecord(record, fieldLens)
+		s[i+3] = formatRecord(record, fieldWidths)
 	}
 
-	s[len(s)-1] = formatHR(fieldLens)
+	s[len(s)-1] = formatHR(fieldWidths)
 	return strings.Join(s, "")
 }
 
@@ -114,15 +164,10 @@ func formatHR(lens []int) string {
 	return strings.Join(s, "")
 }
 
-func formatRecord(record []textField, fieldLens []int) string {
-	row := make([][]string, len(record))
-	for i, f := range record {
-		row[i] = strings.Split(f.value, "\n")
-	}
-
+func formatRecord(record []textField, fieldWidths []int) string {
 	lineCount := 0
-	for _, lines := range row {
-		n := len(lines)
+	for _, tf := range record {
+		n := len(tf.values)
 		if lineCount < n {
 			lineCount = n
 		}
@@ -131,13 +176,20 @@ func formatRecord(record []textField, fieldLens []int) string {
 	s := make([]string, lineCount)
 
 	for lineIdx := 0; lineIdx < lineCount; lineIdx++ {
-		sl := make([]string, len(row)+1)
-		for fieldIdx, lines := range row {
-			if lineIdx < len(lines) {
-				sl[fieldIdx] = fmt.Sprintf("| %"+strconv.Itoa(record[fieldIdx].sign*fieldLens[fieldIdx])+"s ", lines[lineIdx])
+		sl := make([]string, len(record)+1)
+		for fieldIdx, tf := range record {
+			var value string
+			if lineIdx < len(tf.values) {
+				pad := strings.Repeat(" ", fieldWidths[fieldIdx]-tf.widths[lineIdx])
+				if tf.sign < 0 {
+					value = tf.values[lineIdx] + pad
+				} else {
+					value = pad + tf.values[lineIdx]
+				}
 			} else {
-				sl[fieldIdx] = fmt.Sprintf("| %"+strconv.Itoa(fieldLens[fieldIdx])+"s ", "")
+				value = strings.Repeat(" ", fieldWidths[fieldIdx])
 			}
+			sl[fieldIdx] = fmt.Sprintf("| %s ", value)
 		}
 		sl[len(sl)-1] = "|\n"
 		s[lineIdx] = strings.Join(sl, "")
@@ -146,16 +198,16 @@ func formatRecord(record []textField, fieldLens []int) string {
 	return strings.Join(s, "")
 }
 
-func countRunes(f textField) int {
-	i := 0
-	lines := strings.Split(f.value, "\n")
-	for _, line := range lines {
-		count := utf8.RuneCountInString(line)
-		if i < count {
-			i = count
+func stringWidth(s string) int {
+	l := 0
+	for _, r := range s {
+		if unicode.In(r, fullWidthTable) {
+			l = l + 2
+		} else {
+			l = l + 1
 		}
 	}
-	return i
+	return l
 }
 
 func formatTextCell(c Cell) textField {
@@ -184,7 +236,7 @@ func formatTextCell(c Cell) textField {
 		s = "NULL"
 	}
 
-	return textField{value: s, sign: sign}
+	return NewTextField(s, sign)
 }
 
 func encodeCSV(view *View, delimiter string, withoutHeader bool) string {
