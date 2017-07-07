@@ -21,7 +21,7 @@ var fullWidthTable = &unicode.RangeTable{
 		{0x31a0, 0x31bf, 1}, //Bopomofo Extended
 		{0x31f0, 0x31ff, 1}, //Phonetic extensions for Ainu
 		{0x3400, 0x4dbf, 1}, //CJK Unified Ideographs Extension A
-		{0x4e00, 0x9fff, 1}, //CJK United Ideographs
+		{0x4e00, 0x9fff, 1}, //CJK Unified Ideographs
 		{0xac00, 0xd7af, 1}, //Hangul Syllables
 		{0xff01, 0xff60, 1}, //FullWidth ASCII variants
 		{0xffe0, 0xffe6, 1}, //FullWidth Symbol variants
