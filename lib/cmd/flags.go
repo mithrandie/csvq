@@ -50,13 +50,14 @@ const (
 
 type Flags struct {
 	// Global Options
-	Delimiter   rune
-	Encoding    Encoding
-	LineBreak   LineBreak
-	Repository  string
-	Source      string
-	NoHeader    bool
-	WithoutNull bool
+	Delimiter      rune
+	Encoding       Encoding
+	LineBreak      LineBreak
+	Repository     string
+	Source         string
+	DatetimeFormat string
+	NoHeader       bool
+	WithoutNull    bool
 
 	// Write Subcommand Options
 	WriteEncoding  Encoding
@@ -83,6 +84,7 @@ func GetFlags() *Flags {
 			LineBreak:      LF,
 			Repository:     ".",
 			Source:         "",
+			DatetimeFormat: "",
 			NoHeader:       false,
 			WithoutNull:    false,
 			WriteEncoding:  UTF8,
@@ -161,16 +163,22 @@ func SetSource(s string) error {
 	return nil
 }
 
-func SetNoHeader(b bool) error {
+func SetDatetimeFormat(s string) {
 	f := GetFlags()
-	f.NoHeader = b
-	return nil
+	f.DatetimeFormat = s
+	return
 }
 
-func SetWithoutNull(b bool) error {
+func SetNoHeader(b bool) {
+	f := GetFlags()
+	f.NoHeader = b
+	return
+}
+
+func SetWithoutNull(b bool) {
 	f := GetFlags()
 	f.WithoutNull = b
-	return nil
+	return
 }
 
 func SetWriteEncoding(s string) error {
@@ -274,10 +282,10 @@ func SetWriteDelimiter(s string) error {
 	return nil
 }
 
-func SetWithoutHeader(b bool) error {
+func SetWithoutHeader(b bool) {
 	f := GetFlags()
 	f.WithoutHeader = b
-	return nil
+	return
 }
 
 func ParseEncoding(s string) (Encoding, error) {

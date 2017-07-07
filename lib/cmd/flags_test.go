@@ -110,6 +110,16 @@ func TestSetSource(t *testing.T) {
 	}
 }
 
+func TestSetDatetimeFormat(t *testing.T) {
+	flags := GetFlags()
+
+	format := "%Y-%m-%d"
+	SetDatetimeFormat(format)
+	if flags.DatetimeFormat != format {
+		t.Errorf("datetime format = %s, expect to set %s", flags.DatetimeFormat, format)
+	}
+}
+
 func TestSetNoHeader(t *testing.T) {
 	flags := GetFlags()
 
