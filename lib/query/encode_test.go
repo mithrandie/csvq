@@ -45,7 +45,7 @@ var encodeViewTests = []struct {
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
 				NewRecordWithoutId([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), parser.NewString("abcdef")}),
-				NewRecordWithoutId([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
+				NewRecordWithoutId([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk日本語あアｱＡ（\n"), parser.NewNull()}),
 			},
 		},
 		Format: cmd.TEXT,
@@ -56,7 +56,7 @@ var encodeViewTests = []struct {
 			"|       -1 |                           UNKNOWN |   true |\n" +
 			"|   2.0123 | 2016-02-01 16:00:00.123456        | abcdef |\n" +
 			"| 34567890 | abcdefghijklmnopqrstuvwxyzabcdefg |   NULL |\n" +
-			"|          | hi\"jk                             |        |\n" +
+			"|          | hi\"jk日本語あアｱＡ（              |        |\n" +
 			"+----------+-----------------------------------+--------+\n",
 	},
 	{
@@ -190,6 +190,7 @@ func TestEncodeView(t *testing.T) {
 		}
 		if s != v.Result {
 			t.Errorf("%s, result = %q, want %q", v.Name, s, v.Result)
+			t.Log(s)
 		}
 	}
 }
