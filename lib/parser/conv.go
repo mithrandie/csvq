@@ -14,13 +14,26 @@ import (
 )
 
 func StrToTime(s string) (time.Time, error) {
+	flags := cmd.GetFlags()
+	if 0 < len(flags.DatetimeFormat) {
+		if t, e := time.Parse(ConvertDatetimeFormat(flags.DatetimeFormat), s); e == nil {
+			return t, nil
+		}
+	}
+
 	if t, e := time.Parse(time.RFC3339Nano, s); e == nil {
 		return t, nil
 	} else if t, e := time.ParseInLocation(DATETIME_FORMAT, s, cmd.GetLocation()); e == nil {
 		return t, nil
 	} else if t, e := time.Parse(DATETIME_FORMAT+" MST", s); e == nil {
 		return t, nil
-	} else if t, e := time.Parse("2006-01-02", s); e == nil {
+	} else if t, e := time.ParseInLocation("2006-01-02", s, cmd.GetLocation()); e == nil {
+		return t, nil
+	} else if t, e := time.ParseInLocation("2006/01/02 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
+		return t, nil
+	} else if t, e := time.Parse("2006/01/02 15:04:05.999999999 MST", s); e == nil {
+		return t, nil
+	} else if t, e := time.ParseInLocation("2006/01/02", s, cmd.GetLocation()); e == nil {
 		return t, nil
 	} else if t, e := time.Parse(time.RFC822, s); e == nil {
 		return t, nil
@@ -28,6 +41,82 @@ func StrToTime(s string) (time.Time, error) {
 		return t, nil
 	}
 	return time.Time{}, errors.New(fmt.Sprintf("%q does not match with datetime format", s))
+}
+
+func ConvertDatetimeFormat(format string) string {
+	runes := []rune(format)
+	dtfmt := []rune{}
+
+	escaped := false
+	for _, r := range runes {
+		if !escaped {
+			switch r {
+			case '%':
+				escaped = true
+			default:
+				dtfmt = append(dtfmt, r)
+			}
+			continue
+		}
+
+		switch r {
+		case 'a':
+			dtfmt = append(dtfmt, []rune("Mon")...)
+		case 'b':
+			dtfmt = append(dtfmt, []rune("Jan")...)
+		case 'c':
+			dtfmt = append(dtfmt, []rune("1")...)
+		case 'd':
+			dtfmt = append(dtfmt, []rune("02")...)
+		case 'E':
+			dtfmt = append(dtfmt, []rune("_2")...)
+		case 'e':
+			dtfmt = append(dtfmt, []rune("2")...)
+		case 'F':
+			dtfmt = append(dtfmt, []rune(".999999")...)
+		case 'f':
+			dtfmt = append(dtfmt, []rune(".000000")...)
+		case 'H':
+			dtfmt = append(dtfmt, []rune("15")...)
+		case 'h':
+			dtfmt = append(dtfmt, []rune("03")...)
+		case 'i':
+			dtfmt = append(dtfmt, []rune("04")...)
+		case 'l':
+			dtfmt = append(dtfmt, []rune("3")...)
+		case 'M':
+			dtfmt = append(dtfmt, []rune("January")...)
+		case 'm':
+			dtfmt = append(dtfmt, []rune("01")...)
+		case 'N':
+			dtfmt = append(dtfmt, []rune(".999999999")...)
+		case 'n':
+			dtfmt = append(dtfmt, []rune(".000000000")...)
+		case 'p':
+			dtfmt = append(dtfmt, []rune("PM")...)
+		case 'r':
+			dtfmt = append(dtfmt, []rune("03:04:05 PM")...)
+		case 's':
+			dtfmt = append(dtfmt, []rune("05")...)
+		case 'T':
+			dtfmt = append(dtfmt, []rune("15:04:05")...)
+		case 'W':
+			dtfmt = append(dtfmt, []rune("Monday")...)
+		case 'Y':
+			dtfmt = append(dtfmt, []rune("2006")...)
+		case 'y':
+			dtfmt = append(dtfmt, []rune("06")...)
+		case 'Z':
+			dtfmt = append(dtfmt, []rune("Z07:00")...)
+		case 'z':
+			dtfmt = append(dtfmt, []rune("MST")...)
+		default:
+			dtfmt = append(dtfmt, r)
+		}
+		escaped = false
+	}
+
+	return string(dtfmt)
 }
 
 func Int64ToStr(i int64) string {

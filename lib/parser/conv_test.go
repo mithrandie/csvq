@@ -3,11 +3,20 @@ package parser
 import (
 	"testing"
 
+	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
 func TestStrToTime(t *testing.T) {
-	s := "2006-01-02 15:04:05"
+	flags := cmd.GetFlags()
+	flags.DatetimeFormat = "01/02/2006"
+
+	s := "01/02/2006"
+	if _, err := StrToTime(s); err != nil {
+		t.Errorf("unexpected error %q for %q", err, s)
+	}
+
+	s = "2006-01-02 15:04:05"
 	if _, err := StrToTime(s); err != nil {
 		t.Errorf("unexpected error %q for %q", err, s)
 	}
@@ -18,6 +27,21 @@ func TestStrToTime(t *testing.T) {
 	}
 
 	s = "2006-01-02 15:04:05 PDT"
+	if _, err := StrToTime(s); err != nil {
+		t.Errorf("unexpected error %q for %q", err, s)
+	}
+
+	s = "2006/01/02 15:04:05"
+	if _, err := StrToTime(s); err != nil {
+		t.Errorf("unexpected error %q for %q", err, s)
+	}
+
+	s = "2006/01/02"
+	if _, err := StrToTime(s); err != nil {
+		t.Errorf("unexpected error %q for %q", err, s)
+	}
+
+	s = "2006/01/02 15:04:05 PDT"
 	if _, err := StrToTime(s); err != nil {
 		t.Errorf("unexpected error %q for %q", err, s)
 	}
@@ -40,6 +64,102 @@ func TestStrToTime(t *testing.T) {
 	s = "e"
 	if _, err := StrToTime(s); err == nil {
 		t.Errorf("no errors, want error for %q", s)
+	}
+}
+
+var convertDatetimeFormatTests = []struct {
+	Datetime string
+	Format   string
+	Result   string
+}{
+	{
+		Format: "datetime: %Y-%m-%d %H:%i:%s %% %g",
+		Result: "datetime: 2006-01-02 15:04:05 % g",
+	},
+	{
+		Format: "%a",
+		Result: "Mon",
+	},
+	{
+		Format: "%b",
+		Result: "Jan",
+	},
+	{
+		Format: "%c",
+		Result: "1",
+	},
+	{
+		Format: "%E",
+		Result: "_2",
+	},
+	{
+		Format: "%e",
+		Result: "2",
+	},
+	{
+		Format: "%F",
+		Result: ".999999",
+	},
+	{
+		Format: "%f",
+		Result: ".000000",
+	},
+	{
+		Format: "%h",
+		Result: "03",
+	},
+	{
+		Format: "%l",
+		Result: "3",
+	},
+	{
+		Format: "%M",
+		Result: "January",
+	},
+	{
+		Format: "%N",
+		Result: ".999999999",
+	},
+	{
+		Format: "%n",
+		Result: ".000000000",
+	},
+	{
+		Format: "%p",
+		Result: "PM",
+	},
+	{
+		Format: "%r",
+		Result: "03:04:05 PM",
+	},
+	{
+		Format: "%T",
+		Result: "15:04:05",
+	},
+	{
+		Format: "%W",
+		Result: "Monday",
+	},
+	{
+		Format: "%y",
+		Result: "06",
+	},
+	{
+		Format: "%Z",
+		Result: "Z07:00",
+	},
+	{
+		Format: "%z",
+		Result: "MST",
+	},
+}
+
+func TestConvertDatetimeFormat(t *testing.T) {
+	for _, v := range convertDatetimeFormatTests {
+		converted := ConvertDatetimeFormat(v.Format)
+		if converted != v.Result {
+			t.Errorf("result = %q, want %q for %q", converted, v.Result, v.Format)
+		}
 	}
 }
 

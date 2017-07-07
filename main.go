@@ -11,7 +11,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var version = "v0.2.6"
+var version = "v0.2.7"
 
 func main() {
 	cli.AppHelpTemplate = appHHelpTemplate
@@ -46,6 +46,10 @@ func main() {
 		cli.StringFlag{
 			Name:  "source, s",
 			Usage: "load query from `FILE`",
+		},
+		cli.StringFlag{
+			Name:  "datetime-format, t",
+			Usage: "set datetime format to parse strings",
 		},
 		cli.BoolFlag{
 			Name:  "no-header, n",
@@ -204,12 +208,9 @@ func setGlobalFlags(c *cli.Context) error {
 	if err := cmd.SetSource(c.GlobalString("source")); err != nil {
 		return err
 	}
-	if err := cmd.SetNoHeader(c.GlobalBool("no-header")); err != nil {
-		return err
-	}
-	if err := cmd.SetWithoutNull(c.GlobalBool("without-null")); err != nil {
-		return err
-	}
+	cmd.SetDatetimeFormat(c.GlobalString("datetime-format"))
+	cmd.SetNoHeader(c.GlobalBool("no-header"))
+	cmd.SetWithoutNull(c.GlobalBool("without-null"))
 	return nil
 }
 
@@ -226,8 +227,6 @@ func setWriteFlags(c *cli.Context) error {
 	if err := cmd.SetWriteDelimiter(c.String("write-delimiter")); err != nil {
 		return err
 	}
-	if err := cmd.SetWithoutHeader(c.Bool("without-header")); err != nil {
-		return err
-	}
+	cmd.SetWithoutHeader(c.Bool("without-header"))
 	return nil
 }

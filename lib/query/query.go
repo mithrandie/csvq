@@ -1070,10 +1070,12 @@ func SetFlag(stmt parser.SetFlag) error {
 	var p parser.Primary
 
 	switch strings.ToUpper(stmt.Name) {
-	case "@@DELIMITER", "@@ENCODING", "@@REPOSITORY":
+	case "@@DELIMITER", "@@ENCODING", "@@LINE_BREAK", "@@REPOSITORY", "@@DATETIME_FORMAT":
 		p = parser.PrimaryToString(stmt.Value)
 	case "@@NO_HEADER", "@@WITHOUT_NULL":
 		p = parser.PrimaryToBoolean(stmt.Value)
+	default:
+		return errors.New(fmt.Sprintf("invalid flag name: %s", stmt.Name))
 	}
 	if parser.IsNull(p) {
 		return errors.New(fmt.Sprintf("invalid flag value: %s = %s", stmt.Name, stmt.Value))
@@ -1084,14 +1086,16 @@ func SetFlag(stmt parser.SetFlag) error {
 		err = cmd.SetDelimiter(p.(parser.String).Value())
 	case "@@ENCODING":
 		err = cmd.SetEncoding(p.(parser.String).Value())
+	case "@@LINE_BREAK":
+		err = cmd.SetLineBreak(p.(parser.String).Value())
 	case "@@REPOSITORY":
 		err = cmd.SetRepository(p.(parser.String).Value())
+	case "@@DATETIME_FORMAT":
+		cmd.SetDatetimeFormat(p.(parser.String).Value())
 	case "@@NO_HEADER":
-		err = cmd.SetNoHeader(p.(parser.Boolean).Bool())
+		cmd.SetNoHeader(p.(parser.Boolean).Bool())
 	case "@@WITHOUT_NULL":
-		err = cmd.SetWithoutNull(p.(parser.Boolean).Bool())
-	default:
-		err = errors.New(fmt.Sprintf("invalid flag name: %s", stmt.Name))
+		cmd.SetWithoutNull(p.(parser.Boolean).Bool())
 	}
 	return err
 }
