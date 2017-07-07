@@ -20,7 +20,13 @@ func StrToTime(s string) (time.Time, error) {
 		return t, nil
 	} else if t, e := time.Parse(DATETIME_FORMAT+" MST", s); e == nil {
 		return t, nil
-	} else if t, e := time.Parse("2006-01-02", s); e == nil {
+	} else if t, e := time.ParseInLocation("2006-01-02", s, cmd.GetLocation()); e == nil {
+		return t, nil
+	} else if t, e := time.ParseInLocation("2006/01/02 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
+		return t, nil
+	} else if t, e := time.Parse("2006/01/02 15:04:05.999999999 MST", s); e == nil {
+		return t, nil
+	} else if t, e := time.ParseInLocation("2006/01/02", s, cmd.GetLocation()); e == nil {
 		return t, nil
 	} else if t, e := time.Parse(time.RFC822, s); e == nil {
 		return t, nil
