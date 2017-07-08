@@ -109,7 +109,11 @@ func (r *Reader) parseRecord(withoutNull bool) ([]parser.Primary, error) {
 		}
 
 		if eol {
-			break
+			if fieldIndex < 1 && (parser.IsNull(field) || len(field.(parser.String).Value()) < 1) {
+				continue
+			} else {
+				break
+			}
 		}
 
 		fieldIndex++

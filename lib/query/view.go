@@ -275,27 +275,33 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 		if _, ok := ViewCache.Exists(fileInfo.Path); !ok {
 			file := os.Stdin
 			defer file.Close()
-			err = loadViewFromFile(file, fileInfo, table.Name())
+			if err := loadViewFromFile(file, fileInfo, table.Name()); err != nil {
+				return nil, err
+			}
 		} else {
 			if _, ok := ViewCache.HasAlias(table.Name()); !ok {
 				ViewCache.SetAlias(table.Name(), fileInfo.Path)
 			}
 		}
-		if err == nil {
-			if useInternalId {
-				view, _ = ViewCache.GetWithInternalId(fileInfo.Path)
-			} else {
-				view, _ = ViewCache.Get(fileInfo.Path)
-			}
+		if useInternalId {
+			view, _ = ViewCache.GetWithInternalId(fileInfo.Path)
+		} else {
+			view, _ = ViewCache.Get(fileInfo.Path)
 		}
 	case parser.Identifier:
 		tableIdentifier := table.Object.(parser.Identifier).Literal
 		if strings.EqualFold(tableIdentifier, parentFilter.RecursiveTable.Name.Literal) && parentFilter.RecursiveTmpView != nil {
 			view = parentFilter.RecursiveTmpView
+			if parentFilter.RecursiveTable.Name.Literal != table.Name() {
+				view.UpdateHeader(table.Name(), nil)
+			}
 		} else if ct, err := parentFilter.CommonTables.Get(tableIdentifier); err == nil {
 			view = ct
+			if tableIdentifier != table.Name() {
+				view.UpdateHeader(table.Name(), nil)
+			}
 		} else if _, err := parentFilter.CommonTables.Get(table.Name()); err == nil {
-			err = errors.New(fmt.Sprintf("table name %s is duplicated", table.Name()))
+			return nil, errors.New(fmt.Sprintf("table name %s is duplicated", table.Name()))
 		} else {
 
 			flags := cmd.GetFlags()
@@ -305,24 +311,29 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 				return nil, err
 			}
 
+			commonTableName := parser.FormatTableName(fileInfo.Path)
+
 			if _, ok := ViewCache.Exists(fileInfo.Path); !ok {
 				file, err := os.Open(fileInfo.Path)
 				if err != nil {
 					return nil, err
 				}
 				defer file.Close()
-				err = loadViewFromFile(file, fileInfo, table.Name())
-			} else {
-				if _, ok := ViewCache.HasAlias(table.Name()); !ok {
-					ViewCache.SetAlias(table.Name(), fileInfo.Path)
+				if err := loadViewFromFile(file, fileInfo, commonTableName); err != nil {
+					return nil, err
 				}
 			}
-			if err == nil {
-				if useInternalId {
-					view, _ = ViewCache.GetWithInternalId(fileInfo.Path)
-				} else {
-					view, _ = ViewCache.Get(fileInfo.Path)
-				}
+			if _, ok := ViewCache.HasAlias(table.Name()); !ok {
+				ViewCache.SetAlias(table.Name(), fileInfo.Path)
+			}
+
+			if useInternalId {
+				view, _ = ViewCache.GetWithInternalId(fileInfo.Path)
+			} else {
+				view, _ = ViewCache.Get(fileInfo.Path)
+			}
+			if commonTableName != table.Name() {
+				view.UpdateHeader(table.Name(), nil)
 			}
 		}
 	case parser.Join:
@@ -363,10 +374,7 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 		}
 	}
 
-	if err != nil {
-		return nil, err
-	}
-	return view, nil
+	return view, err
 }
 
 func loadViewFromFile(file *os.File, fileInfo *FileInfo, reference string) error {

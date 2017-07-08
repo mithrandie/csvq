@@ -90,6 +90,15 @@ var readAllTests = []struct {
 		LineBreak: "",
 	},
 	{
+		Name:  "Trailing empty lines",
+		Input: "a,b,c\nd,e,f\n\n",
+		Output: [][]parser.Primary{
+			{parser.NewString("a"), parser.NewString("b"), parser.NewString("c")},
+			{parser.NewString("d"), parser.NewString("e"), parser.NewString("f")},
+		},
+		LineBreak: cmd.LF,
+	},
+	{
 		Name:  "ExtraneousQuote",
 		Input: "a,\"b\",\"ccc\ncc\nd,e,",
 		Error: "line 3, column 5: extraneous \" in field",

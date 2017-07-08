@@ -2371,6 +2371,44 @@ var updateTests = []struct {
 		Query: parser.UpdateQuery{
 			Update: "update",
 			Tables: []parser.Expression{
+				parser.Table{Object: parser.Identifier{Literal: "notexist"}},
+			},
+			Set: "set",
+			SetList: []parser.Expression{
+				parser.UpdateSet{
+					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+					Value: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}},
+				},
+			},
+			FromClause: parser.FromClause{
+				Tables: []parser.Expression{
+					parser.Table{Object: parser.Join{
+						Table: parser.Table{
+							Object: parser.Identifier{Literal: "table1"},
+							Alias:  parser.Identifier{Literal: "t1"},
+						},
+						JoinTable: parser.Table{
+							Object: parser.Identifier{Literal: "table2"},
+							Alias:  parser.Identifier{Literal: "t2"},
+						},
+						Condition: parser.JoinCondition{
+							On: parser.Comparison{
+								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+								RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
+								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+							},
+						},
+					}},
+				},
+			},
+		},
+		Error: "file notexist is not loaded",
+	},
+	{
+		Name: "Update Query Update Table Is Not Specified Error",
+		Query: parser.UpdateQuery{
+			Update: "update",
+			Tables: []parser.Expression{
 				parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			},
 			Set: "set",
@@ -2402,7 +2440,7 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "file table1 is not loaded",
+		Error: "table t1 is not specified in tables to update",
 	},
 	{
 		Name: "Update Query Update Field Error",
@@ -2684,7 +2722,7 @@ var deleteTests = []struct {
 		Query: parser.DeleteQuery{
 			Delete: "delete",
 			Tables: []parser.Expression{
-				parser.Table{Object: parser.Identifier{Literal: "table1"}},
+				parser.Table{Object: parser.Identifier{Literal: "notexist"}},
 			},
 			FromClause: parser.FromClause{
 				Tables: []parser.Expression{
@@ -2708,7 +2746,7 @@ var deleteTests = []struct {
 				},
 			},
 		},
-		Error: "file table1 is not loaded",
+		Error: "file notexist is not loaded",
 	},
 }
 
