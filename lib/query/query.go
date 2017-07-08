@@ -722,6 +722,7 @@ func Update(query parser.UpdateQuery) ([]*View, error) {
 		if viewsToUpdate[table.Name()], err = ViewCache.Get(table.Name()); err != nil {
 			return nil, err
 		}
+		viewsToUpdate[table.Name()].UpdateHeader(table.Name(), nil)
 		updatedIndices[table.Name()] = []int{}
 	}
 
@@ -740,6 +741,9 @@ func Update(query parser.UpdateQuery) ([]*View, error) {
 			viewref, err := view.FieldViewName(uset.Field)
 			if err != nil {
 				return nil, err
+			}
+			if _, ok := viewsToUpdate[viewref]; !ok {
+				return nil, errors.New(fmt.Sprintf("table %s is not specified in tables to update", viewref))
 			}
 
 			internalId, err := view.InternalRecordId(viewref, i)
@@ -813,6 +817,7 @@ func Delete(query parser.DeleteQuery) ([]*View, error) {
 		if viewsToDelete[table.Name()], err = ViewCache.Get(table.Name()); err != nil {
 			return nil, err
 		}
+		viewsToDelete[table.Name()].UpdateHeader(table.Name(), nil)
 		deletedIndices[table.Name()] = []int{}
 	}
 
