@@ -401,10 +401,8 @@ func DeclareTable(expr parser.TableDeclaration) error {
 			return err
 		}
 
-		if expr.Fields != nil {
-			if err := view.UpdateHeader(expr.Table.Literal, expr.Fields); err != nil {
-				return err
-			}
+		if err := view.UpdateHeader(expr.Table.Literal, expr.Fields); err != nil {
+			return err
 		}
 	} else {
 		fields := make([]string, len(expr.Fields))

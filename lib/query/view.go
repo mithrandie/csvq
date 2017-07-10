@@ -269,10 +269,6 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 	case parser.Dual:
 		view = loadDualView()
 	case parser.Stdin:
-		if !isReadableFromStdin() {
-			return nil, errors.New("stdin is empty")
-		}
-
 		delimiter := cmd.GetFlags().Delimiter
 		if delimiter == cmd.UNDEF {
 			delimiter = ','
@@ -284,9 +280,13 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 		}
 
 		if _, ok := ViewCache.Exists(fileInfo.Path); !ok {
+			if !isReadableFromStdin() {
+				return nil, errors.New("stdin is empty")
+			}
+
 			file := os.Stdin
 			defer file.Close()
-			if err := loadViewFromFile(file, fileInfo, table.Name()); err != nil {
+			if err := loadViewFromFile(file, fileInfo, STDIN_VIRTUAL_FILE_PATH); err != nil {
 				return nil, err
 			}
 		} else {
@@ -298,6 +298,9 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 			view, _ = ViewCache.GetWithInternalId(fileInfo.Path)
 		} else {
 			view, _ = ViewCache.Get(fileInfo.Path)
+		}
+		if STDIN_VIRTUAL_FILE_PATH != table.Name() {
+			view.UpdateHeader(table.Name(), nil)
 		}
 	case parser.Identifier:
 		tableIdentifier := table.Object.(parser.Identifier).Literal
