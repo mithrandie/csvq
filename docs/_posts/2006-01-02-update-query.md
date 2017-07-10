@@ -11,12 +11,13 @@ Update query is used to update records on csv files.
 ## Update on a single file
 
 ```sql
-[with_clause] UPDATE table_name
+[WITH common_table_expression [, common_table_expression ...]]
+  UPDATE table_name
   SET column_name = value [, column_name = value ...]
   [where_clause]
 ```
 
-_with_clause_
+_common_table_expression_
 : [Common Table Expression]({{ '/reference/common-table-expression.html' | relative_url }})
 
 _table_name_
@@ -34,13 +35,14 @@ _where_clause_
 ## Update on multiple files
 
 ```sql
-[with_clause] UPDATE table_name [, table_name ...]
+[WITH common_table_expression [, common_table_expression ...]]
+  UPDATE table_name [, table_name ...]
   SET column_name = value [, column_name = value ...]
   from_clause
   [where_clause]
 ```
 
-_with_clause_
+_common_table_expression_
 : [Common Table Expression]({{ '/reference/common-table-expression.html' | relative_url }})
 
 _table_name_

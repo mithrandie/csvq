@@ -11,12 +11,13 @@ Insert query is used to insert records to a csv file.
 ## Insert Values
 
 ```sql
-[with_clause] INSERT INTO table_name
+[WITH common_table_expression [, common_table_expression ...]]
+  INSERT INTO table_name
   [(column_name [, column_name ...])]
   VALUES row_value [, row_value ...]
 ```
 
-_with_clause_
+_common_table_expression_
 : [Common Table Expression]({{ '/reference/common-table-expression.html' | relative_url }})
 
 _table_name_
@@ -31,12 +32,13 @@ _row_value_
 ## Insert From Select Query
 
 ```sql
-[with_clause] INSERT INTO table_name
+[WITH common_table_expression [, common_table_expression ...]]
+  INSERT INTO table_name
   [(column_name [, column_name ...])]
   select_query
 ```
 
-_with_clause_
+_common_table_expression_
 : [Common Table Expression]({{ '/reference/common-table-expression.html' | relative_url }})
 
 _table_name_
