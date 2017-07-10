@@ -1926,25 +1926,25 @@ yydefault:
 		yyDollar = yyS[yypt-3 : yypt+1]
 		//line parser.y:756
 		{
-			yyVAL.expression = Comparison{LHS: yyDollar[1].expression, Operator: yyDollar[2].token, RHS: yyDollar[3].expression}
+			yyVAL.expression = Comparison{LHS: yyDollar[1].expression, Operator: yyDollar[2].token.Literal, RHS: yyDollar[3].expression}
 		}
 	case 119:
 		yyDollar = yyS[yypt-3 : yypt+1]
 		//line parser.y:760
 		{
-			yyVAL.expression = Comparison{LHS: yyDollar[1].expression, Operator: yyDollar[2].token, RHS: yyDollar[3].expression}
+			yyVAL.expression = Comparison{LHS: yyDollar[1].expression, Operator: yyDollar[2].token.Literal, RHS: yyDollar[3].expression}
 		}
 	case 120:
 		yyDollar = yyS[yypt-3 : yypt+1]
 		//line parser.y:764
 		{
-			yyVAL.expression = Comparison{LHS: yyDollar[1].expression, Operator: Token{Token: COMPARISON_OP, Literal: "="}, RHS: yyDollar[3].expression}
+			yyVAL.expression = Comparison{LHS: yyDollar[1].expression, Operator: "=", RHS: yyDollar[3].expression}
 		}
 	case 121:
 		yyDollar = yyS[yypt-3 : yypt+1]
 		//line parser.y:768
 		{
-			yyVAL.expression = Comparison{LHS: yyDollar[1].expression, Operator: Token{Token: COMPARISON_OP, Literal: "="}, RHS: yyDollar[3].expression}
+			yyVAL.expression = Comparison{LHS: yyDollar[1].expression, Operator: "=", RHS: yyDollar[3].expression}
 		}
 	case 122:
 		yyDollar = yyS[yypt-4 : yypt+1]
@@ -1998,37 +1998,37 @@ yydefault:
 		yyDollar = yyS[yypt-4 : yypt+1]
 		//line parser.y:804
 		{
-			yyVAL.expression = Any{Any: yyDollar[3].token.Literal, LHS: yyDollar[1].expression, Operator: yyDollar[2].token, Values: yyDollar[4].expression}
+			yyVAL.expression = Any{Any: yyDollar[3].token.Literal, LHS: yyDollar[1].expression, Operator: yyDollar[2].token.Literal, Values: yyDollar[4].expression}
 		}
 	case 131:
 		yyDollar = yyS[yypt-6 : yypt+1]
 		//line parser.y:808
 		{
-			yyVAL.expression = Any{Any: yyDollar[3].token.Literal, LHS: yyDollar[1].expression, Operator: yyDollar[2].token, Values: RowValueList{RowValues: yyDollar[5].expressions}}
+			yyVAL.expression = Any{Any: yyDollar[3].token.Literal, LHS: yyDollar[1].expression, Operator: yyDollar[2].token.Literal, Values: RowValueList{RowValues: yyDollar[5].expressions}}
 		}
 	case 132:
 		yyDollar = yyS[yypt-4 : yypt+1]
 		//line parser.y:812
 		{
-			yyVAL.expression = Any{Any: yyDollar[3].token.Literal, LHS: yyDollar[1].expression, Operator: yyDollar[2].token, Values: yyDollar[4].expression}
+			yyVAL.expression = Any{Any: yyDollar[3].token.Literal, LHS: yyDollar[1].expression, Operator: yyDollar[2].token.Literal, Values: yyDollar[4].expression}
 		}
 	case 133:
 		yyDollar = yyS[yypt-4 : yypt+1]
 		//line parser.y:816
 		{
-			yyVAL.expression = All{All: yyDollar[3].token.Literal, LHS: yyDollar[1].expression, Operator: yyDollar[2].token, Values: yyDollar[4].expression}
+			yyVAL.expression = All{All: yyDollar[3].token.Literal, LHS: yyDollar[1].expression, Operator: yyDollar[2].token.Literal, Values: yyDollar[4].expression}
 		}
 	case 134:
 		yyDollar = yyS[yypt-6 : yypt+1]
 		//line parser.y:820
 		{
-			yyVAL.expression = All{All: yyDollar[3].token.Literal, LHS: yyDollar[1].expression, Operator: yyDollar[2].token, Values: RowValueList{RowValues: yyDollar[5].expressions}}
+			yyVAL.expression = All{All: yyDollar[3].token.Literal, LHS: yyDollar[1].expression, Operator: yyDollar[2].token.Literal, Values: RowValueList{RowValues: yyDollar[5].expressions}}
 		}
 	case 135:
 		yyDollar = yyS[yypt-4 : yypt+1]
 		//line parser.y:824
 		{
-			yyVAL.expression = All{All: yyDollar[3].token.Literal, LHS: yyDollar[1].expression, Operator: yyDollar[2].token, Values: yyDollar[4].expression}
+			yyVAL.expression = All{All: yyDollar[3].token.Literal, LHS: yyDollar[1].expression, Operator: yyDollar[2].token.Literal, Values: yyDollar[4].expression}
 		}
 	case 136:
 		yyDollar = yyS[yypt-2 : yypt+1]
@@ -2166,7 +2166,7 @@ yydefault:
 		yyDollar = yyS[yypt-3 : yypt+1]
 		//line parser.y:934
 		{
-			yyVAL.expression = Table{Object: yyDollar[1].identifier, As: yyDollar[2].token, Alias: yyDollar[3].identifier}
+			yyVAL.expression = Table{Object: yyDollar[1].identifier, As: yyDollar[2].token.Literal, Alias: yyDollar[3].identifier}
 		}
 	case 159:
 		yyDollar = yyS[yypt-1 : yypt+1]
@@ -2202,7 +2202,7 @@ yydefault:
 		yyDollar = yyS[yypt-3 : yypt+1]
 		//line parser.y:962
 		{
-			yyVAL.expression = Table{Object: yyDollar[1].expression, As: yyDollar[2].token, Alias: yyDollar[3].identifier}
+			yyVAL.expression = Table{Object: yyDollar[1].expression, As: yyDollar[2].token.Literal, Alias: yyDollar[3].identifier}
 		}
 	case 165:
 		yyDollar = yyS[yypt-1 : yypt+1]
@@ -2292,7 +2292,7 @@ yydefault:
 		yyDollar = yyS[yypt-3 : yypt+1]
 		//line parser.y:1030
 		{
-			yyVAL.expression = Field{Object: yyDollar[1].expression, As: yyDollar[2].token, Alias: yyDollar[3].identifier}
+			yyVAL.expression = Field{Object: yyDollar[1].expression, As: yyDollar[2].token.Literal, Alias: yyDollar[3].identifier}
 		}
 	case 180:
 		yyDollar = yyS[yypt-5 : yypt+1]

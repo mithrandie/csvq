@@ -8,6 +8,8 @@ type scanResult struct {
 	Token   int
 	Literal string
 	Quoted  bool
+	Line    int
+	Char    int
 }
 
 var scanTests = []struct {
@@ -278,6 +280,48 @@ var scanTests = []struct {
 		},
 	},
 	{
+		Name:  "Line and Char Count",
+		Input: "a, \n  /* \n\n */ \r\n c \rd 'abc\ndef' --f\n g",
+		Output: []scanResult{
+			{
+				Token:   IDENTIFIER,
+				Literal: "a",
+				Line:    1,
+				Char:    1,
+			},
+			{
+				Token:   int(','),
+				Literal: ",",
+				Line:    1,
+				Char:    2,
+			},
+			{
+				Token:   IDENTIFIER,
+				Literal: "c",
+				Line:    5,
+				Char:    2,
+			},
+			{
+				Token:   IDENTIFIER,
+				Literal: "d",
+				Line:    6,
+				Char:    1,
+			},
+			{
+				Token:   STRING,
+				Literal: "abc\ndef",
+				Line:    6,
+				Char:    3,
+			},
+			{
+				Token:   IDENTIFIER,
+				Literal: "g",
+				Line:    8,
+				Char:    2,
+			},
+		},
+	},
+	{
 		Name:  "LiteralNotTerminatedError",
 		Input: "\"string",
 		Error: "literal not terminated",
@@ -290,7 +334,7 @@ func TestScan(t *testing.T) {
 
 		tokenCount := 0
 		for {
-			token, literal, quoted, err := s.Scan()
+			token, err := s.Scan()
 			tokenCount++
 
 			if err != nil {
@@ -306,7 +350,7 @@ func TestScan(t *testing.T) {
 				break
 			}
 
-			if token == EOF {
+			if token.Token == EOF {
 				break
 			}
 
@@ -314,14 +358,22 @@ func TestScan(t *testing.T) {
 				break
 			}
 			expect := v.Output[tokenCount-1]
-			if token != expect.Token {
-				t.Errorf("%s, token %d: token = %s, want %s", v.Name, tokenCount, TokenLiteral(token), TokenLiteral(expect.Token))
+			if token.Token != expect.Token {
+				t.Errorf("%s, token %d: token = %s, want %s", v.Name, tokenCount, TokenLiteral(token.Token), TokenLiteral(expect.Token))
 			}
-			if literal != expect.Literal {
-				t.Errorf("%s, token %d: literal = %q, want %q", v.Name, tokenCount, literal, expect.Literal)
+			if token.Literal != expect.Literal {
+				t.Errorf("%s, token %d: literal = %q, want %q", v.Name, tokenCount, token.Literal, expect.Literal)
 			}
-			if quoted != expect.Quoted {
-				t.Errorf("%s, token %d: quoted = %t, want %t", v.Name, tokenCount, quoted, expect.Quoted)
+			if token.Quoted != expect.Quoted {
+				t.Errorf("%s, token %d: quoted = %t, want %t", v.Name, tokenCount, token.Quoted, expect.Quoted)
+			}
+			if 0 < expect.Line {
+				if token.Line != expect.Line {
+					t.Errorf("%s, token %d: line %d: want %d", v.Name, tokenCount, token.Line, expect.Line)
+				}
+				if token.Char != expect.Char {
+					t.Errorf("%s, token %d: char %d: want %d", v.Name, tokenCount, token.Char, expect.Char)
+				}
 			}
 		}
 

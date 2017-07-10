@@ -49,7 +49,7 @@ func ParseJoinCondition(join parser.Join, view *View, joinView *View) parser.Exp
 		comps[i] = parser.Comparison{
 			LHS:      parser.Identifier{Literal: viewName + "." + v.(parser.Identifier).Literal},
 			RHS:      parser.Identifier{Literal: joinViewName + "." + v.(parser.Identifier).Literal},
-			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+			Operator: "=",
 		}
 	}
 

@@ -52,7 +52,6 @@ var ResultSet = []Result{}
 func Execute(input string) (string, error) {
 	var out string
 
-	parser.SetDebugLevel(0, true)
 	program, err := parser.Parse(input)
 	if err != nil {
 		return out, err

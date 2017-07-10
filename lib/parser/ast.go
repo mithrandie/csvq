@@ -567,12 +567,12 @@ func (sq Subquery) String() string {
 
 type Comparison struct {
 	LHS      Expression
-	Operator Token
+	Operator string
 	RHS      Expression
 }
 
 func (c Comparison) String() string {
-	s := []string{c.LHS.String(), c.Operator.Literal, c.RHS.String()}
+	s := []string{c.LHS.String(), c.Operator, c.RHS.String()}
 	return joinWithSpace(s)
 }
 
@@ -641,24 +641,24 @@ func (i In) String() string {
 type All struct {
 	All      string
 	LHS      Expression
-	Operator Token
+	Operator string
 	Values   Expression
 }
 
 func (a All) String() string {
-	s := []string{a.LHS.String(), a.Operator.Literal, a.All, a.Values.String()}
+	s := []string{a.LHS.String(), a.Operator, a.All, a.Values.String()}
 	return joinWithSpace(s)
 }
 
 type Any struct {
 	Any      string
 	LHS      Expression
-	Operator Token
+	Operator string
 	Values   Expression
 }
 
 func (a Any) String() string {
-	s := []string{a.LHS.String(), a.Operator.Literal, a.Any, a.Values.String()}
+	s := []string{a.LHS.String(), a.Operator, a.Any, a.Values.String()}
 	return joinWithSpace(s)
 }
 
@@ -761,14 +761,14 @@ func (f Function) String() string {
 
 type Table struct {
 	Object Expression
-	As     Token
+	As     string
 	Alias  Expression
 }
 
 func (t Table) String() string {
 	s := []string{t.Object.String()}
-	if !t.As.IsEmpty() {
-		s = append(s, t.As.Literal)
+	if 0 < len(t.As) {
+		s = append(s, t.As)
 	}
 	if t.Alias != nil {
 		s = append(s, t.Alias.String())
@@ -834,14 +834,14 @@ func (jc JoinCondition) String() string {
 
 type Field struct {
 	Object Expression
-	As     Token
+	As     string
 	Alias  Expression
 }
 
 func (f Field) String() string {
 	s := []string{f.Object.String()}
-	if !f.As.IsEmpty() {
-		s = append(s, f.As.Literal)
+	if 0 < len(f.As) {
+		s = append(s, f.As)
 	}
 	if f.Alias != nil {
 		s = append(s, f.Alias.String())
