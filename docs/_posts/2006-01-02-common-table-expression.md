@@ -6,12 +6,15 @@ category: reference
 
 # Common Table Expression
 
-A Common Table Expression declare a temporary view that can be referenced in a single query.
+A Common Table Expression in a _with clause_ declare a temporary view that can be referenced in a single query.
 You can use the views in a [Select Query]({{ '/reference/select-query.html' | relative_url }}), [Insert Query]({{ '/reference/insert-query.html' | relative_url }}), [Update Query]({{ '/reference/update-query.html' | relative_url }}), or [Delete Query]({{ '/reference/delete-query.html' | relative_url }}).
 
 ## Syntax
 
 ```sql
+with_clause
+  : WITH common_table_expression [, common_table_expression ...]
+
 common_table_expression
   : [RECURSIVE] table_name [(column_name [, column_name ...])] AS (select_query)
 ```
