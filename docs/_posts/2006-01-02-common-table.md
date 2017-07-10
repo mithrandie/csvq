@@ -44,7 +44,7 @@ WITH
 ```
 
 At first, the result set of the _base_select_query_ is stored in the _temporary view_ for recursion.
-Next, the _recursive_select_query_ that reference the _temporary view_ is excuted and the _temporary view_ is replaced by the result set of the _recursive_select_query_.
+Next, the _recursive_select_query_ that refer to the _temporary view_ is excuted and the _temporary view_ is replaced by the result set of the _recursive_select_query_.
 The execution of the _recursive_select_query_ is iterated until the result set is empty.
 All the result sets are combined by the [UNION]({{ '/reference/set-operators.html#union' | relative_url }}) operator.
 
