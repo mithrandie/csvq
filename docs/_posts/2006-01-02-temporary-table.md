@@ -14,7 +14,7 @@ You can refer, insert, update, or delete temporary tables.
 
 ```sql
 temporary_table_declaration
-  : DECLARE table_name TABLE (column_name [, column_name ...])
+  : DECLARE table_name TABLE (column_name [, column_name ...]);
   | DECLARE table_name TABLE [(column_name [, column_name ...])] FOR select_query;
 ```
 

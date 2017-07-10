@@ -57,7 +57,7 @@ The While statement iterates it while _condition_ is TRUE.
 WHILE variable [, variable ...] IN cursor
 DO
   statements
-END WHILE
+END WHILE;
 ```
 
 _variable_
