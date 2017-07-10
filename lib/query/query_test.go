@@ -123,7 +123,7 @@ var executeTests = []struct {
 	{
 		Name:  "Query Execution Error",
 		Input: "select from",
-		Error: "syntax error: unexpected FROM",
+		Error: "syntax error: unexpected from [L:1 C:8]",
 	},
 }
 
@@ -297,7 +297,7 @@ var executeStatementTests = []struct {
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					RHS:      parser.NewInteger(2),
-					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+					Operator: "=",
 				},
 			},
 		},
@@ -329,7 +329,7 @@ var executeStatementTests = []struct {
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					RHS:      parser.NewInteger(2),
-					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+					Operator: "=",
 				},
 			},
 		},
@@ -631,7 +631,7 @@ var whileTests = []struct {
 			Condition: parser.Comparison{
 				LHS:      parser.Variable{Name: "@while_test"},
 				RHS:      parser.NewInteger(3),
-				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
+				Operator: "<",
 			},
 			Statements: []parser.Statement{
 				parser.VariableSubstitution{
@@ -655,7 +655,7 @@ var whileTests = []struct {
 			Condition: parser.Comparison{
 				LHS:      parser.Variable{Name: "@while_test_count"},
 				RHS:      parser.NewInteger(3),
-				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
+				Operator: "<",
 			},
 			Statements: []parser.Statement{
 				parser.VariableSubstitution{
@@ -678,7 +678,7 @@ var whileTests = []struct {
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "@while_test_count"},
 						RHS:      parser.NewInteger(2),
-						Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+						Operator: "=",
 					},
 					Statements: []parser.Statement{
 						parser.FlowControl{Token: parser.CONTINUE},
@@ -697,7 +697,7 @@ var whileTests = []struct {
 			Condition: parser.Comparison{
 				LHS:      parser.Variable{Name: "@while_test_count"},
 				RHS:      parser.NewInteger(3),
-				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
+				Operator: "<",
 			},
 			Statements: []parser.Statement{
 				parser.VariableSubstitution{
@@ -720,7 +720,7 @@ var whileTests = []struct {
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "@while_test_count"},
 						RHS:      parser.NewInteger(2),
-						Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+						Operator: "=",
 					},
 					Statements: []parser.Statement{
 						parser.FlowControl{Token: parser.BREAK},
@@ -739,7 +739,7 @@ var whileTests = []struct {
 			Condition: parser.Comparison{
 				LHS:      parser.Variable{Name: "@while_test_count"},
 				RHS:      parser.NewInteger(3),
-				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
+				Operator: "<",
 			},
 			Statements: []parser.Statement{
 				parser.VariableSubstitution{
@@ -762,7 +762,7 @@ var whileTests = []struct {
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "@while_test_count"},
 						RHS:      parser.NewInteger(2),
-						Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+						Operator: "=",
 					},
 					Statements: []parser.Statement{
 						parser.FlowControl{Token: parser.EXIT},
@@ -781,7 +781,7 @@ var whileTests = []struct {
 			Condition: parser.Comparison{
 				LHS:      parser.Variable{Name: "@while_test"},
 				RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
+				Operator: "<",
 			},
 			Statements: []parser.Statement{
 				parser.VariableSubstitution{
@@ -804,7 +804,7 @@ var whileTests = []struct {
 			Condition: parser.Comparison{
 				LHS:      parser.Variable{Name: "@while_test"},
 				RHS:      parser.NewInteger(3),
-				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
+				Operator: "<",
 			},
 			Statements: []parser.Statement{
 				parser.VariableSubstitution{
@@ -894,7 +894,7 @@ var whileInCursorTests = []struct {
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "@var1"},
 						RHS:      parser.NewInteger(2),
-						Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+						Operator: "=",
 					},
 					Statements: []parser.Statement{
 						parser.FlowControl{Token: parser.CONTINUE},
@@ -920,7 +920,7 @@ var whileInCursorTests = []struct {
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "@var1"},
 						RHS:      parser.NewInteger(2),
-						Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+						Operator: "=",
 					},
 					Statements: []parser.Statement{
 						parser.FlowControl{Token: parser.BREAK},
@@ -946,7 +946,7 @@ var whileInCursorTests = []struct {
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "@var1"},
 						RHS:      parser.NewInteger(2),
-						Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+						Operator: "=",
 					},
 					Statements: []parser.Statement{
 						parser.FlowControl{Token: parser.EXIT},
@@ -987,7 +987,7 @@ var whileInCursorTests = []struct {
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "@var1"},
 						RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-						Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+						Operator: "=",
 					},
 					Statements: []parser.Statement{
 						parser.FlowControl{Token: parser.BREAK},
@@ -1243,7 +1243,7 @@ var selectTests = []struct {
 					Filter: parser.Comparison{
 						LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 						RHS:      parser.NewInteger(3),
-						Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
+						Operator: "<",
 					},
 				},
 				GroupByClause: parser.GroupByClause{
@@ -1255,7 +1255,7 @@ var selectTests = []struct {
 					Filter: parser.Comparison{
 						LHS:      parser.Function{Name: "count", Option: parser.Option{Args: []parser.Expression{parser.AllColumns{}}}},
 						RHS:      parser.NewInteger(1),
-						Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: ">"},
+						Operator: ">",
 					},
 				},
 			},
@@ -1754,7 +1754,7 @@ var selectTests = []struct {
 										Filter: parser.Comparison{
 											LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
 											RHS:      parser.NewInteger(3),
-											Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
+											Operator: "<",
 										},
 									},
 								},
@@ -1844,7 +1844,7 @@ var selectTests = []struct {
 										Filter: parser.Comparison{
 											LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
 											RHS:      parser.NewInteger(3),
-											Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
+											Operator: "<",
 										},
 									},
 								},
@@ -2222,7 +2222,7 @@ var updateTests = []struct {
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					RHS:      parser.NewInteger(2),
-					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+					Operator: "=",
 				},
 			},
 		},
@@ -2283,7 +2283,7 @@ var updateTests = []struct {
 							On: parser.Comparison{
 								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 								RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
-								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+								Operator: "=",
 							},
 						},
 					}},
@@ -2336,7 +2336,7 @@ var updateTests = []struct {
 				Filter: parser.Comparison{
 					LHS:      parser.Identifier{Literal: "column1"},
 					RHS:      parser.NewInteger(2),
-					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+					Operator: "=",
 				},
 			},
 		},
@@ -2360,7 +2360,7 @@ var updateTests = []struct {
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 					RHS:      parser.NewInteger(2),
-					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+					Operator: "=",
 				},
 			},
 		},
@@ -2395,7 +2395,7 @@ var updateTests = []struct {
 							On: parser.Comparison{
 								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 								RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
-								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+								Operator: "=",
 							},
 						},
 					}},
@@ -2433,7 +2433,7 @@ var updateTests = []struct {
 							On: parser.Comparison{
 								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 								RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
-								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+								Operator: "=",
 							},
 						},
 					}},
@@ -2460,7 +2460,7 @@ var updateTests = []struct {
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					RHS:      parser.NewInteger(2),
-					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+					Operator: "=",
 				},
 			},
 		},
@@ -2484,7 +2484,7 @@ var updateTests = []struct {
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					RHS:      parser.NewInteger(2),
-					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+					Operator: "=",
 				},
 			},
 		},
@@ -2570,7 +2570,7 @@ var deleteTests = []struct {
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					RHS:      parser.NewInteger(2),
-					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+					Operator: "=",
 				},
 			},
 		},
@@ -2620,7 +2620,7 @@ var deleteTests = []struct {
 							On: parser.Comparison{
 								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 								RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
-								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+								Operator: "=",
 							},
 						},
 					}},
@@ -2666,7 +2666,7 @@ var deleteTests = []struct {
 							On: parser.Comparison{
 								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 								RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
-								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+								Operator: "=",
 							},
 						},
 					}},
@@ -2690,7 +2690,7 @@ var deleteTests = []struct {
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					RHS:      parser.NewInteger(2),
-					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+					Operator: "=",
 				},
 			},
 		},
@@ -2711,7 +2711,7 @@ var deleteTests = []struct {
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+					Operator: "=",
 				},
 			},
 		},
@@ -2739,7 +2739,7 @@ var deleteTests = []struct {
 							On: parser.Comparison{
 								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 								RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
-								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+								Operator: "=",
 							},
 						},
 					}},

@@ -29,6 +29,7 @@ package parser
 %type<statement>   variable_statement
 %type<statement>   transaction_statement
 %type<statement>   cursor_statement
+%type<statement>   table_statement
 %type<expression>  fetch_position
 %type<expression>  cursor_status
 %type<statement>   flow_control_statement
@@ -226,6 +227,10 @@ statement
     {
         $$ = $1
     }
+    | table_statement
+    {
+        $$ = $1
+    }
     | flow_control_statement
     {
         $$ = $1
@@ -285,6 +290,20 @@ cursor_statement
     | FETCH fetch_position identifier INTO variables statement_terminal
     {
         $$ = FetchCursor{Position: $2, Cursor: $3, Variables: $5}
+    }
+
+table_statement
+    : DECLARE identifier TABLE '(' identifiers ')'
+    {
+        $$ = TableDeclaration{Table: $2, Fields: $5}
+    }
+    | DECLARE identifier TABLE '(' identifiers ')' FOR select_query statement_terminal
+    {
+        $$ = TableDeclaration{Table: $2, Fields: $5, Query: $8}
+    }
+    | DECLARE identifier TABLE FOR select_query statement_terminal
+    {
+        $$ = TableDeclaration{Table: $2, Query: $5}
     }
 
 fetch_position
@@ -754,19 +773,19 @@ string_operation
 comparison
     : value COMPARISON_OP value
     {
-        $$ = Comparison{LHS: $1, Operator: $2, RHS: $3}
+        $$ = Comparison{LHS: $1, Operator: $2.Literal, RHS: $3}
     }
     | row_value COMPARISON_OP row_value
     {
-        $$ = Comparison{LHS: $1, Operator: $2, RHS: $3}
+        $$ = Comparison{LHS: $1, Operator: $2.Literal, RHS: $3}
     }
     | value '=' value
     {
-        $$ = Comparison{LHS: $1, Operator: Token{Token: COMPARISON_OP, Literal: "="}, RHS: $3}
+        $$ = Comparison{LHS: $1, Operator: "=", RHS: $3}
     }
     | row_value '=' row_value
     {
-        $$ = Comparison{LHS: $1, Operator: Token{Token: COMPARISON_OP, Literal: "="}, RHS: $3}
+        $$ = Comparison{LHS: $1, Operator: "=", RHS: $3}
     }
     | value IS negation ternary
     {
@@ -802,27 +821,27 @@ comparison
     }
     | value comparison_operator ANY row_value
     {
-        $$ = Any{Any: $3.Literal, LHS: $1, Operator: $2, Values: $4}
+        $$ = Any{Any: $3.Literal, LHS: $1, Operator: $2.Literal, Values: $4}
     }
     | row_value comparison_operator ANY '(' row_values ')'
     {
-        $$ = Any{Any: $3.Literal, LHS: $1, Operator: $2, Values: RowValueList{RowValues: $5}}
+        $$ = Any{Any: $3.Literal, LHS: $1, Operator: $2.Literal, Values: RowValueList{RowValues: $5}}
     }
     | row_value comparison_operator ANY subquery
     {
-        $$ = Any{Any: $3.Literal, LHS: $1, Operator: $2, Values: $4}
+        $$ = Any{Any: $3.Literal, LHS: $1, Operator: $2.Literal, Values: $4}
     }
     | value comparison_operator ALL row_value
     {
-        $$ = All{All: $3.Literal, LHS: $1, Operator: $2, Values: $4}
+        $$ = All{All: $3.Literal, LHS: $1, Operator: $2.Literal, Values: $4}
     }
     | row_value comparison_operator ALL '(' row_values ')'
     {
-        $$ = All{All: $3.Literal, LHS: $1, Operator: $2, Values: RowValueList{RowValues: $5}}
+        $$ = All{All: $3.Literal, LHS: $1, Operator: $2.Literal, Values: RowValueList{RowValues: $5}}
     }
     | row_value comparison_operator ALL subquery
     {
-        $$ = All{All: $3.Literal, LHS: $1, Operator: $2, Values: $4}
+        $$ = All{All: $3.Literal, LHS: $1, Operator: $2.Literal, Values: $4}
     }
     | EXISTS subquery
     {
@@ -932,7 +951,7 @@ identified_table
     }
     | identifier AS identifier
     {
-        $$ = Table{Object: $1, As: $2, Alias: $3}
+        $$ = Table{Object: $1, As: $2.Literal, Alias: $3}
     }
 
 virtual_table
@@ -960,7 +979,7 @@ table
     }
     | virtual_table AS identifier
     {
-        $$ = Table{Object: $1, As: $2, Alias: $3}
+        $$ = Table{Object: $1, As: $2.Literal, Alias: $3}
     }
     | join
     {
@@ -1028,7 +1047,7 @@ field
     }
     | field_object AS identifier
     {
-        $$ = Field{Object: $1, As: $2, Alias: $3}
+        $$ = Field{Object: $1, As: $2.Literal, Alias: $3}
     }
 
 case

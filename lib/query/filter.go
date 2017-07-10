@@ -205,7 +205,7 @@ func (f Filter) evalComparison(expr parser.Comparison) (parser.Primary, error) {
 			return nil, err
 		}
 
-		t, err = CompareRowValues(lhs, rhs, expr.Operator.Literal)
+		t, err = CompareRowValues(lhs, rhs, expr.Operator)
 		if err != nil {
 			return nil, err
 		}
@@ -220,7 +220,7 @@ func (f Filter) evalComparison(expr parser.Comparison) (parser.Primary, error) {
 			return nil, err
 		}
 
-		t = Compare(lhs, rhs, expr.Operator.Literal)
+		t = Compare(lhs, rhs, expr.Operator)
 	}
 	return parser.NewTernary(t), nil
 }
@@ -363,7 +363,7 @@ func (f Filter) evalAny(expr parser.Any) (parser.Primary, error) {
 		return nil, err
 	}
 
-	t, err := Any(value, list, expr.Operator.Literal)
+	t, err := Any(value, list, expr.Operator)
 	if err != nil {
 		return nil, err
 	}
@@ -376,7 +376,7 @@ func (f Filter) evalAll(expr parser.All) (parser.Primary, error) {
 		return nil, err
 	}
 
-	t, err := All(value, list, expr.Operator.Literal)
+	t, err := All(value, list, expr.Operator)
 	if err != nil {
 		return nil, err
 	}

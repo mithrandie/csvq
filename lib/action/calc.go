@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 
+	"errors"
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
@@ -14,10 +15,9 @@ func Calc(expr string) error {
 
 	q := "select " + expr + " from stdin"
 
-	parser.SetDebugLevel(0, true)
 	program, err := parser.Parse(q)
 	if err != nil {
-		return err
+		return errors.New("syntax error")
 	}
 	selectEntity, _ := program[0].(parser.SelectQuery).SelectEntity.(parser.SelectEntity)
 

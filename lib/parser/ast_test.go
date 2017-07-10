@@ -497,7 +497,7 @@ func TestSelectEntity_String(t *testing.T) {
 			Where: "where",
 			Filter: Comparison{
 				LHS:      Identifier{Literal: "column"},
-				Operator: Token{Token: COMPARISON_OP, Literal: ">"},
+				Operator: ">",
 				RHS:      Integer{literal: "1"},
 			},
 		},
@@ -511,7 +511,7 @@ func TestSelectEntity_String(t *testing.T) {
 			Having: "having",
 			Filter: Comparison{
 				LHS:      Identifier{Literal: "column"},
-				Operator: Token{Token: COMPARISON_OP, Literal: ">"},
+				Operator: ">",
 				RHS:      Integer{literal: "1"},
 			},
 		},
@@ -545,7 +545,7 @@ func TestSelectClause_String(t *testing.T) {
 			},
 			Field{
 				Object: Identifier{Literal: "column2"},
-				As:     Token{Token: AS, Literal: "as"},
+				As:     "as",
 				Alias:  Identifier{Literal: "alias"},
 			},
 		},
@@ -575,7 +575,7 @@ func TestWhereClause_String(t *testing.T) {
 		Where: "where",
 		Filter: Comparison{
 			LHS:      Identifier{Literal: "column"},
-			Operator: Token{Token: COMPARISON_OP, Literal: ">"},
+			Operator: ">",
 			RHS:      Integer{literal: "1"},
 		},
 	}
@@ -604,7 +604,7 @@ func TestHavingClause_String(t *testing.T) {
 		Having: "having",
 		Filter: Comparison{
 			LHS:      Identifier{Literal: "column"},
-			Operator: Token{Token: COMPARISON_OP, Literal: ">"},
+			Operator: ">",
 			RHS:      Integer{literal: "1"},
 		},
 	}
@@ -820,7 +820,7 @@ func TestSubquery_String(t *testing.T) {
 func TestComparison_String(t *testing.T) {
 	e := Comparison{
 		LHS:      Identifier{Literal: "column"},
-		Operator: Token{Token: COMPARISON_OP, Literal: ">"},
+		Operator: ">",
 		RHS:      Integer{literal: "1"},
 	}
 	expect := "column > 1"
@@ -924,7 +924,7 @@ func TestAll_String(t *testing.T) {
 				},
 			},
 		},
-		Operator: Token{Token: COMPARISON_OP, Literal: ">"},
+		Operator: ">",
 		Values: Subquery{
 			Query: SelectQuery{
 				SelectEntity: SelectEntity{
@@ -961,7 +961,7 @@ func TestAny_String(t *testing.T) {
 				},
 			},
 		},
-		Operator: Token{Token: COMPARISON_OP, Literal: ">"},
+		Operator: ">",
 		Values: Subquery{
 			Query: SelectQuery{
 				SelectEntity: SelectEntity{
@@ -1136,7 +1136,7 @@ func TestFunction_String(t *testing.T) {
 func TestTable_String(t *testing.T) {
 	e := Table{
 		Object: Identifier{Literal: "table"},
-		As:     Token{Token: AS, Literal: "as"},
+		As:     "as",
 		Alias:  Identifier{Literal: "alias"},
 	}
 	expect := "table as alias"
@@ -1156,7 +1156,7 @@ func TestTable_String(t *testing.T) {
 func TestTable_Name(t *testing.T) {
 	e := Table{
 		Object: Identifier{Literal: "table.csv"},
-		As:     Token{Token: AS, Literal: "as"},
+		As:     "as",
 		Alias:  Identifier{Literal: "alias"},
 	}
 	expect := "alias"
@@ -1234,7 +1234,7 @@ func TestJoinCondition_String(t *testing.T) {
 		Literal: "on",
 		On: Comparison{
 			LHS:      Identifier{Literal: "column"},
-			Operator: Token{Token: COMPARISON_OP, Literal: ">"},
+			Operator: ">",
 			RHS:      Integer{literal: "1"},
 		},
 	}
@@ -1259,7 +1259,7 @@ func TestJoinCondition_String(t *testing.T) {
 func TestField_String(t *testing.T) {
 	e := Field{
 		Object: Identifier{Literal: "column"},
-		As:     Token{Token: AS, Literal: "as"},
+		As:     "as",
 		Alias:  Identifier{Literal: "alias"},
 	}
 	expect := "column as alias"
@@ -1279,7 +1279,7 @@ func TestField_String(t *testing.T) {
 func TestField_Name(t *testing.T) {
 	e := Field{
 		Object: Identifier{Literal: "column"},
-		As:     Token{Token: AS, Literal: "as"},
+		As:     "as",
 		Alias:  Identifier{Literal: "alias"},
 	}
 	expect := "alias"
@@ -1399,7 +1399,7 @@ func TestCase_String(t *testing.T) {
 				Then: "then",
 				Condition: Comparison{
 					LHS:      Identifier{Literal: "column"},
-					Operator: Token{Token: COMPARISON_OP, Literal: ">"},
+					Operator: ">",
 					RHS:      Integer{literal: "1"},
 				},
 				Result: String{literal: "A"},
@@ -1418,7 +1418,7 @@ func TestCaseWhen_String(t *testing.T) {
 		Then: "then",
 		Condition: Comparison{
 			LHS:      Identifier{Literal: "column"},
-			Operator: Token{Token: COMPARISON_OP, Literal: ">"},
+			Operator: ">",
 			RHS:      Integer{literal: "1"},
 		},
 		Result: String{literal: "abcde"},
@@ -1741,7 +1741,7 @@ func TestUpdateQuery_String(t *testing.T) {
 			Where: "where",
 			Filter: Comparison{
 				LHS:      Identifier{Literal: "column3"},
-				Operator: Token{Token: COMPARISON_OP, Literal: "="},
+				Operator: "=",
 				RHS:      NewInteger(3),
 			},
 		},
@@ -1802,7 +1802,7 @@ func TestDeleteQuery_String(t *testing.T) {
 			Where: "where",
 			Filter: Comparison{
 				LHS:      Identifier{Literal: "column1"},
-				Operator: Token{Token: COMPARISON_OP, Literal: "="},
+				Operator: "=",
 				RHS:      NewInteger(1),
 			},
 		},

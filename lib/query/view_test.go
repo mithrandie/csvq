@@ -405,7 +405,7 @@ var viewLoadTests = []struct {
 							On: parser.Comparison{
 								LHS:      parser.FieldReference{View: parser.Identifier{Literal: "table1"}, Column: parser.Identifier{Literal: "column1"}},
 								RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column3"}},
-								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+								Operator: "=",
 							},
 						},
 					},
@@ -452,7 +452,7 @@ var viewLoadTests = []struct {
 							On: parser.Comparison{
 								LHS:      parser.FieldReference{View: parser.Identifier{Literal: "table1"}, Column: parser.Identifier{Literal: "column1"}},
 								RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column3"}},
-								Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+								Operator: "=",
 							},
 						},
 					},
@@ -703,7 +703,7 @@ var viewWhereTests = []struct {
 			Filter: parser.Comparison{
 				LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 				RHS:      parser.NewInteger(2),
-				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+				Operator: "=",
 			},
 		},
 		Result: []int{1},
@@ -731,7 +731,7 @@ var viewWhereTests = []struct {
 			Filter: parser.Comparison{
 				LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 				RHS:      parser.NewInteger(2),
-				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
+				Operator: "=",
 			},
 		},
 		Error: "field notexist does not exist",
@@ -921,7 +921,7 @@ var viewHavingTests = []struct {
 					},
 				},
 				RHS:      parser.NewInteger(5),
-				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: ">"},
+				Operator: ">",
 			},
 		},
 		Result: []int{1},
@@ -976,7 +976,7 @@ var viewHavingTests = []struct {
 					},
 				},
 				RHS:      parser.NewInteger(5),
-				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: ">"},
+				Operator: ">",
 			},
 		},
 		Error: "field notexist does not exist",
@@ -1007,7 +1007,7 @@ var viewHavingTests = []struct {
 					},
 				},
 				RHS:      parser.NewInteger(5),
-				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: ">"},
+				Operator: ">",
 			},
 		},
 		Result: []int{0},
@@ -3288,7 +3288,7 @@ func TestView_UpdateHeader(t *testing.T) {
 	fields = []parser.Expression{
 		parser.Identifier{Literal: "alias3"},
 	}
-	expectError := "common table ref1: field length does not match"
+	expectError := "view ref1: field length does not match"
 	err := view.UpdateHeader(reference, fields)
 	if err.Error() != expectError {
 		t.Errorf("error = %q, want error %q for UpdateHeader(%s, %s)", err, expectError, reference, fields)

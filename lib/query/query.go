@@ -52,7 +52,6 @@ var ResultSet = []Result{}
 func Execute(input string) (string, error) {
 	var out string
 
-	parser.SetDebugLevel(0, true)
 	program, err := parser.Parse(input)
 	if err != nil {
 		return out, err
@@ -120,6 +119,8 @@ func ExecuteStatement(stmt parser.Statement) (StatementFlow, string, error) {
 	case parser.FetchCursor:
 		fetch := stmt.(parser.FetchCursor)
 		_, err = FetchCursor(fetch.Cursor.Literal, fetch.Position, fetch.Variables)
+	case parser.TableDeclaration:
+		err = DeclareTable(stmt.(parser.TableDeclaration))
 	case parser.SelectQuery:
 		if view, err = Select(stmt.(parser.SelectQuery)); err == nil {
 			results = []Result{
@@ -386,6 +387,50 @@ func FetchCursor(name string, fetchPosition parser.Expression, vars []parser.Var
 	return true, nil
 }
 
+func DeclareTable(expr parser.TableDeclaration) error {
+	if _, ok := ViewCache.Exists(expr.Table.Literal); ok {
+		return errors.New(fmt.Sprintf("table %s already exists", expr.Table.Literal))
+	}
+
+	var view *View
+	var err error
+
+	if expr.Query != nil {
+		view, err = Select(expr.Query.(parser.SelectQuery))
+		if err != nil {
+			return err
+		}
+
+		if expr.Fields != nil {
+			if err := view.UpdateHeader(expr.Table.Literal, expr.Fields); err != nil {
+				return err
+			}
+		}
+	} else {
+		fields := make([]string, len(expr.Fields))
+		for i, v := range expr.Fields {
+			f, _ := v.(parser.Identifier)
+			if InStrSlice(f.Literal, fields) {
+				return errors.New(fmt.Sprintf("field %s is duplicate", f))
+			}
+			fields[i] = f.Literal
+		}
+		header := NewHeaderWithoutId(expr.Table.Literal, fields)
+		view = &View{
+			Header: header,
+		}
+	}
+
+	view.FileInfo = &FileInfo{
+		Path:      expr.Table.Literal,
+		Temporary: true,
+	}
+
+	ViewCache.Set(view, expr.Table.Literal)
+
+	return err
+}
+
 func formatCount(i int, obj string) string {
 	var s string
 	if i == 0 {
@@ -419,7 +464,7 @@ func Commit() (string, error) {
 			case CREATE_TABLE:
 				createFiles[result.FileInfo.Path] = result.FileInfo
 			default:
-				if 0 < result.OperatedCount {
+				if !result.FileInfo.Temporary && 0 < result.OperatedCount {
 					if _, ok := createFiles[result.FileInfo.Path]; !ok {
 						if _, ok := updateFiles[result.FileInfo.Path]; !ok {
 							updateFiles[result.FileInfo.Path] = result.FileInfo

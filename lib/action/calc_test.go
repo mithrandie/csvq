@@ -27,7 +27,7 @@ var calcTests = []struct {
 	{
 		Stdin: "foo",
 		Input: "from",
-		Error: "syntax error: unexpected FROM",
+		Error: "syntax error",
 	},
 	{
 		Stdin: "",

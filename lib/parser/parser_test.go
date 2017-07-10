@@ -1,15 +1,16 @@
 package parser
 
 import (
-	"fmt"
-	"github.com/mithrandie/csvq/lib/ternary"
 	"reflect"
 	"testing"
+
+	"github.com/mithrandie/csvq/lib/ternary"
 )
 
 var parseTests = []struct {
 	Input  string
 	Output []Statement
+	Error  string
 }{
 	{
 		Input: "select foo; select bar;",
@@ -31,19 +32,19 @@ var parseTests = []struct {
 						LHS: SelectEntity{
 							SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
 						},
-						Operator: Token{Token: UNION, Literal: "union"},
-						All:      Token{Token: ALL, Literal: "all"},
+						Operator: Token{Token: UNION, Literal: "union", Line: 1, Char: 10},
+						All:      Token{Token: ALL, Literal: "all", Line: 1, Char: 16},
 						RHS: SelectSet{
 							LHS: SelectEntity{
 								SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewInteger(2)}}},
 							},
-							Operator: Token{Token: INTERSECT, Literal: "intersect"},
+							Operator: Token{Token: INTERSECT, Literal: "intersect", Line: 1, Char: 29},
 							RHS: SelectEntity{
 								SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewInteger(3)}}},
 							},
 						},
 					},
-					Operator: Token{Token: EXCEPT, Literal: "except"},
+					Operator: Token{Token: EXCEPT, Literal: "except", Line: 1, Char: 48},
 					RHS: SelectEntity{
 						SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewInteger(4)}}},
 					},
@@ -59,7 +60,7 @@ var parseTests = []struct {
 					LHS: SelectEntity{
 						SelectClause: SelectClause{Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
 					},
-					Operator: Token{Token: UNION, Literal: "union"},
+					Operator: Token{Token: UNION, Literal: "union", Line: 1, Char: 10},
 					RHS: Subquery{
 						Query: SelectQuery{
 							SelectEntity: SelectEntity{
@@ -81,7 +82,7 @@ var parseTests = []struct {
 						Fields: []Expression{
 							Field{
 								Object: NewInteger(1),
-								As:     Token{Token: AS, Literal: "as"},
+								As:     "as",
 								Alias:  Identifier{Literal: "a"},
 							},
 						},
@@ -182,7 +183,7 @@ var parseTests = []struct {
 						Tables: []Expression{
 							Table{
 								Object: Identifier{Literal: "table1"},
-								As:     Token{Token: AS, Literal: "as"},
+								As:     "as",
 								Alias:  Identifier{Literal: "alias"},
 							},
 							Table{
@@ -194,7 +195,7 @@ var parseTests = []struct {
 										},
 									},
 								},
-								As:    Token{Token: AS, Literal: "as"},
+								As:    "as",
 								Alias: Identifier{Literal: "alias2"},
 							},
 						},
@@ -204,14 +205,19 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select 1 " +
-			" from dual " +
-			" where 1 = 1" +
-			" group by column1, column2 " +
-			" having 1 > 1 " +
-			" order by column4, column5 desc, column6 asc, column7 nulls first, column8 desc nulls last, avg() over () " +
-			" limit 10 " +
-			" offset 10 ",
+		Input: "select 1 \r\n" +
+			" from dual \n" +
+			" where 1 = 1 \n" +
+			" group by column1, column2 \n" +
+			" having 1 > 1 \n" +
+			" order by column4, \n" +
+			"          column5 desc, \n" +
+			"          column6 asc, \n" +
+			"          column7 nulls first, \n" +
+			"          column8 desc nulls last, \n" +
+			"          avg() over () \n" +
+			" limit 10 \n" +
+			" offset 10 \n",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -221,7 +227,7 @@ var parseTests = []struct {
 						Where: "where",
 						Filter: Comparison{
 							LHS:      NewIntegerFromString("1"),
-							Operator: Token{Token: COMPARISON_OP, Literal: "="},
+							Operator: "=",
 							RHS:      NewIntegerFromString("1"),
 						},
 					},
@@ -236,7 +242,7 @@ var parseTests = []struct {
 						Having: "having",
 						Filter: Comparison{
 							LHS:      NewIntegerFromString("1"),
-							Operator: Token{Token: COMPARISON_OP, Literal: ">"},
+							Operator: ">",
 							RHS:      NewIntegerFromString("1"),
 						},
 					},
@@ -245,10 +251,10 @@ var parseTests = []struct {
 					OrderBy: "order by",
 					Items: []Expression{
 						OrderItem{Value: FieldReference{Column: Identifier{Literal: "column4"}}},
-						OrderItem{Value: FieldReference{Column: Identifier{Literal: "column5"}}, Direction: Token{Token: DESC, Literal: "desc"}},
-						OrderItem{Value: FieldReference{Column: Identifier{Literal: "column6"}}, Direction: Token{Token: ASC, Literal: "asc"}},
-						OrderItem{Value: FieldReference{Column: Identifier{Literal: "column7"}}, Nulls: "nulls", Position: Token{Token: FIRST, Literal: "first"}},
-						OrderItem{Value: FieldReference{Column: Identifier{Literal: "column8"}}, Direction: Token{Token: DESC, Literal: "desc"}, Nulls: "nulls", Position: Token{Token: LAST, Literal: "last"}},
+						OrderItem{Value: FieldReference{Column: Identifier{Literal: "column5"}}, Direction: Token{Token: DESC, Literal: "desc", Line: 7, Char: 19}},
+						OrderItem{Value: FieldReference{Column: Identifier{Literal: "column6"}}, Direction: Token{Token: ASC, Literal: "asc", Line: 8, Char: 19}},
+						OrderItem{Value: FieldReference{Column: Identifier{Literal: "column7"}}, Nulls: "nulls", Position: Token{Token: FIRST, Literal: "first", Line: 9, Char: 25}},
+						OrderItem{Value: FieldReference{Column: Identifier{Literal: "column8"}}, Direction: Token{Token: DESC, Literal: "desc", Line: 10, Char: 19}, Nulls: "nulls", Position: Token{Token: LAST, Literal: "last", Line: 10, Char: 30}},
 						OrderItem{Value: AnalyticFunction{
 							Name:   "avg",
 							Option: Option{},
@@ -290,8 +296,8 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select 1 " +
-			" from dual " +
+		Input: "select 1 \n" +
+			" from dual \n" +
 			" limit 10 with ties",
 		Output: []Statement{
 			SelectQuery{
@@ -302,7 +308,7 @@ var parseTests = []struct {
 				LimitClause: LimitClause{
 					Limit: "limit",
 					Value: NewInteger(10),
-					With:  LimitWith{With: "with", Type: Token{Token: TIES, Literal: "ties"}},
+					With:  LimitWith{With: "with", Type: Token{Token: TIES, Literal: "ties", Line: 3, Char: 16}},
 				},
 			},
 		},
@@ -314,7 +320,7 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						Select:   "select",
-						Distinct: Token{Token: DISTINCT, Literal: "distinct"},
+						Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 8},
 						Fields: []Expression{
 							Field{Object: AllColumns{}},
 						},
@@ -504,7 +510,7 @@ var parseTests = []struct {
 						Fields: []Expression{
 							Field{Object: Comparison{
 								LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
-								Operator: Token{Token: COMPARISON_OP, Literal: "="},
+								Operator: "=",
 								RHS:      NewInteger(1),
 							}},
 						},
@@ -530,7 +536,7 @@ var parseTests = []struct {
 										},
 									},
 								},
-								Operator: Token{Token: COMPARISON_OP, Literal: "="},
+								Operator: "=",
 								RHS: RowValue{
 									Value: ValueList{
 										Values: []Expression{
@@ -556,7 +562,7 @@ var parseTests = []struct {
 						Fields: []Expression{
 							Field{Object: Comparison{
 								LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
-								Operator: Token{Token: COMPARISON_OP, Literal: "<"},
+								Operator: "<",
 								RHS:      NewInteger(1),
 							}},
 						},
@@ -582,7 +588,7 @@ var parseTests = []struct {
 										},
 									},
 								},
-								Operator: Token{Token: COMPARISON_OP, Literal: "<"},
+								Operator: "<",
 								RHS: RowValue{
 									Value: Subquery{
 										Query: SelectQuery{
@@ -617,7 +623,7 @@ var parseTests = []struct {
 								Is:       "is",
 								LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
 								RHS:      NewNullFromString("null"),
-								Negation: Token{Token: NOT, Literal: "not"},
+								Negation: Token{Token: NOT, Literal: "not", Line: 1, Char: 19},
 							}},
 						},
 					},
@@ -658,7 +664,7 @@ var parseTests = []struct {
 								LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
 								Low:      NewIntegerFromString("-10"),
 								High:     NewIntegerFromString("10"),
-								Negation: Token{Token: NOT, Literal: "not"},
+								Negation: Token{Token: NOT, Literal: "not", Line: 1, Char: 16},
 							}},
 						},
 					},
@@ -728,7 +734,7 @@ var parseTests = []struct {
 										},
 									},
 								},
-								Negation: Token{Token: NOT, Literal: "not"},
+								Negation: Token{Token: NOT, Literal: "not", Line: 1, Char: 16},
 							}},
 						},
 					},
@@ -774,7 +780,7 @@ var parseTests = []struct {
 										},
 									},
 								},
-								Negation: Token{Token: NOT, Literal: "not"},
+								Negation: Token{Token: NOT, Literal: "not", Line: 1, Char: 27},
 							}},
 						},
 					},
@@ -826,7 +832,7 @@ var parseTests = []struct {
 								Like:     "like",
 								LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
 								Pattern:  String{literal: "pattern"},
-								Negation: Token{Token: NOT, Literal: "not"},
+								Negation: Token{Token: NOT, Literal: "not", Line: 1, Char: 16},
 							}},
 						},
 					},
@@ -845,7 +851,7 @@ var parseTests = []struct {
 							Field{Object: Any{
 								Any:      "any",
 								LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
-								Operator: Token{Token: COMPARISON_OP, Literal: "="},
+								Operator: "=",
 								Values: RowValue{
 									Value: Subquery{
 										Query: SelectQuery{
@@ -880,7 +886,7 @@ var parseTests = []struct {
 										},
 									},
 								},
-								Operator: Token{Token: COMPARISON_OP, Literal: "="},
+								Operator: "=",
 								Values: RowValueList{
 									RowValues: []Expression{
 										RowValue{
@@ -926,7 +932,7 @@ var parseTests = []struct {
 										},
 									},
 								},
-								Operator: Token{Token: COMPARISON_OP, Literal: "="},
+								Operator: "=",
 								Values: Subquery{
 									Query: SelectQuery{
 										SelectEntity: SelectEntity{
@@ -952,7 +958,7 @@ var parseTests = []struct {
 							Field{Object: All{
 								All:      "all",
 								LHS:      FieldReference{Column: Identifier{Literal: "column1"}},
-								Operator: Token{Token: COMPARISON_OP, Literal: "="},
+								Operator: "=",
 								Values: RowValue{
 									Subquery{
 										Query: SelectQuery{
@@ -987,7 +993,7 @@ var parseTests = []struct {
 										},
 									},
 								},
-								Operator: Token{Token: COMPARISON_OP, Literal: "="},
+								Operator: "=",
 								Values: RowValueList{
 									RowValues: []Expression{
 										RowValue{
@@ -1033,7 +1039,7 @@ var parseTests = []struct {
 										},
 									},
 								},
-								Operator: Token{Token: COMPARISON_OP, Literal: "="},
+								Operator: "=",
 								Values: Subquery{
 									Query: SelectQuery{
 										SelectEntity: SelectEntity{
@@ -1177,7 +1183,7 @@ var parseTests = []struct {
 						Fields: []Expression{
 							Field{Object: Logic{
 								LHS:      NewTernaryFromString("true"),
-								Operator: Token{Token: AND, Literal: "and"},
+								Operator: Token{Token: AND, Literal: "and", Line: 1, Char: 13},
 								RHS:      NewTernaryFromString("false"),
 							}},
 						},
@@ -1196,7 +1202,7 @@ var parseTests = []struct {
 						Fields: []Expression{
 							Field{Object: Logic{
 								LHS:      NewTernaryFromString("true"),
-								Operator: Token{Token: OR, Literal: "or"},
+								Operator: Token{Token: OR, Literal: "or", Line: 1, Char: 13},
 								RHS:      NewTernaryFromString("false"),
 							}},
 						},
@@ -1214,7 +1220,7 @@ var parseTests = []struct {
 						Select: "select",
 						Fields: []Expression{
 							Field{Object: Logic{
-								Operator: Token{Token: NOT, Literal: "not"},
+								Operator: Token{Token: NOT, Literal: "not", Line: 1, Char: 8},
 								RHS:      NewTernaryFromString("false"),
 							}},
 						},
@@ -1233,11 +1239,11 @@ var parseTests = []struct {
 						Fields: []Expression{
 							Field{Object: Logic{
 								LHS:      NewTernaryFromString("true"),
-								Operator: Token{Token: OR, Literal: "or"},
+								Operator: Token{Token: OR, Literal: "or", Line: 1, Char: 13},
 								RHS: Parentheses{
 									Expr: Logic{
 										LHS:      NewTernaryFromString("false"),
-										Operator: Token{Token: AND, Literal: "and"},
+										Operator: Token{Token: AND, Literal: "and", Line: 1, Char: 23},
 										RHS:      NewTernaryFromString("false"),
 									},
 								},
@@ -1259,15 +1265,15 @@ var parseTests = []struct {
 							Field{Object: Logic{
 								LHS: Logic{
 									LHS:      NewTernaryFromString("true"),
-									Operator: Token{Token: AND, Literal: "and"},
+									Operator: Token{Token: AND, Literal: "and", Line: 1, Char: 13},
 									RHS:      NewTernaryFromString("true"),
 								},
-								Operator: Token{Token: OR, Literal: "or"},
+								Operator: Token{Token: OR, Literal: "or", Line: 1, Char: 22},
 								RHS: Logic{
 									LHS:      NewTernaryFromString("false"),
-									Operator: Token{Token: AND, Literal: "and"},
+									Operator: Token{Token: AND, Literal: "and", Line: 1, Char: 31},
 									RHS: Logic{
-										Operator: Token{Token: NOT, Literal: "not"},
+										Operator: Token{Token: NOT, Literal: "not", Line: 1, Char: 35},
 										RHS:      NewTernaryFromString("false"),
 									},
 								},
@@ -1409,7 +1415,7 @@ var parseTests = []struct {
 							Field{Object: Function{
 								Name: "count",
 								Option: Option{
-									Distinct: Token{Token: DISTINCT, Literal: "distinct"},
+									Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 14},
 									Args:     []Expression{AllColumns{}},
 								},
 							}},
@@ -1498,7 +1504,7 @@ var parseTests = []struct {
 								CursorLit: "cursor",
 								Cursor:    Identifier{Literal: "cur"},
 								Is:        "is",
-								Negation:  Token{Token: NOT, Literal: "not"},
+								Negation:  Token{Token: NOT, Literal: "not", Line: 1, Char: 22},
 								Type:      OPEN,
 								TypeLit:   "open",
 							}},
@@ -1520,7 +1526,7 @@ var parseTests = []struct {
 								CursorLit: "cursor",
 								Cursor:    Identifier{Literal: "cur"},
 								Is:        "is",
-								Negation:  Token{Token: NOT, Literal: "not"},
+								Negation:  Token{Token: NOT, Literal: "not", Line: 1, Char: 22},
 								Type:      RANGE,
 								TypeLit:   "in range",
 							}},
@@ -1602,7 +1608,7 @@ var parseTests = []struct {
 									Join:      "join",
 									Table:     Table{Object: Identifier{Literal: "table1"}},
 									JoinTable: Table{Object: Identifier{Literal: "table2"}},
-									JoinType:  Token{Token: CROSS, Literal: "cross"},
+									JoinType:  Token{Token: CROSS, Literal: "cross", Line: 1, Char: 22},
 								},
 							},
 						},
@@ -1625,7 +1631,7 @@ var parseTests = []struct {
 									Join:      "join",
 									Table:     Table{Object: Identifier{Literal: "table1"}},
 									JoinTable: Table{Object: Identifier{Literal: "table2"}},
-									JoinType:  Token{Token: INNER, Literal: "inner"},
+									JoinType:  Token{Token: INNER, Literal: "inner", Line: 1, Char: 22},
 								},
 							},
 						},
@@ -1652,7 +1658,7 @@ var parseTests = []struct {
 										Literal: "on",
 										On: Comparison{
 											LHS:      FieldReference{View: Identifier{Literal: "table1"}, Column: Identifier{Literal: "id"}},
-											Operator: Token{Token: COMPARISON_OP, Literal: "="},
+											Operator: "=",
 											RHS:      FieldReference{View: Identifier{Literal: "table2"}, Column: Identifier{Literal: "id"}},
 										},
 									},
@@ -1678,7 +1684,7 @@ var parseTests = []struct {
 									Join:      "join",
 									Table:     Table{Object: Identifier{Literal: "table1"}},
 									JoinTable: Table{Object: Identifier{Literal: "table2"}},
-									Natural:   Token{Token: NATURAL, Literal: "natural"},
+									Natural:   Token{Token: NATURAL, Literal: "natural", Line: 1, Char: 22},
 								},
 							},
 						},
@@ -1701,7 +1707,7 @@ var parseTests = []struct {
 									Join:      "join",
 									Table:     Table{Object: Identifier{Literal: "table1"}},
 									JoinTable: Table{Object: Identifier{Literal: "table2"}},
-									Direction: Token{Token: LEFT, Literal: "left"},
+									Direction: Token{Token: LEFT, Literal: "left", Line: 1, Char: 22},
 									Condition: JoinCondition{
 										Literal: "using",
 										Using: []Expression{
@@ -1730,8 +1736,8 @@ var parseTests = []struct {
 									Join:      "join",
 									Table:     Table{Object: Identifier{Literal: "table1"}},
 									JoinTable: Table{Object: Identifier{Literal: "table2"}},
-									Natural:   Token{Token: NATURAL, Literal: "natural"},
-									JoinType:  Token{Token: OUTER, Literal: "outer"},
+									Natural:   Token{Token: NATURAL, Literal: "natural", Line: 1, Char: 22},
+									JoinType:  Token{Token: OUTER, Literal: "outer", Line: 1, Char: 30},
 								},
 							},
 						},
@@ -1754,7 +1760,7 @@ var parseTests = []struct {
 									Join:      "join",
 									Table:     Table{Object: Identifier{Literal: "table1"}},
 									JoinTable: Table{Object: Identifier{Literal: "table2"}},
-									Direction: Token{Token: RIGHT, Literal: "right"},
+									Direction: Token{Token: RIGHT, Literal: "right", Line: 1, Char: 22},
 								},
 							},
 						},
@@ -1777,7 +1783,7 @@ var parseTests = []struct {
 									Join:      "join",
 									Table:     Table{Object: Identifier{Literal: "table1"}},
 									JoinTable: Table{Object: Identifier{Literal: "table2"}},
-									Direction: Token{Token: FULL, Literal: "full"},
+									Direction: Token{Token: FULL, Literal: "full", Line: 1, Char: 22},
 								},
 							},
 						},
@@ -2080,7 +2086,7 @@ var parseTests = []struct {
 					},
 				},
 				Position: ColumnPosition{
-					Position: Token{Token: FIRST, Literal: "first"},
+					Position: Token{Token: FIRST, Literal: "first", Line: 1, Char: 53},
 				},
 			},
 		},
@@ -2098,7 +2104,7 @@ var parseTests = []struct {
 					},
 				},
 				Position: ColumnPosition{
-					Position: Token{Token: LAST, Literal: "last"},
+					Position: Token{Token: LAST, Literal: "last", Line: 1, Char: 32},
 				},
 			},
 		},
@@ -2116,7 +2122,7 @@ var parseTests = []struct {
 					},
 				},
 				Position: ColumnPosition{
-					Position: Token{Token: AFTER, Literal: "after"},
+					Position: Token{Token: AFTER, Literal: "after", Line: 1, Char: 32},
 					Column:   FieldReference{Column: Identifier{Literal: "column2"}},
 				},
 			},
@@ -2135,7 +2141,7 @@ var parseTests = []struct {
 					},
 				},
 				Position: ColumnPosition{
-					Position: Token{Token: BEFORE, Literal: "before"},
+					Position: Token{Token: BEFORE, Literal: "before", Line: 1, Char: 32},
 					Column:   FieldReference{Column: Identifier{Literal: "column2"}},
 				},
 			},
@@ -2272,7 +2278,7 @@ var parseTests = []struct {
 			FetchCursor{
 				Cursor: Identifier{Literal: "cur"},
 				Position: FetchPosition{
-					Position: Token{Token: NEXT, Literal: "next"},
+					Position: Token{Token: NEXT, Literal: "next", Line: 1, Char: 7},
 				},
 				Variables: []Variable{
 					{Name: "@var1"},
@@ -2286,7 +2292,7 @@ var parseTests = []struct {
 			FetchCursor{
 				Cursor: Identifier{Literal: "cur"},
 				Position: FetchPosition{
-					Position: Token{Token: PRIOR, Literal: "prior"},
+					Position: Token{Token: PRIOR, Literal: "prior", Line: 1, Char: 7},
 				},
 				Variables: []Variable{
 					{Name: "@var1"},
@@ -2300,7 +2306,7 @@ var parseTests = []struct {
 			FetchCursor{
 				Cursor: Identifier{Literal: "cur"},
 				Position: FetchPosition{
-					Position: Token{Token: FIRST, Literal: "first"},
+					Position: Token{Token: FIRST, Literal: "first", Line: 1, Char: 7},
 				},
 				Variables: []Variable{
 					{Name: "@var1"},
@@ -2314,7 +2320,7 @@ var parseTests = []struct {
 			FetchCursor{
 				Cursor: Identifier{Literal: "cur"},
 				Position: FetchPosition{
-					Position: Token{Token: LAST, Literal: "last"},
+					Position: Token{Token: LAST, Literal: "last", Line: 1, Char: 7},
 				},
 				Variables: []Variable{
 					{Name: "@var1"},
@@ -2328,7 +2334,7 @@ var parseTests = []struct {
 			FetchCursor{
 				Cursor: Identifier{Literal: "cur"},
 				Position: FetchPosition{
-					Position: Token{Token: ABSOLUTE, Literal: "absolute"},
+					Position: Token{Token: ABSOLUTE, Literal: "absolute", Line: 1, Char: 7},
 					Number:   NewInteger(1),
 				},
 				Variables: []Variable{
@@ -2343,11 +2349,73 @@ var parseTests = []struct {
 			FetchCursor{
 				Cursor: Identifier{Literal: "cur"},
 				Position: FetchPosition{
-					Position: Token{Token: RELATIVE, Literal: "relative"},
+					Position: Token{Token: RELATIVE, Literal: "relative", Line: 1, Char: 7},
 					Number:   NewInteger(1),
 				},
 				Variables: []Variable{
 					{Name: "@var1"},
+				},
+			},
+		},
+	},
+	{
+		Input: "declare tbl table (column1, column2)",
+		Output: []Statement{
+			TableDeclaration{
+				Table: Identifier{Literal: "tbl"},
+				Fields: []Expression{
+					Identifier{Literal: "column1"},
+					Identifier{Literal: "column2"},
+				},
+			},
+		},
+	},
+	{
+		Input: "declare tbl table (column1, column2) for select 1, 2",
+		Output: []Statement{
+			TableDeclaration{
+				Table: Identifier{Literal: "tbl"},
+				Fields: []Expression{
+					Identifier{Literal: "column1"},
+					Identifier{Literal: "column2"},
+				},
+				Query: SelectQuery{
+					SelectEntity: SelectEntity{
+						SelectClause: SelectClause{
+							Select: "select",
+							Fields: []Expression{
+								Field{
+									Object: NewInteger(1),
+								},
+								Field{
+									Object: NewInteger(2),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "declare tbl table for select 1, 2",
+		Output: []Statement{
+			TableDeclaration{
+				Table: Identifier{Literal: "tbl"},
+				Query: SelectQuery{
+					SelectEntity: SelectEntity{
+						SelectClause: SelectClause{
+							Select: "select",
+							Fields: []Expression{
+								Field{
+									Object: NewInteger(1),
+								},
+								Field{
+									Object: NewInteger(2),
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -2359,7 +2427,7 @@ var parseTests = []struct {
 				Condition: Comparison{
 					LHS:      Variable{Name: "@var1"},
 					RHS:      NewInteger(1),
-					Operator: Token{Token: COMPARISON_OP, Literal: "="},
+					Operator: "=",
 				},
 				Statements: []Statement{
 					Print{Value: NewInteger(1)},
@@ -2374,7 +2442,7 @@ var parseTests = []struct {
 				Condition: Comparison{
 					LHS:      Variable{Name: "@var1"},
 					RHS:      NewInteger(1),
-					Operator: Token{Token: COMPARISON_OP, Literal: "="},
+					Operator: "=",
 				},
 				Statements: []Statement{
 					Print{Value: NewInteger(1)},
@@ -2384,7 +2452,7 @@ var parseTests = []struct {
 						Condition: Comparison{
 							LHS:      Variable{Name: "@var1"},
 							RHS:      NewInteger(2),
-							Operator: Token{Token: COMPARISON_OP, Literal: "="},
+							Operator: "=",
 						},
 						Statements: []Statement{
 							Print{Value: NewInteger(2)},
@@ -2394,7 +2462,7 @@ var parseTests = []struct {
 						Condition: Comparison{
 							LHS:      Variable{Name: "@var1"},
 							RHS:      NewInteger(3),
-							Operator: Token{Token: COMPARISON_OP, Literal: "="},
+							Operator: "=",
 						},
 						Statements: []Statement{
 							Print{Value: NewInteger(3)},
@@ -2473,7 +2541,7 @@ var parseTests = []struct {
 						Condition: Comparison{
 							LHS:      Variable{Name: "@var1"},
 							RHS:      NewInteger(1),
-							Operator: Token{Token: COMPARISON_OP, Literal: "="},
+							Operator: "=",
 						},
 						Statements: []Statement{
 							FlowControl{Token: CONTINUE},
@@ -2493,7 +2561,7 @@ var parseTests = []struct {
 						Condition: Comparison{
 							LHS:      Variable{Name: "@var1"},
 							RHS:      NewInteger(1),
-							Operator: Token{Token: COMPARISON_OP, Literal: "="},
+							Operator: "=",
 						},
 						Statements: []Statement{
 							FlowControl{Token: CONTINUE},
@@ -2503,7 +2571,7 @@ var parseTests = []struct {
 								Condition: Comparison{
 									LHS:      Variable{Name: "@var1"},
 									RHS:      NewInteger(2),
-									Operator: Token{Token: COMPARISON_OP, Literal: "="},
+									Operator: "=",
 								},
 								Statements: []Statement{
 									FlowControl{Token: BREAK},
@@ -2513,7 +2581,7 @@ var parseTests = []struct {
 								Condition: Comparison{
 									LHS:      Variable{Name: "@var1"},
 									RHS:      NewInteger(3),
-									Operator: Token{Token: COMPARISON_OP, Literal: "="},
+									Operator: "=",
 								},
 								Statements: []Statement{
 									FlowControl{Token: EXIT},
@@ -2530,21 +2598,25 @@ var parseTests = []struct {
 			},
 		},
 	},
+	{
+		Input: "select 'literal not terminated",
+		Error: "literal not terminated [L:1 C:30]",
+	},
 }
 
 func TestParse(t *testing.T) {
-	SetDebugLevel(0, true)
-
-	errorQuery := "select 'literal not teriinated"
-	_, err := Parse(errorQuery)
-	if err == nil {
-		t.Errorf("no error, want an error for %q", errorQuery)
-	}
-
 	for _, v := range parseTests {
 		prog, err := Parse(v.Input)
 		if err != nil {
-			t.Errorf("unexpected error %q at %q", err.Error(), v.Input)
+			if len(v.Error) < 1 {
+				t.Errorf("unexpected error %q for %q", err, v.Input)
+			} else if err.Error() != v.Error {
+				t.Errorf("error %q, want error %q for %q", err, v.Error, v.Input)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("no error, want error %q for %q", v.Error, v.Input)
 			continue
 		}
 
@@ -2614,17 +2686,4 @@ func TestParse(t *testing.T) {
 			}
 		}
 	}
-}
-
-func ExampleSetDebugLevel() {
-	SetDebugLevel(0, false)
-	_, err := Parse("select select")
-	fmt.Println(err)
-
-	SetDebugLevel(0, true)
-	_, err = Parse("select select")
-	fmt.Println(err)
-	//Output:
-	//syntax error
-	//syntax error: unexpected SELECT
 }

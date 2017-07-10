@@ -53,6 +53,9 @@ type Scanner struct {
 	srcPos int
 	offset int
 	err    error
+
+	line int
+	char int
 }
 
 func (s *Scanner) Init(src string) *Scanner {
@@ -60,6 +63,8 @@ func (s *Scanner) Init(src string) *Scanner {
 	s.srcPos = 0
 	s.offset = 0
 	s.err = nil
+	s.line = 1
+	s.char = 0
 	return s
 }
 
@@ -72,11 +77,32 @@ func (s *Scanner) peek() rune {
 
 func (s *Scanner) next() rune {
 	ch := s.peek()
-	if ch != EOF {
+	if ch == EOF {
+		return ch
+	}
+
+	s.srcPos++
+	s.offset++
+	s.char++
+
+	ch = s.checkNewLine(ch)
+
+	return ch
+}
+
+func (s *Scanner) checkNewLine(ch rune) rune {
+	if ch != '\r' && ch != '\n' {
+		return ch
+	}
+
+	if ch == '\r' && s.peek() == '\n' {
 		s.srcPos++
 		s.offset++
 	}
-	return ch
+
+	s.line++
+	s.char = 0
+	return s.src[s.srcPos-1]
 }
 
 func (s *Scanner) runes() []rune {
@@ -110,10 +136,10 @@ func (s *Scanner) unescapeTokenString() string {
 	return string(runes)
 }
 
-func (s *Scanner) Scan() (int, string, bool, error) {
+func (s *Scanner) Scan() (Token, error) {
 	ch := s.peek()
 
-	for s.isWhiteSpace(ch) {
+	for unicode.IsSpace(ch) {
 		s.next()
 		ch = s.peek()
 	}
@@ -123,6 +149,8 @@ func (s *Scanner) Scan() (int, string, bool, error) {
 	token := ch
 	literal := string(ch)
 	quoted := false
+	line := s.line
+	char := s.char
 
 	switch {
 	case s.isDecimal(ch):
@@ -163,14 +191,10 @@ func (s *Scanner) Scan() (int, string, bool, error) {
 		literal = s.literal()
 	case s.isCommentRune(ch):
 		s.scanComment()
-		var tok int
-		tok, literal, quoted, _ = s.Scan()
-		token = rune(tok)
+		return s.Scan()
 	case s.isLineCommentRune(ch):
 		s.scanLineComment()
-		var tok int
-		tok, literal, quoted, _ = s.Scan()
-		token = rune(tok)
+		return s.Scan()
 	default:
 		switch ch {
 		case EOF:
@@ -192,11 +216,7 @@ func (s *Scanner) Scan() (int, string, bool, error) {
 		}
 	}
 
-	return int(token), literal, quoted, s.err
-}
-
-func (s *Scanner) isWhiteSpace(ch rune) bool {
-	return unicode.IsSpace(ch)
+	return Token{Token: int(token), Literal: literal, Quoted: quoted, Line: line, Char: char}, s.err
 }
 
 func (s *Scanner) scanString(quote rune) {
@@ -207,7 +227,9 @@ func (s *Scanner) scanString(quote rune) {
 			break
 		} else if ch == quote {
 			break
-		} else if ch == '\\' {
+		}
+
+		if ch == '\\' {
 			s.next()
 		}
 	}
