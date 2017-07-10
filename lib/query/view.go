@@ -17,7 +17,7 @@ import (
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
-const STDIN_VIRTUAL_FILE_PATH = ";;__STDIN__;;"
+const STDIN_VIRTUAL_FILE_PATH = "@__STDIN"
 
 type ViewMap struct {
 	views map[string]*View
@@ -55,6 +55,15 @@ func (m *ViewMap) Get(fpath string) (*View, error) {
 		return m.views[pt].Copy(), nil
 	}
 	return nil, errors.New(fmt.Sprintf("file %s is not loaded", fpath))
+}
+
+func (m *ViewMap) HasTemporaryTable(name string) bool {
+	for k, v := range m.views {
+		if v.FileInfo.Temporary && name == k {
+			return true
+		}
+	}
+	return false
 }
 
 func (m *ViewMap) GetWithInternalId(fpath string) (*View, error) {
@@ -123,6 +132,7 @@ type FileInfo struct {
 	NoHeader  bool
 	Encoding  cmd.Encoding
 	LineBreak cmd.LineBreak
+	Temporary bool
 }
 
 func NewFileInfo(filename string, repository string, delimiter rune) (*FileInfo, error) {
@@ -270,6 +280,7 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 		fileInfo := &FileInfo{
 			Path:      STDIN_VIRTUAL_FILE_PATH,
 			Delimiter: delimiter,
+			Temporary: true,
 		}
 
 		if _, ok := ViewCache.Exists(fileInfo.Path); !ok {
@@ -303,12 +314,20 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 		} else if _, err := parentFilter.CommonTables.Get(table.Name()); err == nil {
 			return nil, errors.New(fmt.Sprintf("table name %s is duplicated", table.Name()))
 		} else {
+			var fileInfo *FileInfo
 
-			flags := cmd.GetFlags()
+			if ViewCache.HasTemporaryTable(tableIdentifier) {
+				fileInfo = &FileInfo{
+					Path:      tableIdentifier,
+					Temporary: true,
+				}
+			} else {
+				flags := cmd.GetFlags()
 
-			fileInfo, err := NewFileInfo(tableIdentifier, flags.Repository, flags.Delimiter)
-			if err != nil {
-				return nil, err
+				fileInfo, err = NewFileInfo(tableIdentifier, flags.Repository, flags.Delimiter)
+				if err != nil {
+					return nil, err
+				}
 			}
 
 			commonTableName := parser.FormatTableName(fileInfo.Path)
@@ -1045,7 +1064,7 @@ func (view *View) InternalRecordId(ref string, recordIndex int) (int, error) {
 
 func (view *View) UpdateHeader(reference string, fields []parser.Expression) error {
 	if fields != nil && len(fields) != view.FieldLen() {
-		return errors.New(fmt.Sprintf("common table %s: field length does not match", reference))
+		return errors.New(fmt.Sprintf("view %s: field length does not match", reference))
 	}
 
 	for i := range view.Header {

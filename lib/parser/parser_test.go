@@ -2359,6 +2359,68 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "declare tbl table (column1, column2)",
+		Output: []Statement{
+			TableDeclaration{
+				Table: Identifier{Literal: "tbl"},
+				Fields: []Expression{
+					Identifier{Literal: "column1"},
+					Identifier{Literal: "column2"},
+				},
+			},
+		},
+	},
+	{
+		Input: "declare tbl table (column1, column2) for select 1, 2",
+		Output: []Statement{
+			TableDeclaration{
+				Table: Identifier{Literal: "tbl"},
+				Fields: []Expression{
+					Identifier{Literal: "column1"},
+					Identifier{Literal: "column2"},
+				},
+				Query: SelectQuery{
+					SelectEntity: SelectEntity{
+						SelectClause: SelectClause{
+							Select: "select",
+							Fields: []Expression{
+								Field{
+									Object: NewInteger(1),
+								},
+								Field{
+									Object: NewInteger(2),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "declare tbl table for select 1, 2",
+		Output: []Statement{
+			TableDeclaration{
+				Table: Identifier{Literal: "tbl"},
+				Query: SelectQuery{
+					SelectEntity: SelectEntity{
+						SelectClause: SelectClause{
+							Select: "select",
+							Fields: []Expression{
+								Field{
+									Object: NewInteger(1),
+								},
+								Field{
+									Object: NewInteger(2),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "if @var1 = 1 then print 1; end if",
 		Output: []Statement{
 			If{

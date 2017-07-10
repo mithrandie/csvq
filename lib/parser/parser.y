@@ -29,6 +29,7 @@ package parser
 %type<statement>   variable_statement
 %type<statement>   transaction_statement
 %type<statement>   cursor_statement
+%type<statement>   table_statement
 %type<expression>  fetch_position
 %type<expression>  cursor_status
 %type<statement>   flow_control_statement
@@ -226,6 +227,10 @@ statement
     {
         $$ = $1
     }
+    | table_statement
+    {
+        $$ = $1
+    }
     | flow_control_statement
     {
         $$ = $1
@@ -285,6 +290,20 @@ cursor_statement
     | FETCH fetch_position identifier INTO variables statement_terminal
     {
         $$ = FetchCursor{Position: $2, Cursor: $3, Variables: $5}
+    }
+
+table_statement
+    : DECLARE identifier TABLE '(' identifiers ')'
+    {
+        $$ = TableDeclaration{Table: $2, Fields: $5}
+    }
+    | DECLARE identifier TABLE '(' identifiers ')' FOR select_query statement_terminal
+    {
+        $$ = TableDeclaration{Table: $2, Fields: $5, Query: $8}
+    }
+    | DECLARE identifier TABLE FOR select_query statement_terminal
+    {
+        $$ = TableDeclaration{Table: $2, Query: $5}
     }
 
 fetch_position

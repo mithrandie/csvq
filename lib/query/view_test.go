@@ -3288,7 +3288,7 @@ func TestView_UpdateHeader(t *testing.T) {
 	fields = []parser.Expression{
 		parser.Identifier{Literal: "alias3"},
 	}
-	expectError := "common table ref1: field length does not match"
+	expectError := "view ref1: field length does not match"
 	err := view.UpdateHeader(reference, fields)
 	if err.Error() != expectError {
 		t.Errorf("error = %q, want error %q for UpdateHeader(%s, %s)", err, expectError, reference, fields)

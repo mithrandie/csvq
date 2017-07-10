@@ -1348,6 +1348,12 @@ func (e CursorStatus) String() string {
 	return joinWithSpace(s)
 }
 
+type TableDeclaration struct {
+	Table  Identifier
+	Fields []Expression
+	Query  Expression
+}
+
 type TransactionControl struct {
 	Token int
 }
