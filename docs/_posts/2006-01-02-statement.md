@@ -18,7 +18,7 @@ You can pass a query or statements(it's also called procedure) as a csvq command
 
 A statements is terminated with a semicolon. 
 Stetaments are processed sequentially for each statement.
-In statements, character case is ignored.
+In statements, character cases of keywords are ignored.
 
 If you want to execute a single query, you can omit the terminal semicolon.  
 
