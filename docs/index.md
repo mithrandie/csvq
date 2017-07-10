@@ -18,8 +18,8 @@ You can read, update, delete CSV records with SQL-like query.
   * [Create Table Query]({{ '/reference/create-table-query.html' | relative_url }})
   * [Alter Table Query]({{ '/reference/alter-table-query.html' | relative_url }})
 * Control Flow
-  * [Variable]({{ '/reference/variable.html' | relative_url }})
   * [Cursor]({{ '/reference/cursor.html' | relative_url }})
+  * [Temporary Table]({{ '/reference/temporary-table.html' | relative_url }})
   * [If Statement]({{ '/reference/control-flow.html' | relative_url }})
   * [While Statement]({{ '/reference/control-flow.html' | relative_url }})
 * [Transaction Management]({{ '/reference/transaction.html' | relative_url }})
