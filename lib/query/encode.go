@@ -9,6 +9,7 @@ import (
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/ternary"
 )
 
 var fullWidthTable = &unicode.RangeTable{
@@ -280,7 +281,12 @@ func formatCSVCell(c Cell) string {
 	case parser.Boolean:
 		s = strconv.FormatBool(primary.(parser.Boolean).Bool())
 	case parser.Ternary:
-		s = strconv.FormatBool(primary.(parser.Ternary).Bool())
+		t := primary.(parser.Ternary)
+		if t.Ternary() == ternary.UNKNOWN {
+			s = ""
+		} else {
+			s = strconv.FormatBool(t.Bool())
+		}
 	case parser.Datetime:
 		s = quote(escapeCSVString(primary.(parser.Datetime).Format()))
 	case parser.Null:
@@ -323,7 +329,12 @@ func formatJsonCell(c Cell) string {
 	case parser.Boolean:
 		s = strconv.FormatBool(primary.(parser.Boolean).Bool())
 	case parser.Ternary:
-		s = strconv.FormatBool(primary.(parser.Ternary).Bool())
+		t := primary.(parser.Ternary)
+		if t.Ternary() == ternary.UNKNOWN {
+			s = "null"
+		} else {
+			s = strconv.FormatBool(t.Bool())
+		}
 	case parser.Datetime:
 		s = quote(escapeJsonString(primary.(parser.Datetime).Format()))
 	case parser.Null:

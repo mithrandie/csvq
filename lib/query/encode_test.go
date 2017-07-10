@@ -65,12 +65,14 @@ var encodeViewTests = []struct {
 			Header: NewHeaderWithoutId("test", []string{"c1", "c2\nsecond line", "c3"}),
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
+				NewRecordWithoutId([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.FALSE), parser.NewBoolean(true)}),
 				NewRecordWithoutId([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), parser.NewString("abcdef")}),
 				NewRecordWithoutId([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
 			},
 		},
 		Format: cmd.CSV,
 		Result: "\"c1\",\"c2\nsecond line\",\"c3\"\n" +
+			"-1,,true\n" +
 			"-1,false,true\n" +
 			"2.0123,\"2016-02-01 16:00:00.123456\",\"abcdef\"\n" +
 			"34567890,\" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"\"jk\n\",",
@@ -88,7 +90,7 @@ var encodeViewTests = []struct {
 		Format:         cmd.TSV,
 		WriteDelimiter: '\t',
 		Result: "\"c1\"\t\"c2\nsecond line\"\t\"c3\"\n" +
-			"-1\tfalse\ttrue\n" +
+			"-1\t\ttrue\n" +
 			"2.0123\t\"2016-02-01 16:00:00.123456\"\t\"abcdef\"\n" +
 			"34567890\t\" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"\"jk\n\"\t",
 	},
@@ -104,7 +106,7 @@ var encodeViewTests = []struct {
 		},
 		Format:        cmd.CSV,
 		WithoutHeader: true,
-		Result: "-1,false,true\n" +
+		Result: "-1,,true\n" +
 			"2.0123,\"2016-02-01 16:00:00.123456\",\"abcdef\"\n" +
 			"34567890,\" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"\"jk\n\",",
 	},
@@ -121,7 +123,7 @@ var encodeViewTests = []struct {
 		Format:    cmd.CSV,
 		LineBreak: cmd.CRLF,
 		Result: "\"c1\",\"c2\r\nsecond line\",\"c3\"\r\n" +
-			"-1,false,true\r\n" +
+			"-1,,true\r\n" +
 			"2.0123,\"2016-02-01 16:00:00.123456\",\"abcdef\"\r\n" +
 			"34567890,\" abcdefghijklmnopqrstuvwxyzabcdefg\r\nhi\"\"jk\r\n\",",
 	},
@@ -131,12 +133,18 @@ var encodeViewTests = []struct {
 			Header: NewHeaderWithoutId("test", []string{"c1", "c2\nsecond line", "c3"}),
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
+				NewRecordWithoutId([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.FALSE), parser.NewBoolean(true)}),
 				NewRecordWithoutId([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), parser.NewString("abcdef")}),
 				NewRecordWithoutId([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abc\\defghi/jklmn\topqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
 			},
 		},
 		Format: cmd.JSON,
 		Result: "[" +
+			"{" +
+			"\"c1\":-1," +
+			"\"c2\\nsecond line\":null," +
+			"\"c3\":true" +
+			"}," +
 			"{" +
 			"\"c1\":-1," +
 			"\"c2\\nsecond line\":false," +
@@ -190,7 +198,6 @@ func TestEncodeView(t *testing.T) {
 		}
 		if s != v.Result {
 			t.Errorf("%s, result = %q, want %q", v.Name, s, v.Result)
-			t.Log(s)
 		}
 	}
 }
