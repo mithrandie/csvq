@@ -307,6 +307,18 @@ func TestPrimaryToBoolean(t *testing.T) {
 		t.Errorf("primary type = %T, want Boolean for %#v", b, p)
 	}
 
+	p = NewInteger(1)
+	b = PrimaryToBoolean(p)
+	if _, ok := b.(Boolean); !ok {
+		t.Errorf("primary type = %T, want Boolean for %#v", b, p)
+	}
+
+	p = NewFloat(0)
+	b = PrimaryToBoolean(p)
+	if _, ok := b.(Boolean); !ok {
+		t.Errorf("primary type = %T, want Boolean for %#v", b, p)
+	}
+
 	p = NewString("true")
 	b = PrimaryToBoolean(p)
 	if _, ok := b.(Boolean); !ok {

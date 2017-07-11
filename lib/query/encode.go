@@ -345,13 +345,24 @@ func formatJsonCell(c Cell) string {
 }
 
 func escapeJsonString(s string) string {
-	s = strings.Replace(s, "\\", "\\\\", -1)
-	s = strings.Replace(s, "\"", "\\\"", -1)
-	s = strings.Replace(s, "/", "\\/", -1)
-	s = strings.Replace(s, "\n", "\\n", -1)
-	s = strings.Replace(s, "\r", "\\r", -1)
-	s = strings.Replace(s, "\t", "\\t", -1)
-	return s
+	runes := []rune(s)
+	encoded := []rune{}
+
+	for _, r := range runes {
+		switch r {
+		case '\\', '"', '/':
+			encoded = append(encoded, '\\', r)
+		case '\n':
+			encoded = append(encoded, '\\', 'n')
+		case '\r':
+			encoded = append(encoded, '\\', 'r')
+		case '\t':
+			encoded = append(encoded, '\\', 't')
+		default:
+			encoded = append(encoded, r)
+		}
+	}
+	return string(encoded)
 }
 
 func quote(s string) string {

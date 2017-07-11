@@ -63,10 +63,6 @@ func (f Filter) Copy() Filter {
 	}
 }
 
-func (f Filter) RecordCount() int {
-	return len(f.Records)
-}
-
 func (f Filter) Evaluate(expr parser.Expression) (parser.Primary, error) {
 	if expr == nil {
 		return parser.NewTernary(ternary.TRUE), nil
