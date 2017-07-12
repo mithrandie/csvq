@@ -32,6 +32,16 @@ _return_
 
 Convert a value to a string.
 
+| value type | descriptin |
+| :- | :- |
+| Integer  | A integer value is converted to a string representing a decimal integer. |
+| Float    | A float value is converted to a string representing a floating-point decimal. |
+| Datetime | A datetime value is converted to a string formatted with "%Y-%m-%d %H:%i:%s%N". |
+| Boolean  | A boolean value is converted to either 'true' or 'false'. |
+| Ternary  | A ternaly value is converted to any one string of 'TRUE', 'FALSE' and 'UNKNOWN'. |
+| Null     | A null value is kept as it is. |
+
+
 ### INTEGER
 {: #integer}
 
@@ -46,6 +56,15 @@ _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
 Convert a value to a integer.
+
+| value type | descriptin |
+| :- | :- |
+| String   | If a string is a representation of a decimal integer, then it is converted to a integer. Otherwise it is converted to a null. |
+| Float    | A float value is rounded to a integer. |
+| Datetime | A datetime value is converted to a integer representing it's unix time. |
+| Boolean  | A boolean value is converted to a null. |
+| Ternary  | A ternaly value is converted to a null. |
+| Null     | A null value is kept as it is. |
 
 ### FLOAT
 {: #float}
@@ -62,6 +81,15 @@ _return_
 
 Convert a value to a float.
 
+| value type | descriptin |
+| :- | :- |
+| String   | If a string is a representation of a floating-point decimal, then it is converted to a float. Otherwise it is converted to a null. |
+| Integer  | A integer value is converted to a float. |
+| Datetime | A datetime value is converted to a float representing it's unix time. |
+| Boolean  | A boolean value is converted to a null. |
+| Ternary  | A ternary value is converted to a null. |
+| Null     | A null value is kept as it is. |
+
 ### BOOLEAN
 {: #boolean}
 
@@ -76,6 +104,15 @@ _boolean_
 : [boolean]({{ '/reference/value.html#boolean' | relative_url }})
 
 Convert a value to a boolean.
+
+| value type | descriptin |
+| :- | :- |
+| String   | If a string value is any of '1', 't', 'T', 'TRUE', 'true' and 'True', then it is converted to true. If a string value is any of '0', 'f', 'F', 'FALSE' and 'false', then it is converted to false. Otherwise it is converted to a null. |
+| Integer  | If a integer value is 1, then it is converted to true, otherwise it is converted to false. |
+| Float    | If a float value is 1, then it is converted to true, otherwise it is converted to false. |
+| Datetime | A datetime value is converted to a null. |
+| Ternary  | If a ternary value is TRUE, then it is converted to true. If a ternary value is FALSE, then it is converted to false. Otherwise it is converted to a null. |
+| Null     | A null value is kept as it is. |
 
 ### TERNARY
 {: #ternary}
@@ -92,6 +129,15 @@ _return_
 
 Convert a value to a ternary.
 
+| value type | descriptin |
+| :- | :- |
+| String   | If a string value is any of '1', 't', 'T', 'TRUE', 'true' and 'True', then it is converted to TRUE. If a string value is any of '0', 'f', 'F', 'FALSE' and 'false', then it is converted to FALSE. Otherwise it is converted to UNKNOWN. |
+| Integer  | If a integer value is 1, then it is converted to TRUE, otherwise it is converted to FALSE. |
+| Float    | If a float value is 1, then it is converted to TRUE, otherwise it is converted to FALSE. |
+| Datetime | If a datetime value is not empty, then it is converted to TRUE. Otherwise it is converted to FALSE. |
+| Boolean  | If a boolean value is true, then it is converted to TRUE. If a boolean value is false, then it is converted to FALSE. |
+| Null     | A null value is converted to UNKNOWN. |
+
 ### DATETIME
 {: #datetime}
 
@@ -106,3 +152,12 @@ _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
 Convert a value to a datetime.
+
+| value type | descriptin |
+| :- | :- |
+| String   | If a string value is a representation of a integer or float value, then it is converted to a datetime represented by the number as a unix time. If a string value is formatted as a datetime, then it is convered to a datetime. Otherwise it is converted to a null. |
+| Integer  | A integer value is converted to a datetime represented by the integer value as a unix time. |
+| Float    | A float value is converted to a datetime represented by the float value as a unix time. |
+| Boolean  | A boolean value is converted to a null. |
+| Ternary  | A ternaly value is converted to a null. |
+| Null     | A null value is kept as it is. |

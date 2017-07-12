@@ -8,7 +8,7 @@ category: reference
 
 Update query is used to update records on csv files.
 
-## Update on a single file
+## Update in a single file
 
 ```sql
 [WITH common_table_expression [, common_table_expression ...]]
@@ -32,7 +32,7 @@ _value_
 _where_clause_
 : [Where Clause]({{ '/reference/select-query.html#where_clause' | relative_url }})
 
-## Update on multiple files
+## Update in multiple files
 
 ```sql
 [WITH common_table_expression [, common_table_expression ...]]

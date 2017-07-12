@@ -135,7 +135,7 @@ var encodeViewTests = []struct {
 				NewRecordWithoutId([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
 				NewRecordWithoutId([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.FALSE), parser.NewBoolean(true)}),
 				NewRecordWithoutId([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), parser.NewString("abcdef")}),
-				NewRecordWithoutId([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abc\\defghi/jklmn\topqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
+				NewRecordWithoutId([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" abc\\defghi/jk\rlmn\topqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
 			},
 		},
 		Format: cmd.JSON,
@@ -157,7 +157,7 @@ var encodeViewTests = []struct {
 			"}," +
 			"{" +
 			"\"c1\":34567890," +
-			"\"c2\\nsecond line\":\" abc\\\\defghi\\/jklmn\\topqrstuvwxyzabcdefg\\nhi\\\"jk\\n\"," +
+			"\"c2\\nsecond line\":\" abc\\\\defghi\\/jk\\rlmn\\topqrstuvwxyzabcdefg\\nhi\\\"jk\\n\"," +
 			"\"c3\":null" +
 			"}" +
 			"]",

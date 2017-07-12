@@ -67,7 +67,10 @@ func (s String) Bool() bool {
 }
 
 func (s String) Ternary() ternary.Value {
-	return ternary.ParseBool(s.Bool())
+	if b, err := strconv.ParseBool(s.Value()); err == nil {
+		return ternary.ParseBool(b)
+	}
+	return ternary.UNKNOWN
 }
 
 type Integer struct {

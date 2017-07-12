@@ -24,12 +24,12 @@ A comparison operator returns a ternary value.
 
 | operator | description |
 | :- | :- |
-| \=      | Equal |
+| \=      | Equal to |
 | <       | Less than |
-| <\=     | Less than or equal |
+| <\=     | Less than or equal to |
 | >       | Greater than |
-| >\=     | Greater than or equal |
-| <>, !\= | Not equal |
+| >\=     | Greater than or equal to |
+| <>, !\= | Not equal to |
 
 ```sql
 relational_operation

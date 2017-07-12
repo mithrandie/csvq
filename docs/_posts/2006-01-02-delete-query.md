@@ -8,7 +8,7 @@ category: reference
 
 Delete query is used to delete records on csv files.
 
-## Delete on a sigle file.
+## Delete in a single file.
 
 ```sql
 [WITH common_table_expression [, common_table_expression ...]]
@@ -26,7 +26,7 @@ _table_name_
 _where_clause_
 : [Where Clause]({{ '/reference/select-query.html#where_clause' | relative_url }})
 
-## Delete on multiple files
+## Delete in multiple files
 
 ```sql
 [WITH common_table_expression [, common_table_expression ...]]

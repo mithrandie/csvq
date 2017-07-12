@@ -89,6 +89,11 @@ func TestString_Ternary(t *testing.T) {
 	if p.Ternary() != ternary.FALSE {
 		t.Errorf("ternary = %s, want %s for %#v", p.Ternary(), ternary.FALSE, p)
 	}
+	s = "unknown"
+	p = NewString(s)
+	if p.Ternary() != ternary.UNKNOWN {
+		t.Errorf("ternary = %s, want %s for %#v", p.Ternary(), ternary.UNKNOWN, p)
+	}
 }
 
 func TestInteger_String(t *testing.T) {
