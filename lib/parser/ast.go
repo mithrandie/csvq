@@ -37,7 +37,6 @@ type Expression interface {
 
 type Primary interface {
 	String() string
-	Bool() bool
 	Ternary() ternary.Value
 }
 
@@ -57,13 +56,6 @@ func NewString(s string) String {
 
 func (s String) Value() string {
 	return s.literal
-}
-
-func (s String) Bool() bool {
-	if b, err := strconv.ParseBool(s.Value()); err == nil {
-		return b
-	}
-	return false
 }
 
 func (s String) Ternary() ternary.Value {
@@ -101,15 +93,15 @@ func (i Integer) Value() int64 {
 	return i.value
 }
 
-func (i Integer) Bool() bool {
-	if i.Value() == 1 {
-		return true
-	}
-	return false
-}
-
 func (i Integer) Ternary() ternary.Value {
-	return ternary.ParseBool(i.Bool())
+	switch i.Value() {
+	case 0:
+		return ternary.FALSE
+	case 1:
+		return ternary.TRUE
+	default:
+		return ternary.UNKNOWN
+	}
 }
 
 type Float struct {
@@ -140,15 +132,15 @@ func (f Float) Value() float64 {
 	return f.value
 }
 
-func (f Float) Bool() bool {
-	if f.Value() == 1 {
-		return true
-	}
-	return false
-}
-
 func (f Float) Ternary() ternary.Value {
-	return ternary.ParseBool(f.Bool())
+	switch f.Value() {
+	case 0:
+		return ternary.FALSE
+	case 1:
+		return ternary.TRUE
+	default:
+		return ternary.UNKNOWN
+	}
 }
 
 type Boolean struct {
@@ -167,12 +159,12 @@ func (b Boolean) String() string {
 	return b.literal
 }
 
-func (b Boolean) Bool() bool {
+func (b Boolean) Value() bool {
 	return b.value
 }
 
 func (b Boolean) Ternary() ternary.Value {
-	return ternary.ParseBool(b.Bool())
+	return ternary.ParseBool(b.Value())
 }
 
 type Ternary struct {
@@ -197,10 +189,6 @@ func NewTernary(t ternary.Value) Ternary {
 
 func (t Ternary) String() string {
 	return t.literal
-}
-
-func (t Ternary) Bool() bool {
-	return t.Ternary().BoolValue()
 }
 
 func (t Ternary) Ternary() ternary.Value {
@@ -238,12 +226,8 @@ func (dt Datetime) Value() time.Time {
 	return dt.value
 }
 
-func (dt Datetime) Bool() bool {
-	return !dt.Value().IsZero()
-}
-
 func (dt Datetime) Ternary() ternary.Value {
-	return ternary.ParseBool(dt.Bool())
+	return ternary.ParseBool(!dt.Value().IsZero())
 }
 
 func (dt Datetime) Format() string {
@@ -273,10 +257,6 @@ func (n Null) String() string {
 		return "NULL"
 	}
 	return n.literal
-}
-
-func (n Null) Bool() bool {
-	return false
 }
 
 func (n Null) Ternary() ternary.Value {

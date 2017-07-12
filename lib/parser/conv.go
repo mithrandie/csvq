@@ -195,12 +195,10 @@ func PrimaryToBoolean(p Primary) Primary {
 	switch p.(type) {
 	case Boolean:
 		return p
-	case Ternary:
-		if p.(Ternary).Ternary() != ternary.UNKNOWN {
-			return NewBoolean(p.(Ternary).Bool())
+	case Integer, Float, Ternary:
+		if p.Ternary() != ternary.UNKNOWN {
+			return NewBoolean(p.Ternary().BoolValue())
 		}
-	case Integer, Float:
-		return NewBoolean(p.Bool())
 	case String:
 		if b, e := strconv.ParseBool(p.(String).Value()); e == nil {
 			return NewBoolean(b)

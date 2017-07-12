@@ -55,9 +55,16 @@ Values at the same indices are compared, and the result is decided by [AND]({{ '
 {: #is}
 
 ```sql
-is_operation
-  : value IS [NOT] ternary
-  | value IS [NOT] NULL
+value IS [NOT] NULL
+```
+
+_value_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+Check if a _value_ is a null value.
+
+```sql
+value IS [NOT] ternary
 ```
 
 _value_
@@ -66,7 +73,7 @@ _value_
 _ternary_
 : [ternary]({{ '/reference/value.html#ternary' | relative_url }})
 
-Evaluate the ternary value of _value_ and check if the ternary value is equal to _ternary_.
+Evaluate the ternary value of a _value_ and check if the ternary value is equal to _ternary_.
 
 ## BETWEEN
 {: #between}

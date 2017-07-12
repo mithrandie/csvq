@@ -1083,7 +1083,7 @@ func String(args []parser.Primary) (parser.Primary, error) {
 
 	switch args[0].(type) {
 	case parser.Boolean:
-		return parser.NewString(strconv.FormatBool(args[0].(parser.Boolean).Bool())), nil
+		return parser.NewString(strconv.FormatBool(args[0].(parser.Boolean).Value())), nil
 	case parser.Ternary:
 		return parser.NewString(args[0].(parser.Ternary).Ternary().String()), nil
 	case parser.Datetime:
@@ -1162,9 +1162,9 @@ func Call(args []parser.Primary) (parser.Primary, error) {
 		case parser.Float:
 			s = parser.Float64ToStr(v.(parser.Float).Value())
 		case parser.Boolean:
-			s = strconv.FormatBool(v.(parser.Boolean).Bool())
+			s = strconv.FormatBool(v.(parser.Boolean).Value())
 		case parser.Ternary:
-			s = strconv.FormatBool(v.(parser.Ternary).Bool())
+			s = strconv.FormatBool(v.(parser.Ternary).Ternary().BoolValue())
 		case parser.Datetime:
 			s = v.(parser.Datetime).Format()
 		case parser.Null:
