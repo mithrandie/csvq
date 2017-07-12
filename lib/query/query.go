@@ -1141,9 +1141,9 @@ func SetFlag(stmt parser.SetFlag) error {
 	case "@@DATETIME_FORMAT":
 		cmd.SetDatetimeFormat(p.(parser.String).Value())
 	case "@@NO_HEADER":
-		cmd.SetNoHeader(p.(parser.Boolean).Bool())
+		cmd.SetNoHeader(p.(parser.Boolean).Value())
 	case "@@WITHOUT_NULL":
-		cmd.SetWithoutNull(p.(parser.Boolean).Bool())
+		cmd.SetWithoutNull(p.(parser.Boolean).Value())
 	}
 	return err
 }

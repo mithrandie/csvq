@@ -1,10 +1,10 @@
 package action
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 
-	"errors"
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
@@ -53,7 +53,7 @@ func Calc(expr string) error {
 		delimiter = ','
 	}
 
-	cmd.ToStdout(strings.Join(values, ","))
+	cmd.ToStdout(strings.Join(values, string(delimiter)))
 	return nil
 }
 
@@ -62,13 +62,13 @@ func formatCalcResult(p parser.Primary) string {
 
 	switch p.(type) {
 	case parser.String:
-		s = p.(parser.String).Value()
+		s = strings.TrimSpace(p.(parser.String).Value())
 	case parser.Integer:
 		s = parser.Int64ToStr(p.(parser.Integer).Value())
 	case parser.Float:
 		s = parser.Float64ToStr(p.(parser.Float).Value())
 	case parser.Boolean:
-		s = strconv.FormatBool(p.(parser.Boolean).Bool())
+		s = strconv.FormatBool(p.(parser.Boolean).Value())
 	case parser.Ternary:
 		s = p.(parser.Ternary).String()
 	case parser.Datetime:

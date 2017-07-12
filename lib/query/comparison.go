@@ -66,8 +66,8 @@ func CompareCombinedly(p1 parser.Primary, p2 parser.Primary) ComparisonResult {
 
 	if b1 := parser.PrimaryToBoolean(p1); !parser.IsNull(b1) {
 		if b2 := parser.PrimaryToBoolean(p2); !parser.IsNull(b2) {
-			v1 := b1.(parser.Boolean).Bool()
-			v2 := b2.(parser.Boolean).Bool()
+			v1 := b1.(parser.Boolean).Value()
+			v2 := b2.(parser.Boolean).Value()
 			if v1 == v2 {
 				return EQUAL
 			} else {
@@ -177,6 +177,10 @@ func EquivalentTo(p1 parser.Primary, p2 parser.Primary) ternary.Value {
 }
 
 func Is(p1 parser.Primary, p2 parser.Primary) ternary.Value {
+	if parser.IsNull(p2) {
+		return ternary.ParseBool(parser.IsNull(p1))
+	}
+
 	return p1.Ternary().EqualTo(p2.Ternary())
 }
 

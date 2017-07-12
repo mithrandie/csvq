@@ -57,26 +57,6 @@ func TestString_Value(t *testing.T) {
 	}
 }
 
-func TestString_Bool(t *testing.T) {
-	s := "true"
-	p := NewString(s)
-	if p.Bool() != true {
-		t.Errorf("bool = %t, want %t for %#v", p.Bool(), true, p)
-	}
-
-	s = "false"
-	p = NewString(s)
-	if p.Bool() != false {
-		t.Errorf("bool = %t, want %t for %#v", p.Bool(), false, p)
-	}
-
-	s = "error"
-	p = NewString(s)
-	if p.Bool() != false {
-		t.Errorf("bool = %t, want %t for %#v", p.Bool(), false, p)
-	}
-}
-
 func TestString_Ternary(t *testing.T) {
 	s := "1"
 	p := NewString(s)
@@ -113,22 +93,18 @@ func TestInteger_Value(t *testing.T) {
 	}
 }
 
-func TestInteger_Bool(t *testing.T) {
-	p := NewInteger(1)
-	if p.Bool() != true {
-		t.Errorf("bool = %t, want %t for %#v", p.Bool(), true, p)
-	}
-
-	p = NewInteger(0)
-	if p.Bool() != false {
-		t.Errorf("bool = %t, want %t for %#v", p.Bool(), false, p)
-	}
-}
-
 func TestInteger_Ternary(t *testing.T) {
 	p := NewInteger(1)
 	if p.Ternary() != ternary.TRUE {
 		t.Errorf("ternary = %s, want %s for %#v", p.Ternary(), ternary.TRUE, p)
+	}
+	p = NewInteger(0)
+	if p.Ternary() != ternary.FALSE {
+		t.Errorf("ternary = %s, want %s for %#v", p.Ternary(), ternary.FALSE, p)
+	}
+	p = NewInteger(2)
+	if p.Ternary() != ternary.UNKNOWN {
+		t.Errorf("ternary = %s, want %s for %#v", p.Ternary(), ternary.UNKNOWN, p)
 	}
 }
 
@@ -149,22 +125,18 @@ func TestFloat_Value(t *testing.T) {
 	}
 }
 
-func TestFloat_Bool(t *testing.T) {
-	p := NewFloat(1)
-	if p.Bool() != true {
-		t.Errorf("bool = %t, want %t for %#v", p.Bool(), true, p)
-	}
-
-	p = NewFloat(0)
-	if p.Bool() != false {
-		t.Errorf("bool = %t, want %t for %#v", p.Bool(), false, p)
-	}
-}
-
 func TestFloat_Ternary(t *testing.T) {
 	p := NewFloat(1)
 	if p.Ternary() != ternary.TRUE {
 		t.Errorf("ternary = %s, want %s for %#v", p.Ternary(), ternary.TRUE, p)
+	}
+	p = NewFloat(0)
+	if p.Ternary() != ternary.FALSE {
+		t.Errorf("ternary = %s, want %s for %#v", p.Ternary(), ternary.FALSE, p)
+	}
+	p = NewFloat(2)
+	if p.Ternary() != ternary.UNKNOWN {
+		t.Errorf("ternary = %s, want %s for %#v", p.Ternary(), ternary.UNKNOWN, p)
 	}
 }
 
@@ -176,10 +148,10 @@ func TestBoolean_String(t *testing.T) {
 	}
 }
 
-func TestBoolean_Bool(t *testing.T) {
+func TestBoolean_Value(t *testing.T) {
 	p := NewBoolean(true)
-	if p.Bool() != true {
-		t.Errorf("bool = %t, want %t for %#v", p.Bool(), true, p)
+	if p.Value() != true {
+		t.Errorf("bool = %t, want %t for %#v", p.Value(), true, p)
 	}
 }
 
@@ -195,13 +167,6 @@ func TestTernary_String(t *testing.T) {
 	p := NewTernary(ternary.TRUE)
 	if p.String() != s {
 		t.Errorf("string = %q, want %q for %#v", p.String(), s, p)
-	}
-}
-
-func TestTernary_Bool(t *testing.T) {
-	p := NewTernary(ternary.TRUE)
-	if p.Bool() != true {
-		t.Errorf("bool = %t, want %t for %#v", p.Bool(), true, p)
 	}
 }
 
@@ -236,20 +201,6 @@ func TestDatetime_Value(t *testing.T) {
 
 	if d.Value().Sub(expect).Seconds() != 0 {
 		t.Errorf("value = %q, want %t for %#v", d.Value(), expect, d)
-	}
-}
-
-func TestDatetime_Bool(t *testing.T) {
-	d := NewDatetime(time.Time{})
-
-	if d.Bool() != false {
-		t.Errorf("bool = %t, want %t for %#v", d.Bool(), false, d)
-	}
-
-	d = NewDatetimeFromString("2000-01-01 00:00:00")
-
-	if d.Bool() != true {
-		t.Errorf("bool = %t, want %t for %#v", d.Bool(), true, d)
 	}
 }
 
@@ -301,13 +252,6 @@ func TestNull_String(t *testing.T) {
 	p = NewNull()
 	if p.String() != "NULL" {
 		t.Errorf("string = %q, want %q for %#v", p.String(), "NULL", p)
-	}
-}
-
-func TestNull_Bool(t *testing.T) {
-	p := NewNull()
-	if p.Bool() != false {
-		t.Errorf("bool = %t, want %t for %#v", p.Bool(), false, p)
 	}
 }
 
