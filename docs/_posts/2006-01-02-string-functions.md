@@ -14,9 +14,9 @@ category: reference
 | [UPPER](#upper) | Returns the string with all characters mapped to their upper case |
 | [LOWER](#lower) | Returns the string with all characters mapped to their lower case |
 | [BASE64_ENCODE](#base64_encode) | Return the base64 encoding of string |
-| [BASE64_DECODE](#base64_decode) | Return the string represented by the base64 string |
+| [BASE64_DECODE](#base64_decode) | Return the string represented by the base64 encoding |
 | [HEX_ENCODE](#hex_encode) | Return the hexadecimal encoding of string |
-| [HEX_DECODE](#hex_decode) | Return the string represented by the hexadecimal string |
+| [HEX_DECODE](#hex_decode) | Return the string represented by the hexadecimal encoding |
 | [LEN](#len) | Return the character length of the string |
 | [BYTE_LEN](#byte_len) | Return the byte length in utf-8 encoding of the string |
 | [LPAD](#lpad) | Return the string left-side padded |
