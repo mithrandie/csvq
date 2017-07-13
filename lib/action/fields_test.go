@@ -2,7 +2,7 @@ package action
 
 import (
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -41,7 +41,7 @@ func TestShowFields(t *testing.T) {
 func ExampleShowFields() {
 	flags := cmd.GetFlags()
 	dir, _ := os.Getwd()
-	flags.Repository = path.Join(dir, "..", "..", "testdata", "csv")
+	flags.Repository = filepath.Join(dir, "..", "..", "testdata", "csv")
 
 	ShowFields("table1")
 	//OUTPUT:

@@ -2,7 +2,6 @@ package query
 
 import (
 	"os"
-	"path"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -22,7 +21,7 @@ var fileInfoTests = []struct {
 	{
 		Name:       "CSV",
 		FilePath:   "table1",
-		Repository: path.Join("..", "..", "testdata", "csv"),
+		Repository: filepath.Join("..", "..", "testdata", "csv"),
 		Delimiter:  cmd.UNDEF,
 		Result: &FileInfo{
 			Path:      "table1.csv",
@@ -32,7 +31,7 @@ var fileInfoTests = []struct {
 	{
 		Name:       "TSV",
 		FilePath:   "table3",
-		Repository: path.Join("..", "..", "testdata", "csv"),
+		Repository: filepath.Join("..", "..", "testdata", "csv"),
 		Delimiter:  cmd.UNDEF,
 		Result: &FileInfo{
 			Path:      "table3.tsv",
@@ -58,7 +57,7 @@ func TestNewFileInfo(t *testing.T) {
 		repo := v.Repository
 		if 0 < len(repo) {
 			dir, _ := os.Getwd()
-			repo = path.Join(dir, repo)
+			repo = filepath.Join(dir, repo)
 		}
 
 		fileInfo, err := NewFileInfo(v.FilePath, repo, v.Delimiter)
@@ -75,9 +74,9 @@ func TestNewFileInfo(t *testing.T) {
 			continue
 		}
 
-		abs, _ := filepath.Abs(path.Join(repo, v.Result.Path))
+		abs, _ := filepath.Abs(filepath.Join(repo, v.Result.Path))
 		if fileInfo.Path != abs {
-			t.Errorf("%s: filepath = %s, want %s", v.Name, path.Base(fileInfo.Path), abs)
+			t.Errorf("%s: filepath = %s, want %s", v.Name, filepath.Base(fileInfo.Path), abs)
 		}
 		if fileInfo.Delimiter != v.Result.Delimiter {
 			t.Errorf("%s: delimiter = %q, want %q", v.Name, fileInfo.Delimiter, v.Result.Delimiter)
@@ -629,8 +628,8 @@ func TestView_Load(t *testing.T) {
 		}
 
 		if v.Result.FileInfo != nil {
-			if path.Base(view.FileInfo.Path) != path.Base(v.Result.FileInfo.Path) {
-				t.Errorf("%s: filepath = %q, want %q", v.Name, path.Base(view.FileInfo.Path), path.Base(v.Result.FileInfo.Path))
+			if filepath.Base(view.FileInfo.Path) != filepath.Base(v.Result.FileInfo.Path) {
+				t.Errorf("%s: filepath = %q, want %q", v.Name, filepath.Base(view.FileInfo.Path), filepath.Base(v.Result.FileInfo.Path))
 			}
 			if view.FileInfo.Delimiter != v.Result.FileInfo.Delimiter {
 				t.Errorf("%s: delimiter = %q, want %q", v.Name, view.FileInfo.Delimiter, v.Result.FileInfo.Delimiter)

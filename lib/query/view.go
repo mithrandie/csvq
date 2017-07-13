@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"path"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -137,8 +136,8 @@ type FileInfo struct {
 
 func NewFileInfo(filename string, repository string, delimiter rune) (*FileInfo, error) {
 	fpath := filename
-	if !path.IsAbs(fpath) {
-		fpath = path.Join(repository, fpath)
+	if !filepath.IsAbs(fpath) {
+		fpath = filepath.Join(repository, fpath)
 	}
 
 	var info os.FileInfo
@@ -164,7 +163,7 @@ func NewFileInfo(filename string, repository string, delimiter rune) (*FileInfo,
 	}
 
 	if delimiter == cmd.UNDEF {
-		if strings.EqualFold(path.Ext(fpath), cmd.TSV_EXT) {
+		if strings.EqualFold(filepath.Ext(fpath), cmd.TSV_EXT) {
 			delimiter = '\t'
 		} else {
 			delimiter = ','

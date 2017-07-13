@@ -3,7 +3,7 @@ package query
 import (
 	"errors"
 	"fmt"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -914,13 +914,13 @@ func CreateTable(query parser.CreateTable) (*View, error) {
 	}
 
 	flags := cmd.GetFlags()
-	filepath := query.Table.Literal
-	if !path.IsAbs(filepath) {
-		filepath = path.Join(flags.Repository, filepath)
+	fpath := query.Table.Literal
+	if !filepath.IsAbs(fpath) {
+		fpath = filepath.Join(flags.Repository, fpath)
 	}
 	delimiter := flags.Delimiter
 	if delimiter == cmd.UNDEF {
-		if strings.EqualFold(path.Ext(filepath), cmd.TSV_EXT) {
+		if strings.EqualFold(filepath.Ext(fpath), cmd.TSV_EXT) {
 			delimiter = '\t'
 		} else {
 			delimiter = ','
@@ -931,7 +931,7 @@ func CreateTable(query parser.CreateTable) (*View, error) {
 	view := &View{
 		Header: header,
 		FileInfo: &FileInfo{
-			Path:      filepath,
+			Path:      fpath,
 			Delimiter: delimiter,
 			NoHeader:  false,
 			Encoding:  flags.Encoding,

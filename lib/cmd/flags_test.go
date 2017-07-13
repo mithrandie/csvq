@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"path"
+	"path/filepath"
 	"testing"
 )
 
@@ -122,7 +122,7 @@ func TestSetRepository(t *testing.T) {
 		t.Errorf("repository = %s, expect to set %s for %q", flags.Repository, ".", "")
 	}
 
-	dir := path.Join("..", "..", "lib", "cmd")
+	dir := filepath.Join("..", "..", "lib", "cmd")
 	SetRepository(dir)
 	if flags.Repository != dir {
 		t.Errorf("repository = %s, expect to set %s for %s", flags.Repository, dir, dir)
@@ -148,13 +148,13 @@ func TestSetRepository(t *testing.T) {
 func TestSetSource(t *testing.T) {
 	flags := GetFlags()
 
-	s := path.Join("..", "..", "lib", "cmd", "flags_test.go")
+	s := filepath.Join("..", "..", "lib", "cmd", "flags_test.go")
 	SetSource(s)
 	if flags.Source != s {
 		t.Errorf("source = %s, expect to set %s for %s", flags.Source, s, s)
 	}
 
-	s = path.Join("..", "..", "lib", "cmd", "notexist")
+	s = filepath.Join("..", "..", "lib", "cmd", "notexist")
 	expectErr := "source file does not exist"
 	err := SetSource(s)
 	if err == nil {
@@ -163,7 +163,7 @@ func TestSetSource(t *testing.T) {
 		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "notexists")
 	}
 
-	s = path.Join("..", "..", "lib", "cmd")
+	s = filepath.Join("..", "..", "lib", "cmd")
 	expectErr = "source file must be a readable file"
 	err = SetSource(s)
 	if err == nil {

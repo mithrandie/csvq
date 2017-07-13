@@ -3,7 +3,7 @@ package query
 import (
 	"io"
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -11,10 +11,10 @@ import (
 )
 
 func GetTestFilePath(filename string) string {
-	return path.Join(TestDir, filename)
+	return filepath.Join(TestDir, filename)
 }
 
-var TestDir = path.Join(os.TempDir(), "csvq_query_test")
+var TestDir = filepath.Join(os.TempDir(), "csvq_query_test")
 var TestDataDir string
 var TestLocation = "America/Los_Angeles"
 
@@ -40,25 +40,25 @@ func setup() {
 	flags.Now = "2012-02-03 09:18:15"
 
 	wdir, _ := os.Getwd()
-	TestDataDir = path.Join(wdir, "..", "..", "testdata", "csv")
+	TestDataDir = filepath.Join(wdir, "..", "..", "testdata", "csv")
 
-	r, _ := os.Open(path.Join(TestDataDir, "empty.txt"))
+	r, _ := os.Open(filepath.Join(TestDataDir, "empty.txt"))
 	os.Stdin = r
 
 	if _, err := os.Stat(TestDir); os.IsNotExist(err) {
 		os.Mkdir(TestDir, 0755)
 	}
 
-	copyfile(path.Join(TestDir, "table1.csv"), path.Join(TestDataDir, "table1.csv"))
-	copyfile(path.Join(TestDir, "table2.csv"), path.Join(TestDataDir, "table2.csv"))
-	copyfile(path.Join(TestDir, "table4.csv"), path.Join(TestDataDir, "table4.csv"))
-	copyfile(path.Join(TestDir, "group_table.csv"), path.Join(TestDataDir, "group_table.csv"))
-	copyfile(path.Join(TestDir, "insert_query.csv"), path.Join(TestDataDir, "table1.csv"))
-	copyfile(path.Join(TestDir, "update_query.csv"), path.Join(TestDataDir, "table1.csv"))
-	copyfile(path.Join(TestDir, "delete_query.csv"), path.Join(TestDataDir, "table1.csv"))
-	copyfile(path.Join(TestDir, "add_columns.csv"), path.Join(TestDataDir, "table1.csv"))
-	copyfile(path.Join(TestDir, "drop_columns.csv"), path.Join(TestDataDir, "table1.csv"))
-	copyfile(path.Join(TestDir, "rename_column.csv"), path.Join(TestDataDir, "table1.csv"))
+	copyfile(filepath.Join(TestDir, "table1.csv"), filepath.Join(TestDataDir, "table1.csv"))
+	copyfile(filepath.Join(TestDir, "table2.csv"), filepath.Join(TestDataDir, "table2.csv"))
+	copyfile(filepath.Join(TestDir, "table4.csv"), filepath.Join(TestDataDir, "table4.csv"))
+	copyfile(filepath.Join(TestDir, "group_table.csv"), filepath.Join(TestDataDir, "group_table.csv"))
+	copyfile(filepath.Join(TestDir, "insert_query.csv"), filepath.Join(TestDataDir, "table1.csv"))
+	copyfile(filepath.Join(TestDir, "update_query.csv"), filepath.Join(TestDataDir, "table1.csv"))
+	copyfile(filepath.Join(TestDir, "delete_query.csv"), filepath.Join(TestDataDir, "table1.csv"))
+	copyfile(filepath.Join(TestDir, "add_columns.csv"), filepath.Join(TestDataDir, "table1.csv"))
+	copyfile(filepath.Join(TestDir, "drop_columns.csv"), filepath.Join(TestDataDir, "table1.csv"))
+	copyfile(filepath.Join(TestDir, "rename_column.csv"), filepath.Join(TestDataDir, "table1.csv"))
 }
 
 func teardown() {

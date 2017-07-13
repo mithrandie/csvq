@@ -3,7 +3,6 @@ package parser
 import (
 	"errors"
 	"fmt"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -239,5 +238,5 @@ func float64ToTime(f float64) time.Time {
 }
 
 func FormatTableName(s string) string {
-	return strings.TrimSuffix(path.Base(s), filepath.Ext(s))
+	return strings.TrimSuffix(filepath.Base(s), filepath.Ext(s))
 }

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 )
 
@@ -36,8 +36,8 @@ var createFileTests = []writeTest{
 	},
 	{
 		Name:     "File Open Error",
-		Filename: path.Join("notexistdir", "create.txt"),
-		Error:    fmt.Sprintf("open %s: no such file or directory", GetTestFilePath(path.Join("notexistdir", "create.txt"))),
+		Filename: filepath.Join("notexistdir", "create.txt"),
+		Error:    fmt.Sprintf("open %s: no such file or directory", GetTestFilePath(filepath.Join("notexistdir", "create.txt"))),
 	},
 }
 
