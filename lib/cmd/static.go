@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"math/rand"
 	"sync"
 	"time"
@@ -27,6 +28,7 @@ func GetLocation() *time.Location {
 	getLocation.Do(func() {
 		loc, _ := time.LoadLocation(GetFlags().Location)
 		time.Local = loc
+		fmt.Println(GetFlags().Location)
 	})
 	return time.Local
 }
@@ -35,6 +37,7 @@ func Now() time.Time {
 	getNow.Do(func() {
 		timeString := GetFlags().Now
 		if len(timeString) < 1 {
+			GetLocation()
 			now = time.Now()
 		} else {
 			t, _ := time.ParseInLocation("2006-01-02 15:04:05.999999999", timeString, GetLocation())
