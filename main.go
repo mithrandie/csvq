@@ -11,7 +11,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var version = "v0.3.1"
+var version = "v0.3.2"
 
 func main() {
 	cli.AppHelpTemplate = appHHelpTemplate
@@ -26,8 +26,7 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "delimiter, d",
-			Value: ",",
-			Usage: "field delimiter (exam: \",\" for comma, \"\\t\" for tab)",
+			Usage: "field delimiter. Default is \",\" for csv files, \"\\t\" for tsv files.",
 		},
 		cli.StringFlag{
 			Name:  "encoding, e",
@@ -38,6 +37,11 @@ func main() {
 			Name:  "line-break, l",
 			Value: "LF",
 			Usage: "line break. one of: CRLF|LF|CR",
+		},
+		cli.StringFlag{
+			Name:  "timezone, z",
+			Value: "Local",
+			Usage: "default timezone. \"Local\", \"UTC\" or a timezone name(e.g. \"America/Los_Angeles\")",
 		},
 		cli.StringFlag{
 			Name:  "repository, r",
@@ -82,8 +86,7 @@ func main() {
 				},
 				cli.StringFlag{
 					Name:  "write-delimiter, D",
-					Value: ",",
-					Usage: "field delimiter for CSV or TSV (exam: \",\" for comma, \"\\t\" for tab)",
+					Usage: "field delimiter for CSV",
 				},
 				cli.BoolFlag{
 					Name:  "without-header, N",
@@ -200,6 +203,9 @@ func setGlobalFlags(c *cli.Context) error {
 		return err
 	}
 	if err := cmd.SetLineBreak(c.String("line-break")); err != nil {
+		return err
+	}
+	if err := cmd.SetLocation(c.String("timezone")); err != nil {
 		return err
 	}
 	if err := cmd.SetRepository(c.GlobalString("repository")); err != nil {

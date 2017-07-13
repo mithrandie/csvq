@@ -51,6 +51,69 @@ func TestSetEncoding(t *testing.T) {
 	}
 }
 
+func TestSetLineBreak(t *testing.T) {
+	flags := GetFlags()
+
+	SetLineBreak("")
+	if flags.LineBreak != LF {
+		t.Errorf("line-break = %s, expect to set %s for %q", flags.LineBreak, LF, "")
+	}
+
+	SetLineBreak("crlf")
+	if flags.LineBreak != CRLF {
+		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, CRLF, "crlf")
+	}
+
+	SetLineBreak("cr")
+	if flags.LineBreak != CR {
+		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, CR, "cr")
+	}
+
+	SetLineBreak("lf")
+	if flags.LineBreak != LF {
+		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, LF, "LF")
+	}
+
+	expectErr := "line-break must be one of crlf|lf|cr"
+	err := SetLineBreak("error")
+	if err == nil {
+		t.Errorf("no error, want error %q for %s", expectErr, "error")
+	} else if err.Error() != expectErr {
+		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "error")
+	}
+}
+
+func TestSetLocation(t *testing.T) {
+	flags := GetFlags()
+
+	s := ""
+	SetLocation(s)
+	if flags.Location != "Local" {
+		t.Errorf("location = %s, expect to set %s for %q", flags.Location, "Local", "")
+	}
+
+	s = "Local"
+	SetLocation(s)
+	if flags.Location != s {
+		t.Errorf("location = %s, expect to set %s for %q", flags.Location, s, s)
+	}
+
+	s = "America/Los_Angeles"
+	SetLocation(s)
+	if flags.Location != s {
+		t.Errorf("location = %s, expect to set %s for %q", flags.Location, s, s)
+	}
+
+	s = "America/NotExist"
+	expectErr := "timezone does not exist"
+	err := SetLocation(s)
+	if err == nil {
+		t.Errorf("no error, want error %q for %s", expectErr, s)
+	} else if err.Error() != expectErr {
+		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, s)
+	}
+}
+
 func TestSetRepository(t *testing.T) {
 	flags := GetFlags()
 
@@ -155,38 +218,6 @@ func TestSetWriteEncoding(t *testing.T) {
 	}
 }
 
-func TestSetLineBreak(t *testing.T) {
-	flags := GetFlags()
-
-	SetLineBreak("")
-	if flags.LineBreak != LF {
-		t.Errorf("line-break = %s, expect to set %s for %q", flags.LineBreak, LF, "")
-	}
-
-	SetLineBreak("crlf")
-	if flags.LineBreak != CRLF {
-		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, CRLF, "crlf")
-	}
-
-	SetLineBreak("cr")
-	if flags.LineBreak != CR {
-		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, CR, "cr")
-	}
-
-	SetLineBreak("lf")
-	if flags.LineBreak != LF {
-		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, LF, "LF")
-	}
-
-	expectErr := "line-break must be one of crlf|lf|cr"
-	err := SetLineBreak("error")
-	if err == nil {
-		t.Errorf("no error, want error %q for %s", expectErr, "error")
-	} else if err.Error() != expectErr {
-		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "error")
-	}
-}
-
 func TestSetOut(t *testing.T) {
 	flags := GetFlags()
 
@@ -279,6 +310,7 @@ func TestSetWriteDelimiter(t *testing.T) {
 		t.Errorf("write-delimiter = %q, expect to set %q for %q, format = %s", flags.WriteDelimiter, '\t', "", flags.Format)
 	}
 
+	flags.Format = CSV
 	flags.WriteDelimiter = ','
 	SetWriteDelimiter("\\t")
 	if flags.WriteDelimiter != '\t' {

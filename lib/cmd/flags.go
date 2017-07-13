@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"time"
 )
 
 const UNDEF = -1
@@ -53,6 +54,7 @@ type Flags struct {
 	Delimiter      rune
 	Encoding       Encoding
 	LineBreak      LineBreak
+	Location       string
 	Repository     string
 	Source         string
 	DatetimeFormat string
@@ -67,8 +69,7 @@ type Flags struct {
 	WithoutHeader  bool
 
 	// Use in tests
-	Location string
-	Now      string
+	Now string
 }
 
 var (
@@ -82,6 +83,7 @@ func GetFlags() *Flags {
 			Delimiter:      UNDEF,
 			Encoding:       UTF8,
 			LineBreak:      LF,
+			Location:       "Local",
 			Repository:     ".",
 			Source:         "",
 			DatetimeFormat: "",
@@ -92,7 +94,6 @@ func GetFlags() *Flags {
 			Format:         TEXT,
 			WriteDelimiter: ',',
 			WithoutHeader:  false,
-			Location:       "Local",
 			Now:            "",
 		}
 	})
@@ -124,6 +125,43 @@ func SetEncoding(s string) error {
 
 	f := GetFlags()
 	f.Encoding = encoding
+	return nil
+}
+
+func SetLineBreak(s string) error {
+	if len(s) < 1 {
+		return nil
+	}
+
+	var lb LineBreak
+	switch strings.ToUpper(s) {
+	case "CRLF":
+		lb = CRLF
+	case "CR":
+		lb = CR
+	case "LF":
+		lb = LF
+	default:
+		return errors.New("line-break must be one of crlf|lf|cr")
+	}
+
+	f := GetFlags()
+	f.LineBreak = lb
+	return nil
+}
+
+func SetLocation(s string) error {
+	if len(s) < 1 {
+		return nil
+	}
+
+	_, err := time.LoadLocation(s)
+	if err != nil {
+		return errors.New("timezone does not exist")
+	}
+
+	f := GetFlags()
+	f.Location = s
 	return nil
 }
 
@@ -192,28 +230,6 @@ func SetWriteEncoding(s string) error {
 	return nil
 }
 
-func SetLineBreak(s string) error {
-	if len(s) < 1 {
-		return nil
-	}
-
-	var lb LineBreak
-	switch strings.ToUpper(s) {
-	case "CRLF":
-		lb = CRLF
-	case "CR":
-		lb = CR
-	case "LF":
-		lb = LF
-	default:
-		return errors.New("line-break must be one of crlf|lf|cr")
-	}
-
-	f := GetFlags()
-	f.LineBreak = lb
-	return nil
-}
-
 func SetOut(s string) error {
 	if len(s) < 1 {
 		return nil
@@ -264,10 +280,13 @@ func SetFormat(s string) error {
 func SetWriteDelimiter(s string) error {
 	f := GetFlags()
 
+	if f.Format == TSV {
+		f.WriteDelimiter = '\t'
+		return nil
+	}
+
 	if len(s) < 1 {
-		if f.Format == TSV {
-			f.WriteDelimiter = '\t'
-		}
+		f.WriteDelimiter = ','
 		return nil
 	}
 

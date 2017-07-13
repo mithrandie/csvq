@@ -1,11 +1,11 @@
 package parser
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
 	"github.com/mithrandie/csvq/lib/ternary"
-	"reflect"
 )
 
 func TestIsPrimary(t *testing.T) {
@@ -205,9 +205,9 @@ func TestDatetime_Value(t *testing.T) {
 }
 
 func TestDatetime_Ternary(t *testing.T) {
-	p := NewDatetime(time.Time{})
-	if p.Ternary() != ternary.FALSE {
-		t.Errorf("ternary = %s, want %s for %#v", p.Ternary(), ternary.FALSE, p)
+	p := NewDatetimeFromString("2012-01-01T12:34:56-08:00")
+	if p.Ternary() != ternary.UNKNOWN {
+		t.Errorf("ternary = %s, want %s for %#v", p.Ternary(), ternary.UNKNOWN, p)
 	}
 }
 
