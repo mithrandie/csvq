@@ -27,7 +27,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "delimiter, d",
 			Value: ",",
-			Usage: "field delimiter (exam: \",\" for comma, \"\\t\" for tab)",
+			Usage: "field delimiter (e.g. \",\" for comma, \"\\t\" for tab)",
 		},
 		cli.StringFlag{
 			Name:  "encoding, e",
@@ -38,6 +38,11 @@ func main() {
 			Name:  "line-break, l",
 			Value: "LF",
 			Usage: "line break. one of: CRLF|LF|CR",
+		},
+		cli.StringFlag{
+			Name:  "timezone, z",
+			Value: "Local",
+			Usage: "default timezone. \"UTC\" or a location name in the IANA TimeZone database",
 		},
 		cli.StringFlag{
 			Name:  "repository, r",
@@ -83,7 +88,7 @@ func main() {
 				cli.StringFlag{
 					Name:  "write-delimiter, D",
 					Value: ",",
-					Usage: "field delimiter for CSV or TSV (exam: \",\" for comma, \"\\t\" for tab)",
+					Usage: "field delimiter for CSV or TSV (e.g. \",\" for comma, \"\\t\" for tab)",
 				},
 				cli.BoolFlag{
 					Name:  "without-header, N",
@@ -200,6 +205,9 @@ func setGlobalFlags(c *cli.Context) error {
 		return err
 	}
 	if err := cmd.SetLineBreak(c.String("line-break")); err != nil {
+		return err
+	}
+	if err := cmd.SetLocation(c.String("timezone")); err != nil {
 		return err
 	}
 	if err := cmd.SetRepository(c.GlobalString("repository")); err != nil {

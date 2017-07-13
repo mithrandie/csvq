@@ -70,7 +70,7 @@ Format the _datetime_ according to the string _format_.
 
 #### Format Placeholders
 
-| placeholder | description |
+| placeholder | replacement value |
 | :- | :- |
 | %a | Abbreviation of week name (Sun, Mon, ...) |
 | %b | Abbreviation of month name (Jan, Feb, ...) |
