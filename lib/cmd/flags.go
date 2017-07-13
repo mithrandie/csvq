@@ -3,7 +3,7 @@ package cmd
 import (
 	"errors"
 	"os"
-	"path"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"sync"
@@ -251,7 +251,7 @@ func SetFormat(s string) error {
 
 	switch strings.ToUpper(s) {
 	case "":
-		switch strings.ToUpper(path.Ext(f.OutFile)) {
+		switch strings.ToUpper(filepath.Ext(f.OutFile)) {
 		case ".CSV":
 			fm = CSV
 		case ".TSV":
