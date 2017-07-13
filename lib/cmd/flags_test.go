@@ -310,6 +310,7 @@ func TestSetWriteDelimiter(t *testing.T) {
 		t.Errorf("write-delimiter = %q, expect to set %q for %q, format = %s", flags.WriteDelimiter, '\t', "", flags.Format)
 	}
 
+	flags.Format = CSV
 	flags.WriteDelimiter = ','
 	SetWriteDelimiter("\\t")
 	if flags.WriteDelimiter != '\t' {

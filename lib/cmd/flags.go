@@ -280,10 +280,13 @@ func SetFormat(s string) error {
 func SetWriteDelimiter(s string) error {
 	f := GetFlags()
 
+	if f.Format == TSV {
+		f.WriteDelimiter = '\t'
+		return nil
+	}
+
 	if len(s) < 1 {
-		if f.Format == TSV {
-			f.WriteDelimiter = '\t'
-		}
+		f.WriteDelimiter = ','
 		return nil
 	}
 

@@ -26,8 +26,7 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "delimiter, d",
-			Value: ",",
-			Usage: "field delimiter (e.g. \",\" for comma, \"\\t\" for tab)",
+			Usage: "field delimiter. Default is \",\" for csv files, \"\\t\" for tsv files.",
 		},
 		cli.StringFlag{
 			Name:  "encoding, e",
@@ -42,7 +41,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "timezone, z",
 			Value: "Local",
-			Usage: "default timezone. \"UTC\" or a location name in the IANA TimeZone database",
+			Usage: "default timezone. \"Local\", \"UTC\" or a timezone name(e.g. \"America/Los_Angeles\")",
 		},
 		cli.StringFlag{
 			Name:  "repository, r",
@@ -87,8 +86,7 @@ func main() {
 				},
 				cli.StringFlag{
 					Name:  "write-delimiter, D",
-					Value: ",",
-					Usage: "field delimiter for CSV or TSV (e.g. \",\" for comma, \"\\t\" for tab)",
+					Usage: "field delimiter for CSV",
 				},
 				cli.BoolFlag{
 					Name:  "without-header, N",
