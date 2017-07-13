@@ -21,6 +21,7 @@ func main() {
 
 	app.Name = "csvq"
 	app.Usage = "SQL like query language for csv"
+	app.ArgsUsage = "[\"query\"|\"statements\"]"
 	app.Version = version
 
 	app.Flags = []cli.Flag{
@@ -67,8 +68,10 @@ func main() {
 
 	app.Commands = []cli.Command{
 		{
-			Name:  "write",
-			Usage: "Write output to a file",
+			Name:      "write",
+			Usage:     "Write output to a file",
+			ArgsUsage: "[\"query\"|\"statements\"]",
+
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "write-encoding, E",
@@ -99,11 +102,13 @@ func main() {
 			Action: func(c *cli.Context) error {
 				query, err := readQuery(c)
 				if err != nil {
+					cli.ShowCommandHelp(c, "write")
 					return cli.NewExitError(err.Error(), 1)
 				}
 
 				err = action.Write(query)
 				if err != nil {
+					cli.ShowCommandHelp(c, "write")
 					return cli.NewExitError(err.Error(), 1)
 				}
 
@@ -111,10 +116,12 @@ func main() {
 			},
 		},
 		{
-			Name:  "fields",
-			Usage: "Show fields in a file",
+			Name:      "fields",
+			Usage:     "Show fields in a file",
+			ArgsUsage: "CSV_FILE_PATH",
 			Action: func(c *cli.Context) error {
 				if c.NArg() != 1 {
+					cli.ShowCommandHelp(c, "fields")
 					return cli.NewExitError("table is not specified", 1)
 				}
 
@@ -122,6 +129,7 @@ func main() {
 
 				err := action.ShowFields(table)
 				if err != nil {
+					cli.ShowCommandHelp(c, "fields")
 					return cli.NewExitError(err.Error(), 1)
 				}
 
@@ -129,16 +137,19 @@ func main() {
 			},
 		},
 		{
-			Name:  "calc",
-			Usage: "Calculate a value from stdin",
+			Name:      "calc",
+			Usage:     "Calculate a value from stdin",
+			ArgsUsage: "\"expression\"",
 			Action: func(c *cli.Context) error {
 				if c.NArg() != 1 {
+					cli.ShowCommandHelp(c, "calc")
 					return cli.NewExitError("expression is empty", 1)
 				}
 
 				expr := c.Args().First()
 				err := action.Calc(expr)
 				if err != nil {
+					cli.ShowCommandHelp(c, "calc")
 					return cli.NewExitError(err.Error(), 1)
 				}
 
@@ -154,11 +165,13 @@ func main() {
 	app.Action = func(c *cli.Context) error {
 		query, err := readQuery(c)
 		if err != nil {
+			cli.ShowAppHelp(c)
 			return cli.NewExitError(err.Error(), 1)
 		}
 
 		err = action.Write(query)
 		if err != nil {
+			cli.ShowAppHelp(c)
 			return cli.NewExitError(err.Error(), 1)
 		}
 
