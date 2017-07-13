@@ -227,7 +227,7 @@ func (dt Datetime) Value() time.Time {
 }
 
 func (dt Datetime) Ternary() ternary.Value {
-	return ternary.ParseBool(!dt.Value().IsZero())
+	return ternary.UNKNOWN
 }
 
 func (dt Datetime) Format() string {
