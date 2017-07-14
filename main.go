@@ -108,7 +108,6 @@ func main() {
 
 				err = action.Write(query)
 				if err != nil {
-					cli.ShowCommandHelp(c, "write")
 					return cli.NewExitError(err.Error(), 1)
 				}
 
@@ -129,7 +128,6 @@ func main() {
 
 				err := action.ShowFields(table)
 				if err != nil {
-					cli.ShowCommandHelp(c, "fields")
 					return cli.NewExitError(err.Error(), 1)
 				}
 
@@ -149,7 +147,6 @@ func main() {
 				expr := c.Args().First()
 				err := action.Calc(expr)
 				if err != nil {
-					cli.ShowCommandHelp(c, "calc")
 					return cli.NewExitError(err.Error(), 1)
 				}
 
@@ -171,7 +168,6 @@ func main() {
 
 		err = action.Write(query)
 		if err != nil {
-			cli.ShowAppHelp(c)
 			return cli.NewExitError(err.Error(), 1)
 		}
 
