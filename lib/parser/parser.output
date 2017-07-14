@@ -2,7 +2,7 @@
 state 0
 	$accept: .program $end 
 	program: .    (1)
-	common_table_clause: .    (78)
+	with_clause: .    (78)
 
 	$end  reduce 1 (src line 161)
 	VARIABLE  shift 36
@@ -33,7 +33,7 @@ state 0
 	flow_control_statement  goto 15
 	command_statement  goto 16
 	select_query  goto 3
-	common_table_clause  goto 17
+	with_clause  goto 17
 	insert_query  goto 4
 	update_query  goto 5
 	delete_query  goto 6
@@ -54,7 +54,7 @@ state 1
 state 2
 	program:  statement.program 
 	program: .    (1)
-	common_table_clause: .    (78)
+	with_clause: .    (78)
 
 	$end  reduce 1 (src line 161)
 	VARIABLE  shift 36
@@ -88,7 +88,7 @@ state 2
 	flow_control_statement  goto 15
 	command_statement  goto 16
 	select_query  goto 3
-	common_table_clause  goto 17
+	with_clause  goto 17
 	insert_query  goto 4
 	update_query  goto 5
 	delete_query  goto 6
@@ -208,14 +208,14 @@ state 16
 
 
 state 17
-	select_query:  common_table_clause.select_entity order_by_clause limit_clause offset_clause 
-	insert_query:  common_table_clause.INSERT INTO identifier VALUES row_values 
-	insert_query:  common_table_clause.INSERT INTO identifier '(' field_references ')' VALUES row_values 
-	insert_query:  common_table_clause.INSERT INTO identifier select_query 
-	insert_query:  common_table_clause.INSERT INTO identifier '(' field_references ')' select_query 
-	update_query:  common_table_clause.UPDATE identified_tables SET update_set_list from_clause where_clause 
-	delete_query:  common_table_clause.DELETE FROM tables where_clause 
-	delete_query:  common_table_clause.DELETE identified_tables FROM tables where_clause 
+	select_query:  with_clause.select_entity order_by_clause limit_clause offset_clause 
+	insert_query:  with_clause.INSERT INTO identifier VALUES row_values 
+	insert_query:  with_clause.INSERT INTO identifier '(' field_references ')' VALUES row_values 
+	insert_query:  with_clause.INSERT INTO identifier select_query 
+	insert_query:  with_clause.INSERT INTO identifier '(' field_references ')' select_query 
+	update_query:  with_clause.UPDATE identified_tables SET update_set_list from_clause where_clause 
+	delete_query:  with_clause.DELETE FROM tables where_clause 
+	delete_query:  with_clause.DELETE identified_tables FROM tables where_clause 
 
 	SELECT  shift 53
 	UPDATE  shift 49
@@ -481,14 +481,14 @@ state 33
 	variable_substitution  goto 87
 
 state 34
-	common_table_clause:  WITH.common_tables 
+	with_clause:  WITH.inline_tables 
 	recursive: .    (267)
 
 	RECURSIVE  shift 120
 	.  reduce 267 (src line 1477)
 
-	common_table  goto 118
-	common_tables  goto 117
+	inline_table  goto 118
+	inline_tables  goto 117
 	recursive  goto 119
 
 state 35
@@ -565,7 +565,7 @@ state 46
 
 
 state 47
-	select_query:  common_table_clause select_entity.order_by_clause limit_clause offset_clause 
+	select_query:  with_clause select_entity.order_by_clause limit_clause offset_clause 
 	select_set_entity:  select_entity.    (58)
 	order_by_clause: .    (69)
 
@@ -578,17 +578,17 @@ state 47
 	order_by_clause  goto 122
 
 state 48
-	insert_query:  common_table_clause INSERT.INTO identifier VALUES row_values 
-	insert_query:  common_table_clause INSERT.INTO identifier '(' field_references ')' VALUES row_values 
-	insert_query:  common_table_clause INSERT.INTO identifier select_query 
-	insert_query:  common_table_clause INSERT.INTO identifier '(' field_references ')' select_query 
+	insert_query:  with_clause INSERT.INTO identifier VALUES row_values 
+	insert_query:  with_clause INSERT.INTO identifier '(' field_references ')' VALUES row_values 
+	insert_query:  with_clause INSERT.INTO identifier select_query 
+	insert_query:  with_clause INSERT.INTO identifier '(' field_references ')' select_query 
 
 	INTO  shift 124
 	.  error
 
 
 state 49
-	update_query:  common_table_clause UPDATE.identified_tables SET update_set_list from_clause where_clause 
+	update_query:  with_clause UPDATE.identified_tables SET update_set_list from_clause where_clause 
 
 	IDENTIFIER  shift 65
 	.  error
@@ -598,8 +598,8 @@ state 49
 	identifier  goto 127
 
 state 50
-	delete_query:  common_table_clause DELETE.FROM tables where_clause 
-	delete_query:  common_table_clause DELETE.identified_tables FROM tables where_clause 
+	delete_query:  with_clause DELETE.FROM tables where_clause 
+	delete_query:  with_clause DELETE.identified_tables FROM tables where_clause 
 
 	IDENTIFIER  shift 65
 	FROM  shift 128
@@ -646,13 +646,13 @@ state 54
 
 state 55
 	subquery:  '('.select_query ')' 
-	common_table_clause: .    (78)
+	with_clause: .    (78)
 
 	WITH  shift 34
 	.  reduce 78 (src line 550)
 
 	select_query  goto 137
-	common_table_clause  goto 138
+	with_clause  goto 138
 
 state 56
 	create_table:  CREATE TABLE.identifier '(' identifiers ')' 
@@ -1004,7 +1004,7 @@ state 89
 	value:  '('.value ')' 
 	row_value:  '('.values ')' 
 	subquery:  '('.select_query ')' 
-	common_table_clause: .    (78)
+	with_clause: .    (78)
 
 	IDENTIFIER  shift 65
 	STRING  shift 103
@@ -1026,7 +1026,7 @@ state 89
 
 	cursor_status  goto 88
 	select_query  goto 137
-	common_table_clause  goto 138
+	with_clause  goto 138
 	primary  goto 78
 	field_reference  goto 77
 	value  goto 167
@@ -1400,22 +1400,22 @@ state 116
 	statement_terminal  goto 187
 
 state 117
-	common_table_clause:  WITH common_tables.    (79)
+	with_clause:  WITH inline_tables.    (79)
 
 	.  reduce 79 (src line 555)
 
 
 state 118
-	common_tables:  common_table.    (82)
-	common_tables:  common_table.',' common_tables 
+	inline_tables:  inline_table.    (82)
+	inline_tables:  inline_table.',' inline_tables 
 
 	','  shift 188
 	.  reduce 82 (src line 570)
 
 
 state 119
-	common_table:  recursive.identifier AS '(' select_query ')' 
-	common_table:  recursive.identifier '(' identifiers ')' AS '(' select_query ')' 
+	inline_table:  recursive.identifier AS '(' select_query ')' 
+	inline_table:  recursive.identifier '(' identifiers ')' AS '(' select_query ')' 
 
 	IDENTIFIER  shift 65
 	.  error
@@ -1472,7 +1472,7 @@ state 121
 	variable_substitution  goto 87
 
 state 122
-	select_query:  common_table_clause select_entity order_by_clause.limit_clause offset_clause 
+	select_query:  with_clause select_entity order_by_clause.limit_clause offset_clause 
 	limit_clause: .    (71)
 
 	LIMIT  shift 192
@@ -1488,10 +1488,10 @@ state 123
 
 
 state 124
-	insert_query:  common_table_clause INSERT INTO.identifier VALUES row_values 
-	insert_query:  common_table_clause INSERT INTO.identifier '(' field_references ')' VALUES row_values 
-	insert_query:  common_table_clause INSERT INTO.identifier select_query 
-	insert_query:  common_table_clause INSERT INTO.identifier '(' field_references ')' select_query 
+	insert_query:  with_clause INSERT INTO.identifier VALUES row_values 
+	insert_query:  with_clause INSERT INTO.identifier '(' field_references ')' VALUES row_values 
+	insert_query:  with_clause INSERT INTO.identifier select_query 
+	insert_query:  with_clause INSERT INTO.identifier '(' field_references ')' select_query 
 
 	IDENTIFIER  shift 65
 	.  error
@@ -1499,7 +1499,7 @@ state 124
 	identifier  goto 194
 
 state 125
-	update_query:  common_table_clause UPDATE identified_tables.SET update_set_list from_clause where_clause 
+	update_query:  with_clause UPDATE identified_tables.SET update_set_list from_clause where_clause 
 
 	SET  shift 195
 	.  error
@@ -1525,7 +1525,7 @@ state 127
 	identifier  goto 197
 
 state 128
-	delete_query:  common_table_clause DELETE FROM.tables where_clause 
+	delete_query:  with_clause DELETE FROM.tables where_clause 
 
 	IDENTIFIER  shift 65
 	DUAL  shift 204
@@ -1542,7 +1542,7 @@ state 128
 	identifier  goto 127
 
 state 129
-	delete_query:  common_table_clause DELETE identified_tables.FROM tables where_clause 
+	delete_query:  with_clause DELETE identified_tables.FROM tables where_clause 
 
 	FROM  shift 207
 	.  error
@@ -1663,7 +1663,7 @@ state 137
 
 
 state 138
-	select_query:  common_table_clause.select_entity order_by_clause limit_clause offset_clause 
+	select_query:  with_clause.select_entity order_by_clause limit_clause offset_clause 
 
 	SELECT  shift 53
 	'('  shift 55
@@ -1876,7 +1876,7 @@ state 152
 	flow_control_statement:  IF value THEN.program else END IF statement_terminal 
 	flow_control_statement:  IF value THEN.program elseif else END IF statement_terminal 
 	program: .    (1)
-	common_table_clause: .    (78)
+	with_clause: .    (78)
 
 	VARIABLE  shift 36
 	SET  shift 32
@@ -1909,7 +1909,7 @@ state 152
 	flow_control_statement  goto 15
 	command_statement  goto 16
 	select_query  goto 3
-	common_table_clause  goto 17
+	with_clause  goto 17
 	insert_query  goto 4
 	update_query  goto 5
 	delete_query  goto 6
@@ -2629,7 +2629,7 @@ state 182
 state 183
 	flow_control_statement:  WHILE value DO.in_loop_program END WHILE statement_terminal 
 	in_loop_program: .    (3)
-	common_table_clause: .    (78)
+	with_clause: .    (78)
 
 	VARIABLE  shift 36
 	SET  shift 32
@@ -2664,7 +2664,7 @@ state 183
 	in_loop_flow_control_statement  goto 271
 	command_statement  goto 16
 	select_query  goto 3
-	common_table_clause  goto 17
+	with_clause  goto 17
 	insert_query  goto 4
 	update_query  goto 5
 	delete_query  goto 6
@@ -2719,19 +2719,19 @@ state 187
 
 
 state 188
-	common_tables:  common_table ','.common_tables 
+	inline_tables:  inline_table ','.inline_tables 
 	recursive: .    (267)
 
 	RECURSIVE  shift 120
 	.  reduce 267 (src line 1477)
 
-	common_table  goto 118
-	common_tables  goto 279
+	inline_table  goto 118
+	inline_tables  goto 279
 	recursive  goto 119
 
 state 189
-	common_table:  recursive identifier.AS '(' select_query ')' 
-	common_table:  recursive identifier.'(' identifiers ')' AS '(' select_query ')' 
+	inline_table:  recursive identifier.AS '(' select_query ')' 
+	inline_table:  recursive identifier.'(' identifiers ')' AS '(' select_query ')' 
 
 	AS  shift 280
 	'('  shift 281
@@ -2792,7 +2792,7 @@ state 190
 	comparison_operator  goto 158
 
 state 191
-	select_query:  common_table_clause select_entity order_by_clause limit_clause.offset_clause 
+	select_query:  with_clause select_entity order_by_clause limit_clause.offset_clause 
 	offset_clause: .    (76)
 
 	OFFSET  shift 283
@@ -2893,11 +2893,11 @@ state 193
 
 194: shift/reduce conflict (shift 291(0), red'n 78(0)) on '('
 state 194
-	insert_query:  common_table_clause INSERT INTO identifier.VALUES row_values 
-	insert_query:  common_table_clause INSERT INTO identifier.'(' field_references ')' VALUES row_values 
-	insert_query:  common_table_clause INSERT INTO identifier.select_query 
-	insert_query:  common_table_clause INSERT INTO identifier.'(' field_references ')' select_query 
-	common_table_clause: .    (78)
+	insert_query:  with_clause INSERT INTO identifier.VALUES row_values 
+	insert_query:  with_clause INSERT INTO identifier.'(' field_references ')' VALUES row_values 
+	insert_query:  with_clause INSERT INTO identifier.select_query 
+	insert_query:  with_clause INSERT INTO identifier.'(' field_references ')' select_query 
+	with_clause: .    (78)
 
 	VALUES  shift 290
 	WITH  shift 34
@@ -2905,10 +2905,10 @@ state 194
 	.  reduce 78 (src line 550)
 
 	select_query  goto 292
-	common_table_clause  goto 138
+	with_clause  goto 138
 
 state 195
-	update_query:  common_table_clause UPDATE identified_tables SET.update_set_list from_clause where_clause 
+	update_query:  with_clause UPDATE identified_tables SET.update_set_list from_clause where_clause 
 
 	IDENTIFIER  shift 65
 	.  error
@@ -2943,7 +2943,7 @@ state 198
 	identifier  goto 298
 
 state 199
-	delete_query:  common_table_clause DELETE FROM tables.where_clause 
+	delete_query:  with_clause DELETE FROM tables.where_clause 
 	where_clause: .    (63)
 
 	WHERE  shift 209
@@ -3019,7 +3019,7 @@ state 206
 
 
 state 207
-	delete_query:  common_table_clause DELETE identified_tables FROM.tables where_clause 
+	delete_query:  with_clause DELETE identified_tables FROM.tables where_clause 
 
 	IDENTIFIER  shift 65
 	DUAL  shift 204
@@ -3317,13 +3317,13 @@ state 228
 
 state 229
 	cursor_statement:  DECLARE identifier CURSOR FOR.select_query statement_terminal 
-	common_table_clause: .    (78)
+	with_clause: .    (78)
 
 	WITH  shift 34
 	.  reduce 78 (src line 550)
 
 	select_query  goto 330
-	common_table_clause  goto 138
+	with_clause  goto 138
 
 state 230
 	table_statement:  DECLARE identifier TABLE '('.identifiers ')' 
@@ -3337,13 +3337,13 @@ state 230
 
 state 231
 	table_statement:  DECLARE identifier TABLE FOR.select_query statement_terminal 
-	common_table_clause: .    (78)
+	with_clause: .    (78)
 
 	WITH  shift 34
 	.  reduce 78 (src line 550)
 
 	select_query  goto 332
-	common_table_clause  goto 138
+	with_clause  goto 138
 
 state 232
 	cursor_statement:  FETCH fetch_position identifier INTO.variables statement_terminal 
@@ -4010,7 +4010,7 @@ state 258
 state 259
 	row_value:  '('.values ')' 
 	subquery:  '('.select_query ')' 
-	common_table_clause: .    (78)
+	with_clause: .    (78)
 
 	IDENTIFIER  shift 65
 	STRING  shift 103
@@ -4032,7 +4032,7 @@ state 259
 
 	cursor_status  goto 88
 	select_query  goto 137
-	common_table_clause  goto 138
+	with_clause  goto 138
 	primary  goto 78
 	field_reference  goto 77
 	value  goto 346
@@ -4134,7 +4134,7 @@ state 268
 state 269
 	in_loop_program:  in_loop_statement.in_loop_program 
 	in_loop_program: .    (3)
-	common_table_clause: .    (78)
+	with_clause: .    (78)
 
 	VARIABLE  shift 36
 	SET  shift 32
@@ -4171,7 +4171,7 @@ state 269
 	in_loop_flow_control_statement  goto 271
 	command_statement  goto 16
 	select_query  goto 3
-	common_table_clause  goto 17
+	with_clause  goto 17
 	insert_query  goto 4
 	update_query  goto 5
 	delete_query  goto 6
@@ -4289,20 +4289,20 @@ state 278
 	statement_terminal  goto 369
 
 state 279
-	common_tables:  common_table ',' common_tables.    (83)
+	inline_tables:  inline_table ',' inline_tables.    (83)
 
 	.  reduce 83 (src line 575)
 
 
 state 280
-	common_table:  recursive identifier AS.'(' select_query ')' 
+	inline_table:  recursive identifier AS.'(' select_query ')' 
 
 	'('  shift 370
 	.  error
 
 
 state 281
-	common_table:  recursive identifier '('.identifiers ')' AS '(' select_query ')' 
+	inline_table:  recursive identifier '('.identifiers ')' AS '(' select_query ')' 
 
 	IDENTIFIER  shift 65
 	.  error
@@ -4311,7 +4311,7 @@ state 281
 	identifier  goto 323
 
 state 282
-	select_query:  common_table_clause select_entity order_by_clause limit_clause offset_clause.    (53)
+	select_query:  with_clause select_entity order_by_clause limit_clause offset_clause.    (53)
 
 	.  reduce 53 (src line 399)
 
@@ -4479,7 +4479,7 @@ state 289
 
 
 state 290
-	insert_query:  common_table_clause INSERT INTO identifier VALUES.row_values 
+	insert_query:  with_clause INSERT INTO identifier VALUES.row_values 
 
 	'('  shift 259
 	.  error
@@ -4489,8 +4489,8 @@ state 290
 	subquery  goto 260
 
 state 291
-	insert_query:  common_table_clause INSERT INTO identifier '('.field_references ')' VALUES row_values 
-	insert_query:  common_table_clause INSERT INTO identifier '('.field_references ')' select_query 
+	insert_query:  with_clause INSERT INTO identifier '('.field_references ')' VALUES row_values 
+	insert_query:  with_clause INSERT INTO identifier '('.field_references ')' select_query 
 
 	IDENTIFIER  shift 65
 	.  error
@@ -4500,13 +4500,13 @@ state 291
 	identifier  goto 296
 
 state 292
-	insert_query:  common_table_clause INSERT INTO identifier select_query.    (205)
+	insert_query:  with_clause INSERT INTO identifier select_query.    (205)
 
 	.  reduce 205 (src line 1158)
 
 
 state 293
-	update_query:  common_table_clause UPDATE identified_tables SET update_set_list.from_clause where_clause 
+	update_query:  with_clause UPDATE identified_tables SET update_set_list.from_clause where_clause 
 	from_clause: .    (61)
 
 	FROM  shift 131
@@ -4550,7 +4550,7 @@ state 298
 
 
 state 299
-	delete_query:  common_table_clause DELETE FROM tables where_clause.    (211)
+	delete_query:  with_clause DELETE FROM tables where_clause.    (211)
 
 	.  reduce 211 (src line 1189)
 
@@ -4651,7 +4651,7 @@ state 310
 	identifier  goto 394
 
 state 311
-	delete_query:  common_table_clause DELETE identified_tables FROM tables.where_clause 
+	delete_query:  with_clause DELETE identified_tables FROM tables.where_clause 
 	where_clause: .    (63)
 
 	WHERE  shift 209
@@ -4945,7 +4945,7 @@ state 335
 state 336
 	else:  ELSE.program 
 	program: .    (1)
-	common_table_clause: .    (78)
+	with_clause: .    (78)
 
 	VARIABLE  shift 36
 	SET  shift 32
@@ -4976,7 +4976,7 @@ state 336
 	flow_control_statement  goto 15
 	command_statement  goto 16
 	select_query  goto 3
-	common_table_clause  goto 17
+	with_clause  goto 17
 	insert_query  goto 4
 	update_query  goto 5
 	delete_query  goto 6
@@ -5313,14 +5313,14 @@ state 354
 state 355
 	subquery:  '('.select_query ')' 
 	comparison:  row_value negation IN '('.row_values ')' 
-	common_table_clause: .    (78)
+	with_clause: .    (78)
 
 	WITH  shift 34
 	'('  shift 259
 	.  reduce 78 (src line 550)
 
 	select_query  goto 137
-	common_table_clause  goto 138
+	with_clause  goto 138
 	row_value  goto 381
 	row_values  goto 428
 	subquery  goto 260
@@ -5335,14 +5335,14 @@ state 356
 state 357
 	subquery:  '('.select_query ')' 
 	comparison:  row_value comparison_operator ANY '('.row_values ')' 
-	common_table_clause: .    (78)
+	with_clause: .    (78)
 
 	WITH  shift 34
 	'('  shift 259
 	.  reduce 78 (src line 550)
 
 	select_query  goto 137
-	common_table_clause  goto 138
+	with_clause  goto 138
 	row_value  goto 381
 	row_values  goto 429
 	subquery  goto 260
@@ -5357,14 +5357,14 @@ state 358
 state 359
 	subquery:  '('.select_query ')' 
 	comparison:  row_value comparison_operator ALL '('.row_values ')' 
-	common_table_clause: .    (78)
+	with_clause: .    (78)
 
 	WITH  shift 34
 	'('  shift 259
 	.  reduce 78 (src line 550)
 
 	select_query  goto 137
-	common_table_clause  goto 138
+	with_clause  goto 138
 	row_value  goto 381
 	row_values  goto 430
 	subquery  goto 260
@@ -5463,7 +5463,7 @@ state 367
 state 368
 	flow_control_statement:  WHILE variables IN identifier DO.in_loop_program END WHILE statement_terminal 
 	in_loop_program: .    (3)
-	common_table_clause: .    (78)
+	with_clause: .    (78)
 
 	VARIABLE  shift 36
 	SET  shift 32
@@ -5498,7 +5498,7 @@ state 368
 	in_loop_flow_control_statement  goto 271
 	command_statement  goto 16
 	select_query  goto 3
-	common_table_clause  goto 17
+	with_clause  goto 17
 	insert_query  goto 4
 	update_query  goto 5
 	delete_query  goto 6
@@ -5516,17 +5516,17 @@ state 369
 
 
 state 370
-	common_table:  recursive identifier AS '('.select_query ')' 
-	common_table_clause: .    (78)
+	inline_table:  recursive identifier AS '('.select_query ')' 
+	with_clause: .    (78)
 
 	WITH  shift 34
 	.  reduce 78 (src line 550)
 
 	select_query  goto 438
-	common_table_clause  goto 138
+	with_clause  goto 138
 
 state 371
-	common_table:  recursive identifier '(' identifiers.')' AS '(' select_query ')' 
+	inline_table:  recursive identifier '(' identifiers.')' AS '(' select_query ')' 
 
 	')'  shift 439
 	.  error
@@ -5664,7 +5664,7 @@ state 379
 
 
 state 380
-	insert_query:  common_table_clause INSERT INTO identifier VALUES row_values.    (203)
+	insert_query:  with_clause INSERT INTO identifier VALUES row_values.    (203)
 
 	.  reduce 203 (src line 1149)
 
@@ -5678,8 +5678,8 @@ state 381
 
 
 state 382
-	insert_query:  common_table_clause INSERT INTO identifier '(' field_references.')' VALUES row_values 
-	insert_query:  common_table_clause INSERT INTO identifier '(' field_references.')' select_query 
+	insert_query:  with_clause INSERT INTO identifier '(' field_references.')' VALUES row_values 
+	insert_query:  with_clause INSERT INTO identifier '(' field_references.')' select_query 
 
 	')'  shift 445
 	.  error
@@ -5694,7 +5694,7 @@ state 383
 
 
 state 384
-	update_query:  common_table_clause UPDATE identified_tables SET update_set_list from_clause.where_clause 
+	update_query:  with_clause UPDATE identified_tables SET update_set_list from_clause.where_clause 
 	where_clause: .    (63)
 
 	WHERE  shift 209
@@ -5830,7 +5830,7 @@ state 394
 
 
 state 395
-	delete_query:  common_table_clause DELETE identified_tables FROM tables where_clause.    (212)
+	delete_query:  with_clause DELETE identified_tables FROM tables where_clause.    (212)
 
 	.  reduce 212 (src line 1195)
 
@@ -6374,7 +6374,7 @@ state 436
 	in_loop_flow_control_statement:  IF value THEN.in_loop_program in_loop_elseif in_loop_else END IF statement_terminal 
 	program: .    (1)
 	in_loop_program: .    (3)
-	common_table_clause: .    (78)
+	with_clause: .    (78)
 
 	VARIABLE  shift 36
 	SET  shift 32
@@ -6412,7 +6412,7 @@ state 436
 	in_loop_flow_control_statement  goto 271
 	command_statement  goto 16
 	select_query  goto 3
-	common_table_clause  goto 17
+	with_clause  goto 17
 	insert_query  goto 4
 	update_query  goto 5
 	delete_query  goto 6
@@ -6431,14 +6431,14 @@ state 437
 
 
 state 438
-	common_table:  recursive identifier AS '(' select_query.')' 
+	inline_table:  recursive identifier AS '(' select_query.')' 
 
 	')'  shift 482
 	.  error
 
 
 state 439
-	common_table:  recursive identifier '(' identifiers ')'.AS '(' select_query ')' 
+	inline_table:  recursive identifier '(' identifiers ')'.AS '(' select_query ')' 
 
 	AS  shift 483
 	.  error
@@ -6482,16 +6482,16 @@ state 444
 	subquery  goto 260
 
 state 445
-	insert_query:  common_table_clause INSERT INTO identifier '(' field_references ')'.VALUES row_values 
-	insert_query:  common_table_clause INSERT INTO identifier '(' field_references ')'.select_query 
-	common_table_clause: .    (78)
+	insert_query:  with_clause INSERT INTO identifier '(' field_references ')'.VALUES row_values 
+	insert_query:  with_clause INSERT INTO identifier '(' field_references ')'.select_query 
+	with_clause: .    (78)
 
 	VALUES  shift 488
 	WITH  shift 34
 	.  reduce 78 (src line 550)
 
 	select_query  goto 489
-	common_table_clause  goto 138
+	with_clause  goto 138
 
 state 446
 	field_references:  field_reference ','.field_references 
@@ -6504,7 +6504,7 @@ state 446
 	identifier  goto 296
 
 state 447
-	update_query:  common_table_clause UPDATE identified_tables SET update_set_list from_clause where_clause.    (207)
+	update_query:  with_clause UPDATE identified_tables SET update_set_list from_clause where_clause.    (207)
 
 	.  reduce 207 (src line 1167)
 
@@ -6811,13 +6811,13 @@ state 465
 
 state 466
 	table_statement:  DECLARE identifier TABLE '(' identifiers ')' FOR.select_query statement_terminal 
-	common_table_clause: .    (78)
+	with_clause: .    (78)
 
 	WITH  shift 34
 	.  reduce 78 (src line 550)
 
 	select_query  goto 500
-	common_table_clause  goto 138
+	with_clause  goto 138
 
 state 467
 	flow_control_statement:  IF value THEN program else END IF.statement_terminal 
@@ -6838,7 +6838,7 @@ state 468
 state 469
 	elseif:  ELSEIF value THEN.program 
 	program: .    (1)
-	common_table_clause: .    (78)
+	with_clause: .    (78)
 
 	VARIABLE  shift 36
 	SET  shift 32
@@ -6871,7 +6871,7 @@ state 469
 	flow_control_statement  goto 15
 	command_statement  goto 16
 	select_query  goto 3
-	common_table_clause  goto 17
+	with_clause  goto 17
 	insert_query  goto 4
 	update_query  goto 5
 	delete_query  goto 6
@@ -7052,7 +7052,7 @@ state 480
 	program:  statement.program 
 	in_loop_statement:  statement.    (19)
 	program: .    (1)
-	common_table_clause: .    (78)
+	with_clause: .    (78)
 
 	VARIABLE  shift 36
 	SET  shift 32
@@ -7085,7 +7085,7 @@ state 480
 	flow_control_statement  goto 15
 	command_statement  goto 16
 	select_query  goto 3
-	common_table_clause  goto 17
+	with_clause  goto 17
 	insert_query  goto 4
 	update_query  goto 5
 	delete_query  goto 6
@@ -7104,13 +7104,13 @@ state 481
 
 
 state 482
-	common_table:  recursive identifier AS '(' select_query ')'.    (80)
+	inline_table:  recursive identifier AS '(' select_query ')'.    (80)
 
 	.  reduce 80 (src line 560)
 
 
 state 483
-	common_table:  recursive identifier '(' identifiers ')' AS.'(' select_query ')' 
+	inline_table:  recursive identifier '(' identifiers ')' AS.'(' select_query ')' 
 
 	'('  shift 510
 	.  error
@@ -7141,7 +7141,7 @@ state 487
 
 
 state 488
-	insert_query:  common_table_clause INSERT INTO identifier '(' field_references ')' VALUES.row_values 
+	insert_query:  with_clause INSERT INTO identifier '(' field_references ')' VALUES.row_values 
 
 	'('  shift 259
 	.  error
@@ -7151,7 +7151,7 @@ state 488
 	subquery  goto 260
 
 state 489
-	insert_query:  common_table_clause INSERT INTO identifier '(' field_references ')' select_query.    (206)
+	insert_query:  with_clause INSERT INTO identifier '(' field_references ')' select_query.    (206)
 
 	.  reduce 206 (src line 1162)
 
@@ -7377,7 +7377,7 @@ state 506
 state 507
 	in_loop_else:  ELSE.in_loop_program 
 	in_loop_program: .    (3)
-	common_table_clause: .    (78)
+	with_clause: .    (78)
 
 	VARIABLE  shift 36
 	SET  shift 32
@@ -7412,7 +7412,7 @@ state 507
 	in_loop_flow_control_statement  goto 271
 	command_statement  goto 16
 	select_query  goto 3
-	common_table_clause  goto 17
+	with_clause  goto 17
 	insert_query  goto 4
 	update_query  goto 5
 	delete_query  goto 6
@@ -7476,17 +7476,17 @@ state 509
 	statement_terminal  goto 524
 
 state 510
-	common_table:  recursive identifier '(' identifiers ')' AS '('.select_query ')' 
-	common_table_clause: .    (78)
+	inline_table:  recursive identifier '(' identifiers ')' AS '('.select_query ')' 
+	with_clause: .    (78)
 
 	WITH  shift 34
 	.  reduce 78 (src line 550)
 
 	select_query  goto 525
-	common_table_clause  goto 138
+	with_clause  goto 138
 
 state 511
-	insert_query:  common_table_clause INSERT INTO identifier '(' field_references ')' VALUES row_values.    (204)
+	insert_query:  with_clause INSERT INTO identifier '(' field_references ')' VALUES row_values.    (204)
 
 	.  reduce 204 (src line 1154)
 
@@ -7675,7 +7675,7 @@ state 524
 
 
 state 525
-	common_table:  recursive identifier '(' identifiers ')' AS '(' select_query.')' 
+	inline_table:  recursive identifier '(' identifiers ')' AS '(' select_query.')' 
 
 	')'  shift 533
 	.  error
@@ -7730,7 +7730,7 @@ state 531
 state 532
 	in_loop_elseif:  ELSEIF value THEN.in_loop_program 
 	in_loop_program: .    (3)
-	common_table_clause: .    (78)
+	with_clause: .    (78)
 
 	VARIABLE  shift 36
 	SET  shift 32
@@ -7767,7 +7767,7 @@ state 532
 	in_loop_flow_control_statement  goto 271
 	command_statement  goto 16
 	select_query  goto 3
-	common_table_clause  goto 17
+	with_clause  goto 17
 	insert_query  goto 4
 	update_query  goto 5
 	delete_query  goto 6
@@ -7779,7 +7779,7 @@ state 532
 	variable_substitution  goto 21
 
 state 533
-	common_table:  recursive identifier '(' identifiers ')' AS '(' select_query ')'.    (81)
+	inline_table:  recursive identifier '(' identifiers ')' AS '(' select_query ')'.    (81)
 
 	.  reduce 81 (src line 565)
 

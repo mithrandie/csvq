@@ -16,9 +16,9 @@ type FilterRecord struct {
 
 type Filter struct {
 	Records      []FilterRecord
-	CommonTables CommonTables
+	InlineTables InlineTables
 
-	RecursiveTable    parser.CommonTable
+	RecursiveTable    parser.InlineTable
 	RecursiveTmpView  *View
 	tmpViewIsAccessed bool
 }
@@ -31,7 +31,7 @@ func NewFilterForRecord(view *View, recordIndex int, parentFilter Filter) Filter
 				RecordIndex: recordIndex,
 			},
 		},
-		CommonTables: CommonTables{},
+		InlineTables: InlineTables{},
 	}
 	return f.Merge(parentFilter)
 }
@@ -43,21 +43,21 @@ func NewFilterForLoop(view *View, parentFilter Filter) Filter {
 				View: view,
 			},
 		},
-		CommonTables: parentFilter.CommonTables.Copy(),
+		InlineTables: parentFilter.InlineTables.Copy(),
 	}
 }
 
 func (f Filter) Merge(filter Filter) Filter {
 	return Filter{
 		Records:      append(f.Records, filter.Records...),
-		CommonTables: f.CommonTables.Merge(filter.CommonTables),
+		InlineTables: f.InlineTables.Merge(filter.InlineTables),
 	}
 }
 
 func (f Filter) Copy() Filter {
 	return Filter{
 		Records:          f.Records,
-		CommonTables:     f.CommonTables.Copy(),
+		InlineTables:     f.InlineTables.Copy(),
 		RecursiveTable:   f.RecursiveTable,
 		RecursiveTmpView: f.RecursiveTmpView,
 	}

@@ -247,10 +247,10 @@ func (view *View) Load(clause parser.FromClause, parentFilter Filter) error {
 }
 
 func (view *View) LoadFromIdentifier(table parser.Identifier) error {
-	return view.LoadFromIdentifierWithCommonTables(table, Filter{})
+	return view.LoadFromIdentifierWithInlineTables(table, Filter{})
 }
 
-func (view *View) LoadFromIdentifierWithCommonTables(table parser.Identifier, parentFilter Filter) error {
+func (view *View) LoadFromIdentifierWithInlineTables(table parser.Identifier, parentFilter Filter) error {
 	fromClause := parser.FromClause{
 		Tables: []parser.Expression{
 			parser.Table{Object: table},
@@ -308,12 +308,12 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 			if parentFilter.RecursiveTable.Name.Literal != table.Name() {
 				view.UpdateHeader(table.Name(), nil)
 			}
-		} else if ct, err := parentFilter.CommonTables.Get(tableIdentifier); err == nil {
+		} else if ct, err := parentFilter.InlineTables.Get(tableIdentifier); err == nil {
 			view = ct
 			if tableIdentifier != table.Name() {
 				view.UpdateHeader(table.Name(), nil)
 			}
-		} else if _, err := parentFilter.CommonTables.Get(table.Name()); err == nil {
+		} else if _, err := parentFilter.InlineTables.Get(table.Name()); err == nil {
 			return nil, errors.New(fmt.Sprintf("table name %s is duplicated", table.Name()))
 		} else {
 			var fileInfo *FileInfo

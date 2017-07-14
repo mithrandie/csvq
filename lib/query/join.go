@@ -97,7 +97,7 @@ func InnerJoin(view *View, joinView *View, condition parser.Expression, parentFi
 			{View: view},
 			{View: joinView},
 		},
-		CommonTables: CommonTables{},
+		InlineTables: InlineTables{},
 	}
 	filter = filter.Merge(parentFilter)
 
@@ -139,7 +139,7 @@ func OuterJoin(view *View, joinView *View, condition parser.Expression, directio
 			{View: view},
 			{View: joinView},
 		},
-		CommonTables: CommonTables{},
+		InlineTables: InlineTables{},
 	}
 	filter = filter.Merge(parentFilter)
 

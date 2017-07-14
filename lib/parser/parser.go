@@ -1502,11 +1502,11 @@ yydefault:
 		//line parser.y:401
 		{
 			yyVAL.expression = SelectQuery{
-				CommonTableClause: yyDollar[1].expression,
-				SelectEntity:      yyDollar[2].expression,
-				OrderByClause:     yyDollar[3].expression,
-				LimitClause:       yyDollar[4].expression,
-				OffsetClause:      yyDollar[5].expression,
+				WithClause:    yyDollar[1].expression,
+				SelectEntity:  yyDollar[2].expression,
+				OrderByClause: yyDollar[3].expression,
+				LimitClause:   yyDollar[4].expression,
+				OffsetClause:  yyDollar[5].expression,
 			}
 		}
 	case 54:
@@ -1684,19 +1684,19 @@ yydefault:
 		yyDollar = yyS[yypt-2 : yypt+1]
 		//line parser.y:556
 		{
-			yyVAL.expression = CommonTableClause{With: yyDollar[1].token.Literal, CommonTables: yyDollar[2].expressions}
+			yyVAL.expression = WithClause{With: yyDollar[1].token.Literal, InlineTables: yyDollar[2].expressions}
 		}
 	case 80:
 		yyDollar = yyS[yypt-6 : yypt+1]
 		//line parser.y:562
 		{
-			yyVAL.expression = CommonTable{Recursive: yyDollar[1].token, Name: yyDollar[2].identifier, As: yyDollar[3].token.Literal, Query: yyDollar[5].expression.(SelectQuery)}
+			yyVAL.expression = InlineTable{Recursive: yyDollar[1].token, Name: yyDollar[2].identifier, As: yyDollar[3].token.Literal, Query: yyDollar[5].expression.(SelectQuery)}
 		}
 	case 81:
 		yyDollar = yyS[yypt-9 : yypt+1]
 		//line parser.y:566
 		{
-			yyVAL.expression = CommonTable{Recursive: yyDollar[1].token, Name: yyDollar[2].identifier, Columns: yyDollar[4].expressions, As: yyDollar[6].token.Literal, Query: yyDollar[8].expression.(SelectQuery)}
+			yyVAL.expression = InlineTable{Recursive: yyDollar[1].token, Name: yyDollar[2].identifier, Columns: yyDollar[4].expressions, As: yyDollar[6].token.Literal, Query: yyDollar[8].expression.(SelectQuery)}
 		}
 	case 82:
 		yyDollar = yyS[yypt-1 : yypt+1]
@@ -2445,31 +2445,31 @@ yydefault:
 		yyDollar = yyS[yypt-6 : yypt+1]
 		//line parser.y:1151
 		{
-			yyVAL.expression = InsertQuery{CommonTableClause: yyDollar[1].expression, Insert: yyDollar[2].token.Literal, Into: yyDollar[3].token.Literal, Table: yyDollar[4].identifier, Values: yyDollar[5].token.Literal, ValuesList: yyDollar[6].expressions}
+			yyVAL.expression = InsertQuery{WithClause: yyDollar[1].expression, Insert: yyDollar[2].token.Literal, Into: yyDollar[3].token.Literal, Table: yyDollar[4].identifier, Values: yyDollar[5].token.Literal, ValuesList: yyDollar[6].expressions}
 		}
 	case 204:
 		yyDollar = yyS[yypt-9 : yypt+1]
 		//line parser.y:1155
 		{
-			yyVAL.expression = InsertQuery{CommonTableClause: yyDollar[1].expression, Insert: yyDollar[2].token.Literal, Into: yyDollar[3].token.Literal, Table: yyDollar[4].identifier, Fields: yyDollar[6].expressions, Values: yyDollar[8].token.Literal, ValuesList: yyDollar[9].expressions}
+			yyVAL.expression = InsertQuery{WithClause: yyDollar[1].expression, Insert: yyDollar[2].token.Literal, Into: yyDollar[3].token.Literal, Table: yyDollar[4].identifier, Fields: yyDollar[6].expressions, Values: yyDollar[8].token.Literal, ValuesList: yyDollar[9].expressions}
 		}
 	case 205:
 		yyDollar = yyS[yypt-5 : yypt+1]
 		//line parser.y:1159
 		{
-			yyVAL.expression = InsertQuery{CommonTableClause: yyDollar[1].expression, Insert: yyDollar[2].token.Literal, Into: yyDollar[3].token.Literal, Table: yyDollar[4].identifier, Query: yyDollar[5].expression.(SelectQuery)}
+			yyVAL.expression = InsertQuery{WithClause: yyDollar[1].expression, Insert: yyDollar[2].token.Literal, Into: yyDollar[3].token.Literal, Table: yyDollar[4].identifier, Query: yyDollar[5].expression.(SelectQuery)}
 		}
 	case 206:
 		yyDollar = yyS[yypt-8 : yypt+1]
 		//line parser.y:1163
 		{
-			yyVAL.expression = InsertQuery{CommonTableClause: yyDollar[1].expression, Insert: yyDollar[2].token.Literal, Into: yyDollar[3].token.Literal, Table: yyDollar[4].identifier, Fields: yyDollar[6].expressions, Query: yyDollar[8].expression.(SelectQuery)}
+			yyVAL.expression = InsertQuery{WithClause: yyDollar[1].expression, Insert: yyDollar[2].token.Literal, Into: yyDollar[3].token.Literal, Table: yyDollar[4].identifier, Fields: yyDollar[6].expressions, Query: yyDollar[8].expression.(SelectQuery)}
 		}
 	case 207:
 		yyDollar = yyS[yypt-7 : yypt+1]
 		//line parser.y:1169
 		{
-			yyVAL.expression = UpdateQuery{CommonTableClause: yyDollar[1].expression, Update: yyDollar[2].token.Literal, Tables: yyDollar[3].expressions, Set: yyDollar[4].token.Literal, SetList: yyDollar[5].expressions, FromClause: yyDollar[6].expression, WhereClause: yyDollar[7].expression}
+			yyVAL.expression = UpdateQuery{WithClause: yyDollar[1].expression, Update: yyDollar[2].token.Literal, Tables: yyDollar[3].expressions, Set: yyDollar[4].token.Literal, SetList: yyDollar[5].expressions, FromClause: yyDollar[6].expression, WhereClause: yyDollar[7].expression}
 		}
 	case 208:
 		yyDollar = yyS[yypt-3 : yypt+1]
@@ -2494,14 +2494,14 @@ yydefault:
 		//line parser.y:1191
 		{
 			from := FromClause{From: yyDollar[3].token.Literal, Tables: yyDollar[4].expressions}
-			yyVAL.expression = DeleteQuery{CommonTableClause: yyDollar[1].expression, Delete: yyDollar[2].token.Literal, FromClause: from, WhereClause: yyDollar[5].expression}
+			yyVAL.expression = DeleteQuery{WithClause: yyDollar[1].expression, Delete: yyDollar[2].token.Literal, FromClause: from, WhereClause: yyDollar[5].expression}
 		}
 	case 212:
 		yyDollar = yyS[yypt-6 : yypt+1]
 		//line parser.y:1196
 		{
 			from := FromClause{From: yyDollar[4].token.Literal, Tables: yyDollar[5].expressions}
-			yyVAL.expression = DeleteQuery{CommonTableClause: yyDollar[1].expression, Delete: yyDollar[2].token.Literal, Tables: yyDollar[3].expressions, FromClause: from, WhereClause: yyDollar[6].expression}
+			yyVAL.expression = DeleteQuery{WithClause: yyDollar[1].expression, Delete: yyDollar[2].token.Literal, Tables: yyDollar[3].expressions, FromClause: from, WhereClause: yyDollar[6].expression}
 		}
 	case 213:
 		yyDollar = yyS[yypt-6 : yypt+1]

@@ -357,10 +357,10 @@ func TestRowValueList_String(t *testing.T) {
 
 func TestSelectQuery_String(t *testing.T) {
 	e := SelectQuery{
-		CommonTableClause: CommonTableClause{
+		WithClause: WithClause{
 			With: "with",
-			CommonTables: []Expression{
-				CommonTable{
+			InlineTables: []Expression{
+				InlineTable{
 					Name: Identifier{Literal: "ct"},
 					As:   "as",
 					Query: SelectQuery{
@@ -636,11 +636,11 @@ func TestOffsetClause_String(t *testing.T) {
 	}
 }
 
-func TestCommonTableClause_String(t *testing.T) {
-	e := CommonTableClause{
+func TestWithClause_String(t *testing.T) {
+	e := WithClause{
 		With: "with",
-		CommonTables: []Expression{
-			CommonTable{
+		InlineTables: []Expression{
+			InlineTable{
 				Name: Identifier{Literal: "alias1"},
 				As:   "as",
 				Query: SelectQuery{
@@ -654,7 +654,7 @@ func TestCommonTableClause_String(t *testing.T) {
 					},
 				},
 			},
-			CommonTable{
+			InlineTable{
 				Recursive: Token{Token: RECURSIVE, Literal: "recursive"},
 				Name:      Identifier{Literal: "alias2"},
 				As:        "as",
@@ -677,8 +677,8 @@ func TestCommonTableClause_String(t *testing.T) {
 	}
 }
 
-func TestCommonTable_String(t *testing.T) {
-	e := CommonTable{
+func TestInlineTable_String(t *testing.T) {
+	e := InlineTable{
 		Recursive: Token{Token: RECURSIVE, Literal: "recursive"},
 		Name:      Identifier{Literal: "alias"},
 		Columns: []Expression{
@@ -702,8 +702,8 @@ func TestCommonTable_String(t *testing.T) {
 	}
 }
 
-func TestCommonTable_IsRecursive(t *testing.T) {
-	e := CommonTable{
+func TestInlineTable_IsRecursive(t *testing.T) {
+	e := InlineTable{
 		Recursive: Token{Token: RECURSIVE, Literal: "recursive"},
 		Name:      Identifier{Literal: "alias"},
 		As:        "as",
@@ -722,7 +722,7 @@ func TestCommonTable_IsRecursive(t *testing.T) {
 		t.Errorf("IsRecursive = %t, want %t for %#v", e.IsRecursive(), true, e)
 	}
 
-	e = CommonTable{
+	e = InlineTable{
 		Name: Identifier{Literal: "alias"},
 		As:   "as",
 		Query: SelectQuery{
@@ -1563,10 +1563,10 @@ func TestVariableAssignment_String(t *testing.T) {
 
 func TestInsertQuery_String(t *testing.T) {
 	e := InsertQuery{
-		CommonTableClause: CommonTableClause{
+		WithClause: WithClause{
 			With: "with",
-			CommonTables: []Expression{
-				CommonTable{
+			InlineTables: []Expression{
+				InlineTable{
 					Name: Identifier{Literal: "ct"},
 					As:   "as",
 					Query: SelectQuery{
@@ -1642,10 +1642,10 @@ func TestInsertQuery_String(t *testing.T) {
 
 func TestUpdateQuery_String(t *testing.T) {
 	e := UpdateQuery{
-		CommonTableClause: CommonTableClause{
+		WithClause: WithClause{
 			With: "with",
-			CommonTables: []Expression{
-				CommonTable{
+			InlineTables: []Expression{
+				InlineTable{
 					Name: Identifier{Literal: "ct"},
 					As:   "as",
 					Query: SelectQuery{
@@ -1714,10 +1714,10 @@ func TestUpdateSet_String(t *testing.T) {
 
 func TestDeleteQuery_String(t *testing.T) {
 	e := DeleteQuery{
-		CommonTableClause: CommonTableClause{
+		WithClause: WithClause{
 			With: "with",
-			CommonTables: []Expression{
-				CommonTable{
+			InlineTables: []Expression{
+				InlineTable{
 					Name: Identifier{Literal: "ct"},
 					As:   "as",
 					Query: SelectQuery{
