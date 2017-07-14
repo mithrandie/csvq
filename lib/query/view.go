@@ -466,7 +466,11 @@ func NewViewFromGroupedRecord(filterRecord FilterRecord) *View {
 	for i := 0; i < record.GroupLen(); i++ {
 		view.Records[i] = make(Record, view.FieldLen())
 		for j, cell := range record {
-			view.Records[i][j] = NewCell(cell.GroupedPrimary(i))
+			grpIdx := i
+			if cell.Len() < 2 {
+				grpIdx = 0
+			}
+			view.Records[i][j] = NewCell(cell.GroupedPrimary(grpIdx))
 		}
 	}
 
@@ -742,6 +746,11 @@ func (view *View) evalColumn(obj parser.Expression, column string, alias string)
 	switch obj.(type) {
 	case parser.FieldReference:
 		idx, err = view.FieldIndex(obj.(parser.FieldReference))
+		if err == nil {
+			if view.isGrouped && !view.Header[idx].IsGroupKey {
+				err = errors.New(fmt.Sprintf("field %s is not a group key", obj))
+			}
+		}
 	default:
 		idx, err = view.Header.ContainsObject(obj)
 		if err != nil {
