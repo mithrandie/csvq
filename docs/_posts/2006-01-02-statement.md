@@ -44,10 +44,10 @@ $ csvq -s statements.sql
 You can use following types in statements.
 
 Identifier
-: A identifier is a word starting with any one of the characters \[a-z\|A-Z\|\_\] and followed by a character string that contains \[a-z\|A-Z\|0-9\|\_\].
-  You cannot use [reserved words](#reserved_words) as identifier.
+: A identifier is a word starting with any unicode letter or a low line(U+005F '\_') and followed by a character string that contains any unicode letters, any digits or low lines(U+005F '\_').
+  You cannot use [reserved words](#reserved_words) as a identifier.
 
-  Notwithstanding above naming restriction, you can use most characters as identifier by enclosing in back quotes.
+  Notwithstanding above naming restriction, you can use most character strings as a identifier by enclosing in back quotes.
   
   Identifiers represent tables, columns or cursors. 
   
@@ -93,10 +93,10 @@ Null
 : A null is represented by a keyword NULL.
 
 Variable
-: A variable is a word starting with "@" and followed by a character string that contains \[a-z\|A-Z\|0-9\|\_\].
+: A variable is a word starting with "@" and followed by a character string that contains any unicode letters, any digits or low lines(U+005F '\_').
 
 Flag
-: A flag is a word starting with "@@" and followed by a character string that contains \[a-z\|A-Z\|0-9\|\_\].
+: A flag is a word starting with "@@" and followed by a character string that contains any unicode letters, any digits or low lines(U+005F '\_').
 
 ```sql
 abcde                 -- identifier
