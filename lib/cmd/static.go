@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"math/rand"
 	"sync"
 	"time"
@@ -28,7 +27,6 @@ func GetLocation() *time.Location {
 	getLocation.Do(func() {
 		loc, _ := time.LoadLocation(GetFlags().Location)
 		time.Local = loc
-		fmt.Println(GetFlags().Location)
 	})
 	return time.Local
 }
