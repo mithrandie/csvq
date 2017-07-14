@@ -321,17 +321,17 @@ func (e RowValueList) String() string {
 }
 
 type SelectQuery struct {
-	CommonTableClause Expression
-	SelectEntity      Expression
-	OrderByClause     Expression
-	LimitClause       Expression
-	OffsetClause      Expression
+	WithClause    Expression
+	SelectEntity  Expression
+	OrderByClause Expression
+	LimitClause   Expression
+	OffsetClause  Expression
 }
 
 func (e SelectQuery) String() string {
 	s := []string{}
-	if e.CommonTableClause != nil {
-		s = append(s, e.CommonTableClause.String())
+	if e.WithClause != nil {
+		s = append(s, e.WithClause.String())
 	}
 	s = append(s, e.SelectEntity.String())
 	if e.OrderByClause != nil {
@@ -505,17 +505,17 @@ func (e OffsetClause) String() string {
 	return joinWithSpace(s)
 }
 
-type CommonTableClause struct {
+type WithClause struct {
 	With         string
-	CommonTables []Expression
+	InlineTables []Expression
 }
 
-func (e CommonTableClause) String() string {
-	s := []string{e.With, listExpressions(e.CommonTables)}
+func (e WithClause) String() string {
+	s := []string{e.With, listExpressions(e.InlineTables)}
 	return joinWithSpace(s)
 }
 
-type CommonTable struct {
+type InlineTable struct {
 	Recursive Token
 	Name      Identifier
 	Columns   []Expression
@@ -523,7 +523,7 @@ type CommonTable struct {
 	Query     SelectQuery
 }
 
-func (e CommonTable) String() string {
+func (e InlineTable) String() string {
 	s := []string{}
 	if !e.Recursive.IsEmpty() {
 		s = append(s, e.Recursive.Literal)
@@ -536,7 +536,7 @@ func (e CommonTable) String() string {
 	return joinWithSpace(s)
 }
 
-func (e CommonTable) IsRecursive() bool {
+func (e InlineTable) IsRecursive() bool {
 	return !e.Recursive.IsEmpty()
 }
 
@@ -1054,20 +1054,20 @@ type VariableDeclaration struct {
 }
 
 type InsertQuery struct {
-	CommonTableClause Expression
-	Insert            string
-	Into              string
-	Table             Identifier
-	Fields            []Expression
-	Values            string
-	ValuesList        []Expression
-	Query             Expression
+	WithClause Expression
+	Insert     string
+	Into       string
+	Table      Identifier
+	Fields     []Expression
+	Values     string
+	ValuesList []Expression
+	Query      Expression
 }
 
 func (e InsertQuery) String() string {
 	s := []string{}
-	if e.CommonTableClause != nil {
-		s = append(s, e.CommonTableClause.String())
+	if e.WithClause != nil {
+		s = append(s, e.WithClause.String())
 	}
 	s = append(s, e.Insert, e.Into, e.Table.String())
 	if e.Fields != nil {
@@ -1083,19 +1083,19 @@ func (e InsertQuery) String() string {
 }
 
 type UpdateQuery struct {
-	CommonTableClause Expression
-	Update            string
-	Tables            []Expression
-	Set               string
-	SetList           []Expression
-	FromClause        Expression
-	WhereClause       Expression
+	WithClause  Expression
+	Update      string
+	Tables      []Expression
+	Set         string
+	SetList     []Expression
+	FromClause  Expression
+	WhereClause Expression
 }
 
 func (e UpdateQuery) String() string {
 	s := []string{}
-	if e.CommonTableClause != nil {
-		s = append(s, e.CommonTableClause.String())
+	if e.WithClause != nil {
+		s = append(s, e.WithClause.String())
 	}
 	s = append(s, e.Update, listExpressions(e.Tables), e.Set, listExpressions(e.SetList))
 	if e.FromClause != nil {
@@ -1117,17 +1117,17 @@ func (us UpdateSet) String() string {
 }
 
 type DeleteQuery struct {
-	CommonTableClause Expression
-	Delete            string
-	Tables            []Expression
-	FromClause        Expression
-	WhereClause       Expression
+	WithClause  Expression
+	Delete      string
+	Tables      []Expression
+	FromClause  Expression
+	WhereClause Expression
 }
 
 func (e DeleteQuery) String() string {
 	s := []string{}
-	if e.CommonTableClause != nil {
-		s = append(s, e.CommonTableClause.String())
+	if e.WithClause != nil {
+		s = append(s, e.WithClause.String())
 	}
 	s = append(s, e.Delete)
 	if e.Tables != nil {

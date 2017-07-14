@@ -47,9 +47,9 @@ package parser
 %type<expression>  limit_clause
 %type<expression>  limit_with
 %type<expression>  offset_clause
-%type<expression>  common_table_clause
-%type<expression>  common_table
-%type<expressions> common_tables
+%type<expression>  with_clause
+%type<expression>  inline_table
+%type<expressions> inline_tables
 %type<primary>     primary
 %type<expression>  field_reference
 %type<expression>  value
@@ -397,14 +397,14 @@ command_statement
     }
 
 select_query
-    : common_table_clause select_entity order_by_clause limit_clause offset_clause
+    : with_clause select_entity order_by_clause limit_clause offset_clause
     {
         $$ = SelectQuery{
-            CommonTableClause: $1,
-            SelectEntity:      $2,
-            OrderByClause:     $3,
-            LimitClause:       $4,
-            OffsetClause:      $5,
+            WithClause:    $1,
+            SelectEntity:  $2,
+            OrderByClause: $3,
+            LimitClause:   $4,
+            OffsetClause:  $5,
         }
     }
 
@@ -547,32 +547,32 @@ offset_clause
         $$ = OffsetClause{Offset: $1.Literal, Value: $2}
     }
 
-common_table_clause
+with_clause
     :
     {
         $$ = nil
     }
-    | WITH common_tables
+    | WITH inline_tables
     {
-        $$ = CommonTableClause{With: $1.Literal, CommonTables: $2}
+        $$ = WithClause{With: $1.Literal, InlineTables: $2}
     }
 
-common_table
+inline_table
     : recursive identifier AS '(' select_query ')'
     {
-        $$ = CommonTable{Recursive: $1, Name: $2, As: $3.Literal, Query: $5.(SelectQuery)}
+        $$ = InlineTable{Recursive: $1, Name: $2, As: $3.Literal, Query: $5.(SelectQuery)}
     }
     | recursive identifier '(' identifiers ')' AS '(' select_query ')'
     {
-        $$ = CommonTable{Recursive: $1, Name: $2, Columns: $4, As: $6.Literal, Query: $8.(SelectQuery)}
+        $$ = InlineTable{Recursive: $1, Name: $2, Columns: $4, As: $6.Literal, Query: $8.(SelectQuery)}
     }
 
-common_tables
-    : common_table
+inline_tables
+    : inline_table
     {
         $$ = []Expression{$1}
     }
-    | common_table ',' common_tables
+    | inline_table ',' inline_tables
     {
         $$ = append([]Expression{$1}, $3...)
     }
@@ -1147,27 +1147,27 @@ case_when
     }
 
 insert_query
-    : common_table_clause INSERT INTO identifier VALUES row_values
+    : with_clause INSERT INTO identifier VALUES row_values
     {
-        $$ = InsertQuery{CommonTableClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Values: $5.Literal, ValuesList: $6}
+        $$ = InsertQuery{WithClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Values: $5.Literal, ValuesList: $6}
     }
-    | common_table_clause INSERT INTO identifier '(' field_references ')' VALUES row_values
+    | with_clause INSERT INTO identifier '(' field_references ')' VALUES row_values
     {
-        $$ = InsertQuery{CommonTableClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Fields: $6, Values: $8.Literal, ValuesList: $9}
+        $$ = InsertQuery{WithClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Fields: $6, Values: $8.Literal, ValuesList: $9}
     }
-    | common_table_clause INSERT INTO identifier select_query
+    | with_clause INSERT INTO identifier select_query
     {
-        $$ = InsertQuery{CommonTableClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Query: $5.(SelectQuery)}
+        $$ = InsertQuery{WithClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Query: $5.(SelectQuery)}
     }
-    | common_table_clause INSERT INTO identifier '(' field_references ')' select_query
+    | with_clause INSERT INTO identifier '(' field_references ')' select_query
     {
-        $$ = InsertQuery{CommonTableClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Fields: $6, Query: $8.(SelectQuery)}
+        $$ = InsertQuery{WithClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Fields: $6, Query: $8.(SelectQuery)}
     }
 
 update_query
-    : common_table_clause UPDATE identified_tables SET update_set_list from_clause where_clause
+    : with_clause UPDATE identified_tables SET update_set_list from_clause where_clause
     {
-        $$ = UpdateQuery{CommonTableClause: $1, Update: $2.Literal, Tables: $3, Set: $4.Literal, SetList: $5, FromClause: $6, WhereClause: $7}
+        $$ = UpdateQuery{WithClause: $1, Update: $2.Literal, Tables: $3, Set: $4.Literal, SetList: $5, FromClause: $6, WhereClause: $7}
     }
 
 update_set
@@ -1187,15 +1187,15 @@ update_set_list
     }
 
 delete_query
-    : common_table_clause DELETE FROM tables where_clause
+    : with_clause DELETE FROM tables where_clause
     {
         from := FromClause{From: $3.Literal, Tables: $4}
-        $$ = DeleteQuery{CommonTableClause: $1, Delete: $2.Literal, FromClause: from, WhereClause: $5}
+        $$ = DeleteQuery{WithClause: $1, Delete: $2.Literal, FromClause: from, WhereClause: $5}
     }
-    | common_table_clause DELETE identified_tables FROM tables where_clause
+    | with_clause DELETE identified_tables FROM tables where_clause
     {
         from := FromClause{From: $4.Literal, Tables: $5}
-        $$ = DeleteQuery{CommonTableClause: $1, Delete: $2.Literal, Tables: $3, FromClause: from, WhereClause: $6}
+        $$ = DeleteQuery{WithClause: $1, Delete: $2.Literal, Tables: $3, FromClause: from, WhereClause: $6}
     }
 
 create_table

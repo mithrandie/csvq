@@ -1658,11 +1658,11 @@ var selectTests = []struct {
 	{
 		Name: "Common Tables",
 		Query: parser.SelectQuery{
-			CommonTableClause: parser.CommonTableClause{
+			WithClause: parser.WithClause{
 				With: "with",
-				CommonTables: []parser.Expression{
-					parser.CommonTable{
-						Name: parser.Identifier{Literal: "ct"},
+				InlineTables: []parser.Expression{
+					parser.InlineTable{
+						Name: parser.Identifier{Literal: "it"},
 						Columns: []parser.Expression{
 							parser.Identifier{Literal: "c1"},
 						},
@@ -1688,7 +1688,7 @@ var selectTests = []struct {
 				},
 				FromClause: parser.FromClause{
 					Tables: []parser.Expression{
-						parser.Table{Object: parser.Identifier{Literal: "ct"}},
+						parser.Table{Object: parser.Identifier{Literal: "it"}},
 					},
 				},
 			},
@@ -1696,7 +1696,7 @@ var selectTests = []struct {
 		Result: &View{
 			Header: []HeaderField{
 				{
-					Reference: "ct",
+					Reference: "it",
 					Column:    "c1",
 					FromTable: true,
 				},
@@ -1711,12 +1711,12 @@ var selectTests = []struct {
 	{
 		Name: "Common Tables Recursion",
 		Query: parser.SelectQuery{
-			CommonTableClause: parser.CommonTableClause{
+			WithClause: parser.WithClause{
 				With: "with",
-				CommonTables: []parser.Expression{
-					parser.CommonTable{
+				InlineTables: []parser.Expression{
+					parser.InlineTable{
 						Recursive: parser.Token{Token: parser.RECURSIVE, Literal: "recursive"},
-						Name:      parser.Identifier{Literal: "ct"},
+						Name:      parser.Identifier{Literal: "it"},
 						Columns: []parser.Expression{
 							parser.Identifier{Literal: "n"},
 						},
@@ -1747,7 +1747,7 @@ var selectTests = []struct {
 									},
 									FromClause: parser.FromClause{
 										Tables: []parser.Expression{
-											parser.Table{Object: parser.Identifier{Literal: "ct"}},
+											parser.Table{Object: parser.Identifier{Literal: "it"}},
 										},
 									},
 									WhereClause: parser.WhereClause{
@@ -1771,7 +1771,7 @@ var selectTests = []struct {
 				},
 				FromClause: parser.FromClause{
 					Tables: []parser.Expression{
-						parser.Table{Object: parser.Identifier{Literal: "ct"}},
+						parser.Table{Object: parser.Identifier{Literal: "it"}},
 					},
 				},
 			},
@@ -1779,7 +1779,7 @@ var selectTests = []struct {
 		Result: &View{
 			Header: []HeaderField{
 				{
-					Reference: "ct",
+					Reference: "it",
 					Column:    "n",
 					FromTable: true,
 				},
@@ -1800,12 +1800,12 @@ var selectTests = []struct {
 	{
 		Name: "Common Tables Recursion Field Length Error",
 		Query: parser.SelectQuery{
-			CommonTableClause: parser.CommonTableClause{
+			WithClause: parser.WithClause{
 				With: "with",
-				CommonTables: []parser.Expression{
-					parser.CommonTable{
+				InlineTables: []parser.Expression{
+					parser.InlineTable{
 						Recursive: parser.Token{Token: parser.RECURSIVE, Literal: "recursive"},
-						Name:      parser.Identifier{Literal: "ct"},
+						Name:      parser.Identifier{Literal: "it"},
 						Columns: []parser.Expression{
 							parser.Identifier{Literal: "n"},
 						},
@@ -1837,7 +1837,7 @@ var selectTests = []struct {
 									},
 									FromClause: parser.FromClause{
 										Tables: []parser.Expression{
-											parser.Table{Object: parser.Identifier{Literal: "ct"}},
+											parser.Table{Object: parser.Identifier{Literal: "it"}},
 										},
 									},
 									WhereClause: parser.WhereClause{
@@ -1861,7 +1861,7 @@ var selectTests = []struct {
 				},
 				FromClause: parser.FromClause{
 					Tables: []parser.Expression{
-						parser.Table{Object: parser.Identifier{Literal: "ct"}},
+						parser.Table{Object: parser.Identifier{Literal: "it"}},
 					},
 				},
 			},

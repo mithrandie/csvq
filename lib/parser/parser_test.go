@@ -334,10 +334,10 @@ var parseTests = []struct {
 		Input: "with ct as (select 1) select * from ct",
 		Output: []Statement{
 			SelectQuery{
-				CommonTableClause: CommonTableClause{
+				WithClause: WithClause{
 					With: "with",
-					CommonTables: []Expression{
-						CommonTable{
+					InlineTables: []Expression{
+						InlineTable{
 							Name: Identifier{Literal: "ct"},
 							As:   "as",
 							Query: SelectQuery{
@@ -370,10 +370,10 @@ var parseTests = []struct {
 		Input: "with ct (column1) as (select 1) select * from ct",
 		Output: []Statement{
 			SelectQuery{
-				CommonTableClause: CommonTableClause{
+				WithClause: WithClause{
 					With: "with",
-					CommonTables: []Expression{
-						CommonTable{
+					InlineTables: []Expression{
+						InlineTable{
 							Name: Identifier{Literal: "ct"},
 							Columns: []Expression{
 								Identifier{Literal: "column1"},
@@ -409,10 +409,10 @@ var parseTests = []struct {
 		Input: "with recursive ct as (select 1), ct2 as (select 2) select * from ct",
 		Output: []Statement{
 			SelectQuery{
-				CommonTableClause: CommonTableClause{
+				WithClause: WithClause{
 					With: "with",
-					CommonTables: []Expression{
-						CommonTable{
+					InlineTables: []Expression{
+						InlineTable{
 							Name:      Identifier{Literal: "ct"},
 							Recursive: Token{Token: RECURSIVE, Literal: "recursive"},
 							As:        "as",
@@ -427,7 +427,7 @@ var parseTests = []struct {
 								},
 							},
 						},
-						CommonTable{
+						InlineTable{
 							Name: Identifier{Literal: "ct2"},
 							As:   "as",
 							Query: SelectQuery{
@@ -1818,10 +1818,10 @@ var parseTests = []struct {
 		Input: "with ct as (select 1) insert into table1 values (1, 'str1'), (2, 'str2')",
 		Output: []Statement{
 			InsertQuery{
-				CommonTableClause: CommonTableClause{
+				WithClause: WithClause{
 					With: "with",
-					CommonTables: []Expression{
-						CommonTable{
+					InlineTables: []Expression{
+						InlineTable{
 							Name: Identifier{Literal: "ct"},
 							As:   "as",
 							Query: SelectQuery{
@@ -1945,10 +1945,10 @@ var parseTests = []struct {
 		Input: "with ct as (select 1) update table1 set column1 = 1, column2 = 2 from table1 where true",
 		Output: []Statement{
 			UpdateQuery{
-				CommonTableClause: CommonTableClause{
+				WithClause: WithClause{
 					With: "with",
-					CommonTables: []Expression{
-						CommonTable{
+					InlineTables: []Expression{
+						InlineTable{
 							Name: Identifier{Literal: "ct"},
 							As:   "as",
 							Query: SelectQuery{
@@ -1990,10 +1990,10 @@ var parseTests = []struct {
 		Input: "with ct as (select 1) delete from table1",
 		Output: []Statement{
 			DeleteQuery{
-				CommonTableClause: CommonTableClause{
+				WithClause: WithClause{
 					With: "with",
-					CommonTables: []Expression{
-						CommonTable{
+					InlineTables: []Expression{
+						InlineTable{
 							Name: Identifier{Literal: "ct"},
 							As:   "as",
 							Query: SelectQuery{

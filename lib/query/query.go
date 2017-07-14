@@ -535,8 +535,8 @@ func Select(query parser.SelectQuery) (*View, error) {
 func SelectAsSubquery(query parser.SelectQuery, parentFilter Filter) (*View, error) {
 	filter := parentFilter.Copy()
 
-	if query.CommonTableClause != nil {
-		if err := filter.CommonTables.Load(query.CommonTableClause.(parser.CommonTableClause)); err != nil {
+	if query.WithClause != nil {
+		if err := filter.InlineTables.Load(query.WithClause.(parser.WithClause)); err != nil {
 			return nil, err
 		}
 	}
@@ -700,14 +700,14 @@ func selectSetForRecursion(view *View, set parser.SelectSet, filter Filter) erro
 
 func Insert(query parser.InsertQuery) (*View, error) {
 	var filter Filter
-	if query.CommonTableClause != nil {
-		if err := filter.CommonTables.Load(query.CommonTableClause.(parser.CommonTableClause)); err != nil {
+	if query.WithClause != nil {
+		if err := filter.InlineTables.Load(query.WithClause.(parser.WithClause)); err != nil {
 			return nil, err
 		}
 	}
 
 	view := NewView()
-	err := view.LoadFromIdentifierWithCommonTables(query.Table, filter)
+	err := view.LoadFromIdentifierWithInlineTables(query.Table, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -734,8 +734,8 @@ func Insert(query parser.InsertQuery) (*View, error) {
 
 func Update(query parser.UpdateQuery) ([]*View, error) {
 	var filter Filter
-	if query.CommonTableClause != nil {
-		if err := filter.CommonTables.Load(query.CommonTableClause.(parser.CommonTableClause)); err != nil {
+	if query.WithClause != nil {
+		if err := filter.InlineTables.Load(query.WithClause.(parser.WithClause)); err != nil {
 			return nil, err
 		}
 	}
@@ -824,8 +824,8 @@ func Update(query parser.UpdateQuery) ([]*View, error) {
 
 func Delete(query parser.DeleteQuery) ([]*View, error) {
 	var filter Filter
-	if query.CommonTableClause != nil {
-		if err := filter.CommonTables.Load(query.CommonTableClause.(parser.CommonTableClause)); err != nil {
+	if query.WithClause != nil {
+		if err := filter.InlineTables.Load(query.WithClause.(parser.WithClause)); err != nil {
 			return nil, err
 		}
 	}
