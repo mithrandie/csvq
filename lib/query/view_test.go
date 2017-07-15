@@ -1102,20 +1102,22 @@ var viewSelectTests = []struct {
 		},
 		Select: parser.SelectClause{
 			Fields: []parser.Expression{
-				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}, Alias: parser.Identifier{Literal: "c2"}},
 				parser.Field{Object: parser.AllColumns{}},
 				parser.Field{Object: parser.NewInteger(1), Alias: parser.Identifier{Literal: "a"}},
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}, Alias: parser.Identifier{Literal: "c2a"}},
 			},
 		},
 		Result: &View{
 			Header: []HeaderField{
 				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{Reference: "table1", Column: "column2", Alias: "c2", FromTable: true},
 				{Reference: "table2", Column: INTERNAL_ID_COLUMN},
 				{Reference: "table2", Column: "column3", FromTable: true},
 				{Reference: "table2", Column: "column4", FromTable: true},
 				{Column: "1", Alias: "a"},
+				{Column: "", Alias: "c2a"},
 			},
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
@@ -1126,6 +1128,7 @@ var viewSelectTests = []struct {
 					parser.NewString("2"),
 					parser.NewString("str22"),
 					parser.NewInteger(1),
+					parser.NewString("str1"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
 					parser.NewInteger(1),
@@ -1135,6 +1138,7 @@ var viewSelectTests = []struct {
 					parser.NewString("3"),
 					parser.NewString("str33"),
 					parser.NewInteger(1),
+					parser.NewString("str1"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
 					parser.NewInteger(1),
@@ -1144,6 +1148,7 @@ var viewSelectTests = []struct {
 					parser.NewString("1"),
 					parser.NewString("str44"),
 					parser.NewInteger(1),
+					parser.NewString("str1"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
 					parser.NewInteger(2),
@@ -1153,9 +1158,10 @@ var viewSelectTests = []struct {
 					parser.NewString("2"),
 					parser.NewString("str22"),
 					parser.NewInteger(1),
+					parser.NewString("str2"),
 				}),
 			},
-			selectFields: []int{2, 1, 2, 4, 5, 6},
+			selectFields: []int{2, 1, 2, 4, 5, 6, 7},
 		},
 	},
 	{
@@ -1277,6 +1283,40 @@ var viewSelectTests = []struct {
 			},
 			selectFields: []int{3},
 		},
+	},
+	{
+		Name: "Select Aggregate Function Not Group Key Error",
+		View: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
+				{Reference: "table1", Column: "column1", FromTable: true},
+				{Reference: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecord(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord(2, []parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+			},
+		},
+		Select: parser.SelectClause{
+			Fields: []parser.Expression{
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+				parser.Field{
+					Object: parser.Function{
+						Name: "sum",
+						Option: parser.Option{
+							Args: []parser.Expression{parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+						},
+					},
+				},
+			},
+		},
+		Error: "field column2 is not a group key",
 	},
 	{
 		Name: "Select Analytic Function",

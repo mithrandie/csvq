@@ -1,18 +1,30 @@
 package query
 
 import (
+	"io/ioutil"
+	"strings"
 	"testing"
+
+	"golang.org/x/text/encoding/japanese"
+	"golang.org/x/text/transform"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
+func encodeToSJIS(str string) string {
+	r := transform.NewReader(strings.NewReader(str), japanese.ShiftJIS.NewDecoder())
+	bytes, _ := ioutil.ReadAll(r)
+	return string(bytes)
+}
+
 var encodeViewTests = []struct {
 	Name           string
 	View           *View
 	Format         cmd.Format
 	LineBreak      cmd.LineBreak
+	Encoding       cmd.Encoding
 	WriteDelimiter rune
 	WithoutHeader  bool
 	Result         string
@@ -162,6 +174,25 @@ var encodeViewTests = []struct {
 			"}" +
 			"]",
 	},
+	{
+		Name: "CSV Encode Character Code",
+		View: &View{
+			Header: NewHeaderWithoutId("test", []string{"c1", "c2\nsecond line", "c3"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.UNKNOWN), parser.NewBoolean(true)}),
+				NewRecordWithoutId([]parser.Primary{parser.NewInteger(-1), parser.NewTernary(ternary.FALSE), parser.NewBoolean(true)}),
+				NewRecordWithoutId([]parser.Primary{parser.NewFloat(2.0123), parser.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), parser.NewString("abcdef")}),
+				NewRecordWithoutId([]parser.Primary{parser.NewInteger(34567890), parser.NewString(" 日本語ghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), parser.NewNull()}),
+			},
+		},
+		Format:   cmd.CSV,
+		Encoding: cmd.SJIS,
+		Result: encodeToSJIS("\"c1\",\"c2\nsecond line\",\"c3\"\n" +
+			"-1,,true\n" +
+			"-1,false,true\n" +
+			"2.0123,\"2016-02-01 16:00:00.123456\",\"abcdef\"\n" +
+			"34567890,\" 日本語ghijklmnopqrstuvwxyzabcdefg\nhi\"\"jk\n\","),
+	},
 }
 
 func TestEncodeView(t *testing.T) {
@@ -173,6 +204,10 @@ func TestEncodeView(t *testing.T) {
 		flags.LineBreak = cmd.LF
 		if v.LineBreak != "" && v.LineBreak != cmd.LF {
 			flags.LineBreak = v.LineBreak
+		}
+		flags.Encoding = cmd.UTF8
+		if v.Encoding != cmd.UTF8 {
+			flags.Encoding = v.Encoding
 		}
 		flags.WithoutHeader = false
 		if v.WithoutHeader {
@@ -200,4 +235,9 @@ func TestEncodeView(t *testing.T) {
 			t.Errorf("%s, result = %q, want %q", v.Name, s, v.Result)
 		}
 	}
+
+	flags.LineBreak = cmd.LF
+	flags.Encoding = cmd.UTF8
+	flags.WithoutHeader = false
+	flags.WriteDelimiter = ','
 }

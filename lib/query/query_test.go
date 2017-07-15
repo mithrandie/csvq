@@ -3383,6 +3383,15 @@ var setFlagTests = []struct {
 		ResultStlValue: "SJIS",
 	},
 	{
+		Name: "Set LineBreak",
+		Query: parser.SetFlag{
+			Name:  "@@line_break",
+			Value: parser.NewString("CRLF"),
+		},
+		ResultFlag:     "line_break",
+		ResultStlValue: "\r\n",
+	},
+	{
 		Name: "Set Repository",
 		Query: parser.SetFlag{
 			Name:  "@@repository",
@@ -3390,6 +3399,15 @@ var setFlagTests = []struct {
 		},
 		ResultFlag:     "repository",
 		ResultStlValue: TestDir,
+	},
+	{
+		Name: "Set DatetimeFormat",
+		Query: parser.SetFlag{
+			Name:  "@@datetime_format",
+			Value: parser.NewString("%Y%m%d"),
+		},
+		ResultFlag:     "datetime_format",
+		ResultStlValue: "%Y%m%d",
 	},
 	{
 		Name: "Set NoHeader",
@@ -3462,9 +3480,17 @@ func TestSetFlag(t *testing.T) {
 			if flags.Encoding.String() != v.ResultStlValue {
 				t.Errorf("%s: encoding = %q, want %q", v.Name, flags.Encoding.String(), v.ResultStlValue)
 			}
+		case "LINE_BREAK":
+			if flags.LineBreak.Value() != v.ResultStlValue {
+				t.Errorf("%s: line-break = %q, want %q", v.Name, flags.LineBreak.Value(), v.ResultStlValue)
+			}
 		case "REPOSITORY":
 			if flags.Repository != v.ResultStlValue {
 				t.Errorf("%s: repository = %q, want %q", v.Name, flags.Repository, v.ResultStlValue)
+			}
+		case "DATETIME_FORMAT":
+			if flags.DatetimeFormat != v.ResultStlValue {
+				t.Errorf("%s: datetime-format = %q, want %q", v.Name, flags.DatetimeFormat, v.ResultStlValue)
 			}
 		case "NO-HEADER":
 			if flags.NoHeader != v.ResultBoolValue {
