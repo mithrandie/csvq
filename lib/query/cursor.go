@@ -6,34 +6,37 @@ import (
 
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
+	"strings"
 )
 
 type CursorMap map[string]*Cursor
 
 func (m CursorMap) Add(key string, query parser.SelectQuery) error {
-	if _, ok := m[key]; ok {
+	uname := strings.ToUpper(key)
+	if _, ok := m[uname]; ok {
 		return errors.New(fmt.Sprintf("cursor %s already exists", key))
 	}
-	m[key] = NewCursor(key, query)
+	m[uname] = NewCursor(key, query)
 	return nil
 }
 
 func (m CursorMap) Dispose(key string) {
-	if cur, ok := m[key]; ok {
+	uname := strings.ToUpper(key)
+	if cur, ok := m[uname]; ok {
 		cur.Close()
-		delete(m, key)
+		delete(m, uname)
 	}
 }
 
 func (m CursorMap) Open(key string) error {
-	if cur, ok := m[key]; ok {
+	if cur, ok := m[strings.ToUpper(key)]; ok {
 		return cur.Open()
 	}
 	return errors.New(fmt.Sprintf("cursor %s does not exist", key))
 }
 
 func (m CursorMap) Close(key string) error {
-	if cur, ok := m[key]; ok {
+	if cur, ok := m[strings.ToUpper(key)]; ok {
 		cur.Close()
 		return nil
 	}
@@ -41,21 +44,21 @@ func (m CursorMap) Close(key string) error {
 }
 
 func (m CursorMap) Fetch(key string, position int, number int) ([]parser.Primary, error) {
-	if cur, ok := m[key]; ok {
+	if cur, ok := m[strings.ToUpper(key)]; ok {
 		return cur.Fetch(position, number)
 	}
 	return nil, errors.New(fmt.Sprintf("cursor %s does not exist", key))
 }
 
 func (m CursorMap) IsOpen(key string) (ternary.Value, error) {
-	if cur, ok := m[key]; ok {
+	if cur, ok := m[strings.ToUpper(key)]; ok {
 		return ternary.ParseBool(cur.view != nil), nil
 	}
 	return ternary.FALSE, errors.New(fmt.Sprintf("cursor %s does not exist", key))
 }
 
 func (m CursorMap) IsInRange(key string) (ternary.Value, error) {
-	if cur, ok := m[key]; ok {
+	if cur, ok := m[strings.ToUpper(key)]; ok {
 		if cur.view == nil {
 			return ternary.FALSE, errors.New(fmt.Sprintf("cursor %s is closed", key))
 		}

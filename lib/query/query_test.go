@@ -1007,7 +1007,7 @@ func TestWhileInCursor(t *testing.T) {
 
 	for _, v := range whileInCursorTests {
 		Cursors = CursorMap{
-			"cur": &Cursor{
+			"CUR": &Cursor{
 				name:  "cur",
 				query: selectQueryForCursorTest,
 			},
@@ -1178,11 +1178,11 @@ func TestFetchCursor(t *testing.T) {
 	tf.Repository = TestDir
 
 	Cursors = CursorMap{
-		"cur": &Cursor{
+		"CUR": &Cursor{
 			name:  "cur",
 			query: selectQueryForCursorTest,
 		},
-		"cur2": &Cursor{
+		"CUR2": &Cursor{
 			name:  "cur2",
 			query: selectQueryForCursorTest,
 		},

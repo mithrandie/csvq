@@ -2447,7 +2447,7 @@ func TestFilter_Evaluate(t *testing.T) {
 	tf.Repository = TestDataDir
 
 	Cursors = CursorMap{
-		"cur": &Cursor{
+		"CUR": &Cursor{
 			name:  "cur",
 			query: selectQueryForCursorTest,
 		},
