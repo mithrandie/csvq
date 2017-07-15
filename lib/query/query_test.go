@@ -1656,7 +1656,7 @@ var selectTests = []struct {
 		Error: "field notexist does not exist",
 	},
 	{
-		Name: "Common Tables",
+		Name: "Inline Tables",
 		Query: parser.SelectQuery{
 			WithClause: parser.WithClause{
 				With: "with",
@@ -1709,7 +1709,7 @@ var selectTests = []struct {
 		},
 	},
 	{
-		Name: "Common Tables Recursion",
+		Name: "Inline Tables Recursion",
 		Query: parser.SelectQuery{
 			WithClause: parser.WithClause{
 				With: "with",
@@ -1798,7 +1798,7 @@ var selectTests = []struct {
 		},
 	},
 	{
-		Name: "Common Tables Recursion Field Length Error",
+		Name: "Inline Tables Recursion Field Length Error",
 		Query: parser.SelectQuery{
 			WithClause: parser.WithClause{
 				With: "with",
