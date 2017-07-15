@@ -57,7 +57,7 @@ var cursorMapAddTests = []struct {
 		Key:   "cur",
 		Query: selectQueryForCursorTest,
 		Result: CursorMap{
-			"cur": &Cursor{
+			"CUR": &Cursor{
 				name:  "cur",
 				query: selectQueryForCursorTest,
 			},
@@ -108,7 +108,7 @@ var cursorMapDisposeTests = []struct {
 
 func TestCursorMap_Dispose(t *testing.T) {
 	cursors := CursorMap{
-		"cur": &Cursor{
+		"CUR": &Cursor{
 			name:  "cur",
 			query: selectQueryForCursorTest,
 		},
@@ -132,7 +132,7 @@ var cursorMapOpenTests = []struct {
 		Name: "CursorMap Open",
 		Key:  "cur",
 		Result: CursorMap{
-			"cur": &Cursor{
+			"CUR": &Cursor{
 				name:  "cur",
 				query: selectQueryForCursorTest,
 				view: &View{
@@ -161,7 +161,7 @@ var cursorMapOpenTests = []struct {
 				},
 				index: -1,
 			},
-			"cur2": &Cursor{
+			"CUR2": &Cursor{
 				name:  "cur2",
 				query: selectQueryForCursorQueryErrorTest,
 			},
@@ -189,11 +189,11 @@ func TestCursorMap_Open(t *testing.T) {
 	tf.Repository = TestDir
 
 	cursors := CursorMap{
-		"cur": &Cursor{
+		"CUR": &Cursor{
 			name:  "cur",
 			query: selectQueryForCursorTest,
 		},
-		"cur2": &Cursor{
+		"CUR2": &Cursor{
 			name:  "cur2",
 			query: selectQueryForCursorQueryErrorTest,
 		},
@@ -229,7 +229,7 @@ var cursorMapCloseTests = []struct {
 		Name: "CursorMap Close",
 		Key:  "cur",
 		Result: CursorMap{
-			"cur": &Cursor{
+			"CUR": &Cursor{
 				name:  "cur",
 				query: selectQueryForCursorTest,
 			},
@@ -247,7 +247,7 @@ func TestCursorMap_Close(t *testing.T) {
 	tf.Repository = TestDir
 
 	cursors := CursorMap{
-		"cur": &Cursor{
+		"CUR": &Cursor{
 			name:  "cur",
 			query: selectQueryForCursorTest,
 		},
@@ -395,11 +395,11 @@ func TestCursorMap_Fetch(t *testing.T) {
 	tf.Repository = TestDir
 
 	cursors := CursorMap{
-		"cur": &Cursor{
+		"CUR": &Cursor{
 			name:  "cur",
 			query: selectQueryForCursorTest,
 		},
-		"cur2": &Cursor{
+		"CUR2": &Cursor{
 			name:  "cur2",
 			query: selectQueryForCursorTest,
 		},
@@ -454,11 +454,11 @@ func TestCursorMap_IsOpen(t *testing.T) {
 	tf.Repository = TestDir
 
 	cursors := CursorMap{
-		"cur": &Cursor{
+		"CUR": &Cursor{
 			name:  "cur",
 			query: selectQueryForCursorTest,
 		},
-		"cur2": &Cursor{
+		"CUR2": &Cursor{
 			name:  "cur2",
 			query: selectQueryForCursorTest,
 		},
@@ -526,15 +526,15 @@ func TestCursorMap_IsInRange(t *testing.T) {
 	tf.Repository = TestDir
 
 	cursors := CursorMap{
-		"cur": &Cursor{
+		"CUR": &Cursor{
 			name:  "cur",
 			query: selectQueryForCursorTest,
 		},
-		"cur2": &Cursor{
+		"CUR2": &Cursor{
 			name:  "cur2",
 			query: selectQueryForCursorTest,
 		},
-		"cur3": &Cursor{
+		"CUR3": &Cursor{
 			name:  "cur3",
 			query: selectQueryForCursorTest,
 		},
@@ -545,7 +545,7 @@ func TestCursorMap_IsInRange(t *testing.T) {
 
 	for _, v := range cursorMapIsInRangeTests {
 		if 0 != v.Index {
-			cursors["cur2"].index = v.Index
+			cursors["CUR2"].index = v.Index
 		}
 		result, err := cursors.IsInRange(v.Key)
 		if err != nil {

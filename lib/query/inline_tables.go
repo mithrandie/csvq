@@ -31,6 +31,7 @@ func (it InlineTables) Set(inlineTable parser.InlineTable) error {
 		return err
 	}
 
+	view.FileInfo = nil
 	it[uname] = view
 	return nil
 }
@@ -63,12 +64,6 @@ func (it InlineTables) Load(clause parser.WithClause) error {
 	for _, v := range clause.InlineTables {
 		inlineTable := v.(parser.InlineTable)
 		err := it.Set(inlineTable)
-		if err != nil {
-			return err
-		}
-
-		view, _ := it.Get(inlineTable.Name.Literal)
-		err = view.UpdateHeader(inlineTable.Name.Literal, inlineTable.Columns)
 		if err != nil {
 			return err
 		}

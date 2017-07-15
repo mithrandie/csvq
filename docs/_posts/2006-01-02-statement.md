@@ -49,7 +49,7 @@ Identifier
 
   Notwithstanding above naming restriction, you can use most character strings as a identifier by enclosing in back quotes.
   
-  Identifiers represent tables, columns or cursors. 
+  Identifiers represent tables, columns or cursors. These character cases are insensitive.
   
 String
 : A string is a character string enclosed in single quotes or double quotes.
