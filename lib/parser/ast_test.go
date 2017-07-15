@@ -1259,6 +1259,17 @@ func TestField_Name(t *testing.T) {
 	if e.Name() != expect {
 		t.Errorf("name = %q, want %q for %#v", e.Name(), expect, e)
 	}
+
+	e = Field{
+		Object: FieldReference{
+			View:   Identifier{Literal: "tbl"},
+			Column: Identifier{Literal: "column1"},
+		},
+	}
+	expect = "column1"
+	if e.Name() != expect {
+		t.Errorf("name = %q, want %q for %#v", e.Name(), expect, e)
+	}
 }
 
 func TestAllColumns_String(t *testing.T) {

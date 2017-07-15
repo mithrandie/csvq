@@ -648,9 +648,16 @@ func (view *View) Select(clause parser.SelectClause) error {
 	}
 
 	fields := parseAllColumns(view, clause.Fields)
+
+	origFieldLen := view.FieldLen()
 	err := evalFields(view, fields)
 	if err != nil {
 		if _, ok := err.(*NotGroupedError); ok {
+			view.Header = view.Header[:origFieldLen]
+			for i := range view.Records {
+				view.Records[i] = view.Records[i][:origFieldLen]
+			}
+
 			view.group(nil)
 			err = evalFields(view, fields)
 			if err != nil {
@@ -746,10 +753,12 @@ func (view *View) evalColumn(obj parser.Expression, column string, alias string)
 	switch obj.(type) {
 	case parser.FieldReference:
 		idx, err = view.FieldIndex(obj.(parser.FieldReference))
-		if err == nil {
-			if view.isGrouped && !view.Header[idx].IsGroupKey {
-				err = errors.New(fmt.Sprintf("field %s is not a group key", obj))
-			}
+		if err != nil {
+			return
+		}
+		if view.isGrouped && view.Header[idx].FromTable && !view.Header[idx].IsGroupKey {
+			err = errors.New(fmt.Sprintf("field %s is not a group key", obj))
+			return
 		}
 	default:
 		idx, err = view.Header.ContainsObject(obj)
@@ -777,6 +786,17 @@ func (view *View) evalColumn(obj parser.Expression, column string, alias string)
 			view.Header, idx = AddHeaderField(view.Header, column, alias)
 		}
 	}
+	if 0 < len(alias) && !strings.EqualFold(view.Header[idx].Column, alias) && !strings.EqualFold(view.Header[idx].Alias, alias) {
+		if len(view.Header[idx].Alias) < 1 {
+			view.Header[idx].Alias = alias
+		} else {
+			for i := range view.Records {
+				view.Records[i] = append(view.Records[i], NewCell(view.Records[i][idx].Primary()))
+			}
+			view.Header, idx = AddHeaderField(view.Header, "", alias)
+		}
+	}
+
 	return
 }
 

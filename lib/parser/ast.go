@@ -842,6 +842,9 @@ func (f *Field) Name() string {
 	if dt, ok := f.Object.(Datetime); ok {
 		return dt.literal
 	}
+	if fr, ok := f.Object.(FieldReference); ok {
+		return fr.Column.Literal
+	}
 	return f.Object.String()
 }
 
