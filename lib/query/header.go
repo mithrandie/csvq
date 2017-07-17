@@ -136,23 +136,16 @@ func (h Header) Contains(fieldRef parser.FieldReference) (int, error) {
 		}
 
 		if -1 < idx {
-			return -1, h.newError(fieldRef, ErrFieldAmbiguous)
+			return -1, NewFieldAmbiguousError(fieldRef)
 		}
 		idx = i
 	}
 
 	if idx < 0 {
-		return -1, h.newError(fieldRef, ErrFieldNotExist)
+		return -1, NewFieldNotExistError(fieldRef)
 	}
 
 	return idx, nil
-}
-
-func (h Header) newError(field parser.FieldReference, err error) error {
-	return &IdentificationError{
-		Field: field,
-		Err:   err,
-	}
 }
 
 func (h Header) Copy() Header {

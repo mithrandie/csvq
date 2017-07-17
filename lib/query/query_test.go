@@ -10,7 +10,6 @@ import (
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
-	"github.com/mithrandie/csvq/lib/ternary"
 )
 
 var executeTests = []struct {
@@ -33,7 +32,7 @@ var executeTests = []struct {
 	{
 		Name:  "Insert Query",
 		Input: "insert into insert_query values (4, 'str4'), (5, 'str5')",
-		Output: fmt.Sprintf("%d records inserted on %q\n", 2, GetTestFilePath("insert_query.csv")) +
+		Output: fmt.Sprintf("%d records inserted on %q.\n", 2, GetTestFilePath("insert_query.csv")) +
 			fmt.Sprintf("Commit: file %q is updated.\n", GetTestFilePath("insert_query.csv")),
 		UpdateFile: GetTestFilePath("insert_query.csv"),
 		Content: "\"column1\",\"column2\"\n" +
@@ -46,7 +45,7 @@ var executeTests = []struct {
 	{
 		Name:  "Update Query",
 		Input: "update update_query set column2 = 'update' where column1 = 2",
-		Output: fmt.Sprintf("%d record updated on %q\n", 1, GetTestFilePath("update_query.csv")) +
+		Output: fmt.Sprintf("%d record updated on %q.\n", 1, GetTestFilePath("update_query.csv")) +
 			fmt.Sprintf("Commit: file %q is updated.\n", GetTestFilePath("update_query.csv")),
 		UpdateFile: GetTestFilePath("update_query.csv"),
 		Content: "\"column1\",\"column2\"\n" +
@@ -57,12 +56,12 @@ var executeTests = []struct {
 	{
 		Name:   "Update Query No Record Updated",
 		Input:  "update update_query set column2 = 'update' where false",
-		Output: fmt.Sprintf("no record updated on %q\n", GetTestFilePath("update_query.csv")),
+		Output: fmt.Sprintf("no record updated on %q.\n", GetTestFilePath("update_query.csv")),
 	},
 	{
 		Name:  "Delete Query",
 		Input: "delete from delete_query where column1 = 2",
-		Output: fmt.Sprintf("%d record deleted on %q\n", 1, GetTestFilePath("delete_query.csv")) +
+		Output: fmt.Sprintf("%d record deleted on %q.\n", 1, GetTestFilePath("delete_query.csv")) +
 			fmt.Sprintf("Commit: file %q is updated.\n", GetTestFilePath("delete_query.csv")),
 		UpdateFile: GetTestFilePath("delete_query.csv"),
 		Content: "\"column1\",\"column2\"\n" +
@@ -72,12 +71,12 @@ var executeTests = []struct {
 	{
 		Name:   "Delete Query No Record Deleted",
 		Input:  "delete from delete_query where false",
-		Output: fmt.Sprintf("no record deleted on %q\n", GetTestFilePath("delete_query.csv")),
+		Output: fmt.Sprintf("no record deleted on %q.\n", GetTestFilePath("delete_query.csv")),
 	},
 	{
 		Name:  "Create Table",
 		Input: "create table `create_table.csv` (column1, column2)",
-		Output: fmt.Sprintf("file %q is created\n", GetTestFilePath("create_table.csv")) +
+		Output: fmt.Sprintf("file %q is created.\n", GetTestFilePath("create_table.csv")) +
 			fmt.Sprintf("Commit: file %q is created.\n", GetTestFilePath("create_table.csv")),
 		UpdateFile: GetTestFilePath("create_table.csv"),
 		Content:    "\"column1\",\"column2\"\n",
@@ -85,7 +84,7 @@ var executeTests = []struct {
 	{
 		Name:  "Add Columns",
 		Input: "alter table add_columns add column3",
-		Output: fmt.Sprintf("%d field added on %q\n", 1, GetTestFilePath("add_columns.csv")) +
+		Output: fmt.Sprintf("%d field added on %q.\n", 1, GetTestFilePath("add_columns.csv")) +
 			fmt.Sprintf("Commit: file %q is updated.\n", GetTestFilePath("add_columns.csv")),
 		UpdateFile: GetTestFilePath("add_columns.csv"),
 		Content: "\"column1\",\"column2\",\"column3\"\n" +
@@ -96,7 +95,7 @@ var executeTests = []struct {
 	{
 		Name:  "Drop Columns",
 		Input: "alter table drop_columns drop column1",
-		Output: fmt.Sprintf("%d field dropped on %q\n", 1, GetTestFilePath("drop_columns.csv")) +
+		Output: fmt.Sprintf("%d field dropped on %q.\n", 1, GetTestFilePath("drop_columns.csv")) +
 			fmt.Sprintf("Commit: file %q is updated.\n", GetTestFilePath("drop_columns.csv")),
 		UpdateFile: GetTestFilePath("drop_columns.csv"),
 		Content: "\"column2\"\n" +
@@ -107,7 +106,7 @@ var executeTests = []struct {
 	{
 		Name:  "Rename Column",
 		Input: "alter table rename_column rename column1 to newcolumn",
-		Output: fmt.Sprintf("%d field renamed on %q\n", 1, GetTestFilePath("rename_column.csv")) +
+		Output: fmt.Sprintf("%d field renamed on %q.\n", 1, GetTestFilePath("rename_column.csv")) +
 			fmt.Sprintf("Commit: file %q is updated.\n", GetTestFilePath("rename_column.csv")),
 		UpdateFile: GetTestFilePath("rename_column.csv"),
 		Content: "\"newcolumn\",\"column2\"\n" +
@@ -158,885 +157,6 @@ func TestExecute(t *testing.T) {
 			if string(buf) != v.Content {
 				t.Errorf("%s: content = %q, want %q", v.Name, string(buf), v.Content)
 			}
-		}
-	}
-}
-
-var executeStatementTests = []struct {
-	Input  parser.Statement
-	Result []Result
-	Error  string
-}{
-	{
-		Input: parser.SetFlag{
-			Name:  "@@invalid",
-			Value: parser.NewString("\t"),
-		},
-		Error: "invalid flag name: @@invalid",
-	},
-	{
-		Input: parser.VariableDeclaration{
-			Assignments: []parser.Expression{
-				parser.VariableAssignment{
-					Name: "@var1",
-				},
-			},
-		},
-		Result: []Result{},
-	},
-	{
-		Input: parser.VariableSubstitution{
-			Variable: parser.Variable{Name: "@var1"},
-			Value:    parser.NewInteger(1),
-		},
-		Result: []Result{},
-	},
-	{
-		Input: parser.SelectQuery{
-			SelectEntity: parser.SelectEntity{
-				SelectClause: parser.SelectClause{
-					Fields: []parser.Expression{
-						parser.Field{
-							Object: parser.Variable{Name: "@var1"},
-							Alias:  parser.Identifier{Literal: "var1"},
-						},
-					},
-				},
-			},
-		},
-		Result: []Result{
-			{
-				Type: SELECT,
-				View: &View{
-					Header: []HeaderField{
-						{
-							Column:    "@var1",
-							Alias:     "var1",
-							FromTable: true,
-						},
-					},
-					Records: []Record{
-						{
-							NewCell(parser.NewInteger(1)),
-						},
-					},
-				},
-			},
-		},
-	},
-	{
-		Input: parser.VariableDeclaration{
-			Assignments: []parser.Expression{
-				parser.VariableAssignment{
-					Name: "@var1",
-				},
-			},
-		},
-		Error: "variable @var1 is redeclared",
-	},
-	{
-		Input: parser.VariableSubstitution{
-			Variable: parser.Variable{Name: "@var2"},
-			Value:    parser.NewInteger(1),
-		},
-		Error: "variable @var2 is undefined",
-	},
-	{
-		Input: parser.InsertQuery{
-			Table: parser.Identifier{Literal: "table1"},
-			Fields: []parser.Expression{
-				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-			},
-			ValuesList: []parser.Expression{
-				parser.RowValue{
-					Value: parser.ValueList{
-						Values: []parser.Expression{
-							parser.NewInteger(4),
-							parser.NewString("str4"),
-						},
-					},
-				},
-				parser.RowValue{
-					Value: parser.ValueList{
-						Values: []parser.Expression{
-							parser.NewInteger(5),
-							parser.NewString("str5"),
-						},
-					},
-				},
-			},
-		},
-		Result: []Result{
-			{
-				Type: INSERT,
-				FileInfo: &FileInfo{
-					Path:      GetTestFilePath("table1.csv"),
-					Delimiter: ',',
-					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
-				},
-				OperatedCount: 2,
-				Log:           fmt.Sprintf("2 records inserted on %q", GetTestFilePath("table1.csv")),
-			},
-		},
-	},
-	{
-		Input: parser.UpdateQuery{
-			Tables: []parser.Expression{
-				parser.Table{Object: parser.Identifier{Literal: "table1"}},
-			},
-			SetList: []parser.Expression{
-				parser.UpdateSet{
-					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-					Value: parser.NewString("update"),
-				},
-			},
-			WhereClause: parser.WhereClause{
-				Filter: parser.Comparison{
-					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-					RHS:      parser.NewInteger(2),
-					Operator: "=",
-				},
-			},
-		},
-		Result: []Result{
-			{
-				Type: UPDATE,
-				FileInfo: &FileInfo{
-					Path:      GetTestFilePath("table1.csv"),
-					Delimiter: ',',
-					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
-				},
-				OperatedCount: 1,
-				Log:           fmt.Sprintf("1 record updated on %q", GetTestFilePath("table1.csv")),
-			},
-		},
-	},
-	{
-		Input: parser.DeleteQuery{
-			FromClause: parser.FromClause{
-				Tables: []parser.Expression{
-					parser.Table{
-						Object: parser.Identifier{Literal: "table1"},
-					},
-				},
-			},
-			WhereClause: parser.WhereClause{
-				Filter: parser.Comparison{
-					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-					RHS:      parser.NewInteger(2),
-					Operator: "=",
-				},
-			},
-		},
-		Result: []Result{
-			{
-				Type: DELETE,
-				FileInfo: &FileInfo{
-					Path:      GetTestFilePath("table1.csv"),
-					Delimiter: ',',
-					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
-				},
-				OperatedCount: 1,
-				Log:           fmt.Sprintf("1 record deleted on %q", GetTestFilePath("table1.csv")),
-			},
-		},
-	},
-	{
-		Input: parser.CreateTable{
-			Table: parser.Identifier{Literal: "newtable.csv"},
-			Fields: []parser.Expression{
-				parser.Identifier{Literal: "column1"},
-				parser.Identifier{Literal: "column2"},
-			},
-		},
-		Result: []Result{
-			{
-				Type: CREATE_TABLE,
-				FileInfo: &FileInfo{
-					Path:      GetTestFilePath("newtable.csv"),
-					Delimiter: ',',
-					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
-				},
-				Log: fmt.Sprintf("file %q is created", GetTestFilePath("newtable.csv")),
-			},
-		},
-	},
-	{
-		Input: parser.AddColumns{
-			Table: parser.Identifier{Literal: "table1.csv"},
-			Columns: []parser.Expression{
-				parser.ColumnDefault{
-					Column: parser.Identifier{Literal: "column3"},
-				},
-			},
-		},
-		Result: []Result{
-			{
-				Type: ADD_COLUMNS,
-				FileInfo: &FileInfo{
-					Path:      GetTestFilePath("table1.csv"),
-					Delimiter: ',',
-					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
-				},
-				OperatedCount: 1,
-				Log:           fmt.Sprintf("1 field added on %q", GetTestFilePath("table1.csv")),
-			},
-		},
-	},
-	{
-		Input: parser.DropColumns{
-			Table: parser.Identifier{Literal: "table1"},
-			Columns: []parser.Expression{
-				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-			},
-		},
-		Result: []Result{
-			{
-				Type: DROP_COLUMNS,
-				FileInfo: &FileInfo{
-					Path:      GetTestFilePath("table1.csv"),
-					Delimiter: ',',
-					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
-				},
-				OperatedCount: 1,
-				Log:           fmt.Sprintf("1 field dropped on %q", GetTestFilePath("table1.csv")),
-			},
-		},
-	},
-	{
-		Input: parser.RenameColumn{
-			Table: parser.Identifier{Literal: "table1"},
-			Old:   parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-			New:   parser.Identifier{Literal: "newcolumn"},
-		},
-		Result: []Result{
-			{
-				Type: RENAME_COLUMN,
-				FileInfo: &FileInfo{
-					Path:      GetTestFilePath("table1.csv"),
-					Delimiter: ',',
-					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
-				},
-				OperatedCount: 1,
-				Log:           fmt.Sprintf("1 field renamed on %q", GetTestFilePath("table1.csv")),
-			},
-		},
-	},
-	{
-		Input: parser.Print{
-			Value: parser.NewInteger(12345),
-		},
-		Result: []Result{
-			{
-				Type: PRINT,
-				Log:  "12345",
-			},
-		},
-	},
-}
-
-func TestExecuteStatement(t *testing.T) {
-	GlobalVars = map[string]parser.Primary{}
-
-	tf := cmd.GetFlags()
-	tf.Repository = TestDir
-
-	for _, v := range executeStatementTests {
-		ViewCache.Clear()
-		ResultSet = []Result{}
-
-		_, _, err := ExecuteStatement(v.Input)
-		if err != nil {
-			if len(v.Error) < 1 {
-				t.Errorf("unexpected error %q for %q", err, v.Input)
-			} else if err.Error() != v.Error {
-				t.Errorf("error %q, want error %q for %q", err, v.Error, v.Input)
-			}
-			continue
-		}
-		if 0 < len(v.Error) {
-			t.Errorf("no error, want error %q for %q", v.Error, v.Input)
-			continue
-		}
-
-		if !reflect.DeepEqual(ResultSet, v.Result) {
-			t.Errorf("results = %q, want %q for %q", ResultSet, v.Result, v.Input)
-		}
-	}
-}
-
-var ifStmtTests = []struct {
-	Name       string
-	Stmt       parser.If
-	ResultFlow StatementFlow
-	Result     string
-	Error      string
-}{
-	{
-		Name: "If Statement",
-		Stmt: parser.If{
-			Condition: parser.NewTernary(ternary.TRUE),
-			Statements: []parser.Statement{
-				parser.Print{Value: parser.NewString("1")},
-				parser.TransactionControl{Token: parser.COMMIT},
-			},
-		},
-		ResultFlow: TERMINATE,
-		Result:     "'1'\n",
-	},
-	{
-		Name: "If Statement Execute Nothing",
-		Stmt: parser.If{
-			Condition: parser.NewTernary(ternary.FALSE),
-			Statements: []parser.Statement{
-				parser.Print{Value: parser.NewString("1")},
-				parser.TransactionControl{Token: parser.COMMIT},
-			},
-		},
-		ResultFlow: TERMINATE,
-		Result:     "",
-	},
-	{
-		Name: "If Statement Execute ElseIf",
-		Stmt: parser.If{
-			Condition: parser.NewTernary(ternary.FALSE),
-			Statements: []parser.Statement{
-				parser.Print{Value: parser.NewString("1")},
-				parser.TransactionControl{Token: parser.COMMIT},
-			},
-			ElseIf: []parser.ProcExpr{
-				parser.ElseIf{
-					Condition: parser.NewTernary(ternary.TRUE),
-					Statements: []parser.Statement{
-						parser.Print{Value: parser.NewString("2")},
-						parser.TransactionControl{Token: parser.COMMIT},
-					},
-				},
-				parser.ElseIf{
-					Condition: parser.NewTernary(ternary.FALSE),
-					Statements: []parser.Statement{
-						parser.Print{Value: parser.NewString("3")},
-						parser.TransactionControl{Token: parser.COMMIT},
-					},
-				},
-			},
-			Else: parser.Else{
-				Statements: []parser.Statement{
-					parser.Print{Value: parser.NewString("4")},
-					parser.TransactionControl{Token: parser.COMMIT},
-				},
-			},
-		},
-		ResultFlow: TERMINATE,
-		Result:     "'2'\n",
-	},
-	{
-		Name: "If Statement Execute Else",
-		Stmt: parser.If{
-			Condition: parser.NewTernary(ternary.FALSE),
-			Statements: []parser.Statement{
-				parser.Print{Value: parser.NewString("1")},
-				parser.TransactionControl{Token: parser.COMMIT},
-			},
-			ElseIf: []parser.ProcExpr{
-				parser.ElseIf{
-					Condition: parser.NewTernary(ternary.FALSE),
-					Statements: []parser.Statement{
-						parser.Print{Value: parser.NewString("2")},
-						parser.TransactionControl{Token: parser.COMMIT},
-					},
-				},
-				parser.ElseIf{
-					Condition: parser.NewTernary(ternary.FALSE),
-					Statements: []parser.Statement{
-						parser.Print{Value: parser.NewString("3")},
-						parser.TransactionControl{Token: parser.COMMIT},
-					},
-				},
-			},
-			Else: parser.Else{
-				Statements: []parser.Statement{
-					parser.Print{Value: parser.NewString("4")},
-					parser.TransactionControl{Token: parser.COMMIT},
-				},
-			},
-		},
-		ResultFlow: TERMINATE,
-		Result:     "'4'\n",
-	},
-	{
-		Name: "If Statement Filter Error",
-		Stmt: parser.If{
-			Condition: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-			Statements: []parser.Statement{
-				parser.Print{Value: parser.NewString("1")},
-				parser.TransactionControl{Token: parser.COMMIT},
-			},
-		},
-		Error: "field notexist does not exist",
-	},
-}
-
-func TestIfStmt(t *testing.T) {
-	for _, v := range ifStmtTests {
-		Rollback()
-
-		flow, result, err := IfStmt(v.Stmt)
-		if err != nil {
-			if len(v.Error) < 1 {
-				t.Errorf("%s: unexpected error %q", v.Name, err)
-			} else if err.Error() != v.Error {
-				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
-			}
-			continue
-		}
-		if 0 < len(v.Error) {
-			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
-			continue
-		}
-		if flow != v.ResultFlow {
-			t.Errorf("%s: result flow = %q, want %q", v.Name, flow, v.ResultFlow)
-		}
-		if result != v.Result {
-			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
-		}
-	}
-}
-
-var whileTests = []struct {
-	Name       string
-	Stmt       parser.While
-	ResultFlow StatementFlow
-	Result     string
-	Error      string
-}{
-	{
-		Name: "While Statement",
-		Stmt: parser.While{
-			Condition: parser.Comparison{
-				LHS:      parser.Variable{Name: "@while_test"},
-				RHS:      parser.NewInteger(3),
-				Operator: "<",
-			},
-			Statements: []parser.Statement{
-				parser.VariableSubstitution{
-					Variable: parser.Variable{Name: "@while_test"},
-					Value: parser.Arithmetic{
-						LHS:      parser.Variable{Name: "@while_test"},
-						RHS:      parser.NewInteger(1),
-						Operator: '+',
-					},
-				},
-				parser.Print{Value: parser.Variable{Name: "@while_test"}},
-				parser.TransactionControl{Token: parser.COMMIT},
-			},
-		},
-		ResultFlow: TERMINATE,
-		Result:     "1\n2\n3\n",
-	},
-	{
-		Name: "While Statement Continue",
-		Stmt: parser.While{
-			Condition: parser.Comparison{
-				LHS:      parser.Variable{Name: "@while_test_count"},
-				RHS:      parser.NewInteger(3),
-				Operator: "<",
-			},
-			Statements: []parser.Statement{
-				parser.VariableSubstitution{
-					Variable: parser.Variable{Name: "@while_test_count"},
-					Value: parser.Arithmetic{
-						LHS:      parser.Variable{Name: "@while_test_count"},
-						RHS:      parser.NewInteger(1),
-						Operator: '+',
-					},
-				},
-				parser.VariableSubstitution{
-					Variable: parser.Variable{Name: "@while_test"},
-					Value: parser.Arithmetic{
-						LHS:      parser.Variable{Name: "@while_test"},
-						RHS:      parser.NewInteger(1),
-						Operator: '+',
-					},
-				},
-				parser.If{
-					Condition: parser.Comparison{
-						LHS:      parser.Variable{Name: "@while_test_count"},
-						RHS:      parser.NewInteger(2),
-						Operator: "=",
-					},
-					Statements: []parser.Statement{
-						parser.FlowControl{Token: parser.CONTINUE},
-					},
-				},
-				parser.Print{Value: parser.Variable{Name: "@while_test"}},
-				parser.TransactionControl{Token: parser.COMMIT},
-			},
-		},
-		ResultFlow: TERMINATE,
-		Result:     "1\n3\n",
-	},
-	{
-		Name: "While Statement Break",
-		Stmt: parser.While{
-			Condition: parser.Comparison{
-				LHS:      parser.Variable{Name: "@while_test_count"},
-				RHS:      parser.NewInteger(3),
-				Operator: "<",
-			},
-			Statements: []parser.Statement{
-				parser.VariableSubstitution{
-					Variable: parser.Variable{Name: "@while_test_count"},
-					Value: parser.Arithmetic{
-						LHS:      parser.Variable{Name: "@while_test_count"},
-						RHS:      parser.NewInteger(1),
-						Operator: '+',
-					},
-				},
-				parser.VariableSubstitution{
-					Variable: parser.Variable{Name: "@while_test"},
-					Value: parser.Arithmetic{
-						LHS:      parser.Variable{Name: "@while_test"},
-						RHS:      parser.NewInteger(1),
-						Operator: '+',
-					},
-				},
-				parser.If{
-					Condition: parser.Comparison{
-						LHS:      parser.Variable{Name: "@while_test_count"},
-						RHS:      parser.NewInteger(2),
-						Operator: "=",
-					},
-					Statements: []parser.Statement{
-						parser.FlowControl{Token: parser.BREAK},
-					},
-				},
-				parser.Print{Value: parser.Variable{Name: "@while_test"}},
-				parser.TransactionControl{Token: parser.COMMIT},
-			},
-		},
-		ResultFlow: TERMINATE,
-		Result:     "1\n",
-	},
-	{
-		Name: "While Statement Exit",
-		Stmt: parser.While{
-			Condition: parser.Comparison{
-				LHS:      parser.Variable{Name: "@while_test_count"},
-				RHS:      parser.NewInteger(3),
-				Operator: "<",
-			},
-			Statements: []parser.Statement{
-				parser.VariableSubstitution{
-					Variable: parser.Variable{Name: "@while_test_count"},
-					Value: parser.Arithmetic{
-						LHS:      parser.Variable{Name: "@while_test_count"},
-						RHS:      parser.NewInteger(1),
-						Operator: '+',
-					},
-				},
-				parser.VariableSubstitution{
-					Variable: parser.Variable{Name: "@while_test"},
-					Value: parser.Arithmetic{
-						LHS:      parser.Variable{Name: "@while_test"},
-						RHS:      parser.NewInteger(1),
-						Operator: '+',
-					},
-				},
-				parser.If{
-					Condition: parser.Comparison{
-						LHS:      parser.Variable{Name: "@while_test_count"},
-						RHS:      parser.NewInteger(2),
-						Operator: "=",
-					},
-					Statements: []parser.Statement{
-						parser.FlowControl{Token: parser.EXIT},
-					},
-				},
-				parser.Print{Value: parser.Variable{Name: "@while_test"}},
-				parser.TransactionControl{Token: parser.COMMIT},
-			},
-		},
-		ResultFlow: EXIT,
-		Result:     "1\n",
-	},
-	{
-		Name: "While Statement Filter Error",
-		Stmt: parser.While{
-			Condition: parser.Comparison{
-				LHS:      parser.Variable{Name: "@while_test"},
-				RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-				Operator: "<",
-			},
-			Statements: []parser.Statement{
-				parser.VariableSubstitution{
-					Variable: parser.Variable{Name: "@while_test"},
-					Value: parser.Arithmetic{
-						LHS:      parser.Variable{Name: "@while_test"},
-						RHS:      parser.NewInteger(1),
-						Operator: '+',
-					},
-				},
-				parser.Print{Value: parser.Variable{Name: "@while_test"}},
-				parser.TransactionControl{Token: parser.COMMIT},
-			},
-		},
-		Error: "field notexist does not exist",
-	},
-	{
-		Name: "While Statement Execution Error",
-		Stmt: parser.While{
-			Condition: parser.Comparison{
-				LHS:      parser.Variable{Name: "@while_test"},
-				RHS:      parser.NewInteger(3),
-				Operator: "<",
-			},
-			Statements: []parser.Statement{
-				parser.VariableSubstitution{
-					Variable: parser.Variable{Name: "@while_test"},
-					Value: parser.Arithmetic{
-						LHS:      parser.Variable{Name: "@while_test"},
-						RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-						Operator: '+',
-					},
-				},
-				parser.Print{Value: parser.Variable{Name: "@while_test"}},
-				parser.TransactionControl{Token: parser.COMMIT},
-			},
-		},
-		Error: "field notexist does not exist",
-	},
-}
-
-func TestWhile(t *testing.T) {
-	for _, v := range whileTests {
-		Rollback()
-		if _, err := GlobalVars.Get("@while_test"); err != nil {
-			GlobalVars.Add("@while_test", parser.NewInteger(0))
-		}
-		GlobalVars.Set("@while_test", parser.NewInteger(0))
-
-		if _, err := GlobalVars.Get("@while_test_count"); err != nil {
-			GlobalVars.Add("@while_test_count", parser.NewInteger(0))
-		}
-		GlobalVars.Set("@while_test_count", parser.NewInteger(0))
-
-		flow, result, err := While(v.Stmt)
-		if err != nil {
-			if len(v.Error) < 1 {
-				t.Errorf("%s: unexpected error %q", v.Name, err)
-			} else if err.Error() != v.Error {
-				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
-			}
-			continue
-		}
-		if 0 < len(v.Error) {
-			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
-			continue
-		}
-		if flow != v.ResultFlow {
-			t.Errorf("%s: result flow = %q, want %q", v.Name, flow, v.ResultFlow)
-		}
-		if result != v.Result {
-			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
-		}
-	}
-}
-
-var whileInCursorTests = []struct {
-	Name       string
-	Stmt       parser.WhileInCursor
-	ResultFlow StatementFlow
-	Result     string
-	Error      string
-}{
-	{
-		Name: "While In Cursor",
-		Stmt: parser.WhileInCursor{
-			Variables: []parser.Variable{
-				{Name: "@var1"},
-				{Name: "@var2"},
-			},
-			Cursor: parser.Identifier{Literal: "cur"},
-			Statements: []parser.Statement{
-				parser.Print{Value: parser.Variable{Name: "@var1"}},
-				parser.TransactionControl{Token: parser.COMMIT},
-			},
-		},
-		ResultFlow: TERMINATE,
-		Result:     "'1'\n'2'\n'3'\n",
-	},
-	{
-		Name: "While In Cursor Continue",
-		Stmt: parser.WhileInCursor{
-			Variables: []parser.Variable{
-				{Name: "@var1"},
-				{Name: "@var2"},
-			},
-			Cursor: parser.Identifier{Literal: "cur"},
-			Statements: []parser.Statement{
-				parser.If{
-					Condition: parser.Comparison{
-						LHS:      parser.Variable{Name: "@var1"},
-						RHS:      parser.NewInteger(2),
-						Operator: "=",
-					},
-					Statements: []parser.Statement{
-						parser.FlowControl{Token: parser.CONTINUE},
-					},
-				},
-				parser.Print{Value: parser.Variable{Name: "@var1"}},
-				parser.TransactionControl{Token: parser.COMMIT},
-			},
-		},
-		ResultFlow: TERMINATE,
-		Result:     "'1'\n'3'\n",
-	},
-	{
-		Name: "While In Cursor Break",
-		Stmt: parser.WhileInCursor{
-			Variables: []parser.Variable{
-				{Name: "@var1"},
-				{Name: "@var2"},
-			},
-			Cursor: parser.Identifier{Literal: "cur"},
-			Statements: []parser.Statement{
-				parser.If{
-					Condition: parser.Comparison{
-						LHS:      parser.Variable{Name: "@var1"},
-						RHS:      parser.NewInteger(2),
-						Operator: "=",
-					},
-					Statements: []parser.Statement{
-						parser.FlowControl{Token: parser.BREAK},
-					},
-				},
-				parser.Print{Value: parser.Variable{Name: "@var1"}},
-				parser.TransactionControl{Token: parser.COMMIT},
-			},
-		},
-		ResultFlow: TERMINATE,
-		Result:     "'1'\n",
-	},
-	{
-		Name: "While In Cursor Exit",
-		Stmt: parser.WhileInCursor{
-			Variables: []parser.Variable{
-				{Name: "@var1"},
-				{Name: "@var2"},
-			},
-			Cursor: parser.Identifier{Literal: "cur"},
-			Statements: []parser.Statement{
-				parser.If{
-					Condition: parser.Comparison{
-						LHS:      parser.Variable{Name: "@var1"},
-						RHS:      parser.NewInteger(2),
-						Operator: "=",
-					},
-					Statements: []parser.Statement{
-						parser.FlowControl{Token: parser.EXIT},
-					},
-				},
-				parser.Print{Value: parser.Variable{Name: "@var1"}},
-				parser.TransactionControl{Token: parser.COMMIT},
-			},
-		},
-		ResultFlow: EXIT,
-		Result:     "'1'\n",
-	},
-	{
-		Name: "While In Cursor Fetch Error",
-		Stmt: parser.WhileInCursor{
-			Variables: []parser.Variable{
-				{Name: "@var1"},
-				{Name: "@var3"},
-			},
-			Cursor: parser.Identifier{Literal: "cur"},
-			Statements: []parser.Statement{
-				parser.Print{Value: parser.Variable{Name: "@var1"}},
-				parser.TransactionControl{Token: parser.COMMIT},
-			},
-		},
-		Error: "variable @var3 is undefined",
-	},
-	{
-		Name: "While In Cursor Statement Execution Error",
-		Stmt: parser.WhileInCursor{
-			Variables: []parser.Variable{
-				{Name: "@var1"},
-				{Name: "@var2"},
-			},
-			Cursor: parser.Identifier{Literal: "cur"},
-			Statements: []parser.Statement{
-				parser.If{
-					Condition: parser.Comparison{
-						LHS:      parser.Variable{Name: "@var1"},
-						RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-						Operator: "=",
-					},
-					Statements: []parser.Statement{
-						parser.FlowControl{Token: parser.BREAK},
-					},
-				},
-				parser.Print{Value: parser.Variable{Name: "@var1"}},
-				parser.TransactionControl{Token: parser.COMMIT},
-			},
-		},
-		Error: "field notexist does not exist",
-	},
-}
-
-func TestWhileInCursor(t *testing.T) {
-	tf := cmd.GetFlags()
-	tf.Repository = TestDir
-
-	for _, v := range whileInCursorTests {
-		Cursors = CursorMap{
-			"CUR": &Cursor{
-				name:  "cur",
-				query: selectQueryForCursorTest,
-			},
-		}
-		Cursors.Open("cur")
-
-		GlobalVars = Variables{
-			"@var1": parser.NewNull(),
-			"@var2": parser.NewNull(),
-		}
-
-		flow, result, err := WhileInCursor(v.Stmt)
-		if err != nil {
-			if len(v.Error) < 1 {
-				t.Errorf("%s: unexpected error %q", v.Name, err)
-			} else if err.Error() != v.Error {
-				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
-			}
-			continue
-		}
-		if 0 < len(v.Error) {
-			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
-			continue
-		}
-		if flow != v.ResultFlow {
-			t.Errorf("%s: result flow = %q, want %q", v.Name, flow, v.ResultFlow)
-		}
-		if result != v.Result {
-			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
 		}
 	}
 }
@@ -1177,6 +297,13 @@ func TestFetchCursor(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
+	filter := NewFilter([]Variables{
+		{
+			"@var1": parser.NewNull(),
+			"@var2": parser.NewNull(),
+		},
+	})
+
 	Cursors = CursorMap{
 		"CUR": &Cursor{
 			name:  "cur",
@@ -1187,16 +314,11 @@ func TestFetchCursor(t *testing.T) {
 			query: selectQueryForCursorTest,
 		},
 	}
-	Cursors.Open("cur")
-	Cursors.Open("cur2")
-
-	GlobalVars = Variables{
-		"@var1": parser.NewNull(),
-		"@var2": parser.NewNull(),
-	}
+	Cursors.Open("cur", filter)
+	Cursors.Open("cur2", filter)
 
 	for _, v := range fetchCursorTests {
-		success, err := FetchCursor(v.CurName, v.FetchPosition, v.Variables)
+		success, err := FetchCursor(v.CurName, v.FetchPosition, v.Variables, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1212,8 +334,179 @@ func TestFetchCursor(t *testing.T) {
 		if success != v.Success {
 			t.Errorf("%s: success = %t, want %t", v.Name, success, v.Success)
 		}
-		if !reflect.DeepEqual(GlobalVars, v.ResultVars) {
-			t.Errorf("%s: global vars = %q, want %q", v.Name, GlobalVars, v.ResultVars)
+		if !reflect.DeepEqual(filter.VariablesList[0], v.ResultVars) {
+			t.Errorf("%s: global vars = %q, want %q", v.Name, filter.VariablesList[0], v.ResultVars)
+		}
+	}
+}
+
+var declareTableTests = []struct {
+	Name   string
+	Expr   parser.TableDeclaration
+	Result *ViewMap
+	Error  string
+}{
+	{
+		Name: "Declare Table",
+		Expr: parser.TableDeclaration{
+			Table: parser.Identifier{Literal: "tbl"},
+			Fields: []parser.Expression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "column2"},
+			},
+		},
+		Result: &ViewMap{
+			views: map[string]*View{
+				"tbl": {
+					FileInfo: &FileInfo{
+						Path:      "tbl",
+						Temporary: true,
+					},
+					Header: []HeaderField{
+						{
+							Reference: "tbl",
+							Column:    "column1",
+							FromTable: true,
+						},
+						{
+							Reference: "tbl",
+							Column:    "column2",
+							FromTable: true,
+						},
+					},
+					Records: Records{},
+				},
+			},
+			alias: map[string]string{
+				"tbl": "tbl",
+			},
+		},
+	},
+	{
+		Name: "Declare Table Field Duplicate Error",
+		Expr: parser.TableDeclaration{
+			Table: parser.Identifier{Literal: "tbl"},
+			Fields: []parser.Expression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "column1"},
+			},
+		},
+		Error: "field column1 is a duplicate",
+	},
+	{
+		Name: "Declare Table From Query",
+		Expr: parser.TableDeclaration{
+			Table: parser.Identifier{Literal: "tbl"},
+			Fields: []parser.Expression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "column2"},
+			},
+			Query: parser.SelectQuery{
+				SelectEntity: parser.SelectEntity{
+					SelectClause: parser.SelectClause{
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.NewInteger(1)},
+							parser.Field{Object: parser.NewInteger(2)},
+						},
+					},
+				},
+			},
+		},
+		Result: &ViewMap{
+			views: map[string]*View{
+				"tbl": {
+					FileInfo: &FileInfo{
+						Path:      "tbl",
+						Temporary: true,
+					},
+					Header: []HeaderField{
+						{
+							Reference: "tbl",
+							Column:    "column1",
+							FromTable: true,
+						},
+						{
+							Reference: "tbl",
+							Column:    "column2",
+							FromTable: true,
+						},
+					},
+					Records: Records{
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewInteger(1),
+							parser.NewInteger(2),
+						}),
+					},
+				},
+			},
+			alias: map[string]string{
+				"tbl": "tbl",
+			},
+		},
+	},
+	{
+		Name: "Declare Table From Query Query Error",
+		Expr: parser.TableDeclaration{
+			Table: parser.Identifier{Literal: "tbl"},
+			Fields: []parser.Expression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "column2"},
+			},
+			Query: parser.SelectQuery{
+				SelectEntity: parser.SelectEntity{
+					SelectClause: parser.SelectClause{
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.NewInteger(1)},
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
+						},
+					},
+				},
+			},
+		},
+		Error: "field notexist does not exist",
+	},
+	{
+		Name: "Declare Table From Query Field Update Error",
+		Expr: parser.TableDeclaration{
+			Table: parser.Identifier{Literal: "tbl"},
+			Fields: []parser.Expression{
+				parser.Identifier{Literal: "column1"},
+			},
+			Query: parser.SelectQuery{
+				SelectEntity: parser.SelectEntity{
+					SelectClause: parser.SelectClause{
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.NewInteger(1)},
+							parser.Field{Object: parser.NewInteger(2)},
+						},
+					},
+				},
+			},
+		},
+		Error: "view tbl: field length does not match",
+	},
+}
+
+func TestDeclareTable(t *testing.T) {
+	filter := NewFilter([]Variables{{}})
+
+	for _, v := range declareTableTests {
+		ViewCache.Clear()
+		err := DeclareTable(v.Expr, filter)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(ViewCache, v.Result) {
+			t.Errorf("%s: view cache = %q, want %q", v.Name, ViewCache, v.Result)
 		}
 	}
 }
@@ -1231,7 +524,7 @@ var selectTests = []struct {
 				SelectClause: parser.SelectClause{
 					Fields: []parser.Expression{
 						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
-						parser.Field{Object: parser.Function{Name: "count", Option: parser.Option{Args: []parser.Expression{parser.AllColumns{}}}}},
+						parser.Field{Object: parser.AggregateFunction{Name: "count", Option: parser.AggregateOption{Args: []parser.Expression{parser.AllColumns{}}}}},
 					},
 				},
 				FromClause: parser.FromClause{
@@ -1253,7 +546,7 @@ var selectTests = []struct {
 				},
 				HavingClause: parser.HavingClause{
 					Filter: parser.Comparison{
-						LHS:      parser.Function{Name: "count", Option: parser.Option{Args: []parser.Expression{parser.AllColumns{}}}},
+						LHS:      parser.AggregateFunction{Name: "count", Option: parser.AggregateOption{Args: []parser.Expression{parser.AllColumns{}}}},
 						RHS:      parser.NewInteger(1),
 						Operator: ">",
 					},
@@ -1874,9 +1167,11 @@ func TestSelect(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
+	filter := NewFilter([]Variables{{}})
+
 	for _, v := range selectTests {
 		ViewCache.Clear()
-		result, err := Select(v.Query)
+		result, err := Select(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2177,9 +1472,11 @@ func TestInsert(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
+	filter := NewFilter([]Variables{{}})
+
 	for _, v := range insertTests {
 		ViewCache.Clear()
-		result, err := Insert(v.Query)
+		result, err := Insert(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2528,9 +1825,11 @@ func TestUpdate(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
+	filter := NewFilter([]Variables{{}})
+
 	for _, v := range updateTests {
 		ViewCache.Clear()
-		result, err := Update(v.Query)
+		result, err := Update(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2754,9 +2053,11 @@ func TestDelete(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
+	filter := NewFilter([]Variables{{}})
+
 	for _, v := range deleteTests {
 		ViewCache.Clear()
-		result, err := Delete(v.Query)
+		result, err := Delete(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2897,7 +2198,7 @@ var addColumnsTests = []struct {
 			Columns: []parser.Expression{
 				parser.ColumnDefault{
 					Column: parser.Identifier{Literal: "column3"},
-					Value:  parser.Function{Name: "auto_increment"},
+					Value:  parser.NewInteger(2),
 				},
 				parser.ColumnDefault{
 					Column: parser.Identifier{Literal: "column4"},
@@ -2919,7 +2220,7 @@ var addColumnsTests = []struct {
 			Header: NewHeaderWithoutId("table1", []string{"column3", "column4", "column1", "column2"}),
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(1),
+					parser.NewInteger(2),
 					parser.NewInteger(1),
 					parser.NewString("1"),
 					parser.NewString("str1"),
@@ -2931,7 +2232,7 @@ var addColumnsTests = []struct {
 					parser.NewString("str2"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(3),
+					parser.NewInteger(2),
 					parser.NewInteger(1),
 					parser.NewString("3"),
 					parser.NewString("str3"),
@@ -3113,9 +2414,11 @@ func TestAddColumns(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
+	filter := NewFilter([]Variables{{}})
+
 	for _, v := range addColumnsTests {
 		ViewCache.Clear()
-		result, err := AddColumns(v.Query)
+		result, err := AddColumns(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -3336,8 +2639,10 @@ var printTests = []struct {
 }
 
 func TestPrint(t *testing.T) {
+	filter := NewFilter([]Variables{{}})
+
 	for _, v := range printTests {
-		result, err := Print(v.Query)
+		result, err := Print(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

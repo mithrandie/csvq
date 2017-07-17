@@ -256,9 +256,8 @@ var parseTests = []struct {
 						OrderItem{Value: FieldReference{Column: Identifier{Literal: "column7"}}, Nulls: "nulls", Position: Token{Token: FIRST, Literal: "first", Line: 9, Char: 25}},
 						OrderItem{Value: FieldReference{Column: Identifier{Literal: "column8"}}, Direction: Token{Token: DESC, Literal: "desc", Line: 10, Char: 19}, Nulls: "nulls", Position: Token{Token: LAST, Literal: "last", Line: 10, Char: 30}},
 						OrderItem{Value: AnalyticFunction{
-							Name:   "avg",
-							Option: Option{},
-							Over:   "over",
+							Name: "avg",
+							Over: "over",
 							AnalyticClause: AnalyticClause{
 								Partition:     nil,
 								OrderByClause: nil,
@@ -1395,8 +1394,47 @@ var parseTests = []struct {
 						Select: "select",
 						Fields: []Expression{
 							Field{Object: Function{
-								Name:   "count",
-								Option: Option{},
+								Name: "count",
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select count(column1)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Function{
+								Name: "count",
+								Args: []Expression{
+									FieldReference{Column: Identifier{Literal: "column1"}},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select count(*)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: AggregateFunction{
+								Name: "count",
+								Option: AggregateOption{
+									Args: []Expression{AllColumns{}},
+								},
 							}},
 						},
 					},
@@ -1412,11 +1450,34 @@ var parseTests = []struct {
 					SelectClause: SelectClause{
 						Select: "select",
 						Fields: []Expression{
-							Field{Object: Function{
+							Field{Object: AggregateFunction{
 								Name: "count",
-								Option: Option{
+								Option: AggregateOption{
 									Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 14},
 									Args:     []Expression{AllColumns{}},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select count(distinct column1)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: AggregateFunction{
+								Name: "count",
+								Option: AggregateOption{
+									Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 14},
+									Args: []Expression{
+										FieldReference{Column: Identifier{Literal: "column1"}},
+									},
 								},
 							}},
 						},
@@ -1435,11 +1496,9 @@ var parseTests = []struct {
 						Fields: []Expression{
 							Field{Object: Function{
 								Name: "count",
-								Option: Option{
-									Args: []Expression{
-										FieldReference{Column: Identifier{Literal: "column1"}},
-										FieldReference{Column: Identifier{Literal: "column2"}},
-									},
+								Args: []Expression{
+									FieldReference{Column: Identifier{Literal: "column1"}},
+									FieldReference{Column: Identifier{Literal: "column2"}},
 								},
 							}},
 						},
@@ -1458,7 +1517,7 @@ var parseTests = []struct {
 						Fields: []Expression{
 							Field{Object: GroupConcat{
 								GroupConcat: "group_concat",
-								Option:      Option{Args: []Expression{FieldReference{Column: Identifier{Literal: "column1"}}}},
+								Option:      AggregateOption{Args: []Expression{FieldReference{Column: Identifier{Literal: "column1"}}}},
 								OrderBy: OrderByClause{
 									OrderBy: "order by",
 									Items: []Expression{
@@ -1473,7 +1532,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select group_concat(column1 separator ',')",
+		Input: "select group_concat(distinct column1 order by column1)",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -1481,8 +1540,66 @@ var parseTests = []struct {
 						Select: "select",
 						Fields: []Expression{
 							Field{Object: GroupConcat{
-								GroupConcat:  "group_concat",
-								Option:       Option{Args: []Expression{FieldReference{Column: Identifier{Literal: "column1"}}}},
+								GroupConcat: "group_concat",
+								Option: AggregateOption{
+									Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 21},
+									Args:     []Expression{FieldReference{Column: Identifier{Literal: "column1"}}},
+								},
+								OrderBy: OrderByClause{
+									OrderBy: "order by",
+									Items: []Expression{
+										OrderItem{Value: FieldReference{Column: Identifier{Literal: "column1"}}},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select group_concat(distinct column1 separator ',')",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: GroupConcat{
+								GroupConcat: "group_concat",
+								Option: AggregateOption{
+									Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 21},
+									Args:     []Expression{FieldReference{Column: Identifier{Literal: "column1"}}},
+								},
+								SeparatorLit: "separator",
+								Separator:    ",",
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select group_concat(column1 order by column1 separator ',')",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: GroupConcat{
+								GroupConcat: "group_concat",
+								Option: AggregateOption{
+									Args: []Expression{FieldReference{Column: Identifier{Literal: "column1"}}},
+								},
+								OrderBy: OrderByClause{
+									OrderBy: "order by",
+									Items: []Expression{
+										OrderItem{Value: FieldReference{Column: Identifier{Literal: "column1"}}},
+									},
+								},
 								SeparatorLit: "separator",
 								Separator:    ",",
 							}},
@@ -1545,9 +1662,8 @@ var parseTests = []struct {
 						Select: "select",
 						Fields: []Expression{
 							Field{Object: AnalyticFunction{
-								Name:   "rank",
-								Option: Option{},
-								Over:   "over",
+								Name: "rank",
+								Over: "over",
 								AnalyticClause: AnalyticClause{
 									Partition: Partition{
 										PartitionBy: "partition by",
@@ -1580,9 +1696,33 @@ var parseTests = []struct {
 						Select: "select",
 						Fields: []Expression{
 							Field{Object: AnalyticFunction{
-								Name:   "avg",
-								Option: Option{},
-								Over:   "over",
+								Name: "avg",
+								Over: "over",
+								AnalyticClause: AnalyticClause{
+									Partition:     nil,
+									OrderByClause: nil,
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select first_value(column1) over ()",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: AnalyticFunction{
+								Name: "first_value",
+								Args: []Expression{
+									FieldReference{Column: Identifier{Literal: "column1"}},
+								},
+								Over: "over",
 								AnalyticClause: AnalyticClause{
 									Partition:     nil,
 									OrderByClause: nil,

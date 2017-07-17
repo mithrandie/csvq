@@ -246,11 +246,7 @@ func (view *View) Load(clause parser.FromClause, parentFilter Filter) error {
 	return nil
 }
 
-func (view *View) LoadFromIdentifier(table parser.Identifier) error {
-	return view.LoadFromIdentifierWithInlineTables(table, Filter{})
-}
-
-func (view *View) LoadFromIdentifierWithInlineTables(table parser.Identifier, parentFilter Filter) error {
+func (view *View) LoadFromIdentifier(table parser.Identifier, parentFilter Filter) error {
 	fromClause := parser.FromClause{
 		Tables: []parser.Expression{
 			parser.Table{Object: table},
@@ -303,7 +299,7 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 		}
 	case parser.Identifier:
 		tableIdentifier := table.Object.(parser.Identifier).Literal
-		if strings.EqualFold(tableIdentifier, parentFilter.RecursiveTable.Name.Literal) && parentFilter.RecursiveTmpView != nil {
+		if parentFilter.RecursiveTable != nil && strings.EqualFold(tableIdentifier, parentFilter.RecursiveTable.Name.Literal) && parentFilter.RecursiveTmpView != nil {
 			view = parentFilter.RecursiveTmpView
 			if parentFilter.RecursiveTable.Name.Literal != table.Name() {
 				view.UpdateHeader(table.Name(), nil)
@@ -389,7 +385,7 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 		}
 	case parser.Subquery:
 		subquery := table.Object.(parser.Subquery)
-		view, err = SelectAsSubquery(subquery.Query, parentFilter)
+		view, err = Select(subquery.Query, parentFilter)
 		if err == nil {
 			view.UpdateHeader(table.Name(), nil)
 		}
@@ -809,10 +805,6 @@ func (view *View) evalAnalyticFunction(expr parser.AnalyticFunction) error {
 		return errors.New(fmt.Sprintf("function %s does not exist", expr.Name))
 	}
 
-	if expr.Option.IsDistinct() {
-		return errors.New(fmt.Sprintf("syntax error: unexpected %s", expr.Option.Distinct.Literal))
-	}
-
 	if expr.AnalyticClause.OrderByClause != nil {
 		err := view.OrderBy(expr.AnalyticClause.OrderByClause.(parser.OrderByClause))
 		if err != nil {
@@ -820,12 +812,11 @@ func (view *View) evalAnalyticFunction(expr parser.AnalyticFunction) error {
 		}
 	}
 
-	return fn(view, expr.Option.Args, expr.AnalyticClause)
+	return fn(view, expr.Args, expr.AnalyticClause)
 }
 
 func (view *View) Offset(clause parser.OffsetClause) error {
-	var filter Filter
-	value, err := filter.Evaluate(clause.Value)
+	value, err := view.ParentFilter.Evaluate(clause.Value)
 	if err != nil {
 		return err
 	}
@@ -850,8 +841,7 @@ func (view *View) Offset(clause parser.OffsetClause) error {
 }
 
 func (view *View) Limit(clause parser.LimitClause) error {
-	var filter Filter
-	value, err := filter.Evaluate(clause.Value)
+	value, err := view.ParentFilter.Evaluate(clause.Value)
 	if err != nil {
 		return err
 	}
@@ -921,7 +911,7 @@ func (view *View) InsertValues(fields []parser.Expression, list []parser.Express
 }
 
 func (view *View) InsertFromQuery(fields []parser.Expression, query parser.SelectQuery, filter Filter) error {
-	insertView, err := SelectAsSubquery(query, filter)
+	insertView, err := Select(query, filter)
 	if err != nil {
 		return err
 	}
@@ -1094,8 +1084,19 @@ func (view *View) InternalRecordId(ref string, recordIndex int) (int, error) {
 }
 
 func (view *View) UpdateHeader(reference string, fields []parser.Expression) error {
-	if fields != nil && len(fields) != view.FieldLen() {
-		return errors.New(fmt.Sprintf("view %s: field length does not match", reference))
+	if fields != nil {
+		if len(fields) != view.FieldLen() {
+			return errors.New(fmt.Sprintf("view %s: field length does not match", reference))
+		}
+
+		names := make([]string, len(fields))
+		for i, v := range fields {
+			uname := strings.ToUpper(v.(parser.Identifier).Literal)
+			if InStrSlice(uname, names) {
+				return errors.New(fmt.Sprintf("field %s is a duplicate", v.(parser.Identifier).Literal))
+			}
+			names[i] = uname
+		}
 	}
 
 	for i := range view.Header {

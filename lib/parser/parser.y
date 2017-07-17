@@ -66,7 +66,8 @@ package parser
 %type<expression>  arithmetic
 %type<expression>  logic
 %type<expression>  function
-%type<expression>  option
+%type<expression>  aggregate_function
+%type<expression>  aggregate_option
 %type<expression>  group_concat
 %type<expression>  analytic_function
 %type<expression>  analytic_clause
@@ -139,7 +140,7 @@ package parser
 %token<token> CASE IF ELSEIF WHILE WHEN THEN ELSE DO END
 %token<token> DECLARE CURSOR FOR FETCH OPEN CLOSE DISPOSE
 %token<token> NEXT PRIOR ABSOLUTE RELATIVE RANGE
-%token<token> GROUP_CONCAT SEPARATOR PARTITION OVER
+%token<token> SEPARATOR PARTITION OVER
 %token<token> COMMIT ROLLBACK
 %token<token> CONTINUE BREAK EXIT
 %token<token> PRINT
@@ -638,6 +639,10 @@ value
     {
         $$ = $1
     }
+    | aggregate_function
+    {
+        $$ = $1
+    }
     | case
     {
         $$ = $1
@@ -885,43 +890,67 @@ logic
     }
 
 function
-    : identifier '(' option ')'
+    : identifier '(' ')'
     {
-        $$ = Function{Name: $1.Literal, Option: $3.(Option)}
+        $$ = Function{Name: $1.Literal}
+    }
+    | identifier '(' values ')'
+    {
+        $$ = Function{Name: $1.Literal, Args: $3}
+    }
+
+aggregate_function
+    : identifier '(' aggregate_option ')'
+    {
+        $$ = AggregateFunction{Name: $1.Literal, Option: $3.(AggregateOption)}
     }
     | group_concat
     {
         $$ = $1
     }
 
-option
-    :
+aggregate_option
+    : '*'
     {
-        $$ = Option{}
+        $$ = AggregateOption{Args: []Expression{AllColumns{}}}
     }
-    | distinct '*'
+    | DISTINCT '*'
     {
-        $$ = Option{Distinct: $1, Args: []Expression{AllColumns{}}}
+        $$ = AggregateOption{Distinct: $1, Args: []Expression{AllColumns{}}}
     }
-    | distinct values
+    | DISTINCT value
     {
-        $$ = Option{Distinct: $1, Args: $2}
+        $$ = AggregateOption{Distinct: $1, Args: []Expression{$2}}
     }
 
 group_concat
-    : GROUP_CONCAT '(' option order_by_clause ')'
+    : identifier '(' value ORDER BY order_items ')'
     {
-        $$ = GroupConcat{GroupConcat: $1.Literal, Option: $3.(Option), OrderBy: $4}
+        orderBy := OrderByClause{OrderBy: $4.Literal + " " + $5.Literal, Items: $6}
+        $$ = GroupConcat{GroupConcat: $1.Literal, Option: AggregateOption{Args: []Expression{$3}}, OrderBy: orderBy}
     }
-    | GROUP_CONCAT '(' option order_by_clause SEPARATOR STRING ')'
+    | identifier '(' DISTINCT value ORDER BY order_items ')'
     {
-        $$ = GroupConcat{GroupConcat: $1.Literal, Option: $3.(Option), OrderBy: $4, SeparatorLit: $5.Literal, Separator: $6.Literal}
+        orderBy := OrderByClause{OrderBy: $5.Literal + " " + $6.Literal, Items: $7}
+        $$ = GroupConcat{GroupConcat: $1.Literal, Option: AggregateOption{Distinct: $3, Args: []Expression{$4}}, OrderBy: orderBy}
+    }
+    | identifier '(' value order_by_clause SEPARATOR STRING ')'
+    {
+        $$ = GroupConcat{GroupConcat: $1.Literal, Option: AggregateOption{Args: []Expression{$3}}, OrderBy: $4, SeparatorLit: $5.Literal, Separator: $6.Literal}
+    }
+    | identifier '(' DISTINCT value order_by_clause SEPARATOR STRING ')'
+    {
+        $$ = GroupConcat{GroupConcat: $1.Literal, Option: AggregateOption{Distinct: $3, Args: []Expression{$4}}, OrderBy: $5, SeparatorLit: $6.Literal, Separator: $7.Literal}
     }
 
 analytic_function
-    : identifier '(' option ')' OVER '(' analytic_clause ')'
+    : identifier '(' ')' OVER '(' analytic_clause ')'
     {
-        $$ = AnalyticFunction{Name: $1.Literal, Option: $3.(Option), Over: $5.Literal, AnalyticClause: $7.(AnalyticClause)}
+        $$ = AnalyticFunction{Name: $1.Literal, Over: $4.Literal, AnalyticClause: $6.(AnalyticClause)}
+    }
+    | identifier '(' values ')' OVER '(' analytic_clause ')'
+    {
+        $$ = AnalyticFunction{Name: $1.Literal, Args: $3, Over: $5.Literal, AnalyticClause: $7.(AnalyticClause)}
     }
 
 analytic_clause

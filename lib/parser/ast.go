@@ -713,33 +713,42 @@ func (c Concat) String() string {
 	return strings.Join(s, " || ")
 }
 
-type Option struct {
+type Function struct {
+	Name string
+	Args []Expression
+}
+
+func (e Function) String() string {
+	return e.Name + "(" + listExpressions(e.Args) + ")"
+}
+
+type AggregateFunction struct {
+	Name   string
+	Option AggregateOption
+}
+
+func (e AggregateFunction) String() string {
+	return e.Name + "(" + e.Option.String() + ")"
+}
+
+type AggregateOption struct {
 	Distinct Token
 	Args     []Expression
 }
 
-func (o Option) IsDistinct() bool {
-	return !o.Distinct.IsEmpty()
+func (e AggregateOption) IsDistinct() bool {
+	return !e.Distinct.IsEmpty()
 }
 
-func (o Option) String() string {
+func (e AggregateOption) String() string {
 	s := []string{}
-	if !o.Distinct.IsEmpty() {
-		s = append(s, o.Distinct.Literal)
+	if !e.Distinct.IsEmpty() {
+		s = append(s, e.Distinct.Literal)
 	}
-	if o.Args != nil {
-		s = append(s, listExpressions(o.Args))
+	if e.Args != nil {
+		s = append(s, listExpressions(e.Args))
 	}
 	return joinWithSpace(s)
-}
-
-type Function struct {
-	Name   string
-	Option Option
-}
-
-func (f Function) String() string {
-	return f.Name + "(" + f.Option.String() + ")"
 }
 
 type Table struct {
@@ -936,7 +945,7 @@ func (ce CaseElse) String() string {
 
 type GroupConcat struct {
 	GroupConcat  string
-	Option       Option
+	Option       AggregateOption
 	OrderBy      Expression
 	SeparatorLit string
 	Separator    string
@@ -963,14 +972,14 @@ func (gc GroupConcat) String() string {
 
 type AnalyticFunction struct {
 	Name           string
-	Option         Option
+	Args           []Expression
 	Over           string
 	AnalyticClause AnalyticClause
 }
 
 func (e AnalyticFunction) String() string {
 	s := []string{
-		e.Name + "(" + e.Option.String() + ")",
+		e.Name + "(" + listExpressions(e.Args) + ")",
 		e.Over,
 		"(" + e.AnalyticClause.String() + ")",
 	}

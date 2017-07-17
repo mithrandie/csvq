@@ -915,9 +915,7 @@ var viewHavingTests = []struct {
 			Filter: parser.Comparison{
 				LHS: parser.Function{
 					Name: "sum",
-					Option: parser.Option{
-						Args: []parser.Expression{parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
-					},
+					Args: []parser.Expression{parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 				},
 				RHS:      parser.NewInteger(5),
 				Operator: ">",
@@ -970,9 +968,7 @@ var viewHavingTests = []struct {
 			Filter: parser.Comparison{
 				LHS: parser.Function{
 					Name: "sum",
-					Option: parser.Option{
-						Args: []parser.Expression{parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
-					},
+					Args: []parser.Expression{parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
 				},
 				RHS:      parser.NewInteger(5),
 				Operator: ">",
@@ -1001,9 +997,7 @@ var viewHavingTests = []struct {
 			Filter: parser.Comparison{
 				LHS: parser.Function{
 					Name: "sum",
-					Option: parser.Option{
-						Args: []parser.Expression{parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
-					},
+					Args: []parser.Expression{parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 				},
 				RHS:      parser.NewInteger(5),
 				Operator: ">",
@@ -1259,9 +1253,7 @@ var viewSelectTests = []struct {
 				parser.Field{
 					Object: parser.Function{
 						Name: "sum",
-						Option: parser.Option{
-							Args: []parser.Expression{parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
-						},
+						Args: []parser.Expression{parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 					},
 				},
 			},
@@ -1309,9 +1301,7 @@ var viewSelectTests = []struct {
 				parser.Field{
 					Object: parser.Function{
 						Name: "sum",
-						Option: parser.Option{
-							Args: []parser.Expression{parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
-						},
+						Args: []parser.Expression{parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 					},
 				},
 			},
@@ -1467,67 +1457,6 @@ var viewSelectTests = []struct {
 			},
 		},
 		Error: "function notexist does not exist",
-	},
-	{
-		Name: "Select Analytic Function Option Error",
-		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
-				}),
-				NewRecordWithoutId([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(3),
-				}),
-				NewRecordWithoutId([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(5),
-				}),
-				NewRecordWithoutId([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
-				}),
-				NewRecordWithoutId([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(4),
-				}),
-			},
-		},
-		Select: parser.SelectClause{
-			Fields: []parser.Expression{
-				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
-				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
-				parser.Field{
-					Object: parser.AnalyticFunction{
-						Name: "row_number",
-						Option: parser.Option{
-							Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-						},
-						Over: "over",
-						AnalyticClause: parser.AnalyticClause{
-							Partition: parser.Partition{
-								PartitionBy: "partition by",
-								Values: []parser.Expression{
-									parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-								},
-							},
-							OrderByClause: parser.OrderByClause{
-								OrderBy: "order by",
-								Items: []parser.Expression{
-									parser.OrderItem{
-										Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-									},
-								},
-							},
-						},
-					},
-					Alias: parser.Identifier{Literal: "rownum"},
-				},
-			},
-		},
-		Error: "syntax error: unexpected distinct",
 	},
 	{
 		Name: "Select Analytic Function Order Error",
@@ -3329,6 +3258,16 @@ func TestView_UpdateHeader(t *testing.T) {
 	}
 	expectError := "view ref1: field length does not match"
 	err := view.UpdateHeader(reference, fields)
+	if err.Error() != expectError {
+		t.Errorf("error = %q, want error %q for UpdateHeader(%s, %s)", err, expectError, reference, fields)
+	}
+
+	fields = []parser.Expression{
+		parser.Identifier{Literal: "alias3"},
+		parser.Identifier{Literal: "alias3"},
+	}
+	expectError = "field alias3 is a duplicate"
+	err = view.UpdateHeader(reference, fields)
 	if err.Error() != expectError {
 		t.Errorf("error = %q, want error %q for UpdateHeader(%s, %s)", err, expectError, reference, fields)
 	}

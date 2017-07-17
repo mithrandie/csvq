@@ -146,13 +146,3 @@ func TestVariables_Substitute(t *testing.T) {
 		}
 	}
 }
-
-func TestVariables_ClearAutoIncrement(t *testing.T) {
-	vars := Variables{
-		AUTO_INCREMENT_KEY: parser.NewInteger(1),
-	}
-	vars.ClearAutoIncrement()
-	if _, err := vars.Get(AUTO_INCREMENT_KEY); err == nil {
-		t.Error("auto increment key in variables is not deleted")
-	}
-}

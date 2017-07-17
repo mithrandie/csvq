@@ -15,12 +15,19 @@ type FilterRecord struct {
 }
 
 type Filter struct {
-	Records      []FilterRecord
-	InlineTables InlineTables
+	Records       []FilterRecord
+	InlineTables  InlineTables
+	VariablesList []Variables
 
-	RecursiveTable    parser.InlineTable
+	RecursiveTable    *parser.InlineTable
 	RecursiveTmpView  *View
 	tmpViewIsAccessed bool
+}
+
+func NewFilter(variablesList []Variables) Filter {
+	return Filter{
+		VariablesList: variablesList,
+	}
 }
 
 func NewFilterForRecord(view *View, recordIndex int, parentFilter Filter) Filter {
@@ -43,14 +50,16 @@ func NewFilterForLoop(view *View, parentFilter Filter) Filter {
 				View: view,
 			},
 		},
-		InlineTables: parentFilter.InlineTables.Copy(),
+		InlineTables:  parentFilter.InlineTables.Copy(),
+		VariablesList: parentFilter.VariablesList,
 	}
 }
 
 func (f Filter) Merge(filter Filter) Filter {
 	return Filter{
-		Records:      append(f.Records, filter.Records...),
-		InlineTables: f.InlineTables.Merge(filter.InlineTables),
+		Records:       append(f.Records, filter.Records...),
+		InlineTables:  f.InlineTables.Merge(filter.InlineTables),
+		VariablesList: filter.VariablesList,
 	}
 }
 
@@ -58,9 +67,14 @@ func (f Filter) Copy() Filter {
 	return Filter{
 		Records:          f.Records,
 		InlineTables:     f.InlineTables.Copy(),
+		VariablesList:    f.VariablesList,
 		RecursiveTable:   f.RecursiveTable,
 		RecursiveTmpView: f.RecursiveTmpView,
 	}
+}
+
+func (f Filter) LoadInlineTable(clause parser.WithClause) error {
+	return f.InlineTables.Load(clause, f)
 }
 
 func (f Filter) Evaluate(expr parser.Expression) (parser.Primary, error) {
@@ -103,6 +117,8 @@ func (f Filter) Evaluate(expr parser.Expression) (parser.Primary, error) {
 			primary, err = f.evalSubquery(expr.(parser.Subquery))
 		case parser.Function:
 			primary, err = f.evalFunction(expr.(parser.Function))
+		case parser.AggregateFunction:
+			primary, err = f.evalAggregateFunction(expr.(parser.AggregateFunction))
 		case parser.GroupConcat:
 			primary, err = f.evalGroupConcat(expr.(parser.GroupConcat))
 		case parser.Case:
@@ -128,20 +144,13 @@ func (f Filter) evalFieldReference(expr parser.FieldReference) (parser.Primary, 
 	for _, v := range f.Records {
 		idx, err := v.View.Header.Contains(expr)
 		if err != nil {
-			switch err.(type) {
-			case *IdentificationError:
-				e, _ := err.(*IdentificationError)
-				if e.Err == ErrFieldAmbiguous {
-					return nil, err
-				}
+			if _, ok := err.(*FieldAmbiguousError); ok {
+				return nil, err
 			}
 			continue
 		}
 		if p != nil {
-			return nil, &IdentificationError{
-				Field: expr,
-				Err:   ErrFieldAmbiguous,
-			}
+			return nil, NewFieldAmbiguousError(expr)
 		}
 		if v.View.isGrouped && !v.View.Header[idx].IsGroupKey {
 			return nil, errors.New(fmt.Sprintf("field %s is not a group key", expr))
@@ -149,10 +158,7 @@ func (f Filter) evalFieldReference(expr parser.FieldReference) (parser.Primary, 
 		p = v.View.Records[v.RecordIndex][idx].Primary()
 	}
 	if p == nil {
-		return nil, &IdentificationError{
-			Field: expr,
-			Err:   ErrFieldNotExist,
-		}
+		return nil, NewFieldNotExistError(expr)
 	}
 	return p, nil
 }
@@ -397,7 +403,7 @@ func (f Filter) evalLike(expr parser.Like) (parser.Primary, error) {
 }
 
 func (f Filter) evalExists(expr parser.Exists) (parser.Primary, error) {
-	view, err := SelectAsSubquery(expr.Query.Query, f)
+	view, err := Select(expr.Query.Query, f)
 	if err != nil {
 		return nil, err
 	}
@@ -413,8 +419,22 @@ func (f Filter) evalSubquery(expr parser.Subquery) (parser.Primary, error) {
 
 func (f Filter) evalFunction(expr parser.Function) (parser.Primary, error) {
 	name := strings.ToUpper(expr.Name)
-	if _, ok := AggregateFunctions[name]; ok {
-		return f.evalAggregateFunction(expr)
+	if strings.EqualFold("GROUP_CONCAT", name) {
+		gc := parser.GroupConcat{
+			GroupConcat: expr.Name,
+			Option: parser.AggregateOption{
+				Args: expr.Args,
+			},
+		}
+		return f.evalGroupConcat(gc)
+	} else if _, ok := AggregateFunctions[name]; ok {
+		afn := parser.AggregateFunction{
+			Name: expr.Name,
+			Option: parser.AggregateOption{
+				Args: expr.Args,
+			},
+		}
+		return f.evalAggregateFunction(afn)
 	}
 
 	fn, ok := Functions[name]
@@ -422,12 +442,8 @@ func (f Filter) evalFunction(expr parser.Function) (parser.Primary, error) {
 		return nil, errors.New(fmt.Sprintf("function %s does not exist", expr.Name))
 	}
 
-	if expr.Option.IsDistinct() {
-		return nil, errors.New(fmt.Sprintf("syntax error: unexpected %s", expr.Option.Distinct.Literal))
-	}
-
-	args := make([]parser.Primary, len(expr.Option.Args))
-	for i, v := range expr.Option.Args {
+	args := make([]parser.Primary, len(expr.Args))
+	for i, v := range expr.Args {
 		arg, err := f.Evaluate(v)
 		if err != nil {
 			return nil, err
@@ -438,18 +454,27 @@ func (f Filter) evalFunction(expr parser.Function) (parser.Primary, error) {
 	return fn(args)
 }
 
-func (f Filter) evalAggregateFunction(expr parser.Function) (parser.Primary, error) {
-	if !f.Records[0].View.isGrouped {
-		return nil, &NotGroupedError{
-			Function: expr.Name,
-			Err:      ErrNotGrouped,
+func (f Filter) evalAggregateFunction(expr parser.AggregateFunction) (parser.Primary, error) {
+	name := strings.ToUpper(expr.Name)
+	if strings.EqualFold("GROUP_CONCAT", name) {
+		gc := parser.GroupConcat{
+			GroupConcat: expr.Name,
+			Option:      expr.Option,
 		}
+		return f.evalGroupConcat(gc)
 	}
 
-	if len(expr.Option.Args) < 1 {
-		return nil, errors.New(fmt.Sprintf("function %s requires 1 argument", expr.Name))
-	} else if 1 < len(expr.Option.Args) {
-		return nil, errors.New(fmt.Sprintf("function %s has too many arguments", expr.Name))
+	fn, ok := AggregateFunctions[name]
+	if !ok {
+		return nil, errors.New(fmt.Sprintf("function %s does not exist", expr.Name))
+	}
+
+	if !f.Records[0].View.isGrouped {
+		return nil, NewNotGroupedErr(expr.Name)
+	}
+
+	if len(expr.Option.Args) != 1 {
+		return nil, errors.New(fmt.Sprintf("function %s takes exactly 1 argument", expr.Name))
 	}
 
 	arg := expr.Option.Args[0]
@@ -469,28 +494,23 @@ func (f Filter) evalAggregateFunction(expr parser.Function) (parser.Primary, err
 		p, err := filter.Evaluate(arg)
 		if err != nil {
 			if _, ok := err.(*NotGroupedError); ok {
-				err = errors.New(fmt.Sprintf("syntax error: %s", expr))
+				err = errors.New(fmt.Sprintf("%s: aggregate functions are nested", expr))
 			}
 			return nil, err
 		}
 		list[i] = p
 	}
 
-	name := strings.ToUpper(expr.Name)
-	fn, _ := AggregateFunctions[name]
 	return fn(expr.Option.IsDistinct(), list), nil
 }
 
 func (f Filter) evalGroupConcat(expr parser.GroupConcat) (parser.Primary, error) {
 	if !f.Records[0].View.isGrouped {
-		return nil, &NotGroupedError{
-			Function: expr.GroupConcat,
-			Err:      ErrNotGrouped,
-		}
+		return nil, NewNotGroupedErr(expr.GroupConcat)
 	}
 
 	if len(expr.Option.Args) != 1 {
-		return nil, errors.New(fmt.Sprintf("function %s takes 1 argument", expr.GroupConcat))
+		return nil, errors.New(fmt.Sprintf("function %s takes exactly 1 argument", expr.GroupConcat))
 	}
 
 	arg := expr.Option.Args[0]
@@ -513,7 +533,7 @@ func (f Filter) evalGroupConcat(expr parser.GroupConcat) (parser.Primary, error)
 		p, err := filter.Evaluate(arg)
 		if err != nil {
 			if _, ok := err.(*NotGroupedError); ok {
-				err = errors.New(fmt.Sprintf("syntax error: %s", expr))
+				err = errors.New(fmt.Sprintf("%s: aggregate functions are nested", expr))
 			}
 			return nil, err
 		}
@@ -599,12 +619,27 @@ func (f Filter) evalLogic(expr parser.Logic) (parser.Primary, error) {
 	return parser.NewTernary(t), nil
 }
 
-func (f Filter) evalVariable(expr parser.Variable) (parser.Primary, error) {
-	return GlobalVars.Get(expr.Name)
+func (f Filter) evalVariable(expr parser.Variable) (value parser.Primary, err error) {
+	for _, v := range f.VariablesList {
+		if value, err = v.Get(expr.Name); err == nil {
+			return
+		}
+	}
+	err = NewUndefinedVariableError(expr.Name)
+	return
 }
 
-func (f Filter) evalVariableSubstitution(expr parser.VariableSubstitution) (parser.Primary, error) {
-	return GlobalVars.Substitute(expr, f)
+func (f Filter) evalVariableSubstitution(expr parser.VariableSubstitution) (value parser.Primary, err error) {
+	for _, v := range f.VariablesList {
+		if value, err = v.Substitute(expr, f); err == nil {
+			return
+		}
+		if _, ok := err.(*UndefinedVariableError); !ok {
+			return
+		}
+	}
+	err = NewUndefinedVariableError(expr.Variable.Name)
+	return
 }
 
 func (f Filter) evalCursorStatus(expr parser.CursorStatus) (parser.Primary, error) {
@@ -681,7 +716,7 @@ func (f Filter) evalRowValues(expr parser.Expression) (values [][]parser.Primary
 }
 
 func (f Filter) evalSubqueryForRowValue(expr parser.Subquery) ([]parser.Primary, error) {
-	view, err := SelectAsSubquery(expr.Query, f)
+	view, err := Select(expr.Query, f)
 	if err != nil {
 		return nil, err
 	}
@@ -703,7 +738,7 @@ func (f Filter) evalSubqueryForRowValue(expr parser.Subquery) ([]parser.Primary,
 }
 
 func (f Filter) evalSubqueryForRowValues(expr parser.Subquery) ([][]parser.Primary, error) {
-	view, err := SelectAsSubquery(expr.Query, f)
+	view, err := Select(expr.Query, f)
 	if err != nil {
 		return nil, err
 	}
@@ -725,7 +760,7 @@ func (f Filter) evalSubqueryForRowValues(expr parser.Subquery) ([][]parser.Prima
 }
 
 func (f Filter) evalSubqueryForSingleValue(query parser.SelectQuery) (parser.Primary, error) {
-	view, err := SelectAsSubquery(query, f)
+	view, err := Select(query, f)
 	if err != nil {
 		return nil, err
 	}

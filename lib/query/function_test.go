@@ -1824,11 +1824,6 @@ var autoIncrementTests = []functionTest{
 	},
 }
 
-func TestAutoIncrement(t *testing.T) {
-	GlobalVars.ClearAutoIncrement()
-	testFunction(t, AutoIncrement, autoIncrementTests)
-}
-
 var stringTests = []functionTest{
 	{
 		Name: "String from Integer",
@@ -1991,8 +1986,14 @@ var callTests = []functionTest{
 		Args: []parser.Primary{
 			parser.NewString("echo"),
 			parser.NewString("foo"),
+			parser.NewInteger(1),
+			parser.NewFloat(1.234),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
+			parser.NewBoolean(true),
+			parser.NewTernary(ternary.TRUE),
+			parser.NewNull(),
 		},
-		Result: parser.NewString("foo\n"),
+		Result: parser.NewString("foo 1 1.234 2012-02-03 09:18:15 true true \n"),
 	},
 	{
 		Name:  "Call Argument Error",

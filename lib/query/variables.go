@@ -1,21 +1,14 @@
 package query
 
 import (
-	"errors"
-	"fmt"
-
 	"github.com/mithrandie/csvq/lib/parser"
-)
-
-const (
-	AUTO_INCREMENT_KEY = "__auto_increment"
 )
 
 type Variables map[string]parser.Primary
 
 func (v Variables) Add(key string, value parser.Primary) error {
 	if _, ok := v[key]; ok {
-		return errors.New(fmt.Sprintf("variable %s is redeclared", key))
+		return NewRedeclaredVariableError(key)
 	}
 	v[key] = value
 	return nil
@@ -23,7 +16,7 @@ func (v Variables) Add(key string, value parser.Primary) error {
 
 func (v Variables) Set(key string, value parser.Primary) error {
 	if _, ok := v[key]; !ok {
-		return errors.New(fmt.Sprintf("variable %s is undefined", key))
+		return NewUndefinedVariableError(key)
 	}
 	v[key] = value
 	return nil
@@ -33,7 +26,7 @@ func (v Variables) Get(key string) (parser.Primary, error) {
 	if v, ok := v[key]; ok {
 		return v, nil
 	}
-	return nil, errors.New(fmt.Sprintf("variable %s is undefined", key))
+	return nil, NewUndefinedVariableError(key)
 }
 
 func (v Variables) Delete(key string) {
@@ -73,20 +66,4 @@ func (v Variables) Substitute(substitution parser.VariableSubstitution, filter F
 		return nil, err
 	}
 	return val, nil
-}
-
-func (v Variables) Increment(key string, initialVal int64) parser.Primary {
-	if val, err := v.Get(key); err == nil {
-		val = Calculate(val, parser.NewInteger(1), '+')
-		v.Set(key, val)
-		return val
-	}
-
-	val := parser.NewInteger(initialVal)
-	v.Add(key, val)
-	return val
-}
-
-func (v Variables) ClearAutoIncrement() {
-	v.Delete(AUTO_INCREMENT_KEY)
 }
