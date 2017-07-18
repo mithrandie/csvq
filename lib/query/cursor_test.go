@@ -185,6 +185,7 @@ var cursorMapOpenTests = []struct {
 }
 
 func TestCursorMap_Open(t *testing.T) {
+	initFlag()
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 

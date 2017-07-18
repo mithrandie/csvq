@@ -249,6 +249,15 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		if printstr, err = Print(stmt.(parser.Print), filter); err == nil {
 			proc.AddLog(printstr)
 		}
+	case parser.Printf:
+		if printstr, err = Printf(stmt.(parser.Printf), filter); err == nil {
+			proc.AddLog(printstr)
+		}
+	case parser.Source:
+		var externalStatements []parser.Statement
+		if externalStatements, err = Source(stmt.(parser.Source)); err == nil {
+			flow, err = proc.Execute(externalStatements)
+		}
 	}
 
 	if results != nil {

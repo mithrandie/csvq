@@ -2350,6 +2350,24 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "printf 'foo'",
+		Output: []Statement{
+			Printf{
+				Values: []Expression{
+					NewString("foo"),
+				},
+			},
+		},
+	},
+	{
+		Input: "source '/path/to/file.sql'",
+		Output: []Statement{
+			Source{
+				FilePath: "/path/to/file.sql",
+			},
+		},
+	},
+	{
 		Input: "set @@delimiter = ','",
 		Output: []Statement{
 			SetFlag{

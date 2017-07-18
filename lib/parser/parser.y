@@ -143,7 +143,7 @@ package parser
 %token<token> SEPARATOR PARTITION OVER
 %token<token> COMMIT ROLLBACK
 %token<token> CONTINUE BREAK EXIT
-%token<token> PRINT
+%token<token> PRINT PRINTF SOURCE
 %token<token> VAR
 %token<token> COMPARISON_OP STRING_OP SUBSTITUTION_OP
 
@@ -395,6 +395,14 @@ command_statement
     | PRINT value statement_terminal
     {
         $$ = Print{Value: $2}
+    }
+    | PRINTF values statement_terminal
+    {
+        $$ = Printf{Values: $2}
+    }
+    | SOURCE STRING statement_terminal
+    {
+        $$ = Source{FilePath: $2.Literal}
     }
 
 select_query

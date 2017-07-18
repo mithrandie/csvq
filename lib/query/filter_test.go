@@ -2521,6 +2521,7 @@ var filterEvaluateTests = []struct {
 }
 
 func TestFilter_Evaluate(t *testing.T) {
+	initFlag()
 	tf := cmd.GetFlags()
 	tf.Repository = TestDataDir
 

@@ -308,6 +308,25 @@ var procedureExecuteStatementTests = []struct {
 			"12345",
 		},
 	},
+	{
+		Input: parser.Printf{
+			Values: []parser.Expression{
+				parser.NewString("value: %s"),
+				parser.NewInteger(12345),
+			},
+		},
+		Logs: []string{
+			"value: 12345",
+		},
+	},
+	{
+		Input: parser.Source{
+			FilePath: GetTestFilePath("source.sql"),
+		},
+		Logs: []string{
+			"'external executable file'",
+		},
+	},
 }
 
 func TestProcedure_ExecuteStatement(t *testing.T) {

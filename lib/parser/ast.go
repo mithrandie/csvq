@@ -1257,6 +1257,14 @@ type Print struct {
 	Value Expression
 }
 
+type Printf struct {
+	Values []Expression
+}
+
+type Source struct {
+	FilePath string
+}
+
 type SetFlag struct {
 	Name  string
 	Value Primary
