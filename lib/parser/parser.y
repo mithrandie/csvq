@@ -24,16 +24,25 @@ package parser
 
 %type<program>     program
 %type<program>     in_loop_program
+%type<program>     in_function_program
+%type<program>     in_function_in_loop_program
 %type<statement>   statement
+%type<statement>   procedure_statement
+%type<statement>   in_function_statement
 %type<statement>   in_loop_statement
+%type<statement>   in_function_in_loop_statement
 %type<statement>   variable_statement
 %type<statement>   transaction_statement
 %type<statement>   cursor_statement
 %type<statement>   table_statement
+%type<statement>   function_statement
 %type<expression>  fetch_position
 %type<expression>  cursor_status
 %type<statement>   flow_control_statement
+%type<statement>   in_function_flow_control_statement
+%type<statement>   common_in_loop_flow_control_statement
 %type<statement>   in_loop_flow_control_statement
+%type<statement>   in_function_in_loop_flow_control_statement
 %type<statement>   command_statement
 %type<expression>  select_query
 %type<expression>  select_entity
@@ -66,7 +75,8 @@ package parser
 %type<expression>  arithmetic
 %type<expression>  logic
 %type<expression>  function
-%type<expression>  option
+%type<expression>  aggregate_function
+%type<expression>  aggregate_option
 %type<expression>  group_concat
 %type<expression>  analytic_function
 %type<expression>  analytic_clause
@@ -104,6 +114,10 @@ package parser
 %type<procexpr>    else
 %type<procexprs>   in_loop_elseif
 %type<procexpr>    in_loop_else
+%type<procexprs>   in_function_elseif
+%type<procexpr>    in_function_else
+%type<procexprs>   in_function_in_loop_elseif
+%type<procexpr>    in_function_in_loop_else
 %type<identifier>  identifier
 %type<text>        text
 %type<integer>     integer
@@ -139,10 +153,11 @@ package parser
 %token<token> CASE IF ELSEIF WHILE WHEN THEN ELSE DO END
 %token<token> DECLARE CURSOR FOR FETCH OPEN CLOSE DISPOSE
 %token<token> NEXT PRIOR ABSOLUTE RELATIVE RANGE
-%token<token> GROUP_CONCAT SEPARATOR PARTITION OVER
+%token<token> SEPARATOR PARTITION OVER
 %token<token> COMMIT ROLLBACK
 %token<token> CONTINUE BREAK EXIT
-%token<token> PRINT
+%token<token> PRINT PRINTF SOURCE
+%token<token> FUNCTION BEGIN RETURN
 %token<token> VAR
 %token<token> COMPARISON_OP STRING_OP SUBSTITUTION_OP
 
@@ -164,7 +179,7 @@ program
         $$ = nil
         yylex.(*Lexer).program = $$
     }
-    | statement program
+    | procedure_statement program
     {
         $$ = append([]Statement{$1}, $2...)
         yylex.(*Lexer).program = $$
@@ -177,6 +192,30 @@ in_loop_program
         yylex.(*Lexer).program = $$
     }
     | in_loop_statement in_loop_program
+    {
+        $$ = append([]Statement{$1}, $2...)
+        yylex.(*Lexer).program = $$
+    }
+
+in_function_program
+    :
+    {
+        $$ = nil
+        yylex.(*Lexer).program = $$
+    }
+    | in_function_statement in_function_program
+    {
+        $$ = append([]Statement{$1}, $2...)
+        yylex.(*Lexer).program = $$
+    }
+
+in_function_in_loop_program
+    :
+    {
+        $$ = nil
+        yylex.(*Lexer).program = $$
+    }
+    | in_function_in_loop_statement in_function_in_loop_program
     {
         $$ = append([]Statement{$1}, $2...)
         yylex.(*Lexer).program = $$
@@ -215,11 +254,11 @@ statement
     {
         $$ = $1
     }
-    | variable_statement
+    | function statement_terminal
     {
         $$ = $1
     }
-    | transaction_statement
+    | variable_statement
     {
         $$ = $1
     }
@@ -231,7 +270,7 @@ statement
     {
         $$ = $1
     }
-    | flow_control_statement
+    | transaction_statement
     {
         $$ = $1
     }
@@ -240,12 +279,46 @@ statement
         $$ = $1
     }
 
-in_loop_statement
+procedure_statement
     : statement
     {
         $$ = $1
     }
+    | function_statement
+    {
+        $$ = $1
+    }
+    | flow_control_statement
+    {
+        $$ = $1
+    }
+
+in_function_statement
+    : statement
+    {
+        $$ = $1
+    }
+    | in_function_flow_control_statement
+    {
+        $$ = $1
+    }
+
+in_loop_statement
+    : procedure_statement
+    {
+        $$ = $1
+    }
     | in_loop_flow_control_statement
+    {
+        $$ = $1
+    }
+
+in_function_in_loop_statement
+    : in_function_statement
+    {
+        $$ = $1
+    }
+    | in_function_in_loop_flow_control_statement
     {
         $$ = $1
     }
@@ -304,6 +377,16 @@ table_statement
     | DECLARE identifier TABLE FOR select_query statement_terminal
     {
         $$ = TableDeclaration{Table: $2, Query: $5}
+    }
+
+function_statement
+    : DECLARE identifier FUNCTION '(' ')' AS BEGIN in_function_program END statement_terminal
+    {
+        $$ = FunctionDeclaration{Name: $2, Statements: $8}
+    }
+    | DECLARE identifier FUNCTION '(' variables ')' AS BEGIN in_function_program END statement_terminal
+    {
+        $$ = FunctionDeclaration{Name: $2, Parameters: $5, Statements: $9}
     }
 
 fetch_position
@@ -368,6 +451,42 @@ flow_control_statement
         $$ = FlowControl{Token: $1.Token}
     }
 
+in_function_flow_control_statement
+    : IF value THEN in_function_program in_function_else END IF statement_terminal
+    {
+        $$ = If{Condition: $2, Statements: $4, Else: $5}
+    }
+    | IF value THEN in_function_program in_function_elseif in_function_else END IF statement_terminal
+    {
+        $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
+    }
+    | WHILE value DO in_function_in_loop_program END WHILE statement_terminal
+    {
+        $$ = While{Condition: $2, Statements: $4}
+    }
+    | WHILE variables IN identifier DO in_function_in_loop_program END WHILE statement_terminal
+    {
+        $$ = WhileInCursor{Variables: $2, Cursor: $4, Statements: $6}
+    }
+    | RETURN statement_terminal
+    {
+        $$ = Return{Value: NewNull()}
+    }
+    | RETURN value statement_terminal
+    {
+        $$ = Return{Value: $2}
+    }
+
+common_in_loop_flow_control_statement
+    : CONTINUE statement_terminal
+    {
+        $$ = FlowControl{Token: $1.Token}
+    }
+    | BREAK statement_terminal
+    {
+        $$ = FlowControl{Token: $1.Token}
+    }
+
 in_loop_flow_control_statement
     : IF value THEN in_loop_program in_loop_else END IF statement_terminal
     {
@@ -377,13 +496,23 @@ in_loop_flow_control_statement
     {
         $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
     }
-    | CONTINUE statement_terminal
+    | common_in_loop_flow_control_statement
     {
-        $$ = FlowControl{Token: $1.Token}
+        $$ = $1
     }
-    | BREAK statement_terminal
+
+in_function_in_loop_flow_control_statement
+    : IF value THEN in_function_in_loop_program in_function_in_loop_else END IF statement_terminal
     {
-        $$ = FlowControl{Token: $1.Token}
+        $$ = If{Condition: $2, Statements: $4, Else: $5}
+    }
+    | IF value THEN in_function_in_loop_program in_function_in_loop_elseif in_function_in_loop_else END IF statement_terminal
+    {
+        $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
+    }
+    | common_in_loop_flow_control_statement
+    {
+        $$ = $1
     }
 
 command_statement
@@ -394,6 +523,14 @@ command_statement
     | PRINT value statement_terminal
     {
         $$ = Print{Value: $2}
+    }
+    | PRINTF values statement_terminal
+    {
+        $$ = Printf{Values: $2}
+    }
+    | SOURCE STRING statement_terminal
+    {
+        $$ = Source{FilePath: $2.Literal}
     }
 
 select_query
@@ -635,6 +772,10 @@ value
         $$ = $1
     }
     | function
+    {
+        $$ = $1
+    }
+    | aggregate_function
     {
         $$ = $1
     }
@@ -885,43 +1026,67 @@ logic
     }
 
 function
-    : identifier '(' option ')'
+    : identifier '(' ')'
     {
-        $$ = Function{Name: $1.Literal, Option: $3.(Option)}
+        $$ = Function{Name: $1.Literal}
+    }
+    | identifier '(' values ')'
+    {
+        $$ = Function{Name: $1.Literal, Args: $3}
+    }
+
+aggregate_function
+    : identifier '(' aggregate_option ')'
+    {
+        $$ = AggregateFunction{Name: $1.Literal, Option: $3.(AggregateOption)}
     }
     | group_concat
     {
         $$ = $1
     }
 
-option
-    :
+aggregate_option
+    : '*'
     {
-        $$ = Option{}
+        $$ = AggregateOption{Args: []Expression{AllColumns{}}}
     }
-    | distinct '*'
+    | DISTINCT '*'
     {
-        $$ = Option{Distinct: $1, Args: []Expression{AllColumns{}}}
+        $$ = AggregateOption{Distinct: $1, Args: []Expression{AllColumns{}}}
     }
-    | distinct values
+    | DISTINCT value
     {
-        $$ = Option{Distinct: $1, Args: $2}
+        $$ = AggregateOption{Distinct: $1, Args: []Expression{$2}}
     }
 
 group_concat
-    : GROUP_CONCAT '(' option order_by_clause ')'
+    : identifier '(' value ORDER BY order_items ')'
     {
-        $$ = GroupConcat{GroupConcat: $1.Literal, Option: $3.(Option), OrderBy: $4}
+        orderBy := OrderByClause{OrderBy: $4.Literal + " " + $5.Literal, Items: $6}
+        $$ = GroupConcat{GroupConcat: $1.Literal, Option: AggregateOption{Args: []Expression{$3}}, OrderBy: orderBy}
     }
-    | GROUP_CONCAT '(' option order_by_clause SEPARATOR STRING ')'
+    | identifier '(' DISTINCT value ORDER BY order_items ')'
     {
-        $$ = GroupConcat{GroupConcat: $1.Literal, Option: $3.(Option), OrderBy: $4, SeparatorLit: $5.Literal, Separator: $6.Literal}
+        orderBy := OrderByClause{OrderBy: $5.Literal + " " + $6.Literal, Items: $7}
+        $$ = GroupConcat{GroupConcat: $1.Literal, Option: AggregateOption{Distinct: $3, Args: []Expression{$4}}, OrderBy: orderBy}
+    }
+    | identifier '(' value order_by_clause SEPARATOR STRING ')'
+    {
+        $$ = GroupConcat{GroupConcat: $1.Literal, Option: AggregateOption{Args: []Expression{$3}}, OrderBy: $4, SeparatorLit: $5.Literal, Separator: $6.Literal}
+    }
+    | identifier '(' DISTINCT value order_by_clause SEPARATOR STRING ')'
+    {
+        $$ = GroupConcat{GroupConcat: $1.Literal, Option: AggregateOption{Distinct: $3, Args: []Expression{$4}}, OrderBy: $5, SeparatorLit: $6.Literal, Separator: $7.Literal}
     }
 
 analytic_function
-    : identifier '(' option ')' OVER '(' analytic_clause ')'
+    : identifier '(' ')' OVER '(' analytic_clause ')'
     {
-        $$ = AnalyticFunction{Name: $1.Literal, Option: $3.(Option), Over: $5.Literal, AnalyticClause: $7.(AnalyticClause)}
+        $$ = AnalyticFunction{Name: $1.Literal, Over: $4.Literal, AnalyticClause: $6.(AnalyticClause)}
+    }
+    | identifier '(' values ')' OVER '(' analytic_clause ')'
+    {
+        $$ = AnalyticFunction{Name: $1.Literal, Args: $3, Over: $5.Literal, AnalyticClause: $7.(AnalyticClause)}
     }
 
 analytic_clause
@@ -1308,6 +1473,46 @@ in_loop_else
         $$ = nil
     }
     | ELSE in_loop_program
+    {
+        $$ = Else{Statements: $2}
+    }
+
+in_function_elseif
+    : ELSEIF value THEN in_function_program
+    {
+        $$ = []ProcExpr{ElseIf{Condition: $2, Statements: $4}}
+    }
+    | elseif elseif
+    {
+        $$ = append($1, $2...)
+    }
+
+in_function_else
+    :
+    {
+        $$ = nil
+    }
+    | ELSE in_function_program
+    {
+        $$ = Else{Statements: $2}
+    }
+
+in_function_in_loop_elseif
+    : ELSEIF value THEN in_function_in_loop_program
+    {
+        $$ = []ProcExpr{ElseIf{Condition: $2, Statements: $4}}
+    }
+    | in_function_in_loop_elseif in_function_in_loop_elseif
+    {
+        $$ = append($1, $2...)
+    }
+
+in_function_in_loop_else
+    :
+    {
+        $$ = nil
+    }
+    | ELSE in_function_in_loop_program
     {
         $$ = Else{Statements: $2}
     }

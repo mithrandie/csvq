@@ -1035,20 +1035,48 @@ func TestConcat_String(t *testing.T) {
 	}
 }
 
-func TestOption_IsDistinct(t *testing.T) {
-	e := Option{}
+func TestFunction_String(t *testing.T) {
+	e := Function{
+		Name: "sum",
+		Args: []Expression{
+			Identifier{Literal: "column"},
+		},
+	}
+	expect := "sum(column)"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestAggregateFunction_String(t *testing.T) {
+	e := AggregateFunction{
+		Name: "sum",
+		Option: AggregateOption{
+			Args: []Expression{
+				Identifier{Literal: "column"},
+			},
+		},
+	}
+	expect := "sum(column)"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestAggregateOption_IsDistinct(t *testing.T) {
+	e := AggregateOption{}
 	if e.IsDistinct() == true {
 		t.Errorf("distinct = %t, want %t for %#v", e.IsDistinct(), false, e)
 	}
 
-	e = Option{Distinct: Token{Token: DISTINCT, Literal: "distinct"}}
+	e = AggregateOption{Distinct: Token{Token: DISTINCT, Literal: "distinct"}}
 	if e.IsDistinct() == false {
 		t.Errorf("distinct = %t, want %t for %#v", e.IsDistinct(), true, e)
 	}
 }
 
-func TestOption_String(t *testing.T) {
-	e := Option{
+func TestAggregateOption_String(t *testing.T) {
+	e := AggregateOption{
 		Distinct: Token{Token: DISTINCT, Literal: "distinct"},
 		Args: []Expression{
 			Identifier{Literal: "column"},
@@ -1060,23 +1088,8 @@ func TestOption_String(t *testing.T) {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 
-	e = Option{}
+	e = AggregateOption{}
 	expect = ""
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-}
-
-func TestFunction_String(t *testing.T) {
-	e := Function{
-		Name: "sum",
-		Option: Option{
-			Args: []Expression{
-				Identifier{Literal: "column"},
-			},
-		},
-	}
-	expect := "sum(column)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1400,7 +1413,7 @@ func TestCaseElse_String(t *testing.T) {
 func TestGroupConcat_String(t *testing.T) {
 	e := GroupConcat{
 		GroupConcat: "group_concat",
-		Option:      Option{Args: []Expression{Identifier{Literal: "column1"}}},
+		Option:      AggregateOption{Args: []Expression{Identifier{Literal: "column1"}}},
 		OrderBy: OrderByClause{
 			OrderBy: "order by",
 			Items:   []Expression{Identifier{Literal: "column1"}},
@@ -1417,10 +1430,8 @@ func TestGroupConcat_String(t *testing.T) {
 func TestAnalyticFunction_String(t *testing.T) {
 	e := AnalyticFunction{
 		Name: "avg",
-		Option: Option{
-			Args: []Expression{
-				Identifier{Literal: "column4"},
-			},
+		Args: []Expression{
+			Identifier{Literal: "column4"},
 		},
 		Over: "over",
 		AnalyticClause: AnalyticClause{

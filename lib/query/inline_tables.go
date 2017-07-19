@@ -10,18 +10,18 @@ import (
 
 type InlineTables map[string]*View
 
-func (it InlineTables) Set(inlineTable parser.InlineTable) error {
+func (it InlineTables) Set(inlineTable parser.InlineTable, parentFilter Filter) error {
 	uname := strings.ToUpper(inlineTable.Name.Literal)
 	if _, err := it.Get(uname); err == nil {
 		return errors.New(fmt.Sprintf("inline table %s already exists", inlineTable.Name.Literal))
 	}
 
-	filter := Filter{}
+	filter := parentFilter.Copy()
 	filter.InlineTables = it
 	if inlineTable.IsRecursive() {
-		filter.RecursiveTable = inlineTable
+		filter.RecursiveTable = &inlineTable
 	}
-	view, err := SelectAsSubquery(inlineTable.Query, filter)
+	view, err := Select(inlineTable.Query, filter)
 	if err != nil {
 		return err
 	}
@@ -60,10 +60,10 @@ func (it InlineTables) Merge(tables InlineTables) InlineTables {
 	return table
 }
 
-func (it InlineTables) Load(clause parser.WithClause) error {
+func (it InlineTables) Load(clause parser.WithClause, parentFilter Filter) error {
 	for _, v := range clause.InlineTables {
 		inlineTable := v.(parser.InlineTable)
-		err := it.Set(inlineTable)
+		err := it.Set(inlineTable, parentFilter)
 		if err != nil {
 			return err
 		}

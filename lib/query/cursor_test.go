@@ -185,6 +185,7 @@ var cursorMapOpenTests = []struct {
 }
 
 func TestCursorMap_Open(t *testing.T) {
+	initFlag()
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
@@ -200,7 +201,7 @@ func TestCursorMap_Open(t *testing.T) {
 	}
 
 	for _, v := range cursorMapOpenTests {
-		err := cursors.Open(v.Key)
+		err := cursors.Open(v.Key, NewFilter([]Variables{{}}))
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -252,7 +253,7 @@ func TestCursorMap_Close(t *testing.T) {
 			query: selectQueryForCursorTest,
 		},
 	}
-	cursors.Open("cur")
+	cursors.Open("cur", NewFilter([]Variables{{}}))
 
 	for _, v := range cursorMapCloseTests {
 		err := cursors.Close(v.Key)
@@ -404,7 +405,7 @@ func TestCursorMap_Fetch(t *testing.T) {
 			query: selectQueryForCursorTest,
 		},
 	}
-	cursors.Open("cur")
+	cursors.Open("cur", NewFilter([]Variables{{}}))
 
 	for _, v := range cursorMapFetchTests {
 		result, err := cursors.Fetch(v.Key, v.Position, v.Number)
@@ -463,7 +464,7 @@ func TestCursorMap_IsOpen(t *testing.T) {
 			query: selectQueryForCursorTest,
 		},
 	}
-	cursors.Open("cur")
+	cursors.Open("cur", NewFilter([]Variables{{}}))
 
 	for _, v := range cursorMapIsOpenTests {
 		result, err := cursors.IsOpen(v.Key)
@@ -539,8 +540,8 @@ func TestCursorMap_IsInRange(t *testing.T) {
 			query: selectQueryForCursorTest,
 		},
 	}
-	cursors.Open("cur")
-	cursors.Open("cur2")
+	cursors.Open("cur", NewFilter([]Variables{{}}))
+	cursors.Open("cur2", NewFilter([]Variables{{}}))
 	cursors.Fetch("cur2", parser.NEXT, 0)
 
 	for _, v := range cursorMapIsInRangeTests {

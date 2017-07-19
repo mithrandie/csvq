@@ -21,6 +21,7 @@ title: Reference Manual - csvq
   * [Row Value]({{ '/reference/row-value.html' | relative_url }})
   * [Cursor]({{ '/reference/cursor.html' | relative_url }})
   * [Temporary Table]({{ '/reference/temporary-table.html' | relative_url }})
+  * [User Defined Function]({{ '/reference/user-defined-function.html' | relative_url }})
   * [Control Flow]({{ '/reference/control-flow.html' | relative_url }})
   * [Transaction Management]({{ '/reference/transaction.html' | relative_url }})
   * [Built-in Commands]({{ '/reference/built-in.html' | relative_url }})

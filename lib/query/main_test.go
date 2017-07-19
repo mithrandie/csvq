@@ -59,12 +59,25 @@ func setup() {
 	copyfile(filepath.Join(TestDir, "add_columns.csv"), filepath.Join(TestDataDir, "table1.csv"))
 	copyfile(filepath.Join(TestDir, "drop_columns.csv"), filepath.Join(TestDataDir, "table1.csv"))
 	copyfile(filepath.Join(TestDir, "rename_column.csv"), filepath.Join(TestDataDir, "table1.csv"))
+
+	copyfile(filepath.Join(TestDir, "source.sql"), filepath.Join(filepath.Join(wdir, "..", "..", "testdata"), "source.sql"))
 }
 
 func teardown() {
 	if _, err := os.Stat(TestDir); err == nil {
 		os.RemoveAll(TestDir)
 	}
+}
+
+func initFlag() {
+	flags := cmd.GetFlags()
+	flags.Delimiter = cmd.UNDEF
+	flags.Encoding = cmd.UTF8
+	flags.LineBreak = cmd.LF
+	flags.Repository = "."
+	flags.DatetimeFormat = ""
+	flags.NoHeader = false
+	flags.WithoutNull = false
 }
 
 func copyfile(dstfile string, srcfile string) error {

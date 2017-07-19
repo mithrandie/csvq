@@ -28,9 +28,9 @@ func (m CursorMap) Dispose(key string) {
 	}
 }
 
-func (m CursorMap) Open(key string) error {
+func (m CursorMap) Open(key string, filter Filter) error {
 	if cur, ok := m[strings.ToUpper(key)]; ok {
-		return cur.Open()
+		return cur.Open(filter)
 	}
 	return errors.New(fmt.Sprintf("cursor %s does not exist", key))
 }
@@ -85,12 +85,12 @@ func NewCursor(name string, query parser.SelectQuery) *Cursor {
 	}
 }
 
-func (c *Cursor) Open() error {
+func (c *Cursor) Open(filter Filter) error {
 	if c.view != nil {
 		return errors.New(fmt.Sprintf("cursor %s is already open", c.name))
 	}
 
-	view, err := Select(c.query)
+	view, err := Select(c.query, filter)
 	if err != nil {
 		return err
 	}

@@ -37,7 +37,7 @@ var encodeViewTests = []struct {
 			Records: []Record{},
 		},
 		Format: cmd.TEXT,
-		Result: "Empty Records\n",
+		Result: "Empty Records",
 	},
 	{
 		Name: "Empty Fields",
@@ -48,7 +48,7 @@ var encodeViewTests = []struct {
 			},
 		},
 		Format: cmd.TEXT,
-		Result: "Empty Fields\n",
+		Result: "Empty Fields",
 	},
 	{
 		Name: "Text",
@@ -69,7 +69,7 @@ var encodeViewTests = []struct {
 			"|   2.0123 | 2016-02-01 16:00:00.123456        | abcdef |\n" +
 			"| 34567890 | abcdefghijklmnopqrstuvwxyzabcdefg |   NULL |\n" +
 			"|          | hi\"jk日本語あアｱＡ（              |        |\n" +
-			"+----------+-----------------------------------+--------+\n",
+			"+----------+-----------------------------------+--------+",
 	},
 	{
 		Name: "CSV",
@@ -232,7 +232,7 @@ func TestEncodeView(t *testing.T) {
 			continue
 		}
 		if s != v.Result {
-			t.Errorf("%s, result = %q, want %q", v.Name, s, v.Result)
+			t.Errorf("%s: result = %q, want %q", v.Name, s, v.Result)
 		}
 	}
 

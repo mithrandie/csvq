@@ -28,7 +28,7 @@ _value_
 _return_
 : [primitive type]({{ '/reference/value.html#primitive_types' | relative_url }})
 
-Return the first non-null _value_ in arguments. If there are no non-null _value_, return null.
+Return the first non-null _value_ in arguments. If there is no non-null _value_, return null.
 
 ### IF
 {: #if}

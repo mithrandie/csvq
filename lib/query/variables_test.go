@@ -17,7 +17,7 @@ type variableTests struct {
 
 var variablesDeclareTests = []variableTests{
 	{
-		Name: "Decrare Variable",
+		Name: "Declare Variable",
 		Expr: parser.VariableDeclaration{
 			Assignments: []parser.Expression{
 				parser.VariableAssignment{
@@ -30,7 +30,7 @@ var variablesDeclareTests = []variableTests{
 		},
 	},
 	{
-		Name: "Decrare Variable With Initial Value",
+		Name: "Declare Variable With Initial Value",
 		Expr: parser.VariableDeclaration{
 			Assignments: []parser.Expression{
 				parser.VariableAssignment{
@@ -45,7 +45,7 @@ var variablesDeclareTests = []variableTests{
 		},
 	},
 	{
-		Name: "Decrare Variable Redeclaration Error",
+		Name: "Declare Variable Redeclaration Error",
 		Expr: parser.VariableDeclaration{
 			Assignments: []parser.Expression{
 				parser.VariableAssignment{
@@ -57,7 +57,7 @@ var variablesDeclareTests = []variableTests{
 		Error: "variable var2 is redeclared",
 	},
 	{
-		Name: "Decrare Variable Filter Error",
+		Name: "Declare Variable Filter Error",
 		Expr: parser.VariableDeclaration{
 			Assignments: []parser.Expression{
 				parser.VariableAssignment{
@@ -70,11 +70,11 @@ var variablesDeclareTests = []variableTests{
 	},
 }
 
-func TestVariables_Decrare(t *testing.T) {
+func TestVariables_Declare(t *testing.T) {
 	vars := Variables{}
 
 	for _, v := range variablesDeclareTests {
-		err := vars.Decrare(v.Expr.(parser.VariableDeclaration), v.Filter)
+		err := vars.Declare(v.Expr.(parser.VariableDeclaration), v.Filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -144,15 +144,5 @@ func TestVariables_Substitute(t *testing.T) {
 		if !reflect.DeepEqual(vars, v.Result) {
 			t.Errorf("%s: result = %s, want %s", v.Name, vars, v.Result)
 		}
-	}
-}
-
-func TestVariables_ClearAutoIncrement(t *testing.T) {
-	vars := Variables{
-		AUTO_INCREMENT_KEY: parser.NewInteger(1),
-	}
-	vars.ClearAutoIncrement()
-	if _, err := vars.Get(AUTO_INCREMENT_KEY); err == nil {
-		t.Error("auto increment key in variables is not deleted")
 	}
 }

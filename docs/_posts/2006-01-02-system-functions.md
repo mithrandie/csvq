@@ -8,31 +8,9 @@ category: reference
 
 | name | description |
 | :- | :- |
-| [AUTO_INCREMENT](#auto_increment) | Return a sequence number in a single query |
 | [CALL](#call) | Execute a external command |
 
 ## Definitions
-
-### AUTO_INCREMENT
-{: #auto_increment}
-
-```
-AUTO_INCREMENT()
-```
-
-Return a sequence number that starts with 1 in a single query.
-
-```
-AUTO_INCREMENT(initial_value)
-```
-
-_initial_value_
-: [integer]({{ '/reference/value.html#integer' | relative_url }})
-
-_return_
-: [integer]({{ '/reference/value.html#integer' | relative_url }})
-
-Return a sequence number that starts with _initial_value_ in a single query.
 
 ### CALL
 {: #call}

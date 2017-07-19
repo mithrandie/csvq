@@ -108,10 +108,10 @@ func convertLineBreak(str string, lb cmd.LineBreak) string {
 
 func encodeText(view *View) string {
 	if view.FieldLen() < 1 {
-		return "Empty Fields\n"
+		return "Empty Fields"
 	}
 	if view.RecordLen() < 1 {
-		return "Empty Records\n"
+		return "Empty Records"
 	}
 
 	header := make([]textField, view.FieldLen())
@@ -153,7 +153,7 @@ func encodeText(view *View) string {
 	}
 
 	s[len(s)-1] = formatHR(fieldWidths)
-	return strings.Join(s, "")
+	return strings.Join(s, "\n")
 }
 
 func formatHR(lens []int) string {
@@ -161,7 +161,7 @@ func formatHR(lens []int) string {
 	for i, l := range lens {
 		s[i] = "+" + strings.Repeat("-", l+2)
 	}
-	s[len(s)-1] = "+\n"
+	s[len(s)-1] = "+"
 	return strings.Join(s, "")
 }
 
@@ -192,11 +192,11 @@ func formatRecord(record []textField, fieldWidths []int) string {
 			}
 			sl[fieldIdx] = fmt.Sprintf("| %s ", value)
 		}
-		sl[len(sl)-1] = "|\n"
+		sl[len(sl)-1] = "|"
 		s[lineIdx] = strings.Join(sl, "")
 	}
 
-	return strings.Join(s, "")
+	return strings.Join(s, "\n")
 }
 
 func stringWidth(s string) int {

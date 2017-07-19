@@ -249,7 +249,7 @@ func TestInlineTables_Set(t *testing.T) {
 	it := InlineTables{}
 
 	for _, v := range inlineTablesSetTests {
-		err := it.Set(v.Expr)
+		err := it.Set(v.Expr, NewFilter([]Variables{{}}))
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -513,7 +513,7 @@ func TestInlineTables_Load(t *testing.T) {
 			},
 		}
 
-		err := it.Load(v.Expr)
+		err := it.Load(v.Expr, NewFilter([]Variables{{}}))
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

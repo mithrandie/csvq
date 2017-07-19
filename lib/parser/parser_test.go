@@ -256,9 +256,8 @@ var parseTests = []struct {
 						OrderItem{Value: FieldReference{Column: Identifier{Literal: "column7"}}, Nulls: "nulls", Position: Token{Token: FIRST, Literal: "first", Line: 9, Char: 25}},
 						OrderItem{Value: FieldReference{Column: Identifier{Literal: "column8"}}, Direction: Token{Token: DESC, Literal: "desc", Line: 10, Char: 19}, Nulls: "nulls", Position: Token{Token: LAST, Literal: "last", Line: 10, Char: 30}},
 						OrderItem{Value: AnalyticFunction{
-							Name:   "avg",
-							Option: Option{},
-							Over:   "over",
+							Name: "avg",
+							Over: "over",
 							AnalyticClause: AnalyticClause{
 								Partition:     nil,
 								OrderByClause: nil,
@@ -1395,8 +1394,47 @@ var parseTests = []struct {
 						Select: "select",
 						Fields: []Expression{
 							Field{Object: Function{
-								Name:   "count",
-								Option: Option{},
+								Name: "count",
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select count(column1)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: Function{
+								Name: "count",
+								Args: []Expression{
+									FieldReference{Column: Identifier{Literal: "column1"}},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select count(*)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: AggregateFunction{
+								Name: "count",
+								Option: AggregateOption{
+									Args: []Expression{AllColumns{}},
+								},
 							}},
 						},
 					},
@@ -1412,11 +1450,34 @@ var parseTests = []struct {
 					SelectClause: SelectClause{
 						Select: "select",
 						Fields: []Expression{
-							Field{Object: Function{
+							Field{Object: AggregateFunction{
 								Name: "count",
-								Option: Option{
+								Option: AggregateOption{
 									Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 14},
 									Args:     []Expression{AllColumns{}},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select count(distinct column1)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: AggregateFunction{
+								Name: "count",
+								Option: AggregateOption{
+									Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 14},
+									Args: []Expression{
+										FieldReference{Column: Identifier{Literal: "column1"}},
+									},
 								},
 							}},
 						},
@@ -1435,11 +1496,9 @@ var parseTests = []struct {
 						Fields: []Expression{
 							Field{Object: Function{
 								Name: "count",
-								Option: Option{
-									Args: []Expression{
-										FieldReference{Column: Identifier{Literal: "column1"}},
-										FieldReference{Column: Identifier{Literal: "column2"}},
-									},
+								Args: []Expression{
+									FieldReference{Column: Identifier{Literal: "column1"}},
+									FieldReference{Column: Identifier{Literal: "column2"}},
 								},
 							}},
 						},
@@ -1458,7 +1517,7 @@ var parseTests = []struct {
 						Fields: []Expression{
 							Field{Object: GroupConcat{
 								GroupConcat: "group_concat",
-								Option:      Option{Args: []Expression{FieldReference{Column: Identifier{Literal: "column1"}}}},
+								Option:      AggregateOption{Args: []Expression{FieldReference{Column: Identifier{Literal: "column1"}}}},
 								OrderBy: OrderByClause{
 									OrderBy: "order by",
 									Items: []Expression{
@@ -1473,7 +1532,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select group_concat(column1 separator ',')",
+		Input: "select group_concat(distinct column1 order by column1)",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -1481,8 +1540,66 @@ var parseTests = []struct {
 						Select: "select",
 						Fields: []Expression{
 							Field{Object: GroupConcat{
-								GroupConcat:  "group_concat",
-								Option:       Option{Args: []Expression{FieldReference{Column: Identifier{Literal: "column1"}}}},
+								GroupConcat: "group_concat",
+								Option: AggregateOption{
+									Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 21},
+									Args:     []Expression{FieldReference{Column: Identifier{Literal: "column1"}}},
+								},
+								OrderBy: OrderByClause{
+									OrderBy: "order by",
+									Items: []Expression{
+										OrderItem{Value: FieldReference{Column: Identifier{Literal: "column1"}}},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select group_concat(distinct column1 separator ',')",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: GroupConcat{
+								GroupConcat: "group_concat",
+								Option: AggregateOption{
+									Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 21},
+									Args:     []Expression{FieldReference{Column: Identifier{Literal: "column1"}}},
+								},
+								SeparatorLit: "separator",
+								Separator:    ",",
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select group_concat(column1 order by column1 separator ',')",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: GroupConcat{
+								GroupConcat: "group_concat",
+								Option: AggregateOption{
+									Args: []Expression{FieldReference{Column: Identifier{Literal: "column1"}}},
+								},
+								OrderBy: OrderByClause{
+									OrderBy: "order by",
+									Items: []Expression{
+										OrderItem{Value: FieldReference{Column: Identifier{Literal: "column1"}}},
+									},
+								},
 								SeparatorLit: "separator",
 								Separator:    ",",
 							}},
@@ -1545,9 +1662,8 @@ var parseTests = []struct {
 						Select: "select",
 						Fields: []Expression{
 							Field{Object: AnalyticFunction{
-								Name:   "rank",
-								Option: Option{},
-								Over:   "over",
+								Name: "rank",
+								Over: "over",
 								AnalyticClause: AnalyticClause{
 									Partition: Partition{
 										PartitionBy: "partition by",
@@ -1580,9 +1696,33 @@ var parseTests = []struct {
 						Select: "select",
 						Fields: []Expression{
 							Field{Object: AnalyticFunction{
-								Name:   "avg",
-								Option: Option{},
-								Over:   "over",
+								Name: "avg",
+								Over: "over",
+								AnalyticClause: AnalyticClause{
+									Partition:     nil,
+									OrderByClause: nil,
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select first_value(column1) over ()",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						Select: "select",
+						Fields: []Expression{
+							Field{Object: AnalyticFunction{
+								Name: "first_value",
+								Args: []Expression{
+									FieldReference{Column: Identifier{Literal: "column1"}},
+								},
+								Over: "over",
 								AnalyticClause: AnalyticClause{
 									Partition:     nil,
 									OrderByClause: nil,
@@ -1811,6 +1951,18 @@ var parseTests = []struct {
 					Name: "@var1",
 				},
 				Value: NewInteger(1),
+			},
+		},
+	},
+	{
+		Input: "func('arg1', 'arg2')",
+		Output: []Statement{
+			Function{
+				Name: "func",
+				Args: []Expression{
+					NewString("arg1"),
+					NewString("arg2"),
+				},
 			},
 		},
 	},
@@ -2210,6 +2362,24 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "printf 'foo'",
+		Output: []Statement{
+			Printf{
+				Values: []Expression{
+					NewString("foo"),
+				},
+			},
+		},
+	},
+	{
+		Input: "source '/path/to/file.sql'",
+		Output: []Statement{
+			Source{
+				FilePath: "/path/to/file.sql",
+			},
+		},
+	},
+	{
 		Input: "set @@delimiter = ','",
 		Output: []Statement{
 			SetFlag{
@@ -2593,6 +2763,148 @@ var parseTests = []struct {
 								FlowControl{Token: CONTINUE},
 							},
 						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "declare func1 function () as begin end",
+		Output: []Statement{
+			FunctionDeclaration{
+				Name: Identifier{Literal: "func1"},
+			},
+		},
+	},
+	{
+		Input: "declare func1 function (@arg1, @arg2) as begin " +
+			"if @var1 = 1 then print 1; end if; " +
+			"if @var1 = 1 then print 1; elseif @var1 = 2 then print 2; elseif @var1 = 3 then print 3; else print 4; end if; " +
+			"while true do break end while; " +
+			"while true do if @var1 = 1 then continue; end if; end while; " +
+			"while true do if @var1 = 1 then continue; elseif @var1 = 2 then break; elseif @var1 = 3 then return; else continue; end if; end while; " +
+			"return @var1; " +
+			"end",
+		Output: []Statement{
+			FunctionDeclaration{
+				Name: Identifier{Literal: "func1"},
+				Parameters: []Variable{
+					{Name: "@arg1"},
+					{Name: "@arg2"},
+				},
+				Statements: []Statement{
+					If{
+						Condition: Comparison{
+							LHS:      Variable{Name: "@var1"},
+							RHS:      NewInteger(1),
+							Operator: "=",
+						},
+						Statements: []Statement{
+							Print{Value: NewInteger(1)},
+						},
+					},
+					If{
+						Condition: Comparison{
+							LHS:      Variable{Name: "@var1"},
+							RHS:      NewInteger(1),
+							Operator: "=",
+						},
+						Statements: []Statement{
+							Print{Value: NewInteger(1)},
+						},
+						ElseIf: []ProcExpr{
+							ElseIf{
+								Condition: Comparison{
+									LHS:      Variable{Name: "@var1"},
+									RHS:      NewInteger(2),
+									Operator: "=",
+								},
+								Statements: []Statement{
+									Print{Value: NewInteger(2)},
+								},
+							},
+							ElseIf{
+								Condition: Comparison{
+									LHS:      Variable{Name: "@var1"},
+									RHS:      NewInteger(3),
+									Operator: "=",
+								},
+								Statements: []Statement{
+									Print{Value: NewInteger(3)},
+								},
+							},
+						},
+						Else: Else{
+							Statements: []Statement{
+								Print{Value: NewInteger(4)},
+							},
+						},
+					},
+					While{
+						Condition: Ternary{literal: "true", value: ternary.TRUE},
+						Statements: []Statement{
+							FlowControl{Token: BREAK},
+						},
+					},
+					While{
+						Condition: Ternary{literal: "true", value: ternary.TRUE},
+						Statements: []Statement{
+							If{
+								Condition: Comparison{
+									LHS:      Variable{Name: "@var1"},
+									RHS:      NewInteger(1),
+									Operator: "=",
+								},
+								Statements: []Statement{
+									FlowControl{Token: CONTINUE},
+								},
+							},
+						},
+					},
+					While{
+						Condition: Ternary{literal: "true", value: ternary.TRUE},
+						Statements: []Statement{
+							If{
+								Condition: Comparison{
+									LHS:      Variable{Name: "@var1"},
+									RHS:      NewInteger(1),
+									Operator: "=",
+								},
+								Statements: []Statement{
+									FlowControl{Token: CONTINUE},
+								},
+								ElseIf: []ProcExpr{
+									ElseIf{
+										Condition: Comparison{
+											LHS:      Variable{Name: "@var1"},
+											RHS:      NewInteger(2),
+											Operator: "=",
+										},
+										Statements: []Statement{
+											FlowControl{Token: BREAK},
+										},
+									},
+									ElseIf{
+										Condition: Comparison{
+											LHS:      Variable{Name: "@var1"},
+											RHS:      NewInteger(3),
+											Operator: "=",
+										},
+										Statements: []Statement{
+											Return{Value: NewNull()},
+										},
+									},
+								},
+								Else: Else{
+									Statements: []Statement{
+										FlowControl{Token: CONTINUE},
+									},
+								},
+							},
+						},
+					},
+					Return{
+						Value: Variable{Name: "@var1"},
 					},
 				},
 			},
