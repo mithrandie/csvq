@@ -30,12 +30,12 @@ var printTests = []struct {
 				Name: "var",
 			},
 		},
-		Error: "variable var is undefined",
+		Error: "[L:- C:-] variable var is undefined",
 	},
 }
 
 func TestPrint(t *testing.T) {
-	filter := NewFilter([]Variables{{}})
+	filter := NewEmptyFilter()
 
 	for _, v := range printTests {
 		result, err := Print(v.Expr, filter)
@@ -82,7 +82,7 @@ var printfTests = []struct {
 				parser.NewString("str"),
 			},
 		},
-		Error: "print format \"printf test: value1 %s, value2 %s, %a %% %\": number of replace values does not match",
+		Error: "[L:- C:-] PRINTF: number of replace values does not match",
 	},
 	{
 		Name: "Printf Greater Values Error",
@@ -94,12 +94,12 @@ var printfTests = []struct {
 				parser.NewInteger(2),
 			},
 		},
-		Error: "print format \"printf test: value1 %s, value2 %s, %a %% %\": number of replace values does not match",
+		Error: "[L:- C:-] PRINTF: number of replace values does not match",
 	},
 }
 
 func TestPrintf(t *testing.T) {
-	filter := NewFilter([]Variables{{}})
+	filter := NewEmptyFilter()
 
 	for _, v := range printfTests {
 		result, err := Printf(v.Expr, filter)
@@ -143,7 +143,7 @@ var sourceTests = []struct {
 		Expr: parser.Source{
 			FilePath: GetTestFilePath("notexist.sql"),
 		},
-		Error: fmt.Sprintf("source file %q does not exist", GetTestFilePath("notexist.sql")),
+		Error: fmt.Sprintf("[L:- C:-] SOURCE: file %s does not exist", GetTestFilePath("notexist.sql")),
 	},
 }
 
@@ -245,7 +245,7 @@ var setFlagTests = []struct {
 			Name:  "@@delimiter",
 			Value: parser.NewBoolean(true),
 		},
-		Error: "invalid flag value: @@delimiter = true",
+		Error: "[L:- C:-] SET: flag value true for @@delimiter is invalid",
 	},
 	{
 		Name: "Set WithoutNull Value Error",
@@ -253,7 +253,7 @@ var setFlagTests = []struct {
 			Name:  "@@without_null",
 			Value: parser.NewString("string"),
 		},
-		Error: "invalid flag value: @@without_null = 'string'",
+		Error: "[L:- C:-] SET: flag value 'string' for @@without_null is invalid",
 	},
 	{
 		Name: "Invalid Flag Error",
@@ -261,7 +261,7 @@ var setFlagTests = []struct {
 			Name:  "@@invalid",
 			Value: parser.NewString("string"),
 		},
-		Error: "invalid flag name: @@invalid",
+		Error: "[L:- C:-] SET: flag name @@invalid is invalid",
 	},
 }
 

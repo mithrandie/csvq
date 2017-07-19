@@ -21,13 +21,13 @@ var procedureExecuteStatementTests = []struct {
 			Name:  "@@invalid",
 			Value: parser.NewString("\t"),
 		},
-		Error: "invalid flag name: @@invalid",
+		Error: "[L:- C:-] SET: flag name @@invalid is invalid",
 	},
 	{
 		Input: parser.VariableDeclaration{
 			Assignments: []parser.Expression{
 				parser.VariableAssignment{
-					Name: "@var1",
+					Variable: parser.Variable{Name: "@var1"},
 				},
 			},
 		},
@@ -101,18 +101,18 @@ var procedureExecuteStatementTests = []struct {
 		Input: parser.VariableDeclaration{
 			Assignments: []parser.Expression{
 				parser.VariableAssignment{
-					Name: "@var1",
+					Variable: parser.Variable{Name: "@var1"},
 				},
 			},
 		},
-		Error: "variable @var1 is redeclared",
+		Error: "[L:- C:-] variable @var1 is redeclared",
 	},
 	{
 		Input: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "@var2"},
 			Value:    parser.NewInteger(1),
 		},
-		Error: "variable @var2 is undefined",
+		Error: "[L:- C:-] variable @var2 is undefined",
 	},
 	{
 		Input: parser.InsertQuery{
@@ -357,7 +357,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
-	UserFunctions = UserFunctionMap{}
+	UserFunctions = UserDefinedFunctionMap{}
 	proc := NewProcedure()
 
 	for _, v := range procedureExecuteStatementTests {
@@ -500,7 +500,7 @@ var procedureIfStmtTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 }
 
@@ -711,7 +711,7 @@ var procedureWhileTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
 		Name: "While Statement Execution Error",
@@ -734,7 +734,7 @@ var procedureWhileTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 }
 
@@ -745,15 +745,15 @@ func TestProcedure_While(t *testing.T) {
 		proc.Rollback()
 		Logs = []string{}
 
-		if _, err := proc.VariablesList[0].Get("@while_test"); err != nil {
-			proc.VariablesList[0].Add("@while_test", parser.NewInteger(0))
+		if _, err := proc.VariablesList[0].Get(parser.Variable{Name: "@while_test"}); err != nil {
+			proc.VariablesList[0].Add(parser.Variable{Name: "@while_test"}, parser.NewInteger(0))
 		}
-		proc.VariablesList[0].Set("@while_test", parser.NewInteger(0))
+		proc.VariablesList[0].Set(parser.Variable{Name: "@while_test"}, parser.NewInteger(0))
 
-		if _, err := proc.VariablesList[0].Get("@while_test_count"); err != nil {
-			proc.VariablesList[0].Add("@while_test_count", parser.NewInteger(0))
+		if _, err := proc.VariablesList[0].Get(parser.Variable{Name: "@while_test_count"}); err != nil {
+			proc.VariablesList[0].Add(parser.Variable{Name: "@while_test_count"}, parser.NewInteger(0))
 		}
-		proc.VariablesList[0].Set("@while_test_count", parser.NewInteger(0))
+		proc.VariablesList[0].Set(parser.Variable{Name: "@while_test_count"}, parser.NewInteger(0))
 
 		flow, err := proc.While(v.Stmt)
 		if err != nil {
@@ -891,7 +891,7 @@ var procedureWhileInCursorTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		Error: "variable @var3 is undefined",
+		Error: "[L:- C:-] variable @var3 is undefined",
 	},
 	{
 		Name: "While In Cursor Statement Execution Error",
@@ -916,7 +916,7 @@ var procedureWhileInCursorTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 }
 
@@ -931,11 +931,11 @@ func TestProcedure_WhileInCursor(t *testing.T) {
 
 		Cursors = CursorMap{
 			"CUR": &Cursor{
-				name:  "cur",
 				query: selectQueryForCursorTest,
 			},
 		}
-		Cursors.Open("cur", NewFilter([]Variables{{}}))
+		ViewCache.Clear()
+		Cursors.Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
 
 		proc.VariablesList[0] = Variables{
 			"@var1": parser.NewNull(),

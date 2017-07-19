@@ -330,7 +330,7 @@ var scanTests = []struct {
 
 func TestScan(t *testing.T) {
 	for _, v := range scanTests {
-		s := new(Scanner).Init(v.Input)
+		s := new(Scanner).Init(v.Input, "")
 
 		tokenCount := 0
 		for {

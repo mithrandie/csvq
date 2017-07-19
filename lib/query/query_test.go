@@ -121,7 +121,7 @@ var executeTests = []struct {
 	{
 		Name:  "Query Execution Error",
 		Input: "select from",
-		Error: "syntax error: unexpected from [L:1 C:8]",
+		Error: "[L:1 C:8] syntax error: unexpected from",
 	},
 }
 
@@ -132,7 +132,7 @@ func TestExecute(t *testing.T) {
 
 	for _, v := range executeTests {
 		Logs = []string{}
-		out, err := Execute(v.Input)
+		out, err := Execute(v.Input, "")
 
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -163,7 +163,7 @@ func TestExecute(t *testing.T) {
 
 var fetchCursorTests = []struct {
 	Name          string
-	CurName       string
+	CurName       parser.Identifier
 	FetchPosition parser.Expression
 	Variables     []parser.Variable
 	Success       bool
@@ -172,7 +172,7 @@ var fetchCursorTests = []struct {
 }{
 	{
 		Name:    "Fetch Cursor First Time",
-		CurName: "cur",
+		CurName: parser.Identifier{Literal: "cur"},
 		Variables: []parser.Variable{
 			{Name: "@var1"},
 			{Name: "@var2"},
@@ -185,7 +185,7 @@ var fetchCursorTests = []struct {
 	},
 	{
 		Name:    "Fetch Cursor Second Time",
-		CurName: "cur",
+		CurName: parser.Identifier{Literal: "cur"},
 		Variables: []parser.Variable{
 			{Name: "@var1"},
 			{Name: "@var2"},
@@ -198,7 +198,7 @@ var fetchCursorTests = []struct {
 	},
 	{
 		Name:    "Fetch Cursor Third Time",
-		CurName: "cur",
+		CurName: parser.Identifier{Literal: "cur"},
 		Variables: []parser.Variable{
 			{Name: "@var1"},
 			{Name: "@var2"},
@@ -211,7 +211,7 @@ var fetchCursorTests = []struct {
 	},
 	{
 		Name:    "Fetch Cursor Forth Time",
-		CurName: "cur",
+		CurName: parser.Identifier{Literal: "cur"},
 		Variables: []parser.Variable{
 			{Name: "@var1"},
 			{Name: "@var2"},
@@ -224,7 +224,7 @@ var fetchCursorTests = []struct {
 	},
 	{
 		Name:    "Fetch Cursor Absolute",
-		CurName: "cur",
+		CurName: parser.Identifier{Literal: "cur"},
 		FetchPosition: parser.FetchPosition{
 			Position: parser.Token{Token: parser.ABSOLUTE, Literal: "absolute"},
 			Number:   parser.NewInteger(1),
@@ -241,33 +241,33 @@ var fetchCursorTests = []struct {
 	},
 	{
 		Name:    "Fetch Cursor Fetch Error",
-		CurName: "notexist",
+		CurName: parser.Identifier{Literal: "notexist"},
 		Variables: []parser.Variable{
 			{Name: "@var1"},
 			{Name: "@var2"},
 		},
-		Error: "cursor notexist does not exist",
+		Error: "[L:- C:-] cursor notexist is undefined",
 	},
 	{
 		Name:    "Fetch Cursor Not Match Number Error",
-		CurName: "cur2",
+		CurName: parser.Identifier{Literal: "cur2"},
 		Variables: []parser.Variable{
 			{Name: "@var1"},
 		},
-		Error: "cursor cur2 field length does not match variables number",
+		Error: "[L:- C:-] fetching from cursor cur2 returns 2 values",
 	},
 	{
 		Name:    "Fetch Cursor Substitution Error",
-		CurName: "cur2",
+		CurName: parser.Identifier{Literal: "cur2"},
 		Variables: []parser.Variable{
 			{Name: "@var1"},
 			{Name: "@notexist"},
 		},
-		Error: "variable @notexist is undefined",
+		Error: "[L:- C:-] variable @notexist is undefined",
 	},
 	{
 		Name:    "Fetch Cursor Number Value Error",
-		CurName: "cur",
+		CurName: parser.Identifier{Literal: "cur"},
 		FetchPosition: parser.FetchPosition{
 			Position: parser.Token{Token: parser.ABSOLUTE, Literal: "absolute"},
 			Number:   parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
@@ -276,11 +276,11 @@ var fetchCursorTests = []struct {
 			{Name: "@var1"},
 			{Name: "@var2"},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
 		Name:    "Fetch Cursor Number Not Integer Error",
-		CurName: "cur",
+		CurName: parser.Identifier{Literal: "cur"},
 		FetchPosition: parser.FetchPosition{
 			Position: parser.Token{Token: parser.ABSOLUTE, Literal: "absolute"},
 			Number:   parser.NewNull(),
@@ -289,7 +289,7 @@ var fetchCursorTests = []struct {
 			{Name: "@var1"},
 			{Name: "@var2"},
 		},
-		Error: "fetch position NULL is not a integer",
+		Error: "[L:- C:-] fetching position NULL is not an integer value",
 	},
 }
 
@@ -306,16 +306,16 @@ func TestFetchCursor(t *testing.T) {
 
 	Cursors = CursorMap{
 		"CUR": &Cursor{
-			name:  "cur",
 			query: selectQueryForCursorTest,
 		},
 		"CUR2": &Cursor{
-			name:  "cur2",
 			query: selectQueryForCursorTest,
 		},
 	}
-	Cursors.Open("cur", filter)
-	Cursors.Open("cur2", filter)
+	ViewCache.Clear()
+	Cursors.Open(parser.Identifier{Literal: "cur"}, filter)
+	ViewCache.Clear()
+	Cursors.Open(parser.Identifier{Literal: "cur2"}, filter)
 
 	for _, v := range fetchCursorTests {
 		success, err := FetchCursor(v.CurName, v.FetchPosition, v.Variables, filter)
@@ -341,10 +341,11 @@ func TestFetchCursor(t *testing.T) {
 }
 
 var declareTableTests = []struct {
-	Name   string
-	Expr   parser.TableDeclaration
-	Result *ViewMap
-	Error  string
+	Name    string
+	ViewMap ViewMap
+	Expr    parser.TableDeclaration
+	Result  ViewMap
+	Error   string
 }{
 	{
 		Name: "Declare Table",
@@ -355,30 +356,25 @@ var declareTableTests = []struct {
 				parser.Identifier{Literal: "column2"},
 			},
 		},
-		Result: &ViewMap{
-			views: map[string]*View{
-				"TBL": {
-					FileInfo: &FileInfo{
-						Path:      "tbl",
-						Temporary: true,
-					},
-					Header: []HeaderField{
-						{
-							Reference: "tbl",
-							Column:    "column1",
-							FromTable: true,
-						},
-						{
-							Reference: "tbl",
-							Column:    "column2",
-							FromTable: true,
-						},
-					},
-					Records: Records{},
+		Result: ViewMap{
+			"TBL": {
+				FileInfo: &FileInfo{
+					Path:      "tbl",
+					Temporary: true,
 				},
-			},
-			alias: map[string]string{
-				"TBL": "TBL",
+				Header: []HeaderField{
+					{
+						Reference: "tbl",
+						Column:    "column1",
+						FromTable: true,
+					},
+					{
+						Reference: "tbl",
+						Column:    "column2",
+						FromTable: true,
+					},
+				},
+				Records: Records{},
 			},
 		},
 	},
@@ -391,7 +387,7 @@ var declareTableTests = []struct {
 				parser.Identifier{Literal: "column1"},
 			},
 		},
-		Error: "field column1 is a duplicate",
+		Error: "[L:- C:-] field name column1 is a duplicate",
 	},
 	{
 		Name: "Declare Table From Query",
@@ -412,35 +408,30 @@ var declareTableTests = []struct {
 				},
 			},
 		},
-		Result: &ViewMap{
-			views: map[string]*View{
-				"TBL": {
-					FileInfo: &FileInfo{
-						Path:      "tbl",
-						Temporary: true,
+		Result: ViewMap{
+			"TBL": {
+				FileInfo: &FileInfo{
+					Path:      "tbl",
+					Temporary: true,
+				},
+				Header: []HeaderField{
+					{
+						Reference: "tbl",
+						Column:    "column1",
+						FromTable: true,
 					},
-					Header: []HeaderField{
-						{
-							Reference: "tbl",
-							Column:    "column1",
-							FromTable: true,
-						},
-						{
-							Reference: "tbl",
-							Column:    "column2",
-							FromTable: true,
-						},
-					},
-					Records: Records{
-						NewRecordWithoutId([]parser.Primary{
-							parser.NewInteger(1),
-							parser.NewInteger(2),
-						}),
+					{
+						Reference: "tbl",
+						Column:    "column2",
+						FromTable: true,
 					},
 				},
-			},
-			alias: map[string]string{
-				"TBL": "TBL",
+				Records: Records{
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewInteger(1),
+						parser.NewInteger(2),
+					}),
+				},
 			},
 		},
 	},
@@ -463,7 +454,7 @@ var declareTableTests = []struct {
 				},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
 		Name: "Declare Table From Query Field Update Error",
@@ -483,15 +474,39 @@ var declareTableTests = []struct {
 				},
 			},
 		},
-		Error: "view tbl: field length does not match",
+		Error: "[L:- C:-] select query should return exactly 1 field for temporary table tbl",
+	},
+	{
+		Name: "Declare Table Redeclaration Error",
+		ViewMap: ViewMap{
+			"TBL": {
+				FileInfo: &FileInfo{
+					Path:      "tbl",
+					Temporary: true,
+				},
+			},
+		},
+		Expr: parser.TableDeclaration{
+			Table: parser.Identifier{Literal: "tbl"},
+			Fields: []parser.Expression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "column2"},
+			},
+		},
+		Error: "[L:- C:-] temporary table tbl is redeclared",
 	},
 }
 
 func TestDeclareTable(t *testing.T) {
-	filter := NewFilter([]Variables{{}})
+	filter := NewEmptyFilter()
 
 	for _, v := range declareTableTests {
-		ViewCache.Clear()
+		if v.ViewMap == nil {
+			ViewCache.Clear()
+		} else {
+			ViewCache = v.ViewMap
+		}
+
 		err := DeclareTable(v.Expr, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -876,7 +891,7 @@ var selectTests = []struct {
 				},
 			},
 		},
-		Error: "UNION: field length does not match",
+		Error: "[L:- C:-] result set to be combined should contain exactly 2 fields",
 	},
 	{
 		Name: "Union LHS Error",
@@ -911,7 +926,7 @@ var selectTests = []struct {
 				},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
 		Name: "Union RHS Error",
@@ -946,7 +961,7 @@ var selectTests = []struct {
 				},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
 		Name: "Inline Tables",
@@ -956,7 +971,7 @@ var selectTests = []struct {
 				InlineTables: []parser.Expression{
 					parser.InlineTable{
 						Name: parser.Identifier{Literal: "it"},
-						Columns: []parser.Expression{
+						Fields: []parser.Expression{
 							parser.Identifier{Literal: "c1"},
 						},
 						As: "as",
@@ -1010,7 +1025,7 @@ var selectTests = []struct {
 					parser.InlineTable{
 						Recursive: parser.Token{Token: parser.RECURSIVE, Literal: "recursive"},
 						Name:      parser.Identifier{Literal: "it"},
-						Columns: []parser.Expression{
+						Fields: []parser.Expression{
 							parser.Identifier{Literal: "n"},
 						},
 						As: "as",
@@ -1099,7 +1114,7 @@ var selectTests = []struct {
 					parser.InlineTable{
 						Recursive: parser.Token{Token: parser.RECURSIVE, Literal: "recursive"},
 						Name:      parser.Identifier{Literal: "it"},
-						Columns: []parser.Expression{
+						Fields: []parser.Expression{
 							parser.Identifier{Literal: "n"},
 						},
 						As: "as",
@@ -1159,7 +1174,7 @@ var selectTests = []struct {
 				},
 			},
 		},
-		Error: "UNION: field length does not match",
+		Error: "[L:- C:-] result set to be combined should contain exactly 1 field",
 	},
 }
 
@@ -1167,7 +1182,7 @@ func TestSelect(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
-	filter := NewFilter([]Variables{{}})
+	filter := NewEmptyFilter()
 
 	for _, v := range selectTests {
 		ViewCache.Clear()
@@ -1344,7 +1359,7 @@ var insertTests = []struct {
 				},
 			},
 		},
-		Error: "file notexist does not exist",
+		Error: "[L:- C:-] file notexist does not exist",
 	},
 	{
 		Name: "Insert Query Field Does Not Exist Error",
@@ -1373,7 +1388,7 @@ var insertTests = []struct {
 				},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
 		Name: "Insert Select Query",
@@ -1464,7 +1479,7 @@ var insertTests = []struct {
 				},
 			},
 		},
-		Error: "field length does not match value length",
+		Error: "[L:- C:-] select query should return exactly 1 field",
 	},
 }
 
@@ -1472,7 +1487,7 @@ func TestInsert(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
-	filter := NewFilter([]Variables{{}})
+	filter := NewEmptyFilter()
 
 	for _, v := range insertTests {
 		ViewCache.Clear()
@@ -1637,7 +1652,7 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "file notexist does not exist",
+		Error: "[L:- C:-] file notexist does not exist",
 	},
 	{
 		Name: "Update Query Filter Error",
@@ -1661,7 +1676,7 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
 		Name: "Update Query File Is Not Loaded Error",
@@ -1699,19 +1714,19 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "file notexist is not loaded",
+		Error: "[L:- C:-] table notexist is not loaded",
 	},
 	{
 		Name: "Update Query Update Table Is Not Specified Error",
 		Query: parser.UpdateQuery{
 			Update: "update",
 			Tables: []parser.Expression{
-				parser.Table{Object: parser.Identifier{Literal: "table1"}},
+				parser.Table{Object: parser.Identifier{Literal: "t2"}},
 			},
 			Set: "set",
 			SetList: []parser.Expression{
 				parser.UpdateSet{
-					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+					Field: parser.FieldReference{View: parser.Identifier{Literal: "t1"}, Column: parser.Identifier{Literal: "column2"}},
 					Value: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}},
 				},
 			},
@@ -1737,7 +1752,7 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "table t1 is not specified in tables to update",
+		Error: "[L:- C:-] field t1.column2 does not exist in the tables to update",
 	},
 	{
 		Name: "Update Query Update Field Error",
@@ -1761,7 +1776,7 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
 		Name: "Update Query Update Value Error",
@@ -1785,7 +1800,7 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
 		Name: "Update Query Record Is Ambiguous Error",
@@ -1817,7 +1832,7 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "record to update is ambiguous",
+		Error: "[L:- C:-] value column4 to set in the field column2 is ambiguous",
 	},
 }
 
@@ -1825,7 +1840,7 @@ func TestUpdate(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
-	filter := NewFilter([]Variables{{}})
+	filter := NewEmptyFilter()
 
 	for _, v := range updateTests {
 		ViewCache.Clear()
@@ -1947,7 +1962,7 @@ var deleteTests = []struct {
 		},
 	},
 	{
-		Name: "Delete Query File Is Not Specified Error",
+		Name: "Delete Query Tables Not Specified Error",
 		Query: parser.DeleteQuery{
 			Delete: "delete",
 			FromClause: parser.FromClause{
@@ -1972,7 +1987,7 @@ var deleteTests = []struct {
 				},
 			},
 		},
-		Error: "update file is not specified",
+		Error: "[L:- C:-] tables to delete records are not specified",
 	},
 	{
 		Name: "Delete Query File Does Not Exist Error",
@@ -1993,7 +2008,7 @@ var deleteTests = []struct {
 				},
 			},
 		},
-		Error: "file notexist does not exist",
+		Error: "[L:- C:-] file notexist does not exist",
 	},
 	{
 		Name: "Delete Query Filter Error",
@@ -2014,7 +2029,7 @@ var deleteTests = []struct {
 				},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
 		Name: "Delete Query File Is Not Loaded Error",
@@ -2045,7 +2060,7 @@ var deleteTests = []struct {
 				},
 			},
 		},
-		Error: "file notexist is not loaded",
+		Error: "[L:- C:-] table notexist is not loaded",
 	},
 }
 
@@ -2053,7 +2068,7 @@ func TestDelete(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
-	filter := NewFilter([]Variables{{}})
+	filter := NewEmptyFilter()
 
 	for _, v := range deleteTests {
 		ViewCache.Clear()
@@ -2111,7 +2126,7 @@ var createTableTests = []struct {
 				parser.Identifier{Literal: "column1"},
 			},
 		},
-		Error: "field column1 is duplicate",
+		Error: "[L:- C:-] field name column1 is a duplicate",
 	},
 }
 
@@ -2354,7 +2369,7 @@ var addColumnsTests = []struct {
 				},
 			},
 		},
-		Error: "file notexist does not exist",
+		Error: "[L:- C:-] file notexist does not exist",
 	},
 	{
 		Name: "Add Columns Position Column Does Not Exist Error",
@@ -2374,7 +2389,7 @@ var addColumnsTests = []struct {
 				Column:   parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
 		Name: "Add Columns Field Duplicate Error",
@@ -2390,7 +2405,7 @@ var addColumnsTests = []struct {
 				},
 			},
 		},
-		Error: "field column1 is duplicate",
+		Error: "[L:- C:-] field name column1 is a duplicate",
 	},
 	{
 		Name: "Add Columns Default Value Error",
@@ -2406,7 +2421,7 @@ var addColumnsTests = []struct {
 				},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 }
 
@@ -2414,7 +2429,7 @@ func TestAddColumns(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
-	filter := NewFilter([]Variables{{}})
+	filter := NewEmptyFilter()
 
 	for _, v := range addColumnsTests {
 		ViewCache.Clear()
@@ -2482,7 +2497,7 @@ var dropColumnsTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 		},
-		Error: "file notexist does not exist",
+		Error: "[L:- C:-] file notexist does not exist",
 	},
 	{
 		Name: "Drop Columns Field Does Not Exist Error",
@@ -2492,7 +2507,7 @@ var dropColumnsTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 }
 
@@ -2502,7 +2517,7 @@ func TestDropColumns(t *testing.T) {
 
 	for _, v := range dropColumnsTests {
 		ViewCache.Clear()
-		result, err := DropColumns(v.Query)
+		result, err := DropColumns(v.Query, NewEmptyFilter())
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2567,7 +2582,7 @@ var renameColumnTests = []struct {
 			Old:   parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			New:   parser.Identifier{Literal: "newcolumn"},
 		},
-		Error: "file notexist does not exist",
+		Error: "[L:- C:-] file notexist does not exist",
 	},
 	{
 		Name: "Rename Column Field Duplicate Error",
@@ -2576,7 +2591,7 @@ var renameColumnTests = []struct {
 			Old:   parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			New:   parser.Identifier{Literal: "column1"},
 		},
-		Error: "field column1 is duplicate",
+		Error: "[L:- C:-] field name column1 is a duplicate",
 	},
 	{
 		Name: "Rename Column Field Does Not Exist Error",
@@ -2585,7 +2600,7 @@ var renameColumnTests = []struct {
 			Old:   parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			New:   parser.Identifier{Literal: "newcolumn"},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 }
 
@@ -2595,7 +2610,7 @@ func TestRenameColumn(t *testing.T) {
 
 	for _, v := range renameColumnTests {
 		ViewCache.Clear()
-		result, err := RenameColumn(v.Query)
+		result, err := RenameColumn(v.Query, NewEmptyFilter())
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

@@ -35,7 +35,7 @@ var executeTests = []struct {
 	{
 		Name:  "Query Execution Error",
 		Input: "select from",
-		Error: "syntax error: unexpected from [L:1 C:8]",
+		Error: "[L:1 C:8] syntax error: unexpected from",
 	},
 }
 
@@ -61,7 +61,7 @@ func TestWrite(t *testing.T) {
 		r, w, _ := os.Pipe()
 		os.Stdout = w
 
-		err := Write(v.Input)
+		err := Write(v.Input, "")
 
 		w.Close()
 		os.Stdout = oldStdout

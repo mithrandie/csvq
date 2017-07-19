@@ -21,12 +21,12 @@ var variablesDeclareTests = []variableTests{
 		Expr: parser.VariableDeclaration{
 			Assignments: []parser.Expression{
 				parser.VariableAssignment{
-					Name: "var1",
+					Variable: parser.Variable{Name: "@var1"},
 				},
 			},
 		},
 		Result: Variables{
-			"var1": parser.NewNull(),
+			"@var1": parser.NewNull(),
 		},
 	},
 	{
@@ -34,14 +34,14 @@ var variablesDeclareTests = []variableTests{
 		Expr: parser.VariableDeclaration{
 			Assignments: []parser.Expression{
 				parser.VariableAssignment{
-					Name:  "var2",
-					Value: parser.NewInteger(1),
+					Variable: parser.Variable{Name: "@var2"},
+					Value:    parser.NewInteger(1),
 				},
 			},
 		},
 		Result: Variables{
-			"var1": parser.NewNull(),
-			"var2": parser.NewInteger(1),
+			"@var1": parser.NewNull(),
+			"@var2": parser.NewInteger(1),
 		},
 	},
 	{
@@ -49,24 +49,24 @@ var variablesDeclareTests = []variableTests{
 		Expr: parser.VariableDeclaration{
 			Assignments: []parser.Expression{
 				parser.VariableAssignment{
-					Name:  "var2",
-					Value: parser.NewInteger(1),
+					Variable: parser.Variable{Name: "@var2"},
+					Value:    parser.NewInteger(1),
 				},
 			},
 		},
-		Error: "variable var2 is redeclared",
+		Error: "[L:- C:-] variable @var2 is redeclared",
 	},
 	{
 		Name: "Declare Variable Filter Error",
 		Expr: parser.VariableDeclaration{
 			Assignments: []parser.Expression{
 				parser.VariableAssignment{
-					Name:  "var3",
-					Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+					Variable: parser.Variable{Name: "@var3"},
+					Value:    parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 				},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 }
 
@@ -110,7 +110,7 @@ var variablesSubstituteTests = []variableTests{
 			Variable: parser.Variable{Name: "var2"},
 			Value:    parser.NewInteger(2),
 		},
-		Error: "variable var2 is undefined",
+		Error: "[L:- C:-] variable var2 is undefined",
 	},
 	{
 		Name: "Substitute Variable Filter Error",
@@ -118,7 +118,7 @@ var variablesSubstituteTests = []variableTests{
 			Variable: parser.Variable{Name: "var1"},
 			Value:    parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 }
 

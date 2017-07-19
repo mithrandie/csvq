@@ -1,8 +1,6 @@
 package query
 
 import (
-	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -44,7 +42,7 @@ func Printf(expr parser.Printf, filter Filter) (string, error) {
 			case 's':
 				placeholderOrder++
 				if len(args) <= placeholderOrder {
-					return "", errors.New(fmt.Sprintf("print format %q: number of replace values does not match", string(format)))
+					return "", NewPrintfReplaceValueLengthError(expr)
 				}
 				str = append(str, []rune(args[placeholderOrder].String())...)
 			case '%':
@@ -68,7 +66,7 @@ func Printf(expr parser.Printf, filter Filter) (string, error) {
 	}
 
 	if placeholderOrder < len(args)-1 {
-		return "", errors.New(fmt.Sprintf("print format %q: number of replace values does not match", string(format)))
+		return "", NewPrintfReplaceValueLengthError(expr)
 	}
 
 	return string(str), nil
@@ -77,10 +75,10 @@ func Printf(expr parser.Printf, filter Filter) (string, error) {
 func Source(expr parser.Source) ([]parser.Statement, error) {
 	stat, err := os.Stat(expr.FilePath)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("source file %q does not exist", expr.FilePath))
+		return nil, NewSourceFileNotExistError(expr)
 	}
 	if stat.IsDir() {
-		return nil, errors.New(fmt.Sprintf("source file %q must be a readable file", expr.FilePath))
+		return nil, NewSourceFileUnableToReadError(expr)
 	}
 
 	fp, err := os.Open(expr.FilePath)
@@ -95,7 +93,12 @@ func Source(expr parser.Source) ([]parser.Statement, error) {
 	}
 	input := string(buf)
 
-	return parser.Parse(input)
+	statements, err := parser.Parse(input, expr.FilePath)
+	if err != nil {
+		syntaxErr := err.(*parser.SyntaxError)
+		err = NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)
+	}
+	return statements, err
 }
 
 func SetFlag(expr parser.SetFlag) error {
@@ -109,10 +112,10 @@ func SetFlag(expr parser.SetFlag) error {
 	case "@@NO_HEADER", "@@WITHOUT_NULL":
 		p = parser.PrimaryToBoolean(expr.Value)
 	default:
-		return errors.New(fmt.Sprintf("invalid flag name: %s", expr.Name))
+		return NewInvalidFlagNameError(expr)
 	}
 	if parser.IsNull(p) {
-		return errors.New(fmt.Sprintf("invalid flag value: %s = %s", expr.Name, expr.Value))
+		return NewInvalidFlagValueError(expr)
 	}
 
 	switch strings.ToUpper(expr.Name) {
@@ -131,5 +134,10 @@ func SetFlag(expr parser.SetFlag) error {
 	case "@@WITHOUT_NULL":
 		cmd.SetWithoutNull(p.(parser.Boolean).Value())
 	}
-	return err
+
+	if err != nil {
+		return NewInvalidFlagValueError(expr)
+	}
+
+	return nil
 }

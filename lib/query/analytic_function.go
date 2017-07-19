@@ -1,19 +1,18 @@
 package query
 
 import (
-	"errors"
 	"sync"
 
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
-var AnalyticFunctions map[string]func(*View, []parser.Expression, parser.AnalyticClause) error
+var AnalyticFunctions map[string]func(*View, parser.AnalyticFunction) error
 var defineAnalyticFunctions sync.Once
 
 func DefineAnalyticFunctions() {
 	defineAnalyticFunctions.Do(func() {
-		AnalyticFunctions = map[string]func(*View, []parser.Expression, parser.AnalyticClause) error{
+		AnalyticFunctions = map[string]func(*View, parser.AnalyticFunction) error{
 			"ROW_NUMBER": RowNumber,
 			"RANK":       Rank,
 			"DENSE_RANK": DenseRank,
@@ -56,9 +55,9 @@ func (pv partitionValues) searchIndex(values []parser.Primary) int {
 	return -1
 }
 
-func RowNumber(view *View, args []parser.Expression, clause parser.AnalyticClause) error {
-	if args != nil {
-		return errors.New("analytic function ROW_NUMBER takes no argument")
+func RowNumber(view *View, fn parser.AnalyticFunction) error {
+	if fn.Args != nil {
+		return NewFunctionArgumentLengthError(fn.Name, []int{0}, fn)
 	}
 
 	partitions := partitionValues{}
@@ -66,7 +65,7 @@ func RowNumber(view *View, args []parser.Expression, clause parser.AnalyticClaus
 	filter := NewFilterForLoop(view, view.ParentFilter)
 	for i := range view.Records {
 		filter.Records[0].RecordIndex = i
-		partitionValues, err := filter.evalValues(clause.PartitionValues())
+		partitionValues, err := filter.evalValues(fn.AnalyticClause.PartitionValues())
 		if err != nil {
 			return err
 		}
@@ -90,9 +89,9 @@ func RowNumber(view *View, args []parser.Expression, clause parser.AnalyticClaus
 	return nil
 }
 
-func Rank(view *View, args []parser.Expression, clause parser.AnalyticClause) error {
-	if args != nil {
-		return errors.New("analytic function RANK takes no argument")
+func Rank(view *View, fn parser.AnalyticFunction) error {
+	if fn.Args != nil {
+		return NewFunctionArgumentLengthError(fn.Name, []int{0}, fn)
 	}
 
 	partitions := partitionValues{}
@@ -100,12 +99,12 @@ func Rank(view *View, args []parser.Expression, clause parser.AnalyticClause) er
 	filter := NewFilterForLoop(view, view.ParentFilter)
 	for i := range view.Records {
 		filter.Records[0].RecordIndex = i
-		partitionValues, err := filter.evalValues(clause.PartitionValues())
+		partitionValues, err := filter.evalValues(fn.AnalyticClause.PartitionValues())
 		if err != nil {
 			return err
 		}
 
-		orderValues, err := filter.evalValues(clause.OrderValues())
+		orderValues, err := filter.evalValues(fn.AnalyticClause.OrderValues())
 		if err != nil {
 			return err
 		}
@@ -134,9 +133,9 @@ func Rank(view *View, args []parser.Expression, clause parser.AnalyticClause) er
 	return nil
 }
 
-func DenseRank(view *View, args []parser.Expression, clause parser.AnalyticClause) error {
-	if args != nil {
-		return errors.New("analytic function DENSE_RANK takes no argument")
+func DenseRank(view *View, fn parser.AnalyticFunction) error {
+	if fn.Args != nil {
+		return NewFunctionArgumentLengthError(fn.Name, []int{0}, fn)
 	}
 
 	partitions := partitionValues{}
@@ -144,12 +143,12 @@ func DenseRank(view *View, args []parser.Expression, clause parser.AnalyticClaus
 	filter := NewFilterForLoop(view, view.ParentFilter)
 	for i := range view.Records {
 		filter.Records[0].RecordIndex = i
-		partitionValues, err := filter.evalValues(clause.PartitionValues())
+		partitionValues, err := filter.evalValues(fn.AnalyticClause.PartitionValues())
 		if err != nil {
 			return err
 		}
 
-		orderValues, err := filter.evalValues(clause.OrderValues())
+		orderValues, err := filter.evalValues(fn.AnalyticClause.OrderValues())
 		if err != nil {
 			return err
 		}

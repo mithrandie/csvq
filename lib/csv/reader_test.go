@@ -115,7 +115,7 @@ var readAllTests = []struct {
 	},
 	{
 		Name:  "NumberOfFieldsIsGreater",
-		Input: "a,b,c\nd,e,f,g",
+		Input: "a,b,c\nd,e,f,g\nh,i,j",
 		Error: "line 2, column 6: wrong number of fields in line",
 	},
 }

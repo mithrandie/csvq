@@ -11,8 +11,8 @@ category: reference
 | [Relational Operators](#relational_operators) | Compare values |
 | [IS](#is)           | Compare a value with ternary value |
 | [BETWEEN](#between) | Check if a value is with in a range of values |
-| [IN](#in)           | Check if a value is within a set of values |
 | [LIKE](#like)       | Check if a string matches a pattern |
+| [IN](#in)           | Check if a value is within a set of values |
 | [ANY](#any)         | Check if any of values fulfill conditions |
 | [ALL](#all)         | Check if all of values fulfill conditions |
 | [EXISTS](#exists)   | Check if a subquery returns at least one row |
@@ -110,6 +110,30 @@ low <= value AND value <= high
 NOT (low <= value AND value <= high)
 ```
 
+## LIKE
+{: #like}
+
+```sql
+string [NOT] LIKE pattern
+```
+
+_string_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_pattern_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Return TRUE if a _string_ matches a _pattern_, otherwise return FALSE.
+If _string_ is a null, return UNKNOWN. 
+
+In a pattern, following special characters are used.
+
+%
+: any number of characters.
+
+_ (U+005F Low Line)
+: exactly one character
+
 ## IN
 {: #in}
 
@@ -136,30 +160,6 @@ _multiple_fields_subquery_
 Check if a _value_ or _row_value_ is in within a set of _values_ or a result set of _select_query_.
 
 A IN operation is equivalent to a [ANY](#any) operation that _relational_operator_ is specified as "=".
-
-## LIKE
-{: #like}
-
-```sql
-string [NOT] LIKE pattern
-```
-
-_string_
-: [string]({{ '/reference/value.html#string' | relative_url }})
-
-_pattern_
-: [string]({{ '/reference/value.html#string' | relative_url }})
-
-Return TRUE if a _string_ matches a _pattern_, otherwise return FALSE.
-If _string_ is null, return UNKNOWN. 
-
-In pattern, following special characters are used.
-
-%
-: any number of characters.
-
-_
-: exactly one character
 
 ## ANY
 {: #any}

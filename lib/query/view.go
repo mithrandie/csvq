@@ -1,8 +1,6 @@
 package query
 
 import (
-	"errors"
-	"fmt"
 	"math"
 	"os"
 	"path/filepath"
@@ -16,50 +14,61 @@ import (
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
-const STDIN_VIRTUAL_FILE_PATH = "@__STDIN"
+type AliasMap map[string]string
 
-type ViewMap struct {
-	views map[string]*View
-	alias map[string]string
+func (m AliasMap) Add(alias parser.Identifier, path string) error {
+	uname := strings.ToUpper(alias.Literal)
+	if _, ok := m[uname]; ok {
+		return NewDuplicateTableNameError(alias)
+	}
+	m[uname] = strings.ToUpper(path)
+	return nil
 }
 
-func NewViewMap() *ViewMap {
-	return &ViewMap{
-		views: make(map[string]*View),
-		alias: make(map[string]string),
+func (m AliasMap) Get(alias parser.Identifier) (string, error) {
+	uname := strings.ToUpper(alias.Literal)
+	if fpath, ok := m[uname]; ok {
+		if len(fpath) < 1 {
+			return "", NewTableNotLoadedError(alias)
+		}
+		return fpath, nil
 	}
+	return "", NewTableNotLoadedError(alias)
 }
 
-func (m *ViewMap) Exists(fpath string) (string, bool) {
-	ufpath := strings.ToUpper(fpath)
-	if _, ok := m.views[ufpath]; ok {
-		return ufpath, true
-	}
-	if substance, ok := m.alias[ufpath]; ok {
-		if _, ok := m.views[substance]; ok {
-			return substance, true
+type AliasMapList []AliasMap
+
+func (l AliasMapList) Get(alias parser.Identifier) (path string, err error) {
+	for _, m := range l {
+		if path, err = m.Get(alias); err == nil {
+			return
 		}
 	}
-	return "", false
+	err = NewTableNotLoadedError(alias)
+	return
 }
 
-func (m *ViewMap) HasAlias(alias string) (string, bool) {
-	uname := strings.ToUpper(alias)
-	if fpath, ok := m.alias[uname]; ok {
-		return fpath, true
+func (l AliasMapList) CreateChild() AliasMapList {
+	list := make(AliasMapList, len(l)+1)
+	list[0] = AliasMap{}
+	for i := 0; i < len(l); i++ {
+		list[i+1] = l[i]
 	}
-	return "", false
+	return list
 }
 
-func (m *ViewMap) Get(fpath string) (*View, error) {
-	if pt, ok := m.Exists(fpath); ok {
-		return m.views[pt].Copy(), nil
+type ViewMap map[string]*View
+
+func (m ViewMap) Exists(fpath string) bool {
+	ufpath := strings.ToUpper(fpath)
+	if _, ok := m[ufpath]; ok {
+		return true
 	}
-	return nil, errors.New(fmt.Sprintf("file %s is not loaded", fpath))
+	return false
 }
 
-func (m *ViewMap) HasTemporaryTable(name string) bool {
-	for k, v := range m.views {
+func (m ViewMap) HasTemporaryTable(name string) bool {
+	for k, v := range m {
 		if v.FileInfo.Temporary && strings.EqualFold(name, k) {
 			return true
 		}
@@ -67,9 +76,18 @@ func (m *ViewMap) HasTemporaryTable(name string) bool {
 	return false
 }
 
-func (m *ViewMap) GetWithInternalId(fpath string) (*View, error) {
-	if pt, ok := m.Exists(fpath); ok {
-		ret := m.views[pt].Copy()
+func (m ViewMap) Get(fpath parser.Identifier) (*View, error) {
+	ufpath := strings.ToUpper(fpath.Literal)
+	if view, ok := m[ufpath]; ok {
+		return view.Copy(), nil
+	}
+	return nil, NewTableNotLoadedError(fpath)
+}
+
+func (m ViewMap) GetWithInternalId(fpath parser.Identifier) (*View, error) {
+	ufpath := strings.ToUpper(fpath.Literal)
+	if view, ok := m[ufpath]; ok {
+		ret := view.Copy()
 
 		if 0 < ret.FieldLen() {
 			ret.Header = MergeHeader(NewHeader(ret.Header[0].Reference, []string{}), ret.Header)
@@ -80,67 +98,39 @@ func (m *ViewMap) GetWithInternalId(fpath string) (*View, error) {
 		}
 
 		return ret, nil
-
 	}
-	return nil, errors.New(fmt.Sprintf("file %s is not loaded", fpath))
+	return nil, NewTableNotLoadedError(fpath)
 }
 
-func (m *ViewMap) Set(view *View, alias string) error {
-	if view.FileInfo == nil || len(view.FileInfo.Path) < 1 {
-		return errors.New("view cache failed")
+func (m ViewMap) Set(view *View) {
+	if view.FileInfo != nil {
+		m[strings.ToUpper(view.FileInfo.Path)] = view
 	}
-
-	uname := strings.ToUpper(alias)
-	if _, ok := m.alias[uname]; ok {
-		return errors.New(fmt.Sprintf("table name %s is duplicated", alias))
-	}
-	m.views[strings.ToUpper(view.FileInfo.Path)] = view.Copy()
-	m.alias[uname] = strings.ToUpper(view.FileInfo.Path)
-	return nil
 }
 
-func (m *ViewMap) SetAlias(alias string, fpath string) error {
-	uname := strings.ToUpper(alias)
-	if _, ok := m.alias[uname]; ok {
-		return errors.New(fmt.Sprintf("table name %s is duplicated", alias))
+func (m ViewMap) Replace(view *View) {
+	ufpath := strings.ToUpper(view.FileInfo.Path)
+	if ok := m.Exists(ufpath); ok {
+		m[ufpath] = view
 	}
-	m.alias[uname] = strings.ToUpper(fpath)
-	return nil
 }
 
-func (m *ViewMap) Replace(view *View) error {
-	if pt, ok := m.Exists(view.FileInfo.Path); ok {
-		m.views[pt] = view
-		return nil
-	}
-	return errors.New(fmt.Sprintf("file %s is not loaded", view.FileInfo.Path))
-}
-
-func (m *ViewMap) DisposeTemporaryTable(name string) error {
-	uname := strings.ToUpper(name)
-	if v, ok := m.views[uname]; ok {
+func (m ViewMap) DisposeTemporaryTable(table parser.Identifier) error {
+	uname := strings.ToUpper(table.Literal)
+	if v, ok := m[uname]; ok {
 		if v.FileInfo.Temporary {
-			delete(m.views, uname)
+			delete(m, uname)
 			return nil
 		} else {
-			return errors.New(fmt.Sprintf("temporary table %s does not exist", name))
+			return NewUndefinedTemporaryTableError(table)
 		}
 	}
-	return errors.New(fmt.Sprintf("temporary table %s does not exist", name))
+	return NewUndefinedTemporaryTableError(table)
 }
 
-func (m *ViewMap) Clear() {
-	for k := range m.views {
-		delete(m.views, k)
-	}
-	for k := range m.alias {
-		delete(m.alias, k)
-	}
-}
-
-func (m *ViewMap) ClearAliases() {
-	for k := range m.alias {
-		delete(m.alias, k)
+func (m ViewMap) Clear() {
+	for k := range m {
+		delete(m, k)
 	}
 }
 
@@ -153,8 +143,8 @@ type FileInfo struct {
 	Temporary bool
 }
 
-func NewFileInfo(filename string, repository string, delimiter rune) (*FileInfo, error) {
-	fpath := filename
+func NewFileInfo(filename parser.Identifier, repository string, delimiter rune) (*FileInfo, error) {
+	fpath := filename.Literal
 	if !filepath.IsAbs(fpath) {
 		fpath = filepath.Join(repository, fpath)
 	}
@@ -168,17 +158,17 @@ func NewFileInfo(filename string, repository string, delimiter rune) (*FileInfo,
 		} else if info, err = os.Stat(fpath + cmd.TSV_EXT); err == nil {
 			fpath = fpath + cmd.TSV_EXT
 		} else {
-			return nil, errors.New(fmt.Sprintf("file %s does not exist", filename))
+			return nil, NewFileNotExistError(filename)
 		}
 	}
 
 	fpath, err = filepath.Abs(fpath)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("file %s does not exist", filename))
+		return nil, NewFileNotExistError(filename)
 	}
 
 	if info.IsDir() {
-		return nil, errors.New(fmt.Sprintf("%s is a directory", filename))
+		return nil, NewFileUnableToReadError(filename)
 	}
 
 	if delimiter == cmd.UNDEF {
@@ -288,54 +278,56 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 			delimiter = ','
 		}
 		fileInfo := &FileInfo{
-			Path:      STDIN_VIRTUAL_FILE_PATH,
+			Path:      table.Object.String(),
 			Delimiter: delimiter,
 			Temporary: true,
 		}
 
-		if _, ok := ViewCache.Exists(fileInfo.Path); !ok {
+		if !ViewCache.Exists(fileInfo.Path) {
 			if !isReadableFromStdin() {
-				return nil, errors.New("stdin is empty")
+				return nil, NewStdinEmptyError(table.Object.(parser.Stdin))
 			}
 
 			file := os.Stdin
 			defer file.Close()
-			if err := loadViewFromFile(file, fileInfo, STDIN_VIRTUAL_FILE_PATH); err != nil {
+			if err := loadViewFromFile(file, fileInfo, table.Object.String()); err != nil {
 				return nil, err
 			}
-		} else {
-			if _, ok := ViewCache.HasAlias(table.Name()); !ok {
-				ViewCache.SetAlias(table.Name(), fileInfo.Path)
-			}
 		}
+		if err = parentFilter.AliasesList[0].Add(table.Name(), fileInfo.Path); err != nil {
+			return nil, err
+		}
+
+		pathIdent := parser.Identifier{Literal: table.Object.String()}
 		if useInternalId {
-			view, _ = ViewCache.GetWithInternalId(fileInfo.Path)
+			view, _ = ViewCache.GetWithInternalId(pathIdent)
 		} else {
-			view, _ = ViewCache.Get(fileInfo.Path)
+			view, _ = ViewCache.Get(pathIdent)
 		}
-		if STDIN_VIRTUAL_FILE_PATH != table.Name() {
-			view.UpdateHeader(table.Name(), nil)
+		if !strings.EqualFold(table.Object.String(), table.Name().Literal) {
+			view.UpdateHeader(table.Name().Literal, nil)
 		}
 	case parser.Identifier:
-		tableIdentifier := table.Object.(parser.Identifier).Literal
-		if parentFilter.RecursiveTable != nil && strings.EqualFold(tableIdentifier, parentFilter.RecursiveTable.Name.Literal) && parentFilter.RecursiveTmpView != nil {
+		tableIdentifier := table.Object.(parser.Identifier)
+		if parentFilter.RecursiveTable != nil && strings.EqualFold(tableIdentifier.Literal, parentFilter.RecursiveTable.Name.Literal) && parentFilter.RecursiveTmpView != nil {
 			view = parentFilter.RecursiveTmpView
-			if parentFilter.RecursiveTable.Name.Literal != table.Name() {
-				view.UpdateHeader(table.Name(), nil)
+			if !strings.EqualFold(parentFilter.RecursiveTable.Name.Literal, table.Name().Literal) {
+				view.UpdateHeader(table.Name().Literal, nil)
 			}
 		} else if ct, err := parentFilter.InlineTables.Get(tableIdentifier); err == nil {
-			view = ct
-			if tableIdentifier != table.Name() {
-				view.UpdateHeader(table.Name(), nil)
+			if err = parentFilter.AliasesList[0].Add(table.Name(), ""); err != nil {
+				return nil, err
 			}
-		} else if _, err := parentFilter.InlineTables.Get(table.Name()); err == nil {
-			return nil, errors.New(fmt.Sprintf("table name %s is duplicated", table.Name()))
+			view = ct
+			if !strings.EqualFold(tableIdentifier.Literal, table.Name().Literal) {
+				view.UpdateHeader(table.Name().Literal, nil)
+			}
 		} else {
 			var fileInfo *FileInfo
 
-			if ViewCache.HasTemporaryTable(tableIdentifier) {
+			if ViewCache.HasTemporaryTable(tableIdentifier.Literal) {
 				fileInfo = &FileInfo{
-					Path:      tableIdentifier,
+					Path:      tableIdentifier.Literal,
 					Temporary: true,
 				}
 			} else {
@@ -349,27 +341,28 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 
 			commonTableName := parser.FormatTableName(fileInfo.Path)
 
-			if _, ok := ViewCache.Exists(fileInfo.Path); !ok {
+			if !ViewCache.Exists(fileInfo.Path) {
 				file, err := os.Open(fileInfo.Path)
 				if err != nil {
 					return nil, err
 				}
 				defer file.Close()
 				if err := loadViewFromFile(file, fileInfo, commonTableName); err != nil {
-					return nil, err
+					return nil, NewCsvParsingError(tableIdentifier, fileInfo.Path, err.Error())
 				}
 			}
-			if _, ok := ViewCache.HasAlias(table.Name()); !ok {
-				ViewCache.SetAlias(table.Name(), fileInfo.Path)
+			if err = parentFilter.AliasesList[0].Add(table.Name(), fileInfo.Path); err != nil {
+				return nil, err
 			}
 
+			pathIdent := parser.Identifier{Literal: fileInfo.Path}
 			if useInternalId {
-				view, _ = ViewCache.GetWithInternalId(fileInfo.Path)
+				view, _ = ViewCache.GetWithInternalId(pathIdent)
 			} else {
-				view, _ = ViewCache.Get(fileInfo.Path)
+				view, _ = ViewCache.Get(pathIdent)
 			}
-			if commonTableName != table.Name() {
-				view.UpdateHeader(table.Name(), nil)
+			if !strings.EqualFold(commonTableName, table.Name().Literal) {
+				view.UpdateHeader(table.Name().Literal, nil)
 			}
 		}
 	case parser.Join:
@@ -398,15 +391,24 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 		case parser.CROSS:
 			CrossJoin(view, view2)
 		case parser.INNER:
-			err = InnerJoin(view, view2, condition, parentFilter)
+			if err = InnerJoin(view, view2, condition, parentFilter); err != nil {
+				return nil, err
+			}
 		case parser.OUTER:
-			err = OuterJoin(view, view2, condition, join.Direction.Token, parentFilter)
+			if err = OuterJoin(view, view2, condition, join.Direction.Token, parentFilter); err != nil {
+				return nil, err
+			}
 		}
 	case parser.Subquery:
 		subquery := table.Object.(parser.Subquery)
 		view, err = Select(subquery.Query, parentFilter)
+		if table.Alias != nil {
+			if err = parentFilter.AliasesList[0].Add(table.Alias.(parser.Identifier), ""); err != nil {
+				return nil, err
+			}
+		}
 		if err == nil {
-			view.UpdateHeader(table.Name(), nil)
+			view.UpdateHeader(table.Name().Literal, nil)
 		}
 	}
 
@@ -459,7 +461,7 @@ func loadViewFromFile(file *os.File, fileInfo *FileInfo, reference string) error
 
 	view.Header = NewHeaderWithoutId(reference, header)
 	view.FileInfo = fileInfo
-	ViewCache.Set(view, reference)
+	ViewCache.Set(view)
 	return nil
 }
 
@@ -608,7 +610,7 @@ func (view *View) group(items []parser.Expression) error {
 func (view *View) Having(clause parser.HavingClause) error {
 	indices, err := view.filter(clause.Filter)
 	if err != nil {
-		if _, ok := err.(*NotGroupedError); ok {
+		if _, ok := err.(*NotGroupingRecordsError); ok {
 			view.group(nil)
 			indices, err = view.filter(clause.Filter)
 			if err != nil {
@@ -667,7 +669,7 @@ func (view *View) Select(clause parser.SelectClause) error {
 	origFieldLen := view.FieldLen()
 	err := evalFields(view, fields)
 	if err != nil {
-		if _, ok := err.(*NotGroupedError); ok {
+		if _, ok := err.(*NotGroupingRecordsError); ok {
 			view.Header = view.Header[:origFieldLen]
 			for i := range view.Records {
 				view.Records[i] = view.Records[i][:origFieldLen]
@@ -765,17 +767,19 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 }
 
 func (view *View) evalColumn(obj parser.Expression, column string, alias string) (idx int, err error) {
-	switch obj.(type) {
-	case parser.FieldReference:
-		idx, err = view.FieldIndex(obj.(parser.FieldReference))
-		if err != nil {
-			return
+	fieldInTable := false
+
+	if fr, ok := obj.(parser.FieldReference); ok {
+		if idx, err = view.FieldIndex(fr); err == nil {
+			if view.isGrouped && view.Header[idx].FromTable && !view.Header[idx].IsGroupKey {
+				err = NewFieldNotGroupKeyError(fr)
+				return
+			}
+			fieldInTable = true
 		}
-		if view.isGrouped && view.Header[idx].FromTable && !view.Header[idx].IsGroupKey {
-			err = errors.New(fmt.Sprintf("field %s is not a group key", obj))
-			return
-		}
-	default:
+	}
+
+	if !fieldInTable {
 		idx, err = view.Header.ContainsObject(obj)
 		if err != nil {
 			err = nil
@@ -801,6 +805,7 @@ func (view *View) evalColumn(obj parser.Expression, column string, alias string)
 			view.Header, idx = AddHeaderField(view.Header, column, alias)
 		}
 	}
+
 	if 0 < len(alias) && !strings.EqualFold(view.Header[idx].Column, alias) && !strings.EqualFold(view.Header[idx].Alias, alias) {
 		if len(view.Header[idx].Alias) < 1 {
 			view.Header[idx].Alias = alias
@@ -819,7 +824,7 @@ func (view *View) evalAnalyticFunction(expr parser.AnalyticFunction) error {
 	name := strings.ToUpper(expr.Name)
 	fn, ok := AnalyticFunctions[name]
 	if !ok {
-		return errors.New(fmt.Sprintf("function %s does not exist", expr.Name))
+		return NewFunctionNotExistError(expr.Name, expr)
 	}
 
 	if expr.AnalyticClause.OrderByClause != nil {
@@ -829,7 +834,7 @@ func (view *View) evalAnalyticFunction(expr parser.AnalyticFunction) error {
 		}
 	}
 
-	return fn(view, expr.Args, expr.AnalyticClause)
+	return fn(view, expr)
 }
 
 func (view *View) Offset(clause parser.OffsetClause) error {
@@ -839,7 +844,7 @@ func (view *View) Offset(clause parser.OffsetClause) error {
 	}
 	number := parser.PrimaryToInteger(value)
 	if parser.IsNull(number) {
-		return errors.New("offset number is not an integer")
+		return NewInvalidOffsetNumberError(clause)
 	}
 	view.offset = int(number.(parser.Integer).Value())
 	if view.offset < 0 {
@@ -867,7 +872,7 @@ func (view *View) Limit(clause parser.LimitClause) error {
 	if clause.IsPercentage() {
 		number := parser.PrimaryToFloat(value)
 		if parser.IsNull(number) {
-			return errors.New("limit percentage is not a float value")
+			return NewInvalidLimitPercentageError(clause)
 		}
 		percentage := number.(parser.Float).Value()
 		if 100 < percentage {
@@ -880,7 +885,7 @@ func (view *View) Limit(clause parser.LimitClause) error {
 	} else {
 		number := parser.PrimaryToInteger(value)
 		if parser.IsNull(number) {
-			return errors.New("limit number of records is not an integer value")
+			return NewInvalidLimitNumberError(clause)
 		}
 		limit = int(number.(parser.Integer).Value())
 		if limit < 0 {
@@ -913,12 +918,13 @@ func (view *View) InsertValues(fields []parser.Expression, list []parser.Express
 	valuesList := make([][]parser.Primary, len(list))
 
 	for i, item := range list {
-		values, err := filter.evalRowValue(item.(parser.RowValue))
+		rv := item.(parser.RowValue)
+		values, err := filter.evalRowValue(rv)
 		if err != nil {
 			return err
 		}
 		if len(fields) != len(values) {
-			return errors.New("field length does not match value length")
+			return NewInsertRowValueLengthError(rv, len(fields))
 		}
 
 		valuesList[i] = values
@@ -933,7 +939,7 @@ func (view *View) InsertFromQuery(fields []parser.Expression, query parser.Selec
 		return err
 	}
 	if len(fields) != insertView.FieldLen() {
-		return errors.New("field length does not match value length")
+		return NewInsertSelectFieldLengthError(query, len(fields))
 	}
 
 	valuesList := make([][]parser.Primary, insertView.RecordLen())
@@ -1091,11 +1097,11 @@ func (view *View) InternalRecordId(ref string, recordIndex int) (int, error) {
 	}
 	idx, err := view.Header.Contains(fieldRef)
 	if err != nil {
-		return -1, errors.New("internal record id does not exist")
+		return -1, NewInternalRecordIdNotExistError()
 	}
 	internalId, ok := view.Records[recordIndex][idx].Primary().(parser.Integer)
 	if !ok {
-		return -1, errors.New("internal record id is empty")
+		return -1, NewInternalRecordIdEmptyError()
 	}
 	return int(internalId.Value()), nil
 }
@@ -1103,16 +1109,16 @@ func (view *View) InternalRecordId(ref string, recordIndex int) (int, error) {
 func (view *View) UpdateHeader(reference string, fields []parser.Expression) error {
 	if fields != nil {
 		if len(fields) != view.FieldLen() {
-			return errors.New(fmt.Sprintf("view %s: field length does not match", reference))
+			return NewFieldLengthNotMatchError()
 		}
 
 		names := make([]string, len(fields))
 		for i, v := range fields {
-			uname := strings.ToUpper(v.(parser.Identifier).Literal)
-			if InStrSlice(uname, names) {
-				return errors.New(fmt.Sprintf("field %s is a duplicate", v.(parser.Identifier).Literal))
+			f, _ := v.(parser.Identifier)
+			if InStrSliceWithCaseInsensitive(f.Literal, names) {
+				return NewDuplicateFieldNameError(f)
 			}
-			names[i] = uname
+			names[i] = f.Literal
 		}
 	}
 

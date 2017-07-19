@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -25,20 +24,41 @@ func (l *Lexer) Lex(lval *yySymType) int {
 
 func (l *Lexer) Error(e string) {
 	if 0 < l.token.Token {
-		l.err = errors.New(fmt.Sprintf("%s: unexpected %s [L:%d C:%d]", e, l.token.Literal, l.token.Line, l.token.Char))
+		l.err = NewSyntaxError(fmt.Sprintf("%s: unexpected %s", e, l.token.Literal), l.token)
 	} else {
-		l.err = errors.New(fmt.Sprintf("%s [L:%d C:%d]", e, l.token.Line, l.token.Char))
+		l.err = NewSyntaxError(fmt.Sprintf("%s", e), l.token)
 	}
 }
 
 type Token struct {
-	Token   int
-	Literal string
-	Quoted  bool
-	Line    int
-	Char    int
+	Token      int
+	Literal    string
+	Quoted     bool
+	Line       int
+	Char       int
+	SourceFile string
 }
 
 func (t *Token) IsEmpty() bool {
 	return len(t.Literal) < 1
+}
+
+type SyntaxError struct {
+	SourceFile string
+	Line       int
+	Char       int
+	Message    string
+}
+
+func (e SyntaxError) Error() string {
+	return e.Message
+}
+
+func NewSyntaxError(message string, token Token) error {
+	return &SyntaxError{
+		SourceFile: token.SourceFile,
+		Line:       token.Line,
+		Char:       token.Char,
+		Message:    message,
+	}
 }

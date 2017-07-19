@@ -6,13 +6,15 @@ import (
 	"reflect"
 	"testing"
 
+	"fmt"
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
+	"strings"
 )
 
 var fileInfoTests = []struct {
 	Name       string
-	FilePath   string
+	FilePath   parser.Identifier
 	Repository string
 	Delimiter  rune
 	Result     *FileInfo
@@ -20,7 +22,7 @@ var fileInfoTests = []struct {
 }{
 	{
 		Name:       "CSV",
-		FilePath:   "table1",
+		FilePath:   parser.Identifier{Literal: "table1"},
 		Repository: filepath.Join("..", "..", "testdata", "csv"),
 		Delimiter:  cmd.UNDEF,
 		Result: &FileInfo{
@@ -30,7 +32,7 @@ var fileInfoTests = []struct {
 	},
 	{
 		Name:       "TSV",
-		FilePath:   "table3",
+		FilePath:   parser.Identifier{Literal: "table3"},
 		Repository: filepath.Join("..", "..", "testdata", "csv"),
 		Delimiter:  cmd.UNDEF,
 		Result: &FileInfo{
@@ -40,15 +42,15 @@ var fileInfoTests = []struct {
 	},
 	{
 		Name:      "Not Exist Error",
-		FilePath:  "notexist",
+		FilePath:  parser.Identifier{Literal: "notexist"},
 		Delimiter: cmd.UNDEF,
-		Error:     "file notexist does not exist",
+		Error:     "[L:- C:-] file notexist does not exist",
 	},
 	{
 		Name:      "Directory Error",
-		FilePath:  "/",
+		FilePath:  parser.Identifier{Literal: TestDir},
 		Delimiter: cmd.UNDEF,
-		Error:     "/ is a directory",
+		Error:     fmt.Sprintf("[L:- C:-] file %s is unable to be read", TestDir),
 	},
 }
 
@@ -108,6 +110,11 @@ var viewLoadTests = []struct {
 					NewCell(parser.NewNull()),
 				},
 			},
+			ParentFilter: Filter{
+				VariablesList: []Variables{},
+				InlineTables:  InlineTables{},
+				AliasesList:   AliasMapList{{}},
+			},
 		},
 	},
 	{
@@ -139,6 +146,15 @@ var viewLoadTests = []struct {
 				Path:      "table1.csv",
 				Delimiter: ',',
 			},
+			ParentFilter: Filter{
+				VariablesList: []Variables{},
+				InlineTables:  InlineTables{},
+				AliasesList: AliasMapList{
+					{
+						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
+					},
+				},
+			},
 		},
 	},
 	{
@@ -154,8 +170,17 @@ var viewLoadTests = []struct {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:      STDIN_VIRTUAL_FILE_PATH,
+				Path:      "stdin",
 				Delimiter: ',',
+			},
+			ParentFilter: Filter{
+				VariablesList: []Variables{},
+				InlineTables:  InlineTables{},
+				AliasesList: AliasMapList{
+					{
+						"STDIN": "STDIN",
+					},
+				},
 			},
 		},
 	},
@@ -168,7 +193,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "stdin is empty",
+		Error: "[L:- C:-] stdin is empty",
 	},
 	{
 		Name: "Load File Error",
@@ -179,7 +204,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "file notexist does not exist",
+		Error: "[L:- C:-] file notexist does not exist",
 	},
 	{
 		Name:     "Load SJIS File",
@@ -202,6 +227,15 @@ var viewLoadTests = []struct {
 					parser.NewString("2"),
 					parser.NewString("str"),
 				}),
+			},
+			ParentFilter: Filter{
+				VariablesList: []Variables{},
+				InlineTables:  InlineTables{},
+				AliasesList: AliasMapList{
+					{
+						"TABLE_SJIS": strings.ToUpper(GetTestFilePath("table_sjis.csv")),
+					},
+				},
 			},
 		},
 	},
@@ -226,6 +260,15 @@ var viewLoadTests = []struct {
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
+			},
+			ParentFilter: Filter{
+				VariablesList: []Variables{},
+				InlineTables:  InlineTables{},
+				AliasesList: AliasMapList{
+					{
+						"TABLE_NOHEADER": strings.ToUpper(GetTestFilePath("table_noheader.csv")),
+					},
+				},
 			},
 		},
 	},
@@ -303,6 +346,16 @@ var viewLoadTests = []struct {
 					parser.NewString("4"),
 					parser.NewString("str44"),
 				}),
+			},
+			ParentFilter: Filter{
+				VariablesList: []Variables{},
+				InlineTables:  InlineTables{},
+				AliasesList: AliasMapList{
+					{
+						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
+						"TABLE2": strings.ToUpper(GetTestFilePath("table2.csv")),
+					},
+				},
 			},
 		},
 	},
@@ -386,6 +439,16 @@ var viewLoadTests = []struct {
 					parser.NewString("str44"),
 				}),
 			},
+			ParentFilter: Filter{
+				VariablesList: []Variables{},
+				InlineTables:  InlineTables{},
+				AliasesList: AliasMapList{
+					{
+						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
+						"TABLE2": strings.ToUpper(GetTestFilePath("table2.csv")),
+					},
+				},
+			},
 		},
 	},
 	{
@@ -431,6 +494,16 @@ var viewLoadTests = []struct {
 					parser.NewString("3"),
 					parser.NewString("str33"),
 				}),
+			},
+			ParentFilter: Filter{
+				VariablesList: []Variables{},
+				InlineTables:  InlineTables{},
+				AliasesList: AliasMapList{
+					{
+						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
+						"TABLE2": strings.ToUpper(GetTestFilePath("table2.csv")),
+					},
+				},
 			},
 		},
 	},
@@ -485,6 +558,16 @@ var viewLoadTests = []struct {
 					parser.NewString("str33"),
 				}),
 			},
+			ParentFilter: Filter{
+				VariablesList: []Variables{},
+				InlineTables:  InlineTables{},
+				AliasesList: AliasMapList{
+					{
+						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
+						"TABLE2": strings.ToUpper(GetTestFilePath("table2.csv")),
+					},
+				},
+			},
 		},
 	},
 	{
@@ -504,7 +587,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "file notexist does not exist",
+		Error: "[L:- C:-] file notexist does not exist",
 	},
 	{
 		Name: "Join Right Side Table File Not Exist Error",
@@ -523,7 +606,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "file notexist does not exist",
+		Error: "[L:- C:-] file notexist does not exist",
 	},
 	{
 		Name: "Load Subquery",
@@ -579,13 +662,22 @@ var viewLoadTests = []struct {
 					parser.NewString("str3"),
 				}),
 			},
+			ParentFilter: Filter{
+				VariablesList: []Variables{},
+				InlineTables:  InlineTables{},
+				AliasesList: AliasMapList{
+					{
+						"ALIAS": "",
+					},
+				},
+			},
 		},
 	},
 }
 
 func TestView_Load(t *testing.T) {
 	tf := cmd.GetFlags()
-	tf.Repository = TestDataDir
+	tf.Repository = TestDir
 
 	for _, v := range viewLoadTests {
 		ViewCache.Clear()
@@ -608,7 +700,10 @@ func TestView_Load(t *testing.T) {
 		}
 
 		view := NewView()
-		err := view.Load(v.From, v.Filter)
+		if reflect.DeepEqual(v.Filter, Filter{}) {
+			v.Filter = NewFilter([]Variables{})
+		}
+		err := view.Load(v.From, v.Filter.CreateChild())
 
 		if 0 < len(v.Stdin) {
 			os.Stdin = oldStdin
@@ -733,7 +828,7 @@ var viewWhereTests = []struct {
 				Operator: "=",
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 }
 
@@ -974,7 +1069,7 @@ var viewHavingTests = []struct {
 				Operator: ">",
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
 		Name: "Having Not Grouped",
@@ -1306,7 +1401,7 @@ var viewSelectTests = []struct {
 				},
 			},
 		},
-		Error: "field column2 is not a group key",
+		Error: "[L:- C:-] field column2 is not a group key",
 	},
 	{
 		Name: "Select Analytic Function",
@@ -1456,7 +1551,7 @@ var viewSelectTests = []struct {
 				},
 			},
 		},
-		Error: "function notexist does not exist",
+		Error: "[L:- C:-] function notexist does not exist",
 	},
 	{
 		Name: "Select Analytic Function Order Error",
@@ -1514,7 +1609,7 @@ var viewSelectTests = []struct {
 				},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
 		Name: "Select Analytic Function Partition Value Error",
@@ -1572,7 +1667,7 @@ var viewSelectTests = []struct {
 				},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 }
 
@@ -2133,7 +2228,7 @@ var viewLimitTests = []struct {
 			},
 		},
 		Limit: parser.LimitClause{Value: parser.Variable{Name: "notexist"}},
-		Error: "variable notexist is undefined",
+		Error: "[L:- C:-] variable notexist is undefined",
 	},
 	{
 		Name: "Limit Value Error",
@@ -2155,7 +2250,7 @@ var viewLimitTests = []struct {
 			},
 		},
 		Limit: parser.LimitClause{Value: parser.NewString("str")},
-		Error: "limit number of records is not an integer value",
+		Error: "[L:- C:-] limit number of records 'str' is not an integer value",
 	},
 	{
 		Name: "Limit Negative Value",
@@ -2206,7 +2301,7 @@ var viewLimitTests = []struct {
 			},
 		},
 		Limit: parser.LimitClause{Value: parser.NewString("str"), Percent: "percent"},
-		Error: "limit percentage is not a float value",
+		Error: "[L:- C:-] limit percentage 'str' is not a float value",
 	},
 }
 
@@ -2347,7 +2442,7 @@ var viewOffsetTests = []struct {
 			},
 		},
 		Offset: parser.OffsetClause{Value: parser.Variable{Name: "notexist"}},
-		Error:  "variable notexist is undefined",
+		Error:  "[L:- C:-] variable notexist is undefined",
 	},
 	{
 		Name: "Offset Value Error",
@@ -2377,7 +2472,7 @@ var viewOffsetTests = []struct {
 			},
 		},
 		Offset: parser.OffsetClause{Value: parser.NewString("str")},
-		Error:  "offset number is not an integer",
+		Error:  "[L:- C:-] offset number 'str' is not an integer value",
 	},
 	{
 		Name: "Offset Negative Number",
@@ -2511,7 +2606,7 @@ var viewInsertValuesTests = []struct {
 				},
 			},
 		},
-		Error: "field length does not match value length",
+		Error: "[L:- C:-] row value should contain exactly 2 values",
 	},
 	{
 		Name: "InsertValues Value Evaluation Error",
@@ -2527,7 +2622,7 @@ var viewInsertValuesTests = []struct {
 				},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
 		Name: "InsertValues Field Does Not Exist Error",
@@ -2543,7 +2638,7 @@ var viewInsertValuesTests = []struct {
 				},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 }
 
@@ -2640,7 +2735,7 @@ var viewInsertFromQueryTests = []struct {
 				},
 			},
 		},
-		Error: "field length does not match value length",
+		Error: "[L:- C:-] select query should return exactly 2 fields",
 	},
 	{
 		Name: "Insert Values Query Exuecution Error",
@@ -2656,7 +2751,7 @@ var viewInsertFromQueryTests = []struct {
 				},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 }
 
@@ -3160,7 +3255,7 @@ func TestView_InternalRecordId(t *testing.T) {
 	}
 
 	view.Records[1][0] = NewCell(parser.NewNull())
-	expectError := "internal record id is empty"
+	expectError := "[L:- C:-] internal record id is empty"
 	_, err := view.InternalRecordId(ref, recordIndex)
 	if err.Error() != expectError {
 		t.Errorf("error = %q, want error %q", err, expectError)
@@ -3172,7 +3267,7 @@ func TestView_InternalRecordId(t *testing.T) {
 			{Reference: "table2", Column: "column2", FromTable: true},
 		},
 	}
-	expectError = "internal record id does not exist"
+	expectError = "[L:- C:-] internal record id does not exist"
 	_, err = view.InternalRecordId(ref, recordIndex)
 	if err.Error() != expectError {
 		t.Errorf("error = %q, want error %q", err, expectError)
@@ -3258,7 +3353,7 @@ func TestView_UpdateHeader(t *testing.T) {
 	fields = []parser.Expression{
 		parser.Identifier{Literal: "alias3"},
 	}
-	expectError := "view ref1: field length does not match"
+	expectError := "[L:- C:-] field length does not match"
 	err := view.UpdateHeader(reference, fields)
 	if err.Error() != expectError {
 		t.Errorf("error = %q, want error %q for UpdateHeader(%s, %s)", err, expectError, reference, fields)
@@ -3268,7 +3363,7 @@ func TestView_UpdateHeader(t *testing.T) {
 		parser.Identifier{Literal: "alias3"},
 		parser.Identifier{Literal: "alias3"},
 	}
-	expectError = "field alias3 is a duplicate"
+	expectError = "[L:- C:-] field name alias3 is a duplicate"
 	err = view.UpdateHeader(reference, fields)
 	if err.Error() != expectError {
 		t.Errorf("error = %q, want error %q for UpdateHeader(%s, %s)", err, expectError, reference, fields)

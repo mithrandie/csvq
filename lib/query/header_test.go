@@ -86,13 +86,13 @@ var headerContainsTests = []struct {
 		Ref: parser.FieldReference{
 			Column: parser.Identifier{Literal: "c1"},
 		},
-		Error: "field c1 is ambiguous",
+		Error: "[L:- C:-] field c1 is ambiguous",
 	},
 	{
 		Ref: parser.FieldReference{
 			Column: parser.Identifier{Literal: "d1"},
 		},
-		Error: "field d1 does not exist",
+		Error: "[L:- C:-] field d1 does not exist",
 	},
 }
 

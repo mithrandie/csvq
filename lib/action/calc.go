@@ -15,15 +15,18 @@ func Calc(expr string) error {
 
 	q := "select " + expr + " from stdin"
 
-	program, err := parser.Parse(q)
+	program, err := parser.Parse(q, "")
 	if err != nil {
 		return errors.New("syntax error")
 	}
 	selectEntity, _ := program[0].(parser.SelectQuery).SelectEntity.(parser.SelectEntity)
 
 	view := query.NewView()
-	err = view.Load(selectEntity.FromClause.(parser.FromClause), query.Filter{})
+	err = view.Load(selectEntity.FromClause.(parser.FromClause), query.NewEmptyFilter().CreateChild())
 	if err != nil {
+		if appErr, ok := err.(query.AppError); ok {
+			return errors.New(appErr.ErrorMessage())
+		}
 		return err
 	}
 
@@ -42,7 +45,7 @@ func Calc(expr string) error {
 		field := v.(parser.Field)
 		p, err := filter.Evaluate(field.Object)
 		if err != nil {
-			return err
+			return errors.New("syntax error")
 		}
 		values[i] = formatCalcResult(p)
 	}

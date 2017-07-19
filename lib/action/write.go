@@ -5,7 +5,7 @@ import (
 	"github.com/mithrandie/csvq/lib/query"
 )
 
-func Write(input string) error {
+func Write(input string, sourceFile string) error {
 	var out string
 	var err error
 
@@ -15,7 +15,7 @@ func Write(input string) error {
 		}
 	}()
 
-	out, err = query.Execute(input)
+	out, err = query.Execute(input, sourceFile)
 	if err != nil {
 		return err
 	}
