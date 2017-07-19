@@ -566,7 +566,7 @@ type Is struct {
 	Negation Token
 }
 
-func (i *Is) IsNegated() bool {
+func (i Is) IsNegated() bool {
 	return !i.Negation.IsEmpty()
 }
 
@@ -588,7 +588,7 @@ type Between struct {
 	Negation Token
 }
 
-func (b *Between) IsNegated() bool {
+func (b Between) IsNegated() bool {
 	return !b.Negation.IsEmpty()
 }
 
@@ -608,7 +608,7 @@ type In struct {
 	Negation Token
 }
 
-func (i *In) IsNegated() bool {
+func (i In) IsNegated() bool {
 	return !i.Negation.IsEmpty()
 }
 
@@ -652,7 +652,7 @@ type Like struct {
 	Negation Token
 }
 
-func (l *Like) IsNegated() bool {
+func (l Like) IsNegated() bool {
 	return !l.Negation.IsEmpty()
 }
 
@@ -768,7 +768,7 @@ func (t Table) String() string {
 	return joinWithSpace(s)
 }
 
-func (t *Table) Name() string {
+func (t Table) Name() string {
 	if t.Alias != nil {
 		return t.Alias.(Identifier).Literal
 	}
@@ -841,7 +841,7 @@ func (f Field) String() string {
 	return joinWithSpace(s)
 }
 
-func (f *Field) Name() string {
+func (f Field) Name() string {
 	if f.Alias != nil {
 		return f.Alias.(Identifier).Literal
 	}
@@ -1365,6 +1365,10 @@ type TableDeclaration struct {
 	Table  Identifier
 	Fields []Expression
 	Query  Expression
+}
+
+type DisposeTable struct {
+	Table Identifier
 }
 
 type TransactionControl struct {

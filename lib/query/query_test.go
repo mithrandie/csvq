@@ -357,7 +357,7 @@ var declareTableTests = []struct {
 		},
 		Result: &ViewMap{
 			views: map[string]*View{
-				"tbl": {
+				"TBL": {
 					FileInfo: &FileInfo{
 						Path:      "tbl",
 						Temporary: true,
@@ -378,7 +378,7 @@ var declareTableTests = []struct {
 				},
 			},
 			alias: map[string]string{
-				"tbl": "tbl",
+				"TBL": "TBL",
 			},
 		},
 	},
@@ -414,7 +414,7 @@ var declareTableTests = []struct {
 		},
 		Result: &ViewMap{
 			views: map[string]*View{
-				"tbl": {
+				"TBL": {
 					FileInfo: &FileInfo{
 						Path:      "tbl",
 						Temporary: true,
@@ -440,7 +440,7 @@ var declareTableTests = []struct {
 				},
 			},
 			alias: map[string]string{
-				"tbl": "tbl",
+				"TBL": "TBL",
 			},
 		},
 	},

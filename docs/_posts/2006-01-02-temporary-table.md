@@ -26,3 +26,13 @@ _column_name_
 
 _select_query_
 : [Select Query]({{ '/reference/select-query.html' | relative_url }})
+
+## Dispose Temporary Table
+{: #dispose}
+
+```sql
+DISPOSE TABLE table_name;
+```
+
+_table_name_
+: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
