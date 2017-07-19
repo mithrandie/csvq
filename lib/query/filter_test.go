@@ -1879,6 +1879,19 @@ var filterEvaluateTests = []struct {
 		Error: "function notexist does not exist",
 	},
 	{
+		Name:   "Aggregate Function As a Statement Error",
+		Filter: Filter{},
+		Expr: parser.AggregateFunction{
+			Name: "avg",
+			Option: parser.AggregateOption{
+				Args: []parser.Expression{
+					parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+				},
+			},
+		},
+		Error: "function avg cannot be used as a statement",
+	},
+	{
 		Name: "GroupConcat Function",
 		Filter: Filter{
 			Records: []FilterRecord{
@@ -2251,6 +2264,26 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Error: "group_concat(avg(column1)): aggregate functions are nested",
+	},
+	{
+		Name:   "GroupConcat Function As a Statement Error",
+		Filter: Filter{},
+		Expr: parser.GroupConcat{
+			GroupConcat: "group_concat",
+			Option: parser.AggregateOption{
+				Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
+				Args: []parser.Expression{
+					parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				},
+			},
+			OrderBy: parser.OrderByClause{
+				Items: []parser.Expression{
+					parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+				},
+			},
+			Separator: ",",
+		},
+		Error: "function group_concat cannot be used as a statement",
 	},
 	{
 		Name: "Case Comparison",

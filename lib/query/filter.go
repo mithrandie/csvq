@@ -473,6 +473,10 @@ func (f Filter) evalAggregateFunction(expr parser.AggregateFunction) (parser.Pri
 		return nil, errors.New(fmt.Sprintf("function %s does not exist", expr.Name))
 	}
 
+	if len(f.Records) < 1 {
+		return nil, errors.New(fmt.Sprintf("function %s cannot be used as a statement", expr.Name))
+	}
+
 	if !f.Records[0].View.isGrouped {
 		return nil, NewNotGroupedErr(expr.Name)
 	}
@@ -509,6 +513,10 @@ func (f Filter) evalAggregateFunction(expr parser.AggregateFunction) (parser.Pri
 }
 
 func (f Filter) evalGroupConcat(expr parser.GroupConcat) (parser.Primary, error) {
+	if len(f.Records) < 1 {
+		return nil, errors.New(fmt.Sprintf("function %s cannot be used as a statement", expr.GroupConcat))
+	}
+
 	if !f.Records[0].View.isGrouped {
 		return nil, NewNotGroupedErr(expr.GroupConcat)
 	}
