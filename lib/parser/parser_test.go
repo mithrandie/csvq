@@ -1955,6 +1955,18 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "func('arg1', 'arg2')",
+		Output: []Statement{
+			Function{
+				Name: "func",
+				Args: []Expression{
+					NewString("arg1"),
+					NewString("arg2"),
+				},
+			},
+		},
+	},
+	{
 		Input: "with ct as (select 1) insert into table1 values (1, 'str1'), (2, 'str2')",
 		Output: []Statement{
 			InsertQuery{
@@ -2751,6 +2763,148 @@ var parseTests = []struct {
 								FlowControl{Token: CONTINUE},
 							},
 						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "declare func1 function () as begin end",
+		Output: []Statement{
+			FunctionDeclaration{
+				Name: Identifier{Literal: "func1"},
+			},
+		},
+	},
+	{
+		Input: "declare func1 function (@arg1, @arg2) as begin " +
+			"if @var1 = 1 then print 1; end if; " +
+			"if @var1 = 1 then print 1; elseif @var1 = 2 then print 2; elseif @var1 = 3 then print 3; else print 4; end if; " +
+			"while true do break end while; " +
+			"while true do if @var1 = 1 then continue; end if; end while; " +
+			"while true do if @var1 = 1 then continue; elseif @var1 = 2 then break; elseif @var1 = 3 then return; else continue; end if; end while; " +
+			"return @var1; " +
+			"end",
+		Output: []Statement{
+			FunctionDeclaration{
+				Name: Identifier{Literal: "func1"},
+				Parameters: []Variable{
+					{Name: "@arg1"},
+					{Name: "@arg2"},
+				},
+				Statements: []Statement{
+					If{
+						Condition: Comparison{
+							LHS:      Variable{Name: "@var1"},
+							RHS:      NewInteger(1),
+							Operator: "=",
+						},
+						Statements: []Statement{
+							Print{Value: NewInteger(1)},
+						},
+					},
+					If{
+						Condition: Comparison{
+							LHS:      Variable{Name: "@var1"},
+							RHS:      NewInteger(1),
+							Operator: "=",
+						},
+						Statements: []Statement{
+							Print{Value: NewInteger(1)},
+						},
+						ElseIf: []ProcExpr{
+							ElseIf{
+								Condition: Comparison{
+									LHS:      Variable{Name: "@var1"},
+									RHS:      NewInteger(2),
+									Operator: "=",
+								},
+								Statements: []Statement{
+									Print{Value: NewInteger(2)},
+								},
+							},
+							ElseIf{
+								Condition: Comparison{
+									LHS:      Variable{Name: "@var1"},
+									RHS:      NewInteger(3),
+									Operator: "=",
+								},
+								Statements: []Statement{
+									Print{Value: NewInteger(3)},
+								},
+							},
+						},
+						Else: Else{
+							Statements: []Statement{
+								Print{Value: NewInteger(4)},
+							},
+						},
+					},
+					While{
+						Condition: Ternary{literal: "true", value: ternary.TRUE},
+						Statements: []Statement{
+							FlowControl{Token: BREAK},
+						},
+					},
+					While{
+						Condition: Ternary{literal: "true", value: ternary.TRUE},
+						Statements: []Statement{
+							If{
+								Condition: Comparison{
+									LHS:      Variable{Name: "@var1"},
+									RHS:      NewInteger(1),
+									Operator: "=",
+								},
+								Statements: []Statement{
+									FlowControl{Token: CONTINUE},
+								},
+							},
+						},
+					},
+					While{
+						Condition: Ternary{literal: "true", value: ternary.TRUE},
+						Statements: []Statement{
+							If{
+								Condition: Comparison{
+									LHS:      Variable{Name: "@var1"},
+									RHS:      NewInteger(1),
+									Operator: "=",
+								},
+								Statements: []Statement{
+									FlowControl{Token: CONTINUE},
+								},
+								ElseIf: []ProcExpr{
+									ElseIf{
+										Condition: Comparison{
+											LHS:      Variable{Name: "@var1"},
+											RHS:      NewInteger(2),
+											Operator: "=",
+										},
+										Statements: []Statement{
+											FlowControl{Token: BREAK},
+										},
+									},
+									ElseIf{
+										Condition: Comparison{
+											LHS:      Variable{Name: "@var1"},
+											RHS:      NewInteger(3),
+											Operator: "=",
+										},
+										Statements: []Statement{
+											Return{Value: NewNull()},
+										},
+									},
+								},
+								Else: Else{
+									Statements: []Statement{
+										FlowControl{Token: CONTINUE},
+									},
+								},
+							},
+						},
+					},
+					Return{
+						Value: Variable{Name: "@var1"},
 					},
 				},
 			},

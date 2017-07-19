@@ -1587,6 +1587,16 @@ var filterEvaluateTests = []struct {
 		Result: parser.NewString("str"),
 	},
 	{
+		Name: "User Defined Function",
+		Expr: parser.Function{
+			Name: "userfunc",
+			Args: []parser.Expression{
+				parser.NewInteger(1),
+			},
+		},
+		Result: parser.NewInteger(1),
+	},
+	{
 		Name: "Function Not Exist Error",
 		Expr: parser.Function{
 			Name: "notexist",
@@ -2534,6 +2544,18 @@ func TestFilter_Evaluate(t *testing.T) {
 	ViewCache.Clear()
 	Cursors.Open("cur", NewFilter([]Variables{{}}))
 	Cursors.Fetch("cur", parser.NEXT, 0)
+
+	UserFunctions = UserFunctionMap{
+		"USERFUNC": &UserFunction{
+			Name: "userfunc",
+			Parameters: []parser.Variable{
+				{Name: "@arg1"},
+			},
+			Statements: []parser.Statement{
+				parser.Return{Value: parser.Variable{Name: "@arg1"}},
+			},
+		},
+	}
 
 	for _, v := range filterEvaluateTests {
 		ViewCache.Clear()

@@ -18,16 +18,54 @@ const (
 	EXIT
 	BREAK
 	CONTINUE
+	RETURN
 )
+
+type StatementType int
+
+const (
+	SELECT StatementType = iota
+	INSERT
+	UPDATE
+	DELETE
+	CREATE_TABLE
+	ADD_COLUMNS
+	DROP_COLUMNS
+	RENAME_COLUMN
+)
+
+type Result struct {
+	Type          StatementType
+	View          *View
+	FileInfo      *FileInfo
+	OperatedCount int
+}
 
 var ViewCache = NewViewMap()
 var Cursors = CursorMap{}
+var UserFunctions = UserFunctionMap{}
+var Results = []Result{}
+var Logs = []string{}
+
+func AddLog(log string) {
+	Logs = append(Logs, log)
+}
+
+func ReadLog() string {
+	if len(Logs) < 1 {
+		return ""
+	}
+	lb := cmd.GetFlags().LineBreak
+	return strings.Join(Logs, lb.Value()) + lb.Value()
+}
 
 func Execute(input string) (string, error) {
 	statements, err := parser.Parse(input)
 	if err != nil {
 		return "", err
 	}
+
+	Init()
 
 	proc := NewProcedure()
 	flow, err := proc.Execute(statements)
@@ -36,7 +74,11 @@ func Execute(input string) (string, error) {
 		err = proc.Commit()
 	}
 
-	return proc.Log(), err
+	return ReadLog(), err
+}
+
+func Init() {
+	DefineAnalyticFunctions()
 }
 
 func FetchCursor(name string, fetchPosition parser.Expression, vars []parser.Variable, filter Filter) (bool, error) {

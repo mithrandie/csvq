@@ -41,6 +41,30 @@ var procedureExecuteStatementTests = []struct {
 		Result: []Result{},
 	},
 	{
+		Input: parser.FunctionDeclaration{
+			Name: parser.Identifier{Literal: "userfunc"},
+			Parameters: []parser.Variable{
+				{Name: "@arg1"},
+			},
+			Statements: []parser.Statement{
+				parser.Print{
+					Value: parser.Variable{Name: "@arg1"},
+				},
+			},
+		},
+	},
+	{
+		Input: parser.Function{
+			Name: "userfunc",
+			Args: []parser.Expression{
+				parser.NewInteger(1),
+			},
+		},
+		Logs: []string{
+			"1",
+		},
+	},
+	{
 		Input: parser.SelectQuery{
 			SelectEntity: parser.SelectEntity{
 				SelectClause: parser.SelectClause{
@@ -333,12 +357,13 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
+	UserFunctions = UserFunctionMap{}
 	proc := NewProcedure()
 
 	for _, v := range procedureExecuteStatementTests {
 		ViewCache.Clear()
-		proc.Results = []Result{}
-		proc.Logs = []string{}
+		Results = []Result{}
+		Logs = []string{}
 
 		_, err := proc.ExecuteStatement(v.Input)
 		if err != nil {
@@ -355,13 +380,13 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 		}
 
 		if v.Result != nil {
-			if !reflect.DeepEqual(proc.Results, v.Result) {
-				t.Errorf("results = %q, want %q for %q", proc.Results, v.Result, v.Input)
+			if !reflect.DeepEqual(Results, v.Result) {
+				t.Errorf("results = %q, want %q for %q", Results, v.Result, v.Input)
 			}
 		}
 		if v.Logs != nil {
-			if !reflect.DeepEqual(proc.Logs, v.Logs) {
-				t.Errorf("logs = %s, want %s for %q", proc.Logs, v.Logs, v.Input)
+			if !reflect.DeepEqual(Logs, v.Logs) {
+				t.Errorf("logs = %s, want %s for %q", Logs, v.Logs, v.Input)
 			}
 		}
 	}
@@ -484,7 +509,7 @@ func TestProcedure_IfStmt(t *testing.T) {
 
 	for _, v := range procedureIfStmtTests {
 		proc.Rollback()
-		proc.Logs = []string{}
+		Logs = []string{}
 
 		flow, err := proc.IfStmt(v.Stmt)
 		if err != nil {
@@ -502,8 +527,8 @@ func TestProcedure_IfStmt(t *testing.T) {
 		if flow != v.ResultFlow {
 			t.Errorf("%s: result flow = %q, want %q", v.Name, flow, v.ResultFlow)
 		}
-		if proc.Log() != v.Result {
-			t.Errorf("%s: result = %q, want %q", v.Name, proc.Log(), v.Result)
+		if ReadLog() != v.Result {
+			t.Errorf("%s: result = %q, want %q", v.Name, ReadLog(), v.Result)
 		}
 	}
 }
@@ -718,7 +743,7 @@ func TestProcedure_While(t *testing.T) {
 
 	for _, v := range procedureWhileTests {
 		proc.Rollback()
-		proc.Logs = []string{}
+		Logs = []string{}
 
 		if _, err := proc.VariablesList[0].Get("@while_test"); err != nil {
 			proc.VariablesList[0].Add("@while_test", parser.NewInteger(0))
@@ -746,8 +771,8 @@ func TestProcedure_While(t *testing.T) {
 		if flow != v.ResultFlow {
 			t.Errorf("%s: result flow = %q, want %q", v.Name, flow, v.ResultFlow)
 		}
-		if proc.Log() != v.Result {
-			t.Errorf("%s: result = %q, want %q", v.Name, proc.Log(), v.Result)
+		if ReadLog() != v.Result {
+			t.Errorf("%s: result = %q, want %q", v.Name, ReadLog(), v.Result)
 		}
 	}
 }
@@ -902,7 +927,7 @@ func TestProcedure_WhileInCursor(t *testing.T) {
 	proc := NewProcedure()
 
 	for _, v := range procedureWhileInCursorTests {
-		proc.Logs = []string{}
+		Logs = []string{}
 
 		Cursors = CursorMap{
 			"CUR": &Cursor{
@@ -933,8 +958,8 @@ func TestProcedure_WhileInCursor(t *testing.T) {
 		if flow != v.ResultFlow {
 			t.Errorf("%s: result flow = %q, want %q", v.Name, flow, v.ResultFlow)
 		}
-		if proc.Log() != v.Result {
-			t.Errorf("%s: result = %q, want %q", v.Name, proc.Log(), v.Result)
+		if ReadLog() != v.Result {
+			t.Errorf("%s: result = %q, want %q", v.Name, ReadLog(), v.Result)
 		}
 	}
 }

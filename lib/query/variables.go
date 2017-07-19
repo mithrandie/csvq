@@ -35,7 +35,7 @@ func (v Variables) Delete(key string) {
 	}
 }
 
-func (v Variables) Decrare(declaration parser.VariableDeclaration, filter Filter) error {
+func (v Variables) Declare(declaration parser.VariableDeclaration, filter Filter) error {
 	for _, a := range declaration.Assignments {
 		assignment := a.(parser.VariableAssignment)
 		var val parser.Primary

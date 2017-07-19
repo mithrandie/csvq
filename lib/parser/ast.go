@@ -1253,6 +1253,16 @@ func (e RenameColumn) String() string {
 	return joinWithSpace(s)
 }
 
+type FunctionDeclaration struct {
+	Name       Identifier
+	Parameters []Variable
+	Statements []Statement
+}
+
+type Return struct {
+	Value Expression
+}
+
 type Print struct {
 	Value Expression
 }

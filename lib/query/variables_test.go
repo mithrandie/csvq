@@ -17,7 +17,7 @@ type variableTests struct {
 
 var variablesDeclareTests = []variableTests{
 	{
-		Name: "Decrare Variable",
+		Name: "Declare Variable",
 		Expr: parser.VariableDeclaration{
 			Assignments: []parser.Expression{
 				parser.VariableAssignment{
@@ -30,7 +30,7 @@ var variablesDeclareTests = []variableTests{
 		},
 	},
 	{
-		Name: "Decrare Variable With Initial Value",
+		Name: "Declare Variable With Initial Value",
 		Expr: parser.VariableDeclaration{
 			Assignments: []parser.Expression{
 				parser.VariableAssignment{
@@ -45,7 +45,7 @@ var variablesDeclareTests = []variableTests{
 		},
 	},
 	{
-		Name: "Decrare Variable Redeclaration Error",
+		Name: "Declare Variable Redeclaration Error",
 		Expr: parser.VariableDeclaration{
 			Assignments: []parser.Expression{
 				parser.VariableAssignment{
@@ -57,7 +57,7 @@ var variablesDeclareTests = []variableTests{
 		Error: "variable var2 is redeclared",
 	},
 	{
-		Name: "Decrare Variable Filter Error",
+		Name: "Declare Variable Filter Error",
 		Expr: parser.VariableDeclaration{
 			Assignments: []parser.Expression{
 				parser.VariableAssignment{
@@ -70,11 +70,11 @@ var variablesDeclareTests = []variableTests{
 	},
 }
 
-func TestVariables_Decrare(t *testing.T) {
+func TestVariables_Declare(t *testing.T) {
 	vars := Variables{}
 
 	for _, v := range variablesDeclareTests {
-		err := vars.Decrare(v.Expr.(parser.VariableDeclaration), v.Filter)
+		err := vars.Declare(v.Expr.(parser.VariableDeclaration), v.Filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

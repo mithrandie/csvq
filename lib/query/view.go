@@ -797,8 +797,6 @@ func (view *View) evalColumn(obj parser.Expression, column string, alias string)
 }
 
 func (view *View) evalAnalyticFunction(expr parser.AnalyticFunction) error {
-	DefineAnalyticFunctions()
-
 	name := strings.ToUpper(expr.Name)
 	fn, ok := AnalyticFunctions[name]
 	if !ok {

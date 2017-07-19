@@ -437,11 +437,6 @@ func (f Filter) evalFunction(expr parser.Function) (parser.Primary, error) {
 		return f.evalAggregateFunction(afn)
 	}
 
-	fn, ok := Functions[name]
-	if !ok {
-		return nil, errors.New(fmt.Sprintf("function %s does not exist", expr.Name))
-	}
-
 	args := make([]parser.Primary, len(expr.Args))
 	for i, v := range expr.Args {
 		arg, err := f.Evaluate(v)
@@ -449,6 +444,15 @@ func (f Filter) evalFunction(expr parser.Function) (parser.Primary, error) {
 			return nil, err
 		}
 		args[i] = arg
+	}
+
+	fn, ok := Functions[name]
+	if !ok {
+		if udfn, err := UserFunctions.Get(name); err == nil {
+			return udfn.Execute(args, f)
+		}
+
+		return nil, errors.New(fmt.Sprintf("function %s does not exist", expr.Name))
 	}
 
 	return fn(args)

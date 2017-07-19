@@ -2,72 +2,32 @@ package query
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
-type StatementType int
-
-const (
-	SELECT StatementType = iota
-	INSERT
-	UPDATE
-	DELETE
-	CREATE_TABLE
-	ADD_COLUMNS
-	DROP_COLUMNS
-	RENAME_COLUMN
-)
-
-type Result struct {
-	Type          StatementType
-	View          *View
-	FileInfo      *FileInfo
-	OperatedCount int
-}
-
 type Procedure struct {
 	VariablesList []Variables
-	Results       []Result
-	Logs          []string
+	ReturnVal     parser.Primary
 }
 
 func NewProcedure() *Procedure {
 	return &Procedure{
 		VariablesList: []Variables{{}},
-		Results:       []Result{},
-		Logs:          []string{},
 	}
 }
 
 func (proc *Procedure) NewChildProcedure() *Procedure {
 	return &Procedure{
 		VariablesList: append([]Variables{{}}, proc.VariablesList...),
-		Results:       []Result{},
-		Logs:          []string{},
 	}
-}
-
-func (proc *Procedure) AddLog(log string) {
-	proc.Logs = append(proc.Logs, log)
-}
-
-func (proc *Procedure) Log() string {
-	if len(proc.Logs) < 1 {
-		return ""
-	}
-	lb := cmd.GetFlags().LineBreak
-	return strings.Join(proc.Logs, lb.Value()) + lb.Value()
 }
 
 func (proc *Procedure) ExecuteChild(statements []parser.Statement) (StatementFlow, error) {
 	child := proc.NewChildProcedure()
 	f, err := child.Execute(statements)
-	proc.Logs = append(proc.Logs, child.Logs...)
-	proc.Results = append(proc.Results, child.Results...)
 	return f, err
 }
 
@@ -105,7 +65,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 	case parser.SetFlag:
 		err = SetFlag(stmt.(parser.SetFlag))
 	case parser.VariableDeclaration:
-		err = proc.VariablesList[0].Decrare(stmt.(parser.VariableDeclaration), filter)
+		err = proc.VariablesList[0].Declare(stmt.(parser.VariableDeclaration), filter)
 	case parser.VariableSubstitution:
 		_, err = filter.Evaluate(stmt.(parser.Expression))
 	case parser.CursorDeclaration:
@@ -122,6 +82,8 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		_, err = FetchCursor(fetch.Cursor.Literal, fetch.Position, fetch.Variables, filter)
 	case parser.TableDeclaration:
 		err = DeclareTable(stmt.(parser.TableDeclaration), filter)
+	case parser.FunctionDeclaration:
+		err = UserFunctions.Declare(stmt.(parser.FunctionDeclaration))
 	case parser.SelectQuery:
 		if view, err = Select(stmt.(parser.SelectQuery), filter); err == nil {
 			results = []Result{
@@ -140,7 +102,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					OperatedCount: view.OperatedRecords,
 				},
 			}
-			proc.AddLog(fmt.Sprintf("%s inserted on %q.", proc.formatCount(view.OperatedRecords, "record"), view.FileInfo.Path))
+			AddLog(fmt.Sprintf("%s inserted on %q.", proc.formatCount(view.OperatedRecords, "record"), view.FileInfo.Path))
 
 			view.OperatedRecords = 0
 		}
@@ -153,7 +115,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					FileInfo:      v.FileInfo,
 					OperatedCount: v.OperatedRecords,
 				}
-				proc.AddLog(fmt.Sprintf("%s updated on %q.", proc.formatCount(v.OperatedRecords, "record"), v.FileInfo.Path))
+				AddLog(fmt.Sprintf("%s updated on %q.", proc.formatCount(v.OperatedRecords, "record"), v.FileInfo.Path))
 
 				v.OperatedRecords = 0
 			}
@@ -167,7 +129,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					FileInfo:      v.FileInfo,
 					OperatedCount: v.OperatedRecords,
 				}
-				proc.AddLog(fmt.Sprintf("%s deleted on %q.", proc.formatCount(v.OperatedRecords, "record"), v.FileInfo.Path))
+				AddLog(fmt.Sprintf("%s deleted on %q.", proc.formatCount(v.OperatedRecords, "record"), v.FileInfo.Path))
 
 				v.OperatedRecords = 0
 			}
@@ -180,7 +142,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					FileInfo: view.FileInfo,
 				},
 			}
-			proc.AddLog(fmt.Sprintf("file %q is created.", view.FileInfo.Path))
+			AddLog(fmt.Sprintf("file %q is created.", view.FileInfo.Path))
 
 			view.OperatedRecords = 0
 		}
@@ -193,7 +155,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					OperatedCount: view.OperatedFields,
 				},
 			}
-			proc.AddLog(fmt.Sprintf("%s added on %q.", proc.formatCount(view.OperatedFields, "field"), view.FileInfo.Path))
+			AddLog(fmt.Sprintf("%s added on %q.", proc.formatCount(view.OperatedFields, "field"), view.FileInfo.Path))
 
 			view.OperatedRecords = 0
 		}
@@ -206,7 +168,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					OperatedCount: view.OperatedFields,
 				},
 			}
-			proc.AddLog(fmt.Sprintf("%s dropped on %q.", proc.formatCount(view.OperatedFields, "field"), view.FileInfo.Path))
+			AddLog(fmt.Sprintf("%s dropped on %q.", proc.formatCount(view.OperatedFields, "field"), view.FileInfo.Path))
 
 			view.OperatedRecords = 0
 		}
@@ -219,7 +181,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					OperatedCount: view.OperatedFields,
 				},
 			}
-			proc.AddLog(fmt.Sprintf("%s renamed on %q.", proc.formatCount(view.OperatedFields, "field"), view.FileInfo.Path))
+			AddLog(fmt.Sprintf("%s renamed on %q.", proc.formatCount(view.OperatedFields, "field"), view.FileInfo.Path))
 
 			view.OperatedRecords = 0
 		}
@@ -239,6 +201,12 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		case parser.EXIT:
 			flow = EXIT
 		}
+	case parser.Return:
+		var ret parser.Primary
+		if ret, err = filter.Evaluate(stmt.(parser.Return).Value); err == nil {
+			proc.ReturnVal = ret
+			flow = RETURN
+		}
 	case parser.If:
 		flow, err = proc.IfStmt(stmt.(parser.If))
 	case parser.While:
@@ -247,11 +215,13 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		flow, err = proc.WhileInCursor(stmt.(parser.WhileInCursor))
 	case parser.Print:
 		if printstr, err = Print(stmt.(parser.Print), filter); err == nil {
-			proc.AddLog(printstr)
+			AddLog(printstr)
 		}
+	case parser.Function:
+		_, err = filter.Evaluate(stmt.(parser.Function))
 	case parser.Printf:
 		if printstr, err = Printf(stmt.(parser.Printf), filter); err == nil {
-			proc.AddLog(printstr)
+			AddLog(printstr)
 		}
 	case parser.Source:
 		var externalStatements []parser.Statement
@@ -261,7 +231,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 	}
 
 	if results != nil {
-		proc.Results = append(proc.Results, results...)
+		Results = append(Results, results...)
 	}
 
 	if err != nil {
@@ -369,14 +339,14 @@ func (proc *Procedure) Commit() error {
 	var createFiles = map[string]*FileInfo{}
 	var updateFiles = map[string]*FileInfo{}
 
-	for _, result := range proc.Results {
+	for _, result := range Results {
 		if result.View != nil {
 			//SELECT
 			viewstr, err := EncodeView(result.View, flags.Format, flags.WriteDelimiter, flags.WithoutHeader, flags.WriteEncoding, flags.LineBreak)
 			if err != nil {
 				return err
 			}
-			proc.AddLog(viewstr)
+			AddLog(viewstr)
 		} else if result.FileInfo != nil {
 			//CREATE or UPDATE
 			switch result.Type {
@@ -407,7 +377,7 @@ func (proc *Procedure) Commit() error {
 			if err = cmd.CreateFile(pt, viewstr); err != nil {
 				return err
 			}
-			proc.AddLog(fmt.Sprintf("Commit: file %q is created.", pt))
+			AddLog(fmt.Sprintf("Commit: file %q is created.", pt))
 			if !modified {
 				modified = true
 			}
@@ -425,23 +395,23 @@ func (proc *Procedure) Commit() error {
 			if err = cmd.UpdateFile(pt, viewstr); err != nil {
 				return err
 			}
-			proc.AddLog(fmt.Sprintf("Commit: file %q is updated.", pt))
+			AddLog(fmt.Sprintf("Commit: file %q is updated.", pt))
 			if !modified {
 				modified = true
 			}
 		}
 	}
 
-	proc.Results = []Result{}
+	Results = []Result{}
 	ViewCache.Clear()
 
 	return nil
 }
 
 func (proc *Procedure) Rollback() {
-	proc.Results = []Result{}
+	Results = []Result{}
 	ViewCache.Clear()
 
-	proc.AddLog("Rolled back.")
+	AddLog("Rolled back.")
 	return
 }

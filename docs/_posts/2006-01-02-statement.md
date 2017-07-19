@@ -49,7 +49,7 @@ Identifier
 
   Notwithstanding above naming restriction, you can use most character strings as a identifier by enclosing in back quotes.
   
-  Identifiers represent tables, columns or cursors. These character cases are insensitive.
+  Identifiers represent tables, columns, functions or cursors. These character cases are insensitive.
   
 String
 : A string is a character string enclosed in single quotes or double quotes.
@@ -138,11 +138,11 @@ SELECT @id := @id + 1 AS id, -- Line Comment
 {: #reserved_words}
 
 ABSOLUTE ADD AFTER ALTER ALL AND ANY AS ASC
-BEFORE BETWEEN BREAK BY
+BEFORE BEGIN BETWEEN BREAK BY
 CASE COMMIT CREATE CLOSE CONTINUE CROSS CURSOR
 DECLARE DEFAULT DELETE DESC DISPOSE DISTINCT DO DROP DUAL
 ELSE ELSEIF END EXCEPT EXISTS EXIT
-FETCH FIRST FOR FROM FULL
+FETCH FIRST FOR FROM FULL FUNCTION
 GROUP
 HAVING
 IF IN INNER INSERT INTERSECT INTO IS
@@ -151,7 +151,7 @@ LAST LEFT LIKE LIMIT
 NATURAL NEXT NOT NULL NULLS
 OFFSET ON OPEN OR ORDER OUTER OVER
 PARTITION PERCENT PRINT PRINTF PRIOR
-RANGE RECURSIVE RELATIVE RENAME RIGHT ROLLBACK
+RANGE RECURSIVE RELATIVE RENAME RETURN RIGHT ROLLBACK
 SELECT SET SEPARATOR SOURCE STDIN
 TABLE THEN TIES TO
 UNION UPDATE USING

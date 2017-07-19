@@ -1577,6 +1577,8 @@ var viewSelectTests = []struct {
 }
 
 func TestView_Select(t *testing.T) {
+	DefineAnalyticFunctions()
+
 	for _, v := range viewSelectTests {
 		err := v.View.Select(v.Select)
 		if err != nil {

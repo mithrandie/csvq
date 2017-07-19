@@ -131,6 +131,7 @@ func TestExecute(t *testing.T) {
 	tf.Repository = TestDir
 
 	for _, v := range executeTests {
+		Logs = []string{}
 		out, err := Execute(v.Input)
 
 		if err != nil {

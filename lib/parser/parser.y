@@ -24,16 +24,25 @@ package parser
 
 %type<program>     program
 %type<program>     in_loop_program
+%type<program>     in_function_program
+%type<program>     in_function_in_loop_program
 %type<statement>   statement
+%type<statement>   procedure_statement
+%type<statement>   in_function_statement
 %type<statement>   in_loop_statement
+%type<statement>   in_function_in_loop_statement
 %type<statement>   variable_statement
 %type<statement>   transaction_statement
 %type<statement>   cursor_statement
 %type<statement>   table_statement
+%type<statement>   function_statement
 %type<expression>  fetch_position
 %type<expression>  cursor_status
 %type<statement>   flow_control_statement
+%type<statement>   in_function_flow_control_statement
+%type<statement>   common_in_loop_flow_control_statement
 %type<statement>   in_loop_flow_control_statement
+%type<statement>   in_function_in_loop_flow_control_statement
 %type<statement>   command_statement
 %type<expression>  select_query
 %type<expression>  select_entity
@@ -105,6 +114,10 @@ package parser
 %type<procexpr>    else
 %type<procexprs>   in_loop_elseif
 %type<procexpr>    in_loop_else
+%type<procexprs>   in_function_elseif
+%type<procexpr>    in_function_else
+%type<procexprs>   in_function_in_loop_elseif
+%type<procexpr>    in_function_in_loop_else
 %type<identifier>  identifier
 %type<text>        text
 %type<integer>     integer
@@ -144,6 +157,7 @@ package parser
 %token<token> COMMIT ROLLBACK
 %token<token> CONTINUE BREAK EXIT
 %token<token> PRINT PRINTF SOURCE
+%token<token> FUNCTION BEGIN RETURN
 %token<token> VAR
 %token<token> COMPARISON_OP STRING_OP SUBSTITUTION_OP
 
@@ -165,7 +179,7 @@ program
         $$ = nil
         yylex.(*Lexer).program = $$
     }
-    | statement program
+    | procedure_statement program
     {
         $$ = append([]Statement{$1}, $2...)
         yylex.(*Lexer).program = $$
@@ -178,6 +192,30 @@ in_loop_program
         yylex.(*Lexer).program = $$
     }
     | in_loop_statement in_loop_program
+    {
+        $$ = append([]Statement{$1}, $2...)
+        yylex.(*Lexer).program = $$
+    }
+
+in_function_program
+    :
+    {
+        $$ = nil
+        yylex.(*Lexer).program = $$
+    }
+    | in_function_statement in_function_program
+    {
+        $$ = append([]Statement{$1}, $2...)
+        yylex.(*Lexer).program = $$
+    }
+
+in_function_in_loop_program
+    :
+    {
+        $$ = nil
+        yylex.(*Lexer).program = $$
+    }
+    | in_function_in_loop_statement in_function_in_loop_program
     {
         $$ = append([]Statement{$1}, $2...)
         yylex.(*Lexer).program = $$
@@ -216,11 +254,11 @@ statement
     {
         $$ = $1
     }
-    | variable_statement
+    | function statement_terminal
     {
         $$ = $1
     }
-    | transaction_statement
+    | variable_statement
     {
         $$ = $1
     }
@@ -232,7 +270,7 @@ statement
     {
         $$ = $1
     }
-    | flow_control_statement
+    | transaction_statement
     {
         $$ = $1
     }
@@ -241,12 +279,46 @@ statement
         $$ = $1
     }
 
-in_loop_statement
+procedure_statement
     : statement
     {
         $$ = $1
     }
+    | function_statement
+    {
+        $$ = $1
+    }
+    | flow_control_statement
+    {
+        $$ = $1
+    }
+
+in_function_statement
+    : statement
+    {
+        $$ = $1
+    }
+    | in_function_flow_control_statement
+    {
+        $$ = $1
+    }
+
+in_loop_statement
+    : procedure_statement
+    {
+        $$ = $1
+    }
     | in_loop_flow_control_statement
+    {
+        $$ = $1
+    }
+
+in_function_in_loop_statement
+    : in_function_statement
+    {
+        $$ = $1
+    }
+    | in_function_in_loop_flow_control_statement
     {
         $$ = $1
     }
@@ -305,6 +377,16 @@ table_statement
     | DECLARE identifier TABLE FOR select_query statement_terminal
     {
         $$ = TableDeclaration{Table: $2, Query: $5}
+    }
+
+function_statement
+    : DECLARE identifier FUNCTION '(' ')' AS BEGIN in_function_program END statement_terminal
+    {
+        $$ = FunctionDeclaration{Name: $2, Statements: $8}
+    }
+    | DECLARE identifier FUNCTION '(' variables ')' AS BEGIN in_function_program END statement_terminal
+    {
+        $$ = FunctionDeclaration{Name: $2, Parameters: $5, Statements: $9}
     }
 
 fetch_position
@@ -369,6 +451,42 @@ flow_control_statement
         $$ = FlowControl{Token: $1.Token}
     }
 
+in_function_flow_control_statement
+    : IF value THEN in_function_program in_function_else END IF statement_terminal
+    {
+        $$ = If{Condition: $2, Statements: $4, Else: $5}
+    }
+    | IF value THEN in_function_program in_function_elseif in_function_else END IF statement_terminal
+    {
+        $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
+    }
+    | WHILE value DO in_function_in_loop_program END WHILE statement_terminal
+    {
+        $$ = While{Condition: $2, Statements: $4}
+    }
+    | WHILE variables IN identifier DO in_function_in_loop_program END WHILE statement_terminal
+    {
+        $$ = WhileInCursor{Variables: $2, Cursor: $4, Statements: $6}
+    }
+    | RETURN statement_terminal
+    {
+        $$ = Return{Value: NewNull()}
+    }
+    | RETURN value statement_terminal
+    {
+        $$ = Return{Value: $2}
+    }
+
+common_in_loop_flow_control_statement
+    : CONTINUE statement_terminal
+    {
+        $$ = FlowControl{Token: $1.Token}
+    }
+    | BREAK statement_terminal
+    {
+        $$ = FlowControl{Token: $1.Token}
+    }
+
 in_loop_flow_control_statement
     : IF value THEN in_loop_program in_loop_else END IF statement_terminal
     {
@@ -378,13 +496,23 @@ in_loop_flow_control_statement
     {
         $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
     }
-    | CONTINUE statement_terminal
+    | common_in_loop_flow_control_statement
     {
-        $$ = FlowControl{Token: $1.Token}
+        $$ = $1
     }
-    | BREAK statement_terminal
+
+in_function_in_loop_flow_control_statement
+    : IF value THEN in_function_in_loop_program in_function_in_loop_else END IF statement_terminal
     {
-        $$ = FlowControl{Token: $1.Token}
+        $$ = If{Condition: $2, Statements: $4, Else: $5}
+    }
+    | IF value THEN in_function_in_loop_program in_function_in_loop_elseif in_function_in_loop_else END IF statement_terminal
+    {
+        $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
+    }
+    | common_in_loop_flow_control_statement
+    {
+        $$ = $1
     }
 
 command_statement
@@ -1345,6 +1473,46 @@ in_loop_else
         $$ = nil
     }
     | ELSE in_loop_program
+    {
+        $$ = Else{Statements: $2}
+    }
+
+in_function_elseif
+    : ELSEIF value THEN in_function_program
+    {
+        $$ = []ProcExpr{ElseIf{Condition: $2, Statements: $4}}
+    }
+    | elseif elseif
+    {
+        $$ = append($1, $2...)
+    }
+
+in_function_else
+    :
+    {
+        $$ = nil
+    }
+    | ELSE in_function_program
+    {
+        $$ = Else{Statements: $2}
+    }
+
+in_function_in_loop_elseif
+    : ELSEIF value THEN in_function_in_loop_program
+    {
+        $$ = []ProcExpr{ElseIf{Condition: $2, Statements: $4}}
+    }
+    | in_function_in_loop_elseif in_function_in_loop_elseif
+    {
+        $$ = append($1, $2...)
+    }
+
+in_function_in_loop_else
+    :
+    {
+        $$ = nil
+    }
+    | ELSE in_function_in_loop_program
     {
         $$ = Else{Statements: $2}
     }
