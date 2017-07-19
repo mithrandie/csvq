@@ -82,6 +82,8 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		_, err = FetchCursor(fetch.Cursor.Literal, fetch.Position, fetch.Variables, filter)
 	case parser.TableDeclaration:
 		err = DeclareTable(stmt.(parser.TableDeclaration), filter)
+	case parser.DisposeTable:
+		err = ViewCache.DisposeTemporaryTable(stmt.(parser.DisposeTable).Table.Literal)
 	case parser.FunctionDeclaration:
 		err = UserFunctions.Declare(stmt.(parser.FunctionDeclaration))
 	case parser.SelectQuery:

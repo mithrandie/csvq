@@ -356,9 +356,9 @@ cursor_statement
     {
         $$ = CloseCursor{Cursor: $2}
     }
-    | DISPOSE identifier statement_terminal
+    | DISPOSE CURSOR identifier statement_terminal
     {
-        $$ = DisposeCursor{Cursor: $2}
+        $$ = DisposeCursor{Cursor: $3}
     }
     | FETCH fetch_position identifier INTO variables statement_terminal
     {
@@ -377,6 +377,10 @@ table_statement
     | DECLARE identifier TABLE FOR select_query statement_terminal
     {
         $$ = TableDeclaration{Table: $2, Query: $5}
+    }
+    | DISPOSE TABLE identifier statement_terminal
+    {
+        $$ = DisposeTable{Table: $3}
     }
 
 function_statement

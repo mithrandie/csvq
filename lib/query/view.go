@@ -31,10 +31,11 @@ func NewViewMap() *ViewMap {
 }
 
 func (m *ViewMap) Exists(fpath string) (string, bool) {
-	if _, ok := m.views[fpath]; ok {
-		return fpath, true
+	ufpath := strings.ToUpper(fpath)
+	if _, ok := m.views[ufpath]; ok {
+		return ufpath, true
 	}
-	if substance, ok := m.alias[fpath]; ok {
+	if substance, ok := m.alias[ufpath]; ok {
 		if _, ok := m.views[substance]; ok {
 			return substance, true
 		}
@@ -43,7 +44,8 @@ func (m *ViewMap) Exists(fpath string) (string, bool) {
 }
 
 func (m *ViewMap) HasAlias(alias string) (string, bool) {
-	if fpath, ok := m.alias[alias]; ok {
+	uname := strings.ToUpper(alias)
+	if fpath, ok := m.alias[uname]; ok {
 		return fpath, true
 	}
 	return "", false
@@ -58,7 +60,7 @@ func (m *ViewMap) Get(fpath string) (*View, error) {
 
 func (m *ViewMap) HasTemporaryTable(name string) bool {
 	for k, v := range m.views {
-		if v.FileInfo.Temporary && name == k {
+		if v.FileInfo.Temporary && strings.EqualFold(name, k) {
 			return true
 		}
 	}
@@ -87,27 +89,44 @@ func (m *ViewMap) Set(view *View, alias string) error {
 	if view.FileInfo == nil || len(view.FileInfo.Path) < 1 {
 		return errors.New("view cache failed")
 	}
-	if _, ok := m.alias[alias]; ok {
+
+	uname := strings.ToUpper(alias)
+	if _, ok := m.alias[uname]; ok {
 		return errors.New(fmt.Sprintf("table name %s is duplicated", alias))
 	}
-	m.views[view.FileInfo.Path] = view.Copy()
-	m.alias[alias] = view.FileInfo.Path
+	m.views[strings.ToUpper(view.FileInfo.Path)] = view.Copy()
+	m.alias[uname] = strings.ToUpper(view.FileInfo.Path)
 	return nil
 }
 
 func (m *ViewMap) SetAlias(alias string, fpath string) error {
-	if _, ok := m.alias[alias]; ok {
+	uname := strings.ToUpper(alias)
+	if _, ok := m.alias[uname]; ok {
 		return errors.New(fmt.Sprintf("table name %s is duplicated", alias))
 	}
-	m.alias[alias] = fpath
+	m.alias[uname] = strings.ToUpper(fpath)
 	return nil
 }
 
 func (m *ViewMap) Replace(view *View) error {
 	if pt, ok := m.Exists(view.FileInfo.Path); ok {
 		m.views[pt] = view
+		return nil
 	}
 	return errors.New(fmt.Sprintf("file %s is not loaded", view.FileInfo.Path))
+}
+
+func (m *ViewMap) DisposeTemporaryTable(name string) error {
+	uname := strings.ToUpper(name)
+	if v, ok := m.views[uname]; ok {
+		if v.FileInfo.Temporary {
+			delete(m.views, uname)
+			return nil
+		} else {
+			return errors.New(fmt.Sprintf("temporary table %s does not exist", name))
+		}
+	}
+	return errors.New(fmt.Sprintf("temporary table %s does not exist", name))
 }
 
 func (m *ViewMap) Clear() {

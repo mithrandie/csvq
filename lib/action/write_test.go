@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/query"
 )
 
 var executeTests = []struct {
@@ -48,6 +49,8 @@ func initFlags() {
 func TestWrite(t *testing.T) {
 
 	for _, v := range executeTests {
+		query.Logs = []string{}
+
 		initFlags()
 		tf := cmd.GetFlags()
 		if v.OutFile != tf.OutFile {

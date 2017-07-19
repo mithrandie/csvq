@@ -2423,7 +2423,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "dispose cur",
+		Input: "dispose cursor cur",
 		Output: []Statement{
 			DisposeCursor{
 				Cursor: Identifier{Literal: "cur"},
@@ -2587,6 +2587,14 @@ var parseTests = []struct {
 						},
 					},
 				},
+			},
+		},
+	},
+	{
+		Input: "dispose table tbl",
+		Output: []Statement{
+			DisposeTable{
+				Table: Identifier{Literal: "tbl"},
 			},
 		},
 	},
