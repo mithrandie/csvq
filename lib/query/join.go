@@ -47,8 +47,8 @@ func ParseJoinCondition(join parser.Join, view *View, joinView *View) parser.Exp
 	comps := make([]parser.Comparison, len(using))
 	for i, v := range using {
 		comps[i] = parser.Comparison{
-			LHS:      parser.Identifier{Literal: viewName + "." + v.(parser.Identifier).Literal},
-			RHS:      parser.Identifier{Literal: joinViewName + "." + v.(parser.Identifier).Literal},
+			LHS:      parser.FieldReference{BaseExpr: v.GetBaseExpr(), View: viewName, Column: v.(parser.Identifier)},
+			RHS:      parser.FieldReference{BaseExpr: v.GetBaseExpr(), View: joinViewName, Column: v.(parser.Identifier)},
 			Operator: "=",
 		}
 	}
@@ -92,20 +92,19 @@ func CrossJoin(view *View, joinView *View) {
 func InnerJoin(view *View, joinView *View, condition parser.Expression, parentFilter Filter) error {
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 
-	filter := Filter{
-		Records: []FilterRecord{
-			{View: view},
-			{View: joinView},
-		},
-		InlineTables: InlineTables{},
-	}
-	filter = filter.Merge(parentFilter)
-
 	records := []Record{}
 	for i, viewRecord := range view.Records {
 		for j, joinViewRecord := range joinView.Records {
-			filter.Records[0].RecordIndex = i
-			filter.Records[1].RecordIndex = j
+			filter := NewFilterForRecord(
+				&View{
+					Header: MergeHeader(view.Header, joinView.Header),
+					Records: Records{
+						append(view.Records[i], joinView.Records[j]...),
+					},
+				},
+				0,
+				parentFilter,
+			)
 			primary, err := filter.Evaluate(condition)
 			if err != nil {
 				return err
@@ -134,22 +133,21 @@ func OuterJoin(view *View, joinView *View, condition parser.Expression, directio
 		view, joinView = joinView, view
 	}
 
-	filter := Filter{
-		Records: []FilterRecord{
-			{View: view},
-			{View: joinView},
-		},
-		InlineTables: InlineTables{},
-	}
-	filter = filter.Merge(parentFilter)
-
 	records := []Record{}
 	joinViewMatches := make([]bool, len(joinView.Records))
 	for i, viewRecord := range view.Records {
 		match := false
 		for j, joinViewRecord := range joinView.Records {
-			filter.Records[0].RecordIndex = i
-			filter.Records[1].RecordIndex = j
+			filter := NewFilterForRecord(
+				&View{
+					Header: MergeHeader(view.Header, joinView.Header),
+					Records: Records{
+						append(view.Records[i], joinView.Records[j]...),
+					},
+				},
+				0,
+				parentFilter,
+			)
 			primary, err := filter.Evaluate(condition)
 			if err != nil {
 				return err

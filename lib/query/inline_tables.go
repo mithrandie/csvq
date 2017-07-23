@@ -1,8 +1,6 @@
 package query
 
 import (
-	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/parser"
@@ -12,11 +10,11 @@ type InlineTables map[string]*View
 
 func (it InlineTables) Set(inlineTable parser.InlineTable, parentFilter Filter) error {
 	uname := strings.ToUpper(inlineTable.Name.Literal)
-	if _, err := it.Get(uname); err == nil {
-		return errors.New(fmt.Sprintf("inline table %s already exists", inlineTable.Name.Literal))
+	if _, err := it.Get(inlineTable.Name); err == nil {
+		return NewInLineTableRedeclaredError(inlineTable.Name)
 	}
 
-	filter := parentFilter.Copy()
+	filter := parentFilter.CreateChild()
 	filter.InlineTables = it
 	if inlineTable.IsRecursive() {
 		filter.RecursiveTable = &inlineTable
@@ -26,22 +24,26 @@ func (it InlineTables) Set(inlineTable parser.InlineTable, parentFilter Filter) 
 		return err
 	}
 
-	err = view.UpdateHeader(inlineTable.Name.Literal, inlineTable.Columns)
+	err = view.UpdateHeader(inlineTable.Name.Literal, inlineTable.Fields)
 	if err != nil {
+		if _, ok := err.(*FieldLengthNotMatchError); ok {
+			return NewInlineTableFieldLengthError(inlineTable.Query, inlineTable.Name, len(inlineTable.Fields))
+		}
 		return err
 	}
 
 	view.FileInfo = nil
 	it[uname] = view
+
 	return nil
 }
 
-func (it InlineTables) Get(name string) (*View, error) {
-	uname := strings.ToUpper(name)
+func (it InlineTables) Get(name parser.Identifier) (*View, error) {
+	uname := strings.ToUpper(name.Literal)
 	if view, ok := it[uname]; ok {
 		return view.Copy(), nil
 	}
-	return nil, errors.New(fmt.Sprintf("inline table %s does not exist", name))
+	return nil, NewUndefinedInLineTableError(name)
 }
 
 func (it InlineTables) Copy() InlineTables {

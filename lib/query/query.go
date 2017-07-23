@@ -1,8 +1,6 @@
 package query
 
 import (
-	"errors"
-	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -41,9 +39,9 @@ type Result struct {
 	OperatedCount int
 }
 
-var ViewCache = NewViewMap()
+var ViewCache = ViewMap{}
 var Cursors = CursorMap{}
-var UserFunctions = UserFunctionMap{}
+var UserFunctions = UserDefinedFunctionMap{}
 var Results = []Result{}
 var Logs = []string{}
 
@@ -59,10 +57,11 @@ func ReadLog() string {
 	return strings.Join(Logs, lb.Value()) + lb.Value()
 }
 
-func Execute(input string) (string, error) {
-	statements, err := parser.Parse(input)
+func Execute(input string, sourceFile string) (string, error) {
+	statements, err := parser.Parse(input, sourceFile)
 	if err != nil {
-		return "", err
+		syntaxErr := err.(*parser.SyntaxError)
+		return "", NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)
 	}
 
 	Init()
@@ -81,7 +80,7 @@ func Init() {
 	DefineAnalyticFunctions()
 }
 
-func FetchCursor(name string, fetchPosition parser.Expression, vars []parser.Variable, filter Filter) (bool, error) {
+func FetchCursor(name parser.Identifier, fetchPosition parser.Expression, vars []parser.Variable, filter Filter) (bool, error) {
 	position := parser.NEXT
 	number := -1
 	if fetchPosition != nil {
@@ -94,7 +93,7 @@ func FetchCursor(name string, fetchPosition parser.Expression, vars []parser.Var
 			}
 			i := parser.PrimaryToInteger(p)
 			if parser.IsNull(i) {
-				return false, errors.New(fmt.Sprintf("fetch position %s is not a integer", fp.Number))
+				return false, NewInvalidFetchPositionError(fp)
 			}
 			number = int(i.(parser.Integer).Value())
 		}
@@ -108,7 +107,7 @@ func FetchCursor(name string, fetchPosition parser.Expression, vars []parser.Var
 		return false, nil
 	}
 	if len(vars) != len(primaries) {
-		return false, errors.New(fmt.Sprintf("cursor %s field length does not match variables number", name))
+		return false, NewCursorFetchLengthError(name, len(primaries))
 	}
 
 	for i, v := range vars {
@@ -125,8 +124,8 @@ func FetchCursor(name string, fetchPosition parser.Expression, vars []parser.Var
 }
 
 func DeclareTable(expr parser.TableDeclaration, filter Filter) error {
-	if _, ok := ViewCache.Exists(expr.Table.Literal); ok {
-		return errors.New(fmt.Sprintf("table %s already exists", expr.Table.Literal))
+	if ViewCache.Exists(expr.Table.Literal) {
+		return NewTemporaryTableRedeclaredError(expr.Table)
 	}
 
 	var view *View
@@ -139,20 +138,24 @@ func DeclareTable(expr parser.TableDeclaration, filter Filter) error {
 		}
 
 		if err := view.UpdateHeader(expr.Table.Literal, expr.Fields); err != nil {
+			if _, ok := err.(*FieldLengthNotMatchError); ok {
+				return NewTemporaryTableFieldLengthError(expr.Query.(parser.SelectQuery), expr.Table, len(expr.Fields))
+			}
 			return err
 		}
 	} else {
 		fields := make([]string, len(expr.Fields))
 		for i, v := range expr.Fields {
 			f, _ := v.(parser.Identifier)
-			if InStrSlice(f.Literal, fields) {
-				return errors.New(fmt.Sprintf("field %s is a duplicate", f))
+			if InStrSliceWithCaseInsensitive(f.Literal, fields) {
+				return NewDuplicateFieldNameError(f)
 			}
 			fields[i] = f.Literal
 		}
 		header := NewHeaderWithoutId(expr.Table.Literal, fields)
 		view = &View{
-			Header: header,
+			Header:  header,
+			Records: Records{},
 		}
 	}
 
@@ -161,13 +164,13 @@ func DeclareTable(expr parser.TableDeclaration, filter Filter) error {
 		Temporary: true,
 	}
 
-	ViewCache.Set(view, expr.Table.Literal)
+	ViewCache.Set(view)
 
 	return err
 }
 
 func Select(query parser.SelectQuery, parentFilter Filter) (*View, error) {
-	filter := parentFilter.Copy()
+	filter := parentFilter.CreateChild()
 
 	if query.WithClause != nil {
 		if err := filter.LoadInlineTable(query.WithClause.(parser.WithClause)); err != nil {
@@ -277,7 +280,7 @@ func selectSet(set parser.SelectSet, filter Filter) (*View, error) {
 		}
 
 		if lview.FieldLen() != rview.FieldLen() {
-			return nil, errors.New(fmt.Sprintf("%s: field length does not match", parser.TokenLiteral(set.Operator.Token)))
+			return nil, NewCombinedSetFieldLengthError(set.RHS, lview.FieldLen())
 		}
 
 		switch set.Operator.Token {
@@ -299,25 +302,25 @@ func selectSetForRecursion(view *View, set parser.SelectSet, filter Filter) erro
 	tmpViewName := strings.ToUpper(filter.RecursiveTable.Name.Literal)
 
 	if filter.RecursiveTmpView == nil {
-		err := view.UpdateHeader(tmpViewName, filter.RecursiveTable.Columns)
+		err := view.UpdateHeader(tmpViewName, filter.RecursiveTable.Fields)
 		if err != nil {
 			return err
 		}
 		filter.RecursiveTmpView = view
 	}
 
-	rview, err := selectSetEntity(set.RHS, filter)
+	rview, err := selectSetEntity(set.RHS, filter.CreateChild())
 	if err != nil {
 		return err
 	}
 	if view.FieldLen() != rview.FieldLen() {
-		return errors.New(fmt.Sprintf("%s: field length does not match", parser.TokenLiteral(set.Operator.Token)))
+		return NewCombinedSetFieldLengthError(set.RHS, view.FieldLen())
 	}
 
 	if rview.RecordLen() < 1 {
 		return nil
 	}
-	rview.UpdateHeader(tmpViewName, filter.RecursiveTable.Columns)
+	rview.UpdateHeader(tmpViewName, filter.RecursiveTable.Fields)
 	filter.RecursiveTmpView = rview
 
 	switch set.Operator.Token {
@@ -332,7 +335,9 @@ func selectSetForRecursion(view *View, set parser.SelectSet, filter Filter) erro
 	return selectSetForRecursion(view, set, filter)
 }
 
-func Insert(query parser.InsertQuery, filter Filter) (*View, error) {
+func Insert(query parser.InsertQuery, parentFilter Filter) (*View, error) {
+	filter := parentFilter.CreateChild()
+
 	if query.WithClause != nil {
 		if err := filter.LoadInlineTable(query.WithClause.(parser.WithClause)); err != nil {
 			return nil, err
@@ -367,7 +372,9 @@ func Insert(query parser.InsertQuery, filter Filter) (*View, error) {
 	return view, nil
 }
 
-func Update(query parser.UpdateQuery, filter Filter) ([]*View, error) {
+func Update(query parser.UpdateQuery, parentFilter Filter) ([]*View, error) {
+	filter := parentFilter.CreateChild()
+
 	if query.WithClause != nil {
 		if err := filter.LoadInlineTable(query.WithClause.(parser.WithClause)); err != nil {
 			return nil, err
@@ -396,11 +403,13 @@ func Update(query parser.UpdateQuery, filter Filter) ([]*View, error) {
 	updatedIndices := make(map[string][]int)
 	for _, v := range query.Tables {
 		table := v.(parser.Table)
-		if viewsToUpdate[table.Name()], err = ViewCache.Get(table.Name()); err != nil {
+		fpath, err := filter.AliasesList.Get(table.Name())
+		if err != nil {
 			return nil, err
 		}
-		viewsToUpdate[table.Name()].UpdateHeader(table.Name(), nil)
-		updatedIndices[table.Name()] = []int{}
+		viewsToUpdate[table.Name().Literal], _ = ViewCache.Get(parser.Identifier{Literal: fpath})
+		viewsToUpdate[table.Name().Literal].UpdateHeader(table.Name().Literal, nil)
+		updatedIndices[table.Name().Literal] = []int{}
 	}
 
 	filterForLoop := NewFilterForLoop(view, filter)
@@ -420,16 +429,16 @@ func Update(query parser.UpdateQuery, filter Filter) ([]*View, error) {
 				return nil, err
 			}
 			if _, ok := viewsToUpdate[viewref]; !ok {
-				return nil, errors.New(fmt.Sprintf("table %s is not specified in tables to update", viewref))
+				return nil, NewUpdateFieldNotExistError(uset.Field)
 			}
 
 			internalId, err := view.InternalRecordId(viewref, i)
 			if err != nil {
-				return nil, errors.New("record to update is ambiguous")
+				return nil, NewUpdateValueAmbiguousError(uset.Field, uset.Value)
 			}
 
 			if InIntSlice(internalId, updatedIndices[viewref]) {
-				return nil, errors.New("record to update is ambiguous")
+				return nil, NewUpdateValueAmbiguousError(uset.Field, uset.Value)
 			}
 
 			fieldIdx, _ := viewsToUpdate[viewref].FieldIndex(uset.Field)
@@ -456,7 +465,9 @@ func Update(query parser.UpdateQuery, filter Filter) ([]*View, error) {
 	return views, nil
 }
 
-func Delete(query parser.DeleteQuery, filter Filter) ([]*View, error) {
+func Delete(query parser.DeleteQuery, parentFilter Filter) ([]*View, error) {
+	filter := parentFilter.CreateChild()
+
 	if query.WithClause != nil {
 		if err := filter.LoadInlineTable(query.WithClause.(parser.WithClause)); err != nil {
 			return nil, err
@@ -467,7 +478,7 @@ func Delete(query parser.DeleteQuery, filter Filter) ([]*View, error) {
 	if query.Tables == nil {
 		table := fromClause.Tables[0].(parser.Table)
 		if _, ok := table.Object.(parser.Identifier); !ok || 1 < len(fromClause.Tables) {
-			return nil, errors.New("update file is not specified")
+			return nil, NewDeleteTableNotSpecifiedError(query)
 		}
 		query.Tables = []parser.Expression{table}
 	}
@@ -490,11 +501,13 @@ func Delete(query parser.DeleteQuery, filter Filter) ([]*View, error) {
 	deletedIndices := make(map[string][]int)
 	for _, v := range query.Tables {
 		table := v.(parser.Table)
-		if viewsToDelete[table.Name()], err = ViewCache.Get(table.Name()); err != nil {
+		fpath, err := filter.AliasesList.Get(table.Name())
+		if err != nil {
 			return nil, err
 		}
-		viewsToDelete[table.Name()].UpdateHeader(table.Name(), nil)
-		deletedIndices[table.Name()] = []int{}
+		viewsToDelete[table.Name().Literal], err = ViewCache.Get(parser.Identifier{Literal: fpath})
+		viewsToDelete[table.Name().Literal].UpdateHeader(table.Name().Literal, nil)
+		deletedIndices[table.Name().Literal] = []int{}
 	}
 
 	for i := range view.Records {
@@ -540,8 +553,8 @@ func CreateTable(query parser.CreateTable) (*View, error) {
 	fields := make([]string, len(query.Fields))
 	for i, v := range query.Fields {
 		f, _ := v.(parser.Identifier)
-		if InStrSlice(f.Literal, fields) {
-			return nil, errors.New(fmt.Sprintf("field %s is duplicate", f))
+		if InStrSliceWithCaseInsensitive(f.Literal, fields) {
+			return nil, NewDuplicateFieldNameError(f)
 		}
 		fields[i] = f.Literal
 	}
@@ -572,12 +585,14 @@ func CreateTable(query parser.CreateTable) (*View, error) {
 		},
 	}
 
-	ViewCache.Set(view, parser.FormatTableName(view.FileInfo.Path))
+	ViewCache.Set(view)
 
 	return view, nil
 }
 
-func AddColumns(query parser.AddColumns, filter Filter) (*View, error) {
+func AddColumns(query parser.AddColumns, parentFilter Filter) (*View, error) {
+	filter := parentFilter.CreateChild()
+
 	if query.Position == nil {
 		query.Position = parser.ColumnPosition{
 			Position: parser.Token{Token: parser.LAST, Literal: parser.TokenLiteral(parser.LAST)},
@@ -615,8 +630,8 @@ func AddColumns(query parser.AddColumns, filter Filter) (*View, error) {
 	defaults := make([]parser.Expression, len(query.Columns))
 	for i, v := range query.Columns {
 		col := v.(parser.ColumnDefault)
-		if InStrSlice(col.Column.Literal, columnNames) || InStrSlice(col.Column.Literal, fields) {
-			return nil, errors.New(fmt.Sprintf("field %s is duplicate", col.Column))
+		if InStrSliceWithCaseInsensitive(col.Column.Literal, columnNames) || InStrSliceWithCaseInsensitive(col.Column.Literal, fields) {
+			return nil, NewDuplicateFieldNameError(col.Column)
 		}
 		fields[i] = col.Column.Literal
 		defaults[i] = col.Value
@@ -679,9 +694,11 @@ func AddColumns(query parser.AddColumns, filter Filter) (*View, error) {
 	return view, nil
 }
 
-func DropColumns(query parser.DropColumns) (*View, error) {
+func DropColumns(query parser.DropColumns, parentFilter Filter) (*View, error) {
+	filter := parentFilter.CreateChild()
+
 	view := NewView()
-	err := view.LoadFromIdentifier(query.Table, NewFilter([]Variables{{}}))
+	err := view.LoadFromIdentifier(query.Table, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -711,16 +728,18 @@ func DropColumns(query parser.DropColumns) (*View, error) {
 
 }
 
-func RenameColumn(query parser.RenameColumn) (*View, error) {
+func RenameColumn(query parser.RenameColumn, parentFilter Filter) (*View, error) {
+	filter := parentFilter.CreateChild()
+
 	view := NewView()
-	err := view.LoadFromIdentifier(query.Table, NewFilter([]Variables{{}}))
+	err := view.LoadFromIdentifier(query.Table, filter)
 	if err != nil {
 		return nil, err
 	}
 
 	columnNames := view.Header.TableColumnNames()
-	if InStrSlice(query.New.Literal, columnNames) {
-		return nil, errors.New(fmt.Sprintf("field %s is duplicate", query.New))
+	if InStrSliceWithCaseInsensitive(query.New.Literal, columnNames) {
+		return nil, NewDuplicateFieldNameError(query.New)
 	}
 
 	idx, err := view.FieldIndex(query.Old)

@@ -11,7 +11,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var version = "v0.4.1"
+var version = "v0.4.2"
 
 func main() {
 	cli.AppHelpTemplate = appHHelpTemplate
@@ -106,7 +106,7 @@ func main() {
 					return cli.NewExitError(err.Error(), 1)
 				}
 
-				err = action.Write(query)
+				err = action.Write(query, cmd.GetFlags().Source)
 				if err != nil {
 					return cli.NewExitError(err.Error(), 1)
 				}
@@ -166,7 +166,7 @@ func main() {
 			return cli.NewExitError(err.Error(), 1)
 		}
 
-		err = action.Write(query)
+		err = action.Write(query, cmd.GetFlags().Source)
 		if err != nil {
 			return cli.NewExitError(err.Error(), 1)
 		}

@@ -1,93 +1,90 @@
 package query
 
 import (
-	"errors"
-	"fmt"
+	"strings"
 
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
-	"strings"
 )
 
 type CursorMap map[string]*Cursor
 
-func (m CursorMap) Add(key string, query parser.SelectQuery) error {
-	uname := strings.ToUpper(key)
+func (m CursorMap) Declare(expr parser.CursorDeclaration) error {
+	uname := strings.ToUpper(expr.Cursor.Literal)
 	if _, ok := m[uname]; ok {
-		return errors.New(fmt.Sprintf("cursor %s already exists", key))
+		return NewCursorRedeclaredError(expr.Cursor)
 	}
-	m[uname] = NewCursor(key, query)
+	m[uname] = NewCursor(expr.Query)
 	return nil
 }
 
-func (m CursorMap) Dispose(key string) {
-	uname := strings.ToUpper(key)
-	if cur, ok := m[uname]; ok {
-		cur.Close()
+func (m CursorMap) Dispose(name parser.Identifier) error {
+	uname := strings.ToUpper(name.Literal)
+	if _, ok := m[uname]; ok {
 		delete(m, uname)
+		return nil
 	}
+	return NewUndefinedCursorError(name)
 }
 
-func (m CursorMap) Open(key string, filter Filter) error {
-	if cur, ok := m[strings.ToUpper(key)]; ok {
-		return cur.Open(filter)
+func (m CursorMap) Open(name parser.Identifier, filter Filter) error {
+	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
+		return cur.Open(name, filter)
 	}
-	return errors.New(fmt.Sprintf("cursor %s does not exist", key))
+	return NewUndefinedCursorError(name)
 }
 
-func (m CursorMap) Close(key string) error {
-	if cur, ok := m[strings.ToUpper(key)]; ok {
+func (m CursorMap) Close(name parser.Identifier) error {
+	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
 		cur.Close()
 		return nil
 	}
-	return errors.New(fmt.Sprintf("cursor %s does not exist", key))
+	return NewUndefinedCursorError(name)
 }
 
-func (m CursorMap) Fetch(key string, position int, number int) ([]parser.Primary, error) {
-	if cur, ok := m[strings.ToUpper(key)]; ok {
-		return cur.Fetch(position, number)
+func (m CursorMap) Fetch(name parser.Identifier, position int, number int) ([]parser.Primary, error) {
+	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
+		return cur.Fetch(name, position, number)
 	}
-	return nil, errors.New(fmt.Sprintf("cursor %s does not exist", key))
+	return nil, NewUndefinedCursorError(name)
 }
 
-func (m CursorMap) IsOpen(key string) (ternary.Value, error) {
-	if cur, ok := m[strings.ToUpper(key)]; ok {
+func (m CursorMap) IsOpen(name parser.Identifier) (ternary.Value, error) {
+	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
 		return ternary.ParseBool(cur.view != nil), nil
 	}
-	return ternary.FALSE, errors.New(fmt.Sprintf("cursor %s does not exist", key))
+	return ternary.FALSE, NewUndefinedCursorError(name)
 }
 
-func (m CursorMap) IsInRange(key string) (ternary.Value, error) {
-	if cur, ok := m[strings.ToUpper(key)]; ok {
+func (m CursorMap) IsInRange(name parser.Identifier) (ternary.Value, error) {
+	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
 		if cur.view == nil {
-			return ternary.FALSE, errors.New(fmt.Sprintf("cursor %s is closed", key))
+			return ternary.FALSE, NewCursorClosedError(name)
 		}
 		if !cur.fetched {
 			return ternary.UNKNOWN, nil
 		}
 		return ternary.ParseBool(-1 < cur.index && cur.index < cur.view.RecordLen()), nil
 	}
-	return ternary.FALSE, errors.New(fmt.Sprintf("cursor %s does not exist", key))
+	return ternary.FALSE, NewUndefinedCursorError(name)
 }
 
 type Cursor struct {
-	name    string
 	query   parser.SelectQuery
 	view    *View
 	index   int
 	fetched bool
 }
 
-func NewCursor(name string, query parser.SelectQuery) *Cursor {
+func NewCursor(query parser.SelectQuery) *Cursor {
 	return &Cursor{
-		name:  name,
 		query: query,
 	}
 }
 
-func (c *Cursor) Open(filter Filter) error {
+func (c *Cursor) Open(name parser.Identifier, filter Filter) error {
 	if c.view != nil {
-		return errors.New(fmt.Sprintf("cursor %s is already open", c.name))
+		return NewCursorOpenError(name)
 	}
 
 	view, err := Select(c.query, filter)
@@ -107,9 +104,9 @@ func (c *Cursor) Close() {
 	c.fetched = false
 }
 
-func (c *Cursor) Fetch(position int, number int) ([]parser.Primary, error) {
+func (c *Cursor) Fetch(name parser.Identifier, position int, number int) ([]parser.Primary, error) {
 	if c.view == nil {
-		return nil, errors.New(fmt.Sprintf("cursor %s is closed", c.name))
+		return nil, NewCursorClosedError(name)
 	}
 
 	if !c.fetched {

@@ -1,7 +1,6 @@
 package query
 
 import (
-	"errors"
 	"strings"
 	"unicode/utf8"
 
@@ -159,7 +158,7 @@ func CompareRowValues(v1 []parser.Primary, v2 []parser.Primary, operator string)
 	}
 
 	if len(v1) != len(v2) {
-		return ternary.FALSE, errors.New("row value length does not match")
+		return ternary.FALSE, NewRowValueLengthNotMatchError()
 	}
 
 	results := make([]ternary.Value, len(v2))
@@ -299,7 +298,7 @@ func InRowValueList(value []parser.Primary, list [][]parser.Primary, matchType i
 	for i, v := range list {
 		results[i], err = CompareRowValues(value, v, operator)
 		if err != nil {
-			return ternary.FALSE, err
+			return ternary.FALSE, NewRowValueLengthInListError(i)
 		}
 	}
 

@@ -8,18 +8,17 @@ import (
 )
 
 type analyticFunctionTest struct {
-	Name   string
-	View   *View
-	Args   []parser.Expression
-	Clause parser.AnalyticClause
-	Result *View
-	Error  string
+	Name     string
+	View     *View
+	Function parser.AnalyticFunction
+	Result   *View
+	Error    string
 }
 
-func testAnalyticFunction(t *testing.T, f func(*View, []parser.Expression, parser.AnalyticClause) error, tests []analyticFunctionTest) {
+func testAnalyticFunction(t *testing.T, f func(*View, parser.AnalyticFunction) error, tests []analyticFunctionTest) {
 	for _, v := range tests {
 		ViewCache.Clear()
-		err := f(v.View, v.Args, v.Clause)
+		err := f(v.View, v.Function)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -66,11 +65,14 @@ var rowNumberTests = []analyticFunctionTest{
 				}),
 			},
 		},
-		Clause: parser.AnalyticClause{
-			OrderByClause: parser.OrderByClause{
-				Items: []parser.Expression{
-					parser.OrderItem{
-						Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+		Function: parser.AnalyticFunction{
+			Name: "row_number",
+			AnalyticClause: parser.AnalyticClause{
+				OrderByClause: parser.OrderByClause{
+					Items: []parser.Expression{
+						parser.OrderItem{
+							Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+						},
 					},
 				},
 			},
@@ -133,16 +135,19 @@ var rowNumberTests = []analyticFunctionTest{
 				}),
 			},
 		},
-		Clause: parser.AnalyticClause{
-			Partition: parser.Partition{
-				Values: []parser.Expression{
-					parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+		Function: parser.AnalyticFunction{
+			Name: "row_number",
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
 				},
-			},
-			OrderByClause: parser.OrderByClause{
-				Items: []parser.Expression{
-					parser.OrderItem{
-						Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				OrderByClause: parser.OrderByClause{
+					Items: []parser.Expression{
+						parser.OrderItem{
+							Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+						},
 					},
 				},
 			},
@@ -193,10 +198,13 @@ var rowNumberTests = []analyticFunctionTest{
 				}),
 			},
 		},
-		Args: []parser.Expression{
-			parser.NewInteger(1),
+		Function: parser.AnalyticFunction{
+			Name: "row_number",
+			Args: []parser.Expression{
+				parser.NewInteger(1),
+			},
 		},
-		Error: "analytic function ROW_NUMBER takes no argument",
+		Error: "[L:- C:-] function row_number takes no argument",
 	},
 	{
 		Name: "RowNumber Partition Value Error",
@@ -225,21 +233,24 @@ var rowNumberTests = []analyticFunctionTest{
 				}),
 			},
 		},
-		Clause: parser.AnalyticClause{
-			Partition: parser.Partition{
-				Values: []parser.Expression{
-					parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+		Function: parser.AnalyticFunction{
+			Name: "row_number",
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+					},
 				},
-			},
-			OrderByClause: parser.OrderByClause{
-				Items: []parser.Expression{
-					parser.OrderItem{
-						Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				OrderByClause: parser.OrderByClause{
+					Items: []parser.Expression{
+						parser.OrderItem{
+							Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+						},
 					},
 				},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 }
 
@@ -275,16 +286,19 @@ var rankTests = []analyticFunctionTest{
 				}),
 			},
 		},
-		Clause: parser.AnalyticClause{
-			Partition: parser.Partition{
-				Values: []parser.Expression{
-					parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+		Function: parser.AnalyticFunction{
+			Name: "rank",
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
 				},
-			},
-			OrderByClause: parser.OrderByClause{
-				Items: []parser.Expression{
-					parser.OrderItem{
-						Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				OrderByClause: parser.OrderByClause{
+					Items: []parser.Expression{
+						parser.OrderItem{
+							Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+						},
 					},
 				},
 			},
@@ -347,10 +361,13 @@ var rankTests = []analyticFunctionTest{
 				}),
 			},
 		},
-		Args: []parser.Expression{
-			parser.NewInteger(1),
+		Function: parser.AnalyticFunction{
+			Name: "rank",
+			Args: []parser.Expression{
+				parser.NewInteger(1),
+			},
 		},
-		Error: "analytic function RANK takes no argument",
+		Error: "[L:- C:-] function rank takes no argument",
 	},
 	{
 		Name: "Rank Partition Value Error",
@@ -379,21 +396,24 @@ var rankTests = []analyticFunctionTest{
 				}),
 			},
 		},
-		Clause: parser.AnalyticClause{
-			Partition: parser.Partition{
-				Values: []parser.Expression{
-					parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+		Function: parser.AnalyticFunction{
+			Name: "rank",
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+					},
 				},
-			},
-			OrderByClause: parser.OrderByClause{
-				Items: []parser.Expression{
-					parser.OrderItem{
-						Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				OrderByClause: parser.OrderByClause{
+					Items: []parser.Expression{
+						parser.OrderItem{
+							Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+						},
 					},
 				},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
 		Name: "Rank Order Value Error",
@@ -422,21 +442,24 @@ var rankTests = []analyticFunctionTest{
 				}),
 			},
 		},
-		Clause: parser.AnalyticClause{
-			Partition: parser.Partition{
-				Values: []parser.Expression{
-					parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+		Function: parser.AnalyticFunction{
+			Name: "rank",
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
 				},
-			},
-			OrderByClause: parser.OrderByClause{
-				Items: []parser.Expression{
-					parser.OrderItem{
-						Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+				OrderByClause: parser.OrderByClause{
+					Items: []parser.Expression{
+						parser.OrderItem{
+							Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+						},
 					},
 				},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 }
 
@@ -472,16 +495,19 @@ var denseRankTests = []analyticFunctionTest{
 				}),
 			},
 		},
-		Clause: parser.AnalyticClause{
-			Partition: parser.Partition{
-				Values: []parser.Expression{
-					parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+		Function: parser.AnalyticFunction{
+			Name: "dense_rank",
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
 				},
-			},
-			OrderByClause: parser.OrderByClause{
-				Items: []parser.Expression{
-					parser.OrderItem{
-						Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				OrderByClause: parser.OrderByClause{
+					Items: []parser.Expression{
+						parser.OrderItem{
+							Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+						},
 					},
 				},
 			},
@@ -544,10 +570,13 @@ var denseRankTests = []analyticFunctionTest{
 				}),
 			},
 		},
-		Args: []parser.Expression{
-			parser.NewInteger(1),
+		Function: parser.AnalyticFunction{
+			Name: "dense_rank",
+			Args: []parser.Expression{
+				parser.NewInteger(1),
+			},
 		},
-		Error: "analytic function DENSE_RANK takes no argument",
+		Error: "[L:- C:-] function dense_rank takes no argument",
 	},
 	{
 		Name: "DenseRank Partition Value Error",
@@ -576,21 +605,24 @@ var denseRankTests = []analyticFunctionTest{
 				}),
 			},
 		},
-		Clause: parser.AnalyticClause{
-			Partition: parser.Partition{
-				Values: []parser.Expression{
-					parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+		Function: parser.AnalyticFunction{
+			Name: "dense_rank",
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+					},
 				},
-			},
-			OrderByClause: parser.OrderByClause{
-				Items: []parser.Expression{
-					parser.OrderItem{
-						Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				OrderByClause: parser.OrderByClause{
+					Items: []parser.Expression{
+						parser.OrderItem{
+							Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+						},
 					},
 				},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
 		Name: "DenseRank Order Value Error",
@@ -619,21 +651,24 @@ var denseRankTests = []analyticFunctionTest{
 				}),
 			},
 		},
-		Clause: parser.AnalyticClause{
-			Partition: parser.Partition{
-				Values: []parser.Expression{
-					parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+		Function: parser.AnalyticFunction{
+			Name: "dense_rank",
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
 				},
-			},
-			OrderByClause: parser.OrderByClause{
-				Items: []parser.Expression{
-					parser.OrderItem{
-						Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+				OrderByClause: parser.OrderByClause{
+					Items: []parser.Expression{
+						parser.OrderItem{
+							Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+						},
 					},
 				},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 }
 

@@ -109,8 +109,14 @@ func (h Header) TableColumnNames() []string {
 }
 
 func (h Header) ContainsObject(obj parser.Expression) (int, error) {
-	fieldRef := parser.FieldReference{
-		Column: parser.Identifier{Literal: obj.String()},
+	var fieldRef parser.FieldReference
+
+	if fr, ok := obj.(parser.FieldReference); ok {
+		fieldRef = fr
+	} else {
+		fieldRef = parser.FieldReference{
+			Column: parser.Identifier{Literal: obj.String()},
+		}
 	}
 	return h.Contains(fieldRef)
 }

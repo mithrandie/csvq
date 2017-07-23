@@ -3,6 +3,7 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"unicode"
 
@@ -54,17 +55,24 @@ type Scanner struct {
 	offset int
 	err    error
 
-	line int
-	char int
+	line       int
+	char       int
+	sourceFile string
 }
 
-func (s *Scanner) Init(src string) *Scanner {
+func (s *Scanner) Init(src string, sourceFile string) *Scanner {
 	s.src = []rune(src)
 	s.srcPos = 0
 	s.offset = 0
 	s.err = nil
 	s.line = 1
 	s.char = 0
+
+	if 0 < len(sourceFile) {
+		if abs, err := filepath.Abs(sourceFile); err == nil {
+			s.sourceFile = abs
+		}
+	}
 	return s
 }
 
@@ -216,7 +224,7 @@ func (s *Scanner) Scan() (Token, error) {
 		}
 	}
 
-	return Token{Token: int(token), Literal: literal, Quoted: quoted, Line: line, Char: char}, s.err
+	return Token{Token: int(token), Literal: literal, Quoted: quoted, Line: line, Char: char, SourceFile: s.sourceFile}, s.err
 }
 
 func (s *Scanner) scanString(quote rune) {

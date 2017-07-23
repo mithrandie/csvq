@@ -29,18 +29,82 @@ func IsNull(v Primary) bool {
 
 type Statement interface{}
 
-type ProcExpr interface{}
+type ProcExpr interface {
+	GetBaseExpr() *BaseExpr
+	HasParseInfo() bool
+	Line() int
+	Char() int
+	SourceFile() string
+}
 
 type Expression interface {
 	String() string
+
+	GetBaseExpr() *BaseExpr
+	HasParseInfo() bool
+	Line() int
+	Char() int
+	SourceFile() string
+}
+
+type BaseExpr struct {
+	line       int
+	char       int
+	sourceFile string
+}
+
+func (e *BaseExpr) Line() int {
+	return e.line
+}
+
+func (e *BaseExpr) Char() int {
+	return e.char
+}
+
+func (e *BaseExpr) SourceFile() string {
+	return e.sourceFile
+}
+
+func (e *BaseExpr) HasParseInfo() bool {
+	if e == nil {
+		return false
+	}
+	return true
+}
+
+func (e *BaseExpr) GetBaseExpr() *BaseExpr {
+	return e
+}
+
+func NewBaseExpr(token Token) *BaseExpr {
+	return &BaseExpr{
+		line:       token.Line,
+		char:       token.Char,
+		sourceFile: token.SourceFile,
+	}
+}
+
+func NewBaseExprFromIdentifier(ident Identifier) *BaseExpr {
+	return &BaseExpr{
+		line:       ident.Line(),
+		char:       ident.Char(),
+		sourceFile: ident.SourceFile(),
+	}
 }
 
 type Primary interface {
 	String() string
 	Ternary() ternary.Value
+
+	GetBaseExpr() *BaseExpr
+	HasParseInfo() bool
+	Line() int
+	Char() int
+	SourceFile() string
 }
 
 type String struct {
+	*BaseExpr
 	literal string
 }
 
@@ -66,6 +130,7 @@ func (s String) Ternary() ternary.Value {
 }
 
 type Integer struct {
+	*BaseExpr
 	literal string
 	value   int64
 }
@@ -105,6 +170,7 @@ func (i Integer) Ternary() ternary.Value {
 }
 
 type Float struct {
+	*BaseExpr
 	literal string
 	value   float64
 }
@@ -144,6 +210,7 @@ func (f Float) Ternary() ternary.Value {
 }
 
 type Boolean struct {
+	*BaseExpr
 	literal string
 	value   bool
 }
@@ -168,6 +235,7 @@ func (b Boolean) Ternary() ternary.Value {
 }
 
 type Ternary struct {
+	*BaseExpr
 	literal string
 	value   ternary.Value
 }
@@ -196,6 +264,7 @@ func (t Ternary) Ternary() ternary.Value {
 }
 
 type Datetime struct {
+	*BaseExpr
 	literal string
 	value   time.Time
 	format  string
@@ -239,6 +308,7 @@ func (dt *Datetime) SetFormat(format string) {
 }
 
 type Null struct {
+	*BaseExpr
 	literal string
 }
 
@@ -264,6 +334,7 @@ func (n Null) Ternary() ternary.Value {
 }
 
 type Identifier struct {
+	*BaseExpr
 	Literal string
 	Quoted  bool
 }
@@ -276,6 +347,7 @@ func (i Identifier) String() string {
 }
 
 type FieldReference struct {
+	*BaseExpr
 	View   Expression
 	Column Identifier
 }
@@ -289,6 +361,7 @@ func (e FieldReference) String() string {
 }
 
 type Parentheses struct {
+	*BaseExpr
 	Expr Expression
 }
 
@@ -297,6 +370,7 @@ func (p Parentheses) String() string {
 }
 
 type RowValue struct {
+	*BaseExpr
 	Value Expression
 }
 
@@ -305,6 +379,7 @@ func (e RowValue) String() string {
 }
 
 type ValueList struct {
+	*BaseExpr
 	Values []Expression
 }
 
@@ -313,6 +388,7 @@ func (e ValueList) String() string {
 }
 
 type RowValueList struct {
+	*BaseExpr
 	RowValues []Expression
 }
 
@@ -321,6 +397,7 @@ func (e RowValueList) String() string {
 }
 
 type SelectQuery struct {
+	*BaseExpr
 	WithClause    Expression
 	SelectEntity  Expression
 	OrderByClause Expression
@@ -347,6 +424,7 @@ func (e SelectQuery) String() string {
 }
 
 type SelectSet struct {
+	*BaseExpr
 	LHS      Expression
 	Operator Token
 	All      Token
@@ -363,6 +441,7 @@ func (e SelectSet) String() string {
 }
 
 type SelectEntity struct {
+	*BaseExpr
 	SelectClause  Expression
 	FromClause    Expression
 	WhereClause   Expression
@@ -388,6 +467,7 @@ func (e SelectEntity) String() string {
 }
 
 type SelectClause struct {
+	*BaseExpr
 	Select   string
 	Distinct Token
 	Fields   []Expression
@@ -407,6 +487,7 @@ func (sc SelectClause) String() string {
 }
 
 type FromClause struct {
+	*BaseExpr
 	From   string
 	Tables []Expression
 }
@@ -417,6 +498,7 @@ func (f FromClause) String() string {
 }
 
 type WhereClause struct {
+	*BaseExpr
 	Where  string
 	Filter Expression
 }
@@ -427,6 +509,7 @@ func (w WhereClause) String() string {
 }
 
 type GroupByClause struct {
+	*BaseExpr
 	GroupBy string
 	Items   []Expression
 }
@@ -437,6 +520,7 @@ func (gb GroupByClause) String() string {
 }
 
 type HavingClause struct {
+	*BaseExpr
 	Having string
 	Filter Expression
 }
@@ -447,6 +531,7 @@ func (h HavingClause) String() string {
 }
 
 type OrderByClause struct {
+	*BaseExpr
 	OrderBy string
 	Items   []Expression
 }
@@ -457,6 +542,7 @@ func (ob OrderByClause) String() string {
 }
 
 type LimitClause struct {
+	*BaseExpr
 	Limit   string
 	Value   Expression
 	Percent string
@@ -486,6 +572,7 @@ func (e LimitClause) IsWithTies() bool {
 }
 
 type LimitWith struct {
+	*BaseExpr
 	With string
 	Type Token
 }
@@ -496,6 +583,7 @@ func (e LimitWith) String() string {
 }
 
 type OffsetClause struct {
+	*BaseExpr
 	Offset string
 	Value  Expression
 }
@@ -506,6 +594,7 @@ func (e OffsetClause) String() string {
 }
 
 type WithClause struct {
+	*BaseExpr
 	With         string
 	InlineTables []Expression
 }
@@ -516,9 +605,10 @@ func (e WithClause) String() string {
 }
 
 type InlineTable struct {
+	*BaseExpr
 	Recursive Token
 	Name      Identifier
-	Columns   []Expression
+	Fields    []Expression
 	As        string
 	Query     SelectQuery
 }
@@ -529,8 +619,8 @@ func (e InlineTable) String() string {
 		s = append(s, e.Recursive.Literal)
 	}
 	s = append(s, e.Name.String())
-	if e.Columns != nil {
-		s = append(s, putParentheses(listExpressions(e.Columns)))
+	if e.Fields != nil {
+		s = append(s, putParentheses(listExpressions(e.Fields)))
 	}
 	s = append(s, e.As, putParentheses(e.Query.String()))
 	return joinWithSpace(s)
@@ -541,6 +631,7 @@ func (e InlineTable) IsRecursive() bool {
 }
 
 type Subquery struct {
+	*BaseExpr
 	Query SelectQuery
 }
 
@@ -549,6 +640,7 @@ func (sq Subquery) String() string {
 }
 
 type Comparison struct {
+	*BaseExpr
 	LHS      Expression
 	Operator string
 	RHS      Expression
@@ -560,6 +652,7 @@ func (c Comparison) String() string {
 }
 
 type Is struct {
+	*BaseExpr
 	Is       string
 	LHS      Expression
 	RHS      Expression
@@ -580,6 +673,7 @@ func (i Is) String() string {
 }
 
 type Between struct {
+	*BaseExpr
 	Between  string
 	And      string
 	LHS      Expression
@@ -602,6 +696,7 @@ func (b Between) String() string {
 }
 
 type In struct {
+	*BaseExpr
 	In       string
 	LHS      Expression
 	Values   Expression
@@ -622,6 +717,7 @@ func (i In) String() string {
 }
 
 type All struct {
+	*BaseExpr
 	All      string
 	LHS      Expression
 	Operator string
@@ -634,6 +730,7 @@ func (a All) String() string {
 }
 
 type Any struct {
+	*BaseExpr
 	Any      string
 	LHS      Expression
 	Operator string
@@ -646,6 +743,7 @@ func (a Any) String() string {
 }
 
 type Like struct {
+	*BaseExpr
 	Like     string
 	LHS      Expression
 	Pattern  Expression
@@ -666,6 +764,7 @@ func (l Like) String() string {
 }
 
 type Exists struct {
+	*BaseExpr
 	Exists string
 	Query  Subquery
 }
@@ -676,6 +775,7 @@ func (e Exists) String() string {
 }
 
 type Arithmetic struct {
+	*BaseExpr
 	LHS      Expression
 	Operator int
 	RHS      Expression
@@ -686,22 +786,44 @@ func (a Arithmetic) String() string {
 	return joinWithSpace(s)
 }
 
+type UnaryArithmetic struct {
+	*BaseExpr
+	Operand  Expression
+	Operator Token
+}
+
+func (e UnaryArithmetic) String() string {
+	return e.Operator.Literal + e.Operand.String()
+}
+
 type Logic struct {
+	*BaseExpr
 	LHS      Expression
 	Operator Token
 	RHS      Expression
 }
 
 func (l Logic) String() string {
-	s := []string{}
-	if l.LHS != nil {
-		s = append(s, l.LHS.String())
-	}
-	s = append(s, l.Operator.Literal, l.RHS.String())
+	s := []string{l.LHS.String(), l.Operator.Literal, l.RHS.String()}
 	return joinWithSpace(s)
 }
 
+type UnaryLogic struct {
+	*BaseExpr
+	Operand  Expression
+	Operator Token
+}
+
+func (e UnaryLogic) String() string {
+	if e.Operator.Token == NOT {
+		s := []string{e.Operator.Literal, e.Operand.String()}
+		return joinWithSpace(s)
+	}
+	return e.Operator.Literal + e.Operand.String()
+}
+
 type Concat struct {
+	*BaseExpr
 	Items []Expression
 }
 
@@ -714,6 +836,7 @@ func (c Concat) String() string {
 }
 
 type Function struct {
+	*BaseExpr
 	Name string
 	Args []Expression
 }
@@ -723,6 +846,7 @@ func (e Function) String() string {
 }
 
 type AggregateFunction struct {
+	*BaseExpr
 	Name   string
 	Option AggregateOption
 }
@@ -732,6 +856,7 @@ func (e AggregateFunction) String() string {
 }
 
 type AggregateOption struct {
+	*BaseExpr
 	Distinct Token
 	Args     []Expression
 }
@@ -752,6 +877,7 @@ func (e AggregateOption) String() string {
 }
 
 type Table struct {
+	*BaseExpr
 	Object Expression
 	As     string
 	Alias  Expression
@@ -768,19 +894,27 @@ func (t Table) String() string {
 	return joinWithSpace(s)
 }
 
-func (t Table) Name() string {
+func (t Table) Name() Identifier {
 	if t.Alias != nil {
-		return t.Alias.(Identifier).Literal
+		return t.Alias.(Identifier)
 	}
 
 	if file, ok := t.Object.(Identifier); ok {
-		return FormatTableName(file.Literal)
+		return Identifier{
+			BaseExpr: file.BaseExpr,
+			Literal:  FormatTableName(file.Literal),
+		}
 	}
 
-	return t.Object.String()
+	return Identifier{
+		BaseExpr: t.Object.GetBaseExpr(),
+		Literal:  t.Object.String(),
+	}
+
 }
 
 type Join struct {
+	*BaseExpr
 	Join      string
 	Table     Table
 	JoinTable Table
@@ -809,6 +943,7 @@ func (j Join) String() string {
 }
 
 type JoinCondition struct {
+	*BaseExpr
 	Literal string
 	On      Expression
 	Using   []Expression
@@ -825,6 +960,7 @@ func (jc JoinCondition) String() string {
 }
 
 type Field struct {
+	*BaseExpr
 	Object Expression
 	As     string
 	Alias  Expression
@@ -858,6 +994,7 @@ func (f Field) Name() string {
 }
 
 type AllColumns struct {
+	*BaseExpr
 }
 
 func (ac AllColumns) String() string {
@@ -865,6 +1002,7 @@ func (ac AllColumns) String() string {
 }
 
 type Dual struct {
+	*BaseExpr
 	Dual string
 }
 
@@ -873,6 +1011,7 @@ func (d Dual) String() string {
 }
 
 type Stdin struct {
+	*BaseExpr
 	Stdin string
 }
 
@@ -881,6 +1020,7 @@ func (si Stdin) String() string {
 }
 
 type OrderItem struct {
+	*BaseExpr
 	Value     Expression
 	Direction Token
 	Nulls     string
@@ -899,6 +1039,7 @@ func (e OrderItem) String() string {
 }
 
 type Case struct {
+	*BaseExpr
 	Case  string
 	End   string
 	Value Expression
@@ -922,6 +1063,7 @@ func (c Case) String() string {
 }
 
 type CaseWhen struct {
+	*BaseExpr
 	When      string
 	Then      string
 	Condition Expression
@@ -934,6 +1076,7 @@ func (cw CaseWhen) String() string {
 }
 
 type CaseElse struct {
+	*BaseExpr
 	Else   string
 	Result Expression
 }
@@ -944,6 +1087,7 @@ func (ce CaseElse) String() string {
 }
 
 type GroupConcat struct {
+	*BaseExpr
 	GroupConcat  string
 	Option       AggregateOption
 	OrderBy      Expression
@@ -971,6 +1115,7 @@ func (gc GroupConcat) String() string {
 }
 
 type AnalyticFunction struct {
+	*BaseExpr
 	Name           string
 	Args           []Expression
 	Over           string
@@ -987,6 +1132,7 @@ func (e AnalyticFunction) String() string {
 }
 
 type AnalyticClause struct {
+	*BaseExpr
 	Partition     Expression
 	OrderByClause Expression
 }
@@ -1023,6 +1169,7 @@ func (e AnalyticClause) OrderValues() []Expression {
 }
 
 type Partition struct {
+	*BaseExpr
 	PartitionBy string
 	Values      []Expression
 }
@@ -1033,6 +1180,7 @@ func (e Partition) String() string {
 }
 
 type Variable struct {
+	*BaseExpr
 	Name string
 }
 
@@ -1041,31 +1189,35 @@ func (v Variable) String() string {
 }
 
 type VariableSubstitution struct {
+	*BaseExpr
 	Variable Variable
 	Value    Expression
 }
 
 func (vs VariableSubstitution) String() string {
-	return joinWithSpace([]string{vs.Variable.String(), ":=", vs.Value.String()})
+	return joinWithSpace([]string{vs.Variable.String(), SUBSTITUTION_OPERATOR, vs.Value.String()})
 }
 
 type VariableAssignment struct {
-	Name  string
-	Value Expression
+	*BaseExpr
+	Variable Variable
+	Value    Expression
 }
 
 func (va VariableAssignment) String() string {
 	if va.Value == nil {
-		return va.Name
+		return va.Variable.String()
 	}
-	return joinWithSpace([]string{va.Name, "=", va.Value.String()})
+	return joinWithSpace([]string{va.Variable.String(), SUBSTITUTION_OPERATOR, va.Value.String()})
 }
 
 type VariableDeclaration struct {
+	*BaseExpr
 	Assignments []Expression
 }
 
 type InsertQuery struct {
+	*BaseExpr
 	WithClause Expression
 	Insert     string
 	Into       string
@@ -1095,6 +1247,7 @@ func (e InsertQuery) String() string {
 }
 
 type UpdateQuery struct {
+	*BaseExpr
 	WithClause  Expression
 	Update      string
 	Tables      []Expression
@@ -1120,6 +1273,7 @@ func (e UpdateQuery) String() string {
 }
 
 type UpdateSet struct {
+	*BaseExpr
 	Field FieldReference
 	Value Expression
 }
@@ -1129,6 +1283,7 @@ func (us UpdateSet) String() string {
 }
 
 type DeleteQuery struct {
+	*BaseExpr
 	WithClause  Expression
 	Delete      string
 	Tables      []Expression
@@ -1153,6 +1308,7 @@ func (e DeleteQuery) String() string {
 }
 
 type CreateTable struct {
+	*BaseExpr
 	CreateTable string
 	Table       Identifier
 	Fields      []Expression
@@ -1168,6 +1324,7 @@ func (e CreateTable) String() string {
 }
 
 type AddColumns struct {
+	*BaseExpr
 	AlterTable string
 	Table      Identifier
 	Add        string
@@ -1189,6 +1346,7 @@ func (e AddColumns) String() string {
 }
 
 type ColumnDefault struct {
+	*BaseExpr
 	Column  Identifier
 	Default string
 	Value   Expression
@@ -1203,6 +1361,7 @@ func (e ColumnDefault) String() string {
 }
 
 type ColumnPosition struct {
+	*BaseExpr
 	Position Token
 	Column   Expression
 }
@@ -1216,6 +1375,7 @@ func (e ColumnPosition) String() string {
 }
 
 type DropColumns struct {
+	*BaseExpr
 	AlterTable string
 	Table      Identifier
 	Drop       string
@@ -1233,6 +1393,7 @@ func (e DropColumns) String() string {
 }
 
 type RenameColumn struct {
+	*BaseExpr
 	AlterTable string
 	Table      Identifier
 	Rename     string
@@ -1254,33 +1415,40 @@ func (e RenameColumn) String() string {
 }
 
 type FunctionDeclaration struct {
+	*BaseExpr
 	Name       Identifier
 	Parameters []Variable
 	Statements []Statement
 }
 
 type Return struct {
+	*BaseExpr
 	Value Expression
 }
 
 type Print struct {
+	*BaseExpr
 	Value Expression
 }
 
 type Printf struct {
+	*BaseExpr
 	Values []Expression
 }
 
 type Source struct {
+	*BaseExpr
 	FilePath string
 }
 
 type SetFlag struct {
+	*BaseExpr
 	Name  string
 	Value Primary
 }
 
 type If struct {
+	*BaseExpr
 	Condition  Expression
 	Statements []Statement
 	ElseIf     []ProcExpr
@@ -1288,49 +1456,59 @@ type If struct {
 }
 
 type ElseIf struct {
+	*BaseExpr
 	Condition  Expression
 	Statements []Statement
 }
 
 type Else struct {
+	*BaseExpr
 	Statements []Statement
 }
 
 type While struct {
+	*BaseExpr
 	Condition  Expression
 	Statements []Statement
 }
 
 type WhileInCursor struct {
+	*BaseExpr
 	Variables  []Variable
 	Cursor     Identifier
 	Statements []Statement
 }
 
 type CursorDeclaration struct {
+	*BaseExpr
 	Cursor Identifier
 	Query  SelectQuery
 }
 
 type OpenCursor struct {
+	*BaseExpr
 	Cursor Identifier
 }
 
 type CloseCursor struct {
+	*BaseExpr
 	Cursor Identifier
 }
 
 type DisposeCursor struct {
+	*BaseExpr
 	Cursor Identifier
 }
 
 type FetchCursor struct {
+	*BaseExpr
 	Position  Expression
 	Cursor    Identifier
 	Variables []Variable
 }
 
 type FetchPosition struct {
+	*BaseExpr
 	Position Token
 	Number   Expression
 }
@@ -1344,6 +1522,7 @@ func (e FetchPosition) String() string {
 }
 
 type CursorStatus struct {
+	*BaseExpr
 	CursorLit string
 	Cursor    Identifier
 	Is        string
@@ -1362,20 +1541,24 @@ func (e CursorStatus) String() string {
 }
 
 type TableDeclaration struct {
+	*BaseExpr
 	Table  Identifier
 	Fields []Expression
 	Query  Expression
 }
 
 type DisposeTable struct {
+	*BaseExpr
 	Table Identifier
 }
 
 type TransactionControl struct {
+	*BaseExpr
 	Token int
 }
 
 type FlowControl struct {
+	*BaseExpr
 	Token int
 }
 

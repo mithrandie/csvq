@@ -50,8 +50,6 @@ func (proc *Procedure) Execute(statements []parser.Statement) (StatementFlow, er
 func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, error) {
 	flow := TERMINATE
 
-	ViewCache.ClearAliases()
-
 	var err error
 
 	var results []Result
@@ -69,21 +67,20 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 	case parser.VariableSubstitution:
 		_, err = filter.Evaluate(stmt.(parser.Expression))
 	case parser.CursorDeclaration:
-		decl := stmt.(parser.CursorDeclaration)
-		err = Cursors.Add(decl.Cursor.Literal, decl.Query)
+		err = Cursors.Declare(stmt.(parser.CursorDeclaration))
 	case parser.OpenCursor:
-		err = Cursors.Open(stmt.(parser.OpenCursor).Cursor.Literal, filter)
+		err = Cursors.Open(stmt.(parser.OpenCursor).Cursor, filter)
 	case parser.CloseCursor:
-		err = Cursors.Close(stmt.(parser.CloseCursor).Cursor.Literal)
+		err = Cursors.Close(stmt.(parser.CloseCursor).Cursor)
 	case parser.DisposeCursor:
-		Cursors.Dispose(stmt.(parser.DisposeCursor).Cursor.Literal)
+		err = Cursors.Dispose(stmt.(parser.DisposeCursor).Cursor)
 	case parser.FetchCursor:
 		fetch := stmt.(parser.FetchCursor)
-		_, err = FetchCursor(fetch.Cursor.Literal, fetch.Position, fetch.Variables, filter)
+		_, err = FetchCursor(fetch.Cursor, fetch.Position, fetch.Variables, filter)
 	case parser.TableDeclaration:
 		err = DeclareTable(stmt.(parser.TableDeclaration), filter)
 	case parser.DisposeTable:
-		err = ViewCache.DisposeTemporaryTable(stmt.(parser.DisposeTable).Table.Literal)
+		err = ViewCache.DisposeTemporaryTable(stmt.(parser.DisposeTable).Table)
 	case parser.FunctionDeclaration:
 		err = UserFunctions.Declare(stmt.(parser.FunctionDeclaration))
 	case parser.SelectQuery:
@@ -104,7 +101,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					OperatedCount: view.OperatedRecords,
 				},
 			}
-			AddLog(fmt.Sprintf("%s inserted on %q.", proc.formatCount(view.OperatedRecords, "record"), view.FileInfo.Path))
+			AddLog(fmt.Sprintf("%s inserted on %q.", FormatCount(view.OperatedRecords, "record"), view.FileInfo.Path))
 
 			view.OperatedRecords = 0
 		}
@@ -117,7 +114,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					FileInfo:      v.FileInfo,
 					OperatedCount: v.OperatedRecords,
 				}
-				AddLog(fmt.Sprintf("%s updated on %q.", proc.formatCount(v.OperatedRecords, "record"), v.FileInfo.Path))
+				AddLog(fmt.Sprintf("%s updated on %q.", FormatCount(v.OperatedRecords, "record"), v.FileInfo.Path))
 
 				v.OperatedRecords = 0
 			}
@@ -131,7 +128,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					FileInfo:      v.FileInfo,
 					OperatedCount: v.OperatedRecords,
 				}
-				AddLog(fmt.Sprintf("%s deleted on %q.", proc.formatCount(v.OperatedRecords, "record"), v.FileInfo.Path))
+				AddLog(fmt.Sprintf("%s deleted on %q.", FormatCount(v.OperatedRecords, "record"), v.FileInfo.Path))
 
 				v.OperatedRecords = 0
 			}
@@ -157,12 +154,12 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					OperatedCount: view.OperatedFields,
 				},
 			}
-			AddLog(fmt.Sprintf("%s added on %q.", proc.formatCount(view.OperatedFields, "field"), view.FileInfo.Path))
+			AddLog(fmt.Sprintf("%s added on %q.", FormatCount(view.OperatedFields, "field"), view.FileInfo.Path))
 
 			view.OperatedRecords = 0
 		}
 	case parser.DropColumns:
-		if view, err = DropColumns(stmt.(parser.DropColumns)); err == nil {
+		if view, err = DropColumns(stmt.(parser.DropColumns), filter); err == nil {
 			results = []Result{
 				{
 					Type:          DROP_COLUMNS,
@@ -170,12 +167,12 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					OperatedCount: view.OperatedFields,
 				},
 			}
-			AddLog(fmt.Sprintf("%s dropped on %q.", proc.formatCount(view.OperatedFields, "field"), view.FileInfo.Path))
+			AddLog(fmt.Sprintf("%s dropped on %q.", FormatCount(view.OperatedFields, "field"), view.FileInfo.Path))
 
 			view.OperatedRecords = 0
 		}
 	case parser.RenameColumn:
-		if view, err = RenameColumn(stmt.(parser.RenameColumn)); err == nil {
+		if view, err = RenameColumn(stmt.(parser.RenameColumn), filter); err == nil {
 			results = []Result{
 				{
 					Type:          RENAME_COLUMN,
@@ -183,7 +180,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					OperatedCount: view.OperatedFields,
 				},
 			}
-			AddLog(fmt.Sprintf("%s renamed on %q.", proc.formatCount(view.OperatedFields, "field"), view.FileInfo.Path))
+			AddLog(fmt.Sprintf("%s renamed on %q.", FormatCount(view.OperatedFields, "field"), view.FileInfo.Path))
 
 			view.OperatedRecords = 0
 		}
@@ -227,7 +224,8 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		}
 	case parser.Source:
 		var externalStatements []parser.Statement
-		if externalStatements, err = Source(stmt.(parser.Source)); err == nil {
+		source := stmt.(parser.Source)
+		if externalStatements, err = Source(source); err == nil {
 			flow, err = proc.Execute(externalStatements)
 		}
 	}
@@ -299,7 +297,7 @@ func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, 
 	filter := NewFilter(proc.VariablesList)
 
 	for {
-		success, err := FetchCursor(stmt.Cursor.Literal, nil, stmt.Variables, filter)
+		success, err := FetchCursor(stmt.Cursor, nil, stmt.Variables, filter)
 		if err != nil {
 			return ERROR, err
 		}
@@ -321,18 +319,6 @@ func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, 
 	}
 
 	return TERMINATE, nil
-}
-
-func (proc *Procedure) formatCount(i int, obj string) string {
-	var s string
-	if i == 0 {
-		s = fmt.Sprintf("no %s", obj)
-	} else if i == 1 {
-		s = fmt.Sprintf("%d %s", i, obj)
-	} else {
-		s = fmt.Sprintf("%d %ss", i, obj)
-	}
-	return s
 }
 
 func (proc *Procedure) Commit() error {
@@ -370,7 +356,7 @@ func (proc *Procedure) Commit() error {
 
 	if 0 < len(createFiles) {
 		for pt, fi := range createFiles {
-			view, _ := ViewCache.Get(pt)
+			view, _ := ViewCache.Get(parser.Identifier{Literal: pt})
 			viewstr, err := EncodeView(view, cmd.CSV, fi.Delimiter, false, fi.Encoding, fi.LineBreak)
 			if err != nil {
 				return err
@@ -388,7 +374,7 @@ func (proc *Procedure) Commit() error {
 
 	if 0 < len(updateFiles) {
 		for pt, fi := range updateFiles {
-			view, _ := ViewCache.Get(pt)
+			view, _ := ViewCache.Get(parser.Identifier{Literal: pt})
 			viewstr, err := EncodeView(view, cmd.CSV, fi.Delimiter, fi.NoHeader, fi.Encoding, fi.LineBreak)
 			if err != nil {
 				return err

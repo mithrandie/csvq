@@ -10,15 +10,16 @@ import (
 )
 
 type functionTest struct {
-	Name   string
-	Args   []parser.Primary
-	Result parser.Primary
-	Error  string
+	Name     string
+	Function parser.Function
+	Args     []parser.Primary
+	Result   parser.Primary
+	Error    string
 }
 
-func testFunction(t *testing.T, f func([]parser.Primary) (parser.Primary, error), tests []functionTest) {
+func testFunction(t *testing.T, f func(parser.Function, []parser.Primary) (parser.Primary, error), tests []functionTest) {
 	for _, v := range tests {
-		result, err := f(v.Args)
+		result, err := f(v.Function, v.Args)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -40,6 +41,9 @@ func testFunction(t *testing.T, f func([]parser.Primary) (parser.Primary, error)
 var coalesceTests = []functionTest{
 	{
 		Name: "Coalesce",
+		Function: parser.Function{
+			Name: "coalesce",
+		},
 		Args: []parser.Primary{
 			parser.NewNull(),
 			parser.NewString("str"),
@@ -47,12 +51,18 @@ var coalesceTests = []functionTest{
 		Result: parser.NewString("str"),
 	},
 	{
-		Name:  "Coalesce Argments Error",
+		Name: "Coalesce Argments Error",
+		Function: parser.Function{
+			Name: "coalesce",
+		},
 		Args:  []parser.Primary{},
-		Error: "function COALESCE takes at least 1 argument",
+		Error: "[L:- C:-] function coalesce takes at least 1 argument",
 	},
 	{
 		Name: "Coalesce No Match",
+		Function: parser.Function{
+			Name: "coalesce",
+		},
 		Args: []parser.Primary{
 			parser.NewNull(),
 			parser.NewNull(),
@@ -68,6 +78,9 @@ func TestCoalesce(t *testing.T) {
 var ifTests = []functionTest{
 	{
 		Name: "If True",
+		Function: parser.Function{
+			Name: "if",
+		},
 		Args: []parser.Primary{
 			parser.NewTernary(ternary.TRUE),
 			parser.NewInteger(1),
@@ -77,6 +90,9 @@ var ifTests = []functionTest{
 	},
 	{
 		Name: "If False",
+		Function: parser.Function{
+			Name: "if",
+		},
 		Args: []parser.Primary{
 			parser.NewTernary(ternary.FALSE),
 			parser.NewInteger(1),
@@ -86,10 +102,13 @@ var ifTests = []functionTest{
 	},
 	{
 		Name: "If Argumants Error",
+		Function: parser.Function{
+			Name: "if",
+		},
 		Args: []parser.Primary{
 			parser.NewTernary(ternary.FALSE),
 		},
-		Error: "function IF takes 3 arguments",
+		Error: "[L:- C:-] function if takes 3 arguments",
 	},
 }
 
@@ -100,6 +119,9 @@ func TestIf(t *testing.T) {
 var ifnullTests = []functionTest{
 	{
 		Name: "Ifnull True",
+		Function: parser.Function{
+			Name: "ifnull",
+		},
 		Args: []parser.Primary{
 			parser.NewNull(),
 			parser.NewInteger(2),
@@ -108,6 +130,9 @@ var ifnullTests = []functionTest{
 	},
 	{
 		Name: "Ifnull False",
+		Function: parser.Function{
+			Name: "ifnull",
+		},
 		Args: []parser.Primary{
 			parser.NewInteger(1),
 			parser.NewInteger(2),
@@ -116,10 +141,13 @@ var ifnullTests = []functionTest{
 	},
 	{
 		Name: "Ifnull Arguments Error",
+		Function: parser.Function{
+			Name: "ifnull",
+		},
 		Args: []parser.Primary{
 			parser.NewInteger(1),
 		},
-		Error: "function IFNULL takes 2 arguments",
+		Error: "[L:- C:-] function ifnull takes 2 arguments",
 	},
 }
 
@@ -130,6 +158,9 @@ func TestIfnull(t *testing.T) {
 var nullifTests = []functionTest{
 	{
 		Name: "Nullif True",
+		Function: parser.Function{
+			Name: "nullif",
+		},
 		Args: []parser.Primary{
 			parser.NewInteger(2),
 			parser.NewInteger(2),
@@ -138,6 +169,9 @@ var nullifTests = []functionTest{
 	},
 	{
 		Name: "Nullif False",
+		Function: parser.Function{
+			Name: "nullif",
+		},
 		Args: []parser.Primary{
 			parser.NewInteger(1),
 			parser.NewInteger(2),
@@ -146,10 +180,13 @@ var nullifTests = []functionTest{
 	},
 	{
 		Name: "Nullif Arguments Error",
+		Function: parser.Function{
+			Name: "nullif",
+		},
 		Args: []parser.Primary{
 			parser.NewInteger(1),
 		},
-		Error: "function NULLIF takes 2 arguments",
+		Error: "[L:- C:-] function nullif takes 2 arguments",
 	},
 }
 
@@ -160,6 +197,9 @@ func TestNullif(t *testing.T) {
 var ceilTests = []functionTest{
 	{
 		Name: "Ceil",
+		Function: parser.Function{
+			Name: "ceil",
+		},
 		Args: []parser.Primary{
 			parser.NewFloat(2.345),
 		},
@@ -167,6 +207,9 @@ var ceilTests = []functionTest{
 	},
 	{
 		Name: "Ceil Null",
+		Function: parser.Function{
+			Name: "ceil",
+		},
 		Args: []parser.Primary{
 			parser.NewNull(),
 		},
@@ -174,6 +217,9 @@ var ceilTests = []functionTest{
 	},
 	{
 		Name: "Ceil Place is Null",
+		Function: parser.Function{
+			Name: "ceil",
+		},
 		Args: []parser.Primary{
 			parser.NewFloat(2.345),
 			parser.NewNull(),
@@ -181,9 +227,12 @@ var ceilTests = []functionTest{
 		Result: parser.NewNull(),
 	},
 	{
-		Name:  "Ceil Arguments Error",
+		Name: "Ceil Arguments Error",
+		Function: parser.Function{
+			Name: "ceil",
+		},
 		Args:  []parser.Primary{},
-		Error: "function CEIL takes 1 or 2 arguments",
+		Error: "[L:- C:-] function ceil takes 1 or 2 arguments",
 	},
 }
 
@@ -194,6 +243,9 @@ func TestCeil(t *testing.T) {
 var floorTests = []functionTest{
 	{
 		Name: "Floor",
+		Function: parser.Function{
+			Name: "floor",
+		},
 		Args: []parser.Primary{
 			parser.NewFloat(2.345),
 			parser.NewInteger(1),
@@ -202,15 +254,21 @@ var floorTests = []functionTest{
 	},
 	{
 		Name: "Floor Null",
+		Function: parser.Function{
+			Name: "floor",
+		},
 		Args: []parser.Primary{
 			parser.NewNull(),
 		},
 		Result: parser.NewNull(),
 	},
 	{
-		Name:  "Floor Arguments Error",
+		Name: "Floor Arguments Error",
+		Function: parser.Function{
+			Name: "floor",
+		},
 		Args:  []parser.Primary{},
-		Error: "function FLOOR takes 1 or 2 arguments",
+		Error: "[L:- C:-] function floor takes 1 or 2 arguments",
 	},
 }
 
@@ -221,6 +279,9 @@ func TestFloor(t *testing.T) {
 var roundTests = []functionTest{
 	{
 		Name: "Round",
+		Function: parser.Function{
+			Name: "round",
+		},
 		Args: []parser.Primary{
 			parser.NewFloat(2.4),
 		},
@@ -228,6 +289,9 @@ var roundTests = []functionTest{
 	},
 	{
 		Name: "Round Negative Number",
+		Function: parser.Function{
+			Name: "round",
+		},
 		Args: []parser.Primary{
 			parser.NewFloat(-2.4),
 		},
@@ -235,15 +299,21 @@ var roundTests = []functionTest{
 	},
 	{
 		Name: "Round Null",
+		Function: parser.Function{
+			Name: "round",
+		},
 		Args: []parser.Primary{
 			parser.NewNull(),
 		},
 		Result: parser.NewNull(),
 	},
 	{
-		Name:  "Round Arguments Error",
+		Name: "Round Arguments Error",
+		Function: parser.Function{
+			Name: "round",
+		},
 		Args:  []parser.Primary{},
-		Error: "function ROUND takes 1 or 2 arguments",
+		Error: "[L:- C:-] function round takes 1 or 2 arguments",
 	},
 }
 
@@ -254,6 +324,9 @@ func TestRound(t *testing.T) {
 var absTests = []functionTest{
 	{
 		Name: "Abs",
+		Function: parser.Function{
+			Name: "abs",
+		},
 		Args: []parser.Primary{
 			parser.NewInteger(-2),
 		},
@@ -261,15 +334,21 @@ var absTests = []functionTest{
 	},
 	{
 		Name: "Abs Null",
+		Function: parser.Function{
+			Name: "abs",
+		},
 		Args: []parser.Primary{
 			parser.NewNull(),
 		},
 		Result: parser.NewNull(),
 	},
 	{
-		Name:  "Abs Arguments Error",
+		Name: "Abs Arguments Error",
+		Function: parser.Function{
+			Name: "abs",
+		},
 		Args:  []parser.Primary{},
-		Error: "function ABS takes 1 argument",
+		Error: "[L:- C:-] function abs takes 1 argument",
 	},
 }
 
@@ -280,6 +359,9 @@ func TestAbs(t *testing.T) {
 var acosTests = []functionTest{
 	{
 		Name: "Acos",
+		Function: parser.Function{
+			Name: "acos",
+		},
 		Args: []parser.Primary{
 			parser.NewInteger(0),
 		},
@@ -294,6 +376,9 @@ func TestAcos(t *testing.T) {
 var asinTests = []functionTest{
 	{
 		Name: "Asin",
+		Function: parser.Function{
+			Name: "asin",
+		},
 		Args: []parser.Primary{
 			parser.NewFloat(0.1),
 		},
@@ -307,7 +392,10 @@ func TestAsin(t *testing.T) {
 
 var atanTests = []functionTest{
 	{
-		Name: "ATAN",
+		Name: "Atan",
+		Function: parser.Function{
+			Name: "atan",
+		},
 		Args: []parser.Primary{
 			parser.NewInteger(2),
 		},
@@ -322,6 +410,9 @@ func TestAtan(t *testing.T) {
 var atan2Tests = []functionTest{
 	{
 		Name: "Atan2",
+		Function: parser.Function{
+			Name: "atan2",
+		},
 		Args: []parser.Primary{
 			parser.NewInteger(2),
 			parser.NewInteger(2),
@@ -337,6 +428,9 @@ func TestAtan2(t *testing.T) {
 var cosTests = []functionTest{
 	{
 		Name: "Cos",
+		Function: parser.Function{
+			Name: "cos",
+		},
 		Args: []parser.Primary{
 			parser.NewInteger(2),
 		},
@@ -351,6 +445,9 @@ func TestCos(t *testing.T) {
 var sinTests = []functionTest{
 	{
 		Name: "Sin",
+		Function: parser.Function{
+			Name: "sin",
+		},
 		Args: []parser.Primary{
 			parser.NewInteger(1),
 		},
@@ -365,6 +462,9 @@ func TestSin(t *testing.T) {
 var tanTests = []functionTest{
 	{
 		Name: "Tan",
+		Function: parser.Function{
+			Name: "tan",
+		},
 		Args: []parser.Primary{
 			parser.NewInteger(2),
 		},
@@ -379,6 +479,9 @@ func TestTan(t *testing.T) {
 var expTests = []functionTest{
 	{
 		Name: "Exp",
+		Function: parser.Function{
+			Name: "exp",
+		},
 		Args: []parser.Primary{
 			parser.NewInteger(2),
 		},
@@ -393,6 +496,9 @@ func TestExp(t *testing.T) {
 var exp2Tests = []functionTest{
 	{
 		Name: "Exp2",
+		Function: parser.Function{
+			Name: "exp2",
+		},
 		Args: []parser.Primary{
 			parser.NewInteger(2),
 		},
@@ -407,6 +513,9 @@ func TestExp2(t *testing.T) {
 var expm1Tests = []functionTest{
 	{
 		Name: "Expm1",
+		Function: parser.Function{
+			Name: "expm1",
+		},
 		Args: []parser.Primary{
 			parser.NewInteger(2),
 		},
@@ -421,6 +530,9 @@ func TestExpm1(t *testing.T) {
 var logTests = []functionTest{
 	{
 		Name: "Log",
+		Function: parser.Function{
+			Name: "log",
+		},
 		Args: []parser.Primary{
 			parser.NewFloat(2),
 		},
@@ -435,6 +547,9 @@ func TestLog(t *testing.T) {
 var log10Tests = []functionTest{
 	{
 		Name: "Log10",
+		Function: parser.Function{
+			Name: "log10",
+		},
 		Args: []parser.Primary{
 			parser.NewFloat(100),
 		},
@@ -449,6 +564,9 @@ func TestLog10(t *testing.T) {
 var log2Tests = []functionTest{
 	{
 		Name: "Log2",
+		Function: parser.Function{
+			Name: "log2",
+		},
 		Args: []parser.Primary{
 			parser.NewFloat(16),
 		},
@@ -463,6 +581,9 @@ func TestLog2(t *testing.T) {
 var log1pTests = []functionTest{
 	{
 		Name: "Log1p",
+		Function: parser.Function{
+			Name: "log1p",
+		},
 		Args: []parser.Primary{
 			parser.NewFloat(1),
 		},
@@ -477,6 +598,9 @@ func TestLog1p(t *testing.T) {
 var sqrtTests = []functionTest{
 	{
 		Name: "Sqrt",
+		Function: parser.Function{
+			Name: "sqrt",
+		},
 		Args: []parser.Primary{
 			parser.NewFloat(4),
 		},
@@ -484,6 +608,9 @@ var sqrtTests = []functionTest{
 	},
 	{
 		Name: "Sqrt Cannot Calculate",
+		Function: parser.Function{
+			Name: "sqrt",
+		},
 		Args: []parser.Primary{
 			parser.NewFloat(-4),
 		},
@@ -498,6 +625,9 @@ func TestSqrt(t *testing.T) {
 var powTests = []functionTest{
 	{
 		Name: "Pow",
+		Function: parser.Function{
+			Name: "pow",
+		},
 		Args: []parser.Primary{
 			parser.NewFloat(2),
 			parser.NewFloat(2),
@@ -506,6 +636,9 @@ var powTests = []functionTest{
 	},
 	{
 		Name: "Pow First Argument is Null",
+		Function: parser.Function{
+			Name: "pow",
+		},
 		Args: []parser.Primary{
 			parser.NewNull(),
 			parser.NewFloat(2),
@@ -514,6 +647,9 @@ var powTests = []functionTest{
 	},
 	{
 		Name: "Pow Second Argument is Null",
+		Function: parser.Function{
+			Name: "pow",
+		},
 		Args: []parser.Primary{
 			parser.NewFloat(2),
 			parser.NewNull(),
@@ -522,6 +658,9 @@ var powTests = []functionTest{
 	},
 	{
 		Name: "Pow Cannot Calculate",
+		Function: parser.Function{
+			Name: "pow",
+		},
 		Args: []parser.Primary{
 			parser.NewFloat(-2),
 			parser.NewFloat(2.4),
@@ -529,9 +668,12 @@ var powTests = []functionTest{
 		Result: parser.NewNull(),
 	},
 	{
-		Name:  "Pow Arguments Error",
+		Name: "Pow Arguments Error",
+		Function: parser.Function{
+			Name: "pow",
+		},
 		Args:  []parser.Primary{},
-		Error: "function POW takes 2 arguments",
+		Error: "[L:- C:-] function pow takes 2 arguments",
 	},
 }
 
@@ -542,6 +684,9 @@ func TestPow(t *testing.T) {
 var binToDecTests = []functionTest{
 	{
 		Name: "BinToDec",
+		Function: parser.Function{
+			Name: "bin_to_dec",
+		},
 		Args: []parser.Primary{
 			parser.NewString("1111011"),
 		},
@@ -549,6 +694,9 @@ var binToDecTests = []functionTest{
 	},
 	{
 		Name: "BinToDec Null",
+		Function: parser.Function{
+			Name: "bin_to_dec",
+		},
 		Args: []parser.Primary{
 			parser.NewNull(),
 		},
@@ -556,15 +704,21 @@ var binToDecTests = []functionTest{
 	},
 	{
 		Name: "BinToDec Parse Error",
+		Function: parser.Function{
+			Name: "bin_to_dec",
+		},
 		Args: []parser.Primary{
 			parser.NewString("string"),
 		},
 		Result: parser.NewNull(),
 	},
 	{
-		Name:  "BinToDec Arguments Error",
+		Name: "BinToDec Arguments Error",
+		Function: parser.Function{
+			Name: "bin_to_dec",
+		},
 		Args:  []parser.Primary{},
-		Error: "function BIN_TO_DEC takes 1 argument",
+		Error: "[L:- C:-] function bin_to_dec takes 1 argument",
 	},
 }
 
@@ -575,6 +729,9 @@ func TestBinToDec(t *testing.T) {
 var octToDecTests = []functionTest{
 	{
 		Name: "OctToDec",
+		Function: parser.Function{
+			Name: "oct_to_dec",
+		},
 		Args: []parser.Primary{
 			parser.NewString("0173"),
 		},
@@ -589,6 +746,9 @@ func TestOctToDec(t *testing.T) {
 var hexToDecTests = []functionTest{
 	{
 		Name: "HexToDec",
+		Function: parser.Function{
+			Name: "hex_to_dec",
+		},
 		Args: []parser.Primary{
 			parser.NewString("0x7b"),
 		},
@@ -603,6 +763,9 @@ func TestHexToDec(t *testing.T) {
 var binTests = []functionTest{
 	{
 		Name: "Bin",
+		Function: parser.Function{
+			Name: "bin",
+		},
 		Args: []parser.Primary{
 			parser.NewInteger(123),
 		},
@@ -610,15 +773,21 @@ var binTests = []functionTest{
 	},
 	{
 		Name: "Bin Null",
+		Function: parser.Function{
+			Name: "bin",
+		},
 		Args: []parser.Primary{
 			parser.NewNull(),
 		},
 		Result: parser.NewNull(),
 	},
 	{
-		Name:  "Bin Arguments Error",
+		Name: "Bin Arguments Error",
+		Function: parser.Function{
+			Name: "bin",
+		},
 		Args:  []parser.Primary{},
-		Error: "function BIN takes 1 argument",
+		Error: "[L:- C:-] function bin takes 1 argument",
 	},
 }
 
@@ -629,6 +798,9 @@ func TestBin(t *testing.T) {
 var octTests = []functionTest{
 	{
 		Name: "Oct",
+		Function: parser.Function{
+			Name: "oct",
+		},
 		Args: []parser.Primary{
 			parser.NewInteger(123),
 		},
@@ -643,6 +815,9 @@ func TestOct(t *testing.T) {
 var hexTests = []functionTest{
 	{
 		Name: "Hex",
+		Function: parser.Function{
+			Name: "hex",
+		},
 		Args: []parser.Primary{
 			parser.NewInteger(123),
 		},
@@ -656,18 +831,25 @@ func TestHex(t *testing.T) {
 
 var randTests = []struct {
 	Name      string
+	Function  parser.Function
 	Args      []parser.Primary
 	RangeLow  float64
 	RangeHigh float64
 	Error     string
 }{
 	{
-		Name:      "Rand",
+		Name: "Rand",
+		Function: parser.Function{
+			Name: "rand",
+		},
 		RangeLow:  0.0,
 		RangeHigh: 1.0,
 	},
 	{
 		Name: "Rand Range Specified",
+		Function: parser.Function{
+			Name: "rand",
+		},
 		Args: []parser.Primary{
 			parser.NewInteger(7),
 			parser.NewInteger(12),
@@ -677,40 +859,52 @@ var randTests = []struct {
 	},
 	{
 		Name: "Range Arguments Error",
+		Function: parser.Function{
+			Name: "rand",
+		},
 		Args: []parser.Primary{
 			parser.NewInteger(1),
 		},
-		Error: "function RAND takes 0 or 2 arguments",
+		Error: "[L:- C:-] function rand takes 0 or 2 arguments",
 	},
 	{
 		Name: "Range First Arguments Error",
+		Function: parser.Function{
+			Name: "rand",
+		},
 		Args: []parser.Primary{
 			parser.NewString("a"),
 			parser.NewInteger(2),
 		},
-		Error: "function RAND first argument must be parsable as integer",
+		Error: "[L:- C:-] the first argument must be parsable as an integer for function rand",
 	},
 	{
 		Name: "Range Second Arguments Error",
+		Function: parser.Function{
+			Name: "rand",
+		},
 		Args: []parser.Primary{
 			parser.NewInteger(1),
 			parser.NewString("a"),
 		},
-		Error: "function RAND second argument must be parsable as integer",
+		Error: "[L:- C:-] the second argument must be parsable as an integer for function rand",
 	},
 	{
 		Name: "Range Arguments Value Error",
+		Function: parser.Function{
+			Name: "rand",
+		},
 		Args: []parser.Primary{
 			parser.NewInteger(1),
 			parser.NewInteger(1),
 		},
-		Error: "function RAND second argument must be greater than first argument",
+		Error: "[L:- C:-] the second argument must be greater than the first argument for function rand",
 	},
 }
 
 func TestRand(t *testing.T) {
 	for _, v := range randTests {
-		result, err := Rand(v.Args)
+		result, err := Rand(v.Function, v.Args)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -740,6 +934,9 @@ func TestRand(t *testing.T) {
 var trimTests = []functionTest{
 	{
 		Name: "Trim",
+		Function: parser.Function{
+			Name: "trim",
+		},
 		Args: []parser.Primary{
 			parser.NewString("aabbfoo, baraabb"),
 			parser.NewString("ab"),
@@ -748,6 +945,9 @@ var trimTests = []functionTest{
 	},
 	{
 		Name: "Trim Spaces",
+		Function: parser.Function{
+			Name: "trim",
+		},
 		Args: []parser.Primary{
 			parser.NewString("  foo, bar \n"),
 		},
@@ -755,6 +955,9 @@ var trimTests = []functionTest{
 	},
 	{
 		Name: "Trim Null",
+		Function: parser.Function{
+			Name: "trim",
+		},
 		Args: []parser.Primary{
 			parser.NewNull(),
 			parser.NewString("ab"),
@@ -763,6 +966,9 @@ var trimTests = []functionTest{
 	},
 	{
 		Name: "Trim Cutset is Null",
+		Function: parser.Function{
+			Name: "trim",
+		},
 		Args: []parser.Primary{
 			parser.NewString("aabbfoo, baraabb"),
 			parser.NewNull(),
@@ -770,9 +976,12 @@ var trimTests = []functionTest{
 		Result: parser.NewNull(),
 	},
 	{
-		Name:  "Trim Arguments Error",
+		Name: "Trim Arguments Error",
+		Function: parser.Function{
+			Name: "trim",
+		},
 		Args:  []parser.Primary{},
-		Error: "function TRIM takes 1 or 2 arguments",
+		Error: "[L:- C:-] function trim takes 1 or 2 arguments",
 	},
 }
 
@@ -782,7 +991,10 @@ func TestTrim(t *testing.T) {
 
 var ltrimTests = []functionTest{
 	{
-		Name: "Trim",
+		Name: "Ltrim",
+		Function: parser.Function{
+			Name: "ltrim",
+		},
 		Args: []parser.Primary{
 			parser.NewString("aabbfoo, baraabb"),
 			parser.NewString("ab"),
@@ -791,6 +1003,9 @@ var ltrimTests = []functionTest{
 	},
 	{
 		Name: "Ltrim Spaces",
+		Function: parser.Function{
+			Name: "ltrim",
+		},
 		Args: []parser.Primary{
 			parser.NewString("  foo, bar \n"),
 		},
@@ -804,7 +1019,10 @@ func TestLtrim(t *testing.T) {
 
 var rtrimTests = []functionTest{
 	{
-		Name: "Trim",
+		Name: "Rtrim",
+		Function: parser.Function{
+			Name: "rtrim",
+		},
 		Args: []parser.Primary{
 			parser.NewString("aabbfoo, baraabb"),
 			parser.NewString("ab"),
@@ -813,6 +1031,9 @@ var rtrimTests = []functionTest{
 	},
 	{
 		Name: "Rtrim Spaces",
+		Function: parser.Function{
+			Name: "rtrim",
+		},
 		Args: []parser.Primary{
 			parser.NewString("  foo, bar \n"),
 		},
@@ -827,6 +1048,9 @@ func TestRtrim(t *testing.T) {
 var upperTests = []functionTest{
 	{
 		Name: "Upper",
+		Function: parser.Function{
+			Name: "upper",
+		},
 		Args: []parser.Primary{
 			parser.NewString("Foo"),
 		},
@@ -834,15 +1058,21 @@ var upperTests = []functionTest{
 	},
 	{
 		Name: "Upper Null",
+		Function: parser.Function{
+			Name: "upper",
+		},
 		Args: []parser.Primary{
 			parser.NewNull(),
 		},
 		Result: parser.NewNull(),
 	},
 	{
-		Name:  "Upper Arguments Error",
+		Name: "Upper Arguments Error",
+		Function: parser.Function{
+			Name: "upper",
+		},
 		Args:  []parser.Primary{},
-		Error: "function UPPER takes 1 argument",
+		Error: "[L:- C:-] function upper takes 1 argument",
 	},
 }
 
@@ -853,6 +1083,9 @@ func TestUpper(t *testing.T) {
 var lowerTests = []functionTest{
 	{
 		Name: "Lower",
+		Function: parser.Function{
+			Name: "lower",
+		},
 		Args: []parser.Primary{
 			parser.NewString("Foo"),
 		},
@@ -867,6 +1100,9 @@ func TestLower(t *testing.T) {
 var base64EncodeTests = []functionTest{
 	{
 		Name: "Base64Encode",
+		Function: parser.Function{
+			Name: "base64_encode",
+		},
 		Args: []parser.Primary{
 			parser.NewString("Foo"),
 		},
@@ -881,6 +1117,9 @@ func TestBase64Encode(t *testing.T) {
 var base64DecodeTests = []functionTest{
 	{
 		Name: "Base64Decode",
+		Function: parser.Function{
+			Name: "base64_decode",
+		},
 		Args: []parser.Primary{
 			parser.NewString("Rm9v"),
 		},
@@ -895,6 +1134,9 @@ func TestBase64Decode(t *testing.T) {
 var hexEncodeTests = []functionTest{
 	{
 		Name: "HexEncode",
+		Function: parser.Function{
+			Name: "hex_encode",
+		},
 		Args: []parser.Primary{
 			parser.NewString("Foo"),
 		},
@@ -909,6 +1151,9 @@ func TestHexEncode(t *testing.T) {
 var hexDecodeTests = []functionTest{
 	{
 		Name: "HexDecode",
+		Function: parser.Function{
+			Name: "hex_decode",
+		},
 		Args: []parser.Primary{
 			parser.NewString("466f6f"),
 		},
@@ -923,6 +1168,9 @@ func TestHexDecode(t *testing.T) {
 var lenTests = []functionTest{
 	{
 		Name: "Len",
+		Function: parser.Function{
+			Name: "len",
+		},
 		Args: []parser.Primary{
 			parser.NewString("日本語"),
 		},
@@ -930,15 +1178,21 @@ var lenTests = []functionTest{
 	},
 	{
 		Name: "Len Null",
+		Function: parser.Function{
+			Name: "len",
+		},
 		Args: []parser.Primary{
 			parser.NewNull(),
 		},
 		Result: parser.NewNull(),
 	},
 	{
-		Name:  "Len Arguments Error",
+		Name: "Len Arguments Error",
+		Function: parser.Function{
+			Name: "len",
+		},
 		Args:  []parser.Primary{},
-		Error: "function LEN takes 1 argument",
+		Error: "[L:- C:-] function len takes 1 argument",
 	},
 }
 
@@ -949,6 +1203,9 @@ func TestLen(t *testing.T) {
 var byteLenTests = []functionTest{
 	{
 		Name: "ByteLen",
+		Function: parser.Function{
+			Name: "byte_len",
+		},
 		Args: []parser.Primary{
 			parser.NewString("日本語"),
 		},
@@ -956,15 +1213,21 @@ var byteLenTests = []functionTest{
 	},
 	{
 		Name: "ByteLen Null",
+		Function: parser.Function{
+			Name: "byte_len",
+		},
 		Args: []parser.Primary{
 			parser.NewNull(),
 		},
 		Result: parser.NewNull(),
 	},
 	{
-		Name:  "ByteLen Arguments Error",
+		Name: "ByteLen Arguments Error",
+		Function: parser.Function{
+			Name: "byte_len",
+		},
 		Args:  []parser.Primary{},
-		Error: "function BYTE_LEN takes 1 argument",
+		Error: "[L:- C:-] function byte_len takes 1 argument",
 	},
 }
 
@@ -975,6 +1238,9 @@ func TestByteLen(t *testing.T) {
 var lpadTests = []functionTest{
 	{
 		Name: "Lpad",
+		Function: parser.Function{
+			Name: "lpad",
+		},
 		Args: []parser.Primary{
 			parser.NewString("aaaaa"),
 			parser.NewInteger(10),
@@ -984,6 +1250,9 @@ var lpadTests = []functionTest{
 	},
 	{
 		Name: "Lpad No Padding",
+		Function: parser.Function{
+			Name: "lpad",
+		},
 		Args: []parser.Primary{
 			parser.NewString("aaaaa"),
 			parser.NewInteger(5),
@@ -993,6 +1262,9 @@ var lpadTests = []functionTest{
 	},
 	{
 		Name: "Lpad String is Null",
+		Function: parser.Function{
+			Name: "lpad",
+		},
 		Args: []parser.Primary{
 			parser.NewNull(),
 			parser.NewInteger(10),
@@ -1002,6 +1274,9 @@ var lpadTests = []functionTest{
 	},
 	{
 		Name: "Lpad Length is Null",
+		Function: parser.Function{
+			Name: "lpad",
+		},
 		Args: []parser.Primary{
 			parser.NewString("aaaaa"),
 			parser.NewNull(),
@@ -1011,6 +1286,9 @@ var lpadTests = []functionTest{
 	},
 	{
 		Name: "Lpad Pad String is Null",
+		Function: parser.Function{
+			Name: "lpad",
+		},
 		Args: []parser.Primary{
 			parser.NewString("aaaaa"),
 			parser.NewInteger(10),
@@ -1019,9 +1297,12 @@ var lpadTests = []functionTest{
 		Result: parser.NewNull(),
 	},
 	{
-		Name:  "Lpad Arguments Error",
+		Name: "Lpad Arguments Error",
+		Function: parser.Function{
+			Name: "lpad",
+		},
 		Args:  []parser.Primary{},
-		Error: "function LPAD takes 3 arguments",
+		Error: "[L:- C:-] function lpad takes 3 arguments",
 	},
 }
 
@@ -1032,6 +1313,9 @@ func TestLpad(t *testing.T) {
 var rpadTests = []functionTest{
 	{
 		Name: "Rpad",
+		Function: parser.Function{
+			Name: "rpad",
+		},
 		Args: []parser.Primary{
 			parser.NewString("aaaaa"),
 			parser.NewInteger(10),
@@ -1048,6 +1332,9 @@ func TestRpad(t *testing.T) {
 var substrTests = []functionTest{
 	{
 		Name: "Substr",
+		Function: parser.Function{
+			Name: "substr",
+		},
 		Args: []parser.Primary{
 			parser.NewString("abcdefghijklmn"),
 			parser.NewInteger(-5),
@@ -1057,6 +1344,9 @@ var substrTests = []functionTest{
 	},
 	{
 		Name: "Substr String is Null",
+		Function: parser.Function{
+			Name: "substr",
+		},
 		Args: []parser.Primary{
 			parser.NewNull(),
 			parser.NewInteger(-5),
@@ -1066,6 +1356,9 @@ var substrTests = []functionTest{
 	},
 	{
 		Name: "Substr StartIndex is Null",
+		Function: parser.Function{
+			Name: "substr",
+		},
 		Args: []parser.Primary{
 			parser.NewString("abcdefghijklmn"),
 			parser.NewNull(),
@@ -1074,6 +1367,9 @@ var substrTests = []functionTest{
 	},
 	{
 		Name: "Substr Length is Null",
+		Function: parser.Function{
+			Name: "substr",
+		},
 		Args: []parser.Primary{
 			parser.NewString("abcdefghijklmn"),
 			parser.NewInteger(-5),
@@ -1083,6 +1379,9 @@ var substrTests = []functionTest{
 	},
 	{
 		Name: "Substr Length is Negative",
+		Function: parser.Function{
+			Name: "substr",
+		},
 		Args: []parser.Primary{
 			parser.NewString("abcdefghijklmn"),
 			parser.NewInteger(-5),
@@ -1092,6 +1391,9 @@ var substrTests = []functionTest{
 	},
 	{
 		Name: "Substr StartIndex is Out Of Index",
+		Function: parser.Function{
+			Name: "substr",
+		},
 		Args: []parser.Primary{
 			parser.NewString("abcdefghijklmn"),
 			parser.NewInteger(100),
@@ -1100,9 +1402,12 @@ var substrTests = []functionTest{
 		Result: parser.NewNull(),
 	},
 	{
-		Name:  "Substr Arguments Error",
+		Name: "Substr Arguments Error",
+		Function: parser.Function{
+			Name: "substr",
+		},
 		Args:  []parser.Primary{},
-		Error: "function SUBSTR takes 2 or 3 arguments",
+		Error: "[L:- C:-] function substr takes 2 or 3 arguments",
 	},
 }
 
@@ -1113,6 +1418,9 @@ func TestSubstr(t *testing.T) {
 var replaceTests = []functionTest{
 	{
 		Name: "Replace",
+		Function: parser.Function{
+			Name: "replace",
+		},
 		Args: []parser.Primary{
 			parser.NewString("abcdefg abcdefg"),
 			parser.NewString("cd"),
@@ -1122,6 +1430,9 @@ var replaceTests = []functionTest{
 	},
 	{
 		Name: "Replace String is Null",
+		Function: parser.Function{
+			Name: "replace",
+		},
 		Args: []parser.Primary{
 			parser.NewNull(),
 			parser.NewString("cd"),
@@ -1131,6 +1442,9 @@ var replaceTests = []functionTest{
 	},
 	{
 		Name: "Replace Old String is Null",
+		Function: parser.Function{
+			Name: "replace",
+		},
 		Args: []parser.Primary{
 			parser.NewString("abcdefg abcdefg"),
 			parser.NewNull(),
@@ -1140,6 +1454,9 @@ var replaceTests = []functionTest{
 	},
 	{
 		Name: "Replace New String is Null",
+		Function: parser.Function{
+			Name: "replace",
+		},
 		Args: []parser.Primary{
 			parser.NewString("abcdefg abcdefg"),
 			parser.NewString("cd"),
@@ -1148,9 +1465,12 @@ var replaceTests = []functionTest{
 		Result: parser.NewNull(),
 	},
 	{
-		Name:  "Replace Arguments Error",
+		Name: "Replace Arguments Error",
+		Function: parser.Function{
+			Name: "replace",
+		},
 		Args:  []parser.Primary{},
-		Error: "function REPLACE takes 3 arguments",
+		Error: "[L:- C:-] function replace takes 3 arguments",
 	},
 }
 
@@ -1161,6 +1481,9 @@ func TestReplace(t *testing.T) {
 var md5Tests = []functionTest{
 	{
 		Name: "Md5",
+		Function: parser.Function{
+			Name: "md5",
+		},
 		Args: []parser.Primary{
 			parser.NewString("foo"),
 		},
@@ -1168,15 +1491,21 @@ var md5Tests = []functionTest{
 	},
 	{
 		Name: "Md5 Null",
+		Function: parser.Function{
+			Name: "md5",
+		},
 		Args: []parser.Primary{
 			parser.NewNull(),
 		},
 		Result: parser.NewNull(),
 	},
 	{
-		Name:  "Md5 Arguments Error",
+		Name: "Md5 Arguments Error",
+		Function: parser.Function{
+			Name: "md5",
+		},
 		Args:  []parser.Primary{},
-		Error: "function MD5 takes 1 argument",
+		Error: "[L:- C:-] function md5 takes 1 argument",
 	},
 }
 
@@ -1187,6 +1516,9 @@ func TestMd5(t *testing.T) {
 var sha1Tests = []functionTest{
 	{
 		Name: "Sha1",
+		Function: parser.Function{
+			Name: "sha1",
+		},
 		Args: []parser.Primary{
 			parser.NewString("foo"),
 		},
@@ -1201,6 +1533,9 @@ func TestSha1(t *testing.T) {
 var sha256Tests = []functionTest{
 	{
 		Name: "Sha256",
+		Function: parser.Function{
+			Name: "sha256",
+		},
 		Args: []parser.Primary{
 			parser.NewString("foo"),
 		},
@@ -1215,6 +1550,9 @@ func TestSha256(t *testing.T) {
 var sha512Tests = []functionTest{
 	{
 		Name: "Sha512",
+		Function: parser.Function{
+			Name: "sha512",
+		},
 		Args: []parser.Primary{
 			parser.NewString("foo"),
 		},
@@ -1229,6 +1567,9 @@ func TestSha512(t *testing.T) {
 var md5HmacTests = []functionTest{
 	{
 		Name: "Md5Hmac",
+		Function: parser.Function{
+			Name: "md5_hmac",
+		},
 		Args: []parser.Primary{
 			parser.NewString("foo"),
 			parser.NewString("bar"),
@@ -1237,6 +1578,9 @@ var md5HmacTests = []functionTest{
 	},
 	{
 		Name: "Md5Hmac String is Null",
+		Function: parser.Function{
+			Name: "md5_hmac",
+		},
 		Args: []parser.Primary{
 			parser.NewNull(),
 			parser.NewString("bar"),
@@ -1245,6 +1589,9 @@ var md5HmacTests = []functionTest{
 	},
 	{
 		Name: "Md5Hmac Key is Null",
+		Function: parser.Function{
+			Name: "md5_hmac",
+		},
 		Args: []parser.Primary{
 			parser.NewString("foo"),
 			parser.NewNull(),
@@ -1252,9 +1599,12 @@ var md5HmacTests = []functionTest{
 		Result: parser.NewNull(),
 	},
 	{
-		Name:  "Md5Hmac Arguments Error",
+		Name: "Md5Hmac Arguments Error",
+		Function: parser.Function{
+			Name: "md5_hmac",
+		},
 		Args:  []parser.Primary{},
-		Error: "function MD5_HMAC takes 2 arguments",
+		Error: "[L:- C:-] function md5_hmac takes 2 arguments",
 	},
 }
 
@@ -1265,6 +1615,9 @@ func TestMd5Hmac(t *testing.T) {
 var sha1HmacTests = []functionTest{
 	{
 		Name: "Sha1Hmac",
+		Function: parser.Function{
+			Name: "sha1_hmac",
+		},
 		Args: []parser.Primary{
 			parser.NewString("foo"),
 			parser.NewString("bar"),
@@ -1280,6 +1633,9 @@ func TestSha1Hmac(t *testing.T) {
 var sha256HmacTests = []functionTest{
 	{
 		Name: "Sha256Hmac",
+		Function: parser.Function{
+			Name: "sha256_hmac",
+		},
 		Args: []parser.Primary{
 			parser.NewString("foo"),
 			parser.NewString("bar"),
@@ -1295,6 +1651,9 @@ func TestSha256Hmac(t *testing.T) {
 var sha512HmacTests = []functionTest{
 	{
 		Name: "Sha512Hmac",
+		Function: parser.Function{
+			Name: "sha512_hmac",
+		},
 		Args: []parser.Primary{
 			parser.NewString("foo"),
 			parser.NewString("bar"),
@@ -1309,15 +1668,21 @@ func TestSha512Hmac(t *testing.T) {
 
 var nowTests = []functionTest{
 	{
-		Name:   "Now",
+		Name: "Now",
+		Function: parser.Function{
+			Name: "now",
+		},
 		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 	},
 	{
 		Name: "Now Arguments Error",
+		Function: parser.Function{
+			Name: "now",
+		},
 		Args: []parser.Primary{
 			parser.NewInteger(1),
 		},
-		Error: "function NOW takes no arguments",
+		Error: "[L:- C:-] function now takes no argument",
 	},
 }
 
@@ -1328,6 +1693,9 @@ func TestNow(t *testing.T) {
 var datetimeFormatTests = []functionTest{
 	{
 		Name: "DatetimeFormat",
+		Function: parser.Function{
+			Name: "datetime_format",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 			parser.NewString("%Y-%m-%d"),
@@ -1336,6 +1704,9 @@ var datetimeFormatTests = []functionTest{
 	},
 	{
 		Name: "DatetimeFormat Datetime is Null",
+		Function: parser.Function{
+			Name: "datetime_format",
+		},
 		Args: []parser.Primary{
 			parser.NewNull(),
 			parser.NewString("%Y-%m-%d"),
@@ -1344,6 +1715,9 @@ var datetimeFormatTests = []functionTest{
 	},
 	{
 		Name: "DatetimeFormat Format is Null",
+		Function: parser.Function{
+			Name: "datetime_format",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 			parser.NewNull(),
@@ -1352,10 +1726,13 @@ var datetimeFormatTests = []functionTest{
 	},
 	{
 		Name: "DatetimeFormat Arguments Error",
+		Function: parser.Function{
+			Name: "datetime_format",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 		},
-		Error: "function DATETIME_FORMAT takes 2 arguments",
+		Error: "[L:- C:-] function datetime_format takes 2 arguments",
 	},
 }
 
@@ -1366,6 +1743,9 @@ func TestDatetimeFormat(t *testing.T) {
 var yearTests = []functionTest{
 	{
 		Name: "Year",
+		Function: parser.Function{
+			Name: "year",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 		},
@@ -1373,15 +1753,21 @@ var yearTests = []functionTest{
 	},
 	{
 		Name: "Year Datetime is Null",
+		Function: parser.Function{
+			Name: "year",
+		},
 		Args: []parser.Primary{
 			parser.NewNull(),
 		},
 		Result: parser.NewNull(),
 	},
 	{
-		Name:  "Year Arguments Error",
+		Name: "Year Arguments Error",
+		Function: parser.Function{
+			Name: "year",
+		},
 		Args:  []parser.Primary{},
-		Error: "function YEAR takes 1 argument",
+		Error: "[L:- C:-] function year takes 1 argument",
 	},
 }
 
@@ -1392,6 +1778,9 @@ func TestYear(t *testing.T) {
 var monthTests = []functionTest{
 	{
 		Name: "Month",
+		Function: parser.Function{
+			Name: "month",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 		},
@@ -1406,6 +1795,9 @@ func TestMonth(t *testing.T) {
 var dayTests = []functionTest{
 	{
 		Name: "Day",
+		Function: parser.Function{
+			Name: "day",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 		},
@@ -1420,6 +1812,9 @@ func TestDay(t *testing.T) {
 var hourTests = []functionTest{
 	{
 		Name: "Hour",
+		Function: parser.Function{
+			Name: "hour",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 		},
@@ -1434,6 +1829,9 @@ func TestHour(t *testing.T) {
 var minuteTests = []functionTest{
 	{
 		Name: "Minute",
+		Function: parser.Function{
+			Name: "minute",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 		},
@@ -1448,6 +1846,9 @@ func TestMinute(t *testing.T) {
 var secondTests = []functionTest{
 	{
 		Name: "Second",
+		Function: parser.Function{
+			Name: "second",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 		},
@@ -1462,6 +1863,9 @@ func TestSecond(t *testing.T) {
 var millisecondTests = []functionTest{
 	{
 		Name: "Millisecond",
+		Function: parser.Function{
+			Name: "millisecond",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
 		},
@@ -1476,6 +1880,9 @@ func TestMillisecond(t *testing.T) {
 var microsecondTests = []functionTest{
 	{
 		Name: "Microsecond",
+		Function: parser.Function{
+			Name: "microsecond",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
 		},
@@ -1490,6 +1897,9 @@ func TestMicrosecond(t *testing.T) {
 var nanosecondTests = []functionTest{
 	{
 		Name: "Nanosecond",
+		Function: parser.Function{
+			Name: "nanosecond",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
 		},
@@ -1504,6 +1914,9 @@ func TestNanosecond(t *testing.T) {
 var weekdayTests = []functionTest{
 	{
 		Name: "Weekday",
+		Function: parser.Function{
+			Name: "weekday",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 		},
@@ -1518,6 +1931,9 @@ func TestWeekday(t *testing.T) {
 var unixTimeTests = []functionTest{
 	{
 		Name: "UnixTime",
+		Function: parser.Function{
+			Name: "unix_time",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 		},
@@ -1532,6 +1948,9 @@ func TestUnixTime(t *testing.T) {
 var unixNanoTimeTests = []functionTest{
 	{
 		Name: "UnixNanoTime",
+		Function: parser.Function{
+			Name: "unix_nano_time",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
 		},
@@ -1546,6 +1965,9 @@ func TestUnixNanoTime(t *testing.T) {
 var dayOfYearTests = []functionTest{
 	{
 		Name: "DayOfYear",
+		Function: parser.Function{
+			Name: "day_of_year",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 		},
@@ -1560,6 +1982,9 @@ func TestDayOfYear(t *testing.T) {
 var weekOfYearTests = []functionTest{
 	{
 		Name: "WeekOfYear",
+		Function: parser.Function{
+			Name: "week_of_year",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 		},
@@ -1574,6 +1999,9 @@ func TestWeekOfYear(t *testing.T) {
 var addYearTests = []functionTest{
 	{
 		Name: "AddYear",
+		Function: parser.Function{
+			Name: "add_year",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
 			parser.NewInteger(2),
@@ -1582,6 +2010,9 @@ var addYearTests = []functionTest{
 	},
 	{
 		Name: "AddYear Datetime is Null",
+		Function: parser.Function{
+			Name: "add_year",
+		},
 		Args: []parser.Primary{
 			parser.NewNull(),
 			parser.NewInteger(2),
@@ -1590,6 +2021,9 @@ var addYearTests = []functionTest{
 	},
 	{
 		Name: "AddYear Duration is Null",
+		Function: parser.Function{
+			Name: "add_year",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
 			parser.NewNull(),
@@ -1597,9 +2031,12 @@ var addYearTests = []functionTest{
 		Result: parser.NewNull(),
 	},
 	{
-		Name:  "AddYear Arguments Error",
+		Name: "AddYear Arguments Error",
+		Function: parser.Function{
+			Name: "add_year",
+		},
 		Args:  []parser.Primary{},
-		Error: "function ADD_YEAR takes 2 arguments",
+		Error: "[L:- C:-] function add_year takes 2 arguments",
 	},
 }
 
@@ -1610,6 +2047,9 @@ func TestAddYear(t *testing.T) {
 var addMonthTests = []functionTest{
 	{
 		Name: "AddMonth",
+		Function: parser.Function{
+			Name: "add_month",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
 			parser.NewInteger(2),
@@ -1625,6 +2065,9 @@ func TestAddMonth(t *testing.T) {
 var addDayTests = []functionTest{
 	{
 		Name: "AddDay",
+		Function: parser.Function{
+			Name: "add_day",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
 			parser.NewInteger(2),
@@ -1640,6 +2083,9 @@ func TestAddDay(t *testing.T) {
 var addHourTests = []functionTest{
 	{
 		Name: "AddHour",
+		Function: parser.Function{
+			Name: "add_hour",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
 			parser.NewInteger(2),
@@ -1655,6 +2101,9 @@ func TestAddHour(t *testing.T) {
 var addMinuteTests = []functionTest{
 	{
 		Name: "AddMinute",
+		Function: parser.Function{
+			Name: "add_minute",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
 			parser.NewInteger(2),
@@ -1670,6 +2119,9 @@ func TestAddMinute(t *testing.T) {
 var addSecondTests = []functionTest{
 	{
 		Name: "AddSecond",
+		Function: parser.Function{
+			Name: "add_second",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
 			parser.NewInteger(2),
@@ -1685,6 +2137,9 @@ func TestAddSecond(t *testing.T) {
 var addMilliTests = []functionTest{
 	{
 		Name: "AddMilli",
+		Function: parser.Function{
+			Name: "add_milli",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
 			parser.NewInteger(2),
@@ -1700,6 +2155,9 @@ func TestAddMilli(t *testing.T) {
 var addMicroTests = []functionTest{
 	{
 		Name: "AddMicro",
+		Function: parser.Function{
+			Name: "add_micro",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
 			parser.NewInteger(2),
@@ -1715,6 +2173,9 @@ func TestAddMicro(t *testing.T) {
 var addNanoTests = []functionTest{
 	{
 		Name: "AddNano",
+		Function: parser.Function{
+			Name: "add_nano",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
 			parser.NewInteger(2),
@@ -1730,6 +2191,9 @@ func TestAddNano(t *testing.T) {
 var dateDiffTests = []functionTest{
 	{
 		Name: "DateDiff",
+		Function: parser.Function{
+			Name: "date_diff",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
 			parser.NewDatetime(time.Date(2012, 2, 5, 1, 18, 55, 123456789, GetTestLocation())),
@@ -1738,6 +2202,9 @@ var dateDiffTests = []functionTest{
 	},
 	{
 		Name: "DateDiff Datetime1 is Null",
+		Function: parser.Function{
+			Name: "date_diff",
+		},
 		Args: []parser.Primary{
 			parser.NewNull(),
 			parser.NewDatetime(time.Date(2012, 2, 5, 1, 18, 55, 123456789, GetTestLocation())),
@@ -1746,6 +2213,9 @@ var dateDiffTests = []functionTest{
 	},
 	{
 		Name: "DateDiff Datetime2 is Null",
+		Function: parser.Function{
+			Name: "date_diff",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
 			parser.NewNull(),
@@ -1753,9 +2223,12 @@ var dateDiffTests = []functionTest{
 		Result: parser.NewNull(),
 	},
 	{
-		Name:  "DateDiff Arguments Error",
+		Name: "DateDiff Arguments Error",
+		Function: parser.Function{
+			Name: "date_diff",
+		},
 		Args:  []parser.Primary{},
-		Error: "function DATE_DIFF takes 2 arguments",
+		Error: "[L:- C:-] function date_diff takes 2 arguments",
 	},
 }
 
@@ -1766,6 +2239,9 @@ func TestDateDiff(t *testing.T) {
 var timeDiffTests = []functionTest{
 	{
 		Name: "TimeDiff",
+		Function: parser.Function{
+			Name: "time_diff",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
 			parser.NewDatetime(time.Date(2012, 2, 3, 1, 18, 55, 123000000, GetTestLocation())),
@@ -1774,6 +2250,9 @@ var timeDiffTests = []functionTest{
 	},
 	{
 		Name: "TimeDiff Datetime1 is Null",
+		Function: parser.Function{
+			Name: "time_diff",
+		},
 		Args: []parser.Primary{
 			parser.NewNull(),
 			parser.NewDatetime(time.Date(2012, 2, 5, 1, 18, 55, 123456789, GetTestLocation())),
@@ -1782,6 +2261,9 @@ var timeDiffTests = []functionTest{
 	},
 	{
 		Name: "TimeDiff Datetime2 is Null",
+		Function: parser.Function{
+			Name: "time_diff",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
 			parser.NewNull(),
@@ -1789,9 +2271,12 @@ var timeDiffTests = []functionTest{
 		Result: parser.NewNull(),
 	},
 	{
-		Name:  "TimeDiff Arguments Error",
+		Name: "TimeDiff Arguments Error",
+		Function: parser.Function{
+			Name: "time_diff",
+		},
 		Args:  []parser.Primary{},
-		Error: "function TIME_DIFF takes 2 arguments",
+		Error: "[L:- C:-] function time_diff takes 2 arguments",
 	},
 }
 
@@ -1799,34 +2284,12 @@ func TestTimeDiff(t *testing.T) {
 	testFunction(t, TimeDiff, timeDiffTests)
 }
 
-var autoIncrementTests = []functionTest{
-	{
-		Name: "AutoIncrement Arguments Error",
-		Args: []parser.Primary{
-			parser.NewInteger(10),
-			parser.NewInteger(10),
-		},
-		Error: "function AUTO_INCREMENT takes at most 1 argument",
-	},
-	{
-		Name: "AutoIncrement First Time",
-		Args: []parser.Primary{
-			parser.NewInteger(10),
-		},
-		Result: parser.NewInteger(10),
-	},
-	{
-		Name: "AutoIncrement Second Time",
-		Args: []parser.Primary{
-			parser.NewInteger(10),
-		},
-		Result: parser.NewInteger(11),
-	},
-}
-
 var stringTests = []functionTest{
 	{
 		Name: "String from Integer",
+		Function: parser.Function{
+			Name: "string",
+		},
 		Args: []parser.Primary{
 			parser.NewInteger(2),
 		},
@@ -1834,6 +2297,9 @@ var stringTests = []functionTest{
 	},
 	{
 		Name: "String from Boolean",
+		Function: parser.Function{
+			Name: "string",
+		},
 		Args: []parser.Primary{
 			parser.NewBoolean(true),
 		},
@@ -1841,6 +2307,9 @@ var stringTests = []functionTest{
 	},
 	{
 		Name: "String from Ternary",
+		Function: parser.Function{
+			Name: "string",
+		},
 		Args: []parser.Primary{
 			parser.NewTernary(ternary.TRUE),
 		},
@@ -1848,15 +2317,21 @@ var stringTests = []functionTest{
 	},
 	{
 		Name: "String from Datetime",
+		Function: parser.Function{
+			Name: "string",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 		},
 		Result: parser.NewString("2012-02-03 09:18:15"),
 	},
 	{
-		Name:  "String Arguments Error",
+		Name: "String Arguments Error",
+		Function: parser.Function{
+			Name: "string",
+		},
 		Args:  []parser.Primary{},
-		Error: "function STRING takes 1 argument",
+		Error: "[L:- C:-] function string takes 1 argument",
 	},
 }
 
@@ -1867,6 +2342,9 @@ func TestString(t *testing.T) {
 var integerTests = []functionTest{
 	{
 		Name: "Integer from String",
+		Function: parser.Function{
+			Name: "integer",
+		},
 		Args: []parser.Primary{
 			parser.NewString("2"),
 		},
@@ -1874,6 +2352,9 @@ var integerTests = []functionTest{
 	},
 	{
 		Name: "Integer from Float",
+		Function: parser.Function{
+			Name: "integer",
+		},
 		Args: []parser.Primary{
 			parser.NewFloat(1.7),
 		},
@@ -1881,15 +2362,21 @@ var integerTests = []functionTest{
 	},
 	{
 		Name: "Integer from Datetime",
+		Function: parser.Function{
+			Name: "integer",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 		},
 		Result: parser.NewInteger(1328289495),
 	},
 	{
-		Name:  "Integer Arguments Error",
+		Name: "Integer Arguments Error",
+		Function: parser.Function{
+			Name: "integer",
+		},
 		Args:  []parser.Primary{},
-		Error: "function INTEGER takes 1 argument",
+		Error: "[L:- C:-] function integer takes 1 argument",
 	},
 }
 
@@ -1900,6 +2387,9 @@ func TestInteger(t *testing.T) {
 var floatTests = []functionTest{
 	{
 		Name: "Float from String",
+		Function: parser.Function{
+			Name: "float",
+		},
 		Args: []parser.Primary{
 			parser.NewString("2"),
 		},
@@ -1907,15 +2397,21 @@ var floatTests = []functionTest{
 	},
 	{
 		Name: "Float from Datetime",
+		Function: parser.Function{
+			Name: "float",
+		},
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 		},
 		Result: parser.NewFloat(1328289495),
 	},
 	{
-		Name:  "Float Arguments Error",
+		Name: "Float Arguments Error",
+		Function: parser.Function{
+			Name: "float",
+		},
 		Args:  []parser.Primary{},
-		Error: "function FLOAT takes 1 argument",
+		Error: "[L:- C:-] function float takes 1 argument",
 	},
 }
 
@@ -1926,15 +2422,21 @@ func TestFloat(t *testing.T) {
 var booleanTests = []functionTest{
 	{
 		Name: "Boolean from String",
+		Function: parser.Function{
+			Name: "boolean",
+		},
 		Args: []parser.Primary{
 			parser.NewString("true"),
 		},
 		Result: parser.NewBoolean(true),
 	},
 	{
-		Name:  "Boolean Arguments Error",
+		Name: "Boolean Arguments Error",
+		Function: parser.Function{
+			Name: "boolean",
+		},
 		Args:  []parser.Primary{},
-		Error: "function BOOLEAN takes 1 argument",
+		Error: "[L:- C:-] function boolean takes 1 argument",
 	},
 }
 
@@ -1945,15 +2447,21 @@ func TestBoolean(t *testing.T) {
 var ternaryTest = []functionTest{
 	{
 		Name: "Ternary from String",
+		Function: parser.Function{
+			Name: "ternary",
+		},
 		Args: []parser.Primary{
 			parser.NewString("true"),
 		},
 		Result: parser.NewTernary(ternary.TRUE),
 	},
 	{
-		Name:  "Ternary Arguments Error",
+		Name: "Ternary Arguments Error",
+		Function: parser.Function{
+			Name: "ternary",
+		},
 		Args:  []parser.Primary{},
-		Error: "function TERNARY takes 1 argument",
+		Error: "[L:- C:-] function ternary takes 1 argument",
 	},
 }
 
@@ -1964,15 +2472,21 @@ func TestTernary(t *testing.T) {
 var datetimeTests = []functionTest{
 	{
 		Name: "Datetime from String",
+		Function: parser.Function{
+			Name: "datetime",
+		},
 		Args: []parser.Primary{
 			parser.NewString("2012-02-03 09:18:15"),
 		},
 		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 	},
 	{
-		Name:  "Datetime Arguments Error",
+		Name: "Datetime Arguments Error",
+		Function: parser.Function{
+			Name: "datetime",
+		},
 		Args:  []parser.Primary{},
-		Error: "function DATETIME takes 1 argument",
+		Error: "[L:- C:-] function datetime takes 1 argument",
 	},
 }
 
@@ -1983,6 +2497,9 @@ func TestDatetime(t *testing.T) {
 var callTests = []functionTest{
 	{
 		Name: "Call",
+		Function: parser.Function{
+			Name: "call",
+		},
 		Args: []parser.Primary{
 			parser.NewString("echo"),
 			parser.NewString("foo"),
@@ -1996,12 +2513,18 @@ var callTests = []functionTest{
 		Result: parser.NewString("foo 1 1.234 2012-02-03 09:18:15 true true \n"),
 	},
 	{
-		Name:  "Call Argument Error",
+		Name: "Call Argument Error",
+		Function: parser.Function{
+			Name: "call",
+		},
 		Args:  []parser.Primary{},
-		Error: "function CALL takes at least 1 argument",
+		Error: "[L:- C:-] function call takes at least 1 argument",
 	},
 	{
 		Name: "Call Command Error",
+		Function: parser.Function{
+			Name: "call",
+		},
 		Args: []parser.Primary{
 			parser.NewString("notexistcommand"),
 		},

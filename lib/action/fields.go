@@ -6,8 +6,10 @@ import (
 	"strconv"
 	"strings"
 
+	"errors"
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/csv"
+	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
 )
 
@@ -25,9 +27,10 @@ func ShowFields(input string) error {
 func readFields(filename string) ([]string, error) {
 	flags := cmd.GetFlags()
 
-	fileInfo, err := query.NewFileInfo(filename, flags.Repository, flags.Delimiter)
+	fileInfo, err := query.NewFileInfo(parser.Identifier{Literal: filename}, flags.Repository, flags.Delimiter)
 	if err != nil {
-		return nil, err
+		appErr, _ := err.(query.AppError)
+		return nil, errors.New(appErr.ErrorMessage())
 	}
 
 	f, err := os.Open(fileInfo.Path)

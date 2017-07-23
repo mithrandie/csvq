@@ -40,6 +40,19 @@ func TestIsNull(t *testing.T) {
 	}
 }
 
+func TestBaseExpr_HasParseInfo(t *testing.T) {
+	var expr *BaseExpr
+
+	if expr.HasParseInfo() {
+		t.Errorf("has parse info = %t, want %t for %#v", expr.HasParseInfo(), false, expr)
+	}
+
+	expr = &BaseExpr{}
+	if !expr.HasParseInfo() {
+		t.Errorf("has parse info = %t, want %t for %#v", expr.HasParseInfo(), true, expr)
+	}
+}
+
 func TestString_String(t *testing.T) {
 	s := "abcde"
 	p := NewString(s)
@@ -681,7 +694,7 @@ func TestInlineTable_String(t *testing.T) {
 	e := InlineTable{
 		Recursive: Token{Token: RECURSIVE, Literal: "recursive"},
 		Name:      Identifier{Literal: "alias"},
-		Columns: []Expression{
+		Fields: []Expression{
 			Identifier{Literal: "column1"},
 		},
 		As: "as",
@@ -1001,6 +1014,17 @@ func TestArithmetic_String(t *testing.T) {
 	}
 }
 
+func TestUnaryArithmetic_String(t *testing.T) {
+	e := UnaryArithmetic{
+		Operand:  Identifier{Literal: "column"},
+		Operator: Token{Token: '-', Literal: "-"},
+	}
+	expect := "-column"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
 func TestLogic_String(t *testing.T) {
 	e := Logic{
 		LHS:      Boolean{literal: "true"},
@@ -1011,12 +1035,23 @@ func TestLogic_String(t *testing.T) {
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
+}
 
-	e = Logic{
+func TestUnaryLogic_String(t *testing.T) {
+	e := UnaryLogic{
 		Operator: Token{Token: NOT, Literal: "not"},
-		RHS:      Boolean{literal: "false"},
+		Operand:  Boolean{literal: "false"},
 	}
-	expect = "not false"
+	expect := "not false"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+
+	e = UnaryLogic{
+		Operator: Token{Token: '!', Literal: "!"},
+		Operand:  Boolean{literal: "false"},
+	}
+	expect = "!false"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1121,16 +1156,16 @@ func TestTable_Name(t *testing.T) {
 		As:     "as",
 		Alias:  Identifier{Literal: "alias"},
 	}
-	expect := "alias"
-	if e.Name() != expect {
+	expect := Identifier{Literal: "alias"}
+	if !reflect.DeepEqual(e.Name(), expect) {
 		t.Errorf("name = %q, want %q for %#v", e.Name(), expect, e)
 	}
 
 	e = Table{
 		Object: Identifier{Literal: "/path/to/table.csv"},
 	}
-	expect = "table"
-	if e.Name() != expect {
+	expect = Identifier{Literal: "table"}
+	if !reflect.DeepEqual(e.Name(), expect) {
 		t.Errorf("name = %q, want %q for %#v", e.Name(), expect, e)
 	}
 
@@ -1154,8 +1189,8 @@ func TestTable_Name(t *testing.T) {
 			},
 		},
 	}
-	expect = "(select 1 from dual)"
-	if e.Name() != expect {
+	expect = Identifier{Literal: "(select 1 from dual)"}
+	if !reflect.DeepEqual(e.Name(), expect) {
 		t.Errorf("name = %q, want %q for %#v", e.Name(), expect, e)
 	}
 }
@@ -1565,17 +1600,17 @@ func TestVariableSubstitution_String(t *testing.T) {
 
 func TestVariableAssignment_String(t *testing.T) {
 	e := VariableAssignment{
-		Name:  "@var",
-		Value: NewInteger(1),
+		Variable: Variable{Name: "@var"},
+		Value:    NewInteger(1),
 	}
-	expect := "@var = 1"
+	expect := "@var := 1"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 
 	e = VariableAssignment{
-		Name:  "@var",
-		Value: nil,
+		Variable: Variable{Name: "@var"},
+		Value:    nil,
 	}
 	expect = "@var"
 	if e.String() != expect {
@@ -1614,7 +1649,7 @@ func TestInsertQuery_String(t *testing.T) {
 		Values: "values",
 		ValuesList: []Expression{
 			RowValue{
-				ValueList{
+				Value: ValueList{
 					Values: []Expression{
 						NewInteger(1),
 						NewInteger(2),
@@ -1622,7 +1657,7 @@ func TestInsertQuery_String(t *testing.T) {
 				},
 			},
 			RowValue{
-				ValueList{
+				Value: ValueList{
 					Values: []Expression{
 						NewInteger(3),
 						NewInteger(4),

@@ -289,7 +289,7 @@ var compareRowValuesTests = []struct {
 			parser.NewInteger(3),
 		},
 		Op:    "=",
-		Error: "row value length does not match",
+		Error: "[L:- C:-] row value length does not match",
 	},
 }
 
@@ -543,7 +543,7 @@ var inRowValueListTests = []struct {
 		},
 		Type:     parser.ALL,
 		Operator: "=",
-		Error:    "row value length does not match",
+		Error:    "[L:- C:-] row value length does not match at index 1",
 	},
 }
 

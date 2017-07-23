@@ -7,14 +7,14 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
-var userFunctionMapDeclareTests = []struct {
+var userDefinedFunctionMapDeclareTests = []struct {
 	Name   string
 	Expr   parser.FunctionDeclaration
-	Result UserFunctionMap
+	Result UserDefinedFunctionMap
 	Error  string
 }{
 	{
-		Name: "UserFunctionMap Declare",
+		Name: "UserDefinedFunctionMap Declare",
 		Expr: parser.FunctionDeclaration{
 			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.Variable{
@@ -25,9 +25,9 @@ var userFunctionMapDeclareTests = []struct {
 				parser.Print{Value: parser.Variable{Name: "@var1"}},
 			},
 		},
-		Result: UserFunctionMap{
-			"USERFUNC": &UserFunction{
-				Name: "userfunc",
+		Result: UserDefinedFunctionMap{
+			"USERFUNC": &UserDefinedFunction{
+				Name: parser.Identifier{Literal: "userfunc"},
 				Parameters: []parser.Variable{
 					{Name: "@arg1"},
 					{Name: "@arg2"},
@@ -39,7 +39,7 @@ var userFunctionMapDeclareTests = []struct {
 		},
 	},
 	{
-		Name: "UserFunctionMap Declare Redeclaration Error",
+		Name: "UserDefinedFunctionMap Declare Redeclaration Error",
 		Expr: parser.FunctionDeclaration{
 			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.Variable{
@@ -50,10 +50,10 @@ var userFunctionMapDeclareTests = []struct {
 				parser.Print{Value: parser.Variable{Name: "@var1"}},
 			},
 		},
-		Error: "function userfunc is redeclared",
+		Error: "[L:- C:-] function userfunc is redeclared",
 	},
 	{
-		Name: "UserFunctionMap Declare Duplicate with Built-in Function Error",
+		Name: "UserDefinedFunctionMap Declare Duplicate with Built-in Function Error",
 		Expr: parser.FunctionDeclaration{
 			Name: parser.Identifier{Literal: "now"},
 			Parameters: []parser.Variable{
@@ -64,10 +64,10 @@ var userFunctionMapDeclareTests = []struct {
 				parser.Print{Value: parser.Variable{Name: "@var1"}},
 			},
 		},
-		Error: "function now is redeclared",
+		Error: "[L:- C:-] function now is a built-in function",
 	},
 	{
-		Name: "UserFunctionMap Declare Duplicate with Aggregate Function Error",
+		Name: "UserDefinedFunctionMap Declare Duplicate with Aggregate Function Error",
 		Expr: parser.FunctionDeclaration{
 			Name: parser.Identifier{Literal: "count"},
 			Parameters: []parser.Variable{
@@ -78,10 +78,10 @@ var userFunctionMapDeclareTests = []struct {
 				parser.Print{Value: parser.Variable{Name: "@var1"}},
 			},
 		},
-		Error: "function count is redeclared",
+		Error: "[L:- C:-] function count is a built-in function",
 	},
 	{
-		Name: "UserFunctionMap Declare Duplicate with Analytic Function Error",
+		Name: "UserDefinedFunctionMap Declare Duplicate with Analytic Function Error",
 		Expr: parser.FunctionDeclaration{
 			Name: parser.Identifier{Literal: "row_number"},
 			Parameters: []parser.Variable{
@@ -92,10 +92,10 @@ var userFunctionMapDeclareTests = []struct {
 				parser.Print{Value: parser.Variable{Name: "@var1"}},
 			},
 		},
-		Error: "function row_number is redeclared",
+		Error: "[L:- C:-] function row_number is a built-in function",
 	},
 	{
-		Name: "UserFunctionMap Declare Duplicate with GroupConcat Function Error",
+		Name: "UserDefinedFunctionMap Declare Duplicate with GroupConcat Function Error",
 		Expr: parser.FunctionDeclaration{
 			Name: parser.Identifier{Literal: "group_concat"},
 			Parameters: []parser.Variable{
@@ -106,14 +106,14 @@ var userFunctionMapDeclareTests = []struct {
 				parser.Print{Value: parser.Variable{Name: "@var1"}},
 			},
 		},
-		Error: "function group_concat is redeclared",
+		Error: "[L:- C:-] function group_concat is a built-in function",
 	},
 }
 
-func TestUserFunctionMap_Declare(t *testing.T) {
-	funcs := UserFunctionMap{}
+func TestUserDefinedFunctionMap_Declare(t *testing.T) {
+	funcs := UserDefinedFunctionMap{}
 
-	for _, v := range userFunctionMapDeclareTests {
+	for _, v := range userDefinedFunctionMapDeclareTests {
 		err := funcs.Declare(v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -133,17 +133,19 @@ func TestUserFunctionMap_Declare(t *testing.T) {
 	}
 }
 
-var userFunctionMapGetTests = []struct {
-	Name   string
-	Key    string
-	Result *UserFunction
-	Error  string
+var userDefinedFunctionMapGetTests = []struct {
+	Name     string
+	Function parser.Function
+	Result   *UserDefinedFunction
+	Error    string
 }{
 	{
-		Name: "UserFunctionMap Get",
-		Key:  "userfunc",
-		Result: &UserFunction{
+		Name: "UserDefinedFunctionMap Get",
+		Function: parser.Function{
 			Name: "userfunc",
+		},
+		Result: &UserDefinedFunction{
+			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.Variable{
 				{Name: "@arg1"},
 				{Name: "@arg2"},
@@ -154,16 +156,18 @@ var userFunctionMapGetTests = []struct {
 		},
 	},
 	{
-		Name:  "UserFunctionMap Get Not Exist Error",
-		Key:   "notexist",
-		Error: "function notexist does not exist",
+		Name: "UserDefinedFunctionMap Get Not Exist Error",
+		Function: parser.Function{
+			Name: "notexist",
+		},
+		Error: "[L:- C:-] function notexist does not exist",
 	},
 }
 
-func TestUserFunctionMap_Get(t *testing.T) {
-	funcs := UserFunctionMap{
-		"USERFUNC": &UserFunction{
-			Name: "userfunc",
+func TestUserDefinedFunctionMap_Get(t *testing.T) {
+	funcs := UserDefinedFunctionMap{
+		"USERFUNC": &UserDefinedFunction{
+			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.Variable{
 				{Name: "@arg1"},
 				{Name: "@arg2"},
@@ -174,8 +178,8 @@ func TestUserFunctionMap_Get(t *testing.T) {
 		},
 	}
 
-	for _, v := range userFunctionMapGetTests {
-		result, err := funcs.Get(v.Key)
+	for _, v := range userDefinedFunctionMapGetTests {
+		result, err := funcs.Get(v.Function)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -194,17 +198,17 @@ func TestUserFunctionMap_Get(t *testing.T) {
 	}
 }
 
-var userFunctionExecuteTests = []struct {
+var userDefinedFunctionExecuteTests = []struct {
 	Name   string
-	Func   *UserFunction
+	Func   *UserDefinedFunction
 	Args   []parser.Primary
 	Result parser.Primary
 	Error  string
 }{
 	{
-		Name: "UserFunction Execute",
-		Func: &UserFunction{
-			Name: "userfunc",
+		Name: "UserDefinedFunction Execute",
+		Func: &UserDefinedFunction{
+			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.Variable{
 				{Name: "@arg1"},
 				{Name: "@arg2"},
@@ -213,7 +217,7 @@ var userFunctionExecuteTests = []struct {
 				parser.VariableDeclaration{
 					Assignments: []parser.Expression{
 						parser.VariableAssignment{
-							Name: "@var2",
+							Variable: parser.Variable{Name: "@var2"},
 							Value: parser.Arithmetic{
 								LHS: parser.Arithmetic{
 									LHS:      parser.Variable{Name: "@arg1"},
@@ -238,9 +242,9 @@ var userFunctionExecuteTests = []struct {
 		Result: parser.NewInteger(6),
 	},
 	{
-		Name: "UserFunction Execute No Return Statement",
-		Func: &UserFunction{
-			Name: "userfunc",
+		Name: "UserDefinedFunction Execute No Return Statement",
+		Func: &UserDefinedFunction{
+			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.Variable{
 				{Name: "@arg1"},
 				{Name: "@arg2"},
@@ -249,7 +253,7 @@ var userFunctionExecuteTests = []struct {
 				parser.VariableDeclaration{
 					Assignments: []parser.Expression{
 						parser.VariableAssignment{
-							Name: "@var2",
+							Variable: parser.Variable{Name: "@var2"},
 							Value: parser.Arithmetic{
 								LHS: parser.Arithmetic{
 									LHS:      parser.Variable{Name: "@arg1"},
@@ -271,9 +275,9 @@ var userFunctionExecuteTests = []struct {
 		Result: parser.NewNull(),
 	},
 	{
-		Name: "UserFunction Execute Arguments Error",
-		Func: &UserFunction{
-			Name: "userfunc",
+		Name: "UserDefinedFunction Execute Arguments Error",
+		Func: &UserDefinedFunction{
+			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.Variable{
 				{Name: "@arg1"},
 				{Name: "@arg2"},
@@ -282,7 +286,7 @@ var userFunctionExecuteTests = []struct {
 				parser.VariableDeclaration{
 					Assignments: []parser.Expression{
 						parser.VariableAssignment{
-							Name: "@var2",
+							Variable: parser.Variable{Name: "@var2"},
 							Value: parser.Arithmetic{
 								LHS: parser.Arithmetic{
 									LHS:      parser.Variable{Name: "@arg1"},
@@ -303,12 +307,12 @@ var userFunctionExecuteTests = []struct {
 		Args: []parser.Primary{
 			parser.NewInteger(2),
 		},
-		Error: "declared function userfunc takes 2 argument(s)",
+		Error: "[L:- C:-] function userfunc takes 2 arguments",
 	},
 	{
-		Name: "UserFunction Execute Execution Error",
-		Func: &UserFunction{
-			Name: "userfunc",
+		Name: "UserDefinedFunction Execute Execution Error",
+		Func: &UserDefinedFunction{
+			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.Variable{
 				{Name: "@arg1"},
 				{Name: "@arg2"},
@@ -317,7 +321,7 @@ var userFunctionExecuteTests = []struct {
 				parser.VariableDeclaration{
 					Assignments: []parser.Expression{
 						parser.VariableAssignment{
-							Name: "@var2",
+							Variable: parser.Variable{Name: "@var2"},
 							Value: parser.Subquery{
 								Query: parser.SelectQuery{
 									SelectEntity: parser.SelectEntity{
@@ -338,17 +342,17 @@ var userFunctionExecuteTests = []struct {
 			parser.NewInteger(2),
 			parser.NewInteger(3),
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 }
 
-func TestUserFunction_Execute(t *testing.T) {
+func TestUserDefinedFunction_Execute(t *testing.T) {
 	vars := Variables{
 		"@var1": parser.NewInteger(1),
 	}
 	filter := NewFilter([]Variables{vars})
 
-	for _, v := range userFunctionExecuteTests {
+	for _, v := range userDefinedFunctionExecuteTests {
 		result, err := v.Func.Execute(v.Args, filter)
 		if err != nil {
 			if len(v.Error) < 1 {

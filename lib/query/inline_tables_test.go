@@ -17,7 +17,7 @@ var inlineTablesSetTests = []struct {
 		Name: "InlineTables Set",
 		Expr: parser.InlineTable{
 			Name: parser.Identifier{Literal: "it"},
-			Columns: []parser.Expression{
+			Fields: []parser.Expression{
 				parser.Identifier{Literal: "c1"},
 				parser.Identifier{Literal: "c2"},
 				parser.Identifier{Literal: "num"},
@@ -70,7 +70,7 @@ var inlineTablesSetTests = []struct {
 		Expr: parser.InlineTable{
 			Recursive: parser.Token{Token: parser.RECURSIVE, Literal: "recursive"},
 			Name:      parser.Identifier{Literal: "it_recursive"},
-			Columns: []parser.Expression{
+			Fields: []parser.Expression{
 				parser.Identifier{Literal: "n"},
 			},
 			As: "as",
@@ -158,10 +158,10 @@ var inlineTablesSetTests = []struct {
 		},
 	},
 	{
-		Name: "InlineTables Set Duplicate Error",
+		Name: "InlineTables Set Redeclared Error",
 		Expr: parser.InlineTable{
 			Name: parser.Identifier{Literal: "it"},
-			Columns: []parser.Expression{
+			Fields: []parser.Expression{
 				parser.Identifier{Literal: "c1"},
 				parser.Identifier{Literal: "c2"},
 			},
@@ -184,13 +184,13 @@ var inlineTablesSetTests = []struct {
 				},
 			},
 		},
-		Error: "inline table it already exists",
+		Error: "[L:- C:-] inline table it is redeclared",
 	},
 	{
 		Name: "InlineTables Set Query Error",
 		Expr: parser.InlineTable{
 			Name: parser.Identifier{Literal: "it2"},
-			Columns: []parser.Expression{
+			Fields: []parser.Expression{
 				parser.Identifier{Literal: "c1"},
 				parser.Identifier{Literal: "c2"},
 			},
@@ -213,13 +213,13 @@ var inlineTablesSetTests = []struct {
 				},
 			},
 		},
-		Error: "field notexist does not exist",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
 		Name: "InlineTables Set Field Length Error",
 		Expr: parser.InlineTable{
 			Name: parser.Identifier{Literal: "it2"},
-			Columns: []parser.Expression{
+			Fields: []parser.Expression{
 				parser.Identifier{Literal: "c1"},
 			},
 			As: "as",
@@ -241,7 +241,7 @@ var inlineTablesSetTests = []struct {
 				},
 			},
 		},
-		Error: "view it2: field length does not match",
+		Error: "[L:- C:-] select query should return exactly 1 field for inline table it2",
 	},
 }
 
@@ -249,7 +249,8 @@ func TestInlineTables_Set(t *testing.T) {
 	it := InlineTables{}
 
 	for _, v := range inlineTablesSetTests {
-		err := it.Set(v.Expr, NewFilter([]Variables{{}}))
+		ViewCache.Clear()
+		err := it.Set(v.Expr, NewEmptyFilter())
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -270,13 +271,13 @@ func TestInlineTables_Set(t *testing.T) {
 
 var inlineTablesGetTests = []struct {
 	Name      string
-	TableName string
+	TableName parser.Identifier
 	Result    *View
 	Error     string
 }{
 	{
 		Name:      "InlineTables Get",
-		TableName: "it",
+		TableName: parser.Identifier{Literal: "it"},
 		Result: &View{
 			Header: NewHeaderWithoutId("it", []string{"c1", "c2", "num"}),
 			Records: []Record{
@@ -299,9 +300,9 @@ var inlineTablesGetTests = []struct {
 		},
 	},
 	{
-		Name:      "InlineTables Get Not Exist Error",
-		TableName: "notexist",
-		Error:     "inline table notexist does not exist",
+		Name:      "InlineTables Get Undefined Error",
+		TableName: parser.Identifier{Literal: "notexist"},
+		Error:     "[L:- C:-] inline table notexist is undefined",
 	},
 }
 
@@ -363,7 +364,7 @@ var inlineTablesLoadTests = []struct {
 				parser.InlineTable{
 					Recursive: parser.Token{Token: parser.RECURSIVE, Literal: "recursive"},
 					Name:      parser.Identifier{Literal: "it_recursive"},
-					Columns: []parser.Expression{
+					Fields: []parser.Expression{
 						parser.Identifier{Literal: "n"},
 					},
 					As: "as",
@@ -459,7 +460,7 @@ var inlineTablesLoadTests = []struct {
 			InlineTables: []parser.Expression{
 				parser.InlineTable{
 					Name: parser.Identifier{Literal: "it"},
-					Columns: []parser.Expression{
+					Fields: []parser.Expression{
 						parser.Identifier{Literal: "c1"},
 						parser.Identifier{Literal: "c2"},
 					},
@@ -484,7 +485,7 @@ var inlineTablesLoadTests = []struct {
 				},
 			},
 		},
-		Error: "inline table it already exists",
+		Error: "[L:- C:-] inline table it is redeclared",
 	},
 }
 
@@ -513,7 +514,7 @@ func TestInlineTables_Load(t *testing.T) {
 			},
 		}
 
-		err := it.Load(v.Expr, NewFilter([]Variables{{}}))
+		err := it.Load(v.Expr, NewEmptyFilter())
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

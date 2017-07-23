@@ -31,18 +31,22 @@ package parser
 %type<statement>   in_function_statement
 %type<statement>   in_loop_statement
 %type<statement>   in_function_in_loop_statement
-%type<statement>   variable_statement
-%type<statement>   transaction_statement
-%type<statement>   cursor_statement
-%type<statement>   table_statement
-%type<statement>   function_statement
-%type<expression>  fetch_position
-%type<expression>  cursor_status
 %type<statement>   flow_control_statement
 %type<statement>   in_function_flow_control_statement
 %type<statement>   common_in_loop_flow_control_statement
 %type<statement>   in_loop_flow_control_statement
 %type<statement>   in_function_in_loop_flow_control_statement
+%type<statement>   variable_statement
+%type<statement>   transaction_statement
+%type<statement>   table_operation
+%type<expression>  column_default
+%type<expressions> column_defaults
+%type<expression>  column_position
+%type<statement>   cursor_statement
+%type<statement>   temporary_table_statement
+%type<statement>   user_defined_function_statement
+%type<expression>  fetch_position
+%type<expression>  cursor_status
 %type<statement>   command_statement
 %type<expression>  select_query
 %type<expression>  select_entity
@@ -90,6 +94,7 @@ package parser
 %type<expression>  field
 %type<expression>  case
 %type<expression>  case_value
+%type<expressions> case_when
 %type<expression>  case_else
 %type<expressions> field_references
 %type<expressions> values
@@ -97,19 +102,11 @@ package parser
 %type<expressions> identified_tables
 %type<expressions> identifiers
 %type<expressions> fields
-%type<expressions> case_when
 %type<expression>  insert_query
 %type<expression>  update_query
 %type<expression>  update_set
 %type<expressions> update_set_list
 %type<expression>  delete_query
-%type<expression>  create_table
-%type<expression>  add_columns
-%type<expression>  column_default
-%type<expressions> column_defaults
-%type<expression>  column_position
-%type<expression>  drop_columns
-%type<expression>  rename_column
 %type<procexprs>   elseif
 %type<procexpr>    else
 %type<procexprs>   in_loop_elseif
@@ -160,6 +157,8 @@ package parser
 %token<token> FUNCTION BEGIN RETURN
 %token<token> VAR
 %token<token> COMPARISON_OP STRING_OP SUBSTITUTION_OP
+%token<token> UMINUS UPLUS
+%token<token> ';' '*' '=' '-' '+' '!' '(' ')'
 
 %left UNION EXCEPT
 %left INTERSECT
@@ -170,6 +169,7 @@ package parser
 %left STRING_OP
 %left '+' '-'
 %left '*' '/' '%'
+%right UMINUS UPLUS '!'
 
 %%
 
@@ -238,19 +238,7 @@ statement
     {
         $$ = $1
     }
-    | create_table statement_terminal
-    {
-        $$ = $1
-    }
-    | add_columns statement_terminal
-    {
-        $$ = $1
-    }
-    | drop_columns statement_terminal
-    {
-        $$ = $1
-    }
-    | rename_column statement_terminal
+    | table_operation statement_terminal
     {
         $$ = $1
     }
@@ -266,7 +254,7 @@ statement
     {
         $$ = $1
     }
-    | table_statement
+    | temporary_table_statement
     {
         $$ = $1
     }
@@ -284,7 +272,7 @@ procedure_statement
     {
         $$ = $1
     }
-    | function_statement
+    | user_defined_function_statement
     {
         $$ = $1
     }
@@ -321,116 +309,6 @@ in_function_in_loop_statement
     | in_function_in_loop_flow_control_statement
     {
         $$ = $1
-    }
-
-variable_statement
-    : VAR variable_assignments statement_terminal
-    {
-        $$ = VariableDeclaration{Assignments:$2}
-    }
-    | variable_substitution statement_terminal
-    {
-        $$ = $1
-    }
-
-transaction_statement
-    : COMMIT statement_terminal
-    {
-        $$ = TransactionControl{Token: $1.Token}
-    }
-    | ROLLBACK statement_terminal
-    {
-        $$ = TransactionControl{Token: $1.Token}
-    }
-
-cursor_statement
-    : DECLARE identifier CURSOR FOR select_query statement_terminal
-    {
-        $$ = CursorDeclaration{Cursor:$2, Query: $5.(SelectQuery)}
-    }
-    | OPEN identifier statement_terminal
-    {
-        $$ = OpenCursor{Cursor: $2}
-    }
-    | CLOSE identifier statement_terminal
-    {
-        $$ = CloseCursor{Cursor: $2}
-    }
-    | DISPOSE CURSOR identifier statement_terminal
-    {
-        $$ = DisposeCursor{Cursor: $3}
-    }
-    | FETCH fetch_position identifier INTO variables statement_terminal
-    {
-        $$ = FetchCursor{Position: $2, Cursor: $3, Variables: $5}
-    }
-
-table_statement
-    : DECLARE identifier TABLE '(' identifiers ')'
-    {
-        $$ = TableDeclaration{Table: $2, Fields: $5}
-    }
-    | DECLARE identifier TABLE '(' identifiers ')' FOR select_query statement_terminal
-    {
-        $$ = TableDeclaration{Table: $2, Fields: $5, Query: $8}
-    }
-    | DECLARE identifier TABLE FOR select_query statement_terminal
-    {
-        $$ = TableDeclaration{Table: $2, Query: $5}
-    }
-    | DISPOSE TABLE identifier statement_terminal
-    {
-        $$ = DisposeTable{Table: $3}
-    }
-
-function_statement
-    : DECLARE identifier FUNCTION '(' ')' AS BEGIN in_function_program END statement_terminal
-    {
-        $$ = FunctionDeclaration{Name: $2, Statements: $8}
-    }
-    | DECLARE identifier FUNCTION '(' variables ')' AS BEGIN in_function_program END statement_terminal
-    {
-        $$ = FunctionDeclaration{Name: $2, Parameters: $5, Statements: $9}
-    }
-
-fetch_position
-    :
-    {
-        $$ = nil
-    }
-    | NEXT
-    {
-        $$ = FetchPosition{Position: $1}
-    }
-    | PRIOR
-    {
-        $$ = FetchPosition{Position: $1}
-    }
-    | FIRST
-    {
-        $$ = FetchPosition{Position: $1}
-    }
-    | LAST
-    {
-        $$ = FetchPosition{Position: $1}
-    }
-    | ABSOLUTE value
-    {
-        $$ = FetchPosition{Position: $1, Number: $2}
-    }
-    | RELATIVE value
-    {
-        $$ = FetchPosition{Position: $1, Number: $2}
-    }
-
-cursor_status
-    : CURSOR identifier IS negation OPEN
-    {
-        $$ = CursorStatus{CursorLit: $1.Literal, Cursor: $2, Is: $3.Literal, Negation: $4, Type: $5.Token, TypeLit: $5.Literal}
-    }
-    | CURSOR identifier IS negation IN RANGE
-    {
-        $$ = CursorStatus{CursorLit: $1.Literal, Cursor: $2, Is: $3.Literal, Negation: $4, Type: $6.Token, TypeLit: $5.Literal + " " + $6.Literal}
     }
 
 flow_control_statement
@@ -519,10 +397,188 @@ in_function_in_loop_flow_control_statement
         $$ = $1
     }
 
+variable_statement
+    : VAR variable_assignments statement_terminal
+    {
+        $$ = VariableDeclaration{Assignments:$2}
+    }
+    | variable_substitution statement_terminal
+    {
+        $$ = $1
+    }
+
+transaction_statement
+    : COMMIT statement_terminal
+    {
+        $$ = TransactionControl{Token: $1.Token}
+    }
+    | ROLLBACK statement_terminal
+    {
+        $$ = TransactionControl{Token: $1.Token}
+    }
+
+table_operation
+    : CREATE TABLE identifier '(' identifiers ')'
+    {
+        $$ = CreateTable{CreateTable: $1.Literal + " " + $2.Literal, Table: $3, Fields: $5}
+    }
+    | ALTER TABLE identifier ADD column_default column_position
+    {
+        $$ = AddColumns{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Add: $4.Literal, Columns: []Expression{$5}, Position: $6}
+    }
+    | ALTER TABLE identifier ADD '(' column_defaults ')' column_position
+    {
+        $$ = AddColumns{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Add: $4.Literal, Columns: $6, Position: $8}
+    }
+    | ALTER TABLE identifier DROP field_reference
+    {
+        $$ = DropColumns{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Drop: $4.Literal, Columns: []Expression{$5}}
+    }
+    | ALTER TABLE identifier DROP '(' field_references ')'
+    {
+        $$ = DropColumns{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Drop: $4.Literal, Columns: $6}
+    }
+    | ALTER TABLE identifier RENAME field_reference TO identifier
+    {
+        $$ = RenameColumn{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Rename: $4.Literal, Old: $5.(FieldReference), To: $6.Literal, New: $7}
+    }
+
+column_default
+    : identifier
+    {
+        $$ = ColumnDefault{Column: $1}
+    }
+    | identifier DEFAULT value
+    {
+        $$ = ColumnDefault{Column: $1, Default: $2.Literal, Value: $3}
+    }
+
+column_defaults
+    : column_default
+    {
+        $$ = []Expression{$1}
+    }
+    | column_default ',' column_defaults
+    {
+        $$ = append([]Expression{$1}, $3...)
+    }
+
+column_position
+    :
+    {
+        $$ = nil
+    }
+    | FIRST
+    {
+        $$ = ColumnPosition{Position: $1}
+    }
+    | LAST
+    {
+        $$ = ColumnPosition{Position: $1}
+    }
+    | AFTER field_reference
+    {
+        $$ = ColumnPosition{Position: $1, Column: $2}
+    }
+    | BEFORE field_reference
+    {
+        $$ = ColumnPosition{Position: $1, Column: $2}
+    }
+
+cursor_statement
+    : DECLARE identifier CURSOR FOR select_query statement_terminal
+    {
+        $$ = CursorDeclaration{Cursor:$2, Query: $5.(SelectQuery)}
+    }
+    | OPEN identifier statement_terminal
+    {
+        $$ = OpenCursor{Cursor: $2}
+    }
+    | CLOSE identifier statement_terminal
+    {
+        $$ = CloseCursor{Cursor: $2}
+    }
+    | DISPOSE CURSOR identifier statement_terminal
+    {
+        $$ = DisposeCursor{Cursor: $3}
+    }
+    | FETCH fetch_position identifier INTO variables statement_terminal
+    {
+        $$ = FetchCursor{Position: $2, Cursor: $3, Variables: $5}
+    }
+
+temporary_table_statement
+    : DECLARE identifier TABLE '(' identifiers ')' statement_terminal
+    {
+        $$ = TableDeclaration{Table: $2, Fields: $5}
+    }
+    | DECLARE identifier TABLE '(' identifiers ')' FOR select_query statement_terminal
+    {
+        $$ = TableDeclaration{Table: $2, Fields: $5, Query: $8}
+    }
+    | DECLARE identifier TABLE FOR select_query statement_terminal
+    {
+        $$ = TableDeclaration{Table: $2, Query: $5}
+    }
+    | DISPOSE TABLE identifier statement_terminal
+    {
+        $$ = DisposeTable{Table: $3}
+    }
+
+user_defined_function_statement
+    : DECLARE identifier FUNCTION '(' ')' AS BEGIN in_function_program END statement_terminal
+    {
+        $$ = FunctionDeclaration{Name: $2, Statements: $8}
+    }
+    | DECLARE identifier FUNCTION '(' variables ')' AS BEGIN in_function_program END statement_terminal
+    {
+        $$ = FunctionDeclaration{Name: $2, Parameters: $5, Statements: $9}
+    }
+
+fetch_position
+    :
+    {
+        $$ = nil
+    }
+    | NEXT
+    {
+        $$ = FetchPosition{Position: $1}
+    }
+    | PRIOR
+    {
+        $$ = FetchPosition{Position: $1}
+    }
+    | FIRST
+    {
+        $$ = FetchPosition{Position: $1}
+    }
+    | LAST
+    {
+        $$ = FetchPosition{Position: $1}
+    }
+    | ABSOLUTE value
+    {
+        $$ = FetchPosition{BaseExpr: NewBaseExpr($1), Position: $1, Number: $2}
+    }
+    | RELATIVE value
+    {
+        $$ = FetchPosition{BaseExpr: NewBaseExpr($1), Position: $1, Number: $2}
+    }
+
+cursor_status
+    : CURSOR identifier IS negation OPEN
+    {
+        $$ = CursorStatus{CursorLit: $1.Literal, Cursor: $2, Is: $3.Literal, Negation: $4, Type: $5.Token, TypeLit: $5.Literal}
+    }
+    | CURSOR identifier IS negation IN RANGE
+    {
+        $$ = CursorStatus{CursorLit: $1.Literal, Cursor: $2, Is: $3.Literal, Negation: $4, Type: $6.Token, TypeLit: $5.Literal + " " + $6.Literal}
+    }
+
 command_statement
     : SET FLAG '=' primary statement_terminal
     {
-        $$ = SetFlag{Name: $2.Literal, Value: $4}
+        $$ = SetFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal, Value: $4}
     }
     | PRINT value statement_terminal
     {
@@ -530,11 +586,11 @@ command_statement
     }
     | PRINTF values statement_terminal
     {
-        $$ = Printf{Values: $2}
+        $$ = Printf{BaseExpr: NewBaseExpr($1), Values: $2}
     }
     | SOURCE STRING statement_terminal
     {
-        $$ = Source{FilePath: $2.Literal}
+        $$ = Source{BaseExpr: NewBaseExpr($1), FilePath: $2.Literal}
     }
 
 select_query
@@ -601,7 +657,7 @@ select_set_entity
 select_clause
     : SELECT distinct fields
     {
-        $$ = SelectClause{Select: $1.Literal, Distinct: $2, Fields: $3}
+        $$ = SelectClause{BaseExpr: NewBaseExpr($1), Select: $1.Literal, Distinct: $2, Fields: $3}
     }
 
 from_clause
@@ -661,11 +717,11 @@ limit_clause
     }
     | LIMIT value limit_with
     {
-        $$ = LimitClause{Limit: $1.Literal, Value: $2, With: $3}
+        $$ = LimitClause{BaseExpr: NewBaseExpr($1), Limit: $1.Literal, Value: $2, With: $3}
     }
     | LIMIT value PERCENT limit_with
     {
-        $$ = LimitClause{Limit: $1.Literal, Value: $2, Percent: $3.Literal, With: $4}
+        $$ = LimitClause{BaseExpr: NewBaseExpr($1), Limit: $1.Literal, Value: $2, Percent: $3.Literal, With: $4}
     }
 
 limit_with
@@ -685,7 +741,7 @@ offset_clause
     }
     | OFFSET value
     {
-        $$ = OffsetClause{Offset: $1.Literal, Value: $2}
+        $$ = OffsetClause{BaseExpr: NewBaseExpr($1), Offset: $1.Literal, Value: $2}
     }
 
 with_clause
@@ -705,7 +761,7 @@ inline_table
     }
     | recursive identifier '(' identifiers ')' AS '(' select_query ')'
     {
-        $$ = InlineTable{Recursive: $1, Name: $2, Columns: $4, As: $6.Literal, Query: $8.(SelectQuery)}
+        $$ = InlineTable{Recursive: $1, Name: $2, Fields: $4, As: $6.Literal, Query: $8.(SelectQuery)}
     }
 
 inline_tables
@@ -747,11 +803,11 @@ primary
 field_reference
     : identifier
     {
-        $$ = FieldReference{Column: $1}
+        $$ = FieldReference{BaseExpr: NewBaseExprFromIdentifier($1), Column: $1}
     }
     | identifier '.' identifier
     {
-        $$ = FieldReference{View: $1, Column: $3}
+        $$ = FieldReference{BaseExpr: NewBaseExprFromIdentifier($1), View: $1, Column: $3}
     }
 
 value
@@ -815,11 +871,11 @@ value
 row_value
     : '(' values ')'
     {
-        $$ = RowValue{Value: ValueList{Values: $2}}
+        $$ = RowValue{BaseExpr: NewBaseExpr($1), Value: ValueList{Values: $2}}
     }
     | subquery
     {
-        $$ = RowValue{Value: $1}
+        $$ = RowValue{BaseExpr: $1.GetBaseExpr(), Value: $1}
     }
 
 row_values
@@ -889,7 +945,7 @@ order_null_position
 subquery
     : '(' select_query ')'
     {
-        $$ = Subquery{Query: $2.(SelectQuery)}
+        $$ = Subquery{BaseExpr: NewBaseExpr($1), Query: $2.(SelectQuery)}
     }
 
 string_operation
@@ -916,19 +972,19 @@ string_operation
     }
 
 comparison
-    : value COMPARISON_OP value
+    : value comparison_operator value
     {
         $$ = Comparison{LHS: $1, Operator: $2.Literal, RHS: $3}
     }
-    | row_value COMPARISON_OP row_value
+    | row_value comparison_operator row_value
     {
         $$ = Comparison{LHS: $1, Operator: $2.Literal, RHS: $3}
     }
-    | value '=' value
+    | value '=' value %prec COMPARISON_OP
     {
         $$ = Comparison{LHS: $1, Operator: "=", RHS: $3}
     }
-    | row_value '=' row_value
+    | row_value '=' row_value %prec COMPARISON_OP
     {
         $$ = Comparison{LHS: $1, Operator: "=", RHS: $3}
     }
@@ -1014,6 +1070,14 @@ arithmetic
     {
         $$ = Arithmetic{LHS: $1, Operator: int('%'), RHS: $3}
     }
+    | '-' value %prec UMINUS
+    {
+        $$ = UnaryArithmetic{Operand: $2, Operator: $1}
+    }
+    | '+' value %prec UPLUS
+    {
+        $$ = UnaryArithmetic{Operand: $2, Operator: $1}
+    }
 
 logic
     : value OR value
@@ -1026,23 +1090,27 @@ logic
     }
     | NOT value
     {
-        $$ = Logic{LHS: nil, Operator: $1, RHS: $2}
+        $$ = UnaryLogic{Operand: $2, Operator: $1}
+    }
+    | '!' value
+    {
+        $$ = UnaryLogic{Operand: $2, Operator: $1}
     }
 
 function
     : identifier '(' ')'
     {
-        $$ = Function{Name: $1.Literal}
+        $$ = Function{BaseExpr: NewBaseExprFromIdentifier($1), Name: $1.Literal}
     }
     | identifier '(' values ')'
     {
-        $$ = Function{Name: $1.Literal, Args: $3}
+        $$ = Function{BaseExpr: NewBaseExprFromIdentifier($1), Name: $1.Literal, Args: $3}
     }
 
 aggregate_function
     : identifier '(' aggregate_option ')'
     {
-        $$ = AggregateFunction{Name: $1.Literal, Option: $3.(AggregateOption)}
+        $$ = AggregateFunction{BaseExpr: NewBaseExprFromIdentifier($1), Name: $1.Literal, Option: $3.(AggregateOption)}
     }
     | group_concat
     {
@@ -1052,11 +1120,11 @@ aggregate_function
 aggregate_option
     : '*'
     {
-        $$ = AggregateOption{Args: []Expression{AllColumns{}}}
+        $$ = AggregateOption{Args: []Expression{AllColumns{BaseExpr: NewBaseExpr($1)}}}
     }
     | DISTINCT '*'
     {
-        $$ = AggregateOption{Distinct: $1, Args: []Expression{AllColumns{}}}
+        $$ = AggregateOption{Distinct: $1, Args: []Expression{AllColumns{BaseExpr: NewBaseExpr($2)}}}
     }
     | DISTINCT value
     {
@@ -1067,30 +1135,30 @@ group_concat
     : identifier '(' value ORDER BY order_items ')'
     {
         orderBy := OrderByClause{OrderBy: $4.Literal + " " + $5.Literal, Items: $6}
-        $$ = GroupConcat{GroupConcat: $1.Literal, Option: AggregateOption{Args: []Expression{$3}}, OrderBy: orderBy}
+        $$ = GroupConcat{BaseExpr: NewBaseExprFromIdentifier($1), GroupConcat: $1.Literal, Option: AggregateOption{Args: []Expression{$3}}, OrderBy: orderBy}
     }
     | identifier '(' DISTINCT value ORDER BY order_items ')'
     {
         orderBy := OrderByClause{OrderBy: $5.Literal + " " + $6.Literal, Items: $7}
-        $$ = GroupConcat{GroupConcat: $1.Literal, Option: AggregateOption{Distinct: $3, Args: []Expression{$4}}, OrderBy: orderBy}
+        $$ = GroupConcat{BaseExpr: NewBaseExprFromIdentifier($1), GroupConcat: $1.Literal, Option: AggregateOption{Distinct: $3, Args: []Expression{$4}}, OrderBy: orderBy}
     }
     | identifier '(' value order_by_clause SEPARATOR STRING ')'
     {
-        $$ = GroupConcat{GroupConcat: $1.Literal, Option: AggregateOption{Args: []Expression{$3}}, OrderBy: $4, SeparatorLit: $5.Literal, Separator: $6.Literal}
+        $$ = GroupConcat{BaseExpr: NewBaseExprFromIdentifier($1), GroupConcat: $1.Literal, Option: AggregateOption{Args: []Expression{$3}}, OrderBy: $4, SeparatorLit: $5.Literal, Separator: $6.Literal}
     }
     | identifier '(' DISTINCT value order_by_clause SEPARATOR STRING ')'
     {
-        $$ = GroupConcat{GroupConcat: $1.Literal, Option: AggregateOption{Distinct: $3, Args: []Expression{$4}}, OrderBy: $5, SeparatorLit: $6.Literal, Separator: $7.Literal}
+        $$ = GroupConcat{BaseExpr: NewBaseExprFromIdentifier($1), GroupConcat: $1.Literal, Option: AggregateOption{Distinct: $3, Args: []Expression{$4}}, OrderBy: $5, SeparatorLit: $6.Literal, Separator: $7.Literal}
     }
 
 analytic_function
     : identifier '(' ')' OVER '(' analytic_clause ')'
     {
-        $$ = AnalyticFunction{Name: $1.Literal, Over: $4.Literal, AnalyticClause: $6.(AnalyticClause)}
+        $$ = AnalyticFunction{BaseExpr: NewBaseExprFromIdentifier($1), Name: $1.Literal, Over: $4.Literal, AnalyticClause: $6.(AnalyticClause)}
     }
     | identifier '(' values ')' OVER '(' analytic_clause ')'
     {
-        $$ = AnalyticFunction{Name: $1.Literal, Args: $3, Over: $5.Literal, AnalyticClause: $7.(AnalyticClause)}
+        $$ = AnalyticFunction{BaseExpr: NewBaseExprFromIdentifier($1), Name: $1.Literal, Args: $3, Over: $5.Literal, AnalyticClause: $7.(AnalyticClause)}
     }
 
 analytic_clause
@@ -1130,7 +1198,7 @@ virtual_table
     }
     | STDIN
     {
-        $$ = Stdin{Stdin: $1.Literal}
+        $$ = Stdin{BaseExpr: NewBaseExpr($1), Stdin: $1.Literal}
     }
 
 table
@@ -1206,7 +1274,7 @@ field_object
     }
     | '*'
     {
-        $$ = AllColumns{}
+        $$ = AllColumns{BaseExpr: NewBaseExpr($1)}
     }
 
 field
@@ -1233,6 +1301,16 @@ case_value
     | value
     {
         $$ = $1
+    }
+
+case_when
+    : WHEN value THEN value
+    {
+        $$ = []Expression{CaseWhen{When: $1.Literal, Then: $3.Literal, Condition: $2, Result: $4}}
+    }
+    | case_when case_when
+    {
+        $$ = append($1, $2...)
     }
 
 case_else
@@ -1305,16 +1383,6 @@ fields
         $$ = append([]Expression{$1}, $3...)
     }
 
-case_when
-    : WHEN value THEN value
-    {
-        $$ = []Expression{CaseWhen{When: $1.Literal, Then: $3.Literal, Condition: $2, Result: $4}}
-    }
-    | case_when case_when
-    {
-        $$ = append($1, $2...)
-    }
-
 insert_query
     : with_clause INSERT INTO identifier VALUES row_values
     {
@@ -1359,86 +1427,12 @@ delete_query
     : with_clause DELETE FROM tables where_clause
     {
         from := FromClause{From: $3.Literal, Tables: $4}
-        $$ = DeleteQuery{WithClause: $1, Delete: $2.Literal, FromClause: from, WhereClause: $5}
+        $$ = DeleteQuery{BaseExpr: NewBaseExpr($2), WithClause: $1, Delete: $2.Literal, FromClause: from, WhereClause: $5}
     }
     | with_clause DELETE identified_tables FROM tables where_clause
     {
         from := FromClause{From: $4.Literal, Tables: $5}
-        $$ = DeleteQuery{WithClause: $1, Delete: $2.Literal, Tables: $3, FromClause: from, WhereClause: $6}
-    }
-
-create_table
-    : CREATE TABLE identifier '(' identifiers ')'
-    {
-        $$ = CreateTable{CreateTable: $1.Literal + " " + $2.Literal, Table: $3, Fields: $5}
-    }
-
-add_columns
-    : ALTER TABLE identifier ADD column_default column_position
-    {
-        $$ = AddColumns{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Add: $4.Literal, Columns: []Expression{$5}, Position: $6}
-    }
-    | ALTER TABLE identifier ADD '(' column_defaults ')' column_position
-    {
-        $$ = AddColumns{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Add: $4.Literal, Columns: $6, Position: $8}
-    }
-
-column_default
-    : identifier
-    {
-        $$ = ColumnDefault{Column: $1}
-    }
-    | identifier DEFAULT value
-    {
-        $$ = ColumnDefault{Column: $1, Default: $2.Literal, Value: $3}
-    }
-
-column_defaults
-    : column_default
-    {
-        $$ = []Expression{$1}
-    }
-    | column_default ',' column_defaults
-    {
-        $$ = append([]Expression{$1}, $3...)
-    }
-
-column_position
-    :
-    {
-        $$ = nil
-    }
-    | FIRST
-    {
-        $$ = ColumnPosition{Position: $1}
-    }
-    | LAST
-    {
-        $$ = ColumnPosition{Position: $1}
-    }
-    | AFTER field_reference
-    {
-        $$ = ColumnPosition{Position: $1, Column: $2}
-    }
-    | BEFORE field_reference
-    {
-        $$ = ColumnPosition{Position: $1, Column: $2}
-    }
-
-drop_columns
-    : ALTER TABLE identifier DROP field_reference
-    {
-        $$ = DropColumns{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Drop: $4.Literal, Columns: []Expression{$5}}
-    }
-    | ALTER TABLE identifier DROP '(' field_references ')'
-    {
-        $$ = DropColumns{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Drop: $4.Literal, Columns: $6}
-    }
-
-rename_column
-    : ALTER TABLE identifier RENAME field_reference TO identifier
-    {
-        $$ = RenameColumn{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Rename: $4.Literal, Old: $5.(FieldReference), To: $6.Literal, New: $7}
+        $$ = DeleteQuery{BaseExpr: NewBaseExpr($2), WithClause: $1, Delete: $2.Literal, Tables: $3, FromClause: from, WhereClause: $6}
     }
 
 elseif
@@ -1524,7 +1518,7 @@ in_function_in_loop_else
 identifier
     : IDENTIFIER
     {
-        $$ = Identifier{Literal: $1.Literal, Quoted: $1.Quoted}
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }
 
 text
@@ -1538,21 +1532,11 @@ integer
     {
         $$ = NewIntegerFromString($1.Literal)
     }
-    | '-' integer
-    {
-        i := $2.Value() * -1
-        $$ = NewInteger(i)
-    }
 
 float
     : FLOAT
     {
         $$ = NewFloatFromString($1.Literal)
-    }
-    | '-' float
-    {
-        f := $2.Value() * -1
-        $$ = NewFloat(f)
     }
 
 ternary
@@ -1576,7 +1560,7 @@ null
 variable
     : VARIABLE
     {
-        $$ = Variable{Name:$1.Literal}
+        $$ = Variable{BaseExpr: NewBaseExpr($1), Name:$1.Literal}
     }
 
 variables
@@ -1596,13 +1580,13 @@ variable_substitution
     }
 
 variable_assignment
-    : VARIABLE
+    : variable
     {
-        $$ = VariableAssignment{Name:$1.Literal}
+        $$ = VariableAssignment{Variable:$1}
     }
-    | VARIABLE SUBSTITUTION_OP value
+    | variable SUBSTITUTION_OP value
     {
-        $$ = VariableAssignment{Name: $1.Literal, Value: $3}
+        $$ = VariableAssignment{Variable: $1, Value: $3}
     }
 
 variable_assignments
@@ -1701,7 +1685,8 @@ comparison_operator
     }
     | '='
     {
-        $$ = Token{Token:COMPARISON_OP, Literal:string('=')}
+        $1.Token = COMPARISON_OP
+        $$ = $1
     }
 
 statement_terminal
@@ -1711,7 +1696,7 @@ statement_terminal
     }
     | ';'
     {
-        $$ = Token{Token: ';', Literal: string(';')}
+        $$ = $1
     }
 
 %%
@@ -1721,9 +1706,9 @@ func SetDebugLevel(level int, verbose bool) {
 	yyErrorVerbose = verbose
 }
 
-func Parse(s string) ([]Statement, error) {
+func Parse(s string, sourceFile string) ([]Statement, error) {
     l := new(Lexer)
-    l.Init(s)
+    l.Init(s, sourceFile)
     yyParse(l)
     return l.program, l.err
 }
