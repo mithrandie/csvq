@@ -157,7 +157,8 @@ package parser
 %token<token> FUNCTION BEGIN RETURN
 %token<token> VAR
 %token<token> COMPARISON_OP STRING_OP SUBSTITUTION_OP
-%token<token> ';' '*' '=' '+' '-' '/' '%' '(' ')'
+%token<token> UMINUS UPLUS
+%token<token> ';' '*' '=' '-' '+' '!' '(' ')'
 
 %left UNION EXCEPT
 %left INTERSECT
@@ -168,6 +169,7 @@ package parser
 %left STRING_OP
 %left '+' '-'
 %left '*' '/' '%'
+%right UMINUS UPLUS '!'
 
 %%
 
@@ -970,19 +972,19 @@ string_operation
     }
 
 comparison
-    : value COMPARISON_OP value
+    : value comparison_operator value
     {
         $$ = Comparison{LHS: $1, Operator: $2.Literal, RHS: $3}
     }
-    | row_value COMPARISON_OP row_value
+    | row_value comparison_operator row_value
     {
         $$ = Comparison{LHS: $1, Operator: $2.Literal, RHS: $3}
     }
-    | value '=' value
+    | value '=' value %prec COMPARISON_OP
     {
         $$ = Comparison{LHS: $1, Operator: "=", RHS: $3}
     }
-    | row_value '=' row_value
+    | row_value '=' row_value %prec COMPARISON_OP
     {
         $$ = Comparison{LHS: $1, Operator: "=", RHS: $3}
     }
@@ -1068,6 +1070,14 @@ arithmetic
     {
         $$ = Arithmetic{LHS: $1, Operator: int('%'), RHS: $3}
     }
+    | '-' value %prec UMINUS
+    {
+        $$ = UnaryArithmetic{Operand: $2, Operator: $1}
+    }
+    | '+' value %prec UPLUS
+    {
+        $$ = UnaryArithmetic{Operand: $2, Operator: $1}
+    }
 
 logic
     : value OR value
@@ -1080,7 +1090,11 @@ logic
     }
     | NOT value
     {
-        $$ = Logic{LHS: nil, Operator: $1, RHS: $2}
+        $$ = UnaryLogic{Operand: $2, Operator: $1}
+    }
+    | '!' value
+    {
+        $$ = UnaryLogic{Operand: $2, Operator: $1}
     }
 
 function
@@ -1518,21 +1532,11 @@ integer
     {
         $$ = NewIntegerFromString($1.Literal)
     }
-    | '-' integer
-    {
-        i := $2.Value() * -1
-        $$ = NewInteger(i)
-    }
 
 float
     : FLOAT
     {
         $$ = NewFloatFromString($1.Literal)
-    }
-    | '-' float
-    {
-        f := $2.Value() * -1
-        $$ = NewFloat(f)
     }
 
 ternary

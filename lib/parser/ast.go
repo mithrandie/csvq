@@ -786,6 +786,16 @@ func (a Arithmetic) String() string {
 	return joinWithSpace(s)
 }
 
+type UnaryArithmetic struct {
+	*BaseExpr
+	Operand  Expression
+	Operator Token
+}
+
+func (e UnaryArithmetic) String() string {
+	return e.Operator.Literal + e.Operand.String()
+}
+
 type Logic struct {
 	*BaseExpr
 	LHS      Expression
@@ -794,12 +804,22 @@ type Logic struct {
 }
 
 func (l Logic) String() string {
-	s := []string{}
-	if l.LHS != nil {
-		s = append(s, l.LHS.String())
-	}
-	s = append(s, l.Operator.Literal, l.RHS.String())
+	s := []string{l.LHS.String(), l.Operator.Literal, l.RHS.String()}
 	return joinWithSpace(s)
+}
+
+type UnaryLogic struct {
+	*BaseExpr
+	Operand  Expression
+	Operator Token
+}
+
+func (e UnaryLogic) String() string {
+	if e.Operator.Token == NOT {
+		s := []string{e.Operator.Literal, e.Operand.String()}
+		return joinWithSpace(s)
+	}
+	return e.Operator.Literal + e.Operand.String()
 }
 
 type Concat struct {

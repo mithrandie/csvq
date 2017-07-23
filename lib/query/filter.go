@@ -98,6 +98,8 @@ func (f Filter) Evaluate(expr parser.Expression) (parser.Primary, error) {
 			primary, err = f.evalFieldReference(expr.(parser.FieldReference))
 		case parser.Arithmetic:
 			primary, err = f.evalArithmetic(expr.(parser.Arithmetic))
+		case parser.UnaryArithmetic:
+			primary, err = f.evalUnaryArithmetic(expr.(parser.UnaryArithmetic))
 		case parser.Concat:
 			primary, err = f.evalConcat(expr.(parser.Concat))
 		case parser.Comparison:
@@ -128,6 +130,8 @@ func (f Filter) Evaluate(expr parser.Expression) (parser.Primary, error) {
 			primary, err = f.evalCase(expr.(parser.Case))
 		case parser.Logic:
 			primary, err = f.evalLogic(expr.(parser.Logic))
+		case parser.UnaryLogic:
+			primary, err = f.evalUnaryLogic(expr.(parser.UnaryLogic))
 		case parser.Variable:
 			primary, err = f.evalVariable(expr.(parser.Variable))
 		case parser.VariableSubstitution:
@@ -175,6 +179,27 @@ func (f Filter) evalArithmetic(expr parser.Arithmetic) (parser.Primary, error) {
 	}
 
 	return Calculate(lhs, rhs, expr.Operator), nil
+}
+
+func (f Filter) evalUnaryArithmetic(expr parser.UnaryArithmetic) (parser.Primary, error) {
+	ope, err := f.Evaluate(expr.Operand)
+	if err != nil {
+		return nil, err
+	}
+
+	pf := parser.PrimaryToFloat(ope)
+	if parser.IsNull(pf) {
+		return parser.NewNull(), nil
+	}
+
+	value := pf.(parser.Float).Value()
+
+	switch expr.Operator.Token {
+	case '-':
+		value = value * -1
+	}
+
+	return parser.Float64ToPrimary(value), nil
 }
 
 func (f Filter) evalConcat(expr parser.Concat) (parser.Primary, error) {
@@ -643,8 +668,20 @@ func (f Filter) evalLogic(expr parser.Logic) (parser.Primary, error) {
 		t = ternary.And(lhs.Ternary(), rhs.Ternary())
 	case parser.OR:
 		t = ternary.Or(lhs.Ternary(), rhs.Ternary())
-	case parser.NOT:
-		t = ternary.Not(rhs.Ternary())
+	}
+	return parser.NewTernary(t), nil
+}
+
+func (f Filter) evalUnaryLogic(expr parser.UnaryLogic) (parser.Primary, error) {
+	ope, err := f.Evaluate(expr.Operand)
+	if err != nil {
+		return nil, err
+	}
+
+	var t ternary.Value
+	switch expr.Operator.Token {
+	case parser.NOT, '!':
+		t = ternary.Not(ope.Ternary())
 	}
 	return parser.NewTernary(t), nil
 }

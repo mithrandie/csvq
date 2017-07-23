@@ -479,7 +479,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select ident, 'foo', 1, -1, 1.234, -1.234, true, '2010-01-01 12:00:00', null, ('bar') from dual",
+		Input: "select ident, 'foo', 1, 1.234, true, '2010-01-01 12:00:00', null, ('bar') from dual",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -490,9 +490,7 @@ var parseTests = []struct {
 							Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "ident"}}},
 							Field{Object: NewString("foo")},
 							Field{Object: NewInteger(1)},
-							Field{Object: NewInteger(-1)},
 							Field{Object: NewFloat(1.234)},
-							Field{Object: NewFloat(-1.234)},
 							Field{Object: NewTernaryFromString("true")},
 							Field{Object: NewDatetimeFromString("2010-01-01 12:00:00")},
 							Field{Object: NewNullFromString("null")},
@@ -687,7 +685,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select column1 not between -10 and 10",
+		Input: "select column1 not between -10 and +10",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -696,11 +694,17 @@ var parseTests = []struct {
 						Select:   "select",
 						Fields: []Expression{
 							Field{Object: Between{
-								Between:  "between",
-								And:      "and",
-								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
-								Low:      NewInteger(-10),
-								High:     NewInteger(10),
+								Between: "between",
+								And:     "and",
+								LHS:     FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
+								Low: UnaryArithmetic{
+									Operand:  NewInteger(10),
+									Operator: Token{Token: '-', Literal: "-", Line: 1, Char: 28},
+								},
+								High: UnaryArithmetic{
+									Operand:  NewInteger(10),
+									Operator: Token{Token: '+', Literal: "+", Line: 1, Char: 36},
+								},
 								Negation: Token{Token: NOT, Literal: "not", Line: 1, Char: 16},
 							}},
 						},
@@ -1300,9 +1304,9 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 1},
 						Select:   "select",
 						Fields: []Expression{
-							Field{Object: Logic{
+							Field{Object: UnaryLogic{
 								Operator: Token{Token: NOT, Literal: "not", Line: 1, Char: 8},
-								RHS:      NewTernaryFromString("false"),
+								Operand:  NewTernaryFromString("false"),
 							}},
 						},
 					},
@@ -1337,7 +1341,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select true and true or false and not false",
+		Input: "select true and true or !false and not false",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -1353,11 +1357,14 @@ var parseTests = []struct {
 								},
 								Operator: Token{Token: OR, Literal: "or", Line: 1, Char: 22},
 								RHS: Logic{
-									LHS:      NewTernaryFromString("false"),
-									Operator: Token{Token: AND, Literal: "and", Line: 1, Char: 31},
-									RHS: Logic{
-										Operator: Token{Token: NOT, Literal: "not", Line: 1, Char: 35},
-										RHS:      NewTernaryFromString("false"),
+									LHS: UnaryLogic{
+										Operator: Token{Token: '!', Literal: "!", Line: 1, Char: 25},
+										Operand:  NewTernaryFromString("false"),
+									},
+									Operator: Token{Token: AND, Literal: "and", Line: 1, Char: 32},
+									RHS: UnaryLogic{
+										Operator: Token{Token: NOT, Literal: "not", Line: 1, Char: 36},
+										Operand:  NewTernaryFromString("false"),
 									},
 								},
 							}},

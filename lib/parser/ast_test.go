@@ -1014,6 +1014,17 @@ func TestArithmetic_String(t *testing.T) {
 	}
 }
 
+func TestUnaryArithmetic_String(t *testing.T) {
+	e := UnaryArithmetic{
+		Operand:  Identifier{Literal: "column"},
+		Operator: Token{Token: '-', Literal: "-"},
+	}
+	expect := "-column"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
 func TestLogic_String(t *testing.T) {
 	e := Logic{
 		LHS:      Boolean{literal: "true"},
@@ -1024,12 +1035,23 @@ func TestLogic_String(t *testing.T) {
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
+}
 
-	e = Logic{
+func TestUnaryLogic_String(t *testing.T) {
+	e := UnaryLogic{
 		Operator: Token{Token: NOT, Literal: "not"},
-		RHS:      Boolean{literal: "false"},
+		Operand:  Boolean{literal: "false"},
 	}
-	expect = "not false"
+	expect := "not false"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+
+	e = UnaryLogic{
+		Operator: Token{Token: '!', Literal: "!"},
+		Operand:  Boolean{literal: "false"},
+	}
+	expect = "!false"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}

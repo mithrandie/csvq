@@ -10,7 +10,7 @@ category: reference
 | :- | :- |
 | [AND](#and) | Logical AND |
 | [OR](#or)   | Logical OR |
-| [NOT](#not) | Logical NOT |
+| [NOT, !](#not) | Logical NOT |
 
 A logic operator returns a ternary value.
 
@@ -46,7 +46,9 @@ Otherwise return FALSE.
 {: #not}
 
 ```sql
-NOT condition
+logical_not
+  : NOT condition
+  | !condition
 ```
 
 _condition_
@@ -55,3 +57,5 @@ _condition_
 If the condition is TRUE, return FALSE.
 If the condition is FALSE, return TRUE.
 IF the condition is UNKNOWN, return UNKNOWN.
+
+_NOT_ and _!_ return the same value, but there is the difference of [precedence]({{ '/reference/operator-precedence.html' | relative_url }}) between these two operators.

@@ -180,6 +180,30 @@ var filterEvaluateTests = []struct {
 		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
+		Name: "UnaryArithmetic",
+		Expr: parser.UnaryArithmetic{
+			Operand:  parser.NewInteger(1),
+			Operator: parser.Token{Token: '-', Literal: "-"},
+		},
+		Result: parser.NewInteger(-1),
+	},
+	{
+		Name: "UnaryArithmetic Operand Error",
+		Expr: parser.UnaryArithmetic{
+			Operand:  parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+			Operator: parser.Token{Token: '-', Literal: "-"},
+		},
+		Error: "[L:- C:-] field notexist does not exist",
+	},
+	{
+		Name: "UnaryArithmetic Cast Failure",
+		Expr: parser.UnaryArithmetic{
+			Operand:  parser.NewString("str"),
+			Operator: parser.Token{Token: '-', Literal: "-"},
+		},
+		Result: parser.NewNull(),
+	},
+	{
 		Name: "Concat",
 		Expr: parser.Concat{
 			Items: []parser.Expression{
@@ -2547,14 +2571,6 @@ var filterEvaluateTests = []struct {
 		Result: parser.NewTernary(ternary.TRUE),
 	},
 	{
-		Name: "Logic NOT",
-		Expr: parser.Logic{
-			RHS:      parser.NewTernary(ternary.FALSE),
-			Operator: parser.Token{Token: parser.NOT, Literal: "not"},
-		},
-		Result: parser.NewTernary(ternary.TRUE),
-	},
-	{
 		Name: "Logic LHS Error",
 		Expr: parser.Logic{
 			LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
@@ -2569,6 +2585,22 @@ var filterEvaluateTests = []struct {
 			LHS:      parser.NewTernary(ternary.FALSE),
 			RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Operator: parser.Token{Token: parser.AND, Literal: "and"},
+		},
+		Error: "[L:- C:-] field notexist does not exist",
+	},
+	{
+		Name: "UnaryLogic",
+		Expr: parser.UnaryLogic{
+			Operand:  parser.NewTernary(ternary.FALSE),
+			Operator: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Result: parser.NewTernary(ternary.TRUE),
+	},
+	{
+		Name: "UnaryLogic Operand Error",
+		Expr: parser.UnaryLogic{
+			Operand:  parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+			Operator: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
 		Error: "[L:- C:-] field notexist does not exist",
 	},
