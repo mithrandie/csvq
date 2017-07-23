@@ -36,4 +36,5 @@ The following table list operators from highest precedence to lowest.
 | 9  | [INTERSECT]({{ '/reference/set-operators.html#intersect' | relative_url }}) | Left-to-right | 
 | 10 | [UNION]({{ '/reference/set-operators.html#union' | relative_url }})         | Left-to-right | 
 |    | [EXCEPT]({{ '/reference/set-operators.html#except' | relative_url }})       | Left-to-right | 
+| 11 | [:=]({{ '/reference/variable.html#substitution' | relative_url }})         | Right-to-left | 
 

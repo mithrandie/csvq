@@ -160,6 +160,7 @@ package parser
 %token<token> UMINUS UPLUS
 %token<token> ';' '*' '=' '-' '+' '!' '(' ')'
 
+%right SUBSTITUTION_OP
 %left UNION EXCEPT
 %left INTERSECT
 %left OR
@@ -972,19 +973,19 @@ string_operation
     }
 
 comparison
-    : value comparison_operator value
+    : value COMPARISON_OP value
     {
         $$ = Comparison{LHS: $1, Operator: $2.Literal, RHS: $3}
     }
-    | row_value comparison_operator row_value
+    | row_value COMPARISON_OP row_value
     {
         $$ = Comparison{LHS: $1, Operator: $2.Literal, RHS: $3}
     }
-    | value '=' value %prec COMPARISON_OP
+    | value '=' value
     {
         $$ = Comparison{LHS: $1, Operator: "=", RHS: $3}
     }
-    | row_value '=' row_value %prec COMPARISON_OP
+    | row_value '=' row_value
     {
         $$ = Comparison{LHS: $1, Operator: "=", RHS: $3}
     }
