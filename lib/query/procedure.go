@@ -68,6 +68,8 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		err = proc.Filter.VariablesList.Declare(stmt.(parser.VariableDeclaration), proc.Filter)
 	case parser.VariableSubstitution:
 		_, err = proc.Filter.Evaluate(stmt.(parser.Expression))
+	case parser.DisposeVariable:
+		err = proc.Filter.VariablesList.Dispose(stmt.(parser.DisposeVariable).Variable)
 	case parser.CursorDeclaration:
 		err = proc.Filter.CursorsList.Declare(stmt.(parser.CursorDeclaration))
 	case parser.OpenCursor:
@@ -82,7 +84,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 	case parser.TableDeclaration:
 		err = DeclareTable(stmt.(parser.TableDeclaration), proc.Filter)
 	case parser.DisposeTable:
-		err = ViewCache.DisposeTemporaryTable(stmt.(parser.DisposeTable).Table)
+		err = proc.Filter.TempViewsList.Dispose(stmt.(parser.DisposeTable).Table)
 	case parser.FunctionDeclaration:
 		err = UserFunctions.Declare(stmt.(parser.FunctionDeclaration))
 	case parser.SelectQuery:

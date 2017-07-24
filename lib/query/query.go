@@ -181,7 +181,7 @@ func DeclareTable(expr parser.TableDeclaration, filter Filter) error {
 }
 
 func Select(query parser.SelectQuery, parentFilter Filter) (*View, error) {
-	filter := parentFilter.CreateChild()
+	filter := parentFilter.CreateNode()
 
 	if query.WithClause != nil {
 		if err := filter.LoadInlineTable(query.WithClause.(parser.WithClause)); err != nil {
@@ -320,7 +320,7 @@ func selectSetForRecursion(view *View, set parser.SelectSet, filter Filter) erro
 		filter.RecursiveTmpView = view
 	}
 
-	rview, err := selectSetEntity(set.RHS, filter.CreateChild())
+	rview, err := selectSetEntity(set.RHS, filter.CreateNode())
 	if err != nil {
 		return err
 	}
@@ -347,7 +347,7 @@ func selectSetForRecursion(view *View, set parser.SelectSet, filter Filter) erro
 }
 
 func Insert(query parser.InsertQuery, parentFilter Filter) (*View, error) {
-	filter := parentFilter.CreateChild()
+	filter := parentFilter.CreateNode()
 
 	if query.WithClause != nil {
 		if err := filter.LoadInlineTable(query.WithClause.(parser.WithClause)); err != nil {
@@ -388,7 +388,7 @@ func Insert(query parser.InsertQuery, parentFilter Filter) (*View, error) {
 }
 
 func Update(query parser.UpdateQuery, parentFilter Filter) ([]*View, error) {
-	filter := parentFilter.CreateChild()
+	filter := parentFilter.CreateNode()
 
 	if query.WithClause != nil {
 		if err := filter.LoadInlineTable(query.WithClause.(parser.WithClause)); err != nil {
@@ -427,7 +427,7 @@ func Update(query parser.UpdateQuery, parentFilter Filter) ([]*View, error) {
 		updatedIndices[table.Name().Literal] = []int{}
 	}
 
-	filterForLoop := NewFilterForLoop(view, filter)
+	filterForLoop := NewFilterForSequentialEvaluation(view, filter)
 	for i := range view.Records {
 		filterForLoop.Records[0].RecordIndex = i
 
@@ -485,7 +485,7 @@ func Update(query parser.UpdateQuery, parentFilter Filter) ([]*View, error) {
 }
 
 func Delete(query parser.DeleteQuery, parentFilter Filter) ([]*View, error) {
-	filter := parentFilter.CreateChild()
+	filter := parentFilter.CreateNode()
 
 	if query.WithClause != nil {
 		if err := filter.LoadInlineTable(query.WithClause.(parser.WithClause)); err != nil {
@@ -614,7 +614,7 @@ func CreateTable(query parser.CreateTable) (*View, error) {
 }
 
 func AddColumns(query parser.AddColumns, parentFilter Filter) (*View, error) {
-	filter := parentFilter.CreateChild()
+	filter := parentFilter.CreateNode()
 
 	if query.Position == nil {
 		query.Position = parser.ColumnPosition{
@@ -718,7 +718,7 @@ func AddColumns(query parser.AddColumns, parentFilter Filter) (*View, error) {
 }
 
 func DropColumns(query parser.DropColumns, parentFilter Filter) (*View, error) {
-	filter := parentFilter.CreateChild()
+	filter := parentFilter.CreateNode()
 
 	view := NewView()
 	err := view.LoadFromIdentifier(query.Table, filter)
@@ -752,7 +752,7 @@ func DropColumns(query parser.DropColumns, parentFilter Filter) (*View, error) {
 }
 
 func RenameColumn(query parser.RenameColumn, parentFilter Filter) (*View, error) {
-	filter := parentFilter.CreateChild()
+	filter := parentFilter.CreateNode()
 
 	view := NewView()
 	err := view.LoadFromIdentifier(query.Table, filter)

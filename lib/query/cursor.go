@@ -9,10 +9,29 @@ import (
 
 type CursorMapList []CursorMap
 
-func (list CursorMapList) Open(name parser.Identifier, filter Filter) error {
+func (list CursorMapList) Declare(expr parser.CursorDeclaration) error {
+	return list[0].Declare(expr)
+}
+
+func (list CursorMapList) Dispose(name parser.Identifier) error {
 	for _, m := range list {
-		if err := m.Open(name, filter); err == nil {
+		if err := m.Dispose(name); err == nil {
 			return nil
+		}
+	}
+	return NewUndefinedCursorError(name)
+}
+
+func (list CursorMapList) Open(name parser.Identifier, filter Filter) error {
+	var err error
+
+	for _, m := range list {
+		err = m.Open(name, filter)
+		if err == nil {
+			return nil
+		}
+		if _, ok := err.(*UndefinedCursorError); !ok {
+			return err
 		}
 	}
 	return NewUndefinedCursorError(name)
@@ -28,25 +47,19 @@ func (list CursorMapList) Close(name parser.Identifier) error {
 }
 
 func (list CursorMapList) Fetch(name parser.Identifier, position int, number int) ([]parser.Primary, error) {
+	var values []parser.Primary
+	var err error
+
 	for _, m := range list {
-		if values, err := m.Fetch(name, position, number); err == nil {
+		values, err = m.Fetch(name, position, number)
+		if err == nil {
 			return values, nil
+		}
+		if _, ok := err.(*UndefinedCursorError); !ok {
+			return nil, err
 		}
 	}
 	return nil, NewUndefinedCursorError(name)
-}
-
-func (list CursorMapList) Dispose(name parser.Identifier) error {
-	for _, m := range list {
-		if err := m.Dispose(name); err == nil {
-			return nil
-		}
-	}
-	return NewUndefinedCursorError(name)
-}
-
-func (list CursorMapList) Declare(expr parser.CursorDeclaration) error {
-	return list[0].Declare(expr)
 }
 
 func (list CursorMapList) IsOpen(name parser.Identifier) (ternary.Value, error) {
@@ -59,9 +72,16 @@ func (list CursorMapList) IsOpen(name parser.Identifier) (ternary.Value, error) 
 }
 
 func (list CursorMapList) IsInRange(name parser.Identifier) (ternary.Value, error) {
+	var result ternary.Value
+	var err error
+
 	for _, m := range list {
-		if ok, err := m.IsInRange(name); err == nil {
-			return ok, nil
+		result, err = m.IsInRange(name)
+		if err == nil {
+			return result, nil
+		}
+		if _, ok := err.(*UndefinedCursorError); !ok {
+			return ternary.FALSE, err
 		}
 	}
 	return ternary.FALSE, NewUndefinedCursorError(name)

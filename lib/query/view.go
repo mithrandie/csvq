@@ -48,7 +48,7 @@ func (l AliasMapList) Get(alias parser.Identifier) (path string, err error) {
 	return
 }
 
-func (l AliasMapList) CreateChild() AliasMapList {
+func (l AliasMapList) CreateNode() AliasMapList {
 	list := make(AliasMapList, len(l)+1)
 	list[0] = AliasMap{}
 	for i := 0; i < len(l); i++ {

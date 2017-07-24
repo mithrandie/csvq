@@ -45,6 +45,449 @@ var selectQueryForCursorQueryErrorTest parser.SelectQuery = parser.SelectQuery{
 	},
 }
 
+var cursorMapListDeclareTests = []struct {
+	Name   string
+	Expr   parser.CursorDeclaration
+	Result CursorMapList
+	Error  string
+}{
+	{
+		Name: "CursorMapList Declare",
+		Expr: parser.CursorDeclaration{
+			Cursor: parser.Identifier{Literal: "cur"},
+			Query:  selectQueryForCursorTest,
+		},
+		Result: CursorMapList{
+			{
+				"CUR": &Cursor{
+					query: selectQueryForCursorTest,
+				},
+			},
+			{},
+		},
+	},
+}
+
+func TestCursorMapList_Declare(t *testing.T) {
+	list := CursorMapList{
+		{},
+		{},
+	}
+
+	for _, v := range cursorMapListDeclareTests {
+		err := list.Declare(v.Expr)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(list, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, list, v.Result)
+		}
+	}
+}
+
+var cursorMapListDisposeTests = []struct {
+	Name    string
+	CurName parser.Identifier
+	Result  CursorMapList
+	Error   string
+}{
+	{
+		Name:    "CursorMapList Dispose",
+		CurName: parser.Identifier{Literal: "cur"},
+		Result: CursorMapList{
+			{},
+			{},
+		},
+	},
+	{
+		Name:    "CursorMapList Dispose Undefined Error",
+		CurName: parser.Identifier{Literal: "notexist"},
+		Error:   "[L:- C:-] cursor notexist is undefined",
+	},
+}
+
+func TestCursorMapList_Dispose(t *testing.T) {
+	list := CursorMapList{
+		{},
+		{
+			"CUR": &Cursor{
+				query: selectQueryForCursorTest,
+			},
+		},
+	}
+
+	for _, v := range cursorMapListDisposeTests {
+		err := list.Dispose(v.CurName)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(list, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, list, v.Result)
+		}
+	}
+}
+
+var cursorMapListOpenTests = []struct {
+	Name    string
+	CurName parser.Identifier
+	Result  CursorMapList
+	Error   string
+}{
+	{
+		Name:    "CursorMapList Open",
+		CurName: parser.Identifier{Literal: "cur"},
+		Result: CursorMapList{
+			{},
+			CursorMap{
+				"CUR": &Cursor{
+					query: selectQueryForCursorTest,
+					view: &View{
+						Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							NewRecordWithoutId([]parser.Primary{
+								parser.NewString("1"),
+								parser.NewString("str1"),
+							}),
+							NewRecordWithoutId([]parser.Primary{
+								parser.NewString("2"),
+								parser.NewString("str2"),
+							}),
+							NewRecordWithoutId([]parser.Primary{
+								parser.NewString("3"),
+								parser.NewString("str3"),
+							}),
+						},
+						FileInfo: &FileInfo{
+							Path:      GetTestFilePath("table1.csv"),
+							Delimiter: ',',
+							NoHeader:  false,
+							Encoding:  cmd.UTF8,
+							LineBreak: cmd.LF,
+						},
+					},
+					index: -1,
+				},
+			},
+		},
+	},
+	{
+		Name:    "CursorMapList Open Undefined Error",
+		CurName: parser.Identifier{Literal: "notexist"},
+		Error:   "[L:- C:-] cursor notexist is undefined",
+	},
+	{
+		Name:    "CursorMapList Open Open Error",
+		CurName: parser.Identifier{Literal: "cur"},
+		Error:   "[L:- C:-] cursor cur is already open",
+	},
+}
+
+func TestCursorMapList_Open(t *testing.T) {
+	initFlag()
+	tf := cmd.GetFlags()
+	tf.Repository = TestDir
+
+	list := CursorMapList{
+		{},
+		{
+			"CUR": &Cursor{
+				query: selectQueryForCursorTest,
+			},
+		},
+	}
+
+	for _, v := range cursorMapListOpenTests {
+		ViewCache.Clear()
+
+		err := list.Open(v.CurName, NewEmptyFilter())
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(list, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, list, v.Result)
+		}
+	}
+}
+
+var cursorMapListCloseTests = []struct {
+	Name    string
+	CurName parser.Identifier
+	Result  CursorMapList
+	Error   string
+}{
+	{
+		Name:    "CursorMapList Close",
+		CurName: parser.Identifier{Literal: "cur"},
+		Result: CursorMapList{
+			{},
+			CursorMap{
+				"CUR": &Cursor{
+					query: selectQueryForCursorTest,
+				},
+			},
+		},
+	},
+	{
+		Name:    "CursorMapList Close Undefined Error",
+		CurName: parser.Identifier{Literal: "notexist"},
+		Error:   "[L:- C:-] cursor notexist is undefined",
+	},
+}
+
+func TestCursorMapList_Close(t *testing.T) {
+	initFlag()
+	tf := cmd.GetFlags()
+	tf.Repository = TestDir
+
+	list := CursorMapList{
+		{},
+		{
+			"CUR": &Cursor{
+				query: selectQueryForCursorTest,
+			},
+		},
+	}
+
+	ViewCache.Clear()
+	list[1]["CUR"].Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+
+	for _, v := range cursorMapListCloseTests {
+		err := list.Close(v.CurName)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(list, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, list, v.Result)
+		}
+	}
+}
+
+var cursorMapListFetchTests = []struct {
+	Name     string
+	CurName  parser.Identifier
+	Position int
+	Number   int
+	Result   []parser.Primary
+	Error    string
+}{
+	{
+		Name:     "CursorMapList Fetch",
+		CurName:  parser.Identifier{Literal: "cur"},
+		Position: parser.NEXT,
+		Result: []parser.Primary{
+			parser.NewString("1"),
+			parser.NewString("str1"),
+		},
+	},
+	{
+		Name:     "CursorMapList Fetch Undefined Error",
+		CurName:  parser.Identifier{Literal: "notexist"},
+		Position: parser.NEXT,
+		Error:    "[L:- C:-] cursor notexist is undefined",
+	},
+	{
+		Name:     "CursorMapList Fetch Closed Error",
+		CurName:  parser.Identifier{Literal: "cur2"},
+		Position: parser.NEXT,
+		Error:    "[L:- C:-] cursor cur2 is closed",
+	},
+}
+
+func TestCursorMapList_Fetch(t *testing.T) {
+	initFlag()
+	tf := cmd.GetFlags()
+	tf.Repository = TestDir
+
+	list := CursorMapList{
+		{},
+		{
+			"CUR": &Cursor{
+				query: selectQueryForCursorTest,
+			},
+			"CUR2": &Cursor{
+				query: selectQueryForCursorTest,
+			},
+		},
+	}
+
+	ViewCache.Clear()
+	list[1]["CUR"].Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+
+	for _, v := range cursorMapListFetchTests {
+		result, err := list.Fetch(v.CurName, v.Position, v.Number)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(result, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
+		}
+	}
+}
+
+var cursorMapListIsOpenTests = []struct {
+	Name    string
+	CurName parser.Identifier
+	Result  ternary.Value
+	Error   string
+}{
+	{
+		Name:    "CursorMapList IsOpen",
+		CurName: parser.Identifier{Literal: "cur"},
+		Result:  ternary.TRUE,
+	},
+	{
+		Name:    "CursorMapList IsOpen Undefined Error",
+		CurName: parser.Identifier{Literal: "notexist"},
+		Error:   "[L:- C:-] cursor notexist is undefined",
+	},
+}
+
+func TestCursorMapList_IsOpen(t *testing.T) {
+	initFlag()
+	tf := cmd.GetFlags()
+	tf.Repository = TestDir
+
+	list := CursorMapList{
+		{},
+		{
+			"CUR": &Cursor{
+				query: selectQueryForCursorTest,
+			},
+		},
+	}
+
+	ViewCache.Clear()
+	list[1]["CUR"].Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+
+	for _, v := range cursorMapListIsOpenTests {
+		result, err := list.IsOpen(v.CurName)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if result != v.Result {
+			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
+		}
+	}
+}
+
+var cursorMapListIsInRangeTests = []struct {
+	Name    string
+	CurName parser.Identifier
+	Index   int
+	Result  ternary.Value
+	Error   string
+}{
+	{
+		Name:    "CursorMapList Is In Range UNKNOWN",
+		CurName: parser.Identifier{Literal: "cur"},
+		Result:  ternary.UNKNOWN,
+	},
+	{
+		Name:    "CursorMap Is In Range Not Open Error",
+		CurName: parser.Identifier{Literal: "cur2"},
+		Error:   "[L:- C:-] cursor cur2 is closed",
+	},
+	{
+		Name:    "CursorMap Is In Range Undefined Error",
+		CurName: parser.Identifier{Literal: "notexist"},
+		Error:   "[L:- C:-] cursor notexist is undefined",
+	},
+}
+
+func TestCursorMapList_IsInRange(t *testing.T) {
+	initFlag()
+	tf := cmd.GetFlags()
+	tf.Repository = TestDir
+
+	list := CursorMapList{
+		{},
+		{
+			"CUR": &Cursor{
+				query: selectQueryForCursorTest,
+			},
+			"CUR2": &Cursor{
+				query: selectQueryForCursorTest,
+			},
+		},
+	}
+
+	ViewCache.Clear()
+	list[1]["CUR"].Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+
+	for _, v := range cursorMapListIsInRangeTests {
+		result, err := list.IsInRange(v.CurName)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if result != v.Result {
+			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
+		}
+	}
+}
+
 var cursorMapDeclareTests = []struct {
 	Name   string
 	Expr   parser.CursorDeclaration

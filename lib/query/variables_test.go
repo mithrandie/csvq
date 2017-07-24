@@ -146,3 +146,41 @@ func TestVariables_Substitute(t *testing.T) {
 		}
 	}
 }
+
+var variablesDisposeTests = []variableTests{
+	{
+		Name:   "Dispose Variable",
+		Expr:   parser.Variable{Name: "var1"},
+		Result: Variables{},
+	},
+	{
+		Name:  "Dispose Variable Undefined Error",
+		Expr:  parser.Variable{Name: "var2"},
+		Error: "[L:- C:-] variable var2 is undefined",
+	},
+}
+
+func TestVariables_Dispose(t *testing.T) {
+	vars := Variables{
+		"var1": parser.NewInteger(1),
+	}
+
+	for _, v := range variablesDisposeTests {
+		err := vars.Dispose(v.Expr.(parser.Variable))
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(vars, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, vars, v.Result)
+		}
+	}
+}

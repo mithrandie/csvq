@@ -403,9 +403,17 @@ variable_statement
     {
         $$ = VariableDeclaration{Assignments:$2}
     }
+    | DECLARE variable_assignments statement_terminal
+    {
+        $$ = VariableDeclaration{Assignments:$2}
+    }
     | variable_substitution statement_terminal
     {
         $$ = $1
+    }
+    | DISPOSE variable statement_terminal
+    {
+        $$ = DisposeVariable{Variable:$2}
     }
 
 transaction_statement

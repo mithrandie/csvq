@@ -22,7 +22,7 @@ func Calc(expr string) error {
 	selectEntity, _ := program[0].(parser.SelectQuery).SelectEntity.(parser.SelectEntity)
 
 	view := query.NewView()
-	err = view.Load(selectEntity.FromClause.(parser.FromClause), query.NewEmptyFilter().CreateChild())
+	err = view.Load(selectEntity.FromClause.(parser.FromClause), query.NewEmptyFilter().CreateNode())
 	if err != nil {
 		if appErr, ok := err.(query.AppError); ok {
 			return errors.New(appErr.ErrorMessage())

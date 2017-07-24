@@ -58,6 +58,36 @@ func TestHeader_TableColumns(t *testing.T) {
 	}
 }
 
+func TestHeader_TableColumnNames(t *testing.T) {
+	h := Header{
+		{
+			Reference: "t1",
+			Column:    "c1",
+			Alias:     "a1",
+			FromTable: true,
+		},
+		{
+			Reference: "t1",
+			Column:    "c2",
+			Alias:     "a3",
+			FromTable: false,
+		},
+		{
+			Column:    "c3",
+			FromTable: true,
+		},
+	}
+	expect := []string{
+		"c1",
+		"c3",
+	}
+
+	result := h.TableColumnNames()
+	if !reflect.DeepEqual(result, expect) {
+		t.Errorf("column names = %s, want %s for %#v", result, expect, h)
+	}
+}
+
 var headerContainsTests = []struct {
 	Ref    parser.FieldReference
 	Result int

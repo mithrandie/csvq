@@ -62,7 +62,7 @@ func RowNumber(view *View, fn parser.AnalyticFunction) error {
 
 	partitions := partitionValues{}
 
-	filter := NewFilterForLoop(view, view.ParentFilter)
+	filter := NewFilterForSequentialEvaluation(view, view.ParentFilter)
 	for i := range view.Records {
 		filter.Records[0].RecordIndex = i
 		partitionValues, err := filter.evalValues(fn.AnalyticClause.PartitionValues())
@@ -96,7 +96,7 @@ func Rank(view *View, fn parser.AnalyticFunction) error {
 
 	partitions := partitionValues{}
 
-	filter := NewFilterForLoop(view, view.ParentFilter)
+	filter := NewFilterForSequentialEvaluation(view, view.ParentFilter)
 	for i := range view.Records {
 		filter.Records[0].RecordIndex = i
 		partitionValues, err := filter.evalValues(fn.AnalyticClause.PartitionValues())
@@ -140,7 +140,7 @@ func DenseRank(view *View, fn parser.AnalyticFunction) error {
 
 	partitions := partitionValues{}
 
-	filter := NewFilterForLoop(view, view.ParentFilter)
+	filter := NewFilterForSequentialEvaluation(view, view.ParentFilter)
 	for i := range view.Records {
 		filter.Records[0].RecordIndex = i
 		partitionValues, err := filter.evalValues(fn.AnalyticClause.PartitionValues())

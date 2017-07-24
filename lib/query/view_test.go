@@ -727,7 +727,7 @@ func TestView_Load(t *testing.T) {
 		if reflect.DeepEqual(v.Filter, Filter{}) {
 			v.Filter = NewEmptyFilter()
 		}
-		err := view.Load(v.From, v.Filter.CreateChild())
+		err := view.Load(v.From, v.Filter.CreateNode())
 
 		if 0 < len(v.Stdin) {
 			os.Stdin = oldStdin

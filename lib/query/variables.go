@@ -33,6 +33,15 @@ func (list VariablesList) Substitute(expr parser.VariableSubstitution, filter Fi
 	return
 }
 
+func (list VariablesList) Dispose(expr parser.Variable) error {
+	for _, v := range list {
+		if err := v.Dispose(expr); err == nil {
+			return nil
+		}
+	}
+	return NewUndefinedVariableError(expr)
+}
+
 type Variables map[string]parser.Primary
 
 func (v Variables) Add(variable parser.Variable, value parser.Primary) error {
@@ -58,10 +67,12 @@ func (v Variables) Get(variable parser.Variable) (parser.Primary, error) {
 	return nil, NewUndefinedVariableError(variable)
 }
 
-func (v Variables) Delete(key string) {
-	if _, ok := v[key]; ok {
-		delete(v, key)
+func (v Variables) Dispose(variable parser.Variable) error {
+	if _, ok := v[variable.Name]; !ok {
+		return NewUndefinedVariableError(variable)
 	}
+	delete(v, variable.Name)
+	return nil
 }
 
 func (v Variables) Declare(declaration parser.VariableDeclaration, filter Filter) error {

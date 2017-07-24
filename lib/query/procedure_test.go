@@ -34,11 +34,63 @@ var procedureExecuteStatementTests = []struct {
 		Result: []Result{},
 	},
 	{
+		Input: parser.VariableDeclaration{
+			Assignments: []parser.Expression{
+				parser.VariableAssignment{
+					Variable: parser.Variable{Name: "@var2"},
+				},
+			},
+		},
+		Result: []Result{},
+	},
+	{
+		Input: parser.VariableDeclaration{
+			Assignments: []parser.Expression{
+				parser.VariableAssignment{
+					Variable: parser.Variable{Name: "@var3"},
+				},
+			},
+		},
+		Result: []Result{},
+	},
+	{
+		Input: parser.VariableDeclaration{
+			Assignments: []parser.Expression{
+				parser.VariableAssignment{
+					Variable: parser.Variable{Name: "@var4"},
+				},
+			},
+		},
+		Result: []Result{},
+	},
+	{
 		Input: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "@var1"},
 			Value:    parser.NewInteger(1),
 		},
 		Result: []Result{},
+	},
+	{
+		Input: parser.Print{
+			Value: parser.Variable{Name: "@var1"},
+		},
+		Logs: []string{
+			"1",
+		},
+	},
+	{
+		Input: parser.DisposeVariable{
+			Variable: parser.Variable{Name: "@var4"},
+		},
+	},
+	{
+		Input: parser.VariableDeclaration{
+			Assignments: []parser.Expression{
+				parser.VariableAssignment{
+					Variable: parser.Variable{Name: "@var4"},
+				},
+			},
+		},
 	},
 	{
 		Input: parser.FunctionDeclaration{
@@ -62,6 +114,129 @@ var procedureExecuteStatementTests = []struct {
 		},
 		Logs: []string{
 			"1",
+		},
+	},
+	{
+		Input: parser.CursorDeclaration{
+			Cursor: parser.Identifier{Literal: "cur"},
+			Query:  selectQueryForCursorTest,
+		},
+	},
+	{
+		Input: parser.OpenCursor{
+			Cursor: parser.Identifier{Literal: "cur"},
+		},
+	},
+	{
+		Input: parser.FetchCursor{
+			Cursor: parser.Identifier{Literal: "cur"},
+			Position: parser.FetchPosition{
+				Position: parser.Token{Token: parser.NEXT, Literal: "next"},
+			},
+			Variables: []parser.Variable{
+				{Name: "@var2"},
+				{Name: "@var3"},
+			},
+		},
+	},
+	{
+		Input: parser.Print{
+			Value: parser.Variable{Name: "@var2"},
+		},
+		Logs: []string{
+			"'1'",
+		},
+	},
+	{
+		Input: parser.Print{
+			Value: parser.Variable{Name: "@var3"},
+		},
+		Logs: []string{
+			"'str1'",
+		},
+	},
+	{
+		Input: parser.CloseCursor{
+			Cursor: parser.Identifier{Literal: "cur"},
+		},
+	},
+	{
+		Input: parser.DisposeCursor{
+			Cursor: parser.Identifier{Literal: "cur"},
+		},
+	},
+	{
+		Input: parser.TableDeclaration{
+			Table: parser.Identifier{Literal: "tbl"},
+			Fields: []parser.Expression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "column2"},
+			},
+			Query: parser.SelectQuery{
+				SelectEntity: parser.SelectEntity{
+					SelectClause: parser.SelectClause{
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.NewInteger(1)},
+							parser.Field{Object: parser.NewInteger(2)},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: parser.SelectQuery{
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.Expression{
+						parser.Field{
+							Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+						},
+						parser.Field{
+							Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+						},
+					},
+				},
+				FromClause: parser.FromClause{
+					Tables: []parser.Expression{
+						parser.Table{Object: parser.Identifier{Literal: "tbl"}},
+					},
+				},
+			},
+		},
+		Result: []Result{
+			{
+				Type: SELECT,
+				View: &View{
+					FileInfo: &FileInfo{
+						Path:      "tbl",
+						Temporary: true,
+					},
+					Header: []HeaderField{
+						{
+							Reference: "tbl",
+							Column:    "column1",
+							FromTable: true,
+						},
+						{
+							Reference: "tbl",
+							Column:    "column2",
+							FromTable: true,
+						},
+					},
+					Records: Records{
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewInteger(1),
+							parser.NewInteger(2),
+						}),
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: parser.DisposeTable{
+			Table: parser.Identifier{Literal: "tbl"},
 		},
 	},
 	{
@@ -109,10 +284,10 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.VariableSubstitution{
-			Variable: parser.Variable{Name: "@var2"},
+			Variable: parser.Variable{Name: "@var9"},
 			Value:    parser.NewInteger(1),
 		},
-		Error: "[L:- C:-] variable @var2 is undefined",
+		Error: "[L:- C:-] variable @var9 is undefined",
 	},
 	{
 		Input: parser.InsertQuery{

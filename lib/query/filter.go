@@ -55,7 +55,7 @@ func NewFilterForRecord(view *View, recordIndex int, parentFilter Filter) Filter
 	return f.Merge(parentFilter)
 }
 
-func NewFilterForLoop(view *View, parentFilter Filter) Filter {
+func NewFilterForSequentialEvaluation(view *View, parentFilter Filter) Filter {
 	return Filter{
 		Records: []FilterRecord{
 			{
@@ -79,14 +79,14 @@ func (f Filter) Merge(filter Filter) Filter {
 	}
 }
 
-func (f Filter) CreateChild() Filter {
+func (f Filter) CreateNode() Filter {
 	return Filter{
 		Records:          f.Records,
 		VariablesList:    f.VariablesList,
 		TempViewsList:    f.TempViewsList,
 		CursorsList:      f.CursorsList,
 		InlineTables:     f.InlineTables.Copy(),
-		AliasesList:      f.AliasesList.CreateChild(),
+		AliasesList:      f.AliasesList.CreateNode(),
 		RecursiveTable:   f.RecursiveTable,
 		RecursiveTmpView: f.RecursiveTmpView,
 	}
@@ -124,10 +124,10 @@ func (f Filter) Evaluate(expr parser.Expression) (parser.Primary, error) {
 			primary, err = f.evalIs(expr.(parser.Is))
 		case parser.Between:
 			primary, err = f.evalBetween(expr.(parser.Between))
-		case parser.In:
-			primary, err = f.evalIn(expr.(parser.In))
 		case parser.Like:
 			primary, err = f.evalLike(expr.(parser.Like))
+		case parser.In:
+			primary, err = f.evalIn(expr.(parser.In))
 		case parser.Any:
 			primary, err = f.evalAny(expr.(parser.Any))
 		case parser.All:
@@ -555,7 +555,7 @@ func (f Filter) evalAggregateFunction(expr parser.AggregateFunction) (parser.Pri
 	view := NewViewFromGroupedRecord(f.Records[0])
 
 	list := make([]parser.Primary, view.RecordLen())
-	filter := NewFilterForLoop(view, f)
+	filter := NewFilterForSequentialEvaluation(view, f)
 	for i := 0; i < view.RecordLen(); i++ {
 		filter.Records[0].RecordIndex = i
 		p, err := filter.Evaluate(arg)
@@ -598,7 +598,7 @@ func (f Filter) evalGroupConcat(expr parser.GroupConcat) (parser.Primary, error)
 	}
 
 	list := []string{}
-	filter := NewFilterForLoop(view, f)
+	filter := NewFilterForSequentialEvaluation(view, f)
 	for i := 0; i < view.RecordLen(); i++ {
 		filter.Records[0].RecordIndex = i
 		p, err := filter.Evaluate(arg)
