@@ -334,8 +334,8 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.Printf{
+			Format: "value: %s",
 			Values: []parser.Expression{
-				parser.NewString("value: %s"),
 				parser.NewInteger(12345),
 			},
 		},

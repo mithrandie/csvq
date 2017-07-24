@@ -585,9 +585,13 @@ command_statement
     {
         $$ = Print{Value: $2}
     }
-    | PRINTF values statement_terminal
+    | PRINTF STRING statement_terminal
     {
-        $$ = Printf{BaseExpr: NewBaseExpr($1), Values: $2}
+        $$ = Printf{BaseExpr: NewBaseExpr($1), Format: $2.Literal}
+    }
+    | PRINTF STRING ',' values statement_terminal
+    {
+        $$ = Printf{BaseExpr: NewBaseExpr($1), Format: $2.Literal, Values: $4}
     }
     | SOURCE STRING statement_terminal
     {

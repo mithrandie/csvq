@@ -121,7 +121,7 @@ var executeTests = []struct {
 	{
 		Name:  "Query Execution Error",
 		Input: "select from",
-		Error: "[L:1 C:8] syntax error: unexpected from",
+		Error: "[L:1 C:8] syntax error: unexpected FROM",
 	},
 }
 

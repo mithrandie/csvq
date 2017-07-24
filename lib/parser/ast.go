@@ -1433,6 +1433,7 @@ type Print struct {
 
 type Printf struct {
 	*BaseExpr
+	Format string
 	Values []Expression
 }
 

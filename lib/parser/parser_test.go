@@ -2502,8 +2502,18 @@ var parseTests = []struct {
 		Output: []Statement{
 			Printf{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Format:   "foo",
+			},
+		},
+	},
+	{
+		Input: "printf 'foo', 'bar'",
+		Output: []Statement{
+			Printf{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Format:   "foo",
 				Values: []Expression{
-					NewString("foo"),
+					NewString("bar"),
 				},
 			},
 		},
@@ -3071,9 +3081,25 @@ var parseTests = []struct {
 	{
 		Input:      "select select",
 		SourceFile: GetTestFilePath("dummy.sql"),
-		Error:      "syntax error: unexpected select",
+		Error:      "syntax error: unexpected SELECT",
 		ErrorLine:  1,
 		ErrorChar:  8,
+		ErrorFile:  GetTestFilePath("dummy.sql"),
+	},
+	{
+		Input:      "print 'foo' 'bar'",
+		SourceFile: GetTestFilePath("dummy.sql"),
+		Error:      "syntax error: unexpected STRING",
+		ErrorLine:  1,
+		ErrorChar:  13,
+		ErrorFile:  GetTestFilePath("dummy.sql"),
+	},
+	{
+		Input:      "print !=",
+		SourceFile: GetTestFilePath("dummy.sql"),
+		Error:      "syntax error: unexpected !=",
+		ErrorLine:  1,
+		ErrorChar:  7,
 		ErrorFile:  GetTestFilePath("dummy.sql"),
 	},
 }
