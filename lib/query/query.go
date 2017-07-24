@@ -43,24 +43,36 @@ var ViewCache = ViewMap{}
 var UserFunctions = UserDefinedFunctionMap{}
 var Results = []Result{}
 var Logs = []string{}
+var SelectLogs = []string{}
 
 func AddLog(log string) {
 	Logs = append(Logs, log)
+}
+
+func AddSelectLog(log string) {
+	SelectLogs = append(SelectLogs, log)
 }
 
 func ReadLog() string {
 	if len(Logs) < 1 {
 		return ""
 	}
-	lb := cmd.GetFlags().LineBreak
-	return strings.Join(Logs, lb.Value()) + lb.Value()
+	return strings.Join(Logs, "\n") + "\n"
 }
 
-func Execute(input string, sourceFile string) (string, error) {
+func ReadSelectLog() string {
+	if len(SelectLogs) < 1 {
+		return ""
+	}
+	lb := cmd.GetFlags().LineBreak
+	return strings.Join(SelectLogs, lb.Value()) + lb.Value()
+}
+
+func Execute(input string, sourceFile string) (string, string, error) {
 	statements, err := parser.Parse(input, sourceFile)
 	if err != nil {
 		syntaxErr := err.(*parser.SyntaxError)
-		return "", NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)
+		return "", "", NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)
 	}
 
 	Init()
@@ -72,7 +84,7 @@ func Execute(input string, sourceFile string) (string, error) {
 		err = proc.Commit()
 	}
 
-	return ReadLog(), err
+	return ReadLog(), ReadSelectLog(), err
 }
 
 func Init() {

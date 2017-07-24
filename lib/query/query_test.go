@@ -132,7 +132,7 @@ func TestExecute(t *testing.T) {
 
 	for _, v := range executeTests {
 		Logs = []string{}
-		out, err := Execute(v.Input, "")
+		log, _, err := Execute(v.Input, "")
 
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -147,8 +147,8 @@ func TestExecute(t *testing.T) {
 			continue
 		}
 
-		if out != v.Output {
-			t.Errorf("%s: output = %q, want %q", v.Name, out, v.Output)
+		if log != v.Output {
+			t.Errorf("%s: output = %q, want %q", v.Name, log, v.Output)
 		}
 
 		if 0 < len(v.UpdateFile) {

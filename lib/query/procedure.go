@@ -331,7 +331,12 @@ func (proc *Procedure) Commit() error {
 			if err != nil {
 				return err
 			}
-			AddLog(viewstr)
+
+			if 0 < len(flags.OutFile) {
+				AddSelectLog(viewstr)
+			} else {
+				AddLog(viewstr)
+			}
 		} else if result.FileInfo != nil {
 			//CREATE or UPDATE
 			switch result.Type {

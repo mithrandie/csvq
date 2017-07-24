@@ -6,27 +6,27 @@ import (
 )
 
 func Write(input string, sourceFile string) error {
-	var out string
+	var log string
+	var selectLog string
 	var err error
 
 	defer func() {
-		if 0 < len(out) {
-			cmd.ToStdout(out)
+		if 0 < len(log) {
+			cmd.ToStdout(log)
 		}
 	}()
 
-	out, err = query.Execute(input, sourceFile)
+	log, selectLog, err = query.Execute(input, sourceFile)
 	if err != nil {
 		return err
 	}
 
 	flags := cmd.GetFlags()
 
-	if 0 < len(flags.OutFile) {
-		if err = cmd.CreateFile(flags.OutFile, out); err != nil {
+	if 0 < len(flags.OutFile) && 0 < len(selectLog) {
+		if err = cmd.CreateFile(flags.OutFile, selectLog); err != nil {
 			return err
 		}
-		out = ""
 	}
 
 	return nil

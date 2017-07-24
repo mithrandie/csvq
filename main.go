@@ -84,7 +84,6 @@ func main() {
 				},
 				cli.StringFlag{
 					Name:  "format, f",
-					Value: "TEXT",
 					Usage: "output format. one of: CSV|TSV|JSON|TEXT",
 				},
 				cli.StringFlag{

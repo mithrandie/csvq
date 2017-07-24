@@ -72,12 +72,12 @@ func EncodeView(view *View, format cmd.Format, delimiter rune, withoutHeader boo
 	var err error
 
 	switch format {
-	case cmd.TEXT:
-		s = encodeText(view)
 	case cmd.CSV, cmd.TSV:
 		s = encodeCSV(view, string(delimiter), withoutHeader)
 	case cmd.JSON:
 		s = encodeJson(view)
+	default:
+		s = encodeText(view)
 	}
 
 	if encoding != cmd.UTF8 {
