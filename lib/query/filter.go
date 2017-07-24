@@ -13,24 +13,34 @@ type FilterRecord struct {
 }
 
 type Filter struct {
-	Records       []FilterRecord
-	VariablesList []Variables
-	InlineTables  InlineTables
-	AliasesList   AliasMapList
+	Records []FilterRecord
+
+	VariablesList VariablesList
+	TempViewsList TemporaryViewMapList
+	CursorsList   CursorMapList
+
+	InlineTables InlineTables
+	AliasesList  AliasMapList
 
 	RecursiveTable    *parser.InlineTable
 	RecursiveTmpView  *View
 	tmpViewIsAccessed bool
 }
 
-func NewFilter(variablesList []Variables) Filter {
+func NewFilter(variablesList VariablesList, tempViewsList TemporaryViewMapList, cursorsList CursorMapList) Filter {
 	return Filter{
 		VariablesList: variablesList,
+		TempViewsList: tempViewsList,
+		CursorsList:   cursorsList,
 	}
 }
 
 func NewEmptyFilter() Filter {
-	return NewFilter([]Variables{{}})
+	return NewFilter(
+		VariablesList{{}},
+		TemporaryViewMapList{{}},
+		CursorMapList{{}},
+	)
 }
 
 func NewFilterForRecord(view *View, recordIndex int, parentFilter Filter) Filter {
@@ -53,14 +63,18 @@ func NewFilterForLoop(view *View, parentFilter Filter) Filter {
 			},
 		},
 		VariablesList: parentFilter.VariablesList,
+		TempViewsList: parentFilter.TempViewsList,
+		CursorsList:   parentFilter.CursorsList,
 	}
 }
 
 func (f Filter) Merge(filter Filter) Filter {
 	return Filter{
 		Records:       append(f.Records, filter.Records...),
-		InlineTables:  f.InlineTables.Merge(filter.InlineTables),
 		VariablesList: filter.VariablesList,
+		TempViewsList: filter.TempViewsList,
+		CursorsList:   filter.CursorsList,
+		InlineTables:  f.InlineTables.Merge(filter.InlineTables),
 		AliasesList:   filter.AliasesList,
 	}
 }
@@ -69,6 +83,8 @@ func (f Filter) CreateChild() Filter {
 	return Filter{
 		Records:          f.Records,
 		VariablesList:    f.VariablesList,
+		TempViewsList:    f.TempViewsList,
+		CursorsList:      f.CursorsList,
 		InlineTables:     f.InlineTables.Copy(),
 		AliasesList:      f.AliasesList.CreateChild(),
 		RecursiveTable:   f.RecursiveTable,
@@ -133,9 +149,9 @@ func (f Filter) Evaluate(expr parser.Expression) (parser.Primary, error) {
 		case parser.UnaryLogic:
 			primary, err = f.evalUnaryLogic(expr.(parser.UnaryLogic))
 		case parser.Variable:
-			primary, err = f.evalVariable(expr.(parser.Variable))
+			primary, err = f.VariablesList.Get(expr.(parser.Variable))
 		case parser.VariableSubstitution:
-			primary, err = f.evalVariableSubstitution(expr.(parser.VariableSubstitution))
+			primary, err = f.VariablesList.Substitute(expr.(parser.VariableSubstitution), f)
 		case parser.CursorStatus:
 			primary, err = f.evalCursorStatus(expr.(parser.CursorStatus))
 		default:
@@ -686,41 +702,18 @@ func (f Filter) evalUnaryLogic(expr parser.UnaryLogic) (parser.Primary, error) {
 	return parser.NewTernary(t), nil
 }
 
-func (f Filter) evalVariable(expr parser.Variable) (value parser.Primary, err error) {
-	for _, v := range f.VariablesList {
-		if value, err = v.Get(expr); err == nil {
-			return
-		}
-	}
-	err = NewUndefinedVariableError(expr)
-	return
-}
-
-func (f Filter) evalVariableSubstitution(expr parser.VariableSubstitution) (value parser.Primary, err error) {
-	for _, v := range f.VariablesList {
-		if value, err = v.Substitute(expr, f); err == nil {
-			return
-		}
-		if _, ok := err.(*UndefinedVariableError); !ok {
-			return
-		}
-	}
-	err = NewUndefinedVariableError(expr.Variable)
-	return
-}
-
 func (f Filter) evalCursorStatus(expr parser.CursorStatus) (parser.Primary, error) {
 	var t ternary.Value
 	var err error
 
 	switch expr.Type {
 	case parser.OPEN:
-		t, err = Cursors.IsOpen(expr.Cursor)
+		t, err = f.CursorsList.IsOpen(expr.Cursor)
 		if err != nil {
 			return nil, err
 		}
 	case parser.RANGE:
-		t, err = Cursors.IsInRange(expr.Cursor)
+		t, err = f.CursorsList.IsInRange(expr.Cursor)
 		if err != nil {
 			return nil, err
 		}

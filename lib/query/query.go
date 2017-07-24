@@ -40,7 +40,6 @@ type Result struct {
 }
 
 var ViewCache = ViewMap{}
-var Cursors = CursorMap{}
 var UserFunctions = UserDefinedFunctionMap{}
 var Results = []Result{}
 var Logs = []string{}
@@ -99,7 +98,7 @@ func FetchCursor(name parser.Identifier, fetchPosition parser.Expression, vars [
 		}
 	}
 
-	primaries, err := Cursors.Fetch(name, position, number)
+	primaries, err := filter.CursorsList.Fetch(name, position, number)
 	if err != nil {
 		return false, err
 	}
@@ -124,7 +123,7 @@ func FetchCursor(name parser.Identifier, fetchPosition parser.Expression, vars [
 }
 
 func DeclareTable(expr parser.TableDeclaration, filter Filter) error {
-	if ViewCache.Exists(expr.Table.Literal) {
+	if filter.TempViewsList.HasView(expr.Table.Literal) {
 		return NewTemporaryTableRedeclaredError(expr.Table)
 	}
 
@@ -164,7 +163,7 @@ func DeclareTable(expr parser.TableDeclaration, filter Filter) error {
 		Temporary: true,
 	}
 
-	ViewCache.Set(view)
+	filter.TempViewsList.Set(view)
 
 	return err
 }
@@ -367,7 +366,11 @@ func Insert(query parser.InsertQuery, parentFilter Filter) (*View, error) {
 
 	view.ParentFilter = Filter{}
 
-	ViewCache.Replace(view)
+	if view.FileInfo.Temporary {
+		filter.TempViewsList.Replace(view)
+	} else {
+		ViewCache.Replace(view)
+	}
 
 	return view, nil
 }
@@ -457,7 +460,11 @@ func Update(query parser.UpdateQuery, parentFilter Filter) ([]*View, error) {
 		v.Fix()
 		v.OperatedRecords = len(updatedIndices[k])
 
-		ViewCache.Replace(v)
+		if v.FileInfo.Temporary {
+			filter.TempViewsList.Replace(v)
+		} else {
+			ViewCache.Replace(v)
+		}
 
 		views = append(views, v)
 	}
@@ -541,7 +548,11 @@ func Delete(query parser.DeleteQuery, parentFilter Filter) ([]*View, error) {
 		v.Fix()
 		v.OperatedRecords = len(deletedIndices[k])
 
-		ViewCache.Replace(v)
+		if v.FileInfo.Temporary {
+			filter.TempViewsList.Replace(v)
+		} else {
+			ViewCache.Replace(v)
+		}
 
 		views = append(views, v)
 	}

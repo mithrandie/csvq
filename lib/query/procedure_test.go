@@ -745,15 +745,15 @@ func TestProcedure_While(t *testing.T) {
 		proc.Rollback()
 		Logs = []string{}
 
-		if _, err := proc.VariablesList[0].Get(parser.Variable{Name: "@while_test"}); err != nil {
-			proc.VariablesList[0].Add(parser.Variable{Name: "@while_test"}, parser.NewInteger(0))
+		if _, err := proc.Filter.VariablesList[0].Get(parser.Variable{Name: "@while_test"}); err != nil {
+			proc.Filter.VariablesList[0].Add(parser.Variable{Name: "@while_test"}, parser.NewInteger(0))
 		}
-		proc.VariablesList[0].Set(parser.Variable{Name: "@while_test"}, parser.NewInteger(0))
+		proc.Filter.VariablesList[0].Set(parser.Variable{Name: "@while_test"}, parser.NewInteger(0))
 
-		if _, err := proc.VariablesList[0].Get(parser.Variable{Name: "@while_test_count"}); err != nil {
-			proc.VariablesList[0].Add(parser.Variable{Name: "@while_test_count"}, parser.NewInteger(0))
+		if _, err := proc.Filter.VariablesList[0].Get(parser.Variable{Name: "@while_test_count"}); err != nil {
+			proc.Filter.VariablesList[0].Add(parser.Variable{Name: "@while_test_count"}, parser.NewInteger(0))
 		}
-		proc.VariablesList[0].Set(parser.Variable{Name: "@while_test_count"}, parser.NewInteger(0))
+		proc.Filter.VariablesList[0].Set(parser.Variable{Name: "@while_test_count"}, parser.NewInteger(0))
 
 		flow, err := proc.While(v.Stmt)
 		if err != nil {
@@ -929,18 +929,17 @@ func TestProcedure_WhileInCursor(t *testing.T) {
 	for _, v := range procedureWhileInCursorTests {
 		Logs = []string{}
 
-		Cursors = CursorMap{
+		proc.Filter.VariablesList[0] = Variables{
+			"@var1": parser.NewNull(),
+			"@var2": parser.NewNull(),
+		}
+		proc.Filter.CursorsList[0] = CursorMap{
 			"CUR": &Cursor{
 				query: selectQueryForCursorTest,
 			},
 		}
 		ViewCache.Clear()
-		Cursors.Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
-
-		proc.VariablesList[0] = Variables{
-			"@var1": parser.NewNull(),
-			"@var2": parser.NewNull(),
-		}
+		proc.Filter.CursorsList.Open(parser.Identifier{Literal: "cur"}, proc.Filter)
 
 		flow, err := proc.WhileInCursor(v.Stmt)
 		if err != nil {

@@ -4,6 +4,35 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
+type VariablesList []Variables
+
+func (list VariablesList) Declare(expr parser.VariableDeclaration, filter Filter) error {
+	return list[0].Declare(expr, filter)
+}
+
+func (list VariablesList) Get(expr parser.Variable) (value parser.Primary, err error) {
+	for _, v := range list {
+		if value, err = v.Get(expr); err == nil {
+			return
+		}
+	}
+	err = NewUndefinedVariableError(expr)
+	return
+}
+
+func (list VariablesList) Substitute(expr parser.VariableSubstitution, filter Filter) (value parser.Primary, err error) {
+	for _, v := range list {
+		if value, err = v.Substitute(expr, filter); err == nil {
+			return
+		}
+		if _, ok := err.(*UndefinedVariableError); !ok {
+			return
+		}
+	}
+	err = NewUndefinedVariableError(expr.Variable)
+	return
+}
+
 type Variables map[string]parser.Primary
 
 func (v Variables) Add(variable parser.Variable, value parser.Primary) error {

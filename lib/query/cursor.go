@@ -7,6 +7,66 @@ import (
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
+type CursorMapList []CursorMap
+
+func (list CursorMapList) Open(name parser.Identifier, filter Filter) error {
+	for _, m := range list {
+		if err := m.Open(name, filter); err == nil {
+			return nil
+		}
+	}
+	return NewUndefinedCursorError(name)
+}
+
+func (list CursorMapList) Close(name parser.Identifier) error {
+	for _, m := range list {
+		if err := m.Close(name); err == nil {
+			return nil
+		}
+	}
+	return NewUndefinedCursorError(name)
+}
+
+func (list CursorMapList) Fetch(name parser.Identifier, position int, number int) ([]parser.Primary, error) {
+	for _, m := range list {
+		if values, err := m.Fetch(name, position, number); err == nil {
+			return values, nil
+		}
+	}
+	return nil, NewUndefinedCursorError(name)
+}
+
+func (list CursorMapList) Dispose(name parser.Identifier) error {
+	for _, m := range list {
+		if err := m.Dispose(name); err == nil {
+			return nil
+		}
+	}
+	return NewUndefinedCursorError(name)
+}
+
+func (list CursorMapList) Declare(expr parser.CursorDeclaration) error {
+	return list[0].Declare(expr)
+}
+
+func (list CursorMapList) IsOpen(name parser.Identifier) (ternary.Value, error) {
+	for _, m := range list {
+		if ok, err := m.IsOpen(name); err == nil {
+			return ok, nil
+		}
+	}
+	return ternary.FALSE, NewUndefinedCursorError(name)
+}
+
+func (list CursorMapList) IsInRange(name parser.Identifier) (ternary.Value, error) {
+	for _, m := range list {
+		if ok, err := m.IsInRange(name); err == nil {
+			return ok, nil
+		}
+	}
+	return ternary.FALSE, NewUndefinedCursorError(name)
+}
+
 type CursorMap map[string]*Cursor
 
 func (m CursorMap) Declare(expr parser.CursorDeclaration) error {

@@ -350,7 +350,11 @@ func TestUserDefinedFunction_Execute(t *testing.T) {
 	vars := Variables{
 		"@var1": parser.NewInteger(1),
 	}
-	filter := NewFilter([]Variables{vars})
+	filter := NewFilter(
+		[]Variables{vars},
+		[]ViewMap{{}},
+		[]CursorMap{{}},
+	)
 
 	for _, v := range userDefinedFunctionExecuteTests {
 		result, err := v.Func.Execute(v.Args, filter)

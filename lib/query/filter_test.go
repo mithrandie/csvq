@@ -2606,9 +2606,13 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Variable",
-		Filter: NewFilter([]Variables{{
-			"@var1": parser.NewInteger(1),
-		}}),
+		Filter: NewFilter(
+			[]Variables{{
+				"@var1": parser.NewInteger(1),
+			}},
+			[]ViewMap{{}},
+			[]CursorMap{{}},
+		),
 		Expr: parser.Variable{
 			Name: "@var1",
 		},
@@ -2624,9 +2628,13 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Variable Substitution",
-		Filter: NewFilter([]Variables{{
-			"@var1": parser.NewInteger(1),
-		}}),
+		Filter: NewFilter(
+			[]Variables{{
+				"@var1": parser.NewInteger(1),
+			}},
+			[]ViewMap{{}},
+			[]CursorMap{{}},
+		),
 		Expr: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "@var1"},
 			Value:    parser.NewInteger(2),
@@ -2694,14 +2702,14 @@ func TestFilter_Evaluate(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDataDir
 
-	Cursors = CursorMap{
+	cursors := CursorMap{
 		"CUR": &Cursor{
 			query: selectQueryForCursorTest,
 		},
 	}
 	ViewCache.Clear()
-	Cursors.Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
-	Cursors.Fetch(parser.Identifier{Literal: "cur"}, parser.NEXT, 0)
+	cursors.Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+	cursors.Fetch(parser.Identifier{Literal: "cur"}, parser.NEXT, 0)
 
 	UserFunctions = UserDefinedFunctionMap{
 		"USERFUNC": &UserDefinedFunction{
@@ -2717,6 +2725,7 @@ func TestFilter_Evaluate(t *testing.T) {
 
 	for _, v := range filterEvaluateTests {
 		ViewCache.Clear()
+		v.Filter.CursorsList = append(v.Filter.CursorsList, cursors)
 		result, err := v.Filter.Evaluate(v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {

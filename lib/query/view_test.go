@@ -111,7 +111,9 @@ var viewLoadTests = []struct {
 				},
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{},
+				VariablesList: []Variables{{}},
+				TempViewsList: []ViewMap{{}},
+				CursorsList:   []CursorMap{{}},
 				InlineTables:  InlineTables{},
 				AliasesList:   AliasMapList{{}},
 			},
@@ -147,7 +149,9 @@ var viewLoadTests = []struct {
 				Delimiter: ',',
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{},
+				VariablesList: []Variables{{}},
+				TempViewsList: []ViewMap{{}},
+				CursorsList:   []CursorMap{{}},
 				InlineTables:  InlineTables{},
 				AliasesList: AliasMapList{
 					{
@@ -174,8 +178,14 @@ var viewLoadTests = []struct {
 				Delimiter: ',',
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{},
-				InlineTables:  InlineTables{},
+				VariablesList: []Variables{{}},
+				TempViewsList: []ViewMap{
+					{
+						"STDIN": nil,
+					},
+				},
+				CursorsList:  []CursorMap{{}},
+				InlineTables: InlineTables{},
 				AliasesList: AliasMapList{
 					{
 						"STDIN": "STDIN",
@@ -229,7 +239,9 @@ var viewLoadTests = []struct {
 				}),
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{},
+				VariablesList: []Variables{{}},
+				TempViewsList: []ViewMap{{}},
+				CursorsList:   []CursorMap{{}},
 				InlineTables:  InlineTables{},
 				AliasesList: AliasMapList{
 					{
@@ -262,7 +274,9 @@ var viewLoadTests = []struct {
 				}),
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{},
+				VariablesList: []Variables{{}},
+				TempViewsList: []ViewMap{{}},
+				CursorsList:   []CursorMap{{}},
 				InlineTables:  InlineTables{},
 				AliasesList: AliasMapList{
 					{
@@ -348,7 +362,9 @@ var viewLoadTests = []struct {
 				}),
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{},
+				VariablesList: []Variables{{}},
+				TempViewsList: []ViewMap{{}},
+				CursorsList:   []CursorMap{{}},
 				InlineTables:  InlineTables{},
 				AliasesList: AliasMapList{
 					{
@@ -440,7 +456,9 @@ var viewLoadTests = []struct {
 				}),
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{},
+				VariablesList: []Variables{{}},
+				TempViewsList: []ViewMap{{}},
+				CursorsList:   []CursorMap{{}},
 				InlineTables:  InlineTables{},
 				AliasesList: AliasMapList{
 					{
@@ -496,7 +514,9 @@ var viewLoadTests = []struct {
 				}),
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{},
+				VariablesList: []Variables{{}},
+				TempViewsList: []ViewMap{{}},
+				CursorsList:   []CursorMap{{}},
 				InlineTables:  InlineTables{},
 				AliasesList: AliasMapList{
 					{
@@ -559,7 +579,9 @@ var viewLoadTests = []struct {
 				}),
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{},
+				VariablesList: []Variables{{}},
+				TempViewsList: []ViewMap{{}},
+				CursorsList:   []CursorMap{{}},
 				InlineTables:  InlineTables{},
 				AliasesList: AliasMapList{
 					{
@@ -663,7 +685,9 @@ var viewLoadTests = []struct {
 				}),
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{},
+				VariablesList: []Variables{{}},
+				TempViewsList: []ViewMap{{}},
+				CursorsList:   []CursorMap{{}},
 				InlineTables:  InlineTables{},
 				AliasesList: AliasMapList{
 					{
@@ -701,7 +725,7 @@ func TestView_Load(t *testing.T) {
 
 		view := NewView()
 		if reflect.DeepEqual(v.Filter, Filter{}) {
-			v.Filter = NewFilter([]Variables{})
+			v.Filter = NewEmptyFilter()
 		}
 		err := view.Load(v.From, v.Filter.CreateChild())
 
@@ -732,6 +756,27 @@ func TestView_Load(t *testing.T) {
 		}
 		view.FileInfo = nil
 		v.Result.FileInfo = nil
+
+		if !reflect.DeepEqual(view.ParentFilter.AliasesList, v.Result.ParentFilter.AliasesList) {
+			t.Errorf("%s: alias list = %q, want %q", v.Name, view.ParentFilter.AliasesList, v.Result.ParentFilter.AliasesList)
+		}
+		for i, tviews := range v.Result.ParentFilter.TempViewsList {
+			resultKeys := []string{}
+			for key := range tviews {
+				resultKeys = append(resultKeys, key)
+			}
+			viewKeys := []string{}
+			for key := range view.ParentFilter.TempViewsList[i] {
+				viewKeys = append(viewKeys, key)
+			}
+			if !reflect.DeepEqual(resultKeys, viewKeys) {
+				t.Errorf("%s: temp view list = %q, want %q", v.Name, view.ParentFilter.TempViewsList, v.Result.ParentFilter.TempViewsList)
+			}
+		}
+
+		view.ParentFilter = NewEmptyFilter()
+		v.Result.ParentFilter = NewEmptyFilter()
+
 		if !reflect.DeepEqual(view, v.Result) {
 			t.Errorf("%s: result = %s, want %s", v.Name, view, v.Result)
 		}
