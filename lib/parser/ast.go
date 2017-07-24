@@ -1216,6 +1216,11 @@ type VariableDeclaration struct {
 	Assignments []Expression
 }
 
+type DisposeVariable struct {
+	*BaseExpr
+	Variable Variable
+}
+
 type InsertQuery struct {
 	*BaseExpr
 	WithClause Expression
@@ -1433,6 +1438,7 @@ type Print struct {
 
 type Printf struct {
 	*BaseExpr
+	Format string
 	Values []Expression
 }
 

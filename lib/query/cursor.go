@@ -7,6 +7,86 @@ import (
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
+type CursorMapList []CursorMap
+
+func (list CursorMapList) Declare(expr parser.CursorDeclaration) error {
+	return list[0].Declare(expr)
+}
+
+func (list CursorMapList) Dispose(name parser.Identifier) error {
+	for _, m := range list {
+		if err := m.Dispose(name); err == nil {
+			return nil
+		}
+	}
+	return NewUndefinedCursorError(name)
+}
+
+func (list CursorMapList) Open(name parser.Identifier, filter Filter) error {
+	var err error
+
+	for _, m := range list {
+		err = m.Open(name, filter)
+		if err == nil {
+			return nil
+		}
+		if _, ok := err.(*UndefinedCursorError); !ok {
+			return err
+		}
+	}
+	return NewUndefinedCursorError(name)
+}
+
+func (list CursorMapList) Close(name parser.Identifier) error {
+	for _, m := range list {
+		if err := m.Close(name); err == nil {
+			return nil
+		}
+	}
+	return NewUndefinedCursorError(name)
+}
+
+func (list CursorMapList) Fetch(name parser.Identifier, position int, number int) ([]parser.Primary, error) {
+	var values []parser.Primary
+	var err error
+
+	for _, m := range list {
+		values, err = m.Fetch(name, position, number)
+		if err == nil {
+			return values, nil
+		}
+		if _, ok := err.(*UndefinedCursorError); !ok {
+			return nil, err
+		}
+	}
+	return nil, NewUndefinedCursorError(name)
+}
+
+func (list CursorMapList) IsOpen(name parser.Identifier) (ternary.Value, error) {
+	for _, m := range list {
+		if ok, err := m.IsOpen(name); err == nil {
+			return ok, nil
+		}
+	}
+	return ternary.FALSE, NewUndefinedCursorError(name)
+}
+
+func (list CursorMapList) IsInRange(name parser.Identifier) (ternary.Value, error) {
+	var result ternary.Value
+	var err error
+
+	for _, m := range list {
+		result, err = m.IsInRange(name)
+		if err == nil {
+			return result, nil
+		}
+		if _, ok := err.(*UndefinedCursorError); !ok {
+			return ternary.FALSE, err
+		}
+	}
+	return ternary.FALSE, NewUndefinedCursorError(name)
+}
+
 type CursorMap map[string]*Cursor
 
 func (m CursorMap) Declare(expr parser.CursorDeclaration) error {

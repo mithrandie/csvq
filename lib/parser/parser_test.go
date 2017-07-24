@@ -2079,6 +2079,27 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "declare @var1 := 1",
+		Output: []Statement{
+			VariableDeclaration{
+				Assignments: []Expression{
+					VariableAssignment{
+						Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 9}, Name: "@var1"},
+						Value:    NewInteger(1),
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "dispose @var1",
+		Output: []Statement{
+			DisposeVariable{
+				Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 9}, Name: "@var1"},
+			},
+		},
+	},
+	{
 		Input: "func('arg1', 'arg2')",
 		Output: []Statement{
 			Function{
@@ -2502,8 +2523,18 @@ var parseTests = []struct {
 		Output: []Statement{
 			Printf{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Format:   "foo",
+			},
+		},
+	},
+	{
+		Input: "printf 'foo', 'bar'",
+		Output: []Statement{
+			Printf{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Format:   "foo",
 				Values: []Expression{
-					NewString("foo"),
+					NewString("bar"),
 				},
 			},
 		},
@@ -3063,6 +3094,41 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select @var1 := @var2 + @var3",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []Expression{
+						Field{
+							Object: VariableSubstitution{
+								Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "@var1"},
+								Value: Arithmetic{
+									LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 17}, Name: "@var2"},
+									Operator: int('+'),
+									RHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 25}, Name: "@var3"},
+								},
+							},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input:     "select 1 = 1 = 1",
+		Error:     "syntax error: unexpected =",
+		ErrorLine: 1,
+		ErrorChar: 14,
+	},
+	{
+		Input:     "select 1 < 2 < 3",
+		Error:     "syntax error: unexpected <",
+		ErrorLine: 1,
+		ErrorChar: 14,
+	},
+	{
 		Input:     "select 'literal not terminated",
 		Error:     "literal not terminated",
 		ErrorLine: 1,
@@ -3071,9 +3137,25 @@ var parseTests = []struct {
 	{
 		Input:      "select select",
 		SourceFile: GetTestFilePath("dummy.sql"),
-		Error:      "syntax error: unexpected select",
+		Error:      "syntax error: unexpected SELECT",
 		ErrorLine:  1,
 		ErrorChar:  8,
+		ErrorFile:  GetTestFilePath("dummy.sql"),
+	},
+	{
+		Input:      "print 'foo' 'bar'",
+		SourceFile: GetTestFilePath("dummy.sql"),
+		Error:      "syntax error: unexpected STRING",
+		ErrorLine:  1,
+		ErrorChar:  13,
+		ErrorFile:  GetTestFilePath("dummy.sql"),
+	},
+	{
+		Input:      "print !=",
+		SourceFile: GetTestFilePath("dummy.sql"),
+		Error:      "syntax error: unexpected !=",
+		ErrorLine:  1,
+		ErrorChar:  7,
 		ErrorFile:  GetTestFilePath("dummy.sql"),
 	},
 }

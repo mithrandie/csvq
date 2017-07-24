@@ -57,9 +57,15 @@ func (fn *UserDefinedFunction) Execute(args []parser.Primary, filter Filter) (pa
 	proc := NewProcedure()
 	vars := Variables{}
 	for i, v := range fn.Parameters {
-		vars.Add(v, args[i])
+		if err := vars.Add(v, args[i]); err != nil {
+			return nil, err
+		}
 	}
-	proc.VariablesList = append([]Variables{vars}, filter.VariablesList...)
+	proc.Filter = NewFilter(
+		append([]Variables{vars}, filter.VariablesList...),
+		append([]ViewMap{{}}, filter.TempViewsList...),
+		append([]CursorMap{{}}, filter.CursorsList...),
+	)
 
 	if _, err := proc.Execute(fn.Statements); err != nil {
 		return nil, err

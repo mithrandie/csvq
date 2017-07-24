@@ -27,11 +27,7 @@ func Printf(expr parser.Printf, filter Filter) (string, error) {
 		args[i] = p
 	}
 
-	p := parser.PrimaryToString(args[0])
-	if parser.IsNull(p) {
-		return "", nil
-	}
-	format := []rune(p.(parser.String).Value())
+	format := expr.Format
 	str := []rune{}
 
 	escaped := false
@@ -40,11 +36,11 @@ func Printf(expr parser.Printf, filter Filter) (string, error) {
 		if escaped {
 			switch r {
 			case 's':
-				placeholderOrder++
 				if len(args) <= placeholderOrder {
 					return "", NewPrintfReplaceValueLengthError(expr)
 				}
 				str = append(str, []rune(args[placeholderOrder].String())...)
+				placeholderOrder++
 			case '%':
 				str = append(str, r)
 			default:
@@ -65,7 +61,7 @@ func Printf(expr parser.Printf, filter Filter) (string, error) {
 		str = append(str, '%')
 	}
 
-	if placeholderOrder < len(args)-1 {
+	if placeholderOrder < len(args) {
 		return "", NewPrintfReplaceValueLengthError(expr)
 	}
 

@@ -11,7 +11,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var version = "v0.4.3"
+var version = "v0.4.4"
 
 func main() {
 	cli.AppHelpTemplate = appHHelpTemplate
@@ -84,7 +84,6 @@ func main() {
 				},
 				cli.StringFlag{
 					Name:  "format, f",
-					Value: "TEXT",
 					Usage: "output format. one of: CSV|TSV|JSON|TEXT",
 				},
 				cli.StringFlag{

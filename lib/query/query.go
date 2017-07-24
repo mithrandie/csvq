@@ -40,28 +40,39 @@ type Result struct {
 }
 
 var ViewCache = ViewMap{}
-var Cursors = CursorMap{}
 var UserFunctions = UserDefinedFunctionMap{}
 var Results = []Result{}
 var Logs = []string{}
+var SelectLogs = []string{}
 
 func AddLog(log string) {
 	Logs = append(Logs, log)
+}
+
+func AddSelectLog(log string) {
+	SelectLogs = append(SelectLogs, log)
 }
 
 func ReadLog() string {
 	if len(Logs) < 1 {
 		return ""
 	}
-	lb := cmd.GetFlags().LineBreak
-	return strings.Join(Logs, lb.Value()) + lb.Value()
+	return strings.Join(Logs, "\n") + "\n"
 }
 
-func Execute(input string, sourceFile string) (string, error) {
+func ReadSelectLog() string {
+	if len(SelectLogs) < 1 {
+		return ""
+	}
+	lb := cmd.GetFlags().LineBreak
+	return strings.Join(SelectLogs, lb.Value()) + lb.Value()
+}
+
+func Execute(input string, sourceFile string) (string, string, error) {
 	statements, err := parser.Parse(input, sourceFile)
 	if err != nil {
 		syntaxErr := err.(*parser.SyntaxError)
-		return "", NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)
+		return "", "", NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)
 	}
 
 	Init()
@@ -73,7 +84,7 @@ func Execute(input string, sourceFile string) (string, error) {
 		err = proc.Commit()
 	}
 
-	return ReadLog(), err
+	return ReadLog(), ReadSelectLog(), err
 }
 
 func Init() {
@@ -99,7 +110,7 @@ func FetchCursor(name parser.Identifier, fetchPosition parser.Expression, vars [
 		}
 	}
 
-	primaries, err := Cursors.Fetch(name, position, number)
+	primaries, err := filter.CursorsList.Fetch(name, position, number)
 	if err != nil {
 		return false, err
 	}
@@ -124,7 +135,7 @@ func FetchCursor(name parser.Identifier, fetchPosition parser.Expression, vars [
 }
 
 func DeclareTable(expr parser.TableDeclaration, filter Filter) error {
-	if ViewCache.Exists(expr.Table.Literal) {
+	if filter.TempViewsList.HasView(expr.Table.Literal) {
 		return NewTemporaryTableRedeclaredError(expr.Table)
 	}
 
@@ -164,13 +175,13 @@ func DeclareTable(expr parser.TableDeclaration, filter Filter) error {
 		Temporary: true,
 	}
 
-	ViewCache.Set(view)
+	filter.TempViewsList.Set(view)
 
 	return err
 }
 
 func Select(query parser.SelectQuery, parentFilter Filter) (*View, error) {
-	filter := parentFilter.CreateChild()
+	filter := parentFilter.CreateNode()
 
 	if query.WithClause != nil {
 		if err := filter.LoadInlineTable(query.WithClause.(parser.WithClause)); err != nil {
@@ -309,7 +320,7 @@ func selectSetForRecursion(view *View, set parser.SelectSet, filter Filter) erro
 		filter.RecursiveTmpView = view
 	}
 
-	rview, err := selectSetEntity(set.RHS, filter.CreateChild())
+	rview, err := selectSetEntity(set.RHS, filter.CreateNode())
 	if err != nil {
 		return err
 	}
@@ -336,7 +347,7 @@ func selectSetForRecursion(view *View, set parser.SelectSet, filter Filter) erro
 }
 
 func Insert(query parser.InsertQuery, parentFilter Filter) (*View, error) {
-	filter := parentFilter.CreateChild()
+	filter := parentFilter.CreateNode()
 
 	if query.WithClause != nil {
 		if err := filter.LoadInlineTable(query.WithClause.(parser.WithClause)); err != nil {
@@ -367,13 +378,17 @@ func Insert(query parser.InsertQuery, parentFilter Filter) (*View, error) {
 
 	view.ParentFilter = Filter{}
 
-	ViewCache.Replace(view)
+	if view.FileInfo.Temporary {
+		filter.TempViewsList.Replace(view)
+	} else {
+		ViewCache.Replace(view)
+	}
 
 	return view, nil
 }
 
 func Update(query parser.UpdateQuery, parentFilter Filter) ([]*View, error) {
-	filter := parentFilter.CreateChild()
+	filter := parentFilter.CreateNode()
 
 	if query.WithClause != nil {
 		if err := filter.LoadInlineTable(query.WithClause.(parser.WithClause)); err != nil {
@@ -412,7 +427,7 @@ func Update(query parser.UpdateQuery, parentFilter Filter) ([]*View, error) {
 		updatedIndices[table.Name().Literal] = []int{}
 	}
 
-	filterForLoop := NewFilterForLoop(view, filter)
+	filterForLoop := NewFilterForSequentialEvaluation(view, filter)
 	for i := range view.Records {
 		filterForLoop.Records[0].RecordIndex = i
 
@@ -457,7 +472,11 @@ func Update(query parser.UpdateQuery, parentFilter Filter) ([]*View, error) {
 		v.Fix()
 		v.OperatedRecords = len(updatedIndices[k])
 
-		ViewCache.Replace(v)
+		if v.FileInfo.Temporary {
+			filter.TempViewsList.Replace(v)
+		} else {
+			ViewCache.Replace(v)
+		}
 
 		views = append(views, v)
 	}
@@ -466,7 +485,7 @@ func Update(query parser.UpdateQuery, parentFilter Filter) ([]*View, error) {
 }
 
 func Delete(query parser.DeleteQuery, parentFilter Filter) ([]*View, error) {
-	filter := parentFilter.CreateChild()
+	filter := parentFilter.CreateNode()
 
 	if query.WithClause != nil {
 		if err := filter.LoadInlineTable(query.WithClause.(parser.WithClause)); err != nil {
@@ -541,7 +560,11 @@ func Delete(query parser.DeleteQuery, parentFilter Filter) ([]*View, error) {
 		v.Fix()
 		v.OperatedRecords = len(deletedIndices[k])
 
-		ViewCache.Replace(v)
+		if v.FileInfo.Temporary {
+			filter.TempViewsList.Replace(v)
+		} else {
+			ViewCache.Replace(v)
+		}
 
 		views = append(views, v)
 	}
@@ -591,7 +614,7 @@ func CreateTable(query parser.CreateTable) (*View, error) {
 }
 
 func AddColumns(query parser.AddColumns, parentFilter Filter) (*View, error) {
-	filter := parentFilter.CreateChild()
+	filter := parentFilter.CreateNode()
 
 	if query.Position == nil {
 		query.Position = parser.ColumnPosition{
@@ -695,7 +718,7 @@ func AddColumns(query parser.AddColumns, parentFilter Filter) (*View, error) {
 }
 
 func DropColumns(query parser.DropColumns, parentFilter Filter) (*View, error) {
-	filter := parentFilter.CreateChild()
+	filter := parentFilter.CreateNode()
 
 	view := NewView()
 	err := view.LoadFromIdentifier(query.Table, filter)
@@ -729,7 +752,7 @@ func DropColumns(query parser.DropColumns, parentFilter Filter) (*View, error) {
 }
 
 func RenameColumn(query parser.RenameColumn, parentFilter Filter) (*View, error) {
-	filter := parentFilter.CreateChild()
+	filter := parentFilter.CreateNode()
 
 	view := NewView()
 	err := view.LoadFromIdentifier(query.Table, filter)

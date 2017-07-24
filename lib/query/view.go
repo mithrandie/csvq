@@ -48,13 +48,69 @@ func (l AliasMapList) Get(alias parser.Identifier) (path string, err error) {
 	return
 }
 
-func (l AliasMapList) CreateChild() AliasMapList {
+func (l AliasMapList) CreateNode() AliasMapList {
 	list := make(AliasMapList, len(l)+1)
 	list[0] = AliasMap{}
 	for i := 0; i < len(l); i++ {
 		list[i+1] = l[i]
 	}
 	return list
+}
+
+type TemporaryViewMapList []ViewMap
+
+func (list TemporaryViewMapList) HasView(name string) bool {
+	for _, m := range list {
+		if m.HasTemporaryTable(name) {
+			return true
+		}
+	}
+	return false
+}
+
+func (list TemporaryViewMapList) Get(name parser.Identifier) (*View, error) {
+	for _, m := range list {
+		if view, err := m.Get(name); err == nil {
+			return view, nil
+		}
+	}
+	return nil, NewTableNotLoadedError(name)
+}
+
+func (list TemporaryViewMapList) GetWithInternalId(name parser.Identifier) (*View, error) {
+	for _, m := range list {
+		if view, err := m.GetWithInternalId(name); err == nil {
+			return view, nil
+		}
+	}
+	return nil, NewTableNotLoadedError(name)
+}
+
+func (list TemporaryViewMapList) Set(view *View) {
+	list[0].Set(view)
+}
+
+func (list TemporaryViewMapList) Replace(view *View) {
+	for _, m := range list {
+		if err := m.Replace(view); err == nil {
+			return
+		}
+	}
+}
+
+func (list TemporaryViewMapList) Dispose(name parser.Identifier) error {
+	for _, m := range list {
+		if err := m.DisposeTemporaryTable(name); err == nil {
+			return nil
+		}
+	}
+	return NewUndefinedTemporaryTableError(name)
+}
+
+func (list TemporaryViewMapList) Clear() {
+	for _, m := range list {
+		m.Clear()
+	}
 }
 
 type ViewMap map[string]*View
@@ -108,11 +164,13 @@ func (m ViewMap) Set(view *View) {
 	}
 }
 
-func (m ViewMap) Replace(view *View) {
+func (m ViewMap) Replace(view *View) error {
 	ufpath := strings.ToUpper(view.FileInfo.Path)
 	if ok := m.Exists(ufpath); ok {
 		m[ufpath] = view
+		return nil
 	}
+	return NewTableNotLoadedError(parser.Identifier{Literal: view.FileInfo.Path})
 }
 
 func (m ViewMap) DisposeTemporaryTable(table parser.Identifier) error {
@@ -283,16 +341,19 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 			Temporary: true,
 		}
 
-		if !ViewCache.Exists(fileInfo.Path) {
+		if !parentFilter.TempViewsList[len(parentFilter.TempViewsList)-1].Exists(fileInfo.Path) {
 			if !isReadableFromStdin() {
 				return nil, NewStdinEmptyError(table.Object.(parser.Stdin))
 			}
 
 			file := os.Stdin
 			defer file.Close()
-			if err := loadViewFromFile(file, fileInfo, table.Object.String()); err != nil {
+
+			loadView, err := loadViewFromFile(file, fileInfo, table.Object.String())
+			if err != nil {
 				return nil, err
 			}
+			parentFilter.TempViewsList[len(parentFilter.TempViewsList)-1].Set(loadView)
 		}
 		if err = parentFilter.AliasesList[0].Add(table.Name(), fileInfo.Path); err != nil {
 			return nil, err
@@ -300,9 +361,9 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 
 		pathIdent := parser.Identifier{Literal: table.Object.String()}
 		if useInternalId {
-			view, _ = ViewCache.GetWithInternalId(pathIdent)
+			view, _ = parentFilter.TempViewsList[len(parentFilter.TempViewsList)-1].GetWithInternalId(pathIdent)
 		} else {
-			view, _ = ViewCache.Get(pathIdent)
+			view, _ = parentFilter.TempViewsList[len(parentFilter.TempViewsList)-1].Get(pathIdent)
 		}
 		if !strings.EqualFold(table.Object.String(), table.Name().Literal) {
 			view.UpdateHeader(table.Name().Literal, nil)
@@ -324,11 +385,21 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 			}
 		} else {
 			var fileInfo *FileInfo
+			var commonTableName string
 
-			if ViewCache.HasTemporaryTable(tableIdentifier.Literal) {
+			if parentFilter.TempViewsList.HasView(tableIdentifier.Literal) {
 				fileInfo = &FileInfo{
 					Path:      tableIdentifier.Literal,
 					Temporary: true,
+				}
+
+				commonTableName = parser.FormatTableName(fileInfo.Path)
+
+				pathIdent := parser.Identifier{Literal: fileInfo.Path}
+				if useInternalId {
+					view, _ = parentFilter.TempViewsList.GetWithInternalId(pathIdent)
+				} else {
+					view, _ = parentFilter.TempViewsList.Get(pathIdent)
 				}
 			} else {
 				flags := cmd.GetFlags()
@@ -337,30 +408,34 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 				if err != nil {
 					return nil, err
 				}
+
+				commonTableName = parser.FormatTableName(fileInfo.Path)
+
+				if !ViewCache.Exists(fileInfo.Path) {
+					file, err := os.Open(fileInfo.Path)
+					if err != nil {
+						return nil, err
+					}
+					defer file.Close()
+					loadView, err := loadViewFromFile(file, fileInfo, commonTableName)
+					if err != nil {
+						return nil, NewCsvParsingError(tableIdentifier, fileInfo.Path, err.Error())
+					}
+					ViewCache.Set(loadView)
+				}
+
+				pathIdent := parser.Identifier{Literal: fileInfo.Path}
+				if useInternalId {
+					view, _ = ViewCache.GetWithInternalId(pathIdent)
+				} else {
+					view, _ = ViewCache.Get(pathIdent)
+				}
 			}
 
-			commonTableName := parser.FormatTableName(fileInfo.Path)
-
-			if !ViewCache.Exists(fileInfo.Path) {
-				file, err := os.Open(fileInfo.Path)
-				if err != nil {
-					return nil, err
-				}
-				defer file.Close()
-				if err := loadViewFromFile(file, fileInfo, commonTableName); err != nil {
-					return nil, NewCsvParsingError(tableIdentifier, fileInfo.Path, err.Error())
-				}
-			}
 			if err = parentFilter.AliasesList[0].Add(table.Name(), fileInfo.Path); err != nil {
 				return nil, err
 			}
 
-			pathIdent := parser.Identifier{Literal: fileInfo.Path}
-			if useInternalId {
-				view, _ = ViewCache.GetWithInternalId(pathIdent)
-			} else {
-				view, _ = ViewCache.Get(pathIdent)
-			}
 			if !strings.EqualFold(commonTableName, table.Name().Literal) {
 				view.UpdateHeader(table.Name().Literal, nil)
 			}
@@ -415,7 +490,7 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 	return view, err
 }
 
-func loadViewFromFile(file *os.File, fileInfo *FileInfo, reference string) error {
+func loadViewFromFile(file *os.File, fileInfo *FileInfo, reference string) (*View, error) {
 	flags := cmd.GetFlags()
 
 	r := cmd.GetReader(file, flags.Encoding)
@@ -431,13 +506,13 @@ func loadViewFromFile(file *os.File, fileInfo *FileInfo, reference string) error
 	if !flags.NoHeader {
 		header, err = reader.ReadHeader()
 		if err != nil && err != csv.EOF {
-			return err
+			return nil, err
 		}
 	}
 
 	records, err := reader.ReadAll()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	view.Records = make([]Record, len(records))
@@ -461,8 +536,7 @@ func loadViewFromFile(file *os.File, fileInfo *FileInfo, reference string) error
 
 	view.Header = NewHeaderWithoutId(reference, header)
 	view.FileInfo = fileInfo
-	ViewCache.Set(view)
-	return nil
+	return view, nil
 }
 
 func loadDualView() *View {

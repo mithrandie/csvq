@@ -1,0 +1,1 @@
+PRINT 'external executable file' 'wrong argument'

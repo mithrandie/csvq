@@ -243,6 +243,35 @@ var inlineTablesSetTests = []struct {
 		},
 		Error: "[L:- C:-] select query should return exactly 1 field for inline table it2",
 	},
+	{
+		Name: "InlineTables Set Duplicate Field Name Error",
+		Expr: parser.InlineTable{
+			Name: parser.Identifier{Literal: "it2"},
+			Fields: []parser.Expression{
+				parser.Identifier{Literal: "c1"},
+				parser.Identifier{Literal: "c1"},
+			},
+			As: "as",
+			Query: parser.SelectQuery{
+				SelectEntity: parser.SelectEntity{
+					SelectClause: parser.SelectClause{
+						Select: "select",
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+						},
+					},
+					FromClause: parser.FromClause{
+						From: "from",
+						Tables: []parser.Expression{
+							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] field name c1 is a duplicate",
+	},
 }
 
 func TestInlineTables_Set(t *testing.T) {

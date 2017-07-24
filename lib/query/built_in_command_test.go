@@ -66,8 +66,8 @@ var printfTests = []struct {
 	{
 		Name: "Printf",
 		Expr: parser.Printf{
+			Format: "printf test: value1 %s, value2 %s, %a %% %",
 			Values: []parser.Expression{
-				parser.NewString("printf test: value1 %s, value2 %s, %a %% %"),
 				parser.NewString("str"),
 				parser.NewInteger(1),
 			},
@@ -75,10 +75,22 @@ var printfTests = []struct {
 		Result: "printf test: value1 'str', value2 1, %a % %",
 	},
 	{
+		Name: "Printf Evaluate Error",
+		Expr: parser.Printf{
+			Format: "printf test: value1 %s",
+			Values: []parser.Expression{
+				parser.Variable{
+					Name: "var",
+				},
+			},
+		},
+		Error: "[L:- C:-] variable var is undefined",
+	},
+	{
 		Name: "Printf Less Values Error",
 		Expr: parser.Printf{
+			Format: "printf test: value1 %s, value2 %s, %a %% %",
 			Values: []parser.Expression{
-				parser.NewString("printf test: value1 %s, value2 %s, %a %% %"),
 				parser.NewString("str"),
 			},
 		},
@@ -87,8 +99,8 @@ var printfTests = []struct {
 	{
 		Name: "Printf Greater Values Error",
 		Expr: parser.Printf{
+			Format: "printf test: value1 %s, value2 %s, %a %% %",
 			Values: []parser.Expression{
-				parser.NewString("printf test: value1 %s, value2 %s, %a %% %"),
 				parser.NewString("str"),
 				parser.NewInteger(1),
 				parser.NewInteger(2),
@@ -144,6 +156,20 @@ var sourceTests = []struct {
 			FilePath: GetTestFilePath("notexist.sql"),
 		},
 		Error: fmt.Sprintf("[L:- C:-] SOURCE: file %s does not exist", GetTestFilePath("notexist.sql")),
+	},
+	{
+		Name: "Source File Not Readable Error",
+		Expr: parser.Source{
+			FilePath: TestDir,
+		},
+		Error: fmt.Sprintf("[L:- C:-] SOURCE: file %s is unable to read", TestDir),
+	},
+	{
+		Name: "Source Syntax Error",
+		Expr: parser.Source{
+			FilePath: GetTestFilePath("source_syntaxerror.sql"),
+		},
+		Error: fmt.Sprintf("%s [L:1 C:34] syntax error: unexpected STRING", GetTestFilePath("source_syntaxerror.sql")),
 	},
 }
 
@@ -256,12 +282,20 @@ var setFlagTests = []struct {
 		Error: "[L:- C:-] SET: flag value 'string' for @@without_null is invalid",
 	},
 	{
-		Name: "Invalid Flag Error",
+		Name: "Invalid Flag Name Error",
 		Expr: parser.SetFlag{
 			Name:  "@@invalid",
 			Value: parser.NewString("string"),
 		},
 		Error: "[L:- C:-] SET: flag name @@invalid is invalid",
+	},
+	{
+		Name: "Invalid Flag Value Error",
+		Expr: parser.SetFlag{
+			Name:  "@@line_break",
+			Value: parser.NewString("invalid"),
+		},
+		Error: "[L:- C:-] SET: flag value 'invalid' for @@line_break is invalid",
 	},
 }
 

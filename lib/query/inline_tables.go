@@ -14,7 +14,7 @@ func (it InlineTables) Set(inlineTable parser.InlineTable, parentFilter Filter) 
 		return NewInLineTableRedeclaredError(inlineTable.Name)
 	}
 
-	filter := parentFilter.CreateChild()
+	filter := parentFilter.CreateNode()
 	filter.InlineTables = it
 	if inlineTable.IsRecursive() {
 		filter.RecursiveTable = &inlineTable

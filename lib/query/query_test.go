@@ -121,7 +121,7 @@ var executeTests = []struct {
 	{
 		Name:  "Query Execution Error",
 		Input: "select from",
-		Error: "[L:1 C:8] syntax error: unexpected from",
+		Error: "[L:1 C:8] syntax error: unexpected FROM",
 	},
 }
 
@@ -132,7 +132,7 @@ func TestExecute(t *testing.T) {
 
 	for _, v := range executeTests {
 		Logs = []string{}
-		out, err := Execute(v.Input, "")
+		log, _, err := Execute(v.Input, "")
 
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -147,8 +147,8 @@ func TestExecute(t *testing.T) {
 			continue
 		}
 
-		if out != v.Output {
-			t.Errorf("%s: output = %q, want %q", v.Name, out, v.Output)
+		if log != v.Output {
+			t.Errorf("%s: output = %q, want %q", v.Name, log, v.Output)
 		}
 
 		if 0 < len(v.UpdateFile) {
@@ -297,25 +297,30 @@ func TestFetchCursor(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
-	filter := NewFilter([]Variables{
-		{
-			"@var1": parser.NewNull(),
-			"@var2": parser.NewNull(),
+	filter := NewFilter(
+		[]Variables{
+			{
+				"@var1": parser.NewNull(),
+				"@var2": parser.NewNull(),
+			},
 		},
-	})
+		[]ViewMap{{}},
+		[]CursorMap{
+			{
+				"CUR": &Cursor{
+					query: selectQueryForCursorTest,
+				},
+				"CUR2": &Cursor{
+					query: selectQueryForCursorTest,
+				},
+			},
+		},
+	)
 
-	Cursors = CursorMap{
-		"CUR": &Cursor{
-			query: selectQueryForCursorTest,
-		},
-		"CUR2": &Cursor{
-			query: selectQueryForCursorTest,
-		},
-	}
 	ViewCache.Clear()
-	Cursors.Open(parser.Identifier{Literal: "cur"}, filter)
+	filter.CursorsList.Open(parser.Identifier{Literal: "cur"}, filter)
 	ViewCache.Clear()
-	Cursors.Open(parser.Identifier{Literal: "cur2"}, filter)
+	filter.CursorsList.Open(parser.Identifier{Literal: "cur2"}, filter)
 
 	for _, v := range fetchCursorTests {
 		success, err := FetchCursor(v.CurName, v.FetchPosition, v.Variables, filter)
@@ -502,9 +507,9 @@ func TestDeclareTable(t *testing.T) {
 
 	for _, v := range declareTableTests {
 		if v.ViewMap == nil {
-			ViewCache.Clear()
+			filter.TempViewsList.Clear()
 		} else {
-			ViewCache = v.ViewMap
+			filter.TempViewsList = []ViewMap{v.ViewMap}
 		}
 
 		err := DeclareTable(v.Expr, filter)
@@ -520,7 +525,7 @@ func TestDeclareTable(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(ViewCache, v.Result) {
+		if !reflect.DeepEqual(filter.TempViewsList[0], v.Result) {
 			t.Errorf("%s: view cache = %q, want %q", v.Name, ViewCache, v.Result)
 		}
 	}

@@ -1018,6 +1018,73 @@ var filterEvaluateTests = []struct {
 		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
+		Name: "In with Row Value and Subquery Query Error",
+		Expr: parser.In{
+			LHS: parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.Expression{
+						parser.NewString("2"),
+						parser.NewString("str2"),
+					},
+				},
+			},
+			Values: parser.Subquery{
+				Query: parser.SelectQuery{
+					SelectEntity: parser.SelectEntity{
+						SelectClause: parser.SelectClause{
+							Select: "select",
+							Fields: []parser.Expression{
+								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
+							},
+						},
+						FromClause: parser.FromClause{
+							Tables: []parser.Expression{
+								parser.Table{Object: parser.Identifier{Literal: "table1"}},
+							},
+						},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] field notexist does not exist",
+	},
+	{
+		Name: "In with Row Value and Subquery Empty Result Set",
+		Expr: parser.In{
+			LHS: parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.Expression{
+						parser.NewString("2"),
+						parser.NewString("str2"),
+					},
+				},
+			},
+			Values: parser.Subquery{
+				Query: parser.SelectQuery{
+					SelectEntity: parser.SelectEntity{
+						SelectClause: parser.SelectClause{
+							Select: "select",
+							Fields: []parser.Expression{
+								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+							},
+						},
+						FromClause: parser.FromClause{
+							Tables: []parser.Expression{
+								parser.Table{Object: parser.Identifier{Literal: "table1"}},
+							},
+						},
+						WhereClause: parser.WhereClause{
+							Filter: parser.NewTernary(ternary.FALSE),
+						},
+					},
+				},
+			},
+		},
+		Result: parser.NewTernary(ternary.FALSE),
+	},
+	{
 		Name: "In with Row Values Values Error",
 		Expr: parser.In{
 			LHS: parser.RowValue{
@@ -2606,9 +2673,13 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Variable",
-		Filter: NewFilter([]Variables{{
-			"@var1": parser.NewInteger(1),
-		}}),
+		Filter: NewFilter(
+			[]Variables{{
+				"@var1": parser.NewInteger(1),
+			}},
+			[]ViewMap{{}},
+			[]CursorMap{{}},
+		),
 		Expr: parser.Variable{
 			Name: "@var1",
 		},
@@ -2624,9 +2695,13 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Variable Substitution",
-		Filter: NewFilter([]Variables{{
-			"@var1": parser.NewInteger(1),
-		}}),
+		Filter: NewFilter(
+			[]Variables{{
+				"@var1": parser.NewInteger(1),
+			}},
+			[]ViewMap{{}},
+			[]CursorMap{{}},
+		),
 		Expr: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "@var1"},
 			Value:    parser.NewInteger(2),
@@ -2694,14 +2769,14 @@ func TestFilter_Evaluate(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDataDir
 
-	Cursors = CursorMap{
+	cursors := CursorMap{
 		"CUR": &Cursor{
 			query: selectQueryForCursorTest,
 		},
 	}
 	ViewCache.Clear()
-	Cursors.Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
-	Cursors.Fetch(parser.Identifier{Literal: "cur"}, parser.NEXT, 0)
+	cursors.Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+	cursors.Fetch(parser.Identifier{Literal: "cur"}, parser.NEXT, 0)
 
 	UserFunctions = UserDefinedFunctionMap{
 		"USERFUNC": &UserDefinedFunction{
@@ -2717,6 +2792,7 @@ func TestFilter_Evaluate(t *testing.T) {
 
 	for _, v := range filterEvaluateTests {
 		ViewCache.Clear()
+		v.Filter.CursorsList = append(v.Filter.CursorsList, cursors)
 		result, err := v.Filter.Evaluate(v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
