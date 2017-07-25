@@ -24,7 +24,7 @@ func (it InlineTables) Set(inlineTable parser.InlineTable, parentFilter Filter) 
 		return err
 	}
 
-	err = view.UpdateHeader(inlineTable.Name.Literal, inlineTable.Fields)
+	err = view.Header.Update(inlineTable.Name.Literal, inlineTable.Fields)
 	if err != nil {
 		if _, ok := err.(*FieldLengthNotMatchError); ok {
 			return NewInlineTableFieldLengthError(inlineTable.Query, inlineTable.Name, len(inlineTable.Fields))

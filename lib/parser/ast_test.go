@@ -308,6 +308,17 @@ func TestFieldReference_String(t *testing.T) {
 	}
 }
 
+func TestColumnNumber_String(t *testing.T) {
+	e := ColumnNumber{
+		View:   Identifier{Literal: "table1"},
+		Number: NewInteger(3),
+	}
+	expect := "table1.3"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
 func TestParentheses_String(t *testing.T) {
 	s := "abcde"
 	e := Parentheses{Expr: String{literal: s}}

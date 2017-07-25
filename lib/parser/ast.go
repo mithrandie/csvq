@@ -360,6 +360,16 @@ func (e FieldReference) String() string {
 	return s
 }
 
+type ColumnNumber struct {
+	*BaseExpr
+	View   Identifier
+	Number Integer
+}
+
+func (e ColumnNumber) String() string {
+	return e.View.String() + "." + e.Number.String()
+}
+
 type Parentheses struct {
 	*BaseExpr
 	Expr Expression

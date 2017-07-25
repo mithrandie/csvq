@@ -391,18 +391,7 @@ var declareTableTests = []struct {
 					Temporary:      true,
 					InitialRecords: Records{},
 				},
-				Header: []HeaderField{
-					{
-						Reference: "tbl",
-						Column:    "column1",
-						FromTable: true,
-					},
-					{
-						Reference: "tbl",
-						Column:    "column2",
-						FromTable: true,
-					},
-				},
+				Header:  NewHeaderWithoutId("tbl", []string{"column1", "column2"}),
 				Records: Records{},
 			},
 		},
@@ -449,18 +438,7 @@ var declareTableTests = []struct {
 						}),
 					},
 				},
-				Header: []HeaderField{
-					{
-						Reference: "tbl",
-						Column:    "column1",
-						FromTable: true,
-					},
-					{
-						Reference: "tbl",
-						Column:    "column2",
-						FromTable: true,
-					},
-				},
+				Header: NewHeaderWithoutId("tbl", []string{"column1", "column2"}),
 				Records: Records{
 					NewRecordWithoutId([]parser.Primary{
 						parser.NewInteger(1),
@@ -626,11 +604,13 @@ var selectTests = []struct {
 				{
 					Reference: "group_table",
 					Column:    "column1",
+					Number:    1,
 					FromTable: true,
 				},
 				{
 					Column:    "count(*)",
 					Alias:     "count(*)",
+					Number:    2,
 					FromTable: true,
 				},
 			},
@@ -680,18 +660,7 @@ var selectTests = []struct {
 			},
 		},
 		Result: &View{
-			Header: []HeaderField{
-				{
-					Reference: "table1",
-					Column:    "column1",
-					FromTable: true,
-				},
-				{
-					Reference: "table1",
-					Column:    "column2",
-					FromTable: true,
-				},
-			},
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
 					parser.NewString("1"),
@@ -746,18 +715,7 @@ var selectTests = []struct {
 			},
 		},
 		Result: &View{
-			Header: []HeaderField{
-				{
-					Reference: "table1",
-					Column:    "column1",
-					FromTable: true,
-				},
-				{
-					Reference: "table1",
-					Column:    "column2",
-					FromTable: true,
-				},
-			},
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
 					parser.NewString("2"),
@@ -804,18 +762,7 @@ var selectTests = []struct {
 			},
 		},
 		Result: &View{
-			Header: []HeaderField{
-				{
-					Reference: "table1",
-					Column:    "column1",
-					FromTable: true,
-				},
-				{
-					Reference: "table1",
-					Column:    "column2",
-					FromTable: true,
-				},
-			},
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
 					parser.NewString("1"),
@@ -862,18 +809,7 @@ var selectTests = []struct {
 			},
 		},
 		Result: &View{
-			Header: []HeaderField{
-				{
-					Reference: "table1",
-					Column:    "column1",
-					FromTable: true,
-				},
-				{
-					Reference: "table1",
-					Column:    "column2",
-					FromTable: true,
-				},
-			},
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
 					parser.NewString("1"),
@@ -1037,13 +973,7 @@ var selectTests = []struct {
 			},
 		},
 		Result: &View{
-			Header: []HeaderField{
-				{
-					Reference: "it",
-					Column:    "c1",
-					FromTable: true,
-				},
-			},
+			Header: NewHeaderWithoutId("it", []string{"c1"}),
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
 					parser.NewInteger(2),
@@ -1185,6 +1115,7 @@ var selectTests = []struct {
 				{
 					Reference: "it",
 					Column:    "n",
+					Number:    1,
 					FromTable: true,
 				},
 			},

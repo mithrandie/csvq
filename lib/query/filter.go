@@ -112,6 +112,8 @@ func (f Filter) Evaluate(expr parser.Expression) (parser.Primary, error) {
 			primary, err = f.Evaluate(expr.(parser.Parentheses).Expr)
 		case parser.FieldReference:
 			primary, err = f.evalFieldReference(expr.(parser.FieldReference))
+		case parser.ColumnNumber:
+			primary, err = f.evalColumnNumber(expr.(parser.ColumnNumber))
 		case parser.Arithmetic:
 			primary, err = f.evalArithmetic(expr.(parser.Arithmetic))
 		case parser.UnaryArithmetic:
@@ -182,6 +184,19 @@ func (f Filter) evalFieldReference(expr parser.FieldReference) (parser.Primary, 
 		return nil, NewFieldNotExistError(expr)
 	}
 	return p, nil
+}
+
+func (f Filter) evalColumnNumber(expr parser.ColumnNumber) (parser.Primary, error) {
+	for _, v := range f.Records {
+		idx, err := v.View.Header.ContainsNumber(expr)
+		if err == nil {
+			if v.View.isGrouped && !v.View.Header[idx].IsGroupKey {
+				return nil, NewFieldNumberNotGroupKeyError(expr)
+			}
+			return v.View.Records[v.RecordIndex][idx].Primary(), nil
+		}
+	}
+	return nil, NewFieldNumberNotExistError(expr)
 }
 
 func (f Filter) evalArithmetic(expr parser.Arithmetic) (parser.Primary, error) {
