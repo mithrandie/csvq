@@ -11,10 +11,11 @@ import (
 )
 
 var procedureExecuteStatementTests = []struct {
-	Input  parser.Statement
-	Result []Result
-	Logs   []string
-	Error  string
+	Input      parser.Statement
+	Result     []Result
+	Logs       []string
+	SelectLogs []string
+	Error      string
 }{
 	{
 		Input: parser.SetFlag{
@@ -204,29 +205,8 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Result: []Result{
-			{
-				Type: SELECT,
-				View: &View{
-					FileInfo: &FileInfo{
-						Path:      "tbl",
-						Temporary: true,
-						InitialRecords: Records{
-							NewRecordWithoutId([]parser.Primary{
-								parser.NewInteger(1),
-								parser.NewInteger(2),
-							}),
-						},
-					},
-					Header: NewHeaderWithoutId("tbl", []string{"column1", "column2"}),
-					Records: Records{
-						NewRecordWithoutId([]parser.Primary{
-							parser.NewInteger(1),
-							parser.NewInteger(2),
-						}),
-					},
-				},
-			},
+		Logs: []string{
+			"\"column1\",\"column2\"\n1,2",
 		},
 	},
 	{
@@ -247,25 +227,8 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Result: []Result{
-			{
-				Type: SELECT,
-				View: &View{
-					Header: []HeaderField{
-						{
-							Column:    "@var1",
-							Alias:     "var1",
-							Number:    1,
-							FromTable: true,
-						},
-					},
-					Records: []Record{
-						{
-							NewCell(parser.NewInteger(1)),
-						},
-					},
-				},
-			},
+		Logs: []string{
+			"\"var1\"\n1",
 		},
 	},
 	{
@@ -525,8 +488,10 @@ var procedureExecuteStatementTests = []struct {
 }
 
 func TestProcedure_ExecuteStatement(t *testing.T) {
+	initFlag()
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
+	tf.Format = cmd.CSV
 
 	UserFunctions = UserDefinedFunctionMap{}
 	proc := NewProcedure()
@@ -535,6 +500,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 		ViewCache.Clear()
 		Results = []Result{}
 		Logs = []string{}
+		SelectLogs = []string{}
 
 		_, err := proc.ExecuteStatement(v.Input)
 		if err != nil {
@@ -558,6 +524,11 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 		if v.Logs != nil {
 			if !reflect.DeepEqual(Logs, v.Logs) {
 				t.Errorf("logs = %s, want %s for %q", Logs, v.Logs, v.Input)
+			}
+		}
+		if v.SelectLogs != nil {
+			if !reflect.DeepEqual(SelectLogs, v.SelectLogs) {
+				t.Errorf("select logs = %s, want %s for %q", SelectLogs, v.SelectLogs, v.Input)
 			}
 		}
 	}
