@@ -89,11 +89,15 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		err = UserFunctions.Declare(stmt.(parser.FunctionDeclaration))
 	case parser.SelectQuery:
 		if view, err = Select(stmt.(parser.SelectQuery), proc.Filter); err == nil {
-			results = []Result{
-				{
-					Type: SELECT,
-					View: view,
-				},
+			flags := cmd.GetFlags()
+			var viewstr string
+			viewstr, err = EncodeView(view, flags.Format, flags.WriteDelimiter, flags.WithoutHeader, flags.WriteEncoding, flags.LineBreak)
+			if err == nil {
+				if 0 < len(flags.OutFile) {
+					AddSelectLog(viewstr)
+				} else {
+					AddLog(viewstr)
+				}
 			}
 		}
 	case parser.InsertQuery:
@@ -321,26 +325,11 @@ func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, 
 }
 
 func (proc *Procedure) Commit() error {
-	flags := cmd.GetFlags()
-
 	var createFiles = map[string]*FileInfo{}
 	var updateFiles = map[string]*FileInfo{}
 
 	for _, result := range Results {
-		if result.View != nil {
-			//SELECT
-			viewstr, err := EncodeView(result.View, flags.Format, flags.WriteDelimiter, flags.WithoutHeader, flags.WriteEncoding, flags.LineBreak)
-			if err != nil {
-				return err
-			}
-
-			if 0 < len(flags.OutFile) {
-				AddSelectLog(viewstr)
-			} else {
-				AddLog(viewstr)
-			}
-		} else if result.FileInfo != nil {
-			//CREATE or UPDATE
+		if result.FileInfo != nil {
 			switch result.Type {
 			case CREATE_TABLE:
 				createFiles[result.FileInfo.Path] = result.FileInfo

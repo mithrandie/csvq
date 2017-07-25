@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -1233,10 +1234,12 @@ func TestSelect(t *testing.T) {
 }
 
 var insertTests = []struct {
-	Name   string
-	Query  parser.InsertQuery
-	Result *View
-	Error  string
+	Name         string
+	Query        parser.InsertQuery
+	Result       *View
+	ViewCache    ViewMap
+	TempViewList TemporaryViewMapList
+	Error        string
 }{
 	{
 		Name: "Insert Query",
@@ -1335,6 +1338,127 @@ var insertTests = []struct {
 				}),
 			},
 			OperatedRecords: 2,
+		},
+		ViewCache: ViewMap{
+			strings.ToUpper(GetTestFilePath("table1.csv")): &View{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  cmd.UTF8,
+					LineBreak: cmd.LF,
+				},
+				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+				Records: []Record{
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("1"),
+						parser.NewString("str1"),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("2"),
+						parser.NewString("str2"),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("3"),
+						parser.NewString("str3"),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewInteger(4),
+						parser.NewNull(),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewInteger(2),
+						parser.NewNull(),
+					}),
+				},
+				OperatedRecords: 2,
+			},
+		},
+	},
+	{
+		Name: "Insert Query For Temporary View",
+		Query: parser.InsertQuery{
+			Insert: "insert",
+			Into:   "into",
+			Table:  parser.Identifier{Literal: "tmpview"},
+			Fields: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			},
+			Values: "values",
+			ValuesList: []parser.Expression{
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.Expression{
+							parser.NewInteger(4),
+						},
+					},
+				},
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.Expression{
+							parser.NewInteger(2),
+						},
+					},
+				},
+			},
+		},
+		Result: &View{
+			FileInfo: &FileInfo{
+				Path:      "tmpview",
+				Delimiter: ',',
+				Temporary: true,
+			},
+			Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewInteger(4),
+					parser.NewNull(),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewInteger(2),
+					parser.NewNull(),
+				}),
+			},
+			OperatedRecords: 2,
+		},
+		TempViewList: TemporaryViewMapList{
+			ViewMap{
+				"TMPVIEW": &View{
+					Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2"}),
+					Records: []Record{
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("1"),
+							parser.NewString("str1"),
+						}),
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("2"),
+							parser.NewString("str2"),
+						}),
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewInteger(4),
+							parser.NewNull(),
+						}),
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewInteger(2),
+							parser.NewNull(),
+						}),
+					},
+					FileInfo: &FileInfo{
+						Path:      "tmpview",
+						Delimiter: ',',
+						Temporary: true,
+					},
+					OperatedRecords: 2,
+				},
+			},
 		},
 	},
 	{
@@ -1553,6 +1677,28 @@ func TestInsert(t *testing.T) {
 	tf.Repository = TestDir
 
 	filter := NewEmptyFilter()
+	filter.TempViewsList = TemporaryViewMapList{
+		ViewMap{
+			"TMPVIEW": &View{
+				Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2"}),
+				Records: []Record{
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("1"),
+						parser.NewString("str1"),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("2"),
+						parser.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:      "tmpview",
+					Delimiter: ',',
+					Temporary: true,
+				},
+			},
+		},
+	}
 
 	for _, v := range insertTests {
 		ViewCache.Clear()
@@ -1572,14 +1718,27 @@ func TestInsert(t *testing.T) {
 		if !reflect.DeepEqual(result, v.Result) {
 			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
 		}
+
+		if v.ViewCache != nil {
+			if !reflect.DeepEqual(ViewCache, v.ViewCache) {
+				t.Errorf("%s: view cache = %q, want %q", v.Name, ViewCache, v.ViewCache)
+			}
+		}
+		if v.TempViewList != nil {
+			if !reflect.DeepEqual(filter.TempViewsList, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViewsList, v.TempViewList)
+			}
+		}
 	}
 }
 
 var updateTests = []struct {
-	Name   string
-	Query  parser.UpdateQuery
-	Result []*View
-	Error  string
+	Name         string
+	Query        parser.UpdateQuery
+	Result       []*View
+	ViewCache    ViewMap
+	TempViewList TemporaryViewMapList
+	Error        string
 }{
 	{
 		Name: "Update Query",
@@ -1666,6 +1825,93 @@ var updateTests = []struct {
 					}),
 				},
 				OperatedRecords: 1,
+			},
+		},
+		ViewCache: ViewMap{
+			strings.ToUpper(GetTestFilePath("table1.csv")): &View{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  cmd.UTF8,
+					LineBreak: cmd.LF,
+				},
+				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+				Records: []Record{
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("1"),
+						parser.NewString("str1"),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("2"),
+						parser.NewString("update"),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("3"),
+						parser.NewString("str3"),
+					}),
+				},
+				OperatedRecords: 1,
+			},
+		},
+	},
+	{
+		Name: "Update Query For Temporary View",
+		Query: parser.UpdateQuery{
+			Update: "update",
+			Tables: []parser.Expression{
+				parser.Table{Object: parser.Identifier{Literal: "tmpview"}},
+			},
+			Set: "set",
+			SetList: []parser.Expression{
+				parser.UpdateSet{
+					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+					Value: parser.NewString("update"),
+				},
+			},
+		},
+		Result: []*View{
+			{
+				FileInfo: &FileInfo{
+					Path:      "tmpview",
+					Delimiter: ',',
+					Temporary: true,
+				},
+				Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2"}),
+				Records: []Record{
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("1"),
+						parser.NewString("update"),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("2"),
+						parser.NewString("update"),
+					}),
+				},
+				OperatedRecords: 2,
+			},
+		},
+		TempViewList: TemporaryViewMapList{
+			ViewMap{
+				"TMPVIEW": &View{
+					Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2"}),
+					Records: []Record{
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("1"),
+							parser.NewString("update"),
+						}),
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("2"),
+							parser.NewString("update"),
+						}),
+					},
+					FileInfo: &FileInfo{
+						Path:      "tmpview",
+						Delimiter: ',',
+						Temporary: true,
+					},
+					OperatedRecords: 2,
+				},
 			},
 		},
 	},
@@ -1944,6 +2190,28 @@ func TestUpdate(t *testing.T) {
 	tf.Repository = TestDir
 
 	filter := NewEmptyFilter()
+	filter.TempViewsList = TemporaryViewMapList{
+		ViewMap{
+			"TMPVIEW": &View{
+				Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2"}),
+				Records: []Record{
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("1"),
+						parser.NewString("str1"),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("2"),
+						parser.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:      "tmpview",
+					Delimiter: ',',
+					Temporary: true,
+				},
+			},
+		},
+	}
 
 	for _, v := range updateTests {
 		ViewCache.Clear()
@@ -1963,14 +2231,27 @@ func TestUpdate(t *testing.T) {
 		if !reflect.DeepEqual(result, v.Result) {
 			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
 		}
+
+		if v.ViewCache != nil {
+			if !reflect.DeepEqual(ViewCache, v.ViewCache) {
+				t.Errorf("%s: view cache = %q, want %q", v.Name, ViewCache, v.ViewCache)
+			}
+		}
+		if v.TempViewList != nil {
+			if !reflect.DeepEqual(filter.TempViewsList, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViewsList, v.TempViewList)
+			}
+		}
 	}
 }
 
 var deleteTests = []struct {
-	Name   string
-	Query  parser.DeleteQuery
-	Result []*View
-	Error  string
+	Name         string
+	Query        parser.DeleteQuery
+	Result       []*View
+	ViewCache    ViewMap
+	TempViewList TemporaryViewMapList
+	Error        string
 }{
 	{
 		Name: "Delete Query",
@@ -2050,6 +2331,85 @@ var deleteTests = []struct {
 					}),
 				},
 				OperatedRecords: 1,
+			},
+		},
+		ViewCache: ViewMap{
+			strings.ToUpper(GetTestFilePath("table1.csv")): &View{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  cmd.UTF8,
+					LineBreak: cmd.LF,
+				},
+				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+				Records: []Record{
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("1"),
+						parser.NewString("str1"),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("3"),
+						parser.NewString("str3"),
+					}),
+				},
+				OperatedRecords: 1,
+			},
+		},
+	},
+	{
+		Name: "Delete Query For Temporary View",
+		Query: parser.DeleteQuery{
+			Delete: "delete",
+			FromClause: parser.FromClause{
+				Tables: []parser.Expression{
+					parser.Table{
+						Object: parser.Identifier{Literal: "tmpview"},
+					},
+				},
+			},
+			WhereClause: parser.WhereClause{
+				Filter: parser.Comparison{
+					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					RHS:      parser.NewInteger(2),
+					Operator: "=",
+				},
+			},
+		},
+		Result: []*View{
+			{
+				FileInfo: &FileInfo{
+					Path:      "tmpview",
+					Delimiter: ',',
+					Temporary: true,
+				},
+				Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2"}),
+				Records: []Record{
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("1"),
+						parser.NewString("str1"),
+					}),
+				},
+				OperatedRecords: 1,
+			},
+		},
+		TempViewList: TemporaryViewMapList{
+			ViewMap{
+				"TMPVIEW": &View{
+					Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2"}),
+					Records: []Record{
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("1"),
+							parser.NewString("str1"),
+						}),
+					},
+					FileInfo: &FileInfo{
+						Path:      "tmpview",
+						Delimiter: ',',
+						Temporary: true,
+					},
+					OperatedRecords: 1,
+				},
 			},
 		},
 	},
@@ -2210,6 +2570,28 @@ func TestDelete(t *testing.T) {
 	tf.Repository = TestDir
 
 	filter := NewEmptyFilter()
+	filter.TempViewsList = TemporaryViewMapList{
+		ViewMap{
+			"TMPVIEW": &View{
+				Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2"}),
+				Records: []Record{
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("1"),
+						parser.NewString("str1"),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("2"),
+						parser.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:      "tmpview",
+					Delimiter: ',',
+					Temporary: true,
+				},
+			},
+		},
+	}
 
 	for _, v := range deleteTests {
 		ViewCache.Clear()
@@ -2229,14 +2611,26 @@ func TestDelete(t *testing.T) {
 		if !reflect.DeepEqual(result, v.Result) {
 			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
 		}
+
+		if v.ViewCache != nil {
+			if !reflect.DeepEqual(ViewCache, v.ViewCache) {
+				t.Errorf("%s: view cache = %q, want %q", v.Name, ViewCache, v.ViewCache)
+			}
+		}
+		if v.TempViewList != nil {
+			if !reflect.DeepEqual(filter.TempViewsList, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViewsList, v.TempViewList)
+			}
+		}
 	}
 }
 
 var createTableTests = []struct {
-	Name   string
-	Query  parser.CreateTable
-	Result *View
-	Error  string
+	Name      string
+	Query     parser.CreateTable
+	Result    *View
+	ViewCache ViewMap
+	Error     string
 }{
 	{
 		Name: "Create Table",
@@ -2256,6 +2650,18 @@ var createTableTests = []struct {
 				LineBreak: cmd.LF,
 			},
 			Header: NewHeaderWithoutId("create_table", []string{"column1", "column2"}),
+		},
+		ViewCache: ViewMap{
+			strings.ToUpper(GetTestFilePath("create_table.csv")): &View{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("create_table.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  cmd.UTF8,
+					LineBreak: cmd.LF,
+				},
+				Header: NewHeaderWithoutId("create_table", []string{"column1", "column2"}),
+			},
 		},
 	},
 	{
@@ -2293,14 +2699,22 @@ func TestCreateTable(t *testing.T) {
 		if !reflect.DeepEqual(result, v.Result) {
 			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
 		}
+
+		if v.ViewCache != nil {
+			if !reflect.DeepEqual(ViewCache, v.ViewCache) {
+				t.Errorf("%s: view cache = %q, want %q", v.Name, ViewCache, v.ViewCache)
+			}
+		}
 	}
 }
 
 var addColumnsTests = []struct {
-	Name   string
-	Query  parser.AddColumns
-	Result *View
-	Error  string
+	Name         string
+	Query        parser.AddColumns
+	Result       *View
+	ViewCache    ViewMap
+	TempViewList TemporaryViewMapList
+	Error        string
 }{
 	{
 		Name: "Add Columns",
@@ -2345,6 +2759,103 @@ var addColumnsTests = []struct {
 				}),
 			},
 			OperatedFields: 2,
+		},
+		ViewCache: ViewMap{
+			strings.ToUpper(GetTestFilePath("table1.csv")): &View{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  cmd.UTF8,
+					LineBreak: cmd.LF,
+				},
+				Header: NewHeaderWithoutId("table1", []string{"column1", "column2", "column3", "column4"}),
+				Records: []Record{
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("1"),
+						parser.NewString("str1"),
+						parser.NewNull(),
+						parser.NewNull(),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("2"),
+						parser.NewString("str2"),
+						parser.NewNull(),
+						parser.NewNull(),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("3"),
+						parser.NewString("str3"),
+						parser.NewNull(),
+						parser.NewNull(),
+					}),
+				},
+				OperatedFields: 2,
+			},
+		},
+	},
+	{
+		Name: "Add Columns For Temporary View",
+		Query: parser.AddColumns{
+			Table: parser.Identifier{Literal: "tmpview"},
+			Columns: []parser.Expression{
+				parser.ColumnDefault{
+					Column: parser.Identifier{Literal: "column3"},
+				},
+				parser.ColumnDefault{
+					Column: parser.Identifier{Literal: "column4"},
+				},
+			},
+		},
+		Result: &View{
+			FileInfo: &FileInfo{
+				Path:      "tmpview",
+				Delimiter: ',',
+				Temporary: true,
+			},
+			Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2", "column3", "column4"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+					parser.NewNull(),
+					parser.NewNull(),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+					parser.NewNull(),
+					parser.NewNull(),
+				}),
+			},
+			OperatedFields: 2,
+		},
+		TempViewList: TemporaryViewMapList{
+			ViewMap{
+				"TMPVIEW": &View{
+					Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2", "column3", "column4"}),
+					Records: []Record{
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("1"),
+							parser.NewString("str1"),
+							parser.NewNull(),
+							parser.NewNull(),
+						}),
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("2"),
+							parser.NewString("str2"),
+							parser.NewNull(),
+							parser.NewNull(),
+						}),
+					},
+					FileInfo: &FileInfo{
+						Path:      "tmpview",
+						Delimiter: ',',
+						Temporary: true,
+					},
+					OperatedFields: 2,
+				},
+			},
 		},
 	},
 	{
@@ -2571,7 +3082,28 @@ func TestAddColumns(t *testing.T) {
 	tf.Repository = TestDir
 
 	filter := NewEmptyFilter()
-
+	filter.TempViewsList = TemporaryViewMapList{
+		ViewMap{
+			"TMPVIEW": &View{
+				Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2"}),
+				Records: []Record{
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("1"),
+						parser.NewString("str1"),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("2"),
+						parser.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:      "tmpview",
+					Delimiter: ',',
+					Temporary: true,
+				},
+			},
+		},
+	}
 	for _, v := range addColumnsTests {
 		ViewCache.Clear()
 		result, err := AddColumns(v.Query, filter)
@@ -2590,14 +3122,27 @@ func TestAddColumns(t *testing.T) {
 		if !reflect.DeepEqual(result, v.Result) {
 			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
 		}
+
+		if v.ViewCache != nil {
+			if !reflect.DeepEqual(ViewCache, v.ViewCache) {
+				t.Errorf("%s: view cache = %q, want %q", v.Name, ViewCache, v.ViewCache)
+			}
+		}
+		if v.TempViewList != nil {
+			if !reflect.DeepEqual(filter.TempViewsList, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViewsList, v.TempViewList)
+			}
+		}
 	}
 }
 
 var dropColumnsTests = []struct {
-	Name   string
-	Query  parser.DropColumns
-	Result *View
-	Error  string
+	Name         string
+	Query        parser.DropColumns
+	Result       *View
+	ViewCache    ViewMap
+	TempViewList TemporaryViewMapList
+	Error        string
 }{
 	{
 		Name: "Drop Columns",
@@ -2629,6 +3174,77 @@ var dropColumnsTests = []struct {
 			},
 			OperatedFields: 1,
 		},
+		ViewCache: ViewMap{
+			strings.ToUpper(GetTestFilePath("table1.csv")): &View{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  cmd.UTF8,
+					LineBreak: cmd.LF,
+				},
+				Header: NewHeaderWithoutId("table1", []string{"column1"}),
+				Records: []Record{
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("1"),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("2"),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("3"),
+					}),
+				},
+				OperatedFields: 1,
+			},
+		},
+	},
+	{
+		Name: "Drop Columns For Temporary View",
+		Query: parser.DropColumns{
+			Table: parser.Identifier{Literal: "tmpview"},
+			Columns: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+			},
+		},
+		Result: &View{
+			FileInfo: &FileInfo{
+				Path:      "tmpview",
+				Delimiter: ',',
+				Temporary: true,
+			},
+			Header: NewHeaderWithoutId("tmpview", []string{"column1"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("1"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("2"),
+				}),
+			},
+			OperatedFields: 1,
+		},
+		TempViewList: TemporaryViewMapList{
+			ViewMap{
+				"TMPVIEW": &View{
+					Header: NewHeaderWithoutId("tmpview", []string{"column1"}),
+					Records: []Record{
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("1"),
+						}),
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("2"),
+						}),
+					},
+					FileInfo: &FileInfo{
+						Path:      "tmpview",
+						Delimiter: ',',
+						Temporary: true,
+					},
+					OperatedFields: 1,
+				},
+			},
+		},
 	},
 	{
 		Name: "Drop Columns Load Error",
@@ -2656,9 +3272,33 @@ func TestDropColumns(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
+	filter := NewEmptyFilter()
+	filter.TempViewsList = TemporaryViewMapList{
+		ViewMap{
+			"TMPVIEW": &View{
+				Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2"}),
+				Records: []Record{
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("1"),
+						parser.NewString("str1"),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("2"),
+						parser.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:      "tmpview",
+					Delimiter: ',',
+					Temporary: true,
+				},
+			},
+		},
+	}
+
 	for _, v := range dropColumnsTests {
 		ViewCache.Clear()
-		result, err := DropColumns(v.Query, NewEmptyFilter())
+		result, err := DropColumns(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2674,14 +3314,27 @@ func TestDropColumns(t *testing.T) {
 		if !reflect.DeepEqual(result, v.Result) {
 			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
 		}
+
+		if v.ViewCache != nil {
+			if !reflect.DeepEqual(ViewCache, v.ViewCache) {
+				t.Errorf("%s: view cache = %q, want %q", v.Name, ViewCache, v.ViewCache)
+			}
+		}
+		if v.TempViewList != nil {
+			if !reflect.DeepEqual(filter.TempViewsList, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViewsList, v.TempViewList)
+			}
+		}
 	}
 }
 
 var renameColumnTests = []struct {
-	Name   string
-	Query  parser.RenameColumn
-	Result *View
-	Error  string
+	Name         string
+	Query        parser.RenameColumn
+	Result       *View
+	ViewCache    ViewMap
+	TempViewList TemporaryViewMapList
+	Error        string
 }{
 	{
 		Name: "Rename Column",
@@ -2714,6 +3367,83 @@ var renameColumnTests = []struct {
 				}),
 			},
 			OperatedFields: 1,
+		},
+		ViewCache: ViewMap{
+			strings.ToUpper(GetTestFilePath("table1.csv")): &View{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  cmd.UTF8,
+					LineBreak: cmd.LF,
+				},
+				Header: NewHeaderWithoutId("table1", []string{"column1", "newcolumn"}),
+				Records: []Record{
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("1"),
+						parser.NewString("str1"),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("2"),
+						parser.NewString("str2"),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("3"),
+						parser.NewString("str3"),
+					}),
+				},
+				OperatedFields: 1,
+			},
+		},
+	},
+	{
+		Name: "Rename Column For Temporary View",
+		Query: parser.RenameColumn{
+			Table: parser.Identifier{Literal: "tmpview"},
+			Old:   parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+			New:   parser.Identifier{Literal: "newcolumn"},
+		},
+		Result: &View{
+			FileInfo: &FileInfo{
+				Path:      "tmpview",
+				Delimiter: ',',
+				Temporary: true,
+			},
+			Header: NewHeaderWithoutId("tmpview", []string{"column1", "newcolumn"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+			},
+			OperatedFields: 1,
+		},
+		TempViewList: TemporaryViewMapList{
+			ViewMap{
+				"TMPVIEW": &View{
+					Header: NewHeaderWithoutId("tmpview", []string{"column1", "newcolumn"}),
+					Records: []Record{
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("1"),
+							parser.NewString("str1"),
+						}),
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewString("2"),
+							parser.NewString("str2"),
+						}),
+					},
+					FileInfo: &FileInfo{
+						Path:      "tmpview",
+						Delimiter: ',',
+						Temporary: true,
+					},
+					OperatedFields: 1,
+				},
+			},
 		},
 	},
 	{
@@ -2749,9 +3479,33 @@ func TestRenameColumn(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
+	filter := NewEmptyFilter()
+	filter.TempViewsList = TemporaryViewMapList{
+		ViewMap{
+			"TMPVIEW": &View{
+				Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2"}),
+				Records: []Record{
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("1"),
+						parser.NewString("str1"),
+					}),
+					NewRecordWithoutId([]parser.Primary{
+						parser.NewString("2"),
+						parser.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:      "tmpview",
+					Delimiter: ',',
+					Temporary: true,
+				},
+			},
+		},
+	}
+
 	for _, v := range renameColumnTests {
 		ViewCache.Clear()
-		result, err := RenameColumn(v.Query, NewEmptyFilter())
+		result, err := RenameColumn(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2766,6 +3520,17 @@ func TestRenameColumn(t *testing.T) {
 		}
 		if !reflect.DeepEqual(result, v.Result) {
 			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+		}
+
+		if v.ViewCache != nil {
+			if !reflect.DeepEqual(ViewCache, v.ViewCache) {
+				t.Errorf("%s: view cache = %q, want %q", v.Name, ViewCache, v.ViewCache)
+			}
+		}
+		if v.TempViewList != nil {
+			if !reflect.DeepEqual(filter.TempViewsList, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViewsList, v.TempViewList)
+			}
 		}
 	}
 }

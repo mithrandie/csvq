@@ -22,8 +22,7 @@ const (
 type StatementType int
 
 const (
-	SELECT StatementType = iota
-	INSERT
+	INSERT StatementType = iota
 	UPDATE
 	DELETE
 	CREATE_TABLE
@@ -34,7 +33,6 @@ const (
 
 type Result struct {
 	Type          StatementType
-	View          *View
 	FileInfo      *FileInfo
 	OperatedCount int
 }
@@ -423,7 +421,12 @@ func Update(query parser.UpdateQuery, parentFilter Filter) ([]*View, error) {
 		if err != nil {
 			return nil, err
 		}
-		viewsToUpdate[table.Name().Literal], _ = ViewCache.Get(parser.Identifier{Literal: fpath})
+
+		if parentFilter.TempViewsList.Exists(fpath) {
+			viewsToUpdate[table.Name().Literal], _ = parentFilter.TempViewsList.Get(parser.Identifier{Literal: fpath})
+		} else {
+			viewsToUpdate[table.Name().Literal], _ = ViewCache.Get(parser.Identifier{Literal: fpath})
+		}
 		viewsToUpdate[table.Name().Literal].Header.Update(table.Name().Literal, nil)
 		updatedIndices[table.Name().Literal] = []int{}
 	}
@@ -525,7 +528,11 @@ func Delete(query parser.DeleteQuery, parentFilter Filter) ([]*View, error) {
 		if err != nil {
 			return nil, err
 		}
-		viewsToDelete[table.Name().Literal], err = ViewCache.Get(parser.Identifier{Literal: fpath})
+		if parentFilter.TempViewsList.Exists(fpath) {
+			viewsToDelete[table.Name().Literal], _ = parentFilter.TempViewsList.Get(parser.Identifier{Literal: fpath})
+		} else {
+			viewsToDelete[table.Name().Literal], _ = ViewCache.Get(parser.Identifier{Literal: fpath})
+		}
 		viewsToDelete[table.Name().Literal].Header.Update(table.Name().Literal, nil)
 		deletedIndices[table.Name().Literal] = []int{}
 	}

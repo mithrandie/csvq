@@ -119,8 +119,8 @@ _table_name_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
   or [special tables](#special_tables)
   
-  A identifier represents a csv file path.
-  You can use absolute path or relative path from the directory specified by the ["--repository" option]({{ '/reference/command.html#global_options' | relative_url }}).
+  A identifier represents a csv file path, a [temporary table]({{ '/reference/temporary-table.html' | relative_url }}), or a [inline table]({{ '/reference/common-table-expression.html' | relative_url }}).
+  You can use absolute path or relative path from the directory specified by the ["--repository" option]({{ '/reference/command.html#global_options' | relative_url }}) as a csv file path.
   
   If a file name extension is ".csv" or ".tsv", you can omit it. 
   
@@ -152,7 +152,7 @@ DUAL
   This table is used to retrieve pseudo columns.
 
 STDIN
-: The stdin table loads data from the standard input as a csv data.
+: The stdin table loads data from the standard input as a csv data. The stdin table is one of [temporary tables]({{ '/reference/temporary-table.html' | relative_url }}).
 
 ### join syntax
 
