@@ -9,6 +9,8 @@ category: reference
 A Temporary Table is a temporary view that can be used in a procedure.
 You can refer, insert, update, or delete temporary tables.
 
+When current transaction is rolled back, all of the changes in temporary tables are discarded, and the records that are created in the declarations are set to the tables.
+
 ## Declare Temporary Table
 {: #declare}
 
