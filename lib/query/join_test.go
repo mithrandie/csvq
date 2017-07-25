@@ -147,11 +147,11 @@ func TestCrossJoin(t *testing.T) {
 	expect := &View{
 		Header: []HeaderField{
 			{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table1", Column: "column2", FromTable: true},
+			{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
+			{Reference: "table1", Column: "column2", Number: 2, FromTable: true},
 			{Reference: "table2", Column: INTERNAL_ID_COLUMN},
-			{Reference: "table2", Column: "column3", FromTable: true},
-			{Reference: "table2", Column: "column4", FromTable: true},
+			{Reference: "table2", Column: "column3", Number: 1, FromTable: true},
+			{Reference: "table2", Column: "column4", Number: 2, FromTable: true},
 		},
 		Records: []Record{
 			NewRecordWithoutId([]parser.Primary{
@@ -191,7 +191,7 @@ func TestCrossJoin(t *testing.T) {
 
 	CrossJoin(view, joinView)
 	if !reflect.DeepEqual(view, expect) {
-		t.Errorf("cross join: result = %q, want %q", view, expect)
+		t.Errorf("Cross Join: result = %q, want %q", view, expect)
 	}
 }
 
@@ -244,11 +244,11 @@ var innerJoinTests = []struct {
 		Result: &View{
 			Header: []HeaderField{
 				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
+				{Reference: "table1", Column: "column2", Number: 2, FromTable: true},
 				{Reference: "table2", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table2", Column: "column1", FromTable: true},
-				{Reference: "table2", Column: "column3", FromTable: true},
+				{Reference: "table2", Column: "column1", Number: 1, FromTable: true},
+				{Reference: "table2", Column: "column3", Number: 2, FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
@@ -375,11 +375,11 @@ var outerJoinTests = []struct {
 		Result: &View{
 			Header: []HeaderField{
 				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
+				{Reference: "table1", Column: "column2", Number: 2, FromTable: true},
 				{Reference: "table2", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table2", Column: "column1", FromTable: true},
-				{Reference: "table2", Column: "column3", FromTable: true},
+				{Reference: "table2", Column: "column1", Number: 1, FromTable: true},
+				{Reference: "table2", Column: "column3", Number: 2, FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
@@ -454,11 +454,11 @@ var outerJoinTests = []struct {
 		Result: &View{
 			Header: []HeaderField{
 				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
+				{Reference: "table1", Column: "column2", Number: 2, FromTable: true},
 				{Reference: "table2", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table2", Column: "column1", FromTable: true},
-				{Reference: "table2", Column: "column3", FromTable: true},
+				{Reference: "table2", Column: "column1", Number: 1, FromTable: true},
+				{Reference: "table2", Column: "column3", Number: 2, FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
@@ -533,11 +533,11 @@ var outerJoinTests = []struct {
 		Result: &View{
 			Header: []HeaderField{
 				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
+				{Reference: "table1", Column: "column2", Number: 2, FromTable: true},
 				{Reference: "table2", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table2", Column: "column1", FromTable: true},
-				{Reference: "table2", Column: "column3", FromTable: true},
+				{Reference: "table2", Column: "column1", Number: 1, FromTable: true},
+				{Reference: "table2", Column: "column3", Number: 2, FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
@@ -664,11 +664,11 @@ var outerJoinTests = []struct {
 		Result: &View{
 			Header: []HeaderField{
 				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
+				{Reference: "table1", Column: "column2", Number: 2, FromTable: true},
 				{Reference: "table2", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table2", Column: "column1", FromTable: true},
-				{Reference: "table2", Column: "column3", FromTable: true},
+				{Reference: "table2", Column: "column1", Number: 1, FromTable: true},
+				{Reference: "table2", Column: "column3", Number: 2, FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{

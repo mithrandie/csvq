@@ -148,7 +148,7 @@ func DeclareTable(expr parser.TableDeclaration, filter Filter) error {
 			return err
 		}
 
-		if err := view.UpdateHeader(expr.Table.Literal, expr.Fields); err != nil {
+		if err := view.Header.Update(expr.Table.Literal, expr.Fields); err != nil {
 			if _, ok := err.(*FieldLengthNotMatchError); ok {
 				return NewTemporaryTableFieldLengthError(expr.Query.(parser.SelectQuery), expr.Table, len(expr.Fields))
 			}
@@ -314,7 +314,7 @@ func selectSetForRecursion(view *View, set parser.SelectSet, filter Filter) erro
 	tmpViewName := strings.ToUpper(filter.RecursiveTable.Name.Literal)
 
 	if filter.RecursiveTmpView == nil {
-		err := view.UpdateHeader(tmpViewName, filter.RecursiveTable.Fields)
+		err := view.Header.Update(tmpViewName, filter.RecursiveTable.Fields)
 		if err != nil {
 			return err
 		}
@@ -332,7 +332,7 @@ func selectSetForRecursion(view *View, set parser.SelectSet, filter Filter) erro
 	if rview.RecordLen() < 1 {
 		return nil
 	}
-	rview.UpdateHeader(tmpViewName, filter.RecursiveTable.Fields)
+	rview.Header.Update(tmpViewName, filter.RecursiveTable.Fields)
 	filter.RecursiveTmpView = rview
 
 	switch set.Operator.Token {
@@ -424,7 +424,7 @@ func Update(query parser.UpdateQuery, parentFilter Filter) ([]*View, error) {
 			return nil, err
 		}
 		viewsToUpdate[table.Name().Literal], _ = ViewCache.Get(parser.Identifier{Literal: fpath})
-		viewsToUpdate[table.Name().Literal].UpdateHeader(table.Name().Literal, nil)
+		viewsToUpdate[table.Name().Literal].Header.Update(table.Name().Literal, nil)
 		updatedIndices[table.Name().Literal] = []int{}
 	}
 
@@ -526,7 +526,7 @@ func Delete(query parser.DeleteQuery, parentFilter Filter) ([]*View, error) {
 			return nil, err
 		}
 		viewsToDelete[table.Name().Literal], err = ViewCache.Get(parser.Identifier{Literal: fpath})
-		viewsToDelete[table.Name().Literal].UpdateHeader(table.Name().Literal, nil)
+		viewsToDelete[table.Name().Literal].Header.Update(table.Name().Literal, nil)
 		deletedIndices[table.Name().Literal] = []int{}
 	}
 
@@ -675,6 +675,11 @@ func AddColumns(query parser.AddColumns, parentFilter Filter) (*View, error) {
 	}
 	for i, v := range addHeader {
 		header[i+insertPos] = v
+	}
+	colNumber := 0
+	for i := range header {
+		colNumber++
+		header[i].Number = colNumber
 	}
 
 	records := make([]Record, view.RecordLen())

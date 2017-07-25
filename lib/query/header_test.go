@@ -88,6 +88,83 @@ func TestHeader_TableColumnNames(t *testing.T) {
 	}
 }
 
+var headerContainsNumberTests = []struct {
+	Number parser.ColumnNumber
+	Result int
+	Error  string
+}{
+	{
+		Number: parser.ColumnNumber{
+			View:   parser.Identifier{Literal: "t1"},
+			Number: parser.NewInteger(2),
+		},
+		Result: 1,
+	},
+	{
+		Number: parser.ColumnNumber{
+			View:   parser.Identifier{Literal: "t1"},
+			Number: parser.NewInteger(0),
+		},
+		Error: "[L:- C:-] field number t1.0 does not exist",
+	},
+	{
+		Number: parser.ColumnNumber{
+			View:   parser.Identifier{Literal: "t1"},
+			Number: parser.NewInteger(9),
+		},
+		Error: "[L:- C:-] field number t1.9 does not exist",
+	},
+}
+
+func TestHeader_ContainsNumber(t *testing.T) {
+	h := Header{
+		{
+			Reference: "t1",
+			Column:    "c1",
+			Alias:     "a1",
+			Number:    1,
+			FromTable: true,
+		},
+		{
+			Reference: "t1",
+			Column:    "c2",
+			Alias:     "a2",
+			Number:    2,
+			FromTable: true,
+		},
+		{
+			Column:    "c3",
+			FromTable: false,
+		},
+		{
+			Reference: "t2",
+			Column:    "c1",
+			Alias:     "a3",
+			Number:    1,
+			FromTable: true,
+		},
+	}
+
+	for _, v := range headerContainsNumberTests {
+		result, err := h.ContainsNumber(v.Number)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Number.String(), err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Number.String(), err, v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Number.String(), v.Error)
+			continue
+		}
+		if result != v.Result {
+			t.Errorf("%s: index = %d, want %d", v.Number.String(), result, v.Result)
+		}
+	}
+}
+
 var headerContainsTests = []struct {
 	Ref    parser.FieldReference
 	Result int
@@ -183,11 +260,13 @@ func TestNewHeader(t *testing.T) {
 		{
 			Reference: "table1",
 			Column:    "column1",
+			Number:    1,
 			FromTable: true,
 		},
 		{
 			Reference: "table1",
 			Column:    "column2",
+			Number:    2,
 			FromTable: true,
 		},
 	}
@@ -203,15 +282,172 @@ func TestNewHeaderWithoutId(t *testing.T) {
 		{
 			Reference: "table1",
 			Column:    "column1",
+			Number:    1,
 			FromTable: true,
 		},
 		{
 			Reference: "table1",
 			Column:    "column2",
+			Number:    2,
 			FromTable: true,
 		},
 	}
 	if !reflect.DeepEqual(NewHeaderWithoutId(ref, words), expect) {
 		t.Errorf("header = %s, want %s", NewHeaderWithoutId(ref, words), expect)
+	}
+}
+
+var headerUpdateTests = []struct {
+	Name      string
+	Header    Header
+	Reference string
+	Fields    []parser.Expression
+	Result    Header
+	Error     string
+}{
+	{
+		Name: "Header Update",
+		Header: []HeaderField{
+			{
+				Reference: "table1",
+				Column:    "column1",
+				Alias:     "alias1",
+			},
+			{
+				Reference: "table1",
+				Column:    "column2",
+				Alias:     "alias2",
+			},
+			{
+				Reference: "table2",
+				Column:    "column3",
+			},
+		},
+		Reference: "ref1",
+		Fields: []parser.Expression{
+			parser.Identifier{Literal: "c1"},
+			parser.Identifier{Literal: "c2"},
+			parser.Identifier{Literal: "c3"},
+		},
+		Result: []HeaderField{
+			{
+				Reference: "ref1",
+				Column:    "c1",
+			},
+			{
+				Reference: "ref1",
+				Column:    "c2",
+			},
+			{
+				Reference: "ref1",
+				Column:    "c3",
+			},
+		},
+	},
+	{
+		Name: "Header Update Without Fields",
+		Header: []HeaderField{
+			{
+				Reference: "table1",
+				Column:    "column1",
+				Alias:     "alias1",
+			},
+			{
+				Reference: "table1",
+				Column:    "column2",
+				Alias:     "alias2",
+			},
+			{
+				Reference: "table2",
+				Column:    "column3",
+			},
+		},
+		Reference: "ref1",
+		Result: []HeaderField{
+			{
+				Reference: "ref1",
+				Column:    "alias1",
+			},
+			{
+				Reference: "ref1",
+				Column:    "alias2",
+			},
+			{
+				Reference: "ref1",
+				Column:    "column3",
+			},
+		},
+	},
+	{
+		Name: "Header Update Field Length Error",
+		Header: []HeaderField{
+			{
+				Reference: "table1",
+				Column:    "column1",
+				Alias:     "alias1",
+			},
+			{
+				Reference: "table1",
+				Column:    "column2",
+				Alias:     "alias2",
+			},
+			{
+				Reference: "table2",
+				Column:    "column3",
+			},
+		},
+		Reference: "ref1",
+		Fields: []parser.Expression{
+			parser.Identifier{Literal: "c1"},
+			parser.Identifier{Literal: "c2"},
+		},
+		Error: "[L:- C:-] field length does not match",
+	},
+	{
+		Name: "Header Update Field Name Duplicate Error",
+		Header: []HeaderField{
+			{
+				Reference: "table1",
+				Column:    "column1",
+				Alias:     "alias1",
+			},
+			{
+				Reference: "table1",
+				Column:    "column2",
+				Alias:     "alias2",
+			},
+			{
+				Reference: "table2",
+				Column:    "column3",
+			},
+		},
+		Reference: "ref1",
+		Fields: []parser.Expression{
+			parser.Identifier{Literal: "c1"},
+			parser.Identifier{Literal: "c2"},
+			parser.Identifier{Literal: "c2"},
+		},
+		Error: "[L:- C:-] field name c2 is a duplicate",
+	},
+}
+
+func TestHeader_Update(t *testing.T) {
+	for _, v := range headerUpdateTests {
+		err := v.Header.Update(v.Reference, v.Fields)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(v.Header, v.Result) {
+			t.Errorf("%s: header = %s, want %s", v.Name, v.Header, v.Result)
+		}
 	}
 }

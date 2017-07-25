@@ -18,6 +18,8 @@ const (
 	ERROR_FIELD_AMBIGUOUS                   = "field %s is ambiguous"
 	ERROR_FIELD_NOT_EXIST                   = "field %s does not exist"
 	ERROR_FIELD_NOT_GROUP_KEY               = "field %s is not a group key"
+	ERROR_FIELD_NUMBER_NOT_EXIST            = "field number %s does not exist"
+	ERROR_FIELD_NUMBER_NOT_GROUP_KEY        = "field number %s is not a group key"
 	ERROR_DUPLICATE_FIELD_NAME              = "field name %s is a duplicate"
 	ERROR_NOT_GROUPING_RECORDS              = "function %s cannot aggregate not grouping records"
 	ERROR_UNDEFINED_VARIABLE                = "variable %s is undefined"
@@ -174,6 +176,26 @@ type FieldNotGroupKeyError struct {
 func NewFieldNotGroupKeyError(field parser.FieldReference) error {
 	return &FieldNotGroupKeyError{
 		NewBaseError(field, fmt.Sprintf(ERROR_FIELD_NOT_GROUP_KEY, field)),
+	}
+}
+
+type FieldNumberNotExistError struct {
+	*BaseError
+}
+
+func NewFieldNumberNotExistError(number parser.ColumnNumber) error {
+	return &FieldNumberNotExistError{
+		NewBaseError(number, fmt.Sprintf(ERROR_FIELD_NUMBER_NOT_EXIST, number)),
+	}
+}
+
+type FieldNumberNotGroupKeyError struct {
+	*BaseError
+}
+
+func NewFieldNumberNotGroupKeyError(number parser.ColumnNumber) error {
+	return &FieldNumberNotGroupKeyError{
+		NewBaseError(number, fmt.Sprintf(ERROR_FIELD_NUMBER_NOT_GROUP_KEY, number)),
 	}
 }
 

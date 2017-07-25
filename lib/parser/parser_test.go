@@ -479,7 +479,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select ident, 'foo', 1, 1.234, true, '2010-01-01 12:00:00', null, ('bar') from dual",
+		Input: "select ident, tbl.3, 'foo', 1, 1.234, true, '2010-01-01 12:00:00', null, ('bar') from dual",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -488,6 +488,7 @@ var parseTests = []struct {
 						Select:   "select",
 						Fields: []Expression{
 							Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "ident"}}},
+							Field{Object: ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 15}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "tbl"}, Number: NewInteger(3)}},
 							Field{Object: NewString("foo")},
 							Field{Object: NewInteger(1)},
 							Field{Object: NewFloat(1.234)},

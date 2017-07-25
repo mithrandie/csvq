@@ -12,6 +12,7 @@ type HeaderField struct {
 	Reference  string
 	Column     string
 	Alias      string
+	Number     int
 	FromTable  bool
 	IsGroupKey bool
 }
@@ -39,6 +40,7 @@ func NewHeader(ref string, words []string) Header {
 	for i, v := range words {
 		h[i+1].Reference = ref
 		h[i+1].Column = v
+		h[i+1].Number = i + 1
 		h[i+1].FromTable = true
 	}
 
@@ -51,6 +53,7 @@ func NewHeaderWithoutId(ref string, words []string) Header {
 	for i, v := range words {
 		h[i].Reference = ref
 		h[i].Column = v
+		h[i].Number = i + 1
 		h[i].FromTable = true
 	}
 
@@ -121,6 +124,22 @@ func (h Header) ContainsObject(obj parser.Expression) (int, error) {
 	return h.Contains(fieldRef)
 }
 
+func (h Header) ContainsNumber(number parser.ColumnNumber) (int, error) {
+	ref := number.View.Literal
+	idx := int(number.Number.Value())
+
+	if idx < 1 {
+		return -1, NewFieldNumberNotExistError(number)
+	}
+
+	for i, f := range h {
+		if strings.EqualFold(f.Reference, ref) && f.Number == idx {
+			return i, nil
+		}
+	}
+	return -1, NewFieldNumberNotExistError(number)
+}
+
 func (h Header) Contains(fieldRef parser.FieldReference) (int, error) {
 	var ref string
 	if fieldRef.View != nil {
@@ -152,6 +171,34 @@ func (h Header) Contains(fieldRef parser.FieldReference) (int, error) {
 	}
 
 	return idx, nil
+}
+
+func (h Header) Update(reference string, fields []parser.Expression) error {
+	if fields != nil {
+		if len(fields) != h.Len() {
+			return NewFieldLengthNotMatchError()
+		}
+
+		names := make([]string, len(fields))
+		for i, v := range fields {
+			f, _ := v.(parser.Identifier)
+			if InStrSliceWithCaseInsensitive(f.Literal, names) {
+				return NewDuplicateFieldNameError(f)
+			}
+			names[i] = f.Literal
+		}
+	}
+
+	for i, hf := range h {
+		h[i].Reference = reference
+		if fields != nil {
+			h[i].Column = fields[i].(parser.Identifier).Literal
+		} else if 0 < len(hf.Alias) {
+			h[i].Column = hf.Alias
+		}
+		h[i].Alias = ""
+	}
+	return nil
 }
 
 func (h Header) Copy() Header {

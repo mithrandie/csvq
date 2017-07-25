@@ -226,10 +226,10 @@ var viewLoadTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
-				{Reference: "table2", Column: "column3", FromTable: true},
-				{Reference: "table2", Column: "column4", FromTable: true},
+				{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
+				{Reference: "table1", Column: "column2", Number: 2, FromTable: true},
+				{Reference: "table2", Column: "column3", Number: 1, FromTable: true},
+				{Reference: "table2", Column: "column4", Number: 2, FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
@@ -320,10 +320,10 @@ var viewLoadTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
-				{Reference: "table2", Column: "column3", FromTable: true},
-				{Reference: "table2", Column: "column4", FromTable: true},
+				{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
+				{Reference: "table1", Column: "column2", Number: 2, FromTable: true},
+				{Reference: "table2", Column: "column3", Number: 1, FromTable: true},
+				{Reference: "table2", Column: "column4", Number: 2, FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
@@ -420,10 +420,10 @@ var viewLoadTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
-				{Reference: "table2", Column: "column3", FromTable: true},
-				{Reference: "table2", Column: "column4", FromTable: true},
+				{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
+				{Reference: "table1", Column: "column2", Number: 2, FromTable: true},
+				{Reference: "table2", Column: "column3", Number: 1, FromTable: true},
+				{Reference: "table2", Column: "column4", Number: 2, FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
@@ -479,10 +479,10 @@ var viewLoadTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
-				{Reference: "table2", Column: "column3", FromTable: true},
-				{Reference: "table2", Column: "column4", FromTable: true},
+				{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
+				{Reference: "table1", Column: "column2", Number: 2, FromTable: true},
+				{Reference: "table2", Column: "column3", Number: 1, FromTable: true},
+				{Reference: "table2", Column: "column4", Number: 2, FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
@@ -584,18 +584,7 @@ var viewLoadTests = []struct {
 			},
 		},
 		Result: &View{
-			Header: []HeaderField{
-				{
-					Reference: "alias",
-					Column:    "column1",
-					FromTable: true,
-				},
-				{
-					Reference: "alias",
-					Column:    "column2",
-					FromTable: true,
-				},
-			},
+			Header: NewHeaderWithoutId("alias", []string{"column1", "column2"}),
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
 					parser.NewString("1"),
@@ -885,16 +874,19 @@ var viewGroupByTests = []struct {
 				{
 					Reference: "table1",
 					Column:    "column1",
+					Number:    1,
 					FromTable: true,
 				},
 				{
 					Reference: "table1",
 					Column:    "column2",
+					Number:    2,
 					FromTable: true,
 				},
 				{
 					Reference:  "table1",
 					Column:     "column3",
+					Number:     3,
 					FromTable:  true,
 					IsGroupKey: true,
 				},
@@ -1130,11 +1122,11 @@ var viewSelectTests = []struct {
 		View: &View{
 			Header: []HeaderField{
 				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
+				{Reference: "table1", Column: "column2", Number: 2, FromTable: true},
 				{Reference: "table2", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table2", Column: "column3", FromTable: true},
-				{Reference: "table2", Column: "column4", FromTable: true},
+				{Reference: "table2", Column: "column3", Number: 1, FromTable: true},
+				{Reference: "table2", Column: "column4", Number: 2, FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
@@ -1177,18 +1169,21 @@ var viewSelectTests = []struct {
 				parser.Field{Object: parser.AllColumns{}},
 				parser.Field{Object: parser.NewInteger(1), Alias: parser.Identifier{Literal: "a"}},
 				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}, Alias: parser.Identifier{Literal: "c2a"}},
+				parser.Field{Object: parser.ColumnNumber{View: parser.Identifier{Literal: "table2"}, Number: parser.NewInteger(1)}, Alias: parser.Identifier{Literal: "t21"}},
+				parser.Field{Object: parser.ColumnNumber{View: parser.Identifier{Literal: "table2"}, Number: parser.NewInteger(1)}, Alias: parser.Identifier{Literal: "t21a"}},
 			},
 		},
 		Result: &View{
 			Header: []HeaderField{
 				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", Alias: "c2", FromTable: true},
+				{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
+				{Reference: "table1", Column: "column2", Alias: "c2", Number: 2, FromTable: true},
 				{Reference: "table2", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table2", Column: "column3", FromTable: true},
-				{Reference: "table2", Column: "column4", FromTable: true},
+				{Reference: "table2", Column: "column3", Alias: "t21", Number: 1, FromTable: true},
+				{Reference: "table2", Column: "column4", Number: 2, FromTable: true},
 				{Column: "1", Alias: "a"},
 				{Column: "", Alias: "c2a"},
+				{Column: "", Alias: "t21a"},
 			},
 			Records: []Record{
 				NewRecordWithoutId([]parser.Primary{
@@ -1200,6 +1195,7 @@ var viewSelectTests = []struct {
 					parser.NewString("str22"),
 					parser.NewInteger(1),
 					parser.NewString("str1"),
+					parser.NewString("2"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
 					parser.NewInteger(1),
@@ -1210,6 +1206,7 @@ var viewSelectTests = []struct {
 					parser.NewString("str33"),
 					parser.NewInteger(1),
 					parser.NewString("str1"),
+					parser.NewString("3"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
 					parser.NewInteger(1),
@@ -1220,6 +1217,7 @@ var viewSelectTests = []struct {
 					parser.NewString("str44"),
 					parser.NewInteger(1),
 					parser.NewString("str1"),
+					parser.NewString("1"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
 					parser.NewInteger(2),
@@ -1230,9 +1228,10 @@ var viewSelectTests = []struct {
 					parser.NewString("str22"),
 					parser.NewInteger(1),
 					parser.NewString("str2"),
+					parser.NewString("2"),
 				}),
 			},
-			selectFields: []int{2, 1, 2, 4, 5, 6, 7},
+			selectFields: []int{2, 1, 2, 4, 5, 6, 7, 4, 8},
 		},
 	},
 	{
@@ -1443,8 +1442,8 @@ var viewSelectTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
+				{Reference: "table1", Column: "column2", Number: 2, FromTable: true},
 				{Column: "row_number() over (partition by column1 order by column2)", Alias: "rownum"},
 			},
 			Records: []Record{
@@ -2792,9 +2791,7 @@ func TestView_Fix(t *testing.T) {
 		selectFields: []int{2},
 	}
 	expect := &View{
-		Header: []HeaderField{
-			{Reference: "table1", Column: "column2", FromTable: true},
-		},
+		Header: NewHeaderWithoutId("table1", []string{"column2"}),
 		Records: []Record{
 			NewRecordWithoutId([]parser.Primary{
 				parser.NewString("str1"),
@@ -3253,101 +3250,5 @@ func TestView_InternalRecordId(t *testing.T) {
 	_, err = view.InternalRecordId(ref, recordIndex)
 	if err.Error() != expectError {
 		t.Errorf("error = %q, want error %q", err, expectError)
-	}
-}
-
-func TestView_UpdateHeader(t *testing.T) {
-	view := &View{
-		Header: []HeaderField{
-			{
-				Reference: "table1",
-				Column:    "column1",
-				Alias:     "alias1",
-			},
-			{
-				Reference: "table1",
-				Column:    "column2",
-				Alias:     "alias2",
-			},
-		},
-		Records: []Record{},
-	}
-
-	reference := "ref1"
-	fields := []parser.Expression(nil)
-	expect := &View{
-		Header: []HeaderField{
-			{
-				Reference: "ref1",
-				Column:    "alias1",
-			},
-			{
-				Reference: "ref1",
-				Column:    "alias2",
-			},
-		},
-		Records: []Record{},
-	}
-	view.UpdateHeader(reference, fields)
-	if !reflect.DeepEqual(view, expect) {
-		t.Errorf("view = %s, want %s for UpdateHeader(%s, %s)", view, expect, reference, fields)
-	}
-
-	view = &View{
-		Header: []HeaderField{
-			{
-				Reference: "table1",
-				Column:    "column1",
-				Alias:     "alias1",
-			},
-			{
-				Reference: "table1",
-				Column:    "column2",
-				Alias:     "alias2",
-			},
-		},
-		Records: []Record{},
-	}
-
-	reference = "ref1"
-	fields = []parser.Expression{
-		parser.Identifier{Literal: "alias3"},
-		parser.Identifier{Literal: "alias4"},
-	}
-	expect = &View{
-		Header: []HeaderField{
-			{
-				Reference: "ref1",
-				Column:    "alias3",
-			},
-			{
-				Reference: "ref1",
-				Column:    "alias4",
-			},
-		},
-		Records: []Record{},
-	}
-	view.UpdateHeader(reference, fields)
-	if !reflect.DeepEqual(view, expect) {
-		t.Errorf("view = %s, want %s for UpdateHeader(%s, %s)", view, expect, reference, fields)
-	}
-
-	fields = []parser.Expression{
-		parser.Identifier{Literal: "alias3"},
-	}
-	expectError := "[L:- C:-] field length does not match"
-	err := view.UpdateHeader(reference, fields)
-	if err.Error() != expectError {
-		t.Errorf("error = %q, want error %q for UpdateHeader(%s, %s)", err, expectError, reference, fields)
-	}
-
-	fields = []parser.Expression{
-		parser.Identifier{Literal: "alias3"},
-		parser.Identifier{Literal: "alias3"},
-	}
-	expectError = "[L:- C:-] field name alias3 is a duplicate"
-	err = view.UpdateHeader(reference, fields)
-	if err.Error() != expectError {
-		t.Errorf("error = %q, want error %q for UpdateHeader(%s, %s)", err, expectError, reference, fields)
 	}
 }

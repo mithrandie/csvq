@@ -218,18 +218,7 @@ var procedureExecuteStatementTests = []struct {
 							}),
 						},
 					},
-					Header: []HeaderField{
-						{
-							Reference: "tbl",
-							Column:    "column1",
-							FromTable: true,
-						},
-						{
-							Reference: "tbl",
-							Column:    "column2",
-							FromTable: true,
-						},
-					},
+					Header: NewHeaderWithoutId("tbl", []string{"column1", "column2"}),
 					Records: Records{
 						NewRecordWithoutId([]parser.Primary{
 							parser.NewInteger(1),
@@ -266,6 +255,7 @@ var procedureExecuteStatementTests = []struct {
 						{
 							Column:    "@var1",
 							Alias:     "var1",
+							Number:    1,
 							FromTable: true,
 						},
 					},

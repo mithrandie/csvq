@@ -129,14 +129,14 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 			view, _ = parentFilter.TempViewsList[len(parentFilter.TempViewsList)-1].Get(pathIdent)
 		}
 		if !strings.EqualFold(table.Object.String(), table.Name().Literal) {
-			view.UpdateHeader(table.Name().Literal, nil)
+			view.Header.Update(table.Name().Literal, nil)
 		}
 	case parser.Identifier:
 		tableIdentifier := table.Object.(parser.Identifier)
 		if parentFilter.RecursiveTable != nil && strings.EqualFold(tableIdentifier.Literal, parentFilter.RecursiveTable.Name.Literal) && parentFilter.RecursiveTmpView != nil {
 			view = parentFilter.RecursiveTmpView
 			if !strings.EqualFold(parentFilter.RecursiveTable.Name.Literal, table.Name().Literal) {
-				view.UpdateHeader(table.Name().Literal, nil)
+				view.Header.Update(table.Name().Literal, nil)
 			}
 		} else if ct, err := parentFilter.InlineTables.Get(tableIdentifier); err == nil {
 			if err = parentFilter.AliasesList.Add(table.Name(), ""); err != nil {
@@ -144,7 +144,7 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 			}
 			view = ct
 			if !strings.EqualFold(tableIdentifier.Literal, table.Name().Literal) {
-				view.UpdateHeader(table.Name().Literal, nil)
+				view.Header.Update(table.Name().Literal, nil)
 			}
 		} else {
 			var fileInfo *FileInfo
@@ -200,7 +200,7 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 			}
 
 			if !strings.EqualFold(commonTableName, table.Name().Literal) {
-				view.UpdateHeader(table.Name().Literal, nil)
+				view.Header.Update(table.Name().Literal, nil)
 			}
 		}
 	case parser.Join:
@@ -246,7 +246,7 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 			}
 		}
 		if err == nil {
-			view.UpdateHeader(table.Name().Literal, nil)
+			view.Header.Update(table.Name().Literal, nil)
 		}
 	}
 
@@ -478,14 +478,27 @@ func (view *View) Select(clause parser.SelectClause) error {
 		}
 
 		columns := view.Header.TableColumns()
-		insert := make([]parser.Expression, len(columns))
+		insertLen := len(columns)
+		insert := make([]parser.Expression, insertLen)
 		for i, c := range columns {
 			insert[i] = parser.Field{
 				Object: c,
 			}
 		}
 
-		return append(append(fields[:insertIdx], insert...), fields[insertIdx+1:]...)
+		list := make([]parser.Expression, len(fields)-1+insertLen)
+		for i, field := range fields {
+			if i < insertIdx {
+				list[i] = field
+			} else {
+				list[i+insertLen-1] = field
+			}
+		}
+		for i, field := range insert {
+			list[i+insertIdx] = field
+		}
+
+		return list
 	}
 
 	var evalFields = func(view *View, fields []parser.Expression) error {
@@ -610,6 +623,14 @@ func (view *View) evalColumn(obj parser.Expression, column string, alias string)
 		if idx, err = view.FieldIndex(fr); err == nil {
 			if view.isGrouped && view.Header[idx].FromTable && !view.Header[idx].IsGroupKey {
 				err = NewFieldNotGroupKeyError(fr)
+				return
+			}
+			fieldInTable = true
+		}
+	} else if cn, ok := obj.(parser.ColumnNumber); ok {
+		if idx, err = view.Header.ContainsNumber(cn); err == nil {
+			if view.isGrouped && view.Header[idx].FromTable && !view.Header[idx].IsGroupKey {
+				err = NewFieldNumberNotGroupKeyError(cn)
 				return
 			}
 			fieldInTable = true
@@ -843,8 +864,12 @@ func (view *View) Fix() {
 		records[i] = record
 	}
 
+	colNumber := 0
 	for i, idx := range view.selectFields {
+		colNumber++
+
 		hfields[i] = view.Header[idx]
+		hfields[i].Number = colNumber
 		hfields[i].FromTable = true
 		hfields[i].IsGroupKey = false
 	}
@@ -941,34 +966,6 @@ func (view *View) InternalRecordId(ref string, recordIndex int) (int, error) {
 		return -1, NewInternalRecordIdEmptyError()
 	}
 	return int(internalId.Value()), nil
-}
-
-func (view *View) UpdateHeader(reference string, fields []parser.Expression) error {
-	if fields != nil {
-		if len(fields) != view.FieldLen() {
-			return NewFieldLengthNotMatchError()
-		}
-
-		names := make([]string, len(fields))
-		for i, v := range fields {
-			f, _ := v.(parser.Identifier)
-			if InStrSliceWithCaseInsensitive(f.Literal, names) {
-				return NewDuplicateFieldNameError(f)
-			}
-			names[i] = f.Literal
-		}
-	}
-
-	for i := range view.Header {
-		view.Header[i].Reference = reference
-		if fields != nil {
-			view.Header[i].Column = fields[i].(parser.Identifier).Literal
-		} else if 0 < len(view.Header[i].Alias) {
-			view.Header[i].Column = view.Header[i].Alias
-		}
-		view.Header[i].Alias = ""
-	}
-	return nil
 }
 
 func (view *View) FieldLen() int {

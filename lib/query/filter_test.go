@@ -153,6 +153,100 @@ var filterEvaluateTests = []struct {
 		Error: "[L:- C:-] field column1 is not a group key",
 	},
 	{
+		Name: "ColumnNumber",
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							NewRecord(1, []parser.Primary{
+								parser.NewInteger(1),
+								parser.NewString("str"),
+							}),
+							NewRecord(2, []parser.Primary{
+								parser.NewInteger(2),
+								parser.NewString("strstr"),
+							}),
+						},
+					},
+					RecordIndex: 1,
+				},
+			},
+		},
+		Expr:   parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: parser.NewInteger(2)},
+		Result: parser.NewString("strstr"),
+	},
+	{
+		Name: "ColumnNumber Not Exist Error",
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							NewRecord(1, []parser.Primary{
+								parser.NewInteger(1),
+								parser.NewString("str"),
+							}),
+							NewRecord(2, []parser.Primary{
+								parser.NewInteger(2),
+								parser.NewString("strstr"),
+							}),
+						},
+					},
+					RecordIndex: 1,
+				},
+			},
+		},
+		Expr:  parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: parser.NewInteger(9)},
+		Error: "[L:- C:-] field number table1.9 does not exist",
+	},
+	{
+		Name: "ColumnNumber Not Group Key Error",
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: []HeaderField{
+							{
+								Reference: "table1",
+								Column:    "column1",
+								Number:    1,
+								FromTable: true,
+							},
+							{
+								Reference:  "table1",
+								Column:     "column2",
+								Number:     2,
+								FromTable:  true,
+								IsGroupKey: true,
+							},
+						},
+						Records: []Record{
+							{
+								NewGroupCell([]parser.Primary{
+									parser.NewInteger(1),
+									parser.NewInteger(2),
+								}),
+							},
+							{
+								NewGroupCell([]parser.Primary{
+									parser.NewString("str1"),
+									parser.NewString("str2"),
+								}),
+							},
+						},
+						isGrouped: true,
+					},
+					RecordIndex: 0,
+				},
+			},
+		},
+		Expr:  parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: parser.NewInteger(1)},
+		Error: "[L:- C:-] field number table1.1 is not a group key",
+	},
+	{
 		Name: "Arithmetic",
 		Expr: parser.Arithmetic{
 			LHS:      parser.NewInteger(1),

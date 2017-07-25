@@ -140,6 +140,7 @@ var inlineTablesSetTests = []struct {
 					{
 						Reference: "it_recursive",
 						Column:    "n",
+						Number:    1,
 						FromTable: true,
 					},
 				},
@@ -465,6 +466,7 @@ var inlineTablesLoadTests = []struct {
 					{
 						Reference: "it_recursive",
 						Column:    "n",
+						Number:    1,
 						FromTable: true,
 					},
 				},

@@ -822,6 +822,10 @@ field_reference
     {
         $$ = FieldReference{BaseExpr: NewBaseExprFromIdentifier($1), View: $1, Column: $3}
     }
+    | identifier '.' integer
+    {
+        $$ = ColumnNumber{BaseExpr: NewBaseExprFromIdentifier($1), View: $1, Number: $3}
+    }
 
 value
     : field_reference
@@ -1285,10 +1289,6 @@ field_object
     {
         $$ = $1
     }
-    | '*'
-    {
-        $$ = AllColumns{BaseExpr: NewBaseExpr($1)}
-    }
 
 field
     : field_object
@@ -1298,6 +1298,10 @@ field
     | field_object AS identifier
     {
         $$ = Field{Object: $1, As: $2.Literal, Alias: $3}
+    }
+    | '*'
+    {
+        $$ = Field{Object: AllColumns{BaseExpr: NewBaseExpr($1)}}
     }
 
 case
