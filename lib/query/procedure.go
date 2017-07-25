@@ -403,7 +403,7 @@ func (proc *Procedure) Commit() error {
 func (proc *Procedure) Rollback() {
 	Results = []Result{}
 	ViewCache.Clear()
-	proc.Filter.TempViewsList.Clear()
+	proc.Filter.TempViewsList.Rollback()
 
 	AddLog("Rolled back.")
 	return

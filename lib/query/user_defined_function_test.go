@@ -310,6 +310,41 @@ var userDefinedFunctionExecuteTests = []struct {
 		Error: "[L:- C:-] function userfunc takes 2 arguments",
 	},
 	{
+		Name: "UserDefinedFunction Execute Parameter Duplicate Error",
+		Func: &UserDefinedFunction{
+			Name: parser.Identifier{Literal: "userfunc"},
+			Parameters: []parser.Variable{
+				{Name: "@arg1"},
+				{Name: "@arg1"},
+			},
+			Statements: []parser.Statement{
+				parser.VariableDeclaration{
+					Assignments: []parser.Expression{
+						parser.VariableAssignment{
+							Variable: parser.Variable{Name: "@var2"},
+							Value: parser.Subquery{
+								Query: parser.SelectQuery{
+									SelectEntity: parser.SelectEntity{
+										SelectClause: parser.SelectClause{
+											Fields: []parser.Expression{
+												parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Args: []parser.Primary{
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		Error: "[L:- C:-] variable @arg1 is redeclared",
+	},
+	{
 		Name: "UserDefinedFunction Execute Execution Error",
 		Func: &UserDefinedFunction{
 			Name: parser.Identifier{Literal: "userfunc"},

@@ -211,6 +211,12 @@ var procedureExecuteStatementTests = []struct {
 					FileInfo: &FileInfo{
 						Path:      "tbl",
 						Temporary: true,
+						InitialRecords: Records{
+							NewRecordWithoutId([]parser.Primary{
+								parser.NewInteger(1),
+								parser.NewInteger(2),
+							}),
+						},
 					},
 					Header: []HeaderField{
 						{

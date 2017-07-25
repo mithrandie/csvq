@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -42,4 +43,12 @@ func FormatCount(i int, obj string) string {
 		s = fmt.Sprintf("%d %ss", i, obj)
 	}
 	return s
+}
+
+func IsReadableFromStdin() bool {
+	fi, err := os.Stdin.Stat()
+	if err == nil && (fi.Mode()&os.ModeNamedPipe != 0 || 0 < fi.Size()) {
+		return true
+	}
+	return false
 }
