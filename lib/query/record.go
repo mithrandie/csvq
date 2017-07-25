@@ -16,6 +16,14 @@ func (r Records) Contains(record Record) bool {
 	return false
 }
 
+func (r Records) Copy() Records {
+	records := make(Records, len(r))
+	for i, v := range r {
+		records[i] = v.Copy()
+	}
+	return records
+}
+
 type Record []Cell
 
 func NewRecord(internalId int, values []parser.Primary) Record {

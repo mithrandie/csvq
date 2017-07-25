@@ -13,8 +13,10 @@ import (
 
 var executeTests = []struct {
 	Name       string
+	OutFile    string
 	Input      string
-	Output     string
+	Log        string
+	SelectLog  string
 	UpdateFile string
 	Content    string
 	Error      string
@@ -22,7 +24,17 @@ var executeTests = []struct {
 	{
 		Name:  "Select Query",
 		Input: "select 1 from dual",
-		Output: "+---+\n" +
+		Log: "+---+\n" +
+			"| 1 |\n" +
+			"+---+\n" +
+			"| 1 |\n" +
+			"+---+\n",
+	},
+	{
+		Name:    "Select Query Write To File",
+		OutFile: "dummy.txt",
+		Input:   "select 1 from dual",
+		SelectLog: "+---+\n" +
 			"| 1 |\n" +
 			"+---+\n" +
 			"| 1 |\n" +
@@ -31,7 +43,7 @@ var executeTests = []struct {
 	{
 		Name:  "Insert Query",
 		Input: "insert into insert_query values (4, 'str4'), (5, 'str5')",
-		Output: fmt.Sprintf("%d records inserted on %q.\n", 2, GetTestFilePath("insert_query.csv")) +
+		Log: fmt.Sprintf("%d records inserted on %q.\n", 2, GetTestFilePath("insert_query.csv")) +
 			fmt.Sprintf("Commit: file %q is updated.\n", GetTestFilePath("insert_query.csv")),
 		UpdateFile: GetTestFilePath("insert_query.csv"),
 		Content: "\"column1\",\"column2\"\n" +
@@ -44,7 +56,7 @@ var executeTests = []struct {
 	{
 		Name:  "Update Query",
 		Input: "update update_query set column2 = 'update' where column1 = 2",
-		Output: fmt.Sprintf("%d record updated on %q.\n", 1, GetTestFilePath("update_query.csv")) +
+		Log: fmt.Sprintf("%d record updated on %q.\n", 1, GetTestFilePath("update_query.csv")) +
 			fmt.Sprintf("Commit: file %q is updated.\n", GetTestFilePath("update_query.csv")),
 		UpdateFile: GetTestFilePath("update_query.csv"),
 		Content: "\"column1\",\"column2\"\n" +
@@ -53,14 +65,14 @@ var executeTests = []struct {
 			"\"3\",\"str3\"",
 	},
 	{
-		Name:   "Update Query No Record Updated",
-		Input:  "update update_query set column2 = 'update' where false",
-		Output: fmt.Sprintf("no record updated on %q.\n", GetTestFilePath("update_query.csv")),
+		Name:  "Update Query No Record Updated",
+		Input: "update update_query set column2 = 'update' where false",
+		Log:   fmt.Sprintf("no record updated on %q.\n", GetTestFilePath("update_query.csv")),
 	},
 	{
 		Name:  "Delete Query",
 		Input: "delete from delete_query where column1 = 2",
-		Output: fmt.Sprintf("%d record deleted on %q.\n", 1, GetTestFilePath("delete_query.csv")) +
+		Log: fmt.Sprintf("%d record deleted on %q.\n", 1, GetTestFilePath("delete_query.csv")) +
 			fmt.Sprintf("Commit: file %q is updated.\n", GetTestFilePath("delete_query.csv")),
 		UpdateFile: GetTestFilePath("delete_query.csv"),
 		Content: "\"column1\",\"column2\"\n" +
@@ -68,14 +80,14 @@ var executeTests = []struct {
 			"\"3\",\"str3\"",
 	},
 	{
-		Name:   "Delete Query No Record Deleted",
-		Input:  "delete from delete_query where false",
-		Output: fmt.Sprintf("no record deleted on %q.\n", GetTestFilePath("delete_query.csv")),
+		Name:  "Delete Query No Record Deleted",
+		Input: "delete from delete_query where false",
+		Log:   fmt.Sprintf("no record deleted on %q.\n", GetTestFilePath("delete_query.csv")),
 	},
 	{
 		Name:  "Create Table",
 		Input: "create table `create_table.csv` (column1, column2)",
-		Output: fmt.Sprintf("file %q is created.\n", GetTestFilePath("create_table.csv")) +
+		Log: fmt.Sprintf("file %q is created.\n", GetTestFilePath("create_table.csv")) +
 			fmt.Sprintf("Commit: file %q is created.\n", GetTestFilePath("create_table.csv")),
 		UpdateFile: GetTestFilePath("create_table.csv"),
 		Content:    "\"column1\",\"column2\"\n",
@@ -83,7 +95,7 @@ var executeTests = []struct {
 	{
 		Name:  "Add Columns",
 		Input: "alter table add_columns add column3",
-		Output: fmt.Sprintf("%d field added on %q.\n", 1, GetTestFilePath("add_columns.csv")) +
+		Log: fmt.Sprintf("%d field added on %q.\n", 1, GetTestFilePath("add_columns.csv")) +
 			fmt.Sprintf("Commit: file %q is updated.\n", GetTestFilePath("add_columns.csv")),
 		UpdateFile: GetTestFilePath("add_columns.csv"),
 		Content: "\"column1\",\"column2\",\"column3\"\n" +
@@ -94,7 +106,7 @@ var executeTests = []struct {
 	{
 		Name:  "Drop Columns",
 		Input: "alter table drop_columns drop column1",
-		Output: fmt.Sprintf("%d field dropped on %q.\n", 1, GetTestFilePath("drop_columns.csv")) +
+		Log: fmt.Sprintf("%d field dropped on %q.\n", 1, GetTestFilePath("drop_columns.csv")) +
 			fmt.Sprintf("Commit: file %q is updated.\n", GetTestFilePath("drop_columns.csv")),
 		UpdateFile: GetTestFilePath("drop_columns.csv"),
 		Content: "\"column2\"\n" +
@@ -105,7 +117,7 @@ var executeTests = []struct {
 	{
 		Name:  "Rename Column",
 		Input: "alter table rename_column rename column1 to newcolumn",
-		Output: fmt.Sprintf("%d field renamed on %q.\n", 1, GetTestFilePath("rename_column.csv")) +
+		Log: fmt.Sprintf("%d field renamed on %q.\n", 1, GetTestFilePath("rename_column.csv")) +
 			fmt.Sprintf("Commit: file %q is updated.\n", GetTestFilePath("rename_column.csv")),
 		UpdateFile: GetTestFilePath("rename_column.csv"),
 		Content: "\"newcolumn\",\"column2\"\n" +
@@ -114,9 +126,9 @@ var executeTests = []struct {
 			"\"3\",\"str3\"",
 	},
 	{
-		Name:   "Print",
-		Input:  "var @a := 1; print @a;",
-		Output: "1\n",
+		Name:  "Print",
+		Input: "var @a := 1; print @a;",
+		Log:   "1\n",
 	},
 	{
 		Name:  "Query Execution Error",
@@ -131,8 +143,15 @@ func TestExecute(t *testing.T) {
 	tf.Repository = TestDir
 
 	for _, v := range executeTests {
+		if len(v.OutFile) < 1 {
+			tf.OutFile = ""
+		} else {
+			tf.OutFile = v.OutFile
+		}
+
 		Logs = []string{}
-		log, _, err := Execute(v.Input, "")
+		SelectLogs = []string{}
+		log, selectLog, err := Execute(v.Input, "")
 
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -147,8 +166,12 @@ func TestExecute(t *testing.T) {
 			continue
 		}
 
-		if log != v.Output {
-			t.Errorf("%s: output = %q, want %q", v.Name, log, v.Output)
+		if log != v.Log {
+			t.Errorf("%s: log = %q, want %q", v.Name, log, v.Log)
+		}
+
+		if selectLog != v.SelectLog {
+			t.Errorf("%s: selectLog = %q, want %q", v.Name, log, v.Log)
 		}
 
 		if 0 < len(v.UpdateFile) {
@@ -364,8 +387,9 @@ var declareTableTests = []struct {
 		Result: ViewMap{
 			"TBL": {
 				FileInfo: &FileInfo{
-					Path:      "tbl",
-					Temporary: true,
+					Path:           "tbl",
+					Temporary:      true,
+					InitialRecords: Records{},
 				},
 				Header: []HeaderField{
 					{
@@ -418,6 +442,12 @@ var declareTableTests = []struct {
 				FileInfo: &FileInfo{
 					Path:      "tbl",
 					Temporary: true,
+					InitialRecords: Records{
+						NewRecordWithoutId([]parser.Primary{
+							parser.NewInteger(1),
+							parser.NewInteger(2),
+						}),
+					},
 				},
 				Header: []HeaderField{
 					{
@@ -507,7 +537,7 @@ func TestDeclareTable(t *testing.T) {
 
 	for _, v := range declareTableTests {
 		if v.ViewMap == nil {
-			filter.TempViewsList.Clear()
+			filter.TempViewsList = []ViewMap{{}}
 		} else {
 			filter.TempViewsList = []ViewMap{v.ViewMap}
 		}
@@ -1022,6 +1052,67 @@ var selectTests = []struct {
 		},
 	},
 	{
+		Name: "Inline Tables Field Length Error",
+		Query: parser.SelectQuery{
+			WithClause: parser.WithClause{
+				With: "with",
+				InlineTables: []parser.Expression{
+					parser.InlineTable{
+						Name: parser.Identifier{Literal: "it"},
+						Fields: []parser.Expression{
+							parser.Identifier{Literal: "c1"},
+						},
+						As: "as",
+						Query: parser.SelectQuery{
+							SelectEntity: parser.SelectSet{
+								LHS: parser.SelectEntity{
+									SelectClause: parser.SelectClause{
+										Fields: []parser.Expression{
+											parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+											parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+										},
+									},
+									FromClause: parser.FromClause{
+										Tables: []parser.Expression{
+											parser.Table{Object: parser.Identifier{Literal: "table1"}},
+										},
+									},
+								},
+								Operator: parser.Token{Token: parser.UNION, Literal: "union"},
+								RHS: parser.SelectEntity{
+									SelectClause: parser.SelectClause{
+										Fields: []parser.Expression{
+											parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column3"}}},
+											parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}}},
+										},
+									},
+									FromClause: parser.FromClause{
+										Tables: []parser.Expression{
+											parser.Table{Object: parser.Identifier{Literal: "table4"}},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.Expression{
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "c1"}}},
+					},
+				},
+				FromClause: parser.FromClause{
+					Tables: []parser.Expression{
+						parser.Table{Object: parser.Identifier{Literal: "it"}},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] select query should return exactly 1 field for inline table it",
+	},
+	{
 		Name: "Inline Tables Recursion",
 		Query: parser.SelectQuery{
 			WithClause: parser.WithClause{
@@ -1219,6 +1310,28 @@ var insertTests = []struct {
 	{
 		Name: "Insert Query",
 		Query: parser.InsertQuery{
+			WithClause: parser.WithClause{
+				With: "with",
+				InlineTables: []parser.Expression{
+					parser.InlineTable{
+						Name: parser.Identifier{Literal: "it"},
+						Fields: []parser.Expression{
+							parser.Identifier{Literal: "c1"},
+						},
+						As: "as",
+						Query: parser.SelectQuery{
+							SelectEntity: parser.SelectEntity{
+								SelectClause: parser.SelectClause{
+									Select: "select",
+									Fields: []parser.Expression{
+										parser.Field{Object: parser.NewInteger(2)},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			Insert: "insert",
 			Into:   "into",
 			Table:  parser.Identifier{Literal: "table1"},
@@ -1237,7 +1350,23 @@ var insertTests = []struct {
 				parser.RowValue{
 					Value: parser.ValueList{
 						Values: []parser.Expression{
-							parser.NewInteger(5),
+							parser.Subquery{
+								Query: parser.SelectQuery{
+									SelectEntity: parser.SelectEntity{
+										SelectClause: parser.SelectClause{
+											Select: "select",
+											Fields: []parser.Expression{
+												parser.Field{Object: parser.FieldReference{View: parser.Identifier{Literal: "it"}, Column: parser.Identifier{Literal: "c1"}}},
+											},
+										},
+										FromClause: parser.FromClause{
+											Tables: []parser.Expression{
+												parser.Table{Object: parser.Identifier{Literal: "it"}},
+											},
+										},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -1270,7 +1399,7 @@ var insertTests = []struct {
 					parser.NewNull(),
 				}),
 				NewRecordWithoutId([]parser.Primary{
-					parser.NewInteger(5),
+					parser.NewInteger(2),
 					parser.NewNull(),
 				}),
 			},
@@ -1524,6 +1653,28 @@ var updateTests = []struct {
 	{
 		Name: "Update Query",
 		Query: parser.UpdateQuery{
+			WithClause: parser.WithClause{
+				With: "with",
+				InlineTables: []parser.Expression{
+					parser.InlineTable{
+						Name: parser.Identifier{Literal: "it"},
+						Fields: []parser.Expression{
+							parser.Identifier{Literal: "c1"},
+						},
+						As: "as",
+						Query: parser.SelectQuery{
+							SelectEntity: parser.SelectEntity{
+								SelectClause: parser.SelectClause{
+									Select: "select",
+									Fields: []parser.Expression{
+										parser.Field{Object: parser.NewInteger(2)},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			Update: "update",
 			Tables: []parser.Expression{
 				parser.Table{Object: parser.Identifier{Literal: "table1"}},
@@ -1537,8 +1688,24 @@ var updateTests = []struct {
 			},
 			WhereClause: parser.WhereClause{
 				Filter: parser.Comparison{
-					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-					RHS:      parser.NewInteger(2),
+					LHS: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					RHS: parser.Subquery{
+						Query: parser.SelectQuery{
+							SelectEntity: parser.SelectEntity{
+								SelectClause: parser.SelectClause{
+									Select: "select",
+									Fields: []parser.Expression{
+										parser.Field{Object: parser.FieldReference{View: parser.Identifier{Literal: "it"}, Column: parser.Identifier{Literal: "c1"}}},
+									},
+								},
+								FromClause: parser.FromClause{
+									Tables: []parser.Expression{
+										parser.Table{Object: parser.Identifier{Literal: "it"}},
+									},
+								},
+							},
+						},
+					},
 					Operator: "=",
 				},
 			},
@@ -1877,6 +2044,28 @@ var deleteTests = []struct {
 	{
 		Name: "Delete Query",
 		Query: parser.DeleteQuery{
+			WithClause: parser.WithClause{
+				With: "with",
+				InlineTables: []parser.Expression{
+					parser.InlineTable{
+						Name: parser.Identifier{Literal: "it"},
+						Fields: []parser.Expression{
+							parser.Identifier{Literal: "c1"},
+						},
+						As: "as",
+						Query: parser.SelectQuery{
+							SelectEntity: parser.SelectEntity{
+								SelectClause: parser.SelectClause{
+									Select: "select",
+									Fields: []parser.Expression{
+										parser.Field{Object: parser.NewInteger(2)},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			Delete: "delete",
 			FromClause: parser.FromClause{
 				Tables: []parser.Expression{
@@ -1887,8 +2076,24 @@ var deleteTests = []struct {
 			},
 			WhereClause: parser.WhereClause{
 				Filter: parser.Comparison{
-					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-					RHS:      parser.NewInteger(2),
+					LHS: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					RHS: parser.Subquery{
+						Query: parser.SelectQuery{
+							SelectEntity: parser.SelectEntity{
+								SelectClause: parser.SelectClause{
+									Select: "select",
+									Fields: []parser.Expression{
+										parser.Field{Object: parser.FieldReference{View: parser.Identifier{Literal: "it"}, Column: parser.Identifier{Literal: "c1"}}},
+									},
+								},
+								FromClause: parser.FromClause{
+									Tables: []parser.Expression{
+										parser.Table{Object: parser.Identifier{Literal: "it"}},
+									},
+								},
+							},
+						},
+					},
 					Operator: "=",
 				},
 			},

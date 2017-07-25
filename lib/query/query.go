@@ -135,7 +135,7 @@ func FetchCursor(name parser.Identifier, fetchPosition parser.Expression, vars [
 }
 
 func DeclareTable(expr parser.TableDeclaration, filter Filter) error {
-	if filter.TempViewsList.HasView(expr.Table.Literal) {
+	if filter.TempViewsList.Exists(expr.Table.Literal) {
 		return NewTemporaryTableRedeclaredError(expr.Table)
 	}
 
@@ -171,8 +171,9 @@ func DeclareTable(expr parser.TableDeclaration, filter Filter) error {
 	}
 
 	view.FileInfo = &FileInfo{
-		Path:      expr.Table.Literal,
-		Temporary: true,
+		Path:           expr.Table.Literal,
+		Temporary:      true,
+		InitialRecords: view.Records.Copy(),
 	}
 
 	filter.TempViewsList.Set(view)
@@ -712,7 +713,11 @@ func AddColumns(query parser.AddColumns, parentFilter Filter) (*View, error) {
 	view.OperatedFields = len(fields)
 	view.ParentFilter = Filter{}
 
-	ViewCache.Replace(view)
+	if view.FileInfo.Temporary {
+		filter.TempViewsList.Replace(view)
+	} else {
+		ViewCache.Replace(view)
+	}
 
 	return view, nil
 }
@@ -745,7 +750,11 @@ func DropColumns(query parser.DropColumns, parentFilter Filter) (*View, error) {
 	view.Fix()
 	view.OperatedFields = len(dropIndices)
 
-	ViewCache.Replace(view)
+	if view.FileInfo.Temporary {
+		filter.TempViewsList.Replace(view)
+	} else {
+		ViewCache.Replace(view)
+	}
 
 	return view, nil
 
@@ -774,7 +783,11 @@ func RenameColumn(query parser.RenameColumn, parentFilter Filter) (*View, error)
 	view.OperatedFields = 1
 	view.ParentFilter = Filter{}
 
-	ViewCache.Replace(view)
+	if view.FileInfo.Temporary {
+		filter.TempViewsList.Replace(view)
+	} else {
+		ViewCache.Replace(view)
+	}
 
 	return view, nil
 }

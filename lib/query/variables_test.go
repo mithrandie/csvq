@@ -7,6 +7,174 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
+var variablesListGet = []struct {
+	Name   string
+	Expr   parser.Variable
+	Result parser.Primary
+	Error  string
+}{
+	{
+		Name:   "VariablesList Get",
+		Expr:   parser.Variable{Name: "@var1"},
+		Result: parser.NewInteger(1),
+	},
+	{
+		Name:  "VariablesList Get Undefined Error",
+		Expr:  parser.Variable{Name: "@undef"},
+		Error: "[L:- C:-] variable @undef is undefined",
+	},
+}
+
+func TestVariablesList_Get(t *testing.T) {
+	list := VariablesList{
+		Variables{
+			"@var1": parser.NewInteger(1),
+		},
+		Variables{
+			"@var1": parser.NewInteger(2),
+		},
+	}
+
+	for _, v := range variablesListGet {
+		result, err := list.Get(v.Expr)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(result, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
+		}
+	}
+}
+
+var variablesListSubstituteTests = []struct {
+	Name   string
+	Expr   parser.VariableSubstitution
+	Filter Filter
+	List   VariablesList
+	Result parser.Primary
+	Error  string
+}{
+	{
+		Name: "VariablesList Substitute",
+		Expr: parser.VariableSubstitution{
+			Variable: parser.Variable{Name: "@var1"},
+			Value:    parser.NewInteger(3),
+		},
+		List: VariablesList{
+			Variables{
+				"@var1": parser.NewInteger(3),
+			},
+			Variables{
+				"@var1": parser.NewInteger(2),
+			},
+		},
+		Result: parser.NewInteger(3),
+	},
+	{
+		Name: "VariablesList Substitute Variable Undefined Error",
+		Expr: parser.VariableSubstitution{
+			Variable: parser.Variable{Name: "var2"},
+			Value:    parser.NewInteger(3),
+		},
+		Error: "[L:- C:-] variable var2 is undefined",
+	},
+}
+
+func TestVariablesList_Substitute(t *testing.T) {
+	list := VariablesList{
+		Variables{
+			"@var1": parser.NewInteger(1),
+		},
+		Variables{
+			"@var1": parser.NewInteger(2),
+		},
+	}
+
+	for _, v := range variablesListSubstituteTests {
+		result, err := list.Substitute(v.Expr, v.Filter)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(list, v.List) {
+			t.Errorf("%s: list = %s, want %s", v.Name, list, v.List)
+		}
+		if !reflect.DeepEqual(result, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
+		}
+	}
+}
+
+var variablesListDisposeTests = []struct {
+	Name  string
+	Expr  parser.Variable
+	List  VariablesList
+	Error string
+}{
+	{
+		Name: "VariablesList Dispose",
+		Expr: parser.Variable{Name: "@var1"},
+		List: VariablesList{
+			Variables{},
+			Variables{
+				"@var1": parser.NewInteger(2),
+			},
+		},
+	},
+	{
+		Name:  "VariablesList Dispose Undefined Error",
+		Expr:  parser.Variable{Name: "@undef"},
+		Error: "[L:- C:-] variable @undef is undefined",
+	},
+}
+
+func TestVariablesList_Dispose(t *testing.T) {
+	list := VariablesList{
+		Variables{
+			"@var1": parser.NewInteger(1),
+		},
+		Variables{
+			"@var1": parser.NewInteger(2),
+		},
+	}
+
+	for _, v := range variablesListDisposeTests {
+		err := list.Dispose(v.Expr)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(list, v.List) {
+			t.Errorf("%s: list = %s, want %s", v.Name, list, v.List)
+		}
+	}
+}
+
 type variableTests struct {
 	Name   string
 	Expr   parser.ProcExpr
