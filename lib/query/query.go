@@ -78,7 +78,7 @@ func Execute(input string, sourceFile string) (string, string, error) {
 	flow, err := proc.Execute(statements)
 
 	if flow == TERMINATE {
-		err = proc.Commit()
+		err = proc.Commit(nil)
 	}
 
 	return ReadLog(), ReadSelectLog(), err

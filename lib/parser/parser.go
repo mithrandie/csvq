@@ -1771,13 +1771,13 @@ yydefault:
 		yyDollar = yyS[yypt-2 : yypt+1]
 		//line parser.y:422
 		{
-			yyVAL.statement = TransactionControl{Token: yyDollar[1].token.Token}
+			yyVAL.statement = TransactionControl{BaseExpr: NewBaseExpr(yyDollar[1].token), Token: yyDollar[1].token.Token}
 		}
 	case 53:
 		yyDollar = yyS[yypt-2 : yypt+1]
 		//line parser.y:426
 		{
-			yyVAL.statement = TransactionControl{Token: yyDollar[1].token.Token}
+			yyVAL.statement = TransactionControl{BaseExpr: NewBaseExpr(yyDollar[1].token), Token: yyDollar[1].token.Token}
 		}
 	case 54:
 		yyDollar = yyS[yypt-6 : yypt+1]

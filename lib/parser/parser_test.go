@@ -2520,7 +2520,8 @@ var parseTests = []struct {
 		Input: "commit",
 		Output: []Statement{
 			TransactionControl{
-				Token: COMMIT,
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Token:    COMMIT,
 			},
 		},
 	},
@@ -2528,7 +2529,8 @@ var parseTests = []struct {
 		Input: "rollback",
 		Output: []Statement{
 			TransactionControl{
-				Token: ROLLBACK,
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Token:    ROLLBACK,
 			},
 		},
 	},

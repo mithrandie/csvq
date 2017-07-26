@@ -420,11 +420,11 @@ variable_statement
 transaction_statement
     : COMMIT statement_terminal
     {
-        $$ = TransactionControl{Token: $1.Token}
+        $$ = TransactionControl{BaseExpr: NewBaseExpr($1), Token: $1.Token}
     }
     | ROLLBACK statement_terminal
     {
-        $$ = TransactionControl{Token: $1.Token}
+        $$ = TransactionControl{BaseExpr: NewBaseExpr($1), Token: $1.Token}
     }
 
 table_operation

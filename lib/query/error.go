@@ -14,6 +14,9 @@ const (
 	ERROR_MESSAGE_WITH_EMPTY_POSITION_TEMPLATE = "[L:- C:-] %s"
 
 	ERROR_INVALID_SYNTAX                    = "syntax error: unexpected %s"
+	ERROR_READ_FILE                         = "failed to read from file: %s"
+	ERROR_WRITE_FILE                        = "failed to write to file: %s"
+	ERROR_WRITE_FILE_IN_AUTOCOMMIT          = "[Auto-Commit] failed to write to file: %s"
 	ERROR_UNPERMITTED_WILDCARD              = "wildcard '*' cannot be passed as a argument to the %s function"
 	ERROR_FIELD_AMBIGUOUS                   = "field %s is ambiguous"
 	ERROR_FIELD_NOT_EXIST                   = "field %s does not exist"
@@ -136,6 +139,40 @@ func NewSyntaxError(message string, line int, char int, sourceFile string) error
 func NewSyntaxErrorFromExpr(expr parser.Expression) error {
 	return &SyntaxError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_INVALID_SYNTAX, expr)),
+	}
+}
+
+type ReadFileError struct {
+	*BaseError
+}
+
+func NewReadFileError(expr parser.ProcExpr, message string) error {
+	return &ReadFileError{
+		NewBaseError(expr, fmt.Sprintf(ERROR_READ_FILE, message)),
+	}
+}
+
+type WriteFileError struct {
+	*BaseError
+}
+
+func NewWriteFileError(expr parser.ProcExpr, message string) error {
+	return &WriteFileError{
+		NewBaseError(expr, fmt.Sprintf(ERROR_WRITE_FILE, message)),
+	}
+}
+
+type AutoCommitError struct {
+	Message string
+}
+
+func (e AutoCommitError) Error() string {
+	return e.Message
+}
+
+func NewAutoCommitError(message string) error {
+	return &AutoCommitError{
+		Message: fmt.Sprintf(ERROR_WRITE_FILE_IN_AUTOCOMMIT, message),
 	}
 }
 

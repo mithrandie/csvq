@@ -177,7 +177,7 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 				if !ViewCache.Exists(fileInfo.Path) {
 					file, err := os.Open(fileInfo.Path)
 					if err != nil {
-						return nil, err
+						return nil, NewReadFileError(tableIdentifier, err.Error())
 					}
 					defer file.Close()
 					loadView, err := loadViewFromFile(file, fileInfo, commonTableName)
