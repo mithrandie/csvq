@@ -355,7 +355,7 @@ func Insert(query parser.InsertQuery, parentFilter Filter) (*View, error) {
 	}
 
 	view := NewView()
-	err := view.LoadFromIdentifier(query.Table, filter)
+	err := view.LoadFromTableIdentifier(query.Table, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -421,14 +421,15 @@ func Update(query parser.UpdateQuery, parentFilter Filter) ([]*View, error) {
 		if err != nil {
 			return nil, err
 		}
+		viewKey := strings.ToUpper(table.Name().Literal)
 
 		if parentFilter.TempViewsList.Exists(fpath) {
-			viewsToUpdate[table.Name().Literal], _ = parentFilter.TempViewsList.Get(parser.Identifier{Literal: fpath})
+			viewsToUpdate[viewKey], _ = parentFilter.TempViewsList.Get(parser.Identifier{Literal: fpath})
 		} else {
-			viewsToUpdate[table.Name().Literal], _ = ViewCache.Get(parser.Identifier{Literal: fpath})
+			viewsToUpdate[viewKey], _ = ViewCache.Get(parser.Identifier{Literal: fpath})
 		}
-		viewsToUpdate[table.Name().Literal].Header.Update(table.Name().Literal, nil)
-		updatedIndices[table.Name().Literal] = []int{}
+		viewsToUpdate[viewKey].Header.Update(table.Name().Literal, nil)
+		updatedIndices[viewKey] = []int{}
 	}
 
 	filterForLoop := NewFilterForSequentialEvaluation(view, filter)
@@ -447,6 +448,8 @@ func Update(query parser.UpdateQuery, parentFilter Filter) ([]*View, error) {
 			if err != nil {
 				return nil, err
 			}
+			viewref = strings.ToUpper(viewref)
+
 			if _, ok := viewsToUpdate[viewref]; !ok {
 				return nil, NewUpdateFieldNotExistError(uset.Field)
 			}
@@ -474,6 +477,7 @@ func Update(query parser.UpdateQuery, parentFilter Filter) ([]*View, error) {
 		}
 
 		v.Fix()
+		v.Header.Update(parser.FormatTableName(v.FileInfo.Path), nil)
 		v.OperatedRecords = len(updatedIndices[k])
 
 		if v.FileInfo.Temporary {
@@ -499,11 +503,16 @@ func Delete(query parser.DeleteQuery, parentFilter Filter) ([]*View, error) {
 
 	fromClause := query.FromClause.(parser.FromClause)
 	if query.Tables == nil {
-		table := fromClause.Tables[0].(parser.Table)
-		if _, ok := table.Object.(parser.Identifier); !ok || 1 < len(fromClause.Tables) {
+		if 1 < len(fromClause.Tables) {
 			return nil, NewDeleteTableNotSpecifiedError(query)
 		}
-		query.Tables = []parser.Expression{table}
+		table := fromClause.Tables[0].(parser.Table)
+		if _, ok := table.Object.(parser.Identifier); !ok {
+			if _, ok := table.Object.(parser.Stdin); !ok {
+				return nil, NewDeleteTableNotSpecifiedError(query)
+			}
+		}
+		query.Tables = fromClause.Tables
 	}
 
 	view := NewView()
@@ -528,13 +537,15 @@ func Delete(query parser.DeleteQuery, parentFilter Filter) ([]*View, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		viewKey := strings.ToUpper(table.Name().Literal)
 		if parentFilter.TempViewsList.Exists(fpath) {
-			viewsToDelete[table.Name().Literal], _ = parentFilter.TempViewsList.Get(parser.Identifier{Literal: fpath})
+			viewsToDelete[viewKey], _ = parentFilter.TempViewsList.Get(parser.Identifier{Literal: fpath})
 		} else {
-			viewsToDelete[table.Name().Literal], _ = ViewCache.Get(parser.Identifier{Literal: fpath})
+			viewsToDelete[viewKey], _ = ViewCache.Get(parser.Identifier{Literal: fpath})
 		}
-		viewsToDelete[table.Name().Literal].Header.Update(table.Name().Literal, nil)
-		deletedIndices[table.Name().Literal] = []int{}
+		viewsToDelete[viewKey].Header.Update(table.Name().Literal, nil)
+		deletedIndices[viewKey] = []int{}
 	}
 
 	for i := range view.Records {
@@ -566,6 +577,7 @@ func Delete(query parser.DeleteQuery, parentFilter Filter) ([]*View, error) {
 		}
 
 		v.Fix()
+		v.Header.Update(parser.FormatTableName(v.FileInfo.Path), nil)
 		v.OperatedRecords = len(deletedIndices[k])
 
 		if v.FileInfo.Temporary {
@@ -631,7 +643,7 @@ func AddColumns(query parser.AddColumns, parentFilter Filter) (*View, error) {
 	}
 
 	view := NewView()
-	err := view.LoadFromIdentifier(query.Table, filter)
+	err := view.LoadFromTableIdentifier(query.Table, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -669,7 +681,7 @@ func AddColumns(query parser.AddColumns, parentFilter Filter) (*View, error) {
 	}
 	newFieldLen := view.FieldLen() + len(query.Columns)
 
-	addHeader := NewHeaderWithoutId(parser.FormatTableName(query.Table.Literal), fields)
+	addHeader := NewHeaderWithoutId(parser.FormatTableName(view.FileInfo.Path), fields)
 	header := make(Header, newFieldLen)
 	for i, v := range view.Header {
 		var idx int
@@ -738,7 +750,7 @@ func DropColumns(query parser.DropColumns, parentFilter Filter) (*View, error) {
 	filter := parentFilter.CreateNode()
 
 	view := NewView()
-	err := view.LoadFromIdentifier(query.Table, filter)
+	err := view.LoadFromTableIdentifier(query.Table, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -776,7 +788,7 @@ func RenameColumn(query parser.RenameColumn, parentFilter Filter) (*View, error)
 	filter := parentFilter.CreateNode()
 
 	view := NewView()
-	err := view.LoadFromIdentifier(query.Table, filter)
+	err := view.LoadFromTableIdentifier(query.Table, filter)
 	if err != nil {
 		return nil, err
 	}

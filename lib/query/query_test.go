@@ -1860,7 +1860,7 @@ var updateTests = []struct {
 		Query: parser.UpdateQuery{
 			Update: "update",
 			Tables: []parser.Expression{
-				parser.Table{Object: parser.Identifier{Literal: "tmpview"}},
+				parser.Table{Object: parser.Identifier{Literal: "tmpview"}, Alias: parser.Identifier{Literal: "t1"}},
 			},
 			Set: "set",
 			SetList: []parser.Expression{
@@ -1960,7 +1960,7 @@ var updateTests = []struct {
 					Encoding:  cmd.UTF8,
 					LineBreak: cmd.LF,
 				},
-				Header: NewHeaderWithoutId("t1", []string{"column1", "column2"}),
+				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
 				Records: []Record{
 					NewRecordWithoutId([]parser.Primary{
 						parser.NewString("1"),
@@ -2365,6 +2365,7 @@ var deleteTests = []struct {
 				Tables: []parser.Expression{
 					parser.Table{
 						Object: parser.Identifier{Literal: "tmpview"},
+						Alias:  parser.Identifier{Literal: "t1"},
 					},
 				},
 			},
@@ -2451,7 +2452,7 @@ var deleteTests = []struct {
 					Encoding:  cmd.UTF8,
 					LineBreak: cmd.LF,
 				},
-				Header: NewHeaderWithoutId("t1", []string{"column1", "column2"}),
+				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
 				Records: []Record{
 					NewRecordWithoutId([]parser.Primary{
 						parser.NewString("1"),

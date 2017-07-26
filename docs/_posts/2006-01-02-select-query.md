@@ -106,20 +106,35 @@ If multiple tables have been enumerated, tables are joined using cross join.
 
 ```sql
 table
-  : table_name
-  | table_name alias 
-  | table_name AS alias
-  | subquery
-  | subquery alias
-  | subquery AS alias
+  : table_entity
+  | table_entity alias 
+  | table_entity AS alias
   | join
+  | DUAL
+
+table_entity
+  : table_name
+  | STDIN
+  | subquery
+
+join
+  : table CROSS JOIN table
+  | table NATURAL [INNER] JOIN table
+  | table [INNER] JOIN table [join_condition]
+  | table NATURAL [LEFT|RIGHT|FULL] OUTER JOIN table
+  | table NATURAL {LEFT|RIGHT|FULL} [OUTER] JOIN table
+  | table [LEFT|RIGHT|FULL] OUTER JOIN table [join_condition]
+  | table {LEFT|RIGHT|FULL} [OUTER] JOIN table [join_condition]
+
+join_condition
+  : ON condition
+  | USING (column_name [, column_name, ...])
 ```
 
 _table_name_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
-  or [special tables](#special_tables)
   
-  A identifier represents a csv file path, a [temporary table]({{ '/reference/temporary-table.html' | relative_url }}), or a [inline table]({{ '/reference/common-table-expression.html' | relative_url }}).
+  A _table_name_ represents a csv file path, a [temporary table]({{ '/reference/temporary-table.html' | relative_url }}), or a [inline table]({{ '/reference/common-table-expression.html' | relative_url }}).
   You can use absolute path or relative path from the directory specified by the ["--repository" option]({{ '/reference/command.html#global_options' | relative_url }}) as a csv file path.
   
   If a file name extension is ".csv" or ".tsv", you can omit it. 
@@ -154,32 +169,12 @@ DUAL
 STDIN
 : The stdin table loads data from the standard input as a csv data. The stdin table is one of [temporary tables]({{ '/reference/temporary-table.html' | relative_url }}).
 
-### join syntax
-
-```sql
-join
-  : table CROSS JOIN table
-  | table NATURAL [INNER] JOIN table
-  | table [INNER] JOIN table [join_condition]
-  | table NATURAL [LEFT|RIGHT|FULL] OUTER JOIN table
-  | table NATURAL {LEFT|RIGHT|FULL} [OUTER] JOIN table
-  | table [LEFT|RIGHT|FULL] OUTER JOIN table [join_condition]
-  | table {LEFT|RIGHT|FULL} [OUTER] JOIN table [join_condition]
-```
-
-### join condition syntax
-
-```sql
-join_condition
-  : ON condition
-  | USING (column_name [, column_name, ...])
-```
-
 _condition_
 : [value]({{ '/reference/value.html' | relative_url }})
 
 _column_name_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+
 
 ## Where Clause
 {: #where_clause}

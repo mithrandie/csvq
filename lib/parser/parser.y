@@ -85,8 +85,9 @@ package parser
 %type<expression>  analytic_function
 %type<expression>  analytic_clause
 %type<expression>  partition
+%type<expression>  table_identifier
 %type<expression>  identified_table
-%type<expression>  virtual_table
+%type<expression>  virtual_table_object
 %type<expression>  table
 %type<expression>  join
 %type<expression>  join_condition
@@ -99,7 +100,7 @@ package parser
 %type<expressions> field_references
 %type<expressions> values
 %type<expressions> tables
-%type<expressions> identified_tables
+%type<expressions> operate_tables
 %type<expressions> identifiers
 %type<expressions> fields
 %type<expression>  insert_query
@@ -431,23 +432,23 @@ table_operation
     {
         $$ = CreateTable{CreateTable: $1.Literal + " " + $2.Literal, Table: $3, Fields: $5}
     }
-    | ALTER TABLE identifier ADD column_default column_position
+    | ALTER TABLE table_identifier ADD column_default column_position
     {
         $$ = AddColumns{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Add: $4.Literal, Columns: []Expression{$5}, Position: $6}
     }
-    | ALTER TABLE identifier ADD '(' column_defaults ')' column_position
+    | ALTER TABLE table_identifier ADD '(' column_defaults ')' column_position
     {
         $$ = AddColumns{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Add: $4.Literal, Columns: $6, Position: $8}
     }
-    | ALTER TABLE identifier DROP field_reference
+    | ALTER TABLE table_identifier DROP field_reference
     {
         $$ = DropColumns{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Drop: $4.Literal, Columns: []Expression{$5}}
     }
-    | ALTER TABLE identifier DROP '(' field_references ')'
+    | ALTER TABLE table_identifier DROP '(' field_references ')'
     {
         $$ = DropColumns{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Drop: $4.Literal, Columns: $6}
     }
-    | ALTER TABLE identifier RENAME field_reference TO identifier
+    | ALTER TABLE table_identifier RENAME field_reference TO identifier
     {
         $$ = RenameColumn{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Rename: $4.Literal, Old: $5.(FieldReference), To: $6.Literal, New: $7}
     }
@@ -822,9 +823,17 @@ field_reference
     {
         $$ = FieldReference{BaseExpr: NewBaseExprFromIdentifier($1), View: $1, Column: $3}
     }
+    | STDIN '.' identifier
+    {
+        $$ = FieldReference{BaseExpr: NewBaseExpr($1), View: Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal}, Column: $3}
+    }
     | identifier '.' integer
     {
         $$ = ColumnNumber{BaseExpr: NewBaseExprFromIdentifier($1), View: $1, Number: $3}
+    }
+    | STDIN '.' integer
+    {
+        $$ = ColumnNumber{BaseExpr: NewBaseExpr($1), View: Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal}, Number: $3}
     }
 
 value
@@ -1194,22 +1203,8 @@ partition
         $$ = Partition{PartitionBy: $1.Literal + " " + $2.Literal, Values: $3}
     }
 
-identified_table
+table_identifier
     : identifier
-    {
-        $$ = Table{Object: $1}
-    }
-    | identifier identifier
-    {
-        $$ = Table{Object: $1, Alias: $2}
-    }
-    | identifier AS identifier
-    {
-        $$ = Table{Object: $1, As: $2.Literal, Alias: $3}
-    }
-
-virtual_table
-    : subquery
     {
         $$ = $1
     }
@@ -1218,20 +1213,40 @@ virtual_table
         $$ = Stdin{BaseExpr: NewBaseExpr($1), Stdin: $1.Literal}
     }
 
+identified_table
+    : table_identifier
+    {
+        $$ = Table{Object: $1}
+    }
+    | table_identifier identifier
+    {
+        $$ = Table{Object: $1, Alias: $2}
+    }
+    | table_identifier AS identifier
+    {
+        $$ = Table{Object: $1, As: $2.Literal, Alias: $3}
+    }
+
+virtual_table_object
+    : subquery
+    {
+        $$ = $1
+    }
+
 table
     : identified_table
     {
         $$ = $1
     }
-    | virtual_table
+    | virtual_table_object
     {
         $$ = Table{Object: $1}
     }
-    | virtual_table identifier
+    | virtual_table_object identifier
     {
         $$ = Table{Object: $1, Alias: $2}
     }
-    | virtual_table AS identifier
+    | virtual_table_object AS identifier
     {
         $$ = Table{Object: $1, As: $2.Literal, Alias: $3}
     }
@@ -1370,14 +1385,14 @@ tables
         $$ = append([]Expression{$1}, $3...)
     }
 
-identified_tables
-    : identified_table
+operate_tables
+    : table_identifier
     {
-        $$ = []Expression{$1}
+        $$ = []Expression{Table{Object: $1}}
     }
-    | identified_table ',' identified_tables
+    | operate_tables ',' operate_tables
     {
-        $$ = append([]Expression{$1}, $3...)
+        $$ = append($1, $3...)
     }
 
 identifiers
@@ -1401,25 +1416,25 @@ fields
     }
 
 insert_query
-    : with_clause INSERT INTO identifier VALUES row_values
+    : with_clause INSERT INTO table_identifier VALUES row_values
     {
         $$ = InsertQuery{WithClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Values: $5.Literal, ValuesList: $6}
     }
-    | with_clause INSERT INTO identifier '(' field_references ')' VALUES row_values
+    | with_clause INSERT INTO table_identifier '(' field_references ')' VALUES row_values
     {
         $$ = InsertQuery{WithClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Fields: $6, Values: $8.Literal, ValuesList: $9}
     }
-    | with_clause INSERT INTO identifier select_query
+    | with_clause INSERT INTO table_identifier select_query
     {
         $$ = InsertQuery{WithClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Query: $5.(SelectQuery)}
     }
-    | with_clause INSERT INTO identifier '(' field_references ')' select_query
+    | with_clause INSERT INTO table_identifier '(' field_references ')' select_query
     {
         $$ = InsertQuery{WithClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Fields: $6, Query: $8.(SelectQuery)}
     }
 
 update_query
-    : with_clause UPDATE identified_tables SET update_set_list from_clause where_clause
+    : with_clause UPDATE operate_tables SET update_set_list from_clause where_clause
     {
         $$ = UpdateQuery{WithClause: $1, Update: $2.Literal, Tables: $3, Set: $4.Literal, SetList: $5, FromClause: $6, WhereClause: $7}
     }
@@ -1446,7 +1461,7 @@ delete_query
         from := FromClause{From: $3.Literal, Tables: $4}
         $$ = DeleteQuery{BaseExpr: NewBaseExpr($2), WithClause: $1, Delete: $2.Literal, FromClause: from, WhereClause: $5}
     }
-    | with_clause DELETE identified_tables FROM tables where_clause
+    | with_clause DELETE operate_tables FROM tables where_clause
     {
         from := FromClause{From: $4.Literal, Tables: $5}
         $$ = DeleteQuery{BaseExpr: NewBaseExpr($2), WithClause: $1, Delete: $2.Literal, Tables: $3, FromClause: from, WhereClause: $6}

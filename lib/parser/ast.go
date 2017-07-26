@@ -1236,7 +1236,7 @@ type InsertQuery struct {
 	WithClause Expression
 	Insert     string
 	Into       string
-	Table      Identifier
+	Table      Expression
 	Fields     []Expression
 	Values     string
 	ValuesList []Expression
@@ -1341,7 +1341,7 @@ func (e CreateTable) String() string {
 type AddColumns struct {
 	*BaseExpr
 	AlterTable string
-	Table      Identifier
+	Table      Expression
 	Add        string
 	Columns    []Expression
 	Position   Expression
@@ -1392,7 +1392,7 @@ func (e ColumnPosition) String() string {
 type DropColumns struct {
 	*BaseExpr
 	AlterTable string
-	Table      Identifier
+	Table      Expression
 	Drop       string
 	Columns    []Expression
 }
@@ -1410,7 +1410,7 @@ func (e DropColumns) String() string {
 type RenameColumn struct {
 	*BaseExpr
 	AlterTable string
-	Table      Identifier
+	Table      Expression
 	Rename     string
 	Old        FieldReference
 	To         string

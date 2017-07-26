@@ -75,7 +75,7 @@ func (view *View) Load(clause parser.FromClause, parentFilter Filter) error {
 	return nil
 }
 
-func (view *View) LoadFromIdentifier(table parser.Identifier, parentFilter Filter) error {
+func (view *View) LoadFromTableIdentifier(table parser.Expression, parentFilter Filter) error {
 	fromClause := parser.FromClause{
 		Tables: []parser.Expression{
 			parser.Table{Object: table},
@@ -488,9 +488,12 @@ func (view *View) Select(clause parser.SelectClause) error {
 
 		list := make([]parser.Expression, len(fields)-1+insertLen)
 		for i, field := range fields {
-			if i < insertIdx {
+			switch {
+			case i == insertIdx:
+				continue
+			case i < insertIdx:
 				list[i] = field
-			} else {
+			default:
 				list[i+insertLen-1] = field
 			}
 		}
