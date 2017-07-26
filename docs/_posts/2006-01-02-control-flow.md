@@ -13,6 +13,9 @@ category: reference
 * [Break](#break)
 * [Exit](#exit)
 
+_IF_ statements and _WHILE_ statements create local scopes.
+[Variables]({{ '/reference/variable.html' | relative_url }}), [cursors]({{ '/reference/cursor.html' | relative_url }}), [temporary tables]({{ '/reference/temporary-table.html' | relative_url }}), [functions]({{ '/reference/user-defined-function.html' | relative_url }}) declared in statement blocks can be refered only within the blocks. 
+
 ## If
 {: #if}
 
