@@ -504,6 +504,27 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select foo, \n" +
+			" bar.foo, \n" +
+			" stdin.foo, \n" +
+			" bar.3, \n" +
+			" stdin.3",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select: "select",
+					Fields: []Expression{
+						Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "foo"}}},
+						Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 2, char: 2}, View: Identifier{BaseExpr: &BaseExpr{line: 2, char: 2}, Literal: "bar"}, Column: Identifier{BaseExpr: &BaseExpr{line: 2, char: 6}, Literal: "foo"}}},
+						Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 3, char: 2}, View: Identifier{BaseExpr: &BaseExpr{line: 3, char: 2}, Literal: "stdin"}, Column: Identifier{BaseExpr: &BaseExpr{line: 3, char: 8}, Literal: "foo"}}},
+						Field{Object: ColumnNumber{BaseExpr: &BaseExpr{line: 4, char: 2}, View: Identifier{BaseExpr: &BaseExpr{line: 4, char: 2}, Literal: "bar"}, Number: NewInteger(3)}},
+						Field{Object: ColumnNumber{BaseExpr: &BaseExpr{line: 5, char: 2}, View: Identifier{BaseExpr: &BaseExpr{line: 5, char: 2}, Literal: "stdin"}, Number: NewInteger(3)}},
+					},
+				},
+			}},
+		},
+	},
+	{
 		Input: "select ident || 'foo' || 'bar'",
 		Output: []Statement{
 			SelectQuery{
