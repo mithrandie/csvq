@@ -114,8 +114,8 @@ table
 
 table_entity
   : table_name
-  | STDIN
   | subquery
+  | STDIN
 
 join
   : table CROSS JOIN table
@@ -159,6 +159,12 @@ _alias_
 _subquery_
 : A select query enclosed in parentheses.
 
+_condition_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+_column_name_
+: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+
 #### Special Tables
 {: #special_tables}
 
@@ -168,12 +174,6 @@ DUAL
 
 STDIN
 : The stdin table loads data from the standard input as a csv data. The stdin table is one of [temporary tables]({{ '/reference/temporary-table.html' | relative_url }}).
-
-_condition_
-: [value]({{ '/reference/value.html' | relative_url }})
-
-_column_name_
-: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
 
 
 ## Where Clause
