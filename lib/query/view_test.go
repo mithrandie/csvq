@@ -37,11 +37,11 @@ var viewLoadTests = []struct {
 				},
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{{}},
-				TempViewsList: []ViewMap{{}},
-				CursorsList:   []CursorMap{{}},
-				InlineTables:  InlineTables{},
-				AliasesList:   AliasMapList{{}},
+				VariablesList:    []Variables{{}},
+				TempViewsList:    []ViewMap{{}},
+				CursorsList:      []CursorMap{{}},
+				InlineTablesList: InlineTablesList{{}},
+				AliasesList:      AliasMapList{{}},
 			},
 		},
 	},
@@ -75,10 +75,10 @@ var viewLoadTests = []struct {
 				Delimiter: ',',
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{{}},
-				TempViewsList: []ViewMap{{}},
-				CursorsList:   []CursorMap{{}},
-				InlineTables:  InlineTables{},
+				VariablesList:    []Variables{{}},
+				TempViewsList:    []ViewMap{{}},
+				CursorsList:      []CursorMap{{}},
+				InlineTablesList: InlineTablesList{{}},
 				AliasesList: AliasMapList{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
@@ -110,8 +110,8 @@ var viewLoadTests = []struct {
 						"STDIN": nil,
 					},
 				},
-				CursorsList:  []CursorMap{{}},
-				InlineTables: InlineTables{},
+				CursorsList:      []CursorMap{{}},
+				InlineTablesList: InlineTablesList{{}},
 				AliasesList: AliasMapList{
 					{
 						"STDIN": "STDIN",
@@ -165,10 +165,10 @@ var viewLoadTests = []struct {
 				}),
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{{}},
-				TempViewsList: []ViewMap{{}},
-				CursorsList:   []CursorMap{{}},
-				InlineTables:  InlineTables{},
+				VariablesList:    []Variables{{}},
+				TempViewsList:    []ViewMap{{}},
+				CursorsList:      []CursorMap{{}},
+				InlineTablesList: InlineTablesList{{}},
 				AliasesList: AliasMapList{
 					{
 						"TABLE_SJIS": strings.ToUpper(GetTestFilePath("table_sjis.csv")),
@@ -200,10 +200,10 @@ var viewLoadTests = []struct {
 				}),
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{{}},
-				TempViewsList: []ViewMap{{}},
-				CursorsList:   []CursorMap{{}},
-				InlineTables:  InlineTables{},
+				VariablesList:    []Variables{{}},
+				TempViewsList:    []ViewMap{{}},
+				CursorsList:      []CursorMap{{}},
+				InlineTablesList: InlineTablesList{{}},
 				AliasesList: AliasMapList{
 					{
 						"TABLE_NOHEADER": strings.ToUpper(GetTestFilePath("table_noheader.csv")),
@@ -288,10 +288,10 @@ var viewLoadTests = []struct {
 				}),
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{{}},
-				TempViewsList: []ViewMap{{}},
-				CursorsList:   []CursorMap{{}},
-				InlineTables:  InlineTables{},
+				VariablesList:    []Variables{{}},
+				TempViewsList:    []ViewMap{{}},
+				CursorsList:      []CursorMap{{}},
+				InlineTablesList: InlineTablesList{{}},
 				AliasesList: AliasMapList{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
@@ -382,10 +382,10 @@ var viewLoadTests = []struct {
 				}),
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{{}},
-				TempViewsList: []ViewMap{{}},
-				CursorsList:   []CursorMap{{}},
-				InlineTables:  InlineTables{},
+				VariablesList:    []Variables{{}},
+				TempViewsList:    []ViewMap{{}},
+				CursorsList:      []CursorMap{{}},
+				InlineTablesList: InlineTablesList{{}},
 				AliasesList: AliasMapList{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
@@ -440,10 +440,10 @@ var viewLoadTests = []struct {
 				}),
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{{}},
-				TempViewsList: []ViewMap{{}},
-				CursorsList:   []CursorMap{{}},
-				InlineTables:  InlineTables{},
+				VariablesList:    []Variables{{}},
+				TempViewsList:    []ViewMap{{}},
+				CursorsList:      []CursorMap{{}},
+				InlineTablesList: InlineTablesList{{}},
 				AliasesList: AliasMapList{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
@@ -505,10 +505,10 @@ var viewLoadTests = []struct {
 				}),
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{{}},
-				TempViewsList: []ViewMap{{}},
-				CursorsList:   []CursorMap{{}},
-				InlineTables:  InlineTables{},
+				VariablesList:    []Variables{{}},
+				TempViewsList:    []ViewMap{{}},
+				CursorsList:      []CursorMap{{}},
+				InlineTablesList: InlineTablesList{{}},
 				AliasesList: AliasMapList{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
@@ -600,10 +600,10 @@ var viewLoadTests = []struct {
 				}),
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{{}},
-				TempViewsList: []ViewMap{{}},
-				CursorsList:   []CursorMap{{}},
-				InlineTables:  InlineTables{},
+				VariablesList:    []Variables{{}},
+				TempViewsList:    []ViewMap{{}},
+				CursorsList:      []CursorMap{{}},
+				InlineTablesList: InlineTablesList{{}},
 				AliasesList: AliasMapList{
 					{
 						"ALIAS": "",

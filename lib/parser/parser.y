@@ -260,6 +260,10 @@ statement
     {
         $$ = $1
     }
+    | user_defined_function_statement
+    {
+        $$ = $1
+    }
     | transaction_statement
     {
         $$ = $1
@@ -271,10 +275,6 @@ statement
 
 procedure_statement
     : statement
-    {
-        $$ = $1
-    }
-    | user_defined_function_statement
     {
         $$ = $1
     }

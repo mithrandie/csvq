@@ -57,7 +57,7 @@ func (pv partitionValues) searchIndex(values []parser.Primary) int {
 
 func RowNumber(view *View, fn parser.AnalyticFunction) error {
 	if fn.Args != nil {
-		return NewFunctionArgumentLengthError(fn.Name, []int{0}, fn)
+		return NewFunctionArgumentLengthError(fn, fn.Name, []int{0})
 	}
 
 	partitions := partitionValues{}
@@ -91,7 +91,7 @@ func RowNumber(view *View, fn parser.AnalyticFunction) error {
 
 func Rank(view *View, fn parser.AnalyticFunction) error {
 	if fn.Args != nil {
-		return NewFunctionArgumentLengthError(fn.Name, []int{0}, fn)
+		return NewFunctionArgumentLengthError(fn, fn.Name, []int{0})
 	}
 
 	partitions := partitionValues{}
@@ -135,7 +135,7 @@ func Rank(view *View, fn parser.AnalyticFunction) error {
 
 func DenseRank(view *View, fn parser.AnalyticFunction) error {
 	if fn.Args != nil {
-		return NewFunctionArgumentLengthError(fn.Name, []int{0}, fn)
+		return NewFunctionArgumentLengthError(fn, fn.Name, []int{0})
 	}
 
 	partitions := partitionValues{}

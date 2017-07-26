@@ -143,7 +143,7 @@ type UnpermittedWildCardError struct {
 	*BaseError
 }
 
-func NewUnpermittedWildCardError(funcname string, expr parser.AllColumns) error {
+func NewUnpermittedWildCardError(expr parser.AllColumns, funcname string) error {
 	return &UnpermittedWildCardError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_UNPERMITTED_WILDCARD, funcname)),
 	}
@@ -213,7 +213,7 @@ type NotGroupingRecordsError struct {
 	*BaseError
 }
 
-func NewNotGroupingRecordsError(funcname string, expr parser.Expression) error {
+func NewNotGroupingRecordsError(expr parser.Expression, funcname string) error {
 	return &NotGroupingRecordsError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_NOT_GROUPING_RECORDS, funcname)),
 	}
@@ -243,7 +243,7 @@ type FunctionNotExistError struct {
 	*BaseError
 }
 
-func NewFunctionNotExistError(funcname string, expr parser.Expression) error {
+func NewFunctionNotExistError(expr parser.Expression, funcname string) error {
 	return &FunctionNotExistError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_FUNCTION_NOT_EXIST, funcname)),
 	}
@@ -253,7 +253,7 @@ type FunctionArgumentLengthError struct {
 	*BaseError
 }
 
-func NewFunctionArgumentLengthError(funcname string, argslen []int, expr parser.Expression) error {
+func NewFunctionArgumentLengthError(expr parser.Expression, funcname string, argslen []int) error {
 	var argstr string
 	if 1 < len(argslen) {
 		lastarg := FormatCount(argslen[len(argslen)-1], "argument")
@@ -271,7 +271,7 @@ func NewFunctionArgumentLengthError(funcname string, argslen []int, expr parser.
 	}
 }
 
-func NewFunctionArgumentLengthErrorWithCustomArgs(funcname string, argstr string, expr parser.Expression) error {
+func NewFunctionArgumentLengthErrorWithCustomArgs(expr parser.Expression, funcname string, argstr string) error {
 	return &FunctionArgumentLengthError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_FUNCTION_ARGUMENT_LENGTH, funcname, argstr)),
 	}
@@ -291,7 +291,7 @@ type UnpermittedStatementFunctionError struct {
 	*BaseError
 }
 
-func NewUnpermittedStatementFunctionError(funcname string, expr parser.Expression) error {
+func NewUnpermittedStatementFunctionError(expr parser.Expression, funcname string) error {
 	return &UnpermittedStatementFunctionError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_UNPERMITTED_STATEMENT_FUNCTION, funcname)),
 	}

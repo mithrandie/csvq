@@ -138,7 +138,7 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 			if !strings.EqualFold(parentFilter.RecursiveTable.Name.Literal, table.Name().Literal) {
 				view.Header.Update(table.Name().Literal, nil)
 			}
-		} else if ct, err := parentFilter.InlineTables.Get(tableIdentifier); err == nil {
+		} else if ct, err := parentFilter.InlineTablesList.Get(tableIdentifier); err == nil {
 			if err = parentFilter.AliasesList.Add(table.Name(), ""); err != nil {
 				return nil, err
 			}
@@ -685,7 +685,7 @@ func (view *View) evalAnalyticFunction(expr parser.AnalyticFunction) error {
 	name := strings.ToUpper(expr.Name)
 	fn, ok := AnalyticFunctions[name]
 	if !ok {
-		return NewFunctionNotExistError(expr.Name, expr)
+		return NewFunctionNotExistError(expr, expr.Name)
 	}
 
 	if expr.AnalyticClause.OrderByClause != nil {

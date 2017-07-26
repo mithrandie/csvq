@@ -6,6 +6,34 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
+type InlineTablesList []InlineTables
+
+func (list InlineTablesList) Set(inlineTable parser.InlineTable, parentFilter Filter) error {
+	return list[0].Set(inlineTable, parentFilter)
+}
+
+func (list InlineTablesList) Get(name parser.Identifier) (view *View, err error) {
+	for _, m := range list {
+		if view, err = m.Get(name); err == nil {
+			return
+		}
+	}
+	NewUndefinedInLineTableError(name)
+	return
+}
+
+func (list InlineTablesList) Load(clause parser.WithClause, parentFilter Filter) error {
+	for _, v := range clause.InlineTables {
+		inlineTable := v.(parser.InlineTable)
+		err := list.Set(inlineTable, parentFilter)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 type InlineTables map[string]*View
 
 func (it InlineTables) Set(inlineTable parser.InlineTable, parentFilter Filter) error {
@@ -15,7 +43,6 @@ func (it InlineTables) Set(inlineTable parser.InlineTable, parentFilter Filter) 
 	}
 
 	filter := parentFilter.CreateNode()
-	filter.InlineTables = it
 	if inlineTable.IsRecursive() {
 		filter.RecursiveTable = &inlineTable
 	}
@@ -44,32 +71,4 @@ func (it InlineTables) Get(name parser.Identifier) (*View, error) {
 		return view.Copy(), nil
 	}
 	return nil, NewUndefinedInLineTableError(name)
-}
-
-func (it InlineTables) Copy() InlineTables {
-	table := InlineTables{}
-	for k, v := range it {
-		table[k] = v
-	}
-	return table
-}
-
-func (it InlineTables) Merge(tables InlineTables) InlineTables {
-	table := it.Copy()
-	for k, v := range tables {
-		table[k] = v
-	}
-	return table
-}
-
-func (it InlineTables) Load(clause parser.WithClause, parentFilter Filter) error {
-	for _, v := range clause.InlineTables {
-		inlineTable := v.(parser.InlineTable)
-		err := it.Set(inlineTable, parentFilter)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }

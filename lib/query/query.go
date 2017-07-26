@@ -38,7 +38,6 @@ type Result struct {
 }
 
 var ViewCache = ViewMap{}
-var UserFunctions = UserDefinedFunctionMap{}
 var Results = []Result{}
 var Logs = []string{}
 var SelectLogs = []string{}

@@ -103,32 +103,6 @@ func TestAliasMapList_Get(t *testing.T) {
 	}
 }
 
-func TestAliasMapList_CreateNode(t *testing.T) {
-	list := AliasMapList{
-		AliasMap{
-			"TBL2": "",
-		},
-		AliasMap{
-			"TBL": "/PATH/TO/TBL1.CSV",
-		},
-	}
-
-	expect := AliasMapList{
-		AliasMap{},
-		AliasMap{
-			"TBL2": "",
-		},
-		AliasMap{
-			"TBL": "/PATH/TO/TBL1.CSV",
-		},
-	}
-
-	result := list.CreateNode()
-	if !reflect.DeepEqual(result, expect) {
-		t.Errorf("create node: result = %s, want %s", result, expect)
-	}
-}
-
 var aliasMapAddTests = []struct {
 	Name   string
 	Alias  parser.Identifier

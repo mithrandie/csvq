@@ -18,20 +18,22 @@ type Filter struct {
 	VariablesList VariablesList
 	TempViewsList TemporaryViewMapList
 	CursorsList   CursorMapList
+	FunctionsList UserDefinedFunctionsList
 
-	InlineTables InlineTables
-	AliasesList  AliasMapList
+	InlineTablesList InlineTablesList
+	AliasesList      AliasMapList
 
 	RecursiveTable    *parser.InlineTable
 	RecursiveTmpView  *View
 	tmpViewIsAccessed bool
 }
 
-func NewFilter(variablesList VariablesList, tempViewsList TemporaryViewMapList, cursorsList CursorMapList) Filter {
+func NewFilter(variablesList VariablesList, tempViewsList TemporaryViewMapList, cursorsList CursorMapList, functionsList UserDefinedFunctionsList) Filter {
 	return Filter{
 		VariablesList: variablesList,
 		TempViewsList: tempViewsList,
 		CursorsList:   cursorsList,
+		FunctionsList: functionsList,
 	}
 }
 
@@ -40,6 +42,7 @@ func NewEmptyFilter() Filter {
 		VariablesList{{}},
 		TemporaryViewMapList{{}},
 		CursorMapList{{}},
+		UserDefinedFunctionsList{{}},
 	)
 }
 
@@ -56,27 +59,35 @@ func NewFilterForRecord(view *View, recordIndex int, parentFilter Filter) Filter
 }
 
 func NewFilterForSequentialEvaluation(view *View, parentFilter Filter) Filter {
-	return Filter{
+	f := Filter{
 		Records: []FilterRecord{
 			{
 				View: view,
 			},
 		},
-		VariablesList: parentFilter.VariablesList,
-		TempViewsList: parentFilter.TempViewsList,
-		CursorsList:   parentFilter.CursorsList,
 	}
+	return f.Merge(parentFilter)
 }
 
 func (f Filter) Merge(filter Filter) Filter {
 	return Filter{
-		Records:       append(f.Records, filter.Records...),
-		VariablesList: filter.VariablesList,
-		TempViewsList: filter.TempViewsList,
-		CursorsList:   filter.CursorsList,
-		InlineTables:  f.InlineTables.Merge(filter.InlineTables),
-		AliasesList:   filter.AliasesList,
+		Records:          append(f.Records, filter.Records...),
+		VariablesList:    filter.VariablesList,
+		TempViewsList:    filter.TempViewsList,
+		CursorsList:      filter.CursorsList,
+		FunctionsList:    filter.FunctionsList,
+		InlineTablesList: filter.InlineTablesList,
+		AliasesList:      filter.AliasesList,
 	}
+}
+
+func (f Filter) CreateChildScope() Filter {
+	return NewFilter(
+		append(VariablesList{{}}, f.VariablesList...),
+		append(TemporaryViewMapList{{}}, f.TempViewsList...),
+		append(CursorMapList{{}}, f.CursorsList...),
+		append(UserDefinedFunctionsList{{}}, f.FunctionsList...),
+	)
 }
 
 func (f Filter) CreateNode() Filter {
@@ -85,15 +96,16 @@ func (f Filter) CreateNode() Filter {
 		VariablesList:    f.VariablesList,
 		TempViewsList:    f.TempViewsList,
 		CursorsList:      f.CursorsList,
-		InlineTables:     f.InlineTables.Copy(),
-		AliasesList:      f.AliasesList.CreateNode(),
+		FunctionsList:    f.FunctionsList,
+		InlineTablesList: append(InlineTablesList{{}}, f.InlineTablesList...),
+		AliasesList:      append(AliasMapList{{}}, f.AliasesList...),
 		RecursiveTable:   f.RecursiveTable,
 		RecursiveTmpView: f.RecursiveTmpView,
 	}
 }
 
 func (f Filter) LoadInlineTable(clause parser.WithClause) error {
-	return f.InlineTables.Load(clause, f)
+	return f.InlineTablesList.Load(clause, f)
 }
 
 func (f Filter) Evaluate(expr parser.Expression) (parser.Primary, error) {
@@ -521,11 +533,11 @@ func (f Filter) evalFunction(expr parser.Function) (parser.Primary, error) {
 
 	fn, ok := Functions[name]
 	if !ok {
-		if udfn, err := UserFunctions.Get(expr); err == nil {
+		if udfn, err := f.FunctionsList.Get(expr); err == nil {
 			return udfn.Execute(args, f)
 		}
 
-		return nil, NewFunctionNotExistError(expr.Name, expr)
+		return nil, NewFunctionNotExistError(expr, expr.Name)
 	}
 
 	return fn(expr, args)
@@ -544,25 +556,25 @@ func (f Filter) evalAggregateFunction(expr parser.AggregateFunction) (parser.Pri
 
 	fn, ok := AggregateFunctions[name]
 	if !ok {
-		return nil, NewFunctionNotExistError(expr.Name, expr)
+		return nil, NewFunctionNotExistError(expr, expr.Name)
 	}
 
 	if len(f.Records) < 1 {
-		return nil, NewUnpermittedStatementFunctionError(expr.Name, expr)
+		return nil, NewUnpermittedStatementFunctionError(expr, expr.Name)
 	}
 
 	if !f.Records[0].View.isGrouped {
-		return nil, NewNotGroupingRecordsError(expr.Name, expr)
+		return nil, NewNotGroupingRecordsError(expr, expr.Name)
 	}
 
 	if len(expr.Option.Args) != 1 {
-		return nil, NewFunctionArgumentLengthError(expr.Name, []int{1}, expr)
+		return nil, NewFunctionArgumentLengthError(expr, expr.Name, []int{1})
 	}
 
 	arg := expr.Option.Args[0]
 	if ac, ok := arg.(parser.AllColumns); ok {
 		if !strings.EqualFold(expr.Name, "COUNT") {
-			return nil, NewUnpermittedWildCardError(expr.Name, ac)
+			return nil, NewUnpermittedWildCardError(ac, expr.Name)
 		}
 		arg = parser.NewInteger(1)
 	}
@@ -588,20 +600,20 @@ func (f Filter) evalAggregateFunction(expr parser.AggregateFunction) (parser.Pri
 
 func (f Filter) evalGroupConcat(expr parser.GroupConcat) (parser.Primary, error) {
 	if len(f.Records) < 1 {
-		return nil, NewUnpermittedStatementFunctionError(expr.GroupConcat, expr)
+		return nil, NewUnpermittedStatementFunctionError(expr, expr.GroupConcat)
 	}
 
 	if !f.Records[0].View.isGrouped {
-		return nil, NewNotGroupingRecordsError(expr.GroupConcat, expr)
+		return nil, NewNotGroupingRecordsError(expr, expr.GroupConcat)
 	}
 
 	if len(expr.Option.Args) != 1 {
-		return nil, NewFunctionArgumentLengthError(expr.GroupConcat, []int{1}, expr)
+		return nil, NewFunctionArgumentLengthError(expr, expr.GroupConcat, []int{1})
 	}
 
 	arg := expr.Option.Args[0]
 	if ac, ok := arg.(parser.AllColumns); ok {
-		return nil, NewUnpermittedWildCardError(expr.GroupConcat, ac)
+		return nil, NewUnpermittedWildCardError(ac, expr.GroupConcat)
 	}
 
 	view := NewViewFromGroupedRecord(f.Records[0])

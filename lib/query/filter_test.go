@@ -1867,6 +1867,21 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "User Defined Function",
+		Filter: Filter{
+			FunctionsList: UserDefinedFunctionsList{
+				UserDefinedFunctionMap{
+					"USERFUNC": &UserDefinedFunction{
+						Name: parser.Identifier{Literal: "userfunc"},
+						Parameters: []parser.Variable{
+							{Name: "@arg1"},
+						},
+						Statements: []parser.Statement{
+							parser.Return{Value: parser.Variable{Name: "@arg1"}},
+						},
+					},
+				},
+			},
+		},
 		Expr: parser.Function{
 			Name: "userfunc",
 			Args: []parser.Expression{
@@ -2773,6 +2788,7 @@ var filterEvaluateTests = []struct {
 			}},
 			[]ViewMap{{}},
 			[]CursorMap{{}},
+			[]UserDefinedFunctionMap{{}},
 		),
 		Expr: parser.Variable{
 			Name: "@var1",
@@ -2795,6 +2811,7 @@ var filterEvaluateTests = []struct {
 			}},
 			[]ViewMap{{}},
 			[]CursorMap{{}},
+			[]UserDefinedFunctionMap{{}},
 		),
 		Expr: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "@var1"},
@@ -2871,18 +2888,6 @@ func TestFilter_Evaluate(t *testing.T) {
 	ViewCache.Clear()
 	cursors.Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
 	cursors.Fetch(parser.Identifier{Literal: "cur"}, parser.NEXT, 0)
-
-	UserFunctions = UserDefinedFunctionMap{
-		"USERFUNC": &UserDefinedFunction{
-			Name: parser.Identifier{Literal: "userfunc"},
-			Parameters: []parser.Variable{
-				{Name: "@arg1"},
-			},
-			Statements: []parser.Statement{
-				parser.Return{Value: parser.Variable{Name: "@arg1"}},
-			},
-		},
-	}
 
 	for _, v := range filterEvaluateTests {
 		ViewCache.Clear()

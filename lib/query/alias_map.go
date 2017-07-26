@@ -22,15 +22,6 @@ func (list AliasMapList) Get(alias parser.Identifier) (path string, err error) {
 	return
 }
 
-func (list AliasMapList) CreateNode() AliasMapList {
-	node := make(AliasMapList, len(list)+1)
-	node[0] = AliasMap{}
-	for i := 0; i < len(list); i++ {
-		node[i+1] = list[i]
-	}
-	return node
-}
-
 type AliasMap map[string]string
 
 func (m AliasMap) Add(alias parser.Identifier, path string) error {

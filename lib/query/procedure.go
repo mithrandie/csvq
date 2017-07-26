@@ -21,11 +21,7 @@ func NewProcedure() *Procedure {
 
 func (proc *Procedure) NewChildProcedure() *Procedure {
 	return &Procedure{
-		Filter: NewFilter(
-			append(VariablesList{{}}, proc.Filter.VariablesList...),
-			append(TemporaryViewMapList{{}}, proc.Filter.TempViewsList...),
-			append(CursorMapList{{}}, proc.Filter.CursorsList...),
-		),
+		Filter: proc.Filter.CreateChildScope(),
 	}
 }
 
@@ -86,7 +82,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 	case parser.DisposeTable:
 		err = proc.Filter.TempViewsList.Dispose(stmt.(parser.DisposeTable).Table)
 	case parser.FunctionDeclaration:
-		err = UserFunctions.Declare(stmt.(parser.FunctionDeclaration))
+		err = proc.Filter.FunctionsList.Declare(stmt.(parser.FunctionDeclaration))
 	case parser.SelectQuery:
 		if view, err = Select(stmt.(parser.SelectQuery), proc.Filter); err == nil {
 			flags := cmd.GetFlags()

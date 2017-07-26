@@ -339,6 +339,7 @@ func TestFetchCursor(t *testing.T) {
 				},
 			},
 		},
+		[]UserDefinedFunctionMap{{}},
 	)
 
 	ViewCache.Clear()
