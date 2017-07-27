@@ -656,7 +656,7 @@ type UpdateFieldNotExistError struct {
 	*BaseError
 }
 
-func NewUpdateFieldNotExistError(field parser.FieldReference) error {
+func NewUpdateFieldNotExistError(field parser.Expression) error {
 	return &UpdateFieldNotExistError{
 		NewBaseError(field, fmt.Sprintf(ERROR_UPDATE_FIELD_NOT_EXIST, field)),
 	}
@@ -666,7 +666,7 @@ type UpdateValueAmbiguousError struct {
 	*BaseError
 }
 
-func NewUpdateValueAmbiguousError(field parser.FieldReference, value parser.Expression) error {
+func NewUpdateValueAmbiguousError(field parser.Expression, value parser.Expression) error {
 	return &UpdateValueAmbiguousError{
 		NewBaseError(field, fmt.Sprintf(ERROR_UPDATE_VALUE_AMBIGUOUS, value, field)),
 	}

@@ -13,7 +13,7 @@ Insert query is used to insert records to a csv file.
 ```sql
 [WITH common_table_expression [, common_table_expression ...]]
   INSERT INTO table_name
-  [(column_name [, column_name ...])]
+  [(column [, column ...])]
   VALUES row_value [, row_value ...]
 ```
 
@@ -23,8 +23,8 @@ _common_table_expression_
 _table_name_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
 
-_column_name_
-: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+_column_
+: [field reference]({{ '/reference/value.html#field_reference' | relative_url }})
 
 _row_value_
 : [Row Value]({{ '/reference/row-value.html' | relative_url }})
@@ -34,7 +34,7 @@ _row_value_
 ```sql
 [WITH common_table_expression [, common_table_expression ...]]
   INSERT INTO table_name
-  [(column_name [, column_name ...])]
+  [(column [, column ...])]
   select_query
 ```
 
@@ -44,8 +44,8 @@ _common_table_expression_
 _table_name_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
 
-_column_name_
-: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+_column_
+: [field reference]({{ '/reference/value.html#field_reference' | relative_url }})
 
 _select_query_
 : [Select Query]({{ '/reference/select-query.html' | relative_url }})

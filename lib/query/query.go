@@ -655,7 +655,7 @@ func AddColumns(query parser.AddColumns, parentFilter Filter) (*View, error) {
 	case parser.LAST:
 		insertPos = view.FieldLen()
 	default:
-		idx, err := view.FieldIndex(pos.Column.(parser.FieldReference))
+		idx, err := view.FieldIndex(pos.Column)
 		if err != nil {
 			return nil, err
 		}
@@ -756,7 +756,7 @@ func DropColumns(query parser.DropColumns, parentFilter Filter) (*View, error) {
 
 	dropIndices := make([]int, len(query.Columns))
 	for i, v := range query.Columns {
-		idx, err := view.FieldIndex(v.(parser.FieldReference))
+		idx, err := view.FieldIndex(v)
 		if err != nil {
 			return nil, err
 		}

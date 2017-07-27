@@ -931,14 +931,17 @@ func (view *View) Intersect(calcView *View, all bool) {
 	}
 }
 
-func (view *View) FieldIndex(fieldRef parser.FieldReference) (int, error) {
-	return view.Header.Contains(fieldRef)
+func (view *View) FieldIndex(fieldRef parser.Expression) (int, error) {
+	if number, ok := fieldRef.(parser.ColumnNumber); ok {
+		return view.Header.ContainsNumber(number)
+	}
+	return view.Header.Contains(fieldRef.(parser.FieldReference))
 }
 
 func (view *View) FieldIndices(fields []parser.Expression) ([]int, error) {
 	indices := make([]int, len(fields))
 	for i, v := range fields {
-		idx, err := view.FieldIndex(v.(parser.FieldReference))
+		idx, err := view.FieldIndex(v)
 		if err != nil {
 			return nil, err
 		}
@@ -947,7 +950,7 @@ func (view *View) FieldIndices(fields []parser.Expression) ([]int, error) {
 	return indices, nil
 }
 
-func (view *View) FieldViewName(fieldRef parser.FieldReference) (string, error) {
+func (view *View) FieldViewName(fieldRef parser.Expression) (string, error) {
 	idx, err := view.FieldIndex(fieldRef)
 	if err != nil {
 		return "", err

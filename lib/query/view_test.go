@@ -3163,8 +3163,8 @@ func TestView_Intersect(t *testing.T) {
 func TestView_FieldIndex(t *testing.T) {
 	view := &View{
 		Header: []HeaderField{
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table1", Column: "column2", FromTable: true},
+			{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
+			{Reference: "table1", Column: "column2", Number: 2, FromTable: true},
 		},
 	}
 	fieldRef := parser.FieldReference{
@@ -3173,6 +3173,17 @@ func TestView_FieldIndex(t *testing.T) {
 	expect := 0
 
 	idx, _ := view.FieldIndex(fieldRef)
+	if idx != expect {
+		t.Errorf("field index = %d, want %d", idx, expect)
+	}
+
+	columnNum := parser.ColumnNumber{
+		View:   parser.Identifier{Literal: "table1"},
+		Number: parser.NewInteger(2),
+	}
+	expect = 1
+
+	idx, _ = view.FieldIndex(columnNum)
 	if idx != expect {
 		t.Errorf("field index = %d, want %d", idx, expect)
 	}
@@ -3193,7 +3204,17 @@ func TestView_FieldIndices(t *testing.T) {
 
 	indices, _ := view.FieldIndices(fields)
 	if !reflect.DeepEqual(indices, expect) {
-		t.Errorf("field indices = %d, want %d", indices, expect)
+		t.Errorf("field indices = %s, want %s", indices, expect)
+	}
+
+	fields = []parser.Expression{
+		parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+		parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+	}
+	expectErr := "[L:- C:-] field notexist does not exist"
+	_, err := view.FieldIndices(fields)
+	if err.Error() != expectErr {
+		t.Errorf("error = %s, want %s", err, expectErr)
 	}
 }
 
@@ -3212,6 +3233,15 @@ func TestView_FieldViewName(t *testing.T) {
 	ref, _ := view.FieldViewName(fieldRef)
 	if ref != expect {
 		t.Errorf("field reference = %s, want %s", ref, expect)
+	}
+
+	fieldRef = parser.FieldReference{
+		Column: parser.Identifier{Literal: "notexist"},
+	}
+	expectErr := "[L:- C:-] field notexist does not exist"
+	_, err := view.FieldViewName(fieldRef)
+	if err.Error() != expectErr {
+		t.Errorf("error = %s, want %s", err, expectErr)
 	}
 }
 

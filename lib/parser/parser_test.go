@@ -2186,7 +2186,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "insert into table1 (column1, column2) values (1, 'str1'), (2, 'str2')",
+		Input: "insert into table1 (column1, column2, table1.3) values (1, 'str1'), (2, 'str2')",
 		Output: []Statement{
 			InsertQuery{
 				Insert: "insert",
@@ -2195,11 +2195,12 @@ var parseTests = []struct {
 				Fields: []Expression{
 					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 21}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 21}, Literal: "column1"}},
 					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 30}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 30}, Literal: "column2"}},
+					ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 39}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 39}, Literal: "table1"}, Number: NewInteger(3)},
 				},
 				Values: "values",
 				ValuesList: []Expression{
 					RowValue{
-						BaseExpr: &BaseExpr{line: 1, char: 46},
+						BaseExpr: &BaseExpr{line: 1, char: 56},
 						Value: ValueList{
 							Values: []Expression{
 								NewInteger(1),
@@ -2208,7 +2209,7 @@ var parseTests = []struct {
 						},
 					},
 					RowValue{
-						BaseExpr: &BaseExpr{line: 1, char: 59},
+						BaseExpr: &BaseExpr{line: 1, char: 69},
 						Value: ValueList{
 							Values: []Expression{
 								NewInteger(2),
@@ -2269,7 +2270,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "with ct as (select 1) update table1 set column1 = 1, column2 = 2 from table1 where true",
+		Input: "with ct as (select 1) update table1 set column1 = 1, column2 = 2, table1.3 = 3 from table1 where true",
 		Output: []Statement{
 			UpdateQuery{
 				WithClause: WithClause{
@@ -2300,11 +2301,12 @@ var parseTests = []struct {
 				SetList: []Expression{
 					UpdateSet{Field: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 41}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 41}, Literal: "column1"}}, Value: NewInteger(1)},
 					UpdateSet{Field: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 54}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 54}, Literal: "column2"}}, Value: NewInteger(2)},
+					UpdateSet{Field: ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 67}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 67}, Literal: "table1"}, Number: NewInteger(3)}, Value: NewInteger(3)},
 				},
 				FromClause: FromClause{
 					From: "from",
 					Tables: []Expression{
-						Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 71}, Literal: "table1"}},
+						Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 85}, Literal: "table1"}},
 					},
 				},
 				WhereClause: WhereClause{
@@ -2490,7 +2492,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "alter table table1 drop (column1, column2)",
+		Input: "alter table table1 drop (column1, column2, table1.3)",
 		Output: []Statement{
 			DropColumns{
 				AlterTable: "alter table",
@@ -2499,6 +2501,7 @@ var parseTests = []struct {
 				Columns: []Expression{
 					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 26}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 26}, Literal: "column1"}},
 					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 35}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 35}, Literal: "column2"}},
+					ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 44}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 44}, Literal: "table1"}, Number: NewInteger(3)},
 				},
 			},
 		},
@@ -2513,6 +2516,19 @@ var parseTests = []struct {
 				Old:        FieldReference{BaseExpr: &BaseExpr{line: 1, char: 27}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 27}, Literal: "column1"}},
 				To:         "to",
 				New:        Identifier{BaseExpr: &BaseExpr{line: 1, char: 38}, Literal: "column2"},
+			},
+		},
+	},
+	{
+		Input: "alter table table1 rename table1.3 to column2",
+		Output: []Statement{
+			RenameColumn{
+				AlterTable: "alter table",
+				Table:      Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
+				Rename:     "rename",
+				Old:        ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 27}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 27}, Literal: "table1"}, Number: NewInteger(3)},
+				To:         "to",
+				New:        Identifier{BaseExpr: &BaseExpr{line: 1, char: 39}, Literal: "column2"},
 			},
 		},
 	},

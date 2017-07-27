@@ -1289,7 +1289,7 @@ func (e UpdateQuery) String() string {
 
 type UpdateSet struct {
 	*BaseExpr
-	Field FieldReference
+	Field Expression
 	Value Expression
 }
 
@@ -1412,7 +1412,7 @@ type RenameColumn struct {
 	AlterTable string
 	Table      Expression
 	Rename     string
-	Old        FieldReference
+	Old        Expression
 	To         string
 	New        Identifier
 }

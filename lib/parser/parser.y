@@ -450,7 +450,7 @@ table_operation
     }
     | ALTER TABLE table_identifier RENAME field_reference TO identifier
     {
-        $$ = RenameColumn{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Rename: $4.Literal, Old: $5.(FieldReference), To: $6.Literal, New: $7}
+        $$ = RenameColumn{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Rename: $4.Literal, Old: $5, To: $6.Literal, New: $7}
     }
 
 column_default
@@ -1442,7 +1442,7 @@ update_query
 update_set
     : field_reference '=' value
     {
-        $$ = UpdateSet{Field: $1.(FieldReference), Value: $3}
+        $$ = UpdateSet{Field: $1, Value: $3}
     }
 
 update_set_list

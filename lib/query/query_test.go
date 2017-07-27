@@ -1866,7 +1866,7 @@ var updateTests = []struct {
 			Set: "set",
 			SetList: []parser.Expression{
 				parser.UpdateSet{
-					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+					Field: parser.ColumnNumber{View: parser.Identifier{Literal: "t1"}, Number: parser.NewInteger(2)},
 					Value: parser.NewString("update"),
 				},
 			},
@@ -2975,7 +2975,7 @@ var addColumnsTests = []struct {
 			},
 			Position: parser.ColumnPosition{
 				Position: parser.Token{Token: parser.BEFORE},
-				Column:   parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				Column:   parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: parser.NewInteger(2)},
 			},
 		},
 		Result: &View{
@@ -3206,7 +3206,7 @@ var dropColumnsTests = []struct {
 		Query: parser.DropColumns{
 			Table: parser.Identifier{Literal: "tmpview"},
 			Columns: []parser.Expression{
-				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				parser.ColumnNumber{View: parser.Identifier{Literal: "tmpview"}, Number: parser.NewInteger(2)},
 			},
 		},
 		Result: &View{
@@ -3402,7 +3402,7 @@ var renameColumnTests = []struct {
 		Name: "Rename Column For Temporary View",
 		Query: parser.RenameColumn{
 			Table: parser.Identifier{Literal: "tmpview"},
-			Old:   parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+			Old:   parser.ColumnNumber{View: parser.Identifier{Literal: "tmpview"}, Number: parser.NewInteger(2)},
 			New:   parser.Identifier{Literal: "newcolumn"},
 		},
 		Result: &View{

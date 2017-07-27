@@ -1813,7 +1813,7 @@ yydefault:
 		yyDollar = yyS[yypt-7 : yypt+1]
 		//line parser.y:452
 		{
-			yyVAL.statement = RenameColumn{AlterTable: yyDollar[1].token.Literal + " " + yyDollar[2].token.Literal, Table: yyDollar[3].expression, Rename: yyDollar[4].token.Literal, Old: yyDollar[5].expression.(FieldReference), To: yyDollar[6].token.Literal, New: yyDollar[7].identifier}
+			yyVAL.statement = RenameColumn{AlterTable: yyDollar[1].token.Literal + " " + yyDollar[2].token.Literal, Table: yyDollar[3].expression, Rename: yyDollar[4].token.Literal, Old: yyDollar[5].expression, To: yyDollar[6].token.Literal, New: yyDollar[7].identifier}
 		}
 	case 60:
 		yyDollar = yyS[yypt-1 : yypt+1]
@@ -3077,7 +3077,7 @@ yydefault:
 		yyDollar = yyS[yypt-3 : yypt+1]
 		//line parser.y:1444
 		{
-			yyVAL.expression = UpdateSet{Field: yyDollar[1].expression.(FieldReference), Value: yyDollar[3].expression}
+			yyVAL.expression = UpdateSet{Field: yyDollar[1].expression, Value: yyDollar[3].expression}
 		}
 	case 263:
 		yyDollar = yyS[yypt-1 : yypt+1]
