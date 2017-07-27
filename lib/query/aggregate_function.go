@@ -1,6 +1,8 @@
 package query
 
 import (
+	"strings"
+
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
 )
@@ -34,7 +36,7 @@ func Max(distinct bool, list []parser.Primary) parser.Primary {
 	}
 
 	var result parser.Primary
-	result = parser.Null{}
+	result = parser.NewNull()
 
 	for _, v := range list {
 		if parser.IsNull(v) {
@@ -60,7 +62,7 @@ func Min(distinct bool, list []parser.Primary) parser.Primary {
 	}
 
 	var result parser.Primary
-	result = parser.Null{}
+	result = parser.NewNull()
 
 	for _, v := range list {
 		if parser.IsNull(v) {
@@ -99,7 +101,7 @@ func Sum(distinct bool, list []parser.Primary) parser.Primary {
 	}
 
 	if count < 1 {
-		return parser.Null{}
+		return parser.NewNull()
 	}
 	return parser.Float64ToPrimary(sum)
 }
@@ -123,11 +125,32 @@ func Avg(distinct bool, list []parser.Primary) parser.Primary {
 	}
 
 	if count < 1 {
-		return parser.Null{}
+		return parser.NewNull()
 	}
 
 	avg := sum / float64(count)
 	return parser.Float64ToPrimary(avg)
+}
+
+func ListAgg(distinct bool, list []parser.Primary, separator string) parser.Primary {
+	if distinct {
+		list = distinguish(list)
+	}
+
+	strlist := []string{}
+	for _, v := range list {
+		s := parser.PrimaryToString(v)
+		if parser.IsNull(s) {
+			continue
+		}
+		strlist = append(strlist, s.(parser.String).Value())
+	}
+
+	if len(strlist) < 1 {
+		return parser.NewNull()
+	}
+
+	return parser.NewString(strings.Join(strlist, separator))
 }
 
 func distinguish(list []parser.Primary) []parser.Primary {

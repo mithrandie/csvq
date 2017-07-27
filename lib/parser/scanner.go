@@ -20,13 +20,13 @@ const (
 	TOKEN_FROM   = IDENTIFIER
 	TOKEN_TO     = SUBSTITUTION_OP
 	KEYWORD_FROM = SELECT
-	KEYWORD_TO   = VAR
+	KEYWORD_TO   = AGGREGATE_FUNCTION
 )
 
 const (
-	SUBSTITUTION_OPERATOR = ":="
-
 	VARIABLE_SIGN = '@'
+
+	SUBSTITUTION_OPERATOR = ":="
 )
 
 var comparisonOperators = []string{
@@ -40,6 +40,18 @@ var comparisonOperators = []string{
 
 var stringOperators = []string{
 	"||",
+}
+
+var aggregateFunctions = []string{
+	"MIN",
+	"MAX",
+	"SUM",
+	"AVG",
+}
+
+var functionsWithAdditinals = []string{
+	"FIRST_VALUE",
+	"LAST_VALUE",
 }
 
 func TokenLiteral(token int) string {
@@ -172,6 +184,10 @@ func (s *Scanner) Scan() (Token, error) {
 			token = TERNARY
 		} else if t, e := s.searchKeyword(literal); e == nil {
 			token = rune(t)
+		} else if s.isAggregateFunctions(literal) {
+			token = AGGREGATE_FUNCTION
+		} else if s.isFunctionsWithAdditionals(literal) {
+			token = FUNCTION_WITH_ADDITIONALS
 		} else {
 			token = IDENTIFIER
 		}
@@ -179,9 +195,9 @@ func (s *Scanner) Scan() (Token, error) {
 		s.scanOperator()
 
 		literal = s.literal()
-		if e := s.searchComparisonOperators(literal); e == nil {
+		if s.isComparisonOperators(literal) {
 			token = COMPARISON_OP
-		} else if e := s.searchStringOperators(literal); e == nil {
+		} else if s.isStringOperators(literal) {
 			token = STRING_OP
 		} else if literal == SUBSTITUTION_OPERATOR {
 			token = SUBSTITUTION_OP
@@ -307,22 +323,40 @@ func (s *Scanner) searchKeyword(str string) (int, error) {
 	return IDENTIFIER, errors.New(fmt.Sprintf("%q is not a keyword", str))
 }
 
-func (s *Scanner) searchComparisonOperators(str string) error {
-	for _, v := range comparisonOperators {
-		if v == str {
-			return nil
+func (s *Scanner) isAggregateFunctions(str string) bool {
+	for _, v := range aggregateFunctions {
+		if strings.EqualFold(v, str) {
+			return true
 		}
 	}
-	return errors.New(fmt.Sprintf("%q is not a comparison operator", str))
+	return false
 }
 
-func (s *Scanner) searchStringOperators(str string) error {
-	for _, v := range stringOperators {
-		if v == str {
-			return nil
+func (s *Scanner) isFunctionsWithAdditionals(str string) bool {
+	for _, v := range functionsWithAdditinals {
+		if strings.EqualFold(v, str) {
+			return true
 		}
 	}
-	return errors.New(fmt.Sprintf("%q is not a string operator", str))
+	return false
+}
+
+func (s *Scanner) isComparisonOperators(str string) bool {
+	for _, v := range comparisonOperators {
+		if v == str {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *Scanner) isStringOperators(str string) bool {
+	for _, v := range stringOperators {
+		if v == str {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Scanner) isCommentRune(ch rune) bool {

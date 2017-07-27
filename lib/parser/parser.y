@@ -66,6 +66,7 @@ package parser
 %type<primary>     primary
 %type<expression>  field_reference
 %type<expression>  value
+%type<expression>  wildcard
 %type<expression>  row_value
 %type<expressions> row_values
 %type<expressions> order_items
@@ -80,8 +81,7 @@ package parser
 %type<expression>  logic
 %type<expression>  function
 %type<expression>  aggregate_function
-%type<expression>  aggregate_option
-%type<expression>  group_concat
+%type<expression>  listagg
 %type<expression>  analytic_function
 %type<expression>  analytic_clause
 %type<expression>  partition
@@ -142,11 +142,11 @@ package parser
 %token<token> SELECT FROM UPDATE SET DELETE WHERE INSERT INTO VALUES AS DUAL STDIN
 %token<token> RECURSIVE
 %token<token> CREATE ADD DROP ALTER TABLE FIRST LAST AFTER BEFORE DEFAULT RENAME TO
-%token<token> ORDER GROUP HAVING BY ASC DESC LIMIT OFFSET TIES PERCENT
+%token<token> ORDER GROUP HAVING BY ASC DESC LIMIT OFFSET PERCENT
 %token<token> JOIN INNER OUTER LEFT RIGHT FULL CROSS ON USING NATURAL
 %token<token> UNION INTERSECT EXCEPT
 %token<token> ALL ANY EXISTS IN
-%token<token> AND OR NOT BETWEEN LIKE IS NULL NULLS
+%token<token> AND OR NOT BETWEEN LIKE IS NULL
 %token<token> DISTINCT WITH
 %token<token> CASE IF ELSEIF WHILE WHEN THEN ELSE DO END
 %token<token> DECLARE CURSOR FOR FETCH OPEN CLOSE DISPOSE
@@ -156,7 +156,10 @@ package parser
 %token<token> CONTINUE BREAK EXIT
 %token<token> PRINT PRINTF SOURCE
 %token<token> FUNCTION BEGIN RETURN
+%token<token> IGNORE WITHIN
 %token<token> VAR
+%token<token> TIES NULLS
+%token<token> COUNT LISTAGG AGGREGATE_FUNCTION FUNCTION_WITH_ADDITIONALS
 %token<token> COMPARISON_OP STRING_OP SUBSTITUTION_OP
 %token<token> UMINUS UPLUS
 %token<token> ';' '*' '=' '-' '+' '!' '(' ')'
@@ -894,6 +897,12 @@ value
         $$ = Parentheses{Expr: $2}
     }
 
+wildcard
+    : '*'
+    {
+        $$ = AllColumns{BaseExpr: NewBaseExpr($1)}
+    }
+
 row_value
     : '(' values ')'
     {
@@ -1134,47 +1143,39 @@ function
     }
 
 aggregate_function
-    : identifier '(' aggregate_option ')'
+    : AGGREGATE_FUNCTION '(' distinct value ')'
     {
-        $$ = AggregateFunction{BaseExpr: NewBaseExprFromIdentifier($1), Name: $1.Literal, Option: $3.(AggregateOption)}
+        $$ = AggregateFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Arg: $4}
     }
-    | group_concat
+    | COUNT '(' distinct value ')'
+    {
+        $$ = AggregateFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Arg: $4}
+    }
+    | COUNT '(' distinct wildcard ')'
+    {
+        $$ = AggregateFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Arg: $4}
+    }
+    | listagg
     {
         $$ = $1
     }
 
-aggregate_option
-    : '*'
+listagg
+    : LISTAGG '(' distinct value ')'
     {
-        $$ = AggregateOption{Args: []Expression{AllColumns{BaseExpr: NewBaseExpr($1)}}}
+        $$ = ListAgg{BaseExpr: NewBaseExpr($1), ListAgg: $1.Literal, Distinct: $3, Arg: $4}
     }
-    | DISTINCT '*'
+    | LISTAGG '(' distinct value ',' text ')'
     {
-        $$ = AggregateOption{Distinct: $1, Args: []Expression{AllColumns{BaseExpr: NewBaseExpr($2)}}}
+        $$ = ListAgg{BaseExpr: NewBaseExpr($1), ListAgg: $1.Literal, Distinct: $3, Arg: $4, Separator: $6.Value()}
     }
-    | DISTINCT value
+    | LISTAGG '(' distinct value ')' WITHIN GROUP '(' order_by_clause ')'
     {
-        $$ = AggregateOption{Distinct: $1, Args: []Expression{$2}}
+        $$ = ListAgg{BaseExpr: NewBaseExpr($1), ListAgg: $1.Literal, Distinct: $3, Arg: $4, WithinGroup: $6.Literal + " " + $7.Literal, OrderBy: $9}
     }
-
-group_concat
-    : identifier '(' value ORDER BY order_items ')'
+    | LISTAGG '(' distinct value ',' text ')' WITHIN GROUP '(' order_by_clause ')'
     {
-        orderBy := OrderByClause{OrderBy: $4.Literal + " " + $5.Literal, Items: $6}
-        $$ = GroupConcat{BaseExpr: NewBaseExprFromIdentifier($1), GroupConcat: $1.Literal, Option: AggregateOption{Args: []Expression{$3}}, OrderBy: orderBy}
-    }
-    | identifier '(' DISTINCT value ORDER BY order_items ')'
-    {
-        orderBy := OrderByClause{OrderBy: $5.Literal + " " + $6.Literal, Items: $7}
-        $$ = GroupConcat{BaseExpr: NewBaseExprFromIdentifier($1), GroupConcat: $1.Literal, Option: AggregateOption{Distinct: $3, Args: []Expression{$4}}, OrderBy: orderBy}
-    }
-    | identifier '(' value order_by_clause SEPARATOR STRING ')'
-    {
-        $$ = GroupConcat{BaseExpr: NewBaseExprFromIdentifier($1), GroupConcat: $1.Literal, Option: AggregateOption{Args: []Expression{$3}}, OrderBy: $4, SeparatorLit: $5.Literal, Separator: $6.Literal}
-    }
-    | identifier '(' DISTINCT value order_by_clause SEPARATOR STRING ')'
-    {
-        $$ = GroupConcat{BaseExpr: NewBaseExprFromIdentifier($1), GroupConcat: $1.Literal, Option: AggregateOption{Distinct: $3, Args: []Expression{$4}}, OrderBy: $5, SeparatorLit: $6.Literal, Separator: $7.Literal}
+        $$ = ListAgg{BaseExpr: NewBaseExpr($1), ListAgg: $1.Literal, Distinct: $3, Arg: $4, Separator: $6.Value(), WithinGroup: $8.Literal + " " + $9.Literal, OrderBy: $11}
     }
 
 analytic_function
@@ -1185,6 +1186,34 @@ analytic_function
     | identifier '(' values ')' OVER '(' analytic_clause ')'
     {
         $$ = AnalyticFunction{BaseExpr: NewBaseExprFromIdentifier($1), Name: $1.Literal, Args: $3, Over: $5.Literal, AnalyticClause: $7.(AnalyticClause)}
+    }
+    | AGGREGATE_FUNCTION '(' distinct value ')' OVER '(' analytic_clause ')'
+    {
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: []Expression{$4}, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
+    }
+    | COUNT '(' distinct value ')' OVER '(' analytic_clause ')'
+    {
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: []Expression{$4}, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
+    }
+    | COUNT '(' distinct wildcard ')' OVER '(' analytic_clause ')'
+    {
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: []Expression{$4}, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
+    }
+    | LISTAGG '(' distinct value ')' OVER '(' analytic_clause ')'
+    {
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: []Expression{$4}, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
+    }
+    | LISTAGG '(' distinct value ',' text ')' OVER '(' analytic_clause ')'
+    {
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: []Expression{$4, $6}, Over: $8.Literal, AnalyticClause: $10.(AnalyticClause)}
+    }
+    | FUNCTION_WITH_ADDITIONALS '(' values ')' OVER '(' analytic_clause ')'
+    {
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3, Over: $5.Literal, AnalyticClause: $7.(AnalyticClause)}
+    }
+    | FUNCTION_WITH_ADDITIONALS '(' values IGNORE NULLS ')' OVER '(' analytic_clause ')'
+    {
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3, IgnoreNulls: true, IgnoreNullsLit: $4.Literal + " " + $5.Literal, Over: $7.Literal, AnalyticClause: $9.(AnalyticClause)}
     }
 
 analytic_clause
@@ -1314,9 +1343,9 @@ field
     {
         $$ = Field{Object: $1, As: $2.Literal, Alias: $3}
     }
-    | '*'
+    | wildcard
     {
-        $$ = Field{Object: AllColumns{BaseExpr: NewBaseExpr($1)}}
+        $$ = Field{Object: $1}
     }
 
 case
@@ -1549,6 +1578,30 @@ in_function_in_loop_else
 
 identifier
     : IDENTIFIER
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | TIES
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | NULLS
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | COUNT
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | LISTAGG
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | AGGREGATE_FUNCTION
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | FUNCTION_WITH_ADDITIONALS
     {
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }

@@ -1945,12 +1945,9 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Expr: parser.AggregateFunction{
-			Name: "avg",
-			Option: parser.AggregateOption{
-				Args: []parser.Expression{
-					parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-				},
-			},
+			Name:     "avg",
+			Distinct: parser.Token{},
+			Arg:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 		},
 		Result: parser.NewInteger(2),
 	},
@@ -1973,86 +1970,11 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Expr: parser.AggregateFunction{
-			Name: "avg",
-			Option: parser.AggregateOption{
-				Args: []parser.Expression{
-					parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-				},
-			},
+			Name:     "avg",
+			Distinct: parser.Token{},
+			Arg:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 		},
 		Error: "[L:- C:-] function avg cannot aggregate not grouping records",
-	},
-	{
-		Name: "Aggregate Function No Argument Error",
-		Filter: Filter{
-			Records: []FilterRecord{
-				{
-					View: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
-						Records: []Record{
-							{
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewNull(),
-									parser.NewInteger(3),
-								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewString("str1"),
-									parser.NewString("str2"),
-									parser.NewString("str3"),
-								}),
-							},
-						},
-						isGrouped: true,
-					},
-					RecordIndex: 0,
-				},
-			},
-		},
-		Expr: parser.AggregateFunction{
-			Name: "avg",
-			Option: parser.AggregateOption{
-				Args: []parser.Expression{},
-			},
-		},
-		Error: "[L:- C:-] function avg takes 1 argument",
-	},
-	{
-		Name: "Aggregate Function Unpermitted AllColumns",
-		Filter: Filter{
-			Records: []FilterRecord{
-				{
-					View: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
-						Records: []Record{
-							{
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewNull(),
-									parser.NewInteger(3),
-								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewString("str1"),
-									parser.NewString("str2"),
-									parser.NewString("str3"),
-								}),
-							},
-						},
-						isGrouped: true,
-					},
-					RecordIndex: 0,
-				},
-			},
-		},
-		Expr: parser.AggregateFunction{
-			Name: "avg",
-			Option: parser.AggregateOption{
-				Args: []parser.Expression{
-					parser.AllColumns{BaseExpr: parser.NewBaseExpr(parser.Token{Line: 1, Char: 17})},
-				},
-			},
-		},
-		Error: "[L:1 C:17] wildcard '*' cannot be passed as a argument to the avg function",
 	},
 	{
 		Name: "Aggregate Function Nested Error",
@@ -2082,18 +2004,11 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Expr: parser.AggregateFunction{
-			Name: "avg",
-			Option: parser.AggregateOption{
-				Args: []parser.Expression{
-					parser.AggregateFunction{
-						Name: "avg",
-						Option: parser.AggregateOption{
-							Args: []parser.Expression{
-								parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-							},
-						},
-					},
-				},
+			Name:     "avg",
+			Distinct: parser.Token{},
+			Arg: parser.AggregateFunction{
+				Name: "avg",
+				Arg:  parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 		},
 		Error: "[L:- C:-] aggregate functions are nested at avg(avg(column1))",
@@ -2126,67 +2041,24 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Expr: parser.AggregateFunction{
-			Name: "count",
-			Option: parser.AggregateOption{
-				Args: []parser.Expression{
-					parser.AllColumns{},
-				},
-			},
+			Name:     "count",
+			Distinct: parser.Token{},
+			Arg:      parser.AllColumns{},
 		},
 		Result: parser.NewInteger(3),
-	},
-	{
-		Name: "Aggregate Function Not Exist Error",
-		Filter: Filter{
-			Records: []FilterRecord{
-				{
-					View: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
-						Records: []Record{
-							{
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewNull(),
-									parser.NewInteger(3),
-								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewString("str1"),
-									parser.NewString("str2"),
-									parser.NewString("str3"),
-								}),
-							},
-						},
-						isGrouped: true,
-					},
-					RecordIndex: 0,
-				},
-			},
-		},
-		Expr: parser.AggregateFunction{
-			Name: "notexist",
-			Option: parser.AggregateOption{
-				Args: []parser.Expression{
-					parser.AllColumns{},
-				},
-			},
-		},
-		Error: "[L:- C:-] function notexist does not exist",
 	},
 	{
 		Name:   "Aggregate Function As a Statement Error",
 		Filter: Filter{},
 		Expr: parser.AggregateFunction{
-			Name: "avg",
-			Option: parser.AggregateOption{
-				Args: []parser.Expression{
-					parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-				},
-			},
+			Name:     "avg",
+			Distinct: parser.Token{},
+			Arg:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 		},
 		Error: "[L:- C:-] function avg cannot be used as a statement",
 	},
 	{
-		Name: "GroupConcat Function",
+		Name: "ListAgg Function",
 		Filter: Filter{
 			Records: []FilterRecord{
 				{
@@ -2220,114 +2092,21 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Expr: parser.GroupConcat{
-			GroupConcat: "group_concat",
-			Option: parser.AggregateOption{
-				Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-				Args: []parser.Expression{
-					parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-				},
-			},
+		Expr: parser.ListAgg{
+			ListAgg:   "listagg",
+			Distinct:  parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
+			Arg:       parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+			Separator: ",",
 			OrderBy: parser.OrderByClause{
 				Items: []parser.Expression{
 					parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 				},
 			},
-			Separator: ",",
 		},
 		Result: parser.NewString("str1,str2"),
 	},
 	{
-		Name: "GroupConcat Function From Aggregate Function",
-		Filter: Filter{
-			Records: []FilterRecord{
-				{
-					View: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
-						Records: []Record{
-							{
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewInteger(2),
-									parser.NewInteger(3),
-									parser.NewInteger(4),
-								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewInteger(2),
-									parser.NewInteger(3),
-									parser.NewInteger(4),
-								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewString("str2"),
-									parser.NewString("str1"),
-									parser.NewNull(),
-									parser.NewString("str2"),
-								}),
-							},
-						},
-						isGrouped: true,
-					},
-					RecordIndex: 0,
-				},
-			},
-		},
-		Expr: parser.AggregateFunction{
-			Name: "group_concat",
-			Option: parser.AggregateOption{
-				Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-				Args: []parser.Expression{
-					parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-				},
-			},
-		},
-		Result: parser.NewString("str2str1"),
-	},
-	{
-		Name: "GroupConcat Function From Function",
-		Filter: Filter{
-			Records: []FilterRecord{
-				{
-					View: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
-						Records: []Record{
-							{
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewInteger(2),
-									parser.NewInteger(3),
-									parser.NewInteger(4),
-								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewInteger(2),
-									parser.NewInteger(3),
-									parser.NewInteger(4),
-								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewString("str2"),
-									parser.NewString("str1"),
-									parser.NewNull(),
-									parser.NewString("str2"),
-								}),
-							},
-						},
-						isGrouped: true,
-					},
-					RecordIndex: 0,
-				},
-			},
-		},
-		Expr: parser.Function{
-			Name: "group_concat",
-			Args: []parser.Expression{
-				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-			},
-		},
-		Result: parser.NewString("str2str1str2"),
-	},
-	{
-		Name: "GroupConcat Function Null",
+		Name: "ListAgg Function Null",
 		Filter: Filter{
 			Records: []FilterRecord{
 				{
@@ -2361,18 +2140,14 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Expr: parser.GroupConcat{
-			Option: parser.AggregateOption{
-				Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-				Args: []parser.Expression{
-					parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-				},
-			},
+		Expr: parser.ListAgg{
+			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
+			Arg:      parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 		},
 		Result: parser.NewNull(),
 	},
 	{
-		Name: "GroupConcat Function Not Grouped Error",
+		Name: "ListAgg Function Not Grouped Error",
 		Filter: Filter{
 			Records: []FilterRecord{
 				{
@@ -2389,88 +2164,21 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Expr: parser.GroupConcat{
-			GroupConcat: "group_concat",
-			Option: parser.AggregateOption{
-				Args: []parser.Expression{},
-			},
-		},
-		Error: "[L:- C:-] function group_concat cannot aggregate not grouping records",
-	},
-	{
-		Name: "GroupConcat Function Argument Error",
-		Filter: Filter{
-			Records: []FilterRecord{
-				{
-					View: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
-						Records: []Record{
-							{
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewNull(),
-									parser.NewInteger(3),
-								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewString("str1"),
-									parser.NewString("str2"),
-									parser.NewString("str3"),
-								}),
-							},
-						},
-						isGrouped: true,
-					},
-					RecordIndex: 0,
+		Expr: parser.ListAgg{
+			ListAgg:   "listagg",
+			Distinct:  parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
+			Arg:       parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+			Separator: ",",
+			OrderBy: parser.OrderByClause{
+				Items: []parser.Expression{
+					parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 				},
 			},
 		},
-		Expr: parser.GroupConcat{
-			GroupConcat: "group_concat",
-			Option: parser.AggregateOption{
-				Args: []parser.Expression{},
-			},
-		},
-		Error: "[L:- C:-] function group_concat takes 1 argument",
+		Error: "[L:- C:-] function listagg cannot aggregate not grouping records",
 	},
 	{
-		Name: "GroupConcat Function AllColumns",
-		Filter: Filter{
-			Records: []FilterRecord{
-				{
-					View: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
-						Records: []Record{
-							{
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewNull(),
-									parser.NewInteger(3),
-								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewString("str1"),
-									parser.NewString("str2"),
-									parser.NewString("str3"),
-								}),
-							},
-						},
-						isGrouped: true,
-					},
-					RecordIndex: 0,
-				},
-			},
-		},
-		Expr: parser.GroupConcat{
-			GroupConcat: "group_concat",
-			Option: parser.AggregateOption{
-				Args: []parser.Expression{
-					parser.AllColumns{BaseExpr: parser.NewBaseExpr(parser.Token{Line: 1, Char: 17, SourceFile: "src.sql"})},
-				},
-			},
-		},
-		Error: "src.sql [L:1 C:17] wildcard '*' cannot be passed as a argument to the group_concat function",
-	},
-	{
-		Name: "GroupConcat Function Identification Error",
+		Name: "ListAgg Function Identification Error",
 		Filter: Filter{
 			Records: []FilterRecord{
 				{
@@ -2498,14 +2206,10 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Expr: parser.GroupConcat{
-			GroupConcat: "group_concat",
-			Option: parser.AggregateOption{
-				Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-				Args: []parser.Expression{
-					parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-				},
-			},
+		Expr: parser.ListAgg{
+			ListAgg:  "listagg",
+			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
+			Arg:      parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			OrderBy: parser.OrderByClause{
 				Items: []parser.Expression{
 					parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
@@ -2516,7 +2220,7 @@ var filterEvaluateTests = []struct {
 		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
-		Name: "GroupConcat Function Nested Error",
+		Name: "ListAgg Function Nested Error",
 		Filter: Filter{
 			Records: []FilterRecord{
 				{
@@ -2542,34 +2246,23 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Expr: parser.GroupConcat{
-			GroupConcat: "group_concat",
-			Option: parser.AggregateOption{
-				Args: []parser.Expression{
-					parser.AggregateFunction{
-						Name: "avg",
-						Option: parser.AggregateOption{
-							Args: []parser.Expression{
-								parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-							},
-						},
-					},
-				},
+		Expr: parser.ListAgg{
+			ListAgg: "listagg",
+			Arg: parser.AggregateFunction{
+				Name:     "avg",
+				Distinct: parser.Token{},
+				Arg:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 		},
-		Error: "[L:- C:-] aggregate functions are nested at group_concat(avg(column1))",
+		Error: "[L:- C:-] aggregate functions are nested at listagg(avg(column1))",
 	},
 	{
-		Name:   "GroupConcat Function As a Statement Error",
+		Name:   "ListAgg Function As a Statement Error",
 		Filter: Filter{},
-		Expr: parser.GroupConcat{
-			GroupConcat: "group_concat",
-			Option: parser.AggregateOption{
-				Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-				Args: []parser.Expression{
-					parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-				},
-			},
+		Expr: parser.ListAgg{
+			ListAgg:  "listagg",
+			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
+			Arg:      parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			OrderBy: parser.OrderByClause{
 				Items: []parser.Expression{
 					parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
@@ -2577,7 +2270,7 @@ var filterEvaluateTests = []struct {
 			},
 			Separator: ",",
 		},
-		Error: "[L:- C:-] function group_concat cannot be used as a statement",
+		Error: "[L:- C:-] function listagg cannot be used as a statement",
 	},
 	{
 		Name: "Case Comparison",

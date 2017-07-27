@@ -154,8 +154,8 @@ func (f Filter) Evaluate(expr parser.Expression) (parser.Primary, error) {
 			primary, err = f.evalFunction(expr.(parser.Function))
 		case parser.AggregateFunction:
 			primary, err = f.evalAggregateFunction(expr.(parser.AggregateFunction))
-		case parser.GroupConcat:
-			primary, err = f.evalGroupConcat(expr.(parser.GroupConcat))
+		case parser.ListAgg:
+			primary, err = f.evalListAgg(expr.(parser.ListAgg))
 		case parser.Case:
 			primary, err = f.evalCase(expr.(parser.Case))
 		case parser.Logic:
@@ -502,25 +502,6 @@ func (f Filter) evalExists(expr parser.Exists) (parser.Primary, error) {
 
 func (f Filter) evalFunction(expr parser.Function) (parser.Primary, error) {
 	name := strings.ToUpper(expr.Name)
-	if strings.EqualFold("GROUP_CONCAT", name) {
-		gc := parser.GroupConcat{
-			BaseExpr:    expr.BaseExpr,
-			GroupConcat: expr.Name,
-			Option: parser.AggregateOption{
-				Args: expr.Args,
-			},
-		}
-		return f.evalGroupConcat(gc)
-	} else if _, ok := AggregateFunctions[name]; ok {
-		afn := parser.AggregateFunction{
-			BaseExpr: expr.BaseExpr,
-			Name:     expr.Name,
-			Option: parser.AggregateOption{
-				Args: expr.Args,
-			},
-		}
-		return f.evalAggregateFunction(afn)
-	}
 
 	args := make([]parser.Primary, len(expr.Args))
 	for i, v := range expr.Args {
@@ -531,33 +512,21 @@ func (f Filter) evalFunction(expr parser.Function) (parser.Primary, error) {
 		args[i] = arg
 	}
 
-	fn, ok := Functions[name]
-	if !ok {
-		if udfn, err := f.FunctionsList.Get(expr); err == nil {
-			return udfn.Execute(args, f)
-		}
-
-		return nil, NewFunctionNotExistError(expr, expr.Name)
+	if fn, ok := Functions[name]; ok {
+		return fn(expr, args)
 	}
 
-	return fn(expr, args)
+	if udfn, err := f.FunctionsList.Get(expr); err == nil {
+		return udfn.Execute(args, f)
+	}
+
+	return nil, NewFunctionNotExistError(expr, expr.Name)
 }
 
 func (f Filter) evalAggregateFunction(expr parser.AggregateFunction) (parser.Primary, error) {
 	name := strings.ToUpper(expr.Name)
-	if strings.EqualFold("GROUP_CONCAT", name) {
-		gc := parser.GroupConcat{
-			BaseExpr:    expr.BaseExpr,
-			GroupConcat: expr.Name,
-			Option:      expr.Option,
-		}
-		return f.evalGroupConcat(gc)
-	}
 
-	fn, ok := AggregateFunctions[name]
-	if !ok {
-		return nil, NewFunctionNotExistError(expr, expr.Name)
-	}
+	fn, _ := AggregateFunctions[name]
 
 	if len(f.Records) < 1 {
 		return nil, NewUnpermittedStatementFunctionError(expr, expr.Name)
@@ -567,53 +536,27 @@ func (f Filter) evalAggregateFunction(expr parser.AggregateFunction) (parser.Pri
 		return nil, NewNotGroupingRecordsError(expr, expr.Name)
 	}
 
-	if len(expr.Option.Args) != 1 {
-		return nil, NewFunctionArgumentLengthError(expr, expr.Name, []int{1})
-	}
-
-	arg := expr.Option.Args[0]
-	if ac, ok := arg.(parser.AllColumns); ok {
-		if !strings.EqualFold(expr.Name, "COUNT") {
-			return nil, NewUnpermittedWildCardError(ac, expr.Name)
-		}
+	arg := expr.Arg
+	if _, ok := arg.(parser.AllColumns); ok {
 		arg = parser.NewInteger(1)
 	}
 
 	view := NewViewFromGroupedRecord(f.Records[0])
-
-	list := make([]parser.Primary, view.RecordLen())
-	filter := NewFilterForSequentialEvaluation(view, f)
-	for i := 0; i < view.RecordLen(); i++ {
-		filter.Records[0].RecordIndex = i
-		p, err := filter.Evaluate(arg)
-		if err != nil {
-			if _, ok := err.(*NotGroupingRecordsError); ok {
-				err = NewNestedAggregateFunctionsError(expr)
-			}
-			return nil, err
-		}
-		list[i] = p
+	list, err := view.ListValuesForAggregateFunctions(expr, arg, f)
+	if err != nil {
+		return nil, err
 	}
 
-	return fn(expr.Option.IsDistinct(), list), nil
+	return fn(expr.IsDistinct(), list), nil
 }
 
-func (f Filter) evalGroupConcat(expr parser.GroupConcat) (parser.Primary, error) {
+func (f Filter) evalListAgg(expr parser.ListAgg) (parser.Primary, error) {
 	if len(f.Records) < 1 {
-		return nil, NewUnpermittedStatementFunctionError(expr, expr.GroupConcat)
+		return nil, NewUnpermittedStatementFunctionError(expr, expr.ListAgg)
 	}
 
 	if !f.Records[0].View.isGrouped {
-		return nil, NewNotGroupingRecordsError(expr, expr.GroupConcat)
-	}
-
-	if len(expr.Option.Args) != 1 {
-		return nil, NewFunctionArgumentLengthError(expr, expr.GroupConcat, []int{1})
-	}
-
-	arg := expr.Option.Args[0]
-	if ac, ok := arg.(parser.AllColumns); ok {
-		return nil, NewUnpermittedWildCardError(ac, expr.GroupConcat)
+		return nil, NewNotGroupingRecordsError(expr, expr.ListAgg)
 	}
 
 	view := NewViewFromGroupedRecord(f.Records[0])
@@ -624,31 +567,12 @@ func (f Filter) evalGroupConcat(expr parser.GroupConcat) (parser.Primary, error)
 		}
 	}
 
-	list := []string{}
-	filter := NewFilterForSequentialEvaluation(view, f)
-	for i := 0; i < view.RecordLen(); i++ {
-		filter.Records[0].RecordIndex = i
-		p, err := filter.Evaluate(arg)
-		if err != nil {
-			if _, ok := err.(*NotGroupingRecordsError); ok {
-				err = NewNestedAggregateFunctionsError(expr)
-			}
-			return nil, err
-		}
-		s := parser.PrimaryToString(p)
-		if parser.IsNull(s) {
-			continue
-		}
-		if expr.Option.IsDistinct() && InStrSlice(s.(parser.String).Value(), list) {
-			continue
-		}
-		list = append(list, s.(parser.String).Value())
+	list, err := view.ListValuesForAggregateFunctions(expr, expr.Arg, f)
+	if err != nil {
+		return nil, err
 	}
 
-	if len(list) < 1 {
-		return parser.NewNull(), nil
-	}
-	return parser.NewString(strings.Join(list, expr.Separator)), nil
+	return ListAgg(expr.IsDistinct(), list, expr.Separator), nil
 }
 
 func (f Filter) evalCase(expr parser.Case) (parser.Primary, error) {

@@ -225,7 +225,7 @@ var parseTests = []struct {
 			"          column6 asc, \n" +
 			"          column7 nulls first, \n" +
 			"          column8 desc nulls last, \n" +
-			"          avg() over () \n" +
+			"          rank() over () \n" +
 			" limit 10 \n" +
 			" offset 10 \n",
 		Output: []Statement{
@@ -267,7 +267,7 @@ var parseTests = []struct {
 						OrderItem{Value: FieldReference{BaseExpr: &BaseExpr{line: 10, char: 11}, Column: Identifier{BaseExpr: &BaseExpr{line: 10, char: 11}, Literal: "column8"}}, Direction: Token{Token: DESC, Literal: "desc", Line: 10, Char: 19}, Nulls: "nulls", Position: Token{Token: LAST, Literal: "last", Line: 10, Char: 30}},
 						OrderItem{Value: AnalyticFunction{
 							BaseExpr: &BaseExpr{line: 11, char: 11},
-							Name:     "avg",
+							Name:     "rank",
 							Over:     "over",
 							AnalyticClause: AnalyticClause{
 								Partition:     nil,
@@ -1503,7 +1503,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select count()",
+		Input: "select now()",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -1513,7 +1513,7 @@ var parseTests = []struct {
 						Fields: []Expression{
 							Field{Object: Function{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
-								Name:     "count",
+								Name:     "now",
 							}},
 						},
 					},
@@ -1522,7 +1522,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select count(column1)",
+		Input: "select trim(column1)",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -1532,9 +1532,32 @@ var parseTests = []struct {
 						Fields: []Expression{
 							Field{Object: Function{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
-								Name:     "count",
+								Name:     "trim",
 								Args: []Expression{
-									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 14}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 14}, Literal: "column1"}},
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 13}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "column1"}},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select trim(column1, column2)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []Expression{
+							Field{Object: Function{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "trim",
+								Args: []Expression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 13}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "column1"}},
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 22}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 22}, Literal: "column2"}},
 								},
 							}},
 						},
@@ -1555,9 +1578,7 @@ var parseTests = []struct {
 							Field{Object: AggregateFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
 								Name:     "count",
-								Option: AggregateOption{
-									Args: []Expression{AllColumns{BaseExpr: &BaseExpr{line: 1, char: 14}}},
-								},
+								Arg:      AllColumns{BaseExpr: &BaseExpr{line: 1, char: 14}},
 							}},
 						},
 					},
@@ -1577,10 +1598,28 @@ var parseTests = []struct {
 							Field{Object: AggregateFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
 								Name:     "count",
-								Option: AggregateOption{
-									Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 14},
-									Args:     []Expression{AllColumns{BaseExpr: &BaseExpr{line: 1, char: 23}}},
-								},
+								Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 14},
+								Arg:      AllColumns{BaseExpr: &BaseExpr{line: 1, char: 23}},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select count(column1)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []Expression{
+							Field{Object: AggregateFunction{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "count",
+								Arg:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 14}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 14}, Literal: "column1"}},
 							}},
 						},
 					},
@@ -1600,12 +1639,8 @@ var parseTests = []struct {
 							Field{Object: AggregateFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
 								Name:     "count",
-								Option: AggregateOption{
-									Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 14},
-									Args: []Expression{
-										FieldReference{BaseExpr: &BaseExpr{line: 1, char: 23}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 23}, Literal: "column1"}},
-									},
-								},
+								Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 14},
+								Arg:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 23}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 23}, Literal: "column1"}},
 							}},
 						},
 					},
@@ -1614,7 +1649,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select count(column1, column2)",
+		Input: "select listagg(column1)",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -1622,13 +1657,10 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 1},
 						Select:   "select",
 						Fields: []Expression{
-							Field{Object: Function{
+							Field{Object: ListAgg{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
-								Name:     "count",
-								Args: []Expression{
-									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 14}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 14}, Literal: "column1"}},
-									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 23}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 23}, Literal: "column2"}},
-								},
+								ListAgg:  "listagg",
+								Arg:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 16}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "column1"}},
 							}},
 						},
 					},
@@ -1637,7 +1669,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select group_concat(column1 order by column1)",
+		Input: "select listagg(distinct column1, ',')",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -1645,14 +1677,38 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 1},
 						Select:   "select",
 						Fields: []Expression{
-							Field{Object: GroupConcat{
+							Field{Object: ListAgg{
+								BaseExpr:  &BaseExpr{line: 1, char: 8},
+								ListAgg:   "listagg",
+								Separator: ",",
+								Distinct:  Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 16},
+								Arg:       FieldReference{BaseExpr: &BaseExpr{line: 1, char: 25}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 25}, Literal: "column1"}},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select listagg(distinct column1) within group (order by column1)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []Expression{
+							Field{Object: ListAgg{
 								BaseExpr:    &BaseExpr{line: 1, char: 8},
-								GroupConcat: "group_concat",
-								Option:      AggregateOption{Args: []Expression{FieldReference{BaseExpr: &BaseExpr{line: 1, char: 21}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 21}, Literal: "column1"}}}},
+								ListAgg:     "listagg",
+								Distinct:    Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 16},
+								Arg:         FieldReference{BaseExpr: &BaseExpr{line: 1, char: 25}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 25}, Literal: "column1"}},
+								WithinGroup: "within group",
 								OrderBy: OrderByClause{
 									OrderBy: "order by",
 									Items: []Expression{
-										OrderItem{Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 38}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 38}, Literal: "column1"}}},
+										OrderItem{Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 57}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 57}, Literal: "column1"}}},
 									},
 								},
 							}},
@@ -1663,7 +1719,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select group_concat(distinct column1 order by column1)",
+		Input: "select listagg(column1, ',') within group (order by column1)",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -1671,74 +1727,18 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 1},
 						Select:   "select",
 						Fields: []Expression{
-							Field{Object: GroupConcat{
+							Field{Object: ListAgg{
 								BaseExpr:    &BaseExpr{line: 1, char: 8},
-								GroupConcat: "group_concat",
-								Option: AggregateOption{
-									Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 21},
-									Args:     []Expression{FieldReference{BaseExpr: &BaseExpr{line: 1, char: 30}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 30}, Literal: "column1"}}},
-								},
+								ListAgg:     "listagg",
+								Arg:         FieldReference{BaseExpr: &BaseExpr{line: 1, char: 16}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "column1"}},
+								Separator:   ",",
+								WithinGroup: "within group",
 								OrderBy: OrderByClause{
 									OrderBy: "order by",
 									Items: []Expression{
-										OrderItem{Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 47}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 47}, Literal: "column1"}}},
+										OrderItem{Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 53}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 53}, Literal: "column1"}}},
 									},
 								},
-							}},
-						},
-					},
-				},
-			},
-		},
-	},
-	{
-		Input: "select group_concat(distinct column1 separator ',')",
-		Output: []Statement{
-			SelectQuery{
-				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{
-						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
-						Fields: []Expression{
-							Field{Object: GroupConcat{
-								BaseExpr:    &BaseExpr{line: 1, char: 8},
-								GroupConcat: "group_concat",
-								Option: AggregateOption{
-									Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 21},
-									Args:     []Expression{FieldReference{BaseExpr: &BaseExpr{line: 1, char: 30}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 30}, Literal: "column1"}}},
-								},
-								SeparatorLit: "separator",
-								Separator:    ",",
-							}},
-						},
-					},
-				},
-			},
-		},
-	},
-	{
-		Input: "select group_concat(column1 order by column1 separator ',')",
-		Output: []Statement{
-			SelectQuery{
-				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{
-						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
-						Fields: []Expression{
-							Field{Object: GroupConcat{
-								BaseExpr:    &BaseExpr{line: 1, char: 8},
-								GroupConcat: "group_concat",
-								Option: AggregateOption{
-									Args: []Expression{FieldReference{BaseExpr: &BaseExpr{line: 1, char: 21}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 21}, Literal: "column1"}}},
-								},
-								OrderBy: OrderByClause{
-									OrderBy: "order by",
-									Items: []Expression{
-										OrderItem{Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 38}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 38}, Literal: "column1"}}},
-									},
-								},
-								SeparatorLit: "separator",
-								Separator:    ",",
 							}},
 						},
 					},
@@ -1829,7 +1829,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select avg() over ()",
+		Input: "select f(column1) over (partition by column1 order by column2)",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -1839,11 +1839,26 @@ var parseTests = []struct {
 						Fields: []Expression{
 							Field{Object: AnalyticFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
-								Name:     "avg",
-								Over:     "over",
+								Name:     "f",
+								Args: []Expression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 10}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 10}, Literal: "column1"}},
+								},
+								Over: "over",
 								AnalyticClause: AnalyticClause{
-									Partition:     nil,
-									OrderByClause: nil,
+									Partition: Partition{
+										PartitionBy: "partition by",
+										Values: []Expression{
+											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 38}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 38}, Literal: "column1"}},
+										},
+									},
+									OrderByClause: OrderByClause{
+										OrderBy: "order by",
+										Items: []Expression{
+											OrderItem{
+												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 55}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 55}, Literal: "column2"}},
+											},
+										},
+									},
 								},
 							}},
 						},
@@ -1853,7 +1868,203 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select first_value(column1) over ()",
+		Input: "select min(column1) over (partition by column1 order by column2)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []Expression{
+							Field{Object: AnalyticFunction{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "min",
+								Args: []Expression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 12}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 12}, Literal: "column1"}},
+								},
+								Over: "over",
+								AnalyticClause: AnalyticClause{
+									Partition: Partition{
+										PartitionBy: "partition by",
+										Values: []Expression{
+											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 40}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 40}, Literal: "column1"}},
+										},
+									},
+									OrderByClause: OrderByClause{
+										OrderBy: "order by",
+										Items: []Expression{
+											OrderItem{
+												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 57}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 57}, Literal: "column2"}},
+											},
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select count(column1) over (partition by column1 order by column2)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []Expression{
+							Field{Object: AnalyticFunction{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "count",
+								Args: []Expression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 14}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 14}, Literal: "column1"}},
+								},
+								Over: "over",
+								AnalyticClause: AnalyticClause{
+									Partition: Partition{
+										PartitionBy: "partition by",
+										Values: []Expression{
+											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 42}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 42}, Literal: "column1"}},
+										},
+									},
+									OrderByClause: OrderByClause{
+										OrderBy: "order by",
+										Items: []Expression{
+											OrderItem{
+												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 59}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 59}, Literal: "column2"}},
+											},
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select count(*) over (partition by column1 order by column2)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []Expression{
+							Field{Object: AnalyticFunction{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "count",
+								Args: []Expression{
+									AllColumns{BaseExpr: &BaseExpr{line: 1, char: 14}},
+								},
+								Over: "over",
+								AnalyticClause: AnalyticClause{
+									Partition: Partition{
+										PartitionBy: "partition by",
+										Values: []Expression{
+											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 36}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 36}, Literal: "column1"}},
+										},
+									},
+									OrderByClause: OrderByClause{
+										OrderBy: "order by",
+										Items: []Expression{
+											OrderItem{
+												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 53}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 53}, Literal: "column2"}},
+											},
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select listagg(column1) over (partition by column1 order by column2)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []Expression{
+							Field{Object: AnalyticFunction{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "listagg",
+								Args: []Expression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 16}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "column1"}},
+								},
+								Over: "over",
+								AnalyticClause: AnalyticClause{
+									Partition: Partition{
+										PartitionBy: "partition by",
+										Values: []Expression{
+											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 44}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 44}, Literal: "column1"}},
+										},
+									},
+									OrderByClause: OrderByClause{
+										OrderBy: "order by",
+										Items: []Expression{
+											OrderItem{
+												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 61}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 61}, Literal: "column2"}},
+											},
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select listagg(column1, ',') over (partition by column1 order by column2)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []Expression{
+							Field{Object: AnalyticFunction{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "listagg",
+								Args: []Expression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 16}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "column1"}},
+									NewString(","),
+								},
+								Over: "over",
+								AnalyticClause: AnalyticClause{
+									Partition: Partition{
+										PartitionBy: "partition by",
+										Values: []Expression{
+											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 49}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 49}, Literal: "column1"}},
+										},
+									},
+									OrderByClause: OrderByClause{
+										OrderBy: "order by",
+										Items: []Expression{
+											OrderItem{
+												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 66}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 66}, Literal: "column2"}},
+											},
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select first_value(column1) over (partition by column1 order by column2)",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -1869,8 +2080,61 @@ var parseTests = []struct {
 								},
 								Over: "over",
 								AnalyticClause: AnalyticClause{
-									Partition:     nil,
-									OrderByClause: nil,
+									Partition: Partition{
+										PartitionBy: "partition by",
+										Values: []Expression{
+											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 48}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 48}, Literal: "column1"}},
+										},
+									},
+									OrderByClause: OrderByClause{
+										OrderBy: "order by",
+										Items: []Expression{
+											OrderItem{
+												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 65}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 65}, Literal: "column2"}},
+											},
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select first_value(column1 ignore nulls) over (partition by column1 order by column2)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []Expression{
+							Field{Object: AnalyticFunction{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "first_value",
+								Args: []Expression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 20}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 20}, Literal: "column1"}},
+								},
+								IgnoreNulls:    true,
+								IgnoreNullsLit: "ignore nulls",
+								Over:           "over",
+								AnalyticClause: AnalyticClause{
+									Partition: Partition{
+										PartitionBy: "partition by",
+										Values: []Expression{
+											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 61}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 61}, Literal: "column1"}},
+										},
+									},
+									OrderByClause: OrderByClause{
+										OrderBy: "order by",
+										Items: []Expression{
+											OrderItem{
+												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 78}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 78}, Literal: "column2"}},
+											},
+										},
+									},
 								},
 							}},
 						},
@@ -3150,6 +3414,102 @@ var parseTests = []struct {
 									RHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 25}, Name: "@var3"},
 								},
 							},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select ties",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []Expression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "ties"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select nulls",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []Expression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "nulls"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select count",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []Expression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "count"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select listagg",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []Expression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "listagg"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select aggregate_function",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []Expression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "aggregate_function"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select function_with_additionals",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []Expression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "function_with_additionals"}},
 						},
 					},
 				},

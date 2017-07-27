@@ -931,6 +931,23 @@ func (view *View) Intersect(calcView *View, all bool) {
 	}
 }
 
+func (view *View) ListValuesForAggregateFunctions(expr parser.Expression, arg parser.Expression, filter Filter) ([]parser.Primary, error) {
+	list := make([]parser.Primary, view.RecordLen())
+	f := NewFilterForSequentialEvaluation(view, filter)
+	for i := 0; i < view.RecordLen(); i++ {
+		f.Records[0].RecordIndex = i
+		p, err := f.Evaluate(arg)
+		if err != nil {
+			if _, ok := err.(*NotGroupingRecordsError); ok {
+				err = NewNestedAggregateFunctionsError(expr)
+			}
+			return nil, err
+		}
+		list[i] = p
+	}
+	return list, nil
+}
+
 func (view *View) FieldIndex(fieldRef parser.Expression) (int, error) {
 	if number, ok := fieldRef.(parser.ColumnNumber); ok {
 		return view.Header.ContainsNumber(number)
