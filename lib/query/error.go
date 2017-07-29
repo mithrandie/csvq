@@ -318,9 +318,9 @@ type FunctionInvalidArgumentError struct {
 	*BaseError
 }
 
-func NewFunctionInvalidArgumentError(function parser.Function, message string) error {
+func NewFunctionInvalidArgumentError(function parser.Expression, funcname string, message string) error {
 	return &FunctionInvalidArgumentError{
-		NewBaseError(function, fmt.Sprintf(ERROR_FUNCTION_INVALID_ARGUMENT, message, function.Name)),
+		NewBaseError(function, fmt.Sprintf(ERROR_FUNCTION_INVALID_ARGUMENT, message, funcname)),
 	}
 }
 

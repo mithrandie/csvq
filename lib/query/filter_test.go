@@ -1947,9 +1947,49 @@ var filterEvaluateTests = []struct {
 		Expr: parser.AggregateFunction{
 			Name:     "avg",
 			Distinct: parser.Token{},
-			Arg:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			},
 		},
 		Result: parser.NewInteger(2),
+	},
+	{
+		Name: "Aggregate Function Argument Length Error",
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							{
+								NewGroupCell([]parser.Primary{
+									parser.NewInteger(1),
+									parser.NewInteger(2),
+									parser.NewInteger(3),
+								}),
+								NewGroupCell([]parser.Primary{
+									parser.NewInteger(1),
+									parser.NewNull(),
+									parser.NewInteger(3),
+								}),
+								NewGroupCell([]parser.Primary{
+									parser.NewString("str1"),
+									parser.NewString("str2"),
+									parser.NewString("str3"),
+								}),
+							},
+						},
+						isGrouped: true,
+					},
+					RecordIndex: 0,
+				},
+			},
+		},
+		Expr: parser.AggregateFunction{
+			Name:     "avg",
+			Distinct: parser.Token{},
+		},
+		Error: "[L:- C:-] function avg takes 1 argument",
 	},
 	{
 		Name: "Aggregate Function Not Grouped Error",
@@ -1972,7 +2012,9 @@ var filterEvaluateTests = []struct {
 		Expr: parser.AggregateFunction{
 			Name:     "avg",
 			Distinct: parser.Token{},
-			Arg:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			},
 		},
 		Error: "[L:- C:-] function avg cannot aggregate not grouping records",
 	},
@@ -2006,9 +2048,13 @@ var filterEvaluateTests = []struct {
 		Expr: parser.AggregateFunction{
 			Name:     "avg",
 			Distinct: parser.Token{},
-			Arg: parser.AggregateFunction{
-				Name: "avg",
-				Arg:  parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			Args: []parser.Expression{
+				parser.AggregateFunction{
+					Name: "avg",
+					Args: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
 			},
 		},
 		Error: "[L:- C:-] aggregate functions are nested at avg(avg(column1))",
@@ -2043,7 +2089,9 @@ var filterEvaluateTests = []struct {
 		Expr: parser.AggregateFunction{
 			Name:     "count",
 			Distinct: parser.Token{},
-			Arg:      parser.AllColumns{},
+			Args: []parser.Expression{
+				parser.AllColumns{},
+			},
 		},
 		Result: parser.NewInteger(3),
 	},
@@ -2053,7 +2101,9 @@ var filterEvaluateTests = []struct {
 		Expr: parser.AggregateFunction{
 			Name:     "avg",
 			Distinct: parser.Token{},
-			Arg:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			},
 		},
 		Error: "[L:- C:-] function avg cannot be used as a statement",
 	},
@@ -2093,10 +2143,12 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Expr: parser.ListAgg{
-			ListAgg:   "listagg",
-			Distinct:  parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-			Arg:       parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-			Separator: ",",
+			ListAgg:  "listagg",
+			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				parser.NewString(","),
+			},
 			OrderBy: parser.OrderByClause{
 				Items: []parser.Expression{
 					parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
@@ -2142,9 +2194,41 @@ var filterEvaluateTests = []struct {
 		},
 		Expr: parser.ListAgg{
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-			Arg:      parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				parser.NewString(","),
+			},
 		},
 		Result: parser.NewNull(),
+	},
+	{
+		Name: "ListAgg Function Argument Length Error",
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							NewRecord(1, []parser.Primary{
+								parser.NewInteger(1),
+								parser.NewString("str2"),
+							}),
+						},
+					},
+					RecordIndex: 0,
+				},
+			},
+		},
+		Expr: parser.ListAgg{
+			ListAgg:  "listagg",
+			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
+			OrderBy: parser.OrderByClause{
+				Items: []parser.Expression{
+					parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+				},
+			},
+		},
+		Error: "[L:- C:-] function listagg takes 1 or 2 arguments",
 	},
 	{
 		Name: "ListAgg Function Not Grouped Error",
@@ -2165,10 +2249,12 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Expr: parser.ListAgg{
-			ListAgg:   "listagg",
-			Distinct:  parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-			Arg:       parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-			Separator: ",",
+			ListAgg:  "listagg",
+			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				parser.NewString(","),
+			},
 			OrderBy: parser.OrderByClause{
 				Items: []parser.Expression{
 					parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
@@ -2178,7 +2264,7 @@ var filterEvaluateTests = []struct {
 		Error: "[L:- C:-] function listagg cannot aggregate not grouping records",
 	},
 	{
-		Name: "ListAgg Function Identification Error",
+		Name: "ListAgg Function Sort Error",
 		Filter: Filter{
 			Records: []FilterRecord{
 				{
@@ -2209,13 +2295,15 @@ var filterEvaluateTests = []struct {
 		Expr: parser.ListAgg{
 			ListAgg:  "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-			Arg:      parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				parser.NewString(","),
+			},
 			OrderBy: parser.OrderByClause{
 				Items: []parser.Expression{
 					parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
 				},
 			},
-			Separator: ",",
 		},
 		Error: "[L:- C:-] field notexist does not exist",
 	},
@@ -2248,13 +2336,89 @@ var filterEvaluateTests = []struct {
 		},
 		Expr: parser.ListAgg{
 			ListAgg: "listagg",
-			Arg: parser.AggregateFunction{
-				Name:     "avg",
-				Distinct: parser.Token{},
-				Arg:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			Args: []parser.Expression{
+				parser.AggregateFunction{
+					Name:     "avg",
+					Distinct: parser.Token{},
+					Args: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
 			},
 		},
 		Error: "[L:- C:-] aggregate functions are nested at listagg(avg(column1))",
+	},
+	{
+		Name: "ListAgg Function Second Argument Evaluation Error",
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							{
+								NewGroupCell([]parser.Primary{
+									parser.NewInteger(1),
+									parser.NewNull(),
+									parser.NewInteger(3),
+								}),
+								NewGroupCell([]parser.Primary{
+									parser.NewString("str1"),
+									parser.NewString("str2"),
+									parser.NewString("str3"),
+								}),
+							},
+						},
+						isGrouped: true,
+					},
+					RecordIndex: 0,
+				},
+			},
+		},
+		Expr: parser.ListAgg{
+			ListAgg: "listagg",
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+			},
+		},
+		Error: "[L:- C:-] the second argument must be a string for function listagg",
+	},
+	{
+		Name: "ListAgg Function Second Argument Not String Error",
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							{
+								NewGroupCell([]parser.Primary{
+									parser.NewInteger(1),
+									parser.NewNull(),
+									parser.NewInteger(3),
+								}),
+								NewGroupCell([]parser.Primary{
+									parser.NewString("str1"),
+									parser.NewString("str2"),
+									parser.NewString("str3"),
+								}),
+							},
+						},
+						isGrouped: true,
+					},
+					RecordIndex: 0,
+				},
+			},
+		},
+		Expr: parser.ListAgg{
+			ListAgg: "listagg",
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+				parser.NewNull(),
+			},
+		},
+		Error: "[L:- C:-] the second argument must be a string for function listagg",
 	},
 	{
 		Name:   "ListAgg Function As a Statement Error",
@@ -2262,13 +2426,15 @@ var filterEvaluateTests = []struct {
 		Expr: parser.ListAgg{
 			ListAgg:  "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-			Arg:      parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				parser.NewString(","),
+			},
 			OrderBy: parser.OrderByClause{
 				Items: []parser.Expression{
 					parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 				},
 			},
-			Separator: ",",
 		},
 		Error: "[L:- C:-] function listagg cannot be used as a statement",
 	},

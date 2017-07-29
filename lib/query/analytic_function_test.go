@@ -1410,7 +1410,7 @@ var analyzeListAggTests = []analyticFunctionTest{
 		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
-		Name: "AnalyzeListAgg Argument Value Error",
+		Name: "AnalyzeListAgg First Argument Value Error",
 		View: &View{
 			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
 			Records: []Record{
@@ -1439,6 +1439,68 @@ var analyzeListAggTests = []analyticFunctionTest{
 			},
 		},
 		Error: "[L:- C:-] field notexist does not exist",
+	},
+	{
+		Name: "AnalyzeListAgg Second Argument Evaluation Error",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+				}),
+			},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "listagg",
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+			},
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] the second argument must be a string for function listagg",
+	},
+	{
+		Name: "AnalyzeListAgg Second Argument Not String Error",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+				}),
+			},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "listagg",
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				parser.NewNull(),
+			},
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] the second argument must be a string for function listagg",
 	},
 }
 

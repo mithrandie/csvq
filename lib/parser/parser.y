@@ -79,6 +79,7 @@ package parser
 %type<expression>  comparison
 %type<expression>  arithmetic
 %type<expression>  logic
+%type<expressions> arguments
 %type<expression>  function
 %type<expression>  aggregate_function
 %type<expression>  listagg
@@ -1132,28 +1133,34 @@ logic
         $$ = UnaryLogic{Operand: $2, Operator: $1}
     }
 
-function
-    : identifier '(' ')'
+arguments
+    :
     {
-        $$ = Function{BaseExpr: NewBaseExprFromIdentifier($1), Name: $1.Literal}
+        $$ = nil
     }
-    | identifier '(' values ')'
+    | values
+    {
+        $$ = $1
+    }
+
+function
+    : identifier '(' arguments ')'
     {
         $$ = Function{BaseExpr: NewBaseExprFromIdentifier($1), Name: $1.Literal, Args: $3}
     }
 
 aggregate_function
-    : AGGREGATE_FUNCTION '(' distinct value ')'
+    : AGGREGATE_FUNCTION '(' distinct arguments ')'
     {
-        $$ = AggregateFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Arg: $4}
+        $$ = AggregateFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4}
     }
-    | COUNT '(' distinct value ')'
+    | COUNT '(' distinct arguments ')'
     {
-        $$ = AggregateFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Arg: $4}
+        $$ = AggregateFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4}
     }
     | COUNT '(' distinct wildcard ')'
     {
-        $$ = AggregateFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Arg: $4}
+        $$ = AggregateFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: []Expression{$4}}
     }
     | listagg
     {
@@ -1161,57 +1168,41 @@ aggregate_function
     }
 
 listagg
-    : LISTAGG '(' distinct value ')'
+    : LISTAGG '(' distinct arguments ')'
     {
-        $$ = ListAgg{BaseExpr: NewBaseExpr($1), ListAgg: $1.Literal, Distinct: $3, Arg: $4}
+        $$ = ListAgg{BaseExpr: NewBaseExpr($1), ListAgg: $1.Literal, Distinct: $3, Args: $4}
     }
-    | LISTAGG '(' distinct value ',' text ')'
+    | LISTAGG '(' distinct arguments ')' WITHIN GROUP '(' order_by_clause ')'
     {
-        $$ = ListAgg{BaseExpr: NewBaseExpr($1), ListAgg: $1.Literal, Distinct: $3, Arg: $4, Separator: $6.Value()}
-    }
-    | LISTAGG '(' distinct value ')' WITHIN GROUP '(' order_by_clause ')'
-    {
-        $$ = ListAgg{BaseExpr: NewBaseExpr($1), ListAgg: $1.Literal, Distinct: $3, Arg: $4, WithinGroup: $6.Literal + " " + $7.Literal, OrderBy: $9}
-    }
-    | LISTAGG '(' distinct value ',' text ')' WITHIN GROUP '(' order_by_clause ')'
-    {
-        $$ = ListAgg{BaseExpr: NewBaseExpr($1), ListAgg: $1.Literal, Distinct: $3, Arg: $4, Separator: $6.Value(), WithinGroup: $8.Literal + " " + $9.Literal, OrderBy: $11}
+        $$ = ListAgg{BaseExpr: NewBaseExpr($1), ListAgg: $1.Literal, Distinct: $3, Args: $4, WithinGroup: $6.Literal + " " + $7.Literal, OrderBy: $9}
     }
 
 analytic_function
-    : identifier '(' ')' OVER '(' analytic_clause ')'
-    {
-        $$ = AnalyticFunction{BaseExpr: NewBaseExprFromIdentifier($1), Name: $1.Literal, Over: $4.Literal, AnalyticClause: $6.(AnalyticClause)}
-    }
-    | identifier '(' values ')' OVER '(' analytic_clause ')'
+    : identifier '(' arguments ')' OVER '(' analytic_clause ')'
     {
         $$ = AnalyticFunction{BaseExpr: NewBaseExprFromIdentifier($1), Name: $1.Literal, Args: $3, Over: $5.Literal, AnalyticClause: $7.(AnalyticClause)}
     }
-    | AGGREGATE_FUNCTION '(' distinct value ')' OVER '(' analytic_clause ')'
+    | AGGREGATE_FUNCTION '(' distinct arguments ')' OVER '(' analytic_clause ')'
     {
-        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: []Expression{$4}, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
     }
-    | COUNT '(' distinct value ')' OVER '(' analytic_clause ')'
+    | COUNT '(' distinct arguments ')' OVER '(' analytic_clause ')'
     {
-        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: []Expression{$4}, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
     }
     | COUNT '(' distinct wildcard ')' OVER '(' analytic_clause ')'
     {
         $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: []Expression{$4}, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
     }
-    | LISTAGG '(' distinct value ')' OVER '(' analytic_clause ')'
+    | LISTAGG '(' distinct arguments ')' OVER '(' analytic_clause ')'
     {
-        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: []Expression{$4}, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
     }
-    | LISTAGG '(' distinct value ',' text ')' OVER '(' analytic_clause ')'
-    {
-        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: []Expression{$4, $6}, Over: $8.Literal, AnalyticClause: $10.(AnalyticClause)}
-    }
-    | FUNCTION_WITH_ADDITIONALS '(' values ')' OVER '(' analytic_clause ')'
+    | FUNCTION_WITH_ADDITIONALS '(' arguments ')' OVER '(' analytic_clause ')'
     {
         $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3, Over: $5.Literal, AnalyticClause: $7.(AnalyticClause)}
     }
-    | FUNCTION_WITH_ADDITIONALS '(' values IGNORE NULLS ')' OVER '(' analytic_clause ')'
+    | FUNCTION_WITH_ADDITIONALS '(' arguments IGNORE NULLS ')' OVER '(' analytic_clause ')'
     {
         $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3, IgnoreNulls: true, IgnoreNullsLit: $4.Literal + " " + $5.Literal, Over: $7.Literal, AnalyticClause: $9.(AnalyticClause)}
     }

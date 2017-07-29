@@ -1578,7 +1578,9 @@ var parseTests = []struct {
 							Field{Object: AggregateFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
 								Name:     "count",
-								Arg:      AllColumns{BaseExpr: &BaseExpr{line: 1, char: 14}},
+								Args: []Expression{
+									AllColumns{BaseExpr: &BaseExpr{line: 1, char: 14}},
+								},
 							}},
 						},
 					},
@@ -1599,7 +1601,9 @@ var parseTests = []struct {
 								BaseExpr: &BaseExpr{line: 1, char: 8},
 								Name:     "count",
 								Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 14},
-								Arg:      AllColumns{BaseExpr: &BaseExpr{line: 1, char: 23}},
+								Args: []Expression{
+									AllColumns{BaseExpr: &BaseExpr{line: 1, char: 23}},
+								},
 							}},
 						},
 					},
@@ -1619,7 +1623,9 @@ var parseTests = []struct {
 							Field{Object: AggregateFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
 								Name:     "count",
-								Arg:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 14}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 14}, Literal: "column1"}},
+								Args: []Expression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 14}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 14}, Literal: "column1"}},
+								},
 							}},
 						},
 					},
@@ -1640,7 +1646,9 @@ var parseTests = []struct {
 								BaseExpr: &BaseExpr{line: 1, char: 8},
 								Name:     "count",
 								Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 14},
-								Arg:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 23}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 23}, Literal: "column1"}},
+								Args: []Expression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 23}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 23}, Literal: "column1"}},
+								},
 							}},
 						},
 					},
@@ -1660,7 +1668,9 @@ var parseTests = []struct {
 							Field{Object: ListAgg{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
 								ListAgg:  "listagg",
-								Arg:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 16}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "column1"}},
+								Args: []Expression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 16}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "column1"}},
+								},
 							}},
 						},
 					},
@@ -1678,11 +1688,13 @@ var parseTests = []struct {
 						Select:   "select",
 						Fields: []Expression{
 							Field{Object: ListAgg{
-								BaseExpr:  &BaseExpr{line: 1, char: 8},
-								ListAgg:   "listagg",
-								Separator: ",",
-								Distinct:  Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 16},
-								Arg:       FieldReference{BaseExpr: &BaseExpr{line: 1, char: 25}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 25}, Literal: "column1"}},
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								ListAgg:  "listagg",
+								Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 16},
+								Args: []Expression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 25}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 25}, Literal: "column1"}},
+									NewString(","),
+								},
 							}},
 						},
 					},
@@ -1700,10 +1712,12 @@ var parseTests = []struct {
 						Select:   "select",
 						Fields: []Expression{
 							Field{Object: ListAgg{
-								BaseExpr:    &BaseExpr{line: 1, char: 8},
-								ListAgg:     "listagg",
-								Distinct:    Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 16},
-								Arg:         FieldReference{BaseExpr: &BaseExpr{line: 1, char: 25}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 25}, Literal: "column1"}},
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								ListAgg:  "listagg",
+								Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 16},
+								Args: []Expression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 25}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 25}, Literal: "column1"}},
+								},
 								WithinGroup: "within group",
 								OrderBy: OrderByClause{
 									OrderBy: "order by",
@@ -1728,10 +1742,12 @@ var parseTests = []struct {
 						Select:   "select",
 						Fields: []Expression{
 							Field{Object: ListAgg{
-								BaseExpr:    &BaseExpr{line: 1, char: 8},
-								ListAgg:     "listagg",
-								Arg:         FieldReference{BaseExpr: &BaseExpr{line: 1, char: 16}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "column1"}},
-								Separator:   ",",
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								ListAgg:  "listagg",
+								Args: []Expression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 16}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "column1"}},
+									NewString(","),
+								},
 								WithinGroup: "within group",
 								OrderBy: OrderByClause{
 									OrderBy: "order by",

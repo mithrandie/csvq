@@ -212,7 +212,7 @@ func DenseRank(view *View, fn parser.AnalyticFunction) error {
 }
 
 func analyzeUniqueValue(view *View, fn parser.AnalyticFunction, compareFn func(parser.Primary, parser.Primary, bool) parser.Primary) error {
-	if fn.Args == nil || len(fn.Args) != 1 {
+	if len(fn.Args) != 1 {
 		return NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
@@ -298,7 +298,7 @@ func LastValue(view *View, fn parser.AnalyticFunction) error {
 }
 
 func AnalyzeAggregateValue(view *View, fn parser.AnalyticFunction) error {
-	if fn.Args == nil || len(fn.Args) != 1 {
+	if len(fn.Args) != 1 {
 		return NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
@@ -418,13 +418,21 @@ func AnalyzeListAgg(view *View, fn parser.AnalyticFunction) error {
 		}
 	}
 
-	separater := ""
+	separator := ""
 	if len(fn.Args) == 2 {
-		separater = fn.Args[1].(parser.String).Value()
+		p, err := view.ParentFilter.Evaluate(fn.Args[1])
+		if err != nil {
+			return NewFunctionInvalidArgumentError(fn, fn.Name, "the second argument must be a string")
+		}
+		s := parser.PrimaryToString(p)
+		if parser.IsNull(s) {
+			return NewFunctionInvalidArgumentError(fn, fn.Name, "the second argument must be a string")
+		}
+		separator = s.(parser.String).Value()
 	}
 
 	for _, partition := range partitions {
-		value := ListAgg(fn.IsDistinct(), partition.(part).values, separater)
+		value := ListAgg(fn.IsDistinct(), partition.(part).values, separator)
 
 		for _, idx := range partition.(part).recordIndices {
 			view.Records[idx] = append(view.Records[idx], NewCell(value))

@@ -415,17 +415,17 @@ func Rand(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
 
 	p1 := parser.PrimaryToInteger(args[0])
 	if parser.IsNull(p1) {
-		return nil, NewFunctionInvalidArgumentError(fn, "the first argument must be parsable as an integer")
+		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, "the first argument must be an integer")
 	}
 	p2 := parser.PrimaryToInteger(args[1])
 	if parser.IsNull(p2) {
-		return nil, NewFunctionInvalidArgumentError(fn, "the second argument must be parsable as an integer")
+		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, "the second argument must be an integer")
 	}
 
 	low := p1.(parser.Integer).Value()
 	high := p2.(parser.Integer).Value()
 	if high <= low {
-		return nil, NewFunctionInvalidArgumentError(fn, "the second argument must be greater than the first argument")
+		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, "the second argument must be greater than the first argument")
 	}
 	delta := high - low + 1
 	return parser.NewInteger(r.Int63n(delta) + low), nil

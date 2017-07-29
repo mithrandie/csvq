@@ -1098,7 +1098,9 @@ func TestAggregateFunction_String(t *testing.T) {
 	e := AggregateFunction{
 		Name:     "sum",
 		Distinct: Token{Token: DISTINCT, Literal: "distinct"},
-		Arg:      FieldReference{Column: Identifier{Literal: "column"}},
+		Args: []Expression{
+			FieldReference{Column: Identifier{Literal: "column"}},
+		},
 	}
 	expect := "sum(distinct column)"
 	if e.String() != expect {
@@ -1435,10 +1437,12 @@ func TestCaseElse_String(t *testing.T) {
 
 func TestListAgg_String(t *testing.T) {
 	e := ListAgg{
-		ListAgg:     "listagg",
-		Distinct:    Token{Token: DISTINCT, Literal: "distinct"},
-		Arg:         Identifier{Literal: "column1"},
-		Separator:   ",",
+		ListAgg:  "listagg",
+		Distinct: Token{Token: DISTINCT, Literal: "distinct"},
+		Args: []Expression{
+			Identifier{Literal: "column1"},
+			NewString(","),
+		},
 		WithinGroup: "within group",
 		OrderBy: OrderByClause{
 			OrderBy: "order by",
@@ -1446,17 +1450,6 @@ func TestListAgg_String(t *testing.T) {
 		},
 	}
 	expect := "listagg(distinct column1, ',') within group (order by column1)"
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-
-	e = ListAgg{
-		ListAgg:     "listagg",
-		Distinct:    Token{Token: DISTINCT, Literal: "distinct"},
-		Arg:         Identifier{Literal: "column1"},
-		WithinGroup: "within group",
-	}
-	expect = "listagg(distinct column1) within group ()"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}

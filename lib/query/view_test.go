@@ -985,7 +985,9 @@ var viewHavingTests = []struct {
 				LHS: parser.AggregateFunction{
 					Name:     "sum",
 					Distinct: parser.Token{},
-					Arg:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					Args: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
 				},
 				RHS:      parser.NewInteger(5),
 				Operator: ">",
@@ -1039,7 +1041,9 @@ var viewHavingTests = []struct {
 				LHS: parser.AggregateFunction{
 					Name:     "sum",
 					Distinct: parser.Token{},
-					Arg:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+					Args: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+					},
 				},
 				RHS:      parser.NewInteger(5),
 				Operator: ">",
@@ -1069,7 +1073,9 @@ var viewHavingTests = []struct {
 				LHS: parser.AggregateFunction{
 					Name:     "sum",
 					Distinct: parser.Token{},
-					Arg:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					Args: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
 				},
 				RHS:      parser.NewInteger(5),
 				Operator: ">",
@@ -1333,7 +1339,9 @@ var viewSelectTests = []struct {
 					Object: parser.AggregateFunction{
 						Name:     "sum",
 						Distinct: parser.Token{},
-						Arg:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+						Args: []parser.Expression{
+							parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+						},
 					},
 				},
 			},
@@ -1382,7 +1390,9 @@ var viewSelectTests = []struct {
 					Object: parser.AggregateFunction{
 						Name:     "sum",
 						Distinct: parser.Token{},
-						Arg:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+						Args: []parser.Expression{
+							parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+						},
 					},
 				},
 			},

@@ -876,7 +876,7 @@ var randTests = []struct {
 			parser.NewString("a"),
 			parser.NewInteger(2),
 		},
-		Error: "[L:- C:-] the first argument must be parsable as an integer for function rand",
+		Error: "[L:- C:-] the first argument must be an integer for function rand",
 	},
 	{
 		Name: "Range Second Arguments Error",
@@ -887,7 +887,7 @@ var randTests = []struct {
 			parser.NewInteger(1),
 			parser.NewString("a"),
 		},
-		Error: "[L:- C:-] the second argument must be parsable as an integer for function rand",
+		Error: "[L:- C:-] the second argument must be an integer for function rand",
 	},
 	{
 		Name: "Range Arguments Value Error",

@@ -524,9 +524,9 @@ func (f Filter) evalFunction(expr parser.Function) (parser.Primary, error) {
 }
 
 func (f Filter) evalAggregateFunction(expr parser.AggregateFunction) (parser.Primary, error) {
-	name := strings.ToUpper(expr.Name)
-
-	fn, _ := AggregateFunctions[name]
+	if len(expr.Args) != 1 {
+		return nil, NewFunctionArgumentLengthError(expr, expr.Name, []int{1})
+	}
 
 	if len(f.Records) < 1 {
 		return nil, NewUnpermittedStatementFunctionError(expr, expr.Name)
@@ -536,7 +536,7 @@ func (f Filter) evalAggregateFunction(expr parser.AggregateFunction) (parser.Pri
 		return nil, NewNotGroupingRecordsError(expr, expr.Name)
 	}
 
-	arg := expr.Arg
+	arg := expr.Args[0]
 	if _, ok := arg.(parser.AllColumns); ok {
 		arg = parser.NewInteger(1)
 	}
@@ -547,16 +547,35 @@ func (f Filter) evalAggregateFunction(expr parser.AggregateFunction) (parser.Pri
 		return nil, err
 	}
 
+	name := strings.ToUpper(expr.Name)
+	fn, _ := AggregateFunctions[name]
 	return fn(expr.IsDistinct(), list), nil
 }
 
 func (f Filter) evalListAgg(expr parser.ListAgg) (parser.Primary, error) {
+	if expr.Args == nil || 2 < len(expr.Args) {
+		return nil, NewFunctionArgumentLengthError(expr, expr.ListAgg, []int{1, 2})
+	}
+
 	if len(f.Records) < 1 {
 		return nil, NewUnpermittedStatementFunctionError(expr, expr.ListAgg)
 	}
 
 	if !f.Records[0].View.isGrouped {
 		return nil, NewNotGroupingRecordsError(expr, expr.ListAgg)
+	}
+
+	separator := ""
+	if len(expr.Args) == 2 {
+		p, err := f.Evaluate(expr.Args[1])
+		if err != nil {
+			return nil, NewFunctionInvalidArgumentError(expr, expr.ListAgg, "the second argument must be a string")
+		}
+		s := parser.PrimaryToString(p)
+		if parser.IsNull(s) {
+			return nil, NewFunctionInvalidArgumentError(expr, expr.ListAgg, "the second argument must be a string")
+		}
+		separator = s.(parser.String).Value()
 	}
 
 	view := NewViewFromGroupedRecord(f.Records[0])
@@ -567,12 +586,12 @@ func (f Filter) evalListAgg(expr parser.ListAgg) (parser.Primary, error) {
 		}
 	}
 
-	list, err := view.ListValuesForAggregateFunctions(expr, expr.Arg, f)
+	list, err := view.ListValuesForAggregateFunctions(expr, expr.Args[0], f)
 	if err != nil {
 		return nil, err
 	}
 
-	return ListAgg(expr.IsDistinct(), list, expr.Separator), nil
+	return ListAgg(expr.IsDistinct(), list, separator), nil
 }
 
 func (f Filter) evalCase(expr parser.Case) (parser.Primary, error) {

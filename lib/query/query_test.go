@@ -554,7 +554,7 @@ var selectTests = []struct {
 				SelectClause: parser.SelectClause{
 					Fields: []parser.Expression{
 						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
-						parser.Field{Object: parser.AggregateFunction{Name: "count", Arg: parser.AllColumns{}}},
+						parser.Field{Object: parser.AggregateFunction{Name: "count", Args: []parser.Expression{parser.AllColumns{}}}},
 					},
 				},
 				FromClause: parser.FromClause{
@@ -576,7 +576,7 @@ var selectTests = []struct {
 				},
 				HavingClause: parser.HavingClause{
 					Filter: parser.Comparison{
-						LHS:      parser.AggregateFunction{Name: "count", Arg: parser.AllColumns{}},
+						LHS:      parser.AggregateFunction{Name: "count", Args: []parser.Expression{parser.AllColumns{}}},
 						RHS:      parser.NewInteger(1),
 						Operator: ">",
 					},

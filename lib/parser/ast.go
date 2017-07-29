@@ -859,7 +859,7 @@ type AggregateFunction struct {
 	*BaseExpr
 	Name     string
 	Distinct Token
-	Arg      Expression
+	Args     []Expression
 }
 
 func (e AggregateFunction) String() string {
@@ -867,7 +867,7 @@ func (e AggregateFunction) String() string {
 	if !e.Distinct.IsEmpty() {
 		s = append(s, e.Distinct.Literal)
 	}
-	s = append(s, e.Arg.String())
+	s = append(s, listExpressions(e.Args))
 
 	return e.Name + "(" + joinWithSpace(s) + ")"
 }
@@ -1090,8 +1090,7 @@ type ListAgg struct {
 	*BaseExpr
 	ListAgg     string
 	Distinct    Token
-	Arg         Expression
-	Separator   string
+	Args        []Expression
 	WithinGroup string
 	OrderBy     Expression
 }
@@ -1101,11 +1100,7 @@ func (e ListAgg) String() string {
 	if !e.Distinct.IsEmpty() {
 		option = append(option, e.Distinct.Literal)
 	}
-	if 0 < len(e.Separator) {
-		option = append(option, e.Arg.String()+",", quoteString(e.Separator))
-	} else {
-		option = append(option, e.Arg.String())
-	}
+	option = append(option, listExpressions(e.Args))
 
 	s := []string{e.ListAgg + "(" + joinWithSpace(option) + ")"}
 	if 0 < len(e.WithinGroup) {
