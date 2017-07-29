@@ -606,9 +606,9 @@ command_statement
     {
         $$ = Printf{BaseExpr: NewBaseExpr($1), Format: $2.Literal, Values: $4}
     }
-    | SOURCE STRING statement_terminal
+    | SOURCE value statement_terminal
     {
-        $$ = Source{BaseExpr: NewBaseExpr($1), FilePath: $2.Literal}
+        $$ = Source{BaseExpr: NewBaseExpr($1), FilePath: $2}
     }
 
 select_query

@@ -1466,7 +1466,7 @@ type Printf struct {
 
 type Source struct {
 	*BaseExpr
-	FilePath string
+	FilePath Expression
 }
 
 type SetFlag struct {

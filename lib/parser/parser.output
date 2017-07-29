@@ -567,11 +567,56 @@ state 35
 
 
 state 36
-	command_statement:  SOURCE.STRING statement_terminal 
+	command_statement:  SOURCE.value statement_terminal 
 
-	STRING  shift 135
+	IDENTIFIER  shift 38
+	STRING  shift 90
+	INTEGER  shift 91
+	FLOAT  shift 92
+	TERNARY  shift 93
+	DATETIME  shift 94
+	VARIABLE  shift 46
+	STDIN  shift 71
+	EXISTS  shift 85
+	NOT  shift 86
+	NULL  shift 95
+	CASE  shift 83
+	CURSOR  shift 88
+	TIES  shift 39
+	NULLS  shift 40
+	COUNT  shift 81
+	LISTAGG  shift 89
+	AGGREGATE_FUNCTION  shift 80
+	FUNCTION_WITH_ADDITIONALS  shift 44
+	'-'  shift 78
+	'+'  shift 79
+	'!'  shift 87
+	'('  shift 69
 	.  error
 
+	cursor_status  goto 68
+	primary  goto 57
+	field_reference  goto 56
+	value  goto 135
+	row_value  goto 84
+	subquery  goto 60
+	string_operation  goto 59
+	comparison  goto 64
+	arithmetic  goto 58
+	logic  goto 65
+	function  goto 61
+	aggregate_function  goto 62
+	listagg  goto 82
+	case  goto 63
+	identifier  goto 70
+	text  goto 72
+	integer  goto 73
+	float  goto 74
+	ternary  goto 75
+	datetime  goto 76
+	null  goto 77
+	variable  goto 66
+	variable_substitution  goto 67
 
 state 37
 	with_clause:  WITH.inline_tables 
@@ -1888,12 +1933,47 @@ state 134
 	statement_terminal  goto 218
 
 state 135
-	command_statement:  SOURCE STRING.statement_terminal 
+	command_statement:  SOURCE value.statement_terminal 
+	string_operation:  value.STRING_OP value 
+	comparison:  value.COMPARISON_OP value 
+	comparison:  value.'=' value 
+	comparison:  value.IS negation ternary 
+	comparison:  value.IS negation null 
+	comparison:  value.negation BETWEEN value AND value 
+	comparison:  value.negation IN row_value 
+	comparison:  value.negation LIKE value 
+	comparison:  value.comparison_operator ANY row_value 
+	comparison:  value.comparison_operator ALL row_value 
+	arithmetic:  value.'+' value 
+	arithmetic:  value.'-' value 
+	arithmetic:  value.'*' value 
+	arithmetic:  value.'/' value 
+	arithmetic:  value.'%' value 
+	logic:  value.OR value 
+	logic:  value.AND value 
 	statement_terminal: .    (326)
+	negation: .    (310)
 
+	IN  reduce 310 (src line 1688)
+	AND  shift 154
+	OR  shift 153
+	NOT  shift 155
+	BETWEEN  reduce 310 (src line 1688)
+	LIKE  reduce 310 (src line 1688)
+	IS  shift 145
+	COMPARISON_OP  shift 143
+	STRING_OP  shift 142
 	';'  shift 49
+	'*'  shift 150
+	'='  shift 144
+	'-'  shift 149
+	'+'  shift 148
+	'/'  shift 151
+	'%'  shift 152
 	.  reduce 326 (src line 1768)
 
+	negation  goto 146
+	comparison_operator  goto 147
 	statement_terminal  goto 220
 
 state 136
@@ -3647,7 +3727,7 @@ state 219
 	variable_substitution  goto 67
 
 state 220
-	command_statement:  SOURCE STRING statement_terminal.    (93)
+	command_statement:  SOURCE value statement_terminal.    (93)
 
 	.  reduce 93 (src line 609)
 
@@ -12681,11 +12761,11 @@ state 737
 328 grammar rules, 738/8000 states
 134 shift/reduce, 185 reduce/reduce conflicts reported
 166 working sets used
-memory: parser 4736/120000
+memory: parser 4758/120000
 816 extra closures
-3647 shift entries, 130 exceptions
-649 goto entries
-2064 entries saved by goto default
-Optimizer space used: output 2287/120000
-2287 table entries, 654 zero
+3681 shift entries, 133 exceptions
+650 goto entries
+2088 entries saved by goto default
+Optimizer space used: output 2332/120000
+2332 table entries, 699 zero
 maximum spread: 133, maximum offset: 737

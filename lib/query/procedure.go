@@ -229,7 +229,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 	case parser.Source:
 		var externalStatements []parser.Statement
 		source := stmt.(parser.Source)
-		if externalStatements, err = Source(source); err == nil {
+		if externalStatements, err = Source(source, proc.Filter); err == nil {
 			flow, err = proc.Execute(externalStatements)
 		}
 	}

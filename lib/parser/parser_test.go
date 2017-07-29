@@ -2864,7 +2864,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			Source{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
-				FilePath: "/path/to/file.sql",
+				FilePath: NewString("/path/to/file.sql"),
 			},
 		},
 	},

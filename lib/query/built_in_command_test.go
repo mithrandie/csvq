@@ -142,7 +142,7 @@ var sourceTests = []struct {
 	{
 		Name: "Source",
 		Expr: parser.Source{
-			FilePath: GetTestFilePath("source.sql"),
+			FilePath: parser.NewString(GetTestFilePath("source.sql")),
 		},
 		Result: []parser.Statement{
 			parser.Print{
@@ -151,31 +151,47 @@ var sourceTests = []struct {
 		},
 	},
 	{
+		Name: "Source File Argument Evaluation Error",
+		Expr: parser.Source{
+			FilePath: parser.FieldReference{Column: parser.Identifier{Literal: "ident"}},
+		},
+		Error: "[L:- C:-] field ident does not exist",
+	},
+	{
+		Name: "Source File Argument Not String Error",
+		Expr: parser.Source{
+			FilePath: parser.NewNull(),
+		},
+		Error: "[L:- C:-] SOURCE: argument NULL is not a string",
+	},
+	{
 		Name: "Source File Not Exist Error",
 		Expr: parser.Source{
-			FilePath: GetTestFilePath("notexist.sql"),
+			FilePath: parser.NewString(GetTestFilePath("notexist.sql")),
 		},
 		Error: fmt.Sprintf("[L:- C:-] SOURCE: file %s does not exist", GetTestFilePath("notexist.sql")),
 	},
 	{
 		Name: "Source File Not Readable Error",
 		Expr: parser.Source{
-			FilePath: TestDir,
+			FilePath: parser.NewString(TestDir),
 		},
 		Error: fmt.Sprintf("[L:- C:-] SOURCE: file %s is unable to read", TestDir),
 	},
 	{
 		Name: "Source Syntax Error",
 		Expr: parser.Source{
-			FilePath: GetTestFilePath("source_syntaxerror.sql"),
+			FilePath: parser.NewString(GetTestFilePath("source_syntaxerror.sql")),
 		},
 		Error: fmt.Sprintf("%s [L:1 C:34] syntax error: unexpected STRING", GetTestFilePath("source_syntaxerror.sql")),
 	},
 }
 
 func TestSource(t *testing.T) {
+	filter := NewEmptyFilter()
+
 	for _, v := range sourceTests {
-		result, err := Source(v.Expr)
+		result, err := Source(v.Expr, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

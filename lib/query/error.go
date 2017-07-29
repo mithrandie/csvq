@@ -66,6 +66,7 @@ const (
 	ERROR_UPDATE_VALUE_AMBIGUOUS            = "value %s to set in the field %s is ambiguous"
 	ERROR_DELETE_TABLE_NOT_SPECIFIED        = "tables to delete records are not specified"
 	ERROR_PRINTF_REPLACE_VALUE_LENGTH       = "PRINTF: number of replace values does not match"
+	ERROR_SOURCE_INVALID_ARGUMENT           = "SOURCE: argument %s is not a string"
 	ERROR_SOURCE_FILE_NOT_EXIST             = "SOURCE: file %s does not exist"
 	ERROR_SOURCE_FILE_UNABLE_TO_READ        = "SOURCE: file %s is unable to read"
 	ERROR_INVALID_FLAG_NAME                 = "SET: flag name %s is invalid"
@@ -692,13 +693,23 @@ func NewPrintfReplaceValueLengthError(printf parser.Printf) error {
 	}
 }
 
+type SourceInvalidArgumentError struct {
+	*BaseError
+}
+
+func NewSourceInvalidArgumentError(source parser.Source, arg parser.Expression) error {
+	return &SourceInvalidArgumentError{
+		NewBaseError(source, fmt.Sprintf(ERROR_SOURCE_INVALID_ARGUMENT, arg)),
+	}
+}
+
 type SourceFileNotExistError struct {
 	*BaseError
 }
 
-func NewSourceFileNotExistError(source parser.Source) error {
+func NewSourceFileNotExistError(source parser.Source, fpath string) error {
 	return &SourceFileNotExistError{
-		NewBaseError(source, fmt.Sprintf(ERROR_SOURCE_FILE_NOT_EXIST, source.FilePath)),
+		NewBaseError(source, fmt.Sprintf(ERROR_SOURCE_FILE_NOT_EXIST, fpath)),
 	}
 }
 
@@ -706,9 +717,9 @@ type SourceFileUnableToReadError struct {
 	*BaseError
 }
 
-func NewSourceFileUnableToReadError(source parser.Source) error {
+func NewSourceFileUnableToReadError(source parser.Source, fpath string) error {
 	return &SourceFileUnableToReadError{
-		NewBaseError(source, fmt.Sprintf(ERROR_SOURCE_FILE_UNABLE_TO_READ, source.FilePath)),
+		NewBaseError(source, fmt.Sprintf(ERROR_SOURCE_FILE_UNABLE_TO_READ, fpath)),
 	}
 }
 

@@ -479,7 +479,7 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.Source{
-			FilePath: GetTestFilePath("source.sql"),
+			FilePath: parser.NewString(GetTestFilePath("source.sql")),
 		},
 		Logs: []string{
 			"'external executable file'",
