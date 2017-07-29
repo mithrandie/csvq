@@ -13,7 +13,7 @@ Update query is used to update records on csv files.
 ```sql
 [WITH common_table_expression [, common_table_expression ...]]
   UPDATE table_name
-  SET column_name = value [, column_name = value ...]
+  SET column = value [, column = value ...]
   [where_clause]
 ```
 
@@ -23,7 +23,7 @@ _common_table_expression_
 _table_name_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
 
-_column_name_
+_column_
 : [field reference]({{ '/reference/value.html#field_reference' | relative_url }})
 
 _value_

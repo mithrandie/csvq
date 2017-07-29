@@ -37,11 +37,11 @@ var viewLoadTests = []struct {
 				},
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{{}},
-				TempViewsList: []ViewMap{{}},
-				CursorsList:   []CursorMap{{}},
-				InlineTables:  InlineTables{},
-				AliasesList:   AliasMapList{{}},
+				VariablesList:    []Variables{{}},
+				TempViewsList:    []ViewMap{{}},
+				CursorsList:      []CursorMap{{}},
+				InlineTablesList: InlineTablesList{{}},
+				AliasesList:      AliasMapList{{}},
 			},
 		},
 	},
@@ -75,10 +75,10 @@ var viewLoadTests = []struct {
 				Delimiter: ',',
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{{}},
-				TempViewsList: []ViewMap{{}},
-				CursorsList:   []CursorMap{{}},
-				InlineTables:  InlineTables{},
+				VariablesList:    []Variables{{}},
+				TempViewsList:    []ViewMap{{}},
+				CursorsList:      []CursorMap{{}},
+				InlineTablesList: InlineTablesList{{}},
 				AliasesList: AliasMapList{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
@@ -110,8 +110,8 @@ var viewLoadTests = []struct {
 						"STDIN": nil,
 					},
 				},
-				CursorsList:  []CursorMap{{}},
-				InlineTables: InlineTables{},
+				CursorsList:      []CursorMap{{}},
+				InlineTablesList: InlineTablesList{{}},
 				AliasesList: AliasMapList{
 					{
 						"STDIN": "STDIN",
@@ -165,10 +165,10 @@ var viewLoadTests = []struct {
 				}),
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{{}},
-				TempViewsList: []ViewMap{{}},
-				CursorsList:   []CursorMap{{}},
-				InlineTables:  InlineTables{},
+				VariablesList:    []Variables{{}},
+				TempViewsList:    []ViewMap{{}},
+				CursorsList:      []CursorMap{{}},
+				InlineTablesList: InlineTablesList{{}},
 				AliasesList: AliasMapList{
 					{
 						"TABLE_SJIS": strings.ToUpper(GetTestFilePath("table_sjis.csv")),
@@ -200,10 +200,10 @@ var viewLoadTests = []struct {
 				}),
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{{}},
-				TempViewsList: []ViewMap{{}},
-				CursorsList:   []CursorMap{{}},
-				InlineTables:  InlineTables{},
+				VariablesList:    []Variables{{}},
+				TempViewsList:    []ViewMap{{}},
+				CursorsList:      []CursorMap{{}},
+				InlineTablesList: InlineTablesList{{}},
 				AliasesList: AliasMapList{
 					{
 						"TABLE_NOHEADER": strings.ToUpper(GetTestFilePath("table_noheader.csv")),
@@ -288,10 +288,10 @@ var viewLoadTests = []struct {
 				}),
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{{}},
-				TempViewsList: []ViewMap{{}},
-				CursorsList:   []CursorMap{{}},
-				InlineTables:  InlineTables{},
+				VariablesList:    []Variables{{}},
+				TempViewsList:    []ViewMap{{}},
+				CursorsList:      []CursorMap{{}},
+				InlineTablesList: InlineTablesList{{}},
 				AliasesList: AliasMapList{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
@@ -382,10 +382,10 @@ var viewLoadTests = []struct {
 				}),
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{{}},
-				TempViewsList: []ViewMap{{}},
-				CursorsList:   []CursorMap{{}},
-				InlineTables:  InlineTables{},
+				VariablesList:    []Variables{{}},
+				TempViewsList:    []ViewMap{{}},
+				CursorsList:      []CursorMap{{}},
+				InlineTablesList: InlineTablesList{{}},
 				AliasesList: AliasMapList{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
@@ -440,10 +440,10 @@ var viewLoadTests = []struct {
 				}),
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{{}},
-				TempViewsList: []ViewMap{{}},
-				CursorsList:   []CursorMap{{}},
-				InlineTables:  InlineTables{},
+				VariablesList:    []Variables{{}},
+				TempViewsList:    []ViewMap{{}},
+				CursorsList:      []CursorMap{{}},
+				InlineTablesList: InlineTablesList{{}},
 				AliasesList: AliasMapList{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
@@ -505,10 +505,10 @@ var viewLoadTests = []struct {
 				}),
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{{}},
-				TempViewsList: []ViewMap{{}},
-				CursorsList:   []CursorMap{{}},
-				InlineTables:  InlineTables{},
+				VariablesList:    []Variables{{}},
+				TempViewsList:    []ViewMap{{}},
+				CursorsList:      []CursorMap{{}},
+				InlineTablesList: InlineTablesList{{}},
 				AliasesList: AliasMapList{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
@@ -600,10 +600,10 @@ var viewLoadTests = []struct {
 				}),
 			},
 			ParentFilter: Filter{
-				VariablesList: []Variables{{}},
-				TempViewsList: []ViewMap{{}},
-				CursorsList:   []CursorMap{{}},
-				InlineTables:  InlineTables{},
+				VariablesList:    []Variables{{}},
+				TempViewsList:    []ViewMap{{}},
+				CursorsList:      []CursorMap{{}},
+				InlineTablesList: InlineTablesList{{}},
 				AliasesList: AliasMapList{
 					{
 						"ALIAS": "",
@@ -982,9 +982,12 @@ var viewHavingTests = []struct {
 		},
 		Having: parser.HavingClause{
 			Filter: parser.Comparison{
-				LHS: parser.Function{
-					Name: "sum",
-					Args: []parser.Expression{parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+				LHS: parser.AggregateFunction{
+					Name:     "sum",
+					Distinct: parser.Token{},
+					Args: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
 				},
 				RHS:      parser.NewInteger(5),
 				Operator: ">",
@@ -1035,9 +1038,12 @@ var viewHavingTests = []struct {
 		},
 		Having: parser.HavingClause{
 			Filter: parser.Comparison{
-				LHS: parser.Function{
-					Name: "sum",
-					Args: []parser.Expression{parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
+				LHS: parser.AggregateFunction{
+					Name:     "sum",
+					Distinct: parser.Token{},
+					Args: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+					},
 				},
 				RHS:      parser.NewInteger(5),
 				Operator: ">",
@@ -1064,9 +1070,12 @@ var viewHavingTests = []struct {
 		},
 		Having: parser.HavingClause{
 			Filter: parser.Comparison{
-				LHS: parser.Function{
-					Name: "sum",
-					Args: []parser.Expression{parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+				LHS: parser.AggregateFunction{
+					Name:     "sum",
+					Distinct: parser.Token{},
+					Args: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
 				},
 				RHS:      parser.NewInteger(5),
 				Operator: ">",
@@ -1327,9 +1336,12 @@ var viewSelectTests = []struct {
 		Select: parser.SelectClause{
 			Fields: []parser.Expression{
 				parser.Field{
-					Object: parser.Function{
-						Name: "sum",
-						Args: []parser.Expression{parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+					Object: parser.AggregateFunction{
+						Name:     "sum",
+						Distinct: parser.Token{},
+						Args: []parser.Expression{
+							parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+						},
 					},
 				},
 			},
@@ -1375,9 +1387,12 @@ var viewSelectTests = []struct {
 			Fields: []parser.Expression{
 				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 				parser.Field{
-					Object: parser.Function{
-						Name: "sum",
-						Args: []parser.Expression{parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+					Object: parser.AggregateFunction{
+						Name:     "sum",
+						Distinct: parser.Token{},
+						Args: []parser.Expression{
+							parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+						},
 					},
 				},
 			},
@@ -3163,8 +3178,8 @@ func TestView_Intersect(t *testing.T) {
 func TestView_FieldIndex(t *testing.T) {
 	view := &View{
 		Header: []HeaderField{
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table1", Column: "column2", FromTable: true},
+			{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
+			{Reference: "table1", Column: "column2", Number: 2, FromTable: true},
 		},
 	}
 	fieldRef := parser.FieldReference{
@@ -3173,6 +3188,17 @@ func TestView_FieldIndex(t *testing.T) {
 	expect := 0
 
 	idx, _ := view.FieldIndex(fieldRef)
+	if idx != expect {
+		t.Errorf("field index = %d, want %d", idx, expect)
+	}
+
+	columnNum := parser.ColumnNumber{
+		View:   parser.Identifier{Literal: "table1"},
+		Number: parser.NewInteger(2),
+	}
+	expect = 1
+
+	idx, _ = view.FieldIndex(columnNum)
 	if idx != expect {
 		t.Errorf("field index = %d, want %d", idx, expect)
 	}
@@ -3193,7 +3219,17 @@ func TestView_FieldIndices(t *testing.T) {
 
 	indices, _ := view.FieldIndices(fields)
 	if !reflect.DeepEqual(indices, expect) {
-		t.Errorf("field indices = %d, want %d", indices, expect)
+		t.Errorf("field indices = %s, want %s", indices, expect)
+	}
+
+	fields = []parser.Expression{
+		parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+		parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+	}
+	expectErr := "[L:- C:-] field notexist does not exist"
+	_, err := view.FieldIndices(fields)
+	if err.Error() != expectErr {
+		t.Errorf("error = %s, want %s", err, expectErr)
 	}
 }
 
@@ -3212,6 +3248,15 @@ func TestView_FieldViewName(t *testing.T) {
 	ref, _ := view.FieldViewName(fieldRef)
 	if ref != expect {
 		t.Errorf("field reference = %s, want %s", ref, expect)
+	}
+
+	fieldRef = parser.FieldReference{
+		Column: parser.Identifier{Literal: "notexist"},
+	}
+	expectErr := "[L:- C:-] field notexist does not exist"
+	_, err := view.FieldViewName(fieldRef)
+	if err.Error() != expectErr {
+		t.Errorf("error = %s, want %s", err, expectErr)
 	}
 }
 

@@ -6,6 +6,21 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
+type UserDefinedFunctionsList []UserDefinedFunctionMap
+
+func (list UserDefinedFunctionsList) Declare(expr parser.FunctionDeclaration) error {
+	return list[0].Declare(expr)
+}
+
+func (list UserDefinedFunctionsList) Get(expr parser.Function) (*UserDefinedFunction, error) {
+	for _, v := range list {
+		if fn, err := v.Get(expr); err == nil {
+			return fn, nil
+		}
+	}
+	return nil, NewFunctionNotExistError(expr, expr.Name)
+}
+
 type UserDefinedFunctionMap map[string]*UserDefinedFunction
 
 func (m UserDefinedFunctionMap) Declare(expr parser.FunctionDeclaration) error {
@@ -40,7 +55,7 @@ func (m UserDefinedFunctionMap) Get(fn parser.Function) (*UserDefinedFunction, e
 	if fn, ok := m[uname]; ok {
 		return fn, nil
 	}
-	return nil, NewFunctionNotExistError(fn.Name, fn)
+	return nil, NewFunctionNotExistError(fn, fn.Name)
 }
 
 type UserDefinedFunction struct {
@@ -51,21 +66,16 @@ type UserDefinedFunction struct {
 
 func (fn *UserDefinedFunction) Execute(args []parser.Primary, filter Filter) (parser.Primary, error) {
 	if len(args) != len(fn.Parameters) {
-		return nil, NewFunctionArgumentLengthError(fn.Name.Literal, []int{len(fn.Parameters)}, fn.Name)
+		return nil, NewFunctionArgumentLengthError(fn.Name, fn.Name.Literal, []int{len(fn.Parameters)})
 	}
 
 	proc := NewProcedure()
-	vars := Variables{}
+	proc.Filter = filter.CreateChildScope()
 	for i, v := range fn.Parameters {
-		if err := vars.Add(v, args[i]); err != nil {
+		if err := proc.Filter.VariablesList[0].Add(v, args[i]); err != nil {
 			return nil, err
 		}
 	}
-	proc.Filter = NewFilter(
-		append([]Variables{vars}, filter.VariablesList...),
-		append([]ViewMap{{}}, filter.TempViewsList...),
-		append([]CursorMap{{}}, filter.CursorsList...),
-	)
 
 	if _, err := proc.Execute(fn.Statements); err != nil {
 		return nil, err

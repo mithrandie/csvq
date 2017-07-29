@@ -857,33 +857,23 @@ func (e Function) String() string {
 
 type AggregateFunction struct {
 	*BaseExpr
-	Name   string
-	Option AggregateOption
-}
-
-func (e AggregateFunction) String() string {
-	return e.Name + "(" + e.Option.String() + ")"
-}
-
-type AggregateOption struct {
-	*BaseExpr
+	Name     string
 	Distinct Token
 	Args     []Expression
 }
 
-func (e AggregateOption) IsDistinct() bool {
-	return !e.Distinct.IsEmpty()
-}
-
-func (e AggregateOption) String() string {
+func (e AggregateFunction) String() string {
 	s := []string{}
 	if !e.Distinct.IsEmpty() {
 		s = append(s, e.Distinct.Literal)
 	}
-	if e.Args != nil {
-		s = append(s, listExpressions(e.Args))
-	}
-	return joinWithSpace(s)
+	s = append(s, listExpressions(e.Args))
+
+	return e.Name + "(" + joinWithSpace(s) + ")"
+}
+
+func (e AggregateFunction) IsDistinct() bool {
+	return !e.Distinct.IsEmpty()
 }
 
 type Table struct {
@@ -1096,49 +1086,71 @@ func (ce CaseElse) String() string {
 	return joinWithSpace(s)
 }
 
-type GroupConcat struct {
+type ListAgg struct {
 	*BaseExpr
-	GroupConcat  string
-	Option       AggregateOption
-	OrderBy      Expression
-	SeparatorLit string
-	Separator    string
+	ListAgg     string
+	Distinct    Token
+	Args        []Expression
+	WithinGroup string
+	OrderBy     Expression
 }
 
-func (gc GroupConcat) String() string {
-	s := []string{}
+func (e ListAgg) String() string {
+	option := []string{}
+	if !e.Distinct.IsEmpty() {
+		option = append(option, e.Distinct.Literal)
+	}
+	option = append(option, listExpressions(e.Args))
 
-	op := gc.Option.String()
-	if 0 < len(op) {
-		s = append(s, op)
+	s := []string{e.ListAgg + "(" + joinWithSpace(option) + ")"}
+	if 0 < len(e.WithinGroup) {
+		s = append(s, e.WithinGroup)
+		if e.OrderBy != nil {
+			s = append(s, "("+e.OrderBy.String()+")")
+		} else {
+			s = append(s, "()")
+		}
 	}
-	if gc.OrderBy != nil {
-		s = append(s, gc.OrderBy.String())
-	}
-	if 0 < len(gc.SeparatorLit) {
-		s = append(s, gc.SeparatorLit)
-	}
-	if 0 < len(gc.Separator) {
-		s = append(s, quoteString(gc.Separator))
-	}
-	return gc.GroupConcat + "(" + joinWithSpace(s) + ")"
+	return joinWithSpace(s)
+}
+
+func (e ListAgg) IsDistinct() bool {
+	return !e.Distinct.IsEmpty()
 }
 
 type AnalyticFunction struct {
 	*BaseExpr
 	Name           string
+	Distinct       Token
 	Args           []Expression
+	IgnoreNulls    bool
+	IgnoreNullsLit string
 	Over           string
 	AnalyticClause AnalyticClause
 }
 
 func (e AnalyticFunction) String() string {
+	option := []string{}
+	if !e.Distinct.IsEmpty() {
+		option = append(option, e.Distinct.Literal)
+	}
+	if e.Args != nil {
+		option = append(option, listExpressions(e.Args))
+	}
+	if e.IgnoreNulls {
+		option = append(option, e.IgnoreNullsLit)
+	}
+
 	s := []string{
-		e.Name + "(" + listExpressions(e.Args) + ")",
+		e.Name + "(" + joinWithSpace(option) + ")",
 		e.Over,
 		"(" + e.AnalyticClause.String() + ")",
 	}
 	return joinWithSpace(s)
+}
+
+func (e AnalyticFunction) IsDistinct() bool {
+	return !e.Distinct.IsEmpty()
 }
 
 type AnalyticClause struct {
@@ -1289,7 +1301,7 @@ func (e UpdateQuery) String() string {
 
 type UpdateSet struct {
 	*BaseExpr
-	Field FieldReference
+	Field Expression
 	Value Expression
 }
 
@@ -1412,7 +1424,7 @@ type RenameColumn struct {
 	AlterTable string
 	Table      Expression
 	Rename     string
-	Old        FieldReference
+	Old        Expression
 	To         string
 	New        Identifier
 }

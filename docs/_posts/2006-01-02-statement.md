@@ -15,6 +15,7 @@ category: reference
 {: #basics}
 
 You can pass a query or statements(it's also called procedure) as a csvq command argument or a source file.
+Statements have to be encoded in UTF-8.
 
 A statements is terminated with a semicolon. 
 Stetaments are processed sequentially for each statement.
@@ -48,6 +49,7 @@ Identifier
   You cannot use [reserved words](#reserved_words) as a identifier.
 
   Notwithstanding above naming restriction, you can use most character strings as a identifier by enclosing in back quotes.
+  Back quotes are escaped by back slashes.
   
   Identifiers represent tables, columns, functions or cursors. These character cases are insensitive.
   
@@ -100,7 +102,8 @@ Flag
 
 ```sql
 abcde                 -- identifier
-`ab+cde`              -- identifier
+識別子                 -- identifier
+`ab+c\`de`            -- identifier
 'abcd\'e'             -- string
 "abcd\"e"             -- string
 123                   -- integer
@@ -145,15 +148,15 @@ ELSE ELSEIF END EXCEPT EXISTS EXIT
 FETCH FIRST FOR FROM FULL FUNCTION
 GROUP
 HAVING
-IF IN INNER INSERT INTERSECT INTO IS
+IF IGNORE IN INNER INSERT INTERSECT INTO IS
 JOIN
 LAST LEFT LIKE LIMIT
-NATURAL NEXT NOT NULL NULLS
+NATURAL NEXT NOT NULL
 OFFSET ON OPEN OR ORDER OUTER OVER
 PARTITION PERCENT PRINT PRINTF PRIOR
 RANGE RECURSIVE RELATIVE RENAME RETURN RIGHT ROLLBACK
 SELECT SET SEPARATOR SOURCE STDIN
-TABLE THEN TIES TO
+TABLE THEN TO
 UNION UPDATE USING
 VALUES VAR
 WHEN WHERE WHILE WITH

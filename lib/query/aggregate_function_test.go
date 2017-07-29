@@ -227,3 +227,54 @@ func TestAvg(t *testing.T) {
 		}
 	}
 }
+
+var listAggTests = []struct {
+	Distinct  bool
+	List      []parser.Primary
+	Separator string
+	Result    parser.Primary
+}{
+	{
+		Distinct: false,
+		List: []parser.Primary{
+			parser.NewString("str1"),
+			parser.NewString("str3"),
+			parser.NewNull(),
+			parser.NewString("str2"),
+			parser.NewString("str1"),
+			parser.NewString("str2"),
+		},
+		Separator: ",",
+		Result:    parser.NewString("str1,str3,str2,str1,str2"),
+	},
+	{
+		Distinct: true,
+		List: []parser.Primary{
+			parser.NewString("str1"),
+			parser.NewString("str3"),
+			parser.NewNull(),
+			parser.NewString("str2"),
+			parser.NewString("str1"),
+			parser.NewString("str2"),
+		},
+		Separator: ",",
+		Result:    parser.NewString("str1,str3,str2"),
+	},
+	{
+		Distinct: false,
+		List: []parser.Primary{
+			parser.NewNull(),
+		},
+		Separator: ",",
+		Result:    parser.NewNull(),
+	},
+}
+
+func TestListAgg(t *testing.T) {
+	for _, v := range listAggTests {
+		r := ListAgg(v.Distinct, v.List, v.Separator)
+		if !reflect.DeepEqual(r, v.Result) {
+			t.Errorf("listagg distinct = %t, list = %s: separator = %q, result = %s, want %s", v.Distinct, v.List, v.Separator, r, v.Result)
+		}
+	}
+}

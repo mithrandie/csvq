@@ -14,6 +14,9 @@ const (
 	ERROR_MESSAGE_WITH_EMPTY_POSITION_TEMPLATE = "[L:- C:-] %s"
 
 	ERROR_INVALID_SYNTAX                    = "syntax error: unexpected %s"
+	ERROR_READ_FILE                         = "failed to read from file: %s"
+	ERROR_WRITE_FILE                        = "failed to write to file: %s"
+	ERROR_WRITE_FILE_IN_AUTOCOMMIT          = "[Auto-Commit] failed to write to file: %s"
 	ERROR_UNPERMITTED_WILDCARD              = "wildcard '*' cannot be passed as a argument to the %s function"
 	ERROR_FIELD_AMBIGUOUS                   = "field %s is ambiguous"
 	ERROR_FIELD_NOT_EXIST                   = "field %s does not exist"
@@ -139,11 +142,45 @@ func NewSyntaxErrorFromExpr(expr parser.Expression) error {
 	}
 }
 
+type ReadFileError struct {
+	*BaseError
+}
+
+func NewReadFileError(expr parser.ProcExpr, message string) error {
+	return &ReadFileError{
+		NewBaseError(expr, fmt.Sprintf(ERROR_READ_FILE, message)),
+	}
+}
+
+type WriteFileError struct {
+	*BaseError
+}
+
+func NewWriteFileError(expr parser.ProcExpr, message string) error {
+	return &WriteFileError{
+		NewBaseError(expr, fmt.Sprintf(ERROR_WRITE_FILE, message)),
+	}
+}
+
+type AutoCommitError struct {
+	Message string
+}
+
+func (e AutoCommitError) Error() string {
+	return e.Message
+}
+
+func NewAutoCommitError(message string) error {
+	return &AutoCommitError{
+		Message: fmt.Sprintf(ERROR_WRITE_FILE_IN_AUTOCOMMIT, message),
+	}
+}
+
 type UnpermittedWildCardError struct {
 	*BaseError
 }
 
-func NewUnpermittedWildCardError(funcname string, expr parser.AllColumns) error {
+func NewUnpermittedWildCardError(expr parser.AllColumns, funcname string) error {
 	return &UnpermittedWildCardError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_UNPERMITTED_WILDCARD, funcname)),
 	}
@@ -213,7 +250,7 @@ type NotGroupingRecordsError struct {
 	*BaseError
 }
 
-func NewNotGroupingRecordsError(funcname string, expr parser.Expression) error {
+func NewNotGroupingRecordsError(expr parser.Expression, funcname string) error {
 	return &NotGroupingRecordsError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_NOT_GROUPING_RECORDS, funcname)),
 	}
@@ -243,7 +280,7 @@ type FunctionNotExistError struct {
 	*BaseError
 }
 
-func NewFunctionNotExistError(funcname string, expr parser.Expression) error {
+func NewFunctionNotExistError(expr parser.Expression, funcname string) error {
 	return &FunctionNotExistError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_FUNCTION_NOT_EXIST, funcname)),
 	}
@@ -253,7 +290,7 @@ type FunctionArgumentLengthError struct {
 	*BaseError
 }
 
-func NewFunctionArgumentLengthError(funcname string, argslen []int, expr parser.Expression) error {
+func NewFunctionArgumentLengthError(expr parser.Expression, funcname string, argslen []int) error {
 	var argstr string
 	if 1 < len(argslen) {
 		lastarg := FormatCount(argslen[len(argslen)-1], "argument")
@@ -271,7 +308,7 @@ func NewFunctionArgumentLengthError(funcname string, argslen []int, expr parser.
 	}
 }
 
-func NewFunctionArgumentLengthErrorWithCustomArgs(funcname string, argstr string, expr parser.Expression) error {
+func NewFunctionArgumentLengthErrorWithCustomArgs(expr parser.Expression, funcname string, argstr string) error {
 	return &FunctionArgumentLengthError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_FUNCTION_ARGUMENT_LENGTH, funcname, argstr)),
 	}
@@ -281,9 +318,9 @@ type FunctionInvalidArgumentError struct {
 	*BaseError
 }
 
-func NewFunctionInvalidArgumentError(function parser.Function, message string) error {
+func NewFunctionInvalidArgumentError(function parser.Expression, funcname string, message string) error {
 	return &FunctionInvalidArgumentError{
-		NewBaseError(function, fmt.Sprintf(ERROR_FUNCTION_INVALID_ARGUMENT, message, function.Name)),
+		NewBaseError(function, fmt.Sprintf(ERROR_FUNCTION_INVALID_ARGUMENT, message, funcname)),
 	}
 }
 
@@ -291,7 +328,7 @@ type UnpermittedStatementFunctionError struct {
 	*BaseError
 }
 
-func NewUnpermittedStatementFunctionError(funcname string, expr parser.Expression) error {
+func NewUnpermittedStatementFunctionError(expr parser.Expression, funcname string) error {
 	return &UnpermittedStatementFunctionError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_UNPERMITTED_STATEMENT_FUNCTION, funcname)),
 	}
@@ -619,7 +656,7 @@ type UpdateFieldNotExistError struct {
 	*BaseError
 }
 
-func NewUpdateFieldNotExistError(field parser.FieldReference) error {
+func NewUpdateFieldNotExistError(field parser.Expression) error {
 	return &UpdateFieldNotExistError{
 		NewBaseError(field, fmt.Sprintf(ERROR_UPDATE_FIELD_NOT_EXIST, field)),
 	}
@@ -629,7 +666,7 @@ type UpdateValueAmbiguousError struct {
 	*BaseError
 }
 
-func NewUpdateValueAmbiguousError(field parser.FieldReference, value parser.Expression) error {
+func NewUpdateValueAmbiguousError(field parser.Expression, value parser.Expression) error {
 	return &UpdateValueAmbiguousError{
 		NewBaseError(field, fmt.Sprintf(ERROR_UPDATE_VALUE_AMBIGUOUS, value, field)),
 	}

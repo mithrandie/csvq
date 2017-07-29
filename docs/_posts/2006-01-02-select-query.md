@@ -173,7 +173,7 @@ DUAL
   This table is used to retrieve pseudo columns.
 
 STDIN
-: The stdin table loads data from the standard input as a csv data. The stdin table is one of [temporary tables]({{ '/reference/temporary-table.html' | relative_url }}).
+: The stdin table loads data from the standard input as a csv data. The stdin table is one of [temporary tables]({{ '/reference/temporary-table.html' | relative_url }}) that is declared automatically.
 
 
 ## Where Clause

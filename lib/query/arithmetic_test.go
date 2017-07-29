@@ -15,9 +15,9 @@ var calculateTests = []struct {
 }{
 	{
 		LHS:      parser.NewString("9"),
-		RHS:      parser.Null{},
+		RHS:      parser.NewNull(),
 		Operator: '+',
-		Result:   parser.Null{},
+		Result:   parser.NewNull(),
 	},
 	{
 		LHS:      parser.NewString("9"),

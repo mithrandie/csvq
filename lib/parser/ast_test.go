@@ -1096,48 +1096,27 @@ func TestFunction_String(t *testing.T) {
 
 func TestAggregateFunction_String(t *testing.T) {
 	e := AggregateFunction{
-		Name: "sum",
-		Option: AggregateOption{
-			Args: []Expression{
-				Identifier{Literal: "column"},
-			},
+		Name:     "sum",
+		Distinct: Token{Token: DISTINCT, Literal: "distinct"},
+		Args: []Expression{
+			FieldReference{Column: Identifier{Literal: "column"}},
 		},
 	}
-	expect := "sum(column)"
+	expect := "sum(distinct column)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 }
 
-func TestAggregateOption_IsDistinct(t *testing.T) {
-	e := AggregateOption{}
+func TestAggregateFunction_IsDistinct(t *testing.T) {
+	e := AggregateFunction{}
 	if e.IsDistinct() == true {
 		t.Errorf("distinct = %t, want %t for %#v", e.IsDistinct(), false, e)
 	}
 
-	e = AggregateOption{Distinct: Token{Token: DISTINCT, Literal: "distinct"}}
+	e = AggregateFunction{Distinct: Token{Token: DISTINCT, Literal: "distinct"}}
 	if e.IsDistinct() == false {
 		t.Errorf("distinct = %t, want %t for %#v", e.IsDistinct(), true, e)
-	}
-}
-
-func TestAggregateOption_String(t *testing.T) {
-	e := AggregateOption{
-		Distinct: Token{Token: DISTINCT, Literal: "distinct"},
-		Args: []Expression{
-			Identifier{Literal: "column"},
-			String{literal: "a"},
-		},
-	}
-	expect := "distinct column, 'a'"
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-
-	e = AggregateOption{}
-	expect = ""
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 }
 
@@ -1456,30 +1435,48 @@ func TestCaseElse_String(t *testing.T) {
 	}
 }
 
-func TestGroupConcat_String(t *testing.T) {
-	e := GroupConcat{
-		GroupConcat: "group_concat",
-		Option:      AggregateOption{Args: []Expression{Identifier{Literal: "column1"}}},
+func TestListAgg_String(t *testing.T) {
+	e := ListAgg{
+		ListAgg:  "listagg",
+		Distinct: Token{Token: DISTINCT, Literal: "distinct"},
+		Args: []Expression{
+			Identifier{Literal: "column1"},
+			NewString(","),
+		},
+		WithinGroup: "within group",
 		OrderBy: OrderByClause{
 			OrderBy: "order by",
 			Items:   []Expression{Identifier{Literal: "column1"}},
 		},
-		SeparatorLit: "separator",
-		Separator:    ",",
 	}
-	expect := "group_concat(column1 order by column1 separator ',')"
+	expect := "listagg(distinct column1, ',') within group (order by column1)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 }
 
+func TestListAgg_IsDistinct(t *testing.T) {
+	e := ListAgg{}
+	if e.IsDistinct() == true {
+		t.Errorf("distinct = %t, want %t for %#v", e.IsDistinct(), false, e)
+	}
+
+	e = ListAgg{Distinct: Token{Token: DISTINCT, Literal: "distinct"}}
+	if e.IsDistinct() == false {
+		t.Errorf("distinct = %t, want %t for %#v", e.IsDistinct(), true, e)
+	}
+}
+
 func TestAnalyticFunction_String(t *testing.T) {
 	e := AnalyticFunction{
-		Name: "avg",
+		Name:     "avg",
+		Distinct: Token{Token: DISTINCT, Literal: "distinct"},
 		Args: []Expression{
 			Identifier{Literal: "column4"},
 		},
-		Over: "over",
+		IgnoreNulls:    true,
+		IgnoreNullsLit: "ignore nulls",
+		Over:           "over",
 		AnalyticClause: AnalyticClause{
 			Partition: Partition{
 				PartitionBy: "partition by",
@@ -1496,9 +1493,21 @@ func TestAnalyticFunction_String(t *testing.T) {
 			},
 		},
 	}
-	expect := "avg(column4) over (partition by column1, column2 order by column3)"
+	expect := "avg(distinct column4 ignore nulls) over (partition by column1, column2 order by column3)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestAnalyticFunction_IsDistinct(t *testing.T) {
+	e := AnalyticFunction{}
+	if e.IsDistinct() == true {
+		t.Errorf("distinct = %t, want %t for %#v", e.IsDistinct(), false, e)
+	}
+
+	e = AnalyticFunction{Distinct: Token{Token: DISTINCT, Literal: "distinct"}}
+	if e.IsDistinct() == false {
+		t.Errorf("distinct = %t, want %t for %#v", e.IsDistinct(), true, e)
 	}
 }
 

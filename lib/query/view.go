@@ -138,7 +138,7 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 			if !strings.EqualFold(parentFilter.RecursiveTable.Name.Literal, table.Name().Literal) {
 				view.Header.Update(table.Name().Literal, nil)
 			}
-		} else if ct, err := parentFilter.InlineTables.Get(tableIdentifier); err == nil {
+		} else if ct, err := parentFilter.InlineTablesList.Get(tableIdentifier); err == nil {
 			if err = parentFilter.AliasesList.Add(table.Name(), ""); err != nil {
 				return nil, err
 			}
@@ -177,7 +177,7 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 				if !ViewCache.Exists(fileInfo.Path) {
 					file, err := os.Open(fileInfo.Path)
 					if err != nil {
-						return nil, err
+						return nil, NewReadFileError(tableIdentifier, err.Error())
 					}
 					defer file.Close()
 					loadView, err := loadViewFromFile(file, fileInfo, commonTableName)
@@ -685,7 +685,7 @@ func (view *View) evalAnalyticFunction(expr parser.AnalyticFunction) error {
 	name := strings.ToUpper(expr.Name)
 	fn, ok := AnalyticFunctions[name]
 	if !ok {
-		return NewFunctionNotExistError(expr.Name, expr)
+		return NewFunctionNotExistError(expr, expr.Name)
 	}
 
 	if expr.AnalyticClause.OrderByClause != nil {
@@ -931,14 +931,34 @@ func (view *View) Intersect(calcView *View, all bool) {
 	}
 }
 
-func (view *View) FieldIndex(fieldRef parser.FieldReference) (int, error) {
-	return view.Header.Contains(fieldRef)
+func (view *View) ListValuesForAggregateFunctions(expr parser.Expression, arg parser.Expression, filter Filter) ([]parser.Primary, error) {
+	list := make([]parser.Primary, view.RecordLen())
+	f := NewFilterForSequentialEvaluation(view, filter)
+	for i := 0; i < view.RecordLen(); i++ {
+		f.Records[0].RecordIndex = i
+		p, err := f.Evaluate(arg)
+		if err != nil {
+			if _, ok := err.(*NotGroupingRecordsError); ok {
+				err = NewNestedAggregateFunctionsError(expr)
+			}
+			return nil, err
+		}
+		list[i] = p
+	}
+	return list, nil
+}
+
+func (view *View) FieldIndex(fieldRef parser.Expression) (int, error) {
+	if number, ok := fieldRef.(parser.ColumnNumber); ok {
+		return view.Header.ContainsNumber(number)
+	}
+	return view.Header.Contains(fieldRef.(parser.FieldReference))
 }
 
 func (view *View) FieldIndices(fields []parser.Expression) ([]int, error) {
 	indices := make([]int, len(fields))
 	for i, v := range fields {
-		idx, err := view.FieldIndex(v.(parser.FieldReference))
+		idx, err := view.FieldIndex(v)
 		if err != nil {
 			return nil, err
 		}
@@ -947,7 +967,7 @@ func (view *View) FieldIndices(fields []parser.Expression) ([]int, error) {
 	return indices, nil
 }
 
-func (view *View) FieldViewName(fieldRef parser.FieldReference) (string, error) {
+func (view *View) FieldViewName(fieldRef parser.Expression) (string, error) {
 	idx, err := view.FieldIndex(fieldRef)
 	if err != nil {
 		return "", err

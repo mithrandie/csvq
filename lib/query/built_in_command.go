@@ -79,13 +79,13 @@ func Source(expr parser.Source) ([]parser.Statement, error) {
 
 	fp, err := os.Open(expr.FilePath)
 	if err != nil {
-		return nil, err
+		return nil, NewReadFileError(expr, err.Error())
 	}
 	defer fp.Close()
 
 	buf, err := ioutil.ReadAll(fp)
 	if err != nil {
-		return nil, err
+		return nil, NewReadFileError(expr, err.Error())
 	}
 	input := string(buf)
 

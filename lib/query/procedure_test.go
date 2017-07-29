@@ -493,7 +493,6 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 	tf.Repository = TestDir
 	tf.Format = cmd.CSV
 
-	UserFunctions = UserDefinedFunctionMap{}
 	proc := NewProcedure()
 
 	for _, v := range procedureExecuteStatementTests {

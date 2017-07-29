@@ -21,11 +21,7 @@ func NewProcedure() *Procedure {
 
 func (proc *Procedure) NewChildProcedure() *Procedure {
 	return &Procedure{
-		Filter: NewFilter(
-			append(VariablesList{{}}, proc.Filter.VariablesList...),
-			append(TemporaryViewMapList{{}}, proc.Filter.TempViewsList...),
-			append(CursorMapList{{}}, proc.Filter.CursorsList...),
-		),
+		Filter: proc.Filter.CreateChildScope(),
 	}
 }
 
@@ -86,7 +82,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 	case parser.DisposeTable:
 		err = proc.Filter.TempViewsList.Dispose(stmt.(parser.DisposeTable).Table)
 	case parser.FunctionDeclaration:
-		err = UserFunctions.Declare(stmt.(parser.FunctionDeclaration))
+		err = proc.Filter.FunctionsList.Declare(stmt.(parser.FunctionDeclaration))
 	case parser.SelectQuery:
 		if view, err = Select(stmt.(parser.SelectQuery), proc.Filter); err == nil {
 			flags := cmd.GetFlags()
@@ -195,7 +191,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 	case parser.TransactionControl:
 		switch stmt.(parser.TransactionControl).Token {
 		case parser.COMMIT:
-			err = proc.Commit()
+			err = proc.Commit(stmt.(parser.ProcExpr))
 		case parser.ROLLBACK:
 			proc.Rollback()
 		}
@@ -324,7 +320,7 @@ func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, 
 	return TERMINATE, nil
 }
 
-func (proc *Procedure) Commit() error {
+func (proc *Procedure) Commit(expr parser.ProcExpr) error {
 	var createFiles = map[string]*FileInfo{}
 	var updateFiles = map[string]*FileInfo{}
 
@@ -356,7 +352,10 @@ func (proc *Procedure) Commit() error {
 			}
 
 			if err = cmd.CreateFile(pt, viewstr); err != nil {
-				return err
+				if expr == nil {
+					return NewAutoCommitError(err.Error())
+				}
+				return NewWriteFileError(expr, err.Error())
 			}
 			AddLog(fmt.Sprintf("Commit: file %q is created.", pt))
 			if !modified {
@@ -374,7 +373,10 @@ func (proc *Procedure) Commit() error {
 			}
 
 			if err = cmd.UpdateFile(pt, viewstr); err != nil {
-				return err
+				if expr == nil {
+					return NewAutoCommitError(err.Error())
+				}
+				return NewWriteFileError(expr, err.Error())
 			}
 			AddLog(fmt.Sprintf("Commit: file %q is updated.", pt))
 			if !modified {

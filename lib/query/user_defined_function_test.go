@@ -7,6 +7,166 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
+var userDefinedFunctionListDeclareTests = []struct {
+	Name   string
+	Expr   parser.FunctionDeclaration
+	Result UserDefinedFunctionsList
+	Error  string
+}{
+	{
+		Name: "UserDefineFunctionsList Declare",
+		Expr: parser.FunctionDeclaration{
+			Name: parser.Identifier{Literal: "userfunc1"},
+			Parameters: []parser.Variable{
+				{Name: "@arg1"},
+			},
+			Statements: []parser.Statement{
+				parser.Print{Value: parser.Variable{Name: "@arg1"}},
+			},
+		},
+		Result: UserDefinedFunctionsList{
+			UserDefinedFunctionMap{
+				"USERFUNC1": &UserDefinedFunction{
+					Name: parser.Identifier{Literal: "userfunc1"},
+					Parameters: []parser.Variable{
+						{Name: "@arg1"},
+					},
+					Statements: []parser.Statement{
+						parser.Print{Value: parser.Variable{Name: "@arg1"}},
+					},
+				},
+			},
+			UserDefinedFunctionMap{
+				"USERFUNC2": &UserDefinedFunction{
+					Name: parser.Identifier{Literal: "userfunc2"},
+					Parameters: []parser.Variable{
+						{Name: "@arg1"},
+						{Name: "@arg2"},
+					},
+					Statements: []parser.Statement{
+						parser.Print{Value: parser.Variable{Name: "@arg2"}},
+					},
+				},
+			},
+		},
+	},
+}
+
+func TestUserDefinedFunctionsList_Declare(t *testing.T) {
+	list := UserDefinedFunctionsList{
+		UserDefinedFunctionMap{},
+		UserDefinedFunctionMap{
+			"USERFUNC2": &UserDefinedFunction{
+				Name: parser.Identifier{Literal: "userfunc2"},
+				Parameters: []parser.Variable{
+					{Name: "@arg1"},
+					{Name: "@arg2"},
+				},
+				Statements: []parser.Statement{
+					parser.Print{Value: parser.Variable{Name: "@arg2"}},
+				},
+			},
+		},
+	}
+
+	for _, v := range userDefinedFunctionListDeclareTests {
+		err := list.Declare(v.Expr)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(list, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, list, v.Result)
+		}
+	}
+}
+
+var userDefinedFunctionListGetTests = []struct {
+	Name     string
+	Function parser.Function
+	Result   *UserDefinedFunction
+	Error    string
+}{
+	{
+		Name: "UserDefineFunctionsList Get",
+		Function: parser.Function{
+			Name: "userfunc2",
+		},
+		Result: &UserDefinedFunction{
+			Name: parser.Identifier{Literal: "userfunc2"},
+			Parameters: []parser.Variable{
+				{Name: "@arg1"},
+				{Name: "@arg2"},
+			},
+			Statements: []parser.Statement{
+				parser.Print{Value: parser.Variable{Name: "@arg2"}},
+			},
+		},
+	},
+	{
+		Name: "UserDefineFunctionsList Get Not Exist Error",
+		Function: parser.Function{
+			Name: "notexist",
+		},
+		Error: "[L:- C:-] function notexist does not exist",
+	},
+}
+
+func TestUserDefinedFunctionsList_Get(t *testing.T) {
+	list := UserDefinedFunctionsList{
+		UserDefinedFunctionMap{
+			"USERFUNC1": &UserDefinedFunction{
+				Name: parser.Identifier{Literal: "userfunc1"},
+				Parameters: []parser.Variable{
+					{Name: "@arg1"},
+				},
+				Statements: []parser.Statement{
+					parser.Print{Value: parser.Variable{Name: "@arg1"}},
+				},
+			},
+		},
+		UserDefinedFunctionMap{
+			"USERFUNC2": &UserDefinedFunction{
+				Name: parser.Identifier{Literal: "userfunc2"},
+				Parameters: []parser.Variable{
+					{Name: "@arg1"},
+					{Name: "@arg2"},
+				},
+				Statements: []parser.Statement{
+					parser.Print{Value: parser.Variable{Name: "@arg2"}},
+				},
+			},
+		},
+	}
+
+	for _, v := range userDefinedFunctionListGetTests {
+		fn, err := list.Get(v.Function)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(fn, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, fn, v.Result)
+		}
+	}
+}
+
 var userDefinedFunctionMapDeclareTests = []struct {
 	Name   string
 	Expr   parser.FunctionDeclaration
@@ -389,6 +549,7 @@ func TestUserDefinedFunction_Execute(t *testing.T) {
 		[]Variables{vars},
 		[]ViewMap{{}},
 		[]CursorMap{{}},
+		[]UserDefinedFunctionMap{{}},
 	)
 
 	for _, v := range userDefinedFunctionExecuteTests {
