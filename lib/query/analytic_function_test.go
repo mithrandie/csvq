@@ -1507,3 +1507,462 @@ var analyzeListAggTests = []analyticFunctionTest{
 func TestAnalyzeListAgg(t *testing.T) {
 	testAnalyticFunction(t, AnalyzeListAgg, analyzeListAggTests)
 }
+
+var analyzeLagTests = []analyticFunctionTest{
+	{
+		Name: "Lag",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(100),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(300),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(100),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewNull(),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(300),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(600),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(1000),
+				}),
+			},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "lag",
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				parser.NewInteger(2),
+				parser.NewInteger(0),
+			},
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(100),
+					parser.NewInteger(0),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(300),
+					parser.NewInteger(0),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(100),
+					parser.NewInteger(0),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewNull(),
+					parser.NewInteger(0),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(300),
+					parser.NewInteger(200),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(600),
+					parser.NewInteger(0),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(1000),
+					parser.NewInteger(700),
+				}),
+			},
+		},
+	},
+	{
+		Name: "Lag With Ignore Nulls",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(100),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(300),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(100),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewNull(),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(300),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(600),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(1000),
+				}),
+			},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "lag",
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+			},
+			IgnoreNulls: true,
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(100),
+					parser.NewNull(),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(300),
+					parser.NewInteger(200),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(100),
+					parser.NewNull(),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewNull(),
+					parser.NewNull(),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(300),
+					parser.NewInteger(200),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(600),
+					parser.NewInteger(300),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(1000),
+					parser.NewInteger(400),
+				}),
+			},
+		},
+	},
+	{
+		Name: "Lead",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(100),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(300),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(100),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewNull(),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(300),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(600),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(1000),
+				}),
+			},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "lead",
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+			},
+			IgnoreNulls: true,
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(100),
+					parser.NewInteger(-200),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(300),
+					parser.NewNull(),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(100),
+					parser.NewInteger(-200),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewNull(),
+					parser.NewNull(),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(300),
+					parser.NewInteger(-300),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(600),
+					parser.NewInteger(-400),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(1000),
+					parser.NewNull(),
+				}),
+			},
+		},
+	},
+	{
+		Name: "Lag Argument Length Error",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(100),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(300),
+				}),
+			},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "lag",
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] function lag takes 1 to 3 arguments",
+	},
+	{
+		Name: "Lag First Argument Evaluation Length Error",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(100),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(300),
+				}),
+			},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "lag",
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+			},
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] field notexist does not exist",
+	},
+	{
+		Name: "Lag Second Argument Evaluation Error",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(100),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(300),
+				}),
+			},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "lag",
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+			},
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] the second argument must be an integer for function lag",
+	},
+	{
+		Name: "Lag Second Argument Not Integer Error",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(100),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(300),
+				}),
+			},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "lag",
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				parser.NewNull(),
+			},
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] the second argument must be an integer for function lag",
+	},
+	{
+		Name: "Lag Third Argument Evaluation Error",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(100),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(300),
+				}),
+			},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "lag",
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				parser.NewInteger(1),
+				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+			},
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] the third argument must be a primitive value for function lag",
+	},
+	{
+		Name: "Lag Partition Value Error",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(100),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(300),
+				}),
+			},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "lag",
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+			},
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] field notexist does not exist",
+	},
+}
+
+func TestAnalyzeLag(t *testing.T) {
+	testAnalyticFunction(t, AnalyzeLag, analyzeLagTests)
+}

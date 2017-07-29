@@ -52,6 +52,8 @@ var aggregateFunctions = []string{
 var functionsWithAdditinals = []string{
 	"FIRST_VALUE",
 	"LAST_VALUE",
+	"LAG",
+	"LEAD",
 }
 
 func TokenLiteral(token int) string {
