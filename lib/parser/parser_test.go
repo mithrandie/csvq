@@ -2440,7 +2440,7 @@ var parseTests = []struct {
 				},
 				Insert: "insert",
 				Into:   "into",
-				Table:  Identifier{BaseExpr: &BaseExpr{line: 1, char: 35}, Literal: "table1"},
+				Table:  Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 35}, Literal: "table1"}},
 				Values: "values",
 				ValuesList: []Expression{
 					RowValue{
@@ -2471,7 +2471,7 @@ var parseTests = []struct {
 			InsertQuery{
 				Insert: "insert",
 				Into:   "into",
-				Table:  Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
+				Table:  Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"}},
 				Fields: []Expression{
 					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 21}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 21}, Literal: "column1"}},
 					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 30}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 30}, Literal: "column2"}},
@@ -2507,7 +2507,7 @@ var parseTests = []struct {
 			InsertQuery{
 				Insert: "insert",
 				Into:   "into",
-				Table:  Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
+				Table:  Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"}},
 				Query: SelectQuery{
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
@@ -2529,7 +2529,7 @@ var parseTests = []struct {
 			InsertQuery{
 				Insert: "insert",
 				Into:   "into",
-				Table:  Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
+				Table:  Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"}},
 				Fields: []Expression{
 					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 21}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 21}, Literal: "column1"}},
 					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 30}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 30}, Literal: "column2"}},

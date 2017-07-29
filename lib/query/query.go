@@ -353,8 +353,13 @@ func Insert(query parser.InsertQuery, parentFilter Filter) (*View, error) {
 		}
 	}
 
+	fromClause := parser.FromClause{
+		Tables: []parser.Expression{
+			query.Table,
+		},
+	}
 	view := NewView()
-	err := view.LoadFromTableIdentifier(query.Table, filter)
+	err := view.Load(fromClause, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -374,6 +379,7 @@ func Insert(query parser.InsertQuery, parentFilter Filter) (*View, error) {
 		}
 	}
 
+	view.RestoreHeaderReferences()
 	view.ParentFilter = Filter{}
 
 	if view.FileInfo.Temporary {
@@ -476,7 +482,7 @@ func Update(query parser.UpdateQuery, parentFilter Filter) ([]*View, error) {
 		}
 
 		v.Fix()
-		v.Header.Update(parser.FormatTableName(v.FileInfo.Path), nil)
+		v.RestoreHeaderReferences()
 		v.OperatedRecords = len(updatedIndices[k])
 
 		if v.FileInfo.Temporary {
@@ -576,7 +582,7 @@ func Delete(query parser.DeleteQuery, parentFilter Filter) ([]*View, error) {
 		}
 
 		v.Fix()
-		v.Header.Update(parser.FormatTableName(v.FileInfo.Path), nil)
+		v.RestoreHeaderReferences()
 		v.OperatedRecords = len(deletedIndices[k])
 
 		if v.FileInfo.Temporary {

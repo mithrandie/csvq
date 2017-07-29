@@ -250,7 +250,7 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.InsertQuery{
-			Table: parser.Identifier{Literal: "table1"},
+			Table: parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			Fields: []parser.Expression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},

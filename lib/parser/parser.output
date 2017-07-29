@@ -339,10 +339,10 @@ state 19
 
 state 20
 	select_query:  with_clause.select_entity order_by_clause limit_clause offset_clause 
-	insert_query:  with_clause.INSERT INTO table_identifier VALUES row_values 
-	insert_query:  with_clause.INSERT INTO table_identifier '(' field_references ')' VALUES row_values 
-	insert_query:  with_clause.INSERT INTO table_identifier select_query 
-	insert_query:  with_clause.INSERT INTO table_identifier '(' field_references ')' select_query 
+	insert_query:  with_clause.INSERT INTO identified_table VALUES row_values 
+	insert_query:  with_clause.INSERT INTO identified_table '(' field_references ')' VALUES row_values 
+	insert_query:  with_clause.INSERT INTO identified_table select_query 
+	insert_query:  with_clause.INSERT INTO identified_table '(' field_references ')' select_query 
 	update_query:  with_clause.UPDATE operate_tables SET update_set_list from_clause where_clause 
 	delete_query:  with_clause.DELETE FROM tables where_clause 
 	delete_query:  with_clause.DELETE operate_tables FROM tables where_clause 
@@ -1383,10 +1383,10 @@ state 100
 	order_by_clause  goto 180
 
 state 101
-	insert_query:  with_clause INSERT.INTO table_identifier VALUES row_values 
-	insert_query:  with_clause INSERT.INTO table_identifier '(' field_references ')' VALUES row_values 
-	insert_query:  with_clause INSERT.INTO table_identifier select_query 
-	insert_query:  with_clause INSERT.INTO table_identifier '(' field_references ')' select_query 
+	insert_query:  with_clause INSERT.INTO identified_table VALUES row_values 
+	insert_query:  with_clause INSERT.INTO identified_table '(' field_references ')' VALUES row_values 
+	insert_query:  with_clause INSERT.INTO identified_table select_query 
+	insert_query:  with_clause INSERT.INTO identified_table '(' field_references ')' select_query 
 
 	INTO  shift 182
 	.  error
@@ -3059,10 +3059,10 @@ state 181
 
 
 state 182
-	insert_query:  with_clause INSERT INTO.table_identifier VALUES row_values 
-	insert_query:  with_clause INSERT INTO.table_identifier '(' field_references ')' VALUES row_values 
-	insert_query:  with_clause INSERT INTO.table_identifier select_query 
-	insert_query:  with_clause INSERT INTO.table_identifier '(' field_references ')' select_query 
+	insert_query:  with_clause INSERT INTO.identified_table VALUES row_values 
+	insert_query:  with_clause INSERT INTO.identified_table '(' field_references ')' VALUES row_values 
+	insert_query:  with_clause INSERT INTO.identified_table select_query 
+	insert_query:  with_clause INSERT INTO.identified_table '(' field_references ')' select_query 
 
 	IDENTIFIER  shift 38
 	STDIN  shift 186
@@ -3074,15 +3074,16 @@ state 182
 	FUNCTION_WITH_ADDITIONALS  shift 44
 	.  error
 
-	table_identifier  goto 277
+	table_identifier  goto 278
+	identified_table  goto 277
 	identifier  goto 185
 
 state 183
 	operate_tables:  operate_tables.',' operate_tables 
 	update_query:  with_clause UPDATE operate_tables.SET update_set_list from_clause where_clause 
 
-	SET  shift 279
-	','  shift 278
+	SET  shift 280
+	','  shift 279
 	.  error
 
 
@@ -3108,7 +3109,7 @@ state 187
 	delete_query:  with_clause DELETE FROM.tables where_clause 
 
 	IDENTIFIER  shift 38
-	DUAL  shift 285
+	DUAL  shift 286
 	STDIN  shift 186
 	TIES  shift 39
 	NULLS  shift 40
@@ -3120,12 +3121,12 @@ state 187
 	.  error
 
 	subquery  goto 287
-	table_identifier  goto 286
-	identified_table  goto 282
-	virtual_table_object  goto 283
-	table  goto 281
-	join  goto 284
-	tables  goto 280
+	table_identifier  goto 278
+	identified_table  goto 283
+	virtual_table_object  goto 284
+	table  goto 282
+	join  goto 285
+	tables  goto 281
 	identifier  goto 185
 
 state 188
@@ -3133,7 +3134,7 @@ state 188
 	delete_query:  with_clause DELETE operate_tables.FROM tables where_clause 
 
 	FROM  shift 288
-	','  shift 278
+	','  shift 279
 	.  error
 
 
@@ -3150,7 +3151,7 @@ state 190
 	from_clause:  FROM.tables 
 
 	IDENTIFIER  shift 38
-	DUAL  shift 285
+	DUAL  shift 286
 	STDIN  shift 186
 	TIES  shift 39
 	NULLS  shift 40
@@ -3162,11 +3163,11 @@ state 190
 	.  error
 
 	subquery  goto 287
-	table_identifier  goto 286
-	identified_table  goto 282
-	virtual_table_object  goto 283
-	table  goto 281
-	join  goto 284
+	table_identifier  goto 278
+	identified_table  goto 283
+	virtual_table_object  goto 284
+	table  goto 282
+	join  goto 285
 	tables  goto 291
 	identifier  goto 185
 
@@ -4958,10 +4959,10 @@ state 276
 
 277: shift/reduce conflict (shift 370(0), red'n 119(0)) on '('
 state 277
-	insert_query:  with_clause INSERT INTO table_identifier.VALUES row_values 
-	insert_query:  with_clause INSERT INTO table_identifier.'(' field_references ')' VALUES row_values 
-	insert_query:  with_clause INSERT INTO table_identifier.select_query 
-	insert_query:  with_clause INSERT INTO table_identifier.'(' field_references ')' select_query 
+	insert_query:  with_clause INSERT INTO identified_table.VALUES row_values 
+	insert_query:  with_clause INSERT INTO identified_table.'(' field_references ')' VALUES row_values 
+	insert_query:  with_clause INSERT INTO identified_table.select_query 
+	insert_query:  with_clause INSERT INTO identified_table.'(' field_references ')' select_query 
 	with_clause: .    (119)
 
 	VALUES  shift 369
@@ -4972,7 +4973,31 @@ state 277
 	select_query  goto 371
 	with_clause  goto 159
 
+278: shift/reduce conflict (shift 38(0), red'n 219(0)) on IDENTIFIER
+278: shift/reduce conflict (shift 39(0), red'n 219(0)) on TIES
+278: shift/reduce conflict (shift 40(0), red'n 219(0)) on NULLS
+278: shift/reduce conflict (shift 41(0), red'n 219(0)) on COUNT
+278: shift/reduce conflict (shift 42(0), red'n 219(0)) on LISTAGG
+278: shift/reduce conflict (shift 43(0), red'n 219(0)) on AGGREGATE_FUNCTION
+278: shift/reduce conflict (shift 44(0), red'n 219(0)) on FUNCTION_WITH_ADDITIONALS
 state 278
+	identified_table:  table_identifier.    (219)
+	identified_table:  table_identifier.identifier 
+	identified_table:  table_identifier.AS identifier 
+
+	IDENTIFIER  shift 38
+	AS  shift 373
+	TIES  shift 39
+	NULLS  shift 40
+	COUNT  shift 41
+	LISTAGG  shift 42
+	AGGREGATE_FUNCTION  shift 43
+	FUNCTION_WITH_ADDITIONALS  shift 44
+	.  reduce 219 (src line 1236)
+
+	identifier  goto 372
+
+state 279
 	operate_tables:  operate_tables ','.operate_tables 
 
 	IDENTIFIER  shift 38
@@ -4986,10 +5011,10 @@ state 278
 	.  error
 
 	table_identifier  goto 184
-	operate_tables  goto 372
+	operate_tables  goto 374
 	identifier  goto 185
 
-state 279
+state 280
 	update_query:  with_clause UPDATE operate_tables SET.update_set_list from_clause where_clause 
 
 	IDENTIFIER  shift 38
@@ -5002,22 +5027,22 @@ state 279
 	FUNCTION_WITH_ADDITIONALS  shift 44
 	.  error
 
-	field_reference  goto 375
-	update_set  goto 374
-	update_set_list  goto 373
-	identifier  goto 376
+	field_reference  goto 377
+	update_set  goto 376
+	update_set_list  goto 375
+	identifier  goto 378
 
-state 280
+state 281
 	delete_query:  with_clause DELETE FROM tables.where_clause 
 	where_clause: .    (104)
 
 	WHERE  shift 290
 	.  reduce 104 (src line 691)
 
-	where_clause  goto 377
+	where_clause  goto 379
 
- 281: reduce/reduce conflict  (red'ns 312 and 316) on JOIN
-state 281
+ 282: reduce/reduce conflict  (red'ns 312 and 316) on JOIN
+state 282
 	join:  table.join_inner JOIN table join_condition 
 	join:  table.NATURAL join_inner JOIN table 
 	join:  table.join_direction join_outer JOIN table join_condition 
@@ -5029,72 +5054,36 @@ state 281
 	join_direction: .    (316)
 
 	JOIN  reduce 312 (src line 1698)
-	INNER  shift 383
+	INNER  shift 385
 	OUTER  reduce 316 (src line 1718)
-	LEFT  shift 384
-	RIGHT  shift 385
-	FULL  shift 386
-	CROSS  shift 381
-	NATURAL  shift 379
-	','  shift 382
+	LEFT  shift 386
+	RIGHT  shift 387
+	FULL  shift 388
+	CROSS  shift 383
+	NATURAL  shift 381
+	','  shift 384
 	.  reduce 253 (src line 1398)
 
-	join_inner  goto 378
-	join_direction  goto 380
+	join_inner  goto 380
+	join_direction  goto 382
 
-state 282
+state 283
 	table:  identified_table.    (223)
 
 	.  reduce 223 (src line 1256)
 
 
-283: shift/reduce conflict (shift 38(0), red'n 224(0)) on IDENTIFIER
-283: shift/reduce conflict (shift 39(0), red'n 224(0)) on TIES
-283: shift/reduce conflict (shift 40(0), red'n 224(0)) on NULLS
-283: shift/reduce conflict (shift 41(0), red'n 224(0)) on COUNT
-283: shift/reduce conflict (shift 42(0), red'n 224(0)) on LISTAGG
-283: shift/reduce conflict (shift 43(0), red'n 224(0)) on AGGREGATE_FUNCTION
-283: shift/reduce conflict (shift 44(0), red'n 224(0)) on FUNCTION_WITH_ADDITIONALS
-state 283
+284: shift/reduce conflict (shift 38(0), red'n 224(0)) on IDENTIFIER
+284: shift/reduce conflict (shift 39(0), red'n 224(0)) on TIES
+284: shift/reduce conflict (shift 40(0), red'n 224(0)) on NULLS
+284: shift/reduce conflict (shift 41(0), red'n 224(0)) on COUNT
+284: shift/reduce conflict (shift 42(0), red'n 224(0)) on LISTAGG
+284: shift/reduce conflict (shift 43(0), red'n 224(0)) on AGGREGATE_FUNCTION
+284: shift/reduce conflict (shift 44(0), red'n 224(0)) on FUNCTION_WITH_ADDITIONALS
+state 284
 	table:  virtual_table_object.    (224)
 	table:  virtual_table_object.identifier 
 	table:  virtual_table_object.AS identifier 
-
-	IDENTIFIER  shift 38
-	AS  shift 388
-	TIES  shift 39
-	NULLS  shift 40
-	COUNT  shift 41
-	LISTAGG  shift 42
-	AGGREGATE_FUNCTION  shift 43
-	FUNCTION_WITH_ADDITIONALS  shift 44
-	.  reduce 224 (src line 1261)
-
-	identifier  goto 387
-
-state 284
-	table:  join.    (227)
-
-	.  reduce 227 (src line 1273)
-
-
-state 285
-	table:  DUAL.    (228)
-
-	.  reduce 228 (src line 1277)
-
-
-286: shift/reduce conflict (shift 38(0), red'n 219(0)) on IDENTIFIER
-286: shift/reduce conflict (shift 39(0), red'n 219(0)) on TIES
-286: shift/reduce conflict (shift 40(0), red'n 219(0)) on NULLS
-286: shift/reduce conflict (shift 41(0), red'n 219(0)) on COUNT
-286: shift/reduce conflict (shift 42(0), red'n 219(0)) on LISTAGG
-286: shift/reduce conflict (shift 43(0), red'n 219(0)) on AGGREGATE_FUNCTION
-286: shift/reduce conflict (shift 44(0), red'n 219(0)) on FUNCTION_WITH_ADDITIONALS
-state 286
-	identified_table:  table_identifier.    (219)
-	identified_table:  table_identifier.identifier 
-	identified_table:  table_identifier.AS identifier 
 
 	IDENTIFIER  shift 38
 	AS  shift 390
@@ -5104,9 +5093,21 @@ state 286
 	LISTAGG  shift 42
 	AGGREGATE_FUNCTION  shift 43
 	FUNCTION_WITH_ADDITIONALS  shift 44
-	.  reduce 219 (src line 1236)
+	.  reduce 224 (src line 1261)
 
 	identifier  goto 389
+
+state 285
+	table:  join.    (227)
+
+	.  reduce 227 (src line 1273)
+
+
+state 286
+	table:  DUAL.    (228)
+
+	.  reduce 228 (src line 1277)
+
 
 state 287
 	virtual_table_object:  subquery.    (222)
@@ -5118,7 +5119,7 @@ state 288
 	delete_query:  with_clause DELETE operate_tables FROM.tables where_clause 
 
 	IDENTIFIER  shift 38
-	DUAL  shift 285
+	DUAL  shift 286
 	STDIN  shift 186
 	TIES  shift 39
 	NULLS  shift 40
@@ -5130,11 +5131,11 @@ state 288
 	.  error
 
 	subquery  goto 287
-	table_identifier  goto 286
-	identified_table  goto 282
-	virtual_table_object  goto 283
-	table  goto 281
-	join  goto 284
+	table_identifier  goto 278
+	identified_table  goto 283
+	virtual_table_object  goto 284
+	table  goto 282
+	join  goto 285
 	tables  goto 391
 	identifier  goto 185
 
@@ -5432,7 +5433,7 @@ state 310
 	.  error
 
 	field_reference  goto 411
-	identifier  goto 376
+	identifier  goto 378
 
 state 311
 	table_operation:  ALTER TABLE table_identifier RENAME.field_reference TO identifier 
@@ -5448,7 +5449,7 @@ state 311
 	.  error
 
 	field_reference  goto 413
-	identifier  goto 376
+	identifier  goto 378
 
 state 312
 	function:  identifier '(' arguments ')'.    (200)
@@ -6379,7 +6380,7 @@ state 368
 
 
 state 369
-	insert_query:  with_clause INSERT INTO table_identifier VALUES.row_values 
+	insert_query:  with_clause INSERT INTO identified_table VALUES.row_values 
 
 	'('  shift 254
 	.  error
@@ -6389,8 +6390,8 @@ state 369
 	subquery  goto 255
 
 state 370
-	insert_query:  with_clause INSERT INTO table_identifier '('.field_references ')' VALUES row_values 
-	insert_query:  with_clause INSERT INTO table_identifier '('.field_references ')' select_query 
+	insert_query:  with_clause INSERT INTO identified_table '('.field_references ')' VALUES row_values 
+	insert_query:  with_clause INSERT INTO identified_table '('.field_references ')' select_query 
 
 	IDENTIFIER  shift 38
 	STDIN  shift 71
@@ -6404,48 +6405,68 @@ state 370
 
 	field_reference  goto 457
 	field_references  goto 456
-	identifier  goto 376
+	identifier  goto 378
 
 state 371
-	insert_query:  with_clause INSERT INTO table_identifier select_query.    (263)
+	insert_query:  with_clause INSERT INTO identified_table select_query.    (263)
 
 	.  reduce 263 (src line 1447)
 
 
-372: shift/reduce conflict (shift 278(0), red'n 256(0)) on ','
 state 372
-	operate_tables:  operate_tables.',' operate_tables 
-	operate_tables:  operate_tables ',' operate_tables.    (256)
+	identified_table:  table_identifier identifier.    (220)
 
-	','  shift 278
-	.  reduce 256 (src line 1413)
+	.  reduce 220 (src line 1241)
 
 
 state 373
+	identified_table:  table_identifier AS.identifier 
+
+	IDENTIFIER  shift 38
+	TIES  shift 39
+	NULLS  shift 40
+	COUNT  shift 41
+	LISTAGG  shift 42
+	AGGREGATE_FUNCTION  shift 43
+	FUNCTION_WITH_ADDITIONALS  shift 44
+	.  error
+
+	identifier  goto 458
+
+374: shift/reduce conflict (shift 279(0), red'n 256(0)) on ','
+state 374
+	operate_tables:  operate_tables.',' operate_tables 
+	operate_tables:  operate_tables ',' operate_tables.    (256)
+
+	','  shift 279
+	.  reduce 256 (src line 1413)
+
+
+state 375
 	update_query:  with_clause UPDATE operate_tables SET update_set_list.from_clause where_clause 
 	from_clause: .    (102)
 
 	FROM  shift 190
 	.  reduce 102 (src line 681)
 
-	from_clause  goto 458
+	from_clause  goto 459
 
-state 374
+state 376
 	update_set_list:  update_set.    (267)
 	update_set_list:  update_set.',' update_set_list 
 
-	','  shift 459
+	','  shift 460
 	.  reduce 267 (src line 1468)
 
 
-state 375
+state 377
 	update_set:  field_reference.'=' value 
 
-	'='  shift 460
+	'='  shift 461
 	.  error
 
 
-state 376
+state 378
 	field_reference:  identifier.    (131)
 	field_reference:  identifier.'.' identifier 
 	field_reference:  identifier.'.' integer 
@@ -6454,57 +6475,57 @@ state 376
 	.  reduce 131 (src line 821)
 
 
-state 377
+state 379
 	delete_query:  with_clause DELETE FROM tables where_clause.    (269)
 
 	.  reduce 269 (src line 1478)
 
 
-state 378
+state 380
 	join:  table join_inner.JOIN table join_condition 
 
-	JOIN  shift 461
+	JOIN  shift 462
 	.  error
 
 
- 379: reduce/reduce conflict  (red'ns 312 and 316) on JOIN
-state 379
+ 381: reduce/reduce conflict  (red'ns 312 and 316) on JOIN
+state 381
 	join:  table NATURAL.join_inner JOIN table 
 	join:  table NATURAL.join_direction join_outer JOIN table 
 	join_inner: .    (312)
 	join_direction: .    (316)
 
-	INNER  shift 383
+	INNER  shift 385
 	OUTER  reduce 316 (src line 1718)
-	LEFT  shift 384
-	RIGHT  shift 385
-	FULL  shift 386
+	LEFT  shift 386
+	RIGHT  shift 387
+	FULL  shift 388
 	.  reduce 312 (src line 1698)
 
-	join_inner  goto 462
-	join_direction  goto 463
+	join_inner  goto 463
+	join_direction  goto 464
 
-state 380
+state 382
 	join:  table join_direction.join_outer JOIN table join_condition 
 	join_outer: .    (314)
 
-	OUTER  shift 465
+	OUTER  shift 466
 	.  reduce 314 (src line 1708)
 
-	join_outer  goto 464
+	join_outer  goto 465
 
-state 381
+state 383
 	join:  table CROSS.JOIN table 
 
-	JOIN  shift 466
+	JOIN  shift 467
 	.  error
 
 
-state 382
+state 384
 	tables:  table ','.tables 
 
 	IDENTIFIER  shift 38
-	DUAL  shift 285
+	DUAL  shift 286
 	STDIN  shift 186
 	TIES  shift 39
 	NULLS  shift 40
@@ -6516,66 +6537,46 @@ state 382
 	.  error
 
 	subquery  goto 287
-	table_identifier  goto 286
-	identified_table  goto 282
-	virtual_table_object  goto 283
-	table  goto 281
-	join  goto 284
-	tables  goto 467
+	table_identifier  goto 278
+	identified_table  goto 283
+	virtual_table_object  goto 284
+	table  goto 282
+	join  goto 285
+	tables  goto 468
 	identifier  goto 185
 
-state 383
+state 385
 	join_inner:  INNER.    (313)
 
 	.  reduce 313 (src line 1703)
 
 
-state 384
+state 386
 	join_direction:  LEFT.    (317)
 
 	.  reduce 317 (src line 1723)
 
 
-state 385
+state 387
 	join_direction:  RIGHT.    (318)
 
 	.  reduce 318 (src line 1727)
 
 
-state 386
+state 388
 	join_direction:  FULL.    (319)
 
 	.  reduce 319 (src line 1731)
 
 
-state 387
+state 389
 	table:  virtual_table_object identifier.    (225)
 
 	.  reduce 225 (src line 1265)
 
 
-state 388
-	table:  virtual_table_object AS.identifier 
-
-	IDENTIFIER  shift 38
-	TIES  shift 39
-	NULLS  shift 40
-	COUNT  shift 41
-	LISTAGG  shift 42
-	AGGREGATE_FUNCTION  shift 43
-	FUNCTION_WITH_ADDITIONALS  shift 44
-	.  error
-
-	identifier  goto 468
-
-state 389
-	identified_table:  table_identifier identifier.    (220)
-
-	.  reduce 220 (src line 1241)
-
-
 state 390
-	identified_table:  table_identifier AS.identifier 
+	table:  virtual_table_object AS.identifier 
 
 	IDENTIFIER  shift 38
 	TIES  shift 39
@@ -6978,7 +6979,7 @@ state 412
 
 	field_reference  goto 457
 	field_references  goto 491
-	identifier  goto 376
+	identifier  goto 378
 
 state 413
 	table_operation:  ALTER TABLE table_identifier RENAME field_reference.TO identifier 
@@ -7589,14 +7590,14 @@ state 454
 
 
 state 455
-	insert_query:  with_clause INSERT INTO table_identifier VALUES row_values.    (261)
+	insert_query:  with_clause INSERT INTO identified_table VALUES row_values.    (261)
 
 	.  reduce 261 (src line 1438)
 
 
 state 456
-	insert_query:  with_clause INSERT INTO table_identifier '(' field_references.')' VALUES row_values 
-	insert_query:  with_clause INSERT INTO table_identifier '(' field_references.')' select_query 
+	insert_query:  with_clause INSERT INTO identified_table '(' field_references.')' VALUES row_values 
+	insert_query:  with_clause INSERT INTO identified_table '(' field_references.')' select_query 
 
 	')'  shift 521
 	.  error
@@ -7611,6 +7612,12 @@ state 457
 
 
 state 458
+	identified_table:  table_identifier AS identifier.    (221)
+
+	.  reduce 221 (src line 1245)
+
+
+state 459
 	update_query:  with_clause UPDATE operate_tables SET update_set_list from_clause.where_clause 
 	where_clause: .    (104)
 
@@ -7619,7 +7626,7 @@ state 458
 
 	where_clause  goto 523
 
-state 459
+state 460
 	update_set_list:  update_set ','.update_set_list 
 
 	IDENTIFIER  shift 38
@@ -7632,12 +7639,12 @@ state 459
 	FUNCTION_WITH_ADDITIONALS  shift 44
 	.  error
 
-	field_reference  goto 375
-	update_set  goto 374
+	field_reference  goto 377
+	update_set  goto 376
 	update_set_list  goto 524
-	identifier  goto 376
+	identifier  goto 378
 
-state 460
+state 461
 	update_set:  field_reference '='.value 
 
 	IDENTIFIER  shift 38
@@ -7689,11 +7696,11 @@ state 460
 	variable  goto 66
 	variable_substitution  goto 67
 
-state 461
+state 462
 	join:  table join_inner JOIN.table join_condition 
 
 	IDENTIFIER  shift 38
-	DUAL  shift 285
+	DUAL  shift 286
 	STDIN  shift 186
 	TIES  shift 39
 	NULLS  shift 40
@@ -7705,47 +7712,47 @@ state 461
 	.  error
 
 	subquery  goto 287
-	table_identifier  goto 286
-	identified_table  goto 282
-	virtual_table_object  goto 283
+	table_identifier  goto 278
+	identified_table  goto 283
+	virtual_table_object  goto 284
 	table  goto 526
-	join  goto 284
+	join  goto 285
 	identifier  goto 185
 
-state 462
+state 463
 	join:  table NATURAL join_inner.JOIN table 
 
 	JOIN  shift 527
 	.  error
 
 
-state 463
+state 464
 	join:  table NATURAL join_direction.join_outer JOIN table 
 	join_outer: .    (314)
 
-	OUTER  shift 465
+	OUTER  shift 466
 	.  reduce 314 (src line 1708)
 
 	join_outer  goto 528
 
-state 464
+state 465
 	join:  table join_direction join_outer.JOIN table join_condition 
 
 	JOIN  shift 529
 	.  error
 
 
-state 465
+state 466
 	join_outer:  OUTER.    (315)
 
 	.  reduce 315 (src line 1713)
 
 
-state 466
+state 467
 	join:  table CROSS JOIN.table 
 
 	IDENTIFIER  shift 38
-	DUAL  shift 285
+	DUAL  shift 286
 	STDIN  shift 186
 	TIES  shift 39
 	NULLS  shift 40
@@ -7757,29 +7764,23 @@ state 466
 	.  error
 
 	subquery  goto 287
-	table_identifier  goto 286
-	identified_table  goto 282
-	virtual_table_object  goto 283
+	table_identifier  goto 278
+	identified_table  goto 283
+	virtual_table_object  goto 284
 	table  goto 530
-	join  goto 284
+	join  goto 285
 	identifier  goto 185
 
-state 467
+state 468
 	tables:  table ',' tables.    (254)
 
 	.  reduce 254 (src line 1403)
 
 
-state 468
+state 469
 	table:  virtual_table_object AS identifier.    (226)
 
 	.  reduce 226 (src line 1269)
-
-
-state 469
-	identified_table:  table_identifier AS identifier.    (221)
-
-	.  reduce 221 (src line 1245)
 
 
 state 470
@@ -8154,7 +8155,7 @@ state 486
 	.  error
 
 	field_reference  goto 541
-	identifier  goto 376
+	identifier  goto 378
 
 state 487
 	column_position:  BEFORE.field_reference 
@@ -8170,7 +8171,7 @@ state 487
 	.  error
 
 	field_reference  goto 542
-	identifier  goto 376
+	identifier  goto 378
 
 state 488
 	table_operation:  ALTER TABLE table_identifier ADD '(' column_defaults.')' column_position 
@@ -8668,8 +8669,8 @@ state 520
 	order_null_position  goto 564
 
 state 521
-	insert_query:  with_clause INSERT INTO table_identifier '(' field_references ')'.VALUES row_values 
-	insert_query:  with_clause INSERT INTO table_identifier '(' field_references ')'.select_query 
+	insert_query:  with_clause INSERT INTO identified_table '(' field_references ')'.VALUES row_values 
+	insert_query:  with_clause INSERT INTO identified_table '(' field_references ')'.select_query 
 	with_clause: .    (119)
 
 	VALUES  shift 567
@@ -8694,7 +8695,7 @@ state 522
 
 	field_reference  goto 457
 	field_references  goto 569
-	identifier  goto 376
+	identifier  goto 378
 
 state 523
 	update_query:  with_clause UPDATE operate_tables SET update_set_list from_clause where_clause.    (265)
@@ -8750,14 +8751,14 @@ state 525
 	comparison_operator  goto 147
 
  526: reduce/reduce conflict  (red'ns 312 and 234) on JOIN
-526: shift/reduce conflict (shift 383(0), red'n 234(0)) on INNER
-526: shift/reduce conflict (shift 384(0), red'n 234(0)) on LEFT
-526: shift/reduce conflict (shift 385(0), red'n 234(0)) on RIGHT
-526: shift/reduce conflict (shift 386(0), red'n 234(0)) on FULL
-526: shift/reduce conflict (shift 381(0), red'n 234(0)) on CROSS
+526: shift/reduce conflict (shift 385(0), red'n 234(0)) on INNER
+526: shift/reduce conflict (shift 386(0), red'n 234(0)) on LEFT
+526: shift/reduce conflict (shift 387(0), red'n 234(0)) on RIGHT
+526: shift/reduce conflict (shift 388(0), red'n 234(0)) on FULL
+526: shift/reduce conflict (shift 383(0), red'n 234(0)) on CROSS
 526: shift/reduce conflict (shift 571(0), red'n 234(0)) on ON
 526: shift/reduce conflict (shift 572(0), red'n 234(0)) on USING
-526: shift/reduce conflict (shift 379(0), red'n 234(0)) on NATURAL
+526: shift/reduce conflict (shift 381(0), red'n 234(0)) on NATURAL
  526: reduce/reduce conflict  (red'ns 234 and 316) on JOIN
  526: reduce/reduce conflict  (red'ns 234 and 316) on OUTER
 state 526
@@ -8771,25 +8772,25 @@ state 526
 	join_condition: .    (234)
 	join_direction: .    (316)
 
-	INNER  shift 383
-	LEFT  shift 384
-	RIGHT  shift 385
-	FULL  shift 386
-	CROSS  shift 381
+	INNER  shift 385
+	LEFT  shift 386
+	RIGHT  shift 387
+	FULL  shift 388
+	CROSS  shift 383
 	ON  shift 571
 	USING  shift 572
-	NATURAL  shift 379
+	NATURAL  shift 381
 	.  reduce 234 (src line 1304)
 
 	join_condition  goto 570
-	join_inner  goto 378
-	join_direction  goto 380
+	join_inner  goto 380
+	join_direction  goto 382
 
 state 527
 	join:  table NATURAL join_inner JOIN.table 
 
 	IDENTIFIER  shift 38
-	DUAL  shift 285
+	DUAL  shift 286
 	STDIN  shift 186
 	TIES  shift 39
 	NULLS  shift 40
@@ -8801,11 +8802,11 @@ state 527
 	.  error
 
 	subquery  goto 287
-	table_identifier  goto 286
-	identified_table  goto 282
-	virtual_table_object  goto 283
+	table_identifier  goto 278
+	identified_table  goto 283
+	virtual_table_object  goto 284
 	table  goto 573
-	join  goto 284
+	join  goto 285
 	identifier  goto 185
 
 state 528
@@ -8819,7 +8820,7 @@ state 529
 	join:  table join_direction join_outer JOIN.table join_condition 
 
 	IDENTIFIER  shift 38
-	DUAL  shift 285
+	DUAL  shift 286
 	STDIN  shift 186
 	TIES  shift 39
 	NULLS  shift 40
@@ -8831,19 +8832,19 @@ state 529
 	.  error
 
 	subquery  goto 287
-	table_identifier  goto 286
-	identified_table  goto 282
-	virtual_table_object  goto 283
+	table_identifier  goto 278
+	identified_table  goto 283
+	virtual_table_object  goto 284
 	table  goto 575
-	join  goto 284
+	join  goto 285
 	identifier  goto 185
 
-530: shift/reduce conflict (shift 383(0), red'n 233(0)) on INNER
-530: shift/reduce conflict (shift 384(0), red'n 233(0)) on LEFT
-530: shift/reduce conflict (shift 385(0), red'n 233(0)) on RIGHT
-530: shift/reduce conflict (shift 386(0), red'n 233(0)) on FULL
-530: shift/reduce conflict (shift 381(0), red'n 233(0)) on CROSS
-530: shift/reduce conflict (shift 379(0), red'n 233(0)) on NATURAL
+530: shift/reduce conflict (shift 385(0), red'n 233(0)) on INNER
+530: shift/reduce conflict (shift 386(0), red'n 233(0)) on LEFT
+530: shift/reduce conflict (shift 387(0), red'n 233(0)) on RIGHT
+530: shift/reduce conflict (shift 388(0), red'n 233(0)) on FULL
+530: shift/reduce conflict (shift 383(0), red'n 233(0)) on CROSS
+530: shift/reduce conflict (shift 381(0), red'n 233(0)) on NATURAL
  530: reduce/reduce conflict  (red'ns 233 and 312) on JOIN
  530: reduce/reduce conflict  (red'ns 233 and 316) on JOIN
  530: reduce/reduce conflict  (red'ns 233 and 316) on OUTER
@@ -8857,16 +8858,16 @@ state 530
 	join_inner: .    (312)
 	join_direction: .    (316)
 
-	INNER  shift 383
-	LEFT  shift 384
-	RIGHT  shift 385
-	FULL  shift 386
-	CROSS  shift 381
-	NATURAL  shift 379
+	INNER  shift 385
+	LEFT  shift 386
+	RIGHT  shift 387
+	FULL  shift 388
+	CROSS  shift 383
+	NATURAL  shift 381
 	.  reduce 233 (src line 1299)
 
-	join_inner  goto 378
-	join_direction  goto 380
+	join_inner  goto 380
+	join_direction  goto 382
 
 state 531
 	having_clause:  HAVING value.    (109)
@@ -9353,7 +9354,7 @@ state 566
 
 
 state 567
-	insert_query:  with_clause INSERT INTO table_identifier '(' field_references ')' VALUES.row_values 
+	insert_query:  with_clause INSERT INTO identified_table '(' field_references ')' VALUES.row_values 
 
 	'('  shift 254
 	.  error
@@ -9363,7 +9364,7 @@ state 567
 	subquery  goto 255
 
 state 568
-	insert_query:  with_clause INSERT INTO table_identifier '(' field_references ')' select_query.    (264)
+	insert_query:  with_clause INSERT INTO identified_table '(' field_references ')' select_query.    (264)
 
 	.  reduce 264 (src line 1451)
 
@@ -9439,12 +9440,12 @@ state 572
 	.  error
 
 
-573: shift/reduce conflict (shift 383(0), red'n 230(0)) on INNER
-573: shift/reduce conflict (shift 384(0), red'n 230(0)) on LEFT
-573: shift/reduce conflict (shift 385(0), red'n 230(0)) on RIGHT
-573: shift/reduce conflict (shift 386(0), red'n 230(0)) on FULL
-573: shift/reduce conflict (shift 381(0), red'n 230(0)) on CROSS
-573: shift/reduce conflict (shift 379(0), red'n 230(0)) on NATURAL
+573: shift/reduce conflict (shift 385(0), red'n 230(0)) on INNER
+573: shift/reduce conflict (shift 386(0), red'n 230(0)) on LEFT
+573: shift/reduce conflict (shift 387(0), red'n 230(0)) on RIGHT
+573: shift/reduce conflict (shift 388(0), red'n 230(0)) on FULL
+573: shift/reduce conflict (shift 383(0), red'n 230(0)) on CROSS
+573: shift/reduce conflict (shift 381(0), red'n 230(0)) on NATURAL
  573: reduce/reduce conflict  (red'ns 230 and 312) on JOIN
  573: reduce/reduce conflict  (red'ns 230 and 316) on JOIN
  573: reduce/reduce conflict  (red'ns 230 and 316) on OUTER
@@ -9458,22 +9459,22 @@ state 573
 	join_inner: .    (312)
 	join_direction: .    (316)
 
-	INNER  shift 383
-	LEFT  shift 384
-	RIGHT  shift 385
-	FULL  shift 386
-	CROSS  shift 381
-	NATURAL  shift 379
+	INNER  shift 385
+	LEFT  shift 386
+	RIGHT  shift 387
+	FULL  shift 388
+	CROSS  shift 383
+	NATURAL  shift 381
 	.  reduce 230 (src line 1287)
 
-	join_inner  goto 378
-	join_direction  goto 380
+	join_inner  goto 380
+	join_direction  goto 382
 
 state 574
 	join:  table NATURAL join_direction join_outer JOIN.table 
 
 	IDENTIFIER  shift 38
-	DUAL  shift 285
+	DUAL  shift 286
 	STDIN  shift 186
 	TIES  shift 39
 	NULLS  shift 40
@@ -9485,24 +9486,24 @@ state 574
 	.  error
 
 	subquery  goto 287
-	table_identifier  goto 286
-	identified_table  goto 282
-	virtual_table_object  goto 283
+	table_identifier  goto 278
+	identified_table  goto 283
+	virtual_table_object  goto 284
 	table  goto 606
-	join  goto 284
+	join  goto 285
 	identifier  goto 185
 
  575: reduce/reduce conflict  (red'ns 312 and 316) on JOIN
  575: reduce/reduce conflict  (red'ns 312 and 234) on JOIN
-575: shift/reduce conflict (shift 383(0), red'n 234(0)) on INNER
+575: shift/reduce conflict (shift 385(0), red'n 234(0)) on INNER
  575: reduce/reduce conflict  (red'ns 316 and 234) on OUTER
-575: shift/reduce conflict (shift 384(0), red'n 234(0)) on LEFT
-575: shift/reduce conflict (shift 385(0), red'n 234(0)) on RIGHT
-575: shift/reduce conflict (shift 386(0), red'n 234(0)) on FULL
-575: shift/reduce conflict (shift 381(0), red'n 234(0)) on CROSS
+575: shift/reduce conflict (shift 386(0), red'n 234(0)) on LEFT
+575: shift/reduce conflict (shift 387(0), red'n 234(0)) on RIGHT
+575: shift/reduce conflict (shift 388(0), red'n 234(0)) on FULL
+575: shift/reduce conflict (shift 383(0), red'n 234(0)) on CROSS
 575: shift/reduce conflict (shift 571(0), red'n 234(0)) on ON
 575: shift/reduce conflict (shift 572(0), red'n 234(0)) on USING
-575: shift/reduce conflict (shift 379(0), red'n 234(0)) on NATURAL
+575: shift/reduce conflict (shift 381(0), red'n 234(0)) on NATURAL
 state 575
 	join:  table.join_inner JOIN table join_condition 
 	join:  table.NATURAL join_inner JOIN table 
@@ -9514,19 +9515,19 @@ state 575
 	join_direction: .    (316)
 	join_condition: .    (234)
 
-	INNER  shift 383
-	LEFT  shift 384
-	RIGHT  shift 385
-	FULL  shift 386
-	CROSS  shift 381
+	INNER  shift 385
+	LEFT  shift 386
+	RIGHT  shift 387
+	FULL  shift 388
+	CROSS  shift 383
 	ON  shift 571
 	USING  shift 572
-	NATURAL  shift 379
+	NATURAL  shift 381
 	.  reduce 234 (src line 1304)
 
 	join_condition  goto 607
-	join_inner  goto 378
-	join_direction  goto 380
+	join_inner  goto 380
+	join_direction  goto 382
 
 state 576
 	analytic_function:  identifier '(' arguments ')' OVER.'(' analytic_clause ')' 
@@ -10008,7 +10009,7 @@ state 602
 
 
 state 603
-	insert_query:  with_clause INSERT INTO table_identifier '(' field_references ')' VALUES row_values.    (262)
+	insert_query:  with_clause INSERT INTO identified_table '(' field_references ')' VALUES row_values.    (262)
 
 	.  reduce 262 (src line 1443)
 
@@ -10069,12 +10070,12 @@ state 605
 	identifiers  goto 629
 	identifier  goto 407
 
-606: shift/reduce conflict (shift 383(0), red'n 232(0)) on INNER
-606: shift/reduce conflict (shift 384(0), red'n 232(0)) on LEFT
-606: shift/reduce conflict (shift 385(0), red'n 232(0)) on RIGHT
-606: shift/reduce conflict (shift 386(0), red'n 232(0)) on FULL
-606: shift/reduce conflict (shift 381(0), red'n 232(0)) on CROSS
-606: shift/reduce conflict (shift 379(0), red'n 232(0)) on NATURAL
+606: shift/reduce conflict (shift 385(0), red'n 232(0)) on INNER
+606: shift/reduce conflict (shift 386(0), red'n 232(0)) on LEFT
+606: shift/reduce conflict (shift 387(0), red'n 232(0)) on RIGHT
+606: shift/reduce conflict (shift 388(0), red'n 232(0)) on FULL
+606: shift/reduce conflict (shift 383(0), red'n 232(0)) on CROSS
+606: shift/reduce conflict (shift 381(0), red'n 232(0)) on NATURAL
  606: reduce/reduce conflict  (red'ns 232 and 312) on JOIN
  606: reduce/reduce conflict  (red'ns 232 and 316) on JOIN
  606: reduce/reduce conflict  (red'ns 232 and 316) on OUTER
@@ -10088,16 +10089,16 @@ state 606
 	join_inner: .    (312)
 	join_direction: .    (316)
 
-	INNER  shift 383
-	LEFT  shift 384
-	RIGHT  shift 385
-	FULL  shift 386
-	CROSS  shift 381
-	NATURAL  shift 379
+	INNER  shift 385
+	LEFT  shift 386
+	RIGHT  shift 387
+	FULL  shift 388
+	CROSS  shift 383
+	NATURAL  shift 381
 	.  reduce 232 (src line 1295)
 
-	join_inner  goto 378
-	join_direction  goto 380
+	join_inner  goto 380
+	join_direction  goto 382
 
 state 607
 	join:  table join_direction join_outer JOIN table join_condition.    (231)
@@ -12684,7 +12685,7 @@ memory: parser 4736/120000
 816 extra closures
 3647 shift entries, 130 exceptions
 649 goto entries
-2063 entries saved by goto default
-Optimizer space used: output 2394/120000
-2394 table entries, 761 zero
+2064 entries saved by goto default
+Optimizer space used: output 2287/120000
+2287 table entries, 654 zero
 maximum spread: 133, maximum offset: 737

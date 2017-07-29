@@ -948,6 +948,10 @@ func (view *View) ListValuesForAggregateFunctions(expr parser.Expression, arg pa
 	return list, nil
 }
 
+func (view *View) RestoreHeaderReferences() {
+	view.Header.Update(parser.FormatTableName(view.FileInfo.Path), nil)
+}
+
 func (view *View) FieldIndex(fieldRef parser.Expression) (int, error) {
 	if number, ok := fieldRef.(parser.ColumnNumber); ok {
 		return view.Header.ContainsNumber(number)

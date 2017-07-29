@@ -1269,7 +1269,7 @@ var insertTests = []struct {
 			},
 			Insert: "insert",
 			Into:   "into",
-			Table:  parser.Identifier{Literal: "table1"},
+			Table:  parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			Fields: []parser.Expression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
@@ -1381,7 +1381,7 @@ var insertTests = []struct {
 		Query: parser.InsertQuery{
 			Insert: "insert",
 			Into:   "into",
-			Table:  parser.Identifier{Literal: "tmpview"},
+			Table:  parser.Table{Object: parser.Identifier{Literal: "tmpview"}, Alias: parser.Identifier{Literal: "t"}},
 			Fields: []parser.Expression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
@@ -1467,7 +1467,7 @@ var insertTests = []struct {
 		Query: parser.InsertQuery{
 			Insert: "insert",
 			Into:   "into",
-			Table:  parser.Identifier{Literal: "table1"},
+			Table:  parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			Values: "values",
 			ValuesList: []parser.Expression{
 				parser.RowValue{
@@ -1527,7 +1527,7 @@ var insertTests = []struct {
 		Query: parser.InsertQuery{
 			Insert: "insert",
 			Into:   "into",
-			Table:  parser.Identifier{Literal: "notexist"},
+			Table:  parser.Table{Object: parser.Identifier{Literal: "notexist"}},
 			Fields: []parser.Expression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
@@ -1556,7 +1556,7 @@ var insertTests = []struct {
 		Query: parser.InsertQuery{
 			Insert: "insert",
 			Into:   "into",
-			Table:  parser.Identifier{Literal: "table1"},
+			Table:  parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			Fields: []parser.Expression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
@@ -1585,7 +1585,7 @@ var insertTests = []struct {
 		Query: parser.InsertQuery{
 			Insert: "insert",
 			Into:   "into",
-			Table:  parser.Identifier{Literal: "table1"},
+			Table:  parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			Fields: []parser.Expression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
@@ -1649,7 +1649,7 @@ var insertTests = []struct {
 		Query: parser.InsertQuery{
 			Insert: "insert",
 			Into:   "into",
-			Table:  parser.Identifier{Literal: "table1"},
+			Table:  parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			Fields: []parser.Expression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},

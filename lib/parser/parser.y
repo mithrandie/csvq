@@ -1436,19 +1436,19 @@ fields
     }
 
 insert_query
-    : with_clause INSERT INTO table_identifier VALUES row_values
+    : with_clause INSERT INTO identified_table VALUES row_values
     {
         $$ = InsertQuery{WithClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Values: $5.Literal, ValuesList: $6}
     }
-    | with_clause INSERT INTO table_identifier '(' field_references ')' VALUES row_values
+    | with_clause INSERT INTO identified_table '(' field_references ')' VALUES row_values
     {
         $$ = InsertQuery{WithClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Fields: $6, Values: $8.Literal, ValuesList: $9}
     }
-    | with_clause INSERT INTO table_identifier select_query
+    | with_clause INSERT INTO identified_table select_query
     {
         $$ = InsertQuery{WithClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Query: $5.(SelectQuery)}
     }
-    | with_clause INSERT INTO table_identifier '(' field_references ')' select_query
+    | with_clause INSERT INTO identified_table '(' field_references ')' select_query
     {
         $$ = InsertQuery{WithClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Fields: $6, Query: $8.(SelectQuery)}
     }
