@@ -7,7 +7,7 @@ import (
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
-var AggregateFunctions = map[string]func(bool, []parser.Primary) parser.Primary{
+var AggregateFunctions = map[string]func([]parser.Primary) parser.Primary{
 	"COUNT": Count,
 	"MAX":   Max,
 	"MIN":   Min,
@@ -15,11 +15,7 @@ var AggregateFunctions = map[string]func(bool, []parser.Primary) parser.Primary{
 	"AVG":   Avg,
 }
 
-func Count(distinct bool, list []parser.Primary) parser.Primary {
-	if distinct {
-		list = distinguish(list)
-	}
-
+func Count(list []parser.Primary) parser.Primary {
 	var count int64
 	for _, v := range list {
 		if !parser.IsNull(v) {
@@ -30,11 +26,7 @@ func Count(distinct bool, list []parser.Primary) parser.Primary {
 	return parser.NewInteger(count)
 }
 
-func Max(distinct bool, list []parser.Primary) parser.Primary {
-	if distinct {
-		list = distinguish(list)
-	}
-
+func Max(list []parser.Primary) parser.Primary {
 	var result parser.Primary
 	result = parser.NewNull()
 
@@ -56,11 +48,7 @@ func Max(distinct bool, list []parser.Primary) parser.Primary {
 	return result
 }
 
-func Min(distinct bool, list []parser.Primary) parser.Primary {
-	if distinct {
-		list = distinguish(list)
-	}
-
+func Min(list []parser.Primary) parser.Primary {
 	var result parser.Primary
 	result = parser.NewNull()
 
@@ -82,11 +70,7 @@ func Min(distinct bool, list []parser.Primary) parser.Primary {
 	return result
 }
 
-func Sum(distinct bool, list []parser.Primary) parser.Primary {
-	if distinct {
-		list = distinguish(list)
-	}
-
+func Sum(list []parser.Primary) parser.Primary {
 	var sum float64
 	var count int
 
@@ -106,11 +90,7 @@ func Sum(distinct bool, list []parser.Primary) parser.Primary {
 	return parser.Float64ToPrimary(sum)
 }
 
-func Avg(distinct bool, list []parser.Primary) parser.Primary {
-	if distinct {
-		list = distinguish(list)
-	}
-
+func Avg(list []parser.Primary) parser.Primary {
 	var sum float64
 	var count int
 
@@ -132,11 +112,7 @@ func Avg(distinct bool, list []parser.Primary) parser.Primary {
 	return parser.Float64ToPrimary(avg)
 }
 
-func ListAgg(distinct bool, list []parser.Primary, separator string) parser.Primary {
-	if distinct {
-		list = distinguish(list)
-	}
-
+func ListAgg(list []parser.Primary, separator string) parser.Primary {
 	strlist := []string{}
 	for _, v := range list {
 		s := parser.PrimaryToString(v)
@@ -151,23 +127,4 @@ func ListAgg(distinct bool, list []parser.Primary, separator string) parser.Prim
 	}
 
 	return parser.NewString(strings.Join(strlist, separator))
-}
-
-func distinguish(list []parser.Primary) []parser.Primary {
-	var in = func(list []parser.Primary, item parser.Primary) bool {
-		for _, v := range list {
-			if EquivalentTo(item, v) == ternary.TRUE {
-				return true
-			}
-		}
-		return false
-	}
-
-	distinguished := []parser.Primary{}
-	for _, v := range list {
-		if !in(distinguished, v) {
-			distinguished = append(distinguished, v)
-		}
-	}
-	return distinguished
 }

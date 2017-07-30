@@ -33,7 +33,7 @@ _statements_
 : [Statements]({{ '/reference/statement.html' | relative_url }})
 
 A If statement executes the first _statements_ that _condition_ is TRUE.
-If no condition is TRUE, it executes the _statements_ of the ELSE expression.
+If no condition is TRUE, the _statements_ of the ELSE expression are executed.
 
 ## While Loop
 {: #while_loop}
@@ -57,7 +57,7 @@ The While statement iterates it while _condition_ is TRUE.
 ## While In Loop
 {: #while_in_loop}
 ```sql
-WHILE variable [, variable ...] IN cursor
+WHILE variable [, variable ...] IN cursor_name
 DO
   statements
 END WHILE;
@@ -66,14 +66,14 @@ END WHILE;
 _variable_
 : [Variable]({{ '/reference/variable.html' | relative_url }})
 
-_cursor_
-: [Cursor]({{ '/reference/cursor.html' | relative_url }})
+_cursor_name_
+: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
 
 _statements_
 : [Statements]({{ '/reference/statement.html' | relative_url }})
 
-A While In statement fetch the data from _cursor_ into variables, then execute _statements_.
-The While In statement iterates it until the _cursor_ pointer reaches the last record in the referring view.
+A While In statement fetch the data from the [cursor]({{ '/reference/cursor.html' | relative_url }}) into variables, then execute _statements_.
+The While In statement iterates it until the _cursor_name__ pointer reaches the last record in the referring view.
 
 ## Continue
 {: #continue}

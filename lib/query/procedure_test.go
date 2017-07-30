@@ -215,6 +215,92 @@ var procedureExecuteStatementTests = []struct {
 		},
 	},
 	{
+		Input: parser.AggregateDeclaration{
+			Name:      parser.Identifier{Literal: "useraggfunc"},
+			Parameter: parser.Identifier{Literal: "list"},
+			Statements: []parser.Statement{
+				parser.VariableDeclaration{
+					Assignments: []parser.Expression{
+						parser.VariableAssignment{
+							Variable: parser.Variable{Name: "@value"},
+						},
+						parser.VariableAssignment{
+							Variable: parser.Variable{Name: "@fetch"},
+						},
+					},
+				},
+				parser.WhileInCursor{
+					Variables: []parser.Variable{
+						{Name: "@fetch"},
+					},
+					Cursor: parser.Identifier{Literal: "list"},
+					Statements: []parser.Statement{
+						parser.If{
+							Condition: parser.Is{
+								LHS: parser.Variable{Name: "@fetch"},
+								RHS: parser.NewNull(),
+							},
+							Statements: []parser.Statement{
+								parser.FlowControl{Token: parser.CONTINUE},
+							},
+						},
+						parser.If{
+							Condition: parser.Is{
+								LHS: parser.Variable{Name: "@value"},
+								RHS: parser.NewNull(),
+							},
+							Statements: []parser.Statement{
+								parser.VariableSubstitution{
+									Variable: parser.Variable{Name: "@value"},
+									Value:    parser.Variable{Name: "@fetch"},
+								},
+								parser.FlowControl{Token: parser.CONTINUE},
+							},
+						},
+						parser.VariableSubstitution{
+							Variable: parser.Variable{Name: "@value"},
+							Value: parser.Arithmetic{
+								LHS:      parser.Variable{Name: "@value"},
+								RHS:      parser.Variable{Name: "@fetch"},
+								Operator: '*',
+							},
+						},
+					},
+				},
+				parser.Return{
+					Value: parser.Variable{Name: "@value"},
+				},
+			},
+		},
+	},
+	{
+		Input: parser.SelectQuery{
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.Expression{
+						parser.Field{
+							Object: parser.Function{
+								Name: "useraggfunc",
+								Args: []parser.Expression{
+									parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+								},
+							},
+							Alias: parser.Identifier{Literal: "multiplication"},
+						},
+					},
+				},
+				FromClause: parser.FromClause{
+					Tables: []parser.Expression{
+						parser.Table{Object: parser.Identifier{Literal: "table1"}},
+					},
+				},
+			},
+		},
+		Logs: []string{
+			"\"multiplication\"\n6",
+		},
+	},
+	{
 		Input: parser.SelectQuery{
 			SelectEntity: parser.SelectEntity{
 				SelectClause: parser.SelectClause{

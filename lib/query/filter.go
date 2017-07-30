@@ -168,6 +168,8 @@ func (f Filter) Evaluate(expr parser.Expression) (parser.Primary, error) {
 			primary, err = f.VariablesList.Substitute(expr.(parser.VariableSubstitution), f)
 		case parser.CursorStatus:
 			primary, err = f.evalCursorStatus(expr.(parser.CursorStatus))
+		case parser.CursorAttrebute:
+			primary, err = f.evalCursorAttribute(expr.(parser.CursorAttrebute))
 		default:
 			return nil, NewSyntaxErrorFromExpr(expr)
 		}
@@ -503,6 +505,21 @@ func (f Filter) evalExists(expr parser.Exists) (parser.Primary, error) {
 func (f Filter) evalFunction(expr parser.Function) (parser.Primary, error) {
 	name := strings.ToUpper(expr.Name)
 
+	if _, ok := Functions[name]; !ok {
+		udfn, err := f.FunctionsList.Get(expr, name)
+		if err != nil {
+			return nil, NewFunctionNotExistError(expr, expr.Name)
+		}
+		if udfn.IsAggregate {
+			aggrdcl := parser.AggregateFunction{
+				BaseExpr: expr.BaseExpr,
+				Name:     expr.Name,
+				Args:     expr.Args,
+			}
+			return f.evalAggregateFunction(aggrdcl)
+		}
+	}
+
 	args := make([]parser.Primary, len(expr.Args))
 	for i, v := range expr.Args {
 		arg, err := f.Evaluate(v)
@@ -516,14 +533,18 @@ func (f Filter) evalFunction(expr parser.Function) (parser.Primary, error) {
 		return fn(expr, args)
 	}
 
-	if udfn, err := f.FunctionsList.Get(expr); err == nil {
-		return udfn.Execute(args, f)
-	}
-
-	return nil, NewFunctionNotExistError(expr, expr.Name)
+	udfn, _ := f.FunctionsList.Get(expr, name)
+	return udfn.Execute(args, f)
 }
 
 func (f Filter) evalAggregateFunction(expr parser.AggregateFunction) (parser.Primary, error) {
+	uname := strings.ToUpper(expr.Name)
+	if _, ok := AggregateFunctions[uname]; !ok {
+		if udfn, err := f.FunctionsList.Get(expr, uname); err != nil || !udfn.IsAggregate {
+			return nil, NewFunctionNotExistError(expr, expr.Name)
+		}
+	}
+
 	if len(expr.Args) != 1 {
 		return nil, NewFunctionArgumentLengthError(expr, expr.Name, []int{1})
 	}
@@ -546,10 +567,16 @@ func (f Filter) evalAggregateFunction(expr parser.AggregateFunction) (parser.Pri
 	if err != nil {
 		return nil, err
 	}
+	if expr.IsDistinct() {
+		list = Distinguish(list)
+	}
 
-	name := strings.ToUpper(expr.Name)
-	fn, _ := AggregateFunctions[name]
-	return fn(expr.IsDistinct(), list), nil
+	if fn, ok := AggregateFunctions[uname]; ok {
+		return fn(list), nil
+	}
+
+	udfn, _ := f.FunctionsList.Get(expr, uname)
+	return udfn.Execute(list, f)
 }
 
 func (f Filter) evalListAgg(expr parser.ListAgg) (parser.Primary, error) {
@@ -590,8 +617,11 @@ func (f Filter) evalListAgg(expr parser.ListAgg) (parser.Primary, error) {
 	if err != nil {
 		return nil, err
 	}
+	if expr.IsDistinct() {
+		list = Distinguish(list)
+	}
 
-	return ListAgg(expr.IsDistinct(), list, separator), nil
+	return ListAgg(list, separator), nil
 }
 
 func (f Filter) evalCase(expr parser.Case) (parser.Primary, error) {
@@ -693,6 +723,20 @@ func (f Filter) evalCursorStatus(expr parser.CursorStatus) (parser.Primary, erro
 		t = ternary.Not(t)
 	}
 	return parser.NewTernary(t), nil
+}
+
+func (f Filter) evalCursorAttribute(expr parser.CursorAttrebute) (parser.Primary, error) {
+	var i int
+	var err error
+
+	switch expr.Attrebute.Token {
+	case parser.COUNT:
+		i, err = f.CursorsList.Count(expr.Cursor)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return parser.NewInteger(int64(i)), nil
 }
 
 func (f Filter) evalRowValue(expr parser.RowValue) (values []parser.Primary, err error) {

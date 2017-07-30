@@ -40,6 +40,7 @@ const (
 	ERROR_UNDEFINED_CURSOR                  = "cursor %s is undefined"
 	ERROR_CURSOR_CLOSED                     = "cursor %s is closed"
 	ERROR_CURSOR_OPEN                       = "cursor %s is already open"
+	ERROR_PSEUDO_CURSOR                     = "cursor %s is a pseudo cursor"
 	ERROR_CURSOR_FETCH_LENGTH               = "fetching from cursor %s returns %s"
 	ERROR_INVALID_FETCH_POSITION            = "fetching position %s is not an integer value"
 	ERROR_INLINE_TABLE_REDECLARED           = "inline table %s is redeclared"
@@ -422,6 +423,16 @@ type CursorOpenError struct {
 func NewCursorOpenError(cursor parser.Identifier) error {
 	return &CursorOpenError{
 		NewBaseError(cursor, fmt.Sprintf(ERROR_CURSOR_OPEN, cursor)),
+	}
+}
+
+type PseudoCursorError struct {
+	*BaseError
+}
+
+func NewPseudoCursorError(cursor parser.Identifier) error {
+	return &PseudoCursorError{
+		NewBaseError(cursor, fmt.Sprintf(ERROR_PSEUDO_CURSOR, cursor)),
 	}
 }
 

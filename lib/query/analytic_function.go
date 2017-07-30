@@ -356,10 +356,31 @@ func AnalyzeAggregateValue(view *View, fn parser.AnalyticFunction) error {
 	}
 
 	name := strings.ToUpper(fn.Name)
-	aggfunc, _ := AggregateFunctions[name]
+
+	var err error
+	var udfunc *UserDefinedFunction
+	aggfunc, builtIn := AggregateFunctions[name]
+	if !builtIn {
+		if udfunc, err = view.ParentFilter.FunctionsList.Get(fn, name); err != nil || !udfunc.IsAggregate {
+			return NewFunctionNotExistError(fn, fn.Name)
+		}
+	}
 
 	for _, partition := range partitions {
-		value := aggfunc(fn.IsDistinct(), partition.(part).values)
+		list := partition.(part).values
+		if fn.IsDistinct() {
+			list = Distinguish(list)
+		}
+
+		var value parser.Primary
+		if builtIn {
+			value = aggfunc(list)
+		} else {
+			value, err = udfunc.Execute(list, view.ParentFilter)
+			if err != nil {
+				return err
+			}
+		}
 
 		for _, idx := range partition.(part).recordIndices {
 			view.Records[idx] = append(view.Records[idx], NewCell(value))
@@ -434,7 +455,11 @@ func AnalyzeListAgg(view *View, fn parser.AnalyticFunction) error {
 	}
 
 	for _, partition := range partitions {
-		value := ListAgg(fn.IsDistinct(), partition.(part).values, separator)
+		list := partition.(part).values
+		if fn.IsDistinct() {
+			list = Distinguish(list)
+		}
+		value := ListAgg(list, separator)
 
 		for _, idx := range partition.(part).recordIndices {
 			view.Records[idx] = append(view.Records[idx], NewCell(value))

@@ -492,6 +492,27 @@ var declareTableTests = []struct {
 		Error: "[L:- C:-] select query should return exactly 1 field for temporary table tbl",
 	},
 	{
+		Name: "Declare Table  From Query Field Duplicate Error",
+		Expr: parser.TableDeclaration{
+			Table: parser.Identifier{Literal: "tbl"},
+			Fields: []parser.Expression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "column1"},
+			},
+			Query: parser.SelectQuery{
+				SelectEntity: parser.SelectEntity{
+					SelectClause: parser.SelectClause{
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.NewInteger(1)},
+							parser.Field{Object: parser.NewInteger(2)},
+						},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] field name column1 is a duplicate",
+	},
+	{
 		Name: "Declare Table Redeclaration Error",
 		ViewMap: ViewMap{
 			"TBL": {

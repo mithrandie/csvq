@@ -10,7 +10,7 @@ import (
 )
 
 const TOKEN_UNDEFINED = 0
-const DATETIME_FORMAT = "2006-01-02 15:04:05.999999999"
+const DEFAULT_DATETIME_FORMAT = "2006-01-02 15:04:05.999999999"
 
 func IsPrimary(e Expression) bool {
 	if e == nil {
@@ -81,14 +81,6 @@ func NewBaseExpr(token Token) *BaseExpr {
 		line:       token.Line,
 		char:       token.Char,
 		sourceFile: token.SourceFile,
-	}
-}
-
-func NewBaseExprFromIdentifier(ident Identifier) *BaseExpr {
-	return &BaseExpr{
-		line:       ident.Line(),
-		char:       ident.Char(),
-		sourceFile: ident.SourceFile(),
 	}
 }
 
@@ -275,7 +267,7 @@ func NewDatetimeFromString(s string) Datetime {
 	return Datetime{
 		literal: s,
 		value:   t,
-		format:  DATETIME_FORMAT,
+		format:  DEFAULT_DATETIME_FORMAT,
 	}
 }
 
@@ -283,7 +275,7 @@ func NewDatetime(t time.Time) Datetime {
 	return Datetime{
 		literal: t.Format(time.RFC3339Nano),
 		value:   t,
-		format:  DATETIME_FORMAT,
+		format:  DEFAULT_DATETIME_FORMAT,
 	}
 }
 
@@ -1448,6 +1440,13 @@ type FunctionDeclaration struct {
 	Statements []Statement
 }
 
+type AggregateDeclaration struct {
+	*BaseExpr
+	Name       Identifier
+	Parameter  Identifier
+	Statements []Statement
+}
+
 type Return struct {
 	*BaseExpr
 	Value Expression
@@ -1565,6 +1564,18 @@ func (e CursorStatus) String() string {
 		s = append(s, e.Negation.Literal)
 	}
 	s = append(s, e.TypeLit)
+	return joinWithSpace(s)
+}
+
+type CursorAttrebute struct {
+	*BaseExpr
+	CursorLit string
+	Cursor    Identifier
+	Attrebute Token
+}
+
+func (e CursorAttrebute) String() string {
+	s := []string{e.CursorLit, e.Cursor.String(), e.Attrebute.Literal}
 	return joinWithSpace(s)
 }
 

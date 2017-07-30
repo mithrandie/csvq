@@ -1115,6 +1115,205 @@ var analyzeAggregateValueTests = []analyticFunctionTest{
 		},
 	},
 	{
+		Name: "AnalyzeAggregateValue User Defined Function",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewNull(),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(1),
+				}),
+			},
+			ParentFilter: Filter{
+				FunctionsList: UserDefinedFunctionsList{
+					{
+						"USERAGGFUNC": &UserDefinedFunction{
+							Name:        parser.Identifier{Literal: "useraggfunc"},
+							IsAggregate: true,
+							Parameter:   parser.Identifier{Literal: "list"},
+							Statements: []parser.Statement{
+								parser.VariableDeclaration{
+									Assignments: []parser.Expression{
+										parser.VariableAssignment{
+											Variable: parser.Variable{Name: "@value"},
+										},
+										parser.VariableAssignment{
+											Variable: parser.Variable{Name: "@fetch"},
+										},
+									},
+								},
+								parser.WhileInCursor{
+									Variables: []parser.Variable{
+										{Name: "@fetch"},
+									},
+									Cursor: parser.Identifier{Literal: "list"},
+									Statements: []parser.Statement{
+										parser.If{
+											Condition: parser.Is{
+												LHS: parser.Variable{Name: "@fetch"},
+												RHS: parser.NewNull(),
+											},
+											Statements: []parser.Statement{
+												parser.FlowControl{Token: parser.CONTINUE},
+											},
+										},
+										parser.If{
+											Condition: parser.Is{
+												LHS: parser.Variable{Name: "@value"},
+												RHS: parser.NewNull(),
+											},
+											Statements: []parser.Statement{
+												parser.VariableSubstitution{
+													Variable: parser.Variable{Name: "@value"},
+													Value:    parser.Variable{Name: "@fetch"},
+												},
+												parser.FlowControl{Token: parser.CONTINUE},
+											},
+										},
+										parser.VariableSubstitution{
+											Variable: parser.Variable{Name: "@value"},
+											Value: parser.Arithmetic{
+												LHS:      parser.Variable{Name: "@value"},
+												RHS:      parser.Variable{Name: "@fetch"},
+												Operator: '*',
+											},
+										},
+									},
+								},
+								parser.Return{
+									Value: parser.Variable{Name: "@value"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "useraggfunc",
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+			},
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(1),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewNull(),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(1),
+					parser.NewInteger(1),
+				}),
+			},
+			ParentFilter: Filter{
+				FunctionsList: UserDefinedFunctionsList{
+					{
+						"USERAGGFUNC": &UserDefinedFunction{
+							Name:        parser.Identifier{Literal: "useraggfunc"},
+							IsAggregate: true,
+							Parameter:   parser.Identifier{Literal: "list"},
+							Statements: []parser.Statement{
+								parser.VariableDeclaration{
+									Assignments: []parser.Expression{
+										parser.VariableAssignment{
+											Variable: parser.Variable{Name: "@value"},
+										},
+										parser.VariableAssignment{
+											Variable: parser.Variable{Name: "@fetch"},
+										},
+									},
+								},
+								parser.WhileInCursor{
+									Variables: []parser.Variable{
+										{Name: "@fetch"},
+									},
+									Cursor: parser.Identifier{Literal: "list"},
+									Statements: []parser.Statement{
+										parser.If{
+											Condition: parser.Is{
+												LHS: parser.Variable{Name: "@fetch"},
+												RHS: parser.NewNull(),
+											},
+											Statements: []parser.Statement{
+												parser.FlowControl{Token: parser.CONTINUE},
+											},
+										},
+										parser.If{
+											Condition: parser.Is{
+												LHS: parser.Variable{Name: "@value"},
+												RHS: parser.NewNull(),
+											},
+											Statements: []parser.Statement{
+												parser.VariableSubstitution{
+													Variable: parser.Variable{Name: "@value"},
+													Value:    parser.Variable{Name: "@fetch"},
+												},
+												parser.FlowControl{Token: parser.CONTINUE},
+											},
+										},
+										parser.VariableSubstitution{
+											Variable: parser.Variable{Name: "@value"},
+											Value: parser.Arithmetic{
+												LHS:      parser.Variable{Name: "@value"},
+												RHS:      parser.Variable{Name: "@fetch"},
+												Operator: '*',
+											},
+										},
+									},
+								},
+								parser.Return{
+									Value: parser.Variable{Name: "@value"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
 		Name: "AnalyzeAggregateValue Argument Length Error",
 		View: &View{
 			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
@@ -1201,6 +1400,154 @@ var analyzeAggregateValueTests = []analyticFunctionTest{
 		},
 		Error: "[L:- C:-] field notexist does not exist",
 	},
+	{
+		Name: "AnalyzeAggregateValue User Defined Function Undefined Error",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewNull(),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(1),
+				}),
+			},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "useraggfunc",
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+			},
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] function useraggfunc does not exist",
+	},
+	{
+		Name: "AnalyzeAggregateValue User Defined Function Execution Error",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewNull(),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(1),
+				}),
+			},
+			ParentFilter: Filter{
+				FunctionsList: UserDefinedFunctionsList{
+					{
+						"USERAGGFUNC": &UserDefinedFunction{
+							Name:        parser.Identifier{Literal: "useraggfunc"},
+							IsAggregate: true,
+							Parameter:   parser.Identifier{Literal: "list"},
+							Statements: []parser.Statement{
+								parser.VariableDeclaration{
+									Assignments: []parser.Expression{
+										parser.VariableAssignment{
+											Variable: parser.Variable{Name: "@value"},
+										},
+										parser.VariableAssignment{
+											Variable: parser.Variable{Name: "@fetch"},
+										},
+									},
+								},
+								parser.WhileInCursor{
+									Variables: []parser.Variable{
+										{Name: "@fetch"},
+									},
+									Cursor: parser.Identifier{Literal: "list"},
+									Statements: []parser.Statement{
+										parser.If{
+											Condition: parser.Is{
+												LHS: parser.Variable{Name: "@fetch"},
+												RHS: parser.NewNull(),
+											},
+											Statements: []parser.Statement{
+												parser.FlowControl{Token: parser.CONTINUE},
+											},
+										},
+										parser.If{
+											Condition: parser.Is{
+												LHS: parser.Variable{Name: "@undefined"},
+												RHS: parser.NewNull(),
+											},
+											Statements: []parser.Statement{
+												parser.VariableSubstitution{
+													Variable: parser.Variable{Name: "@value"},
+													Value:    parser.Variable{Name: "@fetch"},
+												},
+												parser.FlowControl{Token: parser.CONTINUE},
+											},
+										},
+										parser.VariableSubstitution{
+											Variable: parser.Variable{Name: "@value"},
+											Value: parser.Arithmetic{
+												LHS:      parser.Variable{Name: "@value"},
+												RHS:      parser.Variable{Name: "@fetch"},
+												Operator: '*',
+											},
+										},
+									},
+								},
+								parser.Return{
+									Value: parser.Variable{Name: "@value"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "useraggfunc",
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+			},
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] variable @undefined is undefined",
+	},
 }
 
 func TestAnalyzeAggregateValue(t *testing.T) {
@@ -1236,7 +1583,8 @@ var analyzeListAggTests = []analyticFunctionTest{
 			},
 		},
 		Function: parser.AnalyticFunction{
-			Name: "listagg",
+			Name:     "listagg",
+			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			Args: []parser.Expression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				parser.NewString(","),
@@ -1265,17 +1613,17 @@ var analyzeListAggTests = []analyticFunctionTest{
 				NewRecordWithoutId([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
-					parser.NewString("1,1"),
+					parser.NewString("1"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
-					parser.NewString("1,1"),
+					parser.NewString("1"),
 				}),
 				NewRecordWithoutId([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
-					parser.NewString("1,1"),
+					parser.NewString("1"),
 				}),
 			},
 		},

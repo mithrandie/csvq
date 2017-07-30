@@ -54,8 +54,8 @@ logical_not
 _condition_
 : [value]({{ '/reference/value.html' | relative_url }})
 
-If the condition is TRUE, return FALSE.
-If the condition is FALSE, return TRUE.
-IF the condition is UNKNOWN, return UNKNOWN.
+If the condition is TRUE, then return FALSE.
+If the condition is FALSE, then return TRUE.
+IF the condition is UNKNOWN, then return UNKNOWN.
 
 _NOT_ and _!_ return the same value, but there is the difference of [precedence]({{ '/reference/operator-precedence.html' | relative_url }}) between these two operators.

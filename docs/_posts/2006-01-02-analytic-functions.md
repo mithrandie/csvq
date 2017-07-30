@@ -25,8 +25,8 @@ Analytic Functions can be used only in [Select Clause]({{ '/reference/select-que
 | [AVG](#avg)                 | Return the average of values |
 | [LISTAGG](#listagg)         | Return the concatenated string of values |
 
-## Syntax
-{: #syntax}
+## Basic Syntax
+{: #basic_syntax}
 
 ```sql
 analytic_function
@@ -206,7 +206,7 @@ _default_
 : [value]({{ '/reference/value.html' | relative_url }})
 
   The value to set when the offset row does not exist or the difference cannot be calculated.
-  The default is null.
+  The default is NULL.
 
 _partition_clause_
 : [Partition Clause](#syntax)

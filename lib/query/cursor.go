@@ -13,10 +13,18 @@ func (list CursorMapList) Declare(expr parser.CursorDeclaration) error {
 	return list[0].Declare(expr)
 }
 
+func (list CursorMapList) AddPseudoCursor(name parser.Identifier, values []parser.Primary) error {
+	return list[0].AddPseudoCursor(name, values)
+}
+
 func (list CursorMapList) Dispose(name parser.Identifier) error {
 	for _, m := range list {
-		if err := m.Dispose(name); err == nil {
+		err := m.Dispose(name)
+		if err == nil {
 			return nil
+		}
+		if _, ok := err.(*UndefinedCursorError); !ok {
+			return err
 		}
 	}
 	return NewUndefinedCursorError(name)
@@ -39,8 +47,12 @@ func (list CursorMapList) Open(name parser.Identifier, filter Filter) error {
 
 func (list CursorMapList) Close(name parser.Identifier) error {
 	for _, m := range list {
-		if err := m.Close(name); err == nil {
+		err := m.Close(name)
+		if err == nil {
 			return nil
+		}
+		if _, ok := err.(*UndefinedCursorError); !ok {
+			return err
 		}
 	}
 	return NewUndefinedCursorError(name)
@@ -87,6 +99,22 @@ func (list CursorMapList) IsInRange(name parser.Identifier) (ternary.Value, erro
 	return ternary.FALSE, NewUndefinedCursorError(name)
 }
 
+func (list CursorMapList) Count(name parser.Identifier) (int, error) {
+	var count int
+	var err error
+
+	for _, m := range list {
+		count, err = m.Count(name)
+		if err == nil {
+			return count, nil
+		}
+		if _, ok := err.(*UndefinedCursorError); !ok {
+			return 0, err
+		}
+	}
+	return 0, NewUndefinedCursorError(name)
+}
+
 type CursorMap map[string]*Cursor
 
 func (m CursorMap) Declare(expr parser.CursorDeclaration) error {
@@ -98,9 +126,21 @@ func (m CursorMap) Declare(expr parser.CursorDeclaration) error {
 	return nil
 }
 
-func (m CursorMap) Dispose(name parser.Identifier) error {
+func (m CursorMap) AddPseudoCursor(name parser.Identifier, values []parser.Primary) error {
 	uname := strings.ToUpper(name.Literal)
 	if _, ok := m[uname]; ok {
+		return NewCursorRedeclaredError(name)
+	}
+	m[uname] = NewPseudoCursor(values)
+	return nil
+}
+
+func (m CursorMap) Dispose(name parser.Identifier) error {
+	uname := strings.ToUpper(name.Literal)
+	if cur, ok := m[uname]; ok {
+		if cur.isPseudo {
+			return NewPseudoCursorError(name)
+		}
 		delete(m, uname)
 		return nil
 	}
@@ -116,8 +156,7 @@ func (m CursorMap) Open(name parser.Identifier, filter Filter) error {
 
 func (m CursorMap) Close(name parser.Identifier) error {
 	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
-		cur.Close()
-		return nil
+		return cur.Close(name)
 	}
 	return NewUndefinedCursorError(name)
 }
@@ -149,11 +188,23 @@ func (m CursorMap) IsInRange(name parser.Identifier) (ternary.Value, error) {
 	return ternary.FALSE, NewUndefinedCursorError(name)
 }
 
+func (m CursorMap) Count(name parser.Identifier) (int, error) {
+	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
+		if cur.view == nil {
+			return 0, NewCursorClosedError(name)
+		}
+		return cur.view.RecordLen(), nil
+	}
+	return 0, NewUndefinedCursorError(name)
+}
+
 type Cursor struct {
 	query   parser.SelectQuery
 	view    *View
 	index   int
 	fetched bool
+
+	isPseudo bool
 }
 
 func NewCursor(query parser.SelectQuery) *Cursor {
@@ -162,7 +213,30 @@ func NewCursor(query parser.SelectQuery) *Cursor {
 	}
 }
 
+func NewPseudoCursor(values []parser.Primary) *Cursor {
+	header := NewHeaderWithoutId("", []string{"c1"})
+
+	records := make(Records, len(values))
+	for i, v := range values {
+		records[i] = NewRecordWithoutId([]parser.Primary{v})
+	}
+	view := NewView()
+	view.Header = header
+	view.Records = records
+
+	return &Cursor{
+		view:     view,
+		index:    -1,
+		fetched:  false,
+		isPseudo: true,
+	}
+}
+
 func (c *Cursor) Open(name parser.Identifier, filter Filter) error {
+	if c.isPseudo {
+		return NewPseudoCursorError(name)
+	}
+
 	if c.view != nil {
 		return NewCursorOpenError(name)
 	}
@@ -178,10 +252,16 @@ func (c *Cursor) Open(name parser.Identifier, filter Filter) error {
 	return nil
 }
 
-func (c *Cursor) Close() {
+func (c *Cursor) Close(name parser.Identifier) error {
+	if c.isPseudo {
+		return NewPseudoCursorError(name)
+	}
+
 	c.view = nil
 	c.index = 0
 	c.fetched = false
+
+	return nil
 }
 
 func (c *Cursor) Fetch(name parser.Identifier, position int, number int) ([]parser.Primary, error) {

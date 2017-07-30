@@ -249,7 +249,7 @@ var inlineTablesListLoadTests = []struct {
 								},
 								FromClause: parser.FromClause{
 									Tables: []parser.Expression{
-										parser.Table{Object: parser.Identifier{Literal: "it_recursive"}},
+										parser.Table{Object: parser.Identifier{Literal: "it_recursive"}, Alias: parser.Identifier{Literal: "t"}},
 									},
 								},
 								WhereClause: parser.WhereClause{

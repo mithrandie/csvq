@@ -46,6 +46,24 @@ var viewLoadTests = []struct {
 		},
 	},
 	{
+		Name: "Dual View With Omitted FromClause",
+		From: parser.FromClause{},
+		Result: &View{
+			Header: []HeaderField{{}},
+			Records: []Record{
+				{
+					NewCell(parser.NewNull()),
+				},
+			},
+			ParentFilter: Filter{
+				VariablesList:    []Variables{{}},
+				TempViewsList:    []ViewMap{{}},
+				CursorsList:      []CursorMap{{}},
+				InlineTablesList: InlineTablesList{{}},
+				AliasesList:      AliasMapList{{}},
+			},
+		},
+	}, {
 		Name: "Load File",
 		From: parser.FromClause{
 			Tables: []parser.Expression{
@@ -88,7 +106,44 @@ var viewLoadTests = []struct {
 		},
 	},
 	{
-		Name:  "Load From Stdin",
+		Name: "Load From Stdin",
+		From: parser.FromClause{
+			Tables: []parser.Expression{
+				parser.Table{Object: parser.Stdin{Stdin: "stdin"}, Alias: parser.Identifier{Literal: "t"}},
+			},
+		},
+		Stdin: "column1,column2\n1,\"str1\"",
+		Result: &View{
+			Header: NewHeaderWithoutId("t", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "stdin",
+				Delimiter: ',',
+			},
+			ParentFilter: Filter{
+				VariablesList: []Variables{{}},
+				TempViewsList: []ViewMap{
+					{
+						"STDIN": nil,
+					},
+				},
+				CursorsList:      []CursorMap{{}},
+				InlineTablesList: InlineTablesList{{}},
+				AliasesList: AliasMapList{
+					{
+						"T": "STDIN",
+					},
+				},
+			},
+		},
+	},
+	{
+		Name:  "Load From Stdin With Omitted FromClause",
 		From:  parser.FromClause{},
 		Stdin: "column1,column2\n1,\"str1\"",
 		Result: &View{
@@ -121,6 +176,17 @@ var viewLoadTests = []struct {
 		},
 	},
 	{
+		Name: "Load From Stdin Duplicate Table Name Error",
+		From: parser.FromClause{
+			Tables: []parser.Expression{
+				parser.Table{Object: parser.Identifier{Literal: "table1"}, Alias: parser.Identifier{Literal: "t"}},
+				parser.Table{Object: parser.Stdin{Stdin: "stdin"}, Alias: parser.Identifier{Literal: "t"}},
+			},
+		},
+		Stdin: "column1,column2\n1,\"str1\"",
+		Error: "[L:- C:-] table name t is a duplicate",
+	},
+	{
 		Name: "Stdin Empty Error",
 		From: parser.FromClause{
 			Tables: []parser.Expression{
@@ -141,6 +207,150 @@ var viewLoadTests = []struct {
 			},
 		},
 		Error: "[L:- C:-] file notexist does not exist",
+	},
+	{
+		Name: "Load From File Duplicate Table Name Error",
+		From: parser.FromClause{
+			Tables: []parser.Expression{
+				parser.Table{Object: parser.Identifier{Literal: "table1"}, Alias: parser.Identifier{Literal: "t"}},
+				parser.Table{Object: parser.Identifier{Literal: "table2"}, Alias: parser.Identifier{Literal: "t"}},
+			},
+		},
+		Error: "[L:- C:-] table name t is a duplicate",
+	},
+	{
+		Name: "Load From File Inline Table",
+		From: parser.FromClause{
+			Tables: []parser.Expression{
+				parser.Table{Object: parser.Identifier{Literal: "it"}, Alias: parser.Identifier{Literal: "t"}},
+			},
+		},
+		Filter: Filter{
+			VariablesList: VariablesList{{}},
+			TempViewsList: TemporaryViewMapList{{}},
+			CursorsList:   CursorMapList{{}},
+			InlineTablesList: InlineTablesList{
+				InlineTables{
+					"IT": &View{
+						Header: NewHeaderWithoutId("it", []string{"c1", "c2", "num"}),
+						Records: []Record{
+							NewRecordWithoutId([]parser.Primary{
+								parser.NewString("1"),
+								parser.NewString("str1"),
+								parser.NewInteger(1),
+							}),
+							NewRecordWithoutId([]parser.Primary{
+								parser.NewString("2"),
+								parser.NewString("str2"),
+								parser.NewInteger(1),
+							}),
+							NewRecordWithoutId([]parser.Primary{
+								parser.NewString("3"),
+								parser.NewString("str3"),
+								parser.NewInteger(1),
+							}),
+						},
+					},
+				},
+			},
+			AliasesList: AliasMapList{{}},
+		},
+		Result: &View{
+			Header: NewHeaderWithoutId("t", []string{"c1", "c2", "num"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("3"),
+					parser.NewString("str3"),
+					parser.NewInteger(1),
+				}),
+			},
+			ParentFilter: Filter{
+				VariablesList: VariablesList{{}},
+				TempViewsList: TemporaryViewMapList{{}},
+				CursorsList:   CursorMapList{{}},
+				InlineTablesList: InlineTablesList{
+					{},
+					InlineTables{
+						"IT": &View{
+							Header: NewHeaderWithoutId("it", []string{"c1", "c2", "num"}),
+							Records: []Record{
+								NewRecordWithoutId([]parser.Primary{
+									parser.NewString("1"),
+									parser.NewString("str1"),
+									parser.NewInteger(1),
+								}),
+								NewRecordWithoutId([]parser.Primary{
+									parser.NewString("2"),
+									parser.NewString("str2"),
+									parser.NewInteger(1),
+								}),
+								NewRecordWithoutId([]parser.Primary{
+									parser.NewString("3"),
+									parser.NewString("str3"),
+									parser.NewInteger(1),
+								}),
+							},
+						},
+					},
+				},
+				AliasesList: AliasMapList{
+					{
+						"T": "",
+					},
+					{},
+				},
+			},
+		},
+	},
+	{
+		Name: "Load From File Inline Table Duplicate Table Name Error",
+		From: parser.FromClause{
+			Tables: []parser.Expression{
+				parser.Table{Object: parser.Identifier{Literal: "table1"}, Alias: parser.Identifier{Literal: "t"}},
+				parser.Table{Object: parser.Identifier{Literal: "it"}, Alias: parser.Identifier{Literal: "t"}},
+			},
+		},
+		Filter: Filter{
+			VariablesList: VariablesList{{}},
+			TempViewsList: TemporaryViewMapList{{}},
+			CursorsList:   CursorMapList{{}},
+			InlineTablesList: InlineTablesList{
+				InlineTables{
+					"IT": &View{
+						Header: NewHeaderWithoutId("it", []string{"c1", "c2", "num"}),
+						Records: []Record{
+							NewRecordWithoutId([]parser.Primary{
+								parser.NewString("1"),
+								parser.NewString("str1"),
+								parser.NewInteger(1),
+							}),
+							NewRecordWithoutId([]parser.Primary{
+								parser.NewString("2"),
+								parser.NewString("str2"),
+								parser.NewInteger(1),
+							}),
+							NewRecordWithoutId([]parser.Primary{
+								parser.NewString("3"),
+								parser.NewString("str3"),
+								parser.NewInteger(1),
+							}),
+						},
+					},
+				},
+			},
+			AliasesList: AliasMapList{{}},
+		},
+		Error: "[L:- C:-] table name t is a duplicate",
 	},
 	{
 		Name:     "Load SJIS File",
@@ -611,6 +821,36 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
+	},
+	{
+		Name: "Load Subquery Duplicate Table Name Error",
+		From: parser.FromClause{
+			Tables: []parser.Expression{
+				parser.Table{Object: parser.Identifier{Literal: "table1"}, Alias: parser.Identifier{Literal: "t"}},
+				parser.Table{
+					Object: parser.Subquery{
+						Query: parser.SelectQuery{
+							SelectEntity: parser.SelectEntity{
+								SelectClause: parser.SelectClause{
+									Select: "select",
+									Fields: []parser.Expression{
+										parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+										parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+									},
+								},
+								FromClause: parser.FromClause{
+									Tables: []parser.Expression{
+										parser.Table{Object: parser.Identifier{Literal: "table1"}},
+									},
+								},
+							},
+						},
+					},
+					Alias: parser.Identifier{Literal: "t"},
+				},
+			},
+		},
+		Error: "[L:- C:-] table name t is a duplicate",
 	},
 	{
 		Name: "Load CSV Parse Error",

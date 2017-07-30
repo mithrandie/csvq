@@ -28,7 +28,7 @@ _value_
 _return_
 : [primitive type]({{ '/reference/value.html#primitive_types' | relative_url }})
 
-Return the first non-null _value_ in arguments. If there is no non-null _value_, return null.
+Returns the first non-null _value_ in arguments. If there is no non-null _value_, then returns a null.
 
 ### IF
 {: #if}
@@ -49,7 +49,7 @@ _value2_
 _return_
 : [primitive type]({{ '/reference/value.html#primitive_types' | relative_url }})
 
-If _condition_ is TRUE, returns _value1_. Otherwise returns _value2_.
+If _condition_ is TRUE, then returns _value1_. Otherwise returns _value2_.
 
 ### IFNULL
 {: #ifnull}
@@ -67,7 +67,7 @@ _value2_
 _return_
 : [primitive type]({{ '/reference/value.html#primitive_types' | relative_url }})
 
-If _value1_ is null, return _value2_. Otherwise return _value1_.
+If _value1_ is null, then returns _value2_. Otherwise returns _value1_.
 
 ### NULLIF
 {: #nullif}
@@ -85,5 +85,5 @@ _value2_
 _return_
 : [primitive type]({{ '/reference/value.html#primitive_types' | relative_url }})
 
-If _value1_ is equal to _value2_, return null. Otherwise return _value1_.
+If _value1_ is equal to _value2_, returns a null. Otherwise returns _value1_.
 

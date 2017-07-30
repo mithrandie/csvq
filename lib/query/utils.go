@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/ternary"
 )
 
 func InIntSlice(i int, list []int) bool {
@@ -22,6 +25,25 @@ func InStrSliceWithCaseInsensitive(s string, list []string) bool {
 		}
 	}
 	return false
+}
+
+func Distinguish(list []parser.Primary) []parser.Primary {
+	var in = func(list []parser.Primary, item parser.Primary) bool {
+		for _, v := range list {
+			if EquivalentTo(item, v) == ternary.TRUE {
+				return true
+			}
+		}
+		return false
+	}
+
+	distinguished := []parser.Primary{}
+	for _, v := range list {
+		if !in(distinguished, v) {
+			distinguished = append(distinguished, v)
+		}
+	}
+	return distinguished
 }
 
 func FormatCount(i int, obj string) string {
