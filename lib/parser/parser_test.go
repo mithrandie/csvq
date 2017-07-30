@@ -1567,6 +1567,29 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select aggfunc(distinct column1)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []Expression{
+							Field{Object: AggregateFunction{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "aggfunc",
+								Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 16},
+								Args: []Expression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 25}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 25}, Literal: "column1"}},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "select count(*)",
 		Output: []Statement{
 			SelectQuery{
@@ -1809,6 +1832,26 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select cursor cur count",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []Expression{
+							Field{Object: CursorAttrebute{
+								CursorLit: "cursor",
+								Cursor:    Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "cur"},
+								Attrebute: Token{Token: COUNT, Literal: "count", Line: 1, Char: 19},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "select rank() over (partition by column1 order by column2)",
 		Output: []Statement{
 			SelectQuery{
@@ -1872,6 +1915,46 @@ var parseTests = []struct {
 										Items: []Expression{
 											OrderItem{
 												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 55}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 55}, Literal: "column2"}},
+											},
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select f(distinct column1) over (partition by column1 order by column2)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []Expression{
+							Field{Object: AnalyticFunction{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "f",
+								Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 10},
+								Args: []Expression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 19}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 19}, Literal: "column1"}},
+								},
+								Over: "over",
+								AnalyticClause: AnalyticClause{
+									Partition: Partition{
+										PartitionBy: "partition by",
+										Values: []Expression{
+											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 47}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 47}, Literal: "column1"}},
+										},
+									},
+									OrderByClause: OrderByClause{
+										OrderBy: "order by",
+										Items: []Expression{
+											OrderItem{
+												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 64}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 64}, Literal: "column2"}},
 											},
 										},
 									},
@@ -2440,7 +2523,7 @@ var parseTests = []struct {
 				},
 				Insert: "insert",
 				Into:   "into",
-				Table:  Identifier{BaseExpr: &BaseExpr{line: 1, char: 35}, Literal: "table1"},
+				Table:  Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 35}, Literal: "table1"}},
 				Values: "values",
 				ValuesList: []Expression{
 					RowValue{
@@ -2471,7 +2554,7 @@ var parseTests = []struct {
 			InsertQuery{
 				Insert: "insert",
 				Into:   "into",
-				Table:  Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
+				Table:  Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"}},
 				Fields: []Expression{
 					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 21}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 21}, Literal: "column1"}},
 					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 30}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 30}, Literal: "column2"}},
@@ -2507,7 +2590,7 @@ var parseTests = []struct {
 			InsertQuery{
 				Insert: "insert",
 				Into:   "into",
-				Table:  Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
+				Table:  Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"}},
 				Query: SelectQuery{
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
@@ -2529,7 +2612,7 @@ var parseTests = []struct {
 			InsertQuery{
 				Insert: "insert",
 				Into:   "into",
-				Table:  Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
+				Table:  Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"}},
 				Fields: []Expression{
 					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 21}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 21}, Literal: "column1"}},
 					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 30}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 30}, Literal: "column2"}},
@@ -2864,7 +2947,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			Source{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
-				FilePath: "/path/to/file.sql",
+				FilePath: NewString("/path/to/file.sql"),
 			},
 		},
 	},
@@ -3162,6 +3245,20 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "while @var1 in cur do print @var1 end while",
+		Output: []Statement{
+			WhileInCursor{
+				Variables: []Variable{
+					{BaseExpr: &BaseExpr{line: 1, char: 7}, Name: "@var1"},
+				},
+				Cursor: Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "cur"},
+				Statements: []Statement{
+					Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 29}, Name: "@var1"}},
+				},
+			},
+		},
+	},
+	{
 		Input: "while @var1, @var2 in cur do print @var1 end while",
 		Output: []Statement{
 			WhileInCursor{
@@ -3286,6 +3383,9 @@ var parseTests = []struct {
 			"while true do break end while; \n" +
 			"while true do if @var1 = 1 then continue; end if; end while; \n" +
 			"while true do if @var1 = 1 then continue; elseif @var1 = 2 then break; elseif @var1 = 3 then return; else continue; end if; end while; \n" +
+			"while @var1 in cur do print @var1 end while; \n" +
+			"while @var1, @var2 in cur do print @var1 end while; \n" +
+			"return; \n" +
 			"return @var1; \n" +
 			"end",
 		Output: []Statement{
@@ -3406,10 +3506,41 @@ var parseTests = []struct {
 							},
 						},
 					},
+					WhileInCursor{
+						Variables: []Variable{
+							{BaseExpr: &BaseExpr{line: 7, char: 7}, Name: "@var1"},
+						},
+						Cursor: Identifier{BaseExpr: &BaseExpr{line: 7, char: 16}, Literal: "cur"},
+						Statements: []Statement{
+							Print{Value: Variable{BaseExpr: &BaseExpr{line: 7, char: 29}, Name: "@var1"}},
+						},
+					},
+					WhileInCursor{
+						Variables: []Variable{
+							{BaseExpr: &BaseExpr{line: 8, char: 7}, Name: "@var1"},
+							{BaseExpr: &BaseExpr{line: 8, char: 14}, Name: "@var2"},
+						},
+						Cursor: Identifier{BaseExpr: &BaseExpr{line: 8, char: 23}, Literal: "cur"},
+						Statements: []Statement{
+							Print{Value: Variable{BaseExpr: &BaseExpr{line: 8, char: 36}, Name: "@var1"}},
+						},
+					},
 					Return{
-						Value: Variable{BaseExpr: &BaseExpr{line: 7, char: 8}, Name: "@var1"},
+						Value: NewNull(),
+					},
+					Return{
+						Value: Variable{BaseExpr: &BaseExpr{line: 10, char: 8}, Name: "@var1"},
 					},
 				},
+			},
+		},
+	},
+	{
+		Input: "declare aggfunc aggregate (params) as begin end",
+		Output: []Statement{
+			AggregateDeclaration{
+				Name:      Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "aggfunc"},
+				Parameter: Identifier{BaseExpr: &BaseExpr{line: 1, char: 28}, Literal: "params"},
 			},
 		},
 	},

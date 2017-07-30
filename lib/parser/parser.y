@@ -156,7 +156,7 @@ package parser
 %token<token> COMMIT ROLLBACK
 %token<token> CONTINUE BREAK EXIT
 %token<token> PRINT PRINTF SOURCE
-%token<token> FUNCTION BEGIN RETURN
+%token<token> FUNCTION AGGREGATE BEGIN RETURN
 %token<token> IGNORE WITHIN
 %token<token> VAR
 %token<token> TIES NULLS
@@ -330,6 +330,10 @@ flow_control_statement
     {
         $$ = While{Condition: $2, Statements: $4}
     }
+    | WHILE variable IN identifier DO in_loop_program END WHILE statement_terminal
+    {
+        $$ = WhileInCursor{Variables: []Variable{$2}, Cursor: $4, Statements: $6}
+    }
     | WHILE variables IN identifier DO in_loop_program END WHILE statement_terminal
     {
         $$ = WhileInCursor{Variables: $2, Cursor: $4, Statements: $6}
@@ -351,6 +355,10 @@ in_function_flow_control_statement
     | WHILE value DO in_function_in_loop_program END WHILE statement_terminal
     {
         $$ = While{Condition: $2, Statements: $4}
+    }
+    | WHILE variable IN identifier DO in_function_in_loop_program END WHILE statement_terminal
+    {
+        $$ = WhileInCursor{Variables: []Variable{$2}, Cursor: $4, Statements: $6}
     }
     | WHILE variables IN identifier DO in_function_in_loop_program END WHILE statement_terminal
     {
@@ -548,6 +556,10 @@ user_defined_function_statement
     {
         $$ = FunctionDeclaration{Name: $2, Parameters: $5, Statements: $9}
     }
+    | DECLARE identifier AGGREGATE '(' identifier ')' AS BEGIN in_function_program END statement_terminal
+    {
+        $$ = AggregateDeclaration{Name: $2, Parameter: $5, Statements: $9}
+    }
 
 fetch_position
     :
@@ -588,6 +600,10 @@ cursor_status
     {
         $$ = CursorStatus{CursorLit: $1.Literal, Cursor: $2, Is: $3.Literal, Negation: $4, Type: $6.Token, TypeLit: $5.Literal + " " + $6.Literal}
     }
+    | CURSOR identifier COUNT
+    {
+        $$ = CursorAttrebute{CursorLit: $1.Literal, Cursor: $2, Attrebute: $3}
+    }
 
 command_statement
     : SET FLAG '=' primary statement_terminal
@@ -606,9 +622,9 @@ command_statement
     {
         $$ = Printf{BaseExpr: NewBaseExpr($1), Format: $2.Literal, Values: $4}
     }
-    | SOURCE STRING statement_terminal
+    | SOURCE value statement_terminal
     {
-        $$ = Source{BaseExpr: NewBaseExpr($1), FilePath: $2.Literal}
+        $$ = Source{BaseExpr: NewBaseExpr($1), FilePath: $2}
     }
 
 select_query
@@ -821,11 +837,11 @@ primary
 field_reference
     : identifier
     {
-        $$ = FieldReference{BaseExpr: NewBaseExprFromIdentifier($1), Column: $1}
+        $$ = FieldReference{BaseExpr: $1.BaseExpr, Column: $1}
     }
     | identifier '.' identifier
     {
-        $$ = FieldReference{BaseExpr: NewBaseExprFromIdentifier($1), View: $1, Column: $3}
+        $$ = FieldReference{BaseExpr: $1.BaseExpr, View: $1, Column: $3}
     }
     | STDIN '.' identifier
     {
@@ -833,7 +849,7 @@ field_reference
     }
     | identifier '.' integer
     {
-        $$ = ColumnNumber{BaseExpr: NewBaseExprFromIdentifier($1), View: $1, Number: $3}
+        $$ = ColumnNumber{BaseExpr: $1.BaseExpr, View: $1, Number: $3}
     }
     | STDIN '.' integer
     {
@@ -1146,11 +1162,15 @@ arguments
 function
     : identifier '(' arguments ')'
     {
-        $$ = Function{BaseExpr: NewBaseExprFromIdentifier($1), Name: $1.Literal, Args: $3}
+        $$ = Function{BaseExpr: $1.BaseExpr, Name: $1.Literal, Args: $3}
     }
 
 aggregate_function
-    : AGGREGATE_FUNCTION '(' distinct arguments ')'
+    : identifier '(' distinct arguments ')'
+    {
+        $$ = AggregateFunction{BaseExpr: $1.BaseExpr, Name: $1.Literal, Distinct: $3, Args: $4}
+    }
+    | AGGREGATE_FUNCTION '(' distinct arguments ')'
     {
         $$ = AggregateFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4}
     }
@@ -1180,7 +1200,11 @@ listagg
 analytic_function
     : identifier '(' arguments ')' OVER '(' analytic_clause ')'
     {
-        $$ = AnalyticFunction{BaseExpr: NewBaseExprFromIdentifier($1), Name: $1.Literal, Args: $3, Over: $5.Literal, AnalyticClause: $7.(AnalyticClause)}
+        $$ = AnalyticFunction{BaseExpr: $1.BaseExpr, Name: $1.Literal, Args: $3, Over: $5.Literal, AnalyticClause: $7.(AnalyticClause)}
+    }
+    | identifier '(' distinct arguments ')' OVER '(' analytic_clause ')'
+    {
+        $$ = AnalyticFunction{BaseExpr: $1.BaseExpr, Name: $1.Literal, Distinct: $3, Args: $4, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
     }
     | AGGREGATE_FUNCTION '(' distinct arguments ')' OVER '(' analytic_clause ')'
     {
@@ -1436,19 +1460,19 @@ fields
     }
 
 insert_query
-    : with_clause INSERT INTO table_identifier VALUES row_values
+    : with_clause INSERT INTO identified_table VALUES row_values
     {
         $$ = InsertQuery{WithClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Values: $5.Literal, ValuesList: $6}
     }
-    | with_clause INSERT INTO table_identifier '(' field_references ')' VALUES row_values
+    | with_clause INSERT INTO identified_table '(' field_references ')' VALUES row_values
     {
         $$ = InsertQuery{WithClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Fields: $6, Values: $8.Literal, ValuesList: $9}
     }
-    | with_clause INSERT INTO table_identifier select_query
+    | with_clause INSERT INTO identified_table select_query
     {
         $$ = InsertQuery{WithClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Query: $5.(SelectQuery)}
     }
-    | with_clause INSERT INTO table_identifier '(' field_references ')' select_query
+    | with_clause INSERT INTO identified_table '(' field_references ')' select_query
     {
         $$ = InsertQuery{WithClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Fields: $6, Query: $8.(SelectQuery)}
     }

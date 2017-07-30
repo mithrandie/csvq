@@ -492,6 +492,27 @@ var declareTableTests = []struct {
 		Error: "[L:- C:-] select query should return exactly 1 field for temporary table tbl",
 	},
 	{
+		Name: "Declare Table  From Query Field Duplicate Error",
+		Expr: parser.TableDeclaration{
+			Table: parser.Identifier{Literal: "tbl"},
+			Fields: []parser.Expression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "column1"},
+			},
+			Query: parser.SelectQuery{
+				SelectEntity: parser.SelectEntity{
+					SelectClause: parser.SelectClause{
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.NewInteger(1)},
+							parser.Field{Object: parser.NewInteger(2)},
+						},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] field name column1 is a duplicate",
+	},
+	{
 		Name: "Declare Table Redeclaration Error",
 		ViewMap: ViewMap{
 			"TBL": {
@@ -1269,7 +1290,7 @@ var insertTests = []struct {
 			},
 			Insert: "insert",
 			Into:   "into",
-			Table:  parser.Identifier{Literal: "table1"},
+			Table:  parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			Fields: []parser.Expression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
@@ -1381,7 +1402,7 @@ var insertTests = []struct {
 		Query: parser.InsertQuery{
 			Insert: "insert",
 			Into:   "into",
-			Table:  parser.Identifier{Literal: "tmpview"},
+			Table:  parser.Table{Object: parser.Identifier{Literal: "tmpview"}, Alias: parser.Identifier{Literal: "t"}},
 			Fields: []parser.Expression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
@@ -1467,7 +1488,7 @@ var insertTests = []struct {
 		Query: parser.InsertQuery{
 			Insert: "insert",
 			Into:   "into",
-			Table:  parser.Identifier{Literal: "table1"},
+			Table:  parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			Values: "values",
 			ValuesList: []parser.Expression{
 				parser.RowValue{
@@ -1527,7 +1548,7 @@ var insertTests = []struct {
 		Query: parser.InsertQuery{
 			Insert: "insert",
 			Into:   "into",
-			Table:  parser.Identifier{Literal: "notexist"},
+			Table:  parser.Table{Object: parser.Identifier{Literal: "notexist"}},
 			Fields: []parser.Expression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
@@ -1556,7 +1577,7 @@ var insertTests = []struct {
 		Query: parser.InsertQuery{
 			Insert: "insert",
 			Into:   "into",
-			Table:  parser.Identifier{Literal: "table1"},
+			Table:  parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			Fields: []parser.Expression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
@@ -1585,7 +1606,7 @@ var insertTests = []struct {
 		Query: parser.InsertQuery{
 			Insert: "insert",
 			Into:   "into",
-			Table:  parser.Identifier{Literal: "table1"},
+			Table:  parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			Fields: []parser.Expression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
@@ -1649,7 +1670,7 @@ var insertTests = []struct {
 		Query: parser.InsertQuery{
 			Insert: "insert",
 			Into:   "into",
-			Table:  parser.Identifier{Literal: "table1"},
+			Table:  parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			Fields: []parser.Expression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},

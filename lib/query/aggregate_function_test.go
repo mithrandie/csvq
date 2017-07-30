@@ -8,14 +8,12 @@ import (
 )
 
 type aggregateTests struct {
-	Distinct bool
-	List     []parser.Primary
-	Result   parser.Primary
+	List   []parser.Primary
+	Result parser.Primary
 }
 
 var countTests = []aggregateTests{
 	{
-		Distinct: false,
 		List: []parser.Primary{
 			parser.NewInteger(2),
 			parser.NewInteger(1),
@@ -27,19 +25,6 @@ var countTests = []aggregateTests{
 		Result: parser.NewInteger(4),
 	},
 	{
-		Distinct: true,
-		List: []parser.Primary{
-			parser.NewInteger(2),
-			parser.NewInteger(1),
-			parser.NewInteger(1),
-			parser.NewNull(),
-			parser.NewInteger(4),
-			parser.NewNull(),
-		},
-		Result: parser.NewInteger(3),
-	},
-	{
-		Distinct: false,
 		List: []parser.Primary{
 			parser.NewNull(),
 		},
@@ -49,16 +34,15 @@ var countTests = []aggregateTests{
 
 func TestCount(t *testing.T) {
 	for _, v := range countTests {
-		r := Count(v.Distinct, v.List)
+		r := Count(v.List)
 		if !reflect.DeepEqual(r, v.Result) {
-			t.Errorf("count distinct = %t, list = %s: result = %s, want %s", v.Distinct, v.List, r, v.Result)
+			t.Errorf("count list = %s: result = %s, want %s", v.List, r, v.Result)
 		}
 	}
 }
 
 var maxTests = []aggregateTests{
 	{
-		Distinct: false,
 		List: []parser.Primary{
 			parser.NewInteger(2),
 			parser.NewInteger(1),
@@ -70,19 +54,6 @@ var maxTests = []aggregateTests{
 		Result: parser.NewInteger(4),
 	},
 	{
-		Distinct: true,
-		List: []parser.Primary{
-			parser.NewInteger(2),
-			parser.NewInteger(1),
-			parser.NewInteger(1),
-			parser.NewNull(),
-			parser.NewInteger(4),
-			parser.NewNull(),
-		},
-		Result: parser.NewInteger(4),
-	},
-	{
-		Distinct: false,
 		List: []parser.Primary{
 			parser.NewNull(),
 		},
@@ -92,16 +63,15 @@ var maxTests = []aggregateTests{
 
 func TestMax(t *testing.T) {
 	for _, v := range maxTests {
-		r := Max(v.Distinct, v.List)
+		r := Max(v.List)
 		if !reflect.DeepEqual(r, v.Result) {
-			t.Errorf("max distinct = %t, list = %s: result = %s, want %s", v.Distinct, v.List, r, v.Result)
+			t.Errorf("max list = %s: result = %s, want %s", v.List, r, v.Result)
 		}
 	}
 }
 
 var minTests = []aggregateTests{
 	{
-		Distinct: false,
 		List: []parser.Primary{
 			parser.NewInteger(2),
 			parser.NewInteger(1),
@@ -113,19 +83,6 @@ var minTests = []aggregateTests{
 		Result: parser.NewInteger(1),
 	},
 	{
-		Distinct: true,
-		List: []parser.Primary{
-			parser.NewInteger(2),
-			parser.NewInteger(1),
-			parser.NewInteger(1),
-			parser.NewNull(),
-			parser.NewInteger(4),
-			parser.NewNull(),
-		},
-		Result: parser.NewInteger(1),
-	},
-	{
-		Distinct: false,
 		List: []parser.Primary{
 			parser.NewNull(),
 		},
@@ -135,16 +92,15 @@ var minTests = []aggregateTests{
 
 func TestMin(t *testing.T) {
 	for _, v := range minTests {
-		r := Min(v.Distinct, v.List)
+		r := Min(v.List)
 		if !reflect.DeepEqual(r, v.Result) {
-			t.Errorf("min distinct = %t, list = %s: result = %s, want %s", v.Distinct, v.List, r, v.Result)
+			t.Errorf("min list = %s: result = %s, want %s", v.List, r, v.Result)
 		}
 	}
 }
 
 var sumTests = []aggregateTests{
 	{
-		Distinct: false,
 		List: []parser.Primary{
 			parser.NewInteger(2),
 			parser.NewInteger(1),
@@ -156,19 +112,6 @@ var sumTests = []aggregateTests{
 		Result: parser.NewInteger(8),
 	},
 	{
-		Distinct: true,
-		List: []parser.Primary{
-			parser.NewInteger(2),
-			parser.NewInteger(1),
-			parser.NewInteger(1),
-			parser.NewNull(),
-			parser.NewInteger(4),
-			parser.NewNull(),
-		},
-		Result: parser.NewInteger(7),
-	},
-	{
-		Distinct: false,
 		List: []parser.Primary{
 			parser.NewNull(),
 		},
@@ -178,16 +121,15 @@ var sumTests = []aggregateTests{
 
 func TestSum(t *testing.T) {
 	for _, v := range sumTests {
-		r := Sum(v.Distinct, v.List)
+		r := Sum(v.List)
 		if !reflect.DeepEqual(r, v.Result) {
-			t.Errorf("sum distinct = %t, list = %s: result = %s, want %s", v.Distinct, v.List, r, v.Result)
+			t.Errorf("sum list = %s: result = %s, want %s", v.List, r, v.Result)
 		}
 	}
 }
 
 var avgTests = []aggregateTests{
 	{
-		Distinct: false,
 		List: []parser.Primary{
 			parser.NewInteger(1),
 			parser.NewInteger(1),
@@ -199,19 +141,6 @@ var avgTests = []aggregateTests{
 		Result: parser.NewInteger(2),
 	},
 	{
-		Distinct: true,
-		List: []parser.Primary{
-			parser.NewInteger(1),
-			parser.NewInteger(1),
-			parser.NewInteger(2),
-			parser.NewNull(),
-			parser.NewInteger(4),
-			parser.NewNull(),
-		},
-		Result: parser.NewFloat(7.0 / 3.0),
-	},
-	{
-		Distinct: false,
 		List: []parser.Primary{
 			parser.NewNull(),
 		},
@@ -221,21 +150,19 @@ var avgTests = []aggregateTests{
 
 func TestAvg(t *testing.T) {
 	for _, v := range avgTests {
-		r := Avg(v.Distinct, v.List)
+		r := Avg(v.List)
 		if !reflect.DeepEqual(r, v.Result) {
-			t.Errorf("avg distinct = %t, list = %s: result = %s, want %s", v.Distinct, v.List, r, v.Result)
+			t.Errorf("avg list = %s: result = %s, want %s", v.List, r, v.Result)
 		}
 	}
 }
 
 var listAggTests = []struct {
-	Distinct  bool
 	List      []parser.Primary
 	Separator string
 	Result    parser.Primary
 }{
 	{
-		Distinct: false,
 		List: []parser.Primary{
 			parser.NewString("str1"),
 			parser.NewString("str3"),
@@ -248,20 +175,6 @@ var listAggTests = []struct {
 		Result:    parser.NewString("str1,str3,str2,str1,str2"),
 	},
 	{
-		Distinct: true,
-		List: []parser.Primary{
-			parser.NewString("str1"),
-			parser.NewString("str3"),
-			parser.NewNull(),
-			parser.NewString("str2"),
-			parser.NewString("str1"),
-			parser.NewString("str2"),
-		},
-		Separator: ",",
-		Result:    parser.NewString("str1,str3,str2"),
-	},
-	{
-		Distinct: false,
 		List: []parser.Primary{
 			parser.NewNull(),
 		},
@@ -272,9 +185,9 @@ var listAggTests = []struct {
 
 func TestListAgg(t *testing.T) {
 	for _, v := range listAggTests {
-		r := ListAgg(v.Distinct, v.List, v.Separator)
+		r := ListAgg(v.List, v.Separator)
 		if !reflect.DeepEqual(r, v.Result) {
-			t.Errorf("listagg distinct = %t, list = %s: separator = %q, result = %s, want %s", v.Distinct, v.List, v.Separator, r, v.Result)
+			t.Errorf("listagg list = %s: separator = %q, result = %s, want %s", v.List, v.Separator, r, v.Result)
 		}
 	}
 }

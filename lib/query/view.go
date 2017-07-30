@@ -683,9 +683,10 @@ func (view *View) evalColumn(obj parser.Expression, column string, alias string)
 
 func (view *View) evalAnalyticFunction(expr parser.AnalyticFunction) error {
 	name := strings.ToUpper(expr.Name)
-	fn, ok := AnalyticFunctions[name]
-	if !ok {
-		return NewFunctionNotExistError(expr, expr.Name)
+	if _, ok := AnalyticFunctions[name]; !ok {
+		if udfn, err := view.ParentFilter.FunctionsList.Get(expr, expr.Name); err != nil || !udfn.IsAggregate {
+			return NewFunctionNotExistError(expr, expr.Name)
+		}
 	}
 
 	if expr.AnalyticClause.OrderByClause != nil {
@@ -695,7 +696,10 @@ func (view *View) evalAnalyticFunction(expr parser.AnalyticFunction) error {
 		}
 	}
 
-	return fn(view, expr)
+	if fn, ok := AnalyticFunctions[name]; ok {
+		return fn(view, expr)
+	}
+	return AnalyzeAggregateValue(view, expr)
 }
 
 func (view *View) Offset(clause parser.OffsetClause) error {
@@ -946,6 +950,10 @@ func (view *View) ListValuesForAggregateFunctions(expr parser.Expression, arg pa
 		list[i] = p
 	}
 	return list, nil
+}
+
+func (view *View) RestoreHeaderReferences() {
+	view.Header.Update(parser.FormatTableName(view.FileInfo.Path), nil)
 }
 
 func (view *View) FieldIndex(fieldRef parser.Expression) (int, error) {

@@ -68,16 +68,26 @@ func Printf(expr parser.Printf, filter Filter) (string, error) {
 	return string(str), nil
 }
 
-func Source(expr parser.Source) ([]parser.Statement, error) {
-	stat, err := os.Stat(expr.FilePath)
+func Source(expr parser.Source, filter Filter) ([]parser.Statement, error) {
+	p, err := filter.Evaluate(expr.FilePath)
 	if err != nil {
-		return nil, NewSourceFileNotExistError(expr)
+		return nil, err
+	}
+	s := parser.PrimaryToString(p)
+	if parser.IsNull(s) {
+		return nil, NewSourceInvalidArgumentError(expr, expr.FilePath)
+	}
+	fpath := s.(parser.String).Value()
+
+	stat, err := os.Stat(fpath)
+	if err != nil {
+		return nil, NewSourceFileNotExistError(expr, fpath)
 	}
 	if stat.IsDir() {
-		return nil, NewSourceFileUnableToReadError(expr)
+		return nil, NewSourceFileUnableToReadError(expr, fpath)
 	}
 
-	fp, err := os.Open(expr.FilePath)
+	fp, err := os.Open(fpath)
 	if err != nil {
 		return nil, NewReadFileError(expr, err.Error())
 	}
@@ -89,7 +99,7 @@ func Source(expr parser.Source) ([]parser.Statement, error) {
 	}
 	input := string(buf)
 
-	statements, err := parser.Parse(input, expr.FilePath)
+	statements, err := parser.Parse(input, fpath)
 	if err != nil {
 		syntaxErr := err.(*parser.SyntaxError)
 		err = NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)

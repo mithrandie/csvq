@@ -83,6 +83,8 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		err = proc.Filter.TempViewsList.Dispose(stmt.(parser.DisposeTable).Table)
 	case parser.FunctionDeclaration:
 		err = proc.Filter.FunctionsList.Declare(stmt.(parser.FunctionDeclaration))
+	case parser.AggregateDeclaration:
+		err = proc.Filter.FunctionsList.DeclareAggregate(stmt.(parser.AggregateDeclaration))
 	case parser.SelectQuery:
 		if view, err = Select(stmt.(parser.SelectQuery), proc.Filter); err == nil {
 			flags := cmd.GetFlags()
@@ -229,7 +231,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 	case parser.Source:
 		var externalStatements []parser.Statement
 		source := stmt.(parser.Source)
-		if externalStatements, err = Source(source); err == nil {
+		if externalStatements, err = Source(source, proc.Filter); err == nil {
 			flow, err = proc.Execute(externalStatements)
 		}
 	}

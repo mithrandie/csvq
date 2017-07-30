@@ -1,11 +1,11 @@
 package query
 
 import (
+	"strings"
 	"sync"
 
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
-	"strings"
 )
 
 var AnalyticFunctions map[string]func(*View, parser.AnalyticFunction) error
@@ -25,6 +25,8 @@ func DefineAnalyticFunctions() {
 			"SUM":         AnalyzeAggregateValue,
 			"AVG":         AnalyzeAggregateValue,
 			"LISTAGG":     AnalyzeListAgg,
+			"LAG":         AnalyzeLag,
+			"LEAD":        AnalyzeLag,
 		}
 	})
 }
@@ -354,10 +356,31 @@ func AnalyzeAggregateValue(view *View, fn parser.AnalyticFunction) error {
 	}
 
 	name := strings.ToUpper(fn.Name)
-	aggfunc, _ := AggregateFunctions[name]
+
+	var err error
+	var udfunc *UserDefinedFunction
+	aggfunc, builtIn := AggregateFunctions[name]
+	if !builtIn {
+		if udfunc, err = view.ParentFilter.FunctionsList.Get(fn, name); err != nil || !udfunc.IsAggregate {
+			return NewFunctionNotExistError(fn, fn.Name)
+		}
+	}
 
 	for _, partition := range partitions {
-		value := aggfunc(fn.IsDistinct(), partition.(part).values)
+		list := partition.(part).values
+		if fn.IsDistinct() {
+			list = Distinguish(list)
+		}
+
+		var value parser.Primary
+		if builtIn {
+			value = aggfunc(list)
+		} else {
+			value, err = udfunc.Execute(list, view.ParentFilter)
+			if err != nil {
+				return err
+			}
+		}
 
 		for _, idx := range partition.(part).recordIndices {
 			view.Records[idx] = append(view.Records[idx], NewCell(value))
@@ -432,11 +455,129 @@ func AnalyzeListAgg(view *View, fn parser.AnalyticFunction) error {
 	}
 
 	for _, partition := range partitions {
-		value := ListAgg(fn.IsDistinct(), partition.(part).values, separator)
+		list := partition.(part).values
+		if fn.IsDistinct() {
+			list = Distinguish(list)
+		}
+		value := ListAgg(list, separator)
 
 		for _, idx := range partition.(part).recordIndices {
 			view.Records[idx] = append(view.Records[idx], NewCell(value))
 		}
+	}
+
+	return nil
+}
+
+func AnalyzeLag(view *View, fn parser.AnalyticFunction) error {
+	if fn.Args == nil || 3 < len(fn.Args) {
+		return NewFunctionArgumentLengthErrorWithCustomArgs(fn, fn.Name, "1 to 3 arguments")
+	}
+
+	type part struct {
+		*partitionBase
+		values []parser.Primary
+	}
+
+	var newPart = func(pvalues []parser.Primary, value parser.Primary) part {
+		return part{
+			partitionBase: NewPartitionBase(pvalues, nil),
+			values:        []parser.Primary{value},
+		}
+	}
+
+	var calcNext = func(partition partition, value parser.Primary) partition {
+		p := partition.(part)
+
+		values := p.values
+		if !fn.IgnoreNulls || !parser.IsNull(value) {
+			values = append(p.values, value)
+		}
+
+		return part{
+			partitionBase: p.partitionBase,
+			values:        values,
+		}
+	}
+
+	offset := 1
+	if 1 < len(fn.Args) {
+		p, err := view.ParentFilter.Evaluate(fn.Args[1])
+		if err != nil {
+			return NewFunctionInvalidArgumentError(fn, fn.Name, "the second argument must be an integer")
+		}
+		i := parser.PrimaryToInteger(p)
+		if parser.IsNull(i) {
+			return NewFunctionInvalidArgumentError(fn, fn.Name, "the second argument must be an integer")
+		}
+		offset = int(i.(parser.Integer).Value())
+	}
+	var defaultValue parser.Primary = parser.NewNull()
+	if 2 < len(fn.Args) {
+		p, err := view.ParentFilter.Evaluate(fn.Args[2])
+		if err != nil {
+			return NewFunctionInvalidArgumentError(fn, fn.Name, "the third argument must be a primitive value")
+		}
+		defaultValue = parser.PrimaryToFloat(p)
+		if !parser.IsNull(defaultValue) {
+			defaultValue = parser.Float64ToPrimary(defaultValue.(parser.Float).Value())
+		}
+	}
+
+	partitions := partitionList{}
+
+	filter := NewFilterForSequentialEvaluation(view, view.ParentFilter)
+
+	var i int
+	switch strings.ToUpper(fn.Name) {
+	case "LAG":
+		i = -1
+	case "LEAD":
+		i = view.RecordLen()
+	}
+AnalyzeLagRecordRoop:
+	for {
+		switch strings.ToUpper(fn.Name) {
+		case "LAG":
+			i++
+			if view.RecordLen() <= i {
+				break AnalyzeLagRecordRoop
+			}
+		case "LEAD":
+			i--
+			if i < 0 {
+				break AnalyzeLagRecordRoop
+			}
+		}
+		filter.Records[0].RecordIndex = i
+		partitionValues, err := filter.evalValues(fn.AnalyticClause.PartitionValues())
+		if err != nil {
+			return err
+		}
+
+		value, err := filter.Evaluate(fn.Args[0])
+		if err != nil {
+			return err
+		}
+
+		var idx int
+		if idx = partitions.searchIndex(partitionValues); -1 < idx {
+			partitions.replace(idx, calcNext(partitions[idx], value))
+		} else {
+			partitions = append(partitions, newPart(partitionValues, value))
+			idx = len(partitions) - 1
+		}
+
+		result := defaultValue
+		compareIdx := len(partitions[idx].(part).values) - offset - 1
+		if 0 <= compareIdx {
+			diff := Calculate(value, partitions[idx].(part).values[compareIdx], '-')
+			if !parser.IsNull(diff) {
+				result = diff
+			}
+		}
+
+		view.Records[i] = append(view.Records[i], NewCell(result))
 	}
 
 	return nil

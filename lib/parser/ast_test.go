@@ -8,6 +8,45 @@ import (
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
+func TestBaseExpr_Line(t *testing.T) {
+	e := BaseExpr{
+		line:       3,
+		char:       5,
+		sourceFile: "source.sql",
+	}
+
+	expect := 3
+	if e.Line() != expect {
+		t.Errorf("line = %d, want %d for %#v", e.Line(), expect, e)
+	}
+}
+
+func TestBaseExpr_Char(t *testing.T) {
+	e := BaseExpr{
+		line:       3,
+		char:       5,
+		sourceFile: "source.sql",
+	}
+
+	expect := 5
+	if e.Char() != expect {
+		t.Errorf("line = %d, want %d for %#v", e.Char(), expect, e)
+	}
+}
+
+func TestBaseExpr_SourceFile(t *testing.T) {
+	e := BaseExpr{
+		line:       3,
+		char:       5,
+		sourceFile: "source.sql",
+	}
+
+	expect := "source.sql"
+	if e.SourceFile() != expect {
+		t.Errorf("line = %d, want %d for %#v", e.SourceFile(), expect, e)
+	}
+}
+
 func TestIsPrimary(t *testing.T) {
 	var e Expression
 
@@ -1453,6 +1492,20 @@ func TestListAgg_String(t *testing.T) {
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
+
+	e = ListAgg{
+		ListAgg:  "listagg",
+		Distinct: Token{Token: DISTINCT, Literal: "distinct"},
+		Args: []Expression{
+			Identifier{Literal: "column1"},
+			NewString(","),
+		},
+		WithinGroup: "within group",
+	}
+	expect = "listagg(distinct column1, ',') within group ()"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
 }
 
 func TestListAgg_IsDistinct(t *testing.T) {
@@ -1954,6 +2007,18 @@ func TestCursorStatus_String(t *testing.T) {
 		TypeLit:   "in range",
 	}
 	expect := "cursor cur is not in range"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestCursorAttrebute_String(t *testing.T) {
+	e := CursorAttrebute{
+		CursorLit: "cursor",
+		Cursor:    Identifier{Literal: "cur"},
+		Attrebute: Token{Token: COUNT, Literal: "count"},
+	}
+	expect := "cursor cur count"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}

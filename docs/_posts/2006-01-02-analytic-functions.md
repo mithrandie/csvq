@@ -16,6 +16,8 @@ Analytic Functions can be used only in [Select Clause]({{ '/reference/select-que
 | [DENSE_RANK](#dense_rank)   | Return ranks without any gaps in the ranking |
 | [FIRST_VALUE](#first_value) | Return the first value |
 | [LAST_VALUE](#last_value)   | Return the last value |
+| [LAG](#lag)                 | Return the difference of current row and previous row |
+| [LEAD](#lead)               | Return the difference of current row and following row |
 | [COUNT](#count)             | Return the number of values |
 | [MIN](#min)                 | Return the minimum value |
 | [MAX](#max)                 | Return the maximum value |
@@ -23,8 +25,8 @@ Analytic Functions can be used only in [Select Clause]({{ '/reference/select-que
 | [AVG](#avg)                 | Return the average of values |
 | [LISTAGG](#listagg)         | Return the concatenated string of values |
 
-## Syntax
-{: #syntax}
+## Basic Syntax
+{: #basic_syntax}
 
 ```sql
 analytic_function
@@ -150,6 +152,73 @@ _return_
 Return the last value in a group.
 If _IGNORE NULLS_ keywords are specified, then return the last value that is not a null.
 
+
+### LAG
+{: #lag}
+
+```
+LAG(expr [, offset [, default]] [IGNORE NULLS]) OVER ([partition_clause] [order by clause])
+```
+
+_expr_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+_offset_
+: [integer]({{ '/reference/value.html#integer' | relative_url }})
+  
+  The number of rows from current row. The default is 1.
+
+_default_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+  The value to set when the offset row does not exist or the difference cannot be calculated.
+  The default is NULL.
+
+_partition_clause_
+: [Partition Clause](#syntax)
+
+_order_by_clause_
+: [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
+
+_return_
+: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+Return the difference of current row and previous row.
+If _IGNORE NULLS_ keywords are specified, then rows that _expr_ values are nulls are skipped. 
+
+
+### LEAD
+{: #lead}
+
+```
+LEAD(expr [, offset [, default]] [IGNORE NULLS]) OVER ([partition_clause] [order by clause])
+```
+
+_expr_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+_offset_
+: [integer]({{ '/reference/value.html#integer' | relative_url }})
+  
+  The number of rows from current row. The default is 1.
+
+_default_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+  The value to set when the offset row does not exist or the difference cannot be calculated.
+  The default is NULL.
+
+_partition_clause_
+: [Partition Clause](#syntax)
+
+_order_by_clause_
+: [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
+
+_return_
+: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+Return the difference of current row and following row.
+If _IGNORE NULLS_ keywords are specified, then rows that _expr_ values are nulls are skipped. 
 
 
 ### COUNT
