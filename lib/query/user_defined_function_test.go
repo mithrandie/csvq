@@ -98,8 +98,12 @@ var userDefinedFunctionListDeclareAggregateTests = []struct {
 	{
 		Name: "UserDefineFunctionsList Declare",
 		Expr: parser.AggregateDeclaration{
-			Name:      parser.Identifier{Literal: "useraggfunc"},
-			Parameter: parser.Identifier{Literal: "column1"},
+			Name:   parser.Identifier{Literal: "useraggfunc"},
+			Cursor: parser.Identifier{Literal: "column1"},
+			Parameters: []parser.Variable{
+				{Name: "@arg1"},
+				{Name: "@arg2"},
+			},
 			Statements: []parser.Statement{
 				parser.Print{Value: parser.Variable{Name: "@var1"}},
 			},
@@ -107,9 +111,13 @@ var userDefinedFunctionListDeclareAggregateTests = []struct {
 		Result: UserDefinedFunctionsList{
 			UserDefinedFunctionMap{
 				"USERAGGFUNC": &UserDefinedFunction{
-					Name:        parser.Identifier{Literal: "useraggfunc"},
+					Name: parser.Identifier{Literal: "useraggfunc"},
+					Parameters: []parser.Variable{
+						{Name: "@arg1"},
+						{Name: "@arg2"},
+					},
 					IsAggregate: true,
-					Parameter:   parser.Identifier{Literal: "column1"},
+					Cursor:      parser.Identifier{Literal: "column1"},
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.Variable{Name: "@var1"}},
 					},
@@ -328,8 +336,12 @@ var userDefinedFunctionMapDeclareAggregateTests = []struct {
 	{
 		Name: "UserDefinedFunctionMap DeclareAggregate",
 		Expr: parser.AggregateDeclaration{
-			Name:      parser.Identifier{Literal: "useraggfunc"},
-			Parameter: parser.Identifier{Literal: "column1"},
+			Name:   parser.Identifier{Literal: "useraggfunc"},
+			Cursor: parser.Identifier{Literal: "column1"},
+			Parameters: []parser.Variable{
+				{Name: "@arg1"},
+				{Name: "@arg2"},
+			},
 			Statements: []parser.Statement{
 				parser.Print{Value: parser.Variable{Name: "@var1"}},
 			},
@@ -338,7 +350,11 @@ var userDefinedFunctionMapDeclareAggregateTests = []struct {
 			"USERAGGFUNC": &UserDefinedFunction{
 				Name:        parser.Identifier{Literal: "useraggfunc"},
 				IsAggregate: true,
-				Parameter:   parser.Identifier{Literal: "column1"},
+				Cursor:      parser.Identifier{Literal: "column1"},
+				Parameters: []parser.Variable{
+					{Name: "@arg1"},
+					{Name: "@arg2"},
+				},
 				Statements: []parser.Statement{
 					parser.Print{Value: parser.Variable{Name: "@var1"}},
 				},
@@ -348,8 +364,8 @@ var userDefinedFunctionMapDeclareAggregateTests = []struct {
 	{
 		Name: "UserDefinedFunctionMap DeclareAggregate Redeclaration Error",
 		Expr: parser.AggregateDeclaration{
-			Name:      parser.Identifier{Literal: "useraggfunc"},
-			Parameter: parser.Identifier{Literal: "column1"},
+			Name:   parser.Identifier{Literal: "useraggfunc"},
+			Cursor: parser.Identifier{Literal: "column1"},
 			Statements: []parser.Statement{
 				parser.Print{Value: parser.Variable{Name: "@var1"}},
 			},
@@ -697,98 +713,6 @@ var userDefinedFunctionExecuteTests = []struct {
 		},
 		Error: "[L:- C:-] field notexist does not exist",
 	},
-	{
-		Name: "UserDefinedFunction Execute Aggregate",
-		Func: &UserDefinedFunction{
-			Name:        parser.Identifier{Literal: "useraggfunc"},
-			IsAggregate: true,
-			Parameter:   parser.Identifier{Literal: "column1"},
-			Statements: []parser.Statement{
-				parser.VariableDeclaration{
-					Assignments: []parser.Expression{
-						parser.VariableAssignment{
-							Variable: parser.Variable{Name: "@value"},
-							Value:    parser.NewInteger(0),
-						},
-						parser.VariableAssignment{
-							Variable: parser.Variable{Name: "@fetch"},
-						},
-					},
-				},
-				parser.WhileInCursor{
-					Variables: []parser.Variable{
-						{Name: "@fetch"},
-					},
-					Cursor: parser.Identifier{Literal: "column1"},
-					Statements: []parser.Statement{
-						parser.VariableSubstitution{
-							Variable: parser.Variable{Name: "@value"},
-							Value: parser.Arithmetic{
-								LHS:      parser.Variable{Name: "@value"},
-								RHS:      parser.Variable{Name: "@fetch"},
-								Operator: '+',
-							},
-						},
-					},
-				},
-				parser.Return{
-					Value: parser.Variable{Name: "@value"},
-				},
-			},
-		},
-		Args: []parser.Primary{
-			parser.NewInteger(1),
-			parser.NewInteger(2),
-			parser.NewInteger(3),
-		},
-		Result: parser.NewInteger(6),
-	},
-	{
-		Name: "UserDefinedFunction Execute Aggregate",
-		Func: &UserDefinedFunction{
-			Name:        parser.Identifier{Literal: "useraggfunc"},
-			IsAggregate: true,
-			Parameter:   parser.Identifier{Literal: "column1"},
-			Statements: []parser.Statement{
-				parser.VariableDeclaration{
-					Assignments: []parser.Expression{
-						parser.VariableAssignment{
-							Variable: parser.Variable{Name: "@value"},
-							Value:    parser.NewInteger(0),
-						},
-						parser.VariableAssignment{
-							Variable: parser.Variable{Name: "@fetch"},
-						},
-					},
-				},
-				parser.WhileInCursor{
-					Variables: []parser.Variable{
-						{Name: "@fetch"},
-					},
-					Cursor: parser.Identifier{Literal: "column1"},
-					Statements: []parser.Statement{
-						parser.VariableSubstitution{
-							Variable: parser.Variable{Name: "@value"},
-							Value: parser.Arithmetic{
-								LHS:      parser.Variable{Name: "@value"},
-								RHS:      parser.Variable{Name: "@fetch"},
-								Operator: '+',
-							},
-						},
-					},
-				},
-				parser.Return{
-					Value: parser.Variable{Name: "@value"},
-				},
-			},
-		},
-		Args: []parser.Primary{
-			parser.NewInteger(1),
-			parser.NewInteger(2),
-			parser.NewInteger(3),
-		},
-		Result: parser.NewInteger(6),
-	},
 }
 
 func TestUserDefinedFunction_Execute(t *testing.T) {
@@ -804,6 +728,265 @@ func TestUserDefinedFunction_Execute(t *testing.T) {
 
 	for _, v := range userDefinedFunctionExecuteTests {
 		result, err := v.Func.Execute(v.Args, filter)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(result, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
+		}
+	}
+}
+
+var userDefinedFunctionExecuteAggregateTests = []struct {
+	Name   string
+	Func   *UserDefinedFunction
+	Values []parser.Primary
+	Args   []parser.Primary
+	Result parser.Primary
+	Error  string
+}{
+	{
+		Name: "UserDefinedFunction Execute Aggregate",
+		Func: &UserDefinedFunction{
+			Name:        parser.Identifier{Literal: "useraggfunc"},
+			IsAggregate: true,
+			Cursor:      parser.Identifier{Literal: "list"},
+			Statements: []parser.Statement{
+				parser.VariableDeclaration{
+					Assignments: []parser.Expression{
+						parser.VariableAssignment{
+							Variable: parser.Variable{Name: "@value"},
+						},
+						parser.VariableAssignment{
+							Variable: parser.Variable{Name: "@fetch"},
+						},
+					},
+				},
+				parser.WhileInCursor{
+					Variables: []parser.Variable{
+						{Name: "@fetch"},
+					},
+					Cursor: parser.Identifier{Literal: "list"},
+					Statements: []parser.Statement{
+						parser.If{
+							Condition: parser.Is{
+								LHS: parser.Variable{Name: "@fetch"},
+								RHS: parser.NewNull(),
+							},
+							Statements: []parser.Statement{
+								parser.FlowControl{Token: parser.CONTINUE},
+							},
+						},
+						parser.If{
+							Condition: parser.Is{
+								LHS: parser.Variable{Name: "@value"},
+								RHS: parser.NewNull(),
+							},
+							Statements: []parser.Statement{
+								parser.VariableSubstitution{
+									Variable: parser.Variable{Name: "@value"},
+									Value:    parser.Variable{Name: "@fetch"},
+								},
+								parser.FlowControl{Token: parser.CONTINUE},
+							},
+						},
+						parser.VariableSubstitution{
+							Variable: parser.Variable{Name: "@value"},
+							Value: parser.Arithmetic{
+								LHS:      parser.Variable{Name: "@value"},
+								RHS:      parser.Variable{Name: "@fetch"},
+								Operator: '*',
+							},
+						},
+					},
+				},
+
+				parser.Return{
+					Value: parser.Variable{Name: "@value"},
+				},
+			},
+		},
+		Values: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		Result: parser.NewInteger(6),
+	},
+	{
+		Name: "UserDefinedFunction Execute Aggregate With Arguments",
+		Func: &UserDefinedFunction{
+			Name:        parser.Identifier{Literal: "useraggfunc"},
+			IsAggregate: true,
+			Cursor:      parser.Identifier{Literal: "list"},
+			Parameters: []parser.Variable{
+				{Name: "@default"},
+			},
+			Statements: []parser.Statement{
+				parser.VariableDeclaration{
+					Assignments: []parser.Expression{
+						parser.VariableAssignment{
+							Variable: parser.Variable{Name: "@value"},
+						},
+						parser.VariableAssignment{
+							Variable: parser.Variable{Name: "@fetch"},
+						},
+					},
+				},
+				parser.WhileInCursor{
+					Variables: []parser.Variable{
+						{Name: "@fetch"},
+					},
+					Cursor: parser.Identifier{Literal: "list"},
+					Statements: []parser.Statement{
+						parser.If{
+							Condition: parser.Is{
+								LHS: parser.Variable{Name: "@fetch"},
+								RHS: parser.NewNull(),
+							},
+							Statements: []parser.Statement{
+								parser.FlowControl{Token: parser.CONTINUE},
+							},
+						},
+						parser.If{
+							Condition: parser.Is{
+								LHS: parser.Variable{Name: "@value"},
+								RHS: parser.NewNull(),
+							},
+							Statements: []parser.Statement{
+								parser.VariableSubstitution{
+									Variable: parser.Variable{Name: "@value"},
+									Value:    parser.Variable{Name: "@fetch"},
+								},
+								parser.FlowControl{Token: parser.CONTINUE},
+							},
+						},
+						parser.VariableSubstitution{
+							Variable: parser.Variable{Name: "@value"},
+							Value: parser.Arithmetic{
+								LHS:      parser.Variable{Name: "@value"},
+								RHS:      parser.Variable{Name: "@fetch"},
+								Operator: '*',
+							},
+						},
+					},
+				},
+
+				parser.If{
+					Condition: parser.Is{
+						LHS: parser.Variable{Name: "@value"},
+						RHS: parser.NewNull(),
+					},
+					Statements: []parser.Statement{
+						parser.VariableSubstitution{
+							Variable: parser.Variable{Name: "@value"},
+							Value:    parser.Variable{Name: "@default"},
+						},
+					},
+				},
+
+				parser.Return{
+					Value: parser.Variable{Name: "@value"},
+				},
+			},
+		},
+		Values: []parser.Primary{
+			parser.NewNull(),
+			parser.NewNull(),
+			parser.NewNull(),
+		},
+		Args: []parser.Primary{
+			parser.NewInteger(0),
+		},
+		Result: parser.NewInteger(0),
+	},
+	{
+		Name: "UserDefinedFunction Aggregate Argument Length Error",
+		Func: &UserDefinedFunction{
+			Name:        parser.Identifier{Literal: "useraggfunc"},
+			IsAggregate: true,
+			Cursor:      parser.Identifier{Literal: "list"},
+			Statements: []parser.Statement{
+				parser.VariableDeclaration{
+					Assignments: []parser.Expression{
+						parser.VariableAssignment{
+							Variable: parser.Variable{Name: "@value"},
+						},
+						parser.VariableAssignment{
+							Variable: parser.Variable{Name: "@fetch"},
+						},
+					},
+				},
+				parser.WhileInCursor{
+					Variables: []parser.Variable{
+						{Name: "@fetch"},
+					},
+					Cursor: parser.Identifier{Literal: "list"},
+					Statements: []parser.Statement{
+						parser.If{
+							Condition: parser.Is{
+								LHS: parser.Variable{Name: "@fetch"},
+								RHS: parser.NewNull(),
+							},
+							Statements: []parser.Statement{
+								parser.FlowControl{Token: parser.CONTINUE},
+							},
+						},
+						parser.If{
+							Condition: parser.Is{
+								LHS: parser.Variable{Name: "@value"},
+								RHS: parser.NewNull(),
+							},
+							Statements: []parser.Statement{
+								parser.VariableSubstitution{
+									Variable: parser.Variable{Name: "@value"},
+									Value:    parser.Variable{Name: "@fetch"},
+								},
+								parser.FlowControl{Token: parser.CONTINUE},
+							},
+						},
+						parser.VariableSubstitution{
+							Variable: parser.Variable{Name: "@value"},
+							Value: parser.Arithmetic{
+								LHS:      parser.Variable{Name: "@value"},
+								RHS:      parser.Variable{Name: "@fetch"},
+								Operator: '*',
+							},
+						},
+					},
+				},
+
+				parser.Return{
+					Value: parser.Variable{Name: "@value"},
+				},
+			},
+		},
+		Values: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		Args: []parser.Primary{
+			parser.NewInteger(0),
+		},
+		Error: "[L:- C:-] function useraggfunc takes 1 argument",
+	},
+}
+
+func TestUserDefinedFunction_ExecuteAggregate(t *testing.T) {
+	filter := NewEmptyFilter()
+
+	for _, v := range userDefinedFunctionExecuteAggregateTests {
+		result, err := v.Func.ExecuteAggregate(v.Values, v.Args, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

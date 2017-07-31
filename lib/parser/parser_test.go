@@ -3536,11 +3536,36 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "declare aggfunc aggregate (params) as begin end",
+		Input: "declare aggfunc aggregate (cur) as begin end",
 		Output: []Statement{
 			AggregateDeclaration{
-				Name:      Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "aggfunc"},
-				Parameter: Identifier{BaseExpr: &BaseExpr{line: 1, char: 28}, Literal: "params"},
+				Name:   Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "aggfunc"},
+				Cursor: Identifier{BaseExpr: &BaseExpr{line: 1, char: 28}, Literal: "cur"},
+			},
+		},
+	},
+	{
+		Input: "declare aggfunc aggregate (cur, @var1) as begin end",
+		Output: []Statement{
+			AggregateDeclaration{
+				Name:   Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "aggfunc"},
+				Cursor: Identifier{BaseExpr: &BaseExpr{line: 1, char: 28}, Literal: "cur"},
+				Parameters: []Variable{
+					{BaseExpr: &BaseExpr{line: 1, char: 33}, Name: "@var1"},
+				},
+			},
+		},
+	},
+	{
+		Input: "declare aggfunc aggregate (cur, @var1, @var2) as begin end",
+		Output: []Statement{
+			AggregateDeclaration{
+				Name:   Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "aggfunc"},
+				Cursor: Identifier{BaseExpr: &BaseExpr{line: 1, char: 28}, Literal: "cur"},
+				Parameters: []Variable{
+					{BaseExpr: &BaseExpr{line: 1, char: 33}, Name: "@var1"},
+					{BaseExpr: &BaseExpr{line: 1, char: 40}, Name: "@var2"},
+				},
 			},
 		},
 	},

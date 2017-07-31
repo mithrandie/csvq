@@ -40,6 +40,8 @@ _statements_
 : [Statements]({{ '/reference/statement.html' | relative_url }})
 
 A scala function takes some arguments, and return a value.
+In the statements, arguments are set to variables specified in the declaration as _parameters_.
+
 
 #### Usage
 
@@ -53,8 +55,6 @@ _function_name_
 _argument_
 : [value]({{ '/reference/value.html' | relative_url }})
 
-In the statements, arguments are set to variables specified in the declaration as _parameters_.
-
 
 ## Aggregate Function
 {: #aggregate}
@@ -63,7 +63,7 @@ In the statements, arguments are set to variables specified in the declaration a
 {: #aggregate_declaration}
 
 ```sql
-DECLARE function_name AGGREGATE (cursor_name)
+DECLARE function_name AGGREGATE (cursor_name [, parameter ...]])
 AS
 BEGIN
   statements
@@ -76,19 +76,28 @@ _function_name_
 _cursor_name_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
 
+_parameter_
+: [Variable]({{ '/reference/variable.html' | relative_url }})
+
 _statements_
 : [Statements]({{ '/reference/statement.html' | relative_url }})
 
-A aggregate function takes exactly one argument, and return a value.
+An aggregate function takes at least one argument, and return a value.
+The first argument is a representation of grouped values, and the following arguments are parameters.
+
+In the statements, grouped values represented by the first argument can be referred with a pseudo cursor named as _cursor_name_, 
+and the second argument and the followings are set to variables specified in the declaration as _parameters_.
+You can use the [Fetch Statement]({{ '/reference/cursor.html#fetch' | relative_url }}), [While In Loop Statement]({{ '/reference/control-flow.html#while_in_loop' | relative_url }}) or the [Cursor Status Expressions]({{ '/reference/cursor.html#status' | relative_url }}) against the pseudo cursor. 
+
 
 #### Usage
 
-You can use a user defined aggregate function as a [Aggregate Function]({{ '/reference/aggregate-functions.html' | relative_url }}) or a [Analytic Function]({{ '/reference/analytic-functions.html' | relative_url }}).
+You can use a user defined aggregate function as an [Aggregate Function]({{ '/reference/aggregate-functions.html' | relative_url }}) or an [Analytic Function]({{ '/reference/analytic-functions.html' | relative_url }}).
 
-##### As a Aggregate Function
+##### As an Aggregate Function
 
 ```sql
-function_name([DISTINCT] expr)
+function_name([DISTINCT] expr [, argument ...])
 ```
 
 _function_name_
@@ -97,10 +106,13 @@ _function_name_
 _expr_
 : [value]({{ '/reference/value.html' | relative_url }})
 
-##### As a Analytic Function
+_argument_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+##### As an Analytic Function
 
 ```sql
-function_name([DISTINCT] expr) OVER ([partition_clause] [order_by_clause])
+function_name([DISTINCT] expr [, argument ...]) OVER ([partition_clause] [order_by_clause])
 ```
 
 _function_name_
@@ -109,20 +121,27 @@ _function_name_
 _expr_
 : [value]({{ '/reference/value.html' | relative_url }})
 
-In the statements, grouped values represented by _expr_ can be referred with a pseudo cursor named as _cursor_name_ in the declaration.
-You can use the [Fetch Statement]({{ '/reference/cursor.html#fetch' | relative_url }}), [While In Loop Statement]({{ '/reference/control-flow.html#while_in_loop' | relative_url }}) or the [Cursor Status Expressions]({{ '/reference/cursor.html#status' | relative_url }}) against the pseudo cursor. 
+_argument_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+_partition_clause_
+: [Partition Clause]({{ '/reference/analytic-functions.html#syntax' | relative_url }})
+
+_order_by_clause_
+: [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
+
 
 Example:
 
 ```sql
-DECLARE multiply AGGREGATE (list)
+DECLARE multiply AGGREGATE (list, @default)
 AS
 BEGIN
     VAR @value, @fetch;
 
     WHILE @fetch IN list
     DO
-        IF @fetch IS NULL THEN
+        IF FLOAT(@fetch) IS NULL THEN
             CONTINUE;
         END IF;
 
@@ -133,13 +152,17 @@ BEGIN
 
         @value := @value * @fetch;
     END WHILE;
+    
+    IF @value IS NULL THEN
+        @value := @default
+    END IF;
 
     RETURN @value;
 END;
 
-SELECT multiply(i) FROM numbers;
+SELECT multiply(i, 0) FROM numbers;
 
-SELECT i, multiply(i) OVER () FROM numbers;
+SELECT i, multiply(i, 0) OVER () FROM numbers;
 ```
 
 
