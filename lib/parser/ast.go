@@ -1443,7 +1443,8 @@ type FunctionDeclaration struct {
 type AggregateDeclaration struct {
 	*BaseExpr
 	Name       Identifier
-	Parameter  Identifier
+	Cursor     Identifier
+	Parameters []Variable
 	Statements []Statement
 }
 

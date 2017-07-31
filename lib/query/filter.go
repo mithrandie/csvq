@@ -538,15 +538,29 @@ func (f Filter) evalFunction(expr parser.Function) (parser.Primary, error) {
 }
 
 func (f Filter) evalAggregateFunction(expr parser.AggregateFunction) (parser.Primary, error) {
+	var aggfn func([]parser.Primary) parser.Primary
+	var udfn *UserDefinedFunction
+	var useUserDefined bool
+	var err error
+
 	uname := strings.ToUpper(expr.Name)
-	if _, ok := AggregateFunctions[uname]; !ok {
-		if udfn, err := f.FunctionsList.Get(expr, uname); err != nil || !udfn.IsAggregate {
+	if fn, ok := AggregateFunctions[uname]; ok {
+		aggfn = fn
+	} else {
+		if udfn, err = f.FunctionsList.Get(expr, uname); err != nil || !udfn.IsAggregate {
 			return nil, NewFunctionNotExistError(expr, expr.Name)
 		}
+		useUserDefined = true
 	}
 
-	if len(expr.Args) != 1 {
-		return nil, NewFunctionArgumentLengthError(expr, expr.Name, []int{1})
+	if useUserDefined {
+		if len(expr.Args)-1 != len(udfn.Parameters) {
+			return nil, NewFunctionArgumentLengthError(expr, expr.Name, []int{len(udfn.Parameters) + 1})
+		}
+	} else {
+		if len(expr.Args) != 1 {
+			return nil, NewFunctionArgumentLengthError(expr, expr.Name, []int{1})
+		}
 	}
 
 	if len(f.Records) < 1 {
@@ -557,13 +571,13 @@ func (f Filter) evalAggregateFunction(expr parser.AggregateFunction) (parser.Pri
 		return nil, NewNotGroupingRecordsError(expr, expr.Name)
 	}
 
-	arg := expr.Args[0]
-	if _, ok := arg.(parser.AllColumns); ok {
-		arg = parser.NewInteger(1)
+	listExpr := expr.Args[0]
+	if _, ok := listExpr.(parser.AllColumns); ok {
+		listExpr = parser.NewInteger(1)
 	}
 
 	view := NewViewFromGroupedRecord(f.Records[0])
-	list, err := view.ListValuesForAggregateFunctions(expr, arg, f)
+	list, err := view.ListValuesForAggregateFunctions(expr, listExpr, f)
 	if err != nil {
 		return nil, err
 	}
@@ -571,12 +585,20 @@ func (f Filter) evalAggregateFunction(expr parser.AggregateFunction) (parser.Pri
 		list = Distinguish(list)
 	}
 
-	if fn, ok := AggregateFunctions[uname]; ok {
-		return fn(list), nil
+	if useUserDefined {
+		argsExprs := expr.Args[1:]
+		args := make([]parser.Primary, len(argsExprs))
+		for i, v := range argsExprs {
+			arg, err := f.Evaluate(v)
+			if err != nil {
+				return nil, err
+			}
+			args[i] = arg
+		}
+		return udfn.ExecuteAggregate(list, args, f)
 	}
 
-	udfn, _ := f.FunctionsList.Get(expr, uname)
-	return udfn.Execute(list, f)
+	return aggfn(list), nil
 }
 
 func (f Filter) evalListAgg(expr parser.ListAgg) (parser.Primary, error) {

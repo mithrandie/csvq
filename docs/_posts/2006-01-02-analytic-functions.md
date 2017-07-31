@@ -26,7 +26,7 @@ Analytic Functions can be used only in [Select Clause]({{ '/reference/select-que
 | [LISTAGG](#listagg)         | Return the concatenated string of values |
 
 ## Basic Syntax
-{: #basic_syntax}
+{: #syntax}
 
 ```sql
 analytic_function

@@ -651,7 +651,7 @@ func (view *View) evalColumn(obj parser.Expression, column string, alias string)
 					return
 				}
 			} else {
-				filter := NewFilterForRecord(view, 0, view.ParentFilter)
+				filter := NewFilterForSequentialEvaluation(view, view.ParentFilter)
 				for i := range view.Records {
 					var primary parser.Primary
 					filter.Records[0].RecordIndex = i

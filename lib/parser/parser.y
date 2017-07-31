@@ -558,7 +558,11 @@ user_defined_function_statement
     }
     | DECLARE identifier AGGREGATE '(' identifier ')' AS BEGIN in_function_program END statement_terminal
     {
-        $$ = AggregateDeclaration{Name: $2, Parameter: $5, Statements: $9}
+        $$ = AggregateDeclaration{Name: $2, Cursor: $5, Statements: $9}
+    }
+    | DECLARE identifier AGGREGATE '(' identifier ',' variables ')' AS BEGIN in_function_program END statement_terminal
+    {
+        $$ = AggregateDeclaration{Name: $2, Cursor: $5, Parameters: $7, Statements: $11}
     }
 
 fetch_position

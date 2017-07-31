@@ -300,13 +300,29 @@ func LastValue(view *View, fn parser.AnalyticFunction) error {
 }
 
 func AnalyzeAggregateValue(view *View, fn parser.AnalyticFunction) error {
-	if len(fn.Args) != 1 {
-		return NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
+	var aggfn func([]parser.Primary) parser.Primary
+	var udfn *UserDefinedFunction
+	var useUserDefined bool
+	var err error
+
+	uname := strings.ToUpper(fn.Name)
+	if f, ok := AggregateFunctions[uname]; ok {
+		aggfn = f
+	} else {
+		if udfn, err = view.ParentFilter.FunctionsList.Get(fn, uname); err != nil || !udfn.IsAggregate {
+			return NewFunctionNotExistError(fn, fn.Name)
+		}
+		useUserDefined = true
 	}
 
-	arg := fn.Args[0]
-	if _, ok := arg.(parser.AllColumns); ok {
-		arg = parser.NewInteger(1)
+	if useUserDefined {
+		if len(fn.Args) != len(udfn.Parameters)+1 {
+			return NewFunctionArgumentLengthError(fn, fn.Name, []int{len(udfn.Parameters) + 1})
+		}
+	} else {
+		if len(fn.Args) != 1 {
+			return NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
+		}
 	}
 
 	type part struct {
@@ -333,6 +349,11 @@ func AnalyzeAggregateValue(view *View, fn parser.AnalyticFunction) error {
 		}
 	}
 
+	listExpr := fn.Args[0]
+	if _, ok := listExpr.(parser.AllColumns); ok {
+		listExpr = parser.NewInteger(1)
+	}
+
 	partitions := partitionList{}
 
 	filter := NewFilterForSequentialEvaluation(view, view.ParentFilter)
@@ -343,7 +364,7 @@ func AnalyzeAggregateValue(view *View, fn parser.AnalyticFunction) error {
 			return err
 		}
 
-		value, err := filter.Evaluate(arg)
+		value, err := filter.Evaluate(listExpr)
 		if err != nil {
 			return err
 		}
@@ -355,35 +376,41 @@ func AnalyzeAggregateValue(view *View, fn parser.AnalyticFunction) error {
 		}
 	}
 
-	name := strings.ToUpper(fn.Name)
-
-	var err error
-	var udfunc *UserDefinedFunction
-	aggfunc, builtIn := AggregateFunctions[name]
-	if !builtIn {
-		if udfunc, err = view.ParentFilter.FunctionsList.Get(fn, name); err != nil || !udfunc.IsAggregate {
-			return NewFunctionNotExistError(fn, fn.Name)
-		}
-	}
-
 	for _, partition := range partitions {
 		list := partition.(part).values
 		if fn.IsDistinct() {
 			list = Distinguish(list)
 		}
 
-		var value parser.Primary
-		if builtIn {
-			value = aggfunc(list)
-		} else {
-			value, err = udfunc.Execute(list, view.ParentFilter)
-			if err != nil {
-				return err
-			}
-		}
+		if useUserDefined {
+			for _, idx := range partition.(part).recordIndices {
+				filter.Records[0].RecordIndex = idx
 
-		for _, idx := range partition.(part).recordIndices {
-			view.Records[idx] = append(view.Records[idx], NewCell(value))
+				var args []parser.Primary
+				if useUserDefined {
+					argsExprs := fn.Args[1:]
+					args = make([]parser.Primary, len(argsExprs))
+					for i, v := range argsExprs {
+						arg, err := filter.Evaluate(v)
+						if err != nil {
+							return err
+						}
+						args[i] = arg
+					}
+				}
+
+				value, err := udfn.ExecuteAggregate(list, args, view.ParentFilter)
+				if err != nil {
+					return err
+				}
+
+				view.Records[idx] = append(view.Records[idx], NewCell(value))
+			}
+		} else {
+			value := aggfn(list)
+			for _, idx := range partition.(part).recordIndices {
+				view.Records[idx] = append(view.Records[idx], NewCell(value))
+			}
 		}
 	}
 

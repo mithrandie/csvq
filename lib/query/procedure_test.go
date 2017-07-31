@@ -216,8 +216,8 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.AggregateDeclaration{
-			Name:      parser.Identifier{Literal: "useraggfunc"},
-			Parameter: parser.Identifier{Literal: "list"},
+			Name:   parser.Identifier{Literal: "useraggfunc"},
+			Cursor: parser.Identifier{Literal: "list"},
 			Statements: []parser.Statement{
 				parser.VariableDeclaration{
 					Assignments: []parser.Expression{

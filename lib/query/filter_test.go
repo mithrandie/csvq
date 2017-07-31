@@ -2103,7 +2103,7 @@ var filterEvaluateTests = []struct {
 		Error: "[L:- C:-] function avg cannot be used as a statement",
 	},
 	{
-		Name: "Aggregate Function Execute User Defined Aggregate Function",
+		Name: "Aggregate Function User Defined",
 		Filter: Filter{
 			Records: []FilterRecord{
 				{
@@ -2135,7 +2135,10 @@ var filterEvaluateTests = []struct {
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:        parser.Identifier{Literal: "useraggfunc"},
 						IsAggregate: true,
-						Parameter:   parser.Identifier{Literal: "column1"},
+						Cursor:      parser.Identifier{Literal: "column1"},
+						Parameters: []parser.Variable{
+							{Name: "@default"},
+						},
 						Statements: []parser.Statement{
 							parser.VariableDeclaration{
 								Assignments: []parser.Expression{
@@ -2185,6 +2188,76 @@ var filterEvaluateTests = []struct {
 									},
 								},
 							},
+
+							parser.If{
+								Condition: parser.Is{
+									LHS: parser.Variable{Name: "@value"},
+									RHS: parser.NewNull(),
+								},
+								Statements: []parser.Statement{
+									parser.VariableSubstitution{
+										Variable: parser.Variable{Name: "@value"},
+										Value:    parser.Variable{Name: "@default"},
+									},
+								},
+							},
+
+							parser.Return{
+								Value: parser.Variable{Name: "@value"},
+							},
+						},
+					},
+				},
+			},
+		},
+		Expr: parser.AggregateFunction{
+			Name:     "useraggfunc",
+			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+				parser.NewInteger(0),
+			},
+		},
+		Result: parser.NewInteger(3),
+	},
+	{
+		Name: "Aggregate Function User Defined Argument Length Error",
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							{
+								NewGroupCell([]parser.Primary{
+									parser.NewInteger(1),
+									parser.NewNull(),
+									parser.NewInteger(3),
+									parser.NewInteger(3),
+								}),
+								NewGroupCell([]parser.Primary{
+									parser.NewString("str1"),
+									parser.NewString("str2"),
+									parser.NewString("str3"),
+									parser.NewString("str4"),
+								}),
+							},
+						},
+						isGrouped: true,
+					},
+					RecordIndex: 0,
+				},
+			},
+			FunctionsList: UserDefinedFunctionsList{
+				{
+					"USERAGGFUNC": &UserDefinedFunction{
+						Name:        parser.Identifier{Literal: "useraggfunc"},
+						IsAggregate: true,
+						Cursor:      parser.Identifier{Literal: "column1"},
+						Parameters: []parser.Variable{
+							{Name: "@default"},
+						},
+						Statements: []parser.Statement{
 							parser.Return{
 								Value: parser.Variable{Name: "@value"},
 							},
@@ -2200,7 +2273,63 @@ var filterEvaluateTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 		},
-		Result: parser.NewInteger(3),
+		Error: "[L:- C:-] function useraggfunc takes 2 arguments",
+	},
+	{
+		Name: "Aggregate Function User Defined Argument Evaluation Error",
+		Filter: Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+						Records: []Record{
+							{
+								NewGroupCell([]parser.Primary{
+									parser.NewInteger(1),
+									parser.NewNull(),
+									parser.NewInteger(3),
+									parser.NewInteger(3),
+								}),
+								NewGroupCell([]parser.Primary{
+									parser.NewString("str1"),
+									parser.NewString("str2"),
+									parser.NewString("str3"),
+									parser.NewString("str4"),
+								}),
+							},
+						},
+						isGrouped: true,
+					},
+					RecordIndex: 0,
+				},
+			},
+			FunctionsList: UserDefinedFunctionsList{
+				{
+					"USERAGGFUNC": &UserDefinedFunction{
+						Name:        parser.Identifier{Literal: "useraggfunc"},
+						IsAggregate: true,
+						Cursor:      parser.Identifier{Literal: "column1"},
+						Parameters: []parser.Variable{
+							{Name: "@default"},
+						},
+						Statements: []parser.Statement{
+							parser.Return{
+								Value: parser.Variable{Name: "@value"},
+							},
+						},
+					},
+				},
+			},
+		},
+		Expr: parser.AggregateFunction{
+			Name:     "useraggfunc",
+			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+			},
+		},
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
 		Name: "Aggregate Function Execute User Defined Aggregate Function Passed As Scala Function",
@@ -2233,7 +2362,7 @@ var filterEvaluateTests = []struct {
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:        parser.Identifier{Literal: "useraggfunc"},
 						IsAggregate: true,
-						Parameter:   parser.Identifier{Literal: "column1"},
+						Cursor:      parser.Identifier{Literal: "column1"},
 						Statements: []parser.Statement{
 							parser.VariableDeclaration{
 								Assignments: []parser.Expression{
@@ -2330,7 +2459,7 @@ var filterEvaluateTests = []struct {
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:        parser.Identifier{Literal: "useraggfunc"},
 						IsAggregate: true,
-						Parameter:   parser.Identifier{Literal: "column1"},
+						Cursor:      parser.Identifier{Literal: "column1"},
 						Statements: []parser.Statement{
 							parser.VariableDeclaration{
 								Assignments: []parser.Expression{

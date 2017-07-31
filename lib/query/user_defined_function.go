@@ -52,8 +52,9 @@ func (m UserDefinedFunctionMap) DeclareAggregate(expr parser.AggregateDeclaratio
 	m[uname] = &UserDefinedFunction{
 		Name:        expr.Name,
 		Statements:  expr.Statements,
+		Parameters:  expr.Parameters,
 		IsAggregate: true,
-		Parameter:   expr.Parameter,
+		Cursor:      expr.Cursor,
 	}
 	return nil
 }
@@ -85,32 +86,44 @@ func (m UserDefinedFunctionMap) Get(fn parser.Expression, name string) (*UserDef
 }
 
 type UserDefinedFunction struct {
-	Name        parser.Identifier
-	Statements  []parser.Statement
-	IsAggregate bool
-
-	// For Scala Functions
+	Name       parser.Identifier
+	Statements []parser.Statement
 	Parameters []parser.Variable
 
-	// For Aggregate Functions
-	Parameter parser.Identifier
+	IsAggregate bool
+	Cursor      parser.Identifier // For Aggregate Functions
 }
 
 func (fn *UserDefinedFunction) Execute(args []parser.Primary, filter Filter) (parser.Primary, error) {
-	var err error
+	childScope := filter.CreateChildScope()
+	return fn.execute(args, childScope)
+}
 
-	proc := NewProcedure()
+func (fn *UserDefinedFunction) ExecuteAggregate(values []parser.Primary, args []parser.Primary, filter Filter) (parser.Primary, error) {
+	childScope := filter.CreateChildScope()
+	childScope.CursorsList.AddPseudoCursor(fn.Cursor, values)
+	return fn.execute(args, childScope)
+}
 
-	if fn.IsAggregate {
-		proc.Filter = fn.generateAggregateFilter(args, filter)
-	} else {
-		proc.Filter, err = fn.generateScalaFilter(args, filter)
-		if err != nil {
+func (fn *UserDefinedFunction) execute(args []parser.Primary, filter Filter) (parser.Primary, error) {
+	if len(args) != len(fn.Parameters) {
+		if fn.IsAggregate {
+			return nil, NewFunctionArgumentLengthError(fn.Name, fn.Name.Literal, []int{len(fn.Parameters) + 1})
+		} else {
+			return nil, NewFunctionArgumentLengthError(fn.Name, fn.Name.Literal, []int{len(fn.Parameters)})
+		}
+	}
+
+	for i, v := range fn.Parameters {
+		if err := filter.VariablesList[0].Add(v, args[i]); err != nil {
 			return nil, err
 		}
 	}
 
-	if _, err = proc.Execute(fn.Statements); err != nil {
+	proc := NewProcedure()
+	proc.Filter = filter
+
+	if _, err := proc.Execute(fn.Statements); err != nil {
 		return nil, err
 	}
 
@@ -120,25 +133,4 @@ func (fn *UserDefinedFunction) Execute(args []parser.Primary, filter Filter) (pa
 	}
 
 	return ret, nil
-}
-
-func (fn *UserDefinedFunction) generateScalaFilter(args []parser.Primary, filter Filter) (Filter, error) {
-	if len(args) != len(fn.Parameters) {
-		return filter, NewFunctionArgumentLengthError(fn.Name, fn.Name.Literal, []int{len(fn.Parameters)})
-	}
-
-	f := filter.CreateChildScope()
-
-	for i, v := range fn.Parameters {
-		if err := f.VariablesList[0].Add(v, args[i]); err != nil {
-			return filter, err
-		}
-	}
-	return f, nil
-}
-
-func (fn *UserDefinedFunction) generateAggregateFilter(values []parser.Primary, filter Filter) Filter {
-	f := filter.CreateChildScope()
-	f.CursorsList.AddPseudoCursor(fn.Parameter, values)
-	return f
 }
