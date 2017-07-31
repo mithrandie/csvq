@@ -146,7 +146,7 @@ BEGIN
         END IF;
 
         IF @value IS NULL THEN
-            @value := @fetch
+            @value := @fetch;
             CONTINUE;
         END IF;
 
@@ -154,7 +154,7 @@ BEGIN
     END WHILE;
     
     IF @value IS NULL THEN
-        @value := @default
+        @value := @default;
     END IF;
 
     RETURN @value;
