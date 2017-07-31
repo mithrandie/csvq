@@ -128,6 +128,7 @@ BEGIN
 
         IF @value IS NULL THEN
             @value := @fetch
+            CONTINUE;
         END IF;
 
         @value := @value * @fetch;
