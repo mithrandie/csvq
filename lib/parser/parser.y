@@ -46,6 +46,9 @@ package parser
 %type<statement>   temporary_table_statement
 %type<expression>  parameter
 %type<expressions> parameters
+%type<expression>  optional_parameter
+%type<expressions> optional_parameters
+%type<expressions> function_parameters
 %type<statement>   user_defined_function_statement
 %type<expression>  fetch_position
 %type<expression>  cursor_status
@@ -161,7 +164,7 @@ package parser
 %token<token> PRINT PRINTF SOURCE TRIGGER
 %token<token> FUNCTION AGGREGATE BEGIN RETURN
 %token<token> IGNORE WITHIN
-%token<token> VAR OPTIONAL
+%token<token> VAR
 %token<token> TIES NULLS
 %token<token> ERROR
 %token<token> COUNT LISTAGG
@@ -561,19 +564,45 @@ parameter
     {
         $$ = VariableAssignment{Variable:$1}
     }
-    | variable DEFAULT value
-    {
-        $$ = VariableAssignment{Variable: $1, Value: $3}
-    }
 
 parameters
     : parameter
     {
         $$ = []Expression{$1}
     }
-    | parameter ',' parameters
+    | parameters ',' parameter
+    {
+        $$ = append($1, $3)
+    }
+
+optional_parameter
+    : variable DEFAULT value
+    {
+        $$ = VariableAssignment{Variable: $1, Value: $3}
+    }
+
+optional_parameters
+    : optional_parameter
+    {
+        $$ = []Expression{$1}
+    }
+    | optional_parameter ',' optional_parameters
     {
         $$ = append([]Expression{$1}, $3...)
+    }
+
+function_parameters
+    : parameters
+    {
+        $$ = $1
+    }
+    | optional_parameters
+    {
+        $$ = $1
+    }
+    | parameters ',' optional_parameters
+    {
+        $$ = append($1, $3...)
     }
 
 user_defined_function_statement
@@ -581,7 +610,7 @@ user_defined_function_statement
     {
         $$ = FunctionDeclaration{Name: $2, Statements: $8}
     }
-    | DECLARE identifier FUNCTION '(' parameters ')' AS BEGIN in_function_program END statement_terminal
+    | DECLARE identifier FUNCTION '(' function_parameters ')' AS BEGIN in_function_program END statement_terminal
     {
         $$ = FunctionDeclaration{Name: $2, Parameters: $5, Statements: $9}
     }
@@ -589,7 +618,7 @@ user_defined_function_statement
     {
         $$ = AggregateDeclaration{Name: $2, Cursor: $5, Statements: $9}
     }
-    | DECLARE identifier AGGREGATE '(' identifier ',' parameters ')' AS BEGIN in_function_program END statement_terminal
+    | DECLARE identifier AGGREGATE '(' identifier ',' function_parameters ')' AS BEGIN in_function_program END statement_terminal
     {
         $$ = AggregateDeclaration{Name: $2, Cursor: $5, Parameters: $7, Statements: $11}
     }

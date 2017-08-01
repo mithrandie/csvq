@@ -3407,6 +3407,18 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "declare func1 function (@arg1 default 0, @arg2 default 1) as begin end",
+		Output: []Statement{
+			FunctionDeclaration{
+				Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "func1"},
+				Parameters: []Expression{
+					VariableAssignment{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 25}, Name: "@arg1"}, Value: NewInteger(0)},
+					VariableAssignment{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 42}, Name: "@arg2"}, Value: NewInteger(1)},
+				},
+			},
+		},
+	},
+	{
 		Input: "declare func1 function (@arg1, @arg2 default 0) as begin \n" +
 			"if @var1 = 1 then print 1; end if; \n" +
 			"if @var1 = 1 then print 1; elseif @var1 = 2 then print 2; elseif @var1 = 3 then print 3; else print 4; end if; \n" +
