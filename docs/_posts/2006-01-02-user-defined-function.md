@@ -24,15 +24,14 @@ Functions create local scopes.
 
 ```sql
 scala_function_declaration
-  : DECLARE function_name FUNCTION ([parameter_assignment [, parameter_assignment ...]])
+  : DECLARE function_name FUNCTION ([parameter [, parameter ...] [, optional_parameter ...]])
     AS
     BEGIN
       statements
     END;
 
-parameter_assignment
-  : parameter
-  | parameter DEFAULT value
+optional_parameter
+  : parameter DEFAULT value
 ```
 
 _function_name_
@@ -43,8 +42,6 @@ _statements_
 
 _parameter_
 : [Variable]({{ '/reference/variable.html' | relative_url }})
-
-  Parameters that specified default values are optional.
 
 _value_
 : [value]({{ '/reference/statement.html' | relative_url }})
@@ -74,15 +71,14 @@ _argument_
 
 ```sql
 aggregate_function_declaration
-  : DECLARE function_name AGGREGATE (cursor_name [, parameter_assignment ...]])
+  : DECLARE function_name AGGREGATE (cursor_name [, parameter ...] [, optional_parameter ...])
     AS
     BEGIN
       statements
     END;
 
-parameter_assignment
-  : parameter
-  | parameter DEFAULT value
+optional_parameter
+  : parameter DEFAULT value
 ```
 
 _function_name_
@@ -97,8 +93,6 @@ _statements_
 _parameter_
 : [Variable]({{ '/reference/variable.html' | relative_url }})
   
-  Parameters that specified default values are optional.
-
 _value_
 : [value]({{ '/reference/statement.html' | relative_url }})
 
