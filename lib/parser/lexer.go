@@ -25,8 +25,10 @@ func (l *Lexer) Lex(lval *yySymType) int {
 func (l *Lexer) Error(e string) {
 	if 0 < l.token.Token {
 		var lit string
-		if TOKEN_FROM <= l.token.Token && l.token.Token <= KEYWORD_TO {
+		if TOKEN_FROM <= l.token.Token && l.token.Token <= ERROR {
 			lit = TokenLiteral(l.token.Token)
+		} else if COUNT <= l.token.Token && l.token.Token <= FUNCTION_WITH_ADDITIONALS {
+			lit = TokenLiteral(IDENTIFIER)
 		} else {
 			lit = l.token.Literal
 		}

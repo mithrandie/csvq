@@ -44,10 +44,13 @@ package parser
 %type<expression>  column_position
 %type<statement>   cursor_statement
 %type<statement>   temporary_table_statement
+%type<expression>  parameter
+%type<expressions> parameters
 %type<statement>   user_defined_function_statement
 %type<expression>  fetch_position
 %type<expression>  cursor_status
 %type<statement>   command_statement
+%type<statement>   trigger_statement
 %type<expression>  select_query
 %type<expression>  select_entity
 %type<expression>  select_set_entity
@@ -155,12 +158,14 @@ package parser
 %token<token> SEPARATOR PARTITION OVER
 %token<token> COMMIT ROLLBACK
 %token<token> CONTINUE BREAK EXIT
-%token<token> PRINT PRINTF SOURCE
+%token<token> PRINT PRINTF SOURCE TRIGGER
 %token<token> FUNCTION AGGREGATE BEGIN RETURN
 %token<token> IGNORE WITHIN
-%token<token> VAR
+%token<token> VAR OPTIONAL
 %token<token> TIES NULLS
-%token<token> COUNT LISTAGG AGGREGATE_FUNCTION FUNCTION_WITH_ADDITIONALS
+%token<token> ERROR
+%token<token> COUNT LISTAGG
+%token<token> AGGREGATE_FUNCTION FUNCTION_WITH_ADDITIONALS
 %token<token> COMPARISON_OP STRING_OP SUBSTITUTION_OP
 %token<token> UMINUS UPLUS
 %token<token> ';' '*' '=' '-' '+' '!' '(' ')'
@@ -273,6 +278,10 @@ statement
         $$ = $1
     }
     | command_statement
+    {
+        $$ = $1
+    }
+    | trigger_statement
     {
         $$ = $1
     }
@@ -547,12 +556,32 @@ temporary_table_statement
         $$ = DisposeTable{Table: $3}
     }
 
+parameter
+    : variable
+    {
+        $$ = VariableAssignment{Variable:$1}
+    }
+    | variable DEFAULT value
+    {
+        $$ = VariableAssignment{Variable: $1, Value: $3}
+    }
+
+parameters
+    : parameter
+    {
+        $$ = []Expression{$1}
+    }
+    | parameter ',' parameters
+    {
+        $$ = append([]Expression{$1}, $3...)
+    }
+
 user_defined_function_statement
     : DECLARE identifier FUNCTION '(' ')' AS BEGIN in_function_program END statement_terminal
     {
         $$ = FunctionDeclaration{Name: $2, Statements: $8}
     }
-    | DECLARE identifier FUNCTION '(' variables ')' AS BEGIN in_function_program END statement_terminal
+    | DECLARE identifier FUNCTION '(' parameters ')' AS BEGIN in_function_program END statement_terminal
     {
         $$ = FunctionDeclaration{Name: $2, Parameters: $5, Statements: $9}
     }
@@ -560,7 +589,7 @@ user_defined_function_statement
     {
         $$ = AggregateDeclaration{Name: $2, Cursor: $5, Statements: $9}
     }
-    | DECLARE identifier AGGREGATE '(' identifier ',' variables ')' AS BEGIN in_function_program END statement_terminal
+    | DECLARE identifier AGGREGATE '(' identifier ',' parameters ')' AS BEGIN in_function_program END statement_terminal
     {
         $$ = AggregateDeclaration{Name: $2, Cursor: $5, Parameters: $7, Statements: $11}
     }
@@ -629,6 +658,20 @@ command_statement
     | SOURCE value statement_terminal
     {
         $$ = Source{BaseExpr: NewBaseExpr($1), FilePath: $2}
+    }
+
+trigger_statement
+    : TRIGGER ERROR statement_terminal
+    {
+        $$ = Trigger{BaseExpr: NewBaseExpr($1), Token: $2.Token}
+    }
+    | TRIGGER ERROR value statement_terminal
+    {
+        $$ = Trigger{BaseExpr: NewBaseExpr($1), Token: $2.Token, Message: $3}
+    }
+    | TRIGGER ERROR integer value statement_terminal
+    {
+        $$ = Trigger{BaseExpr: NewBaseExpr($1), Token: $2.Token, Message: $4, Code: $3}
     }
 
 select_query
@@ -1621,6 +1664,10 @@ identifier
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }
     | FUNCTION_WITH_ADDITIONALS
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | ERROR
     {
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }

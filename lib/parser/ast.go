@@ -1436,7 +1436,7 @@ func (e RenameColumn) String() string {
 type FunctionDeclaration struct {
 	*BaseExpr
 	Name       Identifier
-	Parameters []Variable
+	Parameters []Expression
 	Statements []Statement
 }
 
@@ -1444,7 +1444,7 @@ type AggregateDeclaration struct {
 	*BaseExpr
 	Name       Identifier
 	Cursor     Identifier
-	Parameters []Variable
+	Parameters []Expression
 	Statements []Statement
 }
 
@@ -1600,6 +1600,13 @@ type TransactionControl struct {
 type FlowControl struct {
 	*BaseExpr
 	Token int
+}
+
+type Trigger struct {
+	*BaseExpr
+	Token   int
+	Message Expression
+	Code    Expression
 }
 
 func putParentheses(s string) string {

@@ -23,21 +23,31 @@ Functions create local scopes.
 {: #scala_declaration}
 
 ```sql
-DECLARE function_name FUNCTION ([parameter [, parameter ...]])
-AS
-BEGIN
-  statements
-END;
+scala_function_declaration
+  : DECLARE function_name FUNCTION ([parameter_assignment [, parameter_assignment ...]])
+    AS
+    BEGIN
+      statements
+    END;
+
+parameter_assignment
+  : parameter
+  | parameter DEFAULT value
 ```
 
 _function_name_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
 
+_statements_
+: [Statements]({{ '/reference/statement.html' | relative_url }})
+
 _parameter_
 : [Variable]({{ '/reference/variable.html' | relative_url }})
 
-_statements_
-: [Statements]({{ '/reference/statement.html' | relative_url }})
+  Parameters that specified default values are optional.
+
+_value_
+: [value]({{ '/reference/statement.html' | relative_url }})
 
 A scala function takes some arguments, and return a value.
 In the statements, arguments are set to variables specified in the declaration as _parameters_.
@@ -63,11 +73,16 @@ _argument_
 {: #aggregate_declaration}
 
 ```sql
-DECLARE function_name AGGREGATE (cursor_name [, parameter ...]])
-AS
-BEGIN
-  statements
-END;
+aggregate_function_declaration
+  : DECLARE function_name AGGREGATE (cursor_name [, parameter_assignment ...]])
+    AS
+    BEGIN
+      statements
+    END;
+
+parameter_assignment
+  : parameter
+  | parameter DEFAULT value
 ```
 
 _function_name_
@@ -76,11 +91,16 @@ _function_name_
 _cursor_name_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
 
-_parameter_
-: [Variable]({{ '/reference/variable.html' | relative_url }})
-
 _statements_
 : [Statements]({{ '/reference/statement.html' | relative_url }})
+
+_parameter_
+: [Variable]({{ '/reference/variable.html' | relative_url }})
+  
+  Parameters that specified default values are optional.
+
+_value_
+: [value]({{ '/reference/statement.html' | relative_url }})
 
 An aggregate function takes at least one argument, and return a value.
 The first argument is a representation of grouped values, and the following arguments are parameters.
@@ -134,7 +154,7 @@ _order_by_clause_
 Example:
 
 ```sql
-DECLARE multiply AGGREGATE (list, @default)
+DECLARE multiply AGGREGATE (list, @default DEFAULT 0)
 AS
 BEGIN
     VAR @value, @fetch;
@@ -160,9 +180,11 @@ BEGIN
     RETURN @value;
 END;
 
-SELECT multiply(i, 0) FROM numbers;
+SELECT multiply(i) FROM numbers;
 
-SELECT i, multiply(i, 0) OVER () FROM numbers;
+SELECT multiply(i, NULL) FROM numbers;
+
+SELECT i, multiply(i) OVER () FROM numbers;
 ```
 
 

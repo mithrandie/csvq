@@ -65,3 +65,44 @@ func IsReadableFromStdin() bool {
 	}
 	return false
 }
+
+func FormatString(format string, args []parser.Primary) (string, error) {
+	str := []rune{}
+
+	escaped := false
+	placeholderOrder := 0
+	for _, r := range format {
+		if escaped {
+			switch r {
+			case 's':
+				if len(args) <= placeholderOrder {
+					return "", NewFormatStringLengthNotMatchError()
+				}
+				str = append(str, []rune(args[placeholderOrder].String())...)
+				placeholderOrder++
+			case '%':
+				str = append(str, r)
+			default:
+				str = append(str, '%', r)
+			}
+			escaped = false
+			continue
+		}
+
+		if r == '%' {
+			escaped = true
+			continue
+		}
+
+		str = append(str, r)
+	}
+	if escaped {
+		str = append(str, '%')
+	}
+
+	if placeholderOrder < len(args) {
+		return "", NewFormatStringLengthNotMatchError()
+	}
+
+	return string(str), nil
+}

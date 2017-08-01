@@ -2962,6 +2962,36 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "trigger error",
+		Output: []Statement{
+			Trigger{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Token:    ERROR,
+			},
+		},
+	},
+	{
+		Input: "trigger error 'user error'",
+		Output: []Statement{
+			Trigger{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Token:    ERROR,
+				Message:  NewString("user error"),
+			},
+		},
+	},
+	{
+		Input: "trigger error 300 'user error'",
+		Output: []Statement{
+			Trigger{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Token:    ERROR,
+				Message:  NewString("user error"),
+				Code:     NewInteger(300),
+			},
+		},
+	},
+	{
 		Input: "declare cur cursor for select 1",
 		Output: []Statement{
 			CursorDeclaration{
@@ -3377,7 +3407,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "declare func1 function (@arg1, @arg2) as begin \n" +
+		Input: "declare func1 function (@arg1, @arg2 default 0) as begin \n" +
 			"if @var1 = 1 then print 1; end if; \n" +
 			"if @var1 = 1 then print 1; elseif @var1 = 2 then print 2; elseif @var1 = 3 then print 3; else print 4; end if; \n" +
 			"while true do break end while; \n" +
@@ -3391,9 +3421,9 @@ var parseTests = []struct {
 		Output: []Statement{
 			FunctionDeclaration{
 				Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "func1"},
-				Parameters: []Variable{
-					{BaseExpr: &BaseExpr{line: 1, char: 25}, Name: "@arg1"},
-					{BaseExpr: &BaseExpr{line: 1, char: 32}, Name: "@arg2"},
+				Parameters: []Expression{
+					VariableAssignment{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 25}, Name: "@arg1"}},
+					VariableAssignment{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 32}, Name: "@arg2"}, Value: NewInteger(0)},
 				},
 				Statements: []Statement{
 					If{
@@ -3550,8 +3580,8 @@ var parseTests = []struct {
 			AggregateDeclaration{
 				Name:   Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "aggfunc"},
 				Cursor: Identifier{BaseExpr: &BaseExpr{line: 1, char: 28}, Literal: "cur"},
-				Parameters: []Variable{
-					{BaseExpr: &BaseExpr{line: 1, char: 33}, Name: "@var1"},
+				Parameters: []Expression{
+					VariableAssignment{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 33}, Name: "@var1"}},
 				},
 			},
 		},
@@ -3562,9 +3592,9 @@ var parseTests = []struct {
 			AggregateDeclaration{
 				Name:   Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "aggfunc"},
 				Cursor: Identifier{BaseExpr: &BaseExpr{line: 1, char: 28}, Literal: "cur"},
-				Parameters: []Variable{
-					{BaseExpr: &BaseExpr{line: 1, char: 33}, Name: "@var1"},
-					{BaseExpr: &BaseExpr{line: 1, char: 40}, Name: "@var2"},
+				Parameters: []Expression{
+					VariableAssignment{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 33}, Name: "@var1"}},
+					VariableAssignment{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 40}, Name: "@var2"}},
 				},
 			},
 		},
@@ -3682,6 +3712,22 @@ var parseTests = []struct {
 					Fields: []Expression{
 						Field{
 							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "function_with_additionals"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select error",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []Expression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "error"}},
 						},
 					},
 				},

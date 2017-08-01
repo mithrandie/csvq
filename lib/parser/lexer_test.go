@@ -7,5 +7,44 @@ func TestToken_IsEmpty(t *testing.T) {
 	if !token.IsEmpty() {
 		t.Error("Token.Empty() is false, want true for empty token")
 	}
+}
 
+func TestLexer_Error(t *testing.T) {
+	lexer := Lexer{
+		token: Token{
+			Token:   SELECT,
+			Literal: "select",
+		},
+	}
+	message := "syntax error"
+
+	expect := "syntax error: unexpected SELECT"
+	lexer.Error(message)
+	if lexer.err.Error() != expect {
+		t.Errorf("error message = %s, want %s for token %s", lexer.err.Error(), expect, lexer.token)
+	}
+
+	lexer = Lexer{
+		token: Token{
+			Token:   AGGREGATE_FUNCTION,
+			Literal: "min",
+		},
+	}
+	expect = "syntax error: unexpected IDENTIFIER"
+	lexer.Error(message)
+	if lexer.err.Error() != expect {
+		t.Errorf("error message = %s, want %s for token %s", lexer.err.Error(), expect, lexer.token)
+	}
+
+	lexer = Lexer{
+		token: Token{
+			Token:   SUBSTITUTION_OP,
+			Literal: ":=",
+		},
+	}
+	expect = "syntax error: unexpected :="
+	lexer.Error(message)
+	if lexer.err.Error() != expect {
+		t.Errorf("error message = %s, want %s for token %s", lexer.err.Error(), expect, lexer.token)
+	}
 }

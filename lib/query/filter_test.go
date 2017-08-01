@@ -1875,6 +1875,7 @@ var filterEvaluateTests = []struct {
 						Parameters: []parser.Variable{
 							{Name: "@arg1"},
 						},
+						RequiredArgs: 1,
 						Statements: []parser.Statement{
 							parser.Return{Value: parser.Variable{Name: "@arg1"}},
 						},
@@ -1889,6 +1890,30 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Result: parser.NewInteger(1),
+	},
+	{
+		Name: "User Defined Function Argument Length Error",
+		Filter: Filter{
+			FunctionsList: UserDefinedFunctionsList{
+				UserDefinedFunctionMap{
+					"USERFUNC": &UserDefinedFunction{
+						Name: parser.Identifier{Literal: "userfunc"},
+						Parameters: []parser.Variable{
+							{Name: "@arg1"},
+						},
+						RequiredArgs: 1,
+						Statements: []parser.Statement{
+							parser.Return{Value: parser.Variable{Name: "@arg1"}},
+						},
+					},
+				},
+			},
+		},
+		Expr: parser.Function{
+			Name: "userfunc",
+			Args: []parser.Expression{},
+		},
+		Error: "[L:- C:-] function userfunc takes exactly 1 argument",
 	},
 	{
 		Name: "Function Not Exist Error",
@@ -1984,7 +2009,7 @@ var filterEvaluateTests = []struct {
 			Name:     "avg",
 			Distinct: parser.Token{},
 		},
-		Error: "[L:- C:-] function avg takes 1 argument",
+		Error: "[L:- C:-] function avg takes exactly 1 argument",
 	},
 	{
 		Name: "Aggregate Function Not Grouped Error",
@@ -2139,6 +2164,7 @@ var filterEvaluateTests = []struct {
 						Parameters: []parser.Variable{
 							{Name: "@default"},
 						},
+						RequiredArgs: 1,
 						Statements: []parser.Statement{
 							parser.VariableDeclaration{
 								Assignments: []parser.Expression{
@@ -2273,7 +2299,7 @@ var filterEvaluateTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 		},
-		Error: "[L:- C:-] function useraggfunc takes 2 arguments",
+		Error: "[L:- C:-] function useraggfunc takes exactly 2 arguments",
 	},
 	{
 		Name: "Aggregate Function User Defined Argument Evaluation Error",

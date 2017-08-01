@@ -16,13 +16,15 @@ var procedureExecuteStatementTests = []struct {
 	Logs       []string
 	SelectLogs []string
 	Error      string
+	ErrorCode  int
 }{
 	{
 		Input: parser.SetFlag{
 			Name:  "@@invalid",
 			Value: parser.NewString("\t"),
 		},
-		Error: "[L:- C:-] SET: flag name @@invalid is invalid",
+		Error:     "[L:- C:-] SET: flag name @@invalid is invalid",
+		ErrorCode: 1,
 	},
 	{
 		Input: parser.VariableDeclaration{
@@ -96,8 +98,10 @@ var procedureExecuteStatementTests = []struct {
 	{
 		Input: parser.FunctionDeclaration{
 			Name: parser.Identifier{Literal: "userfunc"},
-			Parameters: []parser.Variable{
-				{Name: "@arg1"},
+			Parameters: []parser.Expression{
+				parser.VariableAssignment{
+					Variable: parser.Variable{Name: "@arg1"},
+				},
 			},
 			Statements: []parser.Statement{
 				parser.Print{
@@ -325,14 +329,16 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] variable @var1 is redeclared",
+		Error:     "[L:- C:-] variable @var1 is redeclared",
+		ErrorCode: 1,
 	},
 	{
 		Input: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "@var9"},
 			Value:    parser.NewInteger(1),
 		},
-		Error: "[L:- C:-] variable @var9 is undefined",
+		Error:     "[L:- C:-] variable @var9 is undefined",
+		ErrorCode: 1,
 	},
 	{
 		Input: parser.InsertQuery{
@@ -571,6 +577,15 @@ var procedureExecuteStatementTests = []struct {
 			"'external executable file'",
 		},
 	},
+	{
+		Input: parser.Trigger{
+			Token:   parser.ERROR,
+			Message: parser.NewString("user error"),
+			Code:    parser.NewInteger(200),
+		},
+		Error:     "[L:- C:-] user error",
+		ErrorCode: 200,
+	},
 }
 
 func TestProcedure_ExecuteStatement(t *testing.T) {
@@ -593,6 +608,9 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 				t.Errorf("unexpected error %q for %q", err, v.Input)
 			} else if err.Error() != v.Error {
 				t.Errorf("error %q, want error %q for %q", err, v.Error, v.Input)
+			}
+			if err.(AppError).GetCode() != v.ErrorCode {
+				t.Errorf("error code %d, want error code %d for %q", err.(AppError).GetCode(), v.ErrorCode, v.Input)
 			}
 			continue
 		}

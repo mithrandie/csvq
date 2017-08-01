@@ -682,7 +682,7 @@ var firstValueTests = []analyticFunctionTest{
 				},
 			},
 		},
-		Error: "[L:- C:-] function first_value takes 1 argument",
+		Error: "[L:- C:-] function first_value takes exactly 1 argument",
 	},
 	{
 		Name: "FirstValue Partition Value Error",
@@ -1139,7 +1139,7 @@ var analyzeAggregateValueTests = []analyticFunctionTest{
 				},
 			},
 		},
-		Error: "[L:- C:-] function count takes 1 argument",
+		Error: "[L:- C:-] function count takes exactly 1 argument",
 	},
 	{
 		Name: "AnalyzeAggregateValue Argument Value Error",
@@ -1454,7 +1454,7 @@ var analyzeAggregateValueTests = []analyticFunctionTest{
 				},
 			},
 		},
-		Error: "[L:- C:-] function useraggfunc takes 2 arguments",
+		Error: "[L:- C:-] function useraggfunc takes exactly 2 arguments",
 	},
 	{
 		Name: "AnalyzeAggregateValue User Defined Argument Evaluation Error",

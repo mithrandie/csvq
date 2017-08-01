@@ -34,6 +34,7 @@ const (
 	ERROR_NESTED_AGGREGATE_FUNCTIONS        = "aggregate functions are nested at %s"
 	ERROR_FUNCTION_REDECLARED               = "function %s is redeclared"
 	ERROR_BUILT_IN_FUNCTION_DECLARED        = "function %s is a built-in function"
+	ERROR_DUPLICATE_PARAMETER               = "parameter %s is a duplicate"
 	ERROR_SUBQUERY_TOO_MANY_RECORDS         = "subquery returns too many records, should return only one record"
 	ERROR_SUBQUERY_TOO_MANY_FIELDS          = "subquery returns too many fields, should return only one field"
 	ERROR_CURSOR_REDECLARED                 = "cursor %s is redeclared"
@@ -66,7 +67,7 @@ const (
 	ERROR_UPDATE_FIELD_NOT_EXIST            = "field %s does not exist in the tables to update"
 	ERROR_UPDATE_VALUE_AMBIGUOUS            = "value %s to set in the field %s is ambiguous"
 	ERROR_DELETE_TABLE_NOT_SPECIFIED        = "tables to delete records are not specified"
-	ERROR_PRINTF_REPLACE_VALUE_LENGTH       = "PRINTF: number of replace values does not match"
+	ERROR_PRINTF_REPLACE_VALUE_LENGTH       = "PRINTF: %s"
 	ERROR_SOURCE_INVALID_ARGUMENT           = "SOURCE: argument %s is not a string"
 	ERROR_SOURCE_FILE_NOT_EXIST             = "SOURCE: file %s does not exist"
 	ERROR_SOURCE_FILE_UNABLE_TO_READ        = "SOURCE: file %s is unable to read"
@@ -77,11 +78,13 @@ const (
 	ERROR_FIELD_LENGTH_NOT_MATCH            = "field length does not match"
 	ERROR_ROW_VALUE_LENGTH_NOT_MATCH        = "row value length does not match"
 	ERROR_ROW_VALUE_LENGTH_IN_LIST          = "row value length does not match at index %d"
+	ERROR_FORMAT_STRING_LENGTH_NOT_MATCH    = "number of replace values does not match"
 )
 
 type AppError interface {
 	Error() string
 	ErrorMessage() string
+	GetCode() int
 }
 
 type BaseError struct {
@@ -89,6 +92,7 @@ type BaseError struct {
 	Line       int
 	Char       int
 	Message    string
+	Code       int
 }
 
 func (e BaseError) Error() string {
@@ -105,7 +109,15 @@ func (e BaseError) ErrorMessage() string {
 	return e.Message
 }
 
+func (e BaseError) GetCode() int {
+	return e.Code
+}
+
 func NewBaseError(expr parser.ProcExpr, message string) *BaseError {
+	return NewBaseErrorWithCode(expr, message, 1)
+}
+
+func NewBaseErrorWithCode(expr parser.ProcExpr, message string, code int) *BaseError {
 	var sourceFile string
 	var line int
 	var char int
@@ -120,6 +132,22 @@ func NewBaseError(expr parser.ProcExpr, message string) *BaseError {
 		Line:       line,
 		Char:       char,
 		Message:    message,
+		Code:       code,
+	}
+}
+
+type UserTriggeredError struct {
+	*BaseError
+}
+
+func NewUserTriggeredError(expr parser.Trigger, message string) error {
+	code := 1
+	if expr.Code != nil {
+		code = int(expr.Code.(parser.Integer).Value())
+	}
+
+	return &UserTriggeredError{
+		NewBaseErrorWithCode(expr, message, code),
 	}
 }
 
@@ -134,6 +162,7 @@ func NewSyntaxError(message string, line int, char int, sourceFile string) error
 			Line:       line,
 			Char:       char,
 			Message:    message,
+			Code:       1,
 		},
 	}
 }
@@ -304,6 +333,9 @@ func NewFunctionArgumentLengthError(expr parser.Expression, funcname string, arg
 		argstr = strings.Join(strs, " or ")
 	} else {
 		argstr = FormatCount(argslen[0], "argument")
+		if 0 < argslen[0] {
+			argstr = "exactly " + argstr
+		}
 	}
 	return &FunctionArgumentLengthError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_FUNCTION_ARGUMENT_LENGTH, funcname, argstr)),
@@ -363,6 +395,16 @@ type BuiltInFunctionDeclaredError struct {
 func NewBuiltInFunctionDeclaredError(expr parser.Identifier) error {
 	return &BuiltInFunctionDeclaredError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_BUILT_IN_FUNCTION_DECLARED, expr.Literal)),
+	}
+}
+
+type DuplicateParameterError struct {
+	*BaseError
+}
+
+func NewDuplicateParameterError(expr parser.Variable) error {
+	return &DuplicateParameterError{
+		NewBaseError(expr, fmt.Sprintf(ERROR_DUPLICATE_PARAMETER, expr.Name)),
 	}
 }
 
@@ -698,9 +740,9 @@ type PrintfReplaceValueLengthError struct {
 	*BaseError
 }
 
-func NewPrintfReplaceValueLengthError(printf parser.Printf) error {
+func NewPrintfReplaceValueLengthError(printf parser.Printf, message string) error {
 	return &PrintfReplaceValueLengthError{
-		NewBaseError(printf, ERROR_PRINTF_REPLACE_VALUE_LENGTH),
+		NewBaseError(printf, fmt.Sprintf(ERROR_PRINTF_REPLACE_VALUE_LENGTH, message)),
 	}
 }
 
@@ -803,6 +845,16 @@ func NewRowValueLengthInListError(i int) error {
 	return &RowValueLengthInListError{
 		BaseError: NewBaseError(parser.NewNull(), fmt.Sprintf(ERROR_ROW_VALUE_LENGTH_IN_LIST, i)),
 		Index:     i,
+	}
+}
+
+type FormatStringLengthNotMatchError struct {
+	*BaseError
+}
+
+func NewFormatStringLengthNotMatchError() error {
+	return &FormatStringLengthNotMatchError{
+		BaseError: NewBaseError(parser.NewNull(), ERROR_FORMAT_STRING_LENGTH_NOT_MATCH),
 	}
 }
 

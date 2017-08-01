@@ -69,6 +69,7 @@ var Functions = map[string]func(parser.Function, []parser.Primary) (parser.Prima
 	"RPAD":            Rpad,
 	"SUBSTR":          Substr,
 	"REPLACE":         Replace,
+	"FORMAT":          Format,
 	"MD5":             Md5,
 	"SHA1":            Sha1,
 	"SHA256":          Sha256,
@@ -726,6 +727,23 @@ func Replace(fn parser.Function, args []parser.Primary) (parser.Primary, error) 
 
 	r := strings.Replace(s.(parser.String).Value(), oldstr.(parser.String).Value(), newstr.(parser.String).Value(), -1)
 	return parser.NewString(r), nil
+}
+
+func Format(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
+	if len(args) < 1 {
+		return nil, NewFunctionArgumentLengthErrorWithCustomArgs(fn, fn.Name, "at least 1 argument")
+	}
+
+	format := parser.PrimaryToString(args[0])
+	if parser.IsNull(format) {
+		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, "the first argument must be a string")
+	}
+
+	str, err := FormatString(format.(parser.String).Value(), args[1:])
+	if err != nil {
+		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, err.(AppError).ErrorMessage())
+	}
+	return parser.NewString(str), nil
 }
 
 func Md5(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
