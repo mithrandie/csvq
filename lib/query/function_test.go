@@ -1478,6 +1478,56 @@ func TestReplace(t *testing.T) {
 	testFunction(t, Replace, replaceTests)
 }
 
+var formatTests = []functionTest{
+	{
+		Name: "Format",
+		Function: parser.Function{
+			Name: "format",
+		},
+		Args: []parser.Primary{
+			parser.NewString("string = %s, integer = %s"),
+			parser.NewString("str"),
+			parser.NewInteger(1),
+		},
+		Result: parser.NewString("string = 'str', integer = 1"),
+	},
+	{
+		Name: "Format Argument Length Error",
+		Function: parser.Function{
+			Name: "format",
+		},
+		Args:  []parser.Primary{},
+		Error: "[L:- C:-] function format takes at least 1 argument",
+	},
+	{
+		Name: "Format Argument Value Error",
+		Function: parser.Function{
+			Name: "format",
+		},
+		Args: []parser.Primary{
+			parser.NewNull(),
+			parser.NewString("str"),
+			parser.NewInteger(1),
+		},
+		Error: "[L:- C:-] the first argument must be a string for function format",
+	},
+	{
+		Name: "Format Replace Holder Length Not Match Error",
+		Function: parser.Function{
+			Name: "format",
+		},
+		Args: []parser.Primary{
+			parser.NewString("string = %s, integer = %s"),
+			parser.NewString("str"),
+		},
+		Error: "[L:- C:-] number of replace values does not match for function format",
+	},
+}
+
+func TestFormat(t *testing.T) {
+	testFunction(t, Format, formatTests)
+}
+
 var md5Tests = []functionTest{
 	{
 		Name: "Md5",

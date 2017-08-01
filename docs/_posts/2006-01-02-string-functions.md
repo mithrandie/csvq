@@ -23,6 +23,7 @@ category: reference
 | [RPAD](#rpad) | Return the string right-side padded |
 | [SUBSTR](#substr) | Return a substring of the string |
 | [REPLACE](#replace) | Return the string with substrings replaced another strings |
+| [FORMAT](#format) | Return the formatted string |
 
 ## Definitions
 
@@ -339,3 +340,26 @@ _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
 Return the string _str_ with all occurrences of the string _old_ replaced by the string _new_.
+
+### FORMAT
+{: #format}
+
+```
+FORMAT(format [, replace ... ])
+```
+
+_format_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_replace_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+Return the formatted string.
+
+#### Format Placeholders
+
+| placeholder | replacement value |
+| :- | :- |
+| %s | a string representing the value |
+| %% | '%' |
+

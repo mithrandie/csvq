@@ -48,6 +48,7 @@ package parser
 %type<expression>  fetch_position
 %type<expression>  cursor_status
 %type<statement>   command_statement
+%type<statement>   trigger_statement
 %type<expression>  select_query
 %type<expression>  select_entity
 %type<expression>  select_set_entity
@@ -155,12 +156,14 @@ package parser
 %token<token> SEPARATOR PARTITION OVER
 %token<token> COMMIT ROLLBACK
 %token<token> CONTINUE BREAK EXIT
-%token<token> PRINT PRINTF SOURCE
+%token<token> PRINT PRINTF SOURCE TRIGGER
 %token<token> FUNCTION AGGREGATE BEGIN RETURN
 %token<token> IGNORE WITHIN
 %token<token> VAR
 %token<token> TIES NULLS
-%token<token> COUNT LISTAGG AGGREGATE_FUNCTION FUNCTION_WITH_ADDITIONALS
+%token<token> ERROR
+%token<token> COUNT LISTAGG
+%token<token> AGGREGATE_FUNCTION FUNCTION_WITH_ADDITIONALS
 %token<token> COMPARISON_OP STRING_OP SUBSTITUTION_OP
 %token<token> UMINUS UPLUS
 %token<token> ';' '*' '=' '-' '+' '!' '(' ')'
@@ -273,6 +276,10 @@ statement
         $$ = $1
     }
     | command_statement
+    {
+        $$ = $1
+    }
+    | trigger_statement
     {
         $$ = $1
     }
@@ -629,6 +636,20 @@ command_statement
     | SOURCE value statement_terminal
     {
         $$ = Source{BaseExpr: NewBaseExpr($1), FilePath: $2}
+    }
+
+trigger_statement
+    : TRIGGER ERROR statement_terminal
+    {
+        $$ = Trigger{BaseExpr: NewBaseExpr($1), Token: $2.Token}
+    }
+    | TRIGGER ERROR value statement_terminal
+    {
+        $$ = Trigger{BaseExpr: NewBaseExpr($1), Token: $2.Token, Message: $3}
+    }
+    | TRIGGER ERROR integer value statement_terminal
+    {
+        $$ = Trigger{BaseExpr: NewBaseExpr($1), Token: $2.Token, Message: $4, Code: $3}
     }
 
 select_query
@@ -1621,6 +1642,10 @@ identifier
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }
     | FUNCTION_WITH_ADDITIONALS
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | ERROR
     {
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }

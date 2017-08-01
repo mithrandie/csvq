@@ -7,6 +7,7 @@ import (
 
 	"github.com/mithrandie/csvq/lib/action"
 	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/query"
 
 	"github.com/urfave/cli"
 )
@@ -99,18 +100,13 @@ func main() {
 				return setWriteFlags(c)
 			},
 			Action: func(c *cli.Context) error {
-				query, err := readQuery(c)
+				queryString, err := readQuery(c)
 				if err != nil {
 					cli.ShowCommandHelp(c, "write")
 					return cli.NewExitError(err.Error(), 1)
 				}
 
-				err = action.Write(query, cmd.GetFlags().Source)
-				if err != nil {
-					return cli.NewExitError(err.Error(), 1)
-				}
-
-				return nil
+				return exec(queryString)
 			},
 		},
 		{
@@ -159,48 +155,56 @@ func main() {
 	}
 
 	app.Action = func(c *cli.Context) error {
-		query, err := readQuery(c)
+		queryString, err := readQuery(c)
 		if err != nil {
 			cli.ShowAppHelp(c)
 			return cli.NewExitError(err.Error(), 1)
 		}
 
-		err = action.Write(query, cmd.GetFlags().Source)
-		if err != nil {
-			return cli.NewExitError(err.Error(), 1)
-		}
-
-		return nil
+		return exec(queryString)
 	}
 
 	app.Run(os.Args)
 }
 
+func exec(queryString string) error {
+	err := action.Write(queryString, cmd.GetFlags().Source)
+	if err != nil {
+		code := 1
+		if apperr, ok := err.(query.AppError); ok {
+			code = apperr.GetCode()
+		}
+		return cli.NewExitError(err.Error(), code)
+	}
+
+	return nil
+}
+
 func readQuery(c *cli.Context) (string, error) {
-	var query string
+	var queryString string
 
 	flags := cmd.GetFlags()
 	if 0 < len(flags.Source) {
 		fp, err := os.Open(flags.Source)
 		if err != nil {
-			return query, err
+			return queryString, err
 		}
 		defer fp.Close()
 
 		buf, err := ioutil.ReadAll(fp)
 		if err != nil {
-			return query, err
+			return queryString, err
 		}
-		query = string(buf)
+		queryString = string(buf)
 
 	} else {
 		if c.NArg() != 1 {
-			return query, errors.New("query is empty")
+			return queryString, errors.New("query is empty")
 		}
-		query = c.Args().First()
+		queryString = c.Args().First()
 	}
 
-	return query, nil
+	return queryString, nil
 }
 
 func setGlobalFlags(c *cli.Context) error {

@@ -2962,6 +2962,36 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "trigger error",
+		Output: []Statement{
+			Trigger{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Token:    ERROR,
+			},
+		},
+	},
+	{
+		Input: "trigger error 'user error'",
+		Output: []Statement{
+			Trigger{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Token:    ERROR,
+				Message:  NewString("user error"),
+			},
+		},
+	},
+	{
+		Input: "trigger error 300 'user error'",
+		Output: []Statement{
+			Trigger{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Token:    ERROR,
+				Message:  NewString("user error"),
+				Code:     NewInteger(300),
+			},
+		},
+	},
+	{
 		Input: "declare cur cursor for select 1",
 		Output: []Statement{
 			CursorDeclaration{
@@ -3682,6 +3712,22 @@ var parseTests = []struct {
 					Fields: []Expression{
 						Field{
 							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "function_with_additionals"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select error",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []Expression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "error"}},
 						},
 					},
 				},

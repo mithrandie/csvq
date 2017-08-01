@@ -1602,6 +1602,13 @@ type FlowControl struct {
 	Token int
 }
 
+type Trigger struct {
+	*BaseExpr
+	Token   int
+	Message Expression
+	Code    Expression
+}
+
 func putParentheses(s string) string {
 	return "(" + s + ")"
 }

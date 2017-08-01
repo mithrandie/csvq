@@ -27,45 +27,11 @@ func Printf(expr parser.Printf, filter Filter) (string, error) {
 		args[i] = p
 	}
 
-	format := expr.Format
-	str := []rune{}
-
-	escaped := false
-	placeholderOrder := 0
-	for _, r := range format {
-		if escaped {
-			switch r {
-			case 's':
-				if len(args) <= placeholderOrder {
-					return "", NewPrintfReplaceValueLengthError(expr)
-				}
-				str = append(str, []rune(args[placeholderOrder].String())...)
-				placeholderOrder++
-			case '%':
-				str = append(str, r)
-			default:
-				str = append(str, '%', r)
-			}
-			escaped = false
-			continue
-		}
-
-		if r == '%' {
-			escaped = true
-			continue
-		}
-
-		str = append(str, r)
+	message, err := FormatString(expr.Format, args)
+	if err != nil {
+		return "", NewPrintfReplaceValueLengthError(expr, err.(AppError).ErrorMessage())
 	}
-	if escaped {
-		str = append(str, '%')
-	}
-
-	if placeholderOrder < len(args) {
-		return "", NewPrintfReplaceValueLengthError(expr)
-	}
-
-	return string(str), nil
+	return message, nil
 }
 
 func Source(expr parser.Source, filter Filter) ([]parser.Statement, error) {
