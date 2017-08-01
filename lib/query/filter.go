@@ -518,6 +518,10 @@ func (f Filter) evalFunction(expr parser.Function) (parser.Primary, error) {
 			}
 			return f.evalAggregateFunction(aggrdcl)
 		}
+
+		if err = udfn.CheckArgsLen(expr, expr.Name, len(expr.Args)); err != nil {
+			return nil, err
+		}
 	}
 
 	args := make([]parser.Primary, len(expr.Args))
@@ -554,8 +558,8 @@ func (f Filter) evalAggregateFunction(expr parser.AggregateFunction) (parser.Pri
 	}
 
 	if useUserDefined {
-		if len(expr.Args)-1 != len(udfn.Parameters) {
-			return nil, NewFunctionArgumentLengthError(expr, expr.Name, []int{len(udfn.Parameters) + 1})
+		if err = udfn.CheckArgsLen(expr, expr.Name, len(expr.Args)-1); err != nil {
+			return nil, err
 		}
 	} else {
 		if len(expr.Args) != 1 {

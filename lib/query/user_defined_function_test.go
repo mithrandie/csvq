@@ -14,11 +14,11 @@ var userDefinedFunctionListDeclareTests = []struct {
 	Error  string
 }{
 	{
-		Name: "UserDefineFunctionsList Declare",
+		Name: "UserDefinedFunctionsList Declare",
 		Expr: parser.FunctionDeclaration{
 			Name: parser.Identifier{Literal: "userfunc1"},
-			Parameters: []parser.Variable{
-				{Name: "@arg1"},
+			Parameters: []parser.Expression{
+				parser.VariableAssignment{Variable: parser.Variable{Name: "@arg1"}},
 			},
 			Statements: []parser.Statement{
 				parser.Print{Value: parser.Variable{Name: "@arg1"}},
@@ -31,6 +31,8 @@ var userDefinedFunctionListDeclareTests = []struct {
 					Parameters: []parser.Variable{
 						{Name: "@arg1"},
 					},
+					Defaults:     map[string]parser.Expression{},
+					RequiredArgs: 1,
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.Variable{Name: "@arg1"}},
 					},
@@ -43,6 +45,8 @@ var userDefinedFunctionListDeclareTests = []struct {
 						{Name: "@arg1"},
 						{Name: "@arg2"},
 					},
+					Defaults:     map[string]parser.Expression{},
+					RequiredArgs: 2,
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.Variable{Name: "@arg2"}},
 					},
@@ -62,6 +66,8 @@ func TestUserDefinedFunctionsList_Declare(t *testing.T) {
 					{Name: "@arg1"},
 					{Name: "@arg2"},
 				},
+				Defaults:     map[string]parser.Expression{},
+				RequiredArgs: 2,
 				Statements: []parser.Statement{
 					parser.Print{Value: parser.Variable{Name: "@arg2"}},
 				},
@@ -96,13 +102,18 @@ var userDefinedFunctionListDeclareAggregateTests = []struct {
 	Error  string
 }{
 	{
-		Name: "UserDefineFunctionsList Declare",
+		Name: "UserDefinedFunctionsList DeclareAggregate",
 		Expr: parser.AggregateDeclaration{
 			Name:   parser.Identifier{Literal: "useraggfunc"},
 			Cursor: parser.Identifier{Literal: "column1"},
-			Parameters: []parser.Variable{
-				{Name: "@arg1"},
-				{Name: "@arg2"},
+			Parameters: []parser.Expression{
+				parser.VariableAssignment{
+					Variable: parser.Variable{Name: "@arg1"},
+				},
+				parser.VariableAssignment{
+					Variable: parser.Variable{Name: "@arg2"},
+					Value:    parser.NewInteger(1),
+				},
 			},
 			Statements: []parser.Statement{
 				parser.Print{Value: parser.Variable{Name: "@var1"}},
@@ -116,8 +127,12 @@ var userDefinedFunctionListDeclareAggregateTests = []struct {
 						{Name: "@arg1"},
 						{Name: "@arg2"},
 					},
-					IsAggregate: true,
-					Cursor:      parser.Identifier{Literal: "column1"},
+					Defaults: map[string]parser.Expression{
+						"@arg2": parser.NewInteger(1),
+					},
+					IsAggregate:  true,
+					RequiredArgs: 1,
+					Cursor:       parser.Identifier{Literal: "column1"},
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.Variable{Name: "@var1"}},
 					},
@@ -130,6 +145,8 @@ var userDefinedFunctionListDeclareAggregateTests = []struct {
 						{Name: "@arg1"},
 						{Name: "@arg2"},
 					},
+					Defaults:     map[string]parser.Expression{},
+					RequiredArgs: 2,
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.Variable{Name: "@arg2"}},
 					},
@@ -149,6 +166,8 @@ func TestUserDefinedFunctionsList_DeclareAggregate(t *testing.T) {
 					{Name: "@arg1"},
 					{Name: "@arg2"},
 				},
+				Defaults:     map[string]parser.Expression{},
+				RequiredArgs: 2,
 				Statements: []parser.Statement{
 					parser.Print{Value: parser.Variable{Name: "@arg2"}},
 				},
@@ -184,7 +203,7 @@ var userDefinedFunctionListGetTests = []struct {
 	Error    string
 }{
 	{
-		Name: "UserDefineFunctionsList Get",
+		Name: "UserDefinedFunctionsList Get",
 		Function: parser.Function{
 			Name: "userfunc2",
 		},
@@ -201,7 +220,7 @@ var userDefinedFunctionListGetTests = []struct {
 		},
 	},
 	{
-		Name: "UserDefineFunctionsList Get Not Exist Error",
+		Name: "UserDefinedFunctionsList Get Not Exist Error",
 		Function: parser.Function{
 			Name: "notexist",
 		},
@@ -267,9 +286,13 @@ var userDefinedFunctionMapDeclareTests = []struct {
 		Name: "UserDefinedFunctionMap Declare",
 		Expr: parser.FunctionDeclaration{
 			Name: parser.Identifier{Literal: "userfunc"},
-			Parameters: []parser.Variable{
-				{Name: "@arg1"},
-				{Name: "@arg2"},
+			Parameters: []parser.Expression{
+				parser.VariableAssignment{
+					Variable: parser.Variable{Name: "@arg1"},
+				},
+				parser.VariableAssignment{
+					Variable: parser.Variable{Name: "@arg2"},
+				},
 			},
 			Statements: []parser.Statement{
 				parser.Print{Value: parser.Variable{Name: "@var1"}},
@@ -282,6 +305,8 @@ var userDefinedFunctionMapDeclareTests = []struct {
 					{Name: "@arg1"},
 					{Name: "@arg2"},
 				},
+				Defaults:     map[string]parser.Expression{},
+				RequiredArgs: 2,
 				Statements: []parser.Statement{
 					parser.Print{Value: parser.Variable{Name: "@var1"}},
 				},
@@ -292,15 +317,37 @@ var userDefinedFunctionMapDeclareTests = []struct {
 		Name: "UserDefinedFunctionMap Declare Redeclaration Error",
 		Expr: parser.FunctionDeclaration{
 			Name: parser.Identifier{Literal: "userfunc"},
-			Parameters: []parser.Variable{
-				{Name: "@arg1"},
-				{Name: "@arg2"},
+			Parameters: []parser.Expression{
+				parser.VariableAssignment{
+					Variable: parser.Variable{Name: "@arg1"},
+				},
+				parser.VariableAssignment{
+					Variable: parser.Variable{Name: "@arg2"},
+				},
 			},
 			Statements: []parser.Statement{
 				parser.Print{Value: parser.Variable{Name: "@var1"}},
 			},
 		},
 		Error: "[L:- C:-] function userfunc is redeclared",
+	},
+	{
+		Name: "UserDefinedFunctionMap Declare Duplicate Prameters Error",
+		Expr: parser.FunctionDeclaration{
+			Name: parser.Identifier{Literal: "userfunc2"},
+			Parameters: []parser.Expression{
+				parser.VariableAssignment{
+					Variable: parser.Variable{Name: "@arg1"},
+				},
+				parser.VariableAssignment{
+					Variable: parser.Variable{Name: "@arg1"},
+				},
+			},
+			Statements: []parser.Statement{
+				parser.Print{Value: parser.Variable{Name: "@var1"}},
+			},
+		},
+		Error: "[L:- C:-] parameter @arg1 is a duplicate",
 	},
 }
 
@@ -338,9 +385,13 @@ var userDefinedFunctionMapDeclareAggregateTests = []struct {
 		Expr: parser.AggregateDeclaration{
 			Name:   parser.Identifier{Literal: "useraggfunc"},
 			Cursor: parser.Identifier{Literal: "column1"},
-			Parameters: []parser.Variable{
-				{Name: "@arg1"},
-				{Name: "@arg2"},
+			Parameters: []parser.Expression{
+				parser.VariableAssignment{
+					Variable: parser.Variable{Name: "@arg1"},
+				},
+				parser.VariableAssignment{
+					Variable: parser.Variable{Name: "@arg2"},
+				},
 			},
 			Statements: []parser.Statement{
 				parser.Print{Value: parser.Variable{Name: "@var1"}},
@@ -355,6 +406,8 @@ var userDefinedFunctionMapDeclareAggregateTests = []struct {
 					{Name: "@arg1"},
 					{Name: "@arg2"},
 				},
+				RequiredArgs: 2,
+				Defaults:     map[string]parser.Expression{},
 				Statements: []parser.Statement{
 					parser.Print{Value: parser.Variable{Name: "@var1"}},
 				},
@@ -371,6 +424,25 @@ var userDefinedFunctionMapDeclareAggregateTests = []struct {
 			},
 		},
 		Error: "[L:- C:-] function useraggfunc is redeclared",
+	},
+	{
+		Name: "UserDefinedFunctionMap DeclareAggregate Duplicate Parameters Error",
+		Expr: parser.AggregateDeclaration{
+			Name:   parser.Identifier{Literal: "useraggfunc2"},
+			Cursor: parser.Identifier{Literal: "column1"},
+			Parameters: []parser.Expression{
+				parser.VariableAssignment{
+					Variable: parser.Variable{Name: "@arg1"},
+				},
+				parser.VariableAssignment{
+					Variable: parser.Variable{Name: "@arg1"},
+				},
+			},
+			Statements: []parser.Statement{
+				parser.Print{Value: parser.Variable{Name: "@var1"}},
+			},
+		},
+		Error: "[L:- C:-] parameter @arg1 is a duplicate",
 	},
 }
 
@@ -547,6 +619,10 @@ var userDefinedFunctionExecuteTests = []struct {
 				{Name: "@arg1"},
 				{Name: "@arg2"},
 			},
+			Defaults: map[string]parser.Expression{
+				"@arg2": parser.NewInteger(3),
+			},
+			RequiredArgs: 1,
 			Statements: []parser.Statement{
 				parser.VariableDeclaration{
 					Assignments: []parser.Expression{
@@ -571,7 +647,6 @@ var userDefinedFunctionExecuteTests = []struct {
 		},
 		Args: []parser.Primary{
 			parser.NewInteger(2),
-			parser.NewInteger(3),
 		},
 		Result: parser.NewInteger(6),
 	},
@@ -609,7 +684,7 @@ var userDefinedFunctionExecuteTests = []struct {
 		Result: parser.NewNull(),
 	},
 	{
-		Name: "UserDefinedFunction Execute Arguments Error",
+		Name: "UserDefinedFunction Execute Argument Length Error",
 		Func: &UserDefinedFunction{
 			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.Variable{
@@ -641,42 +716,46 @@ var userDefinedFunctionExecuteTests = []struct {
 		Args: []parser.Primary{
 			parser.NewInteger(2),
 		},
-		Error: "[L:- C:-] function userfunc takes 2 arguments",
+		Error: "[L:- C:-] function userfunc takes exactly 2 arguments",
 	},
 	{
-		Name: "UserDefinedFunction Execute Parameter Duplicate Error",
+		Name: "UserDefinedFunction Execute Argument Evaluation Error",
 		Func: &UserDefinedFunction{
 			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.Variable{
 				{Name: "@arg1"},
-				{Name: "@arg1"},
+				{Name: "@arg2"},
 			},
+			Defaults: map[string]parser.Expression{
+				"@arg2": parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+			},
+			RequiredArgs: 1,
 			Statements: []parser.Statement{
 				parser.VariableDeclaration{
 					Assignments: []parser.Expression{
 						parser.VariableAssignment{
 							Variable: parser.Variable{Name: "@var2"},
-							Value: parser.Subquery{
-								Query: parser.SelectQuery{
-									SelectEntity: parser.SelectEntity{
-										SelectClause: parser.SelectClause{
-											Fields: []parser.Expression{
-												parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
-											},
-										},
-									},
+							Value: parser.Arithmetic{
+								LHS: parser.Arithmetic{
+									LHS:      parser.Variable{Name: "@arg1"},
+									RHS:      parser.Variable{Name: "@arg2"},
+									Operator: '+',
 								},
+								RHS:      parser.Variable{Name: "@var1"},
+								Operator: '+',
 							},
 						},
 					},
+				},
+				parser.Return{
+					Value: parser.Variable{Name: "@var2"},
 				},
 			},
 		},
 		Args: []parser.Primary{
 			parser.NewInteger(2),
-			parser.NewInteger(3),
 		},
-		Error: "[L:- C:-] variable @arg1 is redeclared",
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
 		Name: "UserDefinedFunction Execute Execution Error",
@@ -978,7 +1057,7 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 		Args: []parser.Primary{
 			parser.NewInteger(0),
 		},
-		Error: "[L:- C:-] function useraggfunc takes 1 argument",
+		Error: "[L:- C:-] function useraggfunc takes exactly 1 argument",
 	},
 }
 
@@ -1001,6 +1080,113 @@ func TestUserDefinedFunction_ExecuteAggregate(t *testing.T) {
 		}
 		if !reflect.DeepEqual(result, v.Result) {
 			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
+		}
+	}
+}
+
+var userDefinedFunctionCheckArgsLenTests = []struct {
+	Name    string
+	Func    *UserDefinedFunction
+	ArgsLen int
+	Error   string
+}{
+	{
+		Name: "UserDefinedFunction CheckArgsLen",
+		Func: &UserDefinedFunction{
+			Name: parser.Identifier{Literal: "userfunc"},
+			Parameters: []parser.Variable{
+				{Name: "@arg1"},
+				{Name: "@arg2"},
+			},
+			Defaults: map[string]parser.Expression{
+				"@arg2": parser.NewInteger(3),
+			},
+			RequiredArgs: 1,
+			Statements:   []parser.Statement{},
+		},
+		ArgsLen: 1,
+		Error:   "",
+	},
+	{
+		Name: "UserDefinedFunction CheckArgsLen Argument Length Error",
+		Func: &UserDefinedFunction{
+			Name: parser.Identifier{Literal: "userfunc"},
+			Parameters: []parser.Variable{
+				{Name: "@arg1"},
+				{Name: "@arg2"},
+			},
+			RequiredArgs: 2,
+			Statements:   []parser.Statement{},
+		},
+		ArgsLen: 1,
+		Error:   "[L:- C:-] function userfunc takes exactly 2 arguments",
+	},
+	{
+		Name: "UserDefinedFunction CheckArgsLen Too Little Argument Error",
+		Func: &UserDefinedFunction{
+			Name: parser.Identifier{Literal: "userfunc"},
+			Parameters: []parser.Variable{
+				{Name: "@arg1"},
+				{Name: "@arg2"},
+			},
+			Defaults: map[string]parser.Expression{
+				"@arg2": parser.NewInteger(3),
+			},
+			RequiredArgs: 1,
+			Statements:   []parser.Statement{},
+		},
+		ArgsLen: 0,
+		Error:   "[L:- C:-] function userfunc takes at least 1 argument",
+	},
+	{
+		Name: "UserDefinedFunction CheckArgsLen Too Many Argument Length Error",
+		Func: &UserDefinedFunction{
+			Name: parser.Identifier{Literal: "userfunc"},
+			Parameters: []parser.Variable{
+				{Name: "@arg1"},
+				{Name: "@arg2"},
+			},
+			Defaults: map[string]parser.Expression{
+				"@arg2": parser.NewInteger(3),
+			},
+			RequiredArgs: 1,
+			Statements:   []parser.Statement{},
+		},
+		ArgsLen: 3,
+		Error:   "[L:- C:-] function userfunc takes at most 2 arguments",
+	},
+	{
+		Name: "UserDefinedFunction CheckArgsLen Aggregate Argument Length Error",
+		Func: &UserDefinedFunction{
+			Name:        parser.Identifier{Literal: "userfunc"},
+			IsAggregate: true,
+			Parameters: []parser.Variable{
+				{Name: "@arg1"},
+				{Name: "@arg2"},
+			},
+			RequiredArgs: 2,
+			Cursor:       parser.Identifier{Literal: "list"},
+			Statements:   []parser.Statement{},
+		},
+		ArgsLen: 1,
+		Error:   "[L:- C:-] function userfunc takes exactly 3 arguments",
+	},
+}
+
+func TestUserDefinedFunction_CheckArgsLen(t *testing.T) {
+	for _, v := range userDefinedFunctionCheckArgsLenTests {
+		err := v.Func.CheckArgsLen(parser.Identifier{Literal: "userfunc"}, "userfunc", v.ArgsLen)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
 		}
 	}
 }

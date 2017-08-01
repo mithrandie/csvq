@@ -316,8 +316,8 @@ func AnalyzeAggregateValue(view *View, fn parser.AnalyticFunction) error {
 	}
 
 	if useUserDefined {
-		if len(fn.Args) != len(udfn.Parameters)+1 {
-			return NewFunctionArgumentLengthError(fn, fn.Name, []int{len(udfn.Parameters) + 1})
+		if err := udfn.CheckArgsLen(fn, fn.Name, len(fn.Args)-1); err != nil {
+			return err
 		}
 	} else {
 		if len(fn.Args) != 1 {

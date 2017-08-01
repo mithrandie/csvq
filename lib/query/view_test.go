@@ -1905,6 +1905,142 @@ var viewSelectTests = []struct {
 		},
 		Error: "[L:- C:-] field notexist does not exist",
 	},
+	{
+		Name: "Select User Defined Analytic Function",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(3),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(5),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(4),
+				}),
+			},
+			ParentFilter: Filter{
+				FunctionsList: UserDefinedFunctionsList{
+					UserDefinedFunctionMap{
+						"USERAGGFUNC": &UserDefinedFunction{
+							Name:         parser.Identifier{Literal: "useraggfunc"},
+							IsAggregate:  true,
+							Cursor:       parser.Identifier{Literal: "list"},
+							RequiredArgs: 0,
+							Statements: []parser.Statement{
+								parser.VariableDeclaration{
+									Assignments: []parser.Expression{
+										parser.VariableAssignment{
+											Variable: parser.Variable{Name: "@value"},
+										},
+										parser.VariableAssignment{
+											Variable: parser.Variable{Name: "@fetch"},
+										},
+									},
+								},
+								parser.WhileInCursor{
+									Variables: []parser.Variable{
+										{Name: "@fetch"},
+									},
+									Cursor: parser.Identifier{Literal: "list"},
+									Statements: []parser.Statement{
+										parser.If{
+											Condition: parser.Is{
+												LHS: parser.Variable{Name: "@value"},
+												RHS: parser.NewNull(),
+											},
+											Statements: []parser.Statement{
+												parser.VariableSubstitution{
+													Variable: parser.Variable{Name: "@value"},
+													Value:    parser.Variable{Name: "@fetch"},
+												},
+												parser.FlowControl{Token: parser.CONTINUE},
+											},
+										},
+										parser.VariableSubstitution{
+											Variable: parser.Variable{Name: "@value"},
+											Value: parser.Arithmetic{
+												LHS:      parser.Variable{Name: "@value"},
+												RHS:      parser.Variable{Name: "@fetch"},
+												Operator: '+',
+											},
+										},
+									},
+								},
+
+								parser.Return{
+									Value: parser.Variable{Name: "@value"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Select: parser.SelectClause{
+			Fields: []parser.Expression{
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+				parser.Field{
+					Object: parser.AnalyticFunction{
+						Name: "useraggfunc",
+						Args: []parser.Expression{
+							parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+						},
+						Over:           "over",
+						AnalyticClause: parser.AnalyticClause{},
+					},
+				},
+			},
+		},
+		Result: &View{
+			Header: []HeaderField{
+				{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
+				{Reference: "table1", Column: "column2", Number: 2, FromTable: true},
+				{Column: "useraggfunc(column2) over ()", Alias: "useraggfunc(column2) over ()"},
+			},
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+					parser.NewInteger(15),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(3),
+					parser.NewInteger(15),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(5),
+					parser.NewInteger(15),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+					parser.NewInteger(15),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(4),
+					parser.NewInteger(15),
+				}),
+			},
+			selectFields: []int{0, 1, 2},
+		},
+	},
 }
 
 func TestView_Select(t *testing.T) {

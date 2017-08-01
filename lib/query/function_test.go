@@ -108,7 +108,7 @@ var ifTests = []functionTest{
 		Args: []parser.Primary{
 			parser.NewTernary(ternary.FALSE),
 		},
-		Error: "[L:- C:-] function if takes 3 arguments",
+		Error: "[L:- C:-] function if takes exactly 3 arguments",
 	},
 }
 
@@ -147,7 +147,7 @@ var ifnullTests = []functionTest{
 		Args: []parser.Primary{
 			parser.NewInteger(1),
 		},
-		Error: "[L:- C:-] function ifnull takes 2 arguments",
+		Error: "[L:- C:-] function ifnull takes exactly 2 arguments",
 	},
 }
 
@@ -186,7 +186,7 @@ var nullifTests = []functionTest{
 		Args: []parser.Primary{
 			parser.NewInteger(1),
 		},
-		Error: "[L:- C:-] function nullif takes 2 arguments",
+		Error: "[L:- C:-] function nullif takes exactly 2 arguments",
 	},
 }
 
@@ -348,7 +348,7 @@ var absTests = []functionTest{
 			Name: "abs",
 		},
 		Args:  []parser.Primary{},
-		Error: "[L:- C:-] function abs takes 1 argument",
+		Error: "[L:- C:-] function abs takes exactly 1 argument",
 	},
 }
 
@@ -673,7 +673,7 @@ var powTests = []functionTest{
 			Name: "pow",
 		},
 		Args:  []parser.Primary{},
-		Error: "[L:- C:-] function pow takes 2 arguments",
+		Error: "[L:- C:-] function pow takes exactly 2 arguments",
 	},
 }
 
@@ -718,7 +718,7 @@ var binToDecTests = []functionTest{
 			Name: "bin_to_dec",
 		},
 		Args:  []parser.Primary{},
-		Error: "[L:- C:-] function bin_to_dec takes 1 argument",
+		Error: "[L:- C:-] function bin_to_dec takes exactly 1 argument",
 	},
 }
 
@@ -787,7 +787,7 @@ var binTests = []functionTest{
 			Name: "bin",
 		},
 		Args:  []parser.Primary{},
-		Error: "[L:- C:-] function bin takes 1 argument",
+		Error: "[L:- C:-] function bin takes exactly 1 argument",
 	},
 }
 
@@ -1072,7 +1072,7 @@ var upperTests = []functionTest{
 			Name: "upper",
 		},
 		Args:  []parser.Primary{},
-		Error: "[L:- C:-] function upper takes 1 argument",
+		Error: "[L:- C:-] function upper takes exactly 1 argument",
 	},
 }
 
@@ -1192,7 +1192,7 @@ var lenTests = []functionTest{
 			Name: "len",
 		},
 		Args:  []parser.Primary{},
-		Error: "[L:- C:-] function len takes 1 argument",
+		Error: "[L:- C:-] function len takes exactly 1 argument",
 	},
 }
 
@@ -1227,7 +1227,7 @@ var byteLenTests = []functionTest{
 			Name: "byte_len",
 		},
 		Args:  []parser.Primary{},
-		Error: "[L:- C:-] function byte_len takes 1 argument",
+		Error: "[L:- C:-] function byte_len takes exactly 1 argument",
 	},
 }
 
@@ -1302,7 +1302,7 @@ var lpadTests = []functionTest{
 			Name: "lpad",
 		},
 		Args:  []parser.Primary{},
-		Error: "[L:- C:-] function lpad takes 3 arguments",
+		Error: "[L:- C:-] function lpad takes exactly 3 arguments",
 	},
 }
 
@@ -1470,7 +1470,7 @@ var replaceTests = []functionTest{
 			Name: "replace",
 		},
 		Args:  []parser.Primary{},
-		Error: "[L:- C:-] function replace takes 3 arguments",
+		Error: "[L:- C:-] function replace takes exactly 3 arguments",
 	},
 }
 
@@ -1555,7 +1555,7 @@ var md5Tests = []functionTest{
 			Name: "md5",
 		},
 		Args:  []parser.Primary{},
-		Error: "[L:- C:-] function md5 takes 1 argument",
+		Error: "[L:- C:-] function md5 takes exactly 1 argument",
 	},
 }
 
@@ -1654,7 +1654,7 @@ var md5HmacTests = []functionTest{
 			Name: "md5_hmac",
 		},
 		Args:  []parser.Primary{},
-		Error: "[L:- C:-] function md5_hmac takes 2 arguments",
+		Error: "[L:- C:-] function md5_hmac takes exactly 2 arguments",
 	},
 }
 
@@ -1782,7 +1782,7 @@ var datetimeFormatTests = []functionTest{
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 		},
-		Error: "[L:- C:-] function datetime_format takes 2 arguments",
+		Error: "[L:- C:-] function datetime_format takes exactly 2 arguments",
 	},
 }
 
@@ -1817,7 +1817,7 @@ var yearTests = []functionTest{
 			Name: "year",
 		},
 		Args:  []parser.Primary{},
-		Error: "[L:- C:-] function year takes 1 argument",
+		Error: "[L:- C:-] function year takes exactly 1 argument",
 	},
 }
 
@@ -2086,7 +2086,7 @@ var addYearTests = []functionTest{
 			Name: "add_year",
 		},
 		Args:  []parser.Primary{},
-		Error: "[L:- C:-] function add_year takes 2 arguments",
+		Error: "[L:- C:-] function add_year takes exactly 2 arguments",
 	},
 }
 
@@ -2278,7 +2278,7 @@ var dateDiffTests = []functionTest{
 			Name: "date_diff",
 		},
 		Args:  []parser.Primary{},
-		Error: "[L:- C:-] function date_diff takes 2 arguments",
+		Error: "[L:- C:-] function date_diff takes exactly 2 arguments",
 	},
 }
 
@@ -2326,7 +2326,7 @@ var timeDiffTests = []functionTest{
 			Name: "time_diff",
 		},
 		Args:  []parser.Primary{},
-		Error: "[L:- C:-] function time_diff takes 2 arguments",
+		Error: "[L:- C:-] function time_diff takes exactly 2 arguments",
 	},
 }
 
@@ -2381,7 +2381,7 @@ var stringTests = []functionTest{
 			Name: "string",
 		},
 		Args:  []parser.Primary{},
-		Error: "[L:- C:-] function string takes 1 argument",
+		Error: "[L:- C:-] function string takes exactly 1 argument",
 	},
 }
 
@@ -2426,7 +2426,7 @@ var integerTests = []functionTest{
 			Name: "integer",
 		},
 		Args:  []parser.Primary{},
-		Error: "[L:- C:-] function integer takes 1 argument",
+		Error: "[L:- C:-] function integer takes exactly 1 argument",
 	},
 }
 
@@ -2461,7 +2461,7 @@ var floatTests = []functionTest{
 			Name: "float",
 		},
 		Args:  []parser.Primary{},
-		Error: "[L:- C:-] function float takes 1 argument",
+		Error: "[L:- C:-] function float takes exactly 1 argument",
 	},
 }
 
@@ -2486,7 +2486,7 @@ var booleanTests = []functionTest{
 			Name: "boolean",
 		},
 		Args:  []parser.Primary{},
-		Error: "[L:- C:-] function boolean takes 1 argument",
+		Error: "[L:- C:-] function boolean takes exactly 1 argument",
 	},
 }
 
@@ -2511,7 +2511,7 @@ var ternaryTest = []functionTest{
 			Name: "ternary",
 		},
 		Args:  []parser.Primary{},
-		Error: "[L:- C:-] function ternary takes 1 argument",
+		Error: "[L:- C:-] function ternary takes exactly 1 argument",
 	},
 }
 
@@ -2536,7 +2536,7 @@ var datetimeTests = []functionTest{
 			Name: "datetime",
 		},
 		Args:  []parser.Primary{},
-		Error: "[L:- C:-] function datetime takes 1 argument",
+		Error: "[L:- C:-] function datetime takes exactly 1 argument",
 	},
 }
 

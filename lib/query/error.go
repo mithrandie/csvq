@@ -34,6 +34,7 @@ const (
 	ERROR_NESTED_AGGREGATE_FUNCTIONS        = "aggregate functions are nested at %s"
 	ERROR_FUNCTION_REDECLARED               = "function %s is redeclared"
 	ERROR_BUILT_IN_FUNCTION_DECLARED        = "function %s is a built-in function"
+	ERROR_DUPLICATE_PARAMETER               = "parameter %s is a duplicate"
 	ERROR_SUBQUERY_TOO_MANY_RECORDS         = "subquery returns too many records, should return only one record"
 	ERROR_SUBQUERY_TOO_MANY_FIELDS          = "subquery returns too many fields, should return only one field"
 	ERROR_CURSOR_REDECLARED                 = "cursor %s is redeclared"
@@ -332,6 +333,9 @@ func NewFunctionArgumentLengthError(expr parser.Expression, funcname string, arg
 		argstr = strings.Join(strs, " or ")
 	} else {
 		argstr = FormatCount(argslen[0], "argument")
+		if 0 < argslen[0] {
+			argstr = "exactly " + argstr
+		}
 	}
 	return &FunctionArgumentLengthError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_FUNCTION_ARGUMENT_LENGTH, funcname, argstr)),
@@ -391,6 +395,16 @@ type BuiltInFunctionDeclaredError struct {
 func NewBuiltInFunctionDeclaredError(expr parser.Identifier) error {
 	return &BuiltInFunctionDeclaredError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_BUILT_IN_FUNCTION_DECLARED, expr.Literal)),
+	}
+}
+
+type DuplicateParameterError struct {
+	*BaseError
+}
+
+func NewDuplicateParameterError(expr parser.Variable) error {
+	return &DuplicateParameterError{
+		NewBaseError(expr, fmt.Sprintf(ERROR_DUPLICATE_PARAMETER, expr.Name)),
 	}
 }
 

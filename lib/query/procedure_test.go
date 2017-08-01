@@ -98,8 +98,10 @@ var procedureExecuteStatementTests = []struct {
 	{
 		Input: parser.FunctionDeclaration{
 			Name: parser.Identifier{Literal: "userfunc"},
-			Parameters: []parser.Variable{
-				{Name: "@arg1"},
+			Parameters: []parser.Expression{
+				parser.VariableAssignment{
+					Variable: parser.Variable{Name: "@arg1"},
+				},
 			},
 			Statements: []parser.Statement{
 				parser.Print{

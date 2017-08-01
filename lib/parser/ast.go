@@ -1436,7 +1436,7 @@ func (e RenameColumn) String() string {
 type FunctionDeclaration struct {
 	*BaseExpr
 	Name       Identifier
-	Parameters []Variable
+	Parameters []Expression
 	Statements []Statement
 }
 
@@ -1444,7 +1444,7 @@ type AggregateDeclaration struct {
 	*BaseExpr
 	Name       Identifier
 	Cursor     Identifier
-	Parameters []Variable
+	Parameters []Expression
 	Statements []Statement
 }
 
