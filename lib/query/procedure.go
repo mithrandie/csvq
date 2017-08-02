@@ -240,10 +240,14 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		case parser.ERROR:
 			var message string
 			if trigger.Message != nil {
-				var p parser.Primary
-				if p, err = proc.Filter.Evaluate(trigger.Message); err == nil {
-					if s := parser.PrimaryToString(p); !parser.IsNull(s) {
-						message = s.(parser.String).Value()
+				if _, ok := trigger.Message.(parser.Integer); ok && trigger.Code == nil {
+					trigger.Code = trigger.Message
+				} else {
+					var p parser.Primary
+					if p, err = proc.Filter.Evaluate(trigger.Message); err == nil {
+						if s := parser.PrimaryToString(p); !parser.IsNull(s) {
+							message = s.(parser.String).Value()
+						}
 					}
 				}
 			}

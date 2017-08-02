@@ -586,6 +586,14 @@ var procedureExecuteStatementTests = []struct {
 		Error:     "[L:- C:-] user error",
 		ErrorCode: 200,
 	},
+	{
+		Input: parser.Trigger{
+			Token:   parser.ERROR,
+			Message: parser.NewInteger(200),
+		},
+		Error:     "[L:- C:-] ",
+		ErrorCode: 200,
+	},
 }
 
 func TestProcedure_ExecuteStatement(t *testing.T) {
