@@ -54,7 +54,7 @@ _limit_clause_
 : [Limit Clause](#limit_clause)
 
 _offset_clause_
-: [Offset Clause](#offsetma_clause)
+: [Offset Clause](#offset_clause)
 
 _set_operator_
 : [Set Operators]({{ '/reference/set-operators.html' | relative_url }})
