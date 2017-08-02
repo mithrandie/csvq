@@ -149,8 +149,15 @@ func analyzeRank(view *View, fn parser.AnalyticFunction, calcFn func(int64, int6
 		}
 	}
 
-	var calcNext = func(partition partition, isSameRank bool) partition {
+	var calcNext = func(partition partition, orderValues []parser.Primary) partition {
 		p := partition.(part)
+
+		isSameRank := false
+		if partition.isSameRank(orderValues) {
+			isSameRank = true
+		} else {
+			p.partitionBase.orderValues = orderValues
+		}
 
 		replaceNumber, replaceRank := calcFn(p.number, p.rank, isSameRank)
 
@@ -178,7 +185,7 @@ func analyzeRank(view *View, fn parser.AnalyticFunction, calcFn func(int64, int6
 
 		var idx int
 		if idx = partitions.searchIndex(partitionValues); -1 < idx {
-			partitions.replace(idx, calcNext(partitions[idx], partitions[idx].isSameRank(orderValues)))
+			partitions.replace(idx, calcNext(partitions[idx], orderValues))
 		} else {
 			partitions = append(partitions, newPart(partitionValues, orderValues))
 			idx = len(partitions) - 1

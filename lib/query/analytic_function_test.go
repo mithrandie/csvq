@@ -281,6 +281,14 @@ var rankTests = []analyticFunctionTest{
 					parser.NewInteger(2),
 				}),
 				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(3),
+				}),
+				NewRecordWithoutId([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
@@ -325,6 +333,16 @@ var rankTests = []analyticFunctionTest{
 					parser.NewString("b"),
 					parser.NewInteger(2),
 					parser.NewInteger(3),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(2),
+					parser.NewInteger(3),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(3),
+					parser.NewInteger(5),
 				}),
 				NewRecordWithoutId([]parser.Primary{
 					parser.NewString("a"),
