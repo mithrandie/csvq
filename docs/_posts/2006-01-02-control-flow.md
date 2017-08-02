@@ -113,6 +113,8 @@ TRIGGER ERROR [error_code] [error_message];
 _error_code_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
+  1 is the default.
+
 _error_message_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
