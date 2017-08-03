@@ -1,7 +1,7 @@
 package query
 
 import (
-	"path/filepath"
+	"os"
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -608,29 +608,21 @@ func CreateTable(query parser.CreateTable) (*View, error) {
 	}
 
 	flags := cmd.GetFlags()
-	fpath := query.Table.Literal
-	if !filepath.IsAbs(fpath) {
-		fpath = filepath.Join(flags.Repository, fpath)
+	fileInfo, err := NewFileInfoForCreate(query.Table, flags.Repository, flags.Delimiter)
+	if err != nil {
+		return nil, err
 	}
-	delimiter := flags.Delimiter
-	if delimiter == cmd.UNDEF {
-		if strings.EqualFold(filepath.Ext(fpath), cmd.TSV_EXT) {
-			delimiter = '\t'
-		} else {
-			delimiter = ','
-		}
+	if _, err := os.Stat(fileInfo.Path); err == nil {
+		return nil, NewFileAlreadyExistError(query.Table)
 	}
 
-	header := NewHeaderWithoutId(parser.FormatTableName(query.Table.Literal), fields)
+	fileInfo.Encoding = flags.Encoding
+	fileInfo.LineBreak = flags.LineBreak
+
+	header := NewHeaderWithoutId(parser.FormatTableName(fileInfo.Path), fields)
 	view := &View{
-		Header: header,
-		FileInfo: &FileInfo{
-			Path:      fpath,
-			Delimiter: delimiter,
-			NoHeader:  false,
-			Encoding:  flags.Encoding,
-			LineBreak: flags.LineBreak,
-		},
+		Header:   header,
+		FileInfo: fileInfo,
 	}
 
 	ViewCache.Set(view)

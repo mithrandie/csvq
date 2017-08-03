@@ -2658,7 +2658,7 @@ var createTableTests = []struct {
 	{
 		Name: "Create Table",
 		Query: parser.CreateTable{
-			Table: parser.Identifier{Literal: "create_table.csv"},
+			Table: parser.Identifier{Literal: "create_table_1.csv"},
 			Fields: []parser.Expression{
 				parser.Identifier{Literal: "column1"},
 				parser.Identifier{Literal: "column2"},
@@ -2666,31 +2666,42 @@ var createTableTests = []struct {
 		},
 		Result: &View{
 			FileInfo: &FileInfo{
-				Path:      GetTestFilePath("create_table.csv"),
+				Path:      GetTestFilePath("create_table_1.csv"),
 				Delimiter: ',',
 				NoHeader:  false,
 				Encoding:  cmd.UTF8,
 				LineBreak: cmd.LF,
 			},
-			Header: NewHeaderWithoutId("create_table", []string{"column1", "column2"}),
+			Header: NewHeaderWithoutId("create_table_1", []string{"column1", "column2"}),
 		},
 		ViewCache: ViewMap{
-			strings.ToUpper(GetTestFilePath("create_table.csv")): &View{
+			strings.ToUpper(GetTestFilePath("create_table_1.csv")): &View{
 				FileInfo: &FileInfo{
-					Path:      GetTestFilePath("create_table.csv"),
+					Path:      GetTestFilePath("create_table_1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
 					Encoding:  cmd.UTF8,
 					LineBreak: cmd.LF,
 				},
-				Header: NewHeaderWithoutId("create_table", []string{"column1", "column2"}),
+				Header: NewHeaderWithoutId("create_table_1", []string{"column1", "column2"}),
 			},
 		},
 	},
 	{
+		Name: "Create Table File Already Exist Error",
+		Query: parser.CreateTable{
+			Table: parser.Identifier{Literal: "table1.csv"},
+			Fields: []parser.Expression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "column2"},
+			},
+		},
+		Error: "[L:- C:-] file table1.csv already exists",
+	},
+	{
 		Name: "Create Table Field Duplicate Error",
 		Query: parser.CreateTable{
-			Table: parser.Identifier{Literal: "create_table.csv"},
+			Table: parser.Identifier{Literal: "create_table_1.csv"},
 			Fields: []parser.Expression{
 				parser.Identifier{Literal: "column1"},
 				parser.Identifier{Literal: "column1"},

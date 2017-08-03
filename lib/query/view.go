@@ -111,7 +111,7 @@ func loadView(table parser.Table, filter Filter, useInternalId bool) (*View, err
 			file := os.Stdin
 			defer file.Close()
 
-			loadView, err := loadViewFromFile(file, fileInfo, table.Object.String())
+			loadView, err := loadViewFromFile(file, fileInfo)
 			if err != nil {
 				return nil, err
 			}
@@ -152,8 +152,7 @@ func loadView(table parser.Table, filter Filter, useInternalId bool) (*View, err
 
 			if filter.TempViewsList.Exists(tableIdentifier.Literal) {
 				fileInfo = &FileInfo{
-					Path:      tableIdentifier.Literal,
-					Temporary: true,
+					Path: tableIdentifier.Literal,
 				}
 
 				commonTableName = parser.FormatTableName(fileInfo.Path)
@@ -167,25 +166,31 @@ func loadView(table parser.Table, filter Filter, useInternalId bool) (*View, err
 			} else {
 				flags := cmd.GetFlags()
 
-				fileInfo, err = NewFileInfo(tableIdentifier, flags.Repository, flags.Delimiter)
+				fileInfo, err = NewFileInfoForCreate(tableIdentifier, flags.Repository, flags.Delimiter)
 				if err != nil {
 					return nil, err
 				}
 
-				commonTableName = parser.FormatTableName(fileInfo.Path)
-
 				if !ViewCache.Exists(fileInfo.Path) {
-					file, err := os.Open(fileInfo.Path)
+					fileInfo, err = NewFileInfo(tableIdentifier, flags.Repository, flags.Delimiter)
 					if err != nil {
-						return nil, NewReadFileError(tableIdentifier, err.Error())
+						return nil, err
 					}
-					defer file.Close()
-					loadView, err := loadViewFromFile(file, fileInfo, commonTableName)
-					if err != nil {
-						return nil, NewCsvParsingError(tableIdentifier, fileInfo.Path, err.Error())
+
+					if !ViewCache.Exists(fileInfo.Path) {
+						file, err := os.Open(fileInfo.Path)
+						if err != nil {
+							return nil, NewReadFileError(tableIdentifier, err.Error())
+						}
+						defer file.Close()
+						loadView, err := loadViewFromFile(file, fileInfo)
+						if err != nil {
+							return nil, NewCsvParsingError(tableIdentifier, fileInfo.Path, err.Error())
+						}
+						ViewCache.Set(loadView)
 					}
-					ViewCache.Set(loadView)
 				}
+				commonTableName = parser.FormatTableName(fileInfo.Path)
 
 				pathIdent := parser.Identifier{Literal: fileInfo.Path}
 				if useInternalId {
@@ -253,7 +258,7 @@ func loadView(table parser.Table, filter Filter, useInternalId bool) (*View, err
 	return view, err
 }
 
-func loadViewFromFile(file *os.File, fileInfo *FileInfo, reference string) (*View, error) {
+func loadViewFromFile(file *os.File, fileInfo *FileInfo) (*View, error) {
 	flags := cmd.GetFlags()
 
 	r := cmd.GetReader(file, flags.Encoding)
@@ -297,7 +302,7 @@ func loadViewFromFile(file *os.File, fileInfo *FileInfo, reference string) (*Vie
 		fileInfo.LineBreak = flags.LineBreak
 	}
 
-	view.Header = NewHeaderWithoutId(reference, header)
+	view.Header = NewHeaderWithoutId(parser.FormatTableName(fileInfo.Path), header)
 	view.FileInfo = fileInfo
 	return view, nil
 }
