@@ -380,7 +380,7 @@ func Insert(query parser.InsertQuery, parentFilter Filter) (*View, error) {
 	}
 
 	view.RestoreHeaderReferences()
-	view.ParentFilter = Filter{}
+	view.Filter = Filter{}
 
 	if view.FileInfo.Temporary {
 		filter.TempViewsList.Replace(view)
@@ -428,8 +428,8 @@ func Update(query parser.UpdateQuery, parentFilter Filter) ([]*View, error) {
 		}
 		viewKey := strings.ToUpper(table.Name().Literal)
 
-		if parentFilter.TempViewsList.Exists(fpath) {
-			viewsToUpdate[viewKey], _ = parentFilter.TempViewsList.Get(parser.Identifier{Literal: fpath})
+		if filter.TempViewsList.Exists(fpath) {
+			viewsToUpdate[viewKey], _ = filter.TempViewsList.Get(parser.Identifier{Literal: fpath})
 		} else {
 			viewsToUpdate[viewKey], _ = ViewCache.Get(parser.Identifier{Literal: fpath})
 		}
@@ -544,8 +544,8 @@ func Delete(query parser.DeleteQuery, parentFilter Filter) ([]*View, error) {
 		}
 
 		viewKey := strings.ToUpper(table.Name().Literal)
-		if parentFilter.TempViewsList.Exists(fpath) {
-			viewsToDelete[viewKey], _ = parentFilter.TempViewsList.Get(parser.Identifier{Literal: fpath})
+		if filter.TempViewsList.Exists(fpath) {
+			viewsToDelete[viewKey], _ = filter.TempViewsList.Get(parser.Identifier{Literal: fpath})
 		} else {
 			viewsToDelete[viewKey], _ = ViewCache.Get(parser.Identifier{Literal: fpath})
 		}
@@ -740,7 +740,7 @@ func AddColumns(query parser.AddColumns, parentFilter Filter) (*View, error) {
 	view.Header = header
 	view.Records = records
 	view.OperatedFields = len(fields)
-	view.ParentFilter = Filter{}
+	view.Filter = Filter{}
 
 	if view.FileInfo.Temporary {
 		filter.TempViewsList.Replace(view)
@@ -810,7 +810,7 @@ func RenameColumn(query parser.RenameColumn, parentFilter Filter) (*View, error)
 
 	view.Header[idx].Column = query.New.Literal
 	view.OperatedFields = 1
-	view.ParentFilter = Filter{}
+	view.Filter = Filter{}
 
 	if view.FileInfo.Temporary {
 		filter.TempViewsList.Replace(view)

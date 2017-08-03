@@ -21,7 +21,7 @@ type View struct {
 
 	selectFields []int
 	isGrouped    bool
-	ParentFilter Filter
+	Filter       Filter
 
 	filteredIndices []int
 
@@ -43,7 +43,7 @@ func NewView() *View {
 	}
 }
 
-func (view *View) Load(clause parser.FromClause, parentFilter Filter) error {
+func (view *View) Load(clause parser.FromClause, filter Filter) error {
 	if clause.Tables == nil {
 		var obj parser.Expression
 		if IsReadableFromStdin() {
@@ -56,7 +56,7 @@ func (view *View) Load(clause parser.FromClause, parentFilter Filter) error {
 
 	views := make([]*View, len(clause.Tables))
 	for i, v := range clause.Tables {
-		loaded, err := loadView(v.(parser.Table), parentFilter, view.UseInternalId)
+		loaded, err := loadView(v.(parser.Table), filter, view.UseInternalId)
 		if err != nil {
 			return err
 		}
@@ -71,21 +71,21 @@ func (view *View) Load(clause parser.FromClause, parentFilter Filter) error {
 		CrossJoin(view, views[i])
 	}
 
-	view.ParentFilter = parentFilter
+	view.Filter = filter
 	return nil
 }
 
-func (view *View) LoadFromTableIdentifier(table parser.Expression, parentFilter Filter) error {
+func (view *View) LoadFromTableIdentifier(table parser.Expression, filter Filter) error {
 	fromClause := parser.FromClause{
 		Tables: []parser.Expression{
 			parser.Table{Object: table},
 		},
 	}
 
-	return view.Load(fromClause, parentFilter)
+	return view.Load(fromClause, filter)
 }
 
-func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*View, error) {
+func loadView(table parser.Table, filter Filter, useInternalId bool) (*View, error) {
 	var view *View
 	var err error
 
@@ -103,7 +103,7 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 			Temporary: true,
 		}
 
-		if !parentFilter.TempViewsList[len(parentFilter.TempViewsList)-1].Exists(fileInfo.Path) {
+		if !filter.TempViewsList[len(filter.TempViewsList)-1].Exists(fileInfo.Path) {
 			if !IsReadableFromStdin() {
 				return nil, NewStdinEmptyError(table.Object.(parser.Stdin))
 			}
@@ -116,30 +116,30 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 				return nil, err
 			}
 			loadView.FileInfo.InitialRecords = loadView.Records.Copy()
-			parentFilter.TempViewsList[len(parentFilter.TempViewsList)-1].Set(loadView)
+			filter.TempViewsList[len(filter.TempViewsList)-1].Set(loadView)
 		}
-		if err = parentFilter.AliasesList.Add(table.Name(), fileInfo.Path); err != nil {
+		if err = filter.AliasesList.Add(table.Name(), fileInfo.Path); err != nil {
 			return nil, err
 		}
 
 		pathIdent := parser.Identifier{Literal: table.Object.String()}
 		if useInternalId {
-			view, _ = parentFilter.TempViewsList[len(parentFilter.TempViewsList)-1].GetWithInternalId(pathIdent)
+			view, _ = filter.TempViewsList[len(filter.TempViewsList)-1].GetWithInternalId(pathIdent)
 		} else {
-			view, _ = parentFilter.TempViewsList[len(parentFilter.TempViewsList)-1].Get(pathIdent)
+			view, _ = filter.TempViewsList[len(filter.TempViewsList)-1].Get(pathIdent)
 		}
 		if !strings.EqualFold(table.Object.String(), table.Name().Literal) {
 			view.Header.Update(table.Name().Literal, nil)
 		}
 	case parser.Identifier:
 		tableIdentifier := table.Object.(parser.Identifier)
-		if parentFilter.RecursiveTable != nil && strings.EqualFold(tableIdentifier.Literal, parentFilter.RecursiveTable.Name.Literal) && parentFilter.RecursiveTmpView != nil {
-			view = parentFilter.RecursiveTmpView
-			if !strings.EqualFold(parentFilter.RecursiveTable.Name.Literal, table.Name().Literal) {
+		if filter.RecursiveTable != nil && strings.EqualFold(tableIdentifier.Literal, filter.RecursiveTable.Name.Literal) && filter.RecursiveTmpView != nil {
+			view = filter.RecursiveTmpView
+			if !strings.EqualFold(filter.RecursiveTable.Name.Literal, table.Name().Literal) {
 				view.Header.Update(table.Name().Literal, nil)
 			}
-		} else if ct, err := parentFilter.InlineTablesList.Get(tableIdentifier); err == nil {
-			if err = parentFilter.AliasesList.Add(table.Name(), ""); err != nil {
+		} else if ct, err := filter.InlineTablesList.Get(tableIdentifier); err == nil {
+			if err = filter.AliasesList.Add(table.Name(), ""); err != nil {
 				return nil, err
 			}
 			view = ct
@@ -150,7 +150,7 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 			var fileInfo *FileInfo
 			var commonTableName string
 
-			if parentFilter.TempViewsList.Exists(tableIdentifier.Literal) {
+			if filter.TempViewsList.Exists(tableIdentifier.Literal) {
 				fileInfo = &FileInfo{
 					Path:      tableIdentifier.Literal,
 					Temporary: true,
@@ -160,9 +160,9 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 
 				pathIdent := parser.Identifier{Literal: fileInfo.Path}
 				if useInternalId {
-					view, _ = parentFilter.TempViewsList.GetWithInternalId(pathIdent)
+					view, _ = filter.TempViewsList.GetWithInternalId(pathIdent)
 				} else {
-					view, _ = parentFilter.TempViewsList.Get(pathIdent)
+					view, _ = filter.TempViewsList.Get(pathIdent)
 				}
 			} else {
 				flags := cmd.GetFlags()
@@ -195,7 +195,7 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 				}
 			}
 
-			if err = parentFilter.AliasesList.Add(table.Name(), fileInfo.Path); err != nil {
+			if err = filter.AliasesList.Add(table.Name(), fileInfo.Path); err != nil {
 				return nil, err
 			}
 
@@ -205,11 +205,11 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 		}
 	case parser.Join:
 		join := table.Object.(parser.Join)
-		view, err = loadView(join.Table, parentFilter, useInternalId)
+		view, err = loadView(join.Table, filter, useInternalId)
 		if err != nil {
 			return nil, err
 		}
-		view2, err := loadView(join.JoinTable, parentFilter, useInternalId)
+		view2, err := loadView(join.JoinTable, filter, useInternalId)
 		if err != nil {
 			return nil, err
 		}
@@ -229,19 +229,19 @@ func loadView(table parser.Table, parentFilter Filter, useInternalId bool) (*Vie
 		case parser.CROSS:
 			CrossJoin(view, view2)
 		case parser.INNER:
-			if err = InnerJoin(view, view2, condition, parentFilter); err != nil {
+			if err = InnerJoin(view, view2, condition, filter); err != nil {
 				return nil, err
 			}
 		case parser.OUTER:
-			if err = OuterJoin(view, view2, condition, join.Direction.Token, parentFilter); err != nil {
+			if err = OuterJoin(view, view2, condition, join.Direction.Token, filter); err != nil {
 				return nil, err
 			}
 		}
 	case parser.Subquery:
 		subquery := table.Object.(parser.Subquery)
-		view, err = Select(subquery.Query, parentFilter)
+		view, err = Select(subquery.Query, filter)
 		if table.Alias != nil {
-			if err = parentFilter.AliasesList.Add(table.Alias.(parser.Identifier), ""); err != nil {
+			if err = filter.AliasesList.Add(table.Alias.(parser.Identifier), ""); err != nil {
 				return nil, err
 			}
 		}
@@ -344,7 +344,7 @@ func (view *View) Where(clause parser.WhereClause) error {
 func (view *View) filter(condition parser.Expression) ([]int, error) {
 	indices := []int{}
 	for i := range view.Records {
-		filter := NewFilterForRecord(view, i, view.ParentFilter)
+		filter := NewFilterForRecord(view, i, view.Filter)
 		primary, err := filter.Evaluate(condition)
 		if err != nil {
 			return nil, err
@@ -391,7 +391,7 @@ func (view *View) group(items []parser.Expression) error {
 	var groups []group
 
 	for i := 0; i < view.RecordLen(); i++ {
-		filter := NewFilterForRecord(view, i, view.ParentFilter)
+		filter := NewFilterForRecord(view, i, view.Filter)
 
 		keys := make([]parser.Primary, len(items))
 		for j, item := range items {
@@ -651,7 +651,7 @@ func (view *View) evalColumn(obj parser.Expression, column string, alias string)
 					return
 				}
 			} else {
-				filter := NewFilterForSequentialEvaluation(view, view.ParentFilter)
+				filter := NewFilterForSequentialEvaluation(view, view.Filter)
 				for i := range view.Records {
 					var primary parser.Primary
 					filter.Records[0].RecordIndex = i
@@ -684,7 +684,7 @@ func (view *View) evalColumn(obj parser.Expression, column string, alias string)
 func (view *View) evalAnalyticFunction(expr parser.AnalyticFunction) error {
 	name := strings.ToUpper(expr.Name)
 	if _, ok := AnalyticFunctions[name]; !ok {
-		if udfn, err := view.ParentFilter.FunctionsList.Get(expr, expr.Name); err != nil || !udfn.IsAggregate {
+		if udfn, err := view.Filter.FunctionsList.Get(expr, expr.Name); err != nil || !udfn.IsAggregate {
 			return NewFunctionNotExistError(expr, expr.Name)
 		}
 	}
@@ -703,7 +703,7 @@ func (view *View) evalAnalyticFunction(expr parser.AnalyticFunction) error {
 }
 
 func (view *View) Offset(clause parser.OffsetClause) error {
-	value, err := view.ParentFilter.Evaluate(clause.Value)
+	value, err := view.Filter.Evaluate(clause.Value)
 	if err != nil {
 		return err
 	}
@@ -728,7 +728,7 @@ func (view *View) Offset(clause parser.OffsetClause) error {
 }
 
 func (view *View) Limit(clause parser.LimitClause) error {
-	value, err := view.ParentFilter.Evaluate(clause.Value)
+	value, err := view.Filter.Evaluate(clause.Value)
 	if err != nil {
 		return err
 	}
@@ -885,7 +885,7 @@ func (view *View) Fix() {
 	view.Records = records
 	view.selectFields = []int(nil)
 	view.isGrouped = false
-	view.ParentFilter = Filter{}
+	view.Filter = Filter{}
 	view.sortIndices = []int(nil)
 	view.sortDirections = []int(nil)
 	view.sortNullPositions = []int(nil)

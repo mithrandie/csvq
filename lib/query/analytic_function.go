@@ -108,7 +108,7 @@ func RowNumber(view *View, fn parser.AnalyticFunction) error {
 
 	partitions := partitionList{}
 
-	filter := NewFilterForSequentialEvaluation(view, view.ParentFilter)
+	filter := NewFilterForSequentialEvaluation(view, view.Filter)
 	for i := range view.Records {
 		filter.Records[0].RecordIndex = i
 		partitionValues, err := filter.evalValues(fn.AnalyticClause.PartitionValues())
@@ -170,7 +170,7 @@ func analyzeRank(view *View, fn parser.AnalyticFunction, calcFn func(int64, int6
 
 	partitions := partitionList{}
 
-	filter := NewFilterForSequentialEvaluation(view, view.ParentFilter)
+	filter := NewFilterForSequentialEvaluation(view, view.Filter)
 	for i := range view.Records {
 		filter.Records[0].RecordIndex = i
 		partitionValues, err := filter.evalValues(fn.AnalyticClause.PartitionValues())
@@ -253,7 +253,7 @@ func analyzeUniqueValue(view *View, fn parser.AnalyticFunction, compareFn func(p
 
 	partitions := partitionList{}
 
-	filter := NewFilterForSequentialEvaluation(view, view.ParentFilter)
+	filter := NewFilterForSequentialEvaluation(view, view.Filter)
 	for i := range view.Records {
 		filter.Records[0].RecordIndex = i
 		partitionValues, err := filter.evalValues(fn.AnalyticClause.PartitionValues())
@@ -316,7 +316,7 @@ func AnalyzeAggregateValue(view *View, fn parser.AnalyticFunction) error {
 	if f, ok := AggregateFunctions[uname]; ok {
 		aggfn = f
 	} else {
-		if udfn, err = view.ParentFilter.FunctionsList.Get(fn, uname); err != nil || !udfn.IsAggregate {
+		if udfn, err = view.Filter.FunctionsList.Get(fn, uname); err != nil || !udfn.IsAggregate {
 			return NewFunctionNotExistError(fn, fn.Name)
 		}
 		useUserDefined = true
@@ -363,7 +363,7 @@ func AnalyzeAggregateValue(view *View, fn parser.AnalyticFunction) error {
 
 	partitions := partitionList{}
 
-	filter := NewFilterForSequentialEvaluation(view, view.ParentFilter)
+	filter := NewFilterForSequentialEvaluation(view, view.Filter)
 	for i := range view.Records {
 		filter.Records[0].RecordIndex = i
 		partitionValues, err := filter.evalValues(fn.AnalyticClause.PartitionValues())
@@ -406,7 +406,7 @@ func AnalyzeAggregateValue(view *View, fn parser.AnalyticFunction) error {
 					}
 				}
 
-				value, err := udfn.ExecuteAggregate(list, args, view.ParentFilter)
+				value, err := udfn.ExecuteAggregate(list, args, view.Filter)
 				if err != nil {
 					return err
 				}
@@ -455,7 +455,7 @@ func AnalyzeListAgg(view *View, fn parser.AnalyticFunction) error {
 
 	partitions := partitionList{}
 
-	filter := NewFilterForSequentialEvaluation(view, view.ParentFilter)
+	filter := NewFilterForSequentialEvaluation(view, view.Filter)
 	for i := range view.Records {
 		filter.Records[0].RecordIndex = i
 		partitionValues, err := filter.evalValues(fn.AnalyticClause.PartitionValues())
@@ -477,7 +477,7 @@ func AnalyzeListAgg(view *View, fn parser.AnalyticFunction) error {
 
 	separator := ""
 	if len(fn.Args) == 2 {
-		p, err := view.ParentFilter.Evaluate(fn.Args[1])
+		p, err := view.Filter.Evaluate(fn.Args[1])
 		if err != nil {
 			return NewFunctionInvalidArgumentError(fn, fn.Name, "the second argument must be a string")
 		}
@@ -536,7 +536,7 @@ func AnalyzeLag(view *View, fn parser.AnalyticFunction) error {
 
 	offset := 1
 	if 1 < len(fn.Args) {
-		p, err := view.ParentFilter.Evaluate(fn.Args[1])
+		p, err := view.Filter.Evaluate(fn.Args[1])
 		if err != nil {
 			return NewFunctionInvalidArgumentError(fn, fn.Name, "the second argument must be an integer")
 		}
@@ -548,7 +548,7 @@ func AnalyzeLag(view *View, fn parser.AnalyticFunction) error {
 	}
 	var defaultValue parser.Primary = parser.NewNull()
 	if 2 < len(fn.Args) {
-		p, err := view.ParentFilter.Evaluate(fn.Args[2])
+		p, err := view.Filter.Evaluate(fn.Args[2])
 		if err != nil {
 			return NewFunctionInvalidArgumentError(fn, fn.Name, "the third argument must be a primitive value")
 		}
@@ -560,7 +560,7 @@ func AnalyzeLag(view *View, fn parser.AnalyticFunction) error {
 
 	partitions := partitionList{}
 
-	filter := NewFilterForSequentialEvaluation(view, view.ParentFilter)
+	filter := NewFilterForSequentialEvaluation(view, view.Filter)
 
 	var i int
 	switch strings.ToUpper(fn.Name) {

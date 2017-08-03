@@ -1245,7 +1245,7 @@ var analyzeAggregateValueTests = []analyticFunctionTest{
 					parser.NewInteger(1),
 				}),
 			},
-			ParentFilter: Filter{
+			Filter: Filter{
 				FunctionsList: UserDefinedFunctionsList{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
@@ -1356,7 +1356,7 @@ var analyzeAggregateValueTests = []analyticFunctionTest{
 					parser.NewInteger(1),
 				}),
 			},
-			ParentFilter: Filter{
+			Filter: Filter{
 				FunctionsList: UserDefinedFunctionsList{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
@@ -1439,7 +1439,7 @@ var analyzeAggregateValueTests = []analyticFunctionTest{
 					parser.NewInteger(2),
 				}),
 			},
-			ParentFilter: Filter{
+			Filter: Filter{
 				FunctionsList: UserDefinedFunctionsList{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
@@ -1488,7 +1488,7 @@ var analyzeAggregateValueTests = []analyticFunctionTest{
 					parser.NewInteger(2),
 				}),
 			},
-			ParentFilter: Filter{
+			Filter: Filter{
 				FunctionsList: UserDefinedFunctionsList{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
@@ -1592,7 +1592,7 @@ var analyzeAggregateValueTests = []analyticFunctionTest{
 					parser.NewInteger(1),
 				}),
 			},
-			ParentFilter: Filter{
+			Filter: Filter{
 				FunctionsList: UserDefinedFunctionsList{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
