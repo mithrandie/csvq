@@ -1,7 +1,7 @@
 package query
 
 import (
-	"path/filepath"
+	"os"
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -380,7 +380,7 @@ func Insert(query parser.InsertQuery, parentFilter Filter) (*View, error) {
 	}
 
 	view.RestoreHeaderReferences()
-	view.ParentFilter = Filter{}
+	view.Filter = Filter{}
 
 	if view.FileInfo.Temporary {
 		filter.TempViewsList.Replace(view)
@@ -428,8 +428,8 @@ func Update(query parser.UpdateQuery, parentFilter Filter) ([]*View, error) {
 		}
 		viewKey := strings.ToUpper(table.Name().Literal)
 
-		if parentFilter.TempViewsList.Exists(fpath) {
-			viewsToUpdate[viewKey], _ = parentFilter.TempViewsList.Get(parser.Identifier{Literal: fpath})
+		if filter.TempViewsList.Exists(fpath) {
+			viewsToUpdate[viewKey], _ = filter.TempViewsList.Get(parser.Identifier{Literal: fpath})
 		} else {
 			viewsToUpdate[viewKey], _ = ViewCache.Get(parser.Identifier{Literal: fpath})
 		}
@@ -544,8 +544,8 @@ func Delete(query parser.DeleteQuery, parentFilter Filter) ([]*View, error) {
 		}
 
 		viewKey := strings.ToUpper(table.Name().Literal)
-		if parentFilter.TempViewsList.Exists(fpath) {
-			viewsToDelete[viewKey], _ = parentFilter.TempViewsList.Get(parser.Identifier{Literal: fpath})
+		if filter.TempViewsList.Exists(fpath) {
+			viewsToDelete[viewKey], _ = filter.TempViewsList.Get(parser.Identifier{Literal: fpath})
 		} else {
 			viewsToDelete[viewKey], _ = ViewCache.Get(parser.Identifier{Literal: fpath})
 		}
@@ -608,29 +608,21 @@ func CreateTable(query parser.CreateTable) (*View, error) {
 	}
 
 	flags := cmd.GetFlags()
-	fpath := query.Table.Literal
-	if !filepath.IsAbs(fpath) {
-		fpath = filepath.Join(flags.Repository, fpath)
+	fileInfo, err := NewFileInfoForCreate(query.Table, flags.Repository, flags.Delimiter)
+	if err != nil {
+		return nil, err
 	}
-	delimiter := flags.Delimiter
-	if delimiter == cmd.UNDEF {
-		if strings.EqualFold(filepath.Ext(fpath), cmd.TSV_EXT) {
-			delimiter = '\t'
-		} else {
-			delimiter = ','
-		}
+	if _, err := os.Stat(fileInfo.Path); err == nil {
+		return nil, NewFileAlreadyExistError(query.Table)
 	}
 
-	header := NewHeaderWithoutId(parser.FormatTableName(query.Table.Literal), fields)
+	fileInfo.Encoding = flags.Encoding
+	fileInfo.LineBreak = flags.LineBreak
+
+	header := NewHeaderWithoutId(parser.FormatTableName(fileInfo.Path), fields)
 	view := &View{
-		Header: header,
-		FileInfo: &FileInfo{
-			Path:      fpath,
-			Delimiter: delimiter,
-			NoHeader:  false,
-			Encoding:  flags.Encoding,
-			LineBreak: flags.LineBreak,
-		},
+		Header:   header,
+		FileInfo: fileInfo,
 	}
 
 	ViewCache.Set(view)
@@ -740,7 +732,7 @@ func AddColumns(query parser.AddColumns, parentFilter Filter) (*View, error) {
 	view.Header = header
 	view.Records = records
 	view.OperatedFields = len(fields)
-	view.ParentFilter = Filter{}
+	view.Filter = Filter{}
 
 	if view.FileInfo.Temporary {
 		filter.TempViewsList.Replace(view)
@@ -810,7 +802,7 @@ func RenameColumn(query parser.RenameColumn, parentFilter Filter) (*View, error)
 
 	view.Header[idx].Column = query.New.Literal
 	view.OperatedFields = 1
-	view.ParentFilter = Filter{}
+	view.Filter = Filter{}
 
 	if view.FileInfo.Temporary {
 		filter.TempViewsList.Replace(view)

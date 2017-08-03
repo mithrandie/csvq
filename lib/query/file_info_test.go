@@ -83,3 +83,63 @@ func TestNewFileInfo(t *testing.T) {
 		}
 	}
 }
+
+var fileInfoForCreateTests = []struct {
+	Name       string
+	FilePath   parser.Identifier
+	Repository string
+	Delimiter  rune
+	Result     *FileInfo
+	Error      string
+}{
+	{
+		Name:      "CSV",
+		FilePath:  parser.Identifier{Literal: "table1.csv"},
+		Delimiter: cmd.UNDEF,
+		Result: &FileInfo{
+			Path:      "table1.csv",
+			Delimiter: ',',
+		},
+	},
+	{
+		Name:      "TSV",
+		FilePath:  parser.Identifier{Literal: "table1.tsv"},
+		Delimiter: cmd.UNDEF,
+		Result: &FileInfo{
+			Path:      "table1.tsv",
+			Delimiter: '\t',
+		},
+	},
+}
+
+func TestNewFileInfoForCreate(t *testing.T) {
+	for _, v := range fileInfoForCreateTests {
+		repo := v.Repository
+		if 0 < len(repo) {
+			dir, _ := os.Getwd()
+			repo = filepath.Join(dir, repo)
+		}
+
+		fileInfo, err := NewFileInfoForCreate(v.FilePath, repo, v.Delimiter)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+
+		abs, _ := filepath.Abs(filepath.Join(repo, v.Result.Path))
+		if fileInfo.Path != abs {
+			t.Errorf("%s: filepath = %s, want %s", v.Name, fileInfo.Path, abs)
+		}
+		if fileInfo.Delimiter != v.Result.Delimiter {
+			t.Errorf("%s: delimiter = %q, want %q", v.Name, fileInfo.Delimiter, v.Result.Delimiter)
+		}
+	}
+}

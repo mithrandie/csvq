@@ -61,3 +61,27 @@ func NewFileInfo(filename parser.Identifier, repository string, delimiter rune) 
 		Delimiter: delimiter,
 	}, nil
 }
+
+func NewFileInfoForCreate(finename parser.Identifier, repository string, delimiter rune) (*FileInfo, error) {
+	fpath := finename.Literal
+	if !filepath.IsAbs(fpath) {
+		fpath = filepath.Join(repository, fpath)
+	}
+	fpath, err := filepath.Abs(fpath)
+	if err != nil {
+		return nil, NewWriteFileError(finename, err.Error())
+	}
+
+	if delimiter == cmd.UNDEF {
+		if strings.EqualFold(filepath.Ext(fpath), cmd.TSV_EXT) {
+			delimiter = '\t'
+		} else {
+			delimiter = ','
+		}
+	}
+
+	return &FileInfo{
+		Path:      fpath,
+		Delimiter: delimiter,
+	}, nil
+}

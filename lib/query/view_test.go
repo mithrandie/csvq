@@ -36,7 +36,7 @@ var viewLoadTests = []struct {
 					NewCell(parser.NewNull()),
 				},
 			},
-			ParentFilter: Filter{
+			Filter: Filter{
 				VariablesList:    []Variables{{}},
 				TempViewsList:    []ViewMap{{}},
 				CursorsList:      []CursorMap{{}},
@@ -55,7 +55,7 @@ var viewLoadTests = []struct {
 					NewCell(parser.NewNull()),
 				},
 			},
-			ParentFilter: Filter{
+			Filter: Filter{
 				VariablesList:    []Variables{{}},
 				TempViewsList:    []ViewMap{{}},
 				CursorsList:      []CursorMap{{}},
@@ -92,7 +92,7 @@ var viewLoadTests = []struct {
 				Path:      "table1.csv",
 				Delimiter: ',',
 			},
-			ParentFilter: Filter{
+			Filter: Filter{
 				VariablesList:    []Variables{{}},
 				TempViewsList:    []ViewMap{{}},
 				CursorsList:      []CursorMap{{}},
@@ -125,7 +125,7 @@ var viewLoadTests = []struct {
 				Path:      "stdin",
 				Delimiter: ',',
 			},
-			ParentFilter: Filter{
+			Filter: Filter{
 				VariablesList: []Variables{{}},
 				TempViewsList: []ViewMap{
 					{
@@ -158,7 +158,7 @@ var viewLoadTests = []struct {
 				Path:      "stdin",
 				Delimiter: ',',
 			},
-			ParentFilter: Filter{
+			Filter: Filter{
 				VariablesList: []Variables{{}},
 				TempViewsList: []ViewMap{
 					{
@@ -274,7 +274,7 @@ var viewLoadTests = []struct {
 					parser.NewInteger(1),
 				}),
 			},
-			ParentFilter: Filter{
+			Filter: Filter{
 				VariablesList: VariablesList{{}},
 				TempViewsList: TemporaryViewMapList{{}},
 				CursorsList:   CursorMapList{{}},
@@ -374,7 +374,7 @@ var viewLoadTests = []struct {
 					parser.NewString("str"),
 				}),
 			},
-			ParentFilter: Filter{
+			Filter: Filter{
 				VariablesList:    []Variables{{}},
 				TempViewsList:    []ViewMap{{}},
 				CursorsList:      []CursorMap{{}},
@@ -409,7 +409,7 @@ var viewLoadTests = []struct {
 					parser.NewString("str2"),
 				}),
 			},
-			ParentFilter: Filter{
+			Filter: Filter{
 				VariablesList:    []Variables{{}},
 				TempViewsList:    []ViewMap{{}},
 				CursorsList:      []CursorMap{{}},
@@ -497,7 +497,7 @@ var viewLoadTests = []struct {
 					parser.NewString("str44"),
 				}),
 			},
-			ParentFilter: Filter{
+			Filter: Filter{
 				VariablesList:    []Variables{{}},
 				TempViewsList:    []ViewMap{{}},
 				CursorsList:      []CursorMap{{}},
@@ -591,7 +591,7 @@ var viewLoadTests = []struct {
 					parser.NewString("str44"),
 				}),
 			},
-			ParentFilter: Filter{
+			Filter: Filter{
 				VariablesList:    []Variables{{}},
 				TempViewsList:    []ViewMap{{}},
 				CursorsList:      []CursorMap{{}},
@@ -649,7 +649,7 @@ var viewLoadTests = []struct {
 					parser.NewString("str33"),
 				}),
 			},
-			ParentFilter: Filter{
+			Filter: Filter{
 				VariablesList:    []Variables{{}},
 				TempViewsList:    []ViewMap{{}},
 				CursorsList:      []CursorMap{{}},
@@ -714,7 +714,7 @@ var viewLoadTests = []struct {
 					parser.NewString("str33"),
 				}),
 			},
-			ParentFilter: Filter{
+			Filter: Filter{
 				VariablesList:    []Variables{{}},
 				TempViewsList:    []ViewMap{{}},
 				CursorsList:      []CursorMap{{}},
@@ -809,7 +809,7 @@ var viewLoadTests = []struct {
 					parser.NewString("str3"),
 				}),
 			},
-			ParentFilter: Filter{
+			Filter: Filter{
 				VariablesList:    []Variables{{}},
 				TempViewsList:    []ViewMap{{}},
 				CursorsList:      []CursorMap{{}},
@@ -923,25 +923,25 @@ func TestView_Load(t *testing.T) {
 		view.FileInfo = nil
 		v.Result.FileInfo = nil
 
-		if !reflect.DeepEqual(view.ParentFilter.AliasesList, v.Result.ParentFilter.AliasesList) {
-			t.Errorf("%s: alias list = %q, want %q", v.Name, view.ParentFilter.AliasesList, v.Result.ParentFilter.AliasesList)
+		if !reflect.DeepEqual(view.Filter.AliasesList, v.Result.Filter.AliasesList) {
+			t.Errorf("%s: alias list = %q, want %q", v.Name, view.Filter.AliasesList, v.Result.Filter.AliasesList)
 		}
-		for i, tviews := range v.Result.ParentFilter.TempViewsList {
+		for i, tviews := range v.Result.Filter.TempViewsList {
 			resultKeys := []string{}
 			for key := range tviews {
 				resultKeys = append(resultKeys, key)
 			}
 			viewKeys := []string{}
-			for key := range view.ParentFilter.TempViewsList[i] {
+			for key := range view.Filter.TempViewsList[i] {
 				viewKeys = append(viewKeys, key)
 			}
 			if !reflect.DeepEqual(resultKeys, viewKeys) {
-				t.Errorf("%s: temp view list = %q, want %q", v.Name, view.ParentFilter.TempViewsList, v.Result.ParentFilter.TempViewsList)
+				t.Errorf("%s: temp view list = %q, want %q", v.Name, view.Filter.TempViewsList, v.Result.Filter.TempViewsList)
 			}
 		}
 
-		view.ParentFilter = NewEmptyFilter()
-		v.Result.ParentFilter = NewEmptyFilter()
+		view.Filter = NewEmptyFilter()
+		v.Result.Filter = NewEmptyFilter()
 
 		if !reflect.DeepEqual(view, v.Result) {
 			t.Errorf("%s: result = %s, want %s", v.Name, view, v.Result)
@@ -1931,7 +1931,7 @@ var viewSelectTests = []struct {
 					parser.NewInteger(4),
 				}),
 			},
-			ParentFilter: Filter{
+			Filter: Filter{
 				FunctionsList: UserDefinedFunctionsList{
 					UserDefinedFunctionMap{
 						"USERAGGFUNC": &UserDefinedFunction{
