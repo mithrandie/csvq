@@ -12,7 +12,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var version = "v0.5.3"
+var version = "v0.5.4"
 
 func main() {
 	cli.AppHelpTemplate = appHHelpTemplate
