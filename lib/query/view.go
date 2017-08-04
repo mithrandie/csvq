@@ -285,7 +285,7 @@ func loadViewFromFile(file *os.File, fileInfo *FileInfo) (*View, error) {
 
 	view.Records = make([]Record, len(records))
 	for i, v := range records {
-		view.Records[i] = NewRecordWithoutId(v)
+		view.Records[i] = NewRecord(v)
 	}
 
 	if header == nil {
@@ -302,7 +302,7 @@ func loadViewFromFile(file *os.File, fileInfo *FileInfo) (*View, error) {
 		fileInfo.LineBreak = flags.LineBreak
 	}
 
-	view.Header = NewHeaderWithoutId(parser.FormatTableName(fileInfo.Path), header)
+	view.Header = NewHeader(parser.FormatTableName(fileInfo.Path), header)
 	view.FileInfo = fileInfo
 	return view, nil
 }

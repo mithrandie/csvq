@@ -214,11 +214,11 @@ func NewCursor(query parser.SelectQuery) *Cursor {
 }
 
 func NewPseudoCursor(values []parser.Primary) *Cursor {
-	header := NewHeaderWithoutId("", []string{"c1"})
+	header := NewHeader("", []string{"c1"})
 
 	records := make(Records, len(values))
 	for i, v := range values {
-		records[i] = NewRecordWithoutId([]parser.Primary{v})
+		records[i] = NewRecord([]parser.Primary{v})
 	}
 	view := NewView()
 	view.Header = header

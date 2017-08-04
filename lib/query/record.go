@@ -26,7 +26,7 @@ func (r Records) Copy() Records {
 
 type Record []Cell
 
-func NewRecord(internalId int, values []parser.Primary) Record {
+func NewRecordWithId(internalId int, values []parser.Primary) Record {
 	record := make(Record, len(values)+1)
 
 	record[0] = NewCell(parser.NewInteger(int64(internalId)))
@@ -38,7 +38,7 @@ func NewRecord(internalId int, values []parser.Primary) Record {
 	return record
 }
 
-func NewRecordWithoutId(values []parser.Primary) Record {
+func NewRecord(values []parser.Primary) Record {
 	record := make(Record, len(values))
 
 	for i, v := range values {

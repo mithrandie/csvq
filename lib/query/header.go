@@ -31,7 +31,7 @@ func NewDualHeader() Header {
 	return h
 }
 
-func NewHeader(ref string, words []string) Header {
+func NewHeaderWithId(ref string, words []string) Header {
 	h := make([]HeaderField, len(words)+1)
 
 	h[0].Reference = ref
@@ -47,7 +47,7 @@ func NewHeader(ref string, words []string) Header {
 	return h
 }
 
-func NewHeaderWithoutId(ref string, words []string) Header {
+func NewHeader(ref string, words []string) Header {
 	h := make([]HeaderField, len(words))
 
 	for i, v := range words {

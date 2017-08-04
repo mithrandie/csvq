@@ -20,8 +20,8 @@ var parseJoinConditionTests = []struct {
 			Table:     parser.Table{Alias: parser.Identifier{Literal: "t1"}},
 			JoinTable: parser.Table{Alias: parser.Identifier{Literal: "t2"}},
 		},
-		View:     &View{Header: NewHeader("table1", []string{"key1", "key2", "key3", "value1", "value2", "value3"})},
-		JoinView: &View{Header: NewHeader("table2", []string{"key1", "key2", "key3", "value4"})},
+		View:     &View{Header: NewHeaderWithId("table1", []string{"key1", "key2", "key3", "value1", "value2", "value3"})},
+		JoinView: &View{Header: NewHeaderWithId("table2", []string{"key1", "key2", "key3", "value4"})},
 		Result:   nil,
 	},
 	{
@@ -31,8 +31,8 @@ var parseJoinConditionTests = []struct {
 			JoinTable: parser.Table{Alias: parser.Identifier{Literal: "t2"}},
 			Natural:   parser.Token{Token: parser.NATURAL, Literal: "natural"},
 		},
-		View:     &View{Header: NewHeader("table1", []string{"key1", "key2", "key3", "value1", "value2", "value3"})},
-		JoinView: &View{Header: NewHeader("table2", []string{"key1", "key2", "key3", "value4"})},
+		View:     &View{Header: NewHeaderWithId("table1", []string{"key1", "key2", "key3", "value1", "value2", "value3"})},
+		JoinView: &View{Header: NewHeaderWithId("table2", []string{"key1", "key2", "key3", "value4"})},
 		Result: parser.Logic{
 			LHS: parser.Logic{
 				LHS: parser.Comparison{
@@ -66,8 +66,8 @@ var parseJoinConditionTests = []struct {
 				},
 			},
 		},
-		View:     &View{Header: NewHeader("table1", []string{"key1", "key2", "key3", "value1", "value2", "value3"})},
-		JoinView: &View{Header: NewHeader("table2", []string{"key1", "key2", "key3", "value4"})},
+		View:     &View{Header: NewHeaderWithId("table1", []string{"key1", "key2", "key3", "value1", "value2", "value3"})},
+		JoinView: &View{Header: NewHeaderWithId("table2", []string{"key1", "key2", "key3", "value4"})},
 		Result: parser.Comparison{
 			LHS:      parser.FieldReference{View: parser.Identifier{Literal: "t1"}, Column: parser.Identifier{Literal: "key1"}},
 			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "t2"}, Column: parser.Identifier{Literal: "key1"}},
@@ -87,8 +87,8 @@ var parseJoinConditionTests = []struct {
 				},
 			},
 		},
-		View:     &View{Header: NewHeader("table1", []string{"key1", "key2", "key3", "value1", "value2", "value3"})},
-		JoinView: &View{Header: NewHeader("table2", []string{"key1", "key2", "key3", "value4"})},
+		View:     &View{Header: NewHeaderWithId("table1", []string{"key1", "key2", "key3", "value1", "value2", "value3"})},
+		JoinView: &View{Header: NewHeaderWithId("table2", []string{"key1", "key2", "key3", "value4"})},
 		Result: parser.Comparison{
 			LHS:      parser.FieldReference{View: parser.Identifier{Literal: "t1"}, Column: parser.Identifier{Literal: "key1"}},
 			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "t2"}, Column: parser.Identifier{Literal: "key1"}},
@@ -102,8 +102,8 @@ var parseJoinConditionTests = []struct {
 			JoinTable: parser.Table{Alias: parser.Identifier{Literal: "t2"}},
 			Natural:   parser.Token{Token: parser.NATURAL, Literal: "natural"},
 		},
-		View:     &View{Header: NewHeader("table1", []string{"value1", "value2", "value3"})},
-		JoinView: &View{Header: NewHeader("table2", []string{"value4"})},
+		View:     &View{Header: NewHeaderWithId("table1", []string{"value1", "value2", "value3"})},
+		JoinView: &View{Header: NewHeaderWithId("table2", []string{"value4"})},
 		Result:   nil,
 	},
 }
@@ -119,26 +119,26 @@ func TestParseJoinCondition(t *testing.T) {
 
 func TestCrossJoin(t *testing.T) {
 	view := &View{
-		Header: NewHeader("table1", []string{"column1", "column2"}),
+		Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 		Records: []Record{
-			NewRecord(1, []parser.Primary{
+			NewRecordWithId(1, []parser.Primary{
 				parser.NewInteger(1),
 				parser.NewString("str1"),
 			}),
-			NewRecord(2, []parser.Primary{
+			NewRecordWithId(2, []parser.Primary{
 				parser.NewInteger(2),
 				parser.NewString("str2"),
 			}),
 		},
 	}
 	joinView := &View{
-		Header: NewHeader("table2", []string{"column3", "column4"}),
+		Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
 		Records: []Record{
-			NewRecord(1, []parser.Primary{
+			NewRecordWithId(1, []parser.Primary{
 				parser.NewInteger(3),
 				parser.NewString("str3"),
 			}),
-			NewRecord(2, []parser.Primary{
+			NewRecordWithId(2, []parser.Primary{
 				parser.NewInteger(4),
 				parser.NewString("str4"),
 			}),
@@ -154,7 +154,7 @@ func TestCrossJoin(t *testing.T) {
 			{Reference: "table2", Column: "column4", Number: 2, FromTable: true},
 		},
 		Records: []Record{
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewInteger(1),
 				parser.NewInteger(1),
 				parser.NewString("str1"),
@@ -162,7 +162,7 @@ func TestCrossJoin(t *testing.T) {
 				parser.NewInteger(3),
 				parser.NewString("str3"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewInteger(1),
 				parser.NewInteger(1),
 				parser.NewString("str1"),
@@ -170,7 +170,7 @@ func TestCrossJoin(t *testing.T) {
 				parser.NewInteger(4),
 				parser.NewString("str4"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewInteger(2),
 				parser.NewInteger(2),
 				parser.NewString("str2"),
@@ -178,7 +178,7 @@ func TestCrossJoin(t *testing.T) {
 				parser.NewInteger(3),
 				parser.NewString("str3"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewInteger(2),
 				parser.NewInteger(2),
 				parser.NewString("str2"),
@@ -207,30 +207,30 @@ var innerJoinTests = []struct {
 	{
 		Name: "Inner Join",
 		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewInteger(1),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewInteger(2),
 					parser.NewString("str2"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewInteger(3),
 					parser.NewString("str3"),
 				}),
 			},
 		},
 		JoinView: &View{
-			Header: NewHeader("table2", []string{"column1", "column3"}),
+			Header: NewHeaderWithId("table2", []string{"column1", "column3"}),
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewInteger(1),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewInteger(2),
 					parser.NewString("str22"),
 				}),
@@ -251,7 +251,7 @@ var innerJoinTests = []struct {
 				{Reference: "table2", Column: "column3", Number: 2, FromTable: true},
 			},
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(1),
 					parser.NewInteger(1),
 					parser.NewString("str1"),
@@ -259,7 +259,7 @@ var innerJoinTests = []struct {
 					parser.NewInteger(1),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(2),
 					parser.NewInteger(2),
 					parser.NewString("str2"),
@@ -273,18 +273,18 @@ var innerJoinTests = []struct {
 	{
 		Name: "Inner Join Filter Error",
 		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewInteger(1),
 					parser.NewString("str1"),
 				}),
 			},
 		},
 		JoinView: &View{
-			Header: NewHeader("table2", []string{"column1", "column3"}),
+			Header: NewHeaderWithId("table2", []string{"column1", "column3"}),
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewInteger(1),
 					parser.NewString("str1"),
 				}),
@@ -333,34 +333,34 @@ var outerJoinTests = []struct {
 	{
 		Name: "Left Outer Join",
 		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewInteger(1),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewInteger(2),
 					parser.NewString("str2"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewInteger(3),
 					parser.NewString("str3"),
 				}),
 			},
 		},
 		JoinView: &View{
-			Header: NewHeader("table2", []string{"column1", "column3"}),
+			Header: NewHeaderWithId("table2", []string{"column1", "column3"}),
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewInteger(2),
 					parser.NewString("str22"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewInteger(3),
 					parser.NewString("str33"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewInteger(4),
 					parser.NewString("str44"),
 				}),
@@ -382,7 +382,7 @@ var outerJoinTests = []struct {
 				{Reference: "table2", Column: "column3", Number: 2, FromTable: true},
 			},
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(1),
 					parser.NewInteger(1),
 					parser.NewString("str1"),
@@ -390,7 +390,7 @@ var outerJoinTests = []struct {
 					parser.NewNull(),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(2),
 					parser.NewInteger(2),
 					parser.NewString("str2"),
@@ -398,7 +398,7 @@ var outerJoinTests = []struct {
 					parser.NewInteger(2),
 					parser.NewString("str22"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(3),
 					parser.NewInteger(3),
 					parser.NewString("str3"),
@@ -412,34 +412,34 @@ var outerJoinTests = []struct {
 	{
 		Name: "Right Outer Join",
 		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewInteger(1),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewInteger(2),
 					parser.NewString("str2"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewInteger(3),
 					parser.NewString("str3"),
 				}),
 			},
 		},
 		JoinView: &View{
-			Header: NewHeader("table2", []string{"column1", "column3"}),
+			Header: NewHeaderWithId("table2", []string{"column1", "column3"}),
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewInteger(2),
 					parser.NewString("str22"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewInteger(3),
 					parser.NewString("str33"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewInteger(4),
 					parser.NewString("str44"),
 				}),
@@ -461,7 +461,7 @@ var outerJoinTests = []struct {
 				{Reference: "table2", Column: "column3", Number: 2, FromTable: true},
 			},
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(2),
 					parser.NewInteger(2),
 					parser.NewString("str2"),
@@ -469,7 +469,7 @@ var outerJoinTests = []struct {
 					parser.NewInteger(2),
 					parser.NewString("str22"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(3),
 					parser.NewInteger(3),
 					parser.NewString("str3"),
@@ -477,7 +477,7 @@ var outerJoinTests = []struct {
 					parser.NewInteger(3),
 					parser.NewString("str33"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewNull(),
 					parser.NewNull(),
 					parser.NewNull(),
@@ -491,34 +491,34 @@ var outerJoinTests = []struct {
 	{
 		Name: "Full Outer Join",
 		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewInteger(1),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewInteger(2),
 					parser.NewString("str2"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewInteger(3),
 					parser.NewString("str3"),
 				}),
 			},
 		},
 		JoinView: &View{
-			Header: NewHeader("table2", []string{"column1", "column3"}),
+			Header: NewHeaderWithId("table2", []string{"column1", "column3"}),
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewInteger(2),
 					parser.NewString("str22"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewInteger(3),
 					parser.NewString("str33"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewInteger(4),
 					parser.NewString("str44"),
 				}),
@@ -540,7 +540,7 @@ var outerJoinTests = []struct {
 				{Reference: "table2", Column: "column3", Number: 2, FromTable: true},
 			},
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(1),
 					parser.NewInteger(1),
 					parser.NewString("str1"),
@@ -548,7 +548,7 @@ var outerJoinTests = []struct {
 					parser.NewNull(),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(2),
 					parser.NewInteger(2),
 					parser.NewString("str2"),
@@ -556,7 +556,7 @@ var outerJoinTests = []struct {
 					parser.NewInteger(2),
 					parser.NewString("str22"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(3),
 					parser.NewInteger(3),
 					parser.NewString("str3"),
@@ -564,7 +564,7 @@ var outerJoinTests = []struct {
 					parser.NewInteger(3),
 					parser.NewString("str33"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewNull(),
 					parser.NewNull(),
 					parser.NewNull(),
@@ -578,34 +578,34 @@ var outerJoinTests = []struct {
 	{
 		Name: "Left Outer Join Filter Error",
 		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewInteger(1),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewInteger(2),
 					parser.NewString("str2"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewInteger(3),
 					parser.NewString("str3"),
 				}),
 			},
 		},
 		JoinView: &View{
-			Header: NewHeader("table2", []string{"column1", "column3"}),
+			Header: NewHeaderWithId("table2", []string{"column1", "column3"}),
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewInteger(2),
 					parser.NewString("str22"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewInteger(3),
 					parser.NewString("str33"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewInteger(4),
 					parser.NewString("str44"),
 				}),
@@ -622,34 +622,34 @@ var outerJoinTests = []struct {
 	{
 		Name: "Outer Join Direction Undefined",
 		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewInteger(1),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewInteger(2),
 					parser.NewString("str2"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewInteger(3),
 					parser.NewString("str3"),
 				}),
 			},
 		},
 		JoinView: &View{
-			Header: NewHeader("table2", []string{"column1", "column3"}),
+			Header: NewHeaderWithId("table2", []string{"column1", "column3"}),
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewInteger(2),
 					parser.NewString("str22"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewInteger(3),
 					parser.NewString("str33"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewInteger(4),
 					parser.NewString("str44"),
 				}),
@@ -671,7 +671,7 @@ var outerJoinTests = []struct {
 				{Reference: "table2", Column: "column3", Number: 2, FromTable: true},
 			},
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(1),
 					parser.NewInteger(1),
 					parser.NewString("str1"),
@@ -679,7 +679,7 @@ var outerJoinTests = []struct {
 					parser.NewNull(),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(2),
 					parser.NewInteger(2),
 					parser.NewString("str2"),
@@ -687,7 +687,7 @@ var outerJoinTests = []struct {
 					parser.NewInteger(2),
 					parser.NewString("str22"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(3),
 					parser.NewInteger(3),
 					parser.NewString("str3"),

@@ -270,8 +270,8 @@ func TestNewHeader(t *testing.T) {
 			FromTable: true,
 		},
 	}
-	if !reflect.DeepEqual(NewHeader(ref, words), expect) {
-		t.Errorf("header = %s, want %s", NewHeader(ref, words), expect)
+	if !reflect.DeepEqual(NewHeaderWithId(ref, words), expect) {
+		t.Errorf("header = %s, want %s", NewHeaderWithId(ref, words), expect)
 	}
 }
 
@@ -292,8 +292,8 @@ func TestNewHeaderWithoutId(t *testing.T) {
 			FromTable: true,
 		},
 	}
-	if !reflect.DeepEqual(NewHeaderWithoutId(ref, words), expect) {
-		t.Errorf("header = %s, want %s", NewHeaderWithoutId(ref, words), expect)
+	if !reflect.DeepEqual(NewHeader(ref, words), expect) {
+		t.Errorf("header = %s, want %s", NewHeader(ref, words), expect)
 	}
 }
 
