@@ -531,6 +531,293 @@ func TestDenseRank(t *testing.T) {
 	testAnalyticFunction(t, DenseRank, denseRankTests)
 }
 
+var cumeDistTests = []analyticFunctionTest{
+	{
+		Name: "CumeDist",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(3),
+				}),
+			},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "cume_dist",
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+				OrderByClause: parser.OrderByClause{
+					Items: []parser.Expression{
+						parser.OrderItem{
+							Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+						},
+					},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+					parser.NewFloat(0.5),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+					parser.NewFloat(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(1),
+					parser.NewFloat(0.25),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(2),
+					parser.NewFloat(0.75),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(2),
+					parser.NewFloat(0.75),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(3),
+					parser.NewFloat(1),
+				}),
+			},
+		},
+	},
+	{
+		Name: "CumeDist Argument Length Error",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+				}),
+			},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "cume_dist",
+			Args: []parser.Expression{
+				parser.NewInteger(1),
+			},
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+				OrderByClause: parser.OrderByClause{
+					Items: []parser.Expression{
+						parser.OrderItem{
+							Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+						},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] function cume_dist takes no argument",
+	},
+	{
+		Name: "CumeDist Partition Value Error",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+				}),
+			},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "cume_dist",
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+					},
+				},
+				OrderByClause: parser.OrderByClause{
+					Items: []parser.Expression{
+						parser.OrderItem{
+							Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+						},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] field notexist does not exist",
+	},
+	{
+		Name: "CumeDist Order Value Error",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+				}),
+			},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "cume_dist",
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+				OrderByClause: parser.OrderByClause{
+					Items: []parser.Expression{
+						parser.OrderItem{
+							Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+						},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] field notexist does not exist",
+	},
+}
+
+func TestCumeDist(t *testing.T) {
+	testAnalyticFunction(t, CumeDist, cumeDistTests)
+}
+
+var percentRankTests = []analyticFunctionTest{
+	{
+		Name: "PercentRank",
+		View: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(2),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(3),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(4),
+				}),
+			},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "percent_rank",
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+				OrderByClause: parser.OrderByClause{
+					Items: []parser.Expression{
+						parser.OrderItem{
+							Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+						},
+					},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+					parser.NewFloat(1),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(1),
+					parser.NewFloat(0),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(2),
+					parser.NewFloat(0.25),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(2),
+					parser.NewFloat(0.25),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(3),
+					parser.NewFloat(0.75),
+				}),
+				NewRecordWithoutId([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(4),
+					parser.NewFloat(1),
+				}),
+			},
+		},
+	},
+}
+
+func TestPercentRank(t *testing.T) {
+	testAnalyticFunction(t, PercentRank, percentRankTests)
+}
+
 var firstValueTests = []analyticFunctionTest{
 	{
 		Name: "FirstValue",

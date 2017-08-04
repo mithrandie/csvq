@@ -8,7 +8,7 @@ title: csvq - SQL-like query language for csv
 csvq is a command line tool to operate CSV files. 
 You can read, update, delete CSV records with SQL-like query.
 
-You can also execute multiple operation sequentially in managed transactions by passing a procedure as a command argument or a source file.
+You can also execute multiple operations sequentially in managed transactions by passing a procedure as a command argument or a source file.
 In the procedure, you can use variables, cursors, temporary tables, and other functions. 
 
 ## Features

@@ -18,6 +18,7 @@ If distinct option is specified, aggregate functions calculate only unique value
 | [MAX](#max) | Return the maximum value |
 | [SUM](#sum) | Return the sum of values |
 | [AVG](#avg) | Return the average of values |
+| [MEDIAN](#median) | Return the median of values |
 | [LISTAGG](#listagg) | Return the concatenated string of values |
 
 ## Definitions
@@ -44,7 +45,7 @@ COUNT([DISTINCT] *)
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the number of all values including null values.
+Returns the number of all values including null values.
 
 ### MIN
 {: #min}
@@ -60,7 +61,7 @@ _return_
 : [primitive value]({{ '/reference/value.html#primitive_types' | relative_url }})
 
 Returns the minimum value of non-null values of _expr_.
-If all values are null, return null.
+If all values are null, then returns a null.
 
 ### MAX
 {: #max}
@@ -76,7 +77,7 @@ _return_
 : [primitive value]({{ '/reference/value.html#primitive_types' | relative_url }})
 
 Returns the maximum value of non-null values of _expr_.
-If all values are null, return null.
+If all values are null, then return a null.
 
 ### SUM
 {: #sum}
@@ -91,8 +92,8 @@ _expr_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Returns the sum of non-null values of _expr_.
-If all values are null, return null.
+Returns the sum of float values of _expr_.
+If all values are null, then returns a null.
 
 ### AVG
 {: #avg}
@@ -107,8 +108,27 @@ _expr_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Returns the average of non-null values of _expr_.
-If all values are null, return null.
+Returns the average of float values of _expr_.
+If all values are null, then returns a null.
+
+### MEDIAN
+{: #median}
+
+```
+MEDIAN([DISTINCT] expr)
+```
+
+_expr_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+_return_
+: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+Returns the median of float or datetime values of _expr_.
+If all values are null, then returns a null.
+
+Even if _expr_ values are datetime values, the _MEDIAN_ function returns a float or integer value.
+The return value can be converted to a datetime value by using the [DATETIME function]({{ '/reference/cast-functions.html#datetime' | relative_url }}).
 
 ### LISTAGG
 {: #listagg}
@@ -129,8 +149,8 @@ _order_by_clause_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Return the string result with the concatenated non-null values of _expr_.
-If all values are null, return null.
+Returns the string result with the concatenated non-null values of _expr_.
+If all values are null, then returns a null.
 
 Separator string _separator_ is placed between values. Empty string is the default.
 
