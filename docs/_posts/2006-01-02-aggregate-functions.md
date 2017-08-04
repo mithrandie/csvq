@@ -58,7 +58,7 @@ _expr_
 : [value]({{ '/reference/value.html' | relative_url }})
 
 _return_
-: [primitive value]({{ '/reference/value.html#primitive_types' | relative_url }})
+: [primitive type]({{ '/reference/value.html#primitive_types' | relative_url }})
 
 Returns the minimum value of non-null values of _expr_.
 If all values are null, then returns a null.
@@ -74,7 +74,7 @@ _expr_
 : [value]({{ '/reference/value.html' | relative_url }})
 
 _return_
-: [primitive value]({{ '/reference/value.html#primitive_types' | relative_url }})
+: [primitive type]({{ '/reference/value.html#primitive_types' | relative_url }})
 
 Returns the maximum value of non-null values of _expr_.
 If all values are null, then return a null.

@@ -2688,7 +2688,7 @@ var analyzeLagTests = []analyticFunctionTest{
 				},
 			},
 		},
-		Error: "[L:- C:-] the third argument must be a primitive value for function lag",
+		Error: "[L:- C:-] the third argument must be a primitive type for function lag",
 	},
 	{
 		Name: "Lag Partition Value Error",

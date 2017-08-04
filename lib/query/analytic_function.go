@@ -652,7 +652,7 @@ func AnalyzeLag(view *View, fn parser.AnalyticFunction) error {
 	if 2 < len(fn.Args) {
 		p, err := view.Filter.Evaluate(fn.Args[2])
 		if err != nil {
-			return NewFunctionInvalidArgumentError(fn, fn.Name, "the third argument must be a primitive value")
+			return NewFunctionInvalidArgumentError(fn, fn.Name, "the third argument must be a primitive type")
 		}
 		defaultValue = parser.PrimaryToFloat(p)
 		if !parser.IsNull(defaultValue) {
