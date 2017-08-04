@@ -45,19 +45,19 @@ var inlineTablesListSetTests = []struct {
 		Result: InlineTablesList{
 			InlineTables{
 				"IT": &View{
-					Header: NewHeaderWithoutId("it", []string{"c1", "c2", "num"}),
+					Header: NewHeader("it", []string{"c1", "c2", "num"}),
 					Records: []Record{
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("1"),
 							parser.NewString("str1"),
 							parser.NewInteger(1),
 						}),
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("2"),
 							parser.NewString("str2"),
 							parser.NewInteger(1),
 						}),
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("3"),
 							parser.NewString("str3"),
 							parser.NewInteger(1),
@@ -67,9 +67,9 @@ var inlineTablesListSetTests = []struct {
 			},
 			InlineTables{
 				"IT2": &View{
-					Header: NewHeaderWithoutId("it2", []string{"c1", "c2", "num"}),
+					Header: NewHeader("it2", []string{"c1", "c2", "num"}),
 					Records: []Record{
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("1"),
 							parser.NewString("str1"),
 							parser.NewInteger(1),
@@ -86,9 +86,9 @@ func TestInlineTablesList_Set(t *testing.T) {
 		{},
 		InlineTables{
 			"IT2": &View{
-				Header: NewHeaderWithoutId("it2", []string{"c1", "c2", "num"}),
+				Header: NewHeader("it2", []string{"c1", "c2", "num"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 						parser.NewInteger(1),
@@ -129,9 +129,9 @@ var inlineTablesListGetTests = []struct {
 		Name:      "InlineTablesList Get",
 		TableName: parser.Identifier{Literal: "it2"},
 		Result: &View{
-			Header: NewHeaderWithoutId("it2", []string{"c1", "c2", "num"}),
+			Header: NewHeader("it2", []string{"c1", "c2", "num"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 					parser.NewInteger(1),
@@ -150,19 +150,19 @@ func TestInlineTablesList_Get(t *testing.T) {
 	list := InlineTablesList{
 		InlineTables{
 			"IT": &View{
-				Header: NewHeaderWithoutId("it", []string{"c1", "c2", "num"}),
+				Header: NewHeader("it", []string{"c1", "c2", "num"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 						parser.NewInteger(1),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 						parser.NewInteger(1),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("3"),
 						parser.NewString("str3"),
 						parser.NewInteger(1),
@@ -172,9 +172,9 @@ func TestInlineTablesList_Get(t *testing.T) {
 		},
 		InlineTables{
 			"IT2": &View{
-				Header: NewHeaderWithoutId("it2", []string{"c1", "c2", "num"}),
+				Header: NewHeader("it2", []string{"c1", "c2", "num"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 						parser.NewInteger(1),
@@ -268,19 +268,19 @@ var inlineTablesListLoadTests = []struct {
 		Result: InlineTablesList{
 			InlineTables{
 				"IT": &View{
-					Header: NewHeaderWithoutId("it", []string{"c1", "c2", "num"}),
+					Header: NewHeader("it", []string{"c1", "c2", "num"}),
 					Records: []Record{
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("1"),
 							parser.NewString("str1"),
 							parser.NewInteger(1),
 						}),
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("2"),
 							parser.NewString("str2"),
 							parser.NewInteger(1),
 						}),
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("3"),
 							parser.NewString("str3"),
 							parser.NewInteger(1),
@@ -297,13 +297,13 @@ var inlineTablesListLoadTests = []struct {
 						},
 					},
 					Records: []Record{
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewInteger(1),
 						}),
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewInteger(2),
 						}),
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewInteger(3),
 						}),
 					},
@@ -311,9 +311,9 @@ var inlineTablesListLoadTests = []struct {
 			},
 			InlineTables{
 				"IT2": &View{
-					Header: NewHeaderWithoutId("it2", []string{"c1", "c2", "num"}),
+					Header: NewHeader("it2", []string{"c1", "c2", "num"}),
 					Records: []Record{
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("1"),
 							parser.NewString("str1"),
 							parser.NewInteger(1),
@@ -363,19 +363,19 @@ func TestInlineTablesList_Load(t *testing.T) {
 	list := InlineTablesList{
 		InlineTables{
 			"IT": &View{
-				Header: NewHeaderWithoutId("it", []string{"c1", "c2", "num"}),
+				Header: NewHeader("it", []string{"c1", "c2", "num"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 						parser.NewInteger(1),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 						parser.NewInteger(1),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("3"),
 						parser.NewString("str3"),
 						parser.NewInteger(1),
@@ -385,9 +385,9 @@ func TestInlineTablesList_Load(t *testing.T) {
 		},
 		InlineTables{
 			"IT2": &View{
-				Header: NewHeaderWithoutId("it2", []string{"c1", "c2", "num"}),
+				Header: NewHeader("it2", []string{"c1", "c2", "num"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 						parser.NewInteger(1),
@@ -454,19 +454,19 @@ var inlineTablesSetTests = []struct {
 		},
 		Result: InlineTables{
 			"IT": &View{
-				Header: NewHeaderWithoutId("it", []string{"c1", "c2", "num"}),
+				Header: NewHeader("it", []string{"c1", "c2", "num"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 						parser.NewInteger(1),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 						parser.NewInteger(1),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("3"),
 						parser.NewString("str3"),
 						parser.NewInteger(1),
@@ -526,19 +526,19 @@ var inlineTablesSetTests = []struct {
 		},
 		Result: InlineTables{
 			"IT": &View{
-				Header: NewHeaderWithoutId("it", []string{"c1", "c2", "num"}),
+				Header: NewHeader("it", []string{"c1", "c2", "num"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 						parser.NewInteger(1),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 						parser.NewInteger(1),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("3"),
 						parser.NewString("str3"),
 						parser.NewInteger(1),
@@ -555,13 +555,13 @@ var inlineTablesSetTests = []struct {
 					},
 				},
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewInteger(1),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewInteger(2),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewInteger(3),
 					}),
 				},
@@ -719,19 +719,19 @@ var inlineTablesGetTests = []struct {
 		Name:      "InlineTables Get",
 		TableName: parser.Identifier{Literal: "it"},
 		Result: &View{
-			Header: NewHeaderWithoutId("it", []string{"c1", "c2", "num"}),
+			Header: NewHeader("it", []string{"c1", "c2", "num"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 					parser.NewInteger(1),
@@ -749,19 +749,19 @@ var inlineTablesGetTests = []struct {
 func TestInlineTables_Get(t *testing.T) {
 	it := InlineTables{
 		"IT": &View{
-			Header: NewHeaderWithoutId("it", []string{"c1", "c2", "num"}),
+			Header: NewHeader("it", []string{"c1", "c2", "num"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 					parser.NewInteger(1),

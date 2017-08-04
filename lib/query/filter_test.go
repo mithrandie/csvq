@@ -44,13 +44,13 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
-							NewRecord(1, []parser.Primary{
+							NewRecordWithId(1, []parser.Primary{
 								parser.NewInteger(1),
 								parser.NewString("str"),
 							}),
-							NewRecord(2, []parser.Primary{
+							NewRecordWithId(2, []parser.Primary{
 								parser.NewInteger(2),
 								parser.NewString("strstr"),
 							}),
@@ -69,13 +69,13 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
-							NewRecord(1, []parser.Primary{
+							NewRecordWithId(1, []parser.Primary{
 								parser.NewInteger(1),
 								parser.NewString("str"),
 							}),
-							NewRecord(2, []parser.Primary{
+							NewRecordWithId(2, []parser.Primary{
 								parser.NewInteger(2),
 								parser.NewString("strstr"),
 							}),
@@ -94,13 +94,13 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeader("table1", []string{"column1", "column1"}),
+						Header: NewHeaderWithId("table1", []string{"column1", "column1"}),
 						Records: []Record{
-							NewRecord(1, []parser.Primary{
+							NewRecordWithId(1, []parser.Primary{
 								parser.NewInteger(1),
 								parser.NewString("str"),
 							}),
-							NewRecord(2, []parser.Primary{
+							NewRecordWithId(2, []parser.Primary{
 								parser.NewInteger(2),
 								parser.NewString("strstr"),
 							}),
@@ -158,13 +158,13 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
-							NewRecord(1, []parser.Primary{
+							NewRecordWithId(1, []parser.Primary{
 								parser.NewInteger(1),
 								parser.NewString("str"),
 							}),
-							NewRecord(2, []parser.Primary{
+							NewRecordWithId(2, []parser.Primary{
 								parser.NewInteger(2),
 								parser.NewString("strstr"),
 							}),
@@ -183,13 +183,13 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
-							NewRecord(1, []parser.Primary{
+							NewRecordWithId(1, []parser.Primary{
 								parser.NewInteger(1),
 								parser.NewString("str"),
 							}),
-							NewRecord(2, []parser.Primary{
+							NewRecordWithId(2, []parser.Primary{
 								parser.NewInteger(2),
 								parser.NewString("strstr"),
 							}),
@@ -876,9 +876,9 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeader("table2", []string{"column3", "column4"}),
+						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
 						Records: []Record{
-							NewRecord(1, []parser.Primary{
+							NewRecordWithId(1, []parser.Primary{
 								parser.NewInteger(1),
 								parser.NewString("str2"),
 							}),
@@ -1617,9 +1617,9 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeader("table2", []string{"column3", "column4"}),
+						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
 						Records: []Record{
-							NewRecord(1, []parser.Primary{
+							NewRecordWithId(1, []parser.Primary{
 								parser.NewInteger(1),
 								parser.NewString("str2"),
 							}),
@@ -1719,9 +1719,9 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeader("table2", []string{"column3", "column4"}),
+						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
 						Records: []Record{
-							NewRecord(1, []parser.Primary{
+							NewRecordWithId(1, []parser.Primary{
 								parser.NewInteger(1),
 								parser.NewString("str2"),
 							}),
@@ -1943,7 +1943,7 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
 								NewGroupCell([]parser.Primary{
@@ -1984,7 +1984,7 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+						Header: NewHeader("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
 								NewGroupCell([]parser.Primary{
@@ -2017,9 +2017,9 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+						Header: NewHeader("table1", []string{"column1", "column2"}),
 						Records: []Record{
-							NewRecord(1, []parser.Primary{
+							NewRecordWithId(1, []parser.Primary{
 								parser.NewInteger(1),
 								parser.NewString("str2"),
 							}),
@@ -2044,7 +2044,7 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+						Header: NewHeader("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
 								NewGroupCell([]parser.Primary{
@@ -2085,7 +2085,7 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+						Header: NewHeader("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
 								NewGroupCell([]parser.Primary{
@@ -2133,7 +2133,7 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+						Header: NewHeader("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
 								NewGroupCell([]parser.Primary{
@@ -2252,7 +2252,7 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+						Header: NewHeader("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
 								NewGroupCell([]parser.Primary{
@@ -2307,7 +2307,7 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+						Header: NewHeader("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
 								NewGroupCell([]parser.Primary{
@@ -2363,7 +2363,7 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+						Header: NewHeader("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
 								NewGroupCell([]parser.Primary{
@@ -2460,7 +2460,7 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+						Header: NewHeader("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
 								NewGroupCell([]parser.Primary{
@@ -2557,7 +2557,7 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
 								NewGroupCell([]parser.Primary{
@@ -2607,7 +2607,7 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
 								NewGroupCell([]parser.Primary{
@@ -2651,9 +2651,9 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
-							NewRecord(1, []parser.Primary{
+							NewRecordWithId(1, []parser.Primary{
 								parser.NewInteger(1),
 								parser.NewString("str2"),
 							}),
@@ -2680,9 +2680,9 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
-							NewRecord(1, []parser.Primary{
+							NewRecordWithId(1, []parser.Primary{
 								parser.NewInteger(1),
 								parser.NewString("str2"),
 							}),
@@ -2713,7 +2713,7 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
 								NewGroupCell([]parser.Primary{
@@ -2757,7 +2757,7 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
 								NewGroupCell([]parser.Primary{
@@ -2798,7 +2798,7 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
 								NewGroupCell([]parser.Primary{
@@ -2834,7 +2834,7 @@ var filterEvaluateTests = []struct {
 			Records: []FilterRecord{
 				{
 					View: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
+						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
 								NewGroupCell([]parser.Primary{

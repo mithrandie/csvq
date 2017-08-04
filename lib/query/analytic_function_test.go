@@ -41,25 +41,25 @@ var rowNumberTests = []analyticFunctionTest{
 	{
 		Name: "RowNumber",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(3),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(4),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(5),
 				}),
@@ -78,29 +78,29 @@ var rowNumberTests = []analyticFunctionTest{
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(3),
 					parser.NewInteger(3),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(4),
 					parser.NewInteger(4),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(5),
 					parser.NewInteger(5),
@@ -111,25 +111,25 @@ var rowNumberTests = []analyticFunctionTest{
 	{
 		Name: "RowNumber with Partition",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(3),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(4),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(5),
 				}),
@@ -153,29 +153,29 @@ var rowNumberTests = []analyticFunctionTest{
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(3),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(4),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(5),
 					parser.NewInteger(3),
@@ -186,13 +186,13 @@ var rowNumberTests = []analyticFunctionTest{
 	{
 		Name: "RowNumber Arguments Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
@@ -209,25 +209,25 @@ var rowNumberTests = []analyticFunctionTest{
 	{
 		Name: "RowNumber Partition Value Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(3),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(4),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(5),
 				}),
@@ -262,33 +262,33 @@ var rankTests = []analyticFunctionTest{
 	{
 		Name: "Rank",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(3),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
@@ -312,39 +312,39 @@ var rankTests = []analyticFunctionTest{
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(2),
-					parser.NewInteger(3),
-				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(2),
 					parser.NewInteger(3),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(2),
+					parser.NewInteger(3),
+				}),
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(3),
 					parser.NewInteger(5),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 					parser.NewInteger(2),
@@ -355,13 +355,13 @@ var rankTests = []analyticFunctionTest{
 	{
 		Name: "Rank Arguments Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
@@ -378,13 +378,13 @@ var rankTests = []analyticFunctionTest{
 	{
 		Name: "Rank Partition Value Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
@@ -412,13 +412,13 @@ var rankTests = []analyticFunctionTest{
 	{
 		Name: "Rank Order Value Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
@@ -453,25 +453,25 @@ var denseRankTests = []analyticFunctionTest{
 	{
 		Name: "DenseRank",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
@@ -495,29 +495,29 @@ var denseRankTests = []analyticFunctionTest{
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(2),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 					parser.NewInteger(2),
@@ -535,29 +535,29 @@ var cumeDistTests = []analyticFunctionTest{
 	{
 		Name: "CumeDist",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(3),
 				}),
@@ -581,34 +581,34 @@ var cumeDistTests = []analyticFunctionTest{
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 					parser.NewFloat(0.5),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 					parser.NewFloat(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 					parser.NewFloat(0.25),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(2),
 					parser.NewFloat(0.75),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(2),
 					parser.NewFloat(0.75),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(3),
 					parser.NewFloat(1),
@@ -619,13 +619,13 @@ var cumeDistTests = []analyticFunctionTest{
 	{
 		Name: "CumeDist Argument Length Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
@@ -656,13 +656,13 @@ var cumeDistTests = []analyticFunctionTest{
 	{
 		Name: "CumeDist Partition Value Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
@@ -690,13 +690,13 @@ var cumeDistTests = []analyticFunctionTest{
 	{
 		Name: "CumeDist Order Value Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
@@ -731,29 +731,29 @@ var percentRankTests = []analyticFunctionTest{
 	{
 		Name: "PercentRank",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(3),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(4),
 				}),
@@ -777,34 +777,34 @@ var percentRankTests = []analyticFunctionTest{
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 					parser.NewFloat(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 					parser.NewFloat(0),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(2),
 					parser.NewFloat(0.25),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(2),
 					parser.NewFloat(0.25),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(3),
 					parser.NewFloat(0.75),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(4),
 					parser.NewFloat(1),
@@ -822,25 +822,25 @@ var firstValueTests = []analyticFunctionTest{
 	{
 		Name: "FirstValue",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(4),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(5),
 				}),
@@ -860,29 +860,29 @@ var firstValueTests = []analyticFunctionTest{
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(4),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(5),
 					parser.NewNull(),
@@ -893,25 +893,25 @@ var firstValueTests = []analyticFunctionTest{
 	{
 		Name: "FirstValue Ignore Nulls",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(4),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(5),
 				}),
@@ -932,29 +932,29 @@ var firstValueTests = []analyticFunctionTest{
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 					parser.NewInteger(4),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(4),
 					parser.NewInteger(4),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(5),
 					parser.NewInteger(4),
@@ -965,13 +965,13 @@ var firstValueTests = []analyticFunctionTest{
 	{
 		Name: "FirstValue Argument Length Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(2),
 				}),
@@ -992,13 +992,13 @@ var firstValueTests = []analyticFunctionTest{
 	{
 		Name: "FirstValue Partition Value Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(2),
 				}),
@@ -1022,13 +1022,13 @@ var firstValueTests = []analyticFunctionTest{
 	{
 		Name: "FirstValue Argument Value Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(2),
 				}),
@@ -1058,25 +1058,25 @@ var lastValueTests = []analyticFunctionTest{
 	{
 		Name: "LastValue",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(3),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(4),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 				}),
@@ -1096,29 +1096,29 @@ var lastValueTests = []analyticFunctionTest{
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(3),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(4),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 					parser.NewNull(),
@@ -1129,25 +1129,25 @@ var lastValueTests = []analyticFunctionTest{
 	{
 		Name: "LastValue Ignore Nulls",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(3),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(4),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 				}),
@@ -1168,29 +1168,29 @@ var lastValueTests = []analyticFunctionTest{
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(3),
 					parser.NewInteger(4),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(4),
 					parser.NewInteger(4),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 					parser.NewInteger(4),
@@ -1208,25 +1208,25 @@ var analyzeAggregateValueTests = []analyticFunctionTest{
 	{
 		Name: "AnalyzeAggregateValue",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
@@ -1246,29 +1246,29 @@ var analyzeAggregateValueTests = []analyticFunctionTest{
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 					parser.NewInteger(2),
@@ -1279,25 +1279,25 @@ var analyzeAggregateValueTests = []analyticFunctionTest{
 	{
 		Name: "AnalyzeAggregateValue With Distinct",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
@@ -1318,29 +1318,29 @@ var analyzeAggregateValueTests = []analyticFunctionTest{
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 					parser.NewInteger(1),
@@ -1351,25 +1351,25 @@ var analyzeAggregateValueTests = []analyticFunctionTest{
 	{
 		Name: "AnalyzeAggregateValue With Wildcard",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
@@ -1389,29 +1389,29 @@ var analyzeAggregateValueTests = []analyticFunctionTest{
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 					parser.NewInteger(3),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 					parser.NewInteger(3),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 					parser.NewInteger(3),
@@ -1422,13 +1422,13 @@ var analyzeAggregateValueTests = []analyticFunctionTest{
 	{
 		Name: "AnalyzeAggregateValue Argument Length Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
@@ -1449,13 +1449,13 @@ var analyzeAggregateValueTests = []analyticFunctionTest{
 	{
 		Name: "AnalyzeAggregateValue Argument Value Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
@@ -1479,13 +1479,13 @@ var analyzeAggregateValueTests = []analyticFunctionTest{
 	{
 		Name: "AnalyzeAggregateValue Partition Value Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
@@ -1509,25 +1509,25 @@ var analyzeAggregateValueTests = []analyticFunctionTest{
 	{
 		Name: "AnalyzeAggregateValue User Defined",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
@@ -1615,29 +1615,29 @@ var analyzeAggregateValueTests = []analyticFunctionTest{
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 					parser.NewInteger(1),
@@ -1715,13 +1715,13 @@ var analyzeAggregateValueTests = []analyticFunctionTest{
 	{
 		Name: "AnalyzeAggregateValue User Defined Argument Length Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
@@ -1764,13 +1764,13 @@ var analyzeAggregateValueTests = []analyticFunctionTest{
 	{
 		Name: "AnalyzeAggregateValue User Defined Argument Evaluation Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
@@ -1814,25 +1814,25 @@ var analyzeAggregateValueTests = []analyticFunctionTest{
 	{
 		Name: "AnalyzeAggregateValue User Defined Undefined Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
@@ -1856,25 +1856,25 @@ var analyzeAggregateValueTests = []analyticFunctionTest{
 	{
 		Name: "AnalyzeAggregateValue User Defined Execution Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
@@ -1969,25 +1969,25 @@ var analyzeListAggTests = []analyticFunctionTest{
 	{
 		Name: "AnalyzeListAgg",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
@@ -2009,29 +2009,29 @@ var analyzeListAggTests = []analyticFunctionTest{
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 					parser.NewString("1,2"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 					parser.NewString("1,2"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 					parser.NewString("1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 					parser.NewString("1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 					parser.NewString("1"),
@@ -2042,25 +2042,25 @@ var analyzeListAggTests = []analyticFunctionTest{
 	{
 		Name: "AnalyzeListAgg With Default Separator",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 				}),
@@ -2080,29 +2080,29 @@ var analyzeListAggTests = []analyticFunctionTest{
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 					parser.NewString("12"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 					parser.NewString("12"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 					parser.NewString("11"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 					parser.NewString("11"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1),
 					parser.NewString("11"),
@@ -2113,13 +2113,13 @@ var analyzeListAggTests = []analyticFunctionTest{
 	{
 		Name: "AnalyzeListAgg Argument Length Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
@@ -2140,13 +2140,13 @@ var analyzeListAggTests = []analyticFunctionTest{
 	{
 		Name: "AnalyzeListAgg Partition Value Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
@@ -2171,13 +2171,13 @@ var analyzeListAggTests = []analyticFunctionTest{
 	{
 		Name: "AnalyzeListAgg First Argument Value Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
@@ -2202,13 +2202,13 @@ var analyzeListAggTests = []analyticFunctionTest{
 	{
 		Name: "AnalyzeListAgg Second Argument Evaluation Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
@@ -2233,13 +2233,13 @@ var analyzeListAggTests = []analyticFunctionTest{
 	{
 		Name: "AnalyzeListAgg Second Argument Not String Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
@@ -2271,33 +2271,33 @@ var analyzeLagTests = []analyticFunctionTest{
 	{
 		Name: "Lag",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(100),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(300),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(100),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(300),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(600),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1000),
 				}),
@@ -2319,39 +2319,39 @@ var analyzeLagTests = []analyticFunctionTest{
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(100),
 					parser.NewInteger(0),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(300),
 					parser.NewInteger(0),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(100),
 					parser.NewInteger(0),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 					parser.NewInteger(0),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(300),
 					parser.NewInteger(200),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(600),
 					parser.NewInteger(0),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1000),
 					parser.NewInteger(700),
@@ -2362,33 +2362,33 @@ var analyzeLagTests = []analyticFunctionTest{
 	{
 		Name: "Lag With Ignore Nulls",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(100),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(300),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(100),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(300),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(600),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1000),
 				}),
@@ -2409,39 +2409,39 @@ var analyzeLagTests = []analyticFunctionTest{
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(100),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(300),
 					parser.NewInteger(200),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(100),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(300),
 					parser.NewInteger(200),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(600),
 					parser.NewInteger(300),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1000),
 					parser.NewInteger(400),
@@ -2452,33 +2452,33 @@ var analyzeLagTests = []analyticFunctionTest{
 	{
 		Name: "Lead",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(100),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(300),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(100),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(300),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(600),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1000),
 				}),
@@ -2499,39 +2499,39 @@ var analyzeLagTests = []analyticFunctionTest{
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(100),
 					parser.NewInteger(-200),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(300),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(100),
 					parser.NewInteger(-200),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewNull(),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(300),
 					parser.NewInteger(-300),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(600),
 					parser.NewInteger(-400),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(1000),
 					parser.NewNull(),
@@ -2542,13 +2542,13 @@ var analyzeLagTests = []analyticFunctionTest{
 	{
 		Name: "Lag Argument Length Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(100),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(300),
 				}),
@@ -2569,13 +2569,13 @@ var analyzeLagTests = []analyticFunctionTest{
 	{
 		Name: "Lag First Argument Evaluation Length Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(100),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(300),
 				}),
@@ -2599,13 +2599,13 @@ var analyzeLagTests = []analyticFunctionTest{
 	{
 		Name: "Lag Second Argument Evaluation Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(100),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(300),
 				}),
@@ -2630,13 +2630,13 @@ var analyzeLagTests = []analyticFunctionTest{
 	{
 		Name: "Lag Second Argument Not Integer Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(100),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(300),
 				}),
@@ -2661,13 +2661,13 @@ var analyzeLagTests = []analyticFunctionTest{
 	{
 		Name: "Lag Third Argument Evaluation Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(100),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(300),
 				}),
@@ -2693,13 +2693,13 @@ var analyzeLagTests = []analyticFunctionTest{
 	{
 		Name: "Lag Partition Value Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(100),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(300),
 				}),

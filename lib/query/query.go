@@ -19,10 +19,10 @@ const (
 	RETURN
 )
 
-type StatementType int
+type OperationType int
 
 const (
-	INSERT StatementType = iota
+	INSERT        OperationType = iota
 	UPDATE
 	DELETE
 	CREATE_TABLE
@@ -32,7 +32,7 @@ const (
 )
 
 type Result struct {
-	Type          StatementType
+	Type          OperationType
 	FileInfo      *FileInfo
 	OperatedCount int
 }
@@ -160,7 +160,7 @@ func DeclareTable(expr parser.TableDeclaration, filter Filter) error {
 			}
 			fields[i] = f.Literal
 		}
-		header := NewHeaderWithoutId(expr.Table.Literal, fields)
+		header := NewHeader(expr.Table.Literal, fields)
 		view = &View{
 			Header:  header,
 			Records: Records{},
@@ -619,7 +619,7 @@ func CreateTable(query parser.CreateTable) (*View, error) {
 	fileInfo.Encoding = flags.Encoding
 	fileInfo.LineBreak = flags.LineBreak
 
-	header := NewHeaderWithoutId(parser.FormatTableName(fileInfo.Path), fields)
+	header := NewHeader(parser.FormatTableName(fileInfo.Path), fields)
 	view := &View{
 		Header:   header,
 		FileInfo: fileInfo,
@@ -678,7 +678,7 @@ func AddColumns(query parser.AddColumns, parentFilter Filter) (*View, error) {
 	}
 	newFieldLen := view.FieldLen() + len(query.Columns)
 
-	addHeader := NewHeaderWithoutId(parser.FormatTableName(view.FileInfo.Path), fields)
+	addHeader := NewHeader(parser.FormatTableName(view.FileInfo.Path), fields)
 	header := make(Header, newFieldLen)
 	for i, v := range view.Header {
 		var idx int

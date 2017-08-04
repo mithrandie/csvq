@@ -28,7 +28,7 @@ func TestTemporaryViewMapList_Exists(t *testing.T) {
 	list := TemporaryViewMapList{
 		ViewMap{
 			"/PATH/TO/TABLE1.CSV": &View{
-				Header:  NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+				Header:  NewHeader("table1", []string{"column1", "column2"}),
 				Records: []Record{},
 				FileInfo: &FileInfo{
 					Path:      "/path/to/table1.csv",
@@ -38,7 +38,7 @@ func TestTemporaryViewMapList_Exists(t *testing.T) {
 		},
 		ViewMap{
 			"/PATH/TO/TABLE2.CSV": &View{
-				Header:  NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+				Header:  NewHeader("table1", []string{"column1", "column2"}),
 				Records: []Record{},
 				FileInfo: &FileInfo{
 					Path:      "/path/to/table1.csv",
@@ -66,13 +66,13 @@ var temporaryViewMapListGetTests = []struct {
 		Name: "TemporaryViewMapList Get",
 		Path: parser.Identifier{Literal: "/path/to/table2.csv"},
 		Result: &View{
-			Header: NewHeaderWithoutId("table2", []string{"column1", "column2"}),
+			Header: NewHeader("table2", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
@@ -94,13 +94,13 @@ func TestTemporaryViewMapList_Get(t *testing.T) {
 	list := TemporaryViewMapList{
 		ViewMap{
 			"/PATH/TO/TABLE1.CSV": &View{
-				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+				Header: NewHeader("table1", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 					}),
@@ -113,13 +113,13 @@ func TestTemporaryViewMapList_Get(t *testing.T) {
 		},
 		ViewMap{
 			"/PATH/TO/TABLE2.CSV": &View{
-				Header: NewHeaderWithoutId("table2", []string{"column1", "column2"}),
+				Header: NewHeader("table2", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 					}),
@@ -162,13 +162,13 @@ var temporaryViewMapListGetWithInternalIdTests = []struct {
 		Name: "TemporaryViewMapList GetWithInternalId",
 		Path: parser.Identifier{Literal: "/path/to/table2.csv"},
 		Result: &View{
-			Header: NewHeader("table2", []string{"column1", "column2"}),
+			Header: NewHeaderWithId("table2", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecord(0, []parser.Primary{
+				NewRecordWithId(0, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
@@ -190,13 +190,13 @@ func TestTemporaryViewMapList_GetWithInternalId(t *testing.T) {
 	list := TemporaryViewMapList{
 		ViewMap{
 			"/PATH/TO/TABLE1.CSV": &View{
-				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+				Header: NewHeader("table1", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 					}),
@@ -209,13 +209,13 @@ func TestTemporaryViewMapList_GetWithInternalId(t *testing.T) {
 		},
 		ViewMap{
 			"/PATH/TO/TABLE2.CSV": &View{
-				Header: NewHeaderWithoutId("table2", []string{"column1", "column2"}),
+				Header: NewHeader("table2", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 					}),
@@ -256,13 +256,13 @@ var temporaryViewMapListSetTests = []struct {
 	{
 		Name: "TemporaryViewMapList Set",
 		SetView: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
@@ -275,13 +275,13 @@ var temporaryViewMapListSetTests = []struct {
 		Result: TemporaryViewMapList{
 			ViewMap{
 				"/PATH/TO/TABLE1.CSV": &View{
-					Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+					Header: NewHeader("table1", []string{"column1", "column2"}),
 					Records: []Record{
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("1"),
 							parser.NewString("str1"),
 						}),
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("2"),
 							parser.NewString("str2"),
 						}),
@@ -294,13 +294,13 @@ var temporaryViewMapListSetTests = []struct {
 			},
 			ViewMap{
 				"/PATH/TO/TABLE2.CSV": &View{
-					Header: NewHeaderWithoutId("table2", []string{"column1", "column2"}),
+					Header: NewHeader("table2", []string{"column1", "column2"}),
 					Records: []Record{
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("1"),
 							parser.NewString("str1"),
 						}),
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("2"),
 							parser.NewString("str2"),
 						}),
@@ -320,13 +320,13 @@ func TestTemporaryViewMapList_Set(t *testing.T) {
 		ViewMap{},
 		ViewMap{
 			"/PATH/TO/TABLE2.CSV": &View{
-				Header: NewHeaderWithoutId("table2", []string{"column1", "column2"}),
+				Header: NewHeader("table2", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 					}),
@@ -356,13 +356,13 @@ var temporaryViewMapListReplaceTests = []struct {
 	{
 		Name: "TemporaryViewMapList Replace",
 		SetView: &View{
-			Header: NewHeaderWithoutId("table2", []string{"column1", "column2"}),
+			Header: NewHeader("table2", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("updated"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("updated"),
 				}),
@@ -375,13 +375,13 @@ var temporaryViewMapListReplaceTests = []struct {
 		Result: TemporaryViewMapList{
 			ViewMap{
 				"/PATH/TO/TABLE1.CSV": &View{
-					Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+					Header: NewHeader("table1", []string{"column1", "column2"}),
 					Records: []Record{
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("1"),
 							parser.NewString("str1"),
 						}),
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("2"),
 							parser.NewString("str2"),
 						}),
@@ -394,13 +394,13 @@ var temporaryViewMapListReplaceTests = []struct {
 			},
 			ViewMap{
 				"/PATH/TO/TABLE2.CSV": &View{
-					Header: NewHeaderWithoutId("table2", []string{"column1", "column2"}),
+					Header: NewHeader("table2", []string{"column1", "column2"}),
 					Records: []Record{
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("1"),
 							parser.NewString("updated"),
 						}),
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("2"),
 							parser.NewString("updated"),
 						}),
@@ -419,13 +419,13 @@ func TestTemporaryViewMapList_Replace(t *testing.T) {
 	list := TemporaryViewMapList{
 		ViewMap{
 			"/PATH/TO/TABLE1.CSV": &View{
-				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+				Header: NewHeader("table1", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 					}),
@@ -438,13 +438,13 @@ func TestTemporaryViewMapList_Replace(t *testing.T) {
 		},
 		ViewMap{
 			"/PATH/TO/TABLE2.CSV": &View{
-				Header: NewHeaderWithoutId("table2", []string{"column1", "column2"}),
+				Header: NewHeader("table2", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 					}),
@@ -478,13 +478,13 @@ var temporaryViewMapListDisposeTests = []struct {
 			ViewMap{},
 			ViewMap{
 				"/PATH/TO/TABLE2.CSV": &View{
-					Header: NewHeaderWithoutId("table2", []string{"column1", "column2"}),
+					Header: NewHeader("table2", []string{"column1", "column2"}),
 					Records: []Record{
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("1"),
 							parser.NewString("updated"),
 						}),
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("2"),
 							parser.NewString("updated"),
 						}),
@@ -508,13 +508,13 @@ func TestTemporaryViewMapList_Dispose(t *testing.T) {
 	list := TemporaryViewMapList{
 		ViewMap{
 			"/PATH/TO/TABLE1.CSV": &View{
-				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+				Header: NewHeader("table1", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 					}),
@@ -528,13 +528,13 @@ func TestTemporaryViewMapList_Dispose(t *testing.T) {
 		},
 		ViewMap{
 			"/PATH/TO/TABLE2.CSV": &View{
-				Header: NewHeaderWithoutId("table2", []string{"column1", "column2"}),
+				Header: NewHeader("table2", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("updated"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("updated"),
 					}),
@@ -571,13 +571,13 @@ func TestTemporaryViewMapList_Rollback(t *testing.T) {
 	list := TemporaryViewMapList{
 		ViewMap{
 			"/PATH/TO/TABLE1.CSV": &View{
-				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+				Header: NewHeader("table1", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 					}),
@@ -591,13 +591,13 @@ func TestTemporaryViewMapList_Rollback(t *testing.T) {
 		},
 		ViewMap{
 			"/PATH/TO/TABLE2.CSV": &View{
-				Header: NewHeaderWithoutId("table2", []string{"column1", "column2"}),
+				Header: NewHeader("table2", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("updated"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("updated"),
 					}),
@@ -606,11 +606,11 @@ func TestTemporaryViewMapList_Rollback(t *testing.T) {
 					Path:      "/path/to/table2.csv",
 					Delimiter: ',',
 					InitialRecords: []Record{
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("1"),
 							parser.NewString("str1"),
 						}),
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("2"),
 							parser.NewString("str2"),
 						}),
@@ -623,7 +623,7 @@ func TestTemporaryViewMapList_Rollback(t *testing.T) {
 	expect := TemporaryViewMapList{
 		ViewMap{
 			"/PATH/TO/TABLE1.CSV": &View{
-				Header:  NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+				Header:  NewHeader("table1", []string{"column1", "column2"}),
 				Records: []Record{},
 				FileInfo: &FileInfo{
 					Path:           "/path/to/table1.csv",
@@ -634,13 +634,13 @@ func TestTemporaryViewMapList_Rollback(t *testing.T) {
 		},
 		ViewMap{
 			"/PATH/TO/TABLE2.CSV": &View{
-				Header: NewHeaderWithoutId("table2", []string{"column1", "column2"}),
+				Header: NewHeader("table2", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 					}),
@@ -649,11 +649,11 @@ func TestTemporaryViewMapList_Rollback(t *testing.T) {
 					Path:      "/path/to/table2.csv",
 					Delimiter: ',',
 					InitialRecords: []Record{
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("1"),
 							parser.NewString("str1"),
 						}),
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("2"),
 							parser.NewString("str2"),
 						}),
@@ -689,7 +689,7 @@ var viewMapExistsTests = []struct {
 func TestViewMap_Exists(t *testing.T) {
 	viewMap := ViewMap{
 		"/PATH/TO/TABLE1.CSV": &View{
-			Header:  NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header:  NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{},
 			FileInfo: &FileInfo{
 				Path:      "/path/to/table1.csv",
@@ -716,13 +716,13 @@ var viewMapGetTests = []struct {
 		Name: "ViewMap Get",
 		Path: parser.Identifier{Literal: "/path/to/table1.csv"},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
@@ -743,13 +743,13 @@ var viewMapGetTests = []struct {
 func TestViewMap_Get(t *testing.T) {
 	viewMap := ViewMap{
 		"/PATH/TO/TABLE1.CSV": &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
@@ -791,13 +791,13 @@ var viewMapGetWithInternalIdTests = []struct {
 		Name: "ViewMap GetWithInternalId",
 		Path: parser.Identifier{Literal: "/path/to/table1.csv"},
 		Result: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecord(0, []parser.Primary{
+				NewRecordWithId(0, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
@@ -818,13 +818,13 @@ var viewMapGetWithInternalIdTests = []struct {
 func TestViewMap_GetWithInternalId(t *testing.T) {
 	viewMap := ViewMap{
 		"/PATH/TO/TABLE1.CSV": &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
@@ -864,13 +864,13 @@ var viewMapSetTests = []struct {
 	{
 		Name: "ViewMap Set",
 		SetView: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
@@ -882,13 +882,13 @@ var viewMapSetTests = []struct {
 		},
 		Result: ViewMap{
 			"/PATH/TO/TABLE1.CSV": &View{
-				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+				Header: NewHeader("table1", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 					}),
@@ -922,13 +922,13 @@ var viewMapReplaceTests = []struct {
 	{
 		Name: "ViewMap Replace",
 		SetView: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("updated"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("updated"),
 				}),
@@ -940,13 +940,13 @@ var viewMapReplaceTests = []struct {
 		},
 		Result: ViewMap{
 			"/PATH/TO/TABLE1.CSV": &View{
-				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+				Header: NewHeader("table1", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("updated"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("updated"),
 					}),
@@ -961,13 +961,13 @@ var viewMapReplaceTests = []struct {
 	{
 		Name: "ViewMap Replace Not Loaded Error",
 		SetView: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("updated"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("updated"),
 				}),
@@ -984,13 +984,13 @@ var viewMapReplaceTests = []struct {
 func TestViewMap_Replace(t *testing.T) {
 	viewMap := ViewMap{
 		"/PATH/TO/TABLE1.CSV": &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
@@ -1033,13 +1033,13 @@ var viewMapDisposeTemporaryTable = []struct {
 		Table: parser.Identifier{Literal: "/path/to/table1.csv"},
 		Result: ViewMap{
 			"/PATH/TO/TABLE2.CSV": &View{
-				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+				Header: NewHeader("table1", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 					}),
@@ -1066,13 +1066,13 @@ var viewMapDisposeTemporaryTable = []struct {
 func TestViewMap_DisposeTemporaryTable(t *testing.T) {
 	viewMap := ViewMap{
 		"/PATH/TO/TABLE1.CSV": &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
@@ -1084,13 +1084,13 @@ func TestViewMap_DisposeTemporaryTable(t *testing.T) {
 			},
 		},
 		"/PATH/TO/TABLE2.CSV": &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
@@ -1125,13 +1125,13 @@ func TestViewMap_DisposeTemporaryTable(t *testing.T) {
 func TestViewMap_Clear(t *testing.T) {
 	viewMap := ViewMap{
 		"/PATH/TO/TABLE1.CSV": &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
@@ -1143,13 +1143,13 @@ func TestViewMap_Clear(t *testing.T) {
 			},
 		},
 		"/PATH/TO/TABLE2.CSV": &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),

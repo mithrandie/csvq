@@ -73,17 +73,17 @@ var viewLoadTests = []struct {
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 				}),
@@ -114,9 +114,9 @@ var viewLoadTests = []struct {
 		},
 		Stdin: "column1,column2\n1,\"str1\"",
 		Result: &View{
-			Header: NewHeaderWithoutId("t", []string{"column1", "column2"}),
+			Header: NewHeader("t", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
@@ -147,9 +147,9 @@ var viewLoadTests = []struct {
 		From:  parser.FromClause{},
 		Stdin: "column1,column2\n1,\"str1\"",
 		Result: &View{
-			Header: NewHeaderWithoutId("stdin", []string{"column1", "column2"}),
+			Header: NewHeader("stdin", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
@@ -232,19 +232,19 @@ var viewLoadTests = []struct {
 			InlineTablesList: InlineTablesList{
 				InlineTables{
 					"IT": &View{
-						Header: NewHeaderWithoutId("it", []string{"c1", "c2", "num"}),
+						Header: NewHeader("it", []string{"c1", "c2", "num"}),
 						Records: []Record{
-							NewRecordWithoutId([]parser.Primary{
+							NewRecord([]parser.Primary{
 								parser.NewString("1"),
 								parser.NewString("str1"),
 								parser.NewInteger(1),
 							}),
-							NewRecordWithoutId([]parser.Primary{
+							NewRecord([]parser.Primary{
 								parser.NewString("2"),
 								parser.NewString("str2"),
 								parser.NewInteger(1),
 							}),
-							NewRecordWithoutId([]parser.Primary{
+							NewRecord([]parser.Primary{
 								parser.NewString("3"),
 								parser.NewString("str3"),
 								parser.NewInteger(1),
@@ -256,19 +256,19 @@ var viewLoadTests = []struct {
 			AliasesList: AliasMapList{{}},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("t", []string{"c1", "c2", "num"}),
+			Header: NewHeader("t", []string{"c1", "c2", "num"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 					parser.NewInteger(1),
@@ -282,19 +282,19 @@ var viewLoadTests = []struct {
 					{},
 					InlineTables{
 						"IT": &View{
-							Header: NewHeaderWithoutId("it", []string{"c1", "c2", "num"}),
+							Header: NewHeader("it", []string{"c1", "c2", "num"}),
 							Records: []Record{
-								NewRecordWithoutId([]parser.Primary{
+								NewRecord([]parser.Primary{
 									parser.NewString("1"),
 									parser.NewString("str1"),
 									parser.NewInteger(1),
 								}),
-								NewRecordWithoutId([]parser.Primary{
+								NewRecord([]parser.Primary{
 									parser.NewString("2"),
 									parser.NewString("str2"),
 									parser.NewInteger(1),
 								}),
-								NewRecordWithoutId([]parser.Primary{
+								NewRecord([]parser.Primary{
 									parser.NewString("3"),
 									parser.NewString("str3"),
 									parser.NewInteger(1),
@@ -327,19 +327,19 @@ var viewLoadTests = []struct {
 			InlineTablesList: InlineTablesList{
 				InlineTables{
 					"IT": &View{
-						Header: NewHeaderWithoutId("it", []string{"c1", "c2", "num"}),
+						Header: NewHeader("it", []string{"c1", "c2", "num"}),
 						Records: []Record{
-							NewRecordWithoutId([]parser.Primary{
+							NewRecord([]parser.Primary{
 								parser.NewString("1"),
 								parser.NewString("str1"),
 								parser.NewInteger(1),
 							}),
-							NewRecordWithoutId([]parser.Primary{
+							NewRecord([]parser.Primary{
 								parser.NewString("2"),
 								parser.NewString("str2"),
 								parser.NewInteger(1),
 							}),
-							NewRecordWithoutId([]parser.Primary{
+							NewRecord([]parser.Primary{
 								parser.NewString("3"),
 								parser.NewString("str3"),
 								parser.NewInteger(1),
@@ -363,13 +363,13 @@ var viewLoadTests = []struct {
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table_sjis", []string{"column1", "column2"}),
+			Header: NewHeader("table_sjis", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("日本語"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str"),
 				}),
@@ -398,13 +398,13 @@ var viewLoadTests = []struct {
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table_noheader", []string{"c1", "c2"}),
+			Header: NewHeader("table_noheader", []string{"c1", "c2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
@@ -442,55 +442,55 @@ var viewLoadTests = []struct {
 				{Reference: "table2", Column: "column4", Number: 2, FromTable: true},
 			},
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 					parser.NewString("2"),
 					parser.NewString("str22"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 					parser.NewString("3"),
 					parser.NewString("str33"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 					parser.NewString("4"),
 					parser.NewString("str44"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 					parser.NewString("2"),
 					parser.NewString("str22"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 					parser.NewString("3"),
 					parser.NewString("str33"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 					parser.NewString("4"),
 					parser.NewString("str44"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 					parser.NewString("2"),
 					parser.NewString("str22"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 					parser.NewString("3"),
 					parser.NewString("str33"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 					parser.NewString("4"),
@@ -536,55 +536,55 @@ var viewLoadTests = []struct {
 				{Reference: "table2", Column: "column4", Number: 2, FromTable: true},
 			},
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 					parser.NewString("2"),
 					parser.NewString("str22"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 					parser.NewString("3"),
 					parser.NewString("str33"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 					parser.NewString("4"),
 					parser.NewString("str44"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 					parser.NewString("2"),
 					parser.NewString("str22"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 					parser.NewString("3"),
 					parser.NewString("str33"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 					parser.NewString("4"),
 					parser.NewString("str44"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 					parser.NewString("2"),
 					parser.NewString("str22"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 					parser.NewString("3"),
 					parser.NewString("str33"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 					parser.NewString("4"),
@@ -636,13 +636,13 @@ var viewLoadTests = []struct {
 				{Reference: "table2", Column: "column4", Number: 2, FromTable: true},
 			},
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 					parser.NewString("2"),
 					parser.NewString("str22"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 					parser.NewString("3"),
@@ -695,19 +695,19 @@ var viewLoadTests = []struct {
 				{Reference: "table2", Column: "column4", Number: 2, FromTable: true},
 			},
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 					parser.NewNull(),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 					parser.NewString("2"),
 					parser.NewString("str22"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 					parser.NewString("3"),
@@ -794,17 +794,17 @@ var viewLoadTests = []struct {
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("alias", []string{"column1", "column2"}),
+			Header: NewHeader("alias", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 				}),
@@ -952,7 +952,7 @@ func TestView_Load(t *testing.T) {
 func TestNewViewFromGroupedRecord(t *testing.T) {
 	fr := FilterRecord{
 		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 			Records: []Record{
 				{
 					NewGroupCell([]parser.Primary{parser.NewInteger(1), parser.NewInteger(2), parser.NewInteger(3)}),
@@ -964,7 +964,7 @@ func TestNewViewFromGroupedRecord(t *testing.T) {
 		RecordIndex: 0,
 	}
 	expect := &View{
-		Header: NewHeader("table1", []string{"column1", "column2"}),
+		Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 		Records: []Record{
 			{NewCell(parser.NewInteger(1)), NewCell(parser.NewInteger(1)), NewCell(parser.NewString("str1"))},
 			{NewCell(parser.NewInteger(2)), NewCell(parser.NewInteger(2)), NewCell(parser.NewString("str2"))},
@@ -988,17 +988,17 @@ var viewWhereTests = []struct {
 	{
 		Name: "Where",
 		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 				}),
@@ -1016,17 +1016,17 @@ var viewWhereTests = []struct {
 	{
 		Name: "Where Filter Error",
 		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 				}),
@@ -1076,24 +1076,24 @@ var viewGroupByTests = []struct {
 	{
 		Name: "Group By",
 		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2", "column3"}),
+			Header: NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 					parser.NewString("group1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 					parser.NewString("group2"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 					parser.NewString("group1"),
 				}),
-				NewRecord(4, []parser.Primary{
+				NewRecordWithId(4, []parser.Primary{
 					parser.NewString("4"),
 					parser.NewString("str4"),
 					parser.NewString("group2"),
@@ -1294,14 +1294,14 @@ var viewHavingTests = []struct {
 	{
 		Name: "Having Not Grouped",
 		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2", "column3"}),
+			Header: NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 					parser.NewString("group2"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("4"),
 					parser.NewString("str4"),
 					parser.NewString("group2"),
@@ -1378,7 +1378,7 @@ var viewSelectTests = []struct {
 				{Reference: "table2", Column: "column4", Number: 2, FromTable: true},
 			},
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(1),
 					parser.NewString("1"),
 					parser.NewString("str1"),
@@ -1386,7 +1386,7 @@ var viewSelectTests = []struct {
 					parser.NewString("2"),
 					parser.NewString("str22"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(1),
 					parser.NewString("1"),
 					parser.NewString("str1"),
@@ -1394,7 +1394,7 @@ var viewSelectTests = []struct {
 					parser.NewString("3"),
 					parser.NewString("str33"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(1),
 					parser.NewString("1"),
 					parser.NewString("str1"),
@@ -1402,7 +1402,7 @@ var viewSelectTests = []struct {
 					parser.NewString("1"),
 					parser.NewString("str44"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(2),
 					parser.NewString("2"),
 					parser.NewString("str2"),
@@ -1435,7 +1435,7 @@ var viewSelectTests = []struct {
 				{Column: "", Alias: "t21a"},
 			},
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(1),
 					parser.NewString("1"),
 					parser.NewString("str1"),
@@ -1446,7 +1446,7 @@ var viewSelectTests = []struct {
 					parser.NewString("str1"),
 					parser.NewString("2"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(1),
 					parser.NewString("1"),
 					parser.NewString("str1"),
@@ -1457,7 +1457,7 @@ var viewSelectTests = []struct {
 					parser.NewString("str1"),
 					parser.NewString("3"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(1),
 					parser.NewString("1"),
 					parser.NewString("str1"),
@@ -1468,7 +1468,7 @@ var viewSelectTests = []struct {
 					parser.NewString("str1"),
 					parser.NewString("1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(2),
 					parser.NewString("2"),
 					parser.NewString("str2"),
@@ -1495,7 +1495,7 @@ var viewSelectTests = []struct {
 				{Reference: "table2", Column: "column4", FromTable: true},
 			},
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(1),
 					parser.NewString("1"),
 					parser.NewString("str1"),
@@ -1503,7 +1503,7 @@ var viewSelectTests = []struct {
 					parser.NewString("2"),
 					parser.NewString("str22"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(1),
 					parser.NewString("1"),
 					parser.NewString("str1"),
@@ -1511,7 +1511,7 @@ var viewSelectTests = []struct {
 					parser.NewString("3"),
 					parser.NewString("str33"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(1),
 					parser.NewString("1"),
 					parser.NewString("str1"),
@@ -1519,7 +1519,7 @@ var viewSelectTests = []struct {
 					parser.NewString("4"),
 					parser.NewString("str44"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(2),
 					parser.NewString("2"),
 					parser.NewString("str2"),
@@ -1542,11 +1542,11 @@ var viewSelectTests = []struct {
 				{Column: "1", Alias: "a"},
 			},
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewInteger(1),
 				}),
@@ -1563,11 +1563,11 @@ var viewSelectTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
@@ -1613,11 +1613,11 @@ var viewSelectTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
@@ -1642,25 +1642,25 @@ var viewSelectTests = []struct {
 	{
 		Name: "Select Analytic Function",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(3),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(5),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(4),
 				}),
@@ -1702,27 +1702,27 @@ var viewSelectTests = []struct {
 				{Column: "row_number() over (partition by column1 order by column2)", Alias: "rownum"},
 			},
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(3),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(4),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(5),
 					parser.NewInteger(3),
@@ -1734,25 +1734,25 @@ var viewSelectTests = []struct {
 	{
 		Name: "Select Analytic Function Not Exist Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(3),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(5),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(4),
 				}),
@@ -1792,25 +1792,25 @@ var viewSelectTests = []struct {
 	{
 		Name: "Select Analytic Function Order Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(3),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(5),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(4),
 				}),
@@ -1850,25 +1850,25 @@ var viewSelectTests = []struct {
 	{
 		Name: "Select Analytic Function Partition Value Error",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(3),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(5),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(4),
 				}),
@@ -1908,25 +1908,25 @@ var viewSelectTests = []struct {
 	{
 		Name: "Select User Defined Analytic Function",
 		View: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(3),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(5),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(4),
 				}),
@@ -2012,27 +2012,27 @@ var viewSelectTests = []struct {
 				{Column: "useraggfunc(column2) over ()", Alias: "useraggfunc(column2) over ()"},
 			},
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(2),
 					parser.NewInteger(15),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(3),
 					parser.NewInteger(15),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(5),
 					parser.NewInteger(15),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("a"),
 					parser.NewInteger(1),
 					parser.NewInteger(15),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("b"),
 					parser.NewInteger(4),
 					parser.NewInteger(15),
@@ -2089,27 +2089,27 @@ var viewOrderByTests = []struct {
 				{Reference: "table1", Column: "column3", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("3"),
 					parser.NewString("2"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("4"),
 					parser.NewString("3"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("4"),
 					parser.NewString("3"),
 				}),
-				NewRecord(4, []parser.Primary{
+				NewRecordWithId(4, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("3"),
 					parser.NewNull(),
 				}),
-				NewRecord(5, []parser.Primary{
+				NewRecordWithId(5, []parser.Primary{
 					parser.NewNull(),
 					parser.NewString("2"),
 					parser.NewString("4"),
@@ -2142,31 +2142,31 @@ var viewOrderByTests = []struct {
 				{Column: "1"},
 			},
 			Records: []Record{
-				NewRecord(5, []parser.Primary{
+				NewRecordWithId(5, []parser.Primary{
 					parser.NewNull(),
 					parser.NewString("2"),
 					parser.NewString("4"),
 					parser.NewInteger(1),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("4"),
 					parser.NewString("3"),
 					parser.NewInteger(1),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("4"),
 					parser.NewString("3"),
 					parser.NewInteger(1),
 				}),
-				NewRecord(4, []parser.Primary{
+				NewRecordWithId(4, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("3"),
 					parser.NewNull(),
 					parser.NewInteger(1),
 				}),
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("3"),
 					parser.NewString("2"),
@@ -2184,23 +2184,23 @@ var viewOrderByTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("2"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("2"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewNull(),
 					parser.NewString("2"),
 				}),
-				NewRecord(4, []parser.Primary{
+				NewRecordWithId(4, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewNull(),
 				}),
-				NewRecord(5, []parser.Primary{
+				NewRecordWithId(5, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("2"),
 				}),
@@ -2225,23 +2225,23 @@ var viewOrderByTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(4, []parser.Primary{
+				NewRecordWithId(4, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewNull(),
 				}),
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("2"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("2"),
 				}),
-				NewRecord(5, []parser.Primary{
+				NewRecordWithId(5, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("2"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewNull(),
 					parser.NewString("2"),
 				}),
@@ -2290,23 +2290,23 @@ var viewLimitTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(4, []parser.Primary{
+				NewRecordWithId(4, []parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
-				NewRecord(4, []parser.Primary{
+				NewRecordWithId(4, []parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 				}),
@@ -2320,11 +2320,11 @@ var viewLimitTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
@@ -2340,23 +2340,23 @@ var viewLimitTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(4, []parser.Primary{
+				NewRecordWithId(4, []parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
-				NewRecord(4, []parser.Primary{
+				NewRecordWithId(4, []parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 				}),
@@ -2371,15 +2371,15 @@ var viewLimitTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
@@ -2396,19 +2396,19 @@ var viewLimitTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(4, []parser.Primary{
+				NewRecordWithId(4, []parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
-				NewRecord(4, []parser.Primary{
+				NewRecordWithId(4, []parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 				}),
@@ -2423,15 +2423,15 @@ var viewLimitTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(4, []parser.Primary{
+				NewRecordWithId(4, []parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
@@ -2448,23 +2448,23 @@ var viewLimitTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(4, []parser.Primary{
+				NewRecordWithId(4, []parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
-				NewRecord(4, []parser.Primary{
+				NewRecordWithId(4, []parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 				}),
@@ -2478,23 +2478,23 @@ var viewLimitTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(4, []parser.Primary{
+				NewRecordWithId(4, []parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
-				NewRecord(4, []parser.Primary{
+				NewRecordWithId(4, []parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 				}),
@@ -2510,23 +2510,23 @@ var viewLimitTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(4, []parser.Primary{
+				NewRecordWithId(4, []parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
-				NewRecord(4, []parser.Primary{
+				NewRecordWithId(4, []parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 				}),
@@ -2551,11 +2551,11 @@ var viewLimitTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
@@ -2569,11 +2569,11 @@ var viewLimitTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
@@ -2589,11 +2589,11 @@ var viewLimitTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
@@ -2611,11 +2611,11 @@ var viewLimitTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
@@ -2633,11 +2633,11 @@ var viewLimitTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
@@ -2662,11 +2662,11 @@ var viewLimitTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
@@ -2714,19 +2714,19 @@ var viewOffsetTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(4, []parser.Primary{
+				NewRecordWithId(4, []parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
@@ -2740,7 +2740,7 @@ var viewOffsetTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(4, []parser.Primary{
+				NewRecordWithId(4, []parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
@@ -2757,19 +2757,19 @@ var viewOffsetTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(4, []parser.Primary{
+				NewRecordWithId(4, []parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
@@ -2795,19 +2795,19 @@ var viewOffsetTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(4, []parser.Primary{
+				NewRecordWithId(4, []parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
@@ -2825,19 +2825,19 @@ var viewOffsetTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(3, []parser.Primary{
+				NewRecordWithId(3, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(4, []parser.Primary{
+				NewRecordWithId(4, []parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
@@ -2855,11 +2855,11 @@ var viewOffsetTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
@@ -2873,11 +2873,11 @@ var viewOffsetTests = []struct {
 				{Reference: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecord(1, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecord(2, []parser.Primary{
+				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
@@ -2937,24 +2937,24 @@ var viewInsertValuesTests = []struct {
 			},
 		},
 		Result: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(1),
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(2),
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewNull(),
 					parser.NewInteger(3),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewNull(),
 					parser.NewInteger(4),
 					parser.NewNull(),
@@ -3016,13 +3016,13 @@ var viewInsertValuesTests = []struct {
 
 func TestView_InsertValues(t *testing.T) {
 	view := &View{
-		Header: NewHeader("table1", []string{"column1", "column2"}),
+		Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 		Records: []Record{
-			NewRecord(1, []parser.Primary{
+			NewRecordWithId(1, []parser.Primary{
 				parser.NewString("1"),
 				parser.NewString("str1"),
 			}),
-			NewRecord(2, []parser.Primary{
+			NewRecordWithId(2, []parser.Primary{
 				parser.NewString("2"),
 				parser.NewString("str2"),
 			}),
@@ -3071,19 +3071,19 @@ var viewInsertFromQueryTests = []struct {
 			},
 		},
 		Result: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(1),
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(2),
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewNull(),
 					parser.NewInteger(3),
 					parser.NewNull(),
@@ -3129,13 +3129,13 @@ var viewInsertFromQueryTests = []struct {
 
 func TestView_InsertFromQuery(t *testing.T) {
 	view := &View{
-		Header: NewHeader("table1", []string{"column1", "column2"}),
+		Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 		Records: []Record{
-			NewRecord(1, []parser.Primary{
+			NewRecordWithId(1, []parser.Primary{
 				parser.NewString("1"),
 				parser.NewString("str1"),
 			}),
-			NewRecord(2, []parser.Primary{
+			NewRecordWithId(2, []parser.Primary{
 				parser.NewString("2"),
 				parser.NewString("str2"),
 			}),
@@ -3170,11 +3170,11 @@ func TestView_Fix(t *testing.T) {
 			{Reference: "table1", Column: "column2", FromTable: true},
 		},
 		Records: []Record{
-			NewRecord(1, []parser.Primary{
+			NewRecordWithId(1, []parser.Primary{
 				parser.NewString("1"),
 				parser.NewString("str1"),
 			}),
-			NewRecord(2, []parser.Primary{
+			NewRecordWithId(2, []parser.Primary{
 				parser.NewString("1"),
 				parser.NewString("str1"),
 			}),
@@ -3182,12 +3182,12 @@ func TestView_Fix(t *testing.T) {
 		selectFields: []int{2},
 	}
 	expect := &View{
-		Header: NewHeaderWithoutId("table1", []string{"column2"}),
+		Header: NewHeader("table1", []string{"column2"}),
 		Records: []Record{
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("str1"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("str1"),
 			}),
 		},
@@ -3207,19 +3207,19 @@ func TestView_Union(t *testing.T) {
 			{Reference: "table1", Column: "column2", FromTable: true},
 		},
 		Records: Records{
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("1"),
 				parser.NewString("str1"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("1"),
 				parser.NewString("str1"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("2"),
 				parser.NewString("str2"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("2"),
 				parser.NewString("str2"),
 			}),
@@ -3232,11 +3232,11 @@ func TestView_Union(t *testing.T) {
 			{Reference: "table2", Column: "column4", FromTable: true},
 		},
 		Records: Records{
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("2"),
 				parser.NewString("str2"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("3"),
 				parser.NewString("str3"),
 			}),
@@ -3249,15 +3249,15 @@ func TestView_Union(t *testing.T) {
 			{Reference: "table1", Column: "column2", FromTable: true},
 		},
 		Records: Records{
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("1"),
 				parser.NewString("str1"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("2"),
 				parser.NewString("str2"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("3"),
 				parser.NewString("str3"),
 			}),
@@ -3275,19 +3275,19 @@ func TestView_Union(t *testing.T) {
 			{Reference: "table1", Column: "column2", FromTable: true},
 		},
 		Records: Records{
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("1"),
 				parser.NewString("str1"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("1"),
 				parser.NewString("str1"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("2"),
 				parser.NewString("str2"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("2"),
 				parser.NewString("str2"),
 			}),
@@ -3300,27 +3300,27 @@ func TestView_Union(t *testing.T) {
 			{Reference: "table1", Column: "column2", FromTable: true},
 		},
 		Records: Records{
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("1"),
 				parser.NewString("str1"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("1"),
 				parser.NewString("str1"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("2"),
 				parser.NewString("str2"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("2"),
 				parser.NewString("str2"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("2"),
 				parser.NewString("str2"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("3"),
 				parser.NewString("str3"),
 			}),
@@ -3340,19 +3340,19 @@ func TestView_Except(t *testing.T) {
 			{Reference: "table1", Column: "column2", FromTable: true},
 		},
 		Records: Records{
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("1"),
 				parser.NewString("str1"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("1"),
 				parser.NewString("str1"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("2"),
 				parser.NewString("str2"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("2"),
 				parser.NewString("str2"),
 			}),
@@ -3365,11 +3365,11 @@ func TestView_Except(t *testing.T) {
 			{Reference: "table2", Column: "column4", FromTable: true},
 		},
 		Records: Records{
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("2"),
 				parser.NewString("str2"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("3"),
 				parser.NewString("str3"),
 			}),
@@ -3382,7 +3382,7 @@ func TestView_Except(t *testing.T) {
 			{Reference: "table1", Column: "column2", FromTable: true},
 		},
 		Records: Records{
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("1"),
 				parser.NewString("str1"),
 			}),
@@ -3400,19 +3400,19 @@ func TestView_Except(t *testing.T) {
 			{Reference: "table1", Column: "column2", FromTable: true},
 		},
 		Records: Records{
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("1"),
 				parser.NewString("str1"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("1"),
 				parser.NewString("str1"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("2"),
 				parser.NewString("str2"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("2"),
 				parser.NewString("str2"),
 			}),
@@ -3425,11 +3425,11 @@ func TestView_Except(t *testing.T) {
 			{Reference: "table1", Column: "column2", FromTable: true},
 		},
 		Records: Records{
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("1"),
 				parser.NewString("str1"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("1"),
 				parser.NewString("str1"),
 			}),
@@ -3449,19 +3449,19 @@ func TestView_Intersect(t *testing.T) {
 			{Reference: "table1", Column: "column2", FromTable: true},
 		},
 		Records: Records{
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("1"),
 				parser.NewString("str1"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("1"),
 				parser.NewString("str1"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("2"),
 				parser.NewString("str2"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("2"),
 				parser.NewString("str2"),
 			}),
@@ -3474,11 +3474,11 @@ func TestView_Intersect(t *testing.T) {
 			{Reference: "table2", Column: "column4", FromTable: true},
 		},
 		Records: Records{
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("2"),
 				parser.NewString("str2"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("3"),
 				parser.NewString("str3"),
 			}),
@@ -3491,7 +3491,7 @@ func TestView_Intersect(t *testing.T) {
 			{Reference: "table1", Column: "column2", FromTable: true},
 		},
 		Records: Records{
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("2"),
 				parser.NewString("str2"),
 			}),
@@ -3509,19 +3509,19 @@ func TestView_Intersect(t *testing.T) {
 			{Reference: "table1", Column: "column2", FromTable: true},
 		},
 		Records: Records{
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("1"),
 				parser.NewString("str1"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("1"),
 				parser.NewString("str1"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("2"),
 				parser.NewString("str2"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("2"),
 				parser.NewString("str2"),
 			}),
@@ -3534,11 +3534,11 @@ func TestView_Intersect(t *testing.T) {
 			{Reference: "table1", Column: "column2", FromTable: true},
 		},
 		Records: Records{
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("2"),
 				parser.NewString("str2"),
 			}),
-			NewRecordWithoutId([]parser.Primary{
+			NewRecord([]parser.Primary{
 				parser.NewString("2"),
 				parser.NewString("str2"),
 			}),
@@ -3638,11 +3638,11 @@ func TestView_FieldViewName(t *testing.T) {
 
 func TestView_InternalRecordId(t *testing.T) {
 	view := &View{
-		Header: NewHeader("table1", []string{"column1", "column2"}),
+		Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 		Records: []Record{
-			NewRecord(0, []parser.Primary{parser.NewInteger(1), parser.NewString("str1")}),
-			NewRecord(1, []parser.Primary{parser.NewInteger(2), parser.NewString("str2")}),
-			NewRecord(2, []parser.Primary{parser.NewInteger(3), parser.NewString("str3")}),
+			NewRecordWithId(0, []parser.Primary{parser.NewInteger(1), parser.NewString("str1")}),
+			NewRecordWithId(1, []parser.Primary{parser.NewInteger(2), parser.NewString("str2")}),
+			NewRecordWithId(2, []parser.Primary{parser.NewInteger(3), parser.NewString("str3")}),
 		},
 	}
 	ref := "table1"

@@ -112,10 +112,10 @@ var cursorMapListAddPseudoCursorTests = []struct {
 			{
 				"PCUR": &Cursor{
 					view: &View{
-						Header: NewHeaderWithoutId("", []string{"c1"}),
+						Header: NewHeader("", []string{"c1"}),
 						Records: Records{
-							NewRecordWithoutId([]parser.Primary{parser.NewInteger(1)}),
-							NewRecordWithoutId([]parser.Primary{parser.NewInteger(2)}),
+							NewRecord([]parser.Primary{parser.NewInteger(1)}),
+							NewRecord([]parser.Primary{parser.NewInteger(2)}),
 						},
 					},
 					index:    -1,
@@ -166,10 +166,10 @@ var cursorMapListDisposeTests = []struct {
 			{
 				"PCUR": &Cursor{
 					view: &View{
-						Header: NewHeaderWithoutId("", []string{"c1"}),
+						Header: NewHeader("", []string{"c1"}),
 						Records: Records{
-							NewRecordWithoutId([]parser.Primary{parser.NewInteger(1)}),
-							NewRecordWithoutId([]parser.Primary{parser.NewInteger(2)}),
+							NewRecord([]parser.Primary{parser.NewInteger(1)}),
+							NewRecord([]parser.Primary{parser.NewInteger(2)}),
 						},
 					},
 					index:    -1,
@@ -196,10 +196,10 @@ func TestCursorMapList_Dispose(t *testing.T) {
 		{
 			"PCUR": &Cursor{
 				view: &View{
-					Header: NewHeaderWithoutId("", []string{"c1"}),
+					Header: NewHeader("", []string{"c1"}),
 					Records: Records{
-						NewRecordWithoutId([]parser.Primary{parser.NewInteger(1)}),
-						NewRecordWithoutId([]parser.Primary{parser.NewInteger(2)}),
+						NewRecord([]parser.Primary{parser.NewInteger(1)}),
+						NewRecord([]parser.Primary{parser.NewInteger(2)}),
 					},
 				},
 				index:    -1,
@@ -246,10 +246,10 @@ var cursorMapListOpenTests = []struct {
 			{
 				"PCUR": &Cursor{
 					view: &View{
-						Header: NewHeaderWithoutId("", []string{"c1"}),
+						Header: NewHeader("", []string{"c1"}),
 						Records: Records{
-							NewRecordWithoutId([]parser.Primary{parser.NewInteger(1)}),
-							NewRecordWithoutId([]parser.Primary{parser.NewInteger(2)}),
+							NewRecord([]parser.Primary{parser.NewInteger(1)}),
+							NewRecord([]parser.Primary{parser.NewInteger(2)}),
 						},
 					},
 					index:    -1,
@@ -260,17 +260,17 @@ var cursorMapListOpenTests = []struct {
 				"CUR": &Cursor{
 					query: selectQueryForCursorTest,
 					view: &View{
-						Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+						Header: NewHeader("table1", []string{"column1", "column2"}),
 						Records: []Record{
-							NewRecordWithoutId([]parser.Primary{
+							NewRecord([]parser.Primary{
 								parser.NewString("1"),
 								parser.NewString("str1"),
 							}),
-							NewRecordWithoutId([]parser.Primary{
+							NewRecord([]parser.Primary{
 								parser.NewString("2"),
 								parser.NewString("str2"),
 							}),
-							NewRecordWithoutId([]parser.Primary{
+							NewRecord([]parser.Primary{
 								parser.NewString("3"),
 								parser.NewString("str3"),
 							}),
@@ -314,10 +314,10 @@ func TestCursorMapList_Open(t *testing.T) {
 		{
 			"PCUR": &Cursor{
 				view: &View{
-					Header: NewHeaderWithoutId("", []string{"c1"}),
+					Header: NewHeader("", []string{"c1"}),
 					Records: Records{
-						NewRecordWithoutId([]parser.Primary{parser.NewInteger(1)}),
-						NewRecordWithoutId([]parser.Primary{parser.NewInteger(2)}),
+						NewRecord([]parser.Primary{parser.NewInteger(1)}),
+						NewRecord([]parser.Primary{parser.NewInteger(2)}),
 					},
 				},
 				index:    -1,
@@ -366,10 +366,10 @@ var cursorMapListCloseTests = []struct {
 			{
 				"PCUR": &Cursor{
 					view: &View{
-						Header: NewHeaderWithoutId("", []string{"c1"}),
+						Header: NewHeader("", []string{"c1"}),
 						Records: Records{
-							NewRecordWithoutId([]parser.Primary{parser.NewInteger(1)}),
-							NewRecordWithoutId([]parser.Primary{parser.NewInteger(2)}),
+							NewRecord([]parser.Primary{parser.NewInteger(1)}),
+							NewRecord([]parser.Primary{parser.NewInteger(2)}),
 						},
 					},
 					index:    -1,
@@ -404,10 +404,10 @@ func TestCursorMapList_Close(t *testing.T) {
 		{
 			"PCUR": &Cursor{
 				view: &View{
-					Header: NewHeaderWithoutId("", []string{"c1"}),
+					Header: NewHeader("", []string{"c1"}),
 					Records: Records{
-						NewRecordWithoutId([]parser.Primary{parser.NewInteger(1)}),
-						NewRecordWithoutId([]parser.Primary{parser.NewInteger(2)}),
+						NewRecord([]parser.Primary{parser.NewInteger(1)}),
+						NewRecord([]parser.Primary{parser.NewInteger(2)}),
 					},
 				},
 				index:    -1,
@@ -765,10 +765,10 @@ var cursorMapAddPseudoCursorTests = []struct {
 		Result: CursorMap{
 			"PCUR": &Cursor{
 				view: &View{
-					Header: NewHeaderWithoutId("", []string{"c1"}),
+					Header: NewHeader("", []string{"c1"}),
 					Records: Records{
-						NewRecordWithoutId([]parser.Primary{parser.NewInteger(1)}),
-						NewRecordWithoutId([]parser.Primary{parser.NewInteger(2)}),
+						NewRecord([]parser.Primary{parser.NewInteger(1)}),
+						NewRecord([]parser.Primary{parser.NewInteger(2)}),
 					},
 				},
 				index:    -1,
@@ -818,10 +818,10 @@ var cursorMapDisposeTests = []struct {
 		Result: CursorMap{
 			"PCUR": &Cursor{
 				view: &View{
-					Header: NewHeaderWithoutId("", []string{"c1"}),
+					Header: NewHeader("", []string{"c1"}),
 					Records: Records{
-						NewRecordWithoutId([]parser.Primary{parser.NewInteger(1)}),
-						NewRecordWithoutId([]parser.Primary{parser.NewInteger(2)}),
+						NewRecord([]parser.Primary{parser.NewInteger(1)}),
+						NewRecord([]parser.Primary{parser.NewInteger(2)}),
 					},
 				},
 				index:    -1,
@@ -888,17 +888,17 @@ var cursorMapOpenTests = []struct {
 			"CUR": &Cursor{
 				query: selectQueryForCursorTest,
 				view: &View{
-					Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+					Header: NewHeader("table1", []string{"column1", "column2"}),
 					Records: []Record{
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("1"),
 							parser.NewString("str1"),
 						}),
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("2"),
 							parser.NewString("str2"),
 						}),
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("3"),
 							parser.NewString("str3"),
 						}),
@@ -918,10 +918,10 @@ var cursorMapOpenTests = []struct {
 			},
 			"PCUR": &Cursor{
 				view: &View{
-					Header: NewHeaderWithoutId("", []string{"c1"}),
+					Header: NewHeader("", []string{"c1"}),
 					Records: Records{
-						NewRecordWithoutId([]parser.Primary{parser.NewInteger(1)}),
-						NewRecordWithoutId([]parser.Primary{parser.NewInteger(2)}),
+						NewRecord([]parser.Primary{parser.NewInteger(1)}),
+						NewRecord([]parser.Primary{parser.NewInteger(2)}),
 					},
 				},
 				index:    -1,
@@ -1008,10 +1008,10 @@ var cursorMapCloseTests = []struct {
 			},
 			"PCUR": &Cursor{
 				view: &View{
-					Header: NewHeaderWithoutId("", []string{"c1"}),
+					Header: NewHeader("", []string{"c1"}),
 					Records: Records{
-						NewRecordWithoutId([]parser.Primary{parser.NewInteger(1)}),
-						NewRecordWithoutId([]parser.Primary{parser.NewInteger(2)}),
+						NewRecord([]parser.Primary{parser.NewInteger(1)}),
+						NewRecord([]parser.Primary{parser.NewInteger(2)}),
 					},
 				},
 				index:    -1,

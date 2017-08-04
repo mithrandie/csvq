@@ -393,7 +393,7 @@ var declareTableTests = []struct {
 					Temporary:      true,
 					InitialRecords: Records{},
 				},
-				Header:  NewHeaderWithoutId("tbl", []string{"column1", "column2"}),
+				Header:  NewHeader("tbl", []string{"column1", "column2"}),
 				Records: Records{},
 			},
 		},
@@ -434,15 +434,15 @@ var declareTableTests = []struct {
 					Path:      "tbl",
 					Temporary: true,
 					InitialRecords: Records{
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewInteger(1),
 							parser.NewInteger(2),
 						}),
 					},
 				},
-				Header: NewHeaderWithoutId("tbl", []string{"column1", "column2"}),
+				Header: NewHeader("tbl", []string{"column1", "column2"}),
 				Records: Records{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewInteger(1),
 						parser.NewInteger(2),
 					}),
@@ -638,11 +638,11 @@ var selectTests = []struct {
 				},
 			},
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewInteger(2),
 				}),
@@ -683,21 +683,21 @@ var selectTests = []struct {
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("4"),
 					parser.NewString("str4"),
 				}),
@@ -738,13 +738,13 @@ var selectTests = []struct {
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 				}),
@@ -785,9 +785,9 @@ var selectTests = []struct {
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
@@ -832,21 +832,21 @@ var selectTests = []struct {
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("4"),
 					parser.NewString("str4"),
 				}),
@@ -996,9 +996,9 @@ var selectTests = []struct {
 			},
 		},
 		Result: &View{
-			Header: NewHeaderWithoutId("it", []string{"c1"}),
+			Header: NewHeader("it", []string{"c1"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(2),
 				}),
 			},
@@ -1143,13 +1143,13 @@ var selectTests = []struct {
 				},
 			},
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(1),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(2),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(3),
 				}),
 			},
@@ -1336,25 +1336,25 @@ var insertTests = []struct {
 				Encoding:  cmd.UTF8,
 				LineBreak: cmd.LF,
 			},
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(4),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(2),
 					parser.NewNull(),
 				}),
@@ -1370,25 +1370,25 @@ var insertTests = []struct {
 					Encoding:  cmd.UTF8,
 					LineBreak: cmd.LF,
 				},
-				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+				Header: NewHeader("table1", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("3"),
 						parser.NewString("str3"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewInteger(4),
 						parser.NewNull(),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewInteger(2),
 						parser.NewNull(),
 					}),
@@ -1430,21 +1430,21 @@ var insertTests = []struct {
 				Delimiter: ',',
 				Temporary: true,
 			},
-			Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2"}),
+			Header: NewHeader("tmpview", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(4),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(2),
 					parser.NewNull(),
 				}),
@@ -1454,21 +1454,21 @@ var insertTests = []struct {
 		TempViewList: TemporaryViewMapList{
 			ViewMap{
 				"TMPVIEW": &View{
-					Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2"}),
+					Header: NewHeader("tmpview", []string{"column1", "column2"}),
 					Records: []Record{
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("1"),
 							parser.NewString("str1"),
 						}),
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("2"),
 							parser.NewString("str2"),
 						}),
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewInteger(4),
 							parser.NewNull(),
 						}),
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewInteger(2),
 							parser.NewNull(),
 						}),
@@ -1517,25 +1517,25 @@ var insertTests = []struct {
 				Encoding:  cmd.UTF8,
 				LineBreak: cmd.LF,
 			},
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(4),
 					parser.NewString("str4"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(5),
 					parser.NewString("str5"),
 				}),
@@ -1635,29 +1635,29 @@ var insertTests = []struct {
 				Encoding:  cmd.UTF8,
 				LineBreak: cmd.LF,
 			},
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str22"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str33"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("4"),
 					parser.NewString("str44"),
 				}),
@@ -1702,13 +1702,13 @@ func TestInsert(t *testing.T) {
 	filter.TempViewsList = TemporaryViewMapList{
 		ViewMap{
 			"TMPVIEW": &View{
-				Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2"}),
+				Header: NewHeader("tmpview", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 					}),
@@ -1831,17 +1831,17 @@ var updateTests = []struct {
 					Encoding:  cmd.UTF8,
 					LineBreak: cmd.LF,
 				},
-				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+				Header: NewHeader("table1", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("update"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("3"),
 						parser.NewString("str3"),
 					}),
@@ -1858,17 +1858,17 @@ var updateTests = []struct {
 					Encoding:  cmd.UTF8,
 					LineBreak: cmd.LF,
 				},
-				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+				Header: NewHeader("table1", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("update"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("3"),
 						parser.NewString("str3"),
 					}),
@@ -1899,13 +1899,13 @@ var updateTests = []struct {
 					Delimiter: ',',
 					Temporary: true,
 				},
-				Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2"}),
+				Header: NewHeader("tmpview", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("update"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("update"),
 					}),
@@ -1916,13 +1916,13 @@ var updateTests = []struct {
 		TempViewList: TemporaryViewMapList{
 			ViewMap{
 				"TMPVIEW": &View{
-					Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2"}),
+					Header: NewHeader("tmpview", []string{"column1", "column2"}),
 					Records: []Record{
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("1"),
 							parser.NewString("update"),
 						}),
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("2"),
 							parser.NewString("update"),
 						}),
@@ -1982,17 +1982,17 @@ var updateTests = []struct {
 					Encoding:  cmd.UTF8,
 					LineBreak: cmd.LF,
 				},
-				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+				Header: NewHeader("table1", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str22"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("3"),
 						parser.NewString("str33"),
 					}),
@@ -2215,13 +2215,13 @@ func TestUpdate(t *testing.T) {
 	filter.TempViewsList = TemporaryViewMapList{
 		ViewMap{
 			"TMPVIEW": &View{
-				Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2"}),
+				Header: NewHeader("tmpview", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 					}),
@@ -2341,13 +2341,13 @@ var deleteTests = []struct {
 					Encoding:  cmd.UTF8,
 					LineBreak: cmd.LF,
 				},
-				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+				Header: NewHeader("table1", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("3"),
 						parser.NewString("str3"),
 					}),
@@ -2364,13 +2364,13 @@ var deleteTests = []struct {
 					Encoding:  cmd.UTF8,
 					LineBreak: cmd.LF,
 				},
-				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+				Header: NewHeader("table1", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("3"),
 						parser.NewString("str3"),
 					}),
@@ -2406,9 +2406,9 @@ var deleteTests = []struct {
 					Delimiter: ',',
 					Temporary: true,
 				},
-				Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2"}),
+				Header: NewHeader("tmpview", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
@@ -2419,9 +2419,9 @@ var deleteTests = []struct {
 		TempViewList: TemporaryViewMapList{
 			ViewMap{
 				"TMPVIEW": &View{
-					Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2"}),
+					Header: NewHeader("tmpview", []string{"column1", "column2"}),
 					Records: []Record{
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("1"),
 							parser.NewString("str1"),
 						}),
@@ -2474,9 +2474,9 @@ var deleteTests = []struct {
 					Encoding:  cmd.UTF8,
 					LineBreak: cmd.LF,
 				},
-				Header: NewHeaderWithoutId("table1", []string{"column1", "column2"}),
+				Header: NewHeader("table1", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
@@ -2596,13 +2596,13 @@ func TestDelete(t *testing.T) {
 	filter.TempViewsList = TemporaryViewMapList{
 		ViewMap{
 			"TMPVIEW": &View{
-				Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2"}),
+				Header: NewHeader("tmpview", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 					}),
@@ -2672,7 +2672,7 @@ var createTableTests = []struct {
 				Encoding:  cmd.UTF8,
 				LineBreak: cmd.LF,
 			},
-			Header: NewHeaderWithoutId("create_table_1", []string{"column1", "column2"}),
+			Header: NewHeader("create_table_1", []string{"column1", "column2"}),
 		},
 		ViewCache: ViewMap{
 			strings.ToUpper(GetTestFilePath("create_table_1.csv")): &View{
@@ -2683,7 +2683,7 @@ var createTableTests = []struct {
 					Encoding:  cmd.UTF8,
 					LineBreak: cmd.LF,
 				},
-				Header: NewHeaderWithoutId("create_table_1", []string{"column1", "column2"}),
+				Header: NewHeader("create_table_1", []string{"column1", "column2"}),
 			},
 		},
 	},
@@ -2771,21 +2771,21 @@ var addColumnsTests = []struct {
 				Encoding:  cmd.UTF8,
 				LineBreak: cmd.LF,
 			},
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column2", "column3", "column4"}),
+			Header: NewHeader("table1", []string{"column1", "column2", "column3", "column4"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 					parser.NewNull(),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 					parser.NewNull(),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 					parser.NewNull(),
@@ -2803,21 +2803,21 @@ var addColumnsTests = []struct {
 					Encoding:  cmd.UTF8,
 					LineBreak: cmd.LF,
 				},
-				Header: NewHeaderWithoutId("table1", []string{"column1", "column2", "column3", "column4"}),
+				Header: NewHeader("table1", []string{"column1", "column2", "column3", "column4"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 						parser.NewNull(),
 						parser.NewNull(),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 						parser.NewNull(),
 						parser.NewNull(),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("3"),
 						parser.NewString("str3"),
 						parser.NewNull(),
@@ -2847,15 +2847,15 @@ var addColumnsTests = []struct {
 				Delimiter: ',',
 				Temporary: true,
 			},
-			Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2", "column3", "column4"}),
+			Header: NewHeader("tmpview", []string{"column1", "column2", "column3", "column4"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 					parser.NewNull(),
 					parser.NewNull(),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 					parser.NewNull(),
@@ -2867,15 +2867,15 @@ var addColumnsTests = []struct {
 		TempViewList: TemporaryViewMapList{
 			ViewMap{
 				"TMPVIEW": &View{
-					Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2", "column3", "column4"}),
+					Header: NewHeader("tmpview", []string{"column1", "column2", "column3", "column4"}),
 					Records: []Record{
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("1"),
 							parser.NewString("str1"),
 							parser.NewNull(),
 							parser.NewNull(),
 						}),
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("2"),
 							parser.NewString("str2"),
 							parser.NewNull(),
@@ -2918,21 +2918,21 @@ var addColumnsTests = []struct {
 				Encoding:  cmd.UTF8,
 				LineBreak: cmd.LF,
 			},
-			Header: NewHeaderWithoutId("table1", []string{"column3", "column4", "column1", "column2"}),
+			Header: NewHeader("table1", []string{"column3", "column4", "column1", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(2),
 					parser.NewInteger(1),
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(2),
 					parser.NewInteger(1),
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewInteger(2),
 					parser.NewInteger(1),
 					parser.NewString("3"),
@@ -2968,21 +2968,21 @@ var addColumnsTests = []struct {
 				Encoding:  cmd.UTF8,
 				LineBreak: cmd.LF,
 			},
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column3", "column4", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column3", "column4", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewNull(),
 					parser.NewInteger(1),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewNull(),
 					parser.NewInteger(1),
 					parser.NewString("str2"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewNull(),
 					parser.NewInteger(1),
@@ -3018,21 +3018,21 @@ var addColumnsTests = []struct {
 				Encoding:  cmd.UTF8,
 				LineBreak: cmd.LF,
 			},
-			Header: NewHeaderWithoutId("table1", []string{"column1", "column3", "column4", "column2"}),
+			Header: NewHeader("table1", []string{"column1", "column3", "column4", "column2"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewNull(),
 					parser.NewInteger(1),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewNull(),
 					parser.NewInteger(1),
 					parser.NewString("str2"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewNull(),
 					parser.NewInteger(1),
@@ -3119,13 +3119,13 @@ func TestAddColumns(t *testing.T) {
 	filter.TempViewsList = TemporaryViewMapList{
 		ViewMap{
 			"TMPVIEW": &View{
-				Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2"}),
+				Header: NewHeader("tmpview", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 					}),
@@ -3194,15 +3194,15 @@ var dropColumnsTests = []struct {
 				Encoding:  cmd.UTF8,
 				LineBreak: cmd.LF,
 			},
-			Header: NewHeaderWithoutId("table1", []string{"column1"}),
+			Header: NewHeader("table1", []string{"column1"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 				}),
 			},
@@ -3217,15 +3217,15 @@ var dropColumnsTests = []struct {
 					Encoding:  cmd.UTF8,
 					LineBreak: cmd.LF,
 				},
-				Header: NewHeaderWithoutId("table1", []string{"column1"}),
+				Header: NewHeader("table1", []string{"column1"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("3"),
 					}),
 				},
@@ -3247,12 +3247,12 @@ var dropColumnsTests = []struct {
 				Delimiter: ',',
 				Temporary: true,
 			},
-			Header: NewHeaderWithoutId("tmpview", []string{"column1"}),
+			Header: NewHeader("tmpview", []string{"column1"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 				}),
 			},
@@ -3261,12 +3261,12 @@ var dropColumnsTests = []struct {
 		TempViewList: TemporaryViewMapList{
 			ViewMap{
 				"TMPVIEW": &View{
-					Header: NewHeaderWithoutId("tmpview", []string{"column1"}),
+					Header: NewHeader("tmpview", []string{"column1"}),
 					Records: []Record{
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("1"),
 						}),
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("2"),
 						}),
 					},
@@ -3310,13 +3310,13 @@ func TestDropColumns(t *testing.T) {
 	filter.TempViewsList = TemporaryViewMapList{
 		ViewMap{
 			"TMPVIEW": &View{
-				Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2"}),
+				Header: NewHeader("tmpview", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 					}),
@@ -3385,17 +3385,17 @@ var renameColumnTests = []struct {
 				Encoding:  cmd.UTF8,
 				LineBreak: cmd.LF,
 			},
-			Header: NewHeaderWithoutId("table1", []string{"column1", "newcolumn"}),
+			Header: NewHeader("table1", []string{"column1", "newcolumn"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("3"),
 					parser.NewString("str3"),
 				}),
@@ -3411,17 +3411,17 @@ var renameColumnTests = []struct {
 					Encoding:  cmd.UTF8,
 					LineBreak: cmd.LF,
 				},
-				Header: NewHeaderWithoutId("table1", []string{"column1", "newcolumn"}),
+				Header: NewHeader("table1", []string{"column1", "newcolumn"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("3"),
 						parser.NewString("str3"),
 					}),
@@ -3443,13 +3443,13 @@ var renameColumnTests = []struct {
 				Delimiter: ',',
 				Temporary: true,
 			},
-			Header: NewHeaderWithoutId("tmpview", []string{"column1", "newcolumn"}),
+			Header: NewHeader("tmpview", []string{"column1", "newcolumn"}),
 			Records: []Record{
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("1"),
 					parser.NewString("str1"),
 				}),
-				NewRecordWithoutId([]parser.Primary{
+				NewRecord([]parser.Primary{
 					parser.NewString("2"),
 					parser.NewString("str2"),
 				}),
@@ -3459,13 +3459,13 @@ var renameColumnTests = []struct {
 		TempViewList: TemporaryViewMapList{
 			ViewMap{
 				"TMPVIEW": &View{
-					Header: NewHeaderWithoutId("tmpview", []string{"column1", "newcolumn"}),
+					Header: NewHeader("tmpview", []string{"column1", "newcolumn"}),
 					Records: []Record{
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("1"),
 							parser.NewString("str1"),
 						}),
-						NewRecordWithoutId([]parser.Primary{
+						NewRecord([]parser.Primary{
 							parser.NewString("2"),
 							parser.NewString("str2"),
 						}),
@@ -3517,13 +3517,13 @@ func TestRenameColumn(t *testing.T) {
 	filter.TempViewsList = TemporaryViewMapList{
 		ViewMap{
 			"TMPVIEW": &View{
-				Header: NewHeaderWithoutId("tmpview", []string{"column1", "column2"}),
+				Header: NewHeader("tmpview", []string{"column1", "column2"}),
 				Records: []Record{
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("1"),
 						parser.NewString("str1"),
 					}),
-					NewRecordWithoutId([]parser.Primary{
+					NewRecord([]parser.Primary{
 						parser.NewString("2"),
 						parser.NewString("str2"),
 					}),
