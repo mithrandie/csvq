@@ -9,6 +9,3 @@ kramdown:
   syntax_highlighter: rouge
 
 permalink: none
-
-gems:
-  - jekyll-sitemap
