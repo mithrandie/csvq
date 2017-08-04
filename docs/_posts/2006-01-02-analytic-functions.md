@@ -11,19 +11,22 @@ Analytic Functions can be used only in [Select Clause]({{ '/reference/select-que
 
 | name | description |
 | :- | :- |
-| [ROW_NUMBER](#row_number)   | Return sequential numbers |
-| [RANK](#rank)               | Return ranks |
-| [DENSE_RANK](#dense_rank)   | Return ranks without any gaps in the ranking |
-| [FIRST_VALUE](#first_value) | Return the first value |
-| [LAST_VALUE](#last_value)   | Return the last value |
-| [LAG](#lag)                 | Return the difference of current row and previous row |
-| [LEAD](#lead)               | Return the difference of current row and following row |
-| [COUNT](#count)             | Return the number of values |
-| [MIN](#min)                 | Return the minimum value |
-| [MAX](#max)                 | Return the maximum value |
-| [SUM](#sum)                 | Return the sum of values |
-| [AVG](#avg)                 | Return the average of values |
-| [LISTAGG](#listagg)         | Return the concatenated string of values |
+| [ROW_NUMBER](#row_number)     | Return the sequential numbers |
+| [RANK](#rank)                 | Return the ranks |
+| [DENSE_RANK](#dense_rank)     | Return the ranks without any gaps in the ranking |
+| [CUME_DIST](#cume_dist)       | Return the cumulative distributions |
+| [PERCENT_RANK](#percent_rank) | Return the relative ranks |
+| [FIRST_VALUE](#first_value)   | Return the first value |
+| [LAST_VALUE](#last_value)     | Return the last value |
+| [LAG](#lag)                   | Return the difference of current row and previous row |
+| [LEAD](#lead)                 | Return the difference of current row and following row |
+| [COUNT](#count)               | Return the number of values |
+| [MIN](#min)                   | Return the minimum value |
+| [MAX](#max)                   | Return the maximum value |
+| [SUM](#sum)                   | Return the sum of values |
+| [AVG](#avg)                   | Return the average of values |
+| [MEDIAN](#median)             | Return the median of values |
+| [LISTAGG](#listagg)           | Return the concatenated string of values |
 
 ## Basic Syntax
 {: #syntax}
@@ -66,7 +69,7 @@ _order_by_clause_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return sequential numbers of records in a group.
+Returns the sequential numbers of records in a group.
 
 
 ### RANK
@@ -85,7 +88,7 @@ _order_by_clause_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return ranks of records in a group.
+Returns the ranks of records in a group.
 
 
 ### DENSE_RANK
@@ -104,7 +107,47 @@ _order_by_clause_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return ranks of records without any gaps in the ranking in a group.
+Returns the ranks of records without any gaps in the ranking in a group.
+
+
+### CUME_DIST
+{: #cume_dist}
+
+```
+CUME_DIST() OVER ([partition_clause] [order_by_clause])
+```
+
+_partition_clause_
+: [Partition Clause](#syntax)
+
+_order_by_clause_
+: [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
+
+_return_
+: [float]({{ '/reference/value.html#float' | relative_url }})
+
+Returns the cumulative distributions in a group.
+The return value is greater than 0 and less than or equal to 1.
+
+
+### PERCENT_RANK
+{: #percent_rank}
+
+```
+PERCENT_RANK() OVER ([partition_clause] [order_by_clause])
+```
+
+_partition_clause_
+: [Partition Clause](#syntax)
+
+_order_by_clause_
+: [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
+
+_return_
+: [float]({{ '/reference/value.html#float' | relative_url }})
+
+Returns the relative ranks in a group.
+The return value is greater than or equal to 0 and less than or equal to 1.
 
 
 ### FIRST_VALUE
@@ -126,8 +169,8 @@ _order_by_clause_
 _return_
 : [primitive value]({{ '/reference/value.html#primitive_types' | relative_url }})
 
-Return the first value in a group.
-If _IGNORE NULLS_ keywords are specified, then return the first value that is not a null.
+Returns the first value in a group.
+If _IGNORE NULLS_ keywords are specified, then returns the first value that is not a null.
 
 
 ### LAST_VALUE
@@ -149,8 +192,8 @@ _order_by_clause_
 _return_
 : [primitive value]({{ '/reference/value.html#primitive_types' | relative_url }})
 
-Return the last value in a group.
-If _IGNORE NULLS_ keywords are specified, then return the last value that is not a null.
+Returns the last value in a group.
+If _IGNORE NULLS_ keywords are specified, then returns the last value that is not a null.
 
 
 ### LAG
@@ -183,7 +226,7 @@ _order_by_clause_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the difference of current row and previous row.
+Returns the difference of current row and previous row.
 If _IGNORE NULLS_ keywords are specified, then rows that _expr_ values are nulls are skipped. 
 
 
@@ -217,7 +260,7 @@ _order_by_clause_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the difference of current row and following row.
+Returns the difference of current row and following row.
 If _IGNORE NULLS_ keywords are specified, then rows that _expr_ values are nulls are skipped. 
 
 
@@ -255,7 +298,7 @@ _order_by_clause_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the number of all values including null values.
+Returns the number of all values including null values.
 
 
 ### MIN
@@ -278,7 +321,7 @@ _return_
 : [primitive value]({{ '/reference/value.html#primitive_types' | relative_url }})
 
 Returns the minimum value of non-null values of _expr_.
-If all values are null, return null.
+If all values are null, then returns a null.
 
 
 ### MAX
@@ -301,7 +344,7 @@ _return_
 : [primitive value]({{ '/reference/value.html#primitive_types' | relative_url }})
 
 Returns the maximum value of non-null values of _expr_.
-If all values are null, return null.
+If all values are null, then returns a null.
 
 
 ### SUM
@@ -323,8 +366,8 @@ _order_by_clause_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Returns the sum of non-null values of _expr_.
-If all values are null, return null.
+Returns the sum of float values of _expr_.
+If all values are null, then returns a null.
 
 
 ### AVG
@@ -346,8 +389,34 @@ _order_by_clause_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Returns the average of non-null values of _expr_.
-If all values are null, return null.
+Returns the average of float values of _expr_.
+If all values are null, then returns a null.
+
+
+### MEDIAN
+{: #median}
+
+```
+MEDIAN([DISTINCT] expr) OVER ([partition_clause] [order by clause])
+```
+
+_expr_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+_partition_clause_
+: [Partition Clause](#syntax)
+
+_order_by_clause_
+: [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
+
+_return_
+: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+Returns the median of float or datetime values of _expr_.
+If all values are null, then returns a null.
+
+Even if _expr_ values are datetime values, the _MEDIAN_ function returns a float or integer value.
+The return value can be converted to a datetime value by using the [DATETIME function]({{ '/reference/cast-functions.html#datetime' | relative_url }}).
 
 
 ### LISTAGG
@@ -370,6 +439,6 @@ _order_by_clause_
 : [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
 
 Return the string result with the concatenated non-null values of _expr_.
-If all values are null, return null.
+If all values are null, then returns a null.
 
 Separator string _separator_ is placed between values. Empty string is the default.

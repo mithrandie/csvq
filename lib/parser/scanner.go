@@ -47,6 +47,7 @@ var aggregateFunctions = []string{
 	"MAX",
 	"SUM",
 	"AVG",
+	"MEDIAN",
 }
 
 var functionsWithAdditinals = []string{

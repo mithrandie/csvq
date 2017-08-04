@@ -1,6 +1,7 @@
 package query
 
 import (
+	"sort"
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/parser"
@@ -8,11 +9,12 @@ import (
 )
 
 var AggregateFunctions = map[string]func([]parser.Primary) parser.Primary{
-	"COUNT": Count,
-	"MAX":   Max,
-	"MIN":   Min,
-	"SUM":   Sum,
-	"AVG":   Avg,
+	"COUNT":  Count,
+	"MAX":    Max,
+	"MIN":    Min,
+	"SUM":    Sum,
+	"AVG":    Avg,
+	"MEDIAN": Median,
 }
 
 func Count(list []parser.Primary) parser.Primary {
@@ -110,6 +112,37 @@ func Avg(list []parser.Primary) parser.Primary {
 
 	avg := sum / float64(count)
 	return parser.Float64ToPrimary(avg)
+}
+
+func Median(list []parser.Primary) parser.Primary {
+	var values []float64
+
+	for _, v := range list {
+		if f := parser.PrimaryToFloat(v); !parser.IsNull(f) {
+			values = append(values, f.(parser.Float).Value())
+			continue
+		}
+		if d := parser.PrimaryToDatetime(v); !parser.IsNull(d) {
+			values = append(values, float64(d.(parser.Datetime).Value().UnixNano())/float64(1000000000))
+			continue
+		}
+	}
+
+	if len(values) < 1 {
+		return parser.NewNull()
+	}
+
+	sort.Float64s(values)
+
+	var median float64
+	if len(values)%2 == 1 {
+		idx := ((len(values) + 1) / 2) - 1
+		median = values[idx]
+	} else {
+		idx := (len(values) / 2) - 1
+		median = (values[idx] + values[idx+1]) / float64(2)
+	}
+	return parser.Float64ToPrimary(median)
 }
 
 func ListAgg(list []parser.Primary, separator string) parser.Primary {

@@ -3,6 +3,7 @@ package query
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/mithrandie/csvq/lib/parser"
 )
@@ -153,6 +154,56 @@ func TestAvg(t *testing.T) {
 		r := Avg(v.List)
 		if !reflect.DeepEqual(r, v.Result) {
 			t.Errorf("avg list = %s: result = %s, want %s", v.List, r, v.Result)
+		}
+	}
+}
+
+var medianTests = []aggregateTests{
+	{
+		List: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(4),
+			parser.NewInteger(6),
+			parser.NewNull(),
+			parser.NewInteger(1),
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewNull(),
+		},
+		Result: parser.NewFloat(1.5),
+	},
+	{
+		List: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(4),
+			parser.NewInteger(6),
+			parser.NewNull(),
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewNull(),
+		},
+		Result: parser.NewInteger(2),
+	},
+	{
+		List: []parser.Primary{
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
+			parser.NewDatetime(time.Date(2012, 2, 5, 9, 18, 15, 0, GetTestLocation())),
+		},
+		Result: parser.NewInteger(time.Date(2012, 2, 4, 9, 18, 15, 0, GetTestLocation()).Unix()),
+	},
+	{
+		List: []parser.Primary{
+			parser.NewNull(),
+		},
+		Result: parser.NewNull(),
+	},
+}
+
+func TestMedian(t *testing.T) {
+	for _, v := range medianTests {
+		r := Median(v.List)
+		if !reflect.DeepEqual(r, v.Result) {
+			t.Errorf("median list = %s: result = %s, want %s", v.List, r, v.Result)
 		}
 	}
 }

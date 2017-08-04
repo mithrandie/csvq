@@ -14,19 +14,22 @@ var defineAnalyticFunctions sync.Once
 func DefineAnalyticFunctions() {
 	defineAnalyticFunctions.Do(func() {
 		AnalyticFunctions = map[string]func(*View, parser.AnalyticFunction) error{
-			"ROW_NUMBER":  RowNumber,
-			"RANK":        Rank,
-			"DENSE_RANK":  DenseRank,
-			"FIRST_VALUE": FirstValue,
-			"LAST_VALUE":  LastValue,
-			"COUNT":       AnalyzeAggregateValue,
-			"MIN":         AnalyzeAggregateValue,
-			"MAX":         AnalyzeAggregateValue,
-			"SUM":         AnalyzeAggregateValue,
-			"AVG":         AnalyzeAggregateValue,
-			"LISTAGG":     AnalyzeListAgg,
-			"LAG":         AnalyzeLag,
-			"LEAD":        AnalyzeLag,
+			"ROW_NUMBER":   RowNumber,
+			"RANK":         Rank,
+			"DENSE_RANK":   DenseRank,
+			"CUME_DIST":    CumeDist,
+			"PERCENT_RANK": PercentRank,
+			"FIRST_VALUE":  FirstValue,
+			"LAST_VALUE":   LastValue,
+			"COUNT":        AnalyzeAggregateValue,
+			"MIN":          AnalyzeAggregateValue,
+			"MAX":          AnalyzeAggregateValue,
+			"SUM":          AnalyzeAggregateValue,
+			"AVG":          AnalyzeAggregateValue,
+			"MEDIAN":       AnalyzeAggregateValue,
+			"LISTAGG":      AnalyzeListAgg,
+			"LAG":          AnalyzeLag,
+			"LEAD":         AnalyzeLag,
 		}
 	})
 }
@@ -218,6 +221,105 @@ func DenseRank(view *View, fn parser.AnalyticFunction) error {
 		return 0, replaceRank
 	}
 	return analyzeRank(view, fn, nextRank)
+}
+
+func analyzeCumulativeValue(view *View, fn parser.AnalyticFunction, calcFn func(float64, float64, int) (float64, float64)) error {
+	if fn.Args != nil {
+		return NewFunctionArgumentLengthError(fn, fn.Name, []int{0})
+	}
+
+	type part struct {
+		*partitionBase
+		total         float64
+		recordIndices [][]int
+	}
+
+	var newPart = func(pvalues []parser.Primary, ovalues []parser.Primary, rowidx int) part {
+		return part{
+			partitionBase: NewPartitionBase(pvalues, ovalues),
+			total:         1,
+			recordIndices: [][]int{{rowidx}},
+		}
+	}
+
+	var calcNext = func(partition partition, orderValues []parser.Primary, idx int) partition {
+		p := partition.(part)
+
+		replaceRecordIndices := p.recordIndices
+		if partition.isSameRank(orderValues) {
+			lastIdx := len(replaceRecordIndices) - 1
+			replaceRecordIndices[lastIdx] = append(replaceRecordIndices[lastIdx], idx)
+		} else {
+			p.partitionBase.orderValues = orderValues
+			replaceRecordIndices = append(replaceRecordIndices, []int{idx})
+		}
+
+		return part{
+			partitionBase: p.partitionBase,
+			total:         p.total + 1,
+			recordIndices: replaceRecordIndices,
+		}
+	}
+
+	partitions := partitionList{}
+
+	filter := NewFilterForSequentialEvaluation(view, view.Filter)
+	for i := range view.Records {
+		filter.Records[0].RecordIndex = i
+		partitionValues, err := filter.evalValues(fn.AnalyticClause.PartitionValues())
+		if err != nil {
+			return err
+		}
+
+		orderValues, err := filter.evalValues(fn.AnalyticClause.OrderValues())
+		if err != nil {
+			return err
+		}
+
+		var idx int
+		if idx = partitions.searchIndex(partitionValues); -1 < idx {
+			partitions.replace(idx, calcNext(partitions[idx], orderValues, i))
+		} else {
+			partitions = append(partitions, newPart(partitionValues, orderValues, i))
+		}
+	}
+
+	for _, partition := range partitions {
+		var cumulative float64 = 0
+
+		for _, records := range partition.(part).recordIndices {
+			var dist float64
+			dist, cumulative = calcFn(cumulative, partition.(part).total, len(records))
+
+			for _, idx := range records {
+				view.Records[idx] = append(view.Records[idx], NewCell(parser.NewFloat(dist)))
+			}
+		}
+	}
+
+	return nil
+}
+
+func CumeDist(view *View, fn parser.AnalyticFunction) error {
+	var calcDist = func(cumulative float64, total float64, ties int) (float64, float64) {
+		cumulative += float64(ties)
+		dist := cumulative / total
+		return dist, cumulative
+	}
+	return analyzeCumulativeValue(view, fn, calcDist)
+}
+
+func PercentRank(view *View, fn parser.AnalyticFunction) error {
+	var calcDist = func(cumulative float64, total float64, ties int) (float64, float64) {
+		denom := total - 1
+		var dist float64 = 1
+		if 0 < denom {
+			dist = cumulative / denom
+		}
+		cumulative += float64(ties)
+		return dist, cumulative
+	}
+	return analyzeCumulativeValue(view, fn, calcDist)
 }
 
 func analyzeUniqueValue(view *View, fn parser.AnalyticFunction, compareFn func(parser.Primary, parser.Primary, bool) parser.Primary) error {
