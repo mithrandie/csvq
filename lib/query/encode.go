@@ -81,6 +81,7 @@ var rightToLeftTable = &unicode.RangeTable{
 		{0x0860, 0x086f, 1}, //Syriac Supplement
 		{0x08a0, 0x08ff, 1}, //Arabic Extended-A
 		{0x200f, 0x200f, 1}, //Right-To-Left Mark
+		{0x202b, 0x202b, 1}, //Right-To-Left Embedding
 		{0x202e, 0x202e, 1}, //Right-To-Left Override
 		{0xfb50, 0xfdff, 1}, //Arabic Presentation Forms-A
 		{0xfe70, 0xfeff, 1}, //Arabic Presentation Forms-B
