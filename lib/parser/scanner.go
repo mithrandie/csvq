@@ -53,6 +53,7 @@ var aggregateFunctions = []string{
 var functionsWithIgnoreNulls = []string{
 	"FIRST_VALUE",
 	"LAST_VALUE",
+	"NTH_VALUE",
 	"LAG",
 	"LEAD",
 }

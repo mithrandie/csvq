@@ -1214,6 +1214,128 @@ func TestPercentRank_Execute(t *testing.T) {
 	testAnalyticFunctionExecute(t, PercentRank{}, percentRankExecuteTests)
 }
 
+var nTileCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{
+	{
+		Name: "NTile CheckArgsLen Error",
+		Function: parser.AnalyticFunction{
+			Name: "ntile",
+		},
+		Error: "[L:- C:-] function ntile takes exactly 1 argument",
+	},
+}
+
+func TestNTile_CheckArgsLen(t *testing.T) {
+	testAnalyticFunctionCheckArgsLenTests(t, NTile{}, nTileCheckArgsLenTests)
+}
+
+var ntileValueExecuteTests = []analyticFunctionExecuteTests{
+	{
+		Name: "NTile Execute",
+		Items: PartitionItemList{
+			{RecordIndex: 1},
+			{RecordIndex: 2},
+			{RecordIndex: 3},
+			{RecordIndex: 4},
+			{RecordIndex: 5},
+			{RecordIndex: 6},
+			{RecordIndex: 7},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "ntile",
+			Args: []parser.Expression{
+				parser.NewInteger(3),
+			},
+		},
+		Result: map[int]parser.Primary{
+			1: parser.NewInteger(1),
+			2: parser.NewInteger(1),
+			3: parser.NewInteger(1),
+			4: parser.NewInteger(2),
+			5: parser.NewInteger(2),
+			6: parser.NewInteger(3),
+			7: parser.NewInteger(3),
+		},
+	},
+	{
+		Name: "NTile Execute Greater Tile Number",
+		Items: PartitionItemList{
+			{RecordIndex: 1},
+			{RecordIndex: 2},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "ntile",
+			Args: []parser.Expression{
+				parser.NewInteger(3),
+			},
+		},
+		Result: map[int]parser.Primary{
+			1: parser.NewInteger(1),
+			2: parser.NewInteger(2),
+		},
+	},
+	{
+		Name: "NTile Execute Argument Evaluation Error",
+		Items: PartitionItemList{
+			{RecordIndex: 1},
+			{RecordIndex: 2},
+			{RecordIndex: 3},
+			{RecordIndex: 4},
+			{RecordIndex: 5},
+			{RecordIndex: 6},
+			{RecordIndex: 7},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "ntile",
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+			},
+		},
+		Error: "[L:- C:-] the first argument must be an integer for function ntile",
+	},
+	{
+		Name: "NTile Execute Argument Type Error",
+		Items: PartitionItemList{
+			{RecordIndex: 1},
+			{RecordIndex: 2},
+			{RecordIndex: 3},
+			{RecordIndex: 4},
+			{RecordIndex: 5},
+			{RecordIndex: 6},
+			{RecordIndex: 7},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "ntile",
+			Args: []parser.Expression{
+				parser.NewNull(),
+			},
+		},
+		Error: "[L:- C:-] the first argument must be an integer for function ntile",
+	},
+	{
+		Name: "NTile Execute Argument Value Error",
+		Items: PartitionItemList{
+			{RecordIndex: 1},
+			{RecordIndex: 2},
+			{RecordIndex: 3},
+			{RecordIndex: 4},
+			{RecordIndex: 5},
+			{RecordIndex: 6},
+			{RecordIndex: 7},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "ntile",
+			Args: []parser.Expression{
+				parser.NewInteger(0),
+			},
+		},
+		Error: "[L:- C:-] the first argument must be greater than 0 for function ntile",
+	},
+}
+
+func TestNTile_Execute(t *testing.T) {
+	testAnalyticFunctionExecute(t, NTile{}, ntileValueExecuteTests)
+}
+
 var firstValueCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{
 	{
 		Name: "FirstValue CheckArgsLen Error",
@@ -1370,6 +1492,110 @@ var lastValueExecuteTests = []analyticFunctionExecuteTests{
 
 func TestLastValue_Execute(t *testing.T) {
 	testAnalyticFunctionExecute(t, LastValue{}, lastValueExecuteTests)
+}
+
+var nthValueCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{
+	{
+		Name: "NthValue CheckArgsLen Error",
+		Function: parser.AnalyticFunction{
+			Name: "nth_value",
+		},
+		Error: "[L:- C:-] function nth_value takes exactly 2 arguments",
+	},
+}
+
+func TestNthValue_CheckArgsLen(t *testing.T) {
+	testAnalyticFunctionCheckArgsLenTests(t, NthValue{}, nthValueCheckArgsLenTests)
+}
+
+var nthValueExecuteTests = []analyticFunctionExecuteTests{
+	{
+		Name: "NthValue Execute",
+		Items: PartitionItemList{
+			{RecordIndex: 2},
+			{RecordIndex: 3},
+			{RecordIndex: 4},
+			{RecordIndex: 5},
+			{RecordIndex: 6},
+			{RecordIndex: 7},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "nth_value",
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				parser.NewInteger(2),
+			},
+		},
+		Result: map[int]parser.Primary{
+			2: parser.NewInteger(200),
+			3: parser.NewInteger(200),
+			4: parser.NewInteger(200),
+			5: parser.NewInteger(200),
+			6: parser.NewInteger(200),
+			7: parser.NewInteger(200),
+		},
+	},
+	{
+		Name: "NthValue Execute Second Argument Evaluation Error",
+		Items: PartitionItemList{
+			{RecordIndex: 2},
+			{RecordIndex: 3},
+			{RecordIndex: 4},
+			{RecordIndex: 5},
+			{RecordIndex: 6},
+			{RecordIndex: 7},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "nth_value",
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+			},
+		},
+		Error: "[L:- C:-] the second argument must be an integer for function nth_value",
+	},
+	{
+		Name: "NthValue Execute Second Argument Type Error",
+		Items: PartitionItemList{
+			{RecordIndex: 2},
+			{RecordIndex: 3},
+			{RecordIndex: 4},
+			{RecordIndex: 5},
+			{RecordIndex: 6},
+			{RecordIndex: 7},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "nth_value",
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				parser.NewNull(),
+			},
+		},
+		Error: "[L:- C:-] the second argument must be an integer for function nth_value",
+	},
+	{
+		Name: "NthValue Execute Second Argument Value Error",
+		Items: PartitionItemList{
+			{RecordIndex: 2},
+			{RecordIndex: 3},
+			{RecordIndex: 4},
+			{RecordIndex: 5},
+			{RecordIndex: 6},
+			{RecordIndex: 7},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "nth_value",
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				parser.NewInteger(0),
+			},
+		},
+		Error: "[L:- C:-] the second argument must be greater than 0 for function nth_value",
+	},
+}
+
+func TestNthValue_Execute(t *testing.T) {
+	testAnalyticFunctionExecute(t, NthValue{}, nthValueExecuteTests)
 }
 
 var lagCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{

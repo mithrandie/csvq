@@ -16,8 +16,10 @@ Analytic Functions can be used only in [Select Clause]({{ '/reference/select-que
 | [DENSE_RANK](#dense_rank)     | Return the ranks without any gaps in the ranking |
 | [CUME_DIST](#cume_dist)       | Return the cumulative distributions |
 | [PERCENT_RANK](#percent_rank) | Return the relative ranks |
+| [NTILE](#ntile)               | Return the number of the group |
 | [FIRST_VALUE](#first_value)   | Return the first value |
 | [LAST_VALUE](#last_value)     | Return the last value |
+| [NTH_VALUE](#nth_value)       | Return the n-th value |
 | [LAG](#lag)                   | Return the value in a previous row |
 | [LEAD](#lead)                 | Return the value in a following row |
 | [COUNT](#count)               | Return the number of values |
@@ -150,6 +152,28 @@ Returns the relative ranks in a group.
 The return value is greater than or equal to 0 and less than or equal to 1.
 
 
+### NTILE
+{: #ntile}
+
+```
+NTILE(number_of_groups) OVER ([partition_clause] [order_by_clause])
+```
+
+_number_of_groups_
+: [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+_partition_clause_
+: [Partition Clause](#syntax)
+
+_order_by_clause_
+: [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
+
+_return_
+: [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+The NTILE function splits the records into _number_of_groups_ groups, then returns the sequential numbers of the groups.
+
+
 ### FIRST_VALUE
 {: #first_value}
 
@@ -194,6 +218,32 @@ _return_
 
 Returns the last value in a group.
 If _IGNORE NULLS_ keywords are specified, then returns the last value that is not a null.
+
+
+### NTH_VALUE
+{: #nth_value}
+
+```
+NTH_VALUE(expr, n) [IGNORE NULLS] OVER ([partition_clause] [order by clause])
+```
+
+_expr_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+_n_
+: [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+_partition_clause_
+: [Partition Clause](#syntax)
+
+_order_by_clause_
+: [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
+
+_return_
+: [primitive type]({{ '/reference/value.html#primitive_types' | relative_url }})
+
+Returns the _n_-th value in a group.
+If _IGNORE NULLS_ keywords are specified, then returns the _n_-th value excluding null values.
 
 
 ### LAG

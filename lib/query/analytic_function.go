@@ -13,8 +13,10 @@ var AnalyticFunctions map[string]AnalyticFunction = map[string]AnalyticFunction{
 	"DENSE_RANK":   DenseRank{},
 	"CUME_DIST":    CumeDist{},
 	"PERCENT_RANK": PercentRank{},
+	"NTILE":        NTile{},
 	"FIRST_VALUE":  FirstValue{},
 	"LAST_VALUE":   LastValue{},
+	"NTH_VALUE":    NthValue{},
 	"LAG":          Lag{},
 	"LEAD":         Lead{},
 	"LISTAGG":      AnalyticListAgg{},
@@ -352,6 +354,63 @@ func perseCumulativeGroups(items PartitionItemList) [][]int {
 	return groups
 }
 
+type NTile struct{}
+
+func (fn NTile) CheckArgsLen(expr parser.AnalyticFunction) error {
+	return CheckArgsLen(expr, []int{1})
+}
+
+func (fn NTile) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter Filter) (map[int]parser.Primary, error) {
+	argsFilter := filter
+	argsFilter.Records = nil
+
+	tileNumber := 0
+	p, err := argsFilter.Evaluate(expr.Args[0])
+	if err != nil {
+		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the first argument must be an integer")
+	}
+	i := parser.PrimaryToInteger(p)
+	if parser.IsNull(i) {
+		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the first argument must be an integer")
+	}
+	tileNumber = int(i.(parser.Integer).Value())
+	if tileNumber < 1 {
+		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the first argument must be greater than 0")
+	}
+
+	total := len(items)
+	perTile := total / tileNumber
+	mod := total % tileNumber
+
+	if perTile < 1 {
+		perTile = 1
+		mod = 0
+	}
+
+	list := make(map[int]parser.Primary, len(items))
+	var tile int64 = 1
+	var count int = 0
+	for _, item := range items {
+		count++
+
+		switch {
+		case perTile+1 < count:
+			tile++
+			count = 1
+		case perTile+1 == count:
+			if 0 < mod {
+				mod--
+			} else {
+				tile++
+				count = 1
+			}
+		}
+		list[item.RecordIndex] = parser.NewInteger(tile)
+	}
+
+	return list, nil
+}
+
 type FirstValue struct{}
 
 func (fn FirstValue) CheckArgsLen(expr parser.AnalyticFunction) error {
@@ -359,7 +418,7 @@ func (fn FirstValue) CheckArgsLen(expr parser.AnalyticFunction) error {
 }
 
 func (fn FirstValue) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter Filter) (map[int]parser.Primary, error) {
-	return searchFirstValue(items, expr, filter)
+	return setNthValue(items, expr, filter, 1)
 }
 
 type LastValue struct{}
@@ -369,25 +428,58 @@ func (fn LastValue) CheckArgsLen(expr parser.AnalyticFunction) error {
 }
 
 func (fn LastValue) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter Filter) (map[int]parser.Primary, error) {
-	return searchFirstValue(items.Reverse(), expr, filter)
+	return setNthValue(items.Reverse(), expr, filter, 1)
 }
 
-func searchFirstValue(items PartitionItemList, expr parser.AnalyticFunction, filter Filter) (map[int]parser.Primary, error) {
+type NthValue struct{}
+
+func (fn NthValue) CheckArgsLen(expr parser.AnalyticFunction) error {
+	return CheckArgsLen(expr, []int{2})
+}
+
+func (fn NthValue) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter Filter) (map[int]parser.Primary, error) {
+	argsFilter := filter
+	argsFilter.Records = nil
+
+	n := 0
+	p, err := argsFilter.Evaluate(expr.Args[1])
+	if err != nil {
+		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be an integer")
+	}
+	pi := parser.PrimaryToInteger(p)
+	if parser.IsNull(pi) {
+		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be an integer")
+	}
+	n = int(pi.(parser.Integer).Value())
+	if n < 1 {
+		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be greater than 0")
+	}
+
+	return setNthValue(items, expr, filter, n)
+}
+
+func setNthValue(items PartitionItemList, expr parser.AnalyticFunction, filter Filter, n int) (map[int]parser.Primary, error) {
 	var value parser.Primary = parser.NewNull()
 
-	for _, item := range items {
-		filter.Records[0].RecordIndex = item.RecordIndex
-		p, err := filter.Evaluate(expr.Args[0])
-		if err != nil {
-			return nil, err
-		}
+	count := 0
+	if n <= len(items) {
+		for _, item := range items {
+			filter.Records[0].RecordIndex = item.RecordIndex
+			p, err := filter.Evaluate(expr.Args[0])
+			if err != nil {
+				return nil, err
+			}
 
-		if expr.IgnoreNulls && parser.IsNull(p) {
-			continue
-		}
+			if expr.IgnoreNulls && parser.IsNull(p) {
+				continue
+			}
 
-		value = p
-		break
+			count++
+			if count == n {
+				value = p
+				break
+			}
+		}
 	}
 
 	list := make(map[int]parser.Primary, len(items))
