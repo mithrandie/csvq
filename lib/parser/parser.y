@@ -168,7 +168,7 @@ package parser
 %token<token> TIES NULLS
 %token<token> ERROR
 %token<token> COUNT LISTAGG
-%token<token> AGGREGATE_FUNCTION FUNCTION_WITH_ADDITIONALS
+%token<token> AGGREGATE_FUNCTION FUNCTION_WITH_INS
 %token<token> COMPARISON_OP STRING_OP SUBSTITUTION_OP
 %token<token> UMINUS UPLUS
 %token<token> ';' '*' '=' '-' '+' '!' '(' ')'
@@ -1298,13 +1298,13 @@ analytic_function
     {
         $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
     }
-    | FUNCTION_WITH_ADDITIONALS '(' arguments ')' OVER '(' analytic_clause ')'
+    | FUNCTION_WITH_INS '(' arguments ')' OVER '(' analytic_clause ')'
     {
         $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3, Over: $5.Literal, AnalyticClause: $7.(AnalyticClause)}
     }
-    | FUNCTION_WITH_ADDITIONALS '(' arguments IGNORE NULLS ')' OVER '(' analytic_clause ')'
+    | FUNCTION_WITH_INS '(' arguments ')' IGNORE NULLS OVER '(' analytic_clause ')'
     {
-        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3, IgnoreNulls: true, IgnoreNullsLit: $4.Literal + " " + $5.Literal, Over: $7.Literal, AnalyticClause: $9.(AnalyticClause)}
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3, IgnoreNulls: true, IgnoreNullsLit: $5.Literal + " " + $6.Literal, Over: $7.Literal, AnalyticClause: $9.(AnalyticClause)}
     }
 
 analytic_clause
@@ -1692,7 +1692,7 @@ identifier
     {
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }
-    | FUNCTION_WITH_ADDITIONALS
+    | FUNCTION_WITH_INS
     {
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }

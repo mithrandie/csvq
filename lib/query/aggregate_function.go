@@ -8,7 +8,9 @@ import (
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
-var AggregateFunctions = map[string]func([]parser.Primary) parser.Primary{
+type AggregateFunction func([]parser.Primary) parser.Primary
+
+var AggregateFunctions = map[string]AggregateFunction{
 	"COUNT":  Count,
 	"MAX":    Max,
 	"MIN":    Min,

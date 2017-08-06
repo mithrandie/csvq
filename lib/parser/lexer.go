@@ -27,7 +27,7 @@ func (l *Lexer) Error(e string) {
 		var lit string
 		if TOKEN_FROM <= l.token.Token && l.token.Token <= ERROR {
 			lit = TokenLiteral(l.token.Token)
-		} else if COUNT <= l.token.Token && l.token.Token <= FUNCTION_WITH_ADDITIONALS {
+		} else if COUNT <= l.token.Token && l.token.Token <= FUNCTION_WITH_INS {
 			lit = TokenLiteral(IDENTIFIER)
 		} else {
 			lit = l.token.Literal

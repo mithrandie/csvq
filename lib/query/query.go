@@ -22,7 +22,7 @@ const (
 type OperationType int
 
 const (
-	INSERT        OperationType = iota
+	INSERT OperationType = iota
 	UPDATE
 	DELETE
 	CREATE_TABLE
@@ -72,8 +72,6 @@ func Execute(input string, sourceFile string) (string, string, error) {
 		return "", "", NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)
 	}
 
-	Init()
-
 	proc := NewProcedure()
 	flow, err := proc.Execute(statements)
 
@@ -82,10 +80,6 @@ func Execute(input string, sourceFile string) (string, string, error) {
 	}
 
 	return ReadLog(), ReadSelectLog(), err
-}
-
-func Init() {
-	DefineAnalyticFunctions()
 }
 
 func FetchCursor(name parser.Identifier, fetchPosition parser.Expression, vars []parser.Variable, filter Filter) (bool, error) {
