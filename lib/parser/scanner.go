@@ -50,7 +50,7 @@ var aggregateFunctions = []string{
 	"MEDIAN",
 }
 
-var functionsWithAdditinals = []string{
+var functionsWithIgnoreNulls = []string{
 	"FIRST_VALUE",
 	"LAST_VALUE",
 	"LAG",
@@ -189,8 +189,8 @@ func (s *Scanner) Scan() (Token, error) {
 			token = rune(t)
 		} else if s.isAggregateFunctions(literal) {
 			token = AGGREGATE_FUNCTION
-		} else if s.isFunctionsWithAdditionals(literal) {
-			token = FUNCTION_WITH_ADDITIONALS
+		} else if s.isFunctionsWithIgnoreNulls(literal) {
+			token = FUNCTION_WITH_INS
 		} else {
 			token = IDENTIFIER
 		}
@@ -335,8 +335,8 @@ func (s *Scanner) isAggregateFunctions(str string) bool {
 	return false
 }
 
-func (s *Scanner) isFunctionsWithAdditionals(str string) bool {
-	for _, v := range functionsWithAdditinals {
+func (s *Scanner) isFunctionsWithIgnoreNulls(str string) bool {
+	for _, v := range functionsWithIgnoreNulls {
 		if strings.EqualFold(v, str) {
 			return true
 		}

@@ -688,9 +688,11 @@ func (view *View) evalColumn(obj parser.Expression, column string, alias string)
 
 func (view *View) evalAnalyticFunction(expr parser.AnalyticFunction) error {
 	name := strings.ToUpper(expr.Name)
-	if _, ok := AnalyticFunctions[name]; !ok {
-		if udfn, err := view.Filter.FunctionsList.Get(expr, expr.Name); err != nil || !udfn.IsAggregate {
-			return NewFunctionNotExistError(expr, expr.Name)
+	if _, ok := AggregateFunctions[name]; !ok {
+		if _, ok := AnalyticFunctions[name]; !ok {
+			if udfn, err := view.Filter.FunctionsList.Get(expr, expr.Name); err != nil || !udfn.IsAggregate {
+				return NewFunctionNotExistError(expr, expr.Name)
+			}
 		}
 	}
 
@@ -701,10 +703,7 @@ func (view *View) evalAnalyticFunction(expr parser.AnalyticFunction) error {
 		}
 	}
 
-	if fn, ok := AnalyticFunctions[name]; ok {
-		return fn(view, expr)
-	}
-	return AnalyzeAggregateValue(view, expr)
+	return Analyze(view, expr)
 }
 
 func (view *View) Offset(clause parser.OffsetClause) error {
@@ -940,7 +939,7 @@ func (view *View) Intersect(calcView *View, all bool) {
 	}
 }
 
-func (view *View) ListValuesForAggregateFunctions(expr parser.Expression, arg parser.Expression, filter Filter) ([]parser.Primary, error) {
+func (view *View) ListValuesForAggregateFunctions(expr parser.Expression, arg parser.Expression, distinct bool, filter Filter) ([]parser.Primary, error) {
 	list := make([]parser.Primary, view.RecordLen())
 	f := NewFilterForSequentialEvaluation(view, filter)
 	for i := 0; i < view.RecordLen(); i++ {
@@ -954,6 +953,30 @@ func (view *View) ListValuesForAggregateFunctions(expr parser.Expression, arg pa
 		}
 		list[i] = p
 	}
+
+	if distinct {
+		list = Distinguish(list)
+	}
+
+	return list, nil
+}
+
+func (view *View) ListValuesForAnalyticFunctions(fn parser.AnalyticFunction, partitionItems PartitionItemList) ([]parser.Primary, error) {
+	list := make([]parser.Primary, len(partitionItems))
+	f := NewFilterForSequentialEvaluation(view, view.Filter)
+	for i, item := range partitionItems {
+		f.Records[0].RecordIndex = item.RecordIndex
+		value, err := f.Evaluate(fn.Args[0])
+		if err != nil {
+			return nil, err
+		}
+		list[i] = value
+	}
+
+	if fn.IsDistinct() {
+		list = Distinguish(list)
+	}
+
 	return list, nil
 }
 

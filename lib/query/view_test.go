@@ -1848,64 +1848,6 @@ var viewSelectTests = []struct {
 		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
-		Name: "Select Analytic Function Partition Value Error",
-		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
-				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(3),
-				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(5),
-				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
-				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(4),
-				}),
-			},
-		},
-		Select: parser.SelectClause{
-			Fields: []parser.Expression{
-				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
-				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
-				parser.Field{
-					Object: parser.AnalyticFunction{
-						Name: "row_number",
-						Over: "over",
-						AnalyticClause: parser.AnalyticClause{
-							Partition: parser.Partition{
-								PartitionBy: "partition by",
-								Values: []parser.Expression{
-									parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-								},
-							},
-							OrderByClause: parser.OrderByClause{
-								OrderBy: "order by",
-								Items: []parser.Expression{
-									parser.OrderItem{
-										Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-									},
-								},
-							},
-						},
-					},
-					Alias: parser.Identifier{Literal: "rownum"},
-				},
-			},
-		},
-		Error: "[L:- C:-] field notexist does not exist",
-	},
-	{
 		Name: "Select User Defined Analytic Function",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
@@ -2044,8 +1986,6 @@ var viewSelectTests = []struct {
 }
 
 func TestView_Select(t *testing.T) {
-	DefineAnalyticFunctions()
-
 	for _, v := range viewSelectTests {
 		err := v.View.Select(v.Select)
 		if err != nil {

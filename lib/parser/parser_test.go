@@ -2202,7 +2202,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select first_value(column1 ignore nulls) over (partition by column1 order by column2)",
+		Input: "select first_value(column1) ignore nulls over (partition by column1 order by column2)",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{

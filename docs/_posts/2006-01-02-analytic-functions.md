@@ -18,8 +18,8 @@ Analytic Functions can be used only in [Select Clause]({{ '/reference/select-que
 | [PERCENT_RANK](#percent_rank) | Return the relative ranks |
 | [FIRST_VALUE](#first_value)   | Return the first value |
 | [LAST_VALUE](#last_value)     | Return the last value |
-| [LAG](#lag)                   | Return the difference of current row and previous row |
-| [LEAD](#lead)                 | Return the difference of current row and following row |
+| [LAG](#lag)                   | Return the value in a previous row |
+| [LEAD](#lead)                 | Return the value in a following row |
 | [COUNT](#count)               | Return the number of values |
 | [MIN](#min)                   | Return the minimum value |
 | [MAX](#max)                   | Return the maximum value |
@@ -154,7 +154,7 @@ The return value is greater than or equal to 0 and less than or equal to 1.
 {: #first_value}
 
 ```
-FIRST_VALUE(expr [IGNORE NULLS]) OVER ([partition_clause] [order_by_clause])
+FIRST_VALUE(expr) [IGNORE NULLS] OVER ([partition_clause] [order_by_clause])
 ```
 
 _expr_
@@ -177,7 +177,7 @@ If _IGNORE NULLS_ keywords are specified, then returns the first value that is n
 {: #last_value}
 
 ```
-LAST_VALUE(expr [IGNORE NULLS]) OVER ([partition_clause] [order by clause])
+LAST_VALUE(expr) [IGNORE NULLS] OVER ([partition_clause] [order by clause])
 ```
 
 _expr_
@@ -200,7 +200,7 @@ If _IGNORE NULLS_ keywords are specified, then returns the last value that is no
 {: #lag}
 
 ```
-LAG(expr [, offset [, default]] [IGNORE NULLS]) OVER ([partition_clause] [order by clause])
+LAG(expr [, offset [, default]]) [IGNORE NULLS] OVER ([partition_clause] [order by clause])
 ```
 
 _expr_
@@ -214,7 +214,7 @@ _offset_
 _default_
 : [value]({{ '/reference/value.html' | relative_url }})
 
-  The value to set when the offset row does not exist or the difference cannot be calculated.
+  The value to set when the offset row does not exist.
   The default is NULL.
 
 _partition_clause_
@@ -226,7 +226,7 @@ _order_by_clause_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Returns the difference of current row and previous row.
+Returns the value in a previous row.
 If _IGNORE NULLS_ keywords are specified, then rows that _expr_ values are nulls are skipped. 
 
 
@@ -234,7 +234,7 @@ If _IGNORE NULLS_ keywords are specified, then rows that _expr_ values are nulls
 {: #lead}
 
 ```
-LEAD(expr [, offset [, default]] [IGNORE NULLS]) OVER ([partition_clause] [order by clause])
+LEAD(expr [, offset [, default]]) [IGNORE NULLS] OVER ([partition_clause] [order by clause])
 ```
 
 _expr_
@@ -248,7 +248,7 @@ _offset_
 _default_
 : [value]({{ '/reference/value.html' | relative_url }})
 
-  The value to set when the offset row does not exist or the difference cannot be calculated.
+  The value to set when the offset row does not exist.
   The default is NULL.
 
 _partition_clause_
@@ -260,7 +260,7 @@ _order_by_clause_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Returns the difference of current row and following row.
+Returns the value in a following row.
 If _IGNORE NULLS_ keywords are specified, then rows that _expr_ values are nulls are skipped. 
 
 

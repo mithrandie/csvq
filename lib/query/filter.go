@@ -581,12 +581,9 @@ func (f Filter) evalAggregateFunction(expr parser.AggregateFunction) (parser.Pri
 	}
 
 	view := NewViewFromGroupedRecord(f.Records[0])
-	list, err := view.ListValuesForAggregateFunctions(expr, listExpr, f)
+	list, err := view.ListValuesForAggregateFunctions(expr, listExpr, expr.IsDistinct(), f)
 	if err != nil {
 		return nil, err
-	}
-	if expr.IsDistinct() {
-		list = Distinguish(list)
 	}
 
 	if useUserDefined {
@@ -639,12 +636,9 @@ func (f Filter) evalListAgg(expr parser.ListAgg) (parser.Primary, error) {
 		}
 	}
 
-	list, err := view.ListValuesForAggregateFunctions(expr, expr.Args[0], f)
+	list, err := view.ListValuesForAggregateFunctions(expr, expr.Args[0], expr.IsDistinct(), f)
 	if err != nil {
 		return nil, err
-	}
-	if expr.IsDistinct() {
-		list = Distinguish(list)
 	}
 
 	return ListAgg(list, separator), nil
