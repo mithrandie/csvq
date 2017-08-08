@@ -17,7 +17,6 @@ const (
 	ERROR_READ_FILE                         = "failed to read from file: %s"
 	ERROR_WRITE_FILE                        = "failed to write to file: %s"
 	ERROR_WRITE_FILE_IN_AUTOCOMMIT          = "[Auto-Commit] failed to write to file: %s"
-	ERROR_UNPERMITTED_WILDCARD              = "wildcard '*' cannot be passed as a argument to the %s function"
 	ERROR_FIELD_AMBIGUOUS                   = "field %s is ambiguous"
 	ERROR_FIELD_NOT_EXIST                   = "field %s does not exist"
 	ERROR_FIELD_NOT_GROUP_KEY               = "field %s is not a group key"
@@ -208,21 +207,11 @@ func NewAutoCommitError(message string) error {
 	}
 }
 
-type UnpermittedWildCardError struct {
-	*BaseError
-}
-
-func NewUnpermittedWildCardError(expr parser.AllColumns, funcname string) error {
-	return &UnpermittedWildCardError{
-		NewBaseError(expr, fmt.Sprintf(ERROR_UNPERMITTED_WILDCARD, funcname)),
-	}
-}
-
 type FieldAmbiguousError struct {
 	*BaseError
 }
 
-func NewFieldAmbiguousError(field parser.FieldReference) error {
+func NewFieldAmbiguousError(field parser.Expression) error {
 	return &FieldAmbiguousError{
 		NewBaseError(field, fmt.Sprintf(ERROR_FIELD_AMBIGUOUS, field)),
 	}
@@ -232,7 +221,7 @@ type FieldNotExistError struct {
 	*BaseError
 }
 
-func NewFieldNotExistError(field parser.FieldReference) error {
+func NewFieldNotExistError(field parser.Expression) error {
 	return &FieldNotExistError{
 		NewBaseError(field, fmt.Sprintf(ERROR_FIELD_NOT_EXIST, field)),
 	}

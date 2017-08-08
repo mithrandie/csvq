@@ -20,6 +20,7 @@ type View struct {
 	FileInfo *FileInfo
 
 	selectFields []int
+	selectLabels []string
 	isGrouped    bool
 	Filter       Filter
 
@@ -511,13 +512,16 @@ func (view *View) Select(clause parser.SelectClause) error {
 
 	var evalFields = func(view *View, fields []parser.Expression) error {
 		view.selectFields = make([]int, len(fields))
+		view.selectLabels = make([]string, len(fields))
 		for i, f := range fields {
 			field := f.(parser.Field)
-			idx, err := view.evalColumn(field.Object, field.Object.String(), field.Name())
+			label := field.Name()
+			idx, err := view.evalColumn(field.Object, field.Object.String(), label)
 			if err != nil {
 				return err
 			}
 			view.selectFields[i] = idx
+			view.selectLabels[i] = label
 		}
 		return nil
 	}
@@ -672,14 +676,9 @@ func (view *View) evalColumn(obj parser.Expression, column string, alias string)
 		}
 	}
 
-	if 0 < len(alias) && !strings.EqualFold(view.Header[idx].Column, alias) && !strings.EqualFold(view.Header[idx].Alias, alias) {
-		if len(view.Header[idx].Alias) < 1 {
-			view.Header[idx].Alias = alias
-		} else {
-			for i := range view.Records {
-				view.Records[i] = append(view.Records[i], NewCell(view.Records[i][idx].Primary()))
-			}
-			view.Header, idx = AddHeaderField(view.Header, "", alias)
+	if 0 < len(alias) {
+		if !strings.EqualFold(view.Header[idx].Column, alias) && !InStrSliceWithCaseInsensitive(alias, view.Header[idx].Aliases) {
+			view.Header[idx].Aliases = append(view.Header[idx].Aliases, alias)
 		}
 	}
 
@@ -880,19 +879,25 @@ func (view *View) Fix() {
 		colNumber++
 
 		hfields[i] = view.Header[idx]
+		hfields[i].Aliases = nil
 		hfields[i].Number = colNumber
 		hfields[i].FromTable = true
 		hfields[i].IsGroupKey = false
+
+		if 0 < len(view.selectLabels) {
+			hfields[i].Column = view.selectLabels[i]
+		}
 	}
 
 	view.Header = hfields
 	view.Records = records
-	view.selectFields = []int(nil)
+	view.selectFields = nil
+	view.selectLabels = nil
 	view.isGrouped = false
 	view.Filter = Filter{}
-	view.sortIndices = []int(nil)
-	view.sortDirections = []int(nil)
-	view.sortNullPositions = []int(nil)
+	view.sortIndices = nil
+	view.sortDirections = nil
+	view.sortNullPositions = nil
 	view.offset = 0
 }
 
@@ -1008,7 +1013,7 @@ func (view *View) FieldViewName(fieldRef parser.Expression) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return view.Header[idx].Reference, nil
+	return view.Header[idx].View, nil
 }
 
 func (view *View) InternalRecordId(ref string, recordIndex int) (int, error) {

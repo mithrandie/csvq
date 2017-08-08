@@ -625,14 +625,13 @@ var selectTests = []struct {
 			},
 			Header: []HeaderField{
 				{
-					Reference: "group_table",
+					View:      "group_table",
 					Column:    "column1",
 					Number:    1,
 					FromTable: true,
 				},
 				{
 					Column:    "count(*)",
-					Alias:     "count(*)",
 					Number:    2,
 					FromTable: true,
 				},
@@ -1136,7 +1135,7 @@ var selectTests = []struct {
 		Result: &View{
 			Header: []HeaderField{
 				{
-					Reference: "it",
+					View:      "it",
 					Column:    "n",
 					Number:    1,
 					FromTable: true,

@@ -171,7 +171,7 @@ func encodeText(view *View) string {
 
 	header := make([]textField, view.FieldLen())
 	for i := range view.Header {
-		header[i] = NewTextField(view.Header[i].Label(), -1)
+		header[i] = NewTextField(view.Header[i].Column, -1)
 	}
 
 	records := make([][]textField, view.RecordLen())
@@ -307,7 +307,7 @@ func encodeCSV(view *View, delimiter string, withoutHeader bool) string {
 	if !withoutHeader {
 		h := make([]string, view.FieldLen())
 		for i := range view.Header {
-			h[i] = quote(escapeCSVString(view.Header[i].Label()))
+			h[i] = quote(escapeCSVString(view.Header[i].Column))
 		}
 		header = strings.Join(h, delimiter)
 	}
@@ -368,7 +368,7 @@ func encodeJson(view *View) string {
 	for i, record := range view.Records {
 		cells := make([]string, view.FieldLen())
 		for j, cell := range record {
-			cells[j] = quote(escapeJsonString(view.Header[j].Label())) + ":" + formatJsonCell(cell)
+			cells[j] = quote(escapeJsonString(view.Header[j].Column)) + ":" + formatJsonCell(cell)
 		}
 		records[i] = "{" + strings.Join(cells, ",") + "}"
 	}

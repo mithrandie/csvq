@@ -7,39 +7,18 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
-func TestHeaderField_Label(t *testing.T) {
-	hf := HeaderField{
-		Column: "c1",
-		Alias:  "a1",
-	}
-	expect := "a1"
-
-	if hf.Label() != expect {
-		t.Errorf("label = %s, want %s for %#v", hf.Label(), expect, hf)
-	}
-
-	hf = HeaderField{
-		Column: "c1",
-	}
-	expect = "c1"
-
-	if hf.Label() != expect {
-		t.Errorf("label = %s, want %s for %#v", hf.Label(), expect, hf)
-	}
-}
-
 func TestHeader_TableColumns(t *testing.T) {
 	h := Header{
 		{
-			Reference: "t1",
+			View:      "t1",
 			Column:    "c1",
-			Alias:     "a1",
+			Aliases:   []string{"a1"},
 			FromTable: true,
 		},
 		{
-			Reference: "t1",
+			View:      "t1",
 			Column:    "c2",
-			Alias:     "a3",
+			Aliases:   []string{"a3"},
 			FromTable: false,
 		},
 		{
@@ -61,15 +40,15 @@ func TestHeader_TableColumns(t *testing.T) {
 func TestHeader_TableColumnNames(t *testing.T) {
 	h := Header{
 		{
-			Reference: "t1",
+			View:      "t1",
 			Column:    "c1",
-			Alias:     "a1",
+			Aliases:   []string{"a1"},
 			FromTable: true,
 		},
 		{
-			Reference: "t1",
+			View:      "t1",
 			Column:    "c2",
-			Alias:     "a3",
+			Aliases:   []string{"a3"},
 			FromTable: false,
 		},
 		{
@@ -85,6 +64,111 @@ func TestHeader_TableColumnNames(t *testing.T) {
 	result := h.TableColumnNames()
 	if !reflect.DeepEqual(result, expect) {
 		t.Errorf("column names = %s, want %s for %#v", result, expect, h)
+	}
+}
+
+var headerContainsObjectTests = []struct {
+	Expr   parser.Expression
+	Result int
+	Error  string
+}{
+	{
+		Expr: parser.AggregateFunction{
+			Name: "count",
+			Args: []parser.Expression{
+				parser.AllColumns{},
+			},
+		},
+		Result: 5,
+	},
+	{
+		Expr: parser.FieldReference{
+			View:   parser.Identifier{Literal: "t2"},
+			Column: parser.Identifier{Literal: "c1"},
+		},
+		Result: 4,
+	},
+	{
+		Expr: parser.ColumnNumber{
+			View:   parser.Identifier{Literal: "t1"},
+			Number: parser.NewInteger(2),
+		},
+		Result: 1,
+	},
+	{
+		Expr:  parser.NewInteger(1),
+		Error: "[L:- C:-] field 1 is ambiguous",
+	},
+	{
+		Expr:  parser.NewInteger(2),
+		Error: "[L:- C:-] field 2 does not exist",
+	},
+}
+
+func TestHeader_ContainsObject(t *testing.T) {
+	h := Header{
+		{
+			View:      "t1",
+			Column:    "c1",
+			Aliases:   []string{"a1"},
+			Number:    1,
+			FromTable: true,
+		},
+		{
+			View:      "t1",
+			Column:    "c2",
+			Aliases:   []string{"a2"},
+			Number:    2,
+			FromTable: true,
+		},
+		{
+			View:      "t1",
+			Column:    "count(*)",
+			Number:    3,
+			FromTable: true,
+		},
+		{
+			Column:    "c3",
+			FromTable: false,
+		},
+		{
+			View:      "t2",
+			Column:    "c1",
+			Aliases:   []string{"a3"},
+			Number:    1,
+			FromTable: true,
+		},
+		{
+			Column:    "count(*)",
+			FromTable: false,
+		},
+		{
+			Column:    "1",
+			FromTable: false,
+		},
+		{
+			Column:    "1",
+			FromTable: false,
+		},
+	}
+
+	for _, v := range headerContainsObjectTests {
+		result, err := h.ContainsObject(v.Expr)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Expr.String(), err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Expr.String(), err, v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Expr.String(), v.Error)
+			continue
+		}
+		if result != v.Result {
+			t.Errorf("%s: index = %d, want %d", v.Expr.String(), result, v.Result)
+		}
 	}
 }
 
@@ -119,16 +203,16 @@ var headerContainsNumberTests = []struct {
 func TestHeader_ContainsNumber(t *testing.T) {
 	h := Header{
 		{
-			Reference: "t1",
+			View:      "t1",
 			Column:    "c1",
-			Alias:     "a1",
+			Aliases:   []string{"a1"},
 			Number:    1,
 			FromTable: true,
 		},
 		{
-			Reference: "t1",
+			View:      "t1",
 			Column:    "c2",
-			Alias:     "a2",
+			Aliases:   []string{"a2"},
 			Number:    2,
 			FromTable: true,
 		},
@@ -137,9 +221,9 @@ func TestHeader_ContainsNumber(t *testing.T) {
 			FromTable: false,
 		},
 		{
-			Reference: "t2",
+			View:      "t2",
 			Column:    "c1",
-			Alias:     "a3",
+			Aliases:   []string{"a3"},
 			Number:    1,
 			FromTable: true,
 		},
@@ -206,15 +290,15 @@ var headerContainsTests = []struct {
 func TestHeader_Contains(t *testing.T) {
 	h := Header{
 		{
-			Reference: "t1",
+			View:      "t1",
 			Column:    "c1",
-			Alias:     "a1",
+			Aliases:   []string{"a1"},
 			FromTable: true,
 		},
 		{
-			Reference: "t1",
+			View:      "t1",
 			Column:    "c2",
-			Alias:     "a2",
+			Aliases:   []string{"a2"},
 			FromTable: false,
 		},
 		{
@@ -222,9 +306,9 @@ func TestHeader_Contains(t *testing.T) {
 			FromTable: true,
 		},
 		{
-			Reference: "t2",
+			View:      "t2",
 			Column:    "c1",
-			Alias:     "a3",
+			Aliases:   []string{"a3"},
 			FromTable: true,
 		},
 	}
@@ -254,17 +338,17 @@ func TestNewHeader(t *testing.T) {
 	words := []string{"column1", "column2"}
 	var expect Header = []HeaderField{
 		{
-			Reference: "table1",
-			Column:    INTERNAL_ID_COLUMN,
+			View:   "table1",
+			Column: INTERNAL_ID_COLUMN,
 		},
 		{
-			Reference: "table1",
+			View:      "table1",
 			Column:    "column1",
 			Number:    1,
 			FromTable: true,
 		},
 		{
-			Reference: "table1",
+			View:      "table1",
 			Column:    "column2",
 			Number:    2,
 			FromTable: true,
@@ -280,13 +364,13 @@ func TestNewHeaderWithoutId(t *testing.T) {
 	words := []string{"column1", "column2"}
 	var expect Header = []HeaderField{
 		{
-			Reference: "table1",
+			View:      "table1",
 			Column:    "column1",
 			Number:    1,
 			FromTable: true,
 		},
 		{
-			Reference: "table1",
+			View:      "table1",
 			Column:    "column2",
 			Number:    2,
 			FromTable: true,
@@ -309,18 +393,18 @@ var headerUpdateTests = []struct {
 		Name: "Header Update",
 		Header: []HeaderField{
 			{
-				Reference: "table1",
-				Column:    "column1",
-				Alias:     "alias1",
+				View:    "table1",
+				Column:  "column1",
+				Aliases: []string{"alias1"},
 			},
 			{
-				Reference: "table1",
-				Column:    "column2",
-				Alias:     "alias2",
+				View:    "table1",
+				Column:  "column2",
+				Aliases: []string{"alias2"},
 			},
 			{
-				Reference: "table2",
-				Column:    "column3",
+				View:   "table2",
+				Column: "column3",
 			},
 		},
 		Reference: "ref1",
@@ -331,16 +415,16 @@ var headerUpdateTests = []struct {
 		},
 		Result: []HeaderField{
 			{
-				Reference: "ref1",
-				Column:    "c1",
+				View:   "ref1",
+				Column: "c1",
 			},
 			{
-				Reference: "ref1",
-				Column:    "c2",
+				View:   "ref1",
+				Column: "c2",
 			},
 			{
-				Reference: "ref1",
-				Column:    "c3",
+				View:   "ref1",
+				Column: "c3",
 			},
 		},
 	},
@@ -348,33 +432,33 @@ var headerUpdateTests = []struct {
 		Name: "Header Update Without Fields",
 		Header: []HeaderField{
 			{
-				Reference: "table1",
-				Column:    "column1",
-				Alias:     "alias1",
+				View:    "table1",
+				Column:  "column1",
+				Aliases: []string{"alias1"},
 			},
 			{
-				Reference: "table1",
-				Column:    "column2",
-				Alias:     "alias2",
+				View:    "table1",
+				Column:  "column2",
+				Aliases: []string{"alias2"},
 			},
 			{
-				Reference: "table2",
-				Column:    "column3",
+				View:   "table2",
+				Column: "column3",
 			},
 		},
 		Reference: "ref1",
 		Result: []HeaderField{
 			{
-				Reference: "ref1",
-				Column:    "alias1",
+				View:   "ref1",
+				Column: "column1",
 			},
 			{
-				Reference: "ref1",
-				Column:    "alias2",
+				View:   "ref1",
+				Column: "column2",
 			},
 			{
-				Reference: "ref1",
-				Column:    "column3",
+				View:   "ref1",
+				Column: "column3",
 			},
 		},
 	},
@@ -382,18 +466,18 @@ var headerUpdateTests = []struct {
 		Name: "Header Update Field Length Error",
 		Header: []HeaderField{
 			{
-				Reference: "table1",
-				Column:    "column1",
-				Alias:     "alias1",
+				View:    "table1",
+				Column:  "column1",
+				Aliases: []string{"alias1"},
 			},
 			{
-				Reference: "table1",
-				Column:    "column2",
-				Alias:     "alias2",
+				View:    "table1",
+				Column:  "column2",
+				Aliases: []string{"alias2"},
 			},
 			{
-				Reference: "table2",
-				Column:    "column3",
+				View:   "table2",
+				Column: "column3",
 			},
 		},
 		Reference: "ref1",
@@ -407,18 +491,18 @@ var headerUpdateTests = []struct {
 		Name: "Header Update Field Name Duplicate Error",
 		Header: []HeaderField{
 			{
-				Reference: "table1",
-				Column:    "column1",
-				Alias:     "alias1",
+				View:    "table1",
+				Column:  "column1",
+				Aliases: []string{"alias1"},
 			},
 			{
-				Reference: "table1",
-				Column:    "column2",
-				Alias:     "alias2",
+				View:    "table1",
+				Column:  "column2",
+				Aliases: []string{"alias2"},
 			},
 			{
-				Reference: "table2",
-				Column:    "column3",
+				View:   "table2",
+				Column: "column3",
 			},
 		},
 		Reference: "ref1",

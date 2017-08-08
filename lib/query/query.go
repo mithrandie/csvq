@@ -471,11 +471,6 @@ func Update(query parser.UpdateQuery, parentFilter Filter) ([]*View, error) {
 
 	views := []*View{}
 	for k, v := range viewsToUpdate {
-		if err := v.SelectAllColumns(); err != nil {
-			return nil, err
-		}
-
-		v.Fix()
 		v.RestoreHeaderReferences()
 		v.OperatedRecords = len(updatedIndices[k])
 
@@ -571,11 +566,6 @@ func Delete(query parser.DeleteQuery, parentFilter Filter) ([]*View, error) {
 		v.filteredIndices = filterdIndices
 		v.Extract()
 
-		if err := v.SelectAllColumns(); err != nil {
-			return nil, err
-		}
-
-		v.Fix()
 		v.RestoreHeaderReferences()
 		v.OperatedRecords = len(deletedIndices[k])
 
