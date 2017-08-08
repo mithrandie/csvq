@@ -88,7 +88,7 @@ func (m ViewMap) GetWithInternalId(fpath parser.Identifier) (*View, error) {
 		ret := view.Copy()
 
 		if 0 < ret.FieldLen() {
-			ret.Header = MergeHeader(NewHeaderWithId(ret.Header[0].Reference, []string{}), ret.Header)
+			ret.Header = MergeHeader(NewHeaderWithId(ret.Header[0].View, []string{}), ret.Header)
 
 			for i, v := range ret.Records {
 				ret.Records[i] = append(Record{NewCell(parser.NewInteger(int64(i)))}, v...)

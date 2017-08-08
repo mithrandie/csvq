@@ -436,10 +436,10 @@ var viewLoadTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
-				{Reference: "table1", Column: "column2", Number: 2, FromTable: true},
-				{Reference: "table2", Column: "column3", Number: 1, FromTable: true},
-				{Reference: "table2", Column: "column4", Number: 2, FromTable: true},
+				{View: "table1", Column: "column1", Number: 1, FromTable: true},
+				{View: "table1", Column: "column2", Number: 2, FromTable: true},
+				{View: "table2", Column: "column3", Number: 1, FromTable: true},
+				{View: "table2", Column: "column4", Number: 2, FromTable: true},
 			},
 			Records: []Record{
 				NewRecord([]parser.Primary{
@@ -530,10 +530,10 @@ var viewLoadTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
-				{Reference: "table1", Column: "column2", Number: 2, FromTable: true},
-				{Reference: "table2", Column: "column3", Number: 1, FromTable: true},
-				{Reference: "table2", Column: "column4", Number: 2, FromTable: true},
+				{View: "table1", Column: "column1", Number: 1, FromTable: true},
+				{View: "table1", Column: "column2", Number: 2, FromTable: true},
+				{View: "table2", Column: "column3", Number: 1, FromTable: true},
+				{View: "table2", Column: "column4", Number: 2, FromTable: true},
 			},
 			Records: []Record{
 				NewRecord([]parser.Primary{
@@ -630,10 +630,10 @@ var viewLoadTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
-				{Reference: "table1", Column: "column2", Number: 2, FromTable: true},
-				{Reference: "table2", Column: "column3", Number: 1, FromTable: true},
-				{Reference: "table2", Column: "column4", Number: 2, FromTable: true},
+				{View: "table1", Column: "column1", Number: 1, FromTable: true},
+				{View: "table1", Column: "column2", Number: 2, FromTable: true},
+				{View: "table2", Column: "column3", Number: 1, FromTable: true},
+				{View: "table2", Column: "column4", Number: 2, FromTable: true},
 			},
 			Records: []Record{
 				NewRecord([]parser.Primary{
@@ -689,10 +689,10 @@ var viewLoadTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
-				{Reference: "table1", Column: "column2", Number: 2, FromTable: true},
-				{Reference: "table2", Column: "column3", Number: 1, FromTable: true},
-				{Reference: "table2", Column: "column4", Number: 2, FromTable: true},
+				{View: "table1", Column: "column1", Number: 1, FromTable: true},
+				{View: "table1", Column: "column2", Number: 2, FromTable: true},
+				{View: "table2", Column: "column3", Number: 1, FromTable: true},
+				{View: "table2", Column: "column4", Number: 2, FromTable: true},
 			},
 			Records: []Record{
 				NewRecord([]parser.Primary{
@@ -1108,23 +1108,23 @@ var viewGroupByTests = []struct {
 		Result: &View{
 			Header: []HeaderField{
 				{
-					Reference: "table1",
-					Column:    INTERNAL_ID_COLUMN,
+					View:   "table1",
+					Column: INTERNAL_ID_COLUMN,
 				},
 				{
-					Reference: "table1",
+					View:      "table1",
 					Column:    "column1",
 					Number:    1,
 					FromTable: true,
 				},
 				{
-					Reference: "table1",
+					View:      "table1",
 					Column:    "column2",
 					Number:    2,
 					FromTable: true,
 				},
 				{
-					Reference:  "table1",
+					View:       "table1",
 					Column:     "column3",
 					Number:     3,
 					FromTable:  true,
@@ -1184,21 +1184,21 @@ var viewHavingTests = []struct {
 		View: &View{
 			Header: []HeaderField{
 				{
-					Reference: "table1",
-					Column:    INTERNAL_ID_COLUMN,
+					View:   "table1",
+					Column: INTERNAL_ID_COLUMN,
 				},
 				{
-					Reference: "table1",
+					View:      "table1",
 					Column:    "column1",
 					FromTable: true,
 				},
 				{
-					Reference: "table1",
+					View:      "table1",
 					Column:    "column2",
 					FromTable: true,
 				},
 				{
-					Reference:  "table1",
+					View:       "table1",
 					Column:     "column3",
 					FromTable:  true,
 					IsGroupKey: true,
@@ -1240,21 +1240,21 @@ var viewHavingTests = []struct {
 		View: &View{
 			Header: []HeaderField{
 				{
-					Reference: "table1",
-					Column:    INTERNAL_ID_COLUMN,
+					View:   "table1",
+					Column: INTERNAL_ID_COLUMN,
 				},
 				{
-					Reference: "table1",
+					View:      "table1",
 					Column:    "column1",
 					FromTable: true,
 				},
 				{
-					Reference: "table1",
+					View:      "table1",
 					Column:    "column2",
 					FromTable: true,
 				},
 				{
-					Reference:  "table1",
+					View:       "table1",
 					Column:     "column3",
 					FromTable:  true,
 					IsGroupKey: true,
@@ -1370,12 +1370,12 @@ var viewSelectTests = []struct {
 		Name: "Select",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
-				{Reference: "table1", Column: "column2", Number: 2, FromTable: true},
-				{Reference: "table2", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table2", Column: "column3", Number: 1, FromTable: true},
-				{Reference: "table2", Column: "column4", Number: 2, FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", Number: 1, FromTable: true},
+				{View: "table1", Column: "column2", Number: 2, FromTable: true},
+				{View: "table2", Column: INTERNAL_ID_COLUMN},
+				{View: "table2", Column: "column3", Number: 1, FromTable: true},
+				{View: "table2", Column: "column4", Number: 2, FromTable: true},
 			},
 			Records: []Record{
 				NewRecord([]parser.Primary{
@@ -1424,15 +1424,13 @@ var viewSelectTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
-				{Reference: "table1", Column: "column2", Alias: "c2", Number: 2, FromTable: true},
-				{Reference: "table2", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table2", Column: "column3", Alias: "t21", Number: 1, FromTable: true},
-				{Reference: "table2", Column: "column4", Number: 2, FromTable: true},
-				{Column: "1", Alias: "a"},
-				{Column: "", Alias: "c2a"},
-				{Column: "", Alias: "t21a"},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", Number: 1, FromTable: true},
+				{View: "table1", Column: "column2", Aliases: []string{"c2", "c2a"}, Number: 2, FromTable: true},
+				{View: "table2", Column: INTERNAL_ID_COLUMN},
+				{View: "table2", Column: "column3", Aliases: []string{"t21", "t21a"}, Number: 1, FromTable: true},
+				{View: "table2", Column: "column4", Number: 2, FromTable: true},
+				{Column: "1", Aliases: []string{"a"}},
 			},
 			Records: []Record{
 				NewRecord([]parser.Primary{
@@ -1443,8 +1441,6 @@ var viewSelectTests = []struct {
 					parser.NewString("2"),
 					parser.NewString("str22"),
 					parser.NewInteger(1),
-					parser.NewString("str1"),
-					parser.NewString("2"),
 				}),
 				NewRecord([]parser.Primary{
 					parser.NewInteger(1),
@@ -1454,8 +1450,6 @@ var viewSelectTests = []struct {
 					parser.NewString("3"),
 					parser.NewString("str33"),
 					parser.NewInteger(1),
-					parser.NewString("str1"),
-					parser.NewString("3"),
 				}),
 				NewRecord([]parser.Primary{
 					parser.NewInteger(1),
@@ -1465,8 +1459,6 @@ var viewSelectTests = []struct {
 					parser.NewString("1"),
 					parser.NewString("str44"),
 					parser.NewInteger(1),
-					parser.NewString("str1"),
-					parser.NewString("1"),
 				}),
 				NewRecord([]parser.Primary{
 					parser.NewInteger(2),
@@ -1476,23 +1468,21 @@ var viewSelectTests = []struct {
 					parser.NewString("2"),
 					parser.NewString("str22"),
 					parser.NewInteger(1),
-					parser.NewString("str2"),
-					parser.NewString("2"),
 				}),
 			},
-			selectFields: []int{2, 1, 2, 4, 5, 6, 7, 4, 8},
+			selectFields: []int{2, 1, 2, 4, 5, 6, 2, 4, 4},
 		},
 	},
 	{
 		Name: "Select Distinct",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
-				{Reference: "table2", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table2", Column: "column3", FromTable: true},
-				{Reference: "table2", Column: "column4", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
+				{View: "table2", Column: INTERNAL_ID_COLUMN},
+				{View: "table2", Column: "column3", FromTable: true},
+				{View: "table2", Column: "column4", FromTable: true},
 			},
 			Records: []Record{
 				NewRecord([]parser.Primary{
@@ -1538,8 +1528,8 @@ var viewSelectTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Column: "1", Alias: "a"},
+				{View: "table1", Column: "column1", FromTable: true},
+				{Column: "1", Aliases: []string{"a"}},
 			},
 			Records: []Record{
 				NewRecord([]parser.Primary{
@@ -1558,9 +1548,9 @@ var viewSelectTests = []struct {
 		Name: "Select Aggregate Function",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(1, []parser.Primary{
@@ -1588,10 +1578,10 @@ var viewSelectTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
-				{Column: "sum(column1)", Alias: "sum(column1)"},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
+				{Column: "sum(column1)"},
 			},
 			Records: []Record{
 				{
@@ -1608,9 +1598,9 @@ var viewSelectTests = []struct {
 		Name: "Select Aggregate Function Not Group Key Error",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(1, []parser.Primary{
@@ -1697,9 +1687,9 @@ var viewSelectTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
-				{Reference: "table1", Column: "column2", Number: 2, FromTable: true},
-				{Column: "row_number() over (partition by column1 order by column2)", Alias: "rownum"},
+				{View: "table1", Column: "column1", Number: 1, FromTable: true},
+				{View: "table1", Column: "column2", Number: 2, FromTable: true},
+				{Column: "row_number() over (partition by column1 order by column2)", Aliases: []string{"rownum"}},
 			},
 			Records: []Record{
 				NewRecord([]parser.Primary{
@@ -1949,9 +1939,9 @@ var viewSelectTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
-				{Reference: "table1", Column: "column2", Number: 2, FromTable: true},
-				{Column: "useraggfunc(column2) over ()", Alias: "useraggfunc(column2) over ()"},
+				{View: "table1", Column: "column1", Number: 1, FromTable: true},
+				{View: "table1", Column: "column2", Number: 2, FromTable: true},
+				{Column: "useraggfunc(column2) over ()"},
 			},
 			Records: []Record{
 				NewRecord([]parser.Primary{
@@ -2023,10 +2013,10 @@ var viewOrderByTests = []struct {
 		Name: "Order By",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
-				{Reference: "table1", Column: "column3", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: "column3", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(1, []parser.Primary{
@@ -2059,14 +2049,14 @@ var viewOrderByTests = []struct {
 		OrderBy: parser.OrderByClause{
 			Items: []parser.Expression{
 				parser.OrderItem{
-					Value: parser.Identifier{Literal: "column1"},
+					Value: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 				},
 				parser.OrderItem{
-					Value:     parser.Identifier{Literal: "column2"},
+					Value:     parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 					Direction: parser.Token{Token: parser.DESC, Literal: "desc"},
 				},
 				parser.OrderItem{
-					Value: parser.Identifier{Literal: "column3"},
+					Value: parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
 				},
 				parser.OrderItem{
 					Value: parser.NewInteger(1),
@@ -2075,10 +2065,10 @@ var viewOrderByTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
-				{Reference: "table1", Column: "column3", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: "column3", FromTable: true},
 				{Column: "1"},
 			},
 			Records: []Record{
@@ -2119,9 +2109,9 @@ var viewOrderByTests = []struct {
 		Name: "Order By With Null Positions",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(1, []parser.Primary{
@@ -2149,20 +2139,20 @@ var viewOrderByTests = []struct {
 		OrderBy: parser.OrderByClause{
 			Items: []parser.Expression{
 				parser.OrderItem{
-					Value:    parser.Identifier{Literal: "column1"},
+					Value:    parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					Position: parser.Token{Token: parser.LAST, Literal: "last"},
 				},
 				parser.OrderItem{
-					Value:    parser.Identifier{Literal: "column2"},
+					Value:    parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 					Position: parser.Token{Token: parser.FIRST, Literal: "first"},
 				},
 			},
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(4, []parser.Primary{
@@ -2225,9 +2215,9 @@ var viewLimitTests = []struct {
 		Name: "Limit",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(1, []parser.Primary{
@@ -2255,9 +2245,9 @@ var viewLimitTests = []struct {
 		Limit: parser.LimitClause{Value: parser.NewInteger(2)},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(1, []parser.Primary{
@@ -2275,9 +2265,9 @@ var viewLimitTests = []struct {
 		Name: "Limit With Ties",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(1, []parser.Primary{
@@ -2306,9 +2296,9 @@ var viewLimitTests = []struct {
 		Limit: parser.LimitClause{Value: parser.NewInteger(2), With: parser.LimitWith{Type: parser.Token{Token: parser.TIES}}},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(1, []parser.Primary{
@@ -2331,9 +2321,9 @@ var viewLimitTests = []struct {
 		Name: "Limit By Percentage",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(2, []parser.Primary{
@@ -2358,9 +2348,9 @@ var viewLimitTests = []struct {
 		Limit: parser.LimitClause{Value: parser.NewFloat(50.5), Percent: "percent"},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(2, []parser.Primary{
@@ -2383,9 +2373,9 @@ var viewLimitTests = []struct {
 		Name: "Limit By Over 100 Percentage",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(1, []parser.Primary{
@@ -2413,9 +2403,9 @@ var viewLimitTests = []struct {
 		Limit: parser.LimitClause{Value: parser.NewFloat(150), Percent: "percent"},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(1, []parser.Primary{
@@ -2445,9 +2435,9 @@ var viewLimitTests = []struct {
 		Name: "Limit By Negative Percentage",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(1, []parser.Primary{
@@ -2475,9 +2465,9 @@ var viewLimitTests = []struct {
 		Limit: parser.LimitClause{Value: parser.NewFloat(-10), Percent: "percent"},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{},
 		},
@@ -2486,9 +2476,9 @@ var viewLimitTests = []struct {
 		Name: "Limit Greater Than Records",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(1, []parser.Primary{
@@ -2504,9 +2494,9 @@ var viewLimitTests = []struct {
 		Limit: parser.LimitClause{Value: parser.NewInteger(5)},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(1, []parser.Primary{
@@ -2524,9 +2514,9 @@ var viewLimitTests = []struct {
 		Name: "Limit Evaluate Error",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(1, []parser.Primary{
@@ -2546,9 +2536,9 @@ var viewLimitTests = []struct {
 		Name: "Limit Value Error",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(1, []parser.Primary{
@@ -2568,9 +2558,9 @@ var viewLimitTests = []struct {
 		Name: "Limit Negative Value",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(1, []parser.Primary{
@@ -2586,9 +2576,9 @@ var viewLimitTests = []struct {
 		Limit: parser.LimitClause{Value: parser.NewInteger(-1)},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{},
 		},
@@ -2597,9 +2587,9 @@ var viewLimitTests = []struct {
 		Name: "Limit By Percentage Value Error",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(1, []parser.Primary{
@@ -2649,9 +2639,9 @@ var viewOffsetTests = []struct {
 		Name: "Offset",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(1, []parser.Primary{
@@ -2675,9 +2665,9 @@ var viewOffsetTests = []struct {
 		Offset: parser.OffsetClause{Value: parser.NewInteger(3)},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(4, []parser.Primary{
@@ -2692,9 +2682,9 @@ var viewOffsetTests = []struct {
 		Name: "Offset Equal To Record Length",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(1, []parser.Primary{
@@ -2718,9 +2708,9 @@ var viewOffsetTests = []struct {
 		Offset: parser.OffsetClause{Value: parser.NewInteger(4)},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{},
 			offset:  4,
@@ -2730,9 +2720,9 @@ var viewOffsetTests = []struct {
 		Name: "Offset Evaluate Error",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(1, []parser.Primary{
@@ -2760,9 +2750,9 @@ var viewOffsetTests = []struct {
 		Name: "Offset Value Error",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(1, []parser.Primary{
@@ -2790,9 +2780,9 @@ var viewOffsetTests = []struct {
 		Name: "Offset Negative Number",
 		View: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(1, []parser.Primary{
@@ -2808,9 +2798,9 @@ var viewOffsetTests = []struct {
 		Offset: parser.OffsetClause{Value: parser.NewInteger(-3)},
 		Result: &View{
 			Header: []HeaderField{
-				{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-				{Reference: "table1", Column: "column1", FromTable: true},
-				{Reference: "table1", Column: "column2", FromTable: true},
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
 				NewRecordWithId(1, []parser.Primary{
@@ -3105,9 +3095,9 @@ func TestView_InsertFromQuery(t *testing.T) {
 func TestView_Fix(t *testing.T) {
 	view := &View{
 		Header: []HeaderField{
-			{Reference: "table1", Column: INTERNAL_ID_COLUMN},
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table1", Column: "column2", FromTable: true},
+			{View: "table1", Column: INTERNAL_ID_COLUMN},
+			{View: "table1", Column: "column1", FromTable: true},
+			{View: "table1", Column: "column2", FromTable: true},
 		},
 		Records: []Record{
 			NewRecordWithId(1, []parser.Primary{
@@ -3143,8 +3133,8 @@ func TestView_Fix(t *testing.T) {
 func TestView_Union(t *testing.T) {
 	view := &View{
 		Header: []HeaderField{
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table1", Column: "column2", FromTable: true},
+			{View: "table1", Column: "column1", FromTable: true},
+			{View: "table1", Column: "column2", FromTable: true},
 		},
 		Records: Records{
 			NewRecord([]parser.Primary{
@@ -3168,8 +3158,8 @@ func TestView_Union(t *testing.T) {
 
 	calcView := &View{
 		Header: []HeaderField{
-			{Reference: "table2", Column: "column3", FromTable: true},
-			{Reference: "table2", Column: "column4", FromTable: true},
+			{View: "table2", Column: "column3", FromTable: true},
+			{View: "table2", Column: "column4", FromTable: true},
 		},
 		Records: Records{
 			NewRecord([]parser.Primary{
@@ -3185,8 +3175,8 @@ func TestView_Union(t *testing.T) {
 
 	expect := &View{
 		Header: []HeaderField{
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table1", Column: "column2", FromTable: true},
+			{View: "table1", Column: "column1", FromTable: true},
+			{View: "table1", Column: "column2", FromTable: true},
 		},
 		Records: Records{
 			NewRecord([]parser.Primary{
@@ -3211,8 +3201,8 @@ func TestView_Union(t *testing.T) {
 
 	view = &View{
 		Header: []HeaderField{
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table1", Column: "column2", FromTable: true},
+			{View: "table1", Column: "column1", FromTable: true},
+			{View: "table1", Column: "column2", FromTable: true},
 		},
 		Records: Records{
 			NewRecord([]parser.Primary{
@@ -3236,8 +3226,8 @@ func TestView_Union(t *testing.T) {
 
 	expect = &View{
 		Header: []HeaderField{
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table1", Column: "column2", FromTable: true},
+			{View: "table1", Column: "column1", FromTable: true},
+			{View: "table1", Column: "column2", FromTable: true},
 		},
 		Records: Records{
 			NewRecord([]parser.Primary{
@@ -3276,8 +3266,8 @@ func TestView_Union(t *testing.T) {
 func TestView_Except(t *testing.T) {
 	view := &View{
 		Header: []HeaderField{
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table1", Column: "column2", FromTable: true},
+			{View: "table1", Column: "column1", FromTable: true},
+			{View: "table1", Column: "column2", FromTable: true},
 		},
 		Records: Records{
 			NewRecord([]parser.Primary{
@@ -3301,8 +3291,8 @@ func TestView_Except(t *testing.T) {
 
 	calcView := &View{
 		Header: []HeaderField{
-			{Reference: "table2", Column: "column3", FromTable: true},
-			{Reference: "table2", Column: "column4", FromTable: true},
+			{View: "table2", Column: "column3", FromTable: true},
+			{View: "table2", Column: "column4", FromTable: true},
 		},
 		Records: Records{
 			NewRecord([]parser.Primary{
@@ -3318,8 +3308,8 @@ func TestView_Except(t *testing.T) {
 
 	expect := &View{
 		Header: []HeaderField{
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table1", Column: "column2", FromTable: true},
+			{View: "table1", Column: "column1", FromTable: true},
+			{View: "table1", Column: "column2", FromTable: true},
 		},
 		Records: Records{
 			NewRecord([]parser.Primary{
@@ -3336,8 +3326,8 @@ func TestView_Except(t *testing.T) {
 
 	view = &View{
 		Header: []HeaderField{
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table1", Column: "column2", FromTable: true},
+			{View: "table1", Column: "column1", FromTable: true},
+			{View: "table1", Column: "column2", FromTable: true},
 		},
 		Records: Records{
 			NewRecord([]parser.Primary{
@@ -3361,8 +3351,8 @@ func TestView_Except(t *testing.T) {
 
 	expect = &View{
 		Header: []HeaderField{
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table1", Column: "column2", FromTable: true},
+			{View: "table1", Column: "column1", FromTable: true},
+			{View: "table1", Column: "column2", FromTable: true},
 		},
 		Records: Records{
 			NewRecord([]parser.Primary{
@@ -3385,8 +3375,8 @@ func TestView_Except(t *testing.T) {
 func TestView_Intersect(t *testing.T) {
 	view := &View{
 		Header: []HeaderField{
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table1", Column: "column2", FromTable: true},
+			{View: "table1", Column: "column1", FromTable: true},
+			{View: "table1", Column: "column2", FromTable: true},
 		},
 		Records: Records{
 			NewRecord([]parser.Primary{
@@ -3410,8 +3400,8 @@ func TestView_Intersect(t *testing.T) {
 
 	calcView := &View{
 		Header: []HeaderField{
-			{Reference: "table2", Column: "column3", FromTable: true},
-			{Reference: "table2", Column: "column4", FromTable: true},
+			{View: "table2", Column: "column3", FromTable: true},
+			{View: "table2", Column: "column4", FromTable: true},
 		},
 		Records: Records{
 			NewRecord([]parser.Primary{
@@ -3427,8 +3417,8 @@ func TestView_Intersect(t *testing.T) {
 
 	expect := &View{
 		Header: []HeaderField{
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table1", Column: "column2", FromTable: true},
+			{View: "table1", Column: "column1", FromTable: true},
+			{View: "table1", Column: "column2", FromTable: true},
 		},
 		Records: Records{
 			NewRecord([]parser.Primary{
@@ -3445,8 +3435,8 @@ func TestView_Intersect(t *testing.T) {
 
 	view = &View{
 		Header: []HeaderField{
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table1", Column: "column2", FromTable: true},
+			{View: "table1", Column: "column1", FromTable: true},
+			{View: "table1", Column: "column2", FromTable: true},
 		},
 		Records: Records{
 			NewRecord([]parser.Primary{
@@ -3470,8 +3460,8 @@ func TestView_Intersect(t *testing.T) {
 
 	expect = &View{
 		Header: []HeaderField{
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table1", Column: "column2", FromTable: true},
+			{View: "table1", Column: "column1", FromTable: true},
+			{View: "table1", Column: "column2", FromTable: true},
 		},
 		Records: Records{
 			NewRecord([]parser.Primary{
@@ -3494,8 +3484,8 @@ func TestView_Intersect(t *testing.T) {
 func TestView_FieldIndex(t *testing.T) {
 	view := &View{
 		Header: []HeaderField{
-			{Reference: "table1", Column: "column1", Number: 1, FromTable: true},
-			{Reference: "table1", Column: "column2", Number: 2, FromTable: true},
+			{View: "table1", Column: "column1", Number: 1, FromTable: true},
+			{View: "table1", Column: "column2", Number: 2, FromTable: true},
 		},
 	}
 	fieldRef := parser.FieldReference{
@@ -3523,8 +3513,8 @@ func TestView_FieldIndex(t *testing.T) {
 func TestView_FieldIndices(t *testing.T) {
 	view := &View{
 		Header: []HeaderField{
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table1", Column: "column2", FromTable: true},
+			{View: "table1", Column: "column1", FromTable: true},
+			{View: "table1", Column: "column2", FromTable: true},
 		},
 	}
 	fields := []parser.Expression{
@@ -3552,8 +3542,8 @@ func TestView_FieldIndices(t *testing.T) {
 func TestView_FieldViewName(t *testing.T) {
 	view := &View{
 		Header: []HeaderField{
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table2", Column: "column2", FromTable: true},
+			{View: "table1", Column: "column1", FromTable: true},
+			{View: "table2", Column: "column2", FromTable: true},
 		},
 	}
 	fieldRef := parser.FieldReference{
@@ -3603,8 +3593,8 @@ func TestView_InternalRecordId(t *testing.T) {
 
 	view = &View{
 		Header: []HeaderField{
-			{Reference: "table1", Column: "column1", FromTable: true},
-			{Reference: "table2", Column: "column2", FromTable: true},
+			{View: "table1", Column: "column1", FromTable: true},
+			{View: "table2", Column: "column2", FromTable: true},
 		},
 	}
 	expectError = "[L:- C:-] internal record id does not exist"

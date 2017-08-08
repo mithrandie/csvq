@@ -9,19 +9,12 @@ import (
 const INTERNAL_ID_COLUMN = "@__internal_id"
 
 type HeaderField struct {
-	Reference  string
+	View       string
 	Column     string
-	Alias      string
+	Aliases    []string
 	Number     int
 	FromTable  bool
 	IsGroupKey bool
-}
-
-func (hf HeaderField) Label() string {
-	if 0 < len(hf.Alias) {
-		return hf.Alias
-	}
-	return hf.Column
 }
 
 type Header []HeaderField
@@ -31,14 +24,14 @@ func NewDualHeader() Header {
 	return h
 }
 
-func NewHeaderWithId(ref string, words []string) Header {
+func NewHeaderWithId(view string, words []string) Header {
 	h := make([]HeaderField, len(words)+1)
 
-	h[0].Reference = ref
+	h[0].View = view
 	h[0].Column = INTERNAL_ID_COLUMN
 
 	for i, v := range words {
-		h[i+1].Reference = ref
+		h[i+1].View = view
 		h[i+1].Column = v
 		h[i+1].Number = i + 1
 		h[i+1].FromTable = true
@@ -47,11 +40,11 @@ func NewHeaderWithId(ref string, words []string) Header {
 	return h
 }
 
-func NewHeader(ref string, words []string) Header {
+func NewHeader(view string, words []string) Header {
 	h := make([]HeaderField, len(words))
 
 	for i, v := range words {
-		h[i].Reference = ref
+		h[i].View = view
 		h[i].Column = v
 		h[i].Number = i + 1
 		h[i].FromTable = true
@@ -69,10 +62,14 @@ func MergeHeader(h1 Header, h2 Header) Header {
 }
 
 func AddHeaderField(h Header, column string, alias string) (header Header, index int) {
-	header = append(h, HeaderField{
+	hfield := HeaderField{
 		Column: column,
-		Alias:  alias,
-	})
+	}
+	if 0 < len(alias) && !strings.EqualFold(column, alias) {
+		hfield.Aliases = append(hfield.Aliases, alias)
+	}
+
+	header = append(h, hfield)
 	index = header.Len() - 1
 	return
 }
@@ -91,8 +88,8 @@ func (h Header) TableColumns() []parser.Expression {
 		fieldRef := parser.FieldReference{
 			Column: parser.Identifier{Literal: f.Column},
 		}
-		if 0 < len(f.Reference) {
-			fieldRef.View = parser.Identifier{Literal: f.Reference}
+		if 0 < len(f.View) {
+			fieldRef.View = parser.Identifier{Literal: f.View}
 		}
 
 		columns = append(columns, fieldRef)
@@ -112,20 +109,39 @@ func (h Header) TableColumnNames() []string {
 }
 
 func (h Header) ContainsObject(obj parser.Expression) (int, error) {
-	var fieldRef parser.FieldReference
-
-	if fr, ok := obj.(parser.FieldReference); ok {
-		fieldRef = fr
-	} else {
-		fieldRef = parser.FieldReference{
-			Column: parser.Identifier{Literal: obj.String()},
-		}
+	if fref, ok := obj.(parser.FieldReference); ok {
+		return h.Contains(fref)
+	} else if cnum, ok := obj.(parser.ColumnNumber); ok {
+		return h.ContainsNumber(cnum)
 	}
-	return h.Contains(fieldRef)
+
+	column := obj.String()
+
+	idx := -1
+
+	for i, f := range h {
+		if f.FromTable {
+			continue
+		}
+
+		if !strings.EqualFold(f.Column, column) {
+			continue
+		}
+
+		if -1 < idx {
+			return -1, NewFieldAmbiguousError(obj)
+		}
+		idx = i
+	}
+
+	if idx < 0 {
+		return -1, NewFieldNotExistError(obj)
+	}
+	return idx, nil
 }
 
 func (h Header) ContainsNumber(number parser.ColumnNumber) (int, error) {
-	ref := number.View.Literal
+	view := number.View.Literal
 	idx := int(number.Number.Value())
 
 	if idx < 1 {
@@ -133,7 +149,7 @@ func (h Header) ContainsNumber(number parser.ColumnNumber) (int, error) {
 	}
 
 	for i, f := range h {
-		if strings.EqualFold(f.Reference, ref) && f.Number == idx {
+		if strings.EqualFold(f.View, view) && f.Number == idx {
 			return i, nil
 		}
 	}
@@ -141,21 +157,21 @@ func (h Header) ContainsNumber(number parser.ColumnNumber) (int, error) {
 }
 
 func (h Header) Contains(fieldRef parser.FieldReference) (int, error) {
-	var ref string
+	var view string
 	if fieldRef.View != nil {
-		ref = fieldRef.View.(parser.Identifier).Literal
+		view = fieldRef.View.(parser.Identifier).Literal
 	}
 	column := fieldRef.Column.Literal
 
 	idx := -1
 
 	for i, f := range h {
-		if 0 < len(ref) {
-			if !strings.EqualFold(f.Reference, ref) || !strings.EqualFold(f.Column, column) {
+		if 0 < len(view) {
+			if !strings.EqualFold(f.View, view) || !strings.EqualFold(f.Column, column) {
 				continue
 			}
 		} else {
-			if !strings.EqualFold(f.Column, column) && !strings.EqualFold(f.Alias, column) {
+			if !strings.EqualFold(f.Column, column) && !InStrSliceWithCaseInsensitive(column, f.Aliases) {
 				continue
 			}
 		}
@@ -189,14 +205,12 @@ func (h Header) Update(reference string, fields []parser.Expression) error {
 		}
 	}
 
-	for i, hf := range h {
-		h[i].Reference = reference
+	for i := range h {
+		h[i].View = reference
 		if fields != nil {
 			h[i].Column = fields[i].(parser.Identifier).Literal
-		} else if 0 < len(hf.Alias) {
-			h[i].Column = hf.Alias
 		}
-		h[i].Alias = ""
+		h[i].Aliases = nil
 	}
 	return nil
 }

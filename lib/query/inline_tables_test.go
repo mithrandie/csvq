@@ -290,7 +290,7 @@ var inlineTablesListLoadTests = []struct {
 				"IT_RECURSIVE": &View{
 					Header: []HeaderField{
 						{
-							Reference: "it_recursive",
+							View:      "it_recursive",
 							Column:    "n",
 							Number:    1,
 							FromTable: true,
@@ -548,7 +548,7 @@ var inlineTablesSetTests = []struct {
 			"IT_RECURSIVE": &View{
 				Header: []HeaderField{
 					{
-						Reference: "it_recursive",
+						View:      "it_recursive",
 						Column:    "n",
 						Number:    1,
 						FromTable: true,

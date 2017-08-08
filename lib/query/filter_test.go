@@ -121,12 +121,12 @@ var filterEvaluateTests = []struct {
 					View: &View{
 						Header: []HeaderField{
 							{
-								Reference: "table1",
-								Column:    "column1",
+								View:   "table1",
+								Column: "column1",
 							},
 							{
-								Reference: "table1",
-								Column:    "column2",
+								View:   "table1",
+								Column: "column2",
 							},
 						},
 						Records: []Record{
@@ -210,13 +210,13 @@ var filterEvaluateTests = []struct {
 					View: &View{
 						Header: []HeaderField{
 							{
-								Reference: "table1",
+								View:      "table1",
 								Column:    "column1",
 								Number:    1,
 								FromTable: true,
 							},
 							{
-								Reference:  "table1",
+								View:       "table1",
 								Column:     "column2",
 								Number:     2,
 								FromTable:  true,
