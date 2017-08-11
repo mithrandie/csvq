@@ -183,7 +183,7 @@ func (f Filter) evalFieldReference(expr parser.FieldReference) (parser.Primary, 
 	for _, v := range f.Records {
 		idx, err := v.View.Header.Contains(expr)
 		if err == nil {
-			if v.View.isGrouped && !v.View.Header[idx].IsGroupKey {
+			if v.View.isGrouped && v.View.Header[idx].FromTable && !v.View.Header[idx].IsGroupKey {
 				return nil, NewFieldNotGroupKeyError(expr)
 			}
 			p = v.View.Records[v.RecordIndex][idx].Primary()
@@ -204,7 +204,7 @@ func (f Filter) evalColumnNumber(expr parser.ColumnNumber) (parser.Primary, erro
 	for _, v := range f.Records {
 		idx, err := v.View.Header.ContainsNumber(expr)
 		if err == nil {
-			if v.View.isGrouped && !v.View.Header[idx].IsGroupKey {
+			if v.View.isGrouped && v.View.Header[idx].FromTable && !v.View.Header[idx].IsGroupKey {
 				return nil, NewFieldNumberNotGroupKeyError(expr)
 			}
 			return v.View.Records[v.RecordIndex][idx].Primary(), nil
