@@ -121,8 +121,9 @@ var filterEvaluateTests = []struct {
 					View: &View{
 						Header: []HeaderField{
 							{
-								View:   "table1",
-								Column: "column1",
+								View:      "table1",
+								Column:    "column1",
+								FromTable: true,
 							},
 							{
 								View:   "table1",

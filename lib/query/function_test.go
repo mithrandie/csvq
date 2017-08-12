@@ -283,9 +283,10 @@ var roundTests = []functionTest{
 			Name: "round",
 		},
 		Args: []parser.Primary{
-			parser.NewFloat(2.4),
+			parser.NewFloat(2.456),
+			parser.NewInteger(2),
 		},
-		Result: parser.NewInteger(2),
+		Result: parser.NewFloat(2.46),
 	},
 	{
 		Name: "Round Negative Number",
@@ -293,9 +294,10 @@ var roundTests = []functionTest{
 			Name: "round",
 		},
 		Args: []parser.Primary{
-			parser.NewFloat(-2.4),
+			parser.NewFloat(-2.456),
+			parser.NewInteger(2),
 		},
-		Result: parser.NewInteger(-2),
+		Result: parser.NewFloat(-2.46),
 	},
 	{
 		Name: "Round Null",
