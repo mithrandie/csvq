@@ -297,7 +297,7 @@ var roundTests = []functionTest{
 			parser.NewFloat(-2.456),
 			parser.NewInteger(2),
 		},
-		Result: parser.NewFloat(-2.461),
+		Result: parser.NewFloat(-2.46),
 	},
 	{
 		Name: "Round Null",
