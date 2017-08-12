@@ -71,18 +71,20 @@ Datetime
 
   Strings of the form passed by the ["datetime-format" option]({{ '/reference/command.html#global_options' | relative_url }}) or the following forms can be converted to datetime values.
   
-  | Format | Example |
+  | DateFormat | Example |
   | :- | :- |
   | YYYY-MM-DD | 2012-03-15 |
-  | YYYY-MM-DD hh:mm:ss(.NanoSecods) | 2012-03-15 12:03:01<br />2012-03-15 12:03:01.123456789 |
-  | YYYY-MM-DD hh:mm:ss(.NanoSecods) Zhh:mm | 2012-03-15 12:03:01 -07:00 |
-  | YYYY-MM-DD hh:mm:ss(.NanoSecods) Zhhmm | 2012-03-15 12:03:01 -0700 |
-  | YYYY-MM-DD hh:mm:ss(.NanoSecods) TZ | 2012-03-15 12:03:01 PST |
   | YYYY/MM/DD | 2012/03/15 |
-  | YYYY/MM/DD hh:mm:ss(.NanoSecods) | 2012/03/15 12:03:01<br />2012/03/15 12:03:01.123456789 |
-  | YYYY/MM/DD hh:mm:ss(.NanoSecods) Zhh:mm | 2012/03/15 12:03:01 -07:00 |
-  | YYYY/MM/DD hh:mm:ss(.NanoSecods) Zhhmm | 2012/03/15 12:03:01 -0700 |
-  | YYYY/MM/DD hh:mm:ss(.NanoSecods) TZ | 2012/03/15 12:03:01 PST |
+  | YYYY-M-D   | 2012-3-15 |
+  | YYYY/M/D   | 2012/3/15 |
+
+  | DatetimeFormat | Example |
+  | :- | :- |
+  | DateFormat | 2012-03-15 |
+  | DateFormat hh:mm:ss(.NanoSecods) | 2012-03-15 12:03:01<br />2012-03-15 12:03:01.123456789 |
+  | DateFormat hh:mm:ss(.NanoSecods) Zhh:mm | 2012-03-15 12:03:01 -07:00 |
+  | DateFormat hh:mm:ss(.NanoSecods) Zhhmm | 2012-03-15 12:03:01 -0700 |
+  | DateFormat hh:mm:ss(.NanoSecods) TZ | 2012-03-15 12:03:01 PST |
   | RFC3339 | 2012-03-15T12:03:01-07:00 |
   | RFC3339 with Nano Seconds | 2012-03-15T12:03:01.123456789-07:00 |
   | RFC822 | 03 Mar 12 12:03 PST |
