@@ -66,6 +66,56 @@ func TestStrToTime(t *testing.T) {
 		t.Errorf("unexpected error %q for %q", err, s)
 	}
 
+	s = "2006-1-2 15:04:05"
+	if _, err := StrToTime(s); err != nil {
+		t.Errorf("unexpected error %q for %q", err, s)
+	}
+
+	s = "2006-1-2"
+	if _, err := StrToTime(s); err != nil {
+		t.Errorf("unexpected error %q for %q", err, s)
+	}
+
+	s = "2006-1-2 15:04:05 -08:00"
+	if _, err := StrToTime(s); err != nil {
+		t.Errorf("unexpected error %q for %q", err, s)
+	}
+
+	s = "2006-1-2 15:04:05 -0800"
+	if _, err := StrToTime(s); err != nil {
+		t.Errorf("unexpected error %q for %q", err, s)
+	}
+
+	s = "2006-1-2 15:04:05 PST"
+	if _, err := StrToTime(s); err != nil {
+		t.Errorf("unexpected error %q for %q", err, s)
+	}
+
+	s = "2006/1/2 15:04:05"
+	if _, err := StrToTime(s); err != nil {
+		t.Errorf("unexpected error %q for %q", err, s)
+	}
+
+	s = "2006/1/2"
+	if _, err := StrToTime(s); err != nil {
+		t.Errorf("unexpected error %q for %q", err, s)
+	}
+
+	s = "2006/1/2 15:04:05 -08:00"
+	if _, err := StrToTime(s); err != nil {
+		t.Errorf("unexpected error %q for %q", err, s)
+	}
+
+	s = "2006/1/2 15:04:05 -0800"
+	if _, err := StrToTime(s); err != nil {
+		t.Errorf("unexpected error %q for %q", err, s)
+	}
+
+	s = "2006/1/2 15:04:05 PST"
+	if _, err := StrToTime(s); err != nil {
+		t.Errorf("unexpected error %q for %q", err, s)
+	}
+
 	s = "02 Jan 06 15:04 PDT"
 	if _, err := StrToTime(s); err != nil {
 		t.Errorf("unexpected error %q for %q", err, s)
