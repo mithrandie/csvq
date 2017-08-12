@@ -216,9 +216,9 @@ func round(f float64, place float64) float64 {
 	pow := math.Pow(10, place)
 	var r float64
 	if f < 0 {
-		r = math.Ceil(pow*(f-0.5)) / pow
+		r = math.Ceil(pow*f-0.5) / pow
 	} else {
-		r = math.Floor(pow*(f+0.5)) / pow
+		r = math.Floor(pow*f+0.5) / pow
 	}
 	return r
 }
