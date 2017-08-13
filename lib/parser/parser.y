@@ -1240,6 +1240,11 @@ function
     {
         $$ = Function{BaseExpr: $1.BaseExpr, Name: $1.Literal, Args: $3}
     }
+    | IF '(' arguments ')'
+    {
+        $$ = Function{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3}
+    }
+
 
 aggregate_function
     : identifier '(' distinct arguments ')'
@@ -1669,10 +1674,6 @@ in_function_in_loop_else
 
 identifier
     : IDENTIFIER
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | IF
     {
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }
