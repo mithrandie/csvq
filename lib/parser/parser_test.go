@@ -3635,6 +3635,22 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select if",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []Expression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "if"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
 		Input: "select ties",
 		Output: []Statement{
 			SelectQuery{SelectEntity: SelectEntity{
