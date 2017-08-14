@@ -356,10 +356,40 @@ _replace_
 
 Return the formatted string.
 
-#### Format Placeholders
+#### Format Placeholder
 
-| placeholder | replacement value |
-| :- | :- |
-| %s | a string representing the value |
-| %% | '%' |
+```
+%[flags][width][.precision]specifier
+```
+
+flags
+: | flag | description |
+  | :- | :- |
+  | + | print a plus sign for numeric values |
+  | '&nbsp;' (U+0020 Space) | print a space instead of a plus sign |
+  | - | pad on the right |
+  | 0 | pad with zeros |
+
+width
+: [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+precision
+: [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+  Number of digits after the decimal point.
+
+specifier
+: | specifier | description |
+  | :- | :- |
+  | b | base 2 integer |
+  | o | base 8 integer |
+  | d | base 10 integer |
+  | x | base 16 integer with lower cases |
+  | X | base 16 integer with upper cases |
+  | e | exponential notation with lower cases |
+  | E | exponential notation with upper cases |
+  | f | floating point decimal number |
+  | s | string representing the value |
+  | s | string representing the value with quotes |
+  | % | '%' |
 

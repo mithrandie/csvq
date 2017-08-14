@@ -66,7 +66,7 @@ var printfTests = []struct {
 	{
 		Name: "Printf",
 		Expr: parser.Printf{
-			Format: "printf test: value1 %s, value2 %s, %a %% %",
+			Format: "printf test: value1 %q, value2 %q, %a %% %",
 			Values: []parser.Expression{
 				parser.NewString("str"),
 				parser.NewInteger(1),

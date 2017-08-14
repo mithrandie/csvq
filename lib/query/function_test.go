@@ -1587,7 +1587,7 @@ var formatTests = []functionTest{
 			Name: "format",
 		},
 		Args: []parser.Primary{
-			parser.NewString("string = %s, integer = %s"),
+			parser.NewString("string = %q, integer = %q"),
 			parser.NewString("str"),
 			parser.NewInteger(1),
 		},
@@ -2475,7 +2475,7 @@ var stringTests = []functionTest{
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 		},
-		Result: parser.NewString("2012-02-03 09:18:15"),
+		Result: parser.NewString("2012-02-03T09:18:15-08:00"),
 	},
 	{
 		Name: "String Arguments Error",
@@ -2662,7 +2662,7 @@ var callTests = []functionTest{
 			parser.NewTernary(ternary.TRUE),
 			parser.NewNull(),
 		},
-		Result: parser.NewString("foo 1 1.234 2012-02-03 09:18:15 true true \n"),
+		Result: parser.NewString("foo 1 1.234 2012-02-03T09:18:15-08:00 true true \n"),
 	},
 	{
 		Name: "Call Argument Error",

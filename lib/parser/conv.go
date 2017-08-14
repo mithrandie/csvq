@@ -3,6 +3,7 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"math"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -22,7 +23,7 @@ func StrToTime(s string) (time.Time, error) {
 
 	if t, e := time.Parse(time.RFC3339Nano, s); e == nil {
 		return t, nil
-	} else if t, e := time.ParseInLocation(DEFAULT_DATETIME_FORMAT, s, cmd.GetLocation()); e == nil {
+	} else if t, e := time.ParseInLocation("2006-01-02 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
 		return t, nil
 	} else if t, e := time.ParseInLocation("2006/01/02 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
 		return t, nil
@@ -38,11 +39,11 @@ func StrToTime(s string) (time.Time, error) {
 		return t, nil
 	} else if t, e := time.ParseInLocation("2006/1/2", s, cmd.GetLocation()); e == nil {
 		return t, nil
-	} else if t, e := time.Parse(DEFAULT_DATETIME_FORMAT+" Z07:00", s); e == nil {
+	} else if t, e := time.Parse("2006-01-02 15:04:05.999999999"+" Z07:00", s); e == nil {
 		return t, nil
-	} else if t, e := time.Parse(DEFAULT_DATETIME_FORMAT+" -0700", s); e == nil {
+	} else if t, e := time.Parse("2006-01-02 15:04:05.999999999"+" -0700", s); e == nil {
 		return t, nil
-	} else if t, e := time.Parse(DEFAULT_DATETIME_FORMAT+" MST", s); e == nil {
+	} else if t, e := time.Parse("2006-01-02 15:04:05.999999999"+" MST", s); e == nil {
 		return t, nil
 	} else if t, e := time.Parse("2006/01/02 15:04:05.999999999 Z07:00", s); e == nil {
 		return t, nil
@@ -155,9 +156,8 @@ func Float64ToStr(f float64) string {
 }
 
 func Float64ToPrimary(f float64) Primary {
-	s := Float64ToStr(f)
-	if i, e := strconv.ParseInt(s, 10, 64); e == nil {
-		return NewInteger(i)
+	if math.Remainder(f, 1) == 0 {
+		return NewInteger(int64(f))
 	}
 	return NewFloat(f)
 }

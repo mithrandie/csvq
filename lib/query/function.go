@@ -837,8 +837,7 @@ func DatetimeFormat(fn parser.Function, args []parser.Primary) (parser.Primary, 
 	}
 
 	dt := p.(parser.Datetime)
-	dt.SetFormat(format.(parser.String).Value())
-	return parser.NewString(dt.Format()), nil
+	return parser.NewString(dt.SetFormat(format.(parser.String).Value()).Format()), nil
 }
 
 func execDatetimeToInt(fn parser.Function, args []parser.Primary, timef func(time.Time) int64) (parser.Primary, error) {

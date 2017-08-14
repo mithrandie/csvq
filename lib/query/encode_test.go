@@ -66,7 +66,7 @@ var encodeViewTests = []struct {
 			"|          | second line                       |        |\n" +
 			"+----------+-----------------------------------+--------+\n" +
 			"|       -1 |                           UNKNOWN |   true |\n" +
-			"|   2.0123 | 2016-02-01 16:00:00.123456        | abcdef |\n" +
+			"|   2.0123 | 2016-02-01T16:00:00.123456-07:00  | abcdef |\n" +
 			"| 34567890 | abcdefghijklmnopqrstuvwxyzabcdefg |   NULL |\n" +
 			"|          | hi\"jk日本語あアｱＡ（              |        |\n" +
 			"+----------+-----------------------------------+--------+",
@@ -86,7 +86,7 @@ var encodeViewTests = []struct {
 		Result: "\"c1\",\"c2\nsecond line\",\"c3\"\n" +
 			"-1,,true\n" +
 			"-1,false,true\n" +
-			"2.0123,\"2016-02-01 16:00:00.123456\",\"abcdef\"\n" +
+			"2.0123,\"2016-02-01T16:00:00.123456-07:00\",\"abcdef\"\n" +
 			"34567890,\" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"\"jk\n\",",
 	},
 	{
@@ -103,7 +103,7 @@ var encodeViewTests = []struct {
 		WriteDelimiter: '\t',
 		Result: "\"c1\"\t\"c2\nsecond line\"\t\"c3\"\n" +
 			"-1\t\ttrue\n" +
-			"2.0123\t\"2016-02-01 16:00:00.123456\"\t\"abcdef\"\n" +
+			"2.0123\t\"2016-02-01T16:00:00.123456-07:00\"\t\"abcdef\"\n" +
 			"34567890\t\" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"\"jk\n\"\t",
 	},
 	{
@@ -119,7 +119,7 @@ var encodeViewTests = []struct {
 		Format:        cmd.CSV,
 		WithoutHeader: true,
 		Result: "-1,,true\n" +
-			"2.0123,\"2016-02-01 16:00:00.123456\",\"abcdef\"\n" +
+			"2.0123,\"2016-02-01T16:00:00.123456-07:00\",\"abcdef\"\n" +
 			"34567890,\" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"\"jk\n\",",
 	},
 	{
@@ -136,7 +136,7 @@ var encodeViewTests = []struct {
 		LineBreak: cmd.CRLF,
 		Result: "\"c1\",\"c2\r\nsecond line\",\"c3\"\r\n" +
 			"-1,,true\r\n" +
-			"2.0123,\"2016-02-01 16:00:00.123456\",\"abcdef\"\r\n" +
+			"2.0123,\"2016-02-01T16:00:00.123456-07:00\",\"abcdef\"\r\n" +
 			"34567890,\" abcdefghijklmnopqrstuvwxyzabcdefg\r\nhi\"\"jk\r\n\",",
 	},
 	{
@@ -164,7 +164,7 @@ var encodeViewTests = []struct {
 			"}," +
 			"{" +
 			"\"c1\":2.0123," +
-			"\"c2\\nsecond line\":\"2016-02-01 16:00:00.123456\"," +
+			"\"c2\\nsecond line\":\"2016-02-01T16:00:00.123456-07:00\"," +
 			"\"c3\":\"abcdef\"" +
 			"}," +
 			"{" +
@@ -190,7 +190,7 @@ var encodeViewTests = []struct {
 		Result: encodeToSJIS("\"c1\",\"c2\nsecond line\",\"c3\"\n" +
 			"-1,,true\n" +
 			"-1,false,true\n" +
-			"2.0123,\"2016-02-01 16:00:00.123456\",\"abcdef\"\n" +
+			"2.0123,\"2016-02-01T16:00:00.123456-07:00\",\"abcdef\"\n" +
 			"34567890,\" 日本語ghijklmnopqrstuvwxyzabcdefg\nhi\"\"jk\n\","),
 	},
 }

@@ -266,7 +266,7 @@ func TestDatetime_Ternary(t *testing.T) {
 func TestDatetime_Format(t *testing.T) {
 	dtstring := "2012-08-01T04:03:05.123-08:00"
 	dt := NewDatetimeFromString(dtstring)
-	expect := "2012-08-01 04:03:05.123"
+	expect := "2012-08-01T04:03:05.123-08:00"
 	if dt.Format() != expect {
 		t.Errorf("result = %q, want %q for %q ", dt.Format(), expect, dtstring)
 	}
@@ -280,16 +280,16 @@ var datetimeSetFormatTests = []struct {
 	{
 		Datetime: "2012-08-01T04:03:05.123-08:00",
 		Format:   "datetime: %Y-%m-%d %H:%i:%s %% %g",
-		Result:   "datetime: 2012-08-01 04:03:05 % g",
+		Result:   "datetime: 2006-01-02 15:04:05 % g",
 	},
 }
 
 func TestDatetime_SetFormat(t *testing.T) {
 	for _, v := range datetimeSetFormatTests {
 		dt := NewDatetimeFromString(v.Datetime)
-		dt.SetFormat(v.Format)
-		if dt.Format() != v.Result {
-			t.Errorf("result = %q, want %q for %q with %q", dt.Format(), v.Result, v.Format, v.Datetime)
+		result := dt.SetFormat(v.Format)
+		if result.format != v.Result {
+			t.Errorf("result = %q, want %q for %q with %q", result.format, v.Result, v.Format, v.Datetime)
 		}
 	}
 }

@@ -10,7 +10,6 @@ import (
 )
 
 const TOKEN_UNDEFINED = 0
-const DEFAULT_DATETIME_FORMAT = "2006-01-02 15:04:05.999999999"
 
 func IsPrimary(e Expression) bool {
 	if e == nil {
@@ -267,7 +266,7 @@ func NewDatetimeFromString(s string) Datetime {
 	return Datetime{
 		literal: s,
 		value:   t,
-		format:  DEFAULT_DATETIME_FORMAT,
+		format:  time.RFC3339Nano,
 	}
 }
 
@@ -275,7 +274,7 @@ func NewDatetime(t time.Time) Datetime {
 	return Datetime{
 		literal: t.Format(time.RFC3339Nano),
 		value:   t,
-		format:  DEFAULT_DATETIME_FORMAT,
+		format:  time.RFC3339Nano,
 	}
 }
 
@@ -295,8 +294,9 @@ func (dt Datetime) Format() string {
 	return dt.value.Format(dt.format)
 }
 
-func (dt *Datetime) SetFormat(format string) {
+func (dt Datetime) SetFormat(format string) Datetime {
 	dt.format = ConvertDatetimeFormat(format)
+	return dt
 }
 
 type Null struct {
