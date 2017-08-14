@@ -58,7 +58,7 @@ String
   In a string, single quotes or double quotes are escaped by back slashes.
 
 Integer
-: A integer is a word that contains only \[0-9\].
+: An integer is a word that contains only \[0-9\].
 
 Float
 : A float is a word that contains only \[0-9\] with a decimal point.

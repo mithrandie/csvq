@@ -9,7 +9,7 @@ category: reference
 | name | description |
 | :- | :- |
 | [STRING](#string) | Convert a value to a string |
-| [INTEGER](#integer) | Convert a value to a integer |
+| [INTEGER](#integer) | Convert a value to an integer |
 | [FLOAT](#float) | Convert a value to a float |
 | [DATETIME](#datetime) | Convert a value to a datetime |
 | [BOOLEAN](#boolean) | Convert a value to a boolean |
@@ -34,7 +34,7 @@ Convert a value to a string.
 
 | value type | descriptin |
 | :- | :- |
-| Integer  | A integer value is converted to a string representing a decimal integer. |
+| Integer  | An integer value is converted to a string representing a decimal integer. |
 | Float    | A float value is converted to a string representing a floating-point decimal. |
 | Datetime | A datetime value is converted to a string formatted with "%Y-%m-%d %H:%i:%s%N". |
 | Boolean  | A boolean value is converted to either 'true' or 'false'. |
@@ -55,13 +55,13 @@ _value_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Convert a value to a integer.
+Convert a value to an integer.
 
 | value type | descriptin |
 | :- | :- |
-| String   | If a string is a representation of a decimal integer, then it is converted to a integer. Otherwise it is converted to a null. |
-| Float    | A float value is rounded to a integer. |
-| Datetime | A datetime value is converted to a integer representing it's unix time. |
+| String   | If a string is a representation of a decimal integer, then it is converted to an integer. Otherwise it is converted to a null. |
+| Float    | A float value is rounded to an integer. |
+| Datetime | A datetime value is converted to an integer representing it's unix time. |
 | Boolean  | A boolean value is converted to a null. |
 | Ternary  | A ternaly value is converted to a null. |
 | Null     | A null value is kept as it is. |
@@ -83,8 +83,8 @@ Convert a value to a float.
 
 | value type | descriptin |
 | :- | :- |
-| String   | If a string is a representation of a floating-point decimal, then it is converted to a float. Otherwise it is converted to a null. |
-| Integer  | A integer value is converted to a float. |
+| String   | If a string is a representation of a floating-point decimal or its exponential notation, then it is converted to a float. Otherwise it is converted to a null. |
+| Integer  | An integer value is converted to a float. |
 | Datetime | A datetime value is converted to a float representing it's unix time. |
 | Boolean  | A boolean value is converted to a null. |
 | Ternary  | A ternary value is converted to a null. |
@@ -107,8 +107,8 @@ Convert a value to a datetime.
 
 | value type | descriptin |
 | :- | :- |
-| String   | If a string value is a representation of a integer or float value, then it is converted to a datetime represented by the number as a unix time. If a string value is formatted as a datetime, then it is convered to a datetime. Otherwise it is converted to a null. |
-| Integer  | A integer value is converted to a datetime represented by the integer value as a unix time. |
+| String   | If a string value is a representation of an integer or a float value, then it is converted to a datetime represented by the number as a unix time. If a string value is formatted as a datetime, then it is convered to a datetime. Otherwise it is converted to a null. |
+| Integer  | An integer value is converted to a datetime represented by the integer value as a unix time. |
 | Float    | A float value is converted to a datetime represented by the float value as a unix time. |
 | Boolean  | A boolean value is converted to a null. |
 | Ternary  | A ternaly value is converted to a null. |
@@ -132,7 +132,7 @@ Convert a value to a boolean.
 | value type | descriptin |
 | :- | :- |
 | String   | If a string value is any of '1', 't', 'T', 'TRUE', 'true' and 'True', then it is converted to true. If a string value is any of '0', 'f', 'F', 'FALSE' and 'false', then it is converted to false. Otherwise it is converted to a null. |
-| Integer  | If a integer value is 1, then it is converted to true. If a integer value is 0, then it is converted to false. Otherwise it is converted to a null. |
+| Integer  | If an integer value is 1, then it is converted to true. If an integer value is 0, then it is converted to false. Otherwise it is converted to a null. |
 | Float    | If a float value is 1, then it is converted to true. If a float value is 0, then it is converted to false. Otherwise it is converted to a null. |
 | Datetime | A datetime value is converted to a null. |
 | Ternary  | If a ternary value is TRUE, then it is converted to true. If a ternary value is FALSE, then it is converted to false. Otherwise it is converted to a null. |
@@ -156,7 +156,7 @@ Convert a value to a ternary.
 | value type | descriptin |
 | :- | :- |
 | String   | If a string value is any of '1', 't', 'T', 'TRUE', 'true' and 'True', then it is converted to TRUE. If a string value is any of '0', 'f', 'F', 'FALSE' and 'false', then it is converted to FALSE. Otherwise it is converted to UNKNOWN. |
-| Integer  | If a integer value is 1, then it is converted to TRUE. If a integer value is 0, then it is converted to FALSE. Otherwise it is converted to UNKNOWN. |
+| Integer  | If an integer value is 1, then it is converted to TRUE. If an integer value is 0, then it is converted to FALSE. Otherwise it is converted to UNKNOWN. |
 | Float    | If a float value is 1, then it is converted to TRUE. If a float value is 0, then it is converted to FALSE. Otherwise it is converted to UNKNOWN. |
 | Datetime | A datetime value is converted to UNKNOWN. |
 | Boolean  | If a boolean value is true, then it is converted to TRUE. If a boolean value is false, then it is converted to FALSE. |

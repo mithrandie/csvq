@@ -28,12 +28,14 @@ category: reference
 | [LOG1P](#log1p) | Return the natural logarithm of 1 plus a number |
 | [SQRT](#sqrt) | Return the square root of a number |
 | [POW](#pow) | Returns the value of a number raised to the power of another number |
-| [BIN_TO_DEC](#bin_to_dec) | Convert a string representing a binary number to a integer |
-| [OCT_TO_DEC](#oct_to_dec) | Convert a string representing a octal number to a integer |
-| [HEX_TO_DEC](#hex_to_dec) | Convert a string representing a hexadecimal number to a integer |
-| [BIN](#bin) | Convert a integer to a string representing a bynary number |
-| [OCT](#oct) | Convert a integer to a string representing a octal number |
-| [HEX](#hex) | Convert a integer to a string representing a hexadecimal number |
+| [BIN_TO_DEC](#bin_to_dec) | Convert a string representing a binary number to an integer |
+| [OCT_TO_DEC](#oct_to_dec) | Convert a string representing a octal number to an integer |
+| [HEX_TO_DEC](#hex_to_dec) | Convert a string representing a hexadecimal number to an integer |
+| [ENOTATION_TO_DEC](#enotation_to_dec) | Convert a string representing a number with exponential notation to an integer or a float |
+| [BIN](#bin) | Convert an integer to a string representing the bynary number |
+| [OCT](#oct) | Convert an integer to a string representing the octal number |
+| [HEX](#hex) | Convert an integer to a string representing the hexadecimal number |
+| [ENOTATION](#enotation) | Convert a float to a string representing the number with exponential notation |
 | [RAND](#rand) | Return a pseudo-random number |
 
 > _e_ is the base of natural logarithms
@@ -407,7 +409,7 @@ _bin_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Convert a string _bin_ representing a binary number to a integer.
+Convert a string _bin_ representing a binary number to an integer.
 
 ### OCT_TO_DEC
 {: #oct_to_dec}
@@ -422,7 +424,7 @@ _oct_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Convert a string _hex_ representing a octal number to a integer.
+Convert a string _hex_ representing a octal number to an integer.
 
 ### HEX_TO_DEC
 {: #hex_to_dec}
@@ -437,7 +439,22 @@ _hex_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Convert a string _hex_ representing a hexadecimal number to a integer.
+Convert a string _hex_ representing a hexadecimal number to an integer.
+
+### ENOTATION_TO_DEC
+{: #enotation_to_dec}
+
+```
+HEX_TO_DEC(enotation)
+```
+
+_enotation_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_return_
+: [integer]({{ '/reference/value.html#integer' | relative_url }}) or [float]({{ '/reference/value.html#float' | relative_url }})
+
+Convert a string _enotation_ representing a number with exponential notation to an integer or a float.
 
 ### BIN
 {: #bin}
@@ -452,7 +469,7 @@ _integer_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Convert a _integer_ to a string representing a binary number.
+Convert an _integer_ to a string representing the binary number.
 
 ### OCT
 {: #oct}
@@ -467,7 +484,7 @@ _integer_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Convert a _integer_ to a string representing a octal number.
+Convert an _integer_ to a string representing the octal number.
 
 ### HEX
 {: #hex}
@@ -482,7 +499,22 @@ _integer_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Convert a _integer_ to a string representing a hexadecimal number.
+Convert an _integer_ to a string representing the hexadecimal number.
+
+### ENOTATION
+{: #enotation}
+
+```
+ENOTATION(float)
+```
+
+_float_
+: [float]({{ '/reference/value.html#float' | relative_url }})
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Convert a _float_ to a string representing the number with exponential notation.
 
 ### RAND
 {: #rand}

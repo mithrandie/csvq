@@ -23,95 +23,97 @@ import (
 )
 
 var Functions = map[string]func(parser.Function, []parser.Primary) (parser.Primary, error){
-	"COALESCE":        Coalesce,
-	"IF":              If,
-	"IFNULL":          Ifnull,
-	"NULLIF":          Nullif,
-	"CEIL":            Ceil,
-	"FLOOR":           Floor,
-	"ROUND":           Round,
-	"ABS":             Abs,
-	"ACOS":            Acos,
-	"ASIN":            Asin,
-	"ATAN":            Atan,
-	"ATAN2":           Atan2,
-	"COS":             Cos,
-	"SIN":             Sin,
-	"TAN":             Tan,
-	"EXP":             Exp,
-	"EXP2":            Exp2,
-	"EXPM1":           Expm1,
-	"LOG":             Log,
-	"LOG10":           Log10,
-	"LOG2":            Log2,
-	"LOG1P":           Log1p,
-	"SQRT":            Sqrt,
-	"POW":             Pow,
-	"BIN_TO_DEC":      BinToDec,
-	"OCT_TO_DEC":      OctToDec,
-	"HEX_TO_DEC":      HexToDec,
-	"BIN":             Bin,
-	"OCT":             Oct,
-	"HEX":             Hex,
-	"RAND":            Rand,
-	"TRIM":            Trim,
-	"LTRIM":           Ltrim,
-	"RTRIM":           Rtrim,
-	"UPPER":           Upper,
-	"LOWER":           Lower,
-	"BASE64_ENCODE":   Base64Encode,
-	"BASE64_DECODE":   Base64Decode,
-	"HEX_ENCODE":      HexEncode,
-	"HEX_DECODE":      HexDecode,
-	"LEN":             Len,
-	"BYTE_LEN":        ByteLen,
-	"LPAD":            Lpad,
-	"RPAD":            Rpad,
-	"SUBSTR":          Substr,
-	"REPLACE":         Replace,
-	"FORMAT":          Format,
-	"MD5":             Md5,
-	"SHA1":            Sha1,
-	"SHA256":          Sha256,
-	"SHA512":          Sha512,
-	"MD5_HMAC":        Md5Hmac,
-	"SHA1_HMAC":       Sha1Hmac,
-	"SHA256_HMAC":     Sha256Hmac,
-	"SHA512_HMAC":     Sha512Hmac,
-	"NOW":             Now,
-	"DATETIME_FORMAT": DatetimeFormat,
-	"YEAR":            Year,
-	"MONTH":           Month,
-	"DAY":             Day,
-	"HOUR":            Hour,
-	"MINUTE":          Minute,
-	"SECOND":          Second,
-	"MILLISECOND":     Millisecond,
-	"MICROSECOND":     Microsecond,
-	"NANOSECOND":      Nanosecond,
-	"WEEKDAY":         Weekday,
-	"UNIX_TIME":       UnixTime,
-	"UNIX_NANO_TIME":  UnixNanoTime,
-	"DAY_OF_YEAR":     DayOfYear,
-	"WEEK_OF_YEAR":    WeekOfYear,
-	"ADD_YEAR":        AddYear,
-	"ADD_MONTH":       AddMonth,
-	"ADD_DAY":         AddDay,
-	"ADD_HOUR":        AddHour,
-	"ADD_MINUTE":      AddMinute,
-	"ADD_SECOND":      AddSecond,
-	"ADD_MILLI":       AddMilli,
-	"ADD_MICRO":       AddMicro,
-	"ADD_NANO":        AddNano,
-	"DATE_DIFF":       DateDiff,
-	"TIME_DIFF":       TimeDiff,
-	"STRING":          String,
-	"INTEGER":         Integer,
-	"FLOAT":           Float,
-	"BOOLEAN":         Boolean,
-	"TERNARY":         Ternary,
-	"DATETIME":        Datetime,
-	"CALL":            Call,
+	"COALESCE":         Coalesce,
+	"IF":               If,
+	"IFNULL":           Ifnull,
+	"NULLIF":           Nullif,
+	"CEIL":             Ceil,
+	"FLOOR":            Floor,
+	"ROUND":            Round,
+	"ABS":              Abs,
+	"ACOS":             Acos,
+	"ASIN":             Asin,
+	"ATAN":             Atan,
+	"ATAN2":            Atan2,
+	"COS":              Cos,
+	"SIN":              Sin,
+	"TAN":              Tan,
+	"EXP":              Exp,
+	"EXP2":             Exp2,
+	"EXPM1":            Expm1,
+	"LOG":              Log,
+	"LOG10":            Log10,
+	"LOG2":             Log2,
+	"LOG1P":            Log1p,
+	"SQRT":             Sqrt,
+	"POW":              Pow,
+	"BIN_TO_DEC":       BinToDec,
+	"OCT_TO_DEC":       OctToDec,
+	"HEX_TO_DEC":       HexToDec,
+	"ENOTATION_TO_DEC": EnotationToDec,
+	"BIN":              Bin,
+	"OCT":              Oct,
+	"HEX":              Hex,
+	"ENOTATION":        Enotation,
+	"RAND":             Rand,
+	"TRIM":             Trim,
+	"LTRIM":            Ltrim,
+	"RTRIM":            Rtrim,
+	"UPPER":            Upper,
+	"LOWER":            Lower,
+	"BASE64_ENCODE":    Base64Encode,
+	"BASE64_DECODE":    Base64Decode,
+	"HEX_ENCODE":       HexEncode,
+	"HEX_DECODE":       HexDecode,
+	"LEN":              Len,
+	"BYTE_LEN":         ByteLen,
+	"LPAD":             Lpad,
+	"RPAD":             Rpad,
+	"SUBSTR":           Substr,
+	"REPLACE":          Replace,
+	"FORMAT":           Format,
+	"MD5":              Md5,
+	"SHA1":             Sha1,
+	"SHA256":           Sha256,
+	"SHA512":           Sha512,
+	"MD5_HMAC":         Md5Hmac,
+	"SHA1_HMAC":        Sha1Hmac,
+	"SHA256_HMAC":      Sha256Hmac,
+	"SHA512_HMAC":      Sha512Hmac,
+	"NOW":              Now,
+	"DATETIME_FORMAT":  DatetimeFormat,
+	"YEAR":             Year,
+	"MONTH":            Month,
+	"DAY":              Day,
+	"HOUR":             Hour,
+	"MINUTE":           Minute,
+	"SECOND":           Second,
+	"MILLISECOND":      Millisecond,
+	"MICROSECOND":      Microsecond,
+	"NANOSECOND":       Nanosecond,
+	"WEEKDAY":          Weekday,
+	"UNIX_TIME":        UnixTime,
+	"UNIX_NANO_TIME":   UnixNanoTime,
+	"DAY_OF_YEAR":      DayOfYear,
+	"WEEK_OF_YEAR":     WeekOfYear,
+	"ADD_YEAR":         AddYear,
+	"ADD_MONTH":        AddMonth,
+	"ADD_DAY":          AddDay,
+	"ADD_HOUR":         AddHour,
+	"ADD_MINUTE":       AddMinute,
+	"ADD_SECOND":       AddSecond,
+	"ADD_MILLI":        AddMilli,
+	"ADD_MICRO":        AddMicro,
+	"ADD_NANO":         AddNano,
+	"DATE_DIFF":        DateDiff,
+	"TIME_DIFF":        TimeDiff,
+	"STRING":           String,
+	"INTEGER":          Integer,
+	"FLOAT":            Float,
+	"BOOLEAN":          Boolean,
+	"TERNARY":          Ternary,
+	"DATETIME":         Datetime,
+	"CALL":             Call,
 }
 
 func Coalesce(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
@@ -391,6 +393,26 @@ func HexToDec(fn parser.Function, args []parser.Primary) (parser.Primary, error)
 	return execParseInt(fn, args, 16)
 }
 
+func EnotationToDec(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
+	if len(args) != 1 {
+		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
+	}
+
+	p := parser.PrimaryToString(args[0])
+	if parser.IsNull(p) {
+		return parser.NewNull(), nil
+	}
+
+	s := p.(parser.String).Value()
+
+	f, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return parser.NewNull(), nil
+	}
+
+	return parser.Float64ToPrimary(f), nil
+}
+
 func Bin(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
 	return execFormatInt(fn, args, 2)
 }
@@ -401,6 +423,20 @@ func Oct(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
 
 func Hex(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
 	return execFormatInt(fn, args, 16)
+}
+
+func Enotation(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
+	if len(args) != 1 {
+		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
+	}
+
+	p := parser.PrimaryToFloat(args[0])
+	if parser.IsNull(p) {
+		return parser.NewNull(), nil
+	}
+
+	s := strconv.FormatFloat(p.(parser.Float).Value(), 'e', -1, 64)
+	return parser.NewString(s), nil
 }
 
 func Rand(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
@@ -801,8 +837,7 @@ func DatetimeFormat(fn parser.Function, args []parser.Primary) (parser.Primary, 
 	}
 
 	dt := p.(parser.Datetime)
-	dt.SetFormat(format.(parser.String).Value())
-	return parser.NewString(dt.Format()), nil
+	return parser.NewString(dt.SetFormat(format.(parser.String).Value()).Format()), nil
 }
 
 func execDatetimeToInt(fn parser.Function, args []parser.Primary, timef func(time.Time) int64) (parser.Primary, error) {

@@ -1567,6 +1567,30 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select if(column1, column2, column3)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []Expression{
+							Field{Object: Function{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "if",
+								Args: []Expression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 11}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 11}, Literal: "column1"}},
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 20}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 20}, Literal: "column2"}},
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 29}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 29}, Literal: "column3"}},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "select aggfunc(distinct column1)",
 		Output: []Statement{
 			SelectQuery{
@@ -3628,22 +3652,6 @@ var parseTests = []struct {
 									RHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 25}, Name: "@var3"},
 								},
 							},
-						},
-					},
-				},
-			}},
-		},
-	},
-	{
-		Input: "select if",
-		Output: []Statement{
-			SelectQuery{SelectEntity: SelectEntity{
-				SelectClause: SelectClause{
-					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
-					Fields: []Expression{
-						Field{
-							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "if"}},
 						},
 					},
 				},

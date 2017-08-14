@@ -762,6 +762,61 @@ func TestHexToDec(t *testing.T) {
 	testFunction(t, HexToDec, hexToDecTests)
 }
 
+var enotationToDecTests = []functionTest{
+	{
+		Name: "EnotationToDec",
+		Function: parser.Function{
+			Name: "enotation_to_dec",
+		},
+		Args: []parser.Primary{
+			parser.NewString("1.23e-11"),
+		},
+		Result: parser.NewFloat(0.0000000000123),
+	},
+	{
+		Name: "EnotationToDec To Integer",
+		Function: parser.Function{
+			Name: "enotation_to_dec",
+		},
+		Args: []parser.Primary{
+			parser.NewString("1.23e+12"),
+		},
+		Result: parser.NewInteger(1230000000000),
+	},
+	{
+		Name: "EnotationToDec Null",
+		Function: parser.Function{
+			Name: "enotation_to_dec",
+		},
+		Args: []parser.Primary{
+			parser.NewNull(),
+		},
+		Result: parser.NewNull(),
+	},
+	{
+		Name: "EnotationToDec Parse Error",
+		Function: parser.Function{
+			Name: "enotation_to_dec",
+		},
+		Args: []parser.Primary{
+			parser.NewString("string"),
+		},
+		Result: parser.NewNull(),
+	},
+	{
+		Name: "EnotationToDec Arguments Error",
+		Function: parser.Function{
+			Name: "enotation_to_dec",
+		},
+		Args:  []parser.Primary{},
+		Error: "[L:- C:-] function enotation_to_dec takes exactly 1 argument",
+	},
+}
+
+func TestEnotationToDec(t *testing.T) {
+	testFunction(t, EnotationToDec, enotationToDecTests)
+}
+
 var binTests = []functionTest{
 	{
 		Name: "Bin",
@@ -829,6 +884,51 @@ var hexTests = []functionTest{
 
 func TestHex(t *testing.T) {
 	testFunction(t, Hex, hexTests)
+}
+
+var enotationTests = []functionTest{
+	{
+		Name: "Enotation",
+		Function: parser.Function{
+			Name: "enotation",
+		},
+		Args: []parser.Primary{
+			parser.NewFloat(0.0000000000123),
+		},
+		Result: parser.NewString("1.23e-11"),
+	},
+	{
+		Name: "Enotation From Integer",
+		Function: parser.Function{
+			Name: "enotation",
+		},
+		Args: []parser.Primary{
+			parser.NewInteger(1230000000000),
+		},
+		Result: parser.NewString("1.23e+12"),
+	},
+	{
+		Name: "Enotation Null",
+		Function: parser.Function{
+			Name: "enotation",
+		},
+		Args: []parser.Primary{
+			parser.NewNull(),
+		},
+		Result: parser.NewNull(),
+	},
+	{
+		Name: "Enotation Arguments Error",
+		Function: parser.Function{
+			Name: "enotation",
+		},
+		Args:  []parser.Primary{},
+		Error: "[L:- C:-] function enotation takes exactly 1 argument",
+	},
+}
+
+func TestEnotation(t *testing.T) {
+	testFunction(t, Enotation, enotationTests)
 }
 
 var randTests = []struct {
@@ -1487,7 +1587,7 @@ var formatTests = []functionTest{
 			Name: "format",
 		},
 		Args: []parser.Primary{
-			parser.NewString("string = %s, integer = %s"),
+			parser.NewString("string = %q, integer = %q"),
 			parser.NewString("str"),
 			parser.NewInteger(1),
 		},
@@ -2375,7 +2475,7 @@ var stringTests = []functionTest{
 		Args: []parser.Primary{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 		},
-		Result: parser.NewString("2012-02-03 09:18:15"),
+		Result: parser.NewString("2012-02-03T09:18:15-08:00"),
 	},
 	{
 		Name: "String Arguments Error",
@@ -2562,7 +2662,7 @@ var callTests = []functionTest{
 			parser.NewTernary(ternary.TRUE),
 			parser.NewNull(),
 		},
-		Result: parser.NewString("foo 1 1.234 2012-02-03 09:18:15 true true \n"),
+		Result: parser.NewString("foo 1 1.234 2012-02-03T09:18:15-08:00 true true \n"),
 	},
 	{
 		Name: "Call Argument Error",
