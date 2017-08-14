@@ -390,6 +390,6 @@ specifier
   | E | exponential notation with upper cases |
   | f | floating point decimal number |
   | s | string representing the value |
-  | s | string representing the value with quotes |
+  | q | string representing the value with quotes |
   | % | '%' |
 
