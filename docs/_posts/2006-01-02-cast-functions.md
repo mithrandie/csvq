@@ -36,7 +36,7 @@ Convert a value to a string.
 | :- | :- |
 | Integer  | An integer value is converted to a string representing a decimal integer. |
 | Float    | A float value is converted to a string representing a floating-point decimal. |
-| Datetime | A datetime value is converted to a string formatted with "%Y-%m-%d %H:%i:%s%N". |
+| Datetime | A datetime value is converted to a string formatted with RFC3339 with Nano Seconds. |
 | Boolean  | A boolean value is converted to either 'true' or 'false'. |
 | Ternary  | A ternaly value is converted to any one string of 'TRUE', 'FALSE' and 'UNKNOWN'. |
 | Null     | A null value is kept as it is. |
