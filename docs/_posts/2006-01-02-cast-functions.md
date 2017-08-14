@@ -59,7 +59,7 @@ Convert a value to an integer.
 
 | value type | descriptin |
 | :- | :- |
-| String   | If a string is a representation of a decimal integer, then it is converted to an integer. Otherwise it is converted to a null. |
+| String   | If a string is a representation of a decimal integer or its exponential notation, then it is converted to an integer. If a string is a representation of a floating-point decimal or its exponential notation, then it is converted and rounded to an integer. Otherwise it is converted to a null. |
 | Float    | A float value is rounded to an integer. |
 | Datetime | A datetime value is converted to an integer representing it's unix time. |
 | Boolean  | A boolean value is converted to a null. |
