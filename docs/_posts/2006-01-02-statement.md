@@ -51,7 +51,8 @@ Identifier
   Notwithstanding above naming restriction, you can use most character strings as a identifier by enclosing in back quotes.
   Back quotes are escaped by back slashes.
   
-  Identifiers represent tables, columns, functions or cursors. These character cases are insensitive.
+  Identifiers represent tables, columns, functions or cursors.
+  These character cases are insensitive except file paths, and whether file paths are case insensitive or not depends on your file system.
   
 String
 : A string is a character string enclosed in single quotes or double quotes.
