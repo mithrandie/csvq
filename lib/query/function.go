@@ -1133,13 +1133,18 @@ func Integer(fn parser.Function, args []parser.Primary) (parser.Primary, error) 
 	}
 
 	switch args[0].(type) {
+	case parser.Integer:
+		return args[0], nil
 	case parser.Float:
 		return parser.NewInteger(int64(round(args[0].(parser.Float).Value(), 0))), nil
+	case parser.String:
+		if f, e := strconv.ParseFloat(args[0].(parser.String).Value(), 64); e == nil {
+			return parser.NewInteger(int64(round(f, 0))), nil
+		}
 	case parser.Datetime:
 		return parser.NewInteger(args[0].(parser.Datetime).Value().Unix()), nil
-	default:
-		return parser.PrimaryToInteger(args[0]), nil
 	}
+	return parser.NewNull(), nil
 }
 
 func Float(fn parser.Function, args []parser.Primary) (parser.Primary, error) {

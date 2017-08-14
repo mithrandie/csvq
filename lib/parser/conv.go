@@ -167,12 +167,15 @@ func PrimaryToInteger(p Primary) Primary {
 	case Integer:
 		return p
 	case Float:
-		if i, e := strconv.ParseInt(p.(Float).literal, 10, 64); e == nil {
-			return NewInteger(i)
+		f := p.(Float).Value()
+		if math.Remainder(f, 1) == 0 {
+			return NewInteger(int64(f))
 		}
 	case String:
-		if i, e := strconv.ParseInt(p.(String).Value(), 10, 64); e == nil {
-			return NewInteger(i)
+		if f, e := strconv.ParseFloat(p.(String).Value(), 64); e == nil {
+			if math.Remainder(f, 1) == 0 {
+				return NewInteger(int64(f))
+			}
 		}
 	}
 

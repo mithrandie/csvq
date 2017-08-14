@@ -2493,6 +2493,16 @@ func TestString(t *testing.T) {
 
 var integerTests = []functionTest{
 	{
+		Name: "Integer from Integer",
+		Function: parser.Function{
+			Name: "integer",
+		},
+		Args: []parser.Primary{
+			parser.NewInteger(2),
+		},
+		Result: parser.NewInteger(2),
+	},
+	{
 		Name: "Integer from String",
 		Function: parser.Function{
 			Name: "integer",
@@ -2511,6 +2521,16 @@ var integerTests = []functionTest{
 			parser.NewFloat(1.7),
 		},
 		Result: parser.NewInteger(2),
+	},
+	{
+		Name: "Float Null",
+		Function: parser.Function{
+			Name: "float",
+		},
+		Args: []parser.Primary{
+			parser.NewNull(),
+		},
+		Result: parser.NewNull(),
 	},
 	{
 		Name: "Integer from Datetime",
