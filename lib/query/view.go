@@ -279,13 +279,13 @@ func loadViewFromFile(file *os.File, fileInfo *FileInfo) (*View, error) {
 		}
 	}
 
-	records, err := reader.ReadAll()
+	rows, err := reader.ReadAll()
 	if err != nil {
 		return nil, err
 	}
 
-	view.Records = make([]Record, len(records))
-	for i, v := range records {
+	view.Records = make([]Record, len(rows))
+	for i, v := range rows {
 		view.Records[i] = NewRecord(v)
 	}
 

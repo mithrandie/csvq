@@ -91,3 +91,14 @@ func (r Record) Copy() Record {
 	return record
 
 }
+
+func MergeRecord(r1 Record, r2 Record) Record {
+	r := make(Record, len(r1)+len(r2))
+	for i, v := range r1 {
+		r[i] = v
+	}
+	for i, v := range r2 {
+		r[i+len(r1)] = v
+	}
+	return r
+}

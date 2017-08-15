@@ -271,6 +271,80 @@ var innerJoinTests = []struct {
 		},
 	},
 	{
+		Name: "Inner Join With No Condition",
+		View: &View{
+			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithId(1, []parser.Primary{
+					parser.NewInteger(1),
+					parser.NewString("str1"),
+				}),
+				NewRecordWithId(2, []parser.Primary{
+					parser.NewInteger(2),
+					parser.NewString("str2"),
+				}),
+			},
+		},
+		JoinView: &View{
+			Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
+			Records: []Record{
+				NewRecordWithId(1, []parser.Primary{
+					parser.NewInteger(3),
+					parser.NewString("str3"),
+				}),
+				NewRecordWithId(2, []parser.Primary{
+					parser.NewInteger(4),
+					parser.NewString("str4"),
+				}),
+			},
+		},
+		Condition: nil,
+		Result: &View{
+			Header: []HeaderField{
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", Number: 1, FromTable: true},
+				{View: "table1", Column: "column2", Number: 2, FromTable: true},
+				{View: "table2", Column: INTERNAL_ID_COLUMN},
+				{View: "table2", Column: "column3", Number: 1, FromTable: true},
+				{View: "table2", Column: "column4", Number: 2, FromTable: true},
+			},
+			Records: []Record{
+				NewRecord([]parser.Primary{
+					parser.NewInteger(1),
+					parser.NewInteger(1),
+					parser.NewString("str1"),
+					parser.NewInteger(1),
+					parser.NewInteger(3),
+					parser.NewString("str3"),
+				}),
+				NewRecord([]parser.Primary{
+					parser.NewInteger(1),
+					parser.NewInteger(1),
+					parser.NewString("str1"),
+					parser.NewInteger(2),
+					parser.NewInteger(4),
+					parser.NewString("str4"),
+				}),
+				NewRecord([]parser.Primary{
+					parser.NewInteger(2),
+					parser.NewInteger(2),
+					parser.NewString("str2"),
+					parser.NewInteger(1),
+					parser.NewInteger(3),
+					parser.NewString("str3"),
+				}),
+				NewRecord([]parser.Primary{
+					parser.NewInteger(2),
+					parser.NewInteger(2),
+					parser.NewString("str2"),
+					parser.NewInteger(2),
+					parser.NewInteger(4),
+					parser.NewString("str4"),
+				}),
+			},
+		},
+	},
+	{
 		Name: "Inner Join Filter Error",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
@@ -717,6 +791,51 @@ func TestOuterJoin(t *testing.T) {
 		}
 		if !reflect.DeepEqual(v.View, v.Result) {
 			t.Errorf("%s: result = %q, want %q", v.Name, v.View, v.Result)
+			t.Log(v.View.Records)
+			t.Log(v.Result.Records)
 		}
+	}
+}
+
+func BenchmarkCrossJoin(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		view := GenerateBenchView("t1", 100)
+		joinView := GenerateBenchView("t2", 100)
+
+		CrossJoin(view, joinView)
+	}
+}
+
+func BenchmarkInnerJoin(b *testing.B) {
+	condition := parser.Comparison{
+		LHS:      parser.FieldReference{View: parser.Identifier{Literal: "t1"}, Column: parser.Identifier{Literal: "c1"}},
+		RHS:      parser.FieldReference{View: parser.Identifier{Literal: "t2"}, Column: parser.Identifier{Literal: "c1"}},
+		Operator: "=",
+	}
+
+	filter := NewEmptyFilter()
+
+	for i := 0; i < b.N; i++ {
+		view := GenerateBenchView("t1", 100)
+		joinView := GenerateBenchView("t2", 100)
+
+		InnerJoin(view, joinView, condition, filter)
+	}
+}
+
+func BenchmarkOuterJoin(b *testing.B) {
+	condition := parser.Comparison{
+		LHS:      parser.FieldReference{View: parser.Identifier{Literal: "t1"}, Column: parser.Identifier{Literal: "c1"}},
+		RHS:      parser.FieldReference{View: parser.Identifier{Literal: "t2"}, Column: parser.Identifier{Literal: "c1"}},
+		Operator: "=",
+	}
+
+	filter := NewEmptyFilter()
+
+	for i := 0; i < b.N; i++ {
+		view := GenerateBenchView("t1", 100)
+		joinView := GenerateBenchView("t2", 50)
+
+		InnerJoin(view, joinView, condition, filter)
 	}
 }

@@ -3232,3 +3232,35 @@ func TestFilter_Evaluate(t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkFilter_Evaluate1(b *testing.B) {
+	filter := GenerateBenchGroupedViewFilter()
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		filter.Evaluate(parser.AggregateFunction{
+			Name:     "count",
+			Distinct: parser.Token{},
+			Args: []parser.Expression{
+				parser.AllColumns{},
+			},
+		})
+	}
+}
+
+func BenchmarkFilter_Evaluate2(b *testing.B) {
+	filter := GenerateBenchGroupedViewFilter()
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		filter.Evaluate(parser.AggregateFunction{
+			Name:     "count",
+			Distinct: parser.Token{},
+			Args: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "c1"}},
+			},
+		})
+	}
+}

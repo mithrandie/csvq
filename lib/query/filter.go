@@ -580,6 +580,10 @@ func (f Filter) evalAggregateFunction(expr parser.AggregateFunction) (parser.Pri
 		listExpr = parser.NewInteger(1)
 	}
 
+	if uname == "COUNT" && parser.IsPrimary(listExpr) {
+		return parser.NewInteger(int64(f.Records[0].View.Records[f.Records[0].RecordIndex].GroupLen())), nil
+	}
+
 	view := NewViewFromGroupedRecord(f.Records[0])
 	list, err := view.ListValuesForAggregateFunctions(expr, listExpr, expr.IsDistinct(), f)
 	if err != nil {
