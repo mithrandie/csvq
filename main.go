@@ -12,7 +12,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var version = "v0.6.0"
+var version = "v0.6.1"
 
 func main() {
 	cli.AppHelpTemplate = appHHelpTemplate
@@ -22,7 +22,7 @@ func main() {
 
 	app.Name = "csvq"
 	app.Usage = "SQL like query language for csv"
-	app.ArgsUsage = "[\"query\"|\"statements\"]"
+	app.ArgsUsage = "[\"query\"|\"statements\"|argument]"
 	app.Version = version
 
 	app.Flags = []cli.Flag{
