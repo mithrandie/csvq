@@ -135,7 +135,7 @@ _table_name_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
   
   A _table_name_ represents a csv file path, a [temporary table]({{ '/reference/temporary-table.html' | relative_url }}), or a [inline table]({{ '/reference/common-table-expression.html' | relative_url }}).
-  You can use absolute path or relative path from the directory specified by the ["--repository" option]({{ '/reference/command.html#global_options' | relative_url }}) as a csv file path.
+  You can use absolute path or relative path from the directory specified by the ["--repository" option]({{ '/reference/command.html#options' | relative_url }}) as a csv file path.
   
   If a file name extension is ".csv" or ".tsv", you can omit it. 
   

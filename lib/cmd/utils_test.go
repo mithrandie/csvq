@@ -28,3 +28,33 @@ func TestUnescapeString(t *testing.T) {
 		t.Errorf("unescaped string = %q, want %q", unescaped, expect)
 	}
 }
+
+func TestHumarizeNumber(t *testing.T) {
+	number := "1234567"
+	expect := "1,234,567"
+	result := HumarizeNumber(number)
+	if result != expect {
+		t.Errorf("humarized = %q, want %q", result, expect)
+	}
+
+	number = "123456"
+	expect = "123,456"
+	result = HumarizeNumber(number)
+	if result != expect {
+		t.Errorf("humarized = %q, want %q", result, expect)
+	}
+
+	number = "123"
+	expect = "123"
+	result = HumarizeNumber(number)
+	if result != expect {
+		t.Errorf("humarized = %q, want %q", result, expect)
+	}
+
+	number = "1234.5678"
+	expect = "1,234.5678"
+	result = HumarizeNumber(number)
+	if result != expect {
+		t.Errorf("humarized = %q, want %q", result, expect)
+	}
+}

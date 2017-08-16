@@ -65,50 +65,34 @@ func main() {
 			Name:  "without-null, a",
 			Usage: "parse empty fields as empty strings",
 		},
+		cli.StringFlag{
+			Name:  "write-encoding, E",
+			Value: "UTF8",
+			Usage: "file encoding. one of: UTF8|SJIS",
+		},
+		cli.StringFlag{
+			Name:  "out, o",
+			Usage: "write output to `FILE`",
+		},
+		cli.StringFlag{
+			Name:  "format, f",
+			Usage: "output format. one of: CSV|TSV|JSON|TEXT",
+		},
+		cli.StringFlag{
+			Name:  "write-delimiter, D",
+			Usage: "field delimiter for CSV",
+		},
+		cli.BoolFlag{
+			Name:  "without-header, N",
+			Usage: "when the file format is specified as CSV or TSV, write without the header line",
+		},
+		cli.BoolFlag{
+			Name:  "stats, x",
+			Usage: "show execution time and memory statistics",
+		},
 	}
 
 	app.Commands = []cli.Command{
-		{
-			Name:      "write",
-			Usage:     "Write output to a file",
-			ArgsUsage: "[\"query\"|\"statements\"]",
-
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "write-encoding, E",
-					Value: "UTF8",
-					Usage: "file encoding. one of: UTF8|SJIS",
-				},
-				cli.StringFlag{
-					Name:  "out, o",
-					Usage: "write output to `FILE`",
-				},
-				cli.StringFlag{
-					Name:  "format, f",
-					Usage: "output format. one of: CSV|TSV|JSON|TEXT",
-				},
-				cli.StringFlag{
-					Name:  "write-delimiter, D",
-					Usage: "field delimiter for CSV",
-				},
-				cli.BoolFlag{
-					Name:  "without-header, N",
-					Usage: "when the file format is specified as CSV or TSV, write without the header line",
-				},
-			},
-			Before: func(c *cli.Context) error {
-				return setWriteFlags(c)
-			},
-			Action: func(c *cli.Context) error {
-				queryString, err := readQuery(c)
-				if err != nil {
-					cli.ShowCommandHelp(c, "write")
-					return cli.NewExitError(err.Error(), 1)
-				}
-
-				return exec(queryString)
-			},
-		},
 		{
 			Name:      "fields",
 			Usage:     "Show fields in a file",
@@ -151,7 +135,7 @@ func main() {
 	}
 
 	app.Before = func(c *cli.Context) error {
-		return setGlobalFlags(c)
+		return setFlags(c)
 	}
 
 	app.Action = func(c *cli.Context) error {
@@ -161,23 +145,18 @@ func main() {
 			return cli.NewExitError(err.Error(), 1)
 		}
 
-		return exec(queryString)
+		if err = action.Run(queryString, cmd.GetFlags().Source); err != nil {
+			code := 1
+			if apperr, ok := err.(query.AppError); ok {
+				code = apperr.GetCode()
+			}
+			return cli.NewExitError(err.Error(), code)
+		}
+
+		return nil
 	}
 
 	app.Run(os.Args)
-}
-
-func exec(queryString string) error {
-	err := action.Write(queryString, cmd.GetFlags().Source)
-	if err != nil {
-		code := 1
-		if apperr, ok := err.(query.AppError); ok {
-			code = apperr.GetCode()
-		}
-		return cli.NewExitError(err.Error(), code)
-	}
-
-	return nil
 }
 
 func readQuery(c *cli.Context) (string, error) {
@@ -207,7 +186,7 @@ func readQuery(c *cli.Context) (string, error) {
 	return queryString, nil
 }
 
-func setGlobalFlags(c *cli.Context) error {
+func setFlags(c *cli.Context) error {
 	if err := cmd.SetDelimiter(c.GlobalString("delimiter")); err != nil {
 		return err
 	}
@@ -229,10 +208,7 @@ func setGlobalFlags(c *cli.Context) error {
 	cmd.SetDatetimeFormat(c.GlobalString("datetime-format"))
 	cmd.SetNoHeader(c.GlobalBool("no-header"))
 	cmd.SetWithoutNull(c.GlobalBool("without-null"))
-	return nil
-}
 
-func setWriteFlags(c *cli.Context) error {
 	if err := cmd.SetWriteEncoding(c.String("write-encoding")); err != nil {
 		return err
 	}
@@ -246,5 +222,7 @@ func setWriteFlags(c *cli.Context) error {
 		return err
 	}
 	cmd.SetWithoutHeader(c.Bool("without-header"))
+	cmd.SetStats(c.Bool("stats"))
+
 	return nil
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/query"
+	"strings"
 )
 
 var executeTests = []struct {
@@ -14,6 +15,7 @@ var executeTests = []struct {
 	Input   string
 	OutFile string
 	Output  string
+	Stats   bool
 	Content string
 	Error   string
 }{
@@ -37,6 +39,11 @@ var executeTests = []struct {
 		Input: "select from",
 		Error: "[L:1 C:8] syntax error: unexpected FROM",
 	},
+	{
+		Name:  "Show Statistics",
+		Input: "select 1",
+		Stats: true,
+	},
 }
 
 func initFlags() {
@@ -44,9 +51,10 @@ func initFlags() {
 	tf.Repository = TestDir
 	tf.OutFile = ""
 	tf.Format = cmd.TEXT
+	tf.Stats = false
 }
 
-func TestWrite(t *testing.T) {
+func TestRun(t *testing.T) {
 
 	for _, v := range executeTests {
 		query.Logs = []string{}
@@ -56,12 +64,15 @@ func TestWrite(t *testing.T) {
 		if v.OutFile != tf.OutFile {
 			tf.OutFile = v.OutFile
 		}
+		if v.Stats {
+			tf.Stats = v.Stats
+		}
 
 		oldStdout := os.Stdout
 		r, w, _ := os.Pipe()
 		os.Stdout = w
 
-		err := Write(v.Input, "")
+		err := Run(v.Input, "")
 
 		w.Close()
 		os.Stdout = oldStdout
@@ -80,15 +91,21 @@ func TestWrite(t *testing.T) {
 			continue
 		}
 
-		if string(stdout) != v.Output {
-			t.Errorf("%s: output = %q, want %q", v.Name, string(stdout), v.Output)
-		}
+		if v.Stats {
+			if !strings.Contains(string(stdout), "Time:") {
+				t.Errorf("%s: output = %q, want statistics", v.Name, string(stdout))
+			}
+		} else {
+			if string(stdout) != v.Output {
+				t.Errorf("%s: output = %q, want %q", v.Name, string(stdout), v.Output)
+			}
 
-		if 0 < len(v.OutFile) {
-			fp, _ := os.Open(v.OutFile)
-			buf, _ := ioutil.ReadAll(fp)
-			if string(buf) != v.Content {
-				t.Errorf("%s: content = %q, want %q", v.Name, string(buf), v.Content)
+			if 0 < len(v.OutFile) {
+				fp, _ := os.Open(v.OutFile)
+				buf, _ := ioutil.ReadAll(fp)
+				if string(buf) != v.Content {
+					t.Errorf("%s: content = %q, want %q", v.Name, string(buf), v.Content)
+				}
 			}
 		}
 	}

@@ -335,6 +335,15 @@ func TestSetWithoutHeader(t *testing.T) {
 	}
 }
 
+func TestSetStats(t *testing.T) {
+	flags := GetFlags()
+
+	SetStats(true)
+	if !flags.Stats {
+		t.Errorf("stats = %t, expect to set %t", flags.Stats, true)
+	}
+}
+
 func TestParseEncoding(t *testing.T) {
 	e, err := ParseEncoding("")
 	if err != nil {

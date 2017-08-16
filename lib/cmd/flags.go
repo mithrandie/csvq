@@ -67,6 +67,7 @@ type Flags struct {
 	Format         Format
 	WriteDelimiter rune
 	WithoutHeader  bool
+	Stats          bool
 
 	// Use in tests
 	Now string
@@ -94,6 +95,7 @@ func GetFlags() *Flags {
 			Format:         TEXT,
 			WriteDelimiter: ',',
 			WithoutHeader:  false,
+			Stats:          false,
 			Now:            "",
 		}
 	})
@@ -304,6 +306,12 @@ func SetWriteDelimiter(s string) error {
 func SetWithoutHeader(b bool) {
 	f := GetFlags()
 	f.WithoutHeader = b
+	return
+}
+
+func SetStats(b bool) {
+	f := GetFlags()
+	f.Stats = b
 	return
 }
 
