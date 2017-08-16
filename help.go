@@ -6,7 +6,7 @@ var appHHelpTemplate = `NAME:
      https://mithrandie.github.io/csvq
 
 USAGE:
-   {{if .UsageText}}{{.UsageText}}{{else}}{{.HelpName}} {{if .VisibleFlags}}[global options]{{end}}{{if .Commands}} [command [command options]]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}{{end}}{{if .Version}}{{if not .HideVersion}}
+   {{if .UsageText}}{{.UsageText}}{{else}}{{.HelpName}} {{if .VisibleFlags}}[options]{{end}}{{if .Commands}} [subcommand]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}{{end}}{{if .Version}}{{if not .HideVersion}}
 
 VERSION:
    {{.Version}}{{end}}{{end}}{{if .Description}}
@@ -18,11 +18,11 @@ AUTHOR{{with $length := len .Authors}}{{if ne 1 $length}}S{{end}}{{end}}:
    {{range $index, $author := .Authors}}{{if $index}}
    {{end}}{{$author}}{{end}}{{end}}{{if .VisibleCommands}}
 
-COMMANDS:{{range .VisibleCategories}}{{if .Name}}
+SUBCOMMANDS:{{range .VisibleCategories}}{{if .Name}}
    {{.Name}}:{{end}}{{range .VisibleCommands}}
      {{join .Names ", "}}{{"\t"}}{{.Usage}}{{end}}{{end}}{{end}}{{if .VisibleFlags}}
 
-GLOBAL OPTIONS:
+OPTIONS:
    {{range $index, $option := .VisibleFlags}}{{if $index}}
    {{end}}{{$option}}{{end}}{{end}}{{if .Copyright}}
 
@@ -35,7 +35,7 @@ var commandHelpTemplate = `NAME:
    {{.HelpName}} - {{.Usage}}
 
 USAGE:
-   csvq [global options] {{.Name}}{{if .VisibleFlags}} [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}
+   csvq [options] {{.Name}}{{if .VisibleFlags}} [subcommand options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}
 {{if .Category}}
 CATEGORY:
    {{.Category}}{{end}}{{if .Description}}
