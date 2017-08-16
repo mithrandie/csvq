@@ -436,3 +436,45 @@ func TestPrimaryToString(t *testing.T) {
 		t.Errorf("primary type = %T, want Null for %#v", s, p)
 	}
 }
+
+func BenchmarkStrToTime1(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		s := "01/02/2006"
+		StrToTime(s)
+	}
+}
+
+func BenchmarkStrToTime2(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		s := "2006-01-02T15:04:05-07:00"
+		StrToTime(s)
+	}
+}
+
+func BenchmarkStrToTime3(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		s := "2006-01-02"
+		StrToTime(s)
+	}
+}
+
+func BenchmarkStrToTime4(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		s := "2006-01-02 15:04:05"
+		StrToTime(s)
+	}
+}
+
+func BenchmarkStrToTime5(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		s := "2006-01-02 15:04:05 -0700"
+		StrToTime(s)
+	}
+}
+
+func BenchmarkStrToTime6(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		s := "02 Jan 06 15:04 MST"
+		StrToTime(s)
+	}
+}

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/parser"
 )
 
 func GetTestFilePath(filename string) string {
@@ -103,4 +104,40 @@ func copyfile(dstfile string, srcfile string) error {
 	}
 
 	return nil
+}
+
+func GenerateBenchGroupedViewFilter() Filter {
+	primaries := make([]parser.Primary, 1000)
+	for i := 0; i < 1000; i++ {
+		primaries[i] = parser.NewInteger(int64(i))
+	}
+
+	view := &View{
+		Header: NewHeader("table1", []string{"c1"}),
+		Records: []Record{
+			{
+				NewGroupCell(primaries),
+			},
+		},
+		isGrouped: true,
+	}
+
+	return Filter{
+		Records: []FilterRecord{
+			{View: view},
+		},
+	}
+}
+
+func GenerateBenchView(tableName string, records int) *View {
+	view := &View{
+		Header:  NewHeader(tableName, []string{"c1"}),
+		Records: make([]Record, records),
+	}
+
+	for i := 0; i < records; i++ {
+		view.Records[i] = NewRecord([]parser.Primary{parser.NewInteger(int64(i))})
+	}
+
+	return view
 }

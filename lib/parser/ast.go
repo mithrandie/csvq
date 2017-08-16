@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -16,9 +15,11 @@ func IsPrimary(e Expression) bool {
 		return false
 	}
 
-	t := reflect.TypeOf(e)
-	v := reflect.TypeOf((*Primary)(nil)).Elem()
-	return t.Implements(v)
+	switch e.(type) {
+	case String, Integer, Float, Datetime, Boolean, Ternary, Null:
+		return true
+	}
+	return false
 }
 
 func IsNull(v Primary) bool {

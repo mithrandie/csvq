@@ -79,7 +79,7 @@ func CrossJoin(view *View, joinView *View) {
 	idx := 0
 	for _, viewRecord := range view.Records {
 		for _, joinViewRecord := range joinView.Records {
-			records[idx] = append(viewRecord, joinViewRecord...)
+			records[idx] = MergeRecord(viewRecord, joinViewRecord)
 			idx++
 		}
 	}
@@ -90,16 +90,22 @@ func CrossJoin(view *View, joinView *View) {
 }
 
 func InnerJoin(view *View, joinView *View, condition parser.Expression, parentFilter Filter) error {
+	if condition == nil {
+		CrossJoin(view, joinView)
+		return nil
+	}
+
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 
-	records := []Record{}
-	for i, viewRecord := range view.Records {
-		for j, joinViewRecord := range joinView.Records {
+	records := make(Records, 0, view.RecordLen())
+	for _, viewRecord := range view.Records {
+		for _, joinViewRecord := range joinView.Records {
+			mergedRecord := MergeRecord(viewRecord, joinViewRecord)
 			filter := NewFilterForRecord(
 				&View{
-					Header: MergeHeader(view.Header, joinView.Header),
+					Header: mergedHeader,
 					Records: Records{
-						append(view.Records[i], joinView.Records[j]...),
+						mergedRecord,
 					},
 				},
 				0,
@@ -110,14 +116,14 @@ func InnerJoin(view *View, joinView *View, condition parser.Expression, parentFi
 				return err
 			}
 			if primary.Ternary() == ternary.TRUE {
-				record := append(viewRecord, joinViewRecord...)
-				records = append(records, record)
+				records = append(records, mergedRecord)
 			}
 		}
 	}
 
 	view.Header = mergedHeader
-	view.Records = records
+	view.Records = make(Records, len(records))
+	copy(view.Records, records)
 	view.FileInfo = nil
 	return nil
 }
@@ -133,16 +139,26 @@ func OuterJoin(view *View, joinView *View, condition parser.Expression, directio
 		view, joinView = joinView, view
 	}
 
-	records := []Record{}
+	viewEmptyRecord := NewEmptyRecord(view.FieldLen())
+	joinViewEmptyRecord := NewEmptyRecord(joinView.FieldLen())
+
+	records := make(Records, 0, view.RecordLen()*joinView.RecordLen())
 	joinViewMatches := make([]bool, len(joinView.Records))
-	for i, viewRecord := range view.Records {
+	for _, viewRecord := range view.Records {
 		match := false
 		for j, joinViewRecord := range joinView.Records {
+			var mergedRecord Record
+			switch direction {
+			case parser.RIGHT:
+				mergedRecord = MergeRecord(joinViewRecord, viewRecord)
+			default:
+				mergedRecord = MergeRecord(viewRecord, joinViewRecord)
+			}
 			filter := NewFilterForRecord(
 				&View{
-					Header: MergeHeader(view.Header, joinView.Header),
+					Header: mergedHeader,
 					Records: Records{
-						append(view.Records[i], joinView.Records[j]...),
+						mergedRecord,
 					},
 				},
 				0,
@@ -153,29 +169,21 @@ func OuterJoin(view *View, joinView *View, condition parser.Expression, directio
 				return err
 			}
 			if primary.Ternary() == ternary.TRUE {
-				var record Record
-				switch direction {
-				case parser.RIGHT:
-					record = append(joinViewRecord, viewRecord...)
-				default:
-					record = append(viewRecord, joinViewRecord...)
-					if !joinViewMatches[j] {
-						joinViewMatches[j] = true
-					}
+				if direction == parser.FULL && !joinViewMatches[j] {
+					joinViewMatches[j] = true
 				}
-				records = append(records, record)
+				records = append(records, mergedRecord)
 				match = true
 			}
 		}
 
 		if !match {
-			empty := NewEmptyRecord(joinView.FieldLen())
 			var record Record
 			switch direction {
 			case parser.RIGHT:
-				record = append(empty, viewRecord...)
+				record = MergeRecord(joinViewEmptyRecord, viewRecord)
 			default:
-				record = append(viewRecord, empty...)
+				record = MergeRecord(viewRecord, joinViewEmptyRecord)
 			}
 			records = append(records, record)
 
@@ -185,8 +193,7 @@ func OuterJoin(view *View, joinView *View, condition parser.Expression, directio
 	if direction == parser.FULL {
 		for i, match := range joinViewMatches {
 			if !match {
-				empty := NewEmptyRecord(view.FieldLen())
-				record := append(empty, joinView.Records[i]...)
+				record := MergeRecord(viewEmptyRecord, joinView.Records[i])
 				records = append(records, record)
 			}
 		}
@@ -197,7 +204,8 @@ func OuterJoin(view *View, joinView *View, condition parser.Expression, directio
 	}
 
 	view.Header = mergedHeader
-	view.Records = records
+	view.Records = make(Records, len(records))
+	copy(view.Records, records)
 	view.FileInfo = nil
 	return nil
 }

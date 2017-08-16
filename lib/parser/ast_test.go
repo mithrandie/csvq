@@ -2023,3 +2023,10 @@ func TestCursorAttrebute_String(t *testing.T) {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 }
+
+func BenchmarkIsPrimary(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		p := NewInteger(int64(i))
+		IsPrimary(p)
+	}
+}
