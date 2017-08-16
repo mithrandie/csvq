@@ -1148,6 +1148,81 @@ var viewGroupByTests = []struct {
 			isGrouped: true,
 		},
 	},
+	{
+		Name: "Group By With ColumnNumber",
+		View: &View{
+			Header: NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
+			Records: []Record{
+				NewRecordWithId(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+					parser.NewString("group1"),
+				}),
+				NewRecordWithId(2, []parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+					parser.NewString("group2"),
+				}),
+				NewRecordWithId(3, []parser.Primary{
+					parser.NewString("3"),
+					parser.NewString("str3"),
+					parser.NewString("group1"),
+				}),
+				NewRecordWithId(4, []parser.Primary{
+					parser.NewString("4"),
+					parser.NewString("str4"),
+					parser.NewString("group2"),
+				}),
+			},
+		},
+		GroupBy: parser.GroupByClause{
+			Items: []parser.Expression{
+				parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: parser.NewInteger(3)},
+			},
+		},
+		Result: &View{
+			Header: []HeaderField{
+				{
+					View:   "table1",
+					Column: INTERNAL_ID_COLUMN,
+				},
+				{
+					View:      "table1",
+					Column:    "column1",
+					Number:    1,
+					FromTable: true,
+				},
+				{
+					View:      "table1",
+					Column:    "column2",
+					Number:    2,
+					FromTable: true,
+				},
+				{
+					View:       "table1",
+					Column:     "column3",
+					Number:     3,
+					FromTable:  true,
+					IsGroupKey: true,
+				},
+			},
+			Records: []Record{
+				{
+					NewGroupCell([]parser.Primary{parser.NewInteger(1), parser.NewInteger(3)}),
+					NewGroupCell([]parser.Primary{parser.NewString("1"), parser.NewString("3")}),
+					NewGroupCell([]parser.Primary{parser.NewString("str1"), parser.NewString("str3")}),
+					NewGroupCell([]parser.Primary{parser.NewString("group1"), parser.NewString("group1")}),
+				},
+				{
+					NewGroupCell([]parser.Primary{parser.NewInteger(2), parser.NewInteger(4)}),
+					NewGroupCell([]parser.Primary{parser.NewString("2"), parser.NewString("4")}),
+					NewGroupCell([]parser.Primary{parser.NewString("str2"), parser.NewString("str4")}),
+					NewGroupCell([]parser.Primary{parser.NewString("group2"), parser.NewString("group2")}),
+				},
+			},
+			isGrouped: true,
+		},
+	},
 }
 
 func TestView_GroupBy(t *testing.T) {

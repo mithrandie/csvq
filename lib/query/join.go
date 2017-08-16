@@ -97,7 +97,7 @@ func InnerJoin(view *View, joinView *View, condition parser.Expression, parentFi
 
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 
-	records := make(Records, 0, view.RecordLen())
+	records := make(Records, 0, view.RecordLen()*joinView.RecordLen())
 	for _, viewRecord := range view.Records {
 		for _, joinViewRecord := range joinView.Records {
 			mergedRecord := MergeRecord(viewRecord, joinViewRecord)

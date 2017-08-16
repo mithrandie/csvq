@@ -442,8 +442,9 @@ func (view *View) group(items []parser.Expression) error {
 	view.Records = records
 	view.isGrouped = true
 	for _, item := range items {
-		if fieldRef, ok := item.(parser.FieldReference); ok {
-			idx, _ := view.FieldIndex(fieldRef)
+		switch item.(type) {
+		case parser.FieldReference, parser.ColumnNumber:
+			idx, _ := view.FieldIndex(item)
 			view.Header[idx].IsGroupKey = true
 		}
 	}
