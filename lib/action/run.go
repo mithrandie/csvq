@@ -48,26 +48,34 @@ func Run(input string, sourceFile string) error {
 		talloc := cmd.HumarizeNumber(fmt.Sprintf("%v", mem.TotalAlloc))
 		sys := cmd.HumarizeNumber(fmt.Sprintf("%v", mem.HeapSys))
 		released := cmd.HumarizeNumber(fmt.Sprintf("%v", mem.HeapReleased))
+		mallocs := cmd.HumarizeNumber(fmt.Sprintf("%v", mem.Mallocs))
+		frees := cmd.HumarizeNumber(fmt.Sprintf("%v", mem.Frees))
 
 		width := len(exectime)
-		mslen := len(sys)
-		if width < mslen {
-			width = mslen
+		for _, v := range []string{alloc, talloc, sys, released, mallocs, frees} {
+			if width < len(v) {
+				width = len(v)
+			}
 		}
 		w := strconv.Itoa(width)
 
-		log += fmt.Sprintf(""+
+		log += fmt.Sprintf(
 			"        Time: %"+w+"[2]s seconds %[1]s"+
-			"       Alloc: %"+w+"[3]s bytes %[1]s"+
-			"  TotalAlloc: %"+w+"[4]s bytes %[1]s"+
-			"     HeapSys: %"+w+"[5]s bytes %[1]s"+
-			"HeapReleased: %"+w+"[6]s bytes %[1]s",
+				"       Alloc: %"+w+"[3]s bytes %[1]s"+
+				"  TotalAlloc: %"+w+"[4]s bytes %[1]s"+
+				"     HeapSys: %"+w+"[5]s bytes %[1]s"+
+				"HeapReleased: %"+w+"[6]s bytes %[1]s"+
+				"     Mallocs: %"+w+"[7]s times %[1]s"+
+				"       Frees: %"+w+"[8]s times %[1]s",
 			flags.LineBreak.Value(),
 			exectime,
 			alloc,
 			talloc,
 			sys,
-			released)
+			released,
+			mallocs,
+			frees,
+		)
 	}
 
 	return nil

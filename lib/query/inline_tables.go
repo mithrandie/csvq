@@ -8,7 +8,7 @@ import (
 
 type InlineTablesList []InlineTables
 
-func (list InlineTablesList) Set(inlineTable parser.InlineTable, parentFilter Filter) error {
+func (list InlineTablesList) Set(inlineTable parser.InlineTable, parentFilter *Filter) error {
 	return list[0].Set(inlineTable, parentFilter)
 }
 
@@ -22,7 +22,7 @@ func (list InlineTablesList) Get(name parser.Identifier) (view *View, err error)
 	return
 }
 
-func (list InlineTablesList) Load(clause parser.WithClause, parentFilter Filter) error {
+func (list InlineTablesList) Load(clause parser.WithClause, parentFilter *Filter) error {
 	for _, v := range clause.InlineTables {
 		inlineTable := v.(parser.InlineTable)
 		err := list.Set(inlineTable, parentFilter)
@@ -36,7 +36,7 @@ func (list InlineTablesList) Load(clause parser.WithClause, parentFilter Filter)
 
 type InlineTables map[string]*View
 
-func (it InlineTables) Set(inlineTable parser.InlineTable, parentFilter Filter) error {
+func (it InlineTables) Set(inlineTable parser.InlineTable, parentFilter *Filter) error {
 	uname := strings.ToUpper(inlineTable.Name.Literal)
 	if _, err := it.Get(inlineTable.Name); err == nil {
 		return NewInLineTableRedeclaredError(inlineTable.Name)

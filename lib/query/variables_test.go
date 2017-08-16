@@ -58,7 +58,7 @@ func TestVariablesList_Get(t *testing.T) {
 var variablesListSubstituteTests = []struct {
 	Name   string
 	Expr   parser.VariableSubstitution
-	Filter Filter
+	Filter *Filter
 	List   VariablesList
 	Result parser.Primary
 	Error  string
@@ -178,7 +178,7 @@ func TestVariablesList_Dispose(t *testing.T) {
 type variableTests struct {
 	Name   string
 	Expr   parser.ProcExpr
-	Filter Filter
+	Filter *Filter
 	Result Variables
 	Error  string
 }
@@ -242,6 +242,10 @@ func TestVariables_Declare(t *testing.T) {
 	vars := Variables{}
 
 	for _, v := range variablesDeclareTests {
+		if v.Filter == nil {
+			v.Filter = NewEmptyFilter()
+		}
+
 		err := vars.Declare(v.Expr.(parser.VariableDeclaration), v.Filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -296,6 +300,10 @@ func TestVariables_Substitute(t *testing.T) {
 	}
 
 	for _, v := range variablesSubstituteTests {
+		if v.Filter == nil {
+			v.Filter = NewEmptyFilter()
+		}
+
 		_, err := vars.Substitute(v.Expr.(parser.VariableSubstitution), v.Filter)
 		if err != nil {
 			if len(v.Error) < 1 {

@@ -145,7 +145,7 @@ func (h Header) ContainsNumber(number parser.ColumnNumber) (int, error) {
 	idx := int(number.Number.Value())
 
 	if idx < 1 {
-		return -1, NewFieldNumberNotExistError(number)
+		return -1, NewFieldNotExistError(number)
 	}
 
 	for i, f := range h {
@@ -153,7 +153,7 @@ func (h Header) ContainsNumber(number parser.ColumnNumber) (int, error) {
 			return i, nil
 		}
 	}
-	return -1, NewFieldNumberNotExistError(number)
+	return -1, NewFieldNotExistError(number)
 }
 
 func (h Header) Contains(fieldRef parser.FieldReference) (int, error) {

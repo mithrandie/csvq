@@ -9,7 +9,7 @@ import (
 )
 
 type Procedure struct {
-	Filter    Filter
+	Filter    *Filter
 	ReturnVal parser.Primary
 }
 

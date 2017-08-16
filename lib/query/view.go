@@ -22,7 +22,7 @@ type View struct {
 	selectFields []int
 	selectLabels []string
 	isGrouped    bool
-	Filter       Filter
+	Filter       *Filter
 
 	filteredIndices []int
 
@@ -44,7 +44,7 @@ func NewView() *View {
 	}
 }
 
-func (view *View) Load(clause parser.FromClause, filter Filter) error {
+func (view *View) Load(clause parser.FromClause, filter *Filter) error {
 	if clause.Tables == nil {
 		var obj parser.Expression
 		if IsReadableFromStdin() {
@@ -76,7 +76,7 @@ func (view *View) Load(clause parser.FromClause, filter Filter) error {
 	return nil
 }
 
-func (view *View) LoadFromTableIdentifier(table parser.Expression, filter Filter) error {
+func (view *View) LoadFromTableIdentifier(table parser.Expression, filter *Filter) error {
 	fromClause := parser.FromClause{
 		Tables: []parser.Expression{
 			parser.Table{Object: table},
@@ -86,7 +86,7 @@ func (view *View) LoadFromTableIdentifier(table parser.Expression, filter Filter
 	return view.Load(fromClause, filter)
 }
 
-func loadView(table parser.Table, filter Filter, useInternalId bool) (*View, error) {
+func loadView(table parser.Table, filter *Filter, useInternalId bool) (*View, error) {
 	var view *View
 	var err error
 
@@ -334,6 +334,8 @@ func NewViewFromGroupedRecord(filterRecord FilterRecord) *View {
 		}
 	}
 
+	view.Filter = filterRecord.View.Filter
+
 	return view
 }
 
@@ -348,9 +350,11 @@ func (view *View) Where(clause parser.WhereClause) error {
 }
 
 func (view *View) filter(condition parser.Expression) ([]int, error) {
+	filter := NewFilterForSequentialEvaluation(view, view.Filter)
+
 	indices := []int{}
 	for i := range view.Records {
-		filter := NewFilterForRecord(view, i, view.Filter)
+		filter.Records[0].RecordIndex = i
 		primary, err := filter.Evaluate(condition)
 		if err != nil {
 			return nil, err
@@ -394,10 +398,11 @@ func (view *View) group(items []parser.Expression) error {
 		return true
 	}
 
-	var groups []group
+	filter := NewFilterForSequentialEvaluation(view, view.Filter)
 
+	var groups []group
 	for i := 0; i < view.RecordLen(); i++ {
-		filter := NewFilterForRecord(view, i, view.Filter)
+		filter.Records[0].RecordIndex = i
 
 		keys := make([]parser.Primary, len(items))
 		for j, item := range items {
@@ -630,27 +635,16 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 }
 
 func (view *View) evalColumn(obj parser.Expression, column string, alias string) (idx int, err error) {
-	fieldInTable := false
-
-	if fr, ok := obj.(parser.FieldReference); ok {
-		if idx, err = view.FieldIndex(fr); err == nil {
-			if view.isGrouped && view.Header[idx].FromTable && !view.Header[idx].IsGroupKey {
-				err = NewFieldNotGroupKeyError(fr)
-				return
-			}
-			fieldInTable = true
+	switch obj.(type) {
+	case parser.FieldReference, parser.ColumnNumber:
+		if idx, err = view.FieldIndex(obj); err != nil {
+			return
 		}
-	} else if cn, ok := obj.(parser.ColumnNumber); ok {
-		if idx, err = view.Header.ContainsNumber(cn); err == nil {
-			if view.isGrouped && view.Header[idx].FromTable && !view.Header[idx].IsGroupKey {
-				err = NewFieldNumberNotGroupKeyError(cn)
-				return
-			}
-			fieldInTable = true
+		if view.isGrouped && view.Header[idx].FromTable && !view.Header[idx].IsGroupKey {
+			err = NewFieldNotGroupKeyError(obj)
+			return
 		}
-	}
-
-	if !fieldInTable {
+	default:
 		idx, err = view.Header.ContainsObject(obj)
 		if err != nil {
 			err = nil
@@ -783,12 +777,12 @@ func (view *View) Limit(clause parser.LimitClause) error {
 	return nil
 }
 
-func (view *View) InsertValues(fields []parser.Expression, list []parser.Expression, filter Filter) error {
+func (view *View) InsertValues(fields []parser.Expression, list []parser.Expression) error {
 	valuesList := make([][]parser.Primary, len(list))
 
 	for i, item := range list {
 		rv := item.(parser.RowValue)
-		values, err := filter.evalRowValue(rv)
+		values, err := view.Filter.evalRowValue(rv)
 		if err != nil {
 			return err
 		}
@@ -802,8 +796,8 @@ func (view *View) InsertValues(fields []parser.Expression, list []parser.Express
 	return view.insert(fields, valuesList)
 }
 
-func (view *View) InsertFromQuery(fields []parser.Expression, query parser.SelectQuery, filter Filter) error {
-	insertView, err := Select(query, filter)
+func (view *View) InsertFromQuery(fields []parser.Expression, query parser.SelectQuery) error {
+	insertView, err := Select(query, view.Filter)
 	if err != nil {
 		return err
 	}
@@ -895,7 +889,7 @@ func (view *View) Fix() {
 	view.selectFields = nil
 	view.selectLabels = nil
 	view.isGrouped = false
-	view.Filter = Filter{}
+	view.Filter = nil
 	view.sortIndices = nil
 	view.sortDirections = nil
 	view.sortNullPositions = nil
@@ -945,7 +939,7 @@ func (view *View) Intersect(calcView *View, all bool) {
 	}
 }
 
-func (view *View) ListValuesForAggregateFunctions(expr parser.Expression, arg parser.Expression, distinct bool, filter Filter) ([]parser.Primary, error) {
+func (view *View) ListValuesForAggregateFunctions(expr parser.Expression, arg parser.Expression, distinct bool, filter *Filter) ([]parser.Primary, error) {
 	list := make([]parser.Primary, view.RecordLen())
 	f := NewFilterForSequentialEvaluation(view, filter)
 	for i := 0; i < view.RecordLen(); i++ {

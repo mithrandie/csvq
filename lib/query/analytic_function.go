@@ -24,7 +24,7 @@ var AnalyticFunctions map[string]AnalyticFunction = map[string]AnalyticFunction{
 
 type AnalyticFunction interface {
 	CheckArgsLen(expr parser.AnalyticFunction) error
-	Execute(PartitionItemList, parser.AnalyticFunction, Filter) (map[int]parser.Primary, error)
+	Execute(PartitionItemList, parser.AnalyticFunction, *Filter) (map[int]parser.Primary, error)
 }
 
 type Partition struct {
@@ -233,7 +233,7 @@ func (fn RowNumber) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{0})
 }
 
-func (fn RowNumber) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter Filter) (map[int]parser.Primary, error) {
+func (fn RowNumber) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
 	list := make(map[int]parser.Primary, len(items))
 	var number int64 = 0
 	for _, item := range items {
@@ -250,7 +250,7 @@ func (fn Rank) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{0})
 }
 
-func (fn Rank) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter Filter) (map[int]parser.Primary, error) {
+func (fn Rank) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
 	list := make(map[int]parser.Primary, len(items))
 	var number int64 = 0
 	var rank int64 = 0
@@ -273,7 +273,7 @@ func (fn DenseRank) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{0})
 }
 
-func (fn DenseRank) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter Filter) (map[int]parser.Primary, error) {
+func (fn DenseRank) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
 	list := make(map[int]parser.Primary, len(items))
 	var rank int64 = 0
 	var currentRank PartitionItem
@@ -294,7 +294,7 @@ func (fn CumeDist) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{0})
 }
 
-func (fn CumeDist) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter Filter) (map[int]parser.Primary, error) {
+func (fn CumeDist) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
 	list := make(map[int]parser.Primary, len(items))
 
 	groups := perseCumulativeGroups(items)
@@ -318,7 +318,7 @@ func (fn PercentRank) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{0})
 }
 
-func (fn PercentRank) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter Filter) (map[int]parser.Primary, error) {
+func (fn PercentRank) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
 	list := make(map[int]parser.Primary, len(items))
 
 	groups := perseCumulativeGroups(items)
@@ -360,8 +360,8 @@ func (fn NTile) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{1})
 }
 
-func (fn NTile) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter Filter) (map[int]parser.Primary, error) {
-	argsFilter := filter
+func (fn NTile) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
+	argsFilter := filter.CreateNode()
 	argsFilter.Records = nil
 
 	tileNumber := 0
@@ -417,7 +417,7 @@ func (fn FirstValue) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{1})
 }
 
-func (fn FirstValue) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter Filter) (map[int]parser.Primary, error) {
+func (fn FirstValue) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
 	return setNthValue(items, expr, filter, 1)
 }
 
@@ -427,7 +427,7 @@ func (fn LastValue) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{1})
 }
 
-func (fn LastValue) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter Filter) (map[int]parser.Primary, error) {
+func (fn LastValue) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
 	return setNthValue(items.Reverse(), expr, filter, 1)
 }
 
@@ -437,8 +437,8 @@ func (fn NthValue) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{2})
 }
 
-func (fn NthValue) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter Filter) (map[int]parser.Primary, error) {
-	argsFilter := filter
+func (fn NthValue) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
+	argsFilter := filter.CreateNode()
 	argsFilter.Records = nil
 
 	n := 0
@@ -458,7 +458,7 @@ func (fn NthValue) Execute(items PartitionItemList, expr parser.AnalyticFunction
 	return setNthValue(items, expr, filter, n)
 }
 
-func setNthValue(items PartitionItemList, expr parser.AnalyticFunction, filter Filter, n int) (map[int]parser.Primary, error) {
+func setNthValue(items PartitionItemList, expr parser.AnalyticFunction, filter *Filter, n int) (map[int]parser.Primary, error) {
 	var value parser.Primary = parser.NewNull()
 
 	count := 0
@@ -496,7 +496,7 @@ func (fn Lag) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{1, 3})
 }
 
-func (fn Lag) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter Filter) (map[int]parser.Primary, error) {
+func (fn Lag) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
 	return setLag(items, expr, filter)
 }
 
@@ -506,12 +506,12 @@ func (fn Lead) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{1, 3})
 }
 
-func (fn Lead) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter Filter) (map[int]parser.Primary, error) {
+func (fn Lead) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
 	return setLag(items.Reverse(), expr, filter)
 }
 
-func setLag(items PartitionItemList, expr parser.AnalyticFunction, filter Filter) (map[int]parser.Primary, error) {
-	argsFilter := filter
+func setLag(items PartitionItemList, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
+	argsFilter := filter.CreateNode()
 	argsFilter.Records = nil
 
 	offset := 1
@@ -570,8 +570,8 @@ func (fn AnalyticListAgg) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{1, 2})
 }
 
-func (fn AnalyticListAgg) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter Filter) (map[int]parser.Primary, error) {
-	argsFilter := filter
+func (fn AnalyticListAgg) Execute(items PartitionItemList, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
+	argsFilter := filter.CreateNode()
 	argsFilter.Records = nil
 
 	separator := ""

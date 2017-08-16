@@ -200,7 +200,7 @@ var innerJoinTests = []struct {
 	View      *View
 	JoinView  *View
 	Condition parser.Expression
-	Filter    Filter
+	Filter    *Filter
 	Result    *View
 	Error     string
 }{
@@ -375,6 +375,10 @@ var innerJoinTests = []struct {
 
 func TestInnerJoin(t *testing.T) {
 	for _, v := range innerJoinTests {
+		if v.Filter == nil {
+			v.Filter = NewEmptyFilter()
+		}
+
 		err := InnerJoin(v.View, v.JoinView, v.Condition, v.Filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -400,7 +404,7 @@ var outerJoinTests = []struct {
 	JoinView  *View
 	Condition parser.Expression
 	Direction int
-	Filter    Filter
+	Filter    *Filter
 	Result    *View
 	Error     string
 }{
@@ -776,6 +780,10 @@ var outerJoinTests = []struct {
 
 func TestOuterJoin(t *testing.T) {
 	for _, v := range outerJoinTests {
+		if v.Filter == nil {
+			v.Filter = NewEmptyFilter()
+		}
+
 		err := OuterJoin(v.View, v.JoinView, v.Condition, v.Direction, v.Filter)
 		if err != nil {
 			if len(v.Error) < 1 {

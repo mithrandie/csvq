@@ -107,8 +107,8 @@ func copyfile(dstfile string, srcfile string) error {
 }
 
 func GenerateBenchGroupedViewFilter() Filter {
-	primaries := make([]parser.Primary, 1000)
-	for i := 0; i < 1000; i++ {
+	primaries := make([]parser.Primary, 10000)
+	for i := 0; i < 10000; i++ {
 		primaries[i] = parser.NewInteger(int64(i))
 	}
 

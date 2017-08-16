@@ -189,14 +189,14 @@ var headerContainsNumberTests = []struct {
 			View:   parser.Identifier{Literal: "t1"},
 			Number: parser.NewInteger(0),
 		},
-		Error: "[L:- C:-] field number t1.0 does not exist",
+		Error: "[L:- C:-] field t1.0 does not exist",
 	},
 	{
 		Number: parser.ColumnNumber{
 			View:   parser.Identifier{Literal: "t1"},
 			Number: parser.NewInteger(9),
 		},
-		Error: "[L:- C:-] field number t1.9 does not exist",
+		Error: "[L:- C:-] field t1.9 does not exist",
 	},
 }
 
