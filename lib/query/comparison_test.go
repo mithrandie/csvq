@@ -79,7 +79,7 @@ var compareCombinedlyTests = []struct {
 		Result: NOT_EQUAL,
 	},
 	{
-		LHS:    parser.NewString("A"),
+		LHS:    parser.NewString(" A "),
 		RHS:    parser.NewString("a"),
 		Result: EQUAL,
 	},

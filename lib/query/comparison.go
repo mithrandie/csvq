@@ -91,8 +91,8 @@ func CompareCombinedly(p1 parser.Primary, p2 parser.Primary) ComparisonResult {
 
 	if s1, ok := p1.(parser.String); ok {
 		if s2, ok := p2.(parser.String); ok {
-			v1 := strings.ToUpper(s1.Value())
-			v2 := strings.ToUpper(s2.Value())
+			v1 := strings.ToUpper(strings.TrimSpace(s1.Value()))
+			v2 := strings.ToUpper(strings.TrimSpace(s2.Value()))
 
 			if v1 == v2 {
 				return EQUAL
