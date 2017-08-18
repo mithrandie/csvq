@@ -11,6 +11,7 @@ import (
 	"github.com/mithrandie/csvq/lib/csv"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
+	"sync"
 )
 
 type View struct {
@@ -350,17 +351,65 @@ func (view *View) Where(clause parser.WhereClause) error {
 }
 
 func (view *View) filter(condition parser.Expression) ([]int, error) {
-	filter := NewFilterForSequentialEvaluation(view, view.Filter)
+	cpu := cmd.GetFlags().CPU
+	if view.RecordLen() < cpu {
+		cpu = 1
+	}
 
-	indices := []int{}
-	for i := range view.Records {
-		filter.Records[0].RecordIndex = i
-		primary, err := filter.Evaluate(condition)
-		if err != nil {
-			return nil, err
+	var err error
+	indicesList := make([][]int, cpu)
+
+	wg := sync.WaitGroup{}
+	for i := 0; i < cpu; i++ {
+		wg.Add(1)
+		go func(thIdx int) {
+			indices := []int{}
+			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+
+			filter := NewFilterForSequentialEvaluation(view, view.Filter)
+
+		FilterLoop:
+			for i := start; i < end; i++ {
+				if err != nil {
+					break FilterLoop
+				}
+
+				filter.Records[0].RecordIndex = i
+				primary, e := filter.Evaluate(condition)
+				if e != nil {
+					err = e
+					break FilterLoop
+				}
+				if primary.Ternary() == ternary.TRUE {
+					indices = append(indices, i)
+				}
+			}
+
+			indicesList[thIdx] = indices
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
+
+	if err != nil {
+		return nil, err
+	}
+
+	var indices []int
+	if len(indicesList) == 1 {
+		indices = indicesList[0]
+	} else {
+		indicesLen := 0
+		for _, v := range indicesList {
+			indicesLen += len(v)
 		}
-		if primary.Ternary() == ternary.TRUE {
-			indices = append(indices, i)
+		indices = make([]int, indicesLen)
+		idx := 0
+		for _, v := range indicesList {
+			for _, r := range v {
+				indices[idx] = r
+				idx++
+			}
 		}
 	}
 	return indices, nil

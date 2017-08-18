@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -61,13 +62,16 @@ type Flags struct {
 	NoHeader       bool
 	WithoutNull    bool
 
-	// Write Subcommand Options
+	// For Output
 	WriteEncoding  Encoding
 	OutFile        string
 	Format         Format
 	WriteDelimiter rune
 	WithoutHeader  bool
-	Stats          bool
+
+	// System Use
+	CPU   int
+	Stats bool
 
 	// Use in tests
 	Now string
@@ -90,12 +94,13 @@ func GetFlags() *Flags {
 			DatetimeFormat: "",
 			NoHeader:       false,
 			WithoutNull:    false,
+			CPU:            1,
+			Stats:          false,
 			WriteEncoding:  UTF8,
 			OutFile:        "",
 			Format:         TEXT,
 			WriteDelimiter: ',',
 			WithoutHeader:  false,
-			Stats:          false,
 			Now:            "",
 		}
 	})
@@ -309,12 +314,6 @@ func SetWithoutHeader(b bool) {
 	return
 }
 
-func SetStats(b bool) {
-	f := GetFlags()
-	f.Stats = b
-	return
-}
-
 func ParseEncoding(s string) (Encoding, error) {
 	if len(s) < 1 {
 		return UTF8, nil
@@ -330,4 +329,22 @@ func ParseEncoding(s string) (Encoding, error) {
 		return UTF8, errors.New("encoding must be one of utf8|sjis")
 	}
 	return encoding, nil
+}
+
+func SetCPU(i int) {
+	if i < 1 {
+		i = 1
+	} else if runtime.NumCPU() < i {
+		i = runtime.NumCPU()
+	}
+
+	f := GetFlags()
+	f.CPU = i
+	return
+}
+
+func SetStats(b bool) {
+	f := GetFlags()
+	f.Stats = b
+	return
 }

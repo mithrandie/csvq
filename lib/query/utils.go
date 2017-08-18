@@ -78,6 +78,19 @@ func IsReadableFromStdin() bool {
 	return false
 }
 
+func RecordRange(cpuIndex int, totalLen int, numberOfCPU int) (int, int) {
+	calcLen := totalLen / numberOfCPU
+
+	var start int = cpuIndex * calcLen
+	var end int
+	if cpuIndex == numberOfCPU-1 {
+		end = totalLen
+	} else {
+		end = (cpuIndex + 1) * calcLen
+	}
+	return start, end
+}
+
 func FormatString(format string, args []parser.Primary) (string, error) {
 	var pad = func(s string, length int, flags []rune) string {
 		if length <= len(s) {

@@ -102,3 +102,24 @@ func MergeRecord(r1 Record, r2 Record) Record {
 	}
 	return r
 }
+
+func MergeRecordsList(list []Records) Records {
+	var records Records
+	if len(list) == 1 {
+		records = list[0]
+	} else {
+		recordLen := 0
+		for _, v := range list {
+			recordLen += len(v)
+		}
+		records = make(Records, recordLen)
+		idx := 0
+		for _, v := range list {
+			for _, r := range v {
+				records[idx] = r
+				idx++
+			}
+		}
+	}
+	return records
+}

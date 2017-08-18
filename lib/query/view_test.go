@@ -981,6 +981,7 @@ func TestNewViewFromGroupedRecord(t *testing.T) {
 
 var viewWhereTests = []struct {
 	Name   string
+	CPU    int
 	View   *View
 	Where  parser.WhereClause
 	Result []int
@@ -988,6 +989,36 @@ var viewWhereTests = []struct {
 }{
 	{
 		Name: "Where",
+		View: &View{
+			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithId(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecordWithId(2, []parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+				NewRecordWithId(3, []parser.Primary{
+					parser.NewString("3"),
+					parser.NewString("str3"),
+				}),
+			},
+			Filter: NewEmptyFilter(),
+		},
+		Where: parser.WhereClause{
+			Filter: parser.Comparison{
+				LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+				RHS:      parser.NewInteger(2),
+				Operator: "=",
+			},
+		},
+		Result: []int{1},
+	},
+	{
+		Name: "Where in Multi Threading",
+		CPU:  2,
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 			Records: []Record{
@@ -1047,7 +1078,14 @@ var viewWhereTests = []struct {
 }
 
 func TestView_Where(t *testing.T) {
+	flags := cmd.GetFlags()
+
 	for _, v := range viewWhereTests {
+		flags.CPU = 1
+		if v.CPU != 0 {
+			flags.CPU = v.CPU
+		}
+
 		err := v.View.Where(v.Where)
 		if err != nil {
 			if len(v.Error) < 1 {
