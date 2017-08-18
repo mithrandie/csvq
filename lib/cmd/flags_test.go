@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -332,6 +333,25 @@ func TestSetWithoutHeader(t *testing.T) {
 	SetWithoutHeader(true)
 	if !flags.NoHeader {
 		t.Errorf("without-header = %t, expect to set %t", flags.WithoutHeader, true)
+	}
+}
+
+func TestSetCPU(t *testing.T) {
+	flags := GetFlags()
+
+	SetCPU(3)
+	if 3 != flags.CPU {
+		t.Errorf("cpu = %d, expect to set %d", flags.CPU, 3)
+	}
+
+	SetCPU(0)
+	if 1 != flags.CPU {
+		t.Errorf("cpu = %d, expect to set %d", flags.CPU, 1)
+	}
+
+	SetCPU(runtime.NumCPU() + 100)
+	if runtime.NumCPU() != flags.CPU {
+		t.Errorf("cpu = %d, expect to set %d", flags.CPU, runtime.NumCPU())
 	}
 }
 

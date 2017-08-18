@@ -142,12 +142,12 @@ type UserDefinedFunction struct {
 	Cursor      parser.Identifier // For Aggregate Functions
 }
 
-func (fn *UserDefinedFunction) Execute(args []parser.Primary, filter Filter) (parser.Primary, error) {
+func (fn *UserDefinedFunction) Execute(args []parser.Primary, filter *Filter) (parser.Primary, error) {
 	childScope := filter.CreateChildScope()
 	return fn.execute(args, childScope)
 }
 
-func (fn *UserDefinedFunction) ExecuteAggregate(values []parser.Primary, args []parser.Primary, filter Filter) (parser.Primary, error) {
+func (fn *UserDefinedFunction) ExecuteAggregate(values []parser.Primary, args []parser.Primary, filter *Filter) (parser.Primary, error) {
 	childScope := filter.CreateChildScope()
 	childScope.CursorsList.AddPseudoCursor(fn.Cursor, values)
 	return fn.execute(args, childScope)
@@ -174,7 +174,7 @@ func (fn *UserDefinedFunction) CheckArgsLen(expr parser.Expression, name string,
 	return nil
 }
 
-func (fn *UserDefinedFunction) execute(args []parser.Primary, filter Filter) (parser.Primary, error) {
+func (fn *UserDefinedFunction) execute(args []parser.Primary, filter *Filter) (parser.Primary, error) {
 	if err := fn.CheckArgsLen(fn.Name, fn.Name.Literal, len(args)); err != nil {
 		return nil, err
 	}

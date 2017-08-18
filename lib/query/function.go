@@ -1138,6 +1138,9 @@ func Integer(fn parser.Function, args []parser.Primary) (parser.Primary, error) 
 	case parser.Float:
 		return parser.NewInteger(int64(round(args[0].(parser.Float).Value(), 0))), nil
 	case parser.String:
+		if i, e := strconv.ParseInt(args[0].(parser.String).Value(), 10, 64); e == nil {
+			return parser.NewInteger(i), nil
+		}
 		if f, e := strconv.ParseFloat(args[0].(parser.String).Value(), 64); e == nil {
 			return parser.NewInteger(int64(round(f, 0))), nil
 		}

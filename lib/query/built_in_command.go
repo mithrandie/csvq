@@ -9,7 +9,7 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
-func Print(expr parser.Print, filter Filter) (string, error) {
+func Print(expr parser.Print, filter *Filter) (string, error) {
 	p, err := filter.Evaluate(expr.Value)
 	if err != nil {
 		return "", err
@@ -17,7 +17,7 @@ func Print(expr parser.Print, filter Filter) (string, error) {
 	return p.String(), err
 }
 
-func Printf(expr parser.Printf, filter Filter) (string, error) {
+func Printf(expr parser.Printf, filter *Filter) (string, error) {
 	args := make([]parser.Primary, len(expr.Values))
 	for i, v := range expr.Values {
 		p, err := filter.Evaluate(v)
@@ -34,7 +34,7 @@ func Printf(expr parser.Printf, filter Filter) (string, error) {
 	return message, nil
 }
 
-func Source(expr parser.Source, filter Filter) ([]parser.Statement, error) {
+func Source(expr parser.Source, filter *Filter) ([]parser.Statement, error) {
 	p, err := filter.Evaluate(expr.FilePath)
 	if err != nil {
 		return nil, err

@@ -43,8 +43,8 @@ _value_
 _row_value_
 : [Row Value]({{ '/reference/row-value.html' | relative_url }})
 
-At first, a relational operator attempt to convert both of operands to float values, and if both convertions are successful then compare them.
-If conversions failed, next a relational operater attempt to convert to datetime, and next to boolean, at last to string.
+At first, a relational operator attempt to convert both of operands to integer values, and if both convertions are successful then compare them.
+If conversions failed, next a relational operater attempt to convert to float, and next to datetime, boolean, at last to string.
 
 If either of operands is null or all conversion failed, return UNKNOWN.
 

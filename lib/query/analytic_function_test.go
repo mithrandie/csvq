@@ -48,6 +48,7 @@ var analyzeTests = []struct {
 					parser.NewInteger(2),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Function: parser.AnalyticFunction{
 			Name: "rank",
@@ -105,6 +106,7 @@ var analyzeTests = []struct {
 					parser.NewInteger(2),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 	},
 	{
@@ -121,6 +123,7 @@ var analyzeTests = []struct {
 					parser.NewInteger(2),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Function: parser.AnalyticFunction{
 			Name: "rank",
@@ -158,6 +161,7 @@ var analyzeTests = []struct {
 					parser.NewInteger(2),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Function: parser.AnalyticFunction{
 			Name: "rank",
@@ -192,6 +196,7 @@ var analyzeTests = []struct {
 					parser.NewInteger(2),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Function: parser.AnalyticFunction{
 			Name: "rank",
@@ -226,6 +231,7 @@ var analyzeTests = []struct {
 					parser.NewInteger(2),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Function: parser.AnalyticFunction{
 			Name: "first_value",
@@ -261,6 +267,7 @@ var analyzeTests = []struct {
 					parser.NewInteger(1),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Function: parser.AnalyticFunction{
 			Name: "count",
@@ -304,6 +311,7 @@ var analyzeTests = []struct {
 					parser.NewInteger(3),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 	},
 	{
@@ -332,6 +340,7 @@ var analyzeTests = []struct {
 					parser.NewInteger(1),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Function: parser.AnalyticFunction{
 			Name:     "count",
@@ -376,6 +385,7 @@ var analyzeTests = []struct {
 					parser.NewInteger(1),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 	},
 	{
@@ -392,6 +402,7 @@ var analyzeTests = []struct {
 					parser.NewInteger(2),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Function: parser.AnalyticFunction{
 			Name: "count",
@@ -419,6 +430,7 @@ var analyzeTests = []struct {
 					parser.NewInteger(2),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Function: parser.AnalyticFunction{
 			Name: "count",
@@ -461,7 +473,7 @@ var analyzeTests = []struct {
 					parser.NewInteger(1),
 				}),
 			},
-			Filter: Filter{
+			Filter: &Filter{
 				FunctionsList: UserDefinedFunctionsList{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
@@ -572,7 +584,7 @@ var analyzeTests = []struct {
 					parser.NewInteger(1),
 				}),
 			},
-			Filter: Filter{
+			Filter: &Filter{
 				FunctionsList: UserDefinedFunctionsList{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
@@ -655,7 +667,7 @@ var analyzeTests = []struct {
 					parser.NewInteger(2),
 				}),
 			},
-			Filter: Filter{
+			Filter: &Filter{
 				FunctionsList: UserDefinedFunctionsList{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
@@ -701,7 +713,7 @@ var analyzeTests = []struct {
 					parser.NewInteger(2),
 				}),
 			},
-			Filter: Filter{
+			Filter: &Filter{
 				FunctionsList: UserDefinedFunctionsList{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
@@ -751,7 +763,7 @@ var analyzeTests = []struct {
 					parser.NewInteger(2),
 				}),
 			},
-			Filter: Filter{
+			Filter: &Filter{
 				FunctionsList: UserDefinedFunctionsList{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
@@ -801,6 +813,7 @@ var analyzeTests = []struct {
 					parser.NewInteger(2),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Function: parser.AnalyticFunction{
 			Name: "notexist",
@@ -862,7 +875,7 @@ type analyticFunctionExecuteTests struct {
 	Error    string
 }
 
-var analyticFunctionTestFilter = Filter{
+var analyticFunctionTestFilter = &Filter{
 	Records: []FilterRecord{
 		{
 			View: &View{
@@ -900,6 +913,12 @@ var analyticFunctionTestFilter = Filter{
 						parser.NewString("b"),
 						parser.NewNull(),
 					}),
+				},
+				Filter: &Filter{
+					VariablesList: VariablesList{{}},
+					TempViewsList: TemporaryViewMapList{{}},
+					CursorsList:   CursorMapList{{}},
+					FunctionsList: UserDefinedFunctionsList{{}},
 				},
 			},
 			RecordIndex: 0,

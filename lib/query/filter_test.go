@@ -11,7 +11,7 @@ import (
 
 var filterEvaluateTests = []struct {
 	Name   string
-	Filter Filter
+	Filter *Filter
 	Expr   parser.Expression
 	Result parser.Primary
 	Error  string
@@ -40,7 +40,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "FieldReference",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -65,7 +65,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "FieldReference ColumnNotExist Error",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -90,7 +90,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "FieldReference FieldAmbigous Error",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -115,7 +115,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "FieldReference Not Group Key Error",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -155,7 +155,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "ColumnNumber",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -180,7 +180,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "ColumnNumber Not Exist Error",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -201,11 +201,11 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Expr:  parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: parser.NewInteger(9)},
-		Error: "[L:- C:-] field number table1.9 does not exist",
+		Error: "[L:- C:-] field table1.9 does not exist",
 	},
 	{
 		Name: "ColumnNumber Not Group Key Error",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -245,7 +245,7 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Expr:  parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: parser.NewInteger(1)},
-		Error: "[L:- C:-] field number table1.1 is not a group key",
+		Error: "[L:- C:-] field table1.1 is not a group key",
 	},
 	{
 		Name: "Arithmetic",
@@ -873,7 +873,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "In Subquery",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -1614,7 +1614,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Exists",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -1716,7 +1716,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Subquery",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -1868,7 +1868,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "User Defined Function",
-		Filter: Filter{
+		Filter: &Filter{
 			FunctionsList: UserDefinedFunctionsList{
 				UserDefinedFunctionMap{
 					"USERFUNC": &UserDefinedFunction{
@@ -1894,7 +1894,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "User Defined Function Argument Length Error",
-		Filter: Filter{
+		Filter: &Filter{
 			FunctionsList: UserDefinedFunctionsList{
 				UserDefinedFunctionMap{
 					"USERFUNC": &UserDefinedFunction{
@@ -1940,7 +1940,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -1981,7 +1981,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function Argument Length Error",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -2014,7 +2014,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function Not Grouped Error",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -2041,7 +2041,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function Nested Error",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -2082,7 +2082,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function Count With AllColumns",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -2118,7 +2118,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name:   "Aggregate Function As a Statement Error",
-		Filter: Filter{},
+		Filter: &Filter{},
 		Expr: parser.AggregateFunction{
 			Name:     "avg",
 			Distinct: parser.Token{},
@@ -2130,7 +2130,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function User Defined",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -2249,7 +2249,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function User Defined Argument Length Error",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -2304,7 +2304,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function User Defined Argument Evaluation Error",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -2360,7 +2360,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function Execute User Defined Aggregate Function Passed As Scala Function",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -2457,7 +2457,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function Execute User Defined Aggregate Function Undefined Error",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -2554,7 +2554,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "ListAgg Function",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -2581,6 +2581,7 @@ var filterEvaluateTests = []struct {
 								}),
 							},
 						},
+						Filter:    NewEmptyFilter(),
 						isGrouped: true,
 					},
 					RecordIndex: 0,
@@ -2604,7 +2605,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "ListAgg Function Null",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -2631,6 +2632,7 @@ var filterEvaluateTests = []struct {
 								}),
 							},
 						},
+						Filter:    NewEmptyFilter(),
 						isGrouped: true,
 					},
 					RecordIndex: 0,
@@ -2648,7 +2650,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "ListAgg Function Argument Length Error",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -2659,6 +2661,7 @@ var filterEvaluateTests = []struct {
 								parser.NewString("str2"),
 							}),
 						},
+						Filter: NewEmptyFilter(),
 					},
 					RecordIndex: 0,
 				},
@@ -2677,7 +2680,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "ListAgg Function Not Grouped Error",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -2688,6 +2691,7 @@ var filterEvaluateTests = []struct {
 								parser.NewString("str2"),
 							}),
 						},
+						Filter: NewEmptyFilter(),
 					},
 					RecordIndex: 0,
 				},
@@ -2710,7 +2714,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "ListAgg Function Sort Error",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -2731,6 +2735,7 @@ var filterEvaluateTests = []struct {
 								}),
 							},
 						},
+						Filter:    NewEmptyFilter(),
 						isGrouped: true,
 					},
 					RecordIndex: 0,
@@ -2754,7 +2759,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "ListAgg Function Nested Error",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -2773,6 +2778,7 @@ var filterEvaluateTests = []struct {
 								}),
 							},
 						},
+						Filter:    NewEmptyFilter(),
 						isGrouped: true,
 					},
 					RecordIndex: 0,
@@ -2795,7 +2801,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "ListAgg Function Second Argument Evaluation Error",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -2814,6 +2820,7 @@ var filterEvaluateTests = []struct {
 								}),
 							},
 						},
+						Filter:    NewEmptyFilter(),
 						isGrouped: true,
 					},
 					RecordIndex: 0,
@@ -2831,7 +2838,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "ListAgg Function Second Argument Not String Error",
-		Filter: Filter{
+		Filter: &Filter{
 			Records: []FilterRecord{
 				{
 					View: &View{
@@ -2850,6 +2857,7 @@ var filterEvaluateTests = []struct {
 								}),
 							},
 						},
+						Filter:    NewEmptyFilter(),
 						isGrouped: true,
 					},
 					RecordIndex: 0,
@@ -2867,7 +2875,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name:   "ListAgg Function As a Statement Error",
-		Filter: Filter{},
+		Filter: &Filter{},
 		Expr: parser.ListAgg{
 			ListAgg:  "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
@@ -3100,8 +3108,7 @@ var filterEvaluateTests = []struct {
 		Result: parser.NewInteger(1),
 	},
 	{
-		Name:   "Variable Undefined Error",
-		Filter: NewEmptyFilter(),
+		Name: "Variable Undefined Error",
 		Expr: parser.Variable{
 			Name: "@undefined",
 		},
@@ -3124,8 +3131,7 @@ var filterEvaluateTests = []struct {
 		Result: parser.NewInteger(2),
 	},
 	{
-		Name:   "Variable Substitution Undefined Error",
-		Filter: NewEmptyFilter(),
+		Name: "Variable Substitution Undefined Error",
 		Expr: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "@undefined"},
 			Value:    parser.NewInteger(2),
@@ -3213,6 +3219,11 @@ func TestFilter_Evaluate(t *testing.T) {
 
 	for _, v := range filterEvaluateTests {
 		ViewCache.Clear()
+
+		if v.Filter == nil {
+			v.Filter = NewEmptyFilter()
+		}
+
 		v.Filter.CursorsList = append(v.Filter.CursorsList, cursors)
 		result, err := v.Filter.Evaluate(v.Expr)
 		if err != nil {

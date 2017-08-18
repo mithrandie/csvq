@@ -278,6 +278,12 @@ func TestPrimaryToInteger(t *testing.T) {
 		t.Errorf("primary type = %T, want Integer for %#v", i, p)
 	}
 
+	p = NewString("1e+02")
+	i = PrimaryToInteger(p)
+	if _, ok := i.(Integer); !ok {
+		t.Errorf("primary type = %T, want Integer for %#v", i, p)
+	}
+
 	p = NewString("1.5")
 	i = PrimaryToInteger(p)
 	if _, ok := i.(Null); !ok {

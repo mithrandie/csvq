@@ -6,7 +6,7 @@ import (
 
 type VariablesList []Variables
 
-func (list VariablesList) Declare(expr parser.VariableDeclaration, filter Filter) error {
+func (list VariablesList) Declare(expr parser.VariableDeclaration, filter *Filter) error {
 	return list[0].Declare(expr, filter)
 }
 
@@ -20,7 +20,7 @@ func (list VariablesList) Get(expr parser.Variable) (value parser.Primary, err e
 	return
 }
 
-func (list VariablesList) Substitute(expr parser.VariableSubstitution, filter Filter) (value parser.Primary, err error) {
+func (list VariablesList) Substitute(expr parser.VariableSubstitution, filter *Filter) (value parser.Primary, err error) {
 	for _, v := range list {
 		if value, err = v.Substitute(expr, filter); err == nil {
 			return
@@ -75,7 +75,7 @@ func (v Variables) Dispose(variable parser.Variable) error {
 	return nil
 }
 
-func (v Variables) Declare(declaration parser.VariableDeclaration, filter Filter) error {
+func (v Variables) Declare(declaration parser.VariableDeclaration, filter *Filter) error {
 	for _, a := range declaration.Assignments {
 		assignment := a.(parser.VariableAssignment)
 		var val parser.Primary
@@ -96,7 +96,7 @@ func (v Variables) Declare(declaration parser.VariableDeclaration, filter Filter
 	return nil
 }
 
-func (v Variables) Substitute(substitution parser.VariableSubstitution, filter Filter) (parser.Primary, error) {
+func (v Variables) Substitute(substitution parser.VariableSubstitution, filter *Filter) (parser.Primary, error) {
 	val, err := filter.Evaluate(substitution.Value)
 	if err != nil {
 		return nil, err

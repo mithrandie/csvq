@@ -8,6 +8,24 @@ import (
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
+func TestSerializeValues(t *testing.T) {
+	values := []parser.Primary{
+		parser.NewString("str"),
+		parser.NewInteger(1),
+		parser.NewFloat(1.234),
+		parser.NewDatetimeFromString("2012-02-03T09:18:15-08:00"),
+		parser.NewBoolean(true),
+		parser.NewTernary(ternary.UNKNOWN),
+		parser.NewNull(),
+	}
+	expect := "[String]STR:[Integer]1:[Float]1.234:[Datetime]2012-02-03T09:18:15-08:00:[Boolean]true:[Ternary]UNKNOWN:[Null]"
+
+	result := SerializeValues(values)
+	if result != expect {
+		t.Errorf("result = %q, want %q", result, expect)
+	}
+}
+
 var formatStringTests = []struct {
 	Name   string
 	Format string
@@ -32,7 +50,7 @@ var formatStringTests = []struct {
 	},
 	{
 		Name:   "FormatString Float",
-		Format: "float: %e %E %f %e %+f %.2f %.6f %.6f %.6e % f",
+		Format: "float: %e %E %f %e %+f %.2f %.6f %.6f %.6e %.6e % f",
 		Args: []parser.Primary{
 			parser.NewFloat(0.0000000000123),
 			parser.NewFloat(0.0000000000123),
@@ -43,9 +61,10 @@ var formatStringTests = []struct {
 			parser.NewFloat(123.456),
 			parser.NewFloat(0),
 			parser.NewFloat(0),
+			parser.NewFloat(1.23e-2),
 			parser.NewFloat(123.456),
 		},
-		Result: "float: 1.23e-11 1.23E-11 0.0000000000123  +123.456 123.46 123.456000 0.000000 0.000000e+00  123.456",
+		Result: "float: 1.23e-11 1.23E-11 0.0000000000123  +123.456 123.46 123.456000 0.000000 0.000000e+00 1.230000e-02  123.456",
 	},
 	{
 		Name:   "FormatString String",
@@ -85,7 +104,7 @@ var formatStringTests = []struct {
 	},
 	{
 		Name:   "FormatString Padding",
-		Format: "padding: %6d %+06d %+06d %2d %010d %6f %6s",
+		Format: "padding: %6d %+06d %+06d %2d %010d %6f %6s %-6s",
 		Args: []parser.Primary{
 			parser.NewInteger(123),
 			parser.NewInteger(123),
@@ -94,8 +113,9 @@ var formatStringTests = []struct {
 			parser.NewInteger(123),
 			parser.NewFloat(123.4),
 			parser.NewString("str"),
+			parser.NewString("str"),
 		},
-		Result: "padding:    123 +00123 -00123 123 0000000123  123.4    str",
+		Result: "padding:    123 +00123 -00123 123 0000000123  123.4    str str   ",
 	},
 	{
 		Name:   "FormatString Etc.",

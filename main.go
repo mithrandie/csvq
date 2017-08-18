@@ -12,7 +12,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var version = "v0.6.1"
+var version = "v0.6.2"
 
 func main() {
 	cli.AppHelpTemplate = appHHelpTemplate
@@ -85,6 +85,11 @@ func main() {
 		cli.BoolFlag{
 			Name:  "without-header, N",
 			Usage: "when the file format is specified as CSV or TSV, write without the header line",
+		},
+		cli.IntFlag{
+			Name:  "cpu, p",
+			Value: 1,
+			Usage: "number of cpu cores to be used. 1 - number of cpu cores",
 		},
 		cli.BoolFlag{
 			Name:  "stats, x",
@@ -209,20 +214,22 @@ func setFlags(c *cli.Context) error {
 	cmd.SetNoHeader(c.GlobalBool("no-header"))
 	cmd.SetWithoutNull(c.GlobalBool("without-null"))
 
-	if err := cmd.SetWriteEncoding(c.String("write-encoding")); err != nil {
+	if err := cmd.SetWriteEncoding(c.GlobalString("write-encoding")); err != nil {
 		return err
 	}
-	if err := cmd.SetOut(c.String("out")); err != nil {
+	if err := cmd.SetOut(c.GlobalString("out")); err != nil {
 		return err
 	}
-	if err := cmd.SetFormat(c.String("format")); err != nil {
+	if err := cmd.SetFormat(c.GlobalString("format")); err != nil {
 		return err
 	}
-	if err := cmd.SetWriteDelimiter(c.String("write-delimiter")); err != nil {
+	if err := cmd.SetWriteDelimiter(c.GlobalString("write-delimiter")); err != nil {
 		return err
 	}
-	cmd.SetWithoutHeader(c.Bool("without-header"))
-	cmd.SetStats(c.Bool("stats"))
+	cmd.SetWithoutHeader(c.GlobalBool("without-header"))
+
+	cmd.SetCPU(c.GlobalInt("cpu"))
+	cmd.SetStats(c.GlobalBool("stats"))
 
 	return nil
 }

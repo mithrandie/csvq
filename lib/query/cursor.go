@@ -30,7 +30,7 @@ func (list CursorMapList) Dispose(name parser.Identifier) error {
 	return NewUndefinedCursorError(name)
 }
 
-func (list CursorMapList) Open(name parser.Identifier, filter Filter) error {
+func (list CursorMapList) Open(name parser.Identifier, filter *Filter) error {
 	var err error
 
 	for _, m := range list {
@@ -147,7 +147,7 @@ func (m CursorMap) Dispose(name parser.Identifier) error {
 	return NewUndefinedCursorError(name)
 }
 
-func (m CursorMap) Open(name parser.Identifier, filter Filter) error {
+func (m CursorMap) Open(name parser.Identifier, filter *Filter) error {
 	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
 		return cur.Open(name, filter)
 	}
@@ -232,7 +232,7 @@ func NewPseudoCursor(values []parser.Primary) *Cursor {
 	}
 }
 
-func (c *Cursor) Open(name parser.Identifier, filter Filter) error {
+func (c *Cursor) Open(name parser.Identifier, filter *Filter) error {
 	if c.isPseudo {
 		return NewPseudoCursorError(name)
 	}

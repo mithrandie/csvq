@@ -7,6 +7,14 @@ import (
 )
 
 func Calculate(p1 parser.Primary, p2 parser.Primary, operator int) parser.Primary {
+	if operator != '/' {
+		if pi1 := parser.PrimaryToInteger(p1); !parser.IsNull(pi1) {
+			if pi2 := parser.PrimaryToInteger(p2); !parser.IsNull(pi2) {
+				return calculateInteger(pi1.(parser.Integer).Value(), pi2.(parser.Integer).Value(), operator)
+			}
+		}
+	}
+
 	pf1 := parser.PrimaryToFloat(p1)
 	pf2 := parser.PrimaryToFloat(p2)
 
@@ -32,4 +40,20 @@ func Calculate(p1 parser.Primary, p2 parser.Primary, operator int) parser.Primar
 	}
 
 	return parser.Float64ToPrimary(result)
+}
+
+func calculateInteger(i1 int64, i2 int64, operator int) parser.Primary {
+	var result int64 = 0
+	switch operator {
+	case '+':
+		result = i1 + i2
+	case '-':
+		result = i1 - i2
+	case '*':
+		result = i1 * i2
+	case '%':
+		result = i1 % i2
+	}
+
+	return parser.NewInteger(result)
 }

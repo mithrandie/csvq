@@ -20,16 +20,15 @@ category: reference
 ### Syntax
 
 ```sql
-float operator float
+value operator value
 ```
 
-_float_
+_value_
 : [value]({{ '/reference/value.html' | relative_url }})
 
-An binary arithmetic operator calculate float values, and return a integer or float value.
-If each of operands is not a float value, the value is converted to a float value.
+An binary arithmetic operator calculate integer or float values, and return the result.
 
-If either of operands is null or conversions to float failed, return null.
+If either of operands is null or the conversions to integer or float failed, return null.
 
 ## Unary Operators
 {: #unary}
@@ -42,9 +41,9 @@ If either of operands is null or conversions to float failed, return null.
 ### Syntax
 
 ```sql
-operator float
+operator value
 ```
 
-_float_
+_value_
 : [value]({{ '/reference/value.html' | relative_url }})
 

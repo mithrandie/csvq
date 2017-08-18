@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
@@ -197,15 +198,83 @@ func TestCrossJoin(t *testing.T) {
 
 var innerJoinTests = []struct {
 	Name      string
+	CPU       int
 	View      *View
 	JoinView  *View
 	Condition parser.Expression
-	Filter    Filter
+	Filter    *Filter
 	Result    *View
 	Error     string
 }{
 	{
 		Name: "Inner Join",
+		View: &View{
+			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithId(1, []parser.Primary{
+					parser.NewInteger(1),
+					parser.NewString("str1"),
+				}),
+				NewRecordWithId(2, []parser.Primary{
+					parser.NewInteger(2),
+					parser.NewString("str2"),
+				}),
+				NewRecordWithId(3, []parser.Primary{
+					parser.NewInteger(3),
+					parser.NewString("str3"),
+				}),
+			},
+		},
+		JoinView: &View{
+			Header: NewHeaderWithId("table2", []string{"column1", "column3"}),
+			Records: []Record{
+				NewRecordWithId(1, []parser.Primary{
+					parser.NewInteger(1),
+					parser.NewString("str1"),
+				}),
+				NewRecordWithId(2, []parser.Primary{
+					parser.NewInteger(2),
+					parser.NewString("str22"),
+				}),
+			},
+		},
+		Condition: parser.Comparison{
+			LHS:      parser.FieldReference{View: parser.Identifier{Literal: "table1"}, Column: parser.Identifier{Literal: "column1"}},
+			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column1"}},
+			Operator: "=",
+		},
+		Result: &View{
+			Header: []HeaderField{
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", Number: 1, FromTable: true},
+				{View: "table1", Column: "column2", Number: 2, FromTable: true},
+				{View: "table2", Column: INTERNAL_ID_COLUMN},
+				{View: "table2", Column: "column1", Number: 1, FromTable: true},
+				{View: "table2", Column: "column3", Number: 2, FromTable: true},
+			},
+			Records: []Record{
+				NewRecord([]parser.Primary{
+					parser.NewInteger(1),
+					parser.NewInteger(1),
+					parser.NewString("str1"),
+					parser.NewInteger(1),
+					parser.NewInteger(1),
+					parser.NewString("str1"),
+				}),
+				NewRecord([]parser.Primary{
+					parser.NewInteger(2),
+					parser.NewInteger(2),
+					parser.NewString("str2"),
+					parser.NewInteger(2),
+					parser.NewInteger(2),
+					parser.NewString("str22"),
+				}),
+			},
+		},
+	},
+	{
+		Name: "Inner Join in Multi Threading",
+		CPU:  2,
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 			Records: []Record{
@@ -353,6 +422,18 @@ var innerJoinTests = []struct {
 					parser.NewInteger(1),
 					parser.NewString("str1"),
 				}),
+				NewRecordWithId(1, []parser.Primary{
+					parser.NewInteger(2),
+					parser.NewString("str2"),
+				}),
+				NewRecordWithId(1, []parser.Primary{
+					parser.NewInteger(3),
+					parser.NewString("str3"),
+				}),
+				NewRecordWithId(1, []parser.Primary{
+					parser.NewInteger(4),
+					parser.NewString("str4"),
+				}),
 			},
 		},
 		JoinView: &View{
@@ -374,7 +455,18 @@ var innerJoinTests = []struct {
 }
 
 func TestInnerJoin(t *testing.T) {
+	flags := cmd.GetFlags()
+
 	for _, v := range innerJoinTests {
+		flags.CPU = 1
+		if v.CPU != 0 {
+			flags.CPU = v.CPU
+		}
+
+		if v.Filter == nil {
+			v.Filter = NewEmptyFilter()
+		}
+
 		err := InnerJoin(v.View, v.JoinView, v.Condition, v.Filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -400,7 +492,7 @@ var outerJoinTests = []struct {
 	JoinView  *View
 	Condition parser.Expression
 	Direction int
-	Filter    Filter
+	Filter    *Filter
 	Result    *View
 	Error     string
 }{
@@ -776,6 +868,10 @@ var outerJoinTests = []struct {
 
 func TestOuterJoin(t *testing.T) {
 	for _, v := range outerJoinTests {
+		if v.Filter == nil {
+			v.Filter = NewEmptyFilter()
+		}
+
 		err := OuterJoin(v.View, v.JoinView, v.Condition, v.Direction, v.Filter)
 		if err != nil {
 			if len(v.Error) < 1 {

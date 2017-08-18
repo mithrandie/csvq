@@ -1,13 +1,13 @@
 package query
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
 
-	"fmt"
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 )
@@ -18,7 +18,7 @@ var viewLoadTests = []struct {
 	NoHeader bool
 	From     parser.FromClause
 	Stdin    string
-	Filter   Filter
+	Filter   *Filter
 	Result   *View
 	Error    string
 }{
@@ -36,7 +36,7 @@ var viewLoadTests = []struct {
 					NewCell(parser.NewNull()),
 				},
 			},
-			Filter: Filter{
+			Filter: &Filter{
 				VariablesList:    []Variables{{}},
 				TempViewsList:    []ViewMap{{}},
 				CursorsList:      []CursorMap{{}},
@@ -55,7 +55,7 @@ var viewLoadTests = []struct {
 					NewCell(parser.NewNull()),
 				},
 			},
-			Filter: Filter{
+			Filter: &Filter{
 				VariablesList:    []Variables{{}},
 				TempViewsList:    []ViewMap{{}},
 				CursorsList:      []CursorMap{{}},
@@ -92,7 +92,7 @@ var viewLoadTests = []struct {
 				Path:      "table1.csv",
 				Delimiter: ',',
 			},
-			Filter: Filter{
+			Filter: &Filter{
 				VariablesList:    []Variables{{}},
 				TempViewsList:    []ViewMap{{}},
 				CursorsList:      []CursorMap{{}},
@@ -125,7 +125,7 @@ var viewLoadTests = []struct {
 				Path:      "stdin",
 				Delimiter: ',',
 			},
-			Filter: Filter{
+			Filter: &Filter{
 				VariablesList: []Variables{{}},
 				TempViewsList: []ViewMap{
 					{
@@ -158,7 +158,7 @@ var viewLoadTests = []struct {
 				Path:      "stdin",
 				Delimiter: ',',
 			},
-			Filter: Filter{
+			Filter: &Filter{
 				VariablesList: []Variables{{}},
 				TempViewsList: []ViewMap{
 					{
@@ -225,7 +225,7 @@ var viewLoadTests = []struct {
 				parser.Table{Object: parser.Identifier{Literal: "it"}, Alias: parser.Identifier{Literal: "t"}},
 			},
 		},
-		Filter: Filter{
+		Filter: &Filter{
 			VariablesList: VariablesList{{}},
 			TempViewsList: TemporaryViewMapList{{}},
 			CursorsList:   CursorMapList{{}},
@@ -274,7 +274,7 @@ var viewLoadTests = []struct {
 					parser.NewInteger(1),
 				}),
 			},
-			Filter: Filter{
+			Filter: &Filter{
 				VariablesList: VariablesList{{}},
 				TempViewsList: TemporaryViewMapList{{}},
 				CursorsList:   CursorMapList{{}},
@@ -320,7 +320,7 @@ var viewLoadTests = []struct {
 				parser.Table{Object: parser.Identifier{Literal: "it"}, Alias: parser.Identifier{Literal: "t"}},
 			},
 		},
-		Filter: Filter{
+		Filter: &Filter{
 			VariablesList: VariablesList{{}},
 			TempViewsList: TemporaryViewMapList{{}},
 			CursorsList:   CursorMapList{{}},
@@ -374,7 +374,7 @@ var viewLoadTests = []struct {
 					parser.NewString("str"),
 				}),
 			},
-			Filter: Filter{
+			Filter: &Filter{
 				VariablesList:    []Variables{{}},
 				TempViewsList:    []ViewMap{{}},
 				CursorsList:      []CursorMap{{}},
@@ -409,7 +409,7 @@ var viewLoadTests = []struct {
 					parser.NewString("str2"),
 				}),
 			},
-			Filter: Filter{
+			Filter: &Filter{
 				VariablesList:    []Variables{{}},
 				TempViewsList:    []ViewMap{{}},
 				CursorsList:      []CursorMap{{}},
@@ -497,7 +497,7 @@ var viewLoadTests = []struct {
 					parser.NewString("str44"),
 				}),
 			},
-			Filter: Filter{
+			Filter: &Filter{
 				VariablesList:    []Variables{{}},
 				TempViewsList:    []ViewMap{{}},
 				CursorsList:      []CursorMap{{}},
@@ -591,7 +591,7 @@ var viewLoadTests = []struct {
 					parser.NewString("str44"),
 				}),
 			},
-			Filter: Filter{
+			Filter: &Filter{
 				VariablesList:    []Variables{{}},
 				TempViewsList:    []ViewMap{{}},
 				CursorsList:      []CursorMap{{}},
@@ -649,7 +649,7 @@ var viewLoadTests = []struct {
 					parser.NewString("str33"),
 				}),
 			},
-			Filter: Filter{
+			Filter: &Filter{
 				VariablesList:    []Variables{{}},
 				TempViewsList:    []ViewMap{{}},
 				CursorsList:      []CursorMap{{}},
@@ -714,7 +714,7 @@ var viewLoadTests = []struct {
 					parser.NewString("str33"),
 				}),
 			},
-			Filter: Filter{
+			Filter: &Filter{
 				VariablesList:    []Variables{{}},
 				TempViewsList:    []ViewMap{{}},
 				CursorsList:      []CursorMap{{}},
@@ -809,7 +809,7 @@ var viewLoadTests = []struct {
 					parser.NewString("str3"),
 				}),
 			},
-			Filter: Filter{
+			Filter: &Filter{
 				VariablesList:    []Variables{{}},
 				TempViewsList:    []ViewMap{{}},
 				CursorsList:      []CursorMap{{}},
@@ -890,9 +890,10 @@ func TestView_Load(t *testing.T) {
 		}
 
 		view := NewView()
-		if reflect.DeepEqual(v.Filter, Filter{}) {
+		if v.Filter == nil {
 			v.Filter = NewEmptyFilter()
 		}
+
 		err := view.Load(v.From, v.Filter.CreateNode())
 
 		if 0 < len(v.Stdin) {
@@ -980,6 +981,7 @@ func TestNewViewFromGroupedRecord(t *testing.T) {
 
 var viewWhereTests = []struct {
 	Name   string
+	CPU    int
 	View   *View
 	Where  parser.WhereClause
 	Result []int
@@ -1003,6 +1005,37 @@ var viewWhereTests = []struct {
 					parser.NewString("str3"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
+		},
+		Where: parser.WhereClause{
+			Filter: parser.Comparison{
+				LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+				RHS:      parser.NewInteger(2),
+				Operator: "=",
+			},
+		},
+		Result: []int{1},
+	},
+	{
+		Name: "Where in Multi Threading",
+		CPU:  2,
+		View: &View{
+			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithId(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecordWithId(2, []parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+				NewRecordWithId(3, []parser.Primary{
+					parser.NewString("3"),
+					parser.NewString("str3"),
+				}),
+			},
+			Filter: NewEmptyFilter(),
 		},
 		Where: parser.WhereClause{
 			Filter: parser.Comparison{
@@ -1031,6 +1064,7 @@ var viewWhereTests = []struct {
 					parser.NewString("str3"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Where: parser.WhereClause{
 			Filter: parser.Comparison{
@@ -1044,7 +1078,14 @@ var viewWhereTests = []struct {
 }
 
 func TestView_Where(t *testing.T) {
+	flags := cmd.GetFlags()
+
 	for _, v := range viewWhereTests {
+		flags.CPU = 1
+		if v.CPU != 0 {
+			flags.CPU = v.CPU
+		}
+
 		err := v.View.Where(v.Where)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -1099,6 +1140,7 @@ var viewGroupByTests = []struct {
 					parser.NewString("group2"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		GroupBy: parser.GroupByClause{
 			Items: []parser.Expression{
@@ -1145,6 +1187,84 @@ var viewGroupByTests = []struct {
 					NewGroupCell([]parser.Primary{parser.NewString("group2"), parser.NewString("group2")}),
 				},
 			},
+			Filter:    NewEmptyFilter(),
+			isGrouped: true,
+		},
+	},
+	{
+		Name: "Group By With ColumnNumber",
+		View: &View{
+			Header: NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
+			Records: []Record{
+				NewRecordWithId(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+					parser.NewString("group1"),
+				}),
+				NewRecordWithId(2, []parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+					parser.NewString("group2"),
+				}),
+				NewRecordWithId(3, []parser.Primary{
+					parser.NewString("3"),
+					parser.NewString("str3"),
+					parser.NewString("group1"),
+				}),
+				NewRecordWithId(4, []parser.Primary{
+					parser.NewString("4"),
+					parser.NewString("str4"),
+					parser.NewString("group2"),
+				}),
+			},
+			Filter: NewEmptyFilter(),
+		},
+		GroupBy: parser.GroupByClause{
+			Items: []parser.Expression{
+				parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: parser.NewInteger(3)},
+			},
+		},
+		Result: &View{
+			Header: []HeaderField{
+				{
+					View:   "table1",
+					Column: INTERNAL_ID_COLUMN,
+				},
+				{
+					View:      "table1",
+					Column:    "column1",
+					Number:    1,
+					FromTable: true,
+				},
+				{
+					View:      "table1",
+					Column:    "column2",
+					Number:    2,
+					FromTable: true,
+				},
+				{
+					View:       "table1",
+					Column:     "column3",
+					Number:     3,
+					FromTable:  true,
+					IsGroupKey: true,
+				},
+			},
+			Records: []Record{
+				{
+					NewGroupCell([]parser.Primary{parser.NewInteger(1), parser.NewInteger(3)}),
+					NewGroupCell([]parser.Primary{parser.NewString("1"), parser.NewString("3")}),
+					NewGroupCell([]parser.Primary{parser.NewString("str1"), parser.NewString("str3")}),
+					NewGroupCell([]parser.Primary{parser.NewString("group1"), parser.NewString("group1")}),
+				},
+				{
+					NewGroupCell([]parser.Primary{parser.NewInteger(2), parser.NewInteger(4)}),
+					NewGroupCell([]parser.Primary{parser.NewString("2"), parser.NewString("4")}),
+					NewGroupCell([]parser.Primary{parser.NewString("str2"), parser.NewString("str4")}),
+					NewGroupCell([]parser.Primary{parser.NewString("group2"), parser.NewString("group2")}),
+				},
+			},
+			Filter:    NewEmptyFilter(),
 			isGrouped: true,
 		},
 	},
@@ -1219,6 +1339,7 @@ var viewHavingTests = []struct {
 					NewGroupCell([]parser.Primary{parser.NewString("group2"), parser.NewString("group2")}),
 				},
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Having: parser.HavingClause{
 			Filter: parser.Comparison{
@@ -1275,6 +1396,7 @@ var viewHavingTests = []struct {
 					NewGroupCell([]parser.Primary{parser.NewString("group2"), parser.NewString("group2")}),
 				},
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Having: parser.HavingClause{
 			Filter: parser.Comparison{
@@ -1307,6 +1429,7 @@ var viewHavingTests = []struct {
 					parser.NewString("group2"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Having: parser.HavingClause{
 			Filter: parser.Comparison{
@@ -1411,6 +1534,7 @@ var viewSelectTests = []struct {
 					parser.NewString("str22"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Select: parser.SelectClause{
 			Fields: []parser.Expression{
@@ -1470,6 +1594,7 @@ var viewSelectTests = []struct {
 					parser.NewInteger(1),
 				}),
 			},
+			Filter:       NewEmptyFilter(),
 			selectFields: []int{2, 1, 2, 4, 5, 6, 2, 4, 4},
 		},
 	},
@@ -1518,6 +1643,7 @@ var viewSelectTests = []struct {
 					parser.NewString("str22"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Select: parser.SelectClause{
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
@@ -1541,6 +1667,7 @@ var viewSelectTests = []struct {
 					parser.NewInteger(1),
 				}),
 			},
+			Filter:       NewEmptyFilter(),
 			selectFields: []int{0, 1},
 		},
 	},
@@ -1562,6 +1689,7 @@ var viewSelectTests = []struct {
 					parser.NewString("str2"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Select: parser.SelectClause{
 			Fields: []parser.Expression{
@@ -1591,6 +1719,7 @@ var viewSelectTests = []struct {
 					NewCell(parser.NewInteger(3)),
 				},
 			},
+			Filter:       NewEmptyFilter(),
 			selectFields: []int{3},
 		},
 	},
@@ -1612,6 +1741,7 @@ var viewSelectTests = []struct {
 					parser.NewString("str2"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Select: parser.SelectClause{
 			Fields: []parser.Expression{
@@ -1655,6 +1785,7 @@ var viewSelectTests = []struct {
 					parser.NewInteger(4),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Select: parser.SelectClause{
 			Fields: []parser.Expression{
@@ -1718,6 +1849,7 @@ var viewSelectTests = []struct {
 					parser.NewInteger(3),
 				}),
 			},
+			Filter:       NewEmptyFilter(),
 			selectFields: []int{0, 1, 2},
 		},
 	},
@@ -1747,6 +1879,7 @@ var viewSelectTests = []struct {
 					parser.NewInteger(4),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Select: parser.SelectClause{
 			Fields: []parser.Expression{
@@ -1805,6 +1938,7 @@ var viewSelectTests = []struct {
 					parser.NewInteger(4),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Select: parser.SelectClause{
 			Fields: []parser.Expression{
@@ -1863,7 +1997,7 @@ var viewSelectTests = []struct {
 					parser.NewInteger(4),
 				}),
 			},
-			Filter: Filter{
+			Filter: &Filter{
 				FunctionsList: UserDefinedFunctionsList{
 					UserDefinedFunctionMap{
 						"USERAGGFUNC": &UserDefinedFunction{
@@ -2045,6 +2179,7 @@ var viewOrderByTests = []struct {
 					parser.NewString("4"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		OrderBy: parser.OrderByClause{
 			Items: []parser.Expression{
@@ -2103,6 +2238,7 @@ var viewOrderByTests = []struct {
 					parser.NewInteger(1),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 	},
 	{
@@ -2135,6 +2271,7 @@ var viewOrderByTests = []struct {
 					parser.NewString("2"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		OrderBy: parser.OrderByClause{
 			Items: []parser.Expression{
@@ -2176,6 +2313,7 @@ var viewOrderByTests = []struct {
 					parser.NewString("2"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 	},
 }
@@ -2241,6 +2379,7 @@ var viewLimitTests = []struct {
 					parser.NewString("str3"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Limit: parser.LimitClause{Value: parser.NewInteger(2)},
 		Result: &View{
@@ -2259,6 +2398,7 @@ var viewLimitTests = []struct {
 					parser.NewString("str1"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 	},
 	{
@@ -2291,6 +2431,7 @@ var viewLimitTests = []struct {
 					parser.NewString("str3"),
 				}),
 			},
+			Filter:      NewEmptyFilter(),
 			sortIndices: []int{1, 2},
 		},
 		Limit: parser.LimitClause{Value: parser.NewInteger(2), With: parser.LimitWith{Type: parser.Token{Token: parser.TIES}}},
@@ -2314,6 +2455,7 @@ var viewLimitTests = []struct {
 					parser.NewString("str1"),
 				}),
 			},
+			Filter:      NewEmptyFilter(),
 			sortIndices: []int{1, 2},
 		},
 	},
@@ -2343,6 +2485,7 @@ var viewLimitTests = []struct {
 					parser.NewString("str3"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 			offset: 1,
 		},
 		Limit: parser.LimitClause{Value: parser.NewFloat(50.5), Percent: "percent"},
@@ -2366,6 +2509,7 @@ var viewLimitTests = []struct {
 					parser.NewString("str2"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 			offset: 1,
 		},
 	},
@@ -2399,6 +2543,7 @@ var viewLimitTests = []struct {
 					parser.NewString("str3"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Limit: parser.LimitClause{Value: parser.NewFloat(150), Percent: "percent"},
 		Result: &View{
@@ -2429,6 +2574,7 @@ var viewLimitTests = []struct {
 					parser.NewString("str3"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 	},
 	{
@@ -2461,6 +2607,7 @@ var viewLimitTests = []struct {
 					parser.NewString("str3"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Limit: parser.LimitClause{Value: parser.NewFloat(-10), Percent: "percent"},
 		Result: &View{
@@ -2470,6 +2617,7 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{},
+			Filter:  NewEmptyFilter(),
 		},
 	},
 	{
@@ -2490,6 +2638,7 @@ var viewLimitTests = []struct {
 					parser.NewString("str1"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Limit: parser.LimitClause{Value: parser.NewInteger(5)},
 		Result: &View{
@@ -2508,6 +2657,7 @@ var viewLimitTests = []struct {
 					parser.NewString("str1"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 	},
 	{
@@ -2528,6 +2678,7 @@ var viewLimitTests = []struct {
 					parser.NewString("str1"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Limit: parser.LimitClause{Value: parser.Variable{Name: "notexist"}},
 		Error: "[L:- C:-] variable notexist is undefined",
@@ -2550,6 +2701,7 @@ var viewLimitTests = []struct {
 					parser.NewString("str1"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Limit: parser.LimitClause{Value: parser.NewString("str")},
 		Error: "[L:- C:-] limit number of records 'str' is not an integer value",
@@ -2572,6 +2724,7 @@ var viewLimitTests = []struct {
 					parser.NewString("str1"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Limit: parser.LimitClause{Value: parser.NewInteger(-1)},
 		Result: &View{
@@ -2581,6 +2734,7 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{},
+			Filter:  NewEmptyFilter(),
 		},
 	},
 	{
@@ -2601,6 +2755,7 @@ var viewLimitTests = []struct {
 					parser.NewString("str1"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Limit: parser.LimitClause{Value: parser.NewString("str"), Percent: "percent"},
 		Error: "[L:- C:-] limit percentage 'str' is not a float value",
@@ -2661,6 +2816,7 @@ var viewOffsetTests = []struct {
 					parser.NewString("str2"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Offset: parser.OffsetClause{Value: parser.NewInteger(3)},
 		Result: &View{
@@ -2675,6 +2831,7 @@ var viewOffsetTests = []struct {
 					parser.NewString("str2"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 			offset: 3,
 		},
 	},
@@ -2704,6 +2861,7 @@ var viewOffsetTests = []struct {
 					parser.NewString("str2"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Offset: parser.OffsetClause{Value: parser.NewInteger(4)},
 		Result: &View{
@@ -2713,6 +2871,7 @@ var viewOffsetTests = []struct {
 				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{},
+			Filter:  NewEmptyFilter(),
 			offset:  4,
 		},
 	},
@@ -2742,6 +2901,7 @@ var viewOffsetTests = []struct {
 					parser.NewString("str2"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Offset: parser.OffsetClause{Value: parser.Variable{Name: "notexist"}},
 		Error:  "[L:- C:-] variable notexist is undefined",
@@ -2772,6 +2932,7 @@ var viewOffsetTests = []struct {
 					parser.NewString("str2"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Offset: parser.OffsetClause{Value: parser.NewString("str")},
 		Error:  "[L:- C:-] offset number 'str' is not an integer value",
@@ -2794,6 +2955,7 @@ var viewOffsetTests = []struct {
 					parser.NewString("str1"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 		},
 		Offset: parser.OffsetClause{Value: parser.NewInteger(-3)},
 		Result: &View{
@@ -2812,6 +2974,7 @@ var viewOffsetTests = []struct {
 					parser.NewString("str1"),
 				}),
 			},
+			Filter: NewEmptyFilter(),
 			offset: 0,
 		},
 	},
@@ -2890,6 +3053,7 @@ var viewInsertValuesTests = []struct {
 					parser.NewNull(),
 				}),
 			},
+			Filter:          NewEmptyFilter(),
 			OperatedRecords: 2,
 		},
 	},
@@ -2957,10 +3121,11 @@ func TestView_InsertValues(t *testing.T) {
 				parser.NewString("str2"),
 			}),
 		},
+		Filter: NewEmptyFilter(),
 	}
 
 	for _, v := range viewInsertValuesTests {
-		err := view.InsertValues(v.Fields, v.ValuesList, Filter{})
+		err := view.InsertValues(v.Fields, v.ValuesList)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -3019,6 +3184,7 @@ var viewInsertFromQueryTests = []struct {
 					parser.NewNull(),
 				}),
 			},
+			Filter:          NewEmptyFilter(),
 			OperatedRecords: 1,
 		},
 	},
@@ -3070,10 +3236,11 @@ func TestView_InsertFromQuery(t *testing.T) {
 				parser.NewString("str2"),
 			}),
 		},
+		Filter: NewEmptyFilter(),
 	}
 
 	for _, v := range viewInsertFromQueryTests {
-		err := view.InsertFromQuery(v.Fields, v.Query, Filter{})
+		err := view.InsertFromQuery(v.Fields, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
