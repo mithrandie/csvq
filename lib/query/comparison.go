@@ -35,6 +35,20 @@ func CompareCombinedly(p1 parser.Primary, p2 parser.Primary) ComparisonResult {
 		return INCOMMENSURABLE
 	}
 
+	if i1 := parser.PrimaryToInteger(p1); !parser.IsNull(i1) {
+		if i2 := parser.PrimaryToInteger(p2); !parser.IsNull(i2) {
+			v1 := i1.(parser.Integer).Value()
+			v2 := i2.(parser.Integer).Value()
+			if v1 == v2 {
+				return EQUAL
+			} else if v1 < v2 {
+				return LESS
+			} else {
+				return GREATER
+			}
+		}
+	}
+
 	if f1 := parser.PrimaryToFloat(p1); !parser.IsNull(f1) {
 		if f2 := parser.PrimaryToFloat(p2); !parser.IsNull(f2) {
 			v1 := f1.(parser.Float).Value()

@@ -2513,6 +2513,16 @@ var integerTests = []functionTest{
 		Result: parser.NewInteger(2),
 	},
 	{
+		Name: "Integer from E-Notation",
+		Function: parser.Function{
+			Name: "integer",
+		},
+		Args: []parser.Primary{
+			parser.NewString("2e+02"),
+		},
+		Result: parser.NewInteger(200),
+	},
+	{
 		Name: "Integer from Float",
 		Function: parser.Function{
 			Name: "integer",

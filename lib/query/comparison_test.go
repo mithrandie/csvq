@@ -39,6 +39,21 @@ var compareCombinedlyTests = []struct {
 		Result: GREATER,
 	},
 	{
+		LHS:    parser.NewFloat(1.5),
+		RHS:    parser.NewFloat(1.5),
+		Result: EQUAL,
+	},
+	{
+		LHS:    parser.NewFloat(1.5),
+		RHS:    parser.NewFloat(2.0),
+		Result: LESS,
+	},
+	{
+		LHS:    parser.NewFloat(1.5),
+		RHS:    parser.NewFloat(1.0),
+		Result: GREATER,
+	},
+	{
 		LHS:    parser.NewDatetimeFromString("2006-01-02T15:04:05-07:00"),
 		RHS:    parser.NewDatetimeFromString("2006-01-02T15:04:05-07:00"),
 		Result: EQUAL,

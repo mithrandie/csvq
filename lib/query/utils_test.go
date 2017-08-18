@@ -8,6 +8,24 @@ import (
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
+func TestSerializeValues(t *testing.T) {
+	values := []parser.Primary{
+		parser.NewString("str"),
+		parser.NewInteger(1),
+		parser.NewFloat(1.234),
+		parser.NewDatetimeFromString("2012-02-03T09:18:15-08:00"),
+		parser.NewBoolean(true),
+		parser.NewTernary(ternary.UNKNOWN),
+		parser.NewNull(),
+	}
+	expect := "[String]STR:[Integer]1:[Float]1.234:[Datetime]2012-02-03T09:18:15-08:00:[Boolean]true:[Ternary]UNKNOWN:[Null]"
+
+	result := SerializeValues(values)
+	if result != expect {
+		t.Errorf("result = %q, want %q", result, expect)
+	}
+}
+
 var formatStringTests = []struct {
 	Name   string
 	Format string

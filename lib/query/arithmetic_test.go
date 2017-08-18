@@ -40,14 +40,38 @@ var calculateTests = []struct {
 	{
 		LHS:      parser.NewString("9"),
 		RHS:      parser.NewString("2"),
-		Operator: '/',
-		Result:   parser.NewFloat(4.5),
+		Operator: '%',
+		Result:   parser.NewInteger(1),
+	},
+	{
+		LHS:      parser.NewString("9.5"),
+		RHS:      parser.NewString("2"),
+		Operator: '+',
+		Result:   parser.NewFloat(11.5),
+	},
+	{
+		LHS:      parser.NewString("9.5"),
+		RHS:      parser.NewString("2"),
+		Operator: '-',
+		Result:   parser.NewFloat(7.5),
+	},
+	{
+		LHS:      parser.NewString("9.5"),
+		RHS:      parser.NewString("2"),
+		Operator: '*',
+		Result:   parser.NewInteger(19),
 	},
 	{
 		LHS:      parser.NewString("9"),
 		RHS:      parser.NewString("2"),
+		Operator: '/',
+		Result:   parser.NewFloat(4.5),
+	},
+	{
+		LHS:      parser.NewString("8.5"),
+		RHS:      parser.NewString("2"),
 		Operator: '%',
-		Result:   parser.NewInteger(1),
+		Result:   parser.NewFloat(0.5),
 	},
 }
 

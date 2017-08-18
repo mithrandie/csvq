@@ -434,17 +434,8 @@ func (view *View) group(items []parser.Expression) error {
 	}
 
 	type group struct {
-		primaries []parser.Primary
-		indices   []int
-	}
-
-	var match = func(g group, keys []parser.Primary) bool {
-		for i, primary := range g.primaries {
-			if EquivalentTo(primary, keys[i]) != ternary.TRUE {
-				return false
-			}
-		}
-		return true
+		key     string
+		indices []int
 	}
 
 	filter := NewFilterForSequentialEvaluation(view, view.Filter)
@@ -461,10 +452,11 @@ func (view *View) group(items []parser.Expression) error {
 			}
 			keys[j] = key
 		}
+		key := SerializeValues(keys)
 
 		newGr := true
 		for j, gr := range groups {
-			if match(gr, keys) {
+			if gr.key == key {
 				groups[j].indices = append(groups[j].indices, i)
 				newGr = false
 				break
@@ -472,8 +464,8 @@ func (view *View) group(items []parser.Expression) error {
 		}
 		if newGr {
 			gr := group{
-				primaries: keys,
-				indices:   []int{i},
+				key:     key,
+				indices: []int{i},
 			}
 			groups = append(groups, gr)
 		}
