@@ -3,6 +3,7 @@ package query
 import (
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
@@ -434,6 +435,7 @@ func Update(query parser.UpdateQuery, parentFilter *Filter) ([]*View, error) {
 	filterForLoop := NewFilterForSequentialEvaluation(view, filter)
 	for i := range view.Records {
 		filterForLoop.Records[0].RecordIndex = i
+		internalIds := make(map[string]int)
 
 		for _, v := range query.SetList {
 			uset := v.(parser.UpdateSet)
@@ -453,19 +455,29 @@ func Update(query parser.UpdateQuery, parentFilter *Filter) ([]*View, error) {
 				return nil, NewUpdateFieldNotExistError(uset.Field)
 			}
 
-			internalId, err := view.InternalRecordId(viewref, i)
-			if err != nil {
-				return nil, NewUpdateValueAmbiguousError(uset.Field, uset.Value)
-			}
+			var internalId int
+			if id, ok := internalIds[viewref]; ok {
+				internalId = id
+			} else {
+				id, err := view.InternalRecordId(viewref, i)
+				if err != nil {
+					return nil, NewUpdateValueAmbiguousError(uset.Field, uset.Value)
+				}
 
-			if InIntSlice(internalId, updatedIndices[viewref]) {
-				return nil, NewUpdateValueAmbiguousError(uset.Field, uset.Value)
+				if InIntSlice(id, updatedIndices[viewref]) {
+					return nil, NewUpdateValueAmbiguousError(uset.Field, uset.Value)
+				}
+				internalId = id
+				internalIds[viewref] = internalId
 			}
 
 			fieldIdx, _ := viewsToUpdate[viewref].FieldIndex(uset.Field)
 
 			viewsToUpdate[viewref].Records[internalId][fieldIdx] = NewCell(value)
-			updatedIndices[viewref] = append(updatedIndices[viewref], internalId)
+		}
+
+		for viewref, id := range internalIds {
+			updatedIndices[viewref] = append(updatedIndices[viewref], id)
 		}
 	}
 
@@ -682,35 +694,61 @@ func AddColumns(query parser.AddColumns, parentFilter *Filter) (*View, error) {
 		header[i].Number = colNumber
 	}
 
-	records := make([]Record, view.RecordLen())
-	filter.Records = append(filter.Records, FilterRecord{
-		View: view,
-	})
-	for i, v := range view.Records {
-		record := make(Record, newFieldLen)
-		for j, cell := range v {
-			var idx int
-			if j < insertPos {
-				idx = j
-			} else {
-				idx = j + len(fields)
-			}
-			record[idx] = cell
-		}
+	cpu := cmd.GetFlags().CPU
+	if view.RecordLen() < cpu {
+		cpu = 1
+	}
 
-		filter.Records[0].RecordIndex = i
-		for j, v := range defaults {
-			if v == nil {
-				v = parser.NewNull()
-			}
-			val, err := filter.Evaluate(v)
-			if err != nil {
-				return nil, err
-			}
-			record[j+insertPos] = NewCell(val)
-		}
+	records := make(Records, view.RecordLen())
 
-		records[i] = record
+	wg := sync.WaitGroup{}
+	for i := 0; i < cpu; i++ {
+		wg.Add(1)
+		go func(thIdx int) {
+			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+
+			filter := NewFilterForSequentialEvaluation(view, filter)
+
+		AddColumnLoop:
+			for i := start; i < end; i++ {
+				if err != nil {
+					break AddColumnLoop
+				}
+
+				record := make(Record, newFieldLen)
+				for j, cell := range view.Records[i] {
+					var idx int
+					if j < insertPos {
+						idx = j
+					} else {
+						idx = j + len(fields)
+					}
+					record[idx] = cell
+				}
+
+				filter.Records[0].RecordIndex = i
+
+				for j, v := range defaults {
+					if v == nil {
+						v = parser.NewNull()
+					}
+					val, e := filter.Evaluate(v)
+					if e != nil {
+						err = e
+						break AddColumnLoop
+					}
+					record[j+insertPos] = NewCell(val)
+				}
+				records[i] = record
+			}
+
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
+
+	if err != nil {
+		return nil, err
 	}
 
 	view.Header = header

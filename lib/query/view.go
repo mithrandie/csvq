@@ -6,12 +6,12 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/csv"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
-	"sync"
 )
 
 type View struct {
@@ -27,7 +27,7 @@ type View struct {
 
 	filteredIndices []int
 
-	sortIndices       []int
+	recordSortValues  []SortValues
 	sortDirections    []int
 	sortNullPositions []int
 
@@ -433,50 +433,69 @@ func (view *View) group(items []parser.Expression) error {
 		return nil
 	}
 
-	type group struct {
-		key     string
-		indices []int
+	cpu := cmd.GetFlags().CPU
+	if view.RecordLen() < cpu {
+		cpu = 1
 	}
 
-	filter := NewFilterForSequentialEvaluation(view, view.Filter)
+	var err error
+	keys := make([]string, view.RecordLen())
 
-	var groups []group
-	for i := 0; i < view.RecordLen(); i++ {
-		filter.Records[0].RecordIndex = i
+	wg := sync.WaitGroup{}
+	for i := 0; i < cpu; i++ {
+		wg.Add(1)
+		go func(thIdx int) {
+			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
 
-		keys := make([]parser.Primary, len(items))
-		for j, item := range items {
-			key, err := filter.Evaluate(item)
-			if err != nil {
-				return err
-			}
-			keys[j] = key
-		}
-		key := SerializeValues(keys)
+			filter := NewFilterForSequentialEvaluation(view, view.Filter)
 
-		newGr := true
-		for j, gr := range groups {
-			if gr.key == key {
-				groups[j].indices = append(groups[j].indices, i)
-				newGr = false
-				break
+		GroupLoop:
+			for i := start; i < end; i++ {
+				if err != nil {
+					break GroupLoop
+				}
+
+				filter.Records[0].RecordIndex = i
+
+				values := make([]parser.Primary, len(items))
+				for j, item := range items {
+					p, e := filter.Evaluate(item)
+					if e != nil {
+						err = e
+						break GroupLoop
+					}
+					values[j] = p
+				}
+				keys[i] = SerializeGroupKeys(values)
 			}
-		}
-		if newGr {
-			gr := group{
-				key:     key,
-				indices: []int{i},
-			}
-			groups = append(groups, gr)
+
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
+
+	if err != nil {
+		return err
+	}
+
+	groups := make(map[string][]int)
+	groupKeys := []string{}
+	for i, key := range keys {
+		if _, ok := groups[key]; ok {
+			groups[key] = append(groups[key], i)
+		} else {
+			groups[key] = []int{i}
+			groupKeys = append(groupKeys, key)
 		}
 	}
 
 	records := make([]Record, len(groups))
-	for i, gr := range groups {
+	for i, groupKey := range groupKeys {
 		record := make(Record, view.FieldLen())
+		indices := groups[groupKey]
 		for j := 0; j < view.FieldLen(); j++ {
-			primaries := make([]parser.Primary, len(gr.indices))
-			for k, idx := range gr.indices {
+			primaries := make([]parser.Primary, len(indices))
+			for k, idx := range indices {
 				primaries[k] = view.Records[idx][j].Primary()
 			}
 			record[j] = NewGroupCell(primaries)
@@ -641,17 +660,18 @@ func (view *View) SelectAllColumns() error {
 }
 
 func (view *View) OrderBy(clause parser.OrderByClause) error {
-	view.sortIndices = make([]int, len(clause.Items))
+	view.recordSortValues = make([]SortValues, view.RecordLen())
 	view.sortDirections = make([]int, len(clause.Items))
 	view.sortNullPositions = make([]int, len(clause.Items))
 
+	sortIndices := make([]int, len(clause.Items))
 	for i, v := range clause.Items {
 		oi := v.(parser.OrderItem)
 		idx, err := view.evalColumn(oi.Value, oi.Value.String(), "")
 		if err != nil {
 			return err
 		}
-		view.sortIndices[i] = idx
+		sortIndices[i] = idx
 
 		if oi.Direction.IsEmpty() {
 			view.sortDirections[i] = parser.ASC
@@ -670,6 +690,30 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 			view.sortNullPositions[i] = oi.Position.Token
 		}
 	}
+
+	cpu := cmd.GetFlags().CPU
+	if view.RecordLen() < cpu {
+		cpu = 1
+	}
+
+	wg := sync.WaitGroup{}
+	for i := 0; i < cpu; i++ {
+		wg.Add(1)
+		go func(thIdx int) {
+			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+
+			for i := start; i < end; i++ {
+				sortValues := make(SortValues, len(sortIndices))
+				for j, idx := range sortIndices {
+					sortValues[j] = NewSortValue(view.Records[i][idx].Primary())
+				}
+				view.recordSortValues[i] = sortValues
+			}
+
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
 
 	sort.Sort(view)
 	return nil
@@ -696,16 +740,41 @@ func (view *View) evalColumn(obj parser.Expression, column string, alias string)
 					return
 				}
 			} else {
-				filter := NewFilterForSequentialEvaluation(view, view.Filter)
-				for i := range view.Records {
-					var primary parser.Primary
-					filter.Records[0].RecordIndex = i
+				cpu := cmd.GetFlags().CPU
+				if view.RecordLen() < cpu {
+					cpu = 1
+				}
 
-					primary, err = filter.Evaluate(obj)
-					if err != nil {
-						return
-					}
-					view.Records[i] = append(view.Records[i], NewCell(primary))
+				wg := sync.WaitGroup{}
+				for i := 0; i < cpu; i++ {
+					wg.Add(1)
+					go func(thIdx int) {
+						start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+						filter := NewFilterForSequentialEvaluation(view, view.Filter)
+
+					EvalColumnLoop:
+						for i := start; i < end; i++ {
+							if err != nil {
+								break EvalColumnLoop
+							}
+
+							var primary parser.Primary
+							filter.Records[0].RecordIndex = i
+
+							primary, err = filter.Evaluate(obj)
+							if err != nil {
+								break EvalColumnLoop
+							}
+							view.Records[i] = append(view.Records[i], NewCell(primary))
+						}
+
+						wg.Done()
+					}(i)
+				}
+				wg.Wait()
+
+				if err != nil {
+					return
 				}
 			}
 			view.Header, idx = AddHeaderField(view.Header, column, alias)
@@ -736,6 +805,9 @@ func (view *View) evalAnalyticFunction(expr parser.AnalyticFunction) error {
 		if err != nil {
 			return err
 		}
+		view.recordSortValues = nil
+		view.sortDirections = nil
+		view.sortNullPositions = nil
 	}
 
 	return Analyze(view, expr)
@@ -801,10 +873,10 @@ func (view *View) Limit(clause parser.LimitClause) error {
 		return nil
 	}
 
-	if clause.IsWithTies() && 0 < len(view.sortIndices) {
-		bottomRecord := view.Records[limit-1]
+	if clause.IsWithTies() && view.recordSortValues != nil {
+		bottomSortValues := view.recordSortValues[limit-1]
 		for limit < view.RecordLen() {
-			if !bottomRecord.Match(view.Records[limit], view.sortIndices) {
+			if !bottomSortValues.EquivalentTo(view.recordSortValues[limit]) {
 				break
 			}
 			limit++
@@ -897,18 +969,33 @@ func (view *View) Fix() {
 	hfields := NewEmptyHeader(len(view.selectFields))
 	records := make([]Record, view.RecordLen())
 
-	for i, v := range view.Records {
-		record := make(Record, len(view.selectFields))
-		for j, idx := range view.selectFields {
-			if 1 < v.GroupLen() {
-				record[j] = NewCell(v[idx].Primary())
-			} else {
-				record[j] = v[idx]
-			}
-		}
-
-		records[i] = record
+	cpu := cmd.GetFlags().CPU
+	if view.RecordLen() < cpu {
+		cpu = 1
 	}
+
+	wg := sync.WaitGroup{}
+	for i := 0; i < cpu; i++ {
+		wg.Add(1)
+		go func(thIdx int) {
+			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+
+			for i := start; i < end; i++ {
+				record := make(Record, len(view.selectFields))
+				for j, idx := range view.selectFields {
+					if 1 < view.Records[i].GroupLen() {
+						record[j] = NewCell(view.Records[i][idx].Primary())
+					} else {
+						record[j] = view.Records[i][idx]
+					}
+				}
+				records[i] = record
+			}
+
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
 
 	colNumber := 0
 	for i, idx := range view.selectFields {
@@ -931,7 +1018,7 @@ func (view *View) Fix() {
 	view.selectLabels = nil
 	view.isGrouped = false
 	view.Filter = nil
-	view.sortIndices = nil
+	view.recordSortValues = nil
 	view.sortDirections = nil
 	view.sortNullPositions = nil
 	view.offset = 0
@@ -1082,44 +1169,11 @@ func (view *View) Len() int {
 
 func (view *View) Swap(i, j int) {
 	view.Records[i], view.Records[j] = view.Records[j], view.Records[i]
+	view.recordSortValues[i], view.recordSortValues[j] = view.recordSortValues[j], view.recordSortValues[i]
 }
 
 func (view *View) Less(i, j int) bool {
-	for k, idx := range view.sortIndices {
-		pi := view.Records[i][idx].Primary()
-		pj := view.Records[j][idx].Primary()
-
-		t := EquivalentTo(pi, pj)
-		switch t {
-		case ternary.TRUE:
-			continue
-		case ternary.UNKNOWN:
-			if parser.IsNull(pi) {
-				if view.sortNullPositions[k] == parser.FIRST {
-					return true
-				} else {
-					return false
-				}
-			} else if parser.IsNull(pj) {
-				if view.sortNullPositions[k] == parser.FIRST {
-					return false
-				} else {
-					return true
-				}
-			} else {
-				continue
-			}
-		case ternary.FALSE:
-			t = LessThan(pi, pj)
-		}
-
-		if view.sortDirections[k] == parser.ASC {
-			return t == ternary.TRUE
-		} else {
-			return t == ternary.FALSE
-		}
-	}
-	return false
+	return view.recordSortValues[i].Less(view.recordSortValues[j], view.sortDirections, view.sortNullPositions)
 }
 
 func (view *View) Rollback() {

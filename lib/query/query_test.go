@@ -1793,8 +1793,12 @@ var updateTests = []struct {
 			Set: "set",
 			SetList: []parser.Expression{
 				parser.UpdateSet{
+					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					Value: parser.NewString("update1"),
+				},
+				parser.UpdateSet{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-					Value: parser.NewString("update"),
+					Value: parser.NewString("update2"),
 				},
 			},
 			WhereClause: parser.WhereClause{
@@ -1837,8 +1841,8 @@ var updateTests = []struct {
 						parser.NewString("str1"),
 					}),
 					NewRecord([]parser.Primary{
-						parser.NewString("2"),
-						parser.NewString("update"),
+						parser.NewString("update1"),
+						parser.NewString("update2"),
 					}),
 					NewRecord([]parser.Primary{
 						parser.NewString("3"),
@@ -1864,8 +1868,8 @@ var updateTests = []struct {
 						parser.NewString("str1"),
 					}),
 					NewRecord([]parser.Primary{
-						parser.NewString("2"),
-						parser.NewString("update"),
+						parser.NewString("update1"),
+						parser.NewString("update2"),
 					}),
 					NewRecord([]parser.Primary{
 						parser.NewString("3"),

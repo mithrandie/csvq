@@ -8,7 +8,7 @@ import (
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
-func TestSerializeValues(t *testing.T) {
+func TestSerializeGroupKeys(t *testing.T) {
 	values := []parser.Primary{
 		parser.NewString("str"),
 		parser.NewInteger(1),
@@ -18,9 +18,9 @@ func TestSerializeValues(t *testing.T) {
 		parser.NewTernary(ternary.UNKNOWN),
 		parser.NewNull(),
 	}
-	expect := "[String]STR:[Integer]1:[Float]1.234:[Datetime]2012-02-03T09:18:15-08:00:[Boolean]true:[Ternary]UNKNOWN:[Null]"
+	expect := "[S]STR:[I]1:[F]1.234:[D]2012-02-03T09:18:15-08:00:[B]true:[N]:[N]"
 
-	result := SerializeValues(values)
+	result := SerializeGroupKeys(values)
 	if result != expect {
 		t.Errorf("result = %q, want %q", result, expect)
 	}

@@ -2,7 +2,6 @@ package parser
 
 import (
 	"errors"
-	"fmt"
 	"math"
 	"path/filepath"
 	"strconv"
@@ -13,94 +12,93 @@ import (
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
+type ConvertedDatetimeFormatMap map[string]string
+
+func (m ConvertedDatetimeFormatMap) Get(s string) string {
+	if f, ok := m[s]; ok {
+		return f
+	}
+	f := ConvertDatetimeFormat(s)
+	m[s] = f
+	return f
+}
+
+var DatetimeFormats = ConvertedDatetimeFormatMap{}
+
 func StrToTime(s string) (time.Time, error) {
+	s = strings.TrimSpace(s)
+
 	flags := cmd.GetFlags()
 	if 0 < len(flags.DatetimeFormat) {
-		if t, e := time.Parse(ConvertDatetimeFormat(flags.DatetimeFormat), s); e == nil {
+		if t, e := time.Parse(DatetimeFormats.Get(flags.DatetimeFormat), s); e == nil {
 			return t, nil
 		}
 	}
 
-	if 8 <= len(s) {
+	if 8 <= len(s) && '0' <= s[0] && s[0] <= '9' {
 		switch {
 		case s[4] == '-':
-			short := false
-			if s[5] != '0' && s[6] == '-' {
-				short = true
-			}
-
-			if len(s) <= 10 {
-				if short {
-					if t, e := time.ParseInLocation("2006-1-2", s, cmd.GetLocation()); e == nil {
-						return t, nil
-					}
-				} else {
-					if t, e := time.ParseInLocation("2006-01-02", s, cmd.GetLocation()); e == nil {
-						return t, nil
-					}
+			if len(s) < 10 {
+				if t, e := time.ParseInLocation("2006-1-2", s, cmd.GetLocation()); e == nil {
+					return t, nil
+				}
+			} else if len(s) == 10 {
+				if t, e := time.ParseInLocation("2006-01-02", s, cmd.GetLocation()); e == nil {
+					return t, nil
+				}
+			} else if s[10] == 'T' {
+				if t, e := time.Parse(time.RFC3339Nano, s); e == nil {
+					return t, nil
+				}
+			} else if s[10] == ' ' {
+				if t, e := time.ParseInLocation("2006-01-02 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
+					return t, nil
+				} else if t, e := time.Parse("2006-01-02 15:04:05.999999999 Z07:00", s); e == nil {
+					return t, nil
+				} else if t, e := time.Parse("2006-01-02 15:04:05.999999999 -0700", s); e == nil {
+					return t, nil
+				} else if t, e := time.Parse("2006-01-02 15:04:05.999999999 MST", s); e == nil {
+					return t, nil
 				}
 			} else {
-				if short {
-					if t, e := time.ParseInLocation("2006-1-2 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
-						return t, nil
-					} else if t, e := time.Parse("2006-1-2 15:04:05.999999999 Z07:00", s); e == nil {
-						return t, nil
-					} else if t, e := time.Parse("2006-1-2 15:04:05.999999999 -0700", s); e == nil {
-						return t, nil
-					} else if t, e := time.Parse("2006-1-2 15:04:05.999999999 MST", s); e == nil {
-						return t, nil
-					}
-				} else {
-					if t, e := time.Parse(time.RFC3339Nano, s); e == nil {
-						return t, nil
-					} else if t, e := time.ParseInLocation("2006-01-02 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
-						return t, nil
-					} else if t, e := time.Parse("2006-01-02 15:04:05.999999999 Z07:00", s); e == nil {
-						return t, nil
-					} else if t, e := time.Parse("2006-01-02 15:04:05.999999999 -0700", s); e == nil {
-						return t, nil
-					} else if t, e := time.Parse("2006-01-02 15:04:05.999999999 MST", s); e == nil {
-						return t, nil
-					}
+				if t, e := time.ParseInLocation("2006-1-2 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
+					return t, nil
+				} else if t, e := time.Parse("2006-1-2 15:04:05.999999999 Z07:00", s); e == nil {
+					return t, nil
+				} else if t, e := time.Parse("2006-1-2 15:04:05.999999999 -0700", s); e == nil {
+					return t, nil
+				} else if t, e := time.Parse("2006-1-2 15:04:05.999999999 MST", s); e == nil {
+					return t, nil
 				}
 			}
 		case s[4] == '/':
-			short := false
-			if s[5] != '0' && s[6] == '/' {
-				short = true
-			}
-
-			if len(s) <= 10 {
-				if short {
-					if t, e := time.ParseInLocation("2006/1/2", s, cmd.GetLocation()); e == nil {
-						return t, nil
-					}
-				} else {
-					if t, e := time.ParseInLocation("2006/01/02", s, cmd.GetLocation()); e == nil {
-						return t, nil
-					}
+			if len(s) < 10 {
+				if t, e := time.ParseInLocation("2006/1/2", s, cmd.GetLocation()); e == nil {
+					return t, nil
+				}
+			} else if len(s) == 10 {
+				if t, e := time.ParseInLocation("2006/01/02", s, cmd.GetLocation()); e == nil {
+					return t, nil
+				}
+			} else if s[10] == ' ' {
+				if t, e := time.ParseInLocation("2006/01/02 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
+					return t, nil
+				} else if t, e := time.Parse("2006/01/02 15:04:05.999999999 Z07:00", s); e == nil {
+					return t, nil
+				} else if t, e := time.Parse("2006/01/02 15:04:05.999999999 -0700", s); e == nil {
+					return t, nil
+				} else if t, e := time.Parse("2006/01/02 15:04:05.999999999 MST", s); e == nil {
+					return t, nil
 				}
 			} else {
-				if short {
-					if t, e := time.ParseInLocation("2006/1/2 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
-						return t, nil
-					} else if t, e := time.Parse("2006/1/2 15:04:05.999999999 Z07:00", s); e == nil {
-						return t, nil
-					} else if t, e := time.Parse("2006/1/2 15:04:05.999999999 -0700", s); e == nil {
-						return t, nil
-					} else if t, e := time.Parse("2006/1/2 15:04:05.999999999 MST", s); e == nil {
-						return t, nil
-					}
-				} else {
-					if t, e := time.ParseInLocation("2006/01/02 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
-						return t, nil
-					} else if t, e := time.Parse("2006/01/02 15:04:05.999999999 Z07:00", s); e == nil {
-						return t, nil
-					} else if t, e := time.Parse("2006/01/02 15:04:05.999999999 -0700", s); e == nil {
-						return t, nil
-					} else if t, e := time.Parse("2006/01/02 15:04:05.999999999 MST", s); e == nil {
-						return t, nil
-					}
+				if t, e := time.ParseInLocation("2006/1/2 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
+					return t, nil
+				} else if t, e := time.Parse("2006/1/2 15:04:05.999999999 Z07:00", s); e == nil {
+					return t, nil
+				} else if t, e := time.Parse("2006/1/2 15:04:05.999999999 -0700", s); e == nil {
+					return t, nil
+				} else if t, e := time.Parse("2006/1/2 15:04:05.999999999 MST", s); e == nil {
+					return t, nil
 				}
 			}
 		default:
@@ -111,7 +109,7 @@ func StrToTime(s string) (time.Time, error) {
 			}
 		}
 	}
-	return time.Time{}, errors.New(fmt.Sprintf("%q does not match with datetime format", s))
+	return time.Time{}, errors.New("conversion failed")
 }
 
 func ConvertDatetimeFormat(format string) string {
@@ -215,12 +213,15 @@ func PrimaryToInteger(p Primary) Primary {
 			return NewInteger(int64(f))
 		}
 	case String:
-		if i, e := strconv.ParseInt(p.(String).Value(), 10, 64); e == nil {
-			return NewInteger(i)
-		}
-		if f, e := strconv.ParseFloat(p.(String).Value(), 64); e == nil {
-			if math.Remainder(f, 1) == 0 {
-				return NewInteger(int64(f))
+		s := strings.TrimSpace(p.(String).Value())
+		if maybeNumber(s) {
+			if i, e := strconv.ParseInt(s, 10, 64); e == nil {
+				return NewInteger(i)
+			}
+			if f, e := strconv.ParseFloat(s, 64); e == nil {
+				if math.Remainder(f, 1) == 0 {
+					return NewInteger(int64(f))
+				}
 			}
 		}
 	}
@@ -235,12 +236,37 @@ func PrimaryToFloat(p Primary) Primary {
 	case Float:
 		return p
 	case String:
-		if f, e := strconv.ParseFloat(p.(String).Value(), 64); e == nil {
-			return NewFloat(f)
+		s := strings.TrimSpace(p.(String).Value())
+		if maybeNumber(s) {
+			if f, e := strconv.ParseFloat(p.(String).Value(), 64); e == nil {
+				return NewFloat(f)
+			}
 		}
 	}
 
 	return NewNull()
+}
+
+func maybeNumber(s string) bool {
+	slen := len(s)
+	if 1 < slen && (s[0] == '-' || s[0] == '+') && '0' <= s[1] && s[1] <= '9' {
+		return true
+	}
+	if 0 < slen && '0' <= s[0] && s[0] <= '9' {
+		if 8 <= slen {
+			if s[4] == '-' && (s[6] == '-' || s[7] == '-') {
+				return false
+			}
+			if s[4] == '/' && (s[6] == '/' || s[7] == '/') {
+				return false
+			}
+			if s[2] == ' ' {
+				return false
+			}
+		}
+		return true
+	}
+	return false
 }
 
 func PrimaryToDatetime(p Primary) Primary {
@@ -254,13 +280,19 @@ func PrimaryToDatetime(p Primary) Primary {
 	case Datetime:
 		return p
 	case String:
-		if f, e := strconv.ParseFloat(p.(String).Value(), 64); e == nil {
-			dt := float64ToTime(f)
+		s := strings.TrimSpace(p.(String).Value())
+		if dt, e := StrToTime(s); e == nil {
 			return NewDatetime(dt)
 		}
-
-		if dt, e := StrToTime(p.(String).Value()); e == nil {
-			return NewDatetime(dt)
+		if maybeNumber(s) {
+			if i, e := strconv.ParseInt(s, 10, 64); e == nil {
+				dt := time.Unix(i, 0)
+				return NewDatetime(dt)
+			}
+			if f, e := strconv.ParseFloat(s, 64); e == nil {
+				dt := float64ToTime(f)
+				return NewDatetime(dt)
+			}
 		}
 	}
 
@@ -276,7 +308,8 @@ func PrimaryToBoolean(p Primary) Primary {
 			return NewBoolean(p.Ternary().BoolValue())
 		}
 	case String:
-		if b, e := strconv.ParseBool(p.(String).Value()); e == nil {
+		s := strings.TrimSpace(p.(String).Value())
+		if b, e := strconv.ParseBool(s); e == nil {
 			return NewBoolean(b)
 		}
 	}
