@@ -3,7 +3,6 @@ package query
 import (
 	"sync"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
 )
@@ -100,10 +99,7 @@ func InnerJoin(view *View, joinView *View, condition parser.Expression, parentFi
 
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 
-	cpu := cmd.GetFlags().CPU
-	if view.RecordLen() < cpu {
-		cpu = 1
-	}
+	cpu := NumberOfCPU(view.RecordLen())
 
 	var err error
 	recordsList := make([]Records, cpu)
@@ -175,10 +171,7 @@ func OuterJoin(view *View, joinView *View, condition parser.Expression, directio
 	viewEmptyRecord := NewEmptyRecord(view.FieldLen())
 	joinViewEmptyRecord := NewEmptyRecord(joinView.FieldLen())
 
-	cpu := cmd.GetFlags().CPU
-	if view.RecordLen() < cpu {
-		cpu = 1
-	}
+	cpu := NumberOfCPU(view.RecordLen())
 
 	var err error
 	recordsList := make([]Records, cpu)

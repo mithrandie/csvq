@@ -49,7 +49,7 @@ If conversions failed, next a relational operater attempt to convert to float, a
 If either of operands is null or all conversion failed, return UNKNOWN.
 
 In case of _row_values_ comparison, both of _row_values_ must be tha same lengths.
-Values at the same indices are compared, and the result is decided by [AND]({{ '/reference/logic-operators.html#and' | relative_url }}) condition of each comparisons
+Values at the same indices are compared in order from left to right.
 
 ## IS
 {: #is}

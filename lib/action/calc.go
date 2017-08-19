@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
@@ -75,7 +76,7 @@ func formatCalcResult(p parser.Primary) string {
 	case parser.Ternary:
 		s = p.(parser.Ternary).String()
 	case parser.Datetime:
-		s = p.(parser.Datetime).Format()
+		s = p.(parser.Datetime).Format(time.RFC3339Nano)
 	case parser.Null:
 		s = "null"
 	}

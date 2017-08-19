@@ -2,6 +2,7 @@ package query
 
 import (
 	"reflect"
+	"sync"
 	"testing"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -266,6 +267,15 @@ var filterEvaluateTests = []struct {
 		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
+		Name: "Arithmetic LHS Is Null",
+		Expr: parser.Arithmetic{
+			LHS:      parser.NewNull(),
+			RHS:      parser.NewInteger(2),
+			Operator: '+',
+		},
+		Result: parser.NewNull(),
+	},
+	{
 		Name: "Arithmetic RHS Error",
 		Expr: parser.Arithmetic{
 			LHS:      parser.NewInteger(1),
@@ -275,12 +285,20 @@ var filterEvaluateTests = []struct {
 		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
-		Name: "UnaryArithmetic",
+		Name: "UnaryArithmetic Integer",
 		Expr: parser.UnaryArithmetic{
 			Operand:  parser.NewInteger(1),
 			Operator: parser.Token{Token: '-', Literal: "-"},
 		},
 		Result: parser.NewInteger(-1),
+	},
+	{
+		Name: "UnaryArithmetic Float",
+		Expr: parser.UnaryArithmetic{
+			Operand:  parser.NewFloat(1.234),
+			Operator: parser.Token{Token: '-', Literal: "-"},
+		},
+		Result: parser.NewFloat(-1.234),
 	},
 	{
 		Name: "UnaryArithmetic Operand Error",
@@ -348,6 +366,15 @@ var filterEvaluateTests = []struct {
 			Operator: "=",
 		},
 		Error: "[L:- C:-] field notexist does not exist",
+	},
+	{
+		Name: "Comparison LHS Is Null",
+		Expr: parser.Comparison{
+			LHS:      parser.NewNull(),
+			RHS:      parser.NewInteger(2),
+			Operator: "=",
+		},
+		Result: parser.NewTernary(ternary.UNKNOWN),
 	},
 	{
 		Name: "Comparison RHS Error",
@@ -623,6 +650,16 @@ var filterEvaluateTests = []struct {
 		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
+		Name: "Between LHS Is Null",
+		Expr: parser.Between{
+			LHS:      parser.NewNull(),
+			Low:      parser.NewInteger(1),
+			High:     parser.NewInteger(3),
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Result: parser.NewTernary(ternary.UNKNOWN),
+	},
+	{
 		Name: "Between Low Error",
 		Expr: parser.Between{
 			LHS:      parser.NewInteger(2),
@@ -631,6 +668,16 @@ var filterEvaluateTests = []struct {
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
 		Error: "[L:- C:-] field notexist does not exist",
+	},
+	{
+		Name: "Between Low Comparison False",
+		Expr: parser.Between{
+			LHS:      parser.NewInteger(2),
+			Low:      parser.NewInteger(3),
+			High:     parser.NewInteger(5),
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Result: parser.NewTernary(ternary.TRUE),
 	},
 	{
 		Name: "Between High Error",
@@ -731,6 +778,36 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Error: "[L:- C:-] field notexist does not exist",
+	},
+	{
+		Name: "Between with Row Values Low Comparison False",
+		Expr: parser.Between{
+			LHS: parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.Expression{
+						parser.NewInteger(1),
+						parser.NewInteger(2),
+					},
+				},
+			},
+			Low: parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.Expression{
+						parser.NewInteger(1),
+						parser.NewInteger(3),
+					},
+				},
+			},
+			High: parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.Expression{
+						parser.NewInteger(1),
+						parser.NewInteger(5),
+					},
+				},
+			},
+		},
+		Result: parser.NewTernary(ternary.FALSE),
 	},
 	{
 		Name: "Between with Row Values High Error",
@@ -1414,7 +1491,7 @@ var filterEvaluateTests = []struct {
 						Value: parser.ValueList{
 							Values: []parser.Expression{
 								parser.NewInteger(1),
-								parser.NewInteger(1),
+								parser.NewInteger(2),
 							},
 						},
 					},
@@ -1457,6 +1534,33 @@ var filterEvaluateTests = []struct {
 			Operator: ">",
 		},
 		Result: parser.NewTernary(ternary.TRUE),
+	},
+	{
+		Name: "All False",
+		Expr: parser.All{
+			LHS: parser.NewInteger(-99),
+			Values: parser.RowValue{
+				Value: parser.Subquery{
+					Query: parser.SelectQuery{
+						SelectEntity: parser.SelectEntity{
+							SelectClause: parser.SelectClause{
+								Select: "select",
+								Fields: []parser.Expression{
+									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+								},
+							},
+							FromClause: parser.FromClause{
+								Tables: []parser.Expression{
+									parser.Table{Object: parser.Identifier{Literal: "table1"}},
+								},
+							},
+						},
+					},
+				},
+			},
+			Operator: ">",
+		},
+		Result: parser.NewTernary(ternary.FALSE),
 	},
 	{
 		Name: "All LHS Error",
@@ -1568,7 +1672,7 @@ var filterEvaluateTests = []struct {
 						Value: parser.ValueList{
 							Values: []parser.Expression{
 								parser.NewInteger(1),
-								parser.NewInteger(1),
+								parser.NewInteger(2),
 							},
 						},
 					},
@@ -1581,7 +1685,7 @@ var filterEvaluateTests = []struct {
 					},
 				},
 			},
-			Operator: ">",
+			Operator: "=",
 		},
 		Error: "[L:- C:-] row value should contain exactly 2 values",
 	},
@@ -3050,7 +3154,25 @@ var filterEvaluateTests = []struct {
 		Result: parser.NewTernary(ternary.FALSE),
 	},
 	{
+		Name: "Logic AND Decided with LHS",
+		Expr: parser.Logic{
+			LHS:      parser.NewTernary(ternary.FALSE),
+			RHS:      parser.NewTernary(ternary.FALSE),
+			Operator: parser.Token{Token: parser.AND, Literal: "and"},
+		},
+		Result: parser.NewTernary(ternary.FALSE),
+	},
+	{
 		Name: "Logic OR",
+		Expr: parser.Logic{
+			LHS:      parser.NewTernary(ternary.FALSE),
+			RHS:      parser.NewTernary(ternary.TRUE),
+			Operator: parser.Token{Token: parser.OR, Literal: "or"},
+		},
+		Result: parser.NewTernary(ternary.TRUE),
+	},
+	{
+		Name: "Logic OR Decided with LHS",
 		Expr: parser.Logic{
 			LHS:      parser.NewTernary(ternary.TRUE),
 			RHS:      parser.NewTernary(ternary.FALSE),
@@ -3070,7 +3192,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Logic RHS Error",
 		Expr: parser.Logic{
-			LHS:      parser.NewTernary(ternary.FALSE),
+			LHS:      parser.NewTernary(ternary.UNKNOWN),
 			RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Operator: parser.Token{Token: parser.AND, Literal: "and"},
 		},
@@ -3273,5 +3395,53 @@ func BenchmarkFilter_Evaluate2(b *testing.B) {
 				parser.FieldReference{Column: parser.Identifier{Literal: "c1"}},
 			},
 		})
+	}
+}
+
+func BenchmarkFilter_EvaluateSingleThread(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		filter := NewEmptyFilter()
+
+		for j := 0; j < 150; j++ {
+			filter.Evaluate(parser.Comparison{
+				LHS:      parser.NewInteger(1),
+				RHS:      parser.NewString("1"),
+				Operator: "=",
+			})
+		}
+	}
+}
+
+func BenchmarkFilter_EvaluateMultiThread(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		wg := sync.WaitGroup{}
+		for i := 0; i < 3; i++ {
+			wg.Add(1)
+			go func(thIdx int) {
+				filter := NewEmptyFilter()
+
+				for j := 0; j < 50; j++ {
+					filter.Evaluate(parser.Comparison{
+						LHS:      parser.NewInteger(1),
+						RHS:      parser.NewString("1"),
+						Operator: "=",
+					})
+				}
+				wg.Done()
+			}(i)
+		}
+		wg.Wait()
+	}
+}
+
+func BenchmarkFilter_Evaluate(b *testing.B) {
+	r := cmd.GetRand()
+	for i := 0; i < b.N; i++ {
+		for j := 0; j < 10000000; j++ {
+			s1 := NewSortValue(parser.NewString(parser.Float64ToStr(r.Float64())))
+			s2 := NewSortValue(parser.NewString(parser.Float64ToStr(r.Float64())))
+
+			s1.Less(s2)
+		}
 	}
 }

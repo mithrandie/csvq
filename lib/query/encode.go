@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -285,15 +286,15 @@ func formatTextCell(c Cell) textField {
 		s = strings.TrimSpace(primary.(parser.String).Value())
 		sign = -1
 	case parser.Integer:
-		s = parser.Int64ToStr(primary.(parser.Integer).Value())
+		s = primary.(parser.Integer).String()
 	case parser.Float:
-		s = parser.Float64ToStr(primary.(parser.Float).Value())
+		s = primary.(parser.Float).String()
 	case parser.Boolean:
-		s = strconv.FormatBool(primary.(parser.Boolean).Value())
+		s = primary.(parser.Boolean).String()
 	case parser.Ternary:
 		s = primary.(parser.Ternary).Ternary().String()
 	case parser.Datetime:
-		s = primary.(parser.Datetime).Format()
+		s = primary.(parser.Datetime).Format(time.RFC3339Nano)
 		sign = -1
 	case parser.Null:
 		s = "NULL"
@@ -337,11 +338,11 @@ func formatCSVCell(c Cell) string {
 	case parser.String:
 		s = quote(escapeCSVString(primary.(parser.String).Value()))
 	case parser.Integer:
-		s = parser.Int64ToStr(primary.(parser.Integer).Value())
+		s = primary.(parser.Integer).String()
 	case parser.Float:
-		s = parser.Float64ToStr(primary.(parser.Float).Value())
+		s = primary.(parser.Float).String()
 	case parser.Boolean:
-		s = strconv.FormatBool(primary.(parser.Boolean).Value())
+		s = primary.(parser.Boolean).String()
 	case parser.Ternary:
 		t := primary.(parser.Ternary)
 		if t.Ternary() == ternary.UNKNOWN {
@@ -350,7 +351,7 @@ func formatCSVCell(c Cell) string {
 			s = strconv.FormatBool(t.Ternary().BoolValue())
 		}
 	case parser.Datetime:
-		s = quote(escapeCSVString(primary.(parser.Datetime).Format()))
+		s = quote(escapeCSVString(primary.(parser.Datetime).Format(time.RFC3339Nano)))
 	case parser.Null:
 		s = ""
 	}
@@ -385,11 +386,11 @@ func formatJsonCell(c Cell) string {
 	case parser.String:
 		s = quote(escapeJsonString(primary.(parser.String).Value()))
 	case parser.Integer:
-		s = parser.Int64ToStr(primary.(parser.Integer).Value())
+		s = primary.(parser.Integer).String()
 	case parser.Float:
-		s = parser.Float64ToStr(primary.(parser.Float).Value())
+		s = primary.(parser.Float).String()
 	case parser.Boolean:
-		s = strconv.FormatBool(primary.(parser.Boolean).Value())
+		s = primary.(parser.Boolean).String()
 	case parser.Ternary:
 		t := primary.(parser.Ternary)
 		if t.Ternary() == ternary.UNKNOWN {
@@ -398,7 +399,7 @@ func formatJsonCell(c Cell) string {
 			s = strconv.FormatBool(t.Ternary().BoolValue())
 		}
 	case parser.Datetime:
-		s = quote(escapeJsonString(primary.(parser.Datetime).Format()))
+		s = quote(escapeJsonString(primary.(parser.Datetime).Format(time.RFC3339Nano)))
 	case parser.Null:
 		s = "null"
 	}

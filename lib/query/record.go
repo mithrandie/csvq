@@ -71,16 +71,6 @@ func (r Record) IsEqualTo(record Record) bool {
 	return true
 }
 
-func (r Record) Match(record Record, indices []int) bool {
-	for _, i := range indices {
-		if EquivalentTo(r[i].Primary(), record[i].Primary()) != ternary.TRUE {
-			return false
-		}
-	}
-
-	return true
-}
-
 func (r Record) GroupLen() int {
 	return r[0].Len()
 }

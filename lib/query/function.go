@@ -837,7 +837,7 @@ func DatetimeFormat(fn parser.Function, args []parser.Primary) (parser.Primary, 
 	}
 
 	dt := p.(parser.Datetime)
-	return parser.NewString(dt.SetFormat(format.(parser.String).Value()).Format()), nil
+	return parser.NewString(dt.Format(parser.DatetimeFormats.Get(format.(parser.String).Value()))), nil
 }
 
 func execDatetimeToInt(fn parser.Function, args []parser.Primary, timef func(time.Time) int64) (parser.Primary, error) {
@@ -1121,7 +1121,7 @@ func String(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
 	case parser.Ternary:
 		return parser.NewString(args[0].(parser.Ternary).Ternary().String()), nil
 	case parser.Datetime:
-		return parser.NewString(args[0].(parser.Datetime).Format()), nil
+		return parser.NewString(args[0].(parser.Datetime).Format(time.RFC3339Nano)), nil
 	default:
 		return parser.PrimaryToString(args[0]), nil
 	}
@@ -1201,15 +1201,15 @@ func Call(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
 		case parser.String:
 			s = v.(parser.String).Value()
 		case parser.Integer:
-			s = parser.Int64ToStr(v.(parser.Integer).Value())
+			s = v.(parser.Integer).String()
 		case parser.Float:
-			s = parser.Float64ToStr(v.(parser.Float).Value())
+			s = v.(parser.Float).String()
 		case parser.Boolean:
-			s = strconv.FormatBool(v.(parser.Boolean).Value())
+			s = v.(parser.Boolean).String()
 		case parser.Ternary:
-			s = strconv.FormatBool(v.(parser.Ternary).Ternary().BoolValue())
+			s = v.(parser.Ternary).String()
 		case parser.Datetime:
-			s = v.(parser.Datetime).Format()
+			s = v.(parser.Datetime).Format(time.RFC3339Nano)
 		case parser.Null:
 			s = ""
 		}

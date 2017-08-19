@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-type Value int
+type Value int8
 
 const (
 	FALSE Value = iota - 1

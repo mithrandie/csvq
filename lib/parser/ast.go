@@ -123,27 +123,24 @@ func (s String) Ternary() ternary.Value {
 
 type Integer struct {
 	*BaseExpr
-	literal string
-	value   int64
+	value int64
 }
 
 func NewIntegerFromString(s string) Integer {
 	i, _ := strconv.ParseInt(s, 10, 64)
 	return Integer{
-		literal: s,
-		value:   i,
+		value: i,
 	}
 }
 
 func NewInteger(i int64) Integer {
 	return Integer{
-		literal: Int64ToStr(i),
-		value:   i,
+		value: i,
 	}
 }
 
 func (i Integer) String() string {
-	return i.literal
+	return Int64ToStr(i.value)
 }
 
 func (i Integer) Value() int64 {
@@ -163,27 +160,24 @@ func (i Integer) Ternary() ternary.Value {
 
 type Float struct {
 	*BaseExpr
-	literal string
-	value   float64
+	value float64
 }
 
 func NewFloatFromString(s string) Float {
 	f, _ := strconv.ParseFloat(s, 64)
 	return Float{
-		literal: s,
-		value:   f,
+		value: f,
 	}
 }
 
 func NewFloat(f float64) Float {
 	return Float{
-		literal: Float64ToStr(f),
-		value:   f,
+		value: f,
 	}
 }
 
 func (f Float) String() string {
-	return f.literal
+	return Float64ToStr(f.value)
 }
 
 func (f Float) Value() float64 {
@@ -203,19 +197,17 @@ func (f Float) Ternary() ternary.Value {
 
 type Boolean struct {
 	*BaseExpr
-	literal string
-	value   bool
+	value bool
 }
 
 func NewBoolean(b bool) Boolean {
 	return Boolean{
-		literal: strconv.FormatBool(b),
-		value:   b,
+		value: b,
 	}
 }
 
 func (b Boolean) String() string {
-	return b.literal
+	return strconv.FormatBool(b.value)
 }
 
 func (b Boolean) Value() bool {
@@ -242,13 +234,15 @@ func NewTernaryFromString(s string) Ternary {
 
 func NewTernary(t ternary.Value) Ternary {
 	return Ternary{
-		literal: t.String(),
-		value:   t,
+		value: t,
 	}
 }
 
 func (t Ternary) String() string {
-	return t.literal
+	if 0 < len(t.literal) {
+		return t.literal
+	}
+	return t.value.String()
 }
 
 func (t Ternary) Ternary() ternary.Value {
@@ -259,7 +253,6 @@ type Datetime struct {
 	*BaseExpr
 	literal string
 	value   time.Time
-	format  string
 }
 
 func NewDatetimeFromString(s string) Datetime {
@@ -267,20 +260,20 @@ func NewDatetimeFromString(s string) Datetime {
 	return Datetime{
 		literal: s,
 		value:   t,
-		format:  time.RFC3339Nano,
 	}
 }
 
 func NewDatetime(t time.Time) Datetime {
 	return Datetime{
-		literal: t.Format(time.RFC3339Nano),
-		value:   t,
-		format:  time.RFC3339Nano,
+		value: t,
 	}
 }
 
 func (dt Datetime) String() string {
-	return quoteString(dt.literal)
+	if 0 < len(dt.literal) {
+		return quoteString(dt.literal)
+	}
+	return quoteString(dt.value.Format(time.RFC3339Nano))
 }
 
 func (dt Datetime) Value() time.Time {
@@ -291,13 +284,8 @@ func (dt Datetime) Ternary() ternary.Value {
 	return ternary.UNKNOWN
 }
 
-func (dt Datetime) Format() string {
-	return dt.value.Format(dt.format)
-}
-
-func (dt Datetime) SetFormat(format string) Datetime {
-	dt.format = ConvertDatetimeFormat(format)
-	return dt
+func (dt Datetime) Format(s string) string {
+	return dt.value.Format(s)
 }
 
 type Null struct {

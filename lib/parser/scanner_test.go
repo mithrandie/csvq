@@ -30,11 +30,11 @@ var scanTests = []struct {
 	},
 	{
 		Name:  "QuotedIdentifier",
-		Input: "`identi\\`fier`",
+		Input: "`id\\enti\\`fier`",
 		Output: []scanResult{
 			{
 				Token:   IDENTIFIER,
-				Literal: "identi`fier",
+				Literal: "id\\enti`fier",
 				Quoted:  true,
 			},
 		},

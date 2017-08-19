@@ -55,7 +55,7 @@ func TestIsPrimary(t *testing.T) {
 		t.Errorf("expression %#v is evaluated as is a implementation of primary, but it is not so", e)
 	}
 
-	e = Integer{literal: "1"}
+	e = Integer{value: 1}
 	if !IsPrimary(e) {
 		t.Errorf("expression %#v is evaluated as is not a implementation of primary, but it is so", e)
 	}
@@ -220,6 +220,12 @@ func TestTernary_String(t *testing.T) {
 	if p.String() != s {
 		t.Errorf("string = %q, want %q for %#v", p.String(), s, p)
 	}
+
+	s = "true"
+	p = NewTernaryFromString("true")
+	if p.String() != s {
+		t.Errorf("string = %q, want %q for %#v", p.String(), s, p)
+	}
 }
 
 func TestTernary_Ternary(t *testing.T) {
@@ -234,6 +240,16 @@ func TestDatetime_String(t *testing.T) {
 	p := NewDatetimeFromString(s)
 
 	expect := "'" + s + "'"
+	if p.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", p.String(), expect, p)
+	}
+
+	s = "2012-01-01T12:34:56-08:00"
+	tm, _ := StrToTime(s)
+	p = Datetime{
+		value: tm,
+	}
+	expect = "'" + s + "'"
 	if p.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", p.String(), expect, p)
 	}
@@ -266,31 +282,9 @@ func TestDatetime_Ternary(t *testing.T) {
 func TestDatetime_Format(t *testing.T) {
 	dtstring := "2012-08-01T04:03:05.123-08:00"
 	dt := NewDatetimeFromString(dtstring)
-	expect := "2012-08-01T04:03:05.123-08:00"
-	if dt.Format() != expect {
-		t.Errorf("result = %q, want %q for %q ", dt.Format(), expect, dtstring)
-	}
-}
-
-var datetimeSetFormatTests = []struct {
-	Datetime string
-	Format   string
-	Result   string
-}{
-	{
-		Datetime: "2012-08-01T04:03:05.123-08:00",
-		Format:   "datetime: %Y-%m-%d %H:%i:%s %% %g",
-		Result:   "datetime: 2006-01-02 15:04:05 % g",
-	},
-}
-
-func TestDatetime_SetFormat(t *testing.T) {
-	for _, v := range datetimeSetFormatTests {
-		dt := NewDatetimeFromString(v.Datetime)
-		result := dt.SetFormat(v.Format)
-		if result.format != v.Result {
-			t.Errorf("result = %q, want %q for %q with %q", result.format, v.Result, v.Format, v.Datetime)
-		}
+	expect := "2012-08-01T04:03:05-08:00"
+	if dt.Format(time.RFC3339) != expect {
+		t.Errorf("result = %q, want %q for %q ", dt.Format(time.RFC3339), expect, dtstring)
 	}
 }
 
@@ -510,7 +504,7 @@ func TestSelectEntity_String(t *testing.T) {
 			Filter: Comparison{
 				LHS:      Identifier{Literal: "column"},
 				Operator: ">",
-				RHS:      Integer{literal: "1"},
+				RHS:      NewInteger(1),
 			},
 		},
 		GroupByClause: GroupByClause{
@@ -524,7 +518,7 @@ func TestSelectEntity_String(t *testing.T) {
 			Filter: Comparison{
 				LHS:      Identifier{Literal: "column"},
 				Operator: ">",
-				RHS:      Integer{literal: "1"},
+				RHS:      NewInteger(1),
 			},
 		},
 	}
@@ -588,7 +582,7 @@ func TestWhereClause_String(t *testing.T) {
 		Filter: Comparison{
 			LHS:      Identifier{Literal: "column"},
 			Operator: ">",
-			RHS:      Integer{literal: "1"},
+			RHS:      NewInteger(1),
 		},
 	}
 	expect := "where column > 1"
@@ -617,7 +611,7 @@ func TestHavingClause_String(t *testing.T) {
 		Filter: Comparison{
 			LHS:      Identifier{Literal: "column"},
 			Operator: ">",
-			RHS:      Integer{literal: "1"},
+			RHS:      NewInteger(1),
 		},
 	}
 	expect := "having column > 1"
@@ -811,7 +805,7 @@ func TestSubquery_String(t *testing.T) {
 				SelectClause: SelectClause{
 					Select: "select",
 					Fields: []Expression{
-						Integer{literal: "1"},
+						NewInteger(1),
 					},
 				},
 				FromClause: FromClause{
@@ -833,7 +827,7 @@ func TestComparison_String(t *testing.T) {
 	e := Comparison{
 		LHS:      Identifier{Literal: "column"},
 		Operator: ">",
-		RHS:      Integer{literal: "1"},
+		RHS:      NewInteger(1),
 	}
 	expect := "column > 1"
 	if e.String() != expect {
@@ -883,8 +877,8 @@ func TestBetween_String(t *testing.T) {
 		Between:  "between",
 		And:      "and",
 		LHS:      Identifier{Literal: "column"},
-		Low:      Integer{literal: "-10"},
-		High:     Integer{literal: "10"},
+		Low:      NewInteger(-10),
+		High:     NewInteger(10),
 		Negation: Token{Token: NOT, Literal: "not"},
 	}
 	expect := "column not between -10 and 10"
@@ -912,8 +906,8 @@ func TestIn_String(t *testing.T) {
 		Values: RowValue{
 			Value: ValueList{
 				Values: []Expression{
-					Integer{literal: "1"},
-					Integer{literal: "2"},
+					NewInteger(1),
+					NewInteger(2),
 				},
 			},
 		},
@@ -943,7 +937,7 @@ func TestAll_String(t *testing.T) {
 					SelectClause: SelectClause{
 						Select: "select",
 						Fields: []Expression{
-							Integer{literal: "1"},
+							NewInteger(1),
 						},
 					},
 					FromClause: FromClause{
@@ -980,7 +974,7 @@ func TestAny_String(t *testing.T) {
 					SelectClause: SelectClause{
 						Select: "select",
 						Fields: []Expression{
-							Integer{literal: "1"},
+							NewInteger(1),
 						},
 					},
 					FromClause: FromClause{
@@ -1033,7 +1027,7 @@ func TestExists_String(t *testing.T) {
 					SelectClause: SelectClause{
 						Select: "select",
 						Fields: []Expression{
-							Integer{literal: "1"},
+							NewInteger(1),
 						},
 					},
 					FromClause: FromClause{
@@ -1056,7 +1050,7 @@ func TestArithmetic_String(t *testing.T) {
 	e := Arithmetic{
 		LHS:      Identifier{Literal: "column"},
 		Operator: int('+'),
-		RHS:      Integer{literal: "2"},
+		RHS:      NewInteger(2),
 	}
 	expect := "column + 2"
 	if e.String() != expect {
@@ -1077,9 +1071,9 @@ func TestUnaryArithmetic_String(t *testing.T) {
 
 func TestLogic_String(t *testing.T) {
 	e := Logic{
-		LHS:      Boolean{literal: "true"},
+		LHS:      NewBoolean(true),
 		Operator: Token{Token: AND, Literal: "and"},
-		RHS:      Boolean{literal: "false"},
+		RHS:      NewBoolean(false),
 	}
 	expect := "true and false"
 	if e.String() != expect {
@@ -1090,7 +1084,7 @@ func TestLogic_String(t *testing.T) {
 func TestUnaryLogic_String(t *testing.T) {
 	e := UnaryLogic{
 		Operator: Token{Token: NOT, Literal: "not"},
-		Operand:  Boolean{literal: "false"},
+		Operand:  NewBoolean(false),
 	}
 	expect := "not false"
 	if e.String() != expect {
@@ -1099,7 +1093,7 @@ func TestUnaryLogic_String(t *testing.T) {
 
 	e = UnaryLogic{
 		Operator: Token{Token: '!', Literal: "!"},
-		Operand:  Boolean{literal: "false"},
+		Operand:  NewBoolean(false),
 	}
 	expect = "!false"
 	if e.String() != expect {
@@ -1205,7 +1199,7 @@ func TestTable_Name(t *testing.T) {
 					SelectClause: SelectClause{
 						Select: "select",
 						Fields: []Expression{
-							Integer{literal: "1"},
+							NewInteger(1),
 						},
 					},
 					FromClause: FromClause{
@@ -1261,7 +1255,7 @@ func TestJoinCondition_String(t *testing.T) {
 		On: Comparison{
 			LHS:      Identifier{Literal: "column"},
 			Operator: ">",
-			RHS:      Integer{literal: "1"},
+			RHS:      NewInteger(1),
 		},
 	}
 	expect := "on column > 1"
@@ -1410,13 +1404,13 @@ func TestCase_String(t *testing.T) {
 			CaseWhen{
 				When:      "when",
 				Then:      "then",
-				Condition: Integer{literal: "1"},
+				Condition: NewInteger(1),
 				Result:    String{literal: "A"},
 			},
 			CaseWhen{
 				When:      "when",
 				Then:      "then",
-				Condition: Integer{literal: "2"},
+				Condition: NewInteger(2),
 				Result:    String{literal: "B"},
 			},
 		},
@@ -1437,7 +1431,7 @@ func TestCase_String(t *testing.T) {
 				Condition: Comparison{
 					LHS:      Identifier{Literal: "column"},
 					Operator: ">",
-					RHS:      Integer{literal: "1"},
+					RHS:      NewInteger(1),
 				},
 				Result: String{literal: "A"},
 			},
@@ -1456,7 +1450,7 @@ func TestCaseWhen_String(t *testing.T) {
 		Condition: Comparison{
 			LHS:      Identifier{Literal: "column"},
 			Operator: ">",
-			RHS:      Integer{literal: "1"},
+			RHS:      NewInteger(1),
 		},
 		Result: String{literal: "abcde"},
 	}

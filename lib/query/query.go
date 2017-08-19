@@ -414,7 +414,7 @@ func Update(query parser.UpdateQuery, parentFilter *Filter) ([]*View, error) {
 	}
 
 	viewsToUpdate := make(map[string]*View)
-	updatedIndices := make(map[string][]int)
+	updatedCount := make(map[string]int)
 	for _, v := range query.Tables {
 		table := v.(parser.Table)
 		fpath, err := filter.AliasesList.Get(table.Name())
@@ -429,9 +429,9 @@ func Update(query parser.UpdateQuery, parentFilter *Filter) ([]*View, error) {
 			viewsToUpdate[viewKey], _ = ViewCache.Get(parser.Identifier{Literal: fpath})
 		}
 		viewsToUpdate[viewKey].Header.Update(table.Name().Literal, nil)
-		updatedIndices[viewKey] = []int{}
 	}
 
+	updatesList := make(map[string]map[int][]int)
 	filterForLoop := NewFilterForSequentialEvaluation(view, filter)
 	for i := range view.Records {
 		filterForLoop.Records[0].RecordIndex = i
@@ -464,27 +464,30 @@ func Update(query parser.UpdateQuery, parentFilter *Filter) ([]*View, error) {
 					return nil, NewUpdateValueAmbiguousError(uset.Field, uset.Value)
 				}
 
-				if InIntSlice(id, updatedIndices[viewref]) {
-					return nil, NewUpdateValueAmbiguousError(uset.Field, uset.Value)
-				}
 				internalId = id
 				internalIds[viewref] = internalId
 			}
 
 			fieldIdx, _ := viewsToUpdate[viewref].FieldIndex(uset.Field)
-
+			if _, ok := updatesList[viewref]; !ok {
+				updatesList[viewref] = make(map[int][]int)
+			}
+			if _, ok := updatesList[viewref][internalId]; !ok {
+				updatesList[viewref][internalId] = []int{}
+				updatedCount[viewref]++
+			}
+			if InIntSlice(fieldIdx, updatesList[viewref][internalId]) {
+				return nil, NewUpdateValueAmbiguousError(uset.Field, uset.Value)
+			}
+			updatesList[viewref][internalId] = append(updatesList[viewref][internalId], fieldIdx)
 			viewsToUpdate[viewref].Records[internalId][fieldIdx] = NewCell(value)
-		}
-
-		for viewref, id := range internalIds {
-			updatedIndices[viewref] = append(updatedIndices[viewref], id)
 		}
 	}
 
 	views := []*View{}
 	for k, v := range viewsToUpdate {
 		v.RestoreHeaderReferences()
-		v.OperatedRecords = len(updatedIndices[k])
+		v.OperatedRecords = updatedCount[k]
 
 		if v.FileInfo.Temporary {
 			filter.TempViewsList.Replace(v)
@@ -536,7 +539,7 @@ func Delete(query parser.DeleteQuery, parentFilter *Filter) ([]*View, error) {
 	}
 
 	viewsToDelete := make(map[string]*View)
-	deletedIndices := make(map[string][]int)
+	deletedIndices := make(map[string]map[int]bool)
 	for _, v := range query.Tables {
 		table := v.(parser.Table)
 		fpath, err := filter.AliasesList.Get(table.Name())
@@ -551,7 +554,7 @@ func Delete(query parser.DeleteQuery, parentFilter *Filter) ([]*View, error) {
 			viewsToDelete[viewKey], _ = ViewCache.Get(parser.Identifier{Literal: fpath})
 		}
 		viewsToDelete[viewKey].Header.Update(table.Name().Literal, nil)
-		deletedIndices[viewKey] = []int{}
+		deletedIndices[viewKey] = make(map[int]bool)
 	}
 
 	for i := range view.Records {
@@ -560,19 +563,20 @@ func Delete(query parser.DeleteQuery, parentFilter *Filter) ([]*View, error) {
 			if err != nil {
 				continue
 			}
-			if InIntSlice(internalId, deletedIndices[viewref]) {
-				continue
+			if _, ok := deletedIndices[viewref][internalId]; !ok {
+				deletedIndices[viewref][internalId] = true
 			}
-			deletedIndices[viewref] = append(deletedIndices[viewref], internalId)
 		}
 	}
 
 	views := []*View{}
 	for k, v := range viewsToDelete {
-		filterdIndices := []int{}
+		filterdIndices := make([]int, v.RecordLen()-len(deletedIndices[k]))
+		count := 0
 		for i := range v.Records {
-			if !InIntSlice(i, deletedIndices[k]) {
-				filterdIndices = append(filterdIndices, i)
+			if _, ok := deletedIndices[k][i]; !ok {
+				filterdIndices[count] = i
+				count++
 			}
 		}
 		v.filteredIndices = filterdIndices
@@ -694,11 +698,7 @@ func AddColumns(query parser.AddColumns, parentFilter *Filter) (*View, error) {
 		header[i].Number = colNumber
 	}
 
-	cpu := cmd.GetFlags().CPU
-	if view.RecordLen() < cpu {
-		cpu = 1
-	}
-
+	cpu := NumberOfCPU(view.RecordLen())
 	records := make(Records, view.RecordLen())
 
 	wg := sync.WaitGroup{}

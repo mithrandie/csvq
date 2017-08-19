@@ -351,10 +351,7 @@ func (view *View) Where(clause parser.WhereClause) error {
 }
 
 func (view *View) filter(condition parser.Expression) ([]int, error) {
-	cpu := cmd.GetFlags().CPU
-	if view.RecordLen() < cpu {
-		cpu = 1
-	}
+	cpu := NumberOfCPU(view.RecordLen())
 
 	var err error
 	indicesList := make([][]int, cpu)
@@ -433,10 +430,7 @@ func (view *View) group(items []parser.Expression) error {
 		return nil
 	}
 
-	cpu := cmd.GetFlags().CPU
-	if view.RecordLen() < cpu {
-		cpu = 1
-	}
+	cpu := NumberOfCPU(view.RecordLen())
 
 	var err error
 	keys := make([]string, view.RecordLen())
@@ -466,7 +460,7 @@ func (view *View) group(items []parser.Expression) error {
 					}
 					values[j] = p
 				}
-				keys[i] = SerializeGroupKeys(values)
+				keys[i] = SerializeComparisonKeys(values)
 			}
 
 			wg.Done()
@@ -489,7 +483,7 @@ func (view *View) group(items []parser.Expression) error {
 		}
 	}
 
-	records := make([]Record, len(groups))
+	records := make([]Record, len(groupKeys))
 	for i, groupKey := range groupKeys {
 		record := make(Record, view.FieldLen())
 		indices := groups[groupKey]
@@ -614,13 +608,24 @@ func (view *View) Select(clause parser.SelectClause) error {
 	}
 
 	if clause.IsDistinct() {
-		records := make(Records, view.RecordLen())
-		for i, v := range view.Records {
-			record := make(Record, len(view.selectFields))
+		records := make(Records, 0, view.RecordLen())
+		values := make(map[string]bool)
+
+		for _, v := range view.Records {
+			primaries := make([]parser.Primary, len(view.selectFields))
 			for j, idx := range view.selectFields {
-				record[j] = v[idx]
+				primaries[j] = v[idx].Primary()
 			}
-			records[i] = record
+			key := SerializeComparisonKeys(primaries)
+			if _, ok := values[key]; !ok {
+				values[key] = true
+
+				record := make(Record, len(view.selectFields))
+				for j, idx := range view.selectFields {
+					record[j] = v[idx]
+				}
+				records = append(records, record)
+			}
 		}
 
 		hfields := NewEmptyHeader(len(view.selectFields))
@@ -691,10 +696,7 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 		}
 	}
 
-	cpu := cmd.GetFlags().CPU
-	if view.RecordLen() < cpu {
-		cpu = 1
-	}
+	cpu := NumberOfCPU(view.RecordLen())
 
 	wg := sync.WaitGroup{}
 	for i := 0; i < cpu; i++ {
@@ -740,10 +742,7 @@ func (view *View) evalColumn(obj parser.Expression, column string, alias string)
 					return
 				}
 			} else {
-				cpu := cmd.GetFlags().CPU
-				if view.RecordLen() < cpu {
-					cpu = 1
-				}
+				cpu := NumberOfCPU(view.RecordLen())
 
 				wg := sync.WaitGroup{}
 				for i := 0; i < cpu; i++ {
@@ -969,10 +968,7 @@ func (view *View) Fix() {
 	hfields := NewEmptyHeader(len(view.selectFields))
 	records := make([]Record, view.RecordLen())
 
-	cpu := cmd.GetFlags().CPU
-	if view.RecordLen() < cpu {
-		cpu = 1
-	}
+	cpu := NumberOfCPU(view.RecordLen())
 
 	wg := sync.WaitGroup{}
 	for i := 0; i < cpu; i++ {
@@ -1068,18 +1064,43 @@ func (view *View) Intersect(calcView *View, all bool) {
 }
 
 func (view *View) ListValuesForAggregateFunctions(expr parser.Expression, arg parser.Expression, distinct bool, filter *Filter) ([]parser.Primary, error) {
+	cpu := NumberOfCPU(view.RecordLen())
 	list := make([]parser.Primary, view.RecordLen())
-	f := NewFilterForSequentialEvaluation(view, filter)
-	for i := 0; i < view.RecordLen(); i++ {
-		f.Records[0].RecordIndex = i
-		p, err := f.Evaluate(arg)
-		if err != nil {
-			if _, ok := err.(*NotGroupingRecordsError); ok {
-				err = NewNestedAggregateFunctionsError(expr)
+	var err error
+
+	wg := sync.WaitGroup{}
+	for i := 0; i < cpu; i++ {
+		wg.Add(1)
+		go func(thIdx int) {
+			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+			filter := NewFilterForSequentialEvaluation(view, filter)
+
+		ListAggregateFunctionLoop:
+			for i := start; i < end; i++ {
+				if err != nil {
+					break ListAggregateFunctionLoop
+				}
+
+				filter.Records[0].RecordIndex = i
+				p, e := filter.Evaluate(arg)
+				if e != nil {
+					if _, ok := e.(*NotGroupingRecordsError); ok {
+						err = NewNestedAggregateFunctionsError(expr)
+					} else {
+						err = e
+					}
+					break ListAggregateFunctionLoop
+				}
+				list[i] = p
 			}
-			return nil, err
-		}
-		list[i] = p
+
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
+
+	if err != nil {
+		return nil, err
 	}
 
 	if distinct {
@@ -1090,15 +1111,39 @@ func (view *View) ListValuesForAggregateFunctions(expr parser.Expression, arg pa
 }
 
 func (view *View) ListValuesForAnalyticFunctions(fn parser.AnalyticFunction, partitionItems PartitionItemList) ([]parser.Primary, error) {
+	cpu := NumberOfCPU(view.RecordLen())
 	list := make([]parser.Primary, len(partitionItems))
-	f := NewFilterForSequentialEvaluation(view, view.Filter)
-	for i, item := range partitionItems {
-		f.Records[0].RecordIndex = item.RecordIndex
-		value, err := f.Evaluate(fn.Args[0])
-		if err != nil {
-			return nil, err
-		}
-		list[i] = value
+	var err error
+
+	wg := sync.WaitGroup{}
+	for i := 0; i < cpu; i++ {
+		wg.Add(1)
+		go func(thIdx int) {
+			start, end := RecordRange(thIdx, len(partitionItems), cpu)
+			filter := NewFilterForSequentialEvaluation(view, view.Filter)
+
+		ListAnalyticFunctionLoop:
+			for i := start; i < end; i++ {
+				if err != nil {
+					break ListAnalyticFunctionLoop
+				}
+
+				filter.Records[0].RecordIndex = partitionItems[i].RecordIndex
+				value, e := filter.Evaluate(fn.Args[0])
+				if e != nil {
+					err = e
+					break ListAnalyticFunctionLoop
+				}
+				list[i] = value
+			}
+
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
+
+	if err != nil {
+		return nil, err
 	}
 
 	if fn.IsDistinct() {
