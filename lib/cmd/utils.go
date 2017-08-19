@@ -40,6 +40,8 @@ func UnescapeString(s string) string {
 				unescaped = append(unescaped, '\v')
 			case '"':
 				unescaped = append(unescaped, '"')
+			case '\'':
+				unescaped = append(unescaped, '\'')
 			case '\\':
 				unescaped = append(unescaped, '\\')
 			default:

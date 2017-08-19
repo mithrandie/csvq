@@ -30,11 +30,11 @@ var scanTests = []struct {
 	},
 	{
 		Name:  "QuotedIdentifier",
-		Input: "`identifier`",
+		Input: "`identi\\`fier`",
 		Output: []scanResult{
 			{
 				Token:   IDENTIFIER,
-				Literal: "identifier",
+				Literal: "identi`fier",
 				Quoted:  true,
 			},
 		},
@@ -46,6 +46,16 @@ var scanTests = []struct {
 			{
 				Token:   STRING,
 				Literal: "string\"",
+			},
+		},
+	},
+	{
+		Name:  "QuotedString 2",
+		Input: "\"string\\\\\"",
+		Output: []scanResult{
+			{
+				Token:   STRING,
+				Literal: "string\\",
 			},
 		},
 	},
@@ -324,6 +334,11 @@ var scanTests = []struct {
 	{
 		Name:  "LiteralNotTerminatedError",
 		Input: "\"string",
+		Error: "literal not terminated",
+	},
+	{
+		Name:  "LiteralNotTerminatedError 2",
+		Input: "\"",
 		Error: "literal not terminated",
 	},
 }

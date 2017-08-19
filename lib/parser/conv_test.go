@@ -61,6 +61,16 @@ func TestStrToTime(t *testing.T) {
 		t.Errorf("unexpected error %q for %q", err, s)
 	}
 
+	s = "2006/01/02 15:04:05 -0800"
+	if _, err := StrToTime(s); err != nil {
+		t.Errorf("unexpected error %q for %q", err, s)
+	}
+
+	s = "2006/11/2 15:04:05 -0800"
+	if _, err := StrToTime(s); err != nil {
+		t.Errorf("unexpected error %q for %q", err, s)
+	}
+
 	s = "2006/01/02 15:04:05 PST"
 	if _, err := StrToTime(s); err != nil {
 		t.Errorf("unexpected error %q for %q", err, s)
@@ -278,6 +288,12 @@ func TestPrimaryToInteger(t *testing.T) {
 		t.Errorf("primary type = %T, want Integer for %#v", i, p)
 	}
 
+	p = NewString("-1")
+	i = PrimaryToInteger(p)
+	if _, ok := i.(Integer); !ok {
+		t.Errorf("primary type = %T, want Integer for %#v", i, p)
+	}
+
 	p = NewString("1e+02")
 	i = PrimaryToInteger(p)
 	if _, ok := i.(Integer); !ok {
@@ -291,6 +307,30 @@ func TestPrimaryToInteger(t *testing.T) {
 	}
 
 	p = NewString("error")
+	i = PrimaryToInteger(p)
+	if _, ok := i.(Null); !ok {
+		t.Errorf("primary type = %T, want Null for %#v", i, p)
+	}
+
+	p = NewString("error")
+	i = PrimaryToInteger(p)
+	if _, ok := i.(Null); !ok {
+		t.Errorf("primary type = %T, want Null for %#v", i, p)
+	}
+
+	p = NewString("2002-02-02")
+	i = PrimaryToInteger(p)
+	if _, ok := i.(Null); !ok {
+		t.Errorf("primary type = %T, want Null for %#v", i, p)
+	}
+
+	p = NewString("2002/02/02")
+	i = PrimaryToInteger(p)
+	if _, ok := i.(Null); !ok {
+		t.Errorf("primary type = %T, want Null for %#v", i, p)
+	}
+
+	p = NewString("03 Mar 12 12:03 PST")
 	i = PrimaryToInteger(p)
 	if _, ok := i.(Null); !ok {
 		t.Errorf("primary type = %T, want Null for %#v", i, p)
@@ -343,6 +383,12 @@ func TestPrimaryToDatetime(t *testing.T) {
 	}
 
 	p = NewDatetimeFromString("2006-01-02 15:04:05")
+	dt = PrimaryToDatetime(p)
+	if _, ok := dt.(Datetime); !ok {
+		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
+	}
+
+	p = NewString("1136181845")
 	dt = PrimaryToDatetime(p)
 	if _, ok := dt.(Datetime); !ok {
 		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
@@ -444,6 +490,9 @@ func TestPrimaryToString(t *testing.T) {
 }
 
 func BenchmarkStrToTime1(b *testing.B) {
+	flags := cmd.GetFlags()
+	flags.DatetimeFormat = "01/02/2006"
+
 	for i := 0; i < b.N; i++ {
 		s := "01/02/2006"
 		StrToTime(s)
@@ -451,6 +500,9 @@ func BenchmarkStrToTime1(b *testing.B) {
 }
 
 func BenchmarkStrToTime2(b *testing.B) {
+	flags := cmd.GetFlags()
+	flags.DatetimeFormat = ""
+
 	for i := 0; i < b.N; i++ {
 		s := "2006-01-02T15:04:05-07:00"
 		StrToTime(s)
@@ -458,6 +510,9 @@ func BenchmarkStrToTime2(b *testing.B) {
 }
 
 func BenchmarkStrToTime3(b *testing.B) {
+	flags := cmd.GetFlags()
+	flags.DatetimeFormat = ""
+
 	for i := 0; i < b.N; i++ {
 		s := "2006-01-02"
 		StrToTime(s)
@@ -465,6 +520,9 @@ func BenchmarkStrToTime3(b *testing.B) {
 }
 
 func BenchmarkStrToTime4(b *testing.B) {
+	flags := cmd.GetFlags()
+	flags.DatetimeFormat = ""
+
 	for i := 0; i < b.N; i++ {
 		s := "2006-01-02 15:04:05"
 		StrToTime(s)
@@ -472,6 +530,9 @@ func BenchmarkStrToTime4(b *testing.B) {
 }
 
 func BenchmarkStrToTime5(b *testing.B) {
+	flags := cmd.GetFlags()
+	flags.DatetimeFormat = ""
+
 	for i := 0; i < b.N; i++ {
 		s := "2006-01-02 15:04:05 -0700"
 		StrToTime(s)
@@ -479,8 +540,49 @@ func BenchmarkStrToTime5(b *testing.B) {
 }
 
 func BenchmarkStrToTime6(b *testing.B) {
+	flags := cmd.GetFlags()
+	flags.DatetimeFormat = ""
+
 	for i := 0; i < b.N; i++ {
-		s := "02 Jan 06 15:04 MST"
+		s := "02 Jan 06 15:04 PDT"
 		StrToTime(s)
+	}
+}
+
+func BenchmarkStrToTime7(b *testing.B) {
+	flags := cmd.GetFlags()
+	flags.DatetimeFormat = ""
+
+	for i := 0; i < b.N; i++ {
+		s := "abcdefghijklmnopq"
+		StrToTime(s)
+	}
+}
+
+func BenchmarkPrimaryToInteger(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		p := NewString("a")
+		PrimaryToInteger(p)
+	}
+}
+
+func BenchmarkPrimaryToInteger2(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		p := NewString("2012-02-02")
+		PrimaryToInteger(p)
+	}
+}
+
+func BenchmarkPrimaryToFloat(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		p := NewString("a")
+		PrimaryToFloat(p)
+	}
+}
+
+func BenchmarkPrimaryToFloat2(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		p := NewString("2012-02-02")
+		PrimaryToFloat(p)
 	}
 }

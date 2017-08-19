@@ -1268,6 +1268,41 @@ var viewGroupByTests = []struct {
 			isGrouped: true,
 		},
 	},
+	{
+		Name: "Group By Evaluation Error",
+		View: &View{
+			Header: NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
+			Records: []Record{
+				NewRecordWithId(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+					parser.NewString("group1"),
+				}),
+				NewRecordWithId(2, []parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+					parser.NewString("group2"),
+				}),
+				NewRecordWithId(3, []parser.Primary{
+					parser.NewString("3"),
+					parser.NewString("str3"),
+					parser.NewString("group1"),
+				}),
+				NewRecordWithId(4, []parser.Primary{
+					parser.NewString("4"),
+					parser.NewString("str4"),
+					parser.NewString("group2"),
+				}),
+			},
+			Filter: NewEmptyFilter(),
+		},
+		GroupBy: parser.GroupByClause{
+			Items: []parser.Expression{
+				parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: parser.NewInteger(0)},
+			},
+		},
+		Error: "[L:- C:-] field table1.0 does not exist",
+	},
 }
 
 func TestView_GroupBy(t *testing.T) {
@@ -2431,8 +2466,29 @@ var viewLimitTests = []struct {
 					parser.NewString("str3"),
 				}),
 			},
-			Filter:      NewEmptyFilter(),
-			sortIndices: []int{1, 2},
+			Filter: NewEmptyFilter(),
+			recordSortValues: []SortValues{
+				{
+					&SortValue{Type: SORT_VALUE_INTEGER, Integer: 1},
+					&SortValue{Type: SORT_VALUE_STRING, String: "str1"},
+				},
+				{
+					&SortValue{Type: SORT_VALUE_INTEGER, Integer: 1},
+					&SortValue{Type: SORT_VALUE_STRING, String: "str1"},
+				},
+				{
+					&SortValue{Type: SORT_VALUE_INTEGER, Integer: 1},
+					&SortValue{Type: SORT_VALUE_STRING, String: "str1"},
+				},
+				{
+					&SortValue{Type: SORT_VALUE_INTEGER, Integer: 2},
+					&SortValue{Type: SORT_VALUE_STRING, String: "str2"},
+				},
+				{
+					&SortValue{Type: SORT_VALUE_INTEGER, Integer: 3},
+					&SortValue{Type: SORT_VALUE_STRING, String: "str3"},
+				},
+			},
 		},
 		Limit: parser.LimitClause{Value: parser.NewInteger(2), With: parser.LimitWith{Type: parser.Token{Token: parser.TIES}}},
 		Result: &View{
@@ -2455,8 +2511,29 @@ var viewLimitTests = []struct {
 					parser.NewString("str1"),
 				}),
 			},
-			Filter:      NewEmptyFilter(),
-			sortIndices: []int{1, 2},
+			Filter: NewEmptyFilter(),
+			recordSortValues: []SortValues{
+				{
+					&SortValue{Type: SORT_VALUE_INTEGER, Integer: 1},
+					&SortValue{Type: SORT_VALUE_STRING, String: "str1"},
+				},
+				{
+					&SortValue{Type: SORT_VALUE_INTEGER, Integer: 1},
+					&SortValue{Type: SORT_VALUE_STRING, String: "str1"},
+				},
+				{
+					&SortValue{Type: SORT_VALUE_INTEGER, Integer: 1},
+					&SortValue{Type: SORT_VALUE_STRING, String: "str1"},
+				},
+				{
+					&SortValue{Type: SORT_VALUE_INTEGER, Integer: 2},
+					&SortValue{Type: SORT_VALUE_STRING, String: "str2"},
+				},
+				{
+					&SortValue{Type: SORT_VALUE_INTEGER, Integer: 3},
+					&SortValue{Type: SORT_VALUE_STRING, String: "str3"},
+				},
+			},
 		},
 	},
 	{

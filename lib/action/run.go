@@ -63,8 +63,8 @@ func Run(input string, sourceFile string) error {
 				"     Alloc: %"+w+"[3]s bytes %[1]s"+
 				"TotalAlloc: %"+w+"[4]s bytes %[1]s"+
 				"   HeapSys: %"+w+"[5]s bytes %[1]s"+
-				"   Mallocs: %"+w+"[6]s times %[1]s"+
-				"     Frees: %"+w+"[7]s times %[1]s",
+				"   Mallocs: %"+w+"[6]s objects %[1]s"+
+				"     Frees: %"+w+"[7]s objects %[1]s",
 			flags.LineBreak.Value(),
 			exectime,
 			alloc,

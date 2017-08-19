@@ -91,24 +91,24 @@ func RecordRange(cpuIndex int, totalLen int, numberOfCPU int) (int, int) {
 	return start, end
 }
 
-func SerializeValues(values []parser.Primary) string {
+func SerializeGroupKeys(values []parser.Primary) string {
 	list := make([]string, len(values))
 
 	for i, value := range values {
 		if parser.IsNull(value) {
-			list[i] = "[Null]"
+			list[i] = "[N]"
 		} else if in := parser.PrimaryToInteger(value); !parser.IsNull(in) {
-			list[i] = "[Integer]" + parser.Int64ToStr(in.(parser.Integer).Value())
+			list[i] = "[I]" + parser.Int64ToStr(in.(parser.Integer).Value())
 		} else if f := parser.PrimaryToFloat(value); !parser.IsNull(f) {
-			list[i] = "[Float]" + parser.Float64ToStr(f.(parser.Float).Value())
+			list[i] = "[F]" + parser.Float64ToStr(f.(parser.Float).Value())
 		} else if dt := parser.PrimaryToDatetime(value); !parser.IsNull(dt) {
-			list[i] = "[Datetime]" + dt.(parser.Datetime).Format()
+			list[i] = "[D]" + dt.(parser.Datetime).Format()
 		} else if b := parser.PrimaryToBoolean(value); !parser.IsNull(b) {
-			list[i] = "[Boolean]" + strconv.FormatBool(b.(parser.Boolean).Value())
-		} else if t, ok := value.(parser.Ternary); ok {
-			list[i] = "[Ternary]" + t.Ternary().String()
+			list[i] = "[B]" + strconv.FormatBool(b.(parser.Boolean).Value())
+		} else if s, ok := value.(parser.String); ok {
+			list[i] = "[S]" + strings.ToUpper(strings.TrimSpace(s.Value()))
 		} else {
-			list[i] = "[String]" + strings.ToUpper(value.(parser.String).Value())
+			list[i] = "[N]"
 		}
 	}
 

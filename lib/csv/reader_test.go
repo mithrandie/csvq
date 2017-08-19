@@ -150,7 +150,7 @@ func TestReader_ReadAll(t *testing.T) {
 }
 
 func TestReader_ReadHeader(t *testing.T) {
-	input := "h1,h2,h3\na,b,c\nd,e,f"
+	input := "h1,h2 ,h3\na,b,c\nd,e,f"
 	outHeader := []string{"h1", "h2", "h3"}
 	output := [][]parser.Primary{
 		{parser.NewString("a"), parser.NewString("b"), parser.NewString("c")},
