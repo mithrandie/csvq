@@ -137,25 +137,16 @@ func (s *Scanner) literal() string {
 	return string(s.runes())
 }
 
-func (s *Scanner) unescapeTokenString() string {
+func (s *Scanner) trimQuotes() string {
 	runes := s.runes()
 	quote := runes[0]
 	switch quote {
 	case '"', '\'', '`':
-		if runes[len(runes)-1] == quote {
+		if 1 < len(runes) && runes[len(runes)-1] == quote {
 			runes = runes[1:(len(runes) - 1)]
 		} else {
 			runes = runes[1:]
 		}
-
-		escaped := []rune{}
-		for i := 0; i < len(runes); i++ {
-			if runes[i] == '\\' && (i+1) < len(runes) && runes[i+1] == quote {
-				i++
-			}
-			escaped = append(escaped, runes[i])
-		}
-		runes = escaped
 	}
 	return string(runes)
 }
@@ -229,16 +220,15 @@ func (s *Scanner) Scan() (Token, error) {
 			break
 		case '"', '\'':
 			s.scanString(ch)
-			literal = s.unescapeTokenString()
+			literal = cmd.UnescapeString(s.trimQuotes())
 			if _, e := StrToTime(literal); e == nil {
 				token = DATETIME
 			} else {
 				token = STRING
-				literal = cmd.UnescapeString(literal)
 			}
 		case '`':
 			s.scanString(ch)
-			literal = s.unescapeTokenString()
+			literal = unescapeBackQuote(s.trimQuotes())
 			token = IDENTIFIER
 			quoted = true
 		}
@@ -248,17 +238,28 @@ func (s *Scanner) Scan() (Token, error) {
 }
 
 func (s *Scanner) scanString(quote rune) {
+	escaped := false
 	for {
 		ch := s.next()
 		if ch == EOF {
 			s.err = errors.New("literal not terminated")
 			break
-		} else if ch == quote {
+		}
+
+		if escaped {
+			if s.peek() == '\\' {
+				s.next()
+			}
+			escaped = false
+			continue
+		}
+
+		if ch == quote {
 			break
 		}
 
 		if ch == '\\' {
-			s.next()
+			escaped = true
 		}
 	}
 
@@ -403,4 +404,35 @@ func (s *Scanner) scanLineComment() {
 		s.next()
 	}
 	return
+}
+
+func unescapeBackQuote(s string) string {
+	runes := []rune(s)
+	unescaped := []rune{}
+
+	escaped := false
+	for _, r := range runes {
+		if escaped {
+			switch r {
+			case '`':
+				unescaped = append(unescaped, '`')
+			default:
+				unescaped = append(unescaped, '\\', r)
+			}
+			escaped = false
+			continue
+		}
+
+		if r == '\\' {
+			escaped = true
+			continue
+		}
+
+		unescaped = append(unescaped, r)
+	}
+	if escaped {
+		unescaped = append(unescaped, '\\')
+	}
+
+	return string(unescaped)
 }
