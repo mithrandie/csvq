@@ -175,11 +175,64 @@ func CompareRowValues(v1 []parser.Primary, v2 []parser.Primary, operator string)
 		return ternary.FALSE, NewRowValueLengthNotMatchError()
 	}
 
-	results := make([]ternary.Value, len(v2))
+	unknown := false
 	for i := 0; i < len(v1); i++ {
-		results[i] = Compare(v1[i], v2[i], operator)
+		r := CompareCombinedly(v1[i], v2[i])
+
+		if r == INCOMMENSURABLE {
+			switch operator {
+			case "=", "<>", "!=":
+				if i < len(v1)-1 {
+					unknown = true
+					continue
+				}
+			}
+
+			return ternary.UNKNOWN, nil
+		}
+
+		switch operator {
+		case ">", "<", ">=", "<=":
+			if r == NOT_EQUAL {
+				return ternary.UNKNOWN, nil
+			}
+		}
+
+		switch operator {
+		case "=":
+			if r != EQUAL {
+				return ternary.FALSE, nil
+			}
+		case ">", ">=":
+			switch r {
+			case GREATER:
+				return ternary.TRUE, nil
+			case LESS:
+				return ternary.FALSE, nil
+			}
+		case "<", "<=":
+			switch r {
+			case LESS:
+				return ternary.TRUE, nil
+			case GREATER:
+				return ternary.FALSE, nil
+			}
+		case "<>", "!=":
+			if r != EQUAL {
+				return ternary.TRUE, nil
+			}
+		}
 	}
-	return ternary.All(results), nil
+
+	if unknown {
+		return ternary.UNKNOWN, nil
+	}
+
+	switch operator {
+	case ">", "<", "<>", "!=":
+		return ternary.FALSE, nil
+	}
+	return ternary.TRUE, nil
 }
 
 func EquivalentTo(p1 parser.Primary, p2 parser.Primary) ternary.Value {
@@ -307,13 +360,24 @@ func stringPattern(pattern []rune, position int) (int, int, string, int) {
 
 func InRowValueList(value []parser.Primary, list [][]parser.Primary, matchType int, operator string) (ternary.Value, error) {
 	results := make([]ternary.Value, len(list))
-	var err error
 
 	for i, v := range list {
-		results[i], err = CompareRowValues(value, v, operator)
+		t, err := CompareRowValues(value, v, operator)
 		if err != nil {
 			return ternary.FALSE, NewRowValueLengthInListError(i)
 		}
+		switch matchType {
+		case parser.ANY:
+			if t == ternary.TRUE {
+				return ternary.TRUE, nil
+			}
+		default: // parser.ALL
+			if t == ternary.FALSE {
+				return ternary.FALSE, nil
+			}
+		}
+
+		results[i] = t
 	}
 
 	switch matchType {

@@ -203,6 +203,10 @@ func (f *Filter) evalArithmetic(expr parser.Arithmetic) (parser.Primary, error) 
 	if err != nil {
 		return nil, err
 	}
+	if parser.IsNull(lhs) {
+		return parser.NewNull(), nil
+	}
+
 	rhs, err := f.Evaluate(expr.RHS)
 	if err != nil {
 		return nil, err
@@ -215,6 +219,15 @@ func (f *Filter) evalUnaryArithmetic(expr parser.UnaryArithmetic) (parser.Primar
 	ope, err := f.Evaluate(expr.Operand)
 	if err != nil {
 		return nil, err
+	}
+
+	if pi := parser.PrimaryToInteger(ope); !parser.IsNull(pi) {
+		value := pi.(parser.Integer).Value()
+		switch expr.Operator.Token {
+		case '-':
+			value = value * -1
+		}
+		return parser.NewInteger(value), nil
 	}
 
 	pf := parser.PrimaryToFloat(ope)
@@ -273,12 +286,16 @@ func (f *Filter) evalComparison(expr parser.Comparison) (parser.Primary, error) 
 		if err != nil {
 			return nil, err
 		}
-		rhs, err := f.Evaluate(expr.RHS)
-		if err != nil {
-			return nil, err
-		}
+		if parser.IsNull(lhs) {
+			t = ternary.UNKNOWN
+		} else {
+			rhs, err := f.Evaluate(expr.RHS)
+			if err != nil {
+				return nil, err
+			}
 
-		t = Compare(lhs, rhs, expr.Operator)
+			t = Compare(lhs, rhs, expr.Operator)
+		}
 	}
 	return parser.NewTernary(t), nil
 }
@@ -314,37 +331,52 @@ func (f *Filter) evalBetween(expr parser.Between) (parser.Primary, error) {
 		if err != nil {
 			return nil, err
 		}
-
-		high, err := f.evalRowValue(expr.High.(parser.RowValue))
-		if err != nil {
-			return nil, err
-		}
-
-		t1, err := CompareRowValues(lhs, low, ">=")
+		lowResult, err := CompareRowValues(lhs, low, ">=")
 		if err != nil {
 			return nil, NewRowValueLengthInComparisonError(expr.Low.(parser.RowValue), len(lhs))
 		}
-		t2, err := CompareRowValues(lhs, high, "<=")
-		if err != nil {
-			return nil, NewRowValueLengthInComparisonError(expr.High.(parser.RowValue), len(lhs))
-		}
 
-		t = ternary.And(t1, t2)
+		if lowResult == ternary.FALSE {
+			t = ternary.FALSE
+		} else {
+			high, err := f.evalRowValue(expr.High.(parser.RowValue))
+			if err != nil {
+				return nil, err
+			}
+
+			highResult, err := CompareRowValues(lhs, high, "<=")
+			if err != nil {
+				return nil, NewRowValueLengthInComparisonError(expr.High.(parser.RowValue), len(lhs))
+			}
+
+			t = ternary.And(lowResult, highResult)
+		}
 	default:
 		lhs, err := f.Evaluate(expr.LHS)
 		if err != nil {
 			return nil, err
 		}
-		low, err := f.Evaluate(expr.Low)
-		if err != nil {
-			return nil, err
-		}
-		high, err := f.Evaluate(expr.High)
-		if err != nil {
-			return nil, err
-		}
+		if parser.IsNull(lhs) {
+			t = ternary.UNKNOWN
+		} else {
+			low, err := f.Evaluate(expr.Low)
+			if err != nil {
+				return nil, err
+			}
 
-		t = ternary.And(GreaterThanOrEqualTo(lhs, low), LessThanOrEqualTo(lhs, high))
+			lowResult := GreaterThanOrEqualTo(lhs, low)
+			if lowResult == ternary.FALSE {
+				t = ternary.FALSE
+			} else {
+				high, err := f.Evaluate(expr.High)
+				if err != nil {
+					return nil, err
+				}
+
+				highResult := LessThanOrEqualTo(lhs, high)
+				t = ternary.And(lowResult, highResult)
+			}
+		}
 	}
 
 	if expr.IsNegated() {
@@ -682,6 +714,17 @@ func (f *Filter) evalLogic(expr parser.Logic) (parser.Primary, error) {
 	if err != nil {
 		return nil, err
 	}
+	switch expr.Operator.Token {
+	case parser.AND:
+		if lhs.Ternary() == ternary.FALSE {
+			return parser.NewTernary(ternary.FALSE), nil
+		}
+	case parser.OR:
+		if lhs.Ternary() == ternary.TRUE {
+			return parser.NewTernary(ternary.TRUE), nil
+		}
+	}
+
 	rhs, err := f.Evaluate(expr.RHS)
 	if err != nil {
 		return nil, err

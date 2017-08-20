@@ -238,7 +238,6 @@ func (s *Scanner) Scan() (Token, error) {
 }
 
 func (s *Scanner) scanString(quote rune) {
-	escaped := false
 	for {
 		ch := s.next()
 		if ch == EOF {
@@ -246,20 +245,15 @@ func (s *Scanner) scanString(quote rune) {
 			break
 		}
 
-		if escaped {
-			if s.peek() == '\\' {
-				s.next()
-			}
-			escaped = false
-			continue
-		}
-
 		if ch == quote {
 			break
 		}
 
 		if ch == '\\' {
-			escaped = true
+			switch s.peek() {
+			case '\\', quote:
+				s.next()
+			}
 		}
 	}
 
@@ -429,9 +423,6 @@ func unescapeBackQuote(s string) string {
 		}
 
 		unescaped = append(unescaped, r)
-	}
-	if escaped {
-		unescaped = append(unescaped, '\\')
 	}
 
 	return string(unescaped)

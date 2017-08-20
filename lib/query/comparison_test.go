@@ -277,11 +277,221 @@ var compareRowValuesTests = []struct {
 		},
 		RHS: []parser.Primary{
 			parser.NewInteger(1),
+			parser.NewNull(),
+			parser.NewInteger(2),
+		},
+		Op:     "=",
+		Result: ternary.FALSE,
+	},
+	{
+		LHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		RHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewNull(),
+		},
+		Op:     "=",
+		Result: ternary.UNKNOWN,
+	},
+	{
+		LHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		RHS: []parser.Primary{
+			parser.NewInteger(1),
 			parser.NewInteger(9),
 			parser.NewInteger(3),
 		},
 		Op:     "=",
 		Result: ternary.FALSE,
+	},
+	{
+		LHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		RHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(0),
+			parser.NewInteger(3),
+		},
+		Op:     "<>",
+		Result: ternary.TRUE,
+	},
+	{
+		LHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		RHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewNull(),
+			parser.NewInteger(2),
+		},
+		Op:     "<>",
+		Result: ternary.TRUE,
+	},
+	{
+		LHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		RHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewNull(),
+			parser.NewInteger(3),
+		},
+		Op:     "<>",
+		Result: ternary.UNKNOWN,
+	},
+	{
+		LHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		RHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		Op:     "!=",
+		Result: ternary.FALSE,
+	},
+	{
+		LHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		RHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(2),
+		},
+		Op:     ">",
+		Result: ternary.TRUE,
+	},
+	{
+		LHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		RHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(4),
+		},
+		Op:     ">",
+		Result: ternary.FALSE,
+	},
+	{
+		LHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		RHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		Op:     ">",
+		Result: ternary.FALSE,
+	},
+	{
+		LHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		RHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		Op:     ">=",
+		Result: ternary.TRUE,
+	},
+	{
+		LHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewBoolean(true),
+			parser.NewInteger(3),
+		},
+		RHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewBoolean(false),
+			parser.NewInteger(2),
+		},
+		Op:     ">",
+		Result: ternary.UNKNOWN,
+	},
+	{
+		LHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		RHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(4),
+		},
+		Op:     "<",
+		Result: ternary.TRUE,
+	},
+	{
+		LHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		RHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(2),
+		},
+		Op:     "<",
+		Result: ternary.FALSE,
+	},
+	{
+		LHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		RHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		Op:     "<",
+		Result: ternary.FALSE,
+	},
+	{
+		LHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		RHS: []parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+		},
+		Op:     "<=",
+		Result: ternary.TRUE,
 	},
 	{
 		LHS: []parser.Primary{

@@ -2692,7 +2692,7 @@ var callTests = []functionTest{
 			parser.NewTernary(ternary.TRUE),
 			parser.NewNull(),
 		},
-		Result: parser.NewString("foo 1 1.234 2012-02-03T09:18:15-08:00 true true \n"),
+		Result: parser.NewString("foo 1 1.234 2012-02-03T09:18:15-08:00 true TRUE \n"),
 	},
 	{
 		Name: "Call Argument Error",

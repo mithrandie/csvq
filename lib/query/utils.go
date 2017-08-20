@@ -7,9 +7,10 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
-	"github.com/mithrandie/csvq/lib/ternary"
 )
 
 func InIntSlice(i int, list []int) bool {
@@ -40,21 +41,22 @@ func InRuneSlice(r rune, list []rune) bool {
 }
 
 func Distinguish(list []parser.Primary) []parser.Primary {
-	var in = func(list []parser.Primary, item parser.Primary) bool {
-		for _, v := range list {
-			if EquivalentTo(item, v) == ternary.TRUE {
-				return true
-			}
+	values := make(map[string]int)
+	valueKeys := make([]string, 0, len(list))
+
+	for i, v := range list {
+		key := SerializeComparisonKeys([]parser.Primary{v})
+		if _, ok := values[key]; !ok {
+			values[key] = i
+			valueKeys = append(valueKeys, key)
 		}
-		return false
 	}
 
-	distinguished := []parser.Primary{}
-	for _, v := range list {
-		if !in(distinguished, v) {
-			distinguished = append(distinguished, v)
-		}
+	distinguished := make([]parser.Primary, len(valueKeys))
+	for i, key := range valueKeys {
+		distinguished[i] = list[values[key]]
 	}
+
 	return distinguished
 }
 
@@ -91,20 +93,28 @@ func RecordRange(cpuIndex int, totalLen int, numberOfCPU int) (int, int) {
 	return start, end
 }
 
-func SerializeGroupKeys(values []parser.Primary) string {
+func NumberOfCPU(recordLen int) int {
+	num := cmd.GetFlags().CPU
+	if recordLen < 150 || recordLen < num {
+		num = 1
+	}
+	return num
+}
+
+func SerializeComparisonKeys(values []parser.Primary) string {
 	list := make([]string, len(values))
 
 	for i, value := range values {
 		if parser.IsNull(value) {
 			list[i] = "[N]"
 		} else if in := parser.PrimaryToInteger(value); !parser.IsNull(in) {
-			list[i] = "[I]" + parser.Int64ToStr(in.(parser.Integer).Value())
+			list[i] = "[I]" + in.(parser.Integer).String()
 		} else if f := parser.PrimaryToFloat(value); !parser.IsNull(f) {
-			list[i] = "[F]" + parser.Float64ToStr(f.(parser.Float).Value())
+			list[i] = "[F]" + f.(parser.Float).String()
 		} else if dt := parser.PrimaryToDatetime(value); !parser.IsNull(dt) {
-			list[i] = "[D]" + dt.(parser.Datetime).Format()
+			list[i] = "[D]" + dt.(parser.Datetime).Format(time.RFC3339Nano)
 		} else if b := parser.PrimaryToBoolean(value); !parser.IsNull(b) {
-			list[i] = "[B]" + strconv.FormatBool(b.(parser.Boolean).Value())
+			list[i] = "[B]" + b.(parser.Boolean).String()
 		} else if s, ok := value.(parser.String); ok {
 			list[i] = "[S]" + strings.ToUpper(strings.TrimSpace(s.Value()))
 		} else {
@@ -263,15 +273,15 @@ func FormatString(format string, args []parser.Primary) (string, error) {
 					case parser.String:
 						s = args[placeholderOrder].(parser.String).Value()
 					case parser.Integer:
-						s = parser.Int64ToStr(args[placeholderOrder].(parser.Integer).Value())
+						s = args[placeholderOrder].(parser.Integer).String()
 					case parser.Float:
-						s = parser.Float64ToStr(args[placeholderOrder].(parser.Float).Value())
+						s = args[placeholderOrder].(parser.Float).String()
 					case parser.Boolean:
-						s = strconv.FormatBool(args[placeholderOrder].(parser.Boolean).Value())
+						s = args[placeholderOrder].(parser.Boolean).String()
 					case parser.Ternary:
 						s = args[placeholderOrder].(parser.Ternary).Ternary().String()
 					case parser.Datetime:
-						s = args[placeholderOrder].(parser.Datetime).Format()
+						s = args[placeholderOrder].(parser.Datetime).Format(time.RFC3339Nano)
 					case parser.Null:
 						s = "NULL"
 					}
