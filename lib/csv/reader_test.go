@@ -99,6 +99,15 @@ var readAllTests = []struct {
 		LineBreak: cmd.LF,
 	},
 	{
+		Name:  "Different Line Breaks",
+		Input: "a,b,\"c\r\nd\"\ne,f,g",
+		Output: [][]parser.Primary{
+			{parser.NewString("a"), parser.NewString("b"), parser.NewString("c\r\nd")},
+			{parser.NewString("e"), parser.NewString("f"), parser.NewString("g")},
+		},
+		LineBreak: cmd.LF,
+	},
+	{
 		Name:  "ExtraneousQuote",
 		Input: "a,\"b\",\"ccc\ncc\nd,e,",
 		Error: "line 3, column 5: extraneous \" in field",
@@ -110,8 +119,8 @@ var readAllTests = []struct {
 	},
 	{
 		Name:  "NumberOfFieldsIsLess",
-		Input: "a,b,c\nd,e",
-		Error: "line 2, column 4: wrong number of fields in line",
+		Input: "a,b,c\nd,e\nf,g,h",
+		Error: "line 2, column 0: wrong number of fields in line",
 	},
 	{
 		Name:  "NumberOfFieldsIsGreater",
@@ -172,5 +181,28 @@ func TestReader_ReadHeader(t *testing.T) {
 	}
 	if !reflect.DeepEqual(records, output) {
 		t.Errorf("records = %q, want %q", records, output)
+	}
+
+	input = "h1,\"h2 ,h3\na,b,c\nd,e,f"
+	expectErr := "line 3, column 6: extraneous \" in field"
+
+	r = NewReader(strings.NewReader(input))
+	_, err = r.ReadHeader()
+	if err == nil {
+		t.Errorf("no error, want error %q", expectErr)
+	} else if err.Error() != expectErr {
+		t.Errorf("error = %q, want error %q", err.Error(), expectErr)
+	}
+}
+
+var readerReadAllBenchmarkText = strings.Repeat("aaaaaa,\"bbbbbb\",cccccc\n", 10000)
+
+func BenchmarkReader_ReadAll(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		r := strings.NewReader(readerReadAllBenchmarkText)
+		reader := NewReader(r)
+		reader.Delimiter = ','
+		reader.WithoutNull = false
+		reader.ReadAll()
 	}
 }

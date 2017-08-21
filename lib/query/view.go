@@ -291,8 +291,8 @@ func loadViewFromFile(file *os.File, fileInfo *FileInfo) (*View, error) {
 	}
 
 	if header == nil {
-		header = make([]string, reader.FieldsPerRecords)
-		for i := 0; i < reader.FieldsPerRecords; i++ {
+		header = make([]string, reader.FieldsPerRecord)
+		for i := 0; i < reader.FieldsPerRecord; i++ {
 			header[i] = "c" + strconv.Itoa(i+1)
 		}
 	}

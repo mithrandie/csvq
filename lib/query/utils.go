@@ -108,13 +108,28 @@ func SerializeComparisonKeys(values []parser.Primary) string {
 		if parser.IsNull(value) {
 			list[i] = "[N]"
 		} else if in := parser.PrimaryToInteger(value); !parser.IsNull(in) {
-			list[i] = "[I]" + in.(parser.Integer).String()
+			integer := in.(parser.Integer)
+			var b string
+			switch integer.Value() {
+			case 0:
+				b = "[B]" + strconv.FormatBool(false)
+			case 1:
+				b = "[B]" + strconv.FormatBool(true)
+			}
+			list[i] = "[I]" + integer.String() + b
 		} else if f := parser.PrimaryToFloat(value); !parser.IsNull(f) {
 			list[i] = "[F]" + f.(parser.Float).String()
 		} else if dt := parser.PrimaryToDatetime(value); !parser.IsNull(dt) {
 			list[i] = "[D]" + dt.(parser.Datetime).Format(time.RFC3339Nano)
 		} else if b := parser.PrimaryToBoolean(value); !parser.IsNull(b) {
-			list[i] = "[B]" + b.(parser.Boolean).String()
+			boolean := b.(parser.Boolean)
+			var intliteral string
+			if boolean.Value() {
+				intliteral = "1"
+			} else {
+				intliteral = "0"
+			}
+			list[i] = "[I]" + intliteral + "[B]" + boolean.String()
 		} else if s, ok := value.(parser.String); ok {
 			list[i] = "[S]" + strings.ToUpper(strings.TrimSpace(s.Value()))
 		} else {
