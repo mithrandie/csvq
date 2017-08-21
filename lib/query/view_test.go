@@ -2287,7 +2287,7 @@ var viewOrderByTests = []struct {
 			Records: []Record{
 				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
-					parser.NewString("2"),
+					parser.NewNull(),
 				}),
 				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),
@@ -2327,13 +2327,13 @@ var viewOrderByTests = []struct {
 				{View: "table1", Column: "column2", FromTable: true},
 			},
 			Records: []Record{
-				NewRecordWithId(4, []parser.Primary{
+				NewRecordWithId(1, []parser.Primary{
 					parser.NewString("1"),
 					parser.NewNull(),
 				}),
-				NewRecordWithId(1, []parser.Primary{
+				NewRecordWithId(4, []parser.Primary{
 					parser.NewString("1"),
-					parser.NewString("2"),
+					parser.NewNull(),
 				}),
 				NewRecordWithId(2, []parser.Primary{
 					parser.NewString("1"),

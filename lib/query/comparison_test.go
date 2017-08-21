@@ -71,7 +71,7 @@ var compareCombinedlyTests = []struct {
 	{
 		LHS:    parser.NewBoolean(true),
 		RHS:    parser.NewBoolean(true),
-		Result: EQUAL,
+		Result: BOOL_EQUAL,
 	},
 	{
 		LHS:    parser.NewBoolean(true),

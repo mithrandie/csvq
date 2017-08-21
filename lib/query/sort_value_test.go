@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
 )
@@ -122,6 +123,12 @@ var sortValueEquivalentToTests = []struct {
 		Result:       true,
 	},
 	{
+		Name:         "SortValue EquivalentTo Boolean",
+		SortValue:    NewSortValue(parser.NewBoolean(true)),
+		CompareValue: NewSortValue(parser.NewBoolean(true)),
+		Result:       true,
+	},
+	{
 		Name:         "SortValue EquivalentTo String",
 		SortValue:    NewSortValue(parser.NewString("str")),
 		CompareValue: NewSortValue(parser.NewString("str")),
@@ -132,6 +139,30 @@ var sortValueEquivalentToTests = []struct {
 		SortValue:    NewSortValue(parser.NewNull()),
 		CompareValue: NewSortValue(parser.NewNull()),
 		Result:       true,
+	},
+	{
+		Name:         "SortValue EquivalentTo Integer as True and Boolean",
+		SortValue:    NewSortValue(parser.NewInteger(1)),
+		CompareValue: NewSortValue(parser.NewBoolean(true)),
+		Result:       true,
+	},
+	{
+		Name:         "SortValue EquivalentTo Integer as False and Boolean",
+		SortValue:    NewSortValue(parser.NewInteger(0)),
+		CompareValue: NewSortValue(parser.NewBoolean(true)),
+		Result:       false,
+	},
+	{
+		Name:         "SortValue EquivalentTo Boolean and Integer as True",
+		SortValue:    NewSortValue(parser.NewBoolean(true)),
+		CompareValue: NewSortValue(parser.NewInteger(1)),
+		Result:       true,
+	},
+	{
+		Name:         "SortValue EquivalentTo Boolean and Integer as False",
+		SortValue:    NewSortValue(parser.NewBoolean(true)),
+		CompareValue: NewSortValue(parser.NewInteger(0)),
+		Result:       false,
 	},
 	{
 		Name:         "SortValue EquivalentTo Different Types",
@@ -146,6 +177,18 @@ func TestSortValue_EquivalentTo(t *testing.T) {
 		result := v.SortValue.EquivalentTo(v.CompareValue)
 		if result != v.Result {
 			t.Errorf("%s: result = %t, want %t", v.Name, result, v.Result)
+		}
+	}
+}
+
+func BenchmarkSortValue_Less(b *testing.B) {
+	r := cmd.GetRand()
+	s1 := NewSortValue(parser.NewString(parser.Float64ToStr(r.Float64())))
+	s2 := NewSortValue(parser.NewString(parser.Float64ToStr(r.Float64())))
+
+	for i := 0; i < b.N; i++ {
+		for j := 0; j < 10000000; j++ {
+			s1.Less(s2)
 		}
 	}
 }

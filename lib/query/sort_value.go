@@ -15,6 +15,7 @@ const (
 	SORT_VALUE_INTEGER
 	SORT_VALUE_FLOAT
 	SORT_VALUE_DATETIME
+	SORT_VALUE_BOOLEAN
 	SORT_VALUE_STRING
 )
 
@@ -83,7 +84,8 @@ func NewSortValue(value parser.Primary) *SortValue {
 		sortValue.Type = SORT_VALUE_DATETIME
 		sortValue.Datetime = dt.(parser.Datetime).Value()
 	} else if b := parser.PrimaryToBoolean(value); !parser.IsNull(b) {
-		sortValue.Type = SORT_VALUE_NULL
+		sortValue.Type = SORT_VALUE_BOOLEAN
+		sortValue.Boolean = b.(parser.Boolean).Value()
 	} else if s, ok := value.(parser.String); ok {
 		sortValue.Type = SORT_VALUE_STRING
 		sortValue.String = strings.ToUpper(strings.TrimSpace(s.Value()))
@@ -94,7 +96,7 @@ func NewSortValue(value parser.Primary) *SortValue {
 	return sortValue
 }
 
-func (v SortValue) Less(compareValue *SortValue) ternary.Value {
+func (v *SortValue) Less(compareValue *SortValue) ternary.Value {
 	if v.Type == SORT_VALUE_INTEGER && compareValue.Type == SORT_VALUE_FLOAT {
 		f := float64(v.Integer)
 		return ternary.ParseBool(f < compareValue.Float)
@@ -134,7 +136,24 @@ func (v SortValue) Less(compareValue *SortValue) ternary.Value {
 	return ternary.UNKNOWN
 }
 
-func (v SortValue) EquivalentTo(compareValue *SortValue) bool {
+func (v *SortValue) EquivalentTo(compareValue *SortValue) bool {
+	if v.Type == SORT_VALUE_BOOLEAN && compareValue.Type == SORT_VALUE_INTEGER {
+		switch compareValue.Integer {
+		case 0:
+			return v.Boolean == false
+		case 1:
+			return v.Boolean == true
+		}
+	}
+	if v.Type == SORT_VALUE_INTEGER && compareValue.Type == SORT_VALUE_BOOLEAN {
+		switch v.Integer {
+		case 0:
+			return compareValue.Boolean == false
+		case 1:
+			return compareValue.Boolean == true
+		}
+	}
+
 	if v.Type != compareValue.Type {
 		return false
 	}
@@ -146,6 +165,8 @@ func (v SortValue) EquivalentTo(compareValue *SortValue) bool {
 		return v.Float == compareValue.Float
 	case SORT_VALUE_DATETIME:
 		return v.Datetime.Equal(compareValue.Datetime)
+	case SORT_VALUE_BOOLEAN:
+		return v.Boolean == compareValue.Boolean
 	case SORT_VALUE_STRING:
 		return v.String == compareValue.String
 	default: //SORT_VALUE_NULL

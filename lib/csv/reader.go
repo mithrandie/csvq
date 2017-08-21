@@ -2,6 +2,7 @@ package csv
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -18,23 +19,26 @@ type Reader struct {
 	WithoutNull bool
 
 	reader *bufio.Reader
-
 	line   int
 	column int
 
-	FieldsPerRecords int
+	recordBuf     bytes.Buffer
+	fieldStartPos []int
+	fieldQuoted   []bool
+
+	FieldsPerRecord int
 
 	LineBreak cmd.LineBreak
 }
 
 func NewReader(r io.Reader) *Reader {
 	return &Reader{
-		Delimiter:        ',',
-		WithoutNull:      false,
-		reader:           bufio.NewReader(r),
-		line:             1,
-		column:           0,
-		FieldsPerRecords: 0,
+		Delimiter:       ',',
+		WithoutNull:     false,
+		reader:          bufio.NewReader(r),
+		line:            1,
+		column:          0,
+		FieldsPerRecord: 0,
 	}
 }
 
@@ -81,169 +85,166 @@ func (r *Reader) ReadAll() ([][]parser.Primary, error) {
 }
 
 func (r *Reader) parseRecord(withoutNull bool) ([]parser.Primary, error) {
-	var record []parser.Primary
-	if r.FieldsPerRecords < 1 {
-		record = []parser.Primary{}
-	} else {
-		record = make([]parser.Primary, r.FieldsPerRecords)
-	}
+	r.recordBuf.Reset()
+	r.fieldStartPos = r.fieldStartPos[:0]
+	r.fieldQuoted = r.fieldQuoted[:0]
 
 	fieldIndex := 0
+	fieldPosition := 0
 	for {
-		if 0 < r.FieldsPerRecords && r.FieldsPerRecords <= fieldIndex {
+		if 0 < r.FieldsPerRecord && r.FieldsPerRecord <= fieldIndex {
 			return nil, r.newError("wrong number of fields in line")
 		}
 
-		field, eol, err := r.parseField(withoutNull)
-		if err == EOF {
-			if fieldIndex < 1 && (parser.IsNull(field) || len(field.(parser.String).Value()) < 1) {
-				return nil, EOF
+		fieldPosition = r.recordBuf.Len()
+		quoted, eol, err := r.parseField()
+
+		if err != nil {
+			if err == EOF {
+				if fieldIndex < 1 && r.recordBuf.Len() < 1 {
+					return nil, EOF
+				}
+			} else {
+				return nil, err
 			}
-		} else if err != nil {
-			return nil, err
 		}
 
-		if r.FieldsPerRecords < 1 {
-			record = append(record, field)
-		} else {
-			record[fieldIndex] = field
+		if eol && fieldIndex < 1 && r.recordBuf.Len() < 1 {
+			continue
 		}
+
+		r.fieldStartPos = append(r.fieldStartPos, fieldPosition)
+		r.fieldQuoted = append(r.fieldQuoted, quoted)
+		fieldIndex++
 
 		if eol {
-			if fieldIndex < 1 && (parser.IsNull(field) || len(field.(parser.String).Value()) < 1) {
-				continue
-			} else {
-				break
-			}
+			break
+		}
+	}
+
+	if r.FieldsPerRecord < 1 {
+		r.FieldsPerRecord = fieldIndex
+	} else if fieldIndex < r.FieldsPerRecord {
+		r.line--
+		return nil, r.newError("wrong number of fields in line")
+	}
+
+	record := make([]parser.Primary, 0, r.FieldsPerRecord)
+	recordStr := r.recordBuf.String()
+	for i, pos := range r.fieldStartPos {
+		var endPos int
+		if i == len(r.fieldStartPos)-1 {
+			endPos = r.recordBuf.Len()
+		} else {
+			endPos = r.fieldStartPos[i+1]
 		}
 
-		fieldIndex++
-	}
-
-	if r.FieldsPerRecords < 1 {
-		r.FieldsPerRecords = fieldIndex + 1
-	}
-
-	if r.FieldsPerRecords != fieldIndex+1 {
-		return nil, r.newError("wrong number of fields in line")
+		if !withoutNull && pos == endPos && !r.fieldQuoted[i] {
+			record = append(record, parser.NewNull())
+		} else {
+			record = append(record, parser.NewString(recordStr[pos:endPos]))
+		}
 	}
 
 	return record, nil
 }
 
-func (r *Reader) parseField(stringOnly bool) (parser.Primary, bool, error) {
+func (r *Reader) parseField() (bool, bool, error) {
 	var eof error
 	eol := false
+	startPos := r.recordBuf.Len()
 
 	quoted := false
 	escaped := false
 
-	field := []rune{}
+	var lineBreak cmd.LineBreak
 
 Read:
 	for {
-		r1, err := r.readRune()
-		if err == io.EOF {
-			if !escaped && quoted {
-				return nil, eol, r.newError("extraneous \" in field")
-			}
+		lineBreak = ""
 
-			eof = EOF
-			eol = true
-			break
-		}
+		r1, _, err := r.reader.ReadRune()
+		r.column++
+
 		if err != nil {
-			return nil, eol, err
+			if err == io.EOF {
+				if !escaped && quoted {
+					return quoted, eol, r.newError("extraneous \" in field")
+				}
+				eol = true
+			}
+			return quoted, eol, err
 		}
 
-		if escaped {
-			switch r1 {
-			case '"':
-				escaped = false
-				field = append(field, r1)
-				continue
-			case r.Delimiter:
-				break Read
-			case '\n':
-				eol = true
-				break Read
-			default:
-				r.column--
-				return nil, eol, r.newError("unexpected \" in field")
+		switch r1 {
+		case '\r':
+			r2, _, _ := r.reader.ReadRune()
+			if r2 == '\n' {
+				lineBreak = cmd.CRLF
+			} else {
+				r.reader.UnreadRune()
+				lineBreak = cmd.CR
 			}
+			r1 = '\n'
+		case '\n':
+			lineBreak = cmd.LF
+		}
+		if r1 == '\n' {
+			r.line++
+			r.column = 0
 		}
 
 		if quoted {
-			if r1 == '"' {
-				escaped = true
-				continue
+			if escaped {
+				switch r1 {
+				case '"':
+					escaped = false
+					r.recordBuf.WriteRune(r1)
+					continue
+				case r.Delimiter:
+					break Read
+				case '\n':
+					if r.LineBreak == "" {
+						r.LineBreak = lineBreak
+					}
+					eol = true
+					break Read
+				default:
+					r.column--
+					return quoted, eol, r.newError("unexpected \" in field")
+				}
 			}
-			field = append(field, r1)
+
+			switch r1 {
+			case '"':
+				escaped = true
+			case '\n':
+				r.recordBuf.WriteString(lineBreak.Value())
+			default:
+				r.recordBuf.WriteRune(r1)
+			}
 			continue
 		}
 
 		switch r1 {
 		case '\n':
+			if r.LineBreak == "" {
+				r.LineBreak = lineBreak
+			}
 			eol = true
 			break Read
 		case r.Delimiter:
 			break Read
 		case '"':
-			if len(field) < 1 {
+			if startPos == r.recordBuf.Len() {
 				quoted = true
 			} else {
-				field = append(field, r1)
+				r.recordBuf.WriteRune(r1)
 			}
 		default:
-			field = append(field, r1)
+			r.recordBuf.WriteRune(r1)
 		}
 	}
 
-	s := string(field)
-
-	if !stringOnly && len(s) < 1 && !quoted {
-		return parser.NewNull(), eol, eof
-	}
-
-	return parser.NewString(s), eol, eof
-}
-
-func (r *Reader) readRune() (rune, error) {
-	r1, _, err := r.reader.ReadRune()
-	r.column++
-
-	if err != nil {
-		return r1, err
-	}
-
-	if r.isNewLine(r1) {
-		r.line++
-		r.column = 0
-		return '\n', nil
-	}
-	return r1, nil
-}
-
-func (r *Reader) isNewLine(r1 rune) bool {
-	switch r1 {
-	case '\r':
-		r2, _, _ := r.reader.ReadRune()
-		if r2 == '\n' {
-			if r.LineBreak == "" {
-				r.LineBreak = cmd.CRLF
-			}
-			return true
-		}
-		r.reader.UnreadRune()
-		if r.LineBreak == "" {
-			r.LineBreak = cmd.CR
-		}
-		return true
-	case '\n':
-		if r.LineBreak == "" {
-			r.LineBreak = cmd.LF
-		}
-		return true
-	}
-	return false
+	return quoted, eol, eof
 }

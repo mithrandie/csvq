@@ -3433,15 +3433,3 @@ func BenchmarkFilter_EvaluateMultiThread(b *testing.B) {
 		wg.Wait()
 	}
 }
-
-func BenchmarkFilter_Evaluate(b *testing.B) {
-	r := cmd.GetRand()
-	for i := 0; i < b.N; i++ {
-		for j := 0; j < 10000000; j++ {
-			s1 := NewSortValue(parser.NewString(parser.Float64ToStr(r.Float64())))
-			s2 := NewSortValue(parser.NewString(parser.Float64ToStr(r.Float64())))
-
-			s1.Less(s2)
-		}
-	}
-}

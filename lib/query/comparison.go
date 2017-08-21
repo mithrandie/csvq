@@ -12,6 +12,7 @@ type ComparisonResult int
 
 const (
 	EQUAL ComparisonResult = iota
+	BOOL_EQUAL
 	NOT_EQUAL
 	LESS
 	GREATER
@@ -20,6 +21,7 @@ const (
 
 var comparisonResultLiterals = map[ComparisonResult]string{
 	EQUAL:           "EQUAL",
+	BOOL_EQUAL:      "BOOL_EQUAL",
 	NOT_EQUAL:       "NOT_EQUAL",
 	LESS:            "LESS",
 	GREATER:         "GREATER",
@@ -82,7 +84,7 @@ func CompareCombinedly(p1 parser.Primary, p2 parser.Primary) ComparisonResult {
 			v1 := b1.(parser.Boolean).Value()
 			v2 := b2.(parser.Boolean).Value()
 			if v1 == v2 {
-				return EQUAL
+				return BOOL_EQUAL
 			} else {
 				return NOT_EQUAL
 			}
@@ -109,41 +111,41 @@ func CompareCombinedly(p1 parser.Primary, p2 parser.Primary) ComparisonResult {
 
 func EqualTo(p1 parser.Primary, p2 parser.Primary) ternary.Value {
 	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE {
-		return ternary.ParseBool(r == EQUAL)
+		return ternary.ParseBool(r == EQUAL || r == BOOL_EQUAL)
 	}
 	return ternary.UNKNOWN
 }
 
 func NotEqualTo(p1 parser.Primary, p2 parser.Primary) ternary.Value {
 	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE {
-		return ternary.ParseBool(r != EQUAL)
+		return ternary.ParseBool(r != EQUAL && r != BOOL_EQUAL)
 	}
 	return ternary.UNKNOWN
 }
 
 func LessThan(p1 parser.Primary, p2 parser.Primary) ternary.Value {
-	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE && r != NOT_EQUAL {
+	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE && r != NOT_EQUAL && r != BOOL_EQUAL {
 		return ternary.ParseBool(r == LESS)
 	}
 	return ternary.UNKNOWN
 }
 
 func GreaterThan(p1 parser.Primary, p2 parser.Primary) ternary.Value {
-	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE && r != NOT_EQUAL {
+	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE && r != NOT_EQUAL && r != BOOL_EQUAL {
 		return ternary.ParseBool(r == GREATER)
 	}
 	return ternary.UNKNOWN
 }
 
 func LessThanOrEqualTo(p1 parser.Primary, p2 parser.Primary) ternary.Value {
-	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE && r != NOT_EQUAL {
+	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE && r != NOT_EQUAL && r != BOOL_EQUAL {
 		return ternary.ParseBool(r != GREATER)
 	}
 	return ternary.UNKNOWN
 }
 
 func GreaterThanOrEqualTo(p1 parser.Primary, p2 parser.Primary) ternary.Value {
-	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE && r != NOT_EQUAL {
+	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE && r != NOT_EQUAL && r != BOOL_EQUAL {
 		return ternary.ParseBool(r != LESS)
 	}
 	return ternary.UNKNOWN
@@ -193,14 +195,14 @@ func CompareRowValues(v1 []parser.Primary, v2 []parser.Primary, operator string)
 
 		switch operator {
 		case ">", "<", ">=", "<=":
-			if r == NOT_EQUAL {
+			if r == NOT_EQUAL || r == BOOL_EQUAL {
 				return ternary.UNKNOWN, nil
 			}
 		}
 
 		switch operator {
 		case "=":
-			if r != EQUAL {
+			if r != EQUAL && r != BOOL_EQUAL {
 				return ternary.FALSE, nil
 			}
 		case ">", ">=":
@@ -218,7 +220,7 @@ func CompareRowValues(v1 []parser.Primary, v2 []parser.Primary, operator string)
 				return ternary.FALSE, nil
 			}
 		case "<>", "!=":
-			if r != EQUAL {
+			if r != EQUAL && r != BOOL_EQUAL {
 				return ternary.TRUE, nil
 			}
 		}
