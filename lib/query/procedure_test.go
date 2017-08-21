@@ -69,7 +69,7 @@ var procedureExecuteStatementTests = []struct {
 	{
 		Input: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "@var1"},
-			Value:    parser.NewInteger(1),
+			Value:    parser.NewIntegerValue(1),
 		},
 		Result: []Result{},
 	},
@@ -114,7 +114,7 @@ var procedureExecuteStatementTests = []struct {
 		Input: parser.Function{
 			Name: "userfunc",
 			Args: []parser.Expression{
-				parser.NewInteger(1),
+				parser.NewIntegerValue(1),
 			},
 		},
 		Logs: []string{
@@ -181,8 +181,8 @@ var procedureExecuteStatementTests = []struct {
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
 						Fields: []parser.Expression{
-							parser.Field{Object: parser.NewInteger(1)},
-							parser.Field{Object: parser.NewInteger(2)},
+							parser.Field{Object: parser.NewIntegerValue(1)},
+							parser.Field{Object: parser.NewIntegerValue(2)},
 						},
 					},
 				},
@@ -242,7 +242,7 @@ var procedureExecuteStatementTests = []struct {
 						parser.If{
 							Condition: parser.Is{
 								LHS: parser.Variable{Name: "@fetch"},
-								RHS: parser.NewNull(),
+								RHS: parser.NewNullValue(),
 							},
 							Statements: []parser.Statement{
 								parser.FlowControl{Token: parser.CONTINUE},
@@ -251,7 +251,7 @@ var procedureExecuteStatementTests = []struct {
 						parser.If{
 							Condition: parser.Is{
 								LHS: parser.Variable{Name: "@value"},
-								RHS: parser.NewNull(),
+								RHS: parser.NewNullValue(),
 							},
 							Statements: []parser.Statement{
 								parser.VariableSubstitution{
@@ -335,7 +335,7 @@ var procedureExecuteStatementTests = []struct {
 	{
 		Input: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "@var9"},
-			Value:    parser.NewInteger(1),
+			Value:    parser.NewIntegerValue(1),
 		},
 		Error:     "[L:- C:-] variable @var9 is undefined",
 		ErrorCode: 1,
@@ -351,16 +351,16 @@ var procedureExecuteStatementTests = []struct {
 				parser.RowValue{
 					Value: parser.ValueList{
 						Values: []parser.Expression{
-							parser.NewInteger(4),
-							parser.NewString("str4"),
+							parser.NewIntegerValue(4),
+							parser.NewStringValue("str4"),
 						},
 					},
 				},
 				parser.RowValue{
 					Value: parser.ValueList{
 						Values: []parser.Expression{
-							parser.NewInteger(5),
-							parser.NewString("str5"),
+							parser.NewIntegerValue(5),
+							parser.NewStringValue("str5"),
 						},
 					},
 				},
@@ -391,13 +391,13 @@ var procedureExecuteStatementTests = []struct {
 			SetList: []parser.Expression{
 				parser.UpdateSet{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-					Value: parser.NewString("update"),
+					Value: parser.NewStringValue("update"),
 				},
 			},
 			WhereClause: parser.WhereClause{
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-					RHS:      parser.NewInteger(2),
+					RHS:      parser.NewIntegerValue(2),
 					Operator: "=",
 				},
 			},
@@ -431,7 +431,7 @@ var procedureExecuteStatementTests = []struct {
 			WhereClause: parser.WhereClause{
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-					RHS:      parser.NewInteger(2),
+					RHS:      parser.NewIntegerValue(2),
 					Operator: "=",
 				},
 			},
@@ -552,7 +552,7 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.Print{
-			Value: parser.NewInteger(12345),
+			Value: parser.NewIntegerValue(12345),
 		},
 		Logs: []string{
 			"12345",
@@ -562,7 +562,7 @@ var procedureExecuteStatementTests = []struct {
 		Input: parser.Printf{
 			Format: "value: %s",
 			Values: []parser.Expression{
-				parser.NewInteger(12345),
+				parser.NewIntegerValue(12345),
 			},
 		},
 		Logs: []string{
@@ -571,7 +571,7 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.Source{
-			FilePath: parser.NewString(GetTestFilePath("source.sql")),
+			FilePath: parser.NewStringValue(GetTestFilePath("source.sql")),
 		},
 		Logs: []string{
 			"'external executable file'",
@@ -580,7 +580,7 @@ var procedureExecuteStatementTests = []struct {
 	{
 		Input: parser.Trigger{
 			Token:   parser.ERROR,
-			Message: parser.NewString("user error"),
+			Message: parser.NewStringValue("user error"),
 			Code:    parser.NewInteger(200),
 		},
 		Error:     "[L:- C:-] user error",
@@ -589,7 +589,7 @@ var procedureExecuteStatementTests = []struct {
 	{
 		Input: parser.Trigger{
 			Token:   parser.ERROR,
-			Message: parser.NewInteger(200),
+			Message: parser.NewIntegerValue(200),
 		},
 		Error:     "[L:- C:-] ",
 		ErrorCode: 200,
@@ -655,9 +655,9 @@ var procedureIfStmtTests = []struct {
 	{
 		Name: "If Statement",
 		Stmt: parser.If{
-			Condition: parser.NewTernary(ternary.TRUE),
+			Condition: parser.NewTernaryValue(ternary.TRUE),
 			Statements: []parser.Statement{
-				parser.Print{Value: parser.NewString("1")},
+				parser.Print{Value: parser.NewStringValue("1")},
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
@@ -667,9 +667,9 @@ var procedureIfStmtTests = []struct {
 	{
 		Name: "If Statement Execute Nothing",
 		Stmt: parser.If{
-			Condition: parser.NewTernary(ternary.FALSE),
+			Condition: parser.NewTernaryValue(ternary.FALSE),
 			Statements: []parser.Statement{
-				parser.Print{Value: parser.NewString("1")},
+				parser.Print{Value: parser.NewStringValue("1")},
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
@@ -679,30 +679,30 @@ var procedureIfStmtTests = []struct {
 	{
 		Name: "If Statement Execute ElseIf",
 		Stmt: parser.If{
-			Condition: parser.NewTernary(ternary.FALSE),
+			Condition: parser.NewTernaryValue(ternary.FALSE),
 			Statements: []parser.Statement{
-				parser.Print{Value: parser.NewString("1")},
+				parser.Print{Value: parser.NewStringValue("1")},
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 			ElseIf: []parser.ProcExpr{
 				parser.ElseIf{
-					Condition: parser.NewTernary(ternary.TRUE),
+					Condition: parser.NewTernaryValue(ternary.TRUE),
 					Statements: []parser.Statement{
-						parser.Print{Value: parser.NewString("2")},
+						parser.Print{Value: parser.NewStringValue("2")},
 						parser.TransactionControl{Token: parser.COMMIT},
 					},
 				},
 				parser.ElseIf{
-					Condition: parser.NewTernary(ternary.FALSE),
+					Condition: parser.NewTernaryValue(ternary.FALSE),
 					Statements: []parser.Statement{
-						parser.Print{Value: parser.NewString("3")},
+						parser.Print{Value: parser.NewStringValue("3")},
 						parser.TransactionControl{Token: parser.COMMIT},
 					},
 				},
 			},
 			Else: parser.Else{
 				Statements: []parser.Statement{
-					parser.Print{Value: parser.NewString("4")},
+					parser.Print{Value: parser.NewStringValue("4")},
 					parser.TransactionControl{Token: parser.COMMIT},
 				},
 			},
@@ -713,30 +713,30 @@ var procedureIfStmtTests = []struct {
 	{
 		Name: "If Statement Execute Else",
 		Stmt: parser.If{
-			Condition: parser.NewTernary(ternary.FALSE),
+			Condition: parser.NewTernaryValue(ternary.FALSE),
 			Statements: []parser.Statement{
-				parser.Print{Value: parser.NewString("1")},
+				parser.Print{Value: parser.NewStringValue("1")},
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 			ElseIf: []parser.ProcExpr{
 				parser.ElseIf{
-					Condition: parser.NewTernary(ternary.FALSE),
+					Condition: parser.NewTernaryValue(ternary.FALSE),
 					Statements: []parser.Statement{
-						parser.Print{Value: parser.NewString("2")},
+						parser.Print{Value: parser.NewStringValue("2")},
 						parser.TransactionControl{Token: parser.COMMIT},
 					},
 				},
 				parser.ElseIf{
-					Condition: parser.NewTernary(ternary.FALSE),
+					Condition: parser.NewTernaryValue(ternary.FALSE),
 					Statements: []parser.Statement{
-						parser.Print{Value: parser.NewString("3")},
+						parser.Print{Value: parser.NewStringValue("3")},
 						parser.TransactionControl{Token: parser.COMMIT},
 					},
 				},
 			},
 			Else: parser.Else{
 				Statements: []parser.Statement{
-					parser.Print{Value: parser.NewString("4")},
+					parser.Print{Value: parser.NewStringValue("4")},
 					parser.TransactionControl{Token: parser.COMMIT},
 				},
 			},
@@ -749,7 +749,7 @@ var procedureIfStmtTests = []struct {
 		Stmt: parser.If{
 			Condition: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Statements: []parser.Statement{
-				parser.Print{Value: parser.NewString("1")},
+				parser.Print{Value: parser.NewStringValue("1")},
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
@@ -798,7 +798,7 @@ var procedureWhileTests = []struct {
 		Stmt: parser.While{
 			Condition: parser.Comparison{
 				LHS:      parser.Variable{Name: "@while_test"},
-				RHS:      parser.NewInteger(3),
+				RHS:      parser.NewIntegerValue(3),
 				Operator: "<",
 			},
 			Statements: []parser.Statement{
@@ -806,7 +806,7 @@ var procedureWhileTests = []struct {
 					Variable: parser.Variable{Name: "@while_test"},
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "@while_test"},
-						RHS:      parser.NewInteger(1),
+						RHS:      parser.NewIntegerValue(1),
 						Operator: '+',
 					},
 				},
@@ -822,7 +822,7 @@ var procedureWhileTests = []struct {
 		Stmt: parser.While{
 			Condition: parser.Comparison{
 				LHS:      parser.Variable{Name: "@while_test_count"},
-				RHS:      parser.NewInteger(3),
+				RHS:      parser.NewIntegerValue(3),
 				Operator: "<",
 			},
 			Statements: []parser.Statement{
@@ -830,7 +830,7 @@ var procedureWhileTests = []struct {
 					Variable: parser.Variable{Name: "@while_test_count"},
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "@while_test_count"},
-						RHS:      parser.NewInteger(1),
+						RHS:      parser.NewIntegerValue(1),
 						Operator: '+',
 					},
 				},
@@ -838,14 +838,14 @@ var procedureWhileTests = []struct {
 					Variable: parser.Variable{Name: "@while_test"},
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "@while_test"},
-						RHS:      parser.NewInteger(1),
+						RHS:      parser.NewIntegerValue(1),
 						Operator: '+',
 					},
 				},
 				parser.If{
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "@while_test_count"},
-						RHS:      parser.NewInteger(2),
+						RHS:      parser.NewIntegerValue(2),
 						Operator: "=",
 					},
 					Statements: []parser.Statement{
@@ -864,7 +864,7 @@ var procedureWhileTests = []struct {
 		Stmt: parser.While{
 			Condition: parser.Comparison{
 				LHS:      parser.Variable{Name: "@while_test_count"},
-				RHS:      parser.NewInteger(3),
+				RHS:      parser.NewIntegerValue(3),
 				Operator: "<",
 			},
 			Statements: []parser.Statement{
@@ -872,7 +872,7 @@ var procedureWhileTests = []struct {
 					Variable: parser.Variable{Name: "@while_test_count"},
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "@while_test_count"},
-						RHS:      parser.NewInteger(1),
+						RHS:      parser.NewIntegerValue(1),
 						Operator: '+',
 					},
 				},
@@ -880,14 +880,14 @@ var procedureWhileTests = []struct {
 					Variable: parser.Variable{Name: "@while_test"},
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "@while_test"},
-						RHS:      parser.NewInteger(1),
+						RHS:      parser.NewIntegerValue(1),
 						Operator: '+',
 					},
 				},
 				parser.If{
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "@while_test_count"},
-						RHS:      parser.NewInteger(2),
+						RHS:      parser.NewIntegerValue(2),
 						Operator: "=",
 					},
 					Statements: []parser.Statement{
@@ -906,7 +906,7 @@ var procedureWhileTests = []struct {
 		Stmt: parser.While{
 			Condition: parser.Comparison{
 				LHS:      parser.Variable{Name: "@while_test_count"},
-				RHS:      parser.NewInteger(3),
+				RHS:      parser.NewIntegerValue(3),
 				Operator: "<",
 			},
 			Statements: []parser.Statement{
@@ -914,7 +914,7 @@ var procedureWhileTests = []struct {
 					Variable: parser.Variable{Name: "@while_test_count"},
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "@while_test_count"},
-						RHS:      parser.NewInteger(1),
+						RHS:      parser.NewIntegerValue(1),
 						Operator: '+',
 					},
 				},
@@ -922,14 +922,14 @@ var procedureWhileTests = []struct {
 					Variable: parser.Variable{Name: "@while_test"},
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "@while_test"},
-						RHS:      parser.NewInteger(1),
+						RHS:      parser.NewIntegerValue(1),
 						Operator: '+',
 					},
 				},
 				parser.If{
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "@while_test_count"},
-						RHS:      parser.NewInteger(2),
+						RHS:      parser.NewIntegerValue(2),
 						Operator: "=",
 					},
 					Statements: []parser.Statement{
@@ -956,7 +956,7 @@ var procedureWhileTests = []struct {
 					Variable: parser.Variable{Name: "@while_test"},
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "@while_test"},
-						RHS:      parser.NewInteger(1),
+						RHS:      parser.NewIntegerValue(1),
 						Operator: '+',
 					},
 				},
@@ -971,7 +971,7 @@ var procedureWhileTests = []struct {
 		Stmt: parser.While{
 			Condition: parser.Comparison{
 				LHS:      parser.Variable{Name: "@while_test"},
-				RHS:      parser.NewInteger(3),
+				RHS:      parser.NewIntegerValue(3),
 				Operator: "<",
 			},
 			Statements: []parser.Statement{
@@ -1065,7 +1065,7 @@ var procedureWhileInCursorTests = []struct {
 				parser.If{
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "@var1"},
-						RHS:      parser.NewInteger(2),
+						RHS:      parser.NewIntegerValue(2),
 						Operator: "=",
 					},
 					Statements: []parser.Statement{
@@ -1091,7 +1091,7 @@ var procedureWhileInCursorTests = []struct {
 				parser.If{
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "@var1"},
-						RHS:      parser.NewInteger(2),
+						RHS:      parser.NewIntegerValue(2),
 						Operator: "=",
 					},
 					Statements: []parser.Statement{
@@ -1117,7 +1117,7 @@ var procedureWhileInCursorTests = []struct {
 				parser.If{
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "@var1"},
-						RHS:      parser.NewInteger(2),
+						RHS:      parser.NewIntegerValue(2),
 						Operator: "=",
 					},
 					Statements: []parser.Statement{

@@ -112,7 +112,7 @@ var userDefinedFunctionListDeclareAggregateTests = []struct {
 				},
 				parser.VariableAssignment{
 					Variable: parser.Variable{Name: "@arg2"},
-					Value:    parser.NewInteger(1),
+					Value:    parser.NewIntegerValue(1),
 				},
 			},
 			Statements: []parser.Statement{
@@ -128,7 +128,7 @@ var userDefinedFunctionListDeclareAggregateTests = []struct {
 						{Name: "@arg2"},
 					},
 					Defaults: map[string]parser.Expression{
-						"@arg2": parser.NewInteger(1),
+						"@arg2": parser.NewIntegerValue(1),
 					},
 					IsAggregate:  true,
 					RequiredArgs: 1,
@@ -620,7 +620,7 @@ var userDefinedFunctionExecuteTests = []struct {
 				{Name: "@arg2"},
 			},
 			Defaults: map[string]parser.Expression{
-				"@arg2": parser.NewInteger(3),
+				"@arg2": parser.NewIntegerValue(3),
 			},
 			RequiredArgs: 1,
 			Statements: []parser.Statement{
@@ -859,7 +859,7 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 						parser.If{
 							Condition: parser.Is{
 								LHS: parser.Variable{Name: "@fetch"},
-								RHS: parser.NewNull(),
+								RHS: parser.NewNullValue(),
 							},
 							Statements: []parser.Statement{
 								parser.FlowControl{Token: parser.CONTINUE},
@@ -868,7 +868,7 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 						parser.If{
 							Condition: parser.Is{
 								LHS: parser.Variable{Name: "@value"},
-								RHS: parser.NewNull(),
+								RHS: parser.NewNullValue(),
 							},
 							Statements: []parser.Statement{
 								parser.VariableSubstitution{
@@ -930,7 +930,7 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 						parser.If{
 							Condition: parser.Is{
 								LHS: parser.Variable{Name: "@fetch"},
-								RHS: parser.NewNull(),
+								RHS: parser.NewNullValue(),
 							},
 							Statements: []parser.Statement{
 								parser.FlowControl{Token: parser.CONTINUE},
@@ -939,7 +939,7 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 						parser.If{
 							Condition: parser.Is{
 								LHS: parser.Variable{Name: "@value"},
-								RHS: parser.NewNull(),
+								RHS: parser.NewNullValue(),
 							},
 							Statements: []parser.Statement{
 								parser.VariableSubstitution{
@@ -963,7 +963,7 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 				parser.If{
 					Condition: parser.Is{
 						LHS: parser.Variable{Name: "@value"},
-						RHS: parser.NewNull(),
+						RHS: parser.NewNullValue(),
 					},
 					Statements: []parser.Statement{
 						parser.VariableSubstitution{
@@ -1014,7 +1014,7 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 						parser.If{
 							Condition: parser.Is{
 								LHS: parser.Variable{Name: "@fetch"},
-								RHS: parser.NewNull(),
+								RHS: parser.NewNullValue(),
 							},
 							Statements: []parser.Statement{
 								parser.FlowControl{Token: parser.CONTINUE},
@@ -1023,7 +1023,7 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 						parser.If{
 							Condition: parser.Is{
 								LHS: parser.Variable{Name: "@value"},
-								RHS: parser.NewNull(),
+								RHS: parser.NewNullValue(),
 							},
 							Statements: []parser.Statement{
 								parser.VariableSubstitution{
@@ -1099,7 +1099,7 @@ var userDefinedFunctionCheckArgsLenTests = []struct {
 				{Name: "@arg2"},
 			},
 			Defaults: map[string]parser.Expression{
-				"@arg2": parser.NewInteger(3),
+				"@arg2": parser.NewIntegerValue(3),
 			},
 			RequiredArgs: 1,
 			Statements:   []parser.Statement{},
@@ -1130,7 +1130,7 @@ var userDefinedFunctionCheckArgsLenTests = []struct {
 				{Name: "@arg2"},
 			},
 			Defaults: map[string]parser.Expression{
-				"@arg2": parser.NewInteger(3),
+				"@arg2": parser.NewIntegerValue(3),
 			},
 			RequiredArgs: 1,
 			Statements:   []parser.Statement{},
@@ -1147,7 +1147,7 @@ var userDefinedFunctionCheckArgsLenTests = []struct {
 				{Name: "@arg2"},
 			},
 			Defaults: map[string]parser.Expression{
-				"@arg2": parser.NewInteger(3),
+				"@arg2": parser.NewIntegerValue(3),
 			},
 			RequiredArgs: 1,
 			Statements:   []parser.Statement{},

@@ -14,6 +14,20 @@ import (
 
 var EOF error = io.EOF
 
+type Field []byte
+
+func NewField(s string) Field {
+	return []byte(s)
+}
+
+func (f Field) ToPrimary() parser.Primary {
+	if f == nil {
+		return parser.NewNull()
+	} else {
+		return parser.NewString(string(f))
+	}
+}
+
 type Reader struct {
 	Delimiter   rune
 	WithoutNull bool
@@ -54,12 +68,12 @@ func (r *Reader) ReadHeader() ([]string, error) {
 
 	header := make([]string, len(record))
 	for i, v := range record {
-		header[i] = strings.TrimSpace(v.(parser.String).Value())
+		header[i] = strings.TrimSpace(string(v))
 	}
 	return header, nil
 }
 
-func (r *Reader) Read() ([]parser.Primary, error) {
+func (r *Reader) Read() ([]Field, error) {
 	record, err := r.parseRecord(r.WithoutNull)
 	if err != nil {
 		return nil, err
@@ -67,8 +81,8 @@ func (r *Reader) Read() ([]parser.Primary, error) {
 	return record, nil
 }
 
-func (r *Reader) ReadAll() ([][]parser.Primary, error) {
-	records := [][]parser.Primary{}
+func (r *Reader) ReadAll() ([][]Field, error) {
+	records := [][]Field{}
 
 	for {
 		record, err := r.Read()
@@ -84,7 +98,7 @@ func (r *Reader) ReadAll() ([][]parser.Primary, error) {
 	return records, nil
 }
 
-func (r *Reader) parseRecord(withoutNull bool) ([]parser.Primary, error) {
+func (r *Reader) parseRecord(withoutNull bool) ([]Field, error) {
 	r.recordBuf.Reset()
 	r.fieldStartPos = r.fieldStartPos[:0]
 	r.fieldQuoted = r.fieldQuoted[:0]
@@ -129,8 +143,9 @@ func (r *Reader) parseRecord(withoutNull bool) ([]parser.Primary, error) {
 		return nil, r.newError("wrong number of fields in line")
 	}
 
-	record := make([]parser.Primary, 0, r.FieldsPerRecord)
-	recordStr := r.recordBuf.String()
+	record := make([]Field, 0, r.FieldsPerRecord)
+	recordStr := make([]byte, r.recordBuf.Len())
+	copy(recordStr, r.recordBuf.Bytes())
 	for i, pos := range r.fieldStartPos {
 		var endPos int
 		if i == len(r.fieldStartPos)-1 {
@@ -140,9 +155,9 @@ func (r *Reader) parseRecord(withoutNull bool) ([]parser.Primary, error) {
 		}
 
 		if !withoutNull && pos == endPos && !r.fieldQuoted[i] {
-			record = append(record, parser.NewNull())
+			record = append(record, nil)
 		} else {
-			record = append(record, parser.NewString(recordStr[pos:endPos]))
+			record = append(record, recordStr[pos:endPos])
 		}
 	}
 

@@ -30,7 +30,7 @@ var inlineTablesListSetTests = []struct {
 						Fields: []parser.Expression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
-							parser.Field{Object: parser.NewInteger(1)},
+							parser.Field{Object: parser.NewIntegerValue(1)},
 						},
 					},
 					FromClause: parser.FromClause{
@@ -229,7 +229,7 @@ var inlineTablesListLoadTests = []struct {
 								SelectClause: parser.SelectClause{
 									Select: "select",
 									Fields: []parser.Expression{
-										parser.Field{Object: parser.NewInteger(1)},
+										parser.Field{Object: parser.NewIntegerValue(1)},
 									},
 								},
 							},
@@ -241,7 +241,7 @@ var inlineTablesListLoadTests = []struct {
 										parser.Field{
 											Object: parser.Arithmetic{
 												LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
-												RHS:      parser.NewInteger(1),
+												RHS:      parser.NewIntegerValue(1),
 												Operator: '+',
 											},
 										},
@@ -255,7 +255,7 @@ var inlineTablesListLoadTests = []struct {
 								WhereClause: parser.WhereClause{
 									Filter: parser.Comparison{
 										LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
-										RHS:      parser.NewInteger(3),
+										RHS:      parser.NewIntegerValue(3),
 										Operator: "<",
 									},
 								},
@@ -440,7 +440,7 @@ var inlineTablesSetTests = []struct {
 						Fields: []parser.Expression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
-							parser.Field{Object: parser.NewInteger(1)},
+							parser.Field{Object: parser.NewIntegerValue(1)},
 						},
 					},
 					FromClause: parser.FromClause{
@@ -490,7 +490,7 @@ var inlineTablesSetTests = []struct {
 						SelectClause: parser.SelectClause{
 							Select: "select",
 							Fields: []parser.Expression{
-								parser.Field{Object: parser.NewInteger(1)},
+								parser.Field{Object: parser.NewIntegerValue(1)},
 							},
 						},
 					},
@@ -502,7 +502,7 @@ var inlineTablesSetTests = []struct {
 								parser.Field{
 									Object: parser.Arithmetic{
 										LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
-										RHS:      parser.NewInteger(1),
+										RHS:      parser.NewIntegerValue(1),
 										Operator: '+',
 									},
 								},
@@ -516,7 +516,7 @@ var inlineTablesSetTests = []struct {
 						WhereClause: parser.WhereClause{
 							Filter: parser.Comparison{
 								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
-								RHS:      parser.NewInteger(3),
+								RHS:      parser.NewIntegerValue(3),
 								Operator: "<",
 							},
 						},

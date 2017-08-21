@@ -113,67 +113,65 @@ func (f *Filter) Evaluate(expr parser.Expression) (parser.Primary, error) {
 		return parser.NewTernary(ternary.TRUE), nil
 	}
 
-	var primary parser.Primary
+	var value parser.Primary
 	var err error
 
-	if parser.IsPrimary(expr) {
-		primary = expr.(parser.Primary)
-	} else {
-		switch expr.(type) {
-		case parser.Parentheses:
-			primary, err = f.Evaluate(expr.(parser.Parentheses).Expr)
-		case parser.FieldReference, parser.ColumnNumber:
-			primary, err = f.evalFieldReference(expr)
-		case parser.Arithmetic:
-			primary, err = f.evalArithmetic(expr.(parser.Arithmetic))
-		case parser.UnaryArithmetic:
-			primary, err = f.evalUnaryArithmetic(expr.(parser.UnaryArithmetic))
-		case parser.Concat:
-			primary, err = f.evalConcat(expr.(parser.Concat))
-		case parser.Comparison:
-			primary, err = f.evalComparison(expr.(parser.Comparison))
-		case parser.Is:
-			primary, err = f.evalIs(expr.(parser.Is))
-		case parser.Between:
-			primary, err = f.evalBetween(expr.(parser.Between))
-		case parser.Like:
-			primary, err = f.evalLike(expr.(parser.Like))
-		case parser.In:
-			primary, err = f.evalIn(expr.(parser.In))
-		case parser.Any:
-			primary, err = f.evalAny(expr.(parser.Any))
-		case parser.All:
-			primary, err = f.evalAll(expr.(parser.All))
-		case parser.Exists:
-			primary, err = f.evalExists(expr.(parser.Exists))
-		case parser.Subquery:
-			primary, err = f.evalSubqueryForSingleValue(expr.(parser.Subquery))
-		case parser.Function:
-			primary, err = f.evalFunction(expr.(parser.Function))
-		case parser.AggregateFunction:
-			primary, err = f.evalAggregateFunction(expr.(parser.AggregateFunction))
-		case parser.ListAgg:
-			primary, err = f.evalListAgg(expr.(parser.ListAgg))
-		case parser.Case:
-			primary, err = f.evalCase(expr.(parser.Case))
-		case parser.Logic:
-			primary, err = f.evalLogic(expr.(parser.Logic))
-		case parser.UnaryLogic:
-			primary, err = f.evalUnaryLogic(expr.(parser.UnaryLogic))
-		case parser.Variable:
-			primary, err = f.VariablesList.Get(expr.(parser.Variable))
-		case parser.VariableSubstitution:
-			primary, err = f.VariablesList.Substitute(expr.(parser.VariableSubstitution), f)
-		case parser.CursorStatus:
-			primary, err = f.evalCursorStatus(expr.(parser.CursorStatus))
-		case parser.CursorAttrebute:
-			primary, err = f.evalCursorAttribute(expr.(parser.CursorAttrebute))
-		default:
-			return nil, NewSyntaxErrorFromExpr(expr)
-		}
+	switch expr.(type) {
+	case parser.PrimitiveType:
+		return expr.(parser.PrimitiveType).Value, nil
+	case parser.Parentheses:
+		value, err = f.Evaluate(expr.(parser.Parentheses).Expr)
+	case parser.FieldReference, parser.ColumnNumber:
+		value, err = f.evalFieldReference(expr)
+	case parser.Arithmetic:
+		value, err = f.evalArithmetic(expr.(parser.Arithmetic))
+	case parser.UnaryArithmetic:
+		value, err = f.evalUnaryArithmetic(expr.(parser.UnaryArithmetic))
+	case parser.Concat:
+		value, err = f.evalConcat(expr.(parser.Concat))
+	case parser.Comparison:
+		value, err = f.evalComparison(expr.(parser.Comparison))
+	case parser.Is:
+		value, err = f.evalIs(expr.(parser.Is))
+	case parser.Between:
+		value, err = f.evalBetween(expr.(parser.Between))
+	case parser.Like:
+		value, err = f.evalLike(expr.(parser.Like))
+	case parser.In:
+		value, err = f.evalIn(expr.(parser.In))
+	case parser.Any:
+		value, err = f.evalAny(expr.(parser.Any))
+	case parser.All:
+		value, err = f.evalAll(expr.(parser.All))
+	case parser.Exists:
+		value, err = f.evalExists(expr.(parser.Exists))
+	case parser.Subquery:
+		value, err = f.evalSubqueryForSingleValue(expr.(parser.Subquery))
+	case parser.Function:
+		value, err = f.evalFunction(expr.(parser.Function))
+	case parser.AggregateFunction:
+		value, err = f.evalAggregateFunction(expr.(parser.AggregateFunction))
+	case parser.ListAgg:
+		value, err = f.evalListAgg(expr.(parser.ListAgg))
+	case parser.Case:
+		value, err = f.evalCase(expr.(parser.Case))
+	case parser.Logic:
+		value, err = f.evalLogic(expr.(parser.Logic))
+	case parser.UnaryLogic:
+		value, err = f.evalUnaryLogic(expr.(parser.UnaryLogic))
+	case parser.Variable:
+		value, err = f.VariablesList.Get(expr.(parser.Variable))
+	case parser.VariableSubstitution:
+		value, err = f.VariablesList.Substitute(expr.(parser.VariableSubstitution), f)
+	case parser.CursorStatus:
+		value, err = f.evalCursorStatus(expr.(parser.CursorStatus))
+	case parser.CursorAttrebute:
+		value, err = f.evalCursorAttribute(expr.(parser.CursorAttrebute))
+	default:
+		return nil, NewSyntaxErrorFromExpr(expr)
 	}
 
-	return primary, err
+	return value, err
 }
 
 func (f *Filter) evalFieldReference(expr parser.Expression) (parser.Primary, error) {
@@ -594,11 +592,13 @@ func (f *Filter) evalAggregateFunction(expr parser.AggregateFunction) (parser.Pr
 
 	listExpr := expr.Args[0]
 	if _, ok := listExpr.(parser.AllColumns); ok {
-		listExpr = parser.NewInteger(1)
+		listExpr = parser.NewIntegerValue(1)
 	}
 
-	if uname == "COUNT" && parser.IsPrimary(listExpr) {
-		return parser.NewInteger(int64(f.Records[0].View.Records[f.Records[0].RecordIndex].GroupLen())), nil
+	if uname == "COUNT" {
+		if _, ok := listExpr.(parser.PrimitiveType); ok {
+			return parser.NewInteger(int64(f.Records[0].View.Records[f.Records[0].RecordIndex].GroupLen())), nil
+		}
 	}
 
 	view := NewViewFromGroupedRecord(f.Records[0])

@@ -95,6 +95,9 @@ func RecordRange(cpuIndex int, totalLen int, numberOfCPU int) (int, int) {
 
 func NumberOfCPU(recordLen int) int {
 	num := cmd.GetFlags().CPU
+	if 2 < num {
+		num = num - 1
+	}
 	if recordLen < 150 || recordLen < num {
 		num = 1
 	}
@@ -105,39 +108,43 @@ func SerializeComparisonKeys(values []parser.Primary) string {
 	list := make([]string, len(values))
 
 	for i, value := range values {
-		if parser.IsNull(value) {
-			list[i] = "[N]"
-		} else if in := parser.PrimaryToInteger(value); !parser.IsNull(in) {
-			integer := in.(parser.Integer)
-			var b string
-			switch integer.Value() {
-			case 0:
-				b = "[B]" + strconv.FormatBool(false)
-			case 1:
-				b = "[B]" + strconv.FormatBool(true)
-			}
-			list[i] = "[I]" + integer.String() + b
-		} else if f := parser.PrimaryToFloat(value); !parser.IsNull(f) {
-			list[i] = "[F]" + f.(parser.Float).String()
-		} else if dt := parser.PrimaryToDatetime(value); !parser.IsNull(dt) {
-			list[i] = "[D]" + dt.(parser.Datetime).Format(time.RFC3339Nano)
-		} else if b := parser.PrimaryToBoolean(value); !parser.IsNull(b) {
-			boolean := b.(parser.Boolean)
-			var intliteral string
-			if boolean.Value() {
-				intliteral = "1"
-			} else {
-				intliteral = "0"
-			}
-			list[i] = "[I]" + intliteral + "[B]" + boolean.String()
-		} else if s, ok := value.(parser.String); ok {
-			list[i] = "[S]" + strings.ToUpper(strings.TrimSpace(s.Value()))
-		} else {
-			list[i] = "[N]"
-		}
+		list[i] = SerializeKey(value)
 	}
 
 	return strings.Join(list, ":")
+}
+
+func SerializeKey(value parser.Primary) string {
+	if parser.IsNull(value) {
+		return "[N]"
+	} else if in := parser.PrimaryToInteger(value); !parser.IsNull(in) {
+		integer := in.(parser.Integer)
+		var b string
+		switch integer.Value() {
+		case 0:
+			b = "[B]" + strconv.FormatBool(false)
+		case 1:
+			b = "[B]" + strconv.FormatBool(true)
+		}
+		return "[I]" + integer.String() + b
+	} else if f := parser.PrimaryToFloat(value); !parser.IsNull(f) {
+		return "[F]" + f.(parser.Float).String()
+	} else if dt := parser.PrimaryToDatetime(value); !parser.IsNull(dt) {
+		return "[D]" + dt.(parser.Datetime).Format(time.RFC3339Nano)
+	} else if b := parser.PrimaryToBoolean(value); !parser.IsNull(b) {
+		boolean := b.(parser.Boolean)
+		var intliteral string
+		if boolean.Value() {
+			intliteral = "1"
+		} else {
+			intliteral = "0"
+		}
+		return "[I]" + intliteral + "[B]" + boolean.String()
+	} else if s, ok := value.(parser.String); ok {
+		return "[S]" + strings.ToUpper(strings.TrimSpace(s.Value()))
+	} else {
+		return "[N]"
+	}
 }
 
 func FormatString(format string, args []parser.Primary) (string, error) {

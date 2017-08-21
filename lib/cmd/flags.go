@@ -332,8 +332,11 @@ func ParseEncoding(s string) (Encoding, error) {
 }
 
 func SetCPU(i int) {
-	if i < 1 {
-		i = 1
+	if i <= 0 {
+		i = runtime.NumCPU() / 2
+		if i < 1 {
+			i = 1
+		}
 	} else if runtime.NumCPU() < i {
 		i = runtime.NumCPU()
 	}

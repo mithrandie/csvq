@@ -67,7 +67,7 @@ var variablesListSubstituteTests = []struct {
 		Name: "VariablesList Substitute",
 		Expr: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "@var1"},
-			Value:    parser.NewInteger(3),
+			Value:    parser.NewIntegerValue(3),
 		},
 		List: VariablesList{
 			Variables{
@@ -83,7 +83,7 @@ var variablesListSubstituteTests = []struct {
 		Name: "VariablesList Substitute Variable Undefined Error",
 		Expr: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "var2"},
-			Value:    parser.NewInteger(3),
+			Value:    parser.NewIntegerValue(3),
 		},
 		Error: "[L:- C:-] variable var2 is undefined",
 	},
@@ -203,7 +203,7 @@ var variablesDeclareTests = []variableTests{
 			Assignments: []parser.Expression{
 				parser.VariableAssignment{
 					Variable: parser.Variable{Name: "@var2"},
-					Value:    parser.NewInteger(1),
+					Value:    parser.NewIntegerValue(1),
 				},
 			},
 		},
@@ -218,7 +218,7 @@ var variablesDeclareTests = []variableTests{
 			Assignments: []parser.Expression{
 				parser.VariableAssignment{
 					Variable: parser.Variable{Name: "@var2"},
-					Value:    parser.NewInteger(1),
+					Value:    parser.NewIntegerValue(1),
 				},
 			},
 		},
@@ -270,7 +270,7 @@ var variablesSubstituteTests = []variableTests{
 		Name: "Substitute Variable",
 		Expr: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "var1"},
-			Value:    parser.NewInteger(2),
+			Value:    parser.NewIntegerValue(2),
 		},
 		Result: Variables{
 			"var1": parser.NewInteger(2),
@@ -280,7 +280,7 @@ var variablesSubstituteTests = []variableTests{
 		Name: "Substitute Variable Undefined Error",
 		Expr: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "var2"},
-			Value:    parser.NewInteger(2),
+			Value:    parser.NewIntegerValue(2),
 		},
 		Error: "[L:- C:-] variable var2 is undefined",
 	},

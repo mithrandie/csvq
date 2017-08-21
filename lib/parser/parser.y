@@ -9,7 +9,6 @@ package parser
     expressions []Expression
     procexpr    ProcExpr
     procexprs   []ProcExpr
-    primary     Primary
     identifier  Identifier
     text        String
     integer     Integer
@@ -69,7 +68,7 @@ package parser
 %type<expression>  with_clause
 %type<expression>  inline_table
 %type<expressions> inline_tables
-%type<primary>     primary
+%type<expression>  primitive_type
 %type<expression>  field_reference
 %type<expression>  value
 %type<expression>  wildcard
@@ -378,7 +377,7 @@ in_function_flow_control_statement
     }
     | RETURN statement_terminal
     {
-        $$ = Return{Value: NewNull()}
+        $$ = Return{Value: NewNullValue()}
     }
     | RETURN value statement_terminal
     {
@@ -668,9 +667,9 @@ cursor_status
     }
 
 command_statement
-    : SET FLAG '=' primary statement_terminal
+    : SET FLAG '=' primitive_type statement_terminal
     {
-        $$ = SetFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal, Value: $4}
+        $$ = SetFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal, Value: $4.(PrimitiveType).Value}
     }
     | PRINT value statement_terminal
     {
@@ -884,30 +883,30 @@ inline_tables
         $$ = append([]Expression{$1}, $3...)
     }
 
-primary
+primitive_type
     : text
     {
-        $$ = $1
+        $$ = NewPrimitiveType($1)
     }
     | integer
     {
-        $$ = $1
+        $$ = NewPrimitiveType($1)
     }
     | float
     {
-        $$ = $1
+        $$ = NewPrimitiveType($1)
     }
     | ternary
     {
-        $$ = $1
+        $$ = NewPrimitiveType($1)
     }
     | datetime
     {
-        $$ = $1
+        $$ = NewPrimitiveType($1)
     }
     | null
     {
-        $$ = $1
+        $$ = NewPrimitiveType($1)
     }
 
 field_reference
@@ -937,7 +936,7 @@ value
     {
         $$ = $1
     }
-    | primary
+    | primitive_type
     {
         $$ = $1
     }
@@ -1118,11 +1117,11 @@ comparison
     }
     | value IS negation ternary
     {
-        $$ = Is{Is: $2.Literal, LHS: $1, RHS: $4, Negation: $3}
+        $$ = Is{Is: $2.Literal, LHS: $1, RHS: NewPrimitiveType($4), Negation: $3}
     }
     | value IS negation null
     {
-        $$ = Is{Is: $2.Literal, LHS: $1, RHS: $4, Negation: $3}
+        $$ = Is{Is: $2.Literal, LHS: $1, RHS: NewPrimitiveType($4), Negation: $3}
     }
     | value negation BETWEEN value AND value
     {

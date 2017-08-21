@@ -3,8 +3,6 @@ package parser
 import (
 	"reflect"
 	"testing"
-
-	"github.com/mithrandie/csvq/lib/ternary"
 )
 
 var parseTests = []struct {
@@ -34,23 +32,23 @@ var parseTests = []struct {
 				SelectEntity: SelectSet{
 					LHS: SelectSet{
 						LHS: SelectEntity{
-							SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
+							SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(1)}}},
 						},
 						Operator: Token{Token: UNION, Literal: "union", Line: 1, Char: 10},
 						All:      Token{Token: ALL, Literal: "all", Line: 1, Char: 16},
 						RHS: SelectSet{
 							LHS: SelectEntity{
-								SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 20}, Select: "select", Fields: []Expression{Field{Object: NewInteger(2)}}},
+								SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 20}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(2)}}},
 							},
 							Operator: Token{Token: INTERSECT, Literal: "intersect", Line: 1, Char: 29},
 							RHS: SelectEntity{
-								SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 39}, Select: "select", Fields: []Expression{Field{Object: NewInteger(3)}}},
+								SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 39}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(3)}}},
 							},
 						},
 					},
 					Operator: Token{Token: EXCEPT, Literal: "except", Line: 1, Char: 48},
 					RHS: SelectEntity{
-						SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 55}, Select: "select", Fields: []Expression{Field{Object: NewInteger(4)}}},
+						SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 55}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(4)}}},
 					},
 				},
 			},
@@ -62,14 +60,14 @@ var parseTests = []struct {
 			SelectQuery{
 				SelectEntity: SelectSet{
 					LHS: SelectEntity{
-						SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
+						SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(1)}}},
 					},
 					Operator: Token{Token: UNION, Literal: "union", Line: 1, Char: 10},
 					RHS: Subquery{
 						BaseExpr: &BaseExpr{line: 1, char: 16},
 						Query: SelectQuery{
 							SelectEntity: SelectEntity{
-								SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 17}, Select: "select", Fields: []Expression{Field{Object: NewInteger(2)}}},
+								SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 17}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(2)}}},
 							},
 						},
 					},
@@ -87,7 +85,7 @@ var parseTests = []struct {
 						Select:   "select",
 						Fields: []Expression{
 							Field{
-								Object: NewInteger(1),
+								Object: NewIntegerValue(1),
 								As:     "as",
 								Alias:  Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "a"},
 							},
@@ -126,7 +124,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(1)}}},
 					FromClause: FromClause{
 						From: "from",
 						Tables: []Expression{
@@ -138,7 +136,7 @@ var parseTests = []struct {
 									BaseExpr: &BaseExpr{line: 1, char: 23},
 									Query: SelectQuery{
 										SelectEntity: SelectEntity{
-											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 24}, Select: "select", Fields: []Expression{Field{Object: NewInteger(2)}}},
+											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 24}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(2)}}},
 											FromClause:   FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
 										},
 									},
@@ -155,7 +153,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(1)}}},
 					FromClause: FromClause{
 						From: "from",
 						Tables: []Expression{
@@ -168,7 +166,7 @@ var parseTests = []struct {
 									BaseExpr: &BaseExpr{line: 1, char: 29},
 									Query: SelectQuery{
 										SelectEntity: SelectEntity{
-											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 30}, Select: "select", Fields: []Expression{Field{Object: NewInteger(2)}}},
+											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 30}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(2)}}},
 											FromClause:   FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
 										},
 									},
@@ -186,7 +184,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(1)}}},
 					FromClause: FromClause{
 						From: "from",
 						Tables: []Expression{
@@ -200,7 +198,7 @@ var parseTests = []struct {
 									BaseExpr: &BaseExpr{line: 1, char: 32},
 									Query: SelectQuery{
 										SelectEntity: SelectEntity{
-											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 33}, Select: "select", Fields: []Expression{Field{Object: NewInteger(2)}}},
+											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 33}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(2)}}},
 											FromClause:   FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
 										},
 									},
@@ -231,14 +229,14 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(1)}}},
 					FromClause:   FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
 					WhereClause: WhereClause{
 						Where: "where",
 						Filter: Comparison{
-							LHS:      NewInteger(1),
+							LHS:      NewIntegerValue(1),
 							Operator: "=",
-							RHS:      NewInteger(1),
+							RHS:      NewIntegerValue(1),
 						},
 					},
 					GroupByClause: GroupByClause{
@@ -251,9 +249,9 @@ var parseTests = []struct {
 					HavingClause: HavingClause{
 						Having: "having",
 						Filter: Comparison{
-							LHS:      NewInteger(1),
+							LHS:      NewIntegerValue(1),
 							Operator: ">",
-							RHS:      NewInteger(1),
+							RHS:      NewIntegerValue(1),
 						},
 					},
 				},
@@ -279,12 +277,12 @@ var parseTests = []struct {
 				LimitClause: LimitClause{
 					BaseExpr: &BaseExpr{line: 12, char: 2},
 					Limit:    "limit",
-					Value:    NewInteger(10),
+					Value:    NewIntegerValue(10),
 				},
 				OffsetClause: OffsetClause{
 					BaseExpr: &BaseExpr{line: 13, char: 2},
 					Offset:   "offset",
-					Value:    NewInteger(10),
+					Value:    NewIntegerValue(10),
 				},
 			},
 		},
@@ -296,13 +294,13 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(1)}}},
 					FromClause:   FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
 				},
 				LimitClause: LimitClause{
 					BaseExpr: &BaseExpr{line: 3, char: 2},
 					Limit:    "limit",
-					Value:    NewInteger(10),
+					Value:    NewIntegerValue(10),
 					Percent:  "percent",
 				},
 			},
@@ -315,13 +313,13 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(1)}}},
 					FromClause:   FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
 				},
 				LimitClause: LimitClause{
 					BaseExpr: &BaseExpr{line: 3, char: 2},
 					Limit:    "limit",
-					Value:    NewInteger(10),
+					Value:    NewIntegerValue(10),
 					With:     LimitWith{With: "with", Type: Token{Token: TIES, Literal: "ties", Line: 3, Char: 16}},
 				},
 			},
@@ -361,7 +359,7 @@ var parseTests = []struct {
 										BaseExpr: &BaseExpr{line: 1, char: 13},
 										Select:   "select",
 										Fields: []Expression{
-											Field{Object: NewInteger(1)},
+											Field{Object: NewIntegerValue(1)},
 										},
 									},
 								},
@@ -402,7 +400,7 @@ var parseTests = []struct {
 										BaseExpr: &BaseExpr{line: 1, char: 23},
 										Select:   "select",
 										Fields: []Expression{
-											Field{Object: NewInteger(1)},
+											Field{Object: NewIntegerValue(1)},
 										},
 									},
 								},
@@ -441,7 +439,7 @@ var parseTests = []struct {
 										BaseExpr: &BaseExpr{line: 1, char: 23},
 										Select:   "select",
 										Fields: []Expression{
-											Field{Object: NewInteger(1)},
+											Field{Object: NewIntegerValue(1)},
 										},
 									},
 								},
@@ -456,7 +454,7 @@ var parseTests = []struct {
 										BaseExpr: &BaseExpr{line: 1, char: 42},
 										Select:   "select",
 										Fields: []Expression{
-											Field{Object: NewInteger(2)},
+											Field{Object: NewIntegerValue(2)},
 										},
 									},
 								},
@@ -489,13 +487,13 @@ var parseTests = []struct {
 						Fields: []Expression{
 							Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "ident"}}},
 							Field{Object: ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 15}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "tbl"}, Number: NewInteger(3)}},
-							Field{Object: NewString("foo")},
-							Field{Object: NewInteger(1)},
-							Field{Object: NewFloat(1.234)},
-							Field{Object: NewTernaryFromString("true")},
-							Field{Object: NewDatetimeFromString("2010-01-01 12:00:00")},
-							Field{Object: NewNullFromString("null")},
-							Field{Object: Parentheses{Expr: NewString("bar")}},
+							Field{Object: NewStringValue("foo")},
+							Field{Object: NewIntegerValue(1)},
+							Field{Object: NewFloatValue(1.234)},
+							Field{Object: NewTernaryValueFromString("true")},
+							Field{Object: NewDatetimeValueFromString("2010-01-01 12:00:00")},
+							Field{Object: NewNullValueFromString("null")},
+							Field{Object: Parentheses{Expr: NewStringValue("bar")}},
 						},
 					},
 					FromClause: FromClause{From: "from", Tables: []Expression{Table{Object: Dual{Dual: "dual"}}}},
@@ -535,8 +533,8 @@ var parseTests = []struct {
 						Fields: []Expression{
 							Field{Object: Concat{Items: []Expression{
 								FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "ident"}},
-								NewString("foo"),
-								NewString("bar"),
+								NewStringValue("foo"),
+								NewStringValue("bar"),
 							}}},
 						},
 					},
@@ -556,7 +554,7 @@ var parseTests = []struct {
 							Field{Object: Comparison{
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
 								Operator: "=",
-								RHS:      NewInteger(1),
+								RHS:      NewIntegerValue(1),
 							}},
 						},
 					},
@@ -588,8 +586,8 @@ var parseTests = []struct {
 									BaseExpr: &BaseExpr{line: 1, char: 29},
 									Value: ValueList{
 										Values: []Expression{
-											NewInteger(1),
-											NewInteger(2),
+											NewIntegerValue(1),
+											NewIntegerValue(2),
 										},
 									},
 								},
@@ -612,7 +610,7 @@ var parseTests = []struct {
 							Field{Object: Comparison{
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
 								Operator: "<",
-								RHS:      NewInteger(1),
+								RHS:      NewIntegerValue(1),
 							}},
 						},
 					},
@@ -650,8 +648,8 @@ var parseTests = []struct {
 													BaseExpr: &BaseExpr{line: 1, char: 30},
 													Select:   "select",
 													Fields: []Expression{
-														Field{Object: NewInteger(1)},
-														Field{Object: NewInteger(2)},
+														Field{Object: NewIntegerValue(1)},
+														Field{Object: NewIntegerValue(2)},
 													},
 												},
 											},
@@ -677,7 +675,7 @@ var parseTests = []struct {
 							Field{Object: Is{
 								Is:       "is",
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
-								RHS:      NewNullFromString("null"),
+								RHS:      NewNullValueFromString("null"),
 								Negation: Token{Token: NOT, Literal: "not", Line: 1, Char: 19},
 							}},
 						},
@@ -698,7 +696,7 @@ var parseTests = []struct {
 							Field{Object: Is{
 								Is:  "is",
 								LHS: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
-								RHS: NewTernaryFromString("true"),
+								RHS: NewTernaryValueFromString("true"),
 							}},
 						},
 					},
@@ -720,11 +718,11 @@ var parseTests = []struct {
 								And:     "and",
 								LHS:     FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
 								Low: UnaryArithmetic{
-									Operand:  NewInteger(10),
+									Operand:  NewIntegerValue(10),
 									Operator: Token{Token: '-', Literal: "-", Line: 1, Char: 28},
 								},
 								High: UnaryArithmetic{
-									Operand:  NewInteger(10),
+									Operand:  NewIntegerValue(10),
 									Operator: Token{Token: '+', Literal: "+", Line: 1, Char: 36},
 								},
 								Negation: Token{Token: NOT, Literal: "not", Line: 1, Char: 16},
@@ -760,8 +758,8 @@ var parseTests = []struct {
 									BaseExpr: &BaseExpr{line: 1, char: 35},
 									Value: ValueList{
 										Values: []Expression{
-											NewInteger(1),
-											NewInteger(2),
+											NewIntegerValue(1),
+											NewIntegerValue(2),
 										},
 									},
 								},
@@ -769,8 +767,8 @@ var parseTests = []struct {
 									BaseExpr: &BaseExpr{line: 1, char: 46},
 									Value: ValueList{
 										Values: []Expression{
-											NewInteger(3),
-											NewInteger(4),
+											NewIntegerValue(3),
+											NewIntegerValue(4),
 										},
 									},
 								},
@@ -797,9 +795,9 @@ var parseTests = []struct {
 									BaseExpr: &BaseExpr{line: 1, char: 23},
 									Value: ValueList{
 										Values: []Expression{
-											NewInteger(1),
-											NewInteger(2),
-											NewInteger(3),
+											NewIntegerValue(1),
+											NewIntegerValue(2),
+											NewIntegerValue(3),
 										},
 									},
 								},
@@ -837,8 +835,8 @@ var parseTests = []struct {
 											BaseExpr: &BaseExpr{line: 1, char: 35},
 											Value: ValueList{
 												Values: []Expression{
-													NewInteger(1),
-													NewInteger(2),
+													NewIntegerValue(1),
+													NewIntegerValue(2),
 												},
 											},
 										},
@@ -846,8 +844,8 @@ var parseTests = []struct {
 											BaseExpr: &BaseExpr{line: 1, char: 43},
 											Value: ValueList{
 												Values: []Expression{
-													NewInteger(3),
-													NewInteger(4),
+													NewIntegerValue(3),
+													NewIntegerValue(4),
 												},
 											},
 										},
@@ -885,7 +883,7 @@ var parseTests = []struct {
 									BaseExpr: &BaseExpr{line: 1, char: 30},
 									Query: SelectQuery{
 										SelectEntity: SelectEntity{
-											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 31}, Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
+											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 31}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(1)}}},
 										},
 									},
 								},
@@ -908,7 +906,7 @@ var parseTests = []struct {
 							Field{Object: Like{
 								Like:     "like",
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
-								Pattern:  String{literal: "pattern"},
+								Pattern:  NewStringValue("pattern"),
 								Negation: Token{Token: NOT, Literal: "not", Line: 1, Char: 16},
 							}},
 						},
@@ -936,7 +934,7 @@ var parseTests = []struct {
 										BaseExpr: &BaseExpr{line: 1, char: 22},
 										Query: SelectQuery{
 											SelectEntity: SelectEntity{
-												SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 23}, Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
+												SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 23}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(1)}}},
 											},
 										},
 									},
@@ -975,8 +973,8 @@ var parseTests = []struct {
 											BaseExpr: &BaseExpr{line: 1, char: 34},
 											Value: ValueList{
 												Values: []Expression{
-													NewInteger(1),
-													NewInteger(2),
+													NewIntegerValue(1),
+													NewIntegerValue(2),
 												},
 											},
 										},
@@ -984,8 +982,8 @@ var parseTests = []struct {
 											BaseExpr: &BaseExpr{line: 1, char: 42},
 											Value: ValueList{
 												Values: []Expression{
-													NewInteger(3),
-													NewInteger(4),
+													NewIntegerValue(3),
+													NewIntegerValue(4),
 												},
 											},
 										},
@@ -1023,7 +1021,7 @@ var parseTests = []struct {
 									BaseExpr: &BaseExpr{line: 1, char: 33},
 									Query: SelectQuery{
 										SelectEntity: SelectEntity{
-											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 34}, Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
+											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 34}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(1)}}},
 										},
 									},
 								},
@@ -1053,7 +1051,7 @@ var parseTests = []struct {
 										BaseExpr: &BaseExpr{line: 1, char: 22},
 										Query: SelectQuery{
 											SelectEntity: SelectEntity{
-												SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 23}, Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
+												SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 23}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(1)}}},
 											},
 										},
 									},
@@ -1092,8 +1090,8 @@ var parseTests = []struct {
 											BaseExpr: &BaseExpr{line: 1, char: 34},
 											Value: ValueList{
 												Values: []Expression{
-													NewInteger(1),
-													NewInteger(2),
+													NewIntegerValue(1),
+													NewIntegerValue(2),
 												},
 											},
 										},
@@ -1101,8 +1099,8 @@ var parseTests = []struct {
 											BaseExpr: &BaseExpr{line: 1, char: 42},
 											Value: ValueList{
 												Values: []Expression{
-													NewInteger(3),
-													NewInteger(4),
+													NewIntegerValue(3),
+													NewIntegerValue(4),
 												},
 											},
 										},
@@ -1140,7 +1138,7 @@ var parseTests = []struct {
 									BaseExpr: &BaseExpr{line: 1, char: 33},
 									Query: SelectQuery{
 										SelectEntity: SelectEntity{
-											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 34}, Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
+											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 34}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(1)}}},
 										},
 									},
 								},
@@ -1166,7 +1164,7 @@ var parseTests = []struct {
 									BaseExpr: &BaseExpr{line: 1, char: 15},
 									Query: SelectQuery{
 										SelectEntity: SelectEntity{
-											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 16}, Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
+											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 16}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(1)}}},
 										},
 									},
 								},
@@ -1189,7 +1187,7 @@ var parseTests = []struct {
 							Field{Object: Arithmetic{
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
 								Operator: int('+'),
-								RHS:      NewInteger(1),
+								RHS:      NewIntegerValue(1),
 							}},
 						},
 					},
@@ -1209,7 +1207,7 @@ var parseTests = []struct {
 							Field{Object: Arithmetic{
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
 								Operator: int('-'),
-								RHS:      NewInteger(1),
+								RHS:      NewIntegerValue(1),
 							}},
 						},
 					},
@@ -1229,7 +1227,7 @@ var parseTests = []struct {
 							Field{Object: Arithmetic{
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
 								Operator: int('*'),
-								RHS:      NewInteger(1),
+								RHS:      NewIntegerValue(1),
 							}},
 						},
 					},
@@ -1249,7 +1247,7 @@ var parseTests = []struct {
 							Field{Object: Arithmetic{
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
 								Operator: int('/'),
-								RHS:      NewInteger(1),
+								RHS:      NewIntegerValue(1),
 							}},
 						},
 					},
@@ -1269,7 +1267,7 @@ var parseTests = []struct {
 							Field{Object: Arithmetic{
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
 								Operator: int('%'),
-								RHS:      NewInteger(1),
+								RHS:      NewIntegerValue(1),
 							}},
 						},
 					},
@@ -1287,9 +1285,9 @@ var parseTests = []struct {
 						Select:   "select",
 						Fields: []Expression{
 							Field{Object: Logic{
-								LHS:      NewTernaryFromString("true"),
+								LHS:      NewTernaryValueFromString("true"),
 								Operator: Token{Token: AND, Literal: "and", Line: 1, Char: 13},
-								RHS:      NewTernaryFromString("false"),
+								RHS:      NewTernaryValueFromString("false"),
 							}},
 						},
 					},
@@ -1307,9 +1305,9 @@ var parseTests = []struct {
 						Select:   "select",
 						Fields: []Expression{
 							Field{Object: Logic{
-								LHS:      NewTernaryFromString("true"),
+								LHS:      NewTernaryValueFromString("true"),
 								Operator: Token{Token: OR, Literal: "or", Line: 1, Char: 13},
-								RHS:      NewTernaryFromString("false"),
+								RHS:      NewTernaryValueFromString("false"),
 							}},
 						},
 					},
@@ -1328,7 +1326,7 @@ var parseTests = []struct {
 						Fields: []Expression{
 							Field{Object: UnaryLogic{
 								Operator: Token{Token: NOT, Literal: "not", Line: 1, Char: 8},
-								Operand:  NewTernaryFromString("false"),
+								Operand:  NewTernaryValueFromString("false"),
 							}},
 						},
 					},
@@ -1346,13 +1344,13 @@ var parseTests = []struct {
 						Select:   "select",
 						Fields: []Expression{
 							Field{Object: Logic{
-								LHS:      NewTernaryFromString("true"),
+								LHS:      NewTernaryValueFromString("true"),
 								Operator: Token{Token: OR, Literal: "or", Line: 1, Char: 13},
 								RHS: Parentheses{
 									Expr: Logic{
-										LHS:      NewTernaryFromString("false"),
+										LHS:      NewTernaryValueFromString("false"),
 										Operator: Token{Token: AND, Literal: "and", Line: 1, Char: 23},
-										RHS:      NewTernaryFromString("false"),
+										RHS:      NewTernaryValueFromString("false"),
 									},
 								},
 							}},
@@ -1373,20 +1371,20 @@ var parseTests = []struct {
 						Fields: []Expression{
 							Field{Object: Logic{
 								LHS: Logic{
-									LHS:      NewTernaryFromString("true"),
+									LHS:      NewTernaryValueFromString("true"),
 									Operator: Token{Token: AND, Literal: "and", Line: 1, Char: 13},
-									RHS:      NewTernaryFromString("true"),
+									RHS:      NewTernaryValueFromString("true"),
 								},
 								Operator: Token{Token: OR, Literal: "or", Line: 1, Char: 22},
 								RHS: Logic{
 									LHS: UnaryLogic{
 										Operator: Token{Token: '!', Literal: "!", Line: 1, Char: 25},
-										Operand:  NewTernaryFromString("false"),
+										Operand:  NewTernaryValueFromString("false"),
 									},
 									Operator: Token{Token: AND, Literal: "and", Line: 1, Char: 32},
 									RHS: UnaryLogic{
 										Operator: Token{Token: NOT, Literal: "not", Line: 1, Char: 36},
-										Operand:  NewTernaryFromString("false"),
+										Operand:  NewTernaryValueFromString("false"),
 									},
 								},
 							}},
@@ -1423,7 +1421,7 @@ var parseTests = []struct {
 						Fields: []Expression{
 							Field{Object: VariableSubstitution{
 								Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "@var"},
-								Value:    NewInteger(1),
+								Value:    NewIntegerValue(1),
 							}},
 						},
 					},
@@ -1447,14 +1445,14 @@ var parseTests = []struct {
 									CaseWhen{
 										When:      "when",
 										Then:      "then",
-										Condition: Ternary{literal: "true", value: ternary.TRUE},
-										Result:    NewString("A"),
+										Condition: NewTernaryValueFromString("true"),
+										Result:    NewStringValue("A"),
 									},
 									CaseWhen{
 										When:      "when",
 										Then:      "then",
-										Condition: Ternary{literal: "false", value: ternary.FALSE},
-										Result:    NewString("B"),
+										Condition: NewTernaryValueFromString("false"),
+										Result:    NewStringValue("B"),
 									},
 								},
 							}},
@@ -1481,19 +1479,19 @@ var parseTests = []struct {
 									CaseWhen{
 										When:      "when",
 										Then:      "then",
-										Condition: NewInteger(1),
-										Result:    NewString("A"),
+										Condition: NewIntegerValue(1),
+										Result:    NewStringValue("A"),
 									},
 									CaseWhen{
 										When:      "when",
 										Then:      "then",
-										Condition: NewInteger(2),
-										Result:    NewString("B"),
+										Condition: NewIntegerValue(2),
+										Result:    NewStringValue("B"),
 									},
 								},
 								Else: CaseElse{
 									Else:   "else",
-									Result: NewString("C"),
+									Result: NewStringValue("C"),
 								},
 							}},
 						},
@@ -1740,7 +1738,7 @@ var parseTests = []struct {
 								Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 16},
 								Args: []Expression{
 									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 25}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 25}, Literal: "column1"}},
-									NewString(","),
+									NewStringValue(","),
 								},
 							}},
 						},
@@ -1793,7 +1791,7 @@ var parseTests = []struct {
 								ListAgg:  "listagg",
 								Args: []Expression{
 									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 16}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "column1"}},
-									NewString(","),
+									NewStringValue(","),
 								},
 								WithinGroup: "within group",
 								OrderBy: OrderByClause{
@@ -2160,7 +2158,7 @@ var parseTests = []struct {
 								Name:     "listagg",
 								Args: []Expression{
 									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 16}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "column1"}},
-									NewString(","),
+									NewStringValue(","),
 								},
 								Over: "over",
 								AnalyticClause: AnalyticClause{
@@ -2271,7 +2269,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(1)}}},
 					FromClause: FromClause{
 						From: "from",
 						Tables: []Expression{
@@ -2294,7 +2292,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(1)}}},
 					FromClause: FromClause{
 						From: "from",
 						Tables: []Expression{
@@ -2317,7 +2315,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(1)}}},
 					FromClause: FromClause{
 						From: "from",
 						Tables: []Expression{
@@ -2347,7 +2345,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(1)}}},
 					FromClause: FromClause{
 						From: "from",
 						Tables: []Expression{
@@ -2370,7 +2368,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(1)}}},
 					FromClause: FromClause{
 						From: "from",
 						Tables: []Expression{
@@ -2399,7 +2397,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(1)}}},
 					FromClause: FromClause{
 						From: "from",
 						Tables: []Expression{
@@ -2423,7 +2421,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(1)}}},
 					FromClause: FromClause{
 						From: "from",
 						Tables: []Expression{
@@ -2446,7 +2444,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewInteger(1)}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValue(1)}}},
 					FromClause: FromClause{
 						From: "from",
 						Tables: []Expression{
@@ -2474,7 +2472,7 @@ var parseTests = []struct {
 					},
 					VariableAssignment{
 						Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 12}, Name: "@var2"},
-						Value:    NewInteger(2),
+						Value:    NewIntegerValue(2),
 					},
 				},
 			},
@@ -2483,7 +2481,7 @@ var parseTests = []struct {
 					BaseExpr: &BaseExpr{line: 1, char: 24},
 					Name:     "@var1",
 				},
-				Value: NewInteger(1),
+				Value: NewIntegerValue(1),
 			},
 		},
 	},
@@ -2494,7 +2492,7 @@ var parseTests = []struct {
 				Assignments: []Expression{
 					VariableAssignment{
 						Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 9}, Name: "@var1"},
-						Value:    NewInteger(1),
+						Value:    NewIntegerValue(1),
 					},
 				},
 			},
@@ -2515,8 +2513,8 @@ var parseTests = []struct {
 				BaseExpr: &BaseExpr{line: 1, char: 1},
 				Name:     "func",
 				Args: []Expression{
-					NewString("arg1"),
-					NewString("arg2"),
+					NewStringValue("arg1"),
+					NewStringValue("arg2"),
 				},
 			},
 		},
@@ -2537,7 +2535,7 @@ var parseTests = []struct {
 										BaseExpr: &BaseExpr{line: 1, char: 13},
 										Select:   "select",
 										Fields: []Expression{
-											Field{Object: NewInteger(1)},
+											Field{Object: NewIntegerValue(1)},
 										},
 									},
 								},
@@ -2554,8 +2552,8 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 49},
 						Value: ValueList{
 							Values: []Expression{
-								NewInteger(1),
-								NewString("str1"),
+								NewIntegerValue(1),
+								NewStringValue("str1"),
 							},
 						},
 					},
@@ -2563,8 +2561,8 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 62},
 						Value: ValueList{
 							Values: []Expression{
-								NewInteger(2),
-								NewString("str2"),
+								NewIntegerValue(2),
+								NewStringValue("str2"),
 							},
 						},
 					},
@@ -2590,8 +2588,8 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 56},
 						Value: ValueList{
 							Values: []Expression{
-								NewInteger(1),
-								NewString("str1"),
+								NewIntegerValue(1),
+								NewStringValue("str1"),
 							},
 						},
 					},
@@ -2599,8 +2597,8 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 69},
 						Value: ValueList{
 							Values: []Expression{
-								NewInteger(2),
-								NewString("str2"),
+								NewIntegerValue(2),
+								NewStringValue("str2"),
 							},
 						},
 					},
@@ -2621,8 +2619,8 @@ var parseTests = []struct {
 							BaseExpr: &BaseExpr{line: 1, char: 20},
 							Select:   "select",
 							Fields: []Expression{
-								Field{Object: NewInteger(1)},
-								Field{Object: NewInteger(2)},
+								Field{Object: NewIntegerValue(1)},
+								Field{Object: NewIntegerValue(2)},
 							},
 						},
 					},
@@ -2647,8 +2645,8 @@ var parseTests = []struct {
 							BaseExpr: &BaseExpr{line: 1, char: 39},
 							Select:   "select",
 							Fields: []Expression{
-								Field{Object: NewInteger(1)},
-								Field{Object: NewInteger(2)},
+								Field{Object: NewIntegerValue(1)},
+								Field{Object: NewIntegerValue(2)},
 							},
 						},
 					},
@@ -2672,7 +2670,7 @@ var parseTests = []struct {
 										BaseExpr: &BaseExpr{line: 1, char: 13},
 										Select:   "select",
 										Fields: []Expression{
-											Field{Object: NewInteger(1)},
+											Field{Object: NewIntegerValue(1)},
 										},
 									},
 								},
@@ -2686,9 +2684,9 @@ var parseTests = []struct {
 				},
 				Set: "set",
 				SetList: []Expression{
-					UpdateSet{Field: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 41}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 41}, Literal: "column1"}}, Value: NewInteger(1)},
-					UpdateSet{Field: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 54}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 54}, Literal: "column2"}}, Value: NewInteger(2)},
-					UpdateSet{Field: ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 67}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 67}, Literal: "table1"}, Number: NewInteger(3)}, Value: NewInteger(3)},
+					UpdateSet{Field: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 41}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 41}, Literal: "column1"}}, Value: NewIntegerValue(1)},
+					UpdateSet{Field: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 54}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 54}, Literal: "column2"}}, Value: NewIntegerValue(2)},
+					UpdateSet{Field: ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 67}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 67}, Literal: "table1"}, Number: NewInteger(3)}, Value: NewIntegerValue(3)},
 				},
 				FromClause: FromClause{
 					From: "from",
@@ -2698,7 +2696,7 @@ var parseTests = []struct {
 				},
 				WhereClause: WhereClause{
 					Where:  "where",
-					Filter: Ternary{literal: "true", value: ternary.TRUE},
+					Filter: NewTernaryValueFromString("true"),
 				},
 			},
 		},
@@ -2720,7 +2718,7 @@ var parseTests = []struct {
 										BaseExpr: &BaseExpr{line: 1, char: 13},
 										Select:   "select",
 										Fields: []Expression{
-											Field{Object: NewInteger(1)},
+											Field{Object: NewIntegerValue(1)},
 										},
 									},
 								},
@@ -2755,7 +2753,7 @@ var parseTests = []struct {
 				},
 				WhereClause: WhereClause{
 					Where:  "where",
-					Filter: Ternary{literal: "true", value: ternary.TRUE},
+					Filter: NewTernaryValueFromString("true"),
 				},
 			},
 		},
@@ -2802,7 +2800,7 @@ var parseTests = []struct {
 					ColumnDefault{
 						Column:  Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "column2"},
 						Default: "default",
-						Value:   NewInteger(1),
+						Value:   NewIntegerValue(1),
 					},
 				},
 				Position: ColumnPosition{
@@ -2941,7 +2939,7 @@ var parseTests = []struct {
 		Input: "print 'foo'",
 		Output: []Statement{
 			Print{
-				Value: NewString("foo"),
+				Value: NewStringValue("foo"),
 			},
 		},
 	},
@@ -2961,7 +2959,7 @@ var parseTests = []struct {
 				BaseExpr: &BaseExpr{line: 1, char: 1},
 				Format:   "foo",
 				Values: []Expression{
-					NewString("bar"),
+					NewStringValue("bar"),
 				},
 			},
 		},
@@ -2971,7 +2969,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			Source{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
-				FilePath: NewString("/path/to/file.sql"),
+				FilePath: NewStringValue("/path/to/file.sql"),
 			},
 		},
 	},
@@ -3000,7 +2998,7 @@ var parseTests = []struct {
 			Trigger{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
 				Token:    ERROR,
-				Message:  NewString("user error"),
+				Message:  NewStringValue("user error"),
 			},
 		},
 	},
@@ -3010,7 +3008,7 @@ var parseTests = []struct {
 			Trigger{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
 				Token:    ERROR,
-				Message:  NewString("user error"),
+				Message:  NewStringValue("user error"),
 				Code:     NewInteger(300),
 			},
 		},
@@ -3026,7 +3024,7 @@ var parseTests = []struct {
 							BaseExpr: &BaseExpr{line: 1, char: 24},
 							Select:   "select",
 							Fields: []Expression{
-								Field{Object: NewInteger(1)},
+								Field{Object: NewIntegerValue(1)},
 							},
 						},
 					},
@@ -3134,7 +3132,7 @@ var parseTests = []struct {
 				Position: FetchPosition{
 					BaseExpr: &BaseExpr{line: 1, char: 7},
 					Position: Token{Token: ABSOLUTE, Literal: "absolute", Line: 1, Char: 7},
-					Number:   NewInteger(1),
+					Number:   NewIntegerValue(1),
 				},
 				Variables: []Variable{
 					{BaseExpr: &BaseExpr{line: 1, char: 27}, Name: "@var1"},
@@ -3150,7 +3148,7 @@ var parseTests = []struct {
 				Position: FetchPosition{
 					BaseExpr: &BaseExpr{line: 1, char: 7},
 					Position: Token{Token: RELATIVE, Literal: "relative", Line: 1, Char: 7},
-					Number:   NewInteger(1),
+					Number:   NewIntegerValue(1),
 				},
 				Variables: []Variable{
 					{BaseExpr: &BaseExpr{line: 1, char: 27}, Name: "@var1"},
@@ -3186,10 +3184,10 @@ var parseTests = []struct {
 							Select:   "select",
 							Fields: []Expression{
 								Field{
-									Object: NewInteger(1),
+									Object: NewIntegerValue(1),
 								},
 								Field{
-									Object: NewInteger(2),
+									Object: NewIntegerValue(2),
 								},
 							},
 						},
@@ -3210,10 +3208,10 @@ var parseTests = []struct {
 							Select:   "select",
 							Fields: []Expression{
 								Field{
-									Object: NewInteger(1),
+									Object: NewIntegerValue(1),
 								},
 								Field{
-									Object: NewInteger(2),
+									Object: NewIntegerValue(2),
 								},
 							},
 						},
@@ -3236,11 +3234,11 @@ var parseTests = []struct {
 			If{
 				Condition: Comparison{
 					LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 4}, Name: "@var1"},
-					RHS:      NewInteger(1),
+					RHS:      NewIntegerValue(1),
 					Operator: "=",
 				},
 				Statements: []Statement{
-					Print{Value: NewInteger(1)},
+					Print{Value: NewIntegerValue(1)},
 				},
 			},
 		},
@@ -3251,37 +3249,37 @@ var parseTests = []struct {
 			If{
 				Condition: Comparison{
 					LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 4}, Name: "@var1"},
-					RHS:      NewInteger(1),
+					RHS:      NewIntegerValue(1),
 					Operator: "=",
 				},
 				Statements: []Statement{
-					Print{Value: NewInteger(1)},
+					Print{Value: NewIntegerValue(1)},
 				},
 				ElseIf: []ProcExpr{
 					ElseIf{
 						Condition: Comparison{
 							LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 35}, Name: "@var1"},
-							RHS:      NewInteger(2),
+							RHS:      NewIntegerValue(2),
 							Operator: "=",
 						},
 						Statements: []Statement{
-							Print{Value: NewInteger(2)},
+							Print{Value: NewIntegerValue(2)},
 						},
 					},
 					ElseIf{
 						Condition: Comparison{
 							LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 66}, Name: "@var1"},
-							RHS:      NewInteger(3),
+							RHS:      NewIntegerValue(3),
 							Operator: "=",
 						},
 						Statements: []Statement{
-							Print{Value: NewInteger(3)},
+							Print{Value: NewIntegerValue(3)},
 						},
 					},
 				},
 				Else: Else{
 					Statements: []Statement{
-						Print{Value: NewInteger(4)},
+						Print{Value: NewIntegerValue(4)},
 					},
 				},
 			},
@@ -3337,7 +3335,7 @@ var parseTests = []struct {
 		Input: "while true do continue end while",
 		Output: []Statement{
 			While{
-				Condition: Ternary{literal: "true", value: ternary.TRUE},
+				Condition: NewTernaryValueFromString("true"),
 				Statements: []Statement{
 					FlowControl{Token: CONTINUE},
 				},
@@ -3348,7 +3346,7 @@ var parseTests = []struct {
 		Input: "while true do break end while",
 		Output: []Statement{
 			While{
-				Condition: Ternary{literal: "true", value: ternary.TRUE},
+				Condition: NewTernaryValueFromString("true"),
 				Statements: []Statement{
 					FlowControl{Token: BREAK},
 				},
@@ -3359,12 +3357,12 @@ var parseTests = []struct {
 		Input: "while true do if @var1 = 1 then continue; end if; end while",
 		Output: []Statement{
 			While{
-				Condition: Ternary{literal: "true", value: ternary.TRUE},
+				Condition: NewTernaryValueFromString("true"),
 				Statements: []Statement{
 					If{
 						Condition: Comparison{
 							LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 18}, Name: "@var1"},
-							RHS:      NewInteger(1),
+							RHS:      NewIntegerValue(1),
 							Operator: "=",
 						},
 						Statements: []Statement{
@@ -3379,12 +3377,12 @@ var parseTests = []struct {
 		Input: "while true do if @var1 = 1 then continue; elseif @var1 = 2 then break; elseif @var1 = 3 then exit; else continue; end if; end while",
 		Output: []Statement{
 			While{
-				Condition: Ternary{literal: "true", value: ternary.TRUE},
+				Condition: NewTernaryValueFromString("true"),
 				Statements: []Statement{
 					If{
 						Condition: Comparison{
 							LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 18}, Name: "@var1"},
-							RHS:      NewInteger(1),
+							RHS:      NewIntegerValue(1),
 							Operator: "=",
 						},
 						Statements: []Statement{
@@ -3394,7 +3392,7 @@ var parseTests = []struct {
 							ElseIf{
 								Condition: Comparison{
 									LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 50}, Name: "@var1"},
-									RHS:      NewInteger(2),
+									RHS:      NewIntegerValue(2),
 									Operator: "=",
 								},
 								Statements: []Statement{
@@ -3404,7 +3402,7 @@ var parseTests = []struct {
 							ElseIf{
 								Condition: Comparison{
 									LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 79}, Name: "@var1"},
-									RHS:      NewInteger(3),
+									RHS:      NewIntegerValue(3),
 									Operator: "=",
 								},
 								Statements: []Statement{
@@ -3436,8 +3434,8 @@ var parseTests = []struct {
 			FunctionDeclaration{
 				Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "func1"},
 				Parameters: []Expression{
-					VariableAssignment{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 25}, Name: "@arg1"}, Value: NewInteger(0)},
-					VariableAssignment{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 42}, Name: "@arg2"}, Value: NewInteger(1)},
+					VariableAssignment{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 25}, Name: "@arg1"}, Value: NewIntegerValue(0)},
+					VariableAssignment{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 42}, Name: "@arg2"}, Value: NewIntegerValue(1)},
 				},
 			},
 		},
@@ -3459,69 +3457,69 @@ var parseTests = []struct {
 				Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "func1"},
 				Parameters: []Expression{
 					VariableAssignment{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 25}, Name: "@arg1"}},
-					VariableAssignment{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 32}, Name: "@arg2"}, Value: NewInteger(0)},
+					VariableAssignment{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 32}, Name: "@arg2"}, Value: NewIntegerValue(0)},
 				},
 				Statements: []Statement{
 					If{
 						Condition: Comparison{
 							LHS:      Variable{BaseExpr: &BaseExpr{line: 2, char: 4}, Name: "@var1"},
-							RHS:      NewInteger(1),
+							RHS:      NewIntegerValue(1),
 							Operator: "=",
 						},
 						Statements: []Statement{
-							Print{Value: NewInteger(1)},
+							Print{Value: NewIntegerValue(1)},
 						},
 					},
 					If{
 						Condition: Comparison{
 							LHS:      Variable{BaseExpr: &BaseExpr{line: 3, char: 4}, Name: "@var1"},
-							RHS:      NewInteger(1),
+							RHS:      NewIntegerValue(1),
 							Operator: "=",
 						},
 						Statements: []Statement{
-							Print{Value: NewInteger(1)},
+							Print{Value: NewIntegerValue(1)},
 						},
 						ElseIf: []ProcExpr{
 							ElseIf{
 								Condition: Comparison{
 									LHS:      Variable{BaseExpr: &BaseExpr{line: 3, char: 35}, Name: "@var1"},
-									RHS:      NewInteger(2),
+									RHS:      NewIntegerValue(2),
 									Operator: "=",
 								},
 								Statements: []Statement{
-									Print{Value: NewInteger(2)},
+									Print{Value: NewIntegerValue(2)},
 								},
 							},
 							ElseIf{
 								Condition: Comparison{
 									LHS:      Variable{BaseExpr: &BaseExpr{line: 3, char: 66}, Name: "@var1"},
-									RHS:      NewInteger(3),
+									RHS:      NewIntegerValue(3),
 									Operator: "=",
 								},
 								Statements: []Statement{
-									Print{Value: NewInteger(3)},
+									Print{Value: NewIntegerValue(3)},
 								},
 							},
 						},
 						Else: Else{
 							Statements: []Statement{
-								Print{Value: NewInteger(4)},
+								Print{Value: NewIntegerValue(4)},
 							},
 						},
 					},
 					While{
-						Condition: Ternary{literal: "true", value: ternary.TRUE},
+						Condition: NewTernaryValueFromString("true"),
 						Statements: []Statement{
 							FlowControl{Token: BREAK},
 						},
 					},
 					While{
-						Condition: Ternary{literal: "true", value: ternary.TRUE},
+						Condition: NewTernaryValueFromString("true"),
 						Statements: []Statement{
 							If{
 								Condition: Comparison{
 									LHS:      Variable{BaseExpr: &BaseExpr{line: 5, char: 18}, Name: "@var1"},
-									RHS:      NewInteger(1),
+									RHS:      NewIntegerValue(1),
 									Operator: "=",
 								},
 								Statements: []Statement{
@@ -3531,12 +3529,12 @@ var parseTests = []struct {
 						},
 					},
 					While{
-						Condition: Ternary{literal: "true", value: ternary.TRUE},
+						Condition: NewTernaryValueFromString("true"),
 						Statements: []Statement{
 							If{
 								Condition: Comparison{
 									LHS:      Variable{BaseExpr: &BaseExpr{line: 6, char: 18}, Name: "@var1"},
-									RHS:      NewInteger(1),
+									RHS:      NewIntegerValue(1),
 									Operator: "=",
 								},
 								Statements: []Statement{
@@ -3546,7 +3544,7 @@ var parseTests = []struct {
 									ElseIf{
 										Condition: Comparison{
 											LHS:      Variable{BaseExpr: &BaseExpr{line: 6, char: 50}, Name: "@var1"},
-											RHS:      NewInteger(2),
+											RHS:      NewIntegerValue(2),
 											Operator: "=",
 										},
 										Statements: []Statement{
@@ -3556,11 +3554,11 @@ var parseTests = []struct {
 									ElseIf{
 										Condition: Comparison{
 											LHS:      Variable{BaseExpr: &BaseExpr{line: 6, char: 79}, Name: "@var1"},
-											RHS:      NewInteger(3),
+											RHS:      NewIntegerValue(3),
 											Operator: "=",
 										},
 										Statements: []Statement{
-											Return{Value: NewNull()},
+											Return{Value: NewNullValue()},
 										},
 									},
 								},
@@ -3592,7 +3590,7 @@ var parseTests = []struct {
 						},
 					},
 					Return{
-						Value: NewNull(),
+						Value: NewNullValue(),
 					},
 					Return{
 						Value: Variable{BaseExpr: &BaseExpr{line: 10, char: 8}, Name: "@var1"},

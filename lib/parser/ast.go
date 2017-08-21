@@ -10,18 +10,6 @@ import (
 
 const TOKEN_UNDEFINED = 0
 
-func IsPrimary(e Expression) bool {
-	if e == nil {
-		return false
-	}
-
-	switch e.(type) {
-	case String, Integer, Float, Datetime, Boolean, Ternary, Null:
-		return true
-	}
-	return false
-}
-
 func IsNull(v Primary) bool {
 	_, ok := v.(Null)
 	return ok
@@ -87,16 +75,9 @@ func NewBaseExpr(token Token) *BaseExpr {
 type Primary interface {
 	String() string
 	Ternary() ternary.Value
-
-	GetBaseExpr() *BaseExpr
-	HasParseInfo() bool
-	Line() int
-	Char() int
-	SourceFile() string
 }
 
 type String struct {
-	*BaseExpr
 	literal string
 }
 
@@ -122,7 +103,6 @@ func (s String) Ternary() ternary.Value {
 }
 
 type Integer struct {
-	*BaseExpr
 	value int64
 }
 
@@ -159,7 +139,6 @@ func (i Integer) Ternary() ternary.Value {
 }
 
 type Float struct {
-	*BaseExpr
 	value float64
 }
 
@@ -196,7 +175,6 @@ func (f Float) Ternary() ternary.Value {
 }
 
 type Boolean struct {
-	*BaseExpr
 	value bool
 }
 
@@ -219,7 +197,6 @@ func (b Boolean) Ternary() ternary.Value {
 }
 
 type Ternary struct {
-	*BaseExpr
 	literal string
 	value   ternary.Value
 }
@@ -250,7 +227,6 @@ func (t Ternary) Ternary() ternary.Value {
 }
 
 type Datetime struct {
-	*BaseExpr
 	literal string
 	value   time.Time
 }
@@ -289,7 +265,6 @@ func (dt Datetime) Format(s string) string {
 }
 
 type Null struct {
-	*BaseExpr
 	literal string
 }
 
@@ -312,6 +287,80 @@ func (n Null) String() string {
 
 func (n Null) Ternary() ternary.Value {
 	return ternary.UNKNOWN
+}
+
+type PrimitiveType struct {
+	*BaseExpr
+	Value Primary
+}
+
+func NewPrimitiveType(p Primary) PrimitiveType {
+	return PrimitiveType{
+		Value: p,
+	}
+}
+
+func NewStringValue(s string) PrimitiveType {
+	return PrimitiveType{
+		Value: NewString(s),
+	}
+}
+
+func NewIntegerValue(i int64) PrimitiveType {
+	return PrimitiveType{
+		Value: NewInteger(i),
+	}
+}
+
+func NewFloatValue(f float64) PrimitiveType {
+	return PrimitiveType{
+		Value: NewFloat(f),
+	}
+}
+
+func NewTernaryValueFromString(s string) PrimitiveType {
+	return PrimitiveType{
+		Value: NewTernaryFromString(s),
+	}
+}
+
+func NewTernaryValue(t ternary.Value) PrimitiveType {
+	return PrimitiveType{
+		Value: NewTernary(t),
+	}
+}
+
+func NewDatetimeValueFromString(s string) PrimitiveType {
+	return PrimitiveType{
+		Value: NewDatetimeFromString(s),
+	}
+}
+
+func NewDatetimeValue(t time.Time) PrimitiveType {
+	return PrimitiveType{
+		Value: NewDatetime(t),
+	}
+}
+
+func NewNullValueFromString(s string) PrimitiveType {
+	return PrimitiveType{
+		Value: NewNullFromString(s),
+	}
+}
+
+func NewNullValue() PrimitiveType {
+	return PrimitiveType{
+		Value: NewNull(),
+	}
+}
+
+func (e PrimitiveType) String() string {
+	return e.Value.String()
+}
+
+func (e PrimitiveType) IsInteger() bool {
+	_, ok := e.Value.(Integer)
+	return ok
 }
 
 type Identifier struct {
@@ -962,11 +1011,13 @@ func (f Field) Name() string {
 	if f.Alias != nil {
 		return f.Alias.(Identifier).Literal
 	}
-	if s, ok := f.Object.(String); ok {
-		return s.Value()
-	}
-	if dt, ok := f.Object.(Datetime); ok {
-		return dt.literal
+	if t, ok := f.Object.(PrimitiveType); ok {
+		if s, ok := t.Value.(String); ok {
+			return s.Value()
+		}
+		if dt, ok := t.Value.(Datetime); ok {
+			return dt.literal
+		}
 	}
 	if fr, ok := f.Object.(FieldReference); ok {
 		return fr.Column.Literal
@@ -1595,7 +1646,7 @@ type Trigger struct {
 	*BaseExpr
 	Token   int
 	Message Expression
-	Code    Expression
+	Code    Primary
 }
 
 func putParentheses(s string) string {

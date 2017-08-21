@@ -24,7 +24,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name:   "Primary",
-		Expr:   parser.NewString("str"),
+		Expr:   parser.NewStringValue("str"),
 		Result: parser.NewString("str"),
 	},
 	{
@@ -35,7 +35,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Parentheses",
 		Expr: parser.Parentheses{
-			Expr: parser.NewString("str"),
+			Expr: parser.NewStringValue("str"),
 		},
 		Result: parser.NewString("str"),
 	},
@@ -251,8 +251,8 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Arithmetic",
 		Expr: parser.Arithmetic{
-			LHS:      parser.NewInteger(1),
-			RHS:      parser.NewInteger(2),
+			LHS:      parser.NewIntegerValue(1),
+			RHS:      parser.NewIntegerValue(2),
 			Operator: '+',
 		},
 		Result: parser.NewInteger(3),
@@ -261,7 +261,7 @@ var filterEvaluateTests = []struct {
 		Name: "Arithmetic LHS Error",
 		Expr: parser.Arithmetic{
 			LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-			RHS:      parser.NewInteger(2),
+			RHS:      parser.NewIntegerValue(2),
 			Operator: '+',
 		},
 		Error: "[L:- C:-] field notexist does not exist",
@@ -269,8 +269,8 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Arithmetic LHS Is Null",
 		Expr: parser.Arithmetic{
-			LHS:      parser.NewNull(),
-			RHS:      parser.NewInteger(2),
+			LHS:      parser.NewNullValue(),
+			RHS:      parser.NewIntegerValue(2),
 			Operator: '+',
 		},
 		Result: parser.NewNull(),
@@ -278,7 +278,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Arithmetic RHS Error",
 		Expr: parser.Arithmetic{
-			LHS:      parser.NewInteger(1),
+			LHS:      parser.NewIntegerValue(1),
 			RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Operator: '+',
 		},
@@ -287,7 +287,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "UnaryArithmetic Integer",
 		Expr: parser.UnaryArithmetic{
-			Operand:  parser.NewInteger(1),
+			Operand:  parser.NewIntegerValue(1),
 			Operator: parser.Token{Token: '-', Literal: "-"},
 		},
 		Result: parser.NewInteger(-1),
@@ -295,7 +295,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "UnaryArithmetic Float",
 		Expr: parser.UnaryArithmetic{
-			Operand:  parser.NewFloat(1.234),
+			Operand:  parser.NewFloatValue(1.234),
 			Operator: parser.Token{Token: '-', Literal: "-"},
 		},
 		Result: parser.NewFloat(-1.234),
@@ -311,7 +311,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "UnaryArithmetic Cast Failure",
 		Expr: parser.UnaryArithmetic{
-			Operand:  parser.NewString("str"),
+			Operand:  parser.NewStringValue("str"),
 			Operator: parser.Token{Token: '-', Literal: "-"},
 		},
 		Result: parser.NewNull(),
@@ -320,9 +320,9 @@ var filterEvaluateTests = []struct {
 		Name: "Concat",
 		Expr: parser.Concat{
 			Items: []parser.Expression{
-				parser.NewString("a"),
-				parser.NewString("b"),
-				parser.NewString("c"),
+				parser.NewStringValue("a"),
+				parser.NewStringValue("b"),
+				parser.NewStringValue("c"),
 			},
 		},
 		Result: parser.NewString("abc"),
@@ -331,8 +331,8 @@ var filterEvaluateTests = []struct {
 		Name: "Concat FieldNotExist Error",
 		Expr: parser.Concat{
 			Items: []parser.Expression{
-				parser.NewString("a"),
-				parser.NewString("b"),
+				parser.NewStringValue("a"),
+				parser.NewStringValue("b"),
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
@@ -342,9 +342,9 @@ var filterEvaluateTests = []struct {
 		Name: "Concat Including Null",
 		Expr: parser.Concat{
 			Items: []parser.Expression{
-				parser.NewString("a"),
-				parser.NewNull(),
-				parser.NewString("c"),
+				parser.NewStringValue("a"),
+				parser.NewNullValue(),
+				parser.NewStringValue("c"),
 			},
 		},
 		Result: parser.NewNull(),
@@ -352,8 +352,8 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Comparison",
 		Expr: parser.Comparison{
-			LHS:      parser.NewInteger(1),
-			RHS:      parser.NewInteger(2),
+			LHS:      parser.NewIntegerValue(1),
+			RHS:      parser.NewIntegerValue(2),
 			Operator: "=",
 		},
 		Result: parser.NewTernary(ternary.FALSE),
@@ -362,7 +362,7 @@ var filterEvaluateTests = []struct {
 		Name: "Comparison LHS Error",
 		Expr: parser.Comparison{
 			LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-			RHS:      parser.NewInteger(2),
+			RHS:      parser.NewIntegerValue(2),
 			Operator: "=",
 		},
 		Error: "[L:- C:-] field notexist does not exist",
@@ -370,8 +370,8 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Comparison LHS Is Null",
 		Expr: parser.Comparison{
-			LHS:      parser.NewNull(),
-			RHS:      parser.NewInteger(2),
+			LHS:      parser.NewNullValue(),
+			RHS:      parser.NewIntegerValue(2),
 			Operator: "=",
 		},
 		Result: parser.NewTernary(ternary.UNKNOWN),
@@ -379,7 +379,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Comparison RHS Error",
 		Expr: parser.Comparison{
-			LHS:      parser.NewInteger(1),
+			LHS:      parser.NewIntegerValue(1),
 			RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Operator: "=",
 		},
@@ -391,16 +391,16 @@ var filterEvaluateTests = []struct {
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(2),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(2),
 					},
 				},
 			},
 			RHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(2),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(2),
 					},
 				},
 			},
@@ -414,8 +414,8 @@ var filterEvaluateTests = []struct {
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewString("1"),
-						parser.NewString("str1"),
+						parser.NewStringValue("1"),
+						parser.NewStringValue("str1"),
 					},
 				},
 			},
@@ -438,7 +438,7 @@ var filterEvaluateTests = []struct {
 							WhereClause: parser.WhereClause{
 								Filter: parser.Comparison{
 									LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-									RHS:      parser.NewInteger(1),
+									RHS:      parser.NewIntegerValue(1),
 									Operator: "=",
 								},
 							},
@@ -457,15 +457,15 @@ var filterEvaluateTests = []struct {
 				Value: parser.ValueList{
 					Values: []parser.Expression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-						parser.NewInteger(2),
+						parser.NewIntegerValue(2),
 					},
 				},
 			},
 			RHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(2),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(2),
 					},
 				},
 			},
@@ -479,8 +479,8 @@ var filterEvaluateTests = []struct {
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewString("1"),
-						parser.NewString("str1"),
+						parser.NewStringValue("1"),
+						parser.NewStringValue("str1"),
 					},
 				},
 			},
@@ -501,7 +501,7 @@ var filterEvaluateTests = []struct {
 								},
 							},
 							WhereClause: parser.WhereClause{
-								Filter: parser.NewTernary(ternary.FALSE),
+								Filter: parser.NewTernaryValue(ternary.FALSE),
 							},
 						},
 					},
@@ -517,8 +517,8 @@ var filterEvaluateTests = []struct {
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewString("1"),
-						parser.NewString("str1"),
+						parser.NewStringValue("1"),
+						parser.NewStringValue("str1"),
 					},
 				},
 			},
@@ -552,8 +552,8 @@ var filterEvaluateTests = []struct {
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(2),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(2),
 					},
 				},
 			},
@@ -587,15 +587,15 @@ var filterEvaluateTests = []struct {
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(2),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(2),
 					},
 				},
 			},
 			RHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
+						parser.NewIntegerValue(1),
 					},
 				},
 			},
@@ -605,8 +605,8 @@ var filterEvaluateTests = []struct {
 	}, {
 		Name: "Is",
 		Expr: parser.Is{
-			LHS:      parser.NewInteger(1),
-			RHS:      parser.NewNull(),
+			LHS:      parser.NewIntegerValue(1),
+			RHS:      parser.NewNullValue(),
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
 		Result: parser.NewTernary(ternary.TRUE),
@@ -615,7 +615,7 @@ var filterEvaluateTests = []struct {
 		Name: "Is LHS Error",
 		Expr: parser.Is{
 			LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-			RHS:      parser.NewNull(),
+			RHS:      parser.NewNullValue(),
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
 		Error: "[L:- C:-] field notexist does not exist",
@@ -623,7 +623,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Is RHS Error",
 		Expr: parser.Is{
-			LHS:      parser.NewInteger(1),
+			LHS:      parser.NewIntegerValue(1),
 			RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
@@ -632,9 +632,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Between",
 		Expr: parser.Between{
-			LHS:      parser.NewInteger(2),
-			Low:      parser.NewInteger(1),
-			High:     parser.NewInteger(3),
+			LHS:      parser.NewIntegerValue(2),
+			Low:      parser.NewIntegerValue(1),
+			High:     parser.NewIntegerValue(3),
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
 		Result: parser.NewTernary(ternary.FALSE),
@@ -643,8 +643,8 @@ var filterEvaluateTests = []struct {
 		Name: "Between LHS Error",
 		Expr: parser.Between{
 			LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-			Low:      parser.NewInteger(1),
-			High:     parser.NewInteger(3),
+			Low:      parser.NewIntegerValue(1),
+			High:     parser.NewIntegerValue(3),
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
 		Error: "[L:- C:-] field notexist does not exist",
@@ -652,9 +652,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Between LHS Is Null",
 		Expr: parser.Between{
-			LHS:      parser.NewNull(),
-			Low:      parser.NewInteger(1),
-			High:     parser.NewInteger(3),
+			LHS:      parser.NewNullValue(),
+			Low:      parser.NewIntegerValue(1),
+			High:     parser.NewIntegerValue(3),
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
 		Result: parser.NewTernary(ternary.UNKNOWN),
@@ -662,9 +662,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Between Low Error",
 		Expr: parser.Between{
-			LHS:      parser.NewInteger(2),
+			LHS:      parser.NewIntegerValue(2),
 			Low:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-			High:     parser.NewInteger(3),
+			High:     parser.NewIntegerValue(3),
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
 		Error: "[L:- C:-] field notexist does not exist",
@@ -672,9 +672,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Between Low Comparison False",
 		Expr: parser.Between{
-			LHS:      parser.NewInteger(2),
-			Low:      parser.NewInteger(3),
-			High:     parser.NewInteger(5),
+			LHS:      parser.NewIntegerValue(2),
+			Low:      parser.NewIntegerValue(3),
+			High:     parser.NewIntegerValue(5),
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
 		Result: parser.NewTernary(ternary.TRUE),
@@ -682,8 +682,8 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Between High Error",
 		Expr: parser.Between{
-			LHS:      parser.NewInteger(2),
-			Low:      parser.NewInteger(1),
+			LHS:      parser.NewIntegerValue(2),
+			Low:      parser.NewIntegerValue(1),
 			High:     parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
@@ -695,24 +695,24 @@ var filterEvaluateTests = []struct {
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(2),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(2),
 					},
 				},
 			},
 			Low: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(1),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(1),
 					},
 				},
 			},
 			High: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(3),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(3),
 					},
 				},
 			},
@@ -726,23 +726,23 @@ var filterEvaluateTests = []struct {
 				Value: parser.ValueList{
 					Values: []parser.Expression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-						parser.NewInteger(2),
+						parser.NewIntegerValue(2),
 					},
 				},
 			},
 			Low: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(1),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(1),
 					},
 				},
 			},
 			High: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(3),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(3),
 					},
 				},
 			},
@@ -755,8 +755,8 @@ var filterEvaluateTests = []struct {
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(2),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(2),
 					},
 				},
 			},
@@ -764,15 +764,15 @@ var filterEvaluateTests = []struct {
 				Value: parser.ValueList{
 					Values: []parser.Expression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-						parser.NewInteger(1),
+						parser.NewIntegerValue(1),
 					},
 				},
 			},
 			High: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(3),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(3),
 					},
 				},
 			},
@@ -785,24 +785,24 @@ var filterEvaluateTests = []struct {
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(2),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(2),
 					},
 				},
 			},
 			Low: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(3),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(3),
 					},
 				},
 			},
 			High: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(5),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(5),
 					},
 				},
 			},
@@ -815,16 +815,16 @@ var filterEvaluateTests = []struct {
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(2),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(2),
 					},
 				},
 			},
 			Low: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(1),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(1),
 					},
 				},
 			},
@@ -832,7 +832,7 @@ var filterEvaluateTests = []struct {
 				Value: parser.ValueList{
 					Values: []parser.Expression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-						parser.NewInteger(3),
+						parser.NewIntegerValue(3),
 					},
 				},
 			},
@@ -845,23 +845,23 @@ var filterEvaluateTests = []struct {
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(2),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(2),
 					},
 				},
 			},
 			Low: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
+						parser.NewIntegerValue(1),
 					},
 				},
 			},
 			High: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(3),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(3),
 					},
 				},
 			},
@@ -874,23 +874,23 @@ var filterEvaluateTests = []struct {
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(2),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(2),
 					},
 				},
 			},
 			Low: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(1),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(1),
 					},
 				},
 			},
 			High: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(3),
+						parser.NewIntegerValue(3),
 					},
 				},
 			},
@@ -900,13 +900,13 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "In",
 		Expr: parser.In{
-			LHS: parser.NewInteger(2),
+			LHS: parser.NewIntegerValue(2),
 			Values: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(2),
-						parser.NewInteger(3),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(2),
+						parser.NewIntegerValue(3),
 					},
 				},
 			},
@@ -921,9 +921,9 @@ var filterEvaluateTests = []struct {
 			Values: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(2),
-						parser.NewInteger(3),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(2),
+						parser.NewIntegerValue(3),
 					},
 				},
 			},
@@ -934,13 +934,13 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "In List Error",
 		Expr: parser.In{
-			LHS: parser.NewInteger(2),
+			LHS: parser.NewIntegerValue(2),
 			Values: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
+						parser.NewIntegerValue(1),
 						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-						parser.NewInteger(3),
+						parser.NewIntegerValue(3),
 					},
 				},
 			},
@@ -967,7 +967,7 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Expr: parser.In{
-			LHS: parser.NewInteger(2),
+			LHS: parser.NewIntegerValue(2),
 			Values: parser.RowValue{
 				Value: parser.Subquery{
 					Query: parser.SelectQuery{
@@ -1001,7 +1001,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "In Subquery Execution Error",
 		Expr: parser.In{
-			LHS: parser.NewInteger(2),
+			LHS: parser.NewIntegerValue(2),
 			Values: parser.RowValue{
 				Value: parser.Subquery{
 					Query: parser.SelectQuery{
@@ -1035,7 +1035,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "In Subquery Too Many Field Error",
 		Expr: parser.In{
-			LHS: parser.NewInteger(2),
+			LHS: parser.NewIntegerValue(2),
 			Values: parser.RowValue{
 				Value: parser.Subquery{
 					Query: parser.SelectQuery{
@@ -1063,7 +1063,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "In Subquery Returns No Record",
 		Expr: parser.In{
-			LHS: parser.NewInteger(2),
+			LHS: parser.NewIntegerValue(2),
 			Values: parser.RowValue{
 				Value: parser.Subquery{
 					Query: parser.SelectQuery{
@@ -1080,7 +1080,7 @@ var filterEvaluateTests = []struct {
 								},
 							},
 							WhereClause: parser.WhereClause{
-								Filter: parser.NewTernary(ternary.FALSE),
+								Filter: parser.NewTernaryValue(ternary.FALSE),
 							},
 						},
 					},
@@ -1095,8 +1095,8 @@ var filterEvaluateTests = []struct {
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(2),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(2),
 					},
 				},
 			},
@@ -1105,16 +1105,16 @@ var filterEvaluateTests = []struct {
 					parser.RowValue{
 						Value: parser.ValueList{
 							Values: []parser.Expression{
-								parser.NewInteger(1),
-								parser.NewInteger(1),
+								parser.NewIntegerValue(1),
+								parser.NewIntegerValue(1),
 							},
 						},
 					},
 					parser.RowValue{
 						Value: parser.ValueList{
 							Values: []parser.Expression{
-								parser.NewInteger(1),
-								parser.NewInteger(2),
+								parser.NewIntegerValue(1),
+								parser.NewIntegerValue(2),
 							},
 						},
 					},
@@ -1129,8 +1129,8 @@ var filterEvaluateTests = []struct {
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewString("2"),
-						parser.NewString("str2"),
+						parser.NewStringValue("2"),
+						parser.NewStringValue("str2"),
 					},
 				},
 			},
@@ -1162,7 +1162,7 @@ var filterEvaluateTests = []struct {
 				Value: parser.ValueList{
 					Values: []parser.Expression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-						parser.NewInteger(2),
+						parser.NewIntegerValue(2),
 					},
 				},
 			},
@@ -1171,16 +1171,16 @@ var filterEvaluateTests = []struct {
 					parser.RowValue{
 						Value: parser.ValueList{
 							Values: []parser.Expression{
-								parser.NewInteger(1),
-								parser.NewInteger(1),
+								parser.NewIntegerValue(1),
+								parser.NewIntegerValue(1),
 							},
 						},
 					},
 					parser.RowValue{
 						Value: parser.ValueList{
 							Values: []parser.Expression{
-								parser.NewInteger(1),
-								parser.NewInteger(2),
+								parser.NewIntegerValue(1),
+								parser.NewIntegerValue(2),
 							},
 						},
 					},
@@ -1195,8 +1195,8 @@ var filterEvaluateTests = []struct {
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewString("2"),
-						parser.NewString("str2"),
+						parser.NewStringValue("2"),
+						parser.NewStringValue("str2"),
 					},
 				},
 			},
@@ -1227,8 +1227,8 @@ var filterEvaluateTests = []struct {
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewString("2"),
-						parser.NewString("str2"),
+						parser.NewStringValue("2"),
+						parser.NewStringValue("str2"),
 					},
 				},
 			},
@@ -1248,7 +1248,7 @@ var filterEvaluateTests = []struct {
 							},
 						},
 						WhereClause: parser.WhereClause{
-							Filter: parser.NewTernary(ternary.FALSE),
+							Filter: parser.NewTernaryValue(ternary.FALSE),
 						},
 					},
 				},
@@ -1262,8 +1262,8 @@ var filterEvaluateTests = []struct {
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(2),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(2),
 					},
 				},
 			},
@@ -1273,15 +1273,15 @@ var filterEvaluateTests = []struct {
 						Value: parser.ValueList{
 							Values: []parser.Expression{
 								parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-								parser.NewInteger(1),
+								parser.NewIntegerValue(1),
 							},
 						},
 					},
 					parser.RowValue{
 						Value: parser.ValueList{
 							Values: []parser.Expression{
-								parser.NewInteger(1),
-								parser.NewInteger(2),
+								parser.NewIntegerValue(1),
+								parser.NewIntegerValue(2),
 							},
 						},
 					},
@@ -1296,8 +1296,8 @@ var filterEvaluateTests = []struct {
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(2),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(2),
 					},
 				},
 			},
@@ -1306,15 +1306,15 @@ var filterEvaluateTests = []struct {
 					parser.RowValue{
 						Value: parser.ValueList{
 							Values: []parser.Expression{
-								parser.NewInteger(1),
-								parser.NewInteger(1),
+								parser.NewIntegerValue(1),
+								parser.NewIntegerValue(1),
 							},
 						},
 					},
 					parser.RowValue{
 						Value: parser.ValueList{
 							Values: []parser.Expression{
-								parser.NewInteger(2),
+								parser.NewIntegerValue(2),
 							},
 						},
 					},
@@ -1329,8 +1329,8 @@ var filterEvaluateTests = []struct {
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewString("2"),
-						parser.NewString("str2"),
+						parser.NewStringValue("2"),
+						parser.NewStringValue("str2"),
 					},
 				},
 			},
@@ -1357,7 +1357,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Any",
 		Expr: parser.Any{
-			LHS: parser.NewInteger(5),
+			LHS: parser.NewIntegerValue(5),
 			Values: parser.RowValue{
 				Value: parser.Subquery{
 					Query: parser.SelectQuery{
@@ -1411,7 +1411,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Any Query Execution Error",
 		Expr: parser.Any{
-			LHS: parser.NewInteger(2),
+			LHS: parser.NewIntegerValue(2),
 			Values: parser.RowValue{
 				Value: parser.Subquery{
 					Query: parser.SelectQuery{
@@ -1448,8 +1448,8 @@ var filterEvaluateTests = []struct {
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(2),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(2),
 					},
 				},
 			},
@@ -1480,8 +1480,8 @@ var filterEvaluateTests = []struct {
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(2),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(2),
 					},
 				},
 			},
@@ -1490,15 +1490,15 @@ var filterEvaluateTests = []struct {
 					parser.RowValue{
 						Value: parser.ValueList{
 							Values: []parser.Expression{
-								parser.NewInteger(1),
-								parser.NewInteger(2),
+								parser.NewIntegerValue(1),
+								parser.NewIntegerValue(2),
 							},
 						},
 					},
 					parser.RowValue{
 						Value: parser.ValueList{
 							Values: []parser.Expression{
-								parser.NewInteger(1),
+								parser.NewIntegerValue(1),
 							},
 						},
 					},
@@ -1511,7 +1511,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "All",
 		Expr: parser.All{
-			LHS: parser.NewInteger(5),
+			LHS: parser.NewIntegerValue(5),
 			Values: parser.RowValue{
 				Value: parser.Subquery{
 					Query: parser.SelectQuery{
@@ -1538,7 +1538,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "All False",
 		Expr: parser.All{
-			LHS: parser.NewInteger(-99),
+			LHS: parser.NewIntegerValue(-99),
 			Values: parser.RowValue{
 				Value: parser.Subquery{
 					Query: parser.SelectQuery{
@@ -1592,7 +1592,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "All Query Execution Error",
 		Expr: parser.All{
-			LHS: parser.NewInteger(5),
+			LHS: parser.NewIntegerValue(5),
 			Values: parser.RowValue{
 				Value: parser.Subquery{
 					Query: parser.SelectQuery{
@@ -1629,8 +1629,8 @@ var filterEvaluateTests = []struct {
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(2),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(2),
 					},
 				},
 			},
@@ -1661,8 +1661,8 @@ var filterEvaluateTests = []struct {
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(1),
-						parser.NewInteger(2),
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(2),
 					},
 				},
 			},
@@ -1671,15 +1671,15 @@ var filterEvaluateTests = []struct {
 					parser.RowValue{
 						Value: parser.ValueList{
 							Values: []parser.Expression{
-								parser.NewInteger(1),
-								parser.NewInteger(2),
+								parser.NewIntegerValue(1),
+								parser.NewIntegerValue(2),
 							},
 						},
 					},
 					parser.RowValue{
 						Value: parser.ValueList{
 							Values: []parser.Expression{
-								parser.NewInteger(1),
+								parser.NewIntegerValue(1),
 							},
 						},
 					},
@@ -1692,8 +1692,8 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Like",
 		Expr: parser.Like{
-			LHS:      parser.NewString("abcdefg"),
-			Pattern:  parser.NewString("_bc%"),
+			LHS:      parser.NewStringValue("abcdefg"),
+			Pattern:  parser.NewStringValue("_bc%"),
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
 		Result: parser.NewTernary(ternary.FALSE),
@@ -1702,7 +1702,7 @@ var filterEvaluateTests = []struct {
 		Name: "Like LHS Error",
 		Expr: parser.Like{
 			LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-			Pattern:  parser.NewString("_bc%"),
+			Pattern:  parser.NewStringValue("_bc%"),
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
 		Error: "[L:- C:-] field notexist does not exist",
@@ -1710,7 +1710,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Like Pattern Error",
 		Expr: parser.Like{
-			LHS:      parser.NewString("abcdefg"),
+			LHS:      parser.NewStringValue("abcdefg"),
 			Pattern:  parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
@@ -1780,7 +1780,7 @@ var filterEvaluateTests = []struct {
 							},
 						},
 						WhereClause: parser.WhereClause{
-							Filter: parser.NewTernary(ternary.FALSE),
+							Filter: parser.NewTernaryValue(ternary.FALSE),
 						},
 					},
 				},
@@ -1808,7 +1808,7 @@ var filterEvaluateTests = []struct {
 						WhereClause: parser.WhereClause{
 							Filter: parser.Comparison{
 								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-								RHS:      parser.NewString("str2"),
+								RHS:      parser.NewStringValue("str2"),
 								Operator: "=",
 							},
 						},
@@ -1859,7 +1859,7 @@ var filterEvaluateTests = []struct {
 					},
 				},
 				LimitClause: parser.LimitClause{
-					Value: parser.NewInteger(1),
+					Value: parser.NewIntegerValue(1),
 				},
 			},
 		},
@@ -1873,7 +1873,7 @@ var filterEvaluateTests = []struct {
 					SelectClause: parser.SelectClause{
 						Select: "select",
 						Fields: []parser.Expression{
-							parser.Field{Object: parser.NewInteger(1)},
+							parser.Field{Object: parser.NewIntegerValue(1)},
 						},
 					},
 					FromClause: parser.FromClause{
@@ -1882,11 +1882,11 @@ var filterEvaluateTests = []struct {
 						},
 					},
 					WhereClause: parser.WhereClause{
-						Filter: parser.NewTernary(ternary.FALSE),
+						Filter: parser.NewTernaryValue(ternary.FALSE),
 					},
 				},
 				LimitClause: parser.LimitClause{
-					Value: parser.NewInteger(1),
+					Value: parser.NewIntegerValue(1),
 				},
 			},
 		},
@@ -1953,7 +1953,7 @@ var filterEvaluateTests = []struct {
 					},
 				},
 				LimitClause: parser.LimitClause{
-					Value: parser.NewInteger(1),
+					Value: parser.NewIntegerValue(1),
 				},
 			},
 		},
@@ -1964,8 +1964,8 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Function{
 			Name: "coalesce",
 			Args: []parser.Expression{
-				parser.NewNull(),
-				parser.NewString("str"),
+				parser.NewNullValue(),
+				parser.NewStringValue("str"),
 			},
 		},
 		Result: parser.NewString("str"),
@@ -1991,7 +1991,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Function{
 			Name: "userfunc",
 			Args: []parser.Expression{
-				parser.NewInteger(1),
+				parser.NewIntegerValue(1),
 			},
 		},
 		Result: parser.NewInteger(1),
@@ -2025,8 +2025,8 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Function{
 			Name: "notexist",
 			Args: []parser.Expression{
-				parser.NewNull(),
-				parser.NewString("str"),
+				parser.NewNullValue(),
+				parser.NewStringValue("str"),
 			},
 		},
 		Error: "[L:- C:-] function notexist does not exist",
@@ -2036,7 +2036,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Function{
 			Name: "coalesce",
 			Args: []parser.Expression{
-				parser.NewNull(),
+				parser.NewNullValue(),
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
@@ -2290,7 +2290,7 @@ var filterEvaluateTests = []struct {
 									parser.If{
 										Condition: parser.Is{
 											LHS: parser.Variable{Name: "@fetch"},
-											RHS: parser.NewNull(),
+											RHS: parser.NewNullValue(),
 										},
 										Statements: []parser.Statement{
 											parser.FlowControl{Token: parser.CONTINUE},
@@ -2299,7 +2299,7 @@ var filterEvaluateTests = []struct {
 									parser.If{
 										Condition: parser.Is{
 											LHS: parser.Variable{Name: "@value"},
-											RHS: parser.NewNull(),
+											RHS: parser.NewNullValue(),
 										},
 										Statements: []parser.Statement{
 											parser.VariableSubstitution{
@@ -2323,7 +2323,7 @@ var filterEvaluateTests = []struct {
 							parser.If{
 								Condition: parser.Is{
 									LHS: parser.Variable{Name: "@value"},
-									RHS: parser.NewNull(),
+									RHS: parser.NewNullValue(),
 								},
 								Statements: []parser.Statement{
 									parser.VariableSubstitution{
@@ -2346,7 +2346,7 @@ var filterEvaluateTests = []struct {
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			Args: []parser.Expression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-				parser.NewInteger(0),
+				parser.NewIntegerValue(0),
 			},
 		},
 		Result: parser.NewInteger(3),
@@ -2514,7 +2514,7 @@ var filterEvaluateTests = []struct {
 									parser.If{
 										Condition: parser.Is{
 											LHS: parser.Variable{Name: "@fetch"},
-											RHS: parser.NewNull(),
+											RHS: parser.NewNullValue(),
 										},
 										Statements: []parser.Statement{
 											parser.FlowControl{Token: parser.CONTINUE},
@@ -2523,7 +2523,7 @@ var filterEvaluateTests = []struct {
 									parser.If{
 										Condition: parser.Is{
 											LHS: parser.Variable{Name: "@value"},
-											RHS: parser.NewNull(),
+											RHS: parser.NewNullValue(),
 										},
 										Statements: []parser.Statement{
 											parser.VariableSubstitution{
@@ -2611,7 +2611,7 @@ var filterEvaluateTests = []struct {
 									parser.If{
 										Condition: parser.Is{
 											LHS: parser.Variable{Name: "@fetch"},
-											RHS: parser.NewNull(),
+											RHS: parser.NewNullValue(),
 										},
 										Statements: []parser.Statement{
 											parser.FlowControl{Token: parser.CONTINUE},
@@ -2620,7 +2620,7 @@ var filterEvaluateTests = []struct {
 									parser.If{
 										Condition: parser.Is{
 											LHS: parser.Variable{Name: "@value"},
-											RHS: parser.NewNull(),
+											RHS: parser.NewNullValue(),
 										},
 										Statements: []parser.Statement{
 											parser.VariableSubstitution{
@@ -2697,7 +2697,7 @@ var filterEvaluateTests = []struct {
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			Args: []parser.Expression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-				parser.NewString(","),
+				parser.NewStringValue(","),
 			},
 			OrderBy: parser.OrderByClause{
 				Items: []parser.Expression{
@@ -2747,7 +2747,7 @@ var filterEvaluateTests = []struct {
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			Args: []parser.Expression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-				parser.NewString(","),
+				parser.NewStringValue(","),
 			},
 		},
 		Result: parser.NewNull(),
@@ -2806,7 +2806,7 @@ var filterEvaluateTests = []struct {
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			Args: []parser.Expression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-				parser.NewString(","),
+				parser.NewStringValue(","),
 			},
 			OrderBy: parser.OrderByClause{
 				Items: []parser.Expression{
@@ -2851,7 +2851,7 @@ var filterEvaluateTests = []struct {
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			Args: []parser.Expression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-				parser.NewString(","),
+				parser.NewStringValue(","),
 			},
 			OrderBy: parser.OrderByClause{
 				Items: []parser.Expression{
@@ -2972,7 +2972,7 @@ var filterEvaluateTests = []struct {
 			ListAgg: "listagg",
 			Args: []parser.Expression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-				parser.NewNull(),
+				parser.NewNullValue(),
 			},
 		},
 		Error: "[L:- C:-] the second argument must be a string for function listagg",
@@ -2985,7 +2985,7 @@ var filterEvaluateTests = []struct {
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			Args: []parser.Expression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-				parser.NewString(","),
+				parser.NewStringValue(","),
 			},
 			OrderBy: parser.OrderByClause{
 				Items: []parser.Expression{
@@ -2998,15 +2998,15 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Case Comparison",
 		Expr: parser.Case{
-			Value: parser.NewInteger(2),
+			Value: parser.NewIntegerValue(2),
 			When: []parser.Expression{
 				parser.CaseWhen{
-					Condition: parser.NewInteger(1),
-					Result:    parser.NewString("A"),
+					Condition: parser.NewIntegerValue(1),
+					Result:    parser.NewStringValue("A"),
 				},
 				parser.CaseWhen{
-					Condition: parser.NewInteger(2),
-					Result:    parser.NewString("B"),
+					Condition: parser.NewIntegerValue(2),
+					Result:    parser.NewStringValue("B"),
 				},
 			},
 		},
@@ -3018,19 +3018,19 @@ var filterEvaluateTests = []struct {
 			When: []parser.Expression{
 				parser.CaseWhen{
 					Condition: parser.Comparison{
-						LHS:      parser.NewInteger(2),
-						RHS:      parser.NewInteger(1),
+						LHS:      parser.NewIntegerValue(2),
+						RHS:      parser.NewIntegerValue(1),
 						Operator: "=",
 					},
-					Result: parser.NewString("A"),
+					Result: parser.NewStringValue("A"),
 				},
 				parser.CaseWhen{
 					Condition: parser.Comparison{
-						LHS:      parser.NewInteger(2),
-						RHS:      parser.NewInteger(2),
+						LHS:      parser.NewIntegerValue(2),
+						RHS:      parser.NewIntegerValue(2),
 						Operator: "=",
 					},
-					Result: parser.NewString("B"),
+					Result: parser.NewStringValue("B"),
 				},
 			},
 		},
@@ -3039,19 +3039,19 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Case Else",
 		Expr: parser.Case{
-			Value: parser.NewInteger(0),
+			Value: parser.NewIntegerValue(0),
 			When: []parser.Expression{
 				parser.CaseWhen{
-					Condition: parser.NewInteger(1),
-					Result:    parser.NewString("A"),
+					Condition: parser.NewIntegerValue(1),
+					Result:    parser.NewStringValue("A"),
 				},
 				parser.CaseWhen{
-					Condition: parser.NewInteger(2),
-					Result:    parser.NewString("B"),
+					Condition: parser.NewIntegerValue(2),
+					Result:    parser.NewStringValue("B"),
 				},
 			},
 			Else: parser.CaseElse{
-				Result: parser.NewString("C"),
+				Result: parser.NewStringValue("C"),
 			},
 		},
 		Result: parser.NewString("C"),
@@ -3059,15 +3059,15 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Case No Else",
 		Expr: parser.Case{
-			Value: parser.NewInteger(0),
+			Value: parser.NewIntegerValue(0),
 			When: []parser.Expression{
 				parser.CaseWhen{
-					Condition: parser.NewInteger(1),
-					Result:    parser.NewString("A"),
+					Condition: parser.NewIntegerValue(1),
+					Result:    parser.NewStringValue("A"),
 				},
 				parser.CaseWhen{
-					Condition: parser.NewInteger(2),
-					Result:    parser.NewString("B"),
+					Condition: parser.NewIntegerValue(2),
+					Result:    parser.NewStringValue("B"),
 				},
 			},
 		},
@@ -3079,12 +3079,12 @@ var filterEvaluateTests = []struct {
 			Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			When: []parser.Expression{
 				parser.CaseWhen{
-					Condition: parser.NewInteger(1),
-					Result:    parser.NewString("A"),
+					Condition: parser.NewIntegerValue(1),
+					Result:    parser.NewStringValue("A"),
 				},
 				parser.CaseWhen{
-					Condition: parser.NewInteger(2),
-					Result:    parser.NewString("B"),
+					Condition: parser.NewIntegerValue(2),
+					Result:    parser.NewStringValue("B"),
 				},
 			},
 		},
@@ -3093,15 +3093,15 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Case When Condition Error",
 		Expr: parser.Case{
-			Value: parser.NewInteger(2),
+			Value: parser.NewIntegerValue(2),
 			When: []parser.Expression{
 				parser.CaseWhen{
-					Condition: parser.NewInteger(1),
-					Result:    parser.NewString("A"),
+					Condition: parser.NewIntegerValue(1),
+					Result:    parser.NewStringValue("A"),
 				},
 				parser.CaseWhen{
 					Condition: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-					Result:    parser.NewString("B"),
+					Result:    parser.NewStringValue("B"),
 				},
 			},
 		},
@@ -3110,14 +3110,14 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Case When Result Error",
 		Expr: parser.Case{
-			Value: parser.NewInteger(2),
+			Value: parser.NewIntegerValue(2),
 			When: []parser.Expression{
 				parser.CaseWhen{
-					Condition: parser.NewInteger(1),
-					Result:    parser.NewString("A"),
+					Condition: parser.NewIntegerValue(1),
+					Result:    parser.NewStringValue("A"),
 				},
 				parser.CaseWhen{
-					Condition: parser.NewInteger(2),
+					Condition: parser.NewIntegerValue(2),
 					Result:    parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 				},
 			},
@@ -3127,15 +3127,15 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Case Else Result Error",
 		Expr: parser.Case{
-			Value: parser.NewInteger(0),
+			Value: parser.NewIntegerValue(0),
 			When: []parser.Expression{
 				parser.CaseWhen{
-					Condition: parser.NewInteger(1),
-					Result:    parser.NewString("A"),
+					Condition: parser.NewIntegerValue(1),
+					Result:    parser.NewStringValue("A"),
 				},
 				parser.CaseWhen{
-					Condition: parser.NewInteger(2),
-					Result:    parser.NewString("B"),
+					Condition: parser.NewIntegerValue(2),
+					Result:    parser.NewStringValue("B"),
 				},
 			},
 			Else: parser.CaseElse{
@@ -3147,8 +3147,8 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Logic AND",
 		Expr: parser.Logic{
-			LHS:      parser.NewTernary(ternary.TRUE),
-			RHS:      parser.NewTernary(ternary.FALSE),
+			LHS:      parser.NewTernaryValue(ternary.TRUE),
+			RHS:      parser.NewTernaryValue(ternary.FALSE),
 			Operator: parser.Token{Token: parser.AND, Literal: "and"},
 		},
 		Result: parser.NewTernary(ternary.FALSE),
@@ -3156,8 +3156,8 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Logic AND Decided with LHS",
 		Expr: parser.Logic{
-			LHS:      parser.NewTernary(ternary.FALSE),
-			RHS:      parser.NewTernary(ternary.FALSE),
+			LHS:      parser.NewTernaryValue(ternary.FALSE),
+			RHS:      parser.NewTernaryValue(ternary.FALSE),
 			Operator: parser.Token{Token: parser.AND, Literal: "and"},
 		},
 		Result: parser.NewTernary(ternary.FALSE),
@@ -3165,8 +3165,8 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Logic OR",
 		Expr: parser.Logic{
-			LHS:      parser.NewTernary(ternary.FALSE),
-			RHS:      parser.NewTernary(ternary.TRUE),
+			LHS:      parser.NewTernaryValue(ternary.FALSE),
+			RHS:      parser.NewTernaryValue(ternary.TRUE),
 			Operator: parser.Token{Token: parser.OR, Literal: "or"},
 		},
 		Result: parser.NewTernary(ternary.TRUE),
@@ -3174,8 +3174,8 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Logic OR Decided with LHS",
 		Expr: parser.Logic{
-			LHS:      parser.NewTernary(ternary.TRUE),
-			RHS:      parser.NewTernary(ternary.FALSE),
+			LHS:      parser.NewTernaryValue(ternary.TRUE),
+			RHS:      parser.NewTernaryValue(ternary.FALSE),
 			Operator: parser.Token{Token: parser.OR, Literal: "or"},
 		},
 		Result: parser.NewTernary(ternary.TRUE),
@@ -3184,7 +3184,7 @@ var filterEvaluateTests = []struct {
 		Name: "Logic LHS Error",
 		Expr: parser.Logic{
 			LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-			RHS:      parser.NewTernary(ternary.FALSE),
+			RHS:      parser.NewTernaryValue(ternary.FALSE),
 			Operator: parser.Token{Token: parser.AND, Literal: "and"},
 		},
 		Error: "[L:- C:-] field notexist does not exist",
@@ -3192,7 +3192,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Logic RHS Error",
 		Expr: parser.Logic{
-			LHS:      parser.NewTernary(ternary.UNKNOWN),
+			LHS:      parser.NewTernaryValue(ternary.UNKNOWN),
 			RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Operator: parser.Token{Token: parser.AND, Literal: "and"},
 		},
@@ -3201,7 +3201,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "UnaryLogic",
 		Expr: parser.UnaryLogic{
-			Operand:  parser.NewTernary(ternary.FALSE),
+			Operand:  parser.NewTernaryValue(ternary.FALSE),
 			Operator: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
 		Result: parser.NewTernary(ternary.TRUE),
@@ -3248,7 +3248,7 @@ var filterEvaluateTests = []struct {
 		),
 		Expr: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "@var1"},
-			Value:    parser.NewInteger(2),
+			Value:    parser.NewIntegerValue(2),
 		},
 		Result: parser.NewInteger(2),
 	},
@@ -3256,7 +3256,7 @@ var filterEvaluateTests = []struct {
 		Name: "Variable Substitution Undefined Error",
 		Expr: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "@undefined"},
-			Value:    parser.NewInteger(2),
+			Value:    parser.NewIntegerValue(2),
 		},
 		Error: "[L:- C:-] variable @undefined is undefined",
 	},
@@ -3404,8 +3404,8 @@ func BenchmarkFilter_EvaluateSingleThread(b *testing.B) {
 
 		for j := 0; j < 150; j++ {
 			filter.Evaluate(parser.Comparison{
-				LHS:      parser.NewInteger(1),
-				RHS:      parser.NewString("1"),
+				LHS:      parser.NewIntegerValue(1),
+				RHS:      parser.NewStringValue("1"),
 				Operator: "=",
 			})
 		}
@@ -3422,8 +3422,8 @@ func BenchmarkFilter_EvaluateMultiThread(b *testing.B) {
 
 				for j := 0; j < 50; j++ {
 					filter.Evaluate(parser.Comparison{
-						LHS:      parser.NewInteger(1),
-						RHS:      parser.NewString("1"),
+						LHS:      parser.NewIntegerValue(1),
+						RHS:      parser.NewStringValue("1"),
 						Operator: "=",
 					})
 				}

@@ -33,6 +33,16 @@ func (list VariablesList) Substitute(expr parser.VariableSubstitution, filter *F
 	return
 }
 
+func (list VariablesList) SubstitutePrimary(variable parser.Variable, value parser.Primary) (parser.Primary, error) {
+	var err error
+	for _, v := range list {
+		if value, err = v.SubstitutePrimary(variable, value); err == nil {
+			return value, nil
+		}
+	}
+	return nil, NewUndefinedVariableError(variable)
+}
+
 func (list VariablesList) Dispose(expr parser.Variable) error {
 	for _, v := range list {
 		if err := v.Dispose(expr); err == nil {
@@ -101,9 +111,10 @@ func (v Variables) Substitute(substitution parser.VariableSubstitution, filter *
 	if err != nil {
 		return nil, err
 	}
-	err = v.Set(substitution.Variable, val)
-	if err != nil {
-		return nil, err
-	}
-	return val, nil
+	return v.SubstitutePrimary(substitution.Variable, val)
+}
+
+func (v Variables) SubstitutePrimary(variable parser.Variable, value parser.Primary) (parser.Primary, error) {
+	err := v.Set(variable, value)
+	return value, err
 }

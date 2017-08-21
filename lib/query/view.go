@@ -27,6 +27,8 @@ type View struct {
 
 	filteredIndices []int
 
+	comparisonKeys []string
+
 	recordSortValues  []SortValues
 	sortDirections    []int
 	sortNullPositions []int
@@ -265,8 +267,6 @@ func loadViewFromFile(file *os.File, fileInfo *FileInfo) (*View, error) {
 
 	r := cmd.GetReader(file, flags.Encoding)
 
-	view := new(View)
-
 	reader := csv.NewReader(r)
 	reader.Delimiter = fileInfo.Delimiter
 	reader.WithoutNull = flags.WithoutNull
@@ -280,14 +280,62 @@ func loadViewFromFile(file *os.File, fileInfo *FileInfo) (*View, error) {
 		}
 	}
 
-	rows, err := reader.ReadAll()
+	records := Records{}
+	rowch := make(chan []csv.Field, 1000)
+	fieldch := make(chan []parser.Primary, 1000)
+
+	wg := sync.WaitGroup{}
+
+	wg.Add(1)
+	go func() {
+		for {
+			primaries, ok := <-fieldch
+			if !ok {
+				break
+			}
+			records = append(records, NewRecord(primaries))
+		}
+		wg.Done()
+	}()
+
+	wg.Add(1)
+	go func() {
+		for {
+			row, ok := <-rowch
+			if !ok {
+				break
+			}
+			fields := make([]parser.Primary, len(row))
+			for i, v := range row {
+				fields[i] = v.ToPrimary()
+			}
+			fieldch <- fields
+		}
+		close(fieldch)
+		wg.Done()
+	}()
+
+	wg.Add(1)
+	go func() {
+		for {
+			record, e := reader.Read()
+			if e == csv.EOF {
+				break
+			}
+			if e != nil {
+				err = e
+				break
+			}
+			rowch <- record
+		}
+		close(rowch)
+		wg.Done()
+	}()
+
+	wg.Wait()
+
 	if err != nil {
 		return nil, err
-	}
-
-	view.Records = make([]Record, len(rows))
-	for i, v := range rows {
-		view.Records[i] = NewRecord(v)
 	}
 
 	if header == nil {
@@ -304,7 +352,9 @@ func loadViewFromFile(file *os.File, fileInfo *FileInfo) (*View, error) {
 		fileInfo.LineBreak = flags.LineBreak
 	}
 
+	view := NewView()
 	view.Header = NewHeader(parser.FormatTableName(fileInfo.Path), header)
+	view.Records = records
 	view.FileInfo = fileInfo
 	return view, nil
 }
@@ -413,7 +463,7 @@ func (view *View) filter(condition parser.Expression) ([]int, error) {
 }
 
 func (view *View) Extract() {
-	records := make([]Record, len(view.filteredIndices))
+	records := make(Records, len(view.filteredIndices))
 	for i, idx := range view.filteredIndices {
 		records[i] = view.Records[idx]
 	}
@@ -442,6 +492,7 @@ func (view *View) group(items []parser.Expression) error {
 			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
 
 			filter := NewFilterForSequentialEvaluation(view, view.Filter)
+			values := make([]parser.Primary, len(items))
 
 		GroupLoop:
 			for i := start; i < end; i++ {
@@ -450,8 +501,6 @@ func (view *View) group(items []parser.Expression) error {
 				}
 
 				filter.Records[0].RecordIndex = i
-
-				values := make([]parser.Primary, len(items))
 				for j, item := range items {
 					p, e := filter.Evaluate(item)
 					if e != nil {
@@ -483,7 +532,7 @@ func (view *View) group(items []parser.Expression) error {
 		}
 	}
 
-	records := make([]Record, len(groupKeys))
+	records := make(Records, len(groupKeys))
 	for i, groupKey := range groupKeys {
 		record := make(Record, view.FieldLen())
 		indices := groups[groupKey]
@@ -608,17 +657,12 @@ func (view *View) Select(clause parser.SelectClause) error {
 	}
 
 	if clause.IsDistinct() {
+		view.GenerateComparisonKeys()
 		records := make(Records, 0, view.RecordLen())
-		values := make(map[string]bool)
-
-		for _, v := range view.Records {
-			primaries := make([]parser.Primary, len(view.selectFields))
-			for j, idx := range view.selectFields {
-				primaries[j] = v[idx].Primary()
-			}
-			key := SerializeComparisonKeys(primaries)
-			if _, ok := values[key]; !ok {
-				values[key] = true
+		values := make(map[string]interface{})
+		for i, v := range view.Records {
+			if _, ok := values[view.comparisonKeys[i]]; !ok {
+				values[view.comparisonKeys[i]] = nil
 
 				record := make(Record, len(view.selectFields))
 				for j, idx := range view.selectFields {
@@ -636,23 +680,41 @@ func (view *View) Select(clause parser.SelectClause) error {
 
 		view.Header = hfields
 		view.Records = records
-
-		view.Distinct()
 	}
 
 	return nil
 }
 
-func (view *View) Distinct() {
-	distinguished := Records{}
+func (view *View) GenerateComparisonKeys() {
+	view.comparisonKeys = make([]string, view.RecordLen())
 
-	for _, record := range view.Records {
-		if !distinguished.Contains(record) {
-			distinguished = append(distinguished, record)
-		}
+	cpu := NumberOfCPU(view.RecordLen())
+	wg := sync.WaitGroup{}
+	for i := 0; i < cpu; i++ {
+		wg.Add(1)
+		go func(thIdx int) {
+			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+
+			var primaries []parser.Primary
+			if view.selectFields != nil {
+				primaries = make([]parser.Primary, len(view.selectFields))
+			}
+
+			for i := start; i < end; i++ {
+				if view.selectFields != nil {
+					for j, idx := range view.selectFields {
+						primaries[j] = view.Records[i][idx].Primary()
+					}
+					view.comparisonKeys[i] = SerializeComparisonKeys(primaries)
+				} else {
+					view.comparisonKeys[i] = view.Records[i].SerializeComparisonKeys()
+				}
+			}
+
+			wg.Done()
+		}(i)
 	}
-
-	view.Records = distinguished
+	wg.Wait()
 }
 
 func (view *View) SelectAllColumns() error {
@@ -965,33 +1027,46 @@ func (view *View) insert(fields []parser.Expression, valuesList [][]parser.Prima
 }
 
 func (view *View) Fix() {
-	hfields := NewEmptyHeader(len(view.selectFields))
-	records := make([]Record, view.RecordLen())
-
-	cpu := NumberOfCPU(view.RecordLen())
-
-	wg := sync.WaitGroup{}
-	for i := 0; i < cpu; i++ {
-		wg.Add(1)
-		go func(thIdx int) {
-			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
-
-			for i := start; i < end; i++ {
-				record := make(Record, len(view.selectFields))
-				for j, idx := range view.selectFields {
-					if 1 < view.Records[i].GroupLen() {
-						record[j] = NewCell(view.Records[i][idx].Primary())
-					} else {
-						record[j] = view.Records[i][idx]
-					}
-				}
-				records[i] = record
+	resize := false
+	if len(view.selectFields) < view.FieldLen() {
+		resize = true
+	} else {
+		for i := 0; i < view.FieldLen(); i++ {
+			if view.selectFields[i] != i {
+				resize = true
+				break
 			}
-
-			wg.Done()
-		}(i)
+		}
 	}
-	wg.Wait()
+
+	if resize {
+		cpu := NumberOfCPU(view.RecordLen())
+
+		wg := sync.WaitGroup{}
+		for i := 0; i < cpu; i++ {
+			wg.Add(1)
+			go func(thIdx int) {
+				start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+
+				for i := start; i < end; i++ {
+					record := make(Record, len(view.selectFields))
+					for j, idx := range view.selectFields {
+						if 1 < view.Records[i].GroupLen() {
+							record[j] = NewCell(view.Records[i][idx].Primary())
+						} else {
+							record[j] = view.Records[i][idx]
+						}
+					}
+					view.Records[i] = record
+				}
+
+				wg.Done()
+			}(i)
+		}
+		wg.Wait()
+	}
+
+	hfields := NewEmptyHeader(len(view.selectFields))
 
 	colNumber := 0
 	for i, idx := range view.selectFields {
@@ -1009,11 +1084,11 @@ func (view *View) Fix() {
 	}
 
 	view.Header = hfields
-	view.Records = records
 	view.selectFields = nil
 	view.selectLabels = nil
 	view.isGrouped = false
 	view.Filter = nil
+	view.comparisonKeys = nil
 	view.recordSortValues = nil
 	view.sortDirections = nil
 	view.sortNullPositions = nil
@@ -1025,42 +1100,79 @@ func (view *View) Union(calcView *View, all bool) {
 	view.FileInfo = nil
 
 	if !all {
-		view.Distinct()
+		view.GenerateComparisonKeys()
+
+		records := make(Records, 0, view.RecordLen())
+		values := make(map[string]interface{})
+
+		for i, key := range view.comparisonKeys {
+			if _, ok := values[key]; !ok {
+				values[key] = nil
+				records = append(records, view.Records[i])
+			}
+		}
+
+		view.Records = records
+		view.comparisonKeys = nil
 	}
 }
 
 func (view *View) Except(calcView *View, all bool) {
-	indices := []int{}
-	for i, record := range view.Records {
-		if !calcView.Records.Contains(record) {
-			indices = append(indices, i)
+	view.GenerateComparisonKeys()
+	calcView.GenerateComparisonKeys()
+
+	keys := make(map[string]interface{})
+	for _, key := range calcView.comparisonKeys {
+		if _, ok := keys[key]; !ok {
+			keys[key] = nil
 		}
 	}
-	view.filteredIndices = indices
-	view.Extract()
 
-	view.FileInfo = nil
-
-	if !all {
-		view.Distinct()
+	distinctKeys := make(map[string]interface{})
+	records := make(Records, 0, view.RecordLen())
+	for i, key := range view.comparisonKeys {
+		if _, ok := keys[key]; !ok {
+			if !all {
+				if _, ok := distinctKeys[key]; ok {
+					continue
+				}
+				distinctKeys[key] = nil
+			}
+			records = append(records, view.Records[i])
+		}
 	}
+	view.Records = records
+	view.FileInfo = nil
+	view.comparisonKeys = nil
 }
 
 func (view *View) Intersect(calcView *View, all bool) {
-	indices := []int{}
-	for i, record := range view.Records {
-		if calcView.Records.Contains(record) {
-			indices = append(indices, i)
+	view.GenerateComparisonKeys()
+	calcView.GenerateComparisonKeys()
+
+	keys := make(map[string]interface{})
+	for _, key := range calcView.comparisonKeys {
+		if _, ok := keys[key]; !ok {
+			keys[key] = nil
 		}
 	}
-	view.filteredIndices = indices
-	view.Extract()
 
-	view.FileInfo = nil
-
-	if !all {
-		view.Distinct()
+	distinctKeys := make(map[string]interface{})
+	records := make(Records, 0, view.RecordLen())
+	for i, key := range view.comparisonKeys {
+		if _, ok := keys[key]; ok {
+			if !all {
+				if _, ok := distinctKeys[key]; ok {
+					continue
+				}
+				distinctKeys[key] = nil
+			}
+			records = append(records, view.Records[i])
+		}
 	}
+	view.Records = records
+	view.FileInfo = nil
+	view.comparisonKeys = nil
 }
 
 func (view *View) ListValuesForAggregateFunctions(expr parser.Expression, arg parser.Expression, distinct bool, filter *Filter) ([]parser.Primary, error) {
@@ -1110,40 +1222,17 @@ func (view *View) ListValuesForAggregateFunctions(expr parser.Expression, arg pa
 	return list, nil
 }
 
-func (view *View) ListValuesForAnalyticFunctions(fn parser.AnalyticFunction, partitionItems PartitionItemList) ([]parser.Primary, error) {
-	cpu := NumberOfCPU(view.RecordLen())
+func (view *View) ListValuesForAnalyticFunctions(fn parser.AnalyticFunction, partitionItems Partition) ([]parser.Primary, error) {
 	list := make([]parser.Primary, len(partitionItems))
-	var err error
 
-	wg := sync.WaitGroup{}
-	for i := 0; i < cpu; i++ {
-		wg.Add(1)
-		go func(thIdx int) {
-			start, end := RecordRange(thIdx, len(partitionItems), cpu)
-			filter := NewFilterForSequentialEvaluation(view, view.Filter)
-
-		ListAnalyticFunctionLoop:
-			for i := start; i < end; i++ {
-				if err != nil {
-					break ListAnalyticFunctionLoop
-				}
-
-				filter.Records[0].RecordIndex = partitionItems[i].RecordIndex
-				value, e := filter.Evaluate(fn.Args[0])
-				if e != nil {
-					err = e
-					break ListAnalyticFunctionLoop
-				}
-				list[i] = value
-			}
-
-			wg.Done()
-		}(i)
-	}
-	wg.Wait()
-
-	if err != nil {
-		return nil, err
+	filter := NewFilterForSequentialEvaluation(view, view.Filter)
+	for i, item := range partitionItems {
+		filter.Records[0].RecordIndex = item.RecordIndex
+		value, err := filter.Evaluate(fn.Args[0])
+		if err != nil {
+			return nil, err
+		}
+		list[i] = value
 	}
 
 	if fn.IsDistinct() {
