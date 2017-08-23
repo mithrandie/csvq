@@ -535,7 +535,7 @@ func Delete(query parser.DeleteQuery, parentFilter *Filter) ([]*View, error) {
 	}
 
 	viewsToDelete := make(map[string]*View)
-	deletedIndices := make(map[string]map[int]bool)
+	deletedIndices := make(map[string]map[int]interface{})
 	for _, v := range query.Tables {
 		table := v.(parser.Table)
 		fpath, err := filter.AliasesList.Get(table.Name())
@@ -550,7 +550,7 @@ func Delete(query parser.DeleteQuery, parentFilter *Filter) ([]*View, error) {
 			viewsToDelete[viewKey], _ = ViewCache.Get(parser.Identifier{Literal: fpath})
 		}
 		viewsToDelete[viewKey].Header.Update(table.Name().Literal, nil)
-		deletedIndices[viewKey] = make(map[int]bool)
+		deletedIndices[viewKey] = make(map[int]interface{})
 	}
 
 	for i := range view.Records {
@@ -560,23 +560,20 @@ func Delete(query parser.DeleteQuery, parentFilter *Filter) ([]*View, error) {
 				continue
 			}
 			if _, ok := deletedIndices[viewref][internalId]; !ok {
-				deletedIndices[viewref][internalId] = true
+				deletedIndices[viewref][internalId] = nil
 			}
 		}
 	}
 
 	views := []*View{}
 	for k, v := range viewsToDelete {
-		filterdIndices := make([]int, v.RecordLen()-len(deletedIndices[k]))
-		count := 0
-		for i := range v.Records {
+		records := make(Records, 0, v.RecordLen()-len(deletedIndices[k]))
+		for i, record := range v.Records {
 			if _, ok := deletedIndices[k][i]; !ok {
-				filterdIndices[count] = i
-				count++
+				records = append(records, record)
 			}
 		}
-		v.filteredIndices = filterdIndices
-		v.Extract()
+		v.Records = records
 
 		v.RestoreHeaderReferences()
 		v.OperatedRecords = len(deletedIndices[k])
