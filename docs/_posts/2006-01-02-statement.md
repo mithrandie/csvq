@@ -83,9 +83,10 @@ Datetime
   | :- | :- |
   | DateFormat | 2012-03-15 |
   | DateFormat hh:mm:ss(.NanoSecods) | 2012-03-15 12:03:01<br />2012-03-15 12:03:01.123456789 |
-  | DateFormat hh:mm:ss(.NanoSecods) Zhh:mm | 2012-03-15 12:03:01 -07:00 |
-  | DateFormat hh:mm:ss(.NanoSecods) Zhhmm | 2012-03-15 12:03:01 -0700 |
-  | DateFormat hh:mm:ss(.NanoSecods) TZ | 2012-03-15 12:03:01 PST |
+  | DateFormat hh:mm:ss(.NanoSecods) ±hh:mm | 2012-03-15 12:03:01 -07:00 |
+  | DateFormat hh:mm:ss(.NanoSecods) ±hhmm | 2012-03-15 12:03:01 -0700 |
+  | DateFormat hh:mm:ss(.NanoSecods) TimeZone | 2012-03-15 12:03:01 PST |
+  | YYYY-MM-DDThh:mm:ss(.NanoSeconds) | 2012-03-15T12:03:01 |
   | RFC3339 | 2012-03-15T12:03:01-07:00 |
   | RFC3339 with Nano Seconds | 2012-03-15T12:03:01.123456789-07:00 |
   | RFC822 | 03 Mar 12 12:03 PST |

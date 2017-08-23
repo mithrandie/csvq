@@ -88,7 +88,7 @@ func main() {
 		},
 		cli.IntFlag{
 			Name:  "cpu, p",
-			Usage: "number of cpu cores to be used. 1 - number of cpu cores",
+			Usage: "hint for the number of cpu cores to be used. 1 - number of cpu cores",
 		},
 		cli.BoolFlag{
 			Name:  "stats, x",
