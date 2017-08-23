@@ -140,7 +140,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			}
 		}
 	case parser.CreateTable:
-		if view, err = CreateTable(stmt.(parser.CreateTable)); err == nil {
+		if view, err = CreateTable(stmt.(parser.CreateTable), proc.Filter); err == nil {
 			results = []Result{
 				{
 					Type:     CREATE_TABLE,

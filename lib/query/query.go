@@ -590,15 +590,11 @@ func Delete(query parser.DeleteQuery, parentFilter *Filter) ([]*View, error) {
 	return views, nil
 }
 
-func CreateTable(query parser.CreateTable) (*View, error) {
-	fields := make([]string, len(query.Fields))
-	for i, v := range query.Fields {
-		f, _ := v.(parser.Identifier)
-		if InStrSliceWithCaseInsensitive(f.Literal, fields) {
-			return nil, NewDuplicateFieldNameError(f)
-		}
-		fields[i] = f.Literal
-	}
+func CreateTable(query parser.CreateTable, parentFilter *Filter) (*View, error) {
+	filter := parentFilter.CreateNode()
+
+	var view *View
+	var err error
 
 	flags := cmd.GetFlags()
 	fileInfo, err := NewFileInfoForCreate(query.Table, flags.Repository, flags.Delimiter)
@@ -608,15 +604,38 @@ func CreateTable(query parser.CreateTable) (*View, error) {
 	if _, err := os.Stat(fileInfo.Path); err == nil {
 		return nil, NewFileAlreadyExistError(query.Table)
 	}
-
 	fileInfo.Encoding = flags.Encoding
 	fileInfo.LineBreak = flags.LineBreak
 
-	header := NewHeader(parser.FormatTableName(fileInfo.Path), fields)
-	view := &View{
-		Header:   header,
-		FileInfo: fileInfo,
+	if query.Query != nil {
+		view, err = Select(query.Query.(parser.SelectQuery), filter)
+		if err != nil {
+			return nil, err
+		}
+
+		if err = view.Header.Update(parser.FormatTableName(fileInfo.Path), query.Fields); err != nil {
+			if _, ok := err.(*FieldLengthNotMatchError); ok {
+				return nil, NewTableFieldLengthError(query.Query.(parser.SelectQuery), query.Table, len(query.Fields))
+			}
+			return nil, err
+		}
+	} else {
+		fields := make([]string, len(query.Fields))
+		for i, v := range query.Fields {
+			f, _ := v.(parser.Identifier)
+			if InStrSliceWithCaseInsensitive(f.Literal, fields) {
+				return nil, NewDuplicateFieldNameError(f)
+			}
+			fields[i] = f.Literal
+		}
+		header := NewHeader(parser.FormatTableName(fileInfo.Path), fields)
+		view = &View{
+			Header:  header,
+			Records: Records{},
+		}
 	}
+
+	view.FileInfo = fileInfo
 
 	ViewCache.Set(view)
 

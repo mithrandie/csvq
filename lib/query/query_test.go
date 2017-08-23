@@ -2675,7 +2675,57 @@ var createTableTests = []struct {
 				Encoding:  cmd.UTF8,
 				LineBreak: cmd.LF,
 			},
+			Header:  NewHeader("create_table_1", []string{"column1", "column2"}),
+			Records: Records{},
+		},
+		ViewCache: ViewMap{
+			strings.ToUpper(GetTestFilePath("create_table_1.csv")): &View{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("create_table_1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  cmd.UTF8,
+					LineBreak: cmd.LF,
+				},
+				Header:  NewHeader("create_table_1", []string{"column1", "column2"}),
+				Records: Records{},
+			},
+		},
+	},
+	{
+		Name: "Create Table From Select Query",
+		Query: parser.CreateTable{
+			Table: parser.Identifier{Literal: "create_table_1.csv"},
+			Fields: []parser.Expression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "column2"},
+			},
+			Query: parser.SelectQuery{
+				SelectEntity: parser.SelectEntity{
+					SelectClause: parser.SelectClause{
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.NewIntegerValue(1)},
+							parser.Field{Object: parser.NewIntegerValue(2)},
+						},
+					},
+				},
+			},
+		},
+		Result: &View{
+			FileInfo: &FileInfo{
+				Path:      GetTestFilePath("create_table_1.csv"),
+				Delimiter: ',',
+				NoHeader:  false,
+				Encoding:  cmd.UTF8,
+				LineBreak: cmd.LF,
+			},
 			Header: NewHeader("create_table_1", []string{"column1", "column2"}),
+			Records: Records{
+				NewRecord([]parser.Primary{
+					parser.NewInteger(1),
+					parser.NewInteger(2),
+				}),
+			},
 		},
 		ViewCache: ViewMap{
 			strings.ToUpper(GetTestFilePath("create_table_1.csv")): &View{
@@ -2687,6 +2737,12 @@ var createTableTests = []struct {
 					LineBreak: cmd.LF,
 				},
 				Header: NewHeader("create_table_1", []string{"column1", "column2"}),
+				Records: Records{
+					NewRecord([]parser.Primary{
+						parser.NewInteger(1),
+						parser.NewInteger(2),
+					}),
+				},
 			},
 		},
 	},
@@ -2712,6 +2768,68 @@ var createTableTests = []struct {
 		},
 		Error: "[L:- C:-] field name column1 is a duplicate",
 	},
+	{
+		Name: "Create Table Select Query Execution Error",
+		Query: parser.CreateTable{
+			Table: parser.Identifier{Literal: "create_table_1.csv"},
+			Fields: []parser.Expression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "column2"},
+			},
+			Query: parser.SelectQuery{
+				SelectEntity: parser.SelectEntity{
+					SelectClause: parser.SelectClause{
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
+							parser.Field{Object: parser.NewIntegerValue(2)},
+						},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] field notexist does not exist",
+	},
+	{
+		Name: "Create Table From Select Query Field Length Not Match Error",
+		Query: parser.CreateTable{
+			Table: parser.Identifier{Literal: "create_table_1.csv"},
+			Fields: []parser.Expression{
+				parser.Identifier{Literal: "column1"},
+			},
+			Query: parser.SelectQuery{
+				SelectEntity: parser.SelectEntity{
+					SelectClause: parser.SelectClause{
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.NewIntegerValue(1)},
+							parser.Field{Object: parser.NewIntegerValue(2)},
+						},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] select query should return exactly 1 field for table create_table_1.csv",
+	},
+	{
+		Name: "Create Table From Select Query Field Name Duplicate Error",
+		Query: parser.CreateTable{
+			Table: parser.Identifier{Literal: "create_table_1.csv"},
+			Fields: []parser.Expression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "column1"},
+			},
+			Query: parser.SelectQuery{
+				SelectEntity: parser.SelectEntity{
+					SelectClause: parser.SelectClause{
+						Fields: []parser.Expression{
+							parser.Field{Object: parser.NewIntegerValue(1)},
+							parser.Field{Object: parser.NewIntegerValue(2)},
+						},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] field name column1 is a duplicate",
+	},
 }
 
 func TestCreateTable(t *testing.T) {
@@ -2720,7 +2838,7 @@ func TestCreateTable(t *testing.T) {
 
 	for _, v := range createTableTests {
 		ViewCache.Clear()
-		result, err := CreateTable(v.Query)
+		result, err := CreateTable(v.Query, NewEmptyFilter())
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

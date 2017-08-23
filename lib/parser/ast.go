@@ -1368,40 +1368,16 @@ func (e DeleteQuery) String() string {
 
 type CreateTable struct {
 	*BaseExpr
-	CreateTable string
-	Table       Identifier
-	Fields      []Expression
-}
-
-func (e CreateTable) String() string {
-	s := []string{
-		e.CreateTable,
-		e.Table.String(),
-		putParentheses(listExpressions(e.Fields)),
-	}
-	return joinWithSpace(s)
+	Table  Identifier
+	Fields []Expression
+	Query  Expression
 }
 
 type AddColumns struct {
 	*BaseExpr
-	AlterTable string
-	Table      Expression
-	Add        string
-	Columns    []Expression
-	Position   Expression
-}
-
-func (e AddColumns) String() string {
-	s := []string{
-		e.AlterTable,
-		e.Table.String(),
-		e.Add,
-		putParentheses(listExpressions(e.Columns)),
-	}
-	if e.Position != nil {
-		s = append(s, e.Position.String())
-	}
-	return joinWithSpace(s)
+	Table    Expression
+	Columns  []Expression
+	Position Expression
 }
 
 type ColumnDefault struct {
@@ -1435,42 +1411,15 @@ func (e ColumnPosition) String() string {
 
 type DropColumns struct {
 	*BaseExpr
-	AlterTable string
-	Table      Expression
-	Drop       string
-	Columns    []Expression
-}
-
-func (e DropColumns) String() string {
-	s := []string{
-		e.AlterTable,
-		e.Table.String(),
-		e.Drop,
-		putParentheses(listExpressions(e.Columns)),
-	}
-	return joinWithSpace(s)
+	Table   Expression
+	Columns []Expression
 }
 
 type RenameColumn struct {
 	*BaseExpr
-	AlterTable string
-	Table      Expression
-	Rename     string
-	Old        Expression
-	To         string
-	New        Identifier
-}
-
-func (e RenameColumn) String() string {
-	s := []string{
-		e.AlterTable,
-		e.Table.String(),
-		e.Rename,
-		e.Old.String(),
-		e.To,
-		e.New.String(),
-	}
-	return joinWithSpace(s)
+	Table Expression
+	Old   Expression
+	New   Identifier
 }
 
 type FunctionDeclaration struct {

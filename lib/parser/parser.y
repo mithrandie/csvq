@@ -37,7 +37,7 @@ package parser
 %type<statement>   in_function_in_loop_flow_control_statement
 %type<statement>   variable_statement
 %type<statement>   transaction_statement
-%type<statement>   table_operation
+%type<statement>   table_operation_statement
 %type<expression>  column_default
 %type<expressions> column_defaults
 %type<expression>  column_position
@@ -251,11 +251,11 @@ statement
     {
         $$ = $1
     }
-    | table_operation statement_terminal
+    | function statement_terminal
     {
         $$ = $1
     }
-    | function statement_terminal
+    | table_operation_statement
     {
         $$ = $1
     }
@@ -450,30 +450,46 @@ transaction_statement
         $$ = TransactionControl{BaseExpr: NewBaseExpr($1), Token: $1.Token}
     }
 
-table_operation
-    : CREATE TABLE identifier '(' identifiers ')'
+table_operation_statement
+    : CREATE TABLE identifier '(' identifiers ')' statement_terminal
     {
-        $$ = CreateTable{CreateTable: $1.Literal + " " + $2.Literal, Table: $3, Fields: $5}
+        $$ = CreateTable{Table: $3, Fields: $5}
     }
-    | ALTER TABLE table_identifier ADD column_default column_position
+    | CREATE TABLE identifier '(' identifiers ')' select_query statement_terminal
     {
-        $$ = AddColumns{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Add: $4.Literal, Columns: []Expression{$5}, Position: $6}
+        $$ = CreateTable{Table: $3, Fields: $5, Query: $7}
     }
-    | ALTER TABLE table_identifier ADD '(' column_defaults ')' column_position
+    | CREATE TABLE identifier select_query statement_terminal
     {
-        $$ = AddColumns{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Add: $4.Literal, Columns: $6, Position: $8}
+        $$ = CreateTable{Table: $3, Query: $4}
     }
-    | ALTER TABLE table_identifier DROP field_reference
+    | CREATE TABLE identifier '(' identifiers ')' AS select_query statement_terminal
     {
-        $$ = DropColumns{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Drop: $4.Literal, Columns: []Expression{$5}}
+        $$ = CreateTable{Table: $3, Fields: $5, Query: $8}
     }
-    | ALTER TABLE table_identifier DROP '(' field_references ')'
+    | CREATE TABLE identifier AS select_query statement_terminal
     {
-        $$ = DropColumns{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Drop: $4.Literal, Columns: $6}
+        $$ = CreateTable{Table: $3, Query: $5}
     }
-    | ALTER TABLE table_identifier RENAME field_reference TO identifier
+    | ALTER TABLE table_identifier ADD column_default column_position statement_terminal
     {
-        $$ = RenameColumn{AlterTable: $1.Literal + " " + $2.Literal, Table: $3, Rename: $4.Literal, Old: $5, To: $6.Literal, New: $7}
+        $$ = AddColumns{Table: $3, Columns: []Expression{$5}, Position: $6}
+    }
+    | ALTER TABLE table_identifier ADD '(' column_defaults ')' column_position statement_terminal
+    {
+        $$ = AddColumns{Table: $3, Columns: $6, Position: $8}
+    }
+    | ALTER TABLE table_identifier DROP field_reference statement_terminal
+    {
+        $$ = DropColumns{Table: $3, Columns: []Expression{$5}}
+    }
+    | ALTER TABLE table_identifier DROP '(' field_references ')' statement_terminal
+    {
+        $$ = DropColumns{Table: $3, Columns: $6}
+    }
+    | ALTER TABLE table_identifier RENAME field_reference TO identifier statement_terminal
+    {
+        $$ = RenameColumn{Table: $3, Old: $5, New: $7}
     }
 
 column_default

@@ -1888,46 +1888,6 @@ func TestDeleteQuery_String(t *testing.T) {
 	}
 }
 
-func TestCreateTable_String(t *testing.T) {
-	e := CreateTable{
-		CreateTable: "create table",
-		Table:       Identifier{Literal: "newtable"},
-		Fields: []Expression{
-			Identifier{Literal: "column1"},
-			Identifier{Literal: "column2"},
-		},
-	}
-	expect := "create table newtable (column1, column2)"
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-}
-
-func TestAddColumns_String(t *testing.T) {
-	e := AddColumns{
-		AlterTable: "alter table",
-		Table:      Identifier{Literal: "table1"},
-		Add:        "add",
-		Columns: []Expression{
-			ColumnDefault{
-				Column: Identifier{Literal: "newcolumn"},
-			},
-			ColumnDefault{
-				Column:  Identifier{Literal: "newcolumn2"},
-				Default: "default",
-				Value:   NewNullValueFromString("null"),
-			},
-		},
-		Position: ColumnPosition{
-			Position: Token{Token: FIRST, Literal: "first"},
-		},
-	}
-	expect := "alter table table1 add (newcolumn, newcolumn2 default null) first"
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-}
-
 func TestColumnDefault_String(t *testing.T) {
 	e := ColumnDefault{
 		Column:  Identifier{Literal: "column1"},
@@ -1946,37 +1906,6 @@ func TestColumnPosition_String(t *testing.T) {
 		Column:   Identifier{Literal: "column1"},
 	}
 	expect := "after column1"
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-}
-
-func TestDropColumns_String(t *testing.T) {
-	e := DropColumns{
-		AlterTable: "alter table",
-		Table:      Identifier{Literal: "table1"},
-		Drop:       "drop",
-		Columns: []Expression{
-			Identifier{Literal: "column1"},
-			Identifier{Literal: "column2"},
-		},
-	}
-	expect := "alter table table1 drop (column1, column2)"
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-}
-
-func TestRenameColumn_String(t *testing.T) {
-	e := RenameColumn{
-		AlterTable: "alter table",
-		Table:      Identifier{Literal: "table1"},
-		Rename:     "rename",
-		Old:        FieldReference{Column: Identifier{Literal: "oldcolumn"}},
-		To:         "to",
-		New:        Identifier{Literal: "newcolumn"},
-	}
-	expect := "alter table table1 rename oldcolumn to newcolumn"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
