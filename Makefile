@@ -72,6 +72,7 @@ build-all: gox
 dist:
 	cd dist && \
 	$(DIST_DIRS) cp ../LICENSE {} \; && \
+	$(DIST_DIRS) cp ../BINARY_CODE_LICENSE {} \; && \
 	$(DIST_DIRS) cp ../README.md {} \; && \
 	$(DIST_DIRS) tar -zcf {}.tar.gz {} \; && \
 	cd ..
