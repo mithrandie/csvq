@@ -251,7 +251,7 @@ var fetchCursorTests = []struct {
 		CurName: parser.Identifier{Literal: "cur"},
 		FetchPosition: parser.FetchPosition{
 			Position: parser.Token{Token: parser.ABSOLUTE, Literal: "absolute"},
-			Number:   parser.NewInteger(1),
+			Number:   parser.NewIntegerValue(1),
 		},
 		Variables: []parser.Variable{
 			{Name: "@var1"},
@@ -307,7 +307,7 @@ var fetchCursorTests = []struct {
 		CurName: parser.Identifier{Literal: "cur"},
 		FetchPosition: parser.FetchPosition{
 			Position: parser.Token{Token: parser.ABSOLUTE, Literal: "absolute"},
-			Number:   parser.NewNull(),
+			Number:   parser.NewNullValue(),
 		},
 		Variables: []parser.Variable{
 			{Name: "@var1"},
@@ -421,8 +421,8 @@ var declareTableTests = []struct {
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
 						Fields: []parser.Expression{
-							parser.Field{Object: parser.NewInteger(1)},
-							parser.Field{Object: parser.NewInteger(2)},
+							parser.Field{Object: parser.NewIntegerValue(1)},
+							parser.Field{Object: parser.NewIntegerValue(2)},
 						},
 					},
 				},
@@ -462,7 +462,7 @@ var declareTableTests = []struct {
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
 						Fields: []parser.Expression{
-							parser.Field{Object: parser.NewInteger(1)},
+							parser.Field{Object: parser.NewIntegerValue(1)},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
 						},
 					},
@@ -482,8 +482,8 @@ var declareTableTests = []struct {
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
 						Fields: []parser.Expression{
-							parser.Field{Object: parser.NewInteger(1)},
-							parser.Field{Object: parser.NewInteger(2)},
+							parser.Field{Object: parser.NewIntegerValue(1)},
+							parser.Field{Object: parser.NewIntegerValue(2)},
 						},
 					},
 				},
@@ -503,8 +503,8 @@ var declareTableTests = []struct {
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
 						Fields: []parser.Expression{
-							parser.Field{Object: parser.NewInteger(1)},
-							parser.Field{Object: parser.NewInteger(2)},
+							parser.Field{Object: parser.NewIntegerValue(1)},
+							parser.Field{Object: parser.NewIntegerValue(2)},
 						},
 					},
 				},
@@ -586,7 +586,7 @@ var selectTests = []struct {
 				WhereClause: parser.WhereClause{
 					Filter: parser.Comparison{
 						LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-						RHS:      parser.NewInteger(3),
+						RHS:      parser.NewIntegerValue(3),
 						Operator: "<",
 					},
 				},
@@ -598,7 +598,7 @@ var selectTests = []struct {
 				HavingClause: parser.HavingClause{
 					Filter: parser.Comparison{
 						LHS:      parser.AggregateFunction{Name: "count", Args: []parser.Expression{parser.AllColumns{}}},
-						RHS:      parser.NewInteger(1),
+						RHS:      parser.NewIntegerValue(1),
 						Operator: ">",
 					},
 				},
@@ -609,10 +609,10 @@ var selectTests = []struct {
 				},
 			},
 			LimitClause: parser.LimitClause{
-				Value: parser.NewInteger(5),
+				Value: parser.NewIntegerValue(5),
 			},
 			OffsetClause: parser.OffsetClause{
-				Value: parser.NewInteger(0),
+				Value: parser.NewIntegerValue(0),
 			},
 		},
 		Result: &View{
@@ -973,7 +973,7 @@ var selectTests = []struct {
 								SelectClause: parser.SelectClause{
 									Select: "select",
 									Fields: []parser.Expression{
-										parser.Field{Object: parser.NewInteger(2)},
+										parser.Field{Object: parser.NewIntegerValue(2)},
 									},
 								},
 							},
@@ -1083,7 +1083,7 @@ var selectTests = []struct {
 									SelectClause: parser.SelectClause{
 										Select: "select",
 										Fields: []parser.Expression{
-											parser.Field{Object: parser.NewInteger(1)},
+											parser.Field{Object: parser.NewIntegerValue(1)},
 										},
 									},
 								},
@@ -1095,7 +1095,7 @@ var selectTests = []struct {
 											parser.Field{
 												Object: parser.Arithmetic{
 													LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
-													RHS:      parser.NewInteger(1),
+													RHS:      parser.NewIntegerValue(1),
 													Operator: '+',
 												},
 											},
@@ -1109,7 +1109,7 @@ var selectTests = []struct {
 									WhereClause: parser.WhereClause{
 										Filter: parser.Comparison{
 											LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
-											RHS:      parser.NewInteger(3),
+											RHS:      parser.NewIntegerValue(3),
 											Operator: "<",
 										},
 									},
@@ -1173,7 +1173,7 @@ var selectTests = []struct {
 									SelectClause: parser.SelectClause{
 										Select: "select",
 										Fields: []parser.Expression{
-											parser.Field{Object: parser.NewInteger(1)},
+											parser.Field{Object: parser.NewIntegerValue(1)},
 										},
 									},
 								},
@@ -1185,11 +1185,11 @@ var selectTests = []struct {
 											parser.Field{
 												Object: parser.Arithmetic{
 													LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
-													RHS:      parser.NewInteger(1),
+													RHS:      parser.NewIntegerValue(1),
 													Operator: '+',
 												},
 											},
-											parser.Field{Object: parser.NewInteger(2)},
+											parser.Field{Object: parser.NewIntegerValue(2)},
 										},
 									},
 									FromClause: parser.FromClause{
@@ -1200,7 +1200,7 @@ var selectTests = []struct {
 									WhereClause: parser.WhereClause{
 										Filter: parser.Comparison{
 											LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
-											RHS:      parser.NewInteger(3),
+											RHS:      parser.NewIntegerValue(3),
 											Operator: "<",
 										},
 									},
@@ -1279,7 +1279,7 @@ var insertTests = []struct {
 								SelectClause: parser.SelectClause{
 									Select: "select",
 									Fields: []parser.Expression{
-										parser.Field{Object: parser.NewInteger(2)},
+										parser.Field{Object: parser.NewIntegerValue(2)},
 									},
 								},
 							},
@@ -1298,7 +1298,7 @@ var insertTests = []struct {
 				parser.RowValue{
 					Value: parser.ValueList{
 						Values: []parser.Expression{
-							parser.NewInteger(4),
+							parser.NewIntegerValue(4),
 						},
 					},
 				},
@@ -1410,14 +1410,14 @@ var insertTests = []struct {
 				parser.RowValue{
 					Value: parser.ValueList{
 						Values: []parser.Expression{
-							parser.NewInteger(4),
+							parser.NewIntegerValue(4),
 						},
 					},
 				},
 				parser.RowValue{
 					Value: parser.ValueList{
 						Values: []parser.Expression{
-							parser.NewInteger(2),
+							parser.NewIntegerValue(2),
 						},
 					},
 				},
@@ -1493,16 +1493,16 @@ var insertTests = []struct {
 				parser.RowValue{
 					Value: parser.ValueList{
 						Values: []parser.Expression{
-							parser.NewInteger(4),
-							parser.NewString("str4"),
+							parser.NewIntegerValue(4),
+							parser.NewStringValue("str4"),
 						},
 					},
 				},
 				parser.RowValue{
 					Value: parser.ValueList{
 						Values: []parser.Expression{
-							parser.NewInteger(5),
-							parser.NewString("str5"),
+							parser.NewIntegerValue(5),
+							parser.NewStringValue("str5"),
 						},
 					},
 				},
@@ -1556,14 +1556,14 @@ var insertTests = []struct {
 				parser.RowValue{
 					Value: parser.ValueList{
 						Values: []parser.Expression{
-							parser.NewInteger(4),
+							parser.NewIntegerValue(4),
 						},
 					},
 				},
 				parser.RowValue{
 					Value: parser.ValueList{
 						Values: []parser.Expression{
-							parser.NewInteger(5),
+							parser.NewIntegerValue(5),
 						},
 					},
 				},
@@ -1585,14 +1585,14 @@ var insertTests = []struct {
 				parser.RowValue{
 					Value: parser.ValueList{
 						Values: []parser.Expression{
-							parser.NewInteger(4),
+							parser.NewIntegerValue(4),
 						},
 					},
 				},
 				parser.RowValue{
 					Value: parser.ValueList{
 						Values: []parser.Expression{
-							parser.NewInteger(5),
+							parser.NewIntegerValue(5),
 						},
 					},
 				},
@@ -1778,7 +1778,7 @@ var updateTests = []struct {
 								SelectClause: parser.SelectClause{
 									Select: "select",
 									Fields: []parser.Expression{
-										parser.Field{Object: parser.NewInteger(2)},
+										parser.Field{Object: parser.NewIntegerValue(2)},
 									},
 								},
 							},
@@ -1794,11 +1794,11 @@ var updateTests = []struct {
 			SetList: []parser.Expression{
 				parser.UpdateSet{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-					Value: parser.NewString("update1"),
+					Value: parser.NewStringValue("update1"),
 				},
 				parser.UpdateSet{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-					Value: parser.NewString("update2"),
+					Value: parser.NewStringValue("update2"),
 				},
 			},
 			WhereClause: parser.WhereClause{
@@ -1891,7 +1891,7 @@ var updateTests = []struct {
 			SetList: []parser.Expression{
 				parser.UpdateSet{
 					Field: parser.ColumnNumber{View: parser.Identifier{Literal: "t1"}, Number: parser.NewInteger(2)},
-					Value: parser.NewString("update"),
+					Value: parser.NewStringValue("update"),
 				},
 			},
 		},
@@ -2015,13 +2015,13 @@ var updateTests = []struct {
 			SetList: []parser.Expression{
 				parser.UpdateSet{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-					Value: parser.NewString("update"),
+					Value: parser.NewStringValue("update"),
 				},
 			},
 			WhereClause: parser.WhereClause{
 				Filter: parser.Comparison{
 					LHS:      parser.Identifier{Literal: "column1"},
-					RHS:      parser.NewInteger(2),
+					RHS:      parser.NewIntegerValue(2),
 					Operator: "=",
 				},
 			},
@@ -2039,13 +2039,13 @@ var updateTests = []struct {
 			SetList: []parser.Expression{
 				parser.UpdateSet{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-					Value: parser.NewString("update"),
+					Value: parser.NewStringValue("update"),
 				},
 			},
 			WhereClause: parser.WhereClause{
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-					RHS:      parser.NewInteger(2),
+					RHS:      parser.NewIntegerValue(2),
 					Operator: "=",
 				},
 			},
@@ -2139,13 +2139,13 @@ var updateTests = []struct {
 			SetList: []parser.Expression{
 				parser.UpdateSet{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-					Value: parser.NewString("update"),
+					Value: parser.NewStringValue("update"),
 				},
 			},
 			WhereClause: parser.WhereClause{
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-					RHS:      parser.NewInteger(2),
+					RHS:      parser.NewIntegerValue(2),
 					Operator: "=",
 				},
 			},
@@ -2169,7 +2169,7 @@ var updateTests = []struct {
 			WhereClause: parser.WhereClause{
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-					RHS:      parser.NewInteger(2),
+					RHS:      parser.NewIntegerValue(2),
 					Operator: "=",
 				},
 			},
@@ -2295,7 +2295,7 @@ var deleteTests = []struct {
 								SelectClause: parser.SelectClause{
 									Select: "select",
 									Fields: []parser.Expression{
-										parser.Field{Object: parser.NewInteger(2)},
+										parser.Field{Object: parser.NewIntegerValue(2)},
 									},
 								},
 							},
@@ -2397,7 +2397,7 @@ var deleteTests = []struct {
 			WhereClause: parser.WhereClause{
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-					RHS:      parser.NewInteger(2),
+					RHS:      parser.NewIntegerValue(2),
 					Operator: "=",
 				},
 			},
@@ -2530,7 +2530,7 @@ var deleteTests = []struct {
 			WhereClause: parser.WhereClause{
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-					RHS:      parser.NewInteger(2),
+					RHS:      parser.NewIntegerValue(2),
 					Operator: "=",
 				},
 			},
@@ -2902,11 +2902,11 @@ var addColumnsTests = []struct {
 			Columns: []parser.Expression{
 				parser.ColumnDefault{
 					Column: parser.Identifier{Literal: "column3"},
-					Value:  parser.NewInteger(2),
+					Value:  parser.NewIntegerValue(2),
 				},
 				parser.ColumnDefault{
 					Column: parser.Identifier{Literal: "column4"},
-					Value:  parser.NewInteger(1),
+					Value:  parser.NewIntegerValue(1),
 				},
 			},
 			Position: parser.ColumnPosition{
@@ -2955,7 +2955,7 @@ var addColumnsTests = []struct {
 				},
 				parser.ColumnDefault{
 					Column: parser.Identifier{Literal: "column4"},
-					Value:  parser.NewInteger(1),
+					Value:  parser.NewIntegerValue(1),
 				},
 			},
 			Position: parser.ColumnPosition{
@@ -3005,7 +3005,7 @@ var addColumnsTests = []struct {
 				},
 				parser.ColumnDefault{
 					Column: parser.Identifier{Literal: "column4"},
-					Value:  parser.NewInteger(1),
+					Value:  parser.NewIntegerValue(1),
 				},
 			},
 			Position: parser.ColumnPosition{
@@ -3070,7 +3070,7 @@ var addColumnsTests = []struct {
 				},
 				parser.ColumnDefault{
 					Column: parser.Identifier{Literal: "column2"},
-					Value:  parser.NewInteger(1),
+					Value:  parser.NewIntegerValue(1),
 				},
 			},
 			Position: parser.ColumnPosition{
@@ -3090,7 +3090,7 @@ var addColumnsTests = []struct {
 				},
 				parser.ColumnDefault{
 					Column: parser.Identifier{Literal: "column1"},
-					Value:  parser.NewInteger(1),
+					Value:  parser.NewIntegerValue(1),
 				},
 			},
 		},

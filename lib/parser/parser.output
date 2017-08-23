@@ -4,7 +4,7 @@ state 0
 	program: .    (1)
 	with_clause: .    (137)
 
-	$end  reduce 1 (src line 190)
+	$end  reduce 1 (src line 189)
 	IDENTIFIER  shift 40
 	VARIABLE  shift 49
 	SET  shift 34
@@ -33,7 +33,7 @@ state 0
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	program  goto 1
 	statement  goto 3
@@ -69,7 +69,7 @@ state 2
 	program: .    (1)
 	with_clause: .    (137)
 
-	$end  reduce 1 (src line 190)
+	$end  reduce 1 (src line 189)
 	IDENTIFIER  shift 40
 	VARIABLE  shift 49
 	SET  shift 34
@@ -77,10 +77,10 @@ state 2
 	ALTER  shift 23
 	WITH  shift 39
 	IF  shift 18
-	ELSEIF  reduce 1 (src line 190)
+	ELSEIF  reduce 1 (src line 189)
 	WHILE  shift 19
-	ELSE  reduce 1 (src line 190)
-	END  reduce 1 (src line 190)
+	ELSE  reduce 1 (src line 189)
+	END  reduce 1 (src line 189)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -101,7 +101,7 @@ state 2
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	program  goto 50
 	statement  goto 3
@@ -128,13 +128,13 @@ state 2
 state 3
 	procedure_statement:  statement.    (22)
 
-	.  reduce 22 (src line 292)
+	.  reduce 22 (src line 291)
 
 
 state 4
 	procedure_statement:  flow_control_statement.    (23)
 
-	.  reduce 23 (src line 297)
+	.  reduce 23 (src line 296)
 
 
 state 5
@@ -142,7 +142,7 @@ state 5
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 51
 
@@ -151,7 +151,7 @@ state 6
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 53
 
@@ -160,7 +160,7 @@ state 7
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 54
 
@@ -169,7 +169,7 @@ state 8
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 55
 
@@ -178,7 +178,7 @@ state 9
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 56
 
@@ -187,50 +187,50 @@ state 10
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 57
 
 state 11
 	statement:  variable_statement.    (15)
 
-	.  reduce 15 (src line 263)
+	.  reduce 15 (src line 262)
 
 
 state 12
 	statement:  cursor_statement.    (16)
 
-	.  reduce 16 (src line 267)
+	.  reduce 16 (src line 266)
 
 
 state 13
 	statement:  temporary_table_statement.    (17)
 
-	.  reduce 17 (src line 271)
+	.  reduce 17 (src line 270)
 
 
 state 14
 	statement:  user_defined_function_statement.    (18)
 
-	.  reduce 18 (src line 275)
+	.  reduce 18 (src line 274)
 
 
 state 15
 	statement:  transaction_statement.    (19)
 
-	.  reduce 19 (src line 279)
+	.  reduce 19 (src line 278)
 
 
 state 16
 	statement:  command_statement.    (20)
 
-	.  reduce 20 (src line 283)
+	.  reduce 20 (src line 282)
 
 
 state 17
 	statement:  trigger_statement.    (21)
 
-	.  reduce 21 (src line 287)
+	.  reduce 21 (src line 286)
 
 
 state 18
@@ -266,7 +266,7 @@ state 18
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 58
 	row_value  goto 88
@@ -322,7 +322,7 @@ state 19
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 100
 	row_value  goto 88
@@ -351,7 +351,7 @@ state 20
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 104
 
@@ -444,7 +444,7 @@ state 27
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 122
 
@@ -500,7 +500,7 @@ state 31
 	PRIOR  shift 130
 	ABSOLUTE  shift 133
 	RELATIVE  shift 134
-	.  reduce 94 (src line 626)
+	.  reduce 94 (src line 625)
 
 	fetch_position  goto 128
 
@@ -509,7 +509,7 @@ state 32
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 135
 
@@ -518,12 +518,12 @@ state 33
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 136
 
 state 34
-	command_statement:  SET.FLAG '=' primary statement_terminal 
+	command_statement:  SET.FLAG '=' primitive_type statement_terminal 
 
 	FLAG  shift 137
 	.  error
@@ -560,7 +560,7 @@ state 35
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 138
 	row_value  goto 88
@@ -622,7 +622,7 @@ state 37
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 140
 	row_value  goto 88
@@ -659,7 +659,7 @@ state 39
 	recursive: .    (344)
 
 	RECURSIVE  shift 145
-	.  reduce 344 (src line 1855)
+	.  reduce 344 (src line 1854)
 
 	inline_table  goto 143
 	inline_tables  goto 142
@@ -668,49 +668,49 @@ state 39
 state 40
 	identifier:  IDENTIFIER.    (308)
 
-	.  reduce 308 (src line 1675)
+	.  reduce 308 (src line 1674)
 
 
 state 41
 	identifier:  TIES.    (309)
 
-	.  reduce 309 (src line 1680)
+	.  reduce 309 (src line 1679)
 
 
 state 42
 	identifier:  NULLS.    (310)
 
-	.  reduce 310 (src line 1684)
+	.  reduce 310 (src line 1683)
 
 
 state 43
 	identifier:  COUNT.    (311)
 
-	.  reduce 311 (src line 1688)
+	.  reduce 311 (src line 1687)
 
 
 state 44
 	identifier:  LISTAGG.    (312)
 
-	.  reduce 312 (src line 1692)
+	.  reduce 312 (src line 1691)
 
 
 state 45
 	identifier:  AGGREGATE_FUNCTION.    (313)
 
-	.  reduce 313 (src line 1696)
+	.  reduce 313 (src line 1695)
 
 
 state 46
 	identifier:  FUNCTION_WITH_INS.    (314)
 
-	.  reduce 314 (src line 1700)
+	.  reduce 314 (src line 1699)
 
 
 state 47
 	identifier:  ERROR.    (315)
 
-	.  reduce 315 (src line 1704)
+	.  reduce 315 (src line 1703)
 
 
 state 48
@@ -723,55 +723,55 @@ state 48
 state 49
 	variable:  VARIABLE.    (322)
 
-	.  reduce 322 (src line 1745)
+	.  reduce 322 (src line 1744)
 
 
 state 50
 	program:  procedure_statement program.    (2)
 
-	.  reduce 2 (src line 196)
+	.  reduce 2 (src line 195)
 
 
 state 51
 	statement:  select_query statement_terminal.    (9)
 
-	.  reduce 9 (src line 238)
+	.  reduce 9 (src line 237)
 
 
 state 52
 	statement_terminal:  ';'.    (349)
 
-	.  reduce 349 (src line 1882)
+	.  reduce 349 (src line 1881)
 
 
 state 53
 	statement:  insert_query statement_terminal.    (10)
 
-	.  reduce 10 (src line 243)
+	.  reduce 10 (src line 242)
 
 
 state 54
 	statement:  update_query statement_terminal.    (11)
 
-	.  reduce 11 (src line 247)
+	.  reduce 11 (src line 246)
 
 
 state 55
 	statement:  delete_query statement_terminal.    (12)
 
-	.  reduce 12 (src line 251)
+	.  reduce 12 (src line 250)
 
 
 state 56
 	statement:  table_operation statement_terminal.    (13)
 
-	.  reduce 13 (src line 255)
+	.  reduce 13 (src line 254)
 
 
 state 57
 	statement:  function statement_terminal.    (14)
 
-	.  reduce 14 (src line 259)
+	.  reduce 14 (src line 258)
 
 
 state 58
@@ -809,7 +809,7 @@ state 58
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 332 (src line 1797)
+	.  reduce 332 (src line 1796)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -849,13 +849,13 @@ state 59
 	'+'  shift 82
 	'!'  shift 91
 	'('  shift 103
-	')'  reduce 216 (src line 1228)
-	.  reduce 137 (src line 857)
+	')'  reduce 216 (src line 1227)
+	.  reduce 137 (src line 856)
 
 	cursor_status  goto 72
 	select_query  goto 164
 	with_clause  goto 166
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 162
 	row_value  goto 88
@@ -883,25 +883,25 @@ state 59
 state 60
 	value:  field_reference.    (154)
 
-	.  reduce 154 (src line 935)
+	.  reduce 154 (src line 934)
 
 
 state 61
-	value:  primary.    (155)
+	value:  primitive_type.    (155)
 
-	.  reduce 155 (src line 940)
+	.  reduce 155 (src line 939)
 
 
 state 62
 	value:  arithmetic.    (156)
 
-	.  reduce 156 (src line 944)
+	.  reduce 156 (src line 943)
 
 
 state 63
 	value:  string_operation.    (157)
 
-	.  reduce 157 (src line 948)
+	.  reduce 157 (src line 947)
 
 
  64: reduce/reduce conflict  (red'ns 158 and 170) on IN
@@ -913,37 +913,37 @@ state 64
 	value:  subquery.    (158)
 	row_value:  subquery.    (170)
 
-	.  reduce 158 (src line 952)
+	.  reduce 158 (src line 951)
 
 
 state 65
 	value:  function.    (159)
 
-	.  reduce 159 (src line 956)
+	.  reduce 159 (src line 955)
 
 
 state 66
 	value:  aggregate_function.    (160)
 
-	.  reduce 160 (src line 960)
+	.  reduce 160 (src line 959)
 
 
 state 67
 	value:  case.    (161)
 
-	.  reduce 161 (src line 964)
+	.  reduce 161 (src line 963)
 
 
 state 68
 	value:  comparison.    (162)
 
-	.  reduce 162 (src line 968)
+	.  reduce 162 (src line 967)
 
 
 state 69
 	value:  logic.    (163)
 
-	.  reduce 163 (src line 972)
+	.  reduce 163 (src line 971)
 
 
 state 70
@@ -951,19 +951,19 @@ state 70
 	variable_substitution:  variable.SUBSTITUTION_OP value 
 
 	SUBSTITUTION_OP  shift 146
-	.  reduce 164 (src line 976)
+	.  reduce 164 (src line 975)
 
 
 state 71
 	value:  variable_substitution.    (165)
 
-	.  reduce 165 (src line 980)
+	.  reduce 165 (src line 979)
 
 
 state 72
 	value:  cursor_status.    (166)
 
-	.  reduce 166 (src line 984)
+	.  reduce 166 (src line 983)
 
 
 73: shift/reduce conflict (shift 168(0), red'n 149(0)) on '('
@@ -976,7 +976,7 @@ state 73
 
 	'('  shift 168
 	'.'  shift 167
-	.  reduce 149 (src line 913)
+	.  reduce 149 (src line 912)
 
 
 state 74
@@ -988,39 +988,39 @@ state 74
 
 
 state 75
-	primary:  text.    (143)
+	primitive_type:  text.    (143)
 
-	.  reduce 143 (src line 887)
+	.  reduce 143 (src line 886)
 
 
 state 76
-	primary:  integer.    (144)
+	primitive_type:  integer.    (144)
 
-	.  reduce 144 (src line 892)
+	.  reduce 144 (src line 891)
 
 
 state 77
-	primary:  float.    (145)
+	primitive_type:  float.    (145)
 
-	.  reduce 145 (src line 896)
+	.  reduce 145 (src line 895)
 
 
 state 78
-	primary:  ternary.    (146)
+	primitive_type:  ternary.    (146)
 
-	.  reduce 146 (src line 900)
+	.  reduce 146 (src line 899)
 
 
 state 79
-	primary:  datetime.    (147)
+	primitive_type:  datetime.    (147)
 
-	.  reduce 147 (src line 904)
+	.  reduce 147 (src line 903)
 
 
 state 80
-	primary:  null.    (148)
+	primitive_type:  null.    (148)
 
-	.  reduce 148 (src line 908)
+	.  reduce 148 (src line 907)
 
 
 state 81
@@ -1054,7 +1054,7 @@ state 81
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 170
 	row_value  goto 88
@@ -1108,7 +1108,7 @@ state 82
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 171
 	row_value  goto 88
@@ -1144,7 +1144,7 @@ state 84
 	identifier:  AGGREGATE_FUNCTION.    (313)
 
 	'('  shift 173
-	.  reduce 313 (src line 1696)
+	.  reduce 313 (src line 1695)
 
 
 85: shift/reduce conflict (shift 174(0), red'n 311(0)) on '('
@@ -1154,13 +1154,13 @@ state 85
 	identifier:  COUNT.    (311)
 
 	'('  shift 174
-	.  reduce 311 (src line 1688)
+	.  reduce 311 (src line 1687)
 
 
 state 86
 	aggregate_function:  listagg.    (224)
 
-	.  reduce 224 (src line 1266)
+	.  reduce 224 (src line 1265)
 
 
 state 87
@@ -1192,10 +1192,10 @@ state 87
 	'+'  shift 82
 	'!'  shift 91
 	'('  shift 103
-	.  reduce 264 (src line 1453)
+	.  reduce 264 (src line 1452)
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 176
 	row_value  goto 88
@@ -1234,7 +1234,7 @@ state 88
 	NOT  shift 161
 	COMPARISON_OP  shift 177
 	'='  shift 178
-	.  reduce 332 (src line 1797)
+	.  reduce 332 (src line 1796)
 
 	negation  goto 179
 	comparison_operator  goto 180
@@ -1278,7 +1278,7 @@ state 90
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 182
 	row_value  goto 88
@@ -1332,7 +1332,7 @@ state 91
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 183
 	row_value  goto 88
@@ -1379,43 +1379,43 @@ state 93
 	identifier:  LISTAGG.    (312)
 
 	'('  shift 185
-	.  reduce 312 (src line 1692)
+	.  reduce 312 (src line 1691)
 
 
 state 94
 	text:  STRING.    (316)
 
-	.  reduce 316 (src line 1709)
+	.  reduce 316 (src line 1708)
 
 
 state 95
 	integer:  INTEGER.    (317)
 
-	.  reduce 317 (src line 1715)
+	.  reduce 317 (src line 1714)
 
 
 state 96
 	float:  FLOAT.    (318)
 
-	.  reduce 318 (src line 1721)
+	.  reduce 318 (src line 1720)
 
 
 state 97
 	ternary:  TERNARY.    (319)
 
-	.  reduce 319 (src line 1727)
+	.  reduce 319 (src line 1726)
 
 
 state 98
 	datetime:  DATETIME.    (320)
 
-	.  reduce 320 (src line 1733)
+	.  reduce 320 (src line 1732)
 
 
 state 99
 	null:  NULL.    (321)
 
-	.  reduce 321 (src line 1739)
+	.  reduce 321 (src line 1738)
 
 
 state 100
@@ -1452,7 +1452,7 @@ state 100
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 332 (src line 1797)
+	.  reduce 332 (src line 1796)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -1469,7 +1469,7 @@ state 101
 	IN  shift 187
 	SUBSTITUTION_OP  shift 146
 	','  shift 188
-	.  reduce 164 (src line 976)
+	.  reduce 164 (src line 975)
 
 
 state 102
@@ -1512,12 +1512,12 @@ state 103
 	'+'  shift 82
 	'!'  shift 91
 	'('  shift 103
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	cursor_status  goto 72
 	select_query  goto 164
 	with_clause  goto 166
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 162
 	row_value  goto 88
@@ -1544,7 +1544,7 @@ state 103
 state 104
 	flow_control_statement:  EXIT statement_terminal.    (35)
 
-	.  reduce 35 (src line 353)
+	.  reduce 35 (src line 352)
 
 
 state 105
@@ -1553,10 +1553,10 @@ state 105
 	order_by_clause: .    (128)
 
 	ORDER  shift 192
-	UNION  reduce 117 (src line 757)
-	INTERSECT  reduce 117 (src line 757)
-	EXCEPT  reduce 117 (src line 757)
-	.  reduce 128 (src line 813)
+	UNION  reduce 117 (src line 756)
+	INTERSECT  reduce 117 (src line 756)
+	EXCEPT  reduce 117 (src line 756)
+	.  reduce 128 (src line 812)
 
 	order_by_clause  goto 191
 
@@ -1613,7 +1613,7 @@ state 109
 	from_clause: .    (120)
 
 	FROM  shift 201
-	.  reduce 120 (src line 773)
+	.  reduce 120 (src line 772)
 
 	from_clause  goto 200
 
@@ -1633,14 +1633,14 @@ state 111
 	distinct: .    (330)
 
 	DISTINCT  shift 206
-	.  reduce 330 (src line 1787)
+	.  reduce 330 (src line 1786)
 
 	distinct  goto 205
 
 state 112
 	select_set_entity:  subquery.    (118)
 
-	.  reduce 118 (src line 762)
+	.  reduce 118 (src line 761)
 
 
 state 113
@@ -1648,7 +1648,7 @@ state 113
 	with_clause: .    (137)
 
 	WITH  shift 39
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	select_query  goto 164
 	with_clause  goto 166
@@ -1718,10 +1718,10 @@ state 116
 	'+'  shift 82
 	'!'  shift 91
 	'('  shift 103
-	.  reduce 216 (src line 1228)
+	.  reduce 216 (src line 1227)
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 211
 	row_value  goto 88
@@ -1751,7 +1751,7 @@ state 117
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 212
 
@@ -1760,7 +1760,7 @@ state 118
 	variable_assignments:  variable_assignment.',' variable_assignments 
 
 	','  shift 213
-	.  reduce 328 (src line 1777)
+	.  reduce 328 (src line 1776)
 
 
 state 119
@@ -1768,7 +1768,7 @@ state 119
 	variable_assignment:  variable.SUBSTITUTION_OP value 
 
 	SUBSTITUTION_OP  shift 214
-	.  reduce 326 (src line 1767)
+	.  reduce 326 (src line 1766)
 
 
 state 120
@@ -1776,7 +1776,7 @@ state 120
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 215
 
@@ -1800,7 +1800,7 @@ state 121
 state 122
 	variable_statement:  variable_substitution statement_terminal.    (53)
 
-	.  reduce 53 (src line 435)
+	.  reduce 53 (src line 434)
 
 
 state 123
@@ -1808,7 +1808,7 @@ state 123
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 220
 
@@ -1847,7 +1847,7 @@ state 126
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 223
 
@@ -1856,7 +1856,7 @@ state 127
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 224
 
@@ -1878,25 +1878,25 @@ state 128
 state 129
 	fetch_position:  NEXT.    (95)
 
-	.  reduce 95 (src line 631)
+	.  reduce 95 (src line 630)
 
 
 state 130
 	fetch_position:  PRIOR.    (96)
 
-	.  reduce 96 (src line 635)
+	.  reduce 96 (src line 634)
 
 
 state 131
 	fetch_position:  FIRST.    (97)
 
-	.  reduce 97 (src line 639)
+	.  reduce 97 (src line 638)
 
 
 state 132
 	fetch_position:  LAST.    (98)
 
-	.  reduce 98 (src line 643)
+	.  reduce 98 (src line 642)
 
 
 state 133
@@ -1930,7 +1930,7 @@ state 133
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 226
 	row_value  goto 88
@@ -1984,7 +1984,7 @@ state 134
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 227
 	row_value  goto 88
@@ -2010,17 +2010,17 @@ state 134
 state 135
 	transaction_statement:  COMMIT statement_terminal.    (55)
 
-	.  reduce 55 (src line 444)
+	.  reduce 55 (src line 443)
 
 
 state 136
 	transaction_statement:  ROLLBACK statement_terminal.    (56)
 
-	.  reduce 56 (src line 449)
+	.  reduce 56 (src line 448)
 
 
 state 137
-	command_statement:  SET FLAG.'=' primary statement_terminal 
+	command_statement:  SET FLAG.'=' primitive_type statement_terminal 
 
 	'='  shift 228
 	.  error
@@ -2048,12 +2048,12 @@ state 138
 	statement_terminal: .    (348)
 	negation: .    (332)
 
-	IN  reduce 332 (src line 1797)
+	IN  reduce 332 (src line 1796)
 	AND  shift 160
 	OR  shift 159
 	NOT  shift 161
-	BETWEEN  reduce 332 (src line 1797)
-	LIKE  reduce 332 (src line 1797)
+	BETWEEN  reduce 332 (src line 1796)
+	LIKE  reduce 332 (src line 1796)
 	IS  shift 151
 	COMPARISON_OP  shift 149
 	STRING_OP  shift 148
@@ -2064,7 +2064,7 @@ state 138
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -2077,7 +2077,7 @@ state 139
 
 	';'  shift 52
 	','  shift 231
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 230
 
@@ -2103,12 +2103,12 @@ state 140
 	statement_terminal: .    (348)
 	negation: .    (332)
 
-	IN  reduce 332 (src line 1797)
+	IN  reduce 332 (src line 1796)
 	AND  shift 160
 	OR  shift 159
 	NOT  shift 161
-	BETWEEN  reduce 332 (src line 1797)
-	LIKE  reduce 332 (src line 1797)
+	BETWEEN  reduce 332 (src line 1796)
+	LIKE  reduce 332 (src line 1796)
 	IS  shift 151
 	COMPARISON_OP  shift 149
 	STRING_OP  shift 148
@@ -2119,7 +2119,7 @@ state 140
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -2168,10 +2168,10 @@ state 141
 	'+'  shift 82
 	'!'  shift 91
 	'('  shift 103
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 234
 	row_value  goto 88
@@ -2198,7 +2198,7 @@ state 141
 state 142
 	with_clause:  WITH inline_tables.    (138)
 
-	.  reduce 138 (src line 862)
+	.  reduce 138 (src line 861)
 
 
 state 143
@@ -2206,7 +2206,7 @@ state 143
 	inline_tables:  inline_table.',' inline_tables 
 
 	','  shift 236
-	.  reduce 141 (src line 877)
+	.  reduce 141 (src line 876)
 
 
 state 144
@@ -2228,7 +2228,7 @@ state 144
 state 145
 	recursive:  RECURSIVE.    (345)
 
-	.  reduce 345 (src line 1860)
+	.  reduce 345 (src line 1859)
 
 
 state 146
@@ -2262,7 +2262,7 @@ state 146
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 238
 	row_value  goto 88
@@ -2298,10 +2298,10 @@ state 147
 	ALTER  shift 23
 	WITH  shift 39
 	IF  shift 18
-	ELSEIF  reduce 1 (src line 190)
+	ELSEIF  reduce 1 (src line 189)
 	WHILE  shift 19
-	ELSE  reduce 1 (src line 190)
-	END  reduce 1 (src line 190)
+	ELSE  reduce 1 (src line 189)
+	END  reduce 1 (src line 189)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -2322,7 +2322,7 @@ state 147
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	program  goto 239
 	statement  goto 3
@@ -2377,7 +2377,7 @@ state 148
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 240
 	row_value  goto 88
@@ -2429,10 +2429,10 @@ state 149
 	'+'  shift 82
 	'!'  shift 91
 	'('  shift 103
-	.  reduce 346 (src line 1866)
+	.  reduce 346 (src line 1865)
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 241
 	row_value  goto 88
@@ -2484,10 +2484,10 @@ state 150
 	'+'  shift 82
 	'!'  shift 91
 	'('  shift 103
-	.  reduce 347 (src line 1871)
+	.  reduce 347 (src line 1870)
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 242
 	row_value  goto 88
@@ -2516,7 +2516,7 @@ state 151
 	negation: .    (332)
 
 	NOT  shift 161
-	.  reduce 332 (src line 1797)
+	.  reduce 332 (src line 1796)
 
 	negation  goto 243
 
@@ -2571,7 +2571,7 @@ state 154
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 249
 	row_value  goto 88
@@ -2625,7 +2625,7 @@ state 155
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 250
 	row_value  goto 88
@@ -2679,7 +2679,7 @@ state 156
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 251
 	row_value  goto 88
@@ -2733,7 +2733,7 @@ state 157
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 252
 	row_value  goto 88
@@ -2787,7 +2787,7 @@ state 158
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 253
 	row_value  goto 88
@@ -2841,7 +2841,7 @@ state 159
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 254
 	row_value  goto 88
@@ -2895,7 +2895,7 @@ state 160
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 255
 	row_value  goto 88
@@ -2921,7 +2921,7 @@ state 160
 state 161
 	negation:  NOT.    (333)
 
-	.  reduce 333 (src line 1802)
+	.  reduce 333 (src line 1801)
 
 
 162: shift/reduce conflict (shift 256(0), red'n 272(0)) on ')'
@@ -2962,7 +2962,7 @@ state 162
 	'/'  shift 157
 	'%'  shift 158
 	','  shift 257
-	.  reduce 332 (src line 1797)
+	.  reduce 332 (src line 1796)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -3078,10 +3078,10 @@ state 168
 	'+'  shift 82
 	'!'  shift 91
 	'('  shift 103
-	.  reduce 216 (src line 1228)
+	.  reduce 216 (src line 1227)
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 211
 	row_value  goto 88
@@ -3149,7 +3149,7 @@ state 170
 	logic:  value.AND value 
 	negation: .    (332)
 
-	.  reduce 210 (src line 1201)
+	.  reduce 210 (src line 1200)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -3178,7 +3178,7 @@ state 171
 	logic:  value.AND value 
 	negation: .    (332)
 
-	.  reduce 211 (src line 1205)
+	.  reduce 211 (src line 1204)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -3212,10 +3212,10 @@ state 172
 	'+'  shift 82
 	'!'  shift 91
 	'('  shift 103
-	.  reduce 216 (src line 1228)
+	.  reduce 216 (src line 1227)
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 211
 	row_value  goto 88
@@ -3245,7 +3245,7 @@ state 173
 	distinct: .    (330)
 
 	DISTINCT  shift 206
-	.  reduce 330 (src line 1787)
+	.  reduce 330 (src line 1786)
 
 	distinct  goto 266
 
@@ -3255,7 +3255,7 @@ state 174
 	distinct: .    (330)
 
 	DISTINCT  shift 206
-	.  reduce 330 (src line 1787)
+	.  reduce 330 (src line 1786)
 
 	distinct  goto 267
 
@@ -3292,7 +3292,7 @@ state 176
 	OR  shift 159
 	NOT  shift 161
 	IS  shift 151
-	WHEN  reduce 265 (src line 1458)
+	WHEN  reduce 265 (src line 1457)
 	COMPARISON_OP  shift 149
 	STRING_OP  shift 148
 	'*'  shift 156
@@ -3301,7 +3301,7 @@ state 176
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 332 (src line 1797)
+	.  reduce 332 (src line 1796)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -3311,7 +3311,7 @@ state 177
 	comparison_operator:  COMPARISON_OP.    (346)
 
 	'('  shift 271
-	.  reduce 346 (src line 1866)
+	.  reduce 346 (src line 1865)
 
 	row_value  goto 270
 	subquery  goto 272
@@ -3321,7 +3321,7 @@ state 178
 	comparison_operator:  '='.    (347)
 
 	'('  shift 271
-	.  reduce 347 (src line 1871)
+	.  reduce 347 (src line 1870)
 
 	row_value  goto 273
 	subquery  goto 272
@@ -3350,7 +3350,7 @@ state 180
 state 181
 	comparison:  EXISTS subquery.    (204)
 
-	.  reduce 204 (src line 1175)
+	.  reduce 204 (src line 1174)
 
 
  182: reduce/reduce conflict  (red'ns 214 and 332) on IN
@@ -3387,7 +3387,7 @@ state 182
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 214 (src line 1219)
+	.  reduce 214 (src line 1218)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -3416,7 +3416,7 @@ state 183
 	logic:  '!' value.    (215)
 	negation: .    (332)
 
-	.  reduce 215 (src line 1223)
+	.  reduce 215 (src line 1222)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -3437,7 +3437,7 @@ state 185
 	distinct: .    (330)
 
 	DISTINCT  shift 206
-	.  reduce 330 (src line 1787)
+	.  reduce 330 (src line 1786)
 
 	distinct  goto 280
 
@@ -3454,7 +3454,7 @@ state 186
 	WITH  shift 39
 	IF  shift 285
 	WHILE  shift 19
-	END  reduce 3 (src line 202)
+	END  reduce 3 (src line 201)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -3477,7 +3477,7 @@ state 186
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	in_loop_program  goto 281
 	statement  goto 3
@@ -3555,7 +3555,7 @@ state 191
 	limit_clause: .    (130)
 
 	LIMIT  shift 294
-	.  reduce 130 (src line 823)
+	.  reduce 130 (src line 822)
 
 	limit_clause  goto 293
 
@@ -3599,19 +3599,19 @@ state 194
 state 195
 	operate_tables:  table_identifier.    (276)
 
-	.  reduce 276 (src line 1513)
+	.  reduce 276 (src line 1512)
 
 
 state 196
 	table_identifier:  identifier.    (238)
 
-	.  reduce 238 (src line 1331)
+	.  reduce 238 (src line 1330)
 
 
 state 197
 	table_identifier:  STDIN.    (239)
 
-	.  reduce 239 (src line 1336)
+	.  reduce 239 (src line 1335)
 
 
 state 198
@@ -3653,7 +3653,7 @@ state 200
 	where_clause: .    (122)
 
 	WHERE  shift 309
-	.  reduce 122 (src line 783)
+	.  reduce 122 (src line 782)
 
 	where_clause  goto 308
 
@@ -3687,7 +3687,7 @@ state 202
 	all: .    (342)
 
 	ALL  shift 312
-	.  reduce 342 (src line 1845)
+	.  reduce 342 (src line 1844)
 
 	all  goto 311
 
@@ -3696,7 +3696,7 @@ state 203
 	all: .    (342)
 
 	ALL  shift 312
-	.  reduce 342 (src line 1845)
+	.  reduce 342 (src line 1844)
 
 	all  goto 313
 
@@ -3705,7 +3705,7 @@ state 204
 	all: .    (342)
 
 	ALL  shift 312
-	.  reduce 342 (src line 1845)
+	.  reduce 342 (src line 1844)
 
 	all  goto 314
 
@@ -3741,7 +3741,7 @@ state 205
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 319
 	wildcard  goto 318
@@ -3772,7 +3772,7 @@ state 205
 state 206
 	distinct:  DISTINCT.    (331)
 
-	.  reduce 331 (src line 1792)
+	.  reduce 331 (src line 1791)
 
 
 state 207
@@ -3805,7 +3805,7 @@ state 209
 state 210
 	arguments:  values.    (217)
 
-	.  reduce 217 (src line 1233)
+	.  reduce 217 (src line 1232)
 
 
 state 211
@@ -3830,12 +3830,12 @@ state 211
 	values:  value.',' values 
 	negation: .    (332)
 
-	IN  reduce 332 (src line 1797)
+	IN  reduce 332 (src line 1796)
 	AND  shift 160
 	OR  shift 159
 	NOT  shift 161
-	BETWEEN  reduce 332 (src line 1797)
-	LIKE  reduce 332 (src line 1797)
+	BETWEEN  reduce 332 (src line 1796)
+	LIKE  reduce 332 (src line 1796)
 	IS  shift 151
 	COMPARISON_OP  shift 149
 	STRING_OP  shift 148
@@ -3846,7 +3846,7 @@ state 211
 	'/'  shift 157
 	'%'  shift 158
 	','  shift 257
-	.  reduce 272 (src line 1493)
+	.  reduce 272 (src line 1492)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -3854,7 +3854,7 @@ state 211
 state 212
 	variable_statement:  VAR variable_assignments statement_terminal.    (51)
 
-	.  reduce 51 (src line 426)
+	.  reduce 51 (src line 425)
 
 
 state 213
@@ -3898,7 +3898,7 @@ state 214
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 333
 	row_value  goto 88
@@ -3924,7 +3924,7 @@ state 214
 state 215
 	variable_statement:  DECLARE variable_assignments statement_terminal.    (52)
 
-	.  reduce 52 (src line 431)
+	.  reduce 52 (src line 430)
 
 
 state 216
@@ -3963,7 +3963,7 @@ state 219
 state 220
 	variable_statement:  DISPOSE variable statement_terminal.    (54)
 
-	.  reduce 54 (src line 439)
+	.  reduce 54 (src line 438)
 
 
 state 221
@@ -3971,7 +3971,7 @@ state 221
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 339
 
@@ -3980,20 +3980,20 @@ state 222
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 340
 
 state 223
 	cursor_statement:  OPEN identifier statement_terminal.    (73)
 
-	.  reduce 73 (src line 527)
+	.  reduce 73 (src line 526)
 
 
 state 224
 	cursor_statement:  CLOSE identifier statement_terminal.    (74)
 
-	.  reduce 74 (src line 531)
+	.  reduce 74 (src line 530)
 
 
 state 225
@@ -4024,12 +4024,12 @@ state 226
 	logic:  value.AND value 
 	negation: .    (332)
 
-	IN  reduce 332 (src line 1797)
+	IN  reduce 332 (src line 1796)
 	AND  shift 160
 	OR  shift 159
 	NOT  shift 161
-	BETWEEN  reduce 332 (src line 1797)
-	LIKE  reduce 332 (src line 1797)
+	BETWEEN  reduce 332 (src line 1796)
+	LIKE  reduce 332 (src line 1796)
 	IS  shift 151
 	COMPARISON_OP  shift 149
 	STRING_OP  shift 148
@@ -4039,7 +4039,7 @@ state 226
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 99 (src line 647)
+	.  reduce 99 (src line 646)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -4065,12 +4065,12 @@ state 227
 	logic:  value.AND value 
 	negation: .    (332)
 
-	IN  reduce 332 (src line 1797)
+	IN  reduce 332 (src line 1796)
 	AND  shift 160
 	OR  shift 159
 	NOT  shift 161
-	BETWEEN  reduce 332 (src line 1797)
-	LIKE  reduce 332 (src line 1797)
+	BETWEEN  reduce 332 (src line 1796)
+	LIKE  reduce 332 (src line 1796)
 	IS  shift 151
 	COMPARISON_OP  shift 149
 	STRING_OP  shift 148
@@ -4080,13 +4080,13 @@ state 227
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 100 (src line 651)
+	.  reduce 100 (src line 650)
 
 	negation  goto 152
 	comparison_operator  goto 153
 
 state 228
-	command_statement:  SET FLAG '='.primary statement_terminal 
+	command_statement:  SET FLAG '='.primitive_type statement_terminal 
 
 	STRING  shift 94
 	INTEGER  shift 95
@@ -4096,7 +4096,7 @@ state 228
 	NULL  shift 99
 	.  error
 
-	primary  goto 342
+	primitive_type  goto 342
 	text  goto 75
 	integer  goto 76
 	float  goto 77
@@ -4107,13 +4107,13 @@ state 228
 state 229
 	command_statement:  PRINT value statement_terminal.    (105)
 
-	.  reduce 105 (src line 675)
+	.  reduce 105 (src line 674)
 
 
 state 230
 	command_statement:  PRINTF STRING statement_terminal.    (106)
 
-	.  reduce 106 (src line 679)
+	.  reduce 106 (src line 678)
 
 
 state 231
@@ -4147,7 +4147,7 @@ state 231
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 211
 	row_value  goto 88
@@ -4174,13 +4174,13 @@ state 231
 state 232
 	command_statement:  SOURCE value statement_terminal.    (108)
 
-	.  reduce 108 (src line 687)
+	.  reduce 108 (src line 686)
 
 
 state 233
 	trigger_statement:  TRIGGER ERROR statement_terminal.    (109)
 
-	.  reduce 109 (src line 692)
+	.  reduce 109 (src line 691)
 
 
 state 234
@@ -4205,12 +4205,12 @@ state 234
 	statement_terminal: .    (348)
 	negation: .    (332)
 
-	IN  reduce 332 (src line 1797)
+	IN  reduce 332 (src line 1796)
 	AND  shift 160
 	OR  shift 159
 	NOT  shift 161
-	BETWEEN  reduce 332 (src line 1797)
-	LIKE  reduce 332 (src line 1797)
+	BETWEEN  reduce 332 (src line 1796)
+	LIKE  reduce 332 (src line 1796)
 	IS  shift 151
 	COMPARISON_OP  shift 149
 	STRING_OP  shift 148
@@ -4221,7 +4221,7 @@ state 234
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -4243,7 +4243,7 @@ state 234
 235: shift/reduce conflict (shift 103(0), red'n 144(0)) on '('
 state 235
 	trigger_statement:  TRIGGER ERROR integer.value statement_terminal 
-	primary:  integer.    (144)
+	primitive_type:  integer.    (144)
 
 	IDENTIFIER  shift 40
 	STRING  shift 94
@@ -4270,10 +4270,10 @@ state 235
 	'+'  shift 82
 	'!'  shift 91
 	'('  shift 103
-	.  reduce 144 (src line 892)
+	.  reduce 144 (src line 891)
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 345
 	row_value  goto 88
@@ -4301,7 +4301,7 @@ state 236
 	recursive: .    (344)
 
 	RECURSIVE  shift 145
-	.  reduce 344 (src line 1855)
+	.  reduce 344 (src line 1854)
 
 	inline_table  goto 143
 	inline_tables  goto 346
@@ -4352,7 +4352,7 @@ state 238
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 325 (src line 1761)
+	.  reduce 325 (src line 1760)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -4364,7 +4364,7 @@ state 239
 
 	ELSEIF  shift 352
 	ELSE  shift 351
-	.  reduce 294 (src line 1605)
+	.  reduce 294 (src line 1604)
 
 	elseif  goto 350
 	else  goto 349
@@ -4398,7 +4398,7 @@ state 240
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 185 (src line 1079)
+	.  reduce 185 (src line 1078)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -4436,7 +4436,7 @@ state 241
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 186 (src line 1102)
+	.  reduce 186 (src line 1101)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -4474,7 +4474,7 @@ state 242
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 188 (src line 1111)
+	.  reduce 188 (src line 1110)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -4521,7 +4521,7 @@ state 244
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 355
 	row_value  goto 88
@@ -4584,7 +4584,7 @@ state 246
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 357
 	row_value  goto 88
@@ -4652,7 +4652,7 @@ state 249
 	'*'  shift 156
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 205 (src line 1180)
+	.  reduce 205 (src line 1179)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -4684,7 +4684,7 @@ state 250
 	'*'  shift 156
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 206 (src line 1185)
+	.  reduce 206 (src line 1184)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -4713,7 +4713,7 @@ state 251
 	logic:  value.AND value 
 	negation: .    (332)
 
-	.  reduce 207 (src line 1189)
+	.  reduce 207 (src line 1188)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -4742,7 +4742,7 @@ state 252
 	logic:  value.AND value 
 	negation: .    (332)
 
-	.  reduce 208 (src line 1193)
+	.  reduce 208 (src line 1192)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -4771,7 +4771,7 @@ state 253
 	logic:  value.AND value 
 	negation: .    (332)
 
-	.  reduce 209 (src line 1197)
+	.  reduce 209 (src line 1196)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -4811,7 +4811,7 @@ state 254
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 212 (src line 1210)
+	.  reduce 212 (src line 1209)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -4850,7 +4850,7 @@ state 255
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 213 (src line 1215)
+	.  reduce 213 (src line 1214)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -4858,7 +4858,7 @@ state 255
 state 256
 	value:  '(' value ')'.    (167)
 
-	.  reduce 167 (src line 988)
+	.  reduce 167 (src line 987)
 
 
 state 257
@@ -4892,7 +4892,7 @@ state 257
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 211
 	row_value  goto 88
@@ -4919,31 +4919,31 @@ state 257
 state 258
 	row_value:  '(' values ')'.    (169)
 
-	.  reduce 169 (src line 999)
+	.  reduce 169 (src line 998)
 
 
 state 259
 	subquery:  '(' select_query ')'.    (184)
 
-	.  reduce 184 (src line 1073)
+	.  reduce 184 (src line 1072)
 
 
 state 260
 	function:  IF '(' arguments ')'.    (219)
 
-	.  reduce 219 (src line 1243)
+	.  reduce 219 (src line 1242)
 
 
 state 261
 	field_reference:  identifier '.' identifier.    (150)
 
-	.  reduce 150 (src line 918)
+	.  reduce 150 (src line 917)
 
 
 state 262
 	field_reference:  identifier '.' integer.    (152)
 
-	.  reduce 152 (src line 926)
+	.  reduce 152 (src line 925)
 
 
 state 263
@@ -4975,10 +4975,10 @@ state 263
 	'+'  shift 82
 	'!'  shift 91
 	'('  shift 103
-	.  reduce 216 (src line 1228)
+	.  reduce 216 (src line 1227)
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 211
 	row_value  goto 88
@@ -5006,13 +5006,13 @@ state 263
 state 264
 	field_reference:  STDIN '.' identifier.    (151)
 
-	.  reduce 151 (src line 922)
+	.  reduce 151 (src line 921)
 
 
 state 265
 	field_reference:  STDIN '.' integer.    (153)
 
-	.  reduce 153 (src line 930)
+	.  reduce 153 (src line 929)
 
 
 state 266
@@ -5044,10 +5044,10 @@ state 266
 	'+'  shift 82
 	'!'  shift 91
 	'('  shift 103
-	.  reduce 216 (src line 1228)
+	.  reduce 216 (src line 1227)
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 211
 	row_value  goto 88
@@ -5103,10 +5103,10 @@ state 267
 	'+'  shift 82
 	'!'  shift 91
 	'('  shift 103
-	.  reduce 216 (src line 1228)
+	.  reduce 216 (src line 1227)
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 211
 	wildcard  goto 364
@@ -5139,7 +5139,7 @@ state 268
 
 	WHEN  shift 269
 	ELSE  shift 367
-	.  reduce 268 (src line 1473)
+	.  reduce 268 (src line 1472)
 
 	case_when  goto 366
 	case_else  goto 365
@@ -5175,7 +5175,7 @@ state 269
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 368
 	row_value  goto 88
@@ -5201,7 +5201,7 @@ state 269
 state 270
 	comparison:  row_value COMPARISON_OP row_value.    (187)
 
-	.  reduce 187 (src line 1107)
+	.  reduce 187 (src line 1106)
 
 
 271: shift/reduce conflict (shift 103(0), red'n 137(0)) on '('
@@ -5236,12 +5236,12 @@ state 271
 	'+'  shift 82
 	'!'  shift 91
 	'('  shift 103
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	cursor_status  goto 72
 	select_query  goto 164
 	with_clause  goto 166
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 211
 	row_value  goto 88
@@ -5268,13 +5268,13 @@ state 271
 state 272
 	row_value:  subquery.    (170)
 
-	.  reduce 170 (src line 1004)
+	.  reduce 170 (src line 1003)
 
 
 state 273
 	comparison:  row_value '=' row_value.    (189)
 
-	.  reduce 189 (src line 1115)
+	.  reduce 189 (src line 1114)
 
 
 state 274
@@ -5319,14 +5319,14 @@ state 278
 	negation: .    (332)
 
 	NOT  shift 161
-	.  reduce 332 (src line 1797)
+	.  reduce 332 (src line 1796)
 
 	negation  goto 376
 
 state 279
 	cursor_status:  CURSOR identifier COUNT.    (103)
 
-	.  reduce 103 (src line 665)
+	.  reduce 103 (src line 664)
 
 
 state 280
@@ -5359,10 +5359,10 @@ state 280
 	'+'  shift 82
 	'!'  shift 91
 	'('  shift 103
-	.  reduce 216 (src line 1228)
+	.  reduce 216 (src line 1227)
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 211
 	row_value  goto 88
@@ -5406,10 +5406,10 @@ state 282
 	ALTER  shift 23
 	WITH  shift 39
 	IF  shift 285
-	ELSEIF  reduce 3 (src line 202)
+	ELSEIF  reduce 3 (src line 201)
 	WHILE  shift 19
-	ELSE  reduce 3 (src line 202)
-	END  reduce 3 (src line 202)
+	ELSE  reduce 3 (src line 201)
+	END  reduce 3 (src line 201)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -5432,7 +5432,7 @@ state 282
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	in_loop_program  goto 379
 	statement  goto 3
@@ -5462,13 +5462,13 @@ state 282
 state 283
 	in_loop_statement:  procedure_statement.    (26)
 
-	.  reduce 26 (src line 312)
+	.  reduce 26 (src line 311)
 
 
 state 284
 	in_loop_statement:  in_loop_flow_control_statement.    (27)
 
-	.  reduce 27 (src line 317)
+	.  reduce 27 (src line 316)
 
 
 state 285
@@ -5506,7 +5506,7 @@ state 285
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 380
 	row_value  goto 88
@@ -5532,7 +5532,7 @@ state 285
 state 286
 	in_loop_flow_control_statement:  common_in_loop_flow_control_statement.    (47)
 
-	.  reduce 47 (src line 407)
+	.  reduce 47 (src line 406)
 
 
 state 287
@@ -5540,7 +5540,7 @@ state 287
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 381
 
@@ -5549,7 +5549,7 @@ state 288
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 382
 
@@ -5563,7 +5563,7 @@ state 289
 state 290
 	variables:  variable ',' variables.    (324)
 
-	.  reduce 324 (src line 1756)
+	.  reduce 324 (src line 1755)
 
 
 state 291
@@ -5571,7 +5571,7 @@ state 291
 	variables:  variable.',' variables 
 
 	','  shift 188
-	.  reduce 323 (src line 1751)
+	.  reduce 323 (src line 1750)
 
 
 state 292
@@ -5586,7 +5586,7 @@ state 293
 	offset_clause: .    (135)
 
 	OFFSET  shift 386
-	.  reduce 135 (src line 847)
+	.  reduce 135 (src line 846)
 
 	offset_clause  goto 385
 
@@ -5622,7 +5622,7 @@ state 294
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 387
 	row_value  goto 88
@@ -5676,7 +5676,7 @@ state 295
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 391
 	row_value  goto 88
@@ -5714,7 +5714,7 @@ state 296
 	VALUES  shift 393
 	WITH  shift 39
 	'('  shift 394
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	select_query  goto 395
 	with_clause  goto 166
@@ -5741,7 +5741,7 @@ state 297
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 240 (src line 1341)
+	.  reduce 240 (src line 1340)
 
 	identifier  goto 396
 
@@ -5787,7 +5787,7 @@ state 300
 	where_clause: .    (122)
 
 	WHERE  shift 309
-	.  reduce 122 (src line 783)
+	.  reduce 122 (src line 782)
 
 	where_clause  goto 403
 
@@ -5803,16 +5803,16 @@ state 301
 	join_inner: .    (334)
 	join_direction: .    (338)
 
-	JOIN  reduce 334 (src line 1807)
+	JOIN  reduce 334 (src line 1806)
 	INNER  shift 409
-	OUTER  reduce 338 (src line 1827)
+	OUTER  reduce 338 (src line 1826)
 	LEFT  shift 410
 	RIGHT  shift 411
 	FULL  shift 412
 	CROSS  shift 407
 	NATURAL  shift 405
 	','  shift 408
-	.  reduce 274 (src line 1503)
+	.  reduce 274 (src line 1502)
 
 	join_inner  goto 404
 	join_direction  goto 406
@@ -5820,7 +5820,7 @@ state 301
 state 302
 	table:  identified_table.    (244)
 
-	.  reduce 244 (src line 1361)
+	.  reduce 244 (src line 1360)
 
 
 303: shift/reduce conflict (shift 40(0), red'n 245(0)) on IDENTIFIER
@@ -5845,26 +5845,26 @@ state 303
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 245 (src line 1366)
+	.  reduce 245 (src line 1365)
 
 	identifier  goto 413
 
 state 304
 	table:  join.    (248)
 
-	.  reduce 248 (src line 1378)
+	.  reduce 248 (src line 1377)
 
 
 state 305
 	table:  DUAL.    (249)
 
-	.  reduce 249 (src line 1382)
+	.  reduce 249 (src line 1381)
 
 
 state 306
 	virtual_table_object:  subquery.    (243)
 
-	.  reduce 243 (src line 1355)
+	.  reduce 243 (src line 1354)
 
 
 state 307
@@ -5897,7 +5897,7 @@ state 308
 	group_by_clause: .    (124)
 
 	GROUP  shift 417
-	.  reduce 124 (src line 793)
+	.  reduce 124 (src line 792)
 
 	group_by_clause  goto 416
 
@@ -5932,7 +5932,7 @@ state 309
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 418
 	row_value  goto 88
@@ -5958,7 +5958,7 @@ state 309
 state 310
 	from_clause:  FROM tables.    (121)
 
-	.  reduce 121 (src line 778)
+	.  reduce 121 (src line 777)
 
 
 state 311
@@ -5976,7 +5976,7 @@ state 311
 state 312
 	all:  ALL.    (343)
 
-	.  reduce 343 (src line 1850)
+	.  reduce 343 (src line 1849)
 
 
 state 313
@@ -6006,7 +6006,7 @@ state 314
 state 315
 	select_clause:  SELECT distinct fields.    (119)
 
-	.  reduce 119 (src line 767)
+	.  reduce 119 (src line 766)
 
 
 state 316
@@ -6014,7 +6014,7 @@ state 316
 	fields:  field.',' fields 
 
 	','  shift 423
-	.  reduce 280 (src line 1533)
+	.  reduce 280 (src line 1532)
 
 
 state 317
@@ -6022,13 +6022,13 @@ state 317
 	field:  field_object.AS identifier 
 
 	AS  shift 424
-	.  reduce 260 (src line 1433)
+	.  reduce 260 (src line 1432)
 
 
 state 318
 	field:  wildcard.    (262)
 
-	.  reduce 262 (src line 1442)
+	.  reduce 262 (src line 1441)
 
 
 state 319
@@ -6052,12 +6052,12 @@ state 319
 	field_object:  value.    (258)
 	negation: .    (332)
 
-	IN  reduce 332 (src line 1797)
+	IN  reduce 332 (src line 1796)
 	AND  shift 160
 	OR  shift 159
 	NOT  shift 161
-	BETWEEN  reduce 332 (src line 1797)
-	LIKE  reduce 332 (src line 1797)
+	BETWEEN  reduce 332 (src line 1796)
+	LIKE  reduce 332 (src line 1796)
 	IS  shift 151
 	COMPARISON_OP  shift 149
 	STRING_OP  shift 148
@@ -6067,7 +6067,7 @@ state 319
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 258 (src line 1423)
+	.  reduce 258 (src line 1422)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -6075,13 +6075,13 @@ state 319
 state 320
 	field_object:  analytic_function.    (259)
 
-	.  reduce 259 (src line 1428)
+	.  reduce 259 (src line 1427)
 
 
 state 321
 	wildcard:  '*'.    (168)
 
-	.  reduce 168 (src line 993)
+	.  reduce 168 (src line 992)
 
 
 322: shift/reduce conflict (shift 425(0), red'n 149(0)) on '('
@@ -6096,7 +6096,7 @@ state 322
 
 	'('  shift 425
 	'.'  shift 167
-	.  reduce 149 (src line 913)
+	.  reduce 149 (src line 912)
 
 
 323: shift/reduce conflict (shift 426(0), red'n 313(0)) on '('
@@ -6106,7 +6106,7 @@ state 323
 	identifier:  AGGREGATE_FUNCTION.    (313)
 
 	'('  shift 426
-	.  reduce 313 (src line 1696)
+	.  reduce 313 (src line 1695)
 
 
 324: shift/reduce conflict (shift 427(0), red'n 311(0)) on '('
@@ -6118,7 +6118,7 @@ state 324
 	identifier:  COUNT.    (311)
 
 	'('  shift 427
-	.  reduce 311 (src line 1688)
+	.  reduce 311 (src line 1687)
 
 
 325: shift/reduce conflict (shift 428(0), red'n 312(0)) on '('
@@ -6129,7 +6129,7 @@ state 325
 	identifier:  LISTAGG.    (312)
 
 	'('  shift 428
-	.  reduce 312 (src line 1692)
+	.  reduce 312 (src line 1691)
 
 
 326: shift/reduce conflict (shift 429(0), red'n 314(0)) on '('
@@ -6139,7 +6139,7 @@ state 326
 	identifier:  FUNCTION_WITH_INS.    (314)
 
 	'('  shift 429
-	.  reduce 314 (src line 1700)
+	.  reduce 314 (src line 1699)
 
 
 state 327
@@ -6215,13 +6215,13 @@ state 330
 state 331
 	function:  identifier '(' arguments ')'.    (218)
 
-	.  reduce 218 (src line 1238)
+	.  reduce 218 (src line 1237)
 
 
 state 332
 	variable_assignments:  variable_assignment ',' variable_assignments.    (329)
 
-	.  reduce 329 (src line 1782)
+	.  reduce 329 (src line 1781)
 
 
 state 333
@@ -6245,12 +6245,12 @@ state 333
 	variable_assignment:  variable SUBSTITUTION_OP value.    (327)
 	negation: .    (332)
 
-	IN  reduce 332 (src line 1797)
+	IN  reduce 332 (src line 1796)
 	AND  shift 160
 	OR  shift 159
 	NOT  shift 161
-	BETWEEN  reduce 332 (src line 1797)
-	LIKE  reduce 332 (src line 1797)
+	BETWEEN  reduce 332 (src line 1796)
+	LIKE  reduce 332 (src line 1796)
 	IS  shift 151
 	COMPARISON_OP  shift 149
 	STRING_OP  shift 148
@@ -6260,7 +6260,7 @@ state 333
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 327 (src line 1772)
+	.  reduce 327 (src line 1771)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -6270,7 +6270,7 @@ state 334
 	with_clause: .    (137)
 
 	WITH  shift 39
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	select_query  goto 438
 	with_clause  goto 166
@@ -6297,7 +6297,7 @@ state 336
 	with_clause: .    (137)
 
 	WITH  shift 39
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	select_query  goto 440
 	with_clause  goto 166
@@ -6336,13 +6336,13 @@ state 338
 state 339
 	cursor_statement:  DISPOSE CURSOR identifier statement_terminal.    (75)
 
-	.  reduce 75 (src line 535)
+	.  reduce 75 (src line 534)
 
 
 state 340
 	temporary_table_statement:  DISPOSE TABLE identifier statement_terminal.    (80)
 
-	.  reduce 80 (src line 557)
+	.  reduce 80 (src line 556)
 
 
 state 341
@@ -6355,11 +6355,11 @@ state 341
 	variables  goto 449
 
 state 342
-	command_statement:  SET FLAG '=' primary.statement_terminal 
+	command_statement:  SET FLAG '=' primitive_type.statement_terminal 
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 450
 
@@ -6368,14 +6368,14 @@ state 343
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 451
 
 state 344
 	trigger_statement:  TRIGGER ERROR value statement_terminal.    (110)
 
-	.  reduce 110 (src line 697)
+	.  reduce 110 (src line 696)
 
 
 state 345
@@ -6400,12 +6400,12 @@ state 345
 	statement_terminal: .    (348)
 	negation: .    (332)
 
-	IN  reduce 332 (src line 1797)
+	IN  reduce 332 (src line 1796)
 	AND  shift 160
 	OR  shift 159
 	NOT  shift 161
-	BETWEEN  reduce 332 (src line 1797)
-	LIKE  reduce 332 (src line 1797)
+	BETWEEN  reduce 332 (src line 1796)
+	LIKE  reduce 332 (src line 1796)
 	IS  shift 151
 	COMPARISON_OP  shift 149
 	STRING_OP  shift 148
@@ -6416,7 +6416,7 @@ state 345
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -6425,7 +6425,7 @@ state 345
 state 346
 	inline_tables:  inline_table ',' inline_tables.    (142)
 
-	.  reduce 142 (src line 882)
+	.  reduce 142 (src line 881)
 
 
 state 347
@@ -6465,7 +6465,7 @@ state 350
 
 	ELSEIF  shift 352
 	ELSE  shift 351
-	.  reduce 294 (src line 1605)
+	.  reduce 294 (src line 1604)
 
 	elseif  goto 457
 	else  goto 456
@@ -6483,7 +6483,7 @@ state 351
 	WITH  shift 39
 	IF  shift 18
 	WHILE  shift 19
-	END  reduce 1 (src line 190)
+	END  reduce 1 (src line 189)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -6504,7 +6504,7 @@ state 351
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	program  goto 458
 	statement  goto 3
@@ -6559,7 +6559,7 @@ state 352
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 459
 	row_value  goto 88
@@ -6585,13 +6585,13 @@ state 352
 state 353
 	comparison:  value IS negation ternary.    (190)
 
-	.  reduce 190 (src line 1119)
+	.  reduce 190 (src line 1118)
 
 
 state 354
 	comparison:  value IS negation null.    (191)
 
-	.  reduce 191 (src line 1123)
+	.  reduce 191 (src line 1122)
 
 
 state 355
@@ -6627,7 +6627,7 @@ state 355
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 332 (src line 1797)
+	.  reduce 332 (src line 1796)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -6635,7 +6635,7 @@ state 355
 state 356
 	comparison:  value negation IN row_value.    (194)
 
-	.  reduce 194 (src line 1135)
+	.  reduce 194 (src line 1134)
 
 
  357: reduce/reduce conflict  (red'ns 197 and 332) on IN
@@ -6671,7 +6671,7 @@ state 357
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 197 (src line 1147)
+	.  reduce 197 (src line 1146)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -6679,19 +6679,19 @@ state 357
 state 358
 	comparison:  value comparison_operator ANY row_value.    (198)
 
-	.  reduce 198 (src line 1151)
+	.  reduce 198 (src line 1150)
 
 
 state 359
 	comparison:  value comparison_operator ALL row_value.    (201)
 
-	.  reduce 201 (src line 1163)
+	.  reduce 201 (src line 1162)
 
 
 state 360
 	values:  value ',' values.    (273)
 
-	.  reduce 273 (src line 1498)
+	.  reduce 273 (src line 1497)
 
 
 state 361
@@ -6735,7 +6735,7 @@ state 366
 	case_when:  case_when case_when.    (267)
 
 	WHEN  shift 269
-	.  reduce 267 (src line 1468)
+	.  reduce 267 (src line 1467)
 
 	case_when  goto 366
 
@@ -6770,7 +6770,7 @@ state 367
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 466
 	row_value  goto 88
@@ -6827,7 +6827,7 @@ state 368
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 332 (src line 1797)
+	.  reduce 332 (src line 1796)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -6847,7 +6847,7 @@ state 370
 
 	WITH  shift 39
 	'('  shift 271
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	select_query  goto 164
 	with_clause  goto 166
@@ -6858,7 +6858,7 @@ state 370
 state 371
 	comparison:  row_value negation IN subquery.    (196)
 
-	.  reduce 196 (src line 1143)
+	.  reduce 196 (src line 1142)
 
 
 372: shift/reduce conflict (shift 271(0), red'n 137(0)) on '('
@@ -6869,7 +6869,7 @@ state 372
 
 	WITH  shift 39
 	'('  shift 271
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	select_query  goto 164
 	with_clause  goto 166
@@ -6880,7 +6880,7 @@ state 372
 state 373
 	comparison:  row_value comparison_operator ANY subquery.    (200)
 
-	.  reduce 200 (src line 1159)
+	.  reduce 200 (src line 1158)
 
 
 374: shift/reduce conflict (shift 271(0), red'n 137(0)) on '('
@@ -6891,7 +6891,7 @@ state 374
 
 	WITH  shift 39
 	'('  shift 271
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	select_query  goto 164
 	with_clause  goto 166
@@ -6902,7 +6902,7 @@ state 374
 state 375
 	comparison:  row_value comparison_operator ALL subquery.    (203)
 
-	.  reduce 203 (src line 1171)
+	.  reduce 203 (src line 1170)
 
 
 state 376
@@ -6932,7 +6932,7 @@ state 378
 state 379
 	in_loop_program:  in_loop_statement in_loop_program.    (4)
 
-	.  reduce 4 (src line 208)
+	.  reduce 4 (src line 207)
 
 
 state 380
@@ -6972,7 +6972,7 @@ state 380
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 332 (src line 1797)
+	.  reduce 332 (src line 1796)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -6980,13 +6980,13 @@ state 380
 state 381
 	common_in_loop_flow_control_statement:  CONTINUE statement_terminal.    (43)
 
-	.  reduce 43 (src line 388)
+	.  reduce 43 (src line 387)
 
 
 state 382
 	common_in_loop_flow_control_statement:  BREAK statement_terminal.    (44)
 
-	.  reduce 44 (src line 393)
+	.  reduce 44 (src line 392)
 
 
 state 383
@@ -7002,7 +7002,7 @@ state 383
 	WITH  shift 39
 	IF  shift 285
 	WHILE  shift 19
-	END  reduce 3 (src line 202)
+	END  reduce 3 (src line 201)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -7025,7 +7025,7 @@ state 383
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	in_loop_program  goto 478
 	statement  goto 3
@@ -7065,7 +7065,7 @@ state 384
 	WITH  shift 39
 	IF  shift 285
 	WHILE  shift 19
-	END  reduce 3 (src line 202)
+	END  reduce 3 (src line 201)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -7088,7 +7088,7 @@ state 384
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	in_loop_program  goto 479
 	statement  goto 3
@@ -7118,7 +7118,7 @@ state 384
 state 385
 	select_query:  with_clause select_entity order_by_clause limit_clause offset_clause.    (112)
 
-	.  reduce 112 (src line 706)
+	.  reduce 112 (src line 705)
 
 
 state 386
@@ -7152,7 +7152,7 @@ state 386
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 480
 	row_value  goto 88
@@ -7200,12 +7200,12 @@ state 387
 	negation: .    (332)
 
 	PERCENT  shift 482
-	IN  reduce 332 (src line 1797)
+	IN  reduce 332 (src line 1796)
 	AND  shift 160
 	OR  shift 159
 	NOT  shift 161
-	BETWEEN  reduce 332 (src line 1797)
-	LIKE  reduce 332 (src line 1797)
+	BETWEEN  reduce 332 (src line 1796)
+	LIKE  reduce 332 (src line 1796)
 	IS  shift 151
 	WITH  shift 483
 	COMPARISON_OP  shift 149
@@ -7216,7 +7216,7 @@ state 387
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 133 (src line 837)
+	.  reduce 133 (src line 836)
 
 	limit_with  goto 481
 	negation  goto 152
@@ -7225,7 +7225,7 @@ state 387
 state 388
 	order_by_clause:  ORDER BY order_items.    (129)
 
-	.  reduce 129 (src line 818)
+	.  reduce 129 (src line 817)
 
 
 state 389
@@ -7233,7 +7233,7 @@ state 389
 	order_items:  order_item.',' order_items 
 
 	','  shift 484
-	.  reduce 173 (src line 1019)
+	.  reduce 173 (src line 1018)
 
 
 state 390
@@ -7243,7 +7243,7 @@ state 390
 
 	ASC  shift 486
 	DESC  shift 487
-	.  reduce 179 (src line 1049)
+	.  reduce 179 (src line 1048)
 
 	order_direction  goto 485
 
@@ -7268,12 +7268,12 @@ state 391
 	logic:  value.AND value 
 	negation: .    (332)
 
-	IN  reduce 332 (src line 1797)
+	IN  reduce 332 (src line 1796)
 	AND  shift 160
 	OR  shift 159
 	NOT  shift 161
-	BETWEEN  reduce 332 (src line 1797)
-	LIKE  reduce 332 (src line 1797)
+	BETWEEN  reduce 332 (src line 1796)
+	LIKE  reduce 332 (src line 1796)
 	IS  shift 151
 	COMPARISON_OP  shift 149
 	STRING_OP  shift 148
@@ -7283,7 +7283,7 @@ state 391
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 177 (src line 1039)
+	.  reduce 177 (src line 1038)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -7291,7 +7291,7 @@ state 391
 state 392
 	order_value:  analytic_function.    (178)
 
-	.  reduce 178 (src line 1044)
+	.  reduce 178 (src line 1043)
 
 
 state 393
@@ -7326,13 +7326,13 @@ state 394
 state 395
 	insert_query:  with_clause INSERT INTO identified_table select_query.    (284)
 
-	.  reduce 284 (src line 1552)
+	.  reduce 284 (src line 1551)
 
 
 state 396
 	identified_table:  table_identifier identifier.    (241)
 
-	.  reduce 241 (src line 1346)
+	.  reduce 241 (src line 1345)
 
 
 state 397
@@ -7356,7 +7356,7 @@ state 398
 	operate_tables:  operate_tables ',' operate_tables.    (277)
 
 	','  shift 298
-	.  reduce 277 (src line 1518)
+	.  reduce 277 (src line 1517)
 
 
 state 399
@@ -7364,7 +7364,7 @@ state 399
 	from_clause: .    (120)
 
 	FROM  shift 201
-	.  reduce 120 (src line 773)
+	.  reduce 120 (src line 772)
 
 	from_clause  goto 492
 
@@ -7373,7 +7373,7 @@ state 400
 	update_set_list:  update_set.',' update_set_list 
 
 	','  shift 493
-	.  reduce 288 (src line 1573)
+	.  reduce 288 (src line 1572)
 
 
 state 401
@@ -7389,13 +7389,13 @@ state 402
 	field_reference:  identifier.'.' integer 
 
 	'.'  shift 167
-	.  reduce 149 (src line 913)
+	.  reduce 149 (src line 912)
 
 
 state 403
 	delete_query:  with_clause DELETE FROM tables where_clause.    (290)
 
-	.  reduce 290 (src line 1583)
+	.  reduce 290 (src line 1582)
 
 
 state 404
@@ -7413,11 +7413,11 @@ state 405
 	join_direction: .    (338)
 
 	INNER  shift 409
-	OUTER  reduce 338 (src line 1827)
+	OUTER  reduce 338 (src line 1826)
 	LEFT  shift 410
 	RIGHT  shift 411
 	FULL  shift 412
-	.  reduce 334 (src line 1807)
+	.  reduce 334 (src line 1806)
 
 	join_inner  goto 496
 	join_direction  goto 497
@@ -7427,7 +7427,7 @@ state 406
 	join_outer: .    (336)
 
 	OUTER  shift 499
-	.  reduce 336 (src line 1817)
+	.  reduce 336 (src line 1816)
 
 	join_outer  goto 498
 
@@ -7466,31 +7466,31 @@ state 408
 state 409
 	join_inner:  INNER.    (335)
 
-	.  reduce 335 (src line 1812)
+	.  reduce 335 (src line 1811)
 
 
 state 410
 	join_direction:  LEFT.    (339)
 
-	.  reduce 339 (src line 1832)
+	.  reduce 339 (src line 1831)
 
 
 state 411
 	join_direction:  RIGHT.    (340)
 
-	.  reduce 340 (src line 1836)
+	.  reduce 340 (src line 1835)
 
 
 state 412
 	join_direction:  FULL.    (341)
 
-	.  reduce 341 (src line 1840)
+	.  reduce 341 (src line 1839)
 
 
 state 413
 	table:  virtual_table_object identifier.    (246)
 
-	.  reduce 246 (src line 1370)
+	.  reduce 246 (src line 1369)
 
 
 state 414
@@ -7513,7 +7513,7 @@ state 415
 	where_clause: .    (122)
 
 	WHERE  shift 309
-	.  reduce 122 (src line 783)
+	.  reduce 122 (src line 782)
 
 	where_clause  goto 503
 
@@ -7522,7 +7522,7 @@ state 416
 	having_clause: .    (126)
 
 	HAVING  shift 505
-	.  reduce 126 (src line 803)
+	.  reduce 126 (src line 802)
 
 	having_clause  goto 504
 
@@ -7554,12 +7554,12 @@ state 418
 	logic:  value.AND value 
 	negation: .    (332)
 
-	IN  reduce 332 (src line 1797)
+	IN  reduce 332 (src line 1796)
 	AND  shift 160
 	OR  shift 159
 	NOT  shift 161
-	BETWEEN  reduce 332 (src line 1797)
-	LIKE  reduce 332 (src line 1797)
+	BETWEEN  reduce 332 (src line 1796)
+	LIKE  reduce 332 (src line 1796)
 	IS  shift 151
 	COMPARISON_OP  shift 149
 	STRING_OP  shift 148
@@ -7569,7 +7569,7 @@ state 418
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 123 (src line 788)
+	.  reduce 123 (src line 787)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -7581,13 +7581,13 @@ state 419
 	select_entity:  select_set_entity.EXCEPT all select_set_entity 
 
 	INTERSECT  shift 203
-	.  reduce 114 (src line 729)
+	.  reduce 114 (src line 728)
 
 
 state 420
 	select_set_entity:  select_entity.    (117)
 
-	.  reduce 117 (src line 757)
+	.  reduce 117 (src line 756)
 
 
 state 421
@@ -7596,7 +7596,7 @@ state 421
 	select_entity:  select_set_entity INTERSECT all select_set_entity.    (115)
 	select_entity:  select_set_entity.EXCEPT all select_set_entity 
 
-	.  reduce 115 (src line 738)
+	.  reduce 115 (src line 737)
 
 
 state 422
@@ -7606,7 +7606,7 @@ state 422
 	select_entity:  select_set_entity EXCEPT all select_set_entity.    (116)
 
 	INTERSECT  shift 203
-	.  reduce 116 (src line 747)
+	.  reduce 116 (src line 746)
 
 
 state 423
@@ -7641,7 +7641,7 @@ state 423
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 319
 	wildcard  goto 318
@@ -7744,10 +7744,10 @@ state 425
 	'+'  shift 82
 	'!'  shift 91
 	'('  shift 103
-	.  reduce 216 (src line 1228)
+	.  reduce 216 (src line 1227)
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 211
 	row_value  goto 88
@@ -7779,7 +7779,7 @@ state 426
 	distinct: .    (330)
 
 	DISTINCT  shift 206
-	.  reduce 330 (src line 1787)
+	.  reduce 330 (src line 1786)
 
 	distinct  goto 511
 
@@ -7791,7 +7791,7 @@ state 427
 	distinct: .    (330)
 
 	DISTINCT  shift 206
-	.  reduce 330 (src line 1787)
+	.  reduce 330 (src line 1786)
 
 	distinct  goto 512
 
@@ -7802,7 +7802,7 @@ state 428
 	distinct: .    (330)
 
 	DISTINCT  shift 206
-	.  reduce 330 (src line 1787)
+	.  reduce 330 (src line 1786)
 
 	distinct  goto 513
 
@@ -7836,10 +7836,10 @@ state 429
 	'+'  shift 82
 	'!'  shift 91
 	'('  shift 103
-	.  reduce 216 (src line 1228)
+	.  reduce 216 (src line 1227)
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 211
 	row_value  goto 88
@@ -7876,7 +7876,7 @@ state 431
 	identifiers:  identifier.',' identifiers 
 
 	','  shift 516
-	.  reduce 278 (src line 1523)
+	.  reduce 278 (src line 1522)
 
 
 state 432
@@ -7887,7 +7887,7 @@ state 432
 	LAST  shift 519
 	AFTER  shift 520
 	BEFORE  shift 521
-	.  reduce 67 (src line 500)
+	.  reduce 67 (src line 499)
 
 	column_position  goto 517
 
@@ -7913,13 +7913,13 @@ state 434
 	column_default:  identifier.DEFAULT value 
 
 	DEFAULT  shift 524
-	.  reduce 63 (src line 480)
+	.  reduce 63 (src line 479)
 
 
 state 435
 	table_operation:  ALTER TABLE table_identifier DROP field_reference.    (60)
 
-	.  reduce 60 (src line 467)
+	.  reduce 60 (src line 466)
 
 
 state 436
@@ -7952,7 +7952,7 @@ state 438
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 527
 
@@ -7969,7 +7969,7 @@ state 440
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 529
 
@@ -7993,19 +7993,19 @@ state 443
 	function_parameters:  parameters.',' optional_parameters 
 
 	','  shift 532
-	.  reduce 87 (src line 594)
+	.  reduce 87 (src line 593)
 
 
 state 444
 	function_parameters:  optional_parameters.    (88)
 
-	.  reduce 88 (src line 599)
+	.  reduce 88 (src line 598)
 
 
 state 445
 	parameters:  parameter.    (82)
 
-	.  reduce 82 (src line 568)
+	.  reduce 82 (src line 567)
 
 
 state 446
@@ -8013,7 +8013,7 @@ state 446
 	optional_parameters:  optional_parameter.',' optional_parameters 
 
 	','  shift 533
-	.  reduce 85 (src line 584)
+	.  reduce 85 (src line 583)
 
 
 state 447
@@ -8021,7 +8021,7 @@ state 447
 	optional_parameter:  variable.DEFAULT value 
 
 	DEFAULT  shift 534
-	.  reduce 81 (src line 562)
+	.  reduce 81 (src line 561)
 
 
 state 448
@@ -8038,26 +8038,26 @@ state 449
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 537
 
 state 450
-	command_statement:  SET FLAG '=' primary statement_terminal.    (104)
+	command_statement:  SET FLAG '=' primitive_type statement_terminal.    (104)
 
-	.  reduce 104 (src line 670)
+	.  reduce 104 (src line 669)
 
 
 state 451
 	command_statement:  PRINTF STRING ',' values statement_terminal.    (107)
 
-	.  reduce 107 (src line 683)
+	.  reduce 107 (src line 682)
 
 
 state 452
 	trigger_statement:  TRIGGER ERROR integer value statement_terminal.    (111)
 
-	.  reduce 111 (src line 701)
+	.  reduce 111 (src line 700)
 
 
 state 453
@@ -8065,7 +8065,7 @@ state 453
 	with_clause: .    (137)
 
 	WITH  shift 39
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	select_query  goto 538
 	with_clause  goto 166
@@ -8097,14 +8097,14 @@ state 457
 	elseif:  elseif elseif.    (293)
 
 	ELSEIF  shift 352
-	.  reduce 293 (src line 1600)
+	.  reduce 293 (src line 1599)
 
 	elseif  goto 457
 
 state 458
 	else:  ELSE program.    (295)
 
-	.  reduce 295 (src line 1610)
+	.  reduce 295 (src line 1609)
 
 
 state 459
@@ -8141,7 +8141,7 @@ state 459
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 332 (src line 1797)
+	.  reduce 332 (src line 1796)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -8178,7 +8178,7 @@ state 460
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 543
 	row_value  goto 88
@@ -8204,31 +8204,31 @@ state 460
 state 461
 	aggregate_function:  identifier '(' distinct arguments ')'.    (220)
 
-	.  reduce 220 (src line 1249)
+	.  reduce 220 (src line 1248)
 
 
 state 462
 	aggregate_function:  AGGREGATE_FUNCTION '(' distinct arguments ')'.    (221)
 
-	.  reduce 221 (src line 1254)
+	.  reduce 221 (src line 1253)
 
 
 state 463
 	aggregate_function:  COUNT '(' distinct arguments ')'.    (222)
 
-	.  reduce 222 (src line 1258)
+	.  reduce 222 (src line 1257)
 
 
 state 464
 	aggregate_function:  COUNT '(' distinct wildcard ')'.    (223)
 
-	.  reduce 223 (src line 1262)
+	.  reduce 223 (src line 1261)
 
 
 state 465
 	case:  CASE case_value case_when case_else END.    (263)
 
-	.  reduce 263 (src line 1447)
+	.  reduce 263 (src line 1446)
 
 
 state 466
@@ -8256,7 +8256,7 @@ state 466
 	OR  shift 159
 	NOT  shift 161
 	IS  shift 151
-	END  reduce 269 (src line 1478)
+	END  reduce 269 (src line 1477)
 	COMPARISON_OP  shift 149
 	STRING_OP  shift 148
 	'*'  shift 156
@@ -8265,7 +8265,7 @@ state 466
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 332 (src line 1797)
+	.  reduce 332 (src line 1796)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -8301,7 +8301,7 @@ state 467
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 544
 	row_value  goto 88
@@ -8345,7 +8345,7 @@ state 470
 	row_values:  row_value.',' row_values 
 
 	','  shift 547
-	.  reduce 171 (src line 1009)
+	.  reduce 171 (src line 1008)
 
 
 state 471
@@ -8365,7 +8365,7 @@ state 472
 state 473
 	cursor_status:  CURSOR identifier IS negation OPEN.    (101)
 
-	.  reduce 101 (src line 656)
+	.  reduce 101 (src line 655)
 
 
 state 474
@@ -8380,7 +8380,7 @@ state 475
 	listagg:  LISTAGG '(' distinct arguments ')'.WITHIN GROUP '(' order_by_clause ')' 
 
 	WITHIN  shift 551
-	.  reduce 225 (src line 1271)
+	.  reduce 225 (src line 1270)
 
 
 state 476
@@ -8388,7 +8388,7 @@ state 476
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 552
 
@@ -8411,10 +8411,10 @@ state 477
 	ALTER  shift 23
 	WITH  shift 39
 	IF  shift 285
-	ELSEIF  reduce 1 (src line 190)
+	ELSEIF  reduce 1 (src line 189)
 	WHILE  shift 19
-	ELSE  reduce 1 (src line 190)
-	END  reduce 1 (src line 190)
+	ELSE  reduce 1 (src line 189)
+	END  reduce 1 (src line 189)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -8437,7 +8437,7 @@ state 477
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	program  goto 239
 	in_loop_program  goto 553
@@ -8500,12 +8500,12 @@ state 480
 	logic:  value.AND value 
 	negation: .    (332)
 
-	IN  reduce 332 (src line 1797)
+	IN  reduce 332 (src line 1796)
 	AND  shift 160
 	OR  shift 159
 	NOT  shift 161
-	BETWEEN  reduce 332 (src line 1797)
-	LIKE  reduce 332 (src line 1797)
+	BETWEEN  reduce 332 (src line 1796)
+	LIKE  reduce 332 (src line 1796)
 	IS  shift 151
 	COMPARISON_OP  shift 149
 	STRING_OP  shift 148
@@ -8515,7 +8515,7 @@ state 480
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 136 (src line 852)
+	.  reduce 136 (src line 851)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -8523,7 +8523,7 @@ state 480
 state 481
 	limit_clause:  LIMIT value limit_with.    (131)
 
-	.  reduce 131 (src line 828)
+	.  reduce 131 (src line 827)
 
 
 482: shift/reduce conflict (shift 483(0), red'n 133(0)) on WITH
@@ -8532,7 +8532,7 @@ state 482
 	limit_with: .    (133)
 
 	WITH  shift 483
-	.  reduce 133 (src line 837)
+	.  reduce 133 (src line 836)
 
 	limit_with  goto 557
 
@@ -8574,7 +8574,7 @@ state 484
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 391
 	row_value  goto 88
@@ -8607,25 +8607,25 @@ state 485
 	order_item:  order_value order_direction.NULLS order_null_position 
 
 	NULLS  shift 560
-	.  reduce 175 (src line 1029)
+	.  reduce 175 (src line 1028)
 
 
 state 486
 	order_direction:  ASC.    (180)
 
-	.  reduce 180 (src line 1054)
+	.  reduce 180 (src line 1053)
 
 
 state 487
 	order_direction:  DESC.    (181)
 
-	.  reduce 181 (src line 1058)
+	.  reduce 181 (src line 1057)
 
 
 state 488
 	insert_query:  with_clause INSERT INTO identified_table VALUES row_values.    (282)
 
-	.  reduce 282 (src line 1543)
+	.  reduce 282 (src line 1542)
 
 
 state 489
@@ -8641,13 +8641,13 @@ state 490
 	field_references:  field_reference.',' field_references 
 
 	','  shift 562
-	.  reduce 270 (src line 1483)
+	.  reduce 270 (src line 1482)
 
 
 state 491
 	identified_table:  table_identifier AS identifier.    (242)
 
-	.  reduce 242 (src line 1350)
+	.  reduce 242 (src line 1349)
 
 
 state 492
@@ -8655,7 +8655,7 @@ state 492
 	where_clause: .    (122)
 
 	WHERE  shift 309
-	.  reduce 122 (src line 783)
+	.  reduce 122 (src line 782)
 
 	where_clause  goto 563
 
@@ -8709,7 +8709,7 @@ state 494
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 565
 	row_value  goto 88
@@ -8768,7 +8768,7 @@ state 497
 	join_outer: .    (336)
 
 	OUTER  shift 499
-	.  reduce 336 (src line 1817)
+	.  reduce 336 (src line 1816)
 
 	join_outer  goto 568
 
@@ -8782,7 +8782,7 @@ state 498
 state 499
 	join_outer:  OUTER.    (337)
 
-	.  reduce 337 (src line 1822)
+	.  reduce 337 (src line 1821)
 
 
 state 500
@@ -8812,25 +8812,25 @@ state 500
 state 501
 	tables:  table ',' tables.    (275)
 
-	.  reduce 275 (src line 1508)
+	.  reduce 275 (src line 1507)
 
 
 state 502
 	table:  virtual_table_object AS identifier.    (247)
 
-	.  reduce 247 (src line 1374)
+	.  reduce 247 (src line 1373)
 
 
 state 503
 	delete_query:  with_clause DELETE operate_tables FROM tables where_clause.    (291)
 
-	.  reduce 291 (src line 1589)
+	.  reduce 291 (src line 1588)
 
 
 state 504
 	select_entity:  select_clause from_clause where_clause group_by_clause having_clause.    (113)
 
-	.  reduce 113 (src line 718)
+	.  reduce 113 (src line 717)
 
 
 state 505
@@ -8864,7 +8864,7 @@ state 505
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 571
 	row_value  goto 88
@@ -8918,7 +8918,7 @@ state 506
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 211
 	row_value  goto 88
@@ -8945,13 +8945,13 @@ state 506
 state 507
 	fields:  field ',' fields.    (281)
 
-	.  reduce 281 (src line 1538)
+	.  reduce 281 (src line 1537)
 
 
 state 508
 	field:  field_object AS identifier.    (261)
 
-	.  reduce 261 (src line 1438)
+	.  reduce 261 (src line 1437)
 
 
 state 509
@@ -8992,10 +8992,10 @@ state 510
 	'+'  shift 82
 	'!'  shift 91
 	'('  shift 103
-	.  reduce 216 (src line 1228)
+	.  reduce 216 (src line 1227)
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 211
 	row_value  goto 88
@@ -9050,10 +9050,10 @@ state 511
 	'+'  shift 82
 	'!'  shift 91
 	'('  shift 103
-	.  reduce 216 (src line 1228)
+	.  reduce 216 (src line 1227)
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 211
 	row_value  goto 88
@@ -9111,10 +9111,10 @@ state 512
 	'+'  shift 82
 	'!'  shift 91
 	'('  shift 103
-	.  reduce 216 (src line 1228)
+	.  reduce 216 (src line 1227)
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 211
 	wildcard  goto 577
@@ -9171,10 +9171,10 @@ state 513
 	'+'  shift 82
 	'!'  shift 91
 	'('  shift 103
-	.  reduce 216 (src line 1228)
+	.  reduce 216 (src line 1227)
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 211
 	row_value  goto 88
@@ -9210,7 +9210,7 @@ state 514
 state 515
 	table_operation:  CREATE TABLE identifier '(' identifiers ')'.    (57)
 
-	.  reduce 57 (src line 454)
+	.  reduce 57 (src line 453)
 
 
 state 516
@@ -9232,19 +9232,19 @@ state 516
 state 517
 	table_operation:  ALTER TABLE table_identifier ADD column_default column_position.    (58)
 
-	.  reduce 58 (src line 459)
+	.  reduce 58 (src line 458)
 
 
 state 518
 	column_position:  FIRST.    (68)
 
-	.  reduce 68 (src line 505)
+	.  reduce 68 (src line 504)
 
 
 state 519
 	column_position:  LAST.    (69)
 
-	.  reduce 69 (src line 509)
+	.  reduce 69 (src line 508)
 
 
 state 520
@@ -9293,7 +9293,7 @@ state 523
 	column_defaults:  column_default.',' column_defaults 
 
 	','  shift 584
-	.  reduce 65 (src line 490)
+	.  reduce 65 (src line 489)
 
 
 state 524
@@ -9327,7 +9327,7 @@ state 524
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 585
 	row_value  goto 88
@@ -9375,7 +9375,7 @@ state 526
 state 527
 	cursor_statement:  DECLARE identifier CURSOR FOR select_query statement_terminal.    (72)
 
-	.  reduce 72 (src line 522)
+	.  reduce 72 (src line 521)
 
 
 state 528
@@ -9385,14 +9385,14 @@ state 528
 
 	FOR  shift 589
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 588
 
 state 529
 	temporary_table_statement:  DECLARE identifier TABLE FOR select_query statement_terminal.    (79)
 
-	.  reduce 79 (src line 553)
+	.  reduce 79 (src line 552)
 
 
 state 530
@@ -9462,7 +9462,7 @@ state 534
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 596
 	row_value  goto 88
@@ -9508,7 +9508,7 @@ state 536
 state 537
 	cursor_statement:  FETCH fetch_position identifier INTO variables statement_terminal.    (76)
 
-	.  reduce 76 (src line 539)
+	.  reduce 76 (src line 538)
 
 
 state 538
@@ -9530,7 +9530,7 @@ state 540
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 601
 
@@ -9553,10 +9553,10 @@ state 542
 	ALTER  shift 23
 	WITH  shift 39
 	IF  shift 18
-	ELSEIF  reduce 1 (src line 190)
+	ELSEIF  reduce 1 (src line 189)
 	WHILE  shift 19
-	ELSE  reduce 1 (src line 190)
-	END  reduce 1 (src line 190)
+	ELSE  reduce 1 (src line 189)
+	END  reduce 1 (src line 189)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -9577,7 +9577,7 @@ state 542
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	program  goto 603
 	statement  goto 3
@@ -9641,7 +9641,7 @@ state 543
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 192 (src line 1127)
+	.  reduce 192 (src line 1126)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -9671,9 +9671,9 @@ state 544
 	OR  shift 159
 	NOT  shift 161
 	IS  shift 151
-	WHEN  reduce 266 (src line 1463)
-	ELSE  reduce 266 (src line 1463)
-	END  reduce 266 (src line 1463)
+	WHEN  reduce 266 (src line 1462)
+	ELSE  reduce 266 (src line 1462)
+	END  reduce 266 (src line 1462)
 	COMPARISON_OP  shift 149
 	STRING_OP  shift 148
 	'*'  shift 156
@@ -9682,7 +9682,7 @@ state 544
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 332 (src line 1797)
+	.  reduce 332 (src line 1796)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -9690,13 +9690,13 @@ state 544
 state 545
 	comparison:  row_value negation BETWEEN row_value AND row_value.    (193)
 
-	.  reduce 193 (src line 1131)
+	.  reduce 193 (src line 1130)
 
 
 state 546
 	comparison:  row_value negation IN '(' row_values ')'.    (195)
 
-	.  reduce 195 (src line 1139)
+	.  reduce 195 (src line 1138)
 
 
 state 547
@@ -9712,19 +9712,19 @@ state 547
 state 548
 	comparison:  row_value comparison_operator ANY '(' row_values ')'.    (199)
 
-	.  reduce 199 (src line 1155)
+	.  reduce 199 (src line 1154)
 
 
 state 549
 	comparison:  row_value comparison_operator ALL '(' row_values ')'.    (202)
 
-	.  reduce 202 (src line 1167)
+	.  reduce 202 (src line 1166)
 
 
 state 550
 	cursor_status:  CURSOR identifier IS negation IN RANGE.    (102)
 
-	.  reduce 102 (src line 661)
+	.  reduce 102 (src line 660)
 
 
 state 551
@@ -9737,7 +9737,7 @@ state 551
 state 552
 	flow_control_statement:  WHILE value DO in_loop_program END WHILE statement_terminal.    (32)
 
-	.  reduce 32 (src line 341)
+	.  reduce 32 (src line 340)
 
 
 state 553
@@ -9747,7 +9747,7 @@ state 553
 
 	ELSEIF  shift 609
 	ELSE  shift 608
-	.  reduce 298 (src line 1625)
+	.  reduce 298 (src line 1624)
 
 	in_loop_elseif  goto 607
 	in_loop_else  goto 606
@@ -9801,10 +9801,10 @@ state 554
 	ALTER  shift 23
 	WITH  shift 39
 	IF  shift 18
-	ELSEIF  reduce 1 (src line 190)
+	ELSEIF  reduce 1 (src line 189)
 	WHILE  shift 19
-	ELSE  reduce 1 (src line 190)
-	END  reduce 1 (src line 190)
+	ELSE  reduce 1 (src line 189)
+	END  reduce 1 (src line 189)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -9825,7 +9825,7 @@ state 554
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 26 (src line 312)
+	.  reduce 26 (src line 311)
 
 	program  goto 50
 	statement  goto 3
@@ -9866,19 +9866,19 @@ state 556
 state 557
 	limit_clause:  LIMIT value PERCENT limit_with.    (132)
 
-	.  reduce 132 (src line 832)
+	.  reduce 132 (src line 831)
 
 
 state 558
 	limit_with:  WITH TIES.    (134)
 
-	.  reduce 134 (src line 842)
+	.  reduce 134 (src line 841)
 
 
 state 559
 	order_items:  order_item ',' order_items.    (174)
 
-	.  reduce 174 (src line 1024)
+	.  reduce 174 (src line 1023)
 
 
 state 560
@@ -9897,7 +9897,7 @@ state 561
 
 	VALUES  shift 615
 	WITH  shift 39
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	select_query  goto 616
 	with_clause  goto 166
@@ -9923,13 +9923,13 @@ state 562
 state 563
 	update_query:  with_clause UPDATE operate_tables SET update_set_list from_clause where_clause.    (286)
 
-	.  reduce 286 (src line 1561)
+	.  reduce 286 (src line 1560)
 
 
 state 564
 	update_set_list:  update_set ',' update_set_list.    (289)
 
-	.  reduce 289 (src line 1578)
+	.  reduce 289 (src line 1577)
 
 
 state 565
@@ -9953,12 +9953,12 @@ state 565
 	update_set:  field_reference '=' value.    (287)
 	negation: .    (332)
 
-	IN  reduce 332 (src line 1797)
+	IN  reduce 332 (src line 1796)
 	AND  shift 160
 	OR  shift 159
 	NOT  shift 161
-	BETWEEN  reduce 332 (src line 1797)
-	LIKE  reduce 332 (src line 1797)
+	BETWEEN  reduce 332 (src line 1796)
+	LIKE  reduce 332 (src line 1796)
 	IS  shift 151
 	COMPARISON_OP  shift 149
 	STRING_OP  shift 148
@@ -9968,7 +9968,7 @@ state 565
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 287 (src line 1567)
+	.  reduce 287 (src line 1566)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -10003,7 +10003,7 @@ state 566
 	ON  shift 619
 	USING  shift 620
 	NATURAL  shift 405
-	.  reduce 255 (src line 1409)
+	.  reduce 255 (src line 1408)
 
 	join_condition  goto 618
 	join_inner  goto 404
@@ -10089,7 +10089,7 @@ state 570
 	FULL  shift 412
 	CROSS  shift 407
 	NATURAL  shift 405
-	.  reduce 254 (src line 1404)
+	.  reduce 254 (src line 1403)
 
 	join_inner  goto 404
 	join_direction  goto 406
@@ -10115,12 +10115,12 @@ state 571
 	logic:  value.AND value 
 	negation: .    (332)
 
-	IN  reduce 332 (src line 1797)
+	IN  reduce 332 (src line 1796)
 	AND  shift 160
 	OR  shift 159
 	NOT  shift 161
-	BETWEEN  reduce 332 (src line 1797)
-	LIKE  reduce 332 (src line 1797)
+	BETWEEN  reduce 332 (src line 1796)
+	LIKE  reduce 332 (src line 1796)
 	IS  shift 151
 	COMPARISON_OP  shift 149
 	STRING_OP  shift 148
@@ -10130,7 +10130,7 @@ state 571
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 127 (src line 808)
+	.  reduce 127 (src line 807)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -10138,7 +10138,7 @@ state 571
 state 572
 	group_by_clause:  GROUP BY values.    (125)
 
-	.  reduce 125 (src line 798)
+	.  reduce 125 (src line 797)
 
 
 state 573
@@ -10146,7 +10146,7 @@ state 573
 	analytic_function:  identifier '(' arguments ')'.OVER '(' analytic_clause ')' 
 
 	OVER  shift 624
-	.  reduce 218 (src line 1238)
+	.  reduce 218 (src line 1237)
 
 
 state 574
@@ -10202,19 +10202,19 @@ state 579
 state 580
 	identifiers:  identifier ',' identifiers.    (279)
 
-	.  reduce 279 (src line 1528)
+	.  reduce 279 (src line 1527)
 
 
 state 581
 	column_position:  AFTER field_reference.    (70)
 
-	.  reduce 70 (src line 513)
+	.  reduce 70 (src line 512)
 
 
 state 582
 	column_position:  BEFORE field_reference.    (71)
 
-	.  reduce 71 (src line 517)
+	.  reduce 71 (src line 516)
 
 
 state 583
@@ -10225,7 +10225,7 @@ state 583
 	LAST  shift 519
 	AFTER  shift 520
 	BEFORE  shift 521
-	.  reduce 67 (src line 500)
+	.  reduce 67 (src line 499)
 
 	column_position  goto 632
 
@@ -10267,12 +10267,12 @@ state 585
 	logic:  value.AND value 
 	negation: .    (332)
 
-	IN  reduce 332 (src line 1797)
+	IN  reduce 332 (src line 1796)
 	AND  shift 160
 	OR  shift 159
 	NOT  shift 161
-	BETWEEN  reduce 332 (src line 1797)
-	LIKE  reduce 332 (src line 1797)
+	BETWEEN  reduce 332 (src line 1796)
+	LIKE  reduce 332 (src line 1796)
 	IS  shift 151
 	COMPARISON_OP  shift 149
 	STRING_OP  shift 148
@@ -10282,7 +10282,7 @@ state 585
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 64 (src line 485)
+	.  reduce 64 (src line 484)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -10290,19 +10290,19 @@ state 585
 state 586
 	table_operation:  ALTER TABLE table_identifier DROP '(' field_references ')'.    (61)
 
-	.  reduce 61 (src line 471)
+	.  reduce 61 (src line 470)
 
 
 state 587
 	table_operation:  ALTER TABLE table_identifier RENAME field_reference TO identifier.    (62)
 
-	.  reduce 62 (src line 475)
+	.  reduce 62 (src line 474)
 
 
 state 588
 	temporary_table_statement:  DECLARE identifier TABLE '(' identifiers ')' statement_terminal.    (77)
 
-	.  reduce 77 (src line 544)
+	.  reduce 77 (src line 543)
 
 
 state 589
@@ -10310,7 +10310,7 @@ state 589
 	with_clause: .    (137)
 
 	WITH  shift 39
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	select_query  goto 634
 	with_clause  goto 166
@@ -10328,7 +10328,7 @@ state 590
 	WITH  shift 39
 	IF  shift 639
 	WHILE  shift 640
-	END  reduce 5 (src line 214)
+	END  reduce 5 (src line 213)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -10349,7 +10349,7 @@ state 590
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	in_function_program  goto 635
 	statement  goto 637
@@ -10383,19 +10383,19 @@ state 591
 state 592
 	parameters:  parameters ',' parameter.    (83)
 
-	.  reduce 83 (src line 573)
+	.  reduce 83 (src line 572)
 
 
 state 593
 	function_parameters:  parameters ',' optional_parameters.    (89)
 
-	.  reduce 89 (src line 603)
+	.  reduce 89 (src line 602)
 
 
 state 594
 	optional_parameters:  optional_parameter ',' optional_parameters.    (86)
 
-	.  reduce 86 (src line 589)
+	.  reduce 86 (src line 588)
 
 
 state 595
@@ -10436,11 +10436,11 @@ state 596
 	'='  shift 150
 	'-'  shift 155
 	'+'  shift 154
-	')'  reduce 84 (src line 578)
+	')'  reduce 84 (src line 577)
 	'/'  shift 157
 	'%'  shift 158
-	','  reduce 84 (src line 578)
-	.  reduce 332 (src line 1797)
+	','  reduce 84 (src line 577)
+	.  reduce 332 (src line 1796)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -10462,7 +10462,7 @@ state 598
 state 599
 	inline_table:  recursive identifier AS '(' select_query ')'.    (139)
 
-	.  reduce 139 (src line 867)
+	.  reduce 139 (src line 866)
 
 
 state 600
@@ -10475,7 +10475,7 @@ state 600
 state 601
 	flow_control_statement:  IF value THEN program else END IF statement_terminal.    (30)
 
-	.  reduce 30 (src line 332)
+	.  reduce 30 (src line 331)
 
 
 state 602
@@ -10483,20 +10483,20 @@ state 602
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 646
 
 state 603
 	elseif:  ELSEIF value THEN program.    (292)
 
-	.  reduce 292 (src line 1595)
+	.  reduce 292 (src line 1594)
 
 
 state 604
 	row_values:  row_value ',' row_values.    (172)
 
-	.  reduce 172 (src line 1014)
+	.  reduce 172 (src line 1013)
 
 
 state 605
@@ -10520,7 +10520,7 @@ state 607
 
 	ELSEIF  shift 609
 	ELSE  shift 608
-	.  reduce 298 (src line 1625)
+	.  reduce 298 (src line 1624)
 
 	in_loop_elseif  goto 650
 	in_loop_else  goto 649
@@ -10538,7 +10538,7 @@ state 608
 	WITH  shift 39
 	IF  shift 285
 	WHILE  shift 19
-	END  reduce 3 (src line 202)
+	END  reduce 3 (src line 201)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -10561,7 +10561,7 @@ state 608
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	in_loop_program  goto 651
 	statement  goto 3
@@ -10619,7 +10619,7 @@ state 609
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 652
 	row_value  goto 88
@@ -10647,7 +10647,7 @@ state 610
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 653
 
@@ -10656,26 +10656,26 @@ state 611
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 654
 
 state 612
 	order_item:  order_value order_direction NULLS order_null_position.    (176)
 
-	.  reduce 176 (src line 1034)
+	.  reduce 176 (src line 1033)
 
 
 state 613
 	order_null_position:  FIRST.    (182)
 
-	.  reduce 182 (src line 1063)
+	.  reduce 182 (src line 1062)
 
 
 state 614
 	order_null_position:  LAST.    (183)
 
-	.  reduce 183 (src line 1068)
+	.  reduce 183 (src line 1067)
 
 
 state 615
@@ -10691,19 +10691,19 @@ state 615
 state 616
 	insert_query:  with_clause INSERT INTO identified_table '(' field_references ')' select_query.    (285)
 
-	.  reduce 285 (src line 1556)
+	.  reduce 285 (src line 1555)
 
 
 state 617
 	field_references:  field_reference ',' field_references.    (271)
 
-	.  reduce 271 (src line 1488)
+	.  reduce 271 (src line 1487)
 
 
 state 618
 	join:  table join_inner JOIN table join_condition.    (250)
 
-	.  reduce 250 (src line 1387)
+	.  reduce 250 (src line 1386)
 
 
 state 619
@@ -10737,7 +10737,7 @@ state 619
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 656
 	row_value  goto 88
@@ -10792,7 +10792,7 @@ state 621
 	FULL  shift 412
 	CROSS  shift 407
 	NATURAL  shift 405
-	.  reduce 251 (src line 1392)
+	.  reduce 251 (src line 1391)
 
 	join_inner  goto 404
 	join_direction  goto 406
@@ -10851,7 +10851,7 @@ state 623
 	ON  shift 619
 	USING  shift 620
 	NATURAL  shift 405
-	.  reduce 255 (src line 1409)
+	.  reduce 255 (src line 1408)
 
 	join_condition  goto 659
 	join_inner  goto 404
@@ -10869,7 +10869,7 @@ state 625
 	analytic_function:  identifier '(' distinct arguments ')'.OVER '(' analytic_clause ')' 
 
 	OVER  shift 661
-	.  reduce 220 (src line 1249)
+	.  reduce 220 (src line 1248)
 
 
 state 626
@@ -10877,7 +10877,7 @@ state 626
 	analytic_function:  AGGREGATE_FUNCTION '(' distinct arguments ')'.OVER '(' analytic_clause ')' 
 
 	OVER  shift 662
-	.  reduce 221 (src line 1254)
+	.  reduce 221 (src line 1253)
 
 
 state 627
@@ -10885,7 +10885,7 @@ state 627
 	analytic_function:  COUNT '(' distinct arguments ')'.OVER '(' analytic_clause ')' 
 
 	OVER  shift 663
-	.  reduce 222 (src line 1258)
+	.  reduce 222 (src line 1257)
 
 
 state 628
@@ -10893,7 +10893,7 @@ state 628
 	analytic_function:  COUNT '(' distinct wildcard ')'.OVER '(' analytic_clause ')' 
 
 	OVER  shift 664
-	.  reduce 223 (src line 1262)
+	.  reduce 223 (src line 1261)
 
 
 state 629
@@ -10903,7 +10903,7 @@ state 629
 
 	OVER  shift 665
 	WITHIN  shift 551
-	.  reduce 225 (src line 1271)
+	.  reduce 225 (src line 1270)
 
 
 state 630
@@ -10923,13 +10923,13 @@ state 631
 state 632
 	table_operation:  ALTER TABLE table_identifier ADD '(' column_defaults ')' column_position.    (59)
 
-	.  reduce 59 (src line 463)
+	.  reduce 59 (src line 462)
 
 
 state 633
 	column_defaults:  column_default ',' column_defaults.    (66)
 
-	.  reduce 66 (src line 495)
+	.  reduce 66 (src line 494)
 
 
 state 634
@@ -10937,7 +10937,7 @@ state 634
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 668
 
@@ -10960,10 +10960,10 @@ state 636
 	ALTER  shift 23
 	WITH  shift 39
 	IF  shift 639
-	ELSEIF  reduce 5 (src line 214)
+	ELSEIF  reduce 5 (src line 213)
 	WHILE  shift 640
-	ELSE  reduce 5 (src line 214)
-	END  reduce 5 (src line 214)
+	ELSE  reduce 5 (src line 213)
+	END  reduce 5 (src line 213)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -10984,7 +10984,7 @@ state 636
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	in_function_program  goto 670
 	statement  goto 637
@@ -11011,13 +11011,13 @@ state 636
 state 637
 	in_function_statement:  statement.    (24)
 
-	.  reduce 24 (src line 302)
+	.  reduce 24 (src line 301)
 
 
 state 638
 	in_function_statement:  in_function_flow_control_statement.    (25)
 
-	.  reduce 25 (src line 307)
+	.  reduce 25 (src line 306)
 
 
 state 639
@@ -11053,7 +11053,7 @@ state 639
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 671
 	row_value  goto 88
@@ -11109,7 +11109,7 @@ state 640
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 672
 	row_value  goto 88
@@ -11175,10 +11175,10 @@ state 641
 	'+'  shift 82
 	'!'  shift 91
 	'('  shift 103
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 676
 	row_value  goto 88
@@ -11215,7 +11215,7 @@ state 642
 	WITH  shift 39
 	IF  shift 639
 	WHILE  shift 640
-	END  reduce 5 (src line 214)
+	END  reduce 5 (src line 213)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -11236,7 +11236,7 @@ state 642
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	in_function_program  goto 677
 	statement  goto 637
@@ -11273,7 +11273,7 @@ state 643
 	WITH  shift 39
 	IF  shift 639
 	WHILE  shift 640
-	END  reduce 5 (src line 214)
+	END  reduce 5 (src line 213)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -11294,7 +11294,7 @@ state 643
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	in_function_program  goto 678
 	statement  goto 637
@@ -11330,7 +11330,7 @@ state 645
 	with_clause: .    (137)
 
 	WITH  shift 39
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	select_query  goto 680
 	with_clause  goto 166
@@ -11338,7 +11338,7 @@ state 645
 state 646
 	flow_control_statement:  IF value THEN program elseif else END IF statement_terminal.    (31)
 
-	.  reduce 31 (src line 337)
+	.  reduce 31 (src line 336)
 
 
 state 647
@@ -11346,7 +11346,7 @@ state 647
 	order_by_clause: .    (128)
 
 	ORDER  shift 192
-	.  reduce 128 (src line 813)
+	.  reduce 128 (src line 812)
 
 	order_by_clause  goto 681
 
@@ -11370,14 +11370,14 @@ state 650
 	in_loop_elseif:  in_loop_elseif in_loop_elseif.    (297)
 
 	ELSEIF  shift 609
-	.  reduce 297 (src line 1620)
+	.  reduce 297 (src line 1619)
 
 	in_loop_elseif  goto 650
 
 state 651
 	in_loop_else:  ELSE in_loop_program.    (299)
 
-	.  reduce 299 (src line 1630)
+	.  reduce 299 (src line 1629)
 
 
 state 652
@@ -11414,7 +11414,7 @@ state 652
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 332 (src line 1797)
+	.  reduce 332 (src line 1796)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -11422,19 +11422,19 @@ state 652
 state 653
 	flow_control_statement:  WHILE variable IN identifier DO in_loop_program END WHILE statement_terminal.    (33)
 
-	.  reduce 33 (src line 345)
+	.  reduce 33 (src line 344)
 
 
 state 654
 	flow_control_statement:  WHILE variables IN identifier DO in_loop_program END WHILE statement_terminal.    (34)
 
-	.  reduce 34 (src line 349)
+	.  reduce 34 (src line 348)
 
 
 state 655
 	insert_query:  with_clause INSERT INTO identified_table '(' field_references ')' VALUES row_values.    (283)
 
-	.  reduce 283 (src line 1548)
+	.  reduce 283 (src line 1547)
 
 
 state 656
@@ -11458,12 +11458,12 @@ state 656
 	join_condition:  ON value.    (256)
 	negation: .    (332)
 
-	IN  reduce 332 (src line 1797)
+	IN  reduce 332 (src line 1796)
 	AND  shift 160
 	OR  shift 159
 	NOT  shift 161
-	BETWEEN  reduce 332 (src line 1797)
-	LIKE  reduce 332 (src line 1797)
+	BETWEEN  reduce 332 (src line 1796)
+	LIKE  reduce 332 (src line 1796)
 	IS  shift 151
 	COMPARISON_OP  shift 149
 	STRING_OP  shift 148
@@ -11473,7 +11473,7 @@ state 656
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 256 (src line 1414)
+	.  reduce 256 (src line 1413)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -11519,7 +11519,7 @@ state 658
 	FULL  shift 412
 	CROSS  shift 407
 	NATURAL  shift 405
-	.  reduce 253 (src line 1400)
+	.  reduce 253 (src line 1399)
 
 	join_inner  goto 404
 	join_direction  goto 406
@@ -11527,7 +11527,7 @@ state 658
 state 659
 	join:  table join_direction join_outer JOIN table join_condition.    (252)
 
-	.  reduce 252 (src line 1396)
+	.  reduce 252 (src line 1395)
 
 
 state 660
@@ -11535,7 +11535,7 @@ state 660
 	partition: .    (236)
 
 	PARTITION  shift 688
-	.  reduce 236 (src line 1321)
+	.  reduce 236 (src line 1320)
 
 	analytic_clause  goto 686
 	partition  goto 687
@@ -11580,7 +11580,7 @@ state 666
 	partition: .    (236)
 
 	PARTITION  shift 688
-	.  reduce 236 (src line 1321)
+	.  reduce 236 (src line 1320)
 
 	analytic_clause  goto 694
 	partition  goto 687
@@ -11595,7 +11595,7 @@ state 667
 state 668
 	temporary_table_statement:  DECLARE identifier TABLE '(' identifiers ')' FOR select_query statement_terminal.    (78)
 
-	.  reduce 78 (src line 549)
+	.  reduce 78 (src line 548)
 
 
 state 669
@@ -11603,14 +11603,14 @@ state 669
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 696
 
 state 670
 	in_function_program:  in_function_statement in_function_program.    (6)
 
-	.  reduce 6 (src line 220)
+	.  reduce 6 (src line 219)
 
 
 state 671
@@ -11648,7 +11648,7 @@ state 671
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 332 (src line 1797)
+	.  reduce 332 (src line 1796)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -11687,7 +11687,7 @@ state 672
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 332 (src line 1797)
+	.  reduce 332 (src line 1796)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -11704,7 +11704,7 @@ state 673
 	IN  shift 699
 	SUBSTITUTION_OP  shift 146
 	','  shift 188
-	.  reduce 164 (src line 976)
+	.  reduce 164 (src line 975)
 
 
 state 674
@@ -11717,7 +11717,7 @@ state 674
 state 675
 	in_function_flow_control_statement:  RETURN statement_terminal.    (41)
 
-	.  reduce 41 (src line 379)
+	.  reduce 41 (src line 378)
 
 
 state 676
@@ -11742,12 +11742,12 @@ state 676
 	statement_terminal: .    (348)
 	negation: .    (332)
 
-	IN  reduce 332 (src line 1797)
+	IN  reduce 332 (src line 1796)
 	AND  shift 160
 	OR  shift 159
 	NOT  shift 161
-	BETWEEN  reduce 332 (src line 1797)
-	LIKE  reduce 332 (src line 1797)
+	BETWEEN  reduce 332 (src line 1796)
+	LIKE  reduce 332 (src line 1796)
 	IS  shift 151
 	COMPARISON_OP  shift 149
 	STRING_OP  shift 148
@@ -11758,7 +11758,7 @@ state 676
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -11804,7 +11804,7 @@ state 682
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 707
 
@@ -11827,10 +11827,10 @@ state 684
 	ALTER  shift 23
 	WITH  shift 39
 	IF  shift 285
-	ELSEIF  reduce 3 (src line 202)
+	ELSEIF  reduce 3 (src line 201)
 	WHILE  shift 19
-	ELSE  reduce 3 (src line 202)
-	END  reduce 3 (src line 202)
+	ELSE  reduce 3 (src line 201)
+	END  reduce 3 (src line 201)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -11853,7 +11853,7 @@ state 684
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	in_loop_program  goto 709
 	statement  goto 3
@@ -11899,7 +11899,7 @@ state 687
 	order_by_clause: .    (128)
 
 	ORDER  shift 192
-	.  reduce 128 (src line 813)
+	.  reduce 128 (src line 812)
 
 	order_by_clause  goto 712
 
@@ -11915,7 +11915,7 @@ state 689
 	partition: .    (236)
 
 	PARTITION  shift 688
-	.  reduce 236 (src line 1321)
+	.  reduce 236 (src line 1320)
 
 	analytic_clause  goto 714
 	partition  goto 687
@@ -11925,7 +11925,7 @@ state 690
 	partition: .    (236)
 
 	PARTITION  shift 688
-	.  reduce 236 (src line 1321)
+	.  reduce 236 (src line 1320)
 
 	analytic_clause  goto 715
 	partition  goto 687
@@ -11935,7 +11935,7 @@ state 691
 	partition: .    (236)
 
 	PARTITION  shift 688
-	.  reduce 236 (src line 1321)
+	.  reduce 236 (src line 1320)
 
 	analytic_clause  goto 716
 	partition  goto 687
@@ -11945,7 +11945,7 @@ state 692
 	partition: .    (236)
 
 	PARTITION  shift 688
-	.  reduce 236 (src line 1321)
+	.  reduce 236 (src line 1320)
 
 	analytic_clause  goto 717
 	partition  goto 687
@@ -11955,7 +11955,7 @@ state 693
 	partition: .    (236)
 
 	PARTITION  shift 688
-	.  reduce 236 (src line 1321)
+	.  reduce 236 (src line 1320)
 
 	analytic_clause  goto 718
 	partition  goto 687
@@ -11977,7 +11977,7 @@ state 695
 state 696
 	user_defined_function_statement:  DECLARE identifier FUNCTION '(' ')' AS BEGIN in_function_program END statement_terminal.    (90)
 
-	.  reduce 90 (src line 608)
+	.  reduce 90 (src line 607)
 
 
 state 697
@@ -11993,10 +11993,10 @@ state 697
 	ALTER  shift 23
 	WITH  shift 39
 	IF  shift 639
-	ELSEIF  reduce 5 (src line 214)
+	ELSEIF  reduce 5 (src line 213)
 	WHILE  shift 640
-	ELSE  reduce 5 (src line 214)
-	END  reduce 5 (src line 214)
+	ELSE  reduce 5 (src line 213)
+	END  reduce 5 (src line 213)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -12017,7 +12017,7 @@ state 697
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	in_function_program  goto 721
 	statement  goto 637
@@ -12054,7 +12054,7 @@ state 698
 	WITH  shift 39
 	IF  shift 726
 	WHILE  shift 640
-	END  reduce 7 (src line 226)
+	END  reduce 7 (src line 225)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -12077,7 +12077,7 @@ state 698
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	in_function_in_loop_program  goto 722
 	statement  goto 637
@@ -12137,7 +12137,7 @@ state 700
 state 701
 	in_function_flow_control_statement:  RETURN value statement_terminal.    (42)
 
-	.  reduce 42 (src line 383)
+	.  reduce 42 (src line 382)
 
 
 state 702
@@ -12145,7 +12145,7 @@ state 702
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 730
 
@@ -12154,7 +12154,7 @@ state 703
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 731
 
@@ -12171,7 +12171,7 @@ state 704
 	WITH  shift 39
 	IF  shift 639
 	WHILE  shift 640
-	END  reduce 5 (src line 214)
+	END  reduce 5 (src line 213)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -12192,7 +12192,7 @@ state 704
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	in_function_program  goto 732
 	statement  goto 637
@@ -12219,19 +12219,19 @@ state 704
 state 705
 	inline_table:  recursive identifier '(' identifiers ')' AS '(' select_query ')'.    (140)
 
-	.  reduce 140 (src line 872)
+	.  reduce 140 (src line 871)
 
 
 state 706
 	listagg:  LISTAGG '(' distinct arguments ')' WITHIN GROUP '(' order_by_clause ')'.    (226)
 
-	.  reduce 226 (src line 1276)
+	.  reduce 226 (src line 1275)
 
 
 state 707
 	in_loop_flow_control_statement:  IF value THEN in_loop_program in_loop_else END IF statement_terminal.    (45)
 
-	.  reduce 45 (src line 398)
+	.  reduce 45 (src line 397)
 
 
 state 708
@@ -12239,32 +12239,32 @@ state 708
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 733
 
 state 709
 	in_loop_elseif:  ELSEIF value THEN in_loop_program.    (296)
 
-	.  reduce 296 (src line 1615)
+	.  reduce 296 (src line 1614)
 
 
 state 710
 	join_condition:  USING '(' identifiers ')'.    (257)
 
-	.  reduce 257 (src line 1418)
+	.  reduce 257 (src line 1417)
 
 
 state 711
 	analytic_function:  identifier '(' arguments ')' OVER '(' analytic_clause ')'.    (227)
 
-	.  reduce 227 (src line 1281)
+	.  reduce 227 (src line 1280)
 
 
 state 712
 	analytic_clause:  partition order_by_clause.    (235)
 
-	.  reduce 235 (src line 1315)
+	.  reduce 235 (src line 1314)
 
 
 state 713
@@ -12298,7 +12298,7 @@ state 713
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 211
 	row_value  goto 88
@@ -12360,7 +12360,7 @@ state 718
 state 719
 	analytic_function:  FUNCTION_WITH_INS '(' arguments ')' OVER '(' analytic_clause ')'.    (233)
 
-	.  reduce 233 (src line 1306)
+	.  reduce 233 (src line 1305)
 
 
 state 720
@@ -12368,7 +12368,7 @@ state 720
 	partition: .    (236)
 
 	PARTITION  shift 688
-	.  reduce 236 (src line 1321)
+	.  reduce 236 (src line 1320)
 
 	analytic_clause  goto 740
 	partition  goto 687
@@ -12380,7 +12380,7 @@ state 721
 
 	ELSEIF  shift 744
 	ELSE  shift 743
-	.  reduce 302 (src line 1645)
+	.  reduce 302 (src line 1644)
 
 	elseif  goto 745
 	in_function_elseif  goto 742
@@ -12405,10 +12405,10 @@ state 723
 	ALTER  shift 23
 	WITH  shift 39
 	IF  shift 726
-	ELSEIF  reduce 7 (src line 226)
+	ELSEIF  reduce 7 (src line 225)
 	WHILE  shift 640
-	ELSE  reduce 7 (src line 226)
-	END  reduce 7 (src line 226)
+	ELSE  reduce 7 (src line 225)
+	END  reduce 7 (src line 225)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -12431,7 +12431,7 @@ state 723
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	in_function_in_loop_program  goto 747
 	statement  goto 637
@@ -12461,13 +12461,13 @@ state 723
 state 724
 	in_function_in_loop_statement:  in_function_statement.    (28)
 
-	.  reduce 28 (src line 322)
+	.  reduce 28 (src line 321)
 
 
 state 725
 	in_function_in_loop_statement:  in_function_in_loop_flow_control_statement.    (29)
 
-	.  reduce 29 (src line 327)
+	.  reduce 29 (src line 326)
 
 
 state 726
@@ -12505,7 +12505,7 @@ state 726
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 748
 	row_value  goto 88
@@ -12531,7 +12531,7 @@ state 726
 state 727
 	in_function_in_loop_flow_control_statement:  common_in_loop_flow_control_statement.    (50)
 
-	.  reduce 50 (src line 421)
+	.  reduce 50 (src line 420)
 
 
 state 728
@@ -12551,13 +12551,13 @@ state 729
 state 730
 	user_defined_function_statement:  DECLARE identifier FUNCTION '(' function_parameters ')' AS BEGIN in_function_program END statement_terminal.    (91)
 
-	.  reduce 91 (src line 613)
+	.  reduce 91 (src line 612)
 
 
 state 731
 	user_defined_function_statement:  DECLARE identifier AGGREGATE '(' identifier ')' AS BEGIN in_function_program END statement_terminal.    (92)
 
-	.  reduce 92 (src line 617)
+	.  reduce 92 (src line 616)
 
 
 state 732
@@ -12570,43 +12570,43 @@ state 732
 state 733
 	in_loop_flow_control_statement:  IF value THEN in_loop_program in_loop_elseif in_loop_else END IF statement_terminal.    (46)
 
-	.  reduce 46 (src line 403)
+	.  reduce 46 (src line 402)
 
 
 state 734
 	partition:  PARTITION BY values.    (237)
 
-	.  reduce 237 (src line 1326)
+	.  reduce 237 (src line 1325)
 
 
 state 735
 	analytic_function:  identifier '(' distinct arguments ')' OVER '(' analytic_clause ')'.    (228)
 
-	.  reduce 228 (src line 1286)
+	.  reduce 228 (src line 1285)
 
 
 state 736
 	analytic_function:  AGGREGATE_FUNCTION '(' distinct arguments ')' OVER '(' analytic_clause ')'.    (229)
 
-	.  reduce 229 (src line 1290)
+	.  reduce 229 (src line 1289)
 
 
 state 737
 	analytic_function:  COUNT '(' distinct arguments ')' OVER '(' analytic_clause ')'.    (230)
 
-	.  reduce 230 (src line 1294)
+	.  reduce 230 (src line 1293)
 
 
 state 738
 	analytic_function:  COUNT '(' distinct wildcard ')' OVER '(' analytic_clause ')'.    (231)
 
-	.  reduce 231 (src line 1298)
+	.  reduce 231 (src line 1297)
 
 
 state 739
 	analytic_function:  LISTAGG '(' distinct arguments ')' OVER '(' analytic_clause ')'.    (232)
 
-	.  reduce 232 (src line 1302)
+	.  reduce 232 (src line 1301)
 
 
 state 740
@@ -12628,7 +12628,7 @@ state 742
 	in_function_else: .    (302)
 
 	ELSE  shift 743
-	.  reduce 302 (src line 1645)
+	.  reduce 302 (src line 1644)
 
 	in_function_else  goto 754
 
@@ -12645,7 +12645,7 @@ state 743
 	WITH  shift 39
 	IF  shift 639
 	WHILE  shift 640
-	END  reduce 5 (src line 214)
+	END  reduce 5 (src line 213)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -12666,7 +12666,7 @@ state 743
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	in_function_program  goto 755
 	statement  goto 637
@@ -12722,7 +12722,7 @@ state 744
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 756
 	row_value  goto 88
@@ -12764,7 +12764,7 @@ state 746
 state 747
 	in_function_in_loop_program:  in_function_in_loop_statement in_function_in_loop_program.    (8)
 
-	.  reduce 8 (src line 232)
+	.  reduce 8 (src line 231)
 
 
 state 748
@@ -12804,7 +12804,7 @@ state 748
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 332 (src line 1797)
+	.  reduce 332 (src line 1796)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -12822,7 +12822,7 @@ state 749
 	WITH  shift 39
 	IF  shift 726
 	WHILE  shift 640
-	END  reduce 7 (src line 226)
+	END  reduce 7 (src line 225)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -12845,7 +12845,7 @@ state 749
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	in_function_in_loop_program  goto 760
 	statement  goto 637
@@ -12885,7 +12885,7 @@ state 750
 	WITH  shift 39
 	IF  shift 726
 	WHILE  shift 640
-	END  reduce 7 (src line 226)
+	END  reduce 7 (src line 225)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -12908,7 +12908,7 @@ state 750
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	in_function_in_loop_program  goto 761
 	statement  goto 637
@@ -12940,14 +12940,14 @@ state 751
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 762
 
 state 752
 	analytic_function:  FUNCTION_WITH_INS '(' arguments ')' IGNORE NULLS OVER '(' analytic_clause ')'.    (234)
 
-	.  reduce 234 (src line 1310)
+	.  reduce 234 (src line 1309)
 
 
 state 753
@@ -12967,7 +12967,7 @@ state 754
 state 755
 	in_function_else:  ELSE in_function_program.    (303)
 
-	.  reduce 303 (src line 1650)
+	.  reduce 303 (src line 1649)
 
 
 state 756
@@ -13005,7 +13005,7 @@ state 756
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 332 (src line 1797)
+	.  reduce 332 (src line 1796)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -13017,7 +13017,7 @@ state 757
 	in_function_elseif:  elseif elseif.    (301)
 
 	ELSEIF  shift 352
-	.  reduce 301 (src line 1640)
+	.  reduce 301 (src line 1639)
 
 	elseif  goto 457
 
@@ -13026,7 +13026,7 @@ state 758
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 766
 
@@ -13049,10 +13049,10 @@ state 759
 	ALTER  shift 23
 	WITH  shift 39
 	IF  shift 726
-	ELSEIF  reduce 5 (src line 214)
+	ELSEIF  reduce 5 (src line 213)
 	WHILE  shift 640
-	ELSE  reduce 5 (src line 214)
-	END  reduce 5 (src line 214)
+	ELSE  reduce 5 (src line 213)
+	END  reduce 5 (src line 213)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -13075,7 +13075,7 @@ state 759
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	in_function_program  goto 721
 	in_function_in_loop_program  goto 767
@@ -13120,7 +13120,7 @@ state 761
 state 762
 	user_defined_function_statement:  DECLARE identifier AGGREGATE '(' identifier ',' function_parameters ')' AS BEGIN in_function_program END statement_terminal.    (93)
 
-	.  reduce 93 (src line 621)
+	.  reduce 93 (src line 620)
 
 
 state 763
@@ -13128,7 +13128,7 @@ state 763
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 771
 
@@ -13153,10 +13153,10 @@ state 765
 	ALTER  shift 23
 	WITH  shift 39
 	IF  shift 775
-	ELSEIF  reduce 1 (src line 190)
+	ELSEIF  reduce 1 (src line 189)
 	WHILE  shift 776
-	ELSE  reduce 5 (src line 214)
-	END  reduce 5 (src line 214)
+	ELSE  reduce 5 (src line 213)
+	END  reduce 5 (src line 213)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -13178,7 +13178,7 @@ state 765
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	program  goto 603
 	in_function_program  goto 773
@@ -13208,7 +13208,7 @@ state 765
 state 766
 	in_function_flow_control_statement:  WHILE value DO in_function_in_loop_program END WHILE statement_terminal.    (38)
 
-	.  reduce 38 (src line 367)
+	.  reduce 38 (src line 366)
 
 
 state 767
@@ -13218,7 +13218,7 @@ state 767
 
 	ELSEIF  shift 780
 	ELSE  shift 779
-	.  reduce 306 (src line 1665)
+	.  reduce 306 (src line 1664)
 
 	in_function_in_loop_elseif  goto 778
 	in_function_in_loop_else  goto 777
@@ -13272,10 +13272,10 @@ state 768
 	ALTER  shift 23
 	WITH  shift 39
 	IF  shift 639
-	ELSEIF  reduce 5 (src line 214)
+	ELSEIF  reduce 5 (src line 213)
 	WHILE  shift 640
-	ELSE  reduce 5 (src line 214)
-	END  reduce 5 (src line 214)
+	ELSE  reduce 5 (src line 213)
+	END  reduce 5 (src line 213)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -13296,7 +13296,7 @@ state 768
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 28 (src line 322)
+	.  reduce 28 (src line 321)
 
 	in_function_program  goto 670
 	statement  goto 637
@@ -13337,7 +13337,7 @@ state 770
 state 771
 	in_function_flow_control_statement:  IF value THEN in_function_program in_function_else END IF statement_terminal.    (36)
 
-	.  reduce 36 (src line 358)
+	.  reduce 36 (src line 357)
 
 
 state 772
@@ -13345,14 +13345,14 @@ state 772
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 783
 
 state 773
 	in_function_elseif:  ELSEIF value THEN in_function_program.    (300)
 
-	.  reduce 300 (src line 1635)
+	.  reduce 300 (src line 1634)
 
 
  774: reduce/reduce conflict  (red'ns 22 and 24) on IDENTIFIER
@@ -13396,8 +13396,8 @@ state 774
 	procedure_statement:  statement.    (22)
 	in_function_statement:  statement.    (24)
 
-	RETURN  reduce 24 (src line 302)
-	.  reduce 22 (src line 292)
+	RETURN  reduce 24 (src line 301)
+	.  reduce 22 (src line 291)
 
 
 state 775
@@ -13435,7 +13435,7 @@ state 775
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 784
 	row_value  goto 88
@@ -13494,7 +13494,7 @@ state 776
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 785
 	row_value  goto 88
@@ -13532,7 +13532,7 @@ state 778
 
 	ELSEIF  shift 780
 	ELSE  shift 779
-	.  reduce 306 (src line 1665)
+	.  reduce 306 (src line 1664)
 
 	in_function_in_loop_elseif  goto 790
 	in_function_in_loop_else  goto 789
@@ -13550,7 +13550,7 @@ state 779
 	WITH  shift 39
 	IF  shift 726
 	WHILE  shift 640
-	END  reduce 7 (src line 226)
+	END  reduce 7 (src line 225)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -13573,7 +13573,7 @@ state 779
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	in_function_in_loop_program  goto 791
 	statement  goto 637
@@ -13631,7 +13631,7 @@ state 780
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 792
 	row_value  goto 88
@@ -13659,7 +13659,7 @@ state 781
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 793
 
@@ -13668,14 +13668,14 @@ state 782
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 794
 
 state 783
 	in_function_flow_control_statement:  IF value THEN in_function_program in_function_elseif in_function_else END IF statement_terminal.    (37)
 
-	.  reduce 37 (src line 363)
+	.  reduce 37 (src line 362)
 
 
 state 784
@@ -13715,7 +13715,7 @@ state 784
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 332 (src line 1797)
+	.  reduce 332 (src line 1796)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -13755,7 +13755,7 @@ state 785
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 332 (src line 1797)
+	.  reduce 332 (src line 1796)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -13773,7 +13773,7 @@ state 786
 	IN  shift 797
 	SUBSTITUTION_OP  shift 146
 	','  shift 188
-	.  reduce 164 (src line 976)
+	.  reduce 164 (src line 975)
 
 
 state 787
@@ -13804,14 +13804,14 @@ state 790
 	in_function_in_loop_elseif:  in_function_in_loop_elseif in_function_in_loop_elseif.    (305)
 
 	ELSEIF  shift 780
-	.  reduce 305 (src line 1660)
+	.  reduce 305 (src line 1659)
 
 	in_function_in_loop_elseif  goto 790
 
 state 791
 	in_function_in_loop_else:  ELSE in_function_in_loop_program.    (307)
 
-	.  reduce 307 (src line 1670)
+	.  reduce 307 (src line 1669)
 
 
 state 792
@@ -13848,7 +13848,7 @@ state 792
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 332 (src line 1797)
+	.  reduce 332 (src line 1796)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -13856,13 +13856,13 @@ state 792
 state 793
 	in_function_flow_control_statement:  WHILE variable IN identifier DO in_function_in_loop_program END WHILE statement_terminal.    (39)
 
-	.  reduce 39 (src line 371)
+	.  reduce 39 (src line 370)
 
 
 state 794
 	in_function_flow_control_statement:  WHILE variables IN identifier DO in_function_in_loop_program END WHILE statement_terminal.    (40)
 
-	.  reduce 40 (src line 375)
+	.  reduce 40 (src line 374)
 
 
  795: reduce/reduce conflict  (red'ns 1 and 5) on ELSEIF
@@ -13884,10 +13884,10 @@ state 795
 	ALTER  shift 23
 	WITH  shift 39
 	IF  shift 775
-	ELSEIF  reduce 1 (src line 190)
+	ELSEIF  reduce 1 (src line 189)
 	WHILE  shift 776
-	ELSE  reduce 1 (src line 190)
-	END  reduce 1 (src line 190)
+	ELSE  reduce 1 (src line 189)
+	END  reduce 1 (src line 189)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -13909,7 +13909,7 @@ state 795
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	program  goto 239
 	in_function_program  goto 721
@@ -13952,7 +13952,7 @@ state 796
 	WITH  shift 39
 	IF  shift 802
 	WHILE  shift 776
-	END  reduce 3 (src line 202)
+	END  reduce 3 (src line 201)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -13976,7 +13976,7 @@ state 796
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	in_loop_program  goto 281
 	in_function_in_loop_program  goto 722
@@ -14045,7 +14045,7 @@ state 799
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 806
 
@@ -14068,10 +14068,10 @@ state 801
 	ALTER  shift 23
 	WITH  shift 39
 	IF  shift 726
-	ELSEIF  reduce 7 (src line 226)
+	ELSEIF  reduce 7 (src line 225)
 	WHILE  shift 640
-	ELSE  reduce 7 (src line 226)
-	END  reduce 7 (src line 226)
+	ELSE  reduce 7 (src line 225)
+	END  reduce 7 (src line 225)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -14094,7 +14094,7 @@ state 801
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	in_function_in_loop_program  goto 808
 	statement  goto 637
@@ -14160,7 +14160,7 @@ state 802
 	.  error
 
 	cursor_status  goto 72
-	primary  goto 61
+	primitive_type  goto 61
 	field_reference  goto 60
 	value  goto 809
 	row_value  goto 88
@@ -14224,8 +14224,8 @@ state 803
 	in_loop_flow_control_statement:  common_in_loop_flow_control_statement.    (47)
 	in_function_in_loop_flow_control_statement:  common_in_loop_flow_control_statement.    (50)
 
-	RETURN  reduce 50 (src line 421)
-	.  reduce 47 (src line 407)
+	RETURN  reduce 50 (src line 420)
+	.  reduce 47 (src line 406)
 
 
 state 804
@@ -14247,7 +14247,7 @@ state 805
 state 806
 	in_function_in_loop_flow_control_statement:  IF value THEN in_function_in_loop_program in_function_in_loop_else END IF statement_terminal.    (48)
 
-	.  reduce 48 (src line 412)
+	.  reduce 48 (src line 411)
 
 
 state 807
@@ -14255,14 +14255,14 @@ state 807
 	statement_terminal: .    (348)
 
 	';'  shift 52
-	.  reduce 348 (src line 1877)
+	.  reduce 348 (src line 1876)
 
 	statement_terminal  goto 812
 
 state 808
 	in_function_in_loop_elseif:  ELSEIF value THEN in_function_in_loop_program.    (304)
 
-	.  reduce 304 (src line 1655)
+	.  reduce 304 (src line 1654)
 
 
 state 809
@@ -14306,7 +14306,7 @@ state 809
 	'+'  shift 154
 	'/'  shift 157
 	'%'  shift 158
-	.  reduce 332 (src line 1797)
+	.  reduce 332 (src line 1796)
 
 	negation  goto 152
 	comparison_operator  goto 153
@@ -14327,7 +14327,7 @@ state 810
 	WITH  shift 39
 	IF  shift 802
 	WHILE  shift 776
-	END  reduce 3 (src line 202)
+	END  reduce 3 (src line 201)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -14351,7 +14351,7 @@ state 810
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	in_loop_program  goto 478
 	in_function_in_loop_program  goto 760
@@ -14399,7 +14399,7 @@ state 811
 	WITH  shift 39
 	IF  shift 802
 	WHILE  shift 776
-	END  reduce 3 (src line 202)
+	END  reduce 3 (src line 201)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -14423,7 +14423,7 @@ state 811
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	in_loop_program  goto 479
 	in_function_in_loop_program  goto 761
@@ -14458,7 +14458,7 @@ state 811
 state 812
 	in_function_in_loop_flow_control_statement:  IF value THEN in_function_in_loop_program in_function_in_loop_elseif in_function_in_loop_else END IF statement_terminal.    (49)
 
-	.  reduce 49 (src line 417)
+	.  reduce 49 (src line 416)
 
 
  813: reduce/reduce conflict  (red'ns 1 and 5) on ELSEIF
@@ -14492,10 +14492,10 @@ state 813
 	ALTER  shift 23
 	WITH  shift 39
 	IF  shift 802
-	ELSEIF  reduce 1 (src line 190)
+	ELSEIF  reduce 1 (src line 189)
 	WHILE  shift 776
-	ELSE  reduce 1 (src line 190)
-	END  reduce 1 (src line 190)
+	ELSE  reduce 1 (src line 189)
+	END  reduce 1 (src line 189)
 	DECLARE  shift 26
 	FETCH  shift 31
 	OPEN  shift 29
@@ -14519,7 +14519,7 @@ state 813
 	LISTAGG  shift 44
 	AGGREGATE_FUNCTION  shift 45
 	FUNCTION_WITH_INS  shift 46
-	.  reduce 137 (src line 857)
+	.  reduce 137 (src line 856)
 
 	program  goto 239
 	in_loop_program  goto 553

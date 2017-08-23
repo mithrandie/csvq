@@ -9,38 +9,52 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
+func TestField_ToPrimary(t *testing.T) {
+	var f Field = nil
+	var expect parser.Primary = parser.NewNull()
+	if !reflect.DeepEqual(f.ToPrimary(), expect) {
+		t.Errorf("result = %q, want %q", f.ToPrimary(), expect)
+	}
+
+	f = NewField("str")
+	expect = parser.NewString("str")
+	if !reflect.DeepEqual(f.ToPrimary(), expect) {
+		t.Errorf("result = %q, want %q", f.ToPrimary(), expect)
+	}
+}
+
 var readAllTests = []struct {
 	Name      string
 	Delimiter rune
 	Input     string
-	Output    [][]parser.Primary
+	Output    [][]Field
 	LineBreak cmd.LineBreak
 	Error     string
 }{
 	{
 		Name:  "NewLineLF",
 		Input: "a,b,c\nd,e,f",
-		Output: [][]parser.Primary{
-			{parser.NewString("a"), parser.NewString("b"), parser.NewString("c")},
-			{parser.NewString("d"), parser.NewString("e"), parser.NewString("f")},
+		Output: [][]Field{
+			{NewField("a"), NewField("b"), NewField("c")},
+			{NewField("d"), NewField("e"), NewField("f")},
 		},
 		LineBreak: cmd.LF,
 	},
 	{
 		Name:  "NewLineCR",
 		Input: "a,b,c\rd,e,f",
-		Output: [][]parser.Primary{
-			{parser.NewString("a"), parser.NewString("b"), parser.NewString("c")},
-			{parser.NewString("d"), parser.NewString("e"), parser.NewString("f")},
+		Output: [][]Field{
+			{NewField("a"), NewField("b"), NewField("c")},
+			{NewField("d"), NewField("e"), NewField("f")},
 		},
 		LineBreak: cmd.CR,
 	},
 	{
 		Name:  "NewLineCRLF",
 		Input: "a,b,c\r\nd,e,f",
-		Output: [][]parser.Primary{
-			{parser.NewString("a"), parser.NewString("b"), parser.NewString("c")},
-			{parser.NewString("d"), parser.NewString("e"), parser.NewString("f")},
+		Output: [][]Field{
+			{NewField("a"), NewField("b"), NewField("c")},
+			{NewField("d"), NewField("e"), NewField("f")},
 		},
 		LineBreak: cmd.CRLF,
 	},
@@ -48,62 +62,62 @@ var readAllTests = []struct {
 		Name:      "TabDelimiter",
 		Delimiter: '\t',
 		Input:     "a\tb\tc\nd\te\tf",
-		Output: [][]parser.Primary{
-			{parser.NewString("a"), parser.NewString("b"), parser.NewString("c")},
-			{parser.NewString("d"), parser.NewString("e"), parser.NewString("f")},
+		Output: [][]Field{
+			{NewField("a"), NewField("b"), NewField("c")},
+			{NewField("d"), NewField("e"), NewField("f")},
 		},
 		LineBreak: cmd.LF,
 	},
 	{
 		Name:  "QuotedString",
 		Input: "a,\"b\",\"ccc\ncc\"\nd,e,",
-		Output: [][]parser.Primary{
-			{parser.NewString("a"), parser.NewString("b"), parser.NewString("ccc\ncc")},
-			{parser.NewString("d"), parser.NewString("e"), parser.NewNull()},
+		Output: [][]Field{
+			{NewField("a"), NewField("b"), NewField("ccc\ncc")},
+			{NewField("d"), NewField("e"), nil},
 		},
 		LineBreak: cmd.LF,
 	},
 	{
 		Name:  "EscapeDoubleQuote",
 		Input: "a,\"b\",\"ccc\"\"cc\"\nd,e,\"\"",
-		Output: [][]parser.Primary{
-			{parser.NewString("a"), parser.NewString("b"), parser.NewString("ccc\"cc")},
-			{parser.NewString("d"), parser.NewString("e"), parser.NewString("")},
+		Output: [][]Field{
+			{NewField("a"), NewField("b"), NewField("ccc\"cc")},
+			{NewField("d"), NewField("e"), NewField("")},
 		},
 		LineBreak: cmd.LF,
 	},
 	{
 		Name:  "DoubleQuoteInNoQuoteField",
 		Input: "a,b,ccc\"cc\nd,e,",
-		Output: [][]parser.Primary{
-			{parser.NewString("a"), parser.NewString("b"), parser.NewString("ccc\"cc")},
-			{parser.NewString("d"), parser.NewString("e"), parser.NewNull()},
+		Output: [][]Field{
+			{NewField("a"), NewField("b"), NewField("ccc\"cc")},
+			{NewField("d"), NewField("e"), nil},
 		},
 		LineBreak: cmd.LF,
 	},
 	{
 		Name:  "SingleValue",
 		Input: "a",
-		Output: [][]parser.Primary{
-			{parser.NewString("a")},
+		Output: [][]Field{
+			{NewField("a")},
 		},
 		LineBreak: "",
 	},
 	{
 		Name:  "Trailing empty lines",
 		Input: "a,b,c\nd,e,f\n\n",
-		Output: [][]parser.Primary{
-			{parser.NewString("a"), parser.NewString("b"), parser.NewString("c")},
-			{parser.NewString("d"), parser.NewString("e"), parser.NewString("f")},
+		Output: [][]Field{
+			{NewField("a"), NewField("b"), NewField("c")},
+			{NewField("d"), NewField("e"), NewField("f")},
 		},
 		LineBreak: cmd.LF,
 	},
 	{
 		Name:  "Different Line Breaks",
 		Input: "a,b,\"c\r\nd\"\ne,f,g",
-		Output: [][]parser.Primary{
-			{parser.NewString("a"), parser.NewString("b"), parser.NewString("c\r\nd")},
-			{parser.NewString("e"), parser.NewString("f"), parser.NewString("g")},
+		Output: [][]Field{
+			{NewField("a"), NewField("b"), NewField("c\r\nd")},
+			{NewField("e"), NewField("f"), NewField("g")},
 		},
 		LineBreak: cmd.LF,
 	},
@@ -161,9 +175,9 @@ func TestReader_ReadAll(t *testing.T) {
 func TestReader_ReadHeader(t *testing.T) {
 	input := "h1,h2 ,h3\na,b,c\nd,e,f"
 	outHeader := []string{"h1", "h2", "h3"}
-	output := [][]parser.Primary{
-		{parser.NewString("a"), parser.NewString("b"), parser.NewString("c")},
-		{parser.NewString("d"), parser.NewString("e"), parser.NewString("f")},
+	output := [][]Field{
+		{NewField("a"), NewField("b"), NewField("c")},
+		{NewField("d"), NewField("e"), NewField("f")},
 	}
 
 	r := NewReader(strings.NewReader(input))
@@ -204,5 +218,23 @@ func BenchmarkReader_ReadAll(b *testing.B) {
 		reader.Delimiter = ','
 		reader.WithoutNull = false
 		reader.ReadAll()
+	}
+}
+
+var row []Field = []Field{
+	[]byte("aaaaaaaaaa"),
+	[]byte("bbbbbbbbbb"),
+	nil,
+	[]byte("cccccccccc"),
+}
+
+func BenchmarkField_ToPrimary(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		for j := 0; j < 10000; j++ {
+			fields := make([]parser.Primary, len(row))
+			for i, v := range row {
+				fields[i] = v.ToPrimary()
+			}
+		}
 	}
 }

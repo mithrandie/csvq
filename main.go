@@ -12,7 +12,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var version = "v0.6.5"
+var version = "v0.6.6"
 
 func main() {
 	cli.AppHelpTemplate = appHHelpTemplate
@@ -88,7 +88,6 @@ func main() {
 		},
 		cli.IntFlag{
 			Name:  "cpu, p",
-			Value: 1,
 			Usage: "number of cpu cores to be used. 1 - number of cpu cores",
 		},
 		cli.BoolFlag{

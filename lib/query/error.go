@@ -780,7 +780,7 @@ type InternalRecordIdNotExistError struct {
 
 func NewInternalRecordIdNotExistError() error {
 	return &InternalRecordIdNotExistError{
-		NewBaseError(parser.NewNull(), ERROR_INTERNAL_RECORD_ID_NOT_EXIST),
+		NewBaseError(parser.NewNullValue(), ERROR_INTERNAL_RECORD_ID_NOT_EXIST),
 	}
 }
 
@@ -790,7 +790,7 @@ type InternalRecordIdEmptyError struct {
 
 func NewInternalRecordIdEmptyError() error {
 	return &InternalRecordIdEmptyError{
-		NewBaseError(parser.NewNull(), ERROR_INTERNAL_RECORD_ID_EMPTY),
+		NewBaseError(parser.NewNullValue(), ERROR_INTERNAL_RECORD_ID_EMPTY),
 	}
 }
 
@@ -800,7 +800,7 @@ type FieldLengthNotMatchError struct {
 
 func NewFieldLengthNotMatchError() error {
 	return &FieldLengthNotMatchError{
-		NewBaseError(parser.NewNull(), ERROR_FIELD_LENGTH_NOT_MATCH),
+		NewBaseError(parser.NewNullValue(), ERROR_FIELD_LENGTH_NOT_MATCH),
 	}
 }
 
@@ -810,7 +810,7 @@ type RowValueLengthNotMatchError struct {
 
 func NewRowValueLengthNotMatchError() error {
 	return &RowValueLengthNotMatchError{
-		NewBaseError(parser.NewNull(), ERROR_ROW_VALUE_LENGTH_NOT_MATCH),
+		NewBaseError(parser.NewNullValue(), ERROR_ROW_VALUE_LENGTH_NOT_MATCH),
 	}
 }
 
@@ -821,7 +821,7 @@ type RowValueLengthInListError struct {
 
 func NewRowValueLengthInListError(i int) error {
 	return &RowValueLengthInListError{
-		BaseError: NewBaseError(parser.NewNull(), fmt.Sprintf(ERROR_ROW_VALUE_LENGTH_IN_LIST, i)),
+		BaseError: NewBaseError(parser.NewNullValue(), fmt.Sprintf(ERROR_ROW_VALUE_LENGTH_IN_LIST, i)),
 		Index:     i,
 	}
 }
@@ -832,7 +832,7 @@ type FormatStringLengthNotMatchError struct {
 
 func NewFormatStringLengthNotMatchError() error {
 	return &FormatStringLengthNotMatchError{
-		BaseError: NewBaseError(parser.NewNull(), ERROR_FORMAT_STRING_LENGTH_NOT_MATCH),
+		BaseError: NewBaseError(parser.NewNullValue(), ERROR_FORMAT_STRING_LENGTH_NOT_MATCH),
 	}
 }
 

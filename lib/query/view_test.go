@@ -1010,7 +1010,7 @@ var viewWhereTests = []struct {
 		Where: parser.WhereClause{
 			Filter: parser.Comparison{
 				LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-				RHS:      parser.NewInteger(2),
+				RHS:      parser.NewIntegerValue(2),
 				Operator: "=",
 			},
 		},
@@ -1018,7 +1018,7 @@ var viewWhereTests = []struct {
 	},
 	{
 		Name: "Where in Multi Threading",
-		CPU:  2,
+		CPU:  3,
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 			Records: []Record{
@@ -1040,7 +1040,7 @@ var viewWhereTests = []struct {
 		Where: parser.WhereClause{
 			Filter: parser.Comparison{
 				LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-				RHS:      parser.NewInteger(2),
+				RHS:      parser.NewIntegerValue(2),
 				Operator: "=",
 			},
 		},
@@ -1069,7 +1069,7 @@ var viewWhereTests = []struct {
 		Where: parser.WhereClause{
 			Filter: parser.Comparison{
 				LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-				RHS:      parser.NewInteger(2),
+				RHS:      parser.NewIntegerValue(2),
 				Operator: "=",
 			},
 		},
@@ -1385,7 +1385,7 @@ var viewHavingTests = []struct {
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
 				},
-				RHS:      parser.NewInteger(5),
+				RHS:      parser.NewIntegerValue(5),
 				Operator: ">",
 			},
 		},
@@ -1442,7 +1442,7 @@ var viewHavingTests = []struct {
 						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 					},
 				},
-				RHS:      parser.NewInteger(5),
+				RHS:      parser.NewIntegerValue(5),
 				Operator: ">",
 			},
 		},
@@ -1475,7 +1475,7 @@ var viewHavingTests = []struct {
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
 				},
-				RHS:      parser.NewInteger(5),
+				RHS:      parser.NewIntegerValue(5),
 				Operator: ">",
 			},
 		},
@@ -1575,7 +1575,7 @@ var viewSelectTests = []struct {
 			Fields: []parser.Expression{
 				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}, Alias: parser.Identifier{Literal: "c2"}},
 				parser.Field{Object: parser.AllColumns{}},
-				parser.Field{Object: parser.NewInteger(1), Alias: parser.Identifier{Literal: "a"}},
+				parser.Field{Object: parser.NewIntegerValue(1), Alias: parser.Identifier{Literal: "a"}},
 				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}, Alias: parser.Identifier{Literal: "c2a"}},
 				parser.Field{Object: parser.ColumnNumber{View: parser.Identifier{Literal: "table2"}, Number: parser.NewInteger(1)}, Alias: parser.Identifier{Literal: "t21"}},
 				parser.Field{Object: parser.ColumnNumber{View: parser.Identifier{Literal: "table2"}, Number: parser.NewInteger(1)}, Alias: parser.Identifier{Literal: "t21a"}},
@@ -1684,7 +1684,7 @@ var viewSelectTests = []struct {
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			Fields: []parser.Expression{
 				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
-				parser.Field{Object: parser.NewInteger(1), Alias: parser.Identifier{Literal: "a"}},
+				parser.Field{Object: parser.NewIntegerValue(1), Alias: parser.Identifier{Literal: "a"}},
 			},
 		},
 		Result: &View{
@@ -2060,7 +2060,7 @@ var viewSelectTests = []struct {
 										parser.If{
 											Condition: parser.Is{
 												LHS: parser.Variable{Name: "@value"},
-												RHS: parser.NewNull(),
+												RHS: parser.NewNullValue(),
 											},
 											Statements: []parser.Statement{
 												parser.VariableSubstitution{
@@ -2229,7 +2229,7 @@ var viewOrderByTests = []struct {
 					Value: parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
 				},
 				parser.OrderItem{
-					Value: parser.NewInteger(1),
+					Value: parser.NewIntegerValue(1),
 				},
 			},
 		},
@@ -2416,7 +2416,7 @@ var viewLimitTests = []struct {
 			},
 			Filter: NewEmptyFilter(),
 		},
-		Limit: parser.LimitClause{Value: parser.NewInteger(2)},
+		Limit: parser.LimitClause{Value: parser.NewIntegerValue(2)},
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
@@ -2490,7 +2490,7 @@ var viewLimitTests = []struct {
 				},
 			},
 		},
-		Limit: parser.LimitClause{Value: parser.NewInteger(2), With: parser.LimitWith{Type: parser.Token{Token: parser.TIES}}},
+		Limit: parser.LimitClause{Value: parser.NewIntegerValue(2), With: parser.LimitWith{Type: parser.Token{Token: parser.TIES}}},
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
@@ -2565,7 +2565,7 @@ var viewLimitTests = []struct {
 			Filter: NewEmptyFilter(),
 			offset: 1,
 		},
-		Limit: parser.LimitClause{Value: parser.NewFloat(50.5), Percent: "percent"},
+		Limit: parser.LimitClause{Value: parser.NewFloatValue(50.5), Percent: "percent"},
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
@@ -2622,7 +2622,7 @@ var viewLimitTests = []struct {
 			},
 			Filter: NewEmptyFilter(),
 		},
-		Limit: parser.LimitClause{Value: parser.NewFloat(150), Percent: "percent"},
+		Limit: parser.LimitClause{Value: parser.NewFloatValue(150), Percent: "percent"},
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
@@ -2686,7 +2686,7 @@ var viewLimitTests = []struct {
 			},
 			Filter: NewEmptyFilter(),
 		},
-		Limit: parser.LimitClause{Value: parser.NewFloat(-10), Percent: "percent"},
+		Limit: parser.LimitClause{Value: parser.NewFloatValue(-10), Percent: "percent"},
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
@@ -2717,7 +2717,7 @@ var viewLimitTests = []struct {
 			},
 			Filter: NewEmptyFilter(),
 		},
-		Limit: parser.LimitClause{Value: parser.NewInteger(5)},
+		Limit: parser.LimitClause{Value: parser.NewIntegerValue(5)},
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
@@ -2780,7 +2780,7 @@ var viewLimitTests = []struct {
 			},
 			Filter: NewEmptyFilter(),
 		},
-		Limit: parser.LimitClause{Value: parser.NewString("str")},
+		Limit: parser.LimitClause{Value: parser.NewStringValue("str")},
 		Error: "[L:- C:-] limit number of records 'str' is not an integer value",
 	},
 	{
@@ -2803,7 +2803,7 @@ var viewLimitTests = []struct {
 			},
 			Filter: NewEmptyFilter(),
 		},
-		Limit: parser.LimitClause{Value: parser.NewInteger(-1)},
+		Limit: parser.LimitClause{Value: parser.NewIntegerValue(-1)},
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
@@ -2834,7 +2834,7 @@ var viewLimitTests = []struct {
 			},
 			Filter: NewEmptyFilter(),
 		},
-		Limit: parser.LimitClause{Value: parser.NewString("str"), Percent: "percent"},
+		Limit: parser.LimitClause{Value: parser.NewStringValue("str"), Percent: "percent"},
 		Error: "[L:- C:-] limit percentage 'str' is not a float value",
 	},
 }
@@ -2895,7 +2895,7 @@ var viewOffsetTests = []struct {
 			},
 			Filter: NewEmptyFilter(),
 		},
-		Offset: parser.OffsetClause{Value: parser.NewInteger(3)},
+		Offset: parser.OffsetClause{Value: parser.NewIntegerValue(3)},
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
@@ -2940,7 +2940,7 @@ var viewOffsetTests = []struct {
 			},
 			Filter: NewEmptyFilter(),
 		},
-		Offset: parser.OffsetClause{Value: parser.NewInteger(4)},
+		Offset: parser.OffsetClause{Value: parser.NewIntegerValue(4)},
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
@@ -3011,7 +3011,7 @@ var viewOffsetTests = []struct {
 			},
 			Filter: NewEmptyFilter(),
 		},
-		Offset: parser.OffsetClause{Value: parser.NewString("str")},
+		Offset: parser.OffsetClause{Value: parser.NewStringValue("str")},
 		Error:  "[L:- C:-] offset number 'str' is not an integer value",
 	},
 	{
@@ -3034,7 +3034,7 @@ var viewOffsetTests = []struct {
 			},
 			Filter: NewEmptyFilter(),
 		},
-		Offset: parser.OffsetClause{Value: parser.NewInteger(-3)},
+		Offset: parser.OffsetClause{Value: parser.NewIntegerValue(-3)},
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
@@ -3094,14 +3094,14 @@ var viewInsertValuesTests = []struct {
 			parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(3),
+						parser.NewIntegerValue(3),
 					},
 				},
 			},
 			parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(4),
+						parser.NewIntegerValue(4),
 					},
 				},
 			},
@@ -3144,7 +3144,7 @@ var viewInsertValuesTests = []struct {
 			parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(3),
+						parser.NewIntegerValue(3),
 					},
 				},
 			},
@@ -3176,7 +3176,7 @@ var viewInsertValuesTests = []struct {
 			parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewInteger(3),
+						parser.NewIntegerValue(3),
 					},
 				},
 			},
@@ -3237,7 +3237,7 @@ var viewInsertFromQueryTests = []struct {
 			SelectEntity: parser.SelectEntity{
 				SelectClause: parser.SelectClause{
 					Fields: []parser.Expression{
-						parser.Field{Object: parser.NewInteger(3)},
+						parser.Field{Object: parser.NewIntegerValue(3)},
 					},
 				},
 			},
@@ -3275,7 +3275,7 @@ var viewInsertFromQueryTests = []struct {
 			SelectEntity: parser.SelectEntity{
 				SelectClause: parser.SelectClause{
 					Fields: []parser.Expression{
-						parser.Field{Object: parser.NewInteger(3)},
+						parser.Field{Object: parser.NewIntegerValue(3)},
 					},
 				},
 			},

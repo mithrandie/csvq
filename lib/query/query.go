@@ -114,11 +114,7 @@ func FetchCursor(name parser.Identifier, fetchPosition parser.Expression, vars [
 	}
 
 	for i, v := range vars {
-		substitution := parser.VariableSubstitution{
-			Variable: v,
-			Value:    primaries[i],
-		}
-		_, err := filter.VariablesList[0].Substitute(substitution, filter)
+		_, err := filter.VariablesList.SubstitutePrimary(v, primaries[i])
 		if err != nil {
 			return false, err
 		}
@@ -730,7 +726,7 @@ func AddColumns(query parser.AddColumns, parentFilter *Filter) (*View, error) {
 
 				for j, v := range defaults {
 					if v == nil {
-						v = parser.NewNull()
+						v = parser.NewNullValue()
 					}
 					val, e := filter.Evaluate(v)
 					if e != nil {

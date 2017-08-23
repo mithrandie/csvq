@@ -19,7 +19,7 @@ var printTests = []struct {
 	{
 		Name: "Print",
 		Expr: parser.Print{
-			Value: parser.NewString("foo"),
+			Value: parser.NewStringValue("foo"),
 		},
 		Result: "'foo'",
 	},
@@ -68,8 +68,8 @@ var printfTests = []struct {
 		Expr: parser.Printf{
 			Format: "printf test: value1 %q, value2 %q, %a %% %",
 			Values: []parser.Expression{
-				parser.NewString("str"),
-				parser.NewInteger(1),
+				parser.NewStringValue("str"),
+				parser.NewIntegerValue(1),
 			},
 		},
 		Result: "printf test: value1 'str', value2 1, %a % %",
@@ -91,7 +91,7 @@ var printfTests = []struct {
 		Expr: parser.Printf{
 			Format: "printf test: value1 %s, value2 %s, %a %% %",
 			Values: []parser.Expression{
-				parser.NewString("str"),
+				parser.NewStringValue("str"),
 			},
 		},
 		Error: "[L:- C:-] PRINTF: number of replace values does not match",
@@ -101,9 +101,9 @@ var printfTests = []struct {
 		Expr: parser.Printf{
 			Format: "printf test: value1 %s, value2 %s, %a %% %",
 			Values: []parser.Expression{
-				parser.NewString("str"),
-				parser.NewInteger(1),
-				parser.NewInteger(2),
+				parser.NewStringValue("str"),
+				parser.NewIntegerValue(1),
+				parser.NewIntegerValue(2),
 			},
 		},
 		Error: "[L:- C:-] PRINTF: number of replace values does not match",
@@ -142,11 +142,11 @@ var sourceTests = []struct {
 	{
 		Name: "Source",
 		Expr: parser.Source{
-			FilePath: parser.NewString(GetTestFilePath("source.sql")),
+			FilePath: parser.NewStringValue(GetTestFilePath("source.sql")),
 		},
 		Result: []parser.Statement{
 			parser.Print{
-				Value: parser.NewString("external executable file"),
+				Value: parser.NewStringValue("external executable file"),
 			},
 		},
 	},
@@ -160,28 +160,28 @@ var sourceTests = []struct {
 	{
 		Name: "Source File Argument Not String Error",
 		Expr: parser.Source{
-			FilePath: parser.NewNull(),
+			FilePath: parser.NewNullValue(),
 		},
 		Error: "[L:- C:-] SOURCE: argument NULL is not a string",
 	},
 	{
 		Name: "Source File Not Exist Error",
 		Expr: parser.Source{
-			FilePath: parser.NewString(GetTestFilePath("notexist.sql")),
+			FilePath: parser.NewStringValue(GetTestFilePath("notexist.sql")),
 		},
 		Error: fmt.Sprintf("[L:- C:-] SOURCE: file %s does not exist", GetTestFilePath("notexist.sql")),
 	},
 	{
 		Name: "Source File Not Readable Error",
 		Expr: parser.Source{
-			FilePath: parser.NewString(TestDir),
+			FilePath: parser.NewStringValue(TestDir),
 		},
 		Error: fmt.Sprintf("[L:- C:-] SOURCE: file %s is unable to read", TestDir),
 	},
 	{
 		Name: "Source Syntax Error",
 		Expr: parser.Source{
-			FilePath: parser.NewString(GetTestFilePath("source_syntaxerror.sql")),
+			FilePath: parser.NewStringValue(GetTestFilePath("source_syntaxerror.sql")),
 		},
 		Error: fmt.Sprintf("%s [L:1 C:34] syntax error: unexpected STRING", GetTestFilePath("source_syntaxerror.sql")),
 	},

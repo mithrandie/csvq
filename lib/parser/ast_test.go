@@ -47,24 +47,6 @@ func TestBaseExpr_SourceFile(t *testing.T) {
 	}
 }
 
-func TestIsPrimary(t *testing.T) {
-	var e Expression
-
-	e = Identifier{Literal: "foo"}
-	if IsPrimary(e) {
-		t.Errorf("expression %#v is evaluated as is a implementation of primary, but it is not so", e)
-	}
-
-	e = Integer{value: 1}
-	if !IsPrimary(e) {
-		t.Errorf("expression %#v is evaluated as is not a implementation of primary, but it is so", e)
-	}
-
-	if IsPrimary(nil) {
-		t.Error("nil is evaluated as is a implementation of primary,, want empty string for nil")
-	}
-}
-
 func TestIsNull(t *testing.T) {
 	var p Primary
 
@@ -308,6 +290,26 @@ func TestNull_Ternary(t *testing.T) {
 	}
 }
 
+func TestPrimitiveType_String(t *testing.T) {
+	e := NewTernaryValue(ternary.TRUE)
+	expect := "TRUE"
+	if e.String() != expect {
+		t.Errorf("result = %q, want %q for %q ", e.String(), expect, e)
+	}
+}
+
+func TestPrimitiveType_IsInteger(t *testing.T) {
+	e := NewDatetimeValue(time.Date(2012, 2, 4, 9, 18, 15, 0, time.Local))
+	if e.IsInteger() != false {
+		t.Errorf("result = %t, want %t for %q ", e.IsInteger(), false, e)
+	}
+
+	e = NewPrimitiveType(NewInteger(1))
+	if e.IsInteger() != true {
+		t.Errorf("result = %t, want %t for %q ", e.IsInteger(), true, e)
+	}
+}
+
 func TestIdentifier_String(t *testing.T) {
 	s := "abcde"
 	e := Identifier{Literal: s}
@@ -354,7 +356,7 @@ func TestColumnNumber_String(t *testing.T) {
 
 func TestParentheses_String(t *testing.T) {
 	s := "abcde"
-	e := Parentheses{Expr: String{literal: s}}
+	e := Parentheses{Expr: NewStringValue(s)}
 	expect := "('abcde')"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
@@ -365,8 +367,8 @@ func TestRowValue_String(t *testing.T) {
 	e := RowValue{
 		Value: ValueList{
 			Values: []Expression{
-				NewInteger(1),
-				NewInteger(2),
+				NewIntegerValue(1),
+				NewIntegerValue(2),
 			},
 		},
 	}
@@ -379,8 +381,8 @@ func TestRowValue_String(t *testing.T) {
 func TestValueList_String(t *testing.T) {
 	e := ValueList{
 		Values: []Expression{
-			NewInteger(1),
-			NewInteger(2),
+			NewIntegerValue(1),
+			NewIntegerValue(2),
 		},
 	}
 	expect := "(1, 2)"
@@ -394,14 +396,14 @@ func TestRowValueList_String(t *testing.T) {
 		RowValues: []Expression{
 			ValueList{
 				Values: []Expression{
-					NewInteger(1),
-					NewInteger(2),
+					NewIntegerValue(1),
+					NewIntegerValue(2),
 				},
 			},
 			ValueList{
 				Values: []Expression{
-					NewInteger(3),
-					NewInteger(4),
+					NewIntegerValue(3),
+					NewIntegerValue(4),
 				},
 			},
 		},
@@ -425,7 +427,7 @@ func TestSelectQuery_String(t *testing.T) {
 							SelectClause: SelectClause{
 								Select: "select",
 								Fields: []Expression{
-									Field{Object: NewInteger(1)},
+									Field{Object: NewIntegerValue(1)},
 								},
 							},
 						},
@@ -453,11 +455,11 @@ func TestSelectQuery_String(t *testing.T) {
 		},
 		LimitClause: LimitClause{
 			Limit: "limit",
-			Value: NewInteger(10),
+			Value: NewIntegerValue(10),
 		},
 		OffsetClause: OffsetClause{
 			Offset: "offset",
-			Value:  NewInteger(10),
+			Value:  NewIntegerValue(10),
 		},
 	}
 	expect := "with ct as (select 1) select column from table order by column limit 10 offset 10"
@@ -471,7 +473,7 @@ func TestSelectSet_String(t *testing.T) {
 		LHS: SelectEntity{
 			SelectClause: SelectClause{
 				Select: "select",
-				Fields: []Expression{Field{Object: NewInteger(1)}},
+				Fields: []Expression{Field{Object: NewIntegerValue(1)}},
 			},
 		},
 		Operator: Token{Token: UNION, Literal: "union"},
@@ -479,7 +481,7 @@ func TestSelectSet_String(t *testing.T) {
 		RHS: SelectEntity{
 			SelectClause: SelectClause{
 				Select: "select",
-				Fields: []Expression{Field{Object: NewInteger(2)}},
+				Fields: []Expression{Field{Object: NewIntegerValue(2)}},
 			},
 		},
 	}
@@ -504,7 +506,7 @@ func TestSelectEntity_String(t *testing.T) {
 			Filter: Comparison{
 				LHS:      Identifier{Literal: "column"},
 				Operator: ">",
-				RHS:      NewInteger(1),
+				RHS:      NewIntegerValue(1),
 			},
 		},
 		GroupByClause: GroupByClause{
@@ -518,7 +520,7 @@ func TestSelectEntity_String(t *testing.T) {
 			Filter: Comparison{
 				LHS:      Identifier{Literal: "column"},
 				Operator: ">",
-				RHS:      NewInteger(1),
+				RHS:      NewIntegerValue(1),
 			},
 		},
 	}
@@ -582,7 +584,7 @@ func TestWhereClause_String(t *testing.T) {
 		Filter: Comparison{
 			LHS:      Identifier{Literal: "column"},
 			Operator: ">",
-			RHS:      NewInteger(1),
+			RHS:      NewIntegerValue(1),
 		},
 	}
 	expect := "where column > 1"
@@ -611,7 +613,7 @@ func TestHavingClause_String(t *testing.T) {
 		Filter: Comparison{
 			LHS:      Identifier{Literal: "column"},
 			Operator: ">",
-			RHS:      NewInteger(1),
+			RHS:      NewIntegerValue(1),
 		},
 	}
 	expect := "having column > 1"
@@ -640,13 +642,13 @@ func TestOrderByClause_String(t *testing.T) {
 }
 
 func TestLimitClause_String(t *testing.T) {
-	e := LimitClause{Limit: "limit", Value: NewInteger(10), With: LimitWith{With: "with", Type: Token{Token: TIES, Literal: "ties"}}}
+	e := LimitClause{Limit: "limit", Value: NewIntegerValue(10), With: LimitWith{With: "with", Type: Token{Token: TIES, Literal: "ties"}}}
 	expect := "limit 10 with ties"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 
-	e = LimitClause{Limit: "limit", Value: NewInteger(10), Percent: "percent"}
+	e = LimitClause{Limit: "limit", Value: NewIntegerValue(10), Percent: "percent"}
 	expect = "limit 10 percent"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
@@ -654,24 +656,24 @@ func TestLimitClause_String(t *testing.T) {
 }
 
 func TestLimitClause_IsPercentage(t *testing.T) {
-	e := LimitClause{Limit: "limit", Value: NewInteger(10)}
+	e := LimitClause{Limit: "limit", Value: NewIntegerValue(10)}
 	if e.IsPercentage() {
 		t.Errorf("percentage = %t, want %t for %#v", e.IsPercentage(), false, e)
 	}
 
-	e = LimitClause{Limit: "limit", Value: NewInteger(10), Percent: "percent"}
+	e = LimitClause{Limit: "limit", Value: NewIntegerValue(10), Percent: "percent"}
 	if !e.IsPercentage() {
 		t.Errorf("percentage = %t, want %t for %#v", e.IsPercentage(), true, e)
 	}
 }
 
 func TestLimitClause_IsWithTies(t *testing.T) {
-	e := LimitClause{Limit: "limit", Value: NewInteger(10)}
+	e := LimitClause{Limit: "limit", Value: NewIntegerValue(10)}
 	if e.IsWithTies() {
 		t.Errorf("with ties = %t, want %t for %#v", e.IsWithTies(), false, e)
 	}
 
-	e = LimitClause{Limit: "limit", Value: NewInteger(10), With: LimitWith{With: "with", Type: Token{Token: TIES, Literal: "ties"}}}
+	e = LimitClause{Limit: "limit", Value: NewIntegerValue(10), With: LimitWith{With: "with", Type: Token{Token: TIES, Literal: "ties"}}}
 	if !e.IsWithTies() {
 		t.Errorf("with ties = %t, want %t for %#v", e.IsWithTies(), true, e)
 	}
@@ -686,7 +688,7 @@ func TestLimitWith_String(t *testing.T) {
 }
 
 func TestOffsetClause_String(t *testing.T) {
-	e := OffsetClause{Offset: "offset", Value: NewInteger(10)}
+	e := OffsetClause{Offset: "offset", Value: NewIntegerValue(10)}
 	expect := "offset 10"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
@@ -705,7 +707,7 @@ func TestWithClause_String(t *testing.T) {
 						SelectClause: SelectClause{
 							Select: "select",
 							Fields: []Expression{
-								NewInteger(1),
+								NewIntegerValue(1),
 							},
 						},
 					},
@@ -720,7 +722,7 @@ func TestWithClause_String(t *testing.T) {
 						SelectClause: SelectClause{
 							Select: "select",
 							Fields: []Expression{
-								NewInteger(2),
+								NewIntegerValue(2),
 							},
 						},
 					},
@@ -747,7 +749,7 @@ func TestInlineTable_String(t *testing.T) {
 				SelectClause: SelectClause{
 					Select: "select",
 					Fields: []Expression{
-						NewInteger(1),
+						NewIntegerValue(1),
 					},
 				},
 			},
@@ -769,7 +771,7 @@ func TestInlineTable_IsRecursive(t *testing.T) {
 				SelectClause: SelectClause{
 					Select: "select",
 					Fields: []Expression{
-						NewInteger(1),
+						NewIntegerValue(1),
 					},
 				},
 			},
@@ -787,7 +789,7 @@ func TestInlineTable_IsRecursive(t *testing.T) {
 				SelectClause: SelectClause{
 					Select: "select",
 					Fields: []Expression{
-						NewInteger(1),
+						NewIntegerValue(1),
 					},
 				},
 			},
@@ -805,7 +807,7 @@ func TestSubquery_String(t *testing.T) {
 				SelectClause: SelectClause{
 					Select: "select",
 					Fields: []Expression{
-						NewInteger(1),
+						NewIntegerValue(1),
 					},
 				},
 				FromClause: FromClause{
@@ -827,7 +829,7 @@ func TestComparison_String(t *testing.T) {
 	e := Comparison{
 		LHS:      Identifier{Literal: "column"},
 		Operator: ">",
-		RHS:      NewInteger(1),
+		RHS:      NewIntegerValue(1),
 	}
 	expect := "column > 1"
 	if e.String() != expect {
@@ -851,7 +853,7 @@ func TestIs_String(t *testing.T) {
 	e := Is{
 		Is:       "is",
 		LHS:      Identifier{Literal: "column"},
-		RHS:      Null{literal: "null"},
+		RHS:      NewNullValueFromString("null"),
 		Negation: Token{Token: NOT, Literal: "not"},
 	}
 	expect := "column is not null"
@@ -877,8 +879,8 @@ func TestBetween_String(t *testing.T) {
 		Between:  "between",
 		And:      "and",
 		LHS:      Identifier{Literal: "column"},
-		Low:      NewInteger(-10),
-		High:     NewInteger(10),
+		Low:      NewIntegerValue(-10),
+		High:     NewIntegerValue(10),
 		Negation: Token{Token: NOT, Literal: "not"},
 	}
 	expect := "column not between -10 and 10"
@@ -906,8 +908,8 @@ func TestIn_String(t *testing.T) {
 		Values: RowValue{
 			Value: ValueList{
 				Values: []Expression{
-					NewInteger(1),
-					NewInteger(2),
+					NewIntegerValue(1),
+					NewIntegerValue(2),
 				},
 			},
 		},
@@ -937,7 +939,7 @@ func TestAll_String(t *testing.T) {
 					SelectClause: SelectClause{
 						Select: "select",
 						Fields: []Expression{
-							NewInteger(1),
+							NewIntegerValue(1),
 						},
 					},
 					FromClause: FromClause{
@@ -974,7 +976,7 @@ func TestAny_String(t *testing.T) {
 					SelectClause: SelectClause{
 						Select: "select",
 						Fields: []Expression{
-							NewInteger(1),
+							NewIntegerValue(1),
 						},
 					},
 					FromClause: FromClause{
@@ -1009,7 +1011,7 @@ func TestLike_String(t *testing.T) {
 	e := Like{
 		Like:     "like",
 		LHS:      Identifier{Literal: "column"},
-		Pattern:  String{literal: "pattern"},
+		Pattern:  NewStringValue("pattern"),
 		Negation: Token{Token: NOT, Literal: "not"},
 	}
 	expect := "column not like 'pattern'"
@@ -1027,7 +1029,7 @@ func TestExists_String(t *testing.T) {
 					SelectClause: SelectClause{
 						Select: "select",
 						Fields: []Expression{
-							NewInteger(1),
+							NewIntegerValue(1),
 						},
 					},
 					FromClause: FromClause{
@@ -1050,7 +1052,7 @@ func TestArithmetic_String(t *testing.T) {
 	e := Arithmetic{
 		LHS:      Identifier{Literal: "column"},
 		Operator: int('+'),
-		RHS:      NewInteger(2),
+		RHS:      NewIntegerValue(2),
 	}
 	expect := "column + 2"
 	if e.String() != expect {
@@ -1071,9 +1073,9 @@ func TestUnaryArithmetic_String(t *testing.T) {
 
 func TestLogic_String(t *testing.T) {
 	e := Logic{
-		LHS:      NewBoolean(true),
+		LHS:      NewTernaryValueFromString("true"),
 		Operator: Token{Token: AND, Literal: "and"},
-		RHS:      NewBoolean(false),
+		RHS:      NewTernaryValueFromString("false"),
 	}
 	expect := "true and false"
 	if e.String() != expect {
@@ -1084,7 +1086,7 @@ func TestLogic_String(t *testing.T) {
 func TestUnaryLogic_String(t *testing.T) {
 	e := UnaryLogic{
 		Operator: Token{Token: NOT, Literal: "not"},
-		Operand:  NewBoolean(false),
+		Operand:  NewTernaryValueFromString("false"),
 	}
 	expect := "not false"
 	if e.String() != expect {
@@ -1093,7 +1095,7 @@ func TestUnaryLogic_String(t *testing.T) {
 
 	e = UnaryLogic{
 		Operator: Token{Token: '!', Literal: "!"},
-		Operand:  NewBoolean(false),
+		Operand:  NewTernaryValueFromString("false"),
 	}
 	expect = "!false"
 	if e.String() != expect {
@@ -1105,7 +1107,7 @@ func TestConcat_String(t *testing.T) {
 	e := Concat{
 		Items: []Expression{
 			Identifier{Literal: "column"},
-			String{literal: "a"},
+			NewStringValue("a"),
 		},
 	}
 	expect := "column || 'a'"
@@ -1199,7 +1201,7 @@ func TestTable_Name(t *testing.T) {
 					SelectClause: SelectClause{
 						Select: "select",
 						Fields: []Expression{
-							NewInteger(1),
+							NewIntegerValue(1),
 						},
 					},
 					FromClause: FromClause{
@@ -1255,7 +1257,7 @@ func TestJoinCondition_String(t *testing.T) {
 		On: Comparison{
 			LHS:      Identifier{Literal: "column"},
 			Operator: ">",
-			RHS:      NewInteger(1),
+			RHS:      NewIntegerValue(1),
 		},
 	}
 	expect := "on column > 1"
@@ -1316,7 +1318,7 @@ func TestField_Name(t *testing.T) {
 	}
 
 	e = Field{
-		Object: String{literal: "foo"},
+		Object: NewStringValue("foo"),
 	}
 	expect = "foo"
 	if e.Name() != expect {
@@ -1324,7 +1326,7 @@ func TestField_Name(t *testing.T) {
 	}
 
 	e = Field{
-		Object: NewDatetimeFromString("2012-01-01"),
+		Object: NewDatetimeValueFromString("2012-01-01"),
 	}
 	expect = "2012-01-01"
 	if e.Name() != expect {
@@ -1404,17 +1406,17 @@ func TestCase_String(t *testing.T) {
 			CaseWhen{
 				When:      "when",
 				Then:      "then",
-				Condition: NewInteger(1),
-				Result:    String{literal: "A"},
+				Condition: NewIntegerValue(1),
+				Result:    NewStringValue("A"),
 			},
 			CaseWhen{
 				When:      "when",
 				Then:      "then",
-				Condition: NewInteger(2),
-				Result:    String{literal: "B"},
+				Condition: NewIntegerValue(2),
+				Result:    NewStringValue("B"),
 			},
 		},
-		Else: CaseElse{Else: "else", Result: String{literal: "C"}},
+		Else: CaseElse{Else: "else", Result: NewStringValue("C")},
 	}
 	expect := "case column when 1 then 'A' when 2 then 'B' else 'C' end"
 	if e.String() != expect {
@@ -1431,9 +1433,9 @@ func TestCase_String(t *testing.T) {
 				Condition: Comparison{
 					LHS:      Identifier{Literal: "column"},
 					Operator: ">",
-					RHS:      NewInteger(1),
+					RHS:      NewIntegerValue(1),
 				},
-				Result: String{literal: "A"},
+				Result: NewStringValue("A"),
 			},
 		},
 	}
@@ -1450,9 +1452,9 @@ func TestCaseWhen_String(t *testing.T) {
 		Condition: Comparison{
 			LHS:      Identifier{Literal: "column"},
 			Operator: ">",
-			RHS:      NewInteger(1),
+			RHS:      NewIntegerValue(1),
 		},
-		Result: String{literal: "abcde"},
+		Result: NewStringValue("abcde"),
 	}
 	expect := "when column > 1 then 'abcde'"
 	if e.String() != expect {
@@ -1461,7 +1463,7 @@ func TestCaseWhen_String(t *testing.T) {
 }
 
 func TestCaseElse_String(t *testing.T) {
-	e := CaseElse{Else: "else", Result: String{literal: "abcde"}}
+	e := CaseElse{Else: "else", Result: NewStringValue("abcde")}
 	expect := "else 'abcde'"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
@@ -1474,7 +1476,7 @@ func TestListAgg_String(t *testing.T) {
 		Distinct: Token{Token: DISTINCT, Literal: "distinct"},
 		Args: []Expression{
 			Identifier{Literal: "column1"},
-			NewString(","),
+			NewStringValue(","),
 		},
 		WithinGroup: "within group",
 		OrderBy: OrderByClause{
@@ -1492,7 +1494,7 @@ func TestListAgg_String(t *testing.T) {
 		Distinct: Token{Token: DISTINCT, Literal: "distinct"},
 		Args: []Expression{
 			Identifier{Literal: "column1"},
-			NewString(","),
+			NewStringValue(","),
 		},
 		WithinGroup: "within group",
 	}
@@ -1657,7 +1659,7 @@ func TestVariableSubstitution_String(t *testing.T) {
 		Variable: Variable{
 			Name: "@var",
 		},
-		Value: NewInteger(1),
+		Value: NewIntegerValue(1),
 	}
 	expect := "@var := 1"
 	if e.String() != expect {
@@ -1668,7 +1670,7 @@ func TestVariableSubstitution_String(t *testing.T) {
 func TestVariableAssignment_String(t *testing.T) {
 	e := VariableAssignment{
 		Variable: Variable{Name: "@var"},
-		Value:    NewInteger(1),
+		Value:    NewIntegerValue(1),
 	}
 	expect := "@var := 1"
 	if e.String() != expect {
@@ -1698,7 +1700,7 @@ func TestInsertQuery_String(t *testing.T) {
 							SelectClause: SelectClause{
 								Select: "select",
 								Fields: []Expression{
-									Field{Object: NewInteger(1)},
+									Field{Object: NewIntegerValue(1)},
 								},
 							},
 						},
@@ -1718,16 +1720,16 @@ func TestInsertQuery_String(t *testing.T) {
 			RowValue{
 				Value: ValueList{
 					Values: []Expression{
-						NewInteger(1),
-						NewInteger(2),
+						NewIntegerValue(1),
+						NewIntegerValue(2),
 					},
 				},
 			},
 			RowValue{
 				Value: ValueList{
 					Values: []Expression{
-						NewInteger(3),
-						NewInteger(4),
+						NewIntegerValue(3),
+						NewIntegerValue(4),
 					},
 				},
 			},
@@ -1751,8 +1753,8 @@ func TestInsertQuery_String(t *testing.T) {
 				SelectClause: SelectClause{
 					Select: "select",
 					Fields: []Expression{
-						NewInteger(1),
-						NewInteger(2),
+						NewIntegerValue(1),
+						NewIntegerValue(2),
 					},
 				},
 			},
@@ -1777,7 +1779,7 @@ func TestUpdateQuery_String(t *testing.T) {
 							SelectClause: SelectClause{
 								Select: "select",
 								Fields: []Expression{
-									Field{Object: NewInteger(1)},
+									Field{Object: NewIntegerValue(1)},
 								},
 							},
 						},
@@ -1795,11 +1797,11 @@ func TestUpdateQuery_String(t *testing.T) {
 		SetList: []Expression{
 			UpdateSet{
 				Field: FieldReference{Column: Identifier{Literal: "column1"}},
-				Value: NewInteger(1),
+				Value: NewIntegerValue(1),
 			},
 			UpdateSet{
 				Field: FieldReference{Column: Identifier{Literal: "column2"}},
-				Value: NewInteger(2),
+				Value: NewIntegerValue(2),
 			},
 		},
 		FromClause: FromClause{
@@ -1815,7 +1817,7 @@ func TestUpdateQuery_String(t *testing.T) {
 			Filter: Comparison{
 				LHS:      Identifier{Literal: "column3"},
 				Operator: "=",
-				RHS:      NewInteger(3),
+				RHS:      NewIntegerValue(3),
 			},
 		},
 	}
@@ -1828,7 +1830,7 @@ func TestUpdateQuery_String(t *testing.T) {
 func TestUpdateSet_String(t *testing.T) {
 	e := UpdateSet{
 		Field: FieldReference{Column: Identifier{Literal: "column1"}},
-		Value: NewInteger(1),
+		Value: NewIntegerValue(1),
 	}
 	expect := "column1 = 1"
 	if e.String() != expect {
@@ -1849,7 +1851,7 @@ func TestDeleteQuery_String(t *testing.T) {
 							SelectClause: SelectClause{
 								Select: "select",
 								Fields: []Expression{
-									Field{Object: NewInteger(1)},
+									Field{Object: NewIntegerValue(1)},
 								},
 							},
 						},
@@ -1876,7 +1878,7 @@ func TestDeleteQuery_String(t *testing.T) {
 			Filter: Comparison{
 				LHS:      Identifier{Literal: "column1"},
 				Operator: "=",
-				RHS:      NewInteger(1),
+				RHS:      NewIntegerValue(1),
 			},
 		},
 	}
@@ -1913,7 +1915,7 @@ func TestAddColumns_String(t *testing.T) {
 			ColumnDefault{
 				Column:  Identifier{Literal: "newcolumn2"},
 				Default: "default",
-				Value:   Null{literal: "null"},
+				Value:   NewNullValueFromString("null"),
 			},
 		},
 		Position: ColumnPosition{
@@ -1930,7 +1932,7 @@ func TestColumnDefault_String(t *testing.T) {
 	e := ColumnDefault{
 		Column:  Identifier{Literal: "column1"},
 		Default: "default",
-		Value:   Null{literal: "null"},
+		Value:   NewNullValueFromString("null"),
 	}
 	expect := "column1 default null"
 	if e.String() != expect {
@@ -1983,7 +1985,7 @@ func TestRenameColumn_String(t *testing.T) {
 func TestFetchPosition_String(t *testing.T) {
 	e := FetchPosition{
 		Position: Token{Token: ABSOLUTE, Literal: "absolute"},
-		Number:   NewInteger(1),
+		Number:   NewIntegerValue(1),
 	}
 	expect := "absolute 1"
 	if e.String() != expect {
@@ -2015,12 +2017,5 @@ func TestCursorAttrebute_String(t *testing.T) {
 	expect := "cursor cur count"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-}
-
-func BenchmarkIsPrimary(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		p := NewInteger(int64(i))
-		IsPrimary(p)
 	}
 }

@@ -240,8 +240,8 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		case parser.ERROR:
 			var message string
 			if trigger.Message != nil {
-				if _, ok := trigger.Message.(parser.Integer); ok && trigger.Code == nil {
-					trigger.Code = trigger.Message
+				if pt, ok := trigger.Message.(parser.PrimitiveType); ok && trigger.Code == nil && pt.IsInteger() {
+					trigger.Code = pt.Value
 				} else {
 					var p parser.Primary
 					if p, err = proc.Filter.Evaluate(trigger.Message); err == nil {

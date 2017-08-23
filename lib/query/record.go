@@ -1,20 +1,12 @@
 package query
 
 import (
+	"strings"
+
 	"github.com/mithrandie/csvq/lib/parser"
-	"github.com/mithrandie/csvq/lib/ternary"
 )
 
 type Records []Record
-
-func (r Records) Contains(record Record) bool {
-	for _, v := range r {
-		if v.IsEqualTo(record) {
-			return true
-		}
-	}
-	return false
-}
 
 func (r Records) Copy() Records {
 	records := make(Records, len(r))
@@ -57,20 +49,6 @@ func NewEmptyRecord(len int) Record {
 	return record
 }
 
-func (r Record) IsEqualTo(record Record) bool {
-	if len(r) != len(record) {
-		return false
-	}
-
-	for i, cell := range r {
-		if EquivalentTo(cell.Primary(), record[i].Primary()) != ternary.TRUE {
-			return false
-		}
-	}
-
-	return true
-}
-
 func (r Record) GroupLen() int {
 	return r[0].Len()
 }
@@ -80,6 +58,16 @@ func (r Record) Copy() Record {
 	copy(record, r)
 	return record
 
+}
+
+func (r Record) SerializeComparisonKeys() string {
+	list := make([]string, len(r))
+
+	for i, cell := range r {
+		list[i] = SerializeKey(cell.Primary())
+	}
+
+	return strings.Join(list, ":")
 }
 
 func MergeRecord(r1 Record, r2 Record) Record {

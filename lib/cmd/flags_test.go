@@ -345,7 +345,11 @@ func TestSetCPU(t *testing.T) {
 	}
 
 	SetCPU(0)
-	if 1 != flags.CPU {
+	expect := runtime.NumCPU() / 2
+	if expect < 1 {
+		expect = 1
+	}
+	if expect != flags.CPU {
 		t.Errorf("cpu = %d, expect to set %d", flags.CPU, 1)
 	}
 
