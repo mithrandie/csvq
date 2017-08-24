@@ -16,12 +16,14 @@ func TestSerializeComparisonKeys(t *testing.T) {
 		parser.NewInteger(3),
 		parser.NewFloat(1.234),
 		parser.NewDatetimeFromString("2012-02-03T09:18:15-08:00"),
+		parser.NewDatetimeFromString("2012-02-03T09:18:15.123-08:00"),
+		parser.NewDatetimeFromString("2012-02-03T09:18:15.123456789-08:00"),
 		parser.NewBoolean(true),
 		parser.NewBoolean(false),
 		parser.NewTernary(ternary.UNKNOWN),
 		parser.NewNull(),
 	}
-	expect := "[S]STR:[I]1[B]true:[I]0[B]false:[I]3:[F]1.234:[D]2012-02-03T09:18:15-08:00:[I]1[B]true:[I]0[B]false:[N]:[N]"
+	expect := "[S]STR:[I]1[B]true:[I]0[B]false:[I]3:[F]1.234:[I]1328289495:[F]1328289495.123:[D]1328289495123456789:[I]1[B]true:[I]0[B]false:[N]:[N]"
 
 	result := SerializeComparisonKeys(values)
 	if result != expect {

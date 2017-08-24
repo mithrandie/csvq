@@ -2,10 +2,10 @@ package query
 
 import (
 	"strings"
-	"time"
 
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
+	"time"
 )
 
 type SortValueType int
@@ -63,6 +63,29 @@ func (values SortValues) EquivalentTo(compareValues SortValues) bool {
 	return true
 }
 
+func (values SortValues) Serialize() string {
+	list := make([]string, len(values))
+
+	for i, value := range values {
+		switch value.Type {
+		case SORT_VALUE_NULL:
+			list[i] = serializeNull()
+		case SORT_VALUE_INTEGER:
+			list[i] = serializeInteger(value.Integer)
+		case SORT_VALUE_FLOAT:
+			list[i] = serializeFlaot(value.Float)
+		case SORT_VALUE_DATETIME:
+			list[i] = serializeDatetime(value.Datetime)
+		case SORT_VALUE_BOOLEAN:
+			list[i] = serializeBoolean(value.Boolean)
+		case SORT_VALUE_STRING:
+			list[i] = serializeString(value.String)
+		}
+	}
+
+	return strings.Join(list, ":")
+}
+
 type SortValue struct {
 	Type SortValueType
 
@@ -78,18 +101,49 @@ func NewSortValue(value parser.Primary) *SortValue {
 
 	if parser.IsNull(value) {
 		sortValue.Type = SORT_VALUE_NULL
-	} else if in := parser.PrimaryToInteger(value); !parser.IsNull(in) {
+	} else if i := parser.PrimaryToInteger(value); !parser.IsNull(i) {
 		sortValue.Type = SORT_VALUE_INTEGER
-		sortValue.Integer = in.(parser.Integer).Value()
+		s := parser.PrimaryToString(value)
+		sortValue.Integer = i.(parser.Integer).Value()
+		sortValue.Float = float64(sortValue.Integer)
+		sortValue.Datetime = time.Unix(sortValue.Integer, 0)
+		sortValue.String = s.(parser.String).Value()
 	} else if f := parser.PrimaryToFloat(value); !parser.IsNull(f) {
 		sortValue.Type = SORT_VALUE_FLOAT
+		s := parser.PrimaryToString(value)
 		sortValue.Float = f.(parser.Float).Value()
+		sortValue.Datetime = parser.Float64ToTime(sortValue.Float)
+		sortValue.String = s.(parser.String).Value()
 	} else if dt := parser.PrimaryToDatetime(value); !parser.IsNull(dt) {
-		sortValue.Type = SORT_VALUE_DATETIME
-		sortValue.Datetime = dt.(parser.Datetime).Value()
+		t := dt.(parser.Datetime).Value()
+		if t.Nanosecond() > 0 {
+			f := float64(t.Unix()) + float64(t.Nanosecond())/float64(1000000000)
+			t2 := parser.Float64ToTime(f)
+			if t.Equal(t2) {
+				sortValue.Type = SORT_VALUE_FLOAT
+				sortValue.Float = f
+				sortValue.Datetime = t
+				sortValue.String = parser.Float64ToStr(f)
+			} else {
+				sortValue.Type = SORT_VALUE_DATETIME
+				sortValue.Datetime = t
+			}
+		} else {
+			sortValue.Type = SORT_VALUE_INTEGER
+			i := t.Unix()
+			sortValue.Integer = i
+			sortValue.Float = float64(i)
+			sortValue.Datetime = t
+			sortValue.String = parser.Int64ToStr(i)
+		}
 	} else if b := parser.PrimaryToBoolean(value); !parser.IsNull(b) {
 		sortValue.Type = SORT_VALUE_BOOLEAN
 		sortValue.Boolean = b.(parser.Boolean).Value()
+		if sortValue.Boolean {
+			sortValue.Integer = 1
+		} else {
+			sortValue.Integer = 0
+		}
 	} else if s, ok := value.(parser.String); ok {
 		sortValue.Type = SORT_VALUE_STRING
 		sortValue.String = strings.ToUpper(strings.TrimSpace(s.Value()))
@@ -101,79 +155,86 @@ func NewSortValue(value parser.Primary) *SortValue {
 }
 
 func (v *SortValue) Less(compareValue *SortValue) ternary.Value {
-	if v.Type == SORT_VALUE_INTEGER && compareValue.Type == SORT_VALUE_FLOAT {
-		f := float64(v.Integer)
-		return ternary.ParseBool(f < compareValue.Float)
-	}
-	if v.Type == SORT_VALUE_FLOAT && compareValue.Type == SORT_VALUE_INTEGER {
-		f := float64(compareValue.Integer)
-		return ternary.ParseBool(v.Float < f)
-	}
-
-	if v.Type != compareValue.Type {
-		return ternary.UNKNOWN
-	}
-
 	switch v.Type {
 	case SORT_VALUE_INTEGER:
-		if v.Integer == compareValue.Integer {
-			return ternary.UNKNOWN
+		switch compareValue.Type {
+		case SORT_VALUE_INTEGER:
+			if v.Integer == compareValue.Integer {
+				return ternary.UNKNOWN
+			}
+			return ternary.ParseBool(v.Integer < compareValue.Integer)
+		case SORT_VALUE_FLOAT:
+			return ternary.ParseBool(v.Float < compareValue.Float)
+		case SORT_VALUE_DATETIME:
+			return ternary.ParseBool(v.Datetime.Before(compareValue.Datetime))
+		case SORT_VALUE_STRING:
+			return ternary.ParseBool(v.String < compareValue.String)
 		}
-		return ternary.ParseBool(v.Integer < compareValue.Integer)
 	case SORT_VALUE_FLOAT:
-		if v.Float == compareValue.Float {
-			return ternary.UNKNOWN
+		switch compareValue.Type {
+		case SORT_VALUE_INTEGER, SORT_VALUE_FLOAT:
+			if v.Float == compareValue.Float {
+				return ternary.UNKNOWN
+			}
+			return ternary.ParseBool(v.Float < compareValue.Float)
+		case SORT_VALUE_DATETIME:
+			return ternary.ParseBool(v.Datetime.Before(compareValue.Datetime))
+		case SORT_VALUE_STRING:
+			return ternary.ParseBool(v.String < compareValue.String)
 		}
-		return ternary.ParseBool(v.Float < compareValue.Float)
 	case SORT_VALUE_DATETIME:
-		if v.Datetime.Equal(compareValue.Datetime) {
-			return ternary.UNKNOWN
+		switch compareValue.Type {
+		case SORT_VALUE_INTEGER, SORT_VALUE_FLOAT, SORT_VALUE_DATETIME:
+			if v.Datetime.Equal(compareValue.Datetime) {
+				return ternary.UNKNOWN
+			}
+			return ternary.ParseBool(v.Datetime.Before(compareValue.Datetime))
 		}
-		return ternary.ParseBool(v.Datetime.Before(compareValue.Datetime))
 	case SORT_VALUE_STRING:
-		if v.String == compareValue.String {
-			return ternary.UNKNOWN
+		switch compareValue.Type {
+		case SORT_VALUE_INTEGER, SORT_VALUE_FLOAT, SORT_VALUE_STRING:
+			if v.String == compareValue.String {
+				return ternary.UNKNOWN
+			}
+			return ternary.ParseBool(v.String < compareValue.String)
 		}
-		return ternary.ParseBool(v.String < compareValue.String)
 	}
 
 	return ternary.UNKNOWN
 }
 
 func (v *SortValue) EquivalentTo(compareValue *SortValue) bool {
-	if v.Type == SORT_VALUE_BOOLEAN && compareValue.Type == SORT_VALUE_INTEGER {
-		switch compareValue.Integer {
-		case 0:
-			return v.Boolean == false
-		case 1:
-			return v.Boolean == true
-		}
-	}
-	if v.Type == SORT_VALUE_INTEGER && compareValue.Type == SORT_VALUE_BOOLEAN {
-		switch v.Integer {
-		case 0:
-			return compareValue.Boolean == false
-		case 1:
-			return compareValue.Boolean == true
-		}
-	}
-
-	if v.Type != compareValue.Type {
-		return false
-	}
-
 	switch v.Type {
 	case SORT_VALUE_INTEGER:
-		return v.Integer == compareValue.Integer
+		switch compareValue.Type {
+		case SORT_VALUE_INTEGER, SORT_VALUE_BOOLEAN:
+			return v.Integer == compareValue.Integer
+		}
 	case SORT_VALUE_FLOAT:
-		return v.Float == compareValue.Float
+		switch compareValue.Type {
+		case SORT_VALUE_FLOAT:
+			return v.Float == compareValue.Float
+		}
 	case SORT_VALUE_DATETIME:
-		return v.Datetime.Equal(compareValue.Datetime)
+		switch compareValue.Type {
+		case SORT_VALUE_DATETIME:
+			return v.Datetime.Equal(compareValue.Datetime)
+		}
 	case SORT_VALUE_BOOLEAN:
-		return v.Boolean == compareValue.Boolean
+		switch compareValue.Type {
+		case SORT_VALUE_INTEGER:
+			return v.Integer == compareValue.Integer
+		case SORT_VALUE_BOOLEAN:
+			return v.Boolean == compareValue.Boolean
+		}
 	case SORT_VALUE_STRING:
-		return v.String == compareValue.String
-	default: //SORT_VALUE_NULL
-		return true
+		switch compareValue.Type {
+		case SORT_VALUE_STRING:
+			return v.String == compareValue.String
+		}
+	case SORT_VALUE_NULL:
+		return compareValue.Type == SORT_VALUE_NULL
 	}
+
+	return false
 }

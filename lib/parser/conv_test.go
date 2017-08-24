@@ -387,6 +387,12 @@ func TestPrimaryToDatetime(t *testing.T) {
 		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
 	}
 
+	p = NewFloat(1.123456789123)
+	dt = PrimaryToDatetime(p)
+	if _, ok := dt.(Datetime); !ok {
+		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
+	}
+
 	p = NewDatetimeFromString("2006-01-02 15:04:05")
 	dt = PrimaryToDatetime(p)
 	if _, ok := dt.(Datetime); !ok {

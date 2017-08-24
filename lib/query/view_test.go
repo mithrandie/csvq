@@ -863,6 +863,57 @@ var viewLoadTests = []struct {
 		},
 		Error: fmt.Sprintf("[L:- C:-] csv parse error in file %s: line 3, column 7: wrong number of fields in line", GetTestFilePath("table_broken.csv")),
 	},
+	{
+		Name: "Inner Join Join Error",
+		From: parser.FromClause{
+			Tables: []parser.Expression{
+				parser.Table{
+					Object: parser.Join{
+						Table: parser.Table{
+							Object: parser.Identifier{Literal: "table1"},
+						},
+						JoinTable: parser.Table{
+							Object: parser.Identifier{Literal: "table2"},
+						},
+						Condition: parser.JoinCondition{
+							On: parser.Comparison{
+								LHS:      parser.FieldReference{View: parser.Identifier{Literal: "table1"}, Column: parser.Identifier{Literal: "notexist"}},
+								RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column3"}},
+								Operator: "=",
+							},
+						},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] field table1.notexist does not exist",
+	},
+	{
+		Name: "Outer Join Join Error",
+		From: parser.FromClause{
+			Tables: []parser.Expression{
+				parser.Table{
+					Object: parser.Join{
+						Table: parser.Table{
+							Object: parser.Identifier{Literal: "table1"},
+						},
+						JoinTable: parser.Table{
+							Object: parser.Identifier{Literal: "table2"},
+						},
+						Direction: parser.Token{Token: parser.LEFT, Literal: "left"},
+						Condition: parser.JoinCondition{
+							On: parser.Comparison{
+								LHS:      parser.FieldReference{View: parser.Identifier{Literal: "table1"}, Column: parser.Identifier{Literal: "column1"}},
+								RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "notexist"}},
+								Operator: "=",
+							},
+						},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] field table2.notexist does not exist",
+	},
 }
 
 func TestView_Load(t *testing.T) {
@@ -1303,6 +1354,24 @@ var viewGroupByTests = []struct {
 		},
 		Error: "[L:- C:-] field table1.0 does not exist",
 	},
+	{
+		Name: "Group By Empty Record",
+		View: &View{
+			Header:  NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
+			Records: []Record{},
+			Filter:  NewEmptyFilter(),
+		},
+		GroupBy: parser.GroupByClause{
+			Items: []parser.Expression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
+			},
+		},
+		Result: &View{
+			Header:  NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
+			Records: []Record{},
+			Filter:  NewEmptyFilter(),
+		},
+	},
 }
 
 func TestView_GroupBy(t *testing.T) {
@@ -1488,6 +1557,39 @@ var viewHavingTests = []struct {
 				NewGroupCell([]parser.Primary{parser.NewString("group2"), parser.NewString("group2")}),
 			},
 		},
+	},
+	{
+		Name: "Having All Records Filter Error",
+		View: &View{
+			Header: NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
+			Records: []Record{
+				NewRecordWithId(1, []parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+					parser.NewString("group2"),
+				}),
+				NewRecordWithId(2, []parser.Primary{
+					parser.NewString("4"),
+					parser.NewString("str4"),
+					parser.NewString("group2"),
+				}),
+			},
+			Filter: NewEmptyFilter(),
+		},
+		Having: parser.HavingClause{
+			Filter: parser.Comparison{
+				LHS: parser.AggregateFunction{
+					Name:     "sum",
+					Distinct: parser.Token{},
+					Args: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+					},
+				},
+				RHS:      parser.NewIntegerValue(5),
+				Operator: ">",
+			},
+		},
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 }
 
@@ -1795,6 +1897,65 @@ var viewSelectTests = []struct {
 		Error: "[L:- C:-] field column2 is not a group key",
 	},
 	{
+		Name: "Select Aggregate Function All Records Lazy Evaluation",
+		View: &View{
+			Header: []HeaderField{
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecordWithId(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecordWithId(2, []parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+			},
+			Filter: NewEmptyFilter(),
+		},
+		Select: parser.SelectClause{
+			Fields: []parser.Expression{
+				parser.Field{Object: parser.NewIntegerValue(1)},
+				parser.Field{
+					Object: parser.Arithmetic{
+						LHS: parser.AggregateFunction{
+							Name:     "sum",
+							Distinct: parser.Token{},
+							Args: []parser.Expression{
+								parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+							},
+						},
+						RHS:      parser.NewIntegerValue(1),
+						Operator: '+',
+					},
+				},
+			},
+		},
+		Result: &View{
+			Header: []HeaderField{
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
+				{Column: "1"},
+				{Column: "sum(column1) + 1"},
+			},
+			Records: []Record{
+				{
+					NewGroupCell([]parser.Primary{parser.NewInteger(1), parser.NewInteger(2)}),
+					NewGroupCell([]parser.Primary{parser.NewString("1"), parser.NewString("2")}),
+					NewGroupCell([]parser.Primary{parser.NewString("str1"), parser.NewString("str2")}),
+					NewCell(parser.NewInteger(1)),
+					NewCell(parser.NewInteger(4)),
+				},
+			},
+			Filter:       NewEmptyFilter(),
+			selectFields: []int{3, 4},
+		},
+	},
+	{
 		Name: "Select Analytic Function",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
@@ -1946,6 +2107,65 @@ var viewSelectTests = []struct {
 			},
 		},
 		Error: "[L:- C:-] function notexist does not exist",
+	},
+	{
+		Name: "Select Analytic Function Partition Error",
+		View: &View{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecord([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(2),
+				}),
+				NewRecord([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(3),
+				}),
+				NewRecord([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(5),
+				}),
+				NewRecord([]parser.Primary{
+					parser.NewString("a"),
+					parser.NewInteger(1),
+				}),
+				NewRecord([]parser.Primary{
+					parser.NewString("b"),
+					parser.NewInteger(4),
+				}),
+			},
+			Filter: NewEmptyFilter(),
+		},
+		Select: parser.SelectClause{
+			Fields: []parser.Expression{
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+				parser.Field{
+					Object: parser.AnalyticFunction{
+						Name: "row_number",
+						Over: "over",
+						AnalyticClause: parser.AnalyticClause{
+							Partition: parser.Partition{
+								PartitionBy: "partition by",
+								Values: []parser.Expression{
+									parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+								},
+							},
+							OrderByClause: parser.OrderByClause{
+								OrderBy: "order by",
+								Items: []parser.Expression{
+									parser.OrderItem{
+										Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+									},
+								},
+							},
+						},
+					},
+					Alias: parser.Identifier{Literal: "rownum"},
+				},
+			},
+		},
+		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
 		Name: "Select Analytic Function Order Error",
@@ -2277,6 +2497,92 @@ var viewOrderByTests = []struct {
 		},
 	},
 	{
+		Name: "Order By with Cached SortValues",
+		View: &View{
+			Header: NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
+			Records: []Record{
+				NewRecordWithId(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("3"),
+					parser.NewString("2"),
+				}),
+				NewRecordWithId(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("4"),
+					parser.NewString("3"),
+				}),
+				NewRecordWithId(3, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("4"),
+					parser.NewString("3"),
+				}),
+				NewRecordWithId(4, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("3"),
+					parser.NewNull(),
+				}),
+				NewRecordWithId(5, []parser.Primary{
+					parser.NewNull(),
+					parser.NewString("2"),
+					parser.NewString("4"),
+				}),
+			},
+			Filter: NewEmptyFilter(),
+			sortValues: [][]*SortValue{
+				{nil, nil, NewSortValue(parser.NewString("3")), nil},
+				{nil, nil, NewSortValue(parser.NewString("4")), nil},
+				{nil, nil, NewSortValue(parser.NewString("4")), nil},
+				{nil, nil, NewSortValue(parser.NewString("3")), nil},
+				{nil, nil, NewSortValue(parser.NewString("2")), nil},
+			},
+		},
+		OrderBy: parser.OrderByClause{
+			Items: []parser.Expression{
+				parser.OrderItem{
+					Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
+			Records: []Record{
+				NewRecordWithId(5, []parser.Primary{
+					parser.NewNull(),
+					parser.NewString("2"),
+					parser.NewString("4"),
+				}),
+				NewRecordWithId(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("3"),
+					parser.NewString("2"),
+				}),
+				NewRecordWithId(4, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("3"),
+					parser.NewNull(),
+				}),
+				NewRecordWithId(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("4"),
+					parser.NewString("3"),
+				}),
+				NewRecordWithId(3, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("4"),
+					parser.NewString("3"),
+				}),
+			},
+			Filter: NewEmptyFilter(),
+			sortValues: [][]*SortValue{
+				{nil, nil, NewSortValue(parser.NewString("2")), nil},
+				{nil, nil, NewSortValue(parser.NewString("3")), nil},
+				{nil, nil, NewSortValue(parser.NewString("3")), nil},
+				{nil, nil, NewSortValue(parser.NewString("4")), nil},
+				{nil, nil, NewSortValue(parser.NewString("4")), nil},
+			},
+		},
+	},
+	{
 		Name: "Order By With Null Positions",
 		View: &View{
 			Header: []HeaderField{
@@ -2351,6 +2657,41 @@ var viewOrderByTests = []struct {
 			Filter: NewEmptyFilter(),
 		},
 	},
+	{
+		Name: "Order By Record Extend Error",
+		View: &View{
+			Header: []HeaderField{
+				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: "column1", FromTable: true},
+				{View: "table1", Column: "column2", FromTable: true},
+			},
+			Records: []Record{
+				NewRecordWithId(1, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewNull(),
+				}),
+				NewRecordWithId(2, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("2"),
+				}),
+			},
+			Filter: NewEmptyFilter(),
+		},
+		OrderBy: parser.OrderByClause{
+			Items: []parser.Expression{
+				parser.OrderItem{
+					Value: parser.AggregateFunction{
+						Name:     "sum",
+						Distinct: parser.Token{},
+						Args: []parser.Expression{
+							parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+						},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] function sum cannot aggregate not grouping records",
+	},
 }
 
 func TestView_OrderBy(t *testing.T) {
@@ -2373,6 +2714,300 @@ func TestView_OrderBy(t *testing.T) {
 		}
 		if !reflect.DeepEqual(v.View.Records, v.Result.Records) {
 			t.Errorf("%s: records = %s, want %s", v.Name, v.View.Records, v.Result.Records)
+		}
+	}
+}
+
+var viewExtendRecordCapacity = []struct {
+	Name   string
+	View   *View
+	Exprs  []parser.Expression
+	Result int
+	Error  string
+}{
+	{
+		Name: "ExtendRecordCapacity",
+		View: &View{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Records: Records{
+				NewRecord([]parser.Primary{
+					parser.NewInteger(1),
+					parser.NewInteger(2),
+				}),
+			},
+			Filter: &Filter{
+				FunctionsList: UserDefinedFunctionsList{
+					UserDefinedFunctionMap{
+						"USERFUNC": &UserDefinedFunction{
+							Name: parser.Identifier{Literal: "userfunc"},
+							Parameters: []parser.Variable{
+								{Name: "@arg1"},
+							},
+							RequiredArgs: 1,
+							Statements: []parser.Statement{
+								parser.Return{Value: parser.Variable{Name: "@arg1"}},
+							},
+							IsAggregate: true,
+						},
+					},
+				},
+			},
+			isGrouped: true,
+		},
+		Exprs: []parser.Expression{
+			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			parser.Function{
+				Name: "userfunc",
+				Args: []parser.Expression{
+					parser.NewIntegerValue(1),
+				},
+			},
+			parser.AggregateFunction{
+				Name:     "avg",
+				Distinct: parser.Token{},
+				Args: []parser.Expression{
+					parser.AggregateFunction{
+						Name: "avg",
+						Args: []parser.Expression{
+							parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+						},
+					},
+				},
+			},
+			parser.ListAgg{
+				ListAgg:  "listagg",
+				Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
+				Args: []parser.Expression{
+					parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+					parser.NewStringValue(","),
+				},
+				OrderBy: parser.OrderByClause{
+					Items: []parser.Expression{
+						parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+					},
+				},
+			},
+			parser.AnalyticFunction{
+				Name: "rank",
+				AnalyticClause: parser.AnalyticClause{
+					Partition: parser.Partition{
+						Values: []parser.Expression{
+							parser.Arithmetic{
+								LHS:      parser.NewIntegerValue(1),
+								RHS:      parser.NewIntegerValue(2),
+								Operator: '+',
+							},
+						},
+					},
+					OrderByClause: parser.OrderByClause{
+						Items: []parser.Expression{
+							parser.OrderItem{
+								Value: parser.Arithmetic{
+									LHS:      parser.NewIntegerValue(3),
+									RHS:      parser.NewIntegerValue(4),
+									Operator: '+',
+								},
+							},
+						},
+					},
+				},
+			},
+			parser.Arithmetic{
+				LHS:      parser.NewIntegerValue(5),
+				RHS:      parser.NewIntegerValue(6),
+				Operator: '+',
+			},
+		},
+		Result: 9,
+	},
+	{
+		Name: "ExtendRecordCapacity UserDefinedFunction Not Grouped Error",
+		View: &View{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Records: Records{
+				NewRecord([]parser.Primary{
+					parser.NewInteger(1),
+					parser.NewInteger(2),
+				}),
+			},
+			Filter: &Filter{
+				FunctionsList: UserDefinedFunctionsList{
+					UserDefinedFunctionMap{
+						"USERFUNC": &UserDefinedFunction{
+							Name: parser.Identifier{Literal: "userfunc"},
+							Parameters: []parser.Variable{
+								{Name: "@arg1"},
+							},
+							RequiredArgs: 1,
+							Statements: []parser.Statement{
+								parser.Return{Value: parser.Variable{Name: "@arg1"}},
+							},
+							IsAggregate: true,
+						},
+					},
+				},
+			},
+		},
+		Exprs: []parser.Expression{
+			parser.Function{
+				Name: "userfunc",
+				Args: []parser.Expression{
+					parser.NewIntegerValue(1),
+				},
+			},
+		},
+		Error: "[L:- C:-] function userfunc cannot aggregate not grouping records",
+	},
+	{
+		Name: "ExtendRecordCapacity AggregateFunction Not Grouped Error",
+		View: &View{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Records: Records{
+				NewRecord([]parser.Primary{
+					parser.NewInteger(1),
+					parser.NewInteger(2),
+				}),
+			},
+		},
+		Exprs: []parser.Expression{
+			parser.AggregateFunction{
+				Name: "avg",
+				Args: []parser.Expression{
+					parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				},
+			},
+		},
+		Error: "[L:- C:-] function avg cannot aggregate not grouping records",
+	},
+	{
+		Name: "ExtendRecordCapacity ListAgg Not Grouped Error",
+		View: &View{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Records: Records{
+				NewRecord([]parser.Primary{
+					parser.NewInteger(1),
+					parser.NewInteger(2),
+				}),
+			},
+		},
+		Exprs: []parser.Expression{
+			parser.ListAgg{
+				ListAgg:  "listagg",
+				Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
+				Args: []parser.Expression{
+					parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+					parser.NewStringValue(","),
+				},
+				OrderBy: parser.OrderByClause{
+					Items: []parser.Expression{
+						parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] function listagg cannot aggregate not grouping records",
+	},
+	{
+		Name: "ExtendRecordCapacity AnalyticFunction Partition Value Error",
+		View: &View{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Records: Records{
+				NewRecord([]parser.Primary{
+					parser.NewInteger(1),
+					parser.NewInteger(2),
+				}),
+			},
+		},
+		Exprs: []parser.Expression{
+			parser.AnalyticFunction{
+				Name: "rank",
+				AnalyticClause: parser.AnalyticClause{
+					Partition: parser.Partition{
+						Values: []parser.Expression{
+							parser.AggregateFunction{
+								Name: "avg",
+								Args: []parser.Expression{
+									parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+								},
+							},
+						},
+					},
+					OrderByClause: parser.OrderByClause{
+						Items: []parser.Expression{
+							parser.OrderItem{
+								Value: parser.Arithmetic{
+									LHS:      parser.NewIntegerValue(3),
+									RHS:      parser.NewIntegerValue(4),
+									Operator: '+',
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] function avg cannot aggregate not grouping records",
+	},
+	{
+		Name: "ExtendRecordCapacity AnalyticFunction OrderBy Value Error",
+		View: &View{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Records: Records{
+				NewRecord([]parser.Primary{
+					parser.NewInteger(1),
+					parser.NewInteger(2),
+				}),
+			},
+		},
+		Exprs: []parser.Expression{
+			parser.AnalyticFunction{
+				Name: "rank",
+				AnalyticClause: parser.AnalyticClause{
+					Partition: parser.Partition{
+						Values: []parser.Expression{
+							parser.Arithmetic{
+								LHS:      parser.NewIntegerValue(1),
+								RHS:      parser.NewIntegerValue(2),
+								Operator: '+',
+							},
+						},
+					},
+					OrderByClause: parser.OrderByClause{
+						Items: []parser.Expression{
+							parser.OrderItem{
+								Value: parser.AggregateFunction{
+									Name: "avg",
+									Args: []parser.Expression{
+										parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Error: "[L:- C:-] function avg cannot aggregate not grouping records",
+	},
+}
+
+func TestView_ExtendRecordCapacity(t *testing.T) {
+	for _, v := range viewExtendRecordCapacity {
+		err := v.View.ExtendRecordCapacity(v.Exprs)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if cap(v.View.Records[0]) != v.Result {
+			t.Errorf("%s: record capacity = %d, want %d", v.Name, cap(v.View.Records[0]), v.Result)
 		}
 	}
 }

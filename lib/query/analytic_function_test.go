@@ -4,18 +4,22 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
 var analyzeTests = []struct {
-	Name     string
-	View     *View
-	Function parser.AnalyticFunction
-	Result   *View
-	Error    string
+	Name             string
+	CPU              int
+	View             *View
+	Function         parser.AnalyticFunction
+	PartitionIndices []int
+	Result           *View
+	Error            string
 }{
 	{
 		Name: "Analyze AnalyticFunction",
+		CPU:  3,
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
@@ -76,6 +80,7 @@ var analyzeTests = []struct {
 				},
 			},
 		},
+		PartitionIndices: []int{0},
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
@@ -116,6 +121,15 @@ var analyzeTests = []struct {
 				}),
 			},
 			Filter: NewEmptyFilter(),
+			sortValues: [][]*SortValue{
+				{NewSortValue(parser.NewString("a")), nil},
+				{NewSortValue(parser.NewString("b")), nil},
+				{NewSortValue(parser.NewString("b")), nil},
+				{NewSortValue(parser.NewString("b")), nil},
+				{NewSortValue(parser.NewString("b")), nil},
+				{NewSortValue(parser.NewString("b")), nil},
+				{NewSortValue(parser.NewString("a")), nil},
+			},
 			recordSortValues: []SortValues{
 				{NewSortValue(parser.NewInteger(1))},
 				{NewSortValue(parser.NewInteger(1))},
@@ -125,6 +139,41 @@ var analyzeTests = []struct {
 				{NewSortValue(parser.NewInteger(3))},
 				{NewSortValue(parser.NewInteger(2))},
 			},
+		},
+	},
+	{
+		Name: "Analyze AnalyticFunction Empty Record",
+		CPU:  3,
+		View: &View{
+			Header:           NewHeader("table1", []string{"column1", "column2"}),
+			Records:          []Record{},
+			Filter:           NewEmptyFilter(),
+			recordSortValues: []SortValues{},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "rank",
+			AnalyticClause: parser.AnalyticClause{
+				Partition: parser.Partition{
+					Values: []parser.Expression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+				OrderByClause: parser.OrderByClause{
+					Items: []parser.Expression{
+						parser.OrderItem{
+							Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+						},
+					},
+				},
+			},
+		},
+		PartitionIndices: []int{0},
+		Result: &View{
+			Header:           NewHeader("table1", []string{"column1", "column2"}),
+			Records:          []Record{},
+			Filter:           NewEmptyFilter(),
+			sortValues:       [][]*SortValue{},
+			recordSortValues: []SortValues{},
 		},
 	},
 	{
@@ -164,41 +213,6 @@ var analyzeTests = []struct {
 			},
 		},
 		Error: "[L:- C:-] function rank takes no argument",
-	},
-	{
-		Name: "Analyze AnalyticFunction Partition Value Error",
-		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
-				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
-				}),
-			},
-			Filter: NewEmptyFilter(),
-		},
-		Function: parser.AnalyticFunction{
-			Name: "rank",
-			AnalyticClause: parser.AnalyticClause{
-				Partition: parser.Partition{
-					Values: []parser.Expression{
-						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-					},
-				},
-				OrderByClause: parser.OrderByClause{
-					Items: []parser.Expression{
-						parser.OrderItem{
-							Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-						},
-					},
-				},
-			},
-		},
-		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
 		Name: "Analyze AnalyticFunction Execution Error",
@@ -265,6 +279,7 @@ var analyzeTests = []struct {
 				},
 			},
 		},
+		PartitionIndices: []int{0},
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
@@ -295,6 +310,13 @@ var analyzeTests = []struct {
 				}),
 			},
 			Filter: NewEmptyFilter(),
+			sortValues: [][]*SortValue{
+				{NewSortValue(parser.NewString("a")), nil},
+				{NewSortValue(parser.NewString("a")), nil},
+				{NewSortValue(parser.NewString("b")), nil},
+				{NewSortValue(parser.NewString("b")), nil},
+				{NewSortValue(parser.NewString("b")), nil},
+			},
 		},
 	},
 	{
@@ -324,6 +346,13 @@ var analyzeTests = []struct {
 				}),
 			},
 			Filter: NewEmptyFilter(),
+			sortValues: [][]*SortValue{
+				{NewSortValue(parser.NewString("a")), nil},
+				{NewSortValue(parser.NewString("a")), nil},
+				{NewSortValue(parser.NewString("b")), nil},
+				{NewSortValue(parser.NewString("b")), nil},
+				{NewSortValue(parser.NewString("b")), nil},
+			},
 		},
 		Function: parser.AnalyticFunction{
 			Name:     "count",
@@ -339,6 +368,7 @@ var analyzeTests = []struct {
 				},
 			},
 		},
+		PartitionIndices: []int{0},
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
@@ -369,6 +399,13 @@ var analyzeTests = []struct {
 				}),
 			},
 			Filter: NewEmptyFilter(),
+			sortValues: [][]*SortValue{
+				{NewSortValue(parser.NewString("a")), nil},
+				{NewSortValue(parser.NewString("a")), nil},
+				{NewSortValue(parser.NewString("b")), nil},
+				{NewSortValue(parser.NewString("b")), nil},
+				{NewSortValue(parser.NewString("b")), nil},
+			},
 		},
 	},
 	{
@@ -538,6 +575,7 @@ var analyzeTests = []struct {
 				},
 			},
 		},
+		PartitionIndices: []int{0},
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
 			Records: []Record{
@@ -566,6 +604,13 @@ var analyzeTests = []struct {
 					parser.NewInteger(1),
 					parser.NewInteger(1),
 				}),
+			},
+			sortValues: [][]*SortValue{
+				{NewSortValue(parser.NewString("a")), nil},
+				{NewSortValue(parser.NewString("a")), nil},
+				{NewSortValue(parser.NewString("b")), nil},
+				{NewSortValue(parser.NewString("b")), nil},
+				{NewSortValue(parser.NewString("b")), nil},
 			},
 			Filter: &Filter{
 				FunctionsList: UserDefinedFunctionsList{
@@ -806,8 +851,15 @@ var analyzeTests = []struct {
 }
 
 func TestAnalyze(t *testing.T) {
+	flag := cmd.GetFlags()
+
 	for _, v := range analyzeTests {
-		err := Analyze(v.View, v.Function)
+		if 0 < v.CPU {
+			flag.CPU = v.CPU
+		} else {
+			v.CPU = 1
+		}
+		err := Analyze(v.View, v.Function, v.PartitionIndices)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
