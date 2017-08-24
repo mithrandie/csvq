@@ -1607,29 +1607,6 @@ func TestAnalyticClause_PartitionValues(t *testing.T) {
 	}
 }
 
-func TestAnalyticClause_OrderValues(t *testing.T) {
-	e := AnalyticClause{
-		OrderByClause: OrderByClause{
-			OrderBy: "order by",
-			Items: []Expression{
-				OrderItem{Value: Identifier{Literal: "column3"}},
-			},
-		},
-	}
-	expect := []Expression{
-		Identifier{Literal: "column3"},
-	}
-	if !reflect.DeepEqual(e.OrderValues(), expect) {
-		t.Errorf("order values = %q, want %q for %#v", e.OrderValues(), expect, e)
-	}
-
-	e = AnalyticClause{}
-	expect = []Expression(nil)
-	if !reflect.DeepEqual(e.OrderValues(), expect) {
-		t.Errorf("order values = %q, want %q for %#v", e.OrderValues(), expect, e)
-	}
-}
-
 func TestPartition_String(t *testing.T) {
 	e := Partition{
 		PartitionBy: "partition by",

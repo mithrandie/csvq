@@ -1209,19 +1209,6 @@ func (e AnalyticClause) PartitionValues() []Expression {
 	return e.Partition.(Partition).Values
 }
 
-func (e AnalyticClause) OrderValues() []Expression {
-	if e.OrderByClause == nil {
-		return nil
-	}
-
-	items := e.OrderByClause.(OrderByClause).Items
-	result := make([]Expression, len(items))
-	for i, v := range items {
-		result[i] = v.(OrderItem).Value
-	}
-	return result
-}
-
 type Partition struct {
 	*BaseExpr
 	PartitionBy string

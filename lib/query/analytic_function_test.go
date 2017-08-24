@@ -49,6 +49,15 @@ var analyzeTests = []struct {
 				}),
 			},
 			Filter: NewEmptyFilter(),
+			recordSortValues: []SortValues{
+				{NewSortValue(parser.NewInteger(1))},
+				{NewSortValue(parser.NewInteger(1))},
+				{NewSortValue(parser.NewInteger(1))},
+				{NewSortValue(parser.NewInteger(2))},
+				{NewSortValue(parser.NewInteger(2))},
+				{NewSortValue(parser.NewInteger(3))},
+				{NewSortValue(parser.NewInteger(2))},
+			},
 		},
 		Function: parser.AnalyticFunction{
 			Name: "rank",
@@ -107,6 +116,15 @@ var analyzeTests = []struct {
 				}),
 			},
 			Filter: NewEmptyFilter(),
+			recordSortValues: []SortValues{
+				{NewSortValue(parser.NewInteger(1))},
+				{NewSortValue(parser.NewInteger(1))},
+				{NewSortValue(parser.NewInteger(1))},
+				{NewSortValue(parser.NewInteger(2))},
+				{NewSortValue(parser.NewInteger(2))},
+				{NewSortValue(parser.NewInteger(3))},
+				{NewSortValue(parser.NewInteger(2))},
+			},
 		},
 	},
 	{
@@ -175,41 +193,6 @@ var analyzeTests = []struct {
 					Items: []parser.Expression{
 						parser.OrderItem{
 							Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-						},
-					},
-				},
-			},
-		},
-		Error: "[L:- C:-] field notexist does not exist",
-	},
-	{
-		Name: "Analyze AnalyticFunction Order Value Error",
-		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
-				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
-				}),
-			},
-			Filter: NewEmptyFilter(),
-		},
-		Function: parser.AnalyticFunction{
-			Name: "rank",
-			AnalyticClause: parser.AnalyticClause{
-				Partition: parser.Partition{
-					Values: []parser.Expression{
-						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-					},
-				},
-				OrderByClause: parser.OrderByClause{
-					Items: []parser.Expression{
-						parser.OrderItem{
-							Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 						},
 					},
 				},
@@ -868,11 +851,12 @@ func testAnalyticFunctionCheckArgsLenTests(t *testing.T, fn AnalyticFunction, te
 }
 
 type analyticFunctionExecuteTests struct {
-	Name     string
-	Items    Partition
-	Function parser.AnalyticFunction
-	Result   map[int]parser.Primary
-	Error    string
+	Name       string
+	Items      Partition
+	SortValues map[int]SortValues
+	Function   parser.AnalyticFunction
+	Result     map[int]parser.Primary
+	Error      string
 }
 
 var analyticFunctionTestFilter = &Filter{
@@ -932,6 +916,16 @@ var analyticFunctionTestFilter = &Filter{
 
 func testAnalyticFunctionExecute(t *testing.T, fn AnalyticFunction, tests []analyticFunctionExecuteTests) {
 	for _, v := range tests {
+		if v.SortValues != nil {
+			list := make([]SortValues, analyticFunctionTestFilter.Records[0].View.RecordLen())
+			for i, v := range v.SortValues {
+				list[i] = v
+			}
+			analyticFunctionTestFilter.Records[0].View.recordSortValues = list
+		} else {
+			analyticFunctionTestFilter.Records[0].View.recordSortValues = nil
+		}
+
 		result, err := fn.Execute(v.Items, v.Function, analyticFunctionTestFilter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -977,14 +971,8 @@ func TestRowNumber_CheckArgsLen(t *testing.T) {
 
 var rowNumberExecuteTests = []analyticFunctionExecuteTests{
 	{
-		Name: "RowNumber Execute",
-		Items: Partition{
-			{RecordIndex: 2},
-			{RecordIndex: 4},
-			{RecordIndex: 1},
-			{RecordIndex: 3},
-			{RecordIndex: 5},
-		},
+		Name:  "RowNumber Execute",
+		Items: Partition{2, 4, 1, 3, 5},
 		Function: parser.AnalyticFunction{
 			Name: "row_number",
 		},
@@ -1021,28 +1009,14 @@ func TestRank_CheckArgsLen(t *testing.T) {
 
 var rankExecuteTests = []analyticFunctionExecuteTests{
 	{
-		Name: "Rank Execute",
-		Items: Partition{
-			{
-				OrderKey:    SerializeComparisonKeys([]parser.Primary{parser.NewString("1")}),
-				RecordIndex: 2,
-			},
-			{
-				OrderKey:    SerializeComparisonKeys([]parser.Primary{parser.NewString("1")}),
-				RecordIndex: 4,
-			},
-			{
-				OrderKey:    SerializeComparisonKeys([]parser.Primary{parser.NewString("2")}),
-				RecordIndex: 1,
-			},
-			{
-				OrderKey:    SerializeComparisonKeys([]parser.Primary{parser.NewString("2")}),
-				RecordIndex: 3,
-			},
-			{
-				OrderKey:    SerializeComparisonKeys([]parser.Primary{parser.NewString("3")}),
-				RecordIndex: 5,
-			},
+		Name:  "Rank Execute",
+		Items: Partition{2, 4, 1, 3, 5},
+		SortValues: map[int]SortValues{
+			2: {NewSortValue(parser.NewString("1"))},
+			4: {NewSortValue(parser.NewString("1"))},
+			1: {NewSortValue(parser.NewString("2"))},
+			3: {NewSortValue(parser.NewString("2"))},
+			5: {NewSortValue(parser.NewString("3"))},
 		},
 		Function: parser.AnalyticFunction{
 			Name: "rank",
@@ -1080,28 +1054,14 @@ func TestDenseRank_CheckArgsLen(t *testing.T) {
 
 var denseRankExecuteTests = []analyticFunctionExecuteTests{
 	{
-		Name: "DenseRank Execute",
-		Items: Partition{
-			{
-				OrderKey:    SerializeComparisonKeys([]parser.Primary{parser.NewString("1")}),
-				RecordIndex: 2,
-			},
-			{
-				OrderKey:    SerializeComparisonKeys([]parser.Primary{parser.NewString("1")}),
-				RecordIndex: 4,
-			},
-			{
-				OrderKey:    SerializeComparisonKeys([]parser.Primary{parser.NewString("2")}),
-				RecordIndex: 1,
-			},
-			{
-				OrderKey:    SerializeComparisonKeys([]parser.Primary{parser.NewString("2")}),
-				RecordIndex: 3,
-			},
-			{
-				OrderKey:    SerializeComparisonKeys([]parser.Primary{parser.NewString("3")}),
-				RecordIndex: 5,
-			},
+		Name:  "DenseRank Execute",
+		Items: Partition{2, 4, 1, 3, 5},
+		SortValues: map[int]SortValues{
+			2: {NewSortValue(parser.NewString("1"))},
+			4: {NewSortValue(parser.NewString("1"))},
+			1: {NewSortValue(parser.NewString("2"))},
+			3: {NewSortValue(parser.NewString("2"))},
+			5: {NewSortValue(parser.NewString("3"))},
 		},
 		Function: parser.AnalyticFunction{
 			Name: "dense_rank",
@@ -1139,24 +1099,13 @@ func TestCumeDist_CheckArgsLen(t *testing.T) {
 
 var cumeDistExecuteTests = []analyticFunctionExecuteTests{
 	{
-		Name: "CumeDist Execute",
-		Items: Partition{
-			{
-				OrderKey:    SerializeComparisonKeys([]parser.Primary{parser.NewString("1")}),
-				RecordIndex: 2,
-			},
-			{
-				OrderKey:    SerializeComparisonKeys([]parser.Primary{parser.NewString("2")}),
-				RecordIndex: 4,
-			},
-			{
-				OrderKey:    SerializeComparisonKeys([]parser.Primary{parser.NewString("2")}),
-				RecordIndex: 1,
-			},
-			{
-				OrderKey:    SerializeComparisonKeys([]parser.Primary{parser.NewString("3")}),
-				RecordIndex: 3,
-			},
+		Name:  "CumeDist Execute",
+		Items: Partition{2, 4, 1, 3},
+		SortValues: map[int]SortValues{
+			2: {NewSortValue(parser.NewString("1"))},
+			4: {NewSortValue(parser.NewString("2"))},
+			1: {NewSortValue(parser.NewString("2"))},
+			3: {NewSortValue(parser.NewString("3"))},
 		},
 		Function: parser.AnalyticFunction{
 			Name: "cume_dist",
@@ -1193,28 +1142,14 @@ func TestPercentRank_CheckArgsLen(t *testing.T) {
 
 var percentRankExecuteTests = []analyticFunctionExecuteTests{
 	{
-		Name: "PercentRank Execute",
-		Items: Partition{
-			{
-				OrderKey:    SerializeComparisonKeys([]parser.Primary{parser.NewString("1")}),
-				RecordIndex: 2,
-			},
-			{
-				OrderKey:    SerializeComparisonKeys([]parser.Primary{parser.NewString("2")}),
-				RecordIndex: 4,
-			},
-			{
-				OrderKey:    SerializeComparisonKeys([]parser.Primary{parser.NewString("2")}),
-				RecordIndex: 1,
-			},
-			{
-				OrderKey:    SerializeComparisonKeys([]parser.Primary{parser.NewString("3")}),
-				RecordIndex: 3,
-			},
-			{
-				OrderKey:    SerializeComparisonKeys([]parser.Primary{parser.NewString("4")}),
-				RecordIndex: 5,
-			},
+		Name:  "PercentRank Execute",
+		Items: Partition{2, 4, 1, 3, 5},
+		SortValues: map[int]SortValues{
+			2: {NewSortValue(parser.NewString("1"))},
+			4: {NewSortValue(parser.NewString("2"))},
+			1: {NewSortValue(parser.NewString("2"))},
+			3: {NewSortValue(parser.NewString("3"))},
+			5: {NewSortValue(parser.NewString("4"))},
 		},
 		Function: parser.AnalyticFunction{
 			Name: "percent_rank",
@@ -1249,16 +1184,8 @@ func TestNTile_CheckArgsLen(t *testing.T) {
 
 var ntileValueExecuteTests = []analyticFunctionExecuteTests{
 	{
-		Name: "NTile Execute",
-		Items: Partition{
-			{RecordIndex: 1},
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-			{RecordIndex: 5},
-			{RecordIndex: 6},
-			{RecordIndex: 7},
-		},
+		Name:  "NTile Execute",
+		Items: Partition{1, 2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "ntile",
 			Args: []parser.Expression{
@@ -1276,11 +1203,8 @@ var ntileValueExecuteTests = []analyticFunctionExecuteTests{
 		},
 	},
 	{
-		Name: "NTile Execute Greater Tile Number",
-		Items: Partition{
-			{RecordIndex: 1},
-			{RecordIndex: 2},
-		},
+		Name:  "NTile Execute Greater Tile Number",
+		Items: Partition{1, 2},
 		Function: parser.AnalyticFunction{
 			Name: "ntile",
 			Args: []parser.Expression{
@@ -1293,16 +1217,8 @@ var ntileValueExecuteTests = []analyticFunctionExecuteTests{
 		},
 	},
 	{
-		Name: "NTile Execute Argument Evaluation Error",
-		Items: Partition{
-			{RecordIndex: 1},
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-			{RecordIndex: 5},
-			{RecordIndex: 6},
-			{RecordIndex: 7},
-		},
+		Name:  "NTile Execute Argument Evaluation Error",
+		Items: Partition{1, 2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "ntile",
 			Args: []parser.Expression{
@@ -1312,16 +1228,8 @@ var ntileValueExecuteTests = []analyticFunctionExecuteTests{
 		Error: "[L:- C:-] the first argument must be an integer for function ntile",
 	},
 	{
-		Name: "NTile Execute Argument Type Error",
-		Items: Partition{
-			{RecordIndex: 1},
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-			{RecordIndex: 5},
-			{RecordIndex: 6},
-			{RecordIndex: 7},
-		},
+		Name:  "NTile Execute Argument Type Error",
+		Items: Partition{1, 2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "ntile",
 			Args: []parser.Expression{
@@ -1331,16 +1239,8 @@ var ntileValueExecuteTests = []analyticFunctionExecuteTests{
 		Error: "[L:- C:-] the first argument must be an integer for function ntile",
 	},
 	{
-		Name: "NTile Execute Argument Value Error",
-		Items: Partition{
-			{RecordIndex: 1},
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-			{RecordIndex: 5},
-			{RecordIndex: 6},
-			{RecordIndex: 7},
-		},
+		Name:  "NTile Execute Argument Value Error",
+		Items: Partition{1, 2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "ntile",
 			Args: []parser.Expression{
@@ -1371,15 +1271,8 @@ func TestFirstValue_CheckArgsLen(t *testing.T) {
 
 var firstValueExecuteTests = []analyticFunctionExecuteTests{
 	{
-		Name: "FirstValue Execute",
-		Items: Partition{
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-			{RecordIndex: 5},
-			{RecordIndex: 6},
-			{RecordIndex: 7},
-		},
+		Name:  "FirstValue Execute",
+		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "first_value",
 			Args: []parser.Expression{
@@ -1396,15 +1289,8 @@ var firstValueExecuteTests = []analyticFunctionExecuteTests{
 		},
 	},
 	{
-		Name: "FirstValue Execute IgnoreNulls",
-		Items: Partition{
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-			{RecordIndex: 5},
-			{RecordIndex: 6},
-			{RecordIndex: 7},
-		},
+		Name:  "FirstValue Execute IgnoreNulls",
+		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "first_value",
 			Args: []parser.Expression{
@@ -1422,11 +1308,8 @@ var firstValueExecuteTests = []analyticFunctionExecuteTests{
 		},
 	},
 	{
-		Name: "FirstValue Execute Argument Value Error",
-		Items: Partition{
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-		},
+		Name:  "FirstValue Execute Argument Value Error",
+		Items: Partition{2, 3},
 		Function: parser.AnalyticFunction{
 			Name: "first_value",
 			Args: []parser.Expression{
@@ -1457,15 +1340,8 @@ func TestLastValue_CheckArgsLen(t *testing.T) {
 
 var lastValueExecuteTests = []analyticFunctionExecuteTests{
 	{
-		Name: "LastValue Execute",
-		Items: Partition{
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-			{RecordIndex: 5},
-			{RecordIndex: 6},
-			{RecordIndex: 7},
-		},
+		Name:  "LastValue Execute",
+		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "last_value",
 			Args: []parser.Expression{
@@ -1482,15 +1358,8 @@ var lastValueExecuteTests = []analyticFunctionExecuteTests{
 		},
 	},
 	{
-		Name: "LastValue Execute IgnoreNulls",
-		Items: Partition{
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-			{RecordIndex: 5},
-			{RecordIndex: 6},
-			{RecordIndex: 7},
-		},
+		Name:  "LastValue Execute IgnoreNulls",
+		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "last_value",
 			Args: []parser.Expression{
@@ -1529,15 +1398,8 @@ func TestNthValue_CheckArgsLen(t *testing.T) {
 
 var nthValueExecuteTests = []analyticFunctionExecuteTests{
 	{
-		Name: "NthValue Execute",
-		Items: Partition{
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-			{RecordIndex: 5},
-			{RecordIndex: 6},
-			{RecordIndex: 7},
-		},
+		Name:  "NthValue Execute",
+		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "nth_value",
 			Args: []parser.Expression{
@@ -1555,15 +1417,8 @@ var nthValueExecuteTests = []analyticFunctionExecuteTests{
 		},
 	},
 	{
-		Name: "NthValue Execute Second Argument Evaluation Error",
-		Items: Partition{
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-			{RecordIndex: 5},
-			{RecordIndex: 6},
-			{RecordIndex: 7},
-		},
+		Name:  "NthValue Execute Second Argument Evaluation Error",
+		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "nth_value",
 			Args: []parser.Expression{
@@ -1574,15 +1429,8 @@ var nthValueExecuteTests = []analyticFunctionExecuteTests{
 		Error: "[L:- C:-] the second argument must be an integer for function nth_value",
 	},
 	{
-		Name: "NthValue Execute Second Argument Type Error",
-		Items: Partition{
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-			{RecordIndex: 5},
-			{RecordIndex: 6},
-			{RecordIndex: 7},
-		},
+		Name:  "NthValue Execute Second Argument Type Error",
+		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "nth_value",
 			Args: []parser.Expression{
@@ -1593,15 +1441,8 @@ var nthValueExecuteTests = []analyticFunctionExecuteTests{
 		Error: "[L:- C:-] the second argument must be an integer for function nth_value",
 	},
 	{
-		Name: "NthValue Execute Second Argument Value Error",
-		Items: Partition{
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-			{RecordIndex: 5},
-			{RecordIndex: 6},
-			{RecordIndex: 7},
-		},
+		Name:  "NthValue Execute Second Argument Value Error",
+		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "nth_value",
 			Args: []parser.Expression{
@@ -1646,15 +1487,8 @@ func TestLag_CheckArgsLen(t *testing.T) {
 
 var lagExecuteTests = []analyticFunctionExecuteTests{
 	{
-		Name: "Lag Execute",
-		Items: Partition{
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-			{RecordIndex: 5},
-			{RecordIndex: 6},
-			{RecordIndex: 7},
-		},
+		Name:  "Lag Execute",
+		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "lag",
 			Args: []parser.Expression{
@@ -1673,15 +1507,8 @@ var lagExecuteTests = []analyticFunctionExecuteTests{
 		},
 	},
 	{
-		Name: "Lag Execute With Default Value",
-		Items: Partition{
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-			{RecordIndex: 5},
-			{RecordIndex: 6},
-			{RecordIndex: 7},
-		},
+		Name:  "Lag Execute With Default Value",
+		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "lag",
 			Args: []parser.Expression{
@@ -1698,15 +1525,8 @@ var lagExecuteTests = []analyticFunctionExecuteTests{
 		},
 	},
 	{
-		Name: "Lag Execute With IgnoreNulls",
-		Items: Partition{
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-			{RecordIndex: 5},
-			{RecordIndex: 6},
-			{RecordIndex: 7},
-		},
+		Name:  "Lag Execute With IgnoreNulls",
+		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "lag",
 			Args: []parser.Expression{
@@ -1726,15 +1546,8 @@ var lagExecuteTests = []analyticFunctionExecuteTests{
 		},
 	},
 	{
-		Name: "Lag Execute First Argument Evaluation Error",
-		Items: Partition{
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-			{RecordIndex: 5},
-			{RecordIndex: 6},
-			{RecordIndex: 7},
-		},
+		Name:  "Lag Execute First Argument Evaluation Error",
+		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "lag",
 			Args: []parser.Expression{
@@ -1746,15 +1559,8 @@ var lagExecuteTests = []analyticFunctionExecuteTests{
 		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
-		Name: "Lag Execute Second Argument Evaluation Error",
-		Items: Partition{
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-			{RecordIndex: 5},
-			{RecordIndex: 6},
-			{RecordIndex: 7},
-		},
+		Name:  "Lag Execute Second Argument Evaluation Error",
+		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "lag",
 			Args: []parser.Expression{
@@ -1766,15 +1572,8 @@ var lagExecuteTests = []analyticFunctionExecuteTests{
 		Error: "[L:- C:-] the second argument must be an integer for function lag",
 	},
 	{
-		Name: "Lag Execute Second Argument Type Error",
-		Items: Partition{
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-			{RecordIndex: 5},
-			{RecordIndex: 6},
-			{RecordIndex: 7},
-		},
+		Name:  "Lag Execute Second Argument Type Error",
+		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "lag",
 			Args: []parser.Expression{
@@ -1786,15 +1585,8 @@ var lagExecuteTests = []analyticFunctionExecuteTests{
 		Error: "[L:- C:-] the second argument must be an integer for function lag",
 	},
 	{
-		Name: "Lag Execute Third Argument Type Error",
-		Items: Partition{
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-			{RecordIndex: 5},
-			{RecordIndex: 6},
-			{RecordIndex: 7},
-		},
+		Name:  "Lag Execute Third Argument Type Error",
+		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "lag",
 			Args: []parser.Expression{
@@ -1827,15 +1619,8 @@ func TestLead_CheckArgsLen(t *testing.T) {
 
 var leadExecuteTests = []analyticFunctionExecuteTests{
 	{
-		Name: "Lead Execute With Default Value",
-		Items: Partition{
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-			{RecordIndex: 5},
-			{RecordIndex: 6},
-			{RecordIndex: 7},
-		},
+		Name:  "Lead Execute With Default Value",
+		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "lead",
 			Args: []parser.Expression{
@@ -1873,14 +1658,8 @@ func TestAnalyticListAgg_CheckArgsLen(t *testing.T) {
 
 var analyticListAggExecuteTests = []analyticFunctionExecuteTests{
 	{
-		Name: "AnalyticListAgg Execute",
-		Items: Partition{
-			{RecordIndex: 0},
-			{RecordIndex: 1},
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-		},
+		Name:  "AnalyticListAgg Execute",
+		Items: Partition{0, 1, 2, 3, 4},
 		Function: parser.AnalyticFunction{
 			Name: "listagg",
 			Args: []parser.Expression{
@@ -1897,14 +1676,8 @@ var analyticListAggExecuteTests = []analyticFunctionExecuteTests{
 		},
 	},
 	{
-		Name: "AnalyticListAgg Execute With Default Value",
-		Items: Partition{
-			{RecordIndex: 0},
-			{RecordIndex: 1},
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-		},
+		Name:  "AnalyticListAgg Execute With Default Value",
+		Items: Partition{0, 1, 2, 3, 4},
 		Function: parser.AnalyticFunction{
 			Name: "listagg",
 			Args: []parser.Expression{
@@ -1920,14 +1693,8 @@ var analyticListAggExecuteTests = []analyticFunctionExecuteTests{
 		},
 	},
 	{
-		Name: "AnalyticListAgg Execute With Distinct",
-		Items: Partition{
-			{RecordIndex: 0},
-			{RecordIndex: 1},
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-		},
+		Name:  "AnalyticListAgg Execute With Distinct",
+		Items: Partition{0, 1, 2, 3, 4},
 		Function: parser.AnalyticFunction{
 			Name:     "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
@@ -1945,14 +1712,8 @@ var analyticListAggExecuteTests = []analyticFunctionExecuteTests{
 		},
 	},
 	{
-		Name: "AnalyticListAgg Execute First Argument Evaluation Error",
-		Items: Partition{
-			{RecordIndex: 0},
-			{RecordIndex: 1},
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-		},
+		Name:  "AnalyticListAgg Execute First Argument Evaluation Error",
+		Items: Partition{0, 1, 2, 3, 4},
 		Function: parser.AnalyticFunction{
 			Name: "listagg",
 			Args: []parser.Expression{
@@ -1963,14 +1724,8 @@ var analyticListAggExecuteTests = []analyticFunctionExecuteTests{
 		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
-		Name: "AnalyticListAgg Execute Second Argument Evaluation Error",
-		Items: Partition{
-			{RecordIndex: 0},
-			{RecordIndex: 1},
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-		},
+		Name:  "AnalyticListAgg Execute Second Argument Evaluation Error",
+		Items: Partition{0, 1, 2, 3, 4},
 		Function: parser.AnalyticFunction{
 			Name: "listagg",
 			Args: []parser.Expression{
@@ -1981,14 +1736,8 @@ var analyticListAggExecuteTests = []analyticFunctionExecuteTests{
 		Error: "[L:- C:-] the second argument must be a string for function listagg",
 	},
 	{
-		Name: "AnalyticListAgg Execute Second Argument Type Error",
-		Items: Partition{
-			{RecordIndex: 0},
-			{RecordIndex: 1},
-			{RecordIndex: 2},
-			{RecordIndex: 3},
-			{RecordIndex: 4},
-		},
+		Name:  "AnalyticListAgg Execute Second Argument Type Error",
+		Items: Partition{0, 1, 2, 3, 4},
 		Function: parser.AnalyticFunction{
 			Name: "listagg",
 			Args: []parser.Expression{

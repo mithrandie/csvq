@@ -866,12 +866,15 @@ func (view *View) evalAnalyticFunction(expr parser.AnalyticFunction) error {
 		if err != nil {
 			return err
 		}
-		view.recordSortValues = nil
-		view.sortDirections = nil
-		view.sortNullPositions = nil
 	}
 
-	return Analyze(view, expr)
+	err := Analyze(view, expr)
+
+	view.recordSortValues = nil
+	view.sortDirections = nil
+	view.sortNullPositions = nil
+
+	return err
 }
 
 func (view *View) Offset(clause parser.OffsetClause) error {
@@ -1222,12 +1225,12 @@ func (view *View) ListValuesForAggregateFunctions(expr parser.Expression, arg pa
 	return list, nil
 }
 
-func (view *View) ListValuesForAnalyticFunctions(fn parser.AnalyticFunction, partitionItems Partition) ([]parser.Primary, error) {
-	list := make([]parser.Primary, len(partitionItems))
+func (view *View) ListValuesForAnalyticFunctions(fn parser.AnalyticFunction, partition Partition) ([]parser.Primary, error) {
+	list := make([]parser.Primary, len(partition))
 
 	filter := NewFilterForSequentialEvaluation(view, view.Filter)
-	for i, item := range partitionItems {
-		filter.Records[0].RecordIndex = item.RecordIndex
+	for i, idx := range partition {
+		filter.Records[0].RecordIndex = idx
 		value, err := filter.Evaluate(fn.Args[0])
 		if err != nil {
 			return nil, err

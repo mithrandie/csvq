@@ -1,6 +1,7 @@
 package query
 
 import (
+	"sort"
 	"strings"
 	"sync"
 
@@ -28,23 +29,13 @@ type AnalyticFunction interface {
 	Execute(Partition, parser.AnalyticFunction, *Filter) (map[int]parser.Primary, error)
 }
 
-type PartitionItem struct {
-	OrderKey    string
-	RecordIndex int
+type Partition []int
+
+func (p Partition) Reverse() {
+	sort.Sort(sort.Reverse(sort.IntSlice(p)))
 }
 
-type Partition []PartitionItem
-
-func (p Partition) Reverse() Partition {
-	reverse := make(Partition, len(p))
-	lastIdx := len(p) - 1
-	for i, item := range p {
-		reverse[lastIdx-i] = item
-	}
-	return reverse
-}
-
-type PartitionList map[string]Partition
+type Partitions map[string]Partition
 
 func Analyze(view *View, fn parser.AnalyticFunction) error {
 	const (
@@ -91,7 +82,6 @@ func Analyze(view *View, fn parser.AnalyticFunction) error {
 
 	cpu := NumberOfCPU(view.RecordLen())
 	partitionKeys := make([]string, view.RecordLen())
-	partitionItems := make([]PartitionItem, view.RecordLen())
 
 	wg := sync.WaitGroup{}
 	for i := 0; i < cpu; i++ {
@@ -118,23 +108,7 @@ func Analyze(view *View, fn parser.AnalyticFunction) error {
 					partitionKey = SerializeComparisonKeys(partitionValues)
 				}
 
-				var orderKey string
-				if fn.AnalyticClause.OrderValues() != nil {
-					orderValues, e := filter.evalValues(fn.AnalyticClause.OrderValues())
-					if e != nil {
-						err = e
-						break AnalyzePrepareLoop
-					}
-					orderKey = SerializeComparisonKeys(orderValues)
-				}
-
-				pitem := PartitionItem{
-					OrderKey:    orderKey,
-					RecordIndex: i,
-				}
-
 				partitionKeys[i] = partitionKey
-				partitionItems[i] = pitem
 			}
 
 			wg.Done()
@@ -147,13 +121,13 @@ func Analyze(view *View, fn parser.AnalyticFunction) error {
 		return err
 	}
 
-	partitions := PartitionList{}
+	partitions := Partitions{}
 	partitionMapKeys := []string{}
 	for i, key := range partitionKeys {
 		if _, ok := partitions[key]; ok {
-			partitions[key] = append(partitions[key], partitionItems[i])
+			partitions[key] = append(partitions[key], i)
 		} else {
-			partitions[key] = Partition{partitionItems[i]}
+			partitions[key] = Partition{i}
 			partitionMapKeys = append(partitionMapKeys, key)
 		}
 	}
@@ -195,12 +169,12 @@ func Analyze(view *View, fn parser.AnalyticFunction) error {
 
 					if fnType == AGGREGATE {
 						value := aggfn(values)
-						for _, item := range partitions[partitionMapKeys[i]] {
-							view.Records[item.RecordIndex] = append(view.Records[item.RecordIndex], NewCell(value))
+						for _, idx := range partitions[partitionMapKeys[i]] {
+							view.Records[idx] = append(view.Records[idx], NewCell(value))
 						}
 					} else { //User Defined Function
-						for _, item := range partitions[partitionMapKeys[i]] {
-							filter.Records[0].RecordIndex = item.RecordIndex
+						for _, idx := range partitions[partitionMapKeys[i]] {
+							filter.Records[0].RecordIndex = idx
 
 							var args []parser.Primary
 							argsExprs := fn.Args[1:]
@@ -220,7 +194,7 @@ func Analyze(view *View, fn parser.AnalyticFunction) error {
 								break AnalyzeLoop
 							}
 
-							view.Records[item.RecordIndex] = append(view.Records[item.RecordIndex], NewCell(value))
+							view.Records[idx] = append(view.Records[idx], NewCell(value))
 						}
 					}
 				}
@@ -257,12 +231,12 @@ func (fn RowNumber) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{0})
 }
 
-func (fn RowNumber) Execute(items Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
-	list := make(map[int]parser.Primary, len(items))
+func (fn RowNumber) Execute(partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
+	list := make(map[int]parser.Primary, len(partition))
 	var number int64 = 0
-	for _, item := range items {
+	for _, idx := range partition {
 		number++
-		list[item.RecordIndex] = parser.NewInteger(number)
+		list[idx] = parser.NewInteger(number)
 	}
 
 	return list, nil
@@ -274,18 +248,20 @@ func (fn Rank) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{0})
 }
 
-func (fn Rank) Execute(items Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
-	list := make(map[int]parser.Primary, len(items))
+func (fn Rank) Execute(partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
+	list := make(map[int]parser.Primary, len(partition))
 	var number int64 = 0
 	var rank int64 = 0
-	var currentRank PartitionItem
-	for _, item := range items {
+	var currentRank SortValues
+	for _, idx := range partition {
 		number++
-		if item.OrderKey != currentRank.OrderKey {
+		if filter.Records[0].View.recordSortValues == nil || !filter.Records[0].View.recordSortValues[idx].EquivalentTo(currentRank) {
 			rank = number
-			currentRank = item
+			if filter.Records[0].View.recordSortValues != nil {
+				currentRank = filter.Records[0].View.recordSortValues[idx]
+			}
 		}
-		list[item.RecordIndex] = parser.NewInteger(rank)
+		list[idx] = parser.NewInteger(rank)
 	}
 
 	return list, nil
@@ -297,16 +273,18 @@ func (fn DenseRank) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{0})
 }
 
-func (fn DenseRank) Execute(items Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
-	list := make(map[int]parser.Primary, len(items))
+func (fn DenseRank) Execute(partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
+	list := make(map[int]parser.Primary, len(partition))
 	var rank int64 = 0
-	var currentRank PartitionItem
-	for _, item := range items {
-		if item.OrderKey != currentRank.OrderKey {
+	var currentRank SortValues
+	for _, idx := range partition {
+		if filter.Records[0].View.recordSortValues == nil || !filter.Records[0].View.recordSortValues[idx].EquivalentTo(currentRank) {
 			rank++
-			currentRank = item
+			if filter.Records[0].View.recordSortValues != nil {
+				currentRank = filter.Records[0].View.recordSortValues[idx]
+			}
 		}
-		list[item.RecordIndex] = parser.NewInteger(rank)
+		list[idx] = parser.NewInteger(rank)
 	}
 
 	return list, nil
@@ -318,11 +296,11 @@ func (fn CumeDist) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{0})
 }
 
-func (fn CumeDist) Execute(items Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
-	list := make(map[int]parser.Primary, len(items))
+func (fn CumeDist) Execute(partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
+	list := make(map[int]parser.Primary, len(partition))
 
-	groups := perseCumulativeGroups(items)
-	total := float64(len(items))
+	groups := perseCumulativeGroups(partition, filter.Records[0].View)
+	total := float64(len(partition))
 	cumulative := float64(0)
 	for _, group := range groups {
 		cumulative += float64(len(group))
@@ -342,11 +320,11 @@ func (fn PercentRank) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{0})
 }
 
-func (fn PercentRank) Execute(items Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
-	list := make(map[int]parser.Primary, len(items))
+func (fn PercentRank) Execute(partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
+	list := make(map[int]parser.Primary, len(partition))
 
-	groups := perseCumulativeGroups(items)
-	denom := float64(len(items) - 1)
+	groups := perseCumulativeGroups(partition, filter.Records[0].View)
+	denom := float64(len(partition) - 1)
 	cumulative := float64(0)
 	for _, group := range groups {
 		var dist float64 = 1
@@ -364,15 +342,17 @@ func (fn PercentRank) Execute(items Partition, expr parser.AnalyticFunction, fil
 	return list, nil
 }
 
-func perseCumulativeGroups(items Partition) [][]int {
+func perseCumulativeGroups(partition Partition, view *View) [][]int {
 	groups := [][]int{}
-	var currentRank PartitionItem
-	for _, item := range items {
-		if item.OrderKey != currentRank.OrderKey {
-			groups = append(groups, []int{item.RecordIndex})
-			currentRank = item
+	var currentRank SortValues
+	for _, idx := range partition {
+		if view.recordSortValues == nil || !view.recordSortValues[idx].EquivalentTo(currentRank) {
+			groups = append(groups, []int{idx})
+			if view.recordSortValues != nil {
+				currentRank = view.recordSortValues[idx]
+			}
 		} else {
-			groups[len(groups)-1] = append(groups[len(groups)-1], item.RecordIndex)
+			groups[len(groups)-1] = append(groups[len(groups)-1], idx)
 		}
 	}
 	return groups
@@ -384,7 +364,7 @@ func (fn NTile) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{1})
 }
 
-func (fn NTile) Execute(items Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
+func (fn NTile) Execute(partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
 	argsFilter := filter.CreateNode()
 	argsFilter.Records = nil
 
@@ -402,7 +382,7 @@ func (fn NTile) Execute(items Partition, expr parser.AnalyticFunction, filter *F
 		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the first argument must be greater than 0")
 	}
 
-	total := len(items)
+	total := len(partition)
 	perTile := total / tileNumber
 	mod := total % tileNumber
 
@@ -411,10 +391,10 @@ func (fn NTile) Execute(items Partition, expr parser.AnalyticFunction, filter *F
 		mod = 0
 	}
 
-	list := make(map[int]parser.Primary, len(items))
+	list := make(map[int]parser.Primary, len(partition))
 	var tile int64 = 1
 	var count int = 0
-	for _, item := range items {
+	for _, idx := range partition {
 		count++
 
 		switch {
@@ -429,7 +409,7 @@ func (fn NTile) Execute(items Partition, expr parser.AnalyticFunction, filter *F
 				count = 1
 			}
 		}
-		list[item.RecordIndex] = parser.NewInteger(tile)
+		list[idx] = parser.NewInteger(tile)
 	}
 
 	return list, nil
@@ -441,8 +421,8 @@ func (fn FirstValue) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{1})
 }
 
-func (fn FirstValue) Execute(items Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
-	return setNthValue(items, expr, filter, 1)
+func (fn FirstValue) Execute(partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
+	return setNthValue(partition, expr, filter, 1)
 }
 
 type LastValue struct{}
@@ -451,8 +431,9 @@ func (fn LastValue) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{1})
 }
 
-func (fn LastValue) Execute(items Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
-	return setNthValue(items.Reverse(), expr, filter, 1)
+func (fn LastValue) Execute(partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
+	partition.Reverse()
+	return setNthValue(partition, expr, filter, 1)
 }
 
 type NthValue struct{}
@@ -461,7 +442,7 @@ func (fn NthValue) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{2})
 }
 
-func (fn NthValue) Execute(items Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
+func (fn NthValue) Execute(partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
 	argsFilter := filter.CreateNode()
 	argsFilter.Records = nil
 
@@ -479,16 +460,16 @@ func (fn NthValue) Execute(items Partition, expr parser.AnalyticFunction, filter
 		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be greater than 0")
 	}
 
-	return setNthValue(items, expr, filter, n)
+	return setNthValue(partition, expr, filter, n)
 }
 
-func setNthValue(items Partition, expr parser.AnalyticFunction, filter *Filter, n int) (map[int]parser.Primary, error) {
+func setNthValue(partition Partition, expr parser.AnalyticFunction, filter *Filter, n int) (map[int]parser.Primary, error) {
 	var value parser.Primary = parser.NewNull()
 
 	count := 0
-	if n <= len(items) {
-		for _, item := range items {
-			filter.Records[0].RecordIndex = item.RecordIndex
+	if n <= len(partition) {
+		for _, idx := range partition {
+			filter.Records[0].RecordIndex = idx
 			p, err := filter.Evaluate(expr.Args[0])
 			if err != nil {
 				return nil, err
@@ -506,9 +487,9 @@ func setNthValue(items Partition, expr parser.AnalyticFunction, filter *Filter, 
 		}
 	}
 
-	list := make(map[int]parser.Primary, len(items))
-	for _, item := range items {
-		list[item.RecordIndex] = value
+	list := make(map[int]parser.Primary, len(partition))
+	for _, idx := range partition {
+		list[idx] = value
 	}
 
 	return list, nil
@@ -520,8 +501,8 @@ func (fn Lag) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{1, 3})
 }
 
-func (fn Lag) Execute(items Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
-	return setLag(items, expr, filter)
+func (fn Lag) Execute(partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
+	return setLag(partition, expr, filter)
 }
 
 type Lead struct{}
@@ -530,11 +511,12 @@ func (fn Lead) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{1, 3})
 }
 
-func (fn Lead) Execute(items Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
-	return setLag(items.Reverse(), expr, filter)
+func (fn Lead) Execute(partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
+	partition.Reverse()
+	return setLag(partition, expr, filter)
 }
 
-func setLag(items Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
+func setLag(partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
 	argsFilter := filter.CreateNode()
 	argsFilter.Records = nil
 
@@ -560,10 +542,10 @@ func setLag(items Partition, expr parser.AnalyticFunction, filter *Filter) (map[
 		defaultValue = p
 	}
 
-	list := make(map[int]parser.Primary, len(items))
+	list := make(map[int]parser.Primary, len(partition))
 	values := []parser.Primary{}
-	for _, item := range items {
-		filter.Records[0].RecordIndex = item.RecordIndex
+	for _, idx := range partition {
+		filter.Records[0].RecordIndex = idx
 		p, err := filter.Evaluate(expr.Args[0])
 		if err != nil {
 			return nil, err
@@ -582,7 +564,7 @@ func setLag(items Partition, expr parser.AnalyticFunction, filter *Filter) (map[
 				break
 			}
 		}
-		list[item.RecordIndex] = value
+		list[idx] = value
 	}
 
 	return list, nil
@@ -594,7 +576,7 @@ func (fn AnalyticListAgg) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{1, 2})
 }
 
-func (fn AnalyticListAgg) Execute(items Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
+func (fn AnalyticListAgg) Execute(partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]parser.Primary, error) {
 	argsFilter := filter.CreateNode()
 	argsFilter.Records = nil
 
@@ -611,16 +593,16 @@ func (fn AnalyticListAgg) Execute(items Partition, expr parser.AnalyticFunction,
 		separator = s.(parser.String).Value()
 	}
 
-	values, err := filter.Records[0].View.ListValuesForAnalyticFunctions(expr, items)
+	values, err := filter.Records[0].View.ListValuesForAnalyticFunctions(expr, partition)
 	if err != nil {
 		return nil, err
 	}
 
 	value := ListAgg(values, separator)
 
-	list := make(map[int]parser.Primary, len(items))
-	for _, item := range items {
-		list[item.RecordIndex] = value
+	list := make(map[int]parser.Primary, len(partition))
+	for _, idx := range partition {
+		list[idx] = value
 	}
 
 	return list, nil

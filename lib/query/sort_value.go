@@ -51,6 +51,10 @@ func (values SortValues) Less(compareValues SortValues, directions []int, nullPo
 }
 
 func (values SortValues) EquivalentTo(compareValues SortValues) bool {
+	if compareValues == nil {
+		return false
+	}
+
 	for i, value := range values {
 		if !value.EquivalentTo(compareValues[i]) {
 			return false
