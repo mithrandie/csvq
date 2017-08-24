@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
 )
@@ -181,14 +180,31 @@ func TestSortValue_EquivalentTo(t *testing.T) {
 	}
 }
 
-func BenchmarkSortValue_Less(b *testing.B) {
-	r := cmd.GetRand()
-	s1 := NewSortValue(parser.NewString(parser.Float64ToStr(r.Float64())))
-	s2 := NewSortValue(parser.NewString(parser.Float64ToStr(r.Float64())))
+var sortValueLessBench1 = NewSortValue(parser.NewInteger(12345))
+var sortValueLessBench2 = NewSortValue(parser.NewInteger(67890))
 
+func BenchmarkSortValue_Less(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		for j := 0; j < 10000000; j++ {
-			s1.Less(s2)
+		for j := 0; j < 10000; j++ {
+			sortValueLessBench1.Less(sortValueLessBench2)
+		}
+	}
+}
+
+var sortValuesEquivalentBench1 = SortValues{
+	NewSortValue(parser.NewInteger(12345)),
+	NewSortValue(parser.NewString("abcdefghijklmnopqrstuvwxymabcdefghijklmnopqrstuvwxyz")),
+}
+
+var sortValuesEquivalentBench2 = SortValues{
+	NewSortValue(parser.NewInteger(67890)),
+	NewSortValue(parser.NewString("abcdefghijklmnopqrstuvwxymabcdefghijklmnopqrstuvwxyz")),
+}
+
+func BenchmarkSortValues_EquivalentTo(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		for j := 0; j < 10000; j++ {
+			sortValuesEquivalentBench1.EquivalentTo(sortValuesEquivalentBench2)
 		}
 	}
 }

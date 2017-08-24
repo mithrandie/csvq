@@ -47,13 +47,19 @@ func StrToTime(s string) (time.Time, error) {
 					return t, nil
 				}
 			} else if s[10] == 'T' {
-				if t, e := time.Parse(time.RFC3339Nano, s); e == nil {
-					return t, nil
+				if s[len(s)-3] == '+' || s[len(s)-6] == '-' || s[len(s)-1] == 'Z' {
+					if t, e := time.Parse(time.RFC3339Nano, s); e == nil {
+						return t, nil
+					}
+				} else {
+					if t, e := time.ParseInLocation("2006-01-02T15:04:05.999999999", s, cmd.GetLocation()); e == nil {
+						return t, nil
+					}
 				}
 			} else if s[10] == ' ' {
 				if t, e := time.ParseInLocation("2006-01-02 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
 					return t, nil
-				} else if t, e := time.Parse("2006-01-02 15:04:05.999999999 Z07:00", s); e == nil {
+				} else if t, e := time.Parse("2006-01-02 15:04:05.999999999 -07:00", s); e == nil {
 					return t, nil
 				} else if t, e := time.Parse("2006-01-02 15:04:05.999999999 -0700", s); e == nil {
 					return t, nil
@@ -63,7 +69,7 @@ func StrToTime(s string) (time.Time, error) {
 			} else {
 				if t, e := time.ParseInLocation("2006-1-2 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
 					return t, nil
-				} else if t, e := time.Parse("2006-1-2 15:04:05.999999999 Z07:00", s); e == nil {
+				} else if t, e := time.Parse("2006-1-2 15:04:05.999999999 -07:00", s); e == nil {
 					return t, nil
 				} else if t, e := time.Parse("2006-1-2 15:04:05.999999999 -0700", s); e == nil {
 					return t, nil

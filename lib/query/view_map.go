@@ -2,6 +2,7 @@ package query
 
 import (
 	"strings"
+	"sync"
 
 	"github.com/mithrandie/csvq/lib/parser"
 )
@@ -87,13 +88,28 @@ func (m ViewMap) GetWithInternalId(fpath parser.Identifier) (*View, error) {
 	if view, ok := m[ufpath]; ok {
 		ret := view.Copy()
 
-		if 0 < ret.FieldLen() {
-			ret.Header = MergeHeader(NewHeaderWithId(ret.Header[0].View, []string{}), ret.Header)
+		ret.Header = MergeHeader(NewHeaderWithId(ret.Header[0].View, []string{}), ret.Header)
+		fieldLen := ret.FieldLen()
 
-			for i, v := range ret.Records {
-				ret.Records[i] = append(Record{NewCell(parser.NewInteger(int64(i)))}, v...)
-			}
+		cpu := NumberOfCPU(ret.RecordLen())
+		wg := sync.WaitGroup{}
+		for i := 0; i < cpu; i++ {
+			wg.Add(1)
+			go func(thIdx int) {
+				start, end := RecordRange(thIdx, ret.RecordLen(), cpu)
+
+				for i := start; i < end; i++ {
+					record := make(Record, fieldLen)
+					record[0] = NewCell(parser.NewInteger(int64(i)))
+					for j, cell := range ret.Records[i] {
+						record[j+1] = cell
+					}
+					ret.Records[i] = record
+				}
+				wg.Done()
+			}(i)
 		}
+		wg.Wait()
 
 		return ret, nil
 	}

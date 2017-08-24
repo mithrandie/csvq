@@ -1168,3 +1168,26 @@ func TestViewMap_Clear(t *testing.T) {
 		t.Errorf("result = %s, want %s", viewMap, expect)
 	}
 }
+
+var viewMapGetWithInternalIdBench = ViewMap{
+	"BENCH_VIEW": &View{
+		Header: NewHeader("bench_view", []string{"c1", "c2", "c3", "c4"}),
+	},
+}
+
+func BenchmarkViewMap_GetWithInternalId(b *testing.B) {
+	view := viewMapGetWithInternalIdBench["BENCH_VIEW"]
+	view.Records = make(Records, 10000)
+	for i := 0; i < 10000; i++ {
+		view.Records[i] = NewRecord([]parser.Primary{
+			parser.NewInteger(1),
+			parser.NewInteger(2),
+			parser.NewInteger(3),
+			parser.NewInteger(4),
+		})
+	}
+
+	for i := 0; i < b.N; i++ {
+		viewMapGetWithInternalIdBench.GetWithInternalId(parser.Identifier{Literal: "BENCH_VIEW"})
+	}
+}

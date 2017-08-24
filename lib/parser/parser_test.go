@@ -2762,8 +2762,7 @@ var parseTests = []struct {
 		Input: "create table newtable (column1, column2)",
 		Output: []Statement{
 			CreateTable{
-				CreateTable: "create table",
-				Table:       Identifier{BaseExpr: &BaseExpr{line: 1, char: 14}, Literal: "newtable"},
+				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 14}, Literal: "newtable"},
 				Fields: []Expression{
 					Identifier{BaseExpr: &BaseExpr{line: 1, char: 24}, Literal: "column1"},
 					Identifier{BaseExpr: &BaseExpr{line: 1, char: 33}, Literal: "column2"},
@@ -2772,12 +2771,114 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "create table newtable (column1, column2) select 1, 2",
+		Output: []Statement{
+			CreateTable{
+				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 14}, Literal: "newtable"},
+				Fields: []Expression{
+					Identifier{BaseExpr: &BaseExpr{line: 1, char: 24}, Literal: "column1"},
+					Identifier{BaseExpr: &BaseExpr{line: 1, char: 33}, Literal: "column2"},
+				},
+				Query: SelectQuery{
+					SelectEntity: SelectEntity{
+						SelectClause: SelectClause{
+							BaseExpr: &BaseExpr{line: 1, char: 42},
+							Select:   "select",
+							Fields: []Expression{
+								Field{
+									Object: NewIntegerValue(1),
+								},
+								Field{
+									Object: NewIntegerValue(2),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "create table newtable select 1, 2",
+		Output: []Statement{
+			CreateTable{
+				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 14}, Literal: "newtable"},
+				Query: SelectQuery{
+					SelectEntity: SelectEntity{
+						SelectClause: SelectClause{
+							BaseExpr: &BaseExpr{line: 1, char: 23},
+							Select:   "select",
+							Fields: []Expression{
+								Field{
+									Object: NewIntegerValue(1),
+								},
+								Field{
+									Object: NewIntegerValue(2),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "create table newtable (column1, column2) as select 1, 2",
+		Output: []Statement{
+			CreateTable{
+				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 14}, Literal: "newtable"},
+				Fields: []Expression{
+					Identifier{BaseExpr: &BaseExpr{line: 1, char: 24}, Literal: "column1"},
+					Identifier{BaseExpr: &BaseExpr{line: 1, char: 33}, Literal: "column2"},
+				},
+				Query: SelectQuery{
+					SelectEntity: SelectEntity{
+						SelectClause: SelectClause{
+							BaseExpr: &BaseExpr{line: 1, char: 45},
+							Select:   "select",
+							Fields: []Expression{
+								Field{
+									Object: NewIntegerValue(1),
+								},
+								Field{
+									Object: NewIntegerValue(2),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "create table newtable as select 1, 2",
+		Output: []Statement{
+			CreateTable{
+				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 14}, Literal: "newtable"},
+				Query: SelectQuery{
+					SelectEntity: SelectEntity{
+						SelectClause: SelectClause{
+							BaseExpr: &BaseExpr{line: 1, char: 26},
+							Select:   "select",
+							Fields: []Expression{
+								Field{
+									Object: NewIntegerValue(1),
+								},
+								Field{
+									Object: NewIntegerValue(2),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "alter table table1 add column1",
 		Output: []Statement{
 			AddColumns{
-				AlterTable: "alter table",
-				Table:      Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
-				Add:        "add",
+				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
 				Columns: []Expression{
 					ColumnDefault{
 						Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 24}, Literal: "column1"},
@@ -2790,9 +2891,7 @@ var parseTests = []struct {
 		Input: "alter table table1 add (column1, column2 default 1) first",
 		Output: []Statement{
 			AddColumns{
-				AlterTable: "alter table",
-				Table:      Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
-				Add:        "add",
+				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
 				Columns: []Expression{
 					ColumnDefault{
 						Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 25}, Literal: "column1"},
@@ -2813,9 +2912,7 @@ var parseTests = []struct {
 		Input: "alter table table1 add column1 last",
 		Output: []Statement{
 			AddColumns{
-				AlterTable: "alter table",
-				Table:      Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
-				Add:        "add",
+				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
 				Columns: []Expression{
 					ColumnDefault{
 						Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 24}, Literal: "column1"},
@@ -2831,9 +2928,7 @@ var parseTests = []struct {
 		Input: "alter table table1 add column1 after column2",
 		Output: []Statement{
 			AddColumns{
-				AlterTable: "alter table",
-				Table:      Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
-				Add:        "add",
+				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
 				Columns: []Expression{
 					ColumnDefault{
 						Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 24}, Literal: "column1"},
@@ -2850,9 +2945,7 @@ var parseTests = []struct {
 		Input: "alter table table1 add column1 before column2",
 		Output: []Statement{
 			AddColumns{
-				AlterTable: "alter table",
-				Table:      Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
-				Add:        "add",
+				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
 				Columns: []Expression{
 					ColumnDefault{
 						Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 24}, Literal: "column1"},
@@ -2869,10 +2962,8 @@ var parseTests = []struct {
 		Input: "alter table table1 drop column1",
 		Output: []Statement{
 			DropColumns{
-				AlterTable: "alter table",
-				Table:      Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
-				Drop:       "drop",
-				Columns:    []Expression{FieldReference{BaseExpr: &BaseExpr{line: 1, char: 25}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 25}, Literal: "column1"}}},
+				Table:   Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
+				Columns: []Expression{FieldReference{BaseExpr: &BaseExpr{line: 1, char: 25}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 25}, Literal: "column1"}}},
 			},
 		},
 	},
@@ -2880,9 +2971,7 @@ var parseTests = []struct {
 		Input: "alter table table1 drop (column1, column2, table1.3)",
 		Output: []Statement{
 			DropColumns{
-				AlterTable: "alter table",
-				Table:      Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
-				Drop:       "drop",
+				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
 				Columns: []Expression{
 					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 26}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 26}, Literal: "column1"}},
 					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 35}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 35}, Literal: "column2"}},
@@ -2895,12 +2984,9 @@ var parseTests = []struct {
 		Input: "alter table table1 rename column1 to column2",
 		Output: []Statement{
 			RenameColumn{
-				AlterTable: "alter table",
-				Table:      Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
-				Rename:     "rename",
-				Old:        FieldReference{BaseExpr: &BaseExpr{line: 1, char: 27}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 27}, Literal: "column1"}},
-				To:         "to",
-				New:        Identifier{BaseExpr: &BaseExpr{line: 1, char: 38}, Literal: "column2"},
+				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
+				Old:   FieldReference{BaseExpr: &BaseExpr{line: 1, char: 27}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 27}, Literal: "column1"}},
+				New:   Identifier{BaseExpr: &BaseExpr{line: 1, char: 38}, Literal: "column2"},
 			},
 		},
 	},
@@ -2908,12 +2994,9 @@ var parseTests = []struct {
 		Input: "alter table table1 rename table1.3 to column2",
 		Output: []Statement{
 			RenameColumn{
-				AlterTable: "alter table",
-				Table:      Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
-				Rename:     "rename",
-				Old:        ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 27}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 27}, Literal: "table1"}, Number: NewInteger(3)},
-				To:         "to",
-				New:        Identifier{BaseExpr: &BaseExpr{line: 1, char: 39}, Literal: "column2"},
+				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
+				Old:   ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 27}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 27}, Literal: "table1"}, Number: NewInteger(3)},
+				New:   Identifier{BaseExpr: &BaseExpr{line: 1, char: 39}, Literal: "column2"},
 			},
 		},
 	},

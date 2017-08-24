@@ -14,10 +14,23 @@ When current transaction is rolled back, all of the changes in temporary tables 
 ## Declare Temporary Table
 {: #declare}
 
+### Declare Empty Table
+
 ```sql
-temporary_table_declaration
-  : DECLARE table_name TABLE (column_name [, column_name ...]);
-  | DECLARE table_name TABLE [(column_name [, column_name ...])] FOR select_query;
+DECLARE table_name TABLE (column_name [, column_name ...]);
+```
+
+_table_name_
+: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+
+_column_name_
+: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+
+
+### Declare from the Result-Set of a Select Query
+
+```sql
+DECLARE table_name TABLE [(column_name [, column_name ...])] FOR select_query;
 ```
 
 _table_name_
@@ -28,6 +41,7 @@ _column_name_
 
 _select_query_
 : [Select Query]({{ '/reference/select-query.html' | relative_url }})
+
 
 ## Dispose Temporary Table
 {: #dispose}

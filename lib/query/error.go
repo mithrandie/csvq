@@ -48,6 +48,7 @@ const (
 	ERROR_FILE_ALREADY_EXIST                = "file %s already exists"
 	ERROR_FILE_UNABLE_TO_READ               = "file %s is unable to be read"
 	ERROR_CSV_PARSING                       = "csv parse error in file %s: %s"
+	ERROR_TABLE_FIELD_LENGTH                = "select query should return exactly %s for table %s"
 	ERROR_TEMPORARY_TABLE_REDECLARED        = "temporary table %s is redeclared"
 	ERROR_UNDEFINED_TEMPORARY_TABLE         = "temporary table %s is undefined"
 	ERROR_TEMPORARY_TABLE_FIELD_LENGTH      = "select query should return exactly %s for temporary table %s"
@@ -535,6 +536,18 @@ type CsvParsingError struct {
 func NewCsvParsingError(file parser.Identifier, filepath string, message string) error {
 	return &CsvParsingError{
 		NewBaseError(file, fmt.Sprintf(ERROR_CSV_PARSING, filepath, message)),
+	}
+}
+
+type TableFieldLengthError struct {
+	*BaseError
+}
+
+func NewTableFieldLengthError(query parser.SelectQuery, table parser.Identifier, fieldLen int) error {
+	selectClause := searchSelectClause(query)
+
+	return &TableFieldLengthError{
+		NewBaseError(selectClause, fmt.Sprintf(ERROR_TABLE_FIELD_LENGTH, FormatCount(fieldLen, "field"), table)),
 	}
 }
 
