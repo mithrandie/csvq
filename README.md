@@ -28,15 +28,15 @@ Go tools (ref. [Getting Started - The Go Programming Language](https://golang.or
 
 ##### Use go get
 
-2. ```$ go get -u github.com/mithrandie/csvq```
+1. ```$ go get -u github.com/mithrandie/csvq```
 
 ##### Build with strict dependencies
 
-2. Install GNU Make
-3. ```$ go get -d github.com/mithrandie/csvq```
-4. Change directory to $GOPATH/github.com/mithrandie/csvq
-5. ```$ make deps```
-6. ```$ make install```
+1. Install GNU Make
+2. ```$ go get -d github.com/mithrandie/csvq```
+3. Change directory to $GOPATH/github.com/mithrandie/csvq
+4. ```$ make deps```
+5. ```$ make install```
 
 ## Usage
 
