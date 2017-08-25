@@ -281,24 +281,24 @@ func PrimaryToDatetime(p Primary) Primary {
 		dt := time.Unix(p.(Integer).Value(), 0)
 		return NewDatetime(dt)
 	case Float:
-		dt := float64ToTime(p.(Float).Value())
+		dt := Float64ToTime(p.(Float).Value())
 		return NewDatetime(dt)
 	case Datetime:
 		return p
 	case String:
 		s := strings.TrimSpace(p.(String).Value())
-		if dt, e := StrToTime(s); e == nil {
-			return NewDatetime(dt)
-		}
 		if maybeNumber(s) {
 			if i, e := strconv.ParseInt(s, 10, 64); e == nil {
 				dt := time.Unix(i, 0)
 				return NewDatetime(dt)
 			}
 			if f, e := strconv.ParseFloat(s, 64); e == nil {
-				dt := float64ToTime(f)
+				dt := Float64ToTime(f)
 				return NewDatetime(dt)
 			}
+		}
+		if dt, e := StrToTime(s); e == nil {
+			return NewDatetime(dt)
 		}
 	}
 
@@ -334,12 +334,15 @@ func PrimaryToString(p Primary) Primary {
 	return NewNull()
 }
 
-func float64ToTime(f float64) time.Time {
+func Float64ToTime(f float64) time.Time {
 	s := Float64ToStr(f)
 	ns := strings.Split(s, ".")
 	sec, _ := strconv.ParseInt(ns[0], 10, 64)
 	var nsec int64
 	if 1 < len(ns) {
+		if 9 < len(ns[1]) {
+			ns[1] = ns[1][:9]
+		}
 		nsec, _ = strconv.ParseInt(ns[1]+strings.Repeat("0", 9-len(ns[1])), 10, 64)
 	}
 	return time.Unix(sec, nsec)

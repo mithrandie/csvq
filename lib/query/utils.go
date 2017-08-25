@@ -5,6 +5,7 @@ import (
 	"math"
 	"os"
 	"reflect"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -72,38 +73,6 @@ func FormatCount(i int, obj string) string {
 	return s
 }
 
-func IsReadableFromStdin() bool {
-	fi, err := os.Stdin.Stat()
-	if err == nil && (fi.Mode()&os.ModeNamedPipe != 0 || 0 < fi.Size()) {
-		return true
-	}
-	return false
-}
-
-func RecordRange(cpuIndex int, totalLen int, numberOfCPU int) (int, int) {
-	calcLen := totalLen / numberOfCPU
-
-	var start int = cpuIndex * calcLen
-	var end int
-	if cpuIndex == numberOfCPU-1 {
-		end = totalLen
-	} else {
-		end = (cpuIndex + 1) * calcLen
-	}
-	return start, end
-}
-
-func NumberOfCPU(recordLen int) int {
-	num := cmd.GetFlags().CPU
-	if 2 < num {
-		num = num - 1
-	}
-	if recordLen < 150 || recordLen < num {
-		num = 1
-	}
-	return num
-}
-
 func SerializeComparisonKeys(values []parser.Primary) string {
 	list := make([]string, len(values))
 
@@ -116,35 +85,68 @@ func SerializeComparisonKeys(values []parser.Primary) string {
 
 func SerializeKey(value parser.Primary) string {
 	if parser.IsNull(value) {
-		return "[N]"
+		return serializeNull()
 	} else if in := parser.PrimaryToInteger(value); !parser.IsNull(in) {
-		integer := in.(parser.Integer)
-		var b string
-		switch integer.Value() {
-		case 0:
-			b = "[B]" + strconv.FormatBool(false)
-		case 1:
-			b = "[B]" + strconv.FormatBool(true)
-		}
-		return "[I]" + integer.String() + b
+		return serializeInteger(in.(parser.Integer).Value())
 	} else if f := parser.PrimaryToFloat(value); !parser.IsNull(f) {
-		return "[F]" + f.(parser.Float).String()
+		return serializeFlaot(f.(parser.Float).Value())
 	} else if dt := parser.PrimaryToDatetime(value); !parser.IsNull(dt) {
-		return "[D]" + dt.(parser.Datetime).Format(time.RFC3339Nano)
-	} else if b := parser.PrimaryToBoolean(value); !parser.IsNull(b) {
-		boolean := b.(parser.Boolean)
-		var intliteral string
-		if boolean.Value() {
-			intliteral = "1"
+		t := dt.(parser.Datetime).Value()
+		if t.Nanosecond() > 0 {
+			f := float64(t.Unix()) + float64(t.Nanosecond())/float64(1000000000)
+			t2 := parser.Float64ToTime(f)
+			if t.Equal(t2) {
+				return serializeFlaot(f)
+			} else {
+				return serializeDatetime(t)
+			}
 		} else {
-			intliteral = "0"
+			return serializeInteger(t.Unix())
 		}
-		return "[I]" + intliteral + "[B]" + boolean.String()
+	} else if b := parser.PrimaryToBoolean(value); !parser.IsNull(b) {
+		return serializeBoolean(b.(parser.Boolean).Value())
 	} else if s, ok := value.(parser.String); ok {
-		return "[S]" + strings.ToUpper(strings.TrimSpace(s.Value()))
+		return serializeString(s.Value())
 	} else {
-		return "[N]"
+		return serializeNull()
 	}
+}
+
+func serializeNull() string {
+	return "[N]"
+}
+
+func serializeInteger(i int64) string {
+	var b string
+	switch i {
+	case 0:
+		b = "[B]" + strconv.FormatBool(false)
+	case 1:
+		b = "[B]" + strconv.FormatBool(true)
+	}
+	return "[I]" + parser.Int64ToStr(i) + b
+}
+
+func serializeFlaot(f float64) string {
+	return "[F]" + parser.Float64ToStr(f)
+}
+
+func serializeDatetime(t time.Time) string {
+	return "[D]" + t.UTC().Format(time.RFC3339Nano)
+}
+
+func serializeBoolean(b bool) string {
+	var intliteral string
+	if b {
+		intliteral = "1"
+	} else {
+		intliteral = "0"
+	}
+	return "[I]" + intliteral + "[B]" + strconv.FormatBool(b)
+}
+
+func serializeString(s string) string {
+	return "[S]" + strings.ToUpper(strings.TrimSpace(s))
 }
 
 func FormatString(format string, args []parser.Primary) (string, error) {
@@ -347,4 +349,37 @@ func FormatString(format string, args []parser.Primary) (string, error) {
 	}
 
 	return string(str), nil
+}
+
+func IsReadableFromStdin() bool {
+	fi, err := os.Stdin.Stat()
+	if err == nil && (fi.Mode()&os.ModeNamedPipe != 0 || 0 < fi.Size()) {
+		return true
+	}
+	return false
+}
+
+func NumberOfCPU(recordLen int) int {
+	num := cmd.GetFlags().CPU
+	if 2 < num {
+		num = num - 1
+	}
+	if num <= runtime.NumGoroutine() || recordLen < 150 || recordLen < num {
+		num = 1
+	}
+
+	return num
+}
+
+func RecordRange(cpuIndex int, totalLen int, numberOfCPU int) (int, int) {
+	calcLen := totalLen / numberOfCPU
+
+	var start int = cpuIndex * calcLen
+	var end int
+	if cpuIndex == numberOfCPU-1 {
+		end = totalLen
+	} else {
+		end = (cpuIndex + 1) * calcLen
+	}
+	return start, end
 }

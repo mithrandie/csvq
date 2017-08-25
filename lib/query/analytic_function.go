@@ -37,7 +37,7 @@ func (p Partition) Reverse() {
 
 type Partitions map[string]Partition
 
-func Analyze(view *View, fn parser.AnalyticFunction) error {
+func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) error {
 	const (
 		ANALYTIC = iota
 		AGGREGATE
@@ -80,6 +80,10 @@ func Analyze(view *View, fn parser.AnalyticFunction) error {
 		}
 	}
 
+	if view.sortValues == nil {
+		view.sortValues = make([][]*SortValue, view.RecordLen())
+	}
+
 	cpu := NumberOfCPU(view.RecordLen())
 	partitionKeys := make([]string, view.RecordLen())
 
@@ -88,24 +92,25 @@ func Analyze(view *View, fn parser.AnalyticFunction) error {
 		wg.Add(1)
 		go func(thIdx int) {
 			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
-			filter := NewFilterForSequentialEvaluation(view, view.Filter)
+			sortValues := make(SortValues, len(partitionIndices))
 
-		AnalyzePrepareLoop:
 			for i := start; i < end; i++ {
-				if err != nil {
-					break AnalyzePrepareLoop
-				}
-
-				filter.Records[0].RecordIndex = i
-
 				var partitionKey string
-				if fn.AnalyticClause.PartitionValues() != nil {
-					partitionValues, e := filter.evalValues(fn.AnalyticClause.PartitionValues())
-					if e != nil {
-						err = e
-						break AnalyzePrepareLoop
+				if view.sortValues[i] == nil {
+					view.sortValues[i] = make([]*SortValue, cap(view.Records[i]))
+				}
+				if partitionIndices != nil {
+					for j, idx := range partitionIndices {
+						if idx < len(view.sortValues[i]) && view.sortValues[i][idx] != nil {
+							sortValues[j] = view.sortValues[i][idx]
+						} else {
+							sortValues[j] = NewSortValue(view.Records[i][idx].Primary())
+							if idx < len(view.sortValues[i]) {
+								view.sortValues[i][idx] = sortValues[j]
+							}
+						}
 					}
-					partitionKey = SerializeComparisonKeys(partitionValues)
+					partitionKey = sortValues.Serialize()
 				}
 
 				partitionKeys[i] = partitionKey
@@ -116,10 +121,6 @@ func Analyze(view *View, fn parser.AnalyticFunction) error {
 	}
 
 	wg.Wait()
-
-	if err != nil {
-		return err
-	}
 
 	partitions := Partitions{}
 	partitionMapKeys := []string{}
@@ -133,8 +134,14 @@ func Analyze(view *View, fn parser.AnalyticFunction) error {
 	}
 
 	cpu = cmd.GetFlags().CPU
-	if cpu < len(partitionMapKeys) {
+	if 2 < cpu {
+		cpu = cpu - 1
+	}
+	if len(partitionMapKeys) < cpu {
 		cpu = len(partitionMapKeys)
+	}
+	if cpu < 1 {
+		cpu = 1
 	}
 
 	for i := 0; i < cpu; i++ {

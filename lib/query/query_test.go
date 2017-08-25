@@ -649,6 +649,43 @@ var selectTests = []struct {
 		},
 	},
 	{
+		Name: "Select Replace Columns",
+		Query: parser.SelectQuery{
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.Expression{
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+					},
+				},
+				FromClause: parser.FromClause{
+					Tables: []parser.Expression{
+						parser.Table{Object: parser.Identifier{Literal: "table1"}},
+					},
+				},
+			},
+			LimitClause: parser.LimitClause{
+				Value: parser.NewIntegerValue(1),
+			},
+		},
+		Result: &View{
+			FileInfo: &FileInfo{
+				Path:      GetTestFilePath("table1.csv"),
+				Delimiter: ',',
+				NoHeader:  false,
+				Encoding:  cmd.UTF8,
+				LineBreak: cmd.LF,
+			},
+			Header: NewHeader("table1", []string{"column2", "column1"}),
+			Records: []Record{
+				NewRecord([]parser.Primary{
+					parser.NewString("str1"),
+					parser.NewString("1"),
+				}),
+			},
+		},
+	},
+	{
 		Name: "Union",
 		Query: parser.SelectQuery{
 			SelectEntity: parser.SelectSet{

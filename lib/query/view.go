@@ -15,20 +15,21 @@ import (
 )
 
 type View struct {
-	Header  Header
-	Records Records
-
+	Header   Header
+	Records  Records
 	FileInfo *FileInfo
+
+	Filter *Filter
 
 	selectFields []int
 	selectLabels []string
 	isGrouped    bool
-	Filter       *Filter
 
 	filteredIndices []int
 
 	comparisonKeys []string
 
+	sortValues        [][]*SortValue
 	recordSortValues  []SortValues
 	sortDirections    []int
 	sortNullPositions []int
@@ -620,6 +621,14 @@ func (view *View) Select(clause parser.SelectClause) error {
 	}
 
 	var evalFields = func(view *View, fields []parser.Expression) error {
+		fieldsObjects := make([]parser.Expression, len(fields))
+		for i, f := range fields {
+			fieldsObjects[i] = f.(parser.Field).Object
+		}
+		if err := view.ExtendRecordCapacity(fieldsObjects); err != nil {
+			return err
+		}
+
 		view.selectFields = make([]int, len(fields))
 		view.selectLabels = make([]string, len(fields))
 		for i, f := range fields {
@@ -642,8 +651,10 @@ func (view *View) Select(clause parser.SelectClause) error {
 	if err != nil {
 		if _, ok := err.(*NotGroupingRecordsError); ok {
 			view.Header = view.Header[:origFieldLen]
-			for i := range view.Records {
-				view.Records[i] = view.Records[i][:origFieldLen]
+			if 0 < view.RecordLen() && view.FieldLen() < len(view.Records[0]) {
+				for i := range view.Records {
+					view.Records[i] = view.Records[i][:origFieldLen]
+				}
 			}
 
 			view.group(nil)
@@ -659,10 +670,10 @@ func (view *View) Select(clause parser.SelectClause) error {
 	if clause.IsDistinct() {
 		view.GenerateComparisonKeys()
 		records := make(Records, 0, view.RecordLen())
-		values := make(map[string]interface{})
+		values := make(map[string]bool)
 		for i, v := range view.Records {
-			if _, ok := values[view.comparisonKeys[i]]; !ok {
-				values[view.comparisonKeys[i]] = nil
+			if !values[view.comparisonKeys[i]] {
+				values[view.comparisonKeys[i]] = true
 
 				record := make(Record, len(view.selectFields))
 				for j, idx := range view.selectFields {
@@ -680,6 +691,7 @@ func (view *View) Select(clause parser.SelectClause) error {
 
 		view.Header = hfields
 		view.Records = records
+		view.sortValues = nil
 	}
 
 	return nil
@@ -727,9 +739,13 @@ func (view *View) SelectAllColumns() error {
 }
 
 func (view *View) OrderBy(clause parser.OrderByClause) error {
-	view.recordSortValues = make([]SortValues, view.RecordLen())
-	view.sortDirections = make([]int, len(clause.Items))
-	view.sortNullPositions = make([]int, len(clause.Items))
+	orderValues := make([]parser.Expression, len(clause.Items))
+	for i, item := range clause.Items {
+		orderValues[i] = item.(parser.OrderItem).Value
+	}
+	if err := view.ExtendRecordCapacity(orderValues); err != nil {
+		return err
+	}
 
 	sortIndices := make([]int, len(clause.Items))
 	for i, v := range clause.Items {
@@ -739,7 +755,14 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 			return err
 		}
 		sortIndices[i] = idx
+	}
 
+	view.recordSortValues = make([]SortValues, view.RecordLen())
+	view.sortDirections = make([]int, len(clause.Items))
+	view.sortNullPositions = make([]int, len(clause.Items))
+
+	for i, v := range clause.Items {
+		oi := v.(parser.OrderItem)
 		if oi.Direction.IsEmpty() {
 			view.sortDirections[i] = parser.ASC
 		} else {
@@ -767,9 +790,20 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
 
 			for i := start; i < end; i++ {
+				if view.sortValues != nil && view.sortValues[i] == nil {
+					view.sortValues[i] = make([]*SortValue, cap(view.Records[i]))
+				}
+
 				sortValues := make(SortValues, len(sortIndices))
 				for j, idx := range sortIndices {
-					sortValues[j] = NewSortValue(view.Records[i][idx].Primary())
+					if view.sortValues != nil && idx < len(view.sortValues[i]) && view.sortValues[i][idx] != nil {
+						sortValues[j] = view.sortValues[i][idx]
+					} else {
+						sortValues[j] = NewSortValue(view.Records[i][idx].Primary())
+						if view.sortValues != nil && idx < len(view.sortValues[i]) {
+							view.sortValues[i][idx] = sortValues[j]
+						}
+					}
 				}
 				view.recordSortValues[i] = sortValues
 			}
@@ -780,6 +814,112 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 	wg.Wait()
 
 	sort.Sort(view)
+	return nil
+}
+
+func (view *View) additionalColumns(expr parser.Expression) ([]string, error) {
+	list := []string{}
+
+	switch expr.(type) {
+	case parser.FieldReference, parser.ColumnNumber:
+		return nil, nil
+	case parser.Function:
+		if udfn, err := view.Filter.FunctionsList.Get(expr, expr.(parser.Function).Name); err == nil {
+			if udfn.IsAggregate && !view.isGrouped {
+				return nil, NewNotGroupingRecordsError(expr, expr.(parser.Function).Name)
+			}
+		}
+	case parser.AggregateFunction:
+		if !view.isGrouped {
+			return nil, NewNotGroupingRecordsError(expr, expr.(parser.AggregateFunction).Name)
+		}
+	case parser.ListAgg:
+		if !view.isGrouped {
+			return nil, NewNotGroupingRecordsError(expr, expr.(parser.ListAgg).ListAgg)
+		}
+	case parser.AnalyticFunction:
+		fn := expr.(parser.AnalyticFunction)
+		pvalues := fn.AnalyticClause.PartitionValues()
+		ovalues := []parser.Expression(nil)
+		if fn.AnalyticClause.OrderByClause != nil {
+			ovalues = fn.AnalyticClause.OrderByClause.(parser.OrderByClause).Items
+		}
+
+		if pvalues != nil {
+			for _, pvalue := range pvalues {
+				columns, err := view.additionalColumns(pvalue)
+				if err != nil {
+					return nil, err
+				}
+				for _, s := range columns {
+					if !InStrSliceWithCaseInsensitive(s, list) {
+						list = append(list, s)
+					}
+				}
+			}
+		}
+		if ovalues != nil {
+			for _, value := range ovalues {
+				item := value.(parser.OrderItem)
+				columns, err := view.additionalColumns(item.Value)
+				if err != nil {
+					return nil, err
+				}
+				for _, s := range columns {
+					if !InStrSliceWithCaseInsensitive(s, list) {
+						list = append(list, s)
+					}
+				}
+			}
+		}
+	}
+
+	if _, err := view.Header.ContainsObject(expr); err != nil {
+		s := expr.String()
+		if !InStrSliceWithCaseInsensitive(s, list) {
+			list = append(list, s)
+		}
+	}
+
+	return list, nil
+}
+
+func (view *View) ExtendRecordCapacity(exprs []parser.Expression) error {
+	additions := []string{}
+	for _, expr := range exprs {
+		columns, err := view.additionalColumns(expr)
+		if err != nil {
+			return err
+		}
+		for _, s := range columns {
+			if !InStrSliceWithCaseInsensitive(s, additions) {
+				additions = append(additions, s)
+			}
+		}
+	}
+
+	currentLen := view.FieldLen()
+	fieldCap := currentLen + len(additions)
+
+	if 0 < view.RecordLen() && fieldCap <= cap(view.Records[0]) {
+		return nil
+	}
+
+	cpu := NumberOfCPU(view.RecordLen())
+	wg := sync.WaitGroup{}
+	for i := 0; i < cpu; i++ {
+		wg.Add(1)
+		go func(thIdx int) {
+			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+			for i := start; i < end; i++ {
+				record := make(Record, currentLen, fieldCap)
+				copy(record, view.Records[i])
+				view.Records[i] = record
+			}
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
 	return nil
 }
 
@@ -861,6 +1001,24 @@ func (view *View) evalAnalyticFunction(expr parser.AnalyticFunction) error {
 		}
 	}
 
+	var partitionIndices []int
+	if expr.AnalyticClause.Partition != nil {
+		partitionExprs := expr.AnalyticClause.PartitionValues()
+
+		partitionIndices = make([]int, len(partitionExprs))
+		for i, pexpr := range partitionExprs {
+			idx, err := view.evalColumn(pexpr, pexpr.String(), "")
+			if err != nil {
+				return err
+			}
+			partitionIndices[i] = idx
+		}
+	}
+
+	if view.sortValues == nil {
+		view.sortValues = make([][]*SortValue, view.RecordLen())
+	}
+
 	if expr.AnalyticClause.OrderByClause != nil {
 		err := view.OrderBy(expr.AnalyticClause.OrderByClause.(parser.OrderByClause))
 		if err != nil {
@@ -868,7 +1026,7 @@ func (view *View) evalAnalyticFunction(expr parser.AnalyticFunction) error {
 		}
 	}
 
-	err := Analyze(view, expr)
+	err := Analyze(view, expr, partitionIndices)
 
 	view.recordSortValues = nil
 	view.sortDirections = nil
@@ -1087,11 +1245,12 @@ func (view *View) Fix() {
 	}
 
 	view.Header = hfields
+	view.Filter = nil
 	view.selectFields = nil
 	view.selectLabels = nil
 	view.isGrouped = false
-	view.Filter = nil
 	view.comparisonKeys = nil
+	view.sortValues = nil
 	view.recordSortValues = nil
 	view.sortDirections = nil
 	view.sortNullPositions = nil
@@ -1106,11 +1265,11 @@ func (view *View) Union(calcView *View, all bool) {
 		view.GenerateComparisonKeys()
 
 		records := make(Records, 0, view.RecordLen())
-		values := make(map[string]interface{})
+		values := make(map[string]bool)
 
 		for i, key := range view.comparisonKeys {
-			if _, ok := values[key]; !ok {
-				values[key] = nil
+			if !values[key] {
+				values[key] = true
 				records = append(records, view.Records[i])
 			}
 		}
@@ -1124,22 +1283,22 @@ func (view *View) Except(calcView *View, all bool) {
 	view.GenerateComparisonKeys()
 	calcView.GenerateComparisonKeys()
 
-	keys := make(map[string]interface{})
+	keys := make(map[string]bool)
 	for _, key := range calcView.comparisonKeys {
-		if _, ok := keys[key]; !ok {
-			keys[key] = nil
+		if !keys[key] {
+			keys[key] = true
 		}
 	}
 
-	distinctKeys := make(map[string]interface{})
+	distinctKeys := make(map[string]bool)
 	records := make(Records, 0, view.RecordLen())
 	for i, key := range view.comparisonKeys {
-		if _, ok := keys[key]; !ok {
+		if !keys[key] {
 			if !all {
-				if _, ok := distinctKeys[key]; ok {
+				if distinctKeys[key] {
 					continue
 				}
-				distinctKeys[key] = nil
+				distinctKeys[key] = true
 			}
 			records = append(records, view.Records[i])
 		}
@@ -1153,22 +1312,22 @@ func (view *View) Intersect(calcView *View, all bool) {
 	view.GenerateComparisonKeys()
 	calcView.GenerateComparisonKeys()
 
-	keys := make(map[string]interface{})
+	keys := make(map[string]bool)
 	for _, key := range calcView.comparisonKeys {
-		if _, ok := keys[key]; !ok {
-			keys[key] = nil
+		if !keys[key] {
+			keys[key] = true
 		}
 	}
 
-	distinctKeys := make(map[string]interface{})
+	distinctKeys := make(map[string]bool)
 	records := make(Records, 0, view.RecordLen())
 	for i, key := range view.comparisonKeys {
 		if _, ok := keys[key]; ok {
 			if !all {
-				if _, ok := distinctKeys[key]; ok {
+				if distinctKeys[key] {
 					continue
 				}
-				distinctKeys[key] = nil
+				distinctKeys[key] = true
 			}
 			records = append(records, view.Records[i])
 		}
@@ -1226,16 +1385,37 @@ func (view *View) ListValuesForAggregateFunctions(expr parser.Expression, arg pa
 }
 
 func (view *View) ListValuesForAnalyticFunctions(fn parser.AnalyticFunction, partition Partition) ([]parser.Primary, error) {
+	cpu := NumberOfCPU(len(partition))
 	list := make([]parser.Primary, len(partition))
+	var err error
 
-	filter := NewFilterForSequentialEvaluation(view, view.Filter)
-	for i, idx := range partition {
-		filter.Records[0].RecordIndex = idx
-		value, err := filter.Evaluate(fn.Args[0])
-		if err != nil {
-			return nil, err
-		}
-		list[i] = value
+	wg := sync.WaitGroup{}
+	for i := 0; i < cpu; i++ {
+		wg.Add(1)
+		go func(thIdx int) {
+			start, end := RecordRange(thIdx, len(partition), cpu)
+			filter := NewFilterForSequentialEvaluation(view, view.Filter)
+
+		ListAnalyticFunctionLoop:
+			for i := start; i < end; i++ {
+				if err != nil {
+					break ListAnalyticFunctionLoop
+				}
+				filter.Records[0].RecordIndex = partition[i]
+				value, e := filter.Evaluate(fn.Args[0])
+				if e != nil {
+					err = e
+					break ListAnalyticFunctionLoop
+				}
+				list[i] = value
+			}
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
+
+	if err != nil {
+		return nil, err
 	}
 
 	if fn.IsDistinct() {
@@ -1307,6 +1487,9 @@ func (view *View) Len() int {
 func (view *View) Swap(i, j int) {
 	view.Records[i], view.Records[j] = view.Records[j], view.Records[i]
 	view.recordSortValues[i], view.recordSortValues[j] = view.recordSortValues[j], view.recordSortValues[i]
+	if view.sortValues != nil {
+		view.sortValues[i], view.sortValues[j] = view.sortValues[j], view.sortValues[i]
+	}
 }
 
 func (view *View) Less(i, j int) bool {

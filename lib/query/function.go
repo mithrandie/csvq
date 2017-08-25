@@ -1158,7 +1158,11 @@ func Float(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
 
 	switch args[0].(type) {
 	case parser.Datetime:
-		f := float64(args[0].(parser.Datetime).Value().UnixNano()) / float64(1000000000)
+		t := args[0].(parser.Datetime).Value()
+		f := float64(t.Unix())
+		if t.Nanosecond() > 0 {
+			f = f + float64(t.Nanosecond())/float64(1000000000)
+		}
 		return parser.NewFloat(f), nil
 	default:
 		return parser.PrimaryToFloat(args[0]), nil
