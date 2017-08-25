@@ -34,7 +34,8 @@ category: reference
 | [ADD_MICRO](#add_micro) | Add microseconds to a datetime |
 | [ADD_NANO](#add_nano) | Add nanoseconds to a datetime |
 | [DATE_DIFF](#date_diff) | Return the difference of days between two datetime values |
-| [TIME_DIFF](#time_diff) | Return the difference of time between two datetime values |
+| [TIME_DIFF](#time_diff) | Return the difference of time between two datetime values as seconds |
+| [TIME_NANO_DIFF](#time_nano_diff) | Return the difference of time between two datetime values as nanoseconds |
 
 ## Definitions
 
@@ -520,7 +521,26 @@ _duration2_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
 _return_
-: [float]({{ '/reference/value.html#float' | relative_url }})
+: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the difference of time between two _datetime_ values.
+Return the difference of time between two _datetime_ values as seconds.
 In the return value, the integer part representing seconds and the fractional part representing nanoseconds.
+
+### TIME_NANO_DIFF
+{: #time_nano_diff}
+
+```
+TIME_NANO_DIFF(datetime1, datetime2)
+```
+
+_datetime1_
+: [datetime]({{ '/reference/value.html#datetime' | relative_url }})
+
+_duration2_
+: [datetime]({{ '/reference/value.html#datetime' | relative_url }})
+
+_return_
+: [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+Return the difference of time between two _datetime_ values as nanoseconds.
+

@@ -2436,6 +2436,24 @@ func TestTimeDiff(t *testing.T) {
 	testFunction(t, TimeDiff, timeDiffTests)
 }
 
+var timeNanoDiffTests = []functionTest{
+	{
+		Name: "TimeNanoDiff",
+		Function: parser.Function{
+			Name: "time_nano_diff",
+		},
+		Args: []parser.Primary{
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+			parser.NewDatetime(time.Date(2012, 2, 3, 1, 18, 55, 123000000, GetTestLocation())),
+		},
+		Result: parser.NewInteger(28760000456789),
+	},
+}
+
+func TestTimeNanoDiff(t *testing.T) {
+	testFunction(t, TimeNanoDiff, timeNanoDiffTests)
+}
+
 var stringTests = []functionTest{
 	{
 		Name: "String from Integer",
@@ -2583,9 +2601,9 @@ var floatTests = []functionTest{
 			Name: "float",
 		},
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123450000, GetTestLocation())),
 		},
-		Result: parser.NewFloat(1328289495),
+		Result: parser.NewFloat(1328289495.12345),
 	},
 	{
 		Name: "Float Arguments Error",

@@ -107,6 +107,7 @@ var Functions = map[string]func(parser.Function, []parser.Primary) (parser.Prima
 	"ADD_NANO":         AddNano,
 	"DATE_DIFF":        DateDiff,
 	"TIME_DIFF":        TimeDiff,
+	"TIME_NANO_DIFF":   TimeNanoDiff,
 	"STRING":           String,
 	"INTEGER":          Integer,
 	"FLOAT":            Float,
@@ -1088,7 +1089,7 @@ func DateDiff(fn parser.Function, args []parser.Primary) (parser.Primary, error)
 	return parser.NewInteger(int64(dur.Hours() / 24)), nil
 }
 
-func TimeDiff(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
+func timeDiff(fn parser.Function, args []parser.Primary, durf func(time.Duration) parser.Primary) (parser.Primary, error) {
 	if len(args) != 2 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2})
 	}
@@ -1106,8 +1107,23 @@ func TimeDiff(fn parser.Function, args []parser.Primary) (parser.Primary, error)
 	dt2 := p2.(parser.Datetime).Value()
 
 	dur := dt1.Sub(dt2)
+	return durf(dur), nil
+}
 
-	return parser.NewFloat(dur.Seconds()), nil
+func durationSeconds(dur time.Duration) parser.Primary {
+	return parser.Float64ToPrimary(dur.Seconds())
+}
+
+func durationNanoseconds(dur time.Duration) parser.Primary {
+	return parser.NewInteger(dur.Nanoseconds())
+}
+
+func TimeDiff(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
+	return timeDiff(fn, args, durationSeconds)
+}
+
+func TimeNanoDiff(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
+	return timeDiff(fn, args, durationNanoseconds)
 }
 
 func String(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
