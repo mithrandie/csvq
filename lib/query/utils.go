@@ -132,7 +132,7 @@ func serializeFlaot(f float64) string {
 }
 
 func serializeDatetime(t time.Time) string {
-	return "[D]" + parser.Int64ToStr(t.UnixNano())
+	return "[D]" + t.UTC().Format(time.RFC3339Nano)
 }
 
 func serializeBoolean(b bool) string {
