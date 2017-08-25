@@ -22,7 +22,7 @@ In the procedure, you can use variables, cursors, temporary tables, and other fu
 
 #### Requirements
 
-Go tools (ref. [Getting Started - The Go Programming Language](https://golang.org/doc/install))
+Go 1.9.x (ref. [Getting Started - The Go Programming Language](https://golang.org/doc/install))
 
 #### Build with either of the following two ways
 
