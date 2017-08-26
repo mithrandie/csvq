@@ -24,11 +24,19 @@ func TestGetLocation(t *testing.T) {
 }
 
 func TestNow(t *testing.T) {
-	t1 := Now()
-	time.Sleep(time.Millisecond)
-	t2 := Now()
+	flag := GetFlags()
+	flag.Now = "2012-02-01 12:03:23"
+	expect := time.Date(2012, 2, 1, 12, 3, 23, 0, GetLocation())
 
-	if !t1.Equal(t2) {
-		t.Errorf("function Now() returns different time")
+	if !Now().Equal(expect) {
+		t.Errorf("function Now() returns current time")
+		t.Log(Now())
 	}
+
+	flag.Now = ""
+	if Now().Equal(expect) {
+		t.Errorf("function Now() returns fixed time")
+		t.Log(Now())
+	}
+
 }

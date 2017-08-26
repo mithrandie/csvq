@@ -2,7 +2,9 @@ package query
 
 import (
 	"strings"
+	"time"
 
+	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
 )
@@ -28,6 +30,8 @@ type Filter struct {
 	RecursiveTable    *parser.InlineTable
 	RecursiveTmpView  *View
 	tmpViewIsAccessed bool
+
+	Now time.Time
 }
 
 func NewFilter(variablesList VariablesList, tempViewsList TemporaryViewMapList, cursorsList CursorMapList, functionsList UserDefinedFunctionsList) *Filter {
@@ -83,6 +87,7 @@ func (f *Filter) Merge(filter *Filter) {
 	f.FunctionsList = filter.FunctionsList
 	f.InlineTablesList = filter.InlineTablesList
 	f.AliasesList = filter.AliasesList
+	f.Now = filter.Now
 }
 
 func (f *Filter) CreateChildScope() *Filter {
@@ -95,7 +100,7 @@ func (f *Filter) CreateChildScope() *Filter {
 }
 
 func (f *Filter) CreateNode() *Filter {
-	return &Filter{
+	filter := &Filter{
 		Records:          f.Records,
 		VariablesList:    f.VariablesList,
 		TempViewsList:    f.TempViewsList,
@@ -105,7 +110,14 @@ func (f *Filter) CreateNode() *Filter {
 		AliasesList:      append(AliasMapList{{}}, f.AliasesList...),
 		RecursiveTable:   f.RecursiveTable,
 		RecursiveTmpView: f.RecursiveTmpView,
+		Now:              f.Now,
 	}
+
+	if filter.Now.IsZero() {
+		filter.Now = cmd.Now()
+	}
+
+	return filter
 }
 
 func (f *Filter) LoadInlineTable(clause parser.WithClause) error {
@@ -536,7 +548,7 @@ func (f *Filter) evalExists(expr parser.Exists) (parser.Primary, error) {
 func (f *Filter) evalFunction(expr parser.Function) (parser.Primary, error) {
 	name := strings.ToUpper(expr.Name)
 
-	if _, ok := Functions[name]; !ok {
+	if _, ok := Functions[name]; !ok && name != "NOW" {
 		udfn, err := f.FunctionsList.Get(expr, name)
 		if err != nil {
 			return nil, NewFunctionNotExistError(expr, expr.Name)
@@ -562,6 +574,10 @@ func (f *Filter) evalFunction(expr parser.Function) (parser.Primary, error) {
 			return nil, err
 		}
 		args[i] = arg
+	}
+
+	if name == "NOW" {
+		return Now(expr, args, f)
 	}
 
 	if fn, ok := Functions[name]; ok {

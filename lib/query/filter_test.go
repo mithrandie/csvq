@@ -1971,6 +1971,13 @@ var filterEvaluateTests = []struct {
 		Result: parser.NewString("str"),
 	},
 	{
+		Name: "Function Now",
+		Expr: parser.Function{
+			Name: "now",
+		},
+		Result: parser.NewDatetime(NowForTest),
+	},
+	{
 		Name: "User Defined Function",
 		Filter: &Filter{
 			FunctionsList: UserDefinedFunctionsList{

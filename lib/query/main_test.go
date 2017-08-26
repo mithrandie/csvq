@@ -18,6 +18,7 @@ func GetTestFilePath(filename string) string {
 var TestDir = filepath.Join(os.TempDir(), "csvq_query_test")
 var TestDataDir string
 var TestLocation = "America/Los_Angeles"
+var NowForTest = time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())
 
 func GetTestLocation() *time.Location {
 	l, _ := time.LoadLocation(TestLocation)

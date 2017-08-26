@@ -108,7 +108,7 @@ func (m UserDefinedFunctionMap) parserParameters(parameters []parser.Expression)
 func (m UserDefinedFunctionMap) CheckDuplicate(name parser.Identifier) error {
 	uname := strings.ToUpper(name.Literal)
 
-	if _, ok := Functions[uname]; ok {
+	if _, ok := Functions[uname]; ok || uname == "NOW" {
 		return NewBuiltInFunctionDeclaredError(name)
 	}
 	if _, ok := AggregateFunctions[uname]; ok {

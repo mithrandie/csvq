@@ -60,6 +60,7 @@ _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
 Return the datetime value of current date and time.
+In a single query, all _NOW_ functions return the same value. 
 
 ### DATETIME_FORMAT
 {: #datetime_format}
