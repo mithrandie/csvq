@@ -10,6 +10,8 @@ import (
 type FilterRecord struct {
 	View        *View
 	RecordIndex int
+
+	fieldReferenceIndices map[string]int
 }
 
 type Filter struct {
@@ -47,38 +49,40 @@ func NewEmptyFilter() *Filter {
 }
 
 func NewFilterForRecord(view *View, recordIndex int, parentFilter *Filter) *Filter {
-	f := Filter{
+	f := &Filter{
 		Records: []FilterRecord{
 			{
-				View:        view,
-				RecordIndex: recordIndex,
+				View:                  view,
+				RecordIndex:           recordIndex,
+				fieldReferenceIndices: make(map[string]int),
 			},
 		},
 	}
-	return f.Merge(parentFilter)
+	f.Merge(parentFilter)
+	return f
 }
 
 func NewFilterForSequentialEvaluation(view *View, parentFilter *Filter) *Filter {
-	f := Filter{
+	f := &Filter{
 		Records: []FilterRecord{
 			{
 				View: view,
+				fieldReferenceIndices: make(map[string]int),
 			},
 		},
 	}
-	return f.Merge(parentFilter)
+	f.Merge(parentFilter)
+	return f
 }
 
-func (f *Filter) Merge(filter *Filter) *Filter {
-	return &Filter{
-		Records:          append(f.Records, filter.Records...),
-		VariablesList:    filter.VariablesList,
-		TempViewsList:    filter.TempViewsList,
-		CursorsList:      filter.CursorsList,
-		FunctionsList:    filter.FunctionsList,
-		InlineTablesList: filter.InlineTablesList,
-		AliasesList:      filter.AliasesList,
-	}
+func (f *Filter) Merge(filter *Filter) {
+	f.Records = append(f.Records, filter.Records...)
+	f.VariablesList = filter.VariablesList
+	f.TempViewsList = filter.TempViewsList
+	f.CursorsList = filter.CursorsList
+	f.FunctionsList = filter.FunctionsList
+	f.InlineTablesList = filter.InlineTablesList
+	f.AliasesList = filter.AliasesList
 }
 
 func (f *Filter) CreateChildScope() *Filter {
@@ -175,14 +179,26 @@ func (f *Filter) Evaluate(expr parser.Expression) (parser.Primary, error) {
 }
 
 func (f *Filter) evalFieldReference(expr parser.Expression) (parser.Primary, error) {
+	exprStr := expr.String()
+
 	var p parser.Primary
 	for _, v := range f.Records {
+		if v.fieldReferenceIndices != nil {
+			if idx, ok := v.fieldReferenceIndices[exprStr]; ok {
+				p = v.View.Records[v.RecordIndex][idx].Primary()
+				break
+			}
+		}
+
 		idx, err := v.View.FieldIndex(expr)
 		if err == nil {
 			if v.View.isGrouped && v.View.Header[idx].FromTable && !v.View.Header[idx].IsGroupKey {
 				return nil, NewFieldNotGroupKeyError(expr)
 			}
 			p = v.View.Records[v.RecordIndex][idx].Primary()
+			if v.fieldReferenceIndices != nil {
+				v.fieldReferenceIndices[exprStr] = idx
+			}
 			break
 		}
 

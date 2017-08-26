@@ -3366,7 +3366,7 @@ func TestFilter_Evaluate(t *testing.T) {
 	}
 }
 
-func BenchmarkFilter_Evaluate1(b *testing.B) {
+func BenchmarkFilter_EvaluateCountAllColumns(b *testing.B) {
 	filter := GenerateBenchGroupedViewFilter()
 
 	b.ResetTimer()
@@ -3382,7 +3382,7 @@ func BenchmarkFilter_Evaluate1(b *testing.B) {
 	}
 }
 
-func BenchmarkFilter_Evaluate2(b *testing.B) {
+func BenchmarkFilter_EvaluateCount(b *testing.B) {
 	filter := GenerateBenchGroupedViewFilter()
 
 	b.ResetTimer()
@@ -3431,5 +3431,62 @@ func BenchmarkFilter_EvaluateMultiThread(b *testing.B) {
 			}(i)
 		}
 		wg.Wait()
+	}
+}
+
+var filterEvaluateFieldReferenceBenchFilter = &Filter{
+	Records: []FilterRecord{
+		{
+			View: &View{
+				Header: NewHeader("table1", []string{"column1", "column2", "column3"}),
+				Records: Records{
+					NewRecord([]parser.Primary{
+						parser.NewInteger(1),
+						parser.NewInteger(1),
+						parser.NewInteger(1),
+					}),
+				},
+			},
+			RecordIndex: 0,
+		},
+	},
+}
+
+var filterEvaluateFieldReferenceWithIndexCacheBenchFilter = &Filter{
+	Records: []FilterRecord{
+		{
+			View: &View{
+				Header: NewHeader("table1", []string{"column1", "column2", "column3"}),
+				Records: Records{
+					NewRecord([]parser.Primary{
+						parser.NewInteger(1),
+						parser.NewInteger(1),
+						parser.NewInteger(1),
+					}),
+				},
+			},
+			RecordIndex:           0,
+			fieldReferenceIndices: make(map[string]int),
+		},
+	},
+}
+
+var filterEvaluateFieldReferenceBenchExpr = parser.FieldReference{
+	Column: parser.Identifier{Literal: "column3"},
+}
+
+func BenchmarkFilter_EvaluateFieldReference(b *testing.B) {
+	filter := filterEvaluateFieldReferenceBenchFilter
+	expr := filterEvaluateFieldReferenceBenchExpr
+	for i := 0; i < b.N; i++ {
+		_, _ = filter.Evaluate(expr)
+	}
+}
+
+func BenchmarkFilter_EvaluateFieldReferenceWithIndexCache(b *testing.B) {
+	filter := filterEvaluateFieldReferenceWithIndexCacheBenchFilter
+	expr := filterEvaluateFieldReferenceBenchExpr
+	for i := 0; i < b.N; i++ {
+		_, _ = filter.Evaluate(expr)
 	}
 }

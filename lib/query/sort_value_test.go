@@ -222,9 +222,7 @@ var sortValueLessBench2 = NewSortValue(parser.NewInteger(67890))
 
 func BenchmarkSortValue_Less(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		for j := 0; j < 10000; j++ {
-			sortValueLessBench1.Less(sortValueLessBench2)
-		}
+		_ = sortValueLessBench1.Less(sortValueLessBench2)
 	}
 }
 
@@ -242,8 +240,6 @@ var sortValuesEquivalentBench2 = SortValues{
 
 func BenchmarkSortValues_EquivalentTo(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		for j := 0; j < 10000; j++ {
-			sortValuesEquivalentBench1.EquivalentTo(sortValuesEquivalentBench2)
-		}
+		_ = sortValuesEquivalentBench1.EquivalentTo(sortValuesEquivalentBench2)
 	}
 }

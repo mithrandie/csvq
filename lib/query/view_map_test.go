@@ -1169,14 +1169,15 @@ func TestViewMap_Clear(t *testing.T) {
 	}
 }
 
-var viewMapGetWithInternalIdBench = ViewMap{
-	"BENCH_VIEW": &View{
-		Header: NewHeader("bench_view", []string{"c1", "c2", "c3", "c4"}),
-	},
-}
+var viewMapGetWithInternalIdBench = generateViewMapGetWithInternalIdBenchViewMap()
 
-func BenchmarkViewMap_GetWithInternalId(b *testing.B) {
-	view := viewMapGetWithInternalIdBench["BENCH_VIEW"]
+func generateViewMapGetWithInternalIdBenchViewMap() ViewMap {
+	m := ViewMap{
+		"BENCH_VIEW": &View{
+			Header: NewHeader("bench_view", []string{"c1", "c2", "c3", "c4"}),
+		},
+	}
+	view := m["BENCH_VIEW"]
 	view.Records = make(Records, 10000)
 	for i := 0; i < 10000; i++ {
 		view.Records[i] = NewRecord([]parser.Primary{
@@ -1186,7 +1187,10 @@ func BenchmarkViewMap_GetWithInternalId(b *testing.B) {
 			parser.NewInteger(4),
 		})
 	}
+	return m
+}
 
+func BenchmarkViewMap_GetWithInternalId(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		viewMapGetWithInternalIdBench.GetWithInternalId(parser.Identifier{Literal: "BENCH_VIEW"})
 	}
