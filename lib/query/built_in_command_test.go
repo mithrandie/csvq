@@ -160,7 +160,7 @@ var sourceTests = []struct {
 	{
 		Name: "Source File Argument Not String Error",
 		Expr: parser.Source{
-			FilePath: parser.NewNullValue(),
+			FilePath: parser.NewNullValueFromString("NULL"),
 		},
 		Error: "[L:- C:-] SOURCE: argument NULL is not a string",
 	},

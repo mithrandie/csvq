@@ -125,7 +125,7 @@ func Median(list []parser.Primary) parser.Primary {
 			continue
 		}
 		if d := parser.PrimaryToDatetime(v); !parser.IsNull(d) {
-			values = append(values, float64(d.(parser.Datetime).Value().UnixNano())/float64(1000000000))
+			values = append(values, float64(d.(parser.Datetime).Value().UnixNano())/1e9)
 			continue
 		}
 	}

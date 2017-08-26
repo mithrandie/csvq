@@ -633,13 +633,16 @@ func (view *View) Select(clause parser.SelectClause) error {
 		view.selectLabels = make([]string, len(fields))
 		for i, f := range fields {
 			field := f.(parser.Field)
-			label := field.Name()
-			idx, err := view.evalColumn(field.Object, field.Object.String(), label)
+			alias := ""
+			if field.Alias != nil {
+				alias = field.Alias.(parser.Identifier).Literal
+			}
+			idx, err := view.evalColumn(field.Object, alias)
 			if err != nil {
 				return err
 			}
 			view.selectFields[i] = idx
-			view.selectLabels[i] = label
+			view.selectLabels[i] = field.Name()
 		}
 		return nil
 	}
@@ -750,7 +753,7 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 	sortIndices := make([]int, len(clause.Items))
 	for i, v := range clause.Items {
 		oi := v.(parser.OrderItem)
-		idx, err := view.evalColumn(oi.Value, oi.Value.String(), "")
+		idx, err := view.evalColumn(oi.Value, "")
 		if err != nil {
 			return err
 		}
@@ -923,7 +926,7 @@ func (view *View) ExtendRecordCapacity(exprs []parser.Expression) error {
 	return nil
 }
 
-func (view *View) evalColumn(obj parser.Expression, column string, alias string) (idx int, err error) {
+func (view *View) evalColumn(obj parser.Expression, alias string) (idx int, err error) {
 	switch obj.(type) {
 	case parser.FieldReference, parser.ColumnNumber:
 		if idx, err = view.FieldIndex(obj); err != nil {
@@ -978,7 +981,7 @@ func (view *View) evalColumn(obj parser.Expression, column string, alias string)
 					return
 				}
 			}
-			view.Header, idx = AddHeaderField(view.Header, column, alias)
+			view.Header, idx = AddHeaderField(view.Header, parser.FieldIdentifier(obj), alias)
 		}
 	}
 
@@ -1007,7 +1010,7 @@ func (view *View) evalAnalyticFunction(expr parser.AnalyticFunction) error {
 
 		partitionIndices = make([]int, len(partitionExprs))
 		for i, pexpr := range partitionExprs {
-			idx, err := view.evalColumn(pexpr, pexpr.String(), "")
+			idx, err := view.evalColumn(pexpr, "")
 			if err != nil {
 				return err
 			}

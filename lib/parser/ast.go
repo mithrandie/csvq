@@ -197,15 +197,13 @@ func (b Boolean) Ternary() ternary.Value {
 }
 
 type Ternary struct {
-	literal string
-	value   ternary.Value
+	value ternary.Value
 }
 
 func NewTernaryFromString(s string) Ternary {
 	t, _ := ternary.Parse(s)
 	return Ternary{
-		literal: s,
-		value:   t,
+		value: t,
 	}
 }
 
@@ -216,9 +214,6 @@ func NewTernary(t ternary.Value) Ternary {
 }
 
 func (t Ternary) String() string {
-	if 0 < len(t.literal) {
-		return t.literal
-	}
 	return t.value.String()
 }
 
@@ -227,15 +222,13 @@ func (t Ternary) Ternary() ternary.Value {
 }
 
 type Datetime struct {
-	literal string
-	value   time.Time
+	value time.Time
 }
 
 func NewDatetimeFromString(s string) Datetime {
 	t, _ := StrToTime(s)
 	return Datetime{
-		literal: s,
-		value:   t,
+		value: t,
 	}
 }
 
@@ -246,9 +239,6 @@ func NewDatetime(t time.Time) Datetime {
 }
 
 func (dt Datetime) String() string {
-	if 0 < len(dt.literal) {
-		return quoteString(dt.literal)
-	}
 	return quoteString(dt.value.Format(time.RFC3339Nano))
 }
 
@@ -264,25 +254,14 @@ func (dt Datetime) Format(s string) string {
 	return dt.value.Format(s)
 }
 
-type Null struct {
-	literal string
-}
-
-func NewNullFromString(s string) Null {
-	return Null{
-		literal: s,
-	}
-}
+type Null struct{}
 
 func NewNull() Null {
 	return Null{}
 }
 
 func (n Null) String() string {
-	if len(n.literal) < 1 {
-		return "NULL"
-	}
-	return n.literal
+	return "NULL"
 }
 
 func (n Null) Ternary() ternary.Value {
@@ -291,24 +270,34 @@ func (n Null) Ternary() ternary.Value {
 
 type PrimitiveType struct {
 	*BaseExpr
-	Value Primary
-}
-
-func NewPrimitiveType(p Primary) PrimitiveType {
-	return PrimitiveType{
-		Value: p,
-	}
+	Literal string
+	Value   Primary
 }
 
 func NewStringValue(s string) PrimitiveType {
 	return PrimitiveType{
-		Value: NewString(s),
+		Literal: s,
+		Value:   NewString(s),
+	}
+}
+
+func NewIntegerValueFromString(s string) PrimitiveType {
+	return PrimitiveType{
+		Literal: s,
+		Value:   NewIntegerFromString(s),
 	}
 }
 
 func NewIntegerValue(i int64) PrimitiveType {
 	return PrimitiveType{
 		Value: NewInteger(i),
+	}
+}
+
+func NewFloatValueFromString(s string) PrimitiveType {
+	return PrimitiveType{
+		Literal: s,
+		Value:   NewFloatFromString(s),
 	}
 }
 
@@ -320,7 +309,8 @@ func NewFloatValue(f float64) PrimitiveType {
 
 func NewTernaryValueFromString(s string) PrimitiveType {
 	return PrimitiveType{
-		Value: NewTernaryFromString(s),
+		Literal: s,
+		Value:   NewTernaryFromString(s),
 	}
 }
 
@@ -332,7 +322,8 @@ func NewTernaryValue(t ternary.Value) PrimitiveType {
 
 func NewDatetimeValueFromString(s string) PrimitiveType {
 	return PrimitiveType{
-		Value: NewDatetimeFromString(s),
+		Literal: s,
+		Value:   NewDatetimeFromString(s),
 	}
 }
 
@@ -344,7 +335,8 @@ func NewDatetimeValue(t time.Time) PrimitiveType {
 
 func NewNullValueFromString(s string) PrimitiveType {
 	return PrimitiveType{
-		Value: NewNullFromString(s),
+		Literal: s,
+		Value:   NewNull(),
 	}
 }
 
@@ -355,6 +347,14 @@ func NewNullValue() PrimitiveType {
 }
 
 func (e PrimitiveType) String() string {
+	if 0 < len(e.Literal) {
+		switch e.Value.(type) {
+		case String, Datetime:
+			return quoteString(e.Literal)
+		default:
+			return e.Literal
+		}
+	}
 	return e.Value.String()
 }
 
@@ -1012,12 +1012,7 @@ func (f Field) Name() string {
 		return f.Alias.(Identifier).Literal
 	}
 	if t, ok := f.Object.(PrimitiveType); ok {
-		if s, ok := t.Value.(String); ok {
-			return s.Value()
-		}
-		if dt, ok := t.Value.(Datetime); ok {
-			return dt.literal
-		}
+		return t.Literal
 	}
 	if fr, ok := f.Object.(FieldReference); ok {
 		return fr.Column.Literal

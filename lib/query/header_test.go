@@ -96,11 +96,11 @@ var headerContainsObjectTests = []struct {
 		Result: 1,
 	},
 	{
-		Expr:  parser.NewIntegerValue(1),
+		Expr:  parser.NewIntegerValueFromString("1"),
 		Error: "[L:- C:-] field 1 is ambiguous",
 	},
 	{
-		Expr:  parser.NewIntegerValue(2),
+		Expr:  parser.NewIntegerValueFromString("2"),
 		Error: "[L:- C:-] field 2 does not exist",
 	},
 }

@@ -69,7 +69,7 @@ var procedureExecuteStatementTests = []struct {
 	{
 		Input: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "@var1"},
-			Value:    parser.NewIntegerValue(1),
+			Value:    parser.NewIntegerValueFromString("1"),
 		},
 		Result: []Result{},
 	},
@@ -114,7 +114,7 @@ var procedureExecuteStatementTests = []struct {
 		Input: parser.Function{
 			Name: "userfunc",
 			Args: []parser.Expression{
-				parser.NewIntegerValue(1),
+				parser.NewIntegerValueFromString("1"),
 			},
 		},
 		Logs: []string{
@@ -181,8 +181,8 @@ var procedureExecuteStatementTests = []struct {
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
 						Fields: []parser.Expression{
-							parser.Field{Object: parser.NewIntegerValue(1)},
-							parser.Field{Object: parser.NewIntegerValue(2)},
+							parser.Field{Object: parser.NewIntegerValueFromString("1")},
+							parser.Field{Object: parser.NewIntegerValueFromString("2")},
 						},
 					},
 				},
@@ -335,7 +335,7 @@ var procedureExecuteStatementTests = []struct {
 	{
 		Input: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "@var9"},
-			Value:    parser.NewIntegerValue(1),
+			Value:    parser.NewIntegerValueFromString("1"),
 		},
 		Error:     "[L:- C:-] variable @var9 is undefined",
 		ErrorCode: 1,
@@ -351,7 +351,7 @@ var procedureExecuteStatementTests = []struct {
 				parser.RowValue{
 					Value: parser.ValueList{
 						Values: []parser.Expression{
-							parser.NewIntegerValue(4),
+							parser.NewIntegerValueFromString("4"),
 							parser.NewStringValue("str4"),
 						},
 					},
@@ -359,7 +359,7 @@ var procedureExecuteStatementTests = []struct {
 				parser.RowValue{
 					Value: parser.ValueList{
 						Values: []parser.Expression{
-							parser.NewIntegerValue(5),
+							parser.NewIntegerValueFromString("5"),
 							parser.NewStringValue("str5"),
 						},
 					},
@@ -397,7 +397,7 @@ var procedureExecuteStatementTests = []struct {
 			WhereClause: parser.WhereClause{
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-					RHS:      parser.NewIntegerValue(2),
+					RHS:      parser.NewIntegerValueFromString("2"),
 					Operator: "=",
 				},
 			},
@@ -431,7 +431,7 @@ var procedureExecuteStatementTests = []struct {
 			WhereClause: parser.WhereClause{
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-					RHS:      parser.NewIntegerValue(2),
+					RHS:      parser.NewIntegerValueFromString("2"),
 					Operator: "=",
 				},
 			},
@@ -798,7 +798,7 @@ var procedureWhileTests = []struct {
 		Stmt: parser.While{
 			Condition: parser.Comparison{
 				LHS:      parser.Variable{Name: "@while_test"},
-				RHS:      parser.NewIntegerValue(3),
+				RHS:      parser.NewIntegerValueFromString("3"),
 				Operator: "<",
 			},
 			Statements: []parser.Statement{
@@ -806,7 +806,7 @@ var procedureWhileTests = []struct {
 					Variable: parser.Variable{Name: "@while_test"},
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "@while_test"},
-						RHS:      parser.NewIntegerValue(1),
+						RHS:      parser.NewIntegerValueFromString("1"),
 						Operator: '+',
 					},
 				},
@@ -822,7 +822,7 @@ var procedureWhileTests = []struct {
 		Stmt: parser.While{
 			Condition: parser.Comparison{
 				LHS:      parser.Variable{Name: "@while_test_count"},
-				RHS:      parser.NewIntegerValue(3),
+				RHS:      parser.NewIntegerValueFromString("3"),
 				Operator: "<",
 			},
 			Statements: []parser.Statement{
@@ -830,7 +830,7 @@ var procedureWhileTests = []struct {
 					Variable: parser.Variable{Name: "@while_test_count"},
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "@while_test_count"},
-						RHS:      parser.NewIntegerValue(1),
+						RHS:      parser.NewIntegerValueFromString("1"),
 						Operator: '+',
 					},
 				},
@@ -838,14 +838,14 @@ var procedureWhileTests = []struct {
 					Variable: parser.Variable{Name: "@while_test"},
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "@while_test"},
-						RHS:      parser.NewIntegerValue(1),
+						RHS:      parser.NewIntegerValueFromString("1"),
 						Operator: '+',
 					},
 				},
 				parser.If{
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "@while_test_count"},
-						RHS:      parser.NewIntegerValue(2),
+						RHS:      parser.NewIntegerValueFromString("2"),
 						Operator: "=",
 					},
 					Statements: []parser.Statement{
@@ -864,7 +864,7 @@ var procedureWhileTests = []struct {
 		Stmt: parser.While{
 			Condition: parser.Comparison{
 				LHS:      parser.Variable{Name: "@while_test_count"},
-				RHS:      parser.NewIntegerValue(3),
+				RHS:      parser.NewIntegerValueFromString("3"),
 				Operator: "<",
 			},
 			Statements: []parser.Statement{
@@ -872,7 +872,7 @@ var procedureWhileTests = []struct {
 					Variable: parser.Variable{Name: "@while_test_count"},
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "@while_test_count"},
-						RHS:      parser.NewIntegerValue(1),
+						RHS:      parser.NewIntegerValueFromString("1"),
 						Operator: '+',
 					},
 				},
@@ -880,14 +880,14 @@ var procedureWhileTests = []struct {
 					Variable: parser.Variable{Name: "@while_test"},
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "@while_test"},
-						RHS:      parser.NewIntegerValue(1),
+						RHS:      parser.NewIntegerValueFromString("1"),
 						Operator: '+',
 					},
 				},
 				parser.If{
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "@while_test_count"},
-						RHS:      parser.NewIntegerValue(2),
+						RHS:      parser.NewIntegerValueFromString("2"),
 						Operator: "=",
 					},
 					Statements: []parser.Statement{
@@ -906,7 +906,7 @@ var procedureWhileTests = []struct {
 		Stmt: parser.While{
 			Condition: parser.Comparison{
 				LHS:      parser.Variable{Name: "@while_test_count"},
-				RHS:      parser.NewIntegerValue(3),
+				RHS:      parser.NewIntegerValueFromString("3"),
 				Operator: "<",
 			},
 			Statements: []parser.Statement{
@@ -914,7 +914,7 @@ var procedureWhileTests = []struct {
 					Variable: parser.Variable{Name: "@while_test_count"},
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "@while_test_count"},
-						RHS:      parser.NewIntegerValue(1),
+						RHS:      parser.NewIntegerValueFromString("1"),
 						Operator: '+',
 					},
 				},
@@ -922,14 +922,14 @@ var procedureWhileTests = []struct {
 					Variable: parser.Variable{Name: "@while_test"},
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "@while_test"},
-						RHS:      parser.NewIntegerValue(1),
+						RHS:      parser.NewIntegerValueFromString("1"),
 						Operator: '+',
 					},
 				},
 				parser.If{
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "@while_test_count"},
-						RHS:      parser.NewIntegerValue(2),
+						RHS:      parser.NewIntegerValueFromString("2"),
 						Operator: "=",
 					},
 					Statements: []parser.Statement{
@@ -956,7 +956,7 @@ var procedureWhileTests = []struct {
 					Variable: parser.Variable{Name: "@while_test"},
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "@while_test"},
-						RHS:      parser.NewIntegerValue(1),
+						RHS:      parser.NewIntegerValueFromString("1"),
 						Operator: '+',
 					},
 				},
@@ -971,7 +971,7 @@ var procedureWhileTests = []struct {
 		Stmt: parser.While{
 			Condition: parser.Comparison{
 				LHS:      parser.Variable{Name: "@while_test"},
-				RHS:      parser.NewIntegerValue(3),
+				RHS:      parser.NewIntegerValueFromString("3"),
 				Operator: "<",
 			},
 			Statements: []parser.Statement{
@@ -1065,7 +1065,7 @@ var procedureWhileInCursorTests = []struct {
 				parser.If{
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "@var1"},
-						RHS:      parser.NewIntegerValue(2),
+						RHS:      parser.NewIntegerValueFromString("2"),
 						Operator: "=",
 					},
 					Statements: []parser.Statement{
@@ -1091,7 +1091,7 @@ var procedureWhileInCursorTests = []struct {
 				parser.If{
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "@var1"},
-						RHS:      parser.NewIntegerValue(2),
+						RHS:      parser.NewIntegerValueFromString("2"),
 						Operator: "=",
 					},
 					Statements: []parser.Statement{
@@ -1117,7 +1117,7 @@ var procedureWhileInCursorTests = []struct {
 				parser.If{
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "@var1"},
-						RHS:      parser.NewIntegerValue(2),
+						RHS:      parser.NewIntegerValueFromString("2"),
 						Operator: "=",
 					},
 					Statements: []parser.Statement{

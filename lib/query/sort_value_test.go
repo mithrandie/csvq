@@ -19,7 +19,7 @@ func TestSortValues_Serialize(t *testing.T) {
 		NewSortValue(parser.NewBoolean(false)),
 		NewSortValue(parser.NewString("str")),
 	}
-	expect := "[N]:[I]1[B]true:[F]1.234:[I]1328289495:[F]1328289495.123:[D]2012-02-03T17:18:15.123456789Z:[I]0[B]false:[S]STR"
+	expect := "[N]:[I]1[B]true:[F]1.234:[I]1328289495:[F]1328289495.123:[D]1328289495123456789:[I]0[B]false:[S]STR"
 
 	result := values.Serialize()
 	if result != expect {
@@ -222,9 +222,7 @@ var sortValueLessBench2 = NewSortValue(parser.NewInteger(67890))
 
 func BenchmarkSortValue_Less(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		for j := 0; j < 10000; j++ {
-			sortValueLessBench1.Less(sortValueLessBench2)
-		}
+		_ = sortValueLessBench1.Less(sortValueLessBench2)
 	}
 }
 
@@ -242,8 +240,6 @@ var sortValuesEquivalentBench2 = SortValues{
 
 func BenchmarkSortValues_EquivalentTo(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		for j := 0; j < 10000; j++ {
-			sortValuesEquivalentBench1.EquivalentTo(sortValuesEquivalentBench2)
-		}
+		_ = sortValuesEquivalentBench1.EquivalentTo(sortValuesEquivalentBench2)
 	}
 }

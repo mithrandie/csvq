@@ -115,7 +115,7 @@ func (h Header) ContainsObject(obj parser.Expression) (int, error) {
 		return h.ContainsNumber(cnum)
 	}
 
-	column := obj.String()
+	column := parser.FieldIdentifier(obj)
 
 	idx := -1
 

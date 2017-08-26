@@ -2340,6 +2340,178 @@ func TestAddNano(t *testing.T) {
 	testFunction(t, AddNano, addNanoTests)
 }
 
+var truncMonthTests = []functionTest{
+	{
+		Name: "TruncMonth",
+		Function: parser.Function{
+			Name: "trunc_month",
+		},
+		Args: []parser.Primary{
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		},
+		Result: parser.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
+	},
+	{
+		Name: "TruncMonth Argument Error",
+		Function: parser.Function{
+			Name: "trunc_month",
+		},
+		Args:  []parser.Primary{},
+		Error: "[L:- C:-] function trunc_month takes exactly 1 argument",
+	},
+	{
+		Name: "TruncMonth Argument Is Null",
+		Function: parser.Function{
+			Name: "trunc_month",
+		},
+		Args: []parser.Primary{
+			parser.NewNull(),
+		},
+		Result: parser.NewNull(),
+	},
+}
+
+func TestTruncMonth(t *testing.T) {
+	testFunction(t, TruncMonth, truncMonthTests)
+}
+
+var truncDayTests = []functionTest{
+	{
+		Name: "TruncDay",
+		Function: parser.Function{
+			Name: "trunc_day",
+		},
+		Args: []parser.Primary{
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		},
+		Result: parser.NewDatetime(time.Date(2012, 2, 1, 0, 0, 0, 0, GetTestLocation())),
+	},
+}
+
+func TestTruncDay(t *testing.T) {
+	testFunction(t, TruncDay, truncDayTests)
+}
+
+var truncTimeTests = []functionTest{
+	{
+		Name: "TruncTime",
+		Function: parser.Function{
+			Name: "trunc_time",
+		},
+		Args: []parser.Primary{
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		},
+		Result: parser.NewDatetime(time.Date(2012, 2, 3, 0, 0, 0, 0, GetTestLocation())),
+	},
+}
+
+func TestTruncTime(t *testing.T) {
+	testFunction(t, TruncTime, truncTimeTests)
+}
+
+var truncMinuteTests = []functionTest{
+	{
+		Name: "TruncMinute",
+		Function: parser.Function{
+			Name: "trunc_minute",
+		},
+		Args: []parser.Primary{
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		},
+		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 0, 0, 0, GetTestLocation())),
+	},
+	{
+		Name: "TruncMinute Argument Error",
+		Function: parser.Function{
+			Name: "trunc_minute",
+		},
+		Args:  []parser.Primary{},
+		Error: "[L:- C:-] function trunc_minute takes exactly 1 argument",
+	},
+	{
+		Name: "TruncMinute Argument Is Null",
+		Function: parser.Function{
+			Name: "trunc_minute",
+		},
+		Args: []parser.Primary{
+			parser.NewNull(),
+		},
+		Result: parser.NewNull(),
+	},
+}
+
+func TestTruncMinute(t *testing.T) {
+	testFunction(t, TruncMinute, truncMinuteTests)
+}
+
+var truncSecondTests = []functionTest{
+	{
+		Name: "TruncSecond",
+		Function: parser.Function{
+			Name: "trunc_second",
+		},
+		Args: []parser.Primary{
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		},
+		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 0, 0, GetTestLocation())),
+	},
+}
+
+func TestTruncSecond(t *testing.T) {
+	testFunction(t, TruncSecond, truncSecondTests)
+}
+
+var truncMilliTests = []functionTest{
+	{
+		Name: "TruncMilli",
+		Function: parser.Function{
+			Name: "trunc_milli",
+		},
+		Args: []parser.Primary{
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		},
+		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
+	},
+}
+
+func TestTruncMilli(t *testing.T) {
+	testFunction(t, TruncMilli, truncMilliTests)
+}
+
+var truncMicroTests = []functionTest{
+	{
+		Name: "TruncMicro",
+		Function: parser.Function{
+			Name: "trunc_micro",
+		},
+		Args: []parser.Primary{
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		},
+		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123000000, GetTestLocation())),
+	},
+}
+
+func TestTruncateMicro(t *testing.T) {
+	testFunction(t, TruncMicro, truncMicroTests)
+}
+
+var truncNanoTests = []functionTest{
+	{
+		Name: "TruncNano",
+		Function: parser.Function{
+			Name: "trunc_nano",
+		},
+		Args: []parser.Primary{
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		},
+		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456000, GetTestLocation())),
+	},
+}
+
+func TestTruncateNano(t *testing.T) {
+	testFunction(t, TruncNano, truncNanoTests)
+}
+
 var dateDiffTests = []functionTest{
 	{
 		Name: "DateDiff",
@@ -2434,6 +2606,59 @@ var timeDiffTests = []functionTest{
 
 func TestTimeDiff(t *testing.T) {
 	testFunction(t, TimeDiff, timeDiffTests)
+}
+
+var timeNanoDiffTests = []functionTest{
+	{
+		Name: "TimeNanoDiff",
+		Function: parser.Function{
+			Name: "time_nano_diff",
+		},
+		Args: []parser.Primary{
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+			parser.NewDatetime(time.Date(2012, 2, 3, 1, 18, 55, 123000000, GetTestLocation())),
+		},
+		Result: parser.NewInteger(28760000456789),
+	},
+}
+
+func TestTimeNanoDiff(t *testing.T) {
+	testFunction(t, TimeNanoDiff, timeNanoDiffTests)
+}
+
+var utcTests = []functionTest{
+	{
+		Name: "UTC",
+		Function: parser.Function{
+			Name: "utc",
+		},
+		Args: []parser.Primary{
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		},
+		Result: parser.NewDatetime(time.Date(2012, 2, 3, 17, 18, 15, 123456789, time.UTC)),
+	},
+	{
+		Name: "UTC Argument Error",
+		Function: parser.Function{
+			Name: "utc",
+		},
+		Args:  []parser.Primary{},
+		Error: "[L:- C:-] function utc takes exactly 1 argument",
+	},
+	{
+		Name: "UTC Argument Is Null",
+		Function: parser.Function{
+			Name: "utc",
+		},
+		Args: []parser.Primary{
+			parser.NewNull(),
+		},
+		Result: parser.NewNull(),
+	},
+}
+
+func TestUTC(t *testing.T) {
+	testFunction(t, UTC, utcTests)
 }
 
 var stringTests = []functionTest{
@@ -2583,9 +2808,9 @@ var floatTests = []functionTest{
 			Name: "float",
 		},
 		Args: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123450000, GetTestLocation())),
 		},
-		Result: parser.NewFloat(1328289495),
+		Result: parser.NewFloat(1328289495.12345),
 	},
 	{
 		Name: "Float Arguments Error",
