@@ -899,11 +899,11 @@ func second(t time.Time) int64 {
 }
 
 func millisecond(t time.Time) int64 {
-	return int64(round(float64(t.Nanosecond())/float64(1000000), 0))
+	return int64(round(float64(t.Nanosecond())/1e6, 0))
 }
 
 func microsecond(t time.Time) int64 {
-	return int64(round(float64(t.Nanosecond())/float64(1000), 0))
+	return int64(round(float64(t.Nanosecond())/1e3, 0))
 }
 
 func nanosecond(t time.Time) int64 {
@@ -1177,7 +1177,7 @@ func Float(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
 		t := args[0].(parser.Datetime).Value()
 		f := float64(t.Unix())
 		if t.Nanosecond() > 0 {
-			f = f + float64(t.Nanosecond())/float64(1000000000)
+			f = f + float64(t.Nanosecond())/1e9
 		}
 		return parser.NewFloat(f), nil
 	default:

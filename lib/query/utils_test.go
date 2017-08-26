@@ -23,7 +23,7 @@ func TestSerializeComparisonKeys(t *testing.T) {
 		parser.NewTernary(ternary.UNKNOWN),
 		parser.NewNull(),
 	}
-	expect := "[S]STR:[I]1[B]true:[I]0[B]false:[I]3:[F]1.234:[I]1328289495:[F]1328289495.123:[D]2012-02-03T17:18:15.123456789Z:[I]1[B]true:[I]0[B]false:[N]:[N]"
+	expect := "[S]STR:[I]1[B]true:[I]0[B]false:[I]3:[F]1.234:[I]1328289495:[F]1328289495.123:[D]1328289495123456789:[I]1[B]true:[I]0[B]false:[N]:[N]"
 
 	result := SerializeComparisonKeys(values)
 	if result != expect {

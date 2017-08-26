@@ -93,7 +93,7 @@ func SerializeKey(value parser.Primary) string {
 	} else if dt := parser.PrimaryToDatetime(value); !parser.IsNull(dt) {
 		t := dt.(parser.Datetime).Value()
 		if t.Nanosecond() > 0 {
-			f := float64(t.Unix()) + float64(t.Nanosecond())/float64(1000000000)
+			f := float64(t.Unix()) + float64(t.Nanosecond())/1e9
 			t2 := parser.Float64ToTime(f)
 			if t.Equal(t2) {
 				return serializeFlaot(f)
@@ -132,7 +132,11 @@ func serializeFlaot(f float64) string {
 }
 
 func serializeDatetime(t time.Time) string {
-	return "[D]" + t.UTC().Format(time.RFC3339Nano)
+	return "[D]" + parser.Int64ToStr(t.UnixNano())
+}
+
+func serializeDatetimeFromUnixNano(t int64) string {
+	return "[D]" + parser.Int64ToStr(t)
 }
 
 func serializeBoolean(b bool) string {
