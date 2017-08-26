@@ -5,6 +5,7 @@ import (
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/ternary"
+	"time"
 )
 
 func TestStrToTime(t *testing.T) {
@@ -372,8 +373,22 @@ func TestPrimaryToFloat(t *testing.T) {
 }
 
 func TestPrimaryToDatetime(t *testing.T) {
+	flags := cmd.GetFlags()
+
 	var p Primary
 	var dt Primary
+
+	flags.DatetimeFormat = "01022006"
+	p = NewString("02012012")
+	dt = PrimaryToDatetime(p)
+	if _, ok := dt.(Datetime); !ok {
+		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
+	} else {
+		expect := time.Date(2012, 2, 1, 0, 0, 0, 0, cmd.GetLocation())
+		if !dt.(Datetime).Value().Equal(expect) {
+			t.Errorf("datetime = %s, want %s for %#v", dt, expect, p)
+		}
+	}
 
 	p = NewInteger(1136181845)
 	dt = PrimaryToDatetime(p)

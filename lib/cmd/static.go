@@ -10,6 +10,7 @@ var (
 	random  *rand.Rand
 	getRand sync.Once
 
+	location    *time.Location
 	getLocation sync.Once
 
 	now    time.Time
@@ -25,10 +26,9 @@ func GetRand() *rand.Rand {
 
 func GetLocation() *time.Location {
 	getLocation.Do(func() {
-		loc, _ := time.LoadLocation(GetFlags().Location)
-		time.Local = loc
+		location, _ = time.LoadLocation(GetFlags().Location)
 	})
-	return time.Local
+	return location
 }
 
 func Now() time.Time {

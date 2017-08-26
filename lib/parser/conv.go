@@ -30,7 +30,7 @@ func StrToTime(s string) (time.Time, error) {
 
 	flags := cmd.GetFlags()
 	if 0 < len(flags.DatetimeFormat) {
-		if t, e := time.Parse(DatetimeFormats.Get(flags.DatetimeFormat), s); e == nil {
+		if t, e := time.ParseInLocation(DatetimeFormats.Get(flags.DatetimeFormat), s, cmd.GetLocation()); e == nil {
 			return t, nil
 		}
 	}
@@ -287,6 +287,9 @@ func PrimaryToDatetime(p Primary) Primary {
 		return p
 	case String:
 		s := strings.TrimSpace(p.(String).Value())
+		if dt, e := StrToTime(s); e == nil {
+			return NewDatetime(dt)
+		}
 		if maybeNumber(s) {
 			if i, e := strconv.ParseInt(s, 10, 64); e == nil {
 				dt := time.Unix(i, 0)
@@ -296,9 +299,6 @@ func PrimaryToDatetime(p Primary) Primary {
 				dt := Float64ToTime(f)
 				return NewDatetime(dt)
 			}
-		}
-		if dt, e := StrToTime(s); e == nil {
-			return NewDatetime(dt)
 		}
 	}
 
