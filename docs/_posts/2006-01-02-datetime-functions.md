@@ -36,7 +36,7 @@ category: reference
 | [TRUNC_TIME](#trunc_time)     | Truncate time from the datetime |
 | [TRUNC_SECOND](#trunc_second) | Truncate seconds from the datetime |
 | [TRUNC_MILLI](#trunc_milli)   | Truncate milli seconds from the datetime |
-| [TRUNC_MICRO](#trunc_micro)   | Truncate nicro seconds from the datetime |
+| [TRUNC_MICRO](#trunc_micro)   | Truncate micro seconds from the datetime |
 | [TRUNC_NANO](#trunc_nano)     | Truncate nano seconds from the datetime |
 | [DATE_DIFF](#date_diff) | Return the difference of days between two datetime values |
 | [TIME_DIFF](#time_diff) | Return the difference of time between two datetime values as seconds |
