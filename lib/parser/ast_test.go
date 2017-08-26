@@ -202,12 +202,6 @@ func TestTernary_String(t *testing.T) {
 	if p.String() != s {
 		t.Errorf("string = %q, want %q for %#v", p.String(), s, p)
 	}
-
-	s = "true"
-	p = NewTernaryFromString("true")
-	if p.String() != s {
-		t.Errorf("string = %q, want %q for %#v", p.String(), s, p)
-	}
 }
 
 func TestTernary_Ternary(t *testing.T) {
@@ -218,20 +212,10 @@ func TestTernary_Ternary(t *testing.T) {
 }
 
 func TestDatetime_String(t *testing.T) {
-	s := "2012-01-01 12:34:56"
+	s := "2012-01-01T12:34:56Z"
 	p := NewDatetimeFromString(s)
 
 	expect := "'" + s + "'"
-	if p.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", p.String(), expect, p)
-	}
-
-	s = "2012-01-01T12:34:56-08:00"
-	tm, _ := StrToTime(s)
-	p = Datetime{
-		value: tm,
-	}
-	expect = "'" + s + "'"
 	if p.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", p.String(), expect, p)
 	}
@@ -271,13 +255,7 @@ func TestDatetime_Format(t *testing.T) {
 }
 
 func TestNull_String(t *testing.T) {
-	s := "null"
-	p := NewNullFromString(s)
-	if p.String() != s {
-		t.Errorf("string = %q, want %q for %#v", p.String(), s, p)
-	}
-
-	p = NewNull()
+	p := NewNull()
 	if p.String() != "NULL" {
 		t.Errorf("string = %q, want %q for %#v", p.String(), "NULL", p)
 	}
@@ -291,8 +269,32 @@ func TestNull_Ternary(t *testing.T) {
 }
 
 func TestPrimitiveType_String(t *testing.T) {
-	e := NewTernaryValue(ternary.TRUE)
-	expect := "TRUE"
+	e := NewTernaryValueFromString("true")
+	expect := "true"
+	if e.String() != expect {
+		t.Errorf("result = %q, want %q for %q ", e.String(), expect, e)
+	}
+
+	e = NewStringValue("str")
+	expect = "'str'"
+	if e.String() != expect {
+		t.Errorf("result = %q, want %q for %q ", e.String(), expect, e)
+	}
+
+	e = NewIntegerValue(1)
+	expect = "1"
+	if e.String() != expect {
+		t.Errorf("result = %q, want %q for %q ", e.String(), expect, e)
+	}
+
+	e = NewFloatValue(1.234)
+	expect = "1.234"
+	if e.String() != expect {
+		t.Errorf("result = %q, want %q for %q ", e.String(), expect, e)
+	}
+
+	e = NewTernaryValue(ternary.TRUE)
+	expect = "TRUE"
 	if e.String() != expect {
 		t.Errorf("result = %q, want %q for %q ", e.String(), expect, e)
 	}
@@ -304,7 +306,7 @@ func TestPrimitiveType_IsInteger(t *testing.T) {
 		t.Errorf("result = %t, want %t for %q ", e.IsInteger(), false, e)
 	}
 
-	e = NewPrimitiveType(NewInteger(1))
+	e = NewIntegerValue(1)
 	if e.IsInteger() != true {
 		t.Errorf("result = %t, want %t for %q ", e.IsInteger(), true, e)
 	}
@@ -367,8 +369,8 @@ func TestRowValue_String(t *testing.T) {
 	e := RowValue{
 		Value: ValueList{
 			Values: []Expression{
-				NewIntegerValue(1),
-				NewIntegerValue(2),
+				NewIntegerValueFromString("1"),
+				NewIntegerValueFromString("2"),
 			},
 		},
 	}
@@ -381,8 +383,8 @@ func TestRowValue_String(t *testing.T) {
 func TestValueList_String(t *testing.T) {
 	e := ValueList{
 		Values: []Expression{
-			NewIntegerValue(1),
-			NewIntegerValue(2),
+			NewIntegerValueFromString("1"),
+			NewIntegerValueFromString("2"),
 		},
 	}
 	expect := "(1, 2)"
@@ -396,14 +398,14 @@ func TestRowValueList_String(t *testing.T) {
 		RowValues: []Expression{
 			ValueList{
 				Values: []Expression{
-					NewIntegerValue(1),
-					NewIntegerValue(2),
+					NewIntegerValueFromString("1"),
+					NewIntegerValueFromString("2"),
 				},
 			},
 			ValueList{
 				Values: []Expression{
-					NewIntegerValue(3),
-					NewIntegerValue(4),
+					NewIntegerValueFromString("3"),
+					NewIntegerValueFromString("4"),
 				},
 			},
 		},
@@ -427,7 +429,7 @@ func TestSelectQuery_String(t *testing.T) {
 							SelectClause: SelectClause{
 								Select: "select",
 								Fields: []Expression{
-									Field{Object: NewIntegerValue(1)},
+									Field{Object: NewIntegerValueFromString("1")},
 								},
 							},
 						},
@@ -455,11 +457,11 @@ func TestSelectQuery_String(t *testing.T) {
 		},
 		LimitClause: LimitClause{
 			Limit: "limit",
-			Value: NewIntegerValue(10),
+			Value: NewIntegerValueFromString("10"),
 		},
 		OffsetClause: OffsetClause{
 			Offset: "offset",
-			Value:  NewIntegerValue(10),
+			Value:  NewIntegerValueFromString("10"),
 		},
 	}
 	expect := "with ct as (select 1) select column from table order by column limit 10 offset 10"
@@ -473,7 +475,7 @@ func TestSelectSet_String(t *testing.T) {
 		LHS: SelectEntity{
 			SelectClause: SelectClause{
 				Select: "select",
-				Fields: []Expression{Field{Object: NewIntegerValue(1)}},
+				Fields: []Expression{Field{Object: NewIntegerValueFromString("1")}},
 			},
 		},
 		Operator: Token{Token: UNION, Literal: "union"},
@@ -481,7 +483,7 @@ func TestSelectSet_String(t *testing.T) {
 		RHS: SelectEntity{
 			SelectClause: SelectClause{
 				Select: "select",
-				Fields: []Expression{Field{Object: NewIntegerValue(2)}},
+				Fields: []Expression{Field{Object: NewIntegerValueFromString("2")}},
 			},
 		},
 	}
@@ -506,7 +508,7 @@ func TestSelectEntity_String(t *testing.T) {
 			Filter: Comparison{
 				LHS:      Identifier{Literal: "column"},
 				Operator: ">",
-				RHS:      NewIntegerValue(1),
+				RHS:      NewIntegerValueFromString("1"),
 			},
 		},
 		GroupByClause: GroupByClause{
@@ -520,7 +522,7 @@ func TestSelectEntity_String(t *testing.T) {
 			Filter: Comparison{
 				LHS:      Identifier{Literal: "column"},
 				Operator: ">",
-				RHS:      NewIntegerValue(1),
+				RHS:      NewIntegerValueFromString("1"),
 			},
 		},
 	}
@@ -584,7 +586,7 @@ func TestWhereClause_String(t *testing.T) {
 		Filter: Comparison{
 			LHS:      Identifier{Literal: "column"},
 			Operator: ">",
-			RHS:      NewIntegerValue(1),
+			RHS:      NewIntegerValueFromString("1"),
 		},
 	}
 	expect := "where column > 1"
@@ -613,7 +615,7 @@ func TestHavingClause_String(t *testing.T) {
 		Filter: Comparison{
 			LHS:      Identifier{Literal: "column"},
 			Operator: ">",
-			RHS:      NewIntegerValue(1),
+			RHS:      NewIntegerValueFromString("1"),
 		},
 	}
 	expect := "having column > 1"
@@ -642,13 +644,13 @@ func TestOrderByClause_String(t *testing.T) {
 }
 
 func TestLimitClause_String(t *testing.T) {
-	e := LimitClause{Limit: "limit", Value: NewIntegerValue(10), With: LimitWith{With: "with", Type: Token{Token: TIES, Literal: "ties"}}}
+	e := LimitClause{Limit: "limit", Value: NewIntegerValueFromString("10"), With: LimitWith{With: "with", Type: Token{Token: TIES, Literal: "ties"}}}
 	expect := "limit 10 with ties"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 
-	e = LimitClause{Limit: "limit", Value: NewIntegerValue(10), Percent: "percent"}
+	e = LimitClause{Limit: "limit", Value: NewIntegerValueFromString("10"), Percent: "percent"}
 	expect = "limit 10 percent"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
@@ -688,7 +690,7 @@ func TestLimitWith_String(t *testing.T) {
 }
 
 func TestOffsetClause_String(t *testing.T) {
-	e := OffsetClause{Offset: "offset", Value: NewIntegerValue(10)}
+	e := OffsetClause{Offset: "offset", Value: NewIntegerValueFromString("10")}
 	expect := "offset 10"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
@@ -707,7 +709,7 @@ func TestWithClause_String(t *testing.T) {
 						SelectClause: SelectClause{
 							Select: "select",
 							Fields: []Expression{
-								NewIntegerValue(1),
+								NewIntegerValueFromString("1"),
 							},
 						},
 					},
@@ -722,7 +724,7 @@ func TestWithClause_String(t *testing.T) {
 						SelectClause: SelectClause{
 							Select: "select",
 							Fields: []Expression{
-								NewIntegerValue(2),
+								NewIntegerValueFromString("2"),
 							},
 						},
 					},
@@ -749,7 +751,7 @@ func TestInlineTable_String(t *testing.T) {
 				SelectClause: SelectClause{
 					Select: "select",
 					Fields: []Expression{
-						NewIntegerValue(1),
+						NewIntegerValueFromString("1"),
 					},
 				},
 			},
@@ -771,7 +773,7 @@ func TestInlineTable_IsRecursive(t *testing.T) {
 				SelectClause: SelectClause{
 					Select: "select",
 					Fields: []Expression{
-						NewIntegerValue(1),
+						NewIntegerValueFromString("1"),
 					},
 				},
 			},
@@ -789,7 +791,7 @@ func TestInlineTable_IsRecursive(t *testing.T) {
 				SelectClause: SelectClause{
 					Select: "select",
 					Fields: []Expression{
-						NewIntegerValue(1),
+						NewIntegerValueFromString("1"),
 					},
 				},
 			},
@@ -807,7 +809,7 @@ func TestSubquery_String(t *testing.T) {
 				SelectClause: SelectClause{
 					Select: "select",
 					Fields: []Expression{
-						NewIntegerValue(1),
+						NewIntegerValueFromString("1"),
 					},
 				},
 				FromClause: FromClause{
@@ -829,7 +831,7 @@ func TestComparison_String(t *testing.T) {
 	e := Comparison{
 		LHS:      Identifier{Literal: "column"},
 		Operator: ">",
-		RHS:      NewIntegerValue(1),
+		RHS:      NewIntegerValueFromString("1"),
 	}
 	expect := "column > 1"
 	if e.String() != expect {
@@ -879,8 +881,8 @@ func TestBetween_String(t *testing.T) {
 		Between:  "between",
 		And:      "and",
 		LHS:      Identifier{Literal: "column"},
-		Low:      NewIntegerValue(-10),
-		High:     NewIntegerValue(10),
+		Low:      NewIntegerValueFromString("-10"),
+		High:     NewIntegerValueFromString("10"),
 		Negation: Token{Token: NOT, Literal: "not"},
 	}
 	expect := "column not between -10 and 10"
@@ -908,8 +910,8 @@ func TestIn_String(t *testing.T) {
 		Values: RowValue{
 			Value: ValueList{
 				Values: []Expression{
-					NewIntegerValue(1),
-					NewIntegerValue(2),
+					NewIntegerValueFromString("1"),
+					NewIntegerValueFromString("2"),
 				},
 			},
 		},
@@ -939,7 +941,7 @@ func TestAll_String(t *testing.T) {
 					SelectClause: SelectClause{
 						Select: "select",
 						Fields: []Expression{
-							NewIntegerValue(1),
+							NewIntegerValueFromString("1"),
 						},
 					},
 					FromClause: FromClause{
@@ -976,7 +978,7 @@ func TestAny_String(t *testing.T) {
 					SelectClause: SelectClause{
 						Select: "select",
 						Fields: []Expression{
-							NewIntegerValue(1),
+							NewIntegerValueFromString("1"),
 						},
 					},
 					FromClause: FromClause{
@@ -1029,7 +1031,7 @@ func TestExists_String(t *testing.T) {
 					SelectClause: SelectClause{
 						Select: "select",
 						Fields: []Expression{
-							NewIntegerValue(1),
+							NewIntegerValueFromString("1"),
 						},
 					},
 					FromClause: FromClause{
@@ -1052,7 +1054,7 @@ func TestArithmetic_String(t *testing.T) {
 	e := Arithmetic{
 		LHS:      Identifier{Literal: "column"},
 		Operator: int('+'),
-		RHS:      NewIntegerValue(2),
+		RHS:      NewIntegerValueFromString("2"),
 	}
 	expect := "column + 2"
 	if e.String() != expect {
@@ -1201,7 +1203,7 @@ func TestTable_Name(t *testing.T) {
 					SelectClause: SelectClause{
 						Select: "select",
 						Fields: []Expression{
-							NewIntegerValue(1),
+							NewIntegerValueFromString("1"),
 						},
 					},
 					FromClause: FromClause{
@@ -1257,7 +1259,7 @@ func TestJoinCondition_String(t *testing.T) {
 		On: Comparison{
 			LHS:      Identifier{Literal: "column"},
 			Operator: ">",
-			RHS:      NewIntegerValue(1),
+			RHS:      NewIntegerValueFromString("1"),
 		},
 	}
 	expect := "on column > 1"
@@ -1326,9 +1328,9 @@ func TestField_Name(t *testing.T) {
 	}
 
 	e = Field{
-		Object: NewDatetimeValueFromString("2012-01-01"),
+		Object: NewDatetimeValueFromString("2012-01-01 00:00:00 +00:00"),
 	}
-	expect = "2012-01-01"
+	expect = "2012-01-01 00:00:00 +00:00"
 	if e.Name() != expect {
 		t.Errorf("name = %q, want %q for %#v", e.Name(), expect, e)
 	}
@@ -1406,13 +1408,13 @@ func TestCase_String(t *testing.T) {
 			CaseWhen{
 				When:      "when",
 				Then:      "then",
-				Condition: NewIntegerValue(1),
+				Condition: NewIntegerValueFromString("1"),
 				Result:    NewStringValue("A"),
 			},
 			CaseWhen{
 				When:      "when",
 				Then:      "then",
-				Condition: NewIntegerValue(2),
+				Condition: NewIntegerValueFromString("2"),
 				Result:    NewStringValue("B"),
 			},
 		},
@@ -1433,7 +1435,7 @@ func TestCase_String(t *testing.T) {
 				Condition: Comparison{
 					LHS:      Identifier{Literal: "column"},
 					Operator: ">",
-					RHS:      NewIntegerValue(1),
+					RHS:      NewIntegerValueFromString("1"),
 				},
 				Result: NewStringValue("A"),
 			},
@@ -1452,7 +1454,7 @@ func TestCaseWhen_String(t *testing.T) {
 		Condition: Comparison{
 			LHS:      Identifier{Literal: "column"},
 			Operator: ">",
-			RHS:      NewIntegerValue(1),
+			RHS:      NewIntegerValueFromString("1"),
 		},
 		Result: NewStringValue("abcde"),
 	}
@@ -1636,7 +1638,7 @@ func TestVariableSubstitution_String(t *testing.T) {
 		Variable: Variable{
 			Name: "@var",
 		},
-		Value: NewIntegerValue(1),
+		Value: NewIntegerValueFromString("1"),
 	}
 	expect := "@var := 1"
 	if e.String() != expect {
@@ -1647,7 +1649,7 @@ func TestVariableSubstitution_String(t *testing.T) {
 func TestVariableAssignment_String(t *testing.T) {
 	e := VariableAssignment{
 		Variable: Variable{Name: "@var"},
-		Value:    NewIntegerValue(1),
+		Value:    NewIntegerValueFromString("1"),
 	}
 	expect := "@var := 1"
 	if e.String() != expect {
@@ -1677,7 +1679,7 @@ func TestInsertQuery_String(t *testing.T) {
 							SelectClause: SelectClause{
 								Select: "select",
 								Fields: []Expression{
-									Field{Object: NewIntegerValue(1)},
+									Field{Object: NewIntegerValueFromString("1")},
 								},
 							},
 						},
@@ -1697,16 +1699,16 @@ func TestInsertQuery_String(t *testing.T) {
 			RowValue{
 				Value: ValueList{
 					Values: []Expression{
-						NewIntegerValue(1),
-						NewIntegerValue(2),
+						NewIntegerValueFromString("1"),
+						NewIntegerValueFromString("2"),
 					},
 				},
 			},
 			RowValue{
 				Value: ValueList{
 					Values: []Expression{
-						NewIntegerValue(3),
-						NewIntegerValue(4),
+						NewIntegerValueFromString("3"),
+						NewIntegerValueFromString("4"),
 					},
 				},
 			},
@@ -1730,8 +1732,8 @@ func TestInsertQuery_String(t *testing.T) {
 				SelectClause: SelectClause{
 					Select: "select",
 					Fields: []Expression{
-						NewIntegerValue(1),
-						NewIntegerValue(2),
+						NewIntegerValueFromString("1"),
+						NewIntegerValueFromString("2"),
 					},
 				},
 			},
@@ -1756,7 +1758,7 @@ func TestUpdateQuery_String(t *testing.T) {
 							SelectClause: SelectClause{
 								Select: "select",
 								Fields: []Expression{
-									Field{Object: NewIntegerValue(1)},
+									Field{Object: NewIntegerValueFromString("1")},
 								},
 							},
 						},
@@ -1774,11 +1776,11 @@ func TestUpdateQuery_String(t *testing.T) {
 		SetList: []Expression{
 			UpdateSet{
 				Field: FieldReference{Column: Identifier{Literal: "column1"}},
-				Value: NewIntegerValue(1),
+				Value: NewIntegerValueFromString("1"),
 			},
 			UpdateSet{
 				Field: FieldReference{Column: Identifier{Literal: "column2"}},
-				Value: NewIntegerValue(2),
+				Value: NewIntegerValueFromString("2"),
 			},
 		},
 		FromClause: FromClause{
@@ -1794,7 +1796,7 @@ func TestUpdateQuery_String(t *testing.T) {
 			Filter: Comparison{
 				LHS:      Identifier{Literal: "column3"},
 				Operator: "=",
-				RHS:      NewIntegerValue(3),
+				RHS:      NewIntegerValueFromString("3"),
 			},
 		},
 	}
@@ -1807,7 +1809,7 @@ func TestUpdateQuery_String(t *testing.T) {
 func TestUpdateSet_String(t *testing.T) {
 	e := UpdateSet{
 		Field: FieldReference{Column: Identifier{Literal: "column1"}},
-		Value: NewIntegerValue(1),
+		Value: NewIntegerValueFromString("1"),
 	}
 	expect := "column1 = 1"
 	if e.String() != expect {
@@ -1828,7 +1830,7 @@ func TestDeleteQuery_String(t *testing.T) {
 							SelectClause: SelectClause{
 								Select: "select",
 								Fields: []Expression{
-									Field{Object: NewIntegerValue(1)},
+									Field{Object: NewIntegerValueFromString("1")},
 								},
 							},
 						},
@@ -1855,7 +1857,7 @@ func TestDeleteQuery_String(t *testing.T) {
 			Filter: Comparison{
 				LHS:      Identifier{Literal: "column1"},
 				Operator: "=",
-				RHS:      NewIntegerValue(1),
+				RHS:      NewIntegerValueFromString("1"),
 			},
 		},
 	}
@@ -1891,7 +1893,7 @@ func TestColumnPosition_String(t *testing.T) {
 func TestFetchPosition_String(t *testing.T) {
 	e := FetchPosition{
 		Position: Token{Token: ABSOLUTE, Literal: "absolute"},
-		Number:   NewIntegerValue(1),
+		Number:   NewIntegerValueFromString("1"),
 	}
 	expect := "absolute 1"
 	if e.String() != expect {

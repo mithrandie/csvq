@@ -351,3 +351,19 @@ func Float64ToTime(f float64) time.Time {
 func FormatTableName(s string) string {
 	return strings.TrimSuffix(filepath.Base(s), filepath.Ext(s))
 }
+
+func FieldIdentifier(e Expression) string {
+	if pt, ok := e.(PrimitiveType); ok {
+		if s, ok := pt.Value.(String); ok {
+			return s.Value()
+		}
+		if dt, ok := pt.Value.(Datetime); ok {
+			return dt.Format(time.RFC3339Nano)
+		}
+		return pt.Value.String()
+	}
+	if fr, ok := e.(FieldReference); ok {
+		return fr.Column.Literal
+	}
+	return e.String()
+}

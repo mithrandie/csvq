@@ -10,6 +10,7 @@ import (
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
+	"time"
 )
 
 var viewLoadTests = []struct {
@@ -1061,7 +1062,7 @@ var viewWhereTests = []struct {
 		Where: parser.WhereClause{
 			Filter: parser.Comparison{
 				LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-				RHS:      parser.NewIntegerValue(2),
+				RHS:      parser.NewIntegerValueFromString("2"),
 				Operator: "=",
 			},
 		},
@@ -1091,7 +1092,7 @@ var viewWhereTests = []struct {
 		Where: parser.WhereClause{
 			Filter: parser.Comparison{
 				LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-				RHS:      parser.NewIntegerValue(2),
+				RHS:      parser.NewIntegerValueFromString("2"),
 				Operator: "=",
 			},
 		},
@@ -1120,7 +1121,7 @@ var viewWhereTests = []struct {
 		Where: parser.WhereClause{
 			Filter: parser.Comparison{
 				LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-				RHS:      parser.NewIntegerValue(2),
+				RHS:      parser.NewIntegerValueFromString("2"),
 				Operator: "=",
 			},
 		},
@@ -1454,7 +1455,7 @@ var viewHavingTests = []struct {
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
 				},
-				RHS:      parser.NewIntegerValue(5),
+				RHS:      parser.NewIntegerValueFromString("5"),
 				Operator: ">",
 			},
 		},
@@ -1511,7 +1512,7 @@ var viewHavingTests = []struct {
 						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 					},
 				},
-				RHS:      parser.NewIntegerValue(5),
+				RHS:      parser.NewIntegerValueFromString("5"),
 				Operator: ">",
 			},
 		},
@@ -1544,7 +1545,7 @@ var viewHavingTests = []struct {
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
 				},
-				RHS:      parser.NewIntegerValue(5),
+				RHS:      parser.NewIntegerValueFromString("5"),
 				Operator: ">",
 			},
 		},
@@ -1585,7 +1586,7 @@ var viewHavingTests = []struct {
 						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 					},
 				},
-				RHS:      parser.NewIntegerValue(5),
+				RHS:      parser.NewIntegerValueFromString("5"),
 				Operator: ">",
 			},
 		},
@@ -1677,10 +1678,14 @@ var viewSelectTests = []struct {
 			Fields: []parser.Expression{
 				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}, Alias: parser.Identifier{Literal: "c2"}},
 				parser.Field{Object: parser.AllColumns{}},
-				parser.Field{Object: parser.NewIntegerValue(1), Alias: parser.Identifier{Literal: "a"}},
+				parser.Field{Object: parser.NewIntegerValueFromString("1"), Alias: parser.Identifier{Literal: "a"}},
 				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}, Alias: parser.Identifier{Literal: "c2a"}},
 				parser.Field{Object: parser.ColumnNumber{View: parser.Identifier{Literal: "table2"}, Number: parser.NewInteger(1)}, Alias: parser.Identifier{Literal: "t21"}},
 				parser.Field{Object: parser.ColumnNumber{View: parser.Identifier{Literal: "table2"}, Number: parser.NewInteger(1)}, Alias: parser.Identifier{Literal: "t21a"}},
+				parser.Field{Object: parser.PrimitiveType{
+					Literal: "2012-01-01",
+					Value:   parser.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
+				}},
 			},
 		},
 		Result: &View{
@@ -1692,6 +1697,7 @@ var viewSelectTests = []struct {
 				{View: "table2", Column: "column3", Aliases: []string{"t21", "t21a"}, Number: 1, FromTable: true},
 				{View: "table2", Column: "column4", Number: 2, FromTable: true},
 				{Column: "1", Aliases: []string{"a"}},
+				{Column: "2012-01-01T00:00:00-08:00"},
 			},
 			Records: []Record{
 				NewRecord([]parser.Primary{
@@ -1702,6 +1708,7 @@ var viewSelectTests = []struct {
 					parser.NewString("2"),
 					parser.NewString("str22"),
 					parser.NewInteger(1),
+					parser.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
 				}),
 				NewRecord([]parser.Primary{
 					parser.NewInteger(1),
@@ -1711,6 +1718,7 @@ var viewSelectTests = []struct {
 					parser.NewString("3"),
 					parser.NewString("str33"),
 					parser.NewInteger(1),
+					parser.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
 				}),
 				NewRecord([]parser.Primary{
 					parser.NewInteger(1),
@@ -1720,6 +1728,7 @@ var viewSelectTests = []struct {
 					parser.NewString("1"),
 					parser.NewString("str44"),
 					parser.NewInteger(1),
+					parser.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
 				}),
 				NewRecord([]parser.Primary{
 					parser.NewInteger(2),
@@ -1729,10 +1738,11 @@ var viewSelectTests = []struct {
 					parser.NewString("2"),
 					parser.NewString("str22"),
 					parser.NewInteger(1),
+					parser.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
 				}),
 			},
 			Filter:       NewEmptyFilter(),
-			selectFields: []int{2, 1, 2, 4, 5, 6, 2, 4, 4},
+			selectFields: []int{2, 1, 2, 4, 5, 6, 2, 4, 4, 7},
 		},
 	},
 	{
@@ -1786,7 +1796,7 @@ var viewSelectTests = []struct {
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			Fields: []parser.Expression{
 				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
-				parser.Field{Object: parser.NewIntegerValue(1), Alias: parser.Identifier{Literal: "a"}},
+				parser.Field{Object: parser.NewIntegerValueFromString("1"), Alias: parser.Identifier{Literal: "a"}},
 			},
 		},
 		Result: &View{
@@ -1918,7 +1928,7 @@ var viewSelectTests = []struct {
 		},
 		Select: parser.SelectClause{
 			Fields: []parser.Expression{
-				parser.Field{Object: parser.NewIntegerValue(1)},
+				parser.Field{Object: parser.NewIntegerValueFromString("1")},
 				parser.Field{
 					Object: parser.Arithmetic{
 						LHS: parser.AggregateFunction{
@@ -1928,7 +1938,7 @@ var viewSelectTests = []struct {
 								parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 							},
 						},
-						RHS:      parser.NewIntegerValue(1),
+						RHS:      parser.NewIntegerValueFromString("1"),
 						Operator: '+',
 					},
 				},
@@ -2449,7 +2459,7 @@ var viewOrderByTests = []struct {
 					Value: parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
 				},
 				parser.OrderItem{
-					Value: parser.NewIntegerValue(1),
+					Value: parser.NewIntegerValueFromString("1"),
 				},
 			},
 		},
@@ -2759,7 +2769,7 @@ var viewExtendRecordCapacity = []struct {
 			parser.Function{
 				Name: "userfunc",
 				Args: []parser.Expression{
-					parser.NewIntegerValue(1),
+					parser.NewIntegerValueFromString("1"),
 				},
 			},
 			parser.AggregateFunction{
@@ -2793,8 +2803,8 @@ var viewExtendRecordCapacity = []struct {
 					Partition: parser.Partition{
 						Values: []parser.Expression{
 							parser.Arithmetic{
-								LHS:      parser.NewIntegerValue(1),
-								RHS:      parser.NewIntegerValue(2),
+								LHS:      parser.NewIntegerValueFromString("1"),
+								RHS:      parser.NewIntegerValueFromString("2"),
 								Operator: '+',
 							},
 						},
@@ -2803,8 +2813,8 @@ var viewExtendRecordCapacity = []struct {
 						Items: []parser.Expression{
 							parser.OrderItem{
 								Value: parser.Arithmetic{
-									LHS:      parser.NewIntegerValue(3),
-									RHS:      parser.NewIntegerValue(4),
+									LHS:      parser.NewIntegerValueFromString("3"),
+									RHS:      parser.NewIntegerValueFromString("4"),
 									Operator: '+',
 								},
 							},
@@ -2813,8 +2823,8 @@ var viewExtendRecordCapacity = []struct {
 				},
 			},
 			parser.Arithmetic{
-				LHS:      parser.NewIntegerValue(5),
-				RHS:      parser.NewIntegerValue(6),
+				LHS:      parser.NewIntegerValueFromString("5"),
+				RHS:      parser.NewIntegerValueFromString("6"),
 				Operator: '+',
 			},
 		},
@@ -2852,7 +2862,7 @@ var viewExtendRecordCapacity = []struct {
 			parser.Function{
 				Name: "userfunc",
 				Args: []parser.Expression{
-					parser.NewIntegerValue(1),
+					parser.NewIntegerValueFromString("1"),
 				},
 			},
 		},
@@ -2936,8 +2946,8 @@ var viewExtendRecordCapacity = []struct {
 						Items: []parser.Expression{
 							parser.OrderItem{
 								Value: parser.Arithmetic{
-									LHS:      parser.NewIntegerValue(3),
-									RHS:      parser.NewIntegerValue(4),
+									LHS:      parser.NewIntegerValueFromString("3"),
+									RHS:      parser.NewIntegerValueFromString("4"),
 									Operator: '+',
 								},
 							},
@@ -2966,8 +2976,8 @@ var viewExtendRecordCapacity = []struct {
 					Partition: parser.Partition{
 						Values: []parser.Expression{
 							parser.Arithmetic{
-								LHS:      parser.NewIntegerValue(1),
-								RHS:      parser.NewIntegerValue(2),
+								LHS:      parser.NewIntegerValueFromString("1"),
+								RHS:      parser.NewIntegerValueFromString("2"),
 								Operator: '+',
 							},
 						},
@@ -3051,7 +3061,7 @@ var viewLimitTests = []struct {
 			},
 			Filter: NewEmptyFilter(),
 		},
-		Limit: parser.LimitClause{Value: parser.NewIntegerValue(2)},
+		Limit: parser.LimitClause{Value: parser.NewIntegerValueFromString("2")},
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
@@ -3125,7 +3135,7 @@ var viewLimitTests = []struct {
 				},
 			},
 		},
-		Limit: parser.LimitClause{Value: parser.NewIntegerValue(2), With: parser.LimitWith{Type: parser.Token{Token: parser.TIES}}},
+		Limit: parser.LimitClause{Value: parser.NewIntegerValueFromString("2"), With: parser.LimitWith{Type: parser.Token{Token: parser.TIES}}},
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
@@ -3352,7 +3362,7 @@ var viewLimitTests = []struct {
 			},
 			Filter: NewEmptyFilter(),
 		},
-		Limit: parser.LimitClause{Value: parser.NewIntegerValue(5)},
+		Limit: parser.LimitClause{Value: parser.NewIntegerValueFromString("5")},
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
@@ -3530,7 +3540,7 @@ var viewOffsetTests = []struct {
 			},
 			Filter: NewEmptyFilter(),
 		},
-		Offset: parser.OffsetClause{Value: parser.NewIntegerValue(3)},
+		Offset: parser.OffsetClause{Value: parser.NewIntegerValueFromString("3")},
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
@@ -3575,7 +3585,7 @@ var viewOffsetTests = []struct {
 			},
 			Filter: NewEmptyFilter(),
 		},
-		Offset: parser.OffsetClause{Value: parser.NewIntegerValue(4)},
+		Offset: parser.OffsetClause{Value: parser.NewIntegerValueFromString("4")},
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
@@ -3729,14 +3739,14 @@ var viewInsertValuesTests = []struct {
 			parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewIntegerValue(3),
+						parser.NewIntegerValueFromString("3"),
 					},
 				},
 			},
 			parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewIntegerValue(4),
+						parser.NewIntegerValueFromString("4"),
 					},
 				},
 			},
@@ -3779,7 +3789,7 @@ var viewInsertValuesTests = []struct {
 			parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewIntegerValue(3),
+						parser.NewIntegerValueFromString("3"),
 					},
 				},
 			},
@@ -3811,7 +3821,7 @@ var viewInsertValuesTests = []struct {
 			parser.RowValue{
 				Value: parser.ValueList{
 					Values: []parser.Expression{
-						parser.NewIntegerValue(3),
+						parser.NewIntegerValueFromString("3"),
 					},
 				},
 			},
@@ -3872,7 +3882,7 @@ var viewInsertFromQueryTests = []struct {
 			SelectEntity: parser.SelectEntity{
 				SelectClause: parser.SelectClause{
 					Fields: []parser.Expression{
-						parser.Field{Object: parser.NewIntegerValue(3)},
+						parser.Field{Object: parser.NewIntegerValueFromString("3")},
 					},
 				},
 			},
@@ -3910,7 +3920,7 @@ var viewInsertFromQueryTests = []struct {
 			SelectEntity: parser.SelectEntity{
 				SelectClause: parser.SelectClause{
 					Fields: []parser.Expression{
-						parser.Field{Object: parser.NewIntegerValue(3)},
+						parser.Field{Object: parser.NewIntegerValueFromString("3")},
 					},
 				},
 			},

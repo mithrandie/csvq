@@ -10,12 +10,6 @@ package parser
     procexpr    ProcExpr
     procexprs   []ProcExpr
     identifier  Identifier
-    text        String
-    integer     Integer
-    float       Float
-    ternary     Ternary
-    datetime    Datetime
-    null        Null
     variable    Variable
     variables   []Variable
     token       Token
@@ -69,6 +63,8 @@ package parser
 %type<expression>  inline_table
 %type<expressions> inline_tables
 %type<expression>  primitive_type
+%type<expression>  ternary
+%type<expression>  null
 %type<expression>  field_reference
 %type<expression>  value
 %type<expression>  wildcard
@@ -123,12 +119,6 @@ package parser
 %type<procexprs>   in_function_in_loop_elseif
 %type<procexpr>    in_function_in_loop_else
 %type<identifier>  identifier
-%type<text>        text
-%type<integer>     integer
-%type<float>       float
-%type<ternary>     ternary
-%type<datetime>    datetime
-%type<null>        null
 %type<variable>    variable
 %type<variables>   variables
 %type<expression>  variable_substitution
@@ -713,9 +703,9 @@ trigger_statement
     {
         $$ = Trigger{BaseExpr: NewBaseExpr($1), Token: $2.Token, Message: $3}
     }
-    | TRIGGER ERROR integer value statement_terminal
+    | TRIGGER ERROR INTEGER value statement_terminal
     {
-        $$ = Trigger{BaseExpr: NewBaseExpr($1), Token: $2.Token, Message: $4, Code: $3}
+        $$ = Trigger{BaseExpr: NewBaseExpr($1), Token: $2.Token, Message: $4, Code: NewIntegerFromString($3.Literal)}
     }
 
 select_query
@@ -900,29 +890,41 @@ inline_tables
     }
 
 primitive_type
-    : text
+    : STRING
     {
-        $$ = NewPrimitiveType($1)
+        $$ = NewStringValue($1.Literal)
     }
-    | integer
+    | INTEGER
     {
-        $$ = NewPrimitiveType($1)
+        $$ = NewIntegerValueFromString($1.Literal)
     }
-    | float
+    | FLOAT
     {
-        $$ = NewPrimitiveType($1)
+        $$ = NewFloatValueFromString($1.Literal)
     }
     | ternary
     {
-        $$ = NewPrimitiveType($1)
+        $$ = $1
     }
-    | datetime
+    | DATETIME
     {
-        $$ = NewPrimitiveType($1)
+        $$ = NewDatetimeValueFromString($1.Literal)
     }
     | null
     {
-        $$ = NewPrimitiveType($1)
+        $$ = $1
+    }
+
+ternary
+    : TERNARY
+    {
+        $$ = NewTernaryValueFromString($1.Literal)
+    }
+
+null
+    : NULL
+    {
+        $$ = NewNullValueFromString($1.Literal)
     }
 
 field_reference
@@ -938,13 +940,13 @@ field_reference
     {
         $$ = FieldReference{BaseExpr: NewBaseExpr($1), View: Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal}, Column: $3}
     }
-    | identifier '.' integer
+    | identifier '.' INTEGER
     {
-        $$ = ColumnNumber{BaseExpr: $1.BaseExpr, View: $1, Number: $3}
+        $$ = ColumnNumber{BaseExpr: $1.BaseExpr, View: $1, Number: NewIntegerFromString($3.Literal)}
     }
-    | STDIN '.' integer
+    | STDIN '.' INTEGER
     {
-        $$ = ColumnNumber{BaseExpr: NewBaseExpr($1), View: Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal}, Number: $3}
+        $$ = ColumnNumber{BaseExpr: NewBaseExpr($1), View: Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal}, Number: NewIntegerFromString($3.Literal)}
     }
 
 value
@@ -1133,11 +1135,11 @@ comparison
     }
     | value IS negation ternary
     {
-        $$ = Is{Is: $2.Literal, LHS: $1, RHS: NewPrimitiveType($4), Negation: $3}
+        $$ = Is{Is: $2.Literal, LHS: $1, RHS: $4, Negation: $3}
     }
     | value IS negation null
     {
-        $$ = Is{Is: $2.Literal, LHS: $1, RHS: NewPrimitiveType($4), Negation: $3}
+        $$ = Is{Is: $2.Literal, LHS: $1, RHS: $4, Negation: $3}
     }
     | value negation BETWEEN value AND value
     {
@@ -1719,42 +1721,6 @@ identifier
     | ERROR
     {
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-
-text
-    : STRING
-    {
-        $$ = NewString($1.Literal)
-    }
-
-integer
-    : INTEGER
-    {
-        $$ = NewIntegerFromString($1.Literal)
-    }
-
-float
-    : FLOAT
-    {
-        $$ = NewFloatFromString($1.Literal)
-    }
-
-ternary
-    : TERNARY
-    {
-        $$ = NewTernaryFromString($1.Literal)
-    }
-
-datetime
-    : DATETIME
-    {
-        $$ = NewDatetimeFromString($1.Literal)
-    }
-
-null
-    : NULL
-    {
-        $$ = NewNullFromString($1.Literal)
     }
 
 variable
