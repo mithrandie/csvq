@@ -2340,6 +2340,127 @@ func TestAddNano(t *testing.T) {
 	testFunction(t, AddNano, addNanoTests)
 }
 
+var truncTimeTests = []functionTest{
+	{
+		Name: "TruncTime",
+		Function: parser.Function{
+			Name: "trunc_time",
+		},
+		Args: []parser.Primary{
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		},
+		Result: parser.NewDatetime(time.Date(2012, 2, 3, 0, 0, 0, 0, GetTestLocation())),
+	},
+	{
+		Name: "TruncTime Argument Error",
+		Function: parser.Function{
+			Name: "trunc_time",
+		},
+		Args:  []parser.Primary{},
+		Error: "[L:- C:-] function trunc_time takes exactly 1 argument",
+	},
+	{
+		Name: "TruncTime Argument Is Null",
+		Function: parser.Function{
+			Name: "trunc_time",
+		},
+		Args: []parser.Primary{
+			parser.NewNull(),
+		},
+		Result: parser.NewNull(),
+	},
+}
+
+func TestTruncTime(t *testing.T) {
+	testFunction(t, TruncTime, truncTimeTests)
+}
+
+var truncSecondTests = []functionTest{
+	{
+		Name: "TruncSecond",
+		Function: parser.Function{
+			Name: "trunc_second",
+		},
+		Args: []parser.Primary{
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		},
+		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 0, 0, GetTestLocation())),
+	},
+	{
+		Name: "TruncSecond Argument Error",
+		Function: parser.Function{
+			Name: "trunc_second",
+		},
+		Args:  []parser.Primary{},
+		Error: "[L:- C:-] function trunc_second takes exactly 1 argument",
+	},
+	{
+		Name: "TruncSecond Argument Is Null",
+		Function: parser.Function{
+			Name: "trunc_second",
+		},
+		Args: []parser.Primary{
+			parser.NewNull(),
+		},
+		Result: parser.NewNull(),
+	},
+}
+
+func TestTruncSecond(t *testing.T) {
+	testFunction(t, TruncSecond, truncSecondTests)
+}
+
+var truncMilliTests = []functionTest{
+	{
+		Name: "TruncMilli",
+		Function: parser.Function{
+			Name: "trunc_milli",
+		},
+		Args: []parser.Primary{
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		},
+		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
+	},
+}
+
+func TestTruncMilli(t *testing.T) {
+	testFunction(t, TruncMilli, truncMilliTests)
+}
+
+var truncMicroTests = []functionTest{
+	{
+		Name: "TruncMicro",
+		Function: parser.Function{
+			Name: "trunc_micro",
+		},
+		Args: []parser.Primary{
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		},
+		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123000000, GetTestLocation())),
+	},
+}
+
+func TestTruncateMicro(t *testing.T) {
+	testFunction(t, TruncMicro, truncMicroTests)
+}
+
+var truncNanoTests = []functionTest{
+	{
+		Name: "TruncNano",
+		Function: parser.Function{
+			Name: "trunc_nano",
+		},
+		Args: []parser.Primary{
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		},
+		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456000, GetTestLocation())),
+	},
+}
+
+func TestTruncateNano(t *testing.T) {
+	testFunction(t, TruncNano, truncNanoTests)
+}
+
 var dateDiffTests = []functionTest{
 	{
 		Name: "DateDiff",
@@ -2452,6 +2573,41 @@ var timeNanoDiffTests = []functionTest{
 
 func TestTimeNanoDiff(t *testing.T) {
 	testFunction(t, TimeNanoDiff, timeNanoDiffTests)
+}
+
+var utcTests = []functionTest{
+	{
+		Name: "UTC",
+		Function: parser.Function{
+			Name: "utc",
+		},
+		Args: []parser.Primary{
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		},
+		Result: parser.NewDatetime(time.Date(2012, 2, 3, 17, 18, 15, 123456789, time.UTC)),
+	},
+	{
+		Name: "UTC Argument Error",
+		Function: parser.Function{
+			Name: "utc",
+		},
+		Args:  []parser.Primary{},
+		Error: "[L:- C:-] function utc takes exactly 1 argument",
+	},
+	{
+		Name: "UTC Argument Is Null",
+		Function: parser.Function{
+			Name: "utc",
+		},
+		Args: []parser.Primary{
+			parser.NewNull(),
+		},
+		Result: parser.NewNull(),
+	},
+}
+
+func TestUTC(t *testing.T) {
+	testFunction(t, UTC, utcTests)
 }
 
 var stringTests = []functionTest{

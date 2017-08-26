@@ -105,9 +105,15 @@ var Functions = map[string]func(parser.Function, []parser.Primary) (parser.Prima
 	"ADD_MILLI":        AddMilli,
 	"ADD_MICRO":        AddMicro,
 	"ADD_NANO":         AddNano,
+	"TRUNC_TIME":       TruncTime,
+	"TRUNC_SECOND":     TruncSecond,
+	"TRUNC_MILLI":      TruncMilli,
+	"TRUNC_MICRO":      TruncMicro,
+	"TRUNC_NANO":       TruncNano,
 	"DATE_DIFF":        DateDiff,
 	"TIME_DIFF":        TimeDiff,
 	"TIME_NANO_DIFF":   TimeNanoDiff,
+	"UTC":              UTC,
 	"STRING":           String,
 	"INTEGER":          Integer,
 	"FLOAT":            Float,
@@ -1065,6 +1071,50 @@ func AddNano(fn parser.Function, args []parser.Primary) (parser.Primary, error) 
 	return execDatetimeAdd(fn, args, addNano)
 }
 
+func TruncTime(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
+	if len(args) != 1 {
+		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
+	}
+
+	dt := parser.PrimaryToDatetime(args[0])
+	if parser.IsNull(dt) {
+		return parser.NewNull(), nil
+	}
+
+	t := dt.(parser.Datetime).Value()
+	y, m, d := t.Date()
+	return parser.NewDatetime(time.Date(y, m, d, 0, 0, 0, 0, t.Location())), nil
+}
+
+func truncateDuration(fn parser.Function, args []parser.Primary, dur time.Duration) (parser.Primary, error) {
+	if len(args) != 1 {
+		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
+	}
+
+	dt := parser.PrimaryToDatetime(args[0])
+	if parser.IsNull(dt) {
+		return parser.NewNull(), nil
+	}
+
+	return parser.NewDatetime(dt.(parser.Datetime).Value().Truncate(dur)), nil
+}
+
+func TruncSecond(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
+	return truncateDuration(fn, args, time.Minute)
+}
+
+func TruncMilli(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
+	return truncateDuration(fn, args, time.Second)
+}
+
+func TruncMicro(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
+	return truncateDuration(fn, args, time.Millisecond)
+}
+
+func TruncNano(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
+	return truncateDuration(fn, args, time.Microsecond)
+}
+
 func DateDiff(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
 	if len(args) != 2 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2})
@@ -1124,6 +1174,19 @@ func TimeDiff(fn parser.Function, args []parser.Primary) (parser.Primary, error)
 
 func TimeNanoDiff(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
 	return timeDiff(fn, args, durationNanoseconds)
+}
+
+func UTC(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
+	if len(args) != 1 {
+		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
+	}
+
+	dt := parser.PrimaryToDatetime(args[0])
+	if parser.IsNull(dt) {
+		return parser.NewNull(), nil
+	}
+
+	return parser.NewDatetime(dt.(parser.Datetime).Value().UTC()), nil
 }
 
 func String(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
