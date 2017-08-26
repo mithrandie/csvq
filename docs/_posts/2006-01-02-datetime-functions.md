@@ -33,11 +33,15 @@ category: reference
 | [ADD_MILLI](#add_milli) | Add milliseconds to the datetime |
 | [ADD_MICRO](#add_micro) | Add microseconds to the datetime |
 | [ADD_NANO](#add_nano) | Add nanoseconds to the datetime |
-| [TRUNC_TIME](#trunc_time)     | Truncate time from the datetime |
-| [TRUNC_SECOND](#trunc_second) | Truncate seconds from the datetime |
-| [TRUNC_MILLI](#trunc_milli)   | Truncate milli seconds from the datetime |
-| [TRUNC_MICRO](#trunc_micro)   | Truncate micro seconds from the datetime |
-| [TRUNC_NANO](#trunc_nano)     | Truncate nano seconds from the datetime |
+| [TRUNC_MONTH](#trunc_month)   | Truncate time information less than 1 year from the datetime |
+| [TRUNC_DAY](#trunc_day)       | Truncate time information less than 1 month from the datetime |
+| [TRUNC_TIME](#trunc_time)     | Truncate time information less than 1 day from the datetime |
+| [TRUNC_HOUR](#trunc_time)     | Alias for TRUNC_TIME |
+| [TRUNC_MINUTE](#trunc_minute) | Truncate time information less than 1 hour from the datetime |
+| [TRUNC_SECOND](#trunc_second) | Truncate time information less than 1 minute from the datetime |
+| [TRUNC_MILLI](#trunc_milli)   | Truncate time information less than 1 second from the datetime |
+| [TRUNC_MICRO](#trunc_micro)   | Truncate time information less than 1 millisecond from the datetime |
+| [TRUNC_NANO](#trunc_nano)     | Truncate time information less than 1 microsecond from the datetime |
 | [DATE_DIFF](#date_diff) | Return the difference of days between two datetime values |
 | [TIME_DIFF](#time_diff) | Return the difference of time between two datetime values as seconds |
 | [TIME_NANO_DIFF](#time_nano_diff) | Return the difference of time between two datetime values as nanoseconds |
@@ -495,6 +499,38 @@ _return_
 Add _duration_ nanoseconds to the _datetime_.
 
 
+### TRUNC_MONTH
+{: #trunc_month}
+
+```
+TRUNC_MONTH(datetime)
+```
+
+_datetime_
+: [datetime]({{ '/reference/value.html#datetime' | relative_url }})
+
+_return_
+: [datetime]({{ '/reference/value.html#datetime' | relative_url }})
+
+Truncate time information less than 1 year from the _datetime_.
+
+
+### TRUNC_DAY
+{: #trunc_day}
+
+```
+TRUNC_DAY(datetime)
+```
+
+_datetime_
+: [datetime]({{ '/reference/value.html#datetime' | relative_url }})
+
+_return_
+: [datetime]({{ '/reference/value.html#datetime' | relative_url }})
+
+Truncate time information less than 1 month from the _datetime_.
+
+
 ### TRUNC_TIME
 {: #trunc_time}
 
@@ -508,7 +544,23 @@ _datetime_
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Truncate time from the _datetime_.
+Truncate time information less than 1 day from the _datetime_.
+
+
+### TRUNC_MINUTE
+{: #trunc_minute}
+
+```
+TRUNC_MINUTE(datetime)
+```
+
+_datetime_
+: [datetime]({{ '/reference/value.html#datetime' | relative_url }})
+
+_return_
+: [datetime]({{ '/reference/value.html#datetime' | relative_url }})
+
+Truncate time information less than 1 hour from the _datetime_.
 
 
 ### TRUNC_SECOND
@@ -524,7 +576,7 @@ _datetime_
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Truncate seconds from the _datetime_.
+Truncate time information less than 1 minute from the _datetime_.
 
 
 ### TRUNC_MILLI
@@ -540,7 +592,7 @@ _datetime_
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Truncate milli seconds from the _datetime_.
+Truncate time information less than 1 second from the _datetime_.
 
 
 ### TRUNC_MICRO
@@ -556,7 +608,7 @@ _datetime_
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Truncate micro seconds from the _datetime_.
+Truncate time information less than 1 millisecond from the _datetime_.
 
 
 ### TRUNC_NANO
@@ -572,7 +624,7 @@ _datetime_
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Truncate nano seconds from the _datetime_.
+Truncate time information less than 1 microsecond from the _datetime_.
 
 
 

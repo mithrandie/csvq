@@ -105,7 +105,11 @@ var Functions = map[string]func(parser.Function, []parser.Primary) (parser.Prima
 	"ADD_MILLI":        AddMilli,
 	"ADD_MICRO":        AddMicro,
 	"ADD_NANO":         AddNano,
+	"TRUNC_MONTH":      TruncMonth,
+	"TRUNC_DAY":        TruncDay,
 	"TRUNC_TIME":       TruncTime,
+	"TRUNC_HOUR":       TruncTime,
+	"TRUNC_MINUTE":     TruncMinute,
 	"TRUNC_SECOND":     TruncSecond,
 	"TRUNC_MILLI":      TruncMilli,
 	"TRUNC_MICRO":      TruncMicro,
@@ -1071,7 +1075,7 @@ func AddNano(fn parser.Function, args []parser.Primary) (parser.Primary, error) 
 	return execDatetimeAdd(fn, args, addNano)
 }
 
-func TruncTime(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
+func truncateDate(fn parser.Function, args []parser.Primary, place int8) (parser.Primary, error) {
 	if len(args) != 1 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
@@ -1083,7 +1087,26 @@ func TruncTime(fn parser.Function, args []parser.Primary) (parser.Primary, error
 
 	t := dt.(parser.Datetime).Value()
 	y, m, d := t.Date()
+	switch place {
+	case 1:
+		d = 1
+	case 2:
+		d = 1
+		m = 1
+	}
 	return parser.NewDatetime(time.Date(y, m, d, 0, 0, 0, 0, t.Location())), nil
+}
+
+func TruncMonth(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
+	return truncateDate(fn, args, 2)
+}
+
+func TruncDay(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
+	return truncateDate(fn, args, 1)
+}
+
+func TruncTime(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
+	return truncateDate(fn, args, 0)
 }
 
 func truncateDuration(fn parser.Function, args []parser.Primary, dur time.Duration) (parser.Primary, error) {
@@ -1097,6 +1120,10 @@ func truncateDuration(fn parser.Function, args []parser.Primary, dur time.Durati
 	}
 
 	return parser.NewDatetime(dt.(parser.Datetime).Value().Truncate(dur)), nil
+}
+
+func TruncMinute(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
+	return truncateDuration(fn, args, time.Hour)
 }
 
 func TruncSecond(fn parser.Function, args []parser.Primary) (parser.Primary, error) {

@@ -2340,6 +2340,58 @@ func TestAddNano(t *testing.T) {
 	testFunction(t, AddNano, addNanoTests)
 }
 
+var truncMonthTests = []functionTest{
+	{
+		Name: "TruncMonth",
+		Function: parser.Function{
+			Name: "trunc_month",
+		},
+		Args: []parser.Primary{
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		},
+		Result: parser.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
+	},
+	{
+		Name: "TruncMonth Argument Error",
+		Function: parser.Function{
+			Name: "trunc_month",
+		},
+		Args:  []parser.Primary{},
+		Error: "[L:- C:-] function trunc_month takes exactly 1 argument",
+	},
+	{
+		Name: "TruncMonth Argument Is Null",
+		Function: parser.Function{
+			Name: "trunc_month",
+		},
+		Args: []parser.Primary{
+			parser.NewNull(),
+		},
+		Result: parser.NewNull(),
+	},
+}
+
+func TestTruncMonth(t *testing.T) {
+	testFunction(t, TruncMonth, truncMonthTests)
+}
+
+var truncDayTests = []functionTest{
+	{
+		Name: "TruncDay",
+		Function: parser.Function{
+			Name: "trunc_day",
+		},
+		Args: []parser.Primary{
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		},
+		Result: parser.NewDatetime(time.Date(2012, 2, 1, 0, 0, 0, 0, GetTestLocation())),
+	},
+}
+
+func TestTruncDay(t *testing.T) {
+	testFunction(t, TruncDay, truncDayTests)
+}
+
 var truncTimeTests = []functionTest{
 	{
 		Name: "TruncTime",
@@ -2351,18 +2403,35 @@ var truncTimeTests = []functionTest{
 		},
 		Result: parser.NewDatetime(time.Date(2012, 2, 3, 0, 0, 0, 0, GetTestLocation())),
 	},
+}
+
+func TestTruncTime(t *testing.T) {
+	testFunction(t, TruncTime, truncTimeTests)
+}
+
+var truncMinuteTests = []functionTest{
 	{
-		Name: "TruncTime Argument Error",
+		Name: "TruncMinute",
 		Function: parser.Function{
-			Name: "trunc_time",
+			Name: "trunc_minute",
 		},
-		Args:  []parser.Primary{},
-		Error: "[L:- C:-] function trunc_time takes exactly 1 argument",
+		Args: []parser.Primary{
+			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		},
+		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 0, 0, 0, GetTestLocation())),
 	},
 	{
-		Name: "TruncTime Argument Is Null",
+		Name: "TruncMinute Argument Error",
 		Function: parser.Function{
-			Name: "trunc_time",
+			Name: "trunc_minute",
+		},
+		Args:  []parser.Primary{},
+		Error: "[L:- C:-] function trunc_minute takes exactly 1 argument",
+	},
+	{
+		Name: "TruncMinute Argument Is Null",
+		Function: parser.Function{
+			Name: "trunc_minute",
 		},
 		Args: []parser.Primary{
 			parser.NewNull(),
@@ -2371,8 +2440,8 @@ var truncTimeTests = []functionTest{
 	},
 }
 
-func TestTruncTime(t *testing.T) {
-	testFunction(t, TruncTime, truncTimeTests)
+func TestTruncMinute(t *testing.T) {
+	testFunction(t, TruncMinute, truncMinuteTests)
 }
 
 var truncSecondTests = []functionTest{
@@ -2385,24 +2454,6 @@ var truncSecondTests = []functionTest{
 			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
 		},
 		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 0, 0, GetTestLocation())),
-	},
-	{
-		Name: "TruncSecond Argument Error",
-		Function: parser.Function{
-			Name: "trunc_second",
-		},
-		Args:  []parser.Primary{},
-		Error: "[L:- C:-] function trunc_second takes exactly 1 argument",
-	},
-	{
-		Name: "TruncSecond Argument Is Null",
-		Function: parser.Function{
-			Name: "trunc_second",
-		},
-		Args: []parser.Primary{
-			parser.NewNull(),
-		},
-		Result: parser.NewNull(),
 	},
 }
 
