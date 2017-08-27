@@ -520,6 +520,7 @@ func (view *View) group(items []parser.Expression) error {
 	for i, groupKey := range groupKeys {
 		record := make(Record, view.FieldLen())
 		indices := groups[groupKey]
+
 		for j := 0; j < view.FieldLen(); j++ {
 			primaries := make([]parser.Primary, len(indices))
 			for k, idx := range indices {
@@ -677,6 +678,7 @@ func (view *View) Select(clause parser.SelectClause) error {
 
 		view.Header = hfields
 		view.Records = records
+		view.comparisonKeys = nil
 		view.sortValues = nil
 	}
 

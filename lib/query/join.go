@@ -78,13 +78,25 @@ func CrossJoin(view *View, joinView *View) {
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 	records := make([]Record, view.RecordLen()*joinView.RecordLen())
 
-	idx := 0
-	for _, viewRecord := range view.Records {
-		for _, joinViewRecord := range joinView.Records {
-			records[idx] = MergeRecord(viewRecord, joinViewRecord)
-			idx++
-		}
+	cpu := NumberOfCPU(view.RecordLen())
+	wg := sync.WaitGroup{}
+	for i := 0; i < cpu; i++ {
+		wg.Add(1)
+		go func(thIdx int) {
+			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+			idx := start * joinView.RecordLen()
+
+			for _, viewRecord := range view.Records[start:end] {
+				for _, joinViewRecord := range joinView.Records {
+					records[idx] = MergeRecord(viewRecord, joinViewRecord)
+					idx++
+				}
+			}
+
+			wg.Done()
+		}(i)
 	}
+	wg.Wait()
 
 	view.Header = mergedHeader
 	view.Records = records
@@ -108,8 +120,8 @@ func InnerJoin(view *View, joinView *View, condition parser.Expression, parentFi
 	for i := 0; i < cpu; i++ {
 		wg.Add(1)
 		go func(thIdx int) {
-			records := Records{}
 			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+			records := make(Records, 0, end-start)
 
 			filter := NewFilterForRecord(
 				&View{
@@ -181,8 +193,8 @@ func OuterJoin(view *View, joinView *View, condition parser.Expression, directio
 	for i := 0; i < cpu; i++ {
 		wg.Add(1)
 		go func(thIdx int) {
-			records := Records{}
 			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+			records := make(Records, 0, (end-start)*2)
 
 			filter := NewFilterForRecord(
 				&View{

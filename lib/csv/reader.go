@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
@@ -68,7 +67,7 @@ func (r *Reader) ReadHeader() ([]string, error) {
 
 	header := make([]string, len(record))
 	for i, v := range record {
-		header[i] = strings.TrimSpace(string(v))
+		header[i] = string(v)
 	}
 	return header, nil
 }

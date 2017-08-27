@@ -11,12 +11,8 @@ import (
 )
 
 func Run(input string, sourceFile string) error {
+	start := time.Now()
 	flags := cmd.GetFlags()
-
-	var start time.Time
-	if flags.Stats {
-		start = time.Now()
-	}
 
 	err := query.Execute(input, sourceFile)
 	if err != nil {
@@ -34,7 +30,7 @@ func Run(input string, sourceFile string) error {
 		var mem runtime.MemStats
 		runtime.ReadMemStats(&mem)
 
-		exectime := cmd.HumarizeNumber(fmt.Sprintf("%f", time.Now().Sub(start).Seconds()))
+		exectime := cmd.HumarizeNumber(fmt.Sprintf("%f", time.Since(start).Seconds()))
 		alloc := cmd.HumarizeNumber(fmt.Sprintf("%v", mem.Alloc))
 		talloc := cmd.HumarizeNumber(fmt.Sprintf("%v", mem.TotalAlloc))
 		sys := cmd.HumarizeNumber(fmt.Sprintf("%v", mem.HeapSys))

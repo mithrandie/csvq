@@ -283,7 +283,7 @@ func formatTextCell(c Cell) textField {
 	sign = 1
 	switch primary.(type) {
 	case parser.String:
-		s = strings.TrimSpace(primary.(parser.String).Value())
+		s = primary.(parser.String).Value()
 		sign = -1
 	case parser.Integer:
 		s = primary.(parser.Integer).String()
