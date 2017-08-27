@@ -150,9 +150,18 @@ func TestExecute(t *testing.T) {
 			tf.OutFile = v.OutFile
 		}
 
-		Logs = []string{}
 		SelectLogs = []string{}
-		log, selectLog, err := Execute(v.Input, "")
+
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		err := Execute(v.Input, "")
+
+		w.Close()
+		os.Stdout = oldStdout
+
+		log, _ := ioutil.ReadAll(r)
 
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -167,10 +176,11 @@ func TestExecute(t *testing.T) {
 			continue
 		}
 
-		if log != v.Log {
-			t.Errorf("%s: log = %q, want %q", v.Name, log, v.Log)
+		if string(log) != v.Log {
+			t.Errorf("%s: log = %q, want %q", v.Name, string(log), v.Log)
 		}
 
+		selectLog := ReadSelectLog()
 		if selectLog != v.SelectLog {
 			t.Errorf("%s: selectLog = %q, want %q", v.Name, log, v.Log)
 		}

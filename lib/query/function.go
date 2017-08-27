@@ -41,7 +41,7 @@ var Functions = map[string]func(parser.Function, []parser.Primary) (parser.Prima
 	"EXP":              Exp,
 	"EXP2":             Exp2,
 	"EXPM1":            Expm1,
-	"LOG":              Log,
+	"LOG":              MathLog,
 	"LOG10":            Log10,
 	"LOG2":             Log2,
 	"LOG1P":            Log1p,
@@ -330,7 +330,7 @@ func Expm1(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
 	return execMath1Arg(fn, args, math.Expm1)
 }
 
-func Log(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
+func MathLog(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
 	return execMath1Arg(fn, args, math.Log)
 }
 

@@ -11,16 +11,6 @@ import (
 )
 
 func Run(input string, sourceFile string) error {
-	var log string
-	var selectLog string
-	var err error
-
-	defer func() {
-		if 0 < len(log) {
-			cmd.ToStdout(log)
-		}
-	}()
-
 	flags := cmd.GetFlags()
 
 	var start time.Time
@@ -28,13 +18,14 @@ func Run(input string, sourceFile string) error {
 		start = time.Now()
 	}
 
-	log, selectLog, err = query.Execute(input, sourceFile)
+	err := query.Execute(input, sourceFile)
 	if err != nil {
 		return err
 	}
 
+	selectLog := query.ReadSelectLog()
 	if 0 < len(flags.OutFile) && 0 < len(selectLog) {
-		if err = cmd.CreateFile(flags.OutFile, selectLog); err != nil {
+		if err := cmd.CreateFile(flags.OutFile, selectLog); err != nil {
 			return err
 		}
 	}
@@ -58,7 +49,7 @@ func Run(input string, sourceFile string) error {
 		}
 		w := strconv.Itoa(width)
 
-		log += fmt.Sprintf(
+		stats := fmt.Sprintf(
 			"      Time: %"+w+"[2]s seconds %[1]s"+
 				"     Alloc: %"+w+"[3]s bytes %[1]s"+
 				"TotalAlloc: %"+w+"[4]s bytes %[1]s"+
@@ -73,6 +64,7 @@ func Run(input string, sourceFile string) error {
 			mallocs,
 			frees,
 		)
+		cmd.ToStdout(stats)
 	}
 
 	return nil

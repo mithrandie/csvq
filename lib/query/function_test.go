@@ -529,9 +529,9 @@ func TestExpm1(t *testing.T) {
 	testFunction(t, Expm1, expm1Tests)
 }
 
-var logTests = []functionTest{
+var mathLogTests = []functionTest{
 	{
-		Name: "Log",
+		Name: "MathLog",
 		Function: parser.Function{
 			Name: "log",
 		},
@@ -542,8 +542,8 @@ var logTests = []functionTest{
 	},
 }
 
-func TestLog(t *testing.T) {
-	testFunction(t, Log, logTests)
+func TestMathLog(t *testing.T) {
+	testFunction(t, MathLog, mathLogTests)
 }
 
 var log10Tests = []functionTest{

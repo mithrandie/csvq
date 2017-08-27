@@ -3,11 +3,10 @@ package action
 import (
 	"io/ioutil"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/csvq/lib/query"
-	"strings"
 )
 
 var executeTests = []struct {
@@ -57,8 +56,6 @@ func initFlags() {
 func TestRun(t *testing.T) {
 
 	for _, v := range executeTests {
-		query.Logs = []string{}
-
 		initFlags()
 		tf := cmd.GetFlags()
 		if v.OutFile != tf.OutFile {
