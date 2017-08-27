@@ -10,10 +10,8 @@ var (
 	random  *rand.Rand
 	getRand sync.Once
 
+	location    *time.Location
 	getLocation sync.Once
-
-	now    time.Time
-	getNow sync.Once
 )
 
 func GetRand() *rand.Rand {
@@ -25,22 +23,16 @@ func GetRand() *rand.Rand {
 
 func GetLocation() *time.Location {
 	getLocation.Do(func() {
-		loc, _ := time.LoadLocation(GetFlags().Location)
-		time.Local = loc
+		location, _ = time.LoadLocation(GetFlags().Location)
 	})
-	return time.Local
+	return location
 }
 
 func Now() time.Time {
-	getNow.Do(func() {
-		timeString := GetFlags().Now
-		if len(timeString) < 1 {
-			GetLocation()
-			now = time.Now()
-		} else {
-			t, _ := time.ParseInLocation("2006-01-02 15:04:05.999999999", timeString, GetLocation())
-			now = t
-		}
-	})
-	return now
+	if 0 < len(GetFlags().Now) {
+		t, _ := time.ParseInLocation("2006-01-02 15:04:05.999999999", GetFlags().Now, GetLocation())
+		return t
+	}
+	GetLocation()
+	return time.Now()
 }

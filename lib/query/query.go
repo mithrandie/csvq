@@ -40,22 +40,14 @@ type Result struct {
 
 var ViewCache = ViewMap{}
 var Results = []Result{}
-var Logs = []string{}
 var SelectLogs = []string{}
 
-func AddLog(log string) {
-	Logs = append(Logs, log)
+func Log(log string) {
+	cmd.ToStdout(log + "\n")
 }
 
 func AddSelectLog(log string) {
 	SelectLogs = append(SelectLogs, log)
-}
-
-func ReadLog() string {
-	if len(Logs) < 1 {
-		return ""
-	}
-	return strings.Join(Logs, "\n") + "\n"
 }
 
 func ReadSelectLog() string {
@@ -66,11 +58,11 @@ func ReadSelectLog() string {
 	return strings.Join(SelectLogs, lb.Value()) + lb.Value()
 }
 
-func Execute(input string, sourceFile string) (string, string, error) {
+func Execute(input string, sourceFile string) error {
 	statements, err := parser.Parse(input, sourceFile)
 	if err != nil {
 		syntaxErr := err.(*parser.SyntaxError)
-		return "", "", NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)
+		return NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)
 	}
 
 	proc := NewProcedure()
@@ -80,7 +72,7 @@ func Execute(input string, sourceFile string) (string, string, error) {
 		err = proc.Commit(nil)
 	}
 
-	return ReadLog(), ReadSelectLog(), err
+	return err
 }
 
 func FetchCursor(name parser.Identifier, fetchPosition parser.Expression, vars []parser.Variable, filter *Filter) (bool, error) {

@@ -405,15 +405,13 @@ func (view *View) filter(condition parser.Expression) ([]int, error) {
 	cpu := NumberOfCPU(view.RecordLen())
 
 	var err error
-	indicesList := make([][]int, cpu)
+	results := make([]bool, view.RecordLen())
 
 	wg := sync.WaitGroup{}
 	for i := 0; i < cpu; i++ {
 		wg.Add(1)
 		go func(thIdx int) {
-			indices := []int{}
 			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
-
 			filter := NewFilterForSequentialEvaluation(view, view.Filter)
 
 		FilterLoop:
@@ -429,11 +427,10 @@ func (view *View) filter(condition parser.Expression) ([]int, error) {
 					break FilterLoop
 				}
 				if primary.Ternary() == ternary.TRUE {
-					indices = append(indices, i)
+					results[i] = true
 				}
 			}
 
-			indicesList[thIdx] = indices
 			wg.Done()
 		}(i)
 	}
@@ -443,23 +440,13 @@ func (view *View) filter(condition parser.Expression) ([]int, error) {
 		return nil, err
 	}
 
-	var indices []int
-	if len(indicesList) == 1 {
-		indices = indicesList[0]
-	} else {
-		indicesLen := 0
-		for _, v := range indicesList {
-			indicesLen += len(v)
-		}
-		indices = make([]int, indicesLen)
-		idx := 0
-		for _, v := range indicesList {
-			for _, r := range v {
-				indices[idx] = r
-				idx++
-			}
+	indices := make([]int, 0, len(results))
+	for i, ok := range results {
+		if ok {
+			indices = append(indices, i)
 		}
 	}
+
 	return indices, nil
 }
 
@@ -477,10 +464,6 @@ func (view *View) GroupBy(clause parser.GroupByClause) error {
 }
 
 func (view *View) group(items []parser.Expression) error {
-	if len(view.Records) < 1 {
-		return nil
-	}
-
 	cpu := NumberOfCPU(view.RecordLen())
 
 	var err error
@@ -537,6 +520,7 @@ func (view *View) group(items []parser.Expression) error {
 	for i, groupKey := range groupKeys {
 		record := make(Record, view.FieldLen())
 		indices := groups[groupKey]
+
 		for j := 0; j < view.FieldLen(); j++ {
 			primaries := make([]parser.Primary, len(indices))
 			for k, idx := range indices {
@@ -694,6 +678,7 @@ func (view *View) Select(clause parser.SelectClause) error {
 
 		view.Header = hfields
 		view.Records = records
+		view.comparisonKeys = nil
 		view.sortValues = nil
 	}
 

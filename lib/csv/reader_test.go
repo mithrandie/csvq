@@ -174,7 +174,7 @@ func TestReader_ReadAll(t *testing.T) {
 
 func TestReader_ReadHeader(t *testing.T) {
 	input := "h1,h2 ,h3\na,b,c\nd,e,f"
-	outHeader := []string{"h1", "h2", "h3"}
+	outHeader := []string{"h1", "h2 ", "h3"}
 	output := [][]Field{
 		{NewField("a"), NewField("b"), NewField("c")},
 		{NewField("d"), NewField("e"), NewField("f")},

@@ -41,7 +41,7 @@ var Functions = map[string]func(parser.Function, []parser.Primary) (parser.Prima
 	"EXP":              Exp,
 	"EXP2":             Exp2,
 	"EXPM1":            Expm1,
-	"LOG":              Log,
+	"LOG":              MathLog,
 	"LOG10":            Log10,
 	"LOG2":             Log2,
 	"LOG1P":            Log1p,
@@ -80,7 +80,6 @@ var Functions = map[string]func(parser.Function, []parser.Primary) (parser.Prima
 	"SHA1_HMAC":        Sha1Hmac,
 	"SHA256_HMAC":      Sha256Hmac,
 	"SHA512_HMAC":      Sha512Hmac,
-	"NOW":              Now,
 	"DATETIME_FORMAT":  DatetimeFormat,
 	"YEAR":             Year,
 	"MONTH":            Month,
@@ -331,7 +330,7 @@ func Expm1(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
 	return execMath1Arg(fn, args, math.Expm1)
 }
 
-func Log(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
+func MathLog(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
 	return execMath1Arg(fn, args, math.Log)
 }
 
@@ -823,14 +822,6 @@ func Sha256Hmac(fn parser.Function, args []parser.Primary) (parser.Primary, erro
 
 func Sha512Hmac(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
 	return execCryptoHMAC(fn, args, sha512.New)
-}
-
-func Now(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
-	if 0 < len(args) {
-		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{0})
-	}
-
-	return parser.NewDatetime(cmd.Now()), nil
 }
 
 func DatetimeFormat(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
@@ -1331,4 +1322,15 @@ func Call(fn parser.Function, args []parser.Primary) (parser.Primary, error) {
 		return nil, err
 	}
 	return parser.NewString(string(buf)), nil
+}
+
+func Now(fn parser.Function, args []parser.Primary, filter *Filter) (parser.Primary, error) {
+	if 0 < len(args) {
+		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{0})
+	}
+
+	if filter.Now.IsZero() {
+		return parser.NewDatetime(cmd.Now()), nil
+	}
+	return parser.NewDatetime(filter.Now), nil
 }

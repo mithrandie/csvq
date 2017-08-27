@@ -529,9 +529,9 @@ func TestExpm1(t *testing.T) {
 	testFunction(t, Expm1, expm1Tests)
 }
 
-var logTests = []functionTest{
+var mathLogTests = []functionTest{
 	{
-		Name: "Log",
+		Name: "MathLog",
 		Function: parser.Function{
 			Name: "log",
 		},
@@ -542,8 +542,8 @@ var logTests = []functionTest{
 	},
 }
 
-func TestLog(t *testing.T) {
-	testFunction(t, Log, logTests)
+func TestMathLog(t *testing.T) {
+	testFunction(t, MathLog, mathLogTests)
 }
 
 var log10Tests = []functionTest{
@@ -1818,30 +1818,6 @@ func TestSha512Hmac(t *testing.T) {
 	testFunction(t, Sha512Hmac, sha512HmacTests)
 }
 
-var nowTests = []functionTest{
-	{
-		Name: "Now",
-		Function: parser.Function{
-			Name: "now",
-		},
-		Result: parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
-	},
-	{
-		Name: "Now Arguments Error",
-		Function: parser.Function{
-			Name: "now",
-		},
-		Args: []parser.Primary{
-			parser.NewInteger(1),
-		},
-		Error: "[L:- C:-] function now takes no argument",
-	},
-}
-
-func TestNow(t *testing.T) {
-	testFunction(t, Now, nowTests)
-}
-
 var datetimeFormatTests = []functionTest{
 	{
 		Name: "DatetimeFormat",
@@ -2941,4 +2917,68 @@ var callTests = []functionTest{
 
 func TestCall(t *testing.T) {
 	testFunction(t, Call, callTests)
+}
+
+var nowTests = []struct {
+	Name     string
+	Function parser.Function
+	Args     []parser.Primary
+	Filter   *Filter
+	Result   parser.Primary
+	Error    string
+}{
+	{
+		Name: "Now From Current Time",
+		Function: parser.Function{
+			Name: "now",
+		},
+		Filter: NewEmptyFilter(),
+		Result: parser.NewDatetime(NowForTest),
+	},
+	{
+		Name: "Now From Filter",
+		Function: parser.Function{
+			Name: "now",
+		},
+		Filter: &Filter{
+			VariablesList: VariablesList{{}},
+			TempViewsList: TemporaryViewMapList{{}},
+			CursorsList:   CursorMapList{{}},
+			FunctionsList: UserDefinedFunctionsList{{}},
+			Now:           time.Date(2013, 2, 3, 0, 0, 0, 0, GetTestLocation()),
+		},
+		Result: parser.NewDatetime(time.Date(2013, 2, 3, 0, 0, 0, 0, GetTestLocation())),
+	},
+	{
+		Name: "Now Arguments Error",
+		Function: parser.Function{
+			Name: "now",
+		},
+		Args: []parser.Primary{
+			parser.NewInteger(1),
+		},
+		Filter: NewEmptyFilter(),
+		Error:  "[L:- C:-] function now takes no argument",
+	},
+}
+
+func TestNow(t *testing.T) {
+	for _, v := range nowTests {
+		result, err := Now(v.Function, v.Args, v.Filter)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(result, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
+		}
+	}
 }

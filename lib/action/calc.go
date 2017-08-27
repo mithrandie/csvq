@@ -33,14 +33,7 @@ func Calc(expr string) error {
 
 	clause := selectEntity.SelectClause.(parser.SelectClause)
 
-	filter := query.Filter{
-		Records: []query.FilterRecord{
-			{
-				View:        view,
-				RecordIndex: 0,
-			},
-		},
-	}
+	filter := query.NewFilterForRecord(view, 0, query.NewEmptyFilter())
 	values := make([]string, len(clause.Fields))
 	for i, v := range clause.Fields {
 		field := v.(parser.Field)

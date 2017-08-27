@@ -2,6 +2,8 @@ package query
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"reflect"
 	"testing"
 
@@ -13,7 +15,7 @@ import (
 var procedureExecuteStatementTests = []struct {
 	Input      parser.Statement
 	Result     []Result
-	Logs       []string
+	Logs       string
 	SelectLogs []string
 	Error      string
 	ErrorCode  int
@@ -77,9 +79,7 @@ var procedureExecuteStatementTests = []struct {
 		Input: parser.Print{
 			Value: parser.Variable{Name: "@var1"},
 		},
-		Logs: []string{
-			"1",
-		},
+		Logs: "1\n",
 	},
 	{
 		Input: parser.DisposeVariable{
@@ -117,9 +117,7 @@ var procedureExecuteStatementTests = []struct {
 				parser.NewIntegerValueFromString("1"),
 			},
 		},
-		Logs: []string{
-			"1",
-		},
+		Logs: "1\n",
 	},
 	{
 		Input: parser.CursorDeclaration{
@@ -148,17 +146,13 @@ var procedureExecuteStatementTests = []struct {
 		Input: parser.Print{
 			Value: parser.Variable{Name: "@var2"},
 		},
-		Logs: []string{
-			"'1'",
-		},
+		Logs: "'1'\n",
 	},
 	{
 		Input: parser.Print{
 			Value: parser.Variable{Name: "@var3"},
 		},
-		Logs: []string{
-			"'str1'",
-		},
+		Logs: "'str1'\n",
 	},
 	{
 		Input: parser.CloseCursor{
@@ -209,9 +203,7 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Logs: []string{
-			"\"column1\",\"column2\"\n1,2",
-		},
+		Logs: "\"column1\",\"column2\"\n1,2\n",
 	},
 	{
 		Input: parser.DisposeTable{
@@ -300,9 +292,7 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Logs: []string{
-			"\"multiplication\"\n6",
-		},
+		Logs: "\"multiplication\"\n6\n",
 	},
 	{
 		Input: parser.SelectQuery{
@@ -317,9 +307,7 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Logs: []string{
-			"\"var1\"\n1",
-		},
+		Logs: "\"var1\"\n1\n",
 	},
 	{
 		Input: parser.VariableDeclaration{
@@ -379,9 +367,7 @@ var procedureExecuteStatementTests = []struct {
 				OperatedCount: 2,
 			},
 		},
-		Logs: []string{
-			fmt.Sprintf("2 records inserted on %q.", GetTestFilePath("table1.csv")),
-		},
+		Logs: fmt.Sprintf("2 records inserted on %q.\n", GetTestFilePath("table1.csv")),
 	},
 	{
 		Input: parser.UpdateQuery{
@@ -415,9 +401,7 @@ var procedureExecuteStatementTests = []struct {
 				OperatedCount: 1,
 			},
 		},
-		Logs: []string{
-			fmt.Sprintf("1 record updated on %q.", GetTestFilePath("table1.csv")),
-		},
+		Logs: fmt.Sprintf("1 record updated on %q.\n", GetTestFilePath("table1.csv")),
 	},
 	{
 		Input: parser.DeleteQuery{
@@ -449,9 +433,7 @@ var procedureExecuteStatementTests = []struct {
 				OperatedCount: 1,
 			},
 		},
-		Logs: []string{
-			fmt.Sprintf("1 record deleted on %q.", GetTestFilePath("table1.csv")),
-		},
+		Logs: fmt.Sprintf("1 record deleted on %q.\n", GetTestFilePath("table1.csv")),
 	},
 	{
 		Input: parser.CreateTable{
@@ -473,9 +455,7 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Logs: []string{
-			fmt.Sprintf("file %q is created.", GetTestFilePath("newtable.csv")),
-		},
+		Logs: fmt.Sprintf("file %q is created.\n", GetTestFilePath("newtable.csv")),
 	},
 	{
 		Input: parser.AddColumns{
@@ -499,9 +479,7 @@ var procedureExecuteStatementTests = []struct {
 				OperatedCount: 1,
 			},
 		},
-		Logs: []string{
-			fmt.Sprintf("1 field added on %q.", GetTestFilePath("table1.csv")),
-		},
+		Logs: fmt.Sprintf("1 field added on %q.\n", GetTestFilePath("table1.csv")),
 	},
 	{
 		Input: parser.DropColumns{
@@ -523,9 +501,7 @@ var procedureExecuteStatementTests = []struct {
 				OperatedCount: 1,
 			},
 		},
-		Logs: []string{
-			fmt.Sprintf("1 field dropped on %q.", GetTestFilePath("table1.csv")),
-		},
+		Logs: fmt.Sprintf("1 field dropped on %q.\n", GetTestFilePath("table1.csv")),
 	},
 	{
 		Input: parser.RenameColumn{
@@ -546,17 +522,13 @@ var procedureExecuteStatementTests = []struct {
 				OperatedCount: 1,
 			},
 		},
-		Logs: []string{
-			fmt.Sprintf("1 field renamed on %q.", GetTestFilePath("table1.csv")),
-		},
+		Logs: fmt.Sprintf("1 field renamed on %q.\n", GetTestFilePath("table1.csv")),
 	},
 	{
 		Input: parser.Print{
 			Value: parser.NewIntegerValue(12345),
 		},
-		Logs: []string{
-			"12345",
-		},
+		Logs: "12345\n",
 	},
 	{
 		Input: parser.Printf{
@@ -565,17 +537,13 @@ var procedureExecuteStatementTests = []struct {
 				parser.NewIntegerValue(12345),
 			},
 		},
-		Logs: []string{
-			"value: 12345",
-		},
+		Logs: "value: 12345\n",
 	},
 	{
 		Input: parser.Source{
 			FilePath: parser.NewStringValue(GetTestFilePath("source.sql")),
 		},
-		Logs: []string{
-			"'external executable file'",
-		},
+		Logs: "'external executable file'\n",
 	},
 	{
 		Input: parser.Trigger{
@@ -607,10 +575,19 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 	for _, v := range procedureExecuteStatementTests {
 		ViewCache.Clear()
 		Results = []Result{}
-		Logs = []string{}
 		SelectLogs = []string{}
 
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
 		_, err := proc.ExecuteStatement(v.Input)
+
+		w.Close()
+		os.Stdout = oldStdout
+
+		log, _ := ioutil.ReadAll(r)
+
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("unexpected error %q for %q", err, v.Input)
@@ -632,9 +609,9 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 				t.Errorf("results = %q, want %q for %q", Results, v.Result, v.Input)
 			}
 		}
-		if v.Logs != nil {
-			if !reflect.DeepEqual(Logs, v.Logs) {
-				t.Errorf("logs = %s, want %s for %q", Logs, v.Logs, v.Input)
+		if 0 < len(v.Logs) {
+			if string(log) != v.Logs {
+				t.Errorf("logs = %s, want %s for %q", string(log), v.Logs, v.Input)
 			}
 		}
 		if v.SelectLogs != nil {
@@ -761,10 +738,23 @@ func TestProcedure_IfStmt(t *testing.T) {
 	proc := NewProcedure()
 
 	for _, v := range procedureIfStmtTests {
+		oldStdout := os.Stdout
+
+		r, w, _ := os.Pipe()
+		os.Stdout = w
 		proc.Rollback()
-		Logs = []string{}
+		w.Close()
+
+		r, w, _ = os.Pipe()
+		os.Stdout = w
 
 		flow, err := proc.IfStmt(v.Stmt)
+
+		w.Close()
+		os.Stdout = oldStdout
+
+		log, _ := ioutil.ReadAll(r)
+
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -780,8 +770,8 @@ func TestProcedure_IfStmt(t *testing.T) {
 		if flow != v.ResultFlow {
 			t.Errorf("%s: result flow = %q, want %q", v.Name, flow, v.ResultFlow)
 		}
-		if ReadLog() != v.Result {
-			t.Errorf("%s: result = %q, want %q", v.Name, ReadLog(), v.Result)
+		if string(log) != v.Result {
+			t.Errorf("%s: result = %q, want %q", v.Name, string(log), v.Result)
 		}
 	}
 }
@@ -995,9 +985,6 @@ func TestProcedure_While(t *testing.T) {
 	proc := NewProcedure()
 
 	for _, v := range procedureWhileTests {
-		proc.Rollback()
-		Logs = []string{}
-
 		if _, err := proc.Filter.VariablesList[0].Get(parser.Variable{Name: "@while_test"}); err != nil {
 			proc.Filter.VariablesList[0].Add(parser.Variable{Name: "@while_test"}, parser.NewInteger(0))
 		}
@@ -1008,7 +995,23 @@ func TestProcedure_While(t *testing.T) {
 		}
 		proc.Filter.VariablesList[0].Set(parser.Variable{Name: "@while_test_count"}, parser.NewInteger(0))
 
+		oldStdout := os.Stdout
+
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+		proc.Rollback()
+		w.Close()
+
+		r, w, _ = os.Pipe()
+		os.Stdout = w
+
 		flow, err := proc.While(v.Stmt)
+
+		w.Close()
+		os.Stdout = oldStdout
+
+		log, _ := ioutil.ReadAll(r)
+
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1024,8 +1027,8 @@ func TestProcedure_While(t *testing.T) {
 		if flow != v.ResultFlow {
 			t.Errorf("%s: result flow = %q, want %q", v.Name, flow, v.ResultFlow)
 		}
-		if ReadLog() != v.Result {
-			t.Errorf("%s: result = %q, want %q", v.Name, ReadLog(), v.Result)
+		if string(log) != v.Result {
+			t.Errorf("%s: result = %q, want %q", v.Name, string(log), v.Result)
 		}
 	}
 }
@@ -1180,8 +1183,6 @@ func TestProcedure_WhileInCursor(t *testing.T) {
 	proc := NewProcedure()
 
 	for _, v := range procedureWhileInCursorTests {
-		Logs = []string{}
-
 		proc.Filter.VariablesList[0] = Variables{
 			"@var1": parser.NewNull(),
 			"@var2": parser.NewNull(),
@@ -1194,7 +1195,17 @@ func TestProcedure_WhileInCursor(t *testing.T) {
 		ViewCache.Clear()
 		proc.Filter.CursorsList.Open(parser.Identifier{Literal: "cur"}, proc.Filter)
 
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
 		flow, err := proc.WhileInCursor(v.Stmt)
+
+		w.Close()
+		os.Stdout = oldStdout
+
+		log, _ := ioutil.ReadAll(r)
+
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1210,8 +1221,8 @@ func TestProcedure_WhileInCursor(t *testing.T) {
 		if flow != v.ResultFlow {
 			t.Errorf("%s: result flow = %q, want %q", v.Name, flow, v.ResultFlow)
 		}
-		if ReadLog() != v.Result {
-			t.Errorf("%s: result = %q, want %q", v.Name, ReadLog(), v.Result)
+		if string(log) != v.Result {
+			t.Errorf("%s: result = %q, want %q", v.Name, string(log), v.Result)
 		}
 	}
 }

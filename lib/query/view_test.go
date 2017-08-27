@@ -1368,9 +1368,34 @@ var viewGroupByTests = []struct {
 			},
 		},
 		Result: &View{
-			Header:  NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
-			Records: []Record{},
-			Filter:  NewEmptyFilter(),
+			Header: []HeaderField{
+				{
+					View:   "table1",
+					Column: INTERNAL_ID_COLUMN,
+				},
+				{
+					View:      "table1",
+					Column:    "column1",
+					Number:    1,
+					FromTable: true,
+				},
+				{
+					View:      "table1",
+					Column:    "column2",
+					Number:    2,
+					FromTable: true,
+				},
+				{
+					View:       "table1",
+					Column:     "column3",
+					Number:     3,
+					FromTable:  true,
+					IsGroupKey: true,
+				},
+			},
+			Records:   []Record{},
+			Filter:    NewEmptyFilter(),
+			isGrouped: true,
 		},
 	},
 }
