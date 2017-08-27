@@ -33,7 +33,7 @@ func TestMergeRecordsList(t *testing.T) {
 	}
 }
 
-var serializeComparisonKeysBenchmarkRecord = NewRecord([]parser.Primary{
+var recordSerializeComparisonKeysBenchmarkRecord = NewRecord([]parser.Primary{
 	parser.NewString("str"),
 	parser.NewInteger(1),
 	parser.NewInteger(0),
@@ -48,8 +48,6 @@ var serializeComparisonKeysBenchmarkRecord = NewRecord([]parser.Primary{
 
 func BenchmarkRecord_SerializeComparisonKeys(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		for j := 0; j < 1000; j++ {
-			serializeComparisonKeysBenchmarkRecord.SerializeComparisonKeys()
-		}
+		_ = recordSerializeComparisonKeysBenchmarkRecord.SerializeComparisonKeys()
 	}
 }
