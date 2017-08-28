@@ -61,7 +61,7 @@ func (view *View) Load(clause parser.FromClause, filter *Filter) error {
 
 	views := make([]*View, len(clause.Tables))
 	for i, v := range clause.Tables {
-		loaded, err := loadView(v.(parser.Table), filter, view.UseInternalId)
+		loaded, err := loadView(v, filter, view.UseInternalId)
 		if err != nil {
 			return err
 		}
@@ -90,7 +90,13 @@ func (view *View) LoadFromTableIdentifier(table parser.Expression, filter *Filte
 	return view.Load(fromClause, filter)
 }
 
-func loadView(table parser.Table, filter *Filter, useInternalId bool) (*View, error) {
+func loadView(tableExpr parser.Expression, filter *Filter, useInternalId bool) (*View, error) {
+	if parentheses, ok := tableExpr.(parser.Parentheses); ok {
+		return loadView(parentheses.Expr, filter, useInternalId)
+	}
+
+	table := tableExpr.(parser.Table)
+
 	var view *View
 	var err error
 
@@ -224,7 +230,10 @@ func loadView(table parser.Table, filter *Filter, useInternalId bool) (*View, er
 			return nil, err
 		}
 
-		condition := ParseJoinCondition(join, view, view2)
+		condition, includeFields, excludeFields, err := ParseJoinCondition(join, view, view2)
+		if err != nil {
+			return nil, err
+		}
 
 		joinType := join.JoinType.Token
 		if join.JoinType.IsEmpty() {
@@ -247,6 +256,57 @@ func loadView(table parser.Table, filter *Filter, useInternalId bool) (*View, er
 				return nil, err
 			}
 		}
+
+		includeIndices := make([]int, 0, len(includeFields))
+		excludeIndices := make([]int, 0, len(includeFields))
+		if includeFields != nil {
+			for i := range includeFields {
+				idx, _ := view.Header.Contains(includeFields[i])
+				includeIndices = append(includeIndices, idx)
+
+				idx, _ = view.Header.Contains(excludeFields[i])
+				excludeIndices = append(excludeIndices, idx)
+			}
+
+			fieldIndices := make([]int, 0, view.FieldLen())
+			header := make(Header, 0, view.FieldLen()-len(excludeIndices))
+			for _, idx := range includeIndices {
+				view.Header[idx].View = ""
+				view.Header[idx].Number = 0
+				view.Header[idx].IsJoinColumn = true
+				header = append(header, view.Header[idx])
+				fieldIndices = append(fieldIndices, idx)
+			}
+			for i := range view.Header {
+				if InIntSlice(i, excludeIndices) || InIntSlice(i, includeIndices) {
+					continue
+				}
+				header = append(header, view.Header[i])
+				fieldIndices = append(fieldIndices, i)
+			}
+			view.Header = header
+
+			cpu := NumberOfCPU(view.RecordLen())
+			wg := sync.WaitGroup{}
+			for i := 0; i < cpu; i++ {
+				wg.Add(1)
+				go func(thIdx int) {
+					start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+
+					for i := start; i < end; i++ {
+						record := make(Record, len(fieldIndices))
+						for j, idx := range fieldIndices {
+							record[j] = view.Records[i][idx]
+						}
+						view.Records[i] = record
+					}
+
+					wg.Done()
+				}(i)
+			}
+			wg.Wait()
+		}
+
 	case parser.Subquery:
 		subquery := table.Object.(parser.Subquery)
 		view, err = Select(subquery.Query, filter)
@@ -917,7 +977,7 @@ func (view *View) evalColumn(obj parser.Expression, alias string) (idx int, err 
 		if idx, err = view.FieldIndex(obj); err != nil {
 			return
 		}
-		if view.isGrouped && view.Header[idx].FromTable && !view.Header[idx].IsGroupKey {
+		if view.isGrouped && view.Header[idx].IsFromTable && !view.Header[idx].IsGroupKey {
 			err = NewFieldNotGroupKeyError(obj)
 			return
 		}
@@ -1224,7 +1284,8 @@ func (view *View) Fix() {
 		hfields[i] = view.Header[idx]
 		hfields[i].Aliases = nil
 		hfields[i].Number = colNumber
-		hfields[i].FromTable = true
+		hfields[i].IsFromTable = true
+		hfields[i].IsJoinColumn = false
 		hfields[i].IsGroupKey = false
 
 		if 0 < len(view.selectLabels) {
@@ -1445,11 +1506,7 @@ func (view *View) FieldViewName(fieldRef parser.Expression) (string, error) {
 }
 
 func (view *View) InternalRecordId(ref string, recordIndex int) (int, error) {
-	fieldRef := parser.FieldReference{
-		View:   parser.Identifier{Literal: ref},
-		Column: parser.Identifier{Literal: INTERNAL_ID_COLUMN},
-	}
-	idx, err := view.Header.Contains(fieldRef)
+	idx, err := view.Header.ContainsInternalId(ref)
 	if err != nil {
 		return -1, NewInternalRecordIdNotExistError()
 	}

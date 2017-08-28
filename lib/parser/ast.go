@@ -378,14 +378,14 @@ func (i Identifier) String() string {
 
 type FieldReference struct {
 	*BaseExpr
-	View   Expression
+	View   Identifier
 	Column Identifier
 }
 
 func (e FieldReference) String() string {
 	s := e.Column.String()
-	if e.View != nil {
-		s = e.View.(Identifier).String() + "." + s
+	if 0 < len(e.View.Literal) {
+		s = e.View.String() + "." + s
 	}
 	return s
 }
@@ -946,8 +946,8 @@ func (t Table) Name() Identifier {
 type Join struct {
 	*BaseExpr
 	Join      string
-	Table     Table
-	JoinTable Table
+	Table     Expression
+	JoinTable Expression
 	Natural   Token
 	JoinType  Token
 	Direction Token

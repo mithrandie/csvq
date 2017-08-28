@@ -122,9 +122,9 @@ var filterEvaluateTests = []struct {
 					View: &View{
 						Header: []HeaderField{
 							{
-								View:      "table1",
-								Column:    "column1",
-								FromTable: true,
+								View:        "table1",
+								Column:      "column1",
+								IsFromTable: true,
 							},
 							{
 								View:   "table1",
@@ -212,17 +212,17 @@ var filterEvaluateTests = []struct {
 					View: &View{
 						Header: []HeaderField{
 							{
-								View:      "table1",
-								Column:    "column1",
-								Number:    1,
-								FromTable: true,
+								View:        "table1",
+								Column:      "column1",
+								Number:      1,
+								IsFromTable: true,
 							},
 							{
-								View:       "table1",
-								Column:     "column2",
-								Number:     2,
-								FromTable:  true,
-								IsGroupKey: true,
+								View:        "table1",
+								Column:      "column2",
+								Number:      2,
+								IsFromTable: true,
+								IsGroupKey:  true,
 							},
 						},
 						Records: []Record{

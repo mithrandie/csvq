@@ -47,4 +47,15 @@ func TestLexer_Error(t *testing.T) {
 	if lexer.err.Error() != expect {
 		t.Errorf("error message = %s, want %s for token %s", lexer.err.Error(), expect, lexer.token)
 	}
+
+	lexer = Lexer{
+		token: Token{
+			Token: -1,
+		},
+	}
+	expect = "syntax error: unexpected termination"
+	lexer.Error(message)
+	if lexer.err.Error() != expect {
+		t.Errorf("error message = %s, want %s for token %s", lexer.err.Error(), expect, lexer.token)
+	}
 }

@@ -126,9 +126,9 @@ package parser
 %type<expressions> variable_assignments
 %type<token>       distinct
 %type<token>       negation
-%type<token>       join_inner
-%type<token>       join_outer
-%type<token>       join_direction
+%type<token>       join_type_inner
+%type<token>       join_type_outer
+%type<token>       join_outer_direction
 %type<token>       all
 %type<token>       recursive
 %type<token>       comparison_operator
@@ -165,6 +165,7 @@ package parser
 %right SUBSTITUTION_OP
 %left UNION EXCEPT
 %left INTERSECT
+%left CROSS FULL NATURAL JOIN
 %left OR
 %left AND
 %right NOT
@@ -1400,35 +1401,39 @@ table
     {
         $$ = Table{Object: Dual{Dual: $1.Literal}}
     }
+    | '(' table ')'
+    {
+        $$ = Parentheses{Expr: $2}
+    }
 
 join
-    : table join_inner JOIN table join_condition
+    : table CROSS JOIN table
     {
-        $$ = Join{Join: $3.Literal, Table: $1.(Table), JoinTable: $4.(Table), Natural: Token{}, JoinType: $2, Condition: $5}
-	}
-    | table NATURAL join_inner JOIN table
-    {
-        $$ = Join{Join: $4.Literal, Table: $1.(Table), JoinTable: $5.(Table), Natural: $2, JoinType: $3, Condition: nil}
-	}
-    | table join_direction join_outer JOIN table join_condition
-    {
-        $$ = Join{Join: $4.Literal, Table: $1.(Table), JoinTable: $5.(Table), Natural: Token{}, JoinType: $3, Direction: $2, Condition: $6}
+        $$ = Join{Join: $3.Literal, Table: $1, JoinTable: $4, JoinType: $2, Condition: nil}
     }
-    | table NATURAL join_direction join_outer JOIN table
+    | table join_type_inner JOIN table join_condition
     {
-        $$ = Join{Join: $5.Literal, Table: $1.(Table), JoinTable: $6.(Table), Natural: $2, JoinType: $4, Direction: $3, Condition: nil}
+        $$ = Join{Join: $3.Literal, Table: $1, JoinTable: $4, JoinType: $2, Condition: $5}
     }
-    | table CROSS JOIN table
+    | table join_outer_direction join_type_outer JOIN table join_condition
     {
-        $$ = Join{Join: $3.Literal, Table: $1.(Table), JoinTable: $4.(Table), Natural: Token{}, JoinType: $2, Condition: nil}
+        $$ = Join{Join: $4.Literal, Table: $1, JoinTable: $5, JoinType: $3, Direction: $2, Condition: $6}
+    }
+    | table FULL join_type_outer JOIN table ON value
+    {
+        $$ = Join{Join: $4.Literal, Table: $1, JoinTable: $5, JoinType: $3, Direction: $2, Condition: JoinCondition{Literal:$6.Literal, On: $7}}
+    }
+    | table NATURAL join_type_inner JOIN table
+    {
+        $$ = Join{Join: $4.Literal, Table: $1, JoinTable: $5, JoinType: $3, Natural: $2}
+    }
+    | table NATURAL join_outer_direction join_type_outer JOIN table
+    {
+        $$ = Join{Join: $5.Literal, Table: $1, JoinTable: $6, JoinType: $4, Direction: $3, Natural: $2}
     }
 
 join_condition
-    :
-    {
-        $$ = nil
-    }
-    | ON value
+    : ON value
     {
         $$ = JoinCondition{Literal:$1.Literal, On: $2}
     }
@@ -1785,7 +1790,7 @@ negation
         $$ = $1
     }
 
-join_inner
+join_type_inner
     :
     {
         $$ = Token{}
@@ -1795,7 +1800,7 @@ join_inner
         $$ = $1
     }
 
-join_outer
+join_type_outer
     :
     {
         $$ = Token{}
@@ -1805,20 +1810,12 @@ join_outer
         $$ = $1
     }
 
-join_direction
-    :
-    {
-        $$ = Token{}
-    }
-    | LEFT
+join_outer_direction
+    : LEFT
     {
         $$ = $1
     }
     | RIGHT
-    {
-        $$ = $1
-    }
-    | FULL
     {
         $$ = $1
     }

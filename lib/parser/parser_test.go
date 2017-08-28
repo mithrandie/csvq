@@ -2288,7 +2288,82 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select 1 from table1 inner join table2",
+		Input: "select 1 from table1 cross join table2 cross join table3",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause: FromClause{
+						From: "from",
+						Tables: []Expression{
+							Table{
+								Object: Join{
+									Join: "join",
+									Table: Table{
+										Object: Join{
+											Join:      "join",
+											Table:     Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
+											JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 33}, Literal: "table2"}},
+											JoinType:  Token{Token: CROSS, Literal: "cross", Line: 1, Char: 22},
+										},
+									},
+									JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 51}, Literal: "table3"}},
+									JoinType:  Token{Token: CROSS, Literal: "cross", Line: 1, Char: 40},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 from table1 join table2 on table1.id = table2.id inner join table3 on table1.id = table3.id",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause: FromClause{
+						From: "from",
+						Tables: []Expression{
+							Table{
+								Object: Join{
+									Join: "join",
+									Table: Table{
+										Object: Join{
+											Join:      "join",
+											Table:     Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
+											JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 27}, Literal: "table2"}},
+											Condition: JoinCondition{
+												Literal: "on",
+												On: Comparison{
+													LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 37}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 37}, Literal: "table1"}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 44}, Literal: "id"}},
+													Operator: "=",
+													RHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 49}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 49}, Literal: "table2"}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 56}, Literal: "id"}},
+												},
+											},
+										},
+									},
+									JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 70}, Literal: "table3"}},
+									Condition: JoinCondition{
+										Literal: "on",
+										On: Comparison{
+											LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 80}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 80}, Literal: "table1"}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 87}, Literal: "id"}},
+											Operator: "=",
+											RHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 92}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 92}, Literal: "table3"}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 99}, Literal: "id"}},
+										},
+									},
+									JoinType: Token{Token: INNER, Literal: "inner", Line: 1, Char: 59},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 from table1 inner join table2 on table1.id = table2.id",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -2301,37 +2376,15 @@ var parseTests = []struct {
 									Join:      "join",
 									Table:     Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
 									JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 33}, Literal: "table2"}},
-									JoinType:  Token{Token: INNER, Literal: "inner", Line: 1, Char: 22},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	},
-	{
-		Input: "select 1 from table1 join table2 on table1.id = table2.id",
-		Output: []Statement{
-			SelectQuery{
-				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValueFromString("1")}}},
-					FromClause: FromClause{
-						From: "from",
-						Tables: []Expression{
-							Table{
-								Object: Join{
-									Join:      "join",
-									Table:     Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
-									JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 27}, Literal: "table2"}},
 									Condition: JoinCondition{
 										Literal: "on",
 										On: Comparison{
-											LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 37}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 37}, Literal: "table1"}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 44}, Literal: "id"}},
+											LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 43}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 43}, Literal: "table1"}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 50}, Literal: "id"}},
 											Operator: "=",
-											RHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 49}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 49}, Literal: "table2"}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 56}, Literal: "id"}},
+											RHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 55}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 55}, Literal: "table2"}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 62}, Literal: "id"}},
 										},
 									},
+									JoinType: Token{Token: INNER, Literal: "inner", Line: 1, Char: 22},
 								},
 							},
 						},
@@ -2341,7 +2394,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select 1 from table1 natural join table2",
+		Input: "select 1 from table1 natural join table2 natural join table3",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -2351,10 +2404,17 @@ var parseTests = []struct {
 						Tables: []Expression{
 							Table{
 								Object: Join{
-									Join:      "join",
-									Table:     Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
-									JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 35}, Literal: "table2"}},
-									Natural:   Token{Token: NATURAL, Literal: "natural", Line: 1, Char: 22},
+									Join: "join",
+									Table: Table{
+										Object: Join{
+											Join:      "join",
+											Table:     Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
+											JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 35}, Literal: "table2"}},
+											Natural:   Token{Token: NATURAL, Literal: "natural", Line: 1, Char: 22},
+										},
+									},
+									JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 55}, Literal: "table3"}},
+									Natural:   Token{Token: NATURAL, Literal: "natural", Line: 1, Char: 42},
 								},
 							},
 						},
@@ -2364,7 +2424,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select 1 from table1 left join table2 using(id)",
+		Input: "select 1 from table1 left join table2 using(id) left join table3 using(id)",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -2374,14 +2434,27 @@ var parseTests = []struct {
 						Tables: []Expression{
 							Table{
 								Object: Join{
-									Join:      "join",
-									Table:     Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
-									JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 32}, Literal: "table2"}},
-									Direction: Token{Token: LEFT, Literal: "left", Line: 1, Char: 22},
+									Join: "join",
+									Table: Table{
+										Object: Join{
+											Join:      "join",
+											Table:     Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
+											JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 32}, Literal: "table2"}},
+											Direction: Token{Token: LEFT, Literal: "left", Line: 1, Char: 22},
+											Condition: JoinCondition{
+												Literal: "using",
+												Using: []Expression{
+													Identifier{BaseExpr: &BaseExpr{line: 1, char: 45}, Literal: "id"},
+												},
+											},
+										},
+									},
+									JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 59}, Literal: "table3"}},
+									Direction: Token{Token: LEFT, Literal: "left", Line: 1, Char: 49},
 									Condition: JoinCondition{
 										Literal: "using",
 										Using: []Expression{
-											Identifier{BaseExpr: &BaseExpr{line: 1, char: 45}, Literal: "id"},
+											Identifier{BaseExpr: &BaseExpr{line: 1, char: 72}, Literal: "id"},
 										},
 									},
 								},
@@ -2393,7 +2466,37 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select 1 from table1 natural outer join table2",
+		Input: "select 1 from table1 right outer join table2 using(id)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []Expression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause: FromClause{
+						From: "from",
+						Tables: []Expression{
+							Table{
+								Object: Join{
+									Join:      "join",
+									Table:     Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
+									JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 39}, Literal: "table2"}},
+									Direction: Token{Token: RIGHT, Literal: "right", Line: 1, Char: 22},
+									JoinType:  Token{Token: OUTER, Literal: "outer", Line: 1, Char: 28},
+									Condition: JoinCondition{
+										Literal: "using",
+										Using: []Expression{
+											Identifier{BaseExpr: &BaseExpr{line: 1, char: 52}, Literal: "id"},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 from table1 natural right join table2",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -2407,7 +2510,7 @@ var parseTests = []struct {
 									Table:     Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
 									JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 41}, Literal: "table2"}},
 									Natural:   Token{Token: NATURAL, Literal: "natural", Line: 1, Char: 22},
-									JoinType:  Token{Token: OUTER, Literal: "outer", Line: 1, Char: 30},
+									Direction: Token{Token: RIGHT, Literal: "right", Line: 1, Char: 30},
 								},
 							},
 						},
@@ -2417,7 +2520,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select 1 from table1 right join table2",
+		Input: "select 1 from table1 full join table2 on table1.id = table2.id full join table3 on table3.id = table1.id",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -2427,10 +2530,33 @@ var parseTests = []struct {
 						Tables: []Expression{
 							Table{
 								Object: Join{
-									Join:      "join",
-									Table:     Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
-									JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 33}, Literal: "table2"}},
-									Direction: Token{Token: RIGHT, Literal: "right", Line: 1, Char: 22},
+									Join: "join",
+									Table: Table{
+										Object: Join{
+											Join:      "join",
+											Table:     Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
+											JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 32}, Literal: "table2"}},
+											Direction: Token{Token: FULL, Literal: "full", Line: 1, Char: 22},
+											Condition: JoinCondition{
+												Literal: "on",
+												On: Comparison{
+													LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 42}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 42}, Literal: "table1"}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 49}, Literal: "id"}},
+													Operator: "=",
+													RHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 54}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 54}, Literal: "table2"}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 61}, Literal: "id"}},
+												},
+											},
+										},
+									},
+									JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 74}, Literal: "table3"}},
+									Direction: Token{Token: FULL, Literal: "full", Line: 1, Char: 64},
+									Condition: JoinCondition{
+										Literal: "on",
+										On: Comparison{
+											LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 84}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 84}, Literal: "table3"}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 91}, Literal: "id"}},
+											Operator: "=",
+											RHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 96}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 96}, Literal: "table1"}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 103}, Literal: "id"}},
+										},
+									},
 								},
 							},
 						},
@@ -2440,7 +2566,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select 1 from table1 full join table2",
+		Input: "select 1 from table1 cross join (table2 cross join table3)",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -2450,10 +2576,17 @@ var parseTests = []struct {
 						Tables: []Expression{
 							Table{
 								Object: Join{
-									Join:      "join",
-									Table:     Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
-									JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 32}, Literal: "table2"}},
-									Direction: Token{Token: FULL, Literal: "full", Line: 1, Char: 22},
+									Join:  "join",
+									Table: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
+									JoinTable: Parentheses{Expr: Table{
+										Object: Join{
+											Join:      "join",
+											Table:     Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "table2"}},
+											JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 52}, Literal: "table3"}},
+											JoinType:  Token{Token: CROSS, Literal: "cross", Line: 1, Char: 41},
+										},
+									}},
+									JoinType: Token{Token: CROSS, Literal: "cross", Line: 1, Char: 22},
 								},
 							},
 						},

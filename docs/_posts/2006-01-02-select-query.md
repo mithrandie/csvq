@@ -111,20 +111,20 @@ table
   | table_entity AS alias
   | join
   | DUAL
+  | (table)
 
 table_entity
   : table_name
-  | subquery
+  | (select_query)
   | STDIN
 
 join
   : table CROSS JOIN table
+  | table [INNER] JOIN table join_condition
+  | table {LEFT|RIGHT} [OUTER] JOIN table join_condition
+  | table FULL [OUTER] JOIN table ON condition
   | table NATURAL [INNER] JOIN table
-  | table [INNER] JOIN table [join_condition]
-  | table NATURAL [LEFT|RIGHT|FULL] OUTER JOIN table
-  | table NATURAL {LEFT|RIGHT|FULL} [OUTER] JOIN table
-  | table [LEFT|RIGHT|FULL] OUTER JOIN table [join_condition]
-  | table {LEFT|RIGHT|FULL} [OUTER] JOIN table [join_condition]
+  | table NATURAL {LEFT|RIGHT} [OUTER] JOIN table
 
 join_condition
   : ON condition
@@ -151,13 +151,13 @@ _alias_
   If _alias_ is not specified, _table_name_ stripped it's directory path and extension is used as alias.
 
   ```sql
-  -- Following expressions are the same
+  -- Following expressions are equivalent
   FROM `/path/to/user.csv`
   FROM `/path/to/user.csv` AS user
   ```
 
-_subquery_
-: A select query enclosed in parentheses.
+_select_query_
+: [Select Query]({{ '/reference/select-query.html' | relative_url }})
 
 _condition_
 : [value]({{ '/reference/value.html' | relative_url }})

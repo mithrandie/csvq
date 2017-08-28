@@ -204,7 +204,7 @@ func (f *Filter) evalFieldReference(expr parser.Expression) (parser.Primary, err
 
 		idx, err := v.View.FieldIndex(expr)
 		if err == nil {
-			if v.View.isGrouped && v.View.Header[idx].FromTable && !v.View.Header[idx].IsGroupKey {
+			if v.View.isGrouped && v.View.Header[idx].IsFromTable && !v.View.Header[idx].IsGroupKey {
 				return nil, NewFieldNotGroupKeyError(expr)
 			}
 			p = v.View.Records[v.RecordIndex][idx].Primary()

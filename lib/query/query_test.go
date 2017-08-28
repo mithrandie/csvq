@@ -635,15 +635,15 @@ var selectTests = []struct {
 			},
 			Header: []HeaderField{
 				{
-					View:      "group_table",
-					Column:    "column1",
-					Number:    1,
-					FromTable: true,
+					View:        "group_table",
+					Column:      "column1",
+					Number:      1,
+					IsFromTable: true,
 				},
 				{
-					Column:    "count(*)",
-					Number:    2,
-					FromTable: true,
+					Column:      "count(*)",
+					Number:      2,
+					IsFromTable: true,
 				},
 			},
 			Records: []Record{
@@ -1182,10 +1182,10 @@ var selectTests = []struct {
 		Result: &View{
 			Header: []HeaderField{
 				{
-					View:      "it",
-					Column:    "n",
-					Number:    1,
-					FromTable: true,
+					View:        "it",
+					Column:      "n",
+					Number:      1,
+					IsFromTable: true,
 				},
 			},
 			Records: []Record{

@@ -9,12 +9,13 @@ import (
 const INTERNAL_ID_COLUMN = "@__internal_id"
 
 type HeaderField struct {
-	View       string
-	Column     string
-	Aliases    []string
-	Number     int
-	FromTable  bool
-	IsGroupKey bool
+	View         string
+	Column       string
+	Aliases      []string
+	Number       int
+	IsFromTable  bool
+	IsJoinColumn bool
+	IsGroupKey   bool
 }
 
 type Header []HeaderField
@@ -34,7 +35,7 @@ func NewHeaderWithId(view string, words []string) Header {
 		h[i+1].View = view
 		h[i+1].Column = v
 		h[i+1].Number = i + 1
-		h[i+1].FromTable = true
+		h[i+1].IsFromTable = true
 	}
 
 	return h
@@ -47,7 +48,7 @@ func NewHeader(view string, words []string) Header {
 		h[i].View = view
 		h[i].Column = v
 		h[i].Number = i + 1
-		h[i].FromTable = true
+		h[i].IsFromTable = true
 	}
 
 	return h
@@ -81,7 +82,7 @@ func (h Header) Len() int {
 func (h Header) TableColumns() []parser.Expression {
 	columns := []parser.Expression{}
 	for _, f := range h {
-		if !f.FromTable {
+		if !f.IsFromTable {
 			continue
 		}
 
@@ -100,7 +101,7 @@ func (h Header) TableColumns() []parser.Expression {
 func (h Header) TableColumnNames() []string {
 	names := []string{}
 	for _, f := range h {
-		if !f.FromTable {
+		if !f.IsFromTable {
 			continue
 		}
 		names = append(names, f.Column)
@@ -120,7 +121,7 @@ func (h Header) ContainsObject(obj parser.Expression) (int, error) {
 	idx := -1
 
 	for i, f := range h {
-		if f.FromTable {
+		if f.IsFromTable {
 			continue
 		}
 
@@ -158,8 +159,8 @@ func (h Header) ContainsNumber(number parser.ColumnNumber) (int, error) {
 
 func (h Header) Contains(fieldRef parser.FieldReference) (int, error) {
 	var view string
-	if fieldRef.View != nil {
-		view = fieldRef.View.(parser.Identifier).Literal
+	if 0 < len(fieldRef.View.Literal) {
+		view = fieldRef.View.Literal
 	}
 	column := fieldRef.Column.Literal
 
@@ -171,7 +172,13 @@ func (h Header) Contains(fieldRef parser.FieldReference) (int, error) {
 				continue
 			}
 		} else {
-			if !strings.EqualFold(f.Column, column) && !InStrSliceWithCaseInsensitive(column, f.Aliases) {
+			isEqual := strings.EqualFold(f.Column, column)
+			if isEqual && f.IsJoinColumn {
+				idx = i
+				break
+			}
+
+			if !isEqual && !InStrSliceWithCaseInsensitive(column, f.Aliases) {
 				continue
 			}
 		}
@@ -187,6 +194,14 @@ func (h Header) Contains(fieldRef parser.FieldReference) (int, error) {
 	}
 
 	return idx, nil
+}
+
+func (h Header) ContainsInternalId(viewName string) (int, error) {
+	fieldRef := parser.FieldReference{
+		View:   parser.Identifier{Literal: viewName},
+		Column: parser.Identifier{Literal: INTERNAL_ID_COLUMN},
+	}
+	return h.Contains(fieldRef)
 }
 
 func (h Header) Update(reference string, fields []parser.Expression) error {

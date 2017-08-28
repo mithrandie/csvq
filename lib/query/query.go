@@ -789,7 +789,7 @@ func DropColumns(query parser.DropColumns, parentFilter *Filter) (*View, error) 
 
 	view.selectFields = []int{}
 	for i := 0; i < view.FieldLen(); i++ {
-		if view.Header[i].FromTable && !InIntSlice(i, dropIndices) {
+		if view.Header[i].IsFromTable && !InIntSlice(i, dropIndices) {
 			view.selectFields = append(view.selectFields, i)
 		}
 	}
