@@ -132,7 +132,6 @@ package parser
 %type<token>       all
 %type<token>       recursive
 %type<token>       comparison_operator
-%type<token>       statement_terminal
 
 %token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME VARIABLE FLAG
 %token<token> SELECT FROM UPDATE SET DELETE WHERE INSERT INTO VALUES AS DUAL STDIN
@@ -183,9 +182,14 @@ program
         $$ = nil
         yylex.(*Lexer).program = $$
     }
-    | procedure_statement program
+    | procedure_statement
     {
-        $$ = append([]Statement{$1}, $2...)
+        $$ = []Statement{$1}
+        yylex.(*Lexer).program = $$
+    }
+    | procedure_statement ';' program
+    {
+        $$ = append([]Statement{$1}, $3...)
         yylex.(*Lexer).program = $$
     }
 
@@ -195,9 +199,9 @@ in_loop_program
         $$ = nil
         yylex.(*Lexer).program = $$
     }
-    | in_loop_statement in_loop_program
+    | in_loop_statement ';' in_loop_program
     {
-        $$ = append([]Statement{$1}, $2...)
+        $$ = append([]Statement{$1}, $3...)
         yylex.(*Lexer).program = $$
     }
 
@@ -207,9 +211,9 @@ in_function_program
         $$ = nil
         yylex.(*Lexer).program = $$
     }
-    | in_function_statement in_function_program
+    | in_function_statement ';' in_function_program
     {
-        $$ = append([]Statement{$1}, $2...)
+        $$ = append([]Statement{$1}, $3...)
         yylex.(*Lexer).program = $$
     }
 
@@ -219,30 +223,30 @@ in_function_in_loop_program
         $$ = nil
         yylex.(*Lexer).program = $$
     }
-    | in_function_in_loop_statement in_function_in_loop_program
+    | in_function_in_loop_statement ';' in_function_in_loop_program
     {
-        $$ = append([]Statement{$1}, $2...)
+        $$ = append([]Statement{$1}, $3...)
         yylex.(*Lexer).program = $$
     }
 
 statement
-    : select_query statement_terminal
+    : select_query
     {
         $$ = $1
     }
-    | insert_query statement_terminal
+    | insert_query
     {
         $$ = $1
     }
-    | update_query statement_terminal
+    | update_query
     {
         $$ = $1
     }
-    | delete_query statement_terminal
+    | delete_query
     {
         $$ = $1
     }
-    | function statement_terminal
+    | function
     {
         $$ = $1
     }
@@ -320,77 +324,77 @@ in_function_in_loop_statement
     }
 
 flow_control_statement
-    : IF value THEN program else END IF statement_terminal
+    : IF value THEN program else END IF
     {
         $$ = If{Condition: $2, Statements: $4, Else: $5}
     }
-    | IF value THEN program elseif else END IF statement_terminal
+    | IF value THEN program elseif else END IF
     {
         $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
     }
-    | WHILE value DO in_loop_program END WHILE statement_terminal
+    | WHILE value DO in_loop_program END WHILE
     {
         $$ = While{Condition: $2, Statements: $4}
     }
-    | WHILE variable IN identifier DO in_loop_program END WHILE statement_terminal
+    | WHILE variable IN identifier DO in_loop_program END WHILE
     {
         $$ = WhileInCursor{Variables: []Variable{$2}, Cursor: $4, Statements: $6}
     }
-    | WHILE variables IN identifier DO in_loop_program END WHILE statement_terminal
+    | WHILE variables IN identifier DO in_loop_program END WHILE
     {
         $$ = WhileInCursor{Variables: $2, Cursor: $4, Statements: $6}
     }
-    | EXIT statement_terminal
+    | EXIT
     {
         $$ = FlowControl{Token: $1.Token}
     }
 
 in_function_flow_control_statement
-    : IF value THEN in_function_program in_function_else END IF statement_terminal
+    : IF value THEN in_function_program in_function_else END IF
     {
         $$ = If{Condition: $2, Statements: $4, Else: $5}
     }
-    | IF value THEN in_function_program in_function_elseif in_function_else END IF statement_terminal
+    | IF value THEN in_function_program in_function_elseif in_function_else END IF
     {
         $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
     }
-    | WHILE value DO in_function_in_loop_program END WHILE statement_terminal
+    | WHILE value DO in_function_in_loop_program END WHILE
     {
         $$ = While{Condition: $2, Statements: $4}
     }
-    | WHILE variable IN identifier DO in_function_in_loop_program END WHILE statement_terminal
+    | WHILE variable IN identifier DO in_function_in_loop_program END WHILE
     {
         $$ = WhileInCursor{Variables: []Variable{$2}, Cursor: $4, Statements: $6}
     }
-    | WHILE variables IN identifier DO in_function_in_loop_program END WHILE statement_terminal
+    | WHILE variables IN identifier DO in_function_in_loop_program END WHILE
     {
         $$ = WhileInCursor{Variables: $2, Cursor: $4, Statements: $6}
     }
-    | RETURN statement_terminal
+    | RETURN
     {
         $$ = Return{Value: NewNullValue()}
     }
-    | RETURN value statement_terminal
+    | RETURN value
     {
         $$ = Return{Value: $2}
     }
 
 common_in_loop_flow_control_statement
-    : CONTINUE statement_terminal
+    : CONTINUE
     {
         $$ = FlowControl{Token: $1.Token}
     }
-    | BREAK statement_terminal
+    | BREAK
     {
         $$ = FlowControl{Token: $1.Token}
     }
 
 in_loop_flow_control_statement
-    : IF value THEN in_loop_program in_loop_else END IF statement_terminal
+    : IF value THEN in_loop_program in_loop_else END IF
     {
         $$ = If{Condition: $2, Statements: $4, Else: $5}
     }
-    | IF value THEN in_loop_program in_loop_elseif in_loop_else END IF statement_terminal
+    | IF value THEN in_loop_program in_loop_elseif in_loop_else END IF
     {
         $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
     }
@@ -400,11 +404,11 @@ in_loop_flow_control_statement
     }
 
 in_function_in_loop_flow_control_statement
-    : IF value THEN in_function_in_loop_program in_function_in_loop_else END IF statement_terminal
+    : IF value THEN in_function_in_loop_program in_function_in_loop_else END IF
     {
         $$ = If{Condition: $2, Statements: $4, Else: $5}
     }
-    | IF value THEN in_function_in_loop_program in_function_in_loop_elseif in_function_in_loop_else END IF statement_terminal
+    | IF value THEN in_function_in_loop_program in_function_in_loop_elseif in_function_in_loop_else END IF
     {
         $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
     }
@@ -414,71 +418,71 @@ in_function_in_loop_flow_control_statement
     }
 
 variable_statement
-    : VAR variable_assignments statement_terminal
+    : VAR variable_assignments
     {
         $$ = VariableDeclaration{Assignments:$2}
     }
-    | DECLARE variable_assignments statement_terminal
+    | DECLARE variable_assignments
     {
         $$ = VariableDeclaration{Assignments:$2}
     }
-    | variable_substitution statement_terminal
+    | variable_substitution
     {
         $$ = $1
     }
-    | DISPOSE variable statement_terminal
+    | DISPOSE variable
     {
         $$ = DisposeVariable{Variable:$2}
     }
 
 transaction_statement
-    : COMMIT statement_terminal
+    : COMMIT
     {
         $$ = TransactionControl{BaseExpr: NewBaseExpr($1), Token: $1.Token}
     }
-    | ROLLBACK statement_terminal
+    | ROLLBACK
     {
         $$ = TransactionControl{BaseExpr: NewBaseExpr($1), Token: $1.Token}
     }
 
 table_operation_statement
-    : CREATE TABLE identifier '(' identifiers ')' statement_terminal
+    : CREATE TABLE identifier '(' identifiers ')'
     {
         $$ = CreateTable{Table: $3, Fields: $5}
     }
-    | CREATE TABLE identifier '(' identifiers ')' select_query statement_terminal
+    | CREATE TABLE identifier '(' identifiers ')' select_query
     {
         $$ = CreateTable{Table: $3, Fields: $5, Query: $7}
     }
-    | CREATE TABLE identifier select_query statement_terminal
+    | CREATE TABLE identifier select_query
     {
         $$ = CreateTable{Table: $3, Query: $4}
     }
-    | CREATE TABLE identifier '(' identifiers ')' AS select_query statement_terminal
+    | CREATE TABLE identifier '(' identifiers ')' AS select_query
     {
         $$ = CreateTable{Table: $3, Fields: $5, Query: $8}
     }
-    | CREATE TABLE identifier AS select_query statement_terminal
+    | CREATE TABLE identifier AS select_query
     {
         $$ = CreateTable{Table: $3, Query: $5}
     }
-    | ALTER TABLE table_identifier ADD column_default column_position statement_terminal
+    | ALTER TABLE table_identifier ADD column_default column_position
     {
         $$ = AddColumns{Table: $3, Columns: []Expression{$5}, Position: $6}
     }
-    | ALTER TABLE table_identifier ADD '(' column_defaults ')' column_position statement_terminal
+    | ALTER TABLE table_identifier ADD '(' column_defaults ')' column_position
     {
         $$ = AddColumns{Table: $3, Columns: $6, Position: $8}
     }
-    | ALTER TABLE table_identifier DROP field_reference statement_terminal
+    | ALTER TABLE table_identifier DROP field_reference
     {
         $$ = DropColumns{Table: $3, Columns: []Expression{$5}}
     }
-    | ALTER TABLE table_identifier DROP '(' field_references ')' statement_terminal
+    | ALTER TABLE table_identifier DROP '(' field_references ')'
     {
         $$ = DropColumns{Table: $3, Columns: $6}
     }
-    | ALTER TABLE table_identifier RENAME field_reference TO identifier statement_terminal
+    | ALTER TABLE table_identifier RENAME field_reference TO identifier
     {
         $$ = RenameColumn{Table: $3, Old: $5, New: $7}
     }
@@ -526,41 +530,41 @@ column_position
     }
 
 cursor_statement
-    : DECLARE identifier CURSOR FOR select_query statement_terminal
+    : DECLARE identifier CURSOR FOR select_query
     {
         $$ = CursorDeclaration{Cursor:$2, Query: $5.(SelectQuery)}
     }
-    | OPEN identifier statement_terminal
+    | OPEN identifier
     {
         $$ = OpenCursor{Cursor: $2}
     }
-    | CLOSE identifier statement_terminal
+    | CLOSE identifier
     {
         $$ = CloseCursor{Cursor: $2}
     }
-    | DISPOSE CURSOR identifier statement_terminal
+    | DISPOSE CURSOR identifier
     {
         $$ = DisposeCursor{Cursor: $3}
     }
-    | FETCH fetch_position identifier INTO variables statement_terminal
+    | FETCH fetch_position identifier INTO variables
     {
         $$ = FetchCursor{Position: $2, Cursor: $3, Variables: $5}
     }
 
 temporary_table_statement
-    : DECLARE identifier TABLE '(' identifiers ')' statement_terminal
+    : DECLARE identifier TABLE '(' identifiers ')'
     {
         $$ = TableDeclaration{Table: $2, Fields: $5}
     }
-    | DECLARE identifier TABLE '(' identifiers ')' FOR select_query statement_terminal
+    | DECLARE identifier TABLE '(' identifiers ')' FOR select_query
     {
         $$ = TableDeclaration{Table: $2, Fields: $5, Query: $8}
     }
-    | DECLARE identifier TABLE FOR select_query statement_terminal
+    | DECLARE identifier TABLE FOR select_query
     {
         $$ = TableDeclaration{Table: $2, Query: $5}
     }
-    | DISPOSE TABLE identifier statement_terminal
+    | DISPOSE TABLE identifier
     {
         $$ = DisposeTable{Table: $3}
     }
@@ -612,19 +616,19 @@ function_parameters
     }
 
 user_defined_function_statement
-    : DECLARE identifier FUNCTION '(' ')' AS BEGIN in_function_program END statement_terminal
+    : DECLARE identifier FUNCTION '(' ')' AS BEGIN in_function_program END
     {
         $$ = FunctionDeclaration{Name: $2, Statements: $8}
     }
-    | DECLARE identifier FUNCTION '(' function_parameters ')' AS BEGIN in_function_program END statement_terminal
+    | DECLARE identifier FUNCTION '(' function_parameters ')' AS BEGIN in_function_program END
     {
         $$ = FunctionDeclaration{Name: $2, Parameters: $5, Statements: $9}
     }
-    | DECLARE identifier AGGREGATE '(' identifier ')' AS BEGIN in_function_program END statement_terminal
+    | DECLARE identifier AGGREGATE '(' identifier ')' AS BEGIN in_function_program END
     {
         $$ = AggregateDeclaration{Name: $2, Cursor: $5, Statements: $9}
     }
-    | DECLARE identifier AGGREGATE '(' identifier ',' function_parameters ')' AS BEGIN in_function_program END statement_terminal
+    | DECLARE identifier AGGREGATE '(' identifier ',' function_parameters ')' AS BEGIN in_function_program END
     {
         $$ = AggregateDeclaration{Name: $2, Cursor: $5, Parameters: $7, Statements: $11}
     }
@@ -674,37 +678,37 @@ cursor_status
     }
 
 command_statement
-    : SET FLAG '=' primitive_type statement_terminal
+    : SET FLAG '=' primitive_type
     {
         $$ = SetFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal, Value: $4.(PrimitiveType).Value}
     }
-    | PRINT value statement_terminal
+    | PRINT value
     {
         $$ = Print{Value: $2}
     }
-    | PRINTF STRING statement_terminal
+    | PRINTF STRING
     {
         $$ = Printf{BaseExpr: NewBaseExpr($1), Format: $2.Literal}
     }
-    | PRINTF STRING ',' values statement_terminal
+    | PRINTF STRING ',' values
     {
         $$ = Printf{BaseExpr: NewBaseExpr($1), Format: $2.Literal, Values: $4}
     }
-    | SOURCE value statement_terminal
+    | SOURCE value
     {
         $$ = Source{BaseExpr: NewBaseExpr($1), FilePath: $2}
     }
 
 trigger_statement
-    : TRIGGER ERROR statement_terminal
+    : TRIGGER ERROR
     {
         $$ = Trigger{BaseExpr: NewBaseExpr($1), Token: $2.Token}
     }
-    | TRIGGER ERROR value statement_terminal
+    | TRIGGER ERROR value
     {
         $$ = Trigger{BaseExpr: NewBaseExpr($1), Token: $2.Token, Message: $3}
     }
-    | TRIGGER ERROR INTEGER value statement_terminal
+    | TRIGGER ERROR INTEGER value
     {
         $$ = Trigger{BaseExpr: NewBaseExpr($1), Token: $2.Token, Message: $4, Code: NewIntegerFromString($3.Literal)}
     }
@@ -1537,9 +1541,9 @@ operate_tables
     {
         $$ = []Expression{Table{Object: $1}}
     }
-    | operate_tables ',' operate_tables
+    | table_identifier ',' operate_tables
     {
-        $$ = append($1, $3...)
+        $$ = append([]Expression{Table{Object: $1}}, $3...)
     }
 
 identifiers
@@ -1840,7 +1844,6 @@ recursive
         $$ = $1
     }
 
-
 comparison_operator
     : COMPARISON_OP
     {
@@ -1849,16 +1852,6 @@ comparison_operator
     | '='
     {
         $1.Token = COMPARISON_OP
-        $$ = $1
-    }
-
-statement_terminal
-    :
-    {
-        $$ = Token{}
-    }
-    | ';'
-    {
         $$ = $1
     }
 

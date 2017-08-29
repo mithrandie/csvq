@@ -3502,7 +3502,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "while @var1 do print @var1 end while",
+		Input: "while @var1 do print @var1; end while",
 		Output: []Statement{
 			While{
 				Condition: Variable{BaseExpr: &BaseExpr{line: 1, char: 7}, Name: "@var1"},
@@ -3513,7 +3513,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "while @var1 in cur do print @var1 end while",
+		Input: "while @var1 in cur do print @var1; end while",
 		Output: []Statement{
 			WhileInCursor{
 				Variables: []Variable{
@@ -3527,7 +3527,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "while @var1, @var2 in cur do print @var1 end while",
+		Input: "while @var1, @var2 in cur do print @var1; end while",
 		Output: []Statement{
 			WhileInCursor{
 				Variables: []Variable{
@@ -3548,7 +3548,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "while true do continue end while",
+		Input: "while true do continue; end while",
 		Output: []Statement{
 			While{
 				Condition: NewTernaryValueFromString("true"),
@@ -3559,7 +3559,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "while true do break end while",
+		Input: "while true do break; end while",
 		Output: []Statement{
 			While{
 				Condition: NewTernaryValueFromString("true"),
@@ -3660,11 +3660,11 @@ var parseTests = []struct {
 		Input: "declare func1 function (@arg1, @arg2 default 0) as begin \n" +
 			"if @var1 = 1 then print 1; end if; \n" +
 			"if @var1 = 1 then print 1; elseif @var1 = 2 then print 2; elseif @var1 = 3 then print 3; else print 4; end if; \n" +
-			"while true do break end while; \n" +
+			"while true do break; end while; \n" +
 			"while true do if @var1 = 1 then continue; end if; end while; \n" +
 			"while true do if @var1 = 1 then continue; elseif @var1 = 2 then break; elseif @var1 = 3 then return; else continue; end if; end while; \n" +
-			"while @var1 in cur do print @var1 end while; \n" +
-			"while @var1, @var2 in cur do print @var1 end while; \n" +
+			"while @var1 in cur do print @var1; end while; \n" +
+			"while @var1, @var2 in cur do print @var1; end while; \n" +
 			"return; \n" +
 			"return @var1; \n" +
 			"end",
