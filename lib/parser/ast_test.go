@@ -1400,36 +1400,36 @@ func TestOrderItem_String(t *testing.T) {
 }
 
 func TestCase_String(t *testing.T) {
-	e := Case{
+	e := CaseExpr{
 		Case:  "case",
 		End:   "end",
 		Value: Identifier{Literal: "column"},
 		When: []Expression{
-			CaseWhen{
+			CaseExprWhen{
 				When:      "when",
 				Then:      "then",
 				Condition: NewIntegerValueFromString("1"),
 				Result:    NewStringValue("A"),
 			},
-			CaseWhen{
+			CaseExprWhen{
 				When:      "when",
 				Then:      "then",
 				Condition: NewIntegerValueFromString("2"),
 				Result:    NewStringValue("B"),
 			},
 		},
-		Else: CaseElse{Else: "else", Result: NewStringValue("C")},
+		Else: CaseExprElse{Else: "else", Result: NewStringValue("C")},
 	}
 	expect := "case column when 1 then 'A' when 2 then 'B' else 'C' end"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 
-	e = Case{
+	e = CaseExpr{
 		Case: "case",
 		End:  "end",
 		When: []Expression{
-			CaseWhen{
+			CaseExprWhen{
 				When: "when",
 				Then: "then",
 				Condition: Comparison{
@@ -1448,7 +1448,7 @@ func TestCase_String(t *testing.T) {
 }
 
 func TestCaseWhen_String(t *testing.T) {
-	e := CaseWhen{
+	e := CaseExprWhen{
 		When: "when",
 		Then: "then",
 		Condition: Comparison{
@@ -1465,7 +1465,7 @@ func TestCaseWhen_String(t *testing.T) {
 }
 
 func TestCaseElse_String(t *testing.T) {
-	e := CaseElse{Else: "else", Result: NewStringValue("abcde")}
+	e := CaseExprElse{Else: "else", Result: NewStringValue("abcde")}
 	expect := "else 'abcde'"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)

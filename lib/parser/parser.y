@@ -99,10 +99,10 @@ package parser
 %type<expression>  join_condition
 %type<expression>  field_object
 %type<expression>  field
-%type<expression>  case
+%type<expression>  case_expr
 %type<expression>  case_value
-%type<expressions> case_when
-%type<expression>  case_else
+%type<expressions> case_expr_when
+%type<expression>  case_expr_else
 %type<expressions> field_references
 %type<expressions> values
 %type<expressions> tables
@@ -122,6 +122,14 @@ package parser
 %type<procexpr>    in_function_else
 %type<procexprs>   in_function_in_loop_elseif
 %type<procexpr>    in_function_in_loop_else
+%type<procexprs>   case_when
+%type<procexpr>    case_else
+%type<procexprs>   in_loop_case_when
+%type<procexpr>    in_loop_case_else
+%type<procexprs>   in_function_case_when
+%type<procexpr>    in_function_case_else
+%type<procexprs>   in_function_in_loop_case_when
+%type<procexpr>    in_function_in_loop_case_else
 %type<identifier>  identifier
 %type<variable>    variable
 %type<variables>   variables
@@ -327,6 +335,16 @@ exit_statement
         $$ = FlowControl{Token: $1.Token}
     }
 
+loop_statement
+    : statement
+    {
+        $$ = $1
+    }
+    | loop_flow_control_statement
+    {
+        $$ = $1
+    }
+
 flow_control_statement
     : IF value THEN program else END IF
     {
@@ -336,21 +354,15 @@ flow_control_statement
     {
         $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
     }
+    | CASE case_value case_when case_else END CASE
+    {
+        $$ = Case{Value: $2, When: $3, Else: $4}
+    }
     | while_statement
     {
         $$ = $1
     }
     | exit_statement
-    {
-        $$ = $1
-    }
-
-loop_statement
-    : statement
-    {
-        $$ = $1
-    }
-    | loop_flow_control_statement
     {
         $$ = $1
     }
@@ -363,6 +375,10 @@ loop_flow_control_statement
     | IF value THEN loop_program in_loop_elseif in_loop_else END IF
     {
         $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
+    }
+    | CASE case_value in_loop_case_when in_loop_case_else END CASE
+    {
+        $$ = Case{Value: $2, When: $3, Else: $4}
     }
     | while_statement
     {
@@ -430,6 +446,10 @@ function_flow_control_statement
     {
         $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
     }
+    | CASE case_value in_function_case_when in_function_case_else END CASE
+    {
+        $$ = Case{Value: $2, When: $3, Else: $4}
+    }
     | function_while_statement
     {
         $$ = $1
@@ -447,6 +467,10 @@ function_loop_flow_control_statement
     | IF value THEN function_loop_program in_function_in_loop_elseif in_function_in_loop_else END IF
     {
         $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
+    }
+    | CASE case_value in_function_in_loop_case_when in_function_in_loop_case_else END CASE
+    {
+        $$ = Case{Value: $2, When: $3, Else: $4}
     }
     | function_while_statement
     {
@@ -1027,7 +1051,7 @@ value
     {
         $$ = $1
     }
-    | case
+    | case_expr
     {
         $$ = $1
     }
@@ -1514,10 +1538,10 @@ field
         $$ = Field{Object: $1}
     }
 
-case
-    : CASE case_value case_when case_else END
+case_expr
+    : CASE case_value case_expr_when case_expr_else END
     {
-        $$ = Case{Case: $1.Literal, End: $5.Literal, Value: $2, When: $3, Else: $4}
+        $$ = CaseExpr{Case: $1.Literal, End: $5.Literal, Value: $2, When: $3, Else: $4}
     }
 
 case_value
@@ -1530,24 +1554,24 @@ case_value
         $$ = $1
     }
 
-case_when
+case_expr_when
     : WHEN value THEN value
     {
-        $$ = []Expression{CaseWhen{When: $1.Literal, Then: $3.Literal, Condition: $2, Result: $4}}
+        $$ = []Expression{CaseExprWhen{When: $1.Literal, Then: $3.Literal, Condition: $2, Result: $4}}
     }
-    | case_when case_when
+    | WHEN value THEN value case_expr_when
     {
-        $$ = append($1, $2...)
+        $$ = append([]Expression{CaseExprWhen{When: $1.Literal, Then: $3.Literal, Condition: $2, Result: $4}}, $5...)
     }
 
-case_else
+case_expr_else
     :
     {
         $$ = nil
     }
     | ELSE value
     {
-        $$ = CaseElse{Else: $1.Literal, Result: $2}
+        $$ = CaseExprElse{Else: $1.Literal, Result: $2}
     }
 
 field_references
@@ -1740,6 +1764,86 @@ in_function_in_loop_else
     | ELSE function_loop_program
     {
         $$ = Else{Statements: $2}
+    }
+
+case_when
+    : WHEN value THEN program
+    {
+        $$ = []ProcExpr{CaseWhen{Condition: $2, Statements: $4}}
+    }
+    | WHEN value THEN program case_when
+    {
+        $$ = append([]ProcExpr{CaseWhen{Condition: $2, Statements: $4}}, $5...)
+    }
+
+case_else
+    :
+    {
+        $$ = nil
+    }
+    | ELSE program
+    {
+        $$ = CaseElse{Statements: $2}
+    }
+
+in_loop_case_when
+    : WHEN value THEN loop_program
+    {
+        $$ = []ProcExpr{CaseWhen{Condition: $2, Statements: $4}}
+    }
+    | WHEN value THEN loop_program in_loop_case_when
+    {
+        $$ = append([]ProcExpr{CaseWhen{Condition: $2, Statements: $4}}, $5...)
+    }
+
+in_loop_case_else
+    :
+    {
+        $$ = nil
+    }
+    | ELSE loop_program
+    {
+        $$ = CaseElse{Statements: $2}
+    }
+
+in_function_case_when
+    : WHEN value THEN function_program
+    {
+        $$ = []ProcExpr{CaseWhen{Condition: $2, Statements: $4}}
+    }
+    | WHEN value THEN function_program in_function_case_when
+    {
+        $$ = append([]ProcExpr{CaseWhen{Condition: $2, Statements: $4}}, $5...)
+    }
+
+in_function_case_else
+    :
+    {
+        $$ = nil
+    }
+    | ELSE function_program
+    {
+        $$ = CaseElse{Statements: $2}
+    }
+
+in_function_in_loop_case_when
+    : WHEN value THEN function_loop_program
+    {
+        $$ = []ProcExpr{CaseWhen{Condition: $2, Statements: $4}}
+    }
+    | WHEN value THEN function_loop_program in_function_in_loop_case_when
+    {
+        $$ = append([]ProcExpr{CaseWhen{Condition: $2, Statements: $4}}, $5...)
+    }
+
+in_function_in_loop_case_else
+    :
+    {
+        $$ = nil
+    }
+    | ELSE function_loop_program
+    {
+        $$ = CaseElse{Statements: $2}
     }
 
 identifier

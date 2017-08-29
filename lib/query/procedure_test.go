@@ -525,6 +525,46 @@ var procedureExecuteStatementTests = []struct {
 		Logs: fmt.Sprintf("1 field renamed on %q.\n", GetTestFilePath("table1.csv")),
 	},
 	{
+		Input: parser.Case{
+			When: []parser.ProcExpr{
+				parser.CaseWhen{
+					Condition: parser.NewTernaryValue(ternary.FALSE),
+					Statements: []parser.Statement{
+						parser.Print{Value: parser.NewStringValue("1")},
+					},
+				},
+				parser.CaseWhen{
+					Condition: parser.NewTernaryValue(ternary.TRUE),
+					Statements: []parser.Statement{
+						parser.Print{Value: parser.NewStringValue("2")},
+					},
+				},
+			},
+		},
+		Logs: "'2'\n",
+	},
+	{
+		Input: parser.While{
+			Condition: parser.Comparison{
+				LHS:      parser.Variable{Name: "@while_test"},
+				RHS:      parser.NewIntegerValueFromString("3"),
+				Operator: "<",
+			},
+			Statements: []parser.Statement{
+				parser.VariableSubstitution{
+					Variable: parser.Variable{Name: "@while_test"},
+					Value: parser.Arithmetic{
+						LHS:      parser.Variable{Name: "@while_test"},
+						RHS:      parser.NewIntegerValueFromString("1"),
+						Operator: '+',
+					},
+				},
+				parser.Print{Value: parser.Variable{Name: "@while_test"}},
+			},
+		},
+		Logs: "1\n2\n3\n",
+	},
+	{
 		Input: parser.Print{
 			Value: parser.NewIntegerValue(12345),
 		},
@@ -571,6 +611,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 	tf.Format = cmd.CSV
 
 	proc := NewProcedure()
+	proc.Filter.VariablesList[0].Add(parser.Variable{Name: "@while_test"}, parser.NewInteger(0))
 
 	for _, v := range procedureExecuteStatementTests {
 		ViewCache.Clear()
@@ -635,7 +676,6 @@ var procedureIfStmtTests = []struct {
 			Condition: parser.NewTernaryValue(ternary.TRUE),
 			Statements: []parser.Statement{
 				parser.Print{Value: parser.NewStringValue("1")},
-				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
 		ResultFlow: TERMINATE,
@@ -647,7 +687,6 @@ var procedureIfStmtTests = []struct {
 			Condition: parser.NewTernaryValue(ternary.FALSE),
 			Statements: []parser.Statement{
 				parser.Print{Value: parser.NewStringValue("1")},
-				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
 		ResultFlow: TERMINATE,
@@ -659,28 +698,24 @@ var procedureIfStmtTests = []struct {
 			Condition: parser.NewTernaryValue(ternary.FALSE),
 			Statements: []parser.Statement{
 				parser.Print{Value: parser.NewStringValue("1")},
-				parser.TransactionControl{Token: parser.COMMIT},
 			},
 			ElseIf: []parser.ProcExpr{
 				parser.ElseIf{
 					Condition: parser.NewTernaryValue(ternary.TRUE),
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.NewStringValue("2")},
-						parser.TransactionControl{Token: parser.COMMIT},
 					},
 				},
 				parser.ElseIf{
 					Condition: parser.NewTernaryValue(ternary.FALSE),
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.NewStringValue("3")},
-						parser.TransactionControl{Token: parser.COMMIT},
 					},
 				},
 			},
 			Else: parser.Else{
 				Statements: []parser.Statement{
 					parser.Print{Value: parser.NewStringValue("4")},
-					parser.TransactionControl{Token: parser.COMMIT},
 				},
 			},
 		},
@@ -693,28 +728,24 @@ var procedureIfStmtTests = []struct {
 			Condition: parser.NewTernaryValue(ternary.FALSE),
 			Statements: []parser.Statement{
 				parser.Print{Value: parser.NewStringValue("1")},
-				parser.TransactionControl{Token: parser.COMMIT},
 			},
 			ElseIf: []parser.ProcExpr{
 				parser.ElseIf{
 					Condition: parser.NewTernaryValue(ternary.FALSE),
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.NewStringValue("2")},
-						parser.TransactionControl{Token: parser.COMMIT},
 					},
 				},
 				parser.ElseIf{
 					Condition: parser.NewTernaryValue(ternary.FALSE),
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.NewStringValue("3")},
-						parser.TransactionControl{Token: parser.COMMIT},
 					},
 				},
 			},
 			Else: parser.Else{
 				Statements: []parser.Statement{
 					parser.Print{Value: parser.NewStringValue("4")},
-					parser.TransactionControl{Token: parser.COMMIT},
 				},
 			},
 		},
@@ -727,7 +758,6 @@ var procedureIfStmtTests = []struct {
 			Condition: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Statements: []parser.Statement{
 				parser.Print{Value: parser.NewStringValue("1")},
-				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
 		Error: "[L:- C:-] field notexist does not exist",
@@ -749,6 +779,184 @@ func TestProcedure_IfStmt(t *testing.T) {
 		os.Stdout = w
 
 		flow, err := proc.IfStmt(v.Stmt)
+
+		w.Close()
+		os.Stdout = oldStdout
+
+		log, _ := ioutil.ReadAll(r)
+
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if flow != v.ResultFlow {
+			t.Errorf("%s: result flow = %q, want %q", v.Name, flow, v.ResultFlow)
+		}
+		if string(log) != v.Result {
+			t.Errorf("%s: result = %q, want %q", v.Name, string(log), v.Result)
+		}
+	}
+}
+
+var procedureCaseStmtTests = []struct {
+	Name       string
+	Stmt       parser.Case
+	ResultFlow StatementFlow
+	Result     string
+	Error      string
+}{
+	{
+		Name: "Case",
+		Stmt: parser.Case{
+			When: []parser.ProcExpr{
+				parser.CaseWhen{
+					Condition: parser.NewTernaryValue(ternary.FALSE),
+					Statements: []parser.Statement{
+						parser.Print{Value: parser.NewStringValue("1")},
+					},
+				},
+				parser.CaseWhen{
+					Condition: parser.NewTernaryValue(ternary.TRUE),
+					Statements: []parser.Statement{
+						parser.Print{Value: parser.NewStringValue("2")},
+					},
+				},
+			},
+		},
+		ResultFlow: TERMINATE,
+		Result:     "'2'\n",
+	},
+	{
+		Name: "Case Comparison",
+		Stmt: parser.Case{
+			Value: parser.NewIntegerValue(2),
+			When: []parser.ProcExpr{
+				parser.CaseWhen{
+					Condition: parser.NewIntegerValue(1),
+					Statements: []parser.Statement{
+						parser.Print{Value: parser.NewStringValue("1")},
+					},
+				},
+				parser.CaseWhen{
+					Condition: parser.NewIntegerValue(2),
+					Statements: []parser.Statement{
+						parser.Print{Value: parser.NewStringValue("2")},
+					},
+				},
+			},
+		},
+		ResultFlow: TERMINATE,
+		Result:     "'2'\n",
+	},
+	{
+		Name: "Case Else",
+		Stmt: parser.Case{
+			When: []parser.ProcExpr{
+				parser.CaseWhen{
+					Condition: parser.NewTernaryValue(ternary.FALSE),
+					Statements: []parser.Statement{
+						parser.Print{Value: parser.NewStringValue("1")},
+					},
+				},
+				parser.CaseWhen{
+					Condition: parser.NewTernaryValue(ternary.FALSE),
+					Statements: []parser.Statement{
+						parser.Print{Value: parser.NewStringValue("2")},
+					},
+				},
+			},
+			Else: parser.CaseElse{
+				Statements: []parser.Statement{
+					parser.Print{Value: parser.NewStringValue("3")},
+				},
+			},
+		},
+		ResultFlow: TERMINATE,
+		Result:     "'3'\n",
+	},
+	{
+		Name: "Case No Match",
+		Stmt: parser.Case{
+			When: []parser.ProcExpr{
+				parser.CaseWhen{
+					Condition: parser.NewTernaryValue(ternary.FALSE),
+					Statements: []parser.Statement{
+						parser.Print{Value: parser.NewStringValue("1")},
+					},
+				},
+				parser.CaseWhen{
+					Condition: parser.NewTernaryValue(ternary.FALSE),
+					Statements: []parser.Statement{
+						parser.Print{Value: parser.NewStringValue("2")},
+					},
+				},
+			},
+		},
+		ResultFlow: TERMINATE,
+		Result:     "",
+	},
+	{
+		Name: "Case Comparison Value Error",
+		Stmt: parser.Case{
+			Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+			When: []parser.ProcExpr{
+				parser.CaseWhen{
+					Condition: parser.NewIntegerValue(1),
+					Statements: []parser.Statement{
+						parser.Print{Value: parser.NewStringValue("1")},
+					},
+				},
+				parser.CaseWhen{
+					Condition: parser.NewIntegerValue(2),
+					Statements: []parser.Statement{
+						parser.Print{Value: parser.NewStringValue("2")},
+					},
+				},
+			},
+		},
+		ResultFlow: ERROR,
+		Error:      "[L:- C:-] field notexist does not exist",
+	},
+	{
+		Name: "Case Condition Error",
+		Stmt: parser.Case{
+			When: []parser.ProcExpr{
+				parser.CaseWhen{
+					Condition: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+					Statements: []parser.Statement{
+						parser.Print{Value: parser.NewStringValue("1")},
+					},
+				},
+			},
+		},
+		ResultFlow: ERROR,
+		Error:      "[L:- C:-] field notexist does not exist",
+	},
+}
+
+func TestProcedure_Case(t *testing.T) {
+	proc := NewProcedure()
+
+	for _, v := range procedureCaseStmtTests {
+		oldStdout := os.Stdout
+
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+		proc.Rollback()
+		w.Close()
+
+		r, w, _ = os.Pipe()
+		os.Stdout = w
+
+		flow, err := proc.Case(v.Stmt)
 
 		w.Close()
 		os.Stdout = oldStdout

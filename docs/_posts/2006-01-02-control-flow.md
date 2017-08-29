@@ -6,18 +6,19 @@ category: reference
 
 # Control Flow
 
-* [If](#if)
-* [While Loop](#while_loop)
-* [While In Loop](#while_in_loop)
-* [Continue](#continue)
-* [Break](#break)
-* [Exit](#exit)
-* [Trigger Error](#trigger_error)
+* [IF](#if)
+* [CASE](#case)
+* [WHILE](#while_loop)
+* [WHILE IN](#while_in_loop)
+* [CONTINUE](#continue)
+* [BREAK](#break)
+* [EXIT](#exit)
+* [TRIGGER ERROR](#trigger_error)
 
 _IF_ statements and _WHILE_ statements create local scopes.
 [Variables]({{ '/reference/variable.html' | relative_url }}), [cursors]({{ '/reference/cursor.html' | relative_url }}), [temporary tables]({{ '/reference/temporary-table.html' | relative_url }}), and [functions]({{ '/reference/user-defined-function.html' | relative_url }}) declared in statement blocks can be refered only within the blocks. 
 
-## If
+## IF
 {: #if}
 
 ```sql
@@ -36,7 +37,53 @@ _statements_
 A If statement executes the first _statements_ that _condition_ is TRUE.
 If no condition is TRUE, the _statements_ of the ELSE expression are executed.
 
-## While Loop
+## CASE
+{: #case}
+
+### Case with condition
+
+```sql
+CASE
+  WHEN condition THEN statements
+  [WHEN condition THEN statements]
+  [ELSE statements]
+END CASE;
+```
+
+_condition_
+: value
+
+_statements_
+: [Statements]({{ '/reference/statement.html' | relative_url }})
+
+Execute _statements_ of the first WHEN expression that _condition_ is TRUE.
+If no condition is TRUE, then execute _statements_ of the ELSE expression.
+
+
+### Case with comparison
+
+```sql
+CASE value
+  WHEN comparison_value THEN statements
+  [WHEN comparison_value THEN statements]
+  [ELSE statements]
+END CASE;
+```
+
+_value_
+: value
+
+_comparison_value_
+: value
+
+_statements_
+: [Statements]({{ '/reference/statement.html' | relative_url }})
+
+Execute _statements_ of the first WHEN expression that _comparison_value_ is equal to _value_.
+If no _comparison_value_ is match, then execute _statements_ of the ELSE expression.
+
+
+## WHILE
 {: #while_loop}
 
 ```sql
@@ -55,7 +102,7 @@ _statements_
 A While statement evaluate _condition_, then if condition is TRUE, executes _statements_. 
 The While statement iterates it while _condition_ is TRUE.
 
-## While In Loop
+## WHILE IN
 {: #while_in_loop}
 ```sql
 WHILE variable [, variable ...] IN cursor_name
@@ -76,7 +123,7 @@ _statements_
 A While In statement fetch the data from the [cursor]({{ '/reference/cursor.html' | relative_url }}) into variables, then execute _statements_.
 The While In statement iterates it until the _cursor_name__ pointer reaches the last record in the referring view.
 
-## Continue
+## CONTINUE
 {: #continue}
 
 ```sql
@@ -85,7 +132,7 @@ CONTINUE;
 
 A Continue statement stops statements execution in loop, then jumps to the next iteration.
 
-## Break
+## BREAK
 {: #break}
 
 ```sql
@@ -94,7 +141,7 @@ BREAK;
 
 A Break statement stops statements execution in loop, then exit from current loop.
 
-## Exit
+## EXIT
 {: #exit}
 
 ```sql
@@ -103,7 +150,7 @@ EXIT;
 
 A Exit statement stops statements execution, then terminates the executing procedure without commit.
 
-## Trigger Error
+## TRIGGER ERROR
 {: #trigger_error}
 
 ```sql

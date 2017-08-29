@@ -1438,17 +1438,17 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 1},
 						Select:   "select",
 						Fields: []Expression{
-							Field{Object: Case{
+							Field{Object: CaseExpr{
 								Case: "case",
 								End:  "end",
 								When: []Expression{
-									CaseWhen{
+									CaseExprWhen{
 										When:      "when",
 										Then:      "then",
 										Condition: NewTernaryValueFromString("true"),
 										Result:    NewStringValue("A"),
 									},
-									CaseWhen{
+									CaseExprWhen{
 										When:      "when",
 										Then:      "then",
 										Condition: NewTernaryValueFromString("false"),
@@ -1471,25 +1471,25 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 1},
 						Select:   "select",
 						Fields: []Expression{
-							Field{Object: Case{
+							Field{Object: CaseExpr{
 								Case:  "case",
 								End:   "end",
 								Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 13}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "column1"}},
 								When: []Expression{
-									CaseWhen{
+									CaseExprWhen{
 										When:      "when",
 										Then:      "then",
 										Condition: NewIntegerValueFromString("1"),
 										Result:    NewStringValue("A"),
 									},
-									CaseWhen{
+									CaseExprWhen{
 										When:      "when",
 										Then:      "then",
 										Condition: NewIntegerValueFromString("2"),
 										Result:    NewStringValue("B"),
 									},
 								},
-								Else: CaseElse{
+								Else: CaseExprElse{
 									Else:   "else",
 									Result: NewStringValue("C"),
 								},
@@ -3542,6 +3542,53 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "case when true then print @var1; when false then print @var2; end case",
+		Output: []Statement{
+			Case{
+				When: []ProcExpr{
+					CaseWhen{
+						Condition: NewTernaryValueFromString("true"),
+						Statements: []Statement{
+							Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 27}, Name: "@var1"}},
+						},
+					},
+					CaseWhen{
+						Condition: NewTernaryValueFromString("false"),
+						Statements: []Statement{
+							Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 56}, Name: "@var2"}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "case when true then print @var1; when false then print @var2; else print @var3; end case",
+		Output: []Statement{
+			Case{
+				When: []ProcExpr{
+					CaseWhen{
+						Condition: NewTernaryValueFromString("true"),
+						Statements: []Statement{
+							Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 27}, Name: "@var1"}},
+						},
+					},
+					CaseWhen{
+						Condition: NewTernaryValueFromString("false"),
+						Statements: []Statement{
+							Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 56}, Name: "@var2"}},
+						},
+					},
+				},
+				Else: CaseElse{
+					Statements: []Statement{
+						Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 74}, Name: "@var3"}},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "exit",
 		Output: []Statement{
 			FlowControl{Token: EXIT},
@@ -3649,6 +3696,63 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "while true do case when true then print @var1; when false then continue; end case; end while",
+		Output: []Statement{
+			While{
+				Condition: NewTernaryValueFromString("true"),
+				Statements: []Statement{
+					Case{
+						When: []ProcExpr{
+							CaseWhen{
+								Condition: NewTernaryValueFromString("true"),
+								Statements: []Statement{
+									Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 41}, Name: "@var1"}},
+								},
+							},
+							CaseWhen{
+								Condition: NewTernaryValueFromString("false"),
+								Statements: []Statement{
+									FlowControl{Token: CONTINUE},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "while true do case when true then print @var1; when false then exit; else continue; end case; end while",
+		Output: []Statement{
+			While{
+				Condition: NewTernaryValueFromString("true"),
+				Statements: []Statement{
+					Case{
+						When: []ProcExpr{
+							CaseWhen{
+								Condition: NewTernaryValueFromString("true"),
+								Statements: []Statement{
+									Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 41}, Name: "@var1"}},
+								},
+							},
+							CaseWhen{
+								Condition: NewTernaryValueFromString("false"),
+								Statements: []Statement{
+									FlowControl{Token: EXIT},
+								},
+							},
+						},
+						Else: CaseElse{
+							Statements: []Statement{
+								FlowControl{Token: CONTINUE},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "declare func1 function () as begin end",
 		Output: []Statement{
 			FunctionDeclaration{
@@ -3677,6 +3781,10 @@ var parseTests = []struct {
 			"while true do if @var1 = 1 then continue; elseif @var1 = 2 then break; elseif @var1 = 3 then return; else continue; end if; end while; \n" +
 			"while @var1 in cur do print @var1; end while; \n" +
 			"while @var1, @var2 in cur do print @var1; end while; \n" +
+			"case when true then print @var1; when false then print @var2; end case; \n" +
+			"case when true then print @var1; when false then return; else return; end case; \n" +
+			"while true do case when true then print @var1; when false then continue; end case; end while; \n" +
+			"while true do case when true then print @var1; when false then return; else continue; end case; end while; \n" +
 			"return; \n" +
 			"return @var1; \n" +
 			"end",
@@ -3817,11 +3925,95 @@ var parseTests = []struct {
 							Print{Value: Variable{BaseExpr: &BaseExpr{line: 8, char: 36}, Name: "@var1"}},
 						},
 					},
+					Case{
+						When: []ProcExpr{
+							CaseWhen{
+								Condition: NewTernaryValueFromString("true"),
+								Statements: []Statement{
+									Print{Value: Variable{BaseExpr: &BaseExpr{line: 9, char: 27}, Name: "@var1"}},
+								},
+							},
+							CaseWhen{
+								Condition: NewTernaryValueFromString("false"),
+								Statements: []Statement{
+									Print{Value: Variable{BaseExpr: &BaseExpr{line: 9, char: 56}, Name: "@var2"}},
+								},
+							},
+						},
+					},
+					Case{
+						When: []ProcExpr{
+							CaseWhen{
+								Condition: NewTernaryValueFromString("true"),
+								Statements: []Statement{
+									Print{Value: Variable{BaseExpr: &BaseExpr{line: 10, char: 27}, Name: "@var1"}},
+								},
+							},
+							CaseWhen{
+								Condition: NewTernaryValueFromString("false"),
+								Statements: []Statement{
+									Return{Value: NewNullValue()},
+								},
+							},
+						},
+						Else: CaseElse{
+							Statements: []Statement{
+								Return{Value: NewNullValue()},
+							},
+						},
+					},
+					While{
+						Condition: NewTernaryValueFromString("true"),
+						Statements: []Statement{
+							Case{
+								When: []ProcExpr{
+									CaseWhen{
+										Condition: NewTernaryValueFromString("true"),
+										Statements: []Statement{
+											Print{Value: Variable{BaseExpr: &BaseExpr{line: 11, char: 41}, Name: "@var1"}},
+										},
+									},
+									CaseWhen{
+										Condition: NewTernaryValueFromString("false"),
+										Statements: []Statement{
+											FlowControl{Token: CONTINUE},
+										},
+									},
+								},
+							},
+						},
+					},
+					While{
+						Condition: NewTernaryValueFromString("true"),
+						Statements: []Statement{
+							Case{
+								When: []ProcExpr{
+									CaseWhen{
+										Condition: NewTernaryValueFromString("true"),
+										Statements: []Statement{
+											Print{Value: Variable{BaseExpr: &BaseExpr{line: 12, char: 41}, Name: "@var1"}},
+										},
+									},
+									CaseWhen{
+										Condition: NewTernaryValueFromString("false"),
+										Statements: []Statement{
+											Return{Value: NewNullValue()},
+										},
+									},
+								},
+								Else: CaseElse{
+									Statements: []Statement{
+										FlowControl{Token: CONTINUE},
+									},
+								},
+							},
+						},
+					},
 					Return{
 						Value: NewNullValue(),
 					},
 					Return{
-						Value: Variable{BaseExpr: &BaseExpr{line: 10, char: 8}, Name: "@var1"},
+						Value: Variable{BaseExpr: &BaseExpr{line: 14, char: 8}, Name: "@var1"},
 					},
 				},
 			},

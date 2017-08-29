@@ -101,7 +101,7 @@ The first argument is a representation of grouped values, and the following argu
 
 In the statements, grouped values represented by the first argument can be referred with a pseudo cursor named as _cursor_name_, 
 and the second argument and the followings are set to variables specified in the declaration as _parameters_.
-You can use the [Fetch Statement]({{ '/reference/cursor.html#fetch' | relative_url }}), [While In Loop Statement]({{ '/reference/control-flow.html#while_in_loop' | relative_url }}) or the [Cursor Status Expressions]({{ '/reference/cursor.html#status' | relative_url }}) against the pseudo cursor. 
+You can use the [Fetch Statement]({{ '/reference/cursor.html#fetch' | relative_url }}), [While In Statement]({{ '/reference/control-flow.html#while_in_loop' | relative_url }}) or the [Cursor Status Expressions]({{ '/reference/cursor.html#status' | relative_url }}) against the pseudo cursor. 
 
 
 #### Usage
