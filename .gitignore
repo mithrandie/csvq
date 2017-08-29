@@ -3,6 +3,7 @@
 ################################
 vendor/
 csvq
+lib/parser/parser.output
 
 ################################
 # Jekyll

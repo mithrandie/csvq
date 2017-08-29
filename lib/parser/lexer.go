@@ -34,6 +34,8 @@ func (l *Lexer) Error(e string) {
 		}
 
 		l.err = NewSyntaxError(fmt.Sprintf("%s: unexpected %s", e, lit), l.token)
+	} else if e == "syntax error" && l.token.Token == -1 {
+		l.err = NewSyntaxError(fmt.Sprintf("%s: unexpected termination", e), l.token)
 	} else {
 		l.err = NewSyntaxError(fmt.Sprintf("%s", e), l.token)
 	}

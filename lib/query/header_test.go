@@ -10,20 +10,20 @@ import (
 func TestHeader_TableColumns(t *testing.T) {
 	h := Header{
 		{
-			View:      "t1",
-			Column:    "c1",
-			Aliases:   []string{"a1"},
-			FromTable: true,
+			View:        "t1",
+			Column:      "c1",
+			Aliases:     []string{"a1"},
+			IsFromTable: true,
 		},
 		{
-			View:      "t1",
-			Column:    "c2",
-			Aliases:   []string{"a3"},
-			FromTable: false,
+			View:        "t1",
+			Column:      "c2",
+			Aliases:     []string{"a3"},
+			IsFromTable: false,
 		},
 		{
-			Column:    "c3",
-			FromTable: true,
+			Column:      "c3",
+			IsFromTable: true,
 		},
 	}
 	expect := []parser.Expression{
@@ -40,20 +40,20 @@ func TestHeader_TableColumns(t *testing.T) {
 func TestHeader_TableColumnNames(t *testing.T) {
 	h := Header{
 		{
-			View:      "t1",
-			Column:    "c1",
-			Aliases:   []string{"a1"},
-			FromTable: true,
+			View:        "t1",
+			Column:      "c1",
+			Aliases:     []string{"a1"},
+			IsFromTable: true,
 		},
 		{
-			View:      "t1",
-			Column:    "c2",
-			Aliases:   []string{"a3"},
-			FromTable: false,
+			View:        "t1",
+			Column:      "c2",
+			Aliases:     []string{"a3"},
+			IsFromTable: false,
 		},
 		{
-			Column:    "c3",
-			FromTable: true,
+			Column:      "c3",
+			IsFromTable: true,
 		},
 	}
 	expect := []string{
@@ -108,47 +108,47 @@ var headerContainsObjectTests = []struct {
 func TestHeader_ContainsObject(t *testing.T) {
 	h := Header{
 		{
-			View:      "t1",
-			Column:    "c1",
-			Aliases:   []string{"a1"},
-			Number:    1,
-			FromTable: true,
+			View:        "t1",
+			Column:      "c1",
+			Aliases:     []string{"a1"},
+			Number:      1,
+			IsFromTable: true,
 		},
 		{
-			View:      "t1",
-			Column:    "c2",
-			Aliases:   []string{"a2"},
-			Number:    2,
-			FromTable: true,
+			View:        "t1",
+			Column:      "c2",
+			Aliases:     []string{"a2"},
+			Number:      2,
+			IsFromTable: true,
 		},
 		{
-			View:      "t1",
-			Column:    "count(*)",
-			Number:    3,
-			FromTable: true,
+			View:        "t1",
+			Column:      "count(*)",
+			Number:      3,
+			IsFromTable: true,
 		},
 		{
-			Column:    "c3",
-			FromTable: false,
+			Column:      "c3",
+			IsFromTable: false,
 		},
 		{
-			View:      "t2",
-			Column:    "c1",
-			Aliases:   []string{"a3"},
-			Number:    1,
-			FromTable: true,
+			View:        "t2",
+			Column:      "c1",
+			Aliases:     []string{"a3"},
+			Number:      1,
+			IsFromTable: true,
 		},
 		{
-			Column:    "count(*)",
-			FromTable: false,
+			Column:      "count(*)",
+			IsFromTable: false,
 		},
 		{
-			Column:    "1",
-			FromTable: false,
+			Column:      "1",
+			IsFromTable: false,
 		},
 		{
-			Column:    "1",
-			FromTable: false,
+			Column:      "1",
+			IsFromTable: false,
 		},
 	}
 
@@ -203,29 +203,29 @@ var headerContainsNumberTests = []struct {
 func TestHeader_ContainsNumber(t *testing.T) {
 	h := Header{
 		{
-			View:      "t1",
-			Column:    "c1",
-			Aliases:   []string{"a1"},
-			Number:    1,
-			FromTable: true,
+			View:        "t1",
+			Column:      "c1",
+			Aliases:     []string{"a1"},
+			Number:      1,
+			IsFromTable: true,
 		},
 		{
-			View:      "t1",
-			Column:    "c2",
-			Aliases:   []string{"a2"},
-			Number:    2,
-			FromTable: true,
+			View:        "t1",
+			Column:      "c2",
+			Aliases:     []string{"a2"},
+			Number:      2,
+			IsFromTable: true,
 		},
 		{
-			Column:    "c3",
-			FromTable: false,
+			Column:      "c3",
+			IsFromTable: false,
 		},
 		{
-			View:      "t2",
-			Column:    "c1",
-			Aliases:   []string{"a3"},
-			Number:    1,
-			FromTable: true,
+			View:        "t2",
+			Column:      "c1",
+			Aliases:     []string{"a3"},
+			Number:      1,
+			IsFromTable: true,
 		},
 	}
 
@@ -275,6 +275,12 @@ var headerContainsTests = []struct {
 	},
 	{
 		Ref: parser.FieldReference{
+			Column: parser.Identifier{Literal: "c4"},
+		},
+		Result: 5,
+	},
+	{
+		Ref: parser.FieldReference{
 			Column: parser.Identifier{Literal: "c1"},
 		},
 		Error: "[L:- C:-] field c1 is ambiguous",
@@ -290,26 +296,36 @@ var headerContainsTests = []struct {
 func TestHeader_Contains(t *testing.T) {
 	h := Header{
 		{
-			View:      "t1",
-			Column:    "c1",
-			Aliases:   []string{"a1"},
-			FromTable: true,
+			View:        "t1",
+			Column:      "c1",
+			Aliases:     []string{"a1"},
+			IsFromTable: true,
 		},
 		{
-			View:      "t1",
-			Column:    "c2",
-			Aliases:   []string{"a2"},
-			FromTable: false,
+			View:        "t1",
+			Column:      "c2",
+			Aliases:     []string{"a2"},
+			IsFromTable: false,
 		},
 		{
-			Column:    "c3",
-			FromTable: true,
+			Column:      "c3",
+			IsFromTable: true,
 		},
 		{
-			View:      "t2",
-			Column:    "c1",
-			Aliases:   []string{"a3"},
-			FromTable: true,
+			View:        "t2",
+			Column:      "c1",
+			Aliases:     []string{"a3"},
+			IsFromTable: true,
+		},
+		{
+			View:        "t3",
+			Column:      "c4",
+			IsFromTable: true,
+		},
+		{
+			Column:       "c4",
+			IsFromTable:  true,
+			IsJoinColumn: true,
 		},
 	}
 
@@ -342,16 +358,16 @@ func TestNewHeader(t *testing.T) {
 			Column: INTERNAL_ID_COLUMN,
 		},
 		{
-			View:      "table1",
-			Column:    "column1",
-			Number:    1,
-			FromTable: true,
+			View:        "table1",
+			Column:      "column1",
+			Number:      1,
+			IsFromTable: true,
 		},
 		{
-			View:      "table1",
-			Column:    "column2",
-			Number:    2,
-			FromTable: true,
+			View:        "table1",
+			Column:      "column2",
+			Number:      2,
+			IsFromTable: true,
 		},
 	}
 	if !reflect.DeepEqual(NewHeaderWithId(ref, words), expect) {
@@ -364,16 +380,16 @@ func TestNewHeaderWithoutId(t *testing.T) {
 	words := []string{"column1", "column2"}
 	var expect Header = []HeaderField{
 		{
-			View:      "table1",
-			Column:    "column1",
-			Number:    1,
-			FromTable: true,
+			View:        "table1",
+			Column:      "column1",
+			Number:      1,
+			IsFromTable: true,
 		},
 		{
-			View:      "table1",
-			Column:    "column2",
-			Number:    2,
-			FromTable: true,
+			View:        "table1",
+			Column:      "column2",
+			Number:      2,
+			IsFromTable: true,
 		},
 	}
 	if !reflect.DeepEqual(NewHeader(ref, words), expect) {

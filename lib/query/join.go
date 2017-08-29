@@ -7,56 +7,83 @@ import (
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
-func ParseJoinCondition(join parser.Join, view *View, joinView *View) parser.Expression {
+func ParseJoinCondition(join parser.Join, view *View, joinView *View) (parser.Expression, []parser.FieldReference, []parser.FieldReference, error) {
 	if join.Natural.IsEmpty() && join.Condition == nil {
-		return nil
+		return nil, nil, nil, nil
 	}
 
 	var using []parser.Expression
 
 	if !join.Natural.IsEmpty() {
-		for _, f1 := range view.Header {
-			if f1.Column == INTERNAL_ID_COLUMN {
+		for _, field := range view.Header {
+			if field.Column == INTERNAL_ID_COLUMN {
 				continue
 			}
-
-			for _, f2 := range joinView.Header {
-				if f2.Column == INTERNAL_ID_COLUMN {
-					continue
+			ref := parser.FieldReference{BaseExpr: parser.NewBaseExpr(join.Natural), Column: parser.Identifier{Literal: field.Column}}
+			if _, err := joinView.FieldIndex(ref); err != nil {
+				if _, ok := err.(*FieldAmbiguousError); ok {
+					return nil, nil, nil, err
 				}
-
-				if f1.Column == f2.Column {
-					using = append(using, parser.Identifier{Literal: f1.Column})
-				}
+				continue
 			}
+			using = append(using, parser.Identifier{BaseExpr: parser.NewBaseExpr(join.Natural), Literal: field.Column})
 		}
 	} else {
 		cond := join.Condition.(parser.JoinCondition)
 		if cond.On != nil {
-			return cond.On
+			return cond.On, nil, nil, nil
 		}
 
 		using = cond.Using
 	}
 
 	if len(using) < 1 {
-		return nil
+		return nil, nil, nil, nil
 	}
 
-	viewName := join.Table.Name()
-	joinViewName := join.JoinTable.Name()
+	usingFields := make([]string, len(using))
+	for i, v := range using {
+		usingFields[i] = v.(parser.Identifier).Literal
+	}
+
+	includeFields := make([]parser.FieldReference, len(using))
+	excludeFields := make([]parser.FieldReference, len(using))
 
 	comps := make([]parser.Comparison, len(using))
 	for i, v := range using {
+		var lhs parser.FieldReference
+		var rhs parser.FieldReference
+		fieldref := parser.FieldReference{BaseExpr: v.GetBaseExpr(), Column: v.(parser.Identifier)}
+
+		lhsidx, err := view.FieldIndex(fieldref)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		lhs = parser.FieldReference{BaseExpr: v.GetBaseExpr(), View: parser.Identifier{Literal: view.Header[lhsidx].View}, Column: v.(parser.Identifier)}
+
+		rhsidx, err := joinView.FieldIndex(fieldref)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		rhs = parser.FieldReference{BaseExpr: v.GetBaseExpr(), View: parser.Identifier{Literal: joinView.Header[rhsidx].View}, Column: v.(parser.Identifier)}
+
 		comps[i] = parser.Comparison{
-			LHS:      parser.FieldReference{BaseExpr: v.GetBaseExpr(), View: viewName, Column: v.(parser.Identifier)},
-			RHS:      parser.FieldReference{BaseExpr: v.GetBaseExpr(), View: joinViewName, Column: v.(parser.Identifier)},
+			LHS:      lhs,
+			RHS:      rhs,
 			Operator: "=",
+		}
+
+		if join.Direction.Token == parser.RIGHT {
+			includeFields[i] = rhs
+			excludeFields[i] = lhs
+		} else {
+			includeFields[i] = lhs
+			excludeFields[i] = rhs
 		}
 	}
 
 	if len(comps) == 1 {
-		return comps[0]
+		return comps[0], includeFields, excludeFields, nil
 	}
 
 	logic := parser.Logic{
@@ -71,7 +98,7 @@ func ParseJoinCondition(join parser.Join, view *View, joinView *View) parser.Exp
 			Operator: parser.Token{Token: parser.AND, Literal: parser.TokenLiteral(parser.AND)},
 		}
 	}
-	return logic
+	return logic, includeFields, excludeFields, nil
 }
 
 func CrossJoin(view *View, joinView *View) {

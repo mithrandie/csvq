@@ -2,10 +2,10 @@ package parser
 
 import (
 	"testing"
+	"time"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/ternary"
-	"time"
 )
 
 func TestStrToTime(t *testing.T) {

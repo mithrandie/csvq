@@ -8,12 +8,30 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
+func naturalJoinTestFieldReference(view string, column string) parser.FieldReference {
+	return parser.FieldReference{
+		BaseExpr: parser.NewBaseExpr(parser.Token{}),
+		View:     parser.Identifier{Literal: view},
+		Column:   parser.Identifier{BaseExpr: parser.NewBaseExpr(parser.Token{}), Literal: column},
+	}
+}
+
+func joinUsingTestFieldReference(view string, column string) parser.FieldReference {
+	return parser.FieldReference{
+		View:   parser.Identifier{Literal: view},
+		Column: parser.Identifier{Literal: column},
+	}
+}
+
 var parseJoinConditionTests = []struct {
-	Name     string
-	Join     parser.Join
-	View     *View
-	JoinView *View
-	Result   parser.Expression
+	Name          string
+	Join          parser.Join
+	View          *View
+	JoinView      *View
+	ResultValue   parser.Expression
+	IncludeFields []parser.FieldReference
+	ExcludeFields []parser.FieldReference
+	Error         string
 }{
 	{
 		Name: "No Condition",
@@ -21,9 +39,9 @@ var parseJoinConditionTests = []struct {
 			Table:     parser.Table{Alias: parser.Identifier{Literal: "t1"}},
 			JoinTable: parser.Table{Alias: parser.Identifier{Literal: "t2"}},
 		},
-		View:     &View{Header: NewHeaderWithId("table1", []string{"key1", "key2", "key3", "value1", "value2", "value3"})},
-		JoinView: &View{Header: NewHeaderWithId("table2", []string{"key1", "key2", "key3", "value4"})},
-		Result:   nil,
+		View:        &View{Header: NewHeaderWithId("table1", []string{"key1", "key2", "key3", "value1", "value2", "value3"})},
+		JoinView:    &View{Header: NewHeaderWithId("table2", []string{"key1", "key2", "key3", "value4"})},
+		ResultValue: nil,
 	},
 	{
 		Name: "Natural Join",
@@ -32,28 +50,38 @@ var parseJoinConditionTests = []struct {
 			JoinTable: parser.Table{Alias: parser.Identifier{Literal: "t2"}},
 			Natural:   parser.Token{Token: parser.NATURAL, Literal: "natural"},
 		},
-		View:     &View{Header: NewHeaderWithId("table1", []string{"key1", "key2", "key3", "value1", "value2", "value3"})},
-		JoinView: &View{Header: NewHeaderWithId("table2", []string{"key1", "key2", "key3", "value4"})},
-		Result: parser.Logic{
+		View:     &View{Header: NewHeaderWithId("t1", []string{"key1", "key2", "key3", "value1", "value2", "value3"})},
+		JoinView: &View{Header: NewHeaderWithId("t2", []string{"key1", "key2", "key3", "value4"})},
+		ResultValue: parser.Logic{
 			LHS: parser.Logic{
 				LHS: parser.Comparison{
-					LHS:      parser.FieldReference{View: parser.Identifier{Literal: "t1"}, Column: parser.Identifier{Literal: "key1"}},
-					RHS:      parser.FieldReference{View: parser.Identifier{Literal: "t2"}, Column: parser.Identifier{Literal: "key1"}},
+					LHS:      naturalJoinTestFieldReference("t1", "key1"),
+					RHS:      naturalJoinTestFieldReference("t2", "key1"),
 					Operator: "=",
 				},
 				RHS: parser.Comparison{
-					LHS:      parser.FieldReference{View: parser.Identifier{Literal: "t1"}, Column: parser.Identifier{Literal: "key2"}},
-					RHS:      parser.FieldReference{View: parser.Identifier{Literal: "t2"}, Column: parser.Identifier{Literal: "key2"}},
+					LHS:      naturalJoinTestFieldReference("t1", "key2"),
+					RHS:      naturalJoinTestFieldReference("t2", "key2"),
 					Operator: "=",
 				},
 				Operator: parser.Token{Token: parser.AND, Literal: "AND"},
 			},
 			RHS: parser.Comparison{
-				LHS:      parser.FieldReference{View: parser.Identifier{Literal: "t1"}, Column: parser.Identifier{Literal: "key3"}},
-				RHS:      parser.FieldReference{View: parser.Identifier{Literal: "t2"}, Column: parser.Identifier{Literal: "key3"}},
+				LHS:      naturalJoinTestFieldReference("t1", "key3"),
+				RHS:      naturalJoinTestFieldReference("t2", "key3"),
 				Operator: "=",
 			},
 			Operator: parser.Token{Token: parser.AND, Literal: "AND"},
+		},
+		IncludeFields: []parser.FieldReference{
+			naturalJoinTestFieldReference("t1", "key1"),
+			naturalJoinTestFieldReference("t1", "key2"),
+			naturalJoinTestFieldReference("t1", "key3"),
+		},
+		ExcludeFields: []parser.FieldReference{
+			naturalJoinTestFieldReference("t2", "key1"),
+			naturalJoinTestFieldReference("t2", "key2"),
+			naturalJoinTestFieldReference("t2", "key3"),
 		},
 	},
 	{
@@ -67,12 +95,45 @@ var parseJoinConditionTests = []struct {
 				},
 			},
 		},
-		View:     &View{Header: NewHeaderWithId("table1", []string{"key1", "key2", "key3", "value1", "value2", "value3"})},
-		JoinView: &View{Header: NewHeaderWithId("table2", []string{"key1", "key2", "key3", "value4"})},
-		Result: parser.Comparison{
-			LHS:      parser.FieldReference{View: parser.Identifier{Literal: "t1"}, Column: parser.Identifier{Literal: "key1"}},
-			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "t2"}, Column: parser.Identifier{Literal: "key1"}},
+		View:     &View{Header: NewHeaderWithId("t1", []string{"key1", "key2", "key3", "value1", "value2", "value3"})},
+		JoinView: &View{Header: NewHeaderWithId("t2", []string{"key1", "key2", "key3", "value4"})},
+		ResultValue: parser.Comparison{
+			LHS:      joinUsingTestFieldReference("t1", "key1"),
+			RHS:      joinUsingTestFieldReference("t2", "key1"),
 			Operator: "=",
+		},
+		IncludeFields: []parser.FieldReference{
+			joinUsingTestFieldReference("t1", "key1"),
+		},
+		ExcludeFields: []parser.FieldReference{
+			joinUsingTestFieldReference("t2", "key1"),
+		},
+	},
+	{
+		Name: "Right Outer Join Using Condition",
+		Join: parser.Join{
+			Table:     parser.Table{Alias: parser.Identifier{Literal: "t1"}},
+			JoinTable: parser.Table{Alias: parser.Identifier{Literal: "t2"}},
+			JoinType:  parser.Token{Token: parser.OUTER, Literal: "outer"},
+			Direction: parser.Token{Token: parser.RIGHT, Literal: "right"},
+			Condition: parser.JoinCondition{
+				Using: []parser.Expression{
+					parser.Identifier{Literal: "key1"},
+				},
+			},
+		},
+		View:     &View{Header: NewHeaderWithId("t1", []string{"key1", "key2", "key3", "value1", "value2", "value3"})},
+		JoinView: &View{Header: NewHeaderWithId("t2", []string{"key1", "key2", "key3", "value4"})},
+		ResultValue: parser.Comparison{
+			LHS:      joinUsingTestFieldReference("t1", "key1"),
+			RHS:      joinUsingTestFieldReference("t2", "key1"),
+			Operator: "=",
+		},
+		IncludeFields: []parser.FieldReference{
+			joinUsingTestFieldReference("t2", "key1"),
+		},
+		ExcludeFields: []parser.FieldReference{
+			joinUsingTestFieldReference("t1", "key1"),
 		},
 	},
 	{
@@ -90,7 +151,7 @@ var parseJoinConditionTests = []struct {
 		},
 		View:     &View{Header: NewHeaderWithId("table1", []string{"key1", "key2", "key3", "value1", "value2", "value3"})},
 		JoinView: &View{Header: NewHeaderWithId("table2", []string{"key1", "key2", "key3", "value4"})},
-		Result: parser.Comparison{
+		ResultValue: parser.Comparison{
 			LHS:      parser.FieldReference{View: parser.Identifier{Literal: "t1"}, Column: parser.Identifier{Literal: "key1"}},
 			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "t2"}, Column: parser.Identifier{Literal: "key1"}},
 			Operator: "=",
@@ -103,17 +164,65 @@ var parseJoinConditionTests = []struct {
 			JoinTable: parser.Table{Alias: parser.Identifier{Literal: "t2"}},
 			Natural:   parser.Token{Token: parser.NATURAL, Literal: "natural"},
 		},
-		View:     &View{Header: NewHeaderWithId("table1", []string{"value1", "value2", "value3"})},
-		JoinView: &View{Header: NewHeaderWithId("table2", []string{"value4"})},
-		Result:   nil,
+		View:        &View{Header: NewHeaderWithId("table1", []string{"value1", "value2", "value3"})},
+		JoinView:    &View{Header: NewHeaderWithId("table2", []string{"value4"})},
+		ResultValue: nil,
+	},
+	{
+		Name: "Using Condition View Field Error",
+		Join: parser.Join{
+			Table:     parser.Table{Alias: parser.Identifier{Literal: "t1"}},
+			JoinTable: parser.Table{Alias: parser.Identifier{Literal: "t2"}},
+			Condition: parser.JoinCondition{
+				Using: []parser.Expression{
+					parser.Identifier{Literal: "key1"},
+				},
+			},
+		},
+		View:     &View{Header: NewHeaderWithId("t1", []string{"key1", "key2", "key3", "key1", "value1", "value2", "value3"})},
+		JoinView: &View{Header: NewHeaderWithId("t2", []string{"key1", "key2", "key3", "value4"})},
+		Error:    "[L:- C:-] field key1 is ambiguous",
+	},
+	{
+		Name: "Using Condition JoinView Field Error",
+		Join: parser.Join{
+			Table:     parser.Table{Alias: parser.Identifier{Literal: "t1"}},
+			JoinTable: parser.Table{Alias: parser.Identifier{Literal: "t2"}},
+			Condition: parser.JoinCondition{
+				Using: []parser.Expression{
+					parser.Identifier{Literal: "key1"},
+				},
+			},
+		},
+		View:     &View{Header: NewHeaderWithId("t1", []string{"key1", "key2", "key3", "value1", "value2", "value3"})},
+		JoinView: &View{Header: NewHeaderWithId("t2", []string{"key2", "key3", "value4"})},
+		Error:    "[L:- C:-] field key1 does not exist",
 	},
 }
 
 func TestParseJoinCondition(t *testing.T) {
 	for _, v := range parseJoinConditionTests {
-		r := ParseJoinCondition(v.Join, v.View, v.JoinView)
-		if !reflect.DeepEqual(r, v.Result) {
-			t.Errorf("%s: condition = %q, want %q", v.Name, r, v.Result)
+		r, ifields, xfields, err := ParseJoinCondition(v.Join, v.View, v.JoinView)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(r, v.ResultValue) {
+			t.Errorf("%s: condition = %q, want %q", v.Name, r, v.ResultValue)
+		}
+		if !reflect.DeepEqual(ifields, v.IncludeFields) {
+			t.Errorf("%s: include fields = %q, want %q", v.Name, ifields, v.IncludeFields)
+		}
+		if !reflect.DeepEqual(xfields, v.ExcludeFields) {
+			t.Errorf("%s: exclude fields = %q, want %q", v.Name, xfields, v.ExcludeFields)
 		}
 	}
 }
@@ -148,11 +257,11 @@ func TestCrossJoin(t *testing.T) {
 	expect := &View{
 		Header: []HeaderField{
 			{View: "table1", Column: INTERNAL_ID_COLUMN},
-			{View: "table1", Column: "column1", Number: 1, FromTable: true},
-			{View: "table1", Column: "column2", Number: 2, FromTable: true},
+			{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
+			{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
 			{View: "table2", Column: INTERNAL_ID_COLUMN},
-			{View: "table2", Column: "column3", Number: 1, FromTable: true},
-			{View: "table2", Column: "column4", Number: 2, FromTable: true},
+			{View: "table2", Column: "column3", Number: 1, IsFromTable: true},
+			{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
 		},
 		Records: []Record{
 			NewRecord([]parser.Primary{
@@ -246,11 +355,11 @@ var innerJoinTests = []struct {
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
-				{View: "table1", Column: "column1", Number: 1, FromTable: true},
-				{View: "table1", Column: "column2", Number: 2, FromTable: true},
+				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
+				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
 				{View: "table2", Column: INTERNAL_ID_COLUMN},
-				{View: "table2", Column: "column1", Number: 1, FromTable: true},
-				{View: "table2", Column: "column3", Number: 2, FromTable: true},
+				{View: "table2", Column: "column1", Number: 1, IsFromTable: true},
+				{View: "table2", Column: "column3", Number: 2, IsFromTable: true},
 			},
 			Records: []Record{
 				NewRecord([]parser.Primary{
@@ -313,11 +422,11 @@ var innerJoinTests = []struct {
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
-				{View: "table1", Column: "column1", Number: 1, FromTable: true},
-				{View: "table1", Column: "column2", Number: 2, FromTable: true},
+				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
+				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
 				{View: "table2", Column: INTERNAL_ID_COLUMN},
-				{View: "table2", Column: "column1", Number: 1, FromTable: true},
-				{View: "table2", Column: "column3", Number: 2, FromTable: true},
+				{View: "table2", Column: "column1", Number: 1, IsFromTable: true},
+				{View: "table2", Column: "column3", Number: 2, IsFromTable: true},
 			},
 			Records: []Record{
 				NewRecord([]parser.Primary{
@@ -371,11 +480,11 @@ var innerJoinTests = []struct {
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
-				{View: "table1", Column: "column1", Number: 1, FromTable: true},
-				{View: "table1", Column: "column2", Number: 2, FromTable: true},
+				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
+				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
 				{View: "table2", Column: INTERNAL_ID_COLUMN},
-				{View: "table2", Column: "column3", Number: 1, FromTable: true},
-				{View: "table2", Column: "column4", Number: 2, FromTable: true},
+				{View: "table2", Column: "column3", Number: 1, IsFromTable: true},
+				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
 			},
 			Records: []Record{
 				NewRecord([]parser.Primary{
@@ -541,11 +650,11 @@ var outerJoinTests = []struct {
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
-				{View: "table1", Column: "column1", Number: 1, FromTable: true},
-				{View: "table1", Column: "column2", Number: 2, FromTable: true},
+				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
+				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
 				{View: "table2", Column: INTERNAL_ID_COLUMN},
-				{View: "table2", Column: "column1", Number: 1, FromTable: true},
-				{View: "table2", Column: "column3", Number: 2, FromTable: true},
+				{View: "table2", Column: "column1", Number: 1, IsFromTable: true},
+				{View: "table2", Column: "column3", Number: 2, IsFromTable: true},
 			},
 			Records: []Record{
 				NewRecord([]parser.Primary{
@@ -620,11 +729,11 @@ var outerJoinTests = []struct {
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
-				{View: "table1", Column: "column1", Number: 1, FromTable: true},
-				{View: "table1", Column: "column2", Number: 2, FromTable: true},
+				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
+				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
 				{View: "table2", Column: INTERNAL_ID_COLUMN},
-				{View: "table2", Column: "column1", Number: 1, FromTable: true},
-				{View: "table2", Column: "column3", Number: 2, FromTable: true},
+				{View: "table2", Column: "column1", Number: 1, IsFromTable: true},
+				{View: "table2", Column: "column3", Number: 2, IsFromTable: true},
 			},
 			Records: []Record{
 				NewRecord([]parser.Primary{
@@ -699,11 +808,11 @@ var outerJoinTests = []struct {
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
-				{View: "table1", Column: "column1", Number: 1, FromTable: true},
-				{View: "table1", Column: "column2", Number: 2, FromTable: true},
+				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
+				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
 				{View: "table2", Column: INTERNAL_ID_COLUMN},
-				{View: "table2", Column: "column1", Number: 1, FromTable: true},
-				{View: "table2", Column: "column3", Number: 2, FromTable: true},
+				{View: "table2", Column: "column1", Number: 1, IsFromTable: true},
+				{View: "table2", Column: "column3", Number: 2, IsFromTable: true},
 			},
 			Records: []Record{
 				NewRecord([]parser.Primary{
@@ -830,11 +939,11 @@ var outerJoinTests = []struct {
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
-				{View: "table1", Column: "column1", Number: 1, FromTable: true},
-				{View: "table1", Column: "column2", Number: 2, FromTable: true},
+				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
+				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
 				{View: "table2", Column: INTERNAL_ID_COLUMN},
-				{View: "table2", Column: "column1", Number: 1, FromTable: true},
-				{View: "table2", Column: "column3", Number: 2, FromTable: true},
+				{View: "table2", Column: "column1", Number: 1, IsFromTable: true},
+				{View: "table2", Column: "column3", Number: 2, IsFromTable: true},
 			},
 			Records: []Record{
 				NewRecord([]parser.Primary{
