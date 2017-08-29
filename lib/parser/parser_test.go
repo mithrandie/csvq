@@ -3548,11 +3548,12 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "while true do continue; end while",
+		Input: "while true do print @var1; continue; end while",
 		Output: []Statement{
 			While{
 				Condition: NewTernaryValueFromString("true"),
 				Statements: []Statement{
+					Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 21}, Name: "@var1"}},
 					FlowControl{Token: CONTINUE},
 				},
 			},
@@ -3565,6 +3566,17 @@ var parseTests = []struct {
 				Condition: NewTernaryValueFromString("true"),
 				Statements: []Statement{
 					FlowControl{Token: BREAK},
+				},
+			},
+		},
+	},
+	{
+		Input: "while true do exit; end while",
+		Output: []Statement{
+			While{
+				Condition: NewTernaryValueFromString("true"),
+				Statements: []Statement{
+					FlowControl{Token: EXIT},
 				},
 			},
 		},

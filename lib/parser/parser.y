@@ -16,19 +16,23 @@ package parser
 }
 
 %type<program>     program
-%type<program>     in_loop_program
-%type<program>     in_function_program
-%type<program>     in_function_in_loop_program
+%type<program>     loop_program
+%type<program>     function_program
+%type<program>     function_loop_program
 %type<statement>   statement
+%type<statement>   common_loop_flow_control_statement
 %type<statement>   procedure_statement
-%type<statement>   in_function_statement
-%type<statement>   in_loop_statement
-%type<statement>   in_function_in_loop_statement
+%type<statement>   while_statement
+%type<statement>   exit_statement
 %type<statement>   flow_control_statement
-%type<statement>   in_function_flow_control_statement
-%type<statement>   common_in_loop_flow_control_statement
-%type<statement>   in_loop_flow_control_statement
-%type<statement>   in_function_in_loop_flow_control_statement
+%type<statement>   loop_statement
+%type<statement>   loop_flow_control_statement
+%type<statement>   function_statement
+%type<statement>   function_while_statement
+%type<statement>   function_exit_statement
+%type<statement>   function_loop_statement
+%type<statement>   function_flow_control_statement
+%type<statement>   function_loop_flow_control_statement
 %type<statement>   variable_statement
 %type<statement>   transaction_statement
 %type<statement>   table_operation_statement
@@ -193,37 +197,37 @@ program
         yylex.(*Lexer).program = $$
     }
 
-in_loop_program
+loop_program
     :
     {
         $$ = nil
         yylex.(*Lexer).program = $$
     }
-    | in_loop_statement ';' in_loop_program
+    | loop_statement ';' loop_program
     {
         $$ = append([]Statement{$1}, $3...)
         yylex.(*Lexer).program = $$
     }
 
-in_function_program
+function_program
     :
     {
         $$ = nil
         yylex.(*Lexer).program = $$
     }
-    | in_function_statement ';' in_function_program
+    | function_statement ';' function_program
     {
         $$ = append([]Statement{$1}, $3...)
         yylex.(*Lexer).program = $$
     }
 
-in_function_in_loop_program
+function_loop_program
     :
     {
         $$ = nil
         yylex.(*Lexer).program = $$
     }
-    | in_function_in_loop_statement ';' in_function_in_loop_program
+    | function_loop_statement ';' function_loop_program
     {
         $$ = append([]Statement{$1}, $3...)
         yylex.(*Lexer).program = $$
@@ -283,6 +287,16 @@ statement
         $$ = $1
     }
 
+common_loop_flow_control_statement
+    : CONTINUE
+    {
+        $$ = FlowControl{Token: $1.Token}
+    }
+    | BREAK
+    {
+        $$ = FlowControl{Token: $1.Token}
+    }
+
 procedure_statement
     : statement
     {
@@ -293,34 +307,24 @@ procedure_statement
         $$ = $1
     }
 
-in_function_statement
-    : statement
+while_statement
+    : WHILE value DO loop_program END WHILE
     {
-        $$ = $1
+        $$ = While{Condition: $2, Statements: $4}
     }
-    | in_function_flow_control_statement
+    | WHILE variable IN identifier DO loop_program END WHILE
     {
-        $$ = $1
+        $$ = WhileInCursor{Variables: []Variable{$2}, Cursor: $4, Statements: $6}
     }
-
-in_loop_statement
-    : procedure_statement
+    | WHILE variables IN identifier DO loop_program END WHILE
     {
-        $$ = $1
-    }
-    | in_loop_flow_control_statement
-    {
-        $$ = $1
+        $$ = WhileInCursor{Variables: $2, Cursor: $4, Statements: $6}
     }
 
-in_function_in_loop_statement
-    : in_function_statement
+exit_statement
+    : EXIT
     {
-        $$ = $1
-    }
-    | in_function_in_loop_flow_control_statement
-    {
-        $$ = $1
+        $$ = FlowControl{Token: $1.Token}
     }
 
 flow_control_statement
@@ -332,45 +336,73 @@ flow_control_statement
     {
         $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
     }
-    | WHILE value DO in_loop_program END WHILE
+    | while_statement
     {
-        $$ = While{Condition: $2, Statements: $4}
+        $$ = $1
     }
-    | WHILE variable IN identifier DO in_loop_program END WHILE
+    | exit_statement
     {
-        $$ = WhileInCursor{Variables: []Variable{$2}, Cursor: $4, Statements: $6}
-    }
-    | WHILE variables IN identifier DO in_loop_program END WHILE
-    {
-        $$ = WhileInCursor{Variables: $2, Cursor: $4, Statements: $6}
-    }
-    | EXIT
-    {
-        $$ = FlowControl{Token: $1.Token}
+        $$ = $1
     }
 
-in_function_flow_control_statement
-    : IF value THEN in_function_program in_function_else END IF
+loop_statement
+    : statement
+    {
+        $$ = $1
+    }
+    | loop_flow_control_statement
+    {
+        $$ = $1
+    }
+
+loop_flow_control_statement
+    : IF value THEN loop_program in_loop_else END IF
     {
         $$ = If{Condition: $2, Statements: $4, Else: $5}
     }
-    | IF value THEN in_function_program in_function_elseif in_function_else END IF
+    | IF value THEN loop_program in_loop_elseif in_loop_else END IF
     {
         $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
     }
-    | WHILE value DO in_function_in_loop_program END WHILE
+    | while_statement
+    {
+        $$ = $1
+    }
+    | exit_statement
+    {
+        $$ = $1
+    }
+    | common_loop_flow_control_statement
+    {
+        $$ = $1
+    }
+
+function_statement
+    : statement
+    {
+        $$ = $1
+    }
+    | function_flow_control_statement
+    {
+        $$ = $1
+    }
+
+function_while_statement
+    : WHILE value DO function_loop_program END WHILE
     {
         $$ = While{Condition: $2, Statements: $4}
     }
-    | WHILE variable IN identifier DO in_function_in_loop_program END WHILE
+    | WHILE variable IN identifier DO function_loop_program END WHILE
     {
         $$ = WhileInCursor{Variables: []Variable{$2}, Cursor: $4, Statements: $6}
     }
-    | WHILE variables IN identifier DO in_function_in_loop_program END WHILE
+    | WHILE variables IN identifier DO function_loop_program END WHILE
     {
         $$ = WhileInCursor{Variables: $2, Cursor: $4, Statements: $6}
     }
-    | RETURN
+
+function_exit_statement
+    : RETURN
     {
         $$ = Return{Value: NewNullValue()}
     }
@@ -379,40 +411,52 @@ in_function_flow_control_statement
         $$ = Return{Value: $2}
     }
 
-common_in_loop_flow_control_statement
-    : CONTINUE
+function_loop_statement
+    : statement
     {
-        $$ = FlowControl{Token: $1.Token}
+        $$ = $1
     }
-    | BREAK
-    {
-        $$ = FlowControl{Token: $1.Token}
-    }
-
-in_loop_flow_control_statement
-    : IF value THEN in_loop_program in_loop_else END IF
-    {
-        $$ = If{Condition: $2, Statements: $4, Else: $5}
-    }
-    | IF value THEN in_loop_program in_loop_elseif in_loop_else END IF
-    {
-        $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
-    }
-    | common_in_loop_flow_control_statement
+    | function_loop_flow_control_statement
     {
         $$ = $1
     }
 
-in_function_in_loop_flow_control_statement
-    : IF value THEN in_function_in_loop_program in_function_in_loop_else END IF
+function_flow_control_statement
+    : IF value THEN function_program in_function_else END IF
     {
         $$ = If{Condition: $2, Statements: $4, Else: $5}
     }
-    | IF value THEN in_function_in_loop_program in_function_in_loop_elseif in_function_in_loop_else END IF
+    | IF value THEN function_program in_function_elseif in_function_else END IF
     {
         $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
     }
-    | common_in_loop_flow_control_statement
+    | function_while_statement
+    {
+        $$ = $1
+    }
+    | function_exit_statement
+    {
+        $$ = $1
+    }
+
+function_loop_flow_control_statement
+    : IF value THEN function_loop_program in_function_in_loop_else END IF
+    {
+        $$ = If{Condition: $2, Statements: $4, Else: $5}
+    }
+    | IF value THEN function_loop_program in_function_in_loop_elseif in_function_in_loop_else END IF
+    {
+        $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
+    }
+    | function_while_statement
+    {
+        $$ = $1
+    }
+    | function_exit_statement
+    {
+        $$ = $1
+    }
+    | common_loop_flow_control_statement
     {
         $$ = $1
     }
@@ -616,19 +660,19 @@ function_parameters
     }
 
 user_defined_function_statement
-    : DECLARE identifier FUNCTION '(' ')' AS BEGIN in_function_program END
+    : DECLARE identifier FUNCTION '(' ')' AS BEGIN function_program END
     {
         $$ = FunctionDeclaration{Name: $2, Statements: $8}
     }
-    | DECLARE identifier FUNCTION '(' function_parameters ')' AS BEGIN in_function_program END
+    | DECLARE identifier FUNCTION '(' function_parameters ')' AS BEGIN function_program END
     {
         $$ = FunctionDeclaration{Name: $2, Parameters: $5, Statements: $9}
     }
-    | DECLARE identifier AGGREGATE '(' identifier ')' AS BEGIN in_function_program END
+    | DECLARE identifier AGGREGATE '(' identifier ')' AS BEGIN function_program END
     {
         $$ = AggregateDeclaration{Name: $2, Cursor: $5, Statements: $9}
     }
-    | DECLARE identifier AGGREGATE '(' identifier ',' function_parameters ')' AS BEGIN in_function_program END
+    | DECLARE identifier AGGREGATE '(' identifier ',' function_parameters ')' AS BEGIN function_program END
     {
         $$ = AggregateDeclaration{Name: $2, Cursor: $5, Parameters: $7, Statements: $11}
     }
@@ -1623,9 +1667,9 @@ elseif
     {
         $$ = []ProcExpr{ElseIf{Condition: $2, Statements: $4}}
     }
-    | elseif elseif
+    | ELSEIF value THEN program elseif
     {
-        $$ = append($1, $2...)
+        $$ = append([]ProcExpr{ElseIf{Condition: $2, Statements: $4}}, $5...)
     }
 
 else
@@ -1639,13 +1683,13 @@ else
     }
 
 in_loop_elseif
-    : ELSEIF value THEN in_loop_program
+    : ELSEIF value THEN loop_program
     {
         $$ = []ProcExpr{ElseIf{Condition: $2, Statements: $4}}
     }
-    | in_loop_elseif in_loop_elseif
+    | ELSEIF value THEN loop_program in_loop_elseif
     {
-        $$ = append($1, $2...)
+        $$ = append([]ProcExpr{ElseIf{Condition: $2, Statements: $4}}, $5...)
     }
 
 in_loop_else
@@ -1653,19 +1697,19 @@ in_loop_else
     {
         $$ = nil
     }
-    | ELSE in_loop_program
+    | ELSE loop_program
     {
         $$ = Else{Statements: $2}
     }
 
 in_function_elseif
-    : ELSEIF value THEN in_function_program
+    : ELSEIF value THEN function_program
     {
         $$ = []ProcExpr{ElseIf{Condition: $2, Statements: $4}}
     }
-    | elseif elseif
+    | ELSEIF value THEN function_program in_function_elseif
     {
-        $$ = append($1, $2...)
+        $$ = append([]ProcExpr{ElseIf{Condition: $2, Statements: $4}}, $5...)
     }
 
 in_function_else
@@ -1673,19 +1717,19 @@ in_function_else
     {
         $$ = nil
     }
-    | ELSE in_function_program
+    | ELSE function_program
     {
         $$ = Else{Statements: $2}
     }
 
 in_function_in_loop_elseif
-    : ELSEIF value THEN in_function_in_loop_program
+    : ELSEIF value THEN function_loop_program
     {
         $$ = []ProcExpr{ElseIf{Condition: $2, Statements: $4}}
     }
-    | in_function_in_loop_elseif in_function_in_loop_elseif
+    | ELSEIF value THEN function_loop_program in_function_in_loop_elseif
     {
-        $$ = append($1, $2...)
+        $$ = append([]ProcExpr{ElseIf{Condition: $2, Statements: $4}}, $5...)
     }
 
 in_function_in_loop_else
@@ -1693,7 +1737,7 @@ in_function_in_loop_else
     {
         $$ = nil
     }
-    | ELSE in_function_in_loop_program
+    | ELSE function_loop_program
     {
         $$ = Else{Statements: $2}
     }
