@@ -3385,7 +3385,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "declare tbl table (column1, column2) for select 1, 2",
+		Input: "declare tbl table (column1, column2) as select 1, 2",
 		Output: []Statement{
 			TableDeclaration{
 				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "tbl"},
@@ -3396,7 +3396,7 @@ var parseTests = []struct {
 				Query: SelectQuery{
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
-							BaseExpr: &BaseExpr{line: 1, char: 42},
+							BaseExpr: &BaseExpr{line: 1, char: 41},
 							Select:   "select",
 							Fields: []Expression{
 								Field{
@@ -3413,14 +3413,14 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "declare tbl table for select 1, 2",
+		Input: "declare tbl table as select 1, 2",
 		Output: []Statement{
 			TableDeclaration{
 				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "tbl"},
 				Query: SelectQuery{
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
-							BaseExpr: &BaseExpr{line: 1, char: 23},
+							BaseExpr: &BaseExpr{line: 1, char: 22},
 							Select:   "select",
 							Fields: []Expression{
 								Field{

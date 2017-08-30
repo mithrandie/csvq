@@ -50,15 +50,15 @@ All the result sets are combined by the [UNION]({{ '/reference/set-operators.htm
 
 Example:
 ```sql
-WITH RECURSIVE ct (n)
+WITH RECURSIVE t (n)
   AS (
     SELECT 1
     UNION ALL
     SELECT n + 1
-      FROM ct
+      FROM t
      WHERE n < 5
   )
-SELECT n FROM ct;
+SELECT n FROM t;
 
 
 /* Result Set

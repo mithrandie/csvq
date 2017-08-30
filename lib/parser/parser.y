@@ -624,11 +624,11 @@ temporary_table_statement
     {
         $$ = TableDeclaration{Table: $2, Fields: $5}
     }
-    | DECLARE identifier TABLE '(' identifiers ')' FOR select_query
+    | DECLARE identifier TABLE '(' identifiers ')' AS select_query
     {
         $$ = TableDeclaration{Table: $2, Fields: $5, Query: $8}
     }
-    | DECLARE identifier TABLE FOR select_query
+    | DECLARE identifier TABLE AS select_query
     {
         $$ = TableDeclaration{Table: $2, Query: $5}
     }
