@@ -153,6 +153,7 @@ func DeclareTable(expr parser.TableDeclaration, filter *Filter) error {
 	view.FileInfo = &FileInfo{
 		Path:           expr.Table.Literal,
 		Temporary:      true,
+		InitialHeader:  view.Header.Copy(),
 		InitialRecords: view.Records.Copy(),
 	}
 

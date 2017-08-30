@@ -218,6 +218,8 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		}
 	case parser.If:
 		flow, err = proc.IfStmt(stmt.(parser.If))
+	case parser.Case:
+		flow, err = proc.Case(stmt.(parser.Case))
 	case parser.While:
 		flow, err = proc.While(stmt.(parser.While))
 	case parser.WhileInCursor:
@@ -295,6 +297,42 @@ func (proc *Procedure) IfStmt(stmt parser.If) (StatementFlow, error) {
 		return proc.ExecuteChild(stmt.Else.(parser.Else).Statements)
 	}
 	return TERMINATE, nil
+}
+
+func (proc *Procedure) Case(stmt parser.Case) (StatementFlow, error) {
+	var value parser.Primary
+	var err error
+	if stmt.Value != nil {
+		value, err = proc.Filter.Evaluate(stmt.Value)
+		if err != nil {
+			return ERROR, err
+		}
+	}
+
+	for _, v := range stmt.When {
+		when := v.(parser.CaseWhen)
+		var t ternary.Value
+
+		cond, err := proc.Filter.Evaluate(when.Condition)
+		if err != nil {
+			return ERROR, err
+		}
+
+		if value == nil {
+			t = cond.Ternary()
+		} else {
+			t = EqualTo(value, cond)
+		}
+
+		if t == ternary.TRUE {
+			return proc.ExecuteChild(when.Statements)
+		}
+	}
+
+	if stmt.Else == nil {
+		return TERMINATE, nil
+	}
+	return proc.ExecuteChild(stmt.Else.(parser.CaseElse).Statements)
 }
 
 func (proc *Procedure) While(stmt parser.While) (StatementFlow, error) {

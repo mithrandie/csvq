@@ -1065,7 +1065,7 @@ func (e OrderItem) String() string {
 	return joinWithSpace(s)
 }
 
-type Case struct {
+type CaseExpr struct {
 	*BaseExpr
 	Case  string
 	End   string
@@ -1074,22 +1074,22 @@ type Case struct {
 	Else  Expression
 }
 
-func (c Case) String() string {
-	s := []string{c.Case}
-	if c.Value != nil {
-		s = append(s, c.Value.String())
+func (e CaseExpr) String() string {
+	s := []string{e.Case}
+	if e.Value != nil {
+		s = append(s, e.Value.String())
 	}
-	for _, v := range c.When {
+	for _, v := range e.When {
 		s = append(s, v.String())
 	}
-	if c.Else != nil {
-		s = append(s, c.Else.String())
+	if e.Else != nil {
+		s = append(s, e.Else.String())
 	}
-	s = append(s, c.End)
+	s = append(s, e.End)
 	return joinWithSpace(s)
 }
 
-type CaseWhen struct {
+type CaseExprWhen struct {
 	*BaseExpr
 	When      string
 	Then      string
@@ -1097,19 +1097,19 @@ type CaseWhen struct {
 	Result    Expression
 }
 
-func (cw CaseWhen) String() string {
-	s := []string{cw.When, cw.Condition.String(), cw.Then, cw.Result.String()}
+func (e CaseExprWhen) String() string {
+	s := []string{e.When, e.Condition.String(), e.Then, e.Result.String()}
 	return joinWithSpace(s)
 }
 
-type CaseElse struct {
+type CaseExprElse struct {
 	*BaseExpr
 	Else   string
 	Result Expression
 }
 
-func (ce CaseElse) String() string {
-	s := []string{ce.Else, ce.Result.String()}
+func (e CaseExprElse) String() string {
+	s := []string{e.Else, e.Result.String()}
 	return joinWithSpace(s)
 }
 
@@ -1461,6 +1461,24 @@ type ElseIf struct {
 }
 
 type Else struct {
+	*BaseExpr
+	Statements []Statement
+}
+
+type Case struct {
+	*BaseExpr
+	Value Expression
+	When  []ProcExpr
+	Else  ProcExpr
+}
+
+type CaseWhen struct {
+	*BaseExpr
+	Condition  Expression
+	Statements []Statement
+}
+
+type CaseElse struct {
 	*BaseExpr
 	Statements []Statement
 }

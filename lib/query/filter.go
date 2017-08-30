@@ -169,8 +169,8 @@ func (f *Filter) Evaluate(expr parser.Expression) (parser.Primary, error) {
 		value, err = f.evalAggregateFunction(expr.(parser.AggregateFunction))
 	case parser.ListAgg:
 		value, err = f.evalListAgg(expr.(parser.ListAgg))
-	case parser.Case:
-		value, err = f.evalCase(expr.(parser.Case))
+	case parser.CaseExpr:
+		value, err = f.evalCaseExpr(expr.(parser.CaseExpr))
 	case parser.Logic:
 		value, err = f.evalLogic(expr.(parser.Logic))
 	case parser.UnaryLogic:
@@ -697,7 +697,7 @@ func (f *Filter) evalListAgg(expr parser.ListAgg) (parser.Primary, error) {
 	return ListAgg(list, separator), nil
 }
 
-func (f *Filter) evalCase(expr parser.Case) (parser.Primary, error) {
+func (f *Filter) evalCaseExpr(expr parser.CaseExpr) (parser.Primary, error) {
 	var value parser.Primary
 	var err error
 	if expr.Value != nil {
@@ -708,7 +708,7 @@ func (f *Filter) evalCase(expr parser.Case) (parser.Primary, error) {
 	}
 
 	for _, v := range expr.When {
-		when := v.(parser.CaseWhen)
+		when := v.(parser.CaseExprWhen)
 		var t ternary.Value
 
 		cond, err := f.Evaluate(when.Condition)
@@ -734,7 +734,7 @@ func (f *Filter) evalCase(expr parser.Case) (parser.Primary, error) {
 	if expr.Else == nil {
 		return parser.NewNull(), nil
 	}
-	result, err := f.Evaluate(expr.Else.(parser.CaseElse).Result)
+	result, err := f.Evaluate(expr.Else.(parser.CaseExprElse).Result)
 	if err != nil {
 		return nil, err
 	}

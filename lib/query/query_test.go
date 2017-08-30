@@ -401,6 +401,7 @@ var declareTableTests = []struct {
 				FileInfo: &FileInfo{
 					Path:           "tbl",
 					Temporary:      true,
+					InitialHeader:  NewHeader("tbl", []string{"column1", "column2"}),
 					InitialRecords: Records{},
 				},
 				Header:  NewHeader("tbl", []string{"column1", "column2"}),
@@ -441,8 +442,9 @@ var declareTableTests = []struct {
 		Result: ViewMap{
 			"TBL": {
 				FileInfo: &FileInfo{
-					Path:      "tbl",
-					Temporary: true,
+					Path:          "tbl",
+					Temporary:     true,
+					InitialHeader: NewHeader("tbl", []string{"column1", "column2"}),
 					InitialRecords: Records{
 						NewRecord([]parser.Primary{
 							parser.NewInteger(1),

@@ -3003,15 +3003,15 @@ var filterEvaluateTests = []struct {
 		Error: "[L:- C:-] function listagg cannot be used as a statement",
 	},
 	{
-		Name: "Case Comparison",
-		Expr: parser.Case{
+		Name: "CaseExpr Comparison",
+		Expr: parser.CaseExpr{
 			Value: parser.NewIntegerValue(2),
 			When: []parser.Expression{
-				parser.CaseWhen{
+				parser.CaseExprWhen{
 					Condition: parser.NewIntegerValue(1),
 					Result:    parser.NewStringValue("A"),
 				},
-				parser.CaseWhen{
+				parser.CaseExprWhen{
 					Condition: parser.NewIntegerValue(2),
 					Result:    parser.NewStringValue("B"),
 				},
@@ -3020,10 +3020,10 @@ var filterEvaluateTests = []struct {
 		Result: parser.NewString("B"),
 	},
 	{
-		Name: "Case Filter",
-		Expr: parser.Case{
+		Name: "CaseExpr Filter",
+		Expr: parser.CaseExpr{
 			When: []parser.Expression{
-				parser.CaseWhen{
+				parser.CaseExprWhen{
 					Condition: parser.Comparison{
 						LHS:      parser.NewIntegerValue(2),
 						RHS:      parser.NewIntegerValue(1),
@@ -3031,7 +3031,7 @@ var filterEvaluateTests = []struct {
 					},
 					Result: parser.NewStringValue("A"),
 				},
-				parser.CaseWhen{
+				parser.CaseExprWhen{
 					Condition: parser.Comparison{
 						LHS:      parser.NewIntegerValue(2),
 						RHS:      parser.NewIntegerValue(2),
@@ -3044,35 +3044,35 @@ var filterEvaluateTests = []struct {
 		Result: parser.NewString("B"),
 	},
 	{
-		Name: "Case Else",
-		Expr: parser.Case{
+		Name: "CaseExpr Else",
+		Expr: parser.CaseExpr{
 			Value: parser.NewIntegerValue(0),
 			When: []parser.Expression{
-				parser.CaseWhen{
+				parser.CaseExprWhen{
 					Condition: parser.NewIntegerValue(1),
 					Result:    parser.NewStringValue("A"),
 				},
-				parser.CaseWhen{
+				parser.CaseExprWhen{
 					Condition: parser.NewIntegerValue(2),
 					Result:    parser.NewStringValue("B"),
 				},
 			},
-			Else: parser.CaseElse{
+			Else: parser.CaseExprElse{
 				Result: parser.NewStringValue("C"),
 			},
 		},
 		Result: parser.NewString("C"),
 	},
 	{
-		Name: "Case No Else",
-		Expr: parser.Case{
+		Name: "CaseExpr No Else",
+		Expr: parser.CaseExpr{
 			Value: parser.NewIntegerValue(0),
 			When: []parser.Expression{
-				parser.CaseWhen{
+				parser.CaseExprWhen{
 					Condition: parser.NewIntegerValue(1),
 					Result:    parser.NewStringValue("A"),
 				},
-				parser.CaseWhen{
+				parser.CaseExprWhen{
 					Condition: parser.NewIntegerValue(2),
 					Result:    parser.NewStringValue("B"),
 				},
@@ -3081,15 +3081,15 @@ var filterEvaluateTests = []struct {
 		Result: parser.NewNull(),
 	},
 	{
-		Name: "Case Value Error",
-		Expr: parser.Case{
+		Name: "CaseExpr Value Error",
+		Expr: parser.CaseExpr{
 			Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			When: []parser.Expression{
-				parser.CaseWhen{
+				parser.CaseExprWhen{
 					Condition: parser.NewIntegerValue(1),
 					Result:    parser.NewStringValue("A"),
 				},
-				parser.CaseWhen{
+				parser.CaseExprWhen{
 					Condition: parser.NewIntegerValue(2),
 					Result:    parser.NewStringValue("B"),
 				},
@@ -3098,15 +3098,15 @@ var filterEvaluateTests = []struct {
 		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
-		Name: "Case When Condition Error",
-		Expr: parser.Case{
+		Name: "CaseExpr When Condition Error",
+		Expr: parser.CaseExpr{
 			Value: parser.NewIntegerValue(2),
 			When: []parser.Expression{
-				parser.CaseWhen{
+				parser.CaseExprWhen{
 					Condition: parser.NewIntegerValue(1),
 					Result:    parser.NewStringValue("A"),
 				},
-				parser.CaseWhen{
+				parser.CaseExprWhen{
 					Condition: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 					Result:    parser.NewStringValue("B"),
 				},
@@ -3115,15 +3115,15 @@ var filterEvaluateTests = []struct {
 		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
-		Name: "Case When Result Error",
-		Expr: parser.Case{
+		Name: "CaseExpr When Result Error",
+		Expr: parser.CaseExpr{
 			Value: parser.NewIntegerValue(2),
 			When: []parser.Expression{
-				parser.CaseWhen{
+				parser.CaseExprWhen{
 					Condition: parser.NewIntegerValue(1),
 					Result:    parser.NewStringValue("A"),
 				},
-				parser.CaseWhen{
+				parser.CaseExprWhen{
 					Condition: parser.NewIntegerValue(2),
 					Result:    parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 				},
@@ -3132,20 +3132,20 @@ var filterEvaluateTests = []struct {
 		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
-		Name: "Case Else Result Error",
-		Expr: parser.Case{
+		Name: "CaseExpr Else Result Error",
+		Expr: parser.CaseExpr{
 			Value: parser.NewIntegerValue(0),
 			When: []parser.Expression{
-				parser.CaseWhen{
+				parser.CaseExprWhen{
 					Condition: parser.NewIntegerValue(1),
 					Result:    parser.NewStringValue("A"),
 				},
-				parser.CaseWhen{
+				parser.CaseExprWhen{
 					Condition: parser.NewIntegerValue(2),
 					Result:    parser.NewStringValue("B"),
 				},
 			},
-			Else: parser.CaseElse{
+			Else: parser.CaseExprElse{
 				Result: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
