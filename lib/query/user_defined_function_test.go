@@ -31,7 +31,7 @@ var userDefinedFunctionListDeclareTests = []struct {
 					Parameters: []parser.Variable{
 						{Name: "@arg1"},
 					},
-					Defaults:     map[string]parser.Expression{},
+					Defaults:     map[string]parser.QueryExpression{},
 					RequiredArgs: 1,
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.Variable{Name: "@arg1"}},
@@ -45,7 +45,7 @@ var userDefinedFunctionListDeclareTests = []struct {
 						{Name: "@arg1"},
 						{Name: "@arg2"},
 					},
-					Defaults:     map[string]parser.Expression{},
+					Defaults:     map[string]parser.QueryExpression{},
 					RequiredArgs: 2,
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.Variable{Name: "@arg2"}},
@@ -66,7 +66,7 @@ func TestUserDefinedFunctionsList_Declare(t *testing.T) {
 					{Name: "@arg1"},
 					{Name: "@arg2"},
 				},
-				Defaults:     map[string]parser.Expression{},
+				Defaults:     map[string]parser.QueryExpression{},
 				RequiredArgs: 2,
 				Statements: []parser.Statement{
 					parser.Print{Value: parser.Variable{Name: "@arg2"}},
@@ -127,7 +127,7 @@ var userDefinedFunctionListDeclareAggregateTests = []struct {
 						{Name: "@arg1"},
 						{Name: "@arg2"},
 					},
-					Defaults: map[string]parser.Expression{
+					Defaults: map[string]parser.QueryExpression{
 						"@arg2": parser.NewIntegerValue(1),
 					},
 					IsAggregate:  true,
@@ -145,7 +145,7 @@ var userDefinedFunctionListDeclareAggregateTests = []struct {
 						{Name: "@arg1"},
 						{Name: "@arg2"},
 					},
-					Defaults:     map[string]parser.Expression{},
+					Defaults:     map[string]parser.QueryExpression{},
 					RequiredArgs: 2,
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.Variable{Name: "@arg2"}},
@@ -166,7 +166,7 @@ func TestUserDefinedFunctionsList_DeclareAggregate(t *testing.T) {
 					{Name: "@arg1"},
 					{Name: "@arg2"},
 				},
-				Defaults:     map[string]parser.Expression{},
+				Defaults:     map[string]parser.QueryExpression{},
 				RequiredArgs: 2,
 				Statements: []parser.Statement{
 					parser.Print{Value: parser.Variable{Name: "@arg2"}},
@@ -197,7 +197,7 @@ func TestUserDefinedFunctionsList_DeclareAggregate(t *testing.T) {
 
 var userDefinedFunctionListGetTests = []struct {
 	Name     string
-	Function parser.Expression
+	Function parser.QueryExpression
 	FuncName string
 	Result   *UserDefinedFunction
 	Error    string
@@ -305,7 +305,7 @@ var userDefinedFunctionMapDeclareTests = []struct {
 					{Name: "@arg1"},
 					{Name: "@arg2"},
 				},
-				Defaults:     map[string]parser.Expression{},
+				Defaults:     map[string]parser.QueryExpression{},
 				RequiredArgs: 2,
 				Statements: []parser.Statement{
 					parser.Print{Value: parser.Variable{Name: "@var1"}},
@@ -407,7 +407,7 @@ var userDefinedFunctionMapDeclareAggregateTests = []struct {
 					{Name: "@arg2"},
 				},
 				RequiredArgs: 2,
-				Defaults:     map[string]parser.Expression{},
+				Defaults:     map[string]parser.QueryExpression{},
 				Statements: []parser.Statement{
 					parser.Print{Value: parser.Variable{Name: "@var1"}},
 				},
@@ -538,7 +538,7 @@ func TestUserDefinedFunctionMap_CheckDuplicate(t *testing.T) {
 
 var userDefinedFunctionMapGetTests = []struct {
 	Name     string
-	Function parser.Expression
+	Function parser.QueryExpression
 	FuncName string
 	Result   *UserDefinedFunction
 	Error    string
@@ -619,7 +619,7 @@ var userDefinedFunctionExecuteTests = []struct {
 				{Name: "@arg1"},
 				{Name: "@arg2"},
 			},
-			Defaults: map[string]parser.Expression{
+			Defaults: map[string]parser.QueryExpression{
 				"@arg2": parser.NewIntegerValue(3),
 			},
 			RequiredArgs: 1,
@@ -726,7 +726,7 @@ var userDefinedFunctionExecuteTests = []struct {
 				{Name: "@arg1"},
 				{Name: "@arg2"},
 			},
-			Defaults: map[string]parser.Expression{
+			Defaults: map[string]parser.QueryExpression{
 				"@arg2": parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 			RequiredArgs: 1,
@@ -774,7 +774,7 @@ var userDefinedFunctionExecuteTests = []struct {
 								Query: parser.SelectQuery{
 									SelectEntity: parser.SelectEntity{
 										SelectClause: parser.SelectClause{
-											Fields: []parser.Expression{
+											Fields: []parser.QueryExpression{
 												parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
 											},
 										},
@@ -1098,7 +1098,7 @@ var userDefinedFunctionCheckArgsLenTests = []struct {
 				{Name: "@arg1"},
 				{Name: "@arg2"},
 			},
-			Defaults: map[string]parser.Expression{
+			Defaults: map[string]parser.QueryExpression{
 				"@arg2": parser.NewIntegerValue(3),
 			},
 			RequiredArgs: 1,
@@ -1129,7 +1129,7 @@ var userDefinedFunctionCheckArgsLenTests = []struct {
 				{Name: "@arg1"},
 				{Name: "@arg2"},
 			},
-			Defaults: map[string]parser.Expression{
+			Defaults: map[string]parser.QueryExpression{
 				"@arg2": parser.NewIntegerValue(3),
 			},
 			RequiredArgs: 1,
@@ -1146,7 +1146,7 @@ var userDefinedFunctionCheckArgsLenTests = []struct {
 				{Name: "@arg1"},
 				{Name: "@arg2"},
 			},
-			Defaults: map[string]parser.Expression{
+			Defaults: map[string]parser.QueryExpression{
 				"@arg2": parser.NewIntegerValue(3),
 			},
 			RequiredArgs: 1,

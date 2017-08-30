@@ -177,7 +177,7 @@ func TestVariablesList_Dispose(t *testing.T) {
 
 type variableTests struct {
 	Name   string
-	Expr   parser.ProcExpr
+	Expr   parser.Expression
 	Filter *Filter
 	Result Variables
 	Error  string

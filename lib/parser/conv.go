@@ -352,7 +352,7 @@ func FormatTableName(s string) string {
 	return strings.TrimSuffix(filepath.Base(s), filepath.Ext(s))
 }
 
-func FieldIdentifier(e Expression) string {
+func FieldIdentifier(e QueryExpression) string {
 	if pt, ok := e.(PrimitiveType); ok {
 		if s, ok := pt.Value.(String); ok {
 			return s.Value()

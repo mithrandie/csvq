@@ -26,7 +26,7 @@ func TestHeader_TableColumns(t *testing.T) {
 			IsFromTable: true,
 		},
 	}
-	expect := []parser.Expression{
+	expect := []parser.QueryExpression{
 		parser.FieldReference{View: parser.Identifier{Literal: "t1"}, Column: parser.Identifier{Literal: "c1"}},
 		parser.FieldReference{Column: parser.Identifier{Literal: "c3"}},
 	}
@@ -68,14 +68,14 @@ func TestHeader_TableColumnNames(t *testing.T) {
 }
 
 var headerContainsObjectTests = []struct {
-	Expr   parser.Expression
+	Expr   parser.QueryExpression
 	Result int
 	Error  string
 }{
 	{
 		Expr: parser.AggregateFunction{
 			Name: "count",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.AllColumns{},
 			},
 		},
@@ -401,7 +401,7 @@ var headerUpdateTests = []struct {
 	Name      string
 	Header    Header
 	Reference string
-	Fields    []parser.Expression
+	Fields    []parser.QueryExpression
 	Result    Header
 	Error     string
 }{
@@ -424,7 +424,7 @@ var headerUpdateTests = []struct {
 			},
 		},
 		Reference: "ref1",
-		Fields: []parser.Expression{
+		Fields: []parser.QueryExpression{
 			parser.Identifier{Literal: "c1"},
 			parser.Identifier{Literal: "c2"},
 			parser.Identifier{Literal: "c3"},
@@ -497,7 +497,7 @@ var headerUpdateTests = []struct {
 			},
 		},
 		Reference: "ref1",
-		Fields: []parser.Expression{
+		Fields: []parser.QueryExpression{
 			parser.Identifier{Literal: "c1"},
 			parser.Identifier{Literal: "c2"},
 		},
@@ -522,7 +522,7 @@ var headerUpdateTests = []struct {
 			},
 		},
 		Reference: "ref1",
-		Fields: []parser.Expression{
+		Fields: []parser.QueryExpression{
 			parser.Identifier{Literal: "c1"},
 			parser.Identifier{Literal: "c2"},
 			parser.Identifier{Literal: "c2"},

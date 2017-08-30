@@ -113,7 +113,7 @@ var procedureExecuteStatementTests = []struct {
 	{
 		Input: parser.Function{
 			Name: "userfunc",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.NewIntegerValueFromString("1"),
 			},
 		},
@@ -167,14 +167,14 @@ var procedureExecuteStatementTests = []struct {
 	{
 		Input: parser.TableDeclaration{
 			Table: parser.Identifier{Literal: "tbl"},
-			Fields: []parser.Expression{
+			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "column1"},
 				parser.Identifier{Literal: "column2"},
 			},
 			Query: parser.SelectQuery{
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.NewIntegerValueFromString("1")},
 							parser.Field{Object: parser.NewIntegerValueFromString("2")},
 						},
@@ -187,7 +187,7 @@ var procedureExecuteStatementTests = []struct {
 		Input: parser.SelectQuery{
 			SelectEntity: parser.SelectEntity{
 				SelectClause: parser.SelectClause{
-					Fields: []parser.Expression{
+					Fields: []parser.QueryExpression{
 						parser.Field{
 							Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 						},
@@ -197,7 +197,7 @@ var procedureExecuteStatementTests = []struct {
 					},
 				},
 				FromClause: parser.FromClause{
-					Tables: []parser.Expression{
+					Tables: []parser.QueryExpression{
 						parser.Table{Object: parser.Identifier{Literal: "tbl"}},
 					},
 				},
@@ -273,11 +273,11 @@ var procedureExecuteStatementTests = []struct {
 		Input: parser.SelectQuery{
 			SelectEntity: parser.SelectEntity{
 				SelectClause: parser.SelectClause{
-					Fields: []parser.Expression{
+					Fields: []parser.QueryExpression{
 						parser.Field{
 							Object: parser.Function{
 								Name: "useraggfunc",
-								Args: []parser.Expression{
+								Args: []parser.QueryExpression{
 									parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 								},
 							},
@@ -286,7 +286,7 @@ var procedureExecuteStatementTests = []struct {
 					},
 				},
 				FromClause: parser.FromClause{
-					Tables: []parser.Expression{
+					Tables: []parser.QueryExpression{
 						parser.Table{Object: parser.Identifier{Literal: "table1"}},
 					},
 				},
@@ -298,7 +298,7 @@ var procedureExecuteStatementTests = []struct {
 		Input: parser.SelectQuery{
 			SelectEntity: parser.SelectEntity{
 				SelectClause: parser.SelectClause{
-					Fields: []parser.Expression{
+					Fields: []parser.QueryExpression{
 						parser.Field{
 							Object: parser.Variable{Name: "@var1"},
 							Alias:  parser.Identifier{Literal: "var1"},
@@ -331,14 +331,14 @@ var procedureExecuteStatementTests = []struct {
 	{
 		Input: parser.InsertQuery{
 			Table: parser.Table{Object: parser.Identifier{Literal: "table1"}},
-			Fields: []parser.Expression{
+			Fields: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
-			ValuesList: []parser.Expression{
+			ValuesList: []parser.QueryExpression{
 				parser.RowValue{
 					Value: parser.ValueList{
-						Values: []parser.Expression{
+						Values: []parser.QueryExpression{
 							parser.NewIntegerValueFromString("4"),
 							parser.NewStringValue("str4"),
 						},
@@ -346,7 +346,7 @@ var procedureExecuteStatementTests = []struct {
 				},
 				parser.RowValue{
 					Value: parser.ValueList{
-						Values: []parser.Expression{
+						Values: []parser.QueryExpression{
 							parser.NewIntegerValueFromString("5"),
 							parser.NewStringValue("str5"),
 						},
@@ -371,7 +371,7 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.UpdateQuery{
-			Tables: []parser.Expression{
+			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			},
 			SetList: []parser.Expression{
@@ -406,7 +406,7 @@ var procedureExecuteStatementTests = []struct {
 	{
 		Input: parser.DeleteQuery{
 			FromClause: parser.FromClause{
-				Tables: []parser.Expression{
+				Tables: []parser.QueryExpression{
 					parser.Table{
 						Object: parser.Identifier{Literal: "table1"},
 					},
@@ -438,7 +438,7 @@ var procedureExecuteStatementTests = []struct {
 	{
 		Input: parser.CreateTable{
 			Table: parser.Identifier{Literal: "newtable.csv"},
-			Fields: []parser.Expression{
+			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "column1"},
 				parser.Identifier{Literal: "column2"},
 			},
@@ -484,7 +484,7 @@ var procedureExecuteStatementTests = []struct {
 	{
 		Input: parser.DropColumns{
 			Table: parser.Identifier{Literal: "table1"},
-			Columns: []parser.Expression{
+			Columns: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 		},
@@ -526,7 +526,7 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.Case{
-			When: []parser.ProcExpr{
+			When: []parser.Expression{
 				parser.CaseWhen{
 					Condition: parser.NewTernaryValue(ternary.FALSE),
 					Statements: []parser.Statement{
@@ -573,7 +573,7 @@ var procedureExecuteStatementTests = []struct {
 	{
 		Input: parser.Printf{
 			Format: "value: %s",
-			Values: []parser.Expression{
+			Values: []parser.QueryExpression{
 				parser.NewIntegerValue(12345),
 			},
 		},
@@ -699,7 +699,7 @@ var procedureIfStmtTests = []struct {
 			Statements: []parser.Statement{
 				parser.Print{Value: parser.NewStringValue("1")},
 			},
-			ElseIf: []parser.ProcExpr{
+			ElseIf: []parser.Expression{
 				parser.ElseIf{
 					Condition: parser.NewTernaryValue(ternary.TRUE),
 					Statements: []parser.Statement{
@@ -729,7 +729,7 @@ var procedureIfStmtTests = []struct {
 			Statements: []parser.Statement{
 				parser.Print{Value: parser.NewStringValue("1")},
 			},
-			ElseIf: []parser.ProcExpr{
+			ElseIf: []parser.Expression{
 				parser.ElseIf{
 					Condition: parser.NewTernaryValue(ternary.FALSE),
 					Statements: []parser.Statement{
@@ -816,7 +816,7 @@ var procedureCaseStmtTests = []struct {
 	{
 		Name: "Case",
 		Stmt: parser.Case{
-			When: []parser.ProcExpr{
+			When: []parser.Expression{
 				parser.CaseWhen{
 					Condition: parser.NewTernaryValue(ternary.FALSE),
 					Statements: []parser.Statement{
@@ -838,7 +838,7 @@ var procedureCaseStmtTests = []struct {
 		Name: "Case Comparison",
 		Stmt: parser.Case{
 			Value: parser.NewIntegerValue(2),
-			When: []parser.ProcExpr{
+			When: []parser.Expression{
 				parser.CaseWhen{
 					Condition: parser.NewIntegerValue(1),
 					Statements: []parser.Statement{
@@ -859,7 +859,7 @@ var procedureCaseStmtTests = []struct {
 	{
 		Name: "Case Else",
 		Stmt: parser.Case{
-			When: []parser.ProcExpr{
+			When: []parser.Expression{
 				parser.CaseWhen{
 					Condition: parser.NewTernaryValue(ternary.FALSE),
 					Statements: []parser.Statement{
@@ -885,7 +885,7 @@ var procedureCaseStmtTests = []struct {
 	{
 		Name: "Case No Match",
 		Stmt: parser.Case{
-			When: []parser.ProcExpr{
+			When: []parser.Expression{
 				parser.CaseWhen{
 					Condition: parser.NewTernaryValue(ternary.FALSE),
 					Statements: []parser.Statement{
@@ -907,7 +907,7 @@ var procedureCaseStmtTests = []struct {
 		Name: "Case Comparison Value Error",
 		Stmt: parser.Case{
 			Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-			When: []parser.ProcExpr{
+			When: []parser.Expression{
 				parser.CaseWhen{
 					Condition: parser.NewIntegerValue(1),
 					Statements: []parser.Statement{
@@ -928,7 +928,7 @@ var procedureCaseStmtTests = []struct {
 	{
 		Name: "Case Condition Error",
 		Stmt: parser.Case{
-			When: []parser.ProcExpr{
+			When: []parser.Expression{
 				parser.CaseWhen{
 					Condition: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 					Statements: []parser.Statement{

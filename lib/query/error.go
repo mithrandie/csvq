@@ -112,11 +112,11 @@ func (e BaseError) GetCode() int {
 	return e.Code
 }
 
-func NewBaseError(expr parser.ProcExpr, message string) *BaseError {
+func NewBaseError(expr parser.Expression, message string) *BaseError {
 	return NewBaseErrorWithCode(expr, message, 1)
 }
 
-func NewBaseErrorWithCode(expr parser.ProcExpr, message string, code int) *BaseError {
+func NewBaseErrorWithCode(expr parser.Expression, message string, code int) *BaseError {
 	var sourceFile string
 	var line int
 	var char int
@@ -166,7 +166,7 @@ func NewSyntaxError(message string, line int, char int, sourceFile string) error
 	}
 }
 
-func NewSyntaxErrorFromExpr(expr parser.Expression) error {
+func NewSyntaxErrorFromExpr(expr parser.QueryExpression) error {
 	return &SyntaxError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_INVALID_SYNTAX, expr)),
 	}
@@ -176,7 +176,7 @@ type ReadFileError struct {
 	*BaseError
 }
 
-func NewReadFileError(expr parser.ProcExpr, message string) error {
+func NewReadFileError(expr parser.Expression, message string) error {
 	return &ReadFileError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_READ_FILE, message)),
 	}
@@ -186,7 +186,7 @@ type WriteFileError struct {
 	*BaseError
 }
 
-func NewWriteFileError(expr parser.ProcExpr, message string) error {
+func NewWriteFileError(expr parser.Expression, message string) error {
 	return &WriteFileError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_WRITE_FILE, message)),
 	}
@@ -210,7 +210,7 @@ type FieldAmbiguousError struct {
 	*BaseError
 }
 
-func NewFieldAmbiguousError(field parser.Expression) error {
+func NewFieldAmbiguousError(field parser.QueryExpression) error {
 	return &FieldAmbiguousError{
 		NewBaseError(field, fmt.Sprintf(ERROR_FIELD_AMBIGUOUS, field)),
 	}
@@ -220,7 +220,7 @@ type FieldNotExistError struct {
 	*BaseError
 }
 
-func NewFieldNotExistError(field parser.Expression) error {
+func NewFieldNotExistError(field parser.QueryExpression) error {
 	return &FieldNotExistError{
 		NewBaseError(field, fmt.Sprintf(ERROR_FIELD_NOT_EXIST, field)),
 	}
@@ -230,7 +230,7 @@ type FieldNotGroupKeyError struct {
 	*BaseError
 }
 
-func NewFieldNotGroupKeyError(field parser.Expression) error {
+func NewFieldNotGroupKeyError(field parser.QueryExpression) error {
 	return &FieldNotGroupKeyError{
 		NewBaseError(field, fmt.Sprintf(ERROR_FIELD_NOT_GROUP_KEY, field)),
 	}
@@ -250,7 +250,7 @@ type NotGroupingRecordsError struct {
 	*BaseError
 }
 
-func NewNotGroupingRecordsError(expr parser.Expression, funcname string) error {
+func NewNotGroupingRecordsError(expr parser.QueryExpression, funcname string) error {
 	return &NotGroupingRecordsError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_NOT_GROUPING_RECORDS, funcname)),
 	}
@@ -280,7 +280,7 @@ type FunctionNotExistError struct {
 	*BaseError
 }
 
-func NewFunctionNotExistError(expr parser.Expression, funcname string) error {
+func NewFunctionNotExistError(expr parser.QueryExpression, funcname string) error {
 	return &FunctionNotExistError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_FUNCTION_NOT_EXIST, funcname)),
 	}
@@ -290,7 +290,7 @@ type FunctionArgumentLengthError struct {
 	*BaseError
 }
 
-func NewFunctionArgumentLengthError(expr parser.Expression, funcname string, argslen []int) error {
+func NewFunctionArgumentLengthError(expr parser.QueryExpression, funcname string, argslen []int) error {
 	var argstr string
 	if 1 < len(argslen) {
 		lastarg := FormatCount(argslen[len(argslen)-1], "argument")
@@ -311,7 +311,7 @@ func NewFunctionArgumentLengthError(expr parser.Expression, funcname string, arg
 	}
 }
 
-func NewFunctionArgumentLengthErrorWithCustomArgs(expr parser.Expression, funcname string, argstr string) error {
+func NewFunctionArgumentLengthErrorWithCustomArgs(expr parser.QueryExpression, funcname string, argstr string) error {
 	return &FunctionArgumentLengthError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_FUNCTION_ARGUMENT_LENGTH, funcname, argstr)),
 	}
@@ -321,7 +321,7 @@ type FunctionInvalidArgumentError struct {
 	*BaseError
 }
 
-func NewFunctionInvalidArgumentError(function parser.Expression, funcname string, message string) error {
+func NewFunctionInvalidArgumentError(function parser.QueryExpression, funcname string, message string) error {
 	return &FunctionInvalidArgumentError{
 		NewBaseError(function, fmt.Sprintf(ERROR_FUNCTION_INVALID_ARGUMENT, message, funcname)),
 	}
@@ -331,7 +331,7 @@ type UnpermittedStatementFunctionError struct {
 	*BaseError
 }
 
-func NewUnpermittedStatementFunctionError(expr parser.Expression, funcname string) error {
+func NewUnpermittedStatementFunctionError(expr parser.QueryExpression, funcname string) error {
 	return &UnpermittedStatementFunctionError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_UNPERMITTED_STATEMENT_FUNCTION, funcname)),
 	}
@@ -341,7 +341,7 @@ type NestedAggregateFunctionsError struct {
 	*BaseError
 }
 
-func NewNestedAggregateFunctionsError(expr parser.Expression) error {
+func NewNestedAggregateFunctionsError(expr parser.QueryExpression) error {
 	return &NestedAggregateFunctionsError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_NESTED_AGGREGATE_FUNCTIONS, expr)),
 	}
@@ -617,7 +617,7 @@ type RowValueLengthInComparisonError struct {
 	*BaseError
 }
 
-func NewRowValueLengthInComparisonError(expr parser.Expression, valueLen int) error {
+func NewRowValueLengthInComparisonError(expr parser.QueryExpression, valueLen int) error {
 	return &RowValueLengthInComparisonError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_ROW_VALUE_LENGTH_IN_COMPARISON, FormatCount(valueLen, "value"))),
 	}
@@ -667,7 +667,7 @@ type CombinedSetFieldLengthError struct {
 	*BaseError
 }
 
-func NewCombinedSetFieldLengthError(selectEntity parser.Expression, fieldLen int) error {
+func NewCombinedSetFieldLengthError(selectEntity parser.QueryExpression, fieldLen int) error {
 	selectClause := searchSelectClauseInSelectEntity(selectEntity)
 
 	return &CombinedSetFieldLengthError{
@@ -701,7 +701,7 @@ type UpdateFieldNotExistError struct {
 	*BaseError
 }
 
-func NewUpdateFieldNotExistError(field parser.Expression) error {
+func NewUpdateFieldNotExistError(field parser.QueryExpression) error {
 	return &UpdateFieldNotExistError{
 		NewBaseError(field, fmt.Sprintf(ERROR_UPDATE_FIELD_NOT_EXIST, field)),
 	}
@@ -711,7 +711,7 @@ type UpdateValueAmbiguousError struct {
 	*BaseError
 }
 
-func NewUpdateValueAmbiguousError(field parser.Expression, value parser.Expression) error {
+func NewUpdateValueAmbiguousError(field parser.QueryExpression, value parser.QueryExpression) error {
 	return &UpdateValueAmbiguousError{
 		NewBaseError(field, fmt.Sprintf(ERROR_UPDATE_VALUE_AMBIGUOUS, value, field)),
 	}
@@ -741,7 +741,7 @@ type SourceInvalidArgumentError struct {
 	*BaseError
 }
 
-func NewSourceInvalidArgumentError(source parser.Source, arg parser.Expression) error {
+func NewSourceInvalidArgumentError(source parser.Source, arg parser.QueryExpression) error {
 	return &SourceInvalidArgumentError{
 		NewBaseError(source, fmt.Sprintf(ERROR_SOURCE_INVALID_ARGUMENT, arg)),
 	}
@@ -853,14 +853,14 @@ func searchSelectClause(query parser.SelectQuery) parser.SelectClause {
 	return searchSelectClauseInSelectEntity(query.SelectEntity)
 }
 
-func searchSelectClauseInSelectEntity(selectEntity parser.Expression) parser.SelectClause {
+func searchSelectClauseInSelectEntity(selectEntity parser.QueryExpression) parser.SelectClause {
 	if entity, ok := selectEntity.(parser.SelectEntity); ok {
 		return entity.SelectClause.(parser.SelectClause)
 	}
 	return searchSelectClauseInSelectSetEntity(selectEntity.(parser.SelectSet).LHS)
 }
 
-func searchSelectClauseInSelectSetEntity(selectSetEntity parser.Expression) parser.SelectClause {
+func searchSelectClauseInSelectSetEntity(selectSetEntity parser.QueryExpression) parser.SelectClause {
 	if subquery, ok := selectSetEntity.(parser.Subquery); ok {
 		return searchSelectClause(subquery.Query)
 	}

@@ -199,7 +199,7 @@ func Select(query parser.SelectQuery, parentFilter *Filter) (*View, error) {
 	return view, nil
 }
 
-func selectEntity(expr parser.Expression, filter *Filter) (*View, error) {
+func selectEntity(expr parser.QueryExpression, filter *Filter) (*View, error) {
 	entity, ok := expr.(parser.SelectEntity)
 	if !ok {
 		return selectSet(expr.(parser.SelectSet), filter)
@@ -241,7 +241,7 @@ func selectEntity(expr parser.Expression, filter *Filter) (*View, error) {
 	return view, nil
 }
 
-func selectSetEntity(expr parser.Expression, filter *Filter) (*View, error) {
+func selectSetEntity(expr parser.QueryExpression, filter *Filter) (*View, error) {
 	if subquery, ok := expr.(parser.Subquery); ok {
 		return Select(subquery.Query, filter)
 	}
@@ -338,7 +338,7 @@ func Insert(query parser.InsertQuery, parentFilter *Filter) (*View, error) {
 	}
 
 	fromClause := parser.FromClause{
-		Tables: []parser.Expression{
+		Tables: []parser.QueryExpression{
 			query.Table,
 		},
 	}
@@ -672,7 +672,7 @@ func AddColumns(query parser.AddColumns, parentFilter *Filter) (*View, error) {
 
 	columnNames := view.Header.TableColumnNames()
 	fields := make([]string, len(query.Columns))
-	defaults := make([]parser.Expression, len(query.Columns))
+	defaults := make([]parser.QueryExpression, len(query.Columns))
 	for i, v := range query.Columns {
 		col := v.(parser.ColumnDefault)
 		if InStrSliceWithCaseInsensitive(col.Column.Literal, columnNames) || InStrSliceWithCaseInsensitive(col.Column.Literal, fields) {

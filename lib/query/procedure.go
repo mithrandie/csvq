@@ -63,7 +63,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 	case parser.VariableDeclaration:
 		err = proc.Filter.VariablesList.Declare(stmt.(parser.VariableDeclaration), proc.Filter)
 	case parser.VariableSubstitution:
-		_, err = proc.Filter.Evaluate(stmt.(parser.Expression))
+		_, err = proc.Filter.Evaluate(stmt.(parser.QueryExpression))
 	case parser.DisposeVariable:
 		err = proc.Filter.VariablesList.Dispose(stmt.(parser.DisposeVariable).Variable)
 	case parser.CursorDeclaration:
@@ -197,7 +197,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 	case parser.TransactionControl:
 		switch stmt.(parser.TransactionControl).Token {
 		case parser.COMMIT:
-			err = proc.Commit(stmt.(parser.ProcExpr))
+			err = proc.Commit(stmt.(parser.Expression))
 		case parser.ROLLBACK:
 			proc.Rollback()
 		}
@@ -385,7 +385,7 @@ func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, 
 	return TERMINATE, nil
 }
 
-func (proc *Procedure) Commit(expr parser.ProcExpr) error {
+func (proc *Procedure) Commit(expr parser.Expression) error {
 	var createFiles = map[string]*FileInfo{}
 	var updateFiles = map[string]*FileInfo{}
 

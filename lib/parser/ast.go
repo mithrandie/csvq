@@ -17,7 +17,7 @@ func IsNull(v Primary) bool {
 
 type Statement interface{}
 
-type ProcExpr interface {
+type Expression interface {
 	GetBaseExpr() *BaseExpr
 	HasParseInfo() bool
 	Line() int
@@ -25,7 +25,7 @@ type ProcExpr interface {
 	SourceFile() string
 }
 
-type Expression interface {
+type QueryExpression interface {
 	String() string
 
 	GetBaseExpr() *BaseExpr
@@ -402,7 +402,7 @@ func (e ColumnNumber) String() string {
 
 type Parentheses struct {
 	*BaseExpr
-	Expr Expression
+	Expr QueryExpression
 }
 
 func (p Parentheses) String() string {
@@ -411,7 +411,7 @@ func (p Parentheses) String() string {
 
 type RowValue struct {
 	*BaseExpr
-	Value Expression
+	Value QueryExpression
 }
 
 func (e RowValue) String() string {
@@ -420,29 +420,29 @@ func (e RowValue) String() string {
 
 type ValueList struct {
 	*BaseExpr
-	Values []Expression
+	Values []QueryExpression
 }
 
 func (e ValueList) String() string {
-	return putParentheses(listExpressions(e.Values))
+	return putParentheses(listQueryExpressions(e.Values))
 }
 
 type RowValueList struct {
 	*BaseExpr
-	RowValues []Expression
+	RowValues []QueryExpression
 }
 
 func (e RowValueList) String() string {
-	return putParentheses(listExpressions(e.RowValues))
+	return putParentheses(listQueryExpressions(e.RowValues))
 }
 
 type SelectQuery struct {
 	*BaseExpr
-	WithClause    Expression
-	SelectEntity  Expression
-	OrderByClause Expression
-	LimitClause   Expression
-	OffsetClause  Expression
+	WithClause    QueryExpression
+	SelectEntity  QueryExpression
+	OrderByClause QueryExpression
+	LimitClause   QueryExpression
+	OffsetClause  QueryExpression
 }
 
 func (e SelectQuery) String() string {
@@ -465,10 +465,10 @@ func (e SelectQuery) String() string {
 
 type SelectSet struct {
 	*BaseExpr
-	LHS      Expression
+	LHS      QueryExpression
 	Operator Token
 	All      Token
-	RHS      Expression
+	RHS      QueryExpression
 }
 
 func (e SelectSet) String() string {
@@ -482,11 +482,11 @@ func (e SelectSet) String() string {
 
 type SelectEntity struct {
 	*BaseExpr
-	SelectClause  Expression
-	FromClause    Expression
-	WhereClause   Expression
-	GroupByClause Expression
-	HavingClause  Expression
+	SelectClause  QueryExpression
+	FromClause    QueryExpression
+	WhereClause   QueryExpression
+	GroupByClause QueryExpression
+	HavingClause  QueryExpression
 }
 
 func (e SelectEntity) String() string {
@@ -510,7 +510,7 @@ type SelectClause struct {
 	*BaseExpr
 	Select   string
 	Distinct Token
-	Fields   []Expression
+	Fields   []QueryExpression
 }
 
 func (sc SelectClause) IsDistinct() bool {
@@ -522,25 +522,25 @@ func (sc SelectClause) String() string {
 	if sc.IsDistinct() {
 		s = append(s, sc.Distinct.Literal)
 	}
-	s = append(s, listExpressions(sc.Fields))
+	s = append(s, listQueryExpressions(sc.Fields))
 	return joinWithSpace(s)
 }
 
 type FromClause struct {
 	*BaseExpr
 	From   string
-	Tables []Expression
+	Tables []QueryExpression
 }
 
 func (f FromClause) String() string {
-	s := []string{f.From, listExpressions(f.Tables)}
+	s := []string{f.From, listQueryExpressions(f.Tables)}
 	return joinWithSpace(s)
 }
 
 type WhereClause struct {
 	*BaseExpr
 	Where  string
-	Filter Expression
+	Filter QueryExpression
 }
 
 func (w WhereClause) String() string {
@@ -551,18 +551,18 @@ func (w WhereClause) String() string {
 type GroupByClause struct {
 	*BaseExpr
 	GroupBy string
-	Items   []Expression
+	Items   []QueryExpression
 }
 
 func (gb GroupByClause) String() string {
-	s := []string{gb.GroupBy, listExpressions(gb.Items)}
+	s := []string{gb.GroupBy, listQueryExpressions(gb.Items)}
 	return joinWithSpace(s)
 }
 
 type HavingClause struct {
 	*BaseExpr
 	Having string
-	Filter Expression
+	Filter QueryExpression
 }
 
 func (h HavingClause) String() string {
@@ -573,20 +573,20 @@ func (h HavingClause) String() string {
 type OrderByClause struct {
 	*BaseExpr
 	OrderBy string
-	Items   []Expression
+	Items   []QueryExpression
 }
 
 func (ob OrderByClause) String() string {
-	s := []string{ob.OrderBy, listExpressions(ob.Items)}
+	s := []string{ob.OrderBy, listQueryExpressions(ob.Items)}
 	return joinWithSpace(s)
 }
 
 type LimitClause struct {
 	*BaseExpr
 	Limit   string
-	Value   Expression
+	Value   QueryExpression
 	Percent string
-	With    Expression
+	With    QueryExpression
 }
 
 func (e LimitClause) String() string {
@@ -625,7 +625,7 @@ func (e LimitWith) String() string {
 type OffsetClause struct {
 	*BaseExpr
 	Offset string
-	Value  Expression
+	Value  QueryExpression
 }
 
 func (e OffsetClause) String() string {
@@ -636,11 +636,11 @@ func (e OffsetClause) String() string {
 type WithClause struct {
 	*BaseExpr
 	With         string
-	InlineTables []Expression
+	InlineTables []QueryExpression
 }
 
 func (e WithClause) String() string {
-	s := []string{e.With, listExpressions(e.InlineTables)}
+	s := []string{e.With, listQueryExpressions(e.InlineTables)}
 	return joinWithSpace(s)
 }
 
@@ -648,7 +648,7 @@ type InlineTable struct {
 	*BaseExpr
 	Recursive Token
 	Name      Identifier
-	Fields    []Expression
+	Fields    []QueryExpression
 	As        string
 	Query     SelectQuery
 }
@@ -660,7 +660,7 @@ func (e InlineTable) String() string {
 	}
 	s = append(s, e.Name.String())
 	if e.Fields != nil {
-		s = append(s, putParentheses(listExpressions(e.Fields)))
+		s = append(s, putParentheses(listQueryExpressions(e.Fields)))
 	}
 	s = append(s, e.As, putParentheses(e.Query.String()))
 	return joinWithSpace(s)
@@ -681,9 +681,9 @@ func (sq Subquery) String() string {
 
 type Comparison struct {
 	*BaseExpr
-	LHS      Expression
+	LHS      QueryExpression
 	Operator string
-	RHS      Expression
+	RHS      QueryExpression
 }
 
 func (c Comparison) String() string {
@@ -694,8 +694,8 @@ func (c Comparison) String() string {
 type Is struct {
 	*BaseExpr
 	Is       string
-	LHS      Expression
-	RHS      Expression
+	LHS      QueryExpression
+	RHS      QueryExpression
 	Negation Token
 }
 
@@ -716,9 +716,9 @@ type Between struct {
 	*BaseExpr
 	Between  string
 	And      string
-	LHS      Expression
-	Low      Expression
-	High     Expression
+	LHS      QueryExpression
+	Low      QueryExpression
+	High     QueryExpression
 	Negation Token
 }
 
@@ -738,8 +738,8 @@ func (b Between) String() string {
 type In struct {
 	*BaseExpr
 	In       string
-	LHS      Expression
-	Values   Expression
+	LHS      QueryExpression
+	Values   QueryExpression
 	Negation Token
 }
 
@@ -759,9 +759,9 @@ func (i In) String() string {
 type All struct {
 	*BaseExpr
 	All      string
-	LHS      Expression
+	LHS      QueryExpression
 	Operator string
-	Values   Expression
+	Values   QueryExpression
 }
 
 func (a All) String() string {
@@ -772,9 +772,9 @@ func (a All) String() string {
 type Any struct {
 	*BaseExpr
 	Any      string
-	LHS      Expression
+	LHS      QueryExpression
 	Operator string
-	Values   Expression
+	Values   QueryExpression
 }
 
 func (a Any) String() string {
@@ -785,8 +785,8 @@ func (a Any) String() string {
 type Like struct {
 	*BaseExpr
 	Like     string
-	LHS      Expression
-	Pattern  Expression
+	LHS      QueryExpression
+	Pattern  QueryExpression
 	Negation Token
 }
 
@@ -816,9 +816,9 @@ func (e Exists) String() string {
 
 type Arithmetic struct {
 	*BaseExpr
-	LHS      Expression
+	LHS      QueryExpression
 	Operator int
-	RHS      Expression
+	RHS      QueryExpression
 }
 
 func (a Arithmetic) String() string {
@@ -828,7 +828,7 @@ func (a Arithmetic) String() string {
 
 type UnaryArithmetic struct {
 	*BaseExpr
-	Operand  Expression
+	Operand  QueryExpression
 	Operator Token
 }
 
@@ -838,9 +838,9 @@ func (e UnaryArithmetic) String() string {
 
 type Logic struct {
 	*BaseExpr
-	LHS      Expression
+	LHS      QueryExpression
 	Operator Token
-	RHS      Expression
+	RHS      QueryExpression
 }
 
 func (l Logic) String() string {
@@ -850,7 +850,7 @@ func (l Logic) String() string {
 
 type UnaryLogic struct {
 	*BaseExpr
-	Operand  Expression
+	Operand  QueryExpression
 	Operator Token
 }
 
@@ -864,7 +864,7 @@ func (e UnaryLogic) String() string {
 
 type Concat struct {
 	*BaseExpr
-	Items []Expression
+	Items []QueryExpression
 }
 
 func (c Concat) String() string {
@@ -878,18 +878,18 @@ func (c Concat) String() string {
 type Function struct {
 	*BaseExpr
 	Name string
-	Args []Expression
+	Args []QueryExpression
 }
 
 func (e Function) String() string {
-	return e.Name + "(" + listExpressions(e.Args) + ")"
+	return e.Name + "(" + listQueryExpressions(e.Args) + ")"
 }
 
 type AggregateFunction struct {
 	*BaseExpr
 	Name     string
 	Distinct Token
-	Args     []Expression
+	Args     []QueryExpression
 }
 
 func (e AggregateFunction) String() string {
@@ -897,7 +897,7 @@ func (e AggregateFunction) String() string {
 	if !e.Distinct.IsEmpty() {
 		s = append(s, e.Distinct.Literal)
 	}
-	s = append(s, listExpressions(e.Args))
+	s = append(s, listQueryExpressions(e.Args))
 
 	return e.Name + "(" + joinWithSpace(s) + ")"
 }
@@ -908,9 +908,9 @@ func (e AggregateFunction) IsDistinct() bool {
 
 type Table struct {
 	*BaseExpr
-	Object Expression
+	Object QueryExpression
 	As     string
-	Alias  Expression
+	Alias  QueryExpression
 }
 
 func (t Table) String() string {
@@ -946,12 +946,12 @@ func (t Table) Name() Identifier {
 type Join struct {
 	*BaseExpr
 	Join      string
-	Table     Expression
-	JoinTable Expression
+	Table     QueryExpression
+	JoinTable QueryExpression
 	Natural   Token
 	JoinType  Token
 	Direction Token
-	Condition Expression
+	Condition QueryExpression
 }
 
 func (j Join) String() string {
@@ -975,8 +975,8 @@ func (j Join) String() string {
 type JoinCondition struct {
 	*BaseExpr
 	Literal string
-	On      Expression
-	Using   []Expression
+	On      QueryExpression
+	Using   []QueryExpression
 }
 
 func (jc JoinCondition) String() string {
@@ -984,16 +984,16 @@ func (jc JoinCondition) String() string {
 	if jc.On != nil {
 		s = []string{jc.Literal, jc.On.String()}
 	} else {
-		s = []string{jc.Literal, putParentheses(listExpressions(jc.Using))}
+		s = []string{jc.Literal, putParentheses(listQueryExpressions(jc.Using))}
 	}
 	return joinWithSpace(s)
 }
 
 type Field struct {
 	*BaseExpr
-	Object Expression
+	Object QueryExpression
 	As     string
-	Alias  Expression
+	Alias  QueryExpression
 }
 
 func (f Field) String() string {
@@ -1048,7 +1048,7 @@ func (si Stdin) String() string {
 
 type OrderItem struct {
 	*BaseExpr
-	Value     Expression
+	Value     QueryExpression
 	Direction Token
 	Nulls     string
 	Position  Token
@@ -1069,9 +1069,9 @@ type CaseExpr struct {
 	*BaseExpr
 	Case  string
 	End   string
-	Value Expression
-	When  []Expression
-	Else  Expression
+	Value QueryExpression
+	When  []QueryExpression
+	Else  QueryExpression
 }
 
 func (e CaseExpr) String() string {
@@ -1093,8 +1093,8 @@ type CaseExprWhen struct {
 	*BaseExpr
 	When      string
 	Then      string
-	Condition Expression
-	Result    Expression
+	Condition QueryExpression
+	Result    QueryExpression
 }
 
 func (e CaseExprWhen) String() string {
@@ -1105,7 +1105,7 @@ func (e CaseExprWhen) String() string {
 type CaseExprElse struct {
 	*BaseExpr
 	Else   string
-	Result Expression
+	Result QueryExpression
 }
 
 func (e CaseExprElse) String() string {
@@ -1117,9 +1117,9 @@ type ListAgg struct {
 	*BaseExpr
 	ListAgg     string
 	Distinct    Token
-	Args        []Expression
+	Args        []QueryExpression
 	WithinGroup string
-	OrderBy     Expression
+	OrderBy     QueryExpression
 }
 
 func (e ListAgg) String() string {
@@ -1127,7 +1127,7 @@ func (e ListAgg) String() string {
 	if !e.Distinct.IsEmpty() {
 		option = append(option, e.Distinct.Literal)
 	}
-	option = append(option, listExpressions(e.Args))
+	option = append(option, listQueryExpressions(e.Args))
 
 	s := []string{e.ListAgg + "(" + joinWithSpace(option) + ")"}
 	if 0 < len(e.WithinGroup) {
@@ -1149,7 +1149,7 @@ type AnalyticFunction struct {
 	*BaseExpr
 	Name           string
 	Distinct       Token
-	Args           []Expression
+	Args           []QueryExpression
 	IgnoreNulls    bool
 	IgnoreNullsLit string
 	Over           string
@@ -1162,7 +1162,7 @@ func (e AnalyticFunction) String() string {
 		option = append(option, e.Distinct.Literal)
 	}
 	if e.Args != nil {
-		option = append(option, listExpressions(e.Args))
+		option = append(option, listQueryExpressions(e.Args))
 	}
 	if e.IgnoreNulls {
 		option = append(option, e.IgnoreNullsLit)
@@ -1182,8 +1182,8 @@ func (e AnalyticFunction) IsDistinct() bool {
 
 type AnalyticClause struct {
 	*BaseExpr
-	Partition     Expression
-	OrderByClause Expression
+	Partition     QueryExpression
+	OrderByClause QueryExpression
 }
 
 func (e AnalyticClause) String() string {
@@ -1197,7 +1197,7 @@ func (e AnalyticClause) String() string {
 	return joinWithSpace(s)
 }
 
-func (e AnalyticClause) PartitionValues() []Expression {
+func (e AnalyticClause) PartitionValues() []QueryExpression {
 	if e.Partition == nil {
 		return nil
 	}
@@ -1207,11 +1207,11 @@ func (e AnalyticClause) PartitionValues() []Expression {
 type Partition struct {
 	*BaseExpr
 	PartitionBy string
-	Values      []Expression
+	Values      []QueryExpression
 }
 
 func (e Partition) String() string {
-	s := []string{e.PartitionBy, listExpressions(e.Values)}
+	s := []string{e.PartitionBy, listQueryExpressions(e.Values)}
 	return joinWithSpace(s)
 }
 
@@ -1227,7 +1227,7 @@ func (v Variable) String() string {
 type VariableSubstitution struct {
 	*BaseExpr
 	Variable Variable
-	Value    Expression
+	Value    QueryExpression
 }
 
 func (vs VariableSubstitution) String() string {
@@ -1237,14 +1237,7 @@ func (vs VariableSubstitution) String() string {
 type VariableAssignment struct {
 	*BaseExpr
 	Variable Variable
-	Value    Expression
-}
-
-func (va VariableAssignment) String() string {
-	if va.Value == nil {
-		return va.Variable.String()
-	}
-	return joinWithSpace([]string{va.Variable.String(), SUBSTITUTION_OPERATOR, va.Value.String()})
+	Value    QueryExpression
 }
 
 type VariableDeclaration struct {
@@ -1259,148 +1252,72 @@ type DisposeVariable struct {
 
 type InsertQuery struct {
 	*BaseExpr
-	WithClause Expression
-	Insert     string
-	Into       string
-	Table      Expression
-	Fields     []Expression
-	Values     string
-	ValuesList []Expression
-	Query      Expression
-}
-
-func (e InsertQuery) String() string {
-	s := []string{}
-	if e.WithClause != nil {
-		s = append(s, e.WithClause.String())
-	}
-	s = append(s, e.Insert, e.Into, e.Table.String())
-	if e.Fields != nil {
-		s = append(s, putParentheses(listExpressions(e.Fields)))
-	}
-	if e.ValuesList != nil {
-		s = append(s, e.Values)
-		s = append(s, listExpressions(e.ValuesList))
-	} else {
-		s = append(s, e.Query.String())
-	}
-	return joinWithSpace(s)
+	WithClause QueryExpression
+	Table      QueryExpression
+	Fields     []QueryExpression
+	ValuesList []QueryExpression
+	Query      QueryExpression
 }
 
 type UpdateQuery struct {
 	*BaseExpr
-	WithClause  Expression
-	Update      string
-	Tables      []Expression
-	Set         string
+	WithClause  QueryExpression
+	Tables      []QueryExpression
 	SetList     []Expression
-	FromClause  Expression
-	WhereClause Expression
-}
-
-func (e UpdateQuery) String() string {
-	s := []string{}
-	if e.WithClause != nil {
-		s = append(s, e.WithClause.String())
-	}
-	s = append(s, e.Update, listExpressions(e.Tables), e.Set, listExpressions(e.SetList))
-	if e.FromClause != nil {
-		s = append(s, e.FromClause.String())
-	}
-	if e.WhereClause != nil {
-		s = append(s, e.WhereClause.String())
-	}
-	return joinWithSpace(s)
+	FromClause  QueryExpression
+	WhereClause QueryExpression
 }
 
 type UpdateSet struct {
 	*BaseExpr
-	Field Expression
-	Value Expression
-}
-
-func (us UpdateSet) String() string {
-	return joinWithSpace([]string{us.Field.String(), "=", us.Value.String()})
+	Field QueryExpression
+	Value QueryExpression
 }
 
 type DeleteQuery struct {
 	*BaseExpr
-	WithClause  Expression
-	Delete      string
-	Tables      []Expression
-	FromClause  Expression
-	WhereClause Expression
-}
-
-func (e DeleteQuery) String() string {
-	s := []string{}
-	if e.WithClause != nil {
-		s = append(s, e.WithClause.String())
-	}
-	s = append(s, e.Delete)
-	if e.Tables != nil {
-		s = append(s, listExpressions(e.Tables))
-	}
-	s = append(s, e.FromClause.String())
-	if e.WhereClause != nil {
-		s = append(s, e.WhereClause.String())
-	}
-	return joinWithSpace(s)
+	WithClause  QueryExpression
+	Tables      []QueryExpression
+	FromClause  QueryExpression
+	WhereClause QueryExpression
 }
 
 type CreateTable struct {
 	*BaseExpr
 	Table  Identifier
-	Fields []Expression
-	Query  Expression
+	Fields []QueryExpression
+	Query  QueryExpression
 }
 
 type AddColumns struct {
 	*BaseExpr
-	Table    Expression
+	Table    QueryExpression
 	Columns  []Expression
 	Position Expression
 }
 
 type ColumnDefault struct {
 	*BaseExpr
-	Column  Identifier
-	Default string
-	Value   Expression
-}
-
-func (e ColumnDefault) String() string {
-	s := []string{e.Column.String()}
-	if e.Value != nil {
-		s = append(s, e.Default, e.Value.String())
-	}
-	return joinWithSpace(s)
+	Column Identifier
+	Value  QueryExpression
 }
 
 type ColumnPosition struct {
 	*BaseExpr
 	Position Token
-	Column   Expression
-}
-
-func (e ColumnPosition) String() string {
-	s := []string{e.Position.Literal}
-	if e.Column != nil {
-		s = append(s, e.Column.String())
-	}
-	return joinWithSpace(s)
+	Column   QueryExpression
 }
 
 type DropColumns struct {
 	*BaseExpr
-	Table   Expression
-	Columns []Expression
+	Table   QueryExpression
+	Columns []QueryExpression
 }
 
 type RenameColumn struct {
 	*BaseExpr
-	Table Expression
-	Old   Expression
+	Table QueryExpression
+	Old   QueryExpression
 	New   Identifier
 }
 
@@ -1421,23 +1338,23 @@ type AggregateDeclaration struct {
 
 type Return struct {
 	*BaseExpr
-	Value Expression
+	Value QueryExpression
 }
 
 type Print struct {
 	*BaseExpr
-	Value Expression
+	Value QueryExpression
 }
 
 type Printf struct {
 	*BaseExpr
 	Format string
-	Values []Expression
+	Values []QueryExpression
 }
 
 type Source struct {
 	*BaseExpr
-	FilePath Expression
+	FilePath QueryExpression
 }
 
 type SetFlag struct {
@@ -1448,15 +1365,15 @@ type SetFlag struct {
 
 type If struct {
 	*BaseExpr
-	Condition  Expression
+	Condition  QueryExpression
 	Statements []Statement
-	ElseIf     []ProcExpr
-	Else       ProcExpr
+	ElseIf     []Expression
+	Else       Expression
 }
 
 type ElseIf struct {
 	*BaseExpr
-	Condition  Expression
+	Condition  QueryExpression
 	Statements []Statement
 }
 
@@ -1467,14 +1384,14 @@ type Else struct {
 
 type Case struct {
 	*BaseExpr
-	Value Expression
-	When  []ProcExpr
-	Else  ProcExpr
+	Value QueryExpression
+	When  []Expression
+	Else  Expression
 }
 
 type CaseWhen struct {
 	*BaseExpr
-	Condition  Expression
+	Condition  QueryExpression
 	Statements []Statement
 }
 
@@ -1485,7 +1402,7 @@ type CaseElse struct {
 
 type While struct {
 	*BaseExpr
-	Condition  Expression
+	Condition  QueryExpression
 	Statements []Statement
 }
 
@@ -1527,15 +1444,7 @@ type FetchCursor struct {
 type FetchPosition struct {
 	*BaseExpr
 	Position Token
-	Number   Expression
-}
-
-func (e FetchPosition) String() string {
-	s := []string{e.Position.Literal}
-	if e.Number != nil {
-		s = append(s, e.Number.String())
-	}
-	return joinWithSpace(s)
+	Number   QueryExpression
 }
 
 type CursorStatus struct {
@@ -1572,8 +1481,8 @@ func (e CursorAttrebute) String() string {
 type TableDeclaration struct {
 	*BaseExpr
 	Table  Identifier
-	Fields []Expression
-	Query  Expression
+	Fields []QueryExpression
+	Query  QueryExpression
 }
 
 type DisposeTable struct {
@@ -1594,7 +1503,7 @@ type FlowControl struct {
 type Trigger struct {
 	*BaseExpr
 	Token   int
-	Message Expression
+	Message QueryExpression
 	Code    Primary
 }
 
@@ -1606,7 +1515,7 @@ func joinWithSpace(s []string) string {
 	return strings.Join(s, " ")
 }
 
-func listExpressions(exprs []Expression) string {
+func listQueryExpressions(exprs []QueryExpression) string {
 	s := make([]string, len(exprs))
 	for i, v := range exprs {
 		s[i] = v.String()

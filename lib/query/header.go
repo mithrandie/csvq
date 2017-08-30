@@ -79,8 +79,8 @@ func (h Header) Len() int {
 	return len(h)
 }
 
-func (h Header) TableColumns() []parser.Expression {
-	columns := []parser.Expression{}
+func (h Header) TableColumns() []parser.QueryExpression {
+	columns := []parser.QueryExpression{}
 	for _, f := range h {
 		if !f.IsFromTable {
 			continue
@@ -109,7 +109,7 @@ func (h Header) TableColumnNames() []string {
 	return names
 }
 
-func (h Header) ContainsObject(obj parser.Expression) (int, error) {
+func (h Header) ContainsObject(obj parser.QueryExpression) (int, error) {
 	if fref, ok := obj.(parser.FieldReference); ok {
 		return h.Contains(fref)
 	} else if cnum, ok := obj.(parser.ColumnNumber); ok {
@@ -204,7 +204,7 @@ func (h Header) ContainsInternalId(viewName string) (int, error) {
 	return h.Contains(fieldRef)
 }
 
-func (h Header) Update(reference string, fields []parser.Expression) error {
+func (h Header) Update(reference string, fields []parser.QueryExpression) error {
 	if fields != nil {
 		if len(fields) != h.Len() {
 			return NewFieldLengthNotMatchError()
