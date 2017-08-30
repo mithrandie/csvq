@@ -585,6 +585,7 @@ func TestTemporaryViewMapList_Rollback(t *testing.T) {
 				FileInfo: &FileInfo{
 					Path:           "/path/to/table1.csv",
 					Delimiter:      ',',
+					InitialHeader:  NewHeader("table1", []string{"column1", "column2"}),
 					InitialRecords: Records{},
 				},
 			},
@@ -603,8 +604,9 @@ func TestTemporaryViewMapList_Rollback(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:      "/path/to/table2.csv",
-					Delimiter: ',',
+					Path:          "/path/to/table2.csv",
+					Delimiter:     ',',
+					InitialHeader: NewHeader("table2", []string{"column1", "column2"}),
 					InitialRecords: []Record{
 						NewRecord([]parser.Primary{
 							parser.NewString("1"),
@@ -628,6 +630,7 @@ func TestTemporaryViewMapList_Rollback(t *testing.T) {
 				FileInfo: &FileInfo{
 					Path:           "/path/to/table1.csv",
 					Delimiter:      ',',
+					InitialHeader:  NewHeader("table1", []string{"column1", "column2"}),
 					InitialRecords: Records{},
 				},
 			},
@@ -646,8 +649,9 @@ func TestTemporaryViewMapList_Rollback(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:      "/path/to/table2.csv",
-					Delimiter: ',',
+					Path:          "/path/to/table2.csv",
+					Delimiter:     ',',
+					InitialHeader: NewHeader("table2", []string{"column1", "column2"}),
 					InitialRecords: []Record{
 						NewRecord([]parser.Primary{
 							parser.NewString("1"),

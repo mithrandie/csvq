@@ -126,6 +126,7 @@ func loadView(tableExpr parser.Expression, filter *Filter, useInternalId bool) (
 			if err != nil {
 				return nil, err
 			}
+			loadView.FileInfo.InitialHeader = loadView.Header.Copy()
 			loadView.FileInfo.InitialRecords = loadView.Records.Copy()
 			filter.TempViewsList[len(filter.TempViewsList)-1].Set(loadView)
 		}
@@ -1543,6 +1544,7 @@ func (view *View) Less(i, j int) bool {
 
 func (view *View) Rollback() {
 	view.Records = view.FileInfo.InitialRecords.Copy()
+	view.Header = view.FileInfo.InitialHeader.Copy()
 }
 
 func (view *View) Copy() *View {

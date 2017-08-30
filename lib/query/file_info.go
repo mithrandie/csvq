@@ -17,6 +17,7 @@ type FileInfo struct {
 	LineBreak cmd.LineBreak
 
 	Temporary      bool
+	InitialHeader  Header
 	InitialRecords Records
 }
 
