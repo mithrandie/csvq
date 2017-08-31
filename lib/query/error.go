@@ -81,6 +81,24 @@ const (
 	ERROR_FORMAT_STRING_LENGTH_NOT_MATCH    = "number of replace values does not match"
 )
 
+type Exit struct {
+	Code int
+}
+
+func NewExit(code int) error {
+	return &Exit{
+		Code: code,
+	}
+}
+
+func (e Exit) Error() string {
+	return ""
+}
+
+func (e Exit) GetCode() int {
+	return e.Code
+}
+
 type AppError interface {
 	Error() string
 	ErrorMessage() string

@@ -565,6 +565,13 @@ var procedureExecuteStatementTests = []struct {
 		Logs: "1\n2\n3\n",
 	},
 	{
+		Input: parser.Exit{
+			Code: parser.NewInteger(1),
+		},
+		Error:     "",
+		ErrorCode: 1,
+	},
+	{
 		Input: parser.Print{
 			Value: parser.NewIntegerValue(12345),
 		},
@@ -630,13 +637,20 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 		log, _ := ioutil.ReadAll(r)
 
 		if err != nil {
-			if len(v.Error) < 1 {
-				t.Errorf("unexpected error %q for %q", err, v.Input)
-			} else if err.Error() != v.Error {
-				t.Errorf("error %q, want error %q for %q", err, v.Error, v.Input)
+			var code int
+			if apperr, ok := err.(AppError); ok {
+				if len(v.Error) < 1 {
+					t.Errorf("unexpected error %q for %q", err, v.Input)
+				} else if err.Error() != v.Error {
+					t.Errorf("error %q, want error %q for %q", err, v.Error, v.Input)
+				}
+
+				code = apperr.GetCode()
+			} else if ex, ok := err.(*Exit); ok {
+				code = ex.GetCode()
 			}
-			if err.(AppError).GetCode() != v.ErrorCode {
-				t.Errorf("error code %d, want error code %d for %q", err.(AppError).GetCode(), v.ErrorCode, v.Input)
+			if code != v.ErrorCode {
+				t.Errorf("error code %d, want error code %d for %q", code, v.ErrorCode, v.Input)
 			}
 			continue
 		}
@@ -1131,7 +1145,7 @@ var procedureWhileTests = []struct {
 						Operator: "=",
 					},
 					Statements: []parser.Statement{
-						parser.FlowControl{Token: parser.EXIT},
+						parser.Exit{},
 					},
 				},
 				parser.Print{Value: parser.Variable{Name: "@while_test"}},
@@ -1317,7 +1331,7 @@ var procedureWhileInCursorTests = []struct {
 		Result:     "'1'\n",
 	},
 	{
-		Name: "While In Cursor Exit",
+		Name: "While In Cursor Exit With Code",
 		Stmt: parser.WhileInCursor{
 			Variables: []parser.Variable{
 				{Name: "@var1"},
@@ -1332,7 +1346,7 @@ var procedureWhileInCursorTests = []struct {
 						Operator: "=",
 					},
 					Statements: []parser.Statement{
-						parser.FlowControl{Token: parser.EXIT},
+						parser.Exit{},
 					},
 				},
 				parser.Print{Value: parser.Variable{Name: "@var1"}},

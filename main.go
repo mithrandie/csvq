@@ -157,6 +157,8 @@ func main() {
 			code := 1
 			if apperr, ok := err.(query.AppError); ok {
 				code = apperr.GetCode()
+			} else if ex, ok := err.(*query.Exit); ok {
+				code = ex.GetCode()
 			}
 			return cli.NewExitError(err.Error(), code)
 		}

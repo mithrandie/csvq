@@ -3576,7 +3576,13 @@ var parseTests = []struct {
 	{
 		Input: "exit",
 		Output: []Statement{
-			FlowControl{Token: EXIT},
+			Exit{},
+		},
+	},
+	{
+		Input: "exit 1",
+		Output: []Statement{
+			Exit{Code: NewIntegerFromString("1")},
 		},
 	},
 	{
@@ -3608,7 +3614,7 @@ var parseTests = []struct {
 			While{
 				Condition: NewTernaryValueFromString("true"),
 				Statements: []Statement{
-					FlowControl{Token: EXIT},
+					Exit{},
 				},
 			},
 		},
@@ -3666,7 +3672,7 @@ var parseTests = []struct {
 									Operator: "=",
 								},
 								Statements: []Statement{
-									FlowControl{Token: EXIT},
+									Exit{},
 								},
 							},
 						},
@@ -3723,7 +3729,7 @@ var parseTests = []struct {
 							CaseWhen{
 								Condition: NewTernaryValueFromString("false"),
 								Statements: []Statement{
-									FlowControl{Token: EXIT},
+									Exit{},
 								},
 							},
 						},

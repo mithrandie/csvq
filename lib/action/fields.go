@@ -29,8 +29,10 @@ func readFields(filename string) ([]string, error) {
 
 	fileInfo, err := query.NewFileInfo(parser.Identifier{Literal: filename}, flags.Repository, flags.Delimiter)
 	if err != nil {
-		appErr, _ := err.(query.AppError)
-		return nil, errors.New(appErr.ErrorMessage())
+		if appErr, ok := err.(query.AppError); ok {
+			return nil, errors.New(appErr.ErrorMessage())
+		}
+		return nil, errors.New(err.Error())
 	}
 
 	f, err := os.Open(fileInfo.Path)

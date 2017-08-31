@@ -207,7 +207,17 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			flow = CONTINUE
 		case parser.BREAK:
 			flow = BREAK
-		case parser.EXIT:
+		}
+	case parser.Exit:
+		ex := stmt.(parser.Exit)
+		code := 0
+		if ex.Code != nil {
+			code = int(ex.Code.(parser.Integer).Value())
+		}
+		if 0 < code {
+			flow = ERROR
+			err = NewExit(code)
+		} else {
 			flow = EXIT
 		}
 	case parser.Return:

@@ -145,8 +145,13 @@ A Break statement stops statements execution in loop, then exit from current loo
 {: #exit}
 
 ```sql
-EXIT;
+EXIT [exit_code];
 ```
+
+_exit_code_
+: [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+  0 is the default.
 
 A Exit statement stops statements execution, then terminates the executing procedure without commit.
 
@@ -154,10 +159,10 @@ A Exit statement stops statements execution, then terminates the executing proce
 {: #trigger_error}
 
 ```sql
-TRIGGER ERROR [error_code] [error_message];
+TRIGGER ERROR [exit_code] [error_message];
 ```
 
-_error_code_
+_exit_code_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
   1 is the default.
