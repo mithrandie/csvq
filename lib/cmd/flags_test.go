@@ -336,12 +336,12 @@ func TestSetWithoutHeader(t *testing.T) {
 	}
 }
 
-func TestSetSilent(t *testing.T) {
+func TestSetQuiet(t *testing.T) {
 	flags := GetFlags()
 
-	SetSilent(true)
-	if !flags.Silent {
-		t.Errorf("silent = %t, expect to set %t", flags.Silent, true)
+	SetQuiet(true)
+	if !flags.Quiet {
+		t.Errorf("silent = %t, expect to set %t", flags.Quiet, true)
 	}
 }
 

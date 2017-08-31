@@ -42,8 +42,8 @@ var ViewCache = ViewMap{}
 var Results = []Result{}
 var SelectLogs = []string{}
 
-func Log(log string, silent bool) {
-	if !silent {
+func Log(log string, quiet bool) {
+	if !quiet {
 		cmd.ToStdout(log + "\n")
 	}
 }
