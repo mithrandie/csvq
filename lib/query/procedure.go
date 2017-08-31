@@ -111,7 +111,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					OperatedCount: view.OperatedRecords,
 				},
 			}
-			Log(fmt.Sprintf("%s inserted on %q.", FormatCount(view.OperatedRecords, "record"), view.FileInfo.Path), cmd.GetFlags().Silent)
+			Log(fmt.Sprintf("%s inserted on %q.", FormatCount(view.OperatedRecords, "record"), view.FileInfo.Path), cmd.GetFlags().Quiet)
 
 			view.OperatedRecords = 0
 		}
@@ -124,7 +124,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					FileInfo:      v.FileInfo,
 					OperatedCount: v.OperatedRecords,
 				}
-				Log(fmt.Sprintf("%s updated on %q.", FormatCount(v.OperatedRecords, "record"), v.FileInfo.Path), cmd.GetFlags().Silent)
+				Log(fmt.Sprintf("%s updated on %q.", FormatCount(v.OperatedRecords, "record"), v.FileInfo.Path), cmd.GetFlags().Quiet)
 
 				v.OperatedRecords = 0
 			}
@@ -138,7 +138,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					FileInfo:      v.FileInfo,
 					OperatedCount: v.OperatedRecords,
 				}
-				Log(fmt.Sprintf("%s deleted on %q.", FormatCount(v.OperatedRecords, "record"), v.FileInfo.Path), cmd.GetFlags().Silent)
+				Log(fmt.Sprintf("%s deleted on %q.", FormatCount(v.OperatedRecords, "record"), v.FileInfo.Path), cmd.GetFlags().Quiet)
 
 				v.OperatedRecords = 0
 			}
@@ -151,7 +151,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					FileInfo: view.FileInfo,
 				},
 			}
-			Log(fmt.Sprintf("file %q is created.", view.FileInfo.Path), cmd.GetFlags().Silent)
+			Log(fmt.Sprintf("file %q is created.", view.FileInfo.Path), cmd.GetFlags().Quiet)
 
 			view.OperatedRecords = 0
 		}
@@ -164,7 +164,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					OperatedCount: view.OperatedFields,
 				},
 			}
-			Log(fmt.Sprintf("%s added on %q.", FormatCount(view.OperatedFields, "field"), view.FileInfo.Path), cmd.GetFlags().Silent)
+			Log(fmt.Sprintf("%s added on %q.", FormatCount(view.OperatedFields, "field"), view.FileInfo.Path), cmd.GetFlags().Quiet)
 
 			view.OperatedRecords = 0
 		}
@@ -177,7 +177,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					OperatedCount: view.OperatedFields,
 				},
 			}
-			Log(fmt.Sprintf("%s dropped on %q.", FormatCount(view.OperatedFields, "field"), view.FileInfo.Path), cmd.GetFlags().Silent)
+			Log(fmt.Sprintf("%s dropped on %q.", FormatCount(view.OperatedFields, "field"), view.FileInfo.Path), cmd.GetFlags().Quiet)
 
 			view.OperatedRecords = 0
 		}
@@ -190,7 +190,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					OperatedCount: view.OperatedFields,
 				},
 			}
-			Log(fmt.Sprintf("%s renamed on %q.", FormatCount(view.OperatedFields, "field"), view.FileInfo.Path), cmd.GetFlags().Silent)
+			Log(fmt.Sprintf("%s renamed on %q.", FormatCount(view.OperatedFields, "field"), view.FileInfo.Path), cmd.GetFlags().Quiet)
 
 			view.OperatedRecords = 0
 		}
@@ -432,7 +432,7 @@ func (proc *Procedure) Commit(expr parser.Expression) error {
 				}
 				return NewWriteFileError(expr, err.Error())
 			}
-			Log(fmt.Sprintf("Commit: file %q is created.", filename), cmd.GetFlags().Silent)
+			Log(fmt.Sprintf("Commit: file %q is created.", filename), cmd.GetFlags().Quiet)
 			if !modified {
 				modified = true
 			}
@@ -453,7 +453,7 @@ func (proc *Procedure) Commit(expr parser.Expression) error {
 				}
 				return NewWriteFileError(expr, err.Error())
 			}
-			Log(fmt.Sprintf("Commit: file %q is updated.", filename), cmd.GetFlags().Silent)
+			Log(fmt.Sprintf("Commit: file %q is updated.", filename), cmd.GetFlags().Quiet)
 			if !modified {
 				modified = true
 			}
@@ -471,6 +471,6 @@ func (proc *Procedure) Rollback() {
 	ViewCache.Clear()
 	proc.Filter.TempViewsList.Rollback()
 
-	Log("Rolled back.", cmd.GetFlags().Silent)
+	Log("Rolled back.", cmd.GetFlags().Quiet)
 	return
 }

@@ -70,9 +70,9 @@ type Flags struct {
 	WithoutHeader  bool
 
 	// System Use
-	Silent bool
-	CPU    int
-	Stats  bool
+	Quiet bool
+	CPU   int
+	Stats bool
 
 	// Use in tests
 	Now string
@@ -100,7 +100,7 @@ func GetFlags() *Flags {
 			Format:         TEXT,
 			WriteDelimiter: ',',
 			WithoutHeader:  false,
-			Silent:         false,
+			Quiet:          false,
 			CPU:            1,
 			Stats:          false,
 			Now:            "",
@@ -333,9 +333,9 @@ func ParseEncoding(s string) (Encoding, error) {
 	return encoding, nil
 }
 
-func SetSilent(b bool) {
+func SetQuiet(b bool) {
 	f := GetFlags()
-	f.Silent = b
+	f.Quiet = b
 	return
 }
 
