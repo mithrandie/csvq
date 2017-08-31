@@ -88,7 +88,7 @@ func main() {
 		},
 		cli.BoolFlag{
 			Name:  "silent",
-			Usage: "Does not output operation logs",
+			Usage: "does not output operation logs",
 		},
 		cli.IntFlag{
 			Name:  "cpu, p",
