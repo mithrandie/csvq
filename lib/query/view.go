@@ -109,9 +109,9 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 			delimiter = ','
 		}
 		fileInfo := &FileInfo{
-			Path:      table.Object.String(),
-			Delimiter: delimiter,
-			Temporary: true,
+			Path:        table.Object.String(),
+			Delimiter:   delimiter,
+			IsTemporary: true,
 		}
 
 		if !filter.TempViewsList[len(filter.TempViewsList)-1].Exists(fileInfo.Path) {
@@ -124,7 +124,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 
 			loadView, err := loadViewFromFile(file, fileInfo)
 			if err != nil {
-				return nil, err
+				return nil, NewCsvParsingError(table.Object, fileInfo.Path, err.Error())
 			}
 			loadView.FileInfo.InitialHeader = loadView.Header.Copy()
 			loadView.FileInfo.InitialRecords = loadView.Records.Copy()
@@ -150,11 +150,11 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 			if !strings.EqualFold(filter.RecursiveTable.Name.Literal, table.Name().Literal) {
 				view.Header.Update(table.Name().Literal, nil)
 			}
-		} else if ct, err := filter.InlineTablesList.Get(tableIdentifier); err == nil {
+		} else if it, err := filter.InlineTablesList.Get(tableIdentifier); err == nil {
 			if err = filter.AliasesList.Add(table.Name(), ""); err != nil {
 				return nil, err
 			}
-			view = ct
+			view = it
 			if !strings.EqualFold(tableIdentifier.Literal, table.Name().Literal) {
 				view.Header.Update(table.Name().Literal, nil)
 			}

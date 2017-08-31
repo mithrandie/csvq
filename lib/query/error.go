@@ -15,6 +15,7 @@ const (
 
 	ERROR_INVALID_SYNTAX                    = "syntax error: unexpected %s"
 	ERROR_READ_FILE                         = "failed to read from file: %s"
+	ERROR_CREATE_FILE                       = "failed to create file: %s"
 	ERROR_WRITE_FILE                        = "failed to write to file: %s"
 	ERROR_WRITE_FILE_IN_AUTOCOMMIT          = "[Auto-Commit] failed to write to file: %s"
 	ERROR_FIELD_AMBIGUOUS                   = "field %s is ambiguous"
@@ -179,6 +180,16 @@ type ReadFileError struct {
 func NewReadFileError(expr parser.Expression, message string) error {
 	return &ReadFileError{
 		NewBaseError(expr, fmt.Sprintf(ERROR_READ_FILE, message)),
+	}
+}
+
+type CreateFileError struct {
+	*BaseError
+}
+
+func NewCreateFileError(expr parser.Expression, message string) error {
+	return &CreateFileError{
+		NewBaseError(expr, fmt.Sprintf(ERROR_CREATE_FILE, message)),
 	}
 }
 
@@ -533,7 +544,7 @@ type CsvParsingError struct {
 	*BaseError
 }
 
-func NewCsvParsingError(file parser.Identifier, filepath string, message string) error {
+func NewCsvParsingError(file parser.QueryExpression, filepath string, message string) error {
 	return &CsvParsingError{
 		NewBaseError(file, fmt.Sprintf(ERROR_CSV_PARSING, filepath, message)),
 	}

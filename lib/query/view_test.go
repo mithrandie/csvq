@@ -14,14 +14,15 @@ import (
 )
 
 var viewLoadTests = []struct {
-	Name     string
-	Encoding cmd.Encoding
-	NoHeader bool
-	From     parser.FromClause
-	Stdin    string
-	Filter   *Filter
-	Result   *View
-	Error    string
+	Name          string
+	Encoding      cmd.Encoding
+	NoHeader      bool
+	From          parser.FromClause
+	UseInternalId bool
+	Stdin         string
+	Filter        *Filter
+	Result        *View
+	Error         string
 }{
 	{
 		Name: "Dual View",
@@ -64,12 +65,57 @@ var viewLoadTests = []struct {
 				AliasesList:      AliasMapList{{}},
 			},
 		},
-	}, {
+	},
+	{
 		Name: "Load File",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
 					Object: parser.Identifier{Literal: "table1.csv"},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecord([]parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+				NewRecord([]parser.Primary{
+					parser.NewString("2"),
+					parser.NewString("str2"),
+				}),
+				NewRecord([]parser.Primary{
+					parser.NewString("3"),
+					parser.NewString("str3"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "table1.csv",
+				Delimiter: ',',
+			},
+			Filter: &Filter{
+				VariablesList:    []Variables{{}},
+				TempViewsList:    []ViewMap{{}},
+				CursorsList:      []CursorMap{{}},
+				InlineTablesList: InlineTablesList{{}},
+				AliasesList: AliasMapList{
+					{
+						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
+					},
+				},
+			},
+		},
+	},
+	{
+		Name: "Load with Parentheses",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Parentheses{
+					Expr: parser.Table{
+						Object: parser.Identifier{Literal: "table1.csv"},
+					},
 				},
 			},
 		},
@@ -144,6 +190,45 @@ var viewLoadTests = []struct {
 		},
 	},
 	{
+		Name: "Load From Stdin With Internal Id",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{Object: parser.Stdin{Stdin: "stdin"}, Alias: parser.Identifier{Literal: "t"}},
+			},
+		},
+		UseInternalId: true,
+		Stdin:         "column1,column2\n1,\"str1\"",
+		Result: &View{
+			Header: NewHeaderWithId("t", []string{"column1", "column2"}),
+			Records: []Record{
+				NewRecordWithId(0, []parser.Primary{
+					parser.NewString("1"),
+					parser.NewString("str1"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "stdin",
+				Delimiter: ',',
+			},
+			Filter: &Filter{
+				VariablesList: []Variables{{}},
+				TempViewsList: []ViewMap{
+					{
+						"STDIN": nil,
+					},
+				},
+				CursorsList:      []CursorMap{{}},
+				InlineTablesList: InlineTablesList{{}},
+				AliasesList: AliasMapList{
+					{
+						"T": "STDIN",
+					},
+				},
+			},
+			UseInternalId: true,
+		},
+	},
+	{
 		Name:  "Load From Stdin With Omitted FromClause",
 		From:  parser.FromClause{},
 		Stdin: "column1,column2\n1,\"str1\"",
@@ -175,6 +260,16 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
+	},
+	{
+		Name: "Load From Stdin Broken CSV Error",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{Object: parser.Stdin{Stdin: "stdin"}, Alias: parser.Identifier{Literal: "t"}},
+			},
+		},
+		Stdin: "column1,column2\n1\"str1\"",
+		Error: "[L:- C:-] csv parse error in file stdin: line 1, column 8: wrong number of fields in line",
 	},
 	{
 		Name: "Load From Stdin Duplicate Table Name Error",
@@ -1086,6 +1181,7 @@ func TestView_Load(t *testing.T) {
 		if v.Filter == nil {
 			v.Filter = NewEmptyFilter()
 		}
+		view.UseInternalId = v.UseInternalId
 
 		err := view.Load(v.From, v.Filter.CreateNode())
 

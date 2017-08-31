@@ -395,7 +395,7 @@ func (proc *Procedure) Commit(expr parser.Expression) error {
 			case CREATE_TABLE:
 				createFiles[result.FileInfo.Path] = result.FileInfo
 			default:
-				if !result.FileInfo.Temporary && 0 < result.OperatedCount {
+				if !result.FileInfo.IsTemporary && 0 < result.OperatedCount {
 					if _, ok := createFiles[result.FileInfo.Path]; !ok {
 						if _, ok := updateFiles[result.FileInfo.Path]; !ok {
 							updateFiles[result.FileInfo.Path] = result.FileInfo
@@ -409,20 +409,20 @@ func (proc *Procedure) Commit(expr parser.Expression) error {
 	var modified bool
 
 	if 0 < len(createFiles) {
-		for pt, fi := range createFiles {
-			view, _ := ViewCache.Get(parser.Identifier{Literal: pt})
-			viewstr, err := EncodeView(view, cmd.CSV, fi.Delimiter, false, fi.Encoding, fi.LineBreak)
+		for filename, fileinfo := range createFiles {
+			view, _ := ViewCache.Get(parser.Identifier{Literal: filename})
+			viewstr, err := EncodeView(view, cmd.CSV, fileinfo.Delimiter, false, fileinfo.Encoding, fileinfo.LineBreak)
 			if err != nil {
 				return err
 			}
 
-			if err = cmd.CreateFile(pt, viewstr); err != nil {
+			if err = cmd.CreateFile(filename, viewstr); err != nil {
 				if expr == nil {
 					return NewAutoCommitError(err.Error())
 				}
 				return NewWriteFileError(expr, err.Error())
 			}
-			Log(fmt.Sprintf("Commit: file %q is created.", pt))
+			Log(fmt.Sprintf("Commit: file %q is created.", filename))
 			if !modified {
 				modified = true
 			}
@@ -430,20 +430,20 @@ func (proc *Procedure) Commit(expr parser.Expression) error {
 	}
 
 	if 0 < len(updateFiles) {
-		for pt, fi := range updateFiles {
-			view, _ := ViewCache.Get(parser.Identifier{Literal: pt})
-			viewstr, err := EncodeView(view, cmd.CSV, fi.Delimiter, fi.NoHeader, fi.Encoding, fi.LineBreak)
+		for filename, fileinfo := range updateFiles {
+			view, _ := ViewCache.Get(parser.Identifier{Literal: filename})
+			viewstr, err := EncodeView(view, cmd.CSV, fileinfo.Delimiter, fileinfo.NoHeader, fileinfo.Encoding, fileinfo.LineBreak)
 			if err != nil {
 				return err
 			}
 
-			if err = cmd.UpdateFile(pt, viewstr); err != nil {
+			if err = cmd.UpdateFile(filename, viewstr); err != nil {
 				if expr == nil {
 					return NewAutoCommitError(err.Error())
 				}
 				return NewWriteFileError(expr, err.Error())
 			}
-			Log(fmt.Sprintf("Commit: file %q is updated.", pt))
+			Log(fmt.Sprintf("Commit: file %q is updated.", filename))
 			if !modified {
 				modified = true
 			}

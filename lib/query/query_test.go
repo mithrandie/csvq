@@ -400,7 +400,7 @@ var declareTableTests = []struct {
 			"TBL": {
 				FileInfo: &FileInfo{
 					Path:           "tbl",
-					Temporary:      true,
+					IsTemporary:    true,
 					InitialHeader:  NewHeader("tbl", []string{"column1", "column2"}),
 					InitialRecords: Records{},
 				},
@@ -443,7 +443,7 @@ var declareTableTests = []struct {
 			"TBL": {
 				FileInfo: &FileInfo{
 					Path:          "tbl",
-					Temporary:     true,
+					IsTemporary:   true,
 					InitialHeader: NewHeader("tbl", []string{"column1", "column2"}),
 					InitialRecords: Records{
 						NewRecord([]parser.Primary{
@@ -529,8 +529,8 @@ var declareTableTests = []struct {
 		ViewMap: ViewMap{
 			"TBL": {
 				FileInfo: &FileInfo{
-					Path:      "tbl",
-					Temporary: true,
+					Path:        "tbl",
+					IsTemporary: true,
 				},
 			},
 		},
@@ -1468,9 +1468,9 @@ var insertTests = []struct {
 		},
 		Result: &View{
 			FileInfo: &FileInfo{
-				Path:      "tmpview",
-				Delimiter: ',',
-				Temporary: true,
+				Path:        "tmpview",
+				Delimiter:   ',',
+				IsTemporary: true,
 			},
 			Header: NewHeader("tmpview", []string{"column1", "column2"}),
 			Records: []Record{
@@ -1516,9 +1516,9 @@ var insertTests = []struct {
 						}),
 					},
 					FileInfo: &FileInfo{
-						Path:      "tmpview",
-						Delimiter: ',',
-						Temporary: true,
+						Path:        "tmpview",
+						Delimiter:   ',',
+						IsTemporary: true,
 					},
 					OperatedRecords: 2,
 				},
@@ -1743,9 +1743,9 @@ func TestInsert(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:      "tmpview",
-					Delimiter: ',',
-					Temporary: true,
+					Path:        "tmpview",
+					Delimiter:   ',',
+					IsTemporary: true,
 				},
 			},
 		},
@@ -1924,9 +1924,9 @@ var updateTests = []struct {
 		Result: []*View{
 			{
 				FileInfo: &FileInfo{
-					Path:      "tmpview",
-					Delimiter: ',',
-					Temporary: true,
+					Path:        "tmpview",
+					Delimiter:   ',',
+					IsTemporary: true,
 				},
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
 				Records: []Record{
@@ -1957,9 +1957,9 @@ var updateTests = []struct {
 						}),
 					},
 					FileInfo: &FileInfo{
-						Path:      "tmpview",
-						Delimiter: ',',
-						Temporary: true,
+						Path:        "tmpview",
+						Delimiter:   ',',
+						IsTemporary: true,
 					},
 					OperatedRecords: 2,
 				},
@@ -2240,9 +2240,9 @@ func TestUpdate(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:      "tmpview",
-					Delimiter: ',',
-					Temporary: true,
+					Path:        "tmpview",
+					Delimiter:   ',',
+					IsTemporary: true,
 				},
 			},
 		},
@@ -2413,9 +2413,9 @@ var deleteTests = []struct {
 		Result: []*View{
 			{
 				FileInfo: &FileInfo{
-					Path:      "tmpview",
-					Delimiter: ',',
-					Temporary: true,
+					Path:        "tmpview",
+					Delimiter:   ',',
+					IsTemporary: true,
 				},
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
 				Records: []Record{
@@ -2438,9 +2438,9 @@ var deleteTests = []struct {
 						}),
 					},
 					FileInfo: &FileInfo{
-						Path:      "tmpview",
-						Delimiter: ',',
-						Temporary: true,
+						Path:        "tmpview",
+						Delimiter:   ',',
+						IsTemporary: true,
 					},
 					OperatedRecords: 1,
 				},
@@ -2614,9 +2614,9 @@ func TestDelete(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:      "tmpview",
-					Delimiter: ',',
-					Temporary: true,
+					Path:        "tmpview",
+					Delimiter:   ',',
+					IsTemporary: true,
 				},
 			},
 		},
@@ -2967,9 +2967,9 @@ var addColumnsTests = []struct {
 		},
 		Result: &View{
 			FileInfo: &FileInfo{
-				Path:      "tmpview",
-				Delimiter: ',',
-				Temporary: true,
+				Path:        "tmpview",
+				Delimiter:   ',',
+				IsTemporary: true,
 			},
 			Header: NewHeader("tmpview", []string{"column1", "column2", "column3", "column4"}),
 			Records: []Record{
@@ -3007,9 +3007,9 @@ var addColumnsTests = []struct {
 						}),
 					},
 					FileInfo: &FileInfo{
-						Path:      "tmpview",
-						Delimiter: ',',
-						Temporary: true,
+						Path:        "tmpview",
+						Delimiter:   ',',
+						IsTemporary: true,
 					},
 					OperatedFields: 2,
 				},
@@ -3255,9 +3255,9 @@ func TestAddColumns(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:      "tmpview",
-					Delimiter: ',',
-					Temporary: true,
+					Path:        "tmpview",
+					Delimiter:   ',',
+					IsTemporary: true,
 				},
 			},
 		},
@@ -3367,9 +3367,9 @@ var dropColumnsTests = []struct {
 		},
 		Result: &View{
 			FileInfo: &FileInfo{
-				Path:      "tmpview",
-				Delimiter: ',',
-				Temporary: true,
+				Path:        "tmpview",
+				Delimiter:   ',',
+				IsTemporary: true,
 			},
 			Header: NewHeader("tmpview", []string{"column1"}),
 			Records: []Record{
@@ -3395,9 +3395,9 @@ var dropColumnsTests = []struct {
 						}),
 					},
 					FileInfo: &FileInfo{
-						Path:      "tmpview",
-						Delimiter: ',',
-						Temporary: true,
+						Path:        "tmpview",
+						Delimiter:   ',',
+						IsTemporary: true,
 					},
 					OperatedFields: 1,
 				},
@@ -3446,9 +3446,9 @@ func TestDropColumns(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:      "tmpview",
-					Delimiter: ',',
-					Temporary: true,
+					Path:        "tmpview",
+					Delimiter:   ',',
+					IsTemporary: true,
 				},
 			},
 		},
@@ -3563,9 +3563,9 @@ var renameColumnTests = []struct {
 		},
 		Result: &View{
 			FileInfo: &FileInfo{
-				Path:      "tmpview",
-				Delimiter: ',',
-				Temporary: true,
+				Path:        "tmpview",
+				Delimiter:   ',',
+				IsTemporary: true,
 			},
 			Header: NewHeader("tmpview", []string{"column1", "newcolumn"}),
 			Records: []Record{
@@ -3595,9 +3595,9 @@ var renameColumnTests = []struct {
 						}),
 					},
 					FileInfo: &FileInfo{
-						Path:      "tmpview",
-						Delimiter: ',',
-						Temporary: true,
+						Path:        "tmpview",
+						Delimiter:   ',',
+						IsTemporary: true,
 					},
 					OperatedFields: 1,
 				},
@@ -3653,9 +3653,9 @@ func TestRenameColumn(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:      "tmpview",
-					Delimiter: ',',
-					Temporary: true,
+					Path:        "tmpview",
+					Delimiter:   ',',
+					IsTemporary: true,
 				},
 			},
 		},
