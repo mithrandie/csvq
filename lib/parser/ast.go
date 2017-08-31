@@ -1507,6 +1507,11 @@ type Trigger struct {
 	Code    Primary
 }
 
+type Exit struct {
+	*BaseExpr
+	Code Primary
+}
+
 func putParentheses(s string) string {
 	return "(" + s + ")"
 }

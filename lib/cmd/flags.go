@@ -70,8 +70,9 @@ type Flags struct {
 	WithoutHeader  bool
 
 	// System Use
-	CPU   int
-	Stats bool
+	Silent bool
+	CPU    int
+	Stats  bool
 
 	// Use in tests
 	Now string
@@ -94,13 +95,14 @@ func GetFlags() *Flags {
 			DatetimeFormat: "",
 			NoHeader:       false,
 			WithoutNull:    false,
-			CPU:            1,
-			Stats:          false,
 			WriteEncoding:  UTF8,
 			OutFile:        "",
 			Format:         TEXT,
 			WriteDelimiter: ',',
 			WithoutHeader:  false,
+			Silent:         false,
+			CPU:            1,
+			Stats:          false,
 			Now:            "",
 		}
 	})
@@ -329,6 +331,12 @@ func ParseEncoding(s string) (Encoding, error) {
 		return UTF8, errors.New("encoding must be one of utf8|sjis")
 	}
 	return encoding, nil
+}
+
+func SetSilent(b bool) {
+	f := GetFlags()
+	f.Silent = b
+	return
 }
 
 func SetCPU(i int) {

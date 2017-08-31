@@ -333,7 +333,11 @@ while_statement
 exit_statement
     : EXIT
     {
-        $$ = FlowControl{Token: $1.Token}
+        $$ = Exit{}
+    }
+    | EXIT INTEGER
+    {
+        $$ = Exit{Code: NewIntegerFromString($2.Literal)}
     }
 
 loop_statement
