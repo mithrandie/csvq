@@ -236,13 +236,13 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		flow, err = proc.WhileInCursor(stmt.(parser.WhileInCursor))
 	case parser.Print:
 		if printstr, err = Print(stmt.(parser.Print), proc.Filter); err == nil {
-			Log(printstr, cmd.GetFlags().Silent)
+			Log(printstr, false)
 		}
 	case parser.Function:
 		_, err = proc.Filter.Evaluate(stmt.(parser.Function))
 	case parser.Printf:
 		if printstr, err = Printf(stmt.(parser.Printf), proc.Filter); err == nil {
-			Log(printstr, cmd.GetFlags().Silent)
+			Log(printstr, false)
 		}
 	case parser.Source:
 		var externalStatements []parser.Statement
