@@ -17,7 +17,7 @@ func (list UserDefinedFunctionsList) DeclareAggregate(expr parser.AggregateDecla
 	return list[0].DeclareAggregate(expr)
 }
 
-func (list UserDefinedFunctionsList) Get(expr parser.Expression, name string) (*UserDefinedFunction, error) {
+func (list UserDefinedFunctionsList) Get(expr parser.QueryExpression, name string) (*UserDefinedFunction, error) {
 	for _, v := range list {
 		if fn, err := v.Get(expr, name); err == nil {
 			return fn, nil
@@ -74,7 +74,7 @@ func (m UserDefinedFunctionMap) DeclareAggregate(expr parser.AggregateDeclaratio
 	return nil
 }
 
-func (m UserDefinedFunctionMap) parserParameters(parameters []parser.Expression) ([]parser.Variable, map[string]parser.Expression, int, error) {
+func (m UserDefinedFunctionMap) parserParameters(parameters []parser.Expression) ([]parser.Variable, map[string]parser.QueryExpression, int, error) {
 	var isDuplicate = func(variable parser.Variable, variables []parser.Variable) bool {
 		for _, v := range variables {
 			if variable.Name == v.Name {
@@ -85,7 +85,7 @@ func (m UserDefinedFunctionMap) parserParameters(parameters []parser.Expression)
 	}
 
 	variables := make([]parser.Variable, len(parameters))
-	defaults := make(map[string]parser.Expression)
+	defaults := make(map[string]parser.QueryExpression)
 
 	required := 0
 	for i, parameter := range parameters {
@@ -123,7 +123,7 @@ func (m UserDefinedFunctionMap) CheckDuplicate(name parser.Identifier) error {
 	return nil
 }
 
-func (m UserDefinedFunctionMap) Get(fn parser.Expression, name string) (*UserDefinedFunction, error) {
+func (m UserDefinedFunctionMap) Get(fn parser.QueryExpression, name string) (*UserDefinedFunction, error) {
 	uname := strings.ToUpper(name)
 	if fn, ok := m[uname]; ok {
 		return fn, nil
@@ -135,7 +135,7 @@ type UserDefinedFunction struct {
 	Name         parser.Identifier
 	Statements   []parser.Statement
 	Parameters   []parser.Variable
-	Defaults     map[string]parser.Expression
+	Defaults     map[string]parser.QueryExpression
 	RequiredArgs int
 
 	IsAggregate bool
@@ -153,7 +153,7 @@ func (fn *UserDefinedFunction) ExecuteAggregate(values []parser.Primary, args []
 	return fn.execute(args, childScope)
 }
 
-func (fn *UserDefinedFunction) CheckArgsLen(expr parser.Expression, name string, argsLen int) error {
+func (fn *UserDefinedFunction) CheckArgsLen(expr parser.QueryExpression, name string, argsLen int) error {
 	parametersLen := len(fn.Parameters)
 	requiredLen := fn.RequiredArgs
 	if fn.IsAggregate {

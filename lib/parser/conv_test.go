@@ -516,7 +516,7 @@ func TestPrimaryToString(t *testing.T) {
 }
 
 func TestFieldIdentifier(t *testing.T) {
-	var e Expression = NewStringValue("str")
+	var e QueryExpression = NewStringValue("str")
 	expect := "str"
 	result := FieldIdentifier(e)
 	if result != expect {

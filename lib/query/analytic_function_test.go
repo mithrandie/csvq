@@ -67,12 +67,12 @@ var analyzeTests = []struct {
 			Name: "rank",
 			AnalyticClause: parser.AnalyticClause{
 				Partition: parser.Partition{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
 				},
 				OrderByClause: parser.OrderByClause{
-					Items: []parser.Expression{
+					Items: []parser.QueryExpression{
 						parser.OrderItem{
 							Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 						},
@@ -154,12 +154,12 @@ var analyzeTests = []struct {
 			Name: "rank",
 			AnalyticClause: parser.AnalyticClause{
 				Partition: parser.Partition{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
 				},
 				OrderByClause: parser.OrderByClause{
-					Items: []parser.Expression{
+					Items: []parser.QueryExpression{
 						parser.OrderItem{
 							Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 						},
@@ -194,17 +194,17 @@ var analyzeTests = []struct {
 		},
 		Function: parser.AnalyticFunction{
 			Name: "rank",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.NewIntegerValue(1),
 			},
 			AnalyticClause: parser.AnalyticClause{
 				Partition: parser.Partition{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
 				},
 				OrderByClause: parser.OrderByClause{
-					Items: []parser.Expression{
+					Items: []parser.QueryExpression{
 						parser.OrderItem{
 							Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 						},
@@ -232,7 +232,7 @@ var analyzeTests = []struct {
 		},
 		Function: parser.AnalyticFunction{
 			Name: "first_value",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
@@ -268,12 +268,12 @@ var analyzeTests = []struct {
 		},
 		Function: parser.AnalyticFunction{
 			Name: "count",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.AllColumns{},
 			},
 			AnalyticClause: parser.AnalyticClause{
 				Partition: parser.Partition{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
 				},
@@ -357,12 +357,12 @@ var analyzeTests = []struct {
 		Function: parser.AnalyticFunction{
 			Name:     "count",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 			AnalyticClause: parser.AnalyticClause{
 				Partition: parser.Partition{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
 				},
@@ -428,7 +428,7 @@ var analyzeTests = []struct {
 			Name: "count",
 			AnalyticClause: parser.AnalyticClause{
 				Partition: parser.Partition{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
 				},
@@ -454,12 +454,12 @@ var analyzeTests = []struct {
 		},
 		Function: parser.AnalyticFunction{
 			Name: "count",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 			AnalyticClause: parser.AnalyticClause{
 				Partition: parser.Partition{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
 				},
@@ -563,13 +563,13 @@ var analyzeTests = []struct {
 		},
 		Function: parser.AnalyticFunction{
 			Name: "useraggfunc",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				parser.NewIntegerValue(0),
 			},
 			AnalyticClause: parser.AnalyticClause{
 				Partition: parser.Partition{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
 				},
@@ -719,7 +719,7 @@ var analyzeTests = []struct {
 			Name: "useraggfunc",
 			AnalyticClause: parser.AnalyticClause{
 				Partition: parser.Partition{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
 				},
@@ -763,13 +763,13 @@ var analyzeTests = []struct {
 		},
 		Function: parser.AnalyticFunction{
 			Name: "useraggfunc",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 			AnalyticClause: parser.AnalyticClause{
 				Partition: parser.Partition{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
 				},
@@ -813,13 +813,13 @@ var analyzeTests = []struct {
 		},
 		Function: parser.AnalyticFunction{
 			Name: "useraggfunc",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				parser.NewIntegerValue(0),
 			},
 			AnalyticClause: parser.AnalyticClause{
 				Partition: parser.Partition{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
 				},
@@ -1009,7 +1009,7 @@ var rowNumberCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{
 		Name: "RowNumber CheckArgsLen Error",
 		Function: parser.AnalyticFunction{
 			Name: "row_number",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.NewIntegerValue(1),
 			},
 		},
@@ -1047,7 +1047,7 @@ var rankCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{
 		Name: "Rank CheckArgsLen Error",
 		Function: parser.AnalyticFunction{
 			Name: "rank",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.NewIntegerValue(1),
 			},
 		},
@@ -1092,7 +1092,7 @@ var denseRankCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{
 		Name: "DenseRank CheckArgsLen Error",
 		Function: parser.AnalyticFunction{
 			Name: "dense_rank",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.NewIntegerValue(1),
 			},
 		},
@@ -1137,7 +1137,7 @@ var cumeDistCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{
 		Name: "CumeDist CheckArgsLen Error",
 		Function: parser.AnalyticFunction{
 			Name: "cume_dist",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.NewIntegerValue(1),
 			},
 		},
@@ -1180,7 +1180,7 @@ var percentRankCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{
 		Name: "PercentRank CheckArgsLen Error",
 		Function: parser.AnalyticFunction{
 			Name: "percent_rank",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.NewIntegerValue(1),
 			},
 		},
@@ -1240,7 +1240,7 @@ var ntileValueExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{1, 2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "ntile",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.NewIntegerValue(3),
 			},
 		},
@@ -1259,7 +1259,7 @@ var ntileValueExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{1, 2},
 		Function: parser.AnalyticFunction{
 			Name: "ntile",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.NewIntegerValue(3),
 			},
 		},
@@ -1273,7 +1273,7 @@ var ntileValueExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{1, 2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "ntile",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
@@ -1284,7 +1284,7 @@ var ntileValueExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{1, 2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "ntile",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.NewNullValue(),
 			},
 		},
@@ -1295,7 +1295,7 @@ var ntileValueExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{1, 2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "ntile",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.NewIntegerValue(0),
 			},
 		},
@@ -1327,7 +1327,7 @@ var firstValueExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "first_value",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 		},
@@ -1345,7 +1345,7 @@ var firstValueExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "first_value",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 			IgnoreNulls: true,
@@ -1364,7 +1364,7 @@ var firstValueExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{2, 3},
 		Function: parser.AnalyticFunction{
 			Name: "first_value",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
@@ -1396,7 +1396,7 @@ var lastValueExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "last_value",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 		},
@@ -1414,7 +1414,7 @@ var lastValueExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "last_value",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 			IgnoreNulls: true,
@@ -1454,7 +1454,7 @@ var nthValueExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "nth_value",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				parser.NewIntegerValue(2),
 			},
@@ -1473,7 +1473,7 @@ var nthValueExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "nth_value",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
@@ -1485,7 +1485,7 @@ var nthValueExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "nth_value",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				parser.NewNullValue(),
 			},
@@ -1497,7 +1497,7 @@ var nthValueExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "nth_value",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				parser.NewIntegerValue(0),
 			},
@@ -1522,7 +1522,7 @@ var lagCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{
 		Name: "Lag CheckArgsLen Too Many Error",
 		Function: parser.AnalyticFunction{
 			Name: "lag",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				parser.NewIntegerValue(2),
 				parser.NewIntegerValue(0),
@@ -1543,7 +1543,7 @@ var lagExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "lag",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				parser.NewIntegerValue(2),
 				parser.NewIntegerValue(0),
@@ -1563,7 +1563,7 @@ var lagExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "lag",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 		},
@@ -1581,7 +1581,7 @@ var lagExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "lag",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				parser.NewIntegerValue(2),
 				parser.NewIntegerValue(0),
@@ -1602,7 +1602,7 @@ var lagExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "lag",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 				parser.NewIntegerValue(2),
 				parser.NewIntegerValue(0),
@@ -1615,7 +1615,7 @@ var lagExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "lag",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 				parser.NewIntegerValue(0),
@@ -1628,7 +1628,7 @@ var lagExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "lag",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				parser.NewNullValue(),
 				parser.NewIntegerValue(0),
@@ -1641,7 +1641,7 @@ var lagExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "lag",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				parser.NewIntegerValue(2),
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
@@ -1675,7 +1675,7 @@ var leadExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "lead",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 		},
@@ -1714,7 +1714,7 @@ var analyticListAggExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{0, 1, 2, 3, 4},
 		Function: parser.AnalyticFunction{
 			Name: "listagg",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				parser.NewStringValue(","),
 			},
@@ -1732,7 +1732,7 @@ var analyticListAggExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{0, 1, 2, 3, 4},
 		Function: parser.AnalyticFunction{
 			Name: "listagg",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 		},
@@ -1750,7 +1750,7 @@ var analyticListAggExecuteTests = []analyticFunctionExecuteTests{
 		Function: parser.AnalyticFunction{
 			Name:     "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				parser.NewStringValue(","),
 			},
@@ -1768,7 +1768,7 @@ var analyticListAggExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{0, 1, 2, 3, 4},
 		Function: parser.AnalyticFunction{
 			Name: "listagg",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 				parser.NewStringValue(","),
 			},
@@ -1780,7 +1780,7 @@ var analyticListAggExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{0, 1, 2, 3, 4},
 		Function: parser.AnalyticFunction{
 			Name: "listagg",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
@@ -1792,7 +1792,7 @@ var analyticListAggExecuteTests = []analyticFunctionExecuteTests{
 		Items: Partition{0, 1, 2, 3, 4},
 		Function: parser.AnalyticFunction{
 			Name: "listagg",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				parser.NewNullValue(),
 			},

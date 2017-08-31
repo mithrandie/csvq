@@ -5,10 +5,10 @@ package parser
 %union{
     program     []Statement
     statement   Statement
+    queryexpr   QueryExpression
+    queryexprs  []QueryExpression
     expression  Expression
     expressions []Expression
-    procexpr    ProcExpr
-    procexprs   []ProcExpr
     identifier  Identifier
     variable    Variable
     variables   []Variable
@@ -19,7 +19,7 @@ package parser
 %type<program>     loop_program
 %type<program>     function_program
 %type<program>     function_loop_program
-%type<statement>   statement
+%type<statement>   common_statement
 %type<statement>   common_loop_flow_control_statement
 %type<statement>   procedure_statement
 %type<statement>   while_statement
@@ -48,92 +48,92 @@ package parser
 %type<expressions> function_parameters
 %type<statement>   user_defined_function_statement
 %type<expression>  fetch_position
-%type<expression>  cursor_status
+%type<queryexpr>   cursor_status
 %type<statement>   command_statement
 %type<statement>   trigger_statement
-%type<expression>  select_query
-%type<expression>  select_entity
-%type<expression>  select_set_entity
-%type<expression>  select_clause
-%type<expression>  from_clause
-%type<expression>  where_clause
-%type<expression>  group_by_clause
-%type<expression>  having_clause
-%type<expression>  order_by_clause
-%type<expression>  limit_clause
-%type<expression>  limit_with
-%type<expression>  offset_clause
-%type<expression>  with_clause
-%type<expression>  inline_table
-%type<expressions> inline_tables
-%type<expression>  primitive_type
-%type<expression>  ternary
-%type<expression>  null
-%type<expression>  field_reference
-%type<expression>  value
-%type<expression>  wildcard
-%type<expression>  row_value
-%type<expressions> row_values
-%type<expressions> order_items
-%type<expression>  order_item
-%type<expression>  order_value
+%type<queryexpr>   select_query
+%type<queryexpr>   select_entity
+%type<queryexpr>   select_set_entity
+%type<queryexpr>   select_clause
+%type<queryexpr>   from_clause
+%type<queryexpr>   where_clause
+%type<queryexpr>   group_by_clause
+%type<queryexpr>   having_clause
+%type<queryexpr>   order_by_clause
+%type<queryexpr>   limit_clause
+%type<queryexpr>   limit_with
+%type<queryexpr>   offset_clause
+%type<queryexpr>   with_clause
+%type<queryexpr>   inline_table
+%type<queryexprs>  inline_tables
+%type<queryexpr>   primitive_type
+%type<queryexpr>   ternary
+%type<queryexpr>   null
+%type<queryexpr>   field_reference
+%type<queryexpr>   value
+%type<queryexpr>   wildcard
+%type<queryexpr>   row_value
+%type<queryexprs>  row_values
+%type<queryexprs>  order_items
+%type<queryexpr>   order_item
+%type<queryexpr>   order_value
 %type<token>       order_direction
 %type<token>       order_null_position
-%type<expression>  subquery
-%type<expression>  string_operation
-%type<expression>  comparison
-%type<expression>  arithmetic
-%type<expression>  logic
-%type<expressions> arguments
-%type<expression>  function
-%type<expression>  aggregate_function
-%type<expression>  listagg
-%type<expression>  analytic_function
-%type<expression>  analytic_clause
-%type<expression>  partition
-%type<expression>  table_identifier
-%type<expression>  identified_table
-%type<expression>  virtual_table_object
-%type<expression>  table
-%type<expression>  join
-%type<expression>  join_condition
-%type<expression>  field_object
-%type<expression>  field
-%type<expression>  case_expr
-%type<expression>  case_value
-%type<expressions> case_expr_when
-%type<expression>  case_expr_else
-%type<expressions> field_references
-%type<expressions> values
-%type<expressions> tables
-%type<expressions> operate_tables
-%type<expressions> identifiers
-%type<expressions> fields
+%type<queryexpr>   subquery
+%type<queryexpr>   string_operation
+%type<queryexpr>   comparison
+%type<queryexpr>   arithmetic
+%type<queryexpr>   logic
+%type<queryexprs>  arguments
+%type<queryexpr>   function
+%type<queryexpr>   aggregate_function
+%type<queryexpr>   listagg
+%type<queryexpr>   analytic_function
+%type<queryexpr>   analytic_clause
+%type<queryexpr>   partition
+%type<queryexpr>   table_identifier
+%type<queryexpr>   identified_table
+%type<queryexpr>   virtual_table_object
+%type<queryexpr>   table
+%type<queryexpr>   join
+%type<queryexpr>   join_condition
+%type<queryexpr>   field_object
+%type<queryexpr>   field
+%type<queryexpr>   case_expr
+%type<queryexpr>   case_value
+%type<queryexprs>  case_expr_when
+%type<queryexpr>   case_expr_else
+%type<queryexprs>  field_references
+%type<queryexprs>  values
+%type<queryexprs>  tables
+%type<queryexprs>  operate_tables
+%type<queryexprs>  identifiers
+%type<queryexprs>  fields
 %type<expression>  insert_query
 %type<expression>  update_query
 %type<expression>  update_set
 %type<expressions> update_set_list
 %type<expression>  delete_query
-%type<procexprs>   elseif
-%type<procexpr>    else
-%type<procexprs>   in_loop_elseif
-%type<procexpr>    in_loop_else
-%type<procexprs>   in_function_elseif
-%type<procexpr>    in_function_else
-%type<procexprs>   in_function_in_loop_elseif
-%type<procexpr>    in_function_in_loop_else
-%type<procexprs>   case_when
-%type<procexpr>    case_else
-%type<procexprs>   in_loop_case_when
-%type<procexpr>    in_loop_case_else
-%type<procexprs>   in_function_case_when
-%type<procexpr>    in_function_case_else
-%type<procexprs>   in_function_in_loop_case_when
-%type<procexpr>    in_function_in_loop_case_else
+%type<expressions> elseif
+%type<expression>  else
+%type<expressions> in_loop_elseif
+%type<expression>  in_loop_else
+%type<expressions> in_function_elseif
+%type<expression>  in_function_else
+%type<expressions> in_function_in_loop_elseif
+%type<expression>  in_function_in_loop_else
+%type<expressions> case_when
+%type<expression>  case_else
+%type<expressions> in_loop_case_when
+%type<expression>  in_loop_case_else
+%type<expressions> in_function_case_when
+%type<expression>  in_function_case_else
+%type<expressions> in_function_in_loop_case_when
+%type<expression>  in_function_in_loop_case_else
 %type<identifier>  identifier
 %type<variable>    variable
 %type<variables>   variables
-%type<expression>  variable_substitution
+%type<queryexpr>   variable_substitution
 %type<expression>  variable_assignment
 %type<expressions> variable_assignments
 %type<token>       distinct
@@ -143,6 +143,7 @@ package parser
 %type<token>       join_outer_direction
 %type<token>       all
 %type<token>       recursive
+%type<token>       as
 %type<token>       comparison_operator
 
 %token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME VARIABLE FLAG
@@ -241,7 +242,7 @@ function_loop_program
         yylex.(*Lexer).program = $$
     }
 
-statement
+common_statement
     : select_query
     {
         $$ = $1
@@ -306,7 +307,7 @@ common_loop_flow_control_statement
     }
 
 procedure_statement
-    : statement
+    : common_statement
     {
         $$ = $1
     }
@@ -336,7 +337,7 @@ exit_statement
     }
 
 loop_statement
-    : statement
+    : common_statement
     {
         $$ = $1
     }
@@ -394,7 +395,7 @@ loop_flow_control_statement
     }
 
 function_statement
-    : statement
+    : common_statement
     {
         $$ = $1
     }
@@ -428,7 +429,7 @@ function_exit_statement
     }
 
 function_loop_statement
-    : statement
+    : common_statement
     {
         $$ = $1
     }
@@ -518,19 +519,11 @@ table_operation_statement
     {
         $$ = CreateTable{Table: $3, Fields: $5}
     }
-    | CREATE TABLE identifier '(' identifiers ')' select_query
-    {
-        $$ = CreateTable{Table: $3, Fields: $5, Query: $7}
-    }
-    | CREATE TABLE identifier select_query
-    {
-        $$ = CreateTable{Table: $3, Query: $4}
-    }
-    | CREATE TABLE identifier '(' identifiers ')' AS select_query
+    | CREATE TABLE identifier '(' identifiers ')' as select_query
     {
         $$ = CreateTable{Table: $3, Fields: $5, Query: $8}
     }
-    | CREATE TABLE identifier AS select_query
+    | CREATE TABLE identifier as select_query
     {
         $$ = CreateTable{Table: $3, Query: $5}
     }
@@ -544,7 +537,7 @@ table_operation_statement
     }
     | ALTER TABLE table_identifier DROP field_reference
     {
-        $$ = DropColumns{Table: $3, Columns: []Expression{$5}}
+        $$ = DropColumns{Table: $3, Columns: []QueryExpression{$5}}
     }
     | ALTER TABLE table_identifier DROP '(' field_references ')'
     {
@@ -562,7 +555,7 @@ column_default
     }
     | identifier DEFAULT value
     {
-        $$ = ColumnDefault{Column: $1, Default: $2.Literal, Value: $3}
+        $$ = ColumnDefault{Column: $1, Value: $3}
     }
 
 column_defaults
@@ -624,11 +617,11 @@ temporary_table_statement
     {
         $$ = TableDeclaration{Table: $2, Fields: $5}
     }
-    | DECLARE identifier TABLE '(' identifiers ')' FOR select_query
+    | DECLARE identifier TABLE '(' identifiers ')' AS select_query
     {
         $$ = TableDeclaration{Table: $2, Fields: $5, Query: $8}
     }
-    | DECLARE identifier TABLE FOR select_query
+    | DECLARE identifier TABLE AS select_query
     {
         $$ = TableDeclaration{Table: $2, Query: $5}
     }
@@ -955,11 +948,11 @@ inline_table
 inline_tables
     : inline_table
     {
-        $$ = []Expression{$1}
+        $$ = []QueryExpression{$1}
     }
     | inline_table ',' inline_tables
     {
-        $$ = append([]Expression{$1}, $3...)
+        $$ = append([]QueryExpression{$1}, $3...)
     }
 
 primitive_type
@@ -1099,21 +1092,21 @@ row_value
 row_values
     : row_value
     {
-        $$ = []Expression{$1}
+        $$ = []QueryExpression{$1}
     }
     | row_value ',' row_values
     {
-        $$ = append([]Expression{$1}, $3...)
+        $$ = append([]QueryExpression{$1}, $3...)
     }
 
 order_items
     : order_item
     {
-        $$ = []Expression{$1}
+        $$ = []QueryExpression{$1}
     }
     | order_item ',' order_items
     {
-        $$ = append([]Expression{$1}, $3...)
+        $$ = append([]QueryExpression{$1}, $3...)
     }
 
 order_item
@@ -1169,21 +1162,21 @@ subquery
 string_operation
     : value STRING_OP value
     {
-        var item1 []Expression
-        var item2 []Expression
+        var item1 []QueryExpression
+        var item2 []QueryExpression
 
         c1, ok := $1.(Concat)
         if ok {
             item1 = c1.Items
         } else {
-            item1 = []Expression{$1}
+            item1 = []QueryExpression{$1}
         }
 
         c2, ok := $3.(Concat)
         if ok {
             item2 = c2.Items
         } else {
-            item2 = []Expression{$3}
+            item2 = []QueryExpression{$3}
         }
 
         $$ = Concat{Items: append(item1, item2...)}
@@ -1351,7 +1344,7 @@ aggregate_function
     }
     | COUNT '(' distinct wildcard ')'
     {
-        $$ = AggregateFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: []Expression{$4}}
+        $$ = AggregateFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: []QueryExpression{$4}}
     }
     | listagg
     {
@@ -1387,7 +1380,7 @@ analytic_function
     }
     | COUNT '(' distinct wildcard ')' OVER '(' analytic_clause ')'
     {
-        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: []Expression{$4}, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: []QueryExpression{$4}, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
     }
     | LISTAGG '(' distinct arguments ')' OVER '(' analytic_clause ')'
     {
@@ -1557,11 +1550,11 @@ case_value
 case_expr_when
     : WHEN value THEN value
     {
-        $$ = []Expression{CaseExprWhen{When: $1.Literal, Then: $3.Literal, Condition: $2, Result: $4}}
+        $$ = []QueryExpression{CaseExprWhen{When: $1.Literal, Then: $3.Literal, Condition: $2, Result: $4}}
     }
     | WHEN value THEN value case_expr_when
     {
-        $$ = append([]Expression{CaseExprWhen{When: $1.Literal, Then: $3.Literal, Condition: $2, Result: $4}}, $5...)
+        $$ = append([]QueryExpression{CaseExprWhen{When: $1.Literal, Then: $3.Literal, Condition: $2, Result: $4}}, $5...)
     }
 
 case_expr_else
@@ -1577,85 +1570,85 @@ case_expr_else
 field_references
     : field_reference
     {
-        $$ = []Expression{$1}
+        $$ = []QueryExpression{$1}
     }
     | field_reference ',' field_references
     {
-        $$ = append([]Expression{$1}, $3...)
+        $$ = append([]QueryExpression{$1}, $3...)
     }
 
 values
     : value
     {
-        $$ = []Expression{$1}
+        $$ = []QueryExpression{$1}
     }
     | value ',' values
     {
-        $$ = append([]Expression{$1}, $3...)
+        $$ = append([]QueryExpression{$1}, $3...)
     }
 
 tables
     : table
     {
-        $$ = []Expression{$1}
+        $$ = []QueryExpression{$1}
     }
     | table ',' tables
     {
-        $$ = append([]Expression{$1}, $3...)
+        $$ = append([]QueryExpression{$1}, $3...)
     }
 
 operate_tables
     : table_identifier
     {
-        $$ = []Expression{Table{Object: $1}}
+        $$ = []QueryExpression{Table{Object: $1}}
     }
     | table_identifier ',' operate_tables
     {
-        $$ = append([]Expression{Table{Object: $1}}, $3...)
+        $$ = append([]QueryExpression{Table{Object: $1}}, $3...)
     }
 
 identifiers
     : identifier
     {
-        $$ = []Expression{$1}
+        $$ = []QueryExpression{$1}
     }
     | identifier ',' identifiers
     {
-        $$ = append([]Expression{$1}, $3...)
+        $$ = append([]QueryExpression{$1}, $3...)
     }
 
 fields
     : field
     {
-        $$ = []Expression{$1}
+        $$ = []QueryExpression{$1}
     }
     | field ',' fields
     {
-        $$ = append([]Expression{$1}, $3...)
+        $$ = append([]QueryExpression{$1}, $3...)
     }
 
 insert_query
     : with_clause INSERT INTO identified_table VALUES row_values
     {
-        $$ = InsertQuery{WithClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Values: $5.Literal, ValuesList: $6}
+        $$ = InsertQuery{WithClause: $1, Table: $4, ValuesList: $6}
     }
     | with_clause INSERT INTO identified_table '(' field_references ')' VALUES row_values
     {
-        $$ = InsertQuery{WithClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Fields: $6, Values: $8.Literal, ValuesList: $9}
+        $$ = InsertQuery{WithClause: $1, Table: $4, Fields: $6, ValuesList: $9}
     }
     | with_clause INSERT INTO identified_table select_query
     {
-        $$ = InsertQuery{WithClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Query: $5.(SelectQuery)}
+        $$ = InsertQuery{WithClause: $1, Table: $4, Query: $5.(SelectQuery)}
     }
     | with_clause INSERT INTO identified_table '(' field_references ')' select_query
     {
-        $$ = InsertQuery{WithClause: $1, Insert: $2.Literal, Into: $3.Literal, Table: $4, Fields: $6, Query: $8.(SelectQuery)}
+        $$ = InsertQuery{WithClause: $1, Table: $4, Fields: $6, Query: $8.(SelectQuery)}
     }
 
 update_query
     : with_clause UPDATE operate_tables SET update_set_list from_clause where_clause
     {
-        $$ = UpdateQuery{WithClause: $1, Update: $2.Literal, Tables: $3, Set: $4.Literal, SetList: $5, FromClause: $6, WhereClause: $7}
+        $$ = UpdateQuery{WithClause: $1, Tables: $3, SetList: $5, FromClause: $6, WhereClause: $7}
     }
 
 update_set
@@ -1678,22 +1671,22 @@ delete_query
     : with_clause DELETE FROM tables where_clause
     {
         from := FromClause{From: $3.Literal, Tables: $4}
-        $$ = DeleteQuery{BaseExpr: NewBaseExpr($2), WithClause: $1, Delete: $2.Literal, FromClause: from, WhereClause: $5}
+        $$ = DeleteQuery{BaseExpr: NewBaseExpr($2), WithClause: $1, FromClause: from, WhereClause: $5}
     }
     | with_clause DELETE operate_tables FROM tables where_clause
     {
         from := FromClause{From: $4.Literal, Tables: $5}
-        $$ = DeleteQuery{BaseExpr: NewBaseExpr($2), WithClause: $1, Delete: $2.Literal, Tables: $3, FromClause: from, WhereClause: $6}
+        $$ = DeleteQuery{BaseExpr: NewBaseExpr($2), WithClause: $1, Tables: $3, FromClause: from, WhereClause: $6}
     }
 
 elseif
     : ELSEIF value THEN program
     {
-        $$ = []ProcExpr{ElseIf{Condition: $2, Statements: $4}}
+        $$ = []Expression{ElseIf{Condition: $2, Statements: $4}}
     }
     | ELSEIF value THEN program elseif
     {
-        $$ = append([]ProcExpr{ElseIf{Condition: $2, Statements: $4}}, $5...)
+        $$ = append([]Expression{ElseIf{Condition: $2, Statements: $4}}, $5...)
     }
 
 else
@@ -1709,11 +1702,11 @@ else
 in_loop_elseif
     : ELSEIF value THEN loop_program
     {
-        $$ = []ProcExpr{ElseIf{Condition: $2, Statements: $4}}
+        $$ = []Expression{ElseIf{Condition: $2, Statements: $4}}
     }
     | ELSEIF value THEN loop_program in_loop_elseif
     {
-        $$ = append([]ProcExpr{ElseIf{Condition: $2, Statements: $4}}, $5...)
+        $$ = append([]Expression{ElseIf{Condition: $2, Statements: $4}}, $5...)
     }
 
 in_loop_else
@@ -1729,11 +1722,11 @@ in_loop_else
 in_function_elseif
     : ELSEIF value THEN function_program
     {
-        $$ = []ProcExpr{ElseIf{Condition: $2, Statements: $4}}
+        $$ = []Expression{ElseIf{Condition: $2, Statements: $4}}
     }
     | ELSEIF value THEN function_program in_function_elseif
     {
-        $$ = append([]ProcExpr{ElseIf{Condition: $2, Statements: $4}}, $5...)
+        $$ = append([]Expression{ElseIf{Condition: $2, Statements: $4}}, $5...)
     }
 
 in_function_else
@@ -1749,11 +1742,11 @@ in_function_else
 in_function_in_loop_elseif
     : ELSEIF value THEN function_loop_program
     {
-        $$ = []ProcExpr{ElseIf{Condition: $2, Statements: $4}}
+        $$ = []Expression{ElseIf{Condition: $2, Statements: $4}}
     }
     | ELSEIF value THEN function_loop_program in_function_in_loop_elseif
     {
-        $$ = append([]ProcExpr{ElseIf{Condition: $2, Statements: $4}}, $5...)
+        $$ = append([]Expression{ElseIf{Condition: $2, Statements: $4}}, $5...)
     }
 
 in_function_in_loop_else
@@ -1769,11 +1762,11 @@ in_function_in_loop_else
 case_when
     : WHEN value THEN program
     {
-        $$ = []ProcExpr{CaseWhen{Condition: $2, Statements: $4}}
+        $$ = []Expression{CaseWhen{Condition: $2, Statements: $4}}
     }
     | WHEN value THEN program case_when
     {
-        $$ = append([]ProcExpr{CaseWhen{Condition: $2, Statements: $4}}, $5...)
+        $$ = append([]Expression{CaseWhen{Condition: $2, Statements: $4}}, $5...)
     }
 
 case_else
@@ -1789,11 +1782,11 @@ case_else
 in_loop_case_when
     : WHEN value THEN loop_program
     {
-        $$ = []ProcExpr{CaseWhen{Condition: $2, Statements: $4}}
+        $$ = []Expression{CaseWhen{Condition: $2, Statements: $4}}
     }
     | WHEN value THEN loop_program in_loop_case_when
     {
-        $$ = append([]ProcExpr{CaseWhen{Condition: $2, Statements: $4}}, $5...)
+        $$ = append([]Expression{CaseWhen{Condition: $2, Statements: $4}}, $5...)
     }
 
 in_loop_case_else
@@ -1809,11 +1802,11 @@ in_loop_case_else
 in_function_case_when
     : WHEN value THEN function_program
     {
-        $$ = []ProcExpr{CaseWhen{Condition: $2, Statements: $4}}
+        $$ = []Expression{CaseWhen{Condition: $2, Statements: $4}}
     }
     | WHEN value THEN function_program in_function_case_when
     {
-        $$ = append([]ProcExpr{CaseWhen{Condition: $2, Statements: $4}}, $5...)
+        $$ = append([]Expression{CaseWhen{Condition: $2, Statements: $4}}, $5...)
     }
 
 in_function_case_else
@@ -1829,11 +1822,11 @@ in_function_case_else
 in_function_in_loop_case_when
     : WHEN value THEN function_loop_program
     {
-        $$ = []ProcExpr{CaseWhen{Condition: $2, Statements: $4}}
+        $$ = []Expression{CaseWhen{Condition: $2, Statements: $4}}
     }
     | WHEN value THEN function_loop_program in_function_in_loop_case_when
     {
-        $$ = append([]ProcExpr{CaseWhen{Condition: $2, Statements: $4}}, $5...)
+        $$ = append([]Expression{CaseWhen{Condition: $2, Statements: $4}}, $5...)
     }
 
 in_function_in_loop_case_else
@@ -1988,6 +1981,16 @@ recursive
         $$ = Token{}
     }
     | RECURSIVE
+    {
+        $$ = $1
+    }
+
+as
+    :
+    {
+        $$ = Token{}
+    }
+    | AS
     {
         $$ = $1
     }

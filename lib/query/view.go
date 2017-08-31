@@ -50,13 +50,13 @@ func NewView() *View {
 
 func (view *View) Load(clause parser.FromClause, filter *Filter) error {
 	if clause.Tables == nil {
-		var obj parser.Expression
+		var obj parser.QueryExpression
 		if IsReadableFromStdin() {
 			obj = parser.Stdin{Stdin: "stdin"}
 		} else {
 			obj = parser.Dual{}
 		}
-		clause.Tables = []parser.Expression{parser.Table{Object: obj}}
+		clause.Tables = []parser.QueryExpression{parser.Table{Object: obj}}
 	}
 
 	views := make([]*View, len(clause.Tables))
@@ -80,9 +80,9 @@ func (view *View) Load(clause parser.FromClause, filter *Filter) error {
 	return nil
 }
 
-func (view *View) LoadFromTableIdentifier(table parser.Expression, filter *Filter) error {
+func (view *View) LoadFromTableIdentifier(table parser.QueryExpression, filter *Filter) error {
 	fromClause := parser.FromClause{
-		Tables: []parser.Expression{
+		Tables: []parser.QueryExpression{
 			parser.Table{Object: table},
 		},
 	}
@@ -90,7 +90,7 @@ func (view *View) LoadFromTableIdentifier(table parser.Expression, filter *Filte
 	return view.Load(fromClause, filter)
 }
 
-func loadView(tableExpr parser.Expression, filter *Filter, useInternalId bool) (*View, error) {
+func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bool) (*View, error) {
 	if parentheses, ok := tableExpr.(parser.Parentheses); ok {
 		return loadView(parentheses.Expr, filter, useInternalId)
 	}
@@ -109,9 +109,9 @@ func loadView(tableExpr parser.Expression, filter *Filter, useInternalId bool) (
 			delimiter = ','
 		}
 		fileInfo := &FileInfo{
-			Path:      table.Object.String(),
-			Delimiter: delimiter,
-			Temporary: true,
+			Path:        table.Object.String(),
+			Delimiter:   delimiter,
+			IsTemporary: true,
 		}
 
 		if !filter.TempViewsList[len(filter.TempViewsList)-1].Exists(fileInfo.Path) {
@@ -124,7 +124,7 @@ func loadView(tableExpr parser.Expression, filter *Filter, useInternalId bool) (
 
 			loadView, err := loadViewFromFile(file, fileInfo)
 			if err != nil {
-				return nil, err
+				return nil, NewCsvParsingError(table.Object, fileInfo.Path, err.Error())
 			}
 			loadView.FileInfo.InitialHeader = loadView.Header.Copy()
 			loadView.FileInfo.InitialRecords = loadView.Records.Copy()
@@ -150,11 +150,11 @@ func loadView(tableExpr parser.Expression, filter *Filter, useInternalId bool) (
 			if !strings.EqualFold(filter.RecursiveTable.Name.Literal, table.Name().Literal) {
 				view.Header.Update(table.Name().Literal, nil)
 			}
-		} else if ct, err := filter.InlineTablesList.Get(tableIdentifier); err == nil {
+		} else if it, err := filter.InlineTablesList.Get(tableIdentifier); err == nil {
 			if err = filter.AliasesList.Add(table.Name(), ""); err != nil {
 				return nil, err
 			}
-			view = ct
+			view = it
 			if !strings.EqualFold(tableIdentifier.Literal, table.Name().Literal) {
 				view.Header.Update(table.Name().Literal, nil)
 			}
@@ -462,7 +462,7 @@ func (view *View) Where(clause parser.WhereClause) error {
 	return nil
 }
 
-func (view *View) filter(condition parser.Expression) ([]int, error) {
+func (view *View) filter(condition parser.QueryExpression) ([]int, error) {
 	cpu := NumberOfCPU(view.RecordLen())
 
 	var err error
@@ -524,7 +524,7 @@ func (view *View) GroupBy(clause parser.GroupByClause) error {
 	return view.group(clause.Items)
 }
 
-func (view *View) group(items []parser.Expression) error {
+func (view *View) group(items []parser.QueryExpression) error {
 	cpu := NumberOfCPU(view.RecordLen())
 
 	var err error
@@ -624,7 +624,7 @@ func (view *View) Having(clause parser.HavingClause) error {
 }
 
 func (view *View) Select(clause parser.SelectClause) error {
-	var parseAllColumns = func(view *View, fields []parser.Expression) []parser.Expression {
+	var parseAllColumns = func(view *View, fields []parser.QueryExpression) []parser.QueryExpression {
 		insertIdx := -1
 
 		for i, field := range fields {
@@ -640,14 +640,14 @@ func (view *View) Select(clause parser.SelectClause) error {
 
 		columns := view.Header.TableColumns()
 		insertLen := len(columns)
-		insert := make([]parser.Expression, insertLen)
+		insert := make([]parser.QueryExpression, insertLen)
 		for i, c := range columns {
 			insert[i] = parser.Field{
 				Object: c,
 			}
 		}
 
-		list := make([]parser.Expression, len(fields)-1+insertLen)
+		list := make([]parser.QueryExpression, len(fields)-1+insertLen)
 		for i, field := range fields {
 			switch {
 			case i == insertIdx:
@@ -665,8 +665,8 @@ func (view *View) Select(clause parser.SelectClause) error {
 		return list
 	}
 
-	var evalFields = func(view *View, fields []parser.Expression) error {
-		fieldsObjects := make([]parser.Expression, len(fields))
+	var evalFields = func(view *View, fields []parser.QueryExpression) error {
+		fieldsObjects := make([]parser.QueryExpression, len(fields))
 		for i, f := range fields {
 			fieldsObjects[i] = f.(parser.Field).Object
 		}
@@ -780,7 +780,7 @@ func (view *View) GenerateComparisonKeys() {
 
 func (view *View) SelectAllColumns() error {
 	selectClause := parser.SelectClause{
-		Fields: []parser.Expression{
+		Fields: []parser.QueryExpression{
 			parser.Field{Object: parser.AllColumns{}},
 		},
 	}
@@ -788,7 +788,7 @@ func (view *View) SelectAllColumns() error {
 }
 
 func (view *View) OrderBy(clause parser.OrderByClause) error {
-	orderValues := make([]parser.Expression, len(clause.Items))
+	orderValues := make([]parser.QueryExpression, len(clause.Items))
 	for i, item := range clause.Items {
 		orderValues[i] = item.(parser.OrderItem).Value
 	}
@@ -866,7 +866,7 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 	return nil
 }
 
-func (view *View) additionalColumns(expr parser.Expression) ([]string, error) {
+func (view *View) additionalColumns(expr parser.QueryExpression) ([]string, error) {
 	list := []string{}
 
 	switch expr.(type) {
@@ -889,7 +889,7 @@ func (view *View) additionalColumns(expr parser.Expression) ([]string, error) {
 	case parser.AnalyticFunction:
 		fn := expr.(parser.AnalyticFunction)
 		pvalues := fn.AnalyticClause.PartitionValues()
-		ovalues := []parser.Expression(nil)
+		ovalues := []parser.QueryExpression(nil)
 		if fn.AnalyticClause.OrderByClause != nil {
 			ovalues = fn.AnalyticClause.OrderByClause.(parser.OrderByClause).Items
 		}
@@ -933,7 +933,7 @@ func (view *View) additionalColumns(expr parser.Expression) ([]string, error) {
 	return list, nil
 }
 
-func (view *View) ExtendRecordCapacity(exprs []parser.Expression) error {
+func (view *View) ExtendRecordCapacity(exprs []parser.QueryExpression) error {
 	additions := []string{}
 	for _, expr := range exprs {
 		columns, err := view.additionalColumns(expr)
@@ -972,7 +972,7 @@ func (view *View) ExtendRecordCapacity(exprs []parser.Expression) error {
 	return nil
 }
 
-func (view *View) evalColumn(obj parser.Expression, alias string) (idx int, err error) {
+func (view *View) evalColumn(obj parser.QueryExpression, alias string) (idx int, err error) {
 	switch obj.(type) {
 	case parser.FieldReference, parser.ColumnNumber:
 		if idx, err = view.FieldIndex(obj); err != nil {
@@ -1161,7 +1161,7 @@ func (view *View) Limit(clause parser.LimitClause) error {
 	return nil
 }
 
-func (view *View) InsertValues(fields []parser.Expression, list []parser.Expression) error {
+func (view *View) InsertValues(fields []parser.QueryExpression, list []parser.QueryExpression) error {
 	valuesList := make([][]parser.Primary, len(list))
 
 	for i, item := range list {
@@ -1180,7 +1180,7 @@ func (view *View) InsertValues(fields []parser.Expression, list []parser.Express
 	return view.insert(fields, valuesList)
 }
 
-func (view *View) InsertFromQuery(fields []parser.Expression, query parser.SelectQuery) error {
+func (view *View) InsertFromQuery(fields []parser.QueryExpression, query parser.SelectQuery) error {
 	insertView, err := Select(query, view.Filter)
 	if err != nil {
 		return err
@@ -1202,7 +1202,7 @@ func (view *View) InsertFromQuery(fields []parser.Expression, query parser.Selec
 	return view.insert(fields, valuesList)
 }
 
-func (view *View) insert(fields []parser.Expression, valuesList [][]parser.Primary) error {
+func (view *View) insert(fields []parser.QueryExpression, valuesList [][]parser.Primary) error {
 	var valueIndex = func(i int, list []int) int {
 		for j, v := range list {
 			if i == v {
@@ -1387,7 +1387,7 @@ func (view *View) Intersect(calcView *View, all bool) {
 	view.comparisonKeys = nil
 }
 
-func (view *View) ListValuesForAggregateFunctions(expr parser.Expression, arg parser.Expression, distinct bool, filter *Filter) ([]parser.Primary, error) {
+func (view *View) ListValuesForAggregateFunctions(expr parser.QueryExpression, arg parser.QueryExpression, distinct bool, filter *Filter) ([]parser.Primary, error) {
 	cpu := NumberOfCPU(view.RecordLen())
 	list := make([]parser.Primary, view.RecordLen())
 	var err error
@@ -1479,14 +1479,14 @@ func (view *View) RestoreHeaderReferences() {
 	view.Header.Update(parser.FormatTableName(view.FileInfo.Path), nil)
 }
 
-func (view *View) FieldIndex(fieldRef parser.Expression) (int, error) {
+func (view *View) FieldIndex(fieldRef parser.QueryExpression) (int, error) {
 	if number, ok := fieldRef.(parser.ColumnNumber); ok {
 		return view.Header.ContainsNumber(number)
 	}
 	return view.Header.Contains(fieldRef.(parser.FieldReference))
 }
 
-func (view *View) FieldIndices(fields []parser.Expression) ([]int, error) {
+func (view *View) FieldIndices(fields []parser.QueryExpression) ([]int, error) {
 	indices := make([]int, len(fields))
 	for i, v := range fields {
 		idx, err := view.FieldIndex(v)
@@ -1498,7 +1498,7 @@ func (view *View) FieldIndices(fields []parser.Expression) ([]int, error) {
 	return indices, nil
 }
 
-func (view *View) FieldViewName(fieldRef parser.Expression) (string, error) {
+func (view *View) FieldViewName(fieldRef parser.QueryExpression) (string, error) {
 	idx, err := view.FieldIndex(fieldRef)
 	if err != nil {
 		return "", err

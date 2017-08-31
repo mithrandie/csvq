@@ -134,7 +134,7 @@ func (m ViewMap) Replace(view *View) error {
 func (m ViewMap) DisposeTemporaryTable(table parser.Identifier) error {
 	uname := strings.ToUpper(table.Literal)
 	if v, ok := m[uname]; ok {
-		if v.FileInfo.Temporary {
+		if v.FileInfo.IsTemporary {
 			delete(m, uname)
 			return nil
 		} else {

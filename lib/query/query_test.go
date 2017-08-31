@@ -391,7 +391,7 @@ var declareTableTests = []struct {
 		Name: "Declare Table",
 		Expr: parser.TableDeclaration{
 			Table: parser.Identifier{Literal: "tbl"},
-			Fields: []parser.Expression{
+			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "column1"},
 				parser.Identifier{Literal: "column2"},
 			},
@@ -400,7 +400,7 @@ var declareTableTests = []struct {
 			"TBL": {
 				FileInfo: &FileInfo{
 					Path:           "tbl",
-					Temporary:      true,
+					IsTemporary:    true,
 					InitialHeader:  NewHeader("tbl", []string{"column1", "column2"}),
 					InitialRecords: Records{},
 				},
@@ -413,7 +413,7 @@ var declareTableTests = []struct {
 		Name: "Declare Table Field Duplicate Error",
 		Expr: parser.TableDeclaration{
 			Table: parser.Identifier{Literal: "tbl"},
-			Fields: []parser.Expression{
+			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "column1"},
 				parser.Identifier{Literal: "column1"},
 			},
@@ -424,14 +424,14 @@ var declareTableTests = []struct {
 		Name: "Declare Table From Query",
 		Expr: parser.TableDeclaration{
 			Table: parser.Identifier{Literal: "tbl"},
-			Fields: []parser.Expression{
+			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "column1"},
 				parser.Identifier{Literal: "column2"},
 			},
 			Query: parser.SelectQuery{
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.NewIntegerValueFromString("1")},
 							parser.Field{Object: parser.NewIntegerValueFromString("2")},
 						},
@@ -443,7 +443,7 @@ var declareTableTests = []struct {
 			"TBL": {
 				FileInfo: &FileInfo{
 					Path:          "tbl",
-					Temporary:     true,
+					IsTemporary:   true,
 					InitialHeader: NewHeader("tbl", []string{"column1", "column2"}),
 					InitialRecords: Records{
 						NewRecord([]parser.Primary{
@@ -466,14 +466,14 @@ var declareTableTests = []struct {
 		Name: "Declare Table From Query Query Error",
 		Expr: parser.TableDeclaration{
 			Table: parser.Identifier{Literal: "tbl"},
-			Fields: []parser.Expression{
+			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "column1"},
 				parser.Identifier{Literal: "column2"},
 			},
 			Query: parser.SelectQuery{
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.NewIntegerValueFromString("1")},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
 						},
@@ -487,13 +487,13 @@ var declareTableTests = []struct {
 		Name: "Declare Table From Query Field Update Error",
 		Expr: parser.TableDeclaration{
 			Table: parser.Identifier{Literal: "tbl"},
-			Fields: []parser.Expression{
+			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "column1"},
 			},
 			Query: parser.SelectQuery{
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.NewIntegerValueFromString("1")},
 							parser.Field{Object: parser.NewIntegerValueFromString("2")},
 						},
@@ -507,14 +507,14 @@ var declareTableTests = []struct {
 		Name: "Declare Table  From Query Field Duplicate Error",
 		Expr: parser.TableDeclaration{
 			Table: parser.Identifier{Literal: "tbl"},
-			Fields: []parser.Expression{
+			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "column1"},
 				parser.Identifier{Literal: "column1"},
 			},
 			Query: parser.SelectQuery{
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.NewIntegerValueFromString("1")},
 							parser.Field{Object: parser.NewIntegerValueFromString("2")},
 						},
@@ -529,14 +529,14 @@ var declareTableTests = []struct {
 		ViewMap: ViewMap{
 			"TBL": {
 				FileInfo: &FileInfo{
-					Path:      "tbl",
-					Temporary: true,
+					Path:        "tbl",
+					IsTemporary: true,
 				},
 			},
 		},
 		Expr: parser.TableDeclaration{
 			Table: parser.Identifier{Literal: "tbl"},
-			Fields: []parser.Expression{
+			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "column1"},
 				parser.Identifier{Literal: "column2"},
 			},
@@ -585,13 +585,13 @@ var selectTests = []struct {
 		Query: parser.SelectQuery{
 			SelectEntity: parser.SelectEntity{
 				SelectClause: parser.SelectClause{
-					Fields: []parser.Expression{
+					Fields: []parser.QueryExpression{
 						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
-						parser.Field{Object: parser.AggregateFunction{Name: "count", Args: []parser.Expression{parser.AllColumns{}}}},
+						parser.Field{Object: parser.AggregateFunction{Name: "count", Args: []parser.QueryExpression{parser.AllColumns{}}}},
 					},
 				},
 				FromClause: parser.FromClause{
-					Tables: []parser.Expression{
+					Tables: []parser.QueryExpression{
 						parser.Table{Object: parser.Identifier{Literal: "group_table"}},
 					},
 				},
@@ -603,20 +603,20 @@ var selectTests = []struct {
 					},
 				},
 				GroupByClause: parser.GroupByClause{
-					Items: []parser.Expression{
+					Items: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
 				},
 				HavingClause: parser.HavingClause{
 					Filter: parser.Comparison{
-						LHS:      parser.AggregateFunction{Name: "count", Args: []parser.Expression{parser.AllColumns{}}},
+						LHS:      parser.AggregateFunction{Name: "count", Args: []parser.QueryExpression{parser.AllColumns{}}},
 						RHS:      parser.NewIntegerValueFromString("1"),
 						Operator: ">",
 					},
 				},
 			},
 			OrderByClause: parser.OrderByClause{
-				Items: []parser.Expression{
+				Items: []parser.QueryExpression{
 					parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 				},
 			},
@@ -665,13 +665,13 @@ var selectTests = []struct {
 		Query: parser.SelectQuery{
 			SelectEntity: parser.SelectEntity{
 				SelectClause: parser.SelectClause{
-					Fields: []parser.Expression{
+					Fields: []parser.QueryExpression{
 						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 					},
 				},
 				FromClause: parser.FromClause{
-					Tables: []parser.Expression{
+					Tables: []parser.QueryExpression{
 						parser.Table{Object: parser.Identifier{Literal: "table1"}},
 					},
 				},
@@ -703,13 +703,13 @@ var selectTests = []struct {
 			SelectEntity: parser.SelectSet{
 				LHS: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 						},
 					},
 					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table1"}},
 						},
 					},
@@ -717,13 +717,13 @@ var selectTests = []struct {
 				Operator: parser.Token{Token: parser.UNION, Literal: "union"},
 				RHS: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column3"}}},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}}},
 						},
 					},
 					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table4"}},
 						},
 					},
@@ -758,13 +758,13 @@ var selectTests = []struct {
 			SelectEntity: parser.SelectSet{
 				LHS: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 						},
 					},
 					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table1"}},
 						},
 					},
@@ -772,13 +772,13 @@ var selectTests = []struct {
 				Operator: parser.Token{Token: parser.INTERSECT, Literal: "intersect"},
 				RHS: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column3"}}},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}}},
 						},
 					},
 					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table4"}},
 						},
 					},
@@ -805,13 +805,13 @@ var selectTests = []struct {
 			SelectEntity: parser.SelectSet{
 				LHS: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 						},
 					},
 					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table1"}},
 						},
 					},
@@ -819,13 +819,13 @@ var selectTests = []struct {
 				Operator: parser.Token{Token: parser.EXCEPT, Literal: "except"},
 				RHS: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column3"}}},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}}},
 						},
 					},
 					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table4"}},
 						},
 					},
@@ -850,13 +850,13 @@ var selectTests = []struct {
 					Query: parser.SelectQuery{
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
-								Fields: []parser.Expression{
+								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 								},
 							},
 							FromClause: parser.FromClause{
-								Tables: []parser.Expression{
+								Tables: []parser.QueryExpression{
 									parser.Table{Object: parser.Identifier{Literal: "table1"}},
 								},
 							},
@@ -866,13 +866,13 @@ var selectTests = []struct {
 				Operator: parser.Token{Token: parser.UNION, Literal: "union"},
 				RHS: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column3"}}},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}}},
 						},
 					},
 					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table4"}},
 						},
 					},
@@ -907,13 +907,13 @@ var selectTests = []struct {
 			SelectEntity: parser.SelectSet{
 				LHS: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 						},
 					},
 					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table1"}},
 						},
 					},
@@ -921,12 +921,12 @@ var selectTests = []struct {
 				Operator: parser.Token{Token: parser.UNION, Literal: "union"},
 				RHS: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column3"}}},
 						},
 					},
 					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table4"}},
 						},
 					},
@@ -941,13 +941,13 @@ var selectTests = []struct {
 			SelectEntity: parser.SelectSet{
 				LHS: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
 						},
 					},
 					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table1"}},
 						},
 					},
@@ -955,13 +955,13 @@ var selectTests = []struct {
 				Operator: parser.Token{Token: parser.UNION, Literal: "union"},
 				RHS: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column3"}}},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}}},
 						},
 					},
 					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table4"}},
 						},
 					},
@@ -976,13 +976,13 @@ var selectTests = []struct {
 			SelectEntity: parser.SelectSet{
 				LHS: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 						},
 					},
 					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table1"}},
 						},
 					},
@@ -990,13 +990,13 @@ var selectTests = []struct {
 				Operator: parser.Token{Token: parser.UNION, Literal: "union"},
 				RHS: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column3"}}},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
 						},
 					},
 					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table4"}},
 						},
 					},
@@ -1010,10 +1010,10 @@ var selectTests = []struct {
 		Query: parser.SelectQuery{
 			WithClause: parser.WithClause{
 				With: "with",
-				InlineTables: []parser.Expression{
+				InlineTables: []parser.QueryExpression{
 					parser.InlineTable{
 						Name: parser.Identifier{Literal: "it"},
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Identifier{Literal: "c1"},
 						},
 						As: "as",
@@ -1021,7 +1021,7 @@ var selectTests = []struct {
 							SelectEntity: parser.SelectEntity{
 								SelectClause: parser.SelectClause{
 									Select: "select",
-									Fields: []parser.Expression{
+									Fields: []parser.QueryExpression{
 										parser.Field{Object: parser.NewIntegerValueFromString("2")},
 									},
 								},
@@ -1032,12 +1032,12 @@ var selectTests = []struct {
 			},
 			SelectEntity: parser.SelectEntity{
 				SelectClause: parser.SelectClause{
-					Fields: []parser.Expression{
+					Fields: []parser.QueryExpression{
 						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "c1"}}},
 					},
 				},
 				FromClause: parser.FromClause{
-					Tables: []parser.Expression{
+					Tables: []parser.QueryExpression{
 						parser.Table{Object: parser.Identifier{Literal: "it"}},
 					},
 				},
@@ -1057,10 +1057,10 @@ var selectTests = []struct {
 		Query: parser.SelectQuery{
 			WithClause: parser.WithClause{
 				With: "with",
-				InlineTables: []parser.Expression{
+				InlineTables: []parser.QueryExpression{
 					parser.InlineTable{
 						Name: parser.Identifier{Literal: "it"},
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Identifier{Literal: "c1"},
 						},
 						As: "as",
@@ -1068,13 +1068,13 @@ var selectTests = []struct {
 							SelectEntity: parser.SelectSet{
 								LHS: parser.SelectEntity{
 									SelectClause: parser.SelectClause{
-										Fields: []parser.Expression{
+										Fields: []parser.QueryExpression{
 											parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 											parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 										},
 									},
 									FromClause: parser.FromClause{
-										Tables: []parser.Expression{
+										Tables: []parser.QueryExpression{
 											parser.Table{Object: parser.Identifier{Literal: "table1"}},
 										},
 									},
@@ -1082,13 +1082,13 @@ var selectTests = []struct {
 								Operator: parser.Token{Token: parser.UNION, Literal: "union"},
 								RHS: parser.SelectEntity{
 									SelectClause: parser.SelectClause{
-										Fields: []parser.Expression{
+										Fields: []parser.QueryExpression{
 											parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column3"}}},
 											parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}}},
 										},
 									},
 									FromClause: parser.FromClause{
-										Tables: []parser.Expression{
+										Tables: []parser.QueryExpression{
 											parser.Table{Object: parser.Identifier{Literal: "table4"}},
 										},
 									},
@@ -1100,12 +1100,12 @@ var selectTests = []struct {
 			},
 			SelectEntity: parser.SelectEntity{
 				SelectClause: parser.SelectClause{
-					Fields: []parser.Expression{
+					Fields: []parser.QueryExpression{
 						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "c1"}}},
 					},
 				},
 				FromClause: parser.FromClause{
-					Tables: []parser.Expression{
+					Tables: []parser.QueryExpression{
 						parser.Table{Object: parser.Identifier{Literal: "it"}},
 					},
 				},
@@ -1118,11 +1118,11 @@ var selectTests = []struct {
 		Query: parser.SelectQuery{
 			WithClause: parser.WithClause{
 				With: "with",
-				InlineTables: []parser.Expression{
+				InlineTables: []parser.QueryExpression{
 					parser.InlineTable{
 						Recursive: parser.Token{Token: parser.RECURSIVE, Literal: "recursive"},
 						Name:      parser.Identifier{Literal: "it"},
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Identifier{Literal: "n"},
 						},
 						As: "as",
@@ -1131,7 +1131,7 @@ var selectTests = []struct {
 								LHS: parser.SelectEntity{
 									SelectClause: parser.SelectClause{
 										Select: "select",
-										Fields: []parser.Expression{
+										Fields: []parser.QueryExpression{
 											parser.Field{Object: parser.NewIntegerValueFromString("1")},
 										},
 									},
@@ -1140,7 +1140,7 @@ var selectTests = []struct {
 								RHS: parser.SelectEntity{
 									SelectClause: parser.SelectClause{
 										Select: "select",
-										Fields: []parser.Expression{
+										Fields: []parser.QueryExpression{
 											parser.Field{
 												Object: parser.Arithmetic{
 													LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
@@ -1151,7 +1151,7 @@ var selectTests = []struct {
 										},
 									},
 									FromClause: parser.FromClause{
-										Tables: []parser.Expression{
+										Tables: []parser.QueryExpression{
 											parser.Table{Object: parser.Identifier{Literal: "it"}},
 										},
 									},
@@ -1170,12 +1170,12 @@ var selectTests = []struct {
 			},
 			SelectEntity: parser.SelectEntity{
 				SelectClause: parser.SelectClause{
-					Fields: []parser.Expression{
+					Fields: []parser.QueryExpression{
 						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "n"}}},
 					},
 				},
 				FromClause: parser.FromClause{
-					Tables: []parser.Expression{
+					Tables: []parser.QueryExpression{
 						parser.Table{Object: parser.Identifier{Literal: "it"}},
 					},
 				},
@@ -1208,11 +1208,11 @@ var selectTests = []struct {
 		Query: parser.SelectQuery{
 			WithClause: parser.WithClause{
 				With: "with",
-				InlineTables: []parser.Expression{
+				InlineTables: []parser.QueryExpression{
 					parser.InlineTable{
 						Recursive: parser.Token{Token: parser.RECURSIVE, Literal: "recursive"},
 						Name:      parser.Identifier{Literal: "it"},
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Identifier{Literal: "n"},
 						},
 						As: "as",
@@ -1221,7 +1221,7 @@ var selectTests = []struct {
 								LHS: parser.SelectEntity{
 									SelectClause: parser.SelectClause{
 										Select: "select",
-										Fields: []parser.Expression{
+										Fields: []parser.QueryExpression{
 											parser.Field{Object: parser.NewIntegerValueFromString("1")},
 										},
 									},
@@ -1230,7 +1230,7 @@ var selectTests = []struct {
 								RHS: parser.SelectEntity{
 									SelectClause: parser.SelectClause{
 										Select: "select",
-										Fields: []parser.Expression{
+										Fields: []parser.QueryExpression{
 											parser.Field{
 												Object: parser.Arithmetic{
 													LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
@@ -1242,7 +1242,7 @@ var selectTests = []struct {
 										},
 									},
 									FromClause: parser.FromClause{
-										Tables: []parser.Expression{
+										Tables: []parser.QueryExpression{
 											parser.Table{Object: parser.Identifier{Literal: "it"}},
 										},
 									},
@@ -1261,12 +1261,12 @@ var selectTests = []struct {
 			},
 			SelectEntity: parser.SelectEntity{
 				SelectClause: parser.SelectClause{
-					Fields: []parser.Expression{
+					Fields: []parser.QueryExpression{
 						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "n"}}},
 					},
 				},
 				FromClause: parser.FromClause{
-					Tables: []parser.Expression{
+					Tables: []parser.QueryExpression{
 						parser.Table{Object: parser.Identifier{Literal: "it"}},
 					},
 				},
@@ -1316,10 +1316,10 @@ var insertTests = []struct {
 		Query: parser.InsertQuery{
 			WithClause: parser.WithClause{
 				With: "with",
-				InlineTables: []parser.Expression{
+				InlineTables: []parser.QueryExpression{
 					parser.InlineTable{
 						Name: parser.Identifier{Literal: "it"},
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Identifier{Literal: "c1"},
 						},
 						As: "as",
@@ -1327,7 +1327,7 @@ var insertTests = []struct {
 							SelectEntity: parser.SelectEntity{
 								SelectClause: parser.SelectClause{
 									Select: "select",
-									Fields: []parser.Expression{
+									Fields: []parser.QueryExpression{
 										parser.Field{Object: parser.NewIntegerValueFromString("2")},
 									},
 								},
@@ -1336,35 +1336,32 @@ var insertTests = []struct {
 					},
 				},
 			},
-			Insert: "insert",
-			Into:   "into",
-			Table:  parser.Table{Object: parser.Identifier{Literal: "table1"}},
-			Fields: []parser.Expression{
+			Table: parser.Table{Object: parser.Identifier{Literal: "table1"}},
+			Fields: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
-			Values: "values",
-			ValuesList: []parser.Expression{
+			ValuesList: []parser.QueryExpression{
 				parser.RowValue{
 					Value: parser.ValueList{
-						Values: []parser.Expression{
+						Values: []parser.QueryExpression{
 							parser.NewIntegerValueFromString("4"),
 						},
 					},
 				},
 				parser.RowValue{
 					Value: parser.ValueList{
-						Values: []parser.Expression{
+						Values: []parser.QueryExpression{
 							parser.Subquery{
 								Query: parser.SelectQuery{
 									SelectEntity: parser.SelectEntity{
 										SelectClause: parser.SelectClause{
 											Select: "select",
-											Fields: []parser.Expression{
+											Fields: []parser.QueryExpression{
 												parser.Field{Object: parser.FieldReference{View: parser.Identifier{Literal: "it"}, Column: parser.Identifier{Literal: "c1"}}},
 											},
 										},
 										FromClause: parser.FromClause{
-											Tables: []parser.Expression{
+											Tables: []parser.QueryExpression{
 												parser.Table{Object: parser.Identifier{Literal: "it"}},
 											},
 										},
@@ -1448,24 +1445,21 @@ var insertTests = []struct {
 	{
 		Name: "Insert Query For Temporary View",
 		Query: parser.InsertQuery{
-			Insert: "insert",
-			Into:   "into",
-			Table:  parser.Table{Object: parser.Identifier{Literal: "tmpview"}, Alias: parser.Identifier{Literal: "t"}},
-			Fields: []parser.Expression{
+			Table: parser.Table{Object: parser.Identifier{Literal: "tmpview"}, Alias: parser.Identifier{Literal: "t"}},
+			Fields: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
-			Values: "values",
-			ValuesList: []parser.Expression{
+			ValuesList: []parser.QueryExpression{
 				parser.RowValue{
 					Value: parser.ValueList{
-						Values: []parser.Expression{
+						Values: []parser.QueryExpression{
 							parser.NewIntegerValueFromString("4"),
 						},
 					},
 				},
 				parser.RowValue{
 					Value: parser.ValueList{
-						Values: []parser.Expression{
+						Values: []parser.QueryExpression{
 							parser.NewIntegerValueFromString("2"),
 						},
 					},
@@ -1474,9 +1468,9 @@ var insertTests = []struct {
 		},
 		Result: &View{
 			FileInfo: &FileInfo{
-				Path:      "tmpview",
-				Delimiter: ',',
-				Temporary: true,
+				Path:        "tmpview",
+				Delimiter:   ',',
+				IsTemporary: true,
 			},
 			Header: NewHeader("tmpview", []string{"column1", "column2"}),
 			Records: []Record{
@@ -1522,9 +1516,9 @@ var insertTests = []struct {
 						}),
 					},
 					FileInfo: &FileInfo{
-						Path:      "tmpview",
-						Delimiter: ',',
-						Temporary: true,
+						Path:        "tmpview",
+						Delimiter:   ',',
+						IsTemporary: true,
 					},
 					OperatedRecords: 2,
 				},
@@ -1534,14 +1528,11 @@ var insertTests = []struct {
 	{
 		Name: "Insert Query All Columns",
 		Query: parser.InsertQuery{
-			Insert: "insert",
-			Into:   "into",
-			Table:  parser.Table{Object: parser.Identifier{Literal: "table1"}},
-			Values: "values",
-			ValuesList: []parser.Expression{
+			Table: parser.Table{Object: parser.Identifier{Literal: "table1"}},
+			ValuesList: []parser.QueryExpression{
 				parser.RowValue{
 					Value: parser.ValueList{
-						Values: []parser.Expression{
+						Values: []parser.QueryExpression{
 							parser.NewIntegerValueFromString("4"),
 							parser.NewStringValue("str4"),
 						},
@@ -1549,7 +1540,7 @@ var insertTests = []struct {
 				},
 				parser.RowValue{
 					Value: parser.ValueList{
-						Values: []parser.Expression{
+						Values: []parser.QueryExpression{
 							parser.NewIntegerValueFromString("5"),
 							parser.NewStringValue("str5"),
 						},
@@ -1594,24 +1585,21 @@ var insertTests = []struct {
 	{
 		Name: "Insert Query File Does Not Exist Error",
 		Query: parser.InsertQuery{
-			Insert: "insert",
-			Into:   "into",
-			Table:  parser.Table{Object: parser.Identifier{Literal: "notexist"}},
-			Fields: []parser.Expression{
+			Table: parser.Table{Object: parser.Identifier{Literal: "notexist"}},
+			Fields: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
-			Values: "values",
-			ValuesList: []parser.Expression{
+			ValuesList: []parser.QueryExpression{
 				parser.RowValue{
 					Value: parser.ValueList{
-						Values: []parser.Expression{
+						Values: []parser.QueryExpression{
 							parser.NewIntegerValueFromString("4"),
 						},
 					},
 				},
 				parser.RowValue{
 					Value: parser.ValueList{
-						Values: []parser.Expression{
+						Values: []parser.QueryExpression{
 							parser.NewIntegerValueFromString("5"),
 						},
 					},
@@ -1623,24 +1611,21 @@ var insertTests = []struct {
 	{
 		Name: "Insert Query Field Does Not Exist Error",
 		Query: parser.InsertQuery{
-			Insert: "insert",
-			Into:   "into",
-			Table:  parser.Table{Object: parser.Identifier{Literal: "table1"}},
-			Fields: []parser.Expression{
+			Table: parser.Table{Object: parser.Identifier{Literal: "table1"}},
+			Fields: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
-			Values: "values",
-			ValuesList: []parser.Expression{
+			ValuesList: []parser.QueryExpression{
 				parser.RowValue{
 					Value: parser.ValueList{
-						Values: []parser.Expression{
+						Values: []parser.QueryExpression{
 							parser.NewIntegerValueFromString("4"),
 						},
 					},
 				},
 				parser.RowValue{
 					Value: parser.ValueList{
-						Values: []parser.Expression{
+						Values: []parser.QueryExpression{
 							parser.NewIntegerValueFromString("5"),
 						},
 					},
@@ -1652,23 +1637,21 @@ var insertTests = []struct {
 	{
 		Name: "Insert Select Query",
 		Query: parser.InsertQuery{
-			Insert: "insert",
-			Into:   "into",
-			Table:  parser.Table{Object: parser.Identifier{Literal: "table1"}},
-			Fields: []parser.Expression{
+			Table: parser.Table{Object: parser.Identifier{Literal: "table1"}},
+			Fields: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 			Query: parser.SelectQuery{
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column3"}}},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}}},
 						},
 					},
 					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table2"}},
 						},
 					},
@@ -1716,22 +1699,20 @@ var insertTests = []struct {
 	{
 		Name: "Insert Select Query Field Does Not Exist Error",
 		Query: parser.InsertQuery{
-			Insert: "insert",
-			Into:   "into",
-			Table:  parser.Table{Object: parser.Identifier{Literal: "table1"}},
-			Fields: []parser.Expression{
+			Table: parser.Table{Object: parser.Identifier{Literal: "table1"}},
+			Fields: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 			Query: parser.SelectQuery{
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column3"}}},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}}},
 						},
 					},
 					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table2"}},
 						},
 					},
@@ -1762,9 +1743,9 @@ func TestInsert(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:      "tmpview",
-					Delimiter: ',',
-					Temporary: true,
+					Path:        "tmpview",
+					Delimiter:   ',',
+					IsTemporary: true,
 				},
 			},
 		},
@@ -1815,10 +1796,10 @@ var updateTests = []struct {
 		Query: parser.UpdateQuery{
 			WithClause: parser.WithClause{
 				With: "with",
-				InlineTables: []parser.Expression{
+				InlineTables: []parser.QueryExpression{
 					parser.InlineTable{
 						Name: parser.Identifier{Literal: "it"},
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Identifier{Literal: "c1"},
 						},
 						As: "as",
@@ -1826,7 +1807,7 @@ var updateTests = []struct {
 							SelectEntity: parser.SelectEntity{
 								SelectClause: parser.SelectClause{
 									Select: "select",
-									Fields: []parser.Expression{
+									Fields: []parser.QueryExpression{
 										parser.Field{Object: parser.NewIntegerValueFromString("2")},
 									},
 								},
@@ -1835,11 +1816,9 @@ var updateTests = []struct {
 					},
 				},
 			},
-			Update: "update",
-			Tables: []parser.Expression{
+			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			},
-			Set: "set",
 			SetList: []parser.Expression{
 				parser.UpdateSet{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
@@ -1858,12 +1837,12 @@ var updateTests = []struct {
 							SelectEntity: parser.SelectEntity{
 								SelectClause: parser.SelectClause{
 									Select: "select",
-									Fields: []parser.Expression{
+									Fields: []parser.QueryExpression{
 										parser.Field{Object: parser.FieldReference{View: parser.Identifier{Literal: "it"}, Column: parser.Identifier{Literal: "c1"}}},
 									},
 								},
 								FromClause: parser.FromClause{
-									Tables: []parser.Expression{
+									Tables: []parser.QueryExpression{
 										parser.Table{Object: parser.Identifier{Literal: "it"}},
 									},
 								},
@@ -1932,11 +1911,9 @@ var updateTests = []struct {
 	{
 		Name: "Update Query For Temporary View",
 		Query: parser.UpdateQuery{
-			Update: "update",
-			Tables: []parser.Expression{
+			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "tmpview"}, Alias: parser.Identifier{Literal: "t1"}},
 			},
-			Set: "set",
 			SetList: []parser.Expression{
 				parser.UpdateSet{
 					Field: parser.ColumnNumber{View: parser.Identifier{Literal: "t1"}, Number: parser.NewInteger(2)},
@@ -1947,9 +1924,9 @@ var updateTests = []struct {
 		Result: []*View{
 			{
 				FileInfo: &FileInfo{
-					Path:      "tmpview",
-					Delimiter: ',',
-					Temporary: true,
+					Path:        "tmpview",
+					Delimiter:   ',',
+					IsTemporary: true,
 				},
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
 				Records: []Record{
@@ -1980,9 +1957,9 @@ var updateTests = []struct {
 						}),
 					},
 					FileInfo: &FileInfo{
-						Path:      "tmpview",
-						Delimiter: ',',
-						Temporary: true,
+						Path:        "tmpview",
+						Delimiter:   ',',
+						IsTemporary: true,
 					},
 					OperatedRecords: 2,
 				},
@@ -1992,11 +1969,9 @@ var updateTests = []struct {
 	{
 		Name: "Update Query Multiple Table",
 		Query: parser.UpdateQuery{
-			Update: "update",
-			Tables: []parser.Expression{
+			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "t1"}},
 			},
-			Set: "set",
 			SetList: []parser.Expression{
 				parser.UpdateSet{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
@@ -2004,7 +1979,7 @@ var updateTests = []struct {
 				},
 			},
 			FromClause: parser.FromClause{
-				Tables: []parser.Expression{
+				Tables: []parser.QueryExpression{
 					parser.Table{Object: parser.Join{
 						Table: parser.Table{
 							Object: parser.Identifier{Literal: "table1"},
@@ -2056,11 +2031,9 @@ var updateTests = []struct {
 	{
 		Name: "Update Query File Does Not Exist Error",
 		Query: parser.UpdateQuery{
-			Update: "update",
-			Tables: []parser.Expression{
+			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "notexist"}},
 			},
-			Set: "set",
 			SetList: []parser.Expression{
 				parser.UpdateSet{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
@@ -2080,11 +2053,9 @@ var updateTests = []struct {
 	{
 		Name: "Update Query Filter Error",
 		Query: parser.UpdateQuery{
-			Update: "update",
-			Tables: []parser.Expression{
+			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			},
-			Set: "set",
 			SetList: []parser.Expression{
 				parser.UpdateSet{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
@@ -2104,11 +2075,9 @@ var updateTests = []struct {
 	{
 		Name: "Update Query File Is Not Loaded Error",
 		Query: parser.UpdateQuery{
-			Update: "update",
-			Tables: []parser.Expression{
+			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "notexist"}},
 			},
-			Set: "set",
 			SetList: []parser.Expression{
 				parser.UpdateSet{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
@@ -2116,7 +2085,7 @@ var updateTests = []struct {
 				},
 			},
 			FromClause: parser.FromClause{
-				Tables: []parser.Expression{
+				Tables: []parser.QueryExpression{
 					parser.Table{Object: parser.Join{
 						Table: parser.Table{
 							Object: parser.Identifier{Literal: "table1"},
@@ -2142,11 +2111,9 @@ var updateTests = []struct {
 	{
 		Name: "Update Query Update Table Is Not Specified Error",
 		Query: parser.UpdateQuery{
-			Update: "update",
-			Tables: []parser.Expression{
+			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "t2"}},
 			},
-			Set: "set",
 			SetList: []parser.Expression{
 				parser.UpdateSet{
 					Field: parser.FieldReference{View: parser.Identifier{Literal: "t1"}, Column: parser.Identifier{Literal: "column2"}},
@@ -2154,7 +2121,7 @@ var updateTests = []struct {
 				},
 			},
 			FromClause: parser.FromClause{
-				Tables: []parser.Expression{
+				Tables: []parser.QueryExpression{
 					parser.Table{Object: parser.Join{
 						Table: parser.Table{
 							Object: parser.Identifier{Literal: "table1"},
@@ -2180,11 +2147,9 @@ var updateTests = []struct {
 	{
 		Name: "Update Query Update Field Error",
 		Query: parser.UpdateQuery{
-			Update: "update",
-			Tables: []parser.Expression{
+			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			},
-			Set: "set",
 			SetList: []parser.Expression{
 				parser.UpdateSet{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
@@ -2204,11 +2169,9 @@ var updateTests = []struct {
 	{
 		Name: "Update Query Update Value Error",
 		Query: parser.UpdateQuery{
-			Update: "update",
-			Tables: []parser.Expression{
+			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			},
-			Set: "set",
 			SetList: []parser.Expression{
 				parser.UpdateSet{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
@@ -2228,11 +2191,9 @@ var updateTests = []struct {
 	{
 		Name: "Update Query Record Is Ambiguous Error",
 		Query: parser.UpdateQuery{
-			Update: "update",
-			Tables: []parser.Expression{
+			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "t1"}},
 			},
-			Set: "set",
 			SetList: []parser.Expression{
 				parser.UpdateSet{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
@@ -2240,7 +2201,7 @@ var updateTests = []struct {
 				},
 			},
 			FromClause: parser.FromClause{
-				Tables: []parser.Expression{
+				Tables: []parser.QueryExpression{
 					parser.Table{Object: parser.Join{
 						Table: parser.Table{
 							Object: parser.Identifier{Literal: "table1"},
@@ -2279,9 +2240,9 @@ func TestUpdate(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:      "tmpview",
-					Delimiter: ',',
-					Temporary: true,
+					Path:        "tmpview",
+					Delimiter:   ',',
+					IsTemporary: true,
 				},
 			},
 		},
@@ -2332,10 +2293,10 @@ var deleteTests = []struct {
 		Query: parser.DeleteQuery{
 			WithClause: parser.WithClause{
 				With: "with",
-				InlineTables: []parser.Expression{
+				InlineTables: []parser.QueryExpression{
 					parser.InlineTable{
 						Name: parser.Identifier{Literal: "it"},
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Identifier{Literal: "c1"},
 						},
 						As: "as",
@@ -2343,7 +2304,7 @@ var deleteTests = []struct {
 							SelectEntity: parser.SelectEntity{
 								SelectClause: parser.SelectClause{
 									Select: "select",
-									Fields: []parser.Expression{
+									Fields: []parser.QueryExpression{
 										parser.Field{Object: parser.NewIntegerValueFromString("2")},
 									},
 								},
@@ -2352,9 +2313,8 @@ var deleteTests = []struct {
 					},
 				},
 			},
-			Delete: "delete",
 			FromClause: parser.FromClause{
-				Tables: []parser.Expression{
+				Tables: []parser.QueryExpression{
 					parser.Table{
 						Object: parser.Identifier{Literal: "table1"},
 					},
@@ -2368,12 +2328,12 @@ var deleteTests = []struct {
 							SelectEntity: parser.SelectEntity{
 								SelectClause: parser.SelectClause{
 									Select: "select",
-									Fields: []parser.Expression{
+									Fields: []parser.QueryExpression{
 										parser.Field{Object: parser.FieldReference{View: parser.Identifier{Literal: "it"}, Column: parser.Identifier{Literal: "c1"}}},
 									},
 								},
 								FromClause: parser.FromClause{
-									Tables: []parser.Expression{
+									Tables: []parser.QueryExpression{
 										parser.Table{Object: parser.Identifier{Literal: "it"}},
 									},
 								},
@@ -2434,9 +2394,8 @@ var deleteTests = []struct {
 	{
 		Name: "Delete Query For Temporary View",
 		Query: parser.DeleteQuery{
-			Delete: "delete",
 			FromClause: parser.FromClause{
-				Tables: []parser.Expression{
+				Tables: []parser.QueryExpression{
 					parser.Table{
 						Object: parser.Identifier{Literal: "tmpview"},
 						Alias:  parser.Identifier{Literal: "t1"},
@@ -2454,9 +2413,9 @@ var deleteTests = []struct {
 		Result: []*View{
 			{
 				FileInfo: &FileInfo{
-					Path:      "tmpview",
-					Delimiter: ',',
-					Temporary: true,
+					Path:        "tmpview",
+					Delimiter:   ',',
+					IsTemporary: true,
 				},
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
 				Records: []Record{
@@ -2479,9 +2438,9 @@ var deleteTests = []struct {
 						}),
 					},
 					FileInfo: &FileInfo{
-						Path:      "tmpview",
-						Delimiter: ',',
-						Temporary: true,
+						Path:        "tmpview",
+						Delimiter:   ',',
+						IsTemporary: true,
 					},
 					OperatedRecords: 1,
 				},
@@ -2491,12 +2450,11 @@ var deleteTests = []struct {
 	{
 		Name: "Delete Query Multiple Table",
 		Query: parser.DeleteQuery{
-			Delete: "delete",
-			Tables: []parser.Expression{
+			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "t1"}},
 			},
 			FromClause: parser.FromClause{
-				Tables: []parser.Expression{
+				Tables: []parser.QueryExpression{
 					parser.Table{Object: parser.Join{
 						Table: parser.Table{
 							Object: parser.Identifier{Literal: "table1"},
@@ -2540,9 +2498,8 @@ var deleteTests = []struct {
 	{
 		Name: "Delete Query Tables Not Specified Error",
 		Query: parser.DeleteQuery{
-			Delete: "delete",
 			FromClause: parser.FromClause{
-				Tables: []parser.Expression{
+				Tables: []parser.QueryExpression{
 					parser.Table{Object: parser.Join{
 						Table: parser.Table{
 							Object: parser.Identifier{Literal: "table1"},
@@ -2568,9 +2525,8 @@ var deleteTests = []struct {
 	{
 		Name: "Delete Query File Does Not Exist Error",
 		Query: parser.DeleteQuery{
-			Delete: "delete",
 			FromClause: parser.FromClause{
-				Tables: []parser.Expression{
+				Tables: []parser.QueryExpression{
 					parser.Table{
 						Object: parser.Identifier{Literal: "notexist"},
 					},
@@ -2589,9 +2545,8 @@ var deleteTests = []struct {
 	{
 		Name: "Delete Query Filter Error",
 		Query: parser.DeleteQuery{
-			Delete: "delete",
 			FromClause: parser.FromClause{
-				Tables: []parser.Expression{
+				Tables: []parser.QueryExpression{
 					parser.Table{
 						Object: parser.Identifier{Literal: "table1"},
 					},
@@ -2610,12 +2565,11 @@ var deleteTests = []struct {
 	{
 		Name: "Delete Query File Is Not Loaded Error",
 		Query: parser.DeleteQuery{
-			Delete: "delete",
-			Tables: []parser.Expression{
+			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "notexist"}},
 			},
 			FromClause: parser.FromClause{
-				Tables: []parser.Expression{
+				Tables: []parser.QueryExpression{
 					parser.Table{Object: parser.Join{
 						Table: parser.Table{
 							Object: parser.Identifier{Literal: "table1"},
@@ -2660,9 +2614,9 @@ func TestDelete(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:      "tmpview",
-					Delimiter: ',',
-					Temporary: true,
+					Path:        "tmpview",
+					Delimiter:   ',',
+					IsTemporary: true,
 				},
 			},
 		},
@@ -2711,7 +2665,7 @@ var createTableTests = []struct {
 		Name: "Create Table",
 		Query: parser.CreateTable{
 			Table: parser.Identifier{Literal: "create_table_1.csv"},
-			Fields: []parser.Expression{
+			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "column1"},
 				parser.Identifier{Literal: "column2"},
 			},
@@ -2745,14 +2699,14 @@ var createTableTests = []struct {
 		Name: "Create Table From Select Query",
 		Query: parser.CreateTable{
 			Table: parser.Identifier{Literal: "create_table_1.csv"},
-			Fields: []parser.Expression{
+			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "column1"},
 				parser.Identifier{Literal: "column2"},
 			},
 			Query: parser.SelectQuery{
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.NewIntegerValueFromString("1")},
 							parser.Field{Object: parser.NewIntegerValueFromString("2")},
 						},
@@ -2799,7 +2753,7 @@ var createTableTests = []struct {
 		Name: "Create Table File Already Exist Error",
 		Query: parser.CreateTable{
 			Table: parser.Identifier{Literal: "table1.csv"},
-			Fields: []parser.Expression{
+			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "column1"},
 				parser.Identifier{Literal: "column2"},
 			},
@@ -2810,7 +2764,7 @@ var createTableTests = []struct {
 		Name: "Create Table Field Duplicate Error",
 		Query: parser.CreateTable{
 			Table: parser.Identifier{Literal: "create_table_1.csv"},
-			Fields: []parser.Expression{
+			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "column1"},
 				parser.Identifier{Literal: "column1"},
 			},
@@ -2821,14 +2775,14 @@ var createTableTests = []struct {
 		Name: "Create Table Select Query Execution Error",
 		Query: parser.CreateTable{
 			Table: parser.Identifier{Literal: "create_table_1.csv"},
-			Fields: []parser.Expression{
+			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "column1"},
 				parser.Identifier{Literal: "column2"},
 			},
 			Query: parser.SelectQuery{
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
 							parser.Field{Object: parser.NewIntegerValueFromString("2")},
 						},
@@ -2842,13 +2796,13 @@ var createTableTests = []struct {
 		Name: "Create Table From Select Query Field Length Not Match Error",
 		Query: parser.CreateTable{
 			Table: parser.Identifier{Literal: "create_table_1.csv"},
-			Fields: []parser.Expression{
+			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "column1"},
 			},
 			Query: parser.SelectQuery{
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.NewIntegerValueFromString("1")},
 							parser.Field{Object: parser.NewIntegerValueFromString("2")},
 						},
@@ -2862,14 +2816,14 @@ var createTableTests = []struct {
 		Name: "Create Table From Select Query Field Name Duplicate Error",
 		Query: parser.CreateTable{
 			Table: parser.Identifier{Literal: "create_table_1.csv"},
-			Fields: []parser.Expression{
+			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "column1"},
 				parser.Identifier{Literal: "column1"},
 			},
 			Query: parser.SelectQuery{
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.NewIntegerValueFromString("1")},
 							parser.Field{Object: parser.NewIntegerValueFromString("2")},
 						},
@@ -3013,9 +2967,9 @@ var addColumnsTests = []struct {
 		},
 		Result: &View{
 			FileInfo: &FileInfo{
-				Path:      "tmpview",
-				Delimiter: ',',
-				Temporary: true,
+				Path:        "tmpview",
+				Delimiter:   ',',
+				IsTemporary: true,
 			},
 			Header: NewHeader("tmpview", []string{"column1", "column2", "column3", "column4"}),
 			Records: []Record{
@@ -3053,9 +3007,9 @@ var addColumnsTests = []struct {
 						}),
 					},
 					FileInfo: &FileInfo{
-						Path:      "tmpview",
-						Delimiter: ',',
-						Temporary: true,
+						Path:        "tmpview",
+						Delimiter:   ',',
+						IsTemporary: true,
 					},
 					OperatedFields: 2,
 				},
@@ -3301,9 +3255,9 @@ func TestAddColumns(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:      "tmpview",
-					Delimiter: ',',
-					Temporary: true,
+					Path:        "tmpview",
+					Delimiter:   ',',
+					IsTemporary: true,
 				},
 			},
 		},
@@ -3352,7 +3306,7 @@ var dropColumnsTests = []struct {
 		Name: "Drop Columns",
 		Query: parser.DropColumns{
 			Table: parser.Identifier{Literal: "table1"},
-			Columns: []parser.Expression{
+			Columns: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 		},
@@ -3407,15 +3361,15 @@ var dropColumnsTests = []struct {
 		Name: "Drop Columns For Temporary View",
 		Query: parser.DropColumns{
 			Table: parser.Identifier{Literal: "tmpview"},
-			Columns: []parser.Expression{
+			Columns: []parser.QueryExpression{
 				parser.ColumnNumber{View: parser.Identifier{Literal: "tmpview"}, Number: parser.NewInteger(2)},
 			},
 		},
 		Result: &View{
 			FileInfo: &FileInfo{
-				Path:      "tmpview",
-				Delimiter: ',',
-				Temporary: true,
+				Path:        "tmpview",
+				Delimiter:   ',',
+				IsTemporary: true,
 			},
 			Header: NewHeader("tmpview", []string{"column1"}),
 			Records: []Record{
@@ -3441,9 +3395,9 @@ var dropColumnsTests = []struct {
 						}),
 					},
 					FileInfo: &FileInfo{
-						Path:      "tmpview",
-						Delimiter: ',',
-						Temporary: true,
+						Path:        "tmpview",
+						Delimiter:   ',',
+						IsTemporary: true,
 					},
 					OperatedFields: 1,
 				},
@@ -3454,7 +3408,7 @@ var dropColumnsTests = []struct {
 		Name: "Drop Columns Load Error",
 		Query: parser.DropColumns{
 			Table: parser.Identifier{Literal: "notexist"},
-			Columns: []parser.Expression{
+			Columns: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 		},
@@ -3464,7 +3418,7 @@ var dropColumnsTests = []struct {
 		Name: "Drop Columns Field Does Not Exist Error",
 		Query: parser.DropColumns{
 			Table: parser.Identifier{Literal: "table1"},
-			Columns: []parser.Expression{
+			Columns: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
@@ -3492,9 +3446,9 @@ func TestDropColumns(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:      "tmpview",
-					Delimiter: ',',
-					Temporary: true,
+					Path:        "tmpview",
+					Delimiter:   ',',
+					IsTemporary: true,
 				},
 			},
 		},
@@ -3609,9 +3563,9 @@ var renameColumnTests = []struct {
 		},
 		Result: &View{
 			FileInfo: &FileInfo{
-				Path:      "tmpview",
-				Delimiter: ',',
-				Temporary: true,
+				Path:        "tmpview",
+				Delimiter:   ',',
+				IsTemporary: true,
 			},
 			Header: NewHeader("tmpview", []string{"column1", "newcolumn"}),
 			Records: []Record{
@@ -3641,9 +3595,9 @@ var renameColumnTests = []struct {
 						}),
 					},
 					FileInfo: &FileInfo{
-						Path:      "tmpview",
-						Delimiter: ',',
-						Temporary: true,
+						Path:        "tmpview",
+						Delimiter:   ',',
+						IsTemporary: true,
 					},
 					OperatedFields: 1,
 				},
@@ -3699,9 +3653,9 @@ func TestRenameColumn(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:      "tmpview",
-					Delimiter: ',',
-					Temporary: true,
+					Path:        "tmpview",
+					Delimiter:   ',',
+					IsTemporary: true,
 				},
 			},
 		},

@@ -120,3 +120,31 @@ func TestUpdateFile(t *testing.T) {
 		}
 	}
 }
+
+func TestTryCreateFile(t *testing.T) {
+	err := TryCreateFile(GetTestFilePath("table1.csv"))
+	if err == nil {
+		t.Error("Create table1.csv: no error, want error")
+	}
+
+	err = TryCreateFile(GetTestFilePath("notexist.csv"))
+	if err != nil {
+		t.Errorf("Create notexist.csv: unexpected error %q", err)
+	} else {
+		if _, err := os.Stat(GetTestFilePath("notexist.csv")); err == nil {
+			t.Errorf("Create notexist.csv: temporary file does not removed")
+		}
+	}
+}
+
+func TestTryOpenFileToWrite(t *testing.T) {
+	err := TryOpenFileToWrite(GetTestFilePath("table1.csv"))
+	if err != nil {
+		t.Errorf("Create notexist.csv: unexpected error %q", err)
+	}
+
+	err = TryOpenFileToWrite(GetTestFilePath("notexist.csv"))
+	if err == nil {
+		t.Error("Create table1.csv: no error, want error")
+	}
+}

@@ -520,9 +520,9 @@ func TestTemporaryViewMapList_Dispose(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:      "/path/to/table1.csv",
-					Delimiter: ',',
-					Temporary: true,
+					Path:        "/path/to/table1.csv",
+					Delimiter:   ',',
+					IsTemporary: true,
 				},
 			},
 		},
@@ -1082,9 +1082,9 @@ func TestViewMap_DisposeTemporaryTable(t *testing.T) {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:      "/path/to/table1.csv",
-				Delimiter: ',',
-				Temporary: true,
+				Path:        "/path/to/table1.csv",
+				Delimiter:   ',',
+				IsTemporary: true,
 			},
 		},
 		"/PATH/TO/TABLE2.CSV": &View{
@@ -1141,9 +1141,9 @@ func TestViewMap_Clear(t *testing.T) {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:      "/path/to/table1.csv",
-				Delimiter: ',',
-				Temporary: true,
+				Path:        "/path/to/table1.csv",
+				Delimiter:   ',',
+				IsTemporary: true,
 			},
 		},
 		"/PATH/TO/TABLE2.CSV": &View{

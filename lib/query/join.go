@@ -7,12 +7,12 @@ import (
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
-func ParseJoinCondition(join parser.Join, view *View, joinView *View) (parser.Expression, []parser.FieldReference, []parser.FieldReference, error) {
+func ParseJoinCondition(join parser.Join, view *View, joinView *View) (parser.QueryExpression, []parser.FieldReference, []parser.FieldReference, error) {
 	if join.Natural.IsEmpty() && join.Condition == nil {
 		return nil, nil, nil, nil
 	}
 
-	var using []parser.Expression
+	var using []parser.QueryExpression
 
 	if !join.Natural.IsEmpty() {
 		for _, field := range view.Header {
@@ -130,7 +130,7 @@ func CrossJoin(view *View, joinView *View) {
 	view.FileInfo = nil
 }
 
-func InnerJoin(view *View, joinView *View, condition parser.Expression, parentFilter *Filter) error {
+func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, parentFilter *Filter) error {
 	if condition == nil {
 		CrossJoin(view, joinView)
 		return nil
@@ -196,7 +196,7 @@ func InnerJoin(view *View, joinView *View, condition parser.Expression, parentFi
 	return nil
 }
 
-func OuterJoin(view *View, joinView *View, condition parser.Expression, direction int, parentFilter *Filter) error {
+func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, direction int, parentFilter *Filter) error {
 	if direction == parser.TOKEN_UNDEFINED {
 		direction = parser.LEFT
 	}

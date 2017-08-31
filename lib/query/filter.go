@@ -124,7 +124,7 @@ func (f *Filter) LoadInlineTable(clause parser.WithClause) error {
 	return f.InlineTablesList.Load(clause, f)
 }
 
-func (f *Filter) Evaluate(expr parser.Expression) (parser.Primary, error) {
+func (f *Filter) Evaluate(expr parser.QueryExpression) (parser.Primary, error) {
 	if expr == nil {
 		return parser.NewTernary(ternary.TRUE), nil
 	}
@@ -190,7 +190,7 @@ func (f *Filter) Evaluate(expr parser.Expression) (parser.Primary, error) {
 	return value, err
 }
 
-func (f *Filter) evalFieldReference(expr parser.Expression) (parser.Primary, error) {
+func (f *Filter) evalFieldReference(expr parser.QueryExpression) (parser.Primary, error) {
 	exprStr := expr.String()
 
 	var p parser.Primary
@@ -411,7 +411,7 @@ func (f *Filter) evalBetween(expr parser.Between) (parser.Primary, error) {
 	return parser.NewTernary(t), nil
 }
 
-func (f *Filter) valuesForRowValueListComparison(lhs parser.Expression, values parser.Expression) ([]parser.Primary, [][]parser.Primary, error) {
+func (f *Filter) valuesForRowValueListComparison(lhs parser.QueryExpression, values parser.QueryExpression) ([]parser.Primary, [][]parser.Primary, error) {
 	var value []parser.Primary
 	var list [][]parser.Primary
 	var err error
@@ -834,7 +834,7 @@ func (f *Filter) evalRowValue(expr parser.RowValue) (values []parser.Primary, er
 	return
 }
 
-func (f *Filter) evalValues(exprs []parser.Expression) ([]parser.Primary, error) {
+func (f *Filter) evalValues(exprs []parser.QueryExpression) ([]parser.Primary, error) {
 	values := make([]parser.Primary, len(exprs))
 	for i, v := range exprs {
 		value, err := f.Evaluate(v)
@@ -862,7 +862,7 @@ func (f *Filter) evalRowValueList(expr parser.RowValueList) ([][]parser.Primary,
 	return list, nil
 }
 
-func (f *Filter) evalRowValues(expr parser.Expression) (values [][]parser.Primary, err error) {
+func (f *Filter) evalRowValues(expr parser.QueryExpression) (values [][]parser.Primary, err error) {
 	switch expr.(type) {
 	case parser.Subquery:
 		values, err = f.evalSubqueryForRowValues(expr.(parser.Subquery))

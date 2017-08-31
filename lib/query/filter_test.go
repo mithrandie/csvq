@@ -13,7 +13,7 @@ import (
 var filterEvaluateTests = []struct {
 	Name   string
 	Filter *Filter
-	Expr   parser.Expression
+	Expr   parser.QueryExpression
 	Result parser.Primary
 	Error  string
 }{
@@ -319,7 +319,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Concat",
 		Expr: parser.Concat{
-			Items: []parser.Expression{
+			Items: []parser.QueryExpression{
 				parser.NewStringValue("a"),
 				parser.NewStringValue("b"),
 				parser.NewStringValue("c"),
@@ -330,7 +330,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Concat FieldNotExist Error",
 		Expr: parser.Concat{
-			Items: []parser.Expression{
+			Items: []parser.QueryExpression{
 				parser.NewStringValue("a"),
 				parser.NewStringValue("b"),
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
@@ -341,7 +341,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Concat Including Null",
 		Expr: parser.Concat{
-			Items: []parser.Expression{
+			Items: []parser.QueryExpression{
 				parser.NewStringValue("a"),
 				parser.NewNullValue(),
 				parser.NewStringValue("c"),
@@ -390,7 +390,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Comparison{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(2),
 					},
@@ -398,7 +398,7 @@ var filterEvaluateTests = []struct {
 			},
 			RHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(2),
 					},
@@ -413,7 +413,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Comparison{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewStringValue("1"),
 						parser.NewStringValue("str1"),
 					},
@@ -425,13 +425,13 @@ var filterEvaluateTests = []struct {
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
 								Select: "select",
-								Fields: []parser.Expression{
+								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 								},
 							},
 							FromClause: parser.FromClause{
-								Tables: []parser.Expression{
+								Tables: []parser.QueryExpression{
 									parser.Table{Object: parser.Identifier{Literal: "table1"}},
 								},
 							},
@@ -455,7 +455,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Comparison{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 						parser.NewIntegerValue(2),
 					},
@@ -463,7 +463,7 @@ var filterEvaluateTests = []struct {
 			},
 			RHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(2),
 					},
@@ -478,7 +478,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Comparison{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewStringValue("1"),
 						parser.NewStringValue("str1"),
 					},
@@ -490,13 +490,13 @@ var filterEvaluateTests = []struct {
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
 								Select: "select",
-								Fields: []parser.Expression{
+								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 								},
 							},
 							FromClause: parser.FromClause{
-								Tables: []parser.Expression{
+								Tables: []parser.QueryExpression{
 									parser.Table{Object: parser.Identifier{Literal: "table1"}},
 								},
 							},
@@ -516,7 +516,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Comparison{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewStringValue("1"),
 						parser.NewStringValue("str1"),
 					},
@@ -528,13 +528,13 @@ var filterEvaluateTests = []struct {
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
 								Select: "select",
-								Fields: []parser.Expression{
+								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
 								},
 							},
 							FromClause: parser.FromClause{
-								Tables: []parser.Expression{
+								Tables: []parser.QueryExpression{
 									parser.Table{Object: parser.Identifier{Literal: "table1"}},
 								},
 							},
@@ -551,7 +551,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Comparison{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(2),
 					},
@@ -563,13 +563,13 @@ var filterEvaluateTests = []struct {
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
 								Select: "select",
-								Fields: []parser.Expression{
+								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 								},
 							},
 							FromClause: parser.FromClause{
-								Tables: []parser.Expression{
+								Tables: []parser.QueryExpression{
 									parser.Table{Object: parser.Identifier{Literal: "table1"}},
 								},
 							},
@@ -586,7 +586,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Comparison{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(2),
 					},
@@ -594,7 +594,7 @@ var filterEvaluateTests = []struct {
 			},
 			RHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 					},
 				},
@@ -694,7 +694,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Between{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(2),
 					},
@@ -702,7 +702,7 @@ var filterEvaluateTests = []struct {
 			},
 			Low: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(1),
 					},
@@ -710,7 +710,7 @@ var filterEvaluateTests = []struct {
 			},
 			High: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(3),
 					},
@@ -724,7 +724,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Between{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 						parser.NewIntegerValue(2),
 					},
@@ -732,7 +732,7 @@ var filterEvaluateTests = []struct {
 			},
 			Low: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(1),
 					},
@@ -740,7 +740,7 @@ var filterEvaluateTests = []struct {
 			},
 			High: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(3),
 					},
@@ -754,7 +754,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Between{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(2),
 					},
@@ -762,7 +762,7 @@ var filterEvaluateTests = []struct {
 			},
 			Low: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 						parser.NewIntegerValue(1),
 					},
@@ -770,7 +770,7 @@ var filterEvaluateTests = []struct {
 			},
 			High: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(3),
 					},
@@ -784,7 +784,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Between{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(2),
 					},
@@ -792,7 +792,7 @@ var filterEvaluateTests = []struct {
 			},
 			Low: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(3),
 					},
@@ -800,7 +800,7 @@ var filterEvaluateTests = []struct {
 			},
 			High: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(5),
 					},
@@ -814,7 +814,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Between{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(2),
 					},
@@ -822,7 +822,7 @@ var filterEvaluateTests = []struct {
 			},
 			Low: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(1),
 					},
@@ -830,7 +830,7 @@ var filterEvaluateTests = []struct {
 			},
 			High: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 						parser.NewIntegerValue(3),
 					},
@@ -844,7 +844,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Between{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(2),
 					},
@@ -852,14 +852,14 @@ var filterEvaluateTests = []struct {
 			},
 			Low: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 					},
 				},
 			},
 			High: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(3),
 					},
@@ -873,7 +873,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Between{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(2),
 					},
@@ -881,7 +881,7 @@ var filterEvaluateTests = []struct {
 			},
 			Low: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(1),
 					},
@@ -889,7 +889,7 @@ var filterEvaluateTests = []struct {
 			},
 			High: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(3),
 					},
 				},
@@ -903,7 +903,7 @@ var filterEvaluateTests = []struct {
 			LHS: parser.NewIntegerValue(2),
 			Values: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(2),
 						parser.NewIntegerValue(3),
@@ -920,7 +920,7 @@ var filterEvaluateTests = []struct {
 			LHS: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			Values: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(2),
 						parser.NewIntegerValue(3),
@@ -937,7 +937,7 @@ var filterEvaluateTests = []struct {
 			LHS: parser.NewIntegerValue(2),
 			Values: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 						parser.NewIntegerValue(3),
@@ -974,12 +974,12 @@ var filterEvaluateTests = []struct {
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
 								Select: "select",
-								Fields: []parser.Expression{
+								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								},
 							},
 							FromClause: parser.FromClause{
-								Tables: []parser.Expression{
+								Tables: []parser.QueryExpression{
 									parser.Table{Object: parser.Identifier{Literal: "table1"}},
 								},
 							},
@@ -1008,12 +1008,12 @@ var filterEvaluateTests = []struct {
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
 								Select: "select",
-								Fields: []parser.Expression{
+								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								},
 							},
 							FromClause: parser.FromClause{
-								Tables: []parser.Expression{
+								Tables: []parser.QueryExpression{
 									parser.Table{Object: parser.Identifier{Literal: "table1"}},
 								},
 							},
@@ -1042,13 +1042,13 @@ var filterEvaluateTests = []struct {
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
 								Select: "select",
-								Fields: []parser.Expression{
+								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 								},
 							},
 							FromClause: parser.FromClause{
-								Tables: []parser.Expression{
+								Tables: []parser.QueryExpression{
 									parser.Table{Object: parser.Identifier{Literal: "table1"}},
 								},
 							},
@@ -1070,12 +1070,12 @@ var filterEvaluateTests = []struct {
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
 								Select: "select",
-								Fields: []parser.Expression{
+								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								},
 							},
 							FromClause: parser.FromClause{
-								Tables: []parser.Expression{
+								Tables: []parser.QueryExpression{
 									parser.Table{Object: parser.Identifier{Literal: "table1"}},
 								},
 							},
@@ -1094,17 +1094,17 @@ var filterEvaluateTests = []struct {
 		Expr: parser.In{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(2),
 					},
 				},
 			},
 			Values: parser.RowValueList{
-				RowValues: []parser.Expression{
+				RowValues: []parser.QueryExpression{
 					parser.RowValue{
 						Value: parser.ValueList{
-							Values: []parser.Expression{
+							Values: []parser.QueryExpression{
 								parser.NewIntegerValue(1),
 								parser.NewIntegerValue(1),
 							},
@@ -1112,7 +1112,7 @@ var filterEvaluateTests = []struct {
 					},
 					parser.RowValue{
 						Value: parser.ValueList{
-							Values: []parser.Expression{
+							Values: []parser.QueryExpression{
 								parser.NewIntegerValue(1),
 								parser.NewIntegerValue(2),
 							},
@@ -1128,7 +1128,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.In{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewStringValue("2"),
 						parser.NewStringValue("str2"),
 					},
@@ -1139,13 +1139,13 @@ var filterEvaluateTests = []struct {
 					SelectEntity: parser.SelectEntity{
 						SelectClause: parser.SelectClause{
 							Select: "select",
-							Fields: []parser.Expression{
+							Fields: []parser.QueryExpression{
 								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 							},
 						},
 						FromClause: parser.FromClause{
-							Tables: []parser.Expression{
+							Tables: []parser.QueryExpression{
 								parser.Table{Object: parser.Identifier{Literal: "table1"}},
 							},
 						},
@@ -1160,17 +1160,17 @@ var filterEvaluateTests = []struct {
 		Expr: parser.In{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 						parser.NewIntegerValue(2),
 					},
 				},
 			},
 			Values: parser.RowValueList{
-				RowValues: []parser.Expression{
+				RowValues: []parser.QueryExpression{
 					parser.RowValue{
 						Value: parser.ValueList{
-							Values: []parser.Expression{
+							Values: []parser.QueryExpression{
 								parser.NewIntegerValue(1),
 								parser.NewIntegerValue(1),
 							},
@@ -1178,7 +1178,7 @@ var filterEvaluateTests = []struct {
 					},
 					parser.RowValue{
 						Value: parser.ValueList{
-							Values: []parser.Expression{
+							Values: []parser.QueryExpression{
 								parser.NewIntegerValue(1),
 								parser.NewIntegerValue(2),
 							},
@@ -1194,7 +1194,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.In{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewStringValue("2"),
 						parser.NewStringValue("str2"),
 					},
@@ -1205,13 +1205,13 @@ var filterEvaluateTests = []struct {
 					SelectEntity: parser.SelectEntity{
 						SelectClause: parser.SelectClause{
 							Select: "select",
-							Fields: []parser.Expression{
+							Fields: []parser.QueryExpression{
 								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
 							},
 						},
 						FromClause: parser.FromClause{
-							Tables: []parser.Expression{
+							Tables: []parser.QueryExpression{
 								parser.Table{Object: parser.Identifier{Literal: "table1"}},
 							},
 						},
@@ -1226,7 +1226,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.In{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewStringValue("2"),
 						parser.NewStringValue("str2"),
 					},
@@ -1237,13 +1237,13 @@ var filterEvaluateTests = []struct {
 					SelectEntity: parser.SelectEntity{
 						SelectClause: parser.SelectClause{
 							Select: "select",
-							Fields: []parser.Expression{
+							Fields: []parser.QueryExpression{
 								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 							},
 						},
 						FromClause: parser.FromClause{
-							Tables: []parser.Expression{
+							Tables: []parser.QueryExpression{
 								parser.Table{Object: parser.Identifier{Literal: "table1"}},
 							},
 						},
@@ -1261,17 +1261,17 @@ var filterEvaluateTests = []struct {
 		Expr: parser.In{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(2),
 					},
 				},
 			},
 			Values: parser.RowValueList{
-				RowValues: []parser.Expression{
+				RowValues: []parser.QueryExpression{
 					parser.RowValue{
 						Value: parser.ValueList{
-							Values: []parser.Expression{
+							Values: []parser.QueryExpression{
 								parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 								parser.NewIntegerValue(1),
 							},
@@ -1279,7 +1279,7 @@ var filterEvaluateTests = []struct {
 					},
 					parser.RowValue{
 						Value: parser.ValueList{
-							Values: []parser.Expression{
+							Values: []parser.QueryExpression{
 								parser.NewIntegerValue(1),
 								parser.NewIntegerValue(2),
 							},
@@ -1295,17 +1295,17 @@ var filterEvaluateTests = []struct {
 		Expr: parser.In{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(2),
 					},
 				},
 			},
 			Values: parser.RowValueList{
-				RowValues: []parser.Expression{
+				RowValues: []parser.QueryExpression{
 					parser.RowValue{
 						Value: parser.ValueList{
-							Values: []parser.Expression{
+							Values: []parser.QueryExpression{
 								parser.NewIntegerValue(1),
 								parser.NewIntegerValue(1),
 							},
@@ -1313,7 +1313,7 @@ var filterEvaluateTests = []struct {
 					},
 					parser.RowValue{
 						Value: parser.ValueList{
-							Values: []parser.Expression{
+							Values: []parser.QueryExpression{
 								parser.NewIntegerValue(2),
 							},
 						},
@@ -1328,7 +1328,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.In{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewStringValue("2"),
 						parser.NewStringValue("str2"),
 					},
@@ -1339,12 +1339,12 @@ var filterEvaluateTests = []struct {
 					SelectEntity: parser.SelectEntity{
 						SelectClause: parser.SelectClause{
 							Select: "select",
-							Fields: []parser.Expression{
+							Fields: []parser.QueryExpression{
 								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							},
 						},
 						FromClause: parser.FromClause{
-							Tables: []parser.Expression{
+							Tables: []parser.QueryExpression{
 								parser.Table{Object: parser.Identifier{Literal: "table1"}},
 							},
 						},
@@ -1364,12 +1364,12 @@ var filterEvaluateTests = []struct {
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
 								Select: "select",
-								Fields: []parser.Expression{
+								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								},
 							},
 							FromClause: parser.FromClause{
-								Tables: []parser.Expression{
+								Tables: []parser.QueryExpression{
 									parser.Table{Object: parser.Identifier{Literal: "table1"}},
 								},
 							},
@@ -1391,12 +1391,12 @@ var filterEvaluateTests = []struct {
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
 								Select: "select",
-								Fields: []parser.Expression{
+								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								},
 							},
 							FromClause: parser.FromClause{
-								Tables: []parser.Expression{
+								Tables: []parser.QueryExpression{
 									parser.Table{Object: parser.Identifier{Literal: "table1"}},
 								},
 							},
@@ -1418,12 +1418,12 @@ var filterEvaluateTests = []struct {
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
 								Select: "select",
-								Fields: []parser.Expression{
+								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								},
 							},
 							FromClause: parser.FromClause{
-								Tables: []parser.Expression{
+								Tables: []parser.QueryExpression{
 									parser.Table{Object: parser.Identifier{Literal: "table1"}},
 								},
 							},
@@ -1447,7 +1447,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Any{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(2),
 					},
@@ -1458,12 +1458,12 @@ var filterEvaluateTests = []struct {
 					SelectEntity: parser.SelectEntity{
 						SelectClause: parser.SelectClause{
 							Select: "select",
-							Fields: []parser.Expression{
+							Fields: []parser.QueryExpression{
 								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							},
 						},
 						FromClause: parser.FromClause{
-							Tables: []parser.Expression{
+							Tables: []parser.QueryExpression{
 								parser.Table{Object: parser.Identifier{Literal: "table1"}},
 							},
 						},
@@ -1479,17 +1479,17 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Any{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(2),
 					},
 				},
 			},
 			Values: parser.RowValueList{
-				RowValues: []parser.Expression{
+				RowValues: []parser.QueryExpression{
 					parser.RowValue{
 						Value: parser.ValueList{
-							Values: []parser.Expression{
+							Values: []parser.QueryExpression{
 								parser.NewIntegerValue(1),
 								parser.NewIntegerValue(2),
 							},
@@ -1497,7 +1497,7 @@ var filterEvaluateTests = []struct {
 					},
 					parser.RowValue{
 						Value: parser.ValueList{
-							Values: []parser.Expression{
+							Values: []parser.QueryExpression{
 								parser.NewIntegerValue(1),
 							},
 						},
@@ -1518,12 +1518,12 @@ var filterEvaluateTests = []struct {
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
 								Select: "select",
-								Fields: []parser.Expression{
+								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								},
 							},
 							FromClause: parser.FromClause{
-								Tables: []parser.Expression{
+								Tables: []parser.QueryExpression{
 									parser.Table{Object: parser.Identifier{Literal: "table1"}},
 								},
 							},
@@ -1545,12 +1545,12 @@ var filterEvaluateTests = []struct {
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
 								Select: "select",
-								Fields: []parser.Expression{
+								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								},
 							},
 							FromClause: parser.FromClause{
-								Tables: []parser.Expression{
+								Tables: []parser.QueryExpression{
 									parser.Table{Object: parser.Identifier{Literal: "table1"}},
 								},
 							},
@@ -1572,12 +1572,12 @@ var filterEvaluateTests = []struct {
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
 								Select: "select",
-								Fields: []parser.Expression{
+								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								},
 							},
 							FromClause: parser.FromClause{
-								Tables: []parser.Expression{
+								Tables: []parser.QueryExpression{
 									parser.Table{Object: parser.Identifier{Literal: "table1"}},
 								},
 							},
@@ -1599,12 +1599,12 @@ var filterEvaluateTests = []struct {
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
 								Select: "select",
-								Fields: []parser.Expression{
+								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								},
 							},
 							FromClause: parser.FromClause{
-								Tables: []parser.Expression{
+								Tables: []parser.QueryExpression{
 									parser.Table{Object: parser.Identifier{Literal: "table1"}},
 								},
 							},
@@ -1628,7 +1628,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.All{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(2),
 					},
@@ -1639,12 +1639,12 @@ var filterEvaluateTests = []struct {
 					SelectEntity: parser.SelectEntity{
 						SelectClause: parser.SelectClause{
 							Select: "select",
-							Fields: []parser.Expression{
+							Fields: []parser.QueryExpression{
 								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							},
 						},
 						FromClause: parser.FromClause{
-							Tables: []parser.Expression{
+							Tables: []parser.QueryExpression{
 								parser.Table{Object: parser.Identifier{Literal: "table1"}},
 							},
 						},
@@ -1660,17 +1660,17 @@ var filterEvaluateTests = []struct {
 		Expr: parser.All{
 			LHS: parser.RowValue{
 				Value: parser.ValueList{
-					Values: []parser.Expression{
+					Values: []parser.QueryExpression{
 						parser.NewIntegerValue(1),
 						parser.NewIntegerValue(2),
 					},
 				},
 			},
 			Values: parser.RowValueList{
-				RowValues: []parser.Expression{
+				RowValues: []parser.QueryExpression{
 					parser.RowValue{
 						Value: parser.ValueList{
-							Values: []parser.Expression{
+							Values: []parser.QueryExpression{
 								parser.NewIntegerValue(1),
 								parser.NewIntegerValue(2),
 							},
@@ -1678,7 +1678,7 @@ var filterEvaluateTests = []struct {
 					},
 					parser.RowValue{
 						Value: parser.ValueList{
-							Values: []parser.Expression{
+							Values: []parser.QueryExpression{
 								parser.NewIntegerValue(1),
 							},
 						},
@@ -1740,12 +1740,12 @@ var filterEvaluateTests = []struct {
 					SelectEntity: parser.SelectEntity{
 						SelectClause: parser.SelectClause{
 							Select: "select",
-							Fields: []parser.Expression{
+							Fields: []parser.QueryExpression{
 								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							},
 						},
 						FromClause: parser.FromClause{
-							Tables: []parser.Expression{
+							Tables: []parser.QueryExpression{
 								parser.Table{Object: parser.Identifier{Literal: "table1"}},
 							},
 						},
@@ -1770,12 +1770,12 @@ var filterEvaluateTests = []struct {
 					SelectEntity: parser.SelectEntity{
 						SelectClause: parser.SelectClause{
 							Select: "select",
-							Fields: []parser.Expression{
+							Fields: []parser.QueryExpression{
 								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							},
 						},
 						FromClause: parser.FromClause{
-							Tables: []parser.Expression{
+							Tables: []parser.QueryExpression{
 								parser.Table{Object: parser.Identifier{Literal: "table1"}},
 							},
 						},
@@ -1796,12 +1796,12 @@ var filterEvaluateTests = []struct {
 					SelectEntity: parser.SelectEntity{
 						SelectClause: parser.SelectClause{
 							Select: "select",
-							Fields: []parser.Expression{
+							Fields: []parser.QueryExpression{
 								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							},
 						},
 						FromClause: parser.FromClause{
-							Tables: []parser.Expression{
+							Tables: []parser.QueryExpression{
 								parser.Table{Object: parser.Identifier{Literal: "table1"}},
 							},
 						},
@@ -1841,12 +1841,12 @@ var filterEvaluateTests = []struct {
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
 						Select: "select",
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 						},
 					},
 					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table1"}},
 						},
 					},
@@ -1872,12 +1872,12 @@ var filterEvaluateTests = []struct {
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
 						Select: "select",
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.NewIntegerValue(1)},
 						},
 					},
 					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table1"}},
 						},
 					},
@@ -1899,12 +1899,12 @@ var filterEvaluateTests = []struct {
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
 						Select: "select",
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
 						},
 					},
 					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table1"}},
 						},
 					},
@@ -1920,12 +1920,12 @@ var filterEvaluateTests = []struct {
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
 						Select: "select",
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 						},
 					},
 					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table1"}},
 						},
 					},
@@ -1941,13 +1941,13 @@ var filterEvaluateTests = []struct {
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
 						Select: "select",
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 						},
 					},
 					FromClause: parser.FromClause{
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table1"}},
 						},
 					},
@@ -1963,7 +1963,7 @@ var filterEvaluateTests = []struct {
 		Name: "Function",
 		Expr: parser.Function{
 			Name: "coalesce",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.NewNullValue(),
 				parser.NewStringValue("str"),
 			},
@@ -1997,7 +1997,7 @@ var filterEvaluateTests = []struct {
 		},
 		Expr: parser.Function{
 			Name: "userfunc",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.NewIntegerValue(1),
 			},
 		},
@@ -2023,7 +2023,7 @@ var filterEvaluateTests = []struct {
 		},
 		Expr: parser.Function{
 			Name: "userfunc",
-			Args: []parser.Expression{},
+			Args: []parser.QueryExpression{},
 		},
 		Error: "[L:- C:-] function userfunc takes exactly 1 argument",
 	},
@@ -2031,7 +2031,7 @@ var filterEvaluateTests = []struct {
 		Name: "Function Not Exist Error",
 		Expr: parser.Function{
 			Name: "notexist",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.NewNullValue(),
 				parser.NewStringValue("str"),
 			},
@@ -2042,7 +2042,7 @@ var filterEvaluateTests = []struct {
 		Name: "Function Evaluate Error",
 		Expr: parser.Function{
 			Name: "coalesce",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.NewNullValue(),
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
@@ -2084,7 +2084,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.AggregateFunction{
 			Name:     "avg",
 			Distinct: parser.Token{},
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 		},
@@ -2144,7 +2144,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.AggregateFunction{
 			Name:     "avg",
 			Distinct: parser.Token{},
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 		},
@@ -2180,10 +2180,10 @@ var filterEvaluateTests = []struct {
 		Expr: parser.AggregateFunction{
 			Name:     "avg",
 			Distinct: parser.Token{},
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.AggregateFunction{
 					Name: "avg",
-					Args: []parser.Expression{
+					Args: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
 				},
@@ -2221,7 +2221,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.AggregateFunction{
 			Name:     "count",
 			Distinct: parser.Token{},
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.AllColumns{},
 			},
 		},
@@ -2233,7 +2233,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.AggregateFunction{
 			Name:     "avg",
 			Distinct: parser.Token{},
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 		},
@@ -2351,7 +2351,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.AggregateFunction{
 			Name:     "useraggfunc",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 				parser.NewIntegerValue(0),
 			},
@@ -2407,7 +2407,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.AggregateFunction{
 			Name:     "useraggfunc",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 		},
@@ -2462,7 +2462,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.AggregateFunction{
 			Name:     "useraggfunc",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
@@ -2560,7 +2560,7 @@ var filterEvaluateTests = []struct {
 		},
 		Expr: parser.Function{
 			Name: "useraggfunc",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 		},
@@ -2657,7 +2657,7 @@ var filterEvaluateTests = []struct {
 		},
 		Expr: parser.AggregateFunction{
 			Name: "undefined",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 		},
@@ -2702,12 +2702,12 @@ var filterEvaluateTests = []struct {
 		Expr: parser.ListAgg{
 			ListAgg:  "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				parser.NewStringValue(","),
 			},
 			OrderBy: parser.OrderByClause{
-				Items: []parser.Expression{
+				Items: []parser.QueryExpression{
 					parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 				},
 			},
@@ -2752,7 +2752,7 @@ var filterEvaluateTests = []struct {
 		},
 		Expr: parser.ListAgg{
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				parser.NewStringValue(","),
 			},
@@ -2782,7 +2782,7 @@ var filterEvaluateTests = []struct {
 			ListAgg:  "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			OrderBy: parser.OrderByClause{
-				Items: []parser.Expression{
+				Items: []parser.QueryExpression{
 					parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 				},
 			},
@@ -2811,12 +2811,12 @@ var filterEvaluateTests = []struct {
 		Expr: parser.ListAgg{
 			ListAgg:  "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				parser.NewStringValue(","),
 			},
 			OrderBy: parser.OrderByClause{
-				Items: []parser.Expression{
+				Items: []parser.QueryExpression{
 					parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 				},
 			},
@@ -2856,12 +2856,12 @@ var filterEvaluateTests = []struct {
 		Expr: parser.ListAgg{
 			ListAgg:  "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				parser.NewStringValue(","),
 			},
 			OrderBy: parser.OrderByClause{
-				Items: []parser.Expression{
+				Items: []parser.QueryExpression{
 					parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
 				},
 			},
@@ -2898,11 +2898,11 @@ var filterEvaluateTests = []struct {
 		},
 		Expr: parser.ListAgg{
 			ListAgg: "listagg",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.AggregateFunction{
 					Name:     "avg",
 					Distinct: parser.Token{},
-					Args: []parser.Expression{
+					Args: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
 				},
@@ -2940,7 +2940,7 @@ var filterEvaluateTests = []struct {
 		},
 		Expr: parser.ListAgg{
 			ListAgg: "listagg",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
@@ -2977,7 +2977,7 @@ var filterEvaluateTests = []struct {
 		},
 		Expr: parser.ListAgg{
 			ListAgg: "listagg",
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 				parser.NewNullValue(),
 			},
@@ -2990,12 +2990,12 @@ var filterEvaluateTests = []struct {
 		Expr: parser.ListAgg{
 			ListAgg:  "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				parser.NewStringValue(","),
 			},
 			OrderBy: parser.OrderByClause{
-				Items: []parser.Expression{
+				Items: []parser.QueryExpression{
 					parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 				},
 			},
@@ -3006,7 +3006,7 @@ var filterEvaluateTests = []struct {
 		Name: "CaseExpr Comparison",
 		Expr: parser.CaseExpr{
 			Value: parser.NewIntegerValue(2),
-			When: []parser.Expression{
+			When: []parser.QueryExpression{
 				parser.CaseExprWhen{
 					Condition: parser.NewIntegerValue(1),
 					Result:    parser.NewStringValue("A"),
@@ -3022,7 +3022,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "CaseExpr Filter",
 		Expr: parser.CaseExpr{
-			When: []parser.Expression{
+			When: []parser.QueryExpression{
 				parser.CaseExprWhen{
 					Condition: parser.Comparison{
 						LHS:      parser.NewIntegerValue(2),
@@ -3047,7 +3047,7 @@ var filterEvaluateTests = []struct {
 		Name: "CaseExpr Else",
 		Expr: parser.CaseExpr{
 			Value: parser.NewIntegerValue(0),
-			When: []parser.Expression{
+			When: []parser.QueryExpression{
 				parser.CaseExprWhen{
 					Condition: parser.NewIntegerValue(1),
 					Result:    parser.NewStringValue("A"),
@@ -3067,7 +3067,7 @@ var filterEvaluateTests = []struct {
 		Name: "CaseExpr No Else",
 		Expr: parser.CaseExpr{
 			Value: parser.NewIntegerValue(0),
-			When: []parser.Expression{
+			When: []parser.QueryExpression{
 				parser.CaseExprWhen{
 					Condition: parser.NewIntegerValue(1),
 					Result:    parser.NewStringValue("A"),
@@ -3084,7 +3084,7 @@ var filterEvaluateTests = []struct {
 		Name: "CaseExpr Value Error",
 		Expr: parser.CaseExpr{
 			Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-			When: []parser.Expression{
+			When: []parser.QueryExpression{
 				parser.CaseExprWhen{
 					Condition: parser.NewIntegerValue(1),
 					Result:    parser.NewStringValue("A"),
@@ -3101,7 +3101,7 @@ var filterEvaluateTests = []struct {
 		Name: "CaseExpr When Condition Error",
 		Expr: parser.CaseExpr{
 			Value: parser.NewIntegerValue(2),
-			When: []parser.Expression{
+			When: []parser.QueryExpression{
 				parser.CaseExprWhen{
 					Condition: parser.NewIntegerValue(1),
 					Result:    parser.NewStringValue("A"),
@@ -3118,7 +3118,7 @@ var filterEvaluateTests = []struct {
 		Name: "CaseExpr When Result Error",
 		Expr: parser.CaseExpr{
 			Value: parser.NewIntegerValue(2),
-			When: []parser.Expression{
+			When: []parser.QueryExpression{
 				parser.CaseExprWhen{
 					Condition: parser.NewIntegerValue(1),
 					Result:    parser.NewStringValue("A"),
@@ -3135,7 +3135,7 @@ var filterEvaluateTests = []struct {
 		Name: "CaseExpr Else Result Error",
 		Expr: parser.CaseExpr{
 			Value: parser.NewIntegerValue(0),
-			When: []parser.Expression{
+			When: []parser.QueryExpression{
 				parser.CaseExprWhen{
 					Condition: parser.NewIntegerValue(1),
 					Result:    parser.NewStringValue("A"),
@@ -3382,7 +3382,7 @@ func BenchmarkFilter_EvaluateCountAllColumns(b *testing.B) {
 		filter.Evaluate(parser.AggregateFunction{
 			Name:     "count",
 			Distinct: parser.Token{},
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.AllColumns{},
 			},
 		})
@@ -3398,7 +3398,7 @@ func BenchmarkFilter_EvaluateCount(b *testing.B) {
 		filter.Evaluate(parser.AggregateFunction{
 			Name:     "count",
 			Distinct: parser.Token{},
-			Args: []parser.Expression{
+			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "c1"}},
 			},
 		})

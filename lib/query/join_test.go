@@ -28,7 +28,7 @@ var parseJoinConditionTests = []struct {
 	Join          parser.Join
 	View          *View
 	JoinView      *View
-	ResultValue   parser.Expression
+	ResultValue   parser.QueryExpression
 	IncludeFields []parser.FieldReference
 	ExcludeFields []parser.FieldReference
 	Error         string
@@ -90,7 +90,7 @@ var parseJoinConditionTests = []struct {
 			Table:     parser.Table{Alias: parser.Identifier{Literal: "t1"}},
 			JoinTable: parser.Table{Alias: parser.Identifier{Literal: "t2"}},
 			Condition: parser.JoinCondition{
-				Using: []parser.Expression{
+				Using: []parser.QueryExpression{
 					parser.Identifier{Literal: "key1"},
 				},
 			},
@@ -117,7 +117,7 @@ var parseJoinConditionTests = []struct {
 			JoinType:  parser.Token{Token: parser.OUTER, Literal: "outer"},
 			Direction: parser.Token{Token: parser.RIGHT, Literal: "right"},
 			Condition: parser.JoinCondition{
-				Using: []parser.Expression{
+				Using: []parser.QueryExpression{
 					parser.Identifier{Literal: "key1"},
 				},
 			},
@@ -174,7 +174,7 @@ var parseJoinConditionTests = []struct {
 			Table:     parser.Table{Alias: parser.Identifier{Literal: "t1"}},
 			JoinTable: parser.Table{Alias: parser.Identifier{Literal: "t2"}},
 			Condition: parser.JoinCondition{
-				Using: []parser.Expression{
+				Using: []parser.QueryExpression{
 					parser.Identifier{Literal: "key1"},
 				},
 			},
@@ -189,7 +189,7 @@ var parseJoinConditionTests = []struct {
 			Table:     parser.Table{Alias: parser.Identifier{Literal: "t1"}},
 			JoinTable: parser.Table{Alias: parser.Identifier{Literal: "t2"}},
 			Condition: parser.JoinCondition{
-				Using: []parser.Expression{
+				Using: []parser.QueryExpression{
 					parser.Identifier{Literal: "key1"},
 				},
 			},
@@ -310,7 +310,7 @@ var innerJoinTests = []struct {
 	CPU       int
 	View      *View
 	JoinView  *View
-	Condition parser.Expression
+	Condition parser.QueryExpression
 	Filter    *Filter
 	Result    *View
 	Error     string
@@ -599,7 +599,7 @@ var outerJoinTests = []struct {
 	Name      string
 	View      *View
 	JoinView  *View
-	Condition parser.Expression
+	Condition parser.QueryExpression
 	Direction int
 	Filter    *Filter
 	Result    *View

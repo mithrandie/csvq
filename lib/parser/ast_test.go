@@ -368,7 +368,7 @@ func TestParentheses_String(t *testing.T) {
 func TestRowValue_String(t *testing.T) {
 	e := RowValue{
 		Value: ValueList{
-			Values: []Expression{
+			Values: []QueryExpression{
 				NewIntegerValueFromString("1"),
 				NewIntegerValueFromString("2"),
 			},
@@ -382,7 +382,7 @@ func TestRowValue_String(t *testing.T) {
 
 func TestValueList_String(t *testing.T) {
 	e := ValueList{
-		Values: []Expression{
+		Values: []QueryExpression{
 			NewIntegerValueFromString("1"),
 			NewIntegerValueFromString("2"),
 		},
@@ -395,15 +395,15 @@ func TestValueList_String(t *testing.T) {
 
 func TestRowValueList_String(t *testing.T) {
 	e := RowValueList{
-		RowValues: []Expression{
+		RowValues: []QueryExpression{
 			ValueList{
-				Values: []Expression{
+				Values: []QueryExpression{
 					NewIntegerValueFromString("1"),
 					NewIntegerValueFromString("2"),
 				},
 			},
 			ValueList{
-				Values: []Expression{
+				Values: []QueryExpression{
 					NewIntegerValueFromString("3"),
 					NewIntegerValueFromString("4"),
 				},
@@ -420,7 +420,7 @@ func TestSelectQuery_String(t *testing.T) {
 	e := SelectQuery{
 		WithClause: WithClause{
 			With: "with",
-			InlineTables: []Expression{
+			InlineTables: []QueryExpression{
 				InlineTable{
 					Name: Identifier{Literal: "ct"},
 					As:   "as",
@@ -428,7 +428,7 @@ func TestSelectQuery_String(t *testing.T) {
 						SelectEntity: SelectEntity{
 							SelectClause: SelectClause{
 								Select: "select",
-								Fields: []Expression{
+								Fields: []QueryExpression{
 									Field{Object: NewIntegerValueFromString("1")},
 								},
 							},
@@ -440,16 +440,16 @@ func TestSelectQuery_String(t *testing.T) {
 		SelectEntity: SelectEntity{
 			SelectClause: SelectClause{
 				Select: "select",
-				Fields: []Expression{Field{Object: Identifier{Literal: "column"}}},
+				Fields: []QueryExpression{Field{Object: Identifier{Literal: "column"}}},
 			},
 			FromClause: FromClause{
 				From:   "from",
-				Tables: []Expression{Table{Object: Identifier{Literal: "table"}}},
+				Tables: []QueryExpression{Table{Object: Identifier{Literal: "table"}}},
 			},
 		},
 		OrderByClause: OrderByClause{
 			OrderBy: "order by",
-			Items: []Expression{
+			Items: []QueryExpression{
 				OrderItem{
 					Value: Identifier{Literal: "column"},
 				},
@@ -475,7 +475,7 @@ func TestSelectSet_String(t *testing.T) {
 		LHS: SelectEntity{
 			SelectClause: SelectClause{
 				Select: "select",
-				Fields: []Expression{Field{Object: NewIntegerValueFromString("1")}},
+				Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}},
 			},
 		},
 		Operator: Token{Token: UNION, Literal: "union"},
@@ -483,7 +483,7 @@ func TestSelectSet_String(t *testing.T) {
 		RHS: SelectEntity{
 			SelectClause: SelectClause{
 				Select: "select",
-				Fields: []Expression{Field{Object: NewIntegerValueFromString("2")}},
+				Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("2")}},
 			},
 		},
 	}
@@ -497,11 +497,11 @@ func TestSelectEntity_String(t *testing.T) {
 	e := SelectEntity{
 		SelectClause: SelectClause{
 			Select: "select",
-			Fields: []Expression{Field{Object: Identifier{Literal: "column"}}},
+			Fields: []QueryExpression{Field{Object: Identifier{Literal: "column"}}},
 		},
 		FromClause: FromClause{
 			From:   "from",
-			Tables: []Expression{Table{Object: Identifier{Literal: "table"}}},
+			Tables: []QueryExpression{Table{Object: Identifier{Literal: "table"}}},
 		},
 		WhereClause: WhereClause{
 			Where: "where",
@@ -513,7 +513,7 @@ func TestSelectEntity_String(t *testing.T) {
 		},
 		GroupByClause: GroupByClause{
 			GroupBy: "group by",
-			Items: []Expression{
+			Items: []QueryExpression{
 				Identifier{Literal: "column1"},
 			},
 		},
@@ -549,7 +549,7 @@ func TestSelectClause_String(t *testing.T) {
 	e := SelectClause{
 		Select:   "select",
 		Distinct: Token{Token: DISTINCT, Literal: "distinct"},
-		Fields: []Expression{
+		Fields: []QueryExpression{
 			Field{
 				Object: Identifier{Literal: "column1"},
 			},
@@ -569,7 +569,7 @@ func TestSelectClause_String(t *testing.T) {
 func TestFromClause_String(t *testing.T) {
 	e := FromClause{
 		From: "from",
-		Tables: []Expression{
+		Tables: []QueryExpression{
 			Table{Object: Identifier{Literal: "table1"}},
 			Table{Object: Identifier{Literal: "table2"}},
 		},
@@ -598,7 +598,7 @@ func TestWhereClause_String(t *testing.T) {
 func TestGroupByClause_String(t *testing.T) {
 	e := GroupByClause{
 		GroupBy: "group by",
-		Items: []Expression{
+		Items: []QueryExpression{
 			Identifier{Literal: "column1"},
 			Identifier{Literal: "column2"},
 		},
@@ -627,7 +627,7 @@ func TestHavingClause_String(t *testing.T) {
 func TestOrderByClause_String(t *testing.T) {
 	e := OrderByClause{
 		OrderBy: "order by",
-		Items: []Expression{
+		Items: []QueryExpression{
 			OrderItem{
 				Value: Identifier{Literal: "column1"},
 			},
@@ -700,7 +700,7 @@ func TestOffsetClause_String(t *testing.T) {
 func TestWithClause_String(t *testing.T) {
 	e := WithClause{
 		With: "with",
-		InlineTables: []Expression{
+		InlineTables: []QueryExpression{
 			InlineTable{
 				Name: Identifier{Literal: "alias1"},
 				As:   "as",
@@ -708,7 +708,7 @@ func TestWithClause_String(t *testing.T) {
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
 							Select: "select",
-							Fields: []Expression{
+							Fields: []QueryExpression{
 								NewIntegerValueFromString("1"),
 							},
 						},
@@ -723,7 +723,7 @@ func TestWithClause_String(t *testing.T) {
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
 							Select: "select",
-							Fields: []Expression{
+							Fields: []QueryExpression{
 								NewIntegerValueFromString("2"),
 							},
 						},
@@ -742,7 +742,7 @@ func TestInlineTable_String(t *testing.T) {
 	e := InlineTable{
 		Recursive: Token{Token: RECURSIVE, Literal: "recursive"},
 		Name:      Identifier{Literal: "alias"},
-		Fields: []Expression{
+		Fields: []QueryExpression{
 			Identifier{Literal: "column1"},
 		},
 		As: "as",
@@ -750,7 +750,7 @@ func TestInlineTable_String(t *testing.T) {
 			SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
 					Select: "select",
-					Fields: []Expression{
+					Fields: []QueryExpression{
 						NewIntegerValueFromString("1"),
 					},
 				},
@@ -772,7 +772,7 @@ func TestInlineTable_IsRecursive(t *testing.T) {
 			SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
 					Select: "select",
-					Fields: []Expression{
+					Fields: []QueryExpression{
 						NewIntegerValueFromString("1"),
 					},
 				},
@@ -790,7 +790,7 @@ func TestInlineTable_IsRecursive(t *testing.T) {
 			SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
 					Select: "select",
-					Fields: []Expression{
+					Fields: []QueryExpression{
 						NewIntegerValueFromString("1"),
 					},
 				},
@@ -808,13 +808,13 @@ func TestSubquery_String(t *testing.T) {
 			SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
 					Select: "select",
-					Fields: []Expression{
+					Fields: []QueryExpression{
 						NewIntegerValueFromString("1"),
 					},
 				},
 				FromClause: FromClause{
 					From: "from",
-					Tables: []Expression{
+					Tables: []QueryExpression{
 						Dual{Dual: "dual"},
 					},
 				},
@@ -909,7 +909,7 @@ func TestIn_String(t *testing.T) {
 		LHS: Identifier{Literal: "column"},
 		Values: RowValue{
 			Value: ValueList{
-				Values: []Expression{
+				Values: []QueryExpression{
 					NewIntegerValueFromString("1"),
 					NewIntegerValueFromString("2"),
 				},
@@ -928,7 +928,7 @@ func TestAll_String(t *testing.T) {
 		All: "all",
 		LHS: RowValue{
 			Value: ValueList{
-				Values: []Expression{
+				Values: []QueryExpression{
 					Identifier{Literal: "column1"},
 					Identifier{Literal: "column2"},
 				},
@@ -940,13 +940,13 @@ func TestAll_String(t *testing.T) {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						Select: "select",
-						Fields: []Expression{
+						Fields: []QueryExpression{
 							NewIntegerValueFromString("1"),
 						},
 					},
 					FromClause: FromClause{
 						From: "from",
-						Tables: []Expression{
+						Tables: []QueryExpression{
 							Dual{Dual: "dual"},
 						},
 					},
@@ -965,7 +965,7 @@ func TestAny_String(t *testing.T) {
 		Any: "any",
 		LHS: RowValue{
 			Value: ValueList{
-				Values: []Expression{
+				Values: []QueryExpression{
 					Identifier{Literal: "column1"},
 					Identifier{Literal: "column2"},
 				},
@@ -977,13 +977,13 @@ func TestAny_String(t *testing.T) {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						Select: "select",
-						Fields: []Expression{
+						Fields: []QueryExpression{
 							NewIntegerValueFromString("1"),
 						},
 					},
 					FromClause: FromClause{
 						From: "from",
-						Tables: []Expression{
+						Tables: []QueryExpression{
 							Dual{Dual: "dual"},
 						},
 					},
@@ -1030,13 +1030,13 @@ func TestExists_String(t *testing.T) {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						Select: "select",
-						Fields: []Expression{
+						Fields: []QueryExpression{
 							NewIntegerValueFromString("1"),
 						},
 					},
 					FromClause: FromClause{
 						From: "from",
-						Tables: []Expression{
+						Tables: []QueryExpression{
 							Dual{Dual: "dual"},
 						},
 					},
@@ -1107,7 +1107,7 @@ func TestUnaryLogic_String(t *testing.T) {
 
 func TestConcat_String(t *testing.T) {
 	e := Concat{
-		Items: []Expression{
+		Items: []QueryExpression{
 			Identifier{Literal: "column"},
 			NewStringValue("a"),
 		},
@@ -1121,7 +1121,7 @@ func TestConcat_String(t *testing.T) {
 func TestFunction_String(t *testing.T) {
 	e := Function{
 		Name: "sum",
-		Args: []Expression{
+		Args: []QueryExpression{
 			Identifier{Literal: "column"},
 		},
 	}
@@ -1135,7 +1135,7 @@ func TestAggregateFunction_String(t *testing.T) {
 	e := AggregateFunction{
 		Name:     "sum",
 		Distinct: Token{Token: DISTINCT, Literal: "distinct"},
-		Args: []Expression{
+		Args: []QueryExpression{
 			FieldReference{Column: Identifier{Literal: "column"}},
 		},
 	}
@@ -1202,13 +1202,13 @@ func TestTable_Name(t *testing.T) {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						Select: "select",
-						Fields: []Expression{
+						Fields: []QueryExpression{
 							NewIntegerValueFromString("1"),
 						},
 					},
 					FromClause: FromClause{
 						From: "from",
-						Tables: []Expression{
+						Tables: []QueryExpression{
 							Dual{Dual: "dual"},
 						},
 					},
@@ -1242,7 +1242,7 @@ func TestJoin_String(t *testing.T) {
 		Direction: Token{Token: LEFT, Literal: "left"},
 		Condition: JoinCondition{
 			Literal: "using",
-			Using: []Expression{
+			Using: []QueryExpression{
 				Identifier{Literal: "column"},
 			},
 		},
@@ -1269,7 +1269,7 @@ func TestJoinCondition_String(t *testing.T) {
 
 	e = JoinCondition{
 		Literal: "using",
-		Using: []Expression{
+		Using: []QueryExpression{
 			Identifier{Literal: "column1"},
 			Identifier{Literal: "column2"},
 		},
@@ -1404,7 +1404,7 @@ func TestCase_String(t *testing.T) {
 		Case:  "case",
 		End:   "end",
 		Value: Identifier{Literal: "column"},
-		When: []Expression{
+		When: []QueryExpression{
 			CaseExprWhen{
 				When:      "when",
 				Then:      "then",
@@ -1428,7 +1428,7 @@ func TestCase_String(t *testing.T) {
 	e = CaseExpr{
 		Case: "case",
 		End:  "end",
-		When: []Expression{
+		When: []QueryExpression{
 			CaseExprWhen{
 				When: "when",
 				Then: "then",
@@ -1476,14 +1476,14 @@ func TestListAgg_String(t *testing.T) {
 	e := ListAgg{
 		ListAgg:  "listagg",
 		Distinct: Token{Token: DISTINCT, Literal: "distinct"},
-		Args: []Expression{
+		Args: []QueryExpression{
 			Identifier{Literal: "column1"},
 			NewStringValue(","),
 		},
 		WithinGroup: "within group",
 		OrderBy: OrderByClause{
 			OrderBy: "order by",
-			Items:   []Expression{Identifier{Literal: "column1"}},
+			Items:   []QueryExpression{Identifier{Literal: "column1"}},
 		},
 	}
 	expect := "listagg(distinct column1, ',') within group (order by column1)"
@@ -1494,7 +1494,7 @@ func TestListAgg_String(t *testing.T) {
 	e = ListAgg{
 		ListAgg:  "listagg",
 		Distinct: Token{Token: DISTINCT, Literal: "distinct"},
-		Args: []Expression{
+		Args: []QueryExpression{
 			Identifier{Literal: "column1"},
 			NewStringValue(","),
 		},
@@ -1522,7 +1522,7 @@ func TestAnalyticFunction_String(t *testing.T) {
 	e := AnalyticFunction{
 		Name:     "avg",
 		Distinct: Token{Token: DISTINCT, Literal: "distinct"},
-		Args: []Expression{
+		Args: []QueryExpression{
 			Identifier{Literal: "column4"},
 		},
 		IgnoreNulls:    true,
@@ -1531,14 +1531,14 @@ func TestAnalyticFunction_String(t *testing.T) {
 		AnalyticClause: AnalyticClause{
 			Partition: Partition{
 				PartitionBy: "partition by",
-				Values: []Expression{
+				Values: []QueryExpression{
 					Identifier{Literal: "column1"},
 					Identifier{Literal: "column2"},
 				},
 			},
 			OrderByClause: OrderByClause{
 				OrderBy: "order by",
-				Items: []Expression{
+				Items: []QueryExpression{
 					OrderItem{Value: Identifier{Literal: "column3"}},
 				},
 			},
@@ -1566,14 +1566,14 @@ func TestAnalyticClause_String(t *testing.T) {
 	e := AnalyticClause{
 		Partition: Partition{
 			PartitionBy: "partition by",
-			Values: []Expression{
+			Values: []QueryExpression{
 				Identifier{Literal: "column1"},
 				Identifier{Literal: "column2"},
 			},
 		},
 		OrderByClause: OrderByClause{
 			OrderBy: "order by",
-			Items: []Expression{
+			Items: []QueryExpression{
 				OrderItem{Value: Identifier{Literal: "column3"}},
 			},
 		},
@@ -1588,13 +1588,13 @@ func TestAnalyticClause_PartitionValues(t *testing.T) {
 	e := AnalyticClause{
 		Partition: Partition{
 			PartitionBy: "partition by",
-			Values: []Expression{
+			Values: []QueryExpression{
 				Identifier{Literal: "column1"},
 				Identifier{Literal: "column2"},
 			},
 		},
 	}
-	expect := []Expression{
+	expect := []QueryExpression{
 		Identifier{Literal: "column1"},
 		Identifier{Literal: "column2"},
 	}
@@ -1603,7 +1603,7 @@ func TestAnalyticClause_PartitionValues(t *testing.T) {
 	}
 
 	e = AnalyticClause{}
-	expect = []Expression(nil)
+	expect = []QueryExpression(nil)
 	if !reflect.DeepEqual(e.PartitionValues(), expect) {
 		t.Errorf("partition values = %q, want %q for %#v", e.PartitionValues(), expect, e)
 	}
@@ -1612,7 +1612,7 @@ func TestAnalyticClause_PartitionValues(t *testing.T) {
 func TestPartition_String(t *testing.T) {
 	e := Partition{
 		PartitionBy: "partition by",
-		Values: []Expression{
+		Values: []QueryExpression{
 			Identifier{Literal: "column1"},
 			Identifier{Literal: "column2"},
 		},
@@ -1641,261 +1641,6 @@ func TestVariableSubstitution_String(t *testing.T) {
 		Value: NewIntegerValueFromString("1"),
 	}
 	expect := "@var := 1"
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-}
-
-func TestVariableAssignment_String(t *testing.T) {
-	e := VariableAssignment{
-		Variable: Variable{Name: "@var"},
-		Value:    NewIntegerValueFromString("1"),
-	}
-	expect := "@var := 1"
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-
-	e = VariableAssignment{
-		Variable: Variable{Name: "@var"},
-		Value:    nil,
-	}
-	expect = "@var"
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-}
-
-func TestInsertQuery_String(t *testing.T) {
-	e := InsertQuery{
-		WithClause: WithClause{
-			With: "with",
-			InlineTables: []Expression{
-				InlineTable{
-					Name: Identifier{Literal: "ct"},
-					As:   "as",
-					Query: SelectQuery{
-						SelectEntity: SelectEntity{
-							SelectClause: SelectClause{
-								Select: "select",
-								Fields: []Expression{
-									Field{Object: NewIntegerValueFromString("1")},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		Insert: "insert",
-		Into:   "into",
-		Table:  Identifier{Literal: "table1"},
-		Fields: []Expression{
-			Identifier{Literal: "column1"},
-			Identifier{Literal: "column2"},
-		},
-		Values: "values",
-		ValuesList: []Expression{
-			RowValue{
-				Value: ValueList{
-					Values: []Expression{
-						NewIntegerValueFromString("1"),
-						NewIntegerValueFromString("2"),
-					},
-				},
-			},
-			RowValue{
-				Value: ValueList{
-					Values: []Expression{
-						NewIntegerValueFromString("3"),
-						NewIntegerValueFromString("4"),
-					},
-				},
-			},
-		},
-	}
-	expect := "with ct as (select 1) insert into table1 (column1, column2) values (1, 2), (3, 4)"
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-
-	e = InsertQuery{
-		Insert: "insert",
-		Into:   "into",
-		Table:  Identifier{Literal: "table1"},
-		Fields: []Expression{
-			Identifier{Literal: "column1"},
-			Identifier{Literal: "column2"},
-		},
-		Query: SelectQuery{
-			SelectEntity: SelectEntity{
-				SelectClause: SelectClause{
-					Select: "select",
-					Fields: []Expression{
-						NewIntegerValueFromString("1"),
-						NewIntegerValueFromString("2"),
-					},
-				},
-			},
-		},
-	}
-	expect = "insert into table1 (column1, column2) select 1, 2"
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-}
-
-func TestUpdateQuery_String(t *testing.T) {
-	e := UpdateQuery{
-		WithClause: WithClause{
-			With: "with",
-			InlineTables: []Expression{
-				InlineTable{
-					Name: Identifier{Literal: "ct"},
-					As:   "as",
-					Query: SelectQuery{
-						SelectEntity: SelectEntity{
-							SelectClause: SelectClause{
-								Select: "select",
-								Fields: []Expression{
-									Field{Object: NewIntegerValueFromString("1")},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		Update: "update",
-		Tables: []Expression{
-			Table{
-				Object: Identifier{Literal: "table1"},
-			},
-		},
-		Set: "set",
-		SetList: []Expression{
-			UpdateSet{
-				Field: FieldReference{Column: Identifier{Literal: "column1"}},
-				Value: NewIntegerValueFromString("1"),
-			},
-			UpdateSet{
-				Field: FieldReference{Column: Identifier{Literal: "column2"}},
-				Value: NewIntegerValueFromString("2"),
-			},
-		},
-		FromClause: FromClause{
-			From: "from",
-			Tables: []Expression{
-				Table{
-					Object: Identifier{Literal: "table1"},
-				},
-			},
-		},
-		WhereClause: WhereClause{
-			Where: "where",
-			Filter: Comparison{
-				LHS:      Identifier{Literal: "column3"},
-				Operator: "=",
-				RHS:      NewIntegerValueFromString("3"),
-			},
-		},
-	}
-	expect := "with ct as (select 1) update table1 set column1 = 1, column2 = 2 from table1 where column3 = 3"
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-}
-
-func TestUpdateSet_String(t *testing.T) {
-	e := UpdateSet{
-		Field: FieldReference{Column: Identifier{Literal: "column1"}},
-		Value: NewIntegerValueFromString("1"),
-	}
-	expect := "column1 = 1"
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-}
-
-func TestDeleteQuery_String(t *testing.T) {
-	e := DeleteQuery{
-		WithClause: WithClause{
-			With: "with",
-			InlineTables: []Expression{
-				InlineTable{
-					Name: Identifier{Literal: "ct"},
-					As:   "as",
-					Query: SelectQuery{
-						SelectEntity: SelectEntity{
-							SelectClause: SelectClause{
-								Select: "select",
-								Fields: []Expression{
-									Field{Object: NewIntegerValueFromString("1")},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		Delete: "delete",
-		Tables: []Expression{
-			Table{
-				Object: Identifier{Literal: "table1"},
-			},
-		},
-		FromClause: FromClause{
-			From: "from",
-			Tables: []Expression{
-				Table{
-					Object: Identifier{Literal: "table1"},
-				},
-			},
-		},
-		WhereClause: WhereClause{
-			Where: "where",
-			Filter: Comparison{
-				LHS:      Identifier{Literal: "column1"},
-				Operator: "=",
-				RHS:      NewIntegerValueFromString("1"),
-			},
-		},
-	}
-	expect := "with ct as (select 1) delete table1 from table1 where column1 = 1"
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-}
-
-func TestColumnDefault_String(t *testing.T) {
-	e := ColumnDefault{
-		Column:  Identifier{Literal: "column1"},
-		Default: "default",
-		Value:   NewNullValueFromString("null"),
-	}
-	expect := "column1 default null"
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-}
-
-func TestColumnPosition_String(t *testing.T) {
-	e := ColumnPosition{
-		Position: Token{Token: AFTER, Literal: "after"},
-		Column:   Identifier{Literal: "column1"},
-	}
-	expect := "after column1"
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-}
-
-func TestFetchPosition_String(t *testing.T) {
-	e := FetchPosition{
-		Position: Token{Token: ABSOLUTE, Literal: "absolute"},
-		Number:   NewIntegerValueFromString("1"),
-	}
-	expect := "absolute 1"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}

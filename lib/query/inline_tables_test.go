@@ -17,7 +17,7 @@ var inlineTablesListSetTests = []struct {
 		Name: "InlineTablesList Set",
 		Expr: parser.InlineTable{
 			Name: parser.Identifier{Literal: "it"},
-			Fields: []parser.Expression{
+			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "c1"},
 				parser.Identifier{Literal: "c2"},
 				parser.Identifier{Literal: "num"},
@@ -27,7 +27,7 @@ var inlineTablesListSetTests = []struct {
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
 						Select: "select",
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 							parser.Field{Object: parser.NewIntegerValue(1)},
@@ -35,7 +35,7 @@ var inlineTablesListSetTests = []struct {
 					},
 					FromClause: parser.FromClause{
 						From: "from",
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table1"}},
 						},
 					},
@@ -215,11 +215,11 @@ var inlineTablesListLoadTests = []struct {
 		Name: "InlineTablesList Load",
 		Expr: parser.WithClause{
 			With: "with",
-			InlineTables: []parser.Expression{
+			InlineTables: []parser.QueryExpression{
 				parser.InlineTable{
 					Recursive: parser.Token{Token: parser.RECURSIVE, Literal: "recursive"},
 					Name:      parser.Identifier{Literal: "it_recursive"},
-					Fields: []parser.Expression{
+					Fields: []parser.QueryExpression{
 						parser.Identifier{Literal: "n"},
 					},
 					As: "as",
@@ -228,7 +228,7 @@ var inlineTablesListLoadTests = []struct {
 							LHS: parser.SelectEntity{
 								SelectClause: parser.SelectClause{
 									Select: "select",
-									Fields: []parser.Expression{
+									Fields: []parser.QueryExpression{
 										parser.Field{Object: parser.NewIntegerValueFromString("1")},
 									},
 								},
@@ -237,7 +237,7 @@ var inlineTablesListLoadTests = []struct {
 							RHS: parser.SelectEntity{
 								SelectClause: parser.SelectClause{
 									Select: "select",
-									Fields: []parser.Expression{
+									Fields: []parser.QueryExpression{
 										parser.Field{
 											Object: parser.Arithmetic{
 												LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
@@ -248,7 +248,7 @@ var inlineTablesListLoadTests = []struct {
 									},
 								},
 								FromClause: parser.FromClause{
-									Tables: []parser.Expression{
+									Tables: []parser.QueryExpression{
 										parser.Table{Object: parser.Identifier{Literal: "it_recursive"}, Alias: parser.Identifier{Literal: "t"}},
 									},
 								},
@@ -327,10 +327,10 @@ var inlineTablesListLoadTests = []struct {
 		Name: "InlineTablesList Load Set Error",
 		Expr: parser.WithClause{
 			With: "with",
-			InlineTables: []parser.Expression{
+			InlineTables: []parser.QueryExpression{
 				parser.InlineTable{
 					Name: parser.Identifier{Literal: "it"},
-					Fields: []parser.Expression{
+					Fields: []parser.QueryExpression{
 						parser.Identifier{Literal: "c1"},
 						parser.Identifier{Literal: "c2"},
 					},
@@ -339,14 +339,14 @@ var inlineTablesListLoadTests = []struct {
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
 								Select: "select",
-								Fields: []parser.Expression{
+								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 								},
 							},
 							FromClause: parser.FromClause{
 								From: "from",
-								Tables: []parser.Expression{
+								Tables: []parser.QueryExpression{
 									parser.Table{Object: parser.Identifier{Literal: "table1"}},
 								},
 							},
@@ -427,7 +427,7 @@ var inlineTablesSetTests = []struct {
 		Name: "InlineTables Set",
 		Expr: parser.InlineTable{
 			Name: parser.Identifier{Literal: "it"},
-			Fields: []parser.Expression{
+			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "c1"},
 				parser.Identifier{Literal: "c2"},
 				parser.Identifier{Literal: "num"},
@@ -437,7 +437,7 @@ var inlineTablesSetTests = []struct {
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
 						Select: "select",
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 							parser.Field{Object: parser.NewIntegerValueFromString("1")},
@@ -445,7 +445,7 @@ var inlineTablesSetTests = []struct {
 					},
 					FromClause: parser.FromClause{
 						From: "from",
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table1"}},
 						},
 					},
@@ -480,7 +480,7 @@ var inlineTablesSetTests = []struct {
 		Expr: parser.InlineTable{
 			Recursive: parser.Token{Token: parser.RECURSIVE, Literal: "recursive"},
 			Name:      parser.Identifier{Literal: "it_recursive"},
-			Fields: []parser.Expression{
+			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "n"},
 			},
 			As: "as",
@@ -489,7 +489,7 @@ var inlineTablesSetTests = []struct {
 					LHS: parser.SelectEntity{
 						SelectClause: parser.SelectClause{
 							Select: "select",
-							Fields: []parser.Expression{
+							Fields: []parser.QueryExpression{
 								parser.Field{Object: parser.NewIntegerValueFromString("1")},
 							},
 						},
@@ -498,7 +498,7 @@ var inlineTablesSetTests = []struct {
 					RHS: parser.SelectEntity{
 						SelectClause: parser.SelectClause{
 							Select: "select",
-							Fields: []parser.Expression{
+							Fields: []parser.QueryExpression{
 								parser.Field{
 									Object: parser.Arithmetic{
 										LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
@@ -509,7 +509,7 @@ var inlineTablesSetTests = []struct {
 							},
 						},
 						FromClause: parser.FromClause{
-							Tables: []parser.Expression{
+							Tables: []parser.QueryExpression{
 								parser.Table{Object: parser.Identifier{Literal: "it_recursive"}},
 							},
 						},
@@ -572,7 +572,7 @@ var inlineTablesSetTests = []struct {
 		Name: "InlineTables Set Redeclared Error",
 		Expr: parser.InlineTable{
 			Name: parser.Identifier{Literal: "it"},
-			Fields: []parser.Expression{
+			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "c1"},
 				parser.Identifier{Literal: "c2"},
 			},
@@ -581,14 +581,14 @@ var inlineTablesSetTests = []struct {
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
 						Select: "select",
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 						},
 					},
 					FromClause: parser.FromClause{
 						From: "from",
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table1"}},
 						},
 					},
@@ -601,7 +601,7 @@ var inlineTablesSetTests = []struct {
 		Name: "InlineTables Set Query Error",
 		Expr: parser.InlineTable{
 			Name: parser.Identifier{Literal: "it2"},
-			Fields: []parser.Expression{
+			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "c1"},
 				parser.Identifier{Literal: "c2"},
 			},
@@ -610,14 +610,14 @@ var inlineTablesSetTests = []struct {
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
 						Select: "select",
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
 						},
 					},
 					FromClause: parser.FromClause{
 						From: "from",
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table1"}},
 						},
 					},
@@ -630,7 +630,7 @@ var inlineTablesSetTests = []struct {
 		Name: "InlineTables Set Field Length Error",
 		Expr: parser.InlineTable{
 			Name: parser.Identifier{Literal: "it2"},
-			Fields: []parser.Expression{
+			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "c1"},
 			},
 			As: "as",
@@ -638,14 +638,14 @@ var inlineTablesSetTests = []struct {
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
 						Select: "select",
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 						},
 					},
 					FromClause: parser.FromClause{
 						From: "from",
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table1"}},
 						},
 					},
@@ -658,7 +658,7 @@ var inlineTablesSetTests = []struct {
 		Name: "InlineTables Set Duplicate Field Name Error",
 		Expr: parser.InlineTable{
 			Name: parser.Identifier{Literal: "it2"},
-			Fields: []parser.Expression{
+			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "c1"},
 				parser.Identifier{Literal: "c1"},
 			},
@@ -667,14 +667,14 @@ var inlineTablesSetTests = []struct {
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
 						Select: "select",
-						Fields: []parser.Expression{
+						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 						},
 					},
 					FromClause: parser.FromClause{
 						From: "from",
-						Tables: []parser.Expression{
+						Tables: []parser.QueryExpression{
 							parser.Table{Object: parser.Identifier{Literal: "table1"}},
 						},
 					},
