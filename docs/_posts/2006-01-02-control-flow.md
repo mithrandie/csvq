@@ -121,7 +121,7 @@ _statements_
 : [Statements]({{ '/reference/statement.html' | relative_url }})
 
 A While In statement fetch the data from the [cursor]({{ '/reference/cursor.html' | relative_url }}) into variables, then execute _statements_.
-The While In statement iterates it until the _cursor_name__ pointer reaches the last record in the referring view.
+The While In statement iterates it until the _cursor_name_ pointer reaches the last record in the referring view.
 
 ## CONTINUE
 {: #continue}

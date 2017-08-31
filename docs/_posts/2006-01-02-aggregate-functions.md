@@ -51,7 +51,7 @@ Returns the number of all values including null values.
 {: #min}
 
 ```
-MIN([DISTINCT] expr)
+MIN(expr)
 ```
 
 _expr_
@@ -67,7 +67,7 @@ If all values are null, then returns a null.
 {: #max}
 
 ```
-MAX([DISTINCT] expr)
+MAX(expr)
 ```
 
 _expr_

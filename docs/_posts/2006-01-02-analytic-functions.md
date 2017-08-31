@@ -318,7 +318,7 @@ If _IGNORE NULLS_ keywords are specified, then rows that _expr_ values are nulls
 {: #count}
 
 ```
-COUNT([DISTINCT] expr) OVER ([partition_clause] [order by clause])
+COUNT([DISTINCT] expr) OVER ([partition_clause])
 ```
 
 _expr_
@@ -327,23 +327,17 @@ _expr_
 _partition_clause_
 : [Partition Clause](#syntax)
 
-_order_by_clause_
-: [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
-
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
 Returns the number of non-null values of _expr_.
 
 ```
-COUNT([DISTINCT] *) OVER ([partition_clause] [order by clause])
+COUNT([DISTINCT] *) OVER ([partition_clause])
 ```
 
 _partition_clause_
 : [Partition Clause](#syntax)
-
-_order_by_clause_
-: [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
 
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
@@ -355,7 +349,7 @@ Returns the number of all values including null values.
 {: #min}
 
 ```
-MIN([DISTINCT] expr) OVER ([partition_clause] [order by clause])
+MIN(expr) OVER ([partition_clause])
 ```
 
 _expr_
@@ -363,9 +357,6 @@ _expr_
 
 _partition_clause_
 : [Partition Clause](#syntax)
-
-_order_by_clause_
-: [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
 
 _return_
 : [primitive type]({{ '/reference/value.html#primitive_types' | relative_url }})
@@ -378,7 +369,7 @@ If all values are null, then returns a null.
 {: #max}
 
 ```
-MAX([DISTINCT] expr) OVER ([partition_clause] [order by clause])
+MAX(expr) OVER ([partition_clause])
 ```
 
 _expr_
@@ -386,9 +377,6 @@ _expr_
 
 _partition_clause_
 : [Partition Clause](#syntax)
-
-_order_by_clause_
-: [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
 
 _return_
 : [primitive type]({{ '/reference/value.html#primitive_types' | relative_url }})
@@ -401,7 +389,7 @@ If all values are null, then returns a null.
 {: #sum}
 
 ```
-SUM([DISTINCT] expr) OVER ([partition_clause] [order by clause])
+SUM([DISTINCT] expr) OVER ([partition_clause])
 ```
 
 _expr_
@@ -409,9 +397,6 @@ _expr_
 
 _partition_clause_
 : [Partition Clause](#syntax)
-
-_order_by_clause_
-: [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
 
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
@@ -424,7 +409,7 @@ If all values are null, then returns a null.
 {: #avg}
 
 ```
-AVG([DISTINCT] expr) OVER ([partition_clause] [order by clause])
+AVG([DISTINCT] expr) OVER ([partition_clause])
 ```
 
 _expr_
@@ -432,9 +417,6 @@ _expr_
 
 _partition_clause_
 : [Partition Clause](#syntax)
-
-_order_by_clause_
-: [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
 
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
@@ -447,7 +429,7 @@ If all values are null, then returns a null.
 {: #median}
 
 ```
-MEDIAN([DISTINCT] expr) OVER ([partition_clause] [order by clause])
+MEDIAN([DISTINCT] expr) OVER ([partition_clause])
 ```
 
 _expr_
@@ -455,9 +437,6 @@ _expr_
 
 _partition_clause_
 : [Partition Clause](#syntax)
-
-_order_by_clause_
-: [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
 
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
