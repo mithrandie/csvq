@@ -86,6 +86,10 @@ func main() {
 			Name:  "without-header, N",
 			Usage: "when the file format is specified as CSV or TSV, write without the header line",
 		},
+		cli.BoolFlag{
+			Name:  "silent",
+			Usage: "Does not output operation logs",
+		},
 		cli.IntFlag{
 			Name:  "cpu, p",
 			Usage: "hint for the number of cpu cores to be used. 1 - number of cpu cores",
@@ -227,6 +231,7 @@ func setFlags(c *cli.Context) error {
 	}
 	cmd.SetWithoutHeader(c.GlobalBool("without-header"))
 
+	cmd.SetSilent(c.GlobalBool("silent"))
 	cmd.SetCPU(c.GlobalInt("cpu"))
 	cmd.SetStats(c.GlobalBool("stats"))
 

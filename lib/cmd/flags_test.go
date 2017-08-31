@@ -336,6 +336,15 @@ func TestSetWithoutHeader(t *testing.T) {
 	}
 }
 
+func TestSetSilent(t *testing.T) {
+	flags := GetFlags()
+
+	SetSilent(true)
+	if !flags.Silent {
+		t.Errorf("silent = %t, expect to set %t", flags.Silent, true)
+	}
+}
+
 func TestSetCPU(t *testing.T) {
 	flags := GetFlags()
 
