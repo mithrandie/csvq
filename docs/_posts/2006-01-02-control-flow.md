@@ -51,7 +51,7 @@ END CASE;
 ```
 
 _condition_
-: value
+: [value]({{ '/reference/value.html' | relative_url }})
 
 _statements_
 : [Statements]({{ '/reference/statement.html' | relative_url }})
@@ -71,10 +71,10 @@ END CASE;
 ```
 
 _value_
-: value
+: [value]({{ '/reference/value.html' | relative_url }})
 
 _comparison_value_
-: value
+: [value]({{ '/reference/value.html' | relative_url }})
 
 _statements_
 : [Statements]({{ '/reference/statement.html' | relative_url }})
