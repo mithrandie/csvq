@@ -36,8 +36,8 @@ func CompareCombinedly(p1 Primary, p2 Primary) ComparisonResult {
 		return INCOMMENSURABLE
 	}
 
-	if i1 := PrimaryToInteger(p1); !IsNull(i1) {
-		if i2 := PrimaryToInteger(p2); !IsNull(i2) {
+	if i1 := ToInteger(p1); !IsNull(i1) {
+		if i2 := ToInteger(p2); !IsNull(i2) {
 			v1 := i1.(Integer).Raw()
 			v2 := i2.(Integer).Raw()
 			if v1 == v2 {
@@ -50,8 +50,8 @@ func CompareCombinedly(p1 Primary, p2 Primary) ComparisonResult {
 		}
 	}
 
-	if f1 := PrimaryToFloat(p1); !IsNull(f1) {
-		if f2 := PrimaryToFloat(p2); !IsNull(f2) {
+	if f1 := ToFloat(p1); !IsNull(f1) {
+		if f2 := ToFloat(p2); !IsNull(f2) {
 			v1 := f1.(Float).Raw()
 			v2 := f2.(Float).Raw()
 			if v1 == v2 {
@@ -64,8 +64,8 @@ func CompareCombinedly(p1 Primary, p2 Primary) ComparisonResult {
 		}
 	}
 
-	if d1 := PrimaryToDatetime(p1); !IsNull(d1) {
-		if d2 := PrimaryToDatetime(p2); !IsNull(d2) {
+	if d1 := ToDatetime(p1); !IsNull(d1) {
+		if d2 := ToDatetime(p2); !IsNull(d2) {
 			v1 := d1.(Datetime).Raw()
 			v2 := d2.(Datetime).Raw()
 			if v1.Equal(v2) {
@@ -78,8 +78,8 @@ func CompareCombinedly(p1 Primary, p2 Primary) ComparisonResult {
 		}
 	}
 
-	if b1 := PrimaryToBoolean(p1); !IsNull(b1) {
-		if b2 := PrimaryToBoolean(p2); !IsNull(b2) {
+	if b1 := ToBoolean(p1); !IsNull(b1) {
+		if b2 := ToBoolean(p2); !IsNull(b2) {
 			v1 := b1.(Boolean).Raw()
 			v2 := b2.(Boolean).Raw()
 			if v1 == v2 {

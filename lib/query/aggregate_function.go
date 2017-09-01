@@ -79,7 +79,7 @@ func Sum(list []value.Primary) value.Primary {
 	var count int
 
 	for _, v := range list {
-		f := value.PrimaryToFloat(v)
+		f := value.ToFloat(v)
 		if value.IsNull(f) {
 			continue
 		}
@@ -91,7 +91,7 @@ func Sum(list []value.Primary) value.Primary {
 	if count < 1 {
 		return value.NewNull()
 	}
-	return value.Float64ToPrimary(sum)
+	return value.ParseFloat64(sum)
 }
 
 func Avg(list []value.Primary) value.Primary {
@@ -99,7 +99,7 @@ func Avg(list []value.Primary) value.Primary {
 	var count int
 
 	for _, v := range list {
-		f := value.PrimaryToFloat(v)
+		f := value.ToFloat(v)
 		if value.IsNull(f) {
 			continue
 		}
@@ -113,18 +113,18 @@ func Avg(list []value.Primary) value.Primary {
 	}
 
 	avg := sum / float64(count)
-	return value.Float64ToPrimary(avg)
+	return value.ParseFloat64(avg)
 }
 
 func Median(list []value.Primary) value.Primary {
 	var values []float64
 
 	for _, v := range list {
-		if f := value.PrimaryToFloat(v); !value.IsNull(f) {
+		if f := value.ToFloat(v); !value.IsNull(f) {
 			values = append(values, f.(value.Float).Raw())
 			continue
 		}
-		if d := value.PrimaryToDatetime(v); !value.IsNull(d) {
+		if d := value.ToDatetime(v); !value.IsNull(d) {
 			values = append(values, float64(d.(value.Datetime).Raw().UnixNano())/1e9)
 			continue
 		}
@@ -144,13 +144,13 @@ func Median(list []value.Primary) value.Primary {
 		idx := (len(values) / 2) - 1
 		median = (values[idx] + values[idx+1]) / float64(2)
 	}
-	return value.Float64ToPrimary(median)
+	return value.ParseFloat64(median)
 }
 
 func ListAgg(list []value.Primary, separator string) value.Primary {
 	strlist := []string{}
 	for _, v := range list {
-		s := value.PrimaryToString(v)
+		s := value.ToString(v)
 		if value.IsNull(s) {
 			continue
 		}

@@ -24,7 +24,7 @@ var filterEvaluateTests = []struct {
 		Result: value.NewTernary(ternary.TRUE),
 	},
 	{
-		Name:   "Primary",
+		Name:   "PrimitiveType",
 		Expr:   parser.NewStringValue("str"),
 		Result: value.NewString("str"),
 	},
@@ -2280,11 +2280,11 @@ var filterEvaluateTests = []struct {
 						RequiredArgs: 1,
 						Statements: []parser.Statement{
 							parser.VariableDeclaration{
-								Assignments: []parser.Expression{
-									parser.VariableAssignment{
+								Assignments: []parser.VariableAssignment{
+									{
 										Variable: parser.Variable{Name: "@value"},
 									},
-									parser.VariableAssignment{
+									{
 										Variable: parser.Variable{Name: "@fetch"},
 									},
 								},
@@ -2504,11 +2504,11 @@ var filterEvaluateTests = []struct {
 						Cursor:      parser.Identifier{Literal: "column1"},
 						Statements: []parser.Statement{
 							parser.VariableDeclaration{
-								Assignments: []parser.Expression{
-									parser.VariableAssignment{
+								Assignments: []parser.VariableAssignment{
+									{
 										Variable: parser.Variable{Name: "@value"},
 									},
-									parser.VariableAssignment{
+									{
 										Variable: parser.Variable{Name: "@fetch"},
 									},
 								},
@@ -2601,11 +2601,11 @@ var filterEvaluateTests = []struct {
 						Cursor:      parser.Identifier{Literal: "column1"},
 						Statements: []parser.Statement{
 							parser.VariableDeclaration{
-								Assignments: []parser.Expression{
-									parser.VariableAssignment{
+								Assignments: []parser.VariableAssignment{
+									{
 										Variable: parser.Variable{Name: "@value"},
 									},
-									parser.VariableAssignment{
+									{
 										Variable: parser.Variable{Name: "@fetch"},
 									},
 								},

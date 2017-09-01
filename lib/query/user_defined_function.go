@@ -75,7 +75,7 @@ func (m UserDefinedFunctionMap) DeclareAggregate(expr parser.AggregateDeclaratio
 	return nil
 }
 
-func (m UserDefinedFunctionMap) parserParameters(parameters []parser.Expression) ([]parser.Variable, map[string]parser.QueryExpression, int, error) {
+func (m UserDefinedFunctionMap) parserParameters(parameters []parser.VariableAssignment) ([]parser.Variable, map[string]parser.QueryExpression, int, error) {
 	var isDuplicate = func(variable parser.Variable, variables []parser.Variable) bool {
 		for _, v := range variables {
 			if variable.Name == v.Name {
@@ -89,9 +89,7 @@ func (m UserDefinedFunctionMap) parserParameters(parameters []parser.Expression)
 	defaults := make(map[string]parser.QueryExpression)
 
 	required := 0
-	for i, parameter := range parameters {
-		assignment := parameter.(parser.VariableAssignment)
-
+	for i, assignment := range parameters {
 		if isDuplicate(assignment.Variable, variables) {
 			return nil, nil, 0, NewDuplicateParameterError(assignment.Variable)
 		}

@@ -14,11 +14,11 @@ func NewGroupCell(values []value.Primary) Cell {
 	return values
 }
 
-func (cell Cell) Primary() value.Primary {
+func (cell Cell) Value() value.Primary {
 	return cell[0]
 }
 
-func (cell Cell) GroupedPrimary(index int) value.Primary {
+func (cell Cell) GroupedValue(index int) value.Primary {
 	return cell[index]
 }
 

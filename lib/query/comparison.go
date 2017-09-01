@@ -22,11 +22,11 @@ func Like(p1 value.Primary, p2 value.Primary) ternary.Value {
 		return ternary.UNKNOWN
 	}
 
-	s1 := value.PrimaryToString(p1)
+	s1 := value.ToString(p1)
 	if value.IsNull(s1) {
 		return ternary.UNKNOWN
 	}
-	s2 := value.PrimaryToString(p2)
+	s2 := value.ToString(p2)
 	if value.IsNull(s2) {
 		return ternary.UNKNOWN
 	}

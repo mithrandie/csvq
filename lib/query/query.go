@@ -78,20 +78,19 @@ func Execute(input string, sourceFile string) error {
 	return err
 }
 
-func FetchCursor(name parser.Identifier, fetchPosition parser.Expression, vars []parser.Variable, filter *Filter) (bool, error) {
+func FetchCursor(name parser.Identifier, fetchPosition parser.FetchPosition, vars []parser.Variable, filter *Filter) (bool, error) {
 	position := parser.NEXT
 	number := -1
-	if fetchPosition != nil {
-		fp := fetchPosition.(parser.FetchPosition)
-		position = fp.Position.Token
-		if fp.Number != nil {
-			p, err := filter.Evaluate(fp.Number)
+	if !fetchPosition.Position.IsEmpty() {
+		position = fetchPosition.Position.Token
+		if fetchPosition.Number != nil {
+			p, err := filter.Evaluate(fetchPosition.Number)
 			if err != nil {
 				return false, err
 			}
-			i := value.PrimaryToInteger(p)
+			i := value.ToInteger(p)
 			if value.IsNull(i) {
-				return false, NewInvalidFetchPositionError(fp)
+				return false, NewInvalidFetchPositionError(fetchPosition)
 			}
 			number = int(i.(value.Integer).Raw())
 		}
@@ -109,7 +108,7 @@ func FetchCursor(name parser.Identifier, fetchPosition parser.Expression, vars [
 	}
 
 	for i, v := range vars {
-		_, err := filter.VariablesList.SubstitutePrimary(v, primaries[i])
+		_, err := filter.VariablesList.SubstituteDirectly(v, primaries[i])
 		if err != nil {
 			return false, err
 		}
@@ -221,7 +220,6 @@ func selectEntity(expr parser.QueryExpression, filter *Filter) (*View, error) {
 		if err := view.Where(entity.WhereClause.(parser.WhereClause)); err != nil {
 			return nil, err
 		}
-		view.Extract()
 	}
 
 	if entity.GroupByClause != nil {
@@ -234,7 +232,6 @@ func selectEntity(expr parser.QueryExpression, filter *Filter) (*View, error) {
 		if err := view.Having(entity.HavingClause.(parser.HavingClause)); err != nil {
 			return nil, err
 		}
-		view.Extract()
 	}
 
 	if err := view.Select(entity.SelectClause.(parser.SelectClause)); err != nil {
@@ -353,7 +350,7 @@ func Insert(query parser.InsertQuery, parentFilter *Filter) (*View, error) {
 
 	if !view.FileInfo.IsTemporary {
 		if err := cmd.TryOpenFileToWrite(view.FileInfo.Path); err != nil {
-			return nil, NewWriteFileError(query.Table.(parser.Table).Object, err.Error())
+			return nil, NewWriteFileError(query.Table.Object, err.Error())
 		}
 	}
 
@@ -408,7 +405,6 @@ func Update(query parser.UpdateQuery, parentFilter *Filter) ([]*View, error) {
 		if err := view.Where(query.WhereClause.(parser.WhereClause)); err != nil {
 			return nil, err
 		}
-		view.Extract()
 	}
 
 	viewsToUpdate := make(map[string]*View)
@@ -438,10 +434,8 @@ func Update(query parser.UpdateQuery, parentFilter *Filter) ([]*View, error) {
 		filterForLoop.Records[0].RecordIndex = i
 		internalIds := make(map[string]int)
 
-		for _, v := range query.SetList {
-			uset := v.(parser.UpdateSet)
-
-			value, err := filterForLoop.Evaluate(uset.Value)
+		for _, uset := range query.SetList {
+			val, err := filterForLoop.Evaluate(uset.Value)
 			if err != nil {
 				return nil, err
 			}
@@ -481,7 +475,7 @@ func Update(query parser.UpdateQuery, parentFilter *Filter) ([]*View, error) {
 				return nil, NewUpdateValueAmbiguousError(uset.Field, uset.Value)
 			}
 			updatesList[viewref][internalId] = append(updatesList[viewref][internalId], fieldIdx)
-			viewsToUpdate[viewref].Records[internalId][fieldIdx] = NewCell(value)
+			viewsToUpdate[viewref].Records[internalId][fieldIdx] = NewCell(val)
 		}
 	}
 
@@ -511,7 +505,7 @@ func Delete(query parser.DeleteQuery, parentFilter *Filter) ([]*View, error) {
 		}
 	}
 
-	fromClause := query.FromClause.(parser.FromClause)
+	fromClause := query.FromClause
 	if query.Tables == nil {
 		if 1 < len(fromClause.Tables) {
 			return nil, NewDeleteTableNotSpecifiedError(query)
@@ -527,7 +521,7 @@ func Delete(query parser.DeleteQuery, parentFilter *Filter) ([]*View, error) {
 
 	view := NewView()
 	view.UseInternalId = true
-	err := view.Load(query.FromClause.(parser.FromClause), filter)
+	err := view.Load(query.FromClause, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -536,7 +530,6 @@ func Delete(query parser.DeleteQuery, parentFilter *Filter) ([]*View, error) {
 		if err := view.Where(query.WhereClause.(parser.WhereClause)); err != nil {
 			return nil, err
 		}
-		view.Extract()
 	}
 
 	viewsToDelete := make(map[string]*View)
@@ -698,13 +691,12 @@ func AddColumns(query parser.AddColumns, parentFilter *Filter) (*View, error) {
 	columnNames := view.Header.TableColumnNames()
 	fields := make([]string, len(query.Columns))
 	defaults := make([]parser.QueryExpression, len(query.Columns))
-	for i, v := range query.Columns {
-		col := v.(parser.ColumnDefault)
-		if InStrSliceWithCaseInsensitive(col.Column.Literal, columnNames) || InStrSliceWithCaseInsensitive(col.Column.Literal, fields) {
-			return nil, NewDuplicateFieldNameError(col.Column)
+	for i, coldef := range query.Columns {
+		if InStrSliceWithCaseInsensitive(coldef.Column.Literal, columnNames) || InStrSliceWithCaseInsensitive(coldef.Column.Literal, fields) {
+			return nil, NewDuplicateFieldNameError(coldef.Column)
 		}
-		fields[i] = col.Column.Literal
-		defaults[i] = col.Value
+		fields[i] = coldef.Column.Literal
+		defaults[i] = coldef.Value
 	}
 	newFieldLen := view.FieldLen() + len(query.Columns)
 

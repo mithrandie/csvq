@@ -94,6 +94,9 @@ func All(values []Value) Value {
 	}
 	for i := 1; i < len(values); i++ {
 		t = And(t, values[i])
+		if t == FALSE {
+			return FALSE
+		}
 	}
 	return t
 }
@@ -105,6 +108,9 @@ func Any(values []Value) Value {
 	}
 	for i := 1; i < len(values); i++ {
 		t = Or(t, values[i])
+		if t == TRUE {
+			return TRUE
+		}
 	}
 	return t
 }

@@ -262,7 +262,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 				} else {
 					var p value.Primary
 					if p, err = proc.Filter.Evaluate(trigger.Message); err == nil {
-						if s := value.PrimaryToString(p); !value.IsNull(s) {
+						if s := value.ToString(p); !value.IsNull(s) {
 							message = s.(value.String).Raw()
 						}
 					}
@@ -285,13 +285,13 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 }
 
 func (proc *Procedure) IfStmt(stmt parser.If) (StatementFlow, error) {
-	stmts := make([]parser.ElseIf, len(stmt.ElseIf)+1)
-	stmts[0] = parser.ElseIf{
+	stmts := make([]parser.ElseIf, 0, len(stmt.ElseIf)+1)
+	stmts = append(stmts, parser.ElseIf{
 		Condition:  stmt.Condition,
 		Statements: stmt.Statements,
-	}
-	for i, v := range stmt.ElseIf {
-		stmts[i+1] = v.(parser.ElseIf)
+	})
+	for _, v := range stmt.ElseIf {
+		stmts = append(stmts, v)
 	}
 
 	for _, v := range stmts {
@@ -304,8 +304,8 @@ func (proc *Procedure) IfStmt(stmt parser.If) (StatementFlow, error) {
 		}
 	}
 
-	if stmt.Else != nil {
-		return proc.ExecuteChild(stmt.Else.(parser.Else).Statements)
+	if stmt.Else.Statements != nil {
+		return proc.ExecuteChild(stmt.Else.Statements)
 	}
 	return TERMINATE, nil
 }
@@ -320,8 +320,7 @@ func (proc *Procedure) Case(stmt parser.Case) (StatementFlow, error) {
 		}
 	}
 
-	for _, v := range stmt.When {
-		when := v.(parser.CaseWhen)
+	for _, when := range stmt.When {
 		var t ternary.Value
 
 		cond, err := proc.Filter.Evaluate(when.Condition)
@@ -340,10 +339,10 @@ func (proc *Procedure) Case(stmt parser.Case) (StatementFlow, error) {
 		}
 	}
 
-	if stmt.Else == nil {
+	if stmt.Else.Statements == nil {
 		return TERMINATE, nil
 	}
-	return proc.ExecuteChild(stmt.Else.(parser.CaseElse).Statements)
+	return proc.ExecuteChild(stmt.Else.Statements)
 }
 
 func (proc *Procedure) While(stmt parser.While) (StatementFlow, error) {
@@ -371,8 +370,11 @@ func (proc *Procedure) While(stmt parser.While) (StatementFlow, error) {
 }
 
 func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, error) {
+	fetchPosition := parser.FetchPosition{
+		Position: parser.Token{Token: parser.NEXT},
+	}
 	for {
-		success, err := FetchCursor(stmt.Cursor, nil, stmt.Variables, proc.Filter)
+		success, err := FetchCursor(stmt.Cursor, fetchPosition, stmt.Variables, proc.Filter)
 		if err != nil {
 			return ERROR, err
 		}

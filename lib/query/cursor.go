@@ -301,7 +301,7 @@ func (c *Cursor) Fetch(name parser.Identifier, position int, number int) ([]valu
 
 	list := make([]value.Primary, len(c.view.Records[c.index]))
 	for i, cell := range c.view.Records[c.index] {
-		list[i] = cell.Primary()
+		list[i] = cell.Value()
 	}
 
 	return list, nil

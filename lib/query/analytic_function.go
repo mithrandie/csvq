@@ -105,7 +105,7 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 						if idx < len(view.sortValues[i]) && view.sortValues[i][idx] != nil {
 							sortValues[j] = view.sortValues[i][idx]
 						} else {
-							sortValues[j] = NewSortValue(view.Records[i][idx].Primary())
+							sortValues[j] = NewSortValue(view.Records[i][idx].Value())
 							if idx < len(view.sortValues[i]) {
 								view.sortValues[i][idx] = sortValues[j]
 							}
@@ -381,7 +381,7 @@ func (fn NTile) Execute(partition Partition, expr parser.AnalyticFunction, filte
 	if err != nil {
 		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the first argument must be an integer")
 	}
-	i := value.PrimaryToInteger(p)
+	i := value.ToInteger(p)
 	if value.IsNull(i) {
 		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the first argument must be an integer")
 	}
@@ -459,7 +459,7 @@ func (fn NthValue) Execute(partition Partition, expr parser.AnalyticFunction, fi
 	if err != nil {
 		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be an integer")
 	}
-	pi := value.PrimaryToInteger(p)
+	pi := value.ToInteger(p)
 	if value.IsNull(pi) {
 		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be an integer")
 	}
@@ -534,7 +534,7 @@ func setLag(partition Partition, expr parser.AnalyticFunction, filter *Filter) (
 		if err != nil {
 			return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be an integer")
 		}
-		i := value.PrimaryToInteger(p)
+		i := value.ToInteger(p)
 		if value.IsNull(i) {
 			return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be an integer")
 		}
@@ -594,7 +594,7 @@ func (fn AnalyticListAgg) Execute(partition Partition, expr parser.AnalyticFunct
 		if err != nil {
 			return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be a string")
 		}
-		s := value.PrimaryToString(p)
+		s := value.ToString(p)
 		if value.IsNull(s) {
 			return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be a string")
 		}

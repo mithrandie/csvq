@@ -179,7 +179,7 @@ func roundParams(args []value.Primary) (number float64, place float64, isnull bo
 		return
 	}
 
-	f := value.PrimaryToFloat(args[0])
+	f := value.ToFloat(args[0])
 	if value.IsNull(f) {
 		isnull = true
 		return
@@ -187,7 +187,7 @@ func roundParams(args []value.Primary) (number float64, place float64, isnull bo
 	number = f.(value.Float).Raw()
 
 	if len(args) == 2 {
-		f := value.PrimaryToInteger(args[1])
+		f := value.ToInteger(args[1])
 		if value.IsNull(f) {
 			isnull = true
 			return
@@ -208,7 +208,7 @@ func Ceil(fn parser.Function, args []value.Primary) (value.Primary, error) {
 
 	pow := math.Pow(10, place)
 	r := math.Ceil(pow*number) / pow
-	return value.Float64ToPrimary(r), nil
+	return value.ParseFloat64(r), nil
 }
 
 func Floor(fn parser.Function, args []value.Primary) (value.Primary, error) {
@@ -222,7 +222,7 @@ func Floor(fn parser.Function, args []value.Primary) (value.Primary, error) {
 
 	pow := math.Pow(10, place)
 	r := math.Floor(pow*number) / pow
-	return value.Float64ToPrimary(r), nil
+	return value.ParseFloat64(r), nil
 }
 
 func round(f float64, place float64) float64 {
@@ -245,7 +245,7 @@ func Round(fn parser.Function, args []value.Primary) (value.Primary, error) {
 		return value.NewNull(), nil
 	}
 
-	return value.Float64ToPrimary(round(number, place)), nil
+	return value.ParseFloat64(round(number, place)), nil
 }
 
 func execMath1Arg(fn parser.Function, args []value.Primary, mathf func(float64) float64) (value.Primary, error) {
@@ -253,7 +253,7 @@ func execMath1Arg(fn parser.Function, args []value.Primary, mathf func(float64) 
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	f := value.PrimaryToFloat(args[0])
+	f := value.ToFloat(args[0])
 	if value.IsNull(f) {
 		return value.NewNull(), nil
 	}
@@ -262,7 +262,7 @@ func execMath1Arg(fn parser.Function, args []value.Primary, mathf func(float64) 
 	if math.IsInf(result, 0) || math.IsNaN(result) {
 		return value.NewNull(), nil
 	}
-	return value.Float64ToPrimary(result), nil
+	return value.ParseFloat64(result), nil
 }
 
 func execMath2Args(fn parser.Function, args []value.Primary, mathf func(float64, float64) float64) (value.Primary, error) {
@@ -270,12 +270,12 @@ func execMath2Args(fn parser.Function, args []value.Primary, mathf func(float64,
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2})
 	}
 
-	f1 := value.PrimaryToFloat(args[0])
+	f1 := value.ToFloat(args[0])
 	if value.IsNull(f1) {
 		return value.NewNull(), nil
 	}
 
-	f2 := value.PrimaryToFloat(args[1])
+	f2 := value.ToFloat(args[1])
 	if value.IsNull(f2) {
 		return value.NewNull(), nil
 	}
@@ -284,7 +284,7 @@ func execMath2Args(fn parser.Function, args []value.Primary, mathf func(float64,
 	if math.IsInf(result, 0) || math.IsNaN(result) {
 		return value.NewNull(), nil
 	}
-	return value.Float64ToPrimary(result), nil
+	return value.ParseFloat64(result), nil
 }
 
 func Abs(fn parser.Function, args []value.Primary) (value.Primary, error) {
@@ -360,7 +360,7 @@ func execParseInt(fn parser.Function, args []value.Primary, base int) (value.Pri
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	p := value.PrimaryToString(args[0])
+	p := value.ToString(args[0])
 	if value.IsNull(p) {
 		return value.NewNull(), nil
 	}
@@ -383,7 +383,7 @@ func execFormatInt(fn parser.Function, args []value.Primary, base int) (value.Pr
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	p := value.PrimaryToInteger(args[0])
+	p := value.ToInteger(args[0])
 	if value.IsNull(p) {
 		return value.NewNull(), nil
 	}
@@ -409,7 +409,7 @@ func EnotationToDec(fn parser.Function, args []value.Primary) (value.Primary, er
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	p := value.PrimaryToString(args[0])
+	p := value.ToString(args[0])
 	if value.IsNull(p) {
 		return value.NewNull(), nil
 	}
@@ -421,7 +421,7 @@ func EnotationToDec(fn parser.Function, args []value.Primary) (value.Primary, er
 		return value.NewNull(), nil
 	}
 
-	return value.Float64ToPrimary(f), nil
+	return value.ParseFloat64(f), nil
 }
 
 func Bin(fn parser.Function, args []value.Primary) (value.Primary, error) {
@@ -441,7 +441,7 @@ func Enotation(fn parser.Function, args []value.Primary) (value.Primary, error) 
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	p := value.PrimaryToFloat(args[0])
+	p := value.ToFloat(args[0])
 	if value.IsNull(p) {
 		return value.NewNull(), nil
 	}
@@ -461,11 +461,11 @@ func Rand(fn parser.Function, args []value.Primary) (value.Primary, error) {
 		return value.NewFloat(r.Float64()), nil
 	}
 
-	p1 := value.PrimaryToInteger(args[0])
+	p1 := value.ToInteger(args[0])
 	if value.IsNull(p1) {
 		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, "the first argument must be an integer")
 	}
-	p2 := value.PrimaryToInteger(args[1])
+	p2 := value.ToInteger(args[1])
 	if value.IsNull(p2) {
 		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, "the second argument must be an integer")
 	}
@@ -484,7 +484,7 @@ func execStrings1Arg(fn parser.Function, args []value.Primary, stringsf func(str
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	s := value.PrimaryToString(args[0])
+	s := value.ToString(args[0])
 	if value.IsNull(s) {
 		return value.NewNull(), nil
 	}
@@ -498,14 +498,14 @@ func execStringsTrim(fn parser.Function, args []value.Primary, stringsf func(str
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1, 2})
 	}
 
-	s := value.PrimaryToString(args[0])
+	s := value.ToString(args[0])
 	if value.IsNull(s) {
 		return value.NewNull(), nil
 	}
 
 	cutset := ""
 	if 2 == len(args) {
-		cs := value.PrimaryToString(args[1])
+		cs := value.ToString(args[1])
 		if value.IsNull(cs) {
 			return value.NewNull(), nil
 		}
@@ -560,7 +560,7 @@ func execStringsLen(fn parser.Function, args []value.Primary, stringsf func(stri
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	s := value.PrimaryToString(args[0])
+	s := value.ToString(args[0])
 	if value.IsNull(s) {
 		return value.NewNull(), nil
 	}
@@ -574,19 +574,19 @@ func execStringsPadding(fn parser.Function, args []value.Primary, direction rune
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{3})
 	}
 
-	s := value.PrimaryToString(args[0])
+	s := value.ToString(args[0])
 	if value.IsNull(s) {
 		return value.NewNull(), nil
 	}
 	str := s.(value.String).Raw()
 
-	l := value.PrimaryToInteger(args[1])
+	l := value.ToInteger(args[1])
 	if value.IsNull(l) {
 		return value.NewNull(), nil
 	}
 	length := int(l.(value.Integer).Raw())
 
-	p := value.PrimaryToString(args[2])
+	p := value.ToString(args[2])
 	if value.IsNull(p) {
 		return value.NewNull(), nil
 	}
@@ -618,7 +618,7 @@ func execCrypto(fn parser.Function, args []value.Primary, cryptof func() hash.Ha
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	s := value.PrimaryToString(args[0])
+	s := value.ToString(args[0])
 	if value.IsNull(s) {
 		return value.NewNull(), nil
 	}
@@ -635,12 +635,12 @@ func execCryptoHMAC(fn parser.Function, args []value.Primary, cryptof func() has
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2})
 	}
 
-	s := value.PrimaryToString(args[0])
+	s := value.ToString(args[0])
 	if value.IsNull(s) {
 		return value.NewNull(), nil
 	}
 
-	key := value.PrimaryToString(args[1])
+	key := value.ToString(args[1])
 	if value.IsNull(key) {
 		return value.NewNull(), nil
 	}
@@ -712,7 +712,7 @@ func Substr(fn parser.Function, args []value.Primary) (value.Primary, error) {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2, 3})
 	}
 
-	s := value.PrimaryToString(args[0])
+	s := value.ToString(args[0])
 	if value.IsNull(s) {
 		return value.NewNull(), nil
 	}
@@ -722,7 +722,7 @@ func Substr(fn parser.Function, args []value.Primary) (value.Primary, error) {
 	start := 0
 	end := strlen
 
-	i := value.PrimaryToInteger(args[1])
+	i := value.ToInteger(args[1])
 	if value.IsNull(i) {
 		return value.NewNull(), nil
 	}
@@ -735,7 +735,7 @@ func Substr(fn parser.Function, args []value.Primary) (value.Primary, error) {
 	}
 
 	if 3 == len(args) {
-		i := value.PrimaryToInteger(args[2])
+		i := value.ToInteger(args[2])
 		if value.IsNull(i) {
 			return value.NewNull(), nil
 		}
@@ -757,17 +757,17 @@ func Replace(fn parser.Function, args []value.Primary) (value.Primary, error) {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{3})
 	}
 
-	s := value.PrimaryToString(args[0])
+	s := value.ToString(args[0])
 	if value.IsNull(s) {
 		return value.NewNull(), nil
 	}
 
-	oldstr := value.PrimaryToString(args[1])
+	oldstr := value.ToString(args[1])
 	if value.IsNull(oldstr) {
 		return value.NewNull(), nil
 	}
 
-	newstr := value.PrimaryToString(args[2])
+	newstr := value.ToString(args[2])
 	if value.IsNull(newstr) {
 		return value.NewNull(), nil
 	}
@@ -781,7 +781,7 @@ func Format(fn parser.Function, args []value.Primary) (value.Primary, error) {
 		return nil, NewFunctionArgumentLengthErrorWithCustomArgs(fn, fn.Name, "at least 1 argument")
 	}
 
-	format := value.PrimaryToString(args[0])
+	format := value.ToString(args[0])
 	if value.IsNull(format) {
 		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, "the first argument must be a string")
 	}
@@ -830,11 +830,11 @@ func DatetimeFormat(fn parser.Function, args []value.Primary) (value.Primary, er
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2})
 	}
 
-	p := value.PrimaryToDatetime(args[0])
+	p := value.ToDatetime(args[0])
 	if value.IsNull(p) {
 		return value.NewNull(), nil
 	}
-	format := value.PrimaryToString(args[1])
+	format := value.ToString(args[1])
 	if value.IsNull(format) {
 		return value.NewNull(), nil
 	}
@@ -848,7 +848,7 @@ func execDatetimeToInt(fn parser.Function, args []value.Primary, timef func(time
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	dt := value.PrimaryToDatetime(args[0])
+	dt := value.ToDatetime(args[0])
 	if value.IsNull(dt) {
 		return value.NewNull(), nil
 	}
@@ -862,11 +862,11 @@ func execDatetimeAdd(fn parser.Function, args []value.Primary, timef func(time.T
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2})
 	}
 
-	p1 := value.PrimaryToDatetime(args[0])
+	p1 := value.ToDatetime(args[0])
 	if value.IsNull(p1) {
 		return value.NewNull(), nil
 	}
-	p2 := value.PrimaryToInteger(args[1])
+	p2 := value.ToInteger(args[1])
 	if value.IsNull(p2) {
 		return value.NewNull(), nil
 	}
@@ -1072,7 +1072,7 @@ func truncateDate(fn parser.Function, args []value.Primary, place int8) (value.P
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	dt := value.PrimaryToDatetime(args[0])
+	dt := value.ToDatetime(args[0])
 	if value.IsNull(dt) {
 		return value.NewNull(), nil
 	}
@@ -1106,7 +1106,7 @@ func truncateDuration(fn parser.Function, args []value.Primary, dur time.Duratio
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	dt := value.PrimaryToDatetime(args[0])
+	dt := value.ToDatetime(args[0])
 	if value.IsNull(dt) {
 		return value.NewNull(), nil
 	}
@@ -1139,11 +1139,11 @@ func DateDiff(fn parser.Function, args []value.Primary) (value.Primary, error) {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2})
 	}
 
-	p1 := value.PrimaryToDatetime(args[0])
+	p1 := value.ToDatetime(args[0])
 	if value.IsNull(p1) {
 		return value.NewNull(), nil
 	}
-	p2 := value.PrimaryToDatetime(args[1])
+	p2 := value.ToDatetime(args[1])
 	if value.IsNull(p2) {
 		return value.NewNull(), nil
 	}
@@ -1163,11 +1163,11 @@ func timeDiff(fn parser.Function, args []value.Primary, durf func(time.Duration)
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2})
 	}
 
-	p1 := value.PrimaryToDatetime(args[0])
+	p1 := value.ToDatetime(args[0])
 	if value.IsNull(p1) {
 		return value.NewNull(), nil
 	}
-	p2 := value.PrimaryToDatetime(args[1])
+	p2 := value.ToDatetime(args[1])
 	if value.IsNull(p2) {
 		return value.NewNull(), nil
 	}
@@ -1180,7 +1180,7 @@ func timeDiff(fn parser.Function, args []value.Primary, durf func(time.Duration)
 }
 
 func durationSeconds(dur time.Duration) value.Primary {
-	return value.Float64ToPrimary(dur.Seconds())
+	return value.ParseFloat64(dur.Seconds())
 }
 
 func durationNanoseconds(dur time.Duration) value.Primary {
@@ -1200,7 +1200,7 @@ func UTC(fn parser.Function, args []value.Primary) (value.Primary, error) {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	dt := value.PrimaryToDatetime(args[0])
+	dt := value.ToDatetime(args[0])
 	if value.IsNull(dt) {
 		return value.NewNull(), nil
 	}
@@ -1221,7 +1221,7 @@ func String(fn parser.Function, args []value.Primary) (value.Primary, error) {
 	case value.Datetime:
 		return value.NewString(args[0].(value.Datetime).Format(time.RFC3339Nano)), nil
 	default:
-		return value.PrimaryToString(args[0]), nil
+		return value.ToString(args[0]), nil
 	}
 }
 
@@ -1263,7 +1263,7 @@ func Float(fn parser.Function, args []value.Primary) (value.Primary, error) {
 		}
 		return value.NewFloat(f), nil
 	default:
-		return value.PrimaryToFloat(args[0]), nil
+		return value.ToFloat(args[0]), nil
 	}
 }
 
@@ -1272,7 +1272,7 @@ func Boolean(fn parser.Function, args []value.Primary) (value.Primary, error) {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	return value.PrimaryToBoolean(args[0]), nil
+	return value.ToBoolean(args[0]), nil
 }
 
 func Ternary(fn parser.Function, args []value.Primary) (value.Primary, error) {
@@ -1288,7 +1288,7 @@ func Datetime(fn parser.Function, args []value.Primary) (value.Primary, error) {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	return value.PrimaryToDatetime(args[0]), nil
+	return value.ToDatetime(args[0]), nil
 }
 
 func Call(fn parser.Function, args []value.Primary) (value.Primary, error) {

@@ -1274,14 +1274,14 @@ var viewWhereTests = []struct {
 	CPU    int
 	View   *View
 	Where  parser.WhereClause
-	Result []int
+	Result Records
 	Error  string
 }{
 	{
 		Name: "Where",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			Records: Records{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -1304,14 +1304,19 @@ var viewWhereTests = []struct {
 				Operator: "=",
 			},
 		},
-		Result: []int{1},
+		Result: Records{
+			NewRecordWithId(2, []value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
+			}),
+		},
 	},
 	{
 		Name: "Where in Multi Threading",
 		CPU:  3,
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			Records: Records{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -1334,7 +1339,12 @@ var viewWhereTests = []struct {
 				Operator: "=",
 			},
 		},
-		Result: []int{1},
+		Result: Records{
+			NewRecordWithId(2, []value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
+			}),
+		},
 	},
 	{
 		Name: "Where Filter Error",
@@ -1389,8 +1399,8 @@ func TestView_Where(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(v.View.filteredIndices, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, v.View.filteredIndices, v.Result)
+		if !reflect.DeepEqual(v.View.Records, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, v.View.Records, v.Result)
 		}
 	}
 }
@@ -1663,8 +1673,7 @@ var viewHavingTests = []struct {
 	Name   string
 	View   *View
 	Having parser.HavingClause
-	Result []int
-	Record Records
+	Result Records
 	Error  string
 }{
 	{
@@ -1693,7 +1702,7 @@ var viewHavingTests = []struct {
 				},
 			},
 			isGrouped: true,
-			Records: []Record{
+			Records: Records{
 				{
 					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("3")}),
 					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("3")}),
@@ -1722,7 +1731,14 @@ var viewHavingTests = []struct {
 				Operator: ">",
 			},
 		},
-		Result: []int{1},
+		Result: Records{
+			{
+				NewGroupCell([]value.Primary{value.NewString("2"), value.NewString("4")}),
+				NewGroupCell([]value.Primary{value.NewString("2"), value.NewString("4")}),
+				NewGroupCell([]value.Primary{value.NewString("str2"), value.NewString("str4")}),
+				NewGroupCell([]value.Primary{value.NewString("group2"), value.NewString("group2")}),
+			},
+		},
 	},
 	{
 		Name: "Having Filter Error",
@@ -1750,7 +1766,7 @@ var viewHavingTests = []struct {
 				},
 			},
 			isGrouped: true,
-			Records: []Record{
+			Records: Records{
 				{
 					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("3")}),
 					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("3")}),
@@ -1785,7 +1801,7 @@ var viewHavingTests = []struct {
 		Name: "Having Not Grouped",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
-			Records: []Record{
+			Records: Records{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("2"),
 					value.NewString("str2"),
@@ -1812,8 +1828,7 @@ var viewHavingTests = []struct {
 				Operator: ">",
 			},
 		},
-		Result: []int{0},
-		Record: []Record{
+		Result: Records{
 			{
 				NewGroupCell([]value.Primary{value.NewInteger(1), value.NewInteger(2)}),
 				NewGroupCell([]value.Primary{value.NewString("2"), value.NewString("4")}),
@@ -1826,7 +1841,7 @@ var viewHavingTests = []struct {
 		Name: "Having All Records Filter Error",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
-			Records: []Record{
+			Records: Records{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("2"),
 					value.NewString("str2"),
@@ -1872,13 +1887,8 @@ func TestView_Having(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(v.View.filteredIndices, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, v.View.filteredIndices, v.Result)
-		}
-		if v.Record != nil {
-			if !reflect.DeepEqual(v.View.Records, v.Record) {
-				t.Errorf("%s: result = %s, want %s", v.Name, v.View.Records, v.Record)
-			}
+		if !reflect.DeepEqual(v.View.Records, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, v.View.Records, v.Result)
 		}
 	}
 }
@@ -2535,11 +2545,11 @@ var viewSelectTests = []struct {
 							RequiredArgs: 0,
 							Statements: []parser.Statement{
 								parser.VariableDeclaration{
-									Assignments: []parser.Expression{
-										parser.VariableAssignment{
+									Assignments: []parser.VariableAssignment{
+										{
 											Variable: parser.Variable{Name: "@value"},
 										},
-										parser.VariableAssignment{
+										{
 											Variable: parser.Variable{Name: "@fetch"},
 										},
 									},

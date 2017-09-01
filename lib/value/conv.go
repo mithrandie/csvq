@@ -11,9 +11,9 @@ import (
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
-type ConvertedDatetimeFormatMap map[string]string
+type DatetimeFormatMap map[string]string
 
-func (m ConvertedDatetimeFormatMap) Get(s string) string {
+func (m DatetimeFormatMap) Get(s string) string {
 	if f, ok := m[s]; ok {
 		return f
 	}
@@ -22,7 +22,7 @@ func (m ConvertedDatetimeFormatMap) Get(s string) string {
 	return f
 }
 
-var DatetimeFormats = ConvertedDatetimeFormatMap{}
+var DatetimeFormats = DatetimeFormatMap{}
 
 func StrToTime(s string) (time.Time, error) {
 	s = strings.TrimSpace(s)
@@ -193,6 +193,20 @@ func ConvertDatetimeFormat(format string) string {
 	return string(dtfmt)
 }
 
+func Float64ToTime(f float64) time.Time {
+	s := Float64ToStr(f)
+	ns := strings.Split(s, ".")
+	sec, _ := strconv.ParseInt(ns[0], 10, 64)
+	var nsec int64
+	if 1 < len(ns) {
+		if 9 < len(ns[1]) {
+			ns[1] = ns[1][:9]
+		}
+		nsec, _ = strconv.ParseInt(ns[1]+strings.Repeat("0", 9-len(ns[1])), 10, 64)
+	}
+	return time.Unix(sec, nsec)
+}
+
 func Int64ToStr(i int64) string {
 	return strconv.FormatInt(i, 10)
 }
@@ -201,14 +215,14 @@ func Float64ToStr(f float64) string {
 	return strconv.FormatFloat(f, 'f', -1, 64)
 }
 
-func Float64ToPrimary(f float64) Primary {
+func ParseFloat64(f float64) Primary {
 	if math.Remainder(f, 1) == 0 {
 		return NewInteger(int64(f))
 	}
 	return NewFloat(f)
 }
 
-func PrimaryToInteger(p Primary) Primary {
+func ToInteger(p Primary) Primary {
 	switch p.(type) {
 	case Integer:
 		return p
@@ -234,7 +248,7 @@ func PrimaryToInteger(p Primary) Primary {
 	return NewNull()
 }
 
-func PrimaryToFloat(p Primary) Primary {
+func ToFloat(p Primary) Primary {
 	switch p.(type) {
 	case Integer:
 		return NewFloat(float64(p.(Integer).Raw()))
@@ -274,7 +288,7 @@ func maybeNumber(s string) bool {
 	return false
 }
 
-func PrimaryToDatetime(p Primary) Primary {
+func ToDatetime(p Primary) Primary {
 	switch p.(type) {
 	case Integer:
 		dt := time.Unix(p.(Integer).Raw(), 0)
@@ -304,7 +318,7 @@ func PrimaryToDatetime(p Primary) Primary {
 	return NewNull()
 }
 
-func PrimaryToBoolean(p Primary) Primary {
+func ToBoolean(p Primary) Primary {
 	switch p.(type) {
 	case Boolean:
 		return p
@@ -321,7 +335,7 @@ func PrimaryToBoolean(p Primary) Primary {
 	return NewNull()
 }
 
-func PrimaryToString(p Primary) Primary {
+func ToString(p Primary) Primary {
 	switch p.(type) {
 	case String:
 		return p
@@ -331,18 +345,4 @@ func PrimaryToString(p Primary) Primary {
 		return NewString(Float64ToStr(p.(Float).Raw()))
 	}
 	return NewNull()
-}
-
-func Float64ToTime(f float64) time.Time {
-	s := Float64ToStr(f)
-	ns := strings.Split(s, ".")
-	sec, _ := strconv.ParseInt(ns[0], 10, 64)
-	var nsec int64
-	if 1 < len(ns) {
-		if 9 < len(ns[1]) {
-			ns[1] = ns[1][:9]
-		}
-		nsec, _ = strconv.ParseInt(ns[1]+strings.Repeat("0", 9-len(ns[1])), 10, 64)
-	}
-	return time.Unix(sec, nsec)
 }

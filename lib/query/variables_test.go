@@ -188,8 +188,8 @@ var variablesDeclareTests = []variableTests{
 	{
 		Name: "Declare Variable",
 		Expr: parser.VariableDeclaration{
-			Assignments: []parser.Expression{
-				parser.VariableAssignment{
+			Assignments: []parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@var1"},
 				},
 			},
@@ -201,8 +201,8 @@ var variablesDeclareTests = []variableTests{
 	{
 		Name: "Declare Variable With Initial Value",
 		Expr: parser.VariableDeclaration{
-			Assignments: []parser.Expression{
-				parser.VariableAssignment{
+			Assignments: []parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@var2"},
 					Value:    parser.NewIntegerValue(1),
 				},
@@ -216,8 +216,8 @@ var variablesDeclareTests = []variableTests{
 	{
 		Name: "Declare Variable Redeclaration Error",
 		Expr: parser.VariableDeclaration{
-			Assignments: []parser.Expression{
-				parser.VariableAssignment{
+			Assignments: []parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@var2"},
 					Value:    parser.NewIntegerValue(1),
 				},
@@ -228,8 +228,8 @@ var variablesDeclareTests = []variableTests{
 	{
 		Name: "Declare Variable Filter Error",
 		Expr: parser.VariableDeclaration{
-			Assignments: []parser.Expression{
-				parser.VariableAssignment{
+			Assignments: []parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@var3"},
 					Value:    parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 				},

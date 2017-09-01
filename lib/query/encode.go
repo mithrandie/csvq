@@ -275,7 +275,7 @@ func stringWidth(s string) int {
 }
 
 func formatTextCell(c Cell) textField {
-	primary := c.Primary()
+	primary := c.Value()
 
 	var s string
 	var sign int
@@ -330,7 +330,7 @@ func encodeCSV(view *View, delimiter string, withoutHeader bool) string {
 }
 
 func formatCSVCell(c Cell) string {
-	primary := c.Primary()
+	primary := c.Value()
 
 	var s string
 
@@ -378,7 +378,7 @@ func encodeJson(view *View) string {
 }
 
 func formatJsonCell(c Cell) string {
-	primary := c.Primary()
+	primary := c.Value()
 
 	var s string
 

@@ -199,7 +199,7 @@ func TestExecute(t *testing.T) {
 var fetchCursorTests = []struct {
 	Name          string
 	CurName       parser.Identifier
-	FetchPosition parser.Expression
+	FetchPosition parser.FetchPosition
 	Variables     []parser.Variable
 	Success       bool
 	ResultVars    Variables
@@ -1820,12 +1820,12 @@ var updateTests = []struct {
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			},
-			SetList: []parser.Expression{
-				parser.UpdateSet{
+			SetList: []parser.UpdateSet{
+				{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					Value: parser.NewStringValue("update1"),
 				},
-				parser.UpdateSet{
+				{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 					Value: parser.NewStringValue("update2"),
 				},
@@ -1915,8 +1915,8 @@ var updateTests = []struct {
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "tmpview"}, Alias: parser.Identifier{Literal: "t1"}},
 			},
-			SetList: []parser.Expression{
-				parser.UpdateSet{
+			SetList: []parser.UpdateSet{
+				{
 					Field: parser.ColumnNumber{View: parser.Identifier{Literal: "t1"}, Number: value.NewInteger(2)},
 					Value: parser.NewStringValue("update"),
 				},
@@ -1973,8 +1973,8 @@ var updateTests = []struct {
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "t1"}},
 			},
-			SetList: []parser.Expression{
-				parser.UpdateSet{
+			SetList: []parser.UpdateSet{
+				{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 					Value: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}},
 				},
@@ -2035,8 +2035,8 @@ var updateTests = []struct {
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "notexist"}},
 			},
-			SetList: []parser.Expression{
-				parser.UpdateSet{
+			SetList: []parser.UpdateSet{
+				{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 					Value: parser.NewStringValue("update"),
 				},
@@ -2057,8 +2057,8 @@ var updateTests = []struct {
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			},
-			SetList: []parser.Expression{
-				parser.UpdateSet{
+			SetList: []parser.UpdateSet{
+				{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					Value: parser.NewStringValue("update"),
 				},
@@ -2079,8 +2079,8 @@ var updateTests = []struct {
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "notexist"}},
 			},
-			SetList: []parser.Expression{
-				parser.UpdateSet{
+			SetList: []parser.UpdateSet{
+				{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 					Value: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}},
 				},
@@ -2115,8 +2115,8 @@ var updateTests = []struct {
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "t2"}},
 			},
-			SetList: []parser.Expression{
-				parser.UpdateSet{
+			SetList: []parser.UpdateSet{
+				{
 					Field: parser.FieldReference{View: parser.Identifier{Literal: "t1"}, Column: parser.Identifier{Literal: "column2"}},
 					Value: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}},
 				},
@@ -2151,8 +2151,8 @@ var updateTests = []struct {
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			},
-			SetList: []parser.Expression{
-				parser.UpdateSet{
+			SetList: []parser.UpdateSet{
+				{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 					Value: parser.NewStringValue("update"),
 				},
@@ -2173,8 +2173,8 @@ var updateTests = []struct {
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			},
-			SetList: []parser.Expression{
-				parser.UpdateSet{
+			SetList: []parser.UpdateSet{
+				{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 				},
@@ -2195,8 +2195,8 @@ var updateTests = []struct {
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "t1"}},
 			},
-			SetList: []parser.Expression{
-				parser.UpdateSet{
+			SetList: []parser.UpdateSet{
+				{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 					Value: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}},
 				},
@@ -2879,11 +2879,11 @@ var addColumnsTests = []struct {
 		Name: "Add Columns",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "table1.csv"},
-			Columns: []parser.Expression{
-				parser.ColumnDefault{
+			Columns: []parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column3"},
 				},
-				parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column4"},
 				},
 			},
@@ -2957,11 +2957,11 @@ var addColumnsTests = []struct {
 		Name: "Add Columns For Temporary View",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "tmpview"},
-			Columns: []parser.Expression{
-				parser.ColumnDefault{
+			Columns: []parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column3"},
 				},
-				parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column4"},
 				},
 			},
@@ -3021,12 +3021,12 @@ var addColumnsTests = []struct {
 		Name: "Add Columns First",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "table1.csv"},
-			Columns: []parser.Expression{
-				parser.ColumnDefault{
+			Columns: []parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column3"},
 					Value:  parser.NewIntegerValueFromString("2"),
 				},
-				parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column4"},
 					Value:  parser.NewIntegerValueFromString("1"),
 				},
@@ -3071,11 +3071,11 @@ var addColumnsTests = []struct {
 		Name: "Add Columns After",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "table1.csv"},
-			Columns: []parser.Expression{
-				parser.ColumnDefault{
+			Columns: []parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column3"},
 				},
-				parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column4"},
 					Value:  parser.NewIntegerValueFromString("1"),
 				},
@@ -3121,11 +3121,11 @@ var addColumnsTests = []struct {
 		Name: "Add Columns Before",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "table1.csv"},
-			Columns: []parser.Expression{
-				parser.ColumnDefault{
+			Columns: []parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column3"},
 				},
-				parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column4"},
 					Value:  parser.NewIntegerValueFromString("1"),
 				},
@@ -3171,11 +3171,11 @@ var addColumnsTests = []struct {
 		Name: "Add Columns Load Error",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "notexist"},
-			Columns: []parser.Expression{
-				parser.ColumnDefault{
+			Columns: []parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column3"},
 				},
-				parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column4"},
 				},
 			},
@@ -3186,11 +3186,11 @@ var addColumnsTests = []struct {
 		Name: "Add Columns Position Column Does Not Exist Error",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "table1.csv"},
-			Columns: []parser.Expression{
-				parser.ColumnDefault{
+			Columns: []parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column3"},
 				},
-				parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column2"},
 					Value:  parser.NewIntegerValueFromString("1"),
 				},
@@ -3206,11 +3206,11 @@ var addColumnsTests = []struct {
 		Name: "Add Columns Field Duplicate Error",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "table1.csv"},
-			Columns: []parser.Expression{
-				parser.ColumnDefault{
+			Columns: []parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column3"},
 				},
-				parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column1"},
 					Value:  parser.NewIntegerValueFromString("1"),
 				},
@@ -3222,11 +3222,11 @@ var addColumnsTests = []struct {
 		Name: "Add Columns Default Value Error",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "table1.csv"},
-			Columns: []parser.Expression{
-				parser.ColumnDefault{
+			Columns: []parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column3"},
 				},
-				parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column4"},
 					Value:  parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 				},

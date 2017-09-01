@@ -138,7 +138,15 @@ func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, par
 
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 
-	cpu := NumberOfCPU(view.RecordLen())
+	var cpu int
+	var splitLeft bool
+	if joinView.RecordLen() < view.RecordLen() {
+		cpu = NumberOfCPU(view.RecordLen())
+		splitLeft = true
+	} else {
+		cpu = NumberOfCPU(joinView.RecordLen())
+		splitLeft = false
+	}
 
 	var err error
 	recordsList := make([]Records, cpu)
@@ -147,8 +155,19 @@ func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, par
 	for i := 0; i < cpu; i++ {
 		wg.Add(1)
 		go func(thIdx int) {
-			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
-			records := make(Records, 0, end-start)
+			var lstart, lend, rstart, rend int
+			var records Records
+			if splitLeft {
+				lstart, lend = RecordRange(thIdx, view.RecordLen(), cpu)
+				rstart = 0
+				rend = joinView.RecordLen()
+				records = make(Records, 0, lend-lstart)
+			} else {
+				lstart = 0
+				lend = view.RecordLen()
+				rstart, rend = RecordRange(thIdx, joinView.RecordLen(), cpu)
+				records = make(Records, 0, rend-rstart)
+			}
 
 			filter := NewFilterForRecord(
 				&View{
@@ -160,13 +179,13 @@ func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, par
 			)
 
 		InnerJoinLoop:
-			for _, viewRecord := range view.Records[start:end] {
-				for _, joinViewRecord := range joinView.Records {
+			for i := lstart; i < lend; i++ {
+				for j := rstart; j < rend; j++ {
 					if err != nil {
 						break InnerJoinLoop
 					}
 
-					mergedRecord := MergeRecord(viewRecord, joinViewRecord)
+					mergedRecord := MergeRecord(view.Records[i], joinView.Records[j])
 					filter.Records[0].View.Records[0] = mergedRecord
 
 					primary, e := filter.Evaluate(condition)
@@ -210,7 +229,15 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 	viewEmptyRecord := NewEmptyRecord(view.FieldLen())
 	joinViewEmptyRecord := NewEmptyRecord(joinView.FieldLen())
 
-	cpu := NumberOfCPU(view.RecordLen())
+	var cpu int
+	var splitLeft bool
+	if joinView.RecordLen() < view.RecordLen() {
+		cpu = NumberOfCPU(view.RecordLen())
+		splitLeft = true
+	} else {
+		cpu = NumberOfCPU(joinView.RecordLen())
+		splitLeft = false
+	}
 
 	var err error
 	recordsList := make([]Records, cpu)
@@ -220,8 +247,19 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 	for i := 0; i < cpu; i++ {
 		wg.Add(1)
 		go func(thIdx int) {
-			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
-			records := make(Records, 0, (end-start)*2)
+			var lstart, lend, rstart, rend int
+			var records Records
+			if splitLeft {
+				lstart, lend = RecordRange(thIdx, view.RecordLen(), cpu)
+				rstart = 0
+				rend = joinView.RecordLen()
+				records = make(Records, 0, lend-lstart)
+			} else {
+				lstart = 0
+				lend = view.RecordLen()
+				rstart, rend = RecordRange(thIdx, joinView.RecordLen(), cpu)
+				records = make(Records, 0, rend-rstart)
+			}
 
 			filter := NewFilterForRecord(
 				&View{
@@ -235,9 +273,9 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 			joinViewMatches := make([]bool, joinView.RecordLen())
 
 		OuterJoinLoop:
-			for _, viewRecord := range view.Records[start:end] {
+			for i := lstart; i < lend; i++ {
 				match := false
-				for j, joinViewRecord := range joinView.Records {
+				for j := rstart; j < rend; j++ {
 					if err != nil {
 						break OuterJoinLoop
 					}
@@ -245,9 +283,9 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 					var mergedRecord Record
 					switch direction {
 					case parser.RIGHT:
-						mergedRecord = MergeRecord(joinViewRecord, viewRecord)
+						mergedRecord = MergeRecord(joinView.Records[j], view.Records[i])
 					default:
-						mergedRecord = MergeRecord(viewRecord, joinViewRecord)
+						mergedRecord = MergeRecord(view.Records[i], joinView.Records[j])
 					}
 					filter.Records[0].View.Records[0] = mergedRecord
 
@@ -269,9 +307,9 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 					var record Record
 					switch direction {
 					case parser.RIGHT:
-						record = MergeRecord(joinViewEmptyRecord, viewRecord)
+						record = MergeRecord(joinViewEmptyRecord, view.Records[i])
 					default:
-						record = MergeRecord(viewRecord, joinViewEmptyRecord)
+						record = MergeRecord(view.Records[i], joinViewEmptyRecord)
 					}
 					records = append(records, record)
 

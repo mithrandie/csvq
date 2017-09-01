@@ -506,11 +506,11 @@ var analyzeTests = []struct {
 							},
 							Statements: []parser.Statement{
 								parser.VariableDeclaration{
-									Assignments: []parser.Expression{
-										parser.VariableAssignment{
+									Assignments: []parser.VariableAssignment{
+										{
 											Variable: parser.Variable{Name: "@value"},
 										},
-										parser.VariableAssignment{
+										{
 											Variable: parser.Variable{Name: "@fetch"},
 										},
 									},
@@ -625,11 +625,11 @@ var analyzeTests = []struct {
 							},
 							Statements: []parser.Statement{
 								parser.VariableDeclaration{
-									Assignments: []parser.Expression{
-										parser.VariableAssignment{
+									Assignments: []parser.VariableAssignment{
+										{
 											Variable: parser.Variable{Name: "@value"},
 										},
-										parser.VariableAssignment{
+										{
 											Variable: parser.Variable{Name: "@fetch"},
 										},
 									},

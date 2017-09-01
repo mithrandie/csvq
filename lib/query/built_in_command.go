@@ -19,6 +19,16 @@ func Print(expr parser.Print, filter *Filter) (string, error) {
 }
 
 func Printf(expr parser.Printf, filter *Filter) (string, error) {
+	var format string
+	formatValue, err := filter.Evaluate(expr.Format)
+	if err != nil {
+		return "", err
+	}
+	formatString := value.ToString(formatValue)
+	if !value.IsNull(formatString) {
+		format = formatString.(value.String).Raw()
+	}
+
 	args := make([]value.Primary, len(expr.Values))
 	for i, v := range expr.Values {
 		p, err := filter.Evaluate(v)
@@ -28,7 +38,7 @@ func Printf(expr parser.Printf, filter *Filter) (string, error) {
 		args[i] = p
 	}
 
-	message, err := FormatString(expr.Format, args)
+	message, err := FormatString(format, args)
 	if err != nil {
 		return "", NewPrintfReplaceValueLengthError(expr, err.(AppError).ErrorMessage())
 	}
@@ -40,7 +50,7 @@ func Source(expr parser.Source, filter *Filter) ([]parser.Statement, error) {
 	if err != nil {
 		return nil, err
 	}
-	s := value.PrimaryToString(p)
+	s := value.ToString(p)
 	if value.IsNull(s) {
 		return nil, NewSourceInvalidArgumentError(expr, expr.FilePath)
 	}
@@ -81,9 +91,9 @@ func SetFlag(expr parser.SetFlag) error {
 
 	switch strings.ToUpper(expr.Name) {
 	case "@@DELIMITER", "@@ENCODING", "@@LINE_BREAK", "@@REPOSITORY", "@@DATETIME_FORMAT":
-		p = value.PrimaryToString(expr.Value)
+		p = value.ToString(expr.Value)
 	case "@@NO_HEADER", "@@WITHOUT_NULL":
-		p = value.PrimaryToBoolean(expr.Value)
+		p = value.ToBoolean(expr.Value)
 	default:
 		return NewInvalidFlagNameError(expr)
 	}

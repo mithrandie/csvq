@@ -18,8 +18,8 @@ var userDefinedFunctionListDeclareTests = []struct {
 		Name: "UserDefinedFunctionsList Declare",
 		Expr: parser.FunctionDeclaration{
 			Name: parser.Identifier{Literal: "userfunc1"},
-			Parameters: []parser.Expression{
-				parser.VariableAssignment{Variable: parser.Variable{Name: "@arg1"}},
+			Parameters: []parser.VariableAssignment{
+				{Variable: parser.Variable{Name: "@arg1"}},
 			},
 			Statements: []parser.Statement{
 				parser.Print{Value: parser.Variable{Name: "@arg1"}},
@@ -107,11 +107,11 @@ var userDefinedFunctionListDeclareAggregateTests = []struct {
 		Expr: parser.AggregateDeclaration{
 			Name:   parser.Identifier{Literal: "useraggfunc"},
 			Cursor: parser.Identifier{Literal: "column1"},
-			Parameters: []parser.Expression{
-				parser.VariableAssignment{
+			Parameters: []parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@arg1"},
 				},
-				parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@arg2"},
 					Value:    parser.NewIntegerValue(1),
 				},
@@ -287,11 +287,11 @@ var userDefinedFunctionMapDeclareTests = []struct {
 		Name: "UserDefinedFunctionMap Declare",
 		Expr: parser.FunctionDeclaration{
 			Name: parser.Identifier{Literal: "userfunc"},
-			Parameters: []parser.Expression{
-				parser.VariableAssignment{
+			Parameters: []parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@arg1"},
 				},
-				parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@arg2"},
 				},
 			},
@@ -318,11 +318,11 @@ var userDefinedFunctionMapDeclareTests = []struct {
 		Name: "UserDefinedFunctionMap Declare Redeclaration Error",
 		Expr: parser.FunctionDeclaration{
 			Name: parser.Identifier{Literal: "userfunc"},
-			Parameters: []parser.Expression{
-				parser.VariableAssignment{
+			Parameters: []parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@arg1"},
 				},
-				parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@arg2"},
 				},
 			},
@@ -336,11 +336,11 @@ var userDefinedFunctionMapDeclareTests = []struct {
 		Name: "UserDefinedFunctionMap Declare Duplicate Prameters Error",
 		Expr: parser.FunctionDeclaration{
 			Name: parser.Identifier{Literal: "userfunc2"},
-			Parameters: []parser.Expression{
-				parser.VariableAssignment{
+			Parameters: []parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@arg1"},
 				},
-				parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@arg1"},
 				},
 			},
@@ -386,11 +386,11 @@ var userDefinedFunctionMapDeclareAggregateTests = []struct {
 		Expr: parser.AggregateDeclaration{
 			Name:   parser.Identifier{Literal: "useraggfunc"},
 			Cursor: parser.Identifier{Literal: "column1"},
-			Parameters: []parser.Expression{
-				parser.VariableAssignment{
+			Parameters: []parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@arg1"},
 				},
-				parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@arg2"},
 				},
 			},
@@ -431,11 +431,11 @@ var userDefinedFunctionMapDeclareAggregateTests = []struct {
 		Expr: parser.AggregateDeclaration{
 			Name:   parser.Identifier{Literal: "useraggfunc2"},
 			Cursor: parser.Identifier{Literal: "column1"},
-			Parameters: []parser.Expression{
-				parser.VariableAssignment{
+			Parameters: []parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@arg1"},
 				},
-				parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@arg1"},
 				},
 			},
@@ -626,8 +626,8 @@ var userDefinedFunctionExecuteTests = []struct {
 			RequiredArgs: 1,
 			Statements: []parser.Statement{
 				parser.VariableDeclaration{
-					Assignments: []parser.Expression{
-						parser.VariableAssignment{
+					Assignments: []parser.VariableAssignment{
+						{
 							Variable: parser.Variable{Name: "@var2"},
 							Value: parser.Arithmetic{
 								LHS: parser.Arithmetic{
@@ -661,8 +661,8 @@ var userDefinedFunctionExecuteTests = []struct {
 			},
 			Statements: []parser.Statement{
 				parser.VariableDeclaration{
-					Assignments: []parser.Expression{
-						parser.VariableAssignment{
+					Assignments: []parser.VariableAssignment{
+						{
 							Variable: parser.Variable{Name: "@var2"},
 							Value: parser.Arithmetic{
 								LHS: parser.Arithmetic{
@@ -694,8 +694,8 @@ var userDefinedFunctionExecuteTests = []struct {
 			},
 			Statements: []parser.Statement{
 				parser.VariableDeclaration{
-					Assignments: []parser.Expression{
-						parser.VariableAssignment{
+					Assignments: []parser.VariableAssignment{
+						{
 							Variable: parser.Variable{Name: "@var2"},
 							Value: parser.Arithmetic{
 								LHS: parser.Arithmetic{
@@ -733,8 +733,8 @@ var userDefinedFunctionExecuteTests = []struct {
 			RequiredArgs: 1,
 			Statements: []parser.Statement{
 				parser.VariableDeclaration{
-					Assignments: []parser.Expression{
-						parser.VariableAssignment{
+					Assignments: []parser.VariableAssignment{
+						{
 							Variable: parser.Variable{Name: "@var2"},
 							Value: parser.Arithmetic{
 								LHS: parser.Arithmetic{
@@ -768,8 +768,8 @@ var userDefinedFunctionExecuteTests = []struct {
 			},
 			Statements: []parser.Statement{
 				parser.VariableDeclaration{
-					Assignments: []parser.Expression{
-						parser.VariableAssignment{
+					Assignments: []parser.VariableAssignment{
+						{
 							Variable: parser.Variable{Name: "@var2"},
 							Value: parser.Subquery{
 								Query: parser.SelectQuery{
@@ -842,11 +842,11 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 			Cursor:      parser.Identifier{Literal: "list"},
 			Statements: []parser.Statement{
 				parser.VariableDeclaration{
-					Assignments: []parser.Expression{
-						parser.VariableAssignment{
+					Assignments: []parser.VariableAssignment{
+						{
 							Variable: parser.Variable{Name: "@value"},
 						},
-						parser.VariableAssignment{
+						{
 							Variable: parser.Variable{Name: "@fetch"},
 						},
 					},
@@ -913,11 +913,11 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 			},
 			Statements: []parser.Statement{
 				parser.VariableDeclaration{
-					Assignments: []parser.Expression{
-						parser.VariableAssignment{
+					Assignments: []parser.VariableAssignment{
+						{
 							Variable: parser.Variable{Name: "@value"},
 						},
-						parser.VariableAssignment{
+						{
 							Variable: parser.Variable{Name: "@fetch"},
 						},
 					},
@@ -997,11 +997,11 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 			Cursor:      parser.Identifier{Literal: "list"},
 			Statements: []parser.Statement{
 				parser.VariableDeclaration{
-					Assignments: []parser.Expression{
-						parser.VariableAssignment{
+					Assignments: []parser.VariableAssignment{
+						{
 							Variable: parser.Variable{Name: "@value"},
 						},
-						parser.VariableAssignment{
+						{
 							Variable: parser.Variable{Name: "@fetch"},
 						},
 					},

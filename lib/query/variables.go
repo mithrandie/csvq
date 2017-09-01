@@ -34,10 +34,10 @@ func (list VariablesList) Substitute(expr parser.VariableSubstitution, filter *F
 	return
 }
 
-func (list VariablesList) SubstitutePrimary(variable parser.Variable, value value.Primary) (value.Primary, error) {
+func (list VariablesList) SubstituteDirectly(variable parser.Variable, value value.Primary) (value.Primary, error) {
 	var err error
 	for _, v := range list {
-		if value, err = v.SubstitutePrimary(variable, value); err == nil {
+		if value, err = v.SubstituteDirectly(variable, value); err == nil {
 			return value, nil
 		}
 	}
@@ -87,8 +87,7 @@ func (v Variables) Dispose(variable parser.Variable) error {
 }
 
 func (v Variables) Declare(declaration parser.VariableDeclaration, filter *Filter) error {
-	for _, a := range declaration.Assignments {
-		assignment := a.(parser.VariableAssignment)
+	for _, assignment := range declaration.Assignments {
 		var val value.Primary
 		var err error
 		if assignment.Value == nil {
@@ -112,10 +111,10 @@ func (v Variables) Substitute(substitution parser.VariableSubstitution, filter *
 	if err != nil {
 		return nil, err
 	}
-	return v.SubstitutePrimary(substitution.Variable, val)
+	return v.SubstituteDirectly(substitution.Variable, val)
 }
 
-func (v Variables) SubstitutePrimary(variable parser.Variable, value value.Primary) (value.Primary, error) {
+func (v Variables) SubstituteDirectly(variable parser.Variable, value value.Primary) (value.Primary, error) {
 	err := v.Set(variable, value)
 	return value, err
 }

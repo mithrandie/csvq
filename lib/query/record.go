@@ -64,7 +64,7 @@ func (r Record) SerializeComparisonKeys() string {
 	list := make([]string, len(r))
 
 	for i, cell := range r {
-		list[i] = SerializeKey(cell.Primary())
+		list[i] = SerializeKey(cell.Value())
 	}
 
 	return strings.Join(list, ":")

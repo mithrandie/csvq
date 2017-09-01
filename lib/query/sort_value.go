@@ -101,20 +101,20 @@ func NewSortValue(val value.Primary) *SortValue {
 
 	if value.IsNull(val) {
 		sortValue.Type = SORT_VALUE_NULL
-	} else if i := value.PrimaryToInteger(val); !value.IsNull(i) {
-		s := value.PrimaryToString(val)
+	} else if i := value.ToInteger(val); !value.IsNull(i) {
+		s := value.ToString(val)
 		sortValue.Type = SORT_VALUE_INTEGER
 		sortValue.Integer = i.(value.Integer).Raw()
 		sortValue.Float = float64(sortValue.Integer)
 		sortValue.Datetime = sortValue.Integer * 1e9
 		sortValue.String = s.(value.String).Raw()
-	} else if f := value.PrimaryToFloat(val); !value.IsNull(f) {
-		s := value.PrimaryToString(val)
+	} else if f := value.ToFloat(val); !value.IsNull(f) {
+		s := value.ToString(val)
 		sortValue.Type = SORT_VALUE_FLOAT
 		sortValue.Float = f.(value.Float).Raw()
 		sortValue.Datetime = int64(sortValue.Float * 1e9)
 		sortValue.String = s.(value.String).Raw()
-	} else if dt := value.PrimaryToDatetime(val); !value.IsNull(dt) {
+	} else if dt := value.ToDatetime(val); !value.IsNull(dt) {
 		t := dt.(value.Datetime).Raw()
 		if t.Nanosecond() > 0 {
 			f := float64(t.Unix()) + float64(t.Nanosecond())/1e9
@@ -136,7 +136,7 @@ func NewSortValue(val value.Primary) *SortValue {
 			sortValue.Datetime = t.UnixNano()
 			sortValue.String = value.Int64ToStr(i)
 		}
-	} else if b := value.PrimaryToBoolean(val); !value.IsNull(b) {
+	} else if b := value.ToBoolean(val); !value.IsNull(b) {
 		sortValue.Type = SORT_VALUE_BOOLEAN
 		sortValue.Boolean = b.(value.Boolean).Raw()
 		if sortValue.Boolean {

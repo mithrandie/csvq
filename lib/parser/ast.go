@@ -1041,7 +1041,7 @@ type VariableAssignment struct {
 
 type VariableDeclaration struct {
 	*BaseExpr
-	Assignments []Expression
+	Assignments []VariableAssignment
 }
 
 type DisposeVariable struct {
@@ -1052,7 +1052,7 @@ type DisposeVariable struct {
 type InsertQuery struct {
 	*BaseExpr
 	WithClause QueryExpression
-	Table      QueryExpression
+	Table      Table
 	Fields     []QueryExpression
 	ValuesList []QueryExpression
 	Query      QueryExpression
@@ -1062,7 +1062,7 @@ type UpdateQuery struct {
 	*BaseExpr
 	WithClause  QueryExpression
 	Tables      []QueryExpression
-	SetList     []Expression
+	SetList     []UpdateSet
 	FromClause  QueryExpression
 	WhereClause QueryExpression
 }
@@ -1077,7 +1077,7 @@ type DeleteQuery struct {
 	*BaseExpr
 	WithClause  QueryExpression
 	Tables      []QueryExpression
-	FromClause  QueryExpression
+	FromClause  FromClause
 	WhereClause QueryExpression
 }
 
@@ -1091,7 +1091,7 @@ type CreateTable struct {
 type AddColumns struct {
 	*BaseExpr
 	Table    QueryExpression
-	Columns  []Expression
+	Columns  []ColumnDefault
 	Position Expression
 }
 
@@ -1123,7 +1123,7 @@ type RenameColumn struct {
 type FunctionDeclaration struct {
 	*BaseExpr
 	Name       Identifier
-	Parameters []Expression
+	Parameters []VariableAssignment
 	Statements []Statement
 }
 
@@ -1131,7 +1131,7 @@ type AggregateDeclaration struct {
 	*BaseExpr
 	Name       Identifier
 	Cursor     Identifier
-	Parameters []Expression
+	Parameters []VariableAssignment
 	Statements []Statement
 }
 
@@ -1147,7 +1147,7 @@ type Print struct {
 
 type Printf struct {
 	*BaseExpr
-	Format string
+	Format QueryExpression
 	Values []QueryExpression
 }
 
@@ -1166,8 +1166,8 @@ type If struct {
 	*BaseExpr
 	Condition  QueryExpression
 	Statements []Statement
-	ElseIf     []Expression
-	Else       Expression
+	ElseIf     []ElseIf
+	Else       Else
 }
 
 type ElseIf struct {
@@ -1184,8 +1184,8 @@ type Else struct {
 type Case struct {
 	*BaseExpr
 	Value QueryExpression
-	When  []Expression
-	Else  Expression
+	When  []CaseWhen
+	Else  CaseElse
 }
 
 type CaseWhen struct {
@@ -1235,7 +1235,7 @@ type DisposeCursor struct {
 
 type FetchCursor struct {
 	*BaseExpr
-	Position  Expression
+	Position  FetchPosition
 	Cursor    Identifier
 	Variables []Variable
 }

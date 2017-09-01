@@ -198,7 +198,7 @@ func (f *Filter) evalFieldReference(expr parser.QueryExpression) (value.Primary,
 	for _, v := range f.Records {
 		if v.fieldReferenceIndices != nil {
 			if idx, ok := v.fieldReferenceIndices[exprStr]; ok {
-				p = v.View.Records[v.RecordIndex][idx].Primary()
+				p = v.View.Records[v.RecordIndex][idx].Value()
 				break
 			}
 		}
@@ -208,7 +208,7 @@ func (f *Filter) evalFieldReference(expr parser.QueryExpression) (value.Primary,
 			if v.View.isGrouped && v.View.Header[idx].IsFromTable && !v.View.Header[idx].IsGroupKey {
 				return nil, NewFieldNotGroupKeyError(expr)
 			}
-			p = v.View.Records[v.RecordIndex][idx].Primary()
+			p = v.View.Records[v.RecordIndex][idx].Value()
 			if v.fieldReferenceIndices != nil {
 				v.fieldReferenceIndices[exprStr] = idx
 			}
@@ -248,7 +248,7 @@ func (f *Filter) evalUnaryArithmetic(expr parser.UnaryArithmetic) (value.Primary
 		return nil, err
 	}
 
-	if pi := value.PrimaryToInteger(ope); !value.IsNull(pi) {
+	if pi := value.ToInteger(ope); !value.IsNull(pi) {
 		val := pi.(value.Integer).Raw()
 		switch expr.Operator.Token {
 		case '-':
@@ -257,7 +257,7 @@ func (f *Filter) evalUnaryArithmetic(expr parser.UnaryArithmetic) (value.Primary
 		return value.NewInteger(val), nil
 	}
 
-	pf := value.PrimaryToFloat(ope)
+	pf := value.ToFloat(ope)
 	if value.IsNull(pf) {
 		return value.NewNull(), nil
 	}
@@ -269,7 +269,7 @@ func (f *Filter) evalUnaryArithmetic(expr parser.UnaryArithmetic) (value.Primary
 		val = val * -1
 	}
 
-	return value.Float64ToPrimary(val), nil
+	return value.ParseFloat64(val), nil
 }
 
 func (f *Filter) evalConcat(expr parser.Concat) (value.Primary, error) {
@@ -279,7 +279,7 @@ func (f *Filter) evalConcat(expr parser.Concat) (value.Primary, error) {
 		if err != nil {
 			return nil, err
 		}
-		s = value.PrimaryToString(s)
+		s = value.ToString(s)
 		if value.IsNull(s) {
 			return value.NewNull(), nil
 		}
@@ -675,7 +675,7 @@ func (f *Filter) evalListAgg(expr parser.ListAgg) (value.Primary, error) {
 		if err != nil {
 			return nil, NewFunctionInvalidArgumentError(expr, expr.ListAgg, "the second argument must be a string")
 		}
-		s := value.PrimaryToString(p)
+		s := value.ToString(p)
 		if value.IsNull(s) {
 			return nil, NewFunctionInvalidArgumentError(expr, expr.ListAgg, "the second argument must be a string")
 		}
@@ -890,7 +890,7 @@ func (f *Filter) evalSubqueryForRowValue(expr parser.Subquery) (value.RowValue, 
 
 	rowValue := make(value.RowValue, view.FieldLen())
 	for i, cell := range view.Records[0] {
-		rowValue[i] = cell.Primary()
+		rowValue[i] = cell.Value()
 	}
 
 	return rowValue, nil
@@ -910,7 +910,7 @@ func (f *Filter) evalSubqueryForRowValues(expr parser.Subquery) ([]value.RowValu
 	for i, r := range view.Records {
 		rowValue := make(value.RowValue, view.FieldLen())
 		for j, cell := range r {
-			rowValue[j] = cell.Primary()
+			rowValue[j] = cell.Value()
 		}
 		list[i] = rowValue
 	}
@@ -934,7 +934,7 @@ func (f *Filter) evalSubqueryForSingleFieldRowValues(expr parser.Subquery) ([]va
 
 	list := make([]value.RowValue, view.RecordLen())
 	for i, r := range view.Records {
-		list[i] = value.RowValue{r[0].Primary()}
+		list[i] = value.RowValue{r[0].Value()}
 	}
 
 	return list, nil
@@ -958,5 +958,5 @@ func (f *Filter) evalSubqueryForSingleValue(expr parser.Subquery) (value.Primary
 		return value.NewNull(), nil
 	}
 
-	return view.Records[0][0].Primary(), nil
+	return view.Records[0][0].Value(), nil
 }

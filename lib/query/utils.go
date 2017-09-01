@@ -86,11 +86,11 @@ func SerializeComparisonKeys(values []value.Primary) string {
 func SerializeKey(val value.Primary) string {
 	if value.IsNull(val) {
 		return serializeNull()
-	} else if in := value.PrimaryToInteger(val); !value.IsNull(in) {
+	} else if in := value.ToInteger(val); !value.IsNull(in) {
 		return serializeInteger(in.(value.Integer).Raw())
-	} else if f := value.PrimaryToFloat(val); !value.IsNull(f) {
+	} else if f := value.ToFloat(val); !value.IsNull(f) {
 		return serializeFlaot(f.(value.Float).Raw())
-	} else if dt := value.PrimaryToDatetime(val); !value.IsNull(dt) {
+	} else if dt := value.ToDatetime(val); !value.IsNull(dt) {
 		t := dt.(value.Datetime).Raw()
 		if t.Nanosecond() > 0 {
 			f := float64(t.Unix()) + float64(t.Nanosecond())/1e9
@@ -103,7 +103,7 @@ func SerializeKey(val value.Primary) string {
 		} else {
 			return serializeInteger(t.Unix())
 		}
-	} else if b := value.PrimaryToBoolean(val); !value.IsNull(b) {
+	} else if b := value.ToBoolean(val); !value.IsNull(b) {
 		return serializeBoolean(b.(value.Boolean).Raw())
 	} else if s, ok := val.(value.String); ok {
 		return serializeString(s.Raw())
@@ -228,7 +228,7 @@ func FormatString(format string, args []value.Primary) (string, error) {
 
 				switch r {
 				case 'b', 'o', 'd', 'x', 'X':
-					p := value.PrimaryToInteger(args[placeholderOrder])
+					p := value.ToInteger(args[placeholderOrder])
 					if !value.IsNull(p) {
 						val := float64(p.(value.Integer).Raw())
 						sign := numberSign(val, flags)
@@ -251,7 +251,7 @@ func FormatString(format string, args []value.Primary) (string, error) {
 						str = append(str, []rune(s)...)
 					}
 				case 'e', 'E', 'f':
-					p := value.PrimaryToFloat(args[placeholderOrder])
+					p := value.ToFloat(args[placeholderOrder])
 					if !value.IsNull(p) {
 						val := p.(value.Float).Raw()
 
