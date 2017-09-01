@@ -2,6 +2,7 @@ package query
 
 import (
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 type VariablesList []Variables
@@ -10,7 +11,7 @@ func (list VariablesList) Declare(expr parser.VariableDeclaration, filter *Filte
 	return list[0].Declare(expr, filter)
 }
 
-func (list VariablesList) Get(expr parser.Variable) (value parser.Primary, err error) {
+func (list VariablesList) Get(expr parser.Variable) (value value.Primary, err error) {
 	for _, v := range list {
 		if value, err = v.Get(expr); err == nil {
 			return
@@ -20,7 +21,7 @@ func (list VariablesList) Get(expr parser.Variable) (value parser.Primary, err e
 	return
 }
 
-func (list VariablesList) Substitute(expr parser.VariableSubstitution, filter *Filter) (value parser.Primary, err error) {
+func (list VariablesList) Substitute(expr parser.VariableSubstitution, filter *Filter) (value value.Primary, err error) {
 	for _, v := range list {
 		if value, err = v.Substitute(expr, filter); err == nil {
 			return
@@ -33,7 +34,7 @@ func (list VariablesList) Substitute(expr parser.VariableSubstitution, filter *F
 	return
 }
 
-func (list VariablesList) SubstitutePrimary(variable parser.Variable, value parser.Primary) (parser.Primary, error) {
+func (list VariablesList) SubstitutePrimary(variable parser.Variable, value value.Primary) (value.Primary, error) {
 	var err error
 	for _, v := range list {
 		if value, err = v.SubstitutePrimary(variable, value); err == nil {
@@ -52,9 +53,9 @@ func (list VariablesList) Dispose(expr parser.Variable) error {
 	return NewUndefinedVariableError(expr)
 }
 
-type Variables map[string]parser.Primary
+type Variables map[string]value.Primary
 
-func (v Variables) Add(variable parser.Variable, value parser.Primary) error {
+func (v Variables) Add(variable parser.Variable, value value.Primary) error {
 	if _, ok := v[variable.Name]; ok {
 		return NewVariableRedeclaredError(variable)
 	}
@@ -62,7 +63,7 @@ func (v Variables) Add(variable parser.Variable, value parser.Primary) error {
 	return nil
 }
 
-func (v Variables) Set(variable parser.Variable, value parser.Primary) error {
+func (v Variables) Set(variable parser.Variable, value value.Primary) error {
 	if _, ok := v[variable.Name]; !ok {
 		return NewUndefinedVariableError(variable)
 	}
@@ -70,7 +71,7 @@ func (v Variables) Set(variable parser.Variable, value parser.Primary) error {
 	return nil
 }
 
-func (v Variables) Get(variable parser.Variable) (parser.Primary, error) {
+func (v Variables) Get(variable parser.Variable) (value.Primary, error) {
 	if v, ok := v[variable.Name]; ok {
 		return v, nil
 	}
@@ -88,10 +89,10 @@ func (v Variables) Dispose(variable parser.Variable) error {
 func (v Variables) Declare(declaration parser.VariableDeclaration, filter *Filter) error {
 	for _, a := range declaration.Assignments {
 		assignment := a.(parser.VariableAssignment)
-		var val parser.Primary
+		var val value.Primary
 		var err error
 		if assignment.Value == nil {
-			val = parser.NewNull()
+			val = value.NewNull()
 		} else {
 			val, err = filter.Evaluate(assignment.Value)
 			if err != nil {
@@ -106,7 +107,7 @@ func (v Variables) Declare(declaration parser.VariableDeclaration, filter *Filte
 	return nil
 }
 
-func (v Variables) Substitute(substitution parser.VariableSubstitution, filter *Filter) (parser.Primary, error) {
+func (v Variables) Substitute(substitution parser.VariableSubstitution, filter *Filter) (value.Primary, error) {
 	val, err := filter.Evaluate(substitution.Value)
 	if err != nil {
 		return nil, err
@@ -114,7 +115,7 @@ func (v Variables) Substitute(substitution parser.VariableSubstitution, filter *
 	return v.SubstitutePrimary(substitution.Variable, val)
 }
 
-func (v Variables) SubstitutePrimary(variable parser.Variable, value parser.Primary) (parser.Primary, error) {
+func (v Variables) SubstitutePrimary(variable parser.Variable, value value.Primary) (value.Primary, error) {
 	err := v.Set(variable, value)
 	return value, err
 }

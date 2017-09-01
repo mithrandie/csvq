@@ -8,6 +8,7 @@ import (
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 var printTests = []struct {
@@ -222,7 +223,7 @@ var setFlagTests = []struct {
 		Name: "Set Delimiter",
 		Expr: parser.SetFlag{
 			Name:  "@@delimiter",
-			Value: parser.NewString("\t"),
+			Value: value.NewString("\t"),
 		},
 		ResultFlag:     "delimiter",
 		ResultStlValue: "\t",
@@ -231,7 +232,7 @@ var setFlagTests = []struct {
 		Name: "Set Encoding",
 		Expr: parser.SetFlag{
 			Name:  "@@encoding",
-			Value: parser.NewString("SJIS"),
+			Value: value.NewString("SJIS"),
 		},
 		ResultFlag:     "encoding",
 		ResultStlValue: "SJIS",
@@ -240,7 +241,7 @@ var setFlagTests = []struct {
 		Name: "Set LineBreak",
 		Expr: parser.SetFlag{
 			Name:  "@@line_break",
-			Value: parser.NewString("CRLF"),
+			Value: value.NewString("CRLF"),
 		},
 		ResultFlag:     "line_break",
 		ResultStlValue: "\r\n",
@@ -249,7 +250,7 @@ var setFlagTests = []struct {
 		Name: "Set Repository",
 		Expr: parser.SetFlag{
 			Name:  "@@repository",
-			Value: parser.NewString(TestDir),
+			Value: value.NewString(TestDir),
 		},
 		ResultFlag:     "repository",
 		ResultStlValue: TestDir,
@@ -258,7 +259,7 @@ var setFlagTests = []struct {
 		Name: "Set DatetimeFormat",
 		Expr: parser.SetFlag{
 			Name:  "@@datetime_format",
-			Value: parser.NewString("%Y%m%d"),
+			Value: value.NewString("%Y%m%d"),
 		},
 		ResultFlag:     "datetime_format",
 		ResultStlValue: "%Y%m%d",
@@ -267,7 +268,7 @@ var setFlagTests = []struct {
 		Name: "Set NoHeader",
 		Expr: parser.SetFlag{
 			Name:  "@@no_header",
-			Value: parser.NewBoolean(true),
+			Value: value.NewBoolean(true),
 		},
 		ResultFlag:      "no_header",
 		ResultBoolValue: true,
@@ -276,7 +277,7 @@ var setFlagTests = []struct {
 		Name: "Set WithoutNull",
 		Expr: parser.SetFlag{
 			Name:  "@@without_null",
-			Value: parser.NewBoolean(true),
+			Value: value.NewBoolean(true),
 		},
 		ResultFlag:      "without_null",
 		ResultBoolValue: true,
@@ -285,7 +286,7 @@ var setFlagTests = []struct {
 		Name: "Set Delimiter Value Error",
 		Expr: parser.SetFlag{
 			Name:  "@@delimiter",
-			Value: parser.NewBoolean(true),
+			Value: value.NewBoolean(true),
 		},
 		Error: "[L:- C:-] SET: flag value true for @@delimiter is invalid",
 	},
@@ -293,7 +294,7 @@ var setFlagTests = []struct {
 		Name: "Set WithoutNull Value Error",
 		Expr: parser.SetFlag{
 			Name:  "@@without_null",
-			Value: parser.NewString("string"),
+			Value: value.NewString("string"),
 		},
 		Error: "[L:- C:-] SET: flag value 'string' for @@without_null is invalid",
 	},
@@ -301,7 +302,7 @@ var setFlagTests = []struct {
 		Name: "Invalid Flag Name Error",
 		Expr: parser.SetFlag{
 			Name:  "@@invalid",
-			Value: parser.NewString("string"),
+			Value: value.NewString("string"),
 		},
 		Error: "[L:- C:-] SET: flag name @@invalid is invalid",
 	},
@@ -309,7 +310,7 @@ var setFlagTests = []struct {
 		Name: "Invalid Flag Value Error",
 		Expr: parser.SetFlag{
 			Name:  "@@line_break",
-			Value: parser.NewString("invalid"),
+			Value: value.NewString("invalid"),
 		},
 		Error: "[L:- C:-] SET: flag value 'invalid' for @@line_break is invalid",
 	},

@@ -6,11 +6,12 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 type Procedure struct {
 	Filter    *Filter
-	ReturnVal parser.Primary
+	ReturnVal value.Primary
 }
 
 func NewProcedure() *Procedure {
@@ -212,7 +213,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		ex := stmt.(parser.Exit)
 		code := 0
 		if ex.Code != nil {
-			code = int(ex.Code.(parser.Integer).Value())
+			code = int(ex.Code.(value.Integer).Raw())
 		}
 		if 0 < code {
 			flow = ERROR
@@ -221,7 +222,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			flow = EXIT
 		}
 	case parser.Return:
-		var ret parser.Primary
+		var ret value.Primary
 		if ret, err = proc.Filter.Evaluate(stmt.(parser.Return).Value); err == nil {
 			proc.ReturnVal = ret
 			flow = RETURN
@@ -259,10 +260,10 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 				if pt, ok := trigger.Message.(parser.PrimitiveType); ok && trigger.Code == nil && pt.IsInteger() {
 					trigger.Code = pt.Value
 				} else {
-					var p parser.Primary
+					var p value.Primary
 					if p, err = proc.Filter.Evaluate(trigger.Message); err == nil {
-						if s := parser.PrimaryToString(p); !parser.IsNull(s) {
-							message = s.(parser.String).Value()
+						if s := value.PrimaryToString(p); !value.IsNull(s) {
+							message = s.(value.String).Raw()
 						}
 					}
 				}
@@ -310,10 +311,10 @@ func (proc *Procedure) IfStmt(stmt parser.If) (StatementFlow, error) {
 }
 
 func (proc *Procedure) Case(stmt parser.Case) (StatementFlow, error) {
-	var value parser.Primary
+	var val value.Primary
 	var err error
 	if stmt.Value != nil {
-		value, err = proc.Filter.Evaluate(stmt.Value)
+		val, err = proc.Filter.Evaluate(stmt.Value)
 		if err != nil {
 			return ERROR, err
 		}
@@ -328,10 +329,10 @@ func (proc *Procedure) Case(stmt parser.Case) (StatementFlow, error) {
 			return ERROR, err
 		}
 
-		if value == nil {
+		if val == nil {
 			t = cond.Ternary()
 		} else {
-			t = EqualTo(value, cond)
+			t = value.Equal(val, cond)
 		}
 
 		if t == ternary.TRUE {

@@ -5,31 +5,31 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 type aggregateTests struct {
-	List   []parser.Primary
-	Result parser.Primary
+	List   []value.Primary
+	Result value.Primary
 }
 
 var countTests = []aggregateTests{
 	{
-		List: []parser.Primary{
-			parser.NewInteger(2),
-			parser.NewInteger(1),
-			parser.NewInteger(1),
-			parser.NewNull(),
-			parser.NewInteger(4),
-			parser.NewNull(),
+		List: []value.Primary{
+			value.NewInteger(2),
+			value.NewInteger(1),
+			value.NewInteger(1),
+			value.NewNull(),
+			value.NewInteger(4),
+			value.NewNull(),
 		},
-		Result: parser.NewInteger(4),
+		Result: value.NewInteger(4),
 	},
 	{
-		List: []parser.Primary{
-			parser.NewNull(),
+		List: []value.Primary{
+			value.NewNull(),
 		},
-		Result: parser.NewInteger(0),
+		Result: value.NewInteger(0),
 	},
 }
 
@@ -44,21 +44,21 @@ func TestCount(t *testing.T) {
 
 var maxTests = []aggregateTests{
 	{
-		List: []parser.Primary{
-			parser.NewInteger(2),
-			parser.NewInteger(1),
-			parser.NewInteger(1),
-			parser.NewNull(),
-			parser.NewInteger(4),
-			parser.NewNull(),
+		List: []value.Primary{
+			value.NewInteger(2),
+			value.NewInteger(1),
+			value.NewInteger(1),
+			value.NewNull(),
+			value.NewInteger(4),
+			value.NewNull(),
 		},
-		Result: parser.NewInteger(4),
+		Result: value.NewInteger(4),
 	},
 	{
-		List: []parser.Primary{
-			parser.NewNull(),
+		List: []value.Primary{
+			value.NewNull(),
 		},
-		Result: parser.NewNull(),
+		Result: value.NewNull(),
 	},
 }
 
@@ -73,21 +73,21 @@ func TestMax(t *testing.T) {
 
 var minTests = []aggregateTests{
 	{
-		List: []parser.Primary{
-			parser.NewInteger(2),
-			parser.NewInteger(1),
-			parser.NewInteger(1),
-			parser.NewNull(),
-			parser.NewInteger(4),
-			parser.NewNull(),
+		List: []value.Primary{
+			value.NewInteger(2),
+			value.NewInteger(1),
+			value.NewInteger(1),
+			value.NewNull(),
+			value.NewInteger(4),
+			value.NewNull(),
 		},
-		Result: parser.NewInteger(1),
+		Result: value.NewInteger(1),
 	},
 	{
-		List: []parser.Primary{
-			parser.NewNull(),
+		List: []value.Primary{
+			value.NewNull(),
 		},
-		Result: parser.NewNull(),
+		Result: value.NewNull(),
 	},
 }
 
@@ -102,21 +102,21 @@ func TestMin(t *testing.T) {
 
 var sumTests = []aggregateTests{
 	{
-		List: []parser.Primary{
-			parser.NewInteger(2),
-			parser.NewInteger(1),
-			parser.NewInteger(1),
-			parser.NewNull(),
-			parser.NewInteger(4),
-			parser.NewNull(),
+		List: []value.Primary{
+			value.NewInteger(2),
+			value.NewInteger(1),
+			value.NewInteger(1),
+			value.NewNull(),
+			value.NewInteger(4),
+			value.NewNull(),
 		},
-		Result: parser.NewInteger(8),
+		Result: value.NewInteger(8),
 	},
 	{
-		List: []parser.Primary{
-			parser.NewNull(),
+		List: []value.Primary{
+			value.NewNull(),
 		},
-		Result: parser.NewNull(),
+		Result: value.NewNull(),
 	},
 }
 
@@ -131,21 +131,21 @@ func TestSum(t *testing.T) {
 
 var avgTests = []aggregateTests{
 	{
-		List: []parser.Primary{
-			parser.NewInteger(1),
-			parser.NewInteger(1),
-			parser.NewInteger(2),
-			parser.NewNull(),
-			parser.NewInteger(4),
-			parser.NewNull(),
+		List: []value.Primary{
+			value.NewInteger(1),
+			value.NewInteger(1),
+			value.NewInteger(2),
+			value.NewNull(),
+			value.NewInteger(4),
+			value.NewNull(),
 		},
-		Result: parser.NewInteger(2),
+		Result: value.NewInteger(2),
 	},
 	{
-		List: []parser.Primary{
-			parser.NewNull(),
+		List: []value.Primary{
+			value.NewNull(),
 		},
-		Result: parser.NewNull(),
+		Result: value.NewNull(),
 	},
 }
 
@@ -160,42 +160,42 @@ func TestAvg(t *testing.T) {
 
 var medianTests = []aggregateTests{
 	{
-		List: []parser.Primary{
-			parser.NewInteger(1),
-			parser.NewInteger(4),
-			parser.NewInteger(6),
-			parser.NewNull(),
-			parser.NewInteger(1),
-			parser.NewInteger(1),
-			parser.NewInteger(2),
-			parser.NewNull(),
+		List: []value.Primary{
+			value.NewInteger(1),
+			value.NewInteger(4),
+			value.NewInteger(6),
+			value.NewNull(),
+			value.NewInteger(1),
+			value.NewInteger(1),
+			value.NewInteger(2),
+			value.NewNull(),
 		},
-		Result: parser.NewFloat(1.5),
+		Result: value.NewFloat(1.5),
 	},
 	{
-		List: []parser.Primary{
-			parser.NewInteger(1),
-			parser.NewInteger(4),
-			parser.NewInteger(6),
-			parser.NewNull(),
-			parser.NewInteger(1),
-			parser.NewInteger(2),
-			parser.NewNull(),
+		List: []value.Primary{
+			value.NewInteger(1),
+			value.NewInteger(4),
+			value.NewInteger(6),
+			value.NewNull(),
+			value.NewInteger(1),
+			value.NewInteger(2),
+			value.NewNull(),
 		},
-		Result: parser.NewInteger(2),
+		Result: value.NewInteger(2),
 	},
 	{
-		List: []parser.Primary{
-			parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
-			parser.NewDatetime(time.Date(2012, 2, 5, 9, 18, 15, 0, GetTestLocation())),
+		List: []value.Primary{
+			value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
+			value.NewDatetime(time.Date(2012, 2, 5, 9, 18, 15, 0, GetTestLocation())),
 		},
-		Result: parser.NewInteger(time.Date(2012, 2, 4, 9, 18, 15, 0, GetTestLocation()).Unix()),
+		Result: value.NewInteger(time.Date(2012, 2, 4, 9, 18, 15, 0, GetTestLocation()).Unix()),
 	},
 	{
-		List: []parser.Primary{
-			parser.NewNull(),
+		List: []value.Primary{
+			value.NewNull(),
 		},
-		Result: parser.NewNull(),
+		Result: value.NewNull(),
 	},
 }
 
@@ -209,28 +209,28 @@ func TestMedian(t *testing.T) {
 }
 
 var listAggTests = []struct {
-	List      []parser.Primary
+	List      []value.Primary
 	Separator string
-	Result    parser.Primary
+	Result    value.Primary
 }{
 	{
-		List: []parser.Primary{
-			parser.NewString("str1"),
-			parser.NewString("str3"),
-			parser.NewNull(),
-			parser.NewString("str2"),
-			parser.NewString("str1"),
-			parser.NewString("str2"),
+		List: []value.Primary{
+			value.NewString("str1"),
+			value.NewString("str3"),
+			value.NewNull(),
+			value.NewString("str2"),
+			value.NewString("str1"),
+			value.NewString("str2"),
 		},
 		Separator: ",",
-		Result:    parser.NewString("str1,str3,str2,str1,str2"),
+		Result:    value.NewString("str1,str3,str2,str1,str2"),
 	},
 	{
-		List: []parser.Primary{
-			parser.NewNull(),
+		List: []value.Primary{
+			value.NewNull(),
 		},
 		Separator: ",",
-		Result:    parser.NewNull(),
+		Result:    value.NewNull(),
 	},
 }
 

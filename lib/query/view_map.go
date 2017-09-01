@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 type TemporaryViewMapList []ViewMap
@@ -100,7 +101,7 @@ func (m ViewMap) GetWithInternalId(fpath parser.Identifier) (*View, error) {
 
 				for i := start; i < end; i++ {
 					record := make(Record, fieldLen)
-					record[0] = NewCell(parser.NewInteger(int64(i)))
+					record[0] = NewCell(value.NewInteger(int64(i)))
 					for j, cell := range ret.Records[i] {
 						record[j+1] = cell
 					}

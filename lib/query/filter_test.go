@@ -8,24 +8,25 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 var filterEvaluateTests = []struct {
 	Name   string
 	Filter *Filter
 	Expr   parser.QueryExpression
-	Result parser.Primary
+	Result value.Primary
 	Error  string
 }{
 	{
 		Name:   "nil",
 		Expr:   nil,
-		Result: parser.NewTernary(ternary.TRUE),
+		Result: value.NewTernary(ternary.TRUE),
 	},
 	{
 		Name:   "Primary",
 		Expr:   parser.NewStringValue("str"),
-		Result: parser.NewString("str"),
+		Result: value.NewString("str"),
 	},
 	{
 		Name:  "Syntax Error",
@@ -37,7 +38,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Parentheses{
 			Expr: parser.NewStringValue("str"),
 		},
-		Result: parser.NewString("str"),
+		Result: value.NewString("str"),
 	},
 	{
 		Name: "FieldReference",
@@ -47,13 +48,13 @@ var filterEvaluateTests = []struct {
 					View: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
-							NewRecordWithId(1, []parser.Primary{
-								parser.NewInteger(1),
-								parser.NewString("str"),
+							NewRecordWithId(1, []value.Primary{
+								value.NewInteger(1),
+								value.NewString("str"),
 							}),
-							NewRecordWithId(2, []parser.Primary{
-								parser.NewInteger(2),
-								parser.NewString("strstr"),
+							NewRecordWithId(2, []value.Primary{
+								value.NewInteger(2),
+								value.NewString("strstr"),
 							}),
 						},
 					},
@@ -62,7 +63,7 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Expr:   parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-		Result: parser.NewString("strstr"),
+		Result: value.NewString("strstr"),
 	},
 	{
 		Name: "FieldReference ColumnNotExist Error",
@@ -72,13 +73,13 @@ var filterEvaluateTests = []struct {
 					View: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
-							NewRecordWithId(1, []parser.Primary{
-								parser.NewInteger(1),
-								parser.NewString("str"),
+							NewRecordWithId(1, []value.Primary{
+								value.NewInteger(1),
+								value.NewString("str"),
 							}),
-							NewRecordWithId(2, []parser.Primary{
-								parser.NewInteger(2),
-								parser.NewString("strstr"),
+							NewRecordWithId(2, []value.Primary{
+								value.NewInteger(2),
+								value.NewString("strstr"),
 							}),
 						},
 					},
@@ -97,13 +98,13 @@ var filterEvaluateTests = []struct {
 					View: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column1"}),
 						Records: []Record{
-							NewRecordWithId(1, []parser.Primary{
-								parser.NewInteger(1),
-								parser.NewString("str"),
+							NewRecordWithId(1, []value.Primary{
+								value.NewInteger(1),
+								value.NewString("str"),
 							}),
-							NewRecordWithId(2, []parser.Primary{
-								parser.NewInteger(2),
-								parser.NewString("strstr"),
+							NewRecordWithId(2, []value.Primary{
+								value.NewInteger(2),
+								value.NewString("strstr"),
 							}),
 						},
 					},
@@ -133,15 +134,15 @@ var filterEvaluateTests = []struct {
 						},
 						Records: []Record{
 							{
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewInteger(2),
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewInteger(2),
 								}),
 							},
 							{
-								NewGroupCell([]parser.Primary{
-									parser.NewString("str1"),
-									parser.NewString("str2"),
+								NewGroupCell([]value.Primary{
+									value.NewString("str1"),
+									value.NewString("str2"),
 								}),
 							},
 						},
@@ -162,13 +163,13 @@ var filterEvaluateTests = []struct {
 					View: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
-							NewRecordWithId(1, []parser.Primary{
-								parser.NewInteger(1),
-								parser.NewString("str"),
+							NewRecordWithId(1, []value.Primary{
+								value.NewInteger(1),
+								value.NewString("str"),
 							}),
-							NewRecordWithId(2, []parser.Primary{
-								parser.NewInteger(2),
-								parser.NewString("strstr"),
+							NewRecordWithId(2, []value.Primary{
+								value.NewInteger(2),
+								value.NewString("strstr"),
 							}),
 						},
 					},
@@ -176,8 +177,8 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Expr:   parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: parser.NewInteger(2)},
-		Result: parser.NewString("strstr"),
+		Expr:   parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: value.NewInteger(2)},
+		Result: value.NewString("strstr"),
 	},
 	{
 		Name: "ColumnNumber Not Exist Error",
@@ -187,13 +188,13 @@ var filterEvaluateTests = []struct {
 					View: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
-							NewRecordWithId(1, []parser.Primary{
-								parser.NewInteger(1),
-								parser.NewString("str"),
+							NewRecordWithId(1, []value.Primary{
+								value.NewInteger(1),
+								value.NewString("str"),
 							}),
-							NewRecordWithId(2, []parser.Primary{
-								parser.NewInteger(2),
-								parser.NewString("strstr"),
+							NewRecordWithId(2, []value.Primary{
+								value.NewInteger(2),
+								value.NewString("strstr"),
 							}),
 						},
 					},
@@ -201,7 +202,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Expr:  parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: parser.NewInteger(9)},
+		Expr:  parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: value.NewInteger(9)},
 		Error: "[L:- C:-] field table1.9 does not exist",
 	},
 	{
@@ -227,15 +228,15 @@ var filterEvaluateTests = []struct {
 						},
 						Records: []Record{
 							{
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewInteger(2),
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewInteger(2),
 								}),
 							},
 							{
-								NewGroupCell([]parser.Primary{
-									parser.NewString("str1"),
-									parser.NewString("str2"),
+								NewGroupCell([]value.Primary{
+									value.NewString("str1"),
+									value.NewString("str2"),
 								}),
 							},
 						},
@@ -245,7 +246,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Expr:  parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: parser.NewInteger(1)},
+		Expr:  parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: value.NewInteger(1)},
 		Error: "[L:- C:-] field table1.1 is not a group key",
 	},
 	{
@@ -255,7 +256,7 @@ var filterEvaluateTests = []struct {
 			RHS:      parser.NewIntegerValue(2),
 			Operator: '+',
 		},
-		Result: parser.NewInteger(3),
+		Result: value.NewInteger(3),
 	},
 	{
 		Name: "Arithmetic LHS Error",
@@ -273,7 +274,7 @@ var filterEvaluateTests = []struct {
 			RHS:      parser.NewIntegerValue(2),
 			Operator: '+',
 		},
-		Result: parser.NewNull(),
+		Result: value.NewNull(),
 	},
 	{
 		Name: "Arithmetic RHS Error",
@@ -290,7 +291,7 @@ var filterEvaluateTests = []struct {
 			Operand:  parser.NewIntegerValue(1),
 			Operator: parser.Token{Token: '-', Literal: "-"},
 		},
-		Result: parser.NewInteger(-1),
+		Result: value.NewInteger(-1),
 	},
 	{
 		Name: "UnaryArithmetic Float",
@@ -298,7 +299,7 @@ var filterEvaluateTests = []struct {
 			Operand:  parser.NewFloatValue(1.234),
 			Operator: parser.Token{Token: '-', Literal: "-"},
 		},
-		Result: parser.NewFloat(-1.234),
+		Result: value.NewFloat(-1.234),
 	},
 	{
 		Name: "UnaryArithmetic Operand Error",
@@ -314,7 +315,7 @@ var filterEvaluateTests = []struct {
 			Operand:  parser.NewStringValue("str"),
 			Operator: parser.Token{Token: '-', Literal: "-"},
 		},
-		Result: parser.NewNull(),
+		Result: value.NewNull(),
 	},
 	{
 		Name: "Concat",
@@ -325,7 +326,7 @@ var filterEvaluateTests = []struct {
 				parser.NewStringValue("c"),
 			},
 		},
-		Result: parser.NewString("abc"),
+		Result: value.NewString("abc"),
 	},
 	{
 		Name: "Concat FieldNotExist Error",
@@ -347,7 +348,7 @@ var filterEvaluateTests = []struct {
 				parser.NewStringValue("c"),
 			},
 		},
-		Result: parser.NewNull(),
+		Result: value.NewNull(),
 	},
 	{
 		Name: "Comparison",
@@ -356,7 +357,7 @@ var filterEvaluateTests = []struct {
 			RHS:      parser.NewIntegerValue(2),
 			Operator: "=",
 		},
-		Result: parser.NewTernary(ternary.FALSE),
+		Result: value.NewTernary(ternary.FALSE),
 	},
 	{
 		Name: "Comparison LHS Error",
@@ -374,7 +375,7 @@ var filterEvaluateTests = []struct {
 			RHS:      parser.NewIntegerValue(2),
 			Operator: "=",
 		},
-		Result: parser.NewTernary(ternary.UNKNOWN),
+		Result: value.NewTernary(ternary.UNKNOWN),
 	},
 	{
 		Name: "Comparison RHS Error",
@@ -406,7 +407,7 @@ var filterEvaluateTests = []struct {
 			},
 			Operator: "=",
 		},
-		Result: parser.NewTernary(ternary.TRUE),
+		Result: value.NewTernary(ternary.TRUE),
 	},
 	{
 		Name: "Comparison with Row Value and Subquery",
@@ -448,7 +449,7 @@ var filterEvaluateTests = []struct {
 			},
 			Operator: "=",
 		},
-		Result: parser.NewTernary(ternary.TRUE),
+		Result: value.NewTernary(ternary.TRUE),
 	},
 	{
 		Name: "Comparison with Row Values LHS Error",
@@ -509,7 +510,7 @@ var filterEvaluateTests = []struct {
 			},
 			Operator: "=",
 		},
-		Result: parser.NewTernary(ternary.UNKNOWN),
+		Result: value.NewTernary(ternary.UNKNOWN),
 	},
 	{
 		Name: "Comparison with Row Value and Subquery Query Error",
@@ -609,7 +610,7 @@ var filterEvaluateTests = []struct {
 			RHS:      parser.NewNullValue(),
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
-		Result: parser.NewTernary(ternary.TRUE),
+		Result: value.NewTernary(ternary.TRUE),
 	},
 	{
 		Name: "Is LHS Error",
@@ -637,7 +638,7 @@ var filterEvaluateTests = []struct {
 			High:     parser.NewIntegerValue(3),
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
-		Result: parser.NewTernary(ternary.FALSE),
+		Result: value.NewTernary(ternary.FALSE),
 	},
 	{
 		Name: "Between LHS Error",
@@ -657,7 +658,7 @@ var filterEvaluateTests = []struct {
 			High:     parser.NewIntegerValue(3),
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
-		Result: parser.NewTernary(ternary.UNKNOWN),
+		Result: value.NewTernary(ternary.UNKNOWN),
 	},
 	{
 		Name: "Between Low Error",
@@ -677,7 +678,7 @@ var filterEvaluateTests = []struct {
 			High:     parser.NewIntegerValue(5),
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
-		Result: parser.NewTernary(ternary.TRUE),
+		Result: value.NewTernary(ternary.TRUE),
 	},
 	{
 		Name: "Between High Error",
@@ -717,7 +718,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Result: parser.NewTernary(ternary.TRUE),
+		Result: value.NewTernary(ternary.TRUE),
 	},
 	{
 		Name: "Between with Row Values LHS Error",
@@ -807,7 +808,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Result: parser.NewTernary(ternary.FALSE),
+		Result: value.NewTernary(ternary.FALSE),
 	},
 	{
 		Name: "Between with Row Values High Error",
@@ -912,7 +913,7 @@ var filterEvaluateTests = []struct {
 			},
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
-		Result: parser.NewTernary(ternary.FALSE),
+		Result: value.NewTernary(ternary.FALSE),
 	},
 	{
 		Name: "In LHS Error",
@@ -956,9 +957,9 @@ var filterEvaluateTests = []struct {
 					View: &View{
 						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
 						Records: []Record{
-							NewRecordWithId(1, []parser.Primary{
-								parser.NewInteger(1),
-								parser.NewString("str2"),
+							NewRecordWithId(1, []value.Primary{
+								value.NewInteger(1),
+								value.NewString("str2"),
 							}),
 						},
 					},
@@ -996,7 +997,7 @@ var filterEvaluateTests = []struct {
 			},
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
-		Result: parser.NewTernary(ternary.FALSE),
+		Result: value.NewTernary(ternary.FALSE),
 	},
 	{
 		Name: "In Subquery Execution Error",
@@ -1087,7 +1088,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Result: parser.NewTernary(ternary.FALSE),
+		Result: value.NewTernary(ternary.FALSE),
 	},
 	{
 		Name: "In with Row Values",
@@ -1121,7 +1122,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Result: parser.NewTernary(ternary.TRUE),
+		Result: value.NewTernary(ternary.TRUE),
 	},
 	{
 		Name: "In with Row Value and Subquery",
@@ -1153,7 +1154,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Result: parser.NewTernary(ternary.TRUE),
+		Result: value.NewTernary(ternary.TRUE),
 	},
 	{
 		Name: "In with Row Values LHS Error",
@@ -1254,7 +1255,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Result: parser.NewTernary(ternary.FALSE),
+		Result: value.NewTernary(ternary.FALSE),
 	},
 	{
 		Name: "In with Row Values Values Error",
@@ -1379,7 +1380,7 @@ var filterEvaluateTests = []struct {
 			},
 			Operator: "<>",
 		},
-		Result: parser.NewTernary(ternary.TRUE),
+		Result: value.NewTernary(ternary.TRUE),
 	},
 	{
 		Name: "Any LHS Error",
@@ -1533,7 +1534,7 @@ var filterEvaluateTests = []struct {
 			},
 			Operator: ">",
 		},
-		Result: parser.NewTernary(ternary.TRUE),
+		Result: value.NewTernary(ternary.TRUE),
 	},
 	{
 		Name: "All False",
@@ -1560,7 +1561,7 @@ var filterEvaluateTests = []struct {
 			},
 			Operator: ">",
 		},
-		Result: parser.NewTernary(ternary.FALSE),
+		Result: value.NewTernary(ternary.FALSE),
 	},
 	{
 		Name: "All LHS Error",
@@ -1696,7 +1697,7 @@ var filterEvaluateTests = []struct {
 			Pattern:  parser.NewStringValue("_bc%"),
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
-		Result: parser.NewTernary(ternary.FALSE),
+		Result: value.NewTernary(ternary.FALSE),
 	},
 	{
 		Name: "Like LHS Error",
@@ -1724,9 +1725,9 @@ var filterEvaluateTests = []struct {
 					View: &View{
 						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
 						Records: []Record{
-							NewRecordWithId(1, []parser.Primary{
-								parser.NewInteger(1),
-								parser.NewString("str2"),
+							NewRecordWithId(1, []value.Primary{
+								value.NewInteger(1),
+								value.NewString("str2"),
 							}),
 						},
 					},
@@ -1760,7 +1761,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Result: parser.NewTernary(ternary.TRUE),
+		Result: value.NewTernary(ternary.TRUE),
 	},
 	{
 		Name: "Exists No Record",
@@ -1786,7 +1787,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Result: parser.NewTernary(ternary.FALSE),
+		Result: value.NewTernary(ternary.FALSE),
 	},
 	{
 		Name: "Exists Query Execution Error",
@@ -1826,9 +1827,9 @@ var filterEvaluateTests = []struct {
 					View: &View{
 						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
 						Records: []Record{
-							NewRecordWithId(1, []parser.Primary{
-								parser.NewInteger(1),
-								parser.NewString("str2"),
+							NewRecordWithId(1, []value.Primary{
+								value.NewInteger(1),
+								value.NewString("str2"),
 							}),
 						},
 					},
@@ -1863,7 +1864,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Result: parser.NewString("2"),
+		Result: value.NewString("2"),
 	},
 	{
 		Name: "Subquery No Record",
@@ -1890,7 +1891,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Result: parser.NewNull(),
+		Result: value.NewNull(),
 	},
 	{
 		Name: "Subquery Execution Error",
@@ -1968,14 +1969,14 @@ var filterEvaluateTests = []struct {
 				parser.NewStringValue("str"),
 			},
 		},
-		Result: parser.NewString("str"),
+		Result: value.NewString("str"),
 	},
 	{
 		Name: "Function Now",
 		Expr: parser.Function{
 			Name: "now",
 		},
-		Result: parser.NewDatetime(NowForTest),
+		Result: value.NewDatetime(NowForTest),
 	},
 	{
 		Name: "User Defined Function",
@@ -2001,7 +2002,7 @@ var filterEvaluateTests = []struct {
 				parser.NewIntegerValue(1),
 			},
 		},
-		Result: parser.NewInteger(1),
+		Result: value.NewInteger(1),
 	},
 	{
 		Name: "User Defined Function Argument Length Error",
@@ -2058,20 +2059,20 @@ var filterEvaluateTests = []struct {
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewInteger(2),
-									parser.NewInteger(3),
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewInteger(2),
+									value.NewInteger(3),
 								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewNull(),
-									parser.NewInteger(3),
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewNull(),
+									value.NewInteger(3),
 								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewString("str1"),
-									parser.NewString("str2"),
-									parser.NewString("str3"),
+								NewGroupCell([]value.Primary{
+									value.NewString("str1"),
+									value.NewString("str2"),
+									value.NewString("str3"),
 								}),
 							},
 						},
@@ -2088,7 +2089,7 @@ var filterEvaluateTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 		},
-		Result: parser.NewInteger(2),
+		Result: value.NewInteger(2),
 	},
 	{
 		Name: "Aggregate Function Argument Length Error",
@@ -2099,15 +2100,15 @@ var filterEvaluateTests = []struct {
 						Header: NewHeader("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewNull(),
-									parser.NewInteger(3),
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewNull(),
+									value.NewInteger(3),
 								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewString("str1"),
-									parser.NewString("str2"),
-									parser.NewString("str3"),
+								NewGroupCell([]value.Primary{
+									value.NewString("str1"),
+									value.NewString("str2"),
+									value.NewString("str3"),
 								}),
 							},
 						},
@@ -2131,9 +2132,9 @@ var filterEvaluateTests = []struct {
 					View: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
 						Records: []Record{
-							NewRecordWithId(1, []parser.Primary{
-								parser.NewInteger(1),
-								parser.NewString("str2"),
+							NewRecordWithId(1, []value.Primary{
+								value.NewInteger(1),
+								value.NewString("str2"),
 							}),
 						},
 					},
@@ -2159,15 +2160,15 @@ var filterEvaluateTests = []struct {
 						Header: NewHeader("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewNull(),
-									parser.NewInteger(3),
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewNull(),
+									value.NewInteger(3),
 								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewString("str1"),
-									parser.NewString("str2"),
-									parser.NewString("str3"),
+								NewGroupCell([]value.Primary{
+									value.NewString("str1"),
+									value.NewString("str2"),
+									value.NewString("str3"),
 								}),
 							},
 						},
@@ -2200,15 +2201,15 @@ var filterEvaluateTests = []struct {
 						Header: NewHeader("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewNull(),
-									parser.NewInteger(3),
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewNull(),
+									value.NewInteger(3),
 								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewString("str1"),
-									parser.NewString("str2"),
-									parser.NewString("str3"),
+								NewGroupCell([]value.Primary{
+									value.NewString("str1"),
+									value.NewString("str2"),
+									value.NewString("str3"),
 								}),
 							},
 						},
@@ -2225,7 +2226,7 @@ var filterEvaluateTests = []struct {
 				parser.AllColumns{},
 			},
 		},
-		Result: parser.NewInteger(3),
+		Result: value.NewInteger(3),
 	},
 	{
 		Name:   "Aggregate Function As a Statement Error",
@@ -2248,17 +2249,17 @@ var filterEvaluateTests = []struct {
 						Header: NewHeader("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewNull(),
-									parser.NewInteger(3),
-									parser.NewInteger(3),
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewNull(),
+									value.NewInteger(3),
+									value.NewInteger(3),
 								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewString("str1"),
-									parser.NewString("str2"),
-									parser.NewString("str3"),
-									parser.NewString("str4"),
+								NewGroupCell([]value.Primary{
+									value.NewString("str1"),
+									value.NewString("str2"),
+									value.NewString("str3"),
+									value.NewString("str4"),
 								}),
 							},
 						},
@@ -2356,7 +2357,7 @@ var filterEvaluateTests = []struct {
 				parser.NewIntegerValue(0),
 			},
 		},
-		Result: parser.NewInteger(3),
+		Result: value.NewInteger(3),
 	},
 	{
 		Name: "Aggregate Function User Defined Argument Length Error",
@@ -2367,17 +2368,17 @@ var filterEvaluateTests = []struct {
 						Header: NewHeader("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewNull(),
-									parser.NewInteger(3),
-									parser.NewInteger(3),
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewNull(),
+									value.NewInteger(3),
+									value.NewInteger(3),
 								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewString("str1"),
-									parser.NewString("str2"),
-									parser.NewString("str3"),
-									parser.NewString("str4"),
+								NewGroupCell([]value.Primary{
+									value.NewString("str1"),
+									value.NewString("str2"),
+									value.NewString("str3"),
+									value.NewString("str4"),
 								}),
 							},
 						},
@@ -2422,17 +2423,17 @@ var filterEvaluateTests = []struct {
 						Header: NewHeader("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewNull(),
-									parser.NewInteger(3),
-									parser.NewInteger(3),
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewNull(),
+									value.NewInteger(3),
+									value.NewInteger(3),
 								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewString("str1"),
-									parser.NewString("str2"),
-									parser.NewString("str3"),
-									parser.NewString("str4"),
+								NewGroupCell([]value.Primary{
+									value.NewString("str1"),
+									value.NewString("str2"),
+									value.NewString("str3"),
+									value.NewString("str4"),
 								}),
 							},
 						},
@@ -2478,15 +2479,15 @@ var filterEvaluateTests = []struct {
 						Header: NewHeader("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewNull(),
-									parser.NewInteger(3),
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewNull(),
+									value.NewInteger(3),
 								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewString("str1"),
-									parser.NewString("str2"),
-									parser.NewString("str3"),
+								NewGroupCell([]value.Primary{
+									value.NewString("str1"),
+									value.NewString("str2"),
+									value.NewString("str3"),
 								}),
 							},
 						},
@@ -2564,7 +2565,7 @@ var filterEvaluateTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 		},
-		Result: parser.NewInteger(3),
+		Result: value.NewInteger(3),
 	},
 	{
 		Name: "Aggregate Function Execute User Defined Aggregate Function Undefined Error",
@@ -2575,15 +2576,15 @@ var filterEvaluateTests = []struct {
 						Header: NewHeader("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewNull(),
-									parser.NewInteger(3),
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewNull(),
+									value.NewInteger(3),
 								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewString("str1"),
-									parser.NewString("str2"),
-									parser.NewString("str3"),
+								NewGroupCell([]value.Primary{
+									value.NewString("str1"),
+									value.NewString("str2"),
+									value.NewString("str3"),
 								}),
 							},
 						},
@@ -2672,23 +2673,23 @@ var filterEvaluateTests = []struct {
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewInteger(2),
-									parser.NewInteger(3),
-									parser.NewInteger(4),
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewInteger(2),
+									value.NewInteger(3),
+									value.NewInteger(4),
 								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewInteger(2),
-									parser.NewInteger(3),
-									parser.NewInteger(4),
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewInteger(2),
+									value.NewInteger(3),
+									value.NewInteger(4),
 								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewString("str2"),
-									parser.NewString("str1"),
-									parser.NewNull(),
-									parser.NewString("str2"),
+								NewGroupCell([]value.Primary{
+									value.NewString("str2"),
+									value.NewString("str1"),
+									value.NewNull(),
+									value.NewString("str2"),
 								}),
 							},
 						},
@@ -2712,7 +2713,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Result: parser.NewString("str1,str2"),
+		Result: value.NewString("str1,str2"),
 	},
 	{
 		Name: "ListAgg Function Null",
@@ -2723,23 +2724,23 @@ var filterEvaluateTests = []struct {
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewInteger(2),
-									parser.NewInteger(3),
-									parser.NewInteger(4),
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewInteger(2),
+									value.NewInteger(3),
+									value.NewInteger(4),
 								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewInteger(2),
-									parser.NewInteger(3),
-									parser.NewInteger(4),
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewInteger(2),
+									value.NewInteger(3),
+									value.NewInteger(4),
 								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewNull(),
-									parser.NewNull(),
-									parser.NewNull(),
-									parser.NewNull(),
+								NewGroupCell([]value.Primary{
+									value.NewNull(),
+									value.NewNull(),
+									value.NewNull(),
+									value.NewNull(),
 								}),
 							},
 						},
@@ -2757,7 +2758,7 @@ var filterEvaluateTests = []struct {
 				parser.NewStringValue(","),
 			},
 		},
-		Result: parser.NewNull(),
+		Result: value.NewNull(),
 	},
 	{
 		Name: "ListAgg Function Argument Length Error",
@@ -2767,9 +2768,9 @@ var filterEvaluateTests = []struct {
 					View: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
-							NewRecordWithId(1, []parser.Primary{
-								parser.NewInteger(1),
-								parser.NewString("str2"),
+							NewRecordWithId(1, []value.Primary{
+								value.NewInteger(1),
+								value.NewString("str2"),
 							}),
 						},
 						Filter: NewEmptyFilter(),
@@ -2797,9 +2798,9 @@ var filterEvaluateTests = []struct {
 					View: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
-							NewRecordWithId(1, []parser.Primary{
-								parser.NewInteger(1),
-								parser.NewString("str2"),
+							NewRecordWithId(1, []value.Primary{
+								value.NewInteger(1),
+								value.NewString("str2"),
 							}),
 						},
 						Filter: NewEmptyFilter(),
@@ -2832,17 +2833,17 @@ var filterEvaluateTests = []struct {
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewInteger(2),
-									parser.NewInteger(3),
-									parser.NewInteger(4),
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewInteger(2),
+									value.NewInteger(3),
+									value.NewInteger(4),
 								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewString("str2"),
-									parser.NewString("str1"),
-									parser.NewNull(),
-									parser.NewString("str2"),
+								NewGroupCell([]value.Primary{
+									value.NewString("str2"),
+									value.NewString("str1"),
+									value.NewNull(),
+									value.NewString("str2"),
 								}),
 							},
 						},
@@ -2877,15 +2878,15 @@ var filterEvaluateTests = []struct {
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewNull(),
-									parser.NewInteger(3),
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewNull(),
+									value.NewInteger(3),
 								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewString("str1"),
-									parser.NewString("str2"),
-									parser.NewString("str3"),
+								NewGroupCell([]value.Primary{
+									value.NewString("str1"),
+									value.NewString("str2"),
+									value.NewString("str3"),
 								}),
 							},
 						},
@@ -2919,15 +2920,15 @@ var filterEvaluateTests = []struct {
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewNull(),
-									parser.NewInteger(3),
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewNull(),
+									value.NewInteger(3),
 								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewString("str1"),
-									parser.NewString("str2"),
-									parser.NewString("str3"),
+								NewGroupCell([]value.Primary{
+									value.NewString("str1"),
+									value.NewString("str2"),
+									value.NewString("str3"),
 								}),
 							},
 						},
@@ -2956,15 +2957,15 @@ var filterEvaluateTests = []struct {
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						Records: []Record{
 							{
-								NewGroupCell([]parser.Primary{
-									parser.NewInteger(1),
-									parser.NewNull(),
-									parser.NewInteger(3),
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewNull(),
+									value.NewInteger(3),
 								}),
-								NewGroupCell([]parser.Primary{
-									parser.NewString("str1"),
-									parser.NewString("str2"),
-									parser.NewString("str3"),
+								NewGroupCell([]value.Primary{
+									value.NewString("str1"),
+									value.NewString("str2"),
+									value.NewString("str3"),
 								}),
 							},
 						},
@@ -3017,7 +3018,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Result: parser.NewString("B"),
+		Result: value.NewString("B"),
 	},
 	{
 		Name: "CaseExpr Filter",
@@ -3041,7 +3042,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Result: parser.NewString("B"),
+		Result: value.NewString("B"),
 	},
 	{
 		Name: "CaseExpr Else",
@@ -3061,7 +3062,7 @@ var filterEvaluateTests = []struct {
 				Result: parser.NewStringValue("C"),
 			},
 		},
-		Result: parser.NewString("C"),
+		Result: value.NewString("C"),
 	},
 	{
 		Name: "CaseExpr No Else",
@@ -3078,7 +3079,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Result: parser.NewNull(),
+		Result: value.NewNull(),
 	},
 	{
 		Name: "CaseExpr Value Error",
@@ -3158,7 +3159,7 @@ var filterEvaluateTests = []struct {
 			RHS:      parser.NewTernaryValue(ternary.FALSE),
 			Operator: parser.Token{Token: parser.AND, Literal: "and"},
 		},
-		Result: parser.NewTernary(ternary.FALSE),
+		Result: value.NewTernary(ternary.FALSE),
 	},
 	{
 		Name: "Logic AND Decided with LHS",
@@ -3167,7 +3168,7 @@ var filterEvaluateTests = []struct {
 			RHS:      parser.NewTernaryValue(ternary.FALSE),
 			Operator: parser.Token{Token: parser.AND, Literal: "and"},
 		},
-		Result: parser.NewTernary(ternary.FALSE),
+		Result: value.NewTernary(ternary.FALSE),
 	},
 	{
 		Name: "Logic OR",
@@ -3176,7 +3177,7 @@ var filterEvaluateTests = []struct {
 			RHS:      parser.NewTernaryValue(ternary.TRUE),
 			Operator: parser.Token{Token: parser.OR, Literal: "or"},
 		},
-		Result: parser.NewTernary(ternary.TRUE),
+		Result: value.NewTernary(ternary.TRUE),
 	},
 	{
 		Name: "Logic OR Decided with LHS",
@@ -3185,7 +3186,7 @@ var filterEvaluateTests = []struct {
 			RHS:      parser.NewTernaryValue(ternary.FALSE),
 			Operator: parser.Token{Token: parser.OR, Literal: "or"},
 		},
-		Result: parser.NewTernary(ternary.TRUE),
+		Result: value.NewTernary(ternary.TRUE),
 	},
 	{
 		Name: "Logic LHS Error",
@@ -3211,7 +3212,7 @@ var filterEvaluateTests = []struct {
 			Operand:  parser.NewTernaryValue(ternary.FALSE),
 			Operator: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
-		Result: parser.NewTernary(ternary.TRUE),
+		Result: value.NewTernary(ternary.TRUE),
 	},
 	{
 		Name: "UnaryLogic Operand Error",
@@ -3225,7 +3226,7 @@ var filterEvaluateTests = []struct {
 		Name: "Variable",
 		Filter: NewFilter(
 			[]Variables{{
-				"@var1": parser.NewInteger(1),
+				"@var1": value.NewInteger(1),
 			}},
 			[]ViewMap{{}},
 			[]CursorMap{{}},
@@ -3234,7 +3235,7 @@ var filterEvaluateTests = []struct {
 		Expr: parser.Variable{
 			Name: "@var1",
 		},
-		Result: parser.NewInteger(1),
+		Result: value.NewInteger(1),
 	},
 	{
 		Name: "Variable Undefined Error",
@@ -3247,7 +3248,7 @@ var filterEvaluateTests = []struct {
 		Name: "Variable Substitution",
 		Filter: NewFilter(
 			[]Variables{{
-				"@var1": parser.NewInteger(1),
+				"@var1": value.NewInteger(1),
 			}},
 			[]ViewMap{{}},
 			[]CursorMap{{}},
@@ -3257,7 +3258,7 @@ var filterEvaluateTests = []struct {
 			Variable: parser.Variable{Name: "@var1"},
 			Value:    parser.NewIntegerValue(2),
 		},
-		Result: parser.NewInteger(2),
+		Result: value.NewInteger(2),
 	},
 	{
 		Name: "Variable Substitution Undefined Error",
@@ -3277,7 +3278,7 @@ var filterEvaluateTests = []struct {
 			Type:      parser.OPEN,
 			TypeLit:   "open",
 		},
-		Result: parser.NewTernary(ternary.FALSE),
+		Result: value.NewTernary(ternary.FALSE),
 	},
 	{
 		Name: "Cursor Status Is In Range",
@@ -3288,7 +3289,7 @@ var filterEvaluateTests = []struct {
 			Type:      parser.RANGE,
 			TypeLit:   "in range",
 		},
-		Result: parser.NewTernary(ternary.TRUE),
+		Result: value.NewTernary(ternary.TRUE),
 	},
 	{
 		Name: "Cursor Status Open Error",
@@ -3319,7 +3320,7 @@ var filterEvaluateTests = []struct {
 			Cursor:    parser.Identifier{Literal: "cur"},
 			Attrebute: parser.Token{Token: parser.COUNT, Literal: "count"},
 		},
-		Result: parser.NewInteger(3),
+		Result: value.NewInteger(3),
 	},
 	{
 		Name: "Cursor Attribute Count Error",
@@ -3447,10 +3448,10 @@ var filterEvaluateFieldReferenceBenchFilter = &Filter{
 			View: &View{
 				Header: NewHeader("table1", []string{"column1", "column2", "column3"}),
 				Records: Records{
-					NewRecord([]parser.Primary{
-						parser.NewInteger(1),
-						parser.NewInteger(1),
-						parser.NewInteger(1),
+					NewRecord([]value.Primary{
+						value.NewInteger(1),
+						value.NewInteger(1),
+						value.NewInteger(1),
 					}),
 				},
 			},
@@ -3465,10 +3466,10 @@ var filterEvaluateFieldReferenceWithIndexCacheBenchFilter = &Filter{
 			View: &View{
 				Header: NewHeader("table1", []string{"column1", "column2", "column3"}),
 				Records: Records{
-					NewRecord([]parser.Primary{
-						parser.NewInteger(1),
-						parser.NewInteger(1),
-						parser.NewInteger(1),
+					NewRecord([]value.Primary{
+						value.NewInteger(1),
+						value.NewInteger(1),
+						value.NewInteger(1),
 					}),
 				},
 			},

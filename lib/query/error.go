@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 const (
@@ -161,7 +162,7 @@ type UserTriggeredError struct {
 func NewUserTriggeredError(expr parser.Trigger, message string) error {
 	code := 1
 	if expr.Code != nil {
-		code = int(expr.Code.(parser.Integer).Value())
+		code = int(expr.Code.(value.Integer).Raw())
 	}
 
 	return &UserTriggeredError{

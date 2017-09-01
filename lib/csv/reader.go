@@ -8,7 +8,7 @@ import (
 	"io"
 
 	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 var EOF error = io.EOF
@@ -19,11 +19,11 @@ func NewField(s string) Field {
 	return []byte(s)
 }
 
-func (f Field) ToPrimary() parser.Primary {
+func (f Field) ToPrimary() value.Primary {
 	if f == nil {
-		return parser.NewNull()
+		return value.NewNull()
 	} else {
-		return parser.NewString(string(f))
+		return value.NewString(string(f))
 	}
 }
 

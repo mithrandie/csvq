@@ -7,6 +7,7 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 var selectQueryForCursorTest parser.SelectQuery = parser.SelectQuery{
@@ -97,16 +98,16 @@ func TestCursorMapList_Declare(t *testing.T) {
 var cursorMapListAddPseudoCursorTests = []struct {
 	Name    string
 	CurName parser.Identifier
-	Values  []parser.Primary
+	Values  []value.Primary
 	Result  CursorMapList
 	Error   string
 }{
 	{
 		Name:    "CursorMapList AddPseudoCursor",
 		CurName: parser.Identifier{Literal: "pcur"},
-		Values: []parser.Primary{
-			parser.NewInteger(1),
-			parser.NewInteger(2),
+		Values: []value.Primary{
+			value.NewInteger(1),
+			value.NewInteger(2),
 		},
 		Result: CursorMapList{
 			{
@@ -114,8 +115,8 @@ var cursorMapListAddPseudoCursorTests = []struct {
 					view: &View{
 						Header: NewHeader("", []string{"c1"}),
 						Records: Records{
-							NewRecord([]parser.Primary{parser.NewInteger(1)}),
-							NewRecord([]parser.Primary{parser.NewInteger(2)}),
+							NewRecord([]value.Primary{value.NewInteger(1)}),
+							NewRecord([]value.Primary{value.NewInteger(2)}),
 						},
 					},
 					index:    -1,
@@ -168,8 +169,8 @@ var cursorMapListDisposeTests = []struct {
 					view: &View{
 						Header: NewHeader("", []string{"c1"}),
 						Records: Records{
-							NewRecord([]parser.Primary{parser.NewInteger(1)}),
-							NewRecord([]parser.Primary{parser.NewInteger(2)}),
+							NewRecord([]value.Primary{value.NewInteger(1)}),
+							NewRecord([]value.Primary{value.NewInteger(2)}),
 						},
 					},
 					index:    -1,
@@ -198,8 +199,8 @@ func TestCursorMapList_Dispose(t *testing.T) {
 				view: &View{
 					Header: NewHeader("", []string{"c1"}),
 					Records: Records{
-						NewRecord([]parser.Primary{parser.NewInteger(1)}),
-						NewRecord([]parser.Primary{parser.NewInteger(2)}),
+						NewRecord([]value.Primary{value.NewInteger(1)}),
+						NewRecord([]value.Primary{value.NewInteger(2)}),
 					},
 				},
 				index:    -1,
@@ -248,8 +249,8 @@ var cursorMapListOpenTests = []struct {
 					view: &View{
 						Header: NewHeader("", []string{"c1"}),
 						Records: Records{
-							NewRecord([]parser.Primary{parser.NewInteger(1)}),
-							NewRecord([]parser.Primary{parser.NewInteger(2)}),
+							NewRecord([]value.Primary{value.NewInteger(1)}),
+							NewRecord([]value.Primary{value.NewInteger(2)}),
 						},
 					},
 					index:    -1,
@@ -262,17 +263,17 @@ var cursorMapListOpenTests = []struct {
 					view: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
 						Records: []Record{
-							NewRecord([]parser.Primary{
-								parser.NewString("1"),
-								parser.NewString("str1"),
+							NewRecord([]value.Primary{
+								value.NewString("1"),
+								value.NewString("str1"),
 							}),
-							NewRecord([]parser.Primary{
-								parser.NewString("2"),
-								parser.NewString("str2"),
+							NewRecord([]value.Primary{
+								value.NewString("2"),
+								value.NewString("str2"),
 							}),
-							NewRecord([]parser.Primary{
-								parser.NewString("3"),
-								parser.NewString("str3"),
+							NewRecord([]value.Primary{
+								value.NewString("3"),
+								value.NewString("str3"),
 							}),
 						},
 						FileInfo: &FileInfo{
@@ -316,8 +317,8 @@ func TestCursorMapList_Open(t *testing.T) {
 				view: &View{
 					Header: NewHeader("", []string{"c1"}),
 					Records: Records{
-						NewRecord([]parser.Primary{parser.NewInteger(1)}),
-						NewRecord([]parser.Primary{parser.NewInteger(2)}),
+						NewRecord([]value.Primary{value.NewInteger(1)}),
+						NewRecord([]value.Primary{value.NewInteger(2)}),
 					},
 				},
 				index:    -1,
@@ -368,8 +369,8 @@ var cursorMapListCloseTests = []struct {
 					view: &View{
 						Header: NewHeader("", []string{"c1"}),
 						Records: Records{
-							NewRecord([]parser.Primary{parser.NewInteger(1)}),
-							NewRecord([]parser.Primary{parser.NewInteger(2)}),
+							NewRecord([]value.Primary{value.NewInteger(1)}),
+							NewRecord([]value.Primary{value.NewInteger(2)}),
 						},
 					},
 					index:    -1,
@@ -406,8 +407,8 @@ func TestCursorMapList_Close(t *testing.T) {
 				view: &View{
 					Header: NewHeader("", []string{"c1"}),
 					Records: Records{
-						NewRecord([]parser.Primary{parser.NewInteger(1)}),
-						NewRecord([]parser.Primary{parser.NewInteger(2)}),
+						NewRecord([]value.Primary{value.NewInteger(1)}),
+						NewRecord([]value.Primary{value.NewInteger(2)}),
 					},
 				},
 				index:    -1,
@@ -449,16 +450,16 @@ var cursorMapListFetchTests = []struct {
 	CurName  parser.Identifier
 	Position int
 	Number   int
-	Result   []parser.Primary
+	Result   []value.Primary
 	Error    string
 }{
 	{
 		Name:     "CursorMapList Fetch",
 		CurName:  parser.Identifier{Literal: "cur"},
 		Position: parser.NEXT,
-		Result: []parser.Primary{
-			parser.NewString("1"),
-			parser.NewString("str1"),
+		Result: []value.Primary{
+			value.NewString("1"),
+			value.NewString("str1"),
 		},
 	},
 	{
@@ -751,24 +752,24 @@ func TestCursorMap_Declare(t *testing.T) {
 var cursorMapAddPseudoCursorTests = []struct {
 	Name   string
 	Cursor parser.Identifier
-	Values []parser.Primary
+	Values []value.Primary
 	Result CursorMap
 	Error  string
 }{
 	{
 		Name:   "CursorMap AddPseudoCursor",
 		Cursor: parser.Identifier{Literal: "pcur"},
-		Values: []parser.Primary{
-			parser.NewInteger(1),
-			parser.NewInteger(2),
+		Values: []value.Primary{
+			value.NewInteger(1),
+			value.NewInteger(2),
 		},
 		Result: CursorMap{
 			"PCUR": &Cursor{
 				view: &View{
 					Header: NewHeader("", []string{"c1"}),
 					Records: Records{
-						NewRecord([]parser.Primary{parser.NewInteger(1)}),
-						NewRecord([]parser.Primary{parser.NewInteger(2)}),
+						NewRecord([]value.Primary{value.NewInteger(1)}),
+						NewRecord([]value.Primary{value.NewInteger(2)}),
 					},
 				},
 				index:    -1,
@@ -779,7 +780,7 @@ var cursorMapAddPseudoCursorTests = []struct {
 	{
 		Name:   "CursorMap AddPseudoCursor Redeclaration Error",
 		Cursor: parser.Identifier{Literal: "pcur"},
-		Values: []parser.Primary{},
+		Values: []value.Primary{},
 		Error:  "[L:- C:-] cursor pcur is redeclared",
 	},
 }
@@ -820,8 +821,8 @@ var cursorMapDisposeTests = []struct {
 				view: &View{
 					Header: NewHeader("", []string{"c1"}),
 					Records: Records{
-						NewRecord([]parser.Primary{parser.NewInteger(1)}),
-						NewRecord([]parser.Primary{parser.NewInteger(2)}),
+						NewRecord([]value.Primary{value.NewInteger(1)}),
+						NewRecord([]value.Primary{value.NewInteger(2)}),
 					},
 				},
 				index:    -1,
@@ -849,9 +850,9 @@ func TestCursorMap_Dispose(t *testing.T) {
 	}
 	cursors.AddPseudoCursor(
 		parser.Identifier{Literal: "pcur"},
-		[]parser.Primary{
-			parser.NewInteger(1),
-			parser.NewInteger(2),
+		[]value.Primary{
+			value.NewInteger(1),
+			value.NewInteger(2),
 		},
 	)
 
@@ -890,17 +891,17 @@ var cursorMapOpenTests = []struct {
 				view: &View{
 					Header: NewHeader("table1", []string{"column1", "column2"}),
 					Records: []Record{
-						NewRecord([]parser.Primary{
-							parser.NewString("1"),
-							parser.NewString("str1"),
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
 						}),
-						NewRecord([]parser.Primary{
-							parser.NewString("2"),
-							parser.NewString("str2"),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
+							value.NewString("str2"),
 						}),
-						NewRecord([]parser.Primary{
-							parser.NewString("3"),
-							parser.NewString("str3"),
+						NewRecord([]value.Primary{
+							value.NewString("3"),
+							value.NewString("str3"),
 						}),
 					},
 					FileInfo: &FileInfo{
@@ -920,8 +921,8 @@ var cursorMapOpenTests = []struct {
 				view: &View{
 					Header: NewHeader("", []string{"c1"}),
 					Records: Records{
-						NewRecord([]parser.Primary{parser.NewInteger(1)}),
-						NewRecord([]parser.Primary{parser.NewInteger(2)}),
+						NewRecord([]value.Primary{value.NewInteger(1)}),
+						NewRecord([]value.Primary{value.NewInteger(2)}),
 					},
 				},
 				index:    -1,
@@ -966,9 +967,9 @@ func TestCursorMap_Open(t *testing.T) {
 	}
 	cursors.AddPseudoCursor(
 		parser.Identifier{Literal: "pcur"},
-		[]parser.Primary{
-			parser.NewInteger(1),
-			parser.NewInteger(2),
+		[]value.Primary{
+			value.NewInteger(1),
+			value.NewInteger(2),
 		},
 	)
 
@@ -1010,8 +1011,8 @@ var cursorMapCloseTests = []struct {
 				view: &View{
 					Header: NewHeader("", []string{"c1"}),
 					Records: Records{
-						NewRecord([]parser.Primary{parser.NewInteger(1)}),
-						NewRecord([]parser.Primary{parser.NewInteger(2)}),
+						NewRecord([]value.Primary{value.NewInteger(1)}),
+						NewRecord([]value.Primary{value.NewInteger(2)}),
 					},
 				},
 				index:    -1,
@@ -1042,9 +1043,9 @@ func TestCursorMap_Close(t *testing.T) {
 	}
 	cursors.AddPseudoCursor(
 		parser.Identifier{Literal: "pcur"},
-		[]parser.Primary{
-			parser.NewInteger(1),
-			parser.NewInteger(2),
+		[]value.Primary{
+			value.NewInteger(1),
+			value.NewInteger(2),
 		},
 	)
 	ViewCache.Clear()
@@ -1075,34 +1076,34 @@ var cursorMapFetchTests = []struct {
 	CurName  parser.Identifier
 	Position int
 	Number   int
-	Result   []parser.Primary
+	Result   []value.Primary
 	Error    string
 }{
 	{
 		Name:     "CursorMap Fetch First Time",
 		CurName:  parser.Identifier{Literal: "cur"},
 		Position: parser.NEXT,
-		Result: []parser.Primary{
-			parser.NewString("1"),
-			parser.NewString("str1"),
+		Result: []value.Primary{
+			value.NewString("1"),
+			value.NewString("str1"),
 		},
 	},
 	{
 		Name:     "CursorMap Fetch Second Time",
 		CurName:  parser.Identifier{Literal: "cur"},
 		Position: parser.NEXT,
-		Result: []parser.Primary{
-			parser.NewString("2"),
-			parser.NewString("str2"),
+		Result: []value.Primary{
+			value.NewString("2"),
+			value.NewString("str2"),
 		},
 	},
 	{
 		Name:     "CursorMap Fetch Third Time",
 		CurName:  parser.Identifier{Literal: "cur"},
 		Position: parser.NEXT,
-		Result: []parser.Primary{
-			parser.NewString("3"),
-			parser.NewString("str3"),
+		Result: []value.Primary{
+			value.NewString("3"),
+			value.NewString("str3"),
 		},
 	},
 	{
@@ -1115,27 +1116,27 @@ var cursorMapFetchTests = []struct {
 		Name:     "CursorMap Fetch First",
 		CurName:  parser.Identifier{Literal: "cur"},
 		Position: parser.FIRST,
-		Result: []parser.Primary{
-			parser.NewString("1"),
-			parser.NewString("str1"),
+		Result: []value.Primary{
+			value.NewString("1"),
+			value.NewString("str1"),
 		},
 	},
 	{
 		Name:     "CursorMap Fetch Last",
 		CurName:  parser.Identifier{Literal: "cur"},
 		Position: parser.LAST,
-		Result: []parser.Primary{
-			parser.NewString("3"),
-			parser.NewString("str3"),
+		Result: []value.Primary{
+			value.NewString("3"),
+			value.NewString("str3"),
 		},
 	},
 	{
 		Name:     "CursorMap Fetch Prior",
 		CurName:  parser.Identifier{Literal: "cur"},
 		Position: parser.PRIOR,
-		Result: []parser.Primary{
-			parser.NewString("2"),
-			parser.NewString("str2"),
+		Result: []value.Primary{
+			value.NewString("2"),
+			value.NewString("str2"),
 		},
 	},
 	{
@@ -1143,9 +1144,9 @@ var cursorMapFetchTests = []struct {
 		CurName:  parser.Identifier{Literal: "cur"},
 		Position: parser.ABSOLUTE,
 		Number:   1,
-		Result: []parser.Primary{
-			parser.NewString("2"),
-			parser.NewString("str2"),
+		Result: []value.Primary{
+			value.NewString("2"),
+			value.NewString("str2"),
 		},
 	},
 	{
@@ -1153,9 +1154,9 @@ var cursorMapFetchTests = []struct {
 		CurName:  parser.Identifier{Literal: "cur"},
 		Position: parser.RELATIVE,
 		Number:   -1,
-		Result: []parser.Primary{
-			parser.NewString("1"),
-			parser.NewString("str1"),
+		Result: []value.Primary{
+			value.NewString("1"),
+			value.NewString("str1"),
 		},
 	},
 	{

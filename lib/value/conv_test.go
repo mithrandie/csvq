@@ -1,4 +1,4 @@
-package parser
+package value
 
 import (
 	"testing"
@@ -385,7 +385,7 @@ func TestPrimaryToDatetime(t *testing.T) {
 		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
 	} else {
 		expect := time.Date(2012, 2, 1, 0, 0, 0, 0, cmd.GetLocation())
-		if !dt.(Datetime).Value().Equal(expect) {
+		if !dt.(Datetime).Raw().Equal(expect) {
 			t.Errorf("datetime = %s, want %s for %#v", dt, expect, p)
 		}
 	}
@@ -512,43 +512,6 @@ func TestPrimaryToString(t *testing.T) {
 	s = PrimaryToString(p)
 	if _, ok := s.(Null); !ok {
 		t.Errorf("primary type = %T, want Null for %#v", s, p)
-	}
-}
-
-func TestFieldIdentifier(t *testing.T) {
-	var e QueryExpression = NewStringValue("str")
-	expect := "str"
-	result := FieldIdentifier(e)
-	if result != expect {
-		t.Errorf("field identifier = %q, want %q for %#v", result, expect, e)
-	}
-
-	e = NewDatetimeValueFromString("2006-01-02 15:04:05 -08:00")
-	expect = "2006-01-02T15:04:05-08:00"
-	result = FieldIdentifier(e)
-	if result != expect {
-		t.Errorf("field identifier = %q, want %q for %#v", result, expect, e)
-	}
-
-	e = NewIntegerValue(1)
-	expect = "1"
-	result = FieldIdentifier(e)
-	if result != expect {
-		t.Errorf("field identifier = %q, want %q for %#v", result, expect, e)
-	}
-
-	e = FieldReference{Column: Identifier{Literal: "column1"}}
-	expect = "column1"
-	result = FieldIdentifier(e)
-	if result != expect {
-		t.Errorf("field identifier = %q, want %q for %#v", result, expect, e)
-	}
-
-	e = ColumnNumber{View: Identifier{Literal: "table1"}, Number: NewInteger(1)}
-	expect = "table1.1"
-	result = FieldIdentifier(e)
-	if result != expect {
-		t.Errorf("field identifier = %q, want %q for %#v", result, expect, e)
 	}
 }
 

@@ -1,10 +1,11 @@
 package query
 
 import (
+	"fmt"
 	"strings"
 
-	"fmt"
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 type UserDefinedFunctionsList []UserDefinedFunctionMap
@@ -142,12 +143,12 @@ type UserDefinedFunction struct {
 	Cursor      parser.Identifier // For Aggregate Functions
 }
 
-func (fn *UserDefinedFunction) Execute(args []parser.Primary, filter *Filter) (parser.Primary, error) {
+func (fn *UserDefinedFunction) Execute(args []value.Primary, filter *Filter) (value.Primary, error) {
 	childScope := filter.CreateChildScope()
 	return fn.execute(args, childScope)
 }
 
-func (fn *UserDefinedFunction) ExecuteAggregate(values []parser.Primary, args []parser.Primary, filter *Filter) (parser.Primary, error) {
+func (fn *UserDefinedFunction) ExecuteAggregate(values []value.Primary, args []value.Primary, filter *Filter) (value.Primary, error) {
 	childScope := filter.CreateChildScope()
 	childScope.CursorsList.AddPseudoCursor(fn.Cursor, values)
 	return fn.execute(args, childScope)
@@ -174,7 +175,7 @@ func (fn *UserDefinedFunction) CheckArgsLen(expr parser.QueryExpression, name st
 	return nil
 }
 
-func (fn *UserDefinedFunction) execute(args []parser.Primary, filter *Filter) (parser.Primary, error) {
+func (fn *UserDefinedFunction) execute(args []value.Primary, filter *Filter) (value.Primary, error) {
 	if err := fn.CheckArgsLen(fn.Name, fn.Name.Literal, len(args)); err != nil {
 		return nil, err
 	}
@@ -184,11 +185,11 @@ func (fn *UserDefinedFunction) execute(args []parser.Primary, filter *Filter) (p
 			filter.VariablesList[0].Add(v, args[i])
 		} else {
 			defaultValue, _ := fn.Defaults[v.String()]
-			value, err := filter.Evaluate(defaultValue)
+			val, err := filter.Evaluate(defaultValue)
 			if err != nil {
 				return nil, err
 			}
-			filter.VariablesList[0].Add(v, value)
+			filter.VariablesList[0].Add(v, val)
 		}
 	}
 
@@ -201,7 +202,7 @@ func (fn *UserDefinedFunction) execute(args []parser.Primary, filter *Filter) (p
 
 	ret := proc.ReturnVal
 	if ret == nil {
-		ret = parser.NewNull()
+		ret = value.NewNull()
 	}
 
 	return ret, nil

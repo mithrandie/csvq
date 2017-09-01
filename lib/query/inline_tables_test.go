@@ -1,10 +1,11 @@
 package query
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/mithrandie/csvq/lib/parser"
-	"reflect"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 var inlineTablesListSetTests = []struct {
@@ -47,20 +48,20 @@ var inlineTablesListSetTests = []struct {
 				"IT": &View{
 					Header: NewHeader("it", []string{"c1", "c2", "num"}),
 					Records: []Record{
-						NewRecord([]parser.Primary{
-							parser.NewString("1"),
-							parser.NewString("str1"),
-							parser.NewInteger(1),
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
+							value.NewInteger(1),
 						}),
-						NewRecord([]parser.Primary{
-							parser.NewString("2"),
-							parser.NewString("str2"),
-							parser.NewInteger(1),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
+							value.NewString("str2"),
+							value.NewInteger(1),
 						}),
-						NewRecord([]parser.Primary{
-							parser.NewString("3"),
-							parser.NewString("str3"),
-							parser.NewInteger(1),
+						NewRecord([]value.Primary{
+							value.NewString("3"),
+							value.NewString("str3"),
+							value.NewInteger(1),
 						}),
 					},
 				},
@@ -69,10 +70,10 @@ var inlineTablesListSetTests = []struct {
 				"IT2": &View{
 					Header: NewHeader("it2", []string{"c1", "c2", "num"}),
 					Records: []Record{
-						NewRecord([]parser.Primary{
-							parser.NewString("1"),
-							parser.NewString("str1"),
-							parser.NewInteger(1),
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
+							value.NewInteger(1),
 						}),
 					},
 				},
@@ -88,10 +89,10 @@ func TestInlineTablesList_Set(t *testing.T) {
 			"IT2": &View{
 				Header: NewHeader("it2", []string{"c1", "c2", "num"}),
 				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
-						parser.NewString("str1"),
-						parser.NewInteger(1),
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+						value.NewInteger(1),
 					}),
 				},
 			},
@@ -131,10 +132,10 @@ var inlineTablesListGetTests = []struct {
 		Result: &View{
 			Header: NewHeader("it2", []string{"c1", "c2", "num"}),
 			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(1),
 				}),
 			},
 		},
@@ -152,20 +153,20 @@ func TestInlineTablesList_Get(t *testing.T) {
 			"IT": &View{
 				Header: NewHeader("it", []string{"c1", "c2", "num"}),
 				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
-						parser.NewString("str1"),
-						parser.NewInteger(1),
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+						value.NewInteger(1),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("2"),
-						parser.NewString("str2"),
-						parser.NewInteger(1),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+						value.NewInteger(1),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("3"),
-						parser.NewString("str3"),
-						parser.NewInteger(1),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
+						value.NewString("str3"),
+						value.NewInteger(1),
 					}),
 				},
 			},
@@ -174,10 +175,10 @@ func TestInlineTablesList_Get(t *testing.T) {
 			"IT2": &View{
 				Header: NewHeader("it2", []string{"c1", "c2", "num"}),
 				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
-						parser.NewString("str1"),
-						parser.NewInteger(1),
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+						value.NewInteger(1),
 					}),
 				},
 			},
@@ -270,20 +271,20 @@ var inlineTablesListLoadTests = []struct {
 				"IT": &View{
 					Header: NewHeader("it", []string{"c1", "c2", "num"}),
 					Records: []Record{
-						NewRecord([]parser.Primary{
-							parser.NewString("1"),
-							parser.NewString("str1"),
-							parser.NewInteger(1),
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
+							value.NewInteger(1),
 						}),
-						NewRecord([]parser.Primary{
-							parser.NewString("2"),
-							parser.NewString("str2"),
-							parser.NewInteger(1),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
+							value.NewString("str2"),
+							value.NewInteger(1),
 						}),
-						NewRecord([]parser.Primary{
-							parser.NewString("3"),
-							parser.NewString("str3"),
-							parser.NewInteger(1),
+						NewRecord([]value.Primary{
+							value.NewString("3"),
+							value.NewString("str3"),
+							value.NewInteger(1),
 						}),
 					},
 				},
@@ -297,14 +298,14 @@ var inlineTablesListLoadTests = []struct {
 						},
 					},
 					Records: []Record{
-						NewRecord([]parser.Primary{
-							parser.NewInteger(1),
+						NewRecord([]value.Primary{
+							value.NewInteger(1),
 						}),
-						NewRecord([]parser.Primary{
-							parser.NewInteger(2),
+						NewRecord([]value.Primary{
+							value.NewInteger(2),
 						}),
-						NewRecord([]parser.Primary{
-							parser.NewInteger(3),
+						NewRecord([]value.Primary{
+							value.NewInteger(3),
 						}),
 					},
 				},
@@ -313,10 +314,10 @@ var inlineTablesListLoadTests = []struct {
 				"IT2": &View{
 					Header: NewHeader("it2", []string{"c1", "c2", "num"}),
 					Records: []Record{
-						NewRecord([]parser.Primary{
-							parser.NewString("1"),
-							parser.NewString("str1"),
-							parser.NewInteger(1),
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
+							value.NewInteger(1),
 						}),
 					},
 				},
@@ -365,20 +366,20 @@ func TestInlineTablesList_Load(t *testing.T) {
 			"IT": &View{
 				Header: NewHeader("it", []string{"c1", "c2", "num"}),
 				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
-						parser.NewString("str1"),
-						parser.NewInteger(1),
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+						value.NewInteger(1),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("2"),
-						parser.NewString("str2"),
-						parser.NewInteger(1),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+						value.NewInteger(1),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("3"),
-						parser.NewString("str3"),
-						parser.NewInteger(1),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
+						value.NewString("str3"),
+						value.NewInteger(1),
 					}),
 				},
 			},
@@ -387,10 +388,10 @@ func TestInlineTablesList_Load(t *testing.T) {
 			"IT2": &View{
 				Header: NewHeader("it2", []string{"c1", "c2", "num"}),
 				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
-						parser.NewString("str1"),
-						parser.NewInteger(1),
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+						value.NewInteger(1),
 					}),
 				},
 			},
@@ -456,20 +457,20 @@ var inlineTablesSetTests = []struct {
 			"IT": &View{
 				Header: NewHeader("it", []string{"c1", "c2", "num"}),
 				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
-						parser.NewString("str1"),
-						parser.NewInteger(1),
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+						value.NewInteger(1),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("2"),
-						parser.NewString("str2"),
-						parser.NewInteger(1),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+						value.NewInteger(1),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("3"),
-						parser.NewString("str3"),
-						parser.NewInteger(1),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
+						value.NewString("str3"),
+						value.NewInteger(1),
 					}),
 				},
 			},
@@ -528,20 +529,20 @@ var inlineTablesSetTests = []struct {
 			"IT": &View{
 				Header: NewHeader("it", []string{"c1", "c2", "num"}),
 				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
-						parser.NewString("str1"),
-						parser.NewInteger(1),
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+						value.NewInteger(1),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("2"),
-						parser.NewString("str2"),
-						parser.NewInteger(1),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+						value.NewInteger(1),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("3"),
-						parser.NewString("str3"),
-						parser.NewInteger(1),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
+						value.NewString("str3"),
+						value.NewInteger(1),
 					}),
 				},
 			},
@@ -555,14 +556,14 @@ var inlineTablesSetTests = []struct {
 					},
 				},
 				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewInteger(1),
+					NewRecord([]value.Primary{
+						value.NewInteger(1),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewInteger(2),
+					NewRecord([]value.Primary{
+						value.NewInteger(2),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewInteger(3),
+					NewRecord([]value.Primary{
+						value.NewInteger(3),
 					}),
 				},
 			},
@@ -721,20 +722,20 @@ var inlineTablesGetTests = []struct {
 		Result: &View{
 			Header: NewHeader("it", []string{"c1", "c2", "num"}),
 			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+					value.NewInteger(1),
 				}),
 			},
 		},
@@ -751,20 +752,20 @@ func TestInlineTables_Get(t *testing.T) {
 		"IT": &View{
 			Header: NewHeader("it", []string{"c1", "c2", "num"}),
 			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+					value.NewInteger(1),
 				}),
 			},
 		},

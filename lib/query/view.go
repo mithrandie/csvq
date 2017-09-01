@@ -12,6 +12,7 @@ import (
 	"github.com/mithrandie/csvq/lib/csv"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 type View struct {
@@ -344,7 +345,7 @@ func loadViewFromFile(file *os.File, fileInfo *FileInfo) (*View, error) {
 
 	records := Records{}
 	rowch := make(chan []csv.Field, 1000)
-	fieldch := make(chan []parser.Primary, 1000)
+	fieldch := make(chan []value.Primary, 1000)
 
 	wg := sync.WaitGroup{}
 
@@ -367,7 +368,7 @@ func loadViewFromFile(file *os.File, fileInfo *FileInfo) (*View, error) {
 			if !ok {
 				break
 			}
-			fields := make([]parser.Primary, len(row))
+			fields := make([]value.Primary, len(row))
 			for i, v := range row {
 				fields[i] = v.ToPrimary()
 			}
@@ -537,7 +538,7 @@ func (view *View) group(items []parser.QueryExpression) error {
 			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
 
 			filter := NewFilterForSequentialEvaluation(view, view.Filter)
-			values := make([]parser.Primary, len(items))
+			values := make([]value.Primary, len(items))
 
 		GroupLoop:
 			for i := start; i < end; i++ {
@@ -583,7 +584,7 @@ func (view *View) group(items []parser.QueryExpression) error {
 		indices := groups[groupKey]
 
 		for j := 0; j < view.FieldLen(); j++ {
-			primaries := make([]parser.Primary, len(indices))
+			primaries := make([]value.Primary, len(indices))
 			for k, idx := range indices {
 				primaries[k] = view.Records[idx][j].Primary()
 			}
@@ -756,9 +757,9 @@ func (view *View) GenerateComparisonKeys() {
 		go func(thIdx int) {
 			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
 
-			var primaries []parser.Primary
+			var primaries []value.Primary
 			if view.selectFields != nil {
-				primaries = make([]parser.Primary, len(view.selectFields))
+				primaries = make([]value.Primary, len(view.selectFields))
 			}
 
 			for i := start; i < end; i++ {
@@ -908,8 +909,8 @@ func (view *View) additionalColumns(expr parser.QueryExpression) ([]string, erro
 			}
 		}
 		if ovalues != nil {
-			for _, value := range ovalues {
-				item := value.(parser.OrderItem)
+			for _, v := range ovalues {
+				item := v.(parser.OrderItem)
 				columns, err := view.additionalColumns(item.Value)
 				if err != nil {
 					return nil, err
@@ -1008,7 +1009,7 @@ func (view *View) evalColumn(obj parser.QueryExpression, alias string) (idx int,
 								break EvalColumnLoop
 							}
 
-							var primary parser.Primary
+							var primary value.Primary
 							filter.Records[0].RecordIndex = i
 
 							primary, err = filter.Evaluate(obj)
@@ -1027,7 +1028,7 @@ func (view *View) evalColumn(obj parser.QueryExpression, alias string) (idx int,
 					return
 				}
 			}
-			view.Header, idx = AddHeaderField(view.Header, parser.FieldIdentifier(obj), alias)
+			view.Header, idx = AddHeaderField(view.Header, parser.FormatFieldIdentifier(obj), alias)
 		}
 	}
 
@@ -1085,15 +1086,15 @@ func (view *View) evalAnalyticFunction(expr parser.AnalyticFunction) error {
 }
 
 func (view *View) Offset(clause parser.OffsetClause) error {
-	value, err := view.Filter.Evaluate(clause.Value)
+	val, err := view.Filter.Evaluate(clause.Value)
 	if err != nil {
 		return err
 	}
-	number := parser.PrimaryToInteger(value)
-	if parser.IsNull(number) {
+	number := value.PrimaryToInteger(val)
+	if value.IsNull(number) {
 		return NewInvalidOffsetNumberError(clause)
 	}
-	view.offset = int(number.(parser.Integer).Value())
+	view.offset = int(number.(value.Integer).Raw())
 	if view.offset < 0 {
 		view.offset = 0
 	}
@@ -1110,18 +1111,18 @@ func (view *View) Offset(clause parser.OffsetClause) error {
 }
 
 func (view *View) Limit(clause parser.LimitClause) error {
-	value, err := view.Filter.Evaluate(clause.Value)
+	val, err := view.Filter.Evaluate(clause.Value)
 	if err != nil {
 		return err
 	}
 
 	var limit int
 	if clause.IsPercentage() {
-		number := parser.PrimaryToFloat(value)
-		if parser.IsNull(number) {
+		number := value.PrimaryToFloat(val)
+		if value.IsNull(number) {
 			return NewInvalidLimitPercentageError(clause)
 		}
-		percentage := number.(parser.Float).Value()
+		percentage := number.(value.Float).Raw()
 		if 100 < percentage {
 			limit = 100
 		} else if percentage < 0 {
@@ -1130,11 +1131,11 @@ func (view *View) Limit(clause parser.LimitClause) error {
 			limit = int(math.Ceil(float64(view.RecordLen()+view.offset) * percentage / 100))
 		}
 	} else {
-		number := parser.PrimaryToInteger(value)
-		if parser.IsNull(number) {
+		number := value.PrimaryToInteger(val)
+		if value.IsNull(number) {
 			return NewInvalidLimitNumberError(clause)
 		}
-		limit = int(number.(parser.Integer).Value())
+		limit = int(number.(value.Integer).Raw())
 		if limit < 0 {
 			limit = 0
 		}
@@ -1162,7 +1163,7 @@ func (view *View) Limit(clause parser.LimitClause) error {
 }
 
 func (view *View) InsertValues(fields []parser.QueryExpression, list []parser.QueryExpression) error {
-	valuesList := make([][]parser.Primary, len(list))
+	valuesList := make([][]value.Primary, len(list))
 
 	for i, item := range list {
 		rv := item.(parser.RowValue)
@@ -1189,10 +1190,10 @@ func (view *View) InsertFromQuery(fields []parser.QueryExpression, query parser.
 		return NewInsertSelectFieldLengthError(query, len(fields))
 	}
 
-	valuesList := make([][]parser.Primary, insertView.RecordLen())
+	valuesList := make([][]value.Primary, insertView.RecordLen())
 
 	for i, record := range insertView.Records {
-		values := make([]parser.Primary, insertView.FieldLen())
+		values := make([]value.Primary, insertView.FieldLen())
 		for j, cell := range record {
 			values[j] = cell.Primary()
 		}
@@ -1202,7 +1203,7 @@ func (view *View) InsertFromQuery(fields []parser.QueryExpression, query parser.
 	return view.insert(fields, valuesList)
 }
 
-func (view *View) insert(fields []parser.QueryExpression, valuesList [][]parser.Primary) error {
+func (view *View) insert(fields []parser.QueryExpression, valuesList [][]value.Primary) error {
 	var valueIndex = func(i int, list []int) int {
 		for j, v := range list {
 			if i == v {
@@ -1223,7 +1224,7 @@ func (view *View) insert(fields []parser.QueryExpression, valuesList [][]parser.
 		for j := 0; j < view.FieldLen(); j++ {
 			idx := valueIndex(j, fieldIndices)
 			if idx < 0 {
-				record[j] = NewCell(parser.NewNull())
+				record[j] = NewCell(value.NewNull())
 			} else {
 				record[j] = NewCell(values[idx])
 			}
@@ -1387,9 +1388,9 @@ func (view *View) Intersect(calcView *View, all bool) {
 	view.comparisonKeys = nil
 }
 
-func (view *View) ListValuesForAggregateFunctions(expr parser.QueryExpression, arg parser.QueryExpression, distinct bool, filter *Filter) ([]parser.Primary, error) {
+func (view *View) ListValuesForAggregateFunctions(expr parser.QueryExpression, arg parser.QueryExpression, distinct bool, filter *Filter) ([]value.Primary, error) {
 	cpu := NumberOfCPU(view.RecordLen())
-	list := make([]parser.Primary, view.RecordLen())
+	list := make([]value.Primary, view.RecordLen())
 	var err error
 
 	wg := sync.WaitGroup{}
@@ -1434,9 +1435,9 @@ func (view *View) ListValuesForAggregateFunctions(expr parser.QueryExpression, a
 	return list, nil
 }
 
-func (view *View) ListValuesForAnalyticFunctions(fn parser.AnalyticFunction, partition Partition) ([]parser.Primary, error) {
+func (view *View) ListValuesForAnalyticFunctions(fn parser.AnalyticFunction, partition Partition) ([]value.Primary, error) {
 	cpu := NumberOfCPU(len(partition))
-	list := make([]parser.Primary, len(partition))
+	list := make([]value.Primary, len(partition))
 	var err error
 
 	wg := sync.WaitGroup{}
@@ -1511,11 +1512,11 @@ func (view *View) InternalRecordId(ref string, recordIndex int) (int, error) {
 	if err != nil {
 		return -1, NewInternalRecordIdNotExistError()
 	}
-	internalId, ok := view.Records[recordIndex][idx].Primary().(parser.Integer)
+	internalId, ok := view.Records[recordIndex][idx].Primary().(value.Integer)
 	if !ok {
 		return -1, NewInternalRecordIdEmptyError()
 	}
-	return int(internalId.Value()), nil
+	return int(internalId.Raw()), nil
 }
 
 func (view *View) FieldLen() int {

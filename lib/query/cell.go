@@ -1,24 +1,24 @@
 package query
 
 import (
-	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
-type Cell []parser.Primary
+type Cell []value.Primary
 
-func NewCell(value parser.Primary) Cell {
-	return []parser.Primary{value}
+func NewCell(val value.Primary) Cell {
+	return []value.Primary{val}
 }
 
-func NewGroupCell(values []parser.Primary) Cell {
+func NewGroupCell(values []value.Primary) Cell {
 	return values
 }
 
-func (cell Cell) Primary() parser.Primary {
+func (cell Cell) Primary() value.Primary {
 	return cell[0]
 }
 
-func (cell Cell) GroupedPrimary(index int) parser.Primary {
+func (cell Cell) GroupedPrimary(index int) value.Primary {
 	return cell[index]
 }
 

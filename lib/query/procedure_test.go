@@ -10,6 +10,7 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 var procedureExecuteStatementTests = []struct {
@@ -23,7 +24,7 @@ var procedureExecuteStatementTests = []struct {
 	{
 		Input: parser.SetFlag{
 			Name:  "@@invalid",
-			Value: parser.NewString("\t"),
+			Value: value.NewString("\t"),
 		},
 		Error:     "[L:- C:-] SET: flag name @@invalid is invalid",
 		ErrorCode: 1,
@@ -566,7 +567,7 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.Exit{
-			Code: parser.NewInteger(1),
+			Code: value.NewInteger(1),
 		},
 		Error:     "",
 		ErrorCode: 1,
@@ -596,7 +597,7 @@ var procedureExecuteStatementTests = []struct {
 		Input: parser.Trigger{
 			Token:   parser.ERROR,
 			Message: parser.NewStringValue("user error"),
-			Code:    parser.NewInteger(200),
+			Code:    value.NewInteger(200),
 		},
 		Error:     "[L:- C:-] user error",
 		ErrorCode: 200,
@@ -618,7 +619,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 	tf.Format = cmd.CSV
 
 	proc := NewProcedure()
-	proc.Filter.VariablesList[0].Add(parser.Variable{Name: "@while_test"}, parser.NewInteger(0))
+	proc.Filter.VariablesList[0].Add(parser.Variable{Name: "@while_test"}, value.NewInteger(0))
 
 	for _, v := range procedureExecuteStatementTests {
 		ViewCache.Clear()
@@ -1208,14 +1209,14 @@ func TestProcedure_While(t *testing.T) {
 
 	for _, v := range procedureWhileTests {
 		if _, err := proc.Filter.VariablesList[0].Get(parser.Variable{Name: "@while_test"}); err != nil {
-			proc.Filter.VariablesList[0].Add(parser.Variable{Name: "@while_test"}, parser.NewInteger(0))
+			proc.Filter.VariablesList[0].Add(parser.Variable{Name: "@while_test"}, value.NewInteger(0))
 		}
-		proc.Filter.VariablesList[0].Set(parser.Variable{Name: "@while_test"}, parser.NewInteger(0))
+		proc.Filter.VariablesList[0].Set(parser.Variable{Name: "@while_test"}, value.NewInteger(0))
 
 		if _, err := proc.Filter.VariablesList[0].Get(parser.Variable{Name: "@while_test_count"}); err != nil {
-			proc.Filter.VariablesList[0].Add(parser.Variable{Name: "@while_test_count"}, parser.NewInteger(0))
+			proc.Filter.VariablesList[0].Add(parser.Variable{Name: "@while_test_count"}, value.NewInteger(0))
 		}
-		proc.Filter.VariablesList[0].Set(parser.Variable{Name: "@while_test_count"}, parser.NewInteger(0))
+		proc.Filter.VariablesList[0].Set(parser.Variable{Name: "@while_test_count"}, value.NewInteger(0))
 
 		oldStdout := os.Stdout
 
@@ -1406,8 +1407,8 @@ func TestProcedure_WhileInCursor(t *testing.T) {
 
 	for _, v := range procedureWhileInCursorTests {
 		proc.Filter.VariablesList[0] = Variables{
-			"@var1": parser.NewNull(),
-			"@var2": parser.NewNull(),
+			"@var1": value.NewNull(),
+			"@var2": value.NewNull(),
 		}
 		proc.Filter.CursorsList[0] = CursorMap{
 			"CUR": &Cursor{

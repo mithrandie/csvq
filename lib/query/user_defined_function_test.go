@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 var userDefinedFunctionListDeclareTests = []struct {
@@ -607,8 +608,8 @@ func TestUserDefinedFunctionMap_Get(t *testing.T) {
 var userDefinedFunctionExecuteTests = []struct {
 	Name   string
 	Func   *UserDefinedFunction
-	Args   []parser.Primary
-	Result parser.Primary
+	Args   []value.Primary
+	Result value.Primary
 	Error  string
 }{
 	{
@@ -645,10 +646,10 @@ var userDefinedFunctionExecuteTests = []struct {
 				},
 			},
 		},
-		Args: []parser.Primary{
-			parser.NewInteger(2),
+		Args: []value.Primary{
+			value.NewInteger(2),
 		},
-		Result: parser.NewInteger(6),
+		Result: value.NewInteger(6),
 	},
 	{
 		Name: "UserDefinedFunction Execute No Return Statement",
@@ -677,11 +678,11 @@ var userDefinedFunctionExecuteTests = []struct {
 				},
 			},
 		},
-		Args: []parser.Primary{
-			parser.NewInteger(2),
-			parser.NewInteger(3),
+		Args: []value.Primary{
+			value.NewInteger(2),
+			value.NewInteger(3),
 		},
-		Result: parser.NewNull(),
+		Result: value.NewNull(),
 	},
 	{
 		Name: "UserDefinedFunction Execute Argument Length Error",
@@ -713,8 +714,8 @@ var userDefinedFunctionExecuteTests = []struct {
 				},
 			},
 		},
-		Args: []parser.Primary{
-			parser.NewInteger(2),
+		Args: []value.Primary{
+			value.NewInteger(2),
 		},
 		Error: "[L:- C:-] function userfunc takes exactly 2 arguments",
 	},
@@ -752,8 +753,8 @@ var userDefinedFunctionExecuteTests = []struct {
 				},
 			},
 		},
-		Args: []parser.Primary{
-			parser.NewInteger(2),
+		Args: []value.Primary{
+			value.NewInteger(2),
 		},
 		Error: "[L:- C:-] field notexist does not exist",
 	},
@@ -786,9 +787,9 @@ var userDefinedFunctionExecuteTests = []struct {
 				},
 			},
 		},
-		Args: []parser.Primary{
-			parser.NewInteger(2),
-			parser.NewInteger(3),
+		Args: []value.Primary{
+			value.NewInteger(2),
+			value.NewInteger(3),
 		},
 		Error: "[L:- C:-] field notexist does not exist",
 	},
@@ -796,7 +797,7 @@ var userDefinedFunctionExecuteTests = []struct {
 
 func TestUserDefinedFunction_Execute(t *testing.T) {
 	vars := Variables{
-		"@var1": parser.NewInteger(1),
+		"@var1": value.NewInteger(1),
 	}
 	filter := NewFilter(
 		[]Variables{vars},
@@ -828,9 +829,9 @@ func TestUserDefinedFunction_Execute(t *testing.T) {
 var userDefinedFunctionExecuteAggregateTests = []struct {
 	Name   string
 	Func   *UserDefinedFunction
-	Values []parser.Primary
-	Args   []parser.Primary
-	Result parser.Primary
+	Values []value.Primary
+	Args   []value.Primary
+	Result value.Primary
 	Error  string
 }{
 	{
@@ -894,12 +895,12 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 				},
 			},
 		},
-		Values: []parser.Primary{
-			parser.NewInteger(1),
-			parser.NewInteger(2),
-			parser.NewInteger(3),
+		Values: []value.Primary{
+			value.NewInteger(1),
+			value.NewInteger(2),
+			value.NewInteger(3),
 		},
-		Result: parser.NewInteger(6),
+		Result: value.NewInteger(6),
 	},
 	{
 		Name: "UserDefinedFunction Execute Aggregate With Arguments",
@@ -978,15 +979,15 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 				},
 			},
 		},
-		Values: []parser.Primary{
-			parser.NewNull(),
-			parser.NewNull(),
-			parser.NewNull(),
+		Values: []value.Primary{
+			value.NewNull(),
+			value.NewNull(),
+			value.NewNull(),
 		},
-		Args: []parser.Primary{
-			parser.NewInteger(0),
+		Args: []value.Primary{
+			value.NewInteger(0),
 		},
-		Result: parser.NewInteger(0),
+		Result: value.NewInteger(0),
 	},
 	{
 		Name: "UserDefinedFunction Aggregate Argument Length Error",
@@ -1049,13 +1050,13 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 				},
 			},
 		},
-		Values: []parser.Primary{
-			parser.NewInteger(1),
-			parser.NewInteger(2),
-			parser.NewInteger(3),
+		Values: []value.Primary{
+			value.NewInteger(1),
+			value.NewInteger(2),
+			value.NewInteger(3),
 		},
-		Args: []parser.Primary{
-			parser.NewInteger(0),
+		Args: []value.Primary{
+			value.NewInteger(0),
 		},
 		Error: "[L:- C:-] function useraggfunc takes exactly 1 argument",
 	},

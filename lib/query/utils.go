@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 func InIntSlice(i int, list []int) bool {
@@ -41,19 +41,19 @@ func InRuneSlice(r rune, list []rune) bool {
 	return false
 }
 
-func Distinguish(list []parser.Primary) []parser.Primary {
+func Distinguish(list []value.Primary) []value.Primary {
 	values := make(map[string]int)
 	valueKeys := make([]string, 0, len(list))
 
 	for i, v := range list {
-		key := SerializeComparisonKeys([]parser.Primary{v})
+		key := SerializeComparisonKeys([]value.Primary{v})
 		if _, ok := values[key]; !ok {
 			values[key] = i
 			valueKeys = append(valueKeys, key)
 		}
 	}
 
-	distinguished := make([]parser.Primary, len(valueKeys))
+	distinguished := make([]value.Primary, len(valueKeys))
 	for i, key := range valueKeys {
 		distinguished[i] = list[values[key]]
 	}
@@ -73,28 +73,28 @@ func FormatCount(i int, obj string) string {
 	return s
 }
 
-func SerializeComparisonKeys(values []parser.Primary) string {
+func SerializeComparisonKeys(values []value.Primary) string {
 	list := make([]string, len(values))
 
-	for i, value := range values {
-		list[i] = SerializeKey(value)
+	for i, val := range values {
+		list[i] = SerializeKey(val)
 	}
 
 	return strings.Join(list, ":")
 }
 
-func SerializeKey(value parser.Primary) string {
-	if parser.IsNull(value) {
+func SerializeKey(val value.Primary) string {
+	if value.IsNull(val) {
 		return serializeNull()
-	} else if in := parser.PrimaryToInteger(value); !parser.IsNull(in) {
-		return serializeInteger(in.(parser.Integer).Value())
-	} else if f := parser.PrimaryToFloat(value); !parser.IsNull(f) {
-		return serializeFlaot(f.(parser.Float).Value())
-	} else if dt := parser.PrimaryToDatetime(value); !parser.IsNull(dt) {
-		t := dt.(parser.Datetime).Value()
+	} else if in := value.PrimaryToInteger(val); !value.IsNull(in) {
+		return serializeInteger(in.(value.Integer).Raw())
+	} else if f := value.PrimaryToFloat(val); !value.IsNull(f) {
+		return serializeFlaot(f.(value.Float).Raw())
+	} else if dt := value.PrimaryToDatetime(val); !value.IsNull(dt) {
+		t := dt.(value.Datetime).Raw()
 		if t.Nanosecond() > 0 {
 			f := float64(t.Unix()) + float64(t.Nanosecond())/1e9
-			t2 := parser.Float64ToTime(f)
+			t2 := value.Float64ToTime(f)
 			if t.Equal(t2) {
 				return serializeFlaot(f)
 			} else {
@@ -103,10 +103,10 @@ func SerializeKey(value parser.Primary) string {
 		} else {
 			return serializeInteger(t.Unix())
 		}
-	} else if b := parser.PrimaryToBoolean(value); !parser.IsNull(b) {
-		return serializeBoolean(b.(parser.Boolean).Value())
-	} else if s, ok := value.(parser.String); ok {
-		return serializeString(s.Value())
+	} else if b := value.PrimaryToBoolean(val); !value.IsNull(b) {
+		return serializeBoolean(b.(value.Boolean).Raw())
+	} else if s, ok := val.(value.String); ok {
+		return serializeString(s.Raw())
 	} else {
 		return serializeNull()
 	}
@@ -124,19 +124,19 @@ func serializeInteger(i int64) string {
 	case 1:
 		b = "[B]" + strconv.FormatBool(true)
 	}
-	return "[I]" + parser.Int64ToStr(i) + b
+	return "[I]" + value.Int64ToStr(i) + b
 }
 
 func serializeFlaot(f float64) string {
-	return "[F]" + parser.Float64ToStr(f)
+	return "[F]" + value.Float64ToStr(f)
 }
 
 func serializeDatetime(t time.Time) string {
-	return "[D]" + parser.Int64ToStr(t.UnixNano())
+	return "[D]" + value.Int64ToStr(t.UnixNano())
 }
 
 func serializeDatetimeFromUnixNano(t int64) string {
-	return "[D]" + parser.Int64ToStr(t)
+	return "[D]" + value.Int64ToStr(t)
 }
 
 func serializeBoolean(b bool) string {
@@ -153,7 +153,7 @@ func serializeString(s string) string {
 	return "[S]" + strings.ToUpper(strings.TrimSpace(s))
 }
 
-func FormatString(format string, args []parser.Primary) (string, error) {
+func FormatString(format string, args []value.Primary) (string, error) {
 	var pad = func(s string, length int, flags []rune) string {
 		if length <= len(s) {
 			return s
@@ -228,11 +228,11 @@ func FormatString(format string, args []parser.Primary) (string, error) {
 
 				switch r {
 				case 'b', 'o', 'd', 'x', 'X':
-					p := parser.PrimaryToInteger(args[placeholderOrder])
-					if !parser.IsNull(p) {
-						value := float64(p.(parser.Integer).Value())
-						sign := numberSign(value, flags)
-						i := int64(math.Abs(value))
+					p := value.PrimaryToInteger(args[placeholderOrder])
+					if !value.IsNull(p) {
+						val := float64(p.(value.Integer).Raw())
+						sign := numberSign(val, flags)
+						i := int64(math.Abs(val))
 						var s string
 						switch r {
 						case 'b':
@@ -251,17 +251,17 @@ func FormatString(format string, args []parser.Primary) (string, error) {
 						str = append(str, []rune(s)...)
 					}
 				case 'e', 'E', 'f':
-					p := parser.PrimaryToFloat(args[placeholderOrder])
-					if !parser.IsNull(p) {
-						value := p.(parser.Float).Value()
+					p := value.PrimaryToFloat(args[placeholderOrder])
+					if !value.IsNull(p) {
+						val := p.(value.Float).Raw()
 
 						var prec float64
 						if 0 < len(precision) {
 							prec, _ = strconv.ParseFloat(precision, 64)
-							value = round(value, prec)
+							val = round(val, prec)
 						}
-						sign := numberSign(value, flags)
-						f := math.Abs(value)
+						sign := numberSign(val, flags)
+						f := math.Abs(val)
 						s := strconv.FormatFloat(f, byte(r), -1, 64)
 
 						if 0 < prec {
@@ -298,19 +298,19 @@ func FormatString(format string, args []parser.Primary) (string, error) {
 				case 's':
 					var s string
 					switch args[placeholderOrder].(type) {
-					case parser.String:
-						s = args[placeholderOrder].(parser.String).Value()
-					case parser.Integer:
-						s = args[placeholderOrder].(parser.Integer).String()
-					case parser.Float:
-						s = args[placeholderOrder].(parser.Float).String()
-					case parser.Boolean:
-						s = args[placeholderOrder].(parser.Boolean).String()
-					case parser.Ternary:
-						s = args[placeholderOrder].(parser.Ternary).Ternary().String()
-					case parser.Datetime:
-						s = args[placeholderOrder].(parser.Datetime).Format(time.RFC3339Nano)
-					case parser.Null:
+					case value.String:
+						s = args[placeholderOrder].(value.String).Raw()
+					case value.Integer:
+						s = args[placeholderOrder].(value.Integer).String()
+					case value.Float:
+						s = args[placeholderOrder].(value.Float).String()
+					case value.Boolean:
+						s = args[placeholderOrder].(value.Boolean).String()
+					case value.Ternary:
+						s = args[placeholderOrder].(value.Ternary).Ternary().String()
+					case value.Datetime:
+						s = args[placeholderOrder].(value.Datetime).Format(time.RFC3339Nano)
+					case value.Null:
 						s = "NULL"
 					}
 					l, _ := strconv.Atoi(length)

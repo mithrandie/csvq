@@ -9,6 +9,7 @@ import (
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/ternary"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 const (
@@ -221,7 +222,7 @@ func (s *Scanner) Scan() (Token, error) {
 		case '"', '\'':
 			s.scanString(ch)
 			literal = cmd.UnescapeString(s.trimQuotes())
-			if _, e := StrToTime(literal); e == nil {
+			if _, e := value.StrToTime(literal); e == nil {
 				token = DATETIME
 			} else {
 				token = STRING

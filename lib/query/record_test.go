@@ -5,26 +5,26 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 func TestMergeRecordsList(t *testing.T) {
 	list := []Records{
 		{
-			NewRecord([]parser.Primary{parser.NewInteger(1), parser.NewString("str1")}),
-			NewRecord([]parser.Primary{parser.NewInteger(2), parser.NewString("str2")}),
+			NewRecord([]value.Primary{value.NewInteger(1), value.NewString("str1")}),
+			NewRecord([]value.Primary{value.NewInteger(2), value.NewString("str2")}),
 		},
 		{
-			NewRecord([]parser.Primary{parser.NewInteger(3), parser.NewString("str3")}),
-			NewRecord([]parser.Primary{parser.NewInteger(4), parser.NewString("str4")}),
+			NewRecord([]value.Primary{value.NewInteger(3), value.NewString("str3")}),
+			NewRecord([]value.Primary{value.NewInteger(4), value.NewString("str4")}),
 		},
 	}
 	expect := Records{
-		NewRecord([]parser.Primary{parser.NewInteger(1), parser.NewString("str1")}),
-		NewRecord([]parser.Primary{parser.NewInteger(2), parser.NewString("str2")}),
-		NewRecord([]parser.Primary{parser.NewInteger(3), parser.NewString("str3")}),
-		NewRecord([]parser.Primary{parser.NewInteger(4), parser.NewString("str4")}),
+		NewRecord([]value.Primary{value.NewInteger(1), value.NewString("str1")}),
+		NewRecord([]value.Primary{value.NewInteger(2), value.NewString("str2")}),
+		NewRecord([]value.Primary{value.NewInteger(3), value.NewString("str3")}),
+		NewRecord([]value.Primary{value.NewInteger(4), value.NewString("str4")}),
 	}
 
 	result := MergeRecordsList(list)
@@ -33,17 +33,17 @@ func TestMergeRecordsList(t *testing.T) {
 	}
 }
 
-var recordSerializeComparisonKeysBenchmarkRecord = NewRecord([]parser.Primary{
-	parser.NewString("str"),
-	parser.NewInteger(1),
-	parser.NewInteger(0),
-	parser.NewInteger(3),
-	parser.NewFloat(1.234),
-	parser.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
-	parser.NewBoolean(true),
-	parser.NewBoolean(false),
-	parser.NewTernary(ternary.UNKNOWN),
-	parser.NewNull(),
+var recordSerializeComparisonKeysBenchmarkRecord = NewRecord([]value.Primary{
+	value.NewString("str"),
+	value.NewInteger(1),
+	value.NewInteger(0),
+	value.NewInteger(3),
+	value.NewFloat(1.234),
+	value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
+	value.NewBoolean(true),
+	value.NewBoolean(false),
+	value.NewTernary(ternary.UNKNOWN),
+	value.NewNull(),
 })
 
 func BenchmarkRecord_SerializeComparisonKeys(b *testing.B) {

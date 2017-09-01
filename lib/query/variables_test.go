@@ -5,18 +5,19 @@ import (
 	"testing"
 
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 var variablesListGet = []struct {
 	Name   string
 	Expr   parser.Variable
-	Result parser.Primary
+	Result value.Primary
 	Error  string
 }{
 	{
 		Name:   "VariablesList Get",
 		Expr:   parser.Variable{Name: "@var1"},
-		Result: parser.NewInteger(1),
+		Result: value.NewInteger(1),
 	},
 	{
 		Name:  "VariablesList Get Undefined Error",
@@ -28,10 +29,10 @@ var variablesListGet = []struct {
 func TestVariablesList_Get(t *testing.T) {
 	list := VariablesList{
 		Variables{
-			"@var1": parser.NewInteger(1),
+			"@var1": value.NewInteger(1),
 		},
 		Variables{
-			"@var1": parser.NewInteger(2),
+			"@var1": value.NewInteger(2),
 		},
 	}
 
@@ -60,7 +61,7 @@ var variablesListSubstituteTests = []struct {
 	Expr   parser.VariableSubstitution
 	Filter *Filter
 	List   VariablesList
-	Result parser.Primary
+	Result value.Primary
 	Error  string
 }{
 	{
@@ -71,13 +72,13 @@ var variablesListSubstituteTests = []struct {
 		},
 		List: VariablesList{
 			Variables{
-				"@var1": parser.NewInteger(3),
+				"@var1": value.NewInteger(3),
 			},
 			Variables{
-				"@var1": parser.NewInteger(2),
+				"@var1": value.NewInteger(2),
 			},
 		},
-		Result: parser.NewInteger(3),
+		Result: value.NewInteger(3),
 	},
 	{
 		Name: "VariablesList Substitute Variable Undefined Error",
@@ -92,10 +93,10 @@ var variablesListSubstituteTests = []struct {
 func TestVariablesList_Substitute(t *testing.T) {
 	list := VariablesList{
 		Variables{
-			"@var1": parser.NewInteger(1),
+			"@var1": value.NewInteger(1),
 		},
 		Variables{
-			"@var1": parser.NewInteger(2),
+			"@var1": value.NewInteger(2),
 		},
 	}
 
@@ -134,7 +135,7 @@ var variablesListDisposeTests = []struct {
 		List: VariablesList{
 			Variables{},
 			Variables{
-				"@var1": parser.NewInteger(2),
+				"@var1": value.NewInteger(2),
 			},
 		},
 	},
@@ -148,10 +149,10 @@ var variablesListDisposeTests = []struct {
 func TestVariablesList_Dispose(t *testing.T) {
 	list := VariablesList{
 		Variables{
-			"@var1": parser.NewInteger(1),
+			"@var1": value.NewInteger(1),
 		},
 		Variables{
-			"@var1": parser.NewInteger(2),
+			"@var1": value.NewInteger(2),
 		},
 	}
 
@@ -194,7 +195,7 @@ var variablesDeclareTests = []variableTests{
 			},
 		},
 		Result: Variables{
-			"@var1": parser.NewNull(),
+			"@var1": value.NewNull(),
 		},
 	},
 	{
@@ -208,8 +209,8 @@ var variablesDeclareTests = []variableTests{
 			},
 		},
 		Result: Variables{
-			"@var1": parser.NewNull(),
-			"@var2": parser.NewInteger(1),
+			"@var1": value.NewNull(),
+			"@var2": value.NewInteger(1),
 		},
 	},
 	{
@@ -273,7 +274,7 @@ var variablesSubstituteTests = []variableTests{
 			Value:    parser.NewIntegerValue(2),
 		},
 		Result: Variables{
-			"var1": parser.NewInteger(2),
+			"var1": value.NewInteger(2),
 		},
 	},
 	{
@@ -296,7 +297,7 @@ var variablesSubstituteTests = []variableTests{
 
 func TestVariables_Substitute(t *testing.T) {
 	vars := Variables{
-		"var1": parser.NewInteger(1),
+		"var1": value.NewInteger(1),
 	}
 
 	for _, v := range variablesSubstituteTests {
@@ -338,7 +339,7 @@ var variablesDisposeTests = []variableTests{
 
 func TestVariables_Dispose(t *testing.T) {
 	vars := Variables{
-		"var1": parser.NewInteger(1),
+		"var1": value.NewInteger(1),
 	}
 
 	for _, v := range variablesDisposeTests {

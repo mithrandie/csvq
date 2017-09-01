@@ -5,6 +5,7 @@ import (
 
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 type SortValueType int
@@ -21,8 +22,8 @@ const (
 type SortValues []*SortValue
 
 func (values SortValues) Less(compareValues SortValues, directions []int, nullPositions []int) bool {
-	for i, value := range values {
-		t := value.Less(compareValues[i])
+	for i, val := range values {
+		t := val.Less(compareValues[i])
 		if t != ternary.UNKNOWN {
 			if directions[i] == parser.ASC {
 				return t == ternary.TRUE
@@ -31,14 +32,14 @@ func (values SortValues) Less(compareValues SortValues, directions []int, nullPo
 			}
 		}
 
-		if value.Type == SORT_VALUE_NULL && compareValues[i].Type != SORT_VALUE_NULL {
+		if val.Type == SORT_VALUE_NULL && compareValues[i].Type != SORT_VALUE_NULL {
 			if nullPositions[i] == parser.FIRST {
 				return true
 			} else {
 				return false
 			}
 		}
-		if value.Type != SORT_VALUE_NULL && compareValues[i].Type == SORT_VALUE_NULL {
+		if val.Type != SORT_VALUE_NULL && compareValues[i].Type == SORT_VALUE_NULL {
 			if nullPositions[i] == parser.FIRST {
 				return false
 			} else {
@@ -54,8 +55,8 @@ func (values SortValues) EquivalentTo(compareValues SortValues) bool {
 		return false
 	}
 
-	for i, value := range values {
-		if !value.EquivalentTo(compareValues[i]) {
+	for i, val := range values {
+		if !val.EquivalentTo(compareValues[i]) {
 			return false
 		}
 	}
@@ -65,20 +66,20 @@ func (values SortValues) EquivalentTo(compareValues SortValues) bool {
 func (values SortValues) Serialize() string {
 	list := make([]string, len(values))
 
-	for i, value := range values {
-		switch value.Type {
+	for i, val := range values {
+		switch val.Type {
 		case SORT_VALUE_NULL:
 			list[i] = serializeNull()
 		case SORT_VALUE_INTEGER:
-			list[i] = serializeInteger(value.Integer)
+			list[i] = serializeInteger(val.Integer)
 		case SORT_VALUE_FLOAT:
-			list[i] = serializeFlaot(value.Float)
+			list[i] = serializeFlaot(val.Float)
 		case SORT_VALUE_DATETIME:
-			list[i] = serializeDatetimeFromUnixNano(value.Datetime)
+			list[i] = serializeDatetimeFromUnixNano(val.Datetime)
 		case SORT_VALUE_BOOLEAN:
-			list[i] = serializeBoolean(value.Boolean)
+			list[i] = serializeBoolean(val.Boolean)
 		case SORT_VALUE_STRING:
-			list[i] = serializeString(value.String)
+			list[i] = serializeString(val.String)
 		}
 	}
 
@@ -95,34 +96,34 @@ type SortValue struct {
 	Boolean  bool
 }
 
-func NewSortValue(value parser.Primary) *SortValue {
+func NewSortValue(val value.Primary) *SortValue {
 	sortValue := &SortValue{}
 
-	if parser.IsNull(value) {
+	if value.IsNull(val) {
 		sortValue.Type = SORT_VALUE_NULL
-	} else if i := parser.PrimaryToInteger(value); !parser.IsNull(i) {
-		s := parser.PrimaryToString(value)
+	} else if i := value.PrimaryToInteger(val); !value.IsNull(i) {
+		s := value.PrimaryToString(val)
 		sortValue.Type = SORT_VALUE_INTEGER
-		sortValue.Integer = i.(parser.Integer).Value()
+		sortValue.Integer = i.(value.Integer).Raw()
 		sortValue.Float = float64(sortValue.Integer)
 		sortValue.Datetime = sortValue.Integer * 1e9
-		sortValue.String = s.(parser.String).Value()
-	} else if f := parser.PrimaryToFloat(value); !parser.IsNull(f) {
-		s := parser.PrimaryToString(value)
+		sortValue.String = s.(value.String).Raw()
+	} else if f := value.PrimaryToFloat(val); !value.IsNull(f) {
+		s := value.PrimaryToString(val)
 		sortValue.Type = SORT_VALUE_FLOAT
-		sortValue.Float = f.(parser.Float).Value()
+		sortValue.Float = f.(value.Float).Raw()
 		sortValue.Datetime = int64(sortValue.Float * 1e9)
-		sortValue.String = s.(parser.String).Value()
-	} else if dt := parser.PrimaryToDatetime(value); !parser.IsNull(dt) {
-		t := dt.(parser.Datetime).Value()
+		sortValue.String = s.(value.String).Raw()
+	} else if dt := value.PrimaryToDatetime(val); !value.IsNull(dt) {
+		t := dt.(value.Datetime).Raw()
 		if t.Nanosecond() > 0 {
 			f := float64(t.Unix()) + float64(t.Nanosecond())/1e9
-			t2 := parser.Float64ToTime(f)
+			t2 := value.Float64ToTime(f)
 			if t.Equal(t2) {
 				sortValue.Type = SORT_VALUE_FLOAT
 				sortValue.Float = f
 				sortValue.Datetime = t.UnixNano()
-				sortValue.String = parser.Float64ToStr(f)
+				sortValue.String = value.Float64ToStr(f)
 			} else {
 				sortValue.Type = SORT_VALUE_DATETIME
 				sortValue.Datetime = t.UnixNano()
@@ -133,19 +134,19 @@ func NewSortValue(value parser.Primary) *SortValue {
 			sortValue.Integer = i
 			sortValue.Float = float64(i)
 			sortValue.Datetime = t.UnixNano()
-			sortValue.String = parser.Int64ToStr(i)
+			sortValue.String = value.Int64ToStr(i)
 		}
-	} else if b := parser.PrimaryToBoolean(value); !parser.IsNull(b) {
+	} else if b := value.PrimaryToBoolean(val); !value.IsNull(b) {
 		sortValue.Type = SORT_VALUE_BOOLEAN
-		sortValue.Boolean = b.(parser.Boolean).Value()
+		sortValue.Boolean = b.(value.Boolean).Raw()
 		if sortValue.Boolean {
 			sortValue.Integer = 1
 		} else {
 			sortValue.Integer = 0
 		}
-	} else if s, ok := value.(parser.String); ok {
+	} else if s, ok := val.(value.String); ok {
 		sortValue.Type = SORT_VALUE_STRING
-		sortValue.String = strings.ToUpper(strings.TrimSpace(s.Value()))
+		sortValue.String = strings.ToUpper(strings.TrimSpace(s.Raw()))
 	} else {
 		sortValue.Type = SORT_VALUE_NULL
 	}

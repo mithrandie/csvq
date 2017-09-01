@@ -3,7 +3,7 @@ package query
 import (
 	"strings"
 
-	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 type Records []Record
@@ -18,10 +18,10 @@ func (r Records) Copy() Records {
 
 type Record []Cell
 
-func NewRecordWithId(internalId int, values []parser.Primary) Record {
+func NewRecordWithId(internalId int, values []value.Primary) Record {
 	record := make(Record, len(values)+1)
 
-	record[0] = NewCell(parser.NewInteger(int64(internalId)))
+	record[0] = NewCell(value.NewInteger(int64(internalId)))
 
 	for i, v := range values {
 		record[i+1] = NewCell(v)
@@ -30,7 +30,7 @@ func NewRecordWithId(internalId int, values []parser.Primary) Record {
 	return record
 }
 
-func NewRecord(values []parser.Primary) Record {
+func NewRecord(values []value.Primary) Record {
 	record := make(Record, len(values))
 
 	for i, v := range values {
@@ -43,7 +43,7 @@ func NewRecord(values []parser.Primary) Record {
 func NewEmptyRecord(len int) Record {
 	record := make(Record, len)
 	for i := 0; i < len; i++ {
-		record[i] = NewCell(parser.NewNull())
+		record[i] = NewCell(value.NewNull())
 	}
 
 	return record

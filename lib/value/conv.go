@@ -1,9 +1,8 @@
-package parser
+package value
 
 import (
 	"errors"
 	"math"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -214,12 +213,12 @@ func PrimaryToInteger(p Primary) Primary {
 	case Integer:
 		return p
 	case Float:
-		f := p.(Float).Value()
+		f := p.(Float).Raw()
 		if math.Remainder(f, 1) == 0 {
 			return NewInteger(int64(f))
 		}
 	case String:
-		s := strings.TrimSpace(p.(String).Value())
+		s := strings.TrimSpace(p.(String).Raw())
 		if maybeNumber(s) {
 			if i, e := strconv.ParseInt(s, 10, 64); e == nil {
 				return NewInteger(i)
@@ -238,13 +237,13 @@ func PrimaryToInteger(p Primary) Primary {
 func PrimaryToFloat(p Primary) Primary {
 	switch p.(type) {
 	case Integer:
-		return NewFloat(float64(p.(Integer).Value()))
+		return NewFloat(float64(p.(Integer).Raw()))
 	case Float:
 		return p
 	case String:
-		s := strings.TrimSpace(p.(String).Value())
+		s := strings.TrimSpace(p.(String).Raw())
 		if maybeNumber(s) {
-			if f, e := strconv.ParseFloat(p.(String).Value(), 64); e == nil {
+			if f, e := strconv.ParseFloat(p.(String).Raw(), 64); e == nil {
 				return NewFloat(f)
 			}
 		}
@@ -278,15 +277,15 @@ func maybeNumber(s string) bool {
 func PrimaryToDatetime(p Primary) Primary {
 	switch p.(type) {
 	case Integer:
-		dt := time.Unix(p.(Integer).Value(), 0)
+		dt := time.Unix(p.(Integer).Raw(), 0)
 		return NewDatetime(dt)
 	case Float:
-		dt := Float64ToTime(p.(Float).Value())
+		dt := Float64ToTime(p.(Float).Raw())
 		return NewDatetime(dt)
 	case Datetime:
 		return p
 	case String:
-		s := strings.TrimSpace(p.(String).Value())
+		s := strings.TrimSpace(p.(String).Raw())
 		if dt, e := StrToTime(s); e == nil {
 			return NewDatetime(dt)
 		}
@@ -314,7 +313,7 @@ func PrimaryToBoolean(p Primary) Primary {
 			return NewBoolean(p.Ternary().BoolValue())
 		}
 	case String:
-		s := strings.TrimSpace(p.(String).Value())
+		s := strings.TrimSpace(p.(String).Raw())
 		if b, e := strconv.ParseBool(s); e == nil {
 			return NewBoolean(b)
 		}
@@ -327,9 +326,9 @@ func PrimaryToString(p Primary) Primary {
 	case String:
 		return p
 	case Integer:
-		return NewString(Int64ToStr(p.(Integer).Value()))
+		return NewString(Int64ToStr(p.(Integer).Raw()))
 	case Float:
-		return NewString(Float64ToStr(p.(Float).Value()))
+		return NewString(Float64ToStr(p.(Float).Raw()))
 	}
 	return NewNull()
 }
@@ -346,24 +345,4 @@ func Float64ToTime(f float64) time.Time {
 		nsec, _ = strconv.ParseInt(ns[1]+strings.Repeat("0", 9-len(ns[1])), 10, 64)
 	}
 	return time.Unix(sec, nsec)
-}
-
-func FormatTableName(s string) string {
-	return strings.TrimSuffix(filepath.Base(s), filepath.Ext(s))
-}
-
-func FieldIdentifier(e QueryExpression) string {
-	if pt, ok := e.(PrimitiveType); ok {
-		if s, ok := pt.Value.(String); ok {
-			return s.Value()
-		}
-		if dt, ok := pt.Value.(Datetime); ok {
-			return dt.Format(time.RFC3339Nano)
-		}
-		return pt.Value.String()
-	}
-	if fr, ok := e.(FieldReference); ok {
-		return fr.Column.Literal
-	}
-	return e.String()
 }

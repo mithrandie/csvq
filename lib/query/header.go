@@ -116,7 +116,7 @@ func (h Header) ContainsObject(obj parser.QueryExpression) (int, error) {
 		return h.ContainsNumber(cnum)
 	}
 
-	column := parser.FieldIdentifier(obj)
+	column := parser.FormatFieldIdentifier(obj)
 
 	idx := -1
 
@@ -143,7 +143,7 @@ func (h Header) ContainsObject(obj parser.QueryExpression) (int, error) {
 
 func (h Header) ContainsNumber(number parser.ColumnNumber) (int, error) {
 	view := number.View.Literal
-	idx := int(number.Number.Value())
+	idx := int(number.Number.Raw())
 
 	if idx < 1 {
 		return -1, NewFieldNotExistError(number)

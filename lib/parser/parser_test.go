@@ -3,6 +3,8 @@ package parser
 import (
 	"reflect"
 	"testing"
+
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 var parseTests = []struct {
@@ -486,7 +488,7 @@ var parseTests = []struct {
 						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "ident"}}},
-							Field{Object: ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 15}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "tbl"}, Number: NewInteger(3)}},
+							Field{Object: ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 15}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "tbl"}, Number: value.NewInteger(3)}},
 							Field{Object: NewStringValue("foo")},
 							Field{Object: NewIntegerValueFromString("1")},
 							Field{Object: NewFloatValueFromString("1.234")},
@@ -515,8 +517,8 @@ var parseTests = []struct {
 						Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "foo"}}},
 						Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 2, char: 2}, View: Identifier{BaseExpr: &BaseExpr{line: 2, char: 2}, Literal: "bar"}, Column: Identifier{BaseExpr: &BaseExpr{line: 2, char: 6}, Literal: "foo"}}},
 						Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 3, char: 2}, View: Identifier{BaseExpr: &BaseExpr{line: 3, char: 2}, Literal: "stdin"}, Column: Identifier{BaseExpr: &BaseExpr{line: 3, char: 8}, Literal: "foo"}}},
-						Field{Object: ColumnNumber{BaseExpr: &BaseExpr{line: 4, char: 2}, View: Identifier{BaseExpr: &BaseExpr{line: 4, char: 2}, Literal: "bar"}, Number: NewInteger(3)}},
-						Field{Object: ColumnNumber{BaseExpr: &BaseExpr{line: 5, char: 2}, View: Identifier{BaseExpr: &BaseExpr{line: 5, char: 2}, Literal: "stdin"}, Number: NewInteger(3)}},
+						Field{Object: ColumnNumber{BaseExpr: &BaseExpr{line: 4, char: 2}, View: Identifier{BaseExpr: &BaseExpr{line: 4, char: 2}, Literal: "bar"}, Number: value.NewInteger(3)}},
+						Field{Object: ColumnNumber{BaseExpr: &BaseExpr{line: 5, char: 2}, View: Identifier{BaseExpr: &BaseExpr{line: 5, char: 2}, Literal: "stdin"}, Number: value.NewInteger(3)}},
 					},
 				},
 			}},
@@ -2708,7 +2710,7 @@ var parseTests = []struct {
 				Fields: []QueryExpression{
 					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 21}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 21}, Literal: "column1"}},
 					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 30}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 30}, Literal: "column2"}},
-					ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 39}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 39}, Literal: "table1"}, Number: NewInteger(3)},
+					ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 39}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 39}, Literal: "table1"}, Number: value.NewInteger(3)},
 				},
 				ValuesList: []QueryExpression{
 					RowValue{
@@ -2807,7 +2809,7 @@ var parseTests = []struct {
 				SetList: []Expression{
 					UpdateSet{Field: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 41}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 41}, Literal: "column1"}}, Value: NewIntegerValueFromString("1")},
 					UpdateSet{Field: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 54}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 54}, Literal: "column2"}}, Value: NewIntegerValueFromString("2")},
-					UpdateSet{Field: ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 67}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 67}, Literal: "table1"}, Number: NewInteger(3)}, Value: NewIntegerValueFromString("3")},
+					UpdateSet{Field: ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 67}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 67}, Literal: "table1"}, Number: value.NewInteger(3)}, Value: NewIntegerValueFromString("3")},
 				},
 				FromClause: FromClause{
 					From: "from",
@@ -3093,7 +3095,7 @@ var parseTests = []struct {
 				Columns: []QueryExpression{
 					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 26}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 26}, Literal: "column1"}},
 					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 35}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 35}, Literal: "column2"}},
-					ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 44}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 44}, Literal: "table1"}, Number: NewInteger(3)},
+					ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 44}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 44}, Literal: "table1"}, Number: value.NewInteger(3)},
 				},
 			},
 		},
@@ -3113,7 +3115,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			RenameColumn{
 				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
-				Old:   ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 27}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 27}, Literal: "table1"}, Number: NewInteger(3)},
+				Old:   ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 27}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 27}, Literal: "table1"}, Number: value.NewInteger(3)},
 				New:   Identifier{BaseExpr: &BaseExpr{line: 1, char: 39}, Literal: "column2"},
 			},
 		},
@@ -3180,7 +3182,7 @@ var parseTests = []struct {
 			SetFlag{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
 				Name:     "@@delimiter",
-				Value:    NewString(","),
+				Value:    value.NewString(","),
 			},
 		},
 	},
@@ -3210,7 +3212,7 @@ var parseTests = []struct {
 				BaseExpr: &BaseExpr{line: 1, char: 1},
 				Token:    ERROR,
 				Message:  NewStringValue("user error"),
-				Code:     NewInteger(300),
+				Code:     value.NewInteger(300),
 			},
 		},
 	},
@@ -3582,7 +3584,7 @@ var parseTests = []struct {
 	{
 		Input: "exit 1",
 		Output: []Statement{
-			Exit{Code: NewIntegerFromString("1")},
+			Exit{Code: value.NewIntegerFromString("1")},
 		},
 	},
 	{

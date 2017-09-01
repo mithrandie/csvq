@@ -1,5 +1,7 @@
 %{
 package parser
+
+import "github.com/mithrandie/csvq/lib/value"
 %}
 
 %union{
@@ -337,7 +339,7 @@ exit_statement
     }
     | EXIT INTEGER
     {
-        $$ = Exit{Code: NewIntegerFromString($2.Literal)}
+        $$ = Exit{Code: value.NewIntegerFromString($2.Literal)}
     }
 
 loop_statement
@@ -775,7 +777,7 @@ trigger_statement
     }
     | TRIGGER ERROR INTEGER value
     {
-        $$ = Trigger{BaseExpr: NewBaseExpr($1), Token: $2.Token, Message: $4, Code: NewIntegerFromString($3.Literal)}
+        $$ = Trigger{BaseExpr: NewBaseExpr($1), Token: $2.Token, Message: $4, Code: value.NewIntegerFromString($3.Literal)}
     }
 
 select_query
@@ -1012,11 +1014,11 @@ field_reference
     }
     | identifier '.' INTEGER
     {
-        $$ = ColumnNumber{BaseExpr: $1.BaseExpr, View: $1, Number: NewIntegerFromString($3.Literal)}
+        $$ = ColumnNumber{BaseExpr: $1.BaseExpr, View: $1, Number: value.NewIntegerFromString($3.Literal)}
     }
     | STDIN '.' INTEGER
     {
-        $$ = ColumnNumber{BaseExpr: NewBaseExpr($1), View: Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal}, Number: NewIntegerFromString($3.Literal)}
+        $$ = ColumnNumber{BaseExpr: NewBaseExpr($1), View: Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal}, Number: value.NewIntegerFromString($3.Literal)}
     }
 
 value

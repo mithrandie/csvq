@@ -7,6 +7,7 @@ import (
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 type StatementFlow int
@@ -88,11 +89,11 @@ func FetchCursor(name parser.Identifier, fetchPosition parser.Expression, vars [
 			if err != nil {
 				return false, err
 			}
-			i := parser.PrimaryToInteger(p)
-			if parser.IsNull(i) {
+			i := value.PrimaryToInteger(p)
+			if value.IsNull(i) {
 				return false, NewInvalidFetchPositionError(fp)
 			}
-			number = int(i.(parser.Integer).Value())
+			number = int(i.(value.Integer).Raw())
 		}
 	}
 

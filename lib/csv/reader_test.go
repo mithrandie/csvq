@@ -6,18 +6,18 @@ import (
 	"testing"
 
 	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 func TestField_ToPrimary(t *testing.T) {
 	var f Field = nil
-	var expect parser.Primary = parser.NewNull()
+	var expect value.Primary = value.NewNull()
 	if !reflect.DeepEqual(f.ToPrimary(), expect) {
 		t.Errorf("result = %q, want %q", f.ToPrimary(), expect)
 	}
 
 	f = NewField("str")
-	expect = parser.NewString("str")
+	expect = value.NewString("str")
 	if !reflect.DeepEqual(f.ToPrimary(), expect) {
 		t.Errorf("result = %q, want %q", f.ToPrimary(), expect)
 	}
@@ -231,7 +231,7 @@ var row []Field = []Field{
 func BenchmarkField_ToPrimary(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		for j := 0; j < 10000; j++ {
-			fields := make([]parser.Primary, len(row))
+			fields := make([]value.Primary, len(row))
 			for i, v := range row {
 				fields[i] = v.ToPrimary()
 			}

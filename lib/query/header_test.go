@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 func TestHeader_TableColumns(t *testing.T) {
@@ -91,7 +92,7 @@ var headerContainsObjectTests = []struct {
 	{
 		Expr: parser.ColumnNumber{
 			View:   parser.Identifier{Literal: "t1"},
-			Number: parser.NewInteger(2),
+			Number: value.NewInteger(2),
 		},
 		Result: 1,
 	},
@@ -180,21 +181,21 @@ var headerContainsNumberTests = []struct {
 	{
 		Number: parser.ColumnNumber{
 			View:   parser.Identifier{Literal: "t1"},
-			Number: parser.NewInteger(2),
+			Number: value.NewInteger(2),
 		},
 		Result: 1,
 	},
 	{
 		Number: parser.ColumnNumber{
 			View:   parser.Identifier{Literal: "t1"},
-			Number: parser.NewInteger(0),
+			Number: value.NewInteger(0),
 		},
 		Error: "[L:- C:-] field t1.0 does not exist",
 	},
 	{
 		Number: parser.ColumnNumber{
 			View:   parser.Identifier{Literal: "t1"},
-			Number: parser.NewInteger(9),
+			Number: value.NewInteger(9),
 		},
 		Error: "[L:- C:-] field t1.9 does not exist",
 	},
