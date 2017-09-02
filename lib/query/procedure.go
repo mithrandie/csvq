@@ -6,11 +6,12 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 type Procedure struct {
 	Filter    *Filter
-	ReturnVal parser.Primary
+	ReturnVal value.Primary
 }
 
 func NewProcedure() *Procedure {
@@ -61,30 +62,30 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 	case parser.SetFlag:
 		err = SetFlag(stmt.(parser.SetFlag))
 	case parser.VariableDeclaration:
-		err = proc.Filter.VariablesList.Declare(stmt.(parser.VariableDeclaration), proc.Filter)
+		err = proc.Filter.Variables.Declare(stmt.(parser.VariableDeclaration), proc.Filter)
 	case parser.VariableSubstitution:
 		_, err = proc.Filter.Evaluate(stmt.(parser.QueryExpression))
 	case parser.DisposeVariable:
-		err = proc.Filter.VariablesList.Dispose(stmt.(parser.DisposeVariable).Variable)
+		err = proc.Filter.Variables.Dispose(stmt.(parser.DisposeVariable).Variable)
 	case parser.CursorDeclaration:
-		err = proc.Filter.CursorsList.Declare(stmt.(parser.CursorDeclaration))
+		err = proc.Filter.Cursors.Declare(stmt.(parser.CursorDeclaration))
 	case parser.OpenCursor:
-		err = proc.Filter.CursorsList.Open(stmt.(parser.OpenCursor).Cursor, proc.Filter)
+		err = proc.Filter.Cursors.Open(stmt.(parser.OpenCursor).Cursor, proc.Filter)
 	case parser.CloseCursor:
-		err = proc.Filter.CursorsList.Close(stmt.(parser.CloseCursor).Cursor)
+		err = proc.Filter.Cursors.Close(stmt.(parser.CloseCursor).Cursor)
 	case parser.DisposeCursor:
-		err = proc.Filter.CursorsList.Dispose(stmt.(parser.DisposeCursor).Cursor)
+		err = proc.Filter.Cursors.Dispose(stmt.(parser.DisposeCursor).Cursor)
 	case parser.FetchCursor:
 		fetch := stmt.(parser.FetchCursor)
 		_, err = FetchCursor(fetch.Cursor, fetch.Position, fetch.Variables, proc.Filter)
 	case parser.TableDeclaration:
 		err = DeclareTable(stmt.(parser.TableDeclaration), proc.Filter)
 	case parser.DisposeTable:
-		err = proc.Filter.TempViewsList.Dispose(stmt.(parser.DisposeTable).Table)
+		err = proc.Filter.TempViews.Dispose(stmt.(parser.DisposeTable).Table)
 	case parser.FunctionDeclaration:
-		err = proc.Filter.FunctionsList.Declare(stmt.(parser.FunctionDeclaration))
+		err = proc.Filter.Functions.Declare(stmt.(parser.FunctionDeclaration))
 	case parser.AggregateDeclaration:
-		err = proc.Filter.FunctionsList.DeclareAggregate(stmt.(parser.AggregateDeclaration))
+		err = proc.Filter.Functions.DeclareAggregate(stmt.(parser.AggregateDeclaration))
 	case parser.SelectQuery:
 		if view, err = Select(stmt.(parser.SelectQuery), proc.Filter); err == nil {
 			flags := cmd.GetFlags()
@@ -212,7 +213,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		ex := stmt.(parser.Exit)
 		code := 0
 		if ex.Code != nil {
-			code = int(ex.Code.(parser.Integer).Value())
+			code = int(ex.Code.(value.Integer).Raw())
 		}
 		if 0 < code {
 			flow = ERROR
@@ -221,7 +222,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			flow = EXIT
 		}
 	case parser.Return:
-		var ret parser.Primary
+		var ret value.Primary
 		if ret, err = proc.Filter.Evaluate(stmt.(parser.Return).Value); err == nil {
 			proc.ReturnVal = ret
 			flow = RETURN
@@ -259,10 +260,10 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 				if pt, ok := trigger.Message.(parser.PrimitiveType); ok && trigger.Code == nil && pt.IsInteger() {
 					trigger.Code = pt.Value
 				} else {
-					var p parser.Primary
+					var p value.Primary
 					if p, err = proc.Filter.Evaluate(trigger.Message); err == nil {
-						if s := parser.PrimaryToString(p); !parser.IsNull(s) {
-							message = s.(parser.String).Value()
+						if s := value.ToString(p); !value.IsNull(s) {
+							message = s.(value.String).Raw()
 						}
 					}
 				}
@@ -284,13 +285,13 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 }
 
 func (proc *Procedure) IfStmt(stmt parser.If) (StatementFlow, error) {
-	stmts := make([]parser.ElseIf, len(stmt.ElseIf)+1)
-	stmts[0] = parser.ElseIf{
+	stmts := make([]parser.ElseIf, 0, len(stmt.ElseIf)+1)
+	stmts = append(stmts, parser.ElseIf{
 		Condition:  stmt.Condition,
 		Statements: stmt.Statements,
-	}
-	for i, v := range stmt.ElseIf {
-		stmts[i+1] = v.(parser.ElseIf)
+	})
+	for _, v := range stmt.ElseIf {
+		stmts = append(stmts, v)
 	}
 
 	for _, v := range stmts {
@@ -303,24 +304,23 @@ func (proc *Procedure) IfStmt(stmt parser.If) (StatementFlow, error) {
 		}
 	}
 
-	if stmt.Else != nil {
-		return proc.ExecuteChild(stmt.Else.(parser.Else).Statements)
+	if stmt.Else.Statements != nil {
+		return proc.ExecuteChild(stmt.Else.Statements)
 	}
 	return TERMINATE, nil
 }
 
 func (proc *Procedure) Case(stmt parser.Case) (StatementFlow, error) {
-	var value parser.Primary
+	var val value.Primary
 	var err error
 	if stmt.Value != nil {
-		value, err = proc.Filter.Evaluate(stmt.Value)
+		val, err = proc.Filter.Evaluate(stmt.Value)
 		if err != nil {
 			return ERROR, err
 		}
 	}
 
-	for _, v := range stmt.When {
-		when := v.(parser.CaseWhen)
+	for _, when := range stmt.When {
 		var t ternary.Value
 
 		cond, err := proc.Filter.Evaluate(when.Condition)
@@ -328,10 +328,10 @@ func (proc *Procedure) Case(stmt parser.Case) (StatementFlow, error) {
 			return ERROR, err
 		}
 
-		if value == nil {
+		if val == nil {
 			t = cond.Ternary()
 		} else {
-			t = EqualTo(value, cond)
+			t = value.Equal(val, cond)
 		}
 
 		if t == ternary.TRUE {
@@ -339,10 +339,10 @@ func (proc *Procedure) Case(stmt parser.Case) (StatementFlow, error) {
 		}
 	}
 
-	if stmt.Else == nil {
+	if stmt.Else.Statements == nil {
 		return TERMINATE, nil
 	}
-	return proc.ExecuteChild(stmt.Else.(parser.CaseElse).Statements)
+	return proc.ExecuteChild(stmt.Else.Statements)
 }
 
 func (proc *Procedure) While(stmt parser.While) (StatementFlow, error) {
@@ -370,8 +370,11 @@ func (proc *Procedure) While(stmt parser.While) (StatementFlow, error) {
 }
 
 func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, error) {
+	fetchPosition := parser.FetchPosition{
+		Position: parser.Token{Token: parser.NEXT},
+	}
 	for {
-		success, err := FetchCursor(stmt.Cursor, nil, stmt.Variables, proc.Filter)
+		success, err := FetchCursor(stmt.Cursor, fetchPosition, stmt.Variables, proc.Filter)
 		if err != nil {
 			return ERROR, err
 		}
@@ -469,7 +472,7 @@ func (proc *Procedure) Commit(expr parser.Expression) error {
 func (proc *Procedure) Rollback() {
 	Results = []Result{}
 	ViewCache.Clear()
-	proc.Filter.TempViewsList.Rollback()
+	proc.Filter.TempViews.Rollback()
 
 	Log("Rolled back.", cmd.GetFlags().Quiet)
 	return

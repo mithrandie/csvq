@@ -1,9 +1,9 @@
-package parser
+package value
 
 import (
+	"bytes"
 	"errors"
 	"math"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -12,9 +12,9 @@ import (
 	"github.com/mithrandie/csvq/lib/ternary"
 )
 
-type ConvertedDatetimeFormatMap map[string]string
+type DatetimeFormatMap map[string]string
 
-func (m ConvertedDatetimeFormatMap) Get(s string) string {
+func (m DatetimeFormatMap) Get(s string) string {
 	if f, ok := m[s]; ok {
 		return f
 	}
@@ -23,7 +23,7 @@ func (m ConvertedDatetimeFormatMap) Get(s string) string {
 	return f
 }
 
-var DatetimeFormats = ConvertedDatetimeFormatMap{}
+var DatetimeFormats = DatetimeFormatMap{}
 
 func StrToTime(s string) (time.Time, error) {
 	s = strings.TrimSpace(s)
@@ -120,7 +120,7 @@ func StrToTime(s string) (time.Time, error) {
 
 func ConvertDatetimeFormat(format string) string {
 	runes := []rune(format)
-	dtfmt := []rune{}
+	var buf bytes.Buffer
 
 	escaped := false
 	for _, r := range runes {
@@ -129,69 +129,83 @@ func ConvertDatetimeFormat(format string) string {
 			case '%':
 				escaped = true
 			default:
-				dtfmt = append(dtfmt, r)
+				buf.WriteRune(r)
 			}
 			continue
 		}
 
 		switch r {
 		case 'a':
-			dtfmt = append(dtfmt, []rune("Mon")...)
+			buf.WriteString("Mon")
 		case 'b':
-			dtfmt = append(dtfmt, []rune("Jan")...)
+			buf.WriteString("Jan")
 		case 'c':
-			dtfmt = append(dtfmt, []rune("1")...)
+			buf.WriteString("1")
 		case 'd':
-			dtfmt = append(dtfmt, []rune("02")...)
+			buf.WriteString("02")
 		case 'E':
-			dtfmt = append(dtfmt, []rune("_2")...)
+			buf.WriteString("_2")
 		case 'e':
-			dtfmt = append(dtfmt, []rune("2")...)
+			buf.WriteString("2")
 		case 'F':
-			dtfmt = append(dtfmt, []rune(".999999")...)
+			buf.WriteString(".999999")
 		case 'f':
-			dtfmt = append(dtfmt, []rune(".000000")...)
+			buf.WriteString(".000000")
 		case 'H':
-			dtfmt = append(dtfmt, []rune("15")...)
+			buf.WriteString("15")
 		case 'h':
-			dtfmt = append(dtfmt, []rune("03")...)
+			buf.WriteString("03")
 		case 'i':
-			dtfmt = append(dtfmt, []rune("04")...)
+			buf.WriteString("04")
 		case 'l':
-			dtfmt = append(dtfmt, []rune("3")...)
+			buf.WriteString("3")
 		case 'M':
-			dtfmt = append(dtfmt, []rune("January")...)
+			buf.WriteString("January")
 		case 'm':
-			dtfmt = append(dtfmt, []rune("01")...)
+			buf.WriteString("01")
 		case 'N':
-			dtfmt = append(dtfmt, []rune(".999999999")...)
+			buf.WriteString(".999999999")
 		case 'n':
-			dtfmt = append(dtfmt, []rune(".000000000")...)
+			buf.WriteString(".000000000")
 		case 'p':
-			dtfmt = append(dtfmt, []rune("PM")...)
+			buf.WriteString("PM")
 		case 'r':
-			dtfmt = append(dtfmt, []rune("03:04:05 PM")...)
+			buf.WriteString("03:04:05 PM")
 		case 's':
-			dtfmt = append(dtfmt, []rune("05")...)
+			buf.WriteString("05")
 		case 'T':
-			dtfmt = append(dtfmt, []rune("15:04:05")...)
+			buf.WriteString("15:04:05")
 		case 'W':
-			dtfmt = append(dtfmt, []rune("Monday")...)
+			buf.WriteString("Monday")
 		case 'Y':
-			dtfmt = append(dtfmt, []rune("2006")...)
+			buf.WriteString("2006")
 		case 'y':
-			dtfmt = append(dtfmt, []rune("06")...)
+			buf.WriteString("06")
 		case 'Z':
-			dtfmt = append(dtfmt, []rune("Z07:00")...)
+			buf.WriteString("Z07:00")
 		case 'z':
-			dtfmt = append(dtfmt, []rune("MST")...)
+			buf.WriteString("MST")
 		default:
-			dtfmt = append(dtfmt, r)
+			buf.WriteRune(r)
 		}
 		escaped = false
 	}
 
-	return string(dtfmt)
+	return buf.String()
+}
+
+func Float64ToTime(f float64) time.Time {
+	s := Float64ToStr(f)
+	ns := strings.Split(s, ".")
+	sec, _ := strconv.ParseInt(ns[0], 10, 64)
+	var nsec int64
+	if 1 < len(ns) {
+		if 9 < len(ns[1]) {
+			ns[1] = ns[1][:9]
+		}
+		nsec, _ = strconv.ParseInt(ns[1]+strings.Repeat("0", 9-len(ns[1])), 10, 64)
+	}
+	return time.Unix(sec, nsec)
 }
 
 func Int64ToStr(i int64) string {
@@ -202,24 +216,24 @@ func Float64ToStr(f float64) string {
 	return strconv.FormatFloat(f, 'f', -1, 64)
 }
 
-func Float64ToPrimary(f float64) Primary {
+func ParseFloat64(f float64) Primary {
 	if math.Remainder(f, 1) == 0 {
 		return NewInteger(int64(f))
 	}
 	return NewFloat(f)
 }
 
-func PrimaryToInteger(p Primary) Primary {
+func ToInteger(p Primary) Primary {
 	switch p.(type) {
 	case Integer:
 		return p
 	case Float:
-		f := p.(Float).Value()
+		f := p.(Float).Raw()
 		if math.Remainder(f, 1) == 0 {
 			return NewInteger(int64(f))
 		}
 	case String:
-		s := strings.TrimSpace(p.(String).Value())
+		s := strings.TrimSpace(p.(String).Raw())
 		if maybeNumber(s) {
 			if i, e := strconv.ParseInt(s, 10, 64); e == nil {
 				return NewInteger(i)
@@ -235,16 +249,16 @@ func PrimaryToInteger(p Primary) Primary {
 	return NewNull()
 }
 
-func PrimaryToFloat(p Primary) Primary {
+func ToFloat(p Primary) Primary {
 	switch p.(type) {
 	case Integer:
-		return NewFloat(float64(p.(Integer).Value()))
+		return NewFloat(float64(p.(Integer).Raw()))
 	case Float:
 		return p
 	case String:
-		s := strings.TrimSpace(p.(String).Value())
+		s := strings.TrimSpace(p.(String).Raw())
 		if maybeNumber(s) {
-			if f, e := strconv.ParseFloat(p.(String).Value(), 64); e == nil {
+			if f, e := strconv.ParseFloat(p.(String).Raw(), 64); e == nil {
 				return NewFloat(f)
 			}
 		}
@@ -275,18 +289,18 @@ func maybeNumber(s string) bool {
 	return false
 }
 
-func PrimaryToDatetime(p Primary) Primary {
+func ToDatetime(p Primary) Primary {
 	switch p.(type) {
 	case Integer:
-		dt := time.Unix(p.(Integer).Value(), 0)
+		dt := time.Unix(p.(Integer).Raw(), 0)
 		return NewDatetime(dt)
 	case Float:
-		dt := Float64ToTime(p.(Float).Value())
+		dt := Float64ToTime(p.(Float).Raw())
 		return NewDatetime(dt)
 	case Datetime:
 		return p
 	case String:
-		s := strings.TrimSpace(p.(String).Value())
+		s := strings.TrimSpace(p.(String).Raw())
 		if dt, e := StrToTime(s); e == nil {
 			return NewDatetime(dt)
 		}
@@ -305,7 +319,7 @@ func PrimaryToDatetime(p Primary) Primary {
 	return NewNull()
 }
 
-func PrimaryToBoolean(p Primary) Primary {
+func ToBoolean(p Primary) Primary {
 	switch p.(type) {
 	case Boolean:
 		return p
@@ -314,7 +328,7 @@ func PrimaryToBoolean(p Primary) Primary {
 			return NewBoolean(p.Ternary().BoolValue())
 		}
 	case String:
-		s := strings.TrimSpace(p.(String).Value())
+		s := strings.TrimSpace(p.(String).Raw())
 		if b, e := strconv.ParseBool(s); e == nil {
 			return NewBoolean(b)
 		}
@@ -322,48 +336,14 @@ func PrimaryToBoolean(p Primary) Primary {
 	return NewNull()
 }
 
-func PrimaryToString(p Primary) Primary {
+func ToString(p Primary) Primary {
 	switch p.(type) {
 	case String:
 		return p
 	case Integer:
-		return NewString(Int64ToStr(p.(Integer).Value()))
+		return NewString(Int64ToStr(p.(Integer).Raw()))
 	case Float:
-		return NewString(Float64ToStr(p.(Float).Value()))
+		return NewString(Float64ToStr(p.(Float).Raw()))
 	}
 	return NewNull()
-}
-
-func Float64ToTime(f float64) time.Time {
-	s := Float64ToStr(f)
-	ns := strings.Split(s, ".")
-	sec, _ := strconv.ParseInt(ns[0], 10, 64)
-	var nsec int64
-	if 1 < len(ns) {
-		if 9 < len(ns[1]) {
-			ns[1] = ns[1][:9]
-		}
-		nsec, _ = strconv.ParseInt(ns[1]+strings.Repeat("0", 9-len(ns[1])), 10, 64)
-	}
-	return time.Unix(sec, nsec)
-}
-
-func FormatTableName(s string) string {
-	return strings.TrimSuffix(filepath.Base(s), filepath.Ext(s))
-}
-
-func FieldIdentifier(e QueryExpression) string {
-	if pt, ok := e.(PrimitiveType); ok {
-		if s, ok := pt.Value.(String); ok {
-			return s.Value()
-		}
-		if dt, ok := pt.Value.(Datetime); ok {
-			return dt.Format(time.RFC3339Nano)
-		}
-		return pt.Value.String()
-	}
-	if fr, ok := e.(FieldReference); ok {
-		return fr.Column.Literal
-	}
-	return e.String()
 }

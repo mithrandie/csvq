@@ -1,23 +1,24 @@
 package query
 
 import (
+	"fmt"
 	"strings"
 
-	"fmt"
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
-type UserDefinedFunctionsList []UserDefinedFunctionMap
+type UserDefinedFunctionScopes []UserDefinedFunctionMap
 
-func (list UserDefinedFunctionsList) Declare(expr parser.FunctionDeclaration) error {
+func (list UserDefinedFunctionScopes) Declare(expr parser.FunctionDeclaration) error {
 	return list[0].Declare(expr)
 }
 
-func (list UserDefinedFunctionsList) DeclareAggregate(expr parser.AggregateDeclaration) error {
+func (list UserDefinedFunctionScopes) DeclareAggregate(expr parser.AggregateDeclaration) error {
 	return list[0].DeclareAggregate(expr)
 }
 
-func (list UserDefinedFunctionsList) Get(expr parser.QueryExpression, name string) (*UserDefinedFunction, error) {
+func (list UserDefinedFunctionScopes) Get(expr parser.QueryExpression, name string) (*UserDefinedFunction, error) {
 	for _, v := range list {
 		if fn, err := v.Get(expr, name); err == nil {
 			return fn, nil
@@ -74,7 +75,7 @@ func (m UserDefinedFunctionMap) DeclareAggregate(expr parser.AggregateDeclaratio
 	return nil
 }
 
-func (m UserDefinedFunctionMap) parserParameters(parameters []parser.Expression) ([]parser.Variable, map[string]parser.QueryExpression, int, error) {
+func (m UserDefinedFunctionMap) parserParameters(parameters []parser.VariableAssignment) ([]parser.Variable, map[string]parser.QueryExpression, int, error) {
 	var isDuplicate = func(variable parser.Variable, variables []parser.Variable) bool {
 		for _, v := range variables {
 			if variable.Name == v.Name {
@@ -88,9 +89,7 @@ func (m UserDefinedFunctionMap) parserParameters(parameters []parser.Expression)
 	defaults := make(map[string]parser.QueryExpression)
 
 	required := 0
-	for i, parameter := range parameters {
-		assignment := parameter.(parser.VariableAssignment)
-
+	for i, assignment := range parameters {
 		if isDuplicate(assignment.Variable, variables) {
 			return nil, nil, 0, NewDuplicateParameterError(assignment.Variable)
 		}
@@ -142,14 +141,14 @@ type UserDefinedFunction struct {
 	Cursor      parser.Identifier // For Aggregate Functions
 }
 
-func (fn *UserDefinedFunction) Execute(args []parser.Primary, filter *Filter) (parser.Primary, error) {
+func (fn *UserDefinedFunction) Execute(args []value.Primary, filter *Filter) (value.Primary, error) {
 	childScope := filter.CreateChildScope()
 	return fn.execute(args, childScope)
 }
 
-func (fn *UserDefinedFunction) ExecuteAggregate(values []parser.Primary, args []parser.Primary, filter *Filter) (parser.Primary, error) {
+func (fn *UserDefinedFunction) ExecuteAggregate(values []value.Primary, args []value.Primary, filter *Filter) (value.Primary, error) {
 	childScope := filter.CreateChildScope()
-	childScope.CursorsList.AddPseudoCursor(fn.Cursor, values)
+	childScope.Cursors.AddPseudoCursor(fn.Cursor, values)
 	return fn.execute(args, childScope)
 }
 
@@ -174,21 +173,21 @@ func (fn *UserDefinedFunction) CheckArgsLen(expr parser.QueryExpression, name st
 	return nil
 }
 
-func (fn *UserDefinedFunction) execute(args []parser.Primary, filter *Filter) (parser.Primary, error) {
+func (fn *UserDefinedFunction) execute(args []value.Primary, filter *Filter) (value.Primary, error) {
 	if err := fn.CheckArgsLen(fn.Name, fn.Name.Literal, len(args)); err != nil {
 		return nil, err
 	}
 
 	for i, v := range fn.Parameters {
 		if i < len(args) {
-			filter.VariablesList[0].Add(v, args[i])
+			filter.Variables[0].Add(v, args[i])
 		} else {
 			defaultValue, _ := fn.Defaults[v.String()]
-			value, err := filter.Evaluate(defaultValue)
+			val, err := filter.Evaluate(defaultValue)
 			if err != nil {
 				return nil, err
 			}
-			filter.VariablesList[0].Add(v, value)
+			filter.Variables[0].Add(v, val)
 		}
 	}
 
@@ -201,7 +200,7 @@ func (fn *UserDefinedFunction) execute(args []parser.Primary, filter *Filter) (p
 
 	ret := proc.ReturnVal
 	if ret == nil {
-		ret = parser.NewNull()
+		ret = value.NewNull()
 	}
 
 	return ret, nil

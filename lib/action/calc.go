@@ -9,6 +9,7 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 func Calc(expr string) error {
@@ -54,23 +55,23 @@ func Calc(expr string) error {
 	return nil
 }
 
-func formatCalcResult(p parser.Primary) string {
+func formatCalcResult(p value.Primary) string {
 	var s string
 
 	switch p.(type) {
-	case parser.String:
-		s = strings.TrimSpace(p.(parser.String).Value())
-	case parser.Integer:
-		s = parser.Int64ToStr(p.(parser.Integer).Value())
-	case parser.Float:
-		s = parser.Float64ToStr(p.(parser.Float).Value())
-	case parser.Boolean:
-		s = strconv.FormatBool(p.(parser.Boolean).Value())
-	case parser.Ternary:
-		s = p.(parser.Ternary).String()
-	case parser.Datetime:
-		s = p.(parser.Datetime).Format(time.RFC3339Nano)
-	case parser.Null:
+	case value.String:
+		s = strings.TrimSpace(p.(value.String).Raw())
+	case value.Integer:
+		s = value.Int64ToStr(p.(value.Integer).Raw())
+	case value.Float:
+		s = value.Float64ToStr(p.(value.Float).Raw())
+	case value.Boolean:
+		s = strconv.FormatBool(p.(value.Boolean).Raw())
+	case value.Ternary:
+		s = p.(value.Ternary).String()
+	case value.Datetime:
+		s = p.(value.Datetime).Format(time.RFC3339Nano)
+	case value.Null:
 		s = "null"
 	}
 

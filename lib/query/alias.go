@@ -6,13 +6,13 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
-type AliasMapList []AliasMap
+type AliasNodes []AliasMap
 
-func (list AliasMapList) Add(alias parser.Identifier, path string) error {
+func (list AliasNodes) Add(alias parser.Identifier, path string) error {
 	return list[0].Add(alias, path)
 }
 
-func (list AliasMapList) Get(alias parser.Identifier) (path string, err error) {
+func (list AliasNodes) Get(alias parser.Identifier) (path string, err error) {
 	for _, m := range list {
 		if path, err = m.Get(alias); err == nil {
 			return

@@ -3,13 +3,13 @@ package query
 import (
 	"strings"
 
-	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
-type Records []Record
+type RecordSet []Record
 
-func (r Records) Copy() Records {
-	records := make(Records, len(r))
+func (r RecordSet) Copy() RecordSet {
+	records := make(RecordSet, len(r))
 	for i, v := range r {
 		records[i] = v.Copy()
 	}
@@ -18,10 +18,10 @@ func (r Records) Copy() Records {
 
 type Record []Cell
 
-func NewRecordWithId(internalId int, values []parser.Primary) Record {
+func NewRecordWithId(internalId int, values []value.Primary) Record {
 	record := make(Record, len(values)+1)
 
-	record[0] = NewCell(parser.NewInteger(int64(internalId)))
+	record[0] = NewCell(value.NewInteger(int64(internalId)))
 
 	for i, v := range values {
 		record[i+1] = NewCell(v)
@@ -30,7 +30,7 @@ func NewRecordWithId(internalId int, values []parser.Primary) Record {
 	return record
 }
 
-func NewRecord(values []parser.Primary) Record {
+func NewRecord(values []value.Primary) Record {
 	record := make(Record, len(values))
 
 	for i, v := range values {
@@ -43,7 +43,7 @@ func NewRecord(values []parser.Primary) Record {
 func NewEmptyRecord(len int) Record {
 	record := make(Record, len)
 	for i := 0; i < len; i++ {
-		record[i] = NewCell(parser.NewNull())
+		record[i] = NewCell(value.NewNull())
 	}
 
 	return record
@@ -64,7 +64,7 @@ func (r Record) SerializeComparisonKeys() string {
 	list := make([]string, len(r))
 
 	for i, cell := range r {
-		list[i] = SerializeKey(cell.Primary())
+		list[i] = SerializeKey(cell.Value())
 	}
 
 	return strings.Join(list, ":")
@@ -81,8 +81,8 @@ func MergeRecord(r1 Record, r2 Record) Record {
 	return r
 }
 
-func MergeRecordsList(list []Records) Records {
-	var records Records
+func MergeRecordSetList(list []RecordSet) RecordSet {
+	var records RecordSet
 	if len(list) == 1 {
 		records = list[0]
 	} else {
@@ -90,7 +90,7 @@ func MergeRecordsList(list []Records) Records {
 		for _, v := range list {
 			recordLen += len(v)
 		}
-		records = make(Records, recordLen)
+		records = make(RecordSet, recordLen)
 		idx := 0
 		for _, v := range list {
 			for _, r := range v {

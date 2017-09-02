@@ -10,6 +10,7 @@ import (
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 var executeTests = []struct {
@@ -198,10 +199,10 @@ func TestExecute(t *testing.T) {
 var fetchCursorTests = []struct {
 	Name          string
 	CurName       parser.Identifier
-	FetchPosition parser.Expression
+	FetchPosition parser.FetchPosition
 	Variables     []parser.Variable
 	Success       bool
-	ResultVars    Variables
+	ResultVars    VariableMap
 	Error         string
 }{
 	{
@@ -212,9 +213,9 @@ var fetchCursorTests = []struct {
 			{Name: "@var2"},
 		},
 		Success: true,
-		ResultVars: Variables{
-			"@var1": parser.NewString("1"),
-			"@var2": parser.NewString("str1"),
+		ResultVars: VariableMap{
+			"@var1": value.NewString("1"),
+			"@var2": value.NewString("str1"),
 		},
 	},
 	{
@@ -225,9 +226,9 @@ var fetchCursorTests = []struct {
 			{Name: "@var2"},
 		},
 		Success: true,
-		ResultVars: Variables{
-			"@var1": parser.NewString("2"),
-			"@var2": parser.NewString("str2"),
+		ResultVars: VariableMap{
+			"@var1": value.NewString("2"),
+			"@var2": value.NewString("str2"),
 		},
 	},
 	{
@@ -238,9 +239,9 @@ var fetchCursorTests = []struct {
 			{Name: "@var2"},
 		},
 		Success: true,
-		ResultVars: Variables{
-			"@var1": parser.NewString("3"),
-			"@var2": parser.NewString("str3"),
+		ResultVars: VariableMap{
+			"@var1": value.NewString("3"),
+			"@var2": value.NewString("str3"),
 		},
 	},
 	{
@@ -251,9 +252,9 @@ var fetchCursorTests = []struct {
 			{Name: "@var2"},
 		},
 		Success: false,
-		ResultVars: Variables{
-			"@var1": parser.NewString("3"),
-			"@var2": parser.NewString("str3"),
+		ResultVars: VariableMap{
+			"@var1": value.NewString("3"),
+			"@var2": value.NewString("str3"),
 		},
 	},
 	{
@@ -268,9 +269,9 @@ var fetchCursorTests = []struct {
 			{Name: "@var2"},
 		},
 		Success: true,
-		ResultVars: Variables{
-			"@var1": parser.NewString("2"),
-			"@var2": parser.NewString("str2"),
+		ResultVars: VariableMap{
+			"@var1": value.NewString("2"),
+			"@var2": value.NewString("str2"),
 		},
 	},
 	{
@@ -332,10 +333,10 @@ func TestFetchCursor(t *testing.T) {
 	tf.Repository = TestDir
 
 	filter := NewFilter(
-		[]Variables{
+		[]VariableMap{
 			{
-				"@var1": parser.NewNull(),
-				"@var2": parser.NewNull(),
+				"@var1": value.NewNull(),
+				"@var2": value.NewNull(),
 			},
 		},
 		[]ViewMap{{}},
@@ -353,9 +354,9 @@ func TestFetchCursor(t *testing.T) {
 	)
 
 	ViewCache.Clear()
-	filter.CursorsList.Open(parser.Identifier{Literal: "cur"}, filter)
+	filter.Cursors.Open(parser.Identifier{Literal: "cur"}, filter)
 	ViewCache.Clear()
-	filter.CursorsList.Open(parser.Identifier{Literal: "cur2"}, filter)
+	filter.Cursors.Open(parser.Identifier{Literal: "cur2"}, filter)
 
 	for _, v := range fetchCursorTests {
 		success, err := FetchCursor(v.CurName, v.FetchPosition, v.Variables, filter)
@@ -374,8 +375,8 @@ func TestFetchCursor(t *testing.T) {
 		if success != v.Success {
 			t.Errorf("%s: success = %t, want %t", v.Name, success, v.Success)
 		}
-		if !reflect.DeepEqual(filter.VariablesList[0], v.ResultVars) {
-			t.Errorf("%s: global vars = %q, want %q", v.Name, filter.VariablesList[0], v.ResultVars)
+		if !reflect.DeepEqual(filter.Variables[0], v.ResultVars) {
+			t.Errorf("%s: global vars = %q, want %q", v.Name, filter.Variables[0], v.ResultVars)
 		}
 	}
 }
@@ -399,13 +400,13 @@ var declareTableTests = []struct {
 		Result: ViewMap{
 			"TBL": {
 				FileInfo: &FileInfo{
-					Path:           "tbl",
-					IsTemporary:    true,
-					InitialHeader:  NewHeader("tbl", []string{"column1", "column2"}),
-					InitialRecords: Records{},
+					Path:             "tbl",
+					IsTemporary:      true,
+					InitialHeader:    NewHeader("tbl", []string{"column1", "column2"}),
+					InitialRecordSet: RecordSet{},
 				},
-				Header:  NewHeader("tbl", []string{"column1", "column2"}),
-				Records: Records{},
+				Header:    NewHeader("tbl", []string{"column1", "column2"}),
+				RecordSet: RecordSet{},
 			},
 		},
 	},
@@ -445,18 +446,18 @@ var declareTableTests = []struct {
 					Path:          "tbl",
 					IsTemporary:   true,
 					InitialHeader: NewHeader("tbl", []string{"column1", "column2"}),
-					InitialRecords: Records{
-						NewRecord([]parser.Primary{
-							parser.NewInteger(1),
-							parser.NewInteger(2),
+					InitialRecordSet: RecordSet{
+						NewRecord([]value.Primary{
+							value.NewInteger(1),
+							value.NewInteger(2),
 						}),
 					},
 				},
 				Header: NewHeader("tbl", []string{"column1", "column2"}),
-				Records: Records{
-					NewRecord([]parser.Primary{
-						parser.NewInteger(1),
-						parser.NewInteger(2),
+				RecordSet: RecordSet{
+					NewRecord([]value.Primary{
+						value.NewInteger(1),
+						value.NewInteger(2),
 					}),
 				},
 			},
@@ -550,9 +551,9 @@ func TestDeclareTable(t *testing.T) {
 
 	for _, v := range declareTableTests {
 		if v.ViewMap == nil {
-			filter.TempViewsList = []ViewMap{{}}
+			filter.TempViews = []ViewMap{{}}
 		} else {
-			filter.TempViewsList = []ViewMap{v.ViewMap}
+			filter.TempViews = []ViewMap{v.ViewMap}
 		}
 
 		err := DeclareTable(v.Expr, filter)
@@ -568,7 +569,7 @@ func TestDeclareTable(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(filter.TempViewsList[0], v.Result) {
+		if !reflect.DeepEqual(filter.TempViews[0], v.Result) {
 			t.Errorf("%s: view cache = %q, want %q", v.Name, ViewCache, v.Result)
 		}
 	}
@@ -648,14 +649,14 @@ var selectTests = []struct {
 					IsFromTable: true,
 				},
 			},
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewInteger(2),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewInteger(2),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewInteger(2),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewInteger(2),
 				}),
 			},
 		},
@@ -689,10 +690,10 @@ var selectTests = []struct {
 				LineBreak: cmd.LF,
 			},
 			Header: NewHeader("table1", []string{"column2", "column1"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("str1"),
-					parser.NewString("1"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("str1"),
+					value.NewString("1"),
 				}),
 			},
 		},
@@ -732,22 +733,22 @@ var selectTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("4"),
-					parser.NewString("str4"),
+				NewRecord([]value.Primary{
+					value.NewString("4"),
+					value.NewString("str4"),
 				}),
 			},
 		},
@@ -787,14 +788,14 @@ var selectTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
 				}),
 			},
 		},
@@ -834,10 +835,10 @@ var selectTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
 			},
 		},
@@ -881,22 +882,22 @@ var selectTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("4"),
-					parser.NewString("str4"),
+				NewRecord([]value.Primary{
+					value.NewString("4"),
+					value.NewString("str4"),
 				}),
 			},
 		},
@@ -1045,9 +1046,9 @@ var selectTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeader("it", []string{"c1"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewInteger(2),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewInteger(2),
 				}),
 			},
 		},
@@ -1190,15 +1191,15 @@ var selectTests = []struct {
 					IsFromTable: true,
 				},
 			},
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewInteger(1),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewInteger(2),
+				NewRecord([]value.Primary{
+					value.NewInteger(2),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewInteger(3),
+				NewRecord([]value.Primary{
+					value.NewInteger(3),
 				}),
 			},
 		},
@@ -1308,7 +1309,7 @@ var insertTests = []struct {
 	Query        parser.InsertQuery
 	Result       *View
 	ViewCache    ViewMap
-	TempViewList TemporaryViewMapList
+	TempViewList TemporaryViewScopes
 	Error        string
 }{
 	{
@@ -1382,26 +1383,26 @@ var insertTests = []struct {
 				LineBreak: cmd.LF,
 			},
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewInteger(4),
-					parser.NewNull(),
+				NewRecord([]value.Primary{
+					value.NewInteger(4),
+					value.NewNull(),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewInteger(2),
-					parser.NewNull(),
+				NewRecord([]value.Primary{
+					value.NewInteger(2),
+					value.NewNull(),
 				}),
 			},
 			OperatedRecords: 2,
@@ -1416,26 +1417,26 @@ var insertTests = []struct {
 					LineBreak: cmd.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2"}),
-				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
-						parser.NewString("str1"),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("2"),
-						parser.NewString("str2"),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("3"),
-						parser.NewString("str3"),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
+						value.NewString("str3"),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewInteger(4),
-						parser.NewNull(),
+					NewRecord([]value.Primary{
+						value.NewInteger(4),
+						value.NewNull(),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewInteger(2),
-						parser.NewNull(),
+					NewRecord([]value.Primary{
+						value.NewInteger(2),
+						value.NewNull(),
 					}),
 				},
 				OperatedRecords: 2,
@@ -1473,46 +1474,46 @@ var insertTests = []struct {
 				IsTemporary: true,
 			},
 			Header: NewHeader("tmpview", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewInteger(4),
-					parser.NewNull(),
+				NewRecord([]value.Primary{
+					value.NewInteger(4),
+					value.NewNull(),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewInteger(2),
-					parser.NewNull(),
+				NewRecord([]value.Primary{
+					value.NewInteger(2),
+					value.NewNull(),
 				}),
 			},
 			OperatedRecords: 2,
 		},
-		TempViewList: TemporaryViewMapList{
+		TempViewList: TemporaryViewScopes{
 			ViewMap{
 				"TMPVIEW": &View{
 					Header: NewHeader("tmpview", []string{"column1", "column2"}),
-					Records: []Record{
-						NewRecord([]parser.Primary{
-							parser.NewString("1"),
-							parser.NewString("str1"),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
 						}),
-						NewRecord([]parser.Primary{
-							parser.NewString("2"),
-							parser.NewString("str2"),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
+							value.NewString("str2"),
 						}),
-						NewRecord([]parser.Primary{
-							parser.NewInteger(4),
-							parser.NewNull(),
+						NewRecord([]value.Primary{
+							value.NewInteger(4),
+							value.NewNull(),
 						}),
-						NewRecord([]parser.Primary{
-							parser.NewInteger(2),
-							parser.NewNull(),
+						NewRecord([]value.Primary{
+							value.NewInteger(2),
+							value.NewNull(),
 						}),
 					},
 					FileInfo: &FileInfo{
@@ -1557,26 +1558,26 @@ var insertTests = []struct {
 				LineBreak: cmd.LF,
 			},
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewInteger(4),
-					parser.NewString("str4"),
+				NewRecord([]value.Primary{
+					value.NewInteger(4),
+					value.NewString("str4"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewInteger(5),
-					parser.NewString("str5"),
+				NewRecord([]value.Primary{
+					value.NewInteger(5),
+					value.NewString("str5"),
 				}),
 			},
 			OperatedRecords: 2,
@@ -1667,30 +1668,30 @@ var insertTests = []struct {
 				LineBreak: cmd.LF,
 			},
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str22"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str22"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str33"),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str33"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("4"),
-					parser.NewString("str44"),
+				NewRecord([]value.Primary{
+					value.NewString("4"),
+					value.NewString("str44"),
 				}),
 			},
 			OperatedRecords: 3,
@@ -1728,18 +1729,18 @@ func TestInsert(t *testing.T) {
 	tf.Repository = TestDir
 
 	filter := NewEmptyFilter()
-	filter.TempViewsList = TemporaryViewMapList{
+	filter.TempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
-						parser.NewString("str1"),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("2"),
-						parser.NewString("str2"),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
 					}),
 				},
 				FileInfo: &FileInfo{
@@ -1776,8 +1777,8 @@ func TestInsert(t *testing.T) {
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.TempViewsList, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViewsList, v.TempViewList)
+			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViews, v.TempViewList)
 			}
 		}
 	}
@@ -1788,7 +1789,7 @@ var updateTests = []struct {
 	Query        parser.UpdateQuery
 	Result       []*View
 	ViewCache    ViewMap
-	TempViewList TemporaryViewMapList
+	TempViewList TemporaryViewScopes
 	Error        string
 }{
 	{
@@ -1819,12 +1820,12 @@ var updateTests = []struct {
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			},
-			SetList: []parser.Expression{
-				parser.UpdateSet{
+			SetList: []parser.UpdateSet{
+				{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					Value: parser.NewStringValue("update1"),
 				},
-				parser.UpdateSet{
+				{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 					Value: parser.NewStringValue("update2"),
 				},
@@ -1863,18 +1864,18 @@ var updateTests = []struct {
 					LineBreak: cmd.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2"}),
-				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
-						parser.NewString("str1"),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("update1"),
-						parser.NewString("update2"),
+					NewRecord([]value.Primary{
+						value.NewString("update1"),
+						value.NewString("update2"),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("3"),
-						parser.NewString("str3"),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
+						value.NewString("str3"),
 					}),
 				},
 				OperatedRecords: 1,
@@ -1890,18 +1891,18 @@ var updateTests = []struct {
 					LineBreak: cmd.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2"}),
-				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
-						parser.NewString("str1"),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("update1"),
-						parser.NewString("update2"),
+					NewRecord([]value.Primary{
+						value.NewString("update1"),
+						value.NewString("update2"),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("3"),
-						parser.NewString("str3"),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
+						value.NewString("str3"),
 					}),
 				},
 				OperatedRecords: 1,
@@ -1914,9 +1915,9 @@ var updateTests = []struct {
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "tmpview"}, Alias: parser.Identifier{Literal: "t1"}},
 			},
-			SetList: []parser.Expression{
-				parser.UpdateSet{
-					Field: parser.ColumnNumber{View: parser.Identifier{Literal: "t1"}, Number: parser.NewInteger(2)},
+			SetList: []parser.UpdateSet{
+				{
+					Field: parser.ColumnNumber{View: parser.Identifier{Literal: "t1"}, Number: value.NewInteger(2)},
 					Value: parser.NewStringValue("update"),
 				},
 			},
@@ -1929,31 +1930,31 @@ var updateTests = []struct {
 					IsTemporary: true,
 				},
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
-						parser.NewString("update"),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("update"),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("2"),
-						parser.NewString("update"),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("update"),
 					}),
 				},
 				OperatedRecords: 2,
 			},
 		},
-		TempViewList: TemporaryViewMapList{
+		TempViewList: TemporaryViewScopes{
 			ViewMap{
 				"TMPVIEW": &View{
 					Header: NewHeader("tmpview", []string{"column1", "column2"}),
-					Records: []Record{
-						NewRecord([]parser.Primary{
-							parser.NewString("1"),
-							parser.NewString("update"),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("update"),
 						}),
-						NewRecord([]parser.Primary{
-							parser.NewString("2"),
-							parser.NewString("update"),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
+							value.NewString("update"),
 						}),
 					},
 					FileInfo: &FileInfo{
@@ -1972,8 +1973,8 @@ var updateTests = []struct {
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "t1"}},
 			},
-			SetList: []parser.Expression{
-				parser.UpdateSet{
+			SetList: []parser.UpdateSet{
+				{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 					Value: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}},
 				},
@@ -2010,18 +2011,18 @@ var updateTests = []struct {
 					LineBreak: cmd.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2"}),
-				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
-						parser.NewString("str1"),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("2"),
-						parser.NewString("str22"),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str22"),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("3"),
-						parser.NewString("str33"),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
+						value.NewString("str33"),
 					}),
 				},
 				OperatedRecords: 2,
@@ -2034,8 +2035,8 @@ var updateTests = []struct {
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "notexist"}},
 			},
-			SetList: []parser.Expression{
-				parser.UpdateSet{
+			SetList: []parser.UpdateSet{
+				{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 					Value: parser.NewStringValue("update"),
 				},
@@ -2056,8 +2057,8 @@ var updateTests = []struct {
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			},
-			SetList: []parser.Expression{
-				parser.UpdateSet{
+			SetList: []parser.UpdateSet{
+				{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					Value: parser.NewStringValue("update"),
 				},
@@ -2078,8 +2079,8 @@ var updateTests = []struct {
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "notexist"}},
 			},
-			SetList: []parser.Expression{
-				parser.UpdateSet{
+			SetList: []parser.UpdateSet{
+				{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 					Value: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}},
 				},
@@ -2114,8 +2115,8 @@ var updateTests = []struct {
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "t2"}},
 			},
-			SetList: []parser.Expression{
-				parser.UpdateSet{
+			SetList: []parser.UpdateSet{
+				{
 					Field: parser.FieldReference{View: parser.Identifier{Literal: "t1"}, Column: parser.Identifier{Literal: "column2"}},
 					Value: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}},
 				},
@@ -2150,8 +2151,8 @@ var updateTests = []struct {
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			},
-			SetList: []parser.Expression{
-				parser.UpdateSet{
+			SetList: []parser.UpdateSet{
+				{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 					Value: parser.NewStringValue("update"),
 				},
@@ -2172,8 +2173,8 @@ var updateTests = []struct {
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			},
-			SetList: []parser.Expression{
-				parser.UpdateSet{
+			SetList: []parser.UpdateSet{
+				{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 				},
@@ -2194,8 +2195,8 @@ var updateTests = []struct {
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "t1"}},
 			},
-			SetList: []parser.Expression{
-				parser.UpdateSet{
+			SetList: []parser.UpdateSet{
+				{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 					Value: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}},
 				},
@@ -2225,18 +2226,18 @@ func TestUpdate(t *testing.T) {
 	tf.Repository = TestDir
 
 	filter := NewEmptyFilter()
-	filter.TempViewsList = TemporaryViewMapList{
+	filter.TempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
-						parser.NewString("str1"),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("2"),
-						parser.NewString("str2"),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
 					}),
 				},
 				FileInfo: &FileInfo{
@@ -2273,8 +2274,8 @@ func TestUpdate(t *testing.T) {
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.TempViewsList, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViewsList, v.TempViewList)
+			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViews, v.TempViewList)
 			}
 		}
 	}
@@ -2285,7 +2286,7 @@ var deleteTests = []struct {
 	Query        parser.DeleteQuery
 	Result       []*View
 	ViewCache    ViewMap
-	TempViewList TemporaryViewMapList
+	TempViewList TemporaryViewScopes
 	Error        string
 }{
 	{
@@ -2354,14 +2355,14 @@ var deleteTests = []struct {
 					LineBreak: cmd.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2"}),
-				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
-						parser.NewString("str1"),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("3"),
-						parser.NewString("str3"),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
+						value.NewString("str3"),
 					}),
 				},
 				OperatedRecords: 1,
@@ -2377,14 +2378,14 @@ var deleteTests = []struct {
 					LineBreak: cmd.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2"}),
-				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
-						parser.NewString("str1"),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("3"),
-						parser.NewString("str3"),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
+						value.NewString("str3"),
 					}),
 				},
 				OperatedRecords: 1,
@@ -2418,23 +2419,23 @@ var deleteTests = []struct {
 					IsTemporary: true,
 				},
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
-						parser.NewString("str1"),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
 					}),
 				},
 				OperatedRecords: 1,
 			},
 		},
-		TempViewList: TemporaryViewMapList{
+		TempViewList: TemporaryViewScopes{
 			ViewMap{
 				"TMPVIEW": &View{
 					Header: NewHeader("tmpview", []string{"column1", "column2"}),
-					Records: []Record{
-						NewRecord([]parser.Primary{
-							parser.NewString("1"),
-							parser.NewString("str1"),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
 						}),
 					},
 					FileInfo: &FileInfo{
@@ -2485,10 +2486,10 @@ var deleteTests = []struct {
 					LineBreak: cmd.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2"}),
-				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
-						parser.NewString("str1"),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
 					}),
 				},
 				OperatedRecords: 2,
@@ -2599,18 +2600,18 @@ func TestDelete(t *testing.T) {
 	tf.Repository = TestDir
 
 	filter := NewEmptyFilter()
-	filter.TempViewsList = TemporaryViewMapList{
+	filter.TempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
-						parser.NewString("str1"),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("2"),
-						parser.NewString("str2"),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
 					}),
 				},
 				FileInfo: &FileInfo{
@@ -2647,8 +2648,8 @@ func TestDelete(t *testing.T) {
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.TempViewsList, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViewsList, v.TempViewList)
+			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViews, v.TempViewList)
 			}
 		}
 	}
@@ -2678,8 +2679,8 @@ var createTableTests = []struct {
 				Encoding:  cmd.UTF8,
 				LineBreak: cmd.LF,
 			},
-			Header:  NewHeader("create_table_1", []string{"column1", "column2"}),
-			Records: Records{},
+			Header:    NewHeader("create_table_1", []string{"column1", "column2"}),
+			RecordSet: RecordSet{},
 		},
 		ViewCache: ViewMap{
 			strings.ToUpper(GetTestFilePath("create_table_1.csv")): &View{
@@ -2690,8 +2691,8 @@ var createTableTests = []struct {
 					Encoding:  cmd.UTF8,
 					LineBreak: cmd.LF,
 				},
-				Header:  NewHeader("create_table_1", []string{"column1", "column2"}),
-				Records: Records{},
+				Header:    NewHeader("create_table_1", []string{"column1", "column2"}),
+				RecordSet: RecordSet{},
 			},
 		},
 	},
@@ -2723,10 +2724,10 @@ var createTableTests = []struct {
 				LineBreak: cmd.LF,
 			},
 			Header: NewHeader("create_table_1", []string{"column1", "column2"}),
-			Records: Records{
-				NewRecord([]parser.Primary{
-					parser.NewInteger(1),
-					parser.NewInteger(2),
+			RecordSet: RecordSet{
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewInteger(2),
 				}),
 			},
 		},
@@ -2740,10 +2741,10 @@ var createTableTests = []struct {
 					LineBreak: cmd.LF,
 				},
 				Header: NewHeader("create_table_1", []string{"column1", "column2"}),
-				Records: Records{
-					NewRecord([]parser.Primary{
-						parser.NewInteger(1),
-						parser.NewInteger(2),
+				RecordSet: RecordSet{
+					NewRecord([]value.Primary{
+						value.NewInteger(1),
+						value.NewInteger(2),
 					}),
 				},
 			},
@@ -2871,18 +2872,18 @@ var addColumnsTests = []struct {
 	Query        parser.AddColumns
 	Result       *View
 	ViewCache    ViewMap
-	TempViewList TemporaryViewMapList
+	TempViewList TemporaryViewScopes
 	Error        string
 }{
 	{
 		Name: "Add Columns",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "table1.csv"},
-			Columns: []parser.Expression{
-				parser.ColumnDefault{
+			Columns: []parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column3"},
 				},
-				parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column4"},
 				},
 			},
@@ -2896,24 +2897,24 @@ var addColumnsTests = []struct {
 				LineBreak: cmd.LF,
 			},
 			Header: NewHeader("table1", []string{"column1", "column2", "column3", "column4"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewNull(),
-					parser.NewNull(),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewNull(),
+					value.NewNull(),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
-					parser.NewNull(),
-					parser.NewNull(),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewNull(),
+					value.NewNull(),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
-					parser.NewNull(),
-					parser.NewNull(),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+					value.NewNull(),
+					value.NewNull(),
 				}),
 			},
 			OperatedFields: 2,
@@ -2928,24 +2929,24 @@ var addColumnsTests = []struct {
 					LineBreak: cmd.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2", "column3", "column4"}),
-				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
-						parser.NewString("str1"),
-						parser.NewNull(),
-						parser.NewNull(),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+						value.NewNull(),
+						value.NewNull(),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("2"),
-						parser.NewString("str2"),
-						parser.NewNull(),
-						parser.NewNull(),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+						value.NewNull(),
+						value.NewNull(),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("3"),
-						parser.NewString("str3"),
-						parser.NewNull(),
-						parser.NewNull(),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
+						value.NewString("str3"),
+						value.NewNull(),
+						value.NewNull(),
 					}),
 				},
 				OperatedFields: 2,
@@ -2956,11 +2957,11 @@ var addColumnsTests = []struct {
 		Name: "Add Columns For Temporary View",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "tmpview"},
-			Columns: []parser.Expression{
-				parser.ColumnDefault{
+			Columns: []parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column3"},
 				},
-				parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column4"},
 				},
 			},
@@ -2972,38 +2973,38 @@ var addColumnsTests = []struct {
 				IsTemporary: true,
 			},
 			Header: NewHeader("tmpview", []string{"column1", "column2", "column3", "column4"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewNull(),
-					parser.NewNull(),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewNull(),
+					value.NewNull(),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
-					parser.NewNull(),
-					parser.NewNull(),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewNull(),
+					value.NewNull(),
 				}),
 			},
 			OperatedFields: 2,
 		},
-		TempViewList: TemporaryViewMapList{
+		TempViewList: TemporaryViewScopes{
 			ViewMap{
 				"TMPVIEW": &View{
 					Header: NewHeader("tmpview", []string{"column1", "column2", "column3", "column4"}),
-					Records: []Record{
-						NewRecord([]parser.Primary{
-							parser.NewString("1"),
-							parser.NewString("str1"),
-							parser.NewNull(),
-							parser.NewNull(),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
+							value.NewNull(),
+							value.NewNull(),
 						}),
-						NewRecord([]parser.Primary{
-							parser.NewString("2"),
-							parser.NewString("str2"),
-							parser.NewNull(),
-							parser.NewNull(),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
+							value.NewString("str2"),
+							value.NewNull(),
+							value.NewNull(),
 						}),
 					},
 					FileInfo: &FileInfo{
@@ -3020,12 +3021,12 @@ var addColumnsTests = []struct {
 		Name: "Add Columns First",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "table1.csv"},
-			Columns: []parser.Expression{
-				parser.ColumnDefault{
+			Columns: []parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column3"},
 					Value:  parser.NewIntegerValueFromString("2"),
 				},
-				parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column4"},
 					Value:  parser.NewIntegerValueFromString("1"),
 				},
@@ -3043,24 +3044,24 @@ var addColumnsTests = []struct {
 				LineBreak: cmd.LF,
 			},
 			Header: NewHeader("table1", []string{"column3", "column4", "column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewInteger(2),
-					parser.NewInteger(1),
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewInteger(2),
+					value.NewInteger(1),
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewInteger(2),
-					parser.NewInteger(1),
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecord([]value.Primary{
+					value.NewInteger(2),
+					value.NewInteger(1),
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewInteger(2),
-					parser.NewInteger(1),
-					parser.NewString("3"),
-					parser.NewString("str3"),
+				NewRecord([]value.Primary{
+					value.NewInteger(2),
+					value.NewInteger(1),
+					value.NewString("3"),
+					value.NewString("str3"),
 				}),
 			},
 			OperatedFields: 2,
@@ -3070,11 +3071,11 @@ var addColumnsTests = []struct {
 		Name: "Add Columns After",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "table1.csv"},
-			Columns: []parser.Expression{
-				parser.ColumnDefault{
+			Columns: []parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column3"},
 				},
-				parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column4"},
 					Value:  parser.NewIntegerValueFromString("1"),
 				},
@@ -3093,24 +3094,24 @@ var addColumnsTests = []struct {
 				LineBreak: cmd.LF,
 			},
 			Header: NewHeader("table1", []string{"column1", "column3", "column4", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewNull(),
-					parser.NewInteger(1),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewNull(),
+					value.NewInteger(1),
+					value.NewString("str1"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewNull(),
-					parser.NewInteger(1),
-					parser.NewString("str2"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewNull(),
+					value.NewInteger(1),
+					value.NewString("str2"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewNull(),
-					parser.NewInteger(1),
-					parser.NewString("str3"),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewNull(),
+					value.NewInteger(1),
+					value.NewString("str3"),
 				}),
 			},
 			OperatedFields: 2,
@@ -3120,18 +3121,18 @@ var addColumnsTests = []struct {
 		Name: "Add Columns Before",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "table1.csv"},
-			Columns: []parser.Expression{
-				parser.ColumnDefault{
+			Columns: []parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column3"},
 				},
-				parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column4"},
 					Value:  parser.NewIntegerValueFromString("1"),
 				},
 			},
 			Position: parser.ColumnPosition{
 				Position: parser.Token{Token: parser.BEFORE},
-				Column:   parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: parser.NewInteger(2)},
+				Column:   parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: value.NewInteger(2)},
 			},
 		},
 		Result: &View{
@@ -3143,24 +3144,24 @@ var addColumnsTests = []struct {
 				LineBreak: cmd.LF,
 			},
 			Header: NewHeader("table1", []string{"column1", "column3", "column4", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewNull(),
-					parser.NewInteger(1),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewNull(),
+					value.NewInteger(1),
+					value.NewString("str1"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewNull(),
-					parser.NewInteger(1),
-					parser.NewString("str2"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewNull(),
+					value.NewInteger(1),
+					value.NewString("str2"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewNull(),
-					parser.NewInteger(1),
-					parser.NewString("str3"),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewNull(),
+					value.NewInteger(1),
+					value.NewString("str3"),
 				}),
 			},
 			OperatedFields: 2,
@@ -3170,11 +3171,11 @@ var addColumnsTests = []struct {
 		Name: "Add Columns Load Error",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "notexist"},
-			Columns: []parser.Expression{
-				parser.ColumnDefault{
+			Columns: []parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column3"},
 				},
-				parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column4"},
 				},
 			},
@@ -3185,11 +3186,11 @@ var addColumnsTests = []struct {
 		Name: "Add Columns Position Column Does Not Exist Error",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "table1.csv"},
-			Columns: []parser.Expression{
-				parser.ColumnDefault{
+			Columns: []parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column3"},
 				},
-				parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column2"},
 					Value:  parser.NewIntegerValueFromString("1"),
 				},
@@ -3205,11 +3206,11 @@ var addColumnsTests = []struct {
 		Name: "Add Columns Field Duplicate Error",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "table1.csv"},
-			Columns: []parser.Expression{
-				parser.ColumnDefault{
+			Columns: []parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column3"},
 				},
-				parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column1"},
 					Value:  parser.NewIntegerValueFromString("1"),
 				},
@@ -3221,11 +3222,11 @@ var addColumnsTests = []struct {
 		Name: "Add Columns Default Value Error",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "table1.csv"},
-			Columns: []parser.Expression{
-				parser.ColumnDefault{
+			Columns: []parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column3"},
 				},
-				parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column4"},
 					Value:  parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 				},
@@ -3240,18 +3241,18 @@ func TestAddColumns(t *testing.T) {
 	tf.Repository = TestDir
 
 	filter := NewEmptyFilter()
-	filter.TempViewsList = TemporaryViewMapList{
+	filter.TempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
-						parser.NewString("str1"),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("2"),
-						parser.NewString("str2"),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
 					}),
 				},
 				FileInfo: &FileInfo{
@@ -3287,8 +3288,8 @@ func TestAddColumns(t *testing.T) {
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.TempViewsList, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViewsList, v.TempViewList)
+			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViews, v.TempViewList)
 			}
 		}
 	}
@@ -3299,7 +3300,7 @@ var dropColumnsTests = []struct {
 	Query        parser.DropColumns
 	Result       *View
 	ViewCache    ViewMap
-	TempViewList TemporaryViewMapList
+	TempViewList TemporaryViewScopes
 	Error        string
 }{
 	{
@@ -3319,15 +3320,15 @@ var dropColumnsTests = []struct {
 				LineBreak: cmd.LF,
 			},
 			Header: NewHeader("table1", []string{"column1"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
 				}),
 			},
 			OperatedFields: 1,
@@ -3342,15 +3343,15 @@ var dropColumnsTests = []struct {
 					LineBreak: cmd.LF,
 				},
 				Header: NewHeader("table1", []string{"column1"}),
-				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("2"),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("3"),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
 					}),
 				},
 				OperatedFields: 1,
@@ -3362,7 +3363,7 @@ var dropColumnsTests = []struct {
 		Query: parser.DropColumns{
 			Table: parser.Identifier{Literal: "tmpview"},
 			Columns: []parser.QueryExpression{
-				parser.ColumnNumber{View: parser.Identifier{Literal: "tmpview"}, Number: parser.NewInteger(2)},
+				parser.ColumnNumber{View: parser.Identifier{Literal: "tmpview"}, Number: value.NewInteger(2)},
 			},
 		},
 		Result: &View{
@@ -3372,26 +3373,26 @@ var dropColumnsTests = []struct {
 				IsTemporary: true,
 			},
 			Header: NewHeader("tmpview", []string{"column1"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
 				}),
 			},
 			OperatedFields: 1,
 		},
-		TempViewList: TemporaryViewMapList{
+		TempViewList: TemporaryViewScopes{
 			ViewMap{
 				"TMPVIEW": &View{
 					Header: NewHeader("tmpview", []string{"column1"}),
-					Records: []Record{
-						NewRecord([]parser.Primary{
-							parser.NewString("1"),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("1"),
 						}),
-						NewRecord([]parser.Primary{
-							parser.NewString("2"),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
 						}),
 					},
 					FileInfo: &FileInfo{
@@ -3431,18 +3432,18 @@ func TestDropColumns(t *testing.T) {
 	tf.Repository = TestDir
 
 	filter := NewEmptyFilter()
-	filter.TempViewsList = TemporaryViewMapList{
+	filter.TempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
-						parser.NewString("str1"),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("2"),
-						parser.NewString("str2"),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
 					}),
 				},
 				FileInfo: &FileInfo{
@@ -3479,8 +3480,8 @@ func TestDropColumns(t *testing.T) {
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.TempViewsList, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViewsList, v.TempViewList)
+			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViews, v.TempViewList)
 			}
 		}
 	}
@@ -3491,7 +3492,7 @@ var renameColumnTests = []struct {
 	Query        parser.RenameColumn
 	Result       *View
 	ViewCache    ViewMap
-	TempViewList TemporaryViewMapList
+	TempViewList TemporaryViewScopes
 	Error        string
 }{
 	{
@@ -3510,18 +3511,18 @@ var renameColumnTests = []struct {
 				LineBreak: cmd.LF,
 			},
 			Header: NewHeader("table1", []string{"column1", "newcolumn"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
 				}),
 			},
 			OperatedFields: 1,
@@ -3536,18 +3537,18 @@ var renameColumnTests = []struct {
 					LineBreak: cmd.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "newcolumn"}),
-				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
-						parser.NewString("str1"),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("2"),
-						parser.NewString("str2"),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("3"),
-						parser.NewString("str3"),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
+						value.NewString("str3"),
 					}),
 				},
 				OperatedFields: 1,
@@ -3558,7 +3559,7 @@ var renameColumnTests = []struct {
 		Name: "Rename Column For Temporary View",
 		Query: parser.RenameColumn{
 			Table: parser.Identifier{Literal: "tmpview"},
-			Old:   parser.ColumnNumber{View: parser.Identifier{Literal: "tmpview"}, Number: parser.NewInteger(2)},
+			Old:   parser.ColumnNumber{View: parser.Identifier{Literal: "tmpview"}, Number: value.NewInteger(2)},
 			New:   parser.Identifier{Literal: "newcolumn"},
 		},
 		Result: &View{
@@ -3568,30 +3569,30 @@ var renameColumnTests = []struct {
 				IsTemporary: true,
 			},
 			Header: NewHeader("tmpview", []string{"column1", "newcolumn"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
 			},
 			OperatedFields: 1,
 		},
-		TempViewList: TemporaryViewMapList{
+		TempViewList: TemporaryViewScopes{
 			ViewMap{
 				"TMPVIEW": &View{
 					Header: NewHeader("tmpview", []string{"column1", "newcolumn"}),
-					Records: []Record{
-						NewRecord([]parser.Primary{
-							parser.NewString("1"),
-							parser.NewString("str1"),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
 						}),
-						NewRecord([]parser.Primary{
-							parser.NewString("2"),
-							parser.NewString("str2"),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
+							value.NewString("str2"),
 						}),
 					},
 					FileInfo: &FileInfo{
@@ -3638,18 +3639,18 @@ func TestRenameColumn(t *testing.T) {
 	tf.Repository = TestDir
 
 	filter := NewEmptyFilter()
-	filter.TempViewsList = TemporaryViewMapList{
+	filter.TempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("1"),
-						parser.NewString("str1"),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("2"),
-						parser.NewString("str2"),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
 					}),
 				},
 				FileInfo: &FileInfo{
@@ -3686,8 +3687,8 @@ func TestRenameColumn(t *testing.T) {
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.TempViewsList, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViewsList, v.TempViewList)
+			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViews, v.TempViewList)
 			}
 		}
 	}

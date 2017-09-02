@@ -7,10 +7,11 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
-	"time"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 var viewLoadTests = []struct {
@@ -33,17 +34,17 @@ var viewLoadTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{{}},
-			Records: []Record{
+			RecordSet: []Record{
 				{
-					NewCell(parser.NewNull()),
+					NewCell(value.NewNull()),
 				},
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList:      AliasMapList{{}},
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases:      AliasNodes{{}},
 			},
 		},
 	},
@@ -52,17 +53,17 @@ var viewLoadTests = []struct {
 		From: parser.FromClause{},
 		Result: &View{
 			Header: []HeaderField{{}},
-			Records: []Record{
+			RecordSet: []Record{
 				{
-					NewCell(parser.NewNull()),
+					NewCell(value.NewNull()),
 				},
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList:      AliasMapList{{}},
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases:      AliasNodes{{}},
 			},
 		},
 	},
@@ -77,18 +78,18 @@ var viewLoadTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -96,11 +97,11 @@ var viewLoadTests = []struct {
 				Delimiter: ',',
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
 					},
@@ -121,18 +122,18 @@ var viewLoadTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -140,11 +141,11 @@ var viewLoadTests = []struct {
 				Delimiter: ',',
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
 					},
@@ -162,10 +163,10 @@ var viewLoadTests = []struct {
 		Stdin: "column1,column2\n1,\"str1\"",
 		Result: &View{
 			Header: NewHeader("t", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -173,15 +174,15 @@ var viewLoadTests = []struct {
 				Delimiter: ',',
 			},
 			Filter: &Filter{
-				VariablesList: []Variables{{}},
-				TempViewsList: []ViewMap{
+				Variables: []VariableMap{{}},
+				TempViews: []ViewMap{
 					{
 						"STDIN": nil,
 					},
 				},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"T": "STDIN",
 					},
@@ -200,10 +201,10 @@ var viewLoadTests = []struct {
 		Stdin:         "column1,column2\n1,\"str1\"",
 		Result: &View{
 			Header: NewHeaderWithId("t", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecordWithId(0, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(0, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -211,15 +212,15 @@ var viewLoadTests = []struct {
 				Delimiter: ',',
 			},
 			Filter: &Filter{
-				VariablesList: []Variables{{}},
-				TempViewsList: []ViewMap{
+				Variables: []VariableMap{{}},
+				TempViews: []ViewMap{
 					{
 						"STDIN": nil,
 					},
 				},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"T": "STDIN",
 					},
@@ -234,10 +235,10 @@ var viewLoadTests = []struct {
 		Stdin: "column1,column2\n1,\"str1\"",
 		Result: &View{
 			Header: NewHeader("stdin", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -245,15 +246,15 @@ var viewLoadTests = []struct {
 				Delimiter: ',',
 			},
 			Filter: &Filter{
-				VariablesList: []Variables{{}},
-				TempViewsList: []ViewMap{
+				Variables: []VariableMap{{}},
+				TempViews: []ViewMap{
 					{
 						"STDIN": nil,
 					},
 				},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"STDIN": "STDIN",
 					},
@@ -322,84 +323,84 @@ var viewLoadTests = []struct {
 			},
 		},
 		Filter: &Filter{
-			VariablesList: VariablesList{{}},
-			TempViewsList: TemporaryViewMapList{{}},
-			CursorsList:   CursorMapList{{}},
-			InlineTablesList: InlineTablesList{
-				InlineTables{
+			Variables: VariableScopes{{}},
+			TempViews: TemporaryViewScopes{{}},
+			Cursors:   CursorScopes{{}},
+			InlineTables: InlineTableNodes{
+				InlineTableMap{
 					"IT": &View{
 						Header: NewHeader("it", []string{"c1", "c2", "num"}),
-						Records: []Record{
-							NewRecord([]parser.Primary{
-								parser.NewString("1"),
-								parser.NewString("str1"),
-								parser.NewInteger(1),
+						RecordSet: []Record{
+							NewRecord([]value.Primary{
+								value.NewString("1"),
+								value.NewString("str1"),
+								value.NewInteger(1),
 							}),
-							NewRecord([]parser.Primary{
-								parser.NewString("2"),
-								parser.NewString("str2"),
-								parser.NewInteger(1),
+							NewRecord([]value.Primary{
+								value.NewString("2"),
+								value.NewString("str2"),
+								value.NewInteger(1),
 							}),
-							NewRecord([]parser.Primary{
-								parser.NewString("3"),
-								parser.NewString("str3"),
-								parser.NewInteger(1),
+							NewRecord([]value.Primary{
+								value.NewString("3"),
+								value.NewString("str3"),
+								value.NewInteger(1),
 							}),
 						},
 					},
 				},
 			},
-			AliasesList: AliasMapList{{}},
+			Aliases: AliasNodes{{}},
 		},
 		Result: &View{
 			Header: NewHeader("t", []string{"c1", "c2", "num"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewInteger(1),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+					value.NewInteger(1),
 				}),
 			},
 			Filter: &Filter{
-				VariablesList: VariablesList{{}},
-				TempViewsList: TemporaryViewMapList{{}},
-				CursorsList:   CursorMapList{{}},
-				InlineTablesList: InlineTablesList{
+				Variables: VariableScopes{{}},
+				TempViews: TemporaryViewScopes{{}},
+				Cursors:   CursorScopes{{}},
+				InlineTables: InlineTableNodes{
 					{},
-					InlineTables{
+					InlineTableMap{
 						"IT": &View{
 							Header: NewHeader("it", []string{"c1", "c2", "num"}),
-							Records: []Record{
-								NewRecord([]parser.Primary{
-									parser.NewString("1"),
-									parser.NewString("str1"),
-									parser.NewInteger(1),
+							RecordSet: []Record{
+								NewRecord([]value.Primary{
+									value.NewString("1"),
+									value.NewString("str1"),
+									value.NewInteger(1),
 								}),
-								NewRecord([]parser.Primary{
-									parser.NewString("2"),
-									parser.NewString("str2"),
-									parser.NewInteger(1),
+								NewRecord([]value.Primary{
+									value.NewString("2"),
+									value.NewString("str2"),
+									value.NewInteger(1),
 								}),
-								NewRecord([]parser.Primary{
-									parser.NewString("3"),
-									parser.NewString("str3"),
-									parser.NewInteger(1),
+								NewRecord([]value.Primary{
+									value.NewString("3"),
+									value.NewString("str3"),
+									value.NewInteger(1),
 								}),
 							},
 						},
 					},
 				},
-				AliasesList: AliasMapList{
+				Aliases: AliasNodes{
 					{
 						"T": "",
 					},
@@ -417,34 +418,34 @@ var viewLoadTests = []struct {
 			},
 		},
 		Filter: &Filter{
-			VariablesList: VariablesList{{}},
-			TempViewsList: TemporaryViewMapList{{}},
-			CursorsList:   CursorMapList{{}},
-			InlineTablesList: InlineTablesList{
-				InlineTables{
+			Variables: VariableScopes{{}},
+			TempViews: TemporaryViewScopes{{}},
+			Cursors:   CursorScopes{{}},
+			InlineTables: InlineTableNodes{
+				InlineTableMap{
 					"IT": &View{
 						Header: NewHeader("it", []string{"c1", "c2", "num"}),
-						Records: []Record{
-							NewRecord([]parser.Primary{
-								parser.NewString("1"),
-								parser.NewString("str1"),
-								parser.NewInteger(1),
+						RecordSet: []Record{
+							NewRecord([]value.Primary{
+								value.NewString("1"),
+								value.NewString("str1"),
+								value.NewInteger(1),
 							}),
-							NewRecord([]parser.Primary{
-								parser.NewString("2"),
-								parser.NewString("str2"),
-								parser.NewInteger(1),
+							NewRecord([]value.Primary{
+								value.NewString("2"),
+								value.NewString("str2"),
+								value.NewInteger(1),
 							}),
-							NewRecord([]parser.Primary{
-								parser.NewString("3"),
-								parser.NewString("str3"),
-								parser.NewInteger(1),
+							NewRecord([]value.Primary{
+								value.NewString("3"),
+								value.NewString("str3"),
+								value.NewInteger(1),
 							}),
 						},
 					},
 				},
 			},
-			AliasesList: AliasMapList{{}},
+			Aliases: AliasNodes{{}},
 		},
 		Error: "[L:- C:-] table name t is a duplicate",
 	},
@@ -460,22 +461,22 @@ var viewLoadTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeader("table_sjis", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("日本語"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("日本語"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str"),
 				}),
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"TABLE_SJIS": strings.ToUpper(GetTestFilePath("table_sjis.csv")),
 					},
@@ -495,22 +496,22 @@ var viewLoadTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeader("table_noheader", []string{"c1", "c2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"TABLE_NOHEADER": strings.ToUpper(GetTestFilePath("table_noheader.csv")),
 					},
@@ -537,68 +538,68 @@ var viewLoadTests = []struct {
 				{View: "table2", Column: "column3", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewString("2"),
-					parser.NewString("str22"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewString("2"),
+					value.NewString("str22"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewString("3"),
-					parser.NewString("str33"),
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewString("3"),
+					value.NewString("str33"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewString("4"),
-					parser.NewString("str44"),
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewString("4"),
+					value.NewString("str44"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
-					parser.NewString("2"),
-					parser.NewString("str22"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewString("2"),
+					value.NewString("str22"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
-					parser.NewString("3"),
-					parser.NewString("str33"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewString("3"),
+					value.NewString("str33"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
-					parser.NewString("4"),
-					parser.NewString("str44"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewString("4"),
+					value.NewString("str44"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
-					parser.NewString("2"),
-					parser.NewString("str22"),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+					value.NewString("2"),
+					value.NewString("str22"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
-					parser.NewString("3"),
-					parser.NewString("str33"),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+					value.NewString("3"),
+					value.NewString("str33"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
-					parser.NewString("4"),
-					parser.NewString("str44"),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+					value.NewString("4"),
+					value.NewString("str44"),
 				}),
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
 						"TABLE2": strings.ToUpper(GetTestFilePath("table2.csv")),
@@ -631,68 +632,68 @@ var viewLoadTests = []struct {
 				{View: "table2", Column: "column3", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewString("2"),
-					parser.NewString("str22"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewString("2"),
+					value.NewString("str22"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewString("3"),
-					parser.NewString("str33"),
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewString("3"),
+					value.NewString("str33"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewString("4"),
-					parser.NewString("str44"),
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewString("4"),
+					value.NewString("str44"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
-					parser.NewString("2"),
-					parser.NewString("str22"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewString("2"),
+					value.NewString("str22"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
-					parser.NewString("3"),
-					parser.NewString("str33"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewString("3"),
+					value.NewString("str33"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
-					parser.NewString("4"),
-					parser.NewString("str44"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewString("4"),
+					value.NewString("str44"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
-					parser.NewString("2"),
-					parser.NewString("str22"),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+					value.NewString("2"),
+					value.NewString("str22"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
-					parser.NewString("3"),
-					parser.NewString("str33"),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+					value.NewString("3"),
+					value.NewString("str33"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
-					parser.NewString("4"),
-					parser.NewString("str44"),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+					value.NewString("4"),
+					value.NewString("str44"),
 				}),
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
 						"TABLE2": strings.ToUpper(GetTestFilePath("table2.csv")),
@@ -731,26 +732,26 @@ var viewLoadTests = []struct {
 				{View: "table2", Column: "column3", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
-					parser.NewString("2"),
-					parser.NewString("str22"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewString("2"),
+					value.NewString("str22"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
-					parser.NewString("3"),
-					parser.NewString("str33"),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+					value.NewString("3"),
+					value.NewString("str33"),
 				}),
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
 						"TABLE2": strings.ToUpper(GetTestFilePath("table2.csv")),
@@ -786,29 +787,29 @@ var viewLoadTests = []struct {
 				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
 				{View: "table1b", Column: "column2b", Number: 2, IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewString("str1b"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewString("str1b"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
-					parser.NewString("str2b"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewString("str2b"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
-					parser.NewString("str3b"),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+					value.NewString("str3b"),
 				}),
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"TABLE1":  strings.ToUpper(GetTestFilePath("table1.csv")),
 						"TABLE1B": strings.ToUpper(GetTestFilePath("table1b.csv")),
@@ -848,32 +849,32 @@ var viewLoadTests = []struct {
 				{View: "table2", Column: "column3", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewNull(),
-					parser.NewNull(),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewNull(),
+					value.NewNull(),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
-					parser.NewString("2"),
-					parser.NewString("str22"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewString("2"),
+					value.NewString("str22"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
-					parser.NewString("3"),
-					parser.NewString("str33"),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+					value.NewString("3"),
+					value.NewString("str33"),
 				}),
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
 						"TABLE2": strings.ToUpper(GetTestFilePath("table2.csv")),
@@ -906,34 +907,34 @@ var viewLoadTests = []struct {
 				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
 				{View: "table1b", Column: "column2b", Number: 2, IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewString("str1b"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewString("str1b"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
-					parser.NewString("str2b"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewString("str2b"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
-					parser.NewString("str3b"),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+					value.NewString("str3b"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("4"),
-					parser.NewNull(),
-					parser.NewString("str4b"),
+				NewRecord([]value.Primary{
+					value.NewString("4"),
+					value.NewNull(),
+					value.NewString("str4b"),
 				}),
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"TABLE1":  strings.ToUpper(GetTestFilePath("table1.csv")),
 						"TABLE1B": strings.ToUpper(GetTestFilePath("table1b.csv")),
@@ -1009,26 +1010,26 @@ var viewLoadTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeader("alias", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
 				}),
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"ALIAS": "",
 					},
@@ -1213,20 +1214,20 @@ func TestView_Load(t *testing.T) {
 		view.FileInfo = nil
 		v.Result.FileInfo = nil
 
-		if !reflect.DeepEqual(view.Filter.AliasesList, v.Result.Filter.AliasesList) {
-			t.Errorf("%s: alias list = %q, want %q", v.Name, view.Filter.AliasesList, v.Result.Filter.AliasesList)
+		if !reflect.DeepEqual(view.Filter.Aliases, v.Result.Filter.Aliases) {
+			t.Errorf("%s: alias list = %q, want %q", v.Name, view.Filter.Aliases, v.Result.Filter.Aliases)
 		}
-		for i, tviews := range v.Result.Filter.TempViewsList {
+		for i, tviews := range v.Result.Filter.TempViews {
 			resultKeys := []string{}
 			for key := range tviews {
 				resultKeys = append(resultKeys, key)
 			}
 			viewKeys := []string{}
-			for key := range view.Filter.TempViewsList[i] {
+			for key := range view.Filter.TempViews[i] {
 				viewKeys = append(viewKeys, key)
 			}
 			if !reflect.DeepEqual(resultKeys, viewKeys) {
-				t.Errorf("%s: temp view list = %q, want %q", v.Name, view.Filter.TempViewsList, v.Result.Filter.TempViewsList)
+				t.Errorf("%s: temp view list = %q, want %q", v.Name, view.Filter.TempViews, v.Result.Filter.TempViews)
 			}
 		}
 
@@ -1243,11 +1244,11 @@ func TestNewViewFromGroupedRecord(t *testing.T) {
 	fr := FilterRecord{
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				{
-					NewGroupCell([]parser.Primary{parser.NewInteger(1), parser.NewInteger(2), parser.NewInteger(3)}),
-					NewGroupCell([]parser.Primary{parser.NewInteger(1), parser.NewInteger(2), parser.NewInteger(3)}),
-					NewGroupCell([]parser.Primary{parser.NewString("str1"), parser.NewString("str2"), parser.NewString("str3")}),
+					NewGroupCell([]value.Primary{value.NewInteger(1), value.NewInteger(2), value.NewInteger(3)}),
+					NewGroupCell([]value.Primary{value.NewInteger(1), value.NewInteger(2), value.NewInteger(3)}),
+					NewGroupCell([]value.Primary{value.NewString("str1"), value.NewString("str2"), value.NewString("str3")}),
 				},
 			},
 		},
@@ -1255,10 +1256,10 @@ func TestNewViewFromGroupedRecord(t *testing.T) {
 	}
 	expect := &View{
 		Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-		Records: []Record{
-			{NewCell(parser.NewInteger(1)), NewCell(parser.NewInteger(1)), NewCell(parser.NewString("str1"))},
-			{NewCell(parser.NewInteger(2)), NewCell(parser.NewInteger(2)), NewCell(parser.NewString("str2"))},
-			{NewCell(parser.NewInteger(3)), NewCell(parser.NewInteger(3)), NewCell(parser.NewString("str3"))},
+		RecordSet: []Record{
+			{NewCell(value.NewInteger(1)), NewCell(value.NewInteger(1)), NewCell(value.NewString("str1"))},
+			{NewCell(value.NewInteger(2)), NewCell(value.NewInteger(2)), NewCell(value.NewString("str2"))},
+			{NewCell(value.NewInteger(3)), NewCell(value.NewInteger(3)), NewCell(value.NewString("str3"))},
 		},
 	}
 
@@ -1273,25 +1274,25 @@ var viewWhereTests = []struct {
 	CPU    int
 	View   *View
 	Where  parser.WhereClause
-	Result []int
+	Result RecordSet
 	Error  string
 }{
 	{
 		Name: "Where",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: RecordSet{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
-				NewRecordWithId(3, []parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
+				NewRecordWithId(3, []value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -1303,25 +1304,30 @@ var viewWhereTests = []struct {
 				Operator: "=",
 			},
 		},
-		Result: []int{1},
+		Result: RecordSet{
+			NewRecordWithId(2, []value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
+			}),
+		},
 	},
 	{
 		Name: "Where in Multi Threading",
 		CPU:  3,
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: RecordSet{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
-				NewRecordWithId(3, []parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
+				NewRecordWithId(3, []value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -1333,24 +1339,29 @@ var viewWhereTests = []struct {
 				Operator: "=",
 			},
 		},
-		Result: []int{1},
+		Result: RecordSet{
+			NewRecordWithId(2, []value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
+			}),
+		},
 	},
 	{
 		Name: "Where Filter Error",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
-				NewRecordWithId(3, []parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
+				NewRecordWithId(3, []value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -1388,8 +1399,8 @@ func TestView_Where(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(v.View.filteredIndices, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, v.View.filteredIndices, v.Result)
+		if !reflect.DeepEqual(v.View.RecordSet, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, v.View.RecordSet, v.Result)
 		}
 	}
 }
@@ -1407,26 +1418,26 @@ var viewGroupByTests = []struct {
 		Name: "Group By",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewString("group1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewString("group1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
-					parser.NewString("group2"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewString("group2"),
 				}),
-				NewRecordWithId(3, []parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
-					parser.NewString("group1"),
+				NewRecordWithId(3, []value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+					value.NewString("group1"),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("4"),
-					parser.NewString("str4"),
-					parser.NewString("group2"),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("4"),
+					value.NewString("str4"),
+					value.NewString("group2"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -1462,18 +1473,18 @@ var viewGroupByTests = []struct {
 					IsGroupKey:  true,
 				},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				{
-					NewGroupCell([]parser.Primary{parser.NewInteger(1), parser.NewInteger(3)}),
-					NewGroupCell([]parser.Primary{parser.NewString("1"), parser.NewString("3")}),
-					NewGroupCell([]parser.Primary{parser.NewString("str1"), parser.NewString("str3")}),
-					NewGroupCell([]parser.Primary{parser.NewString("group1"), parser.NewString("group1")}),
+					NewGroupCell([]value.Primary{value.NewInteger(1), value.NewInteger(3)}),
+					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("3")}),
+					NewGroupCell([]value.Primary{value.NewString("str1"), value.NewString("str3")}),
+					NewGroupCell([]value.Primary{value.NewString("group1"), value.NewString("group1")}),
 				},
 				{
-					NewGroupCell([]parser.Primary{parser.NewInteger(2), parser.NewInteger(4)}),
-					NewGroupCell([]parser.Primary{parser.NewString("2"), parser.NewString("4")}),
-					NewGroupCell([]parser.Primary{parser.NewString("str2"), parser.NewString("str4")}),
-					NewGroupCell([]parser.Primary{parser.NewString("group2"), parser.NewString("group2")}),
+					NewGroupCell([]value.Primary{value.NewInteger(2), value.NewInteger(4)}),
+					NewGroupCell([]value.Primary{value.NewString("2"), value.NewString("4")}),
+					NewGroupCell([]value.Primary{value.NewString("str2"), value.NewString("str4")}),
+					NewGroupCell([]value.Primary{value.NewString("group2"), value.NewString("group2")}),
 				},
 			},
 			Filter:    NewEmptyFilter(),
@@ -1484,33 +1495,33 @@ var viewGroupByTests = []struct {
 		Name: "Group By With ColumnNumber",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewString("group1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewString("group1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
-					parser.NewString("group2"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewString("group2"),
 				}),
-				NewRecordWithId(3, []parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
-					parser.NewString("group1"),
+				NewRecordWithId(3, []value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+					value.NewString("group1"),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("4"),
-					parser.NewString("str4"),
-					parser.NewString("group2"),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("4"),
+					value.NewString("str4"),
+					value.NewString("group2"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
 		},
 		GroupBy: parser.GroupByClause{
 			Items: []parser.QueryExpression{
-				parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: parser.NewInteger(3)},
+				parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: value.NewInteger(3)},
 			},
 		},
 		Result: &View{
@@ -1539,18 +1550,18 @@ var viewGroupByTests = []struct {
 					IsGroupKey:  true,
 				},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				{
-					NewGroupCell([]parser.Primary{parser.NewInteger(1), parser.NewInteger(3)}),
-					NewGroupCell([]parser.Primary{parser.NewString("1"), parser.NewString("3")}),
-					NewGroupCell([]parser.Primary{parser.NewString("str1"), parser.NewString("str3")}),
-					NewGroupCell([]parser.Primary{parser.NewString("group1"), parser.NewString("group1")}),
+					NewGroupCell([]value.Primary{value.NewInteger(1), value.NewInteger(3)}),
+					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("3")}),
+					NewGroupCell([]value.Primary{value.NewString("str1"), value.NewString("str3")}),
+					NewGroupCell([]value.Primary{value.NewString("group1"), value.NewString("group1")}),
 				},
 				{
-					NewGroupCell([]parser.Primary{parser.NewInteger(2), parser.NewInteger(4)}),
-					NewGroupCell([]parser.Primary{parser.NewString("2"), parser.NewString("4")}),
-					NewGroupCell([]parser.Primary{parser.NewString("str2"), parser.NewString("str4")}),
-					NewGroupCell([]parser.Primary{parser.NewString("group2"), parser.NewString("group2")}),
+					NewGroupCell([]value.Primary{value.NewInteger(2), value.NewInteger(4)}),
+					NewGroupCell([]value.Primary{value.NewString("2"), value.NewString("4")}),
+					NewGroupCell([]value.Primary{value.NewString("str2"), value.NewString("str4")}),
+					NewGroupCell([]value.Primary{value.NewString("group2"), value.NewString("group2")}),
 				},
 			},
 			Filter:    NewEmptyFilter(),
@@ -1561,33 +1572,33 @@ var viewGroupByTests = []struct {
 		Name: "Group By Evaluation Error",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewString("group1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewString("group1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
-					parser.NewString("group2"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewString("group2"),
 				}),
-				NewRecordWithId(3, []parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
-					parser.NewString("group1"),
+				NewRecordWithId(3, []value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+					value.NewString("group1"),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("4"),
-					parser.NewString("str4"),
-					parser.NewString("group2"),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("4"),
+					value.NewString("str4"),
+					value.NewString("group2"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
 		},
 		GroupBy: parser.GroupByClause{
 			Items: []parser.QueryExpression{
-				parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: parser.NewInteger(0)},
+				parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: value.NewInteger(0)},
 			},
 		},
 		Error: "[L:- C:-] field table1.0 does not exist",
@@ -1595,9 +1606,9 @@ var viewGroupByTests = []struct {
 	{
 		Name: "Group By Empty Record",
 		View: &View{
-			Header:  NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
-			Records: []Record{},
-			Filter:  NewEmptyFilter(),
+			Header:    NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
+			RecordSet: []Record{},
+			Filter:    NewEmptyFilter(),
 		},
 		GroupBy: parser.GroupByClause{
 			Items: []parser.QueryExpression{
@@ -1630,7 +1641,7 @@ var viewGroupByTests = []struct {
 					IsGroupKey:  true,
 				},
 			},
-			Records:   []Record{},
+			RecordSet: []Record{},
 			Filter:    NewEmptyFilter(),
 			isGrouped: true,
 		},
@@ -1662,8 +1673,7 @@ var viewHavingTests = []struct {
 	Name   string
 	View   *View
 	Having parser.HavingClause
-	Result []int
-	Record Records
+	Result RecordSet
 	Error  string
 }{
 	{
@@ -1692,18 +1702,18 @@ var viewHavingTests = []struct {
 				},
 			},
 			isGrouped: true,
-			Records: []Record{
+			RecordSet: RecordSet{
 				{
-					NewGroupCell([]parser.Primary{parser.NewString("1"), parser.NewString("3")}),
-					NewGroupCell([]parser.Primary{parser.NewString("1"), parser.NewString("3")}),
-					NewGroupCell([]parser.Primary{parser.NewString("str1"), parser.NewString("str3")}),
-					NewGroupCell([]parser.Primary{parser.NewString("group1"), parser.NewString("group1")}),
+					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("3")}),
+					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("3")}),
+					NewGroupCell([]value.Primary{value.NewString("str1"), value.NewString("str3")}),
+					NewGroupCell([]value.Primary{value.NewString("group1"), value.NewString("group1")}),
 				},
 				{
-					NewGroupCell([]parser.Primary{parser.NewString("2"), parser.NewString("4")}),
-					NewGroupCell([]parser.Primary{parser.NewString("2"), parser.NewString("4")}),
-					NewGroupCell([]parser.Primary{parser.NewString("str2"), parser.NewString("str4")}),
-					NewGroupCell([]parser.Primary{parser.NewString("group2"), parser.NewString("group2")}),
+					NewGroupCell([]value.Primary{value.NewString("2"), value.NewString("4")}),
+					NewGroupCell([]value.Primary{value.NewString("2"), value.NewString("4")}),
+					NewGroupCell([]value.Primary{value.NewString("str2"), value.NewString("str4")}),
+					NewGroupCell([]value.Primary{value.NewString("group2"), value.NewString("group2")}),
 				},
 			},
 			Filter: NewEmptyFilter(),
@@ -1721,7 +1731,14 @@ var viewHavingTests = []struct {
 				Operator: ">",
 			},
 		},
-		Result: []int{1},
+		Result: RecordSet{
+			{
+				NewGroupCell([]value.Primary{value.NewString("2"), value.NewString("4")}),
+				NewGroupCell([]value.Primary{value.NewString("2"), value.NewString("4")}),
+				NewGroupCell([]value.Primary{value.NewString("str2"), value.NewString("str4")}),
+				NewGroupCell([]value.Primary{value.NewString("group2"), value.NewString("group2")}),
+			},
+		},
 	},
 	{
 		Name: "Having Filter Error",
@@ -1749,18 +1766,18 @@ var viewHavingTests = []struct {
 				},
 			},
 			isGrouped: true,
-			Records: []Record{
+			RecordSet: RecordSet{
 				{
-					NewGroupCell([]parser.Primary{parser.NewString("1"), parser.NewString("3")}),
-					NewGroupCell([]parser.Primary{parser.NewString("1"), parser.NewString("3")}),
-					NewGroupCell([]parser.Primary{parser.NewString("str1"), parser.NewString("str3")}),
-					NewGroupCell([]parser.Primary{parser.NewString("group1"), parser.NewString("group1")}),
+					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("3")}),
+					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("3")}),
+					NewGroupCell([]value.Primary{value.NewString("str1"), value.NewString("str3")}),
+					NewGroupCell([]value.Primary{value.NewString("group1"), value.NewString("group1")}),
 				},
 				{
-					NewGroupCell([]parser.Primary{parser.NewString("2"), parser.NewString("4")}),
-					NewGroupCell([]parser.Primary{parser.NewString("2"), parser.NewString("4")}),
-					NewGroupCell([]parser.Primary{parser.NewString("str2"), parser.NewString("str4")}),
-					NewGroupCell([]parser.Primary{parser.NewString("group2"), parser.NewString("group2")}),
+					NewGroupCell([]value.Primary{value.NewString("2"), value.NewString("4")}),
+					NewGroupCell([]value.Primary{value.NewString("2"), value.NewString("4")}),
+					NewGroupCell([]value.Primary{value.NewString("str2"), value.NewString("str4")}),
+					NewGroupCell([]value.Primary{value.NewString("group2"), value.NewString("group2")}),
 				},
 			},
 			Filter: NewEmptyFilter(),
@@ -1784,16 +1801,16 @@ var viewHavingTests = []struct {
 		Name: "Having Not Grouped",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
-					parser.NewString("group2"),
+			RecordSet: RecordSet{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewString("group2"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("4"),
-					parser.NewString("str4"),
-					parser.NewString("group2"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("4"),
+					value.NewString("str4"),
+					value.NewString("group2"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -1811,30 +1828,29 @@ var viewHavingTests = []struct {
 				Operator: ">",
 			},
 		},
-		Result: []int{0},
-		Record: []Record{
+		Result: RecordSet{
 			{
-				NewGroupCell([]parser.Primary{parser.NewInteger(1), parser.NewInteger(2)}),
-				NewGroupCell([]parser.Primary{parser.NewString("2"), parser.NewString("4")}),
-				NewGroupCell([]parser.Primary{parser.NewString("str2"), parser.NewString("str4")}),
-				NewGroupCell([]parser.Primary{parser.NewString("group2"), parser.NewString("group2")}),
+				NewGroupCell([]value.Primary{value.NewInteger(1), value.NewInteger(2)}),
+				NewGroupCell([]value.Primary{value.NewString("2"), value.NewString("4")}),
+				NewGroupCell([]value.Primary{value.NewString("str2"), value.NewString("str4")}),
+				NewGroupCell([]value.Primary{value.NewString("group2"), value.NewString("group2")}),
 			},
 		},
 	},
 	{
-		Name: "Having All Records Filter Error",
+		Name: "Having All RecordSet Filter Error",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
-					parser.NewString("group2"),
+			RecordSet: RecordSet{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewString("group2"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("4"),
-					parser.NewString("str4"),
-					parser.NewString("group2"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("4"),
+					value.NewString("str4"),
+					value.NewString("group2"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -1871,13 +1887,8 @@ func TestView_Having(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(v.View.filteredIndices, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, v.View.filteredIndices, v.Result)
-		}
-		if v.Record != nil {
-			if !reflect.DeepEqual(v.View.Records, v.Record) {
-				t.Errorf("%s: result = %s, want %s", v.Name, v.View.Records, v.Record)
-			}
+		if !reflect.DeepEqual(v.View.RecordSet, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, v.View.RecordSet, v.Result)
 		}
 	}
 }
@@ -1900,38 +1911,38 @@ var viewSelectTests = []struct {
 				{View: "table2", Column: "column3", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewInteger(1),
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewInteger(1),
-					parser.NewString("2"),
-					parser.NewString("str22"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(1),
+					value.NewString("2"),
+					value.NewString("str22"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewInteger(1),
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewInteger(2),
-					parser.NewString("3"),
-					parser.NewString("str33"),
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(2),
+					value.NewString("3"),
+					value.NewString("str33"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewInteger(1),
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewInteger(3),
-					parser.NewString("1"),
-					parser.NewString("str44"),
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(3),
+					value.NewString("1"),
+					value.NewString("str44"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewInteger(2),
-					parser.NewString("2"),
-					parser.NewString("str2"),
-					parser.NewInteger(1),
-					parser.NewString("2"),
-					parser.NewString("str22"),
+				NewRecord([]value.Primary{
+					value.NewInteger(2),
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewInteger(1),
+					value.NewString("2"),
+					value.NewString("str22"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -1942,11 +1953,11 @@ var viewSelectTests = []struct {
 				parser.Field{Object: parser.AllColumns{}},
 				parser.Field{Object: parser.NewIntegerValueFromString("1"), Alias: parser.Identifier{Literal: "a"}},
 				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}, Alias: parser.Identifier{Literal: "c2a"}},
-				parser.Field{Object: parser.ColumnNumber{View: parser.Identifier{Literal: "table2"}, Number: parser.NewInteger(1)}, Alias: parser.Identifier{Literal: "t21"}},
-				parser.Field{Object: parser.ColumnNumber{View: parser.Identifier{Literal: "table2"}, Number: parser.NewInteger(1)}, Alias: parser.Identifier{Literal: "t21a"}},
+				parser.Field{Object: parser.ColumnNumber{View: parser.Identifier{Literal: "table2"}, Number: value.NewInteger(1)}, Alias: parser.Identifier{Literal: "t21"}},
+				parser.Field{Object: parser.ColumnNumber{View: parser.Identifier{Literal: "table2"}, Number: value.NewInteger(1)}, Alias: parser.Identifier{Literal: "t21a"}},
 				parser.Field{Object: parser.PrimitiveType{
 					Literal: "2012-01-01",
-					Value:   parser.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
+					Value:   value.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
 				}},
 			},
 		},
@@ -1961,46 +1972,46 @@ var viewSelectTests = []struct {
 				{Column: "1", Aliases: []string{"a"}},
 				{Column: "2012-01-01T00:00:00-08:00"},
 			},
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewInteger(1),
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewInteger(1),
-					parser.NewString("2"),
-					parser.NewString("str22"),
-					parser.NewInteger(1),
-					parser.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(1),
+					value.NewString("2"),
+					value.NewString("str22"),
+					value.NewInteger(1),
+					value.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewInteger(1),
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewInteger(2),
-					parser.NewString("3"),
-					parser.NewString("str33"),
-					parser.NewInteger(1),
-					parser.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(2),
+					value.NewString("3"),
+					value.NewString("str33"),
+					value.NewInteger(1),
+					value.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewInteger(1),
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewInteger(3),
-					parser.NewString("1"),
-					parser.NewString("str44"),
-					parser.NewInteger(1),
-					parser.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(3),
+					value.NewString("1"),
+					value.NewString("str44"),
+					value.NewInteger(1),
+					value.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewInteger(2),
-					parser.NewString("2"),
-					parser.NewString("str2"),
-					parser.NewInteger(1),
-					parser.NewString("2"),
-					parser.NewString("str22"),
-					parser.NewInteger(1),
-					parser.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
+				NewRecord([]value.Primary{
+					value.NewInteger(2),
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewInteger(1),
+					value.NewString("2"),
+					value.NewString("str22"),
+					value.NewInteger(1),
+					value.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
 				}),
 			},
 			Filter:       NewEmptyFilter(),
@@ -2018,38 +2029,38 @@ var viewSelectTests = []struct {
 				{View: "table2", Column: "column3", IsFromTable: true},
 				{View: "table2", Column: "column4", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewInteger(1),
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewInteger(1),
-					parser.NewString("2"),
-					parser.NewString("str22"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(1),
+					value.NewString("2"),
+					value.NewString("str22"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewInteger(1),
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewInteger(2),
-					parser.NewString("3"),
-					parser.NewString("str33"),
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(2),
+					value.NewString("3"),
+					value.NewString("str33"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewInteger(1),
-					parser.NewString("1"),
-					parser.NewString("str1"),
-					parser.NewInteger(3),
-					parser.NewString("4"),
-					parser.NewString("str44"),
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(3),
+					value.NewString("4"),
+					value.NewString("str44"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewInteger(2),
-					parser.NewString("2"),
-					parser.NewString("str2"),
-					parser.NewInteger(1),
-					parser.NewString("2"),
-					parser.NewString("str22"),
+				NewRecord([]value.Primary{
+					value.NewInteger(2),
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewInteger(1),
+					value.NewString("2"),
+					value.NewString("str22"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -2066,14 +2077,14 @@ var viewSelectTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{Column: "1", Aliases: []string{"a"}},
 			},
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("1"),
-					parser.NewInteger(1),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("2"),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewInteger(1),
 				}),
 			},
 			Filter:       NewEmptyFilter(),
@@ -2088,14 +2099,14 @@ var viewSelectTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -2120,12 +2131,12 @@ var viewSelectTests = []struct {
 				{View: "table1", Column: "column2", IsFromTable: true},
 				{Column: "sum(column1)"},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				{
-					NewGroupCell([]parser.Primary{parser.NewInteger(1), parser.NewInteger(2)}),
-					NewGroupCell([]parser.Primary{parser.NewString("1"), parser.NewString("2")}),
-					NewGroupCell([]parser.Primary{parser.NewString("str1"), parser.NewString("str2")}),
-					NewCell(parser.NewInteger(3)),
+					NewGroupCell([]value.Primary{value.NewInteger(1), value.NewInteger(2)}),
+					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("2")}),
+					NewGroupCell([]value.Primary{value.NewString("str1"), value.NewString("str2")}),
+					NewCell(value.NewInteger(3)),
 				},
 			},
 			Filter:       NewEmptyFilter(),
@@ -2140,14 +2151,14 @@ var viewSelectTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -2169,21 +2180,21 @@ var viewSelectTests = []struct {
 		Error: "[L:- C:-] field column2 is not a group key",
 	},
 	{
-		Name: "Select Aggregate Function All Records Lazy Evaluation",
+		Name: "Select Aggregate Function All RecordSet Lazy Evaluation",
 		View: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -2214,13 +2225,13 @@ var viewSelectTests = []struct {
 				{Column: "1"},
 				{Column: "sum(column1) + 1"},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				{
-					NewGroupCell([]parser.Primary{parser.NewInteger(1), parser.NewInteger(2)}),
-					NewGroupCell([]parser.Primary{parser.NewString("1"), parser.NewString("2")}),
-					NewGroupCell([]parser.Primary{parser.NewString("str1"), parser.NewString("str2")}),
-					NewCell(parser.NewInteger(1)),
-					NewCell(parser.NewInteger(4)),
+					NewGroupCell([]value.Primary{value.NewInteger(1), value.NewInteger(2)}),
+					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("2")}),
+					NewGroupCell([]value.Primary{value.NewString("str1"), value.NewString("str2")}),
+					NewCell(value.NewInteger(1)),
+					NewCell(value.NewInteger(4)),
 				},
 			},
 			Filter:       NewEmptyFilter(),
@@ -2231,26 +2242,26 @@ var viewSelectTests = []struct {
 		Name: "Select Analytic Function",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(3),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(3),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(5),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(5),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(4),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(4),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -2290,31 +2301,31 @@ var viewSelectTests = []struct {
 				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
 				{Column: "row_number() over (partition by column1 order by column2)", Aliases: []string{"rownum"}},
 			},
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
-					parser.NewInteger(1),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
-					parser.NewInteger(2),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
+					value.NewInteger(2),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(3),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(3),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(4),
-					parser.NewInteger(2),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(4),
+					value.NewInteger(2),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(5),
-					parser.NewInteger(3),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(5),
+					value.NewInteger(3),
 				}),
 			},
 			Filter:       NewEmptyFilter(),
@@ -2325,26 +2336,26 @@ var viewSelectTests = []struct {
 		Name: "Select Analytic Function Not Exist Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(3),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(3),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(5),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(5),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(4),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(4),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -2384,26 +2395,26 @@ var viewSelectTests = []struct {
 		Name: "Select Analytic Function Partition Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(3),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(3),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(5),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(5),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(4),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(4),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -2443,26 +2454,26 @@ var viewSelectTests = []struct {
 		Name: "Select Analytic Function Order Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(3),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(3),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(5),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(5),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(4),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(4),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -2502,30 +2513,30 @@ var viewSelectTests = []struct {
 		Name: "Select User Defined Analytic Function",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(3),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(3),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(5),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(5),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(4),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(4),
 				}),
 			},
 			Filter: &Filter{
-				FunctionsList: UserDefinedFunctionsList{
+				Functions: UserDefinedFunctionScopes{
 					UserDefinedFunctionMap{
 						"USERAGGFUNC": &UserDefinedFunction{
 							Name:         parser.Identifier{Literal: "useraggfunc"},
@@ -2534,11 +2545,11 @@ var viewSelectTests = []struct {
 							RequiredArgs: 0,
 							Statements: []parser.Statement{
 								parser.VariableDeclaration{
-									Assignments: []parser.Expression{
-										parser.VariableAssignment{
+									Assignments: []parser.VariableAssignment{
+										{
 											Variable: parser.Variable{Name: "@value"},
 										},
-										parser.VariableAssignment{
+										{
 											Variable: parser.Variable{Name: "@fetch"},
 										},
 									},
@@ -2604,31 +2615,31 @@ var viewSelectTests = []struct {
 				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
 				{Column: "useraggfunc(column2) over ()"},
 			},
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
-					parser.NewInteger(15),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
+					value.NewInteger(15),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(3),
-					parser.NewInteger(15),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(3),
+					value.NewInteger(15),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(5),
-					parser.NewInteger(15),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(5),
+					value.NewInteger(15),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
-					parser.NewInteger(15),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
+					value.NewInteger(15),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(4),
-					parser.NewInteger(15),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(4),
+					value.NewInteger(15),
 				}),
 			},
 			selectFields: []int{0, 1, 2},
@@ -2654,8 +2665,8 @@ func TestView_Select(t *testing.T) {
 		if !reflect.DeepEqual(v.View.Header, v.Result.Header) {
 			t.Errorf("%s: header = %s, want %s", v.Name, v.View.Header, v.Result.Header)
 		}
-		if !reflect.DeepEqual(v.View.Records, v.Result.Records) {
-			t.Errorf("%s: records = %s, want %s", v.Name, v.View.Records, v.Result.Records)
+		if !reflect.DeepEqual(v.View.RecordSet, v.Result.RecordSet) {
+			t.Errorf("%s: records = %s, want %s", v.Name, v.View.RecordSet, v.Result.RecordSet)
 		}
 		if !reflect.DeepEqual(v.View.selectFields, v.Result.selectFields) {
 			t.Errorf("%s: select indices = %s, want %s", v.Name, v.View.selectFields, v.Result.selectFields)
@@ -2679,31 +2690,31 @@ var viewOrderByTests = []struct {
 				{View: "table1", Column: "column2", IsFromTable: true},
 				{View: "table1", Column: "column3", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("3"),
-					parser.NewString("2"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("3"),
+					value.NewString("2"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("4"),
-					parser.NewString("3"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("4"),
+					value.NewString("3"),
 				}),
-				NewRecordWithId(3, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("4"),
-					parser.NewString("3"),
+				NewRecordWithId(3, []value.Primary{
+					value.NewString("1"),
+					value.NewString("4"),
+					value.NewString("3"),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("3"),
-					parser.NewNull(),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("1"),
+					value.NewString("3"),
+					value.NewNull(),
 				}),
-				NewRecordWithId(5, []parser.Primary{
-					parser.NewNull(),
-					parser.NewString("2"),
-					parser.NewString("4"),
+				NewRecordWithId(5, []value.Primary{
+					value.NewNull(),
+					value.NewString("2"),
+					value.NewString("4"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -2733,36 +2744,36 @@ var viewOrderByTests = []struct {
 				{View: "table1", Column: "column3", IsFromTable: true},
 				{Column: "1"},
 			},
-			Records: []Record{
-				NewRecordWithId(5, []parser.Primary{
-					parser.NewNull(),
-					parser.NewString("2"),
-					parser.NewString("4"),
-					parser.NewInteger(1),
+			RecordSet: []Record{
+				NewRecordWithId(5, []value.Primary{
+					value.NewNull(),
+					value.NewString("2"),
+					value.NewString("4"),
+					value.NewInteger(1),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("4"),
-					parser.NewString("3"),
-					parser.NewInteger(1),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("4"),
+					value.NewString("3"),
+					value.NewInteger(1),
 				}),
-				NewRecordWithId(3, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("4"),
-					parser.NewString("3"),
-					parser.NewInteger(1),
+				NewRecordWithId(3, []value.Primary{
+					value.NewString("1"),
+					value.NewString("4"),
+					value.NewString("3"),
+					value.NewInteger(1),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("3"),
-					parser.NewNull(),
-					parser.NewInteger(1),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("1"),
+					value.NewString("3"),
+					value.NewNull(),
+					value.NewInteger(1),
 				}),
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("3"),
-					parser.NewString("2"),
-					parser.NewInteger(1),
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("3"),
+					value.NewString("2"),
+					value.NewInteger(1),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -2772,40 +2783,40 @@ var viewOrderByTests = []struct {
 		Name: "Order By with Cached SortValues",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("3"),
-					parser.NewString("2"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("3"),
+					value.NewString("2"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("4"),
-					parser.NewString("3"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("4"),
+					value.NewString("3"),
 				}),
-				NewRecordWithId(3, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("4"),
-					parser.NewString("3"),
+				NewRecordWithId(3, []value.Primary{
+					value.NewString("1"),
+					value.NewString("4"),
+					value.NewString("3"),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("3"),
-					parser.NewNull(),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("1"),
+					value.NewString("3"),
+					value.NewNull(),
 				}),
-				NewRecordWithId(5, []parser.Primary{
-					parser.NewNull(),
-					parser.NewString("2"),
-					parser.NewString("4"),
+				NewRecordWithId(5, []value.Primary{
+					value.NewNull(),
+					value.NewString("2"),
+					value.NewString("4"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
-			sortValues: [][]*SortValue{
-				{nil, nil, NewSortValue(parser.NewString("3")), nil},
-				{nil, nil, NewSortValue(parser.NewString("4")), nil},
-				{nil, nil, NewSortValue(parser.NewString("4")), nil},
-				{nil, nil, NewSortValue(parser.NewString("3")), nil},
-				{nil, nil, NewSortValue(parser.NewString("2")), nil},
+			sortValuesInEachCell: [][]*SortValue{
+				{nil, nil, NewSortValue(value.NewString("3")), nil},
+				{nil, nil, NewSortValue(value.NewString("4")), nil},
+				{nil, nil, NewSortValue(value.NewString("4")), nil},
+				{nil, nil, NewSortValue(value.NewString("3")), nil},
+				{nil, nil, NewSortValue(value.NewString("2")), nil},
 			},
 		},
 		OrderBy: parser.OrderByClause{
@@ -2817,40 +2828,40 @@ var viewOrderByTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
-			Records: []Record{
-				NewRecordWithId(5, []parser.Primary{
-					parser.NewNull(),
-					parser.NewString("2"),
-					parser.NewString("4"),
+			RecordSet: []Record{
+				NewRecordWithId(5, []value.Primary{
+					value.NewNull(),
+					value.NewString("2"),
+					value.NewString("4"),
 				}),
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("3"),
-					parser.NewString("2"),
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("3"),
+					value.NewString("2"),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("3"),
-					parser.NewNull(),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("1"),
+					value.NewString("3"),
+					value.NewNull(),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("4"),
-					parser.NewString("3"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("4"),
+					value.NewString("3"),
 				}),
-				NewRecordWithId(3, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("4"),
-					parser.NewString("3"),
+				NewRecordWithId(3, []value.Primary{
+					value.NewString("1"),
+					value.NewString("4"),
+					value.NewString("3"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
-			sortValues: [][]*SortValue{
-				{nil, nil, NewSortValue(parser.NewString("2")), nil},
-				{nil, nil, NewSortValue(parser.NewString("3")), nil},
-				{nil, nil, NewSortValue(parser.NewString("3")), nil},
-				{nil, nil, NewSortValue(parser.NewString("4")), nil},
-				{nil, nil, NewSortValue(parser.NewString("4")), nil},
+			sortValuesInEachCell: [][]*SortValue{
+				{nil, nil, NewSortValue(value.NewString("2")), nil},
+				{nil, nil, NewSortValue(value.NewString("3")), nil},
+				{nil, nil, NewSortValue(value.NewString("3")), nil},
+				{nil, nil, NewSortValue(value.NewString("4")), nil},
+				{nil, nil, NewSortValue(value.NewString("4")), nil},
 			},
 		},
 	},
@@ -2862,26 +2873,26 @@ var viewOrderByTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewNull(),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewNull(),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("2"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("2"),
 				}),
-				NewRecordWithId(3, []parser.Primary{
-					parser.NewNull(),
-					parser.NewString("2"),
+				NewRecordWithId(3, []value.Primary{
+					value.NewNull(),
+					value.NewString("2"),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewNull(),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("1"),
+					value.NewNull(),
 				}),
-				NewRecordWithId(5, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("2"),
+				NewRecordWithId(5, []value.Primary{
+					value.NewString("1"),
+					value.NewString("2"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -2904,26 +2915,26 @@ var viewOrderByTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewNull(),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewNull(),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewNull(),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("1"),
+					value.NewNull(),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("2"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("2"),
 				}),
-				NewRecordWithId(5, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("2"),
+				NewRecordWithId(5, []value.Primary{
+					value.NewString("1"),
+					value.NewString("2"),
 				}),
-				NewRecordWithId(3, []parser.Primary{
-					parser.NewNull(),
-					parser.NewString("2"),
+				NewRecordWithId(3, []value.Primary{
+					value.NewNull(),
+					value.NewString("2"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -2937,14 +2948,14 @@ var viewOrderByTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewNull(),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewNull(),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("2"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("2"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -2984,8 +2995,8 @@ func TestView_OrderBy(t *testing.T) {
 		if !reflect.DeepEqual(v.View.Header, v.Result.Header) {
 			t.Errorf("%s: header = %s, want %s", v.Name, v.View.Header, v.Result.Header)
 		}
-		if !reflect.DeepEqual(v.View.Records, v.Result.Records) {
-			t.Errorf("%s: records = %s, want %s", v.Name, v.View.Records, v.Result.Records)
+		if !reflect.DeepEqual(v.View.RecordSet, v.Result.RecordSet) {
+			t.Errorf("%s: records = %s, want %s", v.Name, v.View.RecordSet, v.Result.RecordSet)
 		}
 	}
 }
@@ -3001,14 +3012,14 @@ var viewExtendRecordCapacity = []struct {
 		Name: "ExtendRecordCapacity",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: Records{
-				NewRecord([]parser.Primary{
-					parser.NewInteger(1),
-					parser.NewInteger(2),
+			RecordSet: RecordSet{
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewInteger(2),
 				}),
 			},
 			Filter: &Filter{
-				FunctionsList: UserDefinedFunctionsList{
+				Functions: UserDefinedFunctionScopes{
 					UserDefinedFunctionMap{
 						"USERFUNC": &UserDefinedFunction{
 							Name: parser.Identifier{Literal: "userfunc"},
@@ -3096,14 +3107,14 @@ var viewExtendRecordCapacity = []struct {
 		Name: "ExtendRecordCapacity UserDefinedFunction Not Grouped Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: Records{
-				NewRecord([]parser.Primary{
-					parser.NewInteger(1),
-					parser.NewInteger(2),
+			RecordSet: RecordSet{
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewInteger(2),
 				}),
 			},
 			Filter: &Filter{
-				FunctionsList: UserDefinedFunctionsList{
+				Functions: UserDefinedFunctionScopes{
 					UserDefinedFunctionMap{
 						"USERFUNC": &UserDefinedFunction{
 							Name: parser.Identifier{Literal: "userfunc"},
@@ -3134,10 +3145,10 @@ var viewExtendRecordCapacity = []struct {
 		Name: "ExtendRecordCapacity AggregateFunction Not Grouped Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: Records{
-				NewRecord([]parser.Primary{
-					parser.NewInteger(1),
-					parser.NewInteger(2),
+			RecordSet: RecordSet{
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewInteger(2),
 				}),
 			},
 		},
@@ -3155,10 +3166,10 @@ var viewExtendRecordCapacity = []struct {
 		Name: "ExtendRecordCapacity ListAgg Not Grouped Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: Records{
-				NewRecord([]parser.Primary{
-					parser.NewInteger(1),
-					parser.NewInteger(2),
+			RecordSet: RecordSet{
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewInteger(2),
 				}),
 			},
 		},
@@ -3183,10 +3194,10 @@ var viewExtendRecordCapacity = []struct {
 		Name: "ExtendRecordCapacity AnalyticFunction Partition Value Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: Records{
-				NewRecord([]parser.Primary{
-					parser.NewInteger(1),
-					parser.NewInteger(2),
+			RecordSet: RecordSet{
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewInteger(2),
 				}),
 			},
 		},
@@ -3224,10 +3235,10 @@ var viewExtendRecordCapacity = []struct {
 		Name: "ExtendRecordCapacity AnalyticFunction OrderBy Value Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: Records{
-				NewRecord([]parser.Primary{
-					parser.NewInteger(1),
-					parser.NewInteger(2),
+			RecordSet: RecordSet{
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewInteger(2),
 				}),
 			},
 		},
@@ -3278,8 +3289,8 @@ func TestView_ExtendRecordCapacity(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if cap(v.View.Records[0]) != v.Result {
-			t.Errorf("%s: record capacity = %d, want %d", v.Name, cap(v.View.Records[0]), v.Result)
+		if cap(v.View.RecordSet[0]) != v.Result {
+			t.Errorf("%s: record capacity = %d, want %d", v.Name, cap(v.View.RecordSet[0]), v.Result)
 		}
 	}
 }
@@ -3299,26 +3310,26 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(3, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(3, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -3330,14 +3341,14 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -3351,30 +3362,30 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(3, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(3, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
-			recordSortValues: []SortValues{
+			sortValuesInEachRecord: []SortValues{
 				{
 					&SortValue{Type: SORT_VALUE_INTEGER, Integer: 1},
 					&SortValue{Type: SORT_VALUE_STRING, String: "str1"},
@@ -3404,22 +3415,22 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(3, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(3, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
-			recordSortValues: []SortValues{
+			sortValuesInEachRecord: []SortValues{
 				{
 					&SortValue{Type: SORT_VALUE_INTEGER, Integer: 1},
 					&SortValue{Type: SORT_VALUE_STRING, String: "str1"},
@@ -3451,22 +3462,22 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(3, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(3, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -3479,18 +3490,18 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(3, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(3, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -3505,26 +3516,26 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(3, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(3, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -3536,26 +3547,26 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(3, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(3, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -3569,26 +3580,26 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(3, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(3, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("3"),
-					parser.NewString("str3"),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -3600,26 +3611,26 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{},
-			Filter:  NewEmptyFilter(),
+			RecordSet: []Record{},
+			Filter:    NewEmptyFilter(),
 		},
 	},
 	{
-		Name: "Limit Greater Than Records",
+		Name: "Limit Greater Than RecordSet",
 		View: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -3631,14 +3642,14 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -3652,14 +3663,14 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -3675,14 +3686,14 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -3698,14 +3709,14 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -3717,8 +3728,8 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{},
-			Filter:  NewEmptyFilter(),
+			RecordSet: []Record{},
+			Filter:    NewEmptyFilter(),
 		},
 	},
 	{
@@ -3729,14 +3740,14 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -3782,22 +3793,22 @@ var viewOffsetTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(3, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(3, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -3809,10 +3820,10 @@ var viewOffsetTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+			RecordSet: []Record{
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -3827,22 +3838,22 @@ var viewOffsetTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(3, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(3, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -3854,9 +3865,9 @@ var viewOffsetTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{},
-			Filter:  NewEmptyFilter(),
-			offset:  4,
+			RecordSet: []Record{},
+			Filter:    NewEmptyFilter(),
+			offset:    4,
 		},
 	},
 	{
@@ -3867,22 +3878,22 @@ var viewOffsetTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(3, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(3, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -3898,22 +3909,22 @@ var viewOffsetTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(3, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(3, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(4, []parser.Primary{
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecordWithId(4, []value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -3929,14 +3940,14 @@ var viewOffsetTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -3948,14 +3959,14 @@ var viewOffsetTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
-				NewRecordWithId(1, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecordWithId(1, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecordWithId(2, []parser.Primary{
-					parser.NewString("1"),
-					parser.NewString("str1"),
+				NewRecordWithId(2, []value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -4015,26 +4026,26 @@ var viewInsertValuesTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewInteger(1),
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewInteger(2),
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecord([]value.Primary{
+					value.NewInteger(2),
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewNull(),
-					parser.NewInteger(3),
-					parser.NewNull(),
+				NewRecord([]value.Primary{
+					value.NewNull(),
+					value.NewInteger(3),
+					value.NewNull(),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewNull(),
-					parser.NewInteger(4),
-					parser.NewNull(),
+				NewRecord([]value.Primary{
+					value.NewNull(),
+					value.NewInteger(4),
+					value.NewNull(),
 				}),
 			},
 			Filter:          NewEmptyFilter(),
@@ -4095,14 +4106,14 @@ var viewInsertValuesTests = []struct {
 func TestView_InsertValues(t *testing.T) {
 	view := &View{
 		Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-		Records: []Record{
-			NewRecordWithId(1, []parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
+		RecordSet: []Record{
+			NewRecordWithId(1, []value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
 			}),
-			NewRecordWithId(2, []parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
+			NewRecordWithId(2, []value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
 			}),
 		},
 		Filter: NewEmptyFilter(),
@@ -4151,21 +4162,21 @@ var viewInsertFromQueryTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewInteger(1),
-					parser.NewString("1"),
-					parser.NewString("str1"),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewInteger(2),
-					parser.NewString("2"),
-					parser.NewString("str2"),
+				NewRecord([]value.Primary{
+					value.NewInteger(2),
+					value.NewString("2"),
+					value.NewString("str2"),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewNull(),
-					parser.NewInteger(3),
-					parser.NewNull(),
+				NewRecord([]value.Primary{
+					value.NewNull(),
+					value.NewInteger(3),
+					value.NewNull(),
 				}),
 			},
 			Filter:          NewEmptyFilter(),
@@ -4210,14 +4221,14 @@ var viewInsertFromQueryTests = []struct {
 func TestView_InsertFromQuery(t *testing.T) {
 	view := &View{
 		Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-		Records: []Record{
-			NewRecordWithId(1, []parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
+		RecordSet: []Record{
+			NewRecordWithId(1, []value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
 			}),
-			NewRecordWithId(2, []parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
+			NewRecordWithId(2, []value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
 			}),
 		},
 		Filter: NewEmptyFilter(),
@@ -4250,26 +4261,26 @@ func TestView_Fix(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: []Record{
-			NewRecordWithId(1, []parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
+		RecordSet: []Record{
+			NewRecordWithId(1, []value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
 			}),
-			NewRecordWithId(2, []parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
+			NewRecordWithId(2, []value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
 			}),
 		},
 		selectFields: []int{2},
 	}
 	expect := &View{
 		Header: NewHeader("table1", []string{"column2"}),
-		Records: []Record{
-			NewRecord([]parser.Primary{
-				parser.NewString("str1"),
+		RecordSet: []Record{
+			NewRecord([]value.Primary{
+				value.NewString("str1"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("str1"),
+			NewRecord([]value.Primary{
+				value.NewString("str1"),
 			}),
 		},
 		selectFields: []int(nil),
@@ -4287,22 +4298,22 @@ func TestView_Union(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: Records{
-			NewRecord([]parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
+		RecordSet: RecordSet{
+			NewRecord([]value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
+			NewRecord([]value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
+			NewRecord([]value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
+			NewRecord([]value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
 			}),
 		},
 	}
@@ -4312,14 +4323,14 @@ func TestView_Union(t *testing.T) {
 			{View: "table2", Column: "column3", IsFromTable: true},
 			{View: "table2", Column: "column4", IsFromTable: true},
 		},
-		Records: Records{
-			NewRecord([]parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
+		RecordSet: RecordSet{
+			NewRecord([]value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("3"),
-				parser.NewString("str3"),
+			NewRecord([]value.Primary{
+				value.NewString("3"),
+				value.NewString("str3"),
 			}),
 		},
 	}
@@ -4329,18 +4340,18 @@ func TestView_Union(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: Records{
-			NewRecord([]parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
+		RecordSet: RecordSet{
+			NewRecord([]value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
+			NewRecord([]value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("3"),
-				parser.NewString("str3"),
+			NewRecord([]value.Primary{
+				value.NewString("3"),
+				value.NewString("str3"),
 			}),
 		},
 	}
@@ -4355,22 +4366,22 @@ func TestView_Union(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: Records{
-			NewRecord([]parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
+		RecordSet: RecordSet{
+			NewRecord([]value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
+			NewRecord([]value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
+			NewRecord([]value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
+			NewRecord([]value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
 			}),
 		},
 	}
@@ -4380,30 +4391,30 @@ func TestView_Union(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: Records{
-			NewRecord([]parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
+		RecordSet: RecordSet{
+			NewRecord([]value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
+			NewRecord([]value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
+			NewRecord([]value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
+			NewRecord([]value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
+			NewRecord([]value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("3"),
-				parser.NewString("str3"),
+			NewRecord([]value.Primary{
+				value.NewString("3"),
+				value.NewString("str3"),
 			}),
 		},
 	}
@@ -4420,22 +4431,22 @@ func TestView_Except(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: Records{
-			NewRecord([]parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
+		RecordSet: RecordSet{
+			NewRecord([]value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
+			NewRecord([]value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
+			NewRecord([]value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
+			NewRecord([]value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
 			}),
 		},
 	}
@@ -4445,14 +4456,14 @@ func TestView_Except(t *testing.T) {
 			{View: "table2", Column: "column3", IsFromTable: true},
 			{View: "table2", Column: "column4", IsFromTable: true},
 		},
-		Records: Records{
-			NewRecord([]parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
+		RecordSet: RecordSet{
+			NewRecord([]value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("3"),
-				parser.NewString("str3"),
+			NewRecord([]value.Primary{
+				value.NewString("3"),
+				value.NewString("str3"),
 			}),
 		},
 	}
@@ -4462,10 +4473,10 @@ func TestView_Except(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: Records{
-			NewRecord([]parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
+		RecordSet: RecordSet{
+			NewRecord([]value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
 			}),
 		},
 	}
@@ -4480,22 +4491,22 @@ func TestView_Except(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: Records{
-			NewRecord([]parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
+		RecordSet: RecordSet{
+			NewRecord([]value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
+			NewRecord([]value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
+			NewRecord([]value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
+			NewRecord([]value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
 			}),
 		},
 	}
@@ -4505,14 +4516,14 @@ func TestView_Except(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: Records{
-			NewRecord([]parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
+		RecordSet: RecordSet{
+			NewRecord([]value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
+			NewRecord([]value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
 			}),
 		},
 	}
@@ -4529,22 +4540,22 @@ func TestView_Intersect(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: Records{
-			NewRecord([]parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
+		RecordSet: RecordSet{
+			NewRecord([]value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
+			NewRecord([]value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
+			NewRecord([]value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
+			NewRecord([]value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
 			}),
 		},
 	}
@@ -4554,14 +4565,14 @@ func TestView_Intersect(t *testing.T) {
 			{View: "table2", Column: "column3", IsFromTable: true},
 			{View: "table2", Column: "column4", IsFromTable: true},
 		},
-		Records: Records{
-			NewRecord([]parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
+		RecordSet: RecordSet{
+			NewRecord([]value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("3"),
-				parser.NewString("str3"),
+			NewRecord([]value.Primary{
+				value.NewString("3"),
+				value.NewString("str3"),
 			}),
 		},
 	}
@@ -4571,10 +4582,10 @@ func TestView_Intersect(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: Records{
-			NewRecord([]parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
+		RecordSet: RecordSet{
+			NewRecord([]value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
 			}),
 		},
 	}
@@ -4589,22 +4600,22 @@ func TestView_Intersect(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: Records{
-			NewRecord([]parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
+		RecordSet: RecordSet{
+			NewRecord([]value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("1"),
-				parser.NewString("str1"),
+			NewRecord([]value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
+			NewRecord([]value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
+			NewRecord([]value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
 			}),
 		},
 	}
@@ -4614,14 +4625,14 @@ func TestView_Intersect(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: Records{
-			NewRecord([]parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
+		RecordSet: RecordSet{
+			NewRecord([]value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
 			}),
-			NewRecord([]parser.Primary{
-				parser.NewString("2"),
-				parser.NewString("str2"),
+			NewRecord([]value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
 			}),
 		},
 	}
@@ -4651,7 +4662,7 @@ func TestView_FieldIndex(t *testing.T) {
 
 	columnNum := parser.ColumnNumber{
 		View:   parser.Identifier{Literal: "table1"},
-		Number: parser.NewInteger(2),
+		Number: value.NewInteger(2),
 	}
 	expect = 1
 
@@ -4720,10 +4731,10 @@ func TestView_FieldViewName(t *testing.T) {
 func TestView_InternalRecordId(t *testing.T) {
 	view := &View{
 		Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-		Records: []Record{
-			NewRecordWithId(0, []parser.Primary{parser.NewInteger(1), parser.NewString("str1")}),
-			NewRecordWithId(1, []parser.Primary{parser.NewInteger(2), parser.NewString("str2")}),
-			NewRecordWithId(2, []parser.Primary{parser.NewInteger(3), parser.NewString("str3")}),
+		RecordSet: []Record{
+			NewRecordWithId(0, []value.Primary{value.NewInteger(1), value.NewString("str1")}),
+			NewRecordWithId(1, []value.Primary{value.NewInteger(2), value.NewString("str2")}),
+			NewRecordWithId(2, []value.Primary{value.NewInteger(3), value.NewString("str3")}),
 		},
 	}
 	ref := "table1"
@@ -4735,7 +4746,7 @@ func TestView_InternalRecordId(t *testing.T) {
 		t.Errorf("field internal id = %d, want %d", id, expect)
 	}
 
-	view.Records[1][0] = NewCell(parser.NewNull())
+	view.RecordSet[1][0] = NewCell(value.NewNull())
 	expectError := "[L:- C:-] internal record id is empty"
 	_, err := view.InternalRecordId(ref, recordIndex)
 	if err.Error() != expectError {

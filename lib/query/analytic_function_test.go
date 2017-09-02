@@ -6,6 +6,7 @@ import (
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 var analyzeTests = []struct {
@@ -22,45 +23,45 @@ var analyzeTests = []struct {
 		CPU:  3,
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(2),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(2),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(2),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(2),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(3),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(3),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
 				}),
 			},
 			Filter: NewEmptyFilter(),
-			recordSortValues: []SortValues{
-				{NewSortValue(parser.NewInteger(1))},
-				{NewSortValue(parser.NewInteger(1))},
-				{NewSortValue(parser.NewInteger(1))},
-				{NewSortValue(parser.NewInteger(2))},
-				{NewSortValue(parser.NewInteger(2))},
-				{NewSortValue(parser.NewInteger(3))},
-				{NewSortValue(parser.NewInteger(2))},
+			sortValuesInEachRecord: []SortValues{
+				{NewSortValue(value.NewInteger(1))},
+				{NewSortValue(value.NewInteger(1))},
+				{NewSortValue(value.NewInteger(1))},
+				{NewSortValue(value.NewInteger(2))},
+				{NewSortValue(value.NewInteger(2))},
+				{NewSortValue(value.NewInteger(3))},
+				{NewSortValue(value.NewInteger(2))},
 			},
 		},
 		Function: parser.AnalyticFunction{
@@ -83,61 +84,61 @@ var analyzeTests = []struct {
 		PartitionIndices: []int{0},
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
-					parser.NewInteger(1),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(1),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(1),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(2),
-					parser.NewInteger(3),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(2),
+					value.NewInteger(3),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(2),
-					parser.NewInteger(3),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(2),
+					value.NewInteger(3),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(3),
-					parser.NewInteger(5),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(3),
+					value.NewInteger(5),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
-					parser.NewInteger(2),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
+					value.NewInteger(2),
 				}),
 			},
 			Filter: NewEmptyFilter(),
-			sortValues: [][]*SortValue{
-				{NewSortValue(parser.NewString("a")), nil},
-				{NewSortValue(parser.NewString("b")), nil},
-				{NewSortValue(parser.NewString("b")), nil},
-				{NewSortValue(parser.NewString("b")), nil},
-				{NewSortValue(parser.NewString("b")), nil},
-				{NewSortValue(parser.NewString("b")), nil},
-				{NewSortValue(parser.NewString("a")), nil},
+			sortValuesInEachCell: [][]*SortValue{
+				{NewSortValue(value.NewString("a")), nil},
+				{NewSortValue(value.NewString("b")), nil},
+				{NewSortValue(value.NewString("b")), nil},
+				{NewSortValue(value.NewString("b")), nil},
+				{NewSortValue(value.NewString("b")), nil},
+				{NewSortValue(value.NewString("b")), nil},
+				{NewSortValue(value.NewString("a")), nil},
 			},
-			recordSortValues: []SortValues{
-				{NewSortValue(parser.NewInteger(1))},
-				{NewSortValue(parser.NewInteger(1))},
-				{NewSortValue(parser.NewInteger(1))},
-				{NewSortValue(parser.NewInteger(2))},
-				{NewSortValue(parser.NewInteger(2))},
-				{NewSortValue(parser.NewInteger(3))},
-				{NewSortValue(parser.NewInteger(2))},
+			sortValuesInEachRecord: []SortValues{
+				{NewSortValue(value.NewInteger(1))},
+				{NewSortValue(value.NewInteger(1))},
+				{NewSortValue(value.NewInteger(1))},
+				{NewSortValue(value.NewInteger(2))},
+				{NewSortValue(value.NewInteger(2))},
+				{NewSortValue(value.NewInteger(3))},
+				{NewSortValue(value.NewInteger(2))},
 			},
 		},
 	},
@@ -145,10 +146,10 @@ var analyzeTests = []struct {
 		Name: "Analyze AnalyticFunction Empty Record",
 		CPU:  3,
 		View: &View{
-			Header:           NewHeader("table1", []string{"column1", "column2"}),
-			Records:          []Record{},
-			Filter:           NewEmptyFilter(),
-			recordSortValues: []SortValues{},
+			Header:                 NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet:              []Record{},
+			Filter:                 NewEmptyFilter(),
+			sortValuesInEachRecord: []SortValues{},
 		},
 		Function: parser.AnalyticFunction{
 			Name: "rank",
@@ -169,25 +170,25 @@ var analyzeTests = []struct {
 		},
 		PartitionIndices: []int{0},
 		Result: &View{
-			Header:           NewHeader("table1", []string{"column1", "column2"}),
-			Records:          []Record{},
-			Filter:           NewEmptyFilter(),
-			sortValues:       [][]*SortValue{},
-			recordSortValues: []SortValues{},
+			Header:                 NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet:              []Record{},
+			Filter:                 NewEmptyFilter(),
+			sortValuesInEachCell:   [][]*SortValue{},
+			sortValuesInEachRecord: []SortValues{},
 		},
 	},
 	{
 		Name: "Analyze AnalyticFunction Argument Length Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -218,14 +219,14 @@ var analyzeTests = []struct {
 		Name: "Analyze AnalyticFunction Execution Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -242,26 +243,26 @@ var analyzeTests = []struct {
 		Name: "Analyze AggregateFunction",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewNull(),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewNull(),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -282,40 +283,40 @@ var analyzeTests = []struct {
 		PartitionIndices: []int{0},
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
-					parser.NewInteger(2),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
+					value.NewInteger(2),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
-					parser.NewInteger(2),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
+					value.NewInteger(2),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(1),
-					parser.NewInteger(3),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
+					value.NewInteger(3),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewNull(),
-					parser.NewInteger(3),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewNull(),
+					value.NewInteger(3),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(1),
-					parser.NewInteger(3),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
+					value.NewInteger(3),
 				}),
 			},
 			Filter: NewEmptyFilter(),
-			sortValues: [][]*SortValue{
-				{NewSortValue(parser.NewString("a")), nil},
-				{NewSortValue(parser.NewString("a")), nil},
-				{NewSortValue(parser.NewString("b")), nil},
-				{NewSortValue(parser.NewString("b")), nil},
-				{NewSortValue(parser.NewString("b")), nil},
+			sortValuesInEachCell: [][]*SortValue{
+				{NewSortValue(value.NewString("a")), nil},
+				{NewSortValue(value.NewString("a")), nil},
+				{NewSortValue(value.NewString("b")), nil},
+				{NewSortValue(value.NewString("b")), nil},
+				{NewSortValue(value.NewString("b")), nil},
 			},
 		},
 	},
@@ -323,35 +324,35 @@ var analyzeTests = []struct {
 		Name: "Analyze AggregateFunction With Distinct",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewNull(),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewNull(),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
 				}),
 			},
 			Filter: NewEmptyFilter(),
-			sortValues: [][]*SortValue{
-				{NewSortValue(parser.NewString("a")), nil},
-				{NewSortValue(parser.NewString("a")), nil},
-				{NewSortValue(parser.NewString("b")), nil},
-				{NewSortValue(parser.NewString("b")), nil},
-				{NewSortValue(parser.NewString("b")), nil},
+			sortValuesInEachCell: [][]*SortValue{
+				{NewSortValue(value.NewString("a")), nil},
+				{NewSortValue(value.NewString("a")), nil},
+				{NewSortValue(value.NewString("b")), nil},
+				{NewSortValue(value.NewString("b")), nil},
+				{NewSortValue(value.NewString("b")), nil},
 			},
 		},
 		Function: parser.AnalyticFunction{
@@ -371,40 +372,40 @@ var analyzeTests = []struct {
 		PartitionIndices: []int{0},
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
-					parser.NewInteger(2),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
+					value.NewInteger(2),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
-					parser.NewInteger(2),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
+					value.NewInteger(2),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(1),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewNull(),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewNull(),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(1),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
+					value.NewInteger(1),
 				}),
 			},
 			Filter: NewEmptyFilter(),
-			sortValues: [][]*SortValue{
-				{NewSortValue(parser.NewString("a")), nil},
-				{NewSortValue(parser.NewString("a")), nil},
-				{NewSortValue(parser.NewString("b")), nil},
-				{NewSortValue(parser.NewString("b")), nil},
-				{NewSortValue(parser.NewString("b")), nil},
+			sortValuesInEachCell: [][]*SortValue{
+				{NewSortValue(value.NewString("a")), nil},
+				{NewSortValue(value.NewString("a")), nil},
+				{NewSortValue(value.NewString("b")), nil},
+				{NewSortValue(value.NewString("b")), nil},
+				{NewSortValue(value.NewString("b")), nil},
 			},
 		},
 	},
@@ -412,14 +413,14 @@ var analyzeTests = []struct {
 		Name: "Analyze AggregateFunction Argument Length Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -440,14 +441,14 @@ var analyzeTests = []struct {
 		Name: "Analyze AggregateFunction Aggregate Value Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -471,30 +472,30 @@ var analyzeTests = []struct {
 		Name: "Analyze UserDefinedFunction",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewNull(),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewNull(),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
 				}),
 			},
 			Filter: &Filter{
-				FunctionsList: UserDefinedFunctionsList{
+				Functions: UserDefinedFunctionScopes{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
 							Name:        parser.Identifier{Literal: "useraggfunc"},
@@ -505,11 +506,11 @@ var analyzeTests = []struct {
 							},
 							Statements: []parser.Statement{
 								parser.VariableDeclaration{
-									Assignments: []parser.Expression{
-										parser.VariableAssignment{
+									Assignments: []parser.VariableAssignment{
+										{
 											Variable: parser.Variable{Name: "@value"},
 										},
-										parser.VariableAssignment{
+										{
 											Variable: parser.Variable{Name: "@fetch"},
 										},
 									},
@@ -578,42 +579,42 @@ var analyzeTests = []struct {
 		PartitionIndices: []int{0},
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
-					parser.NewInteger(2),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
+					value.NewInteger(2),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
-					parser.NewInteger(2),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
+					value.NewInteger(2),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(1),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewNull(),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewNull(),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("b"),
-					parser.NewInteger(1),
-					parser.NewInteger(1),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
+					value.NewInteger(1),
 				}),
 			},
-			sortValues: [][]*SortValue{
-				{NewSortValue(parser.NewString("a")), nil},
-				{NewSortValue(parser.NewString("a")), nil},
-				{NewSortValue(parser.NewString("b")), nil},
-				{NewSortValue(parser.NewString("b")), nil},
-				{NewSortValue(parser.NewString("b")), nil},
+			sortValuesInEachCell: [][]*SortValue{
+				{NewSortValue(value.NewString("a")), nil},
+				{NewSortValue(value.NewString("a")), nil},
+				{NewSortValue(value.NewString("b")), nil},
+				{NewSortValue(value.NewString("b")), nil},
+				{NewSortValue(value.NewString("b")), nil},
 			},
 			Filter: &Filter{
-				FunctionsList: UserDefinedFunctionsList{
+				Functions: UserDefinedFunctionScopes{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
 							Name:        parser.Identifier{Literal: "useraggfunc"},
@@ -624,11 +625,11 @@ var analyzeTests = []struct {
 							},
 							Statements: []parser.Statement{
 								parser.VariableDeclaration{
-									Assignments: []parser.Expression{
-										parser.VariableAssignment{
+									Assignments: []parser.VariableAssignment{
+										{
 											Variable: parser.Variable{Name: "@value"},
 										},
-										parser.VariableAssignment{
+										{
 											Variable: parser.Variable{Name: "@fetch"},
 										},
 									},
@@ -685,18 +686,18 @@ var analyzeTests = []struct {
 		Name: "Analyze UserDefinedFunction Argument Length Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
 				}),
 			},
 			Filter: &Filter{
-				FunctionsList: UserDefinedFunctionsList{
+				Functions: UserDefinedFunctionScopes{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
 							Name:        parser.Identifier{Literal: "useraggfunc"},
@@ -731,18 +732,18 @@ var analyzeTests = []struct {
 		Name: "Analyze UserDefinedFunction Argument Value Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
 				}),
 			},
 			Filter: &Filter{
-				FunctionsList: UserDefinedFunctionsList{
+				Functions: UserDefinedFunctionScopes{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
 							Name:        parser.Identifier{Literal: "useraggfunc"},
@@ -781,18 +782,18 @@ var analyzeTests = []struct {
 		Name: "Analyze UserDefinedFunction Execution Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
 				}),
 			},
 			Filter: &Filter{
-				FunctionsList: UserDefinedFunctionsList{
+				Functions: UserDefinedFunctionScopes{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
 							Name:        parser.Identifier{Literal: "useraggfunc"},
@@ -831,14 +832,14 @@ var analyzeTests = []struct {
 		Name: "Analyze Not Exist Function Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(1),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
 				}),
-				NewRecord([]parser.Primary{
-					parser.NewString("a"),
-					parser.NewInteger(2),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -907,7 +908,7 @@ type analyticFunctionExecuteTests struct {
 	Items      Partition
 	SortValues map[int]SortValues
 	Function   parser.AnalyticFunction
-	Result     map[int]parser.Primary
+	Result     map[int]value.Primary
 	Error      string
 }
 
@@ -916,54 +917,54 @@ var analyticFunctionTestFilter = &Filter{
 		{
 			View: &View{
 				Header: NewHeader("table1", []string{"column1", "column2"}),
-				Records: []Record{
-					NewRecord([]parser.Primary{
-						parser.NewString("a"),
-						parser.NewInteger(100),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("a"),
+						value.NewInteger(100),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("a"),
-						parser.NewInteger(200),
+					NewRecord([]value.Primary{
+						value.NewString("a"),
+						value.NewInteger(200),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("b"),
-						parser.NewNull(),
+					NewRecord([]value.Primary{
+						value.NewString("b"),
+						value.NewNull(),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("b"),
-						parser.NewInteger(200),
+					NewRecord([]value.Primary{
+						value.NewString("b"),
+						value.NewInteger(200),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("b"),
-						parser.NewInteger(300),
+					NewRecord([]value.Primary{
+						value.NewString("b"),
+						value.NewInteger(300),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("b"),
-						parser.NewInteger(500),
+					NewRecord([]value.Primary{
+						value.NewString("b"),
+						value.NewInteger(500),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("b"),
-						parser.NewInteger(800),
+					NewRecord([]value.Primary{
+						value.NewString("b"),
+						value.NewInteger(800),
 					}),
-					NewRecord([]parser.Primary{
-						parser.NewString("b"),
-						parser.NewNull(),
+					NewRecord([]value.Primary{
+						value.NewString("b"),
+						value.NewNull(),
 					}),
 				},
 				Filter: &Filter{
-					VariablesList: VariablesList{{}},
-					TempViewsList: TemporaryViewMapList{{}},
-					CursorsList:   CursorMapList{{}},
-					FunctionsList: UserDefinedFunctionsList{{}},
+					Variables: VariableScopes{{}},
+					TempViews: TemporaryViewScopes{{}},
+					Cursors:   CursorScopes{{}},
+					Functions: UserDefinedFunctionScopes{{}},
 				},
 			},
 			RecordIndex: 0,
 		},
 	},
-	VariablesList: VariablesList{{}},
-	TempViewsList: TemporaryViewMapList{{}},
-	CursorsList:   CursorMapList{{}},
-	FunctionsList: UserDefinedFunctionsList{{}},
+	Variables: VariableScopes{{}},
+	TempViews: TemporaryViewScopes{{}},
+	Cursors:   CursorScopes{{}},
+	Functions: UserDefinedFunctionScopes{{}},
 }
 
 func testAnalyticFunctionExecute(t *testing.T, fn AnalyticFunction, tests []analyticFunctionExecuteTests) {
@@ -973,9 +974,9 @@ func testAnalyticFunctionExecute(t *testing.T, fn AnalyticFunction, tests []anal
 			for i, v := range v.SortValues {
 				list[i] = v
 			}
-			analyticFunctionTestFilter.Records[0].View.recordSortValues = list
+			analyticFunctionTestFilter.Records[0].View.sortValuesInEachRecord = list
 		} else {
-			analyticFunctionTestFilter.Records[0].View.recordSortValues = nil
+			analyticFunctionTestFilter.Records[0].View.sortValuesInEachRecord = nil
 		}
 
 		result, err := fn.Execute(v.Items, v.Function, analyticFunctionTestFilter)
@@ -1028,12 +1029,12 @@ var rowNumberExecuteTests = []analyticFunctionExecuteTests{
 		Function: parser.AnalyticFunction{
 			Name: "row_number",
 		},
-		Result: map[int]parser.Primary{
-			2: parser.NewInteger(1),
-			4: parser.NewInteger(2),
-			1: parser.NewInteger(3),
-			3: parser.NewInteger(4),
-			5: parser.NewInteger(5),
+		Result: map[int]value.Primary{
+			2: value.NewInteger(1),
+			4: value.NewInteger(2),
+			1: value.NewInteger(3),
+			3: value.NewInteger(4),
+			5: value.NewInteger(5),
 		},
 	},
 }
@@ -1064,21 +1065,21 @@ var rankExecuteTests = []analyticFunctionExecuteTests{
 		Name:  "Rank Execute",
 		Items: Partition{2, 4, 1, 3, 5},
 		SortValues: map[int]SortValues{
-			2: {NewSortValue(parser.NewString("1"))},
-			4: {NewSortValue(parser.NewString("1"))},
-			1: {NewSortValue(parser.NewString("2"))},
-			3: {NewSortValue(parser.NewString("2"))},
-			5: {NewSortValue(parser.NewString("3"))},
+			2: {NewSortValue(value.NewString("1"))},
+			4: {NewSortValue(value.NewString("1"))},
+			1: {NewSortValue(value.NewString("2"))},
+			3: {NewSortValue(value.NewString("2"))},
+			5: {NewSortValue(value.NewString("3"))},
 		},
 		Function: parser.AnalyticFunction{
 			Name: "rank",
 		},
-		Result: map[int]parser.Primary{
-			2: parser.NewInteger(1),
-			4: parser.NewInteger(1),
-			1: parser.NewInteger(3),
-			3: parser.NewInteger(3),
-			5: parser.NewInteger(5),
+		Result: map[int]value.Primary{
+			2: value.NewInteger(1),
+			4: value.NewInteger(1),
+			1: value.NewInteger(3),
+			3: value.NewInteger(3),
+			5: value.NewInteger(5),
 		},
 	},
 }
@@ -1109,21 +1110,21 @@ var denseRankExecuteTests = []analyticFunctionExecuteTests{
 		Name:  "DenseRank Execute",
 		Items: Partition{2, 4, 1, 3, 5},
 		SortValues: map[int]SortValues{
-			2: {NewSortValue(parser.NewString("1"))},
-			4: {NewSortValue(parser.NewString("1"))},
-			1: {NewSortValue(parser.NewString("2"))},
-			3: {NewSortValue(parser.NewString("2"))},
-			5: {NewSortValue(parser.NewString("3"))},
+			2: {NewSortValue(value.NewString("1"))},
+			4: {NewSortValue(value.NewString("1"))},
+			1: {NewSortValue(value.NewString("2"))},
+			3: {NewSortValue(value.NewString("2"))},
+			5: {NewSortValue(value.NewString("3"))},
 		},
 		Function: parser.AnalyticFunction{
 			Name: "dense_rank",
 		},
-		Result: map[int]parser.Primary{
-			2: parser.NewInteger(1),
-			4: parser.NewInteger(1),
-			1: parser.NewInteger(2),
-			3: parser.NewInteger(2),
-			5: parser.NewInteger(3),
+		Result: map[int]value.Primary{
+			2: value.NewInteger(1),
+			4: value.NewInteger(1),
+			1: value.NewInteger(2),
+			3: value.NewInteger(2),
+			5: value.NewInteger(3),
 		},
 	},
 }
@@ -1154,19 +1155,19 @@ var cumeDistExecuteTests = []analyticFunctionExecuteTests{
 		Name:  "CumeDist Execute",
 		Items: Partition{2, 4, 1, 3},
 		SortValues: map[int]SortValues{
-			2: {NewSortValue(parser.NewString("1"))},
-			4: {NewSortValue(parser.NewString("2"))},
-			1: {NewSortValue(parser.NewString("2"))},
-			3: {NewSortValue(parser.NewString("3"))},
+			2: {NewSortValue(value.NewString("1"))},
+			4: {NewSortValue(value.NewString("2"))},
+			1: {NewSortValue(value.NewString("2"))},
+			3: {NewSortValue(value.NewString("3"))},
 		},
 		Function: parser.AnalyticFunction{
 			Name: "cume_dist",
 		},
-		Result: map[int]parser.Primary{
-			2: parser.NewFloat(0.25),
-			4: parser.NewFloat(0.75),
-			1: parser.NewFloat(0.75),
-			3: parser.NewFloat(1),
+		Result: map[int]value.Primary{
+			2: value.NewFloat(0.25),
+			4: value.NewFloat(0.75),
+			1: value.NewFloat(0.75),
+			3: value.NewFloat(1),
 		},
 	},
 }
@@ -1197,21 +1198,21 @@ var percentRankExecuteTests = []analyticFunctionExecuteTests{
 		Name:  "PercentRank Execute",
 		Items: Partition{2, 4, 1, 3, 5},
 		SortValues: map[int]SortValues{
-			2: {NewSortValue(parser.NewString("1"))},
-			4: {NewSortValue(parser.NewString("2"))},
-			1: {NewSortValue(parser.NewString("2"))},
-			3: {NewSortValue(parser.NewString("3"))},
-			5: {NewSortValue(parser.NewString("4"))},
+			2: {NewSortValue(value.NewString("1"))},
+			4: {NewSortValue(value.NewString("2"))},
+			1: {NewSortValue(value.NewString("2"))},
+			3: {NewSortValue(value.NewString("3"))},
+			5: {NewSortValue(value.NewString("4"))},
 		},
 		Function: parser.AnalyticFunction{
 			Name: "percent_rank",
 		},
-		Result: map[int]parser.Primary{
-			2: parser.NewFloat(0),
-			4: parser.NewFloat(0.25),
-			1: parser.NewFloat(0.25),
-			3: parser.NewFloat(0.75),
-			5: parser.NewFloat(1),
+		Result: map[int]value.Primary{
+			2: value.NewFloat(0),
+			4: value.NewFloat(0.25),
+			1: value.NewFloat(0.25),
+			3: value.NewFloat(0.75),
+			5: value.NewFloat(1),
 		},
 	},
 }
@@ -1244,14 +1245,14 @@ var ntileValueExecuteTests = []analyticFunctionExecuteTests{
 				parser.NewIntegerValue(3),
 			},
 		},
-		Result: map[int]parser.Primary{
-			1: parser.NewInteger(1),
-			2: parser.NewInteger(1),
-			3: parser.NewInteger(1),
-			4: parser.NewInteger(2),
-			5: parser.NewInteger(2),
-			6: parser.NewInteger(3),
-			7: parser.NewInteger(3),
+		Result: map[int]value.Primary{
+			1: value.NewInteger(1),
+			2: value.NewInteger(1),
+			3: value.NewInteger(1),
+			4: value.NewInteger(2),
+			5: value.NewInteger(2),
+			6: value.NewInteger(3),
+			7: value.NewInteger(3),
 		},
 	},
 	{
@@ -1263,9 +1264,9 @@ var ntileValueExecuteTests = []analyticFunctionExecuteTests{
 				parser.NewIntegerValue(3),
 			},
 		},
-		Result: map[int]parser.Primary{
-			1: parser.NewInteger(1),
-			2: parser.NewInteger(2),
+		Result: map[int]value.Primary{
+			1: value.NewInteger(1),
+			2: value.NewInteger(2),
 		},
 	},
 	{
@@ -1331,13 +1332,13 @@ var firstValueExecuteTests = []analyticFunctionExecuteTests{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 		},
-		Result: map[int]parser.Primary{
-			2: parser.NewNull(),
-			3: parser.NewNull(),
-			4: parser.NewNull(),
-			5: parser.NewNull(),
-			6: parser.NewNull(),
-			7: parser.NewNull(),
+		Result: map[int]value.Primary{
+			2: value.NewNull(),
+			3: value.NewNull(),
+			4: value.NewNull(),
+			5: value.NewNull(),
+			6: value.NewNull(),
+			7: value.NewNull(),
 		},
 	},
 	{
@@ -1350,13 +1351,13 @@ var firstValueExecuteTests = []analyticFunctionExecuteTests{
 			},
 			IgnoreNulls: true,
 		},
-		Result: map[int]parser.Primary{
-			2: parser.NewInteger(200),
-			3: parser.NewInteger(200),
-			4: parser.NewInteger(200),
-			5: parser.NewInteger(200),
-			6: parser.NewInteger(200),
-			7: parser.NewInteger(200),
+		Result: map[int]value.Primary{
+			2: value.NewInteger(200),
+			3: value.NewInteger(200),
+			4: value.NewInteger(200),
+			5: value.NewInteger(200),
+			6: value.NewInteger(200),
+			7: value.NewInteger(200),
 		},
 	},
 	{
@@ -1400,13 +1401,13 @@ var lastValueExecuteTests = []analyticFunctionExecuteTests{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 		},
-		Result: map[int]parser.Primary{
-			2: parser.NewNull(),
-			3: parser.NewNull(),
-			4: parser.NewNull(),
-			5: parser.NewNull(),
-			6: parser.NewNull(),
-			7: parser.NewNull(),
+		Result: map[int]value.Primary{
+			2: value.NewNull(),
+			3: value.NewNull(),
+			4: value.NewNull(),
+			5: value.NewNull(),
+			6: value.NewNull(),
+			7: value.NewNull(),
 		},
 	},
 	{
@@ -1419,13 +1420,13 @@ var lastValueExecuteTests = []analyticFunctionExecuteTests{
 			},
 			IgnoreNulls: true,
 		},
-		Result: map[int]parser.Primary{
-			2: parser.NewInteger(800),
-			3: parser.NewInteger(800),
-			4: parser.NewInteger(800),
-			5: parser.NewInteger(800),
-			6: parser.NewInteger(800),
-			7: parser.NewInteger(800),
+		Result: map[int]value.Primary{
+			2: value.NewInteger(800),
+			3: value.NewInteger(800),
+			4: value.NewInteger(800),
+			5: value.NewInteger(800),
+			6: value.NewInteger(800),
+			7: value.NewInteger(800),
 		},
 	},
 }
@@ -1459,13 +1460,13 @@ var nthValueExecuteTests = []analyticFunctionExecuteTests{
 				parser.NewIntegerValue(2),
 			},
 		},
-		Result: map[int]parser.Primary{
-			2: parser.NewInteger(200),
-			3: parser.NewInteger(200),
-			4: parser.NewInteger(200),
-			5: parser.NewInteger(200),
-			6: parser.NewInteger(200),
-			7: parser.NewInteger(200),
+		Result: map[int]value.Primary{
+			2: value.NewInteger(200),
+			3: value.NewInteger(200),
+			4: value.NewInteger(200),
+			5: value.NewInteger(200),
+			6: value.NewInteger(200),
+			7: value.NewInteger(200),
 		},
 	},
 	{
@@ -1549,13 +1550,13 @@ var lagExecuteTests = []analyticFunctionExecuteTests{
 				parser.NewIntegerValue(0),
 			},
 		},
-		Result: map[int]parser.Primary{
-			2: parser.NewInteger(0),
-			3: parser.NewInteger(0),
-			4: parser.NewNull(),
-			5: parser.NewInteger(200),
-			6: parser.NewInteger(300),
-			7: parser.NewInteger(500),
+		Result: map[int]value.Primary{
+			2: value.NewInteger(0),
+			3: value.NewInteger(0),
+			4: value.NewNull(),
+			5: value.NewInteger(200),
+			6: value.NewInteger(300),
+			7: value.NewInteger(500),
 		},
 	},
 	{
@@ -1567,13 +1568,13 @@ var lagExecuteTests = []analyticFunctionExecuteTests{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 		},
-		Result: map[int]parser.Primary{
-			2: parser.NewNull(),
-			3: parser.NewNull(),
-			4: parser.NewInteger(200),
-			5: parser.NewInteger(300),
-			6: parser.NewInteger(500),
-			7: parser.NewInteger(800),
+		Result: map[int]value.Primary{
+			2: value.NewNull(),
+			3: value.NewNull(),
+			4: value.NewInteger(200),
+			5: value.NewInteger(300),
+			6: value.NewInteger(500),
+			7: value.NewInteger(800),
 		},
 	},
 	{
@@ -1588,13 +1589,13 @@ var lagExecuteTests = []analyticFunctionExecuteTests{
 			},
 			IgnoreNulls: true,
 		},
-		Result: map[int]parser.Primary{
-			2: parser.NewInteger(0),
-			3: parser.NewInteger(0),
-			4: parser.NewInteger(0),
-			5: parser.NewInteger(200),
-			6: parser.NewInteger(300),
-			7: parser.NewInteger(500),
+		Result: map[int]value.Primary{
+			2: value.NewInteger(0),
+			3: value.NewInteger(0),
+			4: value.NewInteger(0),
+			5: value.NewInteger(200),
+			6: value.NewInteger(300),
+			7: value.NewInteger(500),
 		},
 	},
 	{
@@ -1679,13 +1680,13 @@ var leadExecuteTests = []analyticFunctionExecuteTests{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 		},
-		Result: map[int]parser.Primary{
-			2: parser.NewInteger(200),
-			3: parser.NewInteger(300),
-			4: parser.NewInteger(500),
-			5: parser.NewInteger(800),
-			6: parser.NewNull(),
-			7: parser.NewNull(),
+		Result: map[int]value.Primary{
+			2: value.NewInteger(200),
+			3: value.NewInteger(300),
+			4: value.NewInteger(500),
+			5: value.NewInteger(800),
+			6: value.NewNull(),
+			7: value.NewNull(),
 		},
 	},
 }
@@ -1719,12 +1720,12 @@ var analyticListAggExecuteTests = []analyticFunctionExecuteTests{
 				parser.NewStringValue(","),
 			},
 		},
-		Result: map[int]parser.Primary{
-			0: parser.NewString("100,200,200,300"),
-			1: parser.NewString("100,200,200,300"),
-			2: parser.NewString("100,200,200,300"),
-			3: parser.NewString("100,200,200,300"),
-			4: parser.NewString("100,200,200,300"),
+		Result: map[int]value.Primary{
+			0: value.NewString("100,200,200,300"),
+			1: value.NewString("100,200,200,300"),
+			2: value.NewString("100,200,200,300"),
+			3: value.NewString("100,200,200,300"),
+			4: value.NewString("100,200,200,300"),
 		},
 	},
 	{
@@ -1736,12 +1737,12 @@ var analyticListAggExecuteTests = []analyticFunctionExecuteTests{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 		},
-		Result: map[int]parser.Primary{
-			0: parser.NewString("100200200300"),
-			1: parser.NewString("100200200300"),
-			2: parser.NewString("100200200300"),
-			3: parser.NewString("100200200300"),
-			4: parser.NewString("100200200300"),
+		Result: map[int]value.Primary{
+			0: value.NewString("100200200300"),
+			1: value.NewString("100200200300"),
+			2: value.NewString("100200200300"),
+			3: value.NewString("100200200300"),
+			4: value.NewString("100200200300"),
 		},
 	},
 	{
@@ -1755,12 +1756,12 @@ var analyticListAggExecuteTests = []analyticFunctionExecuteTests{
 				parser.NewStringValue(","),
 			},
 		},
-		Result: map[int]parser.Primary{
-			0: parser.NewString("100,200,300"),
-			1: parser.NewString("100,200,300"),
-			2: parser.NewString("100,200,300"),
-			3: parser.NewString("100,200,300"),
-			4: parser.NewString("100,200,300"),
+		Result: map[int]value.Primary{
+			0: value.NewString("100,200,300"),
+			1: value.NewString("100,200,300"),
+			2: value.NewString("100,200,300"),
+			3: value.NewString("100,200,300"),
+			4: value.NewString("100,200,300"),
 		},
 	},
 	{

@@ -1,5 +1,7 @@
 %{
 package parser
+
+import "github.com/mithrandie/csvq/lib/value"
 %}
 
 %union{
@@ -10,8 +12,20 @@ package parser
     expression  Expression
     expressions []Expression
     identifier  Identifier
+    table       Table
     variable    Variable
     variables   []Variable
+    varassign   VariableAssignment
+    varassigns  []VariableAssignment
+    updateset   UpdateSet
+    updatesets  []UpdateSet
+    columndef   ColumnDefault
+    columndefs  []ColumnDefault
+    elseif      []ElseIf
+    elseexpr    Else
+    casewhen    []CaseWhen
+    caseelse    CaseElse
+    fetchpos    FetchPosition
     token       Token
 }
 
@@ -36,18 +50,18 @@ package parser
 %type<statement>   variable_statement
 %type<statement>   transaction_statement
 %type<statement>   table_operation_statement
-%type<expression>  column_default
-%type<expressions> column_defaults
+%type<columndef>   column_default
+%type<columndefs>  column_defaults
 %type<expression>  column_position
 %type<statement>   cursor_statement
 %type<statement>   temporary_table_statement
-%type<expression>  parameter
-%type<expressions> parameters
-%type<expression>  optional_parameter
-%type<expressions> optional_parameters
-%type<expressions> function_parameters
+%type<varassign>   parameter
+%type<varassigns>  parameters
+%type<varassign>   optional_parameter
+%type<varassigns>  optional_parameters
+%type<varassigns>  function_parameters
 %type<statement>   user_defined_function_statement
-%type<expression>  fetch_position
+%type<fetchpos>    fetch_position
 %type<queryexpr>   cursor_status
 %type<statement>   command_statement
 %type<statement>   trigger_statement
@@ -92,7 +106,8 @@ package parser
 %type<queryexpr>   analytic_clause
 %type<queryexpr>   partition
 %type<queryexpr>   table_identifier
-%type<queryexpr>   identified_table
+%type<table>       identified_table
+%type<queryexprs>  operate_tables
 %type<queryexpr>   virtual_table_object
 %type<queryexpr>   table
 %type<queryexpr>   join
@@ -106,36 +121,35 @@ package parser
 %type<queryexprs>  field_references
 %type<queryexprs>  values
 %type<queryexprs>  tables
-%type<queryexprs>  operate_tables
 %type<queryexprs>  identifiers
 %type<queryexprs>  fields
 %type<expression>  insert_query
 %type<expression>  update_query
-%type<expression>  update_set
-%type<expressions> update_set_list
+%type<updateset>   update_set
+%type<updatesets>  update_set_list
 %type<expression>  delete_query
-%type<expressions> elseif
-%type<expression>  else
-%type<expressions> in_loop_elseif
-%type<expression>  in_loop_else
-%type<expressions> in_function_elseif
-%type<expression>  in_function_else
-%type<expressions> in_function_in_loop_elseif
-%type<expression>  in_function_in_loop_else
-%type<expressions> case_when
-%type<expression>  case_else
-%type<expressions> in_loop_case_when
-%type<expression>  in_loop_case_else
-%type<expressions> in_function_case_when
-%type<expression>  in_function_case_else
-%type<expressions> in_function_in_loop_case_when
-%type<expression>  in_function_in_loop_case_else
+%type<elseif>      elseif
+%type<elseexpr>    else
+%type<elseif>      in_loop_elseif
+%type<elseexpr>    in_loop_else
+%type<elseif>      in_function_elseif
+%type<elseexpr>    in_function_else
+%type<elseif>      in_function_in_loop_elseif
+%type<elseexpr>    in_function_in_loop_else
+%type<casewhen>    case_when
+%type<caseelse>    case_else
+%type<casewhen>    in_loop_case_when
+%type<caseelse>    in_loop_case_else
+%type<casewhen>    in_function_case_when
+%type<caseelse>    in_function_case_else
+%type<casewhen>    in_function_in_loop_case_when
+%type<caseelse>    in_function_in_loop_case_else
 %type<identifier>  identifier
 %type<variable>    variable
 %type<variables>   variables
 %type<queryexpr>   variable_substitution
-%type<expression>  variable_assignment
-%type<expressions> variable_assignments
+%type<varassign>   variable_assignment
+%type<varassigns>  variable_assignments
 %type<token>       distinct
 %type<token>       negation
 %type<token>       join_type_inner
@@ -337,7 +351,7 @@ exit_statement
     }
     | EXIT INTEGER
     {
-        $$ = Exit{Code: NewIntegerFromString($2.Literal)}
+        $$ = Exit{Code: value.NewIntegerFromString($2.Literal)}
     }
 
 loop_statement
@@ -533,7 +547,7 @@ table_operation_statement
     }
     | ALTER TABLE table_identifier ADD column_default column_position
     {
-        $$ = AddColumns{Table: $3, Columns: []Expression{$5}, Position: $6}
+        $$ = AddColumns{Table: $3, Columns: []ColumnDefault{$5}, Position: $6}
     }
     | ALTER TABLE table_identifier ADD '(' column_defaults ')' column_position
     {
@@ -565,11 +579,11 @@ column_default
 column_defaults
     : column_default
     {
-        $$ = []Expression{$1}
+        $$ = []ColumnDefault{$1}
     }
     | column_default ',' column_defaults
     {
-        $$ = append([]Expression{$1}, $3...)
+        $$ = append([]ColumnDefault{$1}, $3...)
     }
 
 column_position
@@ -643,7 +657,7 @@ parameter
 parameters
     : parameter
     {
-        $$ = []Expression{$1}
+        $$ = []VariableAssignment{$1}
     }
     | parameters ',' parameter
     {
@@ -659,11 +673,11 @@ optional_parameter
 optional_parameters
     : optional_parameter
     {
-        $$ = []Expression{$1}
+        $$ = []VariableAssignment{$1}
     }
     | optional_parameter ',' optional_parameters
     {
-        $$ = append([]Expression{$1}, $3...)
+        $$ = append([]VariableAssignment{$1}, $3...)
     }
 
 function_parameters
@@ -701,7 +715,7 @@ user_defined_function_statement
 fetch_position
     :
     {
-        $$ = nil
+        $$ = FetchPosition{}
     }
     | NEXT
     {
@@ -751,13 +765,13 @@ command_statement
     {
         $$ = Print{Value: $2}
     }
-    | PRINTF STRING
+    | PRINTF value
     {
-        $$ = Printf{BaseExpr: NewBaseExpr($1), Format: $2.Literal}
+        $$ = Printf{BaseExpr: NewBaseExpr($1), Format: $2}
     }
-    | PRINTF STRING ',' values
+    | PRINTF value ',' values
     {
-        $$ = Printf{BaseExpr: NewBaseExpr($1), Format: $2.Literal, Values: $4}
+        $$ = Printf{BaseExpr: NewBaseExpr($1), Format: $2, Values: $4}
     }
     | SOURCE value
     {
@@ -775,7 +789,7 @@ trigger_statement
     }
     | TRIGGER ERROR INTEGER value
     {
-        $$ = Trigger{BaseExpr: NewBaseExpr($1), Token: $2.Token, Message: $4, Code: NewIntegerFromString($3.Literal)}
+        $$ = Trigger{BaseExpr: NewBaseExpr($1), Token: $2.Token, Message: $4, Code: value.NewIntegerFromString($3.Literal)}
     }
 
 select_query
@@ -1012,11 +1026,11 @@ field_reference
     }
     | identifier '.' INTEGER
     {
-        $$ = ColumnNumber{BaseExpr: $1.BaseExpr, View: $1, Number: NewIntegerFromString($3.Literal)}
+        $$ = ColumnNumber{BaseExpr: $1.BaseExpr, View: $1, Number: value.NewIntegerFromString($3.Literal)}
     }
     | STDIN '.' INTEGER
     {
-        $$ = ColumnNumber{BaseExpr: NewBaseExpr($1), View: Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal}, Number: NewIntegerFromString($3.Literal)}
+        $$ = ColumnNumber{BaseExpr: NewBaseExpr($1), View: Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal}, Number: value.NewIntegerFromString($3.Literal)}
     }
 
 value
@@ -1664,11 +1678,11 @@ update_set
 update_set_list
     : update_set
     {
-        $$ = []Expression{$1}
+        $$ = []UpdateSet{$1}
     }
     | update_set ',' update_set_list
     {
-        $$ = append([]Expression{$1}, $3...)
+        $$ = append([]UpdateSet{$1}, $3...)
     }
 
 delete_query
@@ -1686,17 +1700,17 @@ delete_query
 elseif
     : ELSEIF value THEN program
     {
-        $$ = []Expression{ElseIf{Condition: $2, Statements: $4}}
+        $$ = []ElseIf{{Condition: $2, Statements: $4}}
     }
     | ELSEIF value THEN program elseif
     {
-        $$ = append([]Expression{ElseIf{Condition: $2, Statements: $4}}, $5...)
+        $$ = append([]ElseIf{{Condition: $2, Statements: $4}}, $5...)
     }
 
 else
     :
     {
-        $$ = nil
+        $$ = Else{}
     }
     | ELSE program
     {
@@ -1706,17 +1720,17 @@ else
 in_loop_elseif
     : ELSEIF value THEN loop_program
     {
-        $$ = []Expression{ElseIf{Condition: $2, Statements: $4}}
+        $$ = []ElseIf{{Condition: $2, Statements: $4}}
     }
     | ELSEIF value THEN loop_program in_loop_elseif
     {
-        $$ = append([]Expression{ElseIf{Condition: $2, Statements: $4}}, $5...)
+        $$ = append([]ElseIf{{Condition: $2, Statements: $4}}, $5...)
     }
 
 in_loop_else
     :
     {
-        $$ = nil
+        $$ = Else{}
     }
     | ELSE loop_program
     {
@@ -1726,17 +1740,17 @@ in_loop_else
 in_function_elseif
     : ELSEIF value THEN function_program
     {
-        $$ = []Expression{ElseIf{Condition: $2, Statements: $4}}
+        $$ = []ElseIf{{Condition: $2, Statements: $4}}
     }
     | ELSEIF value THEN function_program in_function_elseif
     {
-        $$ = append([]Expression{ElseIf{Condition: $2, Statements: $4}}, $5...)
+        $$ = append([]ElseIf{{Condition: $2, Statements: $4}}, $5...)
     }
 
 in_function_else
     :
     {
-        $$ = nil
+        $$ = Else{}
     }
     | ELSE function_program
     {
@@ -1746,17 +1760,17 @@ in_function_else
 in_function_in_loop_elseif
     : ELSEIF value THEN function_loop_program
     {
-        $$ = []Expression{ElseIf{Condition: $2, Statements: $4}}
+        $$ = []ElseIf{{Condition: $2, Statements: $4}}
     }
     | ELSEIF value THEN function_loop_program in_function_in_loop_elseif
     {
-        $$ = append([]Expression{ElseIf{Condition: $2, Statements: $4}}, $5...)
+        $$ = append([]ElseIf{{Condition: $2, Statements: $4}}, $5...)
     }
 
 in_function_in_loop_else
     :
     {
-        $$ = nil
+        $$ = Else{}
     }
     | ELSE function_loop_program
     {
@@ -1766,17 +1780,17 @@ in_function_in_loop_else
 case_when
     : WHEN value THEN program
     {
-        $$ = []Expression{CaseWhen{Condition: $2, Statements: $4}}
+        $$ = []CaseWhen{{Condition: $2, Statements: $4}}
     }
     | WHEN value THEN program case_when
     {
-        $$ = append([]Expression{CaseWhen{Condition: $2, Statements: $4}}, $5...)
+        $$ = append([]CaseWhen{{Condition: $2, Statements: $4}}, $5...)
     }
 
 case_else
     :
     {
-        $$ = nil
+        $$ = CaseElse{}
     }
     | ELSE program
     {
@@ -1786,17 +1800,17 @@ case_else
 in_loop_case_when
     : WHEN value THEN loop_program
     {
-        $$ = []Expression{CaseWhen{Condition: $2, Statements: $4}}
+        $$ = []CaseWhen{{Condition: $2, Statements: $4}}
     }
     | WHEN value THEN loop_program in_loop_case_when
     {
-        $$ = append([]Expression{CaseWhen{Condition: $2, Statements: $4}}, $5...)
+        $$ = append([]CaseWhen{{Condition: $2, Statements: $4}}, $5...)
     }
 
 in_loop_case_else
     :
     {
-        $$ = nil
+        $$ = CaseElse{}
     }
     | ELSE loop_program
     {
@@ -1806,17 +1820,17 @@ in_loop_case_else
 in_function_case_when
     : WHEN value THEN function_program
     {
-        $$ = []Expression{CaseWhen{Condition: $2, Statements: $4}}
+        $$ = []CaseWhen{{Condition: $2, Statements: $4}}
     }
     | WHEN value THEN function_program in_function_case_when
     {
-        $$ = append([]Expression{CaseWhen{Condition: $2, Statements: $4}}, $5...)
+        $$ = append([]CaseWhen{{Condition: $2, Statements: $4}}, $5...)
     }
 
 in_function_case_else
     :
     {
-        $$ = nil
+        $$ = CaseElse{}
     }
     | ELSE function_program
     {
@@ -1826,17 +1840,17 @@ in_function_case_else
 in_function_in_loop_case_when
     : WHEN value THEN function_loop_program
     {
-        $$ = []Expression{CaseWhen{Condition: $2, Statements: $4}}
+        $$ = []CaseWhen{{Condition: $2, Statements: $4}}
     }
     | WHEN value THEN function_loop_program in_function_in_loop_case_when
     {
-        $$ = append([]Expression{CaseWhen{Condition: $2, Statements: $4}}, $5...)
+        $$ = append([]CaseWhen{{Condition: $2, Statements: $4}}, $5...)
     }
 
 in_function_in_loop_case_else
     :
     {
-        $$ = nil
+        $$ = CaseElse{}
     }
     | ELSE function_loop_program
     {
@@ -1912,11 +1926,11 @@ variable_assignment
 variable_assignments
     : variable_assignment
     {
-        $$ = []Expression{$1}
+        $$ = []VariableAssignment{$1}
     }
     | variable_assignment ',' variable_assignments
     {
-        $$ = append([]Expression{$1}, $3...)
+        $$ = append([]VariableAssignment{$1}, $3...)
     }
 
 distinct

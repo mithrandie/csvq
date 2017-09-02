@@ -4,74 +4,74 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 var calculateTests = []struct {
-	LHS      parser.Primary
-	RHS      parser.Primary
+	LHS      value.Primary
+	RHS      value.Primary
 	Operator int
-	Result   parser.Primary
+	Result   value.Primary
 }{
 	{
-		LHS:      parser.NewString("9"),
-		RHS:      parser.NewNull(),
+		LHS:      value.NewString("9"),
+		RHS:      value.NewNull(),
 		Operator: '+',
-		Result:   parser.NewNull(),
+		Result:   value.NewNull(),
 	},
 	{
-		LHS:      parser.NewString("9"),
-		RHS:      parser.NewString("2"),
+		LHS:      value.NewString("9"),
+		RHS:      value.NewString("2"),
 		Operator: '+',
-		Result:   parser.NewInteger(11),
+		Result:   value.NewInteger(11),
 	},
 	{
-		LHS:      parser.NewString("9"),
-		RHS:      parser.NewString("2"),
+		LHS:      value.NewString("9"),
+		RHS:      value.NewString("2"),
 		Operator: '-',
-		Result:   parser.NewInteger(7),
+		Result:   value.NewInteger(7),
 	},
 	{
-		LHS:      parser.NewString("9"),
-		RHS:      parser.NewString("2"),
+		LHS:      value.NewString("9"),
+		RHS:      value.NewString("2"),
 		Operator: '*',
-		Result:   parser.NewInteger(18),
+		Result:   value.NewInteger(18),
 	},
 	{
-		LHS:      parser.NewString("9"),
-		RHS:      parser.NewString("2"),
+		LHS:      value.NewString("9"),
+		RHS:      value.NewString("2"),
 		Operator: '%',
-		Result:   parser.NewInteger(1),
+		Result:   value.NewInteger(1),
 	},
 	{
-		LHS:      parser.NewString("9.5"),
-		RHS:      parser.NewString("2"),
+		LHS:      value.NewString("9.5"),
+		RHS:      value.NewString("2"),
 		Operator: '+',
-		Result:   parser.NewFloat(11.5),
+		Result:   value.NewFloat(11.5),
 	},
 	{
-		LHS:      parser.NewString("9.5"),
-		RHS:      parser.NewString("2"),
+		LHS:      value.NewString("9.5"),
+		RHS:      value.NewString("2"),
 		Operator: '-',
-		Result:   parser.NewFloat(7.5),
+		Result:   value.NewFloat(7.5),
 	},
 	{
-		LHS:      parser.NewString("9.5"),
-		RHS:      parser.NewString("2"),
+		LHS:      value.NewString("9.5"),
+		RHS:      value.NewString("2"),
 		Operator: '*',
-		Result:   parser.NewInteger(19),
+		Result:   value.NewInteger(19),
 	},
 	{
-		LHS:      parser.NewString("9"),
-		RHS:      parser.NewString("2"),
+		LHS:      value.NewString("9"),
+		RHS:      value.NewString("2"),
 		Operator: '/',
-		Result:   parser.NewFloat(4.5),
+		Result:   value.NewFloat(4.5),
 	},
 	{
-		LHS:      parser.NewString("8.5"),
-		RHS:      parser.NewString("2"),
+		LHS:      value.NewString("8.5"),
+		RHS:      value.NewString("2"),
 		Operator: '%',
-		Result:   parser.NewFloat(0.5),
+		Result:   value.NewFloat(0.5),
 	},
 }
 

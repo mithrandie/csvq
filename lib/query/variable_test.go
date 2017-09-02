@@ -5,37 +5,38 @@ import (
 	"testing"
 
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
-var variablesListGet = []struct {
+var variableScopesGet = []struct {
 	Name   string
 	Expr   parser.Variable
-	Result parser.Primary
+	Result value.Primary
 	Error  string
 }{
 	{
-		Name:   "VariablesList Get",
+		Name:   "VariableScopes Get",
 		Expr:   parser.Variable{Name: "@var1"},
-		Result: parser.NewInteger(1),
+		Result: value.NewInteger(1),
 	},
 	{
-		Name:  "VariablesList Get Undefined Error",
+		Name:  "VariableScopes Get Undefined Error",
 		Expr:  parser.Variable{Name: "@undef"},
 		Error: "[L:- C:-] variable @undef is undefined",
 	},
 }
 
-func TestVariablesList_Get(t *testing.T) {
-	list := VariablesList{
-		Variables{
-			"@var1": parser.NewInteger(1),
+func TestVariableScopes_Get(t *testing.T) {
+	list := VariableScopes{
+		VariableMap{
+			"@var1": value.NewInteger(1),
 		},
-		Variables{
-			"@var1": parser.NewInteger(2),
+		VariableMap{
+			"@var1": value.NewInteger(2),
 		},
 	}
 
-	for _, v := range variablesListGet {
+	for _, v := range variableScopesGet {
 		result, err := list.Get(v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -55,32 +56,32 @@ func TestVariablesList_Get(t *testing.T) {
 	}
 }
 
-var variablesListSubstituteTests = []struct {
+var variableScopesSubstituteTests = []struct {
 	Name   string
 	Expr   parser.VariableSubstitution
 	Filter *Filter
-	List   VariablesList
-	Result parser.Primary
+	List   VariableScopes
+	Result value.Primary
 	Error  string
 }{
 	{
-		Name: "VariablesList Substitute",
+		Name: "VariableScopes Substitute",
 		Expr: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "@var1"},
 			Value:    parser.NewIntegerValue(3),
 		},
-		List: VariablesList{
-			Variables{
-				"@var1": parser.NewInteger(3),
+		List: VariableScopes{
+			VariableMap{
+				"@var1": value.NewInteger(3),
 			},
-			Variables{
-				"@var1": parser.NewInteger(2),
+			VariableMap{
+				"@var1": value.NewInteger(2),
 			},
 		},
-		Result: parser.NewInteger(3),
+		Result: value.NewInteger(3),
 	},
 	{
-		Name: "VariablesList Substitute Variable Undefined Error",
+		Name: "VariableScopes Substitute Variable Undefined Error",
 		Expr: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "var2"},
 			Value:    parser.NewIntegerValue(3),
@@ -89,17 +90,17 @@ var variablesListSubstituteTests = []struct {
 	},
 }
 
-func TestVariablesList_Substitute(t *testing.T) {
-	list := VariablesList{
-		Variables{
-			"@var1": parser.NewInteger(1),
+func TestVariableScopes_Substitute(t *testing.T) {
+	list := VariableScopes{
+		VariableMap{
+			"@var1": value.NewInteger(1),
 		},
-		Variables{
-			"@var1": parser.NewInteger(2),
+		VariableMap{
+			"@var1": value.NewInteger(2),
 		},
 	}
 
-	for _, v := range variablesListSubstituteTests {
+	for _, v := range variableScopesSubstituteTests {
 		result, err := list.Substitute(v.Expr, v.Filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -122,40 +123,40 @@ func TestVariablesList_Substitute(t *testing.T) {
 	}
 }
 
-var variablesListDisposeTests = []struct {
+var variableScopesDisposeTests = []struct {
 	Name  string
 	Expr  parser.Variable
-	List  VariablesList
+	List  VariableScopes
 	Error string
 }{
 	{
-		Name: "VariablesList Dispose",
+		Name: "VariableScopes Dispose",
 		Expr: parser.Variable{Name: "@var1"},
-		List: VariablesList{
-			Variables{},
-			Variables{
-				"@var1": parser.NewInteger(2),
+		List: VariableScopes{
+			VariableMap{},
+			VariableMap{
+				"@var1": value.NewInteger(2),
 			},
 		},
 	},
 	{
-		Name:  "VariablesList Dispose Undefined Error",
+		Name:  "VariableScopes Dispose Undefined Error",
 		Expr:  parser.Variable{Name: "@undef"},
 		Error: "[L:- C:-] variable @undef is undefined",
 	},
 }
 
-func TestVariablesList_Dispose(t *testing.T) {
-	list := VariablesList{
-		Variables{
-			"@var1": parser.NewInteger(1),
+func TestVariableScopes_Dispose(t *testing.T) {
+	list := VariableScopes{
+		VariableMap{
+			"@var1": value.NewInteger(1),
 		},
-		Variables{
-			"@var1": parser.NewInteger(2),
+		VariableMap{
+			"@var1": value.NewInteger(2),
 		},
 	}
 
-	for _, v := range variablesListDisposeTests {
+	for _, v := range variableScopesDisposeTests {
 		err := list.Dispose(v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -175,48 +176,48 @@ func TestVariablesList_Dispose(t *testing.T) {
 	}
 }
 
-type variableTests struct {
+type variableMapTests struct {
 	Name   string
 	Expr   parser.Expression
 	Filter *Filter
-	Result Variables
+	Result VariableMap
 	Error  string
 }
 
-var variablesDeclareTests = []variableTests{
+var variableMapDeclareTests = []variableMapTests{
 	{
 		Name: "Declare Variable",
 		Expr: parser.VariableDeclaration{
-			Assignments: []parser.Expression{
-				parser.VariableAssignment{
+			Assignments: []parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@var1"},
 				},
 			},
 		},
-		Result: Variables{
-			"@var1": parser.NewNull(),
+		Result: VariableMap{
+			"@var1": value.NewNull(),
 		},
 	},
 	{
 		Name: "Declare Variable With Initial Value",
 		Expr: parser.VariableDeclaration{
-			Assignments: []parser.Expression{
-				parser.VariableAssignment{
+			Assignments: []parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@var2"},
 					Value:    parser.NewIntegerValue(1),
 				},
 			},
 		},
-		Result: Variables{
-			"@var1": parser.NewNull(),
-			"@var2": parser.NewInteger(1),
+		Result: VariableMap{
+			"@var1": value.NewNull(),
+			"@var2": value.NewInteger(1),
 		},
 	},
 	{
 		Name: "Declare Variable Redeclaration Error",
 		Expr: parser.VariableDeclaration{
-			Assignments: []parser.Expression{
-				parser.VariableAssignment{
+			Assignments: []parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@var2"},
 					Value:    parser.NewIntegerValue(1),
 				},
@@ -227,8 +228,8 @@ var variablesDeclareTests = []variableTests{
 	{
 		Name: "Declare Variable Filter Error",
 		Expr: parser.VariableDeclaration{
-			Assignments: []parser.Expression{
-				parser.VariableAssignment{
+			Assignments: []parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@var3"},
 					Value:    parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 				},
@@ -238,10 +239,10 @@ var variablesDeclareTests = []variableTests{
 	},
 }
 
-func TestVariables_Declare(t *testing.T) {
-	vars := Variables{}
+func TestVariableMap_Declare(t *testing.T) {
+	vars := VariableMap{}
 
-	for _, v := range variablesDeclareTests {
+	for _, v := range variableMapDeclareTests {
 		if v.Filter == nil {
 			v.Filter = NewEmptyFilter()
 		}
@@ -265,15 +266,15 @@ func TestVariables_Declare(t *testing.T) {
 	}
 }
 
-var variablesSubstituteTests = []variableTests{
+var variableMapSubstituteTests = []variableMapTests{
 	{
 		Name: "Substitute Variable",
 		Expr: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "var1"},
 			Value:    parser.NewIntegerValue(2),
 		},
-		Result: Variables{
-			"var1": parser.NewInteger(2),
+		Result: VariableMap{
+			"var1": value.NewInteger(2),
 		},
 	},
 	{
@@ -294,12 +295,12 @@ var variablesSubstituteTests = []variableTests{
 	},
 }
 
-func TestVariables_Substitute(t *testing.T) {
-	vars := Variables{
-		"var1": parser.NewInteger(1),
+func TestVariableMap_Substitute(t *testing.T) {
+	vars := VariableMap{
+		"var1": value.NewInteger(1),
 	}
 
-	for _, v := range variablesSubstituteTests {
+	for _, v := range variableMapSubstituteTests {
 		if v.Filter == nil {
 			v.Filter = NewEmptyFilter()
 		}
@@ -323,11 +324,11 @@ func TestVariables_Substitute(t *testing.T) {
 	}
 }
 
-var variablesDisposeTests = []variableTests{
+var variableMapDisposeTests = []variableMapTests{
 	{
 		Name:   "Dispose Variable",
 		Expr:   parser.Variable{Name: "var1"},
-		Result: Variables{},
+		Result: VariableMap{},
 	},
 	{
 		Name:  "Dispose Variable Undefined Error",
@@ -336,12 +337,12 @@ var variablesDisposeTests = []variableTests{
 	},
 }
 
-func TestVariables_Dispose(t *testing.T) {
-	vars := Variables{
-		"var1": parser.NewInteger(1),
+func TestVariableMap_Dispose(t *testing.T) {
+	vars := VariableMap{
+		"var1": value.NewInteger(1),
 	}
 
-	for _, v := range variablesDisposeTests {
+	for _, v := range variableMapDisposeTests {
 		err := vars.Dispose(v.Expr.(parser.Variable))
 		if err != nil {
 			if len(v.Error) < 1 {

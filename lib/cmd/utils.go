@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bufio"
+	"bytes"
 	"io"
 	"strings"
 
@@ -18,34 +19,31 @@ func GetReader(r io.Reader, enc Encoding) io.Reader {
 
 func UnescapeString(s string) string {
 	runes := []rune(s)
-	unescaped := []rune{}
+	var buf bytes.Buffer
 
 	escaped := false
 	for _, r := range runes {
 		if escaped {
 			switch r {
 			case 'a':
-				unescaped = append(unescaped, '\a')
+				buf.WriteRune('\a')
 			case 'b':
-				unescaped = append(unescaped, '\b')
+				buf.WriteRune('\b')
 			case 'f':
-				unescaped = append(unescaped, '\f')
+				buf.WriteRune('\f')
 			case 'n':
-				unescaped = append(unescaped, '\n')
+				buf.WriteRune('\n')
 			case 'r':
-				unescaped = append(unescaped, '\r')
+				buf.WriteRune('\r')
 			case 't':
-				unescaped = append(unescaped, '\t')
+				buf.WriteRune('\t')
 			case 'v':
-				unescaped = append(unescaped, '\v')
-			case '"':
-				unescaped = append(unescaped, '"')
-			case '\'':
-				unescaped = append(unescaped, '\'')
-			case '\\':
-				unescaped = append(unescaped, '\\')
+				buf.WriteRune('\v')
+			case '"', '\'', '\\':
+				buf.WriteRune(r)
 			default:
-				unescaped = append(unescaped, '\\', r)
+				buf.WriteRune('\\')
+				buf.WriteRune(r)
 			}
 			escaped = false
 			continue
@@ -56,13 +54,13 @@ func UnescapeString(s string) string {
 			continue
 		}
 
-		unescaped = append(unescaped, r)
+		buf.WriteRune(r)
 	}
 	if escaped {
-		unescaped = append(unescaped, '\\')
+		buf.WriteRune('\\')
 	}
 
-	return string(unescaped)
+	return buf.String()
 }
 
 func HumarizeNumber(s string) string {

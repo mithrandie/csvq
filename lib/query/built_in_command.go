@@ -7,6 +7,7 @@ import (
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 func Print(expr parser.Print, filter *Filter) (string, error) {
@@ -18,7 +19,17 @@ func Print(expr parser.Print, filter *Filter) (string, error) {
 }
 
 func Printf(expr parser.Printf, filter *Filter) (string, error) {
-	args := make([]parser.Primary, len(expr.Values))
+	var format string
+	formatValue, err := filter.Evaluate(expr.Format)
+	if err != nil {
+		return "", err
+	}
+	formatString := value.ToString(formatValue)
+	if !value.IsNull(formatString) {
+		format = formatString.(value.String).Raw()
+	}
+
+	args := make([]value.Primary, len(expr.Values))
 	for i, v := range expr.Values {
 		p, err := filter.Evaluate(v)
 		if err != nil {
@@ -27,7 +38,7 @@ func Printf(expr parser.Printf, filter *Filter) (string, error) {
 		args[i] = p
 	}
 
-	message, err := FormatString(expr.Format, args)
+	message, err := FormatString(format, args)
 	if err != nil {
 		return "", NewPrintfReplaceValueLengthError(expr, err.(AppError).ErrorMessage())
 	}
@@ -39,11 +50,11 @@ func Source(expr parser.Source, filter *Filter) ([]parser.Statement, error) {
 	if err != nil {
 		return nil, err
 	}
-	s := parser.PrimaryToString(p)
-	if parser.IsNull(s) {
+	s := value.ToString(p)
+	if value.IsNull(s) {
 		return nil, NewSourceInvalidArgumentError(expr, expr.FilePath)
 	}
-	fpath := s.(parser.String).Value()
+	fpath := s.(value.String).Raw()
 
 	stat, err := os.Stat(fpath)
 	if err != nil {
@@ -76,35 +87,35 @@ func Source(expr parser.Source, filter *Filter) ([]parser.Statement, error) {
 func SetFlag(expr parser.SetFlag) error {
 	var err error
 
-	var p parser.Primary
+	var p value.Primary
 
 	switch strings.ToUpper(expr.Name) {
 	case "@@DELIMITER", "@@ENCODING", "@@LINE_BREAK", "@@REPOSITORY", "@@DATETIME_FORMAT":
-		p = parser.PrimaryToString(expr.Value)
+		p = value.ToString(expr.Value)
 	case "@@NO_HEADER", "@@WITHOUT_NULL":
-		p = parser.PrimaryToBoolean(expr.Value)
+		p = value.ToBoolean(expr.Value)
 	default:
 		return NewInvalidFlagNameError(expr)
 	}
-	if parser.IsNull(p) {
+	if value.IsNull(p) {
 		return NewInvalidFlagValueError(expr)
 	}
 
 	switch strings.ToUpper(expr.Name) {
 	case "@@DELIMITER":
-		err = cmd.SetDelimiter(p.(parser.String).Value())
+		err = cmd.SetDelimiter(p.(value.String).Raw())
 	case "@@ENCODING":
-		err = cmd.SetEncoding(p.(parser.String).Value())
+		err = cmd.SetEncoding(p.(value.String).Raw())
 	case "@@LINE_BREAK":
-		err = cmd.SetLineBreak(p.(parser.String).Value())
+		err = cmd.SetLineBreak(p.(value.String).Raw())
 	case "@@REPOSITORY":
-		err = cmd.SetRepository(p.(parser.String).Value())
+		err = cmd.SetRepository(p.(value.String).Raw())
 	case "@@DATETIME_FORMAT":
-		cmd.SetDatetimeFormat(p.(parser.String).Value())
+		cmd.SetDatetimeFormat(p.(value.String).Raw())
 	case "@@NO_HEADER":
-		cmd.SetNoHeader(p.(parser.Boolean).Value())
+		cmd.SetNoHeader(p.(value.Boolean).Raw())
 	case "@@WITHOUT_NULL":
-		cmd.SetWithoutNull(p.(parser.Boolean).Value())
+		cmd.SetWithoutNull(p.(value.Boolean).Raw())
 	}
 
 	if err != nil {

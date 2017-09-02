@@ -7,18 +7,18 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
-var aliasMapListAddTests = []struct {
+var aliasNodesAddTests = []struct {
 	Name   string
 	Alias  parser.Identifier
 	Path   string
-	Result AliasMapList
+	Result AliasNodes
 	Error  string
 }{
 	{
-		Name:  "AliasMapList Add",
+		Name:  "AliasNodes Add",
 		Alias: parser.Identifier{Literal: "tbl"},
 		Path:  "/path/to/tbl1.csv",
-		Result: AliasMapList{
+		Result: AliasNodes{
 			AliasMap{
 				"TBL": "/PATH/TO/TBL1.CSV",
 			},
@@ -27,10 +27,10 @@ var aliasMapListAddTests = []struct {
 	},
 }
 
-func TestAliasMapList_Add(t *testing.T) {
-	list := AliasMapList{{}, {}}
+func TestAliasNodes_Add(t *testing.T) {
+	list := AliasNodes{{}, {}}
 
-	for _, v := range aliasMapListAddTests {
+	for _, v := range aliasNodesAddTests {
 		err := list.Add(v.Alias, v.Path)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -50,7 +50,7 @@ func TestAliasMapList_Add(t *testing.T) {
 	}
 }
 
-var aliasMapListGetTests = []struct {
+var aliasNodesGetTests = []struct {
 	Name   string
 	Alias  parser.Identifier
 	Result string
@@ -73,8 +73,8 @@ var aliasMapListGetTests = []struct {
 	},
 }
 
-func TestAliasMapList_Get(t *testing.T) {
-	list := AliasMapList{
+func TestAliasNodes_Get(t *testing.T) {
+	list := AliasNodes{
 		AliasMap{
 			"TBL2": "",
 		},
@@ -83,7 +83,7 @@ func TestAliasMapList_Get(t *testing.T) {
 		},
 	}
 
-	for _, v := range aliasMapListGetTests {
+	for _, v := range aliasNodesGetTests {
 		result, err := list.Get(v.Alias)
 		if err != nil {
 			if len(v.Error) < 1 {

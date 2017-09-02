@@ -1,4 +1,4 @@
-package parser
+package value
 
 import (
 	"testing"
@@ -249,130 +249,130 @@ func TestConvertDatetimeFormat(t *testing.T) {
 	}
 }
 
-func TestFloat64ToPrimary(t *testing.T) {
+func TestParseFloat64(t *testing.T) {
 	var p Primary
 	var f float64
 
 	f = 1.000
-	p = Float64ToPrimary(f)
+	p = ParseFloat64(f)
 	if _, ok := p.(Integer); !ok {
 		t.Errorf("primary type = %T, want Integer for %d", p, f)
 	}
 
 	f = 1.234
-	p = Float64ToPrimary(f)
+	p = ParseFloat64(f)
 	if _, ok := p.(Float); !ok {
 		t.Errorf("primary type = %T, want Float for %d", p, f)
 	}
 }
 
-func TestPrimaryToInteger(t *testing.T) {
+func TestToInteger(t *testing.T) {
 	var p Primary
 	var i Primary
 
 	p = NewInteger(1)
-	i = PrimaryToInteger(p)
+	i = ToInteger(p)
 	if _, ok := i.(Integer); !ok {
 		t.Errorf("primary type = %T, want Integer for %#v", i, p)
 	}
 
 	p = NewFloat(1)
-	i = PrimaryToInteger(p)
+	i = ToInteger(p)
 	if _, ok := i.(Integer); !ok {
 		t.Errorf("primary type = %T, want Integer for %#v", i, p)
 	}
 
 	p = NewFloat(1.6)
-	i = PrimaryToInteger(p)
+	i = ToInteger(p)
 	if _, ok := i.(Null); !ok {
 		t.Errorf("primary type = %T, want Null for %#v", i, p)
 	}
 
 	p = NewString("1")
-	i = PrimaryToInteger(p)
+	i = ToInteger(p)
 	if _, ok := i.(Integer); !ok {
 		t.Errorf("primary type = %T, want Integer for %#v", i, p)
 	}
 
 	p = NewString("-1")
-	i = PrimaryToInteger(p)
+	i = ToInteger(p)
 	if _, ok := i.(Integer); !ok {
 		t.Errorf("primary type = %T, want Integer for %#v", i, p)
 	}
 
 	p = NewString("1e+02")
-	i = PrimaryToInteger(p)
+	i = ToInteger(p)
 	if _, ok := i.(Integer); !ok {
 		t.Errorf("primary type = %T, want Integer for %#v", i, p)
 	}
 
 	p = NewString("1.5")
-	i = PrimaryToInteger(p)
+	i = ToInteger(p)
 	if _, ok := i.(Null); !ok {
 		t.Errorf("primary type = %T, want Null for %#v", i, p)
 	}
 
 	p = NewString("error")
-	i = PrimaryToInteger(p)
+	i = ToInteger(p)
 	if _, ok := i.(Null); !ok {
 		t.Errorf("primary type = %T, want Null for %#v", i, p)
 	}
 
 	p = NewString("error")
-	i = PrimaryToInteger(p)
+	i = ToInteger(p)
 	if _, ok := i.(Null); !ok {
 		t.Errorf("primary type = %T, want Null for %#v", i, p)
 	}
 
 	p = NewString("2002-02-02")
-	i = PrimaryToInteger(p)
+	i = ToInteger(p)
 	if _, ok := i.(Null); !ok {
 		t.Errorf("primary type = %T, want Null for %#v", i, p)
 	}
 
 	p = NewString("2002/02/02")
-	i = PrimaryToInteger(p)
+	i = ToInteger(p)
 	if _, ok := i.(Null); !ok {
 		t.Errorf("primary type = %T, want Null for %#v", i, p)
 	}
 
 	p = NewString("03 Mar 12 12:03 PST")
-	i = PrimaryToInteger(p)
+	i = ToInteger(p)
 	if _, ok := i.(Null); !ok {
 		t.Errorf("primary type = %T, want Null for %#v", i, p)
 	}
 }
 
-func TestPrimaryToFloat(t *testing.T) {
+func TestToFloat(t *testing.T) {
 	var p Primary
 	var f Primary
 
 	p = NewInteger(1)
-	f = PrimaryToFloat(p)
+	f = ToFloat(p)
 	if _, ok := f.(Float); !ok {
 		t.Errorf("primary type = %T, want Float for %#v", f, p)
 	}
 
 	p = NewFloat(1.234)
-	f = PrimaryToFloat(p)
+	f = ToFloat(p)
 	if _, ok := f.(Float); !ok {
 		t.Errorf("primary type = %T, want Float for %#v", f, p)
 	}
 
 	p = NewString("1")
-	f = PrimaryToFloat(p)
+	f = ToFloat(p)
 	if _, ok := f.(Float); !ok {
 		t.Errorf("primary type = %T, want Float for %#v", f, p)
 	}
 
 	p = NewString("error")
-	f = PrimaryToFloat(p)
+	f = ToFloat(p)
 	if _, ok := f.(Null); !ok {
 		t.Errorf("primary type = %T, want Null for %#v", f, p)
 	}
 }
 
-func TestPrimaryToDatetime(t *testing.T) {
+func TestToDatetime(t *testing.T) {
 	flags := cmd.GetFlags()
 
 	var p Primary
@@ -380,175 +380,138 @@ func TestPrimaryToDatetime(t *testing.T) {
 
 	flags.DatetimeFormat = "01022006"
 	p = NewString("02012012")
-	dt = PrimaryToDatetime(p)
+	dt = ToDatetime(p)
 	if _, ok := dt.(Datetime); !ok {
 		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
 	} else {
 		expect := time.Date(2012, 2, 1, 0, 0, 0, 0, cmd.GetLocation())
-		if !dt.(Datetime).Value().Equal(expect) {
+		if !dt.(Datetime).Raw().Equal(expect) {
 			t.Errorf("datetime = %s, want %s for %#v", dt, expect, p)
 		}
 	}
 
 	p = NewInteger(1136181845)
-	dt = PrimaryToDatetime(p)
+	dt = ToDatetime(p)
 	if _, ok := dt.(Datetime); !ok {
 		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
 	}
 
 	p = NewFloat(1136181845)
-	dt = PrimaryToDatetime(p)
+	dt = ToDatetime(p)
 	if _, ok := dt.(Datetime); !ok {
 		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
 	}
 
 	p = NewFloat(1.123456789123)
-	dt = PrimaryToDatetime(p)
+	dt = ToDatetime(p)
 	if _, ok := dt.(Datetime); !ok {
 		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
 	}
 
 	p = NewDatetimeFromString("2006-01-02 15:04:05")
-	dt = PrimaryToDatetime(p)
+	dt = ToDatetime(p)
 	if _, ok := dt.(Datetime); !ok {
 		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
 	}
 
 	p = NewString("1136181845")
-	dt = PrimaryToDatetime(p)
+	dt = ToDatetime(p)
 	if _, ok := dt.(Datetime); !ok {
 		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
 	}
 
 	p = NewString("1136181845.12345")
-	dt = PrimaryToDatetime(p)
+	dt = ToDatetime(p)
 	if _, ok := dt.(Datetime); !ok {
 		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
 	}
 
 	p = NewString("2006-01-02 15:04:05")
-	dt = PrimaryToDatetime(p)
+	dt = ToDatetime(p)
 	if _, ok := dt.(Datetime); !ok {
 		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
 	}
 
 	p = NewString("error")
-	dt = PrimaryToDatetime(p)
+	dt = ToDatetime(p)
 	if _, ok := dt.(Null); !ok {
 		t.Errorf("primary type = %T, want Null for %#v", dt, p)
 	}
 }
 
-func TestPrimaryToBoolean(t *testing.T) {
+func TestToBoolean(t *testing.T) {
 	var p Primary
 	var b Primary
 
 	p = NewBoolean(true)
-	b = PrimaryToBoolean(p)
+	b = ToBoolean(p)
 	if _, ok := b.(Boolean); !ok {
 		t.Errorf("primary type = %T, want Boolean for %#v", b, p)
 	}
 
 	p = NewTernary(ternary.TRUE)
-	b = PrimaryToBoolean(p)
+	b = ToBoolean(p)
 	if _, ok := b.(Boolean); !ok {
 		t.Errorf("primary type = %T, want Boolean for %#v", b, p)
 	}
 
 	p = NewInteger(1)
-	b = PrimaryToBoolean(p)
+	b = ToBoolean(p)
 	if _, ok := b.(Boolean); !ok {
 		t.Errorf("primary type = %T, want Boolean for %#v", b, p)
 	}
 
 	p = NewFloat(0)
-	b = PrimaryToBoolean(p)
+	b = ToBoolean(p)
 	if _, ok := b.(Boolean); !ok {
 		t.Errorf("primary type = %T, want Boolean for %#v", b, p)
 	}
 
 	p = NewString("true")
-	b = PrimaryToBoolean(p)
+	b = ToBoolean(p)
 	if _, ok := b.(Boolean); !ok {
 		t.Errorf("primary type = %T, want Boolean for %#v", b, p)
 	}
 
 	p = NewTernary(ternary.UNKNOWN)
-	b = PrimaryToBoolean(p)
+	b = ToBoolean(p)
 	if _, ok := b.(Null); !ok {
 		t.Errorf("primary type = %T, want Null for %#v", b, p)
 	}
 
 	p = NewString("error")
-	b = PrimaryToBoolean(p)
+	b = ToBoolean(p)
 	if _, ok := b.(Null); !ok {
 		t.Errorf("primary type = %T, want Null for %#v", b, p)
 	}
 }
 
-func TestPrimaryToString(t *testing.T) {
+func TestToString(t *testing.T) {
 	var p Primary
 	var s Primary
 
 	p = NewString("str")
-	s = PrimaryToString(p)
+	s = ToString(p)
 	if _, ok := s.(String); !ok {
 		t.Errorf("primary type = %T, want String for %#v", s, p)
 	}
 
 	p = NewInteger(1)
-	s = PrimaryToString(p)
+	s = ToString(p)
 	if _, ok := s.(String); !ok {
 		t.Errorf("primary type = %T, want String for %#v", s, p)
 	}
 
 	p = NewFloat(1)
-	s = PrimaryToString(p)
+	s = ToString(p)
 	if _, ok := s.(String); !ok {
 		t.Errorf("primary type = %T, want String for %#v", s, p)
 	}
 
 	p = NewDatetimeFromString("2006-01-02 15:04:05")
-	s = PrimaryToString(p)
+	s = ToString(p)
 	if _, ok := s.(Null); !ok {
 		t.Errorf("primary type = %T, want Null for %#v", s, p)
-	}
-}
-
-func TestFieldIdentifier(t *testing.T) {
-	var e QueryExpression = NewStringValue("str")
-	expect := "str"
-	result := FieldIdentifier(e)
-	if result != expect {
-		t.Errorf("field identifier = %q, want %q for %#v", result, expect, e)
-	}
-
-	e = NewDatetimeValueFromString("2006-01-02 15:04:05 -08:00")
-	expect = "2006-01-02T15:04:05-08:00"
-	result = FieldIdentifier(e)
-	if result != expect {
-		t.Errorf("field identifier = %q, want %q for %#v", result, expect, e)
-	}
-
-	e = NewIntegerValue(1)
-	expect = "1"
-	result = FieldIdentifier(e)
-	if result != expect {
-		t.Errorf("field identifier = %q, want %q for %#v", result, expect, e)
-	}
-
-	e = FieldReference{Column: Identifier{Literal: "column1"}}
-	expect = "column1"
-	result = FieldIdentifier(e)
-	if result != expect {
-		t.Errorf("field identifier = %q, want %q for %#v", result, expect, e)
-	}
-
-	e = ColumnNumber{View: Identifier{Literal: "table1"}, Number: NewInteger(1)}
-	expect = "table1.1"
-	result = FieldIdentifier(e)
-	if result != expect {
-		t.Errorf("field identifier = %q, want %q for %#v", result, expect, e)
 	}
 }
 
@@ -622,30 +585,38 @@ func BenchmarkStrToTime7(b *testing.B) {
 	}
 }
 
-func BenchmarkPrimaryToInteger(b *testing.B) {
+func BenchmarkToInteger(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		p := NewString("a")
-		PrimaryToInteger(p)
+		ToInteger(p)
 	}
 }
 
-func BenchmarkPrimaryToInteger2(b *testing.B) {
+func BenchmarkToInteger2(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		p := NewString("2012-02-02")
-		PrimaryToInteger(p)
+		ToInteger(p)
 	}
 }
 
-func BenchmarkPrimaryToFloat(b *testing.B) {
+func BenchmarkToFloat(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		p := NewString("a")
-		PrimaryToFloat(p)
+		ToFloat(p)
 	}
 }
 
-func BenchmarkPrimaryToFloat2(b *testing.B) {
+func BenchmarkToFloat2(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		p := NewString("2012-02-02")
-		PrimaryToFloat(p)
+		ToFloat(p)
+	}
+}
+
+var convertDatetimeFormatBenchString = "%Y-%m-%d %H:%i:%s"
+
+func BenchmarkConvertDatetimeFormat(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = ConvertDatetimeFormat(convertDatetimeFormatBenchString)
 	}
 }

@@ -58,3 +58,18 @@ func TestHumarizeNumber(t *testing.T) {
 		t.Errorf("humarized = %q, want %q", result, expect)
 	}
 }
+
+var unescapeStringBenchString = "fo\\o\\a\\b\\f\\n\\r\\t\\v\\\\\\\\'\\\"bar\\"
+var unescapeStringBenchString2 = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"
+
+func BenchmarkUnescapeString(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = UnescapeString(unescapeStringBenchString)
+	}
+}
+
+func BenchmarkUnescapeString2(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = UnescapeString(unescapeStringBenchString2)
+	}
+}

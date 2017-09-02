@@ -5,11 +5,12 @@ import (
 	"sync"
 
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
-type TemporaryViewMapList []ViewMap
+type TemporaryViewScopes []ViewMap
 
-func (list TemporaryViewMapList) Exists(name string) bool {
+func (list TemporaryViewScopes) Exists(name string) bool {
 	for _, m := range list {
 		if m.Exists(name) {
 			return true
@@ -18,7 +19,7 @@ func (list TemporaryViewMapList) Exists(name string) bool {
 	return false
 }
 
-func (list TemporaryViewMapList) Get(name parser.Identifier) (*View, error) {
+func (list TemporaryViewScopes) Get(name parser.Identifier) (*View, error) {
 	for _, m := range list {
 		if view, err := m.Get(name); err == nil {
 			return view, nil
@@ -27,7 +28,7 @@ func (list TemporaryViewMapList) Get(name parser.Identifier) (*View, error) {
 	return nil, NewTableNotLoadedError(name)
 }
 
-func (list TemporaryViewMapList) GetWithInternalId(name parser.Identifier) (*View, error) {
+func (list TemporaryViewScopes) GetWithInternalId(name parser.Identifier) (*View, error) {
 	for _, m := range list {
 		if view, err := m.GetWithInternalId(name); err == nil {
 			return view, nil
@@ -36,11 +37,11 @@ func (list TemporaryViewMapList) GetWithInternalId(name parser.Identifier) (*Vie
 	return nil, NewTableNotLoadedError(name)
 }
 
-func (list TemporaryViewMapList) Set(view *View) {
+func (list TemporaryViewScopes) Set(view *View) {
 	list[0].Set(view)
 }
 
-func (list TemporaryViewMapList) Replace(view *View) {
+func (list TemporaryViewScopes) Replace(view *View) {
 	for _, m := range list {
 		if err := m.Replace(view); err == nil {
 			return
@@ -48,7 +49,7 @@ func (list TemporaryViewMapList) Replace(view *View) {
 	}
 }
 
-func (list TemporaryViewMapList) Dispose(name parser.Identifier) error {
+func (list TemporaryViewScopes) Dispose(name parser.Identifier) error {
 	for _, m := range list {
 		if err := m.DisposeTemporaryTable(name); err == nil {
 			return nil
@@ -57,7 +58,7 @@ func (list TemporaryViewMapList) Dispose(name parser.Identifier) error {
 	return NewUndefinedTemporaryTableError(name)
 }
 
-func (list TemporaryViewMapList) Rollback() {
+func (list TemporaryViewScopes) Rollback() {
 	for _, m := range list {
 		for _, view := range m {
 			view.Rollback()
@@ -100,11 +101,11 @@ func (m ViewMap) GetWithInternalId(fpath parser.Identifier) (*View, error) {
 
 				for i := start; i < end; i++ {
 					record := make(Record, fieldLen)
-					record[0] = NewCell(parser.NewInteger(int64(i)))
-					for j, cell := range ret.Records[i] {
+					record[0] = NewCell(value.NewInteger(int64(i)))
+					for j, cell := range ret.RecordSet[i] {
 						record[j+1] = cell
 					}
-					ret.Records[i] = record
+					ret.RecordSet[i] = record
 				}
 				wg.Done()
 			}(i)

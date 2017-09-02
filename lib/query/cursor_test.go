@@ -7,6 +7,7 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 var selectQueryForCursorTest parser.SelectQuery = parser.SelectQuery{
@@ -45,19 +46,19 @@ var selectQueryForCursorQueryErrorTest parser.SelectQuery = parser.SelectQuery{
 	},
 }
 
-var cursorMapListDeclareTests = []struct {
+var cursorScopesDeclareTests = []struct {
 	Name   string
 	Expr   parser.CursorDeclaration
-	Result CursorMapList
+	Result CursorScopes
 	Error  string
 }{
 	{
-		Name: "CursorMapList Declare",
+		Name: "CursorScopes Declare",
 		Expr: parser.CursorDeclaration{
 			Cursor: parser.Identifier{Literal: "cur"},
 			Query:  selectQueryForCursorTest,
 		},
-		Result: CursorMapList{
+		Result: CursorScopes{
 			{
 				"CUR": &Cursor{
 					query: selectQueryForCursorTest,
@@ -68,13 +69,13 @@ var cursorMapListDeclareTests = []struct {
 	},
 }
 
-func TestCursorMapList_Declare(t *testing.T) {
-	list := CursorMapList{
+func TestCursorScopes_Declare(t *testing.T) {
+	list := CursorScopes{
 		{},
 		{},
 	}
 
-	for _, v := range cursorMapListDeclareTests {
+	for _, v := range cursorScopesDeclareTests {
 		err := list.Declare(v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -94,28 +95,28 @@ func TestCursorMapList_Declare(t *testing.T) {
 	}
 }
 
-var cursorMapListAddPseudoCursorTests = []struct {
+var cursorScopesAddPseudoCursorTests = []struct {
 	Name    string
 	CurName parser.Identifier
-	Values  []parser.Primary
-	Result  CursorMapList
+	Values  []value.Primary
+	Result  CursorScopes
 	Error   string
 }{
 	{
-		Name:    "CursorMapList AddPseudoCursor",
+		Name:    "CursorScopes AddPseudoCursor",
 		CurName: parser.Identifier{Literal: "pcur"},
-		Values: []parser.Primary{
-			parser.NewInteger(1),
-			parser.NewInteger(2),
+		Values: []value.Primary{
+			value.NewInteger(1),
+			value.NewInteger(2),
 		},
-		Result: CursorMapList{
+		Result: CursorScopes{
 			{
 				"PCUR": &Cursor{
 					view: &View{
 						Header: NewHeader("", []string{"c1"}),
-						Records: Records{
-							NewRecord([]parser.Primary{parser.NewInteger(1)}),
-							NewRecord([]parser.Primary{parser.NewInteger(2)}),
+						RecordSet: RecordSet{
+							NewRecord([]value.Primary{value.NewInteger(1)}),
+							NewRecord([]value.Primary{value.NewInteger(2)}),
 						},
 					},
 					index:    -1,
@@ -127,13 +128,13 @@ var cursorMapListAddPseudoCursorTests = []struct {
 	},
 }
 
-func TestCursorMapList_AddPseudoCursor(t *testing.T) {
-	list := CursorMapList{
+func TestCursorScopes_AddPseudoCursor(t *testing.T) {
+	list := CursorScopes{
 		{},
 		{},
 	}
 
-	for _, v := range cursorMapListAddPseudoCursorTests {
+	for _, v := range cursorScopesAddPseudoCursorTests {
 		err := list.AddPseudoCursor(v.CurName, v.Values)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -153,23 +154,23 @@ func TestCursorMapList_AddPseudoCursor(t *testing.T) {
 	}
 }
 
-var cursorMapListDisposeTests = []struct {
+var cursorScopesDisposeTests = []struct {
 	Name    string
 	CurName parser.Identifier
-	Result  CursorMapList
+	Result  CursorScopes
 	Error   string
 }{
 	{
-		Name:    "CursorMapList Dispose",
+		Name:    "CursorScopes Dispose",
 		CurName: parser.Identifier{Literal: "cur"},
-		Result: CursorMapList{
+		Result: CursorScopes{
 			{
 				"PCUR": &Cursor{
 					view: &View{
 						Header: NewHeader("", []string{"c1"}),
-						Records: Records{
-							NewRecord([]parser.Primary{parser.NewInteger(1)}),
-							NewRecord([]parser.Primary{parser.NewInteger(2)}),
+						RecordSet: RecordSet{
+							NewRecord([]value.Primary{value.NewInteger(1)}),
+							NewRecord([]value.Primary{value.NewInteger(2)}),
 						},
 					},
 					index:    -1,
@@ -180,26 +181,26 @@ var cursorMapListDisposeTests = []struct {
 		},
 	},
 	{
-		Name:    "CursorMapList Dispose Pseudo Cursor Error",
+		Name:    "CursorScopes Dispose Pseudo Cursor Error",
 		CurName: parser.Identifier{Literal: "pcur"},
 		Error:   "[L:- C:-] cursor pcur is a pseudo cursor",
 	},
 	{
-		Name:    "CursorMapList Dispose Undefined Error",
+		Name:    "CursorScopes Dispose Undefined Error",
 		CurName: parser.Identifier{Literal: "notexist"},
 		Error:   "[L:- C:-] cursor notexist is undefined",
 	},
 }
 
-func TestCursorMapList_Dispose(t *testing.T) {
-	list := CursorMapList{
+func TestCursorScopes_Dispose(t *testing.T) {
+	list := CursorScopes{
 		{
 			"PCUR": &Cursor{
 				view: &View{
 					Header: NewHeader("", []string{"c1"}),
-					Records: Records{
-						NewRecord([]parser.Primary{parser.NewInteger(1)}),
-						NewRecord([]parser.Primary{parser.NewInteger(2)}),
+					RecordSet: RecordSet{
+						NewRecord([]value.Primary{value.NewInteger(1)}),
+						NewRecord([]value.Primary{value.NewInteger(2)}),
 					},
 				},
 				index:    -1,
@@ -213,7 +214,7 @@ func TestCursorMapList_Dispose(t *testing.T) {
 		},
 	}
 
-	for _, v := range cursorMapListDisposeTests {
+	for _, v := range cursorScopesDisposeTests {
 		err := list.Dispose(v.CurName)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -233,23 +234,23 @@ func TestCursorMapList_Dispose(t *testing.T) {
 	}
 }
 
-var cursorMapListOpenTests = []struct {
+var cursorScopesOpenTests = []struct {
 	Name    string
 	CurName parser.Identifier
-	Result  CursorMapList
+	Result  CursorScopes
 	Error   string
 }{
 	{
-		Name:    "CursorMapList Open",
+		Name:    "CursorScopes Open",
 		CurName: parser.Identifier{Literal: "cur"},
-		Result: CursorMapList{
+		Result: CursorScopes{
 			{
 				"PCUR": &Cursor{
 					view: &View{
 						Header: NewHeader("", []string{"c1"}),
-						Records: Records{
-							NewRecord([]parser.Primary{parser.NewInteger(1)}),
-							NewRecord([]parser.Primary{parser.NewInteger(2)}),
+						RecordSet: RecordSet{
+							NewRecord([]value.Primary{value.NewInteger(1)}),
+							NewRecord([]value.Primary{value.NewInteger(2)}),
 						},
 					},
 					index:    -1,
@@ -261,18 +262,18 @@ var cursorMapListOpenTests = []struct {
 					query: selectQueryForCursorTest,
 					view: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
-						Records: []Record{
-							NewRecord([]parser.Primary{
-								parser.NewString("1"),
-								parser.NewString("str1"),
+						RecordSet: []Record{
+							NewRecord([]value.Primary{
+								value.NewString("1"),
+								value.NewString("str1"),
 							}),
-							NewRecord([]parser.Primary{
-								parser.NewString("2"),
-								parser.NewString("str2"),
+							NewRecord([]value.Primary{
+								value.NewString("2"),
+								value.NewString("str2"),
 							}),
-							NewRecord([]parser.Primary{
-								parser.NewString("3"),
-								parser.NewString("str3"),
+							NewRecord([]value.Primary{
+								value.NewString("3"),
+								value.NewString("str3"),
 							}),
 						},
 						FileInfo: &FileInfo{
@@ -289,35 +290,35 @@ var cursorMapListOpenTests = []struct {
 		},
 	},
 	{
-		Name:    "CursorMapList Open Undefined Error",
+		Name:    "CursorScopes Open Undefined Error",
 		CurName: parser.Identifier{Literal: "notexist"},
 		Error:   "[L:- C:-] cursor notexist is undefined",
 	},
 	{
-		Name:    "CursorMapList Open Open Error",
+		Name:    "CursorScopes Open Open Error",
 		CurName: parser.Identifier{Literal: "cur"},
 		Error:   "[L:- C:-] cursor cur is already open",
 	},
 	{
-		Name:    "CursorMapList Close Pseudo Cursor Error",
+		Name:    "CursorScopes Close Pseudo Cursor Error",
 		CurName: parser.Identifier{Literal: "pcur"},
 		Error:   "[L:- C:-] cursor pcur is a pseudo cursor",
 	},
 }
 
-func TestCursorMapList_Open(t *testing.T) {
+func TestCursorScopes_Open(t *testing.T) {
 	initFlag()
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
-	list := CursorMapList{
+	list := CursorScopes{
 		{
 			"PCUR": &Cursor{
 				view: &View{
 					Header: NewHeader("", []string{"c1"}),
-					Records: Records{
-						NewRecord([]parser.Primary{parser.NewInteger(1)}),
-						NewRecord([]parser.Primary{parser.NewInteger(2)}),
+					RecordSet: RecordSet{
+						NewRecord([]value.Primary{value.NewInteger(1)}),
+						NewRecord([]value.Primary{value.NewInteger(2)}),
 					},
 				},
 				index:    -1,
@@ -331,7 +332,7 @@ func TestCursorMapList_Open(t *testing.T) {
 		},
 	}
 
-	for _, v := range cursorMapListOpenTests {
+	for _, v := range cursorScopesOpenTests {
 		ViewCache.Clear()
 
 		err := list.Open(v.CurName, NewEmptyFilter())
@@ -353,23 +354,23 @@ func TestCursorMapList_Open(t *testing.T) {
 	}
 }
 
-var cursorMapListCloseTests = []struct {
+var cursorScopesCloseTests = []struct {
 	Name    string
 	CurName parser.Identifier
-	Result  CursorMapList
+	Result  CursorScopes
 	Error   string
 }{
 	{
-		Name:    "CursorMapList Close",
+		Name:    "CursorScopes Close",
 		CurName: parser.Identifier{Literal: "cur"},
-		Result: CursorMapList{
+		Result: CursorScopes{
 			{
 				"PCUR": &Cursor{
 					view: &View{
 						Header: NewHeader("", []string{"c1"}),
-						Records: Records{
-							NewRecord([]parser.Primary{parser.NewInteger(1)}),
-							NewRecord([]parser.Primary{parser.NewInteger(2)}),
+						RecordSet: RecordSet{
+							NewRecord([]value.Primary{value.NewInteger(1)}),
+							NewRecord([]value.Primary{value.NewInteger(2)}),
 						},
 					},
 					index:    -1,
@@ -384,30 +385,30 @@ var cursorMapListCloseTests = []struct {
 		},
 	},
 	{
-		Name:    "CursorMapList Close Pseudo Cursor Error",
+		Name:    "CursorScopes Close Pseudo Cursor Error",
 		CurName: parser.Identifier{Literal: "pcur"},
 		Error:   "[L:- C:-] cursor pcur is a pseudo cursor",
 	},
 	{
-		Name:    "CursorMapList Close Undefined Error",
+		Name:    "CursorScopes Close Undefined Error",
 		CurName: parser.Identifier{Literal: "notexist"},
 		Error:   "[L:- C:-] cursor notexist is undefined",
 	},
 }
 
-func TestCursorMapList_Close(t *testing.T) {
+func TestCursorScopes_Close(t *testing.T) {
 	initFlag()
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
-	list := CursorMapList{
+	list := CursorScopes{
 		{
 			"PCUR": &Cursor{
 				view: &View{
 					Header: NewHeader("", []string{"c1"}),
-					Records: Records{
-						NewRecord([]parser.Primary{parser.NewInteger(1)}),
-						NewRecord([]parser.Primary{parser.NewInteger(2)}),
+					RecordSet: RecordSet{
+						NewRecord([]value.Primary{value.NewInteger(1)}),
+						NewRecord([]value.Primary{value.NewInteger(2)}),
 					},
 				},
 				index:    -1,
@@ -424,7 +425,7 @@ func TestCursorMapList_Close(t *testing.T) {
 	ViewCache.Clear()
 	list[1]["CUR"].Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
 
-	for _, v := range cursorMapListCloseTests {
+	for _, v := range cursorScopesCloseTests {
 		err := list.Close(v.CurName)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -444,43 +445,43 @@ func TestCursorMapList_Close(t *testing.T) {
 	}
 }
 
-var cursorMapListFetchTests = []struct {
+var cursorScopesFetchTests = []struct {
 	Name     string
 	CurName  parser.Identifier
 	Position int
 	Number   int
-	Result   []parser.Primary
+	Result   []value.Primary
 	Error    string
 }{
 	{
-		Name:     "CursorMapList Fetch",
+		Name:     "CursorScopes Fetch",
 		CurName:  parser.Identifier{Literal: "cur"},
 		Position: parser.NEXT,
-		Result: []parser.Primary{
-			parser.NewString("1"),
-			parser.NewString("str1"),
+		Result: []value.Primary{
+			value.NewString("1"),
+			value.NewString("str1"),
 		},
 	},
 	{
-		Name:     "CursorMapList Fetch Undefined Error",
+		Name:     "CursorScopes Fetch Undefined Error",
 		CurName:  parser.Identifier{Literal: "notexist"},
 		Position: parser.NEXT,
 		Error:    "[L:- C:-] cursor notexist is undefined",
 	},
 	{
-		Name:     "CursorMapList Fetch Closed Error",
+		Name:     "CursorScopes Fetch Closed Error",
 		CurName:  parser.Identifier{Literal: "cur2"},
 		Position: parser.NEXT,
 		Error:    "[L:- C:-] cursor cur2 is closed",
 	},
 }
 
-func TestCursorMapList_Fetch(t *testing.T) {
+func TestCursorScopes_Fetch(t *testing.T) {
 	initFlag()
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
-	list := CursorMapList{
+	list := CursorScopes{
 		{},
 		{
 			"CUR": &Cursor{
@@ -495,7 +496,7 @@ func TestCursorMapList_Fetch(t *testing.T) {
 	ViewCache.Clear()
 	list[1]["CUR"].Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
 
-	for _, v := range cursorMapListFetchTests {
+	for _, v := range cursorScopesFetchTests {
 		result, err := list.Fetch(v.CurName, v.Position, v.Number)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -515,30 +516,30 @@ func TestCursorMapList_Fetch(t *testing.T) {
 	}
 }
 
-var cursorMapListIsOpenTests = []struct {
+var cursorScopesIsOpenTests = []struct {
 	Name    string
 	CurName parser.Identifier
 	Result  ternary.Value
 	Error   string
 }{
 	{
-		Name:    "CursorMapList IsOpen",
+		Name:    "CursorScopes IsOpen",
 		CurName: parser.Identifier{Literal: "cur"},
 		Result:  ternary.TRUE,
 	},
 	{
-		Name:    "CursorMapList IsOpen Undefined Error",
+		Name:    "CursorScopes IsOpen Undefined Error",
 		CurName: parser.Identifier{Literal: "notexist"},
 		Error:   "[L:- C:-] cursor notexist is undefined",
 	},
 }
 
-func TestCursorMapList_IsOpen(t *testing.T) {
+func TestCursorScopes_IsOpen(t *testing.T) {
 	initFlag()
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
-	list := CursorMapList{
+	list := CursorScopes{
 		{},
 		{
 			"CUR": &Cursor{
@@ -550,7 +551,7 @@ func TestCursorMapList_IsOpen(t *testing.T) {
 	ViewCache.Clear()
 	list[1]["CUR"].Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
 
-	for _, v := range cursorMapListIsOpenTests {
+	for _, v := range cursorScopesIsOpenTests {
 		result, err := list.IsOpen(v.CurName)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -570,7 +571,7 @@ func TestCursorMapList_IsOpen(t *testing.T) {
 	}
 }
 
-var cursorMapListIsInRangeTests = []struct {
+var cursorScopesIsInRangeTests = []struct {
 	Name    string
 	CurName parser.Identifier
 	Index   int
@@ -578,7 +579,7 @@ var cursorMapListIsInRangeTests = []struct {
 	Error   string
 }{
 	{
-		Name:    "CursorMapList Is In Range UNKNOWN",
+		Name:    "CursorScopes Is In Range UNKNOWN",
 		CurName: parser.Identifier{Literal: "cur"},
 		Result:  ternary.UNKNOWN,
 	},
@@ -594,12 +595,12 @@ var cursorMapListIsInRangeTests = []struct {
 	},
 }
 
-func TestCursorMapList_IsInRange(t *testing.T) {
+func TestCursorScopes_IsInRange(t *testing.T) {
 	initFlag()
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
-	list := CursorMapList{
+	list := CursorScopes{
 		{},
 		{
 			"CUR": &Cursor{
@@ -614,7 +615,7 @@ func TestCursorMapList_IsInRange(t *testing.T) {
 	ViewCache.Clear()
 	list[1]["CUR"].Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
 
-	for _, v := range cursorMapListIsInRangeTests {
+	for _, v := range cursorScopesIsInRangeTests {
 		result, err := list.IsInRange(v.CurName)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -634,35 +635,35 @@ func TestCursorMapList_IsInRange(t *testing.T) {
 	}
 }
 
-var cursorMapListCountTests = []struct {
+var cursorScopesCountTests = []struct {
 	Name    string
 	CurName parser.Identifier
 	Result  int
 	Error   string
 }{
 	{
-		Name:    "CursorMapList Count",
+		Name:    "CursorScopes Count",
 		CurName: parser.Identifier{Literal: "cur"},
 		Result:  3,
 	},
 	{
-		Name:    "CursorMapList Count Not Open Error",
+		Name:    "CursorScopes Count Not Open Error",
 		CurName: parser.Identifier{Literal: "cur2"},
 		Error:   "[L:- C:-] cursor cur2 is closed",
 	},
 	{
-		Name:    "CursorMapList Count Undefined Error",
+		Name:    "CursorScopes Count Undefined Error",
 		CurName: parser.Identifier{Literal: "notexist"},
 		Error:   "[L:- C:-] cursor notexist is undefined",
 	},
 }
 
-func TestCursorMapList_Count(t *testing.T) {
+func TestCursorScopes_Count(t *testing.T) {
 	initFlag()
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
-	list := CursorMapList{
+	list := CursorScopes{
 		{},
 		{
 			"CUR": &Cursor{
@@ -677,7 +678,7 @@ func TestCursorMapList_Count(t *testing.T) {
 	ViewCache.Clear()
 	list[1]["CUR"].Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
 
-	for _, v := range cursorMapListCountTests {
+	for _, v := range cursorScopesCountTests {
 		result, err := list.Count(v.CurName)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -751,24 +752,24 @@ func TestCursorMap_Declare(t *testing.T) {
 var cursorMapAddPseudoCursorTests = []struct {
 	Name   string
 	Cursor parser.Identifier
-	Values []parser.Primary
+	Values []value.Primary
 	Result CursorMap
 	Error  string
 }{
 	{
 		Name:   "CursorMap AddPseudoCursor",
 		Cursor: parser.Identifier{Literal: "pcur"},
-		Values: []parser.Primary{
-			parser.NewInteger(1),
-			parser.NewInteger(2),
+		Values: []value.Primary{
+			value.NewInteger(1),
+			value.NewInteger(2),
 		},
 		Result: CursorMap{
 			"PCUR": &Cursor{
 				view: &View{
 					Header: NewHeader("", []string{"c1"}),
-					Records: Records{
-						NewRecord([]parser.Primary{parser.NewInteger(1)}),
-						NewRecord([]parser.Primary{parser.NewInteger(2)}),
+					RecordSet: RecordSet{
+						NewRecord([]value.Primary{value.NewInteger(1)}),
+						NewRecord([]value.Primary{value.NewInteger(2)}),
 					},
 				},
 				index:    -1,
@@ -779,7 +780,7 @@ var cursorMapAddPseudoCursorTests = []struct {
 	{
 		Name:   "CursorMap AddPseudoCursor Redeclaration Error",
 		Cursor: parser.Identifier{Literal: "pcur"},
-		Values: []parser.Primary{},
+		Values: []value.Primary{},
 		Error:  "[L:- C:-] cursor pcur is redeclared",
 	},
 }
@@ -819,9 +820,9 @@ var cursorMapDisposeTests = []struct {
 			"PCUR": &Cursor{
 				view: &View{
 					Header: NewHeader("", []string{"c1"}),
-					Records: Records{
-						NewRecord([]parser.Primary{parser.NewInteger(1)}),
-						NewRecord([]parser.Primary{parser.NewInteger(2)}),
+					RecordSet: RecordSet{
+						NewRecord([]value.Primary{value.NewInteger(1)}),
+						NewRecord([]value.Primary{value.NewInteger(2)}),
 					},
 				},
 				index:    -1,
@@ -849,9 +850,9 @@ func TestCursorMap_Dispose(t *testing.T) {
 	}
 	cursors.AddPseudoCursor(
 		parser.Identifier{Literal: "pcur"},
-		[]parser.Primary{
-			parser.NewInteger(1),
-			parser.NewInteger(2),
+		[]value.Primary{
+			value.NewInteger(1),
+			value.NewInteger(2),
 		},
 	)
 
@@ -889,18 +890,18 @@ var cursorMapOpenTests = []struct {
 				query: selectQueryForCursorTest,
 				view: &View{
 					Header: NewHeader("table1", []string{"column1", "column2"}),
-					Records: []Record{
-						NewRecord([]parser.Primary{
-							parser.NewString("1"),
-							parser.NewString("str1"),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
 						}),
-						NewRecord([]parser.Primary{
-							parser.NewString("2"),
-							parser.NewString("str2"),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
+							value.NewString("str2"),
 						}),
-						NewRecord([]parser.Primary{
-							parser.NewString("3"),
-							parser.NewString("str3"),
+						NewRecord([]value.Primary{
+							value.NewString("3"),
+							value.NewString("str3"),
 						}),
 					},
 					FileInfo: &FileInfo{
@@ -919,9 +920,9 @@ var cursorMapOpenTests = []struct {
 			"PCUR": &Cursor{
 				view: &View{
 					Header: NewHeader("", []string{"c1"}),
-					Records: Records{
-						NewRecord([]parser.Primary{parser.NewInteger(1)}),
-						NewRecord([]parser.Primary{parser.NewInteger(2)}),
+					RecordSet: RecordSet{
+						NewRecord([]value.Primary{value.NewInteger(1)}),
+						NewRecord([]value.Primary{value.NewInteger(2)}),
 					},
 				},
 				index:    -1,
@@ -966,9 +967,9 @@ func TestCursorMap_Open(t *testing.T) {
 	}
 	cursors.AddPseudoCursor(
 		parser.Identifier{Literal: "pcur"},
-		[]parser.Primary{
-			parser.NewInteger(1),
-			parser.NewInteger(2),
+		[]value.Primary{
+			value.NewInteger(1),
+			value.NewInteger(2),
 		},
 	)
 
@@ -1009,9 +1010,9 @@ var cursorMapCloseTests = []struct {
 			"PCUR": &Cursor{
 				view: &View{
 					Header: NewHeader("", []string{"c1"}),
-					Records: Records{
-						NewRecord([]parser.Primary{parser.NewInteger(1)}),
-						NewRecord([]parser.Primary{parser.NewInteger(2)}),
+					RecordSet: RecordSet{
+						NewRecord([]value.Primary{value.NewInteger(1)}),
+						NewRecord([]value.Primary{value.NewInteger(2)}),
 					},
 				},
 				index:    -1,
@@ -1042,9 +1043,9 @@ func TestCursorMap_Close(t *testing.T) {
 	}
 	cursors.AddPseudoCursor(
 		parser.Identifier{Literal: "pcur"},
-		[]parser.Primary{
-			parser.NewInteger(1),
-			parser.NewInteger(2),
+		[]value.Primary{
+			value.NewInteger(1),
+			value.NewInteger(2),
 		},
 	)
 	ViewCache.Clear()
@@ -1075,34 +1076,34 @@ var cursorMapFetchTests = []struct {
 	CurName  parser.Identifier
 	Position int
 	Number   int
-	Result   []parser.Primary
+	Result   []value.Primary
 	Error    string
 }{
 	{
 		Name:     "CursorMap Fetch First Time",
 		CurName:  parser.Identifier{Literal: "cur"},
 		Position: parser.NEXT,
-		Result: []parser.Primary{
-			parser.NewString("1"),
-			parser.NewString("str1"),
+		Result: []value.Primary{
+			value.NewString("1"),
+			value.NewString("str1"),
 		},
 	},
 	{
 		Name:     "CursorMap Fetch Second Time",
 		CurName:  parser.Identifier{Literal: "cur"},
 		Position: parser.NEXT,
-		Result: []parser.Primary{
-			parser.NewString("2"),
-			parser.NewString("str2"),
+		Result: []value.Primary{
+			value.NewString("2"),
+			value.NewString("str2"),
 		},
 	},
 	{
 		Name:     "CursorMap Fetch Third Time",
 		CurName:  parser.Identifier{Literal: "cur"},
 		Position: parser.NEXT,
-		Result: []parser.Primary{
-			parser.NewString("3"),
-			parser.NewString("str3"),
+		Result: []value.Primary{
+			value.NewString("3"),
+			value.NewString("str3"),
 		},
 	},
 	{
@@ -1115,27 +1116,27 @@ var cursorMapFetchTests = []struct {
 		Name:     "CursorMap Fetch First",
 		CurName:  parser.Identifier{Literal: "cur"},
 		Position: parser.FIRST,
-		Result: []parser.Primary{
-			parser.NewString("1"),
-			parser.NewString("str1"),
+		Result: []value.Primary{
+			value.NewString("1"),
+			value.NewString("str1"),
 		},
 	},
 	{
 		Name:     "CursorMap Fetch Last",
 		CurName:  parser.Identifier{Literal: "cur"},
 		Position: parser.LAST,
-		Result: []parser.Primary{
-			parser.NewString("3"),
-			parser.NewString("str3"),
+		Result: []value.Primary{
+			value.NewString("3"),
+			value.NewString("str3"),
 		},
 	},
 	{
 		Name:     "CursorMap Fetch Prior",
 		CurName:  parser.Identifier{Literal: "cur"},
 		Position: parser.PRIOR,
-		Result: []parser.Primary{
-			parser.NewString("2"),
-			parser.NewString("str2"),
+		Result: []value.Primary{
+			value.NewString("2"),
+			value.NewString("str2"),
 		},
 	},
 	{
@@ -1143,9 +1144,9 @@ var cursorMapFetchTests = []struct {
 		CurName:  parser.Identifier{Literal: "cur"},
 		Position: parser.ABSOLUTE,
 		Number:   1,
-		Result: []parser.Primary{
-			parser.NewString("2"),
-			parser.NewString("str2"),
+		Result: []value.Primary{
+			value.NewString("2"),
+			value.NewString("str2"),
 		},
 	},
 	{
@@ -1153,9 +1154,9 @@ var cursorMapFetchTests = []struct {
 		CurName:  parser.Identifier{Literal: "cur"},
 		Position: parser.RELATIVE,
 		Number:   -1,
-		Result: []parser.Primary{
-			parser.NewString("1"),
-			parser.NewString("str1"),
+		Result: []value.Primary{
+			value.NewString("1"),
+			value.NewString("str1"),
 		},
 	},
 	{

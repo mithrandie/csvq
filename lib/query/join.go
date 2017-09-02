@@ -103,7 +103,7 @@ func ParseJoinCondition(join parser.Join, view *View, joinView *View) (parser.Qu
 
 func CrossJoin(view *View, joinView *View) {
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
-	records := make([]Record, view.RecordLen()*joinView.RecordLen())
+	records := make(RecordSet, view.RecordLen()*joinView.RecordLen())
 
 	cpu := NumberOfCPU(view.RecordLen())
 	wg := sync.WaitGroup{}
@@ -113,8 +113,8 @@ func CrossJoin(view *View, joinView *View) {
 			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
 			idx := start * joinView.RecordLen()
 
-			for _, viewRecord := range view.Records[start:end] {
-				for _, joinViewRecord := range joinView.Records {
+			for _, viewRecord := range view.RecordSet[start:end] {
+				for _, joinViewRecord := range joinView.RecordSet {
 					records[idx] = MergeRecord(viewRecord, joinViewRecord)
 					idx++
 				}
@@ -126,7 +126,7 @@ func CrossJoin(view *View, joinView *View) {
 	wg.Wait()
 
 	view.Header = mergedHeader
-	view.Records = records
+	view.RecordSet = records
 	view.FileInfo = nil
 }
 
@@ -138,36 +138,55 @@ func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, par
 
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 
-	cpu := NumberOfCPU(view.RecordLen())
+	var cpu int
+	var splitLeft bool
+	if joinView.RecordLen() < view.RecordLen() {
+		cpu = NumberOfCPU(view.RecordLen())
+		splitLeft = true
+	} else {
+		cpu = NumberOfCPU(joinView.RecordLen())
+		splitLeft = false
+	}
 
 	var err error
-	recordsList := make([]Records, cpu)
+	recordsList := make([]RecordSet, cpu)
 
 	wg := sync.WaitGroup{}
 	for i := 0; i < cpu; i++ {
 		wg.Add(1)
 		go func(thIdx int) {
-			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
-			records := make(Records, 0, end-start)
+			var lstart, lend, rstart, rend int
+			var records RecordSet
+			if splitLeft {
+				lstart, lend = RecordRange(thIdx, view.RecordLen(), cpu)
+				rstart = 0
+				rend = joinView.RecordLen()
+				records = make(RecordSet, 0, lend-lstart)
+			} else {
+				lstart = 0
+				lend = view.RecordLen()
+				rstart, rend = RecordRange(thIdx, joinView.RecordLen(), cpu)
+				records = make(RecordSet, 0, rend-rstart)
+			}
 
 			filter := NewFilterForRecord(
 				&View{
-					Header:  mergedHeader,
-					Records: make(Records, 1),
+					Header:    mergedHeader,
+					RecordSet: make(RecordSet, 1),
 				},
 				0,
 				parentFilter,
 			)
 
 		InnerJoinLoop:
-			for _, viewRecord := range view.Records[start:end] {
-				for _, joinViewRecord := range joinView.Records {
+			for i := lstart; i < lend; i++ {
+				for j := rstart; j < rend; j++ {
 					if err != nil {
 						break InnerJoinLoop
 					}
 
-					mergedRecord := MergeRecord(viewRecord, joinViewRecord)
-					filter.Records[0].View.Records[0] = mergedRecord
+					mergedRecord := MergeRecord(view.RecordSet[i], joinView.RecordSet[j])
+					filter.Records[0].View.RecordSet[0] = mergedRecord
 
 					primary, e := filter.Evaluate(condition)
 					if e != nil {
@@ -191,7 +210,7 @@ func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, par
 	}
 
 	view.Header = mergedHeader
-	view.Records = MergeRecordsList(recordsList)
+	view.RecordSet = MergeRecordSetList(recordsList)
 	view.FileInfo = nil
 	return nil
 }
@@ -210,23 +229,42 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 	viewEmptyRecord := NewEmptyRecord(view.FieldLen())
 	joinViewEmptyRecord := NewEmptyRecord(joinView.FieldLen())
 
-	cpu := NumberOfCPU(view.RecordLen())
+	var cpu int
+	var splitLeft bool
+	if joinView.RecordLen() < view.RecordLen() {
+		cpu = NumberOfCPU(view.RecordLen())
+		splitLeft = true
+	} else {
+		cpu = NumberOfCPU(joinView.RecordLen())
+		splitLeft = false
+	}
 
 	var err error
-	recordsList := make([]Records, cpu)
+	recordsList := make([]RecordSet, cpu)
 	joinViewMatchesList := make([][]bool, cpu)
 
 	wg := sync.WaitGroup{}
 	for i := 0; i < cpu; i++ {
 		wg.Add(1)
 		go func(thIdx int) {
-			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
-			records := make(Records, 0, (end-start)*2)
+			var lstart, lend, rstart, rend int
+			var records RecordSet
+			if splitLeft {
+				lstart, lend = RecordRange(thIdx, view.RecordLen(), cpu)
+				rstart = 0
+				rend = joinView.RecordLen()
+				records = make(RecordSet, 0, lend-lstart)
+			} else {
+				lstart = 0
+				lend = view.RecordLen()
+				rstart, rend = RecordRange(thIdx, joinView.RecordLen(), cpu)
+				records = make(RecordSet, 0, rend-rstart)
+			}
 
 			filter := NewFilterForRecord(
 				&View{
-					Header:  mergedHeader,
-					Records: make(Records, 1),
+					Header:    mergedHeader,
+					RecordSet: make(RecordSet, 1),
 				},
 				0,
 				parentFilter,
@@ -235,9 +273,9 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 			joinViewMatches := make([]bool, joinView.RecordLen())
 
 		OuterJoinLoop:
-			for _, viewRecord := range view.Records[start:end] {
+			for i := lstart; i < lend; i++ {
 				match := false
-				for j, joinViewRecord := range joinView.Records {
+				for j := rstart; j < rend; j++ {
 					if err != nil {
 						break OuterJoinLoop
 					}
@@ -245,11 +283,11 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 					var mergedRecord Record
 					switch direction {
 					case parser.RIGHT:
-						mergedRecord = MergeRecord(joinViewRecord, viewRecord)
+						mergedRecord = MergeRecord(joinView.RecordSet[j], view.RecordSet[i])
 					default:
-						mergedRecord = MergeRecord(viewRecord, joinViewRecord)
+						mergedRecord = MergeRecord(view.RecordSet[i], joinView.RecordSet[j])
 					}
-					filter.Records[0].View.Records[0] = mergedRecord
+					filter.Records[0].View.RecordSet[0] = mergedRecord
 
 					primary, e := filter.Evaluate(condition)
 					if e != nil {
@@ -269,9 +307,9 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 					var record Record
 					switch direction {
 					case parser.RIGHT:
-						record = MergeRecord(joinViewEmptyRecord, viewRecord)
+						record = MergeRecord(joinViewEmptyRecord, view.RecordSet[i])
 					default:
-						record = MergeRecord(viewRecord, joinViewEmptyRecord)
+						record = MergeRecord(view.RecordSet[i], joinViewEmptyRecord)
 					}
 					records = append(records, record)
 
@@ -299,7 +337,7 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 				}
 			}
 			if !match {
-				record := MergeRecord(viewEmptyRecord, joinView.Records[i])
+				record := MergeRecord(viewEmptyRecord, joinView.RecordSet[i])
 				recordsList[len(recordsList)-1] = append(recordsList[len(recordsList)-1], record)
 			}
 		}
@@ -310,7 +348,7 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 	}
 
 	view.Header = mergedHeader
-	view.Records = MergeRecordsList(recordsList)
+	view.RecordSet = MergeRecordSetList(recordsList)
 	view.FileInfo = nil
 	return nil
 }

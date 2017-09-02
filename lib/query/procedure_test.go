@@ -10,6 +10,7 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
 var procedureExecuteStatementTests = []struct {
@@ -23,15 +24,15 @@ var procedureExecuteStatementTests = []struct {
 	{
 		Input: parser.SetFlag{
 			Name:  "@@invalid",
-			Value: parser.NewString("\t"),
+			Value: value.NewString("\t"),
 		},
 		Error:     "[L:- C:-] SET: flag name @@invalid is invalid",
 		ErrorCode: 1,
 	},
 	{
 		Input: parser.VariableDeclaration{
-			Assignments: []parser.Expression{
-				parser.VariableAssignment{
+			Assignments: []parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@var1"},
 				},
 			},
@@ -40,8 +41,8 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.VariableDeclaration{
-			Assignments: []parser.Expression{
-				parser.VariableAssignment{
+			Assignments: []parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@var2"},
 				},
 			},
@@ -50,8 +51,8 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.VariableDeclaration{
-			Assignments: []parser.Expression{
-				parser.VariableAssignment{
+			Assignments: []parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@var3"},
 				},
 			},
@@ -60,8 +61,8 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.VariableDeclaration{
-			Assignments: []parser.Expression{
-				parser.VariableAssignment{
+			Assignments: []parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@var4"},
 				},
 			},
@@ -88,8 +89,8 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.VariableDeclaration{
-			Assignments: []parser.Expression{
-				parser.VariableAssignment{
+			Assignments: []parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@var4"},
 				},
 			},
@@ -98,8 +99,8 @@ var procedureExecuteStatementTests = []struct {
 	{
 		Input: parser.FunctionDeclaration{
 			Name: parser.Identifier{Literal: "userfunc"},
-			Parameters: []parser.Expression{
-				parser.VariableAssignment{
+			Parameters: []parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@arg1"},
 				},
 			},
@@ -216,11 +217,11 @@ var procedureExecuteStatementTests = []struct {
 			Cursor: parser.Identifier{Literal: "list"},
 			Statements: []parser.Statement{
 				parser.VariableDeclaration{
-					Assignments: []parser.Expression{
-						parser.VariableAssignment{
+					Assignments: []parser.VariableAssignment{
+						{
 							Variable: parser.Variable{Name: "@value"},
 						},
-						parser.VariableAssignment{
+						{
 							Variable: parser.Variable{Name: "@fetch"},
 						},
 					},
@@ -311,8 +312,8 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.VariableDeclaration{
-			Assignments: []parser.Expression{
-				parser.VariableAssignment{
+			Assignments: []parser.VariableAssignment{
+				{
 					Variable: parser.Variable{Name: "@var1"},
 				},
 			},
@@ -374,8 +375,8 @@ var procedureExecuteStatementTests = []struct {
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			},
-			SetList: []parser.Expression{
-				parser.UpdateSet{
+			SetList: []parser.UpdateSet{
+				{
 					Field: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 					Value: parser.NewStringValue("update"),
 				},
@@ -460,8 +461,8 @@ var procedureExecuteStatementTests = []struct {
 	{
 		Input: parser.AddColumns{
 			Table: parser.Identifier{Literal: "table1.csv"},
-			Columns: []parser.Expression{
-				parser.ColumnDefault{
+			Columns: []parser.ColumnDefault{
+				{
 					Column: parser.Identifier{Literal: "column3"},
 				},
 			},
@@ -526,14 +527,14 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.Case{
-			When: []parser.Expression{
-				parser.CaseWhen{
+			When: []parser.CaseWhen{
+				{
 					Condition: parser.NewTernaryValue(ternary.FALSE),
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.NewStringValue("1")},
 					},
 				},
-				parser.CaseWhen{
+				{
 					Condition: parser.NewTernaryValue(ternary.TRUE),
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.NewStringValue("2")},
@@ -566,7 +567,7 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.Exit{
-			Code: parser.NewInteger(1),
+			Code: value.NewInteger(1),
 		},
 		Error:     "",
 		ErrorCode: 1,
@@ -579,7 +580,7 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.Printf{
-			Format: "value: %s",
+			Format: parser.NewStringValue("value: %s"),
 			Values: []parser.QueryExpression{
 				parser.NewIntegerValue(12345),
 			},
@@ -596,7 +597,7 @@ var procedureExecuteStatementTests = []struct {
 		Input: parser.Trigger{
 			Token:   parser.ERROR,
 			Message: parser.NewStringValue("user error"),
-			Code:    parser.NewInteger(200),
+			Code:    value.NewInteger(200),
 		},
 		Error:     "[L:- C:-] user error",
 		ErrorCode: 200,
@@ -618,7 +619,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 	tf.Format = cmd.CSV
 
 	proc := NewProcedure()
-	proc.Filter.VariablesList[0].Add(parser.Variable{Name: "@while_test"}, parser.NewInteger(0))
+	proc.Filter.Variables[0].Add(parser.Variable{Name: "@while_test"}, value.NewInteger(0))
 
 	for _, v := range procedureExecuteStatementTests {
 		ViewCache.Clear()
@@ -713,14 +714,14 @@ var procedureIfStmtTests = []struct {
 			Statements: []parser.Statement{
 				parser.Print{Value: parser.NewStringValue("1")},
 			},
-			ElseIf: []parser.Expression{
-				parser.ElseIf{
+			ElseIf: []parser.ElseIf{
+				{
 					Condition: parser.NewTernaryValue(ternary.TRUE),
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.NewStringValue("2")},
 					},
 				},
-				parser.ElseIf{
+				{
 					Condition: parser.NewTernaryValue(ternary.FALSE),
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.NewStringValue("3")},
@@ -743,14 +744,14 @@ var procedureIfStmtTests = []struct {
 			Statements: []parser.Statement{
 				parser.Print{Value: parser.NewStringValue("1")},
 			},
-			ElseIf: []parser.Expression{
-				parser.ElseIf{
+			ElseIf: []parser.ElseIf{
+				{
 					Condition: parser.NewTernaryValue(ternary.FALSE),
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.NewStringValue("2")},
 					},
 				},
-				parser.ElseIf{
+				{
 					Condition: parser.NewTernaryValue(ternary.FALSE),
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.NewStringValue("3")},
@@ -830,14 +831,14 @@ var procedureCaseStmtTests = []struct {
 	{
 		Name: "Case",
 		Stmt: parser.Case{
-			When: []parser.Expression{
-				parser.CaseWhen{
+			When: []parser.CaseWhen{
+				{
 					Condition: parser.NewTernaryValue(ternary.FALSE),
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.NewStringValue("1")},
 					},
 				},
-				parser.CaseWhen{
+				{
 					Condition: parser.NewTernaryValue(ternary.TRUE),
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.NewStringValue("2")},
@@ -852,14 +853,14 @@ var procedureCaseStmtTests = []struct {
 		Name: "Case Comparison",
 		Stmt: parser.Case{
 			Value: parser.NewIntegerValue(2),
-			When: []parser.Expression{
-				parser.CaseWhen{
+			When: []parser.CaseWhen{
+				{
 					Condition: parser.NewIntegerValue(1),
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.NewStringValue("1")},
 					},
 				},
-				parser.CaseWhen{
+				{
 					Condition: parser.NewIntegerValue(2),
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.NewStringValue("2")},
@@ -873,14 +874,14 @@ var procedureCaseStmtTests = []struct {
 	{
 		Name: "Case Else",
 		Stmt: parser.Case{
-			When: []parser.Expression{
-				parser.CaseWhen{
+			When: []parser.CaseWhen{
+				{
 					Condition: parser.NewTernaryValue(ternary.FALSE),
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.NewStringValue("1")},
 					},
 				},
-				parser.CaseWhen{
+				{
 					Condition: parser.NewTernaryValue(ternary.FALSE),
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.NewStringValue("2")},
@@ -899,14 +900,14 @@ var procedureCaseStmtTests = []struct {
 	{
 		Name: "Case No Match",
 		Stmt: parser.Case{
-			When: []parser.Expression{
-				parser.CaseWhen{
+			When: []parser.CaseWhen{
+				{
 					Condition: parser.NewTernaryValue(ternary.FALSE),
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.NewStringValue("1")},
 					},
 				},
-				parser.CaseWhen{
+				{
 					Condition: parser.NewTernaryValue(ternary.FALSE),
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.NewStringValue("2")},
@@ -921,14 +922,14 @@ var procedureCaseStmtTests = []struct {
 		Name: "Case Comparison Value Error",
 		Stmt: parser.Case{
 			Value: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-			When: []parser.Expression{
-				parser.CaseWhen{
+			When: []parser.CaseWhen{
+				{
 					Condition: parser.NewIntegerValue(1),
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.NewStringValue("1")},
 					},
 				},
-				parser.CaseWhen{
+				{
 					Condition: parser.NewIntegerValue(2),
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.NewStringValue("2")},
@@ -942,8 +943,8 @@ var procedureCaseStmtTests = []struct {
 	{
 		Name: "Case Condition Error",
 		Stmt: parser.Case{
-			When: []parser.Expression{
-				parser.CaseWhen{
+			When: []parser.CaseWhen{
+				{
 					Condition: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 					Statements: []parser.Statement{
 						parser.Print{Value: parser.NewStringValue("1")},
@@ -1207,15 +1208,15 @@ func TestProcedure_While(t *testing.T) {
 	proc := NewProcedure()
 
 	for _, v := range procedureWhileTests {
-		if _, err := proc.Filter.VariablesList[0].Get(parser.Variable{Name: "@while_test"}); err != nil {
-			proc.Filter.VariablesList[0].Add(parser.Variable{Name: "@while_test"}, parser.NewInteger(0))
+		if _, err := proc.Filter.Variables[0].Get(parser.Variable{Name: "@while_test"}); err != nil {
+			proc.Filter.Variables[0].Add(parser.Variable{Name: "@while_test"}, value.NewInteger(0))
 		}
-		proc.Filter.VariablesList[0].Set(parser.Variable{Name: "@while_test"}, parser.NewInteger(0))
+		proc.Filter.Variables[0].Set(parser.Variable{Name: "@while_test"}, value.NewInteger(0))
 
-		if _, err := proc.Filter.VariablesList[0].Get(parser.Variable{Name: "@while_test_count"}); err != nil {
-			proc.Filter.VariablesList[0].Add(parser.Variable{Name: "@while_test_count"}, parser.NewInteger(0))
+		if _, err := proc.Filter.Variables[0].Get(parser.Variable{Name: "@while_test_count"}); err != nil {
+			proc.Filter.Variables[0].Add(parser.Variable{Name: "@while_test_count"}, value.NewInteger(0))
 		}
-		proc.Filter.VariablesList[0].Set(parser.Variable{Name: "@while_test_count"}, parser.NewInteger(0))
+		proc.Filter.Variables[0].Set(parser.Variable{Name: "@while_test_count"}, value.NewInteger(0))
 
 		oldStdout := os.Stdout
 
@@ -1405,17 +1406,17 @@ func TestProcedure_WhileInCursor(t *testing.T) {
 	proc := NewProcedure()
 
 	for _, v := range procedureWhileInCursorTests {
-		proc.Filter.VariablesList[0] = Variables{
-			"@var1": parser.NewNull(),
-			"@var2": parser.NewNull(),
+		proc.Filter.Variables[0] = VariableMap{
+			"@var1": value.NewNull(),
+			"@var2": value.NewNull(),
 		}
-		proc.Filter.CursorsList[0] = CursorMap{
+		proc.Filter.Cursors[0] = CursorMap{
 			"CUR": &Cursor{
 				query: selectQueryForCursorTest,
 			},
 		}
 		ViewCache.Clear()
-		proc.Filter.CursorsList.Open(parser.Identifier{Literal: "cur"}, proc.Filter)
+		proc.Filter.Cursors.Open(parser.Identifier{Literal: "cur"}, proc.Filter)
 
 		oldStdout := os.Stdout
 		r, w, _ := os.Pipe()

@@ -3,27 +3,27 @@ package query
 import (
 	"math"
 
-	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
-func Calculate(p1 parser.Primary, p2 parser.Primary, operator int) parser.Primary {
+func Calculate(p1 value.Primary, p2 value.Primary, operator int) value.Primary {
 	if operator != '/' {
-		if pi1 := parser.PrimaryToInteger(p1); !parser.IsNull(pi1) {
-			if pi2 := parser.PrimaryToInteger(p2); !parser.IsNull(pi2) {
-				return calculateInteger(pi1.(parser.Integer).Value(), pi2.(parser.Integer).Value(), operator)
+		if pi1 := value.ToInteger(p1); !value.IsNull(pi1) {
+			if pi2 := value.ToInteger(p2); !value.IsNull(pi2) {
+				return calculateInteger(pi1.(value.Integer).Raw(), pi2.(value.Integer).Raw(), operator)
 			}
 		}
 	}
 
-	pf1 := parser.PrimaryToFloat(p1)
-	pf2 := parser.PrimaryToFloat(p2)
+	pf1 := value.ToFloat(p1)
+	pf2 := value.ToFloat(p2)
 
-	if parser.IsNull(pf1) || parser.IsNull(pf2) {
-		return parser.NewNull()
+	if value.IsNull(pf1) || value.IsNull(pf2) {
+		return value.NewNull()
 	}
 
-	f1 := pf1.(parser.Float).Value()
-	f2 := pf2.(parser.Float).Value()
+	f1 := pf1.(value.Float).Raw()
+	f2 := pf2.(value.Float).Raw()
 
 	result := 0.0
 	switch operator {
@@ -39,10 +39,10 @@ func Calculate(p1 parser.Primary, p2 parser.Primary, operator int) parser.Primar
 		result = math.Remainder(f1, f2)
 	}
 
-	return parser.Float64ToPrimary(result)
+	return value.ParseFloat64(result)
 }
 
-func calculateInteger(i1 int64, i2 int64, operator int) parser.Primary {
+func calculateInteger(i1 int64, i2 int64, operator int) value.Primary {
 	var result int64 = 0
 	switch operator {
 	case '+':
@@ -55,5 +55,5 @@ func calculateInteger(i1 int64, i2 int64, operator int) parser.Primary {
 		result = i1 % i2
 	}
 
-	return parser.NewInteger(result)
+	return value.NewInteger(result)
 }

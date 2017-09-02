@@ -6,268 +6,33 @@ import (
 
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
+	"github.com/mithrandie/csvq/lib/value"
 )
 
-type ComparisonResult int
-
-const (
-	EQUAL ComparisonResult = iota
-	BOOL_EQUAL
-	NOT_EQUAL
-	LESS
-	GREATER
-	INCOMMENSURABLE
-)
-
-var comparisonResultLiterals = map[ComparisonResult]string{
-	EQUAL:           "EQUAL",
-	BOOL_EQUAL:      "BOOL_EQUAL",
-	NOT_EQUAL:       "NOT_EQUAL",
-	LESS:            "LESS",
-	GREATER:         "GREATER",
-	INCOMMENSURABLE: "INCOMMENSURABLE",
-}
-
-func (cr ComparisonResult) String() string {
-	return comparisonResultLiterals[cr]
-}
-
-func CompareCombinedly(p1 parser.Primary, p2 parser.Primary) ComparisonResult {
-	if parser.IsNull(p1) || parser.IsNull(p2) {
-		return INCOMMENSURABLE
-	}
-
-	if i1 := parser.PrimaryToInteger(p1); !parser.IsNull(i1) {
-		if i2 := parser.PrimaryToInteger(p2); !parser.IsNull(i2) {
-			v1 := i1.(parser.Integer).Value()
-			v2 := i2.(parser.Integer).Value()
-			if v1 == v2 {
-				return EQUAL
-			} else if v1 < v2 {
-				return LESS
-			} else {
-				return GREATER
-			}
-		}
-	}
-
-	if f1 := parser.PrimaryToFloat(p1); !parser.IsNull(f1) {
-		if f2 := parser.PrimaryToFloat(p2); !parser.IsNull(f2) {
-			v1 := f1.(parser.Float).Value()
-			v2 := f2.(parser.Float).Value()
-			if v1 == v2 {
-				return EQUAL
-			} else if v1 < v2 {
-				return LESS
-			} else {
-				return GREATER
-			}
-		}
-	}
-
-	if d1 := parser.PrimaryToDatetime(p1); !parser.IsNull(d1) {
-		if d2 := parser.PrimaryToDatetime(p2); !parser.IsNull(d2) {
-			v1 := d1.(parser.Datetime).Value()
-			v2 := d2.(parser.Datetime).Value()
-			if v1.Equal(v2) {
-				return EQUAL
-			} else if v1.Before(v2) {
-				return LESS
-			} else {
-				return GREATER
-			}
-		}
-	}
-
-	if b1 := parser.PrimaryToBoolean(p1); !parser.IsNull(b1) {
-		if b2 := parser.PrimaryToBoolean(p2); !parser.IsNull(b2) {
-			v1 := b1.(parser.Boolean).Value()
-			v2 := b2.(parser.Boolean).Value()
-			if v1 == v2 {
-				return BOOL_EQUAL
-			} else {
-				return NOT_EQUAL
-			}
-		}
-	}
-
-	if s1, ok := p1.(parser.String); ok {
-		if s2, ok := p2.(parser.String); ok {
-			v1 := strings.ToUpper(strings.TrimSpace(s1.Value()))
-			v2 := strings.ToUpper(strings.TrimSpace(s2.Value()))
-
-			if v1 == v2 {
-				return EQUAL
-			} else if v1 < v2 {
-				return LESS
-			} else {
-				return GREATER
-			}
-		}
-	}
-
-	return INCOMMENSURABLE
-}
-
-func EqualTo(p1 parser.Primary, p2 parser.Primary) ternary.Value {
-	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE {
-		return ternary.ParseBool(r == EQUAL || r == BOOL_EQUAL)
-	}
-	return ternary.UNKNOWN
-}
-
-func NotEqualTo(p1 parser.Primary, p2 parser.Primary) ternary.Value {
-	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE {
-		return ternary.ParseBool(r != EQUAL && r != BOOL_EQUAL)
-	}
-	return ternary.UNKNOWN
-}
-
-func LessThan(p1 parser.Primary, p2 parser.Primary) ternary.Value {
-	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE && r != NOT_EQUAL && r != BOOL_EQUAL {
-		return ternary.ParseBool(r == LESS)
-	}
-	return ternary.UNKNOWN
-}
-
-func GreaterThan(p1 parser.Primary, p2 parser.Primary) ternary.Value {
-	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE && r != NOT_EQUAL && r != BOOL_EQUAL {
-		return ternary.ParseBool(r == GREATER)
-	}
-	return ternary.UNKNOWN
-}
-
-func LessThanOrEqualTo(p1 parser.Primary, p2 parser.Primary) ternary.Value {
-	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE && r != NOT_EQUAL && r != BOOL_EQUAL {
-		return ternary.ParseBool(r != GREATER)
-	}
-	return ternary.UNKNOWN
-}
-
-func GreaterThanOrEqualTo(p1 parser.Primary, p2 parser.Primary) ternary.Value {
-	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE && r != NOT_EQUAL && r != BOOL_EQUAL {
-		return ternary.ParseBool(r != LESS)
-	}
-	return ternary.UNKNOWN
-}
-
-func Compare(p1 parser.Primary, p2 parser.Primary, operator string) ternary.Value {
-	switch operator {
-	case "=":
-		return EqualTo(p1, p2)
-	case ">":
-		return GreaterThan(p1, p2)
-	case "<":
-		return LessThan(p1, p2)
-	case ">=":
-		return GreaterThanOrEqualTo(p1, p2)
-	case "<=":
-		return LessThanOrEqualTo(p1, p2)
-	default: //case "<>", "!=":
-		return NotEqualTo(p1, p2)
-	}
-}
-
-func CompareRowValues(v1 []parser.Primary, v2 []parser.Primary, operator string) (ternary.Value, error) {
-	if v1 == nil || v2 == nil {
-		return ternary.UNKNOWN, nil
-	}
-
-	if len(v1) != len(v2) {
-		return ternary.FALSE, NewRowValueLengthNotMatchError()
-	}
-
-	unknown := false
-	for i := 0; i < len(v1); i++ {
-		r := CompareCombinedly(v1[i], v2[i])
-
-		if r == INCOMMENSURABLE {
-			switch operator {
-			case "=", "<>", "!=":
-				if i < len(v1)-1 {
-					unknown = true
-					continue
-				}
-			}
-
-			return ternary.UNKNOWN, nil
-		}
-
-		switch operator {
-		case ">", "<", ">=", "<=":
-			if r == NOT_EQUAL || r == BOOL_EQUAL {
-				return ternary.UNKNOWN, nil
-			}
-		}
-
-		switch operator {
-		case "=":
-			if r != EQUAL && r != BOOL_EQUAL {
-				return ternary.FALSE, nil
-			}
-		case ">", ">=":
-			switch r {
-			case GREATER:
-				return ternary.TRUE, nil
-			case LESS:
-				return ternary.FALSE, nil
-			}
-		case "<", "<=":
-			switch r {
-			case LESS:
-				return ternary.TRUE, nil
-			case GREATER:
-				return ternary.FALSE, nil
-			}
-		case "<>", "!=":
-			if r != EQUAL && r != BOOL_EQUAL {
-				return ternary.TRUE, nil
-			}
-		}
-	}
-
-	if unknown {
-		return ternary.UNKNOWN, nil
-	}
-
-	switch operator {
-	case ">", "<", "<>", "!=":
-		return ternary.FALSE, nil
-	}
-	return ternary.TRUE, nil
-}
-
-func EquivalentTo(p1 parser.Primary, p2 parser.Primary) ternary.Value {
-	if parser.IsNull(p1) && parser.IsNull(p2) {
-		return ternary.TRUE
-	}
-	return EqualTo(p1, p2)
-}
-
-func Is(p1 parser.Primary, p2 parser.Primary) ternary.Value {
-	if parser.IsNull(p2) {
-		return ternary.ParseBool(parser.IsNull(p1))
+func Is(p1 value.Primary, p2 value.Primary) ternary.Value {
+	if value.IsNull(p2) {
+		return ternary.ParseBool(value.IsNull(p1))
 	}
 
 	return p1.Ternary().EqualTo(p2.Ternary())
 }
 
-func Like(p1 parser.Primary, p2 parser.Primary) ternary.Value {
-	if parser.IsNull(p1) || parser.IsNull(p2) {
+func Like(p1 value.Primary, p2 value.Primary) ternary.Value {
+	if value.IsNull(p1) || value.IsNull(p2) {
 		return ternary.UNKNOWN
 	}
 
-	s1 := parser.PrimaryToString(p1)
-	if parser.IsNull(s1) {
+	s1 := value.ToString(p1)
+	if value.IsNull(s1) {
 		return ternary.UNKNOWN
 	}
-	s2 := parser.PrimaryToString(p2)
-	if parser.IsNull(s2) {
+	s2 := value.ToString(p2)
+	if value.IsNull(s2) {
 		return ternary.UNKNOWN
 	}
 
-	s := strings.ToUpper(p1.(parser.String).Value())
-	pattern := strings.ToUpper(p2.(parser.String).Value())
+	s := strings.ToUpper(p1.(value.String).Raw())
+	pattern := strings.ToUpper(p2.(value.String).Raw())
 
 	if s == pattern {
 		return ternary.TRUE
@@ -360,11 +125,11 @@ func stringPattern(pattern []rune, position int) (int, int, string, int) {
 	return anyRunesMinLen, anyRunesMaxLen, string(search), returnPostion
 }
 
-func InRowValueList(value []parser.Primary, list [][]parser.Primary, matchType int, operator string) (ternary.Value, error) {
+func InRowValueList(rowValue value.RowValue, list []value.RowValue, matchType int, operator string) (ternary.Value, error) {
 	results := make([]ternary.Value, len(list))
 
 	for i, v := range list {
-		t, err := CompareRowValues(value, v, operator)
+		t, err := value.CompareRowValues(rowValue, v, operator)
 		if err != nil {
 			return ternary.FALSE, NewRowValueLengthInListError(i)
 		}
@@ -390,10 +155,10 @@ func InRowValueList(value []parser.Primary, list [][]parser.Primary, matchType i
 	}
 }
 
-func Any(value []parser.Primary, list [][]parser.Primary, operator string) (ternary.Value, error) {
-	return InRowValueList(value, list, parser.ANY, operator)
+func Any(rowValue value.RowValue, list []value.RowValue, operator string) (ternary.Value, error) {
+	return InRowValueList(rowValue, list, parser.ANY, operator)
 }
 
-func All(value []parser.Primary, list [][]parser.Primary, operator string) (ternary.Value, error) {
-	return InRowValueList(value, list, parser.ALL, operator)
+func All(rowValue value.RowValue, list []value.RowValue, operator string) (ternary.Value, error) {
+	return InRowValueList(rowValue, list, parser.ALL, operator)
 }
