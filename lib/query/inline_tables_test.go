@@ -8,14 +8,14 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 )
 
-var inlineTablesListSetTests = []struct {
+var inlineTableNodesSetTests = []struct {
 	Name   string
 	Expr   parser.InlineTable
-	Result InlineTablesList
+	Result InlineTableNodes
 	Error  string
 }{
 	{
-		Name: "InlineTablesList Set",
+		Name: "InlineTableNodes Set",
 		Expr: parser.InlineTable{
 			Name: parser.Identifier{Literal: "it"},
 			Fields: []parser.QueryExpression{
@@ -43,11 +43,11 @@ var inlineTablesListSetTests = []struct {
 				},
 			},
 		},
-		Result: InlineTablesList{
-			InlineTables{
+		Result: InlineTableNodes{
+			InlineTableMap{
 				"IT": &View{
 					Header: NewHeader("it", []string{"c1", "c2", "num"}),
-					Records: []Record{
+					RecordSet: []Record{
 						NewRecord([]value.Primary{
 							value.NewString("1"),
 							value.NewString("str1"),
@@ -66,10 +66,10 @@ var inlineTablesListSetTests = []struct {
 					},
 				},
 			},
-			InlineTables{
+			InlineTableMap{
 				"IT2": &View{
 					Header: NewHeader("it2", []string{"c1", "c2", "num"}),
-					Records: []Record{
+					RecordSet: []Record{
 						NewRecord([]value.Primary{
 							value.NewString("1"),
 							value.NewString("str1"),
@@ -82,13 +82,13 @@ var inlineTablesListSetTests = []struct {
 	},
 }
 
-func TestInlineTablesList_Set(t *testing.T) {
-	list := InlineTablesList{
+func TestInlineTableNodes_Set(t *testing.T) {
+	list := InlineTableNodes{
 		{},
-		InlineTables{
+		InlineTableMap{
 			"IT2": &View{
 				Header: NewHeader("it2", []string{"c1", "c2", "num"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 						value.NewString("str1"),
@@ -99,7 +99,7 @@ func TestInlineTablesList_Set(t *testing.T) {
 		},
 	}
 
-	for _, v := range inlineTablesListSetTests {
+	for _, v := range inlineTableNodesSetTests {
 		ViewCache.Clear()
 		err := list.Set(v.Expr, NewEmptyFilter())
 		if err != nil {
@@ -120,18 +120,18 @@ func TestInlineTablesList_Set(t *testing.T) {
 	}
 }
 
-var inlineTablesListGetTests = []struct {
+var inlineTableNodesGetTests = []struct {
 	Name      string
 	TableName parser.Identifier
 	Result    *View
 	Error     string
 }{
 	{
-		Name:      "InlineTablesList Get",
+		Name:      "InlineTableNodes Get",
 		TableName: parser.Identifier{Literal: "it2"},
 		Result: &View{
 			Header: NewHeader("it2", []string{"c1", "c2", "num"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -141,18 +141,18 @@ var inlineTablesListGetTests = []struct {
 		},
 	},
 	{
-		Name:      "InlineTablesList Get Undefined Error",
+		Name:      "InlineTableNodes Get Undefined Error",
 		TableName: parser.Identifier{Literal: "notexist"},
 		Error:     "[L:- C:-] inline table notexist is undefined",
 	},
 }
 
-func TestInlineTablesList_Get(t *testing.T) {
-	list := InlineTablesList{
-		InlineTables{
+func TestInlineTableNodes_Get(t *testing.T) {
+	list := InlineTableNodes{
+		InlineTableMap{
 			"IT": &View{
 				Header: NewHeader("it", []string{"c1", "c2", "num"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 						value.NewString("str1"),
@@ -171,10 +171,10 @@ func TestInlineTablesList_Get(t *testing.T) {
 				},
 			},
 		},
-		InlineTables{
+		InlineTableMap{
 			"IT2": &View{
 				Header: NewHeader("it2", []string{"c1", "c2", "num"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 						value.NewString("str1"),
@@ -185,7 +185,7 @@ func TestInlineTablesList_Get(t *testing.T) {
 		},
 	}
 
-	for _, v := range inlineTablesListGetTests {
+	for _, v := range inlineTableNodesGetTests {
 		ViewCache.Clear()
 		view, err := list.Get(v.TableName)
 		if err != nil {
@@ -206,14 +206,14 @@ func TestInlineTablesList_Get(t *testing.T) {
 	}
 }
 
-var inlineTablesListLoadTests = []struct {
+var inlineTableNodesLoadTests = []struct {
 	Name   string
 	Expr   parser.WithClause
-	Result InlineTablesList
+	Result InlineTableNodes
 	Error  string
 }{
 	{
-		Name: "InlineTablesList Load",
+		Name: "InlineTableNodes Load",
 		Expr: parser.WithClause{
 			With: "with",
 			InlineTables: []parser.QueryExpression{
@@ -266,11 +266,11 @@ var inlineTablesListLoadTests = []struct {
 				},
 			},
 		},
-		Result: InlineTablesList{
-			InlineTables{
+		Result: InlineTableNodes{
+			InlineTableMap{
 				"IT": &View{
 					Header: NewHeader("it", []string{"c1", "c2", "num"}),
-					Records: []Record{
+					RecordSet: []Record{
 						NewRecord([]value.Primary{
 							value.NewString("1"),
 							value.NewString("str1"),
@@ -297,7 +297,7 @@ var inlineTablesListLoadTests = []struct {
 							IsFromTable: true,
 						},
 					},
-					Records: []Record{
+					RecordSet: []Record{
 						NewRecord([]value.Primary{
 							value.NewInteger(1),
 						}),
@@ -310,10 +310,10 @@ var inlineTablesListLoadTests = []struct {
 					},
 				},
 			},
-			InlineTables{
+			InlineTableMap{
 				"IT2": &View{
 					Header: NewHeader("it2", []string{"c1", "c2", "num"}),
-					Records: []Record{
+					RecordSet: []Record{
 						NewRecord([]value.Primary{
 							value.NewString("1"),
 							value.NewString("str1"),
@@ -325,7 +325,7 @@ var inlineTablesListLoadTests = []struct {
 		},
 	},
 	{
-		Name: "InlineTablesList Load Set Error",
+		Name: "InlineTableNodes Load Set Error",
 		Expr: parser.WithClause{
 			With: "with",
 			InlineTables: []parser.QueryExpression{
@@ -360,12 +360,12 @@ var inlineTablesListLoadTests = []struct {
 	},
 }
 
-func TestInlineTablesList_Load(t *testing.T) {
-	list := InlineTablesList{
-		InlineTables{
+func TestInlineTableNodes_Load(t *testing.T) {
+	list := InlineTableNodes{
+		InlineTableMap{
 			"IT": &View{
 				Header: NewHeader("it", []string{"c1", "c2", "num"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 						value.NewString("str1"),
@@ -384,10 +384,10 @@ func TestInlineTablesList_Load(t *testing.T) {
 				},
 			},
 		},
-		InlineTables{
+		InlineTableMap{
 			"IT2": &View{
 				Header: NewHeader("it2", []string{"c1", "c2", "num"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 						value.NewString("str1"),
@@ -398,7 +398,7 @@ func TestInlineTablesList_Load(t *testing.T) {
 		},
 	}
 
-	for _, v := range inlineTablesListLoadTests {
+	for _, v := range inlineTableNodesLoadTests {
 		err := list.Load(v.Expr, NewEmptyFilter())
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -418,14 +418,14 @@ func TestInlineTablesList_Load(t *testing.T) {
 	}
 }
 
-var inlineTablesSetTests = []struct {
+var inlineTableMapSetTests = []struct {
 	Name   string
 	Expr   parser.InlineTable
-	Result InlineTables
+	Result InlineTableMap
 	Error  string
 }{
 	{
-		Name: "InlineTables Set",
+		Name: "InlineTableMap Set",
 		Expr: parser.InlineTable{
 			Name: parser.Identifier{Literal: "it"},
 			Fields: []parser.QueryExpression{
@@ -453,10 +453,10 @@ var inlineTablesSetTests = []struct {
 				},
 			},
 		},
-		Result: InlineTables{
+		Result: InlineTableMap{
 			"IT": &View{
 				Header: NewHeader("it", []string{"c1", "c2", "num"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 						value.NewString("str1"),
@@ -477,7 +477,7 @@ var inlineTablesSetTests = []struct {
 		},
 	},
 	{
-		Name: "InlineTables Set Recursive Table",
+		Name: "InlineTableMap Set Recursive Table",
 		Expr: parser.InlineTable{
 			Recursive: parser.Token{Token: parser.RECURSIVE, Literal: "recursive"},
 			Name:      parser.Identifier{Literal: "it_recursive"},
@@ -525,10 +525,10 @@ var inlineTablesSetTests = []struct {
 				},
 			},
 		},
-		Result: InlineTables{
+		Result: InlineTableMap{
 			"IT": &View{
 				Header: NewHeader("it", []string{"c1", "c2", "num"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 						value.NewString("str1"),
@@ -555,7 +555,7 @@ var inlineTablesSetTests = []struct {
 						IsFromTable: true,
 					},
 				},
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewInteger(1),
 					}),
@@ -570,7 +570,7 @@ var inlineTablesSetTests = []struct {
 		},
 	},
 	{
-		Name: "InlineTables Set Redeclared Error",
+		Name: "InlineTableMap Set Redeclared Error",
 		Expr: parser.InlineTable{
 			Name: parser.Identifier{Literal: "it"},
 			Fields: []parser.QueryExpression{
@@ -599,7 +599,7 @@ var inlineTablesSetTests = []struct {
 		Error: "[L:- C:-] inline table it is redeclared",
 	},
 	{
-		Name: "InlineTables Set Query Error",
+		Name: "InlineTableMap Set Query Error",
 		Expr: parser.InlineTable{
 			Name: parser.Identifier{Literal: "it2"},
 			Fields: []parser.QueryExpression{
@@ -628,7 +628,7 @@ var inlineTablesSetTests = []struct {
 		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
-		Name: "InlineTables Set Field Length Error",
+		Name: "InlineTableMap Set Field Length Error",
 		Expr: parser.InlineTable{
 			Name: parser.Identifier{Literal: "it2"},
 			Fields: []parser.QueryExpression{
@@ -656,7 +656,7 @@ var inlineTablesSetTests = []struct {
 		Error: "[L:- C:-] select query should return exactly 1 field for inline table it2",
 	},
 	{
-		Name: "InlineTables Set Duplicate Field Name Error",
+		Name: "InlineTableMap Set Duplicate Field Name Error",
 		Expr: parser.InlineTable{
 			Name: parser.Identifier{Literal: "it2"},
 			Fields: []parser.QueryExpression{
@@ -686,10 +686,10 @@ var inlineTablesSetTests = []struct {
 	},
 }
 
-func TestInlineTables_Set(t *testing.T) {
-	it := InlineTables{}
+func TestInlineTableMap_Set(t *testing.T) {
+	it := InlineTableMap{}
 
-	for _, v := range inlineTablesSetTests {
+	for _, v := range inlineTableMapSetTests {
 		ViewCache.Clear()
 		err := it.Set(v.Expr, NewEmptyFilter())
 		if err != nil {
@@ -710,18 +710,18 @@ func TestInlineTables_Set(t *testing.T) {
 	}
 }
 
-var inlineTablesGetTests = []struct {
+var inlineTableMapGetTests = []struct {
 	Name      string
 	TableName parser.Identifier
 	Result    *View
 	Error     string
 }{
 	{
-		Name:      "InlineTables Get",
+		Name:      "InlineTableMap Get",
 		TableName: parser.Identifier{Literal: "it"},
 		Result: &View{
 			Header: NewHeader("it", []string{"c1", "c2", "num"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -741,17 +741,17 @@ var inlineTablesGetTests = []struct {
 		},
 	},
 	{
-		Name:      "InlineTables Get Undefined Error",
+		Name:      "InlineTableMap Get Undefined Error",
 		TableName: parser.Identifier{Literal: "notexist"},
 		Error:     "[L:- C:-] inline table notexist is undefined",
 	},
 }
 
-func TestInlineTables_Get(t *testing.T) {
-	it := InlineTables{
+func TestInlineTableMap_Get(t *testing.T) {
+	it := InlineTableMap{
 		"IT": &View{
 			Header: NewHeader("it", []string{"c1", "c2", "num"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -771,7 +771,7 @@ func TestInlineTables_Get(t *testing.T) {
 		},
 	}
 
-	for _, v := range inlineTablesGetTests {
+	for _, v := range inlineTableMapGetTests {
 		ret, err := it.Get(v.TableName)
 		if err != nil {
 			if len(v.Error) < 1 {

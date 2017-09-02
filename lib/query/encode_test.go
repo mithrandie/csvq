@@ -31,19 +31,19 @@ var encodeViewTests = []struct {
 	Error          string
 }{
 	{
-		Name: "Empty Records",
+		Name: "Empty RecordSet",
 		View: &View{
-			Header:  NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
-			Records: []Record{},
+			Header:    NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
+			RecordSet: []Record{},
 		},
 		Format: cmd.TEXT,
-		Result: "Empty Records",
+		Result: "Empty RecordSet",
 	},
 	{
 		Name: "Empty Fields",
 		View: &View{
 			Header: NewHeader("", []string{}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{value.NewNull()}),
 			},
 		},
@@ -54,7 +54,7 @@ var encodeViewTests = []struct {
 		Name: "Text",
 		View: &View{
 			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(true)}),
 				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk日本語あアｱＡ（\n"), value.NewNull()}),
@@ -76,7 +76,7 @@ var encodeViewTests = []struct {
 		Name: "CSV",
 		View: &View{
 			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(true)}),
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.FALSE), value.NewBoolean(true)}),
 				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
@@ -94,7 +94,7 @@ var encodeViewTests = []struct {
 		Name: "TSV",
 		View: &View{
 			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(true)}),
 				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), value.NewNull()}),
@@ -111,7 +111,7 @@ var encodeViewTests = []struct {
 		Name: "CSV WithoutHeader",
 		View: &View{
 			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(true)}),
 				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), value.NewNull()}),
@@ -127,7 +127,7 @@ var encodeViewTests = []struct {
 		Name: "CSV Line Break CRLF",
 		View: &View{
 			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(true)}),
 				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), value.NewNull()}),
@@ -144,7 +144,7 @@ var encodeViewTests = []struct {
 		Name: "JSON",
 		View: &View{
 			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(true)}),
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.FALSE), value.NewBoolean(true)}),
 				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
@@ -179,7 +179,7 @@ var encodeViewTests = []struct {
 		Name: "CSV Encode Character Code",
 		View: &View{
 			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(true)}),
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.FALSE), value.NewBoolean(true)}),
 				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),

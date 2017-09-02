@@ -20,13 +20,13 @@ type FilterRecord struct {
 type Filter struct {
 	Records []FilterRecord
 
-	VariablesList VariablesList
-	TempViewsList TemporaryViewMapList
-	CursorsList   CursorMapList
-	FunctionsList UserDefinedFunctionsList
+	Variables VariableScopes
+	TempViews TemporaryViewScopes
+	Cursors   CursorScopes
+	Functions UserDefinedFunctionScopes
 
-	InlineTablesList InlineTablesList
-	AliasesList      AliasMapList
+	InlineTables InlineTableNodes
+	Aliases      AliasNodes
 
 	RecursiveTable    *parser.InlineTable
 	RecursiveTmpView  *View
@@ -35,21 +35,21 @@ type Filter struct {
 	Now time.Time
 }
 
-func NewFilter(variablesList VariablesList, tempViewsList TemporaryViewMapList, cursorsList CursorMapList, functionsList UserDefinedFunctionsList) *Filter {
+func NewFilter(variableScopes VariableScopes, tempViewScopes TemporaryViewScopes, cursorScopes CursorScopes, functionScopes UserDefinedFunctionScopes) *Filter {
 	return &Filter{
-		VariablesList: variablesList,
-		TempViewsList: tempViewsList,
-		CursorsList:   cursorsList,
-		FunctionsList: functionsList,
+		Variables: variableScopes,
+		TempViews: tempViewScopes,
+		Cursors:   cursorScopes,
+		Functions: functionScopes,
 	}
 }
 
 func NewEmptyFilter() *Filter {
 	return NewFilter(
-		VariablesList{{}},
-		TemporaryViewMapList{{}},
-		CursorMapList{{}},
-		UserDefinedFunctionsList{{}},
+		VariableScopes{{}},
+		TemporaryViewScopes{{}},
+		CursorScopes{{}},
+		UserDefinedFunctionScopes{{}},
 	)
 }
 
@@ -82,33 +82,33 @@ func NewFilterForSequentialEvaluation(view *View, parentFilter *Filter) *Filter 
 
 func (f *Filter) Merge(filter *Filter) {
 	f.Records = append(f.Records, filter.Records...)
-	f.VariablesList = filter.VariablesList
-	f.TempViewsList = filter.TempViewsList
-	f.CursorsList = filter.CursorsList
-	f.FunctionsList = filter.FunctionsList
-	f.InlineTablesList = filter.InlineTablesList
-	f.AliasesList = filter.AliasesList
+	f.Variables = filter.Variables
+	f.TempViews = filter.TempViews
+	f.Cursors = filter.Cursors
+	f.Functions = filter.Functions
+	f.InlineTables = filter.InlineTables
+	f.Aliases = filter.Aliases
 	f.Now = filter.Now
 }
 
 func (f *Filter) CreateChildScope() *Filter {
 	return NewFilter(
-		append(VariablesList{{}}, f.VariablesList...),
-		append(TemporaryViewMapList{{}}, f.TempViewsList...),
-		append(CursorMapList{{}}, f.CursorsList...),
-		append(UserDefinedFunctionsList{{}}, f.FunctionsList...),
+		append(VariableScopes{{}}, f.Variables...),
+		append(TemporaryViewScopes{{}}, f.TempViews...),
+		append(CursorScopes{{}}, f.Cursors...),
+		append(UserDefinedFunctionScopes{{}}, f.Functions...),
 	)
 }
 
 func (f *Filter) CreateNode() *Filter {
 	filter := &Filter{
 		Records:          f.Records,
-		VariablesList:    f.VariablesList,
-		TempViewsList:    f.TempViewsList,
-		CursorsList:      f.CursorsList,
-		FunctionsList:    f.FunctionsList,
-		InlineTablesList: append(InlineTablesList{{}}, f.InlineTablesList...),
-		AliasesList:      append(AliasMapList{{}}, f.AliasesList...),
+		Variables:        f.Variables,
+		TempViews:        f.TempViews,
+		Cursors:          f.Cursors,
+		Functions:        f.Functions,
+		InlineTables:     append(InlineTableNodes{{}}, f.InlineTables...),
+		Aliases:          append(AliasNodes{{}}, f.Aliases...),
 		RecursiveTable:   f.RecursiveTable,
 		RecursiveTmpView: f.RecursiveTmpView,
 		Now:              f.Now,
@@ -122,7 +122,7 @@ func (f *Filter) CreateNode() *Filter {
 }
 
 func (f *Filter) LoadInlineTable(clause parser.WithClause) error {
-	return f.InlineTablesList.Load(clause, f)
+	return f.InlineTables.Load(clause, f)
 }
 
 func (f *Filter) Evaluate(expr parser.QueryExpression) (value.Primary, error) {
@@ -177,9 +177,9 @@ func (f *Filter) Evaluate(expr parser.QueryExpression) (value.Primary, error) {
 	case parser.UnaryLogic:
 		val, err = f.evalUnaryLogic(expr.(parser.UnaryLogic))
 	case parser.Variable:
-		val, err = f.VariablesList.Get(expr.(parser.Variable))
+		val, err = f.Variables.Get(expr.(parser.Variable))
 	case parser.VariableSubstitution:
-		val, err = f.VariablesList.Substitute(expr.(parser.VariableSubstitution), f)
+		val, err = f.Variables.Substitute(expr.(parser.VariableSubstitution), f)
 	case parser.CursorStatus:
 		val, err = f.evalCursorStatus(expr.(parser.CursorStatus))
 	case parser.CursorAttrebute:
@@ -198,7 +198,7 @@ func (f *Filter) evalFieldReference(expr parser.QueryExpression) (value.Primary,
 	for _, v := range f.Records {
 		if v.fieldReferenceIndices != nil {
 			if idx, ok := v.fieldReferenceIndices[exprStr]; ok {
-				p = v.View.Records[v.RecordIndex][idx].Value()
+				p = v.View.RecordSet[v.RecordIndex][idx].Value()
 				break
 			}
 		}
@@ -208,7 +208,7 @@ func (f *Filter) evalFieldReference(expr parser.QueryExpression) (value.Primary,
 			if v.View.isGrouped && v.View.Header[idx].IsFromTable && !v.View.Header[idx].IsGroupKey {
 				return nil, NewFieldNotGroupKeyError(expr)
 			}
-			p = v.View.Records[v.RecordIndex][idx].Value()
+			p = v.View.RecordSet[v.RecordIndex][idx].Value()
 			if v.fieldReferenceIndices != nil {
 				v.fieldReferenceIndices[exprStr] = idx
 			}
@@ -550,7 +550,7 @@ func (f *Filter) evalFunction(expr parser.Function) (value.Primary, error) {
 	name := strings.ToUpper(expr.Name)
 
 	if _, ok := Functions[name]; !ok && name != "NOW" {
-		udfn, err := f.FunctionsList.Get(expr, name)
+		udfn, err := f.Functions.Get(expr, name)
 		if err != nil {
 			return nil, NewFunctionNotExistError(expr, expr.Name)
 		}
@@ -585,7 +585,7 @@ func (f *Filter) evalFunction(expr parser.Function) (value.Primary, error) {
 		return fn(expr, args)
 	}
 
-	udfn, _ := f.FunctionsList.Get(expr, name)
+	udfn, _ := f.Functions.Get(expr, name)
 	return udfn.Execute(args, f)
 }
 
@@ -599,7 +599,7 @@ func (f *Filter) evalAggregateFunction(expr parser.AggregateFunction) (value.Pri
 	if fn, ok := AggregateFunctions[uname]; ok {
 		aggfn = fn
 	} else {
-		if udfn, err = f.FunctionsList.Get(expr, uname); err != nil || !udfn.IsAggregate {
+		if udfn, err = f.Functions.Get(expr, uname); err != nil || !udfn.IsAggregate {
 			return nil, NewFunctionNotExistError(expr, expr.Name)
 		}
 		useUserDefined = true
@@ -630,7 +630,7 @@ func (f *Filter) evalAggregateFunction(expr parser.AggregateFunction) (value.Pri
 
 	if uname == "COUNT" {
 		if _, ok := listExpr.(parser.PrimitiveType); ok {
-			return value.NewInteger(int64(f.Records[0].View.Records[f.Records[0].RecordIndex].GroupLen())), nil
+			return value.NewInteger(int64(f.Records[0].View.RecordSet[f.Records[0].RecordIndex].GroupLen())), nil
 		}
 	}
 
@@ -793,12 +793,12 @@ func (f *Filter) evalCursorStatus(expr parser.CursorStatus) (value.Primary, erro
 
 	switch expr.Type {
 	case parser.OPEN:
-		t, err = f.CursorsList.IsOpen(expr.Cursor)
+		t, err = f.Cursors.IsOpen(expr.Cursor)
 		if err != nil {
 			return nil, err
 		}
 	case parser.RANGE:
-		t, err = f.CursorsList.IsInRange(expr.Cursor)
+		t, err = f.Cursors.IsInRange(expr.Cursor)
 		if err != nil {
 			return nil, err
 		}
@@ -816,7 +816,7 @@ func (f *Filter) evalCursorAttribute(expr parser.CursorAttrebute) (value.Primary
 
 	switch expr.Attrebute.Token {
 	case parser.COUNT:
-		i, err = f.CursorsList.Count(expr.Cursor)
+		i, err = f.Cursors.Count(expr.Cursor)
 		if err != nil {
 			return nil, err
 		}
@@ -889,7 +889,7 @@ func (f *Filter) evalSubqueryForRowValue(expr parser.Subquery) (value.RowValue, 
 	}
 
 	rowValue := make(value.RowValue, view.FieldLen())
-	for i, cell := range view.Records[0] {
+	for i, cell := range view.RecordSet[0] {
 		rowValue[i] = cell.Value()
 	}
 
@@ -907,7 +907,7 @@ func (f *Filter) evalSubqueryForRowValues(expr parser.Subquery) ([]value.RowValu
 	}
 
 	list := make([]value.RowValue, view.RecordLen())
-	for i, r := range view.Records {
+	for i, r := range view.RecordSet {
 		rowValue := make(value.RowValue, view.FieldLen())
 		for j, cell := range r {
 			rowValue[j] = cell.Value()
@@ -933,7 +933,7 @@ func (f *Filter) evalSubqueryForSingleFieldRowValues(expr parser.Subquery) ([]va
 	}
 
 	list := make([]value.RowValue, view.RecordLen())
-	for i, r := range view.Records {
+	for i, r := range view.RecordSet {
 		list[i] = value.RowValue{r[0].Value()}
 	}
 
@@ -958,5 +958,5 @@ func (f *Filter) evalSubqueryForSingleValue(expr parser.Subquery) (value.Primary
 		return value.NewNull(), nil
 	}
 
-	return view.Records[0][0].Value(), nil
+	return view.RecordSet[0][0].Value(), nil
 }

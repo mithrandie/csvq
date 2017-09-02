@@ -96,7 +96,7 @@ func FetchCursor(name parser.Identifier, fetchPosition parser.FetchPosition, var
 		}
 	}
 
-	primaries, err := filter.CursorsList.Fetch(name, position, number)
+	primaries, err := filter.Cursors.Fetch(name, position, number)
 	if err != nil {
 		return false, err
 	}
@@ -108,7 +108,7 @@ func FetchCursor(name parser.Identifier, fetchPosition parser.FetchPosition, var
 	}
 
 	for i, v := range vars {
-		_, err := filter.VariablesList.SubstituteDirectly(v, primaries[i])
+		_, err := filter.Variables.SubstituteDirectly(v, primaries[i])
 		if err != nil {
 			return false, err
 		}
@@ -117,7 +117,7 @@ func FetchCursor(name parser.Identifier, fetchPosition parser.FetchPosition, var
 }
 
 func DeclareTable(expr parser.TableDeclaration, filter *Filter) error {
-	if filter.TempViewsList.Exists(expr.Table.Literal) {
+	if filter.TempViews.Exists(expr.Table.Literal) {
 		return NewTemporaryTableRedeclaredError(expr.Table)
 	}
 
@@ -147,19 +147,19 @@ func DeclareTable(expr parser.TableDeclaration, filter *Filter) error {
 		}
 		header := NewHeader(expr.Table.Literal, fields)
 		view = &View{
-			Header:  header,
-			Records: Records{},
+			Header:    header,
+			RecordSet: RecordSet{},
 		}
 	}
 
 	view.FileInfo = &FileInfo{
-		Path:           expr.Table.Literal,
-		IsTemporary:    true,
-		InitialHeader:  view.Header.Copy(),
-		InitialRecords: view.Records.Copy(),
+		Path:             expr.Table.Literal,
+		IsTemporary:      true,
+		InitialHeader:    view.Header.Copy(),
+		InitialRecordSet: view.RecordSet.Copy(),
 	}
 
-	filter.TempViewsList.Set(view)
+	filter.TempViews.Set(view)
 
 	return err
 }
@@ -373,7 +373,7 @@ func Insert(query parser.InsertQuery, parentFilter *Filter) (*View, error) {
 	view.Filter = nil
 
 	if view.FileInfo.IsTemporary {
-		filter.TempViewsList.Replace(view)
+		filter.TempViews.Replace(view)
 	} else {
 		ViewCache.Replace(view)
 	}
@@ -411,14 +411,14 @@ func Update(query parser.UpdateQuery, parentFilter *Filter) ([]*View, error) {
 	updatedCount := make(map[string]int)
 	for _, v := range query.Tables {
 		table := v.(parser.Table)
-		fpath, err := filter.AliasesList.Get(table.Name())
+		fpath, err := filter.Aliases.Get(table.Name())
 		if err != nil {
 			return nil, err
 		}
 		viewKey := strings.ToUpper(table.Name().Literal)
 
-		if filter.TempViewsList.Exists(fpath) {
-			viewsToUpdate[viewKey], _ = filter.TempViewsList.Get(parser.Identifier{Literal: fpath})
+		if filter.TempViews.Exists(fpath) {
+			viewsToUpdate[viewKey], _ = filter.TempViews.Get(parser.Identifier{Literal: fpath})
 		} else {
 			viewsToUpdate[viewKey], _ = ViewCache.Get(parser.Identifier{Literal: fpath})
 			if err := cmd.TryOpenFileToWrite(viewsToUpdate[viewKey].FileInfo.Path); err != nil {
@@ -430,7 +430,7 @@ func Update(query parser.UpdateQuery, parentFilter *Filter) ([]*View, error) {
 
 	updatesList := make(map[string]map[int][]int)
 	filterForLoop := NewFilterForSequentialEvaluation(view, filter)
-	for i := range view.Records {
+	for i := range view.RecordSet {
 		filterForLoop.Records[0].RecordIndex = i
 		internalIds := make(map[string]int)
 
@@ -475,7 +475,7 @@ func Update(query parser.UpdateQuery, parentFilter *Filter) ([]*View, error) {
 				return nil, NewUpdateValueAmbiguousError(uset.Field, uset.Value)
 			}
 			updatesList[viewref][internalId] = append(updatesList[viewref][internalId], fieldIdx)
-			viewsToUpdate[viewref].Records[internalId][fieldIdx] = NewCell(val)
+			viewsToUpdate[viewref].RecordSet[internalId][fieldIdx] = NewCell(val)
 		}
 	}
 
@@ -485,7 +485,7 @@ func Update(query parser.UpdateQuery, parentFilter *Filter) ([]*View, error) {
 		v.OperatedRecords = updatedCount[k]
 
 		if v.FileInfo.IsTemporary {
-			filter.TempViewsList.Replace(v)
+			filter.TempViews.Replace(v)
 		} else {
 			ViewCache.Replace(v)
 		}
@@ -536,14 +536,14 @@ func Delete(query parser.DeleteQuery, parentFilter *Filter) ([]*View, error) {
 	deletedIndices := make(map[string]map[int]bool)
 	for _, v := range query.Tables {
 		table := v.(parser.Table)
-		fpath, err := filter.AliasesList.Get(table.Name())
+		fpath, err := filter.Aliases.Get(table.Name())
 		if err != nil {
 			return nil, err
 		}
 
 		viewKey := strings.ToUpper(table.Name().Literal)
-		if filter.TempViewsList.Exists(fpath) {
-			viewsToDelete[viewKey], _ = filter.TempViewsList.Get(parser.Identifier{Literal: fpath})
+		if filter.TempViews.Exists(fpath) {
+			viewsToDelete[viewKey], _ = filter.TempViews.Get(parser.Identifier{Literal: fpath})
 		} else {
 			viewsToDelete[viewKey], _ = ViewCache.Get(parser.Identifier{Literal: fpath})
 			if err := cmd.TryOpenFileToWrite(viewsToDelete[viewKey].FileInfo.Path); err != nil {
@@ -554,7 +554,7 @@ func Delete(query parser.DeleteQuery, parentFilter *Filter) ([]*View, error) {
 		deletedIndices[viewKey] = make(map[int]bool)
 	}
 
-	for i := range view.Records {
+	for i := range view.RecordSet {
 		for viewref := range viewsToDelete {
 			internalId, err := view.InternalRecordId(viewref, i)
 			if err != nil {
@@ -568,19 +568,19 @@ func Delete(query parser.DeleteQuery, parentFilter *Filter) ([]*View, error) {
 
 	views := []*View{}
 	for k, v := range viewsToDelete {
-		records := make(Records, 0, v.RecordLen()-len(deletedIndices[k]))
-		for i, record := range v.Records {
+		records := make(RecordSet, 0, v.RecordLen()-len(deletedIndices[k]))
+		for i, record := range v.RecordSet {
 			if !deletedIndices[k][i] {
 				records = append(records, record)
 			}
 		}
-		v.Records = records
+		v.RecordSet = records
 
 		v.RestoreHeaderReferences()
 		v.OperatedRecords = len(deletedIndices[k])
 
 		if v.FileInfo.IsTemporary {
-			filter.TempViewsList.Replace(v)
+			filter.TempViews.Replace(v)
 		} else {
 			ViewCache.Replace(v)
 		}
@@ -635,8 +635,8 @@ func CreateTable(query parser.CreateTable, parentFilter *Filter) (*View, error) 
 		}
 		header := NewHeader(parser.FormatTableName(fileInfo.Path), fields)
 		view = &View{
-			Header:  header,
-			Records: Records{},
+			Header:    header,
+			RecordSet: RecordSet{},
 		}
 	}
 
@@ -721,7 +721,7 @@ func AddColumns(query parser.AddColumns, parentFilter *Filter) (*View, error) {
 	}
 
 	cpu := NumberOfCPU(view.RecordLen())
-	records := make(Records, view.RecordLen())
+	records := make(RecordSet, view.RecordLen())
 
 	wg := sync.WaitGroup{}
 	for i := 0; i < cpu; i++ {
@@ -738,7 +738,7 @@ func AddColumns(query parser.AddColumns, parentFilter *Filter) (*View, error) {
 				}
 
 				record := make(Record, newFieldLen)
-				for j, cell := range view.Records[i] {
+				for j, cell := range view.RecordSet[i] {
 					var idx int
 					if j < insertPos {
 						idx = j
@@ -774,12 +774,12 @@ func AddColumns(query parser.AddColumns, parentFilter *Filter) (*View, error) {
 	}
 
 	view.Header = header
-	view.Records = records
+	view.RecordSet = records
 	view.OperatedFields = len(fields)
 	view.Filter = nil
 
 	if view.FileInfo.IsTemporary {
-		filter.TempViewsList.Replace(view)
+		filter.TempViews.Replace(view)
 	} else {
 		ViewCache.Replace(view)
 	}
@@ -822,7 +822,7 @@ func DropColumns(query parser.DropColumns, parentFilter *Filter) (*View, error) 
 	view.OperatedFields = len(dropIndices)
 
 	if view.FileInfo.IsTemporary {
-		filter.TempViewsList.Replace(view)
+		filter.TempViews.Replace(view)
 	} else {
 		ViewCache.Replace(view)
 	}
@@ -861,7 +861,7 @@ func RenameColumn(query parser.RenameColumn, parentFilter *Filter) (*View, error
 	view.Filter = nil
 
 	if view.FileInfo.IsTemporary {
-		filter.TempViewsList.Replace(view)
+		filter.TempViews.Replace(view)
 	} else {
 		ViewCache.Replace(view)
 	}

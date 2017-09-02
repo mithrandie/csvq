@@ -16,9 +16,9 @@ type FileInfo struct {
 	Encoding  cmd.Encoding
 	LineBreak cmd.LineBreak
 
-	IsTemporary    bool
-	InitialHeader  Header
-	InitialRecords Records
+	IsTemporary      bool
+	InitialHeader    Header
+	InitialRecordSet RecordSet
 }
 
 func NewFileInfo(filename parser.Identifier, repository string, delimiter rune) (*FileInfo, error) {

@@ -62,30 +62,30 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 	case parser.SetFlag:
 		err = SetFlag(stmt.(parser.SetFlag))
 	case parser.VariableDeclaration:
-		err = proc.Filter.VariablesList.Declare(stmt.(parser.VariableDeclaration), proc.Filter)
+		err = proc.Filter.Variables.Declare(stmt.(parser.VariableDeclaration), proc.Filter)
 	case parser.VariableSubstitution:
 		_, err = proc.Filter.Evaluate(stmt.(parser.QueryExpression))
 	case parser.DisposeVariable:
-		err = proc.Filter.VariablesList.Dispose(stmt.(parser.DisposeVariable).Variable)
+		err = proc.Filter.Variables.Dispose(stmt.(parser.DisposeVariable).Variable)
 	case parser.CursorDeclaration:
-		err = proc.Filter.CursorsList.Declare(stmt.(parser.CursorDeclaration))
+		err = proc.Filter.Cursors.Declare(stmt.(parser.CursorDeclaration))
 	case parser.OpenCursor:
-		err = proc.Filter.CursorsList.Open(stmt.(parser.OpenCursor).Cursor, proc.Filter)
+		err = proc.Filter.Cursors.Open(stmt.(parser.OpenCursor).Cursor, proc.Filter)
 	case parser.CloseCursor:
-		err = proc.Filter.CursorsList.Close(stmt.(parser.CloseCursor).Cursor)
+		err = proc.Filter.Cursors.Close(stmt.(parser.CloseCursor).Cursor)
 	case parser.DisposeCursor:
-		err = proc.Filter.CursorsList.Dispose(stmt.(parser.DisposeCursor).Cursor)
+		err = proc.Filter.Cursors.Dispose(stmt.(parser.DisposeCursor).Cursor)
 	case parser.FetchCursor:
 		fetch := stmt.(parser.FetchCursor)
 		_, err = FetchCursor(fetch.Cursor, fetch.Position, fetch.Variables, proc.Filter)
 	case parser.TableDeclaration:
 		err = DeclareTable(stmt.(parser.TableDeclaration), proc.Filter)
 	case parser.DisposeTable:
-		err = proc.Filter.TempViewsList.Dispose(stmt.(parser.DisposeTable).Table)
+		err = proc.Filter.TempViews.Dispose(stmt.(parser.DisposeTable).Table)
 	case parser.FunctionDeclaration:
-		err = proc.Filter.FunctionsList.Declare(stmt.(parser.FunctionDeclaration))
+		err = proc.Filter.Functions.Declare(stmt.(parser.FunctionDeclaration))
 	case parser.AggregateDeclaration:
-		err = proc.Filter.FunctionsList.DeclareAggregate(stmt.(parser.AggregateDeclaration))
+		err = proc.Filter.Functions.DeclareAggregate(stmt.(parser.AggregateDeclaration))
 	case parser.SelectQuery:
 		if view, err = Select(stmt.(parser.SelectQuery), proc.Filter); err == nil {
 			flags := cmd.GetFlags()
@@ -472,7 +472,7 @@ func (proc *Procedure) Commit(expr parser.Expression) error {
 func (proc *Procedure) Rollback() {
 	Results = []Result{}
 	ViewCache.Clear()
-	proc.Filter.TempViewsList.Rollback()
+	proc.Filter.TempViews.Rollback()
 
 	Log("Rolled back.", cmd.GetFlags().Quiet)
 	return

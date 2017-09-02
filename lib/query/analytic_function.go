@@ -60,7 +60,7 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 		aggfn = f
 		fnType = AGGREGATE
 	} else {
-		if udfn, err = view.Filter.FunctionsList.Get(fn, uname); err != nil || !udfn.IsAggregate {
+		if udfn, err = view.Filter.Functions.Get(fn, uname); err != nil || !udfn.IsAggregate {
 			return NewFunctionNotExistError(fn, fn.Name)
 		}
 		fnType = USER_DEFINED
@@ -81,8 +81,8 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 		}
 	}
 
-	if view.sortValues == nil {
-		view.sortValues = make([][]*SortValue, view.RecordLen())
+	if view.sortValuesInEachCell == nil {
+		view.sortValuesInEachCell = make([][]*SortValue, view.RecordLen())
 	}
 
 	cpu := NumberOfCPU(view.RecordLen())
@@ -97,17 +97,17 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 
 			for i := start; i < end; i++ {
 				var partitionKey string
-				if view.sortValues[i] == nil {
-					view.sortValues[i] = make([]*SortValue, cap(view.Records[i]))
+				if view.sortValuesInEachCell[i] == nil {
+					view.sortValuesInEachCell[i] = make([]*SortValue, cap(view.RecordSet[i]))
 				}
 				if partitionIndices != nil {
 					for j, idx := range partitionIndices {
-						if idx < len(view.sortValues[i]) && view.sortValues[i][idx] != nil {
-							sortValues[j] = view.sortValues[i][idx]
+						if idx < len(view.sortValuesInEachCell[i]) && view.sortValuesInEachCell[i][idx] != nil {
+							sortValues[j] = view.sortValuesInEachCell[i][idx]
 						} else {
-							sortValues[j] = NewSortValue(view.Records[i][idx].Value())
-							if idx < len(view.sortValues[i]) {
-								view.sortValues[i][idx] = sortValues[j]
+							sortValues[j] = NewSortValue(view.RecordSet[i][idx].Value())
+							if idx < len(view.sortValuesInEachCell[i]) {
+								view.sortValuesInEachCell[i][idx] = sortValues[j]
 							}
 						}
 					}
@@ -160,7 +160,7 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 						break AnalyzeLoop
 					}
 					for idx, val := range list {
-						view.Records[idx] = append(view.Records[idx], NewCell(val))
+						view.RecordSet[idx] = append(view.RecordSet[idx], NewCell(val))
 					}
 				} else {
 					if 0 < len(fn.Args) {
@@ -178,7 +178,7 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 					if fnType == AGGREGATE {
 						val := aggfn(values)
 						for _, idx := range partitions[partitionMapKeys[i]] {
-							view.Records[idx] = append(view.Records[idx], NewCell(val))
+							view.RecordSet[idx] = append(view.RecordSet[idx], NewCell(val))
 						}
 					} else { //User Defined Function
 						for _, idx := range partitions[partitionMapKeys[i]] {
@@ -202,7 +202,7 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 								break AnalyzeLoop
 							}
 
-							view.Records[idx] = append(view.Records[idx], NewCell(val))
+							view.RecordSet[idx] = append(view.RecordSet[idx], NewCell(val))
 						}
 					}
 				}
@@ -263,10 +263,10 @@ func (fn Rank) Execute(partition Partition, expr parser.AnalyticFunction, filter
 	var currentRank SortValues
 	for _, idx := range partition {
 		number++
-		if filter.Records[0].View.recordSortValues == nil || !filter.Records[0].View.recordSortValues[idx].EquivalentTo(currentRank) {
+		if filter.Records[0].View.sortValuesInEachRecord == nil || !filter.Records[0].View.sortValuesInEachRecord[idx].EquivalentTo(currentRank) {
 			rank = number
-			if filter.Records[0].View.recordSortValues != nil {
-				currentRank = filter.Records[0].View.recordSortValues[idx]
+			if filter.Records[0].View.sortValuesInEachRecord != nil {
+				currentRank = filter.Records[0].View.sortValuesInEachRecord[idx]
 			}
 		}
 		list[idx] = value.NewInteger(rank)
@@ -286,10 +286,10 @@ func (fn DenseRank) Execute(partition Partition, expr parser.AnalyticFunction, f
 	var rank int64 = 0
 	var currentRank SortValues
 	for _, idx := range partition {
-		if filter.Records[0].View.recordSortValues == nil || !filter.Records[0].View.recordSortValues[idx].EquivalentTo(currentRank) {
+		if filter.Records[0].View.sortValuesInEachRecord == nil || !filter.Records[0].View.sortValuesInEachRecord[idx].EquivalentTo(currentRank) {
 			rank++
-			if filter.Records[0].View.recordSortValues != nil {
-				currentRank = filter.Records[0].View.recordSortValues[idx]
+			if filter.Records[0].View.sortValuesInEachRecord != nil {
+				currentRank = filter.Records[0].View.sortValuesInEachRecord[idx]
 			}
 		}
 		list[idx] = value.NewInteger(rank)
@@ -354,10 +354,10 @@ func perseCumulativeGroups(partition Partition, view *View) [][]int {
 	groups := [][]int{}
 	var currentRank SortValues
 	for _, idx := range partition {
-		if view.recordSortValues == nil || !view.recordSortValues[idx].EquivalentTo(currentRank) {
+		if view.sortValuesInEachRecord == nil || !view.sortValuesInEachRecord[idx].EquivalentTo(currentRank) {
 			groups = append(groups, []int{idx})
-			if view.recordSortValues != nil {
-				currentRank = view.recordSortValues[idx]
+			if view.sortValuesInEachRecord != nil {
+				currentRank = view.sortValuesInEachRecord[idx]
 			}
 		} else {
 			groups[len(groups)-1] = append(groups[len(groups)-1], idx)

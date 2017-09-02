@@ -8,17 +8,17 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 )
 
-type CursorMapList []CursorMap
+type CursorScopes []CursorMap
 
-func (list CursorMapList) Declare(expr parser.CursorDeclaration) error {
+func (list CursorScopes) Declare(expr parser.CursorDeclaration) error {
 	return list[0].Declare(expr)
 }
 
-func (list CursorMapList) AddPseudoCursor(name parser.Identifier, values []value.Primary) error {
+func (list CursorScopes) AddPseudoCursor(name parser.Identifier, values []value.Primary) error {
 	return list[0].AddPseudoCursor(name, values)
 }
 
-func (list CursorMapList) Dispose(name parser.Identifier) error {
+func (list CursorScopes) Dispose(name parser.Identifier) error {
 	for _, m := range list {
 		err := m.Dispose(name)
 		if err == nil {
@@ -31,7 +31,7 @@ func (list CursorMapList) Dispose(name parser.Identifier) error {
 	return NewUndefinedCursorError(name)
 }
 
-func (list CursorMapList) Open(name parser.Identifier, filter *Filter) error {
+func (list CursorScopes) Open(name parser.Identifier, filter *Filter) error {
 	var err error
 
 	for _, m := range list {
@@ -46,7 +46,7 @@ func (list CursorMapList) Open(name parser.Identifier, filter *Filter) error {
 	return NewUndefinedCursorError(name)
 }
 
-func (list CursorMapList) Close(name parser.Identifier) error {
+func (list CursorScopes) Close(name parser.Identifier) error {
 	for _, m := range list {
 		err := m.Close(name)
 		if err == nil {
@@ -59,7 +59,7 @@ func (list CursorMapList) Close(name parser.Identifier) error {
 	return NewUndefinedCursorError(name)
 }
 
-func (list CursorMapList) Fetch(name parser.Identifier, position int, number int) ([]value.Primary, error) {
+func (list CursorScopes) Fetch(name parser.Identifier, position int, number int) ([]value.Primary, error) {
 	var values []value.Primary
 	var err error
 
@@ -75,7 +75,7 @@ func (list CursorMapList) Fetch(name parser.Identifier, position int, number int
 	return nil, NewUndefinedCursorError(name)
 }
 
-func (list CursorMapList) IsOpen(name parser.Identifier) (ternary.Value, error) {
+func (list CursorScopes) IsOpen(name parser.Identifier) (ternary.Value, error) {
 	for _, m := range list {
 		if ok, err := m.IsOpen(name); err == nil {
 			return ok, nil
@@ -84,7 +84,7 @@ func (list CursorMapList) IsOpen(name parser.Identifier) (ternary.Value, error) 
 	return ternary.FALSE, NewUndefinedCursorError(name)
 }
 
-func (list CursorMapList) IsInRange(name parser.Identifier) (ternary.Value, error) {
+func (list CursorScopes) IsInRange(name parser.Identifier) (ternary.Value, error) {
 	var result ternary.Value
 	var err error
 
@@ -100,7 +100,7 @@ func (list CursorMapList) IsInRange(name parser.Identifier) (ternary.Value, erro
 	return ternary.FALSE, NewUndefinedCursorError(name)
 }
 
-func (list CursorMapList) Count(name parser.Identifier) (int, error) {
+func (list CursorScopes) Count(name parser.Identifier) (int, error) {
 	var count int
 	var err error
 
@@ -217,13 +217,13 @@ func NewCursor(query parser.SelectQuery) *Cursor {
 func NewPseudoCursor(values []value.Primary) *Cursor {
 	header := NewHeader("", []string{"c1"})
 
-	records := make(Records, len(values))
+	records := make(RecordSet, len(values))
 	for i, v := range values {
 		records[i] = NewRecord([]value.Primary{v})
 	}
 	view := NewView()
 	view.Header = header
-	view.Records = records
+	view.RecordSet = records
 
 	return &Cursor{
 		view:     view,
@@ -299,8 +299,8 @@ func (c *Cursor) Fetch(name parser.Identifier, position int, number int) ([]valu
 		return nil, nil
 	}
 
-	list := make([]value.Primary, len(c.view.Records[c.index]))
-	for i, cell := range c.view.Records[c.index] {
+	list := make([]value.Primary, len(c.view.RecordSet[c.index]))
+	for i, cell := range c.view.RecordSet[c.index] {
 		list[i] = cell.Value()
 	}
 

@@ -6,13 +6,13 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
-type InlineTablesList []InlineTables
+type InlineTableNodes []InlineTableMap
 
-func (list InlineTablesList) Set(inlineTable parser.InlineTable, parentFilter *Filter) error {
+func (list InlineTableNodes) Set(inlineTable parser.InlineTable, parentFilter *Filter) error {
 	return list[0].Set(inlineTable, parentFilter)
 }
 
-func (list InlineTablesList) Get(name parser.Identifier) (view *View, err error) {
+func (list InlineTableNodes) Get(name parser.Identifier) (view *View, err error) {
 	for _, m := range list {
 		if view, err = m.Get(name); err == nil {
 			return
@@ -22,7 +22,7 @@ func (list InlineTablesList) Get(name parser.Identifier) (view *View, err error)
 	return
 }
 
-func (list InlineTablesList) Load(clause parser.WithClause, parentFilter *Filter) error {
+func (list InlineTableNodes) Load(clause parser.WithClause, parentFilter *Filter) error {
 	for _, v := range clause.InlineTables {
 		inlineTable := v.(parser.InlineTable)
 		err := list.Set(inlineTable, parentFilter)
@@ -34,9 +34,9 @@ func (list InlineTablesList) Load(clause parser.WithClause, parentFilter *Filter
 	return nil
 }
 
-type InlineTables map[string]*View
+type InlineTableMap map[string]*View
 
-func (it InlineTables) Set(inlineTable parser.InlineTable, parentFilter *Filter) error {
+func (it InlineTableMap) Set(inlineTable parser.InlineTable, parentFilter *Filter) error {
 	uname := strings.ToUpper(inlineTable.Name.Literal)
 	if _, err := it.Get(inlineTable.Name); err == nil {
 		return NewInLineTableRedeclaredError(inlineTable.Name)
@@ -65,7 +65,7 @@ func (it InlineTables) Set(inlineTable parser.InlineTable, parentFilter *Filter)
 	return nil
 }
 
-func (it InlineTables) Get(name parser.Identifier) (*View, error) {
+func (it InlineTableMap) Get(name parser.Identifier) (*View, error) {
 	uname := strings.ToUpper(name.Literal)
 	if view, ok := it[uname]; ok {
 		return view.Copy(), nil

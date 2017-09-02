@@ -23,7 +23,7 @@ var analyzeTests = []struct {
 		CPU:  3,
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(1),
@@ -54,7 +54,7 @@ var analyzeTests = []struct {
 				}),
 			},
 			Filter: NewEmptyFilter(),
-			recordSortValues: []SortValues{
+			sortValuesInEachRecord: []SortValues{
 				{NewSortValue(value.NewInteger(1))},
 				{NewSortValue(value.NewInteger(1))},
 				{NewSortValue(value.NewInteger(1))},
@@ -84,7 +84,7 @@ var analyzeTests = []struct {
 		PartitionIndices: []int{0},
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(1),
@@ -122,7 +122,7 @@ var analyzeTests = []struct {
 				}),
 			},
 			Filter: NewEmptyFilter(),
-			sortValues: [][]*SortValue{
+			sortValuesInEachCell: [][]*SortValue{
 				{NewSortValue(value.NewString("a")), nil},
 				{NewSortValue(value.NewString("b")), nil},
 				{NewSortValue(value.NewString("b")), nil},
@@ -131,7 +131,7 @@ var analyzeTests = []struct {
 				{NewSortValue(value.NewString("b")), nil},
 				{NewSortValue(value.NewString("a")), nil},
 			},
-			recordSortValues: []SortValues{
+			sortValuesInEachRecord: []SortValues{
 				{NewSortValue(value.NewInteger(1))},
 				{NewSortValue(value.NewInteger(1))},
 				{NewSortValue(value.NewInteger(1))},
@@ -146,10 +146,10 @@ var analyzeTests = []struct {
 		Name: "Analyze AnalyticFunction Empty Record",
 		CPU:  3,
 		View: &View{
-			Header:           NewHeader("table1", []string{"column1", "column2"}),
-			Records:          []Record{},
-			Filter:           NewEmptyFilter(),
-			recordSortValues: []SortValues{},
+			Header:                 NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet:              []Record{},
+			Filter:                 NewEmptyFilter(),
+			sortValuesInEachRecord: []SortValues{},
 		},
 		Function: parser.AnalyticFunction{
 			Name: "rank",
@@ -170,18 +170,18 @@ var analyzeTests = []struct {
 		},
 		PartitionIndices: []int{0},
 		Result: &View{
-			Header:           NewHeader("table1", []string{"column1", "column2"}),
-			Records:          []Record{},
-			Filter:           NewEmptyFilter(),
-			sortValues:       [][]*SortValue{},
-			recordSortValues: []SortValues{},
+			Header:                 NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet:              []Record{},
+			Filter:                 NewEmptyFilter(),
+			sortValuesInEachCell:   [][]*SortValue{},
+			sortValuesInEachRecord: []SortValues{},
 		},
 	},
 	{
 		Name: "Analyze AnalyticFunction Argument Length Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(1),
@@ -219,7 +219,7 @@ var analyzeTests = []struct {
 		Name: "Analyze AnalyticFunction Execution Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(1),
@@ -243,7 +243,7 @@ var analyzeTests = []struct {
 		Name: "Analyze AggregateFunction",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(1),
@@ -283,7 +283,7 @@ var analyzeTests = []struct {
 		PartitionIndices: []int{0},
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(1),
@@ -311,7 +311,7 @@ var analyzeTests = []struct {
 				}),
 			},
 			Filter: NewEmptyFilter(),
-			sortValues: [][]*SortValue{
+			sortValuesInEachCell: [][]*SortValue{
 				{NewSortValue(value.NewString("a")), nil},
 				{NewSortValue(value.NewString("a")), nil},
 				{NewSortValue(value.NewString("b")), nil},
@@ -324,7 +324,7 @@ var analyzeTests = []struct {
 		Name: "Analyze AggregateFunction With Distinct",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(1),
@@ -347,7 +347,7 @@ var analyzeTests = []struct {
 				}),
 			},
 			Filter: NewEmptyFilter(),
-			sortValues: [][]*SortValue{
+			sortValuesInEachCell: [][]*SortValue{
 				{NewSortValue(value.NewString("a")), nil},
 				{NewSortValue(value.NewString("a")), nil},
 				{NewSortValue(value.NewString("b")), nil},
@@ -372,7 +372,7 @@ var analyzeTests = []struct {
 		PartitionIndices: []int{0},
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(1),
@@ -400,7 +400,7 @@ var analyzeTests = []struct {
 				}),
 			},
 			Filter: NewEmptyFilter(),
-			sortValues: [][]*SortValue{
+			sortValuesInEachCell: [][]*SortValue{
 				{NewSortValue(value.NewString("a")), nil},
 				{NewSortValue(value.NewString("a")), nil},
 				{NewSortValue(value.NewString("b")), nil},
@@ -413,7 +413,7 @@ var analyzeTests = []struct {
 		Name: "Analyze AggregateFunction Argument Length Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(1),
@@ -441,7 +441,7 @@ var analyzeTests = []struct {
 		Name: "Analyze AggregateFunction Aggregate Value Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(1),
@@ -472,7 +472,7 @@ var analyzeTests = []struct {
 		Name: "Analyze UserDefinedFunction",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(1),
@@ -495,7 +495,7 @@ var analyzeTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				FunctionsList: UserDefinedFunctionsList{
+				Functions: UserDefinedFunctionScopes{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
 							Name:        parser.Identifier{Literal: "useraggfunc"},
@@ -579,7 +579,7 @@ var analyzeTests = []struct {
 		PartitionIndices: []int{0},
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(1),
@@ -606,7 +606,7 @@ var analyzeTests = []struct {
 					value.NewInteger(1),
 				}),
 			},
-			sortValues: [][]*SortValue{
+			sortValuesInEachCell: [][]*SortValue{
 				{NewSortValue(value.NewString("a")), nil},
 				{NewSortValue(value.NewString("a")), nil},
 				{NewSortValue(value.NewString("b")), nil},
@@ -614,7 +614,7 @@ var analyzeTests = []struct {
 				{NewSortValue(value.NewString("b")), nil},
 			},
 			Filter: &Filter{
-				FunctionsList: UserDefinedFunctionsList{
+				Functions: UserDefinedFunctionScopes{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
 							Name:        parser.Identifier{Literal: "useraggfunc"},
@@ -686,7 +686,7 @@ var analyzeTests = []struct {
 		Name: "Analyze UserDefinedFunction Argument Length Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(1),
@@ -697,7 +697,7 @@ var analyzeTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				FunctionsList: UserDefinedFunctionsList{
+				Functions: UserDefinedFunctionScopes{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
 							Name:        parser.Identifier{Literal: "useraggfunc"},
@@ -732,7 +732,7 @@ var analyzeTests = []struct {
 		Name: "Analyze UserDefinedFunction Argument Value Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(1),
@@ -743,7 +743,7 @@ var analyzeTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				FunctionsList: UserDefinedFunctionsList{
+				Functions: UserDefinedFunctionScopes{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
 							Name:        parser.Identifier{Literal: "useraggfunc"},
@@ -782,7 +782,7 @@ var analyzeTests = []struct {
 		Name: "Analyze UserDefinedFunction Execution Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(1),
@@ -793,7 +793,7 @@ var analyzeTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				FunctionsList: UserDefinedFunctionsList{
+				Functions: UserDefinedFunctionScopes{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
 							Name:        parser.Identifier{Literal: "useraggfunc"},
@@ -832,7 +832,7 @@ var analyzeTests = []struct {
 		Name: "Analyze Not Exist Function Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(1),
@@ -917,7 +917,7 @@ var analyticFunctionTestFilter = &Filter{
 		{
 			View: &View{
 				Header: NewHeader("table1", []string{"column1", "column2"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("a"),
 						value.NewInteger(100),
@@ -952,19 +952,19 @@ var analyticFunctionTestFilter = &Filter{
 					}),
 				},
 				Filter: &Filter{
-					VariablesList: VariablesList{{}},
-					TempViewsList: TemporaryViewMapList{{}},
-					CursorsList:   CursorMapList{{}},
-					FunctionsList: UserDefinedFunctionsList{{}},
+					Variables: VariableScopes{{}},
+					TempViews: TemporaryViewScopes{{}},
+					Cursors:   CursorScopes{{}},
+					Functions: UserDefinedFunctionScopes{{}},
 				},
 			},
 			RecordIndex: 0,
 		},
 	},
-	VariablesList: VariablesList{{}},
-	TempViewsList: TemporaryViewMapList{{}},
-	CursorsList:   CursorMapList{{}},
-	FunctionsList: UserDefinedFunctionsList{{}},
+	Variables: VariableScopes{{}},
+	TempViews: TemporaryViewScopes{{}},
+	Cursors:   CursorScopes{{}},
+	Functions: UserDefinedFunctionScopes{{}},
 }
 
 func testAnalyticFunctionExecute(t *testing.T, fn AnalyticFunction, tests []analyticFunctionExecuteTests) {
@@ -974,9 +974,9 @@ func testAnalyticFunctionExecute(t *testing.T, fn AnalyticFunction, tests []anal
 			for i, v := range v.SortValues {
 				list[i] = v
 			}
-			analyticFunctionTestFilter.Records[0].View.recordSortValues = list
+			analyticFunctionTestFilter.Records[0].View.sortValuesInEachRecord = list
 		} else {
-			analyticFunctionTestFilter.Records[0].View.recordSortValues = nil
+			analyticFunctionTestFilter.Records[0].View.sortValuesInEachRecord = nil
 		}
 
 		result, err := fn.Execute(v.Items, v.Function, analyticFunctionTestFilter)

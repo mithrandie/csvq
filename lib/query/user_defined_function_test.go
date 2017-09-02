@@ -8,14 +8,14 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 )
 
-var userDefinedFunctionListDeclareTests = []struct {
+var userDefinedFunctionScopesDeclareTests = []struct {
 	Name   string
 	Expr   parser.FunctionDeclaration
-	Result UserDefinedFunctionsList
+	Result UserDefinedFunctionScopes
 	Error  string
 }{
 	{
-		Name: "UserDefinedFunctionsList Declare",
+		Name: "UserDefinedFunctionScopes Declare",
 		Expr: parser.FunctionDeclaration{
 			Name: parser.Identifier{Literal: "userfunc1"},
 			Parameters: []parser.VariableAssignment{
@@ -25,7 +25,7 @@ var userDefinedFunctionListDeclareTests = []struct {
 				parser.Print{Value: parser.Variable{Name: "@arg1"}},
 			},
 		},
-		Result: UserDefinedFunctionsList{
+		Result: UserDefinedFunctionScopes{
 			UserDefinedFunctionMap{
 				"USERFUNC1": &UserDefinedFunction{
 					Name: parser.Identifier{Literal: "userfunc1"},
@@ -57,8 +57,8 @@ var userDefinedFunctionListDeclareTests = []struct {
 	},
 }
 
-func TestUserDefinedFunctionsList_Declare(t *testing.T) {
-	list := UserDefinedFunctionsList{
+func TestUserDefinedFunctionScopes_Declare(t *testing.T) {
+	list := UserDefinedFunctionScopes{
 		UserDefinedFunctionMap{},
 		UserDefinedFunctionMap{
 			"USERFUNC2": &UserDefinedFunction{
@@ -76,7 +76,7 @@ func TestUserDefinedFunctionsList_Declare(t *testing.T) {
 		},
 	}
 
-	for _, v := range userDefinedFunctionListDeclareTests {
+	for _, v := range userDefinedFunctionScopesDeclareTests {
 		err := list.Declare(v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -96,14 +96,14 @@ func TestUserDefinedFunctionsList_Declare(t *testing.T) {
 	}
 }
 
-var userDefinedFunctionListDeclareAggregateTests = []struct {
+var userDefinedFunctionScopesDeclareAggregateTests = []struct {
 	Name   string
 	Expr   parser.AggregateDeclaration
-	Result UserDefinedFunctionsList
+	Result UserDefinedFunctionScopes
 	Error  string
 }{
 	{
-		Name: "UserDefinedFunctionsList DeclareAggregate",
+		Name: "UserDefinedFunctionScopes DeclareAggregate",
 		Expr: parser.AggregateDeclaration{
 			Name:   parser.Identifier{Literal: "useraggfunc"},
 			Cursor: parser.Identifier{Literal: "column1"},
@@ -120,7 +120,7 @@ var userDefinedFunctionListDeclareAggregateTests = []struct {
 				parser.Print{Value: parser.Variable{Name: "@var1"}},
 			},
 		},
-		Result: UserDefinedFunctionsList{
+		Result: UserDefinedFunctionScopes{
 			UserDefinedFunctionMap{
 				"USERAGGFUNC": &UserDefinedFunction{
 					Name: parser.Identifier{Literal: "useraggfunc"},
@@ -157,8 +157,8 @@ var userDefinedFunctionListDeclareAggregateTests = []struct {
 	},
 }
 
-func TestUserDefinedFunctionsList_DeclareAggregate(t *testing.T) {
-	list := UserDefinedFunctionsList{
+func TestUserDefinedFunctionScopes_DeclareAggregate(t *testing.T) {
+	list := UserDefinedFunctionScopes{
 		UserDefinedFunctionMap{},
 		UserDefinedFunctionMap{
 			"USERFUNC2": &UserDefinedFunction{
@@ -176,7 +176,7 @@ func TestUserDefinedFunctionsList_DeclareAggregate(t *testing.T) {
 		},
 	}
 
-	for _, v := range userDefinedFunctionListDeclareAggregateTests {
+	for _, v := range userDefinedFunctionScopesDeclareAggregateTests {
 		err := list.DeclareAggregate(v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -196,7 +196,7 @@ func TestUserDefinedFunctionsList_DeclareAggregate(t *testing.T) {
 	}
 }
 
-var userDefinedFunctionListGetTests = []struct {
+var userDefinedFunctionScopesGetTests = []struct {
 	Name     string
 	Function parser.QueryExpression
 	FuncName string
@@ -204,7 +204,7 @@ var userDefinedFunctionListGetTests = []struct {
 	Error    string
 }{
 	{
-		Name: "UserDefinedFunctionsList Get",
+		Name: "UserDefinedFunctionScopes Get",
 		Function: parser.Function{
 			Name: "userfunc2",
 		},
@@ -221,7 +221,7 @@ var userDefinedFunctionListGetTests = []struct {
 		},
 	},
 	{
-		Name: "UserDefinedFunctionsList Get Not Exist Error",
+		Name: "UserDefinedFunctionScopes Get Not Exist Error",
 		Function: parser.Function{
 			Name: "notexist",
 		},
@@ -230,8 +230,8 @@ var userDefinedFunctionListGetTests = []struct {
 	},
 }
 
-func TestUserDefinedFunctionsList_Get(t *testing.T) {
-	list := UserDefinedFunctionsList{
+func TestUserDefinedFunctionScopes_Get(t *testing.T) {
+	list := UserDefinedFunctionScopes{
 		UserDefinedFunctionMap{
 			"USERFUNC1": &UserDefinedFunction{
 				Name: parser.Identifier{Literal: "userfunc1"},
@@ -257,7 +257,7 @@ func TestUserDefinedFunctionsList_Get(t *testing.T) {
 		},
 	}
 
-	for _, v := range userDefinedFunctionListGetTests {
+	for _, v := range userDefinedFunctionScopesGetTests {
 		fn, err := list.Get(v.Function, v.FuncName)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -796,11 +796,11 @@ var userDefinedFunctionExecuteTests = []struct {
 }
 
 func TestUserDefinedFunction_Execute(t *testing.T) {
-	vars := Variables{
+	vars := VariableMap{
 		"@var1": value.NewInteger(1),
 	}
 	filter := NewFilter(
-		[]Variables{vars},
+		[]VariableMap{vars},
 		[]ViewMap{{}},
 		[]CursorMap{{}},
 		[]UserDefinedFunctionMap{{}},

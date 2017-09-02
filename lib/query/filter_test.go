@@ -47,7 +47,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						Records: []Record{
+						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
 								value.NewInteger(1),
 								value.NewString("str"),
@@ -72,7 +72,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						Records: []Record{
+						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
 								value.NewInteger(1),
 								value.NewString("str"),
@@ -97,7 +97,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column1"}),
-						Records: []Record{
+						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
 								value.NewInteger(1),
 								value.NewString("str"),
@@ -132,7 +132,7 @@ var filterEvaluateTests = []struct {
 								Column: "column2",
 							},
 						},
-						Records: []Record{
+						RecordSet: []Record{
 							{
 								NewGroupCell([]value.Primary{
 									value.NewInteger(1),
@@ -162,7 +162,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						Records: []Record{
+						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
 								value.NewInteger(1),
 								value.NewString("str"),
@@ -187,7 +187,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						Records: []Record{
+						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
 								value.NewInteger(1),
 								value.NewString("str"),
@@ -226,7 +226,7 @@ var filterEvaluateTests = []struct {
 								IsGroupKey:  true,
 							},
 						},
-						Records: []Record{
+						RecordSet: []Record{
 							{
 								NewGroupCell([]value.Primary{
 									value.NewInteger(1),
@@ -956,7 +956,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
-						Records: []Record{
+						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
 								value.NewInteger(1),
 								value.NewString("str2"),
@@ -1724,7 +1724,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
-						Records: []Record{
+						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
 								value.NewInteger(1),
 								value.NewString("str2"),
@@ -1826,7 +1826,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
-						Records: []Record{
+						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
 								value.NewInteger(1),
 								value.NewString("str2"),
@@ -1915,7 +1915,7 @@ var filterEvaluateTests = []struct {
 		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
-		Name: "Subquery Too Many Records Error",
+		Name: "Subquery Too Many RecordSet Error",
 		Expr: parser.Subquery{
 			Query: parser.SelectQuery{
 				SelectEntity: parser.SelectEntity{
@@ -1981,7 +1981,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "User Defined Function",
 		Filter: &Filter{
-			FunctionsList: UserDefinedFunctionsList{
+			Functions: UserDefinedFunctionScopes{
 				UserDefinedFunctionMap{
 					"USERFUNC": &UserDefinedFunction{
 						Name: parser.Identifier{Literal: "userfunc"},
@@ -2007,7 +2007,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "User Defined Function Argument Length Error",
 		Filter: &Filter{
-			FunctionsList: UserDefinedFunctionsList{
+			Functions: UserDefinedFunctionScopes{
 				UserDefinedFunctionMap{
 					"USERFUNC": &UserDefinedFunction{
 						Name: parser.Identifier{Literal: "userfunc"},
@@ -2057,7 +2057,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						Records: []Record{
+						RecordSet: []Record{
 							{
 								NewGroupCell([]value.Primary{
 									value.NewInteger(1),
@@ -2098,7 +2098,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
-						Records: []Record{
+						RecordSet: []Record{
 							{
 								NewGroupCell([]value.Primary{
 									value.NewInteger(1),
@@ -2131,7 +2131,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
-						Records: []Record{
+						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
 								value.NewInteger(1),
 								value.NewString("str2"),
@@ -2158,7 +2158,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
-						Records: []Record{
+						RecordSet: []Record{
 							{
 								NewGroupCell([]value.Primary{
 									value.NewInteger(1),
@@ -2199,7 +2199,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
-						Records: []Record{
+						RecordSet: []Record{
 							{
 								NewGroupCell([]value.Primary{
 									value.NewInteger(1),
@@ -2247,7 +2247,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
-						Records: []Record{
+						RecordSet: []Record{
 							{
 								NewGroupCell([]value.Primary{
 									value.NewInteger(1),
@@ -2268,7 +2268,7 @@ var filterEvaluateTests = []struct {
 					RecordIndex: 0,
 				},
 			},
-			FunctionsList: UserDefinedFunctionsList{
+			Functions: UserDefinedFunctionScopes{
 				{
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:        parser.Identifier{Literal: "useraggfunc"},
@@ -2366,7 +2366,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
-						Records: []Record{
+						RecordSet: []Record{
 							{
 								NewGroupCell([]value.Primary{
 									value.NewInteger(1),
@@ -2387,7 +2387,7 @@ var filterEvaluateTests = []struct {
 					RecordIndex: 0,
 				},
 			},
-			FunctionsList: UserDefinedFunctionsList{
+			Functions: UserDefinedFunctionScopes{
 				{
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:        parser.Identifier{Literal: "useraggfunc"},
@@ -2421,7 +2421,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
-						Records: []Record{
+						RecordSet: []Record{
 							{
 								NewGroupCell([]value.Primary{
 									value.NewInteger(1),
@@ -2442,7 +2442,7 @@ var filterEvaluateTests = []struct {
 					RecordIndex: 0,
 				},
 			},
-			FunctionsList: UserDefinedFunctionsList{
+			Functions: UserDefinedFunctionScopes{
 				{
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:        parser.Identifier{Literal: "useraggfunc"},
@@ -2477,7 +2477,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
-						Records: []Record{
+						RecordSet: []Record{
 							{
 								NewGroupCell([]value.Primary{
 									value.NewInteger(1),
@@ -2496,7 +2496,7 @@ var filterEvaluateTests = []struct {
 					RecordIndex: 0,
 				},
 			},
-			FunctionsList: UserDefinedFunctionsList{
+			Functions: UserDefinedFunctionScopes{
 				{
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:        parser.Identifier{Literal: "useraggfunc"},
@@ -2574,7 +2574,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
-						Records: []Record{
+						RecordSet: []Record{
 							{
 								NewGroupCell([]value.Primary{
 									value.NewInteger(1),
@@ -2593,7 +2593,7 @@ var filterEvaluateTests = []struct {
 					RecordIndex: 0,
 				},
 			},
-			FunctionsList: UserDefinedFunctionsList{
+			Functions: UserDefinedFunctionScopes{
 				{
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:        parser.Identifier{Literal: "useraggfunc"},
@@ -2671,7 +2671,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						Records: []Record{
+						RecordSet: []Record{
 							{
 								NewGroupCell([]value.Primary{
 									value.NewInteger(1),
@@ -2722,7 +2722,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						Records: []Record{
+						RecordSet: []Record{
 							{
 								NewGroupCell([]value.Primary{
 									value.NewInteger(1),
@@ -2767,7 +2767,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						Records: []Record{
+						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
 								value.NewInteger(1),
 								value.NewString("str2"),
@@ -2797,7 +2797,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						Records: []Record{
+						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
 								value.NewInteger(1),
 								value.NewString("str2"),
@@ -2831,7 +2831,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						Records: []Record{
+						RecordSet: []Record{
 							{
 								NewGroupCell([]value.Primary{
 									value.NewInteger(1),
@@ -2876,7 +2876,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						Records: []Record{
+						RecordSet: []Record{
 							{
 								NewGroupCell([]value.Primary{
 									value.NewInteger(1),
@@ -2918,7 +2918,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						Records: []Record{
+						RecordSet: []Record{
 							{
 								NewGroupCell([]value.Primary{
 									value.NewInteger(1),
@@ -2955,7 +2955,7 @@ var filterEvaluateTests = []struct {
 				{
 					View: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						Records: []Record{
+						RecordSet: []Record{
 							{
 								NewGroupCell([]value.Primary{
 									value.NewInteger(1),
@@ -3225,7 +3225,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Variable",
 		Filter: NewFilter(
-			[]Variables{{
+			[]VariableMap{{
 				"@var1": value.NewInteger(1),
 			}},
 			[]ViewMap{{}},
@@ -3247,7 +3247,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Variable Substitution",
 		Filter: NewFilter(
-			[]Variables{{
+			[]VariableMap{{
 				"@var1": value.NewInteger(1),
 			}},
 			[]ViewMap{{}},
@@ -3354,7 +3354,7 @@ func TestFilter_Evaluate(t *testing.T) {
 			v.Filter = NewEmptyFilter()
 		}
 
-		v.Filter.CursorsList = append(v.Filter.CursorsList, cursors)
+		v.Filter.Cursors = append(v.Filter.Cursors, cursors)
 		result, err := v.Filter.Evaluate(v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -3447,7 +3447,7 @@ var filterEvaluateFieldReferenceBenchFilter = &Filter{
 		{
 			View: &View{
 				Header: NewHeader("table1", []string{"column1", "column2", "column3"}),
-				Records: Records{
+				RecordSet: RecordSet{
 					NewRecord([]value.Primary{
 						value.NewInteger(1),
 						value.NewInteger(1),
@@ -3465,7 +3465,7 @@ var filterEvaluateFieldReferenceWithIndexCacheBenchFilter = &Filter{
 		{
 			View: &View{
 				Header: NewHeader("table1", []string{"column1", "column2", "column3"}),
-				Records: Records{
+				RecordSet: RecordSet{
 					NewRecord([]value.Primary{
 						value.NewInteger(1),
 						value.NewInteger(1),

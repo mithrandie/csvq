@@ -8,17 +8,17 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 )
 
-type UserDefinedFunctionsList []UserDefinedFunctionMap
+type UserDefinedFunctionScopes []UserDefinedFunctionMap
 
-func (list UserDefinedFunctionsList) Declare(expr parser.FunctionDeclaration) error {
+func (list UserDefinedFunctionScopes) Declare(expr parser.FunctionDeclaration) error {
 	return list[0].Declare(expr)
 }
 
-func (list UserDefinedFunctionsList) DeclareAggregate(expr parser.AggregateDeclaration) error {
+func (list UserDefinedFunctionScopes) DeclareAggregate(expr parser.AggregateDeclaration) error {
 	return list[0].DeclareAggregate(expr)
 }
 
-func (list UserDefinedFunctionsList) Get(expr parser.QueryExpression, name string) (*UserDefinedFunction, error) {
+func (list UserDefinedFunctionScopes) Get(expr parser.QueryExpression, name string) (*UserDefinedFunction, error) {
 	for _, v := range list {
 		if fn, err := v.Get(expr, name); err == nil {
 			return fn, nil
@@ -148,7 +148,7 @@ func (fn *UserDefinedFunction) Execute(args []value.Primary, filter *Filter) (va
 
 func (fn *UserDefinedFunction) ExecuteAggregate(values []value.Primary, args []value.Primary, filter *Filter) (value.Primary, error) {
 	childScope := filter.CreateChildScope()
-	childScope.CursorsList.AddPseudoCursor(fn.Cursor, values)
+	childScope.Cursors.AddPseudoCursor(fn.Cursor, values)
 	return fn.execute(args, childScope)
 }
 
@@ -180,14 +180,14 @@ func (fn *UserDefinedFunction) execute(args []value.Primary, filter *Filter) (va
 
 	for i, v := range fn.Parameters {
 		if i < len(args) {
-			filter.VariablesList[0].Add(v, args[i])
+			filter.Variables[0].Add(v, args[i])
 		} else {
 			defaultValue, _ := fn.Defaults[v.String()]
 			val, err := filter.Evaluate(defaultValue)
 			if err != nil {
 				return nil, err
 			}
-			filter.VariablesList[0].Add(v, val)
+			filter.Variables[0].Add(v, val)
 		}
 	}
 

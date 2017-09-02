@@ -6,10 +6,10 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 )
 
-type Records []Record
+type RecordSet []Record
 
-func (r Records) Copy() Records {
-	records := make(Records, len(r))
+func (r RecordSet) Copy() RecordSet {
+	records := make(RecordSet, len(r))
 	for i, v := range r {
 		records[i] = v.Copy()
 	}
@@ -81,8 +81,8 @@ func MergeRecord(r1 Record, r2 Record) Record {
 	return r
 }
 
-func MergeRecordsList(list []Records) Records {
-	var records Records
+func MergeRecordSetList(list []RecordSet) RecordSet {
+	var records RecordSet
 	if len(list) == 1 {
 		records = list[0]
 	} else {
@@ -90,7 +90,7 @@ func MergeRecordsList(list []Records) Records {
 		for _, v := range list {
 			recordLen += len(v)
 		}
-		records = make(Records, recordLen)
+		records = make(RecordSet, recordLen)
 		idx := 0
 		for _, v := range list {
 			for _, r := range v {

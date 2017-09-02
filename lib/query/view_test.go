@@ -34,17 +34,17 @@ var viewLoadTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{{}},
-			Records: []Record{
+			RecordSet: []Record{
 				{
 					NewCell(value.NewNull()),
 				},
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList:      AliasMapList{{}},
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases:      AliasNodes{{}},
 			},
 		},
 	},
@@ -53,17 +53,17 @@ var viewLoadTests = []struct {
 		From: parser.FromClause{},
 		Result: &View{
 			Header: []HeaderField{{}},
-			Records: []Record{
+			RecordSet: []Record{
 				{
 					NewCell(value.NewNull()),
 				},
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList:      AliasMapList{{}},
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases:      AliasNodes{{}},
 			},
 		},
 	},
@@ -78,7 +78,7 @@ var viewLoadTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -97,11 +97,11 @@ var viewLoadTests = []struct {
 				Delimiter: ',',
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
 					},
@@ -122,7 +122,7 @@ var viewLoadTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -141,11 +141,11 @@ var viewLoadTests = []struct {
 				Delimiter: ',',
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
 					},
@@ -163,7 +163,7 @@ var viewLoadTests = []struct {
 		Stdin: "column1,column2\n1,\"str1\"",
 		Result: &View{
 			Header: NewHeader("t", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -174,15 +174,15 @@ var viewLoadTests = []struct {
 				Delimiter: ',',
 			},
 			Filter: &Filter{
-				VariablesList: []Variables{{}},
-				TempViewsList: []ViewMap{
+				Variables: []VariableMap{{}},
+				TempViews: []ViewMap{
 					{
 						"STDIN": nil,
 					},
 				},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"T": "STDIN",
 					},
@@ -201,7 +201,7 @@ var viewLoadTests = []struct {
 		Stdin:         "column1,column2\n1,\"str1\"",
 		Result: &View{
 			Header: NewHeaderWithId("t", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(0, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -212,15 +212,15 @@ var viewLoadTests = []struct {
 				Delimiter: ',',
 			},
 			Filter: &Filter{
-				VariablesList: []Variables{{}},
-				TempViewsList: []ViewMap{
+				Variables: []VariableMap{{}},
+				TempViews: []ViewMap{
 					{
 						"STDIN": nil,
 					},
 				},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"T": "STDIN",
 					},
@@ -235,7 +235,7 @@ var viewLoadTests = []struct {
 		Stdin: "column1,column2\n1,\"str1\"",
 		Result: &View{
 			Header: NewHeader("stdin", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -246,15 +246,15 @@ var viewLoadTests = []struct {
 				Delimiter: ',',
 			},
 			Filter: &Filter{
-				VariablesList: []Variables{{}},
-				TempViewsList: []ViewMap{
+				Variables: []VariableMap{{}},
+				TempViews: []ViewMap{
 					{
 						"STDIN": nil,
 					},
 				},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"STDIN": "STDIN",
 					},
@@ -323,14 +323,14 @@ var viewLoadTests = []struct {
 			},
 		},
 		Filter: &Filter{
-			VariablesList: VariablesList{{}},
-			TempViewsList: TemporaryViewMapList{{}},
-			CursorsList:   CursorMapList{{}},
-			InlineTablesList: InlineTablesList{
-				InlineTables{
+			Variables: VariableScopes{{}},
+			TempViews: TemporaryViewScopes{{}},
+			Cursors:   CursorScopes{{}},
+			InlineTables: InlineTableNodes{
+				InlineTableMap{
 					"IT": &View{
 						Header: NewHeader("it", []string{"c1", "c2", "num"}),
-						Records: []Record{
+						RecordSet: []Record{
 							NewRecord([]value.Primary{
 								value.NewString("1"),
 								value.NewString("str1"),
@@ -350,11 +350,11 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
-			AliasesList: AliasMapList{{}},
+			Aliases: AliasNodes{{}},
 		},
 		Result: &View{
 			Header: NewHeader("t", []string{"c1", "c2", "num"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -372,15 +372,15 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				VariablesList: VariablesList{{}},
-				TempViewsList: TemporaryViewMapList{{}},
-				CursorsList:   CursorMapList{{}},
-				InlineTablesList: InlineTablesList{
+				Variables: VariableScopes{{}},
+				TempViews: TemporaryViewScopes{{}},
+				Cursors:   CursorScopes{{}},
+				InlineTables: InlineTableNodes{
 					{},
-					InlineTables{
+					InlineTableMap{
 						"IT": &View{
 							Header: NewHeader("it", []string{"c1", "c2", "num"}),
-							Records: []Record{
+							RecordSet: []Record{
 								NewRecord([]value.Primary{
 									value.NewString("1"),
 									value.NewString("str1"),
@@ -400,7 +400,7 @@ var viewLoadTests = []struct {
 						},
 					},
 				},
-				AliasesList: AliasMapList{
+				Aliases: AliasNodes{
 					{
 						"T": "",
 					},
@@ -418,14 +418,14 @@ var viewLoadTests = []struct {
 			},
 		},
 		Filter: &Filter{
-			VariablesList: VariablesList{{}},
-			TempViewsList: TemporaryViewMapList{{}},
-			CursorsList:   CursorMapList{{}},
-			InlineTablesList: InlineTablesList{
-				InlineTables{
+			Variables: VariableScopes{{}},
+			TempViews: TemporaryViewScopes{{}},
+			Cursors:   CursorScopes{{}},
+			InlineTables: InlineTableNodes{
+				InlineTableMap{
 					"IT": &View{
 						Header: NewHeader("it", []string{"c1", "c2", "num"}),
-						Records: []Record{
+						RecordSet: []Record{
 							NewRecord([]value.Primary{
 								value.NewString("1"),
 								value.NewString("str1"),
@@ -445,7 +445,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
-			AliasesList: AliasMapList{{}},
+			Aliases: AliasNodes{{}},
 		},
 		Error: "[L:- C:-] table name t is a duplicate",
 	},
@@ -461,7 +461,7 @@ var viewLoadTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeader("table_sjis", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("日本語"),
@@ -472,11 +472,11 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"TABLE_SJIS": strings.ToUpper(GetTestFilePath("table_sjis.csv")),
 					},
@@ -496,7 +496,7 @@ var viewLoadTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeader("table_noheader", []string{"c1", "c2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -507,11 +507,11 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"TABLE_NOHEADER": strings.ToUpper(GetTestFilePath("table_noheader.csv")),
 					},
@@ -538,7 +538,7 @@ var viewLoadTests = []struct {
 				{View: "table2", Column: "column3", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -595,11 +595,11 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
 						"TABLE2": strings.ToUpper(GetTestFilePath("table2.csv")),
@@ -632,7 +632,7 @@ var viewLoadTests = []struct {
 				{View: "table2", Column: "column3", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -689,11 +689,11 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
 						"TABLE2": strings.ToUpper(GetTestFilePath("table2.csv")),
@@ -732,7 +732,7 @@ var viewLoadTests = []struct {
 				{View: "table2", Column: "column3", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("2"),
 					value.NewString("str2"),
@@ -747,11 +747,11 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
 						"TABLE2": strings.ToUpper(GetTestFilePath("table2.csv")),
@@ -787,7 +787,7 @@ var viewLoadTests = []struct {
 				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
 				{View: "table1b", Column: "column2b", Number: 2, IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -805,11 +805,11 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"TABLE1":  strings.ToUpper(GetTestFilePath("table1.csv")),
 						"TABLE1B": strings.ToUpper(GetTestFilePath("table1b.csv")),
@@ -849,7 +849,7 @@ var viewLoadTests = []struct {
 				{View: "table2", Column: "column3", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -870,11 +870,11 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
 						"TABLE2": strings.ToUpper(GetTestFilePath("table2.csv")),
@@ -907,7 +907,7 @@ var viewLoadTests = []struct {
 				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
 				{View: "table1b", Column: "column2b", Number: 2, IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -930,11 +930,11 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"TABLE1":  strings.ToUpper(GetTestFilePath("table1.csv")),
 						"TABLE1B": strings.ToUpper(GetTestFilePath("table1b.csv")),
@@ -1010,7 +1010,7 @@ var viewLoadTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeader("alias", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -1025,11 +1025,11 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				VariablesList:    []Variables{{}},
-				TempViewsList:    []ViewMap{{}},
-				CursorsList:      []CursorMap{{}},
-				InlineTablesList: InlineTablesList{{}},
-				AliasesList: AliasMapList{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
 					{
 						"ALIAS": "",
 					},
@@ -1214,20 +1214,20 @@ func TestView_Load(t *testing.T) {
 		view.FileInfo = nil
 		v.Result.FileInfo = nil
 
-		if !reflect.DeepEqual(view.Filter.AliasesList, v.Result.Filter.AliasesList) {
-			t.Errorf("%s: alias list = %q, want %q", v.Name, view.Filter.AliasesList, v.Result.Filter.AliasesList)
+		if !reflect.DeepEqual(view.Filter.Aliases, v.Result.Filter.Aliases) {
+			t.Errorf("%s: alias list = %q, want %q", v.Name, view.Filter.Aliases, v.Result.Filter.Aliases)
 		}
-		for i, tviews := range v.Result.Filter.TempViewsList {
+		for i, tviews := range v.Result.Filter.TempViews {
 			resultKeys := []string{}
 			for key := range tviews {
 				resultKeys = append(resultKeys, key)
 			}
 			viewKeys := []string{}
-			for key := range view.Filter.TempViewsList[i] {
+			for key := range view.Filter.TempViews[i] {
 				viewKeys = append(viewKeys, key)
 			}
 			if !reflect.DeepEqual(resultKeys, viewKeys) {
-				t.Errorf("%s: temp view list = %q, want %q", v.Name, view.Filter.TempViewsList, v.Result.Filter.TempViewsList)
+				t.Errorf("%s: temp view list = %q, want %q", v.Name, view.Filter.TempViews, v.Result.Filter.TempViews)
 			}
 		}
 
@@ -1244,7 +1244,7 @@ func TestNewViewFromGroupedRecord(t *testing.T) {
 	fr := FilterRecord{
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				{
 					NewGroupCell([]value.Primary{value.NewInteger(1), value.NewInteger(2), value.NewInteger(3)}),
 					NewGroupCell([]value.Primary{value.NewInteger(1), value.NewInteger(2), value.NewInteger(3)}),
@@ -1256,7 +1256,7 @@ func TestNewViewFromGroupedRecord(t *testing.T) {
 	}
 	expect := &View{
 		Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-		Records: []Record{
+		RecordSet: []Record{
 			{NewCell(value.NewInteger(1)), NewCell(value.NewInteger(1)), NewCell(value.NewString("str1"))},
 			{NewCell(value.NewInteger(2)), NewCell(value.NewInteger(2)), NewCell(value.NewString("str2"))},
 			{NewCell(value.NewInteger(3)), NewCell(value.NewInteger(3)), NewCell(value.NewString("str3"))},
@@ -1274,14 +1274,14 @@ var viewWhereTests = []struct {
 	CPU    int
 	View   *View
 	Where  parser.WhereClause
-	Result Records
+	Result RecordSet
 	Error  string
 }{
 	{
 		Name: "Where",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-			Records: Records{
+			RecordSet: RecordSet{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -1304,7 +1304,7 @@ var viewWhereTests = []struct {
 				Operator: "=",
 			},
 		},
-		Result: Records{
+		Result: RecordSet{
 			NewRecordWithId(2, []value.Primary{
 				value.NewString("2"),
 				value.NewString("str2"),
@@ -1316,7 +1316,7 @@ var viewWhereTests = []struct {
 		CPU:  3,
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-			Records: Records{
+			RecordSet: RecordSet{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -1339,7 +1339,7 @@ var viewWhereTests = []struct {
 				Operator: "=",
 			},
 		},
-		Result: Records{
+		Result: RecordSet{
 			NewRecordWithId(2, []value.Primary{
 				value.NewString("2"),
 				value.NewString("str2"),
@@ -1350,7 +1350,7 @@ var viewWhereTests = []struct {
 		Name: "Where Filter Error",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -1399,8 +1399,8 @@ func TestView_Where(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(v.View.Records, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, v.View.Records, v.Result)
+		if !reflect.DeepEqual(v.View.RecordSet, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, v.View.RecordSet, v.Result)
 		}
 	}
 }
@@ -1418,7 +1418,7 @@ var viewGroupByTests = []struct {
 		Name: "Group By",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -1473,7 +1473,7 @@ var viewGroupByTests = []struct {
 					IsGroupKey:  true,
 				},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				{
 					NewGroupCell([]value.Primary{value.NewInteger(1), value.NewInteger(3)}),
 					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("3")}),
@@ -1495,7 +1495,7 @@ var viewGroupByTests = []struct {
 		Name: "Group By With ColumnNumber",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -1550,7 +1550,7 @@ var viewGroupByTests = []struct {
 					IsGroupKey:  true,
 				},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				{
 					NewGroupCell([]value.Primary{value.NewInteger(1), value.NewInteger(3)}),
 					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("3")}),
@@ -1572,7 +1572,7 @@ var viewGroupByTests = []struct {
 		Name: "Group By Evaluation Error",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -1606,9 +1606,9 @@ var viewGroupByTests = []struct {
 	{
 		Name: "Group By Empty Record",
 		View: &View{
-			Header:  NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
-			Records: []Record{},
-			Filter:  NewEmptyFilter(),
+			Header:    NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
+			RecordSet: []Record{},
+			Filter:    NewEmptyFilter(),
 		},
 		GroupBy: parser.GroupByClause{
 			Items: []parser.QueryExpression{
@@ -1641,7 +1641,7 @@ var viewGroupByTests = []struct {
 					IsGroupKey:  true,
 				},
 			},
-			Records:   []Record{},
+			RecordSet: []Record{},
 			Filter:    NewEmptyFilter(),
 			isGrouped: true,
 		},
@@ -1673,7 +1673,7 @@ var viewHavingTests = []struct {
 	Name   string
 	View   *View
 	Having parser.HavingClause
-	Result Records
+	Result RecordSet
 	Error  string
 }{
 	{
@@ -1702,7 +1702,7 @@ var viewHavingTests = []struct {
 				},
 			},
 			isGrouped: true,
-			Records: Records{
+			RecordSet: RecordSet{
 				{
 					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("3")}),
 					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("3")}),
@@ -1731,7 +1731,7 @@ var viewHavingTests = []struct {
 				Operator: ">",
 			},
 		},
-		Result: Records{
+		Result: RecordSet{
 			{
 				NewGroupCell([]value.Primary{value.NewString("2"), value.NewString("4")}),
 				NewGroupCell([]value.Primary{value.NewString("2"), value.NewString("4")}),
@@ -1766,7 +1766,7 @@ var viewHavingTests = []struct {
 				},
 			},
 			isGrouped: true,
-			Records: Records{
+			RecordSet: RecordSet{
 				{
 					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("3")}),
 					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("3")}),
@@ -1801,7 +1801,7 @@ var viewHavingTests = []struct {
 		Name: "Having Not Grouped",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
-			Records: Records{
+			RecordSet: RecordSet{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("2"),
 					value.NewString("str2"),
@@ -1828,7 +1828,7 @@ var viewHavingTests = []struct {
 				Operator: ">",
 			},
 		},
-		Result: Records{
+		Result: RecordSet{
 			{
 				NewGroupCell([]value.Primary{value.NewInteger(1), value.NewInteger(2)}),
 				NewGroupCell([]value.Primary{value.NewString("2"), value.NewString("4")}),
@@ -1838,10 +1838,10 @@ var viewHavingTests = []struct {
 		},
 	},
 	{
-		Name: "Having All Records Filter Error",
+		Name: "Having All RecordSet Filter Error",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
-			Records: Records{
+			RecordSet: RecordSet{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("2"),
 					value.NewString("str2"),
@@ -1887,8 +1887,8 @@ func TestView_Having(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(v.View.Records, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, v.View.Records, v.Result)
+		if !reflect.DeepEqual(v.View.RecordSet, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, v.View.RecordSet, v.Result)
 		}
 	}
 }
@@ -1911,7 +1911,7 @@ var viewSelectTests = []struct {
 				{View: "table2", Column: "column3", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewInteger(1),
 					value.NewString("1"),
@@ -1972,7 +1972,7 @@ var viewSelectTests = []struct {
 				{Column: "1", Aliases: []string{"a"}},
 				{Column: "2012-01-01T00:00:00-08:00"},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewInteger(1),
 					value.NewString("1"),
@@ -2029,7 +2029,7 @@ var viewSelectTests = []struct {
 				{View: "table2", Column: "column3", IsFromTable: true},
 				{View: "table2", Column: "column4", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewInteger(1),
 					value.NewString("1"),
@@ -2077,7 +2077,7 @@ var viewSelectTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{Column: "1", Aliases: []string{"a"}},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewInteger(1),
@@ -2099,7 +2099,7 @@ var viewSelectTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -2131,7 +2131,7 @@ var viewSelectTests = []struct {
 				{View: "table1", Column: "column2", IsFromTable: true},
 				{Column: "sum(column1)"},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				{
 					NewGroupCell([]value.Primary{value.NewInteger(1), value.NewInteger(2)}),
 					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("2")}),
@@ -2151,7 +2151,7 @@ var viewSelectTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -2180,14 +2180,14 @@ var viewSelectTests = []struct {
 		Error: "[L:- C:-] field column2 is not a group key",
 	},
 	{
-		Name: "Select Aggregate Function All Records Lazy Evaluation",
+		Name: "Select Aggregate Function All RecordSet Lazy Evaluation",
 		View: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -2225,7 +2225,7 @@ var viewSelectTests = []struct {
 				{Column: "1"},
 				{Column: "sum(column1) + 1"},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				{
 					NewGroupCell([]value.Primary{value.NewInteger(1), value.NewInteger(2)}),
 					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("2")}),
@@ -2242,7 +2242,7 @@ var viewSelectTests = []struct {
 		Name: "Select Analytic Function",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(2),
@@ -2301,7 +2301,7 @@ var viewSelectTests = []struct {
 				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
 				{Column: "row_number() over (partition by column1 order by column2)", Aliases: []string{"rownum"}},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(1),
@@ -2336,7 +2336,7 @@ var viewSelectTests = []struct {
 		Name: "Select Analytic Function Not Exist Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(2),
@@ -2395,7 +2395,7 @@ var viewSelectTests = []struct {
 		Name: "Select Analytic Function Partition Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(2),
@@ -2454,7 +2454,7 @@ var viewSelectTests = []struct {
 		Name: "Select Analytic Function Order Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(2),
@@ -2513,7 +2513,7 @@ var viewSelectTests = []struct {
 		Name: "Select User Defined Analytic Function",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(2),
@@ -2536,7 +2536,7 @@ var viewSelectTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				FunctionsList: UserDefinedFunctionsList{
+				Functions: UserDefinedFunctionScopes{
 					UserDefinedFunctionMap{
 						"USERAGGFUNC": &UserDefinedFunction{
 							Name:         parser.Identifier{Literal: "useraggfunc"},
@@ -2615,7 +2615,7 @@ var viewSelectTests = []struct {
 				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
 				{Column: "useraggfunc(column2) over ()"},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(2),
@@ -2665,8 +2665,8 @@ func TestView_Select(t *testing.T) {
 		if !reflect.DeepEqual(v.View.Header, v.Result.Header) {
 			t.Errorf("%s: header = %s, want %s", v.Name, v.View.Header, v.Result.Header)
 		}
-		if !reflect.DeepEqual(v.View.Records, v.Result.Records) {
-			t.Errorf("%s: records = %s, want %s", v.Name, v.View.Records, v.Result.Records)
+		if !reflect.DeepEqual(v.View.RecordSet, v.Result.RecordSet) {
+			t.Errorf("%s: records = %s, want %s", v.Name, v.View.RecordSet, v.Result.RecordSet)
 		}
 		if !reflect.DeepEqual(v.View.selectFields, v.Result.selectFields) {
 			t.Errorf("%s: select indices = %s, want %s", v.Name, v.View.selectFields, v.Result.selectFields)
@@ -2690,7 +2690,7 @@ var viewOrderByTests = []struct {
 				{View: "table1", Column: "column2", IsFromTable: true},
 				{View: "table1", Column: "column3", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("3"),
@@ -2744,7 +2744,7 @@ var viewOrderByTests = []struct {
 				{View: "table1", Column: "column3", IsFromTable: true},
 				{Column: "1"},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(5, []value.Primary{
 					value.NewNull(),
 					value.NewString("2"),
@@ -2783,7 +2783,7 @@ var viewOrderByTests = []struct {
 		Name: "Order By with Cached SortValues",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("3"),
@@ -2811,7 +2811,7 @@ var viewOrderByTests = []struct {
 				}),
 			},
 			Filter: NewEmptyFilter(),
-			sortValues: [][]*SortValue{
+			sortValuesInEachCell: [][]*SortValue{
 				{nil, nil, NewSortValue(value.NewString("3")), nil},
 				{nil, nil, NewSortValue(value.NewString("4")), nil},
 				{nil, nil, NewSortValue(value.NewString("4")), nil},
@@ -2828,7 +2828,7 @@ var viewOrderByTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(5, []value.Primary{
 					value.NewNull(),
 					value.NewString("2"),
@@ -2856,7 +2856,7 @@ var viewOrderByTests = []struct {
 				}),
 			},
 			Filter: NewEmptyFilter(),
-			sortValues: [][]*SortValue{
+			sortValuesInEachCell: [][]*SortValue{
 				{nil, nil, NewSortValue(value.NewString("2")), nil},
 				{nil, nil, NewSortValue(value.NewString("3")), nil},
 				{nil, nil, NewSortValue(value.NewString("3")), nil},
@@ -2873,7 +2873,7 @@ var viewOrderByTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewNull(),
@@ -2915,7 +2915,7 @@ var viewOrderByTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewNull(),
@@ -2948,7 +2948,7 @@ var viewOrderByTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewNull(),
@@ -2995,8 +2995,8 @@ func TestView_OrderBy(t *testing.T) {
 		if !reflect.DeepEqual(v.View.Header, v.Result.Header) {
 			t.Errorf("%s: header = %s, want %s", v.Name, v.View.Header, v.Result.Header)
 		}
-		if !reflect.DeepEqual(v.View.Records, v.Result.Records) {
-			t.Errorf("%s: records = %s, want %s", v.Name, v.View.Records, v.Result.Records)
+		if !reflect.DeepEqual(v.View.RecordSet, v.Result.RecordSet) {
+			t.Errorf("%s: records = %s, want %s", v.Name, v.View.RecordSet, v.Result.RecordSet)
 		}
 	}
 }
@@ -3012,14 +3012,14 @@ var viewExtendRecordCapacity = []struct {
 		Name: "ExtendRecordCapacity",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: Records{
+			RecordSet: RecordSet{
 				NewRecord([]value.Primary{
 					value.NewInteger(1),
 					value.NewInteger(2),
 				}),
 			},
 			Filter: &Filter{
-				FunctionsList: UserDefinedFunctionsList{
+				Functions: UserDefinedFunctionScopes{
 					UserDefinedFunctionMap{
 						"USERFUNC": &UserDefinedFunction{
 							Name: parser.Identifier{Literal: "userfunc"},
@@ -3107,14 +3107,14 @@ var viewExtendRecordCapacity = []struct {
 		Name: "ExtendRecordCapacity UserDefinedFunction Not Grouped Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: Records{
+			RecordSet: RecordSet{
 				NewRecord([]value.Primary{
 					value.NewInteger(1),
 					value.NewInteger(2),
 				}),
 			},
 			Filter: &Filter{
-				FunctionsList: UserDefinedFunctionsList{
+				Functions: UserDefinedFunctionScopes{
 					UserDefinedFunctionMap{
 						"USERFUNC": &UserDefinedFunction{
 							Name: parser.Identifier{Literal: "userfunc"},
@@ -3145,7 +3145,7 @@ var viewExtendRecordCapacity = []struct {
 		Name: "ExtendRecordCapacity AggregateFunction Not Grouped Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: Records{
+			RecordSet: RecordSet{
 				NewRecord([]value.Primary{
 					value.NewInteger(1),
 					value.NewInteger(2),
@@ -3166,7 +3166,7 @@ var viewExtendRecordCapacity = []struct {
 		Name: "ExtendRecordCapacity ListAgg Not Grouped Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: Records{
+			RecordSet: RecordSet{
 				NewRecord([]value.Primary{
 					value.NewInteger(1),
 					value.NewInteger(2),
@@ -3194,7 +3194,7 @@ var viewExtendRecordCapacity = []struct {
 		Name: "ExtendRecordCapacity AnalyticFunction Partition Value Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: Records{
+			RecordSet: RecordSet{
 				NewRecord([]value.Primary{
 					value.NewInteger(1),
 					value.NewInteger(2),
@@ -3235,7 +3235,7 @@ var viewExtendRecordCapacity = []struct {
 		Name: "ExtendRecordCapacity AnalyticFunction OrderBy Value Error",
 		View: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: Records{
+			RecordSet: RecordSet{
 				NewRecord([]value.Primary{
 					value.NewInteger(1),
 					value.NewInteger(2),
@@ -3289,8 +3289,8 @@ func TestView_ExtendRecordCapacity(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if cap(v.View.Records[0]) != v.Result {
-			t.Errorf("%s: record capacity = %d, want %d", v.Name, cap(v.View.Records[0]), v.Result)
+		if cap(v.View.RecordSet[0]) != v.Result {
+			t.Errorf("%s: record capacity = %d, want %d", v.Name, cap(v.View.RecordSet[0]), v.Result)
 		}
 	}
 }
@@ -3310,7 +3310,7 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -3341,7 +3341,7 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -3362,7 +3362,7 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -3385,7 +3385,7 @@ var viewLimitTests = []struct {
 				}),
 			},
 			Filter: NewEmptyFilter(),
-			recordSortValues: []SortValues{
+			sortValuesInEachRecord: []SortValues{
 				{
 					&SortValue{Type: SORT_VALUE_INTEGER, Integer: 1},
 					&SortValue{Type: SORT_VALUE_STRING, String: "str1"},
@@ -3415,7 +3415,7 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -3430,7 +3430,7 @@ var viewLimitTests = []struct {
 				}),
 			},
 			Filter: NewEmptyFilter(),
-			recordSortValues: []SortValues{
+			sortValuesInEachRecord: []SortValues{
 				{
 					&SortValue{Type: SORT_VALUE_INTEGER, Integer: 1},
 					&SortValue{Type: SORT_VALUE_STRING, String: "str1"},
@@ -3462,7 +3462,7 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(2, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -3490,7 +3490,7 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(2, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -3516,7 +3516,7 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -3547,7 +3547,7 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -3580,7 +3580,7 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -3611,19 +3611,19 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{},
-			Filter:  NewEmptyFilter(),
+			RecordSet: []Record{},
+			Filter:    NewEmptyFilter(),
 		},
 	},
 	{
-		Name: "Limit Greater Than Records",
+		Name: "Limit Greater Than RecordSet",
 		View: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: INTERNAL_ID_COLUMN},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -3642,7 +3642,7 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -3663,7 +3663,7 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -3686,7 +3686,7 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -3709,7 +3709,7 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -3728,8 +3728,8 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{},
-			Filter:  NewEmptyFilter(),
+			RecordSet: []Record{},
+			Filter:    NewEmptyFilter(),
 		},
 	},
 	{
@@ -3740,7 +3740,7 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -3793,7 +3793,7 @@ var viewOffsetTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -3820,7 +3820,7 @@ var viewOffsetTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(4, []value.Primary{
 					value.NewString("2"),
 					value.NewString("str2"),
@@ -3838,7 +3838,7 @@ var viewOffsetTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -3865,9 +3865,9 @@ var viewOffsetTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{},
-			Filter:  NewEmptyFilter(),
-			offset:  4,
+			RecordSet: []Record{},
+			Filter:    NewEmptyFilter(),
+			offset:    4,
 		},
 	},
 	{
@@ -3878,7 +3878,7 @@ var viewOffsetTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -3909,7 +3909,7 @@ var viewOffsetTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -3940,7 +3940,7 @@ var viewOffsetTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -3959,7 +3959,7 @@ var viewOffsetTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -4026,7 +4026,7 @@ var viewInsertValuesTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewInteger(1),
 					value.NewString("1"),
@@ -4106,7 +4106,7 @@ var viewInsertValuesTests = []struct {
 func TestView_InsertValues(t *testing.T) {
 	view := &View{
 		Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-		Records: []Record{
+		RecordSet: []Record{
 			NewRecordWithId(1, []value.Primary{
 				value.NewString("1"),
 				value.NewString("str1"),
@@ -4162,7 +4162,7 @@ var viewInsertFromQueryTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewInteger(1),
 					value.NewString("1"),
@@ -4221,7 +4221,7 @@ var viewInsertFromQueryTests = []struct {
 func TestView_InsertFromQuery(t *testing.T) {
 	view := &View{
 		Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-		Records: []Record{
+		RecordSet: []Record{
 			NewRecordWithId(1, []value.Primary{
 				value.NewString("1"),
 				value.NewString("str1"),
@@ -4261,7 +4261,7 @@ func TestView_Fix(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: []Record{
+		RecordSet: []Record{
 			NewRecordWithId(1, []value.Primary{
 				value.NewString("1"),
 				value.NewString("str1"),
@@ -4275,7 +4275,7 @@ func TestView_Fix(t *testing.T) {
 	}
 	expect := &View{
 		Header: NewHeader("table1", []string{"column2"}),
-		Records: []Record{
+		RecordSet: []Record{
 			NewRecord([]value.Primary{
 				value.NewString("str1"),
 			}),
@@ -4298,7 +4298,7 @@ func TestView_Union(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: Records{
+		RecordSet: RecordSet{
 			NewRecord([]value.Primary{
 				value.NewString("1"),
 				value.NewString("str1"),
@@ -4323,7 +4323,7 @@ func TestView_Union(t *testing.T) {
 			{View: "table2", Column: "column3", IsFromTable: true},
 			{View: "table2", Column: "column4", IsFromTable: true},
 		},
-		Records: Records{
+		RecordSet: RecordSet{
 			NewRecord([]value.Primary{
 				value.NewString("2"),
 				value.NewString("str2"),
@@ -4340,7 +4340,7 @@ func TestView_Union(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: Records{
+		RecordSet: RecordSet{
 			NewRecord([]value.Primary{
 				value.NewString("1"),
 				value.NewString("str1"),
@@ -4366,7 +4366,7 @@ func TestView_Union(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: Records{
+		RecordSet: RecordSet{
 			NewRecord([]value.Primary{
 				value.NewString("1"),
 				value.NewString("str1"),
@@ -4391,7 +4391,7 @@ func TestView_Union(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: Records{
+		RecordSet: RecordSet{
 			NewRecord([]value.Primary{
 				value.NewString("1"),
 				value.NewString("str1"),
@@ -4431,7 +4431,7 @@ func TestView_Except(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: Records{
+		RecordSet: RecordSet{
 			NewRecord([]value.Primary{
 				value.NewString("1"),
 				value.NewString("str1"),
@@ -4456,7 +4456,7 @@ func TestView_Except(t *testing.T) {
 			{View: "table2", Column: "column3", IsFromTable: true},
 			{View: "table2", Column: "column4", IsFromTable: true},
 		},
-		Records: Records{
+		RecordSet: RecordSet{
 			NewRecord([]value.Primary{
 				value.NewString("2"),
 				value.NewString("str2"),
@@ -4473,7 +4473,7 @@ func TestView_Except(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: Records{
+		RecordSet: RecordSet{
 			NewRecord([]value.Primary{
 				value.NewString("1"),
 				value.NewString("str1"),
@@ -4491,7 +4491,7 @@ func TestView_Except(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: Records{
+		RecordSet: RecordSet{
 			NewRecord([]value.Primary{
 				value.NewString("1"),
 				value.NewString("str1"),
@@ -4516,7 +4516,7 @@ func TestView_Except(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: Records{
+		RecordSet: RecordSet{
 			NewRecord([]value.Primary{
 				value.NewString("1"),
 				value.NewString("str1"),
@@ -4540,7 +4540,7 @@ func TestView_Intersect(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: Records{
+		RecordSet: RecordSet{
 			NewRecord([]value.Primary{
 				value.NewString("1"),
 				value.NewString("str1"),
@@ -4565,7 +4565,7 @@ func TestView_Intersect(t *testing.T) {
 			{View: "table2", Column: "column3", IsFromTable: true},
 			{View: "table2", Column: "column4", IsFromTable: true},
 		},
-		Records: Records{
+		RecordSet: RecordSet{
 			NewRecord([]value.Primary{
 				value.NewString("2"),
 				value.NewString("str2"),
@@ -4582,7 +4582,7 @@ func TestView_Intersect(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: Records{
+		RecordSet: RecordSet{
 			NewRecord([]value.Primary{
 				value.NewString("2"),
 				value.NewString("str2"),
@@ -4600,7 +4600,7 @@ func TestView_Intersect(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: Records{
+		RecordSet: RecordSet{
 			NewRecord([]value.Primary{
 				value.NewString("1"),
 				value.NewString("str1"),
@@ -4625,7 +4625,7 @@ func TestView_Intersect(t *testing.T) {
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},
-		Records: Records{
+		RecordSet: RecordSet{
 			NewRecord([]value.Primary{
 				value.NewString("2"),
 				value.NewString("str2"),
@@ -4731,7 +4731,7 @@ func TestView_FieldViewName(t *testing.T) {
 func TestView_InternalRecordId(t *testing.T) {
 	view := &View{
 		Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-		Records: []Record{
+		RecordSet: []Record{
 			NewRecordWithId(0, []value.Primary{value.NewInteger(1), value.NewString("str1")}),
 			NewRecordWithId(1, []value.Primary{value.NewInteger(2), value.NewString("str2")}),
 			NewRecordWithId(2, []value.Primary{value.NewInteger(3), value.NewString("str3")}),
@@ -4746,7 +4746,7 @@ func TestView_InternalRecordId(t *testing.T) {
 		t.Errorf("field internal id = %d, want %d", id, expect)
 	}
 
-	view.Records[1][0] = NewCell(value.NewNull())
+	view.RecordSet[1][0] = NewCell(value.NewNull())
 	expectError := "[L:- C:-] internal record id is empty"
 	_, err := view.InternalRecordId(ref, recordIndex)
 	if err.Error() != expectError {

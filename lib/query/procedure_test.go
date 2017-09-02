@@ -619,7 +619,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 	tf.Format = cmd.CSV
 
 	proc := NewProcedure()
-	proc.Filter.VariablesList[0].Add(parser.Variable{Name: "@while_test"}, value.NewInteger(0))
+	proc.Filter.Variables[0].Add(parser.Variable{Name: "@while_test"}, value.NewInteger(0))
 
 	for _, v := range procedureExecuteStatementTests {
 		ViewCache.Clear()
@@ -1208,15 +1208,15 @@ func TestProcedure_While(t *testing.T) {
 	proc := NewProcedure()
 
 	for _, v := range procedureWhileTests {
-		if _, err := proc.Filter.VariablesList[0].Get(parser.Variable{Name: "@while_test"}); err != nil {
-			proc.Filter.VariablesList[0].Add(parser.Variable{Name: "@while_test"}, value.NewInteger(0))
+		if _, err := proc.Filter.Variables[0].Get(parser.Variable{Name: "@while_test"}); err != nil {
+			proc.Filter.Variables[0].Add(parser.Variable{Name: "@while_test"}, value.NewInteger(0))
 		}
-		proc.Filter.VariablesList[0].Set(parser.Variable{Name: "@while_test"}, value.NewInteger(0))
+		proc.Filter.Variables[0].Set(parser.Variable{Name: "@while_test"}, value.NewInteger(0))
 
-		if _, err := proc.Filter.VariablesList[0].Get(parser.Variable{Name: "@while_test_count"}); err != nil {
-			proc.Filter.VariablesList[0].Add(parser.Variable{Name: "@while_test_count"}, value.NewInteger(0))
+		if _, err := proc.Filter.Variables[0].Get(parser.Variable{Name: "@while_test_count"}); err != nil {
+			proc.Filter.Variables[0].Add(parser.Variable{Name: "@while_test_count"}, value.NewInteger(0))
 		}
-		proc.Filter.VariablesList[0].Set(parser.Variable{Name: "@while_test_count"}, value.NewInteger(0))
+		proc.Filter.Variables[0].Set(parser.Variable{Name: "@while_test_count"}, value.NewInteger(0))
 
 		oldStdout := os.Stdout
 
@@ -1406,17 +1406,17 @@ func TestProcedure_WhileInCursor(t *testing.T) {
 	proc := NewProcedure()
 
 	for _, v := range procedureWhileInCursorTests {
-		proc.Filter.VariablesList[0] = Variables{
+		proc.Filter.Variables[0] = VariableMap{
 			"@var1": value.NewNull(),
 			"@var2": value.NewNull(),
 		}
-		proc.Filter.CursorsList[0] = CursorMap{
+		proc.Filter.Cursors[0] = CursorMap{
 			"CUR": &Cursor{
 				query: selectQueryForCursorTest,
 			},
 		}
 		ViewCache.Clear()
-		proc.Filter.CursorsList.Open(parser.Identifier{Literal: "cur"}, proc.Filter)
+		proc.Filter.Cursors.Open(parser.Identifier{Literal: "cur"}, proc.Filter)
 
 		oldStdout := os.Stdout
 		r, w, _ := os.Pipe()

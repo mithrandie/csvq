@@ -9,8 +9,8 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 )
 
-func TestMergeRecordsList(t *testing.T) {
-	list := []Records{
+func TestMergeRecordSetList(t *testing.T) {
+	list := []RecordSet{
 		{
 			NewRecord([]value.Primary{value.NewInteger(1), value.NewString("str1")}),
 			NewRecord([]value.Primary{value.NewInteger(2), value.NewString("str2")}),
@@ -20,14 +20,14 @@ func TestMergeRecordsList(t *testing.T) {
 			NewRecord([]value.Primary{value.NewInteger(4), value.NewString("str4")}),
 		},
 	}
-	expect := Records{
+	expect := RecordSet{
 		NewRecord([]value.Primary{value.NewInteger(1), value.NewString("str1")}),
 		NewRecord([]value.Primary{value.NewInteger(2), value.NewString("str2")}),
 		NewRecord([]value.Primary{value.NewInteger(3), value.NewString("str3")}),
 		NewRecord([]value.Primary{value.NewInteger(4), value.NewString("str4")}),
 	}
 
-	result := MergeRecordsList(list)
+	result := MergeRecordSetList(list)
 	if !reflect.DeepEqual(result, expect) {
 		t.Errorf("result = %s, want %s", result, expect)
 	}

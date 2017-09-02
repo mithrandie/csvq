@@ -202,7 +202,7 @@ var fetchCursorTests = []struct {
 	FetchPosition parser.FetchPosition
 	Variables     []parser.Variable
 	Success       bool
-	ResultVars    Variables
+	ResultVars    VariableMap
 	Error         string
 }{
 	{
@@ -213,7 +213,7 @@ var fetchCursorTests = []struct {
 			{Name: "@var2"},
 		},
 		Success: true,
-		ResultVars: Variables{
+		ResultVars: VariableMap{
 			"@var1": value.NewString("1"),
 			"@var2": value.NewString("str1"),
 		},
@@ -226,7 +226,7 @@ var fetchCursorTests = []struct {
 			{Name: "@var2"},
 		},
 		Success: true,
-		ResultVars: Variables{
+		ResultVars: VariableMap{
 			"@var1": value.NewString("2"),
 			"@var2": value.NewString("str2"),
 		},
@@ -239,7 +239,7 @@ var fetchCursorTests = []struct {
 			{Name: "@var2"},
 		},
 		Success: true,
-		ResultVars: Variables{
+		ResultVars: VariableMap{
 			"@var1": value.NewString("3"),
 			"@var2": value.NewString("str3"),
 		},
@@ -252,7 +252,7 @@ var fetchCursorTests = []struct {
 			{Name: "@var2"},
 		},
 		Success: false,
-		ResultVars: Variables{
+		ResultVars: VariableMap{
 			"@var1": value.NewString("3"),
 			"@var2": value.NewString("str3"),
 		},
@@ -269,7 +269,7 @@ var fetchCursorTests = []struct {
 			{Name: "@var2"},
 		},
 		Success: true,
-		ResultVars: Variables{
+		ResultVars: VariableMap{
 			"@var1": value.NewString("2"),
 			"@var2": value.NewString("str2"),
 		},
@@ -333,7 +333,7 @@ func TestFetchCursor(t *testing.T) {
 	tf.Repository = TestDir
 
 	filter := NewFilter(
-		[]Variables{
+		[]VariableMap{
 			{
 				"@var1": value.NewNull(),
 				"@var2": value.NewNull(),
@@ -354,9 +354,9 @@ func TestFetchCursor(t *testing.T) {
 	)
 
 	ViewCache.Clear()
-	filter.CursorsList.Open(parser.Identifier{Literal: "cur"}, filter)
+	filter.Cursors.Open(parser.Identifier{Literal: "cur"}, filter)
 	ViewCache.Clear()
-	filter.CursorsList.Open(parser.Identifier{Literal: "cur2"}, filter)
+	filter.Cursors.Open(parser.Identifier{Literal: "cur2"}, filter)
 
 	for _, v := range fetchCursorTests {
 		success, err := FetchCursor(v.CurName, v.FetchPosition, v.Variables, filter)
@@ -375,8 +375,8 @@ func TestFetchCursor(t *testing.T) {
 		if success != v.Success {
 			t.Errorf("%s: success = %t, want %t", v.Name, success, v.Success)
 		}
-		if !reflect.DeepEqual(filter.VariablesList[0], v.ResultVars) {
-			t.Errorf("%s: global vars = %q, want %q", v.Name, filter.VariablesList[0], v.ResultVars)
+		if !reflect.DeepEqual(filter.Variables[0], v.ResultVars) {
+			t.Errorf("%s: global vars = %q, want %q", v.Name, filter.Variables[0], v.ResultVars)
 		}
 	}
 }
@@ -400,13 +400,13 @@ var declareTableTests = []struct {
 		Result: ViewMap{
 			"TBL": {
 				FileInfo: &FileInfo{
-					Path:           "tbl",
-					IsTemporary:    true,
-					InitialHeader:  NewHeader("tbl", []string{"column1", "column2"}),
-					InitialRecords: Records{},
+					Path:             "tbl",
+					IsTemporary:      true,
+					InitialHeader:    NewHeader("tbl", []string{"column1", "column2"}),
+					InitialRecordSet: RecordSet{},
 				},
-				Header:  NewHeader("tbl", []string{"column1", "column2"}),
-				Records: Records{},
+				Header:    NewHeader("tbl", []string{"column1", "column2"}),
+				RecordSet: RecordSet{},
 			},
 		},
 	},
@@ -446,7 +446,7 @@ var declareTableTests = []struct {
 					Path:          "tbl",
 					IsTemporary:   true,
 					InitialHeader: NewHeader("tbl", []string{"column1", "column2"}),
-					InitialRecords: Records{
+					InitialRecordSet: RecordSet{
 						NewRecord([]value.Primary{
 							value.NewInteger(1),
 							value.NewInteger(2),
@@ -454,7 +454,7 @@ var declareTableTests = []struct {
 					},
 				},
 				Header: NewHeader("tbl", []string{"column1", "column2"}),
-				Records: Records{
+				RecordSet: RecordSet{
 					NewRecord([]value.Primary{
 						value.NewInteger(1),
 						value.NewInteger(2),
@@ -551,9 +551,9 @@ func TestDeclareTable(t *testing.T) {
 
 	for _, v := range declareTableTests {
 		if v.ViewMap == nil {
-			filter.TempViewsList = []ViewMap{{}}
+			filter.TempViews = []ViewMap{{}}
 		} else {
-			filter.TempViewsList = []ViewMap{v.ViewMap}
+			filter.TempViews = []ViewMap{v.ViewMap}
 		}
 
 		err := DeclareTable(v.Expr, filter)
@@ -569,7 +569,7 @@ func TestDeclareTable(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(filter.TempViewsList[0], v.Result) {
+		if !reflect.DeepEqual(filter.TempViews[0], v.Result) {
 			t.Errorf("%s: view cache = %q, want %q", v.Name, ViewCache, v.Result)
 		}
 	}
@@ -649,7 +649,7 @@ var selectTests = []struct {
 					IsFromTable: true,
 				},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewInteger(2),
@@ -690,7 +690,7 @@ var selectTests = []struct {
 				LineBreak: cmd.LF,
 			},
 			Header: NewHeader("table1", []string{"column2", "column1"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("str1"),
 					value.NewString("1"),
@@ -733,7 +733,7 @@ var selectTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -788,7 +788,7 @@ var selectTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("2"),
 					value.NewString("str2"),
@@ -835,7 +835,7 @@ var selectTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -882,7 +882,7 @@ var selectTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -1046,7 +1046,7 @@ var selectTests = []struct {
 		},
 		Result: &View{
 			Header: NewHeader("it", []string{"c1"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewInteger(2),
 				}),
@@ -1191,7 +1191,7 @@ var selectTests = []struct {
 					IsFromTable: true,
 				},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewInteger(1),
 				}),
@@ -1309,7 +1309,7 @@ var insertTests = []struct {
 	Query        parser.InsertQuery
 	Result       *View
 	ViewCache    ViewMap
-	TempViewList TemporaryViewMapList
+	TempViewList TemporaryViewScopes
 	Error        string
 }{
 	{
@@ -1383,7 +1383,7 @@ var insertTests = []struct {
 				LineBreak: cmd.LF,
 			},
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -1417,7 +1417,7 @@ var insertTests = []struct {
 					LineBreak: cmd.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 						value.NewString("str1"),
@@ -1474,7 +1474,7 @@ var insertTests = []struct {
 				IsTemporary: true,
 			},
 			Header: NewHeader("tmpview", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -1494,11 +1494,11 @@ var insertTests = []struct {
 			},
 			OperatedRecords: 2,
 		},
-		TempViewList: TemporaryViewMapList{
+		TempViewList: TemporaryViewScopes{
 			ViewMap{
 				"TMPVIEW": &View{
 					Header: NewHeader("tmpview", []string{"column1", "column2"}),
-					Records: []Record{
+					RecordSet: []Record{
 						NewRecord([]value.Primary{
 							value.NewString("1"),
 							value.NewString("str1"),
@@ -1558,7 +1558,7 @@ var insertTests = []struct {
 				LineBreak: cmd.LF,
 			},
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -1668,7 +1668,7 @@ var insertTests = []struct {
 				LineBreak: cmd.LF,
 			},
 			Header: NewHeader("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -1729,11 +1729,11 @@ func TestInsert(t *testing.T) {
 	tf.Repository = TestDir
 
 	filter := NewEmptyFilter()
-	filter.TempViewsList = TemporaryViewMapList{
+	filter.TempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 						value.NewString("str1"),
@@ -1777,8 +1777,8 @@ func TestInsert(t *testing.T) {
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.TempViewsList, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViewsList, v.TempViewList)
+			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViews, v.TempViewList)
 			}
 		}
 	}
@@ -1789,7 +1789,7 @@ var updateTests = []struct {
 	Query        parser.UpdateQuery
 	Result       []*View
 	ViewCache    ViewMap
-	TempViewList TemporaryViewMapList
+	TempViewList TemporaryViewScopes
 	Error        string
 }{
 	{
@@ -1864,7 +1864,7 @@ var updateTests = []struct {
 					LineBreak: cmd.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 						value.NewString("str1"),
@@ -1891,7 +1891,7 @@ var updateTests = []struct {
 					LineBreak: cmd.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 						value.NewString("str1"),
@@ -1930,7 +1930,7 @@ var updateTests = []struct {
 					IsTemporary: true,
 				},
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 						value.NewString("update"),
@@ -1943,11 +1943,11 @@ var updateTests = []struct {
 				OperatedRecords: 2,
 			},
 		},
-		TempViewList: TemporaryViewMapList{
+		TempViewList: TemporaryViewScopes{
 			ViewMap{
 				"TMPVIEW": &View{
 					Header: NewHeader("tmpview", []string{"column1", "column2"}),
-					Records: []Record{
+					RecordSet: []Record{
 						NewRecord([]value.Primary{
 							value.NewString("1"),
 							value.NewString("update"),
@@ -2011,7 +2011,7 @@ var updateTests = []struct {
 					LineBreak: cmd.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 						value.NewString("str1"),
@@ -2226,11 +2226,11 @@ func TestUpdate(t *testing.T) {
 	tf.Repository = TestDir
 
 	filter := NewEmptyFilter()
-	filter.TempViewsList = TemporaryViewMapList{
+	filter.TempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 						value.NewString("str1"),
@@ -2274,8 +2274,8 @@ func TestUpdate(t *testing.T) {
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.TempViewsList, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViewsList, v.TempViewList)
+			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViews, v.TempViewList)
 			}
 		}
 	}
@@ -2286,7 +2286,7 @@ var deleteTests = []struct {
 	Query        parser.DeleteQuery
 	Result       []*View
 	ViewCache    ViewMap
-	TempViewList TemporaryViewMapList
+	TempViewList TemporaryViewScopes
 	Error        string
 }{
 	{
@@ -2355,7 +2355,7 @@ var deleteTests = []struct {
 					LineBreak: cmd.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 						value.NewString("str1"),
@@ -2378,7 +2378,7 @@ var deleteTests = []struct {
 					LineBreak: cmd.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 						value.NewString("str1"),
@@ -2419,7 +2419,7 @@ var deleteTests = []struct {
 					IsTemporary: true,
 				},
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 						value.NewString("str1"),
@@ -2428,11 +2428,11 @@ var deleteTests = []struct {
 				OperatedRecords: 1,
 			},
 		},
-		TempViewList: TemporaryViewMapList{
+		TempViewList: TemporaryViewScopes{
 			ViewMap{
 				"TMPVIEW": &View{
 					Header: NewHeader("tmpview", []string{"column1", "column2"}),
-					Records: []Record{
+					RecordSet: []Record{
 						NewRecord([]value.Primary{
 							value.NewString("1"),
 							value.NewString("str1"),
@@ -2486,7 +2486,7 @@ var deleteTests = []struct {
 					LineBreak: cmd.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 						value.NewString("str1"),
@@ -2600,11 +2600,11 @@ func TestDelete(t *testing.T) {
 	tf.Repository = TestDir
 
 	filter := NewEmptyFilter()
-	filter.TempViewsList = TemporaryViewMapList{
+	filter.TempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 						value.NewString("str1"),
@@ -2648,8 +2648,8 @@ func TestDelete(t *testing.T) {
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.TempViewsList, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViewsList, v.TempViewList)
+			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViews, v.TempViewList)
 			}
 		}
 	}
@@ -2679,8 +2679,8 @@ var createTableTests = []struct {
 				Encoding:  cmd.UTF8,
 				LineBreak: cmd.LF,
 			},
-			Header:  NewHeader("create_table_1", []string{"column1", "column2"}),
-			Records: Records{},
+			Header:    NewHeader("create_table_1", []string{"column1", "column2"}),
+			RecordSet: RecordSet{},
 		},
 		ViewCache: ViewMap{
 			strings.ToUpper(GetTestFilePath("create_table_1.csv")): &View{
@@ -2691,8 +2691,8 @@ var createTableTests = []struct {
 					Encoding:  cmd.UTF8,
 					LineBreak: cmd.LF,
 				},
-				Header:  NewHeader("create_table_1", []string{"column1", "column2"}),
-				Records: Records{},
+				Header:    NewHeader("create_table_1", []string{"column1", "column2"}),
+				RecordSet: RecordSet{},
 			},
 		},
 	},
@@ -2724,7 +2724,7 @@ var createTableTests = []struct {
 				LineBreak: cmd.LF,
 			},
 			Header: NewHeader("create_table_1", []string{"column1", "column2"}),
-			Records: Records{
+			RecordSet: RecordSet{
 				NewRecord([]value.Primary{
 					value.NewInteger(1),
 					value.NewInteger(2),
@@ -2741,7 +2741,7 @@ var createTableTests = []struct {
 					LineBreak: cmd.LF,
 				},
 				Header: NewHeader("create_table_1", []string{"column1", "column2"}),
-				Records: Records{
+				RecordSet: RecordSet{
 					NewRecord([]value.Primary{
 						value.NewInteger(1),
 						value.NewInteger(2),
@@ -2872,7 +2872,7 @@ var addColumnsTests = []struct {
 	Query        parser.AddColumns
 	Result       *View
 	ViewCache    ViewMap
-	TempViewList TemporaryViewMapList
+	TempViewList TemporaryViewScopes
 	Error        string
 }{
 	{
@@ -2897,7 +2897,7 @@ var addColumnsTests = []struct {
 				LineBreak: cmd.LF,
 			},
 			Header: NewHeader("table1", []string{"column1", "column2", "column3", "column4"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -2929,7 +2929,7 @@ var addColumnsTests = []struct {
 					LineBreak: cmd.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2", "column3", "column4"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 						value.NewString("str1"),
@@ -2973,7 +2973,7 @@ var addColumnsTests = []struct {
 				IsTemporary: true,
 			},
 			Header: NewHeader("tmpview", []string{"column1", "column2", "column3", "column4"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -2989,11 +2989,11 @@ var addColumnsTests = []struct {
 			},
 			OperatedFields: 2,
 		},
-		TempViewList: TemporaryViewMapList{
+		TempViewList: TemporaryViewScopes{
 			ViewMap{
 				"TMPVIEW": &View{
 					Header: NewHeader("tmpview", []string{"column1", "column2", "column3", "column4"}),
-					Records: []Record{
+					RecordSet: []Record{
 						NewRecord([]value.Primary{
 							value.NewString("1"),
 							value.NewString("str1"),
@@ -3044,7 +3044,7 @@ var addColumnsTests = []struct {
 				LineBreak: cmd.LF,
 			},
 			Header: NewHeader("table1", []string{"column3", "column4", "column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewInteger(2),
 					value.NewInteger(1),
@@ -3094,7 +3094,7 @@ var addColumnsTests = []struct {
 				LineBreak: cmd.LF,
 			},
 			Header: NewHeader("table1", []string{"column1", "column3", "column4", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewNull(),
@@ -3144,7 +3144,7 @@ var addColumnsTests = []struct {
 				LineBreak: cmd.LF,
 			},
 			Header: NewHeader("table1", []string{"column1", "column3", "column4", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewNull(),
@@ -3241,11 +3241,11 @@ func TestAddColumns(t *testing.T) {
 	tf.Repository = TestDir
 
 	filter := NewEmptyFilter()
-	filter.TempViewsList = TemporaryViewMapList{
+	filter.TempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 						value.NewString("str1"),
@@ -3288,8 +3288,8 @@ func TestAddColumns(t *testing.T) {
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.TempViewsList, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViewsList, v.TempViewList)
+			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViews, v.TempViewList)
 			}
 		}
 	}
@@ -3300,7 +3300,7 @@ var dropColumnsTests = []struct {
 	Query        parser.DropColumns
 	Result       *View
 	ViewCache    ViewMap
-	TempViewList TemporaryViewMapList
+	TempViewList TemporaryViewScopes
 	Error        string
 }{
 	{
@@ -3320,7 +3320,7 @@ var dropColumnsTests = []struct {
 				LineBreak: cmd.LF,
 			},
 			Header: NewHeader("table1", []string{"column1"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 				}),
@@ -3343,7 +3343,7 @@ var dropColumnsTests = []struct {
 					LineBreak: cmd.LF,
 				},
 				Header: NewHeader("table1", []string{"column1"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 					}),
@@ -3373,7 +3373,7 @@ var dropColumnsTests = []struct {
 				IsTemporary: true,
 			},
 			Header: NewHeader("tmpview", []string{"column1"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 				}),
@@ -3383,11 +3383,11 @@ var dropColumnsTests = []struct {
 			},
 			OperatedFields: 1,
 		},
-		TempViewList: TemporaryViewMapList{
+		TempViewList: TemporaryViewScopes{
 			ViewMap{
 				"TMPVIEW": &View{
 					Header: NewHeader("tmpview", []string{"column1"}),
-					Records: []Record{
+					RecordSet: []Record{
 						NewRecord([]value.Primary{
 							value.NewString("1"),
 						}),
@@ -3432,11 +3432,11 @@ func TestDropColumns(t *testing.T) {
 	tf.Repository = TestDir
 
 	filter := NewEmptyFilter()
-	filter.TempViewsList = TemporaryViewMapList{
+	filter.TempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 						value.NewString("str1"),
@@ -3480,8 +3480,8 @@ func TestDropColumns(t *testing.T) {
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.TempViewsList, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViewsList, v.TempViewList)
+			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViews, v.TempViewList)
 			}
 		}
 	}
@@ -3492,7 +3492,7 @@ var renameColumnTests = []struct {
 	Query        parser.RenameColumn
 	Result       *View
 	ViewCache    ViewMap
-	TempViewList TemporaryViewMapList
+	TempViewList TemporaryViewScopes
 	Error        string
 }{
 	{
@@ -3511,7 +3511,7 @@ var renameColumnTests = []struct {
 				LineBreak: cmd.LF,
 			},
 			Header: NewHeader("table1", []string{"column1", "newcolumn"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -3537,7 +3537,7 @@ var renameColumnTests = []struct {
 					LineBreak: cmd.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "newcolumn"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 						value.NewString("str1"),
@@ -3569,7 +3569,7 @@ var renameColumnTests = []struct {
 				IsTemporary: true,
 			},
 			Header: NewHeader("tmpview", []string{"column1", "newcolumn"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
@@ -3581,11 +3581,11 @@ var renameColumnTests = []struct {
 			},
 			OperatedFields: 1,
 		},
-		TempViewList: TemporaryViewMapList{
+		TempViewList: TemporaryViewScopes{
 			ViewMap{
 				"TMPVIEW": &View{
 					Header: NewHeader("tmpview", []string{"column1", "newcolumn"}),
-					Records: []Record{
+					RecordSet: []Record{
 						NewRecord([]value.Primary{
 							value.NewString("1"),
 							value.NewString("str1"),
@@ -3639,11 +3639,11 @@ func TestRenameColumn(t *testing.T) {
 	tf.Repository = TestDir
 
 	filter := NewEmptyFilter()
-	filter.TempViewsList = TemporaryViewMapList{
+	filter.TempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				Records: []Record{
+				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
 						value.NewString("str1"),
@@ -3687,8 +3687,8 @@ func TestRenameColumn(t *testing.T) {
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.TempViewsList, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViewsList, v.TempViewList)
+			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViews, v.TempViewList)
 			}
 		}
 	}

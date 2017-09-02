@@ -231,7 +231,7 @@ func TestParseJoinCondition(t *testing.T) {
 func TestCrossJoin(t *testing.T) {
 	view := &View{
 		Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-		Records: []Record{
+		RecordSet: []Record{
 			NewRecordWithId(1, []value.Primary{
 				value.NewInteger(1),
 				value.NewString("str1"),
@@ -244,7 +244,7 @@ func TestCrossJoin(t *testing.T) {
 	}
 	joinView := &View{
 		Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
-		Records: []Record{
+		RecordSet: []Record{
 			NewRecordWithId(1, []value.Primary{
 				value.NewInteger(3),
 				value.NewString("str3"),
@@ -264,7 +264,7 @@ func TestCrossJoin(t *testing.T) {
 			{View: "table2", Column: "column3", Number: 1, IsFromTable: true},
 			{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
 		},
-		Records: []Record{
+		RecordSet: []Record{
 			NewRecord([]value.Primary{
 				value.NewInteger(1),
 				value.NewInteger(1),
@@ -320,7 +320,7 @@ var innerJoinTests = []struct {
 		Name: "Inner Join",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewInteger(1),
 					value.NewString("str1"),
@@ -337,7 +337,7 @@ var innerJoinTests = []struct {
 		},
 		JoinView: &View{
 			Header: NewHeaderWithId("table2", []string{"column1", "column3"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewInteger(1),
 					value.NewString("str1"),
@@ -362,7 +362,7 @@ var innerJoinTests = []struct {
 				{View: "table2", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column3", Number: 2, IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewInteger(1),
 					value.NewInteger(1),
@@ -387,7 +387,7 @@ var innerJoinTests = []struct {
 		CPU:  2,
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewInteger(1),
 					value.NewString("str1"),
@@ -404,7 +404,7 @@ var innerJoinTests = []struct {
 		},
 		JoinView: &View{
 			Header: NewHeaderWithId("table2", []string{"column1", "column3"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewInteger(1),
 					value.NewString("str1"),
@@ -429,7 +429,7 @@ var innerJoinTests = []struct {
 				{View: "table2", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column3", Number: 2, IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewInteger(1),
 					value.NewInteger(1),
@@ -453,7 +453,7 @@ var innerJoinTests = []struct {
 		Name: "Inner Join With No Condition",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewInteger(1),
 					value.NewString("str1"),
@@ -466,7 +466,7 @@ var innerJoinTests = []struct {
 		},
 		JoinView: &View{
 			Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewInteger(3),
 					value.NewString("str3"),
@@ -487,7 +487,7 @@ var innerJoinTests = []struct {
 				{View: "table2", Column: "column3", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewInteger(1),
 					value.NewInteger(1),
@@ -527,7 +527,7 @@ var innerJoinTests = []struct {
 		Name: "Inner Join Filter Error",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewInteger(1),
 					value.NewString("str1"),
@@ -548,7 +548,7 @@ var innerJoinTests = []struct {
 		},
 		JoinView: &View{
 			Header: NewHeaderWithId("table2", []string{"column1", "column3"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewInteger(1),
 					value.NewString("str1"),
@@ -610,7 +610,7 @@ var outerJoinTests = []struct {
 		Name: "Left Outer Join",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewInteger(1),
 					value.NewString("str1"),
@@ -627,7 +627,7 @@ var outerJoinTests = []struct {
 		},
 		JoinView: &View{
 			Header: NewHeaderWithId("table2", []string{"column1", "column3"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewInteger(2),
 					value.NewString("str22"),
@@ -657,7 +657,7 @@ var outerJoinTests = []struct {
 				{View: "table2", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column3", Number: 2, IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewInteger(1),
 					value.NewInteger(1),
@@ -689,7 +689,7 @@ var outerJoinTests = []struct {
 		Name: "Right Outer Join",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewInteger(1),
 					value.NewString("str1"),
@@ -706,7 +706,7 @@ var outerJoinTests = []struct {
 		},
 		JoinView: &View{
 			Header: NewHeaderWithId("table2", []string{"column1", "column3"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewInteger(2),
 					value.NewString("str22"),
@@ -736,7 +736,7 @@ var outerJoinTests = []struct {
 				{View: "table2", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column3", Number: 2, IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewInteger(2),
 					value.NewInteger(2),
@@ -768,7 +768,7 @@ var outerJoinTests = []struct {
 		Name: "Full Outer Join",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewInteger(1),
 					value.NewString("str1"),
@@ -785,7 +785,7 @@ var outerJoinTests = []struct {
 		},
 		JoinView: &View{
 			Header: NewHeaderWithId("table2", []string{"column1", "column3"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewInteger(2),
 					value.NewString("str22"),
@@ -815,7 +815,7 @@ var outerJoinTests = []struct {
 				{View: "table2", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column3", Number: 2, IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewInteger(1),
 					value.NewInteger(1),
@@ -855,7 +855,7 @@ var outerJoinTests = []struct {
 		Name: "Left Outer Join Filter Error",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewInteger(1),
 					value.NewString("str1"),
@@ -872,7 +872,7 @@ var outerJoinTests = []struct {
 		},
 		JoinView: &View{
 			Header: NewHeaderWithId("table2", []string{"column1", "column3"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewInteger(2),
 					value.NewString("str22"),
@@ -899,7 +899,7 @@ var outerJoinTests = []struct {
 		Name: "Outer Join Direction Undefined",
 		View: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewInteger(1),
 					value.NewString("str1"),
@@ -916,7 +916,7 @@ var outerJoinTests = []struct {
 		},
 		JoinView: &View{
 			Header: NewHeaderWithId("table2", []string{"column1", "column3"}),
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecordWithId(1, []value.Primary{
 					value.NewInteger(2),
 					value.NewString("str22"),
@@ -946,7 +946,7 @@ var outerJoinTests = []struct {
 				{View: "table2", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column3", Number: 2, IsFromTable: true},
 			},
-			Records: []Record{
+			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewInteger(1),
 					value.NewInteger(1),
@@ -997,8 +997,8 @@ func TestOuterJoin(t *testing.T) {
 		}
 		if !reflect.DeepEqual(v.View, v.Result) {
 			t.Errorf("%s: result = %q, want %q", v.Name, v.View, v.Result)
-			t.Log(v.View.Records)
-			t.Log(v.Result.Records)
+			t.Log(v.View.RecordSet)
+			t.Log(v.Result.RecordSet)
 		}
 	}
 }

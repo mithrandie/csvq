@@ -167,7 +167,7 @@ func encodeText(view *View) string {
 		return "Empty Fields"
 	}
 	if view.RecordLen() < 1 {
-		return "Empty Records"
+		return "Empty RecordSet"
 	}
 
 	header := make([]textField, view.FieldLen())
@@ -176,7 +176,7 @@ func encodeText(view *View) string {
 	}
 
 	records := make([][]textField, view.RecordLen())
-	for i, record := range view.Records {
+	for i, record := range view.RecordSet {
 		records[i] = make([]textField, view.FieldLen())
 		for j, cell := range record {
 			records[i][j] = formatTextCell(cell)
@@ -314,7 +314,7 @@ func encodeCSV(view *View, delimiter string, withoutHeader bool) string {
 	}
 
 	records := make([]string, view.RecordLen())
-	for i, record := range view.Records {
+	for i, record := range view.RecordSet {
 		cells := make([]string, view.FieldLen())
 		for j, cell := range record {
 			cells[j] = formatCSVCell(cell)
@@ -366,7 +366,7 @@ func escapeCSVString(s string) string {
 func encodeJson(view *View) string {
 	records := make([]string, view.RecordLen())
 
-	for i, record := range view.Records {
+	for i, record := range view.RecordSet {
 		cells := make([]string, view.FieldLen())
 		for j, cell := range record {
 			cells[j] = quote(escapeJsonString(view.Header[j].Column)) + ":" + formatJsonCell(cell)
