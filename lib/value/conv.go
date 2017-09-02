@@ -323,14 +323,9 @@ func ToBoolean(p Primary) Primary {
 	switch p.(type) {
 	case Boolean:
 		return p
-	case Integer, Float, Ternary:
+	case String, Integer, Float, Ternary:
 		if p.Ternary() != ternary.UNKNOWN {
 			return NewBoolean(p.Ternary().BoolValue())
-		}
-	case String:
-		s := strings.TrimSpace(p.(String).Raw())
-		if b, e := strconv.ParseBool(s); e == nil {
-			return NewBoolean(b)
 		}
 	}
 	return NewNull()
