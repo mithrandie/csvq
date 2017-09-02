@@ -39,7 +39,7 @@ func TestString_Value(t *testing.T) {
 }
 
 func TestString_Ternary(t *testing.T) {
-	s := "1"
+	s := " 1"
 	p := NewString(s)
 	if p.Ternary() != ternary.TRUE {
 		t.Errorf("ternary = %s, want %s for %#v", p.Ternary(), ternary.TRUE, p)

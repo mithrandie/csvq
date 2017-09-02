@@ -2,6 +2,7 @@ package value
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/mithrandie/csvq/lib/ternary"
@@ -38,7 +39,8 @@ func (s String) Raw() string {
 }
 
 func (s String) Ternary() ternary.Value {
-	if b, err := strconv.ParseBool(s.Raw()); err == nil {
+	lit := strings.TrimSpace(s.Raw())
+	if b, err := strconv.ParseBool(lit); err == nil {
 		return ternary.ParseBool(b)
 	}
 	return ternary.UNKNOWN
