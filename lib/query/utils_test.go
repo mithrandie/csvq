@@ -109,18 +109,19 @@ var formatStringTests = []struct {
 	},
 	{
 		Name:   "FormatString Padding",
-		Format: "padding: %6d %+06d %+06d %2d %010d %6f %6s %-6s",
+		Format: "padding: %6d %+06d %+06d %2d %010d % 4d %6f %6s %-6s",
 		Args: []value.Primary{
 			value.NewInteger(123),
 			value.NewInteger(123),
 			value.NewInteger(-123),
 			value.NewInteger(123),
 			value.NewInteger(123),
+			value.NewInteger(-1),
 			value.NewFloat(123.4),
 			value.NewString("str"),
 			value.NewString("str"),
 		},
-		Result: "padding:    123 +00123 -00123 123 0000000123  123.4    str str   ",
+		Result: "padding:    123 +00123 -00123 123 0000000123   -1  123.4    str str   ",
 	},
 	{
 		Name:   "FormatString Etc.",

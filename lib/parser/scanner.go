@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -403,16 +404,17 @@ func (s *Scanner) scanLineComment() {
 
 func unescapeBackQuote(s string) string {
 	runes := []rune(s)
-	unescaped := []rune{}
+	var buf bytes.Buffer
 
 	escaped := false
 	for _, r := range runes {
 		if escaped {
 			switch r {
 			case '`':
-				unescaped = append(unescaped, '`')
+				buf.WriteRune(r)
 			default:
-				unescaped = append(unescaped, '\\', r)
+				buf.WriteRune('\\')
+				buf.WriteRune(r)
 			}
 			escaped = false
 			continue
@@ -423,8 +425,8 @@ func unescapeBackQuote(s string) string {
 			continue
 		}
 
-		unescaped = append(unescaped, r)
+		buf.WriteRune(r)
 	}
 
-	return string(unescaped)
+	return buf.String()
 }

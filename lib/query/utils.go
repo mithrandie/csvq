@@ -1,6 +1,7 @@
 package query
 
 import (
+	"bytes"
 	"fmt"
 	"math"
 	"os"
@@ -154,40 +155,52 @@ func serializeString(s string) string {
 }
 
 func FormatString(format string, args []value.Primary) (string, error) {
-	var pad = func(s string, length int, flags []rune) string {
-		if length <= len(s) {
-			return s
+	var pad = func(buf *bytes.Buffer, s string, sign []byte, length int, flags []rune) {
+		padlen := length - len(sign) - len(s)
+		if padlen < 1 {
+			buf.Write(sign)
+			buf.WriteString(s)
+			return
 		}
 
-		padchar := " "
+		var padchar byte = ' '
 		if InRuneSlice('0', flags) {
-			padchar = "0"
+			padchar = '0'
 		}
-		padstr := strings.Repeat(padchar, length-len(s))
+		padstr := bytes.Repeat([]byte{padchar}, padlen)
 		if InRuneSlice('-', flags) {
-			s = s + padstr
+			buf.Write(sign)
+			buf.WriteString(s)
+			buf.Write(padstr)
 		} else {
-			s = padstr + s
+			if padchar == ' ' {
+				buf.Write(padstr)
+				buf.Write(sign)
+			} else {
+				buf.Write(sign)
+				buf.Write(padstr)
+			}
+			buf.WriteString(s)
 		}
-		return s
+		return
 	}
 
-	var numberSign = func(value float64, flags []rune) string {
-		sign := ""
+	var numberSign = func(value float64, flags []rune) []byte {
+		sign := make([]byte, 0, 1)
 		if value < 0 {
-			sign = "-"
+			sign = append(sign, '-')
 		} else {
 			switch {
 			case InRuneSlice('+', flags):
-				sign = "+"
+				sign = append(sign, '+')
 			case InRuneSlice(' ', flags):
-				sign = " "
+				sign = append(sign, ' ')
 			}
 		}
 		return sign
 	}
 
-	str := []rune{}
+	var buf bytes.Buffer
 
 	escaped := false
 	placeholderOrder := 0
@@ -230,9 +243,12 @@ func FormatString(format string, args []value.Primary) (string, error) {
 				case 'b', 'o', 'd', 'x', 'X':
 					p := value.ToInteger(args[placeholderOrder])
 					if !value.IsNull(p) {
-						val := float64(p.(value.Integer).Raw())
+						i := p.(value.Integer).Raw()
+						val := float64(i)
 						sign := numberSign(val, flags)
-						i := int64(math.Abs(val))
+						if i < 0 {
+							i = i * -1
+						}
 						var s string
 						switch r {
 						case 'b':
@@ -247,8 +263,7 @@ func FormatString(format string, args []value.Primary) (string, error) {
 							s = strings.ToUpper(strconv.FormatInt(i, 16))
 						}
 						l, _ := strconv.Atoi(length)
-						s = sign + pad(s, l-len(sign), flags)
-						str = append(str, []rune(s)...)
+						pad(&buf, s, sign, l, flags)
 					}
 				case 'e', 'E', 'f':
 					p := value.ToFloat(args[placeholderOrder])
@@ -292,8 +307,7 @@ func FormatString(format string, args []value.Primary) (string, error) {
 						}
 
 						l, _ := strconv.Atoi(length)
-						s = sign + pad(s, l-len(sign), flags)
-						str = append(str, []rune(s)...)
+						pad(&buf, s, sign, l, flags)
 					}
 				case 's':
 					var s string
@@ -314,19 +328,19 @@ func FormatString(format string, args []value.Primary) (string, error) {
 						s = "NULL"
 					}
 					l, _ := strconv.Atoi(length)
-					s = pad(s, l, flags)
-					str = append(str, []rune(s)...)
+					pad(&buf, s, []byte{}, l, flags)
 				case 'q':
-					str = append(str, []rune(args[placeholderOrder].String())...)
+					buf.WriteString(args[placeholderOrder].String())
 				case 'T':
-					str = append(str, []rune(reflect.TypeOf(args[placeholderOrder]).Name())...)
+					buf.WriteString(reflect.TypeOf(args[placeholderOrder]).Name())
 				}
 
 				placeholderOrder++
 			case '%':
-				str = append(str, r)
+				buf.WriteRune(r)
 			default:
-				str = append(str, '%', r)
+				buf.WriteRune('%')
+				buf.WriteRune(r)
 			}
 
 			escaped = false
@@ -342,17 +356,17 @@ func FormatString(format string, args []value.Primary) (string, error) {
 			continue
 		}
 
-		str = append(str, r)
+		buf.WriteRune(r)
 	}
 	if escaped {
-		str = append(str, '%')
+		buf.WriteRune('%')
 	}
 
 	if placeholderOrder < len(args) {
 		return "", NewFormatStringLengthNotMatchError()
 	}
 
-	return string(str), nil
+	return buf.String(), nil
 }
 
 func IsReadableFromStdin() bool {

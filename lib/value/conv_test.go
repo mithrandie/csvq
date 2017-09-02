@@ -612,3 +612,11 @@ func BenchmarkToFloat2(b *testing.B) {
 		ToFloat(p)
 	}
 }
+
+var convertDatetimeFormatBenchString = "%Y-%m-%d %H:%i:%s"
+
+func BenchmarkConvertDatetimeFormat(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = ConvertDatetimeFormat(convertDatetimeFormatBenchString)
+	}
+}
