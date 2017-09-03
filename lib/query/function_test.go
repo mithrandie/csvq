@@ -2,13 +2,13 @@ package query
 
 import (
 	"reflect"
+	"runtime"
 	"testing"
 	"time"
 
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
 	"github.com/mithrandie/csvq/lib/value"
-	"runtime"
 )
 
 type functionTest struct {
