@@ -35,6 +35,7 @@ var createFileTests = []writeTest{
 		Name:     "File Exists Error",
 		Filename: "create.txt",
 		Error:    fmt.Sprintf("file %s already exists", GetTestFilePath("create.txt")),
+		ErrorWin: fmt.Sprintf("file %s already exists", GetTestFilePath("create.txt")),
 	},
 	{
 		Name:     "File Open Error",
@@ -100,7 +101,7 @@ var updateFileTests = []writeTest{
 		Name:     "File Not Found Error",
 		Filename: "notexist.txt",
 		Error:    fmt.Sprintf("open %s: no such file or directory", GetTestFilePath("notexist.txt")),
-		ErrorWin: fmt.Sprintf("open %s: The system cannot find the path specified.", GetTestFilePath("notexist.txt")),
+		ErrorWin: fmt.Sprintf("open %s: The system cannot find the file specified.", GetTestFilePath("notexist.txt")),
 	},
 }
 
