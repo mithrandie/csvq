@@ -37,6 +37,10 @@ func run(m *testing.M) int {
 }
 
 func setup() {
+	if _, err := os.Stat(TestDir); err == nil {
+		os.RemoveAll(TestDir)
+	}
+
 	flags := cmd.GetFlags()
 	flags.Location = TestLocation
 	flags.Now = "2012-02-03 09:18:15"

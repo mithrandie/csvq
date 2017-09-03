@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -14,6 +15,7 @@ type writeTest struct {
 	Content  string
 	Result   string
 	Error    string
+	ErrorWin string
 }
 
 var createFileTests = []writeTest{
@@ -38,6 +40,7 @@ var createFileTests = []writeTest{
 		Name:     "File Open Error",
 		Filename: filepath.Join("notexistdir", "create.txt"),
 		Error:    fmt.Sprintf("open %s: no such file or directory", GetTestFilePath(filepath.Join("notexistdir", "create.txt"))),
+		ErrorWin: fmt.Sprintf("open %s: The system cannot find the path specified.", GetTestFilePath(filepath.Join("notexistdir", "create.txt"))),
 	},
 }
 
@@ -60,16 +63,20 @@ func TestCreateFile(t *testing.T) {
 		} else {
 			filename := GetTestFilePath(v.Filename)
 			err := CreateFile(filename, v.Content)
+			expectdErr := v.Error
+			if runtime.GOOS == "windows" {
+				expectdErr = v.ErrorWin
+			}
 			if err != nil {
-				if len(v.Error) < 1 {
+				if len(expectdErr) < 1 {
 					t.Errorf("%s: unexpected error %q", v.Name, err)
-				} else if err.Error() != v.Error {
-					t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+				} else if err.Error() != expectdErr {
+					t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), expectdErr)
 				}
 				continue
 			}
-			if 0 < len(v.Error) {
-				t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			if 0 < len(expectdErr) {
+				t.Errorf("%s: no error, want error %q", v.Name, expectdErr)
 				continue
 			}
 
@@ -93,6 +100,7 @@ var updateFileTests = []writeTest{
 		Name:     "File Not Found Error",
 		Filename: "notexist.txt",
 		Error:    fmt.Sprintf("open %s: no such file or directory", GetTestFilePath("notexist.txt")),
+		ErrorWin: fmt.Sprintf("open %s: The system cannot find the path specified.", GetTestFilePath("notexist.txt")),
 	},
 }
 
@@ -100,16 +108,20 @@ func TestUpdateFile(t *testing.T) {
 	for _, v := range updateFileTests {
 		filename := GetTestFilePath(v.Filename)
 		err := UpdateFile(filename, v.Content)
+		expectdErr := v.Error
+		if runtime.GOOS == "windows" {
+			expectdErr = v.ErrorWin
+		}
 		if err != nil {
-			if len(v.Error) < 1 {
+			if len(expectdErr) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
-			} else if err.Error() != v.Error {
-				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			} else if err.Error() != expectdErr {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), expectdErr)
 			}
 			continue
 		}
-		if 0 < len(v.Error) {
-			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+		if 0 < len(expectdErr) {
+			t.Errorf("%s: no error, want error %q", v.Name, expectdErr)
 			continue
 		}
 

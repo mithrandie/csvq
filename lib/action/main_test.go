@@ -25,6 +25,10 @@ func run(m *testing.M) int {
 }
 
 func setup() {
+	if _, err := os.Stat(TestDir); err == nil {
+		os.RemoveAll(TestDir)
+	}
+
 	wdir, _ := os.Getwd()
 	TestDataDir = filepath.Join(wdir, "..", "..", "testdata", "csv")
 

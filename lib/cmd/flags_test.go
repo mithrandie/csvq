@@ -348,11 +348,6 @@ func TestSetQuiet(t *testing.T) {
 func TestSetCPU(t *testing.T) {
 	flags := GetFlags()
 
-	SetCPU(3)
-	if 3 != flags.CPU {
-		t.Errorf("cpu = %d, expect to set %d", flags.CPU, 3)
-	}
-
 	SetCPU(0)
 	expect := runtime.NumCPU() / 2
 	if expect < 1 {

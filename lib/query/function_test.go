@@ -8,6 +8,7 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
 	"github.com/mithrandie/csvq/lib/value"
+	"runtime"
 )
 
 type functionTest struct {
@@ -2916,8 +2917,25 @@ var callTests = []functionTest{
 	},
 }
 
+var callWinTests = []functionTest{
+	{
+		Name: "Call Command Error",
+		Function: parser.Function{
+			Name: "call",
+		},
+		Args: []value.Primary{
+			value.NewString("notexistcommand"),
+		},
+		Error: "exec: \"notexistcommand\": executable file not found in %PATH%",
+	},
+}
+
 func TestCall(t *testing.T) {
-	testFunction(t, Call, callTests)
+	if runtime.GOOS == "windows" {
+		testFunction(t, Call, callWinTests)
+	} else {
+		testFunction(t, Call, callTests)
+	}
 }
 
 var nowTests = []struct {
