@@ -184,6 +184,31 @@ func TestSetDatetimeFormat(t *testing.T) {
 	}
 }
 
+func TestSetWaitTimeout(t *testing.T) {
+	flags := GetFlags()
+
+	s := ""
+	SetWaitTimeout(s)
+	if flags.WaitTimeout != 30 {
+		t.Errorf("wait timeout = %f, expect to set %f for %q", flags.WaitTimeout, 30.0, s)
+	}
+
+	s = "15"
+	SetWaitTimeout(s)
+	if flags.WaitTimeout != 15 {
+		t.Errorf("wait timeout = %f, expect to set %f for %q", flags.WaitTimeout, 15.0, s)
+	}
+
+	s = "str"
+	expectErr := "wait-timeout must be a float value"
+	err := SetWaitTimeout(s)
+	if err == nil {
+		t.Errorf("no error, want error %q for %s", expectErr, "error")
+	} else if err.Error() != expectErr {
+		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "notexists")
+	}
+}
+
 func TestSetNoHeader(t *testing.T) {
 	flags := GetFlags()
 

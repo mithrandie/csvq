@@ -40,6 +40,7 @@ type Result struct {
 }
 
 var ViewCache = ViewMap{}
+var FileLocks = NewFileLockContainer()
 var Results = []Result{}
 var SelectLogs = []string{}
 
@@ -62,6 +63,15 @@ func ReadSelectLog() string {
 }
 
 func Execute(input string, sourceFile string) error {
+	defer func() {
+		ViewCache.Clean()
+		FileLocks.UnlockAll()
+	}()
+
+	flags := cmd.GetFlags()
+	FileLocks.WaitTimeout = flags.WaitTimeout
+	FileLocks.RetryInterval = flags.RetryInterval
+
 	statements, err := parser.Parse(input, sourceFile)
 	if err != nil {
 		syntaxErr := err.(*parser.SyntaxError)
@@ -343,15 +353,10 @@ func Insert(query parser.InsertQuery, parentFilter *Filter) (*View, error) {
 		},
 	}
 	view := NewView()
+	view.UseLock = true
 	err := view.Load(fromClause, filter)
 	if err != nil {
 		return nil, err
-	}
-
-	if !view.FileInfo.IsTemporary {
-		if err := cmd.TryOpenFileToWrite(view.FileInfo.Path); err != nil {
-			return nil, NewWriteFileError(query.Table.Object, err.Error())
-		}
 	}
 
 	fields := query.Fields
@@ -395,6 +400,7 @@ func Update(query parser.UpdateQuery, parentFilter *Filter) ([]*View, error) {
 	}
 
 	view := NewView()
+	view.UseLock = true
 	view.UseInternalId = true
 	err := view.Load(query.FromClause.(parser.FromClause), filter)
 	if err != nil {
@@ -421,9 +427,6 @@ func Update(query parser.UpdateQuery, parentFilter *Filter) ([]*View, error) {
 			viewsToUpdate[viewKey], _ = filter.TempViews.Get(parser.Identifier{Literal: fpath})
 		} else {
 			viewsToUpdate[viewKey], _ = ViewCache.Get(parser.Identifier{Literal: fpath})
-			if err := cmd.TryOpenFileToWrite(viewsToUpdate[viewKey].FileInfo.Path); err != nil {
-				return nil, NewWriteFileError(table.Object, err.Error())
-			}
 		}
 		viewsToUpdate[viewKey].Header.Update(table.Name().Literal, nil)
 	}
@@ -521,6 +524,7 @@ func Delete(query parser.DeleteQuery, parentFilter *Filter) ([]*View, error) {
 
 	view := NewView()
 	view.UseInternalId = true
+	view.UseLock = true
 	err := view.Load(query.FromClause, filter)
 	if err != nil {
 		return nil, err
@@ -546,9 +550,6 @@ func Delete(query parser.DeleteQuery, parentFilter *Filter) ([]*View, error) {
 			viewsToDelete[viewKey], _ = filter.TempViews.Get(parser.Identifier{Literal: fpath})
 		} else {
 			viewsToDelete[viewKey], _ = ViewCache.Get(parser.Identifier{Literal: fpath})
-			if err := cmd.TryOpenFileToWrite(viewsToDelete[viewKey].FileInfo.Path); err != nil {
-				return nil, NewWriteFileError(table.Object, err.Error())
-			}
 		}
 		viewsToDelete[viewKey].Header.Update(table.Name().Literal, nil)
 		deletedIndices[viewKey] = make(map[int]bool)
@@ -605,6 +606,9 @@ func CreateTable(query parser.CreateTable, parentFilter *Filter) (*View, error) 
 	if _, err := os.Stat(fileInfo.Path); err == nil {
 		return nil, NewFileAlreadyExistError(query.Table)
 	}
+	if err := FileLocks.TryLock(fileInfo.Path); err != nil {
+		return nil, NewFileAlreadyExistError(query.Table)
+	}
 	if err := cmd.TryCreateFile(fileInfo.Path); err != nil {
 		return nil, NewCreateFileError(query.Table, err.Error())
 	}
@@ -657,15 +661,10 @@ func AddColumns(query parser.AddColumns, parentFilter *Filter) (*View, error) {
 	}
 
 	view := NewView()
+	view.UseLock = true
 	err := view.LoadFromTableIdentifier(query.Table, filter)
 	if err != nil {
 		return nil, err
-	}
-
-	if !view.FileInfo.IsTemporary {
-		if err := cmd.TryOpenFileToWrite(view.FileInfo.Path); err != nil {
-			return nil, NewWriteFileError(query.Table, err.Error())
-		}
 	}
 
 	var insertPos int
@@ -791,15 +790,10 @@ func DropColumns(query parser.DropColumns, parentFilter *Filter) (*View, error) 
 	filter := parentFilter.CreateNode()
 
 	view := NewView()
+	view.UseLock = true
 	err := view.LoadFromTableIdentifier(query.Table, filter)
 	if err != nil {
 		return nil, err
-	}
-
-	if !view.FileInfo.IsTemporary {
-		if err := cmd.TryOpenFileToWrite(view.FileInfo.Path); err != nil {
-			return nil, NewWriteFileError(query.Table, err.Error())
-		}
 	}
 
 	dropIndices := make([]int, len(query.Columns))
@@ -835,15 +829,10 @@ func RenameColumn(query parser.RenameColumn, parentFilter *Filter) (*View, error
 	filter := parentFilter.CreateNode()
 
 	view := NewView()
+	view.UseLock = true
 	err := view.LoadFromTableIdentifier(query.Table, filter)
 	if err != nil {
 		return nil, err
-	}
-
-	if !view.FileInfo.IsTemporary {
-		if err := cmd.TryOpenFileToWrite(view.FileInfo.Path); err != nil {
-			return nil, NewWriteFileError(query.Table, err.Error())
-		}
 	}
 
 	columnNames := view.Header.TableColumnNames()

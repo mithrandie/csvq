@@ -6,9 +6,12 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/mithrandie/go-file"
 )
 
 const UNDEF = -1
@@ -59,6 +62,7 @@ type Flags struct {
 	Repository     string
 	Source         string
 	DatetimeFormat string
+	WaitTimeout    float64
 	NoHeader       bool
 	WithoutNull    bool
 
@@ -73,6 +77,9 @@ type Flags struct {
 	Quiet bool
 	CPU   int
 	Stats bool
+
+	// Fixed Value
+	RetryInterval time.Duration
 
 	// Use in tests
 	Now string
@@ -93,6 +100,7 @@ func GetFlags() *Flags {
 			Repository:     ".",
 			Source:         "",
 			DatetimeFormat: "",
+			WaitTimeout:    30,
 			NoHeader:       false,
 			WithoutNull:    false,
 			WriteEncoding:  UTF8,
@@ -103,6 +111,7 @@ func GetFlags() *Flags {
 			Quiet:          false,
 			CPU:            1,
 			Stats:          false,
+			RetryInterval:  10 * time.Millisecond,
 			Now:            "",
 		}
 	})
@@ -214,6 +223,23 @@ func SetDatetimeFormat(s string) {
 	f := GetFlags()
 	f.DatetimeFormat = s
 	return
+}
+
+func SetWaitTimeout(s string) error {
+	if len(s) < 1 {
+		return nil
+	}
+
+	f, e := strconv.ParseFloat(s, 64)
+	if e != nil {
+		return errors.New("wait-timeout must be a float value")
+	}
+
+	flags := GetFlags()
+	flags.WaitTimeout = f
+	file.WaitTimeout = f
+	file.RetryInterval = flags.RetryInterval
+	return nil
 }
 
 func SetNoHeader(b bool) {

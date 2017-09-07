@@ -1168,7 +1168,7 @@ func TestViewMap_Clear(t *testing.T) {
 
 	expect := ViewMap{}
 
-	viewMap.Clear()
+	viewMap.Clean()
 	if !reflect.DeepEqual(viewMap, expect) {
 		t.Errorf("result = %s, want %s", viewMap, expect)
 	}

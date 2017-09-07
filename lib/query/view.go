@@ -13,6 +13,7 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
 	"github.com/mithrandie/csvq/lib/value"
+	"github.com/mithrandie/go-file"
 )
 
 type View struct {
@@ -38,6 +39,7 @@ type View struct {
 	OperatedFields  int
 
 	UseInternalId bool
+	UseLock       bool
 }
 
 func NewView() *View {
@@ -59,7 +61,7 @@ func (view *View) Load(clause parser.FromClause, filter *Filter) error {
 
 	views := make([]*View, len(clause.Tables))
 	for i, v := range clause.Tables {
-		loaded, err := loadView(v, filter, view.UseInternalId)
+		loaded, err := loadView(v, filter, view.UseInternalId, view.UseLock)
 		if err != nil {
 			return err
 		}
@@ -88,9 +90,9 @@ func (view *View) LoadFromTableIdentifier(table parser.QueryExpression, filter *
 	return view.Load(fromClause, filter)
 }
 
-func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bool) (*View, error) {
+func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bool, useLock bool) (*View, error) {
 	if parentheses, ok := tableExpr.(parser.Parentheses); ok {
-		return loadView(parentheses.Expr, filter, useInternalId)
+		return loadView(parentheses.Expr, filter, useInternalId, useLock)
 	}
 
 	table := tableExpr.(parser.Table)
@@ -117,10 +119,10 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 				return nil, NewStdinEmptyError(table.Object.(parser.Stdin))
 			}
 
-			file := os.Stdin
-			defer file.Close()
+			fp := os.Stdin
+			defer fp.Close()
 
-			loadView, err := loadViewFromFile(file, fileInfo)
+			loadView, err := loadViewFromFile(fp, fileInfo)
 			if err != nil {
 				return nil, NewCsvParsingError(table.Object, fileInfo.Path, err.Error())
 			}
@@ -187,16 +189,41 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 						return nil, err
 					}
 
-					if !ViewCache.Exists(fileInfo.Path) {
-						file, err := os.Open(fileInfo.Path)
-						if err != nil {
-							return nil, NewReadFileError(tableIdentifier, err.Error())
+					ufpath := strings.ToUpper(fileInfo.Path)
+					if !ViewCache.Exists(fileInfo.Path) || (useLock && !ViewCache[ufpath].UseLock) {
+						ViewCache.Dispose(fileInfo.Path)
+						if useLock {
+							if err := FileLocks.LockWithTimeout(tableIdentifier, fileInfo.Path); err != nil {
+								return nil, err
+							}
+						} else {
+							if !FileLocks.CanRead(fileInfo.Path) {
+								return nil, NewFileLockTimeoutError(tableIdentifier, fileInfo.Path)
+							}
 						}
-						defer file.Close()
-						loadView, err := loadViewFromFile(file, fileInfo)
+
+						var fp *os.File
+						if useLock {
+							fp, err = file.OpenToUpdateWithTimeout(fileInfo.Path)
+							if err != nil {
+								return nil, NewReadFileError(tableIdentifier, err.Error())
+							}
+							fileInfo.File = fp
+						} else {
+							fp, err = file.OpenToReadWithTimeout(fileInfo.Path)
+							if err != nil {
+								return nil, NewReadFileError(tableIdentifier, err.Error())
+							}
+							defer file.Close(fp)
+						}
+						loadView, err := loadViewFromFile(fp, fileInfo)
 						if err != nil {
+							if useLock {
+								file.Close(fp)
+							}
 							return nil, NewCsvParsingError(tableIdentifier, fileInfo.Path, err.Error())
 						}
+						loadView.UseLock = useLock
 						ViewCache.Set(loadView)
 					}
 				}
@@ -220,11 +247,11 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 		}
 	case parser.Join:
 		join := table.Object.(parser.Join)
-		view, err = loadView(join.Table, filter, useInternalId)
+		view, err = loadView(join.Table, filter, useInternalId, useLock)
 		if err != nil {
 			return nil, err
 		}
-		view2, err := loadView(join.JoinTable, filter, useInternalId)
+		view2, err := loadView(join.JoinTable, filter, useInternalId, useLock)
 		if err != nil {
 			return nil, err
 		}
@@ -322,10 +349,10 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 	return view, err
 }
 
-func loadViewFromFile(file *os.File, fileInfo *FileInfo) (*View, error) {
+func loadViewFromFile(fp *os.File, fileInfo *FileInfo) (*View, error) {
 	flags := cmd.GetFlags()
 
-	r := cmd.GetReader(file, flags.Encoding)
+	r := cmd.GetReader(fp, flags.Encoding)
 
 	reader := csv.NewReader(r)
 	reader.Delimiter = fileInfo.Delimiter
@@ -1538,5 +1565,6 @@ func (view *View) Copy() *View {
 		Header:    header,
 		RecordSet: records,
 		FileInfo:  view.FileInfo,
+		UseLock:   view.UseLock,
 	}
 }

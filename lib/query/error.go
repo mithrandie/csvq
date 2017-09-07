@@ -49,6 +49,7 @@ const (
 	ERROR_FILE_NOT_EXIST                    = "file %s does not exist"
 	ERROR_FILE_ALREADY_EXIST                = "file %s already exists"
 	ERROR_FILE_UNABLE_TO_READ               = "file %s is unable to be read"
+	ERROR_FILE_LOCK_TIMEOUT                 = "file %s: lock wait timeout period exceeded"
 	ERROR_CSV_PARSING                       = "csv parse error in file %s: %s"
 	ERROR_TABLE_FIELD_LENGTH                = "select query should return exactly %s for table %s"
 	ERROR_TEMPORARY_TABLE_REDECLARED        = "temporary table %s is redeclared"
@@ -539,10 +540,6 @@ func NewFileNotExistError(file parser.Identifier) error {
 	}
 }
 
-type FileUnableToReadError struct {
-	*BaseError
-}
-
 type FileAlreadyExistError struct {
 	*BaseError
 }
@@ -553,9 +550,23 @@ func NewFileAlreadyExistError(file parser.Identifier) error {
 	}
 }
 
+type FileUnableToReadError struct {
+	*BaseError
+}
+
 func NewFileUnableToReadError(file parser.Identifier) error {
 	return &FileUnableToReadError{
 		NewBaseError(file, fmt.Sprintf(ERROR_FILE_UNABLE_TO_READ, file)),
+	}
+}
+
+type FileLockTimeoutError struct {
+	*BaseError
+}
+
+func NewFileLockTimeoutError(file parser.Identifier, path string) error {
+	return &FileLockTimeoutError{
+		NewBaseError(file, fmt.Sprintf(ERROR_FILE_LOCK_TIMEOUT, path)),
 	}
 }
 

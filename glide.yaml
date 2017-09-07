@@ -2,3 +2,5 @@ package: github.com/mithrandie/csvq
 import:
 - package: github.com/urfave/cli
   version: ^1.19.1
+- package: github.com/mithrandie/go-file
+  version: ^0.0.1

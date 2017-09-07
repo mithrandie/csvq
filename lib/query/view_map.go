@@ -6,6 +6,7 @@ import (
 
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
+	"github.com/mithrandie/go-file"
 )
 
 type TemporaryViewScopes []ViewMap
@@ -145,8 +146,18 @@ func (m ViewMap) DisposeTemporaryTable(table parser.Identifier) error {
 	return NewUndefinedTemporaryTableError(table)
 }
 
-func (m ViewMap) Clear() {
+func (m ViewMap) Dispose(name string) {
+	uname := strings.ToUpper(name)
+	if _, ok := m[uname]; ok {
+		if m[uname].FileInfo.File != nil {
+			file.Close(m[uname].FileInfo.File)
+		}
+		delete(m, uname)
+	}
+}
+
+func (m ViewMap) Clean() {
 	for k := range m {
-		delete(m, k)
+		m.Dispose(k)
 	}
 }

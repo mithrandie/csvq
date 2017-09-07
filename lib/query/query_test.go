@@ -11,6 +11,7 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
+	"github.com/mithrandie/go-file"
 )
 
 var executeTests = []struct {
@@ -353,9 +354,9 @@ func TestFetchCursor(t *testing.T) {
 		[]UserDefinedFunctionMap{{}},
 	)
 
-	ViewCache.Clear()
+	ViewCache.Clean()
 	filter.Cursors.Open(parser.Identifier{Literal: "cur"}, filter)
-	ViewCache.Clear()
+	ViewCache.Clean()
 	filter.Cursors.Open(parser.Identifier{Literal: "cur2"}, filter)
 
 	for _, v := range fetchCursorTests {
@@ -1284,7 +1285,7 @@ func TestSelect(t *testing.T) {
 	filter := NewEmptyFilter()
 
 	for _, v := range selectTests {
-		ViewCache.Clear()
+		ViewCache.Clean()
 		result, err := Select(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -1405,6 +1406,7 @@ var insertTests = []struct {
 					value.NewNull(),
 				}),
 			},
+			UseLock:         true,
 			OperatedRecords: 2,
 		},
 		ViewCache: ViewMap{
@@ -1439,6 +1441,7 @@ var insertTests = []struct {
 						value.NewNull(),
 					}),
 				},
+				UseLock:         true,
 				OperatedRecords: 2,
 			},
 		},
@@ -1492,6 +1495,7 @@ var insertTests = []struct {
 					value.NewNull(),
 				}),
 			},
+			UseLock:         true,
 			OperatedRecords: 2,
 		},
 		TempViewList: TemporaryViewScopes{
@@ -1521,6 +1525,7 @@ var insertTests = []struct {
 						Delimiter:   ',',
 						IsTemporary: true,
 					},
+					UseLock:         true,
 					OperatedRecords: 2,
 				},
 			},
@@ -1580,6 +1585,7 @@ var insertTests = []struct {
 					value.NewString("str5"),
 				}),
 			},
+			UseLock:         true,
 			OperatedRecords: 2,
 		},
 	},
@@ -1694,6 +1700,7 @@ var insertTests = []struct {
 					value.NewString("str44"),
 				}),
 			},
+			UseLock:         true,
 			OperatedRecords: 3,
 		},
 	},
@@ -1753,7 +1760,8 @@ func TestInsert(t *testing.T) {
 	}
 
 	for _, v := range insertTests {
-		ViewCache.Clear()
+		ViewCache.Clean()
+		FileLocks.UnlockAll()
 		result, err := Insert(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -1767,6 +1775,17 @@ func TestInsert(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
+
+		for _, v2 := range ViewCache {
+			if v2.FileInfo.File != nil {
+				if v2.FileInfo.Path != v2.FileInfo.File.Name() {
+					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.File.Name(), v2.FileInfo.Path, v.Name)
+				}
+				file.Close(v2.FileInfo.File)
+				v2.FileInfo.File = nil
+			}
+		}
+
 		if !reflect.DeepEqual(result, v.Result) {
 			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
 		}
@@ -1782,6 +1801,8 @@ func TestInsert(t *testing.T) {
 			}
 		}
 	}
+	ViewCache.Clean()
+	FileLocks.UnlockAll()
 }
 
 var updateTests = []struct {
@@ -1878,6 +1899,7 @@ var updateTests = []struct {
 						value.NewString("str3"),
 					}),
 				},
+				UseLock:         true,
 				OperatedRecords: 1,
 			},
 		},
@@ -1905,6 +1927,7 @@ var updateTests = []struct {
 						value.NewString("str3"),
 					}),
 				},
+				UseLock:         true,
 				OperatedRecords: 1,
 			},
 		},
@@ -2025,6 +2048,7 @@ var updateTests = []struct {
 						value.NewString("str33"),
 					}),
 				},
+				UseLock:         true,
 				OperatedRecords: 2,
 			},
 		},
@@ -2250,7 +2274,8 @@ func TestUpdate(t *testing.T) {
 	}
 
 	for _, v := range updateTests {
-		ViewCache.Clear()
+		ViewCache.Clean()
+		FileLocks.UnlockAll()
 		result, err := Update(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -2264,6 +2289,17 @@ func TestUpdate(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
+
+		for _, v2 := range ViewCache {
+			if v2.FileInfo.File != nil {
+				if v2.FileInfo.Path != v2.FileInfo.File.Name() {
+					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.File.Name(), v2.FileInfo.Path, v.Name)
+				}
+				file.Close(v2.FileInfo.File)
+				v2.FileInfo.File = nil
+			}
+		}
+
 		if !reflect.DeepEqual(result, v.Result) {
 			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
 		}
@@ -2279,6 +2315,8 @@ func TestUpdate(t *testing.T) {
 			}
 		}
 	}
+	ViewCache.Clean()
+	FileLocks.UnlockAll()
 }
 
 var deleteTests = []struct {
@@ -2365,6 +2403,7 @@ var deleteTests = []struct {
 						value.NewString("str3"),
 					}),
 				},
+				UseLock:         true,
 				OperatedRecords: 1,
 			},
 		},
@@ -2388,6 +2427,7 @@ var deleteTests = []struct {
 						value.NewString("str3"),
 					}),
 				},
+				UseLock:         true,
 				OperatedRecords: 1,
 			},
 		},
@@ -2492,6 +2532,7 @@ var deleteTests = []struct {
 						value.NewString("str1"),
 					}),
 				},
+				UseLock:         true,
 				OperatedRecords: 2,
 			},
 		},
@@ -2624,7 +2665,8 @@ func TestDelete(t *testing.T) {
 	}
 
 	for _, v := range deleteTests {
-		ViewCache.Clear()
+		ViewCache.Clean()
+		FileLocks.UnlockAll()
 		result, err := Delete(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -2638,6 +2680,17 @@ func TestDelete(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
+
+		for _, v2 := range ViewCache {
+			if v2.FileInfo.File != nil {
+				if v2.FileInfo.Path != v2.FileInfo.File.Name() {
+					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.File.Name(), v2.FileInfo.Path, v.Name)
+				}
+				file.Close(v2.FileInfo.File)
+				v2.FileInfo.File = nil
+			}
+		}
+
 		if !reflect.DeepEqual(result, v.Result) {
 			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
 		}
@@ -2653,6 +2706,8 @@ func TestDelete(t *testing.T) {
 			}
 		}
 	}
+	ViewCache.Clean()
+	FileLocks.UnlockAll()
 }
 
 var createTableTests = []struct {
@@ -2841,7 +2896,8 @@ func TestCreateTable(t *testing.T) {
 	tf.Repository = TestDir
 
 	for _, v := range createTableTests {
-		ViewCache.Clear()
+		ViewCache.Clean()
+		FileLocks.UnlockAll()
 		result, err := CreateTable(v.Query, NewEmptyFilter())
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -2865,6 +2921,8 @@ func TestCreateTable(t *testing.T) {
 			}
 		}
 	}
+	ViewCache.Clean()
+	FileLocks.UnlockAll()
 }
 
 var addColumnsTests = []struct {
@@ -2917,6 +2975,7 @@ var addColumnsTests = []struct {
 					value.NewNull(),
 				}),
 			},
+			UseLock:        true,
 			OperatedFields: 2,
 		},
 		ViewCache: ViewMap{
@@ -2949,6 +3008,7 @@ var addColumnsTests = []struct {
 						value.NewNull(),
 					}),
 				},
+				UseLock:        true,
 				OperatedFields: 2,
 			},
 		},
@@ -2987,6 +3047,7 @@ var addColumnsTests = []struct {
 					value.NewNull(),
 				}),
 			},
+			UseLock:        true,
 			OperatedFields: 2,
 		},
 		TempViewList: TemporaryViewScopes{
@@ -3012,6 +3073,7 @@ var addColumnsTests = []struct {
 						Delimiter:   ',',
 						IsTemporary: true,
 					},
+					UseLock:        true,
 					OperatedFields: 2,
 				},
 			},
@@ -3064,6 +3126,7 @@ var addColumnsTests = []struct {
 					value.NewString("str3"),
 				}),
 			},
+			UseLock:        true,
 			OperatedFields: 2,
 		},
 	},
@@ -3114,6 +3177,7 @@ var addColumnsTests = []struct {
 					value.NewString("str3"),
 				}),
 			},
+			UseLock:        true,
 			OperatedFields: 2,
 		},
 	},
@@ -3164,6 +3228,7 @@ var addColumnsTests = []struct {
 					value.NewString("str3"),
 				}),
 			},
+			UseLock:        true,
 			OperatedFields: 2,
 		},
 	},
@@ -3264,7 +3329,8 @@ func TestAddColumns(t *testing.T) {
 		},
 	}
 	for _, v := range addColumnsTests {
-		ViewCache.Clear()
+		ViewCache.Clean()
+		FileLocks.UnlockAll()
 		result, err := AddColumns(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -3278,6 +3344,17 @@ func TestAddColumns(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
+
+		for _, v2 := range ViewCache {
+			if v2.FileInfo.File != nil {
+				if v2.FileInfo.Path != v2.FileInfo.File.Name() {
+					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.File.Name(), v2.FileInfo.Path, v.Name)
+				}
+				file.Close(v2.FileInfo.File)
+				v2.FileInfo.File = nil
+			}
+		}
+
 		if !reflect.DeepEqual(result, v.Result) {
 			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
 		}
@@ -3293,6 +3370,8 @@ func TestAddColumns(t *testing.T) {
 			}
 		}
 	}
+	ViewCache.Clean()
+	FileLocks.UnlockAll()
 }
 
 var dropColumnsTests = []struct {
@@ -3331,6 +3410,7 @@ var dropColumnsTests = []struct {
 					value.NewString("3"),
 				}),
 			},
+			UseLock:        true,
 			OperatedFields: 1,
 		},
 		ViewCache: ViewMap{
@@ -3354,6 +3434,7 @@ var dropColumnsTests = []struct {
 						value.NewString("3"),
 					}),
 				},
+				UseLock:        true,
 				OperatedFields: 1,
 			},
 		},
@@ -3381,6 +3462,7 @@ var dropColumnsTests = []struct {
 					value.NewString("2"),
 				}),
 			},
+			UseLock:        true,
 			OperatedFields: 1,
 		},
 		TempViewList: TemporaryViewScopes{
@@ -3400,6 +3482,7 @@ var dropColumnsTests = []struct {
 						Delimiter:   ',',
 						IsTemporary: true,
 					},
+					UseLock:        true,
 					OperatedFields: 1,
 				},
 			},
@@ -3456,7 +3539,8 @@ func TestDropColumns(t *testing.T) {
 	}
 
 	for _, v := range dropColumnsTests {
-		ViewCache.Clear()
+		ViewCache.Clean()
+		FileLocks.UnlockAll()
 		result, err := DropColumns(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -3470,6 +3554,17 @@ func TestDropColumns(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
+
+		for _, v2 := range ViewCache {
+			if v2.FileInfo.File != nil {
+				if v2.FileInfo.Path != v2.FileInfo.File.Name() {
+					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.File.Name(), v2.FileInfo.Path, v.Name)
+				}
+				file.Close(v2.FileInfo.File)
+				v2.FileInfo.File = nil
+			}
+		}
+
 		if !reflect.DeepEqual(result, v.Result) {
 			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
 		}
@@ -3485,6 +3580,8 @@ func TestDropColumns(t *testing.T) {
 			}
 		}
 	}
+	ViewCache.Clean()
+	FileLocks.UnlockAll()
 }
 
 var renameColumnTests = []struct {
@@ -3525,6 +3622,7 @@ var renameColumnTests = []struct {
 					value.NewString("str3"),
 				}),
 			},
+			UseLock:        true,
 			OperatedFields: 1,
 		},
 		ViewCache: ViewMap{
@@ -3551,6 +3649,7 @@ var renameColumnTests = []struct {
 						value.NewString("str3"),
 					}),
 				},
+				UseLock:        true,
 				OperatedFields: 1,
 			},
 		},
@@ -3579,6 +3678,7 @@ var renameColumnTests = []struct {
 					value.NewString("str2"),
 				}),
 			},
+			UseLock:        true,
 			OperatedFields: 1,
 		},
 		TempViewList: TemporaryViewScopes{
@@ -3600,6 +3700,7 @@ var renameColumnTests = []struct {
 						Delimiter:   ',',
 						IsTemporary: true,
 					},
+					UseLock:        true,
 					OperatedFields: 1,
 				},
 			},
@@ -3663,7 +3764,8 @@ func TestRenameColumn(t *testing.T) {
 	}
 
 	for _, v := range renameColumnTests {
-		ViewCache.Clear()
+		ViewCache.Clean()
+		FileLocks.UnlockAll()
 		result, err := RenameColumn(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -3677,6 +3779,17 @@ func TestRenameColumn(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
+
+		for _, v2 := range ViewCache {
+			if v2.FileInfo.File != nil {
+				if v2.FileInfo.Path != v2.FileInfo.File.Name() {
+					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.File.Name(), v2.FileInfo.Path, v.Name)
+				}
+				file.Close(v2.FileInfo.File)
+				v2.FileInfo.File = nil
+			}
+		}
+
 		if !reflect.DeepEqual(result, v.Result) {
 			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
 		}
@@ -3692,4 +3805,6 @@ func TestRenameColumn(t *testing.T) {
 			}
 		}
 	}
+	ViewCache.Clean()
+	FileLocks.UnlockAll()
 }
