@@ -1,9 +1,11 @@
 package query
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 
+	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 	"github.com/mithrandie/go-file"
@@ -62,7 +64,9 @@ func (list TemporaryViewScopes) Dispose(name parser.Identifier) error {
 func (list TemporaryViewScopes) Store() {
 	for _, m := range list {
 		for _, view := range m {
-			view.Store()
+			view.FileInfo.InitialRecordSet = view.RecordSet.Copy()
+			view.FileInfo.InitialHeader = view.Header.Copy()
+			Log(fmt.Sprintf("restore point of %q is created.", view.FileInfo.Path), cmd.GetFlags().Quiet)
 		}
 	}
 }
@@ -70,7 +74,8 @@ func (list TemporaryViewScopes) Store() {
 func (list TemporaryViewScopes) Restore() {
 	for _, m := range list {
 		for _, view := range m {
-			view.Restore()
+			view.RecordSet = view.FileInfo.InitialRecordSet.Copy()
+			view.Header = view.FileInfo.InitialHeader.Copy()
 		}
 	}
 }

@@ -466,7 +466,9 @@ func (proc *Procedure) Commit(expr parser.Expression) error {
 	Results = []Result{}
 	ViewCache.Clean()
 	FileLocks.UnlockAll()
-	proc.Filter.TempViews.Store()
+	if expr != nil {
+		proc.Filter.TempViews.Store()
+	}
 
 	return nil
 }
