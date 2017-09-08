@@ -59,10 +59,18 @@ func (list TemporaryViewScopes) Dispose(name parser.Identifier) error {
 	return NewUndefinedTemporaryTableError(name)
 }
 
-func (list TemporaryViewScopes) Rollback() {
+func (list TemporaryViewScopes) Store() {
 	for _, m := range list {
 		for _, view := range m {
-			view.Rollback()
+			view.Store()
+		}
+	}
+}
+
+func (list TemporaryViewScopes) Restore() {
+	for _, m := range list {
+		for _, view := range m {
+			view.Restore()
 		}
 	}
 }

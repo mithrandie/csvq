@@ -1552,7 +1552,12 @@ func (view *View) Less(i, j int) bool {
 	return view.sortValuesInEachRecord[i].Less(view.sortValuesInEachRecord[j], view.sortDirections, view.sortNullPositions)
 }
 
-func (view *View) Rollback() {
+func (view *View) Store() {
+	view.FileInfo.InitialRecordSet = view.RecordSet.Copy()
+	view.FileInfo.InitialHeader = view.Header.Copy()
+}
+
+func (view *View) Restore() {
 	view.RecordSet = view.FileInfo.InitialRecordSet.Copy()
 	view.Header = view.FileInfo.InitialHeader.Copy()
 }
