@@ -11,6 +11,8 @@ import (
 )
 
 func Run(input string, sourceFile string) error {
+	SetSignalHandler()
+
 	start := time.Now()
 	flags := cmd.GetFlags()
 

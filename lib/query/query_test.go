@@ -1760,8 +1760,7 @@ func TestInsert(t *testing.T) {
 	}
 
 	for _, v := range insertTests {
-		ViewCache.Clean()
-		FileLocks.UnlockAll()
+		ReleaseResources()
 		result, err := Insert(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -1801,8 +1800,7 @@ func TestInsert(t *testing.T) {
 			}
 		}
 	}
-	ViewCache.Clean()
-	FileLocks.UnlockAll()
+	ReleaseResources()
 }
 
 var updateTests = []struct {
@@ -2274,8 +2272,7 @@ func TestUpdate(t *testing.T) {
 	}
 
 	for _, v := range updateTests {
-		ViewCache.Clean()
-		FileLocks.UnlockAll()
+		ReleaseResources()
 		result, err := Update(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -2315,8 +2312,7 @@ func TestUpdate(t *testing.T) {
 			}
 		}
 	}
-	ViewCache.Clean()
-	FileLocks.UnlockAll()
+	ReleaseResources()
 }
 
 var deleteTests = []struct {
@@ -2665,8 +2661,7 @@ func TestDelete(t *testing.T) {
 	}
 
 	for _, v := range deleteTests {
-		ViewCache.Clean()
-		FileLocks.UnlockAll()
+		ReleaseResources()
 		result, err := Delete(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -2706,8 +2701,7 @@ func TestDelete(t *testing.T) {
 			}
 		}
 	}
-	ViewCache.Clean()
-	FileLocks.UnlockAll()
+	ReleaseResources()
 }
 
 var createTableTests = []struct {
@@ -2896,8 +2890,7 @@ func TestCreateTable(t *testing.T) {
 	tf.Repository = TestDir
 
 	for _, v := range createTableTests {
-		ViewCache.Clean()
-		FileLocks.UnlockAll()
+		ReleaseResources()
 		result, err := CreateTable(v.Query, NewEmptyFilter())
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -2921,8 +2914,7 @@ func TestCreateTable(t *testing.T) {
 			}
 		}
 	}
-	ViewCache.Clean()
-	FileLocks.UnlockAll()
+	ReleaseResources()
 }
 
 var addColumnsTests = []struct {
@@ -3329,8 +3321,7 @@ func TestAddColumns(t *testing.T) {
 		},
 	}
 	for _, v := range addColumnsTests {
-		ViewCache.Clean()
-		FileLocks.UnlockAll()
+		ReleaseResources()
 		result, err := AddColumns(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -3370,8 +3361,7 @@ func TestAddColumns(t *testing.T) {
 			}
 		}
 	}
-	ViewCache.Clean()
-	FileLocks.UnlockAll()
+	ReleaseResources()
 }
 
 var dropColumnsTests = []struct {
@@ -3539,8 +3529,7 @@ func TestDropColumns(t *testing.T) {
 	}
 
 	for _, v := range dropColumnsTests {
-		ViewCache.Clean()
-		FileLocks.UnlockAll()
+		ReleaseResources()
 		result, err := DropColumns(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -3580,8 +3569,7 @@ func TestDropColumns(t *testing.T) {
 			}
 		}
 	}
-	ViewCache.Clean()
-	FileLocks.UnlockAll()
+	ReleaseResources()
 }
 
 var renameColumnTests = []struct {
@@ -3764,8 +3752,7 @@ func TestRenameColumn(t *testing.T) {
 	}
 
 	for _, v := range renameColumnTests {
-		ViewCache.Clean()
-		FileLocks.UnlockAll()
+		ReleaseResources()
 		result, err := RenameColumn(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -3805,6 +3792,5 @@ func TestRenameColumn(t *testing.T) {
 			}
 		}
 	}
-	ViewCache.Clean()
-	FileLocks.UnlockAll()
+	ReleaseResources()
 }

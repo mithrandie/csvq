@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/query"
 )
 
 var showFieldsTests = []struct {
@@ -22,6 +23,7 @@ var showFieldsTests = []struct {
 
 func TestShowFields(t *testing.T) {
 	for _, v := range showFieldsTests {
+		query.ReleaseResources()
 		err := ShowFields(v.Input)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -36,6 +38,7 @@ func TestShowFields(t *testing.T) {
 			continue
 		}
 	}
+	query.ReleaseResources()
 }
 
 func ExampleShowFields() {

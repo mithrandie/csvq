@@ -2,7 +2,6 @@ package action
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
@@ -11,9 +10,12 @@ import (
 	"github.com/mithrandie/csvq/lib/csv"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
+	"github.com/mithrandie/go-file"
 )
 
 func ShowFields(input string) error {
+	SetSignalHandler()
+
 	fields, err := readFields(input)
 	if err != nil {
 		return err
@@ -35,13 +37,13 @@ func readFields(filename string) ([]string, error) {
 		return nil, errors.New(err.Error())
 	}
 
-	f, err := os.Open(fileInfo.Path)
+	fp, err := file.OpenToRead(fileInfo.Path)
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer file.Close(fp)
 
-	r := cmd.GetReader(f, flags.Encoding)
+	r := cmd.GetReader(fp, flags.Encoding)
 
 	reader := csv.NewReader(r)
 	reader.Delimiter = fileInfo.Delimiter

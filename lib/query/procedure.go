@@ -456,8 +456,7 @@ func (proc *Procedure) Commit(expr parser.Expression) error {
 	}
 
 	Results = []Result{}
-	ViewCache.Clean()
-	FileLocks.UnlockAll()
+	ReleaseResources()
 	if expr != nil {
 		proc.Filter.TempViews.Store()
 	}
@@ -467,8 +466,7 @@ func (proc *Procedure) Commit(expr parser.Expression) error {
 
 func (proc *Procedure) Rollback() {
 	Results = []Result{}
-	ViewCache.Clean()
-	FileLocks.UnlockAll()
+	ReleaseResources()
 	proc.Filter.TempViews.Restore()
 
 	Log("Rolled back.", cmd.GetFlags().Quiet)

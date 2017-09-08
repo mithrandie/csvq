@@ -623,8 +623,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 	proc.Filter.Variables[0].Add(parser.Variable{Name: "@while_test"}, value.NewInteger(0))
 
 	for _, v := range procedureExecuteStatementTests {
-		ViewCache.Clean()
-		FileLocks.UnlockAll()
+		ReleaseResources()
 		Results = []Result{}
 		SelectLogs = []string{}
 
@@ -689,8 +688,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 		}
 	}
 
-	ViewCache.Clean()
-	FileLocks.UnlockAll()
+	ReleaseResources()
 	Results = []Result{}
 	SelectLogs = []string{}
 }

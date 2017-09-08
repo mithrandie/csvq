@@ -44,6 +44,11 @@ var FileLocks = NewFileLockContainer()
 var Results = []Result{}
 var SelectLogs = []string{}
 
+func ReleaseResources() {
+	ViewCache.Clean()
+	FileLocks.UnlockAll()
+}
+
 func Log(log string, quiet bool) {
 	if !quiet {
 		cmd.ToStdout(log + "\n")
@@ -64,8 +69,7 @@ func ReadSelectLog() string {
 
 func Execute(input string, sourceFile string) error {
 	defer func() {
-		ViewCache.Clean()
-		FileLocks.UnlockAll()
+		ReleaseResources()
 	}()
 
 	flags := cmd.GetFlags()
