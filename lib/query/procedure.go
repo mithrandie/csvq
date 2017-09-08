@@ -419,8 +419,6 @@ func (proc *Procedure) Commit(expr parser.Expression) error {
 		}
 	}
 
-	var modified bool
-
 	if 0 < len(createFiles) {
 		for filename, fileinfo := range createFiles {
 			view, _ := ViewCache.Get(parser.Identifier{Literal: filename})
@@ -436,9 +434,6 @@ func (proc *Procedure) Commit(expr parser.Expression) error {
 				return NewWriteFileError(expr, err.Error())
 			}
 			Log(fmt.Sprintf("Commit: file %q is created.", filename), cmd.GetFlags().Quiet)
-			if !modified {
-				modified = true
-			}
 		}
 	}
 
@@ -457,9 +452,6 @@ func (proc *Procedure) Commit(expr parser.Expression) error {
 				return NewWriteFileError(expr, err.Error())
 			}
 			Log(fmt.Sprintf("Commit: file %q is updated.", filename), cmd.GetFlags().Quiet)
-			if !modified {
-				modified = true
-			}
 		}
 	}
 

@@ -224,36 +224,30 @@ loop_program
     :
     {
         $$ = nil
-        yylex.(*Lexer).program = $$
     }
     | loop_statement ';' loop_program
     {
         $$ = append([]Statement{$1}, $3...)
-        yylex.(*Lexer).program = $$
     }
 
 function_program
     :
     {
         $$ = nil
-        yylex.(*Lexer).program = $$
     }
     | function_statement ';' function_program
     {
         $$ = append([]Statement{$1}, $3...)
-        yylex.(*Lexer).program = $$
     }
 
 function_loop_program
     :
     {
         $$ = nil
-        yylex.(*Lexer).program = $$
     }
     | function_loop_statement ';' function_loop_program
     {
         $$ = append([]Statement{$1}, $3...)
-        yylex.(*Lexer).program = $$
     }
 
 common_statement
