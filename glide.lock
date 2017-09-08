@@ -1,8 +1,8 @@
 hash: a065bbb39d035ea12553f48f8c71e1ddc185360b703e89a9baa6a842c41bcd57
-updated: 2017-09-07T19:27:43.701240027+09:00
+updated: 2017-09-08T16:26:26.368731955+09:00
 imports:
 - name: github.com/mithrandie/go-file
-  version: 2d0b828279d727705fa17a81e4d547cd31a7c30e
+  version: e293f57115f018ba15e0df3390dc07898a42528c
 - name: github.com/urfave/cli
   version: cfb38830724cc34fedffe9a2a29fb54fa9169cd1
 - name: golang.org/x/text
