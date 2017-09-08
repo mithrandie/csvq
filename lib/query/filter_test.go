@@ -3343,12 +3343,12 @@ func TestFilter_Evaluate(t *testing.T) {
 			query: selectQueryForCursorTest,
 		},
 	}
-	ViewCache.Clear()
+	ViewCache.Clean()
 	cursors.Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
 	cursors.Fetch(parser.Identifier{Literal: "cur"}, parser.NEXT, 0)
 
 	for _, v := range filterEvaluateTests {
-		ViewCache.Clear()
+		ViewCache.Clean()
 
 		if v.Filter == nil {
 			v.Filter = NewEmptyFilter()

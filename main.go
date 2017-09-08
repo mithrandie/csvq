@@ -12,7 +12,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var version = "v0.7.9"
+var version = "v0.7.10"
 
 func main() {
 	cli.AppHelpTemplate = appHHelpTemplate
@@ -56,6 +56,11 @@ func main() {
 		cli.StringFlag{
 			Name:  "datetime-format, t",
 			Usage: "set datetime format to parse strings",
+		},
+		cli.StringFlag{
+			Name:  "wait-timeout, w",
+			Value: "10",
+			Usage: "limit of the waiting time in seconds to wait for locked files to be released",
 		},
 		cli.BoolFlag{
 			Name:  "no-header, n",
@@ -143,7 +148,11 @@ func main() {
 	}
 
 	app.Before = func(c *cli.Context) error {
-		return setFlags(c)
+		err := setFlags(c)
+		if err != nil {
+			return cli.NewExitError(err.Error(), 1)
+		}
+		return nil
 	}
 
 	app.Action = func(c *cli.Context) error {
@@ -187,10 +196,13 @@ func readQuery(c *cli.Context) (string, error) {
 		queryString = string(buf)
 
 	} else {
-		if c.NArg() != 1 {
-			return queryString, errors.New("query is empty")
+		if 1 < c.NArg() {
+			return queryString, errors.New("multiple queries or statements were passed")
 		}
 		queryString = c.Args().First()
+	}
+	if len(queryString) < 1 {
+		return queryString, errors.New("query or statements is empty")
 	}
 
 	return queryString, nil
@@ -216,6 +228,9 @@ func setFlags(c *cli.Context) error {
 		return err
 	}
 	cmd.SetDatetimeFormat(c.GlobalString("datetime-format"))
+	if err := cmd.SetWaitTimeout(c.GlobalString("wait-timeout")); err != nil {
+		return err
+	}
 	cmd.SetNoHeader(c.GlobalBool("no-header"))
 	cmd.SetWithoutNull(c.GlobalBool("without-null"))
 

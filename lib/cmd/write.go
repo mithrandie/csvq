@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"bufio"
-	"errors"
-	"fmt"
 	"os"
+
+	"github.com/mithrandie/go-file"
 )
 
 func ToStdout(s string) error {
@@ -18,14 +18,11 @@ func CreateFile(filename string, s string) error {
 	if len(filename) < 1 {
 		fp = os.Stdout
 	} else {
-		if _, err := os.Stat(filename); err == nil {
-			return errors.New(fmt.Sprintf("file %s already exists", filename))
-		}
-		fp, err = os.Create(filename)
+		fp, err = file.Create(filename)
 		if err != nil {
 			return err
 		}
-		defer fp.Close()
+		defer file.Close(fp)
 	}
 
 	w := bufio.NewWriter(fp)
@@ -38,20 +35,14 @@ func CreateFile(filename string, s string) error {
 	return nil
 }
 
-func UpdateFile(filename string, s string) error {
-	var fp *os.File
-	var err error
+func UpdateFile(fp *os.File, s string) error {
+	defer file.Close(fp)
 
-	fp, err = os.OpenFile(filename, os.O_WRONLY|os.O_TRUNC, 0666)
-	if err != nil {
-		return err
-	}
-
-	defer fp.Close()
+	fp.Truncate(0)
+	fp.Seek(0, 0)
 
 	w := bufio.NewWriter(fp)
-	_, err = w.WriteString(s)
-	if err != nil {
+	if _, err := w.WriteString(s); err != nil {
 		return err
 	}
 	w.Flush()
@@ -60,29 +51,13 @@ func UpdateFile(filename string, s string) error {
 }
 
 func TryCreateFile(filename string) error {
-	if _, err := os.Stat(filename); err == nil {
-		return errors.New(fmt.Sprintf("file %s already exists", filename))
-	}
-
-	fp, err := os.Create(filename)
+	fp, err := os.OpenFile(filename, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
 	if err != nil {
 		return err
 	}
 
-	defer func() {
-		fp.Close()
-		os.Remove(filename)
-	}()
+	fp.Close()
+	os.Remove(filename)
 
-	return nil
-}
-
-func TryOpenFileToWrite(filename string) error {
-	fp, err := os.OpenFile(filename, os.O_WRONLY, 0666)
-	if err != nil {
-		return err
-	}
-
-	defer fp.Close()
 	return nil
 }

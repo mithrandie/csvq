@@ -450,7 +450,7 @@ func (proc *Procedure) Commit(expr parser.Expression) error {
 				return err
 			}
 
-			if err = cmd.UpdateFile(filename, viewstr); err != nil {
+			if err = cmd.UpdateFile(fileinfo.File, viewstr); err != nil {
 				if expr == nil {
 					return NewAutoCommitError(err.Error())
 				}
@@ -464,15 +464,20 @@ func (proc *Procedure) Commit(expr parser.Expression) error {
 	}
 
 	Results = []Result{}
-	ViewCache.Clear()
+	ViewCache.Clean()
+	FileLocks.UnlockAll()
+	if expr != nil {
+		proc.Filter.TempViews.Store()
+	}
 
 	return nil
 }
 
 func (proc *Procedure) Rollback() {
 	Results = []Result{}
-	ViewCache.Clear()
-	proc.Filter.TempViews.Rollback()
+	ViewCache.Clean()
+	FileLocks.UnlockAll()
+	proc.Filter.TempViews.Restore()
 
 	Log("Rolled back.", cmd.GetFlags().Quiet)
 	return

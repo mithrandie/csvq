@@ -8,6 +8,7 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
+	"github.com/mithrandie/go-file"
 )
 
 func Print(expr parser.Print, filter *Filter) (string, error) {
@@ -64,11 +65,11 @@ func Source(expr parser.Source, filter *Filter) ([]parser.Statement, error) {
 		return nil, NewSourceFileUnableToReadError(expr, fpath)
 	}
 
-	fp, err := os.Open(fpath)
+	fp, err := file.OpenToRead(fpath)
 	if err != nil {
 		return nil, NewReadFileError(expr, err.Error())
 	}
-	defer fp.Close()
+	defer file.Close(fp)
 
 	buf, err := ioutil.ReadAll(fp)
 	if err != nil {

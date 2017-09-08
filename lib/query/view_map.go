@@ -1,11 +1,14 @@
 package query
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 
+	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
+	"github.com/mithrandie/go-file"
 )
 
 type TemporaryViewScopes []ViewMap
@@ -58,10 +61,21 @@ func (list TemporaryViewScopes) Dispose(name parser.Identifier) error {
 	return NewUndefinedTemporaryTableError(name)
 }
 
-func (list TemporaryViewScopes) Rollback() {
+func (list TemporaryViewScopes) Store() {
 	for _, m := range list {
 		for _, view := range m {
-			view.Rollback()
+			view.FileInfo.InitialRecordSet = view.RecordSet.Copy()
+			view.FileInfo.InitialHeader = view.Header.Copy()
+			Log(fmt.Sprintf("restore point of %q is created.", view.FileInfo.Path), cmd.GetFlags().Quiet)
+		}
+	}
+}
+
+func (list TemporaryViewScopes) Restore() {
+	for _, m := range list {
+		for _, view := range m {
+			view.RecordSet = view.FileInfo.InitialRecordSet.Copy()
+			view.Header = view.FileInfo.InitialHeader.Copy()
 		}
 	}
 }
@@ -145,8 +159,18 @@ func (m ViewMap) DisposeTemporaryTable(table parser.Identifier) error {
 	return NewUndefinedTemporaryTableError(table)
 }
 
-func (m ViewMap) Clear() {
+func (m ViewMap) Dispose(name string) {
+	uname := strings.ToUpper(name)
+	if _, ok := m[uname]; ok {
+		if m[uname].FileInfo.File != nil {
+			file.Close(m[uname].FileInfo.File)
+		}
+		delete(m, uname)
+	}
+}
+
+func (m ViewMap) Clean() {
 	for k := range m {
-		delete(m, k)
+		m.Dispose(k)
 	}
 }

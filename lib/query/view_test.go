@@ -1159,7 +1159,7 @@ func TestView_Load(t *testing.T) {
 	tf.Repository = TestDir
 
 	for _, v := range viewLoadTests {
-		ViewCache.Clear()
+		ViewCache.Clean()
 
 		tf.Delimiter = cmd.UNDEF
 		tf.NoHeader = v.NoHeader

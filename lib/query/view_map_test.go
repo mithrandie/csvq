@@ -25,7 +25,7 @@ var temporaryViewScopesExistsTests = []struct {
 	},
 }
 
-func TestTemporaryViewScopesExists(t *testing.T) {
+func TestTemporaryViewScopes_Exists(t *testing.T) {
 	list := TemporaryViewScopes{
 		ViewMap{
 			"/PATH/TO/TABLE1.CSV": &View{
@@ -91,7 +91,7 @@ var temporaryViewScopesGetTests = []struct {
 	},
 }
 
-func TestTemporaryViewScopesGet(t *testing.T) {
+func TestTemporaryViewScopes_Get(t *testing.T) {
 	list := TemporaryViewScopes{
 		ViewMap{
 			"/PATH/TO/TABLE1.CSV": &View{
@@ -187,7 +187,7 @@ var temporaryViewScopesGetWithInternalIdTests = []struct {
 	},
 }
 
-func TestTemporaryViewScopesGetWithInternalId(t *testing.T) {
+func TestTemporaryViewScopes_GetWithInternalId(t *testing.T) {
 	list := TemporaryViewScopes{
 		ViewMap{
 			"/PATH/TO/TABLE1.CSV": &View{
@@ -316,7 +316,7 @@ var temporaryViewScopesSetTests = []struct {
 	},
 }
 
-func TestTemporaryViewScopesSet(t *testing.T) {
+func TestTemporaryViewScopes_Set(t *testing.T) {
 	list := TemporaryViewScopes{
 		ViewMap{},
 		ViewMap{
@@ -416,7 +416,7 @@ var temporaryViewScopesReplaceTests = []struct {
 	},
 }
 
-func TestTemporaryViewScopesReplace(t *testing.T) {
+func TestTemporaryViewScopes_Replace(t *testing.T) {
 	list := TemporaryViewScopes{
 		ViewMap{
 			"/PATH/TO/TABLE1.CSV": &View{
@@ -568,7 +568,7 @@ func TestTemporaryViewScopesDispose(t *testing.T) {
 	}
 }
 
-func TestTemporaryViewScopesRollback(t *testing.T) {
+func TestTemporaryViewScopes_Restore(t *testing.T) {
 	list := TemporaryViewScopes{
 		ViewMap{
 			"/PATH/TO/TABLE1.CSV": &View{
@@ -668,7 +668,7 @@ func TestTemporaryViewScopesRollback(t *testing.T) {
 		},
 	}
 
-	list.Rollback()
+	list.Restore()
 	if !reflect.DeepEqual(list, expect) {
 		t.Errorf("Rollback: view = %s, want %s", list, expect)
 	}
@@ -1168,7 +1168,7 @@ func TestViewMap_Clear(t *testing.T) {
 
 	expect := ViewMap{}
 
-	viewMap.Clear()
+	viewMap.Clean()
 	if !reflect.DeepEqual(viewMap, expect) {
 		t.Errorf("result = %s, want %s", viewMap, expect)
 	}

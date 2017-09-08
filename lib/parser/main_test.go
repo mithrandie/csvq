@@ -24,6 +24,10 @@ func run(m *testing.M) int {
 }
 
 func setup() {
+	if _, err := os.Stat(TestDir); err == nil {
+		os.RemoveAll(TestDir)
+	}
+
 	fp, _ := os.Create(GetTestFilePath("dummy.sql"))
 	defer fp.Close()
 }

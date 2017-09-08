@@ -55,16 +55,16 @@ csvq -r /path/to "select user.id, user.name, country.name from `user.csv` natura
 # Load no-header-csv
 csvq --no-header "select c1, c2 from user"
 
-# Load from standard input
+# Load from redirection or pipe
 csvq "select * from stdin" < user.csv
 csvq "select *" < user.csv
 cat user.csv | csvq "select *"
 
 # Output in JSON format
-csvq write -f json "select integer(id) as id, name from user"
+csvq -f json "select integer(id) as id, name from user"
 
 # Output to a file
-csvq write -o new_user.csv "select id, name from user"
+csvq -o new_user.csv "select id, name from user"
 
 # Show help
 csvq -h

@@ -15,6 +15,7 @@ type FileInfo struct {
 	NoHeader  bool
 	Encoding  cmd.Encoding
 	LineBreak cmd.LineBreak
+	File      *os.File
 
 	IsTemporary      bool
 	InitialHeader    Header

@@ -100,7 +100,7 @@ func TestInlineTableNodes_Set(t *testing.T) {
 	}
 
 	for _, v := range inlineTableNodesSetTests {
-		ViewCache.Clear()
+		ViewCache.Clean()
 		err := list.Set(v.Expr, NewEmptyFilter())
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -186,7 +186,7 @@ func TestInlineTableNodes_Get(t *testing.T) {
 	}
 
 	for _, v := range inlineTableNodesGetTests {
-		ViewCache.Clear()
+		ViewCache.Clean()
 		view, err := list.Get(v.TableName)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -690,7 +690,7 @@ func TestInlineTableMap_Set(t *testing.T) {
 	it := InlineTableMap{}
 
 	for _, v := range inlineTableMapSetTests {
-		ViewCache.Clear()
+		ViewCache.Clean()
 		err := it.Set(v.Expr, NewEmptyFilter())
 		if err != nil {
 			if len(v.Error) < 1 {

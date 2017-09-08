@@ -11,6 +11,7 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
 	"github.com/mithrandie/csvq/lib/value"
+	"github.com/mithrandie/go-file"
 )
 
 var procedureExecuteStatementTests = []struct {
@@ -622,7 +623,8 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 	proc.Filter.Variables[0].Add(parser.Variable{Name: "@while_test"}, value.NewInteger(0))
 
 	for _, v := range procedureExecuteStatementTests {
-		ViewCache.Clear()
+		ViewCache.Clean()
+		FileLocks.UnlockAll()
 		Results = []Result{}
 		SelectLogs = []string{}
 
@@ -661,6 +663,16 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 		}
 
 		if v.Result != nil {
+			for _, r := range Results {
+				if r.FileInfo.File != nil {
+					if r.FileInfo.Path != r.FileInfo.File.Name() {
+						t.Errorf("file pointer = %q, want %q for %q", r.FileInfo.File.Name(), r.FileInfo.Path, v.Input)
+					}
+					file.Close(r.FileInfo.File)
+					r.FileInfo.File = nil
+				}
+			}
+
 			if !reflect.DeepEqual(Results, v.Result) {
 				t.Errorf("results = %q, want %q for %q", Results, v.Result, v.Input)
 			}
@@ -676,6 +688,11 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 			}
 		}
 	}
+
+	ViewCache.Clean()
+	FileLocks.UnlockAll()
+	Results = []Result{}
+	SelectLogs = []string{}
 }
 
 var procedureIfStmtTests = []struct {
@@ -1415,7 +1432,7 @@ func TestProcedure_WhileInCursor(t *testing.T) {
 				query: selectQueryForCursorTest,
 			},
 		}
-		ViewCache.Clear()
+		ViewCache.Clean()
 		proc.Filter.Cursors.Open(parser.Identifier{Literal: "cur"}, proc.Filter)
 
 		oldStdout := os.Stdout

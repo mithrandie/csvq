@@ -43,7 +43,7 @@ var calcTests = []struct {
 
 func TestCalc(t *testing.T) {
 	for _, v := range calcTests {
-		query.ViewCache.Clear()
+		query.ViewCache.Clean()
 
 		var oldStdin *os.File
 		if 0 < len(v.Stdin) {

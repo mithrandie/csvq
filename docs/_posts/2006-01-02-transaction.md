@@ -42,3 +42,9 @@ A rollback statement discards all of the changes.
 ROLLBACK;
 ```
 
+## File Locking
+
+In a transaction, created files and updated files are locked by using lock files, so these files are protected from other csvq processes.
+
+This locking does not guarantee that these files are protected from other applications.
+System-provided file locking are used only on the systems supported by the package [github.com/mithrandie/go-file](https://github.com/mithrandie/go-file).
