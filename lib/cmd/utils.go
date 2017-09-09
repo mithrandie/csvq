@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"io"
+	"os"
 	"strings"
 
 	"golang.org/x/text/encoding/japanese"
@@ -87,4 +88,12 @@ func HumarizeNumber(s string) string {
 	}
 
 	return strings.Join(places, ",") + decPart
+}
+
+func IsReadableFromPipeOrRedirection() bool {
+	fi, err := os.Stdin.Stat()
+	if err == nil && (fi.Mode()&os.ModeNamedPipe != 0 || 0 < fi.Size()) {
+		return true
+	}
+	return false
 }

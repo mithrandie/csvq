@@ -51,7 +51,7 @@ func NewView() *View {
 func (view *View) Load(clause parser.FromClause, filter *Filter) error {
 	if clause.Tables == nil {
 		var obj parser.QueryExpression
-		if IsReadableFromStdin() {
+		if cmd.IsReadableFromPipeOrRedirection() {
 			obj = parser.Stdin{Stdin: "stdin"}
 		} else {
 			obj = parser.Dual{}
@@ -115,7 +115,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 		}
 
 		if !filter.TempViews[len(filter.TempViews)-1].Exists(fileInfo.Path) {
-			if !IsReadableFromStdin() {
+			if !cmd.IsReadableFromPipeOrRedirection() {
 				return nil, NewStdinEmptyError(table.Object.(parser.Stdin))
 			}
 

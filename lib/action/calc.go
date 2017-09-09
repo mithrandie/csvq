@@ -15,6 +15,8 @@ import (
 func Calc(expr string) error {
 	cmd.SetNoHeader(true)
 
+	SetSignalHandler()
+
 	q := "select " + expr + " from stdin"
 
 	program, err := parser.Parse(q, "")

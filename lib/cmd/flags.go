@@ -10,8 +10,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/mithrandie/go-file"
 )
 
 const UNDEF = -1
@@ -100,7 +98,7 @@ func GetFlags() *Flags {
 			Repository:     ".",
 			Source:         "",
 			DatetimeFormat: "",
-			WaitTimeout:    30,
+			WaitTimeout:    10,
 			NoHeader:       false,
 			WithoutNull:    false,
 			WriteEncoding:  UTF8,
@@ -237,8 +235,6 @@ func SetWaitTimeout(s string) error {
 
 	flags := GetFlags()
 	flags.WaitTimeout = f
-	file.WaitTimeout = f
-	file.RetryInterval = flags.RetryInterval
 	return nil
 }
 

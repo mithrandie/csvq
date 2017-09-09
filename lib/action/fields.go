@@ -29,6 +29,7 @@ func ShowFields(input string) error {
 func readFields(filename string) ([]string, error) {
 	flags := cmd.GetFlags()
 
+	query.UpdateWaitTimeout()
 	fileInfo, err := query.NewFileInfo(parser.Identifier{Literal: filename}, flags.Repository, flags.Delimiter)
 	if err != nil {
 		if appErr, ok := err.(query.AppError); ok {

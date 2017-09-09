@@ -162,7 +162,13 @@ func main() {
 			return cli.NewExitError(err.Error(), 1)
 		}
 
-		if err = action.Run(queryString, cmd.GetFlags().Source); err != nil {
+		if len(queryString) < 1 {
+			err = action.LaunchInteractiveShell()
+		} else {
+			err = action.Run(queryString, cmd.GetFlags().Source)
+		}
+
+		if err != nil {
 			code := 1
 			if apperr, ok := err.(query.AppError); ok {
 				code = apperr.GetCode()
@@ -200,9 +206,6 @@ func readQuery(c *cli.Context) (string, error) {
 			return queryString, errors.New("multiple queries or statements were passed")
 		}
 		queryString = c.Args().First()
-	}
-	if len(queryString) < 1 {
-		return queryString, errors.New("query or statements is empty")
 	}
 
 	return queryString, nil

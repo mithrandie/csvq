@@ -48,16 +48,11 @@ csvq "select id, name from user"
 # Specify data delimiter as tab character
 csvq -d "\t" "select count(*) from `user.csv`"
 
-# Load from another directory
-csvq "select id, name from `/path/to/user.csv`"
-csvq -r /path/to "select user.id, user.name, country.name from `user.csv` natural join `country.csv`"
-
 # Load no-header-csv
 csvq --no-header "select c1, c2 from user"
 
 # Load from redirection or pipe
 csvq "select * from stdin" < user.csv
-csvq "select *" < user.csv
 cat user.csv | csvq "select *"
 
 # Output in JSON format
@@ -65,6 +60,23 @@ csvq -f json "select integer(id) as id, name from user"
 
 # Output to a file
 csvq -o new_user.csv "select id, name from user"
+
+# Load statements from file
+$ cat statements.sql
+VAR @id := 0;
+SELECT @id := @id + 1 AS id,
+       name
+  FROM user;
+
+$ csvq -s statements.sql
+
+# Execute statements in the interactive shell
+$ csvq
+csvq > UPDATE users SET name = 'Mildred' WHERE id = 2;
+1 record updated on "/home/mithrandie/docs/csv/users.csv".
+csvq > COMMIT;
+Commit: file "/home/mithrandie/docs/csv/users.csv" is updated.
+csvq > EXIT;
 
 # Show help
 csvq -h

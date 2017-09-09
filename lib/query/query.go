@@ -8,6 +8,7 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
+	"github.com/mithrandie/go-file"
 )
 
 type StatementFlow int
@@ -67,6 +68,14 @@ func ReadSelectLog() string {
 	return strings.Join(SelectLogs, lb.Value()) + lb.Value()
 }
 
+func UpdateWaitTimeout() {
+	flags := cmd.GetFlags()
+	FileLocks.WaitTimeout = flags.WaitTimeout
+	FileLocks.RetryInterval = flags.RetryInterval
+	file.WaitTimeout = flags.WaitTimeout
+	file.RetryInterval = flags.RetryInterval
+}
+
 func Execute(input string, sourceFile string) error {
 	defer func() {
 		ReleaseResources()
@@ -75,6 +84,8 @@ func Execute(input string, sourceFile string) error {
 	flags := cmd.GetFlags()
 	FileLocks.WaitTimeout = flags.WaitTimeout
 	FileLocks.RetryInterval = flags.RetryInterval
+	file.WaitTimeout = flags.WaitTimeout
+	file.RetryInterval = flags.RetryInterval
 
 	statements, err := parser.Parse(input, sourceFile)
 	if err != nil {
