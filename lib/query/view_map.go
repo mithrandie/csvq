@@ -66,7 +66,7 @@ func (list TemporaryViewScopes) Store() {
 		for _, view := range m {
 			view.FileInfo.InitialRecordSet = view.RecordSet.Copy()
 			view.FileInfo.InitialHeader = view.Header.Copy()
-			Log(fmt.Sprintf("restore point of %q is created.", view.FileInfo.Path), cmd.GetFlags().Quiet)
+			Log(fmt.Sprintf("Commit: restore point of temporary table %q is created.", view.FileInfo.Path), cmd.GetFlags().Quiet)
 		}
 	}
 }
@@ -76,6 +76,7 @@ func (list TemporaryViewScopes) Restore() {
 		for _, view := range m {
 			view.RecordSet = view.FileInfo.InitialRecordSet.Copy()
 			view.Header = view.FileInfo.InitialHeader.Copy()
+			Log(fmt.Sprintf("Rollback: temporary table %q is restored.", view.FileInfo.Path), cmd.GetFlags().Quiet)
 		}
 	}
 }
