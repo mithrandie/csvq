@@ -1162,6 +1162,11 @@ type SetFlag struct {
 	Value value.Primary
 }
 
+type ShowFlag struct {
+	*BaseExpr
+	Name string
+}
+
 type If struct {
 	*BaseExpr
 	Condition  QueryExpression

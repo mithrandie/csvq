@@ -61,6 +61,10 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 	switch stmt.(type) {
 	case parser.SetFlag:
 		err = SetFlag(stmt.(parser.SetFlag))
+	case parser.ShowFlag:
+		if printstr, err = ShowFlag(stmt.(parser.ShowFlag)); err == nil {
+			Log(printstr, false)
+		}
 	case parser.VariableDeclaration:
 		err = proc.Filter.Variables.Declare(stmt.(parser.VariableDeclaration), proc.Filter)
 	case parser.VariableSubstitution:

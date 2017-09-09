@@ -812,9 +812,9 @@ type InvalidFlagNameError struct {
 	*BaseError
 }
 
-func NewInvalidFlagNameError(setFlag parser.SetFlag) error {
+func NewInvalidFlagNameError(expr parser.Expression, name string) error {
 	return &InvalidFlagNameError{
-		NewBaseError(setFlag, fmt.Sprintf(ERROR_INVALID_FLAG_NAME, setFlag.Name)),
+		NewBaseError(expr, fmt.Sprintf(ERROR_INVALID_FLAG_NAME, name)),
 	}
 }
 

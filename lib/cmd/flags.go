@@ -89,13 +89,18 @@ var (
 )
 
 func GetFlags() *Flags {
+	pwd, err := filepath.Abs(".")
+	if err != nil {
+		pwd = "."
+	}
+
 	getFlags.Do(func() {
 		flags = &Flags{
 			Delimiter:      UNDEF,
 			Encoding:       UTF8,
 			LineBreak:      LF,
 			Location:       "Local",
-			Repository:     ".",
+			Repository:     pwd,
 			Source:         "",
 			DatetimeFormat: "",
 			WaitTimeout:    10,

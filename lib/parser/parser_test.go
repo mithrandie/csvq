@@ -3187,6 +3187,15 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "show @@delimiter",
+		Output: []Statement{
+			ShowFlag{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Name:     "@@delimiter",
+			},
+		},
+	},
+	{
 		Input: "trigger error",
 		Output: []Statement{
 			Trigger{

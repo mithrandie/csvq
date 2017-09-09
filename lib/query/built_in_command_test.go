@@ -212,12 +212,13 @@ func TestSource(t *testing.T) {
 }
 
 var setFlagTests = []struct {
-	Name            string
-	Expr            parser.SetFlag
-	ResultFlag      string
-	ResultStlValue  string
-	ResultBoolValue bool
-	Error           string
+	Name             string
+	Expr             parser.SetFlag
+	ResultFlag       string
+	ResultStrValue   string
+	ResultFloatValue float64
+	ResultBoolValue  bool
+	Error            string
 }{
 	{
 		Name: "Set Delimiter",
@@ -226,7 +227,7 @@ var setFlagTests = []struct {
 			Value: value.NewString("\t"),
 		},
 		ResultFlag:     "delimiter",
-		ResultStlValue: "\t",
+		ResultStrValue: "\t",
 	},
 	{
 		Name: "Set Encoding",
@@ -235,7 +236,7 @@ var setFlagTests = []struct {
 			Value: value.NewString("SJIS"),
 		},
 		ResultFlag:     "encoding",
-		ResultStlValue: "SJIS",
+		ResultStrValue: "SJIS",
 	},
 	{
 		Name: "Set LineBreak",
@@ -244,7 +245,7 @@ var setFlagTests = []struct {
 			Value: value.NewString("CRLF"),
 		},
 		ResultFlag:     "line_break",
-		ResultStlValue: "\r\n",
+		ResultStrValue: "\r\n",
 	},
 	{
 		Name: "Set Repository",
@@ -253,7 +254,7 @@ var setFlagTests = []struct {
 			Value: value.NewString(TestDir),
 		},
 		ResultFlag:     "repository",
-		ResultStlValue: TestDir,
+		ResultStrValue: TestDir,
 	},
 	{
 		Name: "Set DatetimeFormat",
@@ -262,7 +263,16 @@ var setFlagTests = []struct {
 			Value: value.NewString("%Y%m%d"),
 		},
 		ResultFlag:     "datetime_format",
-		ResultStlValue: "%Y%m%d",
+		ResultStrValue: "%Y%m%d",
+	},
+	{
+		Name: "Set WaitTimeout",
+		Expr: parser.SetFlag{
+			Name:  "@@wait_timeout",
+			Value: value.NewFloat(15),
+		},
+		ResultFlag:       "wait_timeout",
+		ResultFloatValue: 15,
 	},
 	{
 		Name: "Set NoHeader",
@@ -289,6 +299,14 @@ var setFlagTests = []struct {
 			Value: value.NewBoolean(true),
 		},
 		Error: "[L:- C:-] SET: flag value true for @@delimiter is invalid",
+	},
+	{
+		Name: "Set WaitTimeout Value Error",
+		Expr: parser.SetFlag{
+			Name:  "@@wait_timeout",
+			Value: value.NewBoolean(true),
+		},
+		Error: "[L:- C:-] SET: flag value true for @@wait_timeout is invalid",
 	},
 	{
 		Name: "Set WithoutNull Value Error",
@@ -337,24 +355,28 @@ func TestSetFlag(t *testing.T) {
 
 		switch strings.ToUpper(v.ResultFlag) {
 		case "DELIMITER":
-			if string(flags.Delimiter) != v.ResultStlValue {
-				t.Errorf("%s: delimiter = %q, want %q", v.Name, string(flags.Delimiter), v.ResultStlValue)
+			if string(flags.Delimiter) != v.ResultStrValue {
+				t.Errorf("%s: delimiter = %q, want %q", v.Name, string(flags.Delimiter), v.ResultStrValue)
 			}
 		case "ENCODING":
-			if flags.Encoding.String() != v.ResultStlValue {
-				t.Errorf("%s: encoding = %q, want %q", v.Name, flags.Encoding.String(), v.ResultStlValue)
+			if flags.Encoding.String() != v.ResultStrValue {
+				t.Errorf("%s: encoding = %q, want %q", v.Name, flags.Encoding.String(), v.ResultStrValue)
 			}
 		case "LINE_BREAK":
-			if flags.LineBreak.Value() != v.ResultStlValue {
-				t.Errorf("%s: line-break = %q, want %q", v.Name, flags.LineBreak.Value(), v.ResultStlValue)
+			if flags.LineBreak.Value() != v.ResultStrValue {
+				t.Errorf("%s: line-break = %q, want %q", v.Name, flags.LineBreak.Value(), v.ResultStrValue)
 			}
 		case "REPOSITORY":
-			if flags.Repository != v.ResultStlValue {
-				t.Errorf("%s: repository = %q, want %q", v.Name, flags.Repository, v.ResultStlValue)
+			if flags.Repository != v.ResultStrValue {
+				t.Errorf("%s: repository = %q, want %q", v.Name, flags.Repository, v.ResultStrValue)
 			}
 		case "DATETIME_FORMAT":
-			if flags.DatetimeFormat != v.ResultStlValue {
-				t.Errorf("%s: datetime-format = %q, want %q", v.Name, flags.DatetimeFormat, v.ResultStlValue)
+			if flags.DatetimeFormat != v.ResultStrValue {
+				t.Errorf("%s: datetime-format = %q, want %q", v.Name, flags.DatetimeFormat, v.ResultStrValue)
+			}
+		case "WAIT_TIMEOUT":
+			if flags.WaitTimeout != v.ResultFloatValue {
+				t.Errorf("%s: wait-timeout = %f, want %f", v.Name, flags.WaitTimeout, v.ResultFloatValue)
 			}
 		case "NO-HEADER":
 			if flags.NoHeader != v.ResultBoolValue {

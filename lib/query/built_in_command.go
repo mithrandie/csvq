@@ -3,6 +3,7 @@ package query
 import (
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -86,21 +87,23 @@ func Source(expr parser.Source, filter *Filter) ([]parser.Statement, error) {
 }
 
 func SetFlag(expr parser.SetFlag) error {
-	var err error
-
 	var p value.Primary
 
 	switch strings.ToUpper(expr.Name) {
 	case "@@DELIMITER", "@@ENCODING", "@@LINE_BREAK", "@@REPOSITORY", "@@DATETIME_FORMAT":
 		p = value.ToString(expr.Value)
+	case "@@WAIT_TIMEOUT":
+		p = value.ToFloat(expr.Value)
 	case "@@NO_HEADER", "@@WITHOUT_NULL":
 		p = value.ToBoolean(expr.Value)
 	default:
-		return NewInvalidFlagNameError(expr)
+		return NewInvalidFlagNameError(expr, expr.Name)
 	}
 	if value.IsNull(p) {
 		return NewInvalidFlagValueError(expr)
 	}
+
+	var err error
 
 	switch strings.ToUpper(expr.Name) {
 	case "@@DELIMITER":
@@ -113,6 +116,11 @@ func SetFlag(expr parser.SetFlag) error {
 		err = cmd.SetRepository(p.(value.String).Raw())
 	case "@@DATETIME_FORMAT":
 		cmd.SetDatetimeFormat(p.(value.String).Raw())
+	case "@@WAIT_TIMEOUT":
+		err = cmd.SetWaitTimeout(value.Float64ToStr(p.(value.Float).Raw()))
+		if err == nil {
+			UpdateWaitTimeout()
+		}
 	case "@@NO_HEADER":
 		cmd.SetNoHeader(p.(value.Boolean).Raw())
 	case "@@WITHOUT_NULL":
@@ -124,4 +132,45 @@ func SetFlag(expr parser.SetFlag) error {
 	}
 
 	return nil
+}
+
+func ShowFlag(expr parser.ShowFlag) (string, error) {
+	var quote = func(s string) string {
+		return "'" + s + "'"
+	}
+
+	var s string
+
+	flags := cmd.GetFlags()
+
+	switch strings.ToUpper(expr.Name) {
+	case "@@DELIMITER":
+		if flags.Delimiter == cmd.UNDEF {
+			s = "(auto detection)"
+		} else {
+			s = quote(string(flags.Delimiter))
+		}
+	case "@@ENCODING":
+		s = flags.Encoding.String()
+	case "@@LINE_BREAK":
+		s = flags.LineBreak.Value()
+	case "@@REPOSITORY":
+		s = flags.Repository
+	case "@@DATETIME_FORMAT":
+		if len(flags.DatetimeFormat) < 1 {
+			s = "(not set)"
+		} else {
+			s = flags.DatetimeFormat
+		}
+	case "@@WAIT_TIMEOUT":
+		s = value.Float64ToStr(flags.WaitTimeout)
+	case "@@NO_HEADER":
+		s = strconv.FormatBool(flags.NoHeader)
+	case "@@WITHOUT_NULL":
+		s = strconv.FormatBool(flags.WithoutNull)
+	default:
+		return s, NewInvalidFlagNameError(expr, expr.Name)
+	}
+
+	return s, nil
 }

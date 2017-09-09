@@ -179,7 +179,7 @@ import "github.com/mithrandie/csvq/lib/value"
 %token<token> PRINT PRINTF SOURCE TRIGGER
 %token<token> FUNCTION AGGREGATE BEGIN RETURN
 %token<token> IGNORE WITHIN
-%token<token> VAR
+%token<token> VAR SHOW
 %token<token> TIES NULLS
 %token<token> ERROR
 %token<token> COUNT LISTAGG
@@ -754,6 +754,10 @@ command_statement
     : SET FLAG '=' primitive_type
     {
         $$ = SetFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal, Value: $4.(PrimitiveType).Value}
+    }
+    | SHOW FLAG
+    {
+        $$ = ShowFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal}
     }
     | PRINT value
     {
