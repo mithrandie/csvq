@@ -17,6 +17,10 @@ func Calc(expr string) error {
 
 	SetSignalHandler()
 
+	defer func() {
+		query.ReleaseResources()
+	}()
+
 	q := "select " + expr + " from stdin"
 
 	program, err := parser.Parse(q, "")
