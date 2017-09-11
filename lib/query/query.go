@@ -5,6 +5,7 @@ import (
 	"strings"
 	"sync"
 
+	"fmt"
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
@@ -74,27 +75,6 @@ func UpdateWaitTimeout() {
 	FileLocks.RetryInterval = flags.RetryInterval
 	file.WaitTimeout = flags.WaitTimeout
 	file.RetryInterval = flags.RetryInterval
-}
-
-func Execute(input string, sourceFile string) error {
-	defer func() {
-		ReleaseResources()
-	}()
-
-	statements, err := parser.Parse(input, sourceFile)
-	if err != nil {
-		syntaxErr := err.(*parser.SyntaxError)
-		return NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)
-	}
-
-	proc := NewProcedure()
-	flow, err := proc.Execute(statements)
-
-	if flow == TERMINATE {
-		err = proc.Commit(nil)
-	}
-
-	return err
 }
 
 func FetchCursor(name parser.Identifier, fetchPosition parser.FetchPosition, vars []parser.Variable, filter *Filter) (bool, error) {
@@ -865,4 +845,109 @@ func RenameColumn(query parser.RenameColumn, parentFilter *Filter) (*View, error
 	}
 
 	return view, nil
+}
+
+func Commit(expr parser.Expression, filter *Filter) error {
+	var createFiles = map[string]*FileInfo{}
+	var updateFiles = map[string]*FileInfo{}
+
+	for _, result := range Results {
+		if result.FileInfo != nil {
+			switch result.Type {
+			case CREATE_TABLE:
+				createFiles[result.FileInfo.Path] = result.FileInfo
+			default:
+				if !result.FileInfo.IsTemporary && 0 < result.OperatedCount {
+					if _, ok := createFiles[result.FileInfo.Path]; !ok {
+						if _, ok := updateFiles[result.FileInfo.Path]; !ok {
+							updateFiles[result.FileInfo.Path] = result.FileInfo
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if 0 < len(createFiles) {
+		for filename, fileinfo := range createFiles {
+			view, _ := ViewCache.Get(parser.Identifier{Literal: filename})
+			viewstr, err := EncodeView(view, cmd.CSV, fileinfo.Delimiter, false, fileinfo.Encoding, fileinfo.LineBreak)
+			if err != nil {
+				return err
+			}
+
+			if err = cmd.CreateFile(filename, viewstr); err != nil {
+				if expr == nil {
+					return NewAutoCommitError(err.Error())
+				}
+				return NewWriteFileError(expr, err.Error())
+			}
+			Log(fmt.Sprintf("Commit: file %q is created.", filename), cmd.GetFlags().Quiet)
+		}
+	}
+
+	if 0 < len(updateFiles) {
+		for filename, fileinfo := range updateFiles {
+			view, _ := ViewCache.Get(parser.Identifier{Literal: filename})
+			viewstr, err := EncodeView(view, cmd.CSV, fileinfo.Delimiter, fileinfo.NoHeader, fileinfo.Encoding, fileinfo.LineBreak)
+			if err != nil {
+				return err
+			}
+
+			if err = cmd.UpdateFile(fileinfo.File, viewstr); err != nil {
+				if expr == nil {
+					return NewAutoCommitError(err.Error())
+				}
+				return NewWriteFileError(expr, err.Error())
+			}
+			Log(fmt.Sprintf("Commit: file %q is updated.", filename), cmd.GetFlags().Quiet)
+		}
+	}
+
+	Results = []Result{}
+	ReleaseResources()
+	if expr != nil {
+		filter.TempViews.Store()
+	}
+
+	return nil
+}
+
+func Rollback(filter *Filter) {
+	var createFiles = map[string]*FileInfo{}
+	var updateFiles = map[string]*FileInfo{}
+
+	for _, result := range Results {
+		if result.FileInfo != nil {
+			switch result.Type {
+			case CREATE_TABLE:
+				createFiles[result.FileInfo.Path] = result.FileInfo
+			default:
+				if !result.FileInfo.IsTemporary && 0 < result.OperatedCount {
+					if _, ok := createFiles[result.FileInfo.Path]; !ok {
+						if _, ok := updateFiles[result.FileInfo.Path]; !ok {
+							updateFiles[result.FileInfo.Path] = result.FileInfo
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if 0 < len(createFiles) {
+		for filename := range createFiles {
+			Log(fmt.Sprintf("Rollback: file %q is deleted.", filename), cmd.GetFlags().Quiet)
+		}
+	}
+
+	if 0 < len(updateFiles) {
+		for filename := range updateFiles {
+			Log(fmt.Sprintf("Rollback: file %q is restored.", filename), cmd.GetFlags().Quiet)
+		}
+	}
+
+	Results = []Result{}
+	ReleaseResources()
+	filter.TempViews.Restore()
+	return
 }

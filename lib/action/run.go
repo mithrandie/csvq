@@ -21,11 +21,25 @@ func Run(input string, sourceFile string) error {
 	start := time.Now()
 
 	defer func() {
+		query.ReleaseResources()
 		showStats(start, false)
 	}()
 
 	query.UpdateWaitTimeout()
-	err := query.Execute(input, sourceFile)
+
+	statements, err := parser.Parse(input, sourceFile)
+	if err != nil {
+		syntaxErr := err.(*parser.SyntaxError)
+		return query.NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)
+	}
+
+	proc := query.NewProcedure()
+	flow, err := proc.Execute(statements)
+
+	if err == nil && flow == query.TERMINATE {
+		err = query.Commit(nil, proc.Filter)
+	}
+
 	if err != nil {
 		return err
 	}
@@ -50,10 +64,7 @@ func LaunchInteractiveShell() error {
 	}()
 
 	var err error
-
 	query.UpdateWaitTimeout()
-	proc := query.NewProcedure()
-	var buf bytes.Buffer
 
 	term, err := cmd.NewTerminal()
 	if err != nil {
@@ -64,6 +75,9 @@ func LaunchInteractiveShell() error {
 		cmd.Term = nil
 	}()
 	cmd.Term = term
+
+	proc := query.NewProcedure()
+	var buf bytes.Buffer
 
 	for {
 		line, e := term.ReadLine()

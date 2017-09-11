@@ -1,7 +1,6 @@
 package query
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -11,192 +10,10 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
+
+	"fmt"
 	"github.com/mithrandie/go-file"
 )
-
-var executeTests = []struct {
-	Name       string
-	OutFile    string
-	Input      string
-	Log        string
-	SelectLog  string
-	UpdateFile string
-	Content    string
-	Error      string
-}{
-	{
-		Name:  "Select Query",
-		Input: "select 1 from dual",
-		Log: "+---+\n" +
-			"| 1 |\n" +
-			"+---+\n" +
-			"| 1 |\n" +
-			"+---+\n",
-	},
-	{
-		Name:    "Select Query Write To File",
-		OutFile: "dummy.txt",
-		Input:   "select 1 from dual",
-		SelectLog: "+---+\n" +
-			"| 1 |\n" +
-			"+---+\n" +
-			"| 1 |\n" +
-			"+---+\n",
-	},
-	{
-		Name:  "Insert Query",
-		Input: "insert into insert_query values (4, 'str4'), (5, 'str5')",
-		Log: fmt.Sprintf("%d records inserted on %q.\n", 2, GetTestFilePath("insert_query.csv")) +
-			fmt.Sprintf("Commit: file %q is updated.\n", GetTestFilePath("insert_query.csv")),
-		UpdateFile: GetTestFilePath("insert_query.csv"),
-		Content: "\"column1\",\"column2\"\n" +
-			"\"1\",\"str1\"\n" +
-			"\"2\",\"str2\"\n" +
-			"\"3\",\"str3\"\n" +
-			"4,\"str4\"\n" +
-			"5,\"str5\"",
-	},
-	{
-		Name:  "Update Query",
-		Input: "update update_query set column2 = 'update' where column1 = 2",
-		Log: fmt.Sprintf("%d record updated on %q.\n", 1, GetTestFilePath("update_query.csv")) +
-			fmt.Sprintf("Commit: file %q is updated.\n", GetTestFilePath("update_query.csv")),
-		UpdateFile: GetTestFilePath("update_query.csv"),
-		Content: "\"column1\",\"column2\"\n" +
-			"\"1\",\"str1\"\n" +
-			"\"2\",\"update\"\n" +
-			"\"3\",\"str3\"",
-	},
-	{
-		Name:  "Update Query No Record Updated",
-		Input: "update update_query set column2 = 'update' where false",
-		Log:   fmt.Sprintf("no record updated on %q.\n", GetTestFilePath("update_query.csv")),
-	},
-	{
-		Name:  "Delete Query",
-		Input: "delete from delete_query where column1 = 2",
-		Log: fmt.Sprintf("%d record deleted on %q.\n", 1, GetTestFilePath("delete_query.csv")) +
-			fmt.Sprintf("Commit: file %q is updated.\n", GetTestFilePath("delete_query.csv")),
-		UpdateFile: GetTestFilePath("delete_query.csv"),
-		Content: "\"column1\",\"column2\"\n" +
-			"\"1\",\"str1\"\n" +
-			"\"3\",\"str3\"",
-	},
-	{
-		Name:  "Delete Query No Record Deleted",
-		Input: "delete from delete_query where false",
-		Log:   fmt.Sprintf("no record deleted on %q.\n", GetTestFilePath("delete_query.csv")),
-	},
-	{
-		Name:  "Create Table",
-		Input: "create table `create_table.csv` (column1, column2)",
-		Log: fmt.Sprintf("file %q is created.\n", GetTestFilePath("create_table.csv")) +
-			fmt.Sprintf("Commit: file %q is created.\n", GetTestFilePath("create_table.csv")),
-		UpdateFile: GetTestFilePath("create_table.csv"),
-		Content:    "\"column1\",\"column2\"\n",
-	},
-	{
-		Name:  "Add Columns",
-		Input: "alter table add_columns add column3",
-		Log: fmt.Sprintf("%d field added on %q.\n", 1, GetTestFilePath("add_columns.csv")) +
-			fmt.Sprintf("Commit: file %q is updated.\n", GetTestFilePath("add_columns.csv")),
-		UpdateFile: GetTestFilePath("add_columns.csv"),
-		Content: "\"column1\",\"column2\",\"column3\"\n" +
-			"\"1\",\"str1\",\n" +
-			"\"2\",\"str2\",\n" +
-			"\"3\",\"str3\",",
-	},
-	{
-		Name:  "Drop Columns",
-		Input: "alter table drop_columns drop column1",
-		Log: fmt.Sprintf("%d field dropped on %q.\n", 1, GetTestFilePath("drop_columns.csv")) +
-			fmt.Sprintf("Commit: file %q is updated.\n", GetTestFilePath("drop_columns.csv")),
-		UpdateFile: GetTestFilePath("drop_columns.csv"),
-		Content: "\"column2\"\n" +
-			"\"str1\"\n" +
-			"\"str2\"\n" +
-			"\"str3\"",
-	},
-	{
-		Name:  "Rename Column",
-		Input: "alter table rename_column rename column1 to newcolumn",
-		Log: fmt.Sprintf("%d field renamed on %q.\n", 1, GetTestFilePath("rename_column.csv")) +
-			fmt.Sprintf("Commit: file %q is updated.\n", GetTestFilePath("rename_column.csv")),
-		UpdateFile: GetTestFilePath("rename_column.csv"),
-		Content: "\"newcolumn\",\"column2\"\n" +
-			"\"1\",\"str1\"\n" +
-			"\"2\",\"str2\"\n" +
-			"\"3\",\"str3\"",
-	},
-	{
-		Name:  "Print",
-		Input: "var @a := 1; print @a;",
-		Log:   "1\n",
-	},
-	{
-		Name:  "Query Execution Error",
-		Input: "select from",
-		Error: "[L:1 C:8] syntax error: unexpected FROM",
-	},
-}
-
-func TestExecute(t *testing.T) {
-	tf := cmd.GetFlags()
-	tf.Format = cmd.TEXT
-	tf.Repository = TestDir
-	tf.Quiet = false
-
-	for _, v := range executeTests {
-		if len(v.OutFile) < 1 {
-			tf.OutFile = ""
-		} else {
-			tf.OutFile = v.OutFile
-		}
-
-		SelectLogs = []string{}
-
-		oldStdout := os.Stdout
-		r, w, _ := os.Pipe()
-		os.Stdout = w
-
-		err := Execute(v.Input, "")
-
-		w.Close()
-		os.Stdout = oldStdout
-
-		log, _ := ioutil.ReadAll(r)
-
-		if err != nil {
-			if len(v.Error) < 1 {
-				t.Errorf("%s: unexpected error %q", v.Name, err)
-			} else if err.Error() != v.Error {
-				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
-			}
-			continue
-		}
-		if 0 < len(v.Error) {
-			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
-			continue
-		}
-
-		if string(log) != v.Log {
-			t.Errorf("%s: log = %q, want %q", v.Name, string(log), v.Log)
-		}
-
-		selectLog := ReadSelectLog()
-		if selectLog != v.SelectLog {
-			t.Errorf("%s: selectLog = %q, want %q", v.Name, log, v.Log)
-		}
-
-		if 0 < len(v.UpdateFile) {
-			fp, _ := os.Open(v.UpdateFile)
-			buf, _ := ioutil.ReadAll(fp)
-			if string(buf) != v.Content {
-				t.Errorf("%s: content = %q, want %q", v.Name, string(buf), v.Content)
-			}
-		}
-	}
-}
 
 var fetchCursorTests = []struct {
 	Name          string
@@ -3801,4 +3618,120 @@ func TestRenameColumn(t *testing.T) {
 		}
 	}
 	ReleaseResources()
+}
+
+func TestCommit(t *testing.T) {
+	cmd.SetQuiet(false)
+
+	fp, _ := file.OpenToUpdate(GetTestFilePath("updated_file_1.csv"))
+
+	ViewCache = ViewMap{
+		strings.ToUpper(GetTestFilePath("created_file.csv")): &View{
+			Header:    NewHeader("created_file", []string{"column1", "column2"}),
+			RecordSet: RecordSet{},
+			FileInfo: &FileInfo{
+				Path: GetTestFilePath("created_file.csv"),
+			},
+		},
+		strings.ToUpper(GetTestFilePath("updated_file_1.csv")): &View{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("update1"),
+					value.NewString("update2"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path: GetTestFilePath("updated_file_1.csv"),
+				File: fp,
+			},
+		},
+	}
+
+	Results = []Result{
+		{
+			Type: CREATE_TABLE,
+			FileInfo: &FileInfo{
+				Path: GetTestFilePath("created_file.csv"),
+			},
+		},
+		{
+			Type: UPDATE,
+			FileInfo: &FileInfo{
+				Path: GetTestFilePath("updated_file_1.csv"),
+				File: fp,
+			},
+			OperatedCount: 1,
+		},
+		{
+			Type: UPDATE,
+			FileInfo: &FileInfo{
+				Path: GetTestFilePath("updated_file_2.csv"),
+			},
+		},
+	}
+	expect := fmt.Sprintf("Commit: file %q is created.\nCommit: file %q is updated.\n", GetTestFilePath("created_file.csv"), GetTestFilePath("updated_file_1.csv"))
+
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	Commit(parser.TransactionControl{Token: parser.COMMIT}, NewEmptyFilter())
+
+	w.Close()
+	os.Stdout = oldStdout
+	log, _ := ioutil.ReadAll(r)
+
+	if string(log) != expect {
+		t.Errorf("Commit: log = %q, want %q", string(log), expect)
+	}
+}
+
+func TestRollback(t *testing.T) {
+	cmd.SetQuiet(false)
+
+	Results = []Result{
+		{
+			Type: CREATE_TABLE,
+			FileInfo: &FileInfo{
+				Path: "created_file.csv",
+			},
+		},
+		{
+			Type: UPDATE,
+			FileInfo: &FileInfo{
+				Path: "updated_file_1.csv",
+			},
+			OperatedCount: 1,
+		},
+		{
+			Type: UPDATE,
+			FileInfo: &FileInfo{
+				Path: "updated_file_2.csv",
+			},
+		},
+	}
+	expect := "Rollback: file \"created_file.csv\" is deleted.\nRollback: file \"updated_file_1.csv\" is restored.\n"
+
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	Rollback(NewEmptyFilter())
+
+	w.Close()
+	os.Stdout = oldStdout
+	log, _ := ioutil.ReadAll(r)
+
+	if string(log) != expect {
+		t.Errorf("Rollback: log = %q, want %q", string(log), expect)
+	}
 }

@@ -202,9 +202,9 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 	case parser.TransactionControl:
 		switch stmt.(parser.TransactionControl).Token {
 		case parser.COMMIT:
-			err = proc.Commit(stmt.(parser.Expression))
+			err = Commit(stmt.(parser.Expression), proc.Filter)
 		case parser.ROLLBACK:
-			proc.Rollback()
+			Rollback(proc.Filter)
 		}
 	case parser.FlowControl:
 		switch stmt.(parser.FlowControl).Token {
@@ -400,109 +400,4 @@ func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, 
 	}
 
 	return TERMINATE, nil
-}
-
-func (proc *Procedure) Commit(expr parser.Expression) error {
-	var createFiles = map[string]*FileInfo{}
-	var updateFiles = map[string]*FileInfo{}
-
-	for _, result := range Results {
-		if result.FileInfo != nil {
-			switch result.Type {
-			case CREATE_TABLE:
-				createFiles[result.FileInfo.Path] = result.FileInfo
-			default:
-				if !result.FileInfo.IsTemporary && 0 < result.OperatedCount {
-					if _, ok := createFiles[result.FileInfo.Path]; !ok {
-						if _, ok := updateFiles[result.FileInfo.Path]; !ok {
-							updateFiles[result.FileInfo.Path] = result.FileInfo
-						}
-					}
-				}
-			}
-		}
-	}
-
-	if 0 < len(createFiles) {
-		for filename, fileinfo := range createFiles {
-			view, _ := ViewCache.Get(parser.Identifier{Literal: filename})
-			viewstr, err := EncodeView(view, cmd.CSV, fileinfo.Delimiter, false, fileinfo.Encoding, fileinfo.LineBreak)
-			if err != nil {
-				return err
-			}
-
-			if err = cmd.CreateFile(filename, viewstr); err != nil {
-				if expr == nil {
-					return NewAutoCommitError(err.Error())
-				}
-				return NewWriteFileError(expr, err.Error())
-			}
-			Log(fmt.Sprintf("Commit: file %q is created.", filename), cmd.GetFlags().Quiet)
-		}
-	}
-
-	if 0 < len(updateFiles) {
-		for filename, fileinfo := range updateFiles {
-			view, _ := ViewCache.Get(parser.Identifier{Literal: filename})
-			viewstr, err := EncodeView(view, cmd.CSV, fileinfo.Delimiter, fileinfo.NoHeader, fileinfo.Encoding, fileinfo.LineBreak)
-			if err != nil {
-				return err
-			}
-
-			if err = cmd.UpdateFile(fileinfo.File, viewstr); err != nil {
-				if expr == nil {
-					return NewAutoCommitError(err.Error())
-				}
-				return NewWriteFileError(expr, err.Error())
-			}
-			Log(fmt.Sprintf("Commit: file %q is updated.", filename), cmd.GetFlags().Quiet)
-		}
-	}
-
-	Results = []Result{}
-	ReleaseResources()
-	if expr != nil {
-		proc.Filter.TempViews.Store()
-	}
-
-	return nil
-}
-
-func (proc *Procedure) Rollback() {
-	var createFiles = map[string]*FileInfo{}
-	var updateFiles = map[string]*FileInfo{}
-
-	for _, result := range Results {
-		if result.FileInfo != nil {
-			switch result.Type {
-			case CREATE_TABLE:
-				createFiles[result.FileInfo.Path] = result.FileInfo
-			default:
-				if !result.FileInfo.IsTemporary && 0 < result.OperatedCount {
-					if _, ok := createFiles[result.FileInfo.Path]; !ok {
-						if _, ok := updateFiles[result.FileInfo.Path]; !ok {
-							updateFiles[result.FileInfo.Path] = result.FileInfo
-						}
-					}
-				}
-			}
-		}
-	}
-
-	if 0 < len(createFiles) {
-		for filename := range createFiles {
-			Log(fmt.Sprintf("Rollback: file %q is deleted.", filename), cmd.GetFlags().Quiet)
-		}
-	}
-
-	if 0 < len(updateFiles) {
-		for filename := range updateFiles {
-			Log(fmt.Sprintf("Rollback: file %q is restored.", filename), cmd.GetFlags().Quiet)
-		}
-	}
-
-	Results = []Result{}
-	ReleaseResources()
-	proc.Filter.TempViews.Restore()
-	return
 }

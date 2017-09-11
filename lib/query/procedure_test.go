@@ -11,6 +11,7 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
 	"github.com/mithrandie/csvq/lib/value"
+
 	"github.com/mithrandie/go-file"
 )
 
@@ -1456,48 +1457,5 @@ func TestProcedure_WhileInCursor(t *testing.T) {
 		if string(log) != v.Result {
 			t.Errorf("%s: result = %q, want %q", v.Name, string(log), v.Result)
 		}
-	}
-}
-
-func TestProcedure_Rollback(t *testing.T) {
-	cmd.SetQuiet(false)
-
-	Results = []Result{
-		{
-			Type: CREATE_TABLE,
-			FileInfo: &FileInfo{
-				Path: "created_file.csv",
-			},
-		},
-		{
-			Type: UPDATE,
-			FileInfo: &FileInfo{
-				Path: "updated_file_1.csv",
-			},
-			OperatedCount: 1,
-		},
-		{
-			Type: UPDATE,
-			FileInfo: &FileInfo{
-				Path: "updated_file_2.csv",
-			},
-		},
-	}
-	expect := "Rollback: file \"created_file.csv\" is deleted.\nRollback: file \"updated_file_1.csv\" is restored.\n"
-
-	proc := NewProcedure()
-
-	oldStdout := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	proc.Rollback()
-
-	w.Close()
-	os.Stdout = oldStdout
-	log, _ := ioutil.ReadAll(r)
-
-	if string(log) != expect {
-		t.Errorf("Rollback: log = %q, want %q", string(log), expect)
 	}
 }
