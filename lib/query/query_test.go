@@ -144,6 +144,7 @@ func TestExecute(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Format = cmd.TEXT
 	tf.Repository = TestDir
+	tf.Quiet = false
 
 	for _, v := range executeTests {
 		if len(v.OutFile) < 1 {
@@ -1734,6 +1735,7 @@ var insertTests = []struct {
 func TestInsert(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
+	tf.Quiet = false
 
 	filter := NewEmptyFilter()
 	filter.TempViews = TemporaryViewScopes{
@@ -2246,6 +2248,7 @@ var updateTests = []struct {
 func TestUpdate(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
+	tf.Quiet = false
 
 	filter := NewEmptyFilter()
 	filter.TempViews = TemporaryViewScopes{
@@ -2635,6 +2638,7 @@ var deleteTests = []struct {
 func TestDelete(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
+	tf.Quiet = false
 
 	filter := NewEmptyFilter()
 	filter.TempViews = TemporaryViewScopes{
@@ -2888,6 +2892,7 @@ var createTableTests = []struct {
 func TestCreateTable(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
+	tf.Quiet = false
 
 	for _, v := range createTableTests {
 		ReleaseResources()
@@ -3296,6 +3301,7 @@ var addColumnsTests = []struct {
 func TestAddColumns(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
+	tf.Quiet = false
 
 	filter := NewEmptyFilter()
 	filter.TempViews = TemporaryViewScopes{
@@ -3503,6 +3509,7 @@ var dropColumnsTests = []struct {
 func TestDropColumns(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
+	tf.Quiet = false
 
 	filter := NewEmptyFilter()
 	filter.TempViews = TemporaryViewScopes{
@@ -3726,6 +3733,7 @@ var renameColumnTests = []struct {
 func TestRenameColumn(t *testing.T) {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
+	tf.Quiet = false
 
 	filter := NewEmptyFilter()
 	filter.TempViews = TemporaryViewScopes{

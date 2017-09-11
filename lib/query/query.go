@@ -81,12 +81,6 @@ func Execute(input string, sourceFile string) error {
 		ReleaseResources()
 	}()
 
-	flags := cmd.GetFlags()
-	FileLocks.WaitTimeout = flags.WaitTimeout
-	FileLocks.RetryInterval = flags.RetryInterval
-	file.WaitTimeout = flags.WaitTimeout
-	file.RetryInterval = flags.RetryInterval
-
 	statements, err := parser.Parse(input, sourceFile)
 	if err != nil {
 		syntaxErr := err.(*parser.SyntaxError)

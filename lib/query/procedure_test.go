@@ -27,8 +27,14 @@ var procedureExecuteStatementTests = []struct {
 			Name:  "@@invalid",
 			Value: value.NewString("\t"),
 		},
-		Error:     "[L:- C:-] SET: flag name @@invalid is invalid",
+		Error:     "[L:- C:-] flag name @@invalid is invalid",
 		ErrorCode: 1,
+	},
+	{
+		Input: parser.ShowFlag{
+			Name: "@@repository",
+		},
+		Logs: TestDir + "\n",
 	},
 	{
 		Input: parser.VariableDeclaration{
@@ -795,17 +801,13 @@ var procedureIfStmtTests = []struct {
 }
 
 func TestProcedure_IfStmt(t *testing.T) {
+	cmd.SetQuiet(true)
 	proc := NewProcedure()
 
 	for _, v := range procedureIfStmtTests {
 		oldStdout := os.Stdout
 
 		r, w, _ := os.Pipe()
-		os.Stdout = w
-		proc.Rollback()
-		w.Close()
-
-		r, w, _ = os.Pipe()
 		os.Stdout = w
 
 		flow, err := proc.IfStmt(v.Stmt)
@@ -973,17 +975,13 @@ var procedureCaseStmtTests = []struct {
 }
 
 func TestProcedure_Case(t *testing.T) {
+	cmd.SetQuiet(true)
 	proc := NewProcedure()
 
 	for _, v := range procedureCaseStmtTests {
 		oldStdout := os.Stdout
 
 		r, w, _ := os.Pipe()
-		os.Stdout = w
-		proc.Rollback()
-		w.Close()
-
-		r, w, _ = os.Pipe()
 		os.Stdout = w
 
 		flow, err := proc.Case(v.Stmt)
@@ -1220,6 +1218,7 @@ var procedureWhileTests = []struct {
 }
 
 func TestProcedure_While(t *testing.T) {
+	cmd.SetQuiet(true)
 	proc := NewProcedure()
 
 	for _, v := range procedureWhileTests {
@@ -1236,11 +1235,6 @@ func TestProcedure_While(t *testing.T) {
 		oldStdout := os.Stdout
 
 		r, w, _ := os.Pipe()
-		os.Stdout = w
-		proc.Rollback()
-		w.Close()
-
-		r, w, _ = os.Pipe()
 		os.Stdout = w
 
 		flow, err := proc.While(v.Stmt)
@@ -1462,5 +1456,48 @@ func TestProcedure_WhileInCursor(t *testing.T) {
 		if string(log) != v.Result {
 			t.Errorf("%s: result = %q, want %q", v.Name, string(log), v.Result)
 		}
+	}
+}
+
+func TestProcedure_Rollback(t *testing.T) {
+	cmd.SetQuiet(false)
+
+	Results = []Result{
+		{
+			Type: CREATE_TABLE,
+			FileInfo: &FileInfo{
+				Path: "created_file.csv",
+			},
+		},
+		{
+			Type: UPDATE,
+			FileInfo: &FileInfo{
+				Path: "updated_file_1.csv",
+			},
+			OperatedCount: 1,
+		},
+		{
+			Type: UPDATE,
+			FileInfo: &FileInfo{
+				Path: "updated_file_2.csv",
+			},
+		},
+	}
+	expect := "Rollback: file \"created_file.csv\" is deleted.\nRollback: file \"updated_file_1.csv\" is restored.\n"
+
+	proc := NewProcedure()
+
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	proc.Rollback()
+
+	w.Close()
+	os.Stdout = oldStdout
+	log, _ := ioutil.ReadAll(r)
+
+	if string(log) != expect {
+		t.Errorf("Rollback: log = %q, want %q", string(log), expect)
 	}
 }

@@ -135,10 +135,6 @@ func SetFlag(expr parser.SetFlag) error {
 }
 
 func ShowFlag(expr parser.ShowFlag) (string, error) {
-	var quote = func(s string) string {
-		return "'" + s + "'"
-	}
-
 	var s string
 
 	flags := cmd.GetFlags()
@@ -146,14 +142,14 @@ func ShowFlag(expr parser.ShowFlag) (string, error) {
 	switch strings.ToUpper(expr.Name) {
 	case "@@DELIMITER":
 		if flags.Delimiter == cmd.UNDEF {
-			s = "(auto detection)"
+			s = "(not set)"
 		} else {
-			s = quote(string(flags.Delimiter))
+			s = "'" + cmd.EscapeString(string(flags.Delimiter)) + "'"
 		}
 	case "@@ENCODING":
 		s = flags.Encoding.String()
 	case "@@LINE_BREAK":
-		s = flags.LineBreak.Value()
+		s = flags.LineBreak.String()
 	case "@@REPOSITORY":
 		s = flags.Repository
 	case "@@DATETIME_FORMAT":

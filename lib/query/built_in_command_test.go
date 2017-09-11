@@ -9,6 +9,7 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
+	"github.com/mithrandie/go-file"
 )
 
 var printTests = []struct {
@@ -74,6 +75,17 @@ var printfTests = []struct {
 			},
 		},
 		Result: "printf test: value1 'str', value2 1, %a % %",
+	},
+	{
+		Name: "Printf Format Error",
+		Expr: parser.Printf{
+			Format: parser.Variable{Name: "var"},
+			Values: []parser.QueryExpression{
+				parser.NewStringValue("str"),
+				parser.NewIntegerValue(1),
+			},
+		},
+		Error: "[L:- C:-] variable var is undefined",
 	},
 	{
 		Name: "Printf Evaluate Error",
@@ -322,7 +334,7 @@ var setFlagTests = []struct {
 			Name:  "@@invalid",
 			Value: value.NewString("string"),
 		},
-		Error: "[L:- C:-] SET: flag name @@invalid is invalid",
+		Error: "[L:- C:-] flag name @@invalid is invalid",
 	},
 	{
 		Name: "Invalid Flag Value Error",
@@ -386,6 +398,163 @@ func TestSetFlag(t *testing.T) {
 			if flags.WithoutNull != v.ResultBoolValue {
 				t.Errorf("%s: without-null = %t, want %t", v.Name, flags.WithoutNull, v.ResultBoolValue)
 			}
+		}
+	}
+
+	expr := parser.SetFlag{
+		Name:  "@@wait_timeout",
+		Value: value.NewFloat(20),
+	}
+	SetFlag(expr)
+
+	if FileLocks.WaitTimeout != 20 {
+		t.Errorf("filelocks wait-timeout = %f, want %f", FileLocks.WaitTimeout, 20)
+	}
+	if file.WaitTimeout != 20 {
+		t.Errorf("package file wait-timeout = %f, want %f", file.WaitTimeout, 20)
+	}
+}
+
+var showFlagTests = []struct {
+	Name    string
+	Expr    parser.ShowFlag
+	SetExpr parser.SetFlag
+	Result  string
+	Error   string
+}{
+	{
+		Name: "Show Delimiter Not Set",
+		Expr: parser.ShowFlag{
+			Name: "@@delimiter",
+		},
+		Result: "(not set)",
+	},
+	{
+		Name: "Show Delimiter",
+		Expr: parser.ShowFlag{
+			Name: "@@delimiter",
+		},
+		SetExpr: parser.SetFlag{
+			Name:  "@@delimiter",
+			Value: value.NewString("\t"),
+		},
+		Result: "'\\t'",
+	},
+	{
+		Name: "Show Encoding",
+		Expr: parser.ShowFlag{
+			Name: "@@encoding",
+		},
+		SetExpr: parser.SetFlag{
+			Name:  "@@encoding",
+			Value: value.NewString("SJIS"),
+		},
+		Result: "SJIS",
+	},
+	{
+		Name: "Show LineBreak",
+		Expr: parser.ShowFlag{
+			Name: "@@line_break",
+		},
+		SetExpr: parser.SetFlag{
+			Name:  "@@line_break",
+			Value: value.NewString("CRLF"),
+		},
+		Result: "CRLF",
+	},
+	{
+		Name: "Show Repository",
+		Expr: parser.ShowFlag{
+			Name: "@@repository",
+		},
+		SetExpr: parser.SetFlag{
+			Name:  "@@repository",
+			Value: value.NewString(TestDir),
+		},
+		Result: TestDir,
+	},
+	{
+		Name: "Show DatetimeFormat Not Set",
+		Expr: parser.ShowFlag{
+			Name: "@@datetime_format",
+		},
+		Result: "(not set)",
+	},
+	{
+		Name: "Show DatetimeFormat",
+		Expr: parser.ShowFlag{
+			Name: "@@datetime_format",
+		},
+		SetExpr: parser.SetFlag{
+			Name:  "@@datetime_format",
+			Value: value.NewString("%Y%m%d"),
+		},
+		Result: "%Y%m%d",
+	},
+	{
+		Name: "Show WaitTimeout",
+		Expr: parser.ShowFlag{
+			Name: "@@wait_timeout",
+		},
+		SetExpr: parser.SetFlag{
+			Name:  "@@wait_timeout",
+			Value: value.NewFloat(15),
+		},
+		Result: "15",
+	},
+	{
+		Name: "Show NoHeader",
+		Expr: parser.ShowFlag{
+			Name: "@@no_header",
+		},
+		SetExpr: parser.SetFlag{
+			Name:  "@@no_header",
+			Value: value.NewBoolean(true),
+		},
+		Result: "true",
+	},
+	{
+		Name: "Show WithoutNull",
+		Expr: parser.ShowFlag{
+			Name: "@@without_null",
+		},
+		SetExpr: parser.SetFlag{
+			Name:  "@@without_null",
+			Value: value.NewBoolean(true),
+		},
+		Result: "true",
+	},
+	{
+		Name: "Invalid Flag Name Error",
+		Expr: parser.ShowFlag{
+			Name: "@@invalid",
+		},
+		Error: "[L:- C:-] flag name @@invalid is invalid",
+	},
+}
+
+func TestShowFlag(t *testing.T) {
+	initFlag()
+
+	for _, v := range showFlagTests {
+		if v.SetExpr.Value != nil {
+			SetFlag(v.SetExpr)
+		}
+		result, err := ShowFlag(v.Expr)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if result != v.Result {
+			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
 		}
 	}
 }

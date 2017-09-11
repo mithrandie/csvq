@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 )
@@ -17,6 +18,15 @@ func TestGetReader(t *testing.T) {
 	r = GetReader(fp, SJIS)
 	if reflect.TypeOf(r).String() != "*transform.Reader" {
 		t.Errorf("reader = %q, want %q", reflect.TypeOf(r).String(), "*transform.Reader")
+	}
+}
+
+func TestEscapeString(t *testing.T) {
+	str := "fo\\o\a\b\f\n\r\t\v\\\\'\"bar\\"
+	expect := "fo\\\\o\\a\\b\\f\\n\\r\\t\\v\\\\\\\\\\'\\\"bar\\\\"
+	unescaped := EscapeString(str)
+	if unescaped != expect {
+		t.Errorf("escaped string = %q, want %q", unescaped, expect)
 	}
 }
 
@@ -56,6 +66,36 @@ func TestHumarizeNumber(t *testing.T) {
 	result = HumarizeNumber(number)
 	if result != expect {
 		t.Errorf("humarized = %q, want %q", result, expect)
+	}
+}
+
+func TestIsReadableFromPipeOrRedirection(t *testing.T) {
+	oldStdin := os.Stdin
+	r, _ := os.Open(filepath.Join(TestDataDir, "empty.txt"))
+	os.Stdin = r
+
+	result := IsReadableFromPipeOrRedirection()
+
+	r.Close()
+
+	if result != false {
+		t.Errorf("readable from pipe or redirection = %t, want %t", result, false)
+	}
+
+	oldStdin = os.Stdin
+	r, w, _ := os.Pipe()
+	os.Stdin = r
+
+	w.Write([]byte("abcde"))
+	w.Close()
+
+	result = IsReadableFromPipeOrRedirection()
+
+	r.Close()
+	os.Stdin = oldStdin
+
+	if result != true {
+		t.Errorf("readable from pipe or redirection = %t, want %t", result, true)
 	}
 }
 

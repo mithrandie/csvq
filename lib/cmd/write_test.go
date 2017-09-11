@@ -1,11 +1,12 @@
 package cmd
 
 import (
-	"github.com/mithrandie/go-file"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/mithrandie/go-file"
 )
 
 type writeTest struct {

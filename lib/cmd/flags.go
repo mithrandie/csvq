@@ -33,8 +33,18 @@ const (
 	CRLF LineBreak = "\r\n"
 )
 
+var lineBreakLiterals = map[LineBreak]string{
+	CR:   "CR",
+	LF:   "LF",
+	CRLF: "CRLF",
+}
+
 func (lb LineBreak) Value() string {
 	return reflect.ValueOf(lb).String()
+}
+
+func (lb LineBreak) String() string {
+	return lineBreakLiterals[lb]
 }
 
 type Format int

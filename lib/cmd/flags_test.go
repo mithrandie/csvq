@@ -1,15 +1,30 @@
 package cmd
 
 import (
+	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
 )
 
+func TestEncoding_String(t *testing.T) {
+	enc := UTF8
+	if enc.String() != "UTF8" {
+		t.Errorf("string = %q, want %q for %s", enc.String(), "UTF8", "UTF8")
+	}
+}
+
 func TestLineBreak_Value(t *testing.T) {
 	lb := CRLF
 	if lb.Value() != "\r\n" {
 		t.Errorf("value = %q, want %q for %s", lb.Value(), "\\r\\n", "CRLF")
+	}
+}
+
+func TestLineBreak_String(t *testing.T) {
+	lb := CRLF
+	if lb.String() != "CRLF" {
+		t.Errorf("string = %q, want %q for %s", lb.String(), "CRLF", "CRLF")
 	}
 }
 
@@ -118,9 +133,11 @@ func TestSetLocation(t *testing.T) {
 func TestSetRepository(t *testing.T) {
 	flags := GetFlags()
 
+	pwd, _ := os.Getwd()
+
 	SetRepository("")
-	if flags.Repository != "." {
-		t.Errorf("repository = %s, expect to set %s for %q", flags.Repository, ".", "")
+	if flags.Repository != pwd {
+		t.Errorf("repository = %s, expect to set %s for %q", flags.Repository, pwd, "")
 	}
 
 	dir := filepath.Join("..", "..", "lib", "cmd")
@@ -148,6 +165,11 @@ func TestSetRepository(t *testing.T) {
 
 func TestSetSource(t *testing.T) {
 	flags := GetFlags()
+
+	SetSource("")
+	if flags.Source != "" {
+		t.Errorf("source = %s, expect to set %q for %q", flags.Source, "", "")
+	}
 
 	s := filepath.Join("..", "..", "lib", "cmd", "flags_test.go")
 	SetSource(s)
@@ -189,7 +211,7 @@ func TestSetWaitTimeout(t *testing.T) {
 
 	s := ""
 	SetWaitTimeout(s)
-	if flags.WaitTimeout != 30 {
+	if flags.WaitTimeout != 10 {
 		t.Errorf("wait timeout = %f, expect to set %f for %q", flags.WaitTimeout, 30.0, s)
 	}
 

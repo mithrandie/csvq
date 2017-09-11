@@ -18,6 +18,39 @@ func GetReader(r io.Reader, enc Encoding) io.Reader {
 	return bufio.NewReader(r)
 }
 
+func EscapeString(s string) string {
+	runes := []rune(s)
+	var buf bytes.Buffer
+
+	for _, r := range runes {
+		switch r {
+		case '\a':
+			buf.WriteString("\\a")
+		case '\b':
+			buf.WriteString("\\b")
+		case '\f':
+			buf.WriteString("\\f")
+		case '\n':
+			buf.WriteString("\\n")
+		case '\r':
+			buf.WriteString("\\r")
+		case '\t':
+			buf.WriteString("\\t")
+		case '\v':
+			buf.WriteString("\\v")
+		case '"':
+			buf.WriteString("\\\"")
+		case '\'':
+			buf.WriteString("\\'")
+		case '\\':
+			buf.WriteString("\\\\")
+		default:
+			buf.WriteRune(r)
+		}
+	}
+	return buf.String()
+}
+
 func UnescapeString(s string) string {
 	runes := []rune(s)
 	var buf bytes.Buffer
