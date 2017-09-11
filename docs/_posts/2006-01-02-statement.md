@@ -17,7 +17,7 @@ category: reference
 You can pass a query or statements(it's also called procedure) as a csvq command argument or a source file.
 Statements have to be encoded in UTF-8.
 
-A statements is terminated with a semicolon. 
+A statement is terminated with a semicolon. 
 In statements, character cases of keywords are ignored.
 
 If you want to execute a single query, you can omit the terminal semicolon.  
