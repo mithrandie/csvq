@@ -75,15 +75,23 @@ func LaunchInteractiveShell() error {
 			return e
 		}
 
+		line = strings.TrimRightFunc(line, unicode.IsSpace)
+
 		if buf.Len() < 1 && len(line) < 1 {
+			continue
+		}
+
+		if 0 < len(line) && line[len(line)-1] == '\\' {
+			buf.WriteString(line[:len(line)-1])
+			buf.WriteRune('\n')
+			term.SetContinuousPrompt()
 			continue
 		}
 
 		buf.WriteString(line)
 		buf.WriteRune('\n')
 
-		line = strings.TrimRightFunc(line, unicode.IsSpace)
-		if 0 < len(line) && line[len(line)-1] != ';' {
+		if len(line) < 1 || line[len(line)-1] != ';' {
 			term.SetContinuousPrompt()
 			continue
 		}

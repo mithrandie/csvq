@@ -28,6 +28,9 @@ When the csvq command is called with no argument and no "--source" (or "-s") opt
 You can use the interactive shell in order to sequencial input and execution.
 In the interactive shell, statements are executed when the end of the line ends with a semicolon.
 
+If you want to continue to input a statement on the next line even though the end of the line is a semicolon, you can use a backslash at the end of the line.
+
+
 ```bash
 # Execute a single query
 $ csvq "SELECT id, name FROM user"
@@ -64,6 +67,12 @@ csvq > SELECT id, name FROM users;
 +----+----------+
 csvq > COMMIT;
 Commit: file "/home/mithrandie/docs/csv/users.csv" is updated.
+csvq > IF (SELECT name FROM users WHERE id = 2) = 'Mildred' THEN
+     >   PRINT TRUE; \
+     > ELSE
+     >   PRINT FALSE; \
+     > END IF;
+TRUE
 csvq > EXIT;
 ```
 
