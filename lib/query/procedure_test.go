@@ -11,6 +11,7 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/ternary"
 	"github.com/mithrandie/csvq/lib/value"
+
 	"github.com/mithrandie/go-file"
 )
 
@@ -27,8 +28,14 @@ var procedureExecuteStatementTests = []struct {
 			Name:  "@@invalid",
 			Value: value.NewString("\t"),
 		},
-		Error:     "[L:- C:-] SET: flag name @@invalid is invalid",
+		Error:     "[L:- C:-] flag name @@invalid is invalid",
 		ErrorCode: 1,
+	},
+	{
+		Input: parser.ShowFlag{
+			Name: "@@repository",
+		},
+		Logs: TestDir + "\n",
 	},
 	{
 		Input: parser.VariableDeclaration{
@@ -623,8 +630,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 	proc.Filter.Variables[0].Add(parser.Variable{Name: "@while_test"}, value.NewInteger(0))
 
 	for _, v := range procedureExecuteStatementTests {
-		ViewCache.Clean()
-		FileLocks.UnlockAll()
+		ReleaseResources()
 		Results = []Result{}
 		SelectLogs = []string{}
 
@@ -689,8 +695,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 		}
 	}
 
-	ViewCache.Clean()
-	FileLocks.UnlockAll()
+	ReleaseResources()
 	Results = []Result{}
 	SelectLogs = []string{}
 }
@@ -797,17 +802,13 @@ var procedureIfStmtTests = []struct {
 }
 
 func TestProcedure_IfStmt(t *testing.T) {
+	cmd.SetQuiet(true)
 	proc := NewProcedure()
 
 	for _, v := range procedureIfStmtTests {
 		oldStdout := os.Stdout
 
 		r, w, _ := os.Pipe()
-		os.Stdout = w
-		proc.Rollback()
-		w.Close()
-
-		r, w, _ = os.Pipe()
 		os.Stdout = w
 
 		flow, err := proc.IfStmt(v.Stmt)
@@ -975,17 +976,13 @@ var procedureCaseStmtTests = []struct {
 }
 
 func TestProcedure_Case(t *testing.T) {
+	cmd.SetQuiet(true)
 	proc := NewProcedure()
 
 	for _, v := range procedureCaseStmtTests {
 		oldStdout := os.Stdout
 
 		r, w, _ := os.Pipe()
-		os.Stdout = w
-		proc.Rollback()
-		w.Close()
-
-		r, w, _ = os.Pipe()
 		os.Stdout = w
 
 		flow, err := proc.Case(v.Stmt)
@@ -1222,6 +1219,7 @@ var procedureWhileTests = []struct {
 }
 
 func TestProcedure_While(t *testing.T) {
+	cmd.SetQuiet(true)
 	proc := NewProcedure()
 
 	for _, v := range procedureWhileTests {
@@ -1238,11 +1236,6 @@ func TestProcedure_While(t *testing.T) {
 		oldStdout := os.Stdout
 
 		r, w, _ := os.Pipe()
-		os.Stdout = w
-		proc.Rollback()
-		w.Close()
-
-		r, w, _ = os.Pipe()
 		os.Stdout = w
 
 		flow, err := proc.While(v.Stmt)

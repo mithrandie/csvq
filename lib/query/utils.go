@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"math"
-	"os"
 	"reflect"
 	"runtime"
 	"strconv"
@@ -367,14 +366,6 @@ func FormatString(format string, args []value.Primary) (string, error) {
 	}
 
 	return buf.String(), nil
-}
-
-func IsReadableFromStdin() bool {
-	fi, err := os.Stdin.Stat()
-	if err == nil && (fi.Mode()&os.ModeNamedPipe != 0 || 0 < fi.Size()) {
-		return true
-	}
-	return false
 }
 
 func NumberOfCPU(recordLen int) int {

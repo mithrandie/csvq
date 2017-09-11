@@ -10,8 +10,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/mithrandie/go-file"
 )
 
 const UNDEF = -1
@@ -35,8 +33,18 @@ const (
 	CRLF LineBreak = "\r\n"
 )
 
+var lineBreakLiterals = map[LineBreak]string{
+	CR:   "CR",
+	LF:   "LF",
+	CRLF: "CRLF",
+}
+
 func (lb LineBreak) Value() string {
 	return reflect.ValueOf(lb).String()
+}
+
+func (lb LineBreak) String() string {
+	return lineBreakLiterals[lb]
 }
 
 type Format int
@@ -91,16 +99,21 @@ var (
 )
 
 func GetFlags() *Flags {
+	pwd, err := filepath.Abs(".")
+	if err != nil {
+		pwd = "."
+	}
+
 	getFlags.Do(func() {
 		flags = &Flags{
 			Delimiter:      UNDEF,
 			Encoding:       UTF8,
 			LineBreak:      LF,
 			Location:       "Local",
-			Repository:     ".",
+			Repository:     pwd,
 			Source:         "",
 			DatetimeFormat: "",
-			WaitTimeout:    30,
+			WaitTimeout:    10,
 			NoHeader:       false,
 			WithoutNull:    false,
 			WriteEncoding:  UTF8,
@@ -237,8 +250,6 @@ func SetWaitTimeout(s string) error {
 
 	flags := GetFlags()
 	flags.WaitTimeout = f
-	file.WaitTimeout = f
-	file.RetryInterval = flags.RetryInterval
 	return nil
 }
 

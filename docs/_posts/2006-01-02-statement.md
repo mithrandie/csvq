@@ -18,10 +18,18 @@ You can pass a query or statements(it's also called procedure) as a csvq command
 Statements have to be encoded in UTF-8.
 
 A statements is terminated with a semicolon. 
-Stetaments are processed sequentially for each statement.
 In statements, character cases of keywords are ignored.
 
 If you want to execute a single query, you can omit the terminal semicolon.  
+
+### Interactive Shell
+
+When the csvq command is called with no argument and no "--source" (or "-s") option, the interactive shell is launched.
+You can use the interactive shell in order to sequencial input and execution.
+In the interactive shell, statements are executed when the end of the line ends with a semicolon.
+
+If you want to continue to input a statement on the next line even though the end of the line is a semicolon, you can use a backslash at the end of the line.
+
 
 ```bash
 # Execute a single query
@@ -38,7 +46,36 @@ SELECT @id := @id + 1 AS id,
   FROM user;
 
 $ csvq -s statements.sql
+
+# Execute in the interactive shell
+$ csvq
+csvq > SELECT id, name FROM users;
++----+-------+
+| id | name  |
++----+-------+
+| 1  | Louis |
+| 2  | Sean  |
++----+-------+
+csvq > UPDATE users SET name = 'Mildred' WHERE id = 2;
+1 record updated on "/home/mithrandie/docs/csv/users.csv".
+csvq > SELECT id, name FROM users;
++----+----------+
+| id | name     |
++----+----------+
+| 1  | Louis    |
+| 2  | Mildred  |
++----+----------+
+csvq > COMMIT;
+Commit: file "/home/mithrandie/docs/csv/users.csv" is updated.
+csvq > IF (SELECT name FROM users WHERE id = 2) = 'Mildred' THEN
+     >   PRINT TRUE; \
+     > ELSE
+     >   PRINT FALSE; \
+     > END IF;
+TRUE
+csvq > EXIT;
 ```
+
 ## Parsing
 {: #parsing}
 
@@ -159,7 +196,7 @@ NATURAL NEXT NOT NULL
 OFFSET ON OPEN OR ORDER OUTER OVER
 PARTITION PERCENT PRINT PRINTF PRIOR
 RANGE RECURSIVE RELATIVE RENAME RETURN RIGHT ROLLBACK
-SELECT SET SEPARATOR SOURCE STDIN
+SELECT SET SEPARATOR SHOW SOURCE STDIN
 TABLE THEN TO TRIGGER
 UNION UPDATE USING
 VALUES VAR

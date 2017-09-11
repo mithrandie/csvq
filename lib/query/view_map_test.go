@@ -1,6 +1,8 @@
 package query
 
 import (
+	"io/ioutil"
+	"os"
 	"reflect"
 	"testing"
 
@@ -568,11 +570,90 @@ func TestTemporaryViewScopesDispose(t *testing.T) {
 	}
 }
 
+func TestTemporaryViewScopes_Store(t *testing.T) {
+	list := TemporaryViewScopes{
+		ViewMap{
+			"/PATH/TO/TABLE1.CSV": &View{
+				Header: NewHeader("table1", []string{"column1", "column2", "column3"}),
+				RecordSet: RecordSet{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:             "/path/to/table1.csv",
+					Delimiter:        ',',
+					InitialHeader:    NewHeader("table1", []string{"column1", "column2"}),
+					InitialRecordSet: RecordSet{},
+				},
+			},
+		},
+	}
+
+	expect := TemporaryViewScopes{
+		ViewMap{
+			"/PATH/TO/TABLE1.CSV": &View{
+				Header: NewHeader("table1", []string{"column1", "column2", "column3"}),
+				RecordSet: RecordSet{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:          "/path/to/table1.csv",
+					Delimiter:     ',',
+					InitialHeader: NewHeader("table1", []string{"column1", "column2", "column3"}),
+					InitialRecordSet: RecordSet{
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
+						}),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
+							value.NewString("str2"),
+						}),
+					},
+				},
+			},
+		},
+	}
+	expectOut := "Commit: restore point of temporary table \"/path/to/table1.csv\" is created.\n"
+
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	list.Store()
+
+	w.Close()
+	os.Stdout = oldStdout
+
+	log, _ := ioutil.ReadAll(r)
+
+	if !reflect.DeepEqual(list, expect) {
+		t.Errorf("Store: view = %s, want %s", list, expect)
+	}
+
+	if string(log) != expectOut {
+		t.Errorf("Store: log = %s, want %s", string(log), expectOut)
+	}
+}
+
 func TestTemporaryViewScopes_Restore(t *testing.T) {
 	list := TemporaryViewScopes{
 		ViewMap{
 			"/PATH/TO/TABLE1.CSV": &View{
-				Header: NewHeader("table1", []string{"column1", "column2"}),
+				Header: NewHeader("table1", []string{"column1", "column2", "column3"}),
 				RecordSet: []Record{
 					NewRecord([]value.Primary{
 						value.NewString("1"),
@@ -667,10 +748,25 @@ func TestTemporaryViewScopes_Restore(t *testing.T) {
 			},
 		},
 	}
+	expectOut := "Rollback: temporary table \"/path/to/table1.csv\" is restored.\nRollback: temporary table \"/path/to/table2.csv\" is restored.\n"
+
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
 
 	list.Restore()
+
+	w.Close()
+	os.Stdout = oldStdout
+
+	log, _ := ioutil.ReadAll(r)
+
 	if !reflect.DeepEqual(list, expect) {
-		t.Errorf("Rollback: view = %s, want %s", list, expect)
+		t.Errorf("Restore: view = %s, want %s", list, expect)
+	}
+
+	if string(log) != expectOut {
+		t.Errorf("Restore: log = %s, want %s", string(log), expectOut)
 	}
 }
 

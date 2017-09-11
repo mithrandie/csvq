@@ -23,7 +23,7 @@ func NewFileLockContainer() *FileLockContainer {
 	}
 }
 
-func (c FileLockContainer) LockedByOtherProcess(path string) bool {
+func (c FileLockContainer) IsLockedByOtherProcess(path string) bool {
 	if c.HasLock(path) {
 		return false
 	}
@@ -35,7 +35,7 @@ func (c FileLockContainer) CanRead(path string) bool {
 	start := time.Now()
 
 	for {
-		if !c.LockedByOtherProcess(path) {
+		if !c.IsLockedByOtherProcess(path) {
 			break
 		}
 

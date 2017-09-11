@@ -15,6 +15,12 @@ import (
 func Calc(expr string) error {
 	cmd.SetNoHeader(true)
 
+	SetSignalHandler()
+
+	defer func() {
+		query.ReleaseResources()
+	}()
+
 	q := "select " + expr + " from stdin"
 
 	program, err := parser.Parse(q, "")

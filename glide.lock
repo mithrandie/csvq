@@ -1,10 +1,19 @@
 hash: a065bbb39d035ea12553f48f8c71e1ddc185360b703e89a9baa6a842c41bcd57
-updated: 2017-09-08T16:26:26.368731955+09:00
+updated: 2017-09-11T11:47:21.366722993+09:00
 imports:
 - name: github.com/mithrandie/go-file
   version: e293f57115f018ba15e0df3390dc07898a42528c
 - name: github.com/urfave/cli
   version: cfb38830724cc34fedffe9a2a29fb54fa9169cd1
+- name: golang.org/x/crypto
+  version: 9ba3862cf6a5452ae579de98f9364dd2e544844c
+  subpackages:
+  - ssh/terminal
+- name: golang.org/x/sys
+  version: a5054c7c1385fd50d9394475365355a87a7873ec
+  subpackages:
+  - unix
+  - windows
 - name: golang.org/x/text
   version: 19e51611da83d6be54ddafce4a4af510cb3e9ea4
   subpackages:

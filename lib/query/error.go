@@ -73,7 +73,7 @@ const (
 	ERROR_SOURCE_INVALID_ARGUMENT           = "SOURCE: argument %s is not a string"
 	ERROR_SOURCE_FILE_NOT_EXIST             = "SOURCE: file %s does not exist"
 	ERROR_SOURCE_FILE_UNABLE_TO_READ        = "SOURCE: file %s is unable to read"
-	ERROR_INVALID_FLAG_NAME                 = "SET: flag name %s is invalid"
+	ERROR_INVALID_FLAG_NAME                 = "flag name %s is invalid"
 	ERROR_INVALID_FLAG_VALUE                = "SET: flag value %s for %s is invalid"
 	ERROR_INTERNAL_RECORD_ID_NOT_EXIST      = "internal record id does not exist"
 	ERROR_INTERNAL_RECORD_ID_EMPTY          = "internal record id is empty"
@@ -812,9 +812,9 @@ type InvalidFlagNameError struct {
 	*BaseError
 }
 
-func NewInvalidFlagNameError(setFlag parser.SetFlag) error {
+func NewInvalidFlagNameError(expr parser.Expression, name string) error {
 	return &InvalidFlagNameError{
-		NewBaseError(setFlag, fmt.Sprintf(ERROR_INVALID_FLAG_NAME, setFlag.Name)),
+		NewBaseError(expr, fmt.Sprintf(ERROR_INVALID_FLAG_NAME, name)),
 	}
 }
 
