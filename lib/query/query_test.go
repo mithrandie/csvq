@@ -1,6 +1,7 @@
 package query
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -11,7 +12,6 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
-	"fmt"
 	"github.com/mithrandie/go-file"
 )
 
