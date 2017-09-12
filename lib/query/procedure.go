@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
@@ -10,8 +11,9 @@ import (
 )
 
 type Procedure struct {
-	Filter    *Filter
-	ReturnVal value.Primary
+	Filter           *Filter
+	ReturnVal        value.Primary
+	MeasurementStart time.Time
 }
 
 func NewProcedure() *Procedure {
@@ -49,6 +51,7 @@ func (proc *Procedure) Execute(statements []parser.Statement) (StatementFlow, er
 }
 
 func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, error) {
+	flags := cmd.GetFlags()
 	flow := TERMINATE
 
 	var err error
@@ -91,8 +94,10 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 	case parser.AggregateDeclaration:
 		err = proc.Filter.Functions.DeclareAggregate(stmt.(parser.AggregateDeclaration))
 	case parser.SelectQuery:
+		if flags.Stats {
+			proc.MeasurementStart = time.Now()
+		}
 		if view, err = Select(stmt.(parser.SelectQuery), proc.Filter); err == nil {
-			flags := cmd.GetFlags()
 			var viewstr string
 			var lineBreak = cmd.LF
 			if 0 < len(flags.OutFile) {
@@ -107,7 +112,13 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 				}
 			}
 		}
+		if flags.Stats {
+			proc.showExecutionTime()
+		}
 	case parser.InsertQuery:
+		if flags.Stats {
+			proc.MeasurementStart = time.Now()
+		}
 		if view, err = Insert(stmt.(parser.InsertQuery), proc.Filter); err == nil {
 			results = []Result{
 				{
@@ -116,11 +127,17 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					OperatedCount: view.OperatedRecords,
 				},
 			}
-			Log(fmt.Sprintf("%s inserted on %q.", FormatCount(view.OperatedRecords, "record"), view.FileInfo.Path), cmd.GetFlags().Quiet)
+			Log(fmt.Sprintf("%s inserted on %q.", FormatCount(view.OperatedRecords, "record"), view.FileInfo.Path), flags.Quiet)
 
 			view.OperatedRecords = 0
 		}
+		if flags.Stats {
+			proc.showExecutionTime()
+		}
 	case parser.UpdateQuery:
+		if flags.Stats {
+			proc.MeasurementStart = time.Now()
+		}
 		if views, err = Update(stmt.(parser.UpdateQuery), proc.Filter); err == nil {
 			results = make([]Result, len(views))
 			for i, v := range views {
@@ -129,12 +146,18 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					FileInfo:      v.FileInfo,
 					OperatedCount: v.OperatedRecords,
 				}
-				Log(fmt.Sprintf("%s updated on %q.", FormatCount(v.OperatedRecords, "record"), v.FileInfo.Path), cmd.GetFlags().Quiet)
+				Log(fmt.Sprintf("%s updated on %q.", FormatCount(v.OperatedRecords, "record"), v.FileInfo.Path), flags.Quiet)
 
 				v.OperatedRecords = 0
 			}
 		}
+		if flags.Stats {
+			proc.showExecutionTime()
+		}
 	case parser.DeleteQuery:
+		if flags.Stats {
+			proc.MeasurementStart = time.Now()
+		}
 		if views, err = Delete(stmt.(parser.DeleteQuery), proc.Filter); err == nil {
 			results = make([]Result, len(views))
 			for i, v := range views {
@@ -143,10 +166,13 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					FileInfo:      v.FileInfo,
 					OperatedCount: v.OperatedRecords,
 				}
-				Log(fmt.Sprintf("%s deleted on %q.", FormatCount(v.OperatedRecords, "record"), v.FileInfo.Path), cmd.GetFlags().Quiet)
+				Log(fmt.Sprintf("%s deleted on %q.", FormatCount(v.OperatedRecords, "record"), v.FileInfo.Path), flags.Quiet)
 
 				v.OperatedRecords = 0
 			}
+		}
+		if flags.Stats {
+			proc.showExecutionTime()
 		}
 	case parser.CreateTable:
 		if view, err = CreateTable(stmt.(parser.CreateTable), proc.Filter); err == nil {
@@ -156,7 +182,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					FileInfo: view.FileInfo,
 				},
 			}
-			Log(fmt.Sprintf("file %q is created.", view.FileInfo.Path), cmd.GetFlags().Quiet)
+			Log(fmt.Sprintf("file %q is created.", view.FileInfo.Path), flags.Quiet)
 
 			view.OperatedRecords = 0
 		}
@@ -169,7 +195,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					OperatedCount: view.OperatedFields,
 				},
 			}
-			Log(fmt.Sprintf("%s added on %q.", FormatCount(view.OperatedFields, "field"), view.FileInfo.Path), cmd.GetFlags().Quiet)
+			Log(fmt.Sprintf("%s added on %q.", FormatCount(view.OperatedFields, "field"), view.FileInfo.Path), flags.Quiet)
 
 			view.OperatedRecords = 0
 		}
@@ -182,7 +208,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					OperatedCount: view.OperatedFields,
 				},
 			}
-			Log(fmt.Sprintf("%s dropped on %q.", FormatCount(view.OperatedFields, "field"), view.FileInfo.Path), cmd.GetFlags().Quiet)
+			Log(fmt.Sprintf("%s dropped on %q.", FormatCount(view.OperatedFields, "field"), view.FileInfo.Path), flags.Quiet)
 
 			view.OperatedRecords = 0
 		}
@@ -195,7 +221,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 					OperatedCount: view.OperatedFields,
 				},
 			}
-			Log(fmt.Sprintf("%s renamed on %q.", FormatCount(view.OperatedFields, "field"), view.FileInfo.Path), cmd.GetFlags().Quiet)
+			Log(fmt.Sprintf("%s renamed on %q.", FormatCount(view.OperatedFields, "field"), view.FileInfo.Path), flags.Quiet)
 
 			view.OperatedRecords = 0
 		}
@@ -400,4 +426,10 @@ func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, 
 	}
 
 	return TERMINATE, nil
+}
+
+func (proc *Procedure) showExecutionTime() {
+	exectime := cmd.HumarizeNumber(fmt.Sprintf("%f", time.Since(proc.MeasurementStart).Seconds()))
+	stats := fmt.Sprintf("Query Execution Time: %s seconds", exectime)
+	Log(stats, false)
 }

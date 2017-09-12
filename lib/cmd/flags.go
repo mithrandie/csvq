@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -277,13 +278,11 @@ func SetWriteEncoding(s string) error {
 }
 
 func SetOut(s string) error {
-	if len(s) < 1 {
-		return nil
-	}
-
-	_, err := os.Stat(s)
-	if err == nil {
-		return errors.New("file passed in out option already exists")
+	if 0 < len(s) {
+		_, err := os.Stat(s)
+		if err == nil {
+			return errors.New(fmt.Sprintf("file %q already exists", s))
+		}
 	}
 
 	f := GetFlags()

@@ -61,7 +61,7 @@ Convert a value to an integer.
 | :- | :- |
 | String   | If a string is a representation of a decimal integer or its exponential notation, then it is converted to an integer. If a string is a representation of a floating-point decimal or its exponential notation, then it is converted and rounded to an integer. Otherwise it is converted to a null. |
 | Float    | A float value is rounded to an integer. |
-| Datetime | A datetime value is converted to an integer representing it's unix time. |
+| Datetime | A datetime value is converted to an integer representing its unix time. |
 | Boolean  | A boolean value is converted to a null. |
 | Ternary  | A ternaly value is converted to a null. |
 | Null     | A null value is kept as it is. |
@@ -85,7 +85,7 @@ Convert a value to a float.
 | :- | :- |
 | String   | If a string is a representation of a floating-point decimal or its exponential notation, then it is converted to a float. Otherwise it is converted to a null. |
 | Integer  | An integer value is converted to a float. |
-| Datetime | A datetime value is converted to a float representing it's unix time. |
+| Datetime | A datetime value is converted to a float representing its unix time. |
 | Boolean  | A boolean value is converted to a null. |
 | Ternary  | A ternary value is converted to a null. |
 | Null     | A null value is kept as it is. |

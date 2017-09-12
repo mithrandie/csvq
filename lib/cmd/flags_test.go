@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -279,7 +280,7 @@ func TestSetOut(t *testing.T) {
 		t.Errorf("unexpected error %q for %q", err.Error(), "")
 	}
 
-	expectErr := "file passed in out option already exists"
+	expectErr := fmt.Sprintf("file %q already exists", "flags_test.go")
 	err = SetOut("flags_test.go")
 	if err == nil {
 		t.Errorf("no error, want error %q for %q", expectErr, "flags_test.go")

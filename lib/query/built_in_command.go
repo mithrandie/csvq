@@ -94,7 +94,7 @@ func SetFlag(expr parser.SetFlag) error {
 		p = value.ToString(expr.Value)
 	case "@@WAIT_TIMEOUT":
 		p = value.ToFloat(expr.Value)
-	case "@@NO_HEADER", "@@WITHOUT_NULL":
+	case "@@NO_HEADER", "@@WITHOUT_NULL", "@@STATS":
 		p = value.ToBoolean(expr.Value)
 	default:
 		return NewInvalidFlagNameError(expr, expr.Name)
@@ -125,6 +125,8 @@ func SetFlag(expr parser.SetFlag) error {
 		cmd.SetNoHeader(p.(value.Boolean).Raw())
 	case "@@WITHOUT_NULL":
 		cmd.SetWithoutNull(p.(value.Boolean).Raw())
+	case "@@STATS":
+		cmd.SetStats(p.(value.Boolean).Raw())
 	}
 
 	if err != nil {
@@ -164,6 +166,8 @@ func ShowFlag(expr parser.ShowFlag) (string, error) {
 		s = strconv.FormatBool(flags.NoHeader)
 	case "@@WITHOUT_NULL":
 		s = strconv.FormatBool(flags.WithoutNull)
+	case "@@STATS":
+		s = strconv.FormatBool(flags.Stats)
 	default:
 		return s, NewInvalidFlagNameError(expr, expr.Name)
 	}

@@ -1,7 +1,6 @@
 package action
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -22,7 +21,7 @@ func Run(input string, sourceFile string) error {
 
 	defer func() {
 		query.ReleaseResources()
-		showStats(start, false)
+		showStats(start)
 	}()
 
 	query.UpdateWaitTimeout()
@@ -53,14 +52,16 @@ func LaunchInteractiveShell() error {
 	if cmd.IsReadableFromPipeOrRedirection() {
 		return errors.New("input from pipe or redirection cannot be used in interactive shell")
 	}
+	cmd.SetWriteEncoding("UTF8")
+	cmd.SetOut("")
+	cmd.SetFormat("TEXT")
+	cmd.SetWriteEncoding(",")
+	cmd.SetWithoutHeader(false)
 
 	SetSignalHandler()
-	start := time.Now()
-	eof := false
 
 	defer func() {
 		query.ReleaseResources()
-		showStats(start, eof)
 	}()
 
 	var err error
@@ -70,20 +71,19 @@ func LaunchInteractiveShell() error {
 	if err != nil {
 		return err
 	}
+	cmd.Terminal = term
 	defer func() {
-		term.Restore()
-		cmd.Term = nil
+		cmd.Terminal.Teardown()
+		cmd.Terminal = nil
 	}()
-	cmd.Term = term
 
 	proc := query.NewProcedure()
-	var buf bytes.Buffer
+	lines := []string{}
 
 	for {
-		line, e := term.ReadLine()
+		line, e := cmd.Terminal.ReadLine()
 		if e != nil {
 			if e == io.EOF {
-				eof = true
 				break
 			}
 			return e
@@ -91,34 +91,34 @@ func LaunchInteractiveShell() error {
 
 		line = strings.TrimRightFunc(line, unicode.IsSpace)
 
-		if buf.Len() < 1 && len(line) < 1 {
+		if len(lines) < 1 && len(line) < 1 {
 			continue
 		}
 
 		if 0 < len(line) && line[len(line)-1] == '\\' {
-			buf.WriteString(line[:len(line)-1])
-			buf.WriteRune('\n')
-			term.SetContinuousPrompt()
+			lines = append(lines, line[:len(line)-1])
+			cmd.Terminal.SetContinuousPrompt()
 			continue
 		}
 
-		buf.WriteString(line)
-		buf.WriteRune('\n')
+		lines = append(lines, line)
 
 		if len(line) < 1 || line[len(line)-1] != ';' {
-			term.SetContinuousPrompt()
+			cmd.Terminal.SetContinuousPrompt()
 			continue
 		}
 
-		statements, e := parser.Parse(buf.String(), "")
+		cmd.Terminal.SaveHistory(strings.Join(lines, " "))
+
+		statements, e := parser.Parse(strings.Join(lines, "\n"), "")
 		if e != nil {
 			syntaxErr := e.(*parser.SyntaxError)
 			e = query.NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)
-			if werr := term.Write(e.Error() + "\n"); werr != nil {
+			if werr := cmd.Terminal.Write(e.Error() + "\n"); werr != nil {
 				return werr
 			}
-			buf.Reset()
-			term.SetPrompt()
+			lines = lines[:0]
+			cmd.Terminal.SetPrompt()
 			continue
 		}
 
@@ -128,11 +128,11 @@ func LaunchInteractiveShell() error {
 				err = ex
 				break
 			} else {
-				if werr := term.Write(e.Error() + "\n"); werr != nil {
+				if werr := cmd.Terminal.Write(e.Error() + "\n"); werr != nil {
 					return werr
 				}
-				buf.Reset()
-				term.SetPrompt()
+				lines = lines[:0]
+				cmd.Terminal.SetPrompt()
 				continue
 			}
 		}
@@ -141,8 +141,8 @@ func LaunchInteractiveShell() error {
 			break
 		}
 
-		buf.Reset()
-		term.SetPrompt()
+		lines = lines[:0]
+		cmd.Terminal.SetPrompt()
 	}
 
 	createSelectLog()
@@ -161,7 +161,7 @@ func createSelectLog() error {
 	return nil
 }
 
-func showStats(start time.Time, lower bool) {
+func showStats(start time.Time) {
 	flags := cmd.GetFlags()
 	if !flags.Stats {
 		return
@@ -185,13 +185,13 @@ func showStats(start time.Time, lower bool) {
 	w := strconv.Itoa(width)
 
 	stats := fmt.Sprintf(
-		"      Time: %"+w+"[2]s seconds %[1]s"+
+		" TotalTime: %"+w+"[2]s seconds %[1]s"+
 			"     Alloc: %"+w+"[3]s bytes %[1]s"+
 			"TotalAlloc: %"+w+"[4]s bytes %[1]s"+
 			"   HeapSys: %"+w+"[5]s bytes %[1]s"+
 			"   Mallocs: %"+w+"[6]s objects %[1]s"+
 			"     Frees: %"+w+"[7]s objects %[1]s",
-		flags.LineBreak.Value(),
+		"\n",
 		exectime,
 		alloc,
 		talloc,
@@ -199,8 +199,5 @@ func showStats(start time.Time, lower bool) {
 		mallocs,
 		frees,
 	)
-	if lower {
-		cmd.ToStdout("\n")
-	}
 	cmd.ToStdout(stats)
 }
