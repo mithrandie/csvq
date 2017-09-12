@@ -5,6 +5,8 @@ title: License - csvq
 
 # License
 
+The MIT License
+
 Copyright (c) 2017 Mori, Yuki
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -61,7 +63,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-#### [https://github.com/urfave/cli](https://github.com/golang/go)
+#### [https://github.com/urfave/cli](https://github.com/urfave/cli)
 
 MIT License
 
@@ -138,7 +140,7 @@ THE SOFTWARE.
 
 #### [https://github.com/mithrandie/go-file](https://github.com/mithrandie/go-file)
 
-MIT License
+The MIT License
 
 Copyright (c) 2017 Mithrandie
 
