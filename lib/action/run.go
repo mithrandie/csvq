@@ -145,8 +145,6 @@ func LaunchInteractiveShell() error {
 		cmd.Terminal.SetPrompt()
 	}
 
-	createSelectLog()
-
 	return err
 }
 
