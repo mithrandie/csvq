@@ -148,7 +148,7 @@ _table_name_
 _alias_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
 
-  If _alias_ is not specified, _table_name_ stripped it's directory path and extension is used as alias.
+  If _alias_ is not specified, _table_name_ stripped its directory path and extension is used as alias.
 
   ```sql
   -- Following expressions are equivalent

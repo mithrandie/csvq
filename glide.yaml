@@ -4,3 +4,6 @@ import:
   version: ^1.19.1
 - package: github.com/mithrandie/go-file
   version: ^0.0.1
+- package: github.com/chzyer/readline
+  version: ^1.4.0
+- package: github.com/mitchellh/go-homedir

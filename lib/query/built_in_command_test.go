@@ -305,6 +305,15 @@ var setFlagTests = []struct {
 		ResultBoolValue: true,
 	},
 	{
+		Name: "Set Stats",
+		Expr: parser.SetFlag{
+			Name:  "@@stats",
+			Value: value.NewBoolean(true),
+		},
+		ResultFlag:      "stats",
+		ResultBoolValue: true,
+	},
+	{
 		Name: "Set Delimiter Value Error",
 		Expr: parser.SetFlag{
 			Name:  "@@delimiter",
@@ -397,6 +406,10 @@ func TestSetFlag(t *testing.T) {
 		case "WITHOUT-NULL":
 			if flags.WithoutNull != v.ResultBoolValue {
 				t.Errorf("%s: without-null = %t, want %t", v.Name, flags.WithoutNull, v.ResultBoolValue)
+			}
+		case "STATS":
+			if flags.Stats != v.ResultBoolValue {
+				t.Errorf("%s: stats = %t, want %t", v.Name, flags.Stats, v.ResultBoolValue)
 			}
 		}
 	}
@@ -520,6 +533,17 @@ var showFlagTests = []struct {
 		},
 		SetExpr: parser.SetFlag{
 			Name:  "@@without_null",
+			Value: value.NewBoolean(true),
+		},
+		Result: "true",
+	},
+	{
+		Name: "Show Stats",
+		Expr: parser.ShowFlag{
+			Name: "@@stats",
+		},
+		SetExpr: parser.SetFlag{
+			Name:  "@@stats",
 			Value: value.NewBoolean(true),
 		},
 		Result: "true",

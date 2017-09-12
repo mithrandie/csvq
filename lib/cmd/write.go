@@ -2,23 +2,16 @@ package cmd
 
 import (
 	"bufio"
-	"io"
 	"os"
 
 	"github.com/mithrandie/go-file"
-	"golang.org/x/crypto/ssh/terminal"
 )
 
-const (
-	TERMINAL_PROMPT            string = "csvq > "
-	TERMINAL_CONTINUOUS_PROMPT string = "     > "
-)
-
-var Term *Terminal
+var Terminal VirtualTerminal
 
 func ToStdout(s string) error {
-	if Term != nil {
-		return Term.Write(s)
+	if Terminal != nil {
+		return Terminal.Write(s)
 	}
 	return CreateFile("", s)
 }
@@ -72,65 +65,4 @@ func TryCreateFile(filename string) error {
 	os.Remove(filename)
 
 	return nil
-}
-
-type Terminal struct {
-	terminal *terminal.Terminal
-	oldFd    int
-	oldState *terminal.State
-}
-
-func NewTerminal() (*Terminal, error) {
-	oldFd := int(os.Stdin.Fd())
-	oldState, err := terminal.MakeRaw(oldFd)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Terminal{
-		terminal: terminal.NewTerminal(NewStdIO(), TERMINAL_PROMPT),
-		oldFd:    oldFd,
-		oldState: oldState,
-	}, nil
-}
-
-func (t *Terminal) Restore() {
-	terminal.Restore(t.oldFd, t.oldState)
-}
-
-func (t *Terminal) ReadLine() (string, error) {
-	return t.terminal.ReadLine()
-}
-
-func (t *Terminal) Write(s string) error {
-	_, err := t.terminal.Write([]byte(s))
-	return err
-}
-
-func (t *Terminal) SetPrompt() {
-	t.terminal.SetPrompt(TERMINAL_PROMPT)
-}
-
-func (t *Terminal) SetContinuousPrompt() {
-	t.terminal.SetPrompt(TERMINAL_CONTINUOUS_PROMPT)
-}
-
-type StdIO struct {
-	reader io.Reader
-	writer io.Writer
-}
-
-func (sh *StdIO) Read(p []byte) (n int, err error) {
-	return sh.reader.Read(p)
-}
-
-func (sh *StdIO) Write(p []byte) (n int, err error) {
-	return sh.writer.Write(p)
-}
-
-func NewStdIO() *StdIO {
-	return &StdIO{
-		reader: os.Stdin,
-		writer: os.Stdout,
-	}
 }

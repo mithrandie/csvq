@@ -90,6 +90,7 @@ func initFlag() {
 	flags.DatetimeFormat = ""
 	flags.NoHeader = false
 	flags.WithoutNull = false
+	flags.Stats = false
 }
 
 func copyfile(dstfile string, srcfile string) error {
