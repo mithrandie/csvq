@@ -77,6 +77,12 @@ func LaunchInteractiveShell() error {
 		cmd.Terminal = nil
 	}()
 
+	StartUpMessage := "csvq interactive shell\n" +
+		"Press Ctrl+D or execute \"EXIT;\" to terminate this shell.\n\n"
+	if werr := cmd.Terminal.Write(StartUpMessage); werr != nil {
+		return werr
+	}
+
 	proc := query.NewProcedure()
 	lines := []string{}
 
