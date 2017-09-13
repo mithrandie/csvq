@@ -1,5 +1,5 @@
-hash: 78b046bbc349e08ab3c59bd770810f4e0f4ff2357729419e39d4d450ba003351
-updated: 2017-09-13T15:45:46.513411298+09:00
+hash: b7f8e21599702aec2acb213011540c3ebe8e3d0b205777371c0464cd2908199c
+updated: 2017-09-13T23:00:58.726873643+09:00
 imports:
 - name: github.com/chzyer/readline
   version: 62c6fe6193755f722b8b8788aa7357be55a50ff1
@@ -7,6 +7,8 @@ imports:
   version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/mithrandie/go-file
   version: 0ba4fcc7514bc93acc2832f68e71ea691ce5d0a6
+- name: github.com/mithrandie/ternary
+  version: 0d1fabec7c9e6ea5305b802faf2a8868c4d2099a
 - name: github.com/urfave/cli
   version: cfb38830724cc34fedffe9a2a29fb54fa9169cd1
 - name: golang.org/x/crypto

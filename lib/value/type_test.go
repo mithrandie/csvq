@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/ternary"
+	"github.com/mithrandie/ternary"
 )
 
 func TestIsNull(t *testing.T) {

@@ -5,7 +5,8 @@ import (
 	"time"
 
 	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/csvq/lib/ternary"
+
+	"github.com/mithrandie/ternary"
 )
 
 func TestStrToTime(t *testing.T) {

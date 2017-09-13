@@ -5,8 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/ternary"
 	"github.com/mithrandie/csvq/lib/value"
+
+	"github.com/mithrandie/ternary"
 )
 
 func TestBaseExpr_Line(t *testing.T) {

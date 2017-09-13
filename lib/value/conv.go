@@ -9,7 +9,8 @@ import (
 	"time"
 
 	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/csvq/lib/ternary"
+
+	"github.com/mithrandie/ternary"
 )
 
 type DatetimeFormatMap map[string]string
