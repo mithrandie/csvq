@@ -4,8 +4,9 @@ import (
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/parser"
-	"github.com/mithrandie/csvq/lib/ternary"
 	"github.com/mithrandie/csvq/lib/value"
+
+	"github.com/mithrandie/ternary"
 )
 
 type CursorScopes []CursorMap
@@ -171,7 +172,7 @@ func (m CursorMap) Fetch(name parser.Identifier, position int, number int) ([]va
 
 func (m CursorMap) IsOpen(name parser.Identifier) (ternary.Value, error) {
 	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
-		return ternary.ParseBool(cur.view != nil), nil
+		return ternary.ConvertFromBool(cur.view != nil), nil
 	}
 	return ternary.FALSE, NewUndefinedCursorError(name)
 }
@@ -184,7 +185,7 @@ func (m CursorMap) IsInRange(name parser.Identifier) (ternary.Value, error) {
 		if !cur.fetched {
 			return ternary.UNKNOWN, nil
 		}
-		return ternary.ParseBool(-1 < cur.index && cur.index < cur.view.RecordLen()), nil
+		return ternary.ConvertFromBool(-1 < cur.index && cur.index < cur.view.RecordLen()), nil
 	}
 	return ternary.FALSE, NewUndefinedCursorError(name)
 }

@@ -4,8 +4,9 @@ import (
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/parser"
-	"github.com/mithrandie/csvq/lib/ternary"
 	"github.com/mithrandie/csvq/lib/value"
+
+	"github.com/mithrandie/ternary"
 )
 
 type SortValueType int
@@ -162,13 +163,13 @@ func (v *SortValue) Less(compareValue *SortValue) ternary.Value {
 			if v.Integer == compareValue.Integer {
 				return ternary.UNKNOWN
 			}
-			return ternary.ParseBool(v.Integer < compareValue.Integer)
+			return ternary.ConvertFromBool(v.Integer < compareValue.Integer)
 		case SORT_VALUE_FLOAT:
-			return ternary.ParseBool(v.Float < compareValue.Float)
+			return ternary.ConvertFromBool(v.Float < compareValue.Float)
 		case SORT_VALUE_DATETIME:
-			return ternary.ParseBool(v.Datetime < compareValue.Datetime)
+			return ternary.ConvertFromBool(v.Datetime < compareValue.Datetime)
 		case SORT_VALUE_STRING:
-			return ternary.ParseBool(v.String < compareValue.String)
+			return ternary.ConvertFromBool(v.String < compareValue.String)
 		}
 	case SORT_VALUE_FLOAT:
 		switch compareValue.Type {
@@ -176,11 +177,11 @@ func (v *SortValue) Less(compareValue *SortValue) ternary.Value {
 			if v.Float == compareValue.Float {
 				return ternary.UNKNOWN
 			}
-			return ternary.ParseBool(v.Float < compareValue.Float)
+			return ternary.ConvertFromBool(v.Float < compareValue.Float)
 		case SORT_VALUE_DATETIME:
-			return ternary.ParseBool(v.Datetime < compareValue.Datetime)
+			return ternary.ConvertFromBool(v.Datetime < compareValue.Datetime)
 		case SORT_VALUE_STRING:
-			return ternary.ParseBool(v.String < compareValue.String)
+			return ternary.ConvertFromBool(v.String < compareValue.String)
 		}
 	case SORT_VALUE_DATETIME:
 		switch compareValue.Type {
@@ -188,7 +189,7 @@ func (v *SortValue) Less(compareValue *SortValue) ternary.Value {
 			if v.Datetime == compareValue.Datetime {
 				return ternary.UNKNOWN
 			}
-			return ternary.ParseBool(v.Datetime < compareValue.Datetime)
+			return ternary.ConvertFromBool(v.Datetime < compareValue.Datetime)
 		}
 	case SORT_VALUE_STRING:
 		switch compareValue.Type {
@@ -196,7 +197,7 @@ func (v *SortValue) Less(compareValue *SortValue) ternary.Value {
 			if v.String == compareValue.String {
 				return ternary.UNKNOWN
 			}
-			return ternary.ParseBool(v.String < compareValue.String)
+			return ternary.ConvertFromBool(v.String < compareValue.String)
 		}
 	}
 

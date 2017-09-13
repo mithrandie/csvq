@@ -4,8 +4,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/ternary"
 	"github.com/mithrandie/csvq/lib/value"
+
+	"github.com/mithrandie/ternary"
 )
 
 const TOKEN_UNDEFINED = 0

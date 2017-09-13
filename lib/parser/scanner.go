@@ -9,8 +9,9 @@ import (
 	"unicode"
 
 	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/csvq/lib/ternary"
 	"github.com/mithrandie/csvq/lib/value"
+
+	"github.com/mithrandie/ternary"
 )
 
 const (
@@ -177,7 +178,7 @@ func (s *Scanner) Scan() (Token, error) {
 		s.scanIdentifier()
 
 		literal = s.literal()
-		if _, e := ternary.Parse(literal); e == nil {
+		if _, e := ternary.ConvertFromString(literal); e == nil {
 			token = TERNARY
 		} else if t, e := s.searchKeyword(literal); e == nil {
 			token = rune(t)

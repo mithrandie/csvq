@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/ternary"
+	"github.com/mithrandie/ternary"
 )
 
 func IsNull(v Primary) bool {
@@ -41,7 +41,7 @@ func (s String) Raw() string {
 func (s String) Ternary() ternary.Value {
 	lit := strings.TrimSpace(s.Raw())
 	if b, err := strconv.ParseBool(lit); err == nil {
-		return ternary.ParseBool(b)
+		return ternary.ConvertFromBool(b)
 	}
 	return ternary.UNKNOWN
 }
@@ -137,7 +137,7 @@ func (b Boolean) Raw() bool {
 }
 
 func (b Boolean) Ternary() ternary.Value {
-	return ternary.ParseBool(b.Raw())
+	return ternary.ConvertFromBool(b.Raw())
 }
 
 type Ternary struct {
@@ -145,7 +145,7 @@ type Ternary struct {
 }
 
 func NewTernaryFromString(s string) Ternary {
-	t, _ := ternary.Parse(s)
+	t, _ := ternary.ConvertFromString(s)
 	return Ternary{
 		value: t,
 	}

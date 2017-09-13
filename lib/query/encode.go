@@ -9,8 +9,9 @@ import (
 	"unicode"
 
 	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/csvq/lib/ternary"
 	"github.com/mithrandie/csvq/lib/value"
+
+	"github.com/mithrandie/ternary"
 )
 
 var fullWidthTable = &unicode.RangeTable{

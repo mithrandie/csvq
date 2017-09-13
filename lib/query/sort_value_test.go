@@ -4,8 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/ternary"
 	"github.com/mithrandie/csvq/lib/value"
+
+	"github.com/mithrandie/ternary"
 )
 
 func TestSortValues_Serialize(t *testing.T) {

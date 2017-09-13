@@ -5,16 +5,17 @@ import (
 	"unicode/utf8"
 
 	"github.com/mithrandie/csvq/lib/parser"
-	"github.com/mithrandie/csvq/lib/ternary"
 	"github.com/mithrandie/csvq/lib/value"
+
+	"github.com/mithrandie/ternary"
 )
 
 func Is(p1 value.Primary, p2 value.Primary) ternary.Value {
 	if value.IsNull(p2) {
-		return ternary.ParseBool(value.IsNull(p1))
+		return ternary.ConvertFromBool(value.IsNull(p1))
 	}
 
-	return p1.Ternary().EqualTo(p2.Ternary())
+	return ternary.Equivalent(p1.Ternary(), p2.Ternary())
 }
 
 func Like(p1 value.Primary, p2 value.Primary) ternary.Value {

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/mithrandie/csvq/lib/ternary"
+	"github.com/mithrandie/ternary"
 )
 
 type ComparisonResult int
@@ -110,42 +110,42 @@ func CompareCombinedly(p1 Primary, p2 Primary) ComparisonResult {
 
 func Equal(p1 Primary, p2 Primary) ternary.Value {
 	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE {
-		return ternary.ParseBool(r == EQUAL || r == BOOL_EQUAL)
+		return ternary.ConvertFromBool(r == EQUAL || r == BOOL_EQUAL)
 	}
 	return ternary.UNKNOWN
 }
 
 func NotEqual(p1 Primary, p2 Primary) ternary.Value {
 	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE {
-		return ternary.ParseBool(r != EQUAL && r != BOOL_EQUAL)
+		return ternary.ConvertFromBool(r != EQUAL && r != BOOL_EQUAL)
 	}
 	return ternary.UNKNOWN
 }
 
 func Less(p1 Primary, p2 Primary) ternary.Value {
 	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE && r != NOT_EQUAL && r != BOOL_EQUAL {
-		return ternary.ParseBool(r == LESS)
+		return ternary.ConvertFromBool(r == LESS)
 	}
 	return ternary.UNKNOWN
 }
 
 func Greater(p1 Primary, p2 Primary) ternary.Value {
 	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE && r != NOT_EQUAL && r != BOOL_EQUAL {
-		return ternary.ParseBool(r == GREATER)
+		return ternary.ConvertFromBool(r == GREATER)
 	}
 	return ternary.UNKNOWN
 }
 
 func LessOrEqual(p1 Primary, p2 Primary) ternary.Value {
 	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE && r != NOT_EQUAL && r != BOOL_EQUAL {
-		return ternary.ParseBool(r != GREATER)
+		return ternary.ConvertFromBool(r != GREATER)
 	}
 	return ternary.UNKNOWN
 }
 
 func GreaterOrEqual(p1 Primary, p2 Primary) ternary.Value {
 	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE && r != NOT_EQUAL && r != BOOL_EQUAL {
-		return ternary.ParseBool(r != LESS)
+		return ternary.ConvertFromBool(r != LESS)
 	}
 	return ternary.UNKNOWN
 }

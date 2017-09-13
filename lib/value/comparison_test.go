@@ -3,7 +3,7 @@ package value
 import (
 	"testing"
 
-	"github.com/mithrandie/csvq/lib/ternary"
+	"github.com/mithrandie/ternary"
 )
 
 func TestComparisonResult_String(t *testing.T) {

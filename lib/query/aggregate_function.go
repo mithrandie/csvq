@@ -4,8 +4,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/mithrandie/csvq/lib/ternary"
 	"github.com/mithrandie/csvq/lib/value"
+
+	"github.com/mithrandie/ternary"
 )
 
 type AggregateFunction func([]value.Primary) value.Primary

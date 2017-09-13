@@ -4,7 +4,8 @@ import (
 	"sync"
 
 	"github.com/mithrandie/csvq/lib/parser"
-	"github.com/mithrandie/csvq/lib/ternary"
+
+	"github.com/mithrandie/ternary"
 )
 
 func ParseJoinCondition(join parser.Join, view *View, joinView *View) (parser.QueryExpression, []parser.FieldReference, []parser.FieldReference, error) {

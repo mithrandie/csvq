@@ -9,8 +9,9 @@ import (
 	"golang.org/x/text/transform"
 
 	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/csvq/lib/ternary"
 	"github.com/mithrandie/csvq/lib/value"
+
+	"github.com/mithrandie/ternary"
 )
 
 func encodeToSJIS(str string) string {

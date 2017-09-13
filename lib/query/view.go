@@ -11,9 +11,10 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/csv"
 	"github.com/mithrandie/csvq/lib/parser"
-	"github.com/mithrandie/csvq/lib/ternary"
 	"github.com/mithrandie/csvq/lib/value"
+
 	"github.com/mithrandie/go-file"
+	"github.com/mithrandie/ternary"
 )
 
 type View struct {
