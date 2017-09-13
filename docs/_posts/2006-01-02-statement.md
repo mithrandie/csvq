@@ -38,13 +38,13 @@ If you want to continue to input a statement on the next line even though the en
 --stats
 : Show only Query Execution Time
 
-#### Line Editor in the interactive shell
+#### Line editor in the interactive shell
 
 On the some systems, the interactive shell provide more powerful line editor by using the package [https://github.com/chzyer/readline](https://github.com/chzyer/readline).
 You can use not all features of the readline package, but its short cut keys, command history and features like that will help you.
 
-##### Systems that embed the readline package
-darwin dragonfly freebsd linux netbsd openbsd solaris windows
+The readline package is used on the following systems.
+- darwin dragonfly freebsd linux netbsd openbsd solaris windows
 
 
 ```bash
