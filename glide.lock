@@ -1,12 +1,12 @@
 hash: 78b046bbc349e08ab3c59bd770810f4e0f4ff2357729419e39d4d450ba003351
-updated: 2017-09-12T11:58:57.164209661+09:00
+updated: 2017-09-13T15:45:46.513411298+09:00
 imports:
 - name: github.com/chzyer/readline
   version: 62c6fe6193755f722b8b8788aa7357be55a50ff1
 - name: github.com/mitchellh/go-homedir
   version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/mithrandie/go-file
-  version: e293f57115f018ba15e0df3390dc07898a42528c
+  version: 0ba4fcc7514bc93acc2832f68e71ea691ce5d0a6
 - name: github.com/urfave/cli
   version: cfb38830724cc34fedffe9a2a29fb54fa9169cd1
 - name: golang.org/x/crypto

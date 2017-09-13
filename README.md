@@ -8,8 +8,8 @@ SQL-like query language for csv
 csvq is a command line tool to operate CSV files. 
 You can read, update, delete CSV records with SQL-like query.
 
-You can also execute multiple operations sequentially in managed transactions by passing a procedure as a command argument or a source file.
-In the procedure, you can use variables, cursors, temporary tables, and other features. 
+You can also execute multiple operations sequentially in managed transactions by passing a procedure or using the interactive shell.
+In the multiple operations, you can use variables, cursors, temporary tables, and other features. 
 
 ## Install
 
@@ -32,11 +32,12 @@ Go 1.9 (ref. [Getting Started - The Go Programming Language](https://golang.org/
 
 ##### Build with strict dependencies
 
-1. Install GNU Make
+1. Install Glide (ref. [Glide: Vendor Package Management for Golang](https://github.com/Masterminds/glide))
 2. ```$ go get -d github.com/mithrandie/csvq```
 3. Change directory to $GOPATH/github.com/mithrandie/csvq
-4. ```$ make deps```
-5. ```$ make install```
+4. ```$ glide install```
+5. ```$ go install```
+
 
 ## Usage
 
