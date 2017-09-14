@@ -26,9 +26,9 @@ If you want to execute a single query, you can omit the terminal semicolon.
 
 When the csvq command is called with no argument and no "--source" (or "-s") option, the interactive shell is launched.
 You can use the interactive shell in order to sequencial input and execution.
-In the interactive shell, statements are executed when the end of the line ends with a semicolon.
+In the interactive shell, statements are executed when a line ends with a semicolon.
 
-If you want to continue to input a statement on the next line even though the end of the line is a semicolon, you can use a backslash at the end of the line.
+If you want to continue to input a statement on the next line even though the end of the line is a semicolon, you can use a backslash at the end of the line to continue.
 
 #### Command options in the interactive shell
 
@@ -40,8 +40,8 @@ If you want to continue to input a statement on the next line even though the en
 
 #### Line editor in the interactive shell
 
-On the some systems, the interactive shell provide more powerful line editor by using the package [https://github.com/chzyer/readline](https://github.com/chzyer/readline).
-You can use not all features of the readline package, but its short cut keys, command history and features like that will help you.
+On the some systems, the interactive shell provides a more powerful line editor by using the package [https://github.com/chzyer/readline](https://github.com/chzyer/readline).
+Not all features of the readline package are available, but its short cut keys, command history and features like that will help you.
 
 The readline package is used on the following systems.
 - darwin dragonfly freebsd linux netbsd openbsd solaris windows
