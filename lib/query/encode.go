@@ -349,7 +349,7 @@ func formatCSVCell(c Cell) string {
 		if t.Ternary() == ternary.UNKNOWN {
 			s = ""
 		} else {
-			s = strconv.FormatBool(t.Ternary().BoolValue())
+			s = strconv.FormatBool(t.Ternary().ParseBool())
 		}
 	case value.Datetime:
 		s = quote(escapeCSVString(primary.(value.Datetime).Format(time.RFC3339Nano)))
@@ -397,7 +397,7 @@ func formatJsonCell(c Cell) string {
 		if t.Ternary() == ternary.UNKNOWN {
 			s = "null"
 		} else {
-			s = strconv.FormatBool(t.Ternary().BoolValue())
+			s = strconv.FormatBool(t.Ternary().ParseBool())
 		}
 	case value.Datetime:
 		s = quote(escapeJsonString(primary.(value.Datetime).Format(time.RFC3339Nano)))

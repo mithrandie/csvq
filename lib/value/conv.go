@@ -326,7 +326,7 @@ func ToBoolean(p Primary) Primary {
 		return p
 	case String, Integer, Float, Ternary:
 		if p.Ternary() != ternary.UNKNOWN {
-			return NewBoolean(p.Ternary().BoolValue())
+			return NewBoolean(p.Ternary().ParseBool())
 		}
 	}
 	return NewNull()
