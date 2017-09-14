@@ -15,7 +15,7 @@ func Is(p1 value.Primary, p2 value.Primary) ternary.Value {
 		return ternary.ConvertFromBool(value.IsNull(p1))
 	}
 
-	return ternary.Equivalent(p1.Ternary(), p2.Ternary())
+	return ternary.Equal(p1.Ternary(), p2.Ternary())
 }
 
 func Like(p1 value.Primary, p2 value.Primary) ternary.Value {
