@@ -115,9 +115,9 @@ func FetchCursor(name parser.Identifier, fetchPosition parser.FetchPosition, var
 	return true, nil
 }
 
-func DeclareTable(expr parser.TableDeclaration, filter *Filter) error {
-	if filter.TempViews.Exists(expr.Table.Literal) {
-		return NewTemporaryTableRedeclaredError(expr.Table)
+func DeclareView(expr parser.ViewDeclaration, filter *Filter) error {
+	if filter.TempViews.Exists(expr.View.Literal) {
+		return NewTemporaryTableRedeclaredError(expr.View)
 	}
 
 	var view *View
@@ -129,9 +129,9 @@ func DeclareTable(expr parser.TableDeclaration, filter *Filter) error {
 			return err
 		}
 
-		if err := view.Header.Update(expr.Table.Literal, expr.Fields); err != nil {
+		if err := view.Header.Update(expr.View.Literal, expr.Fields); err != nil {
 			if _, ok := err.(*FieldLengthNotMatchError); ok {
-				return NewTemporaryTableFieldLengthError(expr.Query.(parser.SelectQuery), expr.Table, len(expr.Fields))
+				return NewTemporaryTableFieldLengthError(expr.Query.(parser.SelectQuery), expr.View, len(expr.Fields))
 			}
 			return err
 		}
@@ -144,7 +144,7 @@ func DeclareTable(expr parser.TableDeclaration, filter *Filter) error {
 			}
 			fields[i] = f.Literal
 		}
-		header := NewHeader(expr.Table.Literal, fields)
+		header := NewHeader(expr.View.Literal, fields)
 		view = &View{
 			Header:    header,
 			RecordSet: RecordSet{},
@@ -152,7 +152,7 @@ func DeclareTable(expr parser.TableDeclaration, filter *Filter) error {
 	}
 
 	view.FileInfo = &FileInfo{
-		Path:             expr.Table.Literal,
+		Path:             expr.View.Literal,
 		IsTemporary:      true,
 		InitialHeader:    view.Header.Copy(),
 		InitialRecordSet: view.RecordSet.Copy(),

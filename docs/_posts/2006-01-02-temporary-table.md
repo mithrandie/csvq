@@ -6,7 +6,7 @@ category: reference
 
 # Temporary Table
 
-A Temporary Table is a temporary view that can be used in a procedure.
+A Temporary Table that is treated as "VIEW" can be used in a procedure.
 You can refer, insert, update, or delete records in temporary tables.
 
 Temporary tables are affected by transactions.
@@ -18,7 +18,7 @@ When current transaction is rolled back, the records that saved at the previous 
 ### Declare Empty Table
 
 ```sql
-DECLARE table_name TABLE (column_name [, column_name ...]);
+DECLARE table_name VIEW (column_name [, column_name ...]);
 ```
 
 _table_name_
@@ -31,7 +31,7 @@ _column_name_
 ### Declare from the Result-Set of a Select Query
 
 ```sql
-DECLARE table_name TABLE [(column_name [, column_name ...])] AS select_query;
+DECLARE table_name VIEW [(column_name [, column_name ...])] AS select_query;
 ```
 
 _table_name_
@@ -48,7 +48,7 @@ _select_query_
 {: #dispose}
 
 ```sql
-DISPOSE TABLE table_name;
+DISPOSE VIEW table_name;
 ```
 
 _table_name_

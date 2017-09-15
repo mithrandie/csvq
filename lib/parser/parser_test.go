@@ -3196,6 +3196,51 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "show tables",
+		Output: []Statement{
+			ShowObjects{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Type:     TABLES,
+			},
+		},
+	},
+	{
+		Input: "show views",
+		Output: []Statement{
+			ShowObjects{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Type:     VIEWS,
+			},
+		},
+	},
+	{
+		Input: "show cursors",
+		Output: []Statement{
+			ShowObjects{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Type:     CURSORS,
+			},
+		},
+	},
+	{
+		Input: "show functions",
+		Output: []Statement{
+			ShowObjects{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Type:     FUNCTIONS,
+			},
+		},
+	},
+	{
+		Input: "show fields from table1",
+		Output: []Statement{
+			ShowFields{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Table:    Identifier{BaseExpr: &BaseExpr{line: 1, char: 18}, Literal: "table1"},
+			},
+		},
+	},
+	{
 		Input: "trigger error",
 		Output: []Statement{
 			Trigger{
@@ -3369,30 +3414,30 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "declare tbl table (column1, column2)",
+		Input: "declare tbl view (column1, column2)",
 		Output: []Statement{
-			TableDeclaration{
-				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "tbl"},
+			ViewDeclaration{
+				View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "tbl"},
 				Fields: []QueryExpression{
-					Identifier{BaseExpr: &BaseExpr{line: 1, char: 20}, Literal: "column1"},
-					Identifier{BaseExpr: &BaseExpr{line: 1, char: 29}, Literal: "column2"},
+					Identifier{BaseExpr: &BaseExpr{line: 1, char: 19}, Literal: "column1"},
+					Identifier{BaseExpr: &BaseExpr{line: 1, char: 28}, Literal: "column2"},
 				},
 			},
 		},
 	},
 	{
-		Input: "declare tbl table (column1, column2) as select 1, 2",
+		Input: "declare tbl view (column1, column2) as select 1, 2",
 		Output: []Statement{
-			TableDeclaration{
-				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "tbl"},
+			ViewDeclaration{
+				View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "tbl"},
 				Fields: []QueryExpression{
-					Identifier{BaseExpr: &BaseExpr{line: 1, char: 20}, Literal: "column1"},
-					Identifier{BaseExpr: &BaseExpr{line: 1, char: 29}, Literal: "column2"},
+					Identifier{BaseExpr: &BaseExpr{line: 1, char: 19}, Literal: "column1"},
+					Identifier{BaseExpr: &BaseExpr{line: 1, char: 28}, Literal: "column2"},
 				},
 				Query: SelectQuery{
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
-							BaseExpr: &BaseExpr{line: 1, char: 41},
+							BaseExpr: &BaseExpr{line: 1, char: 40},
 							Select:   "select",
 							Fields: []QueryExpression{
 								Field{
@@ -3409,14 +3454,14 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "declare tbl table as select 1, 2",
+		Input: "declare tbl view as select 1, 2",
 		Output: []Statement{
-			TableDeclaration{
-				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "tbl"},
+			ViewDeclaration{
+				View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "tbl"},
 				Query: SelectQuery{
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
-							BaseExpr: &BaseExpr{line: 1, char: 22},
+							BaseExpr: &BaseExpr{line: 1, char: 21},
 							Select:   "select",
 							Fields: []QueryExpression{
 								Field{
@@ -3433,10 +3478,10 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "dispose table tbl",
+		Input: "dispose view tbl",
 		Output: []Statement{
-			DisposeTable{
-				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "tbl"},
+			DisposeView{
+				View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 14}, Literal: "tbl"},
 			},
 		},
 	},
@@ -4104,6 +4149,86 @@ var parseTests = []struct {
 					Fields: []QueryExpression{
 						Field{
 							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "nulls"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select tables",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "tables"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select views",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "views"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select cursors",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "cursors"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select functions",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "functions"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select fields",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "fields"}},
 						},
 					},
 				},

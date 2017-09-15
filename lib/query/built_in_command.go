@@ -1,14 +1,19 @@
 package query
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/csv"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
+
 	"github.com/mithrandie/go-file"
 )
 
@@ -173,4 +178,189 @@ func ShowFlag(expr parser.ShowFlag) (string, error) {
 	}
 
 	return s, nil
+}
+
+func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
+	var s string
+
+	switch expr.Type {
+	case parser.TABLES:
+		repository := cmd.GetFlags().Repository
+
+		files, err := ioutil.ReadDir(repository)
+		if err != nil {
+			return "", err
+		}
+
+		var filePaths []string
+		var absPaths []string
+		for _, f := range files {
+			if f.IsDir() {
+				continue
+			}
+
+			ext := filepath.Ext(f.Name())
+			switch strings.ToUpper(ext) {
+			case strings.ToUpper(cmd.CSV_EXT), strings.ToUpper(cmd.TSV_EXT):
+				absPath := filepath.Join(repository, f.Name())
+				if !filepath.IsAbs(absPath) {
+					p, err := filepath.Abs(absPath)
+					if err != nil {
+						return "", err
+					}
+					absPath = p
+				}
+				filePaths = append(filePaths, f.Name())
+				absPaths = append(absPaths, absPath)
+			}
+		}
+		sort.Strings(filePaths)
+
+		var cachedPaths []string
+		for _, v := range ViewCache {
+			cachedPath := v.FileInfo.Path
+			if !InStrSlice(cachedPath, absPaths) {
+				cachedPaths = append(cachedPaths, cachedPath)
+			}
+		}
+		sort.Strings(cachedPaths)
+
+		if len(filePaths) < 1 && len(cachedPaths) < 1 {
+			s = fmt.Sprintf("Repository %q is empty", repository)
+		} else {
+			if 0 < len(filePaths) {
+				s += "\n"
+				s += fmt.Sprintf("    Tables in %s\n", repository)
+				s += strings.Repeat("-", len(repository)+18) + "\n"
+				s += strings.Join(filePaths, "\n")
+				s += "\n"
+			}
+			if 0 < len(cachedPaths) {
+				s += "\n"
+				s += "    Tables in other directories\n"
+				s += "-----------------------------------\n"
+				s += strings.Join(cachedPaths, "\n")
+				s += "\n"
+			}
+		}
+	case parser.VIEWS:
+		views := filter.TempViews.List()
+		if len(views) < 1 {
+			s = "No view is declared"
+		} else {
+			s += "\n"
+			s += "    Views\n"
+			s += "-------------\n"
+			s += strings.Join(views, "\n")
+			s += "\n"
+		}
+	case parser.CURSORS:
+		cursors := filter.Cursors.List()
+		if len(cursors) < 1 {
+			s = "No cursor is declared"
+		} else {
+			s += "\n"
+			s += "    Cursors\n"
+			s += "---------------\n"
+			s += strings.Join(cursors, "\n")
+			s += "\n"
+		}
+	case parser.FUNCTIONS:
+		scalas, aggs := filter.Functions.List()
+		if len(scalas) < 1 && len(aggs) < 1 {
+			s = "No function is declared"
+		} else {
+			if 0 < len(scalas) {
+				s += "\n"
+				s += "    Scala Functions\n"
+				s += "-----------------------\n"
+				s += strings.Join(scalas, "\n")
+				s += "\n"
+			}
+			if 0 < len(aggs) {
+				s += "\n"
+				s += "    Aggregate Functions\n"
+				s += "---------------------------\n"
+				s += strings.Join(aggs, "\n")
+				s += "\n"
+			}
+		}
+	}
+
+	return s, nil
+}
+
+func ShowFields(expr parser.ShowFields, filter *Filter) (string, error) {
+	var fields []string
+
+	if filter.TempViews.Exists(expr.Table.Literal) {
+		view, _ := filter.TempViews.Get(expr.Table)
+		fields = view.Header.TableColumnNames()
+	} else {
+		flags := cmd.GetFlags()
+
+		fileInfo, err := NewFileInfoForCreate(expr.Table, flags.Repository, flags.Delimiter)
+		if err != nil {
+			return "", err
+		}
+
+		if ViewCache.Exists(fileInfo.Path) {
+			pathIdent := parser.Identifier{Literal: fileInfo.Path}
+			view, _ := ViewCache.Get(pathIdent)
+			fields = view.Header.TableColumnNames()
+		} else {
+			fileInfo, err = NewFileInfo(expr.Table, flags.Repository, flags.Delimiter)
+			if err != nil {
+				return "", err
+			}
+
+			if ViewCache.Exists(fileInfo.Path) {
+				pathIdent := parser.Identifier{Literal: fileInfo.Path}
+				view, _ := ViewCache.Get(pathIdent)
+				fields = view.Header.TableColumnNames()
+			} else {
+				if !FileLocks.CanRead(fileInfo.Path) {
+					return "", NewFileLockTimeoutError(expr.Table, fileInfo.Path)
+				}
+				fp, err := file.OpenToReadWithTimeout(fileInfo.Path)
+				if err != nil {
+					return "", NewReadFileError(expr.Table, err.Error())
+				}
+				defer file.Close(fp)
+
+				r := cmd.GetReader(fp, flags.Encoding)
+				reader := csv.NewReader(r)
+				reader.Delimiter = fileInfo.Delimiter
+				reader.WithoutNull = flags.WithoutNull
+
+				header, err := reader.ReadHeader()
+				if err != nil && err != csv.EOF {
+					return "", err
+				}
+				fields = header
+			}
+		}
+	}
+
+	var s string
+	s += "\n"
+	s += fmt.Sprintf("    Fields in %s\n", expr.Table.Literal)
+	s += strings.Repeat("-", len(expr.Table.Literal)+18) + "\n"
+	s += formatFields(fields)
+	s += "\n"
+
+	return s, nil
+}
+
+func formatFields(fields []string) string {
+	l := len(fields)
+	digits := len(strconv.Itoa(l))
+	formatted := make([]string, l)
+
+	for i, field := range fields {
+		idxstr := strconv.Itoa(i + 1)
+		formatted[i] = fmt.Sprintf("%"+strconv.Itoa(digits)+"s. %s", idxstr, field)
+	}
+
+	return strings.Join(formatted, "\n")
 }

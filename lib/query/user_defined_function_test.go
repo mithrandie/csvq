@@ -277,6 +277,80 @@ func TestUserDefinedFunctionScopes_Get(t *testing.T) {
 	}
 }
 
+func TestUserDefinedFunctionScopes_List(t *testing.T) {
+	list := UserDefinedFunctionScopes{
+		UserDefinedFunctionMap{
+			"USERFUNC1": &UserDefinedFunction{
+				Name: parser.Identifier{Literal: "userfunc1"},
+				Parameters: []parser.Variable{
+					{Name: "@arg1"},
+				},
+				Statements: []parser.Statement{
+					parser.Print{Value: parser.Variable{Name: "@arg1"}},
+				},
+			},
+		},
+		UserDefinedFunctionMap{
+			"USERAGGFUNC": &UserDefinedFunction{
+				Name: parser.Identifier{Literal: "useraggfunc"},
+				Parameters: []parser.Variable{
+					{Name: "@arg1"},
+					{Name: "@arg2"},
+				},
+				Defaults: map[string]parser.QueryExpression{
+					"@arg2": parser.NewIntegerValue(1),
+				},
+				IsAggregate:  true,
+				RequiredArgs: 1,
+				Cursor:       parser.Identifier{Literal: "column1"},
+				Statements: []parser.Statement{
+					parser.Print{Value: parser.Variable{Name: "@var1"}},
+				},
+			},
+			"USERFUNC2": &UserDefinedFunction{
+				Name: parser.Identifier{Literal: "userfunc2"},
+				Parameters: []parser.Variable{
+					{Name: "@arg1"},
+					{Name: "@arg2"},
+				},
+				Defaults: map[string]parser.QueryExpression{
+					"@arg2": parser.NewIntegerValue(3),
+				},
+				RequiredArgs: 1,
+				Statements: []parser.Statement{
+					parser.Print{Value: parser.Variable{Name: "@arg2"}},
+				},
+			},
+			"USERFUNC1": &UserDefinedFunction{
+				Name: parser.Identifier{Literal: "userfunc1"},
+				Parameters: []parser.Variable{
+					{Name: "@arg2"},
+				},
+				Statements: []parser.Statement{
+					parser.Print{Value: parser.Variable{Name: "@arg1"}},
+				},
+			},
+		},
+	}
+
+	expectScala := []string{
+		"userfunc1(@arg1)",
+		"userfunc2(@arg1, @arg2 = 3)",
+	}
+	expectAgg := []string{
+		"useraggfunc(column1, @arg1, @arg2 = 1)",
+	}
+
+	scala, agg := list.List()
+	if !reflect.DeepEqual(scala, expectScala) {
+		t.Errorf("scala: result = %s, want %s", scala, expectScala)
+	}
+	if !reflect.DeepEqual(agg, expectAgg) {
+		t.Errorf("aggregate: result = %s, want %s", agg, expectAgg)
+	}
+
+}
+
 var userDefinedFunctionMapDeclareTests = []struct {
 	Name   string
 	Expr   parser.FunctionDeclaration

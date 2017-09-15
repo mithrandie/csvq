@@ -200,17 +200,17 @@ func TestFetchCursor(t *testing.T) {
 	}
 }
 
-var declareTableTests = []struct {
+var declareViewTests = []struct {
 	Name    string
 	ViewMap ViewMap
-	Expr    parser.TableDeclaration
+	Expr    parser.ViewDeclaration
 	Result  ViewMap
 	Error   string
 }{
 	{
-		Name: "Declare Table",
-		Expr: parser.TableDeclaration{
-			Table: parser.Identifier{Literal: "tbl"},
+		Name: "Declare View",
+		Expr: parser.ViewDeclaration{
+			View: parser.Identifier{Literal: "tbl"},
 			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "column1"},
 				parser.Identifier{Literal: "column2"},
@@ -230,9 +230,9 @@ var declareTableTests = []struct {
 		},
 	},
 	{
-		Name: "Declare Table Field Duplicate Error",
-		Expr: parser.TableDeclaration{
-			Table: parser.Identifier{Literal: "tbl"},
+		Name: "Declare View Field Duplicate Error",
+		Expr: parser.ViewDeclaration{
+			View: parser.Identifier{Literal: "tbl"},
 			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "column1"},
 				parser.Identifier{Literal: "column1"},
@@ -241,9 +241,9 @@ var declareTableTests = []struct {
 		Error: "[L:- C:-] field name column1 is a duplicate",
 	},
 	{
-		Name: "Declare Table From Query",
-		Expr: parser.TableDeclaration{
-			Table: parser.Identifier{Literal: "tbl"},
+		Name: "Declare View From Query",
+		Expr: parser.ViewDeclaration{
+			View: parser.Identifier{Literal: "tbl"},
 			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "column1"},
 				parser.Identifier{Literal: "column2"},
@@ -283,9 +283,9 @@ var declareTableTests = []struct {
 		},
 	},
 	{
-		Name: "Declare Table From Query Query Error",
-		Expr: parser.TableDeclaration{
-			Table: parser.Identifier{Literal: "tbl"},
+		Name: "Declare View From Query Query Error",
+		Expr: parser.ViewDeclaration{
+			View: parser.Identifier{Literal: "tbl"},
 			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "column1"},
 				parser.Identifier{Literal: "column2"},
@@ -304,9 +304,9 @@ var declareTableTests = []struct {
 		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
-		Name: "Declare Table From Query Field Update Error",
-		Expr: parser.TableDeclaration{
-			Table: parser.Identifier{Literal: "tbl"},
+		Name: "Declare View From Query Field Update Error",
+		Expr: parser.ViewDeclaration{
+			View: parser.Identifier{Literal: "tbl"},
 			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "column1"},
 			},
@@ -321,12 +321,12 @@ var declareTableTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] select query should return exactly 1 field for temporary table tbl",
+		Error: "[L:- C:-] select query should return exactly 1 field for view tbl",
 	},
 	{
-		Name: "Declare Table  From Query Field Duplicate Error",
-		Expr: parser.TableDeclaration{
-			Table: parser.Identifier{Literal: "tbl"},
+		Name: "Declare View  From Query Field Duplicate Error",
+		Expr: parser.ViewDeclaration{
+			View: parser.Identifier{Literal: "tbl"},
 			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "column1"},
 				parser.Identifier{Literal: "column1"},
@@ -345,7 +345,7 @@ var declareTableTests = []struct {
 		Error: "[L:- C:-] field name column1 is a duplicate",
 	},
 	{
-		Name: "Declare Table Redeclaration Error",
+		Name: "Declare View Redeclaration Error",
 		ViewMap: ViewMap{
 			"TBL": {
 				FileInfo: &FileInfo{
@@ -354,28 +354,28 @@ var declareTableTests = []struct {
 				},
 			},
 		},
-		Expr: parser.TableDeclaration{
-			Table: parser.Identifier{Literal: "tbl"},
+		Expr: parser.ViewDeclaration{
+			View: parser.Identifier{Literal: "tbl"},
 			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "column1"},
 				parser.Identifier{Literal: "column2"},
 			},
 		},
-		Error: "[L:- C:-] temporary table tbl is redeclared",
+		Error: "[L:- C:-] view tbl is redeclared",
 	},
 }
 
-func TestDeclareTable(t *testing.T) {
+func TestDeclareView(t *testing.T) {
 	filter := NewEmptyFilter()
 
-	for _, v := range declareTableTests {
+	for _, v := range declareViewTests {
 		if v.ViewMap == nil {
 			filter.TempViews = []ViewMap{{}}
 		} else {
 			filter.TempViews = []ViewMap{v.ViewMap}
 		}
 
-		err := DeclareTable(v.Expr, filter)
+		err := DeclareView(v.Expr, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

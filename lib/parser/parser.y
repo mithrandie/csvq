@@ -163,7 +163,7 @@ import "github.com/mithrandie/csvq/lib/value"
 %token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME VARIABLE FLAG
 %token<token> SELECT FROM UPDATE SET DELETE WHERE INSERT INTO VALUES AS DUAL STDIN
 %token<token> RECURSIVE
-%token<token> CREATE ADD DROP ALTER TABLE FIRST LAST AFTER BEFORE DEFAULT RENAME TO
+%token<token> CREATE ADD DROP ALTER TABLE FIRST LAST AFTER BEFORE DEFAULT RENAME TO VIEW
 %token<token> ORDER GROUP HAVING BY ASC DESC LIMIT OFFSET PERCENT
 %token<token> JOIN INNER OUTER LEFT RIGHT FULL CROSS ON USING NATURAL
 %token<token> UNION INTERSECT EXCEPT
@@ -180,7 +180,7 @@ import "github.com/mithrandie/csvq/lib/value"
 %token<token> FUNCTION AGGREGATE BEGIN RETURN
 %token<token> IGNORE WITHIN
 %token<token> VAR SHOW
-%token<token> TIES NULLS
+%token<token> TIES NULLS TABLES VIEWS FIELDS CURSORS FUNCTIONS
 %token<token> ERROR
 %token<token> COUNT LISTAGG
 %token<token> AGGREGATE_FUNCTION FUNCTION_WITH_INS
@@ -625,21 +625,21 @@ cursor_statement
     }
 
 temporary_table_statement
-    : DECLARE identifier TABLE '(' identifiers ')'
+    : DECLARE identifier VIEW '(' identifiers ')'
     {
-        $$ = TableDeclaration{Table: $2, Fields: $5}
+        $$ = ViewDeclaration{View: $2, Fields: $5}
     }
-    | DECLARE identifier TABLE '(' identifiers ')' AS select_query
+    | DECLARE identifier VIEW '(' identifiers ')' AS select_query
     {
-        $$ = TableDeclaration{Table: $2, Fields: $5, Query: $8}
+        $$ = ViewDeclaration{View: $2, Fields: $5, Query: $8}
     }
-    | DECLARE identifier TABLE AS select_query
+    | DECLARE identifier VIEW AS select_query
     {
-        $$ = TableDeclaration{Table: $2, Query: $5}
+        $$ = ViewDeclaration{View: $2, Query: $5}
     }
-    | DISPOSE TABLE identifier
+    | DISPOSE VIEW identifier
     {
-        $$ = DisposeTable{Table: $3}
+        $$ = DisposeView{View: $3}
     }
 
 parameter
@@ -774,6 +774,26 @@ command_statement
     | SOURCE value
     {
         $$ = Source{BaseExpr: NewBaseExpr($1), FilePath: $2}
+    }
+    | SHOW TABLES
+    {
+        $$ = ShowObjects{BaseExpr: NewBaseExpr($1), Type: $2.Token}
+    }
+    | SHOW VIEWS
+    {
+        $$ = ShowObjects{BaseExpr: NewBaseExpr($1), Type: $2.Token}
+    }
+    | SHOW CURSORS
+    {
+        $$ = ShowObjects{BaseExpr: NewBaseExpr($1), Type: $2.Token}
+    }
+    | SHOW FUNCTIONS
+    {
+        $$ = ShowObjects{BaseExpr: NewBaseExpr($1), Type: $2.Token}
+    }
+    | SHOW FIELDS FROM identifier
+    {
+        $$ = ShowFields{BaseExpr: NewBaseExpr($1), Table: $4}
     }
 
 trigger_statement
@@ -1865,6 +1885,26 @@ identifier
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }
     | NULLS
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | TABLES
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | VIEWS
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | CURSORS
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | FUNCTIONS
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | FIELDS
     {
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }

@@ -2,6 +2,8 @@ package query
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -581,4 +583,314 @@ func TestShowFlag(t *testing.T) {
 			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
 		}
 	}
+}
+
+var showObjectsTests = []struct {
+	Name       string
+	Expr       parser.ShowObjects
+	Filter     *Filter
+	Repository string
+	ViewCache  ViewMap
+	Result     string
+	Error      string
+}{
+	{
+		Name: "ShowObjects Tables",
+		Expr: parser.ShowObjects{Type: parser.TABLES},
+		ViewCache: ViewMap{
+			"DUMMY.CSV": &View{
+				FileInfo: &FileInfo{
+					Path: filepath.Join(TestDir, "dummy.csv"),
+				},
+			},
+			"TABLE1.CSV": &View{
+				FileInfo: &FileInfo{
+					Path: filepath.Join(filepath.Join(TestDir, "test_show_objects"), "table1.csv"),
+				},
+			},
+		},
+		Result: "\n" + fmt.Sprintf("    Tables in %s\n", filepath.Join(TestDir, "test_show_objects")) + strings.Repeat("-", len(filepath.Join(TestDir, "test_show_objects"))+18) + "\n" +
+			filepath.Join("table1.csv") + "\n" +
+			filepath.Join("table2.csv") + "\n" +
+			"\n" + "    Tables in other directories\n" + "-----------------------------------\n" +
+			filepath.Join(TestDir, "dummy.csv") + "\n",
+	},
+	{
+		Name:       "ShowObjects Tables Empty",
+		Expr:       parser.ShowObjects{Type: parser.TABLES},
+		Repository: filepath.Join(TestDir, "test_show_objects_empty"),
+		Result:     fmt.Sprintf("Repository %q is empty", filepath.Join(TestDir, "test_show_objects_empty")),
+	},
+	{
+		Name: "ShowObjects Views",
+		Expr: parser.ShowObjects{Type: parser.VIEWS},
+		Filter: &Filter{
+			TempViews: TemporaryViewScopes{
+				ViewMap{
+					"VIEW1": &View{
+						FileInfo: &FileInfo{
+							Path: "view1",
+						},
+					},
+				},
+				ViewMap{
+					"VIEW1": &View{
+						FileInfo: &FileInfo{
+							Path: "view1",
+						},
+					},
+					"VIEW2": &View{
+						FileInfo: &FileInfo{
+							Path: "view2",
+						},
+					},
+				},
+			},
+		},
+		Result: "\n" + "    Views\n" + "-------------\n" +
+			"view1\nview2\n",
+	},
+	{
+		Name:   "ShowObjects Views Empty",
+		Expr:   parser.ShowObjects{Type: parser.VIEWS},
+		Result: "No view is declared",
+	},
+	{
+		Name: "ShowObjects Cursors",
+		Expr: parser.ShowObjects{Type: parser.CURSORS},
+		Filter: &Filter{
+			Cursors: CursorScopes{
+				{
+					"CUR": &Cursor{
+						name:  "cur",
+						query: selectQueryForCursorTest,
+					},
+					"CUR2": &Cursor{
+						name:  "cur2",
+						query: selectQueryForCursorTest,
+					},
+				},
+			},
+		},
+		Result: "\n" + "    Cursors\n" + "---------------\n" +
+			"cur for select column1, column2 from table1\ncur2 for select column1, column2 from table1\n",
+	},
+	{
+		Name:   "ShowObjects Cursors Empty",
+		Expr:   parser.ShowObjects{Type: parser.CURSORS},
+		Result: "No cursor is declared",
+	},
+	{
+		Name: "ShowObjects Functions",
+		Expr: parser.ShowObjects{Type: parser.FUNCTIONS},
+		Filter: &Filter{
+			Functions: UserDefinedFunctionScopes{
+				UserDefinedFunctionMap{
+					"USERFUNC1": &UserDefinedFunction{
+						Name: parser.Identifier{Literal: "userfunc1"},
+						Parameters: []parser.Variable{
+							{Name: "@arg1"},
+						},
+						Statements: []parser.Statement{
+							parser.Print{Value: parser.Variable{Name: "@arg1"}},
+						},
+					},
+				},
+				UserDefinedFunctionMap{
+					"USERAGGFUNC": &UserDefinedFunction{
+						Name: parser.Identifier{Literal: "useraggfunc"},
+						Parameters: []parser.Variable{
+							{Name: "@arg1"},
+							{Name: "@arg2"},
+						},
+						Defaults: map[string]parser.QueryExpression{
+							"@arg2": parser.NewIntegerValue(1),
+						},
+						IsAggregate:  true,
+						RequiredArgs: 1,
+						Cursor:       parser.Identifier{Literal: "column1"},
+						Statements: []parser.Statement{
+							parser.Print{Value: parser.Variable{Name: "@var1"}},
+						},
+					},
+				},
+			},
+		},
+		Result: "\n" + "    Scala Functions\n" + "-----------------------\n" +
+			"userfunc1(@arg1)\n" +
+			"\n" + "    Aggregate Functions\n" + "---------------------------\n" +
+			"useraggfunc(column1, @arg1, @arg2 = 1)\n",
+	},
+	{
+		Name:   "ShowObjects Functions Empty",
+		Expr:   parser.ShowObjects{Type: parser.FUNCTIONS},
+		Result: "No function is declared",
+	},
+}
+
+func TestShowObjects(t *testing.T) {
+	tableDir := filepath.Join(TestDir, "test_show_objects")
+	emptyDir := filepath.Join(TestDir, "test_show_objects_empty")
+	if _, err := os.Stat(tableDir); os.IsNotExist(err) {
+		os.Mkdir(tableDir, 0755)
+	}
+	if _, err := os.Stat(emptyDir); os.IsNotExist(err) {
+		os.Mkdir(emptyDir, 0755)
+	}
+	copyfile(filepath.Join(tableDir, "table1.csv"), filepath.Join(TestDataDir, "table1.csv"))
+	copyfile(filepath.Join(tableDir, "table2.csv"), filepath.Join(TestDataDir, "table2.csv"))
+
+	flags := cmd.GetFlags()
+
+	for _, v := range showObjectsTests {
+		if 0 < len(v.Repository) {
+			flags.Repository = v.Repository
+		} else {
+			flags.Repository = tableDir
+		}
+		ViewCache.Clean()
+		if 0 < len(v.ViewCache) {
+			ViewCache = v.ViewCache
+		}
+
+		var filter *Filter
+		if v.Filter != nil {
+			filter = v.Filter
+		} else {
+			filter = NewEmptyFilter()
+		}
+
+		result, err := ShowObjects(v.Expr, filter)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if result != v.Result {
+			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
+		}
+	}
+	ReleaseResources()
+}
+
+var showFieldsTests = []struct {
+	Name      string
+	Expr      parser.ShowFields
+	Filter    *Filter
+	ViewCache ViewMap
+	Result    string
+	Error     string
+}{
+	{
+		Name: "ShowFields Temporary Table",
+		Expr: parser.ShowFields{
+			Table: parser.Identifier{Literal: "view1"},
+		},
+		Filter: &Filter{
+			TempViews: TemporaryViewScopes{
+				ViewMap{
+					"VIEW1": &View{
+						Header: NewHeader("view1", []string{"column1", "column2"}),
+						FileInfo: &FileInfo{
+							Path: "view1",
+						},
+					},
+				},
+			},
+		},
+		Result: "\n" + "    Fields in view1" + "\n" + "-----------------------\n" +
+			"1. column1\n2. column2\n",
+	},
+	{
+		Name: "ShowFields Created Table",
+		Expr: parser.ShowFields{
+			Table: parser.Identifier{Literal: GetTestFilePath("show_fields_create.csv")},
+		},
+		ViewCache: ViewMap{
+			strings.ToUpper(GetTestFilePath("show_fields_create.csv")): &View{
+				Header: NewHeader("show_fields_create", []string{"column1", "column2"}),
+				FileInfo: &FileInfo{
+					Path: GetTestFilePath("show_fields_create.csv"),
+				},
+			},
+		},
+		Result: "\n" + fmt.Sprintf("    Fields in %s", GetTestFilePath("show_fields_create.csv")) + "\n" + strings.Repeat("-", len(GetTestFilePath("show_fields_create.csv"))+18) + "\n" +
+			"1. column1\n2. column2\n",
+	},
+	{
+		Name: "ShowFields Cached Table",
+		Expr: parser.ShowFields{
+			Table: parser.Identifier{Literal: "table1"},
+		},
+		ViewCache: ViewMap{
+			strings.ToUpper(GetTestFilePath("table1.csv")): &View{
+				Header: NewHeader("table1", []string{"column1", "column2"}),
+				FileInfo: &FileInfo{
+					Path: GetTestFilePath("table1.csv"),
+				},
+			},
+		},
+		Result: "\n" + "    Fields in table1" + "\n" + "------------------------\n" +
+			"1. column1\n2. column2\n",
+	},
+	{
+		Name: "ShowFields Load From File",
+		Expr: parser.ShowFields{
+			Table: parser.Identifier{Literal: "table2"},
+		},
+		Result: "\n" + "    Fields in table2" + "\n" + "------------------------\n" +
+			"1. column3\n2. column4\n",
+	},
+	{
+		Name: "ShowFields Load Error",
+		Expr: parser.ShowFields{
+			Table: parser.Identifier{Literal: "notexist"},
+		},
+		Error: "[L:- C:-] file notexist does not exist",
+	},
+}
+
+func TestShowFields(t *testing.T) {
+	initFlag()
+	flags := cmd.GetFlags()
+	flags.Repository = TestDir
+
+	for _, v := range showFieldsTests {
+		ViewCache.Clean()
+		if 0 < len(v.ViewCache) {
+			ViewCache = v.ViewCache
+		}
+
+		var filter *Filter
+		if v.Filter != nil {
+			filter = v.Filter
+		} else {
+			filter = NewEmptyFilter()
+		}
+
+		result, err := ShowFields(v.Expr, filter)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if result != v.Result {
+			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
+		}
+	}
+	ReleaseResources()
 }

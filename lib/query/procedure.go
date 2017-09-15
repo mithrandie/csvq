@@ -86,10 +86,10 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 	case parser.FetchCursor:
 		fetch := stmt.(parser.FetchCursor)
 		_, err = FetchCursor(fetch.Cursor, fetch.Position, fetch.Variables, proc.Filter)
-	case parser.TableDeclaration:
-		err = DeclareTable(stmt.(parser.TableDeclaration), proc.Filter)
-	case parser.DisposeTable:
-		err = proc.Filter.TempViews.Dispose(stmt.(parser.DisposeTable).Table)
+	case parser.ViewDeclaration:
+		err = DeclareView(stmt.(parser.ViewDeclaration), proc.Filter)
+	case parser.DisposeView:
+		err = proc.Filter.TempViews.Dispose(stmt.(parser.DisposeView).View)
 	case parser.FunctionDeclaration:
 		err = proc.Filter.Functions.Declare(stmt.(parser.FunctionDeclaration))
 	case parser.AggregateDeclaration:
@@ -281,6 +281,14 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		source := stmt.(parser.Source)
 		if externalStatements, err = Source(source, proc.Filter); err == nil {
 			flow, err = proc.Execute(externalStatements)
+		}
+	case parser.ShowObjects:
+		if printstr, err = ShowObjects(stmt.(parser.ShowObjects), proc.Filter); err == nil {
+			Log(printstr, false)
+		}
+	case parser.ShowFields:
+		if printstr, err = ShowFields(stmt.(parser.ShowFields), proc.Filter); err == nil {
+			Log(printstr, false)
 		}
 	case parser.Trigger:
 		trigger := stmt.(parser.Trigger)
