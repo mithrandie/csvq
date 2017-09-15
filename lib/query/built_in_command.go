@@ -294,8 +294,8 @@ func ShowFields(expr parser.ShowFields, filter *Filter) (string, error) {
 	var fields []string
 
 	if filter.TempViews.Exists(expr.Table.Literal) {
-		view, _ := filter.TempViews.Get(expr.Table)
-		fields = view.Header.TableColumnNames()
+		header, _ := filter.TempViews.GetHeader(expr.Table)
+		fields = header.TableColumnNames()
 	} else {
 		flags := cmd.GetFlags()
 
@@ -306,8 +306,8 @@ func ShowFields(expr parser.ShowFields, filter *Filter) (string, error) {
 
 		if ViewCache.Exists(fileInfo.Path) {
 			pathIdent := parser.Identifier{Literal: fileInfo.Path}
-			view, _ := ViewCache.Get(pathIdent)
-			fields = view.Header.TableColumnNames()
+			header, _ := ViewCache.GetHeader(pathIdent)
+			fields = header.TableColumnNames()
 		} else {
 			fileInfo, err = NewFileInfo(expr.Table, flags.Repository, flags.Delimiter)
 			if err != nil {
@@ -316,8 +316,8 @@ func ShowFields(expr parser.ShowFields, filter *Filter) (string, error) {
 
 			if ViewCache.Exists(fileInfo.Path) {
 				pathIdent := parser.Identifier{Literal: fileInfo.Path}
-				view, _ := ViewCache.Get(pathIdent)
-				fields = view.Header.TableColumnNames()
+				header, _ := ViewCache.GetHeader(pathIdent)
+				fields = header.TableColumnNames()
 			} else {
 				if !FileLocks.CanRead(fileInfo.Path) {
 					return "", NewFileLockTimeoutError(expr.Table, fileInfo.Path)

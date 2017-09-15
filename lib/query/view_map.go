@@ -32,6 +32,15 @@ func (list TemporaryViewScopes) Get(name parser.Identifier) (*View, error) {
 	return nil, NewTableNotLoadedError(name)
 }
 
+func (list TemporaryViewScopes) GetHeader(name parser.Identifier) (Header, error) {
+	for _, m := range list {
+		if header, err := m.GetHeader(name); err == nil {
+			return header, nil
+		}
+	}
+	return nil, NewTableNotLoadedError(name)
+}
+
 func (list TemporaryViewScopes) GetWithInternalId(name parser.Identifier) (*View, error) {
 	for _, m := range list {
 		if view, err := m.GetWithInternalId(name); err == nil {
@@ -117,6 +126,14 @@ func (m ViewMap) Get(fpath parser.Identifier) (*View, error) {
 		return view.Copy(), nil
 	}
 	return nil, NewTableNotLoadedError(fpath)
+}
+
+func (m ViewMap) GetHeader(name parser.Identifier) (Header, error) {
+	ufpath := strings.ToUpper(name.Literal)
+	if view, ok := m[ufpath]; ok {
+		return view.Header, nil
+	}
+	return nil, NewTableNotLoadedError(name)
 }
 
 func (m ViewMap) GetWithInternalId(fpath parser.Identifier) (*View, error) {
