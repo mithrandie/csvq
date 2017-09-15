@@ -174,8 +174,8 @@ var procedureExecuteStatementTests = []struct {
 		},
 	},
 	{
-		Input: parser.TableDeclaration{
-			Table: parser.Identifier{Literal: "tbl"},
+		Input: parser.ViewDeclaration{
+			View: parser.Identifier{Literal: "tbl"},
 			Fields: []parser.QueryExpression{
 				parser.Identifier{Literal: "column1"},
 				parser.Identifier{Literal: "column2"},
@@ -215,8 +215,8 @@ var procedureExecuteStatementTests = []struct {
 		Logs: "\"column1\",\"column2\"\n1,2\n",
 	},
 	{
-		Input: parser.DisposeTable{
-			Table: parser.Identifier{Literal: "tbl"},
+		Input: parser.DisposeView{
+			View: parser.Identifier{Literal: "tbl"},
 		},
 	},
 	{

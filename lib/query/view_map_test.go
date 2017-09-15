@@ -503,7 +503,7 @@ var temporaryViewScopesDisposeTests = []struct {
 	{
 		Name:  "TempViewScopes Dispose Not Loaded Error",
 		Path:  parser.Identifier{Literal: "/path/to/table9.csv"},
-		Error: "[L:- C:-] temporary table /path/to/table9.csv is undefined",
+		Error: "[L:- C:-] view /path/to/table9.csv is undefined",
 	},
 }
 
@@ -627,7 +627,7 @@ func TestTemporaryViewScopes_Store(t *testing.T) {
 			},
 		},
 	}
-	expectOut := "Commit: restore point of temporary table \"/path/to/table1.csv\" is created.\n"
+	expectOut := "Commit: restore point of view \"/path/to/table1.csv\" is created.\n"
 
 	oldStdout := os.Stdout
 	r, w, _ := os.Pipe()
@@ -748,7 +748,7 @@ func TestTemporaryViewScopes_Restore(t *testing.T) {
 			},
 		},
 	}
-	expectOut := "Rollback: temporary table \"/path/to/table1.csv\" is restored.\nRollback: temporary table \"/path/to/table2.csv\" is restored.\n"
+	expectOut := "Rollback: view \"/path/to/table1.csv\" is restored.\nRollback: view \"/path/to/table2.csv\" is restored.\n"
 
 	oldStdout := os.Stdout
 	r, w, _ := os.Pipe()
@@ -1155,12 +1155,12 @@ var viewMapDisposeTemporaryTable = []struct {
 	{
 		Name:  "ViewMap DisposeTemporaryTable Not Temporary Table",
 		Table: parser.Identifier{Literal: "/path/to/table2.csv"},
-		Error: "[L:- C:-] temporary table /path/to/table2.csv is undefined",
+		Error: "[L:- C:-] view /path/to/table2.csv is undefined",
 	},
 	{
 		Name:  "ViewMap DisposeTemporaryTable Undefined Error",
 		Table: parser.Identifier{Literal: "/path/to/undef.csv"},
-		Error: "[L:- C:-] temporary table /path/to/undef.csv is undefined",
+		Error: "[L:- C:-] view /path/to/undef.csv is undefined",
 	},
 }
 

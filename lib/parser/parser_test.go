@@ -3369,30 +3369,30 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "declare tbl table (column1, column2)",
+		Input: "declare tbl view (column1, column2)",
 		Output: []Statement{
-			TableDeclaration{
-				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "tbl"},
+			ViewDeclaration{
+				View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "tbl"},
 				Fields: []QueryExpression{
-					Identifier{BaseExpr: &BaseExpr{line: 1, char: 20}, Literal: "column1"},
-					Identifier{BaseExpr: &BaseExpr{line: 1, char: 29}, Literal: "column2"},
+					Identifier{BaseExpr: &BaseExpr{line: 1, char: 19}, Literal: "column1"},
+					Identifier{BaseExpr: &BaseExpr{line: 1, char: 28}, Literal: "column2"},
 				},
 			},
 		},
 	},
 	{
-		Input: "declare tbl table (column1, column2) as select 1, 2",
+		Input: "declare tbl view (column1, column2) as select 1, 2",
 		Output: []Statement{
-			TableDeclaration{
-				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "tbl"},
+			ViewDeclaration{
+				View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "tbl"},
 				Fields: []QueryExpression{
-					Identifier{BaseExpr: &BaseExpr{line: 1, char: 20}, Literal: "column1"},
-					Identifier{BaseExpr: &BaseExpr{line: 1, char: 29}, Literal: "column2"},
+					Identifier{BaseExpr: &BaseExpr{line: 1, char: 19}, Literal: "column1"},
+					Identifier{BaseExpr: &BaseExpr{line: 1, char: 28}, Literal: "column2"},
 				},
 				Query: SelectQuery{
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
-							BaseExpr: &BaseExpr{line: 1, char: 41},
+							BaseExpr: &BaseExpr{line: 1, char: 40},
 							Select:   "select",
 							Fields: []QueryExpression{
 								Field{
@@ -3409,14 +3409,14 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "declare tbl table as select 1, 2",
+		Input: "declare tbl view as select 1, 2",
 		Output: []Statement{
-			TableDeclaration{
-				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "tbl"},
+			ViewDeclaration{
+				View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "tbl"},
 				Query: SelectQuery{
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
-							BaseExpr: &BaseExpr{line: 1, char: 22},
+							BaseExpr: &BaseExpr{line: 1, char: 21},
 							Select:   "select",
 							Fields: []QueryExpression{
 								Field{
@@ -3433,10 +3433,10 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "dispose table tbl",
+		Input: "dispose view tbl",
 		Output: []Statement{
-			DisposeTable{
-				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "tbl"},
+			DisposeView{
+				View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 14}, Literal: "tbl"},
 			},
 		},
 	},

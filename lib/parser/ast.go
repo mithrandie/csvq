@@ -1283,16 +1283,16 @@ func (e CursorAttrebute) String() string {
 	return joinWithSpace(s)
 }
 
-type TableDeclaration struct {
+type ViewDeclaration struct {
 	*BaseExpr
-	Table  Identifier
+	View   Identifier
 	Fields []QueryExpression
 	Query  QueryExpression
 }
 
-type DisposeTable struct {
+type DisposeView struct {
 	*BaseExpr
-	Table Identifier
+	View Identifier
 }
 
 type TransactionControl struct {
