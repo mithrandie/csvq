@@ -618,6 +618,19 @@ var procedureExecuteStatementTests = []struct {
 		Error:     "[L:- C:-] ",
 		ErrorCode: 200,
 	},
+	{
+		Input: parser.ShowObjects{
+			Type: parser.CURSORS,
+		},
+		Logs: "No cursor is declared\n",
+	},
+	{
+		Input: parser.ShowFields{
+			Table: parser.Identifier{Literal: "table1"},
+		},
+		Logs: "\n" + "    Fields in table1" + "\n" + "------------------------\n" +
+			"1. column1\n2. column2\n\n",
+	},
 }
 
 func TestProcedure_ExecuteStatement(t *testing.T) {

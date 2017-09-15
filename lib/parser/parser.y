@@ -180,7 +180,7 @@ import "github.com/mithrandie/csvq/lib/value"
 %token<token> FUNCTION AGGREGATE BEGIN RETURN
 %token<token> IGNORE WITHIN
 %token<token> VAR SHOW
-%token<token> TIES NULLS
+%token<token> TIES NULLS TABLES VIEWS FIELDS CURSORS FUNCTIONS
 %token<token> ERROR
 %token<token> COUNT LISTAGG
 %token<token> AGGREGATE_FUNCTION FUNCTION_WITH_INS
@@ -774,6 +774,26 @@ command_statement
     | SOURCE value
     {
         $$ = Source{BaseExpr: NewBaseExpr($1), FilePath: $2}
+    }
+    | SHOW TABLES
+    {
+        $$ = ShowObjects{BaseExpr: NewBaseExpr($1), Type: $2.Token}
+    }
+    | SHOW VIEWS
+    {
+        $$ = ShowObjects{BaseExpr: NewBaseExpr($1), Type: $2.Token}
+    }
+    | SHOW CURSORS
+    {
+        $$ = ShowObjects{BaseExpr: NewBaseExpr($1), Type: $2.Token}
+    }
+    | SHOW FUNCTIONS
+    {
+        $$ = ShowObjects{BaseExpr: NewBaseExpr($1), Type: $2.Token}
+    }
+    | SHOW FIELDS FROM identifier
+    {
+        $$ = ShowFields{BaseExpr: NewBaseExpr($1), Table: $4}
     }
 
 trigger_statement
@@ -1865,6 +1885,26 @@ identifier
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }
     | NULLS
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | TABLES
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | VIEWS
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | CURSORS
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | FUNCTIONS
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | FIELDS
     {
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }

@@ -48,6 +48,9 @@ func ExampleShowFields() {
 
 	ShowFields("table1")
 	//OUTPUT:
+	//
+	//    Fields in table1
+	//------------------------
 	//1. column1
 	//2. column2
 }

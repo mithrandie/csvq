@@ -282,6 +282,14 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		if externalStatements, err = Source(source, proc.Filter); err == nil {
 			flow, err = proc.Execute(externalStatements)
 		}
+	case parser.ShowObjects:
+		if printstr, err = ShowObjects(stmt.(parser.ShowObjects), proc.Filter); err == nil {
+			Log(printstr, false)
+		}
+	case parser.ShowFields:
+		if printstr, err = ShowFields(stmt.(parser.ShowFields), proc.Filter); err == nil {
+			Log(printstr, false)
+		}
 	case parser.Trigger:
 		trigger := stmt.(parser.Trigger)
 		switch trigger.Token {

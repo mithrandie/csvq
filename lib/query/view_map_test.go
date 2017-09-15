@@ -770,6 +770,37 @@ func TestTemporaryViewScopes_Restore(t *testing.T) {
 	}
 }
 
+func TestTemporaryViewScopes_List(t *testing.T) {
+	scopes := TemporaryViewScopes{
+		ViewMap{
+			"VIEW1": &View{
+				FileInfo: &FileInfo{
+					Path: "view1",
+				},
+			},
+		},
+		ViewMap{
+			"VIEW1": &View{
+				FileInfo: &FileInfo{
+					Path: "view1",
+				},
+			},
+			"VIEW2": &View{
+				FileInfo: &FileInfo{
+					Path: "view2",
+				},
+			},
+		},
+	}
+
+	expect := []string{"view1", "view2"}
+
+	list := scopes.List()
+	if !reflect.DeepEqual(list, expect) {
+		t.Errorf("List: list = %s, want %s", list, expect)
+	}
+}
+
 var viewMapExistsTests = []struct {
 	Name   string
 	Path   string

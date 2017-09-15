@@ -62,6 +62,7 @@ var cursorScopesDeclareTests = []struct {
 		Result: CursorScopes{
 			{
 				"CUR": &Cursor{
+					name:  "cur",
 					query: selectQueryForCursorTest,
 				},
 			},
@@ -699,6 +700,36 @@ func TestCursorScopes_Count(t *testing.T) {
 	}
 }
 
+func TestCursorScopes_List(t *testing.T) {
+	list := CursorScopes{
+		{
+			"CUR": &Cursor{
+				name:  "cur",
+				query: selectQueryForCursorTest,
+			},
+			"CUR2": &Cursor{
+				name:  "cur2",
+				query: selectQueryForCursorTest,
+			},
+			"CUR3": &Cursor{
+				isPseudo: true,
+				name:     "cur3",
+				query:    selectQueryForCursorTest,
+			},
+		},
+	}
+
+	expect := []string{
+		"cur for " + selectQueryForCursorTest.String(),
+		"cur2 for " + selectQueryForCursorTest.String(),
+	}
+
+	result := list.List()
+	if !reflect.DeepEqual(result, expect) {
+		t.Errorf("result = %s, want %s", result, expect)
+	}
+}
+
 var cursorMapDeclareTests = []struct {
 	Name   string
 	Expr   parser.CursorDeclaration
@@ -713,6 +744,7 @@ var cursorMapDeclareTests = []struct {
 		},
 		Result: CursorMap{
 			"CUR": &Cursor{
+				name:  "cur",
 				query: selectQueryForCursorTest,
 			},
 		},

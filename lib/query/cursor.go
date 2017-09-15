@@ -6,7 +6,9 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
+	"fmt"
 	"github.com/mithrandie/ternary"
+	"sort"
 )
 
 type CursorScopes []CursorMap
@@ -117,6 +119,31 @@ func (list CursorScopes) Count(name parser.Identifier) (int, error) {
 	return 0, NewUndefinedCursorError(name)
 }
 
+func (list CursorScopes) List() []string {
+	cursors := make(map[string]string)
+	keys := make([]string, 0)
+
+	for _, m := range list {
+		for _, cursor := range m {
+			if cursor.isPseudo {
+				continue
+			}
+			if !InStrSliceWithCaseInsensitive(cursor.name, keys) {
+				cursors[cursor.name] = cursor.query.String()
+				keys = append(keys, cursor.name)
+			}
+		}
+	}
+	sort.Strings(keys)
+
+	dcls := make([]string, len(keys))
+	for i, key := range keys {
+		dcls[i] = fmt.Sprintf("%s for %s", key, cursors[key])
+	}
+
+	return dcls
+}
+
 type CursorMap map[string]*Cursor
 
 func (m CursorMap) Declare(expr parser.CursorDeclaration) error {
@@ -124,7 +151,7 @@ func (m CursorMap) Declare(expr parser.CursorDeclaration) error {
 	if _, ok := m[uname]; ok {
 		return NewCursorRedeclaredError(expr.Cursor)
 	}
-	m[uname] = NewCursor(expr.Query)
+	m[uname] = NewCursor(expr.Cursor.Literal, expr.Query)
 	return nil
 }
 
@@ -201,6 +228,7 @@ func (m CursorMap) Count(name parser.Identifier) (int, error) {
 }
 
 type Cursor struct {
+	name    string
 	query   parser.SelectQuery
 	view    *View
 	index   int
@@ -209,8 +237,9 @@ type Cursor struct {
 	isPseudo bool
 }
 
-func NewCursor(query parser.SelectQuery) *Cursor {
+func NewCursor(name string, query parser.SelectQuery) *Cursor {
 	return &Cursor{
+		name:  name,
 		query: query,
 	}
 }

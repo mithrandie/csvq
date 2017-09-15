@@ -3196,6 +3196,51 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "show tables",
+		Output: []Statement{
+			ShowObjects{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Type:     TABLES,
+			},
+		},
+	},
+	{
+		Input: "show views",
+		Output: []Statement{
+			ShowObjects{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Type:     VIEWS,
+			},
+		},
+	},
+	{
+		Input: "show cursors",
+		Output: []Statement{
+			ShowObjects{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Type:     CURSORS,
+			},
+		},
+	},
+	{
+		Input: "show functions",
+		Output: []Statement{
+			ShowObjects{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Type:     FUNCTIONS,
+			},
+		},
+	},
+	{
+		Input: "show fields from table1",
+		Output: []Statement{
+			ShowFields{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Table:    Identifier{BaseExpr: &BaseExpr{line: 1, char: 18}, Literal: "table1"},
+			},
+		},
+	},
+	{
 		Input: "trigger error",
 		Output: []Statement{
 			Trigger{
@@ -4104,6 +4149,86 @@ var parseTests = []struct {
 					Fields: []QueryExpression{
 						Field{
 							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "nulls"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select tables",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "tables"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select views",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "views"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select cursors",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "cursors"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select functions",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "functions"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select fields",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "fields"}},
 						},
 					},
 				},

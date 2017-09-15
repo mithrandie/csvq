@@ -1168,6 +1168,16 @@ type ShowFlag struct {
 	Name string
 }
 
+type ShowObjects struct {
+	*BaseExpr
+	Type int
+}
+
+type ShowFields struct {
+	*BaseExpr
+	Table Identifier
+}
+
 type If struct {
 	*BaseExpr
 	Condition  QueryExpression

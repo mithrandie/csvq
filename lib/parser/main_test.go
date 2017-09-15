@@ -28,6 +28,10 @@ func setup() {
 		os.RemoveAll(TestDir)
 	}
 
+	if _, err := os.Stat(TestDir); os.IsNotExist(err) {
+		os.Mkdir(TestDir, 0755)
+	}
+
 	fp, _ := os.Create(GetTestFilePath("dummy.sql"))
 	defer fp.Close()
 }

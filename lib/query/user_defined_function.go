@@ -6,6 +6,7 @@ import (
 
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
+	"sort"
 )
 
 type UserDefinedFunctionScopes []UserDefinedFunctionMap
@@ -27,6 +28,59 @@ func (list UserDefinedFunctionScopes) Get(expr parser.QueryExpression, name stri
 	return nil, NewFunctionNotExistError(expr, name)
 }
 
+func (list UserDefinedFunctionScopes) List() ([]string, []string) {
+	var fnString = func(fn *UserDefinedFunction) string {
+		parameters := make([]string, len(fn.Parameters))
+		for i, v := range fn.Parameters {
+			if df, ok := fn.Defaults[v.String()]; ok {
+				parameters[i] = v.String() + " = " + df.String()
+			} else {
+				parameters[i] = v.String()
+			}
+		}
+		if fn.IsAggregate {
+			parameters = append([]string{fn.Cursor.String()}, parameters...)
+		}
+
+		return fn.Name.String() + "(" + strings.Join(parameters, ", ") + ")"
+	}
+
+	scala := make(map[string]string)
+	scalaKeys := make([]string, 0)
+	aggregate := make(map[string]string)
+	aggregateKeys := make([]string, 0)
+
+	for _, m := range list {
+		for _, fn := range m {
+			if InStrSlice(fn.Name.Literal, scalaKeys) || InStrSlice(fn.Name.Literal, aggregateKeys) {
+				continue
+			}
+
+			if fn.IsAggregate {
+				aggregate[fn.Name.Literal] = fnString(fn)
+				aggregateKeys = append(aggregateKeys, fn.Name.Literal)
+			} else {
+				scala[fn.Name.Literal] = fnString(fn)
+				scalaKeys = append(scalaKeys, fn.Name.Literal)
+			}
+		}
+	}
+
+	scalaList := make([]string, len(scalaKeys))
+	sort.Strings(scalaKeys)
+	for i, key := range scalaKeys {
+		scalaList[i] = scala[key]
+	}
+
+	aggregateList := make([]string, len(aggregateKeys))
+	sort.Strings(aggregateKeys)
+	for i, key := range aggregateKeys {
+		aggregateList[i] = aggregate[key]
+	}
+
+	return scalaList, aggregateList
+}
+
 type UserDefinedFunctionMap map[string]*UserDefinedFunction
 
 func (m UserDefinedFunctionMap) Declare(expr parser.FunctionDeclaration) error {
@@ -34,7 +88,7 @@ func (m UserDefinedFunctionMap) Declare(expr parser.FunctionDeclaration) error {
 		return err
 	}
 
-	parameters, defaults, required, err := m.parserParameters(expr.Parameters)
+	parameters, defaults, required, err := m.parseParameters(expr.Parameters)
 	if err != nil {
 		return err
 	}
@@ -56,7 +110,7 @@ func (m UserDefinedFunctionMap) DeclareAggregate(expr parser.AggregateDeclaratio
 		return err
 	}
 
-	parameters, defaults, required, err := m.parserParameters(expr.Parameters)
+	parameters, defaults, required, err := m.parseParameters(expr.Parameters)
 	if err != nil {
 		return err
 	}
@@ -75,7 +129,7 @@ func (m UserDefinedFunctionMap) DeclareAggregate(expr parser.AggregateDeclaratio
 	return nil
 }
 
-func (m UserDefinedFunctionMap) parserParameters(parameters []parser.VariableAssignment) ([]parser.Variable, map[string]parser.QueryExpression, int, error) {
+func (m UserDefinedFunctionMap) parseParameters(parameters []parser.VariableAssignment) ([]parser.Variable, map[string]parser.QueryExpression, int, error) {
 	var isDuplicate = func(variable parser.Variable, variables []parser.Variable) bool {
 		for _, v := range variables {
 			if variable.Name == v.Name {

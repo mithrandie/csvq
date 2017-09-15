@@ -9,6 +9,7 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 	"github.com/mithrandie/go-file"
+	"sort"
 )
 
 type TemporaryViewScopes []ViewMap
@@ -79,6 +80,25 @@ func (list TemporaryViewScopes) Restore() {
 			Log(fmt.Sprintf("Rollback: view %q is restored.", view.FileInfo.Path), cmd.GetFlags().Quiet)
 		}
 	}
+}
+
+func (list TemporaryViewScopes) List() []string {
+	var names []string
+
+	for _, m := range list {
+		for _, view := range m {
+			if view.FileInfo.IsTemporary {
+				continue
+			}
+			name := view.FileInfo.Path
+			if !InStrSlice(name, names) {
+				names = append(names, name)
+			}
+		}
+	}
+	sort.Strings(names)
+
+	return names
 }
 
 type ViewMap map[string]*View

@@ -105,6 +105,11 @@ func GetFlags() *Flags {
 		pwd = "."
 	}
 
+	cpu := runtime.NumCPU() / 2
+	if cpu < 1 {
+		cpu = 1
+	}
+
 	getFlags.Do(func() {
 		flags = &Flags{
 			Delimiter:      UNDEF,
@@ -123,7 +128,7 @@ func GetFlags() *Flags {
 			WriteDelimiter: ',',
 			WithoutHeader:  false,
 			Quiet:          false,
-			CPU:            1,
+			CPU:            cpu,
 			Stats:          false,
 			RetryInterval:  10 * time.Millisecond,
 			Now:            "",
@@ -377,11 +382,10 @@ func SetQuiet(b bool) {
 
 func SetCPU(i int) {
 	if i <= 0 {
-		i = runtime.NumCPU() / 2
-		if i < 1 {
-			i = 1
-		}
-	} else if runtime.NumCPU() < i {
+		return
+	}
+
+	if runtime.NumCPU() < i {
 		i = runtime.NumCPU()
 	}
 
