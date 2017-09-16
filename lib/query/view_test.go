@@ -1646,6 +1646,46 @@ var viewGroupByTests = []struct {
 			isGrouped: true,
 		},
 	},
+	{
+		Name: "Group By Empty Record with No Condition",
+		View: &View{
+			Header:    NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
+			RecordSet: []Record{},
+			Filter:    NewEmptyFilter(),
+		},
+		GroupBy: parser.GroupByClause{
+			Items: nil,
+		},
+		Result: &View{
+			Header: []HeaderField{
+				{
+					View:   "table1",
+					Column: INTERNAL_ID_COLUMN,
+				},
+				{
+					View:        "table1",
+					Column:      "column1",
+					Number:      1,
+					IsFromTable: true,
+				},
+				{
+					View:        "table1",
+					Column:      "column2",
+					Number:      2,
+					IsFromTable: true,
+				},
+				{
+					View:        "table1",
+					Column:      "column3",
+					Number:      3,
+					IsFromTable: true,
+				},
+			},
+			RecordSet: []Record{},
+			Filter:    NewEmptyFilter(),
+			isGrouped: true,
+		},
+	},
 }
 
 func TestView_GroupBy(t *testing.T) {

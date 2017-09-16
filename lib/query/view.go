@@ -538,10 +538,14 @@ func (view *View) GroupBy(clause parser.GroupByClause) error {
 }
 
 func (view *View) group(items []parser.QueryExpression) error {
-	cpu := NumberOfCPU(view.RecordLen())
+	if items == nil {
+		return view.groupAll()
+	}
 
 	var err error
 	keys := make([]string, view.RecordLen())
+
+	cpu := NumberOfCPU(view.RecordLen())
 
 	wg := sync.WaitGroup{}
 	for i := 0; i < cpu; i++ {
@@ -615,6 +619,25 @@ func (view *View) group(items []parser.QueryExpression) error {
 			view.Header[idx].IsGroupKey = true
 		}
 	}
+	return nil
+}
+
+func (view *View) groupAll() error {
+	if 0 < view.RecordLen() {
+		records := make(RecordSet, 1)
+		record := make(Record, view.FieldLen())
+		for i := 0; i < view.FieldLen(); i++ {
+			primaries := make([]value.Primary, len(view.RecordSet))
+			for j := range view.RecordSet {
+				primaries[j] = view.RecordSet[j][i].Value()
+			}
+			record[i] = NewGroupCell(primaries)
+		}
+		records[0] = record
+		view.RecordSet = records
+	}
+
+	view.isGrouped = true
 	return nil
 }
 
