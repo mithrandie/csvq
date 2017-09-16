@@ -1,8 +1,9 @@
 package query
 
 import (
-	"github.com/mithrandie/csvq/lib/cmd"
 	"sync"
+
+	"github.com/mithrandie/csvq/lib/cmd"
 )
 
 var parallelProcessing bool
