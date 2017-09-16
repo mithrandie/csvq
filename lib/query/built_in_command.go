@@ -229,18 +229,10 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 			s = fmt.Sprintf("Repository %q is empty", repository)
 		} else {
 			if 0 < len(filePaths) {
-				s += "\n"
-				s += fmt.Sprintf("    Tables in %s\n", repository)
-				s += strings.Repeat("-", len(repository)+18) + "\n"
-				s += strings.Join(filePaths, "\n")
-				s += "\n"
+				s += formatHeader(fmt.Sprintf("Tables in %s", repository)) + strings.Join(filePaths, "\n") + "\n"
 			}
 			if 0 < len(cachedPaths) {
-				s += "\n"
-				s += "    Tables in other directories\n"
-				s += "-----------------------------------\n"
-				s += strings.Join(cachedPaths, "\n")
-				s += "\n"
+				s += formatHeader("Tables in other directories") + strings.Join(cachedPaths, "\n") + "\n"
 			}
 		}
 	case parser.VIEWS:
@@ -248,22 +240,14 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 		if len(views) < 1 {
 			s = "No view is declared"
 		} else {
-			s += "\n"
-			s += "    Views\n"
-			s += "-------------\n"
-			s += strings.Join(views, "\n")
-			s += "\n"
+			s = formatHeader("Views") + strings.Join(views, "\n") + "\n"
 		}
 	case parser.CURSORS:
 		cursors := filter.Cursors.List()
 		if len(cursors) < 1 {
 			s = "No cursor is declared"
 		} else {
-			s += "\n"
-			s += "    Cursors\n"
-			s += "---------------\n"
-			s += strings.Join(cursors, "\n")
-			s += "\n"
+			s = formatHeader("Cursors") + strings.Join(cursors, "\n") + "\n"
 		}
 	case parser.FUNCTIONS:
 		scalas, aggs := filter.Functions.List()
@@ -271,18 +255,10 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 			s = "No function is declared"
 		} else {
 			if 0 < len(scalas) {
-				s += "\n"
-				s += "    Scala Functions\n"
-				s += "-----------------------\n"
-				s += strings.Join(scalas, "\n")
-				s += "\n"
+				s += formatHeader("Scala Functions") + strings.Join(scalas, "\n") + "\n"
 			}
 			if 0 < len(aggs) {
-				s += "\n"
-				s += "    Aggregate Functions\n"
-				s += "---------------------------\n"
-				s += strings.Join(aggs, "\n")
-				s += "\n"
+				s += formatHeader("Aggregate Functions") + strings.Join(aggs, "\n") + "\n"
 			}
 		}
 	}
@@ -342,12 +318,7 @@ func ShowFields(expr parser.ShowFields, filter *Filter) (string, error) {
 		}
 	}
 
-	var s string
-	s += "\n"
-	s += fmt.Sprintf("    Fields in %s\n", expr.Table.Literal)
-	s += strings.Repeat("-", len(expr.Table.Literal)+18) + "\n"
-	s += formatFields(fields)
-	s += "\n"
+	s := formatHeader(fmt.Sprintf("Fields in %s", expr.Table.Literal)) + formatFields(fields)
 
 	return s, nil
 }
@@ -362,5 +333,9 @@ func formatFields(fields []string) string {
 		formatted[i] = fmt.Sprintf("%"+strconv.Itoa(digits)+"s. %s", idxstr, field)
 	}
 
-	return strings.Join(formatted, "\n")
+	return strings.Join(formatted, "\n") + "\n"
+}
+
+func formatHeader(title string) string {
+	return "\n    " + title + "\n" + strings.Repeat("-", len(title)+8) + "\n"
 }
