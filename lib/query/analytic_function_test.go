@@ -826,7 +826,7 @@ var analyzeTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] variable @undefined is undefined",
+		Error: "[L:- C:-] variable @undefined is undeclared",
 	},
 	{
 		Name: "Analyze Not Exist Function Error",

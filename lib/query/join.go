@@ -1,8 +1,6 @@
 package query
 
 import (
-	"sync"
-
 	"github.com/mithrandie/csvq/lib/parser"
 
 	"github.com/mithrandie/ternary"
@@ -106,12 +104,11 @@ func CrossJoin(view *View, joinView *View) {
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 	records := make(RecordSet, view.RecordLen()*joinView.RecordLen())
 
-	cpu := NumberOfCPU(view.RecordLen())
-	wg := sync.WaitGroup{}
-	for i := 0; i < cpu; i++ {
-		wg.Add(1)
+	gm := NewGoroutineManager(view.RecordLen(), 150)
+	for i := 0; i < gm.CPU(); i++ {
+		gm.Add()
 		go func(thIdx int) {
-			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+			start, end := gm.RecordRange(thIdx)
 			idx := start * joinView.RecordLen()
 
 			for _, viewRecord := range view.RecordSet[start:end] {
@@ -121,10 +118,10 @@ func CrossJoin(view *View, joinView *View) {
 				}
 			}
 
-			wg.Done()
+			gm.Done()
 		}(i)
 	}
-	wg.Wait()
+	gm.Wait()
 
 	view.Header = mergedHeader
 	view.RecordSet = records
@@ -139,34 +136,33 @@ func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, par
 
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 
-	var cpu int
+	var gm *GoroutineManager
 	var splitLeft bool
 	if joinView.RecordLen() < view.RecordLen() {
-		cpu = NumberOfCPU(view.RecordLen())
+		gm = NewGoroutineManager(view.RecordLen(), 150)
 		splitLeft = true
 	} else {
-		cpu = NumberOfCPU(joinView.RecordLen())
+		gm = NewGoroutineManager(joinView.RecordLen(), 150)
 		splitLeft = false
 	}
 
 	var err error
-	recordsList := make([]RecordSet, cpu)
+	recordsList := make([]RecordSet, gm.CPU())
 
-	wg := sync.WaitGroup{}
-	for i := 0; i < cpu; i++ {
-		wg.Add(1)
+	for i := 0; i < gm.CPU(); i++ {
+		gm.Add()
 		go func(thIdx int) {
 			var lstart, lend, rstart, rend int
 			var records RecordSet
 			if splitLeft {
-				lstart, lend = RecordRange(thIdx, view.RecordLen(), cpu)
+				lstart, lend = gm.RecordRange(thIdx)
 				rstart = 0
 				rend = joinView.RecordLen()
 				records = make(RecordSet, 0, lend-lstart)
 			} else {
 				lstart = 0
 				lend = view.RecordLen()
-				rstart, rend = RecordRange(thIdx, joinView.RecordLen(), cpu)
+				rstart, rend = gm.RecordRange(thIdx)
 				records = make(RecordSet, 0, rend-rstart)
 			}
 
@@ -201,10 +197,10 @@ func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, par
 			}
 
 			recordsList[thIdx] = records
-			wg.Done()
+			gm.Done()
 		}(i)
 	}
-	wg.Wait()
+	gm.Wait()
 
 	if err != nil {
 		return err
@@ -230,35 +226,34 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 	viewEmptyRecord := NewEmptyRecord(view.FieldLen())
 	joinViewEmptyRecord := NewEmptyRecord(joinView.FieldLen())
 
-	var cpu int
+	var gm *GoroutineManager
 	var splitLeft bool
 	if joinView.RecordLen() < view.RecordLen() {
-		cpu = NumberOfCPU(view.RecordLen())
+		gm = NewGoroutineManager(view.RecordLen(), 150)
 		splitLeft = true
 	} else {
-		cpu = NumberOfCPU(joinView.RecordLen())
+		gm = NewGoroutineManager(joinView.RecordLen(), 150)
 		splitLeft = false
 	}
 
 	var err error
-	recordsList := make([]RecordSet, cpu)
-	joinViewMatchesList := make([][]bool, cpu)
+	recordsList := make([]RecordSet, gm.CPU())
+	joinViewMatchesList := make([][]bool, gm.CPU())
 
-	wg := sync.WaitGroup{}
-	for i := 0; i < cpu; i++ {
-		wg.Add(1)
+	for i := 0; i < gm.CPU(); i++ {
+		gm.Add()
 		go func(thIdx int) {
 			var lstart, lend, rstart, rend int
 			var records RecordSet
 			if splitLeft {
-				lstart, lend = RecordRange(thIdx, view.RecordLen(), cpu)
+				lstart, lend = gm.RecordRange(thIdx)
 				rstart = 0
 				rend = joinView.RecordLen()
 				records = make(RecordSet, 0, lend-lstart)
 			} else {
 				lstart = 0
 				lend = view.RecordLen()
-				rstart, rend = RecordRange(thIdx, joinView.RecordLen(), cpu)
+				rstart, rend = gm.RecordRange(thIdx)
 				records = make(RecordSet, 0, rend-rstart)
 			}
 
@@ -319,10 +314,10 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 
 			recordsList[thIdx] = records
 			joinViewMatchesList[thIdx] = joinViewMatches
-			wg.Done()
+			gm.Done()
 		}(i)
 	}
-	wg.Wait()
+	gm.Wait()
 
 	if err != nil {
 		return err

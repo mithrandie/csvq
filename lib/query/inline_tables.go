@@ -39,7 +39,7 @@ type InlineTableMap map[string]*View
 func (it InlineTableMap) Set(inlineTable parser.InlineTable, parentFilter *Filter) error {
 	uname := strings.ToUpper(inlineTable.Name.Literal)
 	if _, err := it.Get(inlineTable.Name); err == nil {
-		return NewInLineTableRedeclaredError(inlineTable.Name)
+		return NewInLineTableRedefinedError(inlineTable.Name)
 	}
 
 	filter := parentFilter.CreateNode()

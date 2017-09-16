@@ -2569,7 +2569,7 @@ var filterEvaluateTests = []struct {
 		Result: value.NewInteger(3),
 	},
 	{
-		Name: "Aggregate Function Execute User Defined Aggregate Function Undefined Error",
+		Name: "Aggregate Function Execute User Defined Aggregate Function Undeclared Error",
 		Filter: &Filter{
 			Records: []FilterRecord{
 				{
@@ -3239,11 +3239,11 @@ var filterEvaluateTests = []struct {
 		Result: value.NewInteger(1),
 	},
 	{
-		Name: "Variable Undefined Error",
+		Name: "Variable Undeclared Error",
 		Expr: parser.Variable{
 			Name: "@undefined",
 		},
-		Error: "[L:- C:-] variable @undefined is undefined",
+		Error: "[L:- C:-] variable @undefined is undeclared",
 	},
 	{
 		Name: "Variable Substitution",
@@ -3262,12 +3262,12 @@ var filterEvaluateTests = []struct {
 		Result: value.NewInteger(2),
 	},
 	{
-		Name: "Variable Substitution Undefined Error",
+		Name: "Variable Substitution Undeclared Error",
 		Expr: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "@undefined"},
 			Value:    parser.NewIntegerValue(2),
 		},
-		Error: "[L:- C:-] variable @undefined is undefined",
+		Error: "[L:- C:-] variable @undefined is undeclared",
 	},
 	{
 		Name: "Cursor Status Is Not Open",
@@ -3301,7 +3301,7 @@ var filterEvaluateTests = []struct {
 			Type:      parser.OPEN,
 			TypeLit:   "open",
 		},
-		Error: "[L:- C:-] cursor notexist is undefined",
+		Error: "[L:- C:-] cursor notexist is undeclared",
 	},
 	{
 		Name: "Cursor Status In Range Error",
@@ -3312,7 +3312,7 @@ var filterEvaluateTests = []struct {
 			Type:      parser.RANGE,
 			TypeLit:   "in range",
 		},
-		Error: "[L:- C:-] cursor notexist is undefined",
+		Error: "[L:- C:-] cursor notexist is undeclared",
 	},
 	{
 		Name: "Cursor Attribute Count",
@@ -3330,7 +3330,7 @@ var filterEvaluateTests = []struct {
 			Cursor:    parser.Identifier{Literal: "notexist"},
 			Attrebute: parser.Token{Token: parser.COUNT, Literal: "count"},
 		},
-		Error: "[L:- C:-] cursor notexist is undefined",
+		Error: "[L:- C:-] cursor notexist is undeclared",
 	},
 }
 

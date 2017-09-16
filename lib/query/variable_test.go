@@ -20,9 +20,9 @@ var variableScopesGet = []struct {
 		Result: value.NewInteger(1),
 	},
 	{
-		Name:  "VariableScopes Get Undefined Error",
+		Name:  "VariableScopes Get Undeclared Error",
 		Expr:  parser.Variable{Name: "@undef"},
-		Error: "[L:- C:-] variable @undef is undefined",
+		Error: "[L:- C:-] variable @undef is undeclared",
 	},
 }
 
@@ -81,12 +81,12 @@ var variableScopesSubstituteTests = []struct {
 		Result: value.NewInteger(3),
 	},
 	{
-		Name: "VariableScopes Substitute Variable Undefined Error",
+		Name: "VariableScopes Substitute Variable Undeclared Error",
 		Expr: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "var2"},
 			Value:    parser.NewIntegerValue(3),
 		},
-		Error: "[L:- C:-] variable var2 is undefined",
+		Error: "[L:- C:-] variable var2 is undeclared",
 	},
 }
 
@@ -140,9 +140,9 @@ var variableScopesDisposeTests = []struct {
 		},
 	},
 	{
-		Name:  "VariableScopes Dispose Undefined Error",
+		Name:  "VariableScopes Dispose Undeclared Error",
 		Expr:  parser.Variable{Name: "@undef"},
-		Error: "[L:- C:-] variable @undef is undefined",
+		Error: "[L:- C:-] variable @undef is undeclared",
 	},
 }
 
@@ -278,12 +278,12 @@ var variableMapSubstituteTests = []variableMapTests{
 		},
 	},
 	{
-		Name: "Substitute Variable Undefined Error",
+		Name: "Substitute Variable Undeclared Error",
 		Expr: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "var2"},
 			Value:    parser.NewIntegerValue(2),
 		},
-		Error: "[L:- C:-] variable var2 is undefined",
+		Error: "[L:- C:-] variable var2 is undeclared",
 	},
 	{
 		Name: "Substitute Variable Filter Error",
@@ -331,9 +331,9 @@ var variableMapDisposeTests = []variableMapTests{
 		Result: VariableMap{},
 	},
 	{
-		Name:  "Dispose Variable Undefined Error",
+		Name:  "Dispose Variable Undeclared Error",
 		Expr:  parser.Variable{Name: "var2"},
-		Error: "[L:- C:-] variable var2 is undefined",
+		Error: "[L:- C:-] variable var2 is undeclared",
 	},
 }
 

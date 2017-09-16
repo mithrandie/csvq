@@ -2,14 +2,14 @@ package query
 
 import (
 	"fmt"
+	"sort"
 	"strings"
-	"sync"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
+
 	"github.com/mithrandie/go-file"
-	"sort"
 )
 
 type TemporaryViewScopes []ViewMap
@@ -27,6 +27,15 @@ func (list TemporaryViewScopes) Get(name parser.Identifier) (*View, error) {
 	for _, m := range list {
 		if view, err := m.Get(name); err == nil {
 			return view, nil
+		}
+	}
+	return nil, NewTableNotLoadedError(name)
+}
+
+func (list TemporaryViewScopes) GetHeader(name parser.Identifier) (Header, error) {
+	for _, m := range list {
+		if header, err := m.GetHeader(name); err == nil {
+			return header, nil
 		}
 	}
 	return nil, NewTableNotLoadedError(name)
@@ -59,7 +68,7 @@ func (list TemporaryViewScopes) Dispose(name parser.Identifier) error {
 			return nil
 		}
 	}
-	return NewUndefinedTemporaryTableError(name)
+	return NewUndeclaredTemporaryTableError(name)
 }
 
 func (list TemporaryViewScopes) Store() {
@@ -119,6 +128,14 @@ func (m ViewMap) Get(fpath parser.Identifier) (*View, error) {
 	return nil, NewTableNotLoadedError(fpath)
 }
 
+func (m ViewMap) GetHeader(name parser.Identifier) (Header, error) {
+	ufpath := strings.ToUpper(name.Literal)
+	if view, ok := m[ufpath]; ok {
+		return view.Header, nil
+	}
+	return nil, NewTableNotLoadedError(name)
+}
+
 func (m ViewMap) GetWithInternalId(fpath parser.Identifier) (*View, error) {
 	ufpath := strings.ToUpper(fpath.Literal)
 	if view, ok := m[ufpath]; ok {
@@ -127,12 +144,11 @@ func (m ViewMap) GetWithInternalId(fpath parser.Identifier) (*View, error) {
 		ret.Header = MergeHeader(NewHeaderWithId(ret.Header[0].View, []string{}), ret.Header)
 		fieldLen := ret.FieldLen()
 
-		cpu := NumberOfCPU(ret.RecordLen())
-		wg := sync.WaitGroup{}
-		for i := 0; i < cpu; i++ {
-			wg.Add(1)
+		gm := NewGoroutineManager(ret.RecordLen(), 150)
+		for i := 0; i < gm.CPU(); i++ {
+			gm.Add()
 			go func(thIdx int) {
-				start, end := RecordRange(thIdx, ret.RecordLen(), cpu)
+				start, end := gm.RecordRange(thIdx)
 
 				for i := start; i < end; i++ {
 					record := make(Record, fieldLen)
@@ -142,10 +158,10 @@ func (m ViewMap) GetWithInternalId(fpath parser.Identifier) (*View, error) {
 					}
 					ret.RecordSet[i] = record
 				}
-				wg.Done()
+				gm.Done()
 			}(i)
 		}
-		wg.Wait()
+		gm.Wait()
 
 		return ret, nil
 	}
@@ -174,10 +190,10 @@ func (m ViewMap) DisposeTemporaryTable(table parser.Identifier) error {
 			delete(m, uname)
 			return nil
 		} else {
-			return NewUndefinedTemporaryTableError(table)
+			return NewUndeclaredTemporaryTableError(table)
 		}
 	}
-	return NewUndefinedTemporaryTableError(table)
+	return NewUndeclaredTemporaryTableError(table)
 }
 
 func (m ViewMap) Dispose(name string) {

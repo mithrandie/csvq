@@ -17,7 +17,7 @@ func (list VariableScopes) Get(expr parser.Variable) (value value.Primary, err e
 			return
 		}
 	}
-	err = NewUndefinedVariableError(expr)
+	err = NewUndeclaredVariableError(expr)
 	return
 }
 
@@ -26,11 +26,11 @@ func (list VariableScopes) Substitute(expr parser.VariableSubstitution, filter *
 		if value, err = v.Substitute(expr, filter); err == nil {
 			return
 		}
-		if _, ok := err.(*UndefinedVariableError); !ok {
+		if _, ok := err.(*UndeclaredVariableError); !ok {
 			return
 		}
 	}
-	err = NewUndefinedVariableError(expr.Variable)
+	err = NewUndeclaredVariableError(expr.Variable)
 	return
 }
 
@@ -41,7 +41,7 @@ func (list VariableScopes) SubstituteDirectly(variable parser.Variable, value va
 			return value, nil
 		}
 	}
-	return nil, NewUndefinedVariableError(variable)
+	return nil, NewUndeclaredVariableError(variable)
 }
 
 func (list VariableScopes) Dispose(expr parser.Variable) error {
@@ -50,7 +50,7 @@ func (list VariableScopes) Dispose(expr parser.Variable) error {
 			return nil
 		}
 	}
-	return NewUndefinedVariableError(expr)
+	return NewUndeclaredVariableError(expr)
 }
 
 type VariableMap map[string]value.Primary
@@ -65,7 +65,7 @@ func (v VariableMap) Add(variable parser.Variable, value value.Primary) error {
 
 func (v VariableMap) Set(variable parser.Variable, value value.Primary) error {
 	if _, ok := v[variable.Name]; !ok {
-		return NewUndefinedVariableError(variable)
+		return NewUndeclaredVariableError(variable)
 	}
 	v[variable.Name] = value
 	return nil
@@ -75,12 +75,12 @@ func (v VariableMap) Get(variable parser.Variable) (value.Primary, error) {
 	if v, ok := v[variable.Name]; ok {
 		return v, nil
 	}
-	return nil, NewUndefinedVariableError(variable)
+	return nil, NewUndeclaredVariableError(variable)
 }
 
 func (v VariableMap) Dispose(variable parser.Variable) error {
 	if _, ok := v[variable.Name]; !ok {
-		return NewUndefinedVariableError(variable)
+		return NewUndeclaredVariableError(variable)
 	}
 	delete(v, variable.Name)
 	return nil

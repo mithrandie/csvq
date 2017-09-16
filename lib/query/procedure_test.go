@@ -334,7 +334,7 @@ var procedureExecuteStatementTests = []struct {
 			Variable: parser.Variable{Name: "@var9"},
 			Value:    parser.NewIntegerValueFromString("1"),
 		},
-		Error:     "[L:- C:-] variable @var9 is undefined",
+		Error:     "[L:- C:-] variable @var9 is undeclared",
 		ErrorCode: 1,
 	},
 	{
@@ -1393,7 +1393,7 @@ var procedureWhileInCursorTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		Error: "[L:- C:-] variable @var3 is undefined",
+		Error: "[L:- C:-] variable @var3 is undeclared",
 	},
 	{
 		Name: "While In Cursor Statement Execution Error",

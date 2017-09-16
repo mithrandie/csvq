@@ -356,7 +356,7 @@ var inlineTableNodesLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] inline table it is redeclared",
+		Error: "[L:- C:-] inline table it is redefined",
 	},
 }
 
@@ -570,7 +570,7 @@ var inlineTableMapSetTests = []struct {
 		},
 	},
 	{
-		Name: "InlineTableMap Set Redeclared Error",
+		Name: "InlineTableMap Set Redefined Error",
 		Expr: parser.InlineTable{
 			Name: parser.Identifier{Literal: "it"},
 			Fields: []parser.QueryExpression{
@@ -596,7 +596,7 @@ var inlineTableMapSetTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] inline table it is redeclared",
+		Error: "[L:- C:-] inline table it is redefined",
 	},
 	{
 		Name: "InlineTableMap Set Query Error",
