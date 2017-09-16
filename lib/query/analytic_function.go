@@ -3,9 +3,7 @@ package query
 import (
 	"sort"
 	"strings"
-	"sync"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 )
@@ -85,14 +83,13 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 		view.sortValuesInEachCell = make([][]*SortValue, view.RecordLen())
 	}
 
-	cpu := NumberOfCPU(view.RecordLen())
+	gm := NewGoroutineManager(view.RecordLen(), 150)
 	partitionKeys := make([]string, view.RecordLen())
 
-	wg := sync.WaitGroup{}
-	for i := 0; i < cpu; i++ {
-		wg.Add(1)
+	for i := 0; i < gm.CPU(); i++ {
+		gm.Add()
 		go func(thIdx int) {
-			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+			start, end := gm.RecordRange(thIdx)
 			sortValues := make(SortValues, len(partitionIndices))
 
 			for i := start; i < end; i++ {
@@ -117,11 +114,11 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 				partitionKeys[i] = partitionKey
 			}
 
-			wg.Done()
+			gm.Done()
 		}(i)
 	}
 
-	wg.Wait()
+	gm.Wait()
 
 	partitions := Partitions{}
 	partitionMapKeys := []string{}
@@ -134,21 +131,11 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 		}
 	}
 
-	cpu = cmd.GetFlags().CPU
-	if 2 < cpu {
-		cpu = cpu - 1
-	}
-	if len(partitionMapKeys) < cpu {
-		cpu = len(partitionMapKeys)
-	}
-	if cpu < 1 {
-		cpu = 1
-	}
-
-	for i := 0; i < cpu; i++ {
-		wg.Add(1)
+	gm = NewGoroutineManager(len(partitionMapKeys), 0)
+	for i := 0; i < gm.CPU(); i++ {
+		gm.Add()
 		go func(thIdx int) {
-			start, end := RecordRange(thIdx, len(partitionMapKeys), cpu)
+			start, end := gm.RecordRange(thIdx)
 			filter := NewFilterForSequentialEvaluation(view, view.Filter)
 
 		AnalyzeLoop:
@@ -208,11 +195,11 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 				}
 			}
 
-			wg.Done()
+			gm.Done()
 		}(i)
 	}
 
-	wg.Wait()
+	gm.Wait()
 
 	return err
 }

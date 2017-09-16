@@ -1,11 +1,10 @@
 package query
 
 import (
+	"fmt"
 	"os"
 	"strings"
-	"sync"
 
-	"fmt"
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
@@ -708,14 +707,13 @@ func AddColumns(query parser.AddColumns, parentFilter *Filter) (*View, error) {
 		header[i].Number = colNumber
 	}
 
-	cpu := NumberOfCPU(view.RecordLen())
 	records := make(RecordSet, view.RecordLen())
 
-	wg := sync.WaitGroup{}
-	for i := 0; i < cpu; i++ {
-		wg.Add(1)
+	gm := NewGoroutineManager(view.RecordLen(), 150)
+	for i := 0; i < gm.CPU(); i++ {
+		gm.Add()
 		go func(thIdx int) {
-			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+			start, end := gm.RecordRange(thIdx)
 
 			filter := NewFilterForSequentialEvaluation(view, filter)
 
@@ -752,10 +750,10 @@ func AddColumns(query parser.AddColumns, parentFilter *Filter) (*View, error) {
 				records[i] = record
 			}
 
-			wg.Done()
+			gm.Done()
 		}(i)
 	}
-	wg.Wait()
+	gm.Wait()
 
 	if err != nil {
 		return nil, err

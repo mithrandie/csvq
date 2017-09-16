@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"math"
 	"reflect"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/value"
 )
 
@@ -375,18 +373,6 @@ func FormatString(format string, args []value.Primary) (string, error) {
 	}
 
 	return buf.String(), nil
-}
-
-func NumberOfCPU(recordLen int) int {
-	num := cmd.GetFlags().CPU
-	if 2 < num {
-		num = num - 1
-	}
-	if num <= runtime.NumGoroutine() || recordLen < 150 || recordLen < num {
-		num = 1
-	}
-
-	return num
 }
 
 func RecordRange(cpuIndex int, totalLen int, numberOfCPU int) (int, int) {

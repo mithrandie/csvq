@@ -313,12 +313,11 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 			}
 			view.Header = header
 
-			cpu := NumberOfCPU(view.RecordLen())
-			wg := sync.WaitGroup{}
-			for i := 0; i < cpu; i++ {
-				wg.Add(1)
+			gm := NewGoroutineManager(view.RecordLen(), 150)
+			for i := 0; i < gm.CPU(); i++ {
+				gm.Add()
 				go func(thIdx int) {
-					start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+					start, end := gm.RecordRange(thIdx)
 
 					for i := start; i < end; i++ {
 						record := make(Record, len(fieldIndices))
@@ -328,10 +327,10 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 						view.RecordSet[i] = record
 					}
 
-					wg.Done()
+					gm.Done()
 				}(i)
 			}
-			wg.Wait()
+			gm.Wait()
 		}
 
 	case parser.Subquery:
@@ -483,16 +482,14 @@ func (view *View) Where(clause parser.WhereClause) error {
 }
 
 func (view *View) filter(condition parser.QueryExpression) error {
-	cpu := NumberOfCPU(view.RecordLen())
-
 	var err error
 	results := make([]bool, view.RecordLen())
 
-	wg := sync.WaitGroup{}
-	for i := 0; i < cpu; i++ {
-		wg.Add(1)
+	gm := NewGoroutineManager(view.RecordLen(), 150)
+	for i := 0; i < gm.CPU(); i++ {
+		gm.Add()
 		go func(thIdx int) {
-			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+			start, end := gm.RecordRange(thIdx)
 			filter := NewFilterForSequentialEvaluation(view, view.Filter)
 
 		FilterLoop:
@@ -512,10 +509,10 @@ func (view *View) filter(condition parser.QueryExpression) error {
 				}
 			}
 
-			wg.Done()
+			gm.Done()
 		}(i)
 	}
-	wg.Wait()
+	gm.Wait()
 
 	if err != nil {
 		return err
@@ -545,13 +542,11 @@ func (view *View) group(items []parser.QueryExpression) error {
 	var err error
 	keys := make([]string, view.RecordLen())
 
-	cpu := NumberOfCPU(view.RecordLen())
-
-	wg := sync.WaitGroup{}
-	for i := 0; i < cpu; i++ {
-		wg.Add(1)
+	gm := NewGoroutineManager(view.RecordLen(), 150)
+	for i := 0; i < gm.CPU(); i++ {
+		gm.Add()
 		go func(thIdx int) {
-			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+			start, end := gm.RecordRange(thIdx)
 
 			filter := NewFilterForSequentialEvaluation(view, view.Filter)
 			values := make([]value.Primary, len(items))
@@ -574,10 +569,10 @@ func (view *View) group(items []parser.QueryExpression) error {
 				keys[i] = SerializeComparisonKeys(values)
 			}
 
-			wg.Done()
+			gm.Done()
 		}(i)
 	}
-	wg.Wait()
+	gm.Wait()
 
 	if err != nil {
 		return err
@@ -783,12 +778,11 @@ func (view *View) Select(clause parser.SelectClause) error {
 func (view *View) GenerateComparisonKeys() {
 	view.comparisonKeysInEachRecord = make([]string, view.RecordLen())
 
-	cpu := NumberOfCPU(view.RecordLen())
-	wg := sync.WaitGroup{}
-	for i := 0; i < cpu; i++ {
-		wg.Add(1)
+	gm := NewGoroutineManager(view.RecordLen(), 150)
+	for i := 0; i < gm.CPU(); i++ {
+		gm.Add()
 		go func(thIdx int) {
-			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+			start, end := gm.RecordRange(thIdx)
 
 			var primaries []value.Primary
 			if view.selectFields != nil {
@@ -806,10 +800,10 @@ func (view *View) GenerateComparisonKeys() {
 				}
 			}
 
-			wg.Done()
+			gm.Done()
 		}(i)
 	}
-	wg.Wait()
+	gm.Wait()
 }
 
 func (view *View) SelectAllColumns() error {
@@ -864,13 +858,11 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 		}
 	}
 
-	cpu := NumberOfCPU(view.RecordLen())
-
-	wg := sync.WaitGroup{}
-	for i := 0; i < cpu; i++ {
-		wg.Add(1)
+	gm := NewGoroutineManager(view.RecordLen(), 150)
+	for i := 0; i < gm.CPU(); i++ {
+		gm.Add()
 		go func(thIdx int) {
-			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+			start, end := gm.RecordRange(thIdx)
 
 			for i := start; i < end; i++ {
 				if view.sortValuesInEachCell != nil && view.sortValuesInEachCell[i] == nil {
@@ -891,10 +883,10 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 				view.sortValuesInEachRecord[i] = sortValues
 			}
 
-			wg.Done()
+			gm.Done()
 		}(i)
 	}
-	wg.Wait()
+	gm.Wait()
 
 	sort.Sort(view)
 	return nil
@@ -988,21 +980,20 @@ func (view *View) ExtendRecordCapacity(exprs []parser.QueryExpression) error {
 		return nil
 	}
 
-	cpu := NumberOfCPU(view.RecordLen())
-	wg := sync.WaitGroup{}
-	for i := 0; i < cpu; i++ {
-		wg.Add(1)
+	gm := NewGoroutineManager(view.RecordLen(), 150)
+	for i := 0; i < gm.CPU(); i++ {
+		gm.Add()
 		go func(thIdx int) {
-			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+			start, end := gm.RecordRange(thIdx)
 			for i := start; i < end; i++ {
 				record := make(Record, currentLen, fieldCap)
 				copy(record, view.RecordSet[i])
 				view.RecordSet[i] = record
 			}
-			wg.Done()
+			gm.Done()
 		}(i)
 	}
-	wg.Wait()
+	gm.Wait()
 	return nil
 }
 
@@ -1027,13 +1018,11 @@ func (view *View) evalColumn(obj parser.QueryExpression, alias string) (idx int,
 					return
 				}
 			} else {
-				cpu := NumberOfCPU(view.RecordLen())
-
-				wg := sync.WaitGroup{}
-				for i := 0; i < cpu; i++ {
-					wg.Add(1)
+				gm := NewGoroutineManager(view.RecordLen(), 150)
+				for i := 0; i < gm.CPU(); i++ {
+					gm.Add()
 					go func(thIdx int) {
-						start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+						start, end := gm.RecordRange(thIdx)
 						filter := NewFilterForSequentialEvaluation(view, view.Filter)
 
 					EvalColumnLoop:
@@ -1052,10 +1041,10 @@ func (view *View) evalColumn(obj parser.QueryExpression, alias string) (idx int,
 							view.RecordSet[i] = append(view.RecordSet[i], NewCell(primary))
 						}
 
-						wg.Done()
+						gm.Done()
 					}(i)
 				}
-				wg.Wait()
+				gm.Wait()
 
 				if err != nil {
 					return
@@ -1284,13 +1273,11 @@ func (view *View) Fix() {
 	}
 
 	if resize {
-		cpu := NumberOfCPU(view.RecordLen())
-
-		wg := sync.WaitGroup{}
-		for i := 0; i < cpu; i++ {
-			wg.Add(1)
+		gm := NewGoroutineManager(view.RecordLen(), 150)
+		for i := 0; i < gm.CPU(); i++ {
+			gm.Add()
 			go func(thIdx int) {
-				start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+				start, end := gm.RecordRange(thIdx)
 
 				for i := start; i < end; i++ {
 					record := make(Record, len(view.selectFields))
@@ -1304,10 +1291,10 @@ func (view *View) Fix() {
 					view.RecordSet[i] = record
 				}
 
-				wg.Done()
+				gm.Done()
 			}(i)
 		}
-		wg.Wait()
+		gm.Wait()
 	}
 
 	hfields := NewEmptyHeader(len(view.selectFields))
@@ -1422,15 +1409,14 @@ func (view *View) Intersect(calcView *View, all bool) {
 }
 
 func (view *View) ListValuesForAggregateFunctions(expr parser.QueryExpression, arg parser.QueryExpression, distinct bool, filter *Filter) ([]value.Primary, error) {
-	cpu := NumberOfCPU(view.RecordLen())
 	list := make([]value.Primary, view.RecordLen())
 	var err error
 
-	wg := sync.WaitGroup{}
-	for i := 0; i < cpu; i++ {
-		wg.Add(1)
+	gm := NewGoroutineManager(view.RecordLen(), 150)
+	for i := 0; i < gm.CPU(); i++ {
+		gm.Add()
 		go func(thIdx int) {
-			start, end := RecordRange(thIdx, view.RecordLen(), cpu)
+			start, end := gm.RecordRange(thIdx)
 			filter := NewFilterForSequentialEvaluation(view, filter)
 
 		ListAggregateFunctionLoop:
@@ -1452,10 +1438,10 @@ func (view *View) ListValuesForAggregateFunctions(expr parser.QueryExpression, a
 				list[i] = p
 			}
 
-			wg.Done()
+			gm.Done()
 		}(i)
 	}
-	wg.Wait()
+	gm.Wait()
 
 	if err != nil {
 		return nil, err
@@ -1469,15 +1455,14 @@ func (view *View) ListValuesForAggregateFunctions(expr parser.QueryExpression, a
 }
 
 func (view *View) ListValuesForAnalyticFunctions(fn parser.AnalyticFunction, partition Partition) ([]value.Primary, error) {
-	cpu := NumberOfCPU(len(partition))
 	list := make([]value.Primary, len(partition))
 	var err error
 
-	wg := sync.WaitGroup{}
-	for i := 0; i < cpu; i++ {
-		wg.Add(1)
+	gm := NewGoroutineManager(len(partition), 150)
+	for i := 0; i < gm.CPU(); i++ {
+		gm.Add()
 		go func(thIdx int) {
-			start, end := RecordRange(thIdx, len(partition), cpu)
+			start, end := gm.RecordRange(thIdx)
 			filter := NewFilterForSequentialEvaluation(view, view.Filter)
 
 		ListAnalyticFunctionLoop:
@@ -1493,10 +1478,10 @@ func (view *View) ListValuesForAnalyticFunctions(fn parser.AnalyticFunction, par
 				}
 				list[i] = val
 			}
-			wg.Done()
+			gm.Done()
 		}(i)
 	}
-	wg.Wait()
+	gm.Wait()
 
 	if err != nil {
 		return nil, err

@@ -2,14 +2,13 @@ package query
 
 import (
 	"fmt"
+	"sort"
 	"strings"
-	"sync"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 	"github.com/mithrandie/go-file"
-	"sort"
 )
 
 type TemporaryViewScopes []ViewMap
@@ -144,12 +143,11 @@ func (m ViewMap) GetWithInternalId(fpath parser.Identifier) (*View, error) {
 		ret.Header = MergeHeader(NewHeaderWithId(ret.Header[0].View, []string{}), ret.Header)
 		fieldLen := ret.FieldLen()
 
-		cpu := NumberOfCPU(ret.RecordLen())
-		wg := sync.WaitGroup{}
-		for i := 0; i < cpu; i++ {
-			wg.Add(1)
+		gm := NewGoroutineManager(ret.RecordLen(), 150)
+		for i := 0; i < gm.CPU(); i++ {
+			gm.Add()
 			go func(thIdx int) {
-				start, end := RecordRange(thIdx, ret.RecordLen(), cpu)
+				start, end := gm.RecordRange(thIdx)
 
 				for i := start; i < end; i++ {
 					record := make(Record, fieldLen)
@@ -159,10 +157,10 @@ func (m ViewMap) GetWithInternalId(fpath parser.Identifier) (*View, error) {
 					}
 					ret.RecordSet[i] = record
 				}
-				wg.Done()
+				gm.Done()
 			}(i)
 		}
-		wg.Wait()
+		gm.Wait()
 
 		return ret, nil
 	}
