@@ -27,11 +27,11 @@ func (list CursorScopes) Dispose(name parser.Identifier) error {
 		if err == nil {
 			return nil
 		}
-		if _, ok := err.(*UndefinedCursorError); !ok {
+		if _, ok := err.(*UndeclaredCursorError); !ok {
 			return err
 		}
 	}
-	return NewUndefinedCursorError(name)
+	return NewUndeclaredCursorError(name)
 }
 
 func (list CursorScopes) Open(name parser.Identifier, filter *Filter) error {
@@ -42,11 +42,11 @@ func (list CursorScopes) Open(name parser.Identifier, filter *Filter) error {
 		if err == nil {
 			return nil
 		}
-		if _, ok := err.(*UndefinedCursorError); !ok {
+		if _, ok := err.(*UndeclaredCursorError); !ok {
 			return err
 		}
 	}
-	return NewUndefinedCursorError(name)
+	return NewUndeclaredCursorError(name)
 }
 
 func (list CursorScopes) Close(name parser.Identifier) error {
@@ -55,11 +55,11 @@ func (list CursorScopes) Close(name parser.Identifier) error {
 		if err == nil {
 			return nil
 		}
-		if _, ok := err.(*UndefinedCursorError); !ok {
+		if _, ok := err.(*UndeclaredCursorError); !ok {
 			return err
 		}
 	}
-	return NewUndefinedCursorError(name)
+	return NewUndeclaredCursorError(name)
 }
 
 func (list CursorScopes) Fetch(name parser.Identifier, position int, number int) ([]value.Primary, error) {
@@ -71,11 +71,11 @@ func (list CursorScopes) Fetch(name parser.Identifier, position int, number int)
 		if err == nil {
 			return values, nil
 		}
-		if _, ok := err.(*UndefinedCursorError); !ok {
+		if _, ok := err.(*UndeclaredCursorError); !ok {
 			return nil, err
 		}
 	}
-	return nil, NewUndefinedCursorError(name)
+	return nil, NewUndeclaredCursorError(name)
 }
 
 func (list CursorScopes) IsOpen(name parser.Identifier) (ternary.Value, error) {
@@ -84,7 +84,7 @@ func (list CursorScopes) IsOpen(name parser.Identifier) (ternary.Value, error) {
 			return ok, nil
 		}
 	}
-	return ternary.FALSE, NewUndefinedCursorError(name)
+	return ternary.FALSE, NewUndeclaredCursorError(name)
 }
 
 func (list CursorScopes) IsInRange(name parser.Identifier) (ternary.Value, error) {
@@ -96,11 +96,11 @@ func (list CursorScopes) IsInRange(name parser.Identifier) (ternary.Value, error
 		if err == nil {
 			return result, nil
 		}
-		if _, ok := err.(*UndefinedCursorError); !ok {
+		if _, ok := err.(*UndeclaredCursorError); !ok {
 			return ternary.FALSE, err
 		}
 	}
-	return ternary.FALSE, NewUndefinedCursorError(name)
+	return ternary.FALSE, NewUndeclaredCursorError(name)
 }
 
 func (list CursorScopes) Count(name parser.Identifier) (int, error) {
@@ -112,11 +112,11 @@ func (list CursorScopes) Count(name parser.Identifier) (int, error) {
 		if err == nil {
 			return count, nil
 		}
-		if _, ok := err.(*UndefinedCursorError); !ok {
+		if _, ok := err.(*UndeclaredCursorError); !ok {
 			return 0, err
 		}
 	}
-	return 0, NewUndefinedCursorError(name)
+	return 0, NewUndeclaredCursorError(name)
 }
 
 func (list CursorScopes) List() []string {
@@ -173,35 +173,35 @@ func (m CursorMap) Dispose(name parser.Identifier) error {
 		delete(m, uname)
 		return nil
 	}
-	return NewUndefinedCursorError(name)
+	return NewUndeclaredCursorError(name)
 }
 
 func (m CursorMap) Open(name parser.Identifier, filter *Filter) error {
 	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
 		return cur.Open(name, filter)
 	}
-	return NewUndefinedCursorError(name)
+	return NewUndeclaredCursorError(name)
 }
 
 func (m CursorMap) Close(name parser.Identifier) error {
 	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
 		return cur.Close(name)
 	}
-	return NewUndefinedCursorError(name)
+	return NewUndeclaredCursorError(name)
 }
 
 func (m CursorMap) Fetch(name parser.Identifier, position int, number int) ([]value.Primary, error) {
 	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
 		return cur.Fetch(name, position, number)
 	}
-	return nil, NewUndefinedCursorError(name)
+	return nil, NewUndeclaredCursorError(name)
 }
 
 func (m CursorMap) IsOpen(name parser.Identifier) (ternary.Value, error) {
 	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
 		return ternary.ConvertFromBool(cur.view != nil), nil
 	}
-	return ternary.FALSE, NewUndefinedCursorError(name)
+	return ternary.FALSE, NewUndeclaredCursorError(name)
 }
 
 func (m CursorMap) IsInRange(name parser.Identifier) (ternary.Value, error) {
@@ -214,7 +214,7 @@ func (m CursorMap) IsInRange(name parser.Identifier) (ternary.Value, error) {
 		}
 		return ternary.ConvertFromBool(-1 < cur.index && cur.index < cur.view.RecordLen()), nil
 	}
-	return ternary.FALSE, NewUndefinedCursorError(name)
+	return ternary.FALSE, NewUndeclaredCursorError(name)
 }
 
 func (m CursorMap) Count(name parser.Identifier) (int, error) {
@@ -224,7 +224,7 @@ func (m CursorMap) Count(name parser.Identifier) (int, error) {
 		}
 		return cur.view.RecordLen(), nil
 	}
-	return 0, NewUndefinedCursorError(name)
+	return 0, NewUndeclaredCursorError(name)
 }
 
 type Cursor struct {

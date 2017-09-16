@@ -100,7 +100,7 @@ var fetchCursorTests = []struct {
 			{Name: "@var1"},
 			{Name: "@var2"},
 		},
-		Error: "[L:- C:-] cursor notexist is undefined",
+		Error: "[L:- C:-] cursor notexist is undeclared",
 	},
 	{
 		Name:    "Fetch Cursor Not Match Number Error",
@@ -117,7 +117,7 @@ var fetchCursorTests = []struct {
 			{Name: "@var1"},
 			{Name: "@notexist"},
 		},
-		Error: "[L:- C:-] variable @notexist is undefined",
+		Error: "[L:- C:-] variable @notexist is undeclared",
 	},
 	{
 		Name:    "Fetch Cursor Number Value Error",

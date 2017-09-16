@@ -188,9 +188,9 @@ var cursorScopesDisposeTests = []struct {
 		Error:   "[L:- C:-] cursor pcur is a pseudo cursor",
 	},
 	{
-		Name:    "CursorScopes Dispose Undefined Error",
+		Name:    "CursorScopes Dispose Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "[L:- C:-] cursor notexist is undefined",
+		Error:   "[L:- C:-] cursor notexist is undeclared",
 	},
 }
 
@@ -292,9 +292,9 @@ var cursorScopesOpenTests = []struct {
 		},
 	},
 	{
-		Name:    "CursorScopes Open Undefined Error",
+		Name:    "CursorScopes Open Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "[L:- C:-] cursor notexist is undefined",
+		Error:   "[L:- C:-] cursor notexist is undeclared",
 	},
 	{
 		Name:    "CursorScopes Open Open Error",
@@ -392,9 +392,9 @@ var cursorScopesCloseTests = []struct {
 		Error:   "[L:- C:-] cursor pcur is a pseudo cursor",
 	},
 	{
-		Name:    "CursorScopes Close Undefined Error",
+		Name:    "CursorScopes Close Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "[L:- C:-] cursor notexist is undefined",
+		Error:   "[L:- C:-] cursor notexist is undeclared",
 	},
 }
 
@@ -465,10 +465,10 @@ var cursorScopesFetchTests = []struct {
 		},
 	},
 	{
-		Name:     "CursorScopes Fetch Undefined Error",
+		Name:     "CursorScopes Fetch Undeclared Error",
 		CurName:  parser.Identifier{Literal: "notexist"},
 		Position: parser.NEXT,
-		Error:    "[L:- C:-] cursor notexist is undefined",
+		Error:    "[L:- C:-] cursor notexist is undeclared",
 	},
 	{
 		Name:     "CursorScopes Fetch Closed Error",
@@ -530,9 +530,9 @@ var cursorScopesIsOpenTests = []struct {
 		Result:  ternary.TRUE,
 	},
 	{
-		Name:    "CursorScopes IsOpen Undefined Error",
+		Name:    "CursorScopes IsOpen Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "[L:- C:-] cursor notexist is undefined",
+		Error:   "[L:- C:-] cursor notexist is undeclared",
 	},
 }
 
@@ -591,9 +591,9 @@ var cursorScopesIsInRangeTests = []struct {
 		Error:   "[L:- C:-] cursor cur2 is closed",
 	},
 	{
-		Name:    "CursorMap Is In Range Undefined Error",
+		Name:    "CursorMap Is In Range Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "[L:- C:-] cursor notexist is undefined",
+		Error:   "[L:- C:-] cursor notexist is undeclared",
 	},
 }
 
@@ -654,9 +654,9 @@ var cursorScopesCountTests = []struct {
 		Error:   "[L:- C:-] cursor cur2 is closed",
 	},
 	{
-		Name:    "CursorScopes Count Undefined Error",
+		Name:    "CursorScopes Count Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "[L:- C:-] cursor notexist is undefined",
+		Error:   "[L:- C:-] cursor notexist is undeclared",
 	},
 }
 
@@ -864,9 +864,9 @@ var cursorMapDisposeTests = []struct {
 		},
 	},
 	{
-		Name:    "CursorMap Dispose Undefined Error",
+		Name:    "CursorMap Dispose Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "[L:- C:-] cursor notexist is undefined",
+		Error:   "[L:- C:-] cursor notexist is undeclared",
 	},
 	{
 		Name:    "CursorMap Dispose Rseudo Cursor Error",
@@ -964,9 +964,9 @@ var cursorMapOpenTests = []struct {
 		},
 	},
 	{
-		Name:    "CursorMap Open Undefined Error",
+		Name:    "CursorMap Open Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "[L:- C:-] cursor notexist is undefined",
+		Error:   "[L:- C:-] cursor notexist is undeclared",
 	},
 	{
 		Name:    "CursorMap Open Open Error",
@@ -1059,9 +1059,9 @@ var cursorMapCloseTests = []struct {
 		Error:   "[L:- C:-] cursor pcur is a pseudo cursor",
 	},
 	{
-		Name:    "CursorMap Close Undefined Error",
+		Name:    "CursorMap Close Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "[L:- C:-] cursor notexist is undefined",
+		Error:   "[L:- C:-] cursor notexist is undeclared",
 	},
 }
 
@@ -1207,10 +1207,10 @@ var cursorMapFetchTests = []struct {
 		Result:   nil,
 	},
 	{
-		Name:     "CursorMap Fetch Undefined Error",
+		Name:     "CursorMap Fetch Undeclared Error",
 		CurName:  parser.Identifier{Literal: "notexist"},
 		Position: parser.NEXT,
-		Error:    "[L:- C:-] cursor notexist is undefined",
+		Error:    "[L:- C:-] cursor notexist is undeclared",
 	},
 	{
 		Name:     "CursorMap Fetch Closed Error",
@@ -1272,9 +1272,9 @@ var cursorMapIsOpenTests = []struct {
 		Result:  ternary.FALSE,
 	},
 	{
-		Name:    "CursorMap IsOpen Undefined Error",
+		Name:    "CursorMap IsOpen Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "[L:- C:-] cursor notexist is undefined",
+		Error:   "[L:- C:-] cursor notexist is undeclared",
 	},
 }
 
@@ -1343,9 +1343,9 @@ var cursorMapIsInRangeTests = []struct {
 		Error:   "[L:- C:-] cursor cur3 is closed",
 	},
 	{
-		Name:    "CursorMap Is In Range Undefined Error",
+		Name:    "CursorMap Is In Range Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "[L:- C:-] cursor notexist is undefined",
+		Error:   "[L:- C:-] cursor notexist is undeclared",
 	},
 }
 
@@ -1410,9 +1410,9 @@ var cursorMapCountTests = []struct {
 		Error:   "[L:- C:-] cursor cur2 is closed",
 	},
 	{
-		Name:    "CursorMap Count Undefined Error",
+		Name:    "CursorMap Count Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "[L:- C:-] cursor notexist is undefined",
+		Error:   "[L:- C:-] cursor notexist is undeclared",
 	},
 }
 

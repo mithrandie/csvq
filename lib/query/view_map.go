@@ -68,7 +68,7 @@ func (list TemporaryViewScopes) Dispose(name parser.Identifier) error {
 			return nil
 		}
 	}
-	return NewUndefinedTemporaryTableError(name)
+	return NewUndeclaredTemporaryTableError(name)
 }
 
 func (list TemporaryViewScopes) Store() {
@@ -191,10 +191,10 @@ func (m ViewMap) DisposeTemporaryTable(table parser.Identifier) error {
 			delete(m, uname)
 			return nil
 		} else {
-			return NewUndefinedTemporaryTableError(table)
+			return NewUndeclaredTemporaryTableError(table)
 		}
 	}
-	return NewUndefinedTemporaryTableError(table)
+	return NewUndeclaredTemporaryTableError(table)
 }
 
 func (m ViewMap) Dispose(name string) {

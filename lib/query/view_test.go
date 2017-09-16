@@ -3676,7 +3676,7 @@ var viewLimitTests = []struct {
 			Filter: NewEmptyFilter(),
 		},
 		Limit: parser.LimitClause{Value: parser.Variable{Name: "notexist"}},
-		Error: "[L:- C:-] variable notexist is undefined",
+		Error: "[L:- C:-] variable notexist is undeclared",
 	},
 	{
 		Name: "Limit Value Error",
@@ -3899,7 +3899,7 @@ var viewOffsetTests = []struct {
 			Filter: NewEmptyFilter(),
 		},
 		Offset: parser.OffsetClause{Value: parser.Variable{Name: "notexist"}},
-		Error:  "[L:- C:-] variable notexist is undefined",
+		Error:  "[L:- C:-] variable notexist is undeclared",
 	},
 	{
 		Name: "Offset Value Error",

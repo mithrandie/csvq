@@ -503,7 +503,7 @@ var temporaryViewScopesDisposeTests = []struct {
 	{
 		Name:  "TempViewScopes Dispose Not Loaded Error",
 		Path:  parser.Identifier{Literal: "/path/to/table9.csv"},
-		Error: "[L:- C:-] view /path/to/table9.csv is undefined",
+		Error: "[L:- C:-] view /path/to/table9.csv is undeclared",
 	},
 }
 
@@ -1186,12 +1186,12 @@ var viewMapDisposeTemporaryTable = []struct {
 	{
 		Name:  "ViewMap DisposeTemporaryTable Not Temporary Table",
 		Table: parser.Identifier{Literal: "/path/to/table2.csv"},
-		Error: "[L:- C:-] view /path/to/table2.csv is undefined",
+		Error: "[L:- C:-] view /path/to/table2.csv is undeclared",
 	},
 	{
-		Name:  "ViewMap DisposeTemporaryTable Undefined Error",
+		Name:  "ViewMap DisposeTemporaryTable Undeclared Error",
 		Table: parser.Identifier{Literal: "/path/to/undef.csv"},
-		Error: "[L:- C:-] view /path/to/undef.csv is undefined",
+		Error: "[L:- C:-] view /path/to/undef.csv is undeclared",
 	},
 }
 

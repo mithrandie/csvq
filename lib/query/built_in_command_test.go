@@ -34,7 +34,7 @@ var printTests = []struct {
 				Name: "var",
 			},
 		},
-		Error: "[L:- C:-] variable var is undefined",
+		Error: "[L:- C:-] variable var is undeclared",
 	},
 }
 
@@ -87,7 +87,7 @@ var printfTests = []struct {
 				parser.NewIntegerValue(1),
 			},
 		},
-		Error: "[L:- C:-] variable var is undefined",
+		Error: "[L:- C:-] variable var is undeclared",
 	},
 	{
 		Name: "Printf Evaluate Error",
@@ -99,7 +99,7 @@ var printfTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] variable var is undefined",
+		Error: "[L:- C:-] variable var is undeclared",
 	},
 	{
 		Name: "Printf Less Values Error",

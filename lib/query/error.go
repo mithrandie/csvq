@@ -24,7 +24,7 @@ const (
 	ERROR_FIELD_NOT_GROUP_KEY               = "field %s is not a group key"
 	ERROR_DUPLICATE_FIELD_NAME              = "field name %s is a duplicate"
 	ERROR_NOT_GROUPING_RECORDS              = "function %s cannot aggregate not grouping records"
-	ERROR_UNDEFINED_VARIABLE                = "variable %s is undefined"
+	ERROR_UNDECLARED_VARIABLE               = "variable %s is undeclared"
 	ERROR_VARIABLE_REDECLARED               = "variable %s is redeclared"
 	ERROR_FUNCTION_NOT_EXIST                = "function %s does not exist"
 	ERROR_FUNCTION_ARGUMENT_LENGTH          = "function %s takes %s"
@@ -37,13 +37,13 @@ const (
 	ERROR_SUBQUERY_TOO_MANY_RECORDS         = "subquery returns too many records, should return only one record"
 	ERROR_SUBQUERY_TOO_MANY_FIELDS          = "subquery returns too many fields, should return only one field"
 	ERROR_CURSOR_REDECLARED                 = "cursor %s is redeclared"
-	ERROR_UNDEFINED_CURSOR                  = "cursor %s is undefined"
+	ERROR_UNDECLARED_CURSOR                 = "cursor %s is undeclared"
 	ERROR_CURSOR_CLOSED                     = "cursor %s is closed"
 	ERROR_CURSOR_OPEN                       = "cursor %s is already open"
 	ERROR_PSEUDO_CURSOR                     = "cursor %s is a pseudo cursor"
 	ERROR_CURSOR_FETCH_LENGTH               = "fetching from cursor %s returns %s"
 	ERROR_INVALID_FETCH_POSITION            = "fetching position %s is not an integer value"
-	ERROR_INLINE_TABLE_REDECLARED           = "inline table %s is redeclared"
+	ERROR_INLINE_TABLE_REDEFINED            = "inline table %s is redefined"
 	ERROR_UNDEFINED_INLINE_TABLE            = "inline table %s is undefined"
 	ERROR_INLINE_TABLE_FIELD_LENGTH         = "select query should return exactly %s for inline table %s"
 	ERROR_FILE_NOT_EXIST                    = "file %s does not exist"
@@ -53,7 +53,7 @@ const (
 	ERROR_CSV_PARSING                       = "csv parse error in file %s: %s"
 	ERROR_TABLE_FIELD_LENGTH                = "select query should return exactly %s for table %s"
 	ERROR_TEMPORARY_TABLE_REDECLARED        = "view %s is redeclared"
-	ERROR_UNDEFINED_TEMPORARY_TABLE         = "view %s is undefined"
+	ERROR_UNDECLARED_TEMPORARY_TABLE        = "view %s is undeclared"
 	ERROR_TEMPORARY_TABLE_FIELD_LENGTH      = "select query should return exactly %s for view %s"
 	ERROR_DUPLICATE_TABLE_NAME              = "table name %s is a duplicate"
 	ERROR_TABLE_NOT_LOADED                  = "table %s is not loaded"
@@ -287,13 +287,13 @@ func NewNotGroupingRecordsError(expr parser.QueryExpression, funcname string) er
 	}
 }
 
-type UndefinedVariableError struct {
+type UndeclaredVariableError struct {
 	*BaseError
 }
 
-func NewUndefinedVariableError(expr parser.Variable) error {
-	return &UndefinedVariableError{
-		NewBaseError(expr, fmt.Sprintf(ERROR_UNDEFINED_VARIABLE, expr)),
+func NewUndeclaredVariableError(expr parser.Variable) error {
+	return &UndeclaredVariableError{
+		NewBaseError(expr, fmt.Sprintf(ERROR_UNDECLARED_VARIABLE, expr)),
 	}
 }
 
@@ -438,13 +438,13 @@ func NewCursorRedeclaredError(cursor parser.Identifier) error {
 	}
 }
 
-type UndefinedCursorError struct {
+type UndeclaredCursorError struct {
 	*BaseError
 }
 
-func NewUndefinedCursorError(cursor parser.Identifier) error {
-	return &UndefinedCursorError{
-		NewBaseError(cursor, fmt.Sprintf(ERROR_UNDEFINED_CURSOR, cursor)),
+func NewUndeclaredCursorError(cursor parser.Identifier) error {
+	return &UndeclaredCursorError{
+		NewBaseError(cursor, fmt.Sprintf(ERROR_UNDECLARED_CURSOR, cursor)),
 	}
 }
 
@@ -498,13 +498,13 @@ func NewInvalidFetchPositionError(position parser.FetchPosition) error {
 	}
 }
 
-type InLineTableRedeclaredError struct {
+type InLineTableRedefinedError struct {
 	*BaseError
 }
 
-func NewInLineTableRedeclaredError(table parser.Identifier) error {
-	return &InLineTableRedeclaredError{
-		NewBaseError(table, fmt.Sprintf(ERROR_INLINE_TABLE_REDECLARED, table)),
+func NewInLineTableRedefinedError(table parser.Identifier) error {
+	return &InLineTableRedefinedError{
+		NewBaseError(table, fmt.Sprintf(ERROR_INLINE_TABLE_REDEFINED, table)),
 	}
 }
 
@@ -602,13 +602,13 @@ func NewTemporaryTableRedeclaredError(table parser.Identifier) error {
 	}
 }
 
-type UndefinedTemporaryTableError struct {
+type UndeclaredTemporaryTableError struct {
 	*BaseError
 }
 
-func NewUndefinedTemporaryTableError(table parser.Identifier) error {
-	return &UndefinedTemporaryTableError{
-		NewBaseError(table, fmt.Sprintf(ERROR_UNDEFINED_TEMPORARY_TABLE, table)),
+func NewUndeclaredTemporaryTableError(table parser.Identifier) error {
+	return &UndeclaredTemporaryTableError{
+		NewBaseError(table, fmt.Sprintf(ERROR_UNDECLARED_TEMPORARY_TABLE, table)),
 	}
 }
 
