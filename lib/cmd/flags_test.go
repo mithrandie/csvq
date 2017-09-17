@@ -49,6 +49,11 @@ func TestSetDelimiter(t *testing.T) {
 	} else if err.Error() != expectErr {
 		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "//")
 	}
+
+	SetDelimiter("")
+	if flags.Delimiter != UNDEF {
+		t.Errorf("delimiter = %q, expect to set %q for %q", flags.Delimiter, UNDEF, "")
+	}
 }
 
 func TestSetEncoding(t *testing.T) {

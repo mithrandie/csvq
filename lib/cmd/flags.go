@@ -138,19 +138,22 @@ func GetFlags() *Flags {
 }
 
 func SetDelimiter(s string) error {
+	var delimiter rune
+
 	if len(s) < 1 {
-		return nil
-	}
+		delimiter = UNDEF
+	} else {
+		s = UnescapeString(s)
 
-	s = UnescapeString(s)
-
-	runes := []rune(s)
-	if 1 < len(runes) {
-		return errors.New("delimiter must be 1 character")
+		runes := []rune(s)
+		if 1 < len(runes) {
+			return errors.New("delimiter must be 1 character")
+		}
+		delimiter = runes[0]
 	}
 
 	f := GetFlags()
-	f.Delimiter = runes[0]
+	f.Delimiter = delimiter
 	return nil
 }
 
