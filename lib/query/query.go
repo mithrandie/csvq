@@ -711,7 +711,7 @@ func AddColumns(query parser.AddColumns, parentFilter *Filter) (*View, error) {
 	records := make(RecordSet, view.RecordLen())
 
 	gm := NewGoroutineManager(view.RecordLen(), 150)
-	for i := 0; i < gm.CPU(); i++ {
+	for i := 0; i < gm.CPU; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			start, end := gm.RecordRange(thIdx)
@@ -720,7 +720,7 @@ func AddColumns(query parser.AddColumns, parentFilter *Filter) (*View, error) {
 
 		AddColumnLoop:
 			for i := start; i < end; i++ {
-				if err != nil {
+				if gm.HasError() {
 					break AddColumnLoop
 				}
 
@@ -743,7 +743,7 @@ func AddColumns(query parser.AddColumns, parentFilter *Filter) (*View, error) {
 					}
 					val, e := filter.Evaluate(v)
 					if e != nil {
-						err = e
+						gm.SetError(e)
 						break AddColumnLoop
 					}
 					record[j+insertPos] = NewCell(val)
@@ -756,8 +756,8 @@ func AddColumns(query parser.AddColumns, parentFilter *Filter) (*View, error) {
 	}
 	gm.Wait()
 
-	if err != nil {
-		return nil, err
+	if gm.HasError() {
+		return nil, gm.Error()
 	}
 
 	view.Header = header

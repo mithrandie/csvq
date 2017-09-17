@@ -145,7 +145,7 @@ func (m ViewMap) GetWithInternalId(fpath parser.Identifier) (*View, error) {
 		fieldLen := ret.FieldLen()
 
 		gm := NewGoroutineManager(ret.RecordLen(), 150)
-		for i := 0; i < gm.CPU(); i++ {
+		for i := 0; i < gm.CPU; i++ {
 			gm.Add()
 			go func(thIdx int) {
 				start, end := gm.RecordRange(thIdx)
