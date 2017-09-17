@@ -86,7 +86,7 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 	gm := NewGoroutineManager(view.RecordLen(), 150)
 	partitionKeys := make([]string, view.RecordLen())
 
-	for i := 0; i < gm.CPU(); i++ {
+	for i := 0; i < gm.CPU; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			start, end := gm.RecordRange(thIdx)
@@ -132,7 +132,7 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 	}
 
 	gm = NewGoroutineManager(len(partitionMapKeys), 0)
-	for i := 0; i < gm.CPU(); i++ {
+	for i := 0; i < gm.CPU; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			start, end := gm.RecordRange(thIdx)
@@ -140,10 +140,14 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 
 		AnalyzeLoop:
 			for i := start; i < end; i++ {
+				if gm.HasError() {
+					break AnalyzeLoop
+				}
+
 				if fnType == ANALYTIC {
 					list, e := anfn.Execute(partitions[partitionMapKeys[i]], fn, filter)
 					if e != nil {
-						err = e
+						gm.SetError(e)
 						break AnalyzeLoop
 					}
 					for idx, val := range list {
@@ -158,7 +162,7 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 
 					values, e := view.ListValuesForAnalyticFunctions(fn, partitions[partitionMapKeys[i]])
 					if e != nil {
-						err = e
+						gm.SetError(e)
 						break AnalyzeLoop
 					}
 
@@ -177,7 +181,7 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 							for i, v := range argsExprs {
 								arg, e := filter.Evaluate(v)
 								if e != nil {
-									err = e
+									gm.SetError(e)
 									break AnalyzeLoop
 								}
 								args[i] = arg
@@ -185,7 +189,7 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 
 							val, e := udfn.ExecuteAggregate(values, args, view.Filter)
 							if e != nil {
-								err = e
+								gm.SetError(e)
 								break AnalyzeLoop
 							}
 
@@ -201,7 +205,7 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 
 	gm.Wait()
 
-	return err
+	return gm.Error()
 }
 
 func CheckArgsLen(expr parser.AnalyticFunction, length []int) error {

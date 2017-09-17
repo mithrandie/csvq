@@ -314,7 +314,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 			view.Header = header
 
 			gm := NewGoroutineManager(view.RecordLen(), 150)
-			for i := 0; i < gm.CPU(); i++ {
+			for i := 0; i < gm.CPU; i++ {
 				gm.Add()
 				go func(thIdx int) {
 					start, end := gm.RecordRange(thIdx)
@@ -482,11 +482,10 @@ func (view *View) Where(clause parser.WhereClause) error {
 }
 
 func (view *View) filter(condition parser.QueryExpression) error {
-	var err error
 	results := make([]bool, view.RecordLen())
 
 	gm := NewGoroutineManager(view.RecordLen(), 150)
-	for i := 0; i < gm.CPU(); i++ {
+	for i := 0; i < gm.CPU; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			start, end := gm.RecordRange(thIdx)
@@ -494,14 +493,14 @@ func (view *View) filter(condition parser.QueryExpression) error {
 
 		FilterLoop:
 			for i := start; i < end; i++ {
-				if err != nil {
+				if gm.HasError() {
 					break FilterLoop
 				}
 
 				filter.Records[0].RecordIndex = i
 				primary, e := filter.Evaluate(condition)
 				if e != nil {
-					err = e
+					gm.SetError(e)
 					break FilterLoop
 				}
 				if primary.Ternary() == ternary.TRUE {
@@ -514,8 +513,8 @@ func (view *View) filter(condition parser.QueryExpression) error {
 	}
 	gm.Wait()
 
-	if err != nil {
-		return err
+	if gm.HasError() {
+		return gm.Error()
 	}
 
 	records := make(RecordSet, 0, len(results))
@@ -539,11 +538,10 @@ func (view *View) group(items []parser.QueryExpression) error {
 		return view.groupAll()
 	}
 
-	var err error
 	keys := make([]string, view.RecordLen())
 
 	gm := NewGoroutineManager(view.RecordLen(), 150)
-	for i := 0; i < gm.CPU(); i++ {
+	for i := 0; i < gm.CPU; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			start, end := gm.RecordRange(thIdx)
@@ -553,7 +551,7 @@ func (view *View) group(items []parser.QueryExpression) error {
 
 		GroupLoop:
 			for i := start; i < end; i++ {
-				if err != nil {
+				if gm.HasError() {
 					break GroupLoop
 				}
 
@@ -561,7 +559,7 @@ func (view *View) group(items []parser.QueryExpression) error {
 				for j, item := range items {
 					p, e := filter.Evaluate(item)
 					if e != nil {
-						err = e
+						gm.SetError(e)
 						break GroupLoop
 					}
 					values[j] = p
@@ -574,8 +572,8 @@ func (view *View) group(items []parser.QueryExpression) error {
 	}
 	gm.Wait()
 
-	if err != nil {
-		return err
+	if gm.HasError() {
+		return gm.Error()
 	}
 
 	groups := make(map[string][]int)
@@ -779,7 +777,7 @@ func (view *View) GenerateComparisonKeys() {
 	view.comparisonKeysInEachRecord = make([]string, view.RecordLen())
 
 	gm := NewGoroutineManager(view.RecordLen(), 150)
-	for i := 0; i < gm.CPU(); i++ {
+	for i := 0; i < gm.CPU; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			start, end := gm.RecordRange(thIdx)
@@ -859,7 +857,7 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 	}
 
 	gm := NewGoroutineManager(view.RecordLen(), 150)
-	for i := 0; i < gm.CPU(); i++ {
+	for i := 0; i < gm.CPU; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			start, end := gm.RecordRange(thIdx)
@@ -981,7 +979,7 @@ func (view *View) ExtendRecordCapacity(exprs []parser.QueryExpression) error {
 	}
 
 	gm := NewGoroutineManager(view.RecordLen(), 150)
-	for i := 0; i < gm.CPU(); i++ {
+	for i := 0; i < gm.CPU; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			start, end := gm.RecordRange(thIdx)
@@ -1019,7 +1017,7 @@ func (view *View) evalColumn(obj parser.QueryExpression, alias string) (idx int,
 				}
 			} else {
 				gm := NewGoroutineManager(view.RecordLen(), 150)
-				for i := 0; i < gm.CPU(); i++ {
+				for i := 0; i < gm.CPU; i++ {
 					gm.Add()
 					go func(thIdx int) {
 						start, end := gm.RecordRange(thIdx)
@@ -1027,15 +1025,15 @@ func (view *View) evalColumn(obj parser.QueryExpression, alias string) (idx int,
 
 					EvalColumnLoop:
 						for i := start; i < end; i++ {
-							if err != nil {
+							if gm.HasError() {
 								break EvalColumnLoop
 							}
 
-							var primary value.Primary
 							filter.Records[0].RecordIndex = i
 
-							primary, err = filter.Evaluate(obj)
-							if err != nil {
+							primary, e := filter.Evaluate(obj)
+							if e != nil {
+								gm.SetError(e)
 								break EvalColumnLoop
 							}
 							view.RecordSet[i] = append(view.RecordSet[i], NewCell(primary))
@@ -1046,7 +1044,8 @@ func (view *View) evalColumn(obj parser.QueryExpression, alias string) (idx int,
 				}
 				gm.Wait()
 
-				if err != nil {
+				if gm.HasError() {
+					err = gm.Error()
 					return
 				}
 			}
@@ -1274,7 +1273,7 @@ func (view *View) Fix() {
 
 	if resize {
 		gm := NewGoroutineManager(view.RecordLen(), 150)
-		for i := 0; i < gm.CPU(); i++ {
+		for i := 0; i < gm.CPU; i++ {
 			gm.Add()
 			go func(thIdx int) {
 				start, end := gm.RecordRange(thIdx)
@@ -1410,10 +1409,9 @@ func (view *View) Intersect(calcView *View, all bool) {
 
 func (view *View) ListValuesForAggregateFunctions(expr parser.QueryExpression, arg parser.QueryExpression, distinct bool, filter *Filter) ([]value.Primary, error) {
 	list := make([]value.Primary, view.RecordLen())
-	var err error
 
 	gm := NewGoroutineManager(view.RecordLen(), 150)
-	for i := 0; i < gm.CPU(); i++ {
+	for i := 0; i < gm.CPU; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			start, end := gm.RecordRange(thIdx)
@@ -1421,7 +1419,7 @@ func (view *View) ListValuesForAggregateFunctions(expr parser.QueryExpression, a
 
 		ListAggregateFunctionLoop:
 			for i := start; i < end; i++ {
-				if err != nil {
+				if gm.HasError() {
 					break ListAggregateFunctionLoop
 				}
 
@@ -1429,9 +1427,9 @@ func (view *View) ListValuesForAggregateFunctions(expr parser.QueryExpression, a
 				p, e := filter.Evaluate(arg)
 				if e != nil {
 					if _, ok := e.(*NotGroupingRecordsError); ok {
-						err = NewNestedAggregateFunctionsError(expr)
+						gm.SetError(NewNestedAggregateFunctionsError(expr))
 					} else {
-						err = e
+						gm.SetError(e)
 					}
 					break ListAggregateFunctionLoop
 				}
@@ -1443,8 +1441,8 @@ func (view *View) ListValuesForAggregateFunctions(expr parser.QueryExpression, a
 	}
 	gm.Wait()
 
-	if err != nil {
-		return nil, err
+	if gm.HasError() {
+		return nil, gm.Error()
 	}
 
 	if distinct {
@@ -1456,10 +1454,9 @@ func (view *View) ListValuesForAggregateFunctions(expr parser.QueryExpression, a
 
 func (view *View) ListValuesForAnalyticFunctions(fn parser.AnalyticFunction, partition Partition) ([]value.Primary, error) {
 	list := make([]value.Primary, len(partition))
-	var err error
 
 	gm := NewGoroutineManager(len(partition), 150)
-	for i := 0; i < gm.CPU(); i++ {
+	for i := 0; i < gm.CPU; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			start, end := gm.RecordRange(thIdx)
@@ -1467,13 +1464,13 @@ func (view *View) ListValuesForAnalyticFunctions(fn parser.AnalyticFunction, par
 
 		ListAnalyticFunctionLoop:
 			for i := start; i < end; i++ {
-				if err != nil {
+				if gm.HasError() {
 					break ListAnalyticFunctionLoop
 				}
 				filter.Records[0].RecordIndex = partition[i]
 				val, e := filter.Evaluate(fn.Args[0])
 				if e != nil {
-					err = e
+					gm.SetError(e)
 					break ListAnalyticFunctionLoop
 				}
 				list[i] = val
@@ -1483,8 +1480,8 @@ func (view *View) ListValuesForAnalyticFunctions(fn parser.AnalyticFunction, par
 	}
 	gm.Wait()
 
-	if err != nil {
-		return nil, err
+	if gm.HasError() {
+		return nil, gm.Error()
 	}
 
 	if fn.IsDistinct() {

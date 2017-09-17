@@ -105,7 +105,7 @@ func CrossJoin(view *View, joinView *View) {
 	records := make(RecordSet, view.RecordLen()*joinView.RecordLen())
 
 	gm := NewGoroutineManager(view.RecordLen(), 150)
-	for i := 0; i < gm.CPU(); i++ {
+	for i := 0; i < gm.CPU; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			start, end := gm.RecordRange(thIdx)
@@ -146,10 +146,9 @@ func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, par
 		splitLeft = false
 	}
 
-	var err error
-	recordsList := make([]RecordSet, gm.CPU())
+	recordsList := make([]RecordSet, gm.CPU)
 
-	for i := 0; i < gm.CPU(); i++ {
+	for i := 0; i < gm.CPU; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			var lstart, lend, rstart, rend int
@@ -178,7 +177,7 @@ func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, par
 		InnerJoinLoop:
 			for i := lstart; i < lend; i++ {
 				for j := rstart; j < rend; j++ {
-					if err != nil {
+					if gm.HasError() {
 						break InnerJoinLoop
 					}
 
@@ -187,7 +186,7 @@ func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, par
 
 					primary, e := filter.Evaluate(condition)
 					if e != nil {
-						err = e
+						gm.SetError(e)
 						break InnerJoinLoop
 					}
 					if primary.Ternary() == ternary.TRUE {
@@ -202,8 +201,8 @@ func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, par
 	}
 	gm.Wait()
 
-	if err != nil {
-		return err
+	if gm.HasError() {
+		return gm.Error()
 	}
 
 	view.Header = mergedHeader
@@ -236,11 +235,10 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 		splitLeft = false
 	}
 
-	var err error
-	recordsList := make([]RecordSet, gm.CPU())
-	joinViewMatchesList := make([][]bool, gm.CPU())
+	recordsList := make([]RecordSet, gm.CPU)
+	joinViewMatchesList := make([][]bool, gm.CPU)
 
-	for i := 0; i < gm.CPU(); i++ {
+	for i := 0; i < gm.CPU; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			var lstart, lend, rstart, rend int
@@ -272,7 +270,7 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 			for i := lstart; i < lend; i++ {
 				match := false
 				for j := rstart; j < rend; j++ {
-					if err != nil {
+					if gm.HasError() {
 						break OuterJoinLoop
 					}
 
@@ -287,7 +285,7 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 
 					primary, e := filter.Evaluate(condition)
 					if e != nil {
-						err = e
+						gm.SetError(e)
 						break OuterJoinLoop
 					}
 					if primary.Ternary() == ternary.TRUE {
@@ -319,8 +317,8 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 	}
 	gm.Wait()
 
-	if err != nil {
-		return err
+	if gm.HasError() {
+		return gm.Error()
 	}
 
 	if direction == parser.FULL {

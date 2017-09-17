@@ -6,60 +6,79 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 )
 
-var parallelProcessing bool
-var parallelProcessingMutex = new(sync.Mutex)
+var goroutineCount int
+var goroutineCountMutex sync.Mutex
 
-func useParallelRoutine(recordLen int, minimumRequired int) (int, bool) {
-	parallelProcessingMutex.Lock()
-	defer parallelProcessingMutex.Unlock()
-
+func useParallelRoutine(recordLen int, minimumRequired int) (int, int) {
 	cpu := cmd.GetFlags().CPU
 	if 2 < cpu {
 		cpu = cpu - 1
 	}
-	if parallelProcessing || recordLen < minimumRequired || recordLen < cpu {
+
+	goroutineCountMutex.Lock()
+	defer goroutineCountMutex.Unlock()
+
+	max := cpu - goroutineCount
+	if max < 1 {
+		max = 1
+	}
+	if max < cpu {
+		cpu = max
+	}
+	if 1 < cpu && (recordLen < minimumRequired || recordLen < cpu) {
 		cpu = 1
 	}
 
-	if cpu < 2 {
-		return cpu, false
+	addGRCount := cpu - 1
+	if 0 < addGRCount {
+		goroutineCount += addGRCount
 	}
-
-	parallelProcessing = true
-	return cpu, true
+	return cpu, addGRCount
 }
 
-func closeParallelRoutine() {
-	parallelProcessingMutex.Lock()
-	defer parallelProcessingMutex.Unlock()
-
-	parallelProcessing = false
+func decreamentGoroutineCount() {
+	goroutineCountMutex.Lock()
+	goroutineCount--
+	goroutineCountMutex.Unlock()
 }
 
 type GoroutineManager struct {
-	waitGroup   sync.WaitGroup
-	recordLen   int
-	cpu         int
-	useParallel bool
+	CPU int
+
+	grCountMutex sync.Mutex
+	grCount      int
+	recordLen    int
+	waitGroup    sync.WaitGroup
+	errMutex     sync.Mutex
+	err          error
 }
 
 func NewGoroutineManager(recordLen int, minimumRequired int) *GoroutineManager {
-	cpu, useParallel := useParallelRoutine(recordLen, minimumRequired)
+	cpu, grCount := useParallelRoutine(recordLen, minimumRequired)
 
 	return &GoroutineManager{
-		waitGroup:   sync.WaitGroup{},
-		recordLen:   recordLen,
-		cpu:         cpu,
-		useParallel: useParallel,
+		CPU:       cpu,
+		grCount:   grCount,
+		recordLen: recordLen,
 	}
 }
 
-func (m *GoroutineManager) CPU() int {
-	return m.cpu
+func (m *GoroutineManager) HasError() bool {
+	return m.err != nil
+}
+
+func (m *GoroutineManager) SetError(e error) {
+	m.errMutex.Lock()
+	m.err = e
+	m.errMutex.Unlock()
+}
+
+func (m *GoroutineManager) Error() error {
+	return m.err
 }
 
 func (m *GoroutineManager) RecordRange(routineIndex int) (int, int) {
-	return RecordRange(routineIndex, m.recordLen, m.cpu)
+	return RecordRange(routineIndex, m.recordLen, m.CPU)
 }
 
 func (m *GoroutineManager) Add() {
@@ -67,12 +86,16 @@ func (m *GoroutineManager) Add() {
 }
 
 func (m *GoroutineManager) Done() {
+	m.grCountMutex.Lock()
+	if 0 < m.grCount {
+		m.grCount--
+		decreamentGoroutineCount()
+	}
+	m.grCountMutex.Unlock()
+
 	m.waitGroup.Done()
 }
 
 func (m *GoroutineManager) Wait() {
 	m.waitGroup.Wait()
-	if m.useParallel {
-		closeParallelRoutine()
-	}
 }
