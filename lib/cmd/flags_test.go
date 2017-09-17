@@ -109,10 +109,10 @@ func TestSetLocation(t *testing.T) {
 		t.Errorf("location = %s, expect to set %s for %q", flags.Location, "Local", "")
 	}
 
-	s = "Local"
+	s = "local"
 	SetLocation(s)
-	if flags.Location != s {
-		t.Errorf("location = %s, expect to set %s for %q", flags.Location, s, s)
+	if flags.Location != "Local" {
+		t.Errorf("location = %s, expect to set %s for %q", flags.Location, "Local", s)
 	}
 
 	s = "America/Los_Angeles"

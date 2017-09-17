@@ -192,6 +192,10 @@ func SetLocation(s string) error {
 		return nil
 	}
 
+	if strings.EqualFold(s, "Local") {
+		s = "Local"
+	}
+
 	_, err := time.LoadLocation(s)
 	if err != nil {
 		return errors.New("timezone does not exist")
