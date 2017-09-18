@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"runtime"
 
 	"github.com/mithrandie/csvq/lib/action"
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -24,6 +25,11 @@ func main() {
 	app.Usage = "SQL like query language for csv"
 	app.ArgsUsage = "[\"query\"|\"statements\"|argument]"
 	app.Version = version
+
+	defaultCPU := runtime.NumCPU() / 2
+	if defaultCPU < 1 {
+		defaultCPU = 1
+	}
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
@@ -97,6 +103,7 @@ func main() {
 		},
 		cli.IntFlag{
 			Name:  "cpu, p",
+			Value: defaultCPU,
 			Usage: "hint for the number of cpu cores to be used. 1 - number of cpu cores",
 		},
 		cli.BoolFlag{
