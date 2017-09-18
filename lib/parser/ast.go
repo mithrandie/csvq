@@ -1223,9 +1223,10 @@ type While struct {
 
 type WhileInCursor struct {
 	*BaseExpr
-	Variables  []Variable
-	Cursor     Identifier
-	Statements []Statement
+	WithDeclaration bool
+	Variables       []Variable
+	Cursor          Identifier
+	Statements      []Statement
 }
 
 type CursorDeclaration struct {

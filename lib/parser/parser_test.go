@@ -3583,6 +3583,37 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "while var @var1 in cur do print @var1; end while",
+		Output: []Statement{
+			WhileInCursor{
+				WithDeclaration: true,
+				Variables: []Variable{
+					{BaseExpr: &BaseExpr{line: 1, char: 11}, Name: "@var1"},
+				},
+				Cursor: Identifier{BaseExpr: &BaseExpr{line: 1, char: 20}, Literal: "cur"},
+				Statements: []Statement{
+					Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 33}, Name: "@var1"}},
+				},
+			},
+		},
+	},
+	{
+		Input: "while declare @var1, @var2 in cur do print @var1; end while",
+		Output: []Statement{
+			WhileInCursor{
+				WithDeclaration: true,
+				Variables: []Variable{
+					{BaseExpr: &BaseExpr{line: 1, char: 15}, Name: "@var1"},
+					{BaseExpr: &BaseExpr{line: 1, char: 22}, Name: "@var2"},
+				},
+				Cursor: Identifier{BaseExpr: &BaseExpr{line: 1, char: 31}, Literal: "cur"},
+				Statements: []Statement{
+					Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 44}, Name: "@var1"}},
+				},
+			},
+		},
+	},
+	{
 		Input: "case when true then print @var1; when false then print @var2; end case",
 		Output: []Statement{
 			Case{

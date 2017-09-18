@@ -31,8 +31,7 @@ func (proc *Procedure) NewChildProcedure() *Procedure {
 
 func (proc *Procedure) ExecuteChild(statements []parser.Statement) (StatementFlow, error) {
 	child := proc.NewChildProcedure()
-	f, err := child.Execute(statements)
-	return f, err
+	return child.Execute(statements)
 }
 
 func (proc *Procedure) Execute(statements []parser.Statement) (StatementFlow, error) {
@@ -385,7 +384,10 @@ func (proc *Procedure) Case(stmt parser.Case) (StatementFlow, error) {
 }
 
 func (proc *Procedure) While(stmt parser.While) (StatementFlow, error) {
+	childProc := proc.NewChildProcedure()
+
 	for {
+		childProc.Filter.ResetCurrentScope()
 		p, err := proc.Filter.Evaluate(stmt.Condition)
 		if err != nil {
 			return ERROR, err
@@ -393,7 +395,8 @@ func (proc *Procedure) While(stmt parser.While) (StatementFlow, error) {
 		if p.Ternary() != ternary.TRUE {
 			break
 		}
-		f, err := proc.ExecuteChild(stmt.Statements)
+
+		f, err := childProc.Execute(stmt.Statements)
 		if err != nil {
 			return ERROR, err
 		}
@@ -412,8 +415,20 @@ func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, 
 	fetchPosition := parser.FetchPosition{
 		Position: parser.Token{Token: parser.NEXT},
 	}
+
+	childProc := proc.NewChildProcedure()
 	for {
-		success, err := FetchCursor(stmt.Cursor, fetchPosition, stmt.Variables, proc.Filter)
+		childProc.Filter.ResetCurrentScope()
+		if stmt.WithDeclaration {
+			assigns := make([]parser.VariableAssignment, len(stmt.Variables))
+			for i, v := range stmt.Variables {
+				assigns[i] = parser.VariableAssignment{Variable: v}
+			}
+			decl := parser.VariableDeclaration{Assignments: assigns}
+			childProc.Filter.Variables.Declare(decl, childProc.Filter)
+		}
+
+		success, err := FetchCursor(stmt.Cursor, fetchPosition, stmt.Variables, childProc.Filter)
 		if err != nil {
 			return ERROR, err
 		}
@@ -421,7 +436,7 @@ func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, 
 			break
 		}
 
-		f, err := proc.ExecuteChild(stmt.Statements)
+		f, err := childProc.Execute(stmt.Statements)
 		if err != nil {
 			return ERROR, err
 		}

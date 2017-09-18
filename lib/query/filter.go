@@ -101,6 +101,21 @@ func (f *Filter) CreateChildScope() *Filter {
 	)
 }
 
+func (f *Filter) ResetCurrentScope() {
+	for k := range f.Variables[0] {
+		delete(f.Variables[0], k)
+	}
+	for k := range f.TempViews[0] {
+		delete(f.TempViews[0], k)
+	}
+	for k := range f.Cursors[0] {
+		delete(f.Cursors[0], k)
+	}
+	for k := range f.Functions[0] {
+		delete(f.Functions[0], k)
+	}
+}
+
 func (f *Filter) CreateNode() *Filter {
 	filter := &Filter{
 		Records:          f.Records,
