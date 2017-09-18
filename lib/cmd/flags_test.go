@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"testing"
-	"time"
 
 	"github.com/mithrandie/csvq/lib/file"
 )
@@ -122,17 +121,11 @@ func TestSetLocation(t *testing.T) {
 	if flags.Location != "Local" {
 		t.Errorf("location = %s, expect to set %s for %q", flags.Location, "Local", s)
 	}
-	if time.Local.String() != "Local" {
-		t.Errorf("time.local = %s, expect to set %s for %q", time.Local.String(), "Local", s)
-	}
 
 	s = "utc"
 	SetLocation(s)
 	if flags.Location != "UTC" {
 		t.Errorf("location = %s, expect to set %s for %q", flags.Location, "UTC", s)
-	}
-	if time.Local.String() != "UTC" {
-		t.Errorf("time.local = %s, expect to set %s for %q", time.Local.String(), "UTC", s)
 	}
 
 	s = "America/NotExist"
