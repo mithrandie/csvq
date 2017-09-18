@@ -124,10 +124,8 @@ func SetFlag(expr parser.SetFlag) error {
 	case "@@DATETIME_FORMAT":
 		cmd.SetDatetimeFormat(p.(value.String).Raw())
 	case "@@WAIT_TIMEOUT":
-		err = cmd.SetWaitTimeout(value.Float64ToStr(p.(value.Float).Raw()))
-		if err == nil {
-			UpdateWaitTimeout()
-		}
+		cmd.SetWaitTimeout(p.(value.Float).Raw())
+		UpdateWaitTimeout()
 	case "@@NO_HEADER":
 		cmd.SetNoHeader(p.(value.Boolean).Raw())
 	case "@@WITHOUT_NULL":

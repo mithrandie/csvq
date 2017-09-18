@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -250,19 +249,13 @@ func SetDatetimeFormat(s string) {
 	return
 }
 
-func SetWaitTimeout(s string) error {
-	if len(s) < 1 {
-		return nil
-	}
-
-	f, e := strconv.ParseFloat(s, 64)
-	if e != nil {
-		return errors.New("wait-timeout must be a float value")
+func SetWaitTimeout(f float64) {
+	if f < 0 {
+		f = 0
 	}
 
 	flags := GetFlags()
 	flags.WaitTimeout = f
-	return nil
 }
 
 func SetNoHeader(b bool) {

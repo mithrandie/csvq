@@ -222,25 +222,10 @@ func TestSetDatetimeFormat(t *testing.T) {
 func TestSetWaitTimeout(t *testing.T) {
 	flags := GetFlags()
 
-	s := ""
-	SetWaitTimeout(s)
-	if flags.WaitTimeout != 10 {
-		t.Errorf("wait timeout = %f, expect to set %f for %q", flags.WaitTimeout, 30.0, s)
-	}
-
-	s = "15"
-	SetWaitTimeout(s)
+	var f float64 = 15
+	SetWaitTimeout(f)
 	if flags.WaitTimeout != 15 {
-		t.Errorf("wait timeout = %f, expect to set %f for %q", flags.WaitTimeout, 15.0, s)
-	}
-
-	s = "str"
-	expectErr := "wait-timeout must be a float value"
-	err := SetWaitTimeout(s)
-	if err == nil {
-		t.Errorf("no error, want error %q for %s", expectErr, "error")
-	} else if err.Error() != expectErr {
-		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "notexists")
+		t.Errorf("wait timeout = %f, expect to set %f for %f", flags.WaitTimeout, 15.0, f)
 	}
 }
 

@@ -63,9 +63,9 @@ func main() {
 			Name:  "datetime-format, t",
 			Usage: "set datetime format to parse strings",
 		},
-		cli.StringFlag{
+		cli.Float64Flag{
 			Name:  "wait-timeout, w",
-			Value: "10",
+			Value: 10,
 			Usage: "limit of the waiting time in seconds to wait for locked files to be released",
 		},
 		cli.BoolFlag{
@@ -238,9 +238,7 @@ func setFlags(c *cli.Context) error {
 		return err
 	}
 	cmd.SetDatetimeFormat(c.GlobalString("datetime-format"))
-	if err := cmd.SetWaitTimeout(c.GlobalString("wait-timeout")); err != nil {
-		return err
-	}
+	cmd.SetWaitTimeout(c.GlobalFloat64("wait-timeout"))
 	cmd.SetNoHeader(c.GlobalBool("no-header"))
 	cmd.SetWithoutNull(c.GlobalBool("without-null"))
 
