@@ -11,7 +11,6 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
-	"github.com/mithrandie/go-file"
 )
 
 var printTests = []struct {
@@ -427,19 +426,6 @@ func TestSetFlag(t *testing.T) {
 				t.Errorf("%s: stats = %t, want %t", v.Name, flags.Stats, v.ResultBoolValue)
 			}
 		}
-	}
-
-	expr := parser.SetFlag{
-		Name:  "@@wait_timeout",
-		Value: value.NewFloat(20),
-	}
-	SetFlag(expr)
-
-	if FileLocks.WaitTimeout != 20 {
-		t.Errorf("filelocks wait-timeout = %f, want %f", FileLocks.WaitTimeout, 20)
-	}
-	if file.WaitTimeout != 20 {
-		t.Errorf("package file wait-timeout = %f, want %f", file.WaitTimeout, 20)
 	}
 }
 

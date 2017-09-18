@@ -14,8 +14,6 @@ func ShowFields(filename string) error {
 		query.ReleaseResources()
 	}()
 
-	query.UpdateWaitTimeout()
-
 	statements := []parser.Statement{
 		parser.ShowFields{
 			Table: parser.Identifier{Literal: filename},

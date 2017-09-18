@@ -10,10 +10,10 @@ import (
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/csv"
+	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
-	"github.com/mithrandie/go-file"
 	"github.com/mithrandie/ternary"
 )
 
@@ -40,7 +40,7 @@ type View struct {
 	OperatedFields  int
 
 	UseInternalId bool
-	UseLock       bool
+	ForUpdate     bool
 }
 
 func NewView() *View {
@@ -62,7 +62,7 @@ func (view *View) Load(clause parser.FromClause, filter *Filter) error {
 
 	views := make([]*View, len(clause.Tables))
 	for i, v := range clause.Tables {
-		loaded, err := loadView(v, filter, view.UseInternalId, view.UseLock)
+		loaded, err := loadView(v, filter, view.UseInternalId, view.ForUpdate)
 		if err != nil {
 			return err
 		}
@@ -91,9 +91,9 @@ func (view *View) LoadFromTableIdentifier(table parser.QueryExpression, filter *
 	return view.Load(fromClause, filter)
 }
 
-func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bool, useLock bool) (*View, error) {
+func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bool, forUpdate bool) (*View, error) {
 	if parentheses, ok := tableExpr.(parser.Parentheses); ok {
-		return loadView(parentheses.Expr, filter, useInternalId, useLock)
+		return loadView(parentheses.Expr, filter, useInternalId, forUpdate)
 	}
 
 	table := tableExpr.(parser.Table)
@@ -191,40 +191,37 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 					}
 
 					ufpath := strings.ToUpper(fileInfo.Path)
-					if !ViewCache.Exists(fileInfo.Path) || (useLock && !ViewCache[ufpath].UseLock) {
+					if !ViewCache.Exists(fileInfo.Path) || (forUpdate && !ViewCache[ufpath].ForUpdate) {
 						ViewCache.Dispose(fileInfo.Path)
-						if useLock {
-							if err := FileLocks.LockWithTimeout(tableIdentifier, fileInfo.Path); err != nil {
-								return nil, err
-							}
-						} else {
-							if !FileLocks.CanRead(fileInfo.Path) {
-								return nil, NewFileLockTimeoutError(tableIdentifier, fileInfo.Path)
-							}
-						}
 
 						var fp *os.File
-						if useLock {
-							fp, err = file.OpenToUpdateWithTimeout(fileInfo.Path)
+						if forUpdate {
+							fp, err = file.OpenToUpdate(fileInfo.Path)
 							if err != nil {
+								if _, ok := err.(*file.TimeoutError); ok {
+									return nil, NewFileLockTimeoutError(tableIdentifier, fileInfo.Path)
+								}
 								return nil, NewReadFileError(tableIdentifier, err.Error())
 							}
 							fileInfo.File = fp
 						} else {
-							fp, err = file.OpenToReadWithTimeout(fileInfo.Path)
+							fp, err = file.OpenToRead(fileInfo.Path)
 							if err != nil {
+								if _, ok := err.(*file.TimeoutError); ok {
+									return nil, NewFileLockTimeoutError(tableIdentifier, fileInfo.Path)
+								}
 								return nil, NewReadFileError(tableIdentifier, err.Error())
 							}
 							defer file.Close(fp)
 						}
 						loadView, err := loadViewFromFile(fp, fileInfo)
 						if err != nil {
-							if useLock {
+							if forUpdate {
 								file.Close(fp)
 							}
 							return nil, NewCsvParsingError(tableIdentifier, fileInfo.Path, err.Error())
 						}
-						loadView.UseLock = useLock
+						loadView.ForUpdate = forUpdate
 						ViewCache.Set(loadView)
 					}
 				}
@@ -248,11 +245,11 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 		}
 	case parser.Join:
 		join := table.Object.(parser.Join)
-		view, err = loadView(join.Table, filter, useInternalId, useLock)
+		view, err = loadView(join.Table, filter, useInternalId, forUpdate)
 		if err != nil {
 			return nil, err
 		}
-		view2, err := loadView(join.JoinTable, filter, useInternalId, useLock)
+		view2, err := loadView(join.JoinTable, filter, useInternalId, forUpdate)
 		if err != nil {
 			return nil, err
 		}
@@ -1566,6 +1563,6 @@ func (view *View) Copy() *View {
 		Header:    header,
 		RecordSet: records,
 		FileInfo:  view.FileInfo,
-		UseLock:   view.UseLock,
+		ForUpdate: view.ForUpdate,
 	}
 }

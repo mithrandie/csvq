@@ -7,6 +7,8 @@ import (
 	"runtime"
 	"testing"
 	"time"
+
+	"github.com/mithrandie/csvq/lib/file"
 )
 
 func TestEncoding_String(t *testing.T) {
@@ -226,6 +228,10 @@ func TestSetWaitTimeout(t *testing.T) {
 	SetWaitTimeout(f)
 	if flags.WaitTimeout != 15 {
 		t.Errorf("wait timeout = %f, expect to set %f for %f", flags.WaitTimeout, 15.0, f)
+	}
+
+	if file.WaitTimeout != 15 {
+		t.Errorf("wait timeout in the file package = %f, expect to set %f for %f", file.WaitTimeout, 15.0, f)
 	}
 }
 

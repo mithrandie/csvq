@@ -11,10 +11,9 @@ import (
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/csv"
+	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
-
-	"github.com/mithrandie/go-file"
 )
 
 func Print(expr parser.Print, filter *Filter) (string, error) {
@@ -125,7 +124,6 @@ func SetFlag(expr parser.SetFlag) error {
 		cmd.SetDatetimeFormat(p.(value.String).Raw())
 	case "@@WAIT_TIMEOUT":
 		cmd.SetWaitTimeout(p.(value.Float).Raw())
-		UpdateWaitTimeout()
 	case "@@NO_HEADER":
 		cmd.SetNoHeader(p.(value.Boolean).Raw())
 	case "@@WITHOUT_NULL":
@@ -297,11 +295,11 @@ func ShowFields(expr parser.ShowFields, filter *Filter) (string, error) {
 				header, _ := ViewCache.GetHeader(pathIdent)
 				fields = header.TableColumnNames()
 			} else {
-				if !FileLocks.CanRead(fileInfo.Path) {
-					return "", NewFileLockTimeoutError(expr.Table, fileInfo.Path)
-				}
-				fp, err := file.OpenToReadWithTimeout(fileInfo.Path)
+				fp, err := file.OpenToRead(fileInfo.Path)
 				if err != nil {
+					if _, ok := err.(*file.TimeoutError); ok {
+						NewFileLockTimeoutError(expr.Table, fileInfo.Path)
+					}
 					return "", NewReadFileError(expr.Table, err.Error())
 				}
 				defer file.Close(fp)

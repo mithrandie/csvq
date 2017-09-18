@@ -6,10 +6,9 @@ import (
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
-
-	"github.com/mithrandie/go-file"
 )
 
 type StatementFlow int
@@ -42,13 +41,12 @@ type Result struct {
 }
 
 var ViewCache = ViewMap{}
-var FileLocks = NewFileLockContainer()
 var Results = []Result{}
 var SelectLogs = []string{}
 
 func ReleaseResources() {
 	ViewCache.Clean()
-	FileLocks.UnlockAll()
+	file.UnlockAll()
 }
 
 func Log(log string, quiet bool) {
@@ -67,14 +65,6 @@ func ReadSelectLog() string {
 	}
 	lb := cmd.GetFlags().LineBreak
 	return strings.Join(SelectLogs, lb.Value()) + lb.Value()
-}
-
-func UpdateWaitTimeout() {
-	flags := cmd.GetFlags()
-	FileLocks.WaitTimeout = flags.WaitTimeout
-	FileLocks.RetryInterval = flags.RetryInterval
-	file.WaitTimeout = flags.WaitTimeout
-	file.RetryInterval = flags.RetryInterval
 }
 
 func FetchCursor(name parser.Identifier, fetchPosition parser.FetchPosition, vars []parser.Variable, filter *Filter) (bool, error) {
@@ -342,7 +332,7 @@ func Insert(query parser.InsertQuery, parentFilter *Filter) (*View, error) {
 		},
 	}
 	view := NewView()
-	view.UseLock = true
+	view.ForUpdate = true
 	err := view.Load(fromClause, filter)
 	if err != nil {
 		return nil, err
@@ -389,7 +379,7 @@ func Update(query parser.UpdateQuery, parentFilter *Filter) ([]*View, error) {
 	}
 
 	view := NewView()
-	view.UseLock = true
+	view.ForUpdate = true
 	view.UseInternalId = true
 	err := view.Load(query.FromClause.(parser.FromClause), filter)
 	if err != nil {
@@ -513,7 +503,7 @@ func Delete(query parser.DeleteQuery, parentFilter *Filter) ([]*View, error) {
 
 	view := NewView()
 	view.UseInternalId = true
-	view.UseLock = true
+	view.ForUpdate = true
 	err := view.Load(query.FromClause, filter)
 	if err != nil {
 		return nil, err
@@ -595,7 +585,7 @@ func CreateTable(query parser.CreateTable, parentFilter *Filter) (*View, error) 
 	if _, err := os.Stat(fileInfo.Path); err == nil {
 		return nil, NewFileAlreadyExistError(query.Table)
 	}
-	if err := FileLocks.TryLock(fileInfo.Path); err != nil {
+	if err := file.TryLock(fileInfo.Path); err != nil {
 		return nil, NewFileAlreadyExistError(query.Table)
 	}
 	if err := cmd.TryCreateFile(fileInfo.Path); err != nil {
@@ -650,7 +640,7 @@ func AddColumns(query parser.AddColumns, parentFilter *Filter) (*View, error) {
 	}
 
 	view := NewView()
-	view.UseLock = true
+	view.ForUpdate = true
 	err := view.LoadFromTableIdentifier(query.Table, filter)
 	if err != nil {
 		return nil, err
@@ -778,7 +768,7 @@ func DropColumns(query parser.DropColumns, parentFilter *Filter) (*View, error) 
 	filter := parentFilter.CreateNode()
 
 	view := NewView()
-	view.UseLock = true
+	view.ForUpdate = true
 	err := view.LoadFromTableIdentifier(query.Table, filter)
 	if err != nil {
 		return nil, err
@@ -817,7 +807,7 @@ func RenameColumn(query parser.RenameColumn, parentFilter *Filter) (*View, error
 	filter := parentFilter.CreateNode()
 
 	view := NewView()
-	view.UseLock = true
+	view.ForUpdate = true
 	err := view.LoadFromTableIdentifier(query.Table, filter)
 	if err != nil {
 		return nil, err

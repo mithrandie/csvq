@@ -10,6 +10,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/mithrandie/csvq/lib/file"
 )
 
 const UNDEF = -1
@@ -256,6 +258,8 @@ func SetWaitTimeout(f float64) {
 
 	flags := GetFlags()
 	flags.WaitTimeout = f
+	file.UpdateWaitTimeout(flags.WaitTimeout, flags.RetryInterval)
+	return
 }
 
 func SetNoHeader(b bool) {
