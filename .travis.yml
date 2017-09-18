@@ -9,6 +9,9 @@ install:
   - cd $GOPATH/src/github.com/Masterminds/glide && git checkout 84607742b10f492430762d038e954236bbaf23f7 && go install && cd -
   - make deps
 
+script:
+  - make test
+
 after_success:
   - make test-all-cov
   - bash <(curl -s https://codecov.io/bash)
