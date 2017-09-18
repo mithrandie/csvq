@@ -585,8 +585,11 @@ func CreateTable(query parser.CreateTable, parentFilter *Filter) (*View, error) 
 	if _, err := os.Stat(fileInfo.Path); err == nil {
 		return nil, NewFileAlreadyExistError(query.Table)
 	}
-	if err := file.TryLock(fileInfo.Path); err != nil {
+	if file.IsLockedByOtherProcess(fileInfo.Path) {
 		return nil, NewFileAlreadyExistError(query.Table)
+	}
+	if err := file.TryLock(fileInfo.Path); err != nil {
+		return nil, NewCreateFileError(query.Table, err.Error())
 	}
 	if err := cmd.TryCreateFile(fileInfo.Path); err != nil {
 		return nil, NewCreateFileError(query.Table, err.Error())

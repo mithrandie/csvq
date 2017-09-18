@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"os"
 
-	"github.com/mithrandie/go-file"
+	"github.com/mithrandie/csvq/lib/file"
 )
 
 var Terminal VirtualTerminal

@@ -8,10 +8,10 @@ import (
 	"testing"
 
 	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
-	"github.com/mithrandie/go-file"
 	"github.com/mithrandie/ternary"
 )
 

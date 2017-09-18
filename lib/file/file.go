@@ -1,6 +1,7 @@
 package file
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -46,8 +47,25 @@ func OpenToUpdate(path string) (*os.File, error) {
 	return fp, nil
 }
 
+func Create(path string) (*os.File, error) {
+	if !LockFiles.Exists(path) {
+		if err := TryLock(path); err != nil {
+			return nil, err
+		}
+	}
+
+	fp, err := file.Create(path)
+	if err != nil {
+		Unlock(path)
+		return nil, ParseError(err)
+	}
+	return fp, nil
+}
+
 func Close(fp *os.File) error {
-	return file.Close(fp)
+	err := file.Close(fp)
+	Unlock(fp.Name())
+	return err
 }
 
 func Unlock(path string) {
@@ -119,7 +137,7 @@ func TryLock(path string) error {
 	lockFilePath := LockFilePath(path)
 	fp, err := file.Create(lockFilePath)
 	if err != nil {
-		return ParseError(err)
+		return NewLockError(fmt.Sprintf("unable to create lock file for %q", path))
 	}
 
 	LockFiles[strings.ToUpper(path)] = &LockFile{
