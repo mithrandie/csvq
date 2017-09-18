@@ -9,8 +9,6 @@ import (
 var (
 	random  *rand.Rand
 	getRand sync.Once
-
-	getLocation sync.Once
 )
 
 func GetRand() *rand.Rand {
@@ -21,9 +19,6 @@ func GetRand() *rand.Rand {
 }
 
 func GetLocation() *time.Location {
-	getLocation.Do(func() {
-		time.Local, _ = time.LoadLocation(GetFlags().Location)
-	})
 	return time.Local
 }
 
@@ -32,6 +27,5 @@ func Now() time.Time {
 		t, _ := time.ParseInLocation("2006-01-02 15:04:05.999999999", GetFlags().Now, GetLocation())
 		return t
 	}
-	GetLocation()
 	return time.Now()
 }

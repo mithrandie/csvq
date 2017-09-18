@@ -155,7 +155,7 @@ var sortValueEquivalentToTests = []struct {
 	},
 	{
 		Name:         "SortValue EquivalentTo Integer and DateTime",
-		SortValue:    NewSortValue(value.NewInteger(1328289495)),
+		SortValue:    NewSortValue(value.NewInteger(1328260695)),
 		CompareValue: NewSortValue(value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation()))),
 		Result:       true,
 	},
@@ -167,7 +167,7 @@ var sortValueEquivalentToTests = []struct {
 	},
 	{
 		Name:         "SortValue EquivalentTo Float and DateTime",
-		SortValue:    NewSortValue(value.NewFloat(1328289495.0001)),
+		SortValue:    NewSortValue(value.NewFloat(1328260695.0001)),
 		CompareValue: NewSortValue(value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 100000, GetTestLocation()))),
 		Result:       true,
 	},

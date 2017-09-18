@@ -191,21 +191,20 @@ func SetLineBreak(s string) error {
 }
 
 func SetLocation(s string) error {
-	if len(s) < 1 {
-		return nil
-	}
-
-	if strings.EqualFold(s, "Local") {
+	if len(s) < 1 || strings.EqualFold(s, "Local") {
 		s = "Local"
+	} else if strings.EqualFold(s, "UTC") {
+		s = "UTC"
 	}
 
-	_, err := time.LoadLocation(s)
+	location, err := time.LoadLocation(s)
 	if err != nil {
 		return errors.New("timezone does not exist")
 	}
 
 	f := GetFlags()
 	f.Location = s
+	time.Local = location
 	return nil
 }
 

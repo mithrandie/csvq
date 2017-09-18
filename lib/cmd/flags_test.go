@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"testing"
+	"time"
 )
 
 func TestEncoding_String(t *testing.T) {
@@ -119,11 +120,17 @@ func TestSetLocation(t *testing.T) {
 	if flags.Location != "Local" {
 		t.Errorf("location = %s, expect to set %s for %q", flags.Location, "Local", s)
 	}
+	if time.Local.String() != "Local" {
+		t.Errorf("time.local = %s, expect to set %s for %q", time.Local.String(), "Local", s)
+	}
 
-	s = "America/Los_Angeles"
+	s = "utc"
 	SetLocation(s)
-	if flags.Location != s {
-		t.Errorf("location = %s, expect to set %s for %q", flags.Location, s, s)
+	if flags.Location != "UTC" {
+		t.Errorf("location = %s, expect to set %s for %q", flags.Location, "UTC", s)
+	}
+	if time.Local.String() != "UTC" {
+		t.Errorf("time.local = %s, expect to set %s for %q", time.Local.String(), "UTC", s)
 	}
 
 	s = "America/NotExist"

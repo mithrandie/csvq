@@ -95,7 +95,7 @@ func SetFlag(expr parser.SetFlag) error {
 	var p value.Primary
 
 	switch strings.ToUpper(expr.Name) {
-	case "@@DELIMITER", "@@ENCODING", "@@LINE_BREAK", "@@REPOSITORY", "@@DATETIME_FORMAT":
+	case "@@DELIMITER", "@@ENCODING", "@@LINE_BREAK", "@@TIMEZONE", "@@REPOSITORY", "@@DATETIME_FORMAT":
 		p = value.ToString(expr.Value)
 	case "@@WAIT_TIMEOUT":
 		p = value.ToFloat(expr.Value)
@@ -117,6 +117,8 @@ func SetFlag(expr parser.SetFlag) error {
 		err = cmd.SetEncoding(p.(value.String).Raw())
 	case "@@LINE_BREAK":
 		err = cmd.SetLineBreak(p.(value.String).Raw())
+	case "@@TIMEZONE":
+		err = cmd.SetLocation(p.(value.String).Raw())
 	case "@@REPOSITORY":
 		err = cmd.SetRepository(p.(value.String).Raw())
 	case "@@DATETIME_FORMAT":
@@ -157,6 +159,8 @@ func ShowFlag(expr parser.ShowFlag) (string, error) {
 		s = flags.Encoding.String()
 	case "@@LINE_BREAK":
 		s = flags.LineBreak.String()
+	case "@@TIMEZONE":
+		s = flags.Location
 	case "@@REPOSITORY":
 		s = flags.Repository
 	case "@@DATETIME_FORMAT":

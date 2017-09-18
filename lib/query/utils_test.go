@@ -84,7 +84,7 @@ var formatStringTests = []struct {
 			value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 			value.NewNull(),
 		},
-		Result: "string: str 1 1.234 true TRUE 2012-02-03T09:18:15-08:00 NULL",
+		Result: "string: str 1 1.234 true TRUE 2012-02-03T09:18:15Z NULL",
 	},
 	{
 		Name:   "FormatString Quoted String",
@@ -98,7 +98,7 @@ var formatStringTests = []struct {
 			value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 			value.NewNull(),
 		},
-		Result: "string: 'str' 1 1.234 true TRUE '2012-02-03T09:18:15-08:00' NULL",
+		Result: "string: 'str' 1 1.234 true TRUE '2012-02-03T09:18:15Z' NULL",
 	},
 	{
 		Name:   "FormatString Type",

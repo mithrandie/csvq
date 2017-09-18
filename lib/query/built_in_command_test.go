@@ -262,6 +262,15 @@ var setFlagTests = []struct {
 		ResultStrValue: "\r\n",
 	},
 	{
+		Name: "Set Timezone",
+		Expr: parser.SetFlag{
+			Name:  "@@timezone",
+			Value: value.NewString("utc"),
+		},
+		ResultFlag:     "timezone",
+		ResultStrValue: "UTC",
+	},
+	{
 		Name: "Set Repository",
 		Expr: parser.SetFlag{
 			Name:  "@@repository",
@@ -389,6 +398,10 @@ func TestSetFlag(t *testing.T) {
 			if flags.LineBreak.Value() != v.ResultStrValue {
 				t.Errorf("%s: line-break = %q, want %q", v.Name, flags.LineBreak.Value(), v.ResultStrValue)
 			}
+		case "TIMEZONE":
+			if flags.Location != v.ResultStrValue {
+				t.Errorf("%s: timezone = %q, want %q", v.Name, flags.Location, v.ResultStrValue)
+			}
 		case "REPOSITORY":
 			if flags.Repository != v.ResultStrValue {
 				t.Errorf("%s: repository = %q, want %q", v.Name, flags.Repository, v.ResultStrValue)
@@ -476,6 +489,17 @@ var showFlagTests = []struct {
 			Value: value.NewString("CRLF"),
 		},
 		Result: "CRLF",
+	},
+	{
+		Name: "Show Timezone",
+		Expr: parser.ShowFlag{
+			Name: "@@timezone",
+		},
+		SetExpr: parser.SetFlag{
+			Name:  "@@timezone",
+			Value: value.NewString("UTC"),
+		},
+		Result: "UTC",
 	},
 	{
 		Name: "Show Repository",
