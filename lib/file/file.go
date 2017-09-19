@@ -63,8 +63,11 @@ func Create(path string) (*os.File, error) {
 }
 
 func Close(fp *os.File) error {
-	err := file.Close(fp)
-	Unlock(fp.Name())
+	var err error
+	if fp != nil {
+		err = file.Close(fp)
+		Unlock(fp.Name())
+	}
 	return err
 }
 
