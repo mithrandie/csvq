@@ -2010,7 +2010,7 @@ var viewSelectTests = []struct {
 				{View: "table2", Column: "column3", Aliases: []string{"t21", "t21a"}, Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
 				{Column: "1", Aliases: []string{"a"}},
-				{Column: "2012-01-01T00:00:00-08:00"},
+				{Column: "2012-01-01T00:00:00Z"},
 			},
 			RecordSet: []Record{
 				NewRecord([]value.Primary{

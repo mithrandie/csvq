@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"runtime"
 
 	"github.com/mithrandie/csvq/lib/action"
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -12,7 +13,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var version = "v0.8.7"
+var version = "v1.0.0"
 
 func main() {
 	cli.AppHelpTemplate = appHHelpTemplate
@@ -24,6 +25,11 @@ func main() {
 	app.Usage = "SQL like query language for csv"
 	app.ArgsUsage = "[\"query\"|\"statements\"|argument]"
 	app.Version = version
+
+	defaultCPU := runtime.NumCPU() / 2
+	if defaultCPU < 1 {
+		defaultCPU = 1
+	}
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
@@ -57,9 +63,9 @@ func main() {
 			Name:  "datetime-format, t",
 			Usage: "set datetime format to parse strings",
 		},
-		cli.StringFlag{
+		cli.Float64Flag{
 			Name:  "wait-timeout, w",
-			Value: "10",
+			Value: 10,
 			Usage: "limit of the waiting time in seconds to wait for locked files to be released",
 		},
 		cli.BoolFlag{
@@ -97,6 +103,7 @@ func main() {
 		},
 		cli.IntFlag{
 			Name:  "cpu, p",
+			Value: defaultCPU,
 			Usage: "hint for the number of cpu cores to be used. 1 - number of cpu cores",
 		},
 		cli.BoolFlag{
@@ -231,9 +238,7 @@ func setFlags(c *cli.Context) error {
 		return err
 	}
 	cmd.SetDatetimeFormat(c.GlobalString("datetime-format"))
-	if err := cmd.SetWaitTimeout(c.GlobalString("wait-timeout")); err != nil {
-		return err
-	}
+	cmd.SetWaitTimeout(c.GlobalFloat64("wait-timeout"))
 	cmd.SetNoHeader(c.GlobalBool("no-header"))
 	cmd.SetWithoutNull(c.GlobalBool("without-null"))
 

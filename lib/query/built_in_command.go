@@ -11,10 +11,9 @@ import (
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/csv"
+	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
-
-	"github.com/mithrandie/go-file"
 )
 
 func Print(expr parser.Print, filter *Filter) (string, error) {
@@ -95,7 +94,7 @@ func SetFlag(expr parser.SetFlag) error {
 	var p value.Primary
 
 	switch strings.ToUpper(expr.Name) {
-	case "@@DELIMITER", "@@ENCODING", "@@LINE_BREAK", "@@REPOSITORY", "@@DATETIME_FORMAT":
+	case "@@DELIMITER", "@@ENCODING", "@@LINE_BREAK", "@@TIMEZONE", "@@REPOSITORY", "@@DATETIME_FORMAT":
 		p = value.ToString(expr.Value)
 	case "@@WAIT_TIMEOUT":
 		p = value.ToFloat(expr.Value)
@@ -117,15 +116,14 @@ func SetFlag(expr parser.SetFlag) error {
 		err = cmd.SetEncoding(p.(value.String).Raw())
 	case "@@LINE_BREAK":
 		err = cmd.SetLineBreak(p.(value.String).Raw())
+	case "@@TIMEZONE":
+		err = cmd.SetLocation(p.(value.String).Raw())
 	case "@@REPOSITORY":
 		err = cmd.SetRepository(p.(value.String).Raw())
 	case "@@DATETIME_FORMAT":
 		cmd.SetDatetimeFormat(p.(value.String).Raw())
 	case "@@WAIT_TIMEOUT":
-		err = cmd.SetWaitTimeout(value.Float64ToStr(p.(value.Float).Raw()))
-		if err == nil {
-			UpdateWaitTimeout()
-		}
+		cmd.SetWaitTimeout(p.(value.Float).Raw())
 	case "@@NO_HEADER":
 		cmd.SetNoHeader(p.(value.Boolean).Raw())
 	case "@@WITHOUT_NULL":
@@ -157,6 +155,8 @@ func ShowFlag(expr parser.ShowFlag) (string, error) {
 		s = flags.Encoding.String()
 	case "@@LINE_BREAK":
 		s = flags.LineBreak.String()
+	case "@@TIMEZONE":
+		s = flags.Location
 	case "@@REPOSITORY":
 		s = flags.Repository
 	case "@@DATETIME_FORMAT":
@@ -295,11 +295,11 @@ func ShowFields(expr parser.ShowFields, filter *Filter) (string, error) {
 				header, _ := ViewCache.GetHeader(pathIdent)
 				fields = header.TableColumnNames()
 			} else {
-				if !FileLocks.CanRead(fileInfo.Path) {
-					return "", NewFileLockTimeoutError(expr.Table, fileInfo.Path)
-				}
-				fp, err := file.OpenToReadWithTimeout(fileInfo.Path)
+				fp, err := file.OpenToRead(fileInfo.Path)
 				if err != nil {
+					if _, ok := err.(*file.TimeoutError); ok {
+						NewFileLockTimeoutError(expr.Table, fileInfo.Path)
+					}
 					return "", NewReadFileError(expr.Table, err.Error())
 				}
 				defer file.Close(fp)

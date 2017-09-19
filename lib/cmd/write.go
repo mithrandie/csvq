@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"os"
 
-	"github.com/mithrandie/go-file"
+	"github.com/mithrandie/csvq/lib/file"
 )
 
 var Terminal VirtualTerminal
@@ -41,8 +41,6 @@ func CreateFile(filename string, s string) error {
 }
 
 func UpdateFile(fp *os.File, s string) error {
-	defer file.Close(fp)
-
 	fp.Truncate(0)
 	fp.Seek(0, 0)
 

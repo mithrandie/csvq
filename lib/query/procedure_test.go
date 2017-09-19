@@ -8,10 +8,10 @@ import (
 	"testing"
 
 	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
-	"github.com/mithrandie/go-file"
 	"github.com/mithrandie/ternary"
 )
 
@@ -1296,6 +1296,23 @@ var procedureWhileInCursorTests = []struct {
 			Cursor: parser.Identifier{Literal: "cur"},
 			Statements: []parser.Statement{
 				parser.Print{Value: parser.Variable{Name: "@var1"}},
+				parser.TransactionControl{Token: parser.COMMIT},
+			},
+		},
+		ResultFlow: TERMINATE,
+		Result:     "'1'\n'2'\n'3'\n",
+	},
+	{
+		Name: "While In Cursor With Declaration",
+		Stmt: parser.WhileInCursor{
+			WithDeclaration: true,
+			Variables: []parser.Variable{
+				{Name: "@declvar1"},
+				{Name: "@declvar2"},
+			},
+			Cursor: parser.Identifier{Literal: "cur"},
+			Statements: []parser.Statement{
+				parser.Print{Value: parser.Variable{Name: "@declvar1"}},
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},

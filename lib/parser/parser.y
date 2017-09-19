@@ -37,6 +37,7 @@ import "github.com/mithrandie/csvq/lib/value"
 %type<statement>   common_loop_flow_control_statement
 %type<statement>   procedure_statement
 %type<statement>   while_statement
+%type<token>       while_variable_declaration
 %type<statement>   exit_statement
 %type<statement>   flow_control_statement
 %type<statement>   loop_statement
@@ -336,6 +337,24 @@ while_statement
     | WHILE variables IN identifier DO loop_program END WHILE
     {
         $$ = WhileInCursor{Variables: $2, Cursor: $4, Statements: $6}
+    }
+    | WHILE while_variable_declaration variable IN identifier DO loop_program END WHILE
+    {
+        $$ = WhileInCursor{WithDeclaration: true, Variables: []Variable{$3}, Cursor: $5, Statements: $7}
+    }
+    | WHILE while_variable_declaration variables IN identifier DO loop_program END WHILE
+    {
+        $$ = WhileInCursor{WithDeclaration: true, Variables: $3, Cursor: $5, Statements: $7}
+    }
+
+while_variable_declaration
+    : VAR
+    {
+        $$ = $1
+    }
+    | DECLARE
+    {
+        $$ = $1
     }
 
 exit_statement

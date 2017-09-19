@@ -17,7 +17,7 @@ func GetTestFilePath(filename string) string {
 
 var TestDir = filepath.Join(os.TempDir(), "csvq_query_test")
 var TestDataDir string
-var TestLocation = "America/Los_Angeles"
+var TestLocation = "UTC"
 var NowForTest = time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())
 
 func GetTestLocation() *time.Location {
@@ -41,8 +41,8 @@ func setup() {
 		os.RemoveAll(TestDir)
 	}
 
+	cmd.SetLocation(TestLocation)
 	flags := cmd.GetFlags()
-	flags.Location = TestLocation
 	flags.Now = "2012-02-03 09:18:15"
 
 	wdir, _ := os.Getwd()
@@ -82,6 +82,7 @@ func teardown() {
 }
 
 func initFlag() {
+	cmd.SetLocation(TestLocation)
 	flags := cmd.GetFlags()
 	flags.Delimiter = cmd.UNDEF
 	flags.Encoding = cmd.UTF8

@@ -105,7 +105,7 @@ The While statement iterates it while _condition_ is TRUE.
 ## WHILE IN
 {: #while_in_loop}
 ```sql
-WHILE variable [, variable ...] IN cursor_name
+WHILE [DECLARE|VAR] variable [, variable ...] IN cursor_name
 DO
   statements
 END WHILE;
@@ -122,6 +122,9 @@ _statements_
 
 A While In statement fetch the data from the [cursor]({{ '/reference/cursor.html' | relative_url }}) into variables, then execute _statements_.
 The While In statement iterates it until the _cursor_name_ pointer reaches the last record in the referring view.
+
+If DECLARE or VAR keyword is specified, then variables are declared in the child scope. 
+Otherwise variables in the current scope is used to fetch.
 
 ## CONTINUE
 {: #continue}

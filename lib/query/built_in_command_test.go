@@ -11,7 +11,6 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
-	"github.com/mithrandie/go-file"
 )
 
 var printTests = []struct {
@@ -262,6 +261,15 @@ var setFlagTests = []struct {
 		ResultStrValue: "\r\n",
 	},
 	{
+		Name: "Set Timezone",
+		Expr: parser.SetFlag{
+			Name:  "@@timezone",
+			Value: value.NewString("utc"),
+		},
+		ResultFlag:     "timezone",
+		ResultStrValue: "UTC",
+	},
+	{
 		Name: "Set Repository",
 		Expr: parser.SetFlag{
 			Name:  "@@repository",
@@ -389,6 +397,10 @@ func TestSetFlag(t *testing.T) {
 			if flags.LineBreak.Value() != v.ResultStrValue {
 				t.Errorf("%s: line-break = %q, want %q", v.Name, flags.LineBreak.Value(), v.ResultStrValue)
 			}
+		case "TIMEZONE":
+			if flags.Location != v.ResultStrValue {
+				t.Errorf("%s: timezone = %q, want %q", v.Name, flags.Location, v.ResultStrValue)
+			}
 		case "REPOSITORY":
 			if flags.Repository != v.ResultStrValue {
 				t.Errorf("%s: repository = %q, want %q", v.Name, flags.Repository, v.ResultStrValue)
@@ -414,19 +426,6 @@ func TestSetFlag(t *testing.T) {
 				t.Errorf("%s: stats = %t, want %t", v.Name, flags.Stats, v.ResultBoolValue)
 			}
 		}
-	}
-
-	expr := parser.SetFlag{
-		Name:  "@@wait_timeout",
-		Value: value.NewFloat(20),
-	}
-	SetFlag(expr)
-
-	if FileLocks.WaitTimeout != 20 {
-		t.Errorf("filelocks wait-timeout = %f, want %f", FileLocks.WaitTimeout, 20)
-	}
-	if file.WaitTimeout != 20 {
-		t.Errorf("package file wait-timeout = %f, want %f", file.WaitTimeout, 20)
 	}
 }
 
@@ -476,6 +475,17 @@ var showFlagTests = []struct {
 			Value: value.NewString("CRLF"),
 		},
 		Result: "CRLF",
+	},
+	{
+		Name: "Show Timezone",
+		Expr: parser.ShowFlag{
+			Name: "@@timezone",
+		},
+		SetExpr: parser.SetFlag{
+			Name:  "@@timezone",
+			Value: value.NewString("UTC"),
+		},
+		Result: "UTC",
 	},
 	{
 		Name: "Show Repository",

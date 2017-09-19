@@ -2067,7 +2067,7 @@ var unixTimeTests = []functionTest{
 		Args: []value.Primary{
 			value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 		},
-		Result: value.NewInteger(1328289495),
+		Result: value.NewInteger(1328260695),
 	},
 }
 
@@ -2084,7 +2084,7 @@ var unixNanoTimeTests = []functionTest{
 		Args: []value.Primary{
 			value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
 		},
-		Result: value.NewInteger(1328289495123456789),
+		Result: value.NewInteger(1328260695123456789),
 	},
 }
 
@@ -2613,7 +2613,7 @@ var utcTests = []functionTest{
 		Args: []value.Primary{
 			value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
 		},
-		Result: value.NewDatetime(time.Date(2012, 2, 3, 17, 18, 15, 123456789, time.UTC)),
+		Result: value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, time.UTC)),
 	},
 	{
 		Name: "UTC Argument Error",
@@ -2678,7 +2678,7 @@ var stringTests = []functionTest{
 		Args: []value.Primary{
 			value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 		},
-		Result: value.NewString("2012-02-03T09:18:15-08:00"),
+		Result: value.NewString("2012-02-03T09:18:15Z"),
 	},
 	{
 		Name: "String Arguments Error",
@@ -2753,7 +2753,7 @@ var integerTests = []functionTest{
 		Args: []value.Primary{
 			value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 		},
-		Result: value.NewInteger(1328289495),
+		Result: value.NewInteger(1328260695),
 	},
 	{
 		Name: "Integer Arguments Error",
@@ -2788,7 +2788,7 @@ var floatTests = []functionTest{
 		Args: []value.Primary{
 			value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123450000, GetTestLocation())),
 		},
-		Result: value.NewFloat(1328289495.12345),
+		Result: value.NewFloat(1328260695.12345),
 	},
 	{
 		Name: "Float Arguments Error",

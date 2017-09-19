@@ -7,10 +7,11 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/mithrandie/csvq/lib/file"
 )
 
 const UNDEF = -1
@@ -138,19 +139,22 @@ func GetFlags() *Flags {
 }
 
 func SetDelimiter(s string) error {
+	var delimiter rune
+
 	if len(s) < 1 {
-		return nil
-	}
+		delimiter = UNDEF
+	} else {
+		s = UnescapeString(s)
 
-	s = UnescapeString(s)
-
-	runes := []rune(s)
-	if 1 < len(runes) {
-		return errors.New("delimiter must be 1 character")
+		runes := []rune(s)
+		if 1 < len(runes) {
+			return errors.New("delimiter must be 1 character")
+		}
+		delimiter = runes[0]
 	}
 
 	f := GetFlags()
-	f.Delimiter = runes[0]
+	f.Delimiter = delimiter
 	return nil
 }
 
@@ -188,17 +192,20 @@ func SetLineBreak(s string) error {
 }
 
 func SetLocation(s string) error {
-	if len(s) < 1 {
-		return nil
+	if len(s) < 1 || strings.EqualFold(s, "Local") {
+		s = "Local"
+	} else if strings.EqualFold(s, "UTC") {
+		s = "UTC"
 	}
 
-	_, err := time.LoadLocation(s)
+	location, err := time.LoadLocation(s)
 	if err != nil {
 		return errors.New("timezone does not exist")
 	}
 
 	f := GetFlags()
 	f.Location = s
+	time.Local = location
 	return nil
 }
 
@@ -244,19 +251,15 @@ func SetDatetimeFormat(s string) {
 	return
 }
 
-func SetWaitTimeout(s string) error {
-	if len(s) < 1 {
-		return nil
-	}
-
-	f, e := strconv.ParseFloat(s, 64)
-	if e != nil {
-		return errors.New("wait-timeout must be a float value")
+func SetWaitTimeout(f float64) {
+	if f < 0 {
+		f = 0
 	}
 
 	flags := GetFlags()
 	flags.WaitTimeout = f
-	return nil
+	file.UpdateWaitTimeout(flags.WaitTimeout, flags.RetryInterval)
+	return
 }
 
 func SetNoHeader(b bool) {

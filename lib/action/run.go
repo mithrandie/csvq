@@ -24,8 +24,6 @@ func Run(input string, sourceFile string) error {
 		showStats(start)
 	}()
 
-	query.UpdateWaitTimeout()
-
 	statements, err := parser.Parse(input, sourceFile)
 	if err != nil {
 		syntaxErr := err.(*parser.SyntaxError)
@@ -65,7 +63,6 @@ func LaunchInteractiveShell() error {
 	}()
 
 	var err error
-	query.UpdateWaitTimeout()
 
 	term, err := cmd.NewTerminal()
 	if err != nil {

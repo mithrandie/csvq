@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/mithrandie/go-file"
+	"github.com/mithrandie/csvq/lib/file"
 )
 
 type writeTest struct {
@@ -43,6 +43,8 @@ var createFileTests = []writeTest{
 }
 
 func TestCreateFile(t *testing.T) {
+	file.LockFiles = make(file.LockFileContainer)
+
 	for _, v := range createFileTests {
 		if len(v.Filename) < 1 {
 			oldStdout := os.Stdout
@@ -81,6 +83,8 @@ func TestCreateFile(t *testing.T) {
 			}
 		}
 	}
+
+	file.UnlockAll()
 }
 
 var updateFileTests = []writeTest{
@@ -93,6 +97,8 @@ var updateFileTests = []writeTest{
 }
 
 func TestUpdateFile(t *testing.T) {
+	file.LockFiles = make(file.LockFileContainer)
+
 	for _, v := range updateFileTests {
 		filename := GetTestFilePath(v.Filename)
 		fp, _ := file.OpenToUpdate(filename)
@@ -116,6 +122,8 @@ func TestUpdateFile(t *testing.T) {
 			t.Errorf("%s: content = %q, want %q", v.Name, string(buf), v.Result)
 		}
 	}
+
+	file.UnlockAll()
 }
 
 func TestTryCreateFile(t *testing.T) {
