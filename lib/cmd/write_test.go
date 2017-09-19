@@ -103,6 +103,7 @@ func TestUpdateFile(t *testing.T) {
 		filename := GetTestFilePath(v.Filename)
 		fp, _ := file.OpenToUpdate(filename)
 		err := UpdateFile(fp, v.Content)
+		file.Close(fp)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
