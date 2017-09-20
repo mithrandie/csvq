@@ -724,6 +724,10 @@ user_defined_function_statement
     {
         $$ = AggregateDeclaration{Name: $2, Cursor: $5, Parameters: $7, Statements: $11}
     }
+    | DISPOSE FUNCTION identifier
+    {
+        $$ = DisposeFunction{Name: $3}
+    }
 
 fetch_position
     :

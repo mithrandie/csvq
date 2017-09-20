@@ -14,7 +14,8 @@ Functions create local scopes.
 
 * [Scala Function](#scala)
 * [Aggregate Function](#aggregate)
-* [Return Statement](#return)
+* [DISPOSE FUNCTION Statement](#dispose)
+* [RETURN Statement](#return)
 
 ## Scala Function
 {: #scala}
@@ -181,19 +182,29 @@ SELECT multiply(i, NULL) FROM numbers;
 SELECT i, multiply(i) OVER () FROM numbers;
 ```
 
+## DISPOSE FUNCTION Statement
+{: #dispose}
+
+A DISPOSE FUNCTION statement disposes user defined function named as _function_name_.
+
+```sql
+DISPOSE FUNCTION function_name; 
+```
+
+_function_name_
+: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+
 
 ## RETURN Statement
 {: #return}
 
-A Return statement terminates executing function, then returns a value.
+A RETURN statement terminates executing function, then returns a value.
 If the return value is not specified, then returns a null.
 
 When there is no return statement, the function executes all of the statements and returns a null.
 
 ```sql
-return_statement
-  : RETURN;
-  | RETURN value;
+RETURN [value];
 ```
 
 _value_

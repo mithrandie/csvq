@@ -4132,6 +4132,14 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "dispose function userfunc",
+		Output: []Statement{
+			DisposeFunction{
+				Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 18}, Literal: "userfunc"},
+			},
+		},
+	},
+	{
 		Input: "select @var1 := @var2 + @var3",
 		Output: []Statement{
 			SelectQuery{SelectEntity: SelectEntity{

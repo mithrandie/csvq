@@ -129,6 +129,22 @@ var procedureExecuteStatementTests = []struct {
 		Logs: "1\n",
 	},
 	{
+		Input: parser.DisposeFunction{
+			Name: parser.Identifier{Literal: "userfunc"},
+		},
+		Logs: "",
+	},
+	{
+		Input: parser.Function{
+			Name: "userfunc",
+			Args: []parser.QueryExpression{
+				parser.NewIntegerValueFromString("1"),
+			},
+		},
+		Error:     "[L:- C:-] function userfunc does not exist",
+		ErrorCode: 1,
+	},
+	{
 		Input: parser.CursorDeclaration{
 			Cursor: parser.Identifier{Literal: "cur"},
 			Query:  selectQueryForCursorTest,

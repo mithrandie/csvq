@@ -277,6 +277,84 @@ func TestUserDefinedFunctionScopes_Get(t *testing.T) {
 	}
 }
 
+var userDefinedFunctionScopesDisposeTests = []struct {
+	Name     string
+	FuncName parser.Identifier
+	Result   UserDefinedFunctionScopes
+	Error    string
+}{
+	{
+		Name:     "UserDefinedFunctionScopes Despose",
+		FuncName: parser.Identifier{Literal: "userfunc2"},
+		Result: UserDefinedFunctionScopes{
+			UserDefinedFunctionMap{
+				"USERFUNC1": &UserDefinedFunction{
+					Name: parser.Identifier{Literal: "userfunc1"},
+					Parameters: []parser.Variable{
+						{Name: "@arg1"},
+					},
+					Statements: []parser.Statement{
+						parser.Print{Value: parser.Variable{Name: "@arg1"}},
+					},
+				},
+			},
+			UserDefinedFunctionMap{},
+		},
+	},
+	{
+		Name:     "UserDefinedFunctionScopes Despose Not Exist Error",
+		FuncName: parser.Identifier{Literal: "notexist"},
+		Error:    "[L:- C:-] function notexist does not exist",
+	},
+}
+
+func TestUserDefinedFunctionScopes_Dispose(t *testing.T) {
+	list := UserDefinedFunctionScopes{
+		UserDefinedFunctionMap{
+			"USERFUNC1": &UserDefinedFunction{
+				Name: parser.Identifier{Literal: "userfunc1"},
+				Parameters: []parser.Variable{
+					{Name: "@arg1"},
+				},
+				Statements: []parser.Statement{
+					parser.Print{Value: parser.Variable{Name: "@arg1"}},
+				},
+			},
+		},
+		UserDefinedFunctionMap{
+			"USERFUNC2": &UserDefinedFunction{
+				Name: parser.Identifier{Literal: "userfunc2"},
+				Parameters: []parser.Variable{
+					{Name: "@arg1"},
+					{Name: "@arg2"},
+				},
+				Statements: []parser.Statement{
+					parser.Print{Value: parser.Variable{Name: "@arg2"}},
+				},
+			},
+		},
+	}
+
+	for _, v := range userDefinedFunctionScopesDisposeTests {
+		err := list.Dispose(v.FuncName)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(list, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, list, v.Result)
+		}
+	}
+}
+
 func TestUserDefinedFunctionScopes_List(t *testing.T) {
 	list := UserDefinedFunctionScopes{
 		UserDefinedFunctionMap{
@@ -348,7 +426,6 @@ func TestUserDefinedFunctionScopes_List(t *testing.T) {
 	if !reflect.DeepEqual(agg, expectAgg) {
 		t.Errorf("aggregate: result = %s, want %s", agg, expectAgg)
 	}
-
 }
 
 var userDefinedFunctionMapDeclareTests = []struct {

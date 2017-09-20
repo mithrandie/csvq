@@ -1136,6 +1136,11 @@ type AggregateDeclaration struct {
 	Statements []Statement
 }
 
+type DisposeFunction struct {
+	*BaseExpr
+	Name Identifier
+}
+
 type Return struct {
 	*BaseExpr
 	Value QueryExpression

@@ -28,6 +28,16 @@ func (list UserDefinedFunctionScopes) Get(expr parser.QueryExpression, name stri
 	return nil, NewFunctionNotExistError(expr, name)
 }
 
+func (list UserDefinedFunctionScopes) Dispose(name parser.Identifier) error {
+	for _, m := range list {
+		err := m.Dispose(name)
+		if err == nil {
+			return nil
+		}
+	}
+	return NewFunctionNotExistError(name, name.Literal)
+}
+
 func (list UserDefinedFunctionScopes) List() ([]string, []string) {
 	var fnString = func(fn *UserDefinedFunction) string {
 		parameters := make([]string, len(fn.Parameters))
@@ -182,6 +192,15 @@ func (m UserDefinedFunctionMap) Get(fn parser.QueryExpression, name string) (*Us
 		return fn, nil
 	}
 	return nil, NewFunctionNotExistError(fn, name)
+}
+
+func (m UserDefinedFunctionMap) Dispose(name parser.Identifier) error {
+	uname := strings.ToUpper(name.Literal)
+	if _, ok := m[uname]; ok {
+		delete(m, uname)
+		return nil
+	}
+	return NewFunctionNotExistError(name, name.Literal)
 }
 
 type UserDefinedFunction struct {
