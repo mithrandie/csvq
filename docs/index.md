@@ -28,7 +28,6 @@ In the multiple operations, you can use variables, cursors, temporary tables, an
 * Support following file encodings
   * UTF-8
   * Shift-JIS
-  * (Now supported encodings are very few. If you want to use other encodings, please submit an issue on [github](https://github.com/mithrandie/csvq).)
 
 ## Install
 
