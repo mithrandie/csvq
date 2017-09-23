@@ -200,6 +200,46 @@ var scanTests = []struct {
 		},
 	},
 	{
+		Name:  "AggregateFunction",
+		Input: "sum",
+		Output: []scanResult{
+			{
+				Token:   AGGREGATE_FUNCTION,
+				Literal: "sum",
+			},
+		},
+	},
+	{
+		Name:  "AnalyticFunction",
+		Input: "rank",
+		Output: []scanResult{
+			{
+				Token:   ANALYTIC_FUNCTION,
+				Literal: "rank",
+			},
+		},
+	},
+	{
+		Name:  "FunctionNTH",
+		Input: "nth_value",
+		Output: []scanResult{
+			{
+				Token:   FUNCTION_NTH,
+				Literal: "nth_value",
+			},
+		},
+	},
+	{
+		Name:  "FunctionWithINS",
+		Input: "lag",
+		Output: []scanResult{
+			{
+				Token:   FUNCTION_WITH_INS,
+				Literal: "lag",
+			},
+		},
+	},
+	{
 		Name:  "PassThrough",
 		Input: ",",
 		Output: []scanResult{

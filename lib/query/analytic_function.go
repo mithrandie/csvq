@@ -160,40 +160,60 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 						}
 					}
 
-					values, e := view.ListValuesForAnalyticFunctions(fn, partitions[partitionMapKeys[i]])
-					if e != nil {
-						gm.SetError(e)
-						break AnalyzeLoop
-					}
-
 					if fnType == AGGREGATE {
-						val := aggfn(values)
-						for _, idx := range partitions[partitionMapKeys[i]] {
-							view.RecordSet[idx] = append(view.RecordSet[idx], NewCell(val))
+						partition := partitions[partitionMapKeys[i]]
+						frameSet := WindowFrameSet(partition, fn.AnalyticClause)
+
+						valueCache := make(map[int]value.Primary, len(partition))
+
+						for _, frame := range frameSet {
+							values, e := windowValues(frame, partition, fn, filter, valueCache)
+							if e != nil {
+								gm.SetError(e)
+								break AnalyzeLoop
+							}
+							val := aggfn(values)
+
+							for _, idx := range frame.Records {
+								view.RecordSet[idx] = append(view.RecordSet[idx], NewCell(val))
+							}
 						}
 					} else { //User Defined Function
-						for _, idx := range partitions[partitionMapKeys[i]] {
-							filter.Records[0].RecordIndex = idx
+						partition := partitions[partitionMapKeys[i]]
+						frameSet := WindowFrameSet(partition, fn.AnalyticClause)
 
-							var args []value.Primary
-							argsExprs := fn.Args[1:]
-							args = make([]value.Primary, len(argsExprs))
-							for i, v := range argsExprs {
-								arg, e := filter.Evaluate(v)
-								if e != nil {
-									gm.SetError(e)
-									break AnalyzeLoop
-								}
-								args[i] = arg
-							}
+						valueCache := make(map[int]value.Primary, len(partition))
 
-							val, e := udfn.ExecuteAggregate(values, args, view.Filter)
+						for _, frame := range frameSet {
+							values, e := windowValues(frame, partition, fn, filter, valueCache)
 							if e != nil {
 								gm.SetError(e)
 								break AnalyzeLoop
 							}
 
-							view.RecordSet[idx] = append(view.RecordSet[idx], NewCell(val))
+							for _, idx := range frame.Records {
+								filter.Records[0].RecordIndex = idx
+
+								var args []value.Primary
+								argsExprs := fn.Args[1:]
+								args = make([]value.Primary, len(argsExprs))
+								for i, v := range argsExprs {
+									arg, e := filter.Evaluate(v)
+									if e != nil {
+										gm.SetError(e)
+										break AnalyzeLoop
+									}
+									args[i] = arg
+								}
+
+								val, e := udfn.ExecuteAggregate(values, args, view.Filter)
+								if e != nil {
+									gm.SetError(e)
+									break AnalyzeLoop
+								}
+
+								view.RecordSet[idx] = append(view.RecordSet[idx], NewCell(val))
+							}
 						}
 					}
 				}
@@ -206,6 +226,119 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 	gm.Wait()
 
 	return gm.Error()
+}
+
+type WindowFrame struct {
+	Low     int
+	High    int
+	Records []int
+}
+
+func WindowFrameSet(partition Partition, expr parser.AnalyticClause) []WindowFrame {
+	var singleFrameSet = func(partition Partition) []WindowFrame {
+		indices := make([]int, len(partition))
+		for i, idx := range partition {
+			indices[i] = idx
+		}
+		return []WindowFrame{{Low: 0, High: len(partition) - 1, Records: indices}}
+	}
+
+	var frameIndex = func(current int, length int, framePosition parser.WindowFramePosition) int {
+		var idx int
+
+		switch framePosition.Direction {
+		case parser.CURRENT:
+			idx = current
+		case parser.PRECEDING:
+			if framePosition.Unbounded {
+				idx = 0
+			} else {
+				idx = current - framePosition.Offset
+			}
+		case parser.FOLLOWING:
+			if framePosition.Unbounded {
+				idx = length - 1
+			} else {
+				idx = current + framePosition.Offset
+			}
+		}
+
+		return idx
+	}
+
+	length := len(partition)
+
+	if expr.OrderByClause == nil {
+		return singleFrameSet(partition)
+	}
+
+	frameSet := make([]WindowFrame, 0, length)
+
+	var windowClause parser.WindowingClause
+	if expr.WindowingClause == nil {
+		windowClause = parser.WindowingClause{
+			FrameLow: parser.WindowFramePosition{
+				Direction: parser.PRECEDING,
+				Unbounded: true,
+			},
+		}
+	} else {
+		windowClause = expr.WindowingClause.(parser.WindowingClause)
+	}
+	frameLow := windowClause.FrameLow.(parser.WindowFramePosition)
+
+	if windowClause.FrameHigh == nil {
+		for current := 0; current < length; current++ {
+			frameSet = append(frameSet, WindowFrame{
+				Low:     frameIndex(current, length, frameLow),
+				High:    current,
+				Records: []int{partition[current]},
+			})
+		}
+	} else {
+		frameHigh := windowClause.FrameHigh.(parser.WindowFramePosition)
+		if frameLow.Direction == parser.PRECEDING && frameLow.Unbounded && frameHigh.Direction == parser.FOLLOWING && frameHigh.Unbounded {
+			return singleFrameSet(partition)
+		}
+
+		for current := 0; current < length; current++ {
+			frameSet = append(frameSet, WindowFrame{
+				Low:     frameIndex(current, length, frameLow),
+				High:    frameIndex(current, length, frameHigh),
+				Records: []int{partition[current]},
+			})
+		}
+	}
+
+	return frameSet
+}
+
+func windowValues(frame WindowFrame, partition Partition, expr parser.AnalyticFunction, filter *Filter, valueCache map[int]value.Primary) ([]value.Primary, error) {
+	values := make([]value.Primary, 0, frame.High-frame.Low+1)
+
+	for i := frame.Low; i <= frame.High; i++ {
+		if i < 0 || len(partition) <= i {
+			continue
+		}
+
+		recordIdx := partition[i]
+		if v, ok := valueCache[recordIdx]; ok {
+			values = append(values, v)
+		} else {
+			filter.Records[0].RecordIndex = recordIdx
+			p, e := filter.Evaluate(expr.Args[0])
+			if e != nil {
+				return nil, e
+			}
+			valueCache[recordIdx] = p
+			values = append(values, p)
+		}
+	}
+
+	if expr.IsDistinct() {
+		values = Distinguish(values)
+	}
+	return values, nil
 }
 
 func CheckArgsLen(expr parser.AnalyticFunction, length []int) error {
@@ -463,32 +596,45 @@ func (fn NthValue) Execute(partition Partition, expr parser.AnalyticFunction, fi
 }
 
 func setNthValue(partition Partition, expr parser.AnalyticFunction, filter *Filter, n int) (map[int]value.Primary, error) {
-	var val value.Primary = value.NewNull()
+	frameSet := WindowFrameSet(partition, expr.AnalyticClause)
+	list := make(map[int]value.Primary, len(partition))
 
-	count := 0
-	if n <= len(partition) {
-		for _, idx := range partition {
-			filter.Records[0].RecordIndex = idx
-			p, err := filter.Evaluate(expr.Args[0])
-			if err != nil {
-				return nil, err
+	valueCache := make(map[int]value.Primary, len(partition))
+
+	for _, frame := range frameSet {
+		var val value.Primary = value.NewNull()
+		count := 0
+
+		for i := frame.Low; i <= frame.High; i++ {
+			if i < 0 || len(partition) <= i {
+				continue
 			}
 
-			if expr.IgnoreNulls && value.IsNull(p) {
+			recordIdx := partition[i]
+			if v, ok := valueCache[recordIdx]; ok {
+				val = v
+			} else {
+				filter.Records[0].RecordIndex = recordIdx
+				p, err := filter.Evaluate(expr.Args[0])
+				if err != nil {
+					return nil, err
+				}
+				valueCache[recordIdx] = p
+				val = p
+			}
+			if expr.IgnoreNulls && value.IsNull(val) {
 				continue
 			}
 
 			count++
 			if count == n {
-				val = p
 				break
 			}
 		}
-	}
 
-	list := make(map[int]value.Primary, len(partition))
-	for _, idx := range partition {
-		list[idx] = val
+		for _, idx := range frame.Records {
+			list[idx] = val
+		}
 	}
 
 	return list, nil
@@ -592,9 +738,17 @@ func (fn AnalyticListAgg) Execute(partition Partition, expr parser.AnalyticFunct
 		separator = s.(value.String).Raw()
 	}
 
-	values, err := filter.Records[0].View.ListValuesForAnalyticFunctions(expr, partition)
-	if err != nil {
-		return nil, err
+	values := make([]value.Primary, len(partition))
+	for i, idx := range partition {
+		filter.Records[0].RecordIndex = idx
+		val, e := filter.Evaluate(expr.Args[0])
+		if e != nil {
+			return nil, e
+		}
+		values[i] = val
+	}
+	if expr.IsDistinct() {
+		values = Distinguish(values)
 	}
 
 	val := ListAgg(values, separator)

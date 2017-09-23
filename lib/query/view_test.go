@@ -2315,7 +2315,7 @@ var viewSelectTests = []struct {
 						Name: "row_number",
 						Over: "over",
 						AnalyticClause: parser.AnalyticClause{
-							Partition: parser.Partition{
+							PartitionClause: parser.PartitionClause{
 								PartitionBy: "partition by",
 								Values: []parser.QueryExpression{
 									parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
@@ -2409,7 +2409,7 @@ var viewSelectTests = []struct {
 						Name: "notexist",
 						Over: "over",
 						AnalyticClause: parser.AnalyticClause{
-							Partition: parser.Partition{
+							PartitionClause: parser.PartitionClause{
 								PartitionBy: "partition by",
 								Values: []parser.QueryExpression{
 									parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
@@ -2468,7 +2468,7 @@ var viewSelectTests = []struct {
 						Name: "row_number",
 						Over: "over",
 						AnalyticClause: parser.AnalyticClause{
-							Partition: parser.Partition{
+							PartitionClause: parser.PartitionClause{
 								PartitionBy: "partition by",
 								Values: []parser.QueryExpression{
 									parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
@@ -2527,7 +2527,7 @@ var viewSelectTests = []struct {
 						Name: "row_number",
 						Over: "over",
 						AnalyticClause: parser.AnalyticClause{
-							Partition: parser.Partition{
+							PartitionClause: parser.PartitionClause{
 								PartitionBy: "partition by",
 								Values: []parser.QueryExpression{
 									parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
@@ -3113,7 +3113,7 @@ var viewExtendRecordCapacity = []struct {
 			parser.AnalyticFunction{
 				Name: "rank",
 				AnalyticClause: parser.AnalyticClause{
-					Partition: parser.Partition{
+					PartitionClause: parser.PartitionClause{
 						Values: []parser.QueryExpression{
 							parser.Arithmetic{
 								LHS:      parser.NewIntegerValueFromString("1"),
@@ -3245,7 +3245,7 @@ var viewExtendRecordCapacity = []struct {
 			parser.AnalyticFunction{
 				Name: "rank",
 				AnalyticClause: parser.AnalyticClause{
-					Partition: parser.Partition{
+					PartitionClause: parser.PartitionClause{
 						Values: []parser.QueryExpression{
 							parser.AggregateFunction{
 								Name: "avg",
@@ -3286,7 +3286,7 @@ var viewExtendRecordCapacity = []struct {
 			parser.AnalyticFunction{
 				Name: "rank",
 				AnalyticClause: parser.AnalyticClause{
-					Partition: parser.Partition{
+					PartitionClause: parser.PartitionClause{
 						Values: []parser.QueryExpression{
 							parser.Arithmetic{
 								LHS:      parser.NewIntegerValueFromString("1"),

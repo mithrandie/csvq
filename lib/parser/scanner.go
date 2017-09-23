@@ -53,10 +53,22 @@ var aggregateFunctions = []string{
 	"MEDIAN",
 }
 
-var functionsWithIgnoreNulls = []string{
+var analyticFunctions = []string{
+	"ROW_NUMBER",
+	"RANK",
+	"DENSE_RANK",
+	"CUME_DIST",
+	"PERCENT_RANK",
+	"NTILE",
+}
+
+var functionsNth = []string{
 	"FIRST_VALUE",
 	"LAST_VALUE",
 	"NTH_VALUE",
+}
+
+var functionsWithIgnoreNulls = []string{
 	"LAG",
 	"LEAD",
 }
@@ -184,6 +196,10 @@ func (s *Scanner) Scan() (Token, error) {
 			token = rune(t)
 		} else if s.isAggregateFunctions(literal) {
 			token = AGGREGATE_FUNCTION
+		} else if s.isAnalyticFunctions(literal) {
+			token = ANALYTIC_FUNCTION
+		} else if s.isFunctionsNth(literal) {
+			token = FUNCTION_NTH
 		} else if s.isFunctionsWithIgnoreNulls(literal) {
 			token = FUNCTION_WITH_INS
 		} else {
@@ -327,6 +343,24 @@ func (s *Scanner) searchKeyword(str string) (int, error) {
 
 func (s *Scanner) isAggregateFunctions(str string) bool {
 	for _, v := range aggregateFunctions {
+		if strings.EqualFold(v, str) {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *Scanner) isAnalyticFunctions(str string) bool {
+	for _, v := range analyticFunctions {
+		if strings.EqualFold(v, str) {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *Scanner) isFunctionsNth(str string) bool {
+	for _, v := range functionsNth {
 		if strings.EqualFold(v, str) {
 			return true
 		}

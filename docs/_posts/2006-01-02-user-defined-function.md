@@ -127,7 +127,7 @@ _argument_
 ##### As an Analytic Function
 
 ```sql
-function_name([DISTINCT] expr [, argument ...]) OVER ([partition_clause] [order_by_clause])
+function_name([DISTINCT] expr [, argument ...]) OVER ([partition_clause] [order_by_clause [windowing_clause]])
 ```
 
 _function_name_
@@ -145,6 +145,9 @@ _partition_clause_
 _order_by_clause_
 : [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
 
+_windowing_clause_
+: [Windowing Clause]({{ '/reference/analytic-functions.html#syntax' | relative_url }})
+
 
 Example:
 
@@ -156,16 +159,18 @@ BEGIN
 
     WHILE @fetch IN list
     DO
-        IF FLOAT(@fetch) IS NULL THEN
+        VAR @floatVal := FLOAT(@fetch);
+        
+        IF @floatVal IS NULL THEN
             CONTINUE;
         END IF;
 
         IF @value IS NULL THEN
-            @value := @fetch;
+            @value := @floatVal;
             CONTINUE;
         END IF;
 
-        @value := @value * @fetch;
+        @value := @value * @floatVal;
     END WHILE;
     
     IF @value IS NULL THEN
@@ -179,7 +184,7 @@ SELECT multiply(i) FROM numbers;
 
 SELECT multiply(i, NULL) FROM numbers;
 
-SELECT i, multiply(i) OVER () FROM numbers;
+SELECT i, multiply(i) OVER (order by i) FROM numbers;
 ```
 
 ## DISPOSE FUNCTION Statement

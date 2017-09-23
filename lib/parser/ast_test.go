@@ -1323,7 +1323,7 @@ func TestAnalyticFunction_String(t *testing.T) {
 		IgnoreNullsLit: "ignore nulls",
 		Over:           "over",
 		AnalyticClause: AnalyticClause{
-			Partition: Partition{
+			PartitionClause: PartitionClause{
 				PartitionBy: "partition by",
 				Values: []QueryExpression{
 					Identifier{Literal: "column1"},
@@ -1358,7 +1358,7 @@ func TestAnalyticFunction_IsDistinct(t *testing.T) {
 
 func TestAnalyticClause_String(t *testing.T) {
 	e := AnalyticClause{
-		Partition: Partition{
+		PartitionClause: PartitionClause{
 			PartitionBy: "partition by",
 			Values: []QueryExpression{
 				Identifier{Literal: "column1"},
@@ -1371,8 +1371,15 @@ func TestAnalyticClause_String(t *testing.T) {
 				OrderItem{Value: Identifier{Literal: "column3"}},
 			},
 		},
+		WindowingClause: WindowingClause{
+			Rows: "rows",
+			FrameLow: WindowFramePosition{
+				Direction: CURRENT,
+				Literal:   "current row",
+			},
+		},
 	}
-	expect := "partition by column1, column2 order by column3"
+	expect := "partition by column1, column2 order by column3 rows current row"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1380,7 +1387,7 @@ func TestAnalyticClause_String(t *testing.T) {
 
 func TestAnalyticClause_PartitionValues(t *testing.T) {
 	e := AnalyticClause{
-		Partition: Partition{
+		PartitionClause: PartitionClause{
 			PartitionBy: "partition by",
 			Values: []QueryExpression{
 				Identifier{Literal: "column1"},
@@ -1404,7 +1411,7 @@ func TestAnalyticClause_PartitionValues(t *testing.T) {
 }
 
 func TestPartition_String(t *testing.T) {
-	e := Partition{
+	e := PartitionClause{
 		PartitionBy: "partition by",
 		Values: []QueryExpression{
 			Identifier{Literal: "column1"},
@@ -1412,6 +1419,40 @@ func TestPartition_String(t *testing.T) {
 		},
 	}
 	expect := "partition by column1, column2"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestWindowingClause_String(t *testing.T) {
+	e := WindowingClause{
+		Rows: "rows",
+		FrameLow: WindowFramePosition{
+			Direction: CURRENT,
+			Literal:   "current row",
+		},
+	}
+	expect := "rows current row"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+
+	e = WindowingClause{
+		Rows: "rows",
+		FrameLow: WindowFramePosition{
+			Direction: PRECEDING,
+			Offset:    1,
+			Literal:   "1 preceding",
+		},
+		FrameHigh: WindowFramePosition{
+			Direction: FOLLOWING,
+			Unbounded: true,
+			Literal:   "unbounded following",
+		},
+		Between: "between",
+		And:     "and",
+	}
+	expect = "rows between 1 preceding and unbounded following"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}

@@ -982,37 +982,72 @@ func (e AnalyticFunction) IsDistinct() bool {
 
 type AnalyticClause struct {
 	*BaseExpr
-	Partition     QueryExpression
-	OrderByClause QueryExpression
+	PartitionClause QueryExpression
+	OrderByClause   QueryExpression
+	WindowingClause QueryExpression
 }
 
 func (e AnalyticClause) String() string {
 	s := []string{}
-	if e.Partition != nil {
-		s = append(s, e.Partition.String())
+	if e.PartitionClause != nil {
+		s = append(s, e.PartitionClause.String())
 	}
 	if e.OrderByClause != nil {
 		s = append(s, e.OrderByClause.String())
+	}
+	if e.WindowingClause != nil {
+		s = append(s, e.WindowingClause.String())
 	}
 	return joinWithSpace(s)
 }
 
 func (e AnalyticClause) PartitionValues() []QueryExpression {
-	if e.Partition == nil {
+	if e.PartitionClause == nil {
 		return nil
 	}
-	return e.Partition.(Partition).Values
+	return e.PartitionClause.(PartitionClause).Values
 }
 
-type Partition struct {
+type PartitionClause struct {
 	*BaseExpr
 	PartitionBy string
 	Values      []QueryExpression
 }
 
-func (e Partition) String() string {
+func (e PartitionClause) String() string {
 	s := []string{e.PartitionBy, listQueryExpressions(e.Values)}
 	return joinWithSpace(s)
+}
+
+type WindowingClause struct {
+	*BaseExpr
+	Rows      string
+	FrameLow  QueryExpression
+	FrameHigh QueryExpression
+	Between   string
+	And       string
+}
+
+func (e WindowingClause) String() string {
+	s := []string{e.Rows}
+	if e.FrameHigh == nil {
+		s = append(s, e.FrameLow.String())
+	} else {
+		s = append(s, e.Between, e.FrameLow.String(), e.And, e.FrameHigh.String())
+	}
+	return joinWithSpace(s)
+}
+
+type WindowFramePosition struct {
+	*BaseExpr
+	Direction int
+	Unbounded bool
+	Offset    int
+	Literal   string
+}
+
+func (e WindowFramePosition) String() string {
+	return e.Literal
 }
 
 type Variable struct {
