@@ -91,6 +91,8 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		err = proc.Filter.TempViews.Dispose(stmt.(parser.DisposeView).View)
 	case parser.FunctionDeclaration:
 		err = proc.Filter.Functions.Declare(stmt.(parser.FunctionDeclaration))
+	case parser.DisposeFunction:
+		err = proc.Filter.Functions.Dispose(stmt.(parser.DisposeFunction).Name)
 	case parser.AggregateDeclaration:
 		err = proc.Filter.Functions.DeclareAggregate(stmt.(parser.AggregateDeclaration))
 	case parser.SelectQuery:

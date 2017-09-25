@@ -35,13 +35,27 @@ Analytic Functions can be used only in [Select Clause]({{ '/reference/select-que
 
 ```sql
 analytic_function
-  : function_name([args]) OVER ([partition_clause] [order_by_clause])
+  : function_name([args]) OVER ([partition_clause] [order_by_clause [windowing_clause]])
 
 args
   : value [, value ...]
 
 partition_clause
   : PARTITION BY value [, value ...]
+
+windowing_clause
+  : ROWS window_position
+  | ROWS BETWEEN window_frame_low AND window_frame_high
+
+window_position
+  : {UNBOUNDED PRECEDING|offset PRECEDING|CURRENT ROW}
+
+window_frame_low
+  : {UNBOUNDED PRECEDING|offset PRECEDING|offset FOLLOWING|CURRENT_ROW}
+
+window_frame_high
+  : {UNBOUNDED FOLLOWING|offset PRECEDING|offset FOLLOWING|CURRENT_ROW}
+
 ```
 
 _value_
@@ -50,8 +64,12 @@ _value_
 _order_by_clause_
 : [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
 
+_offset_
+: [integer]({{ '/reference/value.html#integer' | relative_url }})
+
 Analytic Functions sort the result set by _order_by_clause_ and calculate values within each of groups partitioned by _partition_clause_.
 If there is no _partition_clause_, then all records of the result set are dealt with as one group. 
+
 
 ## Definitions
 
@@ -178,7 +196,7 @@ The NTILE function splits the records into _number_of_groups_ groups, then retur
 {: #first_value}
 
 ```
-FIRST_VALUE(expr) [IGNORE NULLS] OVER ([partition_clause] [order_by_clause])
+FIRST_VALUE(expr) [IGNORE NULLS] OVER ([partition_clause] [order_by_clause [windowing_clause]])
 ```
 
 _expr_
@@ -201,7 +219,7 @@ If _IGNORE NULLS_ keywords are specified, then returns the first value that is n
 {: #last_value}
 
 ```
-LAST_VALUE(expr) [IGNORE NULLS] OVER ([partition_clause] [order by clause])
+LAST_VALUE(expr) [IGNORE NULLS] OVER ([partition_clause] [order_by_clause [windowing_clause]])
 ```
 
 _expr_
@@ -224,7 +242,7 @@ If _IGNORE NULLS_ keywords are specified, then returns the last value that is no
 {: #nth_value}
 
 ```
-NTH_VALUE(expr, n) [IGNORE NULLS] OVER ([partition_clause] [order by clause])
+NTH_VALUE(expr, n) [IGNORE NULLS] OVER ([partition_clause] [order_by_clause [windowing_clause]])
 ```
 
 _expr_
@@ -318,7 +336,7 @@ If _IGNORE NULLS_ keywords are specified, then rows that _expr_ values are nulls
 {: #count}
 
 ```
-COUNT([DISTINCT] expr) OVER ([partition_clause])
+COUNT([DISTINCT] expr) OVER ([partition_clause] [order_by_clause [windowing_clause]])
 ```
 
 _expr_
@@ -349,7 +367,7 @@ Returns the number of all values including null values.
 {: #min}
 
 ```
-MIN(expr) OVER ([partition_clause])
+MIN(expr) OVER ([partition_clause] [order_by_clause [windowing_clause]])
 ```
 
 _expr_
@@ -369,7 +387,7 @@ If all values are null, then returns a null.
 {: #max}
 
 ```
-MAX(expr) OVER ([partition_clause])
+MAX(expr) OVER ([partition_clause] [order_by_clause [windowing_clause]])
 ```
 
 _expr_
@@ -389,7 +407,7 @@ If all values are null, then returns a null.
 {: #sum}
 
 ```
-SUM([DISTINCT] expr) OVER ([partition_clause])
+SUM([DISTINCT] expr) OVER ([partition_clause] [order_by_clause [windowing_clause]])
 ```
 
 _expr_
@@ -409,7 +427,7 @@ If all values are null, then returns a null.
 {: #avg}
 
 ```
-AVG([DISTINCT] expr) OVER ([partition_clause])
+AVG([DISTINCT] expr) OVER ([partition_clause] [order_by_clause [windowing_clause]])
 ```
 
 _expr_
@@ -429,7 +447,7 @@ If all values are null, then returns a null.
 {: #median}
 
 ```
-MEDIAN([DISTINCT] expr) OVER ([partition_clause])
+MEDIAN([DISTINCT] expr) OVER ([partition_clause] [order_by_clause [windowing_clause]])
 ```
 
 _expr_

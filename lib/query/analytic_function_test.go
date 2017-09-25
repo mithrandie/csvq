@@ -67,7 +67,7 @@ var analyzeTests = []struct {
 		Function: parser.AnalyticFunction{
 			Name: "rank",
 			AnalyticClause: parser.AnalyticClause{
-				Partition: parser.Partition{
+				PartitionClause: parser.PartitionClause{
 					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
@@ -154,7 +154,7 @@ var analyzeTests = []struct {
 		Function: parser.AnalyticFunction{
 			Name: "rank",
 			AnalyticClause: parser.AnalyticClause{
-				Partition: parser.Partition{
+				PartitionClause: parser.PartitionClause{
 					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
@@ -199,7 +199,7 @@ var analyzeTests = []struct {
 				parser.NewIntegerValue(1),
 			},
 			AnalyticClause: parser.AnalyticClause{
-				Partition: parser.Partition{
+				PartitionClause: parser.PartitionClause{
 					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
@@ -273,7 +273,7 @@ var analyzeTests = []struct {
 				parser.AllColumns{},
 			},
 			AnalyticClause: parser.AnalyticClause{
-				Partition: parser.Partition{
+				PartitionClause: parser.PartitionClause{
 					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
@@ -308,6 +308,98 @@ var analyzeTests = []struct {
 					value.NewString("b"),
 					value.NewInteger(1),
 					value.NewInteger(3),
+				}),
+			},
+			Filter: NewEmptyFilter(),
+			sortValuesInEachCell: [][]*SortValue{
+				{NewSortValue(value.NewString("a")), nil},
+				{NewSortValue(value.NewString("a")), nil},
+				{NewSortValue(value.NewString("b")), nil},
+				{NewSortValue(value.NewString("b")), nil},
+				{NewSortValue(value.NewString("b")), nil},
+			},
+		},
+	},
+	{
+		Name: "Analyze AggregateFunction with Windowing Clause",
+		View: &View{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewNull(),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
+				}),
+			},
+			Filter: NewEmptyFilter(),
+		},
+		Function: parser.AnalyticFunction{
+			Name: "sum",
+			Args: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+			},
+			AnalyticClause: parser.AnalyticClause{
+				PartitionClause: parser.PartitionClause{
+					Values: []parser.QueryExpression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+				OrderByClause: parser.OrderByClause{
+					Items: []parser.QueryExpression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+				WindowingClause: parser.WindowingClause{
+					FrameLow: parser.WindowFramePosition{
+						Direction: parser.PRECEDING,
+						Unbounded: true,
+					},
+				},
+			},
+		},
+		PartitionIndices: []int{0},
+		Result: &View{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
+					value.NewInteger(1),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
+					value.NewInteger(3),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
+					value.NewInteger(1),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewNull(),
+					value.NewInteger(1),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
+					value.NewInteger(2),
 				}),
 			},
 			Filter: NewEmptyFilter(),
@@ -362,7 +454,7 @@ var analyzeTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 			AnalyticClause: parser.AnalyticClause{
-				Partition: parser.Partition{
+				PartitionClause: parser.PartitionClause{
 					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
@@ -428,7 +520,7 @@ var analyzeTests = []struct {
 		Function: parser.AnalyticFunction{
 			Name: "count",
 			AnalyticClause: parser.AnalyticClause{
-				Partition: parser.Partition{
+				PartitionClause: parser.PartitionClause{
 					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
@@ -459,7 +551,7 @@ var analyzeTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 			AnalyticClause: parser.AnalyticClause{
-				Partition: parser.Partition{
+				PartitionClause: parser.PartitionClause{
 					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
@@ -569,7 +661,7 @@ var analyzeTests = []struct {
 				parser.NewIntegerValue(0),
 			},
 			AnalyticClause: parser.AnalyticClause{
-				Partition: parser.Partition{
+				PartitionClause: parser.PartitionClause{
 					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
@@ -584,6 +676,231 @@ var analyzeTests = []struct {
 					value.NewString("a"),
 					value.NewInteger(1),
 					value.NewInteger(2),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
+					value.NewInteger(2),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
+					value.NewInteger(1),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewNull(),
+					value.NewInteger(1),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
+					value.NewInteger(1),
+				}),
+			},
+			sortValuesInEachCell: [][]*SortValue{
+				{NewSortValue(value.NewString("a")), nil},
+				{NewSortValue(value.NewString("a")), nil},
+				{NewSortValue(value.NewString("b")), nil},
+				{NewSortValue(value.NewString("b")), nil},
+				{NewSortValue(value.NewString("b")), nil},
+			},
+			Filter: &Filter{
+				Functions: UserDefinedFunctionScopes{
+					{
+						"USERAGGFUNC": &UserDefinedFunction{
+							Name:        parser.Identifier{Literal: "useraggfunc"},
+							IsAggregate: true,
+							Cursor:      parser.Identifier{Literal: "list"},
+							Parameters: []parser.Variable{
+								{Name: "@default"},
+							},
+							Statements: []parser.Statement{
+								parser.VariableDeclaration{
+									Assignments: []parser.VariableAssignment{
+										{
+											Variable: parser.Variable{Name: "@value"},
+										},
+										{
+											Variable: parser.Variable{Name: "@fetch"},
+										},
+									},
+								},
+								parser.WhileInCursor{
+									Variables: []parser.Variable{
+										{Name: "@fetch"},
+									},
+									Cursor: parser.Identifier{Literal: "list"},
+									Statements: []parser.Statement{
+										parser.If{
+											Condition: parser.Is{
+												LHS: parser.Variable{Name: "@fetch"},
+												RHS: parser.NewNullValue(),
+											},
+											Statements: []parser.Statement{
+												parser.FlowControl{Token: parser.CONTINUE},
+											},
+										},
+										parser.If{
+											Condition: parser.Is{
+												LHS: parser.Variable{Name: "@value"},
+												RHS: parser.NewNullValue(),
+											},
+											Statements: []parser.Statement{
+												parser.VariableSubstitution{
+													Variable: parser.Variable{Name: "@value"},
+													Value:    parser.Variable{Name: "@fetch"},
+												},
+												parser.FlowControl{Token: parser.CONTINUE},
+											},
+										},
+										parser.VariableSubstitution{
+											Variable: parser.Variable{Name: "@value"},
+											Value: parser.Arithmetic{
+												LHS:      parser.Variable{Name: "@value"},
+												RHS:      parser.Variable{Name: "@fetch"},
+												Operator: '*',
+											},
+										},
+									},
+								},
+								parser.Return{
+									Value: parser.Variable{Name: "@value"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Name: "Analyze UserDefinedFunction with Windowing Clause",
+		View: &View{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewNull(),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
+				}),
+			},
+			Filter: &Filter{
+				Functions: UserDefinedFunctionScopes{
+					{
+						"USERAGGFUNC": &UserDefinedFunction{
+							Name:        parser.Identifier{Literal: "useraggfunc"},
+							IsAggregate: true,
+							Cursor:      parser.Identifier{Literal: "list"},
+							Parameters: []parser.Variable{
+								{Name: "@default"},
+							},
+							Statements: []parser.Statement{
+								parser.VariableDeclaration{
+									Assignments: []parser.VariableAssignment{
+										{
+											Variable: parser.Variable{Name: "@value"},
+										},
+										{
+											Variable: parser.Variable{Name: "@fetch"},
+										},
+									},
+								},
+								parser.WhileInCursor{
+									Variables: []parser.Variable{
+										{Name: "@fetch"},
+									},
+									Cursor: parser.Identifier{Literal: "list"},
+									Statements: []parser.Statement{
+										parser.If{
+											Condition: parser.Is{
+												LHS: parser.Variable{Name: "@fetch"},
+												RHS: parser.NewNullValue(),
+											},
+											Statements: []parser.Statement{
+												parser.FlowControl{Token: parser.CONTINUE},
+											},
+										},
+										parser.If{
+											Condition: parser.Is{
+												LHS: parser.Variable{Name: "@value"},
+												RHS: parser.NewNullValue(),
+											},
+											Statements: []parser.Statement{
+												parser.VariableSubstitution{
+													Variable: parser.Variable{Name: "@value"},
+													Value:    parser.Variable{Name: "@fetch"},
+												},
+												parser.FlowControl{Token: parser.CONTINUE},
+											},
+										},
+										parser.VariableSubstitution{
+											Variable: parser.Variable{Name: "@value"},
+											Value: parser.Arithmetic{
+												LHS:      parser.Variable{Name: "@value"},
+												RHS:      parser.Variable{Name: "@fetch"},
+												Operator: '*',
+											},
+										},
+									},
+								},
+								parser.Return{
+									Value: parser.Variable{Name: "@value"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "useraggfunc",
+			Args: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				parser.NewIntegerValue(0),
+			},
+			AnalyticClause: parser.AnalyticClause{
+				PartitionClause: parser.PartitionClause{
+					Values: []parser.QueryExpression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+				OrderByClause: parser.OrderByClause{
+					Items: []parser.QueryExpression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+				WindowingClause: parser.WindowingClause{
+					FrameLow: parser.WindowFramePosition{
+						Direction: parser.PRECEDING,
+						Unbounded: true,
+					},
+				},
+			},
+		},
+		PartitionIndices: []int{0},
+		Result: &View{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
+					value.NewInteger(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("a"),
@@ -719,7 +1036,7 @@ var analyzeTests = []struct {
 		Function: parser.AnalyticFunction{
 			Name: "useraggfunc",
 			AnalyticClause: parser.AnalyticClause{
-				Partition: parser.Partition{
+				PartitionClause: parser.PartitionClause{
 					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
@@ -727,6 +1044,69 @@ var analyzeTests = []struct {
 			},
 		},
 		Error: "[L:- C:-] function useraggfunc takes exactly 2 arguments",
+	},
+	{
+		Name: "Analyze UserDefinedFunction Cursor Value Error",
+		View: &View{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(1),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(2),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewNull(),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(1),
+				}),
+			},
+			Filter: &Filter{
+				Functions: UserDefinedFunctionScopes{
+					{
+						"USERAGGFUNC": &UserDefinedFunction{
+							Name:        parser.Identifier{Literal: "useraggfunc"},
+							IsAggregate: true,
+							Cursor:      parser.Identifier{Literal: "list"},
+							Parameters: []parser.Variable{
+								{Name: "@default"},
+							},
+							Statements: []parser.Statement{
+								parser.Return{
+									Value: parser.Variable{Name: "@value"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Function: parser.AnalyticFunction{
+			Name: "useraggfunc",
+			Args: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+				parser.NewIntegerValue(0),
+			},
+			AnalyticClause: parser.AnalyticClause{
+				PartitionClause: parser.PartitionClause{
+					Values: []parser.QueryExpression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+			},
+		},
+		PartitionIndices: []int{0},
+		Error:            "[L:- C:-] field notexist does not exist",
 	},
 	{
 		Name: "Analyze UserDefinedFunction Argument Value Error",
@@ -769,7 +1149,7 @@ var analyzeTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 			AnalyticClause: parser.AnalyticClause{
-				Partition: parser.Partition{
+				PartitionClause: parser.PartitionClause{
 					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
@@ -819,7 +1199,7 @@ var analyzeTests = []struct {
 				parser.NewIntegerValue(0),
 			},
 			AnalyticClause: parser.AnalyticClause{
-				Partition: parser.Partition{
+				PartitionClause: parser.PartitionClause{
 					Values: []parser.QueryExpression{
 						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					},
@@ -1462,6 +1842,171 @@ var nthValueExecuteTests = []analyticFunctionExecuteTests{
 		},
 		Result: map[int]value.Primary{
 			2: value.NewInteger(200),
+			3: value.NewInteger(200),
+			4: value.NewInteger(200),
+			5: value.NewInteger(200),
+			6: value.NewInteger(200),
+			7: value.NewInteger(200),
+		},
+	},
+	{
+		Name:  "NthValue with Start Specified Windowing Clause Execute",
+		Items: Partition{2, 3, 4, 5, 6, 7},
+		Function: parser.AnalyticFunction{
+			Name: "nth_value",
+			Args: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				parser.NewIntegerValue(2),
+			},
+			AnalyticClause: parser.AnalyticClause{
+				OrderByClause: parser.OrderByClause{
+					Items: []parser.QueryExpression{
+						parser.OrderItem{Value: parser.Identifier{Literal: "column2"}},
+					},
+				},
+				WindowingClause: parser.WindowingClause{
+					FrameLow: parser.WindowFramePosition{
+						Direction: parser.PRECEDING,
+						Offset:    2,
+					},
+				},
+			},
+		},
+		Result: map[int]value.Primary{
+			2: value.NewNull(),
+			3: value.NewInteger(200),
+			4: value.NewInteger(200),
+			5: value.NewInteger(300),
+			6: value.NewInteger(500),
+			7: value.NewInteger(800),
+		},
+	},
+	{
+		Name:  "NthValue with Rows Specified Windowing Clause Execute",
+		Items: Partition{2, 3, 4, 5, 6, 7},
+		Function: parser.AnalyticFunction{
+			Name: "nth_value",
+			Args: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				parser.NewIntegerValue(2),
+			},
+			AnalyticClause: parser.AnalyticClause{
+				OrderByClause: parser.OrderByClause{
+					Items: []parser.QueryExpression{
+						parser.OrderItem{Value: parser.Identifier{Literal: "column2"}},
+					},
+				},
+				WindowingClause: parser.WindowingClause{
+					FrameLow: parser.WindowFramePosition{
+						Direction: parser.CURRENT,
+					},
+					FrameHigh: parser.WindowFramePosition{
+						Direction: parser.FOLLOWING,
+						Unbounded: true,
+					},
+				},
+			},
+		},
+		Result: map[int]value.Primary{
+			2: value.NewInteger(200),
+			3: value.NewInteger(300),
+			4: value.NewInteger(500),
+			5: value.NewInteger(800),
+			6: value.NewNull(),
+			7: value.NewNull(),
+		},
+	},
+	{
+		Name:  "NthValue with Rows Specified Windowing Clause Execute 2",
+		Items: Partition{2, 3, 4, 5, 6, 7},
+		Function: parser.AnalyticFunction{
+			Name: "nth_value",
+			Args: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				parser.NewIntegerValue(2),
+			},
+			AnalyticClause: parser.AnalyticClause{
+				OrderByClause: parser.OrderByClause{
+					Items: []parser.QueryExpression{
+						parser.OrderItem{Value: parser.Identifier{Literal: "column2"}},
+					},
+				},
+				WindowingClause: parser.WindowingClause{
+					FrameLow: parser.WindowFramePosition{
+						Direction: parser.PRECEDING,
+						Unbounded: true,
+					},
+					FrameHigh: parser.WindowFramePosition{
+						Direction: parser.FOLLOWING,
+						Offset:    2,
+					},
+				},
+			},
+		},
+		Result: map[int]value.Primary{
+			2: value.NewInteger(200),
+			3: value.NewInteger(200),
+			4: value.NewInteger(200),
+			5: value.NewInteger(200),
+			6: value.NewInteger(200),
+			7: value.NewInteger(200),
+		},
+	},
+	{
+		Name:  "NthValue with Rows Specified Windowing Clause Execute 3",
+		Items: Partition{2, 3, 4, 5, 6, 7},
+		Function: parser.AnalyticFunction{
+			Name: "nth_value",
+			Args: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				parser.NewIntegerValue(2),
+			},
+			AnalyticClause: parser.AnalyticClause{
+				OrderByClause: parser.OrderByClause{
+					Items: []parser.QueryExpression{
+						parser.OrderItem{Value: parser.Identifier{Literal: "column2"}},
+					},
+				},
+				WindowingClause: parser.WindowingClause{
+					FrameLow: parser.WindowFramePosition{
+						Direction: parser.PRECEDING,
+						Unbounded: true,
+					},
+					FrameHigh: parser.WindowFramePosition{
+						Direction: parser.FOLLOWING,
+						Unbounded: true,
+					},
+				},
+			},
+		},
+		Result: map[int]value.Primary{
+			2: value.NewInteger(200),
+			3: value.NewInteger(200),
+			4: value.NewInteger(200),
+			5: value.NewInteger(200),
+			6: value.NewInteger(200),
+			7: value.NewInteger(200),
+		},
+	},
+	{
+		Name:  "NthValue with Default Windowing Clause Execute",
+		Items: Partition{2, 3, 4, 5, 6, 7},
+		Function: parser.AnalyticFunction{
+			Name: "nth_value",
+			Args: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				parser.NewIntegerValue(2),
+			},
+			AnalyticClause: parser.AnalyticClause{
+				OrderByClause: parser.OrderByClause{
+					Items: []parser.QueryExpression{
+						parser.OrderItem{Value: parser.Identifier{Literal: "column2"}},
+					},
+				},
+			},
+		},
+		Result: map[int]value.Primary{
+			2: value.NewNull(),
 			3: value.NewInteger(200),
 			4: value.NewInteger(200),
 			5: value.NewInteger(200),

@@ -14,7 +14,8 @@ Functions create local scopes.
 
 * [Scala Function](#scala)
 * [Aggregate Function](#aggregate)
-* [Return Statement](#return)
+* [DISPOSE FUNCTION Statement](#dispose)
+* [RETURN Statement](#return)
 
 ## Scala Function
 {: #scala}
@@ -126,7 +127,7 @@ _argument_
 ##### As an Analytic Function
 
 ```sql
-function_name([DISTINCT] expr [, argument ...]) OVER ([partition_clause] [order_by_clause])
+function_name([DISTINCT] expr [, argument ...]) OVER ([partition_clause] [order_by_clause [windowing_clause]])
 ```
 
 _function_name_
@@ -144,6 +145,9 @@ _partition_clause_
 _order_by_clause_
 : [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
 
+_windowing_clause_
+: [Windowing Clause]({{ '/reference/analytic-functions.html#syntax' | relative_url }})
+
 
 Example:
 
@@ -155,16 +159,18 @@ BEGIN
 
     WHILE @fetch IN list
     DO
-        IF FLOAT(@fetch) IS NULL THEN
+        VAR @floatVal := FLOAT(@fetch);
+        
+        IF @floatVal IS NULL THEN
             CONTINUE;
         END IF;
 
         IF @value IS NULL THEN
-            @value := @fetch;
+            @value := @floatVal;
             CONTINUE;
         END IF;
 
-        @value := @value * @fetch;
+        @value := @value * @floatVal;
     END WHILE;
     
     IF @value IS NULL THEN
@@ -178,22 +184,32 @@ SELECT multiply(i) FROM numbers;
 
 SELECT multiply(i, NULL) FROM numbers;
 
-SELECT i, multiply(i) OVER () FROM numbers;
+SELECT i, multiply(i) OVER (order by i) FROM numbers;
 ```
+
+## DISPOSE FUNCTION Statement
+{: #dispose}
+
+A DISPOSE FUNCTION statement disposes user defined function named as _function_name_.
+
+```sql
+DISPOSE FUNCTION function_name; 
+```
+
+_function_name_
+: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
 
 
 ## RETURN Statement
 {: #return}
 
-A Return statement terminates executing function, then returns a value.
+A RETURN statement terminates executing function, then returns a value.
 If the return value is not specified, then returns a null.
 
 When there is no return statement, the function executes all of the statements and returns a null.
 
 ```sql
-return_statement
-  : RETURN;
-  | RETURN value;
+RETURN [value];
 ```
 
 _value_

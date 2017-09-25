@@ -1070,7 +1070,7 @@ func (view *View) evalAnalyticFunction(expr parser.AnalyticFunction) error {
 	}
 
 	var partitionIndices []int
-	if expr.AnalyticClause.Partition != nil {
+	if expr.AnalyticClause.PartitionClause != nil {
 		partitionExprs := expr.AnalyticClause.PartitionValues()
 
 		partitionIndices = make([]int, len(partitionExprs))
@@ -1443,45 +1443,6 @@ func (view *View) ListValuesForAggregateFunctions(expr parser.QueryExpression, a
 	}
 
 	if distinct {
-		list = Distinguish(list)
-	}
-
-	return list, nil
-}
-
-func (view *View) ListValuesForAnalyticFunctions(fn parser.AnalyticFunction, partition Partition) ([]value.Primary, error) {
-	list := make([]value.Primary, len(partition))
-
-	gm := NewGoroutineManager(len(partition), 150)
-	for i := 0; i < gm.CPU; i++ {
-		gm.Add()
-		go func(thIdx int) {
-			start, end := gm.RecordRange(thIdx)
-			filter := NewFilterForSequentialEvaluation(view, view.Filter)
-
-		ListAnalyticFunctionLoop:
-			for i := start; i < end; i++ {
-				if gm.HasError() {
-					break ListAnalyticFunctionLoop
-				}
-				filter.Records[0].RecordIndex = partition[i]
-				val, e := filter.Evaluate(fn.Args[0])
-				if e != nil {
-					gm.SetError(e)
-					break ListAnalyticFunctionLoop
-				}
-				list[i] = val
-			}
-			gm.Done()
-		}(i)
-	}
-	gm.Wait()
-
-	if gm.HasError() {
-		return nil, gm.Error()
-	}
-
-	if fn.IsDistinct() {
 		list = Distinguish(list)
 	}
 

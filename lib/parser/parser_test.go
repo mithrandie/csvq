@@ -270,8 +270,8 @@ var parseTests = []struct {
 							Name:     "rank",
 							Over:     "over",
 							AnalyticClause: AnalyticClause{
-								Partition:     nil,
-								OrderByClause: nil,
+								PartitionClause: nil,
+								OrderByClause:   nil,
 							},
 						}},
 					},
@@ -1876,7 +1876,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select rank() over (partition by column1 order by column2)",
+		Input: "select userfunc() over (partition by column1 order by column2)",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -1886,22 +1886,269 @@ var parseTests = []struct {
 						Fields: []QueryExpression{
 							Field{Object: AnalyticFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
-								Name:     "rank",
+								Name:     "userfunc",
 								Over:     "over",
 								AnalyticClause: AnalyticClause{
-									Partition: Partition{
+									PartitionClause: PartitionClause{
 										PartitionBy: "partition by",
 										Values: []QueryExpression{
-											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 34}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "column1"}},
+											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 38}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 38}, Literal: "column1"}},
 										},
 									},
 									OrderByClause: OrderByClause{
 										OrderBy: "order by",
 										Items: []QueryExpression{
 											OrderItem{
-												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 51}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 51}, Literal: "column2"}},
+												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 55}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 55}, Literal: "column2"}},
 											},
 										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select userfunc() over (order by column2 rows current row)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: AnalyticFunction{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "userfunc",
+								Over:     "over",
+								AnalyticClause: AnalyticClause{
+									OrderByClause: OrderByClause{
+										OrderBy: "order by",
+										Items: []QueryExpression{
+											OrderItem{
+												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 34}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "column2"}},
+											},
+										},
+									},
+									WindowingClause: WindowingClause{
+										Rows: "rows",
+										FrameLow: WindowFramePosition{
+											Direction: CURRENT,
+											Literal:   "current row",
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select userfunc() over (order by column2 rows unbounded preceding)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: AnalyticFunction{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "userfunc",
+								Over:     "over",
+								AnalyticClause: AnalyticClause{
+									OrderByClause: OrderByClause{
+										OrderBy: "order by",
+										Items: []QueryExpression{
+											OrderItem{
+												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 34}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "column2"}},
+											},
+										},
+									},
+									WindowingClause: WindowingClause{
+										Rows: "rows",
+										FrameLow: WindowFramePosition{
+											Direction: PRECEDING,
+											Unbounded: true,
+											Literal:   "unbounded preceding",
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select userfunc() over (order by column2 rows 1 preceding)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: AnalyticFunction{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "userfunc",
+								Over:     "over",
+								AnalyticClause: AnalyticClause{
+									OrderByClause: OrderByClause{
+										OrderBy: "order by",
+										Items: []QueryExpression{
+											OrderItem{
+												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 34}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "column2"}},
+											},
+										},
+									},
+									WindowingClause: WindowingClause{
+										Rows: "rows",
+										FrameLow: WindowFramePosition{
+											Direction: PRECEDING,
+											Offset:    1,
+											Literal:   "1 preceding",
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select userfunc() over (order by column2 rows between unbounded preceding and 1 following)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: AnalyticFunction{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "userfunc",
+								Over:     "over",
+								AnalyticClause: AnalyticClause{
+									OrderByClause: OrderByClause{
+										OrderBy: "order by",
+										Items: []QueryExpression{
+											OrderItem{
+												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 34}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "column2"}},
+											},
+										},
+									},
+									WindowingClause: WindowingClause{
+										Rows: "rows",
+										FrameLow: WindowFramePosition{
+											Direction: PRECEDING,
+											Unbounded: true,
+											Literal:   "unbounded preceding",
+										},
+										FrameHigh: WindowFramePosition{
+											Direction: FOLLOWING,
+											Offset:    1,
+											Literal:   "1 following",
+										},
+										Between: "between",
+										And:     "and",
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select userfunc() over (order by column2 rows between 1 preceding and unbounded following)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: AnalyticFunction{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "userfunc",
+								Over:     "over",
+								AnalyticClause: AnalyticClause{
+									OrderByClause: OrderByClause{
+										OrderBy: "order by",
+										Items: []QueryExpression{
+											OrderItem{
+												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 34}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "column2"}},
+											},
+										},
+									},
+									WindowingClause: WindowingClause{
+										Rows: "rows",
+										FrameLow: WindowFramePosition{
+											Direction: PRECEDING,
+											Offset:    1,
+											Literal:   "1 preceding",
+										},
+										FrameHigh: WindowFramePosition{
+											Direction: FOLLOWING,
+											Unbounded: true,
+											Literal:   "unbounded following",
+										},
+										Between: "between",
+										And:     "and",
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select userfunc() over (order by column2 rows between current row and unbounded following)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: AnalyticFunction{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "userfunc",
+								Over:     "over",
+								AnalyticClause: AnalyticClause{
+									OrderByClause: OrderByClause{
+										OrderBy: "order by",
+										Items: []QueryExpression{
+											OrderItem{
+												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 34}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "column2"}},
+											},
+										},
+									},
+									WindowingClause: WindowingClause{
+										Rows: "rows",
+										FrameLow: WindowFramePosition{
+											Direction: CURRENT,
+											Literal:   "current row",
+										},
+										FrameHigh: WindowFramePosition{
+											Direction: FOLLOWING,
+											Unbounded: true,
+											Literal:   "unbounded following",
+										},
+										Between: "between",
+										And:     "and",
 									},
 								},
 							}},
@@ -1928,7 +2175,7 @@ var parseTests = []struct {
 								},
 								Over: "over",
 								AnalyticClause: AnalyticClause{
-									Partition: Partition{
+									PartitionClause: PartitionClause{
 										PartitionBy: "partition by",
 										Values: []QueryExpression{
 											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 38}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 38}, Literal: "column1"}},
@@ -1968,7 +2215,7 @@ var parseTests = []struct {
 								},
 								Over: "over",
 								AnalyticClause: AnalyticClause{
-									Partition: Partition{
+									PartitionClause: PartitionClause{
 										PartitionBy: "partition by",
 										Values: []QueryExpression{
 											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 47}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 47}, Literal: "column1"}},
@@ -1991,7 +2238,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select min(column1) over (partition by column1 order by column2)",
+		Input: "select min(column1) over (partition by column1 order by column2 rows current row)",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -2007,7 +2254,7 @@ var parseTests = []struct {
 								},
 								Over: "over",
 								AnalyticClause: AnalyticClause{
-									Partition: Partition{
+									PartitionClause: PartitionClause{
 										PartitionBy: "partition by",
 										Values: []QueryExpression{
 											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 40}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 40}, Literal: "column1"}},
@@ -2021,6 +2268,13 @@ var parseTests = []struct {
 											},
 										},
 									},
+									WindowingClause: WindowingClause{
+										Rows: "rows",
+										FrameLow: WindowFramePosition{
+											Direction: CURRENT,
+											Literal:   "current row",
+										},
+									},
 								},
 							}},
 						},
@@ -2030,7 +2284,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select count(column1) over (partition by column1 order by column2)",
+		Input: "select count(column1) over (partition by column1 order by column2 rows current row)",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -2046,7 +2300,7 @@ var parseTests = []struct {
 								},
 								Over: "over",
 								AnalyticClause: AnalyticClause{
-									Partition: Partition{
+									PartitionClause: PartitionClause{
 										PartitionBy: "partition by",
 										Values: []QueryExpression{
 											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 42}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 42}, Literal: "column1"}},
@@ -2060,6 +2314,13 @@ var parseTests = []struct {
 											},
 										},
 									},
+									WindowingClause: WindowingClause{
+										Rows: "rows",
+										FrameLow: WindowFramePosition{
+											Direction: CURRENT,
+											Literal:   "current row",
+										},
+									},
 								},
 							}},
 						},
@@ -2069,7 +2330,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select count(*) over (partition by column1 order by column2)",
+		Input: "select count(*) over (partition by column1 order by column2 rows current row)",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -2085,7 +2346,7 @@ var parseTests = []struct {
 								},
 								Over: "over",
 								AnalyticClause: AnalyticClause{
-									Partition: Partition{
+									PartitionClause: PartitionClause{
 										PartitionBy: "partition by",
 										Values: []QueryExpression{
 											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 36}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 36}, Literal: "column1"}},
@@ -2097,6 +2358,13 @@ var parseTests = []struct {
 											OrderItem{
 												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 53}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 53}, Literal: "column2"}},
 											},
+										},
+									},
+									WindowingClause: WindowingClause{
+										Rows: "rows",
+										FrameLow: WindowFramePosition{
+											Direction: CURRENT,
+											Literal:   "current row",
 										},
 									},
 								},
@@ -2124,7 +2392,7 @@ var parseTests = []struct {
 								},
 								Over: "over",
 								AnalyticClause: AnalyticClause{
-									Partition: Partition{
+									PartitionClause: PartitionClause{
 										PartitionBy: "partition by",
 										Values: []QueryExpression{
 											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 44}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 44}, Literal: "column1"}},
@@ -2164,7 +2432,7 @@ var parseTests = []struct {
 								},
 								Over: "over",
 								AnalyticClause: AnalyticClause{
-									Partition: Partition{
+									PartitionClause: PartitionClause{
 										PartitionBy: "partition by",
 										Values: []QueryExpression{
 											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 49}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 49}, Literal: "column1"}},
@@ -2187,7 +2455,43 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select first_value(column1) over (partition by column1 order by column2)",
+		Input: "select rank() over (partition by column1 order by column2)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: AnalyticFunction{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "rank",
+								Over:     "over",
+								AnalyticClause: AnalyticClause{
+									PartitionClause: PartitionClause{
+										PartitionBy: "partition by",
+										Values: []QueryExpression{
+											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 34}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "column1"}},
+										},
+									},
+									OrderByClause: OrderByClause{
+										OrderBy: "order by",
+										Items: []QueryExpression{
+											OrderItem{
+												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 51}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 51}, Literal: "column2"}},
+											},
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select first_value(column1) over (partition by column1 order by column2 rows current row)",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -2203,7 +2507,7 @@ var parseTests = []struct {
 								},
 								Over: "over",
 								AnalyticClause: AnalyticClause{
-									Partition: Partition{
+									PartitionClause: PartitionClause{
 										PartitionBy: "partition by",
 										Values: []QueryExpression{
 											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 48}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 48}, Literal: "column1"}},
@@ -2217,6 +2521,13 @@ var parseTests = []struct {
 											},
 										},
 									},
+									WindowingClause: WindowingClause{
+										Rows: "rows",
+										FrameLow: WindowFramePosition{
+											Direction: CURRENT,
+											Literal:   "current row",
+										},
+									},
 								},
 							}},
 						},
@@ -2226,7 +2537,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select first_value(column1) ignore nulls over (partition by column1 order by column2)",
+		Input: "select first_value(column1) ignore nulls over (partition by column1 order by column2 rows current row)",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -2244,7 +2555,7 @@ var parseTests = []struct {
 								IgnoreNullsLit: "ignore nulls",
 								Over:           "over",
 								AnalyticClause: AnalyticClause{
-									Partition: Partition{
+									PartitionClause: PartitionClause{
 										PartitionBy: "partition by",
 										Values: []QueryExpression{
 											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 61}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 61}, Literal: "column1"}},
@@ -2255,6 +2566,93 @@ var parseTests = []struct {
 										Items: []QueryExpression{
 											OrderItem{
 												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 78}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 78}, Literal: "column2"}},
+											},
+										},
+									},
+									WindowingClause: WindowingClause{
+										Rows: "rows",
+										FrameLow: WindowFramePosition{
+											Direction: CURRENT,
+											Literal:   "current row",
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select lag(column1) over (partition by column1 order by column2)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: AnalyticFunction{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "lag",
+								Args: []QueryExpression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 12}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 12}, Literal: "column1"}},
+								},
+								Over: "over",
+								AnalyticClause: AnalyticClause{
+									PartitionClause: PartitionClause{
+										PartitionBy: "partition by",
+										Values: []QueryExpression{
+											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 40}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 40}, Literal: "column1"}},
+										},
+									},
+									OrderByClause: OrderByClause{
+										OrderBy: "order by",
+										Items: []QueryExpression{
+											OrderItem{
+												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 57}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 57}, Literal: "column2"}},
+											},
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select lag(column1) ignore nulls over (partition by column1 order by column2)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: AnalyticFunction{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "lag",
+								Args: []QueryExpression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 12}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 12}, Literal: "column1"}},
+								},
+								IgnoreNulls:    true,
+								IgnoreNullsLit: "ignore nulls",
+								Over:           "over",
+								AnalyticClause: AnalyticClause{
+									PartitionClause: PartitionClause{
+										PartitionBy: "partition by",
+										Values: []QueryExpression{
+											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 53}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 53}, Literal: "column1"}},
+										},
+									},
+									OrderByClause: OrderByClause{
+										OrderBy: "order by",
+										Items: []QueryExpression{
+											OrderItem{
+												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 70}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 70}, Literal: "column2"}},
 											},
 										},
 									},
@@ -4132,6 +4530,14 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "dispose function userfunc",
+		Output: []Statement{
+			DisposeFunction{
+				Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 18}, Literal: "userfunc"},
+			},
+		},
+	},
+	{
 		Input: "select @var1 := @var2 + @var3",
 		Output: []Statement{
 			SelectQuery{SelectEntity: SelectEntity{
@@ -4251,6 +4657,22 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select rows",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "rows"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
 		Input: "select fields",
 		Output: []Statement{
 			SelectQuery{SelectEntity: SelectEntity{
@@ -4308,6 +4730,38 @@ var parseTests = []struct {
 					Fields: []QueryExpression{
 						Field{
 							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "aggregate_function"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select analytic_function",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "analytic_function"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select function_nth",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "function_nth"}},
 						},
 					},
 				},

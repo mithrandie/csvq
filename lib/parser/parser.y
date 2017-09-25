@@ -1,7 +1,11 @@
 %{
 package parser
 
-import "github.com/mithrandie/csvq/lib/value"
+import (
+	"strconv"
+
+	"github.com/mithrandie/csvq/lib/value"
+)
 %}
 
 %union{
@@ -105,7 +109,13 @@ import "github.com/mithrandie/csvq/lib/value"
 %type<queryexpr>   listagg
 %type<queryexpr>   analytic_function
 %type<queryexpr>   analytic_clause
-%type<queryexpr>   partition
+%type<queryexpr>   analytic_clause_with_windowing
+%type<queryexpr>   partition_clause
+%type<queryexpr>   windowing_clause
+%type<queryexpr>   window_position
+%type<queryexpr>   window_relative_position
+%type<queryexpr>   window_frame_low
+%type<queryexpr>   window_frame_high
 %type<queryexpr>   table_identifier
 %type<table>       identified_table
 %type<queryexprs>  operate_tables
@@ -171,9 +181,10 @@ import "github.com/mithrandie/csvq/lib/value"
 %token<token> ALL ANY EXISTS IN
 %token<token> AND OR NOT BETWEEN LIKE IS NULL
 %token<token> DISTINCT WITH
+%token<token> RANGE UNBOUNDED PRECEDING FOLLOWING CURRENT ROW
 %token<token> CASE IF ELSEIF WHILE WHEN THEN ELSE DO END
 %token<token> DECLARE CURSOR FOR FETCH OPEN CLOSE DISPOSE
-%token<token> NEXT PRIOR ABSOLUTE RELATIVE RANGE
+%token<token> NEXT PRIOR ABSOLUTE RELATIVE
 %token<token> SEPARATOR PARTITION OVER
 %token<token> COMMIT ROLLBACK
 %token<token> CONTINUE BREAK EXIT
@@ -181,10 +192,10 @@ import "github.com/mithrandie/csvq/lib/value"
 %token<token> FUNCTION AGGREGATE BEGIN RETURN
 %token<token> IGNORE WITHIN
 %token<token> VAR SHOW
-%token<token> TIES NULLS TABLES VIEWS FIELDS CURSORS FUNCTIONS
+%token<token> TIES NULLS TABLES VIEWS FIELDS CURSORS FUNCTIONS ROWS
 %token<token> ERROR
 %token<token> COUNT LISTAGG
-%token<token> AGGREGATE_FUNCTION FUNCTION_WITH_INS
+%token<token> AGGREGATE_FUNCTION ANALYTIC_FUNCTION FUNCTION_NTH FUNCTION_WITH_INS
 %token<token> COMPARISON_OP STRING_OP SUBSTITUTION_OP
 %token<token> UMINUS UPLUS
 %token<token> ';' '*' '=' '-' '+' '!' '(' ')'
@@ -723,6 +734,10 @@ user_defined_function_statement
     | DECLARE identifier AGGREGATE '(' identifier ',' function_parameters ')' AS BEGIN function_program END
     {
         $$ = AggregateDeclaration{Name: $2, Cursor: $5, Parameters: $7, Statements: $11}
+    }
+    | DISPOSE FUNCTION identifier
+    {
+        $$ = DisposeFunction{Name: $3}
     }
 
 fetch_position
@@ -1417,29 +1432,41 @@ listagg
     }
 
 analytic_function
-    : identifier '(' arguments ')' OVER '(' analytic_clause ')'
+    : identifier '(' arguments ')' OVER '(' analytic_clause_with_windowing ')'
     {
         $$ = AnalyticFunction{BaseExpr: $1.BaseExpr, Name: $1.Literal, Args: $3, Over: $5.Literal, AnalyticClause: $7.(AnalyticClause)}
     }
-    | identifier '(' distinct arguments ')' OVER '(' analytic_clause ')'
+    | identifier '(' distinct arguments ')' OVER '(' analytic_clause_with_windowing ')'
     {
         $$ = AnalyticFunction{BaseExpr: $1.BaseExpr, Name: $1.Literal, Distinct: $3, Args: $4, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
     }
-    | AGGREGATE_FUNCTION '(' distinct arguments ')' OVER '(' analytic_clause ')'
+    | AGGREGATE_FUNCTION '(' distinct arguments ')' OVER '(' analytic_clause_with_windowing ')'
     {
         $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
     }
-    | COUNT '(' distinct arguments ')' OVER '(' analytic_clause ')'
+    | COUNT '(' distinct arguments ')' OVER '(' analytic_clause_with_windowing ')'
     {
         $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
     }
-    | COUNT '(' distinct wildcard ')' OVER '(' analytic_clause ')'
+    | COUNT '(' distinct wildcard ')' OVER '(' analytic_clause_with_windowing ')'
     {
         $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: []QueryExpression{$4}, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
     }
     | LISTAGG '(' distinct arguments ')' OVER '(' analytic_clause ')'
     {
         $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
+    }
+    | ANALYTIC_FUNCTION '(' arguments ')' OVER '(' analytic_clause ')'
+    {
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3, Over: $5.Literal, AnalyticClause: $7.(AnalyticClause)}
+    }
+    | FUNCTION_NTH '(' arguments ')' OVER '(' analytic_clause_with_windowing ')'
+    {
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3, Over: $5.Literal, AnalyticClause: $7.(AnalyticClause)}
+    }
+    | FUNCTION_NTH '(' arguments ')' IGNORE NULLS OVER '(' analytic_clause_with_windowing ')'
+    {
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3, IgnoreNulls: true, IgnoreNullsLit: $5.Literal + " " + $6.Literal, Over: $7.Literal, AnalyticClause: $9.(AnalyticClause)}
     }
     | FUNCTION_WITH_INS '(' arguments ')' OVER '(' analytic_clause ')'
     {
@@ -1451,19 +1478,91 @@ analytic_function
     }
 
 analytic_clause
-    : partition order_by_clause
+    : partition_clause order_by_clause
     {
-        $$ = AnalyticClause{Partition: $1, OrderByClause: $2}
+        $$ = AnalyticClause{PartitionClause: $1, OrderByClause: $2}
     }
 
-partition
+analytic_clause_with_windowing
+    : analytic_clause
+    {
+        $$ = $1
+    }
+    | partition_clause ORDER BY order_items windowing_clause
+    {
+        orderByClause := OrderByClause{OrderBy: $2.Literal + " " + $3.Literal, Items: $4}
+        $$ = AnalyticClause{PartitionClause: $1, OrderByClause: orderByClause, WindowingClause: $5}
+    }
+
+partition_clause
     :
     {
         $$ = nil
     }
     | PARTITION BY values
     {
-        $$ = Partition{PartitionBy: $1.Literal + " " + $2.Literal, Values: $3}
+        $$ = PartitionClause{PartitionBy: $1.Literal + " " + $2.Literal, Values: $3}
+    }
+
+windowing_clause
+    : ROWS window_position
+    {
+        $$ = WindowingClause{Rows: $1.Literal, FrameLow: $2}
+    }
+    | ROWS BETWEEN window_frame_low AND window_frame_high
+    {
+        $$ = WindowingClause{Rows: $1.Literal, FrameLow: $3, FrameHigh: $5, Between: $2.Literal, And: $4.Literal}
+    }
+
+window_position
+    : UNBOUNDED PRECEDING
+    {
+        $$ = WindowFramePosition{Direction: $2.Token, Unbounded: true, Literal: $1.Literal + " " + $2.Literal}
+    }
+    | INTEGER PRECEDING
+    {
+        i, _ := strconv.Atoi($1.Literal)
+        $$ = WindowFramePosition{Direction: $2.Token, Offset: i, Literal: $1.Literal + " " + $2.Literal}
+    }
+    | CURRENT ROW
+    {
+        $$ = WindowFramePosition{Direction: $1.Token, Literal: $1.Literal + " " + $2.Literal}
+    }
+
+window_relative_position
+    : INTEGER PRECEDING
+    {
+        i, _ := strconv.Atoi($1.Literal)
+        $$ = WindowFramePosition{Direction: $2.Token, Offset: i, Literal: $1.Literal + " " + $2.Literal}
+    }
+    | INTEGER FOLLOWING
+    {
+        i, _ := strconv.Atoi($1.Literal)
+        $$ = WindowFramePosition{Direction: $2.Token, Offset: i, Literal: $1.Literal + " " + $2.Literal}
+    }
+    | CURRENT ROW
+    {
+        $$ = WindowFramePosition{Direction: $1.Token, Literal: $1.Literal + " " + $2.Literal}
+    }
+
+window_frame_low
+    : UNBOUNDED PRECEDING
+    {
+        $$ = WindowFramePosition{Direction: $2.Token, Unbounded: true, Literal: $1.Literal + " " + $2.Literal}
+    }
+    | window_relative_position
+    {
+        $$ = $1
+    }
+
+window_frame_high
+    : UNBOUNDED FOLLOWING
+    {
+        $$ = WindowFramePosition{Direction: $2.Token, Unbounded: true, Literal: $1.Literal + " " + $2.Literal}
+    }
+    | window_relative_position
+    {
+        $$ = $1
     }
 
 table_identifier
@@ -1923,6 +2022,10 @@ identifier
     {
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }
+    | ROWS
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
     | FIELDS
     {
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
@@ -1936,6 +2039,14 @@ identifier
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }
     | AGGREGATE_FUNCTION
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | ANALYTIC_FUNCTION
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | FUNCTION_NTH
     {
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }
