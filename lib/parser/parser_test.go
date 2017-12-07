@@ -707,7 +707,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select column1 not between -10 and +10",
+		Input: "select column1 not between -10 and +10 or column2 between 20 and 30",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -715,64 +715,28 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 1},
 						Select:   "select",
 						Fields: []QueryExpression{
-							Field{Object: Between{
-								Between: "between",
-								And:     "and",
-								LHS:     FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
-								Low: UnaryArithmetic{
-									Operand:  NewIntegerValueFromString("10"),
-									Operator: Token{Token: '-', Literal: "-", Line: 1, Char: 28},
-								},
-								High: UnaryArithmetic{
-									Operand:  NewIntegerValueFromString("10"),
-									Operator: Token{Token: '+', Literal: "+", Line: 1, Char: 36},
-								},
-								Negation: Token{Token: NOT, Literal: "not", Line: 1, Char: 16},
-							}},
-						},
-					},
-				},
-			},
-		},
-	},
-	{
-		Input: "select (column1, column2) between (1, 2) and (3, 4)",
-		Output: []Statement{
-			SelectQuery{
-				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{
-						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
-						Fields: []QueryExpression{
-							Field{Object: Between{
-								Between: "between",
-								And:     "and",
-								LHS: RowValue{
-									BaseExpr: &BaseExpr{line: 1, char: 8},
-									Value: ValueList{
-										Values: []QueryExpression{
-											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 9}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "column1"}},
-											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 18}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 18}, Literal: "column2"}},
-										},
+							Field{Object: Logic{
+								LHS: Between{
+									Between: "between",
+									And:     "and",
+									LHS:     FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
+									Low: UnaryArithmetic{
+										Operand:  NewIntegerValueFromString("10"),
+										Operator: Token{Token: '-', Literal: "-", Line: 1, Char: 28},
 									},
-								},
-								Low: RowValue{
-									BaseExpr: &BaseExpr{line: 1, char: 35},
-									Value: ValueList{
-										Values: []QueryExpression{
-											NewIntegerValueFromString("1"),
-											NewIntegerValueFromString("2"),
-										},
+									High: UnaryArithmetic{
+										Operand:  NewIntegerValueFromString("10"),
+										Operator: Token{Token: '+', Literal: "+", Line: 1, Char: 36},
 									},
+									Negation: Token{Token: NOT, Literal: "not", Line: 1, Char: 16},
 								},
-								High: RowValue{
-									BaseExpr: &BaseExpr{line: 1, char: 46},
-									Value: ValueList{
-										Values: []QueryExpression{
-											NewIntegerValueFromString("3"),
-											NewIntegerValueFromString("4"),
-										},
-									},
+								Operator: Token{Token: OR, Literal: "or", Line: 1, Char: 40},
+								RHS: Between{
+									Between: "between",
+									And:     "and",
+									LHS:     FieldReference{BaseExpr: &BaseExpr{line: 1, char: 43}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 43}, Literal: "column2"}},
+									Low:     NewIntegerValueFromString("20"),
+									High:    NewIntegerValueFromString("30"),
 								},
 							}},
 						},
@@ -782,7 +746,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select column1 not in (1, 2, 3)",
+		Input: "select (column1, column2) not between (1, 2) and (3, 4) and (column3, column4) between (5, 6) and (7, 8)",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -790,20 +754,118 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 1},
 						Select:   "select",
 						Fields: []QueryExpression{
-							Field{Object: In{
-								In:  "in",
-								LHS: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
-								Values: RowValue{
-									BaseExpr: &BaseExpr{line: 1, char: 23},
-									Value: ValueList{
-										Values: []QueryExpression{
-											NewIntegerValueFromString("1"),
-											NewIntegerValueFromString("2"),
-											NewIntegerValueFromString("3"),
+							Field{Object: Logic{
+								LHS: Between{
+									Between: "between",
+									And:     "and",
+									LHS: RowValue{
+										BaseExpr: &BaseExpr{line: 1, char: 8},
+										Value: ValueList{
+											Values: []QueryExpression{
+												FieldReference{BaseExpr: &BaseExpr{line: 1, char: 9}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "column1"}},
+												FieldReference{BaseExpr: &BaseExpr{line: 1, char: 18}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 18}, Literal: "column2"}},
+											},
+										},
+									},
+									Low: RowValue{
+										BaseExpr: &BaseExpr{line: 1, char: 39},
+										Value: ValueList{
+											Values: []QueryExpression{
+												NewIntegerValueFromString("1"),
+												NewIntegerValueFromString("2"),
+											},
+										},
+									},
+									High: RowValue{
+										BaseExpr: &BaseExpr{line: 1, char: 50},
+										Value: ValueList{
+											Values: []QueryExpression{
+												NewIntegerValueFromString("3"),
+												NewIntegerValueFromString("4"),
+											},
+										},
+									},
+									Negation: Token{Token: NOT, Literal: "not", Line: 1, Char: 27},
+								},
+								RHS: Between{
+									Between: "between",
+									And:     "and",
+									LHS: RowValue{
+										BaseExpr: &BaseExpr{line: 1, char: 61},
+										Value: ValueList{
+											Values: []QueryExpression{
+												FieldReference{BaseExpr: &BaseExpr{line: 1, char: 62}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 62}, Literal: "column3"}},
+												FieldReference{BaseExpr: &BaseExpr{line: 1, char: 71}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 71}, Literal: "column4"}},
+											},
+										},
+									},
+									Low: RowValue{
+										BaseExpr: &BaseExpr{line: 1, char: 88},
+										Value: ValueList{
+											Values: []QueryExpression{
+												NewIntegerValueFromString("5"),
+												NewIntegerValueFromString("6"),
+											},
+										},
+									},
+									High: RowValue{
+										BaseExpr: &BaseExpr{line: 1, char: 99},
+										Value: ValueList{
+											Values: []QueryExpression{
+												NewIntegerValueFromString("7"),
+												NewIntegerValueFromString("8"),
+											},
 										},
 									},
 								},
-								Negation: Token{Token: NOT, Literal: "not", Line: 1, Char: 16},
+								Operator: Token{Token: AND, Literal: "and", Line: 1, Char: 57},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select column1 not in (1, 2, 3) and column2 in (4, 5, 6)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: Logic{
+								LHS: In{
+									In:  "in",
+									LHS: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
+									Values: RowValue{
+										BaseExpr: &BaseExpr{line: 1, char: 23},
+										Value: ValueList{
+											Values: []QueryExpression{
+												NewIntegerValueFromString("1"),
+												NewIntegerValueFromString("2"),
+												NewIntegerValueFromString("3"),
+											},
+										},
+									},
+									Negation: Token{Token: NOT, Literal: "not", Line: 1, Char: 16},
+								},
+								RHS: In{
+									In:  "in",
+									LHS: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 37}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 37}, Literal: "column2"}},
+									Values: RowValue{
+										BaseExpr: &BaseExpr{line: 1, char: 48},
+										Value: ValueList{
+											Values: []QueryExpression{
+												NewIntegerValueFromString("4"),
+												NewIntegerValueFromString("5"),
+												NewIntegerValueFromString("6"),
+											},
+										},
+									},
+								},
+								Operator: Token{Token: AND, Literal: "and", Line: 1, Char: 33},
 							}},
 						},
 					},
@@ -897,7 +959,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select column1 not like 'pattern'",
+		Input: "select column1 not like 'pattern1' and column2 like 'pattern2'",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -905,11 +967,48 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 1},
 						Select:   "select",
 						Fields: []QueryExpression{
-							Field{Object: Like{
-								Like:     "like",
-								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
-								Pattern:  NewStringValue("pattern"),
-								Negation: Token{Token: NOT, Literal: "not", Line: 1, Char: 16},
+							Field{Object: Logic{
+								LHS: Like{
+									Like:     "like",
+									LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
+									Pattern:  NewStringValue("pattern1"),
+									Negation: Token{Token: NOT, Literal: "not", Line: 1, Char: 16},
+								},
+								Operator: Token{Token: AND, Literal: "and", Line: 1, Char: 36},
+								RHS: Like{
+									Like:    "like",
+									LHS:     FieldReference{BaseExpr: &BaseExpr{line: 1, char: 40}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 40}, Literal: "column2"}},
+									Pattern: NewStringValue("pattern2"),
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select column1 like 'pattern1' or column2 not like 'pattern2'",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: Logic{
+								LHS: Like{
+									Like:    "like",
+									LHS:     FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
+									Pattern: NewStringValue("pattern1"),
+								},
+								Operator: Token{Token: OR, Literal: "or", Line: 1, Char: 32},
+								RHS: Like{
+									Like:     "like",
+									LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 35}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 35}, Literal: "column2"}},
+									Pattern:  NewStringValue("pattern2"),
+									Negation: Token{Token: NOT, Literal: "not", Line: 1, Char: 43},
+								},
 							}},
 						},
 					},
