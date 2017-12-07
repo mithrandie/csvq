@@ -1277,7 +1277,11 @@ comparison
     {
         $$ = Is{Is: $2.Literal, LHS: $1, RHS: $4, Negation: $3}
     }
-    | value negation BETWEEN value AND value
+    | value BETWEEN value AND value
+    {
+        $$ = Between{Between: $2.Literal, And: $4.Literal, LHS: $1, Low: $3, High: $5}
+    }
+    | value NOT BETWEEN value AND value
     {
         $$ = Between{Between: $3.Literal, And: $5.Literal, LHS: $1, Low: $4, High: $6, Negation: $2}
     }
@@ -1285,7 +1289,11 @@ comparison
     {
         $$ = Between{Between: $3.Literal, And: $5.Literal, LHS: $1, Low: $4, High: $6, Negation: $2}
     }
-    | value negation IN row_value
+    | value IN row_value
+    {
+        $$ = In{In: $2.Literal, LHS: $1, Values: $3}
+    }
+    | value NOT IN row_value
     {
         $$ = In{In: $3.Literal, LHS: $1, Values: $4, Negation: $2}
     }
@@ -1297,7 +1305,11 @@ comparison
     {
         $$ = In{In: $3.Literal, LHS: $1, Values: $4, Negation: $2}
     }
-    | value negation LIKE value
+    | value LIKE value
+    {
+        $$ = Like{Like: $2.Literal, LHS: $1, Pattern: $3}
+    }
+    | value NOT LIKE value
     {
         $$ = Like{Like: $3.Literal, LHS: $1, Pattern: $4, Negation: $2}
     }
