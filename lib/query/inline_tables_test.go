@@ -115,7 +115,7 @@ func TestInlineTableNodes_Set(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(list, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, list, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, list, v.Result)
 		}
 	}
 }
@@ -201,7 +201,7 @@ func TestInlineTableNodes_Get(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(view, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, view, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, view, v.Result)
 		}
 	}
 }
@@ -413,7 +413,7 @@ func TestInlineTableNodes_Load(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(list, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, list, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, list, v.Result)
 		}
 	}
 }
@@ -705,7 +705,7 @@ func TestInlineTableMap_Set(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(it, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, it, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, it, v.Result)
 		}
 	}
 }
@@ -786,7 +786,7 @@ func TestInlineTableMap_Get(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(ret, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, ret, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, ret, v.Result)
 		}
 	}
 }

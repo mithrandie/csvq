@@ -1254,7 +1254,7 @@ func TestAnalyze(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(v.View, v.Result) {
-			t.Errorf("%s: result = %q, want %q", v.Name, v.View, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, v.View, v.Result)
 		}
 	}
 }

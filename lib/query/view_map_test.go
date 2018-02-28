@@ -150,7 +150,7 @@ func TestTemporaryViewScopes_Get(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(view, v.Result) {
-			t.Errorf("%s: view = %s, want %s", v.Name, view, v.Result)
+			t.Errorf("%s: view = %v, want %v", v.Name, view, v.Result)
 		}
 	}
 }
@@ -246,7 +246,7 @@ func TestTemporaryViewScopes_GetWithInternalId(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(view, v.Result) {
-			t.Errorf("%s: view = %s, want %s", v.Name, view, v.Result)
+			t.Errorf("%s: view = %v, want %v", v.Name, view, v.Result)
 		}
 	}
 }
@@ -345,7 +345,7 @@ func TestTemporaryViewScopes_Set(t *testing.T) {
 	for _, v := range temporaryViewScopesSetTests {
 		list.Set(v.SetView)
 		if !reflect.DeepEqual(list, v.Result) {
-			t.Errorf("%s: map = %s, want %s", v.Name, list, v.Result)
+			t.Errorf("%s: map = %v, want %v", v.Name, list, v.Result)
 		}
 	}
 }
@@ -463,7 +463,7 @@ func TestTemporaryViewScopes_Replace(t *testing.T) {
 	for _, v := range temporaryViewScopesReplaceTests {
 		list.Replace(v.SetView)
 		if !reflect.DeepEqual(list, v.Result) {
-			t.Errorf("%s: map = %s, want %s", v.Name, list, v.Result)
+			t.Errorf("%s: map = %v, want %v", v.Name, list, v.Result)
 		}
 	}
 }
@@ -565,7 +565,7 @@ func TestTemporaryViewScopesDispose(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(list, v.Result) {
-			t.Errorf("%s: view = %s, want %s", v.Name, list, v.Result)
+			t.Errorf("%s: view = %v, want %v", v.Name, list, v.Result)
 		}
 	}
 }
@@ -641,7 +641,7 @@ func TestTemporaryViewScopes_Store(t *testing.T) {
 	log, _ := ioutil.ReadAll(r)
 
 	if !reflect.DeepEqual(list, expect) {
-		t.Errorf("Store: view = %s, want %s", list, expect)
+		t.Errorf("Store: view = %v, want %v", list, expect)
 	}
 
 	if string(log) != expectOut {
@@ -762,7 +762,7 @@ func TestTemporaryViewScopes_Restore(t *testing.T) {
 	log, _ := ioutil.ReadAll(r)
 
 	if !reflect.DeepEqual(list, expect) {
-		t.Errorf("Restore: view = %s, want %s", list, expect)
+		t.Errorf("Restore: view = %v, want %v", list, expect)
 	}
 
 	if string(log) != expectOut {
@@ -908,7 +908,7 @@ func TestViewMap_Get(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(view, v.Result) {
-			t.Errorf("%s: view = %s, want %s", v.Name, view, v.Result)
+			t.Errorf("%s: view = %v, want %v", v.Name, view, v.Result)
 		}
 	}
 }
@@ -983,7 +983,7 @@ func TestViewMap_GetWithInternalId(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(view, v.Result) {
-			t.Errorf("%s: view = %s, want %s", v.Name, view, v.Result)
+			t.Errorf("%s: view = %v, want %v", v.Name, view, v.Result)
 		}
 	}
 }
@@ -1040,7 +1040,7 @@ func TestViewMap_Set(t *testing.T) {
 	for _, v := range viewMapSetTests {
 		viewMap.Set(v.SetView)
 		if !reflect.DeepEqual(viewMap, v.Result) {
-			t.Errorf("%s: map = %s, want %s", v.Name, viewMap, v.Result)
+			t.Errorf("%s: map = %v, want %v", v.Name, viewMap, v.Result)
 		}
 	}
 }
@@ -1149,7 +1149,7 @@ func TestViewMap_Replace(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(viewMap, v.Result) {
-			t.Errorf("%s: map = %s, want %s", v.Name, viewMap, v.Result)
+			t.Errorf("%s: map = %v, want %v", v.Name, viewMap, v.Result)
 		}
 	}
 }
@@ -1249,7 +1249,7 @@ func TestViewMap_DisposeTemporaryTable(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(viewMap, v.Result) {
-			t.Errorf("%s: map = %s, want %s", v.Name, viewMap, v.Result)
+			t.Errorf("%s: map = %v, want %v", v.Name, viewMap, v.Result)
 		}
 	}
 }
@@ -1297,7 +1297,7 @@ func TestViewMap_Clear(t *testing.T) {
 
 	viewMap.Clean()
 	if !reflect.DeepEqual(viewMap, expect) {
-		t.Errorf("result = %s, want %s", viewMap, expect)
+		t.Errorf("result = %v, want %v", viewMap, expect)
 	}
 }
 

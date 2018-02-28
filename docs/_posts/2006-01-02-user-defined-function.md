@@ -152,7 +152,7 @@ _windowing_clause_
 Example:
 
 ```sql
-DECLARE multiply AGGREGATE (list, @default DEFAULT 0)
+DECLARE product AGGREGATE (list, @default DEFAULT 0)
 AS
 BEGIN
     VAR @value, @fetch;
@@ -180,11 +180,11 @@ BEGIN
     RETURN @value;
 END;
 
-SELECT multiply(i) FROM numbers;
+SELECT product(i) FROM numbers;
 
-SELECT multiply(i, NULL) FROM numbers;
+SELECT product(i, NULL) FROM numbers;
 
-SELECT i, multiply(i) OVER (order by i) FROM numbers;
+SELECT i, product(i) OVER (order by i) FROM numbers;
 ```
 
 ## DISPOSE FUNCTION Statement

@@ -92,7 +92,7 @@ func TestCursorScopes_Declare(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(list, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, list, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, list, v.Result)
 		}
 	}
 }
@@ -151,7 +151,7 @@ func TestCursorScopes_AddPseudoCursor(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(list, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, list, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, list, v.Result)
 		}
 	}
 }
@@ -231,7 +231,7 @@ func TestCursorScopes_Dispose(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(list, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, list, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, list, v.Result)
 		}
 	}
 }
@@ -351,7 +351,7 @@ func TestCursorScopes_Open(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(list, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, list, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, list, v.Result)
 		}
 	}
 }
@@ -442,7 +442,7 @@ func TestCursorScopes_Close(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(list, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, list, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, list, v.Result)
 		}
 	}
 }
@@ -695,7 +695,7 @@ func TestCursorScopes_Count(t *testing.T) {
 			continue
 		}
 		if result != v.Result {
-			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
 		}
 	}
 }
@@ -777,7 +777,7 @@ func TestCursorMap_Declare(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(cursors, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, cursors, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, cursors, v.Result)
 		}
 	}
 }
@@ -835,7 +835,7 @@ func TestCursorMap_AddPseudoCursor(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(cursors, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, cursors, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, cursors, v.Result)
 		}
 	}
 }
@@ -904,7 +904,7 @@ func TestCursorMap_Dispose(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(cursors, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, cursors, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, cursors, v.Result)
 		}
 	}
 }
@@ -1022,7 +1022,7 @@ func TestCursorMap_Open(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(cursors, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, cursors, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, cursors, v.Result)
 		}
 	}
 }
@@ -1099,7 +1099,7 @@ func TestCursorMap_Close(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(cursors, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, cursors, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, cursors, v.Result)
 		}
 	}
 }
@@ -1446,7 +1446,7 @@ func TestCursorMap_Count(t *testing.T) {
 			continue
 		}
 		if result != v.Result {
-			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
 		}
 	}
 }

@@ -257,13 +257,13 @@ func TestParseFloat64(t *testing.T) {
 	f = 1.000
 	p = ParseFloat64(f)
 	if _, ok := p.(Integer); !ok {
-		t.Errorf("primary type = %T, want Integer for %d", p, f)
+		t.Errorf("primary type = %T, want Integer for %f", p, f)
 	}
 
 	f = 1.234
 	p = ParseFloat64(f)
 	if _, ok := p.(Float); !ok {
-		t.Errorf("primary type = %T, want Float for %d", p, f)
+		t.Errorf("primary type = %T, want Float for %f", p, f)
 	}
 }
 

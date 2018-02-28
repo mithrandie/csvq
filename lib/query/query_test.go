@@ -388,7 +388,7 @@ func TestDeclareView(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(filter.TempViews[0], v.Result) {
-			t.Errorf("%s: view cache = %q, want %q", v.Name, ViewCache, v.Result)
+			t.Errorf("%s: view cache = %v, want %v", v.Name, ViewCache, v.Result)
 		}
 	}
 }
@@ -1117,7 +1117,7 @@ func TestSelect(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(result, v.Result) {
-			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
 		}
 	}
 }
@@ -1604,17 +1604,17 @@ func TestInsert(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(result, v.Result) {
-			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
 		}
 
 		if v.ViewCache != nil {
 			if !reflect.DeepEqual(ViewCache, v.ViewCache) {
-				t.Errorf("%s: view cache = %q, want %q", v.Name, ViewCache, v.ViewCache)
+				t.Errorf("%s: view cache = %v, want %v", v.Name, ViewCache, v.ViewCache)
 			}
 		}
 		if v.TempViewList != nil {
 			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViews, v.TempViewList)
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.TempViews, v.TempViewList)
 			}
 		}
 	}
@@ -2117,17 +2117,17 @@ func TestUpdate(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(result, v.Result) {
-			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
 		}
 
 		if v.ViewCache != nil {
 			if !reflect.DeepEqual(ViewCache, v.ViewCache) {
-				t.Errorf("%s: view cache = %q, want %q", v.Name, ViewCache, v.ViewCache)
+				t.Errorf("%s: view cache = %v, want %v", v.Name, ViewCache, v.ViewCache)
 			}
 		}
 		if v.TempViewList != nil {
 			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViews, v.TempViewList)
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.TempViews, v.TempViewList)
 			}
 		}
 	}
@@ -2507,17 +2507,17 @@ func TestDelete(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(result, v.Result) {
-			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
 		}
 
 		if v.ViewCache != nil {
 			if !reflect.DeepEqual(ViewCache, v.ViewCache) {
-				t.Errorf("%s: view cache = %q, want %q", v.Name, ViewCache, v.ViewCache)
+				t.Errorf("%s: view cache = %v, want %v", v.Name, ViewCache, v.ViewCache)
 			}
 		}
 		if v.TempViewList != nil {
 			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViews, v.TempViewList)
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.TempViews, v.TempViewList)
 			}
 		}
 	}
@@ -2726,12 +2726,12 @@ func TestCreateTable(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(result, v.Result) {
-			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
 		}
 
 		if v.ViewCache != nil {
 			if !reflect.DeepEqual(ViewCache, v.ViewCache) {
-				t.Errorf("%s: view cache = %q, want %q", v.Name, ViewCache, v.ViewCache)
+				t.Errorf("%s: view cache = %v, want %v", v.Name, ViewCache, v.ViewCache)
 			}
 		}
 	}
@@ -3169,17 +3169,17 @@ func TestAddColumns(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(result, v.Result) {
-			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
 		}
 
 		if v.ViewCache != nil {
 			if !reflect.DeepEqual(ViewCache, v.ViewCache) {
-				t.Errorf("%s: view cache = %q, want %q", v.Name, ViewCache, v.ViewCache)
+				t.Errorf("%s: view cache = %v, want %v", v.Name, ViewCache, v.ViewCache)
 			}
 		}
 		if v.TempViewList != nil {
 			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViews, v.TempViewList)
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.TempViews, v.TempViewList)
 			}
 		}
 	}
@@ -3378,17 +3378,17 @@ func TestDropColumns(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(result, v.Result) {
-			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
 		}
 
 		if v.ViewCache != nil {
 			if !reflect.DeepEqual(ViewCache, v.ViewCache) {
-				t.Errorf("%s: view cache = %q, want %q", v.Name, ViewCache, v.ViewCache)
+				t.Errorf("%s: view cache = %v, want %v", v.Name, ViewCache, v.ViewCache)
 			}
 		}
 		if v.TempViewList != nil {
 			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViews, v.TempViewList)
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.TempViews, v.TempViewList)
 			}
 		}
 	}
@@ -3602,17 +3602,17 @@ func TestRenameColumn(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(result, v.Result) {
-			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
 		}
 
 		if v.ViewCache != nil {
 			if !reflect.DeepEqual(ViewCache, v.ViewCache) {
-				t.Errorf("%s: view cache = %q, want %q", v.Name, ViewCache, v.ViewCache)
+				t.Errorf("%s: view cache = %v, want %v", v.Name, ViewCache, v.ViewCache)
 			}
 		}
 		if v.TempViewList != nil {
 			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %q, want %q", v.Name, filter.TempViews, v.TempViewList)
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.TempViews, v.TempViewList)
 			}
 		}
 	}
