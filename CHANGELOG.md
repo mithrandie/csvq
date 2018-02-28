@@ -1,3 +1,7 @@
+## Release v1.1.0 (2018-02-28)
+
+- Support to Go 1.10
+
 ## Release v1.0.2 (2017-12-08)
 
 - Fix some bugs of operetor precedence.
