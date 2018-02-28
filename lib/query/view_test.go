@@ -1218,16 +1218,16 @@ func TestView_Load(t *testing.T) {
 			t.Errorf("%s: alias list = %q, want %q", v.Name, view.Filter.Aliases, v.Result.Filter.Aliases)
 		}
 		for i, tviews := range v.Result.Filter.TempViews {
-			resultKeys := []string{}
+			resultKeys := make([]string, len(tviews))
 			for key := range tviews {
 				resultKeys = append(resultKeys, key)
 			}
-			viewKeys := []string{}
+			viewKeys := make([]string, len(view.Filter.TempViews[i]))
 			for key := range view.Filter.TempViews[i] {
 				viewKeys = append(viewKeys, key)
 			}
 			if !reflect.DeepEqual(resultKeys, viewKeys) {
-				t.Errorf("%s: temp view list = %q, want %q", v.Name, view.Filter.TempViews, v.Result.Filter.TempViews)
+				t.Errorf("%s: temp view list = %v, want %v", v.Name, view.Filter.TempViews, v.Result.Filter.TempViews)
 			}
 		}
 
@@ -1235,7 +1235,7 @@ func TestView_Load(t *testing.T) {
 		v.Result.Filter = NewEmptyFilter()
 
 		if !reflect.DeepEqual(view, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, view, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, view, v.Result)
 		}
 	}
 }
@@ -1265,7 +1265,7 @@ func TestNewViewFromGroupedRecord(t *testing.T) {
 
 	result := NewViewFromGroupedRecord(fr)
 	if !reflect.DeepEqual(result, expect) {
-		t.Errorf("result = %q, want %q", result, expect)
+		t.Errorf("result = %v, want %v", result, expect)
 	}
 }
 
@@ -1704,7 +1704,7 @@ func TestView_GroupBy(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(v.View, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, v.View, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, v.View, v.Result)
 		}
 	}
 }
@@ -2703,13 +2703,13 @@ func TestView_Select(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(v.View.Header, v.Result.Header) {
-			t.Errorf("%s: header = %s, want %s", v.Name, v.View.Header, v.Result.Header)
+			t.Errorf("%s: header = %v, want %v", v.Name, v.View.Header, v.Result.Header)
 		}
 		if !reflect.DeepEqual(v.View.RecordSet, v.Result.RecordSet) {
 			t.Errorf("%s: records = %s, want %s", v.Name, v.View.RecordSet, v.Result.RecordSet)
 		}
 		if !reflect.DeepEqual(v.View.selectFields, v.Result.selectFields) {
-			t.Errorf("%s: select indices = %s, want %s", v.Name, v.View.selectFields, v.Result.selectFields)
+			t.Errorf("%s: select indices = %v, want %v", v.Name, v.View.selectFields, v.Result.selectFields)
 		}
 	}
 }
@@ -3033,7 +3033,7 @@ func TestView_OrderBy(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(v.View.Header, v.Result.Header) {
-			t.Errorf("%s: header = %s, want %s", v.Name, v.View.Header, v.Result.Header)
+			t.Errorf("%s: header = %v, want %v", v.Name, v.View.Header, v.Result.Header)
 		}
 		if !reflect.DeepEqual(v.View.RecordSet, v.Result.RecordSet) {
 			t.Errorf("%s: records = %s, want %s", v.Name, v.View.RecordSet, v.Result.RecordSet)
@@ -3813,7 +3813,7 @@ func TestView_Limit(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(v.View, v.Result) {
-			t.Errorf("%s: view = %s, want %s", v.Name, v.View, v.Result)
+			t.Errorf("%s: view = %v, want %v", v.Name, v.View, v.Result)
 		}
 	}
 }
@@ -4031,7 +4031,7 @@ func TestView_Offset(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(v.View, v.Result) {
-			t.Errorf("%s: view = %s, want %s", v.Name, v.View, v.Result)
+			t.Errorf("%s: view = %v, want %v", v.Name, v.View, v.Result)
 		}
 	}
 }
@@ -4174,7 +4174,7 @@ func TestView_InsertValues(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(view, v.Result) {
-			t.Errorf("%s: result = %q, want %q", v.Name, view, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, view, v.Result)
 		}
 	}
 }
@@ -4289,7 +4289,7 @@ func TestView_InsertFromQuery(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(view, v.Result) {
-			t.Errorf("%s: result = %q, want %q", v.Name, view, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, view, v.Result)
 		}
 	}
 }
@@ -4328,7 +4328,7 @@ func TestView_Fix(t *testing.T) {
 
 	view.Fix()
 	if !reflect.DeepEqual(view, expect) {
-		t.Errorf("fix: view = %s, want %s", view, expect)
+		t.Errorf("fix: view = %v, want %v", view, expect)
 	}
 }
 
@@ -4398,7 +4398,7 @@ func TestView_Union(t *testing.T) {
 
 	view.Union(calcView, false)
 	if !reflect.DeepEqual(view, expect) {
-		t.Errorf("union: view = %s, want %s", view, expect)
+		t.Errorf("union: view = %v, want %v", view, expect)
 	}
 
 	view = &View{
@@ -4461,7 +4461,7 @@ func TestView_Union(t *testing.T) {
 
 	view.Union(calcView, true)
 	if !reflect.DeepEqual(view, expect) {
-		t.Errorf("union all: view = %s, want %s", view, expect)
+		t.Errorf("union all: view = %v, want %v", view, expect)
 	}
 }
 
@@ -4523,7 +4523,7 @@ func TestView_Except(t *testing.T) {
 
 	view.Except(calcView, false)
 	if !reflect.DeepEqual(view, expect) {
-		t.Errorf("except: view = %s, want %s", view, expect)
+		t.Errorf("except: view = %v, want %v", view, expect)
 	}
 
 	view = &View{
@@ -4570,7 +4570,7 @@ func TestView_Except(t *testing.T) {
 
 	view.Except(calcView, true)
 	if !reflect.DeepEqual(view, expect) {
-		t.Errorf("except all: view = %s, want %s", view, expect)
+		t.Errorf("except all: view = %v, want %v", view, expect)
 	}
 }
 
@@ -4632,7 +4632,7 @@ func TestView_Intersect(t *testing.T) {
 
 	view.Intersect(calcView, false)
 	if !reflect.DeepEqual(view, expect) {
-		t.Errorf("intersect: view = %s, want %s", view, expect)
+		t.Errorf("intersect: view = %v, want %v", view, expect)
 	}
 
 	view = &View{
@@ -4679,7 +4679,7 @@ func TestView_Intersect(t *testing.T) {
 
 	view.Intersect(calcView, true)
 	if !reflect.DeepEqual(view, expect) {
-		t.Errorf("intersect all: view = %s, want %s", view, expect)
+		t.Errorf("intersect all: view = %v, want %v", view, expect)
 	}
 }
 
@@ -4727,7 +4727,7 @@ func TestView_FieldIndices(t *testing.T) {
 
 	indices, _ := view.FieldIndices(fields)
 	if !reflect.DeepEqual(indices, expect) {
-		t.Errorf("field indices = %s, want %s", indices, expect)
+		t.Errorf("field indices = %v, want %v", indices, expect)
 	}
 
 	fields = []parser.QueryExpression{

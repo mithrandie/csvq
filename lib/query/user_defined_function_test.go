@@ -91,7 +91,7 @@ func TestUserDefinedFunctionScopes_Declare(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(list, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, list, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, list, v.Result)
 		}
 	}
 }
@@ -191,7 +191,7 @@ func TestUserDefinedFunctionScopes_DeclareAggregate(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(list, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, list, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, list, v.Result)
 		}
 	}
 }
@@ -272,7 +272,7 @@ func TestUserDefinedFunctionScopes_Get(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(fn, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, fn, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, fn, v.Result)
 		}
 	}
 }
@@ -350,7 +350,7 @@ func TestUserDefinedFunctionScopes_Dispose(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(list, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, list, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, list, v.Result)
 		}
 	}
 }
@@ -521,7 +521,7 @@ func TestUserDefinedFunctionMap_Declare(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(funcs, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, funcs, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, funcs, v.Result)
 		}
 	}
 }
@@ -616,7 +616,7 @@ func TestUserDefinedFunctionMap_DeclareAggregate(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(funcs, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, funcs, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, funcs, v.Result)
 		}
 	}
 }
@@ -751,7 +751,7 @@ func TestUserDefinedFunctionMap_Get(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(result, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
 		}
 	}
 }

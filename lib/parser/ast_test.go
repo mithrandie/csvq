@@ -45,7 +45,7 @@ func TestBaseExpr_SourceFile(t *testing.T) {
 
 	expect := "source.sql"
 	if e.SourceFile() != expect {
-		t.Errorf("line = %d, want %d for %#v", e.SourceFile(), expect, e)
+		t.Errorf("line = %q, want %q for %#v", e.SourceFile(), expect, e)
 	}
 }
 

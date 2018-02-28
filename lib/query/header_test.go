@@ -372,7 +372,7 @@ func TestNewHeader(t *testing.T) {
 		},
 	}
 	if !reflect.DeepEqual(NewHeaderWithId(ref, words), expect) {
-		t.Errorf("header = %s, want %s", NewHeaderWithId(ref, words), expect)
+		t.Errorf("header = %v, want %v", NewHeaderWithId(ref, words), expect)
 	}
 }
 
@@ -394,7 +394,7 @@ func TestNewHeaderWithoutId(t *testing.T) {
 		},
 	}
 	if !reflect.DeepEqual(NewHeader(ref, words), expect) {
-		t.Errorf("header = %s, want %s", NewHeader(ref, words), expect)
+		t.Errorf("header = %v, want %v", NewHeader(ref, words), expect)
 	}
 }
 
@@ -548,7 +548,7 @@ func TestHeader_Update(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(v.Header, v.Result) {
-			t.Errorf("%s: header = %s, want %s", v.Name, v.Header, v.Result)
+			t.Errorf("%s: header = %v, want %v", v.Name, v.Header, v.Result)
 		}
 	}
 }

@@ -173,7 +173,7 @@ func TestDatetime_Value(t *testing.T) {
 	expect := time.Date(2012, time.January, 1, 12, 34, 56, 0, time.Local)
 
 	if d.Raw() != expect {
-		t.Errorf("value = %q, want %t for %#v", d.Raw(), expect, d)
+		t.Errorf("value = %v, want %v for %#v", d.Raw(), expect, d)
 	}
 
 	d = NewDatetimeFromString("2012-01-01T12:34:56-08:00")
@@ -181,7 +181,7 @@ func TestDatetime_Value(t *testing.T) {
 	expect = time.Date(2012, time.January, 1, 12, 34, 56, 0, l)
 
 	if d.Raw().Sub(expect).Seconds() != 0 {
-		t.Errorf("value = %q, want %t for %#v", d.Raw(), expect, d)
+		t.Errorf("value = %v, want %v for %#v", d.Raw(), expect, d)
 	}
 }
 

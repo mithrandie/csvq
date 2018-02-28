@@ -58,6 +58,17 @@ const (
 	JSON
 )
 
+var formatLiterals = map[Format]string{
+	TEXT: "TEXT",
+	CSV:  "CSV",
+	TSV:  "TSV",
+	JSON: "JSON",
+}
+
+func (f Format) String() string {
+	return formatLiterals[f]
+}
+
 const (
 	CSV_EXT = ".csv"
 	TSV_EXT = ".tsv"

@@ -709,7 +709,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 			}
 
 			if !reflect.DeepEqual(Results, v.Result) {
-				t.Errorf("results = %q, want %q for %q", Results, v.Result, v.Input)
+				t.Errorf("results = %v, want %v for %q", Results, v.Result, v.Input)
 			}
 		}
 		if 0 < len(v.Logs) {

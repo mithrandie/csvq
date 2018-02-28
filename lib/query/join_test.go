@@ -302,7 +302,7 @@ func TestCrossJoin(t *testing.T) {
 
 	CrossJoin(view, joinView)
 	if !reflect.DeepEqual(view, expect) {
-		t.Errorf("Cross Join: result = %q, want %q", view, expect)
+		t.Errorf("Cross Join: result = %v, want %v", view, expect)
 	}
 }
 
@@ -591,7 +591,7 @@ func TestInnerJoin(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(v.View, v.Result) {
-			t.Errorf("%s: result = %q, want %q", v.Name, v.View, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, v.View, v.Result)
 		}
 	}
 }
@@ -996,7 +996,7 @@ func TestOuterJoin(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(v.View, v.Result) {
-			t.Errorf("%s: result = %q, want %q", v.Name, v.View, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, v.View, v.Result)
 			t.Log(v.View.RecordSet)
 			t.Log(v.Result.RecordSet)
 		}
