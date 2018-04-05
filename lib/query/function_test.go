@@ -1578,6 +1578,93 @@ func TestInstr(t *testing.T) {
 	testFunction(t, Instr, instrTests)
 }
 
+var listElemTests = []functionTest{
+	{
+		Name: "ListElem",
+		Function: parser.Function{
+			Name: "list_elem",
+		},
+		Args: []value.Primary{
+			value.NewString("abc def ghi"),
+			value.NewString(" "),
+			value.NewInteger(1),
+		},
+		Result: value.NewString("def"),
+	},
+	{
+		Name: "ListElem String is Null",
+		Function: parser.Function{
+			Name: "list_elem",
+		},
+		Args: []value.Primary{
+			value.NewNull(),
+			value.NewString(" "),
+			value.NewInteger(1),
+		},
+		Result: value.NewNull(),
+	},
+	{
+		Name: "ListElem Separator is Null",
+		Function: parser.Function{
+			Name: "list_elem",
+		},
+		Args: []value.Primary{
+			value.NewString("abc def ghi"),
+			value.NewNull(),
+			value.NewInteger(1),
+		},
+		Result: value.NewNull(),
+	},
+	{
+		Name: "ListElem Index is Null",
+		Function: parser.Function{
+			Name: "list_elem",
+		},
+		Args: []value.Primary{
+			value.NewString("abc def ghi"),
+			value.NewString(" "),
+			value.NewNull(),
+		},
+		Result: value.NewNull(),
+	},
+	{
+		Name: "ListElem Index is negative value",
+		Function: parser.Function{
+			Name: "list_elem",
+		},
+		Args: []value.Primary{
+			value.NewString("abc def ghi"),
+			value.NewString(" "),
+			value.NewInteger(-1),
+		},
+		Result: value.NewNull(),
+	},
+	{
+		Name: "ListElem Index does not exist",
+		Function: parser.Function{
+			Name: "list_elem",
+		},
+		Args: []value.Primary{
+			value.NewString("abc def ghi"),
+			value.NewString(" "),
+			value.NewInteger(100),
+		},
+		Result: value.NewNull(),
+	},
+	{
+		Name: "ListElem Arguments Error",
+		Function: parser.Function{
+			Name: "list_elem",
+		},
+		Args:  []value.Primary{},
+		Error: "[L:- C:-] function list_elem takes exactly 3 arguments",
+	},
+}
+
+func TestListElem(t *testing.T) {
+	testFunction(t, ListElem, listElemTests)
+}
+
 var replaceTests = []functionTest{
 	{
 		Name: "Replace",

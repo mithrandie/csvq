@@ -73,6 +73,7 @@ var Functions = map[string]func(parser.Function, []value.Primary) (value.Primary
 	"RPAD":             Rpad,
 	"SUBSTR":           Substr,
 	"INSTR":            Instr,
+	"LIST_ELEM":        ListElem,
 	"REPLACE":          Replace,
 	"FORMAT":           Format,
 	"MD5":              Md5,
@@ -775,6 +776,38 @@ func Instr(fn parser.Function, args []value.Primary) (value.Primary, error) {
 		return value.NewNull(), nil
 	}
 	return value.NewInteger(int64(index)), nil
+}
+
+func ListElem(fn parser.Function, args []value.Primary) (value.Primary, error) {
+	if len(args) < 3 || 3 < len(args) {
+		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{3})
+	}
+
+	s := value.ToString(args[0])
+	if value.IsNull(s) {
+		return value.NewNull(), nil
+	}
+
+	sep := value.ToString(args[1])
+	if value.IsNull(sep) {
+		return value.NewNull(), nil
+	}
+
+	i := value.ToInteger(args[2])
+	if value.IsNull(i) {
+		return value.NewNull(), nil
+	}
+	index := int(i.(value.Integer).Raw())
+	if index < 0 {
+		return value.NewNull(), nil
+	}
+
+	list := strings.Split(s.(value.String).Raw(), sep.(value.String).Raw())
+
+	if len(list) <= index {
+		return value.NewNull(), nil
+	}
+	return value.NewString(list[index]), nil
 }
 
 func Replace(fn parser.Function, args []value.Primary) (value.Primary, error) {
