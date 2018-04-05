@@ -22,6 +22,7 @@ category: reference
 | [LPAD](#lpad) | Return the string left-side padded |
 | [RPAD](#rpad) | Return the string right-side padded |
 | [SUBSTR](#substr) | Return a substring of the string |
+| [INSTR](#instr) | Return the index of the first occurrence of the substring |
 | [REPLACE](#replace) | Return the string with substrings replaced another strings |
 | [FORMAT](#format) | Return the formatted string |
 
@@ -319,6 +320,25 @@ _return_
 
 Return a _len_ characters substring of the string _str_ from at _position_.
 if _len_ is less than the length from _position_ to the end, return a substring from _position_ to the end. 
+
+### INSTR
+{: #instr}
+
+```
+INSTR(str, substr)
+```
+
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_substr_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Return the index of the first occurrence of _substr_ in _str_,
+or null if _substr_ is not present in _str_, returns null.
 
 ### REPLACE
 {: #replace}

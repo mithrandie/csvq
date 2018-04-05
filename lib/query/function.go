@@ -72,6 +72,7 @@ var Functions = map[string]func(parser.Function, []value.Primary) (value.Primary
 	"LPAD":             Lpad,
 	"RPAD":             Rpad,
 	"SUBSTR":           Substr,
+	"INSTR":            Instr,
 	"REPLACE":          Replace,
 	"FORMAT":           Format,
 	"MD5":              Md5,
@@ -751,6 +752,29 @@ func Substr(fn parser.Function, args []value.Primary) (value.Primary, error) {
 	}
 
 	return value.NewString(string(runes[start:end])), nil
+}
+
+func Instr(fn parser.Function, args []value.Primary) (value.Primary, error) {
+	if len(args) < 2 || 2 < len(args) {
+		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2})
+	}
+
+	s := value.ToString(args[0])
+	if value.IsNull(s) {
+		return value.NewNull(), nil
+	}
+
+	substr := value.ToString(args[1])
+	if value.IsNull(substr) {
+		return value.NewNull(), nil
+	}
+
+	index := strings.Index(s.(value.String).Raw(), substr.(value.String).Raw())
+
+	if index < 0 {
+		return value.NewNull(), nil
+	}
+	return value.NewInteger(int64(index)), nil
 }
 
 func Replace(fn parser.Function, args []value.Primary) (value.Primary, error) {

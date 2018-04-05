@@ -1519,6 +1519,65 @@ func TestSubstr(t *testing.T) {
 	testFunction(t, Substr, substrTests)
 }
 
+var instrTests = []functionTest{
+	{
+		Name: "Instr",
+		Function: parser.Function{
+			Name: "instr",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefghijklmn"),
+			value.NewString("def"),
+		},
+		Result: value.NewInteger(3),
+	},
+	{
+		Name: "Instr String is Null",
+		Function: parser.Function{
+			Name: "instr",
+		},
+		Args: []value.Primary{
+			value.NewNull(),
+			value.NewString("def"),
+		},
+		Result: value.NewNull(),
+	},
+	{
+		Name: "Instr Substring is Null",
+		Function: parser.Function{
+			Name: "instr",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefghijklmn"),
+			value.NewNull(),
+		},
+		Result: value.NewNull(),
+	},
+	{
+		Name: "Instr Substring does not exist",
+		Function: parser.Function{
+			Name: "instr",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefghijklmn"),
+			value.NewString("zzz"),
+		},
+		Result: value.NewNull(),
+	},
+	{
+		Name: "Instr Arguments Error",
+		Function: parser.Function{
+			Name: "instr",
+		},
+		Args:  []value.Primary{},
+		Error: "[L:- C:-] function instr takes exactly 2 arguments",
+	},
+}
+
+func TestInstr(t *testing.T) {
+	testFunction(t, Instr, instrTests)
+}
+
 var replaceTests = []functionTest{
 	{
 		Name: "Replace",
