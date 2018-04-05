@@ -1,3 +1,9 @@
+## Release v1.1.1 (2018-04-05)
+
+- Implement string functions.
+  - INSTR
+  - LIST_ELEM
+
 ## Release v1.1.0 (2018-02-28)
 
 - Support to Go 1.10
