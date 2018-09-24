@@ -257,10 +257,10 @@ func TestCrossJoin(t *testing.T) {
 	}
 	expect := &View{
 		Header: []HeaderField{
-			{View: "table1", Column: INTERNAL_ID_COLUMN},
+			{View: "table1", Column: InternalIdColumn},
 			{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
 			{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
-			{View: "table2", Column: INTERNAL_ID_COLUMN},
+			{View: "table2", Column: InternalIdColumn},
 			{View: "table2", Column: "column3", Number: 1, IsFromTable: true},
 			{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
 		},
@@ -355,10 +355,10 @@ var innerJoinTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
-				{View: "table2", Column: INTERNAL_ID_COLUMN},
+				{View: "table2", Column: InternalIdColumn},
 				{View: "table2", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column3", Number: 2, IsFromTable: true},
 			},
@@ -422,10 +422,10 @@ var innerJoinTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
-				{View: "table2", Column: INTERNAL_ID_COLUMN},
+				{View: "table2", Column: InternalIdColumn},
 				{View: "table2", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column3", Number: 2, IsFromTable: true},
 			},
@@ -480,10 +480,10 @@ var innerJoinTests = []struct {
 		Condition: nil,
 		Result: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
-				{View: "table2", Column: INTERNAL_ID_COLUMN},
+				{View: "table2", Column: InternalIdColumn},
 				{View: "table2", Column: "column3", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
 			},
@@ -650,10 +650,10 @@ var outerJoinTests = []struct {
 		Direction: parser.LEFT,
 		Result: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
-				{View: "table2", Column: INTERNAL_ID_COLUMN},
+				{View: "table2", Column: InternalIdColumn},
 				{View: "table2", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column3", Number: 2, IsFromTable: true},
 			},
@@ -729,10 +729,10 @@ var outerJoinTests = []struct {
 		Direction: parser.RIGHT,
 		Result: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
-				{View: "table2", Column: INTERNAL_ID_COLUMN},
+				{View: "table2", Column: InternalIdColumn},
 				{View: "table2", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column3", Number: 2, IsFromTable: true},
 			},
@@ -808,10 +808,10 @@ var outerJoinTests = []struct {
 		Direction: parser.FULL,
 		Result: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
-				{View: "table2", Column: INTERNAL_ID_COLUMN},
+				{View: "table2", Column: InternalIdColumn},
 				{View: "table2", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column3", Number: 2, IsFromTable: true},
 			},
@@ -936,13 +936,13 @@ var outerJoinTests = []struct {
 			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column1"}},
 			Operator: "=",
 		},
-		Direction: parser.TOKEN_UNDEFINED,
+		Direction: parser.TokenUndefined,
 		Result: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
-				{View: "table2", Column: INTERNAL_ID_COLUMN},
+				{View: "table2", Column: InternalIdColumn},
 				{View: "table2", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column3", Number: 2, IsFromTable: true},
 			},

@@ -1,8 +1,8 @@
 package cmd
 
 const (
-	TERMINAL_PROMPT            string = "csvq > "
-	TERMINAL_CONTINUOUS_PROMPT string = "     > "
+	TerminalPrompt           string = "csvq > "
+	TerminalContinuousPrompt string = "     > "
 )
 
 type VirtualTerminal interface {

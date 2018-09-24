@@ -201,7 +201,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 
 			ext := filepath.Ext(f.Name())
 			switch strings.ToUpper(ext) {
-			case strings.ToUpper(cmd.CSV_EXT), strings.ToUpper(cmd.TSV_EXT):
+			case strings.ToUpper(cmd.CsvExt), strings.ToUpper(cmd.TsvExt):
 				absPath := filepath.Join(repository, f.Name())
 				if !filepath.IsAbs(absPath) {
 					p, err := filepath.Abs(absPath)

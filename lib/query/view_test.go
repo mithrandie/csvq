@@ -1451,7 +1451,7 @@ var viewGroupByTests = []struct {
 			Header: []HeaderField{
 				{
 					View:   "table1",
-					Column: INTERNAL_ID_COLUMN,
+					Column: InternalIdColumn,
 				},
 				{
 					View:        "table1",
@@ -1528,7 +1528,7 @@ var viewGroupByTests = []struct {
 			Header: []HeaderField{
 				{
 					View:   "table1",
-					Column: INTERNAL_ID_COLUMN,
+					Column: InternalIdColumn,
 				},
 				{
 					View:        "table1",
@@ -1619,7 +1619,7 @@ var viewGroupByTests = []struct {
 			Header: []HeaderField{
 				{
 					View:   "table1",
-					Column: INTERNAL_ID_COLUMN,
+					Column: InternalIdColumn,
 				},
 				{
 					View:        "table1",
@@ -1660,7 +1660,7 @@ var viewGroupByTests = []struct {
 			Header: []HeaderField{
 				{
 					View:   "table1",
-					Column: INTERNAL_ID_COLUMN,
+					Column: InternalIdColumn,
 				},
 				{
 					View:        "table1",
@@ -1722,7 +1722,7 @@ var viewHavingTests = []struct {
 			Header: []HeaderField{
 				{
 					View:   "table1",
-					Column: INTERNAL_ID_COLUMN,
+					Column: InternalIdColumn,
 				},
 				{
 					View:        "table1",
@@ -1786,7 +1786,7 @@ var viewHavingTests = []struct {
 			Header: []HeaderField{
 				{
 					View:   "table1",
-					Column: INTERNAL_ID_COLUMN,
+					Column: InternalIdColumn,
 				},
 				{
 					View:        "table1",
@@ -1944,10 +1944,10 @@ var viewSelectTests = []struct {
 		Name: "Select",
 		View: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
-				{View: "table2", Column: INTERNAL_ID_COLUMN},
+				{View: "table2", Column: InternalIdColumn},
 				{View: "table2", Column: "column3", Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
 			},
@@ -2003,10 +2003,10 @@ var viewSelectTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table1", Column: "column2", Aliases: []string{"c2", "c2a"}, Number: 2, IsFromTable: true},
-				{View: "table2", Column: INTERNAL_ID_COLUMN},
+				{View: "table2", Column: InternalIdColumn},
 				{View: "table2", Column: "column3", Aliases: []string{"t21", "t21a"}, Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
 				{Column: "1", Aliases: []string{"a"}},
@@ -2062,10 +2062,10 @@ var viewSelectTests = []struct {
 		Name: "Select Distinct",
 		View: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
-				{View: "table2", Column: INTERNAL_ID_COLUMN},
+				{View: "table2", Column: InternalIdColumn},
 				{View: "table2", Column: "column3", IsFromTable: true},
 				{View: "table2", Column: "column4", IsFromTable: true},
 			},
@@ -2135,7 +2135,7 @@ var viewSelectTests = []struct {
 		Name: "Select Aggregate Function",
 		View: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -2166,7 +2166,7 @@ var viewSelectTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 				{Column: "sum(column1)"},
@@ -2187,7 +2187,7 @@ var viewSelectTests = []struct {
 		Name: "Select Aggregate Function Not Group Key Error",
 		View: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -2223,7 +2223,7 @@ var viewSelectTests = []struct {
 		Name: "Select Aggregate Function All RecordSet Lazy Evaluation",
 		View: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -2259,7 +2259,7 @@ var viewSelectTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 				{Column: "1"},
@@ -2725,7 +2725,7 @@ var viewOrderByTests = []struct {
 		Name: "Order By",
 		View: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 				{View: "table1", Column: "column3", IsFromTable: true},
@@ -2778,7 +2778,7 @@ var viewOrderByTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 				{View: "table1", Column: "column3", IsFromTable: true},
@@ -2909,7 +2909,7 @@ var viewOrderByTests = []struct {
 		Name: "Order By With Null Positions",
 		View: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -2951,7 +2951,7 @@ var viewOrderByTests = []struct {
 		},
 		Result: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -2984,7 +2984,7 @@ var viewOrderByTests = []struct {
 		Name: "Order By Record Extend Error",
 		View: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3346,7 +3346,7 @@ var viewLimitTests = []struct {
 		Name: "Limit",
 		View: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3377,7 +3377,7 @@ var viewLimitTests = []struct {
 		Limit: parser.LimitClause{Value: parser.NewIntegerValueFromString("2")},
 		Result: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3398,7 +3398,7 @@ var viewLimitTests = []struct {
 		Name: "Limit With Ties",
 		View: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3427,31 +3427,31 @@ var viewLimitTests = []struct {
 			Filter: NewEmptyFilter(),
 			sortValuesInEachRecord: []SortValues{
 				{
-					&SortValue{Type: SORT_VALUE_INTEGER, Integer: 1},
-					&SortValue{Type: SORT_VALUE_STRING, String: "str1"},
+					&SortValue{Type: IntegerType, Integer: 1},
+					&SortValue{Type: StringType, String: "str1"},
 				},
 				{
-					&SortValue{Type: SORT_VALUE_INTEGER, Integer: 1},
-					&SortValue{Type: SORT_VALUE_STRING, String: "str1"},
+					&SortValue{Type: IntegerType, Integer: 1},
+					&SortValue{Type: StringType, String: "str1"},
 				},
 				{
-					&SortValue{Type: SORT_VALUE_INTEGER, Integer: 1},
-					&SortValue{Type: SORT_VALUE_STRING, String: "str1"},
+					&SortValue{Type: IntegerType, Integer: 1},
+					&SortValue{Type: StringType, String: "str1"},
 				},
 				{
-					&SortValue{Type: SORT_VALUE_INTEGER, Integer: 2},
-					&SortValue{Type: SORT_VALUE_STRING, String: "str2"},
+					&SortValue{Type: IntegerType, Integer: 2},
+					&SortValue{Type: StringType, String: "str2"},
 				},
 				{
-					&SortValue{Type: SORT_VALUE_INTEGER, Integer: 3},
-					&SortValue{Type: SORT_VALUE_STRING, String: "str3"},
+					&SortValue{Type: IntegerType, Integer: 3},
+					&SortValue{Type: StringType, String: "str3"},
 				},
 			},
 		},
 		Limit: parser.LimitClause{Value: parser.NewIntegerValueFromString("2"), With: parser.LimitWith{Type: parser.Token{Token: parser.TIES}}},
 		Result: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3472,24 +3472,24 @@ var viewLimitTests = []struct {
 			Filter: NewEmptyFilter(),
 			sortValuesInEachRecord: []SortValues{
 				{
-					&SortValue{Type: SORT_VALUE_INTEGER, Integer: 1},
-					&SortValue{Type: SORT_VALUE_STRING, String: "str1"},
+					&SortValue{Type: IntegerType, Integer: 1},
+					&SortValue{Type: StringType, String: "str1"},
 				},
 				{
-					&SortValue{Type: SORT_VALUE_INTEGER, Integer: 1},
-					&SortValue{Type: SORT_VALUE_STRING, String: "str1"},
+					&SortValue{Type: IntegerType, Integer: 1},
+					&SortValue{Type: StringType, String: "str1"},
 				},
 				{
-					&SortValue{Type: SORT_VALUE_INTEGER, Integer: 1},
-					&SortValue{Type: SORT_VALUE_STRING, String: "str1"},
+					&SortValue{Type: IntegerType, Integer: 1},
+					&SortValue{Type: StringType, String: "str1"},
 				},
 				{
-					&SortValue{Type: SORT_VALUE_INTEGER, Integer: 2},
-					&SortValue{Type: SORT_VALUE_STRING, String: "str2"},
+					&SortValue{Type: IntegerType, Integer: 2},
+					&SortValue{Type: StringType, String: "str2"},
 				},
 				{
-					&SortValue{Type: SORT_VALUE_INTEGER, Integer: 3},
-					&SortValue{Type: SORT_VALUE_STRING, String: "str3"},
+					&SortValue{Type: IntegerType, Integer: 3},
+					&SortValue{Type: StringType, String: "str3"},
 				},
 			},
 		},
@@ -3498,7 +3498,7 @@ var viewLimitTests = []struct {
 		Name: "Limit By Percentage",
 		View: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3526,7 +3526,7 @@ var viewLimitTests = []struct {
 		Limit: parser.LimitClause{Value: parser.NewFloatValue(50.5), Percent: "percent"},
 		Result: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3552,7 +3552,7 @@ var viewLimitTests = []struct {
 		Name: "Limit By Over 100 Percentage",
 		View: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3583,7 +3583,7 @@ var viewLimitTests = []struct {
 		Limit: parser.LimitClause{Value: parser.NewFloatValue(150), Percent: "percent"},
 		Result: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3616,7 +3616,7 @@ var viewLimitTests = []struct {
 		Name: "Limit By Negative Percentage",
 		View: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3647,7 +3647,7 @@ var viewLimitTests = []struct {
 		Limit: parser.LimitClause{Value: parser.NewFloatValue(-10), Percent: "percent"},
 		Result: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3659,7 +3659,7 @@ var viewLimitTests = []struct {
 		Name: "Limit Greater Than RecordSet",
 		View: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3678,7 +3678,7 @@ var viewLimitTests = []struct {
 		Limit: parser.LimitClause{Value: parser.NewIntegerValueFromString("5")},
 		Result: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3699,7 +3699,7 @@ var viewLimitTests = []struct {
 		Name: "Limit Evaluate Error",
 		View: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3722,7 +3722,7 @@ var viewLimitTests = []struct {
 		Name: "Limit Value Error",
 		View: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3745,7 +3745,7 @@ var viewLimitTests = []struct {
 		Name: "Limit Negative Value",
 		View: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3764,7 +3764,7 @@ var viewLimitTests = []struct {
 		Limit: parser.LimitClause{Value: parser.NewIntegerValue(-1)},
 		Result: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3776,7 +3776,7 @@ var viewLimitTests = []struct {
 		Name: "Limit By Percentage Value Error",
 		View: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3829,7 +3829,7 @@ var viewOffsetTests = []struct {
 		Name: "Offset",
 		View: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3856,7 +3856,7 @@ var viewOffsetTests = []struct {
 		Offset: parser.OffsetClause{Value: parser.NewIntegerValueFromString("3")},
 		Result: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3874,7 +3874,7 @@ var viewOffsetTests = []struct {
 		Name: "Offset Equal To Record Length",
 		View: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3901,7 +3901,7 @@ var viewOffsetTests = []struct {
 		Offset: parser.OffsetClause{Value: parser.NewIntegerValueFromString("4")},
 		Result: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3914,7 +3914,7 @@ var viewOffsetTests = []struct {
 		Name: "Offset Evaluate Error",
 		View: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3945,7 +3945,7 @@ var viewOffsetTests = []struct {
 		Name: "Offset Value Error",
 		View: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3976,7 +3976,7 @@ var viewOffsetTests = []struct {
 		Name: "Offset Negative Number",
 		View: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -3995,7 +3995,7 @@ var viewOffsetTests = []struct {
 		Offset: parser.OffsetClause{Value: parser.NewIntegerValue(-3)},
 		Result: &View{
 			Header: []HeaderField{
-				{View: "table1", Column: INTERNAL_ID_COLUMN},
+				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
@@ -4297,7 +4297,7 @@ func TestView_InsertFromQuery(t *testing.T) {
 func TestView_Fix(t *testing.T) {
 	view := &View{
 		Header: []HeaderField{
-			{View: "table1", Column: INTERNAL_ID_COLUMN},
+			{View: "table1", Column: InternalIdColumn},
 			{View: "table1", Column: "column1", IsFromTable: true},
 			{View: "table1", Column: "column2", IsFromTable: true},
 		},

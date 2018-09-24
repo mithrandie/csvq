@@ -16,20 +16,20 @@ import (
 
 const (
 	EOF = -(iota + 1)
-	UNCATEGORIZED
+	Uncategorized
 )
 
 const (
-	TOKEN_FROM   = IDENTIFIER
-	TOKEN_TO     = SUBSTITUTION_OP
-	KEYWORD_FROM = SELECT
-	KEYWORD_TO   = LISTAGG
+	TokenFrom   = IDENTIFIER
+	TokenTo     = SUBSTITUTION_OP
+	KeywordFrom = SELECT
+	KeywordTo   = LISTAGG
 )
 
 const (
-	VARIABLE_SIGN = '@'
+	VariableSign = '@'
 
-	SUBSTITUTION_OPERATOR = ":="
+	SubstitutionOperator = ":="
 )
 
 var comparisonOperators = []string{
@@ -74,8 +74,8 @@ var functionsWithIgnoreNulls = []string{
 }
 
 func TokenLiteral(token int) string {
-	if TOKEN_FROM <= token && token <= TOKEN_TO {
-		return yyToknames[token-TOKEN_FROM+3]
+	if TokenFrom <= token && token <= TokenTo {
+		return yyToknames[token-TokenFrom+3]
 	}
 	return string(token)
 }
@@ -213,10 +213,10 @@ func (s *Scanner) Scan() (Token, error) {
 			token = COMPARISON_OP
 		} else if s.isStringOperators(literal) {
 			token = STRING_OP
-		} else if literal == SUBSTITUTION_OPERATOR {
+		} else if literal == SubstitutionOperator {
 			token = SUBSTITUTION_OP
 		} else if 1 < len(literal) {
-			token = UNCATEGORIZED
+			token = Uncategorized
 		}
 	case s.isVariableSign(ch):
 		if s.isVariableSign(s.peek()) {
@@ -326,14 +326,14 @@ func (s *Scanner) isOperatorRune(ch rune) bool {
 }
 
 func (s *Scanner) isVariableSign(ch rune) bool {
-	if ch == VARIABLE_SIGN {
+	if ch == VariableSign {
 		return true
 	}
 	return false
 }
 
 func (s *Scanner) searchKeyword(str string) (int, error) {
-	for i := KEYWORD_FROM; i <= KEYWORD_TO; i++ {
+	for i := KeywordFrom; i <= KeywordTo; i++ {
 		if strings.EqualFold(TokenLiteral(i), str) {
 			return i, nil
 		}

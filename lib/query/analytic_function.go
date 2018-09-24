@@ -8,7 +8,7 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 )
 
-var AnalyticFunctions map[string]AnalyticFunction = map[string]AnalyticFunction{
+var AnalyticFunctions = map[string]AnalyticFunction{
 	"ROW_NUMBER":   RowNumber{},
 	"RANK":         Rank{},
 	"DENSE_RANK":   DenseRank{},
@@ -38,9 +38,9 @@ type Partitions map[string]Partition
 
 func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) error {
 	const (
-		ANALYTIC = iota
-		AGGREGATE
-		USER_DEFINED
+		Analytic = iota
+		Aggregate
+		UserDefined
 	)
 
 	var anfn AnalyticFunction
@@ -53,27 +53,27 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 	uname := strings.ToUpper(fn.Name)
 	if f, ok := AnalyticFunctions[uname]; ok {
 		anfn = f
-		fnType = ANALYTIC
+		fnType = Analytic
 	} else if f, ok := AggregateFunctions[uname]; ok {
 		aggfn = f
-		fnType = AGGREGATE
+		fnType = Aggregate
 	} else {
 		if udfn, err = view.Filter.Functions.Get(fn, uname); err != nil || !udfn.IsAggregate {
 			return NewFunctionNotExistError(fn, fn.Name)
 		}
-		fnType = USER_DEFINED
+		fnType = UserDefined
 	}
 
 	switch fnType {
-	case ANALYTIC:
+	case Analytic:
 		if err := anfn.CheckArgsLen(fn); err != nil {
 			return err
 		}
-	case AGGREGATE:
+	case Aggregate:
 		if len(fn.Args) != 1 {
 			return NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 		}
-	case USER_DEFINED:
+	case UserDefined:
 		if err := udfn.CheckArgsLen(fn, fn.Name, len(fn.Args)-1); err != nil {
 			return err
 		}
@@ -121,7 +121,7 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 	gm.Wait()
 
 	partitions := Partitions{}
-	partitionMapKeys := []string{}
+	partitionMapKeys := make([]string, 0)
 	for i, key := range partitionKeys {
 		if _, ok := partitions[key]; ok {
 			partitions[key] = append(partitions[key], i)
@@ -144,7 +144,7 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 					break AnalyzeLoop
 				}
 
-				if fnType == ANALYTIC {
+				if fnType == Analytic {
 					list, e := anfn.Execute(partitions[partitionMapKeys[i]], fn, filter)
 					if e != nil {
 						gm.SetError(e)
@@ -160,7 +160,7 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 						}
 					}
 
-					if fnType == AGGREGATE {
+					if fnType == Aggregate {
 						partition := partitions[partitionMapKeys[i]]
 						frameSet := WindowFrameSet(partition, fn.AnalyticClause)
 
@@ -475,7 +475,7 @@ func (fn PercentRank) Execute(partition Partition, expr parser.AnalyticFunction,
 }
 
 func perseCumulativeGroups(partition Partition, view *View) [][]int {
-	groups := [][]int{}
+	groups := make([][]int, 0)
 	var currentRank SortValues
 	for _, idx := range partition {
 		if view.sortValuesInEachRecord == nil || !view.sortValuesInEachRecord[idx].EquivalentTo(currentRank) {
@@ -525,7 +525,7 @@ func (fn NTile) Execute(partition Partition, expr parser.AnalyticFunction, filte
 
 	list := make(map[int]value.Primary, len(partition))
 	var tile int64 = 1
-	var count int = 0
+	var count = 0
 	for _, idx := range partition {
 		count++
 
@@ -688,7 +688,7 @@ func setLag(partition Partition, expr parser.AnalyticFunction, filter *Filter) (
 	}
 
 	list := make(map[int]value.Primary, len(partition))
-	values := []value.Primary{}
+	values := make([]value.Primary, 0)
 	for _, idx := range partition {
 		filter.Records[0].RecordIndex = idx
 		p, err := filter.Evaluate(expr.Args[0])

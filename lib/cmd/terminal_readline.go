@@ -11,7 +11,7 @@ import (
 	"github.com/mitchellh/go-homedir"
 )
 
-const HISTORY_FILE = ".csvq_history"
+const HistoryFile = ".csvq_history"
 
 type ReadLineTerminal struct {
 	terminal *readline.Instance
@@ -24,7 +24,7 @@ func NewTerminal() (VirtualTerminal, error) {
 	}
 
 	t, err := readline.NewEx(&readline.Config{
-		Prompt:                 TERMINAL_PROMPT,
+		Prompt:                 TerminalPrompt,
 		HistoryFile:            historyFile,
 		DisableAutoSaveHistory: true,
 	})
@@ -56,11 +56,11 @@ func (t ReadLineTerminal) Write(s string) error {
 }
 
 func (t ReadLineTerminal) SetPrompt() {
-	t.terminal.SetPrompt(TERMINAL_PROMPT)
+	t.terminal.SetPrompt(TerminalPrompt)
 }
 
 func (t ReadLineTerminal) SetContinuousPrompt() {
-	t.terminal.SetPrompt(TERMINAL_CONTINUOUS_PROMPT)
+	t.terminal.SetPrompt(TerminalContinuousPrompt)
 }
 
 func (t ReadLineTerminal) SaveHistory(s string) {
@@ -76,5 +76,5 @@ func historyFilePath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(home, HISTORY_FILE), nil
+	return filepath.Join(home, HistoryFile), nil
 }

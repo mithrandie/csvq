@@ -10,94 +10,93 @@ import (
 )
 
 const (
-	ERROR_MESSAGE_TEMPLATE                     = "[L:%d C:%d] %s"
-	ERROR_MESSAGE_WITH_FILEPATH_TEMPLATE       = "%s [L:%d C:%d] %s"
-	ERROR_MESSAGE_WITH_EMPTY_POSITION_TEMPLATE = "[L:- C:-] %s"
+	ErrorMessageTemplate                  = "[L:%d C:%d] %s"
+	ErrorMessageWithFilepathTemplate      = "%s [L:%d C:%d] %s"
+	ErrorMessageWithEmptyPositionTemplate = "[L:- C:-] %s"
 
-	ERROR_INVALID_SYNTAX                    = "syntax error: unexpected %s"
-	ERROR_READ_FILE                         = "failed to read from file: %s"
-	ERROR_CREATE_FILE                       = "failed to create file: %s"
-	ERROR_WRITE_FILE                        = "failed to write to file: %s"
-	ERROR_WRITE_FILE_IN_AUTOCOMMIT          = "[Auto-Commit] failed to write to file: %s"
-	ERROR_FIELD_AMBIGUOUS                   = "field %s is ambiguous"
-	ERROR_FIELD_NOT_EXIST                   = "field %s does not exist"
-	ERROR_FIELD_NOT_GROUP_KEY               = "field %s is not a group key"
-	ERROR_DUPLICATE_FIELD_NAME              = "field name %s is a duplicate"
-	ERROR_NOT_GROUPING_RECORDS              = "function %s cannot aggregate not grouping records"
-	ERROR_UNDECLARED_VARIABLE               = "variable %s is undeclared"
-	ERROR_VARIABLE_REDECLARED               = "variable %s is redeclared"
-	ERROR_FUNCTION_NOT_EXIST                = "function %s does not exist"
-	ERROR_FUNCTION_ARGUMENT_LENGTH          = "function %s takes %s"
-	ERROR_FUNCTION_INVALID_ARGUMENT         = "%s for function %s"
-	ERROR_UNPERMITTED_STATEMENT_FUNCTION    = "function %s cannot be used as a statement"
-	ERROR_NESTED_AGGREGATE_FUNCTIONS        = "aggregate functions are nested at %s"
-	ERROR_FUNCTION_REDECLARED               = "function %s is redeclared"
-	ERROR_BUILT_IN_FUNCTION_DECLARED        = "function %s is a built-in function"
-	ERROR_DUPLICATE_PARAMETER               = "parameter %s is a duplicate"
-	ERROR_SUBQUERY_TOO_MANY_RECORDS         = "subquery returns too many records, should return only one record"
-	ERROR_SUBQUERY_TOO_MANY_FIELDS          = "subquery returns too many fields, should return only one field"
-	ERROR_CURSOR_REDECLARED                 = "cursor %s is redeclared"
-	ERROR_UNDECLARED_CURSOR                 = "cursor %s is undeclared"
-	ERROR_CURSOR_CLOSED                     = "cursor %s is closed"
-	ERROR_CURSOR_OPEN                       = "cursor %s is already open"
-	ERROR_PSEUDO_CURSOR                     = "cursor %s is a pseudo cursor"
-	ERROR_CURSOR_FETCH_LENGTH               = "fetching from cursor %s returns %s"
-	ERROR_INVALID_FETCH_POSITION            = "fetching position %s is not an integer value"
-	ERROR_INLINE_TABLE_REDEFINED            = "inline table %s is redefined"
-	ERROR_UNDEFINED_INLINE_TABLE            = "inline table %s is undefined"
-	ERROR_INLINE_TABLE_FIELD_LENGTH         = "select query should return exactly %s for inline table %s"
-	ERROR_FILE_NOT_EXIST                    = "file %s does not exist"
-	ERROR_FILE_ALREADY_EXIST                = "file %s already exists"
-	ERROR_FILE_UNABLE_TO_READ               = "file %s is unable to be read"
-	ERROR_FILE_LOCK_TIMEOUT                 = "file %s: lock wait timeout period exceeded"
-	ERROR_CSV_PARSING                       = "csv parse error in file %s: %s"
-	ERROR_TABLE_FIELD_LENGTH                = "select query should return exactly %s for table %s"
-	ERROR_TEMPORARY_TABLE_REDECLARED        = "view %s is redeclared"
-	ERROR_UNDECLARED_TEMPORARY_TABLE        = "view %s is undeclared"
-	ERROR_TEMPORARY_TABLE_FIELD_LENGTH      = "select query should return exactly %s for view %s"
-	ERROR_DUPLICATE_TABLE_NAME              = "table name %s is a duplicate"
-	ERROR_TABLE_NOT_LOADED                  = "table %s is not loaded"
-	ERROR_STDIN_EMPTY                       = "stdin is empty"
-	ERROR_ROW_VALUE_LENGTH_IN_COMPARISON    = "row value should contain exactly %s"
-	ERROR_SELECT_FIELD_LENGTH_IN_COMPARISON = "select query should return exactly %s"
-	ERROR_INVALID_LIMIT_PERCENTAGE          = "limit percentage %s is not a float value"
-	ERROR_INVALID_LIMIT_NUMBER              = "limit number of records %s is not an integer value"
-	ERROR_INVALID_OFFSET_NUMBER             = "offset number %s is not an integer value"
-	ERROR_COMBINED_SET_FIELD_LENGTH         = "result set to be combined should contain exactly %s"
-	ERROR_INSERT_ROW_VALUE_LENGTH           = "row value should contain exactly %s"
-	ERROR_INSERT_SELECT_FIELD_LENGTH        = "select query should return exactly %s"
-	ERROR_UPDATE_FIELD_NOT_EXIST            = "field %s does not exist in the tables to update"
-	ERROR_UPDATE_VALUE_AMBIGUOUS            = "value %s to set in the field %s is ambiguous"
-	ERROR_DELETE_TABLE_NOT_SPECIFIED        = "tables to delete records are not specified"
-	ERROR_PRINTF_REPLACE_VALUE_LENGTH       = "PRINTF: %s"
-	ERROR_SOURCE_INVALID_ARGUMENT           = "SOURCE: argument %s is not a string"
-	ERROR_SOURCE_FILE_NOT_EXIST             = "SOURCE: file %s does not exist"
-	ERROR_SOURCE_FILE_UNABLE_TO_READ        = "SOURCE: file %s is unable to read"
-	ERROR_INVALID_FLAG_NAME                 = "flag name %s is invalid"
-	ERROR_INVALID_FLAG_VALUE                = "SET: flag value %s for %s is invalid"
-	ERROR_INTERNAL_RECORD_ID_NOT_EXIST      = "internal record id does not exist"
-	ERROR_INTERNAL_RECORD_ID_EMPTY          = "internal record id is empty"
-	ERROR_FIELD_LENGTH_NOT_MATCH            = "field length does not match"
-	ERROR_ROW_VALUE_LENGTH_NOT_MATCH        = "row value length does not match"
-	ERROR_ROW_VALUE_LENGTH_IN_LIST          = "row value length does not match at index %d"
-	ERROR_FORMAT_STRING_LENGTH_NOT_MATCH    = "number of replace values does not match"
+	ErrorInvalidSyntax                = "syntax error: unexpected %s"
+	ErrorReadFile                     = "failed to read from file: %s"
+	ErrorCreateFile                   = "failed to create file: %s"
+	ErrorWriteFile                    = "failed to write to file: %s"
+	ErrorWriteFileInAutoCommit        = "[Auto-Commit] failed to write to file: %s"
+	ErrorFieldAmbiguous               = "field %s is ambiguous"
+	ErrorFieldNotExist                = "field %s does not exist"
+	ErrorFieldNotGroupKey             = "field %s is not a group key"
+	ErrorDuplicateFieldName           = "field name %s is a duplicate"
+	ErrorNotGroupingRecords           = "function %s cannot aggregate not grouping records"
+	ErrorUndeclaredVariable           = "variable %s is undeclared"
+	ErrorVariableRedeclared           = "variable %s is redeclared"
+	ErrorFunctionNotExist             = "function %s does not exist"
+	ErrorFunctionArgumentsLength      = "function %s takes %s"
+	ErrorFunctionInvalidArgument      = "%s for function %s"
+	ErrorUnpermittedStatementFunction = "function %s cannot be used as a statement"
+	ErrorNestedAggregateFunctions     = "aggregate functions are nested at %s"
+	ErrorFunctionRedeclared           = "function %s is redeclared"
+	ErrorBuiltInFunctionDeclared      = "function %s is a built-in function"
+	ErrorDuplicateParameter           = "parameter %s is a duplicate"
+	ErrorSubqueryTooManyRecords       = "subquery returns too many records, should return only one record"
+	ErrorSubqueryTooManyFields        = "subquery returns too many fields, should return only one field"
+	ErrorCursorRedeclared             = "cursor %s is redeclared"
+	ErrorUndeclaredCursor             = "cursor %s is undeclared"
+	ErrorCursorClosed                 = "cursor %s is closed"
+	errorCursorOpen                   = "cursor %s is already open"
+	ErrorPseudoCursor                 = "cursor %s is a pseudo cursor"
+	ErrorCursorFetchLength            = "fetching from cursor %s returns %s"
+	ErrorInvalidFetchPosition         = "fetching position %s is not an integer value"
+	ErrorInlineTableRedefined         = "inline table %s is redefined"
+	ErrorUndefinedInlineTable         = "inline table %s is undefined"
+	ErrorInlineTableFieldLength       = "select query should return exactly %s for inline table %s"
+	ErrorFileNotExist                 = "file %s does not exist"
+	ErrorFileAlreadyExist             = "file %s already exists"
+	ErrorFileUnableToRead             = "file %s is unable to be read"
+	ErrorFileLockTimeout              = "file %s: lock wait timeout period exceeded"
+	ErrorCSVParsing                   = "csv parse error in file %s: %s"
+	ErrorTableFieldLength             = "select query should return exactly %s for table %s"
+	ErrorTemporaryTableRedeclared     = "view %s is redeclared"
+	ErrorUndeclaredTemporaryTable     = "view %s is undeclared"
+	ErrorTemporaryTableFieldLength    = "select query should return exactly %s for view %s"
+	ErrorDuplicateTableName           = "table name %s is a duplicate"
+	ErrorTableNotLoaded               = "table %s is not loaded"
+	ErrorStdinEmpty                   = "stdin is empty"
+	ErrorRowValueLengthInComparison   = "row value should contain exactly %s"
+	ErrorFieldLengthInComparison      = "select query should return exactly %s"
+	ErrorInvalidLimitPercentage       = "limit percentage %s is not a float value"
+	ErrorInvalidLimitNumber           = "limit number of records %s is not an integer value"
+	ErrorInvalidOffsetNumber          = "offset number %s is not an integer value"
+	ErrorCombinedSetFieldLength       = "result set to be combined should contain exactly %s"
+	ErrorInsertRowValueLength         = "row value should contain exactly %s"
+	ErrorInsertSelectFieldLength      = "select query should return exactly %s"
+	ErrorUpdateFieldNotExist          = "field %s does not exist in the tables to update"
+	ErrorUpdateValueAmbiguous         = "value %s to set in the field %s is ambiguous"
+	ErrorDeleteTableNotSpecified      = "tables to delete records are not specified"
+	ErrorPrintfReplaceValueLength     = "PRINTF: %s"
+	ErrorSourceInvalidArgument        = "SOURCE: argument %s is not a string"
+	ErrorSourceFileNotExist           = "SOURCE: file %s does not exist"
+	ErrorSourceFileUnableToRead       = "SOURCE: file %s is unable to read"
+	ErrorInvalidFlagName              = "flag name %s is invalid"
+	ErrorInvalidFlagValue             = "SET: flag value %s for %s is invalid"
+	ErrorInternalRecordIdNotExist     = "internal record id does not exist"
+	ErrorInternalRecordIdEmpty        = "internal record id is empty"
+	ErrorFieldLengthNotMatch          = "field length does not match"
+	ErrorRowValueLengthInList         = "row value length does not match at index %d"
+	ErrorFormatStringLengthNotMatch   = "number of replace values does not match"
 )
 
-type Exit struct {
+type ForcedExit struct {
 	Code int
 }
 
-func NewExit(code int) error {
-	return &Exit{
+func NewForcedExit(code int) error {
+	return &ForcedExit{
 		Code: code,
 	}
 }
 
-func (e Exit) Error() string {
+func (e ForcedExit) Error() string {
 	return ""
 }
 
-func (e Exit) GetCode() int {
+func (e ForcedExit) GetCode() int {
 	return e.Code
 }
 
@@ -117,12 +116,12 @@ type BaseError struct {
 
 func (e BaseError) Error() string {
 	if e.Line < 1 {
-		return fmt.Sprintf(ERROR_MESSAGE_WITH_EMPTY_POSITION_TEMPLATE, e.Message)
+		return fmt.Sprintf(ErrorMessageWithEmptyPositionTemplate, e.Message)
 	}
 	if 0 < len(e.SourceFile) {
-		return fmt.Sprintf(ERROR_MESSAGE_WITH_FILEPATH_TEMPLATE, e.SourceFile, e.Line, e.Char, e.Message)
+		return fmt.Sprintf(ErrorMessageWithFilepathTemplate, e.SourceFile, e.Line, e.Char, e.Message)
 	}
-	return fmt.Sprintf(ERROR_MESSAGE_TEMPLATE, e.Line, e.Char, e.Message)
+	return fmt.Sprintf(ErrorMessageTemplate, e.Line, e.Char, e.Message)
 }
 
 func (e BaseError) ErrorMessage() string {
@@ -189,7 +188,7 @@ func NewSyntaxError(message string, line int, char int, sourceFile string) error
 
 func NewSyntaxErrorFromExpr(expr parser.QueryExpression) error {
 	return &SyntaxError{
-		NewBaseError(expr, fmt.Sprintf(ERROR_INVALID_SYNTAX, expr)),
+		NewBaseError(expr, fmt.Sprintf(ErrorInvalidSyntax, expr)),
 	}
 }
 
@@ -199,7 +198,7 @@ type ReadFileError struct {
 
 func NewReadFileError(expr parser.Expression, message string) error {
 	return &ReadFileError{
-		NewBaseError(expr, fmt.Sprintf(ERROR_READ_FILE, message)),
+		NewBaseError(expr, fmt.Sprintf(ErrorReadFile, message)),
 	}
 }
 
@@ -209,7 +208,7 @@ type CreateFileError struct {
 
 func NewCreateFileError(expr parser.Expression, message string) error {
 	return &CreateFileError{
-		NewBaseError(expr, fmt.Sprintf(ERROR_CREATE_FILE, message)),
+		NewBaseError(expr, fmt.Sprintf(ErrorCreateFile, message)),
 	}
 }
 
@@ -219,7 +218,7 @@ type WriteFileError struct {
 
 func NewWriteFileError(expr parser.Expression, message string) error {
 	return &WriteFileError{
-		NewBaseError(expr, fmt.Sprintf(ERROR_WRITE_FILE, message)),
+		NewBaseError(expr, fmt.Sprintf(ErrorWriteFile, message)),
 	}
 }
 
@@ -233,7 +232,7 @@ func (e AutoCommitError) Error() string {
 
 func NewAutoCommitError(message string) error {
 	return &AutoCommitError{
-		Message: fmt.Sprintf(ERROR_WRITE_FILE_IN_AUTOCOMMIT, message),
+		Message: fmt.Sprintf(ErrorWriteFileInAutoCommit, message),
 	}
 }
 
@@ -243,7 +242,7 @@ type FieldAmbiguousError struct {
 
 func NewFieldAmbiguousError(field parser.QueryExpression) error {
 	return &FieldAmbiguousError{
-		NewBaseError(field, fmt.Sprintf(ERROR_FIELD_AMBIGUOUS, field)),
+		NewBaseError(field, fmt.Sprintf(ErrorFieldAmbiguous, field)),
 	}
 }
 
@@ -253,7 +252,7 @@ type FieldNotExistError struct {
 
 func NewFieldNotExistError(field parser.QueryExpression) error {
 	return &FieldNotExistError{
-		NewBaseError(field, fmt.Sprintf(ERROR_FIELD_NOT_EXIST, field)),
+		NewBaseError(field, fmt.Sprintf(ErrorFieldNotExist, field)),
 	}
 }
 
@@ -263,7 +262,7 @@ type FieldNotGroupKeyError struct {
 
 func NewFieldNotGroupKeyError(field parser.QueryExpression) error {
 	return &FieldNotGroupKeyError{
-		NewBaseError(field, fmt.Sprintf(ERROR_FIELD_NOT_GROUP_KEY, field)),
+		NewBaseError(field, fmt.Sprintf(ErrorFieldNotGroupKey, field)),
 	}
 }
 
@@ -273,7 +272,7 @@ type DuplicateFieldNameError struct {
 
 func NewDuplicateFieldNameError(fieldName parser.Identifier) error {
 	return &DuplicateFieldNameError{
-		NewBaseError(fieldName, fmt.Sprintf(ERROR_DUPLICATE_FIELD_NAME, fieldName)),
+		NewBaseError(fieldName, fmt.Sprintf(ErrorDuplicateFieldName, fieldName)),
 	}
 }
 
@@ -283,7 +282,7 @@ type NotGroupingRecordsError struct {
 
 func NewNotGroupingRecordsError(expr parser.QueryExpression, funcname string) error {
 	return &NotGroupingRecordsError{
-		NewBaseError(expr, fmt.Sprintf(ERROR_NOT_GROUPING_RECORDS, funcname)),
+		NewBaseError(expr, fmt.Sprintf(ErrorNotGroupingRecords, funcname)),
 	}
 }
 
@@ -293,7 +292,7 @@ type UndeclaredVariableError struct {
 
 func NewUndeclaredVariableError(expr parser.Variable) error {
 	return &UndeclaredVariableError{
-		NewBaseError(expr, fmt.Sprintf(ERROR_UNDECLARED_VARIABLE, expr)),
+		NewBaseError(expr, fmt.Sprintf(ErrorUndeclaredVariable, expr)),
 	}
 }
 
@@ -303,7 +302,7 @@ type VariableRedeclaredError struct {
 
 func NewVariableRedeclaredError(expr parser.Variable) error {
 	return &VariableRedeclaredError{
-		NewBaseError(expr, fmt.Sprintf(ERROR_VARIABLE_REDECLARED, expr)),
+		NewBaseError(expr, fmt.Sprintf(ErrorVariableRedeclared, expr)),
 	}
 }
 
@@ -313,7 +312,7 @@ type FunctionNotExistError struct {
 
 func NewFunctionNotExistError(expr parser.QueryExpression, funcname string) error {
 	return &FunctionNotExistError{
-		NewBaseError(expr, fmt.Sprintf(ERROR_FUNCTION_NOT_EXIST, funcname)),
+		NewBaseError(expr, fmt.Sprintf(ErrorFunctionNotExist, funcname)),
 	}
 }
 
@@ -338,13 +337,13 @@ func NewFunctionArgumentLengthError(expr parser.QueryExpression, funcname string
 		}
 	}
 	return &FunctionArgumentLengthError{
-		NewBaseError(expr, fmt.Sprintf(ERROR_FUNCTION_ARGUMENT_LENGTH, funcname, argstr)),
+		NewBaseError(expr, fmt.Sprintf(ErrorFunctionArgumentsLength, funcname, argstr)),
 	}
 }
 
 func NewFunctionArgumentLengthErrorWithCustomArgs(expr parser.QueryExpression, funcname string, argstr string) error {
 	return &FunctionArgumentLengthError{
-		NewBaseError(expr, fmt.Sprintf(ERROR_FUNCTION_ARGUMENT_LENGTH, funcname, argstr)),
+		NewBaseError(expr, fmt.Sprintf(ErrorFunctionArgumentsLength, funcname, argstr)),
 	}
 }
 
@@ -354,7 +353,7 @@ type FunctionInvalidArgumentError struct {
 
 func NewFunctionInvalidArgumentError(function parser.QueryExpression, funcname string, message string) error {
 	return &FunctionInvalidArgumentError{
-		NewBaseError(function, fmt.Sprintf(ERROR_FUNCTION_INVALID_ARGUMENT, message, funcname)),
+		NewBaseError(function, fmt.Sprintf(ErrorFunctionInvalidArgument, message, funcname)),
 	}
 }
 
@@ -364,7 +363,7 @@ type UnpermittedStatementFunctionError struct {
 
 func NewUnpermittedStatementFunctionError(expr parser.QueryExpression, funcname string) error {
 	return &UnpermittedStatementFunctionError{
-		NewBaseError(expr, fmt.Sprintf(ERROR_UNPERMITTED_STATEMENT_FUNCTION, funcname)),
+		NewBaseError(expr, fmt.Sprintf(ErrorUnpermittedStatementFunction, funcname)),
 	}
 }
 
@@ -374,7 +373,7 @@ type NestedAggregateFunctionsError struct {
 
 func NewNestedAggregateFunctionsError(expr parser.QueryExpression) error {
 	return &NestedAggregateFunctionsError{
-		NewBaseError(expr, fmt.Sprintf(ERROR_NESTED_AGGREGATE_FUNCTIONS, expr)),
+		NewBaseError(expr, fmt.Sprintf(ErrorNestedAggregateFunctions, expr)),
 	}
 }
 
@@ -384,7 +383,7 @@ type FunctionRedeclaredError struct {
 
 func NewFunctionRedeclaredError(expr parser.Identifier) error {
 	return &FunctionRedeclaredError{
-		NewBaseError(expr, fmt.Sprintf(ERROR_FUNCTION_REDECLARED, expr.Literal)),
+		NewBaseError(expr, fmt.Sprintf(ErrorFunctionRedeclared, expr.Literal)),
 	}
 }
 
@@ -394,7 +393,7 @@ type BuiltInFunctionDeclaredError struct {
 
 func NewBuiltInFunctionDeclaredError(expr parser.Identifier) error {
 	return &BuiltInFunctionDeclaredError{
-		NewBaseError(expr, fmt.Sprintf(ERROR_BUILT_IN_FUNCTION_DECLARED, expr.Literal)),
+		NewBaseError(expr, fmt.Sprintf(ErrorBuiltInFunctionDeclared, expr.Literal)),
 	}
 }
 
@@ -404,7 +403,7 @@ type DuplicateParameterError struct {
 
 func NewDuplicateParameterError(expr parser.Variable) error {
 	return &DuplicateParameterError{
-		NewBaseError(expr, fmt.Sprintf(ERROR_DUPLICATE_PARAMETER, expr.Name)),
+		NewBaseError(expr, fmt.Sprintf(ErrorDuplicateParameter, expr.Name)),
 	}
 }
 
@@ -414,7 +413,7 @@ type SubqueryTooManyRecordsError struct {
 
 func NewSubqueryTooManyRecordsError(expr parser.Subquery) error {
 	return &SubqueryTooManyRecordsError{
-		NewBaseError(expr, ERROR_SUBQUERY_TOO_MANY_RECORDS),
+		NewBaseError(expr, ErrorSubqueryTooManyRecords),
 	}
 }
 
@@ -424,7 +423,7 @@ type SubqueryTooManyFieldsError struct {
 
 func NewSubqueryTooManyFieldsError(expr parser.Subquery) error {
 	return &SubqueryTooManyFieldsError{
-		NewBaseError(expr, ERROR_SUBQUERY_TOO_MANY_FIELDS),
+		NewBaseError(expr, ErrorSubqueryTooManyFields),
 	}
 }
 
@@ -434,7 +433,7 @@ type CursorRedeclaredError struct {
 
 func NewCursorRedeclaredError(cursor parser.Identifier) error {
 	return &CursorRedeclaredError{
-		NewBaseError(cursor, fmt.Sprintf(ERROR_CURSOR_REDECLARED, cursor)),
+		NewBaseError(cursor, fmt.Sprintf(ErrorCursorRedeclared, cursor)),
 	}
 }
 
@@ -444,7 +443,7 @@ type UndeclaredCursorError struct {
 
 func NewUndeclaredCursorError(cursor parser.Identifier) error {
 	return &UndeclaredCursorError{
-		NewBaseError(cursor, fmt.Sprintf(ERROR_UNDECLARED_CURSOR, cursor)),
+		NewBaseError(cursor, fmt.Sprintf(ErrorUndeclaredCursor, cursor)),
 	}
 }
 
@@ -454,7 +453,7 @@ type CursorClosedError struct {
 
 func NewCursorClosedError(cursor parser.Identifier) error {
 	return &CursorClosedError{
-		NewBaseError(cursor, fmt.Sprintf(ERROR_CURSOR_CLOSED, cursor)),
+		NewBaseError(cursor, fmt.Sprintf(ErrorCursorClosed, cursor)),
 	}
 }
 
@@ -464,7 +463,7 @@ type CursorOpenError struct {
 
 func NewCursorOpenError(cursor parser.Identifier) error {
 	return &CursorOpenError{
-		NewBaseError(cursor, fmt.Sprintf(ERROR_CURSOR_OPEN, cursor)),
+		NewBaseError(cursor, fmt.Sprintf(errorCursorOpen, cursor)),
 	}
 }
 
@@ -474,7 +473,7 @@ type PseudoCursorError struct {
 
 func NewPseudoCursorError(cursor parser.Identifier) error {
 	return &PseudoCursorError{
-		NewBaseError(cursor, fmt.Sprintf(ERROR_PSEUDO_CURSOR, cursor)),
+		NewBaseError(cursor, fmt.Sprintf(ErrorPseudoCursor, cursor)),
 	}
 }
 
@@ -484,7 +483,7 @@ type CursorFetchLengthError struct {
 
 func NewCursorFetchLengthError(cursor parser.Identifier, returnLen int) error {
 	return &CursorFetchLengthError{
-		NewBaseError(cursor, fmt.Sprintf(ERROR_CURSOR_FETCH_LENGTH, cursor, FormatCount(returnLen, "value"))),
+		NewBaseError(cursor, fmt.Sprintf(ErrorCursorFetchLength, cursor, FormatCount(returnLen, "value"))),
 	}
 }
 
@@ -494,7 +493,7 @@ type InvalidFetchPositionError struct {
 
 func NewInvalidFetchPositionError(position parser.FetchPosition) error {
 	return &InvalidFetchPositionError{
-		NewBaseError(position, fmt.Sprintf(ERROR_INVALID_FETCH_POSITION, position.Number)),
+		NewBaseError(position, fmt.Sprintf(ErrorInvalidFetchPosition, position.Number)),
 	}
 }
 
@@ -504,7 +503,7 @@ type InLineTableRedefinedError struct {
 
 func NewInLineTableRedefinedError(table parser.Identifier) error {
 	return &InLineTableRedefinedError{
-		NewBaseError(table, fmt.Sprintf(ERROR_INLINE_TABLE_REDEFINED, table)),
+		NewBaseError(table, fmt.Sprintf(ErrorInlineTableRedefined, table)),
 	}
 }
 
@@ -514,7 +513,7 @@ type UndefinedInLineTableError struct {
 
 func NewUndefinedInLineTableError(table parser.Identifier) error {
 	return &UndefinedInLineTableError{
-		NewBaseError(table, fmt.Sprintf(ERROR_UNDEFINED_INLINE_TABLE, table)),
+		NewBaseError(table, fmt.Sprintf(ErrorUndefinedInlineTable, table)),
 	}
 }
 
@@ -526,7 +525,7 @@ func NewInlineTableFieldLengthError(query parser.SelectQuery, table parser.Ident
 	selectClause := searchSelectClause(query)
 
 	return &InlineTableFieldLengthError{
-		NewBaseError(selectClause, fmt.Sprintf(ERROR_INLINE_TABLE_FIELD_LENGTH, FormatCount(fieldLen, "field"), table)),
+		NewBaseError(selectClause, fmt.Sprintf(ErrorInlineTableFieldLength, FormatCount(fieldLen, "field"), table)),
 	}
 }
 
@@ -536,7 +535,7 @@ type FileNotExistError struct {
 
 func NewFileNotExistError(file parser.Identifier) error {
 	return &FileNotExistError{
-		NewBaseError(file, fmt.Sprintf(ERROR_FILE_NOT_EXIST, file)),
+		NewBaseError(file, fmt.Sprintf(ErrorFileNotExist, file)),
 	}
 }
 
@@ -546,7 +545,7 @@ type FileAlreadyExistError struct {
 
 func NewFileAlreadyExistError(file parser.Identifier) error {
 	return &FileAlreadyExistError{
-		NewBaseError(file, fmt.Sprintf(ERROR_FILE_ALREADY_EXIST, file)),
+		NewBaseError(file, fmt.Sprintf(ErrorFileAlreadyExist, file)),
 	}
 }
 
@@ -556,7 +555,7 @@ type FileUnableToReadError struct {
 
 func NewFileUnableToReadError(file parser.Identifier) error {
 	return &FileUnableToReadError{
-		NewBaseError(file, fmt.Sprintf(ERROR_FILE_UNABLE_TO_READ, file)),
+		NewBaseError(file, fmt.Sprintf(ErrorFileUnableToRead, file)),
 	}
 }
 
@@ -566,7 +565,7 @@ type FileLockTimeoutError struct {
 
 func NewFileLockTimeoutError(file parser.Identifier, path string) error {
 	return &FileLockTimeoutError{
-		NewBaseError(file, fmt.Sprintf(ERROR_FILE_LOCK_TIMEOUT, path)),
+		NewBaseError(file, fmt.Sprintf(ErrorFileLockTimeout, path)),
 	}
 }
 
@@ -576,7 +575,7 @@ type CsvParsingError struct {
 
 func NewCsvParsingError(file parser.QueryExpression, filepath string, message string) error {
 	return &CsvParsingError{
-		NewBaseError(file, fmt.Sprintf(ERROR_CSV_PARSING, filepath, message)),
+		NewBaseError(file, fmt.Sprintf(ErrorCSVParsing, filepath, message)),
 	}
 }
 
@@ -588,7 +587,7 @@ func NewTableFieldLengthError(query parser.SelectQuery, table parser.Identifier,
 	selectClause := searchSelectClause(query)
 
 	return &TableFieldLengthError{
-		NewBaseError(selectClause, fmt.Sprintf(ERROR_TABLE_FIELD_LENGTH, FormatCount(fieldLen, "field"), table)),
+		NewBaseError(selectClause, fmt.Sprintf(ErrorTableFieldLength, FormatCount(fieldLen, "field"), table)),
 	}
 }
 
@@ -598,7 +597,7 @@ type TemporaryTableRedeclaredError struct {
 
 func NewTemporaryTableRedeclaredError(table parser.Identifier) error {
 	return &TemporaryTableRedeclaredError{
-		NewBaseError(table, fmt.Sprintf(ERROR_TEMPORARY_TABLE_REDECLARED, table)),
+		NewBaseError(table, fmt.Sprintf(ErrorTemporaryTableRedeclared, table)),
 	}
 }
 
@@ -608,7 +607,7 @@ type UndeclaredTemporaryTableError struct {
 
 func NewUndeclaredTemporaryTableError(table parser.Identifier) error {
 	return &UndeclaredTemporaryTableError{
-		NewBaseError(table, fmt.Sprintf(ERROR_UNDECLARED_TEMPORARY_TABLE, table)),
+		NewBaseError(table, fmt.Sprintf(ErrorUndeclaredTemporaryTable, table)),
 	}
 }
 
@@ -620,7 +619,7 @@ func NewTemporaryTableFieldLengthError(query parser.SelectQuery, table parser.Id
 	selectClause := searchSelectClause(query)
 
 	return &TemporaryTableFieldLengthError{
-		NewBaseError(selectClause, fmt.Sprintf(ERROR_TEMPORARY_TABLE_FIELD_LENGTH, FormatCount(fieldLen, "field"), table)),
+		NewBaseError(selectClause, fmt.Sprintf(ErrorTemporaryTableFieldLength, FormatCount(fieldLen, "field"), table)),
 	}
 }
 
@@ -630,7 +629,7 @@ type DuplicateTableNameError struct {
 
 func NewDuplicateTableNameError(table parser.Identifier) error {
 	return &DuplicateTableNameError{
-		NewBaseError(table, fmt.Sprintf(ERROR_DUPLICATE_TABLE_NAME, table)),
+		NewBaseError(table, fmt.Sprintf(ErrorDuplicateTableName, table)),
 	}
 }
 
@@ -640,7 +639,7 @@ type TableNotLoadedError struct {
 
 func NewTableNotLoadedError(table parser.Identifier) error {
 	return &TableNotLoadedError{
-		NewBaseError(table, fmt.Sprintf(ERROR_TABLE_NOT_LOADED, table)),
+		NewBaseError(table, fmt.Sprintf(ErrorTableNotLoaded, table)),
 	}
 }
 
@@ -650,7 +649,7 @@ type StdinEmptyError struct {
 
 func NewStdinEmptyError(stdin parser.Stdin) error {
 	return &StdinEmptyError{
-		NewBaseError(stdin, ERROR_STDIN_EMPTY),
+		NewBaseError(stdin, ErrorStdinEmpty),
 	}
 }
 
@@ -660,7 +659,7 @@ type RowValueLengthInComparisonError struct {
 
 func NewRowValueLengthInComparisonError(expr parser.QueryExpression, valueLen int) error {
 	return &RowValueLengthInComparisonError{
-		NewBaseError(expr, fmt.Sprintf(ERROR_ROW_VALUE_LENGTH_IN_COMPARISON, FormatCount(valueLen, "value"))),
+		NewBaseError(expr, fmt.Sprintf(ErrorRowValueLengthInComparison, FormatCount(valueLen, "value"))),
 	}
 }
 
@@ -670,7 +669,7 @@ type SelectFieldLengthInComparisonError struct {
 
 func NewSelectFieldLengthInComparisonError(query parser.Subquery, valueLen int) error {
 	return &SelectFieldLengthInComparisonError{
-		NewBaseError(query, fmt.Sprintf(ERROR_SELECT_FIELD_LENGTH_IN_COMPARISON, FormatCount(valueLen, "field"))),
+		NewBaseError(query, fmt.Sprintf(ErrorFieldLengthInComparison, FormatCount(valueLen, "field"))),
 	}
 }
 
@@ -680,7 +679,7 @@ type InvalidLimitPercentageError struct {
 
 func NewInvalidLimitPercentageError(clause parser.LimitClause) error {
 	return &InvalidLimitPercentageError{
-		NewBaseError(clause, fmt.Sprintf(ERROR_INVALID_LIMIT_PERCENTAGE, clause.Value)),
+		NewBaseError(clause, fmt.Sprintf(ErrorInvalidLimitPercentage, clause.Value)),
 	}
 }
 
@@ -690,7 +689,7 @@ type InvalidLimitNumberError struct {
 
 func NewInvalidLimitNumberError(clause parser.LimitClause) error {
 	return &InvalidLimitNumberError{
-		NewBaseError(clause, fmt.Sprintf(ERROR_INVALID_LIMIT_NUMBER, clause.Value)),
+		NewBaseError(clause, fmt.Sprintf(ErrorInvalidLimitNumber, clause.Value)),
 	}
 }
 
@@ -700,7 +699,7 @@ type InvalidOffsetNumberError struct {
 
 func NewInvalidOffsetNumberError(clause parser.OffsetClause) error {
 	return &InvalidOffsetNumberError{
-		NewBaseError(clause, fmt.Sprintf(ERROR_INVALID_OFFSET_NUMBER, clause.Value)),
+		NewBaseError(clause, fmt.Sprintf(ErrorInvalidOffsetNumber, clause.Value)),
 	}
 }
 
@@ -712,7 +711,7 @@ func NewCombinedSetFieldLengthError(selectEntity parser.QueryExpression, fieldLe
 	selectClause := searchSelectClauseInSelectEntity(selectEntity)
 
 	return &CombinedSetFieldLengthError{
-		NewBaseError(selectClause, fmt.Sprintf(ERROR_COMBINED_SET_FIELD_LENGTH, FormatCount(fieldLen, "field"))),
+		NewBaseError(selectClause, fmt.Sprintf(ErrorCombinedSetFieldLength, FormatCount(fieldLen, "field"))),
 	}
 }
 
@@ -722,7 +721,7 @@ type InsertRowValueLengthError struct {
 
 func NewInsertRowValueLengthError(rowValue parser.RowValue, valueLen int) error {
 	return &InsertRowValueLengthError{
-		NewBaseError(rowValue, fmt.Sprintf(ERROR_INSERT_ROW_VALUE_LENGTH, FormatCount(valueLen, "value"))),
+		NewBaseError(rowValue, fmt.Sprintf(ErrorInsertRowValueLength, FormatCount(valueLen, "value"))),
 	}
 }
 
@@ -734,7 +733,7 @@ func NewInsertSelectFieldLengthError(query parser.SelectQuery, fieldLen int) err
 	selectClause := searchSelectClause(query)
 
 	return &InsertSelectFieldLengthError{
-		NewBaseError(selectClause, fmt.Sprintf(ERROR_INSERT_SELECT_FIELD_LENGTH, FormatCount(fieldLen, "field"))),
+		NewBaseError(selectClause, fmt.Sprintf(ErrorInsertSelectFieldLength, FormatCount(fieldLen, "field"))),
 	}
 }
 
@@ -744,7 +743,7 @@ type UpdateFieldNotExistError struct {
 
 func NewUpdateFieldNotExistError(field parser.QueryExpression) error {
 	return &UpdateFieldNotExistError{
-		NewBaseError(field, fmt.Sprintf(ERROR_UPDATE_FIELD_NOT_EXIST, field)),
+		NewBaseError(field, fmt.Sprintf(ErrorUpdateFieldNotExist, field)),
 	}
 }
 
@@ -754,7 +753,7 @@ type UpdateValueAmbiguousError struct {
 
 func NewUpdateValueAmbiguousError(field parser.QueryExpression, value parser.QueryExpression) error {
 	return &UpdateValueAmbiguousError{
-		NewBaseError(field, fmt.Sprintf(ERROR_UPDATE_VALUE_AMBIGUOUS, value, field)),
+		NewBaseError(field, fmt.Sprintf(ErrorUpdateValueAmbiguous, value, field)),
 	}
 }
 
@@ -764,7 +763,7 @@ type DeleteTableNotSpecifiedError struct {
 
 func NewDeleteTableNotSpecifiedError(query parser.DeleteQuery) error {
 	return &DeleteTableNotSpecifiedError{
-		NewBaseError(query, ERROR_DELETE_TABLE_NOT_SPECIFIED),
+		NewBaseError(query, ErrorDeleteTableNotSpecified),
 	}
 }
 
@@ -774,7 +773,7 @@ type PrintfReplaceValueLengthError struct {
 
 func NewPrintfReplaceValueLengthError(printf parser.Printf, message string) error {
 	return &PrintfReplaceValueLengthError{
-		NewBaseError(printf, fmt.Sprintf(ERROR_PRINTF_REPLACE_VALUE_LENGTH, message)),
+		NewBaseError(printf, fmt.Sprintf(ErrorPrintfReplaceValueLength, message)),
 	}
 }
 
@@ -784,7 +783,7 @@ type SourceInvalidArgumentError struct {
 
 func NewSourceInvalidArgumentError(source parser.Source, arg parser.QueryExpression) error {
 	return &SourceInvalidArgumentError{
-		NewBaseError(source, fmt.Sprintf(ERROR_SOURCE_INVALID_ARGUMENT, arg)),
+		NewBaseError(source, fmt.Sprintf(ErrorSourceInvalidArgument, arg)),
 	}
 }
 
@@ -794,7 +793,7 @@ type SourceFileNotExistError struct {
 
 func NewSourceFileNotExistError(source parser.Source, fpath string) error {
 	return &SourceFileNotExistError{
-		NewBaseError(source, fmt.Sprintf(ERROR_SOURCE_FILE_NOT_EXIST, fpath)),
+		NewBaseError(source, fmt.Sprintf(ErrorSourceFileNotExist, fpath)),
 	}
 }
 
@@ -804,7 +803,7 @@ type SourceFileUnableToReadError struct {
 
 func NewSourceFileUnableToReadError(source parser.Source, fpath string) error {
 	return &SourceFileUnableToReadError{
-		NewBaseError(source, fmt.Sprintf(ERROR_SOURCE_FILE_UNABLE_TO_READ, fpath)),
+		NewBaseError(source, fmt.Sprintf(ErrorSourceFileUnableToRead, fpath)),
 	}
 }
 
@@ -814,7 +813,7 @@ type InvalidFlagNameError struct {
 
 func NewInvalidFlagNameError(expr parser.Expression, name string) error {
 	return &InvalidFlagNameError{
-		NewBaseError(expr, fmt.Sprintf(ERROR_INVALID_FLAG_NAME, name)),
+		NewBaseError(expr, fmt.Sprintf(ErrorInvalidFlagName, name)),
 	}
 }
 
@@ -824,7 +823,7 @@ type InvalidFlagValueError struct {
 
 func NewInvalidFlagValueError(setFlag parser.SetFlag) error {
 	return &InvalidFlagValueError{
-		NewBaseError(setFlag, fmt.Sprintf(ERROR_INVALID_FLAG_VALUE, setFlag.Value, setFlag.Name)),
+		NewBaseError(setFlag, fmt.Sprintf(ErrorInvalidFlagValue, setFlag.Value, setFlag.Name)),
 	}
 }
 
@@ -834,7 +833,7 @@ type InternalRecordIdNotExistError struct {
 
 func NewInternalRecordIdNotExistError() error {
 	return &InternalRecordIdNotExistError{
-		NewBaseError(parser.NewNullValue(), ERROR_INTERNAL_RECORD_ID_NOT_EXIST),
+		NewBaseError(parser.NewNullValue(), ErrorInternalRecordIdNotExist),
 	}
 }
 
@@ -844,7 +843,7 @@ type InternalRecordIdEmptyError struct {
 
 func NewInternalRecordIdEmptyError() error {
 	return &InternalRecordIdEmptyError{
-		NewBaseError(parser.NewNullValue(), ERROR_INTERNAL_RECORD_ID_EMPTY),
+		NewBaseError(parser.NewNullValue(), ErrorInternalRecordIdEmpty),
 	}
 }
 
@@ -854,17 +853,7 @@ type FieldLengthNotMatchError struct {
 
 func NewFieldLengthNotMatchError() error {
 	return &FieldLengthNotMatchError{
-		NewBaseError(parser.NewNullValue(), ERROR_FIELD_LENGTH_NOT_MATCH),
-	}
-}
-
-type RowValueLengthNotMatchError struct {
-	*BaseError
-}
-
-func NewRowValueLengthNotMatchError() error {
-	return &RowValueLengthNotMatchError{
-		NewBaseError(parser.NewNullValue(), ERROR_ROW_VALUE_LENGTH_NOT_MATCH),
+		NewBaseError(parser.NewNullValue(), ErrorFieldLengthNotMatch),
 	}
 }
 
@@ -875,7 +864,7 @@ type RowValueLengthInListError struct {
 
 func NewRowValueLengthInListError(i int) error {
 	return &RowValueLengthInListError{
-		BaseError: NewBaseError(parser.NewNullValue(), fmt.Sprintf(ERROR_ROW_VALUE_LENGTH_IN_LIST, i)),
+		BaseError: NewBaseError(parser.NewNullValue(), fmt.Sprintf(ErrorRowValueLengthInList, i)),
 		Index:     i,
 	}
 }
@@ -886,7 +875,7 @@ type FormatStringLengthNotMatchError struct {
 
 func NewFormatStringLengthNotMatchError() error {
 	return &FormatStringLengthNotMatchError{
-		BaseError: NewBaseError(parser.NewNullValue(), ERROR_FORMAT_STRING_LENGTH_NOT_MATCH),
+		BaseError: NewBaseError(parser.NewNullValue(), ErrorFormatStringLengthNotMatch),
 	}
 }
 

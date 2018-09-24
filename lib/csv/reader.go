@@ -11,7 +11,7 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 )
 
-var EOF error = io.EOF
+var EOF = io.EOF
 
 type Field []byte
 
@@ -81,7 +81,7 @@ func (r *Reader) Read() ([]Field, error) {
 }
 
 func (r *Reader) ReadAll() ([][]Field, error) {
-	records := [][]Field{}
+	records := make([][]Field, 0)
 
 	for {
 		record, err := r.Read()
