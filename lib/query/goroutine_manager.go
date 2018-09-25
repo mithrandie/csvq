@@ -11,9 +11,6 @@ var goroutineCountMutex sync.Mutex
 
 func useParallelRoutine(recordLen int, minimumRequired int) (int, int) {
 	cpu := cmd.GetFlags().CPU
-	if 2 < cpu {
-		cpu = cpu - 1
-	}
 
 	goroutineCountMutex.Lock()
 	defer goroutineCountMutex.Unlock()
