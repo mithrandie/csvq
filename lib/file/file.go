@@ -10,8 +10,8 @@ import (
 	"github.com/mithrandie/go-file"
 )
 
-var WaitTimeout float64 = 30.0
-var RetryInterval time.Duration = 50 * time.Millisecond
+var WaitTimeout = 30.0
+var RetryInterval = 50 * time.Millisecond
 
 var LockFiles = make(LockFileContainer)
 

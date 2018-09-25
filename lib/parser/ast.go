@@ -9,7 +9,7 @@ import (
 	"github.com/mithrandie/ternary"
 )
 
-const TOKEN_UNDEFINED = 0
+const TokenUndefined = 0
 
 type Statement interface{}
 
@@ -246,7 +246,7 @@ type SelectQuery struct {
 }
 
 func (e SelectQuery) String() string {
-	s := []string{}
+	s := make([]string, 0)
 	if e.WithClause != nil {
 		s = append(s, e.WithClause.String())
 	}
@@ -454,7 +454,7 @@ type InlineTable struct {
 }
 
 func (e InlineTable) String() string {
-	s := []string{}
+	s := make([]string, 0)
 	if !e.Recursive.IsEmpty() {
 		s = append(s, e.Recursive.Literal)
 	}
@@ -693,7 +693,7 @@ type AggregateFunction struct {
 }
 
 func (e AggregateFunction) String() string {
-	s := []string{}
+	s := make([]string, 0)
 	if !e.Distinct.IsEmpty() {
 		s = append(s, e.Distinct.Literal)
 	}
@@ -923,7 +923,7 @@ type ListAgg struct {
 }
 
 func (e ListAgg) String() string {
-	option := []string{}
+	option := make([]string, 0)
 	if !e.Distinct.IsEmpty() {
 		option = append(option, e.Distinct.Literal)
 	}
@@ -957,7 +957,7 @@ type AnalyticFunction struct {
 }
 
 func (e AnalyticFunction) String() string {
-	option := []string{}
+	option := make([]string, 0)
 	if !e.Distinct.IsEmpty() {
 		option = append(option, e.Distinct.Literal)
 	}
@@ -988,7 +988,7 @@ type AnalyticClause struct {
 }
 
 func (e AnalyticClause) String() string {
-	s := []string{}
+	s := make([]string, 0)
 	if e.PartitionClause != nil {
 		s = append(s, e.PartitionClause.String())
 	}
@@ -1066,7 +1066,7 @@ type VariableSubstitution struct {
 }
 
 func (vs VariableSubstitution) String() string {
-	return joinWithSpace([]string{vs.Variable.String(), SUBSTITUTION_OPERATOR, vs.Value.String()})
+	return joinWithSpace([]string{vs.Variable.String(), SubstitutionOperator, vs.Value.String()})
 }
 
 type VariableAssignment struct {

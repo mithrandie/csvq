@@ -356,7 +356,7 @@ func TestNewHeader(t *testing.T) {
 	var expect Header = []HeaderField{
 		{
 			View:   "table1",
-			Column: INTERNAL_ID_COLUMN,
+			Column: InternalIdColumn,
 		},
 		{
 			View:        "table1",

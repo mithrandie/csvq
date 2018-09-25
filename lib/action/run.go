@@ -33,7 +33,7 @@ func Run(input string, sourceFile string) error {
 	proc := query.NewProcedure()
 	flow, err := proc.Execute(statements)
 
-	if err == nil && flow == query.TERMINATE {
+	if err == nil && flow == query.Terminate {
 		err = query.Commit(nil, proc.Filter)
 	}
 
@@ -81,7 +81,7 @@ func LaunchInteractiveShell() error {
 	}
 
 	proc := query.NewProcedure()
-	lines := []string{}
+	lines := make([]string, 0)
 
 	for {
 		line, e := cmd.Terminal.ReadLine()
@@ -127,7 +127,7 @@ func LaunchInteractiveShell() error {
 
 		flow, e := proc.Execute(statements)
 		if e != nil {
-			if ex, ok := e.(*query.Exit); ok {
+			if ex, ok := e.(*query.ForcedExit); ok {
 				err = ex
 				break
 			} else {
@@ -140,7 +140,7 @@ func LaunchInteractiveShell() error {
 			}
 		}
 
-		if flow == query.EXIT {
+		if flow == query.Exit {
 			break
 		}
 

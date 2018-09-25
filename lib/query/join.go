@@ -15,7 +15,7 @@ func ParseJoinCondition(join parser.Join, view *View, joinView *View) (parser.Qu
 
 	if !join.Natural.IsEmpty() {
 		for _, field := range view.Header {
-			if field.Column == INTERNAL_ID_COLUMN {
+			if field.Column == InternalIdColumn {
 				continue
 			}
 			ref := parser.FieldReference{BaseExpr: parser.NewBaseExpr(join.Natural), Column: parser.Identifier{Literal: field.Column}}
@@ -212,7 +212,7 @@ func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, par
 }
 
 func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, direction int, parentFilter *Filter) error {
-	if direction == parser.TOKEN_UNDEFINED {
+	if direction == parser.TokenUndefined {
 		direction = parser.LEFT
 	}
 

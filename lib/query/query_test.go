@@ -3657,13 +3657,13 @@ func TestCommit(t *testing.T) {
 
 	Results = []Result{
 		{
-			Type: CREATE_TABLE,
+			Type: CreateTableQuery,
 			FileInfo: &FileInfo{
 				Path: GetTestFilePath("created_file.csv"),
 			},
 		},
 		{
-			Type: UPDATE,
+			Type: UpdateQuery,
 			FileInfo: &FileInfo{
 				Path: GetTestFilePath("updated_file_1.csv"),
 				File: fp,
@@ -3671,7 +3671,7 @@ func TestCommit(t *testing.T) {
 			OperatedCount: 1,
 		},
 		{
-			Type: UPDATE,
+			Type: UpdateQuery,
 			FileInfo: &FileInfo{
 				Path: GetTestFilePath("updated_file_2.csv"),
 			},
@@ -3699,20 +3699,20 @@ func TestRollback(t *testing.T) {
 
 	Results = []Result{
 		{
-			Type: CREATE_TABLE,
+			Type: CreateTableQuery,
 			FileInfo: &FileInfo{
 				Path: "created_file.csv",
 			},
 		},
 		{
-			Type: UPDATE,
+			Type: UpdateQuery,
 			FileInfo: &FileInfo{
 				Path: "updated_file_1.csv",
 			},
 			OperatedCount: 1,
 		},
 		{
-			Type: UPDATE,
+			Type: UpdateQuery,
 			FileInfo: &FileInfo{
 				Path: "updated_file_2.csv",
 			},

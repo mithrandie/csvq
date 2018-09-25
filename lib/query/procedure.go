@@ -35,14 +35,14 @@ func (proc *Procedure) ExecuteChild(statements []parser.Statement) (StatementFlo
 }
 
 func (proc *Procedure) Execute(statements []parser.Statement) (StatementFlow, error) {
-	flow := TERMINATE
+	flow := Terminate
 
 	for _, stmt := range statements {
 		f, err := proc.ExecuteStatement(stmt)
 		if err != nil {
 			return f, err
 		}
-		if f != TERMINATE {
+		if f != Terminate {
 			flow = f
 			break
 		}
@@ -52,7 +52,7 @@ func (proc *Procedure) Execute(statements []parser.Statement) (StatementFlow, er
 
 func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, error) {
 	flags := cmd.GetFlags()
-	flow := TERMINATE
+	flow := Terminate
 
 	var err error
 
@@ -124,7 +124,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		if view, err = Insert(stmt.(parser.InsertQuery), proc.Filter); err == nil {
 			results = []Result{
 				{
-					Type:          INSERT,
+					Type:          InsertQuery,
 					FileInfo:      view.FileInfo,
 					OperatedCount: view.OperatedRecords,
 				},
@@ -144,7 +144,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			results = make([]Result, len(views))
 			for i, v := range views {
 				results[i] = Result{
-					Type:          UPDATE,
+					Type:          UpdateQuery,
 					FileInfo:      v.FileInfo,
 					OperatedCount: v.OperatedRecords,
 				}
@@ -164,7 +164,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			results = make([]Result, len(views))
 			for i, v := range views {
 				results[i] = Result{
-					Type:          DELETE,
+					Type:          DeleteQuery,
 					FileInfo:      v.FileInfo,
 					OperatedCount: v.OperatedRecords,
 				}
@@ -180,7 +180,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		if view, err = CreateTable(stmt.(parser.CreateTable), proc.Filter); err == nil {
 			results = []Result{
 				{
-					Type:     CREATE_TABLE,
+					Type:     CreateTableQuery,
 					FileInfo: view.FileInfo,
 				},
 			}
@@ -192,7 +192,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		if view, err = AddColumns(stmt.(parser.AddColumns), proc.Filter); err == nil {
 			results = []Result{
 				{
-					Type:          ADD_COLUMNS,
+					Type:          AddColumnsQuery,
 					FileInfo:      view.FileInfo,
 					OperatedCount: view.OperatedFields,
 				},
@@ -205,7 +205,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		if view, err = DropColumns(stmt.(parser.DropColumns), proc.Filter); err == nil {
 			results = []Result{
 				{
-					Type:          DROP_COLUMNS,
+					Type:          DropColumnsQuery,
 					FileInfo:      view.FileInfo,
 					OperatedCount: view.OperatedFields,
 				},
@@ -218,7 +218,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		if view, err = RenameColumn(stmt.(parser.RenameColumn), proc.Filter); err == nil {
 			results = []Result{
 				{
-					Type:          RENAME_COLUMN,
+					Type:          RenameColumnQuery,
 					FileInfo:      view.FileInfo,
 					OperatedCount: view.OperatedFields,
 				},
@@ -237,9 +237,9 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 	case parser.FlowControl:
 		switch stmt.(parser.FlowControl).Token {
 		case parser.CONTINUE:
-			flow = CONTINUE
+			flow = Continue
 		case parser.BREAK:
-			flow = BREAK
+			flow = Break
 		}
 	case parser.Exit:
 		ex := stmt.(parser.Exit)
@@ -248,16 +248,16 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			code = int(ex.Code.(value.Integer).Raw())
 		}
 		if 0 < code {
-			flow = ERROR
-			err = NewExit(code)
+			flow = Error
+			err = NewForcedExit(code)
 		} else {
-			flow = EXIT
+			flow = Exit
 		}
 	case parser.Return:
 		var ret value.Primary
 		if ret, err = proc.Filter.Evaluate(stmt.(parser.Return).Value); err == nil {
 			proc.ReturnVal = ret
-			flow = RETURN
+			flow = Return
 		}
 	case parser.If:
 		flow, err = proc.IfStmt(stmt.(parser.If))
@@ -319,7 +319,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 	}
 
 	if err != nil {
-		flow = ERROR
+		flow = Error
 	}
 	return flow, err
 }
@@ -337,7 +337,7 @@ func (proc *Procedure) IfStmt(stmt parser.If) (StatementFlow, error) {
 	for _, v := range stmts {
 		p, err := proc.Filter.Evaluate(v.Condition)
 		if err != nil {
-			return ERROR, err
+			return Error, err
 		}
 		if p.Ternary() == ternary.TRUE {
 			return proc.ExecuteChild(v.Statements)
@@ -347,7 +347,7 @@ func (proc *Procedure) IfStmt(stmt parser.If) (StatementFlow, error) {
 	if stmt.Else.Statements != nil {
 		return proc.ExecuteChild(stmt.Else.Statements)
 	}
-	return TERMINATE, nil
+	return Terminate, nil
 }
 
 func (proc *Procedure) Case(stmt parser.Case) (StatementFlow, error) {
@@ -356,7 +356,7 @@ func (proc *Procedure) Case(stmt parser.Case) (StatementFlow, error) {
 	if stmt.Value != nil {
 		val, err = proc.Filter.Evaluate(stmt.Value)
 		if err != nil {
-			return ERROR, err
+			return Error, err
 		}
 	}
 
@@ -365,7 +365,7 @@ func (proc *Procedure) Case(stmt parser.Case) (StatementFlow, error) {
 
 		cond, err := proc.Filter.Evaluate(when.Condition)
 		if err != nil {
-			return ERROR, err
+			return Error, err
 		}
 
 		if val == nil {
@@ -380,7 +380,7 @@ func (proc *Procedure) Case(stmt parser.Case) (StatementFlow, error) {
 	}
 
 	if stmt.Else.Statements == nil {
-		return TERMINATE, nil
+		return Terminate, nil
 	}
 	return proc.ExecuteChild(stmt.Else.Statements)
 }
@@ -392,7 +392,7 @@ func (proc *Procedure) While(stmt parser.While) (StatementFlow, error) {
 		childProc.Filter.ResetCurrentScope()
 		p, err := proc.Filter.Evaluate(stmt.Condition)
 		if err != nil {
-			return ERROR, err
+			return Error, err
 		}
 		if p.Ternary() != ternary.TRUE {
 			break
@@ -400,17 +400,17 @@ func (proc *Procedure) While(stmt parser.While) (StatementFlow, error) {
 
 		f, err := childProc.Execute(stmt.Statements)
 		if err != nil {
-			return ERROR, err
+			return Error, err
 		}
 
-		if f == BREAK {
-			return TERMINATE, nil
+		if f == Break {
+			return Terminate, nil
 		}
-		if f == EXIT {
-			return EXIT, nil
+		if f == Exit {
+			return Exit, nil
 		}
 	}
-	return TERMINATE, nil
+	return Terminate, nil
 }
 
 func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, error) {
@@ -432,7 +432,7 @@ func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, 
 
 		success, err := FetchCursor(stmt.Cursor, fetchPosition, stmt.Variables, childProc.Filter)
 		if err != nil {
-			return ERROR, err
+			return Error, err
 		}
 		if !success {
 			break
@@ -440,18 +440,18 @@ func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, 
 
 		f, err := childProc.Execute(stmt.Statements)
 		if err != nil {
-			return ERROR, err
+			return Error, err
 		}
 
-		if f == BREAK {
-			return TERMINATE, nil
+		if f == Break {
+			return Terminate, nil
 		}
-		if f == EXIT {
-			return EXIT, nil
+		if f == Exit {
+			return Exit, nil
 		}
 	}
 
-	return TERMINATE, nil
+	return Terminate, nil
 }
 
 func (proc *Procedure) showExecutionTime() {

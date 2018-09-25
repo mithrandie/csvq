@@ -574,7 +574,7 @@ func (view *View) group(items []parser.QueryExpression) error {
 	}
 
 	groups := make(map[string][]int)
-	groupKeys := []string{}
+	groupKeys := make([]string, 0)
 	for i, key := range keys {
 		if _, ok := groups[key]; ok {
 			groups[key] = append(groups[key], i)
@@ -888,7 +888,7 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 }
 
 func (view *View) additionalColumns(expr parser.QueryExpression) ([]string, error) {
-	list := []string{}
+	list := make([]string, 0)
 
 	switch expr.(type) {
 	case parser.FieldReference, parser.ColumnNumber:
@@ -955,7 +955,7 @@ func (view *View) additionalColumns(expr parser.QueryExpression) ([]string, erro
 }
 
 func (view *View) ExtendRecordCapacity(exprs []parser.QueryExpression) error {
-	additions := []string{}
+	additions := make([]string, 0)
 	for _, expr := range exprs {
 		columns, err := view.additionalColumns(expr)
 		if err != nil {

@@ -184,7 +184,7 @@ var scanTests = []struct {
 		Input: "====",
 		Output: []scanResult{
 			{
-				Token:   UNCATEGORIZED,
+				Token:   Uncategorized,
 				Literal: "====",
 			},
 		},
