@@ -14,7 +14,7 @@ after_success:
   - bash <(curl -s https://codecov.io/bash)
 
 before_deploy:
-  - make build-all
+  - env GO111MODULE=on make build-all
   - make dist
 
 deploy:
