@@ -1,11 +1,12 @@
 package: github.com/mithrandie/csvq
 import:
 - package: github.com/urfave/cli
-  version: ^1.19.1
+  version: ^1.20.0
 - package: github.com/mithrandie/go-file
-  version: ^1.0.0
+  version: ^1.1.0
 - package: github.com/chzyer/readline
   version: ^1.4.0
 - package: github.com/mitchellh/go-homedir
-- package: github.com/mithrandie/ternary
   version: ^1.0.0
+- package: github.com/mithrandie/ternary
+  version: ^1.1.0

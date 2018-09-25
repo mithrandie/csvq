@@ -13,59 +13,34 @@ DIST_DIRS := find * -type d -exec
 $(BINARY): $(SOURCES)
 	go build $(LDFLAGS) -o $(BINARY)
 
-.PHONY: deps
-deps: glide
-	glide install
-
 .PHONY: install
 install:
 	go install $(LDFLAGS)
 
-.PHONY: glide
-glide:
-ifeq ($(shell command -v glide 2>/dev/null),)
-	curl https://glide.sh/get | sh
-endif
-
-.PHONY: goyacc
-goyacc:
+.PHONY: install-goyacc
+install-goyacc:
 ifeq ($(shell command -v goyacc 2>/dev/null),)
 	go get -u github.com/cznic/goyacc
 endif
 
 .PHONY: yacc
-yacc: goyacc
+yacc: install-goyacc
 	cd lib/parser && \
 	goyacc -o parser.go -v parser.output parser.y && \
 	cd ../..
-
-.PHONY: test
-test:
-	go test -cover `glide novendor`
-
-.PHONY: test-all-cov
-test-all-cov:
-	echo "" > coverage.txt
-	for d in `go list ./... | grep -v vendor`; do \
-		go test -coverprofile=profile.out -covermode=atomic $$d; \
-		if [ -f profile.out ]; then \
-			cat profile.out >> coverage.txt; \
-			rm profile.out; \
-		fi; \
-	done
 
 .PHONY: clean
 clean:
 	if [ -f $(BINARY) ]; then rm $(BINARY); fi
 
-.PHONY: gox
-gox:
+.PHONY: install-gox
+install-gox:
 ifeq ($(shell command -v gox 2>/dev/null),)
-	go get github.com/mitchellh/gox
+	go get -u github.com/mitchellh/gox
 endif
 
 .PHONY: build-all
-build-all: gox
+build-all: install-gox
 	gox $(LDFLAGS) -output="dist/${BINARY}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}"
 
 .PHONY: dist
