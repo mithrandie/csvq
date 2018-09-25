@@ -109,7 +109,7 @@ func (tf textField) width() int {
 	return w
 }
 
-func NewTextField(s string, sign int) textField {
+func NewTextField(s string, sign int) *textField {
 	values := strings.Split(s, "\n")
 	widths := make([]int, len(values))
 
@@ -117,7 +117,7 @@ func NewTextField(s string, sign int) textField {
 		widths[i] = stringWidth(v)
 	}
 
-	return textField{
+	return &textField{
 		values: values,
 		widths: widths,
 		sign:   sign,
@@ -171,14 +171,14 @@ func encodeText(view *View) string {
 		return "Empty RecordSet"
 	}
 
-	header := make([]textField, view.FieldLen())
+	header := make([]*textField, view.FieldLen())
 	for i := range view.Header {
 		header[i] = NewTextField(view.Header[i].Column, -1)
 	}
 
-	records := make([][]textField, view.RecordLen())
+	records := make([][]*textField, view.RecordLen())
 	for i, record := range view.RecordSet {
-		records[i] = make([]textField, view.FieldLen())
+		records[i] = make([]*textField, view.FieldLen())
 		for j, cell := range record {
 			records[i][j] = formatTextCell(cell)
 		}
@@ -222,7 +222,7 @@ func formatHR(lens []int) string {
 	return strings.Join(s, "")
 }
 
-func formatRecord(record []textField, fieldWidths []int) string {
+func formatRecord(record []*textField, fieldWidths []int) string {
 	lineCount := 0
 	for _, tf := range record {
 		n := len(tf.values)
@@ -236,23 +236,23 @@ func formatRecord(record []textField, fieldWidths []int) string {
 	for lineIdx := 0; lineIdx < lineCount; lineIdx++ {
 		sl := make([]string, len(record)+1)
 		for fieldIdx, tf := range record {
-			var value string
+			var v string
 			if lineIdx < len(tf.values) {
 				pad := strings.Repeat(" ", fieldWidths[fieldIdx]-tf.widths[lineIdx])
 				if tf.sign < 0 {
 					runes := []rune(tf.values[lineIdx])
 					if 0 < len(runes) && unicode.In(runes[0], rightToLeftTable) {
-						value = pad + tf.values[lineIdx]
+						v = pad + tf.values[lineIdx]
 					} else {
-						value = tf.values[lineIdx] + pad
+						v = tf.values[lineIdx] + pad
 					}
 				} else {
-					value = pad + tf.values[lineIdx]
+					v = pad + tf.values[lineIdx]
 				}
 			} else {
-				value = strings.Repeat(" ", fieldWidths[fieldIdx])
+				v = strings.Repeat(" ", fieldWidths[fieldIdx])
 			}
-			sl[fieldIdx] = fmt.Sprintf("| %s ", value)
+			sl[fieldIdx] = fmt.Sprintf("| %s ", v)
 		}
 		sl[len(sl)-1] = "|"
 		s[lineIdx] = strings.Join(sl, "")
@@ -275,7 +275,7 @@ func stringWidth(s string) int {
 	return l
 }
 
-func formatTextCell(c Cell) textField {
+func formatTextCell(c Cell) *textField {
 	primary := c.Value()
 
 	var s string
@@ -410,7 +410,7 @@ func formatJsonCell(c Cell) string {
 
 func escapeJsonString(s string) string {
 	runes := []rune(s)
-	encoded := []rune{}
+	encoded := make([]rune, 0)
 
 	for _, r := range runes {
 		switch r {

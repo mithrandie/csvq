@@ -70,8 +70,8 @@ func (f Format) String() string {
 }
 
 const (
-	CSV_EXT = ".csv"
-	TSV_EXT = ".tsv"
+	CsvExt = ".csv"
+	TsvExt = ".tsv"
 )
 
 type Flags struct {

@@ -10,21 +10,21 @@ import (
 type ComparisonResult int
 
 const (
-	EQUAL ComparisonResult = iota
-	BOOL_EQUAL
-	NOT_EQUAL
-	LESS
-	GREATER
-	INCOMMENSURABLE
+	IsEqual ComparisonResult = iota
+	IsBoolEqual
+	IsNotEqual
+	IsLess
+	IsGreater
+	IsIncommensurable
 )
 
 var comparisonResultLiterals = map[ComparisonResult]string{
-	EQUAL:           "EQUAL",
-	BOOL_EQUAL:      "BOOL_EQUAL",
-	NOT_EQUAL:       "NOT_EQUAL",
-	LESS:            "LESS",
-	GREATER:         "GREATER",
-	INCOMMENSURABLE: "INCOMMENSURABLE",
+	IsEqual:           "IsEqual",
+	IsBoolEqual:       "IsBoolEqual",
+	IsNotEqual:        "IsNotEqual",
+	IsLess:            "IsLess",
+	IsGreater:         "IsGreater",
+	IsIncommensurable: "IsIncommensurable",
 }
 
 func (cr ComparisonResult) String() string {
@@ -33,7 +33,7 @@ func (cr ComparisonResult) String() string {
 
 func CompareCombinedly(p1 Primary, p2 Primary) ComparisonResult {
 	if IsNull(p1) || IsNull(p2) {
-		return INCOMMENSURABLE
+		return IsIncommensurable
 	}
 
 	if i1 := ToInteger(p1); !IsNull(i1) {
@@ -41,11 +41,11 @@ func CompareCombinedly(p1 Primary, p2 Primary) ComparisonResult {
 			v1 := i1.(Integer).Raw()
 			v2 := i2.(Integer).Raw()
 			if v1 == v2 {
-				return EQUAL
+				return IsEqual
 			} else if v1 < v2 {
-				return LESS
+				return IsLess
 			} else {
-				return GREATER
+				return IsGreater
 			}
 		}
 	}
@@ -55,11 +55,11 @@ func CompareCombinedly(p1 Primary, p2 Primary) ComparisonResult {
 			v1 := f1.(Float).Raw()
 			v2 := f2.(Float).Raw()
 			if v1 == v2 {
-				return EQUAL
+				return IsEqual
 			} else if v1 < v2 {
-				return LESS
+				return IsLess
 			} else {
-				return GREATER
+				return IsGreater
 			}
 		}
 	}
@@ -69,11 +69,11 @@ func CompareCombinedly(p1 Primary, p2 Primary) ComparisonResult {
 			v1 := d1.(Datetime).Raw()
 			v2 := d2.(Datetime).Raw()
 			if v1.Equal(v2) {
-				return EQUAL
+				return IsEqual
 			} else if v1.Before(v2) {
-				return LESS
+				return IsLess
 			} else {
-				return GREATER
+				return IsGreater
 			}
 		}
 	}
@@ -83,9 +83,9 @@ func CompareCombinedly(p1 Primary, p2 Primary) ComparisonResult {
 			v1 := b1.(Boolean).Raw()
 			v2 := b2.(Boolean).Raw()
 			if v1 == v2 {
-				return BOOL_EQUAL
+				return IsBoolEqual
 			} else {
-				return NOT_EQUAL
+				return IsNotEqual
 			}
 		}
 	}
@@ -96,56 +96,56 @@ func CompareCombinedly(p1 Primary, p2 Primary) ComparisonResult {
 			v2 := strings.ToUpper(strings.TrimSpace(s2.Raw()))
 
 			if v1 == v2 {
-				return EQUAL
+				return IsEqual
 			} else if v1 < v2 {
-				return LESS
+				return IsLess
 			} else {
-				return GREATER
+				return IsGreater
 			}
 		}
 	}
 
-	return INCOMMENSURABLE
+	return IsIncommensurable
 }
 
 func Equal(p1 Primary, p2 Primary) ternary.Value {
-	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE {
-		return ternary.ConvertFromBool(r == EQUAL || r == BOOL_EQUAL)
+	if r := CompareCombinedly(p1, p2); r != IsIncommensurable {
+		return ternary.ConvertFromBool(r == IsEqual || r == IsBoolEqual)
 	}
 	return ternary.UNKNOWN
 }
 
 func NotEqual(p1 Primary, p2 Primary) ternary.Value {
-	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE {
-		return ternary.ConvertFromBool(r != EQUAL && r != BOOL_EQUAL)
+	if r := CompareCombinedly(p1, p2); r != IsIncommensurable {
+		return ternary.ConvertFromBool(r != IsEqual && r != IsBoolEqual)
 	}
 	return ternary.UNKNOWN
 }
 
 func Less(p1 Primary, p2 Primary) ternary.Value {
-	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE && r != NOT_EQUAL && r != BOOL_EQUAL {
-		return ternary.ConvertFromBool(r == LESS)
+	if r := CompareCombinedly(p1, p2); r != IsIncommensurable && r != IsNotEqual && r != IsBoolEqual {
+		return ternary.ConvertFromBool(r == IsLess)
 	}
 	return ternary.UNKNOWN
 }
 
 func Greater(p1 Primary, p2 Primary) ternary.Value {
-	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE && r != NOT_EQUAL && r != BOOL_EQUAL {
-		return ternary.ConvertFromBool(r == GREATER)
+	if r := CompareCombinedly(p1, p2); r != IsIncommensurable && r != IsNotEqual && r != IsBoolEqual {
+		return ternary.ConvertFromBool(r == IsGreater)
 	}
 	return ternary.UNKNOWN
 }
 
 func LessOrEqual(p1 Primary, p2 Primary) ternary.Value {
-	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE && r != NOT_EQUAL && r != BOOL_EQUAL {
-		return ternary.ConvertFromBool(r != GREATER)
+	if r := CompareCombinedly(p1, p2); r != IsIncommensurable && r != IsNotEqual && r != IsBoolEqual {
+		return ternary.ConvertFromBool(r != IsGreater)
 	}
 	return ternary.UNKNOWN
 }
 
 func GreaterOrEqual(p1 Primary, p2 Primary) ternary.Value {
-	if r := CompareCombinedly(p1, p2); r != INCOMMENSURABLE && r != NOT_EQUAL && r != BOOL_EQUAL {
-		return ternary.ConvertFromBool(r != LESS)
+	if r := CompareCombinedly(p1, p2); r != IsIncommensurable && r != IsNotEqual && r != IsBoolEqual {
+		return ternary.ConvertFromBool(r != IsLess)
 	}
 	return ternary.UNKNOWN
 }
@@ -180,7 +180,7 @@ func CompareRowValues(rowValue1 RowValue, rowValue2 RowValue, operator string) (
 	for i := 0; i < len(rowValue1); i++ {
 		r := CompareCombinedly(rowValue1[i], rowValue2[i])
 
-		if r == INCOMMENSURABLE {
+		if r == IsIncommensurable {
 			switch operator {
 			case "=", "<>", "!=":
 				if i < len(rowValue1)-1 {
@@ -194,32 +194,32 @@ func CompareRowValues(rowValue1 RowValue, rowValue2 RowValue, operator string) (
 
 		switch operator {
 		case ">", "<", ">=", "<=":
-			if r == NOT_EQUAL || r == BOOL_EQUAL {
+			if r == IsNotEqual || r == IsBoolEqual {
 				return ternary.UNKNOWN, nil
 			}
 		}
 
 		switch operator {
 		case "=":
-			if r != EQUAL && r != BOOL_EQUAL {
+			if r != IsEqual && r != IsBoolEqual {
 				return ternary.FALSE, nil
 			}
 		case ">", ">=":
 			switch r {
-			case GREATER:
+			case IsGreater:
 				return ternary.TRUE, nil
-			case LESS:
+			case IsLess:
 				return ternary.FALSE, nil
 			}
 		case "<", "<=":
 			switch r {
-			case LESS:
+			case IsLess:
 				return ternary.TRUE, nil
-			case GREATER:
+			case IsGreater:
 				return ternary.FALSE, nil
 			}
 		case "<>", "!=":
-			if r != EQUAL && r != BOOL_EQUAL {
+			if r != IsEqual && r != IsBoolEqual {
 				return ternary.TRUE, nil
 			}
 		}

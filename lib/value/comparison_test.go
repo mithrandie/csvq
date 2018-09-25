@@ -7,8 +7,8 @@ import (
 )
 
 func TestComparisonResult_String(t *testing.T) {
-	if EQUAL.String() != "EQUAL" {
-		t.Errorf("string = %s, want %s for %s.String()", EQUAL.String(), "EQUAL", EQUAL)
+	if IsEqual.String() != "IsEqual" {
+		t.Errorf("string = %s, want %s for %s.String()", IsEqual.String(), "IsEqual", IsEqual)
 	}
 }
 
@@ -20,82 +20,82 @@ var compareCombinedlyTests = []struct {
 	{
 		LHS:    NewInteger(1),
 		RHS:    NewNull(),
-		Result: INCOMMENSURABLE,
+		Result: IsIncommensurable,
 	},
 	{
 		LHS:    NewIntegerFromString("1"),
 		RHS:    NewInteger(1),
-		Result: EQUAL,
+		Result: IsEqual,
 	},
 	{
 		LHS:    NewInteger(1),
 		RHS:    NewInteger(2),
-		Result: LESS,
+		Result: IsLess,
 	},
 	{
 		LHS:    NewInteger(2),
 		RHS:    NewInteger(1),
-		Result: GREATER,
+		Result: IsGreater,
 	},
 	{
 		LHS:    NewFloatFromString("1.5"),
 		RHS:    NewFloat(1.5),
-		Result: EQUAL,
+		Result: IsEqual,
 	},
 	{
 		LHS:    NewFloat(1.5),
 		RHS:    NewFloat(2.0),
-		Result: LESS,
+		Result: IsLess,
 	},
 	{
 		LHS:    NewFloat(1.5),
 		RHS:    NewFloat(1.0),
-		Result: GREATER,
+		Result: IsGreater,
 	},
 	{
 		LHS:    NewDatetimeFromString("2006-01-02T15:04:05-07:00"),
 		RHS:    NewDatetimeFromString("2006-01-02T15:04:05-07:00"),
-		Result: EQUAL,
+		Result: IsEqual,
 	},
 	{
 		LHS:    NewDatetimeFromString("2006-01-02T15:04:05-07:00"),
 		RHS:    NewDatetimeFromString("2006-02-02T15:04:05-07:00"),
-		Result: LESS,
+		Result: IsLess,
 	},
 	{
 		LHS:    NewDatetimeFromString("2006-02-02T15:04:05-07:00"),
 		RHS:    NewDatetimeFromString("2006-01-02T15:04:05-07:00"),
-		Result: GREATER,
+		Result: IsGreater,
 	},
 	{
 		LHS:    NewBoolean(true),
 		RHS:    NewBoolean(true),
-		Result: BOOL_EQUAL,
+		Result: IsBoolEqual,
 	},
 	{
 		LHS:    NewBoolean(true),
 		RHS:    NewBoolean(false),
-		Result: NOT_EQUAL,
+		Result: IsNotEqual,
 	},
 	{
 		LHS:    NewString(" A "),
 		RHS:    NewString("a"),
-		Result: EQUAL,
+		Result: IsEqual,
 	},
 	{
 		LHS:    NewString("A"),
 		RHS:    NewString("B"),
-		Result: LESS,
+		Result: IsLess,
 	},
 	{
 		LHS:    NewString("B"),
 		RHS:    NewString("A"),
-		Result: GREATER,
+		Result: IsGreater,
 	},
 	{
 		LHS:    NewString("B"),
 		RHS:    NewTernaryFromString("true"),
-		Result: INCOMMENSURABLE,
+		Result: IsIncommensurable,
 	},
 }
 

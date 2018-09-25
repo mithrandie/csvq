@@ -13,7 +13,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var version = "v1.1.1"
+var version = "v1.2.0"
 
 func main() {
 	cli.AppHelpTemplate = appHHelpTemplate
@@ -179,7 +179,7 @@ func main() {
 			code := 1
 			if apperr, ok := err.(query.AppError); ok {
 				code = apperr.GetCode()
-			} else if ex, ok := err.(*query.Exit); ok {
+			} else if ex, ok := err.(*query.ForcedExit); ok {
 				code = ex.GetCode()
 			}
 			return cli.NewExitError(err.Error(), code)

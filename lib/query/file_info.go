@@ -32,10 +32,10 @@ func NewFileInfo(filename parser.Identifier, repository string, delimiter rune) 
 	var err error
 
 	if info, err = os.Stat(fpath); err != nil {
-		if info, err = os.Stat(fpath + cmd.CSV_EXT); err == nil {
-			fpath = fpath + cmd.CSV_EXT
-		} else if info, err = os.Stat(fpath + cmd.TSV_EXT); err == nil {
-			fpath = fpath + cmd.TSV_EXT
+		if info, err = os.Stat(fpath + cmd.CsvExt); err == nil {
+			fpath = fpath + cmd.CsvExt
+		} else if info, err = os.Stat(fpath + cmd.TsvExt); err == nil {
+			fpath = fpath + cmd.TsvExt
 		} else {
 			return nil, NewFileNotExistError(filename)
 		}
@@ -51,7 +51,7 @@ func NewFileInfo(filename parser.Identifier, repository string, delimiter rune) 
 	}
 
 	if delimiter == cmd.UNDEF {
-		if strings.EqualFold(filepath.Ext(fpath), cmd.TSV_EXT) {
+		if strings.EqualFold(filepath.Ext(fpath), cmd.TsvExt) {
 			delimiter = '\t'
 		} else {
 			delimiter = ','
@@ -75,7 +75,7 @@ func NewFileInfoForCreate(finename parser.Identifier, repository string, delimit
 	}
 
 	if delimiter == cmd.UNDEF {
-		if strings.EqualFold(filepath.Ext(fpath), cmd.TSV_EXT) {
+		if strings.EqualFold(filepath.Ext(fpath), cmd.TsvExt) {
 			delimiter = '\t'
 		} else {
 			delimiter = ','

@@ -14,24 +14,24 @@ import (
 type StatementFlow int
 
 const (
-	TERMINATE StatementFlow = iota
-	ERROR
-	EXIT
-	BREAK
-	CONTINUE
-	RETURN
+	Terminate StatementFlow = iota
+	Error
+	Exit
+	Break
+	Continue
+	Return
 )
 
 type OperationType int
 
 const (
-	INSERT OperationType = iota
-	UPDATE
-	DELETE
-	CREATE_TABLE
-	ADD_COLUMNS
-	DROP_COLUMNS
-	RENAME_COLUMN
+	InsertQuery OperationType = iota
+	UpdateQuery
+	DeleteQuery
+	CreateTableQuery
+	AddColumnsQuery
+	DropColumnsQuery
+	RenameColumnQuery
 )
 
 type Result struct {
@@ -41,8 +41,8 @@ type Result struct {
 }
 
 var ViewCache = ViewMap{}
-var Results = []Result{}
-var SelectLogs = []string{}
+var Results = make([]Result, 0)
+var SelectLogs = make([]string, 0)
 
 func ReleaseResources() {
 	ViewCache.Clean()
@@ -461,7 +461,7 @@ func Update(query parser.UpdateQuery, parentFilter *Filter) ([]*View, error) {
 		}
 	}
 
-	views := []*View{}
+	views := make([]*View, 0)
 	for k, v := range viewsToUpdate {
 		v.RestoreHeaderReferences()
 		v.OperatedRecords = updatedCount[k]
@@ -546,7 +546,7 @@ func Delete(query parser.DeleteQuery, parentFilter *Filter) ([]*View, error) {
 		}
 	}
 
-	views := []*View{}
+	views := make([]*View, 0)
 	for k, v := range viewsToDelete {
 		records := make(RecordSet, 0, v.RecordLen()-len(deletedIndices[k]))
 		for i, record := range v.RecordSet {
@@ -846,7 +846,7 @@ func Commit(expr parser.Expression, filter *Filter) error {
 	for _, result := range Results {
 		if result.FileInfo != nil {
 			switch result.Type {
-			case CREATE_TABLE:
+			case CreateTableQuery:
 				createFiles[result.FileInfo.Path] = result.FileInfo
 			default:
 				if !result.FileInfo.IsTemporary && 0 < result.OperatedCount {
@@ -912,7 +912,7 @@ func Rollback(filter *Filter) {
 	for _, result := range Results {
 		if result.FileInfo != nil {
 			switch result.Type {
-			case CREATE_TABLE:
+			case CreateTableQuery:
 				createFiles[result.FileInfo.Path] = result.FileInfo
 			default:
 				if !result.FileInfo.IsTemporary && 0 < result.OperatedCount {

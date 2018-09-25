@@ -149,7 +149,7 @@ func Median(list []value.Primary) value.Primary {
 }
 
 func ListAgg(list []value.Primary, separator string) value.Primary {
-	strlist := []string{}
+	strlist := make([]string, 0)
 	for _, v := range list {
 		s := value.ToString(v)
 		if value.IsNull(s) {

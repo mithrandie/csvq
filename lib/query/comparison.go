@@ -81,7 +81,7 @@ func Like(p1 value.Primary, p2 value.Primary) ternary.Value {
 func stringPattern(pattern []rune, position int) (int, int, string, int) {
 	anyRunesMinLen := 0
 	anyRunesMaxLen := 0
-	search := []rune{}
+	search := make([]rune, 0)
 	returnPostion := position
 
 	escaped := false

@@ -6,7 +6,7 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
-const INTERNAL_ID_COLUMN = "@__internal_id"
+const InternalIdColumn = "@__internal_id"
 
 type HeaderField struct {
 	View         string
@@ -29,7 +29,7 @@ func NewHeaderWithId(view string, words []string) Header {
 	h := make([]HeaderField, len(words)+1)
 
 	h[0].View = view
-	h[0].Column = INTERNAL_ID_COLUMN
+	h[0].Column = InternalIdColumn
 
 	for i, v := range words {
 		h[i+1].View = view
@@ -80,7 +80,7 @@ func (h Header) Len() int {
 }
 
 func (h Header) TableColumns() []parser.QueryExpression {
-	columns := []parser.QueryExpression{}
+	columns := make([]parser.QueryExpression, 0)
 	for _, f := range h {
 		if !f.IsFromTable {
 			continue
@@ -99,7 +99,7 @@ func (h Header) TableColumns() []parser.QueryExpression {
 }
 
 func (h Header) TableColumnNames() []string {
-	names := []string{}
+	names := make([]string, 0)
 	for _, f := range h {
 		if !f.IsFromTable {
 			continue
@@ -199,7 +199,7 @@ func (h Header) Contains(fieldRef parser.FieldReference) (int, error) {
 func (h Header) ContainsInternalId(viewName string) (int, error) {
 	fieldRef := parser.FieldReference{
 		View:   parser.Identifier{Literal: viewName},
-		Column: parser.Identifier{Literal: INTERNAL_ID_COLUMN},
+		Column: parser.Identifier{Literal: InternalIdColumn},
 	}
 	return h.Contains(fieldRef)
 }

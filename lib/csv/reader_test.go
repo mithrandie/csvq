@@ -221,7 +221,7 @@ func BenchmarkReader_ReadAll(b *testing.B) {
 	}
 }
 
-var row []Field = []Field{
+var row = []Field{
 	[]byte("aaaaaaaaaa"),
 	[]byte("bbbbbbbbbb"),
 	nil,

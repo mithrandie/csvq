@@ -23,7 +23,7 @@ func NewTerminal() (VirtualTerminal, error) {
 	}
 
 	return SSHTerminal{
-		terminal: terminal.NewTerminal(NewStdIO(), TERMINAL_PROMPT),
+		terminal: terminal.NewTerminal(NewStdIO(), TerminalPrompt),
 		oldFd:    oldFd,
 		oldState: oldState,
 	}, nil
@@ -43,11 +43,11 @@ func (t SSHTerminal) Write(s string) error {
 }
 
 func (t SSHTerminal) SetPrompt() {
-	t.terminal.SetPrompt(TERMINAL_PROMPT)
+	t.terminal.SetPrompt(TerminalPrompt)
 }
 
 func (t SSHTerminal) SetContinuousPrompt() {
-	t.terminal.SetPrompt(TERMINAL_CONTINUOUS_PROMPT)
+	t.terminal.SetPrompt(TerminalContinuousPrompt)
 }
 
 func (t SSHTerminal) SaveHistory(s string) {

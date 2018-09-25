@@ -1,3 +1,7 @@
+## Release v1.2.0 (2018-09-25)
+
+- Support for Go 1.11 Modules
+
 ## Release v1.1.1 (2018-04-05)
 
 - Implement string functions.
@@ -6,7 +10,7 @@
 
 ## Release v1.1.0 (2018-02-28)
 
-- Support to Go 1.10
+- Support for Go 1.10
 
 ## Release v1.0.2 (2017-12-08)
 

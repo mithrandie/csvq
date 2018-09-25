@@ -381,7 +381,7 @@ var procedureExecuteStatementTests = []struct {
 		},
 		Result: []Result{
 			{
-				Type: INSERT,
+				Type: InsertQuery,
 				FileInfo: &FileInfo{
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
@@ -415,7 +415,7 @@ var procedureExecuteStatementTests = []struct {
 		},
 		Result: []Result{
 			{
-				Type: UPDATE,
+				Type: UpdateQuery,
 				FileInfo: &FileInfo{
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
@@ -447,7 +447,7 @@ var procedureExecuteStatementTests = []struct {
 		},
 		Result: []Result{
 			{
-				Type: DELETE,
+				Type: DeleteQuery,
 				FileInfo: &FileInfo{
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
@@ -470,7 +470,7 @@ var procedureExecuteStatementTests = []struct {
 		},
 		Result: []Result{
 			{
-				Type: CREATE_TABLE,
+				Type: CreateTableQuery,
 				FileInfo: &FileInfo{
 					Path:      GetTestFilePath("newtable.csv"),
 					Delimiter: ',',
@@ -493,7 +493,7 @@ var procedureExecuteStatementTests = []struct {
 		},
 		Result: []Result{
 			{
-				Type: ADD_COLUMNS,
+				Type: AddColumnsQuery,
 				FileInfo: &FileInfo{
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
@@ -515,7 +515,7 @@ var procedureExecuteStatementTests = []struct {
 		},
 		Result: []Result{
 			{
-				Type: DROP_COLUMNS,
+				Type: DropColumnsQuery,
 				FileInfo: &FileInfo{
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
@@ -536,7 +536,7 @@ var procedureExecuteStatementTests = []struct {
 		},
 		Result: []Result{
 			{
-				Type: RENAME_COLUMN,
+				Type: RenameColumnQuery,
 				FileInfo: &FileInfo{
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
@@ -684,7 +684,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 				}
 
 				code = apperr.GetCode()
-			} else if ex, ok := err.(*Exit); ok {
+			} else if ex, ok := err.(*ForcedExit); ok {
 				code = ex.GetCode()
 			}
 			if code != v.ErrorCode {
@@ -744,7 +744,7 @@ var procedureIfStmtTests = []struct {
 				parser.Print{Value: parser.NewStringValue("1")},
 			},
 		},
-		ResultFlow: TERMINATE,
+		ResultFlow: Terminate,
 		Result:     "'1'\n",
 	},
 	{
@@ -755,7 +755,7 @@ var procedureIfStmtTests = []struct {
 				parser.Print{Value: parser.NewStringValue("1")},
 			},
 		},
-		ResultFlow: TERMINATE,
+		ResultFlow: Terminate,
 		Result:     "",
 	},
 	{
@@ -785,7 +785,7 @@ var procedureIfStmtTests = []struct {
 				},
 			},
 		},
-		ResultFlow: TERMINATE,
+		ResultFlow: Terminate,
 		Result:     "'2'\n",
 	},
 	{
@@ -815,7 +815,7 @@ var procedureIfStmtTests = []struct {
 				},
 			},
 		},
-		ResultFlow: TERMINATE,
+		ResultFlow: Terminate,
 		Result:     "'4'\n",
 	},
 	{
@@ -893,7 +893,7 @@ var procedureCaseStmtTests = []struct {
 				},
 			},
 		},
-		ResultFlow: TERMINATE,
+		ResultFlow: Terminate,
 		Result:     "'2'\n",
 	},
 	{
@@ -915,7 +915,7 @@ var procedureCaseStmtTests = []struct {
 				},
 			},
 		},
-		ResultFlow: TERMINATE,
+		ResultFlow: Terminate,
 		Result:     "'2'\n",
 	},
 	{
@@ -941,7 +941,7 @@ var procedureCaseStmtTests = []struct {
 				},
 			},
 		},
-		ResultFlow: TERMINATE,
+		ResultFlow: Terminate,
 		Result:     "'3'\n",
 	},
 	{
@@ -962,7 +962,7 @@ var procedureCaseStmtTests = []struct {
 				},
 			},
 		},
-		ResultFlow: TERMINATE,
+		ResultFlow: Terminate,
 		Result:     "",
 	},
 	{
@@ -984,7 +984,7 @@ var procedureCaseStmtTests = []struct {
 				},
 			},
 		},
-		ResultFlow: ERROR,
+		ResultFlow: Error,
 		Error:      "[L:- C:-] field notexist does not exist",
 	},
 	{
@@ -999,7 +999,7 @@ var procedureCaseStmtTests = []struct {
 				},
 			},
 		},
-		ResultFlow: ERROR,
+		ResultFlow: Error,
 		Error:      "[L:- C:-] field notexist does not exist",
 	},
 }
@@ -1070,7 +1070,7 @@ var procedureWhileTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		ResultFlow: TERMINATE,
+		ResultFlow: Terminate,
 		Result:     "1\n2\n3\n",
 	},
 	{
@@ -1112,7 +1112,7 @@ var procedureWhileTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		ResultFlow: TERMINATE,
+		ResultFlow: Terminate,
 		Result:     "1\n3\n",
 	},
 	{
@@ -1154,7 +1154,7 @@ var procedureWhileTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		ResultFlow: TERMINATE,
+		ResultFlow: Terminate,
 		Result:     "1\n",
 	},
 	{
@@ -1196,7 +1196,7 @@ var procedureWhileTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		ResultFlow: EXIT,
+		ResultFlow: Exit,
 		Result:     "1\n",
 	},
 	{
@@ -1315,7 +1315,7 @@ var procedureWhileInCursorTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		ResultFlow: TERMINATE,
+		ResultFlow: Terminate,
 		Result:     "'1'\n'2'\n'3'\n",
 	},
 	{
@@ -1332,7 +1332,7 @@ var procedureWhileInCursorTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		ResultFlow: TERMINATE,
+		ResultFlow: Terminate,
 		Result:     "'1'\n'2'\n'3'\n",
 	},
 	{
@@ -1358,7 +1358,7 @@ var procedureWhileInCursorTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		ResultFlow: TERMINATE,
+		ResultFlow: Terminate,
 		Result:     "'1'\n'3'\n",
 	},
 	{
@@ -1384,7 +1384,7 @@ var procedureWhileInCursorTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		ResultFlow: TERMINATE,
+		ResultFlow: Terminate,
 		Result:     "'1'\n",
 	},
 	{
@@ -1410,7 +1410,7 @@ var procedureWhileInCursorTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		ResultFlow: EXIT,
+		ResultFlow: Exit,
 		Result:     "'1'\n",
 	},
 	{

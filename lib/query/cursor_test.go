@@ -11,7 +11,7 @@ import (
 	"github.com/mithrandie/ternary"
 )
 
-var selectQueryForCursorTest parser.SelectQuery = parser.SelectQuery{
+var selectQueryForCursorTest = parser.SelectQuery{
 	SelectEntity: parser.SelectEntity{
 		SelectClause: parser.SelectClause{
 			Select: "select",
@@ -29,7 +29,7 @@ var selectQueryForCursorTest parser.SelectQuery = parser.SelectQuery{
 	},
 }
 
-var selectQueryForCursorQueryErrorTest parser.SelectQuery = parser.SelectQuery{
+var selectQueryForCursorQueryErrorTest = parser.SelectQuery{
 	SelectEntity: parser.SelectEntity{
 		SelectClause: parser.SelectClause{
 			Select: "select",

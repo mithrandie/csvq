@@ -210,7 +210,7 @@ func FormatString(format string, args []value.Primary) (string, error) {
 
 	escaped := false
 	placeholderOrder := 0
-	flags := []rune{}
+	flags := make([]rune, 0)
 	var length string
 	var precision string
 	var isPrecision bool
@@ -378,7 +378,7 @@ func FormatString(format string, args []value.Primary) (string, error) {
 func RecordRange(cpuIndex int, totalLen int, numberOfCPU int) (int, int) {
 	calcLen := totalLen / numberOfCPU
 
-	var start int = cpuIndex * calcLen
+	var start = cpuIndex * calcLen
 	var end int
 	if cpuIndex == numberOfCPU-1 {
 		end = totalLen

@@ -105,7 +105,7 @@ func HumarizeNumber(s string) string {
 		decPart = "." + parts[1]
 	}
 
-	places := []string{}
+	places := make([]string, 0)
 	slen := len(intPart)
 	for i := slen / 3; i >= 0; i-- {
 		end := slen - i*3
