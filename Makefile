@@ -20,7 +20,7 @@ install:
 .PHONY: install-goyacc
 install-goyacc:
 ifeq ($(shell command -v goyacc 2>/dev/null),)
-	go get -u github.com/cznic/goyacc
+	go get github.com/cznic/goyacc
 endif
 
 .PHONY: yacc
@@ -36,7 +36,7 @@ clean:
 .PHONY: install-gox
 install-gox:
 ifeq ($(shell command -v gox 2>/dev/null),)
-	go get -u github.com/mitchellh/gox
+	go get github.com/mitchellh/gox
 endif
 
 .PHONY: build-all
