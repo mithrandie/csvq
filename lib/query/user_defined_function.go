@@ -172,7 +172,7 @@ func (m UserDefinedFunctionMap) parseParameters(parameters []parser.VariableAssi
 func (m UserDefinedFunctionMap) CheckDuplicate(name parser.Identifier) error {
 	uname := strings.ToUpper(name.Literal)
 
-	if _, ok := Functions[uname]; ok || uname == "NOW" {
+	if _, ok := Functions[uname]; ok || uname == "NOW" || uname == "JSON_OBJECT" {
 		return NewBuiltInFunctionDeclaredError(name)
 	}
 	if _, ok := AggregateFunctions[uname]; ok {

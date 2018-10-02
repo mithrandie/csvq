@@ -36,6 +36,9 @@ const (
 	ErrorDuplicateParameter           = "parameter %s is a duplicate"
 	ErrorSubqueryTooManyRecords       = "subquery returns too many records, should return only one record"
 	ErrorSubqueryTooManyFields        = "subquery returns too many fields, should return only one field"
+	ErrorJsonQueryTooManyRecords      = "json query returns too many records, should return only one record"
+	ErrorJsonQuery                    = "json query error: %s"
+	ErrorJsonTableEmpty               = "json table is empty"
 	ErrorCursorRedeclared             = "cursor %s is redeclared"
 	ErrorUndeclaredCursor             = "cursor %s is undeclared"
 	ErrorCursorClosed                 = "cursor %s is closed"
@@ -424,6 +427,36 @@ type SubqueryTooManyFieldsError struct {
 func NewSubqueryTooManyFieldsError(expr parser.Subquery) error {
 	return &SubqueryTooManyFieldsError{
 		NewBaseError(expr, ErrorSubqueryTooManyFields),
+	}
+}
+
+type JsonQueryTooManyRecordsError struct {
+	*BaseError
+}
+
+func NewJsonQueryTooManyRecordsError(expr parser.JsonQuery) error {
+	return &JsonQueryTooManyRecordsError{
+		NewBaseError(expr, ErrorJsonQueryTooManyRecords),
+	}
+}
+
+type JsonQueryError struct {
+	*BaseError
+}
+
+func NewJsonQueryError(expr parser.JsonQuery, message string) error {
+	return &JsonQueryError{
+		NewBaseError(expr, fmt.Sprintf(ErrorJsonQuery, message)),
+	}
+}
+
+type JsonTableEmptyError struct {
+	*BaseError
+}
+
+func NewJsonTableEmptyError(expr parser.JsonQuery) error {
+	return &JsonTableEmptyError{
+		NewBaseError(expr, ErrorJsonTableEmpty),
 	}
 }
 

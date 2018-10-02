@@ -100,6 +100,7 @@ import (
 %type<token>       order_null_position
 %type<queryexpr>   subquery
 %type<queryexpr>   string_operation
+%type<queryexpr>   matrix_value
 %type<queryexpr>   comparison
 %type<queryexpr>   arithmetic
 %type<queryexpr>   logic
@@ -194,8 +195,9 @@ import (
 %token<token> VAR SHOW
 %token<token> TIES NULLS TABLES VIEWS FIELDS CURSORS FUNCTIONS ROWS
 %token<token> ERROR
-%token<token> COUNT LISTAGG
-%token<token> AGGREGATE_FUNCTION ANALYTIC_FUNCTION FUNCTION_NTH FUNCTION_WITH_INS
+%token<token> JSON_ROW JSON_TABLE
+%token<token> COUNT JSON_OBJECT
+%token<token> AGGREGATE_FUNCTION LISTAGG ANALYTIC_FUNCTION FUNCTION_NTH FUNCTION_WITH_INS
 %token<token> COMPARISON_OP STRING_OP SUBSTITUTION_OP
 %token<token> UMINUS UPLUS
 %token<token> ';' '*' '=' '-' '+' '!' '(' ')'
@@ -1158,6 +1160,10 @@ row_value
     {
         $$ = RowValue{BaseExpr: $1.GetBaseExpr(), Value: $1}
     }
+    | JSON_ROW '(' value ',' value ')'
+    {
+        $$ = RowValue{BaseExpr: NewBaseExpr($1), Value: JsonQuery{JsonQuery: $1.Literal, Query: $3, JsonText: $5}}
+    }
 
 row_values
     : row_value
@@ -1252,6 +1258,20 @@ string_operation
         $$ = Concat{Items: append(item1, item2...)}
     }
 
+matrix_value
+    : '(' row_values ')'
+    {
+        $$ = RowValueList{RowValues: $2}
+    }
+    | subquery
+    {
+        $$ = $1
+    }
+    | JSON_ROW '(' value ',' value ')'
+    {
+        $$ = JsonQuery{BaseExpr: NewBaseExpr($1), JsonQuery: $1.Literal, Query: $3, JsonText: $5}
+    }
+
 comparison
     : value COMPARISON_OP value
     {
@@ -1297,11 +1317,7 @@ comparison
     {
         $$ = In{In: $3.Literal, LHS: $1, Values: $4, Negation: $2}
     }
-    | row_value negation IN '(' row_values ')'
-    {
-        $$ = In{In: $3.Literal, LHS: $1, Values: RowValueList{RowValues: $5}, Negation: $2}
-    }
-    | row_value negation IN subquery
+    | row_value negation IN matrix_value
     {
         $$ = In{In: $3.Literal, LHS: $1, Values: $4, Negation: $2}
     }
@@ -1317,11 +1333,7 @@ comparison
     {
         $$ = Any{Any: $3.Literal, LHS: $1, Operator: $2.Literal, Values: $4}
     }
-    | row_value comparison_operator ANY '(' row_values ')'
-    {
-        $$ = Any{Any: $3.Literal, LHS: $1, Operator: $2.Literal, Values: RowValueList{RowValues: $5}}
-    }
-    | row_value comparison_operator ANY subquery
+    | row_value comparison_operator ANY matrix_value
     {
         $$ = Any{Any: $3.Literal, LHS: $1, Operator: $2.Literal, Values: $4}
     }
@@ -1329,11 +1341,7 @@ comparison
     {
         $$ = All{All: $3.Literal, LHS: $1, Operator: $2.Literal, Values: $4}
     }
-    | row_value comparison_operator ALL '(' row_values ')'
-    {
-        $$ = All{All: $3.Literal, LHS: $1, Operator: $2.Literal, Values: RowValueList{RowValues: $5}}
-    }
-    | row_value comparison_operator ALL subquery
+    | row_value comparison_operator ALL matrix_value
     {
         $$ = All{All: $3.Literal, LHS: $1, Operator: $2.Literal, Values: $4}
     }
@@ -1405,6 +1413,14 @@ function
     {
         $$ = Function{BaseExpr: $1.BaseExpr, Name: $1.Literal, Args: $3}
     }
+    | JSON_OBJECT '(' ')'
+    {
+        $$ = Function{BaseExpr: NewBaseExpr($1), Name: $1.Literal}
+    }
+    | JSON_OBJECT '(' fields ')'
+    {
+        $$ = Function{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3}
+    }
     | IF '(' arguments ')'
     {
         $$ = Function{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3}
@@ -1436,11 +1452,11 @@ aggregate_function
 listagg
     : LISTAGG '(' distinct arguments ')'
     {
-        $$ = ListAgg{BaseExpr: NewBaseExpr($1), ListAgg: $1.Literal, Distinct: $3, Args: $4}
+        $$ = ListAgg{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4}
     }
     | LISTAGG '(' distinct arguments ')' WITHIN GROUP '(' order_by_clause ')'
     {
-        $$ = ListAgg{BaseExpr: NewBaseExpr($1), ListAgg: $1.Literal, Distinct: $3, Args: $4, WithinGroup: $6.Literal + " " + $7.Literal, OrderBy: $9}
+        $$ = ListAgg{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, WithinGroup: $6.Literal + " " + $7.Literal, OrderBy: $9}
     }
 
 analytic_function
@@ -1605,6 +1621,14 @@ virtual_table_object
     : subquery
     {
         $$ = $1
+    }
+    | JSON_TABLE '(' value ',' identifier ')'
+    {
+        $$ = JsonQuery{BaseExpr: NewBaseExpr($1), JsonQuery: $1.Literal, Query: $3, JsonText: $5}
+    }
+    | JSON_TABLE '(' value ',' value ')'
+    {
+        $$ = JsonQuery{BaseExpr: NewBaseExpr($1), JsonQuery: $1.Literal, Query: $3, JsonText: $5}
     }
 
 table
@@ -2042,7 +2066,19 @@ identifier
     {
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }
+    | JSON_ROW
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | JSON_TABLE
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
     | COUNT
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | JSON_OBJECT
     {
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }

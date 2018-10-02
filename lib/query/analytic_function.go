@@ -21,6 +21,7 @@ var AnalyticFunctions = map[string]AnalyticFunction{
 	"LAG":          Lag{},
 	"LEAD":         Lead{},
 	"LISTAGG":      AnalyticListAgg{},
+	"JSON_AGG":     AnalyticJsonAgg{},
 }
 
 type AnalyticFunction interface {
@@ -752,6 +753,39 @@ func (fn AnalyticListAgg) Execute(partition Partition, expr parser.AnalyticFunct
 	}
 
 	val := ListAgg(values, separator)
+
+	list := make(map[int]value.Primary, len(partition))
+	for _, idx := range partition {
+		list[idx] = val
+	}
+
+	return list, nil
+}
+
+type AnalyticJsonAgg struct{}
+
+func (fn AnalyticJsonAgg) CheckArgsLen(expr parser.AnalyticFunction) error {
+	return CheckArgsLen(expr, []int{1})
+}
+
+func (fn AnalyticJsonAgg) Execute(partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]value.Primary, error) {
+	argsFilter := filter.CreateNode()
+	argsFilter.Records = nil
+
+	values := make([]value.Primary, len(partition))
+	for i, idx := range partition {
+		filter.Records[0].RecordIndex = idx
+		val, e := filter.Evaluate(expr.Args[0])
+		if e != nil {
+			return nil, e
+		}
+		values[i] = val
+	}
+	if expr.IsDistinct() {
+		values = Distinguish(values)
+	}
+
+	val := JsonAgg(values)
 
 	list := make(map[int]value.Primary, len(partition))
 	for _, idx := range partition {

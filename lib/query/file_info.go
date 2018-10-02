@@ -23,31 +23,9 @@ type FileInfo struct {
 }
 
 func NewFileInfo(filename parser.Identifier, repository string, delimiter rune) (*FileInfo, error) {
-	fpath := filename.Literal
-	if !filepath.IsAbs(fpath) {
-		fpath = filepath.Join(repository, fpath)
-	}
-
-	var info os.FileInfo
-	var err error
-
-	if info, err = os.Stat(fpath); err != nil {
-		if info, err = os.Stat(fpath + cmd.CsvExt); err == nil {
-			fpath = fpath + cmd.CsvExt
-		} else if info, err = os.Stat(fpath + cmd.TsvExt); err == nil {
-			fpath = fpath + cmd.TsvExt
-		} else {
-			return nil, NewFileNotExistError(filename)
-		}
-	}
-
-	fpath, err = filepath.Abs(fpath)
+	fpath, err := searchFilePath(filename, repository, []string{cmd.CsvExt, cmd.TsvExt})
 	if err != nil {
-		return nil, NewFileNotExistError(filename)
-	}
-
-	if info.IsDir() {
-		return nil, NewFileUnableToReadError(filename)
+		return nil, err
 	}
 
 	if delimiter == cmd.UNDEF {
@@ -62,6 +40,41 @@ func NewFileInfo(filename parser.Identifier, repository string, delimiter rune) 
 		Path:      fpath,
 		Delimiter: delimiter,
 	}, nil
+}
+
+func searchFilePath(filename parser.Identifier, repository string, extTypes []string) (string, error) {
+	fpath := filename.Literal
+	if !filepath.IsAbs(fpath) {
+		fpath = filepath.Join(repository, fpath)
+	}
+
+	var info os.FileInfo
+	var err error
+
+	if info, err = os.Stat(fpath); err != nil {
+		found := false
+		for _, ext := range extTypes {
+			if info, err = os.Stat(fpath + ext); err == nil {
+				fpath = fpath + ext
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fpath, NewFileNotExistError(filename)
+		}
+	}
+
+	fpath, err = filepath.Abs(fpath)
+	if err != nil {
+		return fpath, NewFileNotExistError(filename)
+	}
+
+	if info.IsDir() {
+		return fpath, NewFileUnableToReadError(filename)
+	}
+
+	return fpath, nil
 }
 
 func NewFileInfoForCreate(finename parser.Identifier, repository string, delimiter rune) (*FileInfo, error) {

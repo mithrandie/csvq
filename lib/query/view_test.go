@@ -21,6 +21,7 @@ var viewLoadTests = []struct {
 	From          parser.FromClause
 	UseInternalId bool
 	Stdin         string
+	JsonQuery     string
 	Filter        *Filter
 	Result        *View
 	Error         string
@@ -230,6 +231,55 @@ var viewLoadTests = []struct {
 		},
 	},
 	{
+		Name: "Load Json From Stdin",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{Object: parser.Stdin{Stdin: "stdin"}, Alias: parser.Identifier{Literal: "t"}},
+			},
+		},
+		Stdin:     "{\"key\":[{\"column1\": 1, \"column2\": \"str1\"}]}",
+		JsonQuery: "key{}",
+		Result: &View{
+			Header: NewHeader("t", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("str1"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "stdin",
+				Delimiter: ',',
+			},
+			Filter: &Filter{
+				Variables: []VariableMap{{}},
+				TempViews: []ViewMap{
+					{
+						"STDIN": nil,
+					},
+				},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
+					{
+						"T": "STDIN",
+					},
+				},
+			},
+		},
+	},
+	{
+		Name: "Load Json From Stdin Json Query Error",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{Object: parser.Stdin{Stdin: "stdin"}, Alias: parser.Identifier{Literal: "t"}},
+			},
+		},
+		Stdin:     "{\"key\":[{\"column1\": 1, \"column2\": \"str1\"}]}",
+		JsonQuery: "key{",
+		Error:     "json query error: column 4: unexpected termination",
+	},
+	{
 		Name:  "Load From Stdin With Omitted FromClause",
 		From:  parser.FromClause{},
 		Stdin: "column1,column2\n1,\"str1\"",
@@ -293,6 +343,172 @@ var viewLoadTests = []struct {
 			},
 		},
 		Error: "[L:- C:-] stdin is empty",
+	},
+	{
+		Name: "Load Json Table",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.JsonQuery{
+						Query:    parser.NewStringValue("{column1, column2}"),
+						JsonText: parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
+					},
+					Alias: parser.Identifier{Literal: "jt"},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("jt", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewInteger(2),
+				}),
+				NewRecord([]value.Primary{
+					value.NewInteger(3),
+					value.NewInteger(4),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:        "jt",
+				IsTemporary: true,
+			},
+			Filter: &Filter{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases:      AliasNodes{{}},
+			},
+		},
+	},
+	{
+		Name: "Load Json Table From File",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.JsonQuery{
+						Query:    parser.NewStringValue("{}"),
+						JsonText: parser.Identifier{Literal: "table"},
+					},
+					Alias: parser.Identifier{Literal: "jt"},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("jt", []string{"item1", "item2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("value1"),
+					value.NewInteger(1),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("value2"),
+					value.NewInteger(2),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:        "jt",
+				IsTemporary: true,
+			},
+			Filter: &Filter{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases:      AliasNodes{{}},
+			},
+		},
+	},
+	{
+		Name: "Load Json Table From File Path Error",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.JsonQuery{
+						Query:    parser.NewStringValue("{}"),
+						JsonText: parser.Identifier{Literal: "notexist"},
+					},
+					Alias: parser.Identifier{Literal: "jt"},
+				},
+			},
+		},
+		Error: "[L:- C:-] file notexist does not exist",
+	},
+	{
+		Name: "Load Json Table Query Evaluation Error",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.JsonQuery{
+						Query:    parser.FieldReference{Column: parser.Identifier{Literal: "notexists"}},
+						JsonText: parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
+					},
+					Alias: parser.Identifier{Literal: "jt"},
+				},
+			},
+		},
+		Error: "[L:- C:-] field notexists does not exist",
+	},
+	{
+		Name: "Load Json Table JsonText Evaluation Error",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.JsonQuery{
+						Query:    parser.NewStringValue("{column1, column2}"),
+						JsonText: parser.FieldReference{Column: parser.Identifier{Literal: "notexists"}},
+					},
+					Alias: parser.Identifier{Literal: "jt"},
+				},
+			},
+		},
+		Error: "[L:- C:-] field notexists does not exist",
+	},
+	{
+		Name: "Load Json Table Query is Null",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.JsonQuery{
+						Query:    parser.NewNullValue(),
+						JsonText: parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
+					},
+					Alias: parser.Identifier{Literal: "jt"},
+				},
+			},
+		},
+		Error: "[L:- C:-] json table is empty",
+	},
+	{
+		Name: "Load Json Table JsonText is Null",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.JsonQuery{
+						Query:    parser.NewStringValue("{column1, column2}"),
+						JsonText: parser.NewNullValue(),
+					},
+					Alias: parser.Identifier{Literal: "jt"},
+				},
+			},
+		},
+		Error: "[L:- C:-] json table is empty",
+	},
+	{
+		Name: "Load Json Table Loading Error",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.JsonQuery{
+						Query:    parser.NewStringValue("{column1, column2"),
+						JsonText: parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
+					},
+					Alias: parser.Identifier{Literal: "jt"},
+				},
+			},
+		},
+		Error: "[L:- C:-] json query error: column 17: unexpected termination",
 	},
 	{
 		Name: "Load File Error",
@@ -1167,6 +1383,11 @@ func TestView_Load(t *testing.T) {
 			tf.Encoding = v.Encoding
 		} else {
 			tf.Encoding = cmd.UTF8
+		}
+		if v.JsonQuery != "" {
+			tf.JsonQuery = v.JsonQuery
+		} else {
+			tf.JsonQuery = ""
 		}
 
 		var oldStdin *os.File
@@ -3098,7 +3319,7 @@ var viewExtendRecordCapacity = []struct {
 				},
 			},
 			parser.ListAgg{
-				ListAgg:  "listagg",
+				Name:     "listagg",
 				Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 				Args: []parser.QueryExpression{
 					parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
@@ -3215,7 +3436,7 @@ var viewExtendRecordCapacity = []struct {
 		},
 		Exprs: []parser.QueryExpression{
 			parser.ListAgg{
-				ListAgg:  "listagg",
+				Name:     "listagg",
 				Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 				Args: []parser.QueryExpression{
 					parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},

@@ -197,7 +197,7 @@ var sourceTests = []struct {
 		Expr: parser.Source{
 			FilePath: parser.NewStringValue(GetTestFilePath("source_syntaxerror.sql")),
 		},
-		Error: fmt.Sprintf("%s [L:1 C:34] syntax error: unexpected STRING", GetTestFilePath("source_syntaxerror.sql")),
+		Error: fmt.Sprintf("%s [L:1 C:34] syntax error: unexpected token \"wrong argument\"", GetTestFilePath("source_syntaxerror.sql")),
 	},
 }
 
@@ -252,7 +252,7 @@ var setFlagTests = []struct {
 		ResultStrValue: "SJIS",
 	},
 	{
-		Name: "Set LineBreak",
+		Name: "Set lineBreak",
 		Expr: parser.SetFlag{
 			Name:  "@@line_break",
 			Value: value.NewString("CRLF"),
@@ -480,7 +480,7 @@ var showFlagTests = []struct {
 		Result: "SJIS",
 	},
 	{
-		Name: "Show LineBreak",
+		Name: "Show lineBreak",
 		Expr: parser.ShowFlag{
 			Name: "@@line_break",
 		},

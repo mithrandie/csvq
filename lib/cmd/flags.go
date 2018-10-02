@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"github.com/mithrandie/csvq/lib/color"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -56,6 +57,8 @@ const (
 	CSV
 	TSV
 	JSON
+	JSONH
+	JSONA
 )
 
 var formatLiterals = map[Format]string{
@@ -70,13 +73,15 @@ func (f Format) String() string {
 }
 
 const (
-	CsvExt = ".csv"
-	TsvExt = ".tsv"
+	CsvExt  = ".csv"
+	TsvExt  = ".tsv"
+	JsonExt = ".json"
 )
 
 type Flags struct {
 	// Global Options
 	Delimiter      rune
+	JsonQuery      string
 	Encoding       Encoding
 	LineBreak      LineBreak
 	Location       string
@@ -91,6 +96,8 @@ type Flags struct {
 	WriteEncoding  Encoding
 	OutFile        string
 	Format         Format
+	PrettyPrint    bool
+	Color          bool
 	WriteDelimiter rune
 	WithoutHeader  bool
 
@@ -125,6 +132,7 @@ func GetFlags() *Flags {
 	getFlags.Do(func() {
 		flags = &Flags{
 			Delimiter:      UNDEF,
+			JsonQuery:      "",
 			Encoding:       UTF8,
 			LineBreak:      LF,
 			Location:       "Local",
@@ -167,6 +175,12 @@ func SetDelimiter(s string) error {
 	f := GetFlags()
 	f.Delimiter = delimiter
 	return nil
+}
+
+func SetJsonQuery(s string) {
+	f := GetFlags()
+	f.JsonQuery = s
+	return
 }
 
 func SetEncoding(s string) error {
@@ -331,6 +345,10 @@ func SetFormat(s string) error {
 		fm = TSV
 	case "JSON":
 		fm = JSON
+	case "JSONH":
+		fm = JSONH
+	case "JSONA":
+		fm = JSONA
 	case "TEXT":
 		fm = TEXT
 	default:
@@ -339,6 +357,19 @@ func SetFormat(s string) error {
 
 	f.Format = fm
 	return nil
+}
+
+func SetPrettyPrint(b bool) {
+	f := GetFlags()
+	f.PrettyPrint = b
+	return
+}
+
+func SetColor(b bool) {
+	f := GetFlags()
+	f.Color = b
+	color.UseEscapeSequences = b
+	return
 }
 
 func SetWriteDelimiter(s string) error {

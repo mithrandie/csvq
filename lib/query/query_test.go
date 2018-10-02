@@ -480,7 +480,7 @@ var selectTests = []struct {
 		},
 	},
 	{
-		Name: "Select Replace Columns",
+		Name: "Select Replace Fields",
 		Query: parser.SelectQuery{
 			SelectEntity: parser.SelectEntity{
 				SelectClause: parser.SelectClause{
@@ -1349,7 +1349,7 @@ var insertTests = []struct {
 		},
 	},
 	{
-		Name: "Insert Query All Columns",
+		Name: "Insert Query All Fields",
 		Query: parser.InsertQuery{
 			Table: parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			ValuesList: []parser.QueryExpression{
@@ -2747,7 +2747,7 @@ var addColumnsTests = []struct {
 	Error        string
 }{
 	{
-		Name: "Add Columns",
+		Name: "Add Fields",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "table1.csv"},
 			Columns: []parser.ColumnDefault{
@@ -2827,7 +2827,7 @@ var addColumnsTests = []struct {
 		},
 	},
 	{
-		Name: "Add Columns For Temporary View",
+		Name: "Add Fields For Temporary View",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "tmpview"},
 			Columns: []parser.ColumnDefault{
@@ -2893,7 +2893,7 @@ var addColumnsTests = []struct {
 		},
 	},
 	{
-		Name: "Add Columns First",
+		Name: "Add Fields First",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "table1.csv"},
 			Columns: []parser.ColumnDefault{
@@ -2944,7 +2944,7 @@ var addColumnsTests = []struct {
 		},
 	},
 	{
-		Name: "Add Columns After",
+		Name: "Add Fields After",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "table1.csv"},
 			Columns: []parser.ColumnDefault{
@@ -2995,7 +2995,7 @@ var addColumnsTests = []struct {
 		},
 	},
 	{
-		Name: "Add Columns Before",
+		Name: "Add Fields Before",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "table1.csv"},
 			Columns: []parser.ColumnDefault{
@@ -3046,7 +3046,7 @@ var addColumnsTests = []struct {
 		},
 	},
 	{
-		Name: "Add Columns Load Error",
+		Name: "Add Fields Load Error",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "notexist"},
 			Columns: []parser.ColumnDefault{
@@ -3061,7 +3061,7 @@ var addColumnsTests = []struct {
 		Error: "[L:- C:-] file notexist does not exist",
 	},
 	{
-		Name: "Add Columns Position Column Does Not Exist Error",
+		Name: "Add Fields Position Column Does Not Exist Error",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "table1.csv"},
 			Columns: []parser.ColumnDefault{
@@ -3081,7 +3081,7 @@ var addColumnsTests = []struct {
 		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
-		Name: "Add Columns Field Duplicate Error",
+		Name: "Add Fields Field Duplicate Error",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "table1.csv"},
 			Columns: []parser.ColumnDefault{
@@ -3097,7 +3097,7 @@ var addColumnsTests = []struct {
 		Error: "[L:- C:-] field name column1 is a duplicate",
 	},
 	{
-		Name: "Add Columns Default Value Error",
+		Name: "Add Fields Default Value Error",
 		Query: parser.AddColumns{
 			Table: parser.Identifier{Literal: "table1.csv"},
 			Columns: []parser.ColumnDefault{
@@ -3195,7 +3195,7 @@ var dropColumnsTests = []struct {
 	Error        string
 }{
 	{
-		Name: "Drop Columns",
+		Name: "Drop Fields",
 		Query: parser.DropColumns{
 			Table: parser.Identifier{Literal: "table1"},
 			Columns: []parser.QueryExpression{
@@ -3252,7 +3252,7 @@ var dropColumnsTests = []struct {
 		},
 	},
 	{
-		Name: "Drop Columns For Temporary View",
+		Name: "Drop Fields For Temporary View",
 		Query: parser.DropColumns{
 			Table: parser.Identifier{Literal: "tmpview"},
 			Columns: []parser.QueryExpression{
@@ -3301,7 +3301,7 @@ var dropColumnsTests = []struct {
 		},
 	},
 	{
-		Name: "Drop Columns Load Error",
+		Name: "Drop Fields Load Error",
 		Query: parser.DropColumns{
 			Table: parser.Identifier{Literal: "notexist"},
 			Columns: []parser.QueryExpression{
@@ -3311,7 +3311,7 @@ var dropColumnsTests = []struct {
 		Error: "[L:- C:-] file notexist does not exist",
 	},
 	{
-		Name: "Drop Columns Field Does Not Exist Error",
+		Name: "Drop Fields Field Does Not Exist Error",
 		Query: parser.DropColumns{
 			Table: parser.Identifier{Literal: "table1"},
 			Columns: []parser.QueryExpression{
