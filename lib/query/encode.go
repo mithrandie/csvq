@@ -165,10 +165,10 @@ func convertLineBreak(str string, lb cmd.LineBreak) string {
 
 func encodeText(view *View) string {
 	if view.FieldLen() < 1 {
-		return "Empty Fields"
+		return color.Warn("Empty Fields")
 	}
 	if view.RecordLen() < 1 {
-		return "Empty RecordSet"
+		return color.Warn("Empty RecordSet")
 	}
 
 	header := make([]*textField, view.FieldLen())

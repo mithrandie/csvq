@@ -92,6 +92,7 @@ func initFlag() {
 	flags.NoHeader = false
 	flags.WithoutNull = false
 	flags.Stats = false
+	cmd.SetColor(false)
 }
 
 func copyfile(dstfile string, srcfile string) error {

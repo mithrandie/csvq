@@ -412,11 +412,11 @@ func TestUserDefinedFunctionScopes_List(t *testing.T) {
 	}
 
 	expectScala := []string{
-		"userfunc1(@arg1)",
-		"userfunc2(@arg1, @arg2 = 3)",
+		"userfunc1 (@arg1)",
+		"userfunc2 (@arg1, @arg2 = 3)",
 	}
 	expectAgg := []string{
-		"useraggfunc(column1, @arg1, @arg2 = 1)",
+		"useraggfunc (column1, @arg1, @arg2 = 1)",
 	}
 
 	scala, agg := list.List()

@@ -219,6 +219,8 @@ func readQuery(c *cli.Context) (string, error) {
 }
 
 func setFlags(c *cli.Context) error {
+	cmd.SetColor(c.GlobalBool("color"))
+
 	if err := cmd.SetDelimiter(c.GlobalString("delimiter")); err != nil {
 		return err
 	}
@@ -254,6 +256,7 @@ func setFlags(c *cli.Context) error {
 	if err := cmd.SetWriteDelimiter(c.GlobalString("write-delimiter")); err != nil {
 		return err
 	}
+	cmd.SetPrettyPrint(c.GlobalBool("pretty-print"))
 	cmd.SetWithoutHeader(c.GlobalBool("without-header"))
 
 	cmd.SetQuiet(c.GlobalBool("quiet"))
