@@ -39,6 +39,14 @@ func TestColorize(t *testing.T) {
 		t.Errorf("result = %q, want %q for %s", result, expect, s)
 	}
 
+	s = "a"
+	expect = "a"
+	result = Colorize(s, PlainColor, false)
+
+	if result != expect {
+		t.Errorf("result = %q, want %q for %s", result, expect, s)
+	}
+
 	UseEscapeSequences = false
 	s = "a"
 	expect = "a"

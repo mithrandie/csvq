@@ -112,12 +112,15 @@ func (tf textField) width() int {
 	return w
 }
 
-func NewTextField(s string, sign int) *textField {
+func NewTextField(s string, sign int, textColor int, bold bool) *textField {
 	values := strings.Split(s, "\n")
 	widths := make([]int, len(values))
 
 	for i, v := range values {
 		widths[i] = stringWidth(v)
+		if -1 < textColor {
+			values[i] = color.Colorize(v, textColor, bold)
+		}
 	}
 
 	return &textField{
@@ -183,7 +186,7 @@ func encodeText(view *View) string {
 
 	header := make([]*textField, view.FieldLen())
 	for i := range view.Header {
-		header[i] = NewTextField(view.Header[i].Column, -1)
+		header[i] = NewTextField(view.Header[i].Column, -1, color.PlainColor, false)
 	}
 
 	records := make([][]*textField, view.RecordLen())
@@ -272,8 +275,6 @@ func formatRecord(record []*textField, fieldWidths []int) string {
 }
 
 func stringWidth(s string) int {
-	s = color.StripEscapeSequence(s)
-
 	l := 0
 	for _, r := range s {
 		if unicode.In(r, fullWidthTable) {
@@ -292,28 +293,38 @@ func formatTextCell(c Cell) *textField {
 
 	var s string
 	var sign int
+	var textColor = color.PlainColor
+	var bold = false
 
 	sign = 1
 	switch primary.(type) {
 	case value.String:
-		s = color.Green(primary.(value.String).Raw())
+		s = primary.(value.String).Raw()
 		sign = -1
+		textColor = color.FGGreen
 	case value.Integer:
-		s = color.Magenta(primary.(value.Integer).String())
+		s = primary.(value.Integer).String()
+		textColor = color.FGMagenta
 	case value.Float:
-		s = color.Magenta(primary.(value.Float).String())
+		s = primary.(value.Float).String()
+		textColor = color.FGMagenta
 	case value.Boolean:
-		s = color.YellowB(primary.(value.Boolean).String())
+		s = primary.(value.Boolean).String()
+		textColor = color.FGYellow
+		bold = true
 	case value.Ternary:
-		s = color.Yellow(primary.(value.Ternary).Ternary().String())
+		s = primary.(value.Ternary).Ternary().String()
+		textColor = color.FGYellow
 	case value.Datetime:
-		s = color.Cyan(primary.(value.Datetime).Format(time.RFC3339Nano))
+		s = primary.(value.Datetime).Format(time.RFC3339Nano)
 		sign = -1
+		textColor = color.FGCyan
 	case value.Null:
-		s = color.BrightBlack("NULL")
+		s = "NULL"
+		textColor = color.FGBrightBlack
 	}
 
-	return NewTextField(s, sign)
+	return NewTextField(s, sign, textColor, bold)
 }
 
 func encodeCSV(view *View, delimiter string, withoutHeader bool) string {
@@ -402,14 +413,7 @@ func encodeJson(view *View, format cmd.Format, lineBreak cmd.LineBreak, prettyPr
 	e.LineBreak = lineBreak
 	e.PrettyPrint = prettyPrint
 
-	useESBack := color.UseEscapeSequences
-	if !e.PrettyPrint {
-		color.UseEscapeSequences = false
-	}
-
-	s := e.Encode(data)
-
-	color.UseEscapeSequences = useESBack
+	s := e.Encode(data, e.PrettyPrint)
 	return s, nil
 }
 

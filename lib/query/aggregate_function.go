@@ -1,7 +1,6 @@
 package query
 
 import (
-	"github.com/mithrandie/csvq/lib/color"
 	"github.com/mithrandie/csvq/lib/json"
 	"sort"
 	"strings"
@@ -174,13 +173,8 @@ func JsonAgg(list []value.Primary) value.Primary {
 		array = append(array, json.ParseValueToStructure(v))
 	}
 
-	useESBack := color.UseEscapeSequences
-	color.UseEscapeSequences = false
-
 	e := json.NewEncoder()
-	s := e.Encode(array)
-
-	color.UseEscapeSequences = useESBack
+	s := e.Encode(array, false)
 
 	return value.NewString(s)
 }

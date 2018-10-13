@@ -2,6 +2,7 @@ package json
 
 import (
 	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/color"
 	"testing"
 )
 
@@ -10,6 +11,7 @@ var encoderEncodeTests = []struct {
 	Escape      EscapeType
 	PrettyPrint bool
 	LineBreak   cmd.LineBreak
+	UseStyle    bool
 	Expect      string
 }{
 	{
@@ -235,9 +237,60 @@ var encoderEncodeTests = []struct {
 			"  \"key2\": \"value2\"\r\n" +
 			"}",
 	},
+	{
+		Input: Object{
+			Members: []ObjectMember{
+				{
+					Key:   "key1",
+					Value: String("value1"),
+				},
+			},
+		},
+		Escape:      Backslash,
+		PrettyPrint: true,
+		LineBreak:   cmd.LF,
+		UseStyle:    true,
+		Expect: "{\n" +
+			"  \x1b[34;1m\"key1\"\x1b[0m: \x1b[32m\"value1\"\x1b[0m\n" +
+			"}",
+	},
+	{
+		Input:       Number(1),
+		Escape:      Backslash,
+		PrettyPrint: false,
+		LineBreak:   cmd.LF,
+		UseStyle:    true,
+		Expect:      "\x1b[35m1\x1b[0m",
+	},
+	{
+		Input:       String("abc"),
+		Escape:      Backslash,
+		PrettyPrint: false,
+		LineBreak:   cmd.LF,
+		UseStyle:    true,
+		Expect:      "\x1b[32m\"abc\"\x1b[0m",
+	},
+	{
+		Input:       Boolean(true),
+		Escape:      Backslash,
+		PrettyPrint: false,
+		LineBreak:   cmd.LF,
+		UseStyle:    true,
+		Expect:      "\x1b[33;1mtrue\x1b[0m",
+	},
+	{
+		Input:       Null{},
+		Escape:      Backslash,
+		PrettyPrint: false,
+		LineBreak:   cmd.LF,
+		UseStyle:    true,
+		Expect:      "\x1b[90mnull\x1b[0m",
+	},
 }
 
 func TestEncoder_Encode(t *testing.T) {
+	color.UseEscapeSequences = true
+
 	for _, v := range encoderEncodeTests {
 		e := NewEncoder()
 
@@ -245,9 +298,11 @@ func TestEncoder_Encode(t *testing.T) {
 		e.PrettyPrint = v.PrettyPrint
 		e.LineBreak = v.LineBreak
 
-		result := e.Encode(v.Input)
+		result := e.Encode(v.Input, v.UseStyle)
 		if result != v.Expect {
 			t.Errorf("result = %q, want %q for EscapeType:%d PrettyPrint:%t Input:%#v", result, v.Expect, v.Escape, v.PrettyPrint, v.Input)
 		}
 	}
+
+	color.UseEscapeSequences = false
 }
