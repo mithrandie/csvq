@@ -1,7 +1,10 @@
 package query
 
 import (
+	"errors"
 	"fmt"
+	"github.com/mithrandie/csvq/lib/color"
+	"github.com/mithrandie/csvq/lib/json"
 	"io/ioutil"
 	"strconv"
 	"strings"
@@ -129,22 +132,29 @@ func EncodeView(view *View, format cmd.Format, delimiter rune, withoutHeader boo
 	var err error
 
 	switch format {
-	case cmd.CSV, cmd.TSV:
-		s = encodeCSV(view, string(delimiter), withoutHeader)
-	case cmd.JSON:
-		s = encodeJson(view)
-	default:
-		s = encodeText(view)
-	}
-
-	if encoding != cmd.UTF8 {
-		s, err = encodeCharacterCode(s, encoding)
+	case cmd.JSON, cmd.JSONH, cmd.JSONA:
+		s, err = encodeJson(view, format, lineBreak, cmd.GetFlags().PrettyPrint)
 		if err != nil {
 			return "", err
 		}
-	}
-	if lineBreak != cmd.LF {
-		s = convertLineBreak(s, lineBreak)
+	default:
+		switch format {
+		case cmd.CSV, cmd.TSV:
+			s = encodeCSV(view, string(delimiter), withoutHeader)
+		default:
+			s = encodeText(view)
+		}
+
+		if encoding != cmd.UTF8 {
+			s, err = encodeCharacterCode(s, encoding)
+			if err != nil {
+				return "", err
+			}
+		}
+		if lineBreak != cmd.LF {
+			s = convertLineBreak(s, lineBreak)
+		}
+
 	}
 
 	return s, nil
@@ -165,10 +175,10 @@ func convertLineBreak(str string, lb cmd.LineBreak) string {
 
 func encodeText(view *View) string {
 	if view.FieldLen() < 1 {
-		return "Empty Fields"
+		return color.Warn("Empty Fields")
 	}
 	if view.RecordLen() < 1 {
-		return "Empty RecordSet"
+		return color.Warn("Empty RecordSet")
 	}
 
 	header := make([]*textField, view.FieldLen())
@@ -262,6 +272,8 @@ func formatRecord(record []*textField, fieldWidths []int) string {
 }
 
 func stringWidth(s string) int {
+	s = color.StripEscapeSequence(s)
+
 	l := 0
 	for _, r := range s {
 		if unicode.In(r, fullWidthTable) {
@@ -284,21 +296,21 @@ func formatTextCell(c Cell) *textField {
 	sign = 1
 	switch primary.(type) {
 	case value.String:
-		s = primary.(value.String).Raw()
+		s = color.Green(primary.(value.String).Raw())
 		sign = -1
 	case value.Integer:
-		s = primary.(value.Integer).String()
+		s = color.Magenta(primary.(value.Integer).String())
 	case value.Float:
-		s = primary.(value.Float).String()
+		s = color.Magenta(primary.(value.Float).String())
 	case value.Boolean:
-		s = primary.(value.Boolean).String()
+		s = color.YellowB(primary.(value.Boolean).String())
 	case value.Ternary:
-		s = primary.(value.Ternary).Ternary().String()
+		s = color.Yellow(primary.(value.Ternary).Ternary().String())
 	case value.Datetime:
-		s = primary.(value.Datetime).Format(time.RFC3339Nano)
+		s = color.Cyan(primary.(value.Datetime).Format(time.RFC3339Nano))
 		sign = -1
 	case value.Null:
-		s = "NULL"
+		s = color.BrightBlack("NULL")
 	}
 
 	return NewTextField(s, sign)
@@ -364,69 +376,41 @@ func escapeCSVString(s string) string {
 	return strings.Replace(s, "\"", "\"\"", -1)
 }
 
-func encodeJson(view *View) string {
-	records := make([]string, view.RecordLen())
-
-	for i, record := range view.RecordSet {
-		cells := make([]string, view.FieldLen())
-		for j, cell := range record {
-			cells[j] = quote(escapeJsonString(view.Header[j].Column)) + ":" + formatJsonCell(cell)
+func encodeJson(view *View, format cmd.Format, lineBreak cmd.LineBreak, prettyPrint bool) (string, error) {
+	header := view.Header.TableColumnNames()
+	records := make([][]value.Primary, 0, view.RecordLen())
+	for _, record := range view.RecordSet {
+		row := make([]value.Primary, 0, view.FieldLen())
+		for _, cell := range record {
+			row = append(row, cell.Value())
 		}
-		records[i] = "{" + strings.Join(cells, ",") + "}"
+		records = append(records, row)
 	}
 
-	return "[" + strings.Join(records, ",") + "]"
-}
-
-func formatJsonCell(c Cell) string {
-	primary := c.Value()
-
-	var s string
-
-	switch primary.(type) {
-	case value.String:
-		s = quote(escapeJsonString(primary.(value.String).Raw()))
-	case value.Integer:
-		s = primary.(value.Integer).String()
-	case value.Float:
-		s = primary.(value.Float).String()
-	case value.Boolean:
-		s = primary.(value.Boolean).String()
-	case value.Ternary:
-		t := primary.(value.Ternary)
-		if t.Ternary() == ternary.UNKNOWN {
-			s = "null"
-		} else {
-			s = strconv.FormatBool(t.Ternary().ParseBool())
-		}
-	case value.Datetime:
-		s = quote(escapeJsonString(primary.(value.Datetime).Format(time.RFC3339Nano)))
-	case value.Null:
-		s = "null"
+	data, err := json.ConvertTableValueToJsonStructure(header, records)
+	if err != nil {
+		return "", errors.New(fmt.Sprintf("encoding to json failed: %s", err.Error()))
 	}
 
-	return s
-}
-
-func escapeJsonString(s string) string {
-	runes := []rune(s)
-	encoded := make([]rune, 0)
-
-	for _, r := range runes {
-		switch r {
-		case '\\', '"', '/':
-			encoded = append(encoded, '\\', r)
-		case '\n':
-			encoded = append(encoded, '\\', 'n')
-		case '\r':
-			encoded = append(encoded, '\\', 'r')
-		case '\t':
-			encoded = append(encoded, '\\', 't')
-		default:
-			encoded = append(encoded, r)
-		}
+	e := json.NewEncoder()
+	switch format {
+	case cmd.JSONH:
+		e.EscapeType = json.HexDigits
+	case cmd.JSONA:
+		e.EscapeType = json.AllWithHexDigits
 	}
-	return string(encoded)
+	e.LineBreak = lineBreak
+	e.PrettyPrint = prettyPrint
+
+	useESBack := color.UseEscapeSequences
+	if !e.PrettyPrint {
+		color.UseEscapeSequences = false
+	}
+
+	s := e.Encode(data)
+
+	color.UseEscapeSequences = useESBack
+	return s, nil
 }
 
 func quote(s string) string {

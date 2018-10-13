@@ -197,7 +197,7 @@ var sourceTests = []struct {
 		Expr: parser.Source{
 			FilePath: parser.NewStringValue(GetTestFilePath("source_syntaxerror.sql")),
 		},
-		Error: fmt.Sprintf("%s [L:1 C:34] syntax error: unexpected STRING", GetTestFilePath("source_syntaxerror.sql")),
+		Error: fmt.Sprintf("%s [L:1 C:34] syntax error: unexpected token \"wrong argument\"", GetTestFilePath("source_syntaxerror.sql")),
 	},
 }
 
@@ -252,7 +252,7 @@ var setFlagTests = []struct {
 		ResultStrValue: "SJIS",
 	},
 	{
-		Name: "Set LineBreak",
+		Name: "Set lineBreak",
 		Expr: parser.SetFlag{
 			Name:  "@@line_break",
 			Value: value.NewString("CRLF"),
@@ -315,6 +315,15 @@ var setFlagTests = []struct {
 		ResultBoolValue: true,
 	},
 	{
+		Name: "Set Color",
+		Expr: parser.SetFlag{
+			Name:  "@@color",
+			Value: value.NewBoolean(true),
+		},
+		ResultFlag:      "color",
+		ResultBoolValue: true,
+	},
+	{
 		Name: "Set Stats",
 		Expr: parser.SetFlag{
 			Name:  "@@stats",
@@ -366,10 +375,10 @@ var setFlagTests = []struct {
 }
 
 func TestSetFlag(t *testing.T) {
-	initFlag()
 	flags := cmd.GetFlags()
 
 	for _, v := range setFlagTests {
+		initFlag()
 		err := SetFlag(v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -421,12 +430,17 @@ func TestSetFlag(t *testing.T) {
 			if flags.WithoutNull != v.ResultBoolValue {
 				t.Errorf("%s: without-null = %t, want %t", v.Name, flags.WithoutNull, v.ResultBoolValue)
 			}
+		case "COLOR":
+			if flags.Color != v.ResultBoolValue {
+				t.Errorf("%s: color = %t, want %t", v.Name, flags.Stats, v.ResultBoolValue)
+			}
 		case "STATS":
 			if flags.Stats != v.ResultBoolValue {
 				t.Errorf("%s: stats = %t, want %t", v.Name, flags.Stats, v.ResultBoolValue)
 			}
 		}
 	}
+	initFlag()
 }
 
 var showFlagTests = []struct {
@@ -466,7 +480,7 @@ var showFlagTests = []struct {
 		Result: "SJIS",
 	},
 	{
-		Name: "Show LineBreak",
+		Name: "Show lineBreak",
 		Expr: parser.ShowFlag{
 			Name: "@@line_break",
 		},
@@ -550,6 +564,17 @@ var showFlagTests = []struct {
 		Result: "true",
 	},
 	{
+		Name: "Show Color",
+		Expr: parser.ShowFlag{
+			Name: "@@color",
+		},
+		SetExpr: parser.SetFlag{
+			Name:  "@@color",
+			Value: value.NewBoolean(true),
+		},
+		Result: "true",
+	},
+	{
 		Name: "Show Stats",
 		Expr: parser.ShowFlag{
 			Name: "@@stats",
@@ -570,9 +595,8 @@ var showFlagTests = []struct {
 }
 
 func TestShowFlag(t *testing.T) {
-	initFlag()
-
 	for _, v := range showFlagTests {
+		initFlag()
 		if v.SetExpr.Value != nil {
 			SetFlag(v.SetExpr)
 		}
@@ -593,6 +617,7 @@ func TestShowFlag(t *testing.T) {
 			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
 		}
 	}
+	initFlag()
 }
 
 var showObjectsTests = []struct {
@@ -639,26 +664,32 @@ var showObjectsTests = []struct {
 				ViewMap{
 					"VIEW1": &View{
 						FileInfo: &FileInfo{
-							Path: "view1",
+							Path:        "view1",
+							IsTemporary: true,
 						},
+						Header: NewHeader("view1", []string{"column1", "column2"}),
 					},
 				},
 				ViewMap{
 					"VIEW1": &View{
 						FileInfo: &FileInfo{
-							Path: "view1",
+							Path:        "view1",
+							IsTemporary: true,
 						},
+						Header: NewHeader("view1", []string{"column1", "column2", "column3"}),
 					},
 					"VIEW2": &View{
 						FileInfo: &FileInfo{
-							Path: "view2",
+							Path:        "view2",
+							IsTemporary: true,
 						},
+						Header: NewHeader("view2", []string{"column1", "column2"}),
 					},
 				},
 			},
 		},
 		Result: "\n" + "    Views\n" + "-------------\n" +
-			"view1\nview2\n",
+			"view1 (column1, column2)\nview2 (column1, column2)\n",
 	},
 	{
 		Name:   "ShowObjects Views Empty",
@@ -727,9 +758,9 @@ var showObjectsTests = []struct {
 			},
 		},
 		Result: "\n" + "    Scala Functions\n" + "-----------------------\n" +
-			"userfunc1(@arg1)\n" +
+			"userfunc1 (@arg1)\n" +
 			"\n" + "    Aggregate Functions\n" + "---------------------------\n" +
-			"useraggfunc(column1, @arg1, @arg2 = 1)\n",
+			"useraggfunc (column1, @arg1, @arg2 = 1)\n",
 	},
 	{
 		Name:   "ShowObjects Functions Empty",

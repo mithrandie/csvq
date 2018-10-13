@@ -24,16 +24,7 @@ func (l *Lexer) Lex(lval *yySymType) int {
 
 func (l *Lexer) Error(e string) {
 	if 0 < l.token.Token {
-		var lit string
-		if TokenFrom <= l.token.Token && l.token.Token <= ERROR {
-			lit = TokenLiteral(l.token.Token)
-		} else if COUNT <= l.token.Token && l.token.Token <= FUNCTION_WITH_INS {
-			lit = TokenLiteral(IDENTIFIER)
-		} else {
-			lit = l.token.Literal
-		}
-
-		l.err = NewSyntaxError(fmt.Sprintf("%s: unexpected %s", e, lit), l.token)
+		l.err = NewSyntaxError(fmt.Sprintf("%s: unexpected token %q", e, l.token.Literal), l.token)
 	} else if e == "syntax error" && l.token.Token == -1 {
 		l.err = NewSyntaxError(fmt.Sprintf("%s: unexpected termination", e), l.token)
 	} else {

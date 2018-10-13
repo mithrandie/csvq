@@ -122,6 +122,94 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select c1 from json_table('key', '{\"key2\":1}') jt",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{
+								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
+							},
+						},
+					},
+					FromClause: FromClause{From: "from", Tables: []QueryExpression{
+						Table{
+							Object: JsonQuery{
+								BaseExpr:  &BaseExpr{line: 1, char: 16},
+								JsonQuery: "json_table",
+								Query:     NewStringValue("key"),
+								JsonText:  NewStringValue("{\"key2\":1}"),
+							},
+							Alias: Identifier{BaseExpr: &BaseExpr{line: 1, char: 48}, Literal: "jt"},
+						},
+					}},
+				},
+			},
+		},
+	},
+	{
+		Input: "select c1 from json_table('key', item) jt",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{
+								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
+							},
+						},
+					},
+					FromClause: FromClause{From: "from", Tables: []QueryExpression{
+						Table{
+							Object: JsonQuery{
+								BaseExpr:  &BaseExpr{line: 1, char: 16},
+								JsonQuery: "json_table",
+								Query:     NewStringValue("key"),
+								JsonText:  Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "item"},
+							},
+							Alias: Identifier{BaseExpr: &BaseExpr{line: 1, char: 40}, Literal: "jt"},
+						},
+					}},
+				},
+			},
+		},
+	},
+	{
+		Input: "select c1 from json_table('key', '{\"key2\":1}') as jt",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{
+								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
+							},
+						},
+					},
+					FromClause: FromClause{From: "from", Tables: []QueryExpression{
+						Table{
+							Object: JsonQuery{
+								BaseExpr:  &BaseExpr{line: 1, char: 16},
+								JsonQuery: "json_table",
+								Query:     NewStringValue("key"),
+								JsonText:  NewStringValue("{\"key2\":1}"),
+							},
+							As:    "as",
+							Alias: Identifier{BaseExpr: &BaseExpr{line: 1, char: 51}, Literal: "jt"},
+						},
+					}},
+				},
+			},
+		},
+	},
+	{
 		Input: "select 1 from table1, (select 2 from dual)",
 		Output: []Statement{
 			SelectQuery{
@@ -874,6 +962,33 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select column1 in json_row('key', '{\"key\":1}')",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: In{
+								In:  "in",
+								LHS: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
+								Values: RowValue{
+									BaseExpr: &BaseExpr{line: 1, char: 19},
+									Value: JsonQuery{
+										JsonQuery: "json_row",
+										Query:     NewStringValue("key"),
+										JsonText:  NewStringValue("{\"key\":1}"),
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "select (column1, column2) not in ((1, 2), (3, 4))",
 		Output: []Statement{
 			SelectQuery{
@@ -950,6 +1065,39 @@ var parseTests = []struct {
 											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 31}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
 										},
 									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select (column1, column2) in json_row('key', '{\"key\":1}')",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: In{
+								In: "in",
+								LHS: RowValue{
+									BaseExpr: &BaseExpr{line: 1, char: 8},
+									Value: ValueList{
+										Values: []QueryExpression{
+											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 9}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "column1"}},
+											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 18}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 18}, Literal: "column2"}},
+										},
+									},
+								},
+								Values: JsonQuery{
+									BaseExpr:  &BaseExpr{line: 1, char: 30},
+									JsonQuery: "json_row",
+									Query:     NewStringValue("key"),
+									JsonText:  NewStringValue("{\"key\":1}"),
 								},
 							}},
 						},
@@ -1666,6 +1814,48 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select json_object()",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: Function{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "json_object",
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select json_object(column1, column2)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: Function{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "json_object",
+								Args: []QueryExpression{
+									Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 20}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 20}, Literal: "column1"}}},
+									Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 29}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 29}, Literal: "column2"}}},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "select if(column1, column2, column3)",
 		Output: []Statement{
 			SelectQuery{
@@ -1813,7 +2003,7 @@ var parseTests = []struct {
 						Fields: []QueryExpression{
 							Field{Object: ListAgg{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
-								ListAgg:  "listagg",
+								Name:     "listagg",
 								Args: []QueryExpression{
 									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 16}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "column1"}},
 								},
@@ -1835,7 +2025,7 @@ var parseTests = []struct {
 						Fields: []QueryExpression{
 							Field{Object: ListAgg{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
-								ListAgg:  "listagg",
+								Name:     "listagg",
 								Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 16},
 								Args: []QueryExpression{
 									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 25}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 25}, Literal: "column1"}},
@@ -1859,7 +2049,7 @@ var parseTests = []struct {
 						Fields: []QueryExpression{
 							Field{Object: ListAgg{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
-								ListAgg:  "listagg",
+								Name:     "listagg",
 								Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 16},
 								Args: []QueryExpression{
 									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 25}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 25}, Literal: "column1"}},
@@ -1889,7 +2079,7 @@ var parseTests = []struct {
 						Fields: []QueryExpression{
 							Field{Object: ListAgg{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
-								ListAgg:  "listagg",
+								Name:     "listagg",
 								Args: []QueryExpression{
 									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 16}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "column1"}},
 									NewStringValue(","),
@@ -4804,6 +4994,54 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select json_row",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "json_row"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select json_table",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "json_table"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select json_object",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "json_object"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
 		Input: "select listagg",
 		Output: []Statement{
 			SelectQuery{SelectEntity: SelectEntity{
@@ -4901,13 +5139,13 @@ var parseTests = []struct {
 	},
 	{
 		Input:     "select 1 = 1 = 1",
-		Error:     "syntax error: unexpected =",
+		Error:     "syntax error: unexpected token \"=\"",
 		ErrorLine: 1,
 		ErrorChar: 14,
 	},
 	{
 		Input:     "select 1 < 2 < 3",
-		Error:     "syntax error: unexpected <",
+		Error:     "syntax error: unexpected token \"<\"",
 		ErrorLine: 1,
 		ErrorChar: 14,
 	},
@@ -4920,7 +5158,7 @@ var parseTests = []struct {
 	{
 		Input:      "select select",
 		SourceFile: GetTestFilePath("dummy.sql"),
-		Error:      "syntax error: unexpected SELECT",
+		Error:      "syntax error: unexpected token \"select\"",
 		ErrorLine:  1,
 		ErrorChar:  8,
 		ErrorFile:  GetTestFilePath("dummy.sql"),
@@ -4928,7 +5166,7 @@ var parseTests = []struct {
 	{
 		Input:      "print 'foo' 'bar'",
 		SourceFile: GetTestFilePath("dummy.sql"),
-		Error:      "syntax error: unexpected STRING",
+		Error:      "syntax error: unexpected token \"bar\"",
 		ErrorLine:  1,
 		ErrorChar:  13,
 		ErrorFile:  GetTestFilePath("dummy.sql"),
@@ -4936,7 +5174,7 @@ var parseTests = []struct {
 	{
 		Input:      "print !=",
 		SourceFile: GetTestFilePath("dummy.sql"),
-		Error:      "syntax error: unexpected !=",
+		Error:      "syntax error: unexpected token \"!=\"",
 		ErrorLine:  1,
 		ErrorChar:  7,
 		ErrorFile:  GetTestFilePath("dummy.sql"),

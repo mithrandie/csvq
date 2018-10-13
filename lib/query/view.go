@@ -1,6 +1,10 @@
 package query
 
 import (
+	"errors"
+	"fmt"
+	"github.com/mithrandie/csvq/lib/json"
+	"io/ioutil"
 	"math"
 	"os"
 	"sort"
@@ -120,13 +124,39 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 				return nil, NewStdinEmptyError(table.Object.(parser.Stdin))
 			}
 
-			fp := os.Stdin
-			defer fp.Close()
+			var loadView *View
 
-			loadView, err := loadViewFromFile(fp, fileInfo)
-			if err != nil {
-				return nil, NewCsvParsingError(table.Object, fileInfo.Path, err.Error())
+			jsonQuery := cmd.GetFlags().JsonQuery
+			if len(jsonQuery) < 1 {
+				fp := os.Stdin
+				defer fp.Close()
+
+				loadView, err = loadViewFromFile(fp, fileInfo)
+				if err != nil {
+					return nil, NewCsvParsingError(table.Object, fileInfo.Path, err.Error())
+				}
+			} else {
+				buf, err := ioutil.ReadAll(os.Stdin)
+				if err != nil {
+					return nil, NewReadFileError(table.Object.(parser.Stdin), err.Error())
+				}
+
+				headerLabels, rows, err := json.LoadTable(jsonQuery, string(buf))
+				if err != nil {
+					return nil, errors.New(fmt.Sprintf("json query error: %s", err.Error()))
+				}
+
+				records := make([]Record, 0, len(rows))
+				for _, row := range rows {
+					records = append(records, NewRecord(row))
+				}
+
+				loadView = NewView()
+				loadView.Header = NewHeader(parser.FormatTableName(fileInfo.Path), headerLabels)
+				loadView.RecordSet = records
+				loadView.FileInfo = fileInfo
 			}
+
 			loadView.FileInfo.InitialHeader = loadView.Header.Copy()
 			loadView.FileInfo.InitialRecordSet = loadView.RecordSet.Copy()
 			filter.TempViews[len(filter.TempViews)-1].Set(loadView)
@@ -144,6 +174,36 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 		if !strings.EqualFold(table.Object.String(), table.Name().Literal) {
 			view.Header.Update(table.Name().Literal, nil)
 		}
+	case parser.JsonQuery:
+		jsonQuery := table.Object.(parser.JsonQuery)
+
+		alias := table.Name().Literal
+		var jsonText string
+
+		if jsonPath, ok := jsonQuery.JsonText.(parser.Identifier); ok {
+			jsonText, err = loadJsonTextFromFile(jsonPath)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			jsonTextValue, err := filter.Evaluate(jsonQuery.JsonText)
+			if err != nil {
+				return nil, err
+			}
+			jsonTextValue = value.ToString(jsonTextValue)
+
+			if value.IsNull(jsonTextValue) {
+				return nil, NewJsonTableEmptyError(jsonQuery)
+			}
+
+			jsonText = jsonTextValue.(value.String).Raw()
+		}
+
+		view, err = loadViewFromJson(jsonQuery, jsonText, alias, filter)
+		if err != nil {
+			return nil, err
+		}
+
 	case parser.Identifier:
 		tableIdentifier := table.Object.(parser.Identifier)
 		if filter.RecursiveTable != nil && strings.EqualFold(tableIdentifier.Literal, filter.RecursiveTable.Name.Literal) && filter.RecursiveTmpView != nil {
@@ -156,7 +216,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 				return nil, err
 			}
 			view = it
-			if !strings.EqualFold(tableIdentifier.Literal, table.Name().Literal) {
+			if tableIdentifier.Literal != table.Name().Literal {
 				view.Header.Update(table.Name().Literal, nil)
 			}
 		} else {
@@ -440,6 +500,54 @@ func loadViewFromFile(fp *os.File, fileInfo *FileInfo) (*View, error) {
 	view.Header = NewHeader(parser.FormatTableName(fileInfo.Path), header)
 	view.RecordSet = records
 	view.FileInfo = fileInfo
+	return view, nil
+}
+
+func loadJsonTextFromFile(jsonPath parser.Identifier) (string, error) {
+	var buf []byte
+
+	flags := cmd.GetFlags()
+	fpath, err := searchFilePath(jsonPath, flags.Repository, []string{cmd.JsonExt})
+	if err != nil {
+		return "", err
+	}
+
+	buf, err = ioutil.ReadFile(fpath)
+	if err != nil {
+		return "", NewReadFileError(jsonPath, err.Error())
+	}
+
+	return string(buf), nil
+}
+
+func loadViewFromJson(jsonQuery parser.JsonQuery, jsonText string, viewName string, filter *Filter) (*View, error) {
+	queryValue, err := filter.Evaluate(jsonQuery.Query)
+	if err != nil {
+		return nil, err
+	}
+	query := value.ToString(queryValue)
+
+	if value.IsNull(query) {
+		return nil, NewJsonTableEmptyError(jsonQuery)
+	}
+
+	headerLabels, rows, err := json.LoadTable(query.(value.String).Raw(), jsonText)
+	if err != nil {
+		return nil, NewJsonQueryError(jsonQuery, err.Error())
+	}
+
+	records := make([]Record, 0, len(rows))
+	for _, row := range rows {
+		records = append(records, NewRecord(row))
+	}
+
+	view := NewView()
+	view.Header = NewHeader(viewName, headerLabels)
+	view.RecordSet = records
+	view.FileInfo = &FileInfo{
+		Path:        viewName,
+		IsTemporary: true,
+	}
 	return view, nil
 }
 
@@ -905,7 +1013,7 @@ func (view *View) additionalColumns(expr parser.QueryExpression) ([]string, erro
 		}
 	case parser.ListAgg:
 		if !view.isGrouped {
-			return nil, NewNotGroupingRecordsError(expr, expr.(parser.ListAgg).ListAgg)
+			return nil, NewNotGroupingRecordsError(expr, expr.(parser.ListAgg).Name)
 		}
 	case parser.AnalyticFunction:
 		fn := expr.(parser.AnalyticFunction)

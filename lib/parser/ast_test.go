@@ -621,6 +621,18 @@ func TestSubquery_String(t *testing.T) {
 	}
 }
 
+func TestJsonQuery_String(t *testing.T) {
+	e := JsonQuery{
+		JsonQuery: "json_array",
+		Query:     NewStringValue("key"),
+		JsonText:  NewStringValue("{\"key\":1}"),
+	}
+	expect := "json_array('key', '{\"key\":1}')"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
 func TestComparison_String(t *testing.T) {
 	e := Comparison{
 		LHS:      Identifier{Literal: "column"},
@@ -1268,7 +1280,7 @@ func TestCaseElse_String(t *testing.T) {
 
 func TestListAgg_String(t *testing.T) {
 	e := ListAgg{
-		ListAgg:  "listagg",
+		Name:     "listagg",
 		Distinct: Token{Token: DISTINCT, Literal: "distinct"},
 		Args: []QueryExpression{
 			Identifier{Literal: "column1"},
@@ -1286,7 +1298,7 @@ func TestListAgg_String(t *testing.T) {
 	}
 
 	e = ListAgg{
-		ListAgg:  "listagg",
+		Name:     "listagg",
 		Distinct: Token{Token: DISTINCT, Literal: "distinct"},
 		Args: []QueryExpression{
 			Identifier{Literal: "column1"},

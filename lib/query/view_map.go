@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"github.com/mithrandie/csvq/lib/color"
 	"sort"
 	"strings"
 
@@ -91,22 +92,32 @@ func (list TemporaryViewScopes) Restore() {
 }
 
 func (list TemporaryViewScopes) List() []string {
+	var viewdefs []string
 	var names []string
 
 	for _, m := range list {
 		for _, view := range m {
-			if view.FileInfo.IsTemporary {
+			if !view.FileInfo.IsTemporary {
 				continue
 			}
 			name := view.FileInfo.Path
 			if !InStrSlice(name, names) {
+				c := view.Header.TableColumnNames()
+				clist := make([]string, 0, len(c))
+				for _, n := range c {
+					clist = append(clist, color.Yellow(n))
+				}
+				viewdefs = append(
+					viewdefs,
+					color.GreenB(name)+" ("+strings.Join(clist, ", ")+")",
+				)
 				names = append(names, name)
 			}
 		}
 	}
-	sort.Strings(names)
+	sort.Strings(viewdefs)
 
-	return names
+	return viewdefs
 }
 
 type ViewMap map[string]*View

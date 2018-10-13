@@ -13,19 +13,21 @@ category: reference
 | [RTRIM](#rtrim) | Returns the string with all trailing characters removed |
 | [UPPER](#upper) | Returns the string with all characters mapped to their upper case |
 | [LOWER](#lower) | Returns the string with all characters mapped to their lower case |
-| [BASE64_ENCODE](#base64_encode) | Return the base64 encoding of string |
-| [BASE64_DECODE](#base64_decode) | Return the string represented by the base64 encoding |
-| [HEX_ENCODE](#hex_encode) | Return the hexadecimal encoding of string |
-| [HEX_DECODE](#hex_decode) | Return the string represented by the hexadecimal encoding |
-| [LEN](#len) | Return the character length of the string |
-| [BYTE_LEN](#byte_len) | Return the byte length in utf-8 encoding of the string |
-| [LPAD](#lpad) | Return the string left-side padded |
-| [RPAD](#rpad) | Return the string right-side padded |
-| [SUBSTR](#substr) | Return a substring of the string |
-| [INSTR](#instr) | Return the index of the first occurrence of the substring |
-| [LIST_ELEM](#list_elem) | Return the element of the list |
-| [REPLACE](#replace) | Return the string with substrings replaced another strings |
-| [FORMAT](#format) | Return the formatted string |
+| [BASE64_ENCODE](#base64_encode) | Returns the base64 encoding of string |
+| [BASE64_DECODE](#base64_decode) | Returns the string represented by the base64 encoding |
+| [HEX_ENCODE](#hex_encode) | Returns the hexadecimal encoding of string |
+| [HEX_DECODE](#hex_decode) | Returns the string represented by the hexadecimal encoding |
+| [LEN](#len) | Returns the character length of the string |
+| [BYTE_LEN](#byte_len) | Returns the byte length in utf-8 encoding of the string |
+| [LPAD](#lpad) | Returns the string left-side padded |
+| [RPAD](#rpad) | Returns the string right-side padded |
+| [SUBSTR](#substr) | Returns a substring of the string |
+| [INSTR](#instr) | Returns the index of the first occurrence of the substring |
+| [LIST_ELEM](#list_elem) | Returns the element of the list |
+| [REPLACE](#replace) | Returns the string with substrings replaced another strings |
+| [FORMAT](#format) | Returns the formatted string |
+| [JSON_VALUE](#json_value) | Returns a value from json |
+| [JSON_OBJECT](#json_object) | Returns a string formatted in json object |
 
 ## Definitions
 
@@ -342,7 +344,6 @@ Return the index of the first occurrence of _substr_ in _str_,
 or null if _substr_ is not present in _str_, returns null.
 
 ### LIST_ELEM
-
 {: #list_elem}
 
 ```
@@ -436,3 +437,60 @@ specifier
   | q | string representing the value with quotes |
   | % | '%' |
 
+### JSON_VALUE
+{: #json_value}
+
+```
+JSON_VALUE(query, json)
+```
+
+_query_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+  [JSON Query]({{ '/reference/json.html#query' |relative_url }}) to uniquely specify data.
+
+_json_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_return_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+Return a value from json.
+
+A JSON values are converted to following types.
+
+| JSON value | csvq value |
+|:-|:-|
+| object | string |
+| array  | string |
+| number | integer or float |
+| string | string |
+| true   | boolean |
+| false  | boolean |
+| null   | null |
+
+
+### JSON_OBJECT
+{: #json_object}
+
+```
+JSON_OBJECT([field [, field ...]])
+
+field
+  : value
+  : value AS alias
+```
+
+_value_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+_alias_
+: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+
+Returns a string formatted in json object.
+
+If no arguments are passed, then the object include all fields in the view.

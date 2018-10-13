@@ -479,6 +479,17 @@ func (sq Subquery) String() string {
 	return putParentheses(sq.Query.String())
 }
 
+type JsonQuery struct {
+	*BaseExpr
+	JsonQuery string
+	Query     QueryExpression
+	JsonText  QueryExpression
+}
+
+func (e JsonQuery) String() string {
+	return e.JsonQuery + putParentheses(e.Query.String()+", "+e.JsonText.String())
+}
+
 type Comparison struct {
 	*BaseExpr
 	LHS      QueryExpression
@@ -915,7 +926,7 @@ func (e CaseExprElse) String() string {
 
 type ListAgg struct {
 	*BaseExpr
-	ListAgg     string
+	Name        string
 	Distinct    Token
 	Args        []QueryExpression
 	WithinGroup string
@@ -929,7 +940,7 @@ func (e ListAgg) String() string {
 	}
 	option = append(option, listQueryExpressions(e.Args))
 
-	s := []string{e.ListAgg + "(" + joinWithSpace(option) + ")"}
+	s := []string{e.Name + "(" + joinWithSpace(option) + ")"}
 	if 0 < len(e.WithinGroup) {
 		s = append(s, e.WithinGroup)
 		if e.OrderBy != nil {

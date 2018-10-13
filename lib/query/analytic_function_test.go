@@ -2350,3 +2350,70 @@ var analyticListAggExecuteTests = []analyticFunctionExecuteTests{
 func TestAnalyticListAgg_Execute(t *testing.T) {
 	testAnalyticFunctionExecute(t, AnalyticListAgg{}, analyticListAggExecuteTests)
 }
+
+var analyticJsonAggCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{
+	{
+		Name: "JsonAgg CheckArgsLen Too Little Error",
+		Function: parser.AnalyticFunction{
+			Name: "json_agg",
+		},
+		Error: "[L:- C:-] function json_agg takes exactly 1 argument",
+	},
+}
+
+func TestAnalyticJsonAgg_CheckArgsLen(t *testing.T) {
+	testAnalyticFunctionCheckArgsLenTests(t, AnalyticJsonAgg{}, analyticJsonAggCheckArgsLenTests)
+}
+
+var analyticJsonAggExecuteTests = []analyticFunctionExecuteTests{
+	{
+		Name:  "AnalyticJsonAgg Execute",
+		Items: Partition{0, 1, 2, 3, 4},
+		Function: parser.AnalyticFunction{
+			Name: "json_agg",
+			Args: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+			},
+		},
+		Result: map[int]value.Primary{
+			0: value.NewString("[100,200,null,200,300]"),
+			1: value.NewString("[100,200,null,200,300]"),
+			2: value.NewString("[100,200,null,200,300]"),
+			3: value.NewString("[100,200,null,200,300]"),
+			4: value.NewString("[100,200,null,200,300]"),
+		},
+	},
+	{
+		Name:  "AnalyticJsonAgg Execute With Distinct",
+		Items: Partition{0, 1, 2, 3, 4},
+		Function: parser.AnalyticFunction{
+			Name:     "json_agg",
+			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
+			Args: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+			},
+		},
+		Result: map[int]value.Primary{
+			0: value.NewString("[100,200,null,300]"),
+			1: value.NewString("[100,200,null,300]"),
+			2: value.NewString("[100,200,null,300]"),
+			3: value.NewString("[100,200,null,300]"),
+			4: value.NewString("[100,200,null,300]"),
+		},
+	},
+	{
+		Name:  "AnalyticJsonAgg Execute First Argument Evaluation Error",
+		Items: Partition{0, 1, 2, 3, 4},
+		Function: parser.AnalyticFunction{
+			Name: "json_agg",
+			Args: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+			},
+		},
+		Error: "[L:- C:-] field notexist does not exist",
+	},
+}
+
+func TestAnalyticJsonAgg_Execute(t *testing.T) {
+	testAnalyticFunctionExecute(t, AnalyticJsonAgg{}, analyticJsonAggExecuteTests)
+}

@@ -1,6 +1,7 @@
 package query
 
 import (
+	"github.com/mithrandie/csvq/lib/json"
 	"strings"
 	"time"
 
@@ -72,7 +73,7 @@ func NewFilterForSequentialEvaluation(view *View, parentFilter *Filter) *Filter 
 	f := &Filter{
 		Records: []FilterRecord{
 			{
-				View: view,
+				View:                  view,
 				fieldReferenceIndices: make(map[string]int),
 			},
 		},
@@ -179,7 +180,7 @@ func (f *Filter) Evaluate(expr parser.QueryExpression) (value.Primary, error) {
 	case parser.Exists:
 		val, err = f.evalExists(expr.(parser.Exists))
 	case parser.Subquery:
-		val, err = f.evalSubqueryForSingleValue(expr.(parser.Subquery))
+		val, err = f.evalSubqueryForValue(expr.(parser.Subquery))
 	case parser.Function:
 		val, err = f.evalFunction(expr.(parser.Function))
 	case parser.AggregateFunction:
@@ -307,13 +308,28 @@ func (f *Filter) evalConcat(expr parser.Concat) (value.Primary, error) {
 func (f *Filter) evalComparison(expr parser.Comparison) (value.Primary, error) {
 	var t ternary.Value
 
-	switch expr.LHS.(type) {
-	case parser.RowValue:
-		lhs, err := f.evalRowValue(expr.LHS.(parser.RowValue))
+	lhs, err := f.evalRowValue(expr.LHS)
+	if err != nil {
+		return nil, err
+	}
+	if lhs == nil {
+		return value.NewTernary(ternary.UNKNOWN), nil
+	}
+
+	if 1 == len(lhs) {
+		lhsVal := lhs[0]
+
+		if value.IsNull(lhsVal) {
+			return value.NewTernary(ternary.UNKNOWN), nil
+		}
+
+		rhs, err := f.Evaluate(expr.RHS)
 		if err != nil {
 			return nil, err
 		}
 
+		t = value.Compare(lhsVal, rhs, expr.Operator)
+	} else {
 		rhs, err := f.evalRowValue(expr.RHS.(parser.RowValue))
 		if err != nil {
 			return nil, err
@@ -323,23 +339,8 @@ func (f *Filter) evalComparison(expr parser.Comparison) (value.Primary, error) {
 		if err != nil {
 			return nil, NewRowValueLengthInComparisonError(expr.RHS.(parser.RowValue), len(lhs))
 		}
-
-	default:
-		lhs, err := f.Evaluate(expr.LHS)
-		if err != nil {
-			return nil, err
-		}
-		if value.IsNull(lhs) {
-			t = ternary.UNKNOWN
-		} else {
-			rhs, err := f.Evaluate(expr.RHS)
-			if err != nil {
-				return nil, err
-			}
-
-			t = value.Compare(lhs, rhs, expr.Operator)
-		}
 	}
+
 	return value.NewTernary(t), nil
 }
 
@@ -363,13 +364,39 @@ func (f *Filter) evalIs(expr parser.Is) (value.Primary, error) {
 func (f *Filter) evalBetween(expr parser.Between) (value.Primary, error) {
 	var t ternary.Value
 
-	switch expr.LHS.(type) {
-	case parser.RowValue:
-		lhs, err := f.evalRowValue(expr.LHS.(parser.RowValue))
+	lhs, err := f.evalRowValue(expr.LHS)
+	if err != nil {
+		return nil, err
+	}
+	if lhs == nil {
+		return value.NewTernary(ternary.UNKNOWN), nil
+	}
+
+	if 1 == len(lhs) {
+		lhsVal := lhs[0]
+
+		if value.IsNull(lhsVal) {
+			return value.NewTernary(ternary.UNKNOWN), nil
+		}
+
+		low, err := f.Evaluate(expr.Low)
 		if err != nil {
 			return nil, err
 		}
 
+		lowResult := value.GreaterOrEqual(lhsVal, low)
+		if lowResult == ternary.FALSE {
+			t = ternary.FALSE
+		} else {
+			high, err := f.Evaluate(expr.High)
+			if err != nil {
+				return nil, err
+			}
+
+			highResult := value.LessOrEqual(lhsVal, high)
+			t = ternary.And(lowResult, highResult)
+		}
+	} else {
 		low, err := f.evalRowValue(expr.Low.(parser.RowValue))
 		if err != nil {
 			return nil, err
@@ -394,32 +421,6 @@ func (f *Filter) evalBetween(expr parser.Between) (value.Primary, error) {
 
 			t = ternary.And(lowResult, highResult)
 		}
-	default:
-		lhs, err := f.Evaluate(expr.LHS)
-		if err != nil {
-			return nil, err
-		}
-		if value.IsNull(lhs) {
-			t = ternary.UNKNOWN
-		} else {
-			low, err := f.Evaluate(expr.Low)
-			if err != nil {
-				return nil, err
-			}
-
-			lowResult := value.GreaterOrEqual(lhs, low)
-			if lowResult == ternary.FALSE {
-				t = ternary.FALSE
-			} else {
-				high, err := f.Evaluate(expr.High)
-				if err != nil {
-					return nil, err
-				}
-
-				highResult := value.LessOrEqual(lhs, high)
-				t = ternary.And(lowResult, highResult)
-			}
-		}
 	}
 
 	if expr.IsNegated() {
@@ -433,44 +434,18 @@ func (f *Filter) valuesForRowValueListComparison(lhs parser.QueryExpression, val
 	var list []value.RowValue
 	var err error
 
-	switch lhs.(type) {
-	case parser.RowValue:
-		rowValue, err = f.evalRowValue(lhs.(parser.RowValue))
-		if err != nil {
-			return nil, nil, err
-		}
-
-		list, err = f.evalRowValues(values)
-		if err != nil {
-			return nil, nil, err
-		}
-
-	default:
-		lhs, err := f.Evaluate(lhs)
-		if err != nil {
-			return nil, nil, err
-		}
-		rowValue = value.RowValue{lhs}
-
-		rowValue := values.(parser.RowValue)
-		switch rowValue.Value.(type) {
-		case parser.Subquery:
-			list, err = f.evalSubqueryForSingleFieldRowValues(rowValue.Value.(parser.Subquery))
-			if err != nil {
-				return nil, nil, err
-			}
-		case parser.ValueList:
-			values, err := f.evalValueList(rowValue.Value.(parser.ValueList))
-			if err != nil {
-				return nil, nil, err
-			}
-			list = make([]value.RowValue, len(values))
-			for i, v := range values {
-				list[i] = value.RowValue{v}
-			}
-		}
+	rowValue, err = f.evalRowValue(lhs)
+	if err != nil {
+		return rowValue, list, err
 	}
-	return rowValue, list, nil
+
+	if rowValue != nil && 1 < len(rowValue) {
+		list, err = f.evalRowValueList(values)
+	} else {
+		list, err = f.evalArray(values)
+	}
+
+	return rowValue, list, err
 }
 
 func (f *Filter) evalIn(expr parser.In) (value.Primary, error) {
@@ -483,6 +458,8 @@ func (f *Filter) evalIn(expr parser.In) (value.Primary, error) {
 	if err != nil {
 		if subquery, ok := expr.Values.(parser.Subquery); ok {
 			return nil, NewSelectFieldLengthInComparisonError(subquery, len(val))
+		} else if jsonQuery, ok := expr.Values.(parser.JsonQuery); ok {
+			return nil, NewRowValueLengthInComparisonError(jsonQuery, len(val))
 		}
 
 		rvlist, _ := expr.Values.(parser.RowValueList)
@@ -506,6 +483,8 @@ func (f *Filter) evalAny(expr parser.Any) (value.Primary, error) {
 	if err != nil {
 		if subquery, ok := expr.Values.(parser.Subquery); ok {
 			return nil, NewSelectFieldLengthInComparisonError(subquery, len(val))
+		} else if jsonQuery, ok := expr.Values.(parser.JsonQuery); ok {
+			return nil, NewRowValueLengthInComparisonError(jsonQuery, len(val))
 		}
 
 		rvlist, _ := expr.Values.(parser.RowValueList)
@@ -525,6 +504,8 @@ func (f *Filter) evalAll(expr parser.All) (value.Primary, error) {
 	if err != nil {
 		if subquery, ok := expr.Values.(parser.Subquery); ok {
 			return nil, NewSelectFieldLengthInComparisonError(subquery, len(val))
+		} else if jsonQuery, ok := expr.Values.(parser.JsonQuery); ok {
+			return nil, NewRowValueLengthInComparisonError(jsonQuery, len(val))
 		}
 
 		rvlist, _ := expr.Values.(parser.RowValueList)
@@ -562,10 +543,31 @@ func (f *Filter) evalExists(expr parser.Exists) (value.Primary, error) {
 	return value.NewTernary(ternary.TRUE), nil
 }
 
+func (f *Filter) evalSubqueryForValue(expr parser.Subquery) (value.Primary, error) {
+	view, err := Select(expr.Query, f)
+	if err != nil {
+		return nil, err
+	}
+
+	if 1 < view.FieldLen() {
+		return nil, NewSubqueryTooManyFieldsError(expr)
+	}
+
+	if 1 < view.RecordLen() {
+		return nil, NewSubqueryTooManyRecordsError(expr)
+	}
+
+	if view.RecordLen() < 1 {
+		return value.NewNull(), nil
+	}
+
+	return view.RecordSet[0][0].Value(), nil
+}
+
 func (f *Filter) evalFunction(expr parser.Function) (value.Primary, error) {
 	name := strings.ToUpper(expr.Name)
 
-	if _, ok := Functions[name]; !ok && name != "NOW" {
+	if _, ok := Functions[name]; !ok && name != "NOW" && name != "JSON_OBJECT" {
 		udfn, err := f.Functions.Get(expr, name)
 		if err != nil {
 			return nil, NewFunctionNotExistError(expr, expr.Name)
@@ -582,6 +584,10 @@ func (f *Filter) evalFunction(expr parser.Function) (value.Primary, error) {
 		if err = udfn.CheckArgsLen(expr, expr.Name, len(expr.Args)); err != nil {
 			return nil, err
 		}
+	}
+
+	if name == "JSON_OBJECT" {
+		return JsonObject(expr, f)
 	}
 
 	args := make([]value.Primary, len(expr.Args))
@@ -673,29 +679,26 @@ func (f *Filter) evalAggregateFunction(expr parser.AggregateFunction) (value.Pri
 }
 
 func (f *Filter) evalListAgg(expr parser.ListAgg) (value.Primary, error) {
-	if expr.Args == nil || 2 < len(expr.Args) {
-		return nil, NewFunctionArgumentLengthError(expr, expr.ListAgg, []int{1, 2})
+	var separator string
+	var err error
+
+	switch strings.ToUpper(expr.Name) {
+	case "JSON_AGG":
+		err = f.checkArgsForJsonAgg(expr)
+	default: // LISTAGG
+		separator, err = f.checkArgsForListAgg(expr)
+	}
+
+	if err != nil {
+		return nil, err
 	}
 
 	if len(f.Records) < 1 {
-		return nil, NewUnpermittedStatementFunctionError(expr, expr.ListAgg)
+		return nil, NewUnpermittedStatementFunctionError(expr, expr.Name)
 	}
 
 	if !f.Records[0].View.isGrouped {
-		return nil, NewNotGroupingRecordsError(expr, expr.ListAgg)
-	}
-
-	separator := ""
-	if len(expr.Args) == 2 {
-		p, err := f.Evaluate(expr.Args[1])
-		if err != nil {
-			return nil, NewFunctionInvalidArgumentError(expr, expr.ListAgg, "the second argument must be a string")
-		}
-		s := value.ToString(p)
-		if value.IsNull(s) {
-			return nil, NewFunctionInvalidArgumentError(expr, expr.ListAgg, "the second argument must be a string")
-		}
-		separator = s.(value.String).Raw()
+		return nil, NewNotGroupingRecordsError(expr, expr.Name)
 	}
 
 	view := NewViewFromGroupedRecord(f.Records[0])
@@ -711,7 +714,39 @@ func (f *Filter) evalListAgg(expr parser.ListAgg) (value.Primary, error) {
 		return nil, err
 	}
 
+	switch strings.ToUpper(expr.Name) {
+	case "JSON_AGG":
+		return JsonAgg(list), nil
+	}
 	return ListAgg(list, separator), nil
+}
+
+func (f *Filter) checkArgsForListAgg(expr parser.ListAgg) (string, error) {
+	var separator string
+
+	if expr.Args == nil || 2 < len(expr.Args) {
+		return "", NewFunctionArgumentLengthError(expr, expr.Name, []int{1, 2})
+	}
+
+	if len(expr.Args) == 2 {
+		p, err := f.Evaluate(expr.Args[1])
+		if err != nil {
+			return separator, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be a string")
+		}
+		s := value.ToString(p)
+		if value.IsNull(s) {
+			return separator, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be a string")
+		}
+		separator = s.(value.String).Raw()
+	}
+	return separator, nil
+}
+
+func (f *Filter) checkArgsForJsonAgg(expr parser.ListAgg) error {
+	if 1 != len(expr.Args) {
+		return NewFunctionArgumentLengthError(expr, expr.Name, []int{1})
+	}
+	return nil
 }
 
 func (f *Filter) evalCaseExpr(expr parser.CaseExpr) (value.Primary, error) {
@@ -840,54 +875,85 @@ func (f *Filter) evalCursorAttribute(expr parser.CursorAttrebute) (value.Primary
 	return value.NewInteger(int64(i)), nil
 }
 
-func (f *Filter) evalRowValue(expr parser.RowValue) (values []value.Primary, err error) {
-	switch expr.Value.(type) {
-	case parser.Subquery:
-		values, err = f.evalSubqueryForRowValue(expr.Value.(parser.Subquery))
-	case parser.ValueList:
-		values, err = f.evalValueList(expr.Value.(parser.ValueList))
-	}
+/*
+ * Returns single or multiple fields, single record
+ */
+func (f *Filter) evalRowValue(expr parser.QueryExpression) (value.RowValue, error) {
+	var rowValue value.RowValue
+	var err error
 
-	return
-}
-
-func (f *Filter) evalValues(exprs []parser.QueryExpression) ([]value.Primary, error) {
-	values := make([]value.Primary, len(exprs))
-	for i, v := range exprs {
-		val, err := f.Evaluate(v)
-		if err != nil {
-			return nil, err
-		}
-		values[i] = val
-	}
-	return values, nil
-}
-
-func (f *Filter) evalValueList(expr parser.ValueList) ([]value.Primary, error) {
-	return f.evalValues(expr.Values)
-}
-
-func (f *Filter) evalRowValueList(expr parser.RowValueList) ([]value.RowValue, error) {
-	list := make([]value.RowValue, len(expr.RowValues))
-	for i, v := range expr.RowValues {
-		rowValue, err := f.evalRowValue(v.(parser.RowValue))
-		if err != nil {
-			return nil, err
-		}
-		list[i] = rowValue
-	}
-	return list, nil
-}
-
-func (f *Filter) evalRowValues(expr parser.QueryExpression) (rowValues []value.RowValue, err error) {
 	switch expr.(type) {
 	case parser.Subquery:
-		rowValues, err = f.evalSubqueryForRowValues(expr.(parser.Subquery))
+		rowValue, err = f.evalSubqueryForRowValue(expr.(parser.Subquery))
+	case parser.JsonQuery:
+		rowValue, err = f.evalJsonQueryForRowValue(expr.(parser.JsonQuery))
+	case parser.ValueList:
+		rowValue, err = f.evalValueList(expr.(parser.ValueList))
+	case parser.RowValue:
+		rowValue, err = f.evalRowValue(expr.(parser.RowValue).Value)
+	default:
+		p, e := f.Evaluate(expr)
+		if e != nil {
+			return rowValue, e
+		}
+		rowValue = value.RowValue{p}
+	}
+	return rowValue, err
+}
+
+/*
+ * Returns multiple fields, multiple records
+ */
+func (f *Filter) evalRowValueList(expr parser.QueryExpression) ([]value.RowValue, error) {
+	var list []value.RowValue
+	var err error
+
+	switch expr.(type) {
+	case parser.Subquery:
+		list, err = f.evalSubqueryForRowValueList(expr.(parser.Subquery))
+	case parser.JsonQuery:
+		list, err = f.evalJsonQueryForRowValueList(expr.(parser.JsonQuery))
 	case parser.RowValueList:
-		rowValues, err = f.evalRowValueList(expr.(parser.RowValueList))
+		rowValueList := expr.(parser.RowValueList)
+		list = make([]value.RowValue, len(rowValueList.RowValues))
+		for i, v := range rowValueList.RowValues {
+			rowValue, e := f.evalRowValue(v.(parser.RowValue))
+			if e != nil {
+				return list, e
+			}
+			list[i] = rowValue
+		}
 	}
 
-	return
+	return list, err
+}
+
+/*
+ * Returns single fields, multiple records
+ */
+func (f *Filter) evalArray(expr parser.QueryExpression) ([]value.RowValue, error) {
+	var array []value.RowValue
+	var err error
+
+	switch expr.(type) {
+	case parser.Subquery:
+		array, err = f.evalSubqueryForArray(expr.(parser.Subquery))
+	case parser.JsonQuery:
+		array, err = f.evalJsonQueryForArray(expr.(parser.JsonQuery))
+	case parser.ValueList:
+		values, e := f.evalValueList(expr.(parser.ValueList))
+		if e != nil {
+			return array, e
+		}
+		array = make([]value.RowValue, len(values))
+		for i, v := range values {
+			array[i] = value.RowValue{v}
+		}
+	case parser.RowValue:
+		array, err = f.evalArray(expr.(parser.RowValue).Value)
+	}
+
+	return array, err
 }
 
 func (f *Filter) evalSubqueryForRowValue(expr parser.Subquery) (value.RowValue, error) {
@@ -912,7 +978,50 @@ func (f *Filter) evalSubqueryForRowValue(expr parser.Subquery) (value.RowValue, 
 	return rowValue, nil
 }
 
-func (f *Filter) evalSubqueryForRowValues(expr parser.Subquery) ([]value.RowValue, error) {
+func (f *Filter) evalJsonQueryForRowValue(expr parser.JsonQuery) (value.RowValue, error) {
+	query, jsonText, err := f.evalJsonQueryParameters(expr)
+	if err != nil {
+		return nil, err
+	}
+
+	if value.IsNull(query) || value.IsNull(jsonText) {
+		return nil, nil
+	}
+
+	_, values, err := json.LoadTable(query.(value.String).Raw(), jsonText.(value.String).Raw())
+	if err != nil {
+		return nil, NewJsonQueryError(expr, err.Error())
+	}
+
+	if len(values) < 1 {
+		return nil, nil
+	}
+
+	if 1 < len(values) {
+		return nil, NewJsonQueryTooManyRecordsError(expr)
+	}
+
+	rowValue := make(value.RowValue, len(values[0]))
+	for i, cell := range values[0] {
+		rowValue[i] = cell
+	}
+
+	return rowValue, nil
+}
+
+func (f *Filter) evalValueList(expr parser.ValueList) (value.RowValue, error) {
+	values := make(value.RowValue, len(expr.Values))
+	for i, v := range expr.Values {
+		val, err := f.Evaluate(v)
+		if err != nil {
+			return nil, err
+		}
+		values[i] = val
+	}
+	return values, nil
+}
+
+func (f *Filter) evalSubqueryForRowValueList(expr parser.Subquery) ([]value.RowValue, error) {
 	view, err := Select(expr.Query, f)
 	if err != nil {
 		return nil, err
@@ -934,7 +1043,34 @@ func (f *Filter) evalSubqueryForRowValues(expr parser.Subquery) ([]value.RowValu
 	return list, nil
 }
 
-func (f *Filter) evalSubqueryForSingleFieldRowValues(expr parser.Subquery) ([]value.RowValue, error) {
+func (f *Filter) evalJsonQueryForRowValueList(expr parser.JsonQuery) ([]value.RowValue, error) {
+	query, jsonText, err := f.evalJsonQueryParameters(expr)
+	if err != nil {
+		return nil, err
+	}
+
+	if value.IsNull(query) || value.IsNull(jsonText) {
+		return nil, nil
+	}
+
+	_, values, err := json.LoadTable(query.(value.String).Raw(), jsonText.(value.String).Raw())
+	if err != nil {
+		return nil, NewJsonQueryError(expr, err.Error())
+	}
+
+	if len(values) < 1 {
+		return nil, nil
+	}
+
+	list := make([]value.RowValue, len(values))
+	for i, row := range values {
+		list[i] = value.RowValue(row)
+	}
+
+	return list, nil
+}
+
+func (f *Filter) evalSubqueryForArray(expr parser.Subquery) ([]value.RowValue, error) {
 	view, err := Select(expr.Query, f)
 	if err != nil {
 		return nil, err
@@ -956,23 +1092,45 @@ func (f *Filter) evalSubqueryForSingleFieldRowValues(expr parser.Subquery) ([]va
 	return list, nil
 }
 
-func (f *Filter) evalSubqueryForSingleValue(expr parser.Subquery) (value.Primary, error) {
-	view, err := Select(expr.Query, f)
+func (f *Filter) evalJsonQueryForArray(expr parser.JsonQuery) ([]value.RowValue, error) {
+	query, jsonText, err := f.evalJsonQueryParameters(expr)
 	if err != nil {
 		return nil, err
 	}
 
-	if 1 < view.FieldLen() {
-		return nil, NewSubqueryTooManyFieldsError(expr)
+	if value.IsNull(query) || value.IsNull(jsonText) {
+		return nil, nil
 	}
 
-	if 1 < view.RecordLen() {
-		return nil, NewSubqueryTooManyRecordsError(expr)
+	values, err := json.LoadArray(query.(value.String).Raw(), jsonText.(value.String).Raw())
+	if err != nil {
+		return nil, NewJsonQueryError(expr, err.Error())
 	}
 
-	if view.RecordLen() < 1 {
-		return value.NewNull(), nil
+	if len(values) < 1 {
+		return nil, nil
 	}
 
-	return view.RecordSet[0][0].Value(), nil
+	list := make([]value.RowValue, len(values))
+	for i, v := range values {
+		list[i] = value.RowValue{v}
+	}
+
+	return list, nil
+}
+
+func (f *Filter) evalJsonQueryParameters(expr parser.JsonQuery) (value.Primary, value.Primary, error) {
+	queryValue, err := f.Evaluate(expr.Query)
+	if err != nil {
+		return nil, nil, err
+	}
+	query := value.ToString(queryValue)
+
+	jsonTextValue, err := f.Evaluate(expr.JsonText)
+	if err != nil {
+		return nil, nil, err
+	}
+	jsonText := value.ToString(jsonTextValue)
+
+	return query, jsonText, nil
 }

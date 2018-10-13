@@ -11,24 +11,25 @@ Analytic Functions can be used only in [Select Clause]({{ '/reference/select-que
 
 | name | description |
 | :- | :- |
-| [ROW_NUMBER](#row_number)     | Return the sequential numbers |
-| [RANK](#rank)                 | Return the ranks |
-| [DENSE_RANK](#dense_rank)     | Return the ranks without any gaps in the ranking |
-| [CUME_DIST](#cume_dist)       | Return the cumulative distributions |
-| [PERCENT_RANK](#percent_rank) | Return the relative ranks |
-| [NTILE](#ntile)               | Return the number of the group |
-| [FIRST_VALUE](#first_value)   | Return the first value |
-| [LAST_VALUE](#last_value)     | Return the last value |
-| [NTH_VALUE](#nth_value)       | Return the n-th value |
-| [LAG](#lag)                   | Return the value in a previous row |
-| [LEAD](#lead)                 | Return the value in a following row |
-| [COUNT](#count)               | Return the number of values |
-| [MIN](#min)                   | Return the minimum value |
-| [MAX](#max)                   | Return the maximum value |
-| [SUM](#sum)                   | Return the sum of values |
-| [AVG](#avg)                   | Return the average of values |
-| [MEDIAN](#median)             | Return the median of values |
-| [LISTAGG](#listagg)           | Return the concatenated string of values |
+| [ROW_NUMBER](#row_number)     | Returns the sequential numbers |
+| [RANK](#rank)                 | Returns the ranks |
+| [DENSE_RANK](#dense_rank)     | Returns the ranks without any gaps in the ranking |
+| [CUME_DIST](#cume_dist)       | Returns the cumulative distributions |
+| [PERCENT_RANK](#percent_rank) | Returns the relative ranks |
+| [NTILE](#ntile)               | Returns the number of the group |
+| [FIRST_VALUE](#first_value)   | Returns the first value |
+| [LAST_VALUE](#last_value)     | Returns the last value |
+| [NTH_VALUE](#nth_value)       | Returns the n-th value |
+| [LAG](#lag)                   | Returns the value in a previous row |
+| [LEAD](#lead)                 | Returns the value in a following row |
+| [COUNT](#count)               | Returns the number of values |
+| [MIN](#min)                   | Returns the minimum value |
+| [MAX](#max)                   | Returns the maximum value |
+| [SUM](#sum)                   | Returns the sum of values |
+| [AVG](#avg)                   | Returns the average of values |
+| [MEDIAN](#median)             | Returns the median of values |
+| [LISTAGG](#listagg)           | Returns the concatenated string of values |
+| [JSON_AGG](#json_agg)         | Returns the string formatted in JSON array |
 
 ## Basic Syntax
 {: #syntax}
@@ -485,7 +486,27 @@ _partition_clause_
 _order_by_clause_
 : [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
 
-Return the string result with the concatenated non-null values of _expr_.
+Returns the string result with the concatenated non-null values of _expr_.
 If all values are null, then returns a null.
 
 Separator string _separator_ is placed between values. Empty string is the default.
+
+
+
+### JSON_AGG
+{: #json_agg}
+
+```
+JSON_AGG([DISTINCT] expr) OVER ([partition_clause] [order by clause])
+```
+
+_expr_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+_partition_clause_
+: [Partition Clause](#syntax)
+
+_order_by_clause_
+: [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
+
+Returns the string formatted in JSON array.

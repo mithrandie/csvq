@@ -1,6 +1,7 @@
 package query
 
 import (
+	"github.com/mithrandie/csvq/lib/color"
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/parser"
@@ -138,7 +139,7 @@ func (list CursorScopes) List() []string {
 
 	dcls := make([]string, len(keys))
 	for i, key := range keys {
-		dcls[i] = fmt.Sprintf("%s for %s", key, cursors[key])
+		dcls[i] = fmt.Sprintf("%s for %s", color.GreenB(key), color.Cyan(cursors[key]))
 	}
 
 	return dcls

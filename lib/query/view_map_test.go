@@ -775,8 +775,10 @@ func TestTemporaryViewScopes_List(t *testing.T) {
 		ViewMap{
 			"VIEW1": &View{
 				FileInfo: &FileInfo{
-					Path: "view1",
+					Path:        "view1",
+					IsTemporary: true,
 				},
+				Header: NewHeader("view1", []string{"column1", "column2"}),
 			},
 		},
 		ViewMap{
@@ -784,16 +786,19 @@ func TestTemporaryViewScopes_List(t *testing.T) {
 				FileInfo: &FileInfo{
 					Path: "view1",
 				},
+				Header: NewHeader("view1", []string{"column1", "column2", "column3"}),
 			},
 			"VIEW2": &View{
 				FileInfo: &FileInfo{
-					Path: "view2",
+					Path:        "view2",
+					IsTemporary: true,
 				},
+				Header: NewHeader("view2", []string{"column1", "column2"}),
 			},
 		},
 	}
 
-	expect := []string{"view1", "view2"}
+	expect := []string{"view1 (column1, column2)", "view2 (column1, column2)"}
 
 	list := scopes.List()
 	if !reflect.DeepEqual(list, expect) {

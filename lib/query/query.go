@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"github.com/mithrandie/csvq/lib/color"
 	"os"
 	"strings"
 
@@ -874,7 +875,7 @@ func Commit(expr parser.Expression, filter *Filter) error {
 				}
 				return NewWriteFileError(expr, err.Error())
 			}
-			Log(fmt.Sprintf("Commit: file %q is created.", filename), cmd.GetFlags().Quiet)
+			Log(color.Info(fmt.Sprintf("Commit: file %q is created.", filename)), cmd.GetFlags().Quiet)
 		}
 	}
 
@@ -892,7 +893,7 @@ func Commit(expr parser.Expression, filter *Filter) error {
 				}
 				return NewWriteFileError(expr, err.Error())
 			}
-			Log(fmt.Sprintf("Commit: file %q is updated.", filename), cmd.GetFlags().Quiet)
+			Log(color.Info(fmt.Sprintf("Commit: file %q is updated.", filename)), cmd.GetFlags().Quiet)
 		}
 	}
 
@@ -928,13 +929,13 @@ func Rollback(filter *Filter) {
 
 	if 0 < len(createFiles) {
 		for filename := range createFiles {
-			Log(fmt.Sprintf("Rollback: file %q is deleted.", filename), cmd.GetFlags().Quiet)
+			Log(color.Info(fmt.Sprintf("Rollback: file %q is deleted.", filename)), cmd.GetFlags().Quiet)
 		}
 	}
 
 	if 0 < len(updateFiles) {
 		for filename := range updateFiles {
-			Log(fmt.Sprintf("Rollback: file %q is restored.", filename), cmd.GetFlags().Quiet)
+			Log(color.Info(fmt.Sprintf("Rollback: file %q is restored.", filename)), cmd.GetFlags().Quiet)
 		}
 	}
 

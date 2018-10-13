@@ -1778,6 +1778,67 @@ func TestFormat(t *testing.T) {
 	testFunction(t, Format, formatTests)
 }
 
+var jsonValueTests = []functionTest{
+	{
+		Name: "JsonValue",
+		Function: parser.Function{
+			Name: "json_value",
+		},
+		Args: []value.Primary{
+			value.NewString("key1.key2"),
+			value.NewString("{\"key1\":{\"key2\":\"value\"}}"),
+		},
+		Result: value.NewString("value"),
+	},
+	{
+		Name: "JsonValue Query is Null",
+		Function: parser.Function{
+			Name: "json_value",
+		},
+		Args: []value.Primary{
+			value.NewNull(),
+			value.NewString("{\"key1\":{\"key2\":\"value\"}}"),
+		},
+		Result: value.NewNull(),
+	},
+	{
+		Name: "JsonValue Json-Text is Null",
+		Function: parser.Function{
+			Name: "json_value",
+		},
+		Args: []value.Primary{
+			value.NewString("key1.key2"),
+			value.NewNull(),
+		},
+		Result: value.NewNull(),
+	},
+	{
+		Name: "JsonValue Arguments Error",
+		Function: parser.Function{
+			Name: "json_value",
+		},
+		Args: []value.Primary{
+			value.NewString("key1.key2"),
+		},
+		Error: "[L:- C:-] function json_value takes exactly 2 arguments",
+	},
+	{
+		Name: "JsonValue Json Loading Error",
+		Function: parser.Function{
+			Name: "json_value",
+		},
+		Args: []value.Primary{
+			value.NewString("key1.key2"),
+			value.NewString("{key1:{\"key2\":\"value\"}}"),
+		},
+		Error: "[L:- C:-] line 1, column 2: unexpected token \"key\" for function json_value",
+	},
+}
+
+func TestJsonValue(t *testing.T) {
+	testFunction(t, JsonValue, jsonValueTests)
+}
+
 var md5Tests = []functionTest{
 	{
 		Name: "Md5",
@@ -3096,6 +3157,113 @@ var nowTests = []struct {
 func TestNow(t *testing.T) {
 	for _, v := range nowTests {
 		result, err := Now(v.Function, v.Args, v.Filter)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(result, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
+		}
+	}
+}
+
+var jsonObjectTests = []struct {
+	Name     string
+	Function parser.Function
+	Filter   *Filter
+	Result   value.Primary
+	Error    string
+}{
+	{
+		Name: "Json Object",
+		Function: parser.Function{
+			Name: "json_object",
+			Args: []parser.QueryExpression{
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+			},
+		},
+		Filter: &Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+						RecordSet: []Record{
+							NewRecordWithId(0, []value.Primary{value.NewInteger(1), value.NewInteger(2)}),
+							NewRecordWithId(1, []value.Primary{value.NewInteger(11), value.NewInteger(12)}),
+						},
+					},
+					RecordIndex: 1,
+				},
+			},
+		},
+		Result: value.NewString("{\"column1\":11}"),
+	},
+	{
+		Name: "Json Object with All Columns",
+		Function: parser.Function{
+			Name: "json_object",
+		},
+		Filter: &Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeaderWithId("table1", []string{"column1", "column2.child1"}),
+						RecordSet: []Record{
+							NewRecordWithId(0, []value.Primary{value.NewInteger(1), value.NewInteger(2)}),
+							NewRecordWithId(1, []value.Primary{value.NewInteger(11), value.NewInteger(12)}),
+						},
+					},
+					RecordIndex: 1,
+				},
+			},
+		},
+		Result: value.NewString("{\"column1\":11,\"column2\":{\"child1\":12}}"),
+	},
+	{
+		Name: "Json Object Unpermitted Statement Error",
+		Function: parser.Function{
+			Name: "json_object",
+			Args: []parser.QueryExpression{
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+			},
+		},
+		Filter: NewEmptyFilter(),
+		Error:  "[L:- C:-] function json_object cannot be used as a statement",
+	},
+	{
+		Name: "Json Object Path Error",
+		Function: parser.Function{
+			Name: "json_object",
+		},
+		Filter: &Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeaderWithId("table1", []string{"column1", "column2.."}),
+						RecordSet: []Record{
+							NewRecordWithId(0, []value.Primary{value.NewInteger(1), value.NewInteger(2)}),
+							NewRecordWithId(1, []value.Primary{value.NewInteger(11), value.NewInteger(12)}),
+						},
+					},
+					RecordIndex: 1,
+				},
+			},
+		},
+		Error: "[L:- C:-] unexpected token \".\" at column 9 in \"column2..\" for function json_object",
+	},
+}
+
+func TestJsonObject(t *testing.T) {
+	for _, v := range jsonObjectTests {
+		result, err := JsonObject(v.Function, v.Filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

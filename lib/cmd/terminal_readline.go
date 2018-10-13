@@ -4,6 +4,7 @@ package cmd
 
 import (
 	"bufio"
+	"github.com/mithrandie/csvq/lib/color"
 	"os"
 	"path/filepath"
 
@@ -24,7 +25,7 @@ func NewTerminal() (VirtualTerminal, error) {
 	}
 
 	t, err := readline.NewEx(&readline.Config{
-		Prompt:                 TerminalPrompt,
+		Prompt:                 color.Blue(TerminalPrompt),
 		HistoryFile:            historyFile,
 		DisableAutoSaveHistory: true,
 	})
@@ -56,11 +57,11 @@ func (t ReadLineTerminal) Write(s string) error {
 }
 
 func (t ReadLineTerminal) SetPrompt() {
-	t.terminal.SetPrompt(TerminalPrompt)
+	t.terminal.SetPrompt(color.Blue(TerminalPrompt))
 }
 
 func (t ReadLineTerminal) SetContinuousPrompt() {
-	t.terminal.SetPrompt(TerminalContinuousPrompt)
+	t.terminal.SetPrompt(color.Blue(TerminalContinuousPrompt))
 }
 
 func (t ReadLineTerminal) SaveHistory(s string) {

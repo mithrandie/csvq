@@ -8,6 +8,8 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"encoding/hex"
+	"github.com/mithrandie/csvq/lib/color"
+	"github.com/mithrandie/csvq/lib/json"
 	"hash"
 	"math"
 	"os/exec"
@@ -76,6 +78,7 @@ var Functions = map[string]func(parser.Function, []value.Primary) (value.Primary
 	"LIST_ELEM":        ListElem,
 	"REPLACE":          Replace,
 	"FORMAT":           Format,
+	"JSON_VALUE":       JsonValue,
 	"MD5":              Md5,
 	"SHA1":             Sha1,
 	"SHA256":           Sha256,
@@ -851,6 +854,28 @@ func Format(fn parser.Function, args []value.Primary) (value.Primary, error) {
 	return value.NewString(str), nil
 }
 
+func JsonValue(fn parser.Function, args []value.Primary) (value.Primary, error) {
+	if len(args) != 2 {
+		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2})
+	}
+
+	query := value.ToString(args[0])
+	if value.IsNull(query) {
+		return value.NewNull(), nil
+	}
+
+	jsonText := value.ToString(args[1])
+	if value.IsNull(jsonText) {
+		return value.NewNull(), nil
+	}
+
+	v, err := json.LoadValue(query.(value.String).Raw(), jsonText.(value.String).Raw())
+	if err != nil {
+		return v, NewFunctionInvalidArgumentError(fn, fn.Name, err.Error())
+	}
+	return v, nil
+}
+
 func Md5(fn parser.Function, args []value.Primary) (value.Primary, error) {
 	return execCrypto(fn, args, md5.New)
 }
@@ -1392,4 +1417,44 @@ func Now(fn parser.Function, args []value.Primary, filter *Filter) (value.Primar
 		return value.NewDatetime(cmd.Now()), nil
 	}
 	return value.NewDatetime(filter.Now), nil
+}
+
+func JsonObject(fn parser.Function, filter *Filter) (value.Primary, error) {
+	if len(filter.Records) < 1 {
+		return nil, NewUnpermittedStatementFunctionError(fn, fn.Name)
+	}
+
+	view := &View{}
+	view.Header = filter.Records[0].View.Header.Copy()
+	view.RecordSet = RecordSet{filter.Records[0].View.RecordSet[filter.Records[0].RecordIndex]}
+	view.Filter = filter.CreateNode()
+
+	if len(fn.Args) < 1 {
+		view.SelectAllColumns()
+	} else {
+		selectClause := parser.SelectClause{
+			Fields: fn.Args,
+		}
+		view.Select(selectClause)
+	}
+	view.Fix()
+
+	pathes, err := json.ParsePathes(view.Header.TableColumnNames())
+	if err != nil {
+		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, err.Error())
+	}
+
+	record := make([]value.Primary, 0, view.FieldLen())
+	for _, cell := range view.RecordSet[0] {
+		record = append(record, cell.Value())
+	}
+	structure, _ := json.ConvertRecordValueToJsonStructure(pathes, record)
+
+	e := json.NewEncoder()
+	useESBack := color.UseEscapeSequences
+	color.UseEscapeSequences = false
+	s := e.Encode(structure)
+	color.UseEscapeSequences = useESBack
+
+	return value.NewString(s), nil
 }
