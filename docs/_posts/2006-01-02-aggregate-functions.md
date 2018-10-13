@@ -13,13 +13,14 @@ If distinct option is specified, aggregate functions calculate only unique value
 
 | name | description |
 | :- | :- |
-| [COUNT](#count) | Return the number of values |
-| [MIN](#min) | Return the minimum value |
-| [MAX](#max) | Return the maximum value |
-| [SUM](#sum) | Return the sum of values |
-| [AVG](#avg) | Return the average of values |
-| [MEDIAN](#median) | Return the median of values |
-| [LISTAGG](#listagg) | Return the concatenated string of values |
+| [COUNT](#count) | Returns the number of values |
+| [MIN](#min) | Returns the minimum value |
+| [MAX](#max) | Returns the maximum value |
+| [SUM](#sum) | Returns the sum of values |
+| [AVG](#avg) | Returns the average of values |
+| [MEDIAN](#median) | Returns the median of values |
+| [LISTAGG](#listagg) | Returns the concatenated string of values |
+| [JSON_AGG](#json_agg) | Returns the string formatted in JSON array |
 
 ## Definitions
 
@@ -155,3 +156,21 @@ If all values are null, then returns a null.
 Separator string _separator_ is placed between values. Empty string is the default.
 
 By using _order_by_clause_, you can sort values.
+
+### JSON_AGG
+{: #json_agg}
+
+```
+JSON_AGG([DISTINCT] expr) [WITHIN GROUP (order_by_clause)]
+```
+
+_expr_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+_order_by_clause_
+: [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Returns the string formatted in JSON array.
