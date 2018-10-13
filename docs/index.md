@@ -24,7 +24,7 @@ In the multiple operations, you can use variables, cursors, temporary tables, an
 * [Temporary Table]({{ '/reference/temporary-table.html' | relative_url }})
 * [Transaction Management]({{ '/reference/transaction.html' | relative_url }})
 * Support loading from standard input as a CSV
-* Support output a result of select query in JSON format 
+* Support [JSON]({{ '/reference/json.html' | relative_url }}) 
 * Support following file encodings
   * UTF-8
   * Shift-JIS

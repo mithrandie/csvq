@@ -101,7 +101,7 @@ Identifier
 : A identifier is a word starting with any unicode letter or a low line(U+005F '\_') and followed by a character string that contains any unicode letters, any digits or low lines(U+005F '\_').
   You cannot use [reserved words](#reserved_words) as a identifier.
 
-  Notwithstanding above naming restriction, you can use most character strings as a identifier by enclosing in back quotes.
+  Notwithstanding above naming restriction, you can use most character strings as a identifier by enclosing in back quotes(U+0060 '`').
   Back quotes are escaped by back slashes.
   
   Identifiers represent tables, columns, functions or cursors.

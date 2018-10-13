@@ -28,6 +28,7 @@ var encodeViewTests = []struct {
 	Encoding       cmd.Encoding
 	WriteDelimiter rune
 	WithoutHeader  bool
+	PrettyPrint    bool
 	Result         string
 	Error          string
 }{
@@ -177,6 +178,89 @@ var encodeViewTests = []struct {
 			"]",
 	},
 	{
+		Name: "JSONH",
+		View: &View{
+			Header: NewHeader("test", []string{"c1"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewString("a")}),
+				NewRecord([]value.Primary{value.NewString("b")}),
+				NewRecord([]value.Primary{value.NewString("abc\\def")}),
+			},
+		},
+		Format: cmd.JSONH,
+		Result: "[" +
+			"{" +
+			"\"c1\":\"a\"" +
+			"}," +
+			"{" +
+			"\"c1\":\"b\"" +
+			"}," +
+			"{" +
+			"\"c1\":\"abc\\u005cdef\"" +
+			"}" +
+			"]",
+	},
+	{
+		Name: "JSONA",
+		View: &View{
+			Header: NewHeader("test", []string{"c1"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewString("a")}),
+				NewRecord([]value.Primary{value.NewString("b")}),
+				NewRecord([]value.Primary{value.NewString("abc\\def")}),
+			},
+		},
+		Format: cmd.JSONA,
+		Result: "[" +
+			"{" +
+			"\"\\u0063\\u0031\":\"\\u0061\"" +
+			"}," +
+			"{" +
+			"\"\\u0063\\u0031\":\"\\u0062\"" +
+			"}," +
+			"{" +
+			"\"\\u0063\\u0031\":\"\\u0061\\u0062\\u0063\\u005c\\u0064\\u0065\\u0066\"" +
+			"}" +
+			"]",
+	},
+	{
+		Name: "JSONH Pretty Print",
+		View: &View{
+			Header: NewHeader("test", []string{"c1"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewString("a")}),
+				NewRecord([]value.Primary{value.NewString("b")}),
+				NewRecord([]value.Primary{value.NewString("abc\\def")}),
+			},
+		},
+		Format:      cmd.JSONH,
+		PrettyPrint: true,
+		Result: "[\n" +
+			"  {\n" +
+			"    \"c1\": \"a\"\n" +
+			"  },\n" +
+			"  {\n" +
+			"    \"c1\": \"b\"\n" +
+			"  },\n" +
+			"  {\n" +
+			"    \"c1\": \"abc\\u005cdef\"\n" +
+			"  }\n" +
+			"]",
+	},
+	{
+		Name: "JSONH Column Name Convert Error",
+		View: &View{
+			Header: NewHeader("test", []string{"c1.."}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewString("a")}),
+				NewRecord([]value.Primary{value.NewString("b")}),
+				NewRecord([]value.Primary{value.NewString("abc\\def")}),
+			},
+		},
+		Format: cmd.JSONH,
+		Error:  "encoding to json failed: unexpected token \".\" at column 4 in \"c1..\"",
+	},
+	{
 		Name: "CSV Encode Character Code",
 		View: &View{
 			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
@@ -219,6 +303,7 @@ func TestEncodeView(t *testing.T) {
 		if v.WriteDelimiter != 0 {
 			flags.WriteDelimiter = v.WriteDelimiter
 		}
+		flags.PrettyPrint = v.PrettyPrint
 
 		s, err := EncodeView(v.View, flags.Format, flags.WriteDelimiter, flags.WithoutHeader, flags.Encoding, flags.LineBreak)
 		if err != nil {

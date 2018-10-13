@@ -23,7 +23,7 @@ const (
 	TokenFrom   = IDENTIFIER
 	TokenTo     = SUBSTITUTION_OP
 	KeywordFrom = SELECT
-	KeywordTo   = LISTAGG
+	KeywordTo   = JSON_OBJECT
 )
 
 const (
@@ -51,6 +51,11 @@ var aggregateFunctions = []string{
 	"SUM",
 	"AVG",
 	"MEDIAN",
+}
+
+var listaggFunctions = []string{
+	"LISTAGG",
+	"JSON_AGG",
 }
 
 var analyticFunctions = []string{
@@ -196,6 +201,8 @@ func (s *Scanner) Scan() (Token, error) {
 			token = rune(t)
 		} else if s.isAggregateFunctions(literal) {
 			token = AGGREGATE_FUNCTION
+		} else if s.isListaggFunctions(literal) {
+			token = LISTAGG
 		} else if s.isAnalyticFunctions(literal) {
 			token = ANALYTIC_FUNCTION
 		} else if s.isFunctionsNth(literal) {
@@ -343,6 +350,15 @@ func (s *Scanner) searchKeyword(str string) (int, error) {
 
 func (s *Scanner) isAggregateFunctions(str string) bool {
 	for _, v := range aggregateFunctions {
+		if strings.EqualFold(v, str) {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *Scanner) isListaggFunctions(str string) bool {
+	for _, v := range listaggFunctions {
 		if strings.EqualFold(v, str) {
 			return true
 		}

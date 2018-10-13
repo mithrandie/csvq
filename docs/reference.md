@@ -26,6 +26,7 @@ title: Reference Manual - csvq
   * [Transaction Management]({{ '/reference/transaction.html' | relative_url }})
   * [Built-in Commands]({{ '/reference/built-in.html' | relative_url }})
   * [Flag]({{ '/reference/flag.html' | relative_url }})
+  * [JSON]({{ '/reference/json.html' | relative_url }})
 * Operators
   * [Operator Precedence]({{ '/reference/operator-precedence.html' | relative_url }})
   * [Arithmetic Operators]({{ '/reference/arithmetic-operators.html' | relative_url }})

@@ -514,6 +514,59 @@ var filterEvaluateTests = []struct {
 		Result: value.NewTernary(ternary.UNKNOWN),
 	},
 	{
+		Name: "Comparison with Row Value and LHS Subquery Returns No Record",
+		Expr: parser.Comparison{
+			LHS: parser.RowValue{
+				Value: parser.Subquery{
+					Query: parser.SelectQuery{
+						SelectEntity: parser.SelectEntity{
+							SelectClause: parser.SelectClause{
+								Select: "select",
+								Fields: []parser.QueryExpression{
+									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+								},
+							},
+							FromClause: parser.FromClause{
+								Tables: []parser.QueryExpression{
+									parser.Table{Object: parser.Identifier{Literal: "table1"}},
+								},
+							},
+							WhereClause: parser.WhereClause{
+								Filter: parser.NewTernaryValue(ternary.FALSE),
+							},
+						},
+					},
+				},
+			},
+			RHS: parser.RowValue{
+				Value: parser.Subquery{
+					Query: parser.SelectQuery{
+						SelectEntity: parser.SelectEntity{
+							SelectClause: parser.SelectClause{
+								Select: "select",
+								Fields: []parser.QueryExpression{
+									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+								},
+							},
+							FromClause: parser.FromClause{
+								Tables: []parser.QueryExpression{
+									parser.Table{Object: parser.Identifier{Literal: "table1"}},
+								},
+							},
+							WhereClause: parser.WhereClause{
+								Filter: parser.NewTernaryValue(ternary.FALSE),
+							},
+						},
+					},
+				},
+			},
+			Operator: "=",
+		},
+		Result: value.NewTernary(ternary.UNKNOWN),
+	},
+	{
 		Name: "Comparison with Row Value and Subquery Query Error",
 		Expr: parser.Comparison{
 			LHS: parser.RowValue{
@@ -604,7 +657,134 @@ var filterEvaluateTests = []struct {
 			Operator: "=",
 		},
 		Error: "[L:- C:-] row value should contain exactly 2 values",
-	}, {
+	},
+	{
+		Name: "Comparison with Row Value and JsonQuery",
+		Expr: parser.Comparison{
+			LHS: parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewStringValue("1"),
+						parser.NewStringValue("str1"),
+					},
+				},
+			},
+			RHS: parser.RowValue{
+				Value: parser.JsonQuery{
+					Query:    parser.NewStringValue("key{key2, key3}"),
+					JsonText: parser.NewStringValue("{\"key\": {\"key2\": 1, \"key3\": \"str1\"}}"),
+				},
+			},
+			Operator: "=",
+		},
+		Result: value.NewTernary(ternary.TRUE),
+	},
+	{
+		Name: "Comparison with Row Value and JsonQuery Query Evaluation Error",
+		Expr: parser.Comparison{
+			LHS: parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewStringValue("1"),
+						parser.NewStringValue("str1"),
+					},
+				},
+			},
+			RHS: parser.RowValue{
+				Value: parser.JsonQuery{
+					Query:    parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+					JsonText: parser.NewStringValue("{\"key\": {\"key2\": 1, \"key3\": \"str1\"}}"),
+				},
+			},
+			Operator: "=",
+		},
+		Error: "[L:- C:-] field notexist does not exist",
+	},
+	{
+		Name: "Comparison with Row Value and JsonQuery Query is Null",
+		Expr: parser.Comparison{
+			LHS: parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewStringValue("1"),
+						parser.NewStringValue("str1"),
+					},
+				},
+			},
+			RHS: parser.RowValue{
+				Value: parser.JsonQuery{
+					Query:    parser.NewNullValue(),
+					JsonText: parser.NewStringValue("{\"key\": {\"key2\": 1, \"key3\": \"str1\"}}"),
+				},
+			},
+			Operator: "=",
+		},
+		Result: value.NewTernary(ternary.UNKNOWN),
+	},
+	{
+		Name: "Comparison with Row Value and JsonQuery Type Error",
+		Expr: parser.Comparison{
+			LHS: parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewStringValue("1"),
+						parser.NewStringValue("str1"),
+					},
+				},
+			},
+			RHS: parser.RowValue{
+				Value: parser.JsonQuery{
+					Query:    parser.NewStringValue("key[]"),
+					JsonText: parser.NewStringValue("{\"key\": {\"key2\": 1, \"key3\": \"str1\"}}"),
+				},
+			},
+			Operator: "=",
+		},
+		Error: "[L:- C:-] json query error: json value must be an array",
+	},
+	{
+		Name: "Comparison with Row Value and JsonQuery Empty Result Set",
+		Expr: parser.Comparison{
+			LHS: parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewStringValue("1"),
+						parser.NewStringValue("str1"),
+					},
+				},
+			},
+			RHS: parser.RowValue{
+				Value: parser.JsonQuery{
+					Query:    parser.NewStringValue("key{}"),
+					JsonText: parser.NewStringValue("{\"key\": []}"),
+				},
+			},
+			Operator: "=",
+		},
+		Result: value.NewTernary(ternary.UNKNOWN),
+	},
+	{
+		Name: "Comparison with Row Value and JsonQuery Too Many Records",
+		Expr: parser.Comparison{
+			LHS: parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewStringValue("1"),
+						parser.NewStringValue("str1"),
+					},
+				},
+			},
+			RHS: parser.RowValue{
+				Value: parser.JsonQuery{
+					Query:    parser.NewStringValue("key{key2, key3}"),
+					JsonText: parser.NewStringValue("{\"key\": [{\"key2\": 1, \"key3\": \"str1\"}, {\"key2\": 1, \"key3\": \"str1\"}] }"),
+				},
+			},
+			Operator: "=",
+		},
+		Error: "[L:- C:-] json query returns too many records, should return only one record",
+	},
+	{
 		Name: "Is",
 		Expr: parser.Is{
 			LHS:      parser.NewIntegerValue(1),
@@ -720,6 +900,51 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Result: value.NewTernary(ternary.TRUE),
+	},
+	{
+		Name: "Between with LHS Subquery Returns No Records",
+		Expr: parser.Between{
+			LHS: parser.RowValue{
+				Value: parser.Subquery{
+					Query: parser.SelectQuery{
+						SelectEntity: parser.SelectEntity{
+							SelectClause: parser.SelectClause{
+								Select: "select",
+								Fields: []parser.QueryExpression{
+									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+								},
+							},
+							FromClause: parser.FromClause{
+								Tables: []parser.QueryExpression{
+									parser.Table{Object: parser.Identifier{Literal: "table1"}},
+								},
+							},
+							WhereClause: parser.WhereClause{
+								Filter: parser.NewTernaryValue(ternary.FALSE),
+							},
+						},
+					},
+				},
+			},
+			Low: parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(1),
+					},
+				},
+			},
+			High: parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(3),
+					},
+				},
+			},
+		},
+		Result: value.NewTernary(ternary.UNKNOWN),
 	},
 	{
 		Name: "Between with Row Values LHS Error",
@@ -1092,6 +1317,186 @@ var filterEvaluateTests = []struct {
 		Result: value.NewTernary(ternary.FALSE),
 	},
 	{
+		Name: "In JsonArray",
+		Filter: &Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
+						RecordSet: []Record{
+							NewRecordWithId(1, []value.Primary{
+								value.NewInteger(1),
+								value.NewString("str2"),
+							}),
+						},
+					},
+					RecordIndex: 0,
+				},
+			},
+		},
+		Expr: parser.In{
+			LHS: parser.NewIntegerValue(2),
+			Values: parser.RowValue{
+				Value: parser.JsonQuery{
+					Query:    parser.NewStringValue("key[]"),
+					JsonText: parser.NewStringValue("{\"key\":[2, 3]}"),
+				},
+			},
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Result: value.NewTernary(ternary.FALSE),
+	},
+	{
+		Name: "In JsonArray Query is Null",
+		Filter: &Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
+						RecordSet: []Record{
+							NewRecordWithId(1, []value.Primary{
+								value.NewInteger(1),
+								value.NewString("str2"),
+							}),
+						},
+					},
+					RecordIndex: 0,
+				},
+			},
+		},
+		Expr: parser.In{
+			LHS: parser.NewIntegerValue(2),
+			Values: parser.RowValue{
+				Value: parser.JsonQuery{
+					Query:    parser.NewNullValue(),
+					JsonText: parser.NewStringValue("{\"key\":[2, 3]}"),
+				},
+			},
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Result: value.NewTernary(ternary.TRUE),
+	},
+	{
+		Name: "In JsonArray Query Evaluation Error",
+		Filter: &Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
+						RecordSet: []Record{
+							NewRecordWithId(1, []value.Primary{
+								value.NewInteger(1),
+								value.NewString("str2"),
+							}),
+						},
+					},
+					RecordIndex: 0,
+				},
+			},
+		},
+		Expr: parser.In{
+			LHS: parser.NewIntegerValue(2),
+			Values: parser.RowValue{
+				Value: parser.JsonQuery{
+					Query:    parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+					JsonText: parser.NewStringValue("{\"key\":[2, 3]}"),
+				},
+			},
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Error: "[L:- C:-] field notexist does not exist",
+	},
+	{
+		Name: "In JsonArray JsonText Evaluation Error",
+		Filter: &Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
+						RecordSet: []Record{
+							NewRecordWithId(1, []value.Primary{
+								value.NewInteger(1),
+								value.NewString("str2"),
+							}),
+						},
+					},
+					RecordIndex: 0,
+				},
+			},
+		},
+		Expr: parser.In{
+			LHS: parser.NewIntegerValue(2),
+			Values: parser.RowValue{
+				Value: parser.JsonQuery{
+					Query:    parser.NewStringValue("key"),
+					JsonText: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+				},
+			},
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Error: "[L:- C:-] field notexist does not exist",
+	},
+	{
+		Name: "In JsonArray Query Load Error",
+		Filter: &Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
+						RecordSet: []Record{
+							NewRecordWithId(1, []value.Primary{
+								value.NewInteger(1),
+								value.NewString("str2"),
+							}),
+						},
+					},
+					RecordIndex: 0,
+				},
+			},
+		},
+		Expr: parser.In{
+			LHS: parser.NewIntegerValue(2),
+			Values: parser.RowValue{
+				Value: parser.JsonQuery{
+					Query:    parser.NewStringValue("'key"),
+					JsonText: parser.NewStringValue("{\"key\":[2, 3]}"),
+				},
+			},
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Error: "[L:- C:-] json query error: column 4: string not terminated",
+	},
+	{
+		Name: "In JsonArray Empty Result Set",
+		Filter: &Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
+						RecordSet: []Record{
+							NewRecordWithId(1, []value.Primary{
+								value.NewInteger(1),
+								value.NewString("str2"),
+							}),
+						},
+					},
+					RecordIndex: 0,
+				},
+			},
+		},
+		Expr: parser.In{
+			LHS: parser.NewIntegerValue(2),
+			Values: parser.RowValue{
+				Value: parser.JsonQuery{
+					Query:    parser.NewStringValue("key[]"),
+					JsonText: parser.NewStringValue("{\"key\":[]}"),
+				},
+			},
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Result: value.NewTernary(ternary.TRUE),
+	},
+	{
 		Name: "In with Row Values",
 		Expr: parser.In{
 			LHS: parser.RowValue{
@@ -1153,6 +1558,24 @@ var filterEvaluateTests = []struct {
 						},
 					},
 				},
+			},
+		},
+		Result: value.NewTernary(ternary.TRUE),
+	},
+	{
+		Name: "In with Row Value and JsonQuery",
+		Expr: parser.In{
+			LHS: parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewStringValue("2"),
+						parser.NewStringValue("str2"),
+					},
+				},
+			},
+			Values: parser.JsonQuery{
+				Query:    parser.NewStringValue("key{key2, key3}"),
+				JsonText: parser.NewStringValue("{\"key\":{\"key2\":2, \"key3\":\"str2\"}}"),
 			},
 		},
 		Result: value.NewTernary(ternary.TRUE),
@@ -1257,6 +1680,96 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Result: value.NewTernary(ternary.FALSE),
+	},
+	{
+		Name: "In with Row Value and JsonQuery Query Evaluation Error",
+		Expr: parser.In{
+			LHS: parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewStringValue("2"),
+						parser.NewStringValue("str2"),
+					},
+				},
+			},
+			Values: parser.JsonQuery{
+				Query:    parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+				JsonText: parser.NewStringValue("{\"key\":{\"key2\":2, \"key3\":\"str2\"}}"),
+			},
+		},
+		Error: "[L:- C:-] field notexist does not exist",
+	},
+	{
+		Name: "In with Row Value and JsonQuery Query is Null",
+		Expr: parser.In{
+			LHS: parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewStringValue("2"),
+						parser.NewStringValue("str2"),
+					},
+				},
+			},
+			Values: parser.JsonQuery{
+				Query:    parser.NewNullValue(),
+				JsonText: parser.NewStringValue("{\"key\":{\"key2\":2, \"key3\":\"str2\"}}"),
+			},
+		},
+		Result: value.NewTernary(ternary.FALSE),
+	},
+	{
+		Name: "In with Row Value and JsonQuery Loading Error",
+		Expr: parser.In{
+			LHS: parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewStringValue("2"),
+						parser.NewStringValue("str2"),
+					},
+				},
+			},
+			Values: parser.JsonQuery{
+				Query:    parser.NewStringValue("key{"),
+				JsonText: parser.NewStringValue("{\"key\":[]}"),
+			},
+		},
+		Error: "[L:- C:-] json query error: column 4: unexpected termination",
+	},
+	{
+		Name: "In with Row Value and JsonQuery Empty Result Set",
+		Expr: parser.In{
+			LHS: parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewStringValue("2"),
+						parser.NewStringValue("str2"),
+					},
+				},
+			},
+			Values: parser.JsonQuery{
+				Query:    parser.NewStringValue("key{}"),
+				JsonText: parser.NewStringValue("{\"key\":[]}"),
+			},
+		},
+		Result: value.NewTernary(ternary.FALSE),
+	},
+	{
+		Name: "In with Row Value and JsonQuery Field Length Error",
+		Expr: parser.In{
+			LHS: parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewStringValue("2"),
+						parser.NewStringValue("str2"),
+					},
+				},
+			},
+			Values: parser.JsonQuery{
+				Query:    parser.NewStringValue("key{}"),
+				JsonText: parser.NewStringValue("{\"key\":{}}"),
+			},
+		},
+		Error: "[L:- C:-] row value should contain exactly 2 values",
 	},
 	{
 		Name: "In with Row Values Values Error",
@@ -1511,6 +2024,24 @@ var filterEvaluateTests = []struct {
 		Error: "[L:- C:-] row value should contain exactly 2 values",
 	},
 	{
+		Name: "Any with Row Value and JsonQuery Field Length Error",
+		Expr: parser.Any{
+			LHS: parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewStringValue("2"),
+						parser.NewStringValue("str2"),
+					},
+				},
+			},
+			Values: parser.JsonQuery{
+				Query:    parser.NewStringValue("key{}"),
+				JsonText: parser.NewStringValue("{\"key\":{}}"),
+			},
+		},
+		Error: "[L:- C:-] row value should contain exactly 2 values",
+	},
+	{
 		Name: "All",
 		Expr: parser.All{
 			LHS: parser.NewIntegerValue(5),
@@ -1688,6 +2219,24 @@ var filterEvaluateTests = []struct {
 				},
 			},
 			Operator: "=",
+		},
+		Error: "[L:- C:-] row value should contain exactly 2 values",
+	},
+	{
+		Name: "All with Row Value and JsonQuery Field Length Error",
+		Expr: parser.All{
+			LHS: parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewStringValue("2"),
+						parser.NewStringValue("str2"),
+					},
+				},
+			},
+			Values: parser.JsonQuery{
+				Query:    parser.NewStringValue("key{}"),
+				JsonText: parser.NewStringValue("{\"key\":{}}"),
+			},
 		},
 		Error: "[L:- C:-] row value should contain exactly 2 values",
 	},
@@ -2702,7 +3251,7 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Expr: parser.ListAgg{
-			ListAgg:  "listagg",
+			Name:     "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
@@ -2781,7 +3330,7 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Expr: parser.ListAgg{
-			ListAgg:  "listagg",
+			Name:     "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			OrderBy: parser.OrderByClause{
 				Items: []parser.QueryExpression{
@@ -2811,7 +3360,7 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Expr: parser.ListAgg{
-			ListAgg:  "listagg",
+			Name:     "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
@@ -2856,7 +3405,7 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Expr: parser.ListAgg{
-			ListAgg:  "listagg",
+			Name:     "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
@@ -2899,7 +3448,7 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Expr: parser.ListAgg{
-			ListAgg: "listagg",
+			Name: "listagg",
 			Args: []parser.QueryExpression{
 				parser.AggregateFunction{
 					Name:     "avg",
@@ -2941,7 +3490,7 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Expr: parser.ListAgg{
-			ListAgg: "listagg",
+			Name: "listagg",
 			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
@@ -2978,7 +3527,7 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Expr: parser.ListAgg{
-			ListAgg: "listagg",
+			Name: "listagg",
 			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 				parser.NewNullValue(),
@@ -2990,7 +3539,7 @@ var filterEvaluateTests = []struct {
 		Name:   "ListAgg Function As a Statement Error",
 		Filter: &Filter{},
 		Expr: parser.ListAgg{
-			ListAgg:  "listagg",
+			Name:     "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
@@ -3003,6 +3552,98 @@ var filterEvaluateTests = []struct {
 			},
 		},
 		Error: "[L:- C:-] function listagg cannot be used as a statement",
+	},
+	{
+		Name: "JsonAgg Function",
+		Filter: &Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+						RecordSet: []Record{
+							{
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewInteger(2),
+									value.NewInteger(3),
+									value.NewInteger(4),
+								}),
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewInteger(2),
+									value.NewInteger(3),
+									value.NewInteger(4),
+								}),
+								NewGroupCell([]value.Primary{
+									value.NewString("str2"),
+									value.NewString("str1"),
+									value.NewNull(),
+									value.NewString("str2"),
+								}),
+							},
+						},
+						Filter:    NewEmptyFilter(),
+						isGrouped: true,
+					},
+					RecordIndex: 0,
+				},
+			},
+		},
+		Expr: parser.ListAgg{
+			Name:     "json_agg",
+			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
+			Args: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+			},
+			OrderBy: parser.OrderByClause{
+				Items: []parser.QueryExpression{
+					parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+				},
+			},
+		},
+		Result: value.NewString("[null,\"str1\",\"str2\"]"),
+	},
+	{
+		Name: "JsonAgg Function Arguments Error",
+		Filter: &Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+						RecordSet: []Record{
+							{
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewInteger(2),
+								}),
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewInteger(2),
+								}),
+								NewGroupCell([]value.Primary{
+									value.NewString("str2"),
+									value.NewString("str1"),
+								}),
+							},
+						},
+						Filter:    NewEmptyFilter(),
+						isGrouped: true,
+					},
+					RecordIndex: 0,
+				},
+			},
+		},
+		Expr: parser.ListAgg{
+			Name:     "json_agg",
+			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
+			Args:     []parser.QueryExpression{},
+			OrderBy: parser.OrderByClause{
+				Items: []parser.QueryExpression{
+					parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+				},
+			},
+		},
+		Error: "[L:- C:-] function json_agg takes exactly 1 argument",
 	},
 	{
 		Name: "CaseExpr Comparison",

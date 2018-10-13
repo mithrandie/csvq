@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"github.com/mithrandie/csvq/lib/color"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -98,7 +99,7 @@ func SetFlag(expr parser.SetFlag) error {
 		p = value.ToString(expr.Value)
 	case "@@WAIT_TIMEOUT":
 		p = value.ToFloat(expr.Value)
-	case "@@NO_HEADER", "@@WITHOUT_NULL", "@@STATS":
+	case "@@NO_HEADER", "@@WITHOUT_NULL", "@@COLOR", "@@STATS":
 		p = value.ToBoolean(expr.Value)
 	default:
 		return NewInvalidFlagNameError(expr, expr.Name)
@@ -128,6 +129,8 @@ func SetFlag(expr parser.SetFlag) error {
 		cmd.SetNoHeader(p.(value.Boolean).Raw())
 	case "@@WITHOUT_NULL":
 		cmd.SetWithoutNull(p.(value.Boolean).Raw())
+	case "@@COLOR":
+		cmd.SetColor(p.(value.Boolean).Raw())
 	case "@@STATS":
 		cmd.SetStats(p.(value.Boolean).Raw())
 	}
@@ -171,6 +174,8 @@ func ShowFlag(expr parser.ShowFlag) (string, error) {
 		s = strconv.FormatBool(flags.NoHeader)
 	case "@@WITHOUT_NULL":
 		s = strconv.FormatBool(flags.WithoutNull)
+	case "@@COLOR":
+		s = strconv.FormatBool(flags.Color)
 	case "@@STATS":
 		s = strconv.FormatBool(flags.Stats)
 	default:
@@ -226,39 +231,39 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 		sort.Strings(cachedPaths)
 
 		if len(filePaths) < 1 && len(cachedPaths) < 1 {
-			s = fmt.Sprintf("Repository %q is empty", repository)
+			s = color.Warn(fmt.Sprintf("Repository %q is empty", repository))
 		} else {
 			if 0 < len(filePaths) {
-				s += formatHeader(fmt.Sprintf("Tables in %s", repository)) + strings.Join(filePaths, "\n") + "\n"
+				s += formatHeader("Tables in ", repository) + strings.Join(filePaths, "\n") + "\n"
 			}
 			if 0 < len(cachedPaths) {
-				s += formatHeader("Tables in other directories") + strings.Join(cachedPaths, "\n") + "\n"
+				s += formatHeader("Tables in other directories", "") + strings.Join(cachedPaths, "\n") + "\n"
 			}
 		}
 	case parser.VIEWS:
 		views := filter.TempViews.List()
 		if len(views) < 1 {
-			s = "No view is declared"
+			s = color.Warn("No view is declared")
 		} else {
-			s = formatHeader("Views") + strings.Join(views, "\n") + "\n"
+			s = formatHeader("Views", "") + strings.Join(views, "\n") + "\n"
 		}
 	case parser.CURSORS:
 		cursors := filter.Cursors.List()
 		if len(cursors) < 1 {
-			s = "No cursor is declared"
+			s = color.Warn("No cursor is declared")
 		} else {
-			s = formatHeader("Cursors") + strings.Join(cursors, "\n") + "\n"
+			s = formatHeader("Cursors", "") + strings.Join(cursors, "\n") + "\n"
 		}
 	case parser.FUNCTIONS:
 		scalas, aggs := filter.Functions.List()
 		if len(scalas) < 1 && len(aggs) < 1 {
-			s = "No function is declared"
+			s = color.Warn("No function is declared")
 		} else {
 			if 0 < len(scalas) {
-				s += formatHeader("Scala Functions") + strings.Join(scalas, "\n") + "\n"
+				s += formatHeader("Scala Functions", "") + strings.Join(scalas, "\n") + "\n"
 			}
 			if 0 < len(aggs) {
-				s += formatHeader("Aggregate Functions") + strings.Join(aggs, "\n") + "\n"
+				s += formatHeader("Aggregate Functions", "") + strings.Join(aggs, "\n") + "\n"
 			}
 		}
 	}
@@ -318,7 +323,7 @@ func ShowFields(expr parser.ShowFields, filter *Filter) (string, error) {
 		}
 	}
 
-	s := formatHeader(fmt.Sprintf("Fields in %s", expr.Table.Literal)) + formatFields(fields)
+	s := formatHeader("Fields in ", expr.Table.Literal) + formatFields(fields)
 
 	return s, nil
 }
@@ -330,12 +335,16 @@ func formatFields(fields []string) string {
 
 	for i, field := range fields {
 		idxstr := strconv.Itoa(i + 1)
-		formatted[i] = fmt.Sprintf("%"+strconv.Itoa(digits)+"s. %s", idxstr, field)
+		formatted[i] = color.MagentaB(fmt.Sprintf("%"+strconv.Itoa(digits)+"s", idxstr)) + ". " + color.Cyan(field)
 	}
 
 	return strings.Join(formatted, "\n") + "\n"
 }
 
-func formatHeader(title string) string {
-	return "\n    " + title + "\n" + strings.Repeat("-", len(title)+8) + "\n"
+func formatHeader(title string, colorItem string) string {
+	colorItem = color.CyanB(colorItem)
+
+	return "\n    " +
+		title + colorItem + "\n" +
+		strings.Repeat("-", len(title)+len(color.StripEscapeSequence(colorItem))+8) + "\n"
 }

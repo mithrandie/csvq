@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"github.com/mithrandie/csvq/lib/color"
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/parser"
@@ -43,16 +44,16 @@ func (list UserDefinedFunctionScopes) List() ([]string, []string) {
 		parameters := make([]string, len(fn.Parameters))
 		for i, v := range fn.Parameters {
 			if df, ok := fn.Defaults[v.String()]; ok {
-				parameters[i] = v.String() + " = " + df.String()
+				parameters[i] = color.Yellow(v.String()) + " = " + color.BlueB(df.String())
 			} else {
-				parameters[i] = v.String()
+				parameters[i] = color.Yellow(v.String())
 			}
 		}
 		if fn.IsAggregate {
-			parameters = append([]string{fn.Cursor.String()}, parameters...)
+			parameters = append([]string{color.Magenta(fn.Cursor.String())}, parameters...)
 		}
 
-		return fn.Name.String() + "(" + strings.Join(parameters, ", ") + ")"
+		return color.GreenB(fn.Name.String()) + " (" + strings.Join(parameters, ", ") + ")"
 	}
 
 	scala := make(map[string]string)
@@ -171,7 +172,7 @@ func (m UserDefinedFunctionMap) parseParameters(parameters []parser.VariableAssi
 func (m UserDefinedFunctionMap) CheckDuplicate(name parser.Identifier) error {
 	uname := strings.ToUpper(name.Literal)
 
-	if _, ok := Functions[uname]; ok || uname == "NOW" {
+	if _, ok := Functions[uname]; ok || uname == "NOW" || uname == "JSON_OBJECT" {
 		return NewBuiltInFunctionDeclaredError(name)
 	}
 	if _, ok := AggregateFunctions[uname]; ok {

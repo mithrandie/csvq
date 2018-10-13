@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"github.com/mithrandie/csvq/lib/color"
 	"io/ioutil"
 	"os"
 	"runtime"
@@ -35,6 +36,10 @@ func main() {
 		cli.StringFlag{
 			Name:  "delimiter, d",
 			Usage: "field delimiter. Default is \",\" for csv files, \"\\t\" for tsv files.",
+		},
+		cli.StringFlag{
+			Name:  "json-query, j",
+			Usage: "`JSON_QUERY` for JSON data passed from standard input",
 		},
 		cli.StringFlag{
 			Name:  "encoding, e",
@@ -87,7 +92,7 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "format, f",
-			Usage: "output format. one of: CSV|TSV|JSON|TEXT",
+			Usage: "output format. one of: CSV|TSV|JSON|JSONH|JSONA|TEXT",
 		},
 		cli.StringFlag{
 			Name:  "write-delimiter, D",
@@ -96,6 +101,14 @@ func main() {
 		cli.BoolFlag{
 			Name:  "without-header, N",
 			Usage: "when the file format is specified as CSV or TSV, write without the header line",
+		},
+		cli.BoolFlag{
+			Name:  "pretty-print, P",
+			Usage: "make JSON output easier to read",
+		},
+		cli.BoolFlag{
+			Name:  "color, c",
+			Usage: "use ANSI color escape sequences",
 		},
 		cli.BoolFlag{
 			Name:  "quiet, q",
@@ -120,14 +133,14 @@ func main() {
 			Action: func(c *cli.Context) error {
 				if c.NArg() != 1 {
 					cli.ShowCommandHelp(c, "fields")
-					return cli.NewExitError("table is not specified", 1)
+					return ExitError("table is not specified", 1)
 				}
 
 				table := c.Args().First()
 
 				err := action.ShowFields(table)
 				if err != nil {
-					return cli.NewExitError(err.Error(), 1)
+					return ExitError(err.Error(), 1)
 				}
 
 				return nil
@@ -140,13 +153,13 @@ func main() {
 			Action: func(c *cli.Context) error {
 				if c.NArg() != 1 {
 					cli.ShowCommandHelp(c, "calc")
-					return cli.NewExitError("expression is empty", 1)
+					return ExitError("expression is empty", 1)
 				}
 
 				expr := c.Args().First()
 				err := action.Calc(expr)
 				if err != nil {
-					return cli.NewExitError(err.Error(), 1)
+					return ExitError(err.Error(), 1)
 				}
 
 				return nil
@@ -157,7 +170,7 @@ func main() {
 	app.Before = func(c *cli.Context) error {
 		err := setFlags(c)
 		if err != nil {
-			return cli.NewExitError(err.Error(), 1)
+			return ExitError(err.Error(), 1)
 		}
 		return nil
 	}
@@ -166,7 +179,7 @@ func main() {
 		queryString, err := readQuery(c)
 		if err != nil {
 			cli.ShowAppHelp(c)
-			return cli.NewExitError(err.Error(), 1)
+			return ExitError(err.Error(), 1)
 		}
 
 		if len(queryString) < 1 {
@@ -182,7 +195,7 @@ func main() {
 			} else if ex, ok := err.(*query.ForcedExit); ok {
 				code = ex.GetCode()
 			}
-			return cli.NewExitError(err.Error(), code)
+			return ExitError(err.Error(), code)
 		}
 
 		return nil
@@ -219,9 +232,12 @@ func readQuery(c *cli.Context) (string, error) {
 }
 
 func setFlags(c *cli.Context) error {
+	cmd.SetColor(c.GlobalBool("color"))
+
 	if err := cmd.SetDelimiter(c.GlobalString("delimiter")); err != nil {
 		return err
 	}
+	cmd.SetJsonQuery(c.GlobalString("json-query"))
 	if err := cmd.SetEncoding(c.GlobalString("encoding")); err != nil {
 		return err
 	}
@@ -254,6 +270,7 @@ func setFlags(c *cli.Context) error {
 	if err := cmd.SetWriteDelimiter(c.GlobalString("write-delimiter")); err != nil {
 		return err
 	}
+	cmd.SetPrettyPrint(c.GlobalBool("pretty-print"))
 	cmd.SetWithoutHeader(c.GlobalBool("without-header"))
 
 	cmd.SetQuiet(c.GlobalBool("quiet"))
@@ -261,4 +278,8 @@ func setFlags(c *cli.Context) error {
 	cmd.SetStats(c.GlobalBool("stats"))
 
 	return nil
+}
+
+func ExitError(message string, code int) *cli.ExitError {
+	return cli.NewExitError(color.Error(message), code)
 }

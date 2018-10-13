@@ -238,7 +238,34 @@ func TestListAgg(t *testing.T) {
 	for _, v := range listAggTests {
 		r := ListAgg(v.List, v.Separator)
 		if !reflect.DeepEqual(r, v.Result) {
-			t.Errorf("listagg list = %s: separator = %q, result = %s, want %s", v.List, v.Separator, r, v.Result)
+			t.Errorf("Listagg list = %s: separator = %q, result = %s, want %s", v.List, v.Separator, r, v.Result)
+		}
+	}
+}
+
+var jsonAggTests = []struct {
+	List   []value.Primary
+	Result value.Primary
+}{
+	{
+		List:   []value.Primary{},
+		Result: value.NewString("[]"),
+	},
+	{
+		List: []value.Primary{
+			value.NewString("str3"),
+			value.NewNull(),
+			value.NewString("str2"),
+		},
+		Result: value.NewString("[\"str3\",null,\"str2\"]"),
+	},
+}
+
+func TestJsonAgg(t *testing.T) {
+	for _, v := range jsonAggTests {
+		r := JsonAgg(v.List)
+		if !reflect.DeepEqual(r, v.Result) {
+			t.Errorf("JsonAgg list = %s, result = %s, want %s", v.List, r, v.Result)
 		}
 	}
 }

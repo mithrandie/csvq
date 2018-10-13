@@ -58,6 +58,15 @@ func TestSetDelimiter(t *testing.T) {
 	}
 }
 
+func TestSetJsonQuery(t *testing.T) {
+	flags := GetFlags()
+
+	SetJsonQuery("{}")
+	if flags.JsonQuery != "{}" {
+		t.Errorf("json-query = %q, expect to set %q", flags.JsonQuery, "{}")
+	}
+}
+
 func TestSetEncoding(t *testing.T) {
 	flags := GetFlags()
 
@@ -326,6 +335,16 @@ func TestSetFormat(t *testing.T) {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, JSON, "json")
 	}
 
+	SetFormat("jsonh")
+	if flags.Format != JSONH {
+		t.Errorf("format = %s, expect to set %s for %s", flags.Format, JSONH, "jsonh")
+	}
+
+	SetFormat("jsona")
+	if flags.Format != JSONA {
+		t.Errorf("format = %s, expect to set %s for %s", flags.Format, JSONA, "jsona")
+	}
+
 	SetFormat("text")
 	if flags.Format != TEXT {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, TEXT, "text")
@@ -338,6 +357,25 @@ func TestSetFormat(t *testing.T) {
 	} else if err.Error() != expectErr {
 		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "error")
 	}
+}
+
+func TestSetPrettyPrint(t *testing.T) {
+	flags := GetFlags()
+
+	SetPrettyPrint(true)
+	if !flags.PrettyPrint {
+		t.Errorf("pretty-print = %t, expect to set %t", flags.PrettyPrint, true)
+	}
+}
+
+func TestSetColor(t *testing.T) {
+	flags := GetFlags()
+
+	SetColor(true)
+	if !flags.Color {
+		t.Errorf("color = %t, expect to set %t", flags.Color, true)
+	}
+	SetColor(false)
 }
 
 func TestSetWriteDelimiter(t *testing.T) {

@@ -3,6 +3,7 @@
 package cmd
 
 import (
+	"github.com/mithrandie/csvq/lib/color"
 	"io"
 	"os"
 
@@ -23,7 +24,7 @@ func NewTerminal() (VirtualTerminal, error) {
 	}
 
 	return SSHTerminal{
-		terminal: terminal.NewTerminal(NewStdIO(), TerminalPrompt),
+		terminal: terminal.NewTerminal(NewStdIO(), color.Blue(TerminalPrompt)),
 		oldFd:    oldFd,
 		oldState: oldState,
 	}, nil
@@ -43,11 +44,11 @@ func (t SSHTerminal) Write(s string) error {
 }
 
 func (t SSHTerminal) SetPrompt() {
-	t.terminal.SetPrompt(TerminalPrompt)
+	t.terminal.SetPrompt(color.Blue(TerminalPrompt))
 }
 
 func (t SSHTerminal) SetContinuousPrompt() {
-	t.terminal.SetPrompt(TerminalContinuousPrompt)
+	t.terminal.SetPrompt(color.Blue(TerminalContinuousPrompt))
 }
 
 func (t SSHTerminal) SaveHistory(s string) {

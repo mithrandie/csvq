@@ -18,7 +18,7 @@ func TestLexer_Error(t *testing.T) {
 	}
 	message := "syntax error"
 
-	expect := "syntax error: unexpected SELECT"
+	expect := "syntax error: unexpected token \"select\""
 	lexer.Error(message)
 	if lexer.err.Error() != expect {
 		t.Errorf("error message = %s, want %s for token %v", lexer.err.Error(), expect, lexer.token)
@@ -30,7 +30,7 @@ func TestLexer_Error(t *testing.T) {
 			Literal: "min",
 		},
 	}
-	expect = "syntax error: unexpected IDENTIFIER"
+	expect = "syntax error: unexpected token \"min\""
 	lexer.Error(message)
 	if lexer.err.Error() != expect {
 		t.Errorf("error message = %s, want %s for token %v", lexer.err.Error(), expect, lexer.token)
@@ -42,7 +42,7 @@ func TestLexer_Error(t *testing.T) {
 			Literal: ":=",
 		},
 	}
-	expect = "syntax error: unexpected :="
+	expect = "syntax error: unexpected token \":=\""
 	lexer.Error(message)
 	if lexer.err.Error() != expect {
 		t.Errorf("error message = %s, want %s for token %v", lexer.err.Error(), expect, lexer.token)

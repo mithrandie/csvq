@@ -116,6 +116,8 @@ table
 table_entity
   : table_name
   | (select_query)
+  | JSON_TABLE(json_query, json_file)
+  | JSON_TABLE(json_query, json_data)
   | STDIN
 
 join
@@ -164,6 +166,23 @@ _condition_
 
 _column_name_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+
+_json_query_
+: [JSON Query]({{ '/reference/json.html#query' | relative_url }})
+
+  Empty string is equivalent to "{}".
+
+_json_file_
+: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+  
+  A _json_file_ represents a json file path.
+  You can use absolute path or relative path from the directory specified by the ["--repository" option]({{ '/reference/command.html#options' | relative_url }}) as a json file path.
+  
+  If a file name extension is ".json", you can omit it. 
+
+_json_data_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+  
 
 #### Special Tables
 {: #special_tables}
