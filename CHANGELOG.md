@@ -1,3 +1,7 @@
+## Release v1.3.1 (2018-10-13)
+
+- Fix a bug of output ANSI escape sequence.
+
 ## Release v1.3.0 (2018-10-13)
 
 - Support ANSI escape sequence.

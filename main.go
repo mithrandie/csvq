@@ -14,7 +14,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var version = "v1.3.0"
+var version = "v1.3.1"
 
 func main() {
 	cli.AppHelpTemplate = appHHelpTemplate
