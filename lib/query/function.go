@@ -8,7 +8,6 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"encoding/hex"
-	"github.com/mithrandie/csvq/lib/color"
 	"github.com/mithrandie/csvq/lib/json"
 	"hash"
 	"math"
@@ -1451,10 +1450,7 @@ func JsonObject(fn parser.Function, filter *Filter) (value.Primary, error) {
 	structure, _ := json.ConvertRecordValueToJsonStructure(pathes, record)
 
 	e := json.NewEncoder()
-	useESBack := color.UseEscapeSequences
-	color.UseEscapeSequences = false
-	s := e.Encode(structure)
-	color.UseEscapeSequences = useESBack
+	s := e.Encode(structure, false)
 
 	return value.NewString(s), nil
 }

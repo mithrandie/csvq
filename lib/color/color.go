@@ -7,6 +7,8 @@ import (
 
 var UseEscapeSequences = false
 
+const PlainColor = -1
+
 const (
 	FGBlack = iota + 30
 	FGRed
@@ -43,7 +45,7 @@ func StripEscapeSequence(s string) string {
 }
 
 func Colorize(s string, color int, bold bool) string {
-	if !UseEscapeSequences {
+	if !UseEscapeSequences || color == PlainColor {
 		return s
 	}
 	boldStr := ""
