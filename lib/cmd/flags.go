@@ -59,6 +59,8 @@ const (
 	JSON
 	JSONH
 	JSONA
+	GFM
+	ORG
 )
 
 var formatLiterals = map[Format]string{
@@ -66,6 +68,8 @@ var formatLiterals = map[Format]string{
 	CSV:  "CSV",
 	TSV:  "TSV",
 	JSON: "JSON",
+	GFM:  "MD",
+	ORG:  "ORG",
 }
 
 func (f Format) String() string {
@@ -76,6 +80,8 @@ const (
 	CsvExt  = ".csv"
 	TsvExt  = ".tsv"
 	JsonExt = ".json"
+	GfmExt  = ".md"
+	OrgExt  = ".org"
 )
 
 type Flags struct {
@@ -208,7 +214,7 @@ func SetLineBreak(s string) error {
 	case "LF":
 		lb = LF
 	default:
-		return errors.New("line-break must be one of crlf|lf|cr")
+		return errors.New("line-break must be one of CRLF|LF|CR")
 	}
 
 	f := GetFlags()
@@ -349,10 +355,14 @@ func SetFormat(s string) error {
 		fm = JSONH
 	case "JSONA":
 		fm = JSONA
+	case "GFM":
+		fm = GFM
+	case "ORG":
+		fm = ORG
 	case "TEXT":
 		fm = TEXT
 	default:
-		return errors.New("format must be one of csv|tsv|json|text")
+		return errors.New("format must be one of CSV|TSV|JSON|JSONH|JSONA|GFM|ORG|TEXT")
 	}
 
 	f.Format = fm
@@ -414,7 +424,7 @@ func ParseEncoding(s string) (Encoding, error) {
 	case "SJIS":
 		encoding = SJIS
 	default:
-		return UTF8, errors.New("encoding must be one of utf8|sjis")
+		return UTF8, errors.New("encoding must be one of UTF8|SJIS")
 	}
 	return encoding, nil
 }
