@@ -1,7 +1,7 @@
 ## Release v1.4.0 (2018-10-16)
 
 - Add output formats.
-  - Text Table for Google Flavored Markdown
+  - Text Table for GitHub Flavored Markdown
   - Text Table for Emacs Org-mode
 
 ## Release v1.3.1 (2018-10-13)
