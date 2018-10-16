@@ -15,7 +15,7 @@ const (
 	VLine             = '|'
 	HLine             = '-'
 	CrossLine         = '+'
-	AlighSign         = ':'
+	AlignSign         = ':'
 	PadChar           = ' '
 	LineBreak         = '\n'
 	EscapeChar        = '\\'
@@ -352,7 +352,7 @@ func (e *Encoder) FormatGFMHR(widths []int, record []*textField) string {
 		e.buf.WriteRune(PadChar)
 		if record[i].align == Right {
 			e.buf.Write(bytes.Repeat([]byte(string(HLine)), w-1))
-			e.buf.WriteRune(AlighSign)
+			e.buf.WriteRune(AlignSign)
 		} else {
 			e.buf.Write(bytes.Repeat([]byte(string(HLine)), w))
 		}
