@@ -14,7 +14,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var version = "v1.3.1"
+var version = "v1.4.0"
 
 func main() {
 	cli.AppHelpTemplate = appHHelpTemplate
@@ -92,7 +92,7 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "format, f",
-			Usage: "output format. one of: CSV|TSV|JSON|JSONH|JSONA|TEXT",
+			Usage: "output format. one of: CSV|TSV|JSON|JSONH|JSONA|GFM|ORG|TEXT",
 		},
 		cli.StringFlag{
 			Name:  "write-delimiter, D",

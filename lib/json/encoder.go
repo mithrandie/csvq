@@ -8,79 +8,6 @@ import (
 
 const IndentSpaces = 2
 
-type Style int
-
-const (
-	ObjectKeyStyle Style = iota
-	NumberStyle
-	StringStyle
-	BooleanStyle
-	NullStyle
-)
-
-type TextStyle struct {
-	Color int
-	Bold  bool
-}
-
-type Palette struct {
-	ObjectKey TextStyle
-	Number    TextStyle
-	String    TextStyle
-	Boolean   TextStyle
-	Null      TextStyle
-	Plain     TextStyle
-
-	useStyle bool
-}
-
-func NewPalette() *Palette {
-	return &Palette{
-		ObjectKey: TextStyle{Color: color.FGBlue, Bold: true},
-		Number:    TextStyle{Color: color.FGMagenta, Bold: false},
-		String:    TextStyle{Color: color.FGGreen, Bold: false},
-		Boolean:   TextStyle{Color: color.FGYellow, Bold: true},
-		Null:      TextStyle{Color: color.FGBrightBlack, Bold: false},
-		Plain:     TextStyle{Color: color.PlainColor, Bold: false},
-		useStyle:  false,
-	}
-}
-
-func (p *Palette) Enable() {
-	p.useStyle = true
-}
-
-func (p *Palette) Disable() {
-	p.useStyle = false
-}
-
-func (p *Palette) Color(s string, style Style) string {
-	var textStyle TextStyle
-
-	if p.useStyle {
-		switch style {
-		case ObjectKeyStyle:
-			textStyle = p.ObjectKey
-		case NumberStyle:
-			textStyle = p.Number
-		case StringStyle:
-			textStyle = p.String
-		case BooleanStyle:
-			textStyle = p.Boolean
-		case NullStyle:
-			textStyle = p.Null
-		}
-	} else {
-		textStyle = p.Plain
-	}
-
-	return p.color(s, textStyle)
-}
-
-func (p *Palette) color(s string, style TextStyle) string {
-	return color.Colorize(s, style.Color, style.Bold)
-}
-
 type Encoder struct {
 	EscapeType  EscapeType
 	PrettyPrint bool
@@ -88,7 +15,7 @@ type Encoder struct {
 
 	nameSeparator string
 	lineBreak     string
-	palette       *Palette
+	palette       *color.Palette
 
 	decoder *Decoder
 }
@@ -100,7 +27,7 @@ func NewEncoder() *Encoder {
 		LineBreak:     cmd.LF,
 		nameSeparator: string(NameSeparator),
 		decoder:       NewDecoder(),
-		palette:       NewPalette(),
+		palette:       color.NewPalette(),
 	}
 }
 
@@ -139,7 +66,7 @@ func (e *Encoder) encodeStructure(structure Structure, depth int) string {
 			strs = append(
 				strs,
 				elementIndent+
-					e.palette.Color(Quote(e.escape(member.Key)), ObjectKeyStyle)+
+					e.palette.Color(Quote(e.escape(member.Key)), color.FieldLableStyle)+
 					e.nameSeparator+
 					e.encodeStructure(member.Value, depth+1),
 			)
@@ -161,19 +88,19 @@ func (e *Encoder) encodeStructure(structure Structure, depth int) string {
 			e.lineBreak +
 			indent + string(EndArray)
 	case Number:
-		encoded = e.palette.Color(structure.String(), NumberStyle)
+		encoded = e.palette.Color(structure.String(), color.NumberStyle)
 	case String:
 		str := string(structure.(String))
 		decoded, err := e.decoder.Decode(str)
 		if err == nil {
 			encoded = e.encodeStructure(decoded, depth)
 		} else {
-			encoded = e.palette.Color(Quote(e.escape(str)), StringStyle)
+			encoded = e.palette.Color(Quote(e.escape(str)), color.StringStyle)
 		}
 	case Boolean:
-		encoded = e.palette.Color(structure.String(), BooleanStyle)
+		encoded = e.palette.Color(structure.String(), color.BooleanStyle)
 	case Null:
-		encoded = e.palette.Color(structure.String(), NullStyle)
+		encoded = e.palette.Color(structure.String(), color.NullStyle)
 	}
 
 	return encoded
