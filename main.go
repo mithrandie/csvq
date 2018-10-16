@@ -92,7 +92,7 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "format, f",
-			Usage: "output format. one of: CSV|TSV|JSON|JSONH|JSONA|TEXT",
+			Usage: "output format. one of: CSV|TSV|JSON|JSONH|JSONA|GFM|ORG|TEXT",
 		},
 		cli.StringFlag{
 			Name:  "write-delimiter, D",

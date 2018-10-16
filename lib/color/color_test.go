@@ -40,7 +40,7 @@ func TestColorize(t *testing.T) {
 	}
 
 	s = "a"
-	expect = "a"
+	expect = "\033[0ma\033[0m"
 	result = Colorize(s, PlainColor, false)
 
 	if result != expect {

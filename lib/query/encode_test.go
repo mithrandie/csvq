@@ -63,34 +63,33 @@ var encodeViewTests = []struct {
 			},
 		},
 		Format: cmd.TEXT,
-		Result: "+----------+------------------------------------+--------+\n" +
-			"| c1       | c2                                 | c3     |\n" +
-			"|          | second line                        |        |\n" +
-			"+----------+------------------------------------+--------+\n" +
-			"|       -1 |                            UNKNOWN |   true |\n" +
-			"|   2.0123 | 2016-02-01T16:00:00.123456-07:00   | abcdef |\n" +
-			"| 34567890 |  abcdefghijklmnopqrstuvwxyzabcdefg |   NULL |\n" +
-			"|          | hi\"jk日本語あアｱＡ（               |        |\n" +
-			"|          |                                    |        |\n" +
-			"+----------+------------------------------------+--------+",
+		Result: "+----------+-------------------------------------+--------+\n" +
+			"|    c1    |                 c2                  |   c3   |\n" +
+			"|          |             second line             |        |\n" +
+			"+----------+-------------------------------------+--------+\n" +
+			"|       -1 |               UNKNOWN               |  true  |\n" +
+			"|   2.0123 | 2016-02-01T16:00:00.123456-07:00    | abcdef |\n" +
+			"| 34567890 |  abcdefghijklmnopqrstuvwxyzabcdefg  |  NULL  |\n" +
+			"|          | hi\"jk日本語あアｱＡ（                |        |\n" +
+			"|          |                                     |        |\n" +
+			"+----------+-------------------------------------+--------+",
 	},
 	{
-		Name: "CSV",
+		Name: "GFM LineBreak CRLF",
 		View: &View{
 			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
 			RecordSet: []Record{
-				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(true)}),
-				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.FALSE), value.NewBoolean(true)}),
 				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
-				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), value.NewNull()}),
+				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" ab|cdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk日本語あアｱＡ（\n"), value.NewNull()}),
 			},
 		},
-		Format: cmd.CSV,
-		Result: "\"c1\",\"c2\nsecond line\",\"c3\"\n" +
-			"-1,,true\n" +
-			"-1,false,true\n" +
-			"2.0123,\"2016-02-01T16:00:00.123456-07:00\",\"abcdef\"\n" +
-			"34567890,\" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"\"jk\n\",",
+		Format:    cmd.GFM,
+		LineBreak: cmd.CRLF,
+		Result: "" +
+			"|    c1    |                          c2<br />second line                          |   c3   |\r\n" +
+			"| -------: | --------------------------------------------------------------------- | ------ |\r\n" +
+			"|   2.0123 | 2016-02-01T16:00:00.123456-07:00                                      | abcdef |\r\n" +
+			"| 34567890 |  ab\\|cdefghijklmnopqrstuvwxyzabcdefg<br />hi\"jk日本語あアｱＡ（<br />  |  NULL  |",
 	},
 	{
 		Name: "TSV",
@@ -137,10 +136,10 @@ var encodeViewTests = []struct {
 		},
 		Format:    cmd.CSV,
 		LineBreak: cmd.CRLF,
-		Result: "\"c1\",\"c2\r\nsecond line\",\"c3\"\r\n" +
+		Result: "\"c1\",\"c2\nsecond line\",\"c3\"\r\n" +
 			"-1,,true\r\n" +
 			"2.0123,\"2016-02-01T16:00:00.123456-07:00\",\"abcdef\"\r\n" +
-			"34567890,\" abcdefghijklmnopqrstuvwxyzabcdefg\r\nhi\"\"jk\r\n\",",
+			"34567890,\" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"\"jk\n\",",
 	},
 	{
 		Name: "JSON",

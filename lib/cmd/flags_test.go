@@ -75,7 +75,7 @@ func TestSetEncoding(t *testing.T) {
 		t.Errorf("encoding = %s, expect to set %s for %s", flags.Encoding, SJIS, "sjis")
 	}
 
-	expectErr := "encoding must be one of utf8|sjis"
+	expectErr := "encoding must be one of UTF8|SJIS"
 	err := SetEncoding("error")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "error")
@@ -107,7 +107,7 @@ func TestSetLineBreak(t *testing.T) {
 		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, LF, "LF")
 	}
 
-	expectErr := "line-break must be one of crlf|lf|cr"
+	expectErr := "line-break must be one of CRLF|LF|CR"
 	err := SetLineBreak("error")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "error")
@@ -263,7 +263,7 @@ func TestSetWriteEncoding(t *testing.T) {
 		t.Errorf("encoding = %s, expect to set %s for %s", flags.WriteEncoding, SJIS, "sjis")
 	}
 
-	expectErr := "encoding must be one of utf8|sjis"
+	expectErr := "encoding must be one of UTF8|SJIS"
 	err := SetWriteEncoding("error")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "error")
@@ -345,12 +345,22 @@ func TestSetFormat(t *testing.T) {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, JSONA, "jsona")
 	}
 
+	SetFormat("gfm")
+	if flags.Format != GFM {
+		t.Errorf("format = %s, expect to set %s for %s", flags.Format, GFM, "gfm")
+	}
+
+	SetFormat("org")
+	if flags.Format != ORG {
+		t.Errorf("format = %s, expect to set %s for %s", flags.Format, ORG, "org")
+	}
+
 	SetFormat("text")
 	if flags.Format != TEXT {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, TEXT, "text")
 	}
 
-	expectErr := "format must be one of csv|tsv|json|text"
+	expectErr := "format must be one of CSV|TSV|JSON|JSONH|JSONA|GFM|ORG|TEXT"
 	err := SetFormat("error")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "error")
@@ -479,7 +489,7 @@ func TestParseEncoding(t *testing.T) {
 		t.Errorf("encoding = %s, expect to set %s for %s", e, SJIS, "sjis")
 	}
 
-	expectErr := "encoding must be one of utf8|sjis"
+	expectErr := "encoding must be one of UTF8|SJIS"
 	_, err = ParseEncoding("error")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "error")
