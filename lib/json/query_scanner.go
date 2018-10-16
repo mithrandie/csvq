@@ -6,14 +6,6 @@ import (
 	"unicode"
 )
 
-type ExtractType int
-
-const (
-	Value    ExtractType = 0
-	RowValue ExtractType = 1
-	Table    ExtractType = 2
-)
-
 const AliasSpecifier = "AS"
 
 type QueryScanner struct {
