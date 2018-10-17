@@ -5,6 +5,8 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/color"
 	"github.com/mithrandie/csvq/lib/value"
+	"github.com/mithrandie/ternary"
+	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -278,13 +280,28 @@ func (e *Encoder) ConvertTextCell(val value.Primary) *textField {
 		s = val.(value.Boolean).String()
 		style = color.BooleanStyle
 	case value.Ternary:
-		s = val.(value.Ternary).Ternary().String()
+		t := val.(value.Ternary)
+		switch e.Format {
+		case cmd.GFM, cmd.ORG:
+			if t.Ternary() == ternary.UNKNOWN {
+				s = ""
+			} else {
+				s = strconv.FormatBool(t.Ternary().ParseBool())
+			}
+		default:
+			s = t.Ternary().String()
+		}
 		style = color.TernaryStyle
 	case value.Datetime:
 		s = val.(value.Datetime).Format(time.RFC3339Nano)
 		style = color.DatetimeStyle
 	case value.Null:
-		s = "NULL"
+		switch e.Format {
+		case cmd.GFM, cmd.ORG:
+			s = ""
+		default:
+			s = "NULL"
+		}
 		style = color.NullStyle
 	}
 

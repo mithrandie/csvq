@@ -1,3 +1,13 @@
+## Release v1.4.2 (2018-10-17)
+
+- Fix output format problems on the specifications.
+  - Conversion to GigHub Flavored Markdown Format
+    - Ternary -> bool or empty string
+    - Null -> empty string
+  - Conversion to Org-mode Table Format
+    - Ternary -> bool or empty string
+    - Null -> empty string
+
 ## Release v1.4.1 (2018-10-17)
 
 - Fix a bug of datetime conversion.

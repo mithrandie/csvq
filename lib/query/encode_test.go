@@ -89,7 +89,7 @@ var encodeViewTests = []struct {
 			"|    c1    |                          c2<br />second line                          |   c3   |\r\n" +
 			"| -------: | --------------------------------------------------------------------- | ------ |\r\n" +
 			"|   2.0123 | 2016-02-01T16:00:00.123456-07:00                                      | abcdef |\r\n" +
-			"| 34567890 |  ab\\|cdefghijklmnopqrstuvwxyzabcdefg<br />hi\"jk日本語あアｱＡ（<br />  |  NULL  |",
+			"| 34567890 |  ab\\|cdefghijklmnopqrstuvwxyzabcdefg<br />hi\"jk日本語あアｱＡ（<br />  |        |",
 	},
 	{
 		Name: "TSV",
