@@ -56,7 +56,8 @@ var encoderEncodeTests = []struct {
 		Name:      "GFM",
 		FieldList: []string{"c1", "c2\nsecond line", "c3"},
 		RecordSet: [][]value.Primary{
-			{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")},
+			{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(false)},
+			{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewTernary(ternary.TRUE)},
 			{value.NewInteger(34567890), value.NewString(" ab|cdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk日本語あアｱＡ（\n"), value.NewNull()},
 		},
 		Format:        cmd.GFM,
@@ -64,14 +65,16 @@ var encoderEncodeTests = []struct {
 		Expect: "" +
 			"|    c1    |                          c2<br />second line                          |   c3   |\n" +
 			"| -------: | --------------------------------------------------------------------- | ------ |\n" +
-			"|   2.0123 | 2016-02-01T16:00:00.123456-07:00                                      | abcdef |\n" +
-			"| 34567890 |  ab\\|cdefghijklmnopqrstuvwxyzabcdefg<br />hi\"jk日本語あアｱＡ（<br />  |  NULL  |",
+			"|       -1 |                                                                       | false  |\n" +
+			"|   2.0123 | 2016-02-01T16:00:00.123456-07:00                                      |  true  |\n" +
+			"| 34567890 |  ab\\|cdefghijklmnopqrstuvwxyzabcdefg<br />hi\"jk日本語あアｱＡ（<br />  |        |",
 	},
 	{
 		Name:      "Org",
 		FieldList: []string{"c1", "c2\nsecond line", "c3"},
 		RecordSet: [][]value.Primary{
-			{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")},
+			{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(false)},
+			{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewTernary(ternary.TRUE)},
 			{value.NewInteger(34567890), value.NewString(" ab|cdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk日本語あアｱＡ（\n"), value.NewNull()},
 		},
 		Format:        cmd.ORG,
@@ -79,8 +82,9 @@ var encoderEncodeTests = []struct {
 		Expect: "" +
 			"|    c1    |                          c2<br />second line                          |   c3   |\n" +
 			"|----------+-----------------------------------------------------------------------+--------|\n" +
-			"|   2.0123 | 2016-02-01T16:00:00.123456-07:00                                      | abcdef |\n" +
-			"| 34567890 |  ab\\|cdefghijklmnopqrstuvwxyzabcdefg<br />hi\"jk日本語あアｱＡ（<br />  |  NULL  |",
+			"|       -1 |                                                                       | false  |\n" +
+			"|   2.0123 | 2016-02-01T16:00:00.123456-07:00                                      |  true  |\n" +
+			"| 34567890 |  ab\\|cdefghijklmnopqrstuvwxyzabcdefg<br />hi\"jk日本語あアｱＡ（<br />  |        |",
 	},
 	{
 		Name:      "Text Special Characters",
@@ -137,7 +141,7 @@ var encoderEncodeTests = []struct {
 		WithoutHeader: true,
 		Expect: "" +
 			"|   2.0123 | 2016-02-01T16:00:00.123456-07:00                                     | abcdef |\n" +
-			"| 34567890 |  ab\\|cdefghijklmnopqrstuvwxyzabcdefg<br />hi\"jk日本語あアｱＡ（<br /> |  NULL  |",
+			"| 34567890 |  ab\\|cdefghijklmnopqrstuvwxyzabcdefg<br />hi\"jk日本語あアｱＡ（<br /> |        |",
 	},
 }
 
