@@ -1,3 +1,7 @@
+## Release v1.4.1 (2018-10-17)
+
+- Fix a bug of datetime conversion.
+
 ## Release v1.4.0 (2018-10-16)
 
 - Add output formats.
