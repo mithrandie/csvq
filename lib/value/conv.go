@@ -48,7 +48,7 @@ func StrToTime(s string) (time.Time, error) {
 					return t, nil
 				}
 			} else if s[10] == 'T' {
-				if s[len(s)-3] == '+' || s[len(s)-6] == '-' || s[len(s)-1] == 'Z' {
+				if s[len(s)-6] == '+' || s[len(s)-6] == '-' || s[len(s)-1] == 'Z' {
 					if t, e := time.Parse(time.RFC3339Nano, s); e == nil {
 						return t, nil
 					}
