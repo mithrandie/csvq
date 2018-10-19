@@ -104,7 +104,7 @@ func CrossJoin(view *View, joinView *View) {
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 	records := make(RecordSet, view.RecordLen()*joinView.RecordLen())
 
-	gm := NewGoroutineManager(view.RecordLen(), 150)
+	gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
 	for i := 0; i < gm.CPU; i++ {
 		gm.Add()
 		go func(thIdx int) {
@@ -139,10 +139,10 @@ func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, par
 	var gm *GoroutineManager
 	var splitLeft bool
 	if joinView.RecordLen() < view.RecordLen() {
-		gm = NewGoroutineManager(view.RecordLen(), 150)
+		gm = NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
 		splitLeft = true
 	} else {
-		gm = NewGoroutineManager(joinView.RecordLen(), 150)
+		gm = NewGoroutineManager(joinView.RecordLen(), MinimumRequiredForParallelRoutine)
 		splitLeft = false
 	}
 
@@ -228,10 +228,10 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 	var gm *GoroutineManager
 	var splitLeft bool
 	if joinView.RecordLen() < view.RecordLen() {
-		gm = NewGoroutineManager(view.RecordLen(), 150)
+		gm = NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
 		splitLeft = true
 	} else {
-		gm = NewGoroutineManager(joinView.RecordLen(), 150)
+		gm = NewGoroutineManager(joinView.RecordLen(), MinimumRequiredForParallelRoutine)
 		splitLeft = false
 	}
 

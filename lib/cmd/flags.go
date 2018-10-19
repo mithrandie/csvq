@@ -125,17 +125,17 @@ var (
 )
 
 func GetFlags() *Flags {
-	pwd, err := filepath.Abs(".")
-	if err != nil {
-		pwd = "."
-	}
-
-	cpu := runtime.NumCPU() / 2
-	if cpu < 1 {
-		cpu = 1
-	}
-
 	getFlags.Do(func() {
+		pwd, err := filepath.Abs(".")
+		if err != nil {
+			pwd = "."
+		}
+
+		cpu := runtime.NumCPU() / 2
+		if cpu < 1 {
+			cpu = 1
+		}
+
 		flags = &Flags{
 			Delimiter:      UNDEF,
 			JsonQuery:      "",

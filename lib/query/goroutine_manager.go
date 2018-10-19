@@ -9,6 +9,8 @@ import (
 var goroutineCount int
 var goroutineCountMutex sync.Mutex
 
+const MinimumRequiredForParallelRoutine = 150
+
 func useParallelRoutine(recordLen int, minimumRequired int) (int, int) {
 	cpu := cmd.GetFlags().CPU
 
