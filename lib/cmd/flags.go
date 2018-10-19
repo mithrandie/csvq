@@ -64,12 +64,14 @@ const (
 )
 
 var formatLiterals = map[Format]string{
-	TEXT: "TEXT",
-	CSV:  "CSV",
-	TSV:  "TSV",
-	JSON: "JSON",
-	GFM:  "MD",
-	ORG:  "ORG",
+	TEXT:  "TEXT",
+	CSV:   "CSV",
+	TSV:   "TSV",
+	JSON:  "JSON",
+	JSONH: "JSONH",
+	JSONA: "JSONA",
+	GFM:   "MD",
+	ORG:   "ORG",
 }
 
 func (f Format) String() string {

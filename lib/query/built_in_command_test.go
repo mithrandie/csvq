@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -225,13 +226,14 @@ func TestSource(t *testing.T) {
 }
 
 var setFlagTests = []struct {
-	Name             string
-	Expr             parser.SetFlag
-	ResultFlag       string
-	ResultStrValue   string
-	ResultFloatValue float64
-	ResultBoolValue  bool
-	Error            string
+	Name               string
+	Expr               parser.SetFlag
+	ResultFlag         string
+	ResultStrValue     string
+	ResultFloatValue   float64
+	ResultIntegerValue int
+	ResultBoolValue    bool
+	Error              string
 }{
 	{
 		Name: "Set Delimiter",
@@ -315,6 +317,51 @@ var setFlagTests = []struct {
 		ResultBoolValue: true,
 	},
 	{
+		Name: "Set WriteEncoding",
+		Expr: parser.SetFlag{
+			Name:  "@@write_encoding",
+			Value: value.NewString("SJIS"),
+		},
+		ResultFlag:     "write_encoding",
+		ResultStrValue: "SJIS",
+	},
+	{
+		Name: "Set Format",
+		Expr: parser.SetFlag{
+			Name:  "@@format",
+			Value: value.NewString("json"),
+		},
+		ResultFlag:     "format",
+		ResultStrValue: "JSON",
+	},
+	{
+		Name: "Set WriteDelimiter",
+		Expr: parser.SetFlag{
+			Name:  "@@write_delimiter",
+			Value: value.NewString("\t"),
+		},
+		ResultFlag:     "write_delimiter",
+		ResultStrValue: "\t",
+	},
+	{
+		Name: "Set WithoutHeader",
+		Expr: parser.SetFlag{
+			Name:  "@@without_header",
+			Value: value.NewBoolean(true),
+		},
+		ResultFlag:      "without_header",
+		ResultBoolValue: true,
+	},
+	{
+		Name: "Set PrettyPrint",
+		Expr: parser.SetFlag{
+			Name:  "@@pretty_print",
+			Value: value.NewBoolean(true),
+		},
+		ResultFlag:      "pretty_print",
+		ResultBoolValue: true,
+	},
+	{
 		Name: "Set Color",
 		Expr: parser.SetFlag{
 			Name:  "@@color",
@@ -322,6 +369,24 @@ var setFlagTests = []struct {
 		},
 		ResultFlag:      "color",
 		ResultBoolValue: true,
+	},
+	{
+		Name: "Set Quiet",
+		Expr: parser.SetFlag{
+			Name:  "@@quiet",
+			Value: value.NewBoolean(true),
+		},
+		ResultFlag:      "quiet",
+		ResultBoolValue: true,
+	},
+	{
+		Name: "Set CPU",
+		Expr: parser.SetFlag{
+			Name:  "@@cpu",
+			Value: value.NewInteger(int64(runtime.NumCPU())),
+		},
+		ResultFlag:         "cpu",
+		ResultIntegerValue: runtime.NumCPU(),
 	},
 	{
 		Name: "Set Stats",
@@ -355,6 +420,14 @@ var setFlagTests = []struct {
 			Value: value.NewString("string"),
 		},
 		Error: "[L:- C:-] SET: flag value 'string' for @@without_null is invalid",
+	},
+	{
+		Name: "Set CPU Value Error",
+		Expr: parser.SetFlag{
+			Name:  "@@cpu",
+			Value: value.NewString("invalid"),
+		},
+		Error: "[L:- C:-] SET: flag value 'invalid' for @@cpu is invalid",
 	},
 	{
 		Name: "Invalid Flag Name Error",
@@ -422,17 +495,45 @@ func TestSetFlag(t *testing.T) {
 			if flags.WaitTimeout != v.ResultFloatValue {
 				t.Errorf("%s: wait-timeout = %f, want %f", v.Name, flags.WaitTimeout, v.ResultFloatValue)
 			}
-		case "NO-HEADER":
+		case "NO_HEADER":
 			if flags.NoHeader != v.ResultBoolValue {
 				t.Errorf("%s: no-header = %t, want %t", v.Name, flags.NoHeader, v.ResultBoolValue)
 			}
-		case "WITHOUT-NULL":
+		case "WITHOUT_NULL":
 			if flags.WithoutNull != v.ResultBoolValue {
 				t.Errorf("%s: without-null = %t, want %t", v.Name, flags.WithoutNull, v.ResultBoolValue)
 			}
+		case "WRITE_ENCODING":
+			if flags.WriteEncoding.String() != v.ResultStrValue {
+				t.Errorf("%s: write-encoding = %q, want %q", v.Name, flags.WriteEncoding.String(), v.ResultStrValue)
+			}
+		case "FORMAT":
+			if flags.Format.String() != v.ResultStrValue {
+				t.Errorf("%s: format = %q, want %q", v.Name, flags.Format.String(), v.ResultStrValue)
+			}
+		case "WRITE_DELIMITER":
+			if string(flags.WriteDelimiter) != v.ResultStrValue {
+				t.Errorf("%s: write-delimiter = %q, want %q", v.Name, string(flags.WriteDelimiter), v.ResultStrValue)
+			}
+		case "WITHOUT_HEADER":
+			if flags.WithoutHeader != v.ResultBoolValue {
+				t.Errorf("%s: without-header = %t, want %t", v.Name, flags.WithoutHeader, v.ResultBoolValue)
+			}
+		case "PRETTY_PRINT":
+			if flags.PrettyPrint != v.ResultBoolValue {
+				t.Errorf("%s: pretty-print = %t, want %t", v.Name, flags.PrettyPrint, v.ResultBoolValue)
+			}
 		case "COLOR":
 			if flags.Color != v.ResultBoolValue {
-				t.Errorf("%s: color = %t, want %t", v.Name, flags.Stats, v.ResultBoolValue)
+				t.Errorf("%s: color = %t, want %t", v.Name, flags.Color, v.ResultBoolValue)
+			}
+		case "QUIET":
+			if flags.Quiet != v.ResultBoolValue {
+				t.Errorf("%s: quiet = %t, want %t", v.Name, flags.Quiet, v.ResultBoolValue)
+			}
+		case "CPU":
+			if flags.CPU != v.ResultIntegerValue {
+				t.Errorf("%s: cpu = %d, want %d", v.Name, flags.CPU, v.ResultIntegerValue)
 			}
 		case "STATS":
 			if flags.Stats != v.ResultBoolValue {
@@ -564,6 +665,61 @@ var showFlagTests = []struct {
 		Result: "true",
 	},
 	{
+		Name: "Show WriteEncoding",
+		Expr: parser.ShowFlag{
+			Name: "@@write_encoding",
+		},
+		SetExpr: parser.SetFlag{
+			Name:  "@@write_encoding",
+			Value: value.NewString("SJIS"),
+		},
+		Result: "SJIS",
+	},
+	{
+		Name: "Show WriteDelimiter",
+		Expr: parser.ShowFlag{
+			Name: "@@write_delimiter",
+		},
+		SetExpr: parser.SetFlag{
+			Name:  "@@write_delimiter",
+			Value: value.NewString("\t"),
+		},
+		Result: "'\\t'",
+	},
+	{
+		Name: "Show Format",
+		Expr: parser.ShowFlag{
+			Name: "@@format",
+		},
+		SetExpr: parser.SetFlag{
+			Name:  "@@format",
+			Value: value.NewString("json"),
+		},
+		Result: "JSON",
+	},
+	{
+		Name: "Show WithoutHeader",
+		Expr: parser.ShowFlag{
+			Name: "@@without_header",
+		},
+		SetExpr: parser.SetFlag{
+			Name:  "@@without_header",
+			Value: value.NewBoolean(true),
+		},
+		Result: "true",
+	},
+	{
+		Name: "Show PrettyPrint",
+		Expr: parser.ShowFlag{
+			Name: "@@pretty_print",
+		},
+		SetExpr: parser.SetFlag{
+			Name:  "@@pretty_print",
+			Value: value.NewBoolean(true),
+		},
+		Result: "true",
+	},
+	{
 		Name: "Show Color",
 		Expr: parser.ShowFlag{
 			Name: "@@color",
@@ -573,6 +729,28 @@ var showFlagTests = []struct {
 			Value: value.NewBoolean(true),
 		},
 		Result: "true",
+	},
+	{
+		Name: "Show Quiet",
+		Expr: parser.ShowFlag{
+			Name: "@@quiet",
+		},
+		SetExpr: parser.SetFlag{
+			Name:  "@@quiet",
+			Value: value.NewBoolean(true),
+		},
+		Result: "true",
+	},
+	{
+		Name: "Show CPU",
+		Expr: parser.ShowFlag{
+			Name: "@@cpu",
+		},
+		SetExpr: parser.SetFlag{
+			Name:  "@@cpu",
+			Value: value.NewInteger(1),
+		},
+		Result: "1",
 	},
 	{
 		Name: "Show Stats",

@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
@@ -84,6 +85,11 @@ func teardown() {
 }
 
 func initFlag() {
+	cpu := runtime.NumCPU() / 2
+	if cpu < 1 {
+		cpu = 1
+	}
+
 	cmd.SetLocation(TestLocation)
 	flags := cmd.GetFlags()
 	flags.Delimiter = cmd.UNDEF
@@ -93,6 +99,13 @@ func initFlag() {
 	flags.DatetimeFormat = ""
 	flags.NoHeader = false
 	flags.WithoutNull = false
+	flags.WriteEncoding = cmd.UTF8
+	flags.Format = cmd.TEXT
+	flags.WriteDelimiter = ','
+	flags.WithoutHeader = false
+	flags.PrettyPrint = false
+	flags.Quiet = false
+	flags.CPU = cpu
 	flags.Stats = false
 	cmd.SetColor(false)
 }
