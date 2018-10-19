@@ -704,7 +704,7 @@ func AddColumns(query parser.AddColumns, parentFilter *Filter) (*View, error) {
 
 	records := make(RecordSet, view.RecordLen())
 
-	gm := NewGoroutineManager(view.RecordLen(), 150)
+	gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
 	for i := 0; i < gm.CPU; i++ {
 		gm.Add()
 		go func(thIdx int) {

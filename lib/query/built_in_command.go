@@ -17,6 +17,27 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 )
 
+const (
+	DelimiterFlag      = "@@DELIMITER"
+	EncodingFlag       = "@@ENCODING"
+	LineBreakFlag      = "@@LINE_BREAK"
+	TimezoneFlag       = "@@TIMEZONE"
+	RepositoryFlag     = "@@REPOSITORY"
+	DatetimeFormatFlag = "@@DATETIME_FORMAT"
+	WaitTimeoutFlag    = "@@WAIT_TIMEOUT"
+	NoHeaderFlag       = "@@NO_HEADER"
+	WithoutNullFlag    = "@@WITHOUT_NULL"
+	WriteEncodingFlag  = "@@WRITE_ENCODING"
+	FormatFlag         = "@@FORMAT"
+	WriteDelimiterFlag = "@@WRITE_DELIMITER"
+	WithoutHeaderFlag  = "@@WITHOUT_HEADER"
+	PrettyPrintFlag    = "@@PRETTY_PRINT"
+	ColorFlag          = "@@COLOR"
+	QuietFlag          = "@@QUIET"
+	CPUFlag            = "@@CPU"
+	StatsFlag          = "@@STATS"
+)
+
 func Print(expr parser.Print, filter *Filter) (string, error) {
 	p, err := filter.Evaluate(expr.Value)
 	if err != nil {
@@ -95,12 +116,15 @@ func SetFlag(expr parser.SetFlag) error {
 	var p value.Primary
 
 	switch strings.ToUpper(expr.Name) {
-	case "@@DELIMITER", "@@ENCODING", "@@LINE_BREAK", "@@TIMEZONE", "@@REPOSITORY", "@@DATETIME_FORMAT":
+	case DelimiterFlag, EncodingFlag, LineBreakFlag, TimezoneFlag, RepositoryFlag, DatetimeFormatFlag,
+		WriteEncodingFlag, FormatFlag, WriteDelimiterFlag:
 		p = value.ToString(expr.Value)
-	case "@@WAIT_TIMEOUT":
-		p = value.ToFloat(expr.Value)
-	case "@@NO_HEADER", "@@WITHOUT_NULL", "@@COLOR", "@@STATS":
+	case NoHeaderFlag, WithoutNullFlag, ColorFlag, StatsFlag, WithoutHeaderFlag, PrettyPrintFlag, QuietFlag:
 		p = value.ToBoolean(expr.Value)
+	case WaitTimeoutFlag:
+		p = value.ToFloat(expr.Value)
+	case CPUFlag:
+		p = value.ToInteger(expr.Value)
 	default:
 		return NewInvalidFlagNameError(expr, expr.Name)
 	}
@@ -111,27 +135,41 @@ func SetFlag(expr parser.SetFlag) error {
 	var err error
 
 	switch strings.ToUpper(expr.Name) {
-	case "@@DELIMITER":
+	case DelimiterFlag:
 		err = cmd.SetDelimiter(p.(value.String).Raw())
-	case "@@ENCODING":
+	case EncodingFlag:
 		err = cmd.SetEncoding(p.(value.String).Raw())
-	case "@@LINE_BREAK":
+	case LineBreakFlag:
 		err = cmd.SetLineBreak(p.(value.String).Raw())
-	case "@@TIMEZONE":
+	case TimezoneFlag:
 		err = cmd.SetLocation(p.(value.String).Raw())
-	case "@@REPOSITORY":
+	case RepositoryFlag:
 		err = cmd.SetRepository(p.(value.String).Raw())
-	case "@@DATETIME_FORMAT":
+	case DatetimeFormatFlag:
 		cmd.SetDatetimeFormat(p.(value.String).Raw())
-	case "@@WAIT_TIMEOUT":
+	case WaitTimeoutFlag:
 		cmd.SetWaitTimeout(p.(value.Float).Raw())
-	case "@@NO_HEADER":
+	case NoHeaderFlag:
 		cmd.SetNoHeader(p.(value.Boolean).Raw())
-	case "@@WITHOUT_NULL":
+	case WithoutNullFlag:
 		cmd.SetWithoutNull(p.(value.Boolean).Raw())
-	case "@@COLOR":
+	case WriteEncodingFlag:
+		err = cmd.SetWriteEncoding(p.(value.String).Raw())
+	case FormatFlag:
+		err = cmd.SetFormat(p.(value.String).Raw())
+	case WriteDelimiterFlag:
+		err = cmd.SetWriteDelimiter(p.(value.String).Raw())
+	case WithoutHeaderFlag:
+		cmd.SetWithoutHeader(p.(value.Boolean).Raw())
+	case PrettyPrintFlag:
+		cmd.SetPrettyPrint(p.(value.Boolean).Raw())
+	case ColorFlag:
 		cmd.SetColor(p.(value.Boolean).Raw())
-	case "@@STATS":
+	case QuietFlag:
+		cmd.SetQuiet(p.(value.Boolean).Raw())
+	case CPUFlag:
+		cmd.SetCPU(int(p.(value.Integer).Raw()))
+	case StatsFlag:
 		cmd.SetStats(p.(value.Boolean).Raw())
 	}
 
@@ -148,35 +186,49 @@ func ShowFlag(expr parser.ShowFlag) (string, error) {
 	flags := cmd.GetFlags()
 
 	switch strings.ToUpper(expr.Name) {
-	case "@@DELIMITER":
+	case DelimiterFlag:
 		if flags.Delimiter == cmd.UNDEF {
 			s = "(not set)"
 		} else {
 			s = "'" + cmd.EscapeString(string(flags.Delimiter)) + "'"
 		}
-	case "@@ENCODING":
+	case EncodingFlag:
 		s = flags.Encoding.String()
-	case "@@LINE_BREAK":
+	case LineBreakFlag:
 		s = flags.LineBreak.String()
-	case "@@TIMEZONE":
+	case TimezoneFlag:
 		s = flags.Location
-	case "@@REPOSITORY":
+	case RepositoryFlag:
 		s = flags.Repository
-	case "@@DATETIME_FORMAT":
+	case DatetimeFormatFlag:
 		if len(flags.DatetimeFormat) < 1 {
 			s = "(not set)"
 		} else {
 			s = flags.DatetimeFormat
 		}
-	case "@@WAIT_TIMEOUT":
+	case WaitTimeoutFlag:
 		s = value.Float64ToStr(flags.WaitTimeout)
-	case "@@NO_HEADER":
+	case NoHeaderFlag:
 		s = strconv.FormatBool(flags.NoHeader)
-	case "@@WITHOUT_NULL":
+	case WithoutNullFlag:
 		s = strconv.FormatBool(flags.WithoutNull)
-	case "@@COLOR":
+	case WriteEncodingFlag:
+		s = flags.WriteEncoding.String()
+	case FormatFlag:
+		s = flags.Format.String()
+	case WriteDelimiterFlag:
+		s = "'" + cmd.EscapeString(string(flags.WriteDelimiter)) + "'"
+	case WithoutHeaderFlag:
+		s = strconv.FormatBool(flags.WithoutHeader)
+	case PrettyPrintFlag:
+		s = strconv.FormatBool(flags.PrettyPrint)
+	case ColorFlag:
 		s = strconv.FormatBool(flags.Color)
-	case "@@STATS":
+	case QuietFlag:
+		s = strconv.FormatBool(flags.Quiet)
+	case CPUFlag:
+		s = strconv.Itoa(flags.CPU)
+	case StatsFlag:
 		s = strconv.FormatBool(flags.Stats)
 	default:
 		return s, NewInvalidFlagNameError(expr, expr.Name)

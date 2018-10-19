@@ -2,19 +2,19 @@ package main
 
 import (
 	"errors"
+	"fmt"
+	"github.com/mithrandie/csvq/lib/action"
+	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/color"
+	"github.com/mithrandie/csvq/lib/query"
 	"io/ioutil"
 	"os"
 	"runtime"
 
-	"github.com/mithrandie/csvq/lib/action"
-	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/csvq/lib/query"
-
 	"github.com/urfave/cli"
 )
 
-var version = "v1.4.2"
+var version = "v1.4.3"
 
 func main() {
 	cli.AppHelpTemplate = appHHelpTemplate
@@ -26,6 +26,14 @@ func main() {
 	app.Usage = "SQL like query language for csv"
 	app.ArgsUsage = "[\"query\"|\"statements\"|argument]"
 	app.Version = version
+
+	app.OnUsageError = func(c *cli.Context, err error, isSubcommand bool) error {
+		if isSubcommand {
+			return err
+		}
+
+		return NewExitError(fmt.Sprintf("Incorrect Usage: %s", err.Error()), 1)
+	}
 
 	defaultCPU := runtime.NumCPU() / 2
 	if defaultCPU < 1 {
@@ -132,18 +140,20 @@ func main() {
 			ArgsUsage: "CSV_FILE_PATH",
 			Action: func(c *cli.Context) error {
 				if c.NArg() != 1 {
-					cli.ShowCommandHelp(c, "fields")
-					return ExitError("table is not specified", 1)
+					return NewExitError("table is not specified", 1)
 				}
 
 				table := c.Args().First()
 
 				err := action.ShowFields(table)
 				if err != nil {
-					return ExitError(err.Error(), 1)
+					return NewExitError(err.Error(), 1)
 				}
 
 				return nil
+			},
+			OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
+				return NewExitError(fmt.Sprintf("Incorrect Usage: %s", err.Error()), 1)
 			},
 		},
 		{
@@ -152,17 +162,19 @@ func main() {
 			ArgsUsage: "\"expression\"",
 			Action: func(c *cli.Context) error {
 				if c.NArg() != 1 {
-					cli.ShowCommandHelp(c, "calc")
-					return ExitError("expression is empty", 1)
+					return NewExitError("expression is empty", 1)
 				}
 
 				expr := c.Args().First()
 				err := action.Calc(expr)
 				if err != nil {
-					return ExitError(err.Error(), 1)
+					return NewExitError(err.Error(), 1)
 				}
 
 				return nil
+			},
+			OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
+				return NewExitError(fmt.Sprintf("Incorrect Usage: %s", err.Error()), 1)
 			},
 		},
 	}
@@ -170,7 +182,7 @@ func main() {
 	app.Before = func(c *cli.Context) error {
 		err := setFlags(c)
 		if err != nil {
-			return ExitError(err.Error(), 1)
+			return NewExitError(err.Error(), 1)
 		}
 		return nil
 	}
@@ -178,8 +190,7 @@ func main() {
 	app.Action = func(c *cli.Context) error {
 		queryString, err := readQuery(c)
 		if err != nil {
-			cli.ShowAppHelp(c)
-			return ExitError(err.Error(), 1)
+			return NewExitError(err.Error(), 1)
 		}
 
 		if len(queryString) < 1 {
@@ -195,7 +206,7 @@ func main() {
 			} else if ex, ok := err.(*query.ForcedExit); ok {
 				code = ex.GetCode()
 			}
-			return ExitError(err.Error(), code)
+			return NewExitError(err.Error(), code)
 		}
 
 		return nil
@@ -280,6 +291,6 @@ func setFlags(c *cli.Context) error {
 	return nil
 }
 
-func ExitError(message string, code int) *cli.ExitError {
+func NewExitError(message string, code int) *cli.ExitError {
 	return cli.NewExitError(color.Error(message), code)
 }

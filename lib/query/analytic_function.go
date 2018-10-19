@@ -84,7 +84,7 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 		view.sortValuesInEachCell = make([][]*SortValue, view.RecordLen())
 	}
 
-	gm := NewGoroutineManager(view.RecordLen(), 150)
+	gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
 	partitionKeys := make([]string, view.RecordLen())
 
 	for i := 0; i < gm.CPU; i++ {

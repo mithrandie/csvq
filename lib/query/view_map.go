@@ -154,7 +154,7 @@ func (m ViewMap) GetWithInternalId(fpath parser.Identifier) (*View, error) {
 		ret.Header = MergeHeader(NewHeaderWithId(ret.Header[0].View, []string{}), ret.Header)
 		fieldLen := ret.FieldLen()
 
-		gm := NewGoroutineManager(ret.RecordLen(), 150)
+		gm := NewGoroutineManager(ret.RecordLen(), MinimumRequiredForParallelRoutine)
 		for i := 0; i < gm.CPU; i++ {
 			gm.Add()
 			go func(thIdx int) {

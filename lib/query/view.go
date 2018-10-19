@@ -370,7 +370,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 			}
 			view.Header = header
 
-			gm := NewGoroutineManager(view.RecordLen(), 150)
+			gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
 			for i := 0; i < gm.CPU; i++ {
 				gm.Add()
 				go func(thIdx int) {
@@ -589,7 +589,7 @@ func (view *View) Where(clause parser.WhereClause) error {
 func (view *View) filter(condition parser.QueryExpression) error {
 	results := make([]bool, view.RecordLen())
 
-	gm := NewGoroutineManager(view.RecordLen(), 150)
+	gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
 	for i := 0; i < gm.CPU; i++ {
 		gm.Add()
 		go func(thIdx int) {
@@ -645,7 +645,7 @@ func (view *View) group(items []parser.QueryExpression) error {
 
 	keys := make([]string, view.RecordLen())
 
-	gm := NewGoroutineManager(view.RecordLen(), 150)
+	gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
 	for i := 0; i < gm.CPU; i++ {
 		gm.Add()
 		go func(thIdx int) {
@@ -881,7 +881,7 @@ func (view *View) Select(clause parser.SelectClause) error {
 func (view *View) GenerateComparisonKeys() {
 	view.comparisonKeysInEachRecord = make([]string, view.RecordLen())
 
-	gm := NewGoroutineManager(view.RecordLen(), 150)
+	gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
 	for i := 0; i < gm.CPU; i++ {
 		gm.Add()
 		go func(thIdx int) {
@@ -961,7 +961,7 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 		}
 	}
 
-	gm := NewGoroutineManager(view.RecordLen(), 150)
+	gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
 	for i := 0; i < gm.CPU; i++ {
 		gm.Add()
 		go func(thIdx int) {
@@ -1083,7 +1083,7 @@ func (view *View) ExtendRecordCapacity(exprs []parser.QueryExpression) error {
 		return nil
 	}
 
-	gm := NewGoroutineManager(view.RecordLen(), 150)
+	gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
 	for i := 0; i < gm.CPU; i++ {
 		gm.Add()
 		go func(thIdx int) {
@@ -1121,7 +1121,7 @@ func (view *View) evalColumn(obj parser.QueryExpression, alias string) (idx int,
 					return
 				}
 			} else {
-				gm := NewGoroutineManager(view.RecordLen(), 150)
+				gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
 				for i := 0; i < gm.CPU; i++ {
 					gm.Add()
 					go func(thIdx int) {
@@ -1377,7 +1377,7 @@ func (view *View) Fix() {
 	}
 
 	if resize {
-		gm := NewGoroutineManager(view.RecordLen(), 150)
+		gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
 		for i := 0; i < gm.CPU; i++ {
 			gm.Add()
 			go func(thIdx int) {
@@ -1515,7 +1515,7 @@ func (view *View) Intersect(calcView *View, all bool) {
 func (view *View) ListValuesForAggregateFunctions(expr parser.QueryExpression, arg parser.QueryExpression, distinct bool, filter *Filter) ([]value.Primary, error) {
 	list := make([]value.Primary, view.RecordLen())
 
-	gm := NewGoroutineManager(view.RecordLen(), 150)
+	gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
 	for i := 0; i < gm.CPU; i++ {
 		gm.Add()
 		go func(thIdx int) {

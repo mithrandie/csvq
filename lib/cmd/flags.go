@@ -64,12 +64,14 @@ const (
 )
 
 var formatLiterals = map[Format]string{
-	TEXT: "TEXT",
-	CSV:  "CSV",
-	TSV:  "TSV",
-	JSON: "JSON",
-	GFM:  "MD",
-	ORG:  "ORG",
+	TEXT:  "TEXT",
+	CSV:   "CSV",
+	TSV:   "TSV",
+	JSON:  "JSON",
+	JSONH: "JSONH",
+	JSONA: "JSONA",
+	GFM:   "MD",
+	ORG:   "ORG",
 }
 
 func (f Format) String() string {
@@ -125,17 +127,17 @@ var (
 )
 
 func GetFlags() *Flags {
-	pwd, err := filepath.Abs(".")
-	if err != nil {
-		pwd = "."
-	}
-
-	cpu := runtime.NumCPU() / 2
-	if cpu < 1 {
-		cpu = 1
-	}
-
 	getFlags.Do(func() {
+		pwd, err := filepath.Abs(".")
+		if err != nil {
+			pwd = "."
+		}
+
+		cpu := runtime.NumCPU() / 2
+		if cpu < 1 {
+			cpu = 1
+		}
+
 		flags = &Flags{
 			Delimiter:      UNDEF,
 			JsonQuery:      "",
