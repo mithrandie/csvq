@@ -1,3 +1,8 @@
+## Release v1.4.3 (2018-10-19)
+
+- Fix return code when on-usage-error occurred.
+- Add flags for write out.
+
 ## Release v1.4.2 (2018-10-17)
 
 - Fix output format problems on the specifications.
