@@ -90,3 +90,8 @@ csvq -h
 ```
 
 More details >> [https://mithrandie.github.io/csvq](https://mithrandie.github.io/csvq)
+
+
+### Example of cooperation with other applications
+
+- [csvq emacs extension](https://github.com/mithrandie/csvq-emacs-extension)
