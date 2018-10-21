@@ -53,7 +53,7 @@ const (
 	ErrorFileAlreadyExist             = "file %s already exists"
 	ErrorFileUnableToRead             = "file %s is unable to be read"
 	ErrorFileLockTimeout              = "file %s: lock wait timeout period exceeded"
-	ErrorCSVParsing                   = "csv parse error in file %s: %s"
+	ErrorDataParsing                  = "data parse error in file %s: %s"
 	ErrorTableFieldLength             = "select query should return exactly %s for table %s"
 	ErrorTemporaryTableRedeclared     = "view %s is redeclared"
 	ErrorUndeclaredTemporaryTable     = "view %s is undeclared"
@@ -602,13 +602,13 @@ func NewFileLockTimeoutError(file parser.Identifier, path string) error {
 	}
 }
 
-type CsvParsingError struct {
+type DataParsingError struct {
 	*BaseError
 }
 
-func NewCsvParsingError(file parser.QueryExpression, filepath string, message string) error {
-	return &CsvParsingError{
-		NewBaseError(file, fmt.Sprintf(ErrorCSVParsing, filepath, message)),
+func NewDataParsingError(file parser.QueryExpression, filepath string, message string) error {
+	return &DataParsingError{
+		NewBaseError(file, fmt.Sprintf(ErrorDataParsing, filepath, message)),
 	}
 }
 

@@ -17,6 +17,11 @@ func EncodeView(view *View, format cmd.Format, delimiter rune, withoutHeader boo
 	var err error
 
 	switch format {
+	case cmd.FIXED:
+		s, err = encodeFixedLengthFormat(view, cmd.GetFlags().WriteDelimiterPositions, lineBreak, withoutHeader, encoding)
+		if err != nil {
+			return "", err
+		}
 	case cmd.JSON, cmd.JSONH, cmd.JSONA:
 		s, err = encodeJson(view, format, lineBreak, cmd.GetFlags().PrettyPrint)
 		if err != nil {
@@ -32,7 +37,12 @@ func EncodeView(view *View, format cmd.Format, delimiter rune, withoutHeader boo
 		default: // cmd.CSV, cmd.TSV:
 			s = encodeCSV(view, delimiter, lineBreak, withoutHeader)
 		}
+	}
 
+	switch format {
+	case cmd.JSON, cmd.JSONH, cmd.JSONA:
+		//Do Nothing
+	default:
 		if encoding != cmd.UTF8 {
 			s, err = encodeCharacterCode(s, encoding)
 			if err != nil {
@@ -77,6 +87,17 @@ func encodeCSV(view *View, delimiter rune, lineBreak cmd.LineBreak, withoutHeade
 	e.Delimiter = delimiter
 	e.LineBreak = lineBreak
 	e.WithoutHeader = withoutHeader
+	return e.Encode(header, records)
+}
+
+func encodeFixedLengthFormat(view *View, positions []int, lineBreak cmd.LineBreak, withoutHeader bool, encoding cmd.Encoding) (string, error) {
+	header, records := bareValues(view)
+
+	e := text.NewFixedLengthEncoder()
+	e.DelimiterPositions = positions
+	e.LineBreak = lineBreak
+	e.WithoutHeader = withoutHeader
+	e.Encoding = encoding
 	return e.Encode(header, records)
 }
 

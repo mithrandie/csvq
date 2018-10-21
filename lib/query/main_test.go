@@ -74,6 +74,8 @@ func setup() {
 
 	copyfile(filepath.Join(TestDir, "table.json"), filepath.Join(TestDataDir, "table.json"))
 
+	copyfile(filepath.Join(TestDir, "fixed_length.txt"), filepath.Join(TestDataDir, "fixed_length.txt"))
+
 	copyfile(filepath.Join(TestDir, "source.sql"), filepath.Join(filepath.Join(wdir, "..", "..", "testdata"), "source.sql"))
 	copyfile(filepath.Join(TestDir, "source_syntaxerror.sql"), filepath.Join(filepath.Join(wdir, "..", "..", "testdata"), "source_syntaxerror.sql"))
 }

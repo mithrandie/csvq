@@ -73,11 +73,7 @@ func (r *Reader) ReadHeader() ([]string, error) {
 }
 
 func (r *Reader) Read() ([]Field, error) {
-	record, err := r.parseRecord(r.WithoutNull)
-	if err != nil {
-		return nil, err
-	}
-	return record, nil
+	return r.parseRecord(r.WithoutNull)
 }
 
 func (r *Reader) ReadAll() ([][]Field, error) {

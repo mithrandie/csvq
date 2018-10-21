@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/mithrandie/csvq/lib/color"
@@ -56,6 +57,7 @@ const (
 	TEXT Format = iota
 	CSV
 	TSV
+	FIXED
 	JSON
 	JSONH
 	JSONA
@@ -67,6 +69,7 @@ var formatLiterals = map[Format]string{
 	TEXT:  "TEXT",
 	CSV:   "CSV",
 	TSV:   "TSV",
+	FIXED: "FIXED",
 	JSON:  "JSON",
 	JSONH: "JSONH",
 	JSONA: "JSONA",
@@ -119,6 +122,11 @@ type Flags struct {
 
 	// Use in tests
 	Now string
+
+	// For Fixed-Length Format
+	DelimitBySpaces         bool
+	DelimiterPositions      []int
+	WriteDelimiterPositions []int
 }
 
 var (
@@ -139,49 +147,65 @@ func GetFlags() *Flags {
 		}
 
 		flags = &Flags{
-			Delimiter:      UNDEF,
-			JsonQuery:      "",
-			Encoding:       UTF8,
-			LineBreak:      LF,
-			Location:       "Local",
-			Repository:     pwd,
-			Source:         "",
-			DatetimeFormat: "",
-			WaitTimeout:    10,
-			NoHeader:       false,
-			WithoutNull:    false,
-			WriteEncoding:  UTF8,
-			OutFile:        "",
-			Format:         TEXT,
-			WriteDelimiter: ',',
-			WithoutHeader:  false,
-			Quiet:          false,
-			CPU:            cpu,
-			Stats:          false,
-			RetryInterval:  10 * time.Millisecond,
-			Now:            "",
+			Delimiter:          UNDEF,
+			JsonQuery:          "",
+			Encoding:           UTF8,
+			LineBreak:          LF,
+			Location:           "Local",
+			Repository:         pwd,
+			Source:             "",
+			DatetimeFormat:     "",
+			WaitTimeout:        10,
+			NoHeader:           false,
+			WithoutNull:        false,
+			WriteEncoding:      UTF8,
+			OutFile:            "",
+			Format:             TEXT,
+			WriteDelimiter:     ',',
+			WithoutHeader:      false,
+			Quiet:              false,
+			CPU:                cpu,
+			Stats:              false,
+			RetryInterval:      10 * time.Millisecond,
+			Now:                "",
+			DelimitBySpaces:    false,
+			DelimiterPositions: nil,
 		}
 	})
 	return flags
 }
 
 func SetDelimiter(s string) error {
-	var delimiter rune
+	var delimiter rune = UNDEF
+	var delimiterPositions []int = nil
+	var delimiteBySpaces = false
 
-	if len(s) < 1 {
-		delimiter = UNDEF
-	} else {
+	if s == "[]" || 2 < len(s) {
+		if strings.EqualFold("SPACES", s) {
+			delimiteBySpaces = true
+		} else {
+			var positions []int
+			err := json.Unmarshal([]byte(s), &positions)
+			if err != nil {
+				return errors.New("delimiter must be one character, \"SPACES\" or JSON array of integers")
+			}
+			delimiteBySpaces = true
+			delimiterPositions = positions
+		}
+	} else if 0 < len(s) {
 		s = UnescapeString(s)
 
 		runes := []rune(s)
 		if 1 < len(runes) {
-			return errors.New("delimiter must be 1 character")
+			return errors.New("delimiter must be one character, \"SPACES\" or JSON array of integers")
 		}
 		delimiter = runes[0]
 	}
 
 	f := GetFlags()
 	f.Delimiter = delimiter
+	f.DelimitBySpaces = delimiteBySpaces
+	f.DelimiterPositions = delimiterPositions
 	return nil
 }
 
@@ -351,6 +375,8 @@ func SetFormat(s string) error {
 		fm = CSV
 	case "TSV":
 		fm = TSV
+	case "FIXED":
+		fm = FIXED
 	case "JSON":
 		fm = JSON
 	case "JSONH":
@@ -364,7 +390,7 @@ func SetFormat(s string) error {
 	case "TEXT":
 		fm = TEXT
 	default:
-		return errors.New("format must be one of CSV|TSV|JSON|JSONH|JSONA|GFM|ORG|TEXT")
+		return errors.New("format must be one of CSV|TSV|FIXED|JSON|JSONH|JSONA|GFM|ORG|TEXT")
 	}
 
 	f.Format = fm
@@ -392,19 +418,28 @@ func SetWriteDelimiter(s string) error {
 		return nil
 	}
 
-	if len(s) < 1 {
-		f.WriteDelimiter = ','
-		return nil
+	var delimiter rune = ','
+	var delimiterPositions []int = nil
+
+	if s == "[]" || 2 < len(s) {
+		var positions []int
+		err := json.Unmarshal([]byte(s), &positions)
+		if err != nil {
+			return errors.New("write-delimiter must be one character or JSON array of integers")
+		}
+		delimiterPositions = positions
+	} else if 0 < len(s) {
+		s = UnescapeString(s)
+
+		runes := []rune(s)
+		if 1 < len(runes) {
+			return errors.New("write-delimiter must be one character or JSON array of integers")
+		}
+		delimiter = runes[0]
 	}
 
-	s = UnescapeString(s)
-
-	runes := []rune(s)
-	if 1 < len(runes) {
-		return errors.New("write-delimiter must be 1 character")
-	}
-
-	f.WriteDelimiter = runes[0]
+	f.WriteDelimiter = delimiter
+	f.WriteDelimiterPositions = delimiterPositions
 	return nil
 }
 

@@ -21,16 +21,17 @@ func encodeToSJIS(str string) string {
 }
 
 var encodeViewTests = []struct {
-	Name           string
-	View           *View
-	Format         cmd.Format
-	LineBreak      cmd.LineBreak
-	Encoding       cmd.Encoding
-	WriteDelimiter rune
-	WithoutHeader  bool
-	PrettyPrint    bool
-	Result         string
-	Error          string
+	Name                    string
+	View                    *View
+	Format                  cmd.Format
+	LineBreak               cmd.LineBreak
+	Encoding                cmd.Encoding
+	WriteDelimiter          rune
+	WriteDelimiterPositions []int
+	WithoutHeader           bool
+	PrettyPrint             bool
+	Result                  string
+	Error                   string
 }{
 	{
 		Name: "Empty RecordSet",
@@ -73,6 +74,22 @@ var encodeViewTests = []struct {
 			"|          | hi\"jk日本語あアｱＡ（                |        |\n" +
 			"|          |                                     |        |\n" +
 			"+----------+-------------------------------------+--------+",
+	},
+	{
+		Name: "Fixed-Length Format",
+		View: &View{
+			Header: NewHeader("test", []string{"c1", "c2", "c3"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(false)}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
+			},
+		},
+		Format:                  cmd.FIXED,
+		WriteDelimiterPositions: []int{10, 42, 50},
+		Result: "" +
+			"c1        c2                              c3      \n" +
+			"        -1                                false   \n" +
+			"    2.01232016-02-01T16:00:00.123456-07:00abcdef  ",
 	},
 	{
 		Name: "GFM LineBreak CRLF",
@@ -247,6 +264,19 @@ var encodeViewTests = []struct {
 			"]",
 	},
 	{
+		Name: "Fixed-Length Format Invalid Positions",
+		View: &View{
+			Header: NewHeader("test", []string{"c1", "c2", "c3"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(false)}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
+			},
+		},
+		Format:                  cmd.FIXED,
+		WriteDelimiterPositions: []int{10, 42, -1},
+		Error:                   "invalid delimiter position: [10, 42, -1]",
+	},
+	{
 		Name: "JSONH Column Name Convert Error",
 		View: &View{
 			Header: NewHeader("test", []string{"c1.."}),
@@ -301,6 +331,10 @@ func TestEncodeView(t *testing.T) {
 		flags.WriteDelimiter = ','
 		if v.WriteDelimiter != 0 {
 			flags.WriteDelimiter = v.WriteDelimiter
+		}
+		flags.WriteDelimiterPositions = nil
+		if v.WriteDelimiterPositions != nil {
+			flags.WriteDelimiterPositions = v.WriteDelimiterPositions
 		}
 		flags.PrettyPrint = v.PrettyPrint
 

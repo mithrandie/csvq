@@ -43,7 +43,7 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "delimiter, d",
-			Usage: "field delimiter. Default is \",\" for csv files, \"\\t\" for tsv files.",
+			Usage: "field delimiter. Default is \",\" for csv files, \"\\t\" for tsv files. one of: delimiter|\"SPACES\"|JSON array",
 		},
 		cli.StringFlag{
 			Name:  "json-query, j",
@@ -100,11 +100,11 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "format, f",
-			Usage: "output format. one of: CSV|TSV|JSON|JSONH|JSONA|GFM|ORG|TEXT",
+			Usage: "output format. one of: CSV|TSV|FIXED|JSON|JSONH|JSONA|GFM|ORG|TEXT",
 		},
 		cli.StringFlag{
 			Name:  "write-delimiter, D",
-			Usage: "field delimiter for CSV",
+			Usage: "field delimiter for CSV or delimiter positions for FIXED",
 		},
 		cli.BoolFlag{
 			Name:  "without-header, N",

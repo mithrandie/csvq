@@ -11,8 +11,8 @@ func TestGetReader(t *testing.T) {
 	fp := os.Stdout
 
 	r := GetReader(fp, UTF8)
-	if reflect.TypeOf(r).String() != "*bufio.Reader" {
-		t.Errorf("reader = %q, want %q", reflect.TypeOf(r).String(), "*bufio.Reader")
+	if reflect.TypeOf(r).String() != "*os.File" {
+		t.Errorf("reader = %q, want %q", reflect.TypeOf(r).String(), "*os.File")
 	}
 
 	r = GetReader(fp, SJIS)
