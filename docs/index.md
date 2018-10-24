@@ -23,11 +23,12 @@ In the multiple operations, you can use variables, cursors, temporary tables, an
 * [Cursor]({{ '/reference/cursor.html' | relative_url }})
 * [Temporary Table]({{ '/reference/temporary-table.html' | relative_url }})
 * [Transaction Management]({{ '/reference/transaction.html' | relative_url }})
-* Support loading from standard input as a CSV
-* Support [JSON]({{ '/reference/json.html' | relative_url }}) 
+* Support loading data from Standard Input
+* Support [JSON]({{ '/reference/json.html' | relative_url }}) Format
+* Support Fixed-Length Format 
 * Support following file encodings
   * UTF-8
-  * Shift-JIS
+  * Shift-JIS (except for JSON Format)
 
 ## Install
 
