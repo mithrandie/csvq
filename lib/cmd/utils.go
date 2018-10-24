@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"bufio"
 	"bytes"
 	"io"
 	"os"
@@ -15,7 +14,7 @@ func GetReader(r io.Reader, enc Encoding) io.Reader {
 	if enc == SJIS {
 		return transform.NewReader(r, japanese.ShiftJIS.NewDecoder())
 	}
-	return bufio.NewReader(r)
+	return r
 }
 
 func EscapeString(s string) string {

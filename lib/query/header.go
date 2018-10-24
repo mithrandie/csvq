@@ -1,6 +1,7 @@
 package query
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/parser"
@@ -52,6 +53,15 @@ func NewHeader(view string, words []string) Header {
 	}
 
 	return h
+}
+
+func NewHeaderWithAutofill(view string, words []string) Header {
+	for i, v := range words {
+		if v == "" {
+			words[i] = "__@" + strconv.Itoa(i+1) + "__"
+		}
+	}
+	return NewHeader(view, words)
 }
 
 func NewEmptyHeader(len int) Header {

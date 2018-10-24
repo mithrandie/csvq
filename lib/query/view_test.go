@@ -15,16 +15,18 @@ import (
 )
 
 var viewLoadTests = []struct {
-	Name          string
-	Encoding      cmd.Encoding
-	NoHeader      bool
-	From          parser.FromClause
-	UseInternalId bool
-	Stdin         string
-	JsonQuery     string
-	Filter        *Filter
-	Result        *View
-	Error         string
+	Name               string
+	Encoding           cmd.Encoding
+	NoHeader           bool
+	From               parser.FromClause
+	UseInternalId      bool
+	Stdin              string
+	JsonQuery          string
+	DelimitBySpaces    bool
+	DelimiterPositions []int
+	Filter             *Filter
+	Result             *View
+	Error              string
 }{
 	{
 		Name: "Dual View",
@@ -280,6 +282,173 @@ var viewLoadTests = []struct {
 		Error:     "json query error: column 4: unexpected termination",
 	},
 	{
+		Name:            "Load Fixed-Length Text File",
+		DelimitBySpaces: true,
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.Identifier{Literal: "fixed_length.txt"},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("fixed_length", []string{"column1", "__@2__"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "fixed_length.txt",
+				Delimiter: ',',
+				NoHeader:  false,
+				Encoding:  cmd.UTF8,
+				LineBreak: cmd.LF,
+			},
+			Filter: &Filter{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
+					{
+						"FIXED_LENGTH": strings.ToUpper(GetTestFilePath("fixed_length.txt")),
+					},
+				},
+			},
+		},
+	},
+	{
+		Name: "Load Json From Stdin Json Query Error",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{Object: parser.Stdin{Stdin: "stdin"}, Alias: parser.Identifier{Literal: "t"}},
+			},
+		},
+		Stdin:     "{\"key\":[{\"column1\": 1, \"column2\": \"str1\"}]}",
+		JsonQuery: "key{",
+		Error:     "json query error: column 4: unexpected termination",
+	},
+	{
+		Name:            "Load Fixed-Length Text File",
+		DelimitBySpaces: true,
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.Identifier{Literal: "fixed_length.txt"},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("fixed_length", []string{"column1", "__@2__"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "fixed_length.txt",
+				Delimiter: ',',
+				NoHeader:  false,
+				Encoding:  cmd.UTF8,
+				LineBreak: cmd.LF,
+			},
+			Filter: &Filter{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
+					{
+						"FIXED_LENGTH": strings.ToUpper(GetTestFilePath("fixed_length.txt")),
+					},
+				},
+			},
+		},
+	},
+	{
+		Name:            "Load Fixed-Length Text File NoHeader",
+		DelimitBySpaces: true,
+		NoHeader:        true,
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.Identifier{Literal: "fixed_length.txt"},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("fixed_length", []string{"c1", "c2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("column1"),
+					value.NewNull(),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "fixed_length.txt",
+				Delimiter: ',',
+				NoHeader:  true,
+				Encoding:  cmd.UTF8,
+				LineBreak: cmd.LF,
+			},
+			Filter: &Filter{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
+					{
+						"FIXED_LENGTH": strings.ToUpper(GetTestFilePath("fixed_length.txt")),
+					},
+				},
+			},
+		},
+	},
+	{
+		Name:               "Load Fixed-Length Text File Position Error",
+		DelimitBySpaces:    true,
+		DelimiterPositions: []int{6, 2},
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.Identifier{Literal: "fixed_length.txt"},
+				},
+			},
+		},
+		Error: "[L:- C:-] data parse error in file /var/folders/5n/nf5ffjgd46d3wnky6djb01mr0000gn/T/csvq_query_test/fixed_length.txt: invalid delimiter position: [6, 2]",
+	},
+	{
 		Name:  "Load From Stdin With Omitted FromClause",
 		From:  parser.FromClause{},
 		Stdin: "column1,column2\n1,\"str1\"",
@@ -320,7 +489,7 @@ var viewLoadTests = []struct {
 			},
 		},
 		Stdin: "column1,column2\n1\"str1\"",
-		Error: "[L:- C:-] csv parse error in file stdin: line 1, column 8: wrong number of fields in line",
+		Error: "[L:- C:-] data parse error in file stdin: line 1, column 8: wrong number of fields in line",
 	},
 	{
 		Name: "Load From Stdin Duplicate Table Name Error",
@@ -1292,7 +1461,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: fmt.Sprintf("[L:- C:-] csv parse error in file %s: line 3, column 7: wrong number of fields in line", GetTestFilePath("table_broken.csv")),
+		Error: fmt.Sprintf("[L:- C:-] data parse error in file %s: line 3, column 7: wrong number of fields in line", GetTestFilePath("table_broken.csv")),
 	},
 	{
 		Name: "Inner Join Join Error",
@@ -1389,6 +1558,8 @@ func TestView_Load(t *testing.T) {
 		} else {
 			tf.JsonQuery = ""
 		}
+		tf.DelimitBySpaces = v.DelimitBySpaces
+		tf.DelimiterPositions = v.DelimiterPositions
 
 		var oldStdin *os.File
 		if 0 < len(v.Stdin) {

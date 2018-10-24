@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"testing"
 
@@ -44,8 +45,32 @@ func TestSetDelimiter(t *testing.T) {
 		t.Errorf("delimiter = %q, expect to set %q for %q", flags.Delimiter, "\t", "\t")
 	}
 
-	expectErr := "delimiter must be 1 character"
-	err := SetDelimiter("//")
+	SetDelimiter("[1, 2, 3]")
+	if !flags.DelimitBySpaces {
+		t.Errorf("delimitBySpaces = %t, expect to set %t for %q", flags.DelimitBySpaces, true, "spaces")
+	}
+	if !reflect.DeepEqual(flags.DelimiterPositions, []int{1, 2, 3}) {
+		t.Errorf("delimitPositions = %v, expect to set %v for %q", flags.DelimiterPositions, []int{1, 2, 3}, "[1, 2, 3]")
+	}
+
+	SetDelimiter("spaces")
+	if !flags.DelimitBySpaces {
+		t.Errorf("delimitBySpaces = %t, expect to set %t for %q", flags.DelimitBySpaces, true, "spaces")
+	}
+	if flags.DelimiterPositions != nil {
+		t.Errorf("delimitPositions = %v, expect to set %v for %q", flags.DelimiterPositions, nil, "spaces")
+	}
+
+	expectErr := "delimiter must be one character, \"SPACES\" or JSON array of integers"
+	err := SetDelimiter("[a]")
+	if err == nil {
+		t.Errorf("no error, want error %q for %s", expectErr, "//")
+	} else if err.Error() != expectErr {
+		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "//")
+	}
+
+	expectErr = "delimiter must be one character, \"SPACES\" or JSON array of integers"
+	err = SetDelimiter("//")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "//")
 	} else if err.Error() != expectErr {
@@ -226,7 +251,13 @@ func TestSetDatetimeFormat(t *testing.T) {
 func TestSetWaitTimeout(t *testing.T) {
 	flags := GetFlags()
 
-	var f float64 = 15
+	var f float64 = -1
+	SetWaitTimeout(f)
+	if flags.WaitTimeout != 0 {
+		t.Errorf("wait timeout = %f, expect to set %f for %f", flags.WaitTimeout, 0.0, f)
+	}
+
+	f = 15
 	SetWaitTimeout(f)
 	if flags.WaitTimeout != 15 {
 		t.Errorf("wait timeout = %f, expect to set %f for %f", flags.WaitTimeout, 15.0, f)
@@ -330,6 +361,11 @@ func TestSetFormat(t *testing.T) {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, TSV, "tsv")
 	}
 
+	SetFormat("fixed")
+	if flags.Format != FIXED {
+		t.Errorf("format = %s, expect to set %s for %s", flags.Format, FIXED, "fixed")
+	}
+
 	SetFormat("json")
 	if flags.Format != JSON {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, JSON, "json")
@@ -360,7 +396,7 @@ func TestSetFormat(t *testing.T) {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, TEXT, "text")
 	}
 
-	expectErr := "format must be one of CSV|TSV|JSON|JSONH|JSONA|GFM|ORG|TEXT"
+	expectErr := "format must be one of CSV|TSV|FIXED|JSON|JSONH|JSONA|GFM|ORG|TEXT"
 	err := SetFormat("error")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "error")
@@ -410,8 +446,22 @@ func TestSetWriteDelimiter(t *testing.T) {
 		t.Errorf("write-delimiter = %q, expect to set %q for %q", flags.WriteDelimiter, "\t", "\t")
 	}
 
-	expectErr := "write-delimiter must be 1 character"
+	flags.Format = FIXED
+	SetWriteDelimiter("[1, 2, 3]")
+	if !reflect.DeepEqual(flags.WriteDelimiterPositions, []int{1, 2, 3}) {
+		t.Errorf("writeDelimitPositions = %v, expect to set %v for %q", flags.WriteDelimiterPositions, []int{1, 2, 3}, "[1, 2, 3]")
+	}
+
+	expectErr := "write-delimiter must be one character or JSON array of integers"
 	err := SetWriteDelimiter("//")
+	if err == nil {
+		t.Errorf("no error, want error %q for %s", expectErr, "//")
+	} else if err.Error() != expectErr {
+		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "//")
+	}
+
+	expectErr = "write-delimiter must be one character or JSON array of integers"
+	err = SetWriteDelimiter("[a]")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "//")
 	} else if err.Error() != expectErr {

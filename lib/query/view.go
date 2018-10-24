@@ -1,9 +1,12 @@
 package query
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/mithrandie/csvq/lib/json"
+	"github.com/mithrandie/csvq/lib/text"
+	"io"
 	"io/ioutil"
 	"math"
 	"os"
@@ -133,7 +136,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 
 				loadView, err = loadViewFromFile(fp, fileInfo)
 				if err != nil {
-					return nil, NewCsvParsingError(table.Object, fileInfo.Path, err.Error())
+					return nil, NewDataParsingError(table.Object, fileInfo.Path, err.Error())
 				}
 			} else {
 				buf, err := ioutil.ReadAll(os.Stdin)
@@ -279,7 +282,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 							if forUpdate {
 								file.Close(fp)
 							}
-							return nil, NewCsvParsingError(tableIdentifier, fileInfo.Path, err.Error())
+							return nil, NewDataParsingError(tableIdentifier, fileInfo.Path, err.Error())
 						}
 						loadView.ForUpdate = forUpdate
 						ViewCache.Set(loadView)
@@ -407,6 +410,78 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 }
 
 func loadViewFromFile(fp *os.File, fileInfo *FileInfo) (*View, error) {
+	if cmd.GetFlags().DelimitBySpaces {
+		return loadViewFromFixedLengthTextFile(fp, fileInfo)
+	}
+	return loadViewFromCSVFile(fp, fileInfo)
+}
+
+func loadViewFromFixedLengthTextFile(fp *os.File, fileInfo *FileInfo) (*View, error) {
+	flags := cmd.GetFlags()
+
+	data, err := ioutil.ReadAll(cmd.GetReader(fp, flags.Encoding))
+	if err != nil {
+		return nil, err
+	}
+	r := bytes.NewReader(data)
+
+	positions := flags.DelimiterPositions
+	if positions == nil {
+		d := text.NewDelimiter(r)
+		d.NoHeader = flags.NoHeader
+		d.Encoding = flags.Encoding
+		positions, err = d.Delimit()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	r.Seek(0, io.SeekStart)
+	reader := text.NewFixedLengthReader(r, positions)
+	reader.WithoutNull = flags.WithoutNull
+	reader.Encoding = flags.Encoding
+
+	var header []string
+	if !flags.NoHeader {
+		header, err = reader.ReadHeader()
+		if err != nil && err != io.EOF {
+			return nil, err
+		}
+	}
+
+	all, err := reader.ReadAll()
+	if err != nil {
+		return nil, err
+	}
+
+	records := make(RecordSet, 0, len(all))
+	for _, row := range all {
+		record := make([]value.Primary, 0, len(row))
+		for _, v := range row {
+			record = append(record, v.ToPrimary())
+		}
+		records = append(records, NewRecord(record))
+	}
+
+	if header == nil {
+		header = make([]string, len(positions))
+		for i := 0; i < len(positions); i++ {
+			header[i] = "c" + strconv.Itoa(i+1)
+		}
+	}
+
+	fileInfo.NoHeader = flags.NoHeader
+	fileInfo.Encoding = flags.Encoding
+	fileInfo.LineBreak = flags.LineBreak
+
+	view := NewView()
+	view.Header = NewHeaderWithAutofill(parser.FormatTableName(fileInfo.Path), header)
+	view.RecordSet = records
+	view.FileInfo = fileInfo
+	return view, nil
+}
+
+func loadViewFromCSVFile(fp *os.File, fileInfo *FileInfo) (*View, error) {
 	flags := cmd.GetFlags()
 
 	r := cmd.GetReader(fp, flags.Encoding)
