@@ -12,39 +12,42 @@ import (
 	"strings"
 )
 
-func EncodeView(view *View, format cmd.Format, delimiter rune, withoutHeader bool, encoding cmd.Encoding, lineBreak cmd.LineBreak) (string, error) {
+func EncodeView(view *View, fileInfo *FileInfo) (string, error) {
 	var s string
 	var err error
 
-	switch format {
+	switch fileInfo.Format {
 	case cmd.FIXED:
-		s, err = encodeFixedLengthFormat(view, cmd.GetFlags().WriteDelimiterPositions, lineBreak, withoutHeader, encoding)
+		s, err = encodeFixedLengthFormat(view, fileInfo.DelimiterPositions, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding)
 		if err != nil {
 			return "", err
 		}
 	case cmd.JSON, cmd.JSONH, cmd.JSONA:
-		s, err = encodeJson(view, format, lineBreak, cmd.GetFlags().PrettyPrint)
+		s, err = encodeJson(view, fileInfo.Format, fileInfo.LineBreak, fileInfo.PrettyPrint)
 		if err != nil {
 			return "", err
 		}
 	default:
-		switch format {
+		switch fileInfo.Format {
 		case cmd.GFM, cmd.ORG, cmd.TEXT:
-			s = encodeText(view, format, withoutHeader)
-			if lineBreak != cmd.LF {
-				s = convertLineBreak(s, lineBreak)
+			s = encodeText(view, fileInfo.Format, fileInfo.NoHeader)
+			if fileInfo.LineBreak != cmd.LF {
+				s = convertLineBreak(s, fileInfo.LineBreak)
 			}
-		default: // cmd.CSV, cmd.TSV:
-			s = encodeCSV(view, delimiter, lineBreak, withoutHeader)
+		case cmd.TSV:
+			fileInfo.Delimiter = '\t'
+			fallthrough
+		default: // cmd.CSV
+			s = encodeCSV(view, fileInfo.Delimiter, fileInfo.LineBreak, fileInfo.NoHeader)
 		}
 	}
 
-	switch format {
+	switch fileInfo.Format {
 	case cmd.JSON, cmd.JSONH, cmd.JSONA:
 		//Do Nothing
 	default:
-		if encoding != cmd.UTF8 {
-			s, err = encodeCharacterCode(s, encoding)
+		if fileInfo.Encoding != cmd.UTF8 {
+			s, err = encodeCharacterCode(s, fileInfo.Encoding)
 			if err != nil {
 				return "", err
 			}
@@ -82,6 +85,10 @@ func bareValues(view *View) ([]string, [][]value.Primary) {
 
 func encodeCSV(view *View, delimiter rune, lineBreak cmd.LineBreak, withoutHeader bool) string {
 	header, records := bareValues(view)
+
+	if delimiter == cmd.UNDEF {
+		delimiter = ','
+	}
 
 	e := csv.NewEncoder()
 	e.Delimiter = delimiter

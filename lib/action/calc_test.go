@@ -20,9 +20,9 @@ var calcTests = []struct {
 		Output: "acbd18db4cc2f85cedef654fccc4a4d8",
 	},
 	{
-		Stdin:  "1,\"a\",1.234,true,unknown,\"2012-01-01 01:00:00\",null",
-		Input:  "c1,c2,c3,boolean(c4),null = true,datetime_format(c6, '%Y-%m-%d'),c7",
-		Output: "1,a,1.234,true,UNKNOWN,2012-01-01,null",
+		Stdin:  "1,\"a\",1.234,true,unknown,\"2012-01-01 01:00:00 +00:00\",",
+		Input:  "integer(c1),c2,float(c3),boolean(c4),null = true,datetime(c6),c7",
+		Output: "1,a,1.234,true,UNKNOWN,2012-01-01T01:00:00Z,null",
 	},
 	{
 		Stdin: "foo",

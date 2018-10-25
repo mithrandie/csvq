@@ -37,13 +37,31 @@ func (e *FixedLengthEncoder) Encode(fieldList []string, recordSet [][]value.Prim
 		prevPos = endPos
 	}
 
+	delimiterPositions := e.DelimiterPositions
+	insertSpace := false
+	if delimiterPositions == nil {
+		fieldLen := e.measureFieldsLength(fieldList, recordSet)
+		delimiterPositions = make(DelimiterPositions, 0, len(fieldLen))
+		pos := 0
+		for _, l := range fieldLen {
+			pos = pos + l
+			delimiterPositions = append(delimiterPositions, pos)
+		}
+
+		insertSpace = true
+	}
+
 	var err error
 
 	e.buf.Reset()
 
 	if !e.WithoutHeader {
 		start := 0
-		for i, end := range e.DelimiterPositions {
+		for i, end := range delimiterPositions {
+			if insertSpace && 0 < i {
+				e.buf.WriteRune(PadChar)
+			}
+
 			size := end - start
 			if i < len(fieldList) {
 				if err = e.addHeader(fieldList[i], size); err != nil {
@@ -62,7 +80,11 @@ func (e *FixedLengthEncoder) Encode(fieldList []string, recordSet [][]value.Prim
 		}
 
 		start := 0
-		for i, end := range e.DelimiterPositions {
+		for i, end := range delimiterPositions {
+			if insertSpace && 0 < i {
+				e.buf.WriteRune(PadChar)
+			}
+
 			size := end - start
 			if i < len(record) {
 				if err = e.addField(record[i], size); err != nil {
@@ -91,6 +113,26 @@ func (e *FixedLengthEncoder) addHeader(s string, byteSize int) error {
 }
 
 func (e *FixedLengthEncoder) addField(val value.Primary, byteSize int) error {
+	s := e.convertToString(val)
+
+	size := ByteSize(s, e.Encoding)
+	if byteSize < size {
+		return errors.New(fmt.Sprintf("value is too long: %q for %d byte(s) length field", s, byteSize))
+	}
+
+	switch val.(type) {
+	case value.Integer, value.Float:
+		e.buf.Write(bytes.Repeat([]byte(string(PadChar)), byteSize-size))
+		e.buf.WriteString(s)
+	default:
+		e.buf.WriteString(s)
+		e.buf.Write(bytes.Repeat([]byte(string(PadChar)), byteSize-size))
+	}
+
+	return nil
+}
+
+func (e *FixedLengthEncoder) convertToString(val value.Primary) string {
 	var s string
 	switch val.(type) {
 	case value.String:
@@ -113,24 +155,31 @@ func (e *FixedLengthEncoder) addField(val value.Primary, byteSize int) error {
 	case value.Null:
 		s = ""
 	}
-
-	size := ByteSize(s, e.Encoding)
-	if byteSize < size {
-		return errors.New(fmt.Sprintf("value is too long: %q for %d byte(s) length field", s, byteSize))
-	}
-
-	switch val.(type) {
-	case value.Integer, value.Float:
-		e.buf.Write(bytes.Repeat([]byte(string(PadChar)), byteSize-size))
-		e.buf.WriteString(s)
-	default:
-		e.buf.WriteString(s)
-		e.buf.Write(bytes.Repeat([]byte(string(PadChar)), byteSize-size))
-	}
-
-	return nil
+	return s
 }
 
 func (e *FixedLengthEncoder) addLineBreak() {
 	e.buf.WriteString(e.LineBreak.Value())
+}
+
+func (e *FixedLengthEncoder) measureFieldsLength(fieldList []string, recordSet [][]value.Primary) []int {
+	fieldsLen := make([]int, 0, len(fieldList))
+
+	if !e.WithoutHeader {
+		for _, v := range fieldList {
+			fieldsLen = append(fieldsLen, ByteSize(v, e.Encoding))
+		}
+	}
+
+	for _, record := range recordSet {
+		for i, v := range record {
+			l := ByteSize(e.convertToString(v), e.Encoding)
+			if len(fieldsLen) <= i {
+				fieldsLen = append(fieldsLen, l)
+			} else if fieldsLen[i] < l {
+				fieldsLen[i] = l
+			}
+		}
+	}
+	return fieldsLen
 }

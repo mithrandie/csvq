@@ -10,22 +10,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
-	"unicode"
 )
-
-type Field []byte
-
-func NewField(s string) Field {
-	return []byte(s)
-}
-
-func (f Field) ToPrimary() value.Primary {
-	if f == nil {
-		return value.NewNull()
-	} else {
-		return value.NewString(string(f))
-	}
-}
 
 type FixedLengthReader struct {
 	DelimiterPositions []int
@@ -33,10 +18,9 @@ type FixedLengthReader struct {
 	Encoding           cmd.Encoding
 
 	reader *bufio.Reader
+	buf    bytes.Buffer
 
-	lineBuf   bytes.Buffer
-	fieldBuf  bytes.Buffer
-	spacesBuf bytes.Buffer
+	LineBreak cmd.LineBreak
 }
 
 func NewFixedLengthReader(r io.Reader, positions []int) *FixedLengthReader {
@@ -60,12 +44,12 @@ func (r *FixedLengthReader) ReadHeader() ([]string, error) {
 	return header, nil
 }
 
-func (r *FixedLengthReader) Read() ([]Field, error) {
+func (r *FixedLengthReader) Read() ([]value.Field, error) {
 	return r.parseRecord(r.WithoutNull)
 }
 
-func (r *FixedLengthReader) ReadAll() ([][]Field, error) {
-	records := make([][]Field, 0, 100)
+func (r *FixedLengthReader) ReadAll() ([][]value.Field, error) {
+	records := make([][]value.Field, 0, 100)
 
 	for {
 		record, err := r.Read()
@@ -81,24 +65,13 @@ func (r *FixedLengthReader) ReadAll() ([][]Field, error) {
 	return records, nil
 }
 
-func (r *FixedLengthReader) parseRecord(withoutNull bool) ([]Field, error) {
-	r.lineBuf.Reset()
-
-	for {
-		line, isPrefix, err := r.reader.ReadLine()
-		if err != nil {
-			return nil, err
-		}
-
-		r.lineBuf.Write(line)
-		if !isPrefix {
-			break
-		}
-	}
-
-	record := make([]Field, 0, len(r.DelimiterPositions)+1)
+func (r *FixedLengthReader) parseRecord(withoutNull bool) ([]value.Field, error) {
+	record := make([]value.Field, 0, len(r.DelimiterPositions))
 	recordPos := 0
 	delimiterPos := 0
+
+	var lineBreak cmd.LineBreak
+	lineEnd := false
 
 	for _, endPos := range r.DelimiterPositions {
 		if endPos < 0 || endPos <= delimiterPos {
@@ -106,33 +79,34 @@ func (r *FixedLengthReader) parseRecord(withoutNull bool) ([]Field, error) {
 		}
 		delimiterPos = endPos
 
-		r.fieldBuf.Reset()
-		r.spacesBuf.Reset()
-		var trimChar bool
+		r.buf.Reset()
+		for !lineEnd && recordPos < delimiterPos {
+			c, s, err := r.reader.ReadRune()
 
-		for recordPos < delimiterPos {
-			c, s, err := r.lineBuf.ReadRune()
 			if err != nil {
-				if err == io.EOF {
-					break
+				if err != io.EOF || recordPos < 1 {
+					return nil, err
 				}
-				return nil, err
-			}
-
-			trimChar = false
-			if unicode.IsSpace(c) {
-				trimChar = true
-				if 0 < r.fieldBuf.Len() {
-					r.spacesBuf.WriteRune(c)
+				lineEnd = true
+				continue
+			} else {
+				switch c {
+				case '\r':
+					c2, _, _ := r.reader.ReadRune()
+					if c2 == '\n' {
+						lineBreak = cmd.CRLF
+					} else {
+						r.reader.UnreadRune()
+						lineBreak = cmd.CR
+					}
+					c = '\n'
+				case '\n':
+					lineBreak = cmd.LF
 				}
-			}
-
-			if !trimChar {
-				if 0 < r.spacesBuf.Len() {
-					r.fieldBuf.Write(r.spacesBuf.Bytes())
-					r.spacesBuf.Reset()
+				if c == '\n' {
+					lineEnd = true
+					continue
 				}
-				r.fieldBuf.WriteRune(c)
 			}
 
 			switch r.Encoding {
@@ -145,15 +119,54 @@ func (r *FixedLengthReader) parseRecord(withoutNull bool) ([]Field, error) {
 			if delimiterPos < recordPos {
 				return nil, errors.New("cannot delimit lines at the position of byte array of a character")
 			}
+
+			r.buf.WriteRune(c)
 		}
 
-		if r.fieldBuf.Len() < 1 && !withoutNull {
+		b := r.buf.Bytes()
+		b = bytes.TrimSpace(b)
+
+		if len(b) < 1 && !withoutNull {
 			record = append(record, nil)
 		} else {
-			field := make([]byte, r.fieldBuf.Len())
-			copy(field, r.fieldBuf.Bytes())
+			field := make([]byte, len(b))
+			copy(field, b)
 			record = append(record, field)
 		}
+	}
+
+	if !lineEnd {
+		for {
+			c, _, err := r.reader.ReadRune()
+			if err != nil {
+				if err != io.EOF || recordPos < 1 {
+					return nil, err
+				}
+				break
+			}
+			switch c {
+			case '\r':
+				c2, _, _ := r.reader.ReadRune()
+				if c2 == '\n' {
+					lineBreak = cmd.CRLF
+				} else {
+					r.reader.UnreadRune()
+					lineBreak = cmd.CR
+				}
+				c = '\n'
+			case '\n':
+				lineBreak = cmd.LF
+			}
+			if c == '\n' {
+				lineEnd = true
+				break
+			}
+			recordPos++
+		}
+	}
+
+	if r.LineBreak == "" {
+		r.LineBreak = lineBreak
 	}
 
 	return record, nil

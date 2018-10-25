@@ -122,6 +122,37 @@ var fixedLengthEncoderEncodeTests = []struct {
 		Encoding:           cmd.UTF8,
 		Error:              "value is too long: \"abcabc\" for 5 byte(s) length field",
 	},
+	{
+		Name:      "Fixed-Length Encode Concatnate Automatically",
+		FieldList: []string{"c1", "c2", "c3"},
+		RecordSet: [][]value.Primary{
+			{value.NewString("abcabc"), value.NewString("def"), value.NewString("def")},
+			{value.NewString("ghi"), value.NewString("jkl"), value.NewString("mno")},
+		},
+		DelimiterPositions: nil,
+		LineBreak:          cmd.LF,
+		WithoutHeader:      false,
+		Encoding:           cmd.UTF8,
+		Expect: "" +
+			"c1     c2  c3 \n" +
+			"abcabc def def\n" +
+			"ghi    jkl mno",
+	},
+	{
+		Name:      "Fixed-Length Encode Concatnate Automatically Without Header",
+		FieldList: []string{"c1", "c2", "c3"},
+		RecordSet: [][]value.Primary{
+			{value.NewString("abcabc"), value.NewString("def"), value.NewString("def")},
+			{value.NewString("ghi"), value.NewString("jkl"), value.NewString("mno")},
+		},
+		DelimiterPositions: nil,
+		LineBreak:          cmd.LF,
+		WithoutHeader:      true,
+		Encoding:           cmd.UTF8,
+		Expect: "" +
+			"abcabc def def\n" +
+			"ghi    jkl mno",
+	},
 }
 
 func TestFixedLengthEncoder_Encode(t *testing.T) {

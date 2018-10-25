@@ -5,27 +5,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/mithrandie/csvq/lib/value"
 	"io"
 
 	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/csvq/lib/value"
 )
 
 var EOF = io.EOF
-
-type Field []byte
-
-func NewField(s string) Field {
-	return []byte(s)
-}
-
-func (f Field) ToPrimary() value.Primary {
-	if f == nil {
-		return value.NewNull()
-	} else {
-		return value.NewString(string(f))
-	}
-}
 
 type Reader struct {
 	Delimiter   rune
@@ -72,12 +58,12 @@ func (r *Reader) ReadHeader() ([]string, error) {
 	return header, nil
 }
 
-func (r *Reader) Read() ([]Field, error) {
+func (r *Reader) Read() ([]value.Field, error) {
 	return r.parseRecord(r.WithoutNull)
 }
 
-func (r *Reader) ReadAll() ([][]Field, error) {
-	records := make([][]Field, 0)
+func (r *Reader) ReadAll() ([][]value.Field, error) {
+	records := make([][]value.Field, 0)
 
 	for {
 		record, err := r.Read()
@@ -93,7 +79,7 @@ func (r *Reader) ReadAll() ([][]Field, error) {
 	return records, nil
 }
 
-func (r *Reader) parseRecord(withoutNull bool) ([]Field, error) {
+func (r *Reader) parseRecord(withoutNull bool) ([]value.Field, error) {
 	r.recordBuf.Reset()
 	r.fieldStartPos = r.fieldStartPos[:0]
 	r.fieldQuoted = r.fieldQuoted[:0]
@@ -138,7 +124,7 @@ func (r *Reader) parseRecord(withoutNull bool) ([]Field, error) {
 		return nil, r.newError("wrong number of fields in line")
 	}
 
-	record := make([]Field, 0, r.FieldsPerRecord)
+	record := make([]value.Field, 0, r.FieldsPerRecord)
 	recordStr := make([]byte, r.recordBuf.Len())
 	copy(recordStr, r.recordBuf.Bytes())
 	for i, pos := range r.fieldStartPos {

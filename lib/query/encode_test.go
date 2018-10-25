@@ -25,7 +25,7 @@ var encodeViewTests = []struct {
 	View                    *View
 	Format                  cmd.Format
 	LineBreak               cmd.LineBreak
-	Encoding                cmd.Encoding
+	WriteEncoding           cmd.Encoding
 	WriteDelimiter          rune
 	WriteDelimiterPositions []int
 	WithoutHeader           bool
@@ -300,8 +300,8 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" 日本語ghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), value.NewNull()}),
 			},
 		},
-		Format:   cmd.CSV,
-		Encoding: cmd.SJIS,
+		Format:        cmd.CSV,
+		WriteEncoding: cmd.SJIS,
 		Result: encodeToSJIS("\"c1\",\"c2\nsecond line\",\"c3\"\n" +
 			"-1,,true\n" +
 			"-1,false,true\n" +
@@ -311,34 +311,28 @@ var encodeViewTests = []struct {
 }
 
 func TestEncodeView(t *testing.T) {
-	flags := cmd.GetFlags()
-
 	for _, v := range encodeViewTests {
-		flags.Format = v.Format
+		if v.WriteEncoding == "" {
+			v.WriteEncoding = cmd.UTF8
+		}
+		if v.LineBreak == "" {
+			v.LineBreak = cmd.LF
+		}
+		if v.WriteDelimiter == cmd.UNDEF {
+			v.WriteDelimiter = ','
+		}
 
-		flags.LineBreak = cmd.LF
-		if v.LineBreak != "" && v.LineBreak != cmd.LF {
-			flags.LineBreak = v.LineBreak
+		fileInfo := &FileInfo{
+			Format:             v.Format,
+			Delimiter:          v.WriteDelimiter,
+			DelimiterPositions: v.WriteDelimiterPositions,
+			Encoding:           v.WriteEncoding,
+			LineBreak:          v.LineBreak,
+			NoHeader:           v.WithoutHeader,
+			PrettyPrint:        v.PrettyPrint,
 		}
-		flags.Encoding = cmd.UTF8
-		if v.Encoding != cmd.UTF8 {
-			flags.Encoding = v.Encoding
-		}
-		flags.WithoutHeader = false
-		if v.WithoutHeader {
-			flags.WithoutHeader = true
-		}
-		flags.WriteDelimiter = ','
-		if v.WriteDelimiter != 0 {
-			flags.WriteDelimiter = v.WriteDelimiter
-		}
-		flags.WriteDelimiterPositions = nil
-		if v.WriteDelimiterPositions != nil {
-			flags.WriteDelimiterPositions = v.WriteDelimiterPositions
-		}
-		flags.PrettyPrint = v.PrettyPrint
 
-		s, err := EncodeView(v.View, flags.Format, flags.WriteDelimiter, flags.WithoutHeader, flags.Encoding, flags.LineBreak)
+		s, err := EncodeView(v.View, fileInfo)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -355,9 +349,4 @@ func TestEncodeView(t *testing.T) {
 			t.Errorf("%s: result = %q, want %q", v.Name, s, v.Result)
 		}
 	}
-
-	flags.LineBreak = cmd.LF
-	flags.Encoding = cmd.UTF8
-	flags.WithoutHeader = false
-	flags.WriteDelimiter = ','
 }

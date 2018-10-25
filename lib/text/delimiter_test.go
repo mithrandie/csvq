@@ -7,6 +7,42 @@ import (
 	"testing"
 )
 
+var delimiterPositionsEqualTests = []struct {
+	Position1 DelimiterPositions
+	Position2 DelimiterPositions
+	Expect    bool
+}{
+	{
+		Position1: nil,
+		Position2: []int{},
+		Expect:    false,
+	},
+	{
+		Position1: []int{4, 7},
+		Position2: []int{4, 7, 10},
+		Expect:    false,
+	},
+	{
+		Position1: []int{4, 7},
+		Position2: []int{4, 8},
+		Expect:    false,
+	},
+	{
+		Position1: []int{4, 7, 10},
+		Position2: []int{4, 7, 10},
+		Expect:    true,
+	},
+}
+
+func TestDelimiterPositions_Equal(t *testing.T) {
+	for _, v := range delimiterPositionsEqualTests {
+		result := v.Position1.Equal(v.Position2)
+		if result != v.Expect {
+			t.Errorf("result = %t, want %t for %v, %v", result, v.Expect, v.Position1, v.Position2)
+		}
+	}
+}
+
 var delimiterDelimitTests = []struct {
 	Input    string
 	NoHeader bool

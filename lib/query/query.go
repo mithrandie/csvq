@@ -42,8 +42,8 @@ type Result struct {
 }
 
 var ViewCache = ViewMap{}
-var Results = make([]Result, 0)
-var SelectLogs = make([]string, 0)
+var Results = make([]Result, 0, 10)
+var SelectLogs = make([]string, 0, 2)
 
 func ReleaseResources() {
 	ViewCache.Clean()
@@ -864,7 +864,7 @@ func Commit(expr parser.Expression, filter *Filter) error {
 	if 0 < len(createFiles) {
 		for filename, fileinfo := range createFiles {
 			view, _ := ViewCache.Get(parser.Identifier{Literal: filename})
-			viewstr, err := EncodeView(view, cmd.CSV, fileinfo.Delimiter, false, fileinfo.Encoding, fileinfo.LineBreak)
+			viewstr, err := EncodeView(view, fileinfo)
 			if err != nil {
 				return err
 			}
@@ -882,7 +882,7 @@ func Commit(expr parser.Expression, filter *Filter) error {
 	if 0 < len(updateFiles) {
 		for filename, fileinfo := range updateFiles {
 			view, _ := ViewCache.Get(parser.Identifier{Literal: filename})
-			viewstr, err := EncodeView(view, cmd.CSV, fileinfo.Delimiter, fileinfo.NoHeader, fileinfo.Encoding, fileinfo.LineBreak)
+			viewstr, err := EncodeView(view, fileinfo)
 			if err != nil {
 				return err
 			}

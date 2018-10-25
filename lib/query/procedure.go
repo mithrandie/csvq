@@ -101,11 +101,16 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		}
 		if view, err = Select(stmt.(parser.SelectQuery), proc.Filter); err == nil {
 			var viewstr string
-			var lineBreak = cmd.LF
-			if 0 < len(flags.OutFile) {
-				lineBreak = flags.LineBreak
+			fileInfo := &FileInfo{
+				Format:             flags.Format,
+				Delimiter:          flags.WriteDelimiter,
+				DelimiterPositions: flags.WriteDelimiterPositions,
+				Encoding:           flags.WriteEncoding,
+				LineBreak:          flags.LineBreak,
+				NoHeader:           flags.WithoutHeader,
+				PrettyPrint:        flags.PrettyPrint,
 			}
-			viewstr, err = EncodeView(view, flags.Format, flags.WriteDelimiter, flags.WithoutHeader, flags.WriteEncoding, lineBreak)
+			viewstr, err = EncodeView(view, fileInfo)
 			if err == nil {
 				if 0 < len(flags.OutFile) {
 					AddSelectLog(viewstr)

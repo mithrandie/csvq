@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/json"
+	"errors"
 	"io"
 	"os"
 	"strings"
@@ -128,4 +130,63 @@ func IsReadableFromPipeOrRedirection() bool {
 		return true
 	}
 	return false
+}
+
+func ParseEncoding(s string) (Encoding, error) {
+	if len(s) < 1 {
+		return UTF8, nil
+	}
+
+	var encoding Encoding
+	switch strings.ToUpper(s) {
+	case "UTF8":
+		encoding = UTF8
+	case "SJIS":
+		encoding = SJIS
+	default:
+		return UTF8, errors.New("encoding must be one of UTF8|SJIS")
+	}
+	return encoding, nil
+}
+
+func ParseLineBreak(s string) (LineBreak, error) {
+	var lb LineBreak
+	switch strings.ToUpper(s) {
+	case "CRLF":
+		lb = CRLF
+	case "CR":
+		lb = CR
+	case "LF":
+		lb = LF
+	default:
+		return lb, errors.New("line-break must be one of CRLF|LF|CR")
+	}
+	return lb, nil
+}
+
+func ParseDelimiter(s string) (Format, rune, []int, error) {
+	var delimiter rune = UNDEF
+	var delimiterPositions []int = nil
+	var importFormat = CSV
+
+	if s == "[]" || 2 < len(s) {
+		if !strings.EqualFold("SPACES", s) {
+			var positions []int
+			err := json.Unmarshal([]byte(s), &positions)
+			if err != nil {
+				return importFormat, delimiter, delimiterPositions, errors.New("delimiter must be one character, \"SPACES\" or JSON array of integers")
+			}
+			delimiterPositions = positions
+		}
+		importFormat = FIXED
+	} else if 0 < len(s) {
+		s = UnescapeString(s)
+
+		runes := []rune(s)
+		if 1 < len(runes) {
+			return importFormat, delimiter, delimiterPositions, errors.New("delimiter must be one character, \"SPACES\" or JSON array of integers")
+		}
+		delimiter = runes[0]
+	}
+	return importFormat, delimiter, delimiterPositions, nil
 }

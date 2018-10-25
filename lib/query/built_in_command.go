@@ -342,7 +342,7 @@ func ShowFields(expr parser.ShowFields, filter *Filter) (string, error) {
 			header, _ := ViewCache.GetHeader(pathIdent)
 			fields = header.TableColumnNames()
 		} else {
-			fileInfo, err = NewFileInfo(expr.Table, flags.Repository, flags.Delimiter)
+			fileInfo, err = NewFileInfo(expr.Table, flags.Repository, flags.Delimiter, cmd.CSV)
 			if err != nil {
 				return "", err
 			}

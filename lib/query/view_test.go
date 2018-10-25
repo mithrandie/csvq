@@ -22,7 +22,7 @@ var viewLoadTests = []struct {
 	UseInternalId      bool
 	Stdin              string
 	JsonQuery          string
-	DelimitBySpaces    bool
+	ImportFormat       cmd.Format
 	DelimiterPositions []int
 	Filter             *Filter
 	Result             *View
@@ -98,6 +98,8 @@ var viewLoadTests = []struct {
 			FileInfo: &FileInfo{
 				Path:      "table1.csv",
 				Delimiter: ',',
+				Encoding:  cmd.UTF8,
+				LineBreak: cmd.LF,
 			},
 			Filter: &Filter{
 				Variables:    []VariableMap{{}},
@@ -142,6 +144,8 @@ var viewLoadTests = []struct {
 			FileInfo: &FileInfo{
 				Path:      "table1.csv",
 				Delimiter: ',',
+				Encoding:  cmd.UTF8,
+				LineBreak: cmd.LF,
 			},
 			Filter: &Filter{
 				Variables:    []VariableMap{{}},
@@ -173,8 +177,11 @@ var viewLoadTests = []struct {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:      "stdin",
-				Delimiter: ',',
+				Path:        "stdin",
+				Delimiter:   ',',
+				Encoding:    cmd.UTF8,
+				LineBreak:   cmd.LF,
+				IsTemporary: true,
 			},
 			Filter: &Filter{
 				Variables: []VariableMap{{}},
@@ -211,8 +218,11 @@ var viewLoadTests = []struct {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:      "stdin",
-				Delimiter: ',',
+				Path:        "stdin",
+				Delimiter:   ',',
+				Encoding:    cmd.UTF8,
+				LineBreak:   cmd.LF,
+				IsTemporary: true,
 			},
 			Filter: &Filter{
 				Variables: []VariableMap{{}},
@@ -250,8 +260,12 @@ var viewLoadTests = []struct {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:      "stdin",
-				Delimiter: ',',
+				Path:        "stdin",
+				Delimiter:   ',',
+				JsonQuery:   "key{}",
+				Encoding:    cmd.UTF8,
+				LineBreak:   cmd.LF,
+				IsTemporary: true,
 			},
 			Filter: &Filter{
 				Variables: []VariableMap{{}},
@@ -279,11 +293,11 @@ var viewLoadTests = []struct {
 		},
 		Stdin:     "{\"key\":[{\"column1\": 1, \"column2\": \"str1\"}]}",
 		JsonQuery: "key{",
-		Error:     "json query error: column 4: unexpected termination",
+		Error:     "[L:- C:-] json query error: column 4: unexpected termination",
 	},
 	{
-		Name:            "Load Fixed-Length Text File",
-		DelimitBySpaces: true,
+		Name:         "Load Fixed-Length Text File",
+		ImportFormat: cmd.FIXED,
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -308,11 +322,12 @@ var viewLoadTests = []struct {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:      "fixed_length.txt",
-				Delimiter: ',',
-				NoHeader:  false,
-				Encoding:  cmd.UTF8,
-				LineBreak: cmd.LF,
+				Path:               "fixed_length.txt",
+				Delimiter:          ',',
+				DelimiterPositions: []int{7, 12},
+				NoHeader:           false,
+				Encoding:           cmd.UTF8,
+				LineBreak:          cmd.LF,
 			},
 			Filter: &Filter{
 				Variables:    []VariableMap{{}},
@@ -328,66 +343,9 @@ var viewLoadTests = []struct {
 		},
 	},
 	{
-		Name: "Load Json From Stdin Json Query Error",
-		From: parser.FromClause{
-			Tables: []parser.QueryExpression{
-				parser.Table{Object: parser.Stdin{Stdin: "stdin"}, Alias: parser.Identifier{Literal: "t"}},
-			},
-		},
-		Stdin:     "{\"key\":[{\"column1\": 1, \"column2\": \"str1\"}]}",
-		JsonQuery: "key{",
-		Error:     "json query error: column 4: unexpected termination",
-	},
-	{
-		Name:            "Load Fixed-Length Text File",
-		DelimitBySpaces: true,
-		From: parser.FromClause{
-			Tables: []parser.QueryExpression{
-				parser.Table{
-					Object: parser.Identifier{Literal: "fixed_length.txt"},
-				},
-			},
-		},
-		Result: &View{
-			Header: NewHeader("fixed_length", []string{"column1", "__@2__"}),
-			RecordSet: []Record{
-				NewRecord([]value.Primary{
-					value.NewString("1"),
-					value.NewString("str1"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("2"),
-					value.NewString("str2"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("3"),
-					value.NewString("str3"),
-				}),
-			},
-			FileInfo: &FileInfo{
-				Path:      "fixed_length.txt",
-				Delimiter: ',',
-				NoHeader:  false,
-				Encoding:  cmd.UTF8,
-				LineBreak: cmd.LF,
-			},
-			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{
-					{
-						"FIXED_LENGTH": strings.ToUpper(GetTestFilePath("fixed_length.txt")),
-					},
-				},
-			},
-		},
-	},
-	{
-		Name:            "Load Fixed-Length Text File NoHeader",
-		DelimitBySpaces: true,
-		NoHeader:        true,
+		Name:         "Load Fixed-Length Text File NoHeader",
+		ImportFormat: cmd.FIXED,
+		NoHeader:     true,
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -416,11 +374,12 @@ var viewLoadTests = []struct {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:      "fixed_length.txt",
-				Delimiter: ',',
-				NoHeader:  true,
-				Encoding:  cmd.UTF8,
-				LineBreak: cmd.LF,
+				Path:               "fixed_length.txt",
+				Delimiter:          ',',
+				DelimiterPositions: []int{7, 12},
+				NoHeader:           true,
+				Encoding:           cmd.UTF8,
+				LineBreak:          cmd.LF,
 			},
 			Filter: &Filter{
 				Variables:    []VariableMap{{}},
@@ -437,7 +396,7 @@ var viewLoadTests = []struct {
 	},
 	{
 		Name:               "Load Fixed-Length Text File Position Error",
-		DelimitBySpaces:    true,
+		ImportFormat:       cmd.FIXED,
 		DelimiterPositions: []int{6, 2},
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
@@ -446,7 +405,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] data parse error in file /var/folders/5n/nf5ffjgd46d3wnky6djb01mr0000gn/T/csvq_query_test/fixed_length.txt: invalid delimiter position: [6, 2]",
+		Error: fmt.Sprintf("[L:- C:-] data parse error in file %s: invalid delimiter position: [6, 2]", GetTestFilePath("fixed_length.txt")),
 	},
 	{
 		Name:  "Load From Stdin With Omitted FromClause",
@@ -461,8 +420,11 @@ var viewLoadTests = []struct {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:      "stdin",
-				Delimiter: ',',
+				Path:        "stdin",
+				Delimiter:   ',',
+				Encoding:    cmd.UTF8,
+				LineBreak:   cmd.LF,
+				IsTemporary: true,
 			},
 			Filter: &Filter{
 				Variables: []VariableMap{{}},
@@ -514,51 +476,279 @@ var viewLoadTests = []struct {
 		Error: "[L:- C:-] stdin is empty",
 	},
 	{
-		Name: "Load Json Table",
+		Name: "Load TableObject From CSV File",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.NewStringValue("{column1, column2}"),
-						JsonText: parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
+					Object: parser.TableObject{
+						Type:          parser.Identifier{Literal: "csv"},
+						FormatElement: parser.NewStringValue(","),
+						Path:          parser.Identifier{Literal: "table5"},
+						Args: []parser.QueryExpression{
+							parser.NewStringValue("SJIS"),
+							parser.NewTernaryValueFromString("true"),
+							parser.NewTernaryValueFromString("true"),
+						},
 					},
-					Alias: parser.Identifier{Literal: "jt"},
+					Alias: parser.Identifier{Literal: "t"},
 				},
 			},
 		},
 		Result: &View{
-			Header: NewHeader("jt", []string{"column1", "column2"}),
+			Header: NewHeader("t", []string{"c1", "c2"}),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
-					value.NewInteger(1),
-					value.NewInteger(2),
+					value.NewString("1"),
+					value.NewString("str1"),
 				}),
 				NewRecord([]value.Primary{
-					value.NewInteger(3),
-					value.NewInteger(4),
+					value.NewString("2"),
+					value.NewString(""),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:        "jt",
-				IsTemporary: true,
+				Path:      "table5.csv",
+				Delimiter: ',',
+				Format:    cmd.CSV,
+				Encoding:  cmd.SJIS,
+				LineBreak: cmd.LF,
+				NoHeader:  true,
 			},
 			Filter: &Filter{
 				Variables:    []VariableMap{{}},
 				TempViews:    []ViewMap{{}},
 				Cursors:      []CursorMap{{}},
 				InlineTables: InlineTableNodes{{}},
-				Aliases:      AliasNodes{{}},
+				Aliases: AliasNodes{{
+					"T": strings.ToUpper(GetTestFilePath("table5.csv")),
+				}},
 			},
 		},
 	},
 	{
-		Name: "Load Json Table From File",
+		Name: "Load TableObject From CSV File FormatElement Evaluate Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.NewStringValue("{}"),
-						JsonText: parser.Identifier{Literal: "table"},
+					Object: parser.TableObject{
+						Type:          parser.Identifier{Literal: "csv"},
+						FormatElement: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+						Path:          parser.Identifier{Literal: "table1"},
+					},
+					Alias: parser.Identifier{Literal: "t"},
+				},
+			},
+		},
+		Error: "[L:- C:-] field notexist does not exist",
+	},
+	{
+		Name: "Load TableObject From CSV File FormatElement is Null",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type:          parser.Identifier{Literal: "csv"},
+						FormatElement: parser.NewNullValueFromString("null"),
+						Path:          parser.Identifier{Literal: "table1"},
+					},
+					Alias: parser.Identifier{Literal: "t"},
+				},
+			},
+		},
+		Error: "[L:- C:-] invalid delimiter: null",
+	},
+	{
+		Name: "Load TableObject From CSV File FormatElement Invalid Delimiter",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type:          parser.Identifier{Literal: "csv"},
+						FormatElement: parser.NewStringValue("invalid"),
+						Path:          parser.Identifier{Literal: "table1"},
+					},
+					Alias: parser.Identifier{Literal: "t"},
+				},
+			},
+		},
+		Error: "[L:- C:-] invalid delimiter: 'invalid'",
+	},
+	{
+		Name: "Load TableObject From CSV File Arguments Length Error",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type:          parser.Identifier{Literal: "csv"},
+						FormatElement: parser.NewStringValue(","),
+						Path:          parser.Identifier{Literal: "table5"},
+						Args: []parser.QueryExpression{
+							parser.NewStringValue("SJIS"),
+							parser.NewTernaryValueFromString("true"),
+							parser.NewTernaryValueFromString("true"),
+							parser.NewStringValue("extra"),
+						},
+					},
+					Alias: parser.Identifier{Literal: "t"},
+				},
+			},
+		},
+		Error: "[L:- C:-] table object csv takes at most 5 arguments",
+	},
+	{
+		Name: "Load TableObject From CSV File Argument Evaluation Error",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type:          parser.Identifier{Literal: "csv"},
+						FormatElement: parser.NewStringValue(","),
+						Path:          parser.Identifier{Literal: "table5"},
+						Args: []parser.QueryExpression{
+							parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+						},
+					},
+					Alias: parser.Identifier{Literal: "t"},
+				},
+			},
+		},
+		Error: "[L:- C:-] invalid argument for csv: field notexist does not exist",
+	},
+	{
+		Name: "Load TableObject From CSV File Invalid Encoding Type",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type:          parser.Identifier{Literal: "csv"},
+						FormatElement: parser.NewStringValue(","),
+						Path:          parser.Identifier{Literal: "table5"},
+						Args: []parser.QueryExpression{
+							parser.NewStringValue("INVALID"),
+						},
+					},
+					Alias: parser.Identifier{Literal: "t"},
+				},
+			},
+		},
+		Error: "[L:- C:-] invalid argument for csv: encoding must be one of UTF8|SJIS",
+	},
+	{
+		Name: "Load TableObject From Fixed-Length File",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type:          parser.Identifier{Literal: "fixed"},
+						FormatElement: parser.NewStringValue("spaces"),
+						Path:          parser.Identifier{Literal: "fixed_length.txt", Quoted: true},
+					},
+					Alias: parser.Identifier{Literal: "t"},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("t", []string{"column1", "__@2__"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:               "fixed_length.txt",
+				Delimiter:          ',',
+				DelimiterPositions: []int{7, 12},
+				Format:             cmd.FIXED,
+				Encoding:           cmd.UTF8,
+				LineBreak:          cmd.LF,
+			},
+			Filter: &Filter{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{{
+					"T": strings.ToUpper(GetTestFilePath("fixed_length.txt")),
+				}},
+			},
+		},
+	},
+	{
+		Name: "Load TableObject From Fixed-Length File FormatElement is Null",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type:          parser.Identifier{Literal: "fixed"},
+						FormatElement: parser.NewNullValueFromString("null"),
+						Path:          parser.Identifier{Literal: "fixed_length.txt", Quoted: true},
+					},
+					Alias: parser.Identifier{Literal: "t"},
+				},
+			},
+		},
+		Error: "[L:- C:-] invalid delimiter positions: null",
+	},
+	{
+		Name: "Load TableObject From Fixed-Length File Invalid Delimiter Positions",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type:          parser.Identifier{Literal: "fixed"},
+						FormatElement: parser.NewStringValue("invalid"),
+						Path:          parser.Identifier{Literal: "fixed_length.txt", Quoted: true},
+					},
+					Alias: parser.Identifier{Literal: "t"},
+				},
+			},
+		},
+		Error: "[L:- C:-] invalid delimiter positions: 'invalid'",
+	},
+	{
+		Name: "Load TableObject From Fixed-Length File Arguments Length Error",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type:          parser.Identifier{Literal: "fixed"},
+						FormatElement: parser.NewStringValue("spaces"),
+						Path:          parser.Identifier{Literal: "fixed_length.txt", Quoted: true},
+						Args: []parser.QueryExpression{
+							parser.NewStringValue("SJIS"),
+							parser.NewTernaryValueFromString("true"),
+							parser.NewTernaryValueFromString("true"),
+							parser.NewStringValue("extra"),
+						},
+					},
+					Alias: parser.Identifier{Literal: "t"},
+				},
+			},
+		},
+		Error: "[L:- C:-] table object fixed takes at most 5 arguments",
+	},
+	{
+		Name: "Load TableObject From Json File",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type:          parser.Identifier{Literal: "json"},
+						FormatElement: parser.NewStringValue("{}"),
+						Path:          parser.Identifier{Literal: "table"},
 					},
 					Alias: parser.Identifier{Literal: "jt"},
 				},
@@ -577,26 +767,48 @@ var viewLoadTests = []struct {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:        "jt",
-				IsTemporary: true,
+				Path:      "table.json",
+				Delimiter: ',',
+				JsonQuery: "{}",
+				Encoding:  cmd.UTF8,
+				LineBreak: cmd.LF,
 			},
 			Filter: &Filter{
 				Variables:    []VariableMap{{}},
 				TempViews:    []ViewMap{{}},
 				Cursors:      []CursorMap{{}},
 				InlineTables: InlineTableNodes{{}},
-				Aliases:      AliasNodes{{}},
+				Aliases: AliasNodes{{
+					"JT": strings.ToUpper(GetTestFilePath("table.json")),
+				}},
 			},
 		},
 	},
 	{
-		Name: "Load Json Table From File Path Error",
+		Name: "Load TableObject From Json File FormatElement is Null",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.NewStringValue("{}"),
-						JsonText: parser.Identifier{Literal: "notexist"},
+					Object: parser.TableObject{
+						Type:          parser.Identifier{Literal: "json"},
+						FormatElement: parser.NewNullValueFromString("null"),
+						Path:          parser.Identifier{Literal: "table"},
+					},
+					Alias: parser.Identifier{Literal: "jt"},
+				},
+			},
+		},
+		Error: "[L:- C:-] invalid json query: null",
+	},
+	{
+		Name: "Load Table Object From Json File Path Error",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type:          parser.Identifier{Literal: "json"},
+						FormatElement: parser.NewStringValue("{}"),
+						Path:          parser.Identifier{Literal: "notexist"},
 					},
 					Alias: parser.Identifier{Literal: "jt"},
 				},
@@ -605,79 +817,39 @@ var viewLoadTests = []struct {
 		Error: "[L:- C:-] file notexist does not exist",
 	},
 	{
-		Name: "Load Json Table Query Evaluation Error",
+		Name: "Load TableObject Invalid Object Type",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.FieldReference{Column: parser.Identifier{Literal: "notexists"}},
-						JsonText: parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
+					Object: parser.TableObject{
+						Type:          parser.Identifier{Literal: "invalid"},
+						FormatElement: parser.NewStringValue(","),
+						Path:          parser.Identifier{Literal: "table"},
 					},
 					Alias: parser.Identifier{Literal: "jt"},
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexists does not exist",
+		Error: "[L:- C:-] invalid table object: invalid",
 	},
 	{
-		Name: "Load Json Table JsonText Evaluation Error",
+		Name: "Load TableObject From Json File Arguments Length Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.NewStringValue("{column1, column2}"),
-						JsonText: parser.FieldReference{Column: parser.Identifier{Literal: "notexists"}},
+					Object: parser.TableObject{
+						Type:          parser.Identifier{Literal: "json"},
+						FormatElement: parser.NewStringValue("{}"),
+						Path:          parser.Identifier{Literal: "table"},
+						Args: []parser.QueryExpression{
+							parser.NewStringValue("SJIS"),
+						},
 					},
 					Alias: parser.Identifier{Literal: "jt"},
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexists does not exist",
-	},
-	{
-		Name: "Load Json Table Query is Null",
-		From: parser.FromClause{
-			Tables: []parser.QueryExpression{
-				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.NewNullValue(),
-						JsonText: parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
-					},
-					Alias: parser.Identifier{Literal: "jt"},
-				},
-			},
-		},
-		Error: "[L:- C:-] json table is empty",
-	},
-	{
-		Name: "Load Json Table JsonText is Null",
-		From: parser.FromClause{
-			Tables: []parser.QueryExpression{
-				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.NewStringValue("{column1, column2}"),
-						JsonText: parser.NewNullValue(),
-					},
-					Alias: parser.Identifier{Literal: "jt"},
-				},
-			},
-		},
-		Error: "[L:- C:-] json table is empty",
-	},
-	{
-		Name: "Load Json Table Loading Error",
-		From: parser.FromClause{
-			Tables: []parser.QueryExpression{
-				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.NewStringValue("{column1, column2"),
-						JsonText: parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
-					},
-					Alias: parser.Identifier{Literal: "jt"},
-				},
-			},
-		},
-		Error: "[L:- C:-] json query error: column 17: unexpected termination",
+		Error: "[L:- C:-] table object json takes exactly 2 arguments",
 	},
 	{
 		Name: "Load File Error",
@@ -1367,6 +1539,184 @@ var viewLoadTests = []struct {
 		Error: "[L:- C:-] file notexist does not exist",
 	},
 	{
+		Name: "Load Json Table",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.JsonQuery{
+						Query:    parser.NewStringValue("{column1, column2}"),
+						JsonText: parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
+					},
+					Alias: parser.Identifier{Literal: "jt"},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("jt", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewInteger(2),
+				}),
+				NewRecord([]value.Primary{
+					value.NewInteger(3),
+					value.NewInteger(4),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:        "jt",
+				Format:      cmd.JSON,
+				JsonQuery:   "{column1, column2}",
+				Encoding:    cmd.UTF8,
+				LineBreak:   cmd.LF,
+				IsTemporary: true,
+			},
+			Filter: &Filter{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{{
+					"JT": "",
+				}},
+			},
+		},
+	},
+	{
+		Name: "Load Json Table Query Evaluation Error",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.JsonQuery{
+						Query:    parser.FieldReference{Column: parser.Identifier{Literal: "notexists"}},
+						JsonText: parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
+					},
+					Alias: parser.Identifier{Literal: "jt"},
+				},
+			},
+		},
+		Error: "[L:- C:-] field notexists does not exist",
+	},
+	{
+		Name: "Load Json Table JsonText Evaluation Error",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.JsonQuery{
+						Query:    parser.NewStringValue("{column1, column2}"),
+						JsonText: parser.FieldReference{Column: parser.Identifier{Literal: "notexists"}},
+					},
+					Alias: parser.Identifier{Literal: "jt"},
+				},
+			},
+		},
+		Error: "[L:- C:-] field notexists does not exist",
+	},
+	{
+		Name: "Load Json Table Query is Null",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.JsonQuery{
+						Query:    parser.NewNullValue(),
+						JsonText: parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
+					},
+					Alias: parser.Identifier{Literal: "jt"},
+				},
+			},
+		},
+		Error: "[L:- C:-] json query is empty",
+	},
+	{
+		Name: "Load Json Table JsonText is Null",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.JsonQuery{
+						Query:    parser.NewStringValue("{column1, column2}"),
+						JsonText: parser.NewNullValue(),
+					},
+					Alias: parser.Identifier{Literal: "jt"},
+				},
+			},
+		},
+		Error: "[L:- C:-] json table is empty",
+	},
+	{
+		Name: "Load Json Table Loading Error",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.JsonQuery{
+						Query:    parser.NewStringValue("{column1, column2"),
+						JsonText: parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
+					},
+					Alias: parser.Identifier{Literal: "jt"},
+				},
+			},
+		},
+		Error: "[L:- C:-] json query error: column 17: unexpected termination",
+	},
+	{
+		Name: "Load Json Table From File",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.JsonQuery{
+						Query:    parser.NewStringValue("{}"),
+						JsonText: parser.Identifier{Literal: "table"},
+					},
+					Alias: parser.Identifier{Literal: "jt"},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("jt", []string{"item1", "item2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("value1"),
+					value.NewInteger(1),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("value2"),
+					value.NewInteger(2),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:        "jt",
+				Format:      cmd.JSON,
+				JsonQuery:   "{}",
+				Encoding:    cmd.UTF8,
+				LineBreak:   cmd.LF,
+				IsTemporary: true,
+			},
+			Filter: &Filter{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{{
+					"JT": "",
+				}},
+			},
+		},
+	},
+	{
+		Name: "Load Json Table From File Path Error",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.JsonQuery{
+						Query:    parser.NewStringValue("{}"),
+						JsonText: parser.Identifier{Literal: "notexist"},
+					},
+					Alias: parser.Identifier{Literal: "jt"},
+				},
+			},
+		},
+		Error: "[L:- C:-] file notexist does not exist",
+	},
+	{
 		Name: "Load Subquery",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
@@ -1558,7 +1908,7 @@ func TestView_Load(t *testing.T) {
 		} else {
 			tf.JsonQuery = ""
 		}
-		tf.DelimitBySpaces = v.DelimitBySpaces
+		tf.ImportFormat = v.ImportFormat
 		tf.DelimiterPositions = v.DelimiterPositions
 
 		var oldStdin *os.File
@@ -1597,10 +1947,31 @@ func TestView_Load(t *testing.T) {
 
 		if v.Result.FileInfo != nil {
 			if filepath.Base(view.FileInfo.Path) != filepath.Base(v.Result.FileInfo.Path) {
-				t.Errorf("%s: filepath = %q, want %q", v.Name, filepath.Base(view.FileInfo.Path), filepath.Base(v.Result.FileInfo.Path))
+				t.Errorf("%s: FileInfo.Path = %q, want %q", v.Name, filepath.Base(view.FileInfo.Path), filepath.Base(v.Result.FileInfo.Path))
 			}
 			if view.FileInfo.Delimiter != v.Result.FileInfo.Delimiter {
-				t.Errorf("%s: delimiter = %q, want %q", v.Name, view.FileInfo.Delimiter, v.Result.FileInfo.Delimiter)
+				t.Errorf("%s: FileInfo.Delimiter = %q, want %q", v.Name, view.FileInfo.Delimiter, v.Result.FileInfo.Delimiter)
+			}
+			if !reflect.DeepEqual(view.FileInfo.DelimiterPositions, v.Result.FileInfo.DelimiterPositions) {
+				t.Errorf("%s: FileInfo.DelimiterPositions = %v, want %v", v.Name, view.FileInfo.DelimiterPositions, v.Result.FileInfo.DelimiterPositions)
+			}
+			if view.FileInfo.JsonQuery != v.Result.FileInfo.JsonQuery {
+				t.Errorf("%s: FileInfo.JsonQuery = %q, want %q", v.Name, view.FileInfo.JsonQuery, v.Result.FileInfo.JsonQuery)
+			}
+			if view.FileInfo.Encoding != v.Result.FileInfo.Encoding {
+				t.Errorf("%s: FileInfo.Encoding = %s, want %s", v.Name, view.FileInfo.Encoding, v.Result.FileInfo.Encoding)
+			}
+			if view.FileInfo.LineBreak != v.Result.FileInfo.LineBreak {
+				t.Errorf("%s: FileInfo.LineBreak = %s, want %s", v.Name, view.FileInfo.LineBreak, v.Result.FileInfo.LineBreak)
+			}
+			if view.FileInfo.NoHeader != v.Result.FileInfo.NoHeader {
+				t.Errorf("%s: FileInfo.NoHeader = %t, want %t", v.Name, view.FileInfo.NoHeader, v.Result.FileInfo.NoHeader)
+			}
+			if view.FileInfo.PrettyPrint != v.Result.FileInfo.PrettyPrint {
+				t.Errorf("%s: FileInfo.PrettyPrint = %t, want %t", v.Name, view.FileInfo.PrettyPrint, v.Result.FileInfo.PrettyPrint)
+			}
+			if view.FileInfo.IsTemporary != v.Result.FileInfo.IsTemporary {
+				t.Errorf("%s: FileInfo.IsTemporary = %t, want %t", v.Name, view.FileInfo.IsTemporary, v.Result.FileInfo.IsTemporary)
 			}
 		}
 		view.FileInfo = nil
@@ -3489,7 +3860,7 @@ var viewExtendRecordCapacity = []struct {
 					},
 				},
 			},
-			parser.ListAgg{
+			parser.ListFunction{
 				Name:     "listagg",
 				Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 				Args: []parser.QueryExpression{
@@ -3606,7 +3977,7 @@ var viewExtendRecordCapacity = []struct {
 			},
 		},
 		Exprs: []parser.QueryExpression{
-			parser.ListAgg{
+			parser.ListFunction{
 				Name:     "listagg",
 				Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 				Args: []parser.QueryExpression{

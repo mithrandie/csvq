@@ -479,6 +479,24 @@ func (sq Subquery) String() string {
 	return putParentheses(sq.Query.String())
 }
 
+type TableObject struct {
+	*BaseExpr
+	Type          Identifier
+	FormatElement QueryExpression
+	Path          Identifier
+	Args          []QueryExpression
+}
+
+func (e TableObject) String() string {
+	allArgs := make([]QueryExpression, 0, len(e.Args)+2)
+	allArgs = append(allArgs, e.FormatElement)
+	allArgs = append(allArgs, e.Path)
+	if e.Args != nil {
+		allArgs = append(allArgs, e.Args...)
+	}
+	return e.Type.String() + putParentheses(listQueryExpressions(allArgs))
+}
+
 type JsonQuery struct {
 	*BaseExpr
 	JsonQuery string
@@ -924,7 +942,7 @@ func (e CaseExprElse) String() string {
 	return joinWithSpace(s)
 }
 
-type ListAgg struct {
+type ListFunction struct {
 	*BaseExpr
 	Name        string
 	Distinct    Token
@@ -933,7 +951,7 @@ type ListAgg struct {
 	OrderBy     QueryExpression
 }
 
-func (e ListAgg) String() string {
+func (e ListFunction) String() string {
 	option := make([]string, 0)
 	if !e.Distinct.IsEmpty() {
 		option = append(option, e.Distinct.Literal)
@@ -952,7 +970,7 @@ func (e ListAgg) String() string {
 	return joinWithSpace(s)
 }
 
-func (e ListAgg) IsDistinct() bool {
+func (e ListFunction) IsDistinct() bool {
 	return !e.Distinct.IsEmpty()
 }
 

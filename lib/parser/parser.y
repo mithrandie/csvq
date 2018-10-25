@@ -107,7 +107,7 @@ import (
 %type<queryexprs>  arguments
 %type<queryexpr>   function
 %type<queryexpr>   aggregate_function
-%type<queryexpr>   listagg
+%type<queryexpr>   list_function
 %type<queryexpr>   analytic_function
 %type<queryexpr>   analytic_clause
 %type<queryexpr>   analytic_clause_with_windowing
@@ -197,7 +197,7 @@ import (
 %token<token> ERROR
 %token<token> JSON_ROW JSON_TABLE
 %token<token> COUNT JSON_OBJECT
-%token<token> AGGREGATE_FUNCTION LISTAGG ANALYTIC_FUNCTION FUNCTION_NTH FUNCTION_WITH_INS
+%token<token> AGGREGATE_FUNCTION LIST_FUNCTION ANALYTIC_FUNCTION FUNCTION_NTH FUNCTION_WITH_INS
 %token<token> COMPARISON_OP STRING_OP SUBSTITUTION_OP
 %token<token> UMINUS UPLUS
 %token<token> ';' '*' '=' '-' '+' '!' '(' ')'
@@ -1444,19 +1444,19 @@ aggregate_function
     {
         $$ = AggregateFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: []QueryExpression{$4}}
     }
-    | listagg
+    | list_function
     {
         $$ = $1
     }
 
-listagg
-    : LISTAGG '(' distinct arguments ')'
+list_function
+    : LIST_FUNCTION '(' distinct arguments ')'
     {
-        $$ = ListAgg{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4}
+        $$ = ListFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4}
     }
-    | LISTAGG '(' distinct arguments ')' WITHIN GROUP '(' order_by_clause ')'
+    | LIST_FUNCTION '(' distinct arguments ')' WITHIN GROUP '(' order_by_clause ')'
     {
-        $$ = ListAgg{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, WithinGroup: $6.Literal + " " + $7.Literal, OrderBy: $9}
+        $$ = ListFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, WithinGroup: $6.Literal + " " + $7.Literal, OrderBy: $9}
     }
 
 analytic_function
@@ -1480,7 +1480,7 @@ analytic_function
     {
         $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: []QueryExpression{$4}, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
     }
-    | LISTAGG '(' distinct arguments ')' OVER '(' analytic_clause ')'
+    | LIST_FUNCTION '(' distinct arguments ')' OVER '(' analytic_clause ')'
     {
         $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
     }
@@ -1629,6 +1629,14 @@ virtual_table_object
     | JSON_TABLE '(' value ',' value ')'
     {
         $$ = JsonQuery{BaseExpr: NewBaseExpr($1), JsonQuery: $1.Literal, Query: $3, JsonText: $5}
+    }
+    | identifier '(' value ',' identifier ')'
+    {
+        $$ = TableObject{BaseExpr: $1.BaseExpr, Type: $1, FormatElement: $3, Path: $5, Args: nil}
+    }
+    | identifier '(' value ',' identifier ',' arguments ')'
+    {
+        $$ = TableObject{BaseExpr: $1.BaseExpr, Type: $1, FormatElement: $3, Path: $5, Args: $7}
     }
 
 table
@@ -2079,26 +2087,6 @@ identifier
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }
     | JSON_OBJECT
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | LISTAGG
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | AGGREGATE_FUNCTION
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | ANALYTIC_FUNCTION
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | FUNCTION_NTH
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | FUNCTION_WITH_INS
     {
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }

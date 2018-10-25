@@ -14,75 +14,85 @@ const (
 	ErrorMessageWithFilepathTemplate      = "%s [L:%d C:%d] %s"
 	ErrorMessageWithEmptyPositionTemplate = "[L:- C:-] %s"
 
-	ErrorInvalidSyntax                = "syntax error: unexpected %s"
-	ErrorReadFile                     = "failed to read from file: %s"
-	ErrorCreateFile                   = "failed to create file: %s"
-	ErrorWriteFile                    = "failed to write to file: %s"
-	ErrorWriteFileInAutoCommit        = "[Auto-Commit] failed to write to file: %s"
-	ErrorFieldAmbiguous               = "field %s is ambiguous"
-	ErrorFieldNotExist                = "field %s does not exist"
-	ErrorFieldNotGroupKey             = "field %s is not a group key"
-	ErrorDuplicateFieldName           = "field name %s is a duplicate"
-	ErrorNotGroupingRecords           = "function %s cannot aggregate not grouping records"
-	ErrorUndeclaredVariable           = "variable %s is undeclared"
-	ErrorVariableRedeclared           = "variable %s is redeclared"
-	ErrorFunctionNotExist             = "function %s does not exist"
-	ErrorFunctionArgumentsLength      = "function %s takes %s"
-	ErrorFunctionInvalidArgument      = "%s for function %s"
-	ErrorUnpermittedStatementFunction = "function %s cannot be used as a statement"
-	ErrorNestedAggregateFunctions     = "aggregate functions are nested at %s"
-	ErrorFunctionRedeclared           = "function %s is redeclared"
-	ErrorBuiltInFunctionDeclared      = "function %s is a built-in function"
-	ErrorDuplicateParameter           = "parameter %s is a duplicate"
-	ErrorSubqueryTooManyRecords       = "subquery returns too many records, should return only one record"
-	ErrorSubqueryTooManyFields        = "subquery returns too many fields, should return only one field"
-	ErrorJsonQueryTooManyRecords      = "json query returns too many records, should return only one record"
-	ErrorJsonQuery                    = "json query error: %s"
-	ErrorJsonTableEmpty               = "json table is empty"
-	ErrorCursorRedeclared             = "cursor %s is redeclared"
-	ErrorUndeclaredCursor             = "cursor %s is undeclared"
-	ErrorCursorClosed                 = "cursor %s is closed"
-	errorCursorOpen                   = "cursor %s is already open"
-	ErrorPseudoCursor                 = "cursor %s is a pseudo cursor"
-	ErrorCursorFetchLength            = "fetching from cursor %s returns %s"
-	ErrorInvalidFetchPosition         = "fetching position %s is not an integer value"
-	ErrorInlineTableRedefined         = "inline table %s is redefined"
-	ErrorUndefinedInlineTable         = "inline table %s is undefined"
-	ErrorInlineTableFieldLength       = "select query should return exactly %s for inline table %s"
-	ErrorFileNotExist                 = "file %s does not exist"
-	ErrorFileAlreadyExist             = "file %s already exists"
-	ErrorFileUnableToRead             = "file %s is unable to be read"
-	ErrorFileLockTimeout              = "file %s: lock wait timeout period exceeded"
-	ErrorDataParsing                  = "data parse error in file %s: %s"
-	ErrorTableFieldLength             = "select query should return exactly %s for table %s"
-	ErrorTemporaryTableRedeclared     = "view %s is redeclared"
-	ErrorUndeclaredTemporaryTable     = "view %s is undeclared"
-	ErrorTemporaryTableFieldLength    = "select query should return exactly %s for view %s"
-	ErrorDuplicateTableName           = "table name %s is a duplicate"
-	ErrorTableNotLoaded               = "table %s is not loaded"
-	ErrorStdinEmpty                   = "stdin is empty"
-	ErrorRowValueLengthInComparison   = "row value should contain exactly %s"
-	ErrorFieldLengthInComparison      = "select query should return exactly %s"
-	ErrorInvalidLimitPercentage       = "limit percentage %s is not a float value"
-	ErrorInvalidLimitNumber           = "limit number of records %s is not an integer value"
-	ErrorInvalidOffsetNumber          = "offset number %s is not an integer value"
-	ErrorCombinedSetFieldLength       = "result set to be combined should contain exactly %s"
-	ErrorInsertRowValueLength         = "row value should contain exactly %s"
-	ErrorInsertSelectFieldLength      = "select query should return exactly %s"
-	ErrorUpdateFieldNotExist          = "field %s does not exist in the tables to update"
-	ErrorUpdateValueAmbiguous         = "value %s to set in the field %s is ambiguous"
-	ErrorDeleteTableNotSpecified      = "tables to delete records are not specified"
-	ErrorPrintfReplaceValueLength     = "PRINTF: %s"
-	ErrorSourceInvalidArgument        = "SOURCE: argument %s is not a string"
-	ErrorSourceFileNotExist           = "SOURCE: file %s does not exist"
-	ErrorSourceFileUnableToRead       = "SOURCE: file %s is unable to read"
-	ErrorInvalidFlagName              = "flag name %s is invalid"
-	ErrorInvalidFlagValue             = "SET: flag value %s for %s is invalid"
-	ErrorInternalRecordIdNotExist     = "internal record id does not exist"
-	ErrorInternalRecordIdEmpty        = "internal record id is empty"
-	ErrorFieldLengthNotMatch          = "field length does not match"
-	ErrorRowValueLengthInList         = "row value length does not match at index %d"
-	ErrorFormatStringLengthNotMatch   = "number of replace values does not match"
+	ErrorInvalidSyntax                        = "syntax error: unexpected %s"
+	ErrorReadFile                             = "failed to read from file: %s"
+	ErrorCreateFile                           = "failed to create file: %s"
+	ErrorWriteFile                            = "failed to write to file: %s"
+	ErrorWriteFileInAutoCommit                = "[Auto-Commit] failed to write to file: %s"
+	ErrorFieldAmbiguous                       = "field %s is ambiguous"
+	ErrorFieldNotExist                        = "field %s does not exist"
+	ErrorFieldNotGroupKey                     = "field %s is not a group key"
+	ErrorDuplicateFieldName                   = "field name %s is a duplicate"
+	ErrorNotGroupingRecords                   = "function %s cannot aggregate not grouping records"
+	ErrorUndeclaredVariable                   = "variable %s is undeclared"
+	ErrorVariableRedeclared                   = "variable %s is redeclared"
+	ErrorFunctionNotExist                     = "function %s does not exist"
+	ErrorFunctionArgumentsLength              = "function %s takes %s"
+	ErrorFunctionInvalidArgument              = "%s for function %s"
+	ErrorUnpermittedStatementFunction         = "function %s cannot be used as a statement"
+	ErrorNestedAggregateFunctions             = "aggregate functions are nested at %s"
+	ErrorFunctionRedeclared                   = "function %s is redeclared"
+	ErrorBuiltInFunctionDeclared              = "function %s is a built-in function"
+	ErrorDuplicateParameter                   = "parameter %s is a duplicate"
+	ErrorSubqueryTooManyRecords               = "subquery returns too many records, should return only one record"
+	ErrorSubqueryTooManyFields                = "subquery returns too many fields, should return only one field"
+	ErrorJsonQueryTooManyRecords              = "json query returns too many records, should return only one record"
+	ErrorJsonQuery                            = "json query error: %s"
+	ErrorJsonQueryEmpty                       = "json query is empty"
+	ErrorJsonTableEmpty                       = "json table is empty"
+	ErrorTableObjectInvalidObject             = "invalid table object: %s"
+	ErrorTableObjectInvalidDelimiter          = "invalid delimiter: %s"
+	ErrorTableObjectInvalidDelimiterPositions = "invalid delimiter positions: %s"
+	ErrorTableObjectInvalidJsonQuery          = "invalid json query: %s"
+	ErrorTableObjectMultipleRead              = "file %s has already been loaded"
+	ErrorTableObjectArgumentsLength           = "table object %s takes at most %d arguments"
+	ErrorTableObjectJsonArgumentsLength       = "table object %s takes exactly %d arguments"
+	ErrorTableObjectInvalidArgument           = "invalid argument for %s: %s"
+	ErrorCursorRedeclared                     = "cursor %s is redeclared"
+	ErrorUndeclaredCursor                     = "cursor %s is undeclared"
+	ErrorCursorClosed                         = "cursor %s is closed"
+	errorCursorOpen                           = "cursor %s is already open"
+	ErrorPseudoCursor                         = "cursor %s is a pseudo cursor"
+	ErrorCursorFetchLength                    = "fetching from cursor %s returns %s"
+	ErrorInvalidFetchPosition                 = "fetching position %s is not an integer value"
+	ErrorInlineTableRedefined                 = "inline table %s is redefined"
+	ErrorUndefinedInlineTable                 = "inline table %s is undefined"
+	ErrorInlineTableFieldLength               = "select query should return exactly %s for inline table %s"
+	ErrorFileNotExist                         = "file %s does not exist"
+	ErrorFileAlreadyExist                     = "file %s already exists"
+	ErrorFileUnableToRead                     = "file %s is unable to be read"
+	ErrorFileLockTimeout                      = "file %s: lock wait timeout period exceeded"
+	ErrorFileNameAmbiguous                    = "filename %s is ambiguous"
+	ErrorDataParsing                          = "data parse error in file %s: %s"
+	ErrorTableFieldLength                     = "select query should return exactly %s for table %s"
+	ErrorTemporaryTableRedeclared             = "view %s is redeclared"
+	ErrorUndeclaredTemporaryTable             = "view %s is undeclared"
+	ErrorTemporaryTableFieldLength            = "select query should return exactly %s for view %s"
+	ErrorDuplicateTableName                   = "table name %s is a duplicate"
+	ErrorTableNotLoaded                       = "table %s is not loaded"
+	ErrorStdinEmpty                           = "stdin is empty"
+	ErrorRowValueLengthInComparison           = "row value should contain exactly %s"
+	ErrorFieldLengthInComparison              = "select query should return exactly %s"
+	ErrorInvalidLimitPercentage               = "limit percentage %s is not a float value"
+	ErrorInvalidLimitNumber                   = "limit number of records %s is not an integer value"
+	ErrorInvalidOffsetNumber                  = "offset number %s is not an integer value"
+	ErrorCombinedSetFieldLength               = "result set to be combined should contain exactly %s"
+	ErrorInsertRowValueLength                 = "row value should contain exactly %s"
+	ErrorInsertSelectFieldLength              = "select query should return exactly %s"
+	ErrorUpdateFieldNotExist                  = "field %s does not exist in the tables to update"
+	ErrorUpdateValueAmbiguous                 = "value %s to set in the field %s is ambiguous"
+	ErrorDeleteTableNotSpecified              = "tables to delete records are not specified"
+	ErrorPrintfReplaceValueLength             = "PRINTF: %s"
+	ErrorSourceInvalidArgument                = "SOURCE: argument %s is not a string"
+	ErrorSourceFileNotExist                   = "SOURCE: file %s does not exist"
+	ErrorSourceFileUnableToRead               = "SOURCE: file %s is unable to read"
+	ErrorInvalidFlagName                      = "flag name %s is invalid"
+	ErrorInvalidFlagValue                     = "SET: flag value %s for %s is invalid"
+	ErrorInternalRecordIdNotExist             = "internal record id does not exist"
+	ErrorInternalRecordIdEmpty                = "internal record id is empty"
+	ErrorFieldLengthNotMatch                  = "field length does not match"
+	ErrorRowValueLengthInList                 = "row value length does not match at index %d"
+	ErrorFormatStringLengthNotMatch           = "number of replace values does not match"
 )
 
 type ForcedExit struct {
@@ -450,6 +460,16 @@ func NewJsonQueryError(expr parser.JsonQuery, message string) error {
 	}
 }
 
+type JsonQueryEmptyError struct {
+	*BaseError
+}
+
+func NewJsonQueryEmptyError(expr parser.JsonQuery) error {
+	return &JsonQueryEmptyError{
+		NewBaseError(expr, ErrorJsonQueryEmpty),
+	}
+}
+
 type JsonTableEmptyError struct {
 	*BaseError
 }
@@ -457,6 +477,86 @@ type JsonTableEmptyError struct {
 func NewJsonTableEmptyError(expr parser.JsonQuery) error {
 	return &JsonTableEmptyError{
 		NewBaseError(expr, ErrorJsonTableEmpty),
+	}
+}
+
+type TableObjectInvalidObjectError struct {
+	*BaseError
+}
+
+func NewTableObjectInvalidObjectError(expr parser.TableObject, objectName string) error {
+	return &TableObjectInvalidObjectError{
+		NewBaseError(expr, fmt.Sprintf(ErrorTableObjectInvalidObject, objectName)),
+	}
+}
+
+type TableObjectInvalidDelimiterError struct {
+	*BaseError
+}
+
+func NewTableObjectInvalidDelimiterError(expr parser.TableObject, delimiter string) error {
+	return &TableObjectInvalidObjectError{
+		NewBaseError(expr, fmt.Sprintf(ErrorTableObjectInvalidDelimiter, delimiter)),
+	}
+}
+
+type TableObjectInvalidDelimiterPositionsError struct {
+	*BaseError
+}
+
+func NewTableObjectInvalidDelimiterPositionsError(expr parser.TableObject, positions string) error {
+	return &TableObjectInvalidObjectError{
+		NewBaseError(expr, fmt.Sprintf(ErrorTableObjectInvalidDelimiterPositions, positions)),
+	}
+}
+
+type TableObjectInvalidJsonQueryError struct {
+	*BaseError
+}
+
+func NewTableObjectInvalidJsonQueryError(expr parser.TableObject, jsonQuery string) error {
+	return &TableObjectInvalidObjectError{
+		NewBaseError(expr, fmt.Sprintf(ErrorTableObjectInvalidJsonQuery, jsonQuery)),
+	}
+}
+
+type TableObjectMultipleReadError struct {
+	*BaseError
+}
+
+func NewTableObjectMultipleReadError(tableIdentifier parser.Identifier) error {
+	return &TableObjectMultipleReadError{
+		NewBaseError(tableIdentifier, fmt.Sprintf(ErrorTableObjectMultipleRead, tableIdentifier)),
+	}
+}
+
+type TableObjectArgumentsLengthError struct {
+	*BaseError
+}
+
+func NewTableObjectArgumentsLengthError(expr parser.TableObject, argLen int) error {
+	return &TableObjectArgumentsLengthError{
+		NewBaseError(expr, fmt.Sprintf(ErrorTableObjectArgumentsLength, expr.Type.Literal, argLen)),
+	}
+}
+
+type TableObjectJsonArgumentsLengthError struct {
+	*BaseError
+}
+
+func NewTableObjectJsonArgumentsLengthError(expr parser.TableObject, argLen int) error {
+	return &TableObjectJsonArgumentsLengthError{
+		NewBaseError(expr, fmt.Sprintf(ErrorTableObjectJsonArgumentsLength, expr.Type.Literal, argLen)),
+	}
+}
+
+type TableObjectInvalidArgumentError struct {
+	*BaseError
+}
+
+func NewTableObjectInvalidArgumentError(expr parser.TableObject, message string) error {
+	return &TableObjectInvalidArgumentError{
+		NewBaseError(expr, fmt.Sprintf(ErrorTableObjectInvalidArgument, expr.Type.Literal, message)),
 	}
 }
 
@@ -599,6 +699,16 @@ type FileLockTimeoutError struct {
 func NewFileLockTimeoutError(file parser.Identifier, path string) error {
 	return &FileLockTimeoutError{
 		NewBaseError(file, fmt.Sprintf(ErrorFileLockTimeout, path)),
+	}
+}
+
+type FileNameAmbiguousError struct {
+	*BaseError
+}
+
+func NewFileNameAmbiguousError(file parser.Identifier) error {
+	return &FileNameAmbiguousError{
+		NewBaseError(file, fmt.Sprintf(ErrorFileNameAmbiguous, file)),
 	}
 }
 

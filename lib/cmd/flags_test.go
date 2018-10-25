@@ -46,16 +46,16 @@ func TestSetDelimiter(t *testing.T) {
 	}
 
 	SetDelimiter("[1, 2, 3]")
-	if !flags.DelimitBySpaces {
-		t.Errorf("delimitBySpaces = %t, expect to set %t for %q", flags.DelimitBySpaces, true, "spaces")
+	if flags.ImportFormat != FIXED {
+		t.Errorf("importFormat = %s, expect to set %s for %q", flags.ImportFormat, FIXED, "spaces")
 	}
 	if !reflect.DeepEqual(flags.DelimiterPositions, []int{1, 2, 3}) {
 		t.Errorf("delimitPositions = %v, expect to set %v for %q", flags.DelimiterPositions, []int{1, 2, 3}, "[1, 2, 3]")
 	}
 
 	SetDelimiter("spaces")
-	if !flags.DelimitBySpaces {
-		t.Errorf("delimitBySpaces = %t, expect to set %t for %q", flags.DelimitBySpaces, true, "spaces")
+	if flags.ImportFormat != FIXED {
+		t.Errorf("importFormat = %s, expect to set %s for %q", flags.ImportFormat, FIXED, "spaces")
 	}
 	if flags.DelimiterPositions != nil {
 		t.Errorf("delimitPositions = %v, expect to set %v for %q", flags.DelimiterPositions, nil, "spaces")

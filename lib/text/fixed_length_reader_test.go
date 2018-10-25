@@ -8,29 +8,6 @@ import (
 	"testing"
 )
 
-var fieldToPrimaryTests = []struct {
-	Field  Field
-	Expect value.Primary
-}{
-	{
-		Field:  nil,
-		Expect: value.NewNull(),
-	},
-	{
-		Field:  []byte{},
-		Expect: value.NewString(""),
-	},
-}
-
-func TestField_ToPrimary(t *testing.T) {
-	for _, v := range fieldToPrimaryTests {
-		result := v.Field.ToPrimary()
-		if !reflect.DeepEqual(result, v.Expect) {
-			t.Errorf("result = %#v, want %#v for %#v", result, v.Expect, v.Field)
-		}
-	}
-}
-
 var fixedLengthReaderReadHeaderTests = []struct {
 	Name               string
 	Input              string
@@ -85,7 +62,8 @@ var fixedLengthReaderReadAllTests = []struct {
 	DelimiterPositions []int
 	WithoutNull        bool
 	Encoding           cmd.Encoding
-	Output             [][]Field
+	Output             [][]value.Field
+	ExpectLineBreak    cmd.LineBreak
 	Error              string
 }{
 	{
@@ -94,10 +72,11 @@ var fixedLengthReaderReadAllTests = []struct {
 		DelimiterPositions: []int{2, 5, 11},
 		WithoutNull:        false,
 		Encoding:           cmd.UTF8,
-		Output: [][]Field{
-			{NewField("ab"), NewField("cde"), NewField("fghi")},
-			{NewField("kl"), NewField("mno"), NewField("pqurst")},
+		Output: [][]value.Field{
+			{value.NewField("ab"), value.NewField("cde"), value.NewField("fghi")},
+			{value.NewField("kl"), value.NewField("mno"), value.NewField("pqurst")},
 		},
+		ExpectLineBreak: cmd.LF,
 	},
 	{
 		Name:               "ReadAll with empty fields",
@@ -105,10 +84,11 @@ var fixedLengthReaderReadAllTests = []struct {
 		DelimiterPositions: []int{2, 5, 11},
 		WithoutNull:        false,
 		Encoding:           cmd.UTF8,
-		Output: [][]Field{
-			{NewField("ab"), nil, nil},
-			{NewField("kl"), NewField("mno"), NewField("pqurst")},
+		Output: [][]value.Field{
+			{value.NewField("ab"), nil, nil},
+			{value.NewField("kl"), value.NewField("mno"), value.NewField("pqurst")},
 		},
+		ExpectLineBreak: cmd.LF,
 	},
 	{
 		Name:               "ReadAll with empty fields without nulls",
@@ -116,10 +96,11 @@ var fixedLengthReaderReadAllTests = []struct {
 		DelimiterPositions: []int{2, 5, 11},
 		WithoutNull:        true,
 		Encoding:           cmd.UTF8,
-		Output: [][]Field{
-			{NewField("ab"), NewField(""), NewField("")},
-			{NewField("kl"), NewField("mno"), NewField("pqurst")},
+		Output: [][]value.Field{
+			{value.NewField("ab"), value.NewField(""), value.NewField("")},
+			{value.NewField("kl"), value.NewField("mno"), value.NewField("pqurst")},
 		},
+		ExpectLineBreak: cmd.LF,
 	},
 	{
 		Name:               "ReadAll with nil",
@@ -127,10 +108,11 @@ var fixedLengthReaderReadAllTests = []struct {
 		DelimiterPositions: nil,
 		WithoutNull:        false,
 		Encoding:           cmd.UTF8,
-		Output: [][]Field{
+		Output: [][]value.Field{
 			{},
 			{},
 		},
+		ExpectLineBreak: cmd.LF,
 	},
 	{
 		Name:               "ReadAll with empty positions",
@@ -138,10 +120,11 @@ var fixedLengthReaderReadAllTests = []struct {
 		DelimiterPositions: []int{},
 		WithoutNull:        false,
 		Encoding:           cmd.UTF8,
-		Output: [][]Field{
+		Output: [][]value.Field{
 			{},
 			{},
 		},
+		ExpectLineBreak: cmd.LF,
 	},
 	{
 		Name:               "ReadAll with trimming value",
@@ -149,21 +132,24 @@ var fixedLengthReaderReadAllTests = []struct {
 		DelimiterPositions: []int{3, 11, 20},
 		WithoutNull:        false,
 		Encoding:           cmd.UTF8,
-		Output: [][]Field{
-			{NewField("abc"), NewField("defghi"), nil},
-			{NewField("k"), NewField("lm  no"), NewField("pqurst")},
+		Output: [][]value.Field{
+			{value.NewField("abc"), value.NewField("defghi"), nil},
+			{value.NewField("k"), value.NewField("lm  no"), value.NewField("pqurst")},
 		},
+		ExpectLineBreak: cmd.LF,
 	},
 	{
 		Name:               "ReadAll with cutting length",
-		Input:              "abcdefghi\nklmnopqurst",
+		Input:              "abcdefghi\nklmnopqurst\nklmnopqurst",
 		DelimiterPositions: []int{2, 5, 9},
 		WithoutNull:        false,
 		Encoding:           cmd.UTF8,
-		Output: [][]Field{
-			{NewField("ab"), NewField("cde"), NewField("fghi")},
-			{NewField("kl"), NewField("mno"), NewField("pqur")},
+		Output: [][]value.Field{
+			{value.NewField("ab"), value.NewField("cde"), value.NewField("fghi")},
+			{value.NewField("kl"), value.NewField("mno"), value.NewField("pqur")},
+			{value.NewField("kl"), value.NewField("mno"), value.NewField("pqur")},
 		},
+		ExpectLineBreak: cmd.LF,
 	},
 	{
 		Name:               "ReadAll from SJIS Text",
@@ -171,10 +157,61 @@ var fixedLengthReaderReadAllTests = []struct {
 		DelimiterPositions: []int{5, 11, 15},
 		WithoutNull:        false,
 		Encoding:           cmd.SJIS,
-		Output: [][]Field{
-			{NewField("abcde"), NewField("日本語"), NewField("fghi")},
-			{NewField("klmno"), NewField("pqurst"), nil},
+		Output: [][]value.Field{
+			{value.NewField("abcde"), value.NewField("日本語"), value.NewField("fghi")},
+			{value.NewField("klmno"), value.NewField("pqurst"), nil},
 		},
+		ExpectLineBreak: cmd.LF,
+	},
+	{
+		Name:               "ReadAll LineBreak CR",
+		Input:              "abcdefghi\rklmnopqurst",
+		DelimiterPositions: []int{2, 5, 11},
+		WithoutNull:        false,
+		Encoding:           cmd.UTF8,
+		Output: [][]value.Field{
+			{value.NewField("ab"), value.NewField("cde"), value.NewField("fghi")},
+			{value.NewField("kl"), value.NewField("mno"), value.NewField("pqurst")},
+		},
+		ExpectLineBreak: cmd.CR,
+	},
+	{
+		Name:               "ReadAll LineBreak CRLF",
+		Input:              "abcdefghi\r\nklmnopqurst",
+		DelimiterPositions: []int{2, 5, 11},
+		WithoutNull:        false,
+		Encoding:           cmd.UTF8,
+		Output: [][]value.Field{
+			{value.NewField("ab"), value.NewField("cde"), value.NewField("fghi")},
+			{value.NewField("kl"), value.NewField("mno"), value.NewField("pqurst")},
+		},
+		ExpectLineBreak: cmd.CRLF,
+	},
+	{
+		Name:               "ReadAll LineBreak CR with cutting length",
+		Input:              "abcdefghi\rklmnopqurst\rklmnopqurst",
+		DelimiterPositions: []int{2, 5, 9},
+		WithoutNull:        false,
+		Encoding:           cmd.UTF8,
+		Output: [][]value.Field{
+			{value.NewField("ab"), value.NewField("cde"), value.NewField("fghi")},
+			{value.NewField("kl"), value.NewField("mno"), value.NewField("pqur")},
+			{value.NewField("kl"), value.NewField("mno"), value.NewField("pqur")},
+		},
+		ExpectLineBreak: cmd.CR,
+	},
+	{
+		Name:               "ReadAll LineBreak CRLF with cutting length",
+		Input:              "abcdefghi\r\nklmnopqurst\r\nklmnopqurst",
+		DelimiterPositions: []int{2, 5, 9},
+		WithoutNull:        false,
+		Encoding:           cmd.UTF8,
+		Output: [][]value.Field{
+			{value.NewField("ab"), value.NewField("cde"), value.NewField("fghi")},
+			{value.NewField("kl"), value.NewField("mno"), value.NewField("pqur")},
+			{value.NewField("kl"), value.NewField("mno"), value.NewField("pqur")},
+		},
+		ExpectLineBreak: cmd.CRLF,
 	},
 	{
 		Name:               "ReadAll with negative position",
@@ -231,6 +268,9 @@ func TestFixedLengthReader_ReadAll(t *testing.T) {
 		}
 		if !reflect.DeepEqual(records, v.Output) {
 			t.Errorf("%s: records = %q, want %q", v.Name, records, v.Output)
+		}
+		if r.LineBreak != v.ExpectLineBreak {
+			t.Errorf("%s: detected line-break = %s, want %s", v.Name, r.LineBreak, v.ExpectLineBreak)
 		}
 	}
 }

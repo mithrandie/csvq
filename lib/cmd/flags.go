@@ -16,7 +16,7 @@ import (
 	"github.com/mithrandie/csvq/lib/file"
 )
 
-const UNDEF = -1
+const UNDEF = 0
 
 type Encoding string
 
@@ -54,7 +54,7 @@ func (lb LineBreak) String() string {
 type Format int
 
 const (
-	TEXT Format = iota
+	AutoSelect Format = -1 + iota
 	CSV
 	TSV
 	FIXED
@@ -63,10 +63,10 @@ const (
 	JSONA
 	GFM
 	ORG
+	TEXT
 )
 
 var formatLiterals = map[Format]string{
-	TEXT:  "TEXT",
 	CSV:   "CSV",
 	TSV:   "TSV",
 	FIXED: "FIXED",
@@ -75,6 +75,7 @@ var formatLiterals = map[Format]string{
 	JSONA: "JSONA",
 	GFM:   "MD",
 	ORG:   "ORG",
+	TEXT:  "TEXT",
 }
 
 func (f Format) String() string {
@@ -85,8 +86,6 @@ const (
 	CsvExt  = ".csv"
 	TsvExt  = ".tsv"
 	JsonExt = ".json"
-	GfmExt  = ".md"
-	OrgExt  = ".org"
 )
 
 type Flags struct {
@@ -124,7 +123,7 @@ type Flags struct {
 	Now string
 
 	// For Fixed-Length Format
-	DelimitBySpaces         bool
+	ImportFormat            Format
 	DelimiterPositions      []int
 	WriteDelimiterPositions []int
 }
@@ -168,7 +167,7 @@ func GetFlags() *Flags {
 			Stats:              false,
 			RetryInterval:      10 * time.Millisecond,
 			Now:                "",
-			DelimitBySpaces:    false,
+			ImportFormat:       CSV,
 			DelimiterPositions: nil,
 		}
 	})
@@ -176,35 +175,14 @@ func GetFlags() *Flags {
 }
 
 func SetDelimiter(s string) error {
-	var delimiter rune = UNDEF
-	var delimiterPositions []int = nil
-	var delimiteBySpaces = false
-
-	if s == "[]" || 2 < len(s) {
-		if strings.EqualFold("SPACES", s) {
-			delimiteBySpaces = true
-		} else {
-			var positions []int
-			err := json.Unmarshal([]byte(s), &positions)
-			if err != nil {
-				return errors.New("delimiter must be one character, \"SPACES\" or JSON array of integers")
-			}
-			delimiteBySpaces = true
-			delimiterPositions = positions
-		}
-	} else if 0 < len(s) {
-		s = UnescapeString(s)
-
-		runes := []rune(s)
-		if 1 < len(runes) {
-			return errors.New("delimiter must be one character, \"SPACES\" or JSON array of integers")
-		}
-		delimiter = runes[0]
+	importFormat, delimiter, delimiterPositions, err := ParseDelimiter(s)
+	if err != nil {
+		return err
 	}
 
 	f := GetFlags()
 	f.Delimiter = delimiter
-	f.DelimitBySpaces = delimiteBySpaces
+	f.ImportFormat = importFormat
 	f.DelimiterPositions = delimiterPositions
 	return nil
 }
@@ -231,16 +209,9 @@ func SetLineBreak(s string) error {
 		return nil
 	}
 
-	var lb LineBreak
-	switch strings.ToUpper(s) {
-	case "CRLF":
-		lb = CRLF
-	case "CR":
-		lb = CR
-	case "LF":
-		lb = LF
-	default:
-		return errors.New("line-break must be one of CRLF|LF|CR")
+	lb, err := ParseLineBreak(s)
+	if err != nil {
+		return err
 	}
 
 	f := GetFlags()
@@ -447,23 +418,6 @@ func SetWithoutHeader(b bool) {
 	f := GetFlags()
 	f.WithoutHeader = b
 	return
-}
-
-func ParseEncoding(s string) (Encoding, error) {
-	if len(s) < 1 {
-		return UTF8, nil
-	}
-
-	var encoding Encoding
-	switch strings.ToUpper(s) {
-	case "UTF8":
-		encoding = UTF8
-	case "SJIS":
-		encoding = SJIS
-	default:
-		return UTF8, errors.New("encoding must be one of UTF8|SJIS")
-	}
-	return encoding, nil
 }
 
 func SetQuiet(b bool) {

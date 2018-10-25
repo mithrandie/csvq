@@ -141,6 +141,21 @@ func (p DelimiterPositions) Last() int {
 	return p[len(p)-1]
 }
 
+func (p DelimiterPositions) Equal(p2 DelimiterPositions) bool {
+	if (p == nil && p2 != nil) || (p != nil && p2 == nil) {
+		return false
+	}
+	if len(p) != len(p2) {
+		return false
+	}
+	for i := 0; i < len(p); i++ {
+		if p[i] != p2[i] {
+			return false
+		}
+	}
+	return true
+}
+
 type Delimiter struct {
 	NoHeader bool
 	Encoding cmd.Encoding

@@ -185,8 +185,8 @@ func (f *Filter) Evaluate(expr parser.QueryExpression) (value.Primary, error) {
 		val, err = f.evalFunction(expr.(parser.Function))
 	case parser.AggregateFunction:
 		val, err = f.evalAggregateFunction(expr.(parser.AggregateFunction))
-	case parser.ListAgg:
-		val, err = f.evalListAgg(expr.(parser.ListAgg))
+	case parser.ListFunction:
+		val, err = f.evalListFunction(expr.(parser.ListFunction))
 	case parser.CaseExpr:
 		val, err = f.evalCaseExpr(expr.(parser.CaseExpr))
 	case parser.Logic:
@@ -678,7 +678,7 @@ func (f *Filter) evalAggregateFunction(expr parser.AggregateFunction) (value.Pri
 	return aggfn(list), nil
 }
 
-func (f *Filter) evalListAgg(expr parser.ListAgg) (value.Primary, error) {
+func (f *Filter) evalListFunction(expr parser.ListFunction) (value.Primary, error) {
 	var separator string
 	var err error
 
@@ -686,7 +686,7 @@ func (f *Filter) evalListAgg(expr parser.ListAgg) (value.Primary, error) {
 	case "JSON_AGG":
 		err = f.checkArgsForJsonAgg(expr)
 	default: // LISTAGG
-		separator, err = f.checkArgsForListAgg(expr)
+		separator, err = f.checkArgsForListFunction(expr)
 	}
 
 	if err != nil {
@@ -721,7 +721,7 @@ func (f *Filter) evalListAgg(expr parser.ListAgg) (value.Primary, error) {
 	return ListAgg(list, separator), nil
 }
 
-func (f *Filter) checkArgsForListAgg(expr parser.ListAgg) (string, error) {
+func (f *Filter) checkArgsForListFunction(expr parser.ListFunction) (string, error) {
 	var separator string
 
 	if expr.Args == nil || 2 < len(expr.Args) {
@@ -742,7 +742,7 @@ func (f *Filter) checkArgsForListAgg(expr parser.ListAgg) (string, error) {
 	return separator, nil
 }
 
-func (f *Filter) checkArgsForJsonAgg(expr parser.ListAgg) error {
+func (f *Filter) checkArgsForJsonAgg(expr parser.ListFunction) error {
 	if 1 != len(expr.Args) {
 		return NewFunctionArgumentLengthError(expr, expr.Name, []int{1})
 	}
