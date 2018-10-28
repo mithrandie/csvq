@@ -807,6 +807,10 @@ command_statement
     {
         $$ = Printf{BaseExpr: NewBaseExpr($1), Format: $2, Values: $4}
     }
+    | SOURCE identifier
+    {
+        $$ = Source{BaseExpr: NewBaseExpr($1), FilePath: $2}
+    }
     | SOURCE value
     {
         $$ = Source{BaseExpr: NewBaseExpr($1), FilePath: $2}

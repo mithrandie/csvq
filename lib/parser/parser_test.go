@@ -3912,6 +3912,15 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "source `/path/to/file.sql`",
+		Output: []Statement{
+			Source{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				FilePath: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "/path/to/file.sql", Quoted: true},
+			},
+		},
+	},
+	{
 		Input: "source '/path/to/file.sql'",
 		Output: []Statement{
 			Source{

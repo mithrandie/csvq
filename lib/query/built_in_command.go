@@ -74,15 +74,21 @@ func Printf(expr parser.Printf, filter *Filter) (string, error) {
 }
 
 func Source(expr parser.Source, filter *Filter) ([]parser.Statement, error) {
-	p, err := filter.Evaluate(expr.FilePath)
-	if err != nil {
-		return nil, err
+	var fpath string
+
+	if ident, ok := expr.FilePath.(parser.Identifier); ok {
+		fpath = ident.Literal
+	} else {
+		p, err := filter.Evaluate(expr.FilePath)
+		if err != nil {
+			return nil, err
+		}
+		s := value.ToString(p)
+		if value.IsNull(s) {
+			return nil, NewSourceInvalidArgumentError(expr, expr.FilePath)
+		}
+		fpath = s.(value.String).Raw()
 	}
-	s := value.ToString(p)
-	if value.IsNull(s) {
-		return nil, NewSourceInvalidArgumentError(expr, expr.FilePath)
-	}
-	fpath := s.(value.String).Raw()
 
 	stat, err := os.Stat(fpath)
 	if err != nil {

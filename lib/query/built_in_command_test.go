@@ -166,6 +166,17 @@ var sourceTests = []struct {
 		},
 	},
 	{
+		Name: "Source from an identifier",
+		Expr: parser.Source{
+			FilePath: parser.Identifier{Literal: GetTestFilePath("source.sql")},
+		},
+		Result: []parser.Statement{
+			parser.Print{
+				Value: parser.NewStringValue("external executable file"),
+			},
+		},
+	},
+	{
 		Name: "Source File Argument Evaluation Error",
 		Expr: parser.Source{
 			FilePath: parser.FieldReference{Column: parser.Identifier{Literal: "ident"}},
