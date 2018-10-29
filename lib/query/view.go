@@ -116,9 +116,6 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 	case parser.Stdin:
 		flags := cmd.GetFlags()
 		delimiter := flags.Delimiter
-		if delimiter == cmd.UNDEF {
-			delimiter = ','
-		}
 		fileInfo := &FileInfo{
 			Path:               table.Object.String(),
 			Delimiter:          delimiter,
@@ -244,7 +241,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 			if 0 < len(tableObject.Args) {
 				return nil, NewTableObjectJsonArgumentsLengthError(tableObject, 2)
 			}
-			jsonQuery = felemStr.(value.String).Raw()
+			jsonQuery = strings.TrimSpace(felemStr.(value.String).Raw())
 			importFormat = cmd.JSON
 		default:
 			return nil, NewTableObjectInvalidObjectError(tableObject, tableObject.Type.Literal)

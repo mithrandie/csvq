@@ -401,7 +401,7 @@ func TestWarn(t *testing.T) {
 
 func TestInfo(t *testing.T) {
 	s := "a"
-	expect := GreenB(s)
+	expect := Green(s)
 	result := Info(s)
 
 	if result != expect {

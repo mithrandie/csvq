@@ -1239,11 +1239,12 @@ type ShowFlag struct {
 
 type ShowObjects struct {
 	*BaseExpr
-	Type int
+	Type Identifier
 }
 
 type ShowFields struct {
 	*BaseExpr
+	Type  Identifier
 	Table Identifier
 }
 

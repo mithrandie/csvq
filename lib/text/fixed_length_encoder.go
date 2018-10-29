@@ -12,7 +12,7 @@ import (
 )
 
 type FixedLengthEncoder struct {
-	DelimiterPositions []int
+	DelimiterPositions DelimiterPositions
 	LineBreak          cmd.LineBreak
 	WithoutHeader      bool
 	Encoding           cmd.Encoding
@@ -32,7 +32,7 @@ func (e *FixedLengthEncoder) Encode(fieldList []string, recordSet [][]value.Prim
 	prevPos := 0
 	for _, endPos := range e.DelimiterPositions {
 		if endPos < 0 || endPos <= prevPos {
-			return "", errors.New(fmt.Sprintf("invalid delimiter position: %s", FormatIntSlice(e.DelimiterPositions)))
+			return "", errors.New(fmt.Sprintf("invalid delimiter position: %s", e.DelimiterPositions))
 		}
 		prevPos = endPos
 	}

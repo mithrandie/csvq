@@ -165,7 +165,7 @@ func ParseLineBreak(s string) (LineBreak, error) {
 }
 
 func ParseDelimiter(s string) (Format, rune, []int, error) {
-	var delimiter rune = UNDEF
+	var delimiter = ','
 	var delimiterPositions []int = nil
 	var importFormat = CSV
 

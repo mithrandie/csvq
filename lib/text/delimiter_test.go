@@ -43,6 +43,33 @@ func TestDelimiterPositions_Equal(t *testing.T) {
 	}
 }
 
+var delimiterPositionsStringTests = []struct {
+	Position DelimiterPositions
+	Expect   string
+}{
+	{
+		Position: nil,
+		Expect:   "SPACES",
+	},
+	{
+		Position: []int{},
+		Expect:   "[]",
+	},
+	{
+		Position: []int{4, 7},
+		Expect:   "[4, 7]",
+	},
+}
+
+func TestDelimiterPositions_String(t *testing.T) {
+	for _, v := range delimiterPositionsStringTests {
+		result := v.Position.String()
+		if result != v.Expect {
+			t.Errorf("result = %s, want %s for %v", result, v.Expect, v.Position)
+		}
+	}
+}
+
 var delimiterDelimitTests = []struct {
 	Input    string
 	NoHeader bool

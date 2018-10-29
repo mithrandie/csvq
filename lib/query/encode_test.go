@@ -318,7 +318,7 @@ func TestEncodeView(t *testing.T) {
 		if v.LineBreak == "" {
 			v.LineBreak = cmd.LF
 		}
-		if v.WriteDelimiter == cmd.UNDEF {
+		if v.WriteDelimiter == 0 {
 			v.WriteDelimiter = ','
 		}
 

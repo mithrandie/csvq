@@ -82,6 +82,7 @@ const (
 	ErrorUpdateFieldNotExist                  = "field %s does not exist in the tables to update"
 	ErrorUpdateValueAmbiguous                 = "value %s to set in the field %s is ambiguous"
 	ErrorDeleteTableNotSpecified              = "tables to delete records are not specified"
+	ErrorShowInvalidObjectType                = "SHOW: object type %s is invalid"
 	ErrorPrintfReplaceValueLength             = "PRINTF: %s"
 	ErrorSourceInvalidArgument                = "SOURCE: argument %s is not a string"
 	ErrorSourceFileNotExist                   = "SOURCE: file %s does not exist"
@@ -907,6 +908,16 @@ type DeleteTableNotSpecifiedError struct {
 func NewDeleteTableNotSpecifiedError(query parser.DeleteQuery) error {
 	return &DeleteTableNotSpecifiedError{
 		NewBaseError(query, ErrorDeleteTableNotSpecified),
+	}
+}
+
+type ShowInvalidObjectTypeError struct {
+	*BaseError
+}
+
+func NewShowInvalidObjectTypeError(expr parser.Expression, objectType string) error {
+	return &ShowInvalidObjectTypeError{
+		NewBaseError(expr, fmt.Sprintf(ErrorShowInvalidObjectType, objectType)),
 	}
 }
 

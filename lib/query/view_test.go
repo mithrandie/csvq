@@ -1896,7 +1896,7 @@ func TestView_Load(t *testing.T) {
 	for _, v := range viewLoadTests {
 		ViewCache.Clean()
 
-		tf.Delimiter = cmd.UNDEF
+		tf.Delimiter = ','
 		tf.NoHeader = v.NoHeader
 		if v.Encoding != "" {
 			tf.Encoding = v.Encoding

@@ -2,10 +2,10 @@ package query
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -563,13 +563,6 @@ var showFlagTests = []struct {
 	Error   string
 }{
 	{
-		Name: "Show Delimiter Not Set",
-		Expr: parser.ShowFlag{
-			Name: "@@delimiter",
-		},
-		Result: "(not set)",
-	},
-	{
 		Name: "Show Delimiter",
 		Expr: parser.ShowFlag{
 			Name: "@@delimiter",
@@ -578,7 +571,7 @@ var showFlagTests = []struct {
 			Name:  "@@delimiter",
 			Value: value.NewString("\t"),
 		},
-		Result: "'\\t'",
+		Result: " @@DELIMITER: '\\t'",
 	},
 	{
 		Name: "Show Encoding",
@@ -589,7 +582,7 @@ var showFlagTests = []struct {
 			Name:  "@@encoding",
 			Value: value.NewString("SJIS"),
 		},
-		Result: "SJIS",
+		Result: " @@ENCODING: SJIS",
 	},
 	{
 		Name: "Show lineBreak",
@@ -600,7 +593,7 @@ var showFlagTests = []struct {
 			Name:  "@@line_break",
 			Value: value.NewString("CRLF"),
 		},
-		Result: "CRLF",
+		Result: " @@LINE_BREAK: CRLF",
 	},
 	{
 		Name: "Show Timezone",
@@ -611,7 +604,7 @@ var showFlagTests = []struct {
 			Name:  "@@timezone",
 			Value: value.NewString("UTC"),
 		},
-		Result: "UTC",
+		Result: " @@TIMEZONE: UTC",
 	},
 	{
 		Name: "Show Repository",
@@ -622,14 +615,14 @@ var showFlagTests = []struct {
 			Name:  "@@repository",
 			Value: value.NewString(TestDir),
 		},
-		Result: TestDir,
+		Result: " @@REPOSITORY: " + TestDir,
 	},
 	{
 		Name: "Show DatetimeFormat Not Set",
 		Expr: parser.ShowFlag{
 			Name: "@@datetime_format",
 		},
-		Result: "(not set)",
+		Result: " @@DATETIME_FORMAT: (not set)",
 	},
 	{
 		Name: "Show DatetimeFormat",
@@ -640,7 +633,7 @@ var showFlagTests = []struct {
 			Name:  "@@datetime_format",
 			Value: value.NewString("%Y%m%d"),
 		},
-		Result: "%Y%m%d",
+		Result: " @@DATETIME_FORMAT: %Y%m%d",
 	},
 	{
 		Name: "Show WaitTimeout",
@@ -651,7 +644,7 @@ var showFlagTests = []struct {
 			Name:  "@@wait_timeout",
 			Value: value.NewFloat(15),
 		},
-		Result: "15",
+		Result: " @@WAIT_TIMEOUT: 15",
 	},
 	{
 		Name: "Show NoHeader",
@@ -662,7 +655,7 @@ var showFlagTests = []struct {
 			Name:  "@@no_header",
 			Value: value.NewBoolean(true),
 		},
-		Result: "true",
+		Result: " @@NO_HEADER: true",
 	},
 	{
 		Name: "Show WithoutNull",
@@ -673,7 +666,7 @@ var showFlagTests = []struct {
 			Name:  "@@without_null",
 			Value: value.NewBoolean(true),
 		},
-		Result: "true",
+		Result: " @@WITHOUT_NULL: true",
 	},
 	{
 		Name: "Show WriteEncoding",
@@ -684,7 +677,7 @@ var showFlagTests = []struct {
 			Name:  "@@write_encoding",
 			Value: value.NewString("SJIS"),
 		},
-		Result: "SJIS",
+		Result: " @@WRITE_ENCODING: SJIS",
 	},
 	{
 		Name: "Show WriteDelimiter",
@@ -695,7 +688,7 @@ var showFlagTests = []struct {
 			Name:  "@@write_delimiter",
 			Value: value.NewString("\t"),
 		},
-		Result: "'\\t'",
+		Result: " @@WRITE_DELIMITER: '\\t'",
 	},
 	{
 		Name: "Show Format",
@@ -706,7 +699,7 @@ var showFlagTests = []struct {
 			Name:  "@@format",
 			Value: value.NewString("json"),
 		},
-		Result: "JSON",
+		Result: " @@FORMAT: JSON",
 	},
 	{
 		Name: "Show WithoutHeader",
@@ -717,7 +710,7 @@ var showFlagTests = []struct {
 			Name:  "@@without_header",
 			Value: value.NewBoolean(true),
 		},
-		Result: "true",
+		Result: " @@WITHOUT_HEADER: true",
 	},
 	{
 		Name: "Show PrettyPrint",
@@ -728,7 +721,7 @@ var showFlagTests = []struct {
 			Name:  "@@pretty_print",
 			Value: value.NewBoolean(true),
 		},
-		Result: "true",
+		Result: " @@PRETTY_PRINT: true",
 	},
 	{
 		Name: "Show Color",
@@ -737,9 +730,9 @@ var showFlagTests = []struct {
 		},
 		SetExpr: parser.SetFlag{
 			Name:  "@@color",
-			Value: value.NewBoolean(true),
+			Value: value.NewBoolean(false),
 		},
-		Result: "true",
+		Result: " @@COLOR: false",
 	},
 	{
 		Name: "Show Quiet",
@@ -750,7 +743,7 @@ var showFlagTests = []struct {
 			Name:  "@@quiet",
 			Value: value.NewBoolean(true),
 		},
-		Result: "true",
+		Result: " @@QUIET: true",
 	},
 	{
 		Name: "Show CPU",
@@ -761,7 +754,7 @@ var showFlagTests = []struct {
 			Name:  "@@cpu",
 			Value: value.NewInteger(1),
 		},
-		Result: "1",
+		Result: " @@CPU: 1",
 	},
 	{
 		Name: "Show Stats",
@@ -772,7 +765,7 @@ var showFlagTests = []struct {
 			Name:  "@@stats",
 			Value: value.NewBoolean(true),
 		},
-		Result: "true",
+		Result: " @@STATS: true",
 	},
 	{
 		Name: "Invalid Flag Name Error",
@@ -810,44 +803,235 @@ func TestShowFlag(t *testing.T) {
 }
 
 var showObjectsTests = []struct {
-	Name       string
-	Expr       parser.ShowObjects
-	Filter     *Filter
-	Repository string
-	ViewCache  ViewMap
-	Result     string
-	Error      string
+	Name        string
+	Expr        parser.ShowObjects
+	Filter      *Filter
+	Repository  string
+	ViewCache   ViewMap
+	ExecResults []ExecResult
+	Expect      string
+	Error       string
 }{
 	{
 		Name: "ShowObjects Tables",
-		Expr: parser.ShowObjects{Type: parser.TABLES},
+		Expr: parser.ShowObjects{Type: parser.Identifier{Literal: "tables"}},
 		ViewCache: ViewMap{
-			"DUMMY.CSV": &View{
+			"TABLE1.CSV": &View{
+				Header: NewHeader("table1", []string{"col1", "col2"}),
 				FileInfo: &FileInfo{
-					Path: filepath.Join(TestDir, "dummy.csv"),
+					Path:      "table1.csv",
+					Delimiter: '\t',
+					Format:    cmd.CSV,
+					Encoding:  cmd.SJIS,
+					LineBreak: cmd.CRLF,
+					NoHeader:  true,
 				},
 			},
-			"TABLE1.CSV": &View{
+			"TABLE1.TSV": &View{
+				Header: NewHeader("table1", []string{"col1", "col2"}),
 				FileInfo: &FileInfo{
-					Path: filepath.Join(filepath.Join(TestDir, "test_show_objects"), "table1.csv"),
+					Path:      "table1.tsv",
+					Delimiter: '\t',
+					Format:    cmd.TSV,
+					Encoding:  cmd.UTF8,
+					LineBreak: cmd.LF,
+					NoHeader:  false,
+				},
+			},
+			"TABLE1.JSON": &View{
+				Header: NewHeader("table1", []string{"col1", "col2"}),
+				FileInfo: &FileInfo{
+					Path:        "table1.json",
+					JsonQuery:   "{}",
+					Format:      cmd.JSON,
+					Encoding:    cmd.UTF8,
+					LineBreak:   cmd.LF,
+					PrettyPrint: false,
+				},
+			},
+			"TABLE2.JSON": &View{
+				Header: NewHeader("table2", []string{"col1", "col2"}),
+				FileInfo: &FileInfo{
+					Path:        "table2.json",
+					JsonQuery:   "",
+					Format:      cmd.JSON,
+					Encoding:    cmd.UTF8,
+					LineBreak:   cmd.LF,
+					PrettyPrint: false,
+				},
+			},
+			"TABLE1.TXT": &View{
+				Header: NewHeader("table1", []string{"col1", "col2"}),
+				FileInfo: &FileInfo{
+					Path:               "table1.txt",
+					DelimiterPositions: []int{3, 12},
+					Format:             cmd.FIXED,
+					Encoding:           cmd.UTF8,
+					LineBreak:          cmd.LF,
+					NoHeader:           false,
 				},
 			},
 		},
-		Result: "\n" + fmt.Sprintf("    Tables in %s\n", filepath.Join(TestDir, "test_show_objects")) + strings.Repeat("-", len(filepath.Join(TestDir, "test_show_objects"))+18) + "\n" +
-			filepath.Join("table1.csv") + "\n" +
-			filepath.Join("table2.csv") + "\n" +
-			"\n" + "    Tables in other directories\n" + "-----------------------------------\n" +
-			filepath.Join(TestDir, "dummy.csv") + "\n",
+		Expect: "\n" +
+			"                      Loaded Tables\n" +
+			"----------------------------------------------------------\n" +
+			" table1.csv\n" +
+			"     Fields: col1, col2\n" +
+			"     Format: CSV     Delimiter: '\\t'\n" +
+			"     Encoding: SJIS  LineBreak: CRLF  Header: false\n" +
+			" table1.json\n" +
+			"     Fields: col1, col2\n" +
+			"     Format: JSON    Query: {}\n" +
+			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
+			" table1.tsv\n" +
+			"     Fields: col1, col2\n" +
+			"     Format: TSV     \n" +
+			"     Encoding: UTF8  LineBreak: LF    Header: true\n" +
+			" table1.txt\n" +
+			"     Fields: col1, col2\n" +
+			"     Format: FIXED   Delimiter Positions: [3, 12]\n" +
+			"     Encoding: UTF8  LineBreak: LF    Header: true\n" +
+			" table2.json\n" +
+			"     Fields: col1, col2\n" +
+			"     Format: JSON    Query: (empty)\n" +
+			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
+			"",
 	},
 	{
-		Name:       "ShowObjects Tables Empty",
-		Expr:       parser.ShowObjects{Type: parser.TABLES},
+		Name: "ShowObjects Tables Uncommitted",
+		Expr: parser.ShowObjects{Type: parser.Identifier{Literal: "tables"}},
+		ViewCache: ViewMap{
+			"TABLE1.CSV": &View{
+				Header: NewHeader("table1", []string{"col1", "col2"}),
+				FileInfo: &FileInfo{
+					Path:      "table1.csv",
+					Delimiter: '\t',
+					Format:    cmd.CSV,
+					Encoding:  cmd.SJIS,
+					LineBreak: cmd.CRLF,
+					NoHeader:  true,
+				},
+			},
+			"TABLE1.TSV": &View{
+				Header: NewHeader("table1", []string{"col1", "col2"}),
+				FileInfo: &FileInfo{
+					Path:      "table1.tsv",
+					Delimiter: '\t',
+					Format:    cmd.TSV,
+					Encoding:  cmd.UTF8,
+					LineBreak: cmd.LF,
+					NoHeader:  false,
+				},
+			},
+			"TABLE1.JSON": &View{
+				Header: NewHeader("table1", []string{"col1", "col2"}),
+				FileInfo: &FileInfo{
+					Path:        "table1.json",
+					JsonQuery:   "{}",
+					Format:      cmd.JSON,
+					Encoding:    cmd.UTF8,
+					LineBreak:   cmd.LF,
+					PrettyPrint: false,
+				},
+			},
+			"TABLE2.JSON": &View{
+				Header: NewHeader("table2", []string{"col1", "col2"}),
+				FileInfo: &FileInfo{
+					Path:        "table2.json",
+					JsonQuery:   "",
+					Format:      cmd.JSON,
+					Encoding:    cmd.UTF8,
+					LineBreak:   cmd.LF,
+					PrettyPrint: false,
+				},
+			},
+			"TABLE1.TXT": &View{
+				Header: NewHeader("table1", []string{"col1", "col2"}),
+				FileInfo: &FileInfo{
+					Path:               "table1.txt",
+					DelimiterPositions: []int{3, 12},
+					Format:             cmd.FIXED,
+					Encoding:           cmd.UTF8,
+					LineBreak:          cmd.LF,
+					NoHeader:           false,
+				},
+			},
+		},
+		ExecResults: []ExecResult{
+			{
+				Type: CreateTableQuery,
+				FileInfo: &FileInfo{
+					Path: "table1.tsv",
+				},
+			},
+			{
+				Type: UpdateQuery,
+				FileInfo: &FileInfo{
+					Path: "table2.json",
+				},
+				OperatedCount: 2,
+			},
+		},
+		Expect: "\n" +
+			"          Loaded Tables (Uncommitted: 2 Tables)\n" +
+			"----------------------------------------------------------\n" +
+			" table1.csv\n" +
+			"     Fields: col1, col2\n" +
+			"     Format: CSV     Delimiter: '\\t'\n" +
+			"     Encoding: SJIS  LineBreak: CRLF  Header: false\n" +
+			" table1.json\n" +
+			"     Fields: col1, col2\n" +
+			"     Format: JSON    Query: {}\n" +
+			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
+			" *Created* table1.tsv\n" +
+			"     Fields: col1, col2\n" +
+			"     Format: TSV     \n" +
+			"     Encoding: UTF8  LineBreak: LF    Header: true\n" +
+			" table1.txt\n" +
+			"     Fields: col1, col2\n" +
+			"     Format: FIXED   Delimiter Positions: [3, 12]\n" +
+			"     Encoding: UTF8  LineBreak: LF    Header: true\n" +
+			" *Updated* table2.json\n" +
+			"     Fields: col1, col2\n" +
+			"     Format: JSON    Query: (empty)\n" +
+			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
+			"",
+	},
+	{
+		Name: "ShowObjects Tables Long Fields",
+		Expr: parser.ShowObjects{Type: parser.Identifier{Literal: "tables"}},
+		ViewCache: ViewMap{
+			"TABLE1.CSV": &View{
+				Header: NewHeader("table1", []string{"colabcdef1", "colabcdef2", "colabcdef3", "colabcdef4", "colabcdef5", "colabcdef6", "colabcdef7"}),
+				FileInfo: &FileInfo{
+					Path:      "table1.csv",
+					Delimiter: '\t',
+					Format:    cmd.CSV,
+					Encoding:  cmd.SJIS,
+					LineBreak: cmd.CRLF,
+					NoHeader:  true,
+				},
+			},
+		},
+		Expect: "\n" +
+			"                              Loaded Tables\n" +
+			"--------------------------------------------------------------------------\n" +
+			" table1.csv\n" +
+			"     Fields: colabcdef1, colabcdef2, colabcdef3, colabcdef4, colabcdef5, \n" +
+			"             colabcdef6, colabcdef7\n" +
+			"     Format: CSV     Delimiter: '\\t'\n" +
+			"     Encoding: SJIS  LineBreak: CRLF  Header: false\n" +
+			"",
+	},
+	{
+		Name:       "ShowObjects No Table is Loaded",
+		Expr:       parser.ShowObjects{Type: parser.Identifier{Literal: "tables"}},
 		Repository: filepath.Join(TestDir, "test_show_objects_empty"),
-		Result:     fmt.Sprintf("Repository %q is empty", filepath.Join(TestDir, "test_show_objects_empty")),
+		Expect:     "No table is loaded",
 	},
 	{
 		Name: "ShowObjects Views",
-		Expr: parser.ShowObjects{Type: parser.VIEWS},
+		Expr: parser.ShowObjects{Type: parser.Identifier{Literal: "views"}},
 		Filter: &Filter{
 			TempViews: TemporaryViewScopes{
 				ViewMap{
@@ -877,17 +1061,32 @@ var showObjectsTests = []struct {
 				},
 			},
 		},
-		Result: "\n" + "    Views\n" + "-------------\n" +
-			"view1 (column1, column2)\nview2 (column1, column2)\n",
+		ExecResults: []ExecResult{
+			{
+				Type: UpdateQuery,
+				FileInfo: &FileInfo{
+					Path:        "view2",
+					IsTemporary: true,
+				},
+				OperatedCount: 2,
+			},
+		},
+		Expect: "\n" +
+			" Views (Uncommitted: 1 View)\n" +
+			"------------------------------\n" +
+			" view1\n" +
+			"     Fields: column1, column2\n" +
+			" *Updated* view2\n" +
+			"     Fields: column1, column2\n",
 	},
 	{
 		Name:   "ShowObjects Views Empty",
-		Expr:   parser.ShowObjects{Type: parser.VIEWS},
-		Result: "No view is declared",
+		Expr:   parser.ShowObjects{Type: parser.Identifier{Literal: "views"}},
+		Expect: "No view is declared",
 	},
 	{
 		Name: "ShowObjects Cursors",
-		Expr: parser.ShowObjects{Type: parser.CURSORS},
+		Expr: parser.ShowObjects{Type: parser.Identifier{Literal: "cursors"}},
 		Filter: &Filter{
 			Cursors: CursorScopes{
 				{
@@ -898,21 +1097,85 @@ var showObjectsTests = []struct {
 					"CUR2": &Cursor{
 						name:  "cur2",
 						query: selectQueryForCursorTest,
+						view: &View{
+							RecordSet: RecordSet{
+								NewRecord([]value.Primary{
+									value.NewInteger(1),
+									value.NewString("a"),
+								}),
+								NewRecord([]value.Primary{
+									value.NewInteger(2),
+									value.NewString("b"),
+								}),
+							},
+						},
+						fetched: false,
+						index:   -1,
+					},
+					"CUR3": &Cursor{
+						name:  "cur3",
+						query: selectQueryForCursorTest,
+						view: &View{
+							RecordSet: RecordSet{
+								NewRecord([]value.Primary{
+									value.NewInteger(1),
+									value.NewString("a"),
+								}),
+								NewRecord([]value.Primary{
+									value.NewInteger(2),
+									value.NewString("b"),
+								}),
+							},
+						},
+						fetched: true,
+						index:   1,
+					},
+					"CUR4": &Cursor{
+						name:  "cur4",
+						query: selectQueryForCursorTest,
+						view: &View{
+							RecordSet: RecordSet{
+								NewRecord([]value.Primary{
+									value.NewInteger(1),
+									value.NewString("a"),
+								}),
+								NewRecord([]value.Primary{
+									value.NewInteger(2),
+									value.NewString("b"),
+								}),
+							},
+						},
+						fetched: true,
+						index:   2,
 					},
 				},
 			},
 		},
-		Result: "\n" + "    Cursors\n" + "---------------\n" +
-			"cur for select column1, column2 from table1\ncur2 for select column1, column2 from table1\n",
+		Expect: "\n" +
+			"                               Cursors\n" +
+			"---------------------------------------------------------------------\n" +
+			" cur\n" +
+			"     Status: Closed\n" +
+			"     Query: select column1, column2 from table1\n" +
+			" cur2\n" +
+			"     Status: Open    Number of Rows: 2         Pointer: UNKNOWN\n" +
+			"     Query: select column1, column2 from table1\n" +
+			" cur3\n" +
+			"     Status: Open    Number of Rows: 2         Pointer: 1\n" +
+			"     Query: select column1, column2 from table1\n" +
+			" cur4\n" +
+			"     Status: Open    Number of Rows: 2         Pointer: Out of Range\n" +
+			"     Query: select column1, column2 from table1\n" +
+			"",
 	},
 	{
 		Name:   "ShowObjects Cursors Empty",
-		Expr:   parser.ShowObjects{Type: parser.CURSORS},
-		Result: "No cursor is declared",
+		Expr:   parser.ShowObjects{Type: parser.Identifier{Literal: "cursors"}},
+		Expect: "No cursor is declared",
 	},
 	{
 		Name: "ShowObjects Functions",
-		Expr: parser.ShowObjects{Type: parser.FUNCTIONS},
+		Expr: parser.ShowObjects{Type: parser.Identifier{Literal: "functions"}},
 		Filter: &Filter{
 			Functions: UserDefinedFunctionScopes{
 				UserDefinedFunctionMap{
@@ -946,41 +1209,67 @@ var showObjectsTests = []struct {
 				},
 			},
 		},
-		Result: "\n" + "    Scala Functions\n" + "-----------------------\n" +
-			"userfunc1 (@arg1)\n" +
-			"\n" + "    Aggregate Functions\n" + "---------------------------\n" +
-			"useraggfunc (column1, @arg1, @arg2 = 1)\n",
+		Expect: "\n" +
+			"  Scala Functions\n" +
+			"-------------------\n" +
+			" userfunc1 (@arg1)\n" +
+			"\n" +
+			"           Aggregate Functions\n" +
+			"-----------------------------------------\n" +
+			" useraggfunc (column1, @arg1, @arg2 = 1)\n",
 	},
 	{
 		Name:   "ShowObjects Functions Empty",
-		Expr:   parser.ShowObjects{Type: parser.FUNCTIONS},
-		Result: "No function is declared",
+		Expr:   parser.ShowObjects{Type: parser.Identifier{Literal: "functions"}},
+		Expect: "No function is declared",
+	},
+	{
+		Name:       "ShowObjects Flags",
+		Expr:       parser.ShowObjects{Type: parser.Identifier{Literal: "flags"}},
+		Repository: ".",
+		Expect: "\n" +
+			"             Flags\n" +
+			"-------------------------------\n" +
+			"        @@DELIMITER: ','\n" +
+			"         @@ENCODING: UTF8\n" +
+			"       @@LINE_BREAK: LF\n" +
+			"         @@TIMEZONE: UTC\n" +
+			"       @@REPOSITORY: .\n" +
+			"  @@DATETIME_FORMAT: (not set)\n" +
+			"        @@NO_HEADER: false\n" +
+			"     @@WITHOUT_NULL: false\n" +
+			"     @@WAIT_TIMEOUT: 15\n" +
+			"   @@WRITE_ENCODING: UTF8\n" +
+			"           @@FORMAT: TEXT\n" +
+			"  @@WRITE_DELIMITER: ','\n" +
+			"   @@WITHOUT_HEADER: false\n" +
+			"     @@PRETTY_PRINT: false\n" +
+			"            @@COLOR: false\n" +
+			"            @@QUIET: false\n" +
+			"              @@CPU: " + strconv.Itoa(cmd.GetFlags().CPU) + "\n" +
+			"            @@STATS: false\n" +
+			"",
+	},
+	{
+		Name:  "ShowObjects Invalid Object Type",
+		Expr:  parser.ShowObjects{Type: parser.Identifier{Literal: "invalid"}},
+		Error: "[L:- C:-] SHOW: object type invalid is invalid",
 	},
 }
 
 func TestShowObjects(t *testing.T) {
-	tableDir := filepath.Join(TestDir, "test_show_objects")
-	emptyDir := filepath.Join(TestDir, "test_show_objects_empty")
-	if _, err := os.Stat(tableDir); os.IsNotExist(err) {
-		os.Mkdir(tableDir, 0755)
-	}
-	if _, err := os.Stat(emptyDir); os.IsNotExist(err) {
-		os.Mkdir(emptyDir, 0755)
-	}
-	copyfile(filepath.Join(tableDir, "table1.csv"), filepath.Join(TestDataDir, "table1.csv"))
-	copyfile(filepath.Join(tableDir, "table2.csv"), filepath.Join(TestDataDir, "table2.csv"))
-
+	initFlag()
 	flags := cmd.GetFlags()
 
 	for _, v := range showObjectsTests {
-		if 0 < len(v.Repository) {
-			flags.Repository = v.Repository
-		} else {
-			flags.Repository = tableDir
-		}
+		flags.Repository = v.Repository
 		ViewCache.Clean()
+		ExecResults = make([]ExecResult, 0)
 		if 0 < len(v.ViewCache) {
 			ViewCache = v.ViewCache
+		}
+		if 0 < len(v.ExecResults) {
+			ExecResults = v.ExecResults
 		}
 
 		var filter *Filter
@@ -1003,24 +1292,26 @@ func TestShowObjects(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if result != v.Result {
-			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
+		if result != v.Expect {
+			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Expect)
 		}
 	}
 	ReleaseResources()
 }
 
 var showFieldsTests = []struct {
-	Name      string
-	Expr      parser.ShowFields
-	Filter    *Filter
-	ViewCache ViewMap
-	Result    string
-	Error     string
+	Name        string
+	Expr        parser.ShowFields
+	Filter      *Filter
+	ViewCache   ViewMap
+	ExecResults []ExecResult
+	Expect      string
+	Error       string
 }{
 	{
 		Name: "ShowFields Temporary Table",
 		Expr: parser.ShowFields{
+			Type:  parser.Identifier{Literal: "fields"},
 			Table: parser.Identifier{Literal: "view1"},
 		},
 		Filter: &Filter{
@@ -1029,62 +1320,172 @@ var showFieldsTests = []struct {
 					"VIEW1": &View{
 						Header: NewHeader("view1", []string{"column1", "column2"}),
 						FileInfo: &FileInfo{
-							Path: "view1",
+							Path:        "view1",
+							IsTemporary: true,
 						},
 					},
 				},
 			},
 		},
-		Result: "\n" + "    Fields in view1" + "\n" + "-----------------------\n" +
-			"1. column1\n2. column2\n",
+		Expect: "\n" +
+			" Fields in view1\n" +
+			"-----------------\n" +
+			" Type: View\n" +
+			" Status: Fixed\n" +
+			" Fields:\n" +
+			"   1. column1\n" +
+			"   2. column2\n",
+	},
+	{
+		Name: "ShowFields Updated Temporary Table",
+		Expr: parser.ShowFields{
+			Type:  parser.Identifier{Literal: "fields"},
+			Table: parser.Identifier{Literal: "view1"},
+		},
+		Filter: &Filter{
+			TempViews: TemporaryViewScopes{
+				ViewMap{
+					"VIEW1": &View{
+						Header: NewHeader("view1", []string{"column1", "column2"}),
+						FileInfo: &FileInfo{
+							Path:        "view1",
+							IsTemporary: true,
+						},
+					},
+				},
+			},
+		},
+		ExecResults: []ExecResult{
+			{
+				Type: UpdateQuery,
+				FileInfo: &FileInfo{
+					Path:        "view1",
+					IsTemporary: true,
+				},
+				OperatedCount: 2,
+			},
+		},
+		Expect: "\n" +
+			" Fields in view1\n" +
+			"-----------------\n" +
+			" Type: View\n" +
+			" Status: Updated\n" +
+			" Fields:\n" +
+			"   1. column1\n" +
+			"   2. column2\n",
 	},
 	{
 		Name: "ShowFields Created Table",
 		Expr: parser.ShowFields{
-			Table: parser.Identifier{Literal: GetTestFilePath("show_fields_create.csv")},
+			Type:  parser.Identifier{Literal: "fields"},
+			Table: parser.Identifier{Literal: "show_fields_create.csv"},
 		},
 		ViewCache: ViewMap{
 			strings.ToUpper(GetTestFilePath("show_fields_create.csv")): &View{
 				Header: NewHeader("show_fields_create", []string{"column1", "column2"}),
 				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("show_fields_create.csv"),
+					Delimiter: ',',
+					Format:    cmd.CSV,
+					Encoding:  cmd.UTF8,
+					LineBreak: cmd.LF,
+					NoHeader:  false,
+				},
+			},
+		},
+		ExecResults: []ExecResult{
+			{
+				Type: CreateTableQuery,
+				FileInfo: &FileInfo{
 					Path: GetTestFilePath("show_fields_create.csv"),
 				},
 			},
 		},
-		Result: "\n" + fmt.Sprintf("    Fields in %s", GetTestFilePath("show_fields_create.csv")) + "\n" + strings.Repeat("-", len(GetTestFilePath("show_fields_create.csv"))+18) + "\n" +
-			"1. column1\n2. column2\n",
+		Expect: "\n" +
+			strings.Repeat(" ", (calcShowFieldsWidth("show_fields_create.csv")-(10+len("show_fields_create.csv")))/2) + "Fields in show_fields_create.csv\n" +
+			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv")) + "\n" +
+			" Type: Table\n" +
+			" Path: " + GetTestFilePath("show_fields_create.csv") + "\n" +
+			" Format: CSV     Delimiter: ','\n" +
+			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
+			" Status: Created\n" +
+			" Fields:\n" +
+			"   1. column1\n" +
+			"   2. column2\n",
 	},
 	{
-		Name: "ShowFields Cached Table",
+		Name: "ShowFields Updated Table",
 		Expr: parser.ShowFields{
-			Table: parser.Identifier{Literal: "table1"},
+			Type:  parser.Identifier{Literal: "fields"},
+			Table: parser.Identifier{Literal: "show_fields_update.csv"},
 		},
 		ViewCache: ViewMap{
-			strings.ToUpper(GetTestFilePath("table1.csv")): &View{
-				Header: NewHeader("table1", []string{"column1", "column2"}),
+			strings.ToUpper(GetTestFilePath("show_fields_update.csv")): &View{
+				Header: NewHeader("show_fields_update", []string{"column1", "column2"}),
 				FileInfo: &FileInfo{
-					Path: GetTestFilePath("table1.csv"),
+					Path:      GetTestFilePath("show_fields_update.csv"),
+					Delimiter: ',',
+					Format:    cmd.CSV,
+					Encoding:  cmd.UTF8,
+					LineBreak: cmd.LF,
+					NoHeader:  false,
 				},
 			},
 		},
-		Result: "\n" + "    Fields in table1" + "\n" + "------------------------\n" +
-			"1. column1\n2. column2\n",
-	},
-	{
-		Name: "ShowFields Load From File",
-		Expr: parser.ShowFields{
-			Table: parser.Identifier{Literal: "table2"},
+		ExecResults: []ExecResult{
+			{
+				Type: UpdateQuery,
+				FileInfo: &FileInfo{
+					Path: GetTestFilePath("show_fields_update.csv"),
+				},
+				OperatedCount: 2,
+			},
 		},
-		Result: "\n" + "    Fields in table2" + "\n" + "------------------------\n" +
-			"1. column3\n2. column4\n",
+		Expect: "\n" +
+			strings.Repeat(" ", (calcShowFieldsWidth("show_fields_update.csv")-(10+len("show_fields_update.csv")))/2) + "Fields in show_fields_update.csv\n" +
+			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv")) + "\n" +
+			" Type: Table\n" +
+			" Path: " + GetTestFilePath("show_fields_update.csv") + "\n" +
+			" Format: CSV     Delimiter: ','\n" +
+			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
+			" Status: Updated\n" +
+			" Fields:\n" +
+			"   1. column1\n" +
+			"   2. column2\n",
 	},
 	{
 		Name: "ShowFields Load Error",
 		Expr: parser.ShowFields{
+			Type:  parser.Identifier{Literal: "fields"},
 			Table: parser.Identifier{Literal: "notexist"},
 		},
 		Error: "[L:- C:-] file notexist does not exist",
 	},
+	{
+		Name: "ShowFields Invalid Object Type",
+		Expr: parser.ShowFields{
+			Type:  parser.Identifier{Literal: "invalid"},
+			Table: parser.Identifier{Literal: "table2"},
+		},
+		Error: "[L:- C:-] SHOW: object type invalid is invalid",
+	},
+}
+
+func calcShowFieldsWidth(fileName string) int {
+	w := 47
+	pathLen := 7 + len(GetTestFilePath(fileName))
+	titleLen := 10 + len(fileName)
+
+	if w < titleLen {
+		w = titleLen
+	}
+	if w < pathLen {
+		w = pathLen
+	}
+	if 75 < w {
+		w = 75
+	}
+	return w
 }
 
 func TestShowFields(t *testing.T) {
@@ -1094,8 +1495,12 @@ func TestShowFields(t *testing.T) {
 
 	for _, v := range showFieldsTests {
 		ViewCache.Clean()
+		ExecResults = make([]ExecResult, 0)
 		if 0 < len(v.ViewCache) {
 			ViewCache = v.ViewCache
+		}
+		if 0 < len(v.ExecResults) {
+			ExecResults = v.ExecResults
 		}
 
 		var filter *Filter
@@ -1118,8 +1523,8 @@ func TestShowFields(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if result != v.Result {
-			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
+		if result != v.Expect {
+			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Expect)
 		}
 	}
 	ReleaseResources()

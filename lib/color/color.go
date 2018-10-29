@@ -192,5 +192,5 @@ func Warn(s string) string {
 }
 
 func Info(s string) string {
-	return GreenB(s)
+	return Green(s)
 }

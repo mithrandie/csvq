@@ -23,7 +23,7 @@ var fileInfoTests = []struct {
 		Name:       "CSV",
 		FilePath:   parser.Identifier{Literal: "table1"},
 		Repository: TestDir,
-		Delimiter:  cmd.UNDEF,
+		Delimiter:  ',',
 		Format:     cmd.CSV,
 		Result: &FileInfo{
 			Path:      "table1.csv",
@@ -35,7 +35,7 @@ var fileInfoTests = []struct {
 		Name:       "CSV with AutoSelect",
 		FilePath:   parser.Identifier{Literal: "table1"},
 		Repository: TestDir,
-		Delimiter:  cmd.UNDEF,
+		Delimiter:  ',',
 		Format:     cmd.AutoSelect,
 		Result: &FileInfo{
 			Path:      "table1.csv",
@@ -47,7 +47,7 @@ var fileInfoTests = []struct {
 		Name:       "TSV",
 		FilePath:   parser.Identifier{Literal: "table3"},
 		Repository: TestDir,
-		Delimiter:  cmd.UNDEF,
+		Delimiter:  ',',
 		Format:     cmd.TSV,
 		Result: &FileInfo{
 			Path:      "table3.tsv",
@@ -59,7 +59,7 @@ var fileInfoTests = []struct {
 		Name:       "TSV with AutoSelect",
 		FilePath:   parser.Identifier{Literal: "table3"},
 		Repository: TestDir,
-		Delimiter:  cmd.UNDEF,
+		Delimiter:  ',',
 		Format:     cmd.AutoSelect,
 		Result: &FileInfo{
 			Path:      "table3.tsv",
@@ -71,7 +71,7 @@ var fileInfoTests = []struct {
 		Name:       "JSON",
 		FilePath:   parser.Identifier{Literal: "table"},
 		Repository: TestDir,
-		Delimiter:  cmd.UNDEF,
+		Delimiter:  ',',
 		Format:     cmd.JSON,
 		Result: &FileInfo{
 			Path:      "table.json",
@@ -83,7 +83,7 @@ var fileInfoTests = []struct {
 		Name:       "JSON with AutoSelect",
 		FilePath:   parser.Identifier{Literal: "table"},
 		Repository: TestDir,
-		Delimiter:  cmd.UNDEF,
+		Delimiter:  ',',
 		Format:     cmd.AutoSelect,
 		Result: &FileInfo{
 			Path:      "table.json",
@@ -95,7 +95,7 @@ var fileInfoTests = []struct {
 		Name:       "Fixed-Length",
 		FilePath:   parser.Identifier{Literal: "fixed_length.txt"},
 		Repository: TestDir,
-		Delimiter:  cmd.UNDEF,
+		Delimiter:  ',',
 		Format:     cmd.FIXED,
 		Result: &FileInfo{
 			Path:      "fixed_length.txt",
@@ -107,7 +107,7 @@ var fileInfoTests = []struct {
 		Name:       "Not Exist Error",
 		FilePath:   parser.Identifier{Literal: "notexist"},
 		Repository: TestDir,
-		Delimiter:  cmd.UNDEF,
+		Delimiter:  ',',
 		Format:     cmd.CSV,
 		Error:      "[L:- C:-] file notexist does not exist",
 	},
@@ -115,7 +115,7 @@ var fileInfoTests = []struct {
 		Name:       "File Read Error",
 		FilePath:   parser.Identifier{Literal: TestDir},
 		Repository: TestDir,
-		Delimiter:  cmd.UNDEF,
+		Delimiter:  ',',
 		Format:     cmd.CSV,
 		Error:      fmt.Sprintf("[L:- C:-] file %s is unable to be read", TestDir),
 	},
@@ -123,7 +123,7 @@ var fileInfoTests = []struct {
 		Name:       "Filenames Ambiguous",
 		FilePath:   parser.Identifier{Literal: "dup_name"},
 		Repository: TestDir,
-		Delimiter:  cmd.UNDEF,
+		Delimiter:  ',',
 		Format:     cmd.AutoSelect,
 		Error:      fmt.Sprintf("[L:- C:-] filename dup_name is ambiguous"),
 	},
@@ -169,7 +169,7 @@ var fileInfoForCreateTests = []struct {
 	{
 		Name:      "CSV",
 		FilePath:  parser.Identifier{Literal: "table1.csv"},
-		Delimiter: cmd.UNDEF,
+		Delimiter: ',',
 		Result: &FileInfo{
 			Path:      "table1.csv",
 			Delimiter: ',',
@@ -179,7 +179,7 @@ var fileInfoForCreateTests = []struct {
 	{
 		Name:      "TSV",
 		FilePath:  parser.Identifier{Literal: "table1.tsv"},
-		Delimiter: cmd.UNDEF,
+		Delimiter: ',',
 		Result: &FileInfo{
 			Path:      "table1.tsv",
 			Delimiter: '\t',
@@ -189,7 +189,7 @@ var fileInfoForCreateTests = []struct {
 	{
 		Name:      "JSON",
 		FilePath:  parser.Identifier{Literal: "table1.json"},
-		Delimiter: cmd.UNDEF,
+		Delimiter: ',',
 		Result: &FileInfo{
 			Path:      "table1.json",
 			Delimiter: ',',

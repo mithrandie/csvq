@@ -86,9 +86,6 @@ func SearchFilePath(filename parser.Identifier, repository string, delimiter run
 		}
 	}
 
-	if delimiter == cmd.UNDEF {
-		delimiter = ','
-	}
 	return fpath, delimiter, format, err
 }
 
@@ -167,10 +164,6 @@ func NewFileInfoForCreate(finename parser.Identifier, repository string, delimit
 		format = cmd.JSON
 	default:
 		format = cmd.CSV
-	}
-
-	if delimiter == cmd.UNDEF {
-		delimiter = ','
 	}
 
 	return &FileInfo{

@@ -35,14 +35,14 @@ const (
 	RenameColumnQuery
 )
 
-type Result struct {
+type ExecResult struct {
 	Type          OperationType
 	FileInfo      *FileInfo
 	OperatedCount int
 }
 
-var ViewCache = ViewMap{}
-var Results = make([]Result, 0, 10)
+var ViewCache = make(ViewMap, 10)
+var ExecResults = make([]ExecResult, 0, 10)
 var SelectLogs = make([]string, 0, 2)
 
 func ReleaseResources() {
@@ -841,28 +841,10 @@ func RenameColumn(query parser.RenameColumn, parentFilter *Filter) (*View, error
 }
 
 func Commit(expr parser.Expression, filter *Filter) error {
-	var createFiles = map[string]*FileInfo{}
-	var updateFiles = map[string]*FileInfo{}
+	createdFiles, updatedFiles := UncommittedFiles()
 
-	for _, result := range Results {
-		if result.FileInfo != nil {
-			switch result.Type {
-			case CreateTableQuery:
-				createFiles[result.FileInfo.Path] = result.FileInfo
-			default:
-				if !result.FileInfo.IsTemporary && 0 < result.OperatedCount {
-					if _, ok := createFiles[result.FileInfo.Path]; !ok {
-						if _, ok := updateFiles[result.FileInfo.Path]; !ok {
-							updateFiles[result.FileInfo.Path] = result.FileInfo
-						}
-					}
-				}
-			}
-		}
-	}
-
-	if 0 < len(createFiles) {
-		for filename, fileinfo := range createFiles {
+	if 0 < len(createdFiles) {
+		for filename, fileinfo := range createdFiles {
 			view, _ := ViewCache.Get(parser.Identifier{Literal: filename})
 			viewstr, err := EncodeView(view, fileinfo)
 			if err != nil {
@@ -879,8 +861,8 @@ func Commit(expr parser.Expression, filter *Filter) error {
 		}
 	}
 
-	if 0 < len(updateFiles) {
-		for filename, fileinfo := range updateFiles {
+	if 0 < len(updatedFiles) {
+		for filename, fileinfo := range updatedFiles {
 			view, _ := ViewCache.Get(parser.Identifier{Literal: filename})
 			viewstr, err := EncodeView(view, fileinfo)
 			if err != nil {
@@ -897,7 +879,7 @@ func Commit(expr parser.Expression, filter *Filter) error {
 		}
 	}
 
-	Results = []Result{}
+	ExecResults = []ExecResult{}
 	ReleaseResources()
 	if expr != nil {
 		filter.TempViews.Store()
@@ -907,19 +889,40 @@ func Commit(expr parser.Expression, filter *Filter) error {
 }
 
 func Rollback(filter *Filter) {
-	var createFiles = map[string]*FileInfo{}
-	var updateFiles = map[string]*FileInfo{}
+	createdFiles, updatedFiles := UncommittedFiles()
 
-	for _, result := range Results {
+	if 0 < len(createdFiles) {
+		for filename := range createdFiles {
+			Log(color.Info(fmt.Sprintf("Rollback: file %q is deleted.", filename)), cmd.GetFlags().Quiet)
+		}
+	}
+
+	if 0 < len(updatedFiles) {
+		for filename := range updatedFiles {
+			Log(color.Info(fmt.Sprintf("Rollback: file %q is restored.", filename)), cmd.GetFlags().Quiet)
+		}
+	}
+
+	ExecResults = []ExecResult{}
+	ReleaseResources()
+	filter.TempViews.Restore()
+	return
+}
+
+func UncommittedFiles() (map[string]*FileInfo, map[string]*FileInfo) {
+	var createdFiles = map[string]*FileInfo{}
+	var updatedFiles = map[string]*FileInfo{}
+
+	for _, result := range ExecResults {
 		if result.FileInfo != nil {
 			switch result.Type {
 			case CreateTableQuery:
-				createFiles[result.FileInfo.Path] = result.FileInfo
+				createdFiles[result.FileInfo.Path] = result.FileInfo
 			default:
 				if !result.FileInfo.IsTemporary && 0 < result.OperatedCount {
-					if _, ok := createFiles[result.FileInfo.Path]; !ok {
-						if _, ok := updateFiles[result.FileInfo.Path]; !ok {
-							updateFiles[result.FileInfo.Path] = result.FileInfo
+					if _, ok := createdFiles[result.FileInfo.Path]; !ok {
+						if _, ok := updatedFiles[result.FileInfo.Path]; !ok {
+							updatedFiles[result.FileInfo.Path] = result.FileInfo
 						}
 					}
 				}
@@ -927,20 +930,21 @@ func Rollback(filter *Filter) {
 		}
 	}
 
-	if 0 < len(createFiles) {
-		for filename := range createFiles {
-			Log(color.Info(fmt.Sprintf("Rollback: file %q is deleted.", filename)), cmd.GetFlags().Quiet)
+	return createdFiles, updatedFiles
+}
+
+func UncommittedTempViews() map[string]*FileInfo {
+	var updatedViews = map[string]*FileInfo{}
+
+	for _, result := range ExecResults {
+		if result.FileInfo != nil && result.Type != CreateTableQuery {
+			if result.FileInfo.IsTemporary && 0 < result.OperatedCount {
+				if _, ok := updatedViews[result.FileInfo.Path]; !ok {
+					updatedViews[result.FileInfo.Path] = result.FileInfo
+				}
+			}
 		}
 	}
 
-	if 0 < len(updateFiles) {
-		for filename := range updateFiles {
-			Log(color.Info(fmt.Sprintf("Rollback: file %q is restored.", filename)), cmd.GetFlags().Quiet)
-		}
-	}
-
-	Results = []Result{}
-	ReleaseResources()
-	filter.TempViews.Restore()
-	return
+	return updatedViews
 }

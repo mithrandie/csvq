@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/mithrandie/csvq/lib/color"
+	"github.com/mithrandie/csvq/lib/file"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -12,11 +13,7 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/mithrandie/csvq/lib/file"
 )
-
-const UNDEF = 0
 
 type Encoding string
 
@@ -98,9 +95,9 @@ type Flags struct {
 	Repository     string
 	Source         string
 	DatetimeFormat string
-	WaitTimeout    float64
 	NoHeader       bool
 	WithoutNull    bool
+	WaitTimeout    float64
 
 	// For Output
 	WriteEncoding  Encoding
@@ -146,7 +143,7 @@ func GetFlags() *Flags {
 		}
 
 		flags = &Flags{
-			Delimiter:          UNDEF,
+			Delimiter:          ',',
 			JsonQuery:          "",
 			Encoding:           UTF8,
 			LineBreak:          LF,
@@ -154,9 +151,9 @@ func GetFlags() *Flags {
 			Repository:         pwd,
 			Source:             "",
 			DatetimeFormat:     "",
-			WaitTimeout:        10,
 			NoHeader:           false,
 			WithoutNull:        false,
+			WaitTimeout:        10,
 			WriteEncoding:      UTF8,
 			OutFile:            "",
 			Format:             TEXT,
@@ -242,7 +239,12 @@ func SetRepository(s string) error {
 		return nil
 	}
 
-	stat, err := os.Stat(s)
+	path, err := filepath.Abs(s)
+	if err != nil {
+		path = s
+	}
+
+	stat, err := os.Stat(path)
 	if err != nil {
 		return errors.New("repository does not exist")
 	}
@@ -251,7 +253,7 @@ func SetRepository(s string) error {
 	}
 
 	f := GetFlags()
-	f.Repository = s
+	f.Repository = path
 	return nil
 }
 
@@ -279,17 +281,6 @@ func SetDatetimeFormat(s string) {
 	return
 }
 
-func SetWaitTimeout(f float64) {
-	if f < 0 {
-		f = 0
-	}
-
-	flags := GetFlags()
-	flags.WaitTimeout = f
-	file.UpdateWaitTimeout(flags.WaitTimeout, flags.RetryInterval)
-	return
-}
-
 func SetNoHeader(b bool) {
 	f := GetFlags()
 	f.NoHeader = b
@@ -299,6 +290,17 @@ func SetNoHeader(b bool) {
 func SetWithoutNull(b bool) {
 	f := GetFlags()
 	f.WithoutNull = b
+	return
+}
+
+func SetWaitTimeout(f float64) {
+	if f < 0 {
+		f = 0
+	}
+
+	flags := GetFlags()
+	flags.WaitTimeout = f
+	file.UpdateWaitTimeout(flags.WaitTimeout, flags.RetryInterval)
 	return
 }
 
@@ -389,7 +391,7 @@ func SetWriteDelimiter(s string) error {
 		return nil
 	}
 
-	var delimiter rune = ','
+	var delimiter = ','
 	var delimiterPositions []int = nil
 
 	if s == "[]" || 2 < len(s) {

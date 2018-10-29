@@ -86,10 +86,6 @@ func bareValues(view *View) ([]string, [][]value.Primary) {
 func encodeCSV(view *View, delimiter rune, lineBreak cmd.LineBreak, withoutHeader bool) string {
 	header, records := bareValues(view)
 
-	if delimiter == cmd.UNDEF {
-		delimiter = ','
-	}
-
 	e := csv.NewEncoder()
 	e.Delimiter = delimiter
 	e.LineBreak = lineBreak

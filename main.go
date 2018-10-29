@@ -43,6 +43,7 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "delimiter, d",
+			Value: ",",
 			Usage: "field delimiter for csv, or delimiter positions for fixed-length format",
 		},
 		cli.StringFlag{
@@ -76,11 +77,6 @@ func main() {
 			Name:  "datetime-format, t",
 			Usage: "set datetime format to parse strings",
 		},
-		cli.Float64Flag{
-			Name:  "wait-timeout, w",
-			Value: 10,
-			Usage: "limit of the waiting time in seconds to wait for locked files to be released",
-		},
 		cli.BoolFlag{
 			Name:  "no-header, n",
 			Usage: "import the first line as a record",
@@ -88,6 +84,11 @@ func main() {
 		cli.BoolFlag{
 			Name:  "without-null, a",
 			Usage: "parse empty fields as empty strings",
+		},
+		cli.Float64Flag{
+			Name:  "wait-timeout, w",
+			Value: 10,
+			Usage: "limit of the waiting time in seconds to wait for locked files to be released",
 		},
 		cli.StringFlag{
 			Name:  "write-encoding, E",
@@ -100,10 +101,12 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "format, f",
+			Value: "TEXT",
 			Usage: "output format. one of: CSV|TSV|FIXED|JSON|JSONH|JSONA|GFM|ORG|TEXT",
 		},
 		cli.StringFlag{
 			Name:  "write-delimiter, D",
+			Value: ",",
 			Usage: "field delimiter for CSV,  or delimiter positions for FIXED",
 		},
 		cli.BoolFlag{

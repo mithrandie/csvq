@@ -2,13 +2,12 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/mithrandie/csvq/lib/file"
 	"os"
 	"path/filepath"
 	"reflect"
 	"runtime"
 	"testing"
-
-	"github.com/mithrandie/csvq/lib/file"
 )
 
 func TestEncoding_String(t *testing.T) {
@@ -36,8 +35,8 @@ func TestSetDelimiter(t *testing.T) {
 	flags := GetFlags()
 
 	SetDelimiter("")
-	if flags.Delimiter != UNDEF {
-		t.Errorf("delimiter = %q, expect to set %q for %q", flags.Delimiter, UNDEF, "")
+	if flags.Delimiter != ',' {
+		t.Errorf("delimiter = %q, expect to set %q for %q", flags.Delimiter, ',', "")
 	}
 
 	SetDelimiter("\\t")
@@ -78,8 +77,8 @@ func TestSetDelimiter(t *testing.T) {
 	}
 
 	SetDelimiter("")
-	if flags.Delimiter != UNDEF {
-		t.Errorf("delimiter = %q, expect to set %q for %q", flags.Delimiter, UNDEF, "")
+	if flags.Delimiter != ',' {
+		t.Errorf("delimiter = %q, expect to set %q for %q", flags.Delimiter, ',', "")
 	}
 }
 
@@ -183,9 +182,10 @@ func TestSetRepository(t *testing.T) {
 	}
 
 	dir := filepath.Join("..", "..", "lib", "cmd")
+	absdir, _ := filepath.Abs(dir)
 	SetRepository(dir)
-	if flags.Repository != dir {
-		t.Errorf("repository = %s, expect to set %s for %s", flags.Repository, dir, dir)
+	if flags.Repository != absdir {
+		t.Errorf("repository = %s, expect to set %s for %s", flags.Repository, absdir, dir)
 	}
 
 	expectErr := "repository does not exist"
@@ -248,6 +248,24 @@ func TestSetDatetimeFormat(t *testing.T) {
 	}
 }
 
+func TestSetNoHeader(t *testing.T) {
+	flags := GetFlags()
+
+	SetNoHeader(true)
+	if !flags.NoHeader {
+		t.Errorf("no-header = %t, expect to set %t", flags.NoHeader, true)
+	}
+}
+
+func TestSetWithoutNull(t *testing.T) {
+	flags := GetFlags()
+
+	SetWithoutNull(true)
+	if !flags.WithoutNull {
+		t.Errorf("without-null = %t, expect to set %t", flags.WithoutNull, true)
+	}
+}
+
 func TestSetWaitTimeout(t *testing.T) {
 	flags := GetFlags()
 
@@ -265,24 +283,6 @@ func TestSetWaitTimeout(t *testing.T) {
 
 	if file.WaitTimeout != 15 {
 		t.Errorf("wait timeout in the file package = %f, expect to set %f for %f", file.WaitTimeout, 15.0, f)
-	}
-}
-
-func TestSetNoHeader(t *testing.T) {
-	flags := GetFlags()
-
-	SetNoHeader(true)
-	if !flags.NoHeader {
-		t.Errorf("no-header = %t, expect to set %t", flags.NoHeader, true)
-	}
-}
-
-func TestSetWithoutNull(t *testing.T) {
-	flags := GetFlags()
-
-	SetWithoutNull(true)
-	if !flags.WithoutNull {
-		t.Errorf("without-null = %t, expect to set %t", flags.WithoutNull, true)
 	}
 }
 

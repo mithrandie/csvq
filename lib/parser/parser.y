@@ -193,7 +193,7 @@ import (
 %token<token> FUNCTION AGGREGATE BEGIN RETURN
 %token<token> IGNORE WITHIN
 %token<token> VAR SHOW
-%token<token> TIES NULLS TABLES VIEWS FIELDS CURSORS FUNCTIONS ROWS
+%token<token> TIES NULLS ROWS
 %token<token> ERROR
 %token<token> JSON_ROW JSON_TABLE
 %token<token> COUNT JSON_OBJECT
@@ -815,25 +815,13 @@ command_statement
     {
         $$ = Source{BaseExpr: NewBaseExpr($1), FilePath: $2}
     }
-    | SHOW TABLES
+    | SHOW identifier
     {
-        $$ = ShowObjects{BaseExpr: NewBaseExpr($1), Type: $2.Token}
+        $$ = ShowObjects{BaseExpr: NewBaseExpr($1), Type: $2}
     }
-    | SHOW VIEWS
+    | SHOW identifier FROM identifier
     {
-        $$ = ShowObjects{BaseExpr: NewBaseExpr($1), Type: $2.Token}
-    }
-    | SHOW CURSORS
-    {
-        $$ = ShowObjects{BaseExpr: NewBaseExpr($1), Type: $2.Token}
-    }
-    | SHOW FUNCTIONS
-    {
-        $$ = ShowObjects{BaseExpr: NewBaseExpr($1), Type: $2.Token}
-    }
-    | SHOW FIELDS FROM identifier
-    {
-        $$ = ShowFields{BaseExpr: NewBaseExpr($1), Table: $4}
+        $$ = ShowFields{BaseExpr: NewBaseExpr($1), Type: $2, Table: $4}
     }
 
 trigger_statement
@@ -2054,27 +2042,7 @@ identifier
     {
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }
-    | TABLES
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | VIEWS
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | CURSORS
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | FUNCTIONS
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
     | ROWS
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | FIELDS
     {
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }

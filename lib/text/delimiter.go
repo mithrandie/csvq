@@ -5,6 +5,8 @@ import (
 	"bytes"
 	"github.com/mithrandie/csvq/lib/cmd"
 	"io"
+	"strconv"
+	"strings"
 	"unicode"
 )
 
@@ -154,6 +156,18 @@ func (p DelimiterPositions) Equal(p2 DelimiterPositions) bool {
 		}
 	}
 	return true
+}
+
+func (p DelimiterPositions) String() string {
+	if p == nil {
+		return "SPACES"
+	}
+
+	slist := make([]string, 0, len(p))
+	for _, v := range p {
+		slist = append(slist, strconv.Itoa(v))
+	}
+	return "[" + strings.Join(slist, ", ") + "]"
 }
 
 type Delimiter struct {

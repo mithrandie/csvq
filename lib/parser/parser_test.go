@@ -3949,46 +3949,11 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "show tables",
-		Output: []Statement{
-			ShowObjects{
-				BaseExpr: &BaseExpr{line: 1, char: 1},
-				Type:     TABLES,
-			},
-		},
-	},
-	{
-		Input: "show views",
-		Output: []Statement{
-			ShowObjects{
-				BaseExpr: &BaseExpr{line: 1, char: 1},
-				Type:     VIEWS,
-			},
-		},
-	},
-	{
-		Input: "show cursors",
-		Output: []Statement{
-			ShowObjects{
-				BaseExpr: &BaseExpr{line: 1, char: 1},
-				Type:     CURSORS,
-			},
-		},
-	},
-	{
-		Input: "show functions",
-		Output: []Statement{
-			ShowObjects{
-				BaseExpr: &BaseExpr{line: 1, char: 1},
-				Type:     FUNCTIONS,
-			},
-		},
-	},
-	{
 		Input: "show fields from table1",
 		Output: []Statement{
 			ShowFields{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Type:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "fields"},
 				Table:    Identifier{BaseExpr: &BaseExpr{line: 1, char: 18}, Literal: "table1"},
 			},
 		},

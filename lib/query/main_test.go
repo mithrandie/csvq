@@ -99,11 +99,12 @@ func initFlag() {
 
 	cmd.SetLocation(TestLocation)
 	flags := cmd.GetFlags()
-	flags.Delimiter = cmd.UNDEF
+	flags.Delimiter = ','
 	flags.Encoding = cmd.UTF8
 	flags.LineBreak = cmd.LF
 	flags.Repository = "."
 	flags.DatetimeFormat = ""
+	flags.WaitTimeout = 15
 	flags.NoHeader = false
 	flags.WithoutNull = false
 	flags.WriteEncoding = cmd.UTF8
@@ -111,6 +112,7 @@ func initFlag() {
 	flags.WriteDelimiter = ','
 	flags.WithoutHeader = false
 	flags.PrettyPrint = false
+	flags.Color = false
 	flags.Quiet = false
 	flags.CPU = cpu
 	flags.Stats = false

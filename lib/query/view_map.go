@@ -32,15 +32,6 @@ func (list TemporaryViewScopes) Get(name parser.Identifier) (*View, error) {
 	return nil, NewTableNotLoadedError(name)
 }
 
-func (list TemporaryViewScopes) GetHeader(name parser.Identifier) (Header, error) {
-	for _, m := range list {
-		if header, err := m.GetHeader(name); err == nil {
-			return header, nil
-		}
-	}
-	return nil, NewTableNotLoadedError(name)
-}
-
 func (list TemporaryViewScopes) GetWithInternalId(name parser.Identifier) (*View, error) {
 	for _, m := range list {
 		if view, err := m.GetWithInternalId(name); err == nil {
@@ -76,7 +67,7 @@ func (list TemporaryViewScopes) Store() {
 		for _, view := range m {
 			view.FileInfo.InitialRecordSet = view.RecordSet.Copy()
 			view.FileInfo.InitialHeader = view.Header.Copy()
-			Log(fmt.Sprintf("Commit: restore point of view %q is created.", view.FileInfo.Path), cmd.GetFlags().Quiet)
+			Log(color.Info(fmt.Sprintf("Commit: restore point of view %q is created.", view.FileInfo.Path)), cmd.GetFlags().Quiet)
 		}
 	}
 }
@@ -86,38 +77,25 @@ func (list TemporaryViewScopes) Restore() {
 		for _, view := range m {
 			view.RecordSet = view.FileInfo.InitialRecordSet.Copy()
 			view.Header = view.FileInfo.InitialHeader.Copy()
-			Log(fmt.Sprintf("Rollback: view %q is restored.", view.FileInfo.Path), cmd.GetFlags().Quiet)
+			Log(color.Info(fmt.Sprintf("Rollback: view %q is restored.", view.FileInfo.Path)), cmd.GetFlags().Quiet)
 		}
 	}
 }
 
-func (list TemporaryViewScopes) List() []string {
-	var viewdefs []string
-	var names []string
+func (list TemporaryViewScopes) All() ViewMap {
+	all := make(ViewMap, 10)
 
 	for _, m := range list {
-		for _, view := range m {
+		for key, view := range m {
 			if !view.FileInfo.IsTemporary {
 				continue
 			}
-			name := view.FileInfo.Path
-			if !InStrSlice(name, names) {
-				c := view.Header.TableColumnNames()
-				clist := make([]string, 0, len(c))
-				for _, n := range c {
-					clist = append(clist, color.Yellow(n))
-				}
-				viewdefs = append(
-					viewdefs,
-					color.GreenB(name)+" ("+strings.Join(clist, ", ")+")",
-				)
-				names = append(names, name)
+			if _, ok := all[key]; !ok {
+				all[key] = view
 			}
 		}
 	}
-	sort.Strings(viewdefs)
-
-	return viewdefs
+	return all
 }
 
 type ViewMap map[string]*View
@@ -136,14 +114,6 @@ func (m ViewMap) Get(fpath parser.Identifier) (*View, error) {
 		return view.Copy(), nil
 	}
 	return nil, NewTableNotLoadedError(fpath)
-}
-
-func (m ViewMap) GetHeader(name parser.Identifier) (Header, error) {
-	ufpath := strings.ToUpper(name.Literal)
-	if view, ok := m[ufpath]; ok {
-		return view.Header, nil
-	}
-	return nil, NewTableNotLoadedError(name)
 }
 
 func (m ViewMap) GetWithInternalId(fpath parser.Identifier) (*View, error) {
@@ -191,6 +161,20 @@ func (m ViewMap) Replace(view *View) error {
 		return nil
 	}
 	return NewTableNotLoadedError(parser.Identifier{Literal: view.FileInfo.Path})
+}
+
+func (m ViewMap) Keys() []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+func (m ViewMap) SortedKeys() []string {
+	keys := m.Keys()
+	sort.Strings(keys)
+	return keys
 }
 
 func (m ViewMap) DisposeTemporaryTable(table parser.Identifier) error {

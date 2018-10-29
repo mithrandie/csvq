@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"github.com/mithrandie/csvq/lib/color"
 	"time"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -56,7 +57,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 
 	var err error
 
-	var results []Result
+	var results []ExecResult
 	var view *View
 	var views []*View
 	var printstr string
@@ -127,7 +128,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			proc.MeasurementStart = time.Now()
 		}
 		if view, err = Insert(stmt.(parser.InsertQuery), proc.Filter); err == nil {
-			results = []Result{
+			results = []ExecResult{
 				{
 					Type:          InsertQuery,
 					FileInfo:      view.FileInfo,
@@ -146,9 +147,9 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			proc.MeasurementStart = time.Now()
 		}
 		if views, err = Update(stmt.(parser.UpdateQuery), proc.Filter); err == nil {
-			results = make([]Result, len(views))
+			results = make([]ExecResult, len(views))
 			for i, v := range views {
-				results[i] = Result{
+				results[i] = ExecResult{
 					Type:          UpdateQuery,
 					FileInfo:      v.FileInfo,
 					OperatedCount: v.OperatedRecords,
@@ -166,9 +167,9 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			proc.MeasurementStart = time.Now()
 		}
 		if views, err = Delete(stmt.(parser.DeleteQuery), proc.Filter); err == nil {
-			results = make([]Result, len(views))
+			results = make([]ExecResult, len(views))
 			for i, v := range views {
-				results[i] = Result{
+				results[i] = ExecResult{
 					Type:          DeleteQuery,
 					FileInfo:      v.FileInfo,
 					OperatedCount: v.OperatedRecords,
@@ -183,7 +184,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		}
 	case parser.CreateTable:
 		if view, err = CreateTable(stmt.(parser.CreateTable), proc.Filter); err == nil {
-			results = []Result{
+			results = []ExecResult{
 				{
 					Type:     CreateTableQuery,
 					FileInfo: view.FileInfo,
@@ -195,7 +196,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		}
 	case parser.AddColumns:
 		if view, err = AddColumns(stmt.(parser.AddColumns), proc.Filter); err == nil {
-			results = []Result{
+			results = []ExecResult{
 				{
 					Type:          AddColumnsQuery,
 					FileInfo:      view.FileInfo,
@@ -208,7 +209,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		}
 	case parser.DropColumns:
 		if view, err = DropColumns(stmt.(parser.DropColumns), proc.Filter); err == nil {
-			results = []Result{
+			results = []ExecResult{
 				{
 					Type:          DropColumnsQuery,
 					FileInfo:      view.FileInfo,
@@ -221,7 +222,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		}
 	case parser.RenameColumn:
 		if view, err = RenameColumn(stmt.(parser.RenameColumn), proc.Filter); err == nil {
-			results = []Result{
+			results = []ExecResult{
 				{
 					Type:          RenameColumnQuery,
 					FileInfo:      view.FileInfo,
@@ -320,7 +321,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 	}
 
 	if results != nil {
-		Results = append(Results, results...)
+		ExecResults = append(ExecResults, results...)
 	}
 
 	if err != nil {
@@ -461,6 +462,6 @@ func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, 
 
 func (proc *Procedure) showExecutionTime() {
 	exectime := cmd.HumarizeNumber(fmt.Sprintf("%f", time.Since(proc.MeasurementStart).Seconds()))
-	stats := fmt.Sprintf("Query Execution Time: %s seconds", exectime)
+	stats := fmt.Sprintf(color.BlueB(" Query Execution Time: ")+"%s seconds", exectime)
 	Log(stats, false)
 }

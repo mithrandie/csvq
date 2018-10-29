@@ -3655,7 +3655,7 @@ func TestCommit(t *testing.T) {
 		},
 	}
 
-	Results = []Result{
+	ExecResults = []ExecResult{
 		{
 			Type: CreateTableQuery,
 			FileInfo: &FileInfo{
@@ -3697,7 +3697,7 @@ func TestCommit(t *testing.T) {
 func TestRollback(t *testing.T) {
 	cmd.SetQuiet(false)
 
-	Results = []Result{
+	ExecResults = []ExecResult{
 		{
 			Type: CreateTableQuery,
 			FileInfo: &FileInfo{

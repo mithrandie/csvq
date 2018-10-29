@@ -8,12 +8,10 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/value"
 	"io"
-	"strconv"
-	"strings"
 )
 
 type FixedLengthReader struct {
-	DelimiterPositions []int
+	DelimiterPositions DelimiterPositions
 	WithoutNull        bool
 	Encoding           cmd.Encoding
 
@@ -75,7 +73,7 @@ func (r *FixedLengthReader) parseRecord(withoutNull bool) ([]value.Field, error)
 
 	for _, endPos := range r.DelimiterPositions {
 		if endPos < 0 || endPos <= delimiterPos {
-			return nil, errors.New(fmt.Sprintf("invalid delimiter position: %s", FormatIntSlice(r.DelimiterPositions)))
+			return nil, errors.New(fmt.Sprintf("invalid delimiter position: %s", r.DelimiterPositions))
 		}
 		delimiterPos = endPos
 
@@ -170,12 +168,4 @@ func (r *FixedLengthReader) parseRecord(withoutNull bool) ([]value.Field, error)
 	}
 
 	return record, nil
-}
-
-func FormatIntSlice(list []int) string {
-	slist := make([]string, 0, len(list))
-	for _, v := range list {
-		slist = append(slist, strconv.Itoa(v))
-	}
-	return "[" + strings.Join(slist, ", ") + "]"
 }
