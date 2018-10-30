@@ -96,12 +96,12 @@ var sjisSingleByteTable = &unicode.RangeTable{
 func StringWidth(s string) int {
 	l := 0
 	for _, r := range s {
-		l = l + CharWidth(r)
+		l = l + RuneWidth(r)
 	}
 	return l
 }
 
-func CharWidth(r rune) int {
+func RuneWidth(r rune) int {
 	switch {
 	case unicode.In(r, fullWidthTable):
 		return 2
@@ -111,7 +111,16 @@ func CharWidth(r rune) int {
 	return 1
 }
 
-func SJISCharByteSize(r rune) int {
+func RuneByteSize(r rune, encoding cmd.Encoding) int {
+	switch encoding {
+	case cmd.SJIS:
+		return SJISRuneByteSize(r)
+	default:
+		return len(string(r))
+	}
+}
+
+func SJISRuneByteSize(r rune) int {
 	switch {
 	case unicode.In(r, sjisSingleByteTable):
 		return 1
@@ -122,12 +131,12 @@ func SJISCharByteSize(r rune) int {
 func ByteSize(s string, encoding cmd.Encoding) int {
 	size := 0
 	switch encoding {
-	case cmd.SJIS:
-		for _, c := range s {
-			size = size + SJISCharByteSize(c)
-		}
-	default:
+	case cmd.UTF8:
 		size = len(s)
+	default:
+		for _, c := range s {
+			size = size + RuneByteSize(c, encoding)
+		}
 	}
 	return size
 }

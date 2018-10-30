@@ -317,7 +317,7 @@ func (d *Delimiter) searchSpacesInLine() (RecordSpaces, error) {
 
 		switch d.Encoding {
 		case cmd.SJIS:
-			linePos = linePos + SJISCharByteSize(c)
+			linePos = linePos + SJISRuneByteSize(c)
 		default:
 			linePos = linePos + s
 		}

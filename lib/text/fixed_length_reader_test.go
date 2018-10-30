@@ -235,7 +235,7 @@ var fixedLengthReaderReadAllTests = []struct {
 		DelimiterPositions: []int{5, 10, 15},
 		WithoutNull:        false,
 		Encoding:           cmd.UTF8,
-		Error:              "cannot delimit lines at the position of byte array of a character",
+		Error:              "cannot delimit lines in a byte array of a character",
 	},
 	{
 		Name:               "ReadAll from SJIS Text with position error",
@@ -243,7 +243,7 @@ var fixedLengthReaderReadAllTests = []struct {
 		DelimiterPositions: []int{5, 10, 15},
 		WithoutNull:        false,
 		Encoding:           cmd.SJIS,
-		Error:              "cannot delimit lines at the position of byte array of a character",
+		Error:              "cannot delimit lines in a byte array of a character",
 	},
 }
 

@@ -109,13 +109,13 @@ func (r *FixedLengthReader) parseRecord(withoutNull bool) ([]value.Field, error)
 
 			switch r.Encoding {
 			case cmd.SJIS:
-				recordPos = recordPos + SJISCharByteSize(c)
+				recordPos = recordPos + SJISRuneByteSize(c)
 			default:
 				recordPos = recordPos + s
 			}
 
 			if delimiterPos < recordPos {
-				return nil, errors.New("cannot delimit lines at the position of byte array of a character")
+				return nil, errors.New("cannot delimit lines in a byte array of a character")
 			}
 
 			r.buf.WriteRune(c)

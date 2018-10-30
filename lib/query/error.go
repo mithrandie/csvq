@@ -2,11 +2,9 @@ package query
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
-
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
+	"strconv"
 )
 
 const (
@@ -337,13 +335,14 @@ type FunctionArgumentLengthError struct {
 func NewFunctionArgumentLengthError(expr parser.QueryExpression, funcname string, argslen []int) error {
 	var argstr string
 	if 1 < len(argslen) {
-		lastarg := FormatCount(argslen[len(argslen)-1], "argument")
-		strs := make([]string, len(argslen))
-		for i := 0; i < len(argslen)-1; i++ {
-			strs[i] = strconv.Itoa(argslen[i])
+		first := argslen[0]
+		last := argslen[len(argslen)-1]
+		lastarg := FormatCount(last, "argument")
+		if len(argslen) == 2 {
+			argstr = strconv.Itoa(first) + " or " + lastarg
+		} else {
+			argstr = strconv.Itoa(first) + " to " + lastarg
 		}
-		strs[len(argslen)-1] = lastarg
-		argstr = strings.Join(strs, " or ")
 	} else {
 		argstr = FormatCount(argslen[0], "argument")
 		if 0 < argslen[0] {
