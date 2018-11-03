@@ -538,37 +538,3 @@ func TestSetStats(t *testing.T) {
 		t.Errorf("stats = %t, expect to set %t", flags.Stats, true)
 	}
 }
-
-func TestParseEncoding(t *testing.T) {
-	e, err := ParseEncoding("")
-	if err != nil {
-		t.Errorf("unexpected error: %q", err.Error())
-	}
-	if e != UTF8 {
-		t.Errorf("encoding = %s, expect to set %s for %s", e, UTF8, "")
-	}
-
-	e, err = ParseEncoding("utf8")
-	if err != nil {
-		t.Errorf("unexpected error: %q", err.Error())
-	}
-	if e != UTF8 {
-		t.Errorf("encoding = %s, expect to set %s for %s", e, UTF8, "utf8")
-	}
-
-	e, err = ParseEncoding("sjis")
-	if err != nil {
-		t.Errorf("unexpected error: %q", err.Error())
-	}
-	if e != SJIS {
-		t.Errorf("encoding = %s, expect to set %s for %s", e, SJIS, "sjis")
-	}
-
-	expectErr := "encoding must be one of UTF8|SJIS"
-	_, err = ParseEncoding("error")
-	if err == nil {
-		t.Errorf("no error, want error %q for %s", expectErr, "error")
-	} else if err.Error() != expectErr {
-		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "error")
-	}
-}

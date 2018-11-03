@@ -1529,8 +1529,8 @@ var showFieldsTests = []struct {
 			},
 		},
 		Expect: "\n" +
-			strings.Repeat(" ", (calcShowFieldsWidth("show_fields_create.csv", 10)-(10+len("show_fields_create.csv")))/2) + "Fields in show_fields_create.csv\n" +
-			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv", 10)) + "\n" +
+			strings.Repeat(" ", (calcShowFieldsWidth("show_fields_create.csv", "show_fields_create.csv", 10)-(10+len("show_fields_create.csv")))/2) + "Fields in show_fields_create.csv\n" +
+			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv", "show_fields_create.csv", 10)) + "\n" +
 			" Type: Table\n" +
 			" Path: " + GetTestFilePath("show_fields_create.csv") + "\n" +
 			" Format: CSV     Delimiter: ','\n" +
@@ -1569,8 +1569,8 @@ var showFieldsTests = []struct {
 			},
 		},
 		Expect: "\n" +
-			strings.Repeat(" ", (calcShowFieldsWidth("show_fields_update.csv", 10)-(10+len("show_fields_update.csv")))/2) + "Fields in show_fields_update.csv\n" +
-			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv", 10)) + "\n" +
+			strings.Repeat(" ", (calcShowFieldsWidth("show_fields_update.csv", "show_fields_update.csv", 10)-(10+len("show_fields_update.csv")))/2) + "Fields in show_fields_update.csv\n" +
+			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv", "show_fields_update.csv", 10)) + "\n" +
 			" Type: Table\n" +
 			" Path: " + GetTestFilePath("show_fields_update.csv") + "\n" +
 			" Format: CSV     Delimiter: ','\n" +
@@ -1598,10 +1598,10 @@ var showFieldsTests = []struct {
 	},
 }
 
-func calcShowFieldsWidth(fileName string, prefixLen int) int {
+func calcShowFieldsWidth(fileName string, fileNameInTitle string, prefixLen int) int {
 	w := 47
-	pathLen := 7 + len(GetTestFilePath(fileName))
-	titleLen := prefixLen + len(fileName)
+	pathLen := 8 + len(GetTestFilePath(fileName))
+	titleLen := prefixLen + len(fileNameInTitle)
 
 	if w < titleLen {
 		w = titleLen

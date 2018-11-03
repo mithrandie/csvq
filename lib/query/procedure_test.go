@@ -564,8 +564,8 @@ var procedureExecuteStatementTests = []struct {
 			Value:     parser.NewStringValue("\t"),
 		},
 		Logs: "\n" +
-			strings.Repeat(" ", (calcShowFieldsWidth("table1.csv", 22)-(22+len("table1.csv")))/2) + "Attributes Updated in table1.csv\n" +
-			strings.Repeat("-", calcShowFieldsWidth("table1.csv", 22)) + "\n" +
+			strings.Repeat(" ", (calcShowFieldsWidth("table1.csv", "table1.csv", 22)-(22+len("table1.csv")))/2) + "Attributes Updated in table1.csv\n" +
+			strings.Repeat("-", calcShowFieldsWidth("table1.csv", "table1.csv", 22)) + "\n" +
 			" Path: " + GetTestFilePath("table1.csv") + "\n" +
 			" Format: TSV     Delimiter: '\\t'\n" +
 			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
@@ -676,8 +676,8 @@ var procedureExecuteStatementTests = []struct {
 			Table: parser.Identifier{Literal: "table1"},
 		},
 		Logs: "\n" +
-			strings.Repeat(" ", (calcShowFieldsWidth("show_fields_update.csv", 10)-(10+len("table1")))/2) + "Fields in table1\n" +
-			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv", 10)) + "\n" +
+			strings.Repeat(" ", (calcShowFieldsWidth("table1.csv", "table1", 10)-(10+len("table1")))/2) + "Fields in table1\n" +
+			strings.Repeat("-", calcShowFieldsWidth("table1.csv", "table1", 10)) + "\n" +
 			" Type: Table\n" +
 			" Path: " + GetTestFilePath("table1.csv") + "\n" +
 			" Format: CSV     Delimiter: ','\n" +
