@@ -3,6 +3,7 @@ package query
 import (
 	"fmt"
 	"github.com/mithrandie/csvq/lib/color"
+	"strings"
 	"time"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -306,8 +307,8 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		}
 	case parser.Trigger:
 		trigger := stmt.(parser.Trigger)
-		switch trigger.Token {
-		case parser.ERROR:
+		switch strings.ToUpper(trigger.Event.Literal) {
+		case "ERROR":
 			var message string
 			if trigger.Message != nil {
 				if pt, ok := trigger.Message.(parser.PrimitiveType); ok && trigger.Code == nil && pt.IsInteger() {
@@ -324,6 +325,8 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			if err == nil {
 				err = NewUserTriggeredError(trigger, message)
 			}
+		default:
+			err = NewInvalidEventNameError(trigger.Event)
 		}
 	}
 

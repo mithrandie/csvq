@@ -641,7 +641,7 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.Trigger{
-			Token:   parser.ERROR,
+			Event:   parser.Identifier{Literal: "error"},
 			Message: parser.NewStringValue("user error"),
 			Code:    value.NewInteger(200),
 		},
@@ -650,11 +650,19 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.Trigger{
-			Token:   parser.ERROR,
+			Event:   parser.Identifier{Literal: "error"},
 			Message: parser.NewIntegerValue(200),
 		},
 		Error:     "[L:- C:-] ",
 		ErrorCode: 200,
+	},
+	{
+		Input: parser.Trigger{
+			Event:   parser.Identifier{Literal: "invalid"},
+			Message: parser.NewIntegerValue(200),
+		},
+		Error:     "[L:- C:-] invalid is an unknown event",
+		ErrorCode: 1,
 	},
 	{
 		Input: parser.ShowObjects{

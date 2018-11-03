@@ -1395,7 +1395,7 @@ type FlowControl struct {
 
 type Trigger struct {
 	*BaseExpr
-	Token   int
+	Event   Identifier
 	Message QueryExpression
 	Code    value.Primary
 }

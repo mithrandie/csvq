@@ -92,6 +92,7 @@ const (
 	ErrorInvalidTableAttributeName            = "table attribute %s does not exist"
 	ErrorTableAttributeValueNotAllowedFormat  = "%s for %s is not allowed"
 	ErrorInvalidTableAttributeValue           = "%s"
+	ErrorInvalidEventName                     = "%s is an unknown event"
 	ErrorInternalRecordIdNotExist             = "internal record id does not exist"
 	ErrorInternalRecordIdEmpty                = "internal record id is empty"
 	ErrorFieldLengthNotMatch                  = "field length does not match"
@@ -1032,6 +1033,16 @@ type InvalidTableAttributeValueError struct {
 func NewInvalidTableAttributeValueError(expr parser.SetTableAttribute, message string) error {
 	return &InvalidTableAttributeValueError{
 		NewBaseError(expr, fmt.Sprintf(ErrorInvalidTableAttributeValue, message)),
+	}
+}
+
+type InvalidEventNameError struct {
+	*BaseError
+}
+
+func NewInvalidEventNameError(expr parser.Identifier) error {
+	return &InvalidEventNameError{
+		NewBaseError(expr, fmt.Sprintf(ErrorInvalidEventName, expr)),
 	}
 }
 

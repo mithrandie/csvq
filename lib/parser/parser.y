@@ -194,7 +194,6 @@ import (
 %token<token> IGNORE WITHIN
 %token<token> VAR SHOW
 %token<token> TIES NULLS ROWS
-%token<token> ERROR
 %token<token> JSON_ROW JSON_TABLE
 %token<token> COUNT JSON_OBJECT
 %token<token> AGGREGATE_FUNCTION LIST_FUNCTION ANALYTIC_FUNCTION FUNCTION_NTH FUNCTION_WITH_INS
@@ -837,17 +836,17 @@ command_statement
     }
 
 trigger_statement
-    : TRIGGER ERROR
+    : TRIGGER identifier
     {
-        $$ = Trigger{BaseExpr: NewBaseExpr($1), Token: $2.Token}
+        $$ = Trigger{BaseExpr: NewBaseExpr($1), Event: $2}
     }
-    | TRIGGER ERROR value
+    | TRIGGER identifier value
     {
-        $$ = Trigger{BaseExpr: NewBaseExpr($1), Token: $2.Token, Message: $3}
+        $$ = Trigger{BaseExpr: NewBaseExpr($1), Event: $2, Message: $3}
     }
-    | TRIGGER ERROR INTEGER value
+    | TRIGGER identifier INTEGER value
     {
-        $$ = Trigger{BaseExpr: NewBaseExpr($1), Token: $2.Token, Message: $4, Code: value.NewIntegerFromString($3.Literal)}
+        $$ = Trigger{BaseExpr: NewBaseExpr($1), Event: $2, Message: $4, Code: value.NewIntegerFromString($3.Literal)}
     }
 
 select_query
@@ -2055,26 +2054,6 @@ identifier
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }
     | ROWS
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | JSON_ROW
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | JSON_TABLE
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | COUNT
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | JSON_OBJECT
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | ERROR
     {
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }
