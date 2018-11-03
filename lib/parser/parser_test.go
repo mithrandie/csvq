@@ -3876,6 +3876,17 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "alter table table1 set format to json",
+		Output: []Statement{
+			SetTableAttribute{
+				BaseExpr:  &BaseExpr{line: 1, char: 1},
+				Table:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
+				Attribute: Identifier{BaseExpr: &BaseExpr{line: 1, char: 24}, Literal: "format"},
+				Value:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "json"},
+			},
+		},
+	},
+	{
 		Input: "commit",
 		Output: []Statement{
 			TransactionControl{
@@ -3947,6 +3958,16 @@ var parseTests = []struct {
 				BaseExpr: &BaseExpr{line: 1, char: 1},
 				Name:     "@@delimiter",
 				Value:    NewStringValue(","),
+			},
+		},
+	},
+	{
+		Input: "set @@encoding = sjis",
+		Output: []Statement{
+			SetFlag{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Name:     "@@encoding",
+				Value:    Identifier{BaseExpr: &BaseExpr{line: 1, char: 18}, Literal: "sjis"},
 			},
 		},
 	},

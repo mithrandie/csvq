@@ -108,9 +108,16 @@ func Source(expr parser.Source, filter *Filter) ([]parser.Statement, error) {
 }
 
 func SetFlag(expr parser.SetFlag, filter *Filter) (string, error) {
-	p, err := filter.Evaluate(expr.Value)
-	if err != nil {
-		return "", err
+	var p value.Primary
+	var err error
+
+	if ident, ok := expr.Value.(parser.Identifier); ok {
+		p = value.NewString(ident.Literal)
+	} else {
+		p, err = filter.Evaluate(expr.Value)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	switch strings.ToUpper(expr.Name) {

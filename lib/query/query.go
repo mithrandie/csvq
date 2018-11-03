@@ -854,9 +854,14 @@ func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (st
 		return log, NewNotTableError(query.Table)
 	}
 
-	p, err := filter.Evaluate(query.Value)
-	if err != nil {
-		return log, err
+	var p value.Primary
+	if ident, ok := query.Value.(parser.Identifier); ok {
+		p = value.NewString(ident.Literal)
+	} else {
+		p, err = filter.Evaluate(query.Value)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	fileInfo := view.FileInfo

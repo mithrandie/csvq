@@ -3758,6 +3758,21 @@ var setTableAttributeTests = []struct {
 		},
 	},
 	{
+		Name: "Set Encoding to SJIS with Identifier",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "encoding"},
+			Value:     parser.Identifier{Literal: "sjis"},
+		},
+		Expect: &FileInfo{
+			Path:      GetTestFilePath("table1.csv"),
+			Delimiter: ',',
+			Format:    cmd.CSV,
+			Encoding:  cmd.SJIS,
+			LineBreak: cmd.LF,
+		},
+	},
+	{
 		Name: "Set Encoding Error",
 		Query: parser.SetTableAttribute{
 			Table:     parser.Identifier{Literal: "table1.csv"},

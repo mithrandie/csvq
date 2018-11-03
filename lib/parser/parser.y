@@ -591,6 +591,10 @@ table_operation_statement
     {
         $$ = RenameColumn{Table: $3, Old: $5, New: $7}
     }
+    | ALTER TABLE table_identifier SET identifier TO identifier
+    {
+        $$ = SetTableAttribute{BaseExpr: NewBaseExpr($1), Table: $3, Attribute: $5, Value: $7}
+    }
     | ALTER TABLE table_identifier SET identifier TO value
     {
         $$ = SetTableAttribute{BaseExpr: NewBaseExpr($1), Table: $3, Attribute: $5, Value: $7}
@@ -791,7 +795,11 @@ cursor_status
     }
 
 command_statement
-    : SET FLAG '=' value
+    : SET FLAG '=' identifier
+    {
+        $$ = SetFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal, Value: $4}
+    }
+    | SET FLAG '=' value
     {
         $$ = SetFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal, Value: $4}
     }

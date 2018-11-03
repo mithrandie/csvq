@@ -396,6 +396,14 @@ var setFlagTests = []struct {
 		Result: " @@STATS: true",
 	},
 	{
+		Name: "Set Encoding with Identifier",
+		Expr: parser.SetFlag{
+			Name:  "@@encoding",
+			Value: parser.Identifier{Literal: "sjis"},
+		},
+		Result: " @@ENCODING: SJIS",
+	},
+	{
 		Name: "Set Delimiter Evaluation Error",
 		Expr: parser.SetFlag{
 			Name:  "@@delimiter",
