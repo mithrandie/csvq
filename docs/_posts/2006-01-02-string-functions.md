@@ -19,6 +19,7 @@ category: reference
 | [HEX_DECODE](#hex_decode) | Returns the string represented by the hexadecimal encoding |
 | [LEN](#len) | Returns the character length of the string |
 | [BYTE_LEN](#byte_len) | Returns the byte length in utf-8 encoding of the string |
+| [WIDTH](#width) | Returns the string width |
 | [LPAD](#lpad) | Returns the string left-side padded |
 | [RPAD](#rpad) | Returns the string right-side padded |
 | [SUBSTR](#substr) | Returns a substring of the string |
@@ -233,7 +234,27 @@ Return the character length of the string _str_.
 {: #byte_len}
 
 ```
-BYTE_LEN(str)
+BYTE_LEN(str [, encoding])
+```
+
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_encoding_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+  "UTF8" or "SJIS". The default is "UTF8".
+
+_return_
+: [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+Return the byte length in utf-8 encoding of the string _str_.
+
+### WIDTH
+{: #width}
+
+```
+WIDTH(str)
 ```
 
 _str_
@@ -242,13 +263,13 @@ _str_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the byte length in utf-8 encoding of the string _str_.
+Return the string width. Half-width characters are counted as 1, and full-width characters are counted as 2.
 
 ### LPAD
 {: #lpad}
 
 ```
-LPAD(str, len, padstr)
+LPAD(str, len, padstr [, pad_type, encoding])
 ```
 
 _str_
@@ -259,6 +280,16 @@ _len_
 
 _padstr_
 : [string]({{ '/reference/value.html#string' | relative_url }})
+
+_pad_type_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+  "LEN", "BYTE" or "WIDTH". The default is "LEN".
+
+_encoding_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+  "UTF8" or "SJIS". The default is "UTF8".
 
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
@@ -269,7 +300,7 @@ Return the string _str_ padded with leading _padstr_ to a length specified by _l
 {: #rpad}
 
 ```
-RPAD(str, len, padstr)
+RPAD(str, len, padstr [, pad_type, encoding])
 ```
 
 _str_
@@ -280,6 +311,16 @@ _len_
 
 _padstr_
 : [string]({{ '/reference/value.html#string' | relative_url }})
+
+_pad_type_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+  "LEN", "BYTE" or "WIDTH". The default is "LEN".
+
+_encoding_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+  "UTF8" or "SJIS". The default is "UTF8".
 
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})

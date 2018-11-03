@@ -24,7 +24,7 @@ func main() {
 
 	app.Name = "csvq"
 	app.Usage = "SQL like query language for csv"
-	app.ArgsUsage = "[\"query\"|\"statements\"|argument]"
+	app.ArgsUsage = "[\"query\"|argument]"
 	app.Version = version
 
 	app.OnUsageError = func(c *cli.Context, err error, isSubcommand bool) error {
@@ -43,7 +43,7 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "repository, r",
-			Usage: "directory path where files are located",
+			Usage: "directory `PATH` where files are located",
 		},
 		cli.StringFlag{
 			Name:  "timezone, z",
@@ -52,7 +52,7 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "datetime-format, t",
-			Usage: "set datetime format to parse strings",
+			Usage: "datetime format to parse strings",
 		},
 		cli.Float64Flag{
 			Name:  "wait-timeout, w",
@@ -61,7 +61,7 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "source, s",
-			Usage: "load query from `FILE`",
+			Usage: "load query or statements from `FILE`",
 		},
 		cli.StringFlag{
 			Name:  "delimiter, d",
@@ -70,7 +70,7 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "json-query, j",
-			Usage: "`JSON_QUERY` for JSON data passed from standard input",
+			Usage: "`QUERY` for JSON data passed from standard input",
 		},
 		cli.StringFlag{
 			Name:  "encoding, e",
@@ -87,35 +87,35 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "out, o",
-			Usage: "write output to `FILE`",
+			Usage: "export query results and logs to `FILE`",
 		},
 		cli.StringFlag{
 			Name:  "format, f",
 			Value: "TEXT",
-			Usage: "output format. one of: CSV|TSV|FIXED|JSON|JSONH|JSONA|GFM|ORG|TEXT",
+			Usage: "format of query results. one of: CSV|TSV|FIXED|JSON|JSONH|JSONA|GFM|ORG|TEXT",
 		},
 		cli.StringFlag{
 			Name:  "write-encoding, E",
 			Value: "UTF8",
-			Usage: "file encoding. one of: UTF8|SJIS",
+			Usage: "character encoding of query results. one of: UTF8|SJIS",
 		},
 		cli.StringFlag{
 			Name:  "write-delimiter, D",
 			Value: ",",
-			Usage: "field delimiter for CSV, or delimiter positions for FIXED",
+			Usage: "field delimiter or delimiter positions in query results",
 		},
 		cli.BoolFlag{
 			Name:  "without-header, N",
-			Usage: "when the file format is specified as CSV or TSV, write without the header line",
+			Usage: "write without the header line in query results",
 		},
 		cli.StringFlag{
 			Name:  "line-break, l",
 			Value: "LF",
-			Usage: "line break. one of: CRLF|LF|CR",
+			Usage: "line break in query results. one of: CRLF|LF|CR",
 		},
 		cli.BoolFlag{
 			Name:  "pretty-print, P",
-			Usage: "make JSON output easier to read",
+			Usage: "make JSON output easier to read in query results",
 		},
 		cli.BoolFlag{
 			Name:  "color, c",
@@ -128,7 +128,7 @@ func main() {
 		cli.IntFlag{
 			Name:  "cpu, p",
 			Value: defaultCPU,
-			Usage: "hint for the number of cpu cores to be used. 1 - number of cpu cores",
+			Usage: "hint for the number of cpu cores to be used",
 		},
 		cli.BoolFlag{
 			Name:  "stats, x",

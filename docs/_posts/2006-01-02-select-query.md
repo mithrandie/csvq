@@ -115,6 +115,7 @@ table
 
 table_entity
   : table_name
+  | table_object
   | (select_query)
   | JSON_TABLE(json_query, json_file)
   | JSON_TABLE(json_query, json_data)
@@ -131,21 +132,32 @@ join
 join_condition
   : ON condition
   | USING (column_name [, column_name, ...])
+
+table_object
+  : CSV(delimiter, table_name [, encoding, no_header, without_null])
+  | FIXED(delimiter_positions, table_name [, encoding, no_header, without_null])
+  | JSON(json_query, table_name)
+
 ```
 
 _table_name_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
   
-  A _table_name_ represents a csv file path, a [temporary table]({{ '/reference/temporary-table.html' | relative_url }}), or a [inline table]({{ '/reference/common-table-expression.html' | relative_url }}).
-  You can use absolute path or relative path from the directory specified by the ["--repository" option]({{ '/reference/command.html#options' | relative_url }}) as a csv file path.
+  A _table_name_ represents a file path, a [temporary table]({{ '/reference/temporary-table.html' | relative_url }}), or a [inline table]({{ '/reference/common-table-expression.html' | relative_url }}).
+  You can use absolute path or relative path from the directory specified by the ["--repository" option]({{ '/reference/command.html#options' | relative_url }}) as a file path.
   
-  If a file name extension is ".csv" or ".tsv", you can omit it. 
+  When the file name extension is ".csv", ".tsv", ".json" or ".txt", the format to be loaded is automatically determined by the file extension and you can omit it. 
   
   ```sql
   FROM `user.csv`          -- Relative path
   FROM `/path/to/user.csv` -- Absolute path
   FROM user                -- Relative path without file extension
   ```
+  
+  The specifications of the command options are used as file attributes like encoding to be loaded. 
+  If you want to specify the different attributes for each file, you can use _table_object_ expressions for each file to load.
+
+  Once a file is loaded, then the data is cached and it can be loaded with only file name after that within the same transaction.
 
 _alias_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
@@ -182,7 +194,25 @@ _json_file_
 
 _json_data_
 : [string]({{ '/reference/value.html#string' | relative_url }})
+
+_delimiter_  
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_delimiter_positions_  
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+  "SPACES" or JSON Array of integers
+
+_encoding_
+: [string]({{ '/reference/value.html#string' | relative_url }})
   
+  "UTF8" or "SJIS"
+
+_no_header_
+: [boolean]({{ '/reference/value.html#boolean' | relative_url }})
+
+_without_null_
+: [boolean]({{ '/reference/value.html#boolean' | relative_url }})
 
 #### Special Tables
 {: #special_tables}

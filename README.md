@@ -31,6 +31,9 @@ In the multiple operations, you can use variables, cursors, temporary tables, an
   * UTF-8
   * Shift-JIS (except for JSON Format)
 
+## Reference Manual
+
+[Reference Manual - csvq](https://mithrandie.github.io/csvq/reference)
 
 ## Install
 
