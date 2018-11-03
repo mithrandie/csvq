@@ -42,6 +42,28 @@ func main() {
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
+			Name:  "repository, r",
+			Usage: "directory path where files are located",
+		},
+		cli.StringFlag{
+			Name:  "timezone, z",
+			Value: "Local",
+			Usage: "default timezone. \"Local\", \"UTC\" or a timezone name(e.g. \"America/Los_Angeles\")",
+		},
+		cli.StringFlag{
+			Name:  "datetime-format, t",
+			Usage: "set datetime format to parse strings",
+		},
+		cli.Float64Flag{
+			Name:  "wait-timeout, w",
+			Value: 10,
+			Usage: "limit of the waiting time in seconds to wait for locked files to be released",
+		},
+		cli.StringFlag{
+			Name:  "source, s",
+			Usage: "load query from `FILE`",
+		},
+		cli.StringFlag{
 			Name:  "delimiter, d",
 			Value: ",",
 			Usage: "field delimiter for csv, or delimiter positions for fixed-length format",
@@ -55,28 +77,6 @@ func main() {
 			Value: "UTF8",
 			Usage: "file encoding. one of: UTF8|SJIS",
 		},
-		cli.StringFlag{
-			Name:  "line-break, l",
-			Value: "LF",
-			Usage: "line break. one of: CRLF|LF|CR",
-		},
-		cli.StringFlag{
-			Name:  "timezone, z",
-			Value: "Local",
-			Usage: "default timezone. \"Local\", \"UTC\" or a timezone name(e.g. \"America/Los_Angeles\")",
-		},
-		cli.StringFlag{
-			Name:  "repository, r",
-			Usage: "directory path where files are located",
-		},
-		cli.StringFlag{
-			Name:  "source, s",
-			Usage: "load query from `FILE`",
-		},
-		cli.StringFlag{
-			Name:  "datetime-format, t",
-			Usage: "set datetime format to parse strings",
-		},
 		cli.BoolFlag{
 			Name:  "no-header, n",
 			Usage: "import the first line as a record",
@@ -84,16 +84,6 @@ func main() {
 		cli.BoolFlag{
 			Name:  "without-null, a",
 			Usage: "parse empty fields as empty strings",
-		},
-		cli.Float64Flag{
-			Name:  "wait-timeout, w",
-			Value: 10,
-			Usage: "limit of the waiting time in seconds to wait for locked files to be released",
-		},
-		cli.StringFlag{
-			Name:  "write-encoding, E",
-			Value: "UTF8",
-			Usage: "file encoding. one of: UTF8|SJIS",
 		},
 		cli.StringFlag{
 			Name:  "out, o",
@@ -105,13 +95,23 @@ func main() {
 			Usage: "output format. one of: CSV|TSV|FIXED|JSON|JSONH|JSONA|GFM|ORG|TEXT",
 		},
 		cli.StringFlag{
+			Name:  "write-encoding, E",
+			Value: "UTF8",
+			Usage: "file encoding. one of: UTF8|SJIS",
+		},
+		cli.StringFlag{
 			Name:  "write-delimiter, D",
 			Value: ",",
-			Usage: "field delimiter for CSV,  or delimiter positions for FIXED",
+			Usage: "field delimiter for CSV, or delimiter positions for FIXED",
 		},
 		cli.BoolFlag{
 			Name:  "without-header, N",
 			Usage: "when the file format is specified as CSV or TSV, write without the header line",
+		},
+		cli.StringFlag{
+			Name:  "line-break, l",
+			Value: "LF",
+			Usage: "line break. one of: CRLF|LF|CR",
 		},
 		cli.BoolFlag{
 			Name:  "pretty-print, P",
@@ -248,6 +248,19 @@ func readQuery(c *cli.Context) (string, error) {
 func setFlags(c *cli.Context) error {
 	cmd.SetColor(c.GlobalBool("color"))
 
+	if err := cmd.SetRepository(c.GlobalString("repository")); err != nil {
+		return err
+	}
+	if err := cmd.SetLocation(c.String("timezone")); err != nil {
+		return err
+	}
+	cmd.SetDatetimeFormat(c.GlobalString("datetime-format"))
+	cmd.SetWaitTimeout(c.GlobalFloat64("wait-timeout"))
+
+	if err := cmd.SetSource(c.GlobalString("source")); err != nil {
+		return err
+	}
+
 	if err := cmd.SetDelimiter(c.GlobalString("delimiter")); err != nil {
 		return err
 	}
@@ -255,37 +268,26 @@ func setFlags(c *cli.Context) error {
 	if err := cmd.SetEncoding(c.GlobalString("encoding")); err != nil {
 		return err
 	}
-	if err := cmd.SetLineBreak(c.String("line-break")); err != nil {
-		return err
-	}
-	if err := cmd.SetLocation(c.String("timezone")); err != nil {
-		return err
-	}
-	if err := cmd.SetRepository(c.GlobalString("repository")); err != nil {
-		return err
-	}
-	if err := cmd.SetSource(c.GlobalString("source")); err != nil {
-		return err
-	}
-	cmd.SetDatetimeFormat(c.GlobalString("datetime-format"))
-	cmd.SetWaitTimeout(c.GlobalFloat64("wait-timeout"))
 	cmd.SetNoHeader(c.GlobalBool("no-header"))
 	cmd.SetWithoutNull(c.GlobalBool("without-null"))
 
-	if err := cmd.SetWriteEncoding(c.GlobalString("write-encoding")); err != nil {
-		return err
-	}
 	if err := cmd.SetOut(c.GlobalString("out")); err != nil {
 		return err
 	}
 	if err := cmd.SetFormat(c.GlobalString("format")); err != nil {
 		return err
 	}
+	if err := cmd.SetWriteEncoding(c.GlobalString("write-encoding")); err != nil {
+		return err
+	}
 	if err := cmd.SetWriteDelimiter(c.GlobalString("write-delimiter")); err != nil {
 		return err
 	}
-	cmd.SetPrettyPrint(c.GlobalBool("pretty-print"))
 	cmd.SetWithoutHeader(c.GlobalBool("without-header"))
+	if err := cmd.SetLineBreak(c.String("line-break")); err != nil {
+		return err
+	}
+	cmd.SetPrettyPrint(c.GlobalBool("pretty-print"))
 
 	cmd.SetQuiet(c.GlobalBool("quiet"))
 	cmd.SetCPU(c.GlobalInt("cpu"))

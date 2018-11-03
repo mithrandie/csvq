@@ -47,11 +47,11 @@ const yyInitialStackSize = 16
 
 //line json_parser.y:106
 
-func ParseJson(src string) (Structure, error) {
+func ParseJson(src string) (Structure, EscapeType, error) {
 	l := new(Lexer)
 	l.Init(src)
 	yyParse(l)
-	return l.structure, l.err
+	return l.structure, l.EscapeType(), l.err
 }
 
 //line yacctab:1

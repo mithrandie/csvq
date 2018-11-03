@@ -3619,6 +3619,331 @@ func TestRenameColumn(t *testing.T) {
 	ReleaseResources()
 }
 
+var setTableAttributeTests = []struct {
+	Name   string
+	Query  parser.SetTableAttribute
+	Expect *FileInfo
+	Error  string
+}{
+	{
+		Name: "Set Delimiter to CSV",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "delimiter"},
+			Value:     parser.NewStringValue(";"),
+		},
+		Expect: &FileInfo{
+			Path:      GetTestFilePath("table1.csv"),
+			Delimiter: ';',
+			Format:    cmd.CSV,
+			Encoding:  cmd.UTF8,
+			LineBreak: cmd.LF,
+		},
+	},
+	{
+		Name: "Set Delimiter to TSV",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "delimiter"},
+			Value:     parser.NewStringValue("\t"),
+		},
+		Expect: &FileInfo{
+			Path:      GetTestFilePath("table1.csv"),
+			Delimiter: '\t',
+			Format:    cmd.TSV,
+			Encoding:  cmd.UTF8,
+			LineBreak: cmd.LF,
+		},
+	},
+	{
+		Name: "Set Delimiter to FIXED",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "delimiter"},
+			Value:     parser.NewStringValue("SPACES"),
+		},
+		Expect: &FileInfo{
+			Path:      GetTestFilePath("table1.csv"),
+			Delimiter: ',',
+			Format:    cmd.FIXED,
+			Encoding:  cmd.UTF8,
+			LineBreak: cmd.LF,
+		},
+	},
+	{
+		Name: "Set Delimiter Error",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "delimiter"},
+			Value:     parser.NewStringValue("aa"),
+		},
+		Error: "[L:- C:-] delimiter must be one character, \"SPACES\" or JSON array of integers",
+	},
+	{
+		Name: "Set Delimiter Not Allowed Value",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "delimiter"},
+			Value:     parser.NewNullValueFromString("null"),
+		},
+		Error: "[L:- C:-] null for delimiter is not allowed",
+	},
+	{
+		Name: "Set Format to Text",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "format"},
+			Value:     parser.NewStringValue("text"),
+		},
+		Expect: &FileInfo{
+			Path:      GetTestFilePath("table1.csv"),
+			Delimiter: ',',
+			Format:    cmd.TEXT,
+			Encoding:  cmd.UTF8,
+			LineBreak: cmd.LF,
+		},
+	},
+	{
+		Name: "Set Format to JSON",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "format"},
+			Value:     parser.NewStringValue("json"),
+		},
+		Expect: &FileInfo{
+			Path:      GetTestFilePath("table1.csv"),
+			Delimiter: ',',
+			Format:    cmd.JSON,
+			Encoding:  cmd.UTF8,
+			LineBreak: cmd.LF,
+		},
+	},
+	{
+		Name: "Set Format to TSV",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "format"},
+			Value:     parser.NewStringValue("tsv"),
+		},
+		Expect: &FileInfo{
+			Path:      GetTestFilePath("table1.csv"),
+			Delimiter: '\t',
+			Format:    cmd.TSV,
+			Encoding:  cmd.UTF8,
+			LineBreak: cmd.LF,
+		},
+	},
+	{
+		Name: "Set Format Error",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "format"},
+			Value:     parser.NewStringValue("invalid"),
+		},
+		Error: "[L:- C:-] format must be one of CSV|TSV|FIXED|JSON|JSONH|JSONA|GFM|ORG|TEXT",
+	},
+	{
+		Name: "Set Encoding to SJIS",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "encoding"},
+			Value:     parser.NewStringValue("sjis"),
+		},
+		Expect: &FileInfo{
+			Path:      GetTestFilePath("table1.csv"),
+			Delimiter: ',',
+			Format:    cmd.CSV,
+			Encoding:  cmd.SJIS,
+			LineBreak: cmd.LF,
+		},
+	},
+	{
+		Name: "Set Encoding Error",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "encoding"},
+			Value:     parser.NewStringValue("invalid"),
+		},
+		Error: "[L:- C:-] encoding must be one of UTF8|SJIS",
+	},
+	{
+		Name: "Set Encoding Error in JSON Format",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table.json"},
+			Attribute: parser.Identifier{Literal: "encoding"},
+			Value:     parser.NewStringValue("sjis"),
+		},
+		Error: "[L:- C:-] json format is supported only UTF8",
+	},
+	{
+		Name: "Set LineBreak to CRLF",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "line_break"},
+			Value:     parser.NewStringValue("crlf"),
+		},
+		Expect: &FileInfo{
+			Path:      GetTestFilePath("table1.csv"),
+			Delimiter: ',',
+			Format:    cmd.CSV,
+			Encoding:  cmd.UTF8,
+			LineBreak: cmd.CRLF,
+		},
+	},
+	{
+		Name: "Set LineBreak Error",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "line_break"},
+			Value:     parser.NewStringValue("invalid"),
+		},
+		Error: "[L:- C:-] line-break must be one of CRLF|LF|CR",
+	},
+	{
+		Name: "Set NoHeader to true",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "header"},
+			Value:     parser.NewTernaryValueFromString("false"),
+		},
+		Expect: &FileInfo{
+			Path:      GetTestFilePath("table1.csv"),
+			Delimiter: ',',
+			Format:    cmd.CSV,
+			Encoding:  cmd.UTF8,
+			LineBreak: cmd.LF,
+			NoHeader:  true,
+		},
+	},
+	{
+		Name: "Set NoHeader Not Allowed Value",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "header"},
+			Value:     parser.NewNullValueFromString("null"),
+		},
+		Error: "[L:- C:-] null for header is not allowed",
+	},
+	{
+		Name: "Set PrettyPring to true",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table.json"},
+			Attribute: parser.Identifier{Literal: "pretty_print"},
+			Value:     parser.NewTernaryValueFromString("true"),
+		},
+		Expect: &FileInfo{
+			Path:        GetTestFilePath("table.json"),
+			Delimiter:   ',',
+			Format:      cmd.JSON,
+			Encoding:    cmd.UTF8,
+			LineBreak:   cmd.LF,
+			PrettyPrint: true,
+		},
+	},
+	{
+		Name: "Not Exist Table Error",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "notexist.csv"},
+			Attribute: parser.Identifier{Literal: "delimiter"},
+			Value:     parser.NewStringValue(","),
+		},
+		Error: "[L:- C:-] file notexist.csv does not exist",
+	},
+	{
+		Name: "Temporary View Error",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "tmpview"},
+			Attribute: parser.Identifier{Literal: "delimiter"},
+			Value:     parser.NewStringValue(","),
+		},
+		Error: "[L:- C:-] tmpview is not a table that has attributes",
+	},
+	{
+		Name: "Value Evaluation Error",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "delimiter"},
+			Value:     parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+		},
+		Error: "[L:- C:-] field notexist does not exist",
+	},
+	{
+		Name: "Not Exist Attribute Error",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "notexist"},
+			Value:     parser.NewStringValue(","),
+		},
+		Error: "[L:- C:-] table attribute notexist does not exist",
+	},
+}
+
+func TestSetTableAttribute(t *testing.T) {
+	tf := cmd.GetFlags()
+	tf.Repository = TestDir
+	tf.Quiet = false
+
+	filter := NewEmptyFilter()
+	filter.TempViews = TemporaryViewScopes{
+		ViewMap{
+			"TMPVIEW": &View{
+				Header: NewHeader("tmpview", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:        "tmpview",
+					Delimiter:   ',',
+					IsTemporary: true,
+				},
+			},
+		},
+	}
+
+	for _, v := range setTableAttributeTests {
+		ReleaseResources()
+
+		_, err := SetTableAttribute(v.Query, filter)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+
+		for _, v2 := range ViewCache {
+			if v2.FileInfo.File != nil {
+				if v2.FileInfo.Path != v2.FileInfo.File.Name() {
+					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.File.Name(), v2.FileInfo.Path, v.Name)
+				}
+				file.Close(v2.FileInfo.File)
+				v2.FileInfo.File = nil
+			}
+		}
+
+		view := NewView()
+		view.LoadFromTableIdentifier(v.Query.Table, filter.CreateNode())
+
+		if !reflect.DeepEqual(view.FileInfo, v.Expect) {
+			t.Errorf("%s: result = %v, want %v", v.Name, view.FileInfo, v.Expect)
+		}
+	}
+	ReleaseResources()
+}
+
 func TestCommit(t *testing.T) {
 	cmd.SetQuiet(false)
 

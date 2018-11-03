@@ -80,13 +80,18 @@ const (
 	ErrorUpdateFieldNotExist                  = "field %s does not exist in the tables to update"
 	ErrorUpdateValueAmbiguous                 = "value %s to set in the field %s is ambiguous"
 	ErrorDeleteTableNotSpecified              = "tables to delete records are not specified"
-	ErrorShowInvalidObjectType                = "SHOW: object type %s is invalid"
-	ErrorPrintfReplaceValueLength             = "PRINTF: %s"
-	ErrorSourceInvalidArgument                = "SOURCE: argument %s is not a string"
-	ErrorSourceFileNotExist                   = "SOURCE: file %s does not exist"
-	ErrorSourceFileUnableToRead               = "SOURCE: file %s is unable to read"
-	ErrorInvalidFlagName                      = "flag name %s is invalid"
-	ErrorInvalidFlagValue                     = "SET: flag value %s for %s is invalid"
+	ErrorShowInvalidObjectType                = "object type %s is invalid"
+	ErrorPrintfReplaceValueLength             = "%s"
+	ErrorSourceInvalidArgument                = "argument %s is not a string"
+	ErrorSourceFileNotExist                   = "file %s does not exist"
+	ErrorSourceFileUnableToRead               = "file %s is unable to read"
+	ErrorInvalidFlagName                      = "flag %s does not exist"
+	ErrorFlagValueNowAllowedFormat            = "%s for %s is not allowed"
+	ErrorInvalidFlagValue                     = "%s"
+	ErrorNotTable                             = "%s is not a table that has attributes"
+	ErrorInvalidTableAttributeName            = "table attribute %s does not exist"
+	ErrorTableAttributeValueNotAllowedFormat  = "%s for %s is not allowed"
+	ErrorInvalidTableAttributeValue           = "%s"
 	ErrorInternalRecordIdNotExist             = "internal record id does not exist"
 	ErrorInternalRecordIdEmpty                = "internal record id is empty"
 	ErrorFieldLengthNotMatch                  = "field length does not match"
@@ -970,13 +975,63 @@ func NewInvalidFlagNameError(expr parser.Expression, name string) error {
 	}
 }
 
+type FlagValueNotAllowedFormatError struct {
+	*BaseError
+}
+
+func NewFlagValueNotAllowedFormatError(setFlag parser.SetFlag) error {
+	return &FlagValueNotAllowedFormatError{
+		NewBaseError(setFlag, fmt.Sprintf(ErrorFlagValueNowAllowedFormat, setFlag.Value, setFlag.Name)),
+	}
+}
+
 type InvalidFlagValueError struct {
 	*BaseError
 }
 
-func NewInvalidFlagValueError(setFlag parser.SetFlag) error {
+func NewInvalidFlagValueError(setFlag parser.SetFlag, message string) error {
 	return &InvalidFlagValueError{
-		NewBaseError(setFlag, fmt.Sprintf(ErrorInvalidFlagValue, setFlag.Value, setFlag.Name)),
+		NewBaseError(setFlag, fmt.Sprintf(ErrorInvalidFlagValue, message)),
+	}
+}
+
+type NotTableError struct {
+	*BaseError
+}
+
+func NewNotTableError(expr parser.QueryExpression) error {
+	return &NotTableError{
+		NewBaseError(expr, fmt.Sprintf(ErrorNotTable, expr)),
+	}
+}
+
+type InvalidTableAttributeNameError struct {
+	*BaseError
+}
+
+func NewInvalidTableAttributeNameError(expr parser.Identifier) error {
+	return &InvalidTableAttributeNameError{
+		NewBaseError(expr, fmt.Sprintf(ErrorInvalidTableAttributeName, expr)),
+	}
+}
+
+type TableAttributeValueNotAllowedFormatError struct {
+	*BaseError
+}
+
+func NewTableAttributeValueNotAllowedFormatError(expr parser.SetTableAttribute) error {
+	return &TableAttributeValueNotAllowedFormatError{
+		NewBaseError(expr, fmt.Sprintf(ErrorTableAttributeValueNotAllowedFormat, expr.Value, expr.Attribute)),
+	}
+}
+
+type InvalidTableAttributeValueError struct {
+	*BaseError
+}
+
+func NewInvalidTableAttributeValueError(expr parser.SetTableAttribute, message string) error {
+	return &InvalidTableAttributeValueError{
+		NewBaseError(expr, fmt.Sprintf(ErrorInvalidTableAttributeValue, message)),
 	}
 }
 

@@ -14,8 +14,9 @@ var fileInfoTests = []struct {
 	Name       string
 	FilePath   parser.Identifier
 	Repository string
-	Delimiter  rune
 	Format     cmd.Format
+	Delimiter  rune
+	Encoding   cmd.Encoding
 	Result     *FileInfo
 	Error      string
 }{
@@ -23,115 +24,146 @@ var fileInfoTests = []struct {
 		Name:       "CSV",
 		FilePath:   parser.Identifier{Literal: "table1"},
 		Repository: TestDir,
-		Delimiter:  ',',
 		Format:     cmd.CSV,
+		Delimiter:  ',',
+		Encoding:   cmd.UTF8,
 		Result: &FileInfo{
 			Path:      "table1.csv",
 			Delimiter: ',',
 			Format:    cmd.CSV,
+			Encoding:  cmd.UTF8,
 		},
 	},
 	{
 		Name:       "CSV with AutoSelect",
 		FilePath:   parser.Identifier{Literal: "table1"},
 		Repository: TestDir,
-		Delimiter:  ',',
 		Format:     cmd.AutoSelect,
+		Delimiter:  ',',
+		Encoding:   cmd.UTF8,
 		Result: &FileInfo{
 			Path:      "table1.csv",
 			Delimiter: ',',
 			Format:    cmd.CSV,
+			Encoding:  cmd.UTF8,
 		},
 	},
 	{
 		Name:       "TSV",
 		FilePath:   parser.Identifier{Literal: "table3"},
 		Repository: TestDir,
-		Delimiter:  ',',
 		Format:     cmd.TSV,
+		Delimiter:  ',',
+		Encoding:   cmd.UTF8,
 		Result: &FileInfo{
 			Path:      "table3.tsv",
 			Delimiter: '\t',
 			Format:    cmd.TSV,
+			Encoding:  cmd.UTF8,
 		},
 	},
 	{
 		Name:       "TSV with AutoSelect",
 		FilePath:   parser.Identifier{Literal: "table3"},
 		Repository: TestDir,
-		Delimiter:  ',',
 		Format:     cmd.AutoSelect,
+		Delimiter:  ',',
+		Encoding:   cmd.UTF8,
 		Result: &FileInfo{
 			Path:      "table3.tsv",
 			Delimiter: '\t',
 			Format:    cmd.TSV,
+			Encoding:  cmd.UTF8,
 		},
 	},
 	{
 		Name:       "JSON",
 		FilePath:   parser.Identifier{Literal: "table"},
 		Repository: TestDir,
-		Delimiter:  ',',
 		Format:     cmd.JSON,
+		Delimiter:  ',',
+		Encoding:   cmd.UTF8,
 		Result: &FileInfo{
 			Path:      "table.json",
 			Delimiter: ',',
 			Format:    cmd.JSON,
+			Encoding:  cmd.UTF8,
 		},
 	},
 	{
 		Name:       "JSON with AutoSelect",
 		FilePath:   parser.Identifier{Literal: "table"},
 		Repository: TestDir,
-		Delimiter:  ',',
 		Format:     cmd.AutoSelect,
+		Delimiter:  ',',
+		Encoding:   cmd.UTF8,
 		Result: &FileInfo{
 			Path:      "table.json",
 			Delimiter: ',',
 			Format:    cmd.JSON,
+			Encoding:  cmd.UTF8,
 		},
 	},
 	{
 		Name:       "Fixed-Length",
 		FilePath:   parser.Identifier{Literal: "fixed_length.txt"},
 		Repository: TestDir,
-		Delimiter:  ',',
 		Format:     cmd.FIXED,
+		Delimiter:  ',',
+		Encoding:   cmd.UTF8,
 		Result: &FileInfo{
 			Path:      "fixed_length.txt",
 			Delimiter: ',',
 			Format:    cmd.FIXED,
+			Encoding:  cmd.UTF8,
+		},
+	},
+	{
+		Name:       "Import Format",
+		FilePath:   parser.Identifier{Literal: "autoselect"},
+		Repository: TestDir,
+		Format:     cmd.AutoSelect,
+		Delimiter:  ',',
+		Encoding:   cmd.UTF8,
+		Result: &FileInfo{
+			Path:      "autoselect",
+			Delimiter: ',',
+			Format:    cmd.CSV,
+			Encoding:  cmd.UTF8,
 		},
 	},
 	{
 		Name:       "Not Exist Error",
 		FilePath:   parser.Identifier{Literal: "notexist"},
 		Repository: TestDir,
-		Delimiter:  ',',
 		Format:     cmd.CSV,
+		Delimiter:  ',',
+		Encoding:   cmd.UTF8,
 		Error:      "[L:- C:-] file notexist does not exist",
 	},
 	{
 		Name:       "File Read Error",
 		FilePath:   parser.Identifier{Literal: TestDir},
 		Repository: TestDir,
-		Delimiter:  ',',
 		Format:     cmd.CSV,
+		Delimiter:  ',',
+		Encoding:   cmd.UTF8,
 		Error:      fmt.Sprintf("[L:- C:-] file %s is unable to be read", TestDir),
 	},
 	{
 		Name:       "Filenames Ambiguous",
 		FilePath:   parser.Identifier{Literal: "dup_name"},
 		Repository: TestDir,
-		Delimiter:  ',',
 		Format:     cmd.AutoSelect,
+		Delimiter:  ',',
+		Encoding:   cmd.UTF8,
 		Error:      fmt.Sprintf("[L:- C:-] filename dup_name is ambiguous"),
 	},
 }
 
 func TestNewFileInfo(t *testing.T) {
 	for _, v := range fileInfoTests {
-		fileInfo, err := NewFileInfo(v.FilePath, v.Repository, v.Delimiter, v.Format)
+		fileInfo, err := NewFileInfo(v.FilePath, v.Repository, v.Format, v.Delimiter, v.Encoding)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -163,6 +195,7 @@ var fileInfoForCreateTests = []struct {
 	FilePath   parser.Identifier
 	Repository string
 	Delimiter  rune
+	Encoding   cmd.Encoding
 	Result     *FileInfo
 	Error      string
 }{
@@ -170,30 +203,72 @@ var fileInfoForCreateTests = []struct {
 		Name:      "CSV",
 		FilePath:  parser.Identifier{Literal: "table1.csv"},
 		Delimiter: ',',
+		Encoding:  cmd.UTF8,
 		Result: &FileInfo{
 			Path:      "table1.csv",
 			Delimiter: ',',
 			Format:    cmd.CSV,
+			Encoding:  cmd.UTF8,
 		},
 	},
 	{
 		Name:      "TSV",
 		FilePath:  parser.Identifier{Literal: "table1.tsv"},
 		Delimiter: ',',
+		Encoding:  cmd.UTF8,
 		Result: &FileInfo{
 			Path:      "table1.tsv",
 			Delimiter: '\t',
 			Format:    cmd.TSV,
+			Encoding:  cmd.UTF8,
+		},
+	},
+	{
+		Name:      "FIXED",
+		FilePath:  parser.Identifier{Literal: "table1.txt"},
+		Delimiter: ',',
+		Encoding:  cmd.UTF8,
+		Result: &FileInfo{
+			Path:      "table1.txt",
+			Delimiter: ',',
+			Format:    cmd.FIXED,
+			Encoding:  cmd.UTF8,
 		},
 	},
 	{
 		Name:      "JSON",
 		FilePath:  parser.Identifier{Literal: "table1.json"},
 		Delimiter: ',',
+		Encoding:  cmd.SJIS,
 		Result: &FileInfo{
 			Path:      "table1.json",
 			Delimiter: ',',
 			Format:    cmd.JSON,
+			Encoding:  cmd.UTF8,
+		},
+	},
+	{
+		Name:      "GFM",
+		FilePath:  parser.Identifier{Literal: "table1.md"},
+		Delimiter: ',',
+		Encoding:  cmd.UTF8,
+		Result: &FileInfo{
+			Path:      "table1.md",
+			Delimiter: ',',
+			Format:    cmd.GFM,
+			Encoding:  cmd.UTF8,
+		},
+	},
+	{
+		Name:      "ORG",
+		FilePath:  parser.Identifier{Literal: "table1.org"},
+		Delimiter: ',',
+		Encoding:  cmd.UTF8,
+		Result: &FileInfo{
+			Path:      "table1.org",
+			Delimiter: ',',
+			Format:    cmd.ORG,
+			Encoding:  cmd.UTF8,
 		},
 	},
 }
@@ -206,7 +281,7 @@ func TestNewFileInfoForCreate(t *testing.T) {
 			repo = filepath.Join(dir, repo)
 		}
 
-		fileInfo, err := NewFileInfoForCreate(v.FilePath, repo, v.Delimiter)
+		fileInfo, err := NewFileInfoForCreate(v.FilePath, repo, v.Delimiter, v.Encoding)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -259,8 +334,8 @@ var fileInfoEquivalentTests = []struct {
 		},
 		FileInfo2: &FileInfo{
 			Path:      "table1.csv",
-			Delimiter: ',',
-			Format:    cmd.TSV,
+			Delimiter: '\t',
+			Format:    cmd.CSV,
 		},
 		Expect: false,
 	},

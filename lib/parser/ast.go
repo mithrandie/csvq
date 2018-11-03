@@ -1185,6 +1185,13 @@ type RenameColumn struct {
 	New   Identifier
 }
 
+type SetTableAttribute struct {
+	*BaseExpr
+	Table     QueryExpression
+	Attribute Identifier
+	Value     QueryExpression
+}
+
 type FunctionDeclaration struct {
 	*BaseExpr
 	Name       Identifier
@@ -1229,7 +1236,7 @@ type Source struct {
 type SetFlag struct {
 	*BaseExpr
 	Name  string
-	Value value.Primary
+	Value QueryExpression
 }
 
 type ShowFlag struct {

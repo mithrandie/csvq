@@ -91,7 +91,7 @@ func (e *Encoder) encodeStructure(structure Structure, depth int) string {
 		encoded = e.palette.Color(structure.String(), color.NumberStyle)
 	case String:
 		str := string(structure.(String))
-		decoded, err := e.decoder.Decode(str)
+		decoded, _, err := e.decoder.Decode(str)
 		if err == nil {
 			encoded = e.encodeStructure(decoded, depth)
 		} else {

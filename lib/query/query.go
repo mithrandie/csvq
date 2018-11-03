@@ -3,6 +3,7 @@ package query
 import (
 	"fmt"
 	"github.com/mithrandie/csvq/lib/color"
+	"github.com/mithrandie/csvq/lib/text"
 	"os"
 	"strings"
 
@@ -579,7 +580,7 @@ func CreateTable(query parser.CreateTable, parentFilter *Filter) (*View, error) 
 	var err error
 
 	flags := cmd.GetFlags()
-	fileInfo, err := NewFileInfoForCreate(query.Table, flags.Repository, flags.Delimiter)
+	fileInfo, err := NewFileInfoForCreate(query.Table, flags.Repository, flags.Delimiter, flags.Encoding)
 	if err != nil {
 		return nil, err
 	}
@@ -596,7 +597,6 @@ func CreateTable(query parser.CreateTable, parentFilter *Filter) (*View, error) 
 		return nil, NewCreateFileError(query.Table, err.Error())
 	}
 
-	fileInfo.Encoding = flags.Encoding
 	fileInfo.LineBreak = flags.LineBreak
 
 	if query.Query != nil {
@@ -838,6 +838,76 @@ func RenameColumn(query parser.RenameColumn, parentFilter *Filter) (*View, error
 	}
 
 	return view, nil
+}
+
+func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (string, error) {
+	var log string
+	filter := parentFilter.CreateNode()
+
+	view := NewView()
+	view.ForUpdate = true
+	err := view.LoadFromTableIdentifier(query.Table, filter)
+	if err != nil {
+		return log, err
+	}
+	if view.FileInfo.IsTemporary {
+		return log, NewNotTableError(query.Table)
+	}
+
+	p, err := filter.Evaluate(query.Value)
+	if err != nil {
+		return log, err
+	}
+
+	fileInfo := view.FileInfo
+	attr := strings.ToUpper(query.Attribute.Literal)
+	switch attr {
+	case TableDelimiter, TableFormat, TableEncoding, TableLineBreak:
+		s := value.ToString(p)
+		if value.IsNull(s) {
+			return log, NewTableAttributeValueNotAllowedFormatError(query)
+		}
+		switch attr {
+		case TableDelimiter:
+			err = fileInfo.SetDelimiter(s.(value.String).Raw())
+		case TableFormat:
+			err = fileInfo.SetFormat(s.(value.String).Raw())
+		case TableEncoding:
+			err = fileInfo.SetEncoding(s.(value.String).Raw())
+		case TableLineBreak:
+			err = fileInfo.SetLineBreak(s.(value.String).Raw())
+		}
+	case TableHeader, TablePrettyPring:
+		b := value.ToBoolean(p)
+		if value.IsNull(b) {
+			return log, NewTableAttributeValueNotAllowedFormatError(query)
+		}
+		switch attr {
+		case TableHeader:
+			fileInfo.SetNoHeader(!b.(value.Boolean).Raw())
+		case TablePrettyPring:
+			fileInfo.SetPrettyPrint(b.(value.Boolean).Raw())
+		}
+	default:
+		return log, NewInvalidTableAttributeNameError(query.Attribute)
+	}
+
+	if err != nil {
+		return log, NewInvalidTableAttributeValueError(query, err.Error())
+	}
+
+	w := text.NewObjectWriter()
+	w.WriteColorWithoutLineBreak("Path: ", color.FieldLableStyle)
+	w.WriteColorWithoutLineBreak(fileInfo.Path, color.ObjectStyle)
+	w.NewLine()
+	writeTableAttribute(w, fileInfo)
+	w.NewLine()
+
+	w.Title1 = "Attributes Updated in"
+	w.Title2 = query.Table.(parser.Identifier).Literal
+	w.Title2Style = color.IdentifierStyle
+	log = "\n" + w.String()
+	return log, nil
 }
 
 func Commit(expr parser.Expression, filter *Filter) error {

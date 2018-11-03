@@ -64,7 +64,9 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 
 	switch stmt.(type) {
 	case parser.SetFlag:
-		err = SetFlag(stmt.(parser.SetFlag))
+		if printstr, err = SetFlag(stmt.(parser.SetFlag), proc.Filter); err == nil {
+			Log(printstr, flags.Quiet)
+		}
 	case parser.ShowFlag:
 		if printstr, err = ShowFlag(stmt.(parser.ShowFlag)); err == nil {
 			Log(printstr, false)
@@ -232,6 +234,11 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			Log(fmt.Sprintf("%s renamed on %q.", FormatCount(view.OperatedFields, "field"), view.FileInfo.Path), flags.Quiet)
 
 			view.OperatedRecords = 0
+		}
+	case parser.SetTableAttribute:
+		expr := stmt.(parser.SetTableAttribute)
+		if printstr, err = SetTableAttribute(expr, proc.Filter); err == nil {
+			Log(printstr, flags.Quiet)
 		}
 	case parser.TransactionControl:
 		switch stmt.(parser.TransactionControl).Token {

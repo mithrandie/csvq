@@ -13,6 +13,14 @@ func TestStringWidth(t *testing.T) {
 	if result != expect {
 		t.Errorf("string width = %d, want %d", result, expect)
 	}
+
+	s = "日本語\033[33mab\033[0mc"
+	expect = 9
+
+	result = StringWidth(s)
+	if result != expect {
+		t.Errorf("string width = %d, want %d", result, expect)
+	}
 }
 
 func TestRuneByteSize(t *testing.T) {

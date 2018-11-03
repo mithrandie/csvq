@@ -102,7 +102,7 @@ func EscapeAll(s string) string {
 	return buf.String()
 }
 
-func Unescape(s string) string {
+func Unescape(s string) (string, EscapeType) {
 	readHexDigits := func(runes []rune, pos int) (rune, error) {
 		var r rune
 
@@ -144,6 +144,7 @@ func Unescape(s string) string {
 		return r, pos, nil
 	}
 
+	escapeType := Backslash
 	runes := []rune(s)
 	var buf bytes.Buffer
 
@@ -169,6 +170,17 @@ func Unescape(s string) string {
 				buf.WriteRune('\t')
 			case 'u':
 				if r, newPos, err := parseHexToRunes(runes, pos); err == nil {
+					switch r {
+					case '"', '\\', '/', '\b', '\f', '\n', '\r', 't':
+						if escapeType < HexDigits {
+							escapeType = HexDigits
+						}
+					default:
+						if 31 < r && escapeType < AllWithHexDigits {
+							escapeType = AllWithHexDigits
+						}
+					}
+
 					buf.WriteRune(r)
 					pos = newPos
 				} else {
@@ -184,7 +196,7 @@ func Unescape(s string) string {
 		pos++
 	}
 
-	return buf.String()
+	return buf.String(), escapeType
 }
 
 func Quote(s string) string {

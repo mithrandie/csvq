@@ -17,48 +17,6 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 )
 
-const (
-	DelimiterFlag      = "@@DELIMITER"
-	EncodingFlag       = "@@ENCODING"
-	LineBreakFlag      = "@@LINE_BREAK"
-	TimezoneFlag       = "@@TIMEZONE"
-	RepositoryFlag     = "@@REPOSITORY"
-	DatetimeFormatFlag = "@@DATETIME_FORMAT"
-	NoHeaderFlag       = "@@NO_HEADER"
-	WithoutNullFlag    = "@@WITHOUT_NULL"
-	WaitTimeoutFlag    = "@@WAIT_TIMEOUT"
-	WriteEncodingFlag  = "@@WRITE_ENCODING"
-	FormatFlag         = "@@FORMAT"
-	WriteDelimiterFlag = "@@WRITE_DELIMITER"
-	WithoutHeaderFlag  = "@@WITHOUT_HEADER"
-	PrettyPrintFlag    = "@@PRETTY_PRINT"
-	ColorFlag          = "@@COLOR"
-	QuietFlag          = "@@QUIET"
-	CPUFlag            = "@@CPU"
-	StatsFlag          = "@@STATS"
-)
-
-var flagList = []string{
-	DelimiterFlag,
-	EncodingFlag,
-	LineBreakFlag,
-	TimezoneFlag,
-	RepositoryFlag,
-	DatetimeFormatFlag,
-	NoHeaderFlag,
-	WithoutNullFlag,
-	WaitTimeoutFlag,
-	WriteEncodingFlag,
-	FormatFlag,
-	WriteDelimiterFlag,
-	WithoutHeaderFlag,
-	PrettyPrintFlag,
-	ColorFlag,
-	QuietFlag,
-	CPUFlag,
-	StatsFlag,
-}
-
 type ObjectStatus int
 
 const (
@@ -66,6 +24,8 @@ const (
 	ObjectCreated
 	ObjectUpdated
 )
+
+const IgnoredFlagPrefix = "(ignored) "
 
 func Print(expr parser.Print, filter *Filter) (string, error) {
 	p, err := filter.Evaluate(expr.Value)
@@ -147,145 +107,187 @@ func Source(expr parser.Source, filter *Filter) ([]parser.Statement, error) {
 	return statements, err
 }
 
-func SetFlag(expr parser.SetFlag) error {
-	var p value.Primary
+func SetFlag(expr parser.SetFlag, filter *Filter) (string, error) {
+	p, err := filter.Evaluate(expr.Value)
+	if err != nil {
+		return "", err
+	}
 
 	switch strings.ToUpper(expr.Name) {
-	case DelimiterFlag, EncodingFlag, LineBreakFlag, TimezoneFlag, RepositoryFlag, DatetimeFormatFlag,
-		WriteEncodingFlag, FormatFlag, WriteDelimiterFlag:
-		p = value.ToString(expr.Value)
-	case NoHeaderFlag, WithoutNullFlag, ColorFlag, StatsFlag, WithoutHeaderFlag, PrettyPrintFlag, QuietFlag:
-		p = value.ToBoolean(expr.Value)
-	case WaitTimeoutFlag:
-		p = value.ToFloat(expr.Value)
-	case CPUFlag:
-		p = value.ToInteger(expr.Value)
+	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.DatetimeFormatFlag, cmd.DelimiterFlag, cmd.JsonQuery, cmd.EncodingFlag,
+		cmd.WriteEncodingFlag, cmd.FormatFlag, cmd.WriteDelimiterFlag, cmd.LineBreakFlag:
+		p = value.ToString(p)
+	case cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.PrettyPrintFlag, cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag:
+		p = value.ToBoolean(p)
+	case cmd.WaitTimeoutFlag:
+		p = value.ToFloat(p)
+	case cmd.CPUFlag:
+		p = value.ToInteger(p)
 	default:
-		return NewInvalidFlagNameError(expr, expr.Name)
+		return "", NewInvalidFlagNameError(expr, expr.Name)
 	}
 	if value.IsNull(p) {
-		return NewInvalidFlagValueError(expr)
+		return "", NewFlagValueNotAllowedFormatError(expr)
 	}
 
-	var err error
-
 	switch strings.ToUpper(expr.Name) {
-	case DelimiterFlag:
-		err = cmd.SetDelimiter(p.(value.String).Raw())
-	case EncodingFlag:
-		err = cmd.SetEncoding(p.(value.String).Raw())
-	case LineBreakFlag:
-		err = cmd.SetLineBreak(p.(value.String).Raw())
-	case TimezoneFlag:
-		err = cmd.SetLocation(p.(value.String).Raw())
-	case RepositoryFlag:
+	case cmd.RepositoryFlag:
 		err = cmd.SetRepository(p.(value.String).Raw())
-	case DatetimeFormatFlag:
+	case cmd.TimezoneFlag:
+		err = cmd.SetLocation(p.(value.String).Raw())
+	case cmd.DatetimeFormatFlag:
 		cmd.SetDatetimeFormat(p.(value.String).Raw())
-	case NoHeaderFlag:
-		cmd.SetNoHeader(p.(value.Boolean).Raw())
-	case WithoutNullFlag:
-		cmd.SetWithoutNull(p.(value.Boolean).Raw())
-	case WaitTimeoutFlag:
+	case cmd.WaitTimeoutFlag:
 		cmd.SetWaitTimeout(p.(value.Float).Raw())
-	case WriteEncodingFlag:
-		err = cmd.SetWriteEncoding(p.(value.String).Raw())
-	case FormatFlag:
+	case cmd.DelimiterFlag:
+		err = cmd.SetDelimiter(p.(value.String).Raw())
+	case cmd.JsonQuery:
+		cmd.SetJsonQuery(p.(value.String).Raw())
+	case cmd.EncodingFlag:
+		err = cmd.SetEncoding(p.(value.String).Raw())
+	case cmd.NoHeaderFlag:
+		cmd.SetNoHeader(p.(value.Boolean).Raw())
+	case cmd.WithoutNullFlag:
+		cmd.SetWithoutNull(p.(value.Boolean).Raw())
+	case cmd.FormatFlag:
 		err = cmd.SetFormat(p.(value.String).Raw())
-	case WriteDelimiterFlag:
+	case cmd.WriteEncodingFlag:
+		err = cmd.SetWriteEncoding(p.(value.String).Raw())
+	case cmd.WriteDelimiterFlag:
 		err = cmd.SetWriteDelimiter(p.(value.String).Raw())
-	case WithoutHeaderFlag:
+	case cmd.WithoutHeaderFlag:
 		cmd.SetWithoutHeader(p.(value.Boolean).Raw())
-	case PrettyPrintFlag:
+	case cmd.LineBreakFlag:
+		err = cmd.SetLineBreak(p.(value.String).Raw())
+	case cmd.PrettyPrintFlag:
 		cmd.SetPrettyPrint(p.(value.Boolean).Raw())
-	case ColorFlag:
+	case cmd.ColorFlag:
 		cmd.SetColor(p.(value.Boolean).Raw())
-	case QuietFlag:
+	case cmd.QuietFlag:
 		cmd.SetQuiet(p.(value.Boolean).Raw())
-	case CPUFlag:
+	case cmd.CPUFlag:
 		cmd.SetCPU(int(p.(value.Integer).Raw()))
-	case StatsFlag:
+	case cmd.StatsFlag:
 		cmd.SetStats(p.(value.Boolean).Raw())
 	}
 
 	if err != nil {
-		return NewInvalidFlagValueError(expr)
-	}
-
-	return nil
-}
-
-func ShowFlag(expr parser.ShowFlag) (string, error) {
-	s, err := showFlag(expr.Name)
-	if err != nil {
-		return s, NewInvalidFlagNameError(expr, expr.Name)
+		return "", NewInvalidFlagValueError(expr, err.Error())
 	}
 
 	palette := color.NewPalette()
 	palette.Enable()
+	s, _ := showFlag(expr.Name, palette)
 
-	flag := strings.ToUpper(expr.Name)
-	style := color.StringStyle
-	switch flag {
-	case WaitTimeoutFlag, CPUFlag:
-		style = color.NumberStyle
-	case NoHeaderFlag, WithoutNullFlag, WithoutHeaderFlag, PrettyPrintFlag, ColorFlag, QuietFlag, StatsFlag:
-		style = color.BooleanStyle
-	default:
-		if s == "(not set)" {
-			style = color.NullStyle
-		}
-	}
-
-	return " " + palette.Color(flag+":", color.FieldLableStyle) + " " + palette.Color(s, style), nil
+	return " " + palette.Color(strings.ToUpper(expr.Name)+":", color.FieldLableStyle) + " " + s, nil
 }
 
-func showFlag(flag string) (string, error) {
+func ShowFlag(expr parser.ShowFlag) (string, error) {
+	palette := color.NewPalette()
+	palette.Enable()
+
+	s, err := showFlag(expr.Name, palette)
+	if err != nil {
+		return s, NewInvalidFlagNameError(expr, expr.Name)
+	}
+
+	return " " + palette.Color(strings.ToUpper(expr.Name)+":", color.FieldLableStyle) + " " + s, nil
+}
+
+func showFlag(flag string, palette *color.Palette) (string, error) {
 	var s string
 
 	flags := cmd.GetFlags()
 
 	switch strings.ToUpper(flag) {
-	case DelimiterFlag:
-		s = "'" + cmd.EscapeString(string(flags.Delimiter)) + "'"
-	case EncodingFlag:
-		s = flags.Encoding.String()
-	case LineBreakFlag:
-		s = flags.LineBreak.String()
-	case TimezoneFlag:
-		s = flags.Location
-	case RepositoryFlag:
-		s = flags.Repository
-	case DatetimeFormatFlag:
+	case cmd.RepositoryFlag:
+		s = palette.Color(flags.Repository, color.StringStyle)
+	case cmd.TimezoneFlag:
+		s = palette.Color(flags.Location, color.StringStyle)
+	case cmd.DatetimeFormatFlag:
 		if len(flags.DatetimeFormat) < 1 {
-			s = "(not set)"
+			s = palette.Color("(not set)", color.NullStyle)
 		} else {
-			s = flags.DatetimeFormat
+			s = palette.Color(flags.DatetimeFormat, color.StringStyle)
 		}
-	case NoHeaderFlag:
-		s = strconv.FormatBool(flags.NoHeader)
-	case WithoutNullFlag:
-		s = strconv.FormatBool(flags.WithoutNull)
-	case WaitTimeoutFlag:
-		s = value.Float64ToStr(flags.WaitTimeout)
-	case WriteEncodingFlag:
-		s = flags.WriteEncoding.String()
-	case FormatFlag:
-		s = flags.Format.String()
-	case WriteDelimiterFlag:
-		s = "'" + cmd.EscapeString(string(flags.WriteDelimiter)) + "'"
-	case WithoutHeaderFlag:
+	case cmd.WaitTimeoutFlag:
+		s = palette.Color(value.Float64ToStr(flags.WaitTimeout), color.NumberStyle)
+	case cmd.DelimiterFlag:
+		d := "'" + cmd.EscapeString(string(flags.Delimiter)) + "'"
+		p := text.DelimiterPositions(flags.DelimiterPositions).String()
+
+		switch flags.ImportFormat() {
+		case cmd.CSV, cmd.TSV:
+			s = palette.Color(d, color.StringStyle) + palette.Color(" | ", color.FieldLableStyle) + palette.Color(p, color.NullStyle)
+		case cmd.FIXED:
+			s = palette.Color(d, color.NullStyle) + palette.Color(" | ", color.FieldLableStyle) + palette.Color(p, color.StringStyle)
+		default:
+			s = palette.Color(IgnoredFlagPrefix+d+" | "+p, color.NullStyle)
+		}
+	case cmd.JsonQuery:
+		q := flags.JsonQuery
+		if len(q) < 1 {
+			q = "(empty)"
+		}
+
+		switch flags.ImportFormat() {
+		case cmd.JSON:
+			s = palette.Color(q, color.StringStyle)
+		default:
+			s = palette.Color(IgnoredFlagPrefix+q, color.NullStyle)
+		}
+	case cmd.EncodingFlag:
+		s = palette.Color(flags.Encoding.String(), color.StringStyle)
+	case cmd.NoHeaderFlag:
+		s = palette.Color(strconv.FormatBool(flags.NoHeader), color.BooleanStyle)
+	case cmd.WithoutNullFlag:
+		s = palette.Color(strconv.FormatBool(flags.WithoutNull), color.BooleanStyle)
+	case cmd.FormatFlag:
+		s = palette.Color(flags.Format.String(), color.StringStyle)
+	case cmd.WriteEncodingFlag:
+		switch flags.Format {
+		case cmd.JSON, cmd.JSONH, cmd.JSONA:
+			s = palette.Color(IgnoredFlagPrefix+flags.WriteEncoding.String(), color.NullStyle)
+		default:
+			s = palette.Color(flags.WriteEncoding.String(), color.StringStyle)
+		}
+	case cmd.WriteDelimiterFlag:
+		d := "'" + cmd.EscapeString(string(flags.WriteDelimiter)) + "'"
+		p := text.DelimiterPositions(flags.WriteDelimiterPositions).String()
+		switch flags.Format {
+		case cmd.CSV:
+			s = palette.Color(d, color.StringStyle) + palette.Color(" | ", color.FieldLableStyle) + palette.Color(p, color.NullStyle)
+		case cmd.FIXED:
+			s = palette.Color(d, color.NullStyle) + palette.Color(" | ", color.FieldLableStyle) + palette.Color(p, color.StringStyle)
+		default:
+			s = palette.Color(IgnoredFlagPrefix+d+" | "+p, color.NullStyle)
+		}
+	case cmd.WithoutHeaderFlag:
 		s = strconv.FormatBool(flags.WithoutHeader)
-	case PrettyPrintFlag:
+		switch flags.Format {
+		case cmd.CSV, cmd.TSV, cmd.FIXED, cmd.GFM, cmd.ORG:
+			s = palette.Color(s, color.BooleanStyle)
+		default:
+			s = palette.Color(IgnoredFlagPrefix+s, color.NullStyle)
+		}
+	case cmd.LineBreakFlag:
+		s = palette.Color(flags.LineBreak.String(), color.StringStyle)
+	case cmd.PrettyPrintFlag:
 		s = strconv.FormatBool(flags.PrettyPrint)
-	case ColorFlag:
-		s = strconv.FormatBool(flags.Color)
-	case QuietFlag:
-		s = strconv.FormatBool(flags.Quiet)
-	case CPUFlag:
-		s = strconv.Itoa(flags.CPU)
-	case StatsFlag:
-		s = strconv.FormatBool(flags.Stats)
+		switch flags.Format {
+		case cmd.JSON, cmd.JSONH, cmd.JSONA:
+			s = palette.Color(s, color.BooleanStyle)
+		default:
+			s = palette.Color(IgnoredFlagPrefix+s, color.NullStyle)
+		}
+	case cmd.ColorFlag:
+		s = palette.Color(strconv.FormatBool(flags.Color), color.BooleanStyle)
+	case cmd.QuietFlag:
+		s = palette.Color(strconv.FormatBool(flags.Quiet), color.BooleanStyle)
+	case cmd.CPUFlag:
+		s = palette.Color(strconv.Itoa(flags.CPU), color.NumberStyle)
+	case cmd.StatsFlag:
+		s = palette.Color(strconv.FormatBool(flags.Stats), color.BooleanStyle)
 	default:
 		return s, errors.New("invalid flag name")
 	}
@@ -440,24 +442,13 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 		}
 	case "FLAGS":
 		w := text.NewObjectWriter()
-		for _, flag := range flagList {
-			s, _ := showFlag(flag)
-			style := color.StringStyle
-			switch flag {
-			case WaitTimeoutFlag, CPUFlag:
-				style = color.NumberStyle
-			case NoHeaderFlag, WithoutNullFlag, WithoutHeaderFlag, PrettyPrintFlag, ColorFlag, QuietFlag, StatsFlag:
-				style = color.BooleanStyle
-			default:
-				if s == "(not set)" {
-					style = color.NullStyle
-				}
-			}
-			w.WriteSpaces(18 - len(flag))
+		for _, flag := range cmd.FlagList {
+			s, _ := showFlag(flag, w.Palette)
+			w.WriteSpaces(17 - len(flag))
 			w.WriteColorWithoutLineBreak(flag, color.FieldLableStyle)
 			w.WriteColorWithoutLineBreak(":", color.FieldLableStyle)
 			w.WriteSpaces(1)
-			w.WriteColorWithoutLineBreak(s, style)
+			w.WriteWithoutLineBreak(s)
 			w.NewLine()
 		}
 		w.Title1 = "Flags"
@@ -478,32 +469,41 @@ func writeTableAttribute(w *text.ObjectWriter, info *FileInfo) {
 	case cmd.CSV:
 		w.WriteColorWithoutLineBreak("Delimiter: ", color.FieldLableStyle)
 		w.WriteWithoutLineBreak("'" + cmd.EscapeString(string(info.Delimiter)) + "'")
+	case cmd.TSV:
+		w.WriteColorWithoutLineBreak("Delimiter: ", color.FieldLableStyle)
+		w.WriteColorWithoutLineBreak("'\\t'", color.NullStyle)
 	case cmd.FIXED:
 		w.WriteColorWithoutLineBreak("Delimiter Positions: ", color.FieldLableStyle)
 		w.WriteWithoutLineBreak(info.DelimiterPositions.String())
-	case cmd.JSON:
+	case cmd.JSON, cmd.JSONH, cmd.JSONA:
 		w.WriteColorWithoutLineBreak("Query: ", color.FieldLableStyle)
 		if len(info.JsonQuery) < 1 {
 			w.WriteColorWithoutLineBreak("(empty)", color.NullStyle)
 		} else {
-			w.WriteWithoutLineBreak(info.JsonQuery)
+			w.WriteColorWithoutLineBreak(info.JsonQuery, color.NullStyle)
 		}
 	}
 
 	w.NewLine()
 
 	w.WriteColor("Encoding: ", color.FieldLableStyle)
-	w.WriteWithoutLineBreak(info.Encoding.String())
+	switch info.Format {
+	case cmd.JSON, cmd.JSONH, cmd.JSONA:
+		w.WriteColorWithoutLineBreak(cmd.UTF8.String(), color.NullStyle)
+	default:
+		w.WriteWithoutLineBreak(info.Encoding.String())
+	}
 
 	w.WriteSpaces(6 - (text.StringWidth(info.Encoding.String())))
 	w.WriteColorWithoutLineBreak("LineBreak: ", color.FieldLableStyle)
 	w.WriteWithoutLineBreak(info.LineBreak.String())
 
-	if info.Format == cmd.JSON {
+	switch info.Format {
+	case cmd.JSON, cmd.JSONH, cmd.JSONA:
 		w.WriteSpaces(6 - (text.StringWidth(info.LineBreak.String())))
 		w.WriteColorWithoutLineBreak("Pretty Print: ", color.FieldLableStyle)
 		w.WriteWithoutLineBreak(strconv.FormatBool(info.PrettyPrint))
-	} else {
+	case cmd.CSV, cmd.TSV, cmd.FIXED, cmd.GFM, cmd.ORG:
 		w.WriteSpaces(6 - (text.StringWidth(info.LineBreak.String())))
 		w.WriteColorWithoutLineBreak("Header: ", color.FieldLableStyle)
 		w.WriteWithoutLineBreak(strconv.FormatBool(!info.NoHeader))

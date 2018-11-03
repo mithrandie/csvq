@@ -23,7 +23,7 @@ type ObjectWriter struct {
 	Title2      string
 	Title2Style color.Style
 
-	palette *color.Palette
+	Palette *color.Palette
 	buf     bytes.Buffer
 
 	subBlock  int
@@ -47,7 +47,7 @@ func NewObjectWriter() *ObjectWriter {
 		Indent:      0,
 		IndentWidth: 4,
 		Padding:     DefaultPadding,
-		palette:     palette,
+		Palette:     palette,
 		lineWidth:   0,
 		column:      0,
 		subBlock:    0,
@@ -75,7 +75,7 @@ func (w *ObjectWriter) write(s string, style color.Style, withoutLineBreak bool)
 		w.NewLine()
 		w.write(s, style, withoutLineBreak)
 	} else {
-		w.writeToBuf(w.palette.Color(s, style))
+		w.writeToBuf(w.Palette.Color(s, style))
 		w.column = w.column + StringWidth(s)
 	}
 }
@@ -158,11 +158,11 @@ func (w *ObjectWriter) String() string {
 			header.Write(bytes.Repeat([]byte(" "), (hlLen-tw)/2))
 		}
 		if 0 < len(w.Title1) {
-			header.WriteString(w.palette.Color(w.Title1, w.Title1Style))
+			header.WriteString(w.Palette.Color(w.Title1, w.Title1Style))
 		}
 		if 0 < len(w.Title2) {
 			header.WriteRune(' ')
-			header.WriteString(w.palette.Color(w.Title2, w.Title2Style))
+			header.WriteString(w.Palette.Color(w.Title2, w.Title2Style))
 		}
 		header.WriteRune('\n')
 		header.Write(bytes.Repeat([]byte("-"), hlLen))

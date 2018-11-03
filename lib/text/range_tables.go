@@ -95,8 +95,18 @@ var sjisSingleByteTable = &unicode.RangeTable{
 
 func StringWidth(s string) int {
 	l := 0
+
+	inEscSeq := false // Ignore ANSI Escape Sequence
 	for _, r := range s {
-		l = l + RuneWidth(r)
+		if inEscSeq {
+			if unicode.IsLetter(r) {
+				inEscSeq = false
+			}
+		} else if r == 27 {
+			inEscSeq = true
+		} else {
+			l = l + RuneWidth(r)
+		}
 	}
 	return l
 }

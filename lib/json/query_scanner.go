@@ -96,7 +96,7 @@ func (s *QueryScanner) Scan() (QueryToken, error) {
 			break
 		case '"', '\'', '`':
 			s.scanString(ch)
-			literal = Unescape(s.trimQuotes())
+			literal, _ = Unescape(s.trimQuotes())
 			token = PATH_IDENTIFIER
 		}
 	}

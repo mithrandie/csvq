@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"github.com/mithrandie/csvq/lib/text"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -109,7 +110,7 @@ var printfTests = []struct {
 				parser.NewStringValue("str"),
 			},
 		},
-		Error: "[L:- C:-] PRINTF: number of replace values does not match",
+		Error: "[L:- C:-] number of replace values does not match",
 	},
 	{
 		Name: "Printf Greater Values Error",
@@ -121,7 +122,7 @@ var printfTests = []struct {
 				parser.NewIntegerValue(2),
 			},
 		},
-		Error: "[L:- C:-] PRINTF: number of replace values does not match",
+		Error: "[L:- C:-] number of replace values does not match",
 	},
 }
 
@@ -188,21 +189,21 @@ var sourceTests = []struct {
 		Expr: parser.Source{
 			FilePath: parser.NewNullValueFromString("NULL"),
 		},
-		Error: "[L:- C:-] SOURCE: argument NULL is not a string",
+		Error: "[L:- C:-] argument NULL is not a string",
 	},
 	{
 		Name: "Source File Not Exist Error",
 		Expr: parser.Source{
 			FilePath: parser.NewStringValue(GetTestFilePath("notexist.sql")),
 		},
-		Error: fmt.Sprintf("[L:- C:-] SOURCE: file %s does not exist", GetTestFilePath("notexist.sql")),
+		Error: fmt.Sprintf("[L:- C:-] file %s does not exist", GetTestFilePath("notexist.sql")),
 	},
 	{
 		Name: "Source File Not Readable Error",
 		Expr: parser.Source{
 			FilePath: parser.NewStringValue(TestDir),
 		},
-		Error: fmt.Sprintf("[L:- C:-] SOURCE: file %s is unable to read", TestDir),
+		Error: fmt.Sprintf("[L:- C:-] file %s is unable to read", TestDir),
 	},
 	{
 		Name: "Source Syntax Error",
@@ -237,233 +238,227 @@ func TestSource(t *testing.T) {
 }
 
 var setFlagTests = []struct {
-	Name               string
-	Expr               parser.SetFlag
-	ResultFlag         string
-	ResultStrValue     string
-	ResultFloatValue   float64
-	ResultIntegerValue int
-	ResultBoolValue    bool
-	Error              string
+	Name   string
+	Expr   parser.SetFlag
+	Result string
+	Error  string
 }{
 	{
-		Name: "Set Delimiter",
+		Name: "Set Repository",
 		Expr: parser.SetFlag{
-			Name:  "@@delimiter",
-			Value: value.NewString("\t"),
+			Name:  "@@repository",
+			Value: parser.NewStringValue(TestDir),
 		},
-		ResultFlag:     "delimiter",
-		ResultStrValue: "\t",
-	},
-	{
-		Name: "Set Encoding",
-		Expr: parser.SetFlag{
-			Name:  "@@encoding",
-			Value: value.NewString("SJIS"),
-		},
-		ResultFlag:     "encoding",
-		ResultStrValue: "SJIS",
-	},
-	{
-		Name: "Set lineBreak",
-		Expr: parser.SetFlag{
-			Name:  "@@line_break",
-			Value: value.NewString("CRLF"),
-		},
-		ResultFlag:     "line_break",
-		ResultStrValue: "\r\n",
+		Result: " @@REPOSITORY: " + TestDir,
 	},
 	{
 		Name: "Set Timezone",
 		Expr: parser.SetFlag{
 			Name:  "@@timezone",
-			Value: value.NewString("utc"),
+			Value: parser.NewStringValue("utc"),
 		},
-		ResultFlag:     "timezone",
-		ResultStrValue: "UTC",
-	},
-	{
-		Name: "Set Repository",
-		Expr: parser.SetFlag{
-			Name:  "@@repository",
-			Value: value.NewString(TestDir),
-		},
-		ResultFlag:     "repository",
-		ResultStrValue: TestDir,
+		Result: " @@TIMEZONE: UTC",
 	},
 	{
 		Name: "Set DatetimeFormat",
 		Expr: parser.SetFlag{
 			Name:  "@@datetime_format",
-			Value: value.NewString("%Y%m%d"),
+			Value: parser.NewStringValue("%Y%m%d"),
 		},
-		ResultFlag:     "datetime_format",
-		ResultStrValue: "%Y%m%d",
+		Result: " @@DATETIME_FORMAT: %Y%m%d",
 	},
 	{
 		Name: "Set WaitTimeout",
 		Expr: parser.SetFlag{
 			Name:  "@@wait_timeout",
-			Value: value.NewFloat(15),
+			Value: parser.NewFloatValue(15),
 		},
-		ResultFlag:       "wait_timeout",
-		ResultFloatValue: 15,
+		Result: " @@WAIT_TIMEOUT: 15",
+	},
+	{
+		Name: "Set Delimiter",
+		Expr: parser.SetFlag{
+			Name:  "@@delimiter",
+			Value: parser.NewStringValue("\\t"),
+		},
+		Result: " @@DELIMITER: '\\t' | SPACES",
+	},
+	{
+		Name: "Set JsonQuery",
+		Expr: parser.SetFlag{
+			Name:  "@@json_query",
+			Value: parser.NewStringValue("{}"),
+		},
+		Result: " @@JSON_QUERY: {}",
+	},
+	{
+		Name: "Set Encoding",
+		Expr: parser.SetFlag{
+			Name:  "@@encoding",
+			Value: parser.NewStringValue("SJIS"),
+		},
+		Result: " @@ENCODING: SJIS",
 	},
 	{
 		Name: "Set NoHeader",
 		Expr: parser.SetFlag{
 			Name:  "@@no_header",
-			Value: value.NewBoolean(true),
+			Value: parser.NewTernaryValueFromString("true"),
 		},
-		ResultFlag:      "no_header",
-		ResultBoolValue: true,
+		Result: " @@NO_HEADER: true",
 	},
 	{
 		Name: "Set WithoutNull",
 		Expr: parser.SetFlag{
 			Name:  "@@without_null",
-			Value: value.NewBoolean(true),
+			Value: parser.NewTernaryValueFromString("true"),
 		},
-		ResultFlag:      "without_null",
-		ResultBoolValue: true,
-	},
-	{
-		Name: "Set WriteEncoding",
-		Expr: parser.SetFlag{
-			Name:  "@@write_encoding",
-			Value: value.NewString("SJIS"),
-		},
-		ResultFlag:     "write_encoding",
-		ResultStrValue: "SJIS",
+		Result: " @@WITHOUT_NULL: true",
 	},
 	{
 		Name: "Set Format",
 		Expr: parser.SetFlag{
 			Name:  "@@format",
-			Value: value.NewString("json"),
+			Value: parser.NewStringValue("json"),
 		},
-		ResultFlag:     "format",
-		ResultStrValue: "JSON",
+		Result: " @@FORMAT: JSON",
+	},
+	{
+		Name: "Set WriteEncoding",
+		Expr: parser.SetFlag{
+			Name:  "@@write_encoding",
+			Value: parser.NewStringValue("SJIS"),
+		},
+		Result: " @@WRITE_ENCODING: SJIS",
 	},
 	{
 		Name: "Set WriteDelimiter",
 		Expr: parser.SetFlag{
 			Name:  "@@write_delimiter",
-			Value: value.NewString("\t"),
+			Value: parser.NewStringValue("\\t"),
 		},
-		ResultFlag:     "write_delimiter",
-		ResultStrValue: "\t",
+		Result: " @@WRITE_DELIMITER: (ignored) '\\t' | SPACES",
 	},
 	{
 		Name: "Set WithoutHeader",
 		Expr: parser.SetFlag{
 			Name:  "@@without_header",
-			Value: value.NewBoolean(true),
+			Value: parser.NewTernaryValueFromString("true"),
 		},
-		ResultFlag:      "without_header",
-		ResultBoolValue: true,
+		Result: " @@WITHOUT_HEADER: (ignored) true",
+	},
+	{
+		Name: "Set lineBreak",
+		Expr: parser.SetFlag{
+			Name:  "@@line_break",
+			Value: parser.NewStringValue("CRLF"),
+		},
+		Result: " @@LINE_BREAK: CRLF",
 	},
 	{
 		Name: "Set PrettyPrint",
 		Expr: parser.SetFlag{
 			Name:  "@@pretty_print",
-			Value: value.NewBoolean(true),
+			Value: parser.NewTernaryValueFromString("true"),
 		},
-		ResultFlag:      "pretty_print",
-		ResultBoolValue: true,
+		Result: " @@PRETTY_PRINT: (ignored) true",
 	},
 	{
 		Name: "Set Color",
 		Expr: parser.SetFlag{
 			Name:  "@@color",
-			Value: value.NewBoolean(true),
+			Value: parser.NewTernaryValueFromString("true"),
 		},
-		ResultFlag:      "color",
-		ResultBoolValue: true,
+		Result: " \033[34;1m@@COLOR:\033[0m \033[33;1mtrue\033[0m",
 	},
 	{
 		Name: "Set Quiet",
 		Expr: parser.SetFlag{
 			Name:  "@@quiet",
-			Value: value.NewBoolean(true),
+			Value: parser.NewTernaryValueFromString("true"),
 		},
-		ResultFlag:      "quiet",
-		ResultBoolValue: true,
+		Result: " @@QUIET: true",
 	},
 	{
 		Name: "Set CPU",
 		Expr: parser.SetFlag{
 			Name:  "@@cpu",
-			Value: value.NewInteger(int64(runtime.NumCPU())),
+			Value: parser.NewIntegerValue(int64(runtime.NumCPU())),
 		},
-		ResultFlag:         "cpu",
-		ResultIntegerValue: runtime.NumCPU(),
+		Result: " @@CPU: " + strconv.Itoa(runtime.NumCPU()),
 	},
 	{
 		Name: "Set Stats",
 		Expr: parser.SetFlag{
 			Name:  "@@stats",
-			Value: value.NewBoolean(true),
+			Value: parser.NewTernaryValueFromString("true"),
 		},
-		ResultFlag:      "stats",
-		ResultBoolValue: true,
+		Result: " @@STATS: true",
+	},
+	{
+		Name: "Set Delimiter Evaluation Error",
+		Expr: parser.SetFlag{
+			Name:  "@@delimiter",
+			Value: parser.FieldReference{Column: parser.Identifier{Literal: "err"}},
+		},
+		Error: "[L:- C:-] field err does not exist",
 	},
 	{
 		Name: "Set Delimiter Value Error",
 		Expr: parser.SetFlag{
 			Name:  "@@delimiter",
-			Value: value.NewBoolean(true),
+			Value: parser.NewTernaryValueFromString("true"),
 		},
-		Error: "[L:- C:-] SET: flag value true for @@delimiter is invalid",
+		Error: "[L:- C:-] true for @@delimiter is not allowed",
 	},
 	{
 		Name: "Set WaitTimeout Value Error",
 		Expr: parser.SetFlag{
 			Name:  "@@wait_timeout",
-			Value: value.NewBoolean(true),
+			Value: parser.NewTernaryValueFromString("true"),
 		},
-		Error: "[L:- C:-] SET: flag value true for @@wait_timeout is invalid",
+		Error: "[L:- C:-] true for @@wait_timeout is not allowed",
 	},
 	{
 		Name: "Set WithoutNull Value Error",
 		Expr: parser.SetFlag{
 			Name:  "@@without_null",
-			Value: value.NewString("string"),
+			Value: parser.NewStringValue("string"),
 		},
-		Error: "[L:- C:-] SET: flag value 'string' for @@without_null is invalid",
+		Error: "[L:- C:-] 'string' for @@without_null is not allowed",
 	},
 	{
 		Name: "Set CPU Value Error",
 		Expr: parser.SetFlag{
 			Name:  "@@cpu",
-			Value: value.NewString("invalid"),
+			Value: parser.NewStringValue("invalid"),
 		},
-		Error: "[L:- C:-] SET: flag value 'invalid' for @@cpu is invalid",
+		Error: "[L:- C:-] 'invalid' for @@cpu is not allowed",
 	},
 	{
 		Name: "Invalid Flag Name Error",
 		Expr: parser.SetFlag{
 			Name:  "@@invalid",
-			Value: value.NewString("string"),
+			Value: parser.NewStringValue("string"),
 		},
-		Error: "[L:- C:-] flag name @@invalid is invalid",
+		Error: "[L:- C:-] flag @@invalid does not exist",
 	},
 	{
 		Name: "Invalid Flag Value Error",
 		Expr: parser.SetFlag{
 			Name:  "@@line_break",
-			Value: value.NewString("invalid"),
+			Value: parser.NewStringValue("invalid"),
 		},
-		Error: "[L:- C:-] SET: flag value 'invalid' for @@line_break is invalid",
+		Error: "[L:- C:-] line-break must be one of CRLF|LF|CR",
 	},
 }
 
 func TestSetFlag(t *testing.T) {
-	flags := cmd.GetFlags()
+	filter := NewEmptyFilter()
 
 	for _, v := range setFlagTests {
 		initFlag()
-		err := SetFlag(v.Expr)
+		result, err := SetFlag(v.Expr, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -476,311 +471,418 @@ func TestSetFlag(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-
-		switch strings.ToUpper(v.ResultFlag) {
-		case "DELIMITER":
-			if string(flags.Delimiter) != v.ResultStrValue {
-				t.Errorf("%s: delimiter = %q, want %q", v.Name, string(flags.Delimiter), v.ResultStrValue)
-			}
-		case "ENCODING":
-			if flags.Encoding.String() != v.ResultStrValue {
-				t.Errorf("%s: encoding = %q, want %q", v.Name, flags.Encoding.String(), v.ResultStrValue)
-			}
-		case "LINE_BREAK":
-			if flags.LineBreak.Value() != v.ResultStrValue {
-				t.Errorf("%s: line-break = %q, want %q", v.Name, flags.LineBreak.Value(), v.ResultStrValue)
-			}
-		case "TIMEZONE":
-			if flags.Location != v.ResultStrValue {
-				t.Errorf("%s: timezone = %q, want %q", v.Name, flags.Location, v.ResultStrValue)
-			}
-		case "REPOSITORY":
-			if flags.Repository != v.ResultStrValue {
-				t.Errorf("%s: repository = %q, want %q", v.Name, flags.Repository, v.ResultStrValue)
-			}
-		case "DATETIME_FORMAT":
-			if flags.DatetimeFormat != v.ResultStrValue {
-				t.Errorf("%s: datetime-format = %q, want %q", v.Name, flags.DatetimeFormat, v.ResultStrValue)
-			}
-		case "WAIT_TIMEOUT":
-			if flags.WaitTimeout != v.ResultFloatValue {
-				t.Errorf("%s: wait-timeout = %f, want %f", v.Name, flags.WaitTimeout, v.ResultFloatValue)
-			}
-		case "NO_HEADER":
-			if flags.NoHeader != v.ResultBoolValue {
-				t.Errorf("%s: no-header = %t, want %t", v.Name, flags.NoHeader, v.ResultBoolValue)
-			}
-		case "WITHOUT_NULL":
-			if flags.WithoutNull != v.ResultBoolValue {
-				t.Errorf("%s: without-null = %t, want %t", v.Name, flags.WithoutNull, v.ResultBoolValue)
-			}
-		case "WRITE_ENCODING":
-			if flags.WriteEncoding.String() != v.ResultStrValue {
-				t.Errorf("%s: write-encoding = %q, want %q", v.Name, flags.WriteEncoding.String(), v.ResultStrValue)
-			}
-		case "FORMAT":
-			if flags.Format.String() != v.ResultStrValue {
-				t.Errorf("%s: format = %q, want %q", v.Name, flags.Format.String(), v.ResultStrValue)
-			}
-		case "WRITE_DELIMITER":
-			if string(flags.WriteDelimiter) != v.ResultStrValue {
-				t.Errorf("%s: write-delimiter = %q, want %q", v.Name, string(flags.WriteDelimiter), v.ResultStrValue)
-			}
-		case "WITHOUT_HEADER":
-			if flags.WithoutHeader != v.ResultBoolValue {
-				t.Errorf("%s: without-header = %t, want %t", v.Name, flags.WithoutHeader, v.ResultBoolValue)
-			}
-		case "PRETTY_PRINT":
-			if flags.PrettyPrint != v.ResultBoolValue {
-				t.Errorf("%s: pretty-print = %t, want %t", v.Name, flags.PrettyPrint, v.ResultBoolValue)
-			}
-		case "COLOR":
-			if flags.Color != v.ResultBoolValue {
-				t.Errorf("%s: color = %t, want %t", v.Name, flags.Color, v.ResultBoolValue)
-			}
-		case "QUIET":
-			if flags.Quiet != v.ResultBoolValue {
-				t.Errorf("%s: quiet = %t, want %t", v.Name, flags.Quiet, v.ResultBoolValue)
-			}
-		case "CPU":
-			if flags.CPU != v.ResultIntegerValue {
-				t.Errorf("%s: cpu = %d, want %d", v.Name, flags.CPU, v.ResultIntegerValue)
-			}
-		case "STATS":
-			if flags.Stats != v.ResultBoolValue {
-				t.Errorf("%s: stats = %t, want %t", v.Name, flags.Stats, v.ResultBoolValue)
-			}
+		if result != v.Result {
+			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
 		}
 	}
 	initFlag()
 }
 
 var showFlagTests = []struct {
-	Name    string
-	Expr    parser.ShowFlag
-	SetExpr parser.SetFlag
-	Result  string
-	Error   string
+	Name     string
+	Expr     parser.ShowFlag
+	SetExprs []parser.SetFlag
+	Result   string
+	Error    string
 }{
 	{
-		Name: "Show Delimiter",
+		Name: "Show Repository",
 		Expr: parser.ShowFlag{
-			Name: "@@delimiter",
+			Name: "@@repository",
 		},
-		SetExpr: parser.SetFlag{
-			Name:  "@@delimiter",
-			Value: value.NewString("\t"),
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@repository",
+				Value: parser.NewStringValue(TestDir),
+			},
 		},
-		Result: " @@DELIMITER: '\\t'",
-	},
-	{
-		Name: "Show Encoding",
-		Expr: parser.ShowFlag{
-			Name: "@@encoding",
-		},
-		SetExpr: parser.SetFlag{
-			Name:  "@@encoding",
-			Value: value.NewString("SJIS"),
-		},
-		Result: " @@ENCODING: SJIS",
-	},
-	{
-		Name: "Show lineBreak",
-		Expr: parser.ShowFlag{
-			Name: "@@line_break",
-		},
-		SetExpr: parser.SetFlag{
-			Name:  "@@line_break",
-			Value: value.NewString("CRLF"),
-		},
-		Result: " @@LINE_BREAK: CRLF",
+		Result: " \033[34;1m@@REPOSITORY:\033[0m \033[32m" + TestDir + "\033[0m",
 	},
 	{
 		Name: "Show Timezone",
 		Expr: parser.ShowFlag{
 			Name: "@@timezone",
 		},
-		SetExpr: parser.SetFlag{
-			Name:  "@@timezone",
-			Value: value.NewString("UTC"),
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@timezone",
+				Value: parser.NewStringValue("UTC"),
+			},
 		},
-		Result: " @@TIMEZONE: UTC",
-	},
-	{
-		Name: "Show Repository",
-		Expr: parser.ShowFlag{
-			Name: "@@repository",
-		},
-		SetExpr: parser.SetFlag{
-			Name:  "@@repository",
-			Value: value.NewString(TestDir),
-		},
-		Result: " @@REPOSITORY: " + TestDir,
+		Result: " \033[34;1m@@TIMEZONE:\033[0m \033[32mUTC\033[0m",
 	},
 	{
 		Name: "Show DatetimeFormat Not Set",
 		Expr: parser.ShowFlag{
 			Name: "@@datetime_format",
 		},
-		Result: " @@DATETIME_FORMAT: (not set)",
+		Result: " \033[34;1m@@DATETIME_FORMAT:\033[0m \033[90m(not set)\033[0m",
 	},
 	{
 		Name: "Show DatetimeFormat",
 		Expr: parser.ShowFlag{
 			Name: "@@datetime_format",
 		},
-		SetExpr: parser.SetFlag{
-			Name:  "@@datetime_format",
-			Value: value.NewString("%Y%m%d"),
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@datetime_format",
+				Value: parser.NewStringValue("%Y%m%d"),
+			},
 		},
-		Result: " @@DATETIME_FORMAT: %Y%m%d",
+		Result: " \033[34;1m@@DATETIME_FORMAT:\033[0m \033[32m%Y%m%d\033[0m",
 	},
 	{
 		Name: "Show WaitTimeout",
 		Expr: parser.ShowFlag{
 			Name: "@@wait_timeout",
 		},
-		SetExpr: parser.SetFlag{
-			Name:  "@@wait_timeout",
-			Value: value.NewFloat(15),
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@wait_timeout",
+				Value: parser.NewFloatValue(15),
+			},
 		},
-		Result: " @@WAIT_TIMEOUT: 15",
+		Result: " \033[34;1m@@WAIT_TIMEOUT:\033[0m \033[35m15\033[0m",
+	},
+	{
+		Name: "Show Delimiter for CSV",
+		Expr: parser.ShowFlag{
+			Name: "@@delimiter",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@delimiter",
+				Value: parser.NewStringValue("\t"),
+			},
+		},
+		Result: " \033[34;1m@@DELIMITER:\033[0m \033[32m'\\t'\033[0m\033[34;1m | \033[0m\033[90mSPACES\033[0m",
+	},
+	{
+		Name: "Show Delimiter for FIXED",
+		Expr: parser.ShowFlag{
+			Name: "@@delimiter",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@delimiter",
+				Value: parser.NewStringValue("SPACES"),
+			},
+		},
+		Result: " \033[34;1m@@DELIMITER:\033[0m \033[90m','\033[0m\033[34;1m | \033[0m\033[32mSPACES\033[0m",
+	},
+	{
+		Name: "Show Delimiter Ignored",
+		Expr: parser.ShowFlag{
+			Name: "@@delimiter",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@json_query",
+				Value: parser.NewStringValue("{}"),
+			},
+		},
+		Result: " \033[34;1m@@DELIMITER:\033[0m \033[90m(ignored) ',' | SPACES\033[0m",
+	},
+	{
+		Name: "Show JsonQuery",
+		Expr: parser.ShowFlag{
+			Name: "@@json_query",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@json_query",
+				Value: parser.NewStringValue("{}"),
+			},
+		},
+		Result: " \033[34;1m@@JSON_QUERY:\033[0m \033[32m{}\033[0m",
+	},
+	{
+		Name: "Show JsonQuery Ignored",
+		Expr: parser.ShowFlag{
+			Name: "@@json_query",
+		},
+		SetExprs: []parser.SetFlag{},
+		Result:   " \033[34;1m@@JSON_QUERY:\033[0m \033[90m(ignored) (empty)\033[0m",
+	},
+	{
+		Name: "Show Encoding",
+		Expr: parser.ShowFlag{
+			Name: "@@encoding",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@encoding",
+				Value: parser.NewStringValue("SJIS"),
+			},
+		},
+		Result: " \033[34;1m@@ENCODING:\033[0m \033[32mSJIS\033[0m",
 	},
 	{
 		Name: "Show NoHeader",
 		Expr: parser.ShowFlag{
 			Name: "@@no_header",
 		},
-		SetExpr: parser.SetFlag{
-			Name:  "@@no_header",
-			Value: value.NewBoolean(true),
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@no_header",
+				Value: parser.NewTernaryValueFromString("true"),
+			},
 		},
-		Result: " @@NO_HEADER: true",
+		Result: " \033[34;1m@@NO_HEADER:\033[0m \033[33;1mtrue\033[0m",
 	},
 	{
 		Name: "Show WithoutNull",
 		Expr: parser.ShowFlag{
 			Name: "@@without_null",
 		},
-		SetExpr: parser.SetFlag{
-			Name:  "@@without_null",
-			Value: value.NewBoolean(true),
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@without_null",
+				Value: parser.NewTernaryValueFromString("true"),
+			},
 		},
-		Result: " @@WITHOUT_NULL: true",
-	},
-	{
-		Name: "Show WriteEncoding",
-		Expr: parser.ShowFlag{
-			Name: "@@write_encoding",
-		},
-		SetExpr: parser.SetFlag{
-			Name:  "@@write_encoding",
-			Value: value.NewString("SJIS"),
-		},
-		Result: " @@WRITE_ENCODING: SJIS",
-	},
-	{
-		Name: "Show WriteDelimiter",
-		Expr: parser.ShowFlag{
-			Name: "@@write_delimiter",
-		},
-		SetExpr: parser.SetFlag{
-			Name:  "@@write_delimiter",
-			Value: value.NewString("\t"),
-		},
-		Result: " @@WRITE_DELIMITER: '\\t'",
+		Result: " \033[34;1m@@WITHOUT_NULL:\033[0m \033[33;1mtrue\033[0m",
 	},
 	{
 		Name: "Show Format",
 		Expr: parser.ShowFlag{
 			Name: "@@format",
 		},
-		SetExpr: parser.SetFlag{
-			Name:  "@@format",
-			Value: value.NewString("json"),
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@format",
+				Value: parser.NewStringValue("json"),
+			},
 		},
-		Result: " @@FORMAT: JSON",
+		Result: " \033[34;1m@@FORMAT:\033[0m \033[32mJSON\033[0m",
+	},
+	{
+		Name: "Show WriteEncoding",
+		Expr: parser.ShowFlag{
+			Name: "@@write_encoding",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@write_encoding",
+				Value: parser.NewStringValue("SJIS"),
+			},
+		},
+		Result: " \033[34;1m@@WRITE_ENCODING:\033[0m \033[32mSJIS\033[0m",
+	},
+	{
+		Name: "Show WriteEncoding Ignored",
+		Expr: parser.ShowFlag{
+			Name: "@@write_encoding",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@write_encoding",
+				Value: parser.NewStringValue("SJIS"),
+			},
+			{
+				Name:  "@@format",
+				Value: parser.NewStringValue("JSON"),
+			},
+		},
+		Result: " \033[34;1m@@WRITE_ENCODING:\033[0m \033[90m(ignored) SJIS\033[0m",
+	},
+	{
+		Name: "Show WriteDelimiter for CSV",
+		Expr: parser.ShowFlag{
+			Name: "@@write_delimiter",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@write_delimiter",
+				Value: parser.NewStringValue("\t"),
+			},
+			{
+				Name:  "@@format",
+				Value: parser.NewStringValue("CSV"),
+			},
+		},
+		Result: " \033[34;1m@@WRITE_DELIMITER:\033[0m \033[32m'\\t'\033[0m\033[34;1m | \033[0m\033[90mSPACES\033[0m",
+	},
+	{
+		Name: "Show WriteDelimiter for FIXED",
+		Expr: parser.ShowFlag{
+			Name: "@@write_delimiter",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@write_delimiter",
+				Value: parser.NewStringValue("\t"),
+			},
+			{
+				Name:  "@@format",
+				Value: parser.NewStringValue("FIXED"),
+			},
+		},
+		Result: " \033[34;1m@@WRITE_DELIMITER:\033[0m \033[90m'\\t'\033[0m\033[34;1m | \033[0m\033[32mSPACES\033[0m",
+	},
+	{
+		Name: "Show WriteDelimiter Ignored",
+		Expr: parser.ShowFlag{
+			Name: "@@write_delimiter",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@write_delimiter",
+				Value: parser.NewStringValue("\t"),
+			},
+			{
+				Name:  "@@format",
+				Value: parser.NewStringValue("JSON"),
+			},
+		},
+		Result: " \033[34;1m@@WRITE_DELIMITER:\033[0m \033[90m(ignored) '\\t' | SPACES\033[0m",
 	},
 	{
 		Name: "Show WithoutHeader",
 		Expr: parser.ShowFlag{
 			Name: "@@without_header",
 		},
-		SetExpr: parser.SetFlag{
-			Name:  "@@without_header",
-			Value: value.NewBoolean(true),
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@without_header",
+				Value: parser.NewTernaryValueFromString("true"),
+			},
+			{
+				Name:  "@@format",
+				Value: parser.NewStringValue("CSV"),
+			},
 		},
-		Result: " @@WITHOUT_HEADER: true",
+		Result: " \033[34;1m@@WITHOUT_HEADER:\033[0m \033[33;1mtrue\033[0m",
+	},
+	{
+		Name: "Show WithoutHeader Ignored",
+		Expr: parser.ShowFlag{
+			Name: "@@without_header",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@without_header",
+				Value: parser.NewTernaryValueFromString("true"),
+			},
+			{
+				Name:  "@@format",
+				Value: parser.NewStringValue("JSON"),
+			},
+		},
+		Result: " \033[34;1m@@WITHOUT_HEADER:\033[0m \033[90m(ignored) true\033[0m",
+	},
+	{
+		Name: "Show lineBreak",
+		Expr: parser.ShowFlag{
+			Name: "@@line_break",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@line_break",
+				Value: parser.NewStringValue("CRLF"),
+			},
+		},
+		Result: " \033[34;1m@@LINE_BREAK:\033[0m \033[32mCRLF\033[0m",
 	},
 	{
 		Name: "Show PrettyPrint",
 		Expr: parser.ShowFlag{
 			Name: "@@pretty_print",
 		},
-		SetExpr: parser.SetFlag{
-			Name:  "@@pretty_print",
-			Value: value.NewBoolean(true),
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@pretty_print",
+				Value: parser.NewTernaryValueFromString("true"),
+			},
+			{
+				Name:  "@@format",
+				Value: parser.NewStringValue("JSON"),
+			},
 		},
-		Result: " @@PRETTY_PRINT: true",
+		Result: " \033[34;1m@@PRETTY_PRINT:\033[0m \033[33;1mtrue\033[0m",
+	},
+	{
+		Name: "Show PrettyPrint Ignored",
+		Expr: parser.ShowFlag{
+			Name: "@@pretty_print",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@pretty_print",
+				Value: parser.NewTernaryValueFromString("true"),
+			},
+		},
+		Result: " \033[34;1m@@PRETTY_PRINT:\033[0m \033[90m(ignored) true\033[0m",
 	},
 	{
 		Name: "Show Color",
 		Expr: parser.ShowFlag{
 			Name: "@@color",
 		},
-		SetExpr: parser.SetFlag{
-			Name:  "@@color",
-			Value: value.NewBoolean(false),
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@color",
+				Value: parser.NewTernaryValueFromString("true"),
+			},
 		},
-		Result: " @@COLOR: false",
+		Result: " \033[34;1m@@COLOR:\033[0m \033[33;1mtrue\033[0m",
 	},
 	{
 		Name: "Show Quiet",
 		Expr: parser.ShowFlag{
 			Name: "@@quiet",
 		},
-		SetExpr: parser.SetFlag{
-			Name:  "@@quiet",
-			Value: value.NewBoolean(true),
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@quiet",
+				Value: parser.NewTernaryValueFromString("true"),
+			},
 		},
-		Result: " @@QUIET: true",
+		Result: " \033[34;1m@@QUIET:\033[0m \033[33;1mtrue\033[0m",
 	},
 	{
 		Name: "Show CPU",
 		Expr: parser.ShowFlag{
 			Name: "@@cpu",
 		},
-		SetExpr: parser.SetFlag{
-			Name:  "@@cpu",
-			Value: value.NewInteger(1),
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@cpu",
+				Value: parser.NewIntegerValue(1),
+			},
 		},
-		Result: " @@CPU: 1",
+		Result: " \033[34;1m@@CPU:\033[0m \033[35m1\033[0m",
 	},
 	{
 		Name: "Show Stats",
 		Expr: parser.ShowFlag{
 			Name: "@@stats",
 		},
-		SetExpr: parser.SetFlag{
-			Name:  "@@stats",
-			Value: value.NewBoolean(true),
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@stats",
+				Value: parser.NewTernaryValueFromString("true"),
+			},
 		},
-		Result: " @@STATS: true",
+		Result: " \033[34;1m@@STATS:\033[0m \033[33;1mtrue\033[0m",
 	},
 	{
 		Name: "Invalid Flag Name Error",
 		Expr: parser.ShowFlag{
 			Name: "@@invalid",
 		},
-		Error: "[L:- C:-] flag name @@invalid is invalid",
+		Error: "[L:- C:-] flag @@invalid does not exist",
 	},
 }
 
 func TestShowFlag(t *testing.T) {
+	filter := NewEmptyFilter()
+
 	for _, v := range showFlagTests {
 		initFlag()
-		if v.SetExpr.Value != nil {
-			SetFlag(v.SetExpr)
+		cmd.SetColor(true)
+		for _, expr := range v.SetExprs {
+			SetFlag(expr, filter)
 		}
 		result, err := ShowFlag(v.Expr)
 		if err != nil {
@@ -803,14 +905,21 @@ func TestShowFlag(t *testing.T) {
 }
 
 var showObjectsTests = []struct {
-	Name        string
-	Expr        parser.ShowObjects
-	Filter      *Filter
-	Repository  string
-	ViewCache   ViewMap
-	ExecResults []ExecResult
-	Expect      string
-	Error       string
+	Name                    string
+	Expr                    parser.ShowObjects
+	Filter                  *Filter
+	Delimiter               rune
+	DelimiterPositions      text.DelimiterPositions
+	DelimitAutomatically    bool
+	JsonQuery               string
+	Repository              string
+	Format                  cmd.Format
+	WriteDelimiter          rune
+	WriteDelimiterPositions text.DelimiterPositions
+	ViewCache               ViewMap
+	ExecResults             []ExecResult
+	Expect                  string
+	Error                   string
 }{
 	{
 		Name: "ShowObjects Tables",
@@ -885,7 +994,7 @@ var showObjectsTests = []struct {
 			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
 			" table1.tsv\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: TSV     \n" +
+			"     Format: TSV     Delimiter: '\\t'\n" +
 			"     Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" table1.txt\n" +
 			"     Fields: col1, col2\n" +
@@ -985,7 +1094,7 @@ var showObjectsTests = []struct {
 			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
 			" *Created* table1.tsv\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: TSV     \n" +
+			"     Format: TSV     Delimiter: '\\t'\n" +
 			"     Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" table1.txt\n" +
 			"     Fields: col1, col2\n" +
@@ -1228,32 +1337,33 @@ var showObjectsTests = []struct {
 		Expr:       parser.ShowObjects{Type: parser.Identifier{Literal: "flags"}},
 		Repository: ".",
 		Expect: "\n" +
-			"             Flags\n" +
-			"-------------------------------\n" +
-			"        @@DELIMITER: ','\n" +
-			"         @@ENCODING: UTF8\n" +
-			"       @@LINE_BREAK: LF\n" +
-			"         @@TIMEZONE: UTC\n" +
-			"       @@REPOSITORY: .\n" +
-			"  @@DATETIME_FORMAT: (not set)\n" +
-			"        @@NO_HEADER: false\n" +
-			"     @@WITHOUT_NULL: false\n" +
-			"     @@WAIT_TIMEOUT: 15\n" +
-			"   @@WRITE_ENCODING: UTF8\n" +
-			"           @@FORMAT: TEXT\n" +
-			"  @@WRITE_DELIMITER: ','\n" +
-			"   @@WITHOUT_HEADER: false\n" +
-			"     @@PRETTY_PRINT: false\n" +
-			"            @@COLOR: false\n" +
-			"            @@QUIET: false\n" +
-			"              @@CPU: " + strconv.Itoa(cmd.GetFlags().CPU) + "\n" +
-			"            @@STATS: false\n" +
+			"                Flags\n" +
+			"--------------------------------------\n" +
+			"      @@REPOSITORY: .\n" +
+			"        @@TIMEZONE: UTC\n" +
+			" @@DATETIME_FORMAT: (not set)\n" +
+			"    @@WAIT_TIMEOUT: 15\n" +
+			"       @@DELIMITER: ',' | SPACES\n" +
+			"      @@JSON_QUERY: (ignored) (empty)\n" +
+			"        @@ENCODING: UTF8\n" +
+			"       @@NO_HEADER: false\n" +
+			"    @@WITHOUT_NULL: false\n" +
+			"          @@FORMAT: CSV\n" +
+			"  @@WRITE_ENCODING: UTF8\n" +
+			" @@WRITE_DELIMITER: ',' | SPACES\n" +
+			"  @@WITHOUT_HEADER: false\n" +
+			"      @@LINE_BREAK: LF\n" +
+			"    @@PRETTY_PRINT: (ignored) false\n" +
+			"           @@COLOR: false\n" +
+			"           @@QUIET: false\n" +
+			"             @@CPU: " + strconv.Itoa(cmd.GetFlags().CPU) + "\n" +
+			"           @@STATS: false\n" +
 			"",
 	},
 	{
 		Name:  "ShowObjects Invalid Object Type",
 		Expr:  parser.ShowObjects{Type: parser.Identifier{Literal: "invalid"}},
-		Error: "[L:- C:-] SHOW: object type invalid is invalid",
+		Error: "[L:- C:-] object type invalid is invalid",
 	},
 }
 
@@ -1263,6 +1373,15 @@ func TestShowObjects(t *testing.T) {
 
 	for _, v := range showObjectsTests {
 		flags.Repository = v.Repository
+		flags.Delimiter = ','
+		if v.Delimiter != 0 {
+			flags.Delimiter = v.Delimiter
+		}
+		flags.DelimiterPositions = v.DelimiterPositions
+		flags.DelimitAutomatically = v.DelimitAutomatically
+		flags.JsonQuery = v.JsonQuery
+		flags.WriteDelimiterPositions = v.WriteDelimiterPositions
+		flags.Format = v.Format
 		ViewCache.Clean()
 		ExecResults = make([]ExecResult, 0)
 		if 0 < len(v.ViewCache) {
@@ -1402,8 +1521,8 @@ var showFieldsTests = []struct {
 			},
 		},
 		Expect: "\n" +
-			strings.Repeat(" ", (calcShowFieldsWidth("show_fields_create.csv")-(10+len("show_fields_create.csv")))/2) + "Fields in show_fields_create.csv\n" +
-			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv")) + "\n" +
+			strings.Repeat(" ", (calcShowFieldsWidth("show_fields_create.csv", 10)-(10+len("show_fields_create.csv")))/2) + "Fields in show_fields_create.csv\n" +
+			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv", 10)) + "\n" +
 			" Type: Table\n" +
 			" Path: " + GetTestFilePath("show_fields_create.csv") + "\n" +
 			" Format: CSV     Delimiter: ','\n" +
@@ -1442,8 +1561,8 @@ var showFieldsTests = []struct {
 			},
 		},
 		Expect: "\n" +
-			strings.Repeat(" ", (calcShowFieldsWidth("show_fields_update.csv")-(10+len("show_fields_update.csv")))/2) + "Fields in show_fields_update.csv\n" +
-			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv")) + "\n" +
+			strings.Repeat(" ", (calcShowFieldsWidth("show_fields_update.csv", 10)-(10+len("show_fields_update.csv")))/2) + "Fields in show_fields_update.csv\n" +
+			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv", 10)) + "\n" +
 			" Type: Table\n" +
 			" Path: " + GetTestFilePath("show_fields_update.csv") + "\n" +
 			" Format: CSV     Delimiter: ','\n" +
@@ -1467,14 +1586,14 @@ var showFieldsTests = []struct {
 			Type:  parser.Identifier{Literal: "invalid"},
 			Table: parser.Identifier{Literal: "table2"},
 		},
-		Error: "[L:- C:-] SHOW: object type invalid is invalid",
+		Error: "[L:- C:-] object type invalid is invalid",
 	},
 }
 
-func calcShowFieldsWidth(fileName string) int {
+func calcShowFieldsWidth(fileName string, prefixLen int) int {
 	w := 47
 	pathLen := 7 + len(GetTestFilePath(fileName))
-	titleLen := 10 + len(fileName)
+	titleLen := prefixLen + len(fileName)
 
 	if w < titleLen {
 		w = titleLen

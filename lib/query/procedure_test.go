@@ -27,10 +27,17 @@ var procedureExecuteStatementTests = []struct {
 	{
 		Input: parser.SetFlag{
 			Name:  "@@invalid",
-			Value: value.NewString("\t"),
+			Value: parser.NewStringValue("\t"),
 		},
-		Error:     "[L:- C:-] flag name @@invalid is invalid",
+		Error:     "[L:- C:-] flag @@invalid does not exist",
 		ErrorCode: 1,
+	},
+	{
+		Input: parser.SetFlag{
+			Name:  "@@delimiter",
+			Value: parser.NewStringValue(","),
+		},
+		Logs: " @@DELIMITER: ',' | SPACES\n",
 	},
 	{
 		Input: parser.ShowFlag{
@@ -551,6 +558,20 @@ var procedureExecuteStatementTests = []struct {
 		Logs: fmt.Sprintf("1 field renamed on %q.\n", GetTestFilePath("table1.csv")),
 	},
 	{
+		Input: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "delimiter"},
+			Value:     parser.NewStringValue("\t"),
+		},
+		Logs: "\n" +
+			strings.Repeat(" ", (calcShowFieldsWidth("table1.csv", 22)-(22+len("table1.csv")))/2) + "Attributes Updated in table1.csv\n" +
+			strings.Repeat("-", calcShowFieldsWidth("table1.csv", 22)) + "\n" +
+			" Path: " + GetTestFilePath("table1.csv") + "\n" +
+			" Format: TSV     Delimiter: '\\t'\n" +
+			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
+			"\n",
+	},
+	{
 		Input: parser.Case{
 			When: []parser.CaseWhen{
 				{
@@ -647,8 +668,8 @@ var procedureExecuteStatementTests = []struct {
 			Table: parser.Identifier{Literal: "table1"},
 		},
 		Logs: "\n" +
-			strings.Repeat(" ", (calcShowFieldsWidth("show_fields_update.csv")-(10+len("table1")))/2) + "Fields in table1\n" +
-			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv")) + "\n" +
+			strings.Repeat(" ", (calcShowFieldsWidth("show_fields_update.csv", 10)-(10+len("table1")))/2) + "Fields in table1\n" +
+			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv", 10)) + "\n" +
 			" Type: Table\n" +
 			" Path: " + GetTestFilePath("table1.csv") + "\n" +
 			" Format: CSV     Delimiter: ','\n" +

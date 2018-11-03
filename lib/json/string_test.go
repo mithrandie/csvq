@@ -50,8 +50,12 @@ func TestEscapeAll(t *testing.T) {
 func TestUnescape(t *testing.T) {
 	s := "abc\\a\\\"\\\\\\/\\b\\f\\n\\r\\t\\u001F\\u0022\\ud834\\udd1e\\u000\\u3042\\u000"
 	expect := "abca\u0022\u005c\u002f\u0008\u000c\u000a\u000d\u0009\u001f\u0022𝄞u000あu000"
-	result := Unescape(s)
+	expectEscapeType := AllWithHexDigits
+	result, escapeType := Unescape(s)
 	if expect != result {
 		t.Errorf("result = %q, want %q", result, expect)
+	}
+	if escapeType != expectEscapeType {
+		t.Errorf("escape type = %d, want %d", escapeType, expectEscapeType)
 	}
 }

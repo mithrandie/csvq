@@ -4,24 +4,6 @@ import (
 	"testing"
 )
 
-func TestStripEscapeSequence(t *testing.T) {
-	s := "\033[34ma\033[0m"
-	expect := "a"
-	result := StripEscapeSequence(s)
-
-	if result != expect {
-		t.Errorf("result = %q, want %q for %s", result, expect, s)
-	}
-
-	s = "\033[34;1ma\033[0m"
-	expect = "a"
-	result = StripEscapeSequence(s)
-
-	if result != expect {
-		t.Errorf("result = %q, want %q for %s", result, expect, s)
-	}
-}
-
 func TestColorize(t *testing.T) {
 	s := "a"
 	expect := "\033[34ma\033[0m"

@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"unicode/utf8"
 
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
@@ -133,10 +134,6 @@ func IsReadableFromPipeOrRedirection() bool {
 }
 
 func ParseEncoding(s string) (Encoding, error) {
-	if len(s) < 1 {
-		return UTF8, nil
-	}
-
 	var encoding Encoding
 	switch strings.ToUpper(s) {
 	case "UTF8":
@@ -164,29 +161,58 @@ func ParseLineBreak(s string) (LineBreak, error) {
 	return lb, nil
 }
 
-func ParseDelimiter(s string) (Format, rune, []int, error) {
-	var delimiter = ','
-	var delimiterPositions []int = nil
-	var importFormat = CSV
+func ParseDelimiter(s string, delimiter rune, delimiterPositions []int, delimitAutomatically bool) (rune, []int, bool, error) {
+	s = UnescapeString(s)
+	strLen := utf8.RuneCountInString(s)
 
-	if s == "[]" || 2 < len(s) {
-		if !strings.EqualFold("SPACES", s) {
+	if strLen < 1 {
+		return delimiter, delimiterPositions, delimitAutomatically, errors.New("delimiter must be one character, \"SPACES\" or JSON array of integers")
+	}
+
+	if strLen == 1 {
+		delimiter = []rune(s)[0]
+		delimitAutomatically = false
+		delimiterPositions = nil
+	} else {
+		if strings.EqualFold("SPACES", s) {
+			delimiterPositions = nil
+			delimitAutomatically = true
+		} else {
 			var positions []int
 			err := json.Unmarshal([]byte(s), &positions)
 			if err != nil {
-				return importFormat, delimiter, delimiterPositions, errors.New("delimiter must be one character, \"SPACES\" or JSON array of integers")
+				return delimiter, delimiterPositions, delimitAutomatically, errors.New("delimiter must be one character, \"SPACES\" or JSON array of integers")
 			}
 			delimiterPositions = positions
+			delimitAutomatically = false
 		}
-		importFormat = FIXED
-	} else if 0 < len(s) {
-		s = UnescapeString(s)
-
-		runes := []rune(s)
-		if 1 < len(runes) {
-			return importFormat, delimiter, delimiterPositions, errors.New("delimiter must be one character, \"SPACES\" or JSON array of integers")
-		}
-		delimiter = runes[0]
 	}
-	return importFormat, delimiter, delimiterPositions, nil
+	return delimiter, delimiterPositions, delimitAutomatically, nil
+}
+
+func ParseFormat(s string) (Format, error) {
+	var fm Format
+	switch strings.ToUpper(s) {
+	case "CSV":
+		fm = CSV
+	case "TSV":
+		fm = TSV
+	case "FIXED":
+		fm = FIXED
+	case "JSON":
+		fm = JSON
+	case "JSONH":
+		fm = JSONH
+	case "JSONA":
+		fm = JSONA
+	case "GFM":
+		fm = GFM
+	case "ORG":
+		fm = ORG
+	case "TEXT":
+		fm = TEXT
+	default:
+		return fm, errors.New("format must be one of CSV|TSV|FIXED|JSON|JSONH|JSONA|GFM|ORG|TEXT")
+	}
+	return fm, nil
 }

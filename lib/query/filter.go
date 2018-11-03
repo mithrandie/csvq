@@ -988,7 +988,7 @@ func (f *Filter) evalJsonQueryForRowValue(expr parser.JsonQuery) (value.RowValue
 		return nil, nil
 	}
 
-	_, values, err := json.LoadTable(query.(value.String).Raw(), jsonText.(value.String).Raw())
+	_, values, _, err := json.LoadTable(query.(value.String).Raw(), jsonText.(value.String).Raw())
 	if err != nil {
 		return nil, NewJsonQueryError(expr, err.Error())
 	}
@@ -1053,7 +1053,7 @@ func (f *Filter) evalJsonQueryForRowValueList(expr parser.JsonQuery) ([]value.Ro
 		return nil, nil
 	}
 
-	_, values, err := json.LoadTable(query.(value.String).Raw(), jsonText.(value.String).Raw())
+	_, values, _, err := json.LoadTable(query.(value.String).Raw(), jsonText.(value.String).Raw())
 	if err != nil {
 		return nil, NewJsonQueryError(expr, err.Error())
 	}

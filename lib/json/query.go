@@ -7,7 +7,7 @@ import (
 )
 
 func LoadValue(queryString string, json string) (value.Primary, error) {
-	structure, err := load(queryString, json)
+	structure, _, err := load(queryString, json)
 	if err != nil {
 		return nil, err
 	}
@@ -16,7 +16,7 @@ func LoadValue(queryString string, json string) (value.Primary, error) {
 }
 
 func LoadArray(queryString string, json string) ([]value.Primary, error) {
-	structure, err := load(queryString, json)
+	structure, _, err := load(queryString, json)
 	if err != nil {
 		return nil, err
 	}
@@ -29,33 +29,35 @@ func LoadArray(queryString string, json string) ([]value.Primary, error) {
 	return ConvertToArray(array), nil
 }
 
-func LoadTable(queryString string, json string) ([]string, [][]value.Primary, error) {
-	structure, err := load(queryString, json)
+func LoadTable(queryString string, json string) ([]string, [][]value.Primary, EscapeType, error) {
+	structure, et, err := load(queryString, json)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, et, err
 	}
 
 	array, ok := structure.(Array)
 	if !ok {
-		return nil, nil, errors.New(fmt.Sprintf("json value does not exists for %q", queryString))
+		return nil, nil, et, errors.New(fmt.Sprintf("json value does not exists for %q", queryString))
 	}
 
-	return ConvertToTableValue(array)
+	h, rows, err := ConvertToTableValue(array)
+	return h, rows, et, err
 }
 
-func load(queryString string, json string) (Structure, error) {
+func load(queryString string, json string) (Structure, EscapeType, error) {
 	query, err := Query.Parse(queryString)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	d := NewDecoder()
-	data, err := d.Decode(json)
+	data, et, err := d.Decode(json)
 	if err != nil {
-		return nil, err
+		return nil, et, err
 	}
 
-	return Extract(query, data)
+	st, err := Extract(query, data)
+	return st, et, err
 }
 
 func Extract(query QueryExpression, data Structure) (Structure, error) {

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/mithrandie/csvq/lib/color"
@@ -14,6 +13,50 @@ import (
 	"sync"
 	"time"
 )
+
+const (
+	RepositoryFlag     = "@@REPOSITORY"
+	TimezoneFlag       = "@@TIMEZONE"
+	DatetimeFormatFlag = "@@DATETIME_FORMAT"
+	WaitTimeoutFlag    = "@@WAIT_TIMEOUT"
+	DelimiterFlag      = "@@DELIMITER"
+	JsonQuery          = "@@JSON_QUERY"
+	EncodingFlag       = "@@ENCODING"
+	NoHeaderFlag       = "@@NO_HEADER"
+	WithoutNullFlag    = "@@WITHOUT_NULL"
+	FormatFlag         = "@@FORMAT"
+	WriteEncodingFlag  = "@@WRITE_ENCODING"
+	WriteDelimiterFlag = "@@WRITE_DELIMITER"
+	WithoutHeaderFlag  = "@@WITHOUT_HEADER"
+	LineBreakFlag      = "@@LINE_BREAK"
+	PrettyPrintFlag    = "@@PRETTY_PRINT"
+	ColorFlag          = "@@COLOR"
+	QuietFlag          = "@@QUIET"
+	CPUFlag            = "@@CPU"
+	StatsFlag          = "@@STATS"
+)
+
+var FlagList = []string{
+	RepositoryFlag,
+	TimezoneFlag,
+	DatetimeFormatFlag,
+	WaitTimeoutFlag,
+	DelimiterFlag,
+	JsonQuery,
+	EncodingFlag,
+	NoHeaderFlag,
+	WithoutNullFlag,
+	FormatFlag,
+	WriteEncodingFlag,
+	WriteDelimiterFlag,
+	WithoutHeaderFlag,
+	LineBreakFlag,
+	PrettyPrintFlag,
+	ColorFlag,
+	QuietFlag,
+	CPUFlag,
+	StatsFlag,
+}
 
 type Encoding string
 
@@ -70,7 +113,7 @@ var formatLiterals = map[Format]string{
 	JSON:  "JSON",
 	JSONH: "JSONH",
 	JSONA: "JSONA",
-	GFM:   "MD",
+	GFM:   "GFM",
 	ORG:   "ORG",
 	TEXT:  "TEXT",
 }
@@ -80,33 +123,42 @@ func (f Format) String() string {
 }
 
 const (
-	CsvExt  = ".csv"
-	TsvExt  = ".tsv"
-	JsonExt = ".json"
+	CsvExt   = ".csv"
+	TsvExt   = ".tsv"
+	FixedExt = ".txt"
+	JsonExt  = ".json"
+	GfmExt   = ".md"
+	OrgExt   = ".org"
 )
 
 type Flags struct {
-	// Global Options
-	Delimiter      rune
-	JsonQuery      string
-	Encoding       Encoding
-	LineBreak      LineBreak
-	Location       string
+	// Common Settings
 	Repository     string
-	Source         string
+	Location       string
 	DatetimeFormat string
-	NoHeader       bool
-	WithoutNull    bool
 	WaitTimeout    float64
 
-	// For Output
-	WriteEncoding  Encoding
+	// For Procedure
+	Source string
+
+	// For Import
+	Delimiter   rune
+	JsonQuery   string
+	Encoding    Encoding
+	NoHeader    bool
+	WithoutNull bool
+
+	// For Export
 	OutFile        string
 	Format         Format
-	PrettyPrint    bool
-	Color          bool
+	WriteEncoding  Encoding
 	WriteDelimiter rune
 	WithoutHeader  bool
+	LineBreak      LineBreak
+	PrettyPrint    bool
+
+	// ANSI Color Sequence
+	Color bool
 
 	// System Use
 	Quiet bool
@@ -116,13 +168,13 @@ type Flags struct {
 	// Fixed Value
 	RetryInterval time.Duration
 
-	// Use in tests
-	Now string
-
 	// For Fixed-Length Format
-	ImportFormat            Format
+	DelimitAutomatically    bool
 	DelimiterPositions      []int
 	WriteDelimiterPositions []int
+
+	// Use in tests
+	Now string
 }
 
 var (
@@ -143,95 +195,48 @@ func GetFlags() *Flags {
 		}
 
 		flags = &Flags{
-			Delimiter:          ',',
-			JsonQuery:          "",
-			Encoding:           UTF8,
-			LineBreak:          LF,
-			Location:           "Local",
-			Repository:         pwd,
-			Source:             "",
-			DatetimeFormat:     "",
-			NoHeader:           false,
-			WithoutNull:        false,
-			WaitTimeout:        10,
-			WriteEncoding:      UTF8,
-			OutFile:            "",
-			Format:             TEXT,
-			WriteDelimiter:     ',',
-			WithoutHeader:      false,
-			Quiet:              false,
-			CPU:                cpu,
-			Stats:              false,
-			RetryInterval:      10 * time.Millisecond,
-			Now:                "",
-			ImportFormat:       CSV,
-			DelimiterPositions: nil,
+			Repository:              pwd,
+			Location:                "Local",
+			DatetimeFormat:          "",
+			WaitTimeout:             10,
+			Source:                  "",
+			Delimiter:               ',',
+			JsonQuery:               "",
+			Encoding:                UTF8,
+			NoHeader:                false,
+			WithoutNull:             false,
+			OutFile:                 "",
+			Format:                  TEXT,
+			WriteEncoding:           UTF8,
+			WriteDelimiter:          ',',
+			WithoutHeader:           false,
+			LineBreak:               LF,
+			PrettyPrint:             false,
+			Color:                   false,
+			Quiet:                   false,
+			CPU:                     cpu,
+			Stats:                   false,
+			RetryInterval:           10 * time.Millisecond,
+			DelimitAutomatically:    false,
+			DelimiterPositions:      nil,
+			WriteDelimiterPositions: nil,
+			Now:                     "",
 		}
 	})
 	return flags
 }
 
-func SetDelimiter(s string) error {
-	importFormat, delimiter, delimiterPositions, err := ParseDelimiter(s)
-	if err != nil {
-		return err
+func (f *Flags) ImportFormat() Format {
+	if 0 < len(f.JsonQuery) {
+		return JSON
 	}
-
-	f := GetFlags()
-	f.Delimiter = delimiter
-	f.ImportFormat = importFormat
-	f.DelimiterPositions = delimiterPositions
-	return nil
-}
-
-func SetJsonQuery(s string) {
-	f := GetFlags()
-	f.JsonQuery = s
-	return
-}
-
-func SetEncoding(s string) error {
-	encoding, err := ParseEncoding(s)
-	if err != nil {
-		return err
+	if f.DelimitAutomatically || f.DelimiterPositions != nil {
+		return FIXED
 	}
-
-	f := GetFlags()
-	f.Encoding = encoding
-	return nil
-}
-
-func SetLineBreak(s string) error {
-	if len(s) < 1 {
-		return nil
+	if f.Delimiter == '\t' {
+		return TSV
 	}
-
-	lb, err := ParseLineBreak(s)
-	if err != nil {
-		return err
-	}
-
-	f := GetFlags()
-	f.LineBreak = lb
-	return nil
-}
-
-func SetLocation(s string) error {
-	if len(s) < 1 || strings.EqualFold(s, "Local") {
-		s = "Local"
-	} else if strings.EqualFold(s, "UTC") {
-		s = "UTC"
-	}
-
-	location, err := time.LoadLocation(s)
-	if err != nil {
-		return errors.New("timezone does not exist")
-	}
-
-	f := GetFlags()
-	f.Location = s
-	time.Local = location
-	return nil
+	return CSV
 }
 
 func SetRepository(s string) error {
@@ -257,6 +262,41 @@ func SetRepository(s string) error {
 	return nil
 }
 
+func SetLocation(s string) error {
+	if len(s) < 1 || strings.EqualFold(s, "Local") {
+		s = "Local"
+	} else if strings.EqualFold(s, "UTC") {
+		s = "UTC"
+	}
+
+	location, err := time.LoadLocation(s)
+	if err != nil {
+		return errors.New("timezone does not exist")
+	}
+
+	f := GetFlags()
+	f.Location = s
+	time.Local = location
+	return nil
+}
+
+func SetDatetimeFormat(s string) {
+	f := GetFlags()
+	f.DatetimeFormat = s
+	return
+}
+
+func SetWaitTimeout(f float64) {
+	if f < 0 {
+		f = 0
+	}
+
+	flags := GetFlags()
+	flags.WaitTimeout = f
+	file.UpdateWaitTimeout(flags.WaitTimeout, flags.RetryInterval)
+	return
+}
+
 func SetSource(s string) error {
 	if len(s) < 1 {
 		return nil
@@ -275,10 +315,43 @@ func SetSource(s string) error {
 	return nil
 }
 
-func SetDatetimeFormat(s string) {
+func SetDelimiter(s string) error {
+	if len(s) < 1 {
+		return nil
+	}
+
 	f := GetFlags()
-	f.DatetimeFormat = s
+
+	delimiter, delimiterPositions, delimitAutomatically, err := ParseDelimiter(s, f.Delimiter, f.DelimiterPositions, f.DelimitAutomatically)
+	if err != nil {
+		return err
+	}
+
+	f.Delimiter = delimiter
+	f.DelimiterPositions = delimiterPositions
+	f.DelimitAutomatically = delimitAutomatically
+	return nil
+}
+
+func SetJsonQuery(s string) {
+	f := GetFlags()
+	f.JsonQuery = strings.TrimSpace(s)
 	return
+}
+
+func SetEncoding(s string) error {
+	if len(s) < 1 {
+		return nil
+	}
+
+	encoding, err := ParseEncoding(s)
+	if err != nil {
+		return err
+	}
+
+	f := GetFlags()
+	f.Encoding = encoding
+	return nil
 }
 
 func SetNoHeader(b bool) {
@@ -291,28 +364,6 @@ func SetWithoutNull(b bool) {
 	f := GetFlags()
 	f.WithoutNull = b
 	return
-}
-
-func SetWaitTimeout(f float64) {
-	if f < 0 {
-		f = 0
-	}
-
-	flags := GetFlags()
-	flags.WaitTimeout = f
-	file.UpdateWaitTimeout(flags.WaitTimeout, flags.RetryInterval)
-	return
-}
-
-func SetWriteEncoding(s string) error {
-	encoding, err := ParseEncoding(s)
-	if err != nil {
-		return err
-	}
-
-	f := GetFlags()
-	f.WriteEncoding = encoding
-	return nil
 }
 
 func SetOut(s string) error {
@@ -332,41 +383,85 @@ func SetFormat(s string) error {
 	var fm Format
 	f := GetFlags()
 
-	switch strings.ToUpper(s) {
+	switch s {
 	case "":
-		switch strings.ToUpper(filepath.Ext(f.OutFile)) {
-		case ".CSV":
+		switch strings.ToLower(filepath.Ext(f.OutFile)) {
+		case CsvExt:
 			fm = CSV
-		case ".TSV":
+		case TsvExt:
 			fm = TSV
-		case ".JSON":
+		case FixedExt:
+			fm = FIXED
+		case JsonExt:
 			fm = JSON
+		case GfmExt:
+			fm = GFM
+		case OrgExt:
+			fm = ORG
 		default:
 			return nil
 		}
-	case "CSV":
-		fm = CSV
-	case "TSV":
-		fm = TSV
-	case "FIXED":
-		fm = FIXED
-	case "JSON":
-		fm = JSON
-	case "JSONH":
-		fm = JSONH
-	case "JSONA":
-		fm = JSONA
-	case "GFM":
-		fm = GFM
-	case "ORG":
-		fm = ORG
-	case "TEXT":
-		fm = TEXT
 	default:
-		return errors.New("format must be one of CSV|TSV|FIXED|JSON|JSONH|JSONA|GFM|ORG|TEXT")
+		var err error
+		if fm, err = ParseFormat(s); err != nil {
+			return err
+		}
 	}
 
 	f.Format = fm
+	return nil
+}
+
+func SetWriteEncoding(s string) error {
+	if len(s) < 1 {
+		return nil
+	}
+
+	encoding, err := ParseEncoding(s)
+	if err != nil {
+		return err
+	}
+
+	f := GetFlags()
+	f.WriteEncoding = encoding
+	return nil
+}
+
+func SetWriteDelimiter(s string) error {
+	if len(s) < 1 {
+		return nil
+	}
+
+	f := GetFlags()
+
+	delimiter, delimiterPositions, _, err := ParseDelimiter(s, f.WriteDelimiter, f.WriteDelimiterPositions, false)
+	if err != nil {
+		return errors.New("write-delimiter must be one character, \"SPACES\" or JSON array of integers")
+	}
+
+	f.WriteDelimiter = delimiter
+	f.WriteDelimiterPositions = delimiterPositions
+	return nil
+}
+
+func SetWithoutHeader(b bool) {
+	f := GetFlags()
+	f.WithoutHeader = b
+	return
+}
+
+func SetLineBreak(s string) error {
+	if len(s) < 1 {
+		return nil
+	}
+
+	lb, err := ParseLineBreak(s)
+	if err != nil {
+		return err
+	}
+
+	f := GetFlags()
+	f.LineBreak = lb
 	return nil
 }
 
@@ -383,45 +478,6 @@ func SetColor(b bool) {
 	return
 }
 
-func SetWriteDelimiter(s string) error {
-	f := GetFlags()
-
-	if f.Format == TSV {
-		f.WriteDelimiter = '\t'
-		return nil
-	}
-
-	var delimiter = ','
-	var delimiterPositions []int = nil
-
-	if s == "[]" || 2 < len(s) {
-		var positions []int
-		err := json.Unmarshal([]byte(s), &positions)
-		if err != nil {
-			return errors.New("write-delimiter must be one character or JSON array of integers")
-		}
-		delimiterPositions = positions
-	} else if 0 < len(s) {
-		s = UnescapeString(s)
-
-		runes := []rune(s)
-		if 1 < len(runes) {
-			return errors.New("write-delimiter must be one character or JSON array of integers")
-		}
-		delimiter = runes[0]
-	}
-
-	f.WriteDelimiter = delimiter
-	f.WriteDelimiterPositions = delimiterPositions
-	return nil
-}
-
-func SetWithoutHeader(b bool) {
-	f := GetFlags()
-	f.WithoutHeader = b
-	return
-}
-
 func SetQuiet(b bool) {
 	f := GetFlags()
 	f.Quiet = b
@@ -429,8 +485,8 @@ func SetQuiet(b bool) {
 }
 
 func SetCPU(i int) {
-	if i <= 0 {
-		return
+	if i < 1 {
+		i = 1
 	}
 
 	if runtime.NumCPU() < i {

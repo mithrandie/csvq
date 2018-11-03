@@ -15,18 +15,18 @@ import (
 )
 
 var viewLoadTests = []struct {
-	Name               string
-	Encoding           cmd.Encoding
-	NoHeader           bool
-	From               parser.FromClause
-	UseInternalId      bool
-	Stdin              string
-	JsonQuery          string
-	ImportFormat       cmd.Format
-	DelimiterPositions []int
-	Filter             *Filter
-	Result             *View
-	Error              string
+	Name                 string
+	Encoding             cmd.Encoding
+	NoHeader             bool
+	From                 parser.FromClause
+	UseInternalId        bool
+	Stdin                string
+	JsonQuery            string
+	DelimiterPositions   []int
+	DelimitAutomatically bool
+	Filter               *Filter
+	Result               *View
+	Error                string
 }{
 	{
 		Name: "Dual View",
@@ -263,6 +263,101 @@ var viewLoadTests = []struct {
 				Path:        "stdin",
 				Delimiter:   ',',
 				JsonQuery:   "key{}",
+				Format:      cmd.JSON,
+				Encoding:    cmd.UTF8,
+				LineBreak:   cmd.LF,
+				IsTemporary: true,
+			},
+			Filter: &Filter{
+				Variables: []VariableMap{{}},
+				TempViews: []ViewMap{
+					{
+						"STDIN": nil,
+					},
+				},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
+					{
+						"T": "STDIN",
+					},
+				},
+			},
+		},
+	},
+	{
+		Name: "Load JsonH From Stdin",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{Object: parser.Stdin{Stdin: "stdin"}, Alias: parser.Identifier{Literal: "t"}},
+			},
+		},
+		Stdin:     "[{\"item1\": \"value\\u00221\",\"item2\": 1},{\"item1\": \"value2\",\"item2\": 2}]",
+		JsonQuery: "{}",
+		Result: &View{
+			Header: NewHeader("t", []string{"item1", "item2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("value\"1"),
+					value.NewInteger(1),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("value2"),
+					value.NewInteger(2),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:        "stdin",
+				Delimiter:   ',',
+				JsonQuery:   "{}",
+				Format:      cmd.JSONH,
+				Encoding:    cmd.UTF8,
+				LineBreak:   cmd.LF,
+				IsTemporary: true,
+			},
+			Filter: &Filter{
+				Variables: []VariableMap{{}},
+				TempViews: []ViewMap{
+					{
+						"STDIN": nil,
+					},
+				},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
+					{
+						"T": "STDIN",
+					},
+				},
+			},
+		},
+	},
+	{
+		Name: "Load JsonA From Stdin",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{Object: parser.Stdin{Stdin: "stdin"}, Alias: parser.Identifier{Literal: "t"}},
+			},
+		},
+		Stdin:     "[{\"item1\": \"\\u0076\\u0061\\u006c\\u0075\\u0065\\u0031\",\"item2\": 1},{\"item1\": \"\\u0076\\u0061\\u006c\\u0075\\u0065\\u0032\",\"item2\": 2}]",
+		JsonQuery: "{}",
+		Result: &View{
+			Header: NewHeader("t", []string{"item1", "item2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("value1"),
+					value.NewInteger(1),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("value2"),
+					value.NewInteger(2),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:        "stdin",
+				Delimiter:   ',',
+				JsonQuery:   "{}",
+				Format:      cmd.JSONA,
 				Encoding:    cmd.UTF8,
 				LineBreak:   cmd.LF,
 				IsTemporary: true,
@@ -296,8 +391,8 @@ var viewLoadTests = []struct {
 		Error:     "[L:- C:-] json query error: column 4: unexpected termination",
 	},
 	{
-		Name:         "Load Fixed-Length Text File",
-		ImportFormat: cmd.FIXED,
+		Name:                 "Load Fixed-Length Text File",
+		DelimitAutomatically: true,
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -325,6 +420,7 @@ var viewLoadTests = []struct {
 				Path:               "fixed_length.txt",
 				Delimiter:          ',',
 				DelimiterPositions: []int{7, 12},
+				Format:             cmd.FIXED,
 				NoHeader:           false,
 				Encoding:           cmd.UTF8,
 				LineBreak:          cmd.LF,
@@ -343,9 +439,9 @@ var viewLoadTests = []struct {
 		},
 	},
 	{
-		Name:         "Load Fixed-Length Text File NoHeader",
-		ImportFormat: cmd.FIXED,
-		NoHeader:     true,
+		Name:                 "Load Fixed-Length Text File NoHeader",
+		DelimitAutomatically: true,
+		NoHeader:             true,
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -377,6 +473,7 @@ var viewLoadTests = []struct {
 				Path:               "fixed_length.txt",
 				Delimiter:          ',',
 				DelimiterPositions: []int{7, 12},
+				Format:             cmd.FIXED,
 				NoHeader:           true,
 				Encoding:           cmd.UTF8,
 				LineBreak:          cmd.LF,
@@ -395,9 +492,9 @@ var viewLoadTests = []struct {
 		},
 	},
 	{
-		Name:               "Load Fixed-Length Text File Position Error",
-		ImportFormat:       cmd.FIXED,
-		DelimiterPositions: []int{6, 2},
+		Name:                 "Load Fixed-Length Text File Position Error",
+		DelimitAutomatically: false,
+		DelimiterPositions:   []int{6, 2},
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -525,6 +622,50 @@ var viewLoadTests = []struct {
 				InlineTables: InlineTableNodes{{}},
 				Aliases: AliasNodes{{
 					"T": strings.ToUpper(GetTestFilePath("table5.csv")),
+				}},
+			},
+		},
+	},
+	{
+		Name: "Load TableObject From TSV File",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type:          parser.Identifier{Literal: "csv"},
+						FormatElement: parser.NewStringValue("\t"),
+						Path:          parser.Identifier{Literal: "table3"},
+					},
+					Alias: parser.Identifier{Literal: "t"},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("t", []string{"column5", "column6"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "table3.tsv",
+				Delimiter: '\t',
+				Format:    cmd.TSV,
+				Encoding:  cmd.UTF8,
+				LineBreak: cmd.LF,
+			},
+			Filter: &Filter{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{{
+					"T": strings.ToUpper(GetTestFilePath("table3.tsv")),
 				}},
 			},
 		},
@@ -770,6 +911,7 @@ var viewLoadTests = []struct {
 				Path:      "table.json",
 				Delimiter: ',',
 				JsonQuery: "{}",
+				Format:    cmd.JSON,
 				Encoding:  cmd.UTF8,
 				LineBreak: cmd.LF,
 			},
@@ -780,6 +922,96 @@ var viewLoadTests = []struct {
 				InlineTables: InlineTableNodes{{}},
 				Aliases: AliasNodes{{
 					"JT": strings.ToUpper(GetTestFilePath("table.json")),
+				}},
+			},
+		},
+	},
+	{
+		Name: "Load TableObject From JsonH File",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type:          parser.Identifier{Literal: "json"},
+						FormatElement: parser.NewStringValue("{}"),
+						Path:          parser.Identifier{Literal: "table_h"},
+					},
+					Alias: parser.Identifier{Literal: "jt"},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("jt", []string{"item1", "item2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("value\"1"),
+					value.NewInteger(1),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("value2"),
+					value.NewInteger(2),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "table_h.json",
+				Delimiter: ',',
+				JsonQuery: "{}",
+				Format:    cmd.JSONH,
+				Encoding:  cmd.UTF8,
+				LineBreak: cmd.LF,
+			},
+			Filter: &Filter{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{{
+					"JT": strings.ToUpper(GetTestFilePath("table_h.json")),
+				}},
+			},
+		},
+	},
+	{
+		Name: "Load TableObject From JsonA File",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type:          parser.Identifier{Literal: "json"},
+						FormatElement: parser.NewStringValue("{}"),
+						Path:          parser.Identifier{Literal: "table_a"},
+					},
+					Alias: parser.Identifier{Literal: "jt"},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("jt", []string{"item1", "item2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("value1"),
+					value.NewInteger(1),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("value2"),
+					value.NewInteger(2),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "table_a.json",
+				Delimiter: ',',
+				JsonQuery: "{}",
+				Format:    cmd.JSONA,
+				Encoding:  cmd.UTF8,
+				LineBreak: cmd.LF,
+			},
+			Filter: &Filter{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{{
+					"JT": strings.ToUpper(GetTestFilePath("table_a.json")),
 				}},
 			},
 		},
@@ -1897,19 +2129,15 @@ func TestView_Load(t *testing.T) {
 		ViewCache.Clean()
 
 		tf.Delimiter = ','
+		tf.DelimiterPositions = v.DelimiterPositions
+		tf.DelimitAutomatically = v.DelimitAutomatically
+		tf.JsonQuery = v.JsonQuery
 		tf.NoHeader = v.NoHeader
 		if v.Encoding != "" {
 			tf.Encoding = v.Encoding
 		} else {
 			tf.Encoding = cmd.UTF8
 		}
-		if v.JsonQuery != "" {
-			tf.JsonQuery = v.JsonQuery
-		} else {
-			tf.JsonQuery = ""
-		}
-		tf.ImportFormat = v.ImportFormat
-		tf.DelimiterPositions = v.DelimiterPositions
 
 		var oldStdin *os.File
 		if 0 < len(v.Stdin) {
@@ -1948,6 +2176,9 @@ func TestView_Load(t *testing.T) {
 		if v.Result.FileInfo != nil {
 			if filepath.Base(view.FileInfo.Path) != filepath.Base(v.Result.FileInfo.Path) {
 				t.Errorf("%s: FileInfo.Path = %q, want %q", v.Name, filepath.Base(view.FileInfo.Path), filepath.Base(v.Result.FileInfo.Path))
+			}
+			if view.FileInfo.Format != v.Result.FileInfo.Format {
+				t.Errorf("%s: FileInfo.Format = %s, want %s", v.Name, view.FileInfo.Format, v.Result.FileInfo.Format)
 			}
 			if view.FileInfo.Delimiter != v.Result.FileInfo.Delimiter {
 				t.Errorf("%s: FileInfo.Delimiter = %q, want %q", v.Name, view.FileInfo.Delimiter, v.Result.FileInfo.Delimiter)

@@ -591,6 +591,10 @@ table_operation_statement
     {
         $$ = RenameColumn{Table: $3, Old: $5, New: $7}
     }
+    | ALTER TABLE table_identifier SET identifier TO value
+    {
+        $$ = SetTableAttribute{BaseExpr: NewBaseExpr($1), Table: $3, Attribute: $5, Value: $7}
+    }
 
 column_default
     : identifier
@@ -787,9 +791,9 @@ cursor_status
     }
 
 command_statement
-    : SET FLAG '=' primitive_type
+    : SET FLAG '=' value
     {
-        $$ = SetFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal, Value: $4.(PrimitiveType).Value}
+        $$ = SetFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal, Value: $4}
     }
     | SHOW FLAG
     {

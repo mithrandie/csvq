@@ -115,12 +115,12 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 		view = loadDualView()
 	case parser.Stdin:
 		flags := cmd.GetFlags()
-		delimiter := flags.Delimiter
 		fileInfo := &FileInfo{
 			Path:               table.Object.String(),
-			Delimiter:          delimiter,
-			Format:             flags.ImportFormat,
+			Format:             flags.ImportFormat(),
+			Delimiter:          flags.Delimiter,
 			DelimiterPositions: flags.DelimiterPositions,
+			JsonQuery:          flags.JsonQuery,
 			Encoding:           flags.Encoding,
 			LineBreak:          flags.LineBreak,
 			NoHeader:           flags.NoHeader,
@@ -134,8 +134,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 
 			var loadView *View
 
-			jsonQuery := flags.JsonQuery
-			if len(jsonQuery) < 1 {
+			if fileInfo.Format != cmd.JSON {
 				fp := os.Stdin
 				defer fp.Close()
 
@@ -144,16 +143,14 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 					return nil, NewDataParsingError(table.Object, fileInfo.Path, err.Error())
 				}
 			} else {
-				fileInfo.Format = cmd.JSON
 				fileInfo.Encoding = cmd.UTF8
-				fileInfo.JsonQuery = flags.JsonQuery
 
 				buf, err := ioutil.ReadAll(os.Stdin)
 				if err != nil {
 					return nil, NewReadFileError(table.Object.(parser.Stdin), err.Error())
 				}
 
-				headerLabels, rows, err := json.LoadTable(jsonQuery, string(buf))
+				headerLabels, rows, encodeType, err := json.LoadTable(fileInfo.JsonQuery, string(buf))
 				if err != nil {
 					return nil, NewJsonQueryError(parser.JsonQuery{BaseExpr: table.Object.GetBaseExpr()}, err.Error())
 				}
@@ -161,6 +158,13 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 				records := make([]Record, 0, len(rows))
 				for _, row := range rows {
 					records = append(records, NewRecord(row))
+				}
+
+				switch encodeType {
+				case json.HexDigits:
+					fileInfo.Format = cmd.JSONH
+				case json.AllWithHexDigits:
+					fileInfo.Format = cmd.JSONA
 				}
 
 				loadView = NewView()
@@ -190,10 +194,13 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 		tableObject := table.Object.(parser.TableObject)
 
 		flags := cmd.GetFlags()
-		importFormat := flags.ImportFormat
+		importFormat := flags.ImportFormat()
 		delimiter := flags.Delimiter
 		delimiterPositions := flags.DelimiterPositions
 		jsonQuery := flags.JsonQuery
+		encoding := flags.Encoding
+		noHeader := flags.NoHeader
+		withoutNull := flags.WithoutNull
 
 		felem, err := filter.Evaluate(tableObject.FormatElement)
 		if err != nil {
@@ -215,7 +222,11 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 				return nil, NewTableObjectArgumentsLengthError(tableObject, 5)
 			}
 			delimiter = d[0]
-			importFormat = cmd.CSV
+			if delimiter == '\t' {
+				importFormat = cmd.TSV
+			} else {
+				importFormat = cmd.CSV
+			}
 		case cmd.FIXED.String():
 			if value.IsNull(felemStr) {
 				return nil, NewTableObjectInvalidDelimiterPositionsError(tableObject, tableObject.FormatElement.String())
@@ -241,15 +252,12 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 			if 0 < len(tableObject.Args) {
 				return nil, NewTableObjectJsonArgumentsLengthError(tableObject, 2)
 			}
-			jsonQuery = strings.TrimSpace(felemStr.(value.String).Raw())
+			jsonQuery = felemStr.(value.String).Raw()
 			importFormat = cmd.JSON
+			encoding = cmd.UTF8
 		default:
 			return nil, NewTableObjectInvalidObjectError(tableObject, tableObject.Type.Literal)
 		}
-
-		encoding := flags.Encoding
-		noHeader := flags.NoHeader
-		withoutNull := flags.WithoutNull
 
 		args := make([]value.Primary, 3)
 		for i, a := range tableObject.Args {
@@ -524,37 +532,34 @@ func loadObject(
 			view.Header.Update(tableName.Literal, nil)
 		}
 	} else {
-		var fileInfo *FileInfo
+		var filePath string
 		var commonTableName string
 
-		if filter.TempViews.Exists(tableIdentifier.Literal) {
-			fileInfo = &FileInfo{
-				Path: tableIdentifier.Literal,
-			}
+		filePath = tableIdentifier.Literal
+		if filter.TempViews.Exists(filePath) {
+			commonTableName = parser.FormatTableName(filePath)
 
-			commonTableName = parser.FormatTableName(fileInfo.Path)
-
-			pathIdent := parser.Identifier{Literal: fileInfo.Path}
+			pathIdent := parser.Identifier{Literal: filePath}
 			if useInternalId {
 				view, _ = filter.TempViews.GetWithInternalId(pathIdent)
 			} else {
 				view, _ = filter.TempViews.Get(pathIdent)
 			}
 		} else {
-			fileInfo, err = NewFileInfoForCreate(tableIdentifier, cmd.GetFlags().Repository, delimiter)
+			filePath, err = CreateFilePath(tableIdentifier, cmd.GetFlags().Repository)
 			if err != nil {
 				return nil, err
 			}
 
-			if !ViewCache.Exists(fileInfo.Path) {
-				fileInfo, err = NewFileInfo(tableIdentifier, cmd.GetFlags().Repository, delimiter, importFormat)
+			if !ViewCache.Exists(filePath) {
+				fileInfo, err := NewFileInfo(tableIdentifier, cmd.GetFlags().Repository, importFormat, delimiter, encoding)
 				if err != nil {
 					return nil, err
 				}
+				filePath = fileInfo.Path
 
 				fileInfo.DelimiterPositions = delimiterPositions
 				fileInfo.JsonQuery = strings.TrimSpace(jsonQuery)
-				fileInfo.Encoding = encoding
 				fileInfo.LineBreak = lineBreak
 				fileInfo.NoHeader = noHeader
 
@@ -562,7 +567,7 @@ func loadObject(
 				ufpath := strings.ToUpper(fileInfo.Path)
 
 				if alreadyLoaded {
-					if !fileInfo.Equivalent(ViewCache[ufpath].FileInfo) {
+					if importFormat != cmd.AutoSelect && !fileInfo.Equivalent(ViewCache[ufpath].FileInfo) {
 						return nil, NewTableObjectMultipleReadError(tableIdentifier)
 					}
 				}
@@ -602,9 +607,9 @@ func loadObject(
 					ViewCache.Set(loadView)
 				}
 			}
-			commonTableName = parser.FormatTableName(fileInfo.Path)
+			commonTableName = parser.FormatTableName(filePath)
 
-			pathIdent := parser.Identifier{Literal: fileInfo.Path}
+			pathIdent := parser.Identifier{Literal: filePath}
 			if useInternalId {
 				view, _ = ViewCache.GetWithInternalId(pathIdent)
 			} else {
@@ -612,7 +617,7 @@ func loadObject(
 			}
 		}
 
-		if err = filter.Aliases.Add(tableName, fileInfo.Path); err != nil {
+		if err = filter.Aliases.Add(tableName, filePath); err != nil {
 			return nil, err
 		}
 
@@ -790,7 +795,7 @@ func loadViewFromJsonFile(fp io.Reader, fileInfo *FileInfo) (*View, error) {
 		return nil, err
 	}
 
-	headerLabels, rows, err := json.LoadTable(fileInfo.JsonQuery, string(jsonText))
+	headerLabels, rows, encodeType, err := json.LoadTable(fileInfo.JsonQuery, string(jsonText))
 	if err != nil {
 		return nil, err
 	}
@@ -798,6 +803,13 @@ func loadViewFromJsonFile(fp io.Reader, fileInfo *FileInfo) (*View, error) {
 	records := make([]Record, 0, len(rows))
 	for _, row := range rows {
 		records = append(records, NewRecord(row))
+	}
+
+	switch encodeType {
+	case json.HexDigits:
+		fileInfo.Format = cmd.JSONH
+	case json.AllWithHexDigits:
+		fileInfo.Format = cmd.JSONA
 	}
 
 	view := NewView()
