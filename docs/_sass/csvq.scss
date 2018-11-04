@@ -148,16 +148,16 @@ main {
 
     li {
         @extend .collection-item;
-        padding: 8px 15px;
     }
 
     table {
         @extend .white, .striped, .z-depth-1;
-        margin: 8px;
+        margin: 4px;
+        width: calc(100% - 8px);
     }
 
     td, th {
-        padding: 8px 5px;
+        padding: 8px 16px;
     }
 
     dt {
