@@ -154,7 +154,7 @@ _table_name_
   FROM user                -- Relative path without file extension
   ```
   
-  The specifications of the command options are used as file attributes like encoding to be loaded. 
+  The specifications of the command options are used as file attributes such as encoding to be loaded. 
   If you want to specify the different attributes for each file, you can use _table_object_ expressions for each file to load.
 
   Once a file is loaded, then the data is cached and it can be loaded with only file name after that within the same transaction.
