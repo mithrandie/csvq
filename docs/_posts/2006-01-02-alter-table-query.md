@@ -91,7 +91,7 @@ _attribute_
   | name | type | description |
   | :- | :- | :- |
   | FORMAT          | string  | Format |
-  | DELIMITER       | string  | Field delimiter for CSVv, or delimiter positions for Fixed-Length Format |
+  | DELIMITER       | string  | Field delimiter for CSV, or delimiter positions for Fixed-Length Format |
   | ENCODING        | string  | File Encoding |
   | LINE_BREAK      | string  | Line Break |
   | HEADER          | boolean | Write header line in the file |
