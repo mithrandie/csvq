@@ -32,7 +32,7 @@ If you want to continue to input a statement on the next line even though the en
 
 #### Command options in the interactive shell
 
---write-encoding, --out, --format, --write-delimiter, --without-header 
+--out
 : Ignored 
 
 --stats
