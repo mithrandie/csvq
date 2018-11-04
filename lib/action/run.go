@@ -52,6 +52,8 @@ func LaunchInteractiveShell() error {
 		return errors.New("input from pipe or redirection cannot be used in interactive shell")
 	}
 
+	cmd.SetOut("") // Ignore --out option
+
 	SetSignalHandler()
 
 	defer func() {
