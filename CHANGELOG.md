@@ -1,3 +1,14 @@
+## Release v1.5.0 (2018-11-04)
+
+- Support Fixed-Length Format.
+- Implement WIDTH function.
+- Support operate with byte length in Shift-JIS encoding in the following string functions.
+  - BYTE_LEN
+  - LPAN
+  - RPAD
+- Implement ALTER TABLE SET ATTRIBUTE statement.
+
+
 ## Release v1.4.3 (2018-10-19)
 
 - Fix return code when on-usage-error occurred.
