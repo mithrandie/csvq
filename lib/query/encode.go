@@ -27,19 +27,16 @@ func EncodeView(view *View, fileInfo *FileInfo) (string, error) {
 		if err != nil {
 			return "", err
 		}
-	default:
-		switch fileInfo.Format {
-		case cmd.GFM, cmd.ORG, cmd.TEXT:
-			s = encodeText(view, fileInfo.Format, fileInfo.NoHeader)
-			if fileInfo.LineBreak != cmd.LF {
-				s = convertLineBreak(s, fileInfo.LineBreak)
-			}
-		case cmd.TSV:
-			fileInfo.Delimiter = '\t'
-			fallthrough
-		default: // cmd.CSV
-			s = encodeCSV(view, fileInfo.Delimiter, fileInfo.LineBreak, fileInfo.NoHeader)
+	case cmd.GFM, cmd.ORG, cmd.TEXT:
+		s = encodeText(view, fileInfo.Format, fileInfo.NoHeader)
+		if fileInfo.LineBreak != cmd.LF {
+			s = convertLineBreak(s, fileInfo.LineBreak)
 		}
+	case cmd.TSV:
+		fileInfo.Delimiter = '\t'
+		fallthrough
+	default: // cmd.CSV
+		s = encodeCSV(view, fileInfo.Delimiter, fileInfo.LineBreak, fileInfo.NoHeader)
 	}
 
 	switch fileInfo.Format {
