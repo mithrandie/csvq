@@ -592,6 +592,25 @@ func TestTemporaryViewScopes_Store(t *testing.T) {
 					InitialRecordSet: RecordSet{},
 				},
 			},
+			"/PATH/TO/TABLE2.CSV": &View{
+				Header: NewHeader("table2", []string{"column1", "column2", "column3"}),
+				RecordSet: RecordSet{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:             "/path/to/table2.csv",
+					Delimiter:        ',',
+					InitialHeader:    NewHeader("table2", []string{"column1", "column2", "column3"}),
+					InitialRecordSet: RecordSet{},
+				},
+			},
 		},
 	}
 
@@ -625,15 +644,38 @@ func TestTemporaryViewScopes_Store(t *testing.T) {
 					},
 				},
 			},
+			"/PATH/TO/TABLE2.CSV": &View{
+				Header: NewHeader("table2", []string{"column1", "column2", "column3"}),
+				RecordSet: RecordSet{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:             "/path/to/table2.csv",
+					Delimiter:        ',',
+					InitialHeader:    NewHeader("table2", []string{"column1", "column2", "column3"}),
+					InitialRecordSet: RecordSet{},
+				},
+			},
 		},
 	}
 	expectOut := "Commit: restore point of view \"/path/to/table1.csv\" is created.\n"
+
+	UncommittedViews := map[string]*FileInfo{
+		"/path/to/table1.csv": nil,
+	}
 
 	oldStdout := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w
 
-	list.Store()
+	list.Store(UncommittedViews)
 
 	w.Close()
 	os.Stdout = oldStdout
@@ -750,11 +792,16 @@ func TestTemporaryViewScopes_Restore(t *testing.T) {
 	}
 	expectOut := "Rollback: view \"/path/to/table1.csv\" is restored.\nRollback: view \"/path/to/table2.csv\" is restored.\n"
 
+	UncommittedViews := map[string]*FileInfo{
+		"/path/to/table1.csv": nil,
+		"/path/to/table2.csv": nil,
+	}
+
 	oldStdout := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w
 
-	list.Restore()
+	list.Restore(UncommittedViews)
 
 	w.Close()
 	os.Stdout = oldStdout

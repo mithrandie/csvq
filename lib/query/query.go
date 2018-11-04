@@ -954,11 +954,11 @@ func Commit(expr parser.Expression, filter *Filter) error {
 		}
 	}
 
-	ExecResults = []ExecResult{}
-	ReleaseResources()
 	if expr != nil {
-		filter.TempViews.Store()
+		filter.TempViews.Store(UncommittedTempViews())
 	}
+	ExecResults = make([]ExecResult, 0, 10)
+	ReleaseResources()
 
 	return nil
 }
@@ -978,9 +978,9 @@ func Rollback(filter *Filter) {
 		}
 	}
 
-	ExecResults = []ExecResult{}
+	filter.TempViews.Restore(UncommittedTempViews())
+	ExecResults = make([]ExecResult, 0, 10)
 	ReleaseResources()
-	filter.TempViews.Restore()
 	return
 }
 

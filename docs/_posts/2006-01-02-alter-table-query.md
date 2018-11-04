@@ -6,13 +6,12 @@ category: reference
 
 # Alter Table Query
 
-Alter Table query is used to modify data structure on csv files.
+Alter Table query is used to modify data structure.
 
-| :- |
-| [ADD COLUMNS](#add-columns)      |
-| [DROP COLUMNS](#drop-columns)    |
-| [RENAME COLUMN](#rename-column)  |
-| [SET ATTRIBUTE](#set-attribute)  |
+* [ADD COLUMNS](#add-columns)
+* [DROP COLUMNS](#drop-columns)
+* [RENAME COLUMN](#rename-column)
+* [SET ATTRIBUTE](#set-attribute)
 
 ## Add Columns
 {: #add-columns}
@@ -76,7 +75,10 @@ _new_column_name_
 {: #set-attribute}
 
 Set file attributes. 
-File attributes is used to create or update files by the results of insert, update, delete, crate table or alter table queries.
+File attributes is used to create or update files by the results of queries.
+
+Changes to the file attributes are retained until the end of the transaction.
+
 
 ```sql
 ALTER TABLE table_name SET attribute TO value
