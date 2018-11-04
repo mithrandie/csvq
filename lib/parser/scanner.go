@@ -53,7 +53,7 @@ var aggregateFunctions = []string{
 	"MEDIAN",
 }
 
-var listaggFunctions = []string{
+var listFunctions = []string{
 	"LISTAGG",
 	"JSON_AGG",
 }
@@ -202,7 +202,7 @@ func (s *Scanner) Scan() (Token, error) {
 		} else if s.isAggregateFunctions(literal) {
 			token = AGGREGATE_FUNCTION
 		} else if s.isListaggFunctions(literal) {
-			token = LISTAGG
+			token = LIST_FUNCTION
 		} else if s.isAnalyticFunctions(literal) {
 			token = ANALYTIC_FUNCTION
 		} else if s.isFunctionsNth(literal) {
@@ -358,7 +358,7 @@ func (s *Scanner) isAggregateFunctions(str string) bool {
 }
 
 func (s *Scanner) isListaggFunctions(str string) bool {
-	for _, v := range listaggFunctions {
+	for _, v := range listFunctions {
 		if strings.EqualFold(v, str) {
 			return true
 		}

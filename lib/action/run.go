@@ -51,11 +51,6 @@ func LaunchInteractiveShell() error {
 	if cmd.IsReadableFromPipeOrRedirection() {
 		return errors.New("input from pipe or redirection cannot be used in interactive shell")
 	}
-	cmd.SetWriteEncoding("UTF8")
-	cmd.SetOut("")
-	cmd.SetFormat("TEXT")
-	cmd.SetWriteEncoding(",")
-	cmd.SetWithoutHeader(false)
 
 	SetSignalHandler()
 
@@ -75,7 +70,8 @@ func LaunchInteractiveShell() error {
 		cmd.Terminal = nil
 	}()
 
-	StartUpMessage := "csvq interactive shell\n" +
+	StartUpMessage := "" +
+		"csvq interactive shell\n" +
 		"Press Ctrl+D or execute \"EXIT;\" to terminate this shell.\n\n"
 	if werr := cmd.Terminal.Write(StartUpMessage); werr != nil {
 		return werr
@@ -187,12 +183,13 @@ func showStats(start time.Time) {
 	w := strconv.Itoa(width)
 
 	stats := fmt.Sprintf(
-		" TotalTime: %"+w+"[2]s seconds %[1]s"+
-			"     Alloc: %"+w+"[3]s bytes %[1]s"+
-			"TotalAlloc: %"+w+"[4]s bytes %[1]s"+
-			"   HeapSys: %"+w+"[5]s bytes %[1]s"+
-			"   Mallocs: %"+w+"[6]s objects %[1]s"+
-			"     Frees: %"+w+"[7]s objects %[1]s",
+		""+
+			color.BlueB("   TotalTime: ")+"%"+w+"[2]s seconds %[1]s"+
+			color.BlueB("       Alloc: ")+"%"+w+"[3]s bytes %[1]s"+
+			color.BlueB("  TotalAlloc: ")+"%"+w+"[4]s bytes %[1]s"+
+			color.BlueB("     HeapSys: ")+"%"+w+"[5]s bytes %[1]s"+
+			color.BlueB("     Mallocs: ")+"%"+w+"[6]s objects %[1]s"+
+			color.BlueB("       Frees: ")+"%"+w+"[7]s objects %[1]s",
 		"\n",
 		exectime,
 		alloc,

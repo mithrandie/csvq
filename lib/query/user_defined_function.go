@@ -2,7 +2,6 @@ package query
 
 import (
 	"fmt"
-	"github.com/mithrandie/csvq/lib/color"
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/parser"
@@ -39,57 +38,25 @@ func (list UserDefinedFunctionScopes) Dispose(name parser.Identifier) error {
 	return NewFunctionNotExistError(name, name.Literal)
 }
 
-func (list UserDefinedFunctionScopes) List() ([]string, []string) {
-	var fnString = func(fn *UserDefinedFunction) string {
-		parameters := make([]string, len(fn.Parameters))
-		for i, v := range fn.Parameters {
-			if df, ok := fn.Defaults[v.String()]; ok {
-				parameters[i] = color.Yellow(v.String()) + " = " + color.BlueB(df.String())
-			} else {
-				parameters[i] = color.Yellow(v.String())
-			}
-		}
-		if fn.IsAggregate {
-			parameters = append([]string{color.Magenta(fn.Cursor.String())}, parameters...)
-		}
-
-		return color.GreenB(fn.Name.String()) + " (" + strings.Join(parameters, ", ") + ")"
-	}
-
-	scala := make(map[string]string)
-	scalaKeys := make([]string, 0)
-	aggregate := make(map[string]string)
-	aggregateKeys := make([]string, 0)
+func (list UserDefinedFunctionScopes) All() (UserDefinedFunctionMap, UserDefinedFunctionMap) {
+	scalaAll := make(UserDefinedFunctionMap, 10)
+	aggregateAll := make(UserDefinedFunctionMap, 10)
 
 	for _, m := range list {
-		for _, fn := range m {
-			if InStrSlice(fn.Name.Literal, scalaKeys) || InStrSlice(fn.Name.Literal, aggregateKeys) {
-				continue
-			}
-
+		for key, fn := range m {
 			if fn.IsAggregate {
-				aggregate[fn.Name.Literal] = fnString(fn)
-				aggregateKeys = append(aggregateKeys, fn.Name.Literal)
+				if _, ok := aggregateAll[key]; !ok {
+					aggregateAll[key] = fn
+				}
 			} else {
-				scala[fn.Name.Literal] = fnString(fn)
-				scalaKeys = append(scalaKeys, fn.Name.Literal)
+				if _, ok := scalaAll[key]; !ok {
+					scalaAll[key] = fn
+				}
 			}
 		}
 	}
 
-	scalaList := make([]string, len(scalaKeys))
-	sort.Strings(scalaKeys)
-	for i, key := range scalaKeys {
-		scalaList[i] = scala[key]
-	}
-
-	aggregateList := make([]string, len(aggregateKeys))
-	sort.Strings(aggregateKeys)
-	for i, key := range aggregateKeys {
-		aggregateList[i] = aggregate[key]
-	}
-
-	return scalaList, aggregateList
+	return scalaAll, aggregateAll
 }
 
 type UserDefinedFunctionMap map[string]*UserDefinedFunction
@@ -193,6 +160,20 @@ func (m UserDefinedFunctionMap) Get(fn parser.QueryExpression, name string) (*Us
 		return fn, nil
 	}
 	return nil, NewFunctionNotExistError(fn, name)
+}
+
+func (m UserDefinedFunctionMap) Keys() []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+func (m UserDefinedFunctionMap) SortedKeys() []string {
+	keys := m.Keys()
+	sort.Strings(keys)
+	return keys
 }
 
 func (m UserDefinedFunctionMap) Dispose(name parser.Identifier) error {

@@ -55,6 +55,10 @@ func (t SSHTerminal) SaveHistory(s string) {
 	return
 }
 
+func (t SSHTerminal) GetSize() (int, int, error) {
+	return terminal.GetSize(t.oldFd)
+}
+
 type StdIO struct {
 	reader io.Reader
 	writer io.Writer

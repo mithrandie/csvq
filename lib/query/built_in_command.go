@@ -1,42 +1,31 @@
 package query
 
 import (
+	"errors"
 	"fmt"
 	"github.com/mithrandie/csvq/lib/color"
+	"github.com/mithrandie/csvq/lib/text"
+	"github.com/mithrandie/ternary"
 	"io/ioutil"
 	"os"
-	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/csvq/lib/csv"
 	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 )
 
+type ObjectStatus int
+
 const (
-	DelimiterFlag      = "@@DELIMITER"
-	EncodingFlag       = "@@ENCODING"
-	LineBreakFlag      = "@@LINE_BREAK"
-	TimezoneFlag       = "@@TIMEZONE"
-	RepositoryFlag     = "@@REPOSITORY"
-	DatetimeFormatFlag = "@@DATETIME_FORMAT"
-	WaitTimeoutFlag    = "@@WAIT_TIMEOUT"
-	NoHeaderFlag       = "@@NO_HEADER"
-	WithoutNullFlag    = "@@WITHOUT_NULL"
-	WriteEncodingFlag  = "@@WRITE_ENCODING"
-	FormatFlag         = "@@FORMAT"
-	WriteDelimiterFlag = "@@WRITE_DELIMITER"
-	WithoutHeaderFlag  = "@@WITHOUT_HEADER"
-	PrettyPrintFlag    = "@@PRETTY_PRINT"
-	ColorFlag          = "@@COLOR"
-	QuietFlag          = "@@QUIET"
-	CPUFlag            = "@@CPU"
-	StatsFlag          = "@@STATS"
+	ObjectFixed ObjectStatus = iota
+	ObjectCreated
+	ObjectUpdated
 )
+
+const IgnoredFlagPrefix = "(ignored) "
 
 func Print(expr parser.Print, filter *Filter) (string, error) {
 	p, err := filter.Evaluate(expr.Value)
@@ -74,15 +63,21 @@ func Printf(expr parser.Printf, filter *Filter) (string, error) {
 }
 
 func Source(expr parser.Source, filter *Filter) ([]parser.Statement, error) {
-	p, err := filter.Evaluate(expr.FilePath)
-	if err != nil {
-		return nil, err
+	var fpath string
+
+	if ident, ok := expr.FilePath.(parser.Identifier); ok {
+		fpath = ident.Literal
+	} else {
+		p, err := filter.Evaluate(expr.FilePath)
+		if err != nil {
+			return nil, err
+		}
+		s := value.ToString(p)
+		if value.IsNull(s) {
+			return nil, NewSourceInvalidArgumentError(expr, expr.FilePath)
+		}
+		fpath = s.(value.String).Raw()
 	}
-	s := value.ToString(p)
-	if value.IsNull(s) {
-		return nil, NewSourceInvalidArgumentError(expr, expr.FilePath)
-	}
-	fpath := s.(value.String).Raw()
 
 	stat, err := os.Stat(fpath)
 	if err != nil {
@@ -112,126 +107,196 @@ func Source(expr parser.Source, filter *Filter) ([]parser.Statement, error) {
 	return statements, err
 }
 
-func SetFlag(expr parser.SetFlag) error {
+func SetFlag(expr parser.SetFlag, filter *Filter) (string, error) {
 	var p value.Primary
-
-	switch strings.ToUpper(expr.Name) {
-	case DelimiterFlag, EncodingFlag, LineBreakFlag, TimezoneFlag, RepositoryFlag, DatetimeFormatFlag,
-		WriteEncodingFlag, FormatFlag, WriteDelimiterFlag:
-		p = value.ToString(expr.Value)
-	case NoHeaderFlag, WithoutNullFlag, ColorFlag, StatsFlag, WithoutHeaderFlag, PrettyPrintFlag, QuietFlag:
-		p = value.ToBoolean(expr.Value)
-	case WaitTimeoutFlag:
-		p = value.ToFloat(expr.Value)
-	case CPUFlag:
-		p = value.ToInteger(expr.Value)
-	default:
-		return NewInvalidFlagNameError(expr, expr.Name)
-	}
-	if value.IsNull(p) {
-		return NewInvalidFlagValueError(expr)
-	}
-
 	var err error
 
+	if ident, ok := expr.Value.(parser.Identifier); ok {
+		p = value.NewString(ident.Literal)
+	} else {
+		p, err = filter.Evaluate(expr.Value)
+		if err != nil {
+			return "", err
+		}
+	}
+
 	switch strings.ToUpper(expr.Name) {
-	case DelimiterFlag:
-		err = cmd.SetDelimiter(p.(value.String).Raw())
-	case EncodingFlag:
-		err = cmd.SetEncoding(p.(value.String).Raw())
-	case LineBreakFlag:
-		err = cmd.SetLineBreak(p.(value.String).Raw())
-	case TimezoneFlag:
-		err = cmd.SetLocation(p.(value.String).Raw())
-	case RepositoryFlag:
+	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.DatetimeFormatFlag, cmd.DelimiterFlag, cmd.JsonQuery, cmd.EncodingFlag,
+		cmd.WriteEncodingFlag, cmd.FormatFlag, cmd.WriteDelimiterFlag, cmd.LineBreakFlag:
+		p = value.ToString(p)
+	case cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.PrettyPrintFlag, cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag:
+		p = value.ToBoolean(p)
+	case cmd.WaitTimeoutFlag:
+		p = value.ToFloat(p)
+	case cmd.CPUFlag:
+		p = value.ToInteger(p)
+	default:
+		return "", NewInvalidFlagNameError(expr, expr.Name)
+	}
+	if value.IsNull(p) {
+		return "", NewFlagValueNotAllowedFormatError(expr)
+	}
+
+	switch strings.ToUpper(expr.Name) {
+	case cmd.RepositoryFlag:
 		err = cmd.SetRepository(p.(value.String).Raw())
-	case DatetimeFormatFlag:
+	case cmd.TimezoneFlag:
+		err = cmd.SetLocation(p.(value.String).Raw())
+	case cmd.DatetimeFormatFlag:
 		cmd.SetDatetimeFormat(p.(value.String).Raw())
-	case WaitTimeoutFlag:
+	case cmd.WaitTimeoutFlag:
 		cmd.SetWaitTimeout(p.(value.Float).Raw())
-	case NoHeaderFlag:
+	case cmd.DelimiterFlag:
+		err = cmd.SetDelimiter(p.(value.String).Raw())
+	case cmd.JsonQuery:
+		cmd.SetJsonQuery(p.(value.String).Raw())
+	case cmd.EncodingFlag:
+		err = cmd.SetEncoding(p.(value.String).Raw())
+	case cmd.NoHeaderFlag:
 		cmd.SetNoHeader(p.(value.Boolean).Raw())
-	case WithoutNullFlag:
+	case cmd.WithoutNullFlag:
 		cmd.SetWithoutNull(p.(value.Boolean).Raw())
-	case WriteEncodingFlag:
-		err = cmd.SetWriteEncoding(p.(value.String).Raw())
-	case FormatFlag:
+	case cmd.FormatFlag:
 		err = cmd.SetFormat(p.(value.String).Raw())
-	case WriteDelimiterFlag:
+	case cmd.WriteEncodingFlag:
+		err = cmd.SetWriteEncoding(p.(value.String).Raw())
+	case cmd.WriteDelimiterFlag:
 		err = cmd.SetWriteDelimiter(p.(value.String).Raw())
-	case WithoutHeaderFlag:
+	case cmd.WithoutHeaderFlag:
 		cmd.SetWithoutHeader(p.(value.Boolean).Raw())
-	case PrettyPrintFlag:
+	case cmd.LineBreakFlag:
+		err = cmd.SetLineBreak(p.(value.String).Raw())
+	case cmd.PrettyPrintFlag:
 		cmd.SetPrettyPrint(p.(value.Boolean).Raw())
-	case ColorFlag:
+	case cmd.ColorFlag:
 		cmd.SetColor(p.(value.Boolean).Raw())
-	case QuietFlag:
+	case cmd.QuietFlag:
 		cmd.SetQuiet(p.(value.Boolean).Raw())
-	case CPUFlag:
+	case cmd.CPUFlag:
 		cmd.SetCPU(int(p.(value.Integer).Raw()))
-	case StatsFlag:
+	case cmd.StatsFlag:
 		cmd.SetStats(p.(value.Boolean).Raw())
 	}
 
 	if err != nil {
-		return NewInvalidFlagValueError(expr)
+		return "", NewInvalidFlagValueError(expr, err.Error())
 	}
 
-	return nil
+	palette := color.NewPalette()
+	palette.Enable()
+	s, _ := showFlag(expr.Name, palette)
+
+	return " " + palette.Color(strings.ToUpper(expr.Name)+":", color.FieldLableStyle) + " " + s, nil
 }
 
 func ShowFlag(expr parser.ShowFlag) (string, error) {
+	palette := color.NewPalette()
+	palette.Enable()
+
+	s, err := showFlag(expr.Name, palette)
+	if err != nil {
+		return s, NewInvalidFlagNameError(expr, expr.Name)
+	}
+
+	return " " + palette.Color(strings.ToUpper(expr.Name)+":", color.FieldLableStyle) + " " + s, nil
+}
+
+func showFlag(flag string, palette *color.Palette) (string, error) {
 	var s string
 
 	flags := cmd.GetFlags()
 
-	switch strings.ToUpper(expr.Name) {
-	case DelimiterFlag:
-		if flags.Delimiter == cmd.UNDEF {
-			s = "(not set)"
-		} else {
-			s = "'" + cmd.EscapeString(string(flags.Delimiter)) + "'"
-		}
-	case EncodingFlag:
-		s = flags.Encoding.String()
-	case LineBreakFlag:
-		s = flags.LineBreak.String()
-	case TimezoneFlag:
-		s = flags.Location
-	case RepositoryFlag:
-		s = flags.Repository
-	case DatetimeFormatFlag:
+	switch strings.ToUpper(flag) {
+	case cmd.RepositoryFlag:
+		s = palette.Color(flags.Repository, color.StringStyle)
+	case cmd.TimezoneFlag:
+		s = palette.Color(flags.Location, color.StringStyle)
+	case cmd.DatetimeFormatFlag:
 		if len(flags.DatetimeFormat) < 1 {
-			s = "(not set)"
+			s = palette.Color("(not set)", color.NullStyle)
 		} else {
-			s = flags.DatetimeFormat
+			s = palette.Color(flags.DatetimeFormat, color.StringStyle)
 		}
-	case WaitTimeoutFlag:
-		s = value.Float64ToStr(flags.WaitTimeout)
-	case NoHeaderFlag:
-		s = strconv.FormatBool(flags.NoHeader)
-	case WithoutNullFlag:
-		s = strconv.FormatBool(flags.WithoutNull)
-	case WriteEncodingFlag:
-		s = flags.WriteEncoding.String()
-	case FormatFlag:
-		s = flags.Format.String()
-	case WriteDelimiterFlag:
-		s = "'" + cmd.EscapeString(string(flags.WriteDelimiter)) + "'"
-	case WithoutHeaderFlag:
+	case cmd.WaitTimeoutFlag:
+		s = palette.Color(value.Float64ToStr(flags.WaitTimeout), color.NumberStyle)
+	case cmd.DelimiterFlag:
+		d := "'" + cmd.EscapeString(string(flags.Delimiter)) + "'"
+		p := text.DelimiterPositions(flags.DelimiterPositions).String()
+
+		switch flags.ImportFormat() {
+		case cmd.CSV, cmd.TSV:
+			s = palette.Color(d, color.StringStyle) + palette.Color(" | ", color.FieldLableStyle) + palette.Color(p, color.NullStyle)
+		case cmd.FIXED:
+			s = palette.Color(d, color.NullStyle) + palette.Color(" | ", color.FieldLableStyle) + palette.Color(p, color.StringStyle)
+		default:
+			s = palette.Color(IgnoredFlagPrefix+d+" | "+p, color.NullStyle)
+		}
+	case cmd.JsonQuery:
+		q := flags.JsonQuery
+		if len(q) < 1 {
+			q = "(empty)"
+		}
+
+		switch flags.ImportFormat() {
+		case cmd.JSON:
+			s = palette.Color(q, color.StringStyle)
+		default:
+			s = palette.Color(IgnoredFlagPrefix+q, color.NullStyle)
+		}
+	case cmd.EncodingFlag:
+		s = palette.Color(flags.Encoding.String(), color.StringStyle)
+	case cmd.NoHeaderFlag:
+		s = palette.Color(strconv.FormatBool(flags.NoHeader), color.BooleanStyle)
+	case cmd.WithoutNullFlag:
+		s = palette.Color(strconv.FormatBool(flags.WithoutNull), color.BooleanStyle)
+	case cmd.FormatFlag:
+		s = palette.Color(flags.Format.String(), color.StringStyle)
+	case cmd.WriteEncodingFlag:
+		switch flags.Format {
+		case cmd.JSON, cmd.JSONH, cmd.JSONA:
+			s = palette.Color(IgnoredFlagPrefix+flags.WriteEncoding.String(), color.NullStyle)
+		default:
+			s = palette.Color(flags.WriteEncoding.String(), color.StringStyle)
+		}
+	case cmd.WriteDelimiterFlag:
+		d := "'" + cmd.EscapeString(string(flags.WriteDelimiter)) + "'"
+		p := text.DelimiterPositions(flags.WriteDelimiterPositions).String()
+		switch flags.Format {
+		case cmd.CSV:
+			s = palette.Color(d, color.StringStyle) + palette.Color(" | ", color.FieldLableStyle) + palette.Color(p, color.NullStyle)
+		case cmd.FIXED:
+			s = palette.Color(d, color.NullStyle) + palette.Color(" | ", color.FieldLableStyle) + palette.Color(p, color.StringStyle)
+		default:
+			s = palette.Color(IgnoredFlagPrefix+d+" | "+p, color.NullStyle)
+		}
+	case cmd.WithoutHeaderFlag:
 		s = strconv.FormatBool(flags.WithoutHeader)
-	case PrettyPrintFlag:
+		switch flags.Format {
+		case cmd.CSV, cmd.TSV, cmd.FIXED, cmd.GFM, cmd.ORG:
+			s = palette.Color(s, color.BooleanStyle)
+		default:
+			s = palette.Color(IgnoredFlagPrefix+s, color.NullStyle)
+		}
+	case cmd.LineBreakFlag:
+		s = palette.Color(flags.LineBreak.String(), color.StringStyle)
+	case cmd.PrettyPrintFlag:
 		s = strconv.FormatBool(flags.PrettyPrint)
-	case ColorFlag:
-		s = strconv.FormatBool(flags.Color)
-	case QuietFlag:
-		s = strconv.FormatBool(flags.Quiet)
-	case CPUFlag:
-		s = strconv.Itoa(flags.CPU)
-	case StatsFlag:
-		s = strconv.FormatBool(flags.Stats)
+		switch flags.Format {
+		case cmd.JSON, cmd.JSONH, cmd.JSONA:
+			s = palette.Color(s, color.BooleanStyle)
+		default:
+			s = palette.Color(IgnoredFlagPrefix+s, color.NullStyle)
+		}
+	case cmd.ColorFlag:
+		s = palette.Color(strconv.FormatBool(flags.Color), color.BooleanStyle)
+	case cmd.QuietFlag:
+		s = palette.Color(strconv.FormatBool(flags.Quiet), color.BooleanStyle)
+	case cmd.CPUFlag:
+		s = palette.Color(strconv.Itoa(flags.CPU), color.NumberStyle)
+	case cmd.StatsFlag:
+		s = palette.Color(strconv.FormatBool(flags.Stats), color.BooleanStyle)
 	default:
-		return s, NewInvalidFlagNameError(expr, expr.Name)
+		return s, errors.New("invalid flag name")
 	}
 
 	return s, nil
@@ -240,163 +305,351 @@ func ShowFlag(expr parser.ShowFlag) (string, error) {
 func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 	var s string
 
-	switch expr.Type {
-	case parser.TABLES:
-		repository := cmd.GetFlags().Repository
+	switch strings.ToUpper(expr.Type.Literal) {
+	case "TABLES":
+		keys := ViewCache.SortedKeys()
 
-		files, err := ioutil.ReadDir(repository)
-		if err != nil {
-			return "", err
-		}
-
-		var filePaths []string
-		var absPaths []string
-		for _, f := range files {
-			if f.IsDir() {
-				continue
-			}
-
-			ext := filepath.Ext(f.Name())
-			switch strings.ToUpper(ext) {
-			case strings.ToUpper(cmd.CsvExt), strings.ToUpper(cmd.TsvExt):
-				absPath := filepath.Join(repository, f.Name())
-				if !filepath.IsAbs(absPath) {
-					p, err := filepath.Abs(absPath)
-					if err != nil {
-						return "", err
-					}
-					absPath = p
-				}
-				filePaths = append(filePaths, f.Name())
-				absPaths = append(absPaths, absPath)
-			}
-		}
-		sort.Strings(filePaths)
-
-		var cachedPaths []string
-		for _, v := range ViewCache {
-			cachedPath := v.FileInfo.Path
-			if !InStrSlice(cachedPath, absPaths) {
-				cachedPaths = append(cachedPaths, cachedPath)
-			}
-		}
-		sort.Strings(cachedPaths)
-
-		if len(filePaths) < 1 && len(cachedPaths) < 1 {
-			s = color.Warn(fmt.Sprintf("Repository %q is empty", repository))
+		if len(keys) < 1 {
+			s = color.Warn("No table is loaded")
 		} else {
-			if 0 < len(filePaths) {
-				s += formatHeader("Tables in ", repository) + strings.Join(filePaths, "\n") + "\n"
+			w := text.NewObjectWriter()
+
+			createdFiles, updatedFiles := UncommittedFiles()
+
+			for _, key := range keys {
+				fields := ViewCache[key].Header.TableColumnNames()
+				info := ViewCache[key].FileInfo
+
+				if _, ok := createdFiles[info.Path]; ok {
+					w.WriteColor("*Created* ", color.EmphasisStyle)
+				} else if _, ok := updatedFiles[info.Path]; ok {
+					w.WriteColor("*Updated* ", color.EmphasisStyle)
+				}
+				w.WriteColorWithoutLineBreak(info.Path, color.ObjectStyle)
+				writeFields(w, fields)
+
+				w.NewLine()
+				writeTableAttribute(w, info)
+				w.ClearBlock()
+				w.NewLine()
 			}
-			if 0 < len(cachedPaths) {
-				s += formatHeader("Tables in other directories", "") + strings.Join(cachedPaths, "\n") + "\n"
+
+			uncommitted := len(createdFiles) + len(updatedFiles)
+
+			w.Title1 = "Loaded Tables"
+			if 0 < uncommitted {
+				w.Title2 = fmt.Sprintf("(Uncommitted: %s)", FormatCount(uncommitted, "Table"))
+				w.Title2Style = color.EmphasisStyle
 			}
+			s = "\n" + w.String()
 		}
-	case parser.VIEWS:
-		views := filter.TempViews.List()
+	case "VIEWS":
+		views := filter.TempViews.All()
+
 		if len(views) < 1 {
 			s = color.Warn("No view is declared")
 		} else {
-			s = formatHeader("Views", "") + strings.Join(views, "\n") + "\n"
+			keys := views.SortedKeys()
+
+			w := text.NewObjectWriter()
+
+			updatedViews := UncommittedTempViews()
+
+			for _, key := range keys {
+				fields := views[key].Header.TableColumnNames()
+				info := views[key].FileInfo
+
+				if _, ok := updatedViews[info.Path]; ok {
+					w.WriteColor("*Updated* ", color.EmphasisStyle)
+				}
+				w.WriteColorWithoutLineBreak(info.Path, color.ObjectStyle)
+				writeFields(w, fields)
+				w.ClearBlock()
+				w.NewLine()
+			}
+
+			uncommitted := len(updatedViews)
+
+			w.Title1 = "Views"
+			if 0 < uncommitted {
+				w.Title2 = fmt.Sprintf("(Uncommitted: %s)", FormatCount(uncommitted, "View"))
+				w.Title2Style = color.EmphasisStyle
+			}
+			s = "\n" + w.String()
 		}
-	case parser.CURSORS:
-		cursors := filter.Cursors.List()
+	case "CURSORS":
+		cursors := filter.Cursors.All()
 		if len(cursors) < 1 {
 			s = color.Warn("No cursor is declared")
 		} else {
-			s = formatHeader("Cursors", "") + strings.Join(cursors, "\n") + "\n"
+			keys := cursors.SortedKeys()
+
+			w := text.NewObjectWriter()
+
+			for _, key := range keys {
+				cur := cursors[key]
+				isOpen := cur.IsOpen()
+
+				w.WriteColor(cur.name, color.ObjectStyle)
+				w.BeginBlock()
+
+				w.NewLine()
+				w.WriteColorWithoutLineBreak("Status: ", color.FieldLableStyle)
+				if isOpen == ternary.TRUE {
+					nor, _ := cur.Count()
+					inRange, _ := cur.IsInRange()
+					position, _ := cur.Pointer()
+
+					norStr := cmd.HumarizeNumber(strconv.Itoa(nor))
+
+					w.WriteColorWithoutLineBreak("Open", color.TernaryStyle)
+					w.WriteColorWithoutLineBreak("    Number of Rows: ", color.FieldLableStyle)
+					w.WriteColorWithoutLineBreak(norStr, color.NumberStyle)
+					w.WriteSpaces(10 - len(norStr))
+					w.WriteColorWithoutLineBreak("Pointer: ", color.FieldLableStyle)
+					switch inRange {
+					case ternary.FALSE:
+						w.WriteColorWithoutLineBreak("Out of Range", color.TernaryStyle)
+					case ternary.UNKNOWN:
+						w.WriteColorWithoutLineBreak(inRange.String(), color.TernaryStyle)
+					default:
+						w.WriteColorWithoutLineBreak(cmd.HumarizeNumber(strconv.Itoa(position)), color.NumberStyle)
+					}
+				} else {
+					w.WriteColorWithoutLineBreak("Closed", color.TernaryStyle)
+				}
+
+				w.NewLine()
+				w.WriteColorWithoutLineBreak("Query: ", color.FieldLableStyle)
+				w.WriteColorWithoutLineBreak(cur.query.String(), color.IdentifierStyle)
+
+				w.ClearBlock()
+				w.NewLine()
+			}
+			w.Title1 = "Cursors"
+			s = "\n" + w.String()
 		}
-	case parser.FUNCTIONS:
-		scalas, aggs := filter.Functions.List()
+	case "FUNCTIONS":
+		scalas, aggs := filter.Functions.All()
 		if len(scalas) < 1 && len(aggs) < 1 {
 			s = color.Warn("No function is declared")
 		} else {
 			if 0 < len(scalas) {
-				s += formatHeader("Scala Functions", "") + strings.Join(scalas, "\n") + "\n"
+				w := text.NewObjectWriter()
+				writeFunctions(w, scalas)
+				w.Title1 = "Scala Functions"
+				s += "\n" + w.String()
 			}
 			if 0 < len(aggs) {
-				s += formatHeader("Aggregate Functions", "") + strings.Join(aggs, "\n") + "\n"
+				w := text.NewObjectWriter()
+				writeFunctions(w, aggs)
+				w.Title1 = "Aggregate Functions"
+				s += "\n" + w.String()
 			}
 		}
+	case "FLAGS":
+		w := text.NewObjectWriter()
+		for _, flag := range cmd.FlagList {
+			s, _ := showFlag(flag, w.Palette)
+			w.WriteSpaces(17 - len(flag))
+			w.WriteColorWithoutLineBreak(flag, color.FieldLableStyle)
+			w.WriteColorWithoutLineBreak(":", color.FieldLableStyle)
+			w.WriteSpaces(1)
+			w.WriteWithoutLineBreak(s)
+			w.NewLine()
+		}
+		w.Title1 = "Flags"
+		s = "\n" + w.String()
+	default:
+		return "", NewShowInvalidObjectTypeError(expr, expr.Type.String())
 	}
 
 	return s, nil
+}
+
+func writeTableAttribute(w *text.ObjectWriter, info *FileInfo) {
+	w.WriteColor("Format: ", color.FieldLableStyle)
+	w.WriteWithoutLineBreak(info.Format.String())
+
+	w.WriteSpaces(8 - text.StringWidth(info.Format.String()))
+	switch info.Format {
+	case cmd.CSV:
+		w.WriteColorWithoutLineBreak("Delimiter: ", color.FieldLableStyle)
+		w.WriteWithoutLineBreak("'" + cmd.EscapeString(string(info.Delimiter)) + "'")
+	case cmd.TSV:
+		w.WriteColorWithoutLineBreak("Delimiter: ", color.FieldLableStyle)
+		w.WriteColorWithoutLineBreak("'\\t'", color.NullStyle)
+	case cmd.FIXED:
+		w.WriteColorWithoutLineBreak("Delimiter Positions: ", color.FieldLableStyle)
+		w.WriteWithoutLineBreak(info.DelimiterPositions.String())
+	case cmd.JSON, cmd.JSONH, cmd.JSONA:
+		w.WriteColorWithoutLineBreak("Query: ", color.FieldLableStyle)
+		if len(info.JsonQuery) < 1 {
+			w.WriteColorWithoutLineBreak("(empty)", color.NullStyle)
+		} else {
+			w.WriteColorWithoutLineBreak(info.JsonQuery, color.NullStyle)
+		}
+	}
+
+	w.NewLine()
+
+	w.WriteColor("Encoding: ", color.FieldLableStyle)
+	switch info.Format {
+	case cmd.JSON, cmd.JSONH, cmd.JSONA:
+		w.WriteColorWithoutLineBreak(cmd.UTF8.String(), color.NullStyle)
+	default:
+		w.WriteWithoutLineBreak(info.Encoding.String())
+	}
+
+	w.WriteSpaces(6 - (text.StringWidth(info.Encoding.String())))
+	w.WriteColorWithoutLineBreak("LineBreak: ", color.FieldLableStyle)
+	w.WriteWithoutLineBreak(info.LineBreak.String())
+
+	switch info.Format {
+	case cmd.JSON, cmd.JSONH, cmd.JSONA:
+		w.WriteSpaces(6 - (text.StringWidth(info.LineBreak.String())))
+		w.WriteColorWithoutLineBreak("Pretty Print: ", color.FieldLableStyle)
+		w.WriteWithoutLineBreak(strconv.FormatBool(info.PrettyPrint))
+	case cmd.CSV, cmd.TSV, cmd.FIXED, cmd.GFM, cmd.ORG:
+		w.WriteSpaces(6 - (text.StringWidth(info.LineBreak.String())))
+		w.WriteColorWithoutLineBreak("Header: ", color.FieldLableStyle)
+		w.WriteWithoutLineBreak(strconv.FormatBool(!info.NoHeader))
+	}
+}
+
+func writeFields(w *text.ObjectWriter, fields []string) {
+	w.BeginBlock()
+	w.NewLine()
+	w.WriteColor("Fields: ", color.FieldLableStyle)
+	w.BeginSubBlock()
+	lastIdx := len(fields) - 1
+	for i, f := range fields {
+		escaped := cmd.EscapeString(f)
+		if i < lastIdx && !w.FitInLine(escaped+", ") {
+			w.NewLine()
+		}
+		w.WriteColor(escaped, color.AttributeStyle)
+		if i < lastIdx {
+			w.WriteWithoutLineBreak(", ")
+		}
+	}
+	w.EndSubBlock()
+}
+
+func writeFunctions(w *text.ObjectWriter, funcs UserDefinedFunctionMap) {
+	keys := funcs.SortedKeys()
+
+	for _, key := range keys {
+		fn := funcs[key]
+
+		w.WriteColor(fn.Name.String(), color.ObjectStyle)
+		w.WriteWithoutLineBreak(" (")
+
+		if fn.IsAggregate {
+			w.WriteColorWithoutLineBreak(fn.Cursor.String(), color.IdentifierStyle)
+			if 0 < len(fn.Parameters) {
+				w.WriteWithoutLineBreak(", ")
+			}
+		}
+
+		for i, p := range fn.Parameters {
+			if 0 < i {
+				w.WriteWithoutLineBreak(", ")
+			}
+			if def, ok := fn.Defaults[p.String()]; ok {
+				w.WriteColorWithoutLineBreak(p.String(), color.AttributeStyle)
+				w.WriteWithoutLineBreak(" = ")
+				w.WriteColorWithoutLineBreak(def.String(), color.ValueStyle)
+			} else {
+				w.WriteColorWithoutLineBreak(p.String(), color.AttributeStyle)
+			}
+		}
+
+		w.WriteWithoutLineBreak(")")
+		w.ClearBlock()
+		w.NewLine()
+	}
 }
 
 func ShowFields(expr parser.ShowFields, filter *Filter) (string, error) {
-	var fields []string
+	if !strings.EqualFold(expr.Type.Literal, "FIELDS") {
+		return "", NewShowInvalidObjectTypeError(expr, expr.Type.Literal)
+	}
 
-	if filter.TempViews.Exists(expr.Table.Literal) {
-		header, _ := filter.TempViews.GetHeader(expr.Table)
-		fields = header.TableColumnNames()
-	} else {
-		flags := cmd.GetFlags()
+	var status = ObjectFixed
 
-		fileInfo, err := NewFileInfoForCreate(expr.Table, flags.Repository, flags.Delimiter)
-		if err != nil {
-			return "", err
+	view := NewView()
+	err := view.LoadFromTableIdentifier(expr.Table, filter.CreateNode())
+	if err != nil {
+		return "", err
+	}
+
+	if view.FileInfo.IsTemporary {
+		updatedViews := UncommittedTempViews()
+
+		if _, ok := updatedViews[view.FileInfo.Path]; ok {
+			status = ObjectUpdated
 		}
-
-		if ViewCache.Exists(fileInfo.Path) {
-			pathIdent := parser.Identifier{Literal: fileInfo.Path}
-			header, _ := ViewCache.GetHeader(pathIdent)
-			fields = header.TableColumnNames()
-		} else {
-			fileInfo, err = NewFileInfo(expr.Table, flags.Repository, flags.Delimiter)
-			if err != nil {
-				return "", err
-			}
-
-			if ViewCache.Exists(fileInfo.Path) {
-				pathIdent := parser.Identifier{Literal: fileInfo.Path}
-				header, _ := ViewCache.GetHeader(pathIdent)
-				fields = header.TableColumnNames()
-			} else {
-				fp, err := file.OpenToRead(fileInfo.Path)
-				if err != nil {
-					if _, ok := err.(*file.TimeoutError); ok {
-						NewFileLockTimeoutError(expr.Table, fileInfo.Path)
-					}
-					return "", NewReadFileError(expr.Table, err.Error())
-				}
-				defer file.Close(fp)
-
-				r := cmd.GetReader(fp, flags.Encoding)
-				reader := csv.NewReader(r)
-				reader.Delimiter = fileInfo.Delimiter
-				reader.WithoutNull = flags.WithoutNull
-
-				header, err := reader.ReadHeader()
-				if err != nil && err != csv.EOF {
-					return "", err
-				}
-				fields = header
-			}
+	} else {
+		createdViews, updatedView := UncommittedFiles()
+		if _, ok := createdViews[view.FileInfo.Path]; ok {
+			status = ObjectCreated
+		} else if _, ok := updatedView[view.FileInfo.Path]; ok {
+			status = ObjectUpdated
 		}
 	}
 
-	s := formatHeader("Fields in ", expr.Table.Literal) + formatFields(fields)
+	w := text.NewObjectWriter()
+	w.WriteColorWithoutLineBreak("Type: ", color.FieldLableStyle)
+	if view.FileInfo.IsTemporary {
+		w.WriteWithoutLineBreak("View")
+	} else {
+		w.WriteWithoutLineBreak("Table")
+		w.NewLine()
+		w.WriteColorWithoutLineBreak("Path: ", color.FieldLableStyle)
+		w.WriteColorWithoutLineBreak(view.FileInfo.Path, color.ObjectStyle)
+		w.NewLine()
+		writeTableAttribute(w, view.FileInfo)
+	}
 
-	return s, nil
+	w.NewLine()
+	w.WriteColorWithoutLineBreak("Status: ", color.FieldLableStyle)
+	switch status {
+	case ObjectCreated:
+		w.WriteColorWithoutLineBreak("Created", color.EmphasisStyle)
+	case ObjectUpdated:
+		w.WriteColorWithoutLineBreak("Updated", color.EmphasisStyle)
+	default:
+		w.WriteWithoutLineBreak("Fixed")
+	}
+
+	w.NewLine()
+	writeFieldList(w, view.Header.TableColumnNames())
+
+	w.Title1 = "Fields in"
+	w.Title2 = expr.Table.Literal
+	w.Title2Style = color.IdentifierStyle
+	return "\n" + w.String(), nil
 }
 
-func formatFields(fields []string) string {
+func writeFieldList(w *text.ObjectWriter, fields []string) {
 	l := len(fields)
 	digits := len(strconv.Itoa(l))
-	formatted := make([]string, l)
-
-	for i, field := range fields {
+	fieldNumbers := make([]string, 0, l)
+	for i := 0; i < l; i++ {
 		idxstr := strconv.Itoa(i + 1)
-		formatted[i] = color.MagentaB(fmt.Sprintf("%"+strconv.Itoa(digits)+"s", idxstr)) + ". " + color.Cyan(field)
+		fieldNumbers = append(fieldNumbers, strings.Repeat(" ", digits-len(idxstr))+idxstr)
 	}
 
-	return strings.Join(formatted, "\n") + "\n"
-}
-
-func formatHeader(title string, colorItem string) string {
-	colorItem = color.CyanB(colorItem)
-
-	return "\n    " +
-		title + colorItem + "\n" +
-		strings.Repeat("-", len(title)+len(color.StripEscapeSequence(colorItem))+8) + "\n"
+	w.WriteColorWithoutLineBreak("Fields:", color.FieldLableStyle)
+	w.NewLine()
+	w.WriteSpaces(2)
+	w.BeginSubBlock()
+	for i := 0; i < l; i++ {
+		w.WriteColor(fieldNumbers[i], color.NumberStyle)
+		w.Write(".")
+		w.WriteSpaces(1)
+		w.WriteColorWithoutLineBreak(fields[i], color.AttributeStyle)
+		w.NewLine()
+	}
 }

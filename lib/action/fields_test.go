@@ -1,11 +1,8 @@
 package action
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/query"
 )
 
@@ -39,18 +36,4 @@ func TestShowFields(t *testing.T) {
 		}
 	}
 	query.ReleaseResources()
-}
-
-func ExampleShowFields() {
-	flags := cmd.GetFlags()
-	dir, _ := os.Getwd()
-	flags.Repository = filepath.Join(dir, "..", "..", "testdata", "csv")
-
-	ShowFields("table1")
-	//OUTPUT:
-	//
-	//    Fields in table1
-	//------------------------
-	//1. column1
-	//2. column2
 }

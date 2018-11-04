@@ -21,16 +21,17 @@ func encodeToSJIS(str string) string {
 }
 
 var encodeViewTests = []struct {
-	Name           string
-	View           *View
-	Format         cmd.Format
-	LineBreak      cmd.LineBreak
-	Encoding       cmd.Encoding
-	WriteDelimiter rune
-	WithoutHeader  bool
-	PrettyPrint    bool
-	Result         string
-	Error          string
+	Name                    string
+	View                    *View
+	Format                  cmd.Format
+	LineBreak               cmd.LineBreak
+	WriteEncoding           cmd.Encoding
+	WriteDelimiter          rune
+	WriteDelimiterPositions []int
+	WithoutHeader           bool
+	PrettyPrint             bool
+	Result                  string
+	Error                   string
 }{
 	{
 		Name: "Empty RecordSet",
@@ -73,6 +74,22 @@ var encodeViewTests = []struct {
 			"|          | hi\"jk日本語あアｱＡ（                |        |\n" +
 			"|          |                                     |        |\n" +
 			"+----------+-------------------------------------+--------+",
+	},
+	{
+		Name: "Fixed-Length Format",
+		View: &View{
+			Header: NewHeader("test", []string{"c1", "c2", "c3"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(false)}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
+			},
+		},
+		Format:                  cmd.FIXED,
+		WriteDelimiterPositions: []int{10, 42, 50},
+		Result: "" +
+			"c1        c2                              c3      \n" +
+			"        -1                                false   \n" +
+			"    2.01232016-02-01T16:00:00.123456-07:00abcdef  ",
 	},
 	{
 		Name: "GFM LineBreak CRLF",
@@ -247,6 +264,19 @@ var encodeViewTests = []struct {
 			"]",
 	},
 	{
+		Name: "Fixed-Length Format Invalid Positions",
+		View: &View{
+			Header: NewHeader("test", []string{"c1", "c2", "c3"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(false)}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
+			},
+		},
+		Format:                  cmd.FIXED,
+		WriteDelimiterPositions: []int{10, 42, -1},
+		Error:                   "invalid delimiter position: [10, 42, -1]",
+	},
+	{
 		Name: "JSONH Column Name Convert Error",
 		View: &View{
 			Header: NewHeader("test", []string{"c1.."}),
@@ -270,8 +300,8 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" 日本語ghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), value.NewNull()}),
 			},
 		},
-		Format:   cmd.CSV,
-		Encoding: cmd.SJIS,
+		Format:        cmd.CSV,
+		WriteEncoding: cmd.SJIS,
 		Result: encodeToSJIS("\"c1\",\"c2\nsecond line\",\"c3\"\n" +
 			"-1,,true\n" +
 			"-1,false,true\n" +
@@ -281,30 +311,28 @@ var encodeViewTests = []struct {
 }
 
 func TestEncodeView(t *testing.T) {
-	flags := cmd.GetFlags()
-
 	for _, v := range encodeViewTests {
-		flags.Format = v.Format
+		if v.WriteEncoding == "" {
+			v.WriteEncoding = cmd.UTF8
+		}
+		if v.LineBreak == "" {
+			v.LineBreak = cmd.LF
+		}
+		if v.WriteDelimiter == 0 {
+			v.WriteDelimiter = ','
+		}
 
-		flags.LineBreak = cmd.LF
-		if v.LineBreak != "" && v.LineBreak != cmd.LF {
-			flags.LineBreak = v.LineBreak
+		fileInfo := &FileInfo{
+			Format:             v.Format,
+			Delimiter:          v.WriteDelimiter,
+			DelimiterPositions: v.WriteDelimiterPositions,
+			Encoding:           v.WriteEncoding,
+			LineBreak:          v.LineBreak,
+			NoHeader:           v.WithoutHeader,
+			PrettyPrint:        v.PrettyPrint,
 		}
-		flags.Encoding = cmd.UTF8
-		if v.Encoding != cmd.UTF8 {
-			flags.Encoding = v.Encoding
-		}
-		flags.WithoutHeader = false
-		if v.WithoutHeader {
-			flags.WithoutHeader = true
-		}
-		flags.WriteDelimiter = ','
-		if v.WriteDelimiter != 0 {
-			flags.WriteDelimiter = v.WriteDelimiter
-		}
-		flags.PrettyPrint = v.PrettyPrint
 
-		s, err := EncodeView(v.View, flags.Format, flags.WriteDelimiter, flags.WithoutHeader, flags.Encoding, flags.LineBreak)
+		s, err := EncodeView(v.View, fileInfo)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -321,9 +349,4 @@ func TestEncodeView(t *testing.T) {
 			t.Errorf("%s: result = %q, want %q", v.Name, s, v.Result)
 		}
 	}
-
-	flags.LineBreak = cmd.LF
-	flags.Encoding = cmd.UTF8
-	flags.WithoutHeader = false
-	flags.WriteDelimiter = ','
 }

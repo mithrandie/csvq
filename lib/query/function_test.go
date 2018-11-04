@@ -1311,7 +1311,18 @@ var byteLenTests = []functionTest{
 			Name: "byte_len",
 		},
 		Args: []value.Primary{
-			value.NewString("日本語"),
+			value.NewString("abc日本語"),
+		},
+		Result: value.NewInteger(12),
+	},
+	{
+		Name: "ByteLen SJIS",
+		Function: parser.Function{
+			Name: "byte_len",
+		},
+		Args: []value.Primary{
+			value.NewString("abc日本語"),
+			value.NewString("sjis"),
 		},
 		Result: value.NewInteger(9),
 	},
@@ -1331,12 +1342,48 @@ var byteLenTests = []functionTest{
 			Name: "byte_len",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function byte_len takes exactly 1 argument",
+		Error: "[L:- C:-] function byte_len takes 1 or 2 arguments",
+	},
+	{
+		Name: "ByteLen Invalid Encoding Error",
+		Function: parser.Function{
+			Name: "byte_len",
+		},
+		Args: []value.Primary{
+			value.NewString("abc日本語"),
+			value.NewString("invalid"),
+		},
+		Error: "[L:- C:-] encoding must be one of UTF8|SJIS for function byte_len",
 	},
 }
 
 func TestByteLen(t *testing.T) {
 	testFunction(t, ByteLen, byteLenTests)
+}
+
+var widthTests = []functionTest{
+	{
+		Name: "Width",
+		Function: parser.Function{
+			Name: "width",
+		},
+		Args: []value.Primary{
+			value.NewString("abc日本語"),
+		},
+		Result: value.NewInteger(9),
+	},
+	{
+		Name: "Width Arguments Error",
+		Function: parser.Function{
+			Name: "width",
+		},
+		Args:  []value.Primary{},
+		Error: "[L:- C:-] function width takes exactly 1 argument",
+	},
+}
+
+func TestWidth(t *testing.T) {
+	testFunction(t, Width, widthTests)
 }
 
 var lpadTests = []functionTest{
@@ -1351,6 +1398,74 @@ var lpadTests = []functionTest{
 			value.NewString("01"),
 		},
 		Result: value.NewString("01010aaaaa"),
+	},
+	{
+		Name: "Lpad by Byte Length",
+		Function: parser.Function{
+			Name: "lpad",
+		},
+		Args: []value.Primary{
+			value.NewString("日本語"),
+			value.NewInteger(12),
+			value.NewString("空白"),
+			value.NewString("byte"),
+			value.NewString("sjis"),
+		},
+		Result: value.NewString("空白空日本語"),
+	},
+	{
+		Name: "Lpad by Byte Length Error",
+		Function: parser.Function{
+			Name: "lpad",
+		},
+		Args: []value.Primary{
+			value.NewString("日本語"),
+			value.NewInteger(11),
+			value.NewString("空白"),
+			value.NewString("byte"),
+			value.NewString("sjis"),
+		},
+		Error: "[L:- C:-] cannot split pad string in a byte array of a character for function lpad",
+	},
+	{
+		Name: "Lpad Encoding Error",
+		Function: parser.Function{
+			Name: "lpad",
+		},
+		Args: []value.Primary{
+			value.NewString("日本語"),
+			value.NewInteger(11),
+			value.NewString("空白"),
+			value.NewString("byte"),
+			value.NewString("invalid"),
+		},
+		Error: "[L:- C:-] encoding must be one of UTF8|SJIS for function lpad",
+	},
+	{
+		Name: "Lpad by Width",
+		Function: parser.Function{
+			Name: "lpad",
+		},
+		Args: []value.Primary{
+			value.NewString("日本語"),
+			value.NewInteger(12),
+			value.NewString("空白"),
+			value.NewString("width"),
+		},
+		Result: value.NewString("空白空日本語"),
+	},
+	{
+		Name: "Lpad by Width Length Error",
+		Function: parser.Function{
+			Name: "lpad",
+		},
+		Args: []value.Primary{
+			value.NewString("日本語"),
+			value.NewInteger(11),
+			value.NewString("空白"),
+			value.NewString("width"),
+		},
+		Error: "[L:- C:-] cannot split pad string in a byte array of a character for function lpad",
 	},
 	{
 		Name: "Lpad No Padding",
@@ -1406,7 +1521,7 @@ var lpadTests = []functionTest{
 			Name: "lpad",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function lpad takes exactly 3 arguments",
+		Error: "[L:- C:-] function lpad takes 3 to 5 arguments",
 	},
 }
 

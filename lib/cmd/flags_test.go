@@ -2,12 +2,12 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/mithrandie/csvq/lib/file"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"testing"
-
-	"github.com/mithrandie/csvq/lib/file"
 )
 
 func TestEncoding_String(t *testing.T) {
@@ -31,88 +31,70 @@ func TestLineBreak_String(t *testing.T) {
 	}
 }
 
-func TestSetDelimiter(t *testing.T) {
-	flags := GetFlags()
-
-	SetDelimiter("")
-	if flags.Delimiter != UNDEF {
-		t.Errorf("delimiter = %q, expect to set %q for %q", flags.Delimiter, UNDEF, "")
-	}
-
-	SetDelimiter("\\t")
-	if flags.Delimiter != '\t' {
-		t.Errorf("delimiter = %q, expect to set %q for %q", flags.Delimiter, "\t", "\t")
-	}
-
-	expectErr := "delimiter must be 1 character"
-	err := SetDelimiter("//")
-	if err == nil {
-		t.Errorf("no error, want error %q for %s", expectErr, "//")
-	} else if err.Error() != expectErr {
-		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "//")
-	}
-
-	SetDelimiter("")
-	if flags.Delimiter != UNDEF {
-		t.Errorf("delimiter = %q, expect to set %q for %q", flags.Delimiter, UNDEF, "")
-	}
-}
-
-func TestSetJsonQuery(t *testing.T) {
+func TestFlags_ImportFormat(t *testing.T) {
 	flags := GetFlags()
 
 	SetJsonQuery("{}")
-	if flags.JsonQuery != "{}" {
-		t.Errorf("json-query = %q, expect to set %q", flags.JsonQuery, "{}")
+	format := flags.ImportFormat()
+	expect := JSON
+	if format != expect {
+		t.Errorf("import-format = %q, want %q", format.String(), expect.String())
+	}
+
+	SetJsonQuery("")
+	SetDelimiter("SPACES")
+	format = flags.ImportFormat()
+	expect = FIXED
+	if format != expect {
+		t.Errorf("import-format = %q, want %q", format.String(), expect.String())
+	}
+
+	SetDelimiter("\\t")
+	format = flags.ImportFormat()
+	expect = TSV
+	if format != expect {
+		t.Errorf("import-format = %q, want %q", format.String(), expect.String())
+	}
+
+	SetDelimiter(",")
+	format = flags.ImportFormat()
+	expect = CSV
+	if format != expect {
+		t.Errorf("import-format = %q, want %q", format.String(), expect.String())
 	}
 }
 
-func TestSetEncoding(t *testing.T) {
+func TestSetRepository(t *testing.T) {
 	flags := GetFlags()
 
-	SetEncoding("sjis")
-	if flags.Encoding != SJIS {
-		t.Errorf("encoding = %s, expect to set %s for %s", flags.Encoding, SJIS, "sjis")
+	pwd, _ := os.Getwd()
+
+	SetRepository("")
+	if flags.Repository != pwd {
+		t.Errorf("repository = %s, expect to set %s for %q", flags.Repository, pwd, "")
 	}
 
-	expectErr := "encoding must be one of UTF8|SJIS"
-	err := SetEncoding("error")
+	dir := filepath.Join("..", "..", "lib", "cmd")
+	absdir, _ := filepath.Abs(dir)
+	SetRepository(dir)
+	if flags.Repository != absdir {
+		t.Errorf("repository = %s, expect to set %s for %s", flags.Repository, absdir, dir)
+	}
+
+	expectErr := "repository does not exist"
+	err := SetRepository("notexists")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "error")
 	} else if err.Error() != expectErr {
-		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "error")
-	}
-}
-
-func TestSetLineBreak(t *testing.T) {
-	flags := GetFlags()
-
-	SetLineBreak("")
-	if flags.LineBreak != LF {
-		t.Errorf("line-break = %s, expect to set %s for %q", flags.LineBreak, LF, "")
+		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "notexists")
 	}
 
-	SetLineBreak("crlf")
-	if flags.LineBreak != CRLF {
-		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, CRLF, "crlf")
-	}
-
-	SetLineBreak("cr")
-	if flags.LineBreak != CR {
-		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, CR, "cr")
-	}
-
-	SetLineBreak("lf")
-	if flags.LineBreak != LF {
-		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, LF, "LF")
-	}
-
-	expectErr := "line-break must be one of CRLF|LF|CR"
-	err := SetLineBreak("error")
+	expectErr = "repository must be a directory path"
+	err = SetRepository("flags_test.go")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "error")
 	} else if err.Error() != expectErr {
-		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "error")
+		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "flags_test.go")
 	}
 }
 
@@ -147,36 +129,33 @@ func TestSetLocation(t *testing.T) {
 	}
 }
 
-func TestSetRepository(t *testing.T) {
+func TestSetDatetimeFormat(t *testing.T) {
 	flags := GetFlags()
 
-	pwd, _ := os.Getwd()
+	format := "%Y-%m-%d"
+	SetDatetimeFormat(format)
+	if flags.DatetimeFormat != format {
+		t.Errorf("datetime format = %s, expect to set %s", flags.DatetimeFormat, format)
+	}
+}
 
-	SetRepository("")
-	if flags.Repository != pwd {
-		t.Errorf("repository = %s, expect to set %s for %q", flags.Repository, pwd, "")
+func TestSetWaitTimeout(t *testing.T) {
+	flags := GetFlags()
+
+	var f float64 = -1
+	SetWaitTimeout(f)
+	if flags.WaitTimeout != 0 {
+		t.Errorf("wait timeout = %f, expect to set %f for %f", flags.WaitTimeout, 0.0, f)
 	}
 
-	dir := filepath.Join("..", "..", "lib", "cmd")
-	SetRepository(dir)
-	if flags.Repository != dir {
-		t.Errorf("repository = %s, expect to set %s for %s", flags.Repository, dir, dir)
+	f = 15
+	SetWaitTimeout(f)
+	if flags.WaitTimeout != 15 {
+		t.Errorf("wait timeout = %f, expect to set %f for %f", flags.WaitTimeout, 15.0, f)
 	}
 
-	expectErr := "repository does not exist"
-	err := SetRepository("notexists")
-	if err == nil {
-		t.Errorf("no error, want error %q for %s", expectErr, "error")
-	} else if err.Error() != expectErr {
-		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "notexists")
-	}
-
-	expectErr = "repository must be a directory path"
-	err = SetRepository("flags_test.go")
-	if err == nil {
-		t.Errorf("no error, want error %q for %s", expectErr, "error")
-	} else if err.Error() != expectErr {
-		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "flags_test.go")
+	if file.WaitTimeout != 15 {
+		t.Errorf("wait timeout in the file package = %f, expect to set %f for %f", file.WaitTimeout, 15.0, f)
 	}
 }
 
@@ -213,27 +192,75 @@ func TestSetSource(t *testing.T) {
 	}
 }
 
-func TestSetDatetimeFormat(t *testing.T) {
+func TestSetDelimiter(t *testing.T) {
 	flags := GetFlags()
 
-	format := "%Y-%m-%d"
-	SetDatetimeFormat(format)
-	if flags.DatetimeFormat != format {
-		t.Errorf("datetime format = %s, expect to set %s", flags.DatetimeFormat, format)
+	SetDelimiter("")
+	if flags.Delimiter != ',' {
+		t.Errorf("delimiter = %q, expect to set %q for %q", flags.Delimiter, ',', "")
+	}
+
+	SetDelimiter("\\t")
+	if flags.Delimiter != '\t' {
+		t.Errorf("delimiter = %q, expect to set %q for %q", flags.Delimiter, "\t", "\t")
+	}
+
+	SetDelimiter("[1, 2, 3]")
+	if flags.DelimitAutomatically != false {
+		t.Errorf("delimitAutomatically = %t, expect to set %t for %q", flags.DelimitAutomatically, false, "[1, 2, 3]")
+	}
+	if !reflect.DeepEqual(flags.DelimiterPositions, []int{1, 2, 3}) {
+		t.Errorf("delimitPositions = %v, expect to set %v for %q", flags.DelimiterPositions, []int{1, 2, 3}, "[1, 2, 3]")
+	}
+
+	SetDelimiter("spaces")
+	if flags.DelimitAutomatically != true {
+		t.Errorf("delimitAutomatically = %t, expect to set %t for %q", flags.DelimitAutomatically, true, "spaces")
+	}
+	if flags.DelimiterPositions != nil {
+		t.Errorf("delimitPositions = %v, expect to set %v for %q", flags.DelimiterPositions, nil, "spaces")
+	}
+
+	expectErr := "delimiter must be one character, \"SPACES\" or JSON array of integers"
+	err := SetDelimiter("[a]")
+	if err == nil {
+		t.Errorf("no error, want error %q for %s", expectErr, "//")
+	} else if err.Error() != expectErr {
+		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "//")
+	}
+
+	expectErr = "delimiter must be one character, \"SPACES\" or JSON array of integers"
+	err = SetDelimiter("//")
+	if err == nil {
+		t.Errorf("no error, want error %q for %s", expectErr, "//")
+	} else if err.Error() != expectErr {
+		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "//")
 	}
 }
 
-func TestSetWaitTimeout(t *testing.T) {
+func TestSetJsonQuery(t *testing.T) {
 	flags := GetFlags()
 
-	var f float64 = 15
-	SetWaitTimeout(f)
-	if flags.WaitTimeout != 15 {
-		t.Errorf("wait timeout = %f, expect to set %f for %f", flags.WaitTimeout, 15.0, f)
+	SetJsonQuery("{}")
+	if flags.JsonQuery != "{}" {
+		t.Errorf("json-query = %q, expect to set %q", flags.JsonQuery, "{}")
+	}
+}
+
+func TestSetEncoding(t *testing.T) {
+	flags := GetFlags()
+
+	SetEncoding("sjis")
+	if flags.Encoding != SJIS {
+		t.Errorf("encoding = %s, expect to set %s for %s", flags.Encoding, SJIS, "sjis")
 	}
 
-	if file.WaitTimeout != 15 {
-		t.Errorf("wait timeout in the file package = %f, expect to set %f for %f", file.WaitTimeout, 15.0, f)
+	expectErr := "encoding must be one of UTF8|SJIS"
+	err := SetEncoding("error")
+	if err == nil {
+		t.Errorf("no error, want error %q for %s", expectErr, "error")
+	} else if err.Error() != expectErr {
+		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "error")
 	}
 }
 
@@ -252,23 +279,6 @@ func TestSetWithoutNull(t *testing.T) {
 	SetWithoutNull(true)
 	if !flags.WithoutNull {
 		t.Errorf("without-null = %t, expect to set %t", flags.WithoutNull, true)
-	}
-}
-
-func TestSetWriteEncoding(t *testing.T) {
-	flags := GetFlags()
-
-	SetWriteEncoding("sjis")
-	if flags.Encoding != SJIS {
-		t.Errorf("encoding = %s, expect to set %s for %s", flags.WriteEncoding, SJIS, "sjis")
-	}
-
-	expectErr := "encoding must be one of UTF8|SJIS"
-	err := SetWriteEncoding("error")
-	if err == nil {
-		t.Errorf("no error, want error %q for %s", expectErr, "error")
-	} else if err.Error() != expectErr {
-		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "error")
 	}
 }
 
@@ -314,10 +324,28 @@ func TestSetFormat(t *testing.T) {
 		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, TSV, "foo.tsv")
 	}
 
+	SetOut("foo.txt")
+	SetFormat("")
+	if flags.Format != FIXED {
+		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, FIXED, "foo.txt")
+	}
+
 	SetOut("foo.json")
 	SetFormat("")
 	if flags.Format != JSON {
 		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, JSON, "foo.json")
+	}
+
+	SetOut("foo.md")
+	SetFormat("")
+	if flags.Format != GFM {
+		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, GFM, "foo.md")
+	}
+
+	SetOut("foo.org")
+	SetFormat("")
+	if flags.Format != ORG {
+		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, ORG, "foo.org")
 	}
 
 	SetFormat("csv")
@@ -328,6 +356,11 @@ func TestSetFormat(t *testing.T) {
 	SetFormat("tsv")
 	if flags.Format != TSV {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, TSV, "tsv")
+	}
+
+	SetFormat("fixed")
+	if flags.Format != FIXED {
+		t.Errorf("format = %s, expect to set %s for %s", flags.Format, FIXED, "fixed")
 	}
 
 	SetFormat("json")
@@ -360,8 +393,93 @@ func TestSetFormat(t *testing.T) {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, TEXT, "text")
 	}
 
-	expectErr := "format must be one of CSV|TSV|JSON|JSONH|JSONA|GFM|ORG|TEXT"
+	expectErr := "format must be one of CSV|TSV|FIXED|JSON|JSONH|JSONA|GFM|ORG|TEXT"
 	err := SetFormat("error")
+	if err == nil {
+		t.Errorf("no error, want error %q for %s", expectErr, "error")
+	} else if err.Error() != expectErr {
+		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "error")
+	}
+}
+
+func TestSetWriteEncoding(t *testing.T) {
+	flags := GetFlags()
+
+	SetWriteEncoding("sjis")
+	if flags.Encoding != SJIS {
+		t.Errorf("encoding = %s, expect to set %s for %s", flags.WriteEncoding, SJIS, "sjis")
+	}
+
+	expectErr := "encoding must be one of UTF8|SJIS"
+	err := SetWriteEncoding("error")
+	if err == nil {
+		t.Errorf("no error, want error %q for %s", expectErr, "error")
+	} else if err.Error() != expectErr {
+		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "error")
+	}
+}
+
+func TestSetWriteDelimiter(t *testing.T) {
+	flags := GetFlags()
+
+	SetWriteDelimiter("")
+	if flags.WriteDelimiter != ',' {
+		t.Errorf("write-delimiter = %q, expect to set %q for %q, format = %s", flags.WriteDelimiter, ',', "", flags.Format)
+	}
+
+	SetWriteDelimiter("\\t")
+	if flags.WriteDelimiter != '\t' {
+		t.Errorf("write-delimiter = %q, expect to set %q for %q", flags.WriteDelimiter, "\t", "\t")
+	}
+
+	SetWriteDelimiter("[1, 2, 3]")
+	if !reflect.DeepEqual(flags.WriteDelimiterPositions, []int{1, 2, 3}) {
+		t.Errorf("writeDelimitPositions = %v, expect to set %v for %q", flags.WriteDelimiterPositions, []int{1, 2, 3}, "[1, 2, 3]")
+	}
+
+	expectErr := "write-delimiter must be one character, \"SPACES\" or JSON array of integers"
+	err := SetWriteDelimiter("//")
+	if err == nil {
+		t.Errorf("no error, want error %q for %s", expectErr, "//")
+	} else if err.Error() != expectErr {
+		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "//")
+	}
+}
+
+func TestSetWithoutHeader(t *testing.T) {
+	flags := GetFlags()
+
+	SetWithoutHeader(true)
+	if !flags.NoHeader {
+		t.Errorf("without-header = %t, expect to set %t", flags.WithoutHeader, true)
+	}
+}
+
+func TestSetLineBreak(t *testing.T) {
+	flags := GetFlags()
+
+	SetLineBreak("")
+	if flags.LineBreak != LF {
+		t.Errorf("line-break = %s, expect to set %s for %q", flags.LineBreak, LF, "")
+	}
+
+	SetLineBreak("crlf")
+	if flags.LineBreak != CRLF {
+		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, CRLF, "crlf")
+	}
+
+	SetLineBreak("cr")
+	if flags.LineBreak != CR {
+		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, CR, "cr")
+	}
+
+	SetLineBreak("lf")
+	if flags.LineBreak != LF {
+		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, LF, "LF")
+	}
+
+	expectErr := "line-break must be one of CRLF|LF|CR"
+	err := SetLineBreak("error")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "error")
 	} else if err.Error() != expectErr {
@@ -388,46 +506,6 @@ func TestSetColor(t *testing.T) {
 	SetColor(false)
 }
 
-func TestSetWriteDelimiter(t *testing.T) {
-	flags := GetFlags()
-
-	flags.Format = CSV
-	SetWriteDelimiter("")
-	if flags.WriteDelimiter != ',' {
-		t.Errorf("write-delimiter = %q, expect to set %q for %q, format = %s", flags.WriteDelimiter, ',', "", flags.Format)
-	}
-
-	flags.Format = TSV
-	SetWriteDelimiter("")
-	if flags.WriteDelimiter != '\t' {
-		t.Errorf("write-delimiter = %q, expect to set %q for %q, format = %s", flags.WriteDelimiter, '\t', "", flags.Format)
-	}
-
-	flags.Format = CSV
-	flags.WriteDelimiter = ','
-	SetWriteDelimiter("\\t")
-	if flags.WriteDelimiter != '\t' {
-		t.Errorf("write-delimiter = %q, expect to set %q for %q", flags.WriteDelimiter, "\t", "\t")
-	}
-
-	expectErr := "write-delimiter must be 1 character"
-	err := SetWriteDelimiter("//")
-	if err == nil {
-		t.Errorf("no error, want error %q for %s", expectErr, "//")
-	} else if err.Error() != expectErr {
-		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "//")
-	}
-}
-
-func TestSetWithoutHeader(t *testing.T) {
-	flags := GetFlags()
-
-	SetWithoutHeader(true)
-	if !flags.NoHeader {
-		t.Errorf("without-header = %t, expect to set %t", flags.WithoutHeader, true)
-	}
-}
-
 func TestSetQuiet(t *testing.T) {
 	flags := GetFlags()
 
@@ -441,10 +519,7 @@ func TestSetCPU(t *testing.T) {
 	flags := GetFlags()
 
 	SetCPU(0)
-	expect := runtime.NumCPU() / 2
-	if expect < 1 {
-		expect = 1
-	}
+	expect := 1
 	if expect != flags.CPU {
 		t.Errorf("cpu = %d, expect to set %d", flags.CPU, 1)
 	}
@@ -461,39 +536,5 @@ func TestSetStats(t *testing.T) {
 	SetStats(true)
 	if !flags.Stats {
 		t.Errorf("stats = %t, expect to set %t", flags.Stats, true)
-	}
-}
-
-func TestParseEncoding(t *testing.T) {
-	e, err := ParseEncoding("")
-	if err != nil {
-		t.Errorf("unexpected error: %q", err.Error())
-	}
-	if e != UTF8 {
-		t.Errorf("encoding = %s, expect to set %s for %s", e, UTF8, "")
-	}
-
-	e, err = ParseEncoding("utf8")
-	if err != nil {
-		t.Errorf("unexpected error: %q", err.Error())
-	}
-	if e != UTF8 {
-		t.Errorf("encoding = %s, expect to set %s for %s", e, UTF8, "utf8")
-	}
-
-	e, err = ParseEncoding("sjis")
-	if err != nil {
-		t.Errorf("unexpected error: %q", err.Error())
-	}
-	if e != SJIS {
-		t.Errorf("encoding = %s, expect to set %s for %s", e, SJIS, "sjis")
-	}
-
-	expectErr := "encoding must be one of UTF8|SJIS"
-	_, err = ParseEncoding("error")
-	if err == nil {
-		t.Errorf("no error, want error %q for %s", expectErr, "error")
-	} else if err.Error() != expectErr {
-		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "error")
 	}
 }

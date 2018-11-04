@@ -14,7 +14,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var version = "v1.4.3"
+var version = "v1.5.0"
 
 func main() {
 	cli.AppHelpTemplate = appHHelpTemplate
@@ -24,7 +24,7 @@ func main() {
 
 	app.Name = "csvq"
 	app.Usage = "SQL like query language for csv"
-	app.ArgsUsage = "[\"query\"|\"statements\"|argument]"
+	app.ArgsUsage = "[\"query\"|argument]"
 	app.Version = version
 
 	app.OnUsageError = func(c *cli.Context, err error, isSubcommand bool) error {
@@ -42,22 +42,8 @@ func main() {
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:  "delimiter, d",
-			Usage: "field delimiter. Default is \",\" for csv files, \"\\t\" for tsv files.",
-		},
-		cli.StringFlag{
-			Name:  "json-query, j",
-			Usage: "`JSON_QUERY` for JSON data passed from standard input",
-		},
-		cli.StringFlag{
-			Name:  "encoding, e",
-			Value: "UTF8",
-			Usage: "file encoding. one of: UTF8|SJIS",
-		},
-		cli.StringFlag{
-			Name:  "line-break, l",
-			Value: "LF",
-			Usage: "line break. one of: CRLF|LF|CR",
+			Name:  "repository, r",
+			Usage: "directory `PATH` where files are located",
 		},
 		cli.StringFlag{
 			Name:  "timezone, z",
@@ -65,21 +51,31 @@ func main() {
 			Usage: "default timezone. \"Local\", \"UTC\" or a timezone name(e.g. \"America/Los_Angeles\")",
 		},
 		cli.StringFlag{
-			Name:  "repository, r",
-			Usage: "directory path where files are located",
-		},
-		cli.StringFlag{
-			Name:  "source, s",
-			Usage: "load query from `FILE`",
-		},
-		cli.StringFlag{
 			Name:  "datetime-format, t",
-			Usage: "set datetime format to parse strings",
+			Usage: "datetime format to parse strings",
 		},
 		cli.Float64Flag{
 			Name:  "wait-timeout, w",
 			Value: 10,
 			Usage: "limit of the waiting time in seconds to wait for locked files to be released",
+		},
+		cli.StringFlag{
+			Name:  "source, s",
+			Usage: "load query or statements from `FILE`",
+		},
+		cli.StringFlag{
+			Name:  "delimiter, d",
+			Value: ",",
+			Usage: "field delimiter for csv, or delimiter positions for fixed-length format",
+		},
+		cli.StringFlag{
+			Name:  "json-query, j",
+			Usage: "`QUERY` for JSON data passed from standard input",
+		},
+		cli.StringFlag{
+			Name:  "encoding, e",
+			Value: "UTF8",
+			Usage: "file encoding. one of: UTF8|SJIS",
 		},
 		cli.BoolFlag{
 			Name:  "no-header, n",
@@ -90,29 +86,36 @@ func main() {
 			Usage: "parse empty fields as empty strings",
 		},
 		cli.StringFlag{
-			Name:  "write-encoding, E",
-			Value: "UTF8",
-			Usage: "file encoding. one of: UTF8|SJIS",
-		},
-		cli.StringFlag{
 			Name:  "out, o",
-			Usage: "write output to `FILE`",
+			Usage: "export query results and logs to `FILE`",
 		},
 		cli.StringFlag{
 			Name:  "format, f",
-			Usage: "output format. one of: CSV|TSV|JSON|JSONH|JSONA|GFM|ORG|TEXT",
+			Value: "TEXT",
+			Usage: "format of query results. one of: CSV|TSV|FIXED|JSON|JSONH|JSONA|GFM|ORG|TEXT",
+		},
+		cli.StringFlag{
+			Name:  "write-encoding, E",
+			Value: "UTF8",
+			Usage: "character encoding of query results. one of: UTF8|SJIS",
 		},
 		cli.StringFlag{
 			Name:  "write-delimiter, D",
-			Usage: "field delimiter for CSV",
+			Value: ",",
+			Usage: "field delimiter or delimiter positions in query results",
 		},
 		cli.BoolFlag{
 			Name:  "without-header, N",
-			Usage: "when the file format is specified as CSV or TSV, write without the header line",
+			Usage: "write without the header line in query results",
+		},
+		cli.StringFlag{
+			Name:  "line-break, l",
+			Value: "LF",
+			Usage: "line break in query results. one of: CRLF|LF|CR",
 		},
 		cli.BoolFlag{
 			Name:  "pretty-print, P",
-			Usage: "make JSON output easier to read",
+			Usage: "make JSON output easier to read in query results",
 		},
 		cli.BoolFlag{
 			Name:  "color, c",
@@ -125,7 +128,7 @@ func main() {
 		cli.IntFlag{
 			Name:  "cpu, p",
 			Value: defaultCPU,
-			Usage: "hint for the number of cpu cores to be used. 1 - number of cpu cores",
+			Usage: "hint for the number of cpu cores to be used",
 		},
 		cli.BoolFlag{
 			Name:  "stats, x",
@@ -245,6 +248,19 @@ func readQuery(c *cli.Context) (string, error) {
 func setFlags(c *cli.Context) error {
 	cmd.SetColor(c.GlobalBool("color"))
 
+	if err := cmd.SetRepository(c.GlobalString("repository")); err != nil {
+		return err
+	}
+	if err := cmd.SetLocation(c.String("timezone")); err != nil {
+		return err
+	}
+	cmd.SetDatetimeFormat(c.GlobalString("datetime-format"))
+	cmd.SetWaitTimeout(c.GlobalFloat64("wait-timeout"))
+
+	if err := cmd.SetSource(c.GlobalString("source")); err != nil {
+		return err
+	}
+
 	if err := cmd.SetDelimiter(c.GlobalString("delimiter")); err != nil {
 		return err
 	}
@@ -252,37 +268,26 @@ func setFlags(c *cli.Context) error {
 	if err := cmd.SetEncoding(c.GlobalString("encoding")); err != nil {
 		return err
 	}
-	if err := cmd.SetLineBreak(c.String("line-break")); err != nil {
-		return err
-	}
-	if err := cmd.SetLocation(c.String("timezone")); err != nil {
-		return err
-	}
-	if err := cmd.SetRepository(c.GlobalString("repository")); err != nil {
-		return err
-	}
-	if err := cmd.SetSource(c.GlobalString("source")); err != nil {
-		return err
-	}
-	cmd.SetDatetimeFormat(c.GlobalString("datetime-format"))
-	cmd.SetWaitTimeout(c.GlobalFloat64("wait-timeout"))
 	cmd.SetNoHeader(c.GlobalBool("no-header"))
 	cmd.SetWithoutNull(c.GlobalBool("without-null"))
 
-	if err := cmd.SetWriteEncoding(c.GlobalString("write-encoding")); err != nil {
-		return err
-	}
 	if err := cmd.SetOut(c.GlobalString("out")); err != nil {
 		return err
 	}
 	if err := cmd.SetFormat(c.GlobalString("format")); err != nil {
 		return err
 	}
+	if err := cmd.SetWriteEncoding(c.GlobalString("write-encoding")); err != nil {
+		return err
+	}
 	if err := cmd.SetWriteDelimiter(c.GlobalString("write-delimiter")); err != nil {
 		return err
 	}
-	cmd.SetPrettyPrint(c.GlobalBool("pretty-print"))
 	cmd.SetWithoutHeader(c.GlobalBool("without-header"))
+	if err := cmd.SetLineBreak(c.String("line-break")); err != nil {
+		return err
+	}
+	cmd.SetPrettyPrint(c.GlobalBool("pretty-print"))
 
 	cmd.SetQuiet(c.GlobalBool("quiet"))
 	cmd.SetCPU(c.GlobalInt("cpu"))

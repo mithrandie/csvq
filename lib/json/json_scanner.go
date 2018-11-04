@@ -16,6 +16,8 @@ type Scanner struct {
 	column     int
 	sourceFile string
 
+	escapeType EscapeType
+
 	err error
 }
 
@@ -25,6 +27,8 @@ func (s *Scanner) Init(src string) *Scanner {
 	s.offset = 0
 	s.line = 1
 	s.column = 0
+
+	s.escapeType = Backslash
 
 	return s
 }
@@ -86,6 +90,10 @@ func (s *Scanner) trimQuotes() string {
 	return string(runes)
 }
 
+func (s *Scanner) EscapeType() EscapeType {
+	return s.escapeType
+}
+
 func (s *Scanner) Scan() (Token, error) {
 	ch := s.skipSpaces()
 
@@ -120,7 +128,12 @@ func (s *Scanner) Scan() (Token, error) {
 		}
 	case ch == '"':
 		s.scanString(ch)
-		literal = Unescape(s.trimQuotes())
+		var et EscapeType
+		literal, et = Unescape(s.trimQuotes())
+		if s.escapeType < et {
+			s.escapeType = et
+		}
+
 		token = STRING
 	}
 

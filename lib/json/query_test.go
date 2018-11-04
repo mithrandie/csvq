@@ -103,6 +103,7 @@ var loadTableTests = []struct {
 	Json         string
 	ExpectHeader []string
 	ExpectValues [][]value.Primary
+	EscapeType   EscapeType
 	Error        string
 }{
 	{
@@ -134,7 +135,7 @@ var loadTableTests = []struct {
 
 func TestLoadTable(t *testing.T) {
 	for _, v := range loadTableTests {
-		header, values, err := LoadTable(v.Query, v.Json)
+		header, values, et, err := LoadTable(v.Query, v.Json)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("unexpected error %q for %q, %q", err.Error(), v.Query, v.Json)
@@ -152,6 +153,9 @@ func TestLoadTable(t *testing.T) {
 		}
 		if !reflect.DeepEqual(values, v.ExpectValues) {
 			t.Errorf("values = %#v, want %#v for %q, %q", values, v.ExpectValues, v.Query, v.Json)
+		}
+		if et != v.EscapeType {
+			t.Errorf("escape type = %d, want %d for %q, %q", et, v.EscapeType, v.Query, v.Json)
 		}
 	}
 }

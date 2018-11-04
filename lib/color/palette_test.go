@@ -24,45 +24,9 @@ var paletteColorTests = []struct {
 	},
 	{
 		Text:     "abc",
-		Style:    NumberStyle,
+		Style:    999,
 		UseStyle: true,
-		Expect:   "\033[35mabc\033[0m",
-	},
-	{
-		Text:     "abc",
-		Style:    StringStyle,
-		UseStyle: true,
-		Expect:   "\033[32mabc\033[0m",
-	},
-	{
-		Text:     "abc",
-		Style:    BooleanStyle,
-		UseStyle: true,
-		Expect:   "\033[33;1mabc\033[0m",
-	},
-	{
-		Text:     "abc",
-		Style:    TernaryStyle,
-		UseStyle: true,
-		Expect:   "\033[33mabc\033[0m",
-	},
-	{
-		Text:     "abc",
-		Style:    DatetimeStyle,
-		UseStyle: true,
-		Expect:   "\033[36mabc\033[0m",
-	},
-	{
-		Text:     "abc",
-		Style:    NullStyle,
-		UseStyle: true,
-		Expect:   "\033[90mabc\033[0m",
-	},
-	{
-		Text:     "abc",
-		Style:    NullStyle,
-		UseStyle: false,
-		Expect:   "abc",
+		Expect:   "\033[0mabc\033[0m",
 	},
 }
 

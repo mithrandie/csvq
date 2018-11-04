@@ -7,9 +7,10 @@ import (
 )
 
 var decoderDecodeTests = []struct {
-	Input  string
-	Expect Structure
-	Error  string
+	Input      string
+	Expect     Structure
+	EscapeType EscapeType
+	Error      string
 }{
 	{
 		Input:  "  ",
@@ -73,6 +74,7 @@ var decoderDecodeTests = []struct {
 			Boolean(true),
 			Null{},
 		},
+		EscapeType: HexDigits,
 	},
 	{
 		Input: "{\"key\":{\"child\":\"value\"}}",
@@ -172,7 +174,7 @@ func TestDecoder_Decode(t *testing.T) {
 	for _, v := range decoderDecodeTests {
 		d := NewDecoder()
 
-		value, err := d.Decode(v.Input)
+		value, et, err := d.Decode(v.Input)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("unexpected error %q for %q", err.Error(), v.Input)
@@ -188,6 +190,9 @@ func TestDecoder_Decode(t *testing.T) {
 		}
 		if !reflect.DeepEqual(value, v.Expect) {
 			t.Errorf("result = %#v, want %#v for %q", value, v.Expect, v.Input)
+		}
+		if et != v.EscapeType {
+			t.Errorf("escape type = %d, want %d for %q", et, v.EscapeType, v.Input)
 		}
 	}
 }

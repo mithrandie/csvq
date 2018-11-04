@@ -1,9 +1,16 @@
 package query
 
 import (
-	"errors"
-	"fmt"
+	"bytes"
+	gojson "encoding/json"
+	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/csv"
+	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/json"
+	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/text"
+	"github.com/mithrandie/csvq/lib/value"
+	"io"
 	"io/ioutil"
 	"math"
 	"os"
@@ -12,14 +19,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/csvq/lib/csv"
-	"github.com/mithrandie/csvq/lib/file"
-	"github.com/mithrandie/csvq/lib/parser"
-	"github.com/mithrandie/csvq/lib/value"
-
 	"github.com/mithrandie/ternary"
 )
+
+type RecordReader interface {
+	Read() ([]value.Field, error)
+}
 
 type View struct {
 	Header    Header
@@ -109,14 +114,17 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 	case parser.Dual:
 		view = loadDualView()
 	case parser.Stdin:
-		delimiter := cmd.GetFlags().Delimiter
-		if delimiter == cmd.UNDEF {
-			delimiter = ','
-		}
+		flags := cmd.GetFlags()
 		fileInfo := &FileInfo{
-			Path:        table.Object.String(),
-			Delimiter:   delimiter,
-			IsTemporary: true,
+			Path:               table.Object.String(),
+			Format:             flags.ImportFormat(),
+			Delimiter:          flags.Delimiter,
+			DelimiterPositions: flags.DelimiterPositions,
+			JsonQuery:          flags.JsonQuery,
+			Encoding:           flags.Encoding,
+			LineBreak:          flags.LineBreak,
+			NoHeader:           flags.NoHeader,
+			IsTemporary:        true,
 		}
 
 		if !filter.TempViews[len(filter.TempViews)-1].Exists(fileInfo.Path) {
@@ -126,29 +134,37 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 
 			var loadView *View
 
-			jsonQuery := cmd.GetFlags().JsonQuery
-			if len(jsonQuery) < 1 {
+			if fileInfo.Format != cmd.JSON {
 				fp := os.Stdin
 				defer fp.Close()
 
-				loadView, err = loadViewFromFile(fp, fileInfo)
+				loadView, err = loadViewFromFile(fp, fileInfo, flags.WithoutNull)
 				if err != nil {
-					return nil, NewCsvParsingError(table.Object, fileInfo.Path, err.Error())
+					return nil, NewDataParsingError(table.Object, fileInfo.Path, err.Error())
 				}
 			} else {
+				fileInfo.Encoding = cmd.UTF8
+
 				buf, err := ioutil.ReadAll(os.Stdin)
 				if err != nil {
 					return nil, NewReadFileError(table.Object.(parser.Stdin), err.Error())
 				}
 
-				headerLabels, rows, err := json.LoadTable(jsonQuery, string(buf))
+				headerLabels, rows, encodeType, err := json.LoadTable(fileInfo.JsonQuery, string(buf))
 				if err != nil {
-					return nil, errors.New(fmt.Sprintf("json query error: %s", err.Error()))
+					return nil, NewJsonQueryError(parser.JsonQuery{BaseExpr: table.Object.GetBaseExpr()}, err.Error())
 				}
 
 				records := make([]Record, 0, len(rows))
 				for _, row := range rows {
 					records = append(records, NewRecord(row))
+				}
+
+				switch encodeType {
+				case json.HexDigits:
+					fileInfo.Format = cmd.JSONH
+				case json.AllWithHexDigits:
+					fileInfo.Format = cmd.JSONA
 				}
 
 				loadView = NewView()
@@ -174,134 +190,149 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 		if !strings.EqualFold(table.Object.String(), table.Name().Literal) {
 			view.Header.Update(table.Name().Literal, nil)
 		}
-	case parser.JsonQuery:
-		jsonQuery := table.Object.(parser.JsonQuery)
+	case parser.TableObject:
+		tableObject := table.Object.(parser.TableObject)
 
-		alias := table.Name().Literal
-		var jsonText string
+		flags := cmd.GetFlags()
+		importFormat := flags.ImportFormat()
+		delimiter := flags.Delimiter
+		delimiterPositions := flags.DelimiterPositions
+		jsonQuery := flags.JsonQuery
+		encoding := flags.Encoding
+		noHeader := flags.NoHeader
+		withoutNull := flags.WithoutNull
 
-		if jsonPath, ok := jsonQuery.JsonText.(parser.Identifier); ok {
-			jsonText, err = loadJsonTextFromFile(jsonPath)
-			if err != nil {
-				return nil, err
+		felem, err := filter.Evaluate(tableObject.FormatElement)
+		if err != nil {
+			return nil, err
+		}
+		felemStr := value.ToString(felem)
+
+		switch strings.ToUpper(tableObject.Type.Literal) {
+		case cmd.CSV.String():
+			if value.IsNull(felemStr) {
+				return nil, NewTableObjectInvalidDelimiterError(tableObject, tableObject.FormatElement.String())
 			}
-		} else {
-			jsonTextValue, err := filter.Evaluate(jsonQuery.JsonText)
-			if err != nil {
-				return nil, err
+			s := cmd.UnescapeString(felemStr.(value.String).Raw())
+			d := []rune(s)
+			if 1 != len(d) {
+				return nil, NewTableObjectInvalidDelimiterError(tableObject, tableObject.FormatElement.String())
 			}
-			jsonTextValue = value.ToString(jsonTextValue)
-
-			if value.IsNull(jsonTextValue) {
-				return nil, NewJsonTableEmptyError(jsonQuery)
+			if 3 < len(tableObject.Args) {
+				return nil, NewTableObjectArgumentsLengthError(tableObject, 5)
 			}
+			delimiter = d[0]
+			if delimiter == '\t' {
+				importFormat = cmd.TSV
+			} else {
+				importFormat = cmd.CSV
+			}
+		case cmd.FIXED.String():
+			if value.IsNull(felemStr) {
+				return nil, NewTableObjectInvalidDelimiterPositionsError(tableObject, tableObject.FormatElement.String())
+			}
+			s := felemStr.(value.String).Raw()
 
-			jsonText = jsonTextValue.(value.String).Raw()
+			var positions []int
+			if !strings.EqualFold("SPACES", s) {
+				err = gojson.Unmarshal([]byte(s), &positions)
+				if err != nil {
+					return nil, NewTableObjectInvalidDelimiterPositionsError(tableObject, tableObject.FormatElement.String())
+				}
+			}
+			if 3 < len(tableObject.Args) {
+				return nil, NewTableObjectArgumentsLengthError(tableObject, 5)
+			}
+			delimiterPositions = positions
+			importFormat = cmd.FIXED
+		case cmd.JSON.String():
+			if value.IsNull(felemStr) {
+				return nil, NewTableObjectInvalidJsonQueryError(tableObject, tableObject.FormatElement.String())
+			}
+			if 0 < len(tableObject.Args) {
+				return nil, NewTableObjectJsonArgumentsLengthError(tableObject, 2)
+			}
+			jsonQuery = felemStr.(value.String).Raw()
+			importFormat = cmd.JSON
+			encoding = cmd.UTF8
+		default:
+			return nil, NewTableObjectInvalidObjectError(tableObject, tableObject.Type.Literal)
 		}
 
-		view, err = loadViewFromJson(jsonQuery, jsonText, alias, filter)
+		args := make([]value.Primary, 3)
+		for i, a := range tableObject.Args {
+			p, err := filter.Evaluate(a)
+			if err != nil {
+				if appErr, ok := err.(AppError); ok {
+					err = NewTableObjectInvalidArgumentError(tableObject, appErr.ErrorMessage())
+				}
+				return nil, err
+			}
+			switch i {
+			case 0:
+				v := value.ToString(p)
+				if !value.IsNull(v) {
+					args[i] = v
+				}
+			default:
+				v := value.ToBoolean(p)
+				if !value.IsNull(v) {
+					args[i] = v
+				}
+			}
+		}
+
+		if args[0] != nil {
+			if encoding, err = cmd.ParseEncoding(args[0].(value.String).Raw()); err != nil {
+				return nil, NewTableObjectInvalidArgumentError(tableObject, err.Error())
+			}
+		}
+		if args[1] != nil {
+			noHeader = args[1].(value.Boolean).Raw()
+		}
+		if args[2] != nil {
+			withoutNull = args[2].(value.Boolean).Raw()
+		}
+
+		view, err = loadObject(
+			table.Object.(parser.TableObject).Path,
+			table.Name(),
+			filter,
+			useInternalId,
+			forUpdate,
+			importFormat,
+			delimiter,
+			delimiterPositions,
+			jsonQuery,
+			encoding,
+			flags.LineBreak,
+			noHeader,
+			withoutNull,
+		)
 		if err != nil {
 			return nil, err
 		}
 
 	case parser.Identifier:
-		tableIdentifier := table.Object.(parser.Identifier)
-		if filter.RecursiveTable != nil && strings.EqualFold(tableIdentifier.Literal, filter.RecursiveTable.Name.Literal) && filter.RecursiveTmpView != nil {
-			view = filter.RecursiveTmpView
-			if !strings.EqualFold(filter.RecursiveTable.Name.Literal, table.Name().Literal) {
-				view.Header.Update(table.Name().Literal, nil)
-			}
-		} else if it, err := filter.InlineTables.Get(tableIdentifier); err == nil {
-			if err = filter.Aliases.Add(table.Name(), ""); err != nil {
-				return nil, err
-			}
-			view = it
-			if tableIdentifier.Literal != table.Name().Literal {
-				view.Header.Update(table.Name().Literal, nil)
-			}
-		} else {
-			var fileInfo *FileInfo
-			var commonTableName string
+		flags := cmd.GetFlags()
 
-			if filter.TempViews.Exists(tableIdentifier.Literal) {
-				fileInfo = &FileInfo{
-					Path: tableIdentifier.Literal,
-				}
-
-				commonTableName = parser.FormatTableName(fileInfo.Path)
-
-				pathIdent := parser.Identifier{Literal: fileInfo.Path}
-				if useInternalId {
-					view, _ = filter.TempViews.GetWithInternalId(pathIdent)
-				} else {
-					view, _ = filter.TempViews.Get(pathIdent)
-				}
-			} else {
-				flags := cmd.GetFlags()
-
-				fileInfo, err = NewFileInfoForCreate(tableIdentifier, flags.Repository, flags.Delimiter)
-				if err != nil {
-					return nil, err
-				}
-
-				if !ViewCache.Exists(fileInfo.Path) {
-					fileInfo, err = NewFileInfo(tableIdentifier, flags.Repository, flags.Delimiter)
-					if err != nil {
-						return nil, err
-					}
-
-					ufpath := strings.ToUpper(fileInfo.Path)
-					if !ViewCache.Exists(fileInfo.Path) || (forUpdate && !ViewCache[ufpath].ForUpdate) {
-						ViewCache.Dispose(fileInfo.Path)
-
-						var fp *os.File
-						if forUpdate {
-							fp, err = file.OpenToUpdate(fileInfo.Path)
-							if err != nil {
-								if _, ok := err.(*file.TimeoutError); ok {
-									return nil, NewFileLockTimeoutError(tableIdentifier, fileInfo.Path)
-								}
-								return nil, NewReadFileError(tableIdentifier, err.Error())
-							}
-							fileInfo.File = fp
-						} else {
-							fp, err = file.OpenToRead(fileInfo.Path)
-							if err != nil {
-								if _, ok := err.(*file.TimeoutError); ok {
-									return nil, NewFileLockTimeoutError(tableIdentifier, fileInfo.Path)
-								}
-								return nil, NewReadFileError(tableIdentifier, err.Error())
-							}
-							defer file.Close(fp)
-						}
-						loadView, err := loadViewFromFile(fp, fileInfo)
-						if err != nil {
-							if forUpdate {
-								file.Close(fp)
-							}
-							return nil, NewCsvParsingError(tableIdentifier, fileInfo.Path, err.Error())
-						}
-						loadView.ForUpdate = forUpdate
-						ViewCache.Set(loadView)
-					}
-				}
-				commonTableName = parser.FormatTableName(fileInfo.Path)
-
-				pathIdent := parser.Identifier{Literal: fileInfo.Path}
-				if useInternalId {
-					view, _ = ViewCache.GetWithInternalId(pathIdent)
-				} else {
-					view, _ = ViewCache.Get(pathIdent)
-				}
-			}
-
-			if err = filter.Aliases.Add(table.Name(), fileInfo.Path); err != nil {
-				return nil, err
-			}
-
-			if !strings.EqualFold(commonTableName, table.Name().Literal) {
-				view.Header.Update(table.Name().Literal, nil)
-			}
+		view, err = loadObject(
+			table.Object.(parser.Identifier),
+			table.Name(),
+			filter,
+			useInternalId,
+			forUpdate,
+			cmd.AutoSelect,
+			flags.Delimiter,
+			flags.DelimiterPositions,
+			flags.JsonQuery,
+			flags.Encoding,
+			flags.LineBreak,
+			flags.NoHeader,
+			flags.WithoutNull,
+		)
+		if err != nil {
+			return nil, err
 		}
 	case parser.Join:
 		join := table.Object.(parser.Join)
@@ -390,42 +421,319 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 			gm.Wait()
 		}
 
+	case parser.JsonQuery:
+		jsonQuery := table.Object.(parser.JsonQuery)
+		alias := table.Name().Literal
+
+		queryValue, err := filter.Evaluate(jsonQuery.Query)
+		if err != nil {
+			return nil, err
+		}
+		queryValue = value.ToString(queryValue)
+
+		if value.IsNull(queryValue) {
+			return nil, NewJsonQueryEmptyError(jsonQuery)
+		}
+
+		var reader io.Reader
+
+		if jsonPath, ok := jsonQuery.JsonText.(parser.Identifier); ok {
+			fpath, err := SearchJsonFilePath(jsonPath, cmd.GetFlags().Repository)
+			if err != nil {
+				return nil, err
+			}
+
+			fp, err := file.OpenToRead(fpath)
+			if err != nil {
+				if _, ok := err.(*file.TimeoutError); ok {
+					return nil, NewFileLockTimeoutError(jsonPath, fpath)
+				}
+				return nil, NewReadFileError(jsonPath, err.Error())
+			}
+			defer file.Close(fp)
+			reader = fp
+		} else {
+			jsonTextValue, err := filter.Evaluate(jsonQuery.JsonText)
+			if err != nil {
+				return nil, err
+			}
+			jsonTextValue = value.ToString(jsonTextValue)
+
+			if value.IsNull(jsonTextValue) {
+				return nil, NewJsonTableEmptyError(jsonQuery)
+			}
+
+			reader = strings.NewReader(jsonTextValue.(value.String).Raw())
+		}
+
+		fileInfo := &FileInfo{
+			Path:        alias,
+			Format:      cmd.JSON,
+			JsonQuery:   queryValue.(value.String).Raw(),
+			Encoding:    cmd.UTF8,
+			LineBreak:   cmd.GetFlags().LineBreak,
+			IsTemporary: true,
+		}
+
+		view, err = loadViewFromJsonFile(reader, fileInfo)
+		if err != nil {
+			return nil, NewJsonQueryError(jsonQuery, err.Error())
+		}
+
+		if err = filter.Aliases.Add(table.Name(), ""); err != nil {
+			return nil, err
+		}
+
 	case parser.Subquery:
 		subquery := table.Object.(parser.Subquery)
 		view, err = Select(subquery.Query, filter)
-		if table.Alias != nil {
-			if err = filter.Aliases.Add(table.Alias.(parser.Identifier), ""); err != nil {
-				return nil, err
-			}
+		if err != nil {
+			return nil, err
 		}
-		if err == nil {
-			view.Header.Update(table.Name().Literal, nil)
+
+		view.Header.Update(table.Name().Literal, nil)
+
+		if err = filter.Aliases.Add(table.Name(), ""); err != nil {
+			return nil, err
 		}
 	}
 
 	return view, err
 }
 
-func loadViewFromFile(fp *os.File, fileInfo *FileInfo) (*View, error) {
-	flags := cmd.GetFlags()
+func loadObject(
+	tableIdentifier parser.Identifier,
+	tableName parser.Identifier,
+	filter *Filter,
+	useInternalId bool,
+	forUpdate bool,
+	importFormat cmd.Format,
+	delimiter rune,
+	delimiterPositions []int,
+	jsonQuery string,
+	encoding cmd.Encoding,
+	lineBreak cmd.LineBreak,
+	noHeader bool,
+	withoutNull bool,
+) (*View, error) {
+	var view *View
 
-	r := cmd.GetReader(fp, flags.Encoding)
+	if filter.RecursiveTable != nil && strings.EqualFold(tableIdentifier.Literal, filter.RecursiveTable.Name.Literal) && filter.RecursiveTmpView != nil {
+		view = filter.RecursiveTmpView
+		if !strings.EqualFold(filter.RecursiveTable.Name.Literal, tableName.Literal) {
+			view.Header.Update(tableName.Literal, nil)
+		}
+	} else if it, err := filter.InlineTables.Get(tableIdentifier); err == nil {
+		if err = filter.Aliases.Add(tableName, ""); err != nil {
+			return nil, err
+		}
+		view = it
+		if tableIdentifier.Literal != tableName.Literal {
+			view.Header.Update(tableName.Literal, nil)
+		}
+	} else {
+		var filePath string
+		var commonTableName string
+
+		filePath = tableIdentifier.Literal
+		if filter.TempViews.Exists(filePath) {
+			commonTableName = parser.FormatTableName(filePath)
+
+			pathIdent := parser.Identifier{Literal: filePath}
+			if useInternalId {
+				view, _ = filter.TempViews.GetWithInternalId(pathIdent)
+			} else {
+				view, _ = filter.TempViews.Get(pathIdent)
+			}
+		} else {
+			filePath, err = CreateFilePath(tableIdentifier, cmd.GetFlags().Repository)
+			if err != nil {
+				return nil, err
+			}
+
+			if !ViewCache.Exists(filePath) {
+				fileInfo, err := NewFileInfo(tableIdentifier, cmd.GetFlags().Repository, importFormat, delimiter, encoding)
+				if err != nil {
+					return nil, err
+				}
+				filePath = fileInfo.Path
+
+				fileInfo.DelimiterPositions = delimiterPositions
+				fileInfo.JsonQuery = strings.TrimSpace(jsonQuery)
+				fileInfo.LineBreak = lineBreak
+				fileInfo.NoHeader = noHeader
+
+				alreadyLoaded := ViewCache.Exists(fileInfo.Path)
+				ufpath := strings.ToUpper(fileInfo.Path)
+
+				if alreadyLoaded {
+					if importFormat != cmd.AutoSelect && !fileInfo.Equivalent(ViewCache[ufpath].FileInfo) {
+						return nil, NewTableObjectMultipleReadError(tableIdentifier)
+					}
+				}
+
+				if !alreadyLoaded || (forUpdate && !ViewCache[ufpath].ForUpdate) {
+					ViewCache.Dispose(fileInfo.Path)
+
+					var fp *os.File
+					if forUpdate {
+						fp, err = file.OpenToUpdate(fileInfo.Path)
+						if err != nil {
+							if _, ok := err.(*file.TimeoutError); ok {
+								return nil, NewFileLockTimeoutError(tableIdentifier, fileInfo.Path)
+							}
+							return nil, NewReadFileError(tableIdentifier, err.Error())
+						}
+						fileInfo.File = fp
+					} else {
+						fp, err = file.OpenToRead(fileInfo.Path)
+						if err != nil {
+							if _, ok := err.(*file.TimeoutError); ok {
+								return nil, NewFileLockTimeoutError(tableIdentifier, fileInfo.Path)
+							}
+							return nil, NewReadFileError(tableIdentifier, err.Error())
+						}
+						defer file.Close(fp)
+					}
+
+					loadView, err := loadViewFromFile(fp, fileInfo, withoutNull)
+					if err != nil {
+						if forUpdate {
+							file.Close(fp)
+						}
+						return nil, NewDataParsingError(tableIdentifier, fileInfo.Path, err.Error())
+					}
+					loadView.ForUpdate = forUpdate
+					ViewCache.Set(loadView)
+				}
+			}
+			commonTableName = parser.FormatTableName(filePath)
+
+			pathIdent := parser.Identifier{Literal: filePath}
+			if useInternalId {
+				view, _ = ViewCache.GetWithInternalId(pathIdent)
+			} else {
+				view, _ = ViewCache.Get(pathIdent)
+			}
+		}
+
+		if err = filter.Aliases.Add(tableName, filePath); err != nil {
+			return nil, err
+		}
+
+		if !strings.EqualFold(commonTableName, tableName.Literal) {
+			view.Header.Update(tableName.Literal, nil)
+		}
+	}
+	return view, nil
+}
+
+func loadViewFromFile(fp *os.File, fileInfo *FileInfo, withoutNull bool) (*View, error) {
+	switch fileInfo.Format {
+	case cmd.FIXED:
+		return loadViewFromFixedLengthTextFile(fp, fileInfo, withoutNull)
+	case cmd.JSON:
+		return loadViewFromJsonFile(fp, fileInfo)
+	}
+	return loadViewFromCSVFile(fp, fileInfo, withoutNull)
+}
+
+func loadViewFromFixedLengthTextFile(fp *os.File, fileInfo *FileInfo, withoutNull bool) (*View, error) {
+	data, err := ioutil.ReadAll(cmd.GetReader(fp, fileInfo.Encoding))
+	if err != nil {
+		return nil, err
+	}
+	r := bytes.NewReader(data)
+
+	if fileInfo.DelimiterPositions == nil {
+		d := text.NewDelimiter(r)
+		d.NoHeader = fileInfo.NoHeader
+		d.Encoding = fileInfo.Encoding
+		fileInfo.DelimiterPositions, err = d.Delimit()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	r.Seek(0, io.SeekStart)
+	reader := text.NewFixedLengthReader(r, fileInfo.DelimiterPositions)
+	reader.WithoutNull = withoutNull
+	reader.Encoding = fileInfo.Encoding
+
+	var header []string
+	if !fileInfo.NoHeader {
+		header, err = reader.ReadHeader()
+		if err != nil && err != io.EOF {
+			return nil, err
+		}
+	}
+
+	records, err := readRecordSet(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	if header == nil {
+		header = make([]string, len(fileInfo.DelimiterPositions))
+		for i := 0; i < len(fileInfo.DelimiterPositions); i++ {
+			header[i] = "c" + strconv.Itoa(i+1)
+		}
+	}
+
+	if reader.LineBreak != "" {
+		fileInfo.LineBreak = reader.LineBreak
+	}
+
+	view := NewView()
+	view.Header = NewHeaderWithAutofill(parser.FormatTableName(fileInfo.Path), header)
+	view.RecordSet = records
+	view.FileInfo = fileInfo
+	return view, nil
+}
+
+func loadViewFromCSVFile(fp *os.File, fileInfo *FileInfo, withoutNull bool) (*View, error) {
+	r := cmd.GetReader(fp, fileInfo.Encoding)
 
 	reader := csv.NewReader(r)
 	reader.Delimiter = fileInfo.Delimiter
-	reader.WithoutNull = flags.WithoutNull
+	reader.WithoutNull = withoutNull
 
 	var err error
 	var header []string
-	if !flags.NoHeader {
+	if !fileInfo.NoHeader {
 		header, err = reader.ReadHeader()
 		if err != nil && err != csv.EOF {
 			return nil, err
 		}
 	}
 
-	records := RecordSet{}
-	rowch := make(chan []csv.Field, 1000)
+	records, err := readRecordSet(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	if header == nil {
+		header = make([]string, reader.FieldsPerRecord)
+		for i := 0; i < reader.FieldsPerRecord; i++ {
+			header[i] = "c" + strconv.Itoa(i+1)
+		}
+	}
+
+	if reader.LineBreak != "" {
+		fileInfo.LineBreak = reader.LineBreak
+	}
+
+	view := NewView()
+	view.Header = NewHeader(parser.FormatTableName(fileInfo.Path), header)
+	view.RecordSet = records
+	view.FileInfo = fileInfo
+	return view, nil
+}
+
+func readRecordSet(reader RecordReader) (RecordSet, error) {
+	var err error
+	records := make(RecordSet, 0, 1000)
+	rowch := make(chan []value.Field, 1000)
 	fieldch := make(chan []value.Primary, 1000)
 
 	wg := sync.WaitGroup{}
@@ -478,62 +786,18 @@ func loadViewFromFile(fp *os.File, fileInfo *FileInfo) (*View, error) {
 
 	wg.Wait()
 
+	return records, err
+}
+
+func loadViewFromJsonFile(fp io.Reader, fileInfo *FileInfo) (*View, error) {
+	jsonText, err := ioutil.ReadAll(fp)
 	if err != nil {
 		return nil, err
 	}
 
-	if header == nil {
-		header = make([]string, reader.FieldsPerRecord)
-		for i := 0; i < reader.FieldsPerRecord; i++ {
-			header[i] = "c" + strconv.Itoa(i+1)
-		}
-	}
-
-	fileInfo.NoHeader = flags.NoHeader
-	fileInfo.Encoding = flags.Encoding
-	fileInfo.LineBreak = reader.LineBreak
-	if fileInfo.LineBreak == "" {
-		fileInfo.LineBreak = flags.LineBreak
-	}
-
-	view := NewView()
-	view.Header = NewHeader(parser.FormatTableName(fileInfo.Path), header)
-	view.RecordSet = records
-	view.FileInfo = fileInfo
-	return view, nil
-}
-
-func loadJsonTextFromFile(jsonPath parser.Identifier) (string, error) {
-	var buf []byte
-
-	flags := cmd.GetFlags()
-	fpath, err := searchFilePath(jsonPath, flags.Repository, []string{cmd.JsonExt})
-	if err != nil {
-		return "", err
-	}
-
-	buf, err = ioutil.ReadFile(fpath)
-	if err != nil {
-		return "", NewReadFileError(jsonPath, err.Error())
-	}
-
-	return string(buf), nil
-}
-
-func loadViewFromJson(jsonQuery parser.JsonQuery, jsonText string, viewName string, filter *Filter) (*View, error) {
-	queryValue, err := filter.Evaluate(jsonQuery.Query)
+	headerLabels, rows, encodeType, err := json.LoadTable(fileInfo.JsonQuery, string(jsonText))
 	if err != nil {
 		return nil, err
-	}
-	query := value.ToString(queryValue)
-
-	if value.IsNull(query) {
-		return nil, NewJsonTableEmptyError(jsonQuery)
-	}
-
-	headerLabels, rows, err := json.LoadTable(query.(value.String).Raw(), jsonText)
-	if err != nil {
-		return nil, NewJsonQueryError(jsonQuery, err.Error())
 	}
 
 	records := make([]Record, 0, len(rows))
@@ -541,13 +805,17 @@ func loadViewFromJson(jsonQuery parser.JsonQuery, jsonText string, viewName stri
 		records = append(records, NewRecord(row))
 	}
 
-	view := NewView()
-	view.Header = NewHeader(viewName, headerLabels)
-	view.RecordSet = records
-	view.FileInfo = &FileInfo{
-		Path:        viewName,
-		IsTemporary: true,
+	switch encodeType {
+	case json.HexDigits:
+		fileInfo.Format = cmd.JSONH
+	case json.AllWithHexDigits:
+		fileInfo.Format = cmd.JSONA
 	}
+
+	view := NewView()
+	view.Header = NewHeader(parser.FormatTableName(fileInfo.Path), headerLabels)
+	view.RecordSet = records
+	view.FileInfo = fileInfo
 	return view, nil
 }
 
@@ -1011,9 +1279,9 @@ func (view *View) additionalColumns(expr parser.QueryExpression) ([]string, erro
 		if !view.isGrouped {
 			return nil, NewNotGroupingRecordsError(expr, expr.(parser.AggregateFunction).Name)
 		}
-	case parser.ListAgg:
+	case parser.ListFunction:
 		if !view.isGrouped {
-			return nil, NewNotGroupingRecordsError(expr, expr.(parser.ListAgg).Name)
+			return nil, NewNotGroupingRecordsError(expr, expr.(parser.ListFunction).Name)
 		}
 	case parser.AnalyticFunction:
 		fn := expr.(parser.AnalyticFunction)

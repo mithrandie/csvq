@@ -2,6 +2,8 @@ package query
 
 import (
 	"fmt"
+	"github.com/mithrandie/csvq/lib/color"
+	"strings"
 	"time"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -56,14 +58,16 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 
 	var err error
 
-	var results []Result
+	var results []ExecResult
 	var view *View
 	var views []*View
 	var printstr string
 
 	switch stmt.(type) {
 	case parser.SetFlag:
-		err = SetFlag(stmt.(parser.SetFlag))
+		if printstr, err = SetFlag(stmt.(parser.SetFlag), proc.Filter); err == nil {
+			Log(printstr, flags.Quiet)
+		}
 	case parser.ShowFlag:
 		if printstr, err = ShowFlag(stmt.(parser.ShowFlag)); err == nil {
 			Log(printstr, false)
@@ -101,11 +105,16 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		}
 		if view, err = Select(stmt.(parser.SelectQuery), proc.Filter); err == nil {
 			var viewstr string
-			var lineBreak = cmd.LF
-			if 0 < len(flags.OutFile) {
-				lineBreak = flags.LineBreak
+			fileInfo := &FileInfo{
+				Format:             flags.Format,
+				Delimiter:          flags.WriteDelimiter,
+				DelimiterPositions: flags.WriteDelimiterPositions,
+				Encoding:           flags.WriteEncoding,
+				LineBreak:          flags.LineBreak,
+				NoHeader:           flags.WithoutHeader,
+				PrettyPrint:        flags.PrettyPrint,
 			}
-			viewstr, err = EncodeView(view, flags.Format, flags.WriteDelimiter, flags.WithoutHeader, flags.WriteEncoding, lineBreak)
+			viewstr, err = EncodeView(view, fileInfo)
 			if err == nil {
 				if 0 < len(flags.OutFile) {
 					AddSelectLog(viewstr)
@@ -122,7 +131,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			proc.MeasurementStart = time.Now()
 		}
 		if view, err = Insert(stmt.(parser.InsertQuery), proc.Filter); err == nil {
-			results = []Result{
+			results = []ExecResult{
 				{
 					Type:          InsertQuery,
 					FileInfo:      view.FileInfo,
@@ -141,9 +150,9 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			proc.MeasurementStart = time.Now()
 		}
 		if views, err = Update(stmt.(parser.UpdateQuery), proc.Filter); err == nil {
-			results = make([]Result, len(views))
+			results = make([]ExecResult, len(views))
 			for i, v := range views {
-				results[i] = Result{
+				results[i] = ExecResult{
 					Type:          UpdateQuery,
 					FileInfo:      v.FileInfo,
 					OperatedCount: v.OperatedRecords,
@@ -161,9 +170,9 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			proc.MeasurementStart = time.Now()
 		}
 		if views, err = Delete(stmt.(parser.DeleteQuery), proc.Filter); err == nil {
-			results = make([]Result, len(views))
+			results = make([]ExecResult, len(views))
 			for i, v := range views {
-				results[i] = Result{
+				results[i] = ExecResult{
 					Type:          DeleteQuery,
 					FileInfo:      v.FileInfo,
 					OperatedCount: v.OperatedRecords,
@@ -178,7 +187,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		}
 	case parser.CreateTable:
 		if view, err = CreateTable(stmt.(parser.CreateTable), proc.Filter); err == nil {
-			results = []Result{
+			results = []ExecResult{
 				{
 					Type:     CreateTableQuery,
 					FileInfo: view.FileInfo,
@@ -190,7 +199,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		}
 	case parser.AddColumns:
 		if view, err = AddColumns(stmt.(parser.AddColumns), proc.Filter); err == nil {
-			results = []Result{
+			results = []ExecResult{
 				{
 					Type:          AddColumnsQuery,
 					FileInfo:      view.FileInfo,
@@ -203,7 +212,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		}
 	case parser.DropColumns:
 		if view, err = DropColumns(stmt.(parser.DropColumns), proc.Filter); err == nil {
-			results = []Result{
+			results = []ExecResult{
 				{
 					Type:          DropColumnsQuery,
 					FileInfo:      view.FileInfo,
@@ -216,7 +225,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		}
 	case parser.RenameColumn:
 		if view, err = RenameColumn(stmt.(parser.RenameColumn), proc.Filter); err == nil {
-			results = []Result{
+			results = []ExecResult{
 				{
 					Type:          RenameColumnQuery,
 					FileInfo:      view.FileInfo,
@@ -226,6 +235,11 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			Log(fmt.Sprintf("%s renamed on %q.", FormatCount(view.OperatedFields, "field"), view.FileInfo.Path), flags.Quiet)
 
 			view.OperatedRecords = 0
+		}
+	case parser.SetTableAttribute:
+		expr := stmt.(parser.SetTableAttribute)
+		if printstr, err = SetTableAttribute(expr, proc.Filter); err == nil {
+			Log(printstr, flags.Quiet)
 		}
 	case parser.TransactionControl:
 		switch stmt.(parser.TransactionControl).Token {
@@ -293,8 +307,8 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		}
 	case parser.Trigger:
 		trigger := stmt.(parser.Trigger)
-		switch trigger.Token {
-		case parser.ERROR:
+		switch strings.ToUpper(trigger.Event.Literal) {
+		case "ERROR":
 			var message string
 			if trigger.Message != nil {
 				if pt, ok := trigger.Message.(parser.PrimitiveType); ok && trigger.Code == nil && pt.IsInteger() {
@@ -311,11 +325,13 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			if err == nil {
 				err = NewUserTriggeredError(trigger, message)
 			}
+		default:
+			err = NewInvalidEventNameError(trigger.Event)
 		}
 	}
 
 	if results != nil {
-		Results = append(Results, results...)
+		ExecResults = append(ExecResults, results...)
 	}
 
 	if err != nil {
@@ -456,6 +472,6 @@ func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, 
 
 func (proc *Procedure) showExecutionTime() {
 	exectime := cmd.HumarizeNumber(fmt.Sprintf("%f", time.Since(proc.MeasurementStart).Seconds()))
-	stats := fmt.Sprintf("Query Execution Time: %s seconds", exectime)
+	stats := fmt.Sprintf(color.BlueB(" Query Execution Time: ")+"%s seconds", exectime)
 	Log(stats, false)
 }

@@ -9,52 +9,38 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 )
 
-func TestField_ToPrimary(t *testing.T) {
-	var f Field = nil
-	var expect value.Primary = value.NewNull()
-	if !reflect.DeepEqual(f.ToPrimary(), expect) {
-		t.Errorf("result = %q, want %q", f.ToPrimary(), expect)
-	}
-
-	f = NewField("str")
-	expect = value.NewString("str")
-	if !reflect.DeepEqual(f.ToPrimary(), expect) {
-		t.Errorf("result = %q, want %q", f.ToPrimary(), expect)
-	}
-}
-
 var readAllTests = []struct {
 	Name      string
 	Delimiter rune
 	Input     string
-	Output    [][]Field
+	Output    [][]value.Field
 	LineBreak cmd.LineBreak
 	Error     string
 }{
 	{
 		Name:  "NewLineLF",
 		Input: "a,b,c\nd,e,f",
-		Output: [][]Field{
-			{NewField("a"), NewField("b"), NewField("c")},
-			{NewField("d"), NewField("e"), NewField("f")},
+		Output: [][]value.Field{
+			{value.NewField("a"), value.NewField("b"), value.NewField("c")},
+			{value.NewField("d"), value.NewField("e"), value.NewField("f")},
 		},
 		LineBreak: cmd.LF,
 	},
 	{
 		Name:  "NewLineCR",
 		Input: "a,b,c\rd,e,f",
-		Output: [][]Field{
-			{NewField("a"), NewField("b"), NewField("c")},
-			{NewField("d"), NewField("e"), NewField("f")},
+		Output: [][]value.Field{
+			{value.NewField("a"), value.NewField("b"), value.NewField("c")},
+			{value.NewField("d"), value.NewField("e"), value.NewField("f")},
 		},
 		LineBreak: cmd.CR,
 	},
 	{
 		Name:  "NewLineCRLF",
 		Input: "a,b,c\r\nd,e,f",
-		Output: [][]Field{
-			{NewField("a"), NewField("b"), NewField("c")},
-			{NewField("d"), NewField("e"), NewField("f")},
+		Output: [][]value.Field{
+			{value.NewField("a"), value.NewField("b"), value.NewField("c")},
+			{value.NewField("d"), value.NewField("e"), value.NewField("f")},
 		},
 		LineBreak: cmd.CRLF,
 	},
@@ -62,62 +48,62 @@ var readAllTests = []struct {
 		Name:      "TabDelimiter",
 		Delimiter: '\t',
 		Input:     "a\tb\tc\nd\te\tf",
-		Output: [][]Field{
-			{NewField("a"), NewField("b"), NewField("c")},
-			{NewField("d"), NewField("e"), NewField("f")},
+		Output: [][]value.Field{
+			{value.NewField("a"), value.NewField("b"), value.NewField("c")},
+			{value.NewField("d"), value.NewField("e"), value.NewField("f")},
 		},
 		LineBreak: cmd.LF,
 	},
 	{
 		Name:  "QuotedString",
 		Input: "a,\"b\",\"ccc\ncc\"\nd,e,",
-		Output: [][]Field{
-			{NewField("a"), NewField("b"), NewField("ccc\ncc")},
-			{NewField("d"), NewField("e"), nil},
+		Output: [][]value.Field{
+			{value.NewField("a"), value.NewField("b"), value.NewField("ccc\ncc")},
+			{value.NewField("d"), value.NewField("e"), nil},
 		},
 		LineBreak: cmd.LF,
 	},
 	{
 		Name:  "EscapeDoubleQuote",
 		Input: "a,\"b\",\"ccc\"\"cc\"\nd,e,\"\"",
-		Output: [][]Field{
-			{NewField("a"), NewField("b"), NewField("ccc\"cc")},
-			{NewField("d"), NewField("e"), NewField("")},
+		Output: [][]value.Field{
+			{value.NewField("a"), value.NewField("b"), value.NewField("ccc\"cc")},
+			{value.NewField("d"), value.NewField("e"), value.NewField("")},
 		},
 		LineBreak: cmd.LF,
 	},
 	{
 		Name:  "DoubleQuoteInNoQuoteField",
 		Input: "a,b,ccc\"cc\nd,e,",
-		Output: [][]Field{
-			{NewField("a"), NewField("b"), NewField("ccc\"cc")},
-			{NewField("d"), NewField("e"), nil},
+		Output: [][]value.Field{
+			{value.NewField("a"), value.NewField("b"), value.NewField("ccc\"cc")},
+			{value.NewField("d"), value.NewField("e"), nil},
 		},
 		LineBreak: cmd.LF,
 	},
 	{
 		Name:  "SingleValue",
 		Input: "a",
-		Output: [][]Field{
-			{NewField("a")},
+		Output: [][]value.Field{
+			{value.NewField("a")},
 		},
 		LineBreak: "",
 	},
 	{
 		Name:  "Trailing empty lines",
 		Input: "a,b,c\nd,e,f\n\n",
-		Output: [][]Field{
-			{NewField("a"), NewField("b"), NewField("c")},
-			{NewField("d"), NewField("e"), NewField("f")},
+		Output: [][]value.Field{
+			{value.NewField("a"), value.NewField("b"), value.NewField("c")},
+			{value.NewField("d"), value.NewField("e"), value.NewField("f")},
 		},
 		LineBreak: cmd.LF,
 	},
 	{
 		Name:  "Different Line Breaks",
 		Input: "a,b,\"c\r\nd\"\ne,f,g",
-		Output: [][]Field{
-			{NewField("a"), NewField("b"), NewField("c\r\nd")},
-			{NewField("e"), NewField("f"), NewField("g")},
+		Output: [][]value.Field{
+			{value.NewField("a"), value.NewField("b"), value.NewField("c\r\nd")},
+			{value.NewField("e"), value.NewField("f"), value.NewField("g")},
 		},
 		LineBreak: cmd.LF,
 	},
@@ -175,9 +161,9 @@ func TestReader_ReadAll(t *testing.T) {
 func TestReader_ReadHeader(t *testing.T) {
 	input := "h1,h2 ,h3\na,b,c\nd,e,f"
 	outHeader := []string{"h1", "h2 ", "h3"}
-	output := [][]Field{
-		{NewField("a"), NewField("b"), NewField("c")},
-		{NewField("d"), NewField("e"), NewField("f")},
+	output := [][]value.Field{
+		{value.NewField("a"), value.NewField("b"), value.NewField("c")},
+		{value.NewField("d"), value.NewField("e"), value.NewField("f")},
 	}
 
 	r := NewReader(strings.NewReader(input))
@@ -221,7 +207,7 @@ func BenchmarkReader_ReadAll(b *testing.B) {
 	}
 }
 
-var row = []Field{
+var row = []value.Field{
 	[]byte("aaaaaaaaaa"),
 	[]byte("bbbbbbbbbb"),
 	nil,

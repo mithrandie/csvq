@@ -12,4 +12,5 @@ type VirtualTerminal interface {
 	SetContinuousPrompt()
 	SaveHistory(string)
 	Teardown()
+	GetSize() (int, int, error)
 }

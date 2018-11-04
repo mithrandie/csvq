@@ -8,7 +8,14 @@ category: reference
 
 Alter Table query is used to modify data structure on csv files.
 
+| :- |
+| [ADD COLUMNS](#add-columns)      |
+| [DROP COLUMNS](#drop-columns)    |
+| [RENAME COLUMN](#rename-column)  |
+| [SET ATTRIBUTE](#set-attribute)  |
+
 ## Add Columns
+{: #add-columns}
 
 ```sql
 ALTER TABLE table_name
@@ -36,6 +43,7 @@ _column_
 
 
 ## Drop Columns
+{: #drop-columns}
 
 ```sql
 ALTER TABLE table_name DROP column
@@ -49,6 +57,7 @@ _column_
 : [field reference]({{ '/reference/value.html#field_reference' | relative_url }})
 
 ## Rename Column
+{: #rename-column}
 
 ```sql
 ALTER TABLE table_name RENAME old_column TO new_column_name
@@ -62,3 +71,31 @@ _old_column_
 
 _new_column_name_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+
+## Set Attribute
+{: #set-attribute}
+
+Set file attributes. 
+File attributes is used to create or update files by the results of insert, update, delete, crate table or alter table queries.
+
+```sql
+ALTER TABLE table_name SET attribute TO value
+```
+
+_table_name_
+: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+
+_attribute_
+: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+
+  | name | type | description |
+  | :- | :- | :- |
+  | FORMAT          | string  | Format |
+  | DELIMITER       | string  | Field delimiter for CSVv, or delimiter positions for Fixed-Length Format |
+  | ENCODING        | string  | File Encoding |
+  | LINE_BREAK      | string  | Line Break |
+  | HEADER          | boolean | Write header line in the file |
+  | PRETTY_PRINT    | boolean | Make JSON output easier to read |
+
+_value_
+: [value]({{ '/reference/value.html' | relative_url }}) or [identifier]({{ '/reference/statement.html#parsing' | relative_url }})

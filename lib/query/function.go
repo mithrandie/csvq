@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"github.com/mithrandie/csvq/lib/json"
+	"github.com/mithrandie/csvq/lib/text"
 	"hash"
 	"math"
 	"os/exec"
@@ -70,6 +71,7 @@ var Functions = map[string]func(parser.Function, []value.Primary) (value.Primary
 	"HEX_DECODE":       HexDecode,
 	"LEN":              Len,
 	"BYTE_LEN":         ByteLen,
+	"WIDTH":            Width,
 	"LPAD":             Lpad,
 	"RPAD":             Rpad,
 	"SUBSTR":           Substr,
@@ -131,6 +133,21 @@ var Functions = map[string]func(parser.Function, []value.Primary) (value.Primary
 	"DATETIME":         Datetime,
 	"CALL":             Call,
 }
+
+type Direction string
+
+const (
+	RightDirection Direction = "R"
+	LeftDirection            = "L"
+)
+
+type PaddingType string
+
+const (
+	PaddingRuneCount PaddingType = "LEN"
+	PaddingByteCount PaddingType = "BYTE"
+	PaddingWidth     PaddingType = "WIDTH"
+)
 
 func Coalesce(fn parser.Function, args []value.Primary) (value.Primary, error) {
 	if len(args) < 1 {
@@ -574,9 +591,9 @@ func execStringsLen(fn parser.Function, args []value.Primary, stringsf func(stri
 	return value.NewInteger(int64(result)), nil
 }
 
-func execStringsPadding(fn parser.Function, args []value.Primary, direction rune) (value.Primary, error) {
-	if len(args) != 3 {
-		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{3})
+func execStringsPadding(fn parser.Function, args []value.Primary, direction Direction) (value.Primary, error) {
+	if len(args) < 3 || 5 < len(args) {
+		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{3, 4, 5})
 	}
 
 	s := value.ToString(args[0])
@@ -597,8 +614,48 @@ func execStringsPadding(fn parser.Function, args []value.Primary, direction rune
 	}
 	padstr := p.(value.String).Raw()
 
-	strLen := utf8.RuneCountInString(str)
-	padstrLen := utf8.RuneCountInString(padstr)
+	padType := PaddingRuneCount
+	if 3 < len(args) {
+		t := value.ToString(args[3])
+		if !value.IsNull(t) {
+			switch PaddingType(strings.ToUpper(t.(value.String).Raw())) {
+			case PaddingRuneCount:
+				// Do Nothing
+			case PaddingByteCount:
+				padType = PaddingByteCount
+			case PaddingWidth:
+				padType = PaddingWidth
+			default:
+				return nil, NewFunctionInvalidArgumentError(fn, fn.Name, "padding type must be one of LEN|BYTE|WIDTH")
+			}
+		}
+	}
+
+	enc := cmd.UTF8
+	if 4 < len(args) {
+		encs := value.ToString(args[4])
+		if !value.IsNull(encs) {
+			e, err := cmd.ParseEncoding(encs.(value.String).Raw())
+			if err != nil {
+				return nil, NewFunctionInvalidArgumentError(fn, fn.Name, err.Error())
+			}
+			enc = e
+		}
+	}
+
+	var strLen int
+	var padstrLen int
+	switch padType {
+	case PaddingRuneCount:
+		strLen = utf8.RuneCountInString(str)
+		padstrLen = utf8.RuneCountInString(padstr)
+	case PaddingByteCount:
+		strLen = text.ByteSize(str, enc)
+		padstrLen = text.ByteSize(padstr, enc)
+	case PaddingWidth:
+		strLen = text.StringWidth(str)
+		padstrLen = text.StringWidth(padstr)
+	}
 
 	if length <= strLen {
 		return args[0], nil
@@ -607,9 +664,32 @@ func execStringsPadding(fn parser.Function, args []value.Primary, direction rune
 	padLen := length - strLen
 	repeat := int(math.Ceil(float64(padLen) / float64(padstrLen)))
 	padding := strings.Repeat(padstr, repeat)
-	padding = string([]rune(padding)[:padLen])
+	switch padType {
+	case PaddingRuneCount:
+		padding = string([]rune(padding)[:padLen])
+	default:
+		buf := make([]rune, 0, len(padding))
+		w := 0
+		l := 0
+		for _, r := range padding {
+			switch padType {
+			case PaddingByteCount:
+				w = text.RuneByteSize(r, enc)
+			default:
+				w = text.RuneWidth(r)
+			}
+			l = l + w
+			buf = append(buf, r)
+			if padLen == l {
+				break
+			} else if padLen < l {
+				return nil, NewFunctionInvalidArgumentError(fn, fn.Name, "cannot split pad string in a byte array of a character")
+			}
+		}
+		padding = string(buf)
+	}
 
-	if direction == 'r' {
+	if direction == RightDirection {
 		str = str + padding
 	} else {
 		str = padding + str
@@ -656,8 +736,8 @@ func execCryptoHMAC(fn parser.Function, args []value.Primary, cryptof func() has
 	return value.NewString(r), nil
 }
 
-func byteLen(s string) int {
-	return len(s)
+func width(s string) int {
+	return text.StringWidth(s)
 }
 
 func Trim(fn parser.Function, args []value.Primary) (value.Primary, error) {
@@ -701,15 +781,40 @@ func Len(fn parser.Function, args []value.Primary) (value.Primary, error) {
 }
 
 func ByteLen(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execStringsLen(fn, args, byteLen)
+	if len(args) < 1 || 2 < len(args) {
+		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1, 2})
+	}
+
+	s := value.ToString(args[0])
+	if value.IsNull(s) {
+		return value.NewNull(), nil
+	}
+
+	enc := cmd.UTF8
+	if 1 < len(args) {
+		encs := value.ToString(args[1])
+		if !value.IsNull(encs) {
+			e, err := cmd.ParseEncoding(encs.(value.String).Raw())
+			if err != nil {
+				return nil, NewFunctionInvalidArgumentError(fn, fn.Name, err.Error())
+			}
+			enc = e
+		}
+	}
+
+	return value.NewInteger(int64(text.ByteSize(s.(value.String).Raw(), enc))), nil
+}
+
+func Width(fn parser.Function, args []value.Primary) (value.Primary, error) {
+	return execStringsLen(fn, args, width)
 }
 
 func Lpad(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execStringsPadding(fn, args, 'l')
+	return execStringsPadding(fn, args, LeftDirection)
 }
 
 func Rpad(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execStringsPadding(fn, args, 'r')
+	return execStringsPadding(fn, args, RightDirection)
 }
 
 func Substr(fn parser.Function, args []value.Primary) (value.Primary, error) {

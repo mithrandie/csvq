@@ -12,14 +12,13 @@ func (list InlineTableNodes) Set(inlineTable parser.InlineTable, parentFilter *F
 	return list[0].Set(inlineTable, parentFilter)
 }
 
-func (list InlineTableNodes) Get(name parser.Identifier) (view *View, err error) {
+func (list InlineTableNodes) Get(name parser.Identifier) (*View, error) {
 	for _, m := range list {
-		if view, err = m.Get(name); err == nil {
-			return
+		if view, err := m.Get(name); err == nil {
+			return view, nil
 		}
 	}
-	NewUndefinedInLineTableError(name)
-	return
+	return nil, NewUndefinedInLineTableError(name)
 }
 
 func (list InlineTableNodes) Load(clause parser.WithClause, parentFilter *Filter) error {

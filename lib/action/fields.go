@@ -16,6 +16,7 @@ func ShowFields(filename string) error {
 
 	statements := []parser.Statement{
 		parser.ShowFields{
+			Type:  parser.Identifier{Literal: "FIELDS"},
 			Table: parser.Identifier{Literal: filename},
 		},
 	}

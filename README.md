@@ -11,6 +11,30 @@ You can read, update, delete CSV records with SQL-like query.
 You can also execute multiple operations sequentially in managed transactions by passing a procedure or using the interactive shell.
 In the multiple operations, you can use variables, cursors, temporary tables, and other features. 
 
+
+## Features
+
+* CSV File Operation
+  * Select Query
+  * Insert Query
+  * Update Query
+  * Delete Query
+  * Create Table Query
+  * Alter Table Query
+* Cursor
+* Temporary Table
+* Transaction Management
+* Support loading data from Standard Input
+* Support JSON Format
+* Support Fixed-Length Format 
+* Support following file encodings
+  * UTF-8
+  * Shift-JIS (except for JSON Format)
+
+## Reference Manual
+
+[Reference Manual - csvq](https://mithrandie.github.io/csvq/reference)
+
 ## Install
 
 ### Install executable binary
@@ -62,6 +86,12 @@ csvq --no-header "select c1, c2 from user"
 csvq "select * from stdin" < user.csv
 cat user.csv | csvq "select *"
 
+# Load from Fixed-Length Format
+cat /var/log/syslog | csvq -n -d "[15, 24, 124]" "select *"
+
+# Split lines with spaces automatically
+ps | csvq -d spaces "select * from stdin"
+
 # Output in JSON format
 csvq -f json "select integer(id) as id, name from user"
 
@@ -90,3 +120,8 @@ csvq -h
 ```
 
 More details >> [https://mithrandie.github.io/csvq](https://mithrandie.github.io/csvq)
+
+
+### Example of cooperation with other applications
+
+- [csvq emacs extension](https://github.com/mithrandie/csvq-emacs-extension)

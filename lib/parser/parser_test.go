@@ -122,6 +122,92 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select c1 from fixed('[1, 2, 3]', `fixed_length.dat`) fl",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{
+								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
+							},
+						},
+					},
+					FromClause: FromClause{From: "from", Tables: []QueryExpression{
+						Table{
+							Object: TableObject{
+								BaseExpr:      &BaseExpr{line: 1, char: 16},
+								Type:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "fixed"},
+								FormatElement: NewStringValue("[1, 2, 3]"),
+								Path:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 35}, Literal: "fixed_length.dat", Quoted: true},
+							},
+							Alias: Identifier{BaseExpr: &BaseExpr{line: 1, char: 55}, Literal: "fl"},
+						},
+					}},
+				},
+			},
+		},
+	},
+	{
+		Input: "select c1 from csv(',', `table.csv`, null, 'utf8')",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{
+								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
+							},
+						},
+					},
+					FromClause: FromClause{From: "from", Tables: []QueryExpression{
+						Table{
+							Object: TableObject{
+								BaseExpr:      &BaseExpr{line: 1, char: 16},
+								Type:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "csv"},
+								FormatElement: NewStringValue(","),
+								Path:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 25}, Literal: "table.csv", Quoted: true},
+								Args:          []QueryExpression{NewNullValueFromString("null"), NewStringValue("utf8")},
+							},
+						},
+					}},
+				},
+			},
+		},
+	},
+	{
+		Input: "select c1 from json_table('key', `table.json`)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{
+								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
+							},
+						},
+					},
+					FromClause: FromClause{From: "from", Tables: []QueryExpression{
+						Table{
+							Object: JsonQuery{
+								BaseExpr:  &BaseExpr{line: 1, char: 16},
+								JsonQuery: "json_table",
+								Query:     NewStringValue("key"),
+								JsonText:  Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "table.json", Quoted: true},
+							},
+						},
+					}},
+				},
+			},
+		},
+	},
+	{
 		Input: "select c1 from json_table('key', '{\"key2\":1}') jt",
 		Output: []Statement{
 			SelectQuery{
@@ -144,35 +230,6 @@ var parseTests = []struct {
 								JsonText:  NewStringValue("{\"key2\":1}"),
 							},
 							Alias: Identifier{BaseExpr: &BaseExpr{line: 1, char: 48}, Literal: "jt"},
-						},
-					}},
-				},
-			},
-		},
-	},
-	{
-		Input: "select c1 from json_table('key', item) jt",
-		Output: []Statement{
-			SelectQuery{
-				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{
-						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
-						Fields: []QueryExpression{
-							Field{
-								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
-							},
-						},
-					},
-					FromClause: FromClause{From: "from", Tables: []QueryExpression{
-						Table{
-							Object: JsonQuery{
-								BaseExpr:  &BaseExpr{line: 1, char: 16},
-								JsonQuery: "json_table",
-								Query:     NewStringValue("key"),
-								JsonText:  Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "item"},
-							},
-							Alias: Identifier{BaseExpr: &BaseExpr{line: 1, char: 40}, Literal: "jt"},
 						},
 					}},
 				},
@@ -2001,7 +2058,7 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 1},
 						Select:   "select",
 						Fields: []QueryExpression{
-							Field{Object: ListAgg{
+							Field{Object: ListFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
 								Name:     "listagg",
 								Args: []QueryExpression{
@@ -2023,7 +2080,7 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 1},
 						Select:   "select",
 						Fields: []QueryExpression{
-							Field{Object: ListAgg{
+							Field{Object: ListFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
 								Name:     "listagg",
 								Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 16},
@@ -2047,7 +2104,7 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 1},
 						Select:   "select",
 						Fields: []QueryExpression{
-							Field{Object: ListAgg{
+							Field{Object: ListFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
 								Name:     "listagg",
 								Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 16},
@@ -2077,7 +2134,7 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 1},
 						Select:   "select",
 						Fields: []QueryExpression{
-							Field{Object: ListAgg{
+							Field{Object: ListFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
 								Name:     "listagg",
 								Args: []QueryExpression{
@@ -3808,6 +3865,28 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "alter table table1 set format to 'json'",
+		Output: []Statement{
+			SetTableAttribute{
+				BaseExpr:  &BaseExpr{line: 1, char: 1},
+				Table:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
+				Attribute: Identifier{BaseExpr: &BaseExpr{line: 1, char: 24}, Literal: "format"},
+				Value:     NewStringValue("json"),
+			},
+		},
+	},
+	{
+		Input: "alter table table1 set format to json",
+		Output: []Statement{
+			SetTableAttribute{
+				BaseExpr:  &BaseExpr{line: 1, char: 1},
+				Table:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "table1"},
+				Attribute: Identifier{BaseExpr: &BaseExpr{line: 1, char: 24}, Literal: "format"},
+				Value:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "json"},
+			},
+		},
+	},
+	{
 		Input: "commit",
 		Output: []Statement{
 			TransactionControl{
@@ -3855,6 +3934,15 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "source `/path/to/file.sql`",
+		Output: []Statement{
+			Source{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				FilePath: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "/path/to/file.sql", Quoted: true},
+			},
+		},
+	},
+	{
 		Input: "source '/path/to/file.sql'",
 		Output: []Statement{
 			Source{
@@ -3869,7 +3957,17 @@ var parseTests = []struct {
 			SetFlag{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
 				Name:     "@@delimiter",
-				Value:    value.NewString(","),
+				Value:    NewStringValue(","),
+			},
+		},
+	},
+	{
+		Input: "set @@encoding = sjis",
+		Output: []Statement{
+			SetFlag{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Name:     "@@encoding",
+				Value:    Identifier{BaseExpr: &BaseExpr{line: 1, char: 18}, Literal: "sjis"},
 			},
 		},
 	},
@@ -3883,46 +3981,11 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "show tables",
-		Output: []Statement{
-			ShowObjects{
-				BaseExpr: &BaseExpr{line: 1, char: 1},
-				Type:     TABLES,
-			},
-		},
-	},
-	{
-		Input: "show views",
-		Output: []Statement{
-			ShowObjects{
-				BaseExpr: &BaseExpr{line: 1, char: 1},
-				Type:     VIEWS,
-			},
-		},
-	},
-	{
-		Input: "show cursors",
-		Output: []Statement{
-			ShowObjects{
-				BaseExpr: &BaseExpr{line: 1, char: 1},
-				Type:     CURSORS,
-			},
-		},
-	},
-	{
-		Input: "show functions",
-		Output: []Statement{
-			ShowObjects{
-				BaseExpr: &BaseExpr{line: 1, char: 1},
-				Type:     FUNCTIONS,
-			},
-		},
-	},
-	{
 		Input: "show fields from table1",
 		Output: []Statement{
 			ShowFields{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Type:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "fields"},
 				Table:    Identifier{BaseExpr: &BaseExpr{line: 1, char: 18}, Literal: "table1"},
 			},
 		},
@@ -3932,7 +3995,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			Trigger{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
-				Token:    ERROR,
+				Event:    Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "error"},
 			},
 		},
 	},
@@ -3941,7 +4004,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			Trigger{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
-				Token:    ERROR,
+				Event:    Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "error"},
 				Message:  NewStringValue("user error"),
 			},
 		},
@@ -3951,7 +4014,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			Trigger{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
-				Token:    ERROR,
+				Event:    Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "error"},
 				Message:  NewStringValue("user error"),
 				Code:     value.NewInteger(300),
 			},
@@ -4971,166 +5034,6 @@ var parseTests = []struct {
 					Fields: []QueryExpression{
 						Field{
 							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "fields"}},
-						},
-					},
-				},
-			}},
-		},
-	},
-	{
-		Input: "select count",
-		Output: []Statement{
-			SelectQuery{SelectEntity: SelectEntity{
-				SelectClause: SelectClause{
-					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
-					Fields: []QueryExpression{
-						Field{
-							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "count"}},
-						},
-					},
-				},
-			}},
-		},
-	},
-	{
-		Input: "select json_row",
-		Output: []Statement{
-			SelectQuery{SelectEntity: SelectEntity{
-				SelectClause: SelectClause{
-					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
-					Fields: []QueryExpression{
-						Field{
-							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "json_row"}},
-						},
-					},
-				},
-			}},
-		},
-	},
-	{
-		Input: "select json_table",
-		Output: []Statement{
-			SelectQuery{SelectEntity: SelectEntity{
-				SelectClause: SelectClause{
-					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
-					Fields: []QueryExpression{
-						Field{
-							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "json_table"}},
-						},
-					},
-				},
-			}},
-		},
-	},
-	{
-		Input: "select json_object",
-		Output: []Statement{
-			SelectQuery{SelectEntity: SelectEntity{
-				SelectClause: SelectClause{
-					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
-					Fields: []QueryExpression{
-						Field{
-							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "json_object"}},
-						},
-					},
-				},
-			}},
-		},
-	},
-	{
-		Input: "select listagg",
-		Output: []Statement{
-			SelectQuery{SelectEntity: SelectEntity{
-				SelectClause: SelectClause{
-					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
-					Fields: []QueryExpression{
-						Field{
-							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "listagg"}},
-						},
-					},
-				},
-			}},
-		},
-	},
-	{
-		Input: "select aggregate_function",
-		Output: []Statement{
-			SelectQuery{SelectEntity: SelectEntity{
-				SelectClause: SelectClause{
-					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
-					Fields: []QueryExpression{
-						Field{
-							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "aggregate_function"}},
-						},
-					},
-				},
-			}},
-		},
-	},
-	{
-		Input: "select analytic_function",
-		Output: []Statement{
-			SelectQuery{SelectEntity: SelectEntity{
-				SelectClause: SelectClause{
-					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
-					Fields: []QueryExpression{
-						Field{
-							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "analytic_function"}},
-						},
-					},
-				},
-			}},
-		},
-	},
-	{
-		Input: "select function_nth",
-		Output: []Statement{
-			SelectQuery{SelectEntity: SelectEntity{
-				SelectClause: SelectClause{
-					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
-					Fields: []QueryExpression{
-						Field{
-							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "function_nth"}},
-						},
-					},
-				},
-			}},
-		},
-	},
-	{
-		Input: "select function_with_additionals",
-		Output: []Statement{
-			SelectQuery{SelectEntity: SelectEntity{
-				SelectClause: SelectClause{
-					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
-					Fields: []QueryExpression{
-						Field{
-							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "function_with_additionals"}},
-						},
-					},
-				},
-			}},
-		},
-	},
-	{
-		Input: "select error",
-		Output: []Statement{
-			SelectQuery{SelectEntity: SelectEntity{
-				SelectClause: SelectClause{
-					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
-					Fields: []QueryExpression{
-						Field{
-							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "error"}},
 						},
 					},
 				},

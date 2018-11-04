@@ -63,6 +63,7 @@ func setup() {
 	copyfile(filepath.Join(TestDir, "table1b.csv"), filepath.Join(TestDataDir, "table1b.csv"))
 	copyfile(filepath.Join(TestDir, "table2.csv"), filepath.Join(TestDataDir, "table2.csv"))
 	copyfile(filepath.Join(TestDir, "table4.csv"), filepath.Join(TestDataDir, "table4.csv"))
+	copyfile(filepath.Join(TestDir, "table5.csv"), filepath.Join(TestDataDir, "table5.csv"))
 	copyfile(filepath.Join(TestDir, "group_table.csv"), filepath.Join(TestDataDir, "group_table.csv"))
 	copyfile(filepath.Join(TestDir, "insert_query.csv"), filepath.Join(TestDataDir, "table1.csv"))
 	copyfile(filepath.Join(TestDir, "update_query.csv"), filepath.Join(TestDataDir, "table1.csv"))
@@ -71,8 +72,18 @@ func setup() {
 	copyfile(filepath.Join(TestDir, "drop_columns.csv"), filepath.Join(TestDataDir, "table1.csv"))
 	copyfile(filepath.Join(TestDir, "rename_column.csv"), filepath.Join(TestDataDir, "table1.csv"))
 	copyfile(filepath.Join(TestDir, "updated_file_1.csv"), filepath.Join(TestDataDir, "table1.csv"))
+	copyfile(filepath.Join(TestDir, "dup_name.csv"), filepath.Join(TestDataDir, "dup_name.csv"))
+
+	copyfile(filepath.Join(TestDir, "table3.tsv"), filepath.Join(TestDataDir, "table3.tsv"))
+	copyfile(filepath.Join(TestDir, "dup_name.tsv"), filepath.Join(TestDataDir, "dup_name.tsv"))
 
 	copyfile(filepath.Join(TestDir, "table.json"), filepath.Join(TestDataDir, "table.json"))
+	copyfile(filepath.Join(TestDir, "table_h.json"), filepath.Join(TestDataDir, "table_h.json"))
+	copyfile(filepath.Join(TestDir, "table_a.json"), filepath.Join(TestDataDir, "table_a.json"))
+
+	copyfile(filepath.Join(TestDir, "fixed_length.txt"), filepath.Join(TestDataDir, "fixed_length.txt"))
+
+	copyfile(filepath.Join(TestDir, "autoselect"), filepath.Join(TestDataDir, "autoselect"))
 
 	copyfile(filepath.Join(TestDir, "source.sql"), filepath.Join(filepath.Join(wdir, "..", "..", "testdata"), "source.sql"))
 	copyfile(filepath.Join(TestDir, "source_syntaxerror.sql"), filepath.Join(filepath.Join(wdir, "..", "..", "testdata"), "source_syntaxerror.sql"))
@@ -92,18 +103,21 @@ func initFlag() {
 
 	cmd.SetLocation(TestLocation)
 	flags := cmd.GetFlags()
-	flags.Delimiter = cmd.UNDEF
-	flags.Encoding = cmd.UTF8
-	flags.LineBreak = cmd.LF
 	flags.Repository = "."
 	flags.DatetimeFormat = ""
+	flags.WaitTimeout = 15
+	flags.Delimiter = ','
+	flags.JsonQuery = ""
+	flags.Encoding = cmd.UTF8
 	flags.NoHeader = false
 	flags.WithoutNull = false
 	flags.WriteEncoding = cmd.UTF8
 	flags.Format = cmd.TEXT
 	flags.WriteDelimiter = ','
 	flags.WithoutHeader = false
+	flags.LineBreak = cmd.LF
 	flags.PrettyPrint = false
+	flags.Color = false
 	flags.Quiet = false
 	flags.CPU = cpu
 	flags.Stats = false

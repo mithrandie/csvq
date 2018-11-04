@@ -16,9 +16,12 @@ const HistoryFile = ".csvq_history"
 
 type ReadLineTerminal struct {
 	terminal *readline.Instance
+	fd       int
 }
 
 func NewTerminal() (VirtualTerminal, error) {
+	fd := int(os.Stdin.Fd())
+
 	historyFile, err := historyFilePath()
 	if err != nil {
 		return nil, err
@@ -35,6 +38,7 @@ func NewTerminal() (VirtualTerminal, error) {
 
 	return ReadLineTerminal{
 		terminal: t,
+		fd:       fd,
 	}, nil
 }
 
@@ -66,6 +70,10 @@ func (t ReadLineTerminal) SetContinuousPrompt() {
 
 func (t ReadLineTerminal) SaveHistory(s string) {
 	t.terminal.SaveHistory(s)
+}
+
+func (t ReadLineTerminal) GetSize() (int, int, error) {
+	return readline.GetSize(t.fd)
 }
 
 func historyFilePath() (string, error) {

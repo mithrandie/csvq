@@ -51,13 +51,7 @@ func Calc(expr string) error {
 		values[i] = formatCalcResult(p)
 	}
 
-	flags := cmd.GetFlags()
-	delimiter := flags.Delimiter
-	if delimiter == cmd.UNDEF {
-		delimiter = ','
-	}
-
-	cmd.ToStdout(strings.Join(values, string(delimiter)))
+	cmd.ToStdout(strings.Join(values, string(cmd.GetFlags().Delimiter)))
 	return nil
 }
 

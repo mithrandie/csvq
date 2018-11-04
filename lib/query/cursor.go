@@ -1,13 +1,12 @@
 package query
 
 import (
-	"github.com/mithrandie/csvq/lib/color"
+	"errors"
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
-	"fmt"
 	"github.com/mithrandie/ternary"
 	"sort"
 )
@@ -120,29 +119,20 @@ func (list CursorScopes) Count(name parser.Identifier) (int, error) {
 	return 0, NewUndeclaredCursorError(name)
 }
 
-func (list CursorScopes) List() []string {
-	cursors := make(map[string]string)
-	keys := make([]string, 0)
+func (list CursorScopes) All() CursorMap {
+	all := make(CursorMap, 10)
 
 	for _, m := range list {
-		for _, cursor := range m {
+		for key, cursor := range m {
 			if cursor.isPseudo {
 				continue
 			}
-			if !InStrSliceWithCaseInsensitive(cursor.name, keys) {
-				cursors[cursor.name] = cursor.query.String()
-				keys = append(keys, cursor.name)
+			if _, ok := all[key]; !ok {
+				all[key] = cursor
 			}
 		}
 	}
-	sort.Strings(keys)
-
-	dcls := make([]string, len(keys))
-	for i, key := range keys {
-		dcls[i] = fmt.Sprintf("%s for %s", color.GreenB(key), color.Cyan(cursors[key]))
-	}
-
-	return dcls
+	return all
 }
 
 type CursorMap map[string]*Cursor
@@ -200,32 +190,45 @@ func (m CursorMap) Fetch(name parser.Identifier, position int, number int) ([]va
 
 func (m CursorMap) IsOpen(name parser.Identifier) (ternary.Value, error) {
 	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
-		return ternary.ConvertFromBool(cur.view != nil), nil
+		return cur.IsOpen(), nil
 	}
 	return ternary.FALSE, NewUndeclaredCursorError(name)
 }
 
 func (m CursorMap) IsInRange(name parser.Identifier) (ternary.Value, error) {
 	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
-		if cur.view == nil {
+		t, err := cur.IsInRange()
+		if err != nil {
 			return ternary.FALSE, NewCursorClosedError(name)
 		}
-		if !cur.fetched {
-			return ternary.UNKNOWN, nil
-		}
-		return ternary.ConvertFromBool(-1 < cur.index && cur.index < cur.view.RecordLen()), nil
+		return t, nil
 	}
 	return ternary.FALSE, NewUndeclaredCursorError(name)
 }
 
 func (m CursorMap) Count(name parser.Identifier) (int, error) {
 	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
-		if cur.view == nil {
+		i, err := cur.Count()
+		if err != nil {
 			return 0, NewCursorClosedError(name)
 		}
-		return cur.view.RecordLen(), nil
+		return i, nil
 	}
 	return 0, NewUndeclaredCursorError(name)
+}
+
+func (m CursorMap) Keys() []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+func (m CursorMap) SortedKeys() []string {
+	keys := m.Keys()
+	sort.Strings(keys)
+	return keys
 }
 
 type Cursor struct {
@@ -336,4 +339,29 @@ func (c *Cursor) Fetch(name parser.Identifier, position int, number int) ([]valu
 	}
 
 	return list, nil
+}
+
+func (c *Cursor) IsOpen() ternary.Value {
+	return ternary.ConvertFromBool(c.view != nil)
+}
+
+func (c *Cursor) IsInRange() (ternary.Value, error) {
+	if c.view == nil {
+		return ternary.FALSE, errors.New("cursor is closed")
+	}
+	if !c.fetched {
+		return ternary.UNKNOWN, nil
+	}
+	return ternary.ConvertFromBool(-1 < c.index && c.index < c.view.RecordLen()), nil
+}
+
+func (c *Cursor) Count() (int, error) {
+	if c.view == nil {
+		return 0, errors.New("cursor is closed")
+	}
+	return c.view.RecordLen(), nil
+}
+
+func (c *Cursor) Pointer() (int, error) {
+	return c.index, nil
 }

@@ -2,7 +2,6 @@ package color
 
 import (
 	"strconv"
-	"strings"
 )
 
 var UseEscapeSequences = false
@@ -30,19 +29,6 @@ const (
 	FGBrightCyan
 	FGBrightWhite
 )
-
-func StripEscapeSequence(s string) string {
-	if strings.HasPrefix(s, "\033[") && strings.HasSuffix(s, "\033[0m") {
-		startIdx := 5
-		if strings.Index(s, ";1m") == 4 {
-			startIdx = 7
-		}
-
-		runes := []rune(s)
-		s = string(runes[startIdx : len(runes)-4])
-	}
-	return s
-}
 
 func Colorize(s string, color int, bold bool) string {
 	if !UseEscapeSequences {
@@ -192,5 +178,5 @@ func Warn(s string) string {
 }
 
 func Info(s string) string {
-	return GreenB(s)
+	return Green(s)
 }

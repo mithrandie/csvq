@@ -107,7 +107,7 @@ import (
 %type<queryexprs>  arguments
 %type<queryexpr>   function
 %type<queryexpr>   aggregate_function
-%type<queryexpr>   listagg
+%type<queryexpr>   list_function
 %type<queryexpr>   analytic_function
 %type<queryexpr>   analytic_clause
 %type<queryexpr>   analytic_clause_with_windowing
@@ -193,11 +193,10 @@ import (
 %token<token> FUNCTION AGGREGATE BEGIN RETURN
 %token<token> IGNORE WITHIN
 %token<token> VAR SHOW
-%token<token> TIES NULLS TABLES VIEWS FIELDS CURSORS FUNCTIONS ROWS
-%token<token> ERROR
+%token<token> TIES NULLS ROWS
 %token<token> JSON_ROW JSON_TABLE
 %token<token> COUNT JSON_OBJECT
-%token<token> AGGREGATE_FUNCTION LISTAGG ANALYTIC_FUNCTION FUNCTION_NTH FUNCTION_WITH_INS
+%token<token> AGGREGATE_FUNCTION LIST_FUNCTION ANALYTIC_FUNCTION FUNCTION_NTH FUNCTION_WITH_INS
 %token<token> COMPARISON_OP STRING_OP SUBSTITUTION_OP
 %token<token> UMINUS UPLUS
 %token<token> ';' '*' '=' '-' '+' '!' '(' ')'
@@ -591,6 +590,14 @@ table_operation_statement
     {
         $$ = RenameColumn{Table: $3, Old: $5, New: $7}
     }
+    | ALTER TABLE table_identifier SET identifier TO identifier
+    {
+        $$ = SetTableAttribute{BaseExpr: NewBaseExpr($1), Table: $3, Attribute: $5, Value: $7}
+    }
+    | ALTER TABLE table_identifier SET identifier TO value
+    {
+        $$ = SetTableAttribute{BaseExpr: NewBaseExpr($1), Table: $3, Attribute: $5, Value: $7}
+    }
 
 column_default
     : identifier
@@ -787,9 +794,13 @@ cursor_status
     }
 
 command_statement
-    : SET FLAG '=' primitive_type
+    : SET FLAG '=' identifier
     {
-        $$ = SetFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal, Value: $4.(PrimitiveType).Value}
+        $$ = SetFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal, Value: $4}
+    }
+    | SET FLAG '=' value
+    {
+        $$ = SetFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal, Value: $4}
     }
     | SHOW FLAG
     {
@@ -807,43 +818,35 @@ command_statement
     {
         $$ = Printf{BaseExpr: NewBaseExpr($1), Format: $2, Values: $4}
     }
+    | SOURCE identifier
+    {
+        $$ = Source{BaseExpr: NewBaseExpr($1), FilePath: $2}
+    }
     | SOURCE value
     {
         $$ = Source{BaseExpr: NewBaseExpr($1), FilePath: $2}
     }
-    | SHOW TABLES
+    | SHOW identifier
     {
-        $$ = ShowObjects{BaseExpr: NewBaseExpr($1), Type: $2.Token}
+        $$ = ShowObjects{BaseExpr: NewBaseExpr($1), Type: $2}
     }
-    | SHOW VIEWS
+    | SHOW identifier FROM identifier
     {
-        $$ = ShowObjects{BaseExpr: NewBaseExpr($1), Type: $2.Token}
-    }
-    | SHOW CURSORS
-    {
-        $$ = ShowObjects{BaseExpr: NewBaseExpr($1), Type: $2.Token}
-    }
-    | SHOW FUNCTIONS
-    {
-        $$ = ShowObjects{BaseExpr: NewBaseExpr($1), Type: $2.Token}
-    }
-    | SHOW FIELDS FROM identifier
-    {
-        $$ = ShowFields{BaseExpr: NewBaseExpr($1), Table: $4}
+        $$ = ShowFields{BaseExpr: NewBaseExpr($1), Type: $2, Table: $4}
     }
 
 trigger_statement
-    : TRIGGER ERROR
+    : TRIGGER identifier
     {
-        $$ = Trigger{BaseExpr: NewBaseExpr($1), Token: $2.Token}
+        $$ = Trigger{BaseExpr: NewBaseExpr($1), Event: $2}
     }
-    | TRIGGER ERROR value
+    | TRIGGER identifier value
     {
-        $$ = Trigger{BaseExpr: NewBaseExpr($1), Token: $2.Token, Message: $3}
+        $$ = Trigger{BaseExpr: NewBaseExpr($1), Event: $2, Message: $3}
     }
-    | TRIGGER ERROR INTEGER value
+    | TRIGGER identifier INTEGER value
     {
-        $$ = Trigger{BaseExpr: NewBaseExpr($1), Token: $2.Token, Message: $4, Code: value.NewIntegerFromString($3.Literal)}
+        $$ = Trigger{BaseExpr: NewBaseExpr($1), Event: $2, Message: $4, Code: value.NewIntegerFromString($3.Literal)}
     }
 
 select_query
@@ -1444,19 +1447,19 @@ aggregate_function
     {
         $$ = AggregateFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: []QueryExpression{$4}}
     }
-    | listagg
+    | list_function
     {
         $$ = $1
     }
 
-listagg
-    : LISTAGG '(' distinct arguments ')'
+list_function
+    : LIST_FUNCTION '(' distinct arguments ')'
     {
-        $$ = ListAgg{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4}
+        $$ = ListFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4}
     }
-    | LISTAGG '(' distinct arguments ')' WITHIN GROUP '(' order_by_clause ')'
+    | LIST_FUNCTION '(' distinct arguments ')' WITHIN GROUP '(' order_by_clause ')'
     {
-        $$ = ListAgg{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, WithinGroup: $6.Literal + " " + $7.Literal, OrderBy: $9}
+        $$ = ListFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, WithinGroup: $6.Literal + " " + $7.Literal, OrderBy: $9}
     }
 
 analytic_function
@@ -1480,7 +1483,7 @@ analytic_function
     {
         $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: []QueryExpression{$4}, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
     }
-    | LISTAGG '(' distinct arguments ')' OVER '(' analytic_clause ')'
+    | LIST_FUNCTION '(' distinct arguments ')' OVER '(' analytic_clause ')'
     {
         $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
     }
@@ -1629,6 +1632,14 @@ virtual_table_object
     | JSON_TABLE '(' value ',' value ')'
     {
         $$ = JsonQuery{BaseExpr: NewBaseExpr($1), JsonQuery: $1.Literal, Query: $3, JsonText: $5}
+    }
+    | identifier '(' value ',' identifier ')'
+    {
+        $$ = TableObject{BaseExpr: $1.BaseExpr, Type: $1, FormatElement: $3, Path: $5, Args: nil}
+    }
+    | identifier '(' value ',' identifier ',' arguments ')'
+    {
+        $$ = TableObject{BaseExpr: $1.BaseExpr, Type: $1, FormatElement: $3, Path: $5, Args: $7}
     }
 
 table
@@ -2042,67 +2053,7 @@ identifier
     {
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }
-    | TABLES
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | VIEWS
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | CURSORS
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | FUNCTIONS
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
     | ROWS
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | FIELDS
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | JSON_ROW
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | JSON_TABLE
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | COUNT
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | JSON_OBJECT
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | LISTAGG
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | AGGREGATE_FUNCTION
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | ANALYTIC_FUNCTION
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | FUNCTION_NTH
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | FUNCTION_WITH_INS
-    {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
-    }
-    | ERROR
     {
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }

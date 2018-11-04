@@ -770,7 +770,7 @@ func TestTemporaryViewScopes_Restore(t *testing.T) {
 	}
 }
 
-func TestTemporaryViewScopes_List(t *testing.T) {
+func TestTemporaryViewScopes_All(t *testing.T) {
 	scopes := TemporaryViewScopes{
 		ViewMap{
 			"VIEW1": &View{
@@ -798,11 +798,26 @@ func TestTemporaryViewScopes_List(t *testing.T) {
 		},
 	}
 
-	expect := []string{"view1 (column1, column2)", "view2 (column1, column2)"}
+	expect := ViewMap{
+		"VIEW1": &View{
+			FileInfo: &FileInfo{
+				Path:        "view1",
+				IsTemporary: true,
+			},
+			Header: NewHeader("view1", []string{"column1", "column2"}),
+		},
+		"VIEW2": &View{
+			FileInfo: &FileInfo{
+				Path:        "view2",
+				IsTemporary: true,
+			},
+			Header: NewHeader("view2", []string{"column1", "column2"}),
+		},
+	}
 
-	list := scopes.List()
+	list := scopes.All()
 	if !reflect.DeepEqual(list, expect) {
-		t.Errorf("List: list = %s, want %s", list, expect)
+		t.Errorf("List: list = %v, want %v", list, expect)
 	}
 }
 

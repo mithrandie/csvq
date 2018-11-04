@@ -621,6 +621,30 @@ func TestSubquery_String(t *testing.T) {
 	}
 }
 
+func TestTableObject_String(t *testing.T) {
+	e := TableObject{
+		Type:          Identifier{Literal: "fixed"},
+		FormatElement: NewStringValue("[1, 2, 3]"),
+		Path:          Identifier{Literal: "fixed_length.dat", Quoted: true},
+		Args:          []QueryExpression{NewStringValue("utf8")},
+	}
+	expect := "fixed('[1, 2, 3]', `fixed_length.dat`, 'utf8')"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+
+	e = TableObject{
+		Type:          Identifier{Literal: "fixed"},
+		FormatElement: NewStringValue("[1, 2, 3]"),
+		Path:          Identifier{Literal: "fixed_length.dat", Quoted: true},
+		Args:          nil,
+	}
+	expect = "fixed('[1, 2, 3]', `fixed_length.dat`)"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
 func TestJsonQuery_String(t *testing.T) {
 	e := JsonQuery{
 		JsonQuery: "json_array",
@@ -1278,8 +1302,8 @@ func TestCaseElse_String(t *testing.T) {
 	}
 }
 
-func TestListAgg_String(t *testing.T) {
-	e := ListAgg{
+func TestListFunction_String(t *testing.T) {
+	e := ListFunction{
 		Name:     "listagg",
 		Distinct: Token{Token: DISTINCT, Literal: "distinct"},
 		Args: []QueryExpression{
@@ -1297,7 +1321,7 @@ func TestListAgg_String(t *testing.T) {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 
-	e = ListAgg{
+	e = ListFunction{
 		Name:     "listagg",
 		Distinct: Token{Token: DISTINCT, Literal: "distinct"},
 		Args: []QueryExpression{
@@ -1312,13 +1336,13 @@ func TestListAgg_String(t *testing.T) {
 	}
 }
 
-func TestListAgg_IsDistinct(t *testing.T) {
-	e := ListAgg{}
+func TestListFunction_IsDistinct(t *testing.T) {
+	e := ListFunction{}
 	if e.IsDistinct() == true {
 		t.Errorf("distinct = %t, want %t for %#v", e.IsDistinct(), false, e)
 	}
 
-	e = ListAgg{Distinct: Token{Token: DISTINCT, Literal: "distinct"}}
+	e = ListFunction{Distinct: Token{Token: DISTINCT, Literal: "distinct"}}
 	if e.IsDistinct() == false {
 		t.Errorf("distinct = %t, want %t for %#v", e.IsDistinct(), true, e)
 	}

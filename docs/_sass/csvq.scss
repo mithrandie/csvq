@@ -1,11 +1,20 @@
-$text-color: color("blue-grey", "darken-3");
+header, main, footer {
+  padding-left: 280px;
+}
+
+@media only screen and (max-width : 992px) {
+  header, main, footer {
+    padding-left: 0px;
+  }
+}
+
 
 h1, h2, h3, h4, h5, h6 {
-    color: $primary-color;
+    color: $secondary-color;
 }
 
 h1 {
-    font-weight: 200;
+    font-weight: 300;
     font-size: 2.4em;
 }
 
@@ -33,35 +42,49 @@ h6 {
     font-weight: 700;
 }
 
-.z-depth-1, .z-depth-1-half, nav, .card-panel, .card, .toast, .btn, .btn-large, .btn-floating, .collapsible, .hoverable, .hoverable:hover {
+nav, .card-panel, .card, .toast, .collapsible, .hoverable, .hoverable:hover {
     box-shadow: none;
 }
 
+a {
+    font-weight: 500;
+}
+
+a:hover {
+    color: $link-color-light;
+}
+
+.btn:hover {
+  color: lighten($button-raised-color, 4%);
+}
+
 body {
-    color: $text-color;
-    background-color: #ffffff;
+    @extend .grey, .lighten-4, .blue-grey-text, .text-darken-3;
 }
 
 header {
     .site-title {
-        font-weight: 300;
+        font-weight: 400;
         font-size: 1em;
     }
 
     .logo {
-        font-weight: 100;
+        font-weight: 300;
         font-size: 3em;
         margin: 0.2em;
 
         a {
-            color: $primary-color;
-            text-decoration: none;
+          font-weight: 400;
+          color: $primary-color;
+          text-decoration: none;
         }
     }
 }
 
 nav {
-    background-color: #eceff1;
+    @extend .grey, .lighten-4;
+
+    border-bottom: 1px solid $secondary-color-light;
 
     a.button-collapse {
         display: inline;
@@ -73,6 +96,8 @@ nav {
 }
 
 .side-nav {
+    @extend .grey, .lighten-4;
+
     li.map-title {
         text-align: center;
         color: $primary-color;
@@ -81,17 +106,17 @@ nav {
         line-height: 56px;
     }
 
-    li.folder{
+    .folder{
         padding: 0 0 0 16px;
     }
 
-    li.folder > a {
-        padding: 0;
+    li {
+        @extend .grey, .lighten-4;
     }
 
     li > a {
+        @extend .blue-grey-text, .text-darken-3;
         padding: 0 16px;
-        color: $text-color;
     }
 
     li > a > i.material-icons {
@@ -104,6 +129,11 @@ nav {
     li > a > i.low-profile {
         color: $secondary-color;
     }
+
+    .current-page, .current-page:hover {
+        @extend .white-text;
+        background: $primary-color;
+    }
 }
 
 main {
@@ -113,6 +143,7 @@ main {
 
     ul {
         @extend .collection;
+        margin: 4px;
     }
 
     li {
@@ -121,7 +152,8 @@ main {
     }
 
     table {
-        @extend .striped;
+        @extend .white, .striped, .z-depth-1;
+        margin: 8px;
     }
 
     td, th {
@@ -129,7 +161,11 @@ main {
     }
 
     dt {
-        font-weight: bold;
+        font-weight: 700;
+    }
+
+    dd {
+       margin-left: 28px;
     }
 }
 

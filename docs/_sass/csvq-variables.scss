@@ -1,0 +1,14 @@
+$primary-color: color("pink", "accent-2");
+$secondary-color: color("teal", "lighten-2");
+$link-color: color("indigo", "lighten-2");
+
+$primary-color-light: lighten($primary-color, 15%) !default;
+$primary-color-dark: darken($primary-color, 15%) !default;
+$secondary-color-light: lighten($secondary-color, 15%);
+$secondary-color-dark: darken($secondary-color, 15%);
+$link-color-light: lighten($link-color, 5%);
+
+$table-border-color: $primary-color-light;
+$table-striped-color: color("grey", "lighten-4");
+
+$button-raised-color: color("grey", "lighten-4");

@@ -3250,7 +3250,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Expr: parser.ListAgg{
+		Expr: parser.ListFunction{
 			Name:     "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			Args: []parser.QueryExpression{
@@ -3301,7 +3301,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Expr: parser.ListAgg{
+		Expr: parser.ListFunction{
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
@@ -3329,7 +3329,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Expr: parser.ListAgg{
+		Expr: parser.ListFunction{
 			Name:     "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			OrderBy: parser.OrderByClause{
@@ -3359,7 +3359,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Expr: parser.ListAgg{
+		Expr: parser.ListFunction{
 			Name:     "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			Args: []parser.QueryExpression{
@@ -3404,7 +3404,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Expr: parser.ListAgg{
+		Expr: parser.ListFunction{
 			Name:     "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			Args: []parser.QueryExpression{
@@ -3447,7 +3447,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Expr: parser.ListAgg{
+		Expr: parser.ListFunction{
 			Name: "listagg",
 			Args: []parser.QueryExpression{
 				parser.AggregateFunction{
@@ -3489,7 +3489,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Expr: parser.ListAgg{
+		Expr: parser.ListFunction{
 			Name: "listagg",
 			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
@@ -3526,7 +3526,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Expr: parser.ListAgg{
+		Expr: parser.ListFunction{
 			Name: "listagg",
 			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
@@ -3538,7 +3538,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name:   "ListAgg Function As a Statement Error",
 		Filter: &Filter{},
-		Expr: parser.ListAgg{
+		Expr: parser.ListFunction{
 			Name:     "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			Args: []parser.QueryExpression{
@@ -3589,7 +3589,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Expr: parser.ListAgg{
+		Expr: parser.ListFunction{
 			Name:     "json_agg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			Args: []parser.QueryExpression{
@@ -3633,7 +3633,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Expr: parser.ListAgg{
+		Expr: parser.ListFunction{
 			Name:     "json_agg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			Args:     []parser.QueryExpression{},

@@ -11,6 +11,11 @@ const (
 	TernaryStyle
 	DatetimeStyle
 	NullStyle
+	ObjectStyle
+	AttributeStyle
+	IdentifierStyle
+	ValueStyle
+	EmphasisStyle
 )
 
 type TextStyle struct {
@@ -19,29 +24,28 @@ type TextStyle struct {
 }
 
 type Palette struct {
-	Plain      TextStyle
-	FieldLabel TextStyle
-	Number     TextStyle
-	String     TextStyle
-	Boolean    TextStyle
-	Ternary    TextStyle
-	Datetime   TextStyle
-	Null       TextStyle
-
-	useStyle bool
+	textStyles []*TextStyle
+	useStyle   bool
 }
 
 func NewPalette() *Palette {
 	return &Palette{
-		Plain:      TextStyle{Color: PlainColor, Bold: false},
-		FieldLabel: TextStyle{Color: FGBlue, Bold: true},
-		Number:     TextStyle{Color: FGMagenta, Bold: false},
-		String:     TextStyle{Color: FGGreen, Bold: false},
-		Boolean:    TextStyle{Color: FGYellow, Bold: true},
-		Ternary:    TextStyle{Color: FGYellow, Bold: false},
-		Datetime:   TextStyle{Color: FGCyan, Bold: false},
-		Null:       TextStyle{Color: FGBrightBlack, Bold: false},
-		useStyle:   false,
+		textStyles: []*TextStyle{
+			{Color: PlainColor, Bold: false},
+			{Color: FGBlue, Bold: true},
+			{Color: FGMagenta, Bold: false},
+			{Color: FGGreen, Bold: false},
+			{Color: FGYellow, Bold: true},
+			{Color: FGYellow, Bold: false},
+			{Color: FGCyan, Bold: false},
+			{Color: FGBrightBlack, Bold: false},
+			{Color: FGGreen, Bold: true},
+			{Color: FGYellow, Bold: false},
+			{Color: FGCyan, Bold: true},
+			{Color: FGBlue, Bold: true},
+			{Color: FGRed, Bold: true},
+		},
+		useStyle: false,
 	}
 }
 
@@ -58,30 +62,14 @@ func (p *Palette) Color(s string, style Style) string {
 		return s
 	}
 
-	var textStyle TextStyle
-
-	switch style {
-	case PlainColor:
-		textStyle = p.Plain
-	case FieldLableStyle:
-		textStyle = p.FieldLabel
-	case NumberStyle:
-		textStyle = p.Number
-	case StringStyle:
-		textStyle = p.String
-	case BooleanStyle:
-		textStyle = p.Boolean
-	case TernaryStyle:
-		textStyle = p.Ternary
-	case DatetimeStyle:
-		textStyle = p.Datetime
-	case NullStyle:
-		textStyle = p.Null
+	idx := int(style)
+	if len(p.textStyles) <= idx {
+		idx = 0
 	}
 
-	return p.color(s, textStyle)
+	return p.color(s, p.textStyles[idx])
 }
 
-func (p *Palette) color(s string, style TextStyle) string {
+func (p *Palette) color(s string, style *TextStyle) string {
 	return Colorize(s, style.Color, style.Bold)
 }

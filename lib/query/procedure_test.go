@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -17,7 +18,7 @@ import (
 
 var procedureExecuteStatementTests = []struct {
 	Input      parser.Statement
-	Result     []Result
+	Result     []ExecResult
 	Logs       string
 	SelectLogs []string
 	Error      string
@@ -26,16 +27,23 @@ var procedureExecuteStatementTests = []struct {
 	{
 		Input: parser.SetFlag{
 			Name:  "@@invalid",
-			Value: value.NewString("\t"),
+			Value: parser.NewStringValue("\t"),
 		},
-		Error:     "[L:- C:-] flag name @@invalid is invalid",
+		Error:     "[L:- C:-] flag @@invalid does not exist",
 		ErrorCode: 1,
+	},
+	{
+		Input: parser.SetFlag{
+			Name:  "@@delimiter",
+			Value: parser.NewStringValue(","),
+		},
+		Logs: " @@DELIMITER: ',' | SPACES\n",
 	},
 	{
 		Input: parser.ShowFlag{
 			Name: "@@repository",
 		},
-		Logs: TestDir + "\n",
+		Logs: " @@REPOSITORY: " + TestDir + "\n",
 	},
 	{
 		Input: parser.VariableDeclaration{
@@ -45,7 +53,7 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Result: []Result{},
+		Result: []ExecResult{},
 	},
 	{
 		Input: parser.VariableDeclaration{
@@ -55,7 +63,7 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Result: []Result{},
+		Result: []ExecResult{},
 	},
 	{
 		Input: parser.VariableDeclaration{
@@ -65,7 +73,7 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Result: []Result{},
+		Result: []ExecResult{},
 	},
 	{
 		Input: parser.VariableDeclaration{
@@ -75,14 +83,14 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Result: []Result{},
+		Result: []ExecResult{},
 	},
 	{
 		Input: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "@var1"},
 			Value:    parser.NewIntegerValueFromString("1"),
 		},
-		Result: []Result{},
+		Result: []ExecResult{},
 	},
 	{
 		Input: parser.Print{
@@ -379,7 +387,7 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Result: []Result{
+		Result: []ExecResult{
 			{
 				Type: InsertQuery,
 				FileInfo: &FileInfo{
@@ -413,7 +421,7 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Result: []Result{
+		Result: []ExecResult{
 			{
 				Type: UpdateQuery,
 				FileInfo: &FileInfo{
@@ -445,7 +453,7 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Result: []Result{
+		Result: []ExecResult{
 			{
 				Type: DeleteQuery,
 				FileInfo: &FileInfo{
@@ -468,7 +476,7 @@ var procedureExecuteStatementTests = []struct {
 				parser.Identifier{Literal: "column2"},
 			},
 		},
-		Result: []Result{
+		Result: []ExecResult{
 			{
 				Type: CreateTableQuery,
 				FileInfo: &FileInfo{
@@ -491,7 +499,7 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Result: []Result{
+		Result: []ExecResult{
 			{
 				Type: AddColumnsQuery,
 				FileInfo: &FileInfo{
@@ -513,7 +521,7 @@ var procedureExecuteStatementTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 		},
-		Result: []Result{
+		Result: []ExecResult{
 			{
 				Type: DropColumnsQuery,
 				FileInfo: &FileInfo{
@@ -534,7 +542,7 @@ var procedureExecuteStatementTests = []struct {
 			Old:   parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			New:   parser.Identifier{Literal: "newcolumn"},
 		},
-		Result: []Result{
+		Result: []ExecResult{
 			{
 				Type: RenameColumnQuery,
 				FileInfo: &FileInfo{
@@ -548,6 +556,20 @@ var procedureExecuteStatementTests = []struct {
 			},
 		},
 		Logs: fmt.Sprintf("1 field renamed on %q.\n", GetTestFilePath("table1.csv")),
+	},
+	{
+		Input: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "delimiter"},
+			Value:     parser.NewStringValue("\t"),
+		},
+		Logs: "\n" +
+			strings.Repeat(" ", (calcShowFieldsWidth("table1.csv", "table1.csv", 22)-(22+len("table1.csv")))/2) + "Attributes Updated in table1.csv\n" +
+			strings.Repeat("-", calcShowFieldsWidth("table1.csv", "table1.csv", 22)) + "\n" +
+			" Path: " + GetTestFilePath("table1.csv") + "\n" +
+			" Format: TSV     Delimiter: '\\t'\n" +
+			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
+			"\n",
 	},
 	{
 		Input: parser.Case{
@@ -619,7 +641,7 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.Trigger{
-			Token:   parser.ERROR,
+			Event:   parser.Identifier{Literal: "error"},
 			Message: parser.NewStringValue("user error"),
 			Code:    value.NewInteger(200),
 		},
@@ -628,24 +650,43 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.Trigger{
-			Token:   parser.ERROR,
+			Event:   parser.Identifier{Literal: "error"},
 			Message: parser.NewIntegerValue(200),
 		},
 		Error:     "[L:- C:-] ",
 		ErrorCode: 200,
 	},
 	{
+		Input: parser.Trigger{
+			Event:   parser.Identifier{Literal: "invalid"},
+			Message: parser.NewIntegerValue(200),
+		},
+		Error:     "[L:- C:-] invalid is an unknown event",
+		ErrorCode: 1,
+	},
+	{
 		Input: parser.ShowObjects{
-			Type: parser.CURSORS,
+			Type: parser.Identifier{Literal: "cursors"},
 		},
 		Logs: "No cursor is declared\n",
 	},
 	{
 		Input: parser.ShowFields{
+			Type:  parser.Identifier{Literal: "fields"},
 			Table: parser.Identifier{Literal: "table1"},
 		},
-		Logs: "\n" + "    Fields in table1" + "\n" + "------------------------\n" +
-			"1. column1\n2. column2\n\n",
+		Logs: "\n" +
+			strings.Repeat(" ", (calcShowFieldsWidth("table1.csv", "table1", 10)-(10+len("table1")))/2) + "Fields in table1\n" +
+			strings.Repeat("-", calcShowFieldsWidth("table1.csv", "table1", 10)) + "\n" +
+			" Type: Table\n" +
+			" Path: " + GetTestFilePath("table1.csv") + "\n" +
+			" Format: CSV     Delimiter: ','\n" +
+			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
+			" Status: Fixed\n" +
+			" Fields:\n" +
+			"   1. column1\n" +
+			"   2. column2\n" +
+			"\n",
 	},
 }
 
@@ -660,7 +701,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 
 	for _, v := range procedureExecuteStatementTests {
 		ReleaseResources()
-		Results = []Result{}
+		ExecResults = []ExecResult{}
 		SelectLogs = []string{}
 
 		oldStdout := os.Stdout
@@ -698,7 +739,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 		}
 
 		if v.Result != nil {
-			for _, r := range Results {
+			for _, r := range ExecResults {
 				if r.FileInfo.File != nil {
 					if r.FileInfo.Path != r.FileInfo.File.Name() {
 						t.Errorf("file pointer = %q, want %q for %q", r.FileInfo.File.Name(), r.FileInfo.Path, v.Input)
@@ -708,8 +749,8 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 				}
 			}
 
-			if !reflect.DeepEqual(Results, v.Result) {
-				t.Errorf("results = %v, want %v for %q", Results, v.Result, v.Input)
+			if !reflect.DeepEqual(ExecResults, v.Result) {
+				t.Errorf("results = %v, want %v for %q", ExecResults, v.Result, v.Input)
 			}
 		}
 		if 0 < len(v.Logs) {
@@ -725,7 +766,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 	}
 
 	ReleaseResources()
-	Results = []Result{}
+	ExecResults = []ExecResult{}
 	SelectLogs = []string{}
 }
 

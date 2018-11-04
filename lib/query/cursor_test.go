@@ -700,8 +700,14 @@ func TestCursorScopes_Count(t *testing.T) {
 	}
 }
 
-func TestCursorScopes_List(t *testing.T) {
+func TestCursorScopes_All(t *testing.T) {
 	list := CursorScopes{
+		{
+			"CUR2": &Cursor{
+				name:  "cur2",
+				query: selectQueryForCursorTest,
+			},
+		},
 		{
 			"CUR": &Cursor{
 				name:  "cur",
@@ -719,14 +725,20 @@ func TestCursorScopes_List(t *testing.T) {
 		},
 	}
 
-	expect := []string{
-		"cur for " + selectQueryForCursorTest.String(),
-		"cur2 for " + selectQueryForCursorTest.String(),
+	expect := CursorMap{
+		"CUR": &Cursor{
+			name:  "cur",
+			query: selectQueryForCursorTest,
+		},
+		"CUR2": &Cursor{
+			name:  "cur2",
+			query: selectQueryForCursorTest,
+		},
 	}
 
-	result := list.List()
+	result := list.All()
 	if !reflect.DeepEqual(result, expect) {
-		t.Errorf("result = %s, want %s", result, expect)
+		t.Errorf("result = %v, want %v", result, expect)
 	}
 }
 
