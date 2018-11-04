@@ -132,6 +132,8 @@ Datetime
   | YYYY-M-D   | 2012-3-15 |
   | YYYY/M/D   | 2012/3/15 |
 
+  &nbsp;
+
   | DatetimeFormat | Example |
   | :- | :- |
   | DateFormat | 2012-03-15 |

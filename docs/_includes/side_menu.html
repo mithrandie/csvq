@@ -1,9 +1,9 @@
-<a href="#" data-activates="slide-out" class="button-collapse"><i class="material-icons">menu</i></a>
-<ul id="slide-out" class="side-nav">
+<a href="#" data-activates="slide-out" class="button-collapse hide-on-large-only"><i class="material-icons">menu</i></a>
+<ul id="slide-out" class="side-nav fixed show-on-large">
   <li class="no-padding map-title">Menu</li>
   <li class="no-padding bold"><a href="{{ '/' | relative_url }}">Home</a></li>
-  <li class="folder bold"><a href="{{ '/reference.html' | relative_url }}">Reference Manual</a>
-    <div>
+  <li class="no-padding bold"><a href="{{ '/reference.html' | relative_url }}">Reference Manual</a>
+    <div class="folder">
       <ul>
         <li><a href="{{ '/reference/install.html' | relative_url }}">Install</a></li>
         <li><a href="{{ '/reference/command.html' | relative_url }}">Command Usage</a></li>
