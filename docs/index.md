@@ -42,6 +42,10 @@ In the multiple operations, you can use variables, cursors, temporary tables, an
 
 [Reference Manual - csvq]({{ '/reference.html' | relative_url }})
 
+## Example of cooperation with other applications
+
+- [csvq emacs extension](https://github.com/mithrandie/csvq-emacs-extension)
+
 ## License
 
 csvq is released under [the MIT License]({{ '/license.html' | relative_url }})
