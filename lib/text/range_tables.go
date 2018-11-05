@@ -132,7 +132,7 @@ func RuneByteSize(r rune, encoding cmd.Encoding) int {
 
 func SJISRuneByteSize(r rune) int {
 	switch {
-	case unicode.In(r, sjisSingleByteTable):
+	case unicode.In(r, sjisSingleByteTable) || unicode.IsControl(r):
 		return 1
 	}
 	return 2

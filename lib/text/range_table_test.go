@@ -40,6 +40,14 @@ func TestRuneByteSize(t *testing.T) {
 		t.Errorf("byte size = %d, want %d for %s in %s", result, expect, string(r), cmd.UTF8)
 	}
 
+	r = 10
+	expect = 1
+
+	result = RuneByteSize(r, cmd.UTF8)
+	if result != expect {
+		t.Errorf("byte size = %d, want %d for %s in %s", result, expect, string(r), cmd.SJIS)
+	}
+
 	r = '日'
 	expect = 2
 
@@ -49,6 +57,14 @@ func TestRuneByteSize(t *testing.T) {
 	}
 
 	r = 'a'
+	expect = 1
+
+	result = RuneByteSize(r, cmd.SJIS)
+	if result != expect {
+		t.Errorf("byte size = %d, want %d for %s in %s", result, expect, string(r), cmd.SJIS)
+	}
+
+	r = 10
 	expect = 1
 
 	result = RuneByteSize(r, cmd.SJIS)

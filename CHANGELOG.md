@@ -1,3 +1,7 @@
+## Release v1.5.2 (2018-11-05)
+
+- Fix a bug in calculation of Shift-JIS byte length.
+
 ## Release v1.5.1 (2018-11-04)
 
 - Fix a bug of interactive shell that hide query results when the --out option is specified.
