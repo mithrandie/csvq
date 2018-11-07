@@ -8,6 +8,7 @@ import (
 	"github.com/mithrandie/ternary"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -57,7 +58,7 @@ func Printf(expr parser.Printf, filter *Filter) (string, error) {
 
 	message, err := FormatString(format, args)
 	if err != nil {
-		return "", NewPrintfReplaceValueLengthError(expr, err.(AppError).ErrorMessage())
+		return "", NewReplaceValueLengthError(expr, err.(AppError).ErrorMessage())
 	}
 	return message, nil
 }
@@ -74,9 +75,15 @@ func Source(expr parser.Source, filter *Filter) ([]parser.Statement, error) {
 		}
 		s := value.ToString(p)
 		if value.IsNull(s) {
-			return nil, NewSourceInvalidArgumentError(expr, expr.FilePath)
+			return nil, NewSourceInvalidFilePathError(expr, expr.FilePath)
 		}
 		fpath = s.(value.String).Raw()
+	}
+	if len(fpath) < 1 {
+		return nil, NewSourceInvalidFilePathError(expr, expr.FilePath)
+	}
+	if abs, err := filepath.Abs(fpath); err == nil {
+		fpath = abs
 	}
 
 	stat, err := os.Stat(fpath)
@@ -100,6 +107,38 @@ func Source(expr parser.Source, filter *Filter) ([]parser.Statement, error) {
 	input := string(buf)
 
 	statements, err := parser.Parse(input, fpath)
+	if err != nil {
+		syntaxErr := err.(*parser.SyntaxError)
+		err = NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)
+	}
+	return statements, err
+}
+
+func ParseExecuteStatements(expr parser.Execute, filter *Filter) ([]parser.Statement, error) {
+	var input string
+	stmt, err := filter.Evaluate(expr.Statements)
+	if err != nil {
+		return nil, err
+	}
+	stmt = value.ToString(stmt)
+	if !value.IsNull(stmt) {
+		input = stmt.(value.String).Raw()
+	}
+
+	args := make([]value.Primary, len(expr.Values))
+	for i, v := range expr.Values {
+		p, err := filter.Evaluate(v)
+		if err != nil {
+			return nil, err
+		}
+		args[i] = p
+	}
+
+	input, err = FormatString(input, args)
+	if err != nil {
+		return nil, NewReplaceValueLengthError(expr, err.(AppError).ErrorMessage())
+	}
+	statements, err := parser.Parse(input, fmt.Sprintf("(L:%d C:%d) EXECUTE", expr.Line(), expr.Char()))
 	if err != nil {
 		syntaxErr := err.(*parser.SyntaxError)
 		err = NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)

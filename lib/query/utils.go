@@ -3,6 +3,7 @@ package query
 import (
 	"bytes"
 	"fmt"
+	"github.com/mithrandie/csvq/lib/cmd"
 	"math"
 	"reflect"
 	"strconv"
@@ -197,6 +198,21 @@ func FormatString(format string, args []value.Primary) (string, error) {
 		return sign
 	}
 
+	var stringRepresentation = func(v value.Primary) string {
+		var s string
+		switch v.(type) {
+		case value.String:
+			s = v.(value.String).Raw()
+		case value.Ternary:
+			s = v.(value.Ternary).Ternary().String()
+		case value.Datetime:
+			s = v.(value.Datetime).Format(time.RFC3339Nano)
+		default:
+			s = v.String()
+		}
+		return s
+	}
+
 	var buf bytes.Buffer
 
 	escaped := false
@@ -231,7 +247,7 @@ func FormatString(format string, args []value.Primary) (string, error) {
 			case '.':
 				isPrecision = true
 				continue
-			case 'b', 'o', 'd', 'x', 'X', 'e', 'E', 'f', 's', 'q', 'T':
+			case 'b', 'o', 'd', 'x', 'X', 'e', 'E', 'f', 's', 'q', 'i', 'T':
 				if len(args) <= placeholderOrder {
 					return "", NewFormatStringLengthNotMatchError()
 				}
@@ -274,6 +290,7 @@ func FormatString(format string, args []value.Primary) (string, error) {
 						}
 						sign := numberSign(val, flags)
 						f := math.Abs(val)
+
 						s := strconv.FormatFloat(f, byte(r), -1, 64)
 
 						if 0 < prec {
@@ -307,27 +324,13 @@ func FormatString(format string, args []value.Primary) (string, error) {
 						pad(&buf, s, sign, l, flags)
 					}
 				case 's':
-					var s string
-					switch args[placeholderOrder].(type) {
-					case value.String:
-						s = args[placeholderOrder].(value.String).Raw()
-					case value.Integer:
-						s = args[placeholderOrder].(value.Integer).String()
-					case value.Float:
-						s = args[placeholderOrder].(value.Float).String()
-					case value.Boolean:
-						s = args[placeholderOrder].(value.Boolean).String()
-					case value.Ternary:
-						s = args[placeholderOrder].(value.Ternary).Ternary().String()
-					case value.Datetime:
-						s = args[placeholderOrder].(value.Datetime).Format(time.RFC3339Nano)
-					case value.Null:
-						s = "NULL"
-					}
+					s := stringRepresentation(args[placeholderOrder])
 					l, _ := strconv.Atoi(length)
 					pad(&buf, s, []byte{}, l, flags)
 				case 'q':
-					buf.WriteString(args[placeholderOrder].String())
+					buf.WriteString(cmd.QuoteString(stringRepresentation(args[placeholderOrder])))
+				case 'i':
+					buf.WriteString(cmd.QuoteIdentifier(stringRepresentation(args[placeholderOrder])))
 				case 'T':
 					buf.WriteString(reflect.TypeOf(args[placeholderOrder]).Name())
 				}

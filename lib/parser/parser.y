@@ -189,7 +189,7 @@ import (
 %token<token> SEPARATOR PARTITION OVER
 %token<token> COMMIT ROLLBACK
 %token<token> CONTINUE BREAK EXIT
-%token<token> PRINT PRINTF SOURCE TRIGGER
+%token<token> PRINT PRINTF SOURCE EXECUTE TRIGGER
 %token<token> FUNCTION AGGREGATE BEGIN RETURN
 %token<token> IGNORE WITHIN
 %token<token> VAR SHOW
@@ -825,6 +825,14 @@ command_statement
     | SOURCE value
     {
         $$ = Source{BaseExpr: NewBaseExpr($1), FilePath: $2}
+    }
+    | EXECUTE value
+    {
+        $$ = Execute{BaseExpr: NewBaseExpr($1), Statements: $2}
+    }
+    | EXECUTE value USING values
+    {
+        $$ = Execute{BaseExpr: NewBaseExpr($1), Statements: $2, Values: $4}
     }
     | SHOW identifier
     {

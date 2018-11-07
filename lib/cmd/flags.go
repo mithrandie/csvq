@@ -309,6 +309,9 @@ func SetSource(s string) error {
 	if stat.IsDir() {
 		return errors.New("source file must be a readable file")
 	}
+	if abs, err := filepath.Abs(s); err == nil {
+		s = abs
+	}
 
 	f := GetFlags()
 	f.Source = s

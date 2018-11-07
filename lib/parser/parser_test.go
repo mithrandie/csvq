@@ -3952,6 +3952,27 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "execute 'select 1'",
+		Output: []Statement{
+			Execute{
+				BaseExpr:   &BaseExpr{line: 1, char: 1},
+				Statements: NewStringValue("select 1"),
+			},
+		},
+	},
+	{
+		Input: "execute 'select %s' using 'a'",
+		Output: []Statement{
+			Execute{
+				BaseExpr:   &BaseExpr{line: 1, char: 1},
+				Statements: NewStringValue("select %s"),
+				Values: []QueryExpression{
+					NewStringValue("a"),
+				},
+			},
+		},
+	},
+	{
 		Input: "set @@delimiter = ','",
 		Output: []Statement{
 			SetFlag{

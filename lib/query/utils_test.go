@@ -90,7 +90,7 @@ var formatStringTests = []struct {
 		Name:   "FormatString Quoted String",
 		Format: "string: %q %q %q %q %q %q %q",
 		Args: []value.Primary{
-			value.NewString("str"),
+			value.NewString("st'r"),
 			value.NewInteger(1),
 			value.NewFloat(1.234),
 			value.NewBoolean(true),
@@ -98,7 +98,21 @@ var formatStringTests = []struct {
 			value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 			value.NewNull(),
 		},
-		Result: "string: 'str' 1 1.234 true TRUE '2012-02-03T09:18:15Z' NULL",
+		Result: "string: \"st\\'r\" \"1\" \"1.234\" \"true\" \"TRUE\" \"2012-02-03T09:18:15Z\" \"NULL\"",
+	},
+	{
+		Name:   "FormatString Quoted Identifier",
+		Format: "string: %i %i %i %i %i %i %i",
+		Args: []value.Primary{
+			value.NewString("st`r"),
+			value.NewInteger(1),
+			value.NewFloat(1.234),
+			value.NewBoolean(true),
+			value.NewTernary(ternary.TRUE),
+			value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
+			value.NewNull(),
+		},
+		Result: "string: `st\\`r` `1` `1.234` `true` `TRUE` `2012-02-03T09:18:15Z` `NULL`",
 	},
 	{
 		Name:   "FormatString Type",

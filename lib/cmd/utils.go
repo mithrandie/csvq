@@ -99,6 +99,91 @@ func UnescapeString(s string) string {
 	return buf.String()
 }
 
+func EscapeIdentifier(s string) string {
+	runes := []rune(s)
+	var buf bytes.Buffer
+
+	for _, r := range runes {
+		switch r {
+		case '\a':
+			buf.WriteString("\\a")
+		case '\b':
+			buf.WriteString("\\b")
+		case '\f':
+			buf.WriteString("\\f")
+		case '\n':
+			buf.WriteString("\\n")
+		case '\r':
+			buf.WriteString("\\r")
+		case '\t':
+			buf.WriteString("\\t")
+		case '\v':
+			buf.WriteString("\\v")
+		case '`':
+			buf.WriteString("\\`")
+		case '\\':
+			buf.WriteString("\\\\")
+		default:
+			buf.WriteRune(r)
+		}
+	}
+	return buf.String()
+}
+
+func UnescapeIdentifier(s string) string {
+	runes := []rune(s)
+	var buf bytes.Buffer
+
+	escaped := false
+	for _, r := range runes {
+		if escaped {
+			switch r {
+			case 'a':
+				buf.WriteRune('\a')
+			case 'b':
+				buf.WriteRune('\b')
+			case 'f':
+				buf.WriteRune('\f')
+			case 'n':
+				buf.WriteRune('\n')
+			case 'r':
+				buf.WriteRune('\r')
+			case 't':
+				buf.WriteRune('\t')
+			case 'v':
+				buf.WriteRune('\v')
+			case '`', '\\':
+				buf.WriteRune(r)
+			default:
+				buf.WriteRune('\\')
+				buf.WriteRune(r)
+			}
+			escaped = false
+			continue
+		}
+
+		if r == '\\' {
+			escaped = true
+			continue
+		}
+
+		buf.WriteRune(r)
+	}
+	if escaped {
+		buf.WriteRune('\\')
+	}
+
+	return buf.String()
+}
+
+func QuoteString(s string) string {
+	return "\"" + EscapeString(s) + "\""
+}
+
+func QuoteIdentifier(s string) string {
+	return "`" + EscapeIdentifier(s) + "`"
+}
+
 func HumarizeNumber(s string) string {
 	parts := strings.Split(s, ".")
 	intPart := parts[0]

@@ -39,6 +39,42 @@ func TestUnescapeString(t *testing.T) {
 	}
 }
 
+func TestEscapeIdentifier(t *testing.T) {
+	str := "fo\\o\a\b\f\n\r\t\v\\\\`bar\\"
+	expect := "fo\\\\o\\a\\b\\f\\n\\r\\t\\v\\\\\\\\\\`bar\\\\"
+	unescaped := EscapeIdentifier(str)
+	if unescaped != expect {
+		t.Errorf("escaped identifier = %q, want %q", unescaped, expect)
+	}
+}
+
+func TestUnescapeIdentifier(t *testing.T) {
+	str := "fo\\o\\a\\b\\f\\n\\r\\t\\v\\\\\\\\`bar\\"
+	expect := "fo\\o\a\b\f\n\r\t\v\\\\`bar\\"
+	unescaped := UnescapeIdentifier(str)
+	if unescaped != expect {
+		t.Errorf("unescaped identifier = %q, want %q", unescaped, expect)
+	}
+}
+
+func TestQuoteString(t *testing.T) {
+	s := "abc'def"
+	expect := "\"abc\\'def\""
+	result := QuoteString(s)
+	if result != expect {
+		t.Errorf("quoted string = %q, want %q for %q", result, expect, s)
+	}
+}
+
+func TestQuoteIdentifier(t *testing.T) {
+	s := "abc`def"
+	expect := "`abc\\`def`"
+	result := QuoteIdentifier(s)
+	if result != expect {
+		t.Errorf("quoted identifier = %q, want %q for %q", result, expect, s)
+	}
+}
+
 func TestHumarizeNumber(t *testing.T) {
 	number := "1234567"
 	expect := "1,234,567"

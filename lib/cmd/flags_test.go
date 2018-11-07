@@ -168,9 +168,10 @@ func TestSetSource(t *testing.T) {
 	}
 
 	s := filepath.Join("..", "..", "lib", "cmd", "flags_test.go")
+	expect, _ := filepath.Abs(s)
 	SetSource(s)
-	if flags.Source != s {
-		t.Errorf("source = %s, expect to set %s for %s", flags.Source, s, s)
+	if flags.Source != expect {
+		t.Errorf("source = %s, expect to set %s for %s", flags.Source, expect, s)
 	}
 
 	s = filepath.Join("..", "..", "lib", "cmd", "notexist")

@@ -81,8 +81,8 @@ const (
 	ErrorUpdateValueAmbiguous                 = "value %s to set in the field %s is ambiguous"
 	ErrorDeleteTableNotSpecified              = "tables to delete records are not specified"
 	ErrorShowInvalidObjectType                = "object type %s is invalid"
-	ErrorPrintfReplaceValueLength             = "%s"
-	ErrorSourceInvalidArgument                = "argument %s is not a string"
+	ErrorReplaceValueLength                   = "%s"
+	ErrorSourceInvalidFilePath                = "%s is a invalid file path"
 	ErrorSourceFileNotExist                   = "file %s does not exist"
 	ErrorSourceFileUnableToRead               = "file %s is unable to read"
 	ErrorInvalidFlagName                      = "flag %s does not exist"
@@ -926,23 +926,23 @@ func NewShowInvalidObjectTypeError(expr parser.Expression, objectType string) er
 	}
 }
 
-type PrintfReplaceValueLengthError struct {
+type ReplaceValueLengthError struct {
 	*BaseError
 }
 
-func NewPrintfReplaceValueLengthError(printf parser.Printf, message string) error {
-	return &PrintfReplaceValueLengthError{
-		NewBaseError(printf, fmt.Sprintf(ErrorPrintfReplaceValueLength, message)),
+func NewReplaceValueLengthError(expr parser.Expression, message string) error {
+	return &ReplaceValueLengthError{
+		NewBaseError(expr, fmt.Sprintf(ErrorReplaceValueLength, message)),
 	}
 }
 
-type SourceInvalidArgumentError struct {
+type SourceInvalidFilePathError struct {
 	*BaseError
 }
 
-func NewSourceInvalidArgumentError(source parser.Source, arg parser.QueryExpression) error {
-	return &SourceInvalidArgumentError{
-		NewBaseError(source, fmt.Sprintf(ErrorSourceInvalidArgument, arg)),
+func NewSourceInvalidFilePathError(source parser.Source, arg parser.QueryExpression) error {
+	return &SourceInvalidFilePathError{
+		NewBaseError(source, fmt.Sprintf(ErrorSourceInvalidFilePath, arg)),
 	}
 }
 

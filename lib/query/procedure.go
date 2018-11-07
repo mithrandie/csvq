@@ -293,8 +293,12 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		}
 	case parser.Source:
 		var externalStatements []parser.Statement
-		source := stmt.(parser.Source)
-		if externalStatements, err = Source(source, proc.Filter); err == nil {
+		if externalStatements, err = Source(stmt.(parser.Source), proc.Filter); err == nil {
+			flow, err = proc.Execute(externalStatements)
+		}
+	case parser.Execute:
+		var externalStatements []parser.Statement
+		if externalStatements, err = ParseExecuteStatements(stmt.(parser.Execute), proc.Filter); err == nil {
 			flow, err = proc.Execute(externalStatements)
 		}
 	case parser.ShowObjects:

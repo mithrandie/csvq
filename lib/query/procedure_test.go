@@ -179,13 +179,13 @@ var procedureExecuteStatementTests = []struct {
 		Input: parser.Print{
 			Value: parser.Variable{Name: "@var2"},
 		},
-		Logs: "'1'\n",
+		Logs: "\"1\"\n",
 	},
 	{
 		Input: parser.Print{
 			Value: parser.Variable{Name: "@var3"},
 		},
-		Logs: "'str1'\n",
+		Logs: "\"str1\"\n",
 	},
 	{
 		Input: parser.CloseCursor{
@@ -588,7 +588,7 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Logs: "'2'\n",
+		Logs: "\"2\"\n",
 	},
 	{
 		Input: parser.While{
@@ -637,7 +637,14 @@ var procedureExecuteStatementTests = []struct {
 		Input: parser.Source{
 			FilePath: parser.NewStringValue(GetTestFilePath("source.sql")),
 		},
-		Logs: "'external executable file'\n",
+		Logs: "\"external executable file\"\n",
+	},
+	{
+		Input: parser.Execute{
+			BaseExpr:   parser.NewBaseExpr(parser.Token{}),
+			Statements: parser.NewStringValue("print 'execute';"),
+		},
+		Logs: "\"execute\"\n",
 	},
 	{
 		Input: parser.Trigger{
@@ -786,7 +793,7 @@ var procedureIfStmtTests = []struct {
 			},
 		},
 		ResultFlow: Terminate,
-		Result:     "'1'\n",
+		Result:     "\"1\"\n",
 	},
 	{
 		Name: "If Statement Execute Nothing",
@@ -827,7 +834,7 @@ var procedureIfStmtTests = []struct {
 			},
 		},
 		ResultFlow: Terminate,
-		Result:     "'2'\n",
+		Result:     "\"2\"\n",
 	},
 	{
 		Name: "If Statement Execute Else",
@@ -857,7 +864,7 @@ var procedureIfStmtTests = []struct {
 			},
 		},
 		ResultFlow: Terminate,
-		Result:     "'4'\n",
+		Result:     "\"4\"\n",
 	},
 	{
 		Name: "If Statement Filter Error",
@@ -935,7 +942,7 @@ var procedureCaseStmtTests = []struct {
 			},
 		},
 		ResultFlow: Terminate,
-		Result:     "'2'\n",
+		Result:     "\"2\"\n",
 	},
 	{
 		Name: "Case Comparison",
@@ -957,7 +964,7 @@ var procedureCaseStmtTests = []struct {
 			},
 		},
 		ResultFlow: Terminate,
-		Result:     "'2'\n",
+		Result:     "\"2\"\n",
 	},
 	{
 		Name: "Case Else",
@@ -983,7 +990,7 @@ var procedureCaseStmtTests = []struct {
 			},
 		},
 		ResultFlow: Terminate,
-		Result:     "'3'\n",
+		Result:     "\"3\"\n",
 	},
 	{
 		Name: "Case No Match",
@@ -1357,7 +1364,7 @@ var procedureWhileInCursorTests = []struct {
 			},
 		},
 		ResultFlow: Terminate,
-		Result:     "'1'\n'2'\n'3'\n",
+		Result:     "\"1\"\n\"2\"\n\"3\"\n",
 	},
 	{
 		Name: "While In Cursor With Declaration",
@@ -1374,7 +1381,7 @@ var procedureWhileInCursorTests = []struct {
 			},
 		},
 		ResultFlow: Terminate,
-		Result:     "'1'\n'2'\n'3'\n",
+		Result:     "\"1\"\n\"2\"\n\"3\"\n",
 	},
 	{
 		Name: "While In Cursor Continue",
@@ -1400,7 +1407,7 @@ var procedureWhileInCursorTests = []struct {
 			},
 		},
 		ResultFlow: Terminate,
-		Result:     "'1'\n'3'\n",
+		Result:     "\"1\"\n\"3\"\n",
 	},
 	{
 		Name: "While In Cursor Break",
@@ -1426,7 +1433,7 @@ var procedureWhileInCursorTests = []struct {
 			},
 		},
 		ResultFlow: Terminate,
-		Result:     "'1'\n",
+		Result:     "\"1\"\n",
 	},
 	{
 		Name: "While In Cursor Exit With Code",
@@ -1452,7 +1459,7 @@ var procedureWhileInCursorTests = []struct {
 			},
 		},
 		ResultFlow: Exit,
-		Result:     "'1'\n",
+		Result:     "\"1\"\n",
 	},
 	{
 		Name: "While In Cursor Fetch Error",

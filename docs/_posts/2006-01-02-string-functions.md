@@ -474,8 +474,9 @@ specifier
   | e | exponential notation with lower cases |
   | E | exponential notation with upper cases |
   | f | floating point decimal number |
-  | s | string representing the value |
-  | q | string representing the value with quotes |
+  | s | string representation of the value |
+  | q | quoted string representation of the value |
+  | i | quoted identifier representation of the value |
   | % | '%' |
 
 ### JSON_VALUE

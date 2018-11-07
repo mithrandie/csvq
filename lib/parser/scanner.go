@@ -1,10 +1,8 @@
 package parser
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
-	"path/filepath"
 	"strings"
 	"unicode"
 
@@ -103,12 +101,7 @@ func (s *Scanner) Init(src string, sourceFile string) *Scanner {
 	s.err = nil
 	s.line = 1
 	s.char = 0
-
-	if 0 < len(sourceFile) {
-		if abs, err := filepath.Abs(sourceFile); err == nil {
-			s.sourceFile = abs
-		}
-	}
+	s.sourceFile = sourceFile
 	return s
 }
 
@@ -254,7 +247,7 @@ func (s *Scanner) Scan() (Token, error) {
 			}
 		case '`':
 			s.scanString(ch)
-			literal = unescapeBackQuote(s.trimQuotes())
+			literal = cmd.UnescapeIdentifier(s.trimQuotes())
 			token = IDENTIFIER
 			quoted = true
 		}
@@ -451,33 +444,4 @@ func (s *Scanner) scanLineComment() {
 		s.next()
 	}
 	return
-}
-
-func unescapeBackQuote(s string) string {
-	runes := []rune(s)
-	var buf bytes.Buffer
-
-	escaped := false
-	for _, r := range runes {
-		if escaped {
-			switch r {
-			case '`':
-				buf.WriteRune(r)
-			default:
-				buf.WriteRune('\\')
-				buf.WriteRune(r)
-			}
-			escaped = false
-			continue
-		}
-
-		if r == '\\' {
-			escaped = true
-			continue
-		}
-
-		buf.WriteRune(r)
-	}
-
-	return buf.String()
 }

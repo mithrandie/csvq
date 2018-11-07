@@ -1,6 +1,7 @@
 package value
 
 import (
+	"github.com/mithrandie/csvq/lib/cmd"
 	"strconv"
 	"strings"
 	"time"
@@ -25,7 +26,7 @@ type String struct {
 }
 
 func (s String) String() string {
-	return quoteString(s.literal)
+	return cmd.QuoteString(s.literal)
 }
 
 func NewString(s string) String {
@@ -183,7 +184,7 @@ func NewDatetime(t time.Time) Datetime {
 }
 
 func (dt Datetime) String() string {
-	return quoteString(dt.value.Format(time.RFC3339Nano))
+	return cmd.QuoteString(dt.value.Format(time.RFC3339Nano))
 }
 
 func (dt Datetime) Raw() time.Time {
@@ -210,8 +211,4 @@ func (n Null) String() string {
 
 func (n Null) Ternary() ternary.Value {
 	return ternary.UNKNOWN
-}
-
-func quoteString(s string) string {
-	return "'" + s + "'"
 }
