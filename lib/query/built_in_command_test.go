@@ -26,7 +26,7 @@ var printTests = []struct {
 		Expr: parser.Print{
 			Value: parser.NewStringValue("foo"),
 		},
-		Result: "'foo'",
+		Result: "\"foo\"",
 	},
 	{
 		Name: "Print Error",
@@ -71,13 +71,13 @@ var printfTests = []struct {
 	{
 		Name: "Printf",
 		Expr: parser.Printf{
-			Format: parser.NewStringValue("printf test: value1 %q, value2 %q, %a %% %"),
+			Format: parser.NewStringValue("printf test: value1 %q, value2 %q"),
 			Values: []parser.QueryExpression{
 				parser.NewStringValue("str"),
 				parser.NewIntegerValue(1),
 			},
 		},
-		Result: "printf test: value1 'str', value2 1, %a % %",
+		Result: "printf test: value1 \"str\", value2 \"1\"",
 	},
 	{
 		Name: "Printf Format Error",
@@ -105,7 +105,7 @@ var printfTests = []struct {
 	{
 		Name: "Printf Less Values Error",
 		Expr: parser.Printf{
-			Format: parser.NewStringValue("printf test: value1 %s, value2 %s, %a %% %"),
+			Format: parser.NewStringValue("printf test: value1 %s, value2 %s %%"),
 			Values: []parser.QueryExpression{
 				parser.NewStringValue("str"),
 			},
@@ -115,7 +115,7 @@ var printfTests = []struct {
 	{
 		Name: "Printf Greater Values Error",
 		Expr: parser.Printf{
-			Format: parser.NewStringValue("printf test: value1 %s, value2 %s, %a %% %"),
+			Format: parser.NewStringValue("printf test: value1 %s, value2 %s %%"),
 			Values: []parser.QueryExpression{
 				parser.NewStringValue("str"),
 				parser.NewIntegerValue(1),
@@ -185,11 +185,18 @@ var sourceTests = []struct {
 		Error: "[L:- C:-] field ident does not exist",
 	},
 	{
-		Name: "Source File Argument Not String Error",
+		Name: "Source File Invalid File Path Error",
 		Expr: parser.Source{
 			FilePath: parser.NewNullValueFromString("NULL"),
 		},
-		Error: "[L:- C:-] argument NULL is not a string",
+		Error: "[L:- C:-] NULL is a invalid file path",
+	},
+	{
+		Name: "Source File Empty File Path Error",
+		Expr: parser.Source{
+			FilePath: parser.Identifier{Literal: "", Quoted: true},
+		},
+		Error: "[L:- C:-] `` is a invalid file path",
 	},
 	{
 		Name: "Source File Not Exist Error",
@@ -219,6 +226,90 @@ func TestSource(t *testing.T) {
 
 	for _, v := range sourceTests {
 		result, err := Source(v.Expr, filter)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(result, v.Result) {
+			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+		}
+	}
+}
+
+var parseExecuteStatementsTests = []struct {
+	Name   string
+	Expr   parser.Execute
+	Result []parser.Statement
+	Error  string
+}{
+	{
+		Name: "ParseExecuteStatements",
+		Expr: parser.Execute{
+			BaseExpr:   parser.NewBaseExpr(parser.Token{}),
+			Statements: parser.NewStringValue("print %q;"),
+			Values: []parser.QueryExpression{
+				parser.NewStringValue("executable string"),
+			},
+		},
+		Result: []parser.Statement{
+			parser.Print{
+				Value: parser.NewStringValue("executable string"),
+			},
+		},
+	},
+	{
+		Name: "ParseExecuteStatements String Evaluation Error",
+		Expr: parser.Execute{
+			BaseExpr:   parser.NewBaseExpr(parser.Token{}),
+			Statements: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+			Values: []parser.QueryExpression{
+				parser.NewStringValue("executable string"),
+			},
+		},
+		Error: "[L:- C:-] field notexist does not exist",
+	},
+	{
+		Name: "ParseExecuteStatements Format Error",
+		Expr: parser.Execute{
+			BaseExpr:   parser.NewBaseExpr(parser.Token{}),
+			Statements: parser.NewStringValue("print %q;"),
+		},
+		Error: "[L:- C:-] number of replace values does not match",
+	},
+	{
+		Name: "ParseExecuteStatements Replace Value Error",
+		Expr: parser.Execute{
+			BaseExpr:   parser.NewBaseExpr(parser.Token{}),
+			Statements: parser.NewStringValue("print %q;"),
+			Values: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+			},
+		},
+		Error: "[L:- C:-] field notexist does not exist",
+	},
+	{
+		Name: "ParseExecuteStatements Parsing Error",
+		Expr: parser.Execute{
+			BaseExpr:   parser.NewBaseExpr(parser.Token{}),
+			Statements: parser.NewStringValue("print;"),
+		},
+		Error: "(L:0 C:0) EXECUTE [L:1 C:6] syntax error: unexpected token \";\"",
+	},
+}
+
+func TestParseExecuteStatements(t *testing.T) {
+	filter := NewEmptyFilter()
+
+	for _, v := range parseExecuteStatementsTests {
+		result, err := ParseExecuteStatements(v.Expr, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

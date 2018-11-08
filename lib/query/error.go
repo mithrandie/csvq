@@ -81,8 +81,8 @@ const (
 	ErrorUpdateValueAmbiguous                 = "value %s to set in the field %s is ambiguous"
 	ErrorDeleteTableNotSpecified              = "tables to delete records are not specified"
 	ErrorShowInvalidObjectType                = "object type %s is invalid"
-	ErrorPrintfReplaceValueLength             = "%s"
-	ErrorSourceInvalidArgument                = "argument %s is not a string"
+	ErrorReplaceValueLength                   = "%s"
+	ErrorSourceInvalidFilePath                = "%s is a invalid file path"
 	ErrorSourceFileNotExist                   = "file %s does not exist"
 	ErrorSourceFileUnableToRead               = "file %s is unable to read"
 	ErrorInvalidFlagName                      = "flag %s does not exist"
@@ -98,6 +98,8 @@ const (
 	ErrorFieldLengthNotMatch                  = "field length does not match"
 	ErrorRowValueLengthInList                 = "row value length does not match at index %d"
 	ErrorFormatStringLengthNotMatch           = "number of replace values does not match"
+	ErrorUnknownFormatPlaceholder             = "unknown placeholder: %q"
+	ErrorFormatUnexpectedTermination          = "unexpected termination of format string"
 )
 
 type ForcedExit struct {
@@ -926,23 +928,23 @@ func NewShowInvalidObjectTypeError(expr parser.Expression, objectType string) er
 	}
 }
 
-type PrintfReplaceValueLengthError struct {
+type ReplaceValueLengthError struct {
 	*BaseError
 }
 
-func NewPrintfReplaceValueLengthError(printf parser.Printf, message string) error {
-	return &PrintfReplaceValueLengthError{
-		NewBaseError(printf, fmt.Sprintf(ErrorPrintfReplaceValueLength, message)),
+func NewReplaceValueLengthError(expr parser.Expression, message string) error {
+	return &ReplaceValueLengthError{
+		NewBaseError(expr, fmt.Sprintf(ErrorReplaceValueLength, message)),
 	}
 }
 
-type SourceInvalidArgumentError struct {
+type SourceInvalidFilePathError struct {
 	*BaseError
 }
 
-func NewSourceInvalidArgumentError(source parser.Source, arg parser.QueryExpression) error {
-	return &SourceInvalidArgumentError{
-		NewBaseError(source, fmt.Sprintf(ErrorSourceInvalidArgument, arg)),
+func NewSourceInvalidFilePathError(source parser.Source, arg parser.QueryExpression) error {
+	return &SourceInvalidFilePathError{
+		NewBaseError(source, fmt.Sprintf(ErrorSourceInvalidFilePath, arg)),
 	}
 }
 
@@ -1095,6 +1097,26 @@ type FormatStringLengthNotMatchError struct {
 func NewFormatStringLengthNotMatchError() error {
 	return &FormatStringLengthNotMatchError{
 		BaseError: NewBaseError(parser.NewNullValue(), ErrorFormatStringLengthNotMatch),
+	}
+}
+
+type UnknownFormatPlaceholderError struct {
+	*BaseError
+}
+
+func NewUnknownFormatPlaceholderError(placeholder rune) error {
+	return &UnknownFormatPlaceholderError{
+		BaseError: NewBaseError(parser.NewNullValue(), fmt.Sprintf(ErrorUnknownFormatPlaceholder, string(placeholder))),
+	}
+}
+
+type FormatUnexpectedTerminationError struct {
+	*BaseError
+}
+
+func NewFormatUnexpectedTerminationError() error {
+	return &FormatUnexpectedTerminationError{
+		BaseError: NewBaseError(parser.NewNullValue(), ErrorFormatUnexpectedTermination),
 	}
 }
 

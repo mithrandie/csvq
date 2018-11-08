@@ -59,6 +59,7 @@ var Functions = map[string]func(parser.Function, []value.Primary) (value.Primary
 	"OCT":              Oct,
 	"HEX":              Hex,
 	"ENOTATION":        Enotation,
+	"NUMBER_FORMAT":    NumberFormat,
 	"RAND":             Rand,
 	"TRIM":             Trim,
 	"LTRIM":            Ltrim,
@@ -469,6 +470,50 @@ func Enotation(fn parser.Function, args []value.Primary) (value.Primary, error) 
 	}
 
 	s := strconv.FormatFloat(p.(value.Float).Raw(), 'e', -1, 64)
+	return value.NewString(s), nil
+}
+
+func NumberFormat(fn parser.Function, args []value.Primary) (value.Primary, error) {
+	if len(args) < 1 || 5 < len(args) {
+		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1, 2, 3, 4, 5})
+	}
+
+	p := value.ToFloat(args[0])
+	if value.IsNull(p) {
+		return value.NewNull(), nil
+	}
+
+	precision := -1
+	decimalPoint := "."
+	thousandsSeparator := ","
+	decimalSeparator := ""
+
+	if 1 < len(args) {
+		i := value.ToInteger(args[1])
+		if !value.IsNull(i) {
+			precision = int(i.(value.Integer).Raw())
+		}
+	}
+	if 2 < len(args) {
+		i := value.ToString(args[2])
+		if !value.IsNull(i) {
+			decimalPoint = i.(value.String).Raw()
+		}
+	}
+	if 3 < len(args) {
+		i := value.ToString(args[3])
+		if !value.IsNull(i) {
+			thousandsSeparator = i.(value.String).Raw()
+		}
+	}
+	if 4 < len(args) {
+		i := value.ToString(args[4])
+		if !value.IsNull(i) {
+			decimalSeparator = i.(value.String).Raw()
+		}
+	}
+
+	s := cmd.FormatNumber(p.(value.Float).Raw(), precision, decimalPoint, thousandsSeparator, decimalSeparator)
 	return value.NewString(s), nil
 }
 
@@ -951,7 +996,8 @@ func Format(fn parser.Function, args []value.Primary) (value.Primary, error) {
 		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, "the first argument must be a string")
 	}
 
-	str, err := FormatString(format.(value.String).Raw(), args[1:])
+	f := NewStringFormatter()
+	str, err := f.Format(format.(value.String).Raw(), args[1:])
 	if err != nil {
 		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, err.(AppError).ErrorMessage())
 	}

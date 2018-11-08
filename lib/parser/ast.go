@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"github.com/mithrandie/csvq/lib/cmd"
 	"strings"
 	"time"
 
@@ -171,7 +172,7 @@ type Identifier struct {
 
 func (i Identifier) String() string {
 	if i.Quoted {
-		return quoteIdentifier(i.Literal)
+		return cmd.QuoteIdentifier(i.Literal)
 	}
 	return i.Literal
 }
@@ -1398,6 +1399,12 @@ type Trigger struct {
 	Event   Identifier
 	Message QueryExpression
 	Code    value.Primary
+}
+
+type Execute struct {
+	*BaseExpr
+	Statements QueryExpression
+	Values     []QueryExpression
 }
 
 type Exit struct {

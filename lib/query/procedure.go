@@ -293,8 +293,12 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		}
 	case parser.Source:
 		var externalStatements []parser.Statement
-		source := stmt.(parser.Source)
-		if externalStatements, err = Source(source, proc.Filter); err == nil {
+		if externalStatements, err = Source(stmt.(parser.Source), proc.Filter); err == nil {
+			flow, err = proc.Execute(externalStatements)
+		}
+	case parser.Execute:
+		var externalStatements []parser.Statement
+		if externalStatements, err = ParseExecuteStatements(stmt.(parser.Execute), proc.Filter); err == nil {
 			flow, err = proc.Execute(externalStatements)
 		}
 	case parser.ShowObjects:
@@ -471,7 +475,7 @@ func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, 
 }
 
 func (proc *Procedure) showExecutionTime() {
-	exectime := cmd.HumarizeNumber(fmt.Sprintf("%f", time.Since(proc.MeasurementStart).Seconds()))
+	exectime := cmd.FormatNumber(time.Since(proc.MeasurementStart).Seconds(), 6, ".", ",", "")
 	stats := fmt.Sprintf(color.BlueB(" Query Execution Time: ")+"%s seconds", exectime)
 	Log(stats, false)
 }
