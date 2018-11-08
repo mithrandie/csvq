@@ -71,13 +71,13 @@ var printfTests = []struct {
 	{
 		Name: "Printf",
 		Expr: parser.Printf{
-			Format: parser.NewStringValue("printf test: value1 %q, value2 %q, %a %% %"),
+			Format: parser.NewStringValue("printf test: value1 %q, value2 %q"),
 			Values: []parser.QueryExpression{
 				parser.NewStringValue("str"),
 				parser.NewIntegerValue(1),
 			},
 		},
-		Result: "printf test: value1 \"str\", value2 \"1\", %a % %",
+		Result: "printf test: value1 \"str\", value2 \"1\"",
 	},
 	{
 		Name: "Printf Format Error",
@@ -105,7 +105,7 @@ var printfTests = []struct {
 	{
 		Name: "Printf Less Values Error",
 		Expr: parser.Printf{
-			Format: parser.NewStringValue("printf test: value1 %s, value2 %s, %a %% %"),
+			Format: parser.NewStringValue("printf test: value1 %s, value2 %s %%"),
 			Values: []parser.QueryExpression{
 				parser.NewStringValue("str"),
 			},
@@ -115,7 +115,7 @@ var printfTests = []struct {
 	{
 		Name: "Printf Greater Values Error",
 		Expr: parser.Printf{
-			Format: parser.NewStringValue("printf test: value1 %s, value2 %s, %a %% %"),
+			Format: parser.NewStringValue("printf test: value1 %s, value2 %s %%"),
 			Values: []parser.QueryExpression{
 				parser.NewStringValue("str"),
 				parser.NewIntegerValue(1),

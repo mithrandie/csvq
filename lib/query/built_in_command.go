@@ -56,7 +56,8 @@ func Printf(expr parser.Printf, filter *Filter) (string, error) {
 		args[i] = p
 	}
 
-	message, err := FormatString(format, args)
+	f := NewStringFormatter()
+	message, err := f.Format(format, args)
 	if err != nil {
 		return "", NewReplaceValueLengthError(expr, err.(AppError).ErrorMessage())
 	}
@@ -134,7 +135,8 @@ func ParseExecuteStatements(expr parser.Execute, filter *Filter) ([]parser.State
 		args[i] = p
 	}
 
-	input, err = FormatString(input, args)
+	f := NewStringFormatter()
+	input, err = f.Format(input, args)
 	if err != nil {
 		return nil, NewReplaceValueLengthError(expr, err.(AppError).ErrorMessage())
 	}

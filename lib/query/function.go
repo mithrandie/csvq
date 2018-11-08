@@ -951,7 +951,8 @@ func Format(fn parser.Function, args []value.Primary) (value.Primary, error) {
 		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, "the first argument must be a string")
 	}
 
-	str, err := FormatString(format.(value.String).Raw(), args[1:])
+	f := NewStringFormatter()
+	str, err := f.Format(format.(value.String).Raw(), args[1:])
 	if err != nil {
 		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, err.(AppError).ErrorMessage())
 	}

@@ -444,10 +444,10 @@ Return the formatted string.
 #### Format Placeholder
 
 ```
-%[flags][width][.precision]specifier
+%[flag][width][.precision]specifier
 ```
 
-flags
+flag
 : | flag | description |
   | :- | :- |
   | + | print a plus sign for numeric values |
@@ -461,8 +461,9 @@ width
 precision
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-  Number of digits after the decimal point.
-
+  Number of digits after the decimal point for a float value, 
+  or max length for a string value.
+  
 specifier
 : | specifier | description |
   | :- | :- |
@@ -477,7 +478,10 @@ specifier
   | s | string representation of the value |
   | q | quoted string representation of the value |
   | i | quoted identifier representation of the value |
+  | T | type of the value |
   | % | '%' |
+
+  > Quoted string and identifier representations are escaped for [special characters]({{ '/reference/command.html#special_characters' | relative_url }}).
 
 ### JSON_VALUE
 {: #json_value}

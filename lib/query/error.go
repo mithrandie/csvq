@@ -98,6 +98,8 @@ const (
 	ErrorFieldLengthNotMatch                  = "field length does not match"
 	ErrorRowValueLengthInList                 = "row value length does not match at index %d"
 	ErrorFormatStringLengthNotMatch           = "number of replace values does not match"
+	ErrorUnknownFormatPlaceholder             = "unknown placeholder: %q"
+	ErrorFormatUnexpectedTermination          = "unexpected termination of format string"
 )
 
 type ForcedExit struct {
@@ -1095,6 +1097,26 @@ type FormatStringLengthNotMatchError struct {
 func NewFormatStringLengthNotMatchError() error {
 	return &FormatStringLengthNotMatchError{
 		BaseError: NewBaseError(parser.NewNullValue(), ErrorFormatStringLengthNotMatch),
+	}
+}
+
+type UnknownFormatPlaceholderError struct {
+	*BaseError
+}
+
+func NewUnknownFormatPlaceholderError(placeholder rune) error {
+	return &UnknownFormatPlaceholderError{
+		BaseError: NewBaseError(parser.NewNullValue(), fmt.Sprintf(ErrorUnknownFormatPlaceholder, string(placeholder))),
+	}
+}
+
+type FormatUnexpectedTerminationError struct {
+	*BaseError
+}
+
+func NewFormatUnexpectedTerminationError() error {
+	return &FormatUnexpectedTerminationError{
+		BaseError: NewBaseError(parser.NewNullValue(), ErrorFormatUnexpectedTermination),
 	}
 }
 
