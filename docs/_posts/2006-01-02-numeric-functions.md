@@ -36,6 +36,7 @@ category: reference
 | [OCT](#oct) | Convert an integer to a string representing the octal number |
 | [HEX](#hex) | Convert an integer to a string representing the hexadecimal number |
 | [ENOTATION](#enotation) | Convert a float to a string representing the number with exponential notation |
+| [NUMBER_FORMAT](#number_format) | Convert a number to a string representing the number with thousands separators |
 | [RAND](#rand) | Return a pseudo-random number |
 
 > _e_ is the base of natural logarithms
@@ -515,6 +516,44 @@ _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
 Convert a _float_ to a string representing the number with exponential notation.
+
+
+### NUMBER_FORMAT
+{: #number_format}
+
+```
+NUMBER_FORMAT(number [, precision, decimalPoint, thousandsSeparator, decimalSeparator])
+```
+
+_number_
+: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+_precision_
+: [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+  The default is -1.
+  -1 is the special precision to determine the number of digits automatically.
+
+_decimalPoint_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+  The default is ".".
+
+_thousandsSeparator_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+  The default is ",".
+
+_decimalSeparator_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+  The default is empty string.
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Convert a number to a string representing the number with thousands separators.
+
 
 ### RAND
 {: #rand}

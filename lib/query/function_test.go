@@ -933,6 +933,45 @@ func TestEnotation(t *testing.T) {
 	testFunction(t, Enotation, enotationTests)
 }
 
+var numberFormatTests = []functionTest{
+	{
+		Name: "NumberFormat",
+		Function: parser.Function{
+			Name: "number_format",
+		},
+		Args: []value.Primary{
+			value.NewFloat(123456.789123),
+			value.NewInteger(4),
+			value.NewString(","),
+			value.NewString(" "),
+			value.NewString(" "),
+		},
+		Result: value.NewString("123 456,789 1"),
+	},
+	{
+		Name: "NumberFormat Null",
+		Function: parser.Function{
+			Name: "number_format",
+		},
+		Args: []value.Primary{
+			value.NewNull(),
+		},
+		Result: value.NewNull(),
+	},
+	{
+		Name: "NumberFormat Arguments Errlr",
+		Function: parser.Function{
+			Name: "number_format",
+		},
+		Args:  []value.Primary{},
+		Error: "[L:- C:-] function number_format takes 1 to 5 arguments",
+	},
+}
+
+func TestNumberFormat(t *testing.T) {
+	testFunction(t, NumberFormat, numberFormatTests)
+}
+
 var randTests = []struct {
 	Name      string
 	Function  parser.Function

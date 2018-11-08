@@ -3,19 +3,18 @@ package query
 import (
 	"errors"
 	"fmt"
+	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/color"
+	"github.com/mithrandie/csvq/lib/file"
+	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/text"
+	"github.com/mithrandie/csvq/lib/value"
 	"github.com/mithrandie/ternary"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
-
-	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/csvq/lib/file"
-	"github.com/mithrandie/csvq/lib/parser"
-	"github.com/mithrandie/csvq/lib/value"
 )
 
 type ObjectStatus int
@@ -441,7 +440,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 					inRange, _ := cur.IsInRange()
 					position, _ := cur.Pointer()
 
-					norStr := cmd.HumarizeNumber(strconv.Itoa(nor))
+					norStr := cmd.FormatInt(nor, ",")
 
 					w.WriteColorWithoutLineBreak("Open", color.TernaryStyle)
 					w.WriteColorWithoutLineBreak("    Number of Rows: ", color.FieldLableStyle)
@@ -454,7 +453,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 					case ternary.UNKNOWN:
 						w.WriteColorWithoutLineBreak(inRange.String(), color.TernaryStyle)
 					default:
-						w.WriteColorWithoutLineBreak(cmd.HumarizeNumber(strconv.Itoa(position)), color.NumberStyle)
+						w.WriteColorWithoutLineBreak(cmd.FormatInt(position, ","), color.NumberStyle)
 					}
 				} else {
 					w.WriteColorWithoutLineBreak("Closed", color.TernaryStyle)

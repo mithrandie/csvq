@@ -169,12 +169,12 @@ func showStats(start time.Time) {
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
 
-	exectime := cmd.HumarizeNumber(fmt.Sprintf("%f", time.Since(start).Seconds()))
-	alloc := cmd.HumarizeNumber(fmt.Sprintf("%v", mem.Alloc))
-	talloc := cmd.HumarizeNumber(fmt.Sprintf("%v", mem.TotalAlloc))
-	sys := cmd.HumarizeNumber(fmt.Sprintf("%v", mem.HeapSys))
-	mallocs := cmd.HumarizeNumber(fmt.Sprintf("%v", mem.Mallocs))
-	frees := cmd.HumarizeNumber(fmt.Sprintf("%v", mem.Frees))
+	exectime := cmd.FormatNumber(time.Since(start).Seconds(), 6, ".", ",", "")
+	alloc := cmd.FormatNumber(float64(mem.Alloc), 0, ".", ",", "")
+	talloc := cmd.FormatNumber(float64(mem.TotalAlloc), 0, ".", ",", "")
+	sys := cmd.FormatNumber(float64(mem.HeapSys), 0, ".", ",", "")
+	mallocs := cmd.FormatNumber(float64(mem.Mallocs), 0, ".", ",", "")
+	frees := cmd.FormatNumber(float64(mem.Frees), 0, ".", ",", "")
 
 	width := len(exectime)
 	for _, v := range []string{alloc, talloc, sys, mallocs, frees} {

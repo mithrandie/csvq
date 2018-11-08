@@ -475,7 +475,7 @@ func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, 
 }
 
 func (proc *Procedure) showExecutionTime() {
-	exectime := cmd.HumarizeNumber(fmt.Sprintf("%f", time.Since(proc.MeasurementStart).Seconds()))
+	exectime := cmd.FormatNumber(time.Since(proc.MeasurementStart).Seconds(), 6, ".", ",", "")
 	stats := fmt.Sprintf(color.BlueB(" Query Execution Time: ")+"%s seconds", exectime)
 	Log(stats, false)
 }

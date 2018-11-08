@@ -75,33 +75,56 @@ func TestQuoteIdentifier(t *testing.T) {
 	}
 }
 
-func TestHumarizeNumber(t *testing.T) {
-	number := "1234567"
+func TestFormatInt(t *testing.T) {
+	i := 1234567
+	sep := ","
 	expect := "1,234,567"
-	result := HumarizeNumber(number)
+	result := FormatInt(i, sep)
 	if result != expect {
-		t.Errorf("humarized = %q, want %q", result, expect)
+		t.Errorf("format int = %q, want %q for %d", result, expect, i)
 	}
+}
 
-	number = "123456"
-	expect = "123,456"
-	result = HumarizeNumber(number)
-	if result != expect {
-		t.Errorf("humarized = %q, want %q", result, expect)
-	}
+var formatNumberTests = []struct {
+	Float              float64
+	Precision          int
+	DecimalPoint       string
+	ThousandsSeparator string
+	DecimalSeparator   string
+	Expect             string
+}{
+	{
+		Float:              0,
+		Precision:          0,
+		DecimalPoint:       ".",
+		ThousandsSeparator: ",",
+		DecimalSeparator:   " ",
+		Expect:             "0",
+	},
+	{
+		Float:              123456.789123,
+		Precision:          4,
+		DecimalPoint:       ".",
+		ThousandsSeparator: ",",
+		DecimalSeparator:   " ",
+		Expect:             "123,456.789 1",
+	},
+	{
+		Float:              123456.7891,
+		Precision:          -1,
+		DecimalPoint:       ".",
+		ThousandsSeparator: ",",
+		DecimalSeparator:   "",
+		Expect:             "123,456.7891",
+	},
+}
 
-	number = "123"
-	expect = "123"
-	result = HumarizeNumber(number)
-	if result != expect {
-		t.Errorf("humarized = %q, want %q", result, expect)
-	}
-
-	number = "1234.5678"
-	expect = "1,234.5678"
-	result = HumarizeNumber(number)
-	if result != expect {
-		t.Errorf("humarized = %q, want %q", result, expect)
+func TestFormatNumber(t *testing.T) {
+	for _, v := range formatNumberTests {
+		result := FormatNumber(v.Float, v.Precision, v.DecimalPoint, v.ThousandsSeparator, v.DecimalSeparator)
+		if result != v.Expect {
+			t.Errorf("result = %s, want %s for %f, %d, %q, %q, %q", result, v.Expect, v.Float, v.Precision, v.DecimalPoint, v.ThousandsSeparator, v.DecimalSeparator)
+		}
 	}
 }
 

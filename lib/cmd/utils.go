@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -184,30 +185,50 @@ func QuoteIdentifier(s string) string {
 	return "`" + EscapeIdentifier(s) + "`"
 }
 
-func HumarizeNumber(s string) string {
+func FormatInt(i int, thousandsSeparator string) string {
+	return FormatNumber(float64(i), 0, ".", thousandsSeparator, "")
+}
+
+func FormatNumber(f float64, precision int, decimalPoint string, thousandsSeparator string, decimalSeparator string) string {
+	s := strconv.FormatFloat(f, 'f', precision, 64)
+
 	parts := strings.Split(s, ".")
 	intPart := parts[0]
 	decPart := ""
 	if 1 < len(parts) {
-		decPart = "." + parts[1]
+		decPart = parts[1]
 	}
 
-	places := make([]string, 0)
-	slen := len(intPart)
-	for i := slen / 3; i >= 0; i-- {
-		end := slen - i*3
+	intPlaces := make([]string, 0, (len(intPart)/3)+1)
+	intLen := len(intPart)
+	for i := intLen / 3; i >= 0; i-- {
+		end := intLen - i*3
 		if end == 0 {
 			continue
 		}
 
-		start := slen - (i+1)*3
+		start := intLen - (i+1)*3
 		if start < 0 {
 			start = 0
 		}
-		places = append(places, intPart[start:end])
+		intPlaces = append(intPlaces, intPart[start:end])
 	}
 
-	return strings.Join(places, ",") + decPart
+	decPlaces := make([]string, 0, (len(decPart)/3)+1)
+	for i := 0; i < len(decPart); i = i + 3 {
+		end := i + 3
+		if len(decPart) < end {
+			end = len(decPart)
+		}
+		decPlaces = append(decPlaces, decPart[i:end])
+	}
+
+	formatted := strings.Join(intPlaces, thousandsSeparator)
+	if 0 < len(decPlaces) {
+		formatted = formatted + decimalPoint + strings.Join(decPlaces, decimalSeparator)
+	}
+
+	return formatted
 }
 
 func IsReadableFromPipeOrRedirection() bool {
