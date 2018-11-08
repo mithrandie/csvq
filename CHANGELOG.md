@@ -1,3 +1,9 @@
+## Release v1.5.3 (2018-11-08)
+
+- Implement EXECUTE statement.
+- Implement NUMBER_FORMAT function.
+- Make FORMAT function to determine the number of digits automatically when precision is not specified.
+
 ## Release v1.5.2 (2018-11-05)
 
 - Fix a bug in calculation of Shift-JIS byte length.
