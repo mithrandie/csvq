@@ -1,3 +1,7 @@
+## Release v1.5.4 (2018-11-08)
+
+- Fix a bug of string format.
+
 ## Release v1.5.3 (2018-11-08)
 
 - Implement EXECUTE statement.

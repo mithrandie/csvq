@@ -39,7 +39,7 @@ var stringFormatterFormatTests = []struct {
 		Expect: "--1111011--173--7b--7B-- 7b--",
 	},
 	{
-		Format: "--%e--%E--%f--%.2f--%.f--%06f--%02f--%-6f--%6f--%2f--% f--%4f--%04f--%f--",
+		Format: "--%e--%E--%f--%.2f--%.f--%06f--%02f--%0f--%-6f--%6f--%2f--% f--%4f--%04f--%f--",
 		Values: []value.Primary{
 			value.NewFloat(123.456),
 			value.NewFloat(123.456),
@@ -48,6 +48,7 @@ var stringFormatterFormatTests = []struct {
 			value.NewFloat(123.456),
 			value.NewFloat(-1.2),
 			value.NewFloat(1.2),
+			value.NewFloat(-1.2),
 			value.NewFloat(1.2),
 			value.NewFloat(1.2),
 			value.NewFloat(1.2),
@@ -56,7 +57,7 @@ var stringFormatterFormatTests = []struct {
 			value.NewNull(),
 			value.NewNull(),
 		},
-		Expect: "--1.23456e+02--1.23456E+02--123.456--123.46--123---001.2--1.2--1.2   --   1.2--1.2-- 1.2--    --    ----",
+		Expect: "--1.23456e+02--1.23456E+02--123.456--123.46--123---001.2--1.2---1.2--1.2   --   1.2--1.2-- 1.2--    --    ----",
 	},
 	{
 		Format: "--%s--%q--%i--%T--%.2i--%.2T--%%",
