@@ -14,15 +14,18 @@ var stringFormatterFormatTests = []struct {
 	Error  string
 }{
 	{
-		Format: "--%d--%+6d--% d--%06d--%-10d--",
+		Format: "--%d--%+6d--% d--%06d--%-10d--%4d--%04d--%d--",
 		Values: []value.Primary{
 			value.NewInteger(123),
 			value.NewInteger(123),
 			value.NewInteger(123),
 			value.NewInteger(123),
 			value.NewInteger(123),
+			value.NewNull(),
+			value.NewNull(),
+			value.NewNull(),
 		},
-		Expect: "--123--  +123-- 123--000123--123       --",
+		Expect: "--123--  +123-- 123--000123--123       --    --    ----",
 	},
 	{
 		Format: "--%b--%o--%x--%X--% x--",
@@ -36,15 +39,24 @@ var stringFormatterFormatTests = []struct {
 		Expect: "--1111011--173--7b--7B-- 7b--",
 	},
 	{
-		Format: "--%e--%E--%f--%.2f--%.f--",
+		Format: "--%e--%E--%f--%.2f--%.f--%06f--%02f--%-6f--%6f--%2f--% f--%4f--%04f--%f--",
 		Values: []value.Primary{
 			value.NewFloat(123.456),
 			value.NewFloat(123.456),
 			value.NewFloat(123.456),
 			value.NewFloat(123.456),
 			value.NewFloat(123.456),
+			value.NewFloat(-1.2),
+			value.NewFloat(1.2),
+			value.NewFloat(1.2),
+			value.NewFloat(1.2),
+			value.NewFloat(1.2),
+			value.NewFloat(1.2),
+			value.NewNull(),
+			value.NewNull(),
+			value.NewNull(),
 		},
-		Expect: "--1.234560e+02--1.234560E+02--123.456000--123.46--123--",
+		Expect: "--1.23456e+02--1.23456E+02--123.456--123.46--123---001.2--1.2--1.2   --   1.2--1.2-- 1.2--    --    ----",
 	},
 	{
 		Format: "--%s--%q--%i--%T--%.2i--%.2T--%%",

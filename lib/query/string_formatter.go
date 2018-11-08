@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/value"
+	"math"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -60,10 +62,13 @@ func (f *StringFormatter) Format(format string, values []value.Primary) (string,
 		placeholder.Reset()
 		placeholder.WriteRune('%')
 
+		var flag rune = -1
+		width := -1
 		precision := -1
 
 		if f.isFlag(ch) {
 			placeholder.WriteRune(ch)
+			flag = ch
 			ch = f.next()
 		}
 
@@ -71,6 +76,7 @@ func (f *StringFormatter) Format(format string, values []value.Primary) (string,
 			f.offset = 1
 			f.scanDecimal()
 			placeholder.WriteString(f.literal())
+			width = f.integer()
 			ch = f.next()
 		}
 
@@ -102,23 +108,50 @@ func (f *StringFormatter) Format(format string, values []value.Primary) (string,
 
 		switch ch {
 		case 'b', 'o', 'd', 'x', 'X':
-			var val int64 = 0
-
 			p := value.ToInteger(values[placeholderOrder])
 			if !value.IsNull(p) {
-				val = p.(value.Integer).Raw()
+				val := p.(value.Integer).Raw()
+				s = fmt.Sprintf(placeholder.String(), val)
+			} else if -1 < width {
+				s = strings.Repeat(" ", width)
 			}
-
-			s = fmt.Sprintf(placeholder.String(), val)
 		case 'e', 'E', 'f':
-			var val float64 = 0
-
 			p := value.ToFloat(values[placeholderOrder])
 			if !value.IsNull(p) {
-				val = p.(value.Float).Raw()
+				val := p.(value.Float).Raw()
+				if -1 < precision {
+					s = fmt.Sprintf(placeholder.String(), val)
+				} else {
+					sign := f.numericSign(flag, val < 0)
+					val := math.Abs(val)
+					s = strconv.FormatFloat(val, byte(ch), -1, 64)
+					switch flag {
+					case '0':
+						if -1 < width {
+							padLen := width - len(s) - len(sign)
+							if padLen < 0 {
+								padLen = 0
+							}
+							s = sign + strings.Repeat("0", padLen) + s
+						}
+					default:
+						s = sign + s
+						if -1 < width {
+							padLen := width - len(s)
+							if padLen < 0 {
+								padLen = 0
+							}
+							if flag == '-' {
+								s = s + strings.Repeat(" ", padLen)
+							} else {
+								s = strings.Repeat(" ", padLen) + s
+							}
+						}
+					}
+				}
+			} else if -1 < width {
+				s = strings.Repeat(" ", width)
 			}
-
-			s = fmt.Sprintf(placeholder.String(), val)
 		case 's', 'q', 'i':
 			switch values[placeholderOrder].(type) {
 			case value.String:
@@ -214,4 +247,15 @@ func (f *StringFormatter) scanDecimal() {
 	for f.isDecimal(f.peek()) {
 		f.next()
 	}
+}
+
+func (f *StringFormatter) numericSign(flag rune, minus bool) string {
+	if minus {
+		return "-"
+	}
+	switch flag {
+	case '+', ' ':
+		return string(flag)
+	}
+	return ""
 }
