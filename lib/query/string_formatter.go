@@ -133,6 +133,8 @@ func (f *StringFormatter) Format(format string, values []value.Primary) (string,
 								padLen = 0
 							}
 							s = sign + strings.Repeat("0", padLen) + s
+						} else {
+							s = sign + s
 						}
 					default:
 						s = sign + s
