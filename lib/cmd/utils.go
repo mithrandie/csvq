@@ -4,22 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"io"
 	"os"
 	"strconv"
 	"strings"
 	"unicode/utf8"
 
-	"golang.org/x/text/encoding/japanese"
-	"golang.org/x/text/transform"
+	"github.com/mithrandie/go-text"
 )
-
-func GetReader(r io.Reader, enc Encoding) io.Reader {
-	if enc == SJIS {
-		return transform.NewReader(r, japanese.ShiftJIS.NewDecoder())
-	}
-	return r
-}
 
 func EscapeString(s string) string {
 	runes := []rune(s)
@@ -239,28 +230,28 @@ func IsReadableFromPipeOrRedirection() bool {
 	return false
 }
 
-func ParseEncoding(s string) (Encoding, error) {
-	var encoding Encoding
+func ParseEncoding(s string) (text.Encoding, error) {
+	var encoding text.Encoding
 	switch strings.ToUpper(s) {
 	case "UTF8":
-		encoding = UTF8
+		encoding = text.UTF8
 	case "SJIS":
-		encoding = SJIS
+		encoding = text.SJIS
 	default:
-		return UTF8, errors.New("encoding must be one of UTF8|SJIS")
+		return text.UTF8, errors.New("encoding must be one of UTF8|SJIS")
 	}
 	return encoding, nil
 }
 
-func ParseLineBreak(s string) (LineBreak, error) {
-	var lb LineBreak
+func ParseLineBreak(s string) (text.LineBreak, error) {
+	var lb text.LineBreak
 	switch strings.ToUpper(s) {
 	case "CRLF":
-		lb = CRLF
+		lb = text.CRLF
 	case "CR":
-		lb = CR
+		lb = text.CR
 	case "LF":
-		lb = LF
+		lb = text.LF
 	default:
 		return lb, errors.New("line-break must be one of CRLF|LF|CR")
 	}

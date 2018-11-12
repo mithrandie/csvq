@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/mithrandie/csvq/lib/cmd"
 )
 
 var TestDir = filepath.Join(os.TempDir(), "csvq_action_test")
@@ -38,10 +40,14 @@ func setup() {
 
 	r, _ := os.Open(filepath.Join(TestDataDir, "empty.txt"))
 	os.Stdin = r
+
+	cmd.SetColor(false)
 }
 
 func teardown() {
 	if _, err := os.Stat(TestDir); err == nil {
 		os.RemoveAll(TestDir)
 	}
+
+	cmd.SetColor(true)
 }

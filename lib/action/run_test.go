@@ -19,10 +19,11 @@ var executeTests = []struct {
 	Error   string
 }{
 	{
-		Name:    "Select Query Output To A File",
+		Name:    "Select Query Output To File",
 		Input:   "select 1 from dual",
-		OutFile: GetTestFilePath("select_query_output_a_file.csv"),
-		Content: "+---+\n" +
+		OutFile: GetTestFilePath("select_query_output_file.csv"),
+		Content: "" +
+			"+---+\n" +
 			"| 1 |\n" +
 			"+---+\n" +
 			"| 1 |\n" +

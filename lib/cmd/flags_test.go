@@ -2,34 +2,16 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/mithrandie/csvq/lib/file"
 	"os"
 	"path/filepath"
 	"reflect"
 	"runtime"
 	"testing"
+
+	"github.com/mithrandie/go-text"
+
+	"github.com/mithrandie/csvq/lib/file"
 )
-
-func TestEncoding_String(t *testing.T) {
-	enc := UTF8
-	if enc.String() != "UTF8" {
-		t.Errorf("string = %q, want %q for %s", enc.String(), "UTF8", "UTF8")
-	}
-}
-
-func TestLineBreak_Value(t *testing.T) {
-	lb := CRLF
-	if lb.Value() != "\r\n" {
-		t.Errorf("value = %q, want %q for %s", lb.Value(), "\\r\\n", "CRLF")
-	}
-}
-
-func TestLineBreak_String(t *testing.T) {
-	lb := CRLF
-	if lb.String() != "CRLF" {
-		t.Errorf("string = %q, want %q for %s", lb.String(), "CRLF", "CRLF")
-	}
-}
 
 func TestFlags_ImportFormat(t *testing.T) {
 	flags := GetFlags()
@@ -252,8 +234,8 @@ func TestSetEncoding(t *testing.T) {
 	flags := GetFlags()
 
 	SetEncoding("sjis")
-	if flags.Encoding != SJIS {
-		t.Errorf("encoding = %s, expect to set %s for %s", flags.Encoding, SJIS, "sjis")
+	if flags.Encoding != text.SJIS {
+		t.Errorf("encoding = %s, expect to set %s for %s", flags.Encoding, text.SJIS, "sjis")
 	}
 
 	expectErr := "encoding must be one of UTF8|SJIS"
@@ -407,8 +389,8 @@ func TestSetWriteEncoding(t *testing.T) {
 	flags := GetFlags()
 
 	SetWriteEncoding("sjis")
-	if flags.Encoding != SJIS {
-		t.Errorf("encoding = %s, expect to set %s for %s", flags.WriteEncoding, SJIS, "sjis")
+	if flags.Encoding != text.SJIS {
+		t.Errorf("encoding = %s, expect to set %s for %s", flags.WriteEncoding, text.SJIS, "sjis")
 	}
 
 	expectErr := "encoding must be one of UTF8|SJIS"
@@ -460,23 +442,23 @@ func TestSetLineBreak(t *testing.T) {
 	flags := GetFlags()
 
 	SetLineBreak("")
-	if flags.LineBreak != LF {
-		t.Errorf("line-break = %s, expect to set %s for %q", flags.LineBreak, LF, "")
+	if flags.LineBreak != text.LF {
+		t.Errorf("line-break = %s, expect to set %s for %q", flags.LineBreak, text.LF, "")
 	}
 
 	SetLineBreak("crlf")
-	if flags.LineBreak != CRLF {
-		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, CRLF, "crlf")
+	if flags.LineBreak != text.CRLF {
+		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, text.CRLF, "crlf")
 	}
 
 	SetLineBreak("cr")
-	if flags.LineBreak != CR {
-		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, CR, "cr")
+	if flags.LineBreak != text.CR {
+		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, text.CR, "cr")
 	}
 
 	SetLineBreak("lf")
-	if flags.LineBreak != LF {
-		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, LF, "LF")
+	if flags.LineBreak != text.LF {
+		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, text.LF, "LF")
 	}
 
 	expectErr := "line-break must be one of CRLF|LF|CR"

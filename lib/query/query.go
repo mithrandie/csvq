@@ -2,8 +2,6 @@ package query
 
 import (
 	"fmt"
-	"github.com/mithrandie/csvq/lib/color"
-	"github.com/mithrandie/csvq/lib/text"
 	"os"
 	"strings"
 
@@ -11,6 +9,8 @@ import (
 	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
+
+	"github.com/mithrandie/go-text/color"
 )
 
 type StatementFlow int
@@ -901,16 +901,16 @@ func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (st
 		return log, NewInvalidTableAttributeValueError(query, err.Error())
 	}
 
-	w := text.NewObjectWriter()
-	w.WriteColorWithoutLineBreak("Path: ", color.FieldLableStyle)
-	w.WriteColorWithoutLineBreak(fileInfo.Path, color.ObjectStyle)
+	w := cmd.NewObjectWriter()
+	w.WriteColorWithoutLineBreak("Path: ", cmd.LableEffect)
+	w.WriteColorWithoutLineBreak(fileInfo.Path, cmd.ObjectEffect)
 	w.NewLine()
 	writeTableAttribute(w, fileInfo)
 	w.NewLine()
 
 	w.Title1 = "Attributes Updated in"
 	w.Title2 = query.Table.(parser.Identifier).Literal
-	w.Title2Style = color.IdentifierStyle
+	w.Title2Effect = cmd.IdentifierEffect
 	log = "\n" + w.String()
 	return log, nil
 }
@@ -932,7 +932,7 @@ func Commit(expr parser.Expression, filter *Filter) error {
 				}
 				return NewWriteFileError(expr, err.Error())
 			}
-			Log(color.Info(fmt.Sprintf("Commit: file %q is created.", filename)), cmd.GetFlags().Quiet)
+			Log(color.Notice(fmt.Sprintf("Commit: file %q is created.", filename)), cmd.GetFlags().Quiet)
 		}
 	}
 
@@ -950,7 +950,7 @@ func Commit(expr parser.Expression, filter *Filter) error {
 				}
 				return NewWriteFileError(expr, err.Error())
 			}
-			Log(color.Info(fmt.Sprintf("Commit: file %q is updated.", filename)), cmd.GetFlags().Quiet)
+			Log(color.Notice(fmt.Sprintf("Commit: file %q is updated.", filename)), cmd.GetFlags().Quiet)
 		}
 	}
 
@@ -968,13 +968,13 @@ func Rollback(filter *Filter) {
 
 	if 0 < len(createdFiles) {
 		for filename := range createdFiles {
-			Log(color.Info(fmt.Sprintf("Rollback: file %q is deleted.", filename)), cmd.GetFlags().Quiet)
+			Log(color.Notice(fmt.Sprintf("Rollback: file %q is deleted.", filename)), cmd.GetFlags().Quiet)
 		}
 	}
 
 	if 0 < len(updatedFiles) {
 		for filename := range updatedFiles {
-			Log(color.Info(fmt.Sprintf("Rollback: file %q is restored.", filename)), cmd.GetFlags().Quiet)
+			Log(color.Notice(fmt.Sprintf("Rollback: file %q is restored.", filename)), cmd.GetFlags().Quiet)
 		}
 	}
 

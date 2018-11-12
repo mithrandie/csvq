@@ -3,14 +3,15 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/mithrandie/csvq/lib/action"
-	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/csvq/lib/color"
-	"github.com/mithrandie/csvq/lib/query"
 	"io/ioutil"
 	"os"
 	"runtime"
 
+	"github.com/mithrandie/csvq/lib/action"
+	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/query"
+
+	"github.com/mithrandie/go-text/color"
 	"github.com/urfave/cli"
 )
 

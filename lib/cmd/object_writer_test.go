@@ -1,8 +1,6 @@
-package text
+package cmd
 
 import (
-	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/csvq/lib/color"
 	"testing"
 )
 
@@ -115,32 +113,32 @@ func TestObjectWriter_String(t *testing.T) {
 		t.Errorf("result = %q, want %q", result, expect)
 	}
 
-	cmd.SetColor(true)
+	SetColor(true)
 	w = NewObjectWriter()
 	w.MaxWidth = 20
 
 	w.Title1 = "title1"
 	w.Title2 = "title2"
-	w.Title2Style = color.IdentifierStyle
+	w.Title2Effect = IdentifierEffect
 
 	w.Write("aaa")
 	w.BeginBlock()
 	w.NewLine()
-	w.Write("bbbbbbbbbb")
+	w.WriteColor("bbbbbbbbbb", StringEffect)
 	w.Write(", ")
 	w.Write("bbbbbbbbbb")
 
 	expect = "" +
-		"  \x1b[0mtitle1\x1b[0m \x1b[36;1mtitle2\x1b[0m\n" +
+		"  title1 \x1b[36;1mtitle2\x1b[0m\n" +
 		"------------------\n" +
-		" \x1b[0maaa\x1b[0m\n" +
-		"     \x1b[0mbbbbbbbbbb\x1b[0m\x1b[0m, \x1b[0m\n" +
-		"     \x1b[0mbbbbbbbbbb\x1b[0m"
+		" aaa\n" +
+		"     \x1b[32mbbbbbbbbbb\x1b[0m, \n" +
+		"     bbbbbbbbbb"
 	result = w.String()
 
 	if result != expect {
 		t.Errorf("result = %q, want %q", result, expect)
 	}
 
-	cmd.SetColor(false)
+	SetColor(false)
 }

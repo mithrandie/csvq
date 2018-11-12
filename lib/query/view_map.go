@@ -2,9 +2,10 @@ package query
 
 import (
 	"fmt"
-	"github.com/mithrandie/csvq/lib/color"
 	"sort"
 	"strings"
+
+	"github.com/mithrandie/go-text/color"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/file"
@@ -68,7 +69,7 @@ func (list TemporaryViewScopes) Store(uncomittedViews map[string]*FileInfo) {
 			if _, ok := uncomittedViews[view.FileInfo.Path]; ok {
 				view.FileInfo.InitialRecordSet = view.RecordSet.Copy()
 				view.FileInfo.InitialHeader = view.Header.Copy()
-				Log(color.Info(fmt.Sprintf("Commit: restore point of view %q is created.", view.FileInfo.Path)), cmd.GetFlags().Quiet)
+				Log(color.Notice(fmt.Sprintf("Commit: restore point of view %q is created.", view.FileInfo.Path)), cmd.GetFlags().Quiet)
 			}
 		}
 	}
@@ -80,7 +81,7 @@ func (list TemporaryViewScopes) Restore(uncomittedViews map[string]*FileInfo) {
 			if _, ok := uncomittedViews[view.FileInfo.Path]; ok {
 				view.RecordSet = view.FileInfo.InitialRecordSet.Copy()
 				view.Header = view.FileInfo.InitialHeader.Copy()
-				Log(color.Info(fmt.Sprintf("Rollback: view %q is restored.", view.FileInfo.Path)), cmd.GetFlags().Quiet)
+				Log(color.Notice(fmt.Sprintf("Rollback: view %q is restored.", view.FileInfo.Path)), cmd.GetFlags().Quiet)
 			}
 		}
 	}

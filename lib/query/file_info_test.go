@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/mithrandie/go-text"
+
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 )
@@ -16,7 +18,7 @@ var fileInfoTests = []struct {
 	Repository string
 	Format     cmd.Format
 	Delimiter  rune
-	Encoding   cmd.Encoding
+	Encoding   text.Encoding
 	Result     *FileInfo
 	Error      string
 }{
@@ -26,12 +28,12 @@ var fileInfoTests = []struct {
 		Repository: TestDir,
 		Format:     cmd.CSV,
 		Delimiter:  ',',
-		Encoding:   cmd.UTF8,
+		Encoding:   text.UTF8,
 		Result: &FileInfo{
 			Path:      "table1.csv",
 			Delimiter: ',',
 			Format:    cmd.CSV,
-			Encoding:  cmd.UTF8,
+			Encoding:  text.UTF8,
 		},
 	},
 	{
@@ -40,12 +42,12 @@ var fileInfoTests = []struct {
 		Repository: TestDir,
 		Format:     cmd.AutoSelect,
 		Delimiter:  ',',
-		Encoding:   cmd.UTF8,
+		Encoding:   text.UTF8,
 		Result: &FileInfo{
 			Path:      "table1.csv",
 			Delimiter: ',',
 			Format:    cmd.CSV,
-			Encoding:  cmd.UTF8,
+			Encoding:  text.UTF8,
 		},
 	},
 	{
@@ -54,12 +56,12 @@ var fileInfoTests = []struct {
 		Repository: TestDir,
 		Format:     cmd.TSV,
 		Delimiter:  ',',
-		Encoding:   cmd.UTF8,
+		Encoding:   text.UTF8,
 		Result: &FileInfo{
 			Path:      "table3.tsv",
 			Delimiter: '\t',
 			Format:    cmd.TSV,
-			Encoding:  cmd.UTF8,
+			Encoding:  text.UTF8,
 		},
 	},
 	{
@@ -68,12 +70,12 @@ var fileInfoTests = []struct {
 		Repository: TestDir,
 		Format:     cmd.AutoSelect,
 		Delimiter:  ',',
-		Encoding:   cmd.UTF8,
+		Encoding:   text.UTF8,
 		Result: &FileInfo{
 			Path:      "table3.tsv",
 			Delimiter: '\t',
 			Format:    cmd.TSV,
-			Encoding:  cmd.UTF8,
+			Encoding:  text.UTF8,
 		},
 	},
 	{
@@ -82,12 +84,12 @@ var fileInfoTests = []struct {
 		Repository: TestDir,
 		Format:     cmd.JSON,
 		Delimiter:  ',',
-		Encoding:   cmd.UTF8,
+		Encoding:   text.UTF8,
 		Result: &FileInfo{
 			Path:      "table.json",
 			Delimiter: ',',
 			Format:    cmd.JSON,
-			Encoding:  cmd.UTF8,
+			Encoding:  text.UTF8,
 		},
 	},
 	{
@@ -96,12 +98,12 @@ var fileInfoTests = []struct {
 		Repository: TestDir,
 		Format:     cmd.AutoSelect,
 		Delimiter:  ',',
-		Encoding:   cmd.UTF8,
+		Encoding:   text.UTF8,
 		Result: &FileInfo{
 			Path:      "table.json",
 			Delimiter: ',',
 			Format:    cmd.JSON,
-			Encoding:  cmd.UTF8,
+			Encoding:  text.UTF8,
 		},
 	},
 	{
@@ -110,12 +112,12 @@ var fileInfoTests = []struct {
 		Repository: TestDir,
 		Format:     cmd.FIXED,
 		Delimiter:  ',',
-		Encoding:   cmd.UTF8,
+		Encoding:   text.UTF8,
 		Result: &FileInfo{
 			Path:      "fixed_length.txt",
 			Delimiter: ',',
 			Format:    cmd.FIXED,
-			Encoding:  cmd.UTF8,
+			Encoding:  text.UTF8,
 		},
 	},
 	{
@@ -124,12 +126,12 @@ var fileInfoTests = []struct {
 		Repository: TestDir,
 		Format:     cmd.AutoSelect,
 		Delimiter:  ',',
-		Encoding:   cmd.UTF8,
+		Encoding:   text.UTF8,
 		Result: &FileInfo{
 			Path:      "autoselect",
 			Delimiter: ',',
 			Format:    cmd.CSV,
-			Encoding:  cmd.UTF8,
+			Encoding:  text.UTF8,
 		},
 	},
 	{
@@ -138,7 +140,7 @@ var fileInfoTests = []struct {
 		Repository: TestDir,
 		Format:     cmd.CSV,
 		Delimiter:  ',',
-		Encoding:   cmd.UTF8,
+		Encoding:   text.UTF8,
 		Error:      "[L:- C:-] file notexist does not exist",
 	},
 	{
@@ -147,7 +149,7 @@ var fileInfoTests = []struct {
 		Repository: TestDir,
 		Format:     cmd.CSV,
 		Delimiter:  ',',
-		Encoding:   cmd.UTF8,
+		Encoding:   text.UTF8,
 		Error:      fmt.Sprintf("[L:- C:-] file %s is unable to be read", TestDir),
 	},
 	{
@@ -156,7 +158,7 @@ var fileInfoTests = []struct {
 		Repository: TestDir,
 		Format:     cmd.AutoSelect,
 		Delimiter:  ',',
-		Encoding:   cmd.UTF8,
+		Encoding:   text.UTF8,
 		Error:      fmt.Sprintf("[L:- C:-] filename dup_name is ambiguous"),
 	},
 }
@@ -195,7 +197,7 @@ var fileInfoForCreateTests = []struct {
 	FilePath   parser.Identifier
 	Repository string
 	Delimiter  rune
-	Encoding   cmd.Encoding
+	Encoding   text.Encoding
 	Result     *FileInfo
 	Error      string
 }{
@@ -203,72 +205,72 @@ var fileInfoForCreateTests = []struct {
 		Name:      "CSV",
 		FilePath:  parser.Identifier{Literal: "table1.csv"},
 		Delimiter: ',',
-		Encoding:  cmd.UTF8,
+		Encoding:  text.UTF8,
 		Result: &FileInfo{
 			Path:      "table1.csv",
 			Delimiter: ',',
 			Format:    cmd.CSV,
-			Encoding:  cmd.UTF8,
+			Encoding:  text.UTF8,
 		},
 	},
 	{
 		Name:      "TSV",
 		FilePath:  parser.Identifier{Literal: "table1.tsv"},
 		Delimiter: ',',
-		Encoding:  cmd.UTF8,
+		Encoding:  text.UTF8,
 		Result: &FileInfo{
 			Path:      "table1.tsv",
 			Delimiter: '\t',
 			Format:    cmd.TSV,
-			Encoding:  cmd.UTF8,
+			Encoding:  text.UTF8,
 		},
 	},
 	{
 		Name:      "FIXED",
 		FilePath:  parser.Identifier{Literal: "table1.txt"},
 		Delimiter: ',',
-		Encoding:  cmd.UTF8,
+		Encoding:  text.UTF8,
 		Result: &FileInfo{
 			Path:      "table1.txt",
 			Delimiter: ',',
 			Format:    cmd.FIXED,
-			Encoding:  cmd.UTF8,
+			Encoding:  text.UTF8,
 		},
 	},
 	{
 		Name:      "JSON",
 		FilePath:  parser.Identifier{Literal: "table1.json"},
 		Delimiter: ',',
-		Encoding:  cmd.SJIS,
+		Encoding:  text.SJIS,
 		Result: &FileInfo{
 			Path:      "table1.json",
 			Delimiter: ',',
 			Format:    cmd.JSON,
-			Encoding:  cmd.UTF8,
+			Encoding:  text.UTF8,
 		},
 	},
 	{
 		Name:      "GFM",
 		FilePath:  parser.Identifier{Literal: "table1.md"},
 		Delimiter: ',',
-		Encoding:  cmd.UTF8,
+		Encoding:  text.UTF8,
 		Result: &FileInfo{
 			Path:      "table1.md",
 			Delimiter: ',',
 			Format:    cmd.GFM,
-			Encoding:  cmd.UTF8,
+			Encoding:  text.UTF8,
 		},
 	},
 	{
 		Name:      "ORG",
 		FilePath:  parser.Identifier{Literal: "table1.org"},
 		Delimiter: ',',
-		Encoding:  cmd.UTF8,
+		Encoding:  text.UTF8,
 		Result: &FileInfo{
 			Path:      "table1.org",
 			Delimiter: ',',
 			Format:    cmd.ORG,
-			Encoding:  cmd.UTF8,
+			Encoding:  text.UTF8,
 		},
 	},
 }

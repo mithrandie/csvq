@@ -3,13 +3,6 @@ package query
 import (
 	"bytes"
 	gojson "encoding/json"
-	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/csvq/lib/csv"
-	"github.com/mithrandie/csvq/lib/file"
-	"github.com/mithrandie/csvq/lib/json"
-	"github.com/mithrandie/csvq/lib/parser"
-	"github.com/mithrandie/csvq/lib/text"
-	"github.com/mithrandie/csvq/lib/value"
 	"io"
 	"io/ioutil"
 	"math"
@@ -19,11 +12,21 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/file"
+	"github.com/mithrandie/csvq/lib/json"
+	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
+
+	"github.com/mithrandie/go-text"
+	"github.com/mithrandie/go-text/csv"
+	"github.com/mithrandie/go-text/fixedlen"
+	txjson "github.com/mithrandie/go-text/json"
 	"github.com/mithrandie/ternary"
 )
 
 type RecordReader interface {
-	Read() ([]value.Field, error)
+	Read() ([]text.RawText, error)
 }
 
 type View struct {
@@ -143,7 +146,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 					return nil, NewDataParsingError(table.Object, fileInfo.Path, err.Error())
 				}
 			} else {
-				fileInfo.Encoding = cmd.UTF8
+				fileInfo.Encoding = text.UTF8
 
 				buf, err := ioutil.ReadAll(os.Stdin)
 				if err != nil {
@@ -161,9 +164,9 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 				}
 
 				switch encodeType {
-				case json.HexDigits:
+				case txjson.HexDigits:
 					fileInfo.Format = cmd.JSONH
-				case json.AllWithHexDigits:
+				case txjson.AllWithHexDigits:
 					fileInfo.Format = cmd.JSONA
 				}
 
@@ -254,7 +257,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 			}
 			jsonQuery = felemStr.(value.String).Raw()
 			importFormat = cmd.JSON
-			encoding = cmd.UTF8
+			encoding = text.UTF8
 		default:
 			return nil, NewTableObjectInvalidObjectError(tableObject, tableObject.Type.Literal)
 		}
@@ -470,7 +473,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 			Path:        alias,
 			Format:      cmd.JSON,
 			JsonQuery:   queryValue.(value.String).Raw(),
-			Encoding:    cmd.UTF8,
+			Encoding:    text.UTF8,
 			LineBreak:   cmd.GetFlags().LineBreak,
 			IsTemporary: true,
 		}
@@ -511,8 +514,8 @@ func loadObject(
 	delimiter rune,
 	delimiterPositions []int,
 	jsonQuery string,
-	encoding cmd.Encoding,
-	lineBreak cmd.LineBreak,
+	encoding text.Encoding,
+	lineBreak text.LineBreak,
 	noHeader bool,
 	withoutNull bool,
 ) (*View, error) {
@@ -639,14 +642,16 @@ func loadViewFromFile(fp *os.File, fileInfo *FileInfo, withoutNull bool) (*View,
 }
 
 func loadViewFromFixedLengthTextFile(fp *os.File, fileInfo *FileInfo, withoutNull bool) (*View, error) {
-	data, err := ioutil.ReadAll(cmd.GetReader(fp, fileInfo.Encoding))
+	var err error
+
+	data, err := ioutil.ReadAll(fp)
 	if err != nil {
 		return nil, err
 	}
 	r := bytes.NewReader(data)
 
 	if fileInfo.DelimiterPositions == nil {
-		d := text.NewDelimiter(r)
+		d := fixedlen.NewDelimiter(r, fileInfo.Encoding)
 		d.NoHeader = fileInfo.NoHeader
 		d.Encoding = fileInfo.Encoding
 		fileInfo.DelimiterPositions, err = d.Delimit()
@@ -656,7 +661,7 @@ func loadViewFromFixedLengthTextFile(fp *os.File, fileInfo *FileInfo, withoutNul
 	}
 
 	r.Seek(0, io.SeekStart)
-	reader := text.NewFixedLengthReader(r, fileInfo.DelimiterPositions)
+	reader := fixedlen.NewReader(r, fileInfo.DelimiterPositions, fileInfo.Encoding)
 	reader.WithoutNull = withoutNull
 	reader.Encoding = fileInfo.Encoding
 
@@ -680,8 +685,8 @@ func loadViewFromFixedLengthTextFile(fp *os.File, fileInfo *FileInfo, withoutNul
 		}
 	}
 
-	if reader.LineBreak != "" {
-		fileInfo.LineBreak = reader.LineBreak
+	if reader.DetectedLineBreak != "" {
+		fileInfo.LineBreak = reader.DetectedLineBreak
 	}
 
 	view := NewView()
@@ -692,9 +697,7 @@ func loadViewFromFixedLengthTextFile(fp *os.File, fileInfo *FileInfo, withoutNul
 }
 
 func loadViewFromCSVFile(fp *os.File, fileInfo *FileInfo, withoutNull bool) (*View, error) {
-	r := cmd.GetReader(fp, fileInfo.Encoding)
-
-	reader := csv.NewReader(r)
+	reader := csv.NewReader(fp, fileInfo.Encoding)
 	reader.Delimiter = fileInfo.Delimiter
 	reader.WithoutNull = withoutNull
 
@@ -702,7 +705,7 @@ func loadViewFromCSVFile(fp *os.File, fileInfo *FileInfo, withoutNull bool) (*Vi
 	var header []string
 	if !fileInfo.NoHeader {
 		header, err = reader.ReadHeader()
-		if err != nil && err != csv.EOF {
+		if err != nil && err != io.EOF {
 			return nil, err
 		}
 	}
@@ -719,8 +722,8 @@ func loadViewFromCSVFile(fp *os.File, fileInfo *FileInfo, withoutNull bool) (*Vi
 		}
 	}
 
-	if reader.LineBreak != "" {
-		fileInfo.LineBreak = reader.LineBreak
+	if reader.DetectedLineBreak != "" {
+		fileInfo.LineBreak = reader.DetectedLineBreak
 	}
 
 	view := NewView()
@@ -733,7 +736,7 @@ func loadViewFromCSVFile(fp *os.File, fileInfo *FileInfo, withoutNull bool) (*Vi
 func readRecordSet(reader RecordReader) (RecordSet, error) {
 	var err error
 	records := make(RecordSet, 0, 1000)
-	rowch := make(chan []value.Field, 1000)
+	rowch := make(chan []text.RawText, 1000)
 	fieldch := make(chan []value.Primary, 1000)
 
 	wg := sync.WaitGroup{}
@@ -759,7 +762,11 @@ func readRecordSet(reader RecordReader) (RecordSet, error) {
 			}
 			fields := make([]value.Primary, len(row))
 			for i, v := range row {
-				fields[i] = v.ToPrimary()
+				if v == nil {
+					fields[i] = value.NewNull()
+				} else {
+					fields[i] = value.NewString(string(v))
+				}
 			}
 			fieldch <- fields
 		}
@@ -771,7 +778,7 @@ func readRecordSet(reader RecordReader) (RecordSet, error) {
 	go func() {
 		for {
 			record, e := reader.Read()
-			if e == csv.EOF {
+			if e == io.EOF {
 				break
 			}
 			if e != nil {
@@ -806,9 +813,9 @@ func loadViewFromJsonFile(fp io.Reader, fileInfo *FileInfo) (*View, error) {
 	}
 
 	switch encodeType {
-	case json.HexDigits:
+	case txjson.HexDigits:
 		fileInfo.Format = cmd.JSONH
-	case json.AllWithHexDigits:
+	case txjson.AllWithHexDigits:
 		fileInfo.Format = cmd.JSONA
 	}
 

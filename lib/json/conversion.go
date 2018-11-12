@@ -3,31 +3,34 @@ package json
 import (
 	"errors"
 	"fmt"
+	"time"
+
+	"github.com/mithrandie/go-text/json"
+
 	"github.com/mithrandie/csvq/lib/value"
 	"github.com/mithrandie/ternary"
-	"time"
 )
 
-func ConvertToValue(structure Structure) value.Primary {
+func ConvertToValue(structure json.Structure) value.Primary {
 	var p value.Primary
 
 	switch structure.(type) {
-	case Number:
-		p = value.ParseFloat64(float64(structure.(Number)))
-	case String:
-		p = value.NewString(string(structure.(String)))
-	case Boolean:
-		p = value.NewBoolean(bool(structure.(Boolean)))
-	case Null:
+	case json.Number:
+		p = value.ParseFloat64(float64(structure.(json.Number)))
+	case json.String:
+		p = value.NewString(string(structure.(json.String)))
+	case json.Boolean:
+		p = value.NewBoolean(bool(structure.(json.Boolean)))
+	case json.Null:
 		p = value.NewNull()
 	default:
-		p = value.NewString(structure.String())
+		p = value.NewString(structure.Encode())
 	}
 
 	return p
 }
 
-func ConvertToArray(array Array) []value.Primary {
+func ConvertToArray(array json.Array) []value.Primary {
 	row := make([]value.Primary, 0, len(array))
 	for _, v := range array {
 		row = append(row, ConvertToValue(v))
@@ -36,7 +39,7 @@ func ConvertToArray(array Array) []value.Primary {
 	return row
 }
 
-func ConvertToTableValue(array Array) ([]string, [][]value.Primary, error) {
+func ConvertToTableValue(array json.Array) ([]string, [][]value.Primary, error) {
 	exists := func(s string, list []string) bool {
 		for _, v := range list {
 			if s == v {
@@ -48,7 +51,7 @@ func ConvertToTableValue(array Array) ([]string, [][]value.Primary, error) {
 
 	var header []string
 	for _, elem := range array {
-		obj, ok := elem.(Object)
+		obj, ok := elem.(json.Object)
 		if !ok {
 			return nil, nil, errors.New("rows loaded from json must be objects")
 		}
@@ -67,12 +70,12 @@ func ConvertToTableValue(array Array) ([]string, [][]value.Primary, error) {
 	for _, elem := range array {
 		row := make([]value.Primary, 0, len(header))
 
-		obj, _ := elem.(Object)
+		obj, _ := elem.(json.Object)
 		for _, column := range header {
 			if obj.Exists(column) {
 				row = append(row, ConvertToValue(obj.Value(column)))
 			} else {
-				row = append(row, ConvertToValue(Null{}))
+				row = append(row, ConvertToValue(json.Null{}))
 			}
 		}
 
@@ -82,13 +85,13 @@ func ConvertToTableValue(array Array) ([]string, [][]value.Primary, error) {
 	return header, rows, nil
 }
 
-func ConvertTableValueToJsonStructure(fields []string, rows [][]value.Primary) (Structure, error) {
+func ConvertTableValueToJsonStructure(fields []string, rows [][]value.Primary) (json.Structure, error) {
 	pathes, err := ParsePathes(fields)
 	if err != nil {
 		return nil, err
 	}
 
-	structure := make(Array, 0, len(rows))
+	structure := make(json.Array, 0, len(rows))
 	for _, row := range rows {
 		rowStructure, err := ConvertRecordValueToJsonStructure(pathes, row)
 		if err != nil {
@@ -115,8 +118,8 @@ func ParsePathes(fields []string) ([]PathExpression, error) {
 	return pathes, nil
 }
 
-func ConvertRecordValueToJsonStructure(pathes []PathExpression, row []value.Primary) (Structure, error) {
-	var structure Structure
+func ConvertRecordValueToJsonStructure(pathes []PathExpression, row []value.Primary) (json.Structure, error) {
+	var structure json.Structure
 
 	fieldLen := len(pathes)
 
@@ -131,12 +134,12 @@ func ConvertRecordValueToJsonStructure(pathes []PathExpression, row []value.Prim
 	return structure, nil
 }
 
-func addPathValueToRowStructure(parent Structure, path ObjectPath, val value.Primary, fieldLen int) Structure {
-	var obj Object
+func addPathValueToRowStructure(parent json.Structure, path ObjectPath, val value.Primary, fieldLen int) json.Structure {
+	var obj json.Object
 	if parent == nil {
-		obj = NewObject(fieldLen)
+		obj = json.NewObject(fieldLen)
 	} else {
-		obj = parent.(Object)
+		obj = parent.(json.Object)
 	}
 
 	if path.Child == nil {
@@ -153,29 +156,29 @@ func addPathValueToRowStructure(parent Structure, path ObjectPath, val value.Pri
 	return obj
 }
 
-func ParseValueToStructure(val value.Primary) Structure {
-	var s Structure
+func ParseValueToStructure(val value.Primary) json.Structure {
+	var s json.Structure
 
 	switch val.(type) {
 	case value.String:
-		s = String(val.(value.String).Raw())
+		s = json.String(val.(value.String).Raw())
 	case value.Integer:
-		s = Number(val.(value.Integer).Raw())
+		s = json.Number(val.(value.Integer).Raw())
 	case value.Float:
-		s = Number(val.(value.Float).Raw())
+		s = json.Number(val.(value.Float).Raw())
 	case value.Boolean:
-		s = Boolean(val.(value.Boolean).Raw())
+		s = json.Boolean(val.(value.Boolean).Raw())
 	case value.Ternary:
 		t := val.(value.Ternary)
 		if t.Ternary() == ternary.UNKNOWN {
-			s = Null{}
+			s = json.Null{}
 		} else {
-			s = Boolean(t.Ternary().ParseBool())
+			s = json.Boolean(t.Ternary().ParseBool())
 		}
 	case value.Datetime:
-		s = String(val.(value.Datetime).Format(time.RFC3339Nano))
+		s = json.String(val.(value.Datetime).Format(time.RFC3339Nano))
 	case value.Null:
-		s = Null{}
+		s = json.Null{}
 	}
 
 	return s

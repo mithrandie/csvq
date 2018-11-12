@@ -3,15 +3,18 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"github.com/mithrandie/csvq/lib/color"
-	"github.com/mithrandie/csvq/lib/file"
 	"os"
 	"path/filepath"
-	"reflect"
 	"runtime"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/mithrandie/go-text/color"
+
+	"github.com/mithrandie/go-text"
+
+	"github.com/mithrandie/csvq/lib/file"
 )
 
 const (
@@ -56,39 +59,6 @@ var FlagList = []string{
 	QuietFlag,
 	CPUFlag,
 	StatsFlag,
-}
-
-type Encoding string
-
-const (
-	UTF8 Encoding = "UTF8"
-	SJIS Encoding = "SJIS"
-)
-
-func (e Encoding) String() string {
-	return reflect.ValueOf(e).String()
-}
-
-type LineBreak string
-
-const (
-	CR   LineBreak = "\r"
-	LF   LineBreak = "\n"
-	CRLF LineBreak = "\r\n"
-)
-
-var lineBreakLiterals = map[LineBreak]string{
-	CR:   "CR",
-	LF:   "LF",
-	CRLF: "CRLF",
-}
-
-func (lb LineBreak) Value() string {
-	return reflect.ValueOf(lb).String()
-}
-
-func (lb LineBreak) String() string {
-	return lineBreakLiterals[lb]
 }
 
 type Format int
@@ -144,21 +114,25 @@ type Flags struct {
 	// For Import
 	Delimiter   rune
 	JsonQuery   string
-	Encoding    Encoding
+	Encoding    text.Encoding
 	NoHeader    bool
 	WithoutNull bool
 
 	// For Export
 	OutFile        string
 	Format         Format
-	WriteEncoding  Encoding
+	WriteEncoding  text.Encoding
 	WriteDelimiter rune
 	WithoutHeader  bool
-	LineBreak      LineBreak
+	LineBreak      text.LineBreak
 	PrettyPrint    bool
 
 	// ANSI Color Sequence
 	Color bool
+
+	// For Calculation of String Width
+	EastAsiaEncoding     bool
+	CountDiacriticalSign bool
 
 	// System Use
 	Quiet bool
@@ -202,15 +176,15 @@ func GetFlags() *Flags {
 			Source:                  "",
 			Delimiter:               ',',
 			JsonQuery:               "",
-			Encoding:                UTF8,
+			Encoding:                text.UTF8,
 			NoHeader:                false,
 			WithoutNull:             false,
 			OutFile:                 "",
 			Format:                  TEXT,
-			WriteEncoding:           UTF8,
+			WriteEncoding:           text.UTF8,
 			WriteDelimiter:          ',',
 			WithoutHeader:           false,
-			LineBreak:               LF,
+			LineBreak:               text.LF,
 			PrettyPrint:             false,
 			Color:                   false,
 			Quiet:                   false,
@@ -477,7 +451,7 @@ func SetPrettyPrint(b bool) {
 func SetColor(b bool) {
 	f := GetFlags()
 	f.Color = b
-	color.UseEscapeSequences = b
+	color.UseEffect = b
 	return
 }
 

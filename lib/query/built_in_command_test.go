@@ -2,13 +2,16 @@ package query
 
 import (
 	"fmt"
-	"github.com/mithrandie/csvq/lib/text"
 	"path/filepath"
 	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/mithrandie/go-text"
+
+	"github.com/mithrandie/go-text/fixedlen"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
@@ -1008,13 +1011,13 @@ var showObjectsTests = []struct {
 	Expr                    parser.ShowObjects
 	Filter                  *Filter
 	Delimiter               rune
-	DelimiterPositions      text.DelimiterPositions
+	DelimiterPositions      fixedlen.DelimiterPositions
 	DelimitAutomatically    bool
 	JsonQuery               string
 	Repository              string
 	Format                  cmd.Format
 	WriteDelimiter          rune
-	WriteDelimiterPositions text.DelimiterPositions
+	WriteDelimiterPositions fixedlen.DelimiterPositions
 	ViewCache               ViewMap
 	ExecResults             []ExecResult
 	Expect                  string
@@ -1030,8 +1033,8 @@ var showObjectsTests = []struct {
 					Path:      "table1.csv",
 					Delimiter: '\t',
 					Format:    cmd.CSV,
-					Encoding:  cmd.SJIS,
-					LineBreak: cmd.CRLF,
+					Encoding:  text.SJIS,
+					LineBreak: text.CRLF,
 					NoHeader:  true,
 				},
 			},
@@ -1041,8 +1044,8 @@ var showObjectsTests = []struct {
 					Path:      "table1.tsv",
 					Delimiter: '\t',
 					Format:    cmd.TSV,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 					NoHeader:  false,
 				},
 			},
@@ -1052,8 +1055,8 @@ var showObjectsTests = []struct {
 					Path:        "table1.json",
 					JsonQuery:   "{}",
 					Format:      cmd.JSON,
-					Encoding:    cmd.UTF8,
-					LineBreak:   cmd.LF,
+					Encoding:    text.UTF8,
+					LineBreak:   text.LF,
 					PrettyPrint: false,
 				},
 			},
@@ -1063,8 +1066,8 @@ var showObjectsTests = []struct {
 					Path:        "table2.json",
 					JsonQuery:   "",
 					Format:      cmd.JSON,
-					Encoding:    cmd.UTF8,
-					LineBreak:   cmd.LF,
+					Encoding:    text.UTF8,
+					LineBreak:   text.LF,
 					PrettyPrint: false,
 				},
 			},
@@ -1074,8 +1077,8 @@ var showObjectsTests = []struct {
 					Path:               "table1.txt",
 					DelimiterPositions: []int{3, 12},
 					Format:             cmd.FIXED,
-					Encoding:           cmd.UTF8,
-					LineBreak:          cmd.LF,
+					Encoding:           text.UTF8,
+					LineBreak:          text.LF,
 					NoHeader:           false,
 				},
 			},
@@ -1115,8 +1118,8 @@ var showObjectsTests = []struct {
 					Path:      "table1.csv",
 					Delimiter: '\t',
 					Format:    cmd.CSV,
-					Encoding:  cmd.SJIS,
-					LineBreak: cmd.CRLF,
+					Encoding:  text.SJIS,
+					LineBreak: text.CRLF,
 					NoHeader:  true,
 				},
 			},
@@ -1126,8 +1129,8 @@ var showObjectsTests = []struct {
 					Path:      "table1.tsv",
 					Delimiter: '\t',
 					Format:    cmd.TSV,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 					NoHeader:  false,
 				},
 			},
@@ -1137,8 +1140,8 @@ var showObjectsTests = []struct {
 					Path:        "table1.json",
 					JsonQuery:   "{}",
 					Format:      cmd.JSON,
-					Encoding:    cmd.UTF8,
-					LineBreak:   cmd.LF,
+					Encoding:    text.UTF8,
+					LineBreak:   text.LF,
 					PrettyPrint: false,
 				},
 			},
@@ -1148,8 +1151,8 @@ var showObjectsTests = []struct {
 					Path:        "table2.json",
 					JsonQuery:   "",
 					Format:      cmd.JSON,
-					Encoding:    cmd.UTF8,
-					LineBreak:   cmd.LF,
+					Encoding:    text.UTF8,
+					LineBreak:   text.LF,
 					PrettyPrint: false,
 				},
 			},
@@ -1159,8 +1162,8 @@ var showObjectsTests = []struct {
 					Path:               "table1.txt",
 					DelimiterPositions: []int{3, 12},
 					Format:             cmd.FIXED,
-					Encoding:           cmd.UTF8,
-					LineBreak:          cmd.LF,
+					Encoding:           text.UTF8,
+					LineBreak:          text.LF,
 					NoHeader:           false,
 				},
 			},
@@ -1215,8 +1218,8 @@ var showObjectsTests = []struct {
 					Path:      "table1.csv",
 					Delimiter: '\t',
 					Format:    cmd.CSV,
-					Encoding:  cmd.SJIS,
-					LineBreak: cmd.CRLF,
+					Encoding:  text.SJIS,
+					LineBreak: text.CRLF,
 					NoHeader:  true,
 				},
 			},
@@ -1605,8 +1608,8 @@ var showFieldsTests = []struct {
 					Path:      GetTestFilePath("show_fields_create.csv"),
 					Delimiter: ',',
 					Format:    cmd.CSV,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 					NoHeader:  false,
 				},
 			},
@@ -1644,8 +1647,8 @@ var showFieldsTests = []struct {
 					Path:      GetTestFilePath("show_fields_update.csv"),
 					Delimiter: ',',
 					Format:    cmd.CSV,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 					NoHeader:  false,
 				},
 			},
