@@ -506,6 +506,15 @@ func TestSetCountDiacriticalSign(t *testing.T) {
 	}
 }
 
+func TestSetCountFormatCode(t *testing.T) {
+	flags := GetFlags()
+
+	SetCountFormatCode(true)
+	if !flags.CountFormatCode {
+		t.Errorf("count-format-code = %t, expect to set %t", flags.CountFormatCode, true)
+	}
+}
+
 func TestSetColor(t *testing.T) {
 	flags := GetFlags()
 

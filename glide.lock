@@ -1,5 +1,5 @@
-hash: c20e4f5eb76bc94316d4690cbecf8870af0f077a34cf41c67ab1fac2426f7ee7
-updated: 2018-11-13T22:50:36.031249+09:00
+hash: 0a877f3aba4bdd263da6e784bcd5188b53e2fb9367f9210c95d3a64972dce1f5
+updated: 2018-11-14T00:10:55.940477+09:00
 imports:
 - name: github.com/chzyer/readline
   version: 62c6fe6193755f722b8b8788aa7357be55a50ff1
@@ -8,7 +8,7 @@ imports:
 - name: github.com/mithrandie/go-file
   version: 2066c60a29ce10d93467df8bb519d8e8668d4c2e
 - name: github.com/mithrandie/go-text
-  version: 641855c0b8560644ac3db9e884104dec4a330215
+  version: 2a3e1383550641bd37bc27e6b12d455c992ee883
   subpackages:
   - color
   - csv

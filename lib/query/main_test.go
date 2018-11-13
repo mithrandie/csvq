@@ -122,6 +122,7 @@ func initFlag() {
 	flags.PrettyPrint = false
 	flags.EastAsianEncoding = false
 	flags.CountDiacriticalSign = false
+	flags.CountFormatCode = false
 	flags.Color = false
 	flags.Quiet = false
 	flags.CPU = cpu

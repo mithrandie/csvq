@@ -202,6 +202,7 @@ func encodeText(view *View, format cmd.Format, lineBreak text.LineBreak, without
 	e.LineBreak = lineBreak
 	e.EastAsianEncoding = cmd.GetFlags().EastAsianEncoding
 	e.CountDiacriticalSign = cmd.GetFlags().CountDiacriticalSign
+	e.CountFormatCode = cmd.GetFlags().CountFormatCode
 	e.WithoutHeader = withoutHeader
 	e.Encoding = encoding
 

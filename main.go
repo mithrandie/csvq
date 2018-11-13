@@ -128,7 +128,11 @@ func main() {
 		},
 		cli.BoolFlag{
 			Name:  "count-diacritical-sign, S",
-			Usage: "count diacritical signs as single characters",
+			Usage: "count diacritical signs as halfwidth",
+		},
+		cli.BoolFlag{
+			Name:  "count-format-code, A",
+			Usage: "count format characters or zero-width spaces as halfwidth",
 		},
 		cli.BoolFlag{
 			Name:  "color, c",
@@ -305,6 +309,7 @@ func setFlags(c *cli.Context) error {
 
 	cmd.SetEastAsianEncoding(c.GlobalBool("east-asian-encoding"))
 	cmd.SetCountDiacriticalSign(c.GlobalBool("count-diacritical-sign"))
+	cmd.SetCountFormatCode(c.GlobalBool("count-format-code"))
 
 	cmd.SetQuiet(c.GlobalBool("quiet"))
 	cmd.SetCPU(c.GlobalInt("cpu"))

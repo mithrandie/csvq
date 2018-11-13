@@ -315,5 +315,9 @@ func ParseFormat(s string) (Format, error) {
 }
 
 func TextWidth(s string) int {
-	return text.Width(s, GetFlags().EastAsianEncoding, GetFlags().CountDiacriticalSign)
+	return text.Width(s, GetFlags().EastAsianEncoding, GetFlags().CountDiacriticalSign, GetFlags().CountFormatCode)
+}
+
+func RuneWidth(r rune) int {
+	return text.RuneWidth(r, GetFlags().EastAsianEncoding, GetFlags().CountDiacriticalSign, GetFlags().CountFormatCode)
 }

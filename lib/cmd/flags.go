@@ -36,6 +36,7 @@ const (
 	PrettyPrintFlag      = "@@PRETTY_PRINT"
 	EastAsianEncoding    = "@@EAST_ASIAN_ENCODING"
 	CountDiacriticalSign = "@@COUNT_DIACRITICAL_SIGN"
+	CountFormatCode      = "@@COUNT_FORMAT_CODE"
 	ColorFlag            = "@@COLOR"
 	QuietFlag            = "@@QUIET"
 	CPUFlag              = "@@CPU"
@@ -61,6 +62,7 @@ var FlagList = []string{
 	PrettyPrintFlag,
 	EastAsianEncoding,
 	CountDiacriticalSign,
+	CountFormatCode,
 	ColorFlag,
 	QuietFlag,
 	CPUFlag,
@@ -137,6 +139,7 @@ type Flags struct {
 	// For Calculation of String Width
 	EastAsianEncoding    bool
 	CountDiacriticalSign bool
+	CountFormatCode      bool
 
 	// ANSI Color Sequence
 	Color bool
@@ -196,6 +199,7 @@ func GetFlags() *Flags {
 			PrettyPrint:             false,
 			EastAsianEncoding:       false,
 			CountDiacriticalSign:    false,
+			CountFormatCode:         false,
 			Color:                   false,
 			Quiet:                   false,
 			CPU:                     cpu,
@@ -480,6 +484,12 @@ func SetEastAsianEncoding(b bool) {
 func SetCountDiacriticalSign(b bool) {
 	f := GetFlags()
 	f.CountDiacriticalSign = b
+	return
+}
+
+func SetCountFormatCode(b bool) {
+	f := GetFlags()
+	f.CountFormatCode = b
 	return
 }
 

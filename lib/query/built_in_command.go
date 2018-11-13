@@ -168,7 +168,7 @@ func SetFlag(expr parser.SetFlag, filter *Filter) (string, error) {
 		cmd.WriteEncodingFlag, cmd.FormatFlag, cmd.WriteDelimiterFlag, cmd.LineBreakFlag:
 		p = value.ToString(p)
 	case cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAll, cmd.PrettyPrintFlag,
-		cmd.EastAsianEncoding, cmd.CountDiacriticalSign, cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag:
+		cmd.EastAsianEncoding, cmd.CountDiacriticalSign, cmd.CountFormatCode, cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag:
 		p = value.ToBoolean(p)
 	case cmd.WaitTimeoutFlag:
 		p = value.ToFloat(p)
@@ -218,6 +218,8 @@ func SetFlag(expr parser.SetFlag, filter *Filter) (string, error) {
 		cmd.SetEastAsianEncoding(p.(value.Boolean).Raw())
 	case cmd.CountDiacriticalSign:
 		cmd.SetCountDiacriticalSign(p.(value.Boolean).Raw())
+	case cmd.CountFormatCode:
+		cmd.SetCountFormatCode(p.(value.Boolean).Raw())
 	case cmd.ColorFlag:
 		cmd.SetColor(p.(value.Boolean).Raw())
 	case cmd.QuietFlag:
@@ -349,6 +351,14 @@ func showFlag(flag string) (string, error) {
 		}
 	case cmd.CountDiacriticalSign:
 		s = strconv.FormatBool(flags.CountDiacriticalSign)
+		switch flags.Format {
+		case cmd.GFM, cmd.ORG, cmd.TEXT:
+			s = cmd.GetPalette().Render(cmd.BooleanEffect, s)
+		default:
+			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+s)
+		}
+	case cmd.CountFormatCode:
+		s = strconv.FormatBool(flags.CountFormatCode)
 		switch flags.Format {
 		case cmd.GFM, cmd.ORG, cmd.TEXT:
 			s = cmd.GetPalette().Render(cmd.BooleanEffect, s)

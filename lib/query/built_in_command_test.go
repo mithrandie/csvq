@@ -482,6 +482,14 @@ var setFlagTests = []struct {
 		Result: " @@COUNT_DIACRITICAL_SIGN: true",
 	},
 	{
+		Name: "Set CountFormatCode",
+		Expr: parser.SetFlag{
+			Name:  "@@count_format_code",
+			Value: parser.NewTernaryValueFromString("true"),
+		},
+		Result: " @@COUNT_FORMAT_CODE: true",
+	},
+	{
 		Name: "Set Color",
 		Expr: parser.SetFlag{
 			Name:  "@@color",
@@ -1043,6 +1051,40 @@ var showFlagTests = []struct {
 		Result: " \033[34;1m@@COUNT_DIACRITICAL_SIGN:\033[0m \033[90m(ignored) true\033[0m",
 	},
 	{
+		Name: "Show CountFormatCode",
+		Expr: parser.ShowFlag{
+			Name: "@@count_format_code",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@count_format_code",
+				Value: parser.NewTernaryValueFromString("true"),
+			},
+			{
+				Name:  "@@format",
+				Value: parser.NewStringValue("TEXT"),
+			},
+		},
+		Result: " \033[34;1m@@COUNT_FORMAT_CODE:\033[0m \033[33;1mtrue\033[0m",
+	},
+	{
+		Name: "Show CountFormatCode Ignored",
+		Expr: parser.ShowFlag{
+			Name: "@@count_format_code",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@count_format_code",
+				Value: parser.NewTernaryValueFromString("true"),
+			},
+			{
+				Name:  "@@format",
+				Value: parser.NewStringValue("JSON"),
+			},
+		},
+		Result: " \033[34;1m@@COUNT_FORMAT_CODE:\033[0m \033[90m(ignored) true\033[0m",
+	},
+	{
 		Name: "Show Color",
 		Expr: parser.ShowFlag{
 			Name: "@@color",
@@ -1585,6 +1627,7 @@ var showObjectsTests = []struct {
 			"           @@PRETTY_PRINT: (ignored) false\n" +
 			"    @@EAST_ASIAN_ENCODING: (ignored) false\n" +
 			" @@COUNT_DIACRITICAL_SIGN: (ignored) false\n" +
+			"      @@COUNT_FORMAT_CODE: (ignored) false\n" +
 			"                  @@COLOR: false\n" +
 			"                  @@QUIET: false\n" +
 			"                    @@CPU: " + strconv.Itoa(cmd.GetFlags().CPU) + "\n" +

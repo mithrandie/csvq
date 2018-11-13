@@ -690,8 +690,6 @@ func execStringsPadding(fn parser.Function, args []value.Primary, direction Dire
 		}
 	}
 
-	flags := cmd.GetFlags()
-
 	var strLen int
 	var padstrLen int
 	switch padType {
@@ -702,8 +700,8 @@ func execStringsPadding(fn parser.Function, args []value.Primary, direction Dire
 		strLen = text.ByteSize(str, enc)
 		padstrLen = text.ByteSize(padstr, enc)
 	case PaddingWidth:
-		strLen = text.Width(str, flags.EastAsianEncoding, flags.CountDiacriticalSign)
-		padstrLen = text.Width(padstr, flags.EastAsianEncoding, flags.CountDiacriticalSign)
+		strLen = cmd.TextWidth(str)
+		padstrLen = cmd.TextWidth(padstr)
 	}
 
 	if length <= strLen {
@@ -725,7 +723,7 @@ func execStringsPadding(fn parser.Function, args []value.Primary, direction Dire
 			case PaddingByteCount:
 				w = text.RuneByteSize(r, enc)
 			default:
-				w = text.RuneWidth(r, flags.EastAsianEncoding, flags.CountDiacriticalSign)
+				w = cmd.RuneWidth(r)
 			}
 			l = l + w
 			buf = append(buf, r)
@@ -786,8 +784,7 @@ func execCryptoHMAC(fn parser.Function, args []value.Primary, cryptof func() has
 }
 
 func width(s string) int {
-	flags := cmd.GetFlags()
-	return text.Width(s, flags.EastAsianEncoding, flags.CountDiacriticalSign)
+	return cmd.TextWidth(s)
 }
 
 func Trim(fn parser.Function, args []value.Primary) (value.Primary, error) {
