@@ -2,10 +2,13 @@ package query
 
 import (
 	"errors"
-	"github.com/mithrandie/csvq/lib/text"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/mithrandie/go-text"
+
+	"github.com/mithrandie/go-text/fixedlen"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
@@ -17,6 +20,7 @@ const (
 	TableEncoding    = "ENCODING"
 	TableLineBreak   = "LINE_BREAK"
 	TableHeader      = "HEADER"
+	TableEncloseAll  = "ENCLOSE_ALL"
 	TablePrettyPring = "PRETTY_PRINT"
 )
 
@@ -25,11 +29,12 @@ type FileInfo struct {
 	Delimiter rune
 
 	Format             cmd.Format
-	DelimiterPositions text.DelimiterPositions
+	DelimiterPositions fixedlen.DelimiterPositions
 	JsonQuery          string
-	Encoding           cmd.Encoding
-	LineBreak          cmd.LineBreak
+	Encoding           text.Encoding
+	LineBreak          text.LineBreak
 	NoHeader           bool
+	EncloseAll         bool
 	PrettyPrint        bool
 
 	File *os.File
@@ -44,7 +49,7 @@ func NewFileInfo(
 	repository string,
 	format cmd.Format,
 	delimiter rune,
-	encoding cmd.Encoding,
+	encoding text.Encoding,
 ) (*FileInfo, error) {
 	fpath, format, err := SearchFilePath(filename, repository, format)
 	if err != nil {
@@ -55,7 +60,7 @@ func NewFileInfo(
 	case cmd.TSV:
 		delimiter = '\t'
 	case cmd.JSON:
-		encoding = cmd.UTF8
+		encoding = text.UTF8
 	}
 
 	return &FileInfo{
@@ -112,7 +117,7 @@ func (f *FileInfo) SetFormat(s string) error {
 	case cmd.TSV:
 		f.Delimiter = '\t'
 	case cmd.JSON, cmd.JSONH, cmd.JSONA:
-		f.Encoding = cmd.UTF8
+		f.Encoding = text.UTF8
 	}
 
 	f.Format = format
@@ -127,7 +132,7 @@ func (f *FileInfo) SetEncoding(s string) error {
 
 	switch f.Format {
 	case cmd.JSON, cmd.JSONH, cmd.JSONA:
-		if encoding != cmd.UTF8 {
+		if encoding != text.UTF8 {
 			return errors.New("json format is supported only UTF8")
 		}
 	}
@@ -148,6 +153,10 @@ func (f *FileInfo) SetLineBreak(s string) error {
 
 func (f *FileInfo) SetNoHeader(b bool) {
 	f.NoHeader = b
+}
+
+func (f *FileInfo) SetEncloseAll(b bool) {
+	f.EncloseAll = b
 }
 
 func (f *FileInfo) SetPrettyPrint(b bool) {
@@ -241,7 +250,7 @@ func SearchFilePathWithExtType(filename parser.Identifier, repository string, ex
 	return fpath, nil
 }
 
-func NewFileInfoForCreate(filename parser.Identifier, repository string, delimiter rune, encoding cmd.Encoding) (*FileInfo, error) {
+func NewFileInfoForCreate(filename parser.Identifier, repository string, delimiter rune, encoding text.Encoding) (*FileInfo, error) {
 	fpath, err := CreateFilePath(filename, repository)
 	if err != nil {
 		return nil, NewWriteFileError(filename, err.Error())
@@ -255,7 +264,7 @@ func NewFileInfoForCreate(filename parser.Identifier, repository string, delimit
 	case cmd.FixedExt:
 		format = cmd.FIXED
 	case cmd.JsonExt:
-		encoding = cmd.UTF8
+		encoding = text.UTF8
 		format = cmd.JSON
 	case cmd.GfmExt:
 		format = cmd.GFM

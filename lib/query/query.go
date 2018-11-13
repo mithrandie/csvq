@@ -2,8 +2,6 @@ package query
 
 import (
 	"fmt"
-	"github.com/mithrandie/csvq/lib/color"
-	"github.com/mithrandie/csvq/lib/text"
 	"os"
 	"strings"
 
@@ -11,6 +9,8 @@ import (
 	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
+
+	"github.com/mithrandie/go-text/color"
 )
 
 type StatementFlow int
@@ -580,7 +580,7 @@ func CreateTable(query parser.CreateTable, parentFilter *Filter) (*View, error) 
 	var err error
 
 	flags := cmd.GetFlags()
-	fileInfo, err := NewFileInfoForCreate(query.Table, flags.Repository, flags.Delimiter, flags.Encoding)
+	fileInfo, err := NewFileInfoForCreate(query.Table, flags.Repository, flags.WriteDelimiter, flags.WriteEncoding)
 	if err != nil {
 		return nil, err
 	}
@@ -598,6 +598,9 @@ func CreateTable(query parser.CreateTable, parentFilter *Filter) (*View, error) 
 	}
 
 	fileInfo.LineBreak = flags.LineBreak
+	fileInfo.EncloseAll = flags.EncloseAll
+	fileInfo.NoHeader = flags.WithoutHeader
+	fileInfo.PrettyPrint = flags.PrettyPrint
 
 	if query.Query != nil {
 		view, err = Select(query.Query.(parser.SelectQuery), filter)
@@ -882,7 +885,7 @@ func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (st
 		case TableLineBreak:
 			err = fileInfo.SetLineBreak(s.(value.String).Raw())
 		}
-	case TableHeader, TablePrettyPring:
+	case TableHeader, TableEncloseAll, TablePrettyPring:
 		b := value.ToBoolean(p)
 		if value.IsNull(b) {
 			return log, NewTableAttributeValueNotAllowedFormatError(query)
@@ -890,6 +893,8 @@ func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (st
 		switch attr {
 		case TableHeader:
 			fileInfo.SetNoHeader(!b.(value.Boolean).Raw())
+		case TableEncloseAll:
+			fileInfo.SetEncloseAll(b.(value.Boolean).Raw())
 		case TablePrettyPring:
 			fileInfo.SetPrettyPrint(b.(value.Boolean).Raw())
 		}
@@ -901,16 +906,16 @@ func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (st
 		return log, NewInvalidTableAttributeValueError(query, err.Error())
 	}
 
-	w := text.NewObjectWriter()
-	w.WriteColorWithoutLineBreak("Path: ", color.FieldLableStyle)
-	w.WriteColorWithoutLineBreak(fileInfo.Path, color.ObjectStyle)
+	w := cmd.NewObjectWriter()
+	w.WriteColorWithoutLineBreak("Path: ", cmd.LableEffect)
+	w.WriteColorWithoutLineBreak(fileInfo.Path, cmd.ObjectEffect)
 	w.NewLine()
 	writeTableAttribute(w, fileInfo)
 	w.NewLine()
 
 	w.Title1 = "Attributes Updated in"
 	w.Title2 = query.Table.(parser.Identifier).Literal
-	w.Title2Style = color.IdentifierStyle
+	w.Title2Effect = cmd.IdentifierEffect
 	log = "\n" + w.String()
 	return log, nil
 }
@@ -932,7 +937,7 @@ func Commit(expr parser.Expression, filter *Filter) error {
 				}
 				return NewWriteFileError(expr, err.Error())
 			}
-			Log(color.Info(fmt.Sprintf("Commit: file %q is created.", filename)), cmd.GetFlags().Quiet)
+			Log(color.Notice(fmt.Sprintf("Commit: file %q is created.", filename)), cmd.GetFlags().Quiet)
 		}
 	}
 
@@ -950,7 +955,7 @@ func Commit(expr parser.Expression, filter *Filter) error {
 				}
 				return NewWriteFileError(expr, err.Error())
 			}
-			Log(color.Info(fmt.Sprintf("Commit: file %q is updated.", filename)), cmd.GetFlags().Quiet)
+			Log(color.Notice(fmt.Sprintf("Commit: file %q is updated.", filename)), cmd.GetFlags().Quiet)
 		}
 	}
 
@@ -968,13 +973,13 @@ func Rollback(filter *Filter) {
 
 	if 0 < len(createdFiles) {
 		for filename := range createdFiles {
-			Log(color.Info(fmt.Sprintf("Rollback: file %q is deleted.", filename)), cmd.GetFlags().Quiet)
+			Log(color.Notice(fmt.Sprintf("Rollback: file %q is deleted.", filename)), cmd.GetFlags().Quiet)
 		}
 	}
 
 	if 0 < len(updatedFiles) {
 		for filename := range updatedFiles {
-			Log(color.Info(fmt.Sprintf("Rollback: file %q is restored.", filename)), cmd.GetFlags().Quiet)
+			Log(color.Notice(fmt.Sprintf("Rollback: file %q is restored.", filename)), cmd.GetFlags().Quiet)
 		}
 	}
 

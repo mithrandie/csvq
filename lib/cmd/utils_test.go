@@ -5,21 +5,9 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+
+	"github.com/mithrandie/go-text"
 )
-
-func TestGetReader(t *testing.T) {
-	fp := os.Stdout
-
-	r := GetReader(fp, UTF8)
-	if reflect.TypeOf(r).String() != "*os.File" {
-		t.Errorf("reader = %q, want %q", reflect.TypeOf(r).String(), "*os.File")
-	}
-
-	r = GetReader(fp, SJIS)
-	if reflect.TypeOf(r).String() != "*transform.Reader" {
-		t.Errorf("reader = %q, want %q", reflect.TypeOf(r).String(), "*transform.Reader")
-	}
-}
 
 func TestEscapeString(t *testing.T) {
 	str := "fo\\o\a\b\f\n\r\t\v\\\\'\"bar\\"
@@ -178,16 +166,16 @@ func TestParseEncoding(t *testing.T) {
 	if err != nil {
 		t.Errorf("unexpected error: %q", err.Error())
 	}
-	if e != UTF8 {
-		t.Errorf("encoding = %s, expect to set %s for %s", e, UTF8, "utf8")
+	if e != text.UTF8 {
+		t.Errorf("encoding = %s, expect to set %s for %s", e, text.UTF8, "utf8")
 	}
 
 	e, err = ParseEncoding("sjis")
 	if err != nil {
 		t.Errorf("unexpected error: %q", err.Error())
 	}
-	if e != SJIS {
-		t.Errorf("encoding = %s, expect to set %s for %s", e, SJIS, "sjis")
+	if e != text.SJIS {
+		t.Errorf("encoding = %s, expect to set %s for %s", e, text.SJIS, "sjis")
 	}
 
 	expectErr := "encoding must be one of UTF8|SJIS"

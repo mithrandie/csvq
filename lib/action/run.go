@@ -3,7 +3,6 @@ package action
 import (
 	"errors"
 	"fmt"
-	"github.com/mithrandie/csvq/lib/color"
 	"io"
 	"runtime"
 	"strconv"
@@ -14,6 +13,8 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
+
+	"github.com/mithrandie/go-text/color"
 )
 
 func Run(input string, sourceFile string) error {
@@ -184,14 +185,16 @@ func showStats(start time.Time) {
 	}
 	w := strconv.Itoa(width)
 
+	palette := cmd.GetPalette()
+
 	stats := fmt.Sprintf(
 		""+
-			color.BlueB("   TotalTime: ")+"%"+w+"[2]s seconds %[1]s"+
-			color.BlueB("       Alloc: ")+"%"+w+"[3]s bytes %[1]s"+
-			color.BlueB("  TotalAlloc: ")+"%"+w+"[4]s bytes %[1]s"+
-			color.BlueB("     HeapSys: ")+"%"+w+"[5]s bytes %[1]s"+
-			color.BlueB("     Mallocs: ")+"%"+w+"[6]s objects %[1]s"+
-			color.BlueB("       Frees: ")+"%"+w+"[7]s objects %[1]s",
+			palette.Render(cmd.LableEffect, "   TotalTime: ")+"%"+w+"[2]s seconds %[1]s"+
+			palette.Render(cmd.LableEffect, "       Alloc: ")+"%"+w+"[3]s bytes %[1]s"+
+			palette.Render(cmd.LableEffect, "  TotalAlloc: ")+"%"+w+"[4]s bytes %[1]s"+
+			palette.Render(cmd.LableEffect, "     HeapSys: ")+"%"+w+"[5]s bytes %[1]s"+
+			palette.Render(cmd.LableEffect, "     Mallocs: ")+"%"+w+"[6]s objects %[1]s"+
+			palette.Render(cmd.LableEffect, "       Frees: ")+"%"+w+"[7]s objects %[1]s",
 		"\n",
 		exectime,
 		alloc,

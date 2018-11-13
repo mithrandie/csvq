@@ -3,11 +3,14 @@ package json
 import (
 	"errors"
 	"fmt"
+
 	"github.com/mithrandie/csvq/lib/value"
+
+	"github.com/mithrandie/go-text/json"
 )
 
-func LoadValue(queryString string, json string) (value.Primary, error) {
-	structure, _, err := load(queryString, json)
+func LoadValue(queryString string, jsontext string) (value.Primary, error) {
+	structure, _, err := load(queryString, jsontext)
 	if err != nil {
 		return nil, err
 	}
@@ -15,13 +18,13 @@ func LoadValue(queryString string, json string) (value.Primary, error) {
 	return ConvertToValue(structure), nil
 }
 
-func LoadArray(queryString string, json string) ([]value.Primary, error) {
-	structure, _, err := load(queryString, json)
+func LoadArray(queryString string, jsontext string) ([]value.Primary, error) {
+	structure, _, err := load(queryString, jsontext)
 	if err != nil {
 		return nil, err
 	}
 
-	array, ok := structure.(Array)
+	array, ok := structure.(json.Array)
 	if !ok {
 		return nil, errors.New(fmt.Sprintf("json value does not exists for %q", queryString))
 	}
@@ -29,13 +32,13 @@ func LoadArray(queryString string, json string) ([]value.Primary, error) {
 	return ConvertToArray(array), nil
 }
 
-func LoadTable(queryString string, json string) ([]string, [][]value.Primary, EscapeType, error) {
-	structure, et, err := load(queryString, json)
+func LoadTable(queryString string, jsontext string) ([]string, [][]value.Primary, json.EscapeType, error) {
+	structure, et, err := load(queryString, jsontext)
 	if err != nil {
 		return nil, nil, et, err
 	}
 
-	array, ok := structure.(Array)
+	array, ok := structure.(json.Array)
 	if !ok {
 		return nil, nil, et, errors.New(fmt.Sprintf("json value does not exists for %q", queryString))
 	}
@@ -44,14 +47,14 @@ func LoadTable(queryString string, json string) ([]string, [][]value.Primary, Es
 	return h, rows, et, err
 }
 
-func load(queryString string, json string) (Structure, EscapeType, error) {
+func load(queryString string, jsontext string) (json.Structure, json.EscapeType, error) {
 	query, err := Query.Parse(queryString)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	d := NewDecoder()
-	data, et, err := d.Decode(json)
+	d := json.NewDecoder()
+	data, et, err := d.Decode(jsontext)
 	if err != nil {
 		return nil, et, err
 	}
@@ -60,8 +63,8 @@ func load(queryString string, json string) (Structure, EscapeType, error) {
 	return st, et, err
 }
 
-func Extract(query QueryExpression, data Structure) (Structure, error) {
-	var extracted Structure
+func Extract(query QueryExpression, data json.Structure) (json.Structure, error) {
+	var extracted json.Structure
 	var err error
 
 	if query == nil {
@@ -71,10 +74,10 @@ func Extract(query QueryExpression, data Structure) (Structure, error) {
 	switch query.(type) {
 	case Element:
 		switch data.(type) {
-		case Object:
+		case json.Object:
 			element := query.(Element)
 
-			obj := data.(Object)
+			obj := data.(json.Object)
 			if obj.Exists(element.Label) {
 				if element.Child == nil {
 					extracted = obj.Value(element.Label)
@@ -82,17 +85,17 @@ func Extract(query QueryExpression, data Structure) (Structure, error) {
 					extracted, err = Extract(element.Child, obj.Value(element.Label))
 				}
 			} else {
-				extracted = Null{}
+				extracted = json.Null{}
 			}
 		default:
-			extracted = Null{}
+			extracted = json.Null{}
 		}
 	case ArrayItem:
 		switch data.(type) {
-		case Array:
+		case json.Array:
 			arrayItem := query.(ArrayItem)
 
-			ar := data.(Array)
+			ar := data.(json.Array)
 			if arrayItem.Index < len(ar) {
 				if arrayItem.Child == nil {
 					extracted = ar[arrayItem.Index]
@@ -100,20 +103,20 @@ func Extract(query QueryExpression, data Structure) (Structure, error) {
 					extracted, err = Extract(arrayItem.Child, ar[arrayItem.Index])
 				}
 			} else {
-				extracted = Null{}
+				extracted = json.Null{}
 			}
 		default:
-			extracted = Null{}
+			extracted = json.Null{}
 		}
 	case RowValueExpr:
 		switch data.(type) {
-		case Array:
+		case json.Array:
 			rowValue := query.(RowValueExpr)
 			if rowValue.Child == nil {
 				extracted = data
 			} else {
-				ar := data.(Array)
-				elems := make(Array, 0, len(ar))
+				ar := data.(json.Array)
+				elems := make(json.Array, 0, len(ar))
 				for _, v := range ar {
 					e, err := Extract(rowValue.Child, v)
 					if err != nil {
@@ -128,12 +131,12 @@ func Extract(query QueryExpression, data Structure) (Structure, error) {
 		}
 	case TableExpr:
 		switch data.(type) {
-		case Object:
+		case json.Object:
 			table := query.(TableExpr)
 			if table.Fields == nil {
-				extracted = Array{data}
+				extracted = json.Array{data}
 			} else {
-				obj := NewObject(len(table.Fields))
+				obj := json.NewObject(len(table.Fields))
 				for _, field := range table.Fields {
 					e, err := Extract(field.Element, data)
 					if err != nil {
@@ -142,9 +145,9 @@ func Extract(query QueryExpression, data Structure) (Structure, error) {
 
 					obj.Add(field.FieldLabel(), e)
 				}
-				extracted = Array{obj}
+				extracted = json.Array{obj}
 			}
-		case Array:
+		case json.Array:
 			table := query.(TableExpr)
 			var fields []FieldExpr
 
@@ -152,9 +155,9 @@ func Extract(query QueryExpression, data Structure) (Structure, error) {
 				fields = table.Fields
 			}
 
-			array := data.(Array)
+			array := data.(json.Array)
 			for _, v := range array {
-				obj, ok := v.(Object)
+				obj, ok := v.(json.Object)
 				if !ok {
 					return extracted, errors.New("all elements in array must be objects")
 				}
@@ -171,9 +174,9 @@ func Extract(query QueryExpression, data Structure) (Structure, error) {
 				}
 			}
 
-			elems := make(Array, 0, len(array))
+			elems := make(json.Array, 0, len(array))
 			for _, v := range array {
-				obj := NewObject(len(fields))
+				obj := json.NewObject(len(fields))
 				for _, field := range fields {
 					e, err := Extract(field.Element, v)
 					if err != nil {

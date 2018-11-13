@@ -4,12 +4,12 @@ package cmd
 
 import (
 	"bufio"
-	"github.com/mithrandie/csvq/lib/color"
 	"os"
 	"path/filepath"
 
 	"github.com/chzyer/readline"
 	"github.com/mitchellh/go-homedir"
+	"github.com/mithrandie/go-text/color"
 )
 
 const HistoryFile = ".csvq_history"
@@ -17,6 +17,7 @@ const HistoryFile = ".csvq_history"
 type ReadLineTerminal struct {
 	terminal *readline.Instance
 	fd       int
+	palette  *color.Palette
 }
 
 func NewTerminal() (VirtualTerminal, error) {
@@ -27,8 +28,10 @@ func NewTerminal() (VirtualTerminal, error) {
 		return nil, err
 	}
 
+	p := GetPalette()
+
 	t, err := readline.NewEx(&readline.Config{
-		Prompt:                 color.Blue(TerminalPrompt),
+		Prompt:                 p.Render(PromptEffect, TerminalPrompt),
 		HistoryFile:            historyFile,
 		DisableAutoSaveHistory: true,
 	})
@@ -39,6 +42,7 @@ func NewTerminal() (VirtualTerminal, error) {
 	return ReadLineTerminal{
 		terminal: t,
 		fd:       fd,
+		palette:  p,
 	}, nil
 }
 
@@ -61,11 +65,11 @@ func (t ReadLineTerminal) Write(s string) error {
 }
 
 func (t ReadLineTerminal) SetPrompt() {
-	t.terminal.SetPrompt(color.Blue(TerminalPrompt))
+	t.terminal.SetPrompt(t.palette.Render(PromptEffect, TerminalPrompt))
 }
 
 func (t ReadLineTerminal) SetContinuousPrompt() {
-	t.terminal.SetPrompt(color.Blue(TerminalContinuousPrompt))
+	t.terminal.SetPrompt(t.palette.Render(PromptEffect, TerminalContinuousPrompt))
 }
 
 func (t ReadLineTerminal) SaveHistory(s string) {

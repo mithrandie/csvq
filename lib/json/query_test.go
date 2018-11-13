@@ -1,9 +1,12 @@
 package json
 
 import (
-	"github.com/mithrandie/csvq/lib/value"
 	"reflect"
 	"testing"
+
+	"github.com/mithrandie/csvq/lib/value"
+
+	"github.com/mithrandie/go-text/json"
 )
 
 var loadValueTests = []struct {
@@ -103,7 +106,7 @@ var loadTableTests = []struct {
 	Json         string
 	ExpectHeader []string
 	ExpectValues [][]value.Primary
-	EscapeType   EscapeType
+	EscapeType   json.EscapeType
 	Error        string
 }{
 	{
@@ -162,44 +165,44 @@ func TestLoadTable(t *testing.T) {
 
 var extractTests = []struct {
 	Query  QueryExpression
-	Data   Structure
-	Expect Structure
+	Data   json.Structure
+	Expect json.Structure
 	Error  string
 }{
 	{
 		Query: nil,
-		Data: Object{
-			Members: []ObjectMember{
+		Data: json.Object{
+			Members: []json.ObjectMember{
 				{
 					Key:   "key",
-					Value: String("value"),
+					Value: json.String("value"),
 				},
 				{
 					Key: "obj",
-					Value: Object{
-						Members: []ObjectMember{
+					Value: json.Object{
+						Members: []json.ObjectMember{
 							{
 								Key:   "key2",
-								Value: String("value2"),
+								Value: json.String("value2"),
 							},
 						},
 					},
 				},
 			},
 		},
-		Expect: Object{
-			Members: []ObjectMember{
+		Expect: json.Object{
+			Members: []json.ObjectMember{
 				{
 					Key:   "key",
-					Value: String("value"),
+					Value: json.String("value"),
 				},
 				{
 					Key: "obj",
-					Value: Object{
-						Members: []ObjectMember{
+					Value: json.Object{
+						Members: []json.ObjectMember{
 							{
 								Key:   "key2",
-								Value: String("value2"),
+								Value: json.String("value2"),
 							},
 						},
 					},
@@ -214,47 +217,47 @@ var extractTests = []struct {
 				Label: "key2",
 			},
 		},
-		Data: Object{
-			Members: []ObjectMember{
+		Data: json.Object{
+			Members: []json.ObjectMember{
 				{
 					Key:   "key",
-					Value: String("value"),
+					Value: json.String("value"),
 				},
 				{
 					Key: "obj",
-					Value: Object{
-						Members: []ObjectMember{
+					Value: json.Object{
+						Members: []json.ObjectMember{
 							{
 								Key:   "key2",
-								Value: String("value2"),
+								Value: json.String("value2"),
 							},
 						},
 					},
 				},
 			},
 		},
-		Expect: String("value2"),
+		Expect: json.String("value2"),
 	},
 	{
 		Query: Element{
 			Label: "notexist",
 		},
-		Data: Object{
-			Members: []ObjectMember{
+		Data: json.Object{
+			Members: []json.ObjectMember{
 				{
 					Key:   "key",
-					Value: String("value"),
+					Value: json.String("value"),
 				},
 			},
 		},
-		Expect: Null{},
+		Expect: json.Null{},
 	},
 	{
 		Query: Element{
 			Label: "notexist",
 		},
-		Data:   String("value"),
-		Expect: Null{},
+		Data:   json.String("value"),
+		Expect: json.Null{},
 	},
 	{
 		Query: ArrayItem{
@@ -263,146 +266,146 @@ var extractTests = []struct {
 				Label: "key2",
 			},
 		},
-		Data: Array{
-			Object{
-				Members: []ObjectMember{
+		Data: json.Array{
+			json.Object{
+				Members: []json.ObjectMember{
 					{
 						Key:   "key",
-						Value: String("value"),
+						Value: json.String("value"),
 					},
 					{
 						Key:   "key2",
-						Value: String("value2"),
+						Value: json.String("value2"),
 					},
 				},
 			},
-			Object{
-				Members: []ObjectMember{
+			json.Object{
+				Members: []json.ObjectMember{
 					{
 						Key:   "key",
-						Value: String("value10"),
+						Value: json.String("value10"),
 					},
 					{
 						Key:   "key2",
-						Value: String("value12"),
+						Value: json.String("value12"),
 					},
 				},
 			},
 		},
-		Expect: String("value12"),
+		Expect: json.String("value12"),
 	},
 	{
 		Query: ArrayItem{
 			Index: 0,
 		},
-		Data: Array{
-			String("value1"),
-			String("value2"),
+		Data: json.Array{
+			json.String("value1"),
+			json.String("value2"),
 		},
-		Expect: String("value1"),
+		Expect: json.String("value1"),
 	},
 	{
 		Query: ArrayItem{
 			Index: 3,
 		},
-		Data: Array{
-			String("value1"),
-			String("value2"),
+		Data: json.Array{
+			json.String("value1"),
+			json.String("value2"),
 		},
-		Expect: Null{},
+		Expect: json.Null{},
 	},
 	{
 		Query: ArrayItem{
 			Index: 3,
 		},
-		Data:   String("value1"),
-		Expect: Null{},
+		Data:   json.String("value1"),
+		Expect: json.Null{},
 	},
 	{
 		Query: RowValueExpr{},
-		Data: Array{
-			String("value1"),
-			String("value2"),
+		Data: json.Array{
+			json.String("value1"),
+			json.String("value2"),
 		},
-		Expect: Array{
-			String("value1"),
-			String("value2"),
+		Expect: json.Array{
+			json.String("value1"),
+			json.String("value2"),
 		},
 	},
 	{
 		Query: RowValueExpr{
 			Child: Element{Label: "key"},
 		},
-		Data: Array{
-			Object{
-				Members: []ObjectMember{
+		Data: json.Array{
+			json.Object{
+				Members: []json.ObjectMember{
 					{
 						Key:   "key",
-						Value: String("value"),
+						Value: json.String("value"),
 					},
 					{
 						Key:   "key2",
-						Value: String("value2"),
+						Value: json.String("value2"),
 					},
 				},
 			},
-			Object{
-				Members: []ObjectMember{
+			json.Object{
+				Members: []json.ObjectMember{
 					{
 						Key:   "key",
-						Value: String("value10"),
+						Value: json.String("value10"),
 					},
 					{
 						Key:   "key2",
-						Value: String("value12"),
+						Value: json.String("value12"),
 					},
 				},
 			},
 		},
-		Expect: Array{
-			String("value"),
-			String("value10"),
+		Expect: json.Array{
+			json.String("value"),
+			json.String("value10"),
 		},
 	},
 	{
 		Query: RowValueExpr{},
-		Data:  String("value1"),
+		Data:  json.String("value1"),
 		Error: "json value must be an array",
 	},
 	{
 		Query: RowValueExpr{
 			Child: RowValueExpr{},
 		},
-		Data: Array{
-			String("value1"),
-			String("value2"),
+		Data: json.Array{
+			json.String("value1"),
+			json.String("value2"),
 		},
 		Error: "json value must be an array",
 	},
 	{
 		Query: TableExpr{},
-		Data: Object{
-			Members: []ObjectMember{
+		Data: json.Object{
+			Members: []json.ObjectMember{
 				{
 					Key:   "key",
-					Value: String("value"),
+					Value: json.String("value"),
 				},
 				{
 					Key:   "key2",
-					Value: String("value2"),
+					Value: json.String("value2"),
 				},
 			},
 		},
-		Expect: Array{
-			Object{
-				Members: []ObjectMember{
+		Expect: json.Array{
+			json.Object{
+				Members: []json.ObjectMember{
 					{
 						Key:   "key",
-						Value: String("value"),
+						Value: json.String("value"),
 					},
 					{
 						Key:   "key2",
-						Value: String("value2"),
+						Value: json.String("value2"),
 					},
 				},
 			},
@@ -423,39 +426,39 @@ var extractTests = []struct {
 				},
 			},
 		},
-		Data: Object{
-			Members: []ObjectMember{
+		Data: json.Object{
+			Members: []json.ObjectMember{
 				{
 					Key:   "key",
-					Value: String("value"),
+					Value: json.String("value"),
 				},
 				{
 					Key: "key2",
-					Value: Object{
-						Members: []ObjectMember{
+					Value: json.Object{
+						Members: []json.ObjectMember{
 							{
 								Key:   "key3",
-								Value: String("value3"),
+								Value: json.String("value3"),
 							},
 							{
 								Key:   "key4",
-								Value: String("value4"),
+								Value: json.String("value4"),
 							},
 						},
 					},
 				},
 			},
 		},
-		Expect: Array{
-			Object{
-				Members: []ObjectMember{
+		Expect: json.Array{
+			json.Object{
+				Members: []json.ObjectMember{
 					{
 						Key:   "key3",
-						Value: String("value3"),
+						Value: json.String("value3"),
 					},
 					{
 						Key:   "key",
-						Value: String("value"),
+						Value: json.String("value"),
 					},
 				},
 			},
@@ -463,106 +466,106 @@ var extractTests = []struct {
 	},
 	{
 		Query: TableExpr{},
-		Data: Array{
-			Object{
-				Members: []ObjectMember{
+		Data: json.Array{
+			json.Object{
+				Members: []json.ObjectMember{
 					{
 						Key: "key2",
-						Value: Object{
-							Members: []ObjectMember{
+						Value: json.Object{
+							Members: []json.ObjectMember{
 								{
 									Key:   "key3",
-									Value: String("value3"),
+									Value: json.String("value3"),
 								},
 								{
 									Key:   "key4",
-									Value: String("value4"),
+									Value: json.String("value4"),
 								},
 							},
 						},
 					},
 				},
 			},
-			Object{
-				Members: []ObjectMember{
+			json.Object{
+				Members: []json.ObjectMember{
 					{
 						Key:   "key",
-						Value: String("value11"),
+						Value: json.String("value11"),
 					},
 					{
 						Key: "key2",
-						Value: Object{
-							Members: []ObjectMember{
+						Value: json.Object{
+							Members: []json.ObjectMember{
 								{
 									Key:   "key3",
-									Value: String("value13"),
+									Value: json.String("value13"),
 								},
 								{
 									Key:   "key4",
-									Value: String("value14"),
+									Value: json.String("value14"),
 								},
 							},
 						},
 					},
 					{
 						Key:   "key9",
-						Value: String("value19"),
+						Value: json.String("value19"),
 					},
 				},
 			},
 		},
-		Expect: Array{
-			Object{
-				Members: []ObjectMember{
+		Expect: json.Array{
+			json.Object{
+				Members: []json.ObjectMember{
 					{
 						Key: "key2",
-						Value: Object{
-							Members: []ObjectMember{
+						Value: json.Object{
+							Members: []json.ObjectMember{
 								{
 									Key:   "key3",
-									Value: String("value3"),
+									Value: json.String("value3"),
 								},
 								{
 									Key:   "key4",
-									Value: String("value4"),
+									Value: json.String("value4"),
 								},
 							},
 						},
 					},
 					{
 						Key:   "key",
-						Value: Null{},
+						Value: json.Null{},
 					},
 					{
 						Key:   "key9",
-						Value: Null{},
+						Value: json.Null{},
 					},
 				},
 			},
-			Object{
-				Members: []ObjectMember{
+			json.Object{
+				Members: []json.ObjectMember{
 					{
 						Key: "key2",
-						Value: Object{
-							Members: []ObjectMember{
+						Value: json.Object{
+							Members: []json.ObjectMember{
 								{
 									Key:   "key3",
-									Value: String("value13"),
+									Value: json.String("value13"),
 								},
 								{
 									Key:   "key4",
-									Value: String("value14"),
+									Value: json.String("value14"),
 								},
 							},
 						},
 					},
 					{
 						Key:   "key",
-						Value: String("value11"),
+						Value: json.String("value11"),
 					},
 					{
 						Key:   "key9",
-						Value: String("value19"),
+						Value: json.String("value19"),
 					},
 				},
 			},
@@ -586,84 +589,84 @@ var extractTests = []struct {
 				},
 			},
 		},
-		Data: Array{
-			Object{
-				Members: []ObjectMember{
+		Data: json.Array{
+			json.Object{
+				Members: []json.ObjectMember{
 					{
 						Key: "key2",
-						Value: Object{
-							Members: []ObjectMember{
+						Value: json.Object{
+							Members: []json.ObjectMember{
 								{
 									Key:   "key3",
-									Value: String("value3"),
+									Value: json.String("value3"),
 								},
 								{
 									Key:   "key4",
-									Value: String("value4"),
+									Value: json.String("value4"),
 								},
 							},
 						},
 					},
 				},
 			},
-			Object{
-				Members: []ObjectMember{
+			json.Object{
+				Members: []json.ObjectMember{
 					{
 						Key:   "key",
-						Value: String("value11"),
+						Value: json.String("value11"),
 					},
 					{
 						Key: "key2",
-						Value: Object{
-							Members: []ObjectMember{
+						Value: json.Object{
+							Members: []json.ObjectMember{
 								{
 									Key:   "key3",
-									Value: String("value13"),
+									Value: json.String("value13"),
 								},
 								{
 									Key:   "key4",
-									Value: String("value14"),
+									Value: json.String("value14"),
 								},
 							},
 						},
 					},
 					{
 						Key:   "key9",
-						Value: String("value19"),
+						Value: json.String("value19"),
 					},
 				},
 			},
 		},
-		Expect: Array{
-			Object{
-				Members: []ObjectMember{
+		Expect: json.Array{
+			json.Object{
+				Members: []json.ObjectMember{
 					{
 						Key:   "key3",
-						Value: String("value3"),
+						Value: json.String("value3"),
 					},
 					{
 						Key:   "key",
-						Value: Null{},
+						Value: json.Null{},
 					},
 					{
 						Key:   "key5",
-						Value: Null{},
+						Value: json.Null{},
 					},
 				},
 			},
-			Object{
-				Members: []ObjectMember{
+			json.Object{
+				Members: []json.ObjectMember{
 					{
 						Key:   "key3",
-						Value: String("value13"),
+						Value: json.String("value13"),
 					},
 					{
 						Key:   "key",
-						Value: String("value11"),
+						Value: json.String("value11"),
 					},
 					{
 						Key:   "key5",
-						Value: Null{},
+						Value: json.Null{},
 					},
 				},
 			},
@@ -671,9 +674,9 @@ var extractTests = []struct {
 	},
 	{
 		Query: TableExpr{},
-		Data: Array{
-			String("value1"),
-			String("value2"),
+		Data: json.Array{
+			json.String("value1"),
+			json.String("value2"),
 		},
 		Error: "all elements in array must be objects",
 	},
@@ -691,50 +694,50 @@ var extractTests = []struct {
 				},
 			},
 		},
-		Data: Array{
-			Object{
-				Members: []ObjectMember{
+		Data: json.Array{
+			json.Object{
+				Members: []json.ObjectMember{
 					{
 						Key: "key2",
-						Value: Object{
-							Members: []ObjectMember{
+						Value: json.Object{
+							Members: []json.ObjectMember{
 								{
 									Key:   "key3",
-									Value: String("value3"),
+									Value: json.String("value3"),
 								},
 								{
 									Key:   "key4",
-									Value: String("value4"),
+									Value: json.String("value4"),
 								},
 							},
 						},
 					},
 				},
 			},
-			Object{
-				Members: []ObjectMember{
+			json.Object{
+				Members: []json.ObjectMember{
 					{
 						Key:   "key",
-						Value: String("value11"),
+						Value: json.String("value11"),
 					},
 					{
 						Key: "key2",
-						Value: Object{
-							Members: []ObjectMember{
+						Value: json.Object{
+							Members: []json.ObjectMember{
 								{
 									Key:   "key3",
-									Value: String("value13"),
+									Value: json.String("value13"),
 								},
 								{
 									Key:   "key4",
-									Value: String("value14"),
+									Value: json.String("value14"),
 								},
 							},
 						},
 					},
 					{
 						Key:   "key9",
-						Value: String("value19"),
+						Value: json.String("value19"),
 					},
 				},
 			},
@@ -755,19 +758,19 @@ var extractTests = []struct {
 				},
 			},
 		},
-		Data: Object{
-			Members: []ObjectMember{
+		Data: json.Object{
+			Members: []json.ObjectMember{
 				{
 					Key: "key2",
-					Value: Object{
-						Members: []ObjectMember{
+					Value: json.Object{
+						Members: []json.ObjectMember{
 							{
 								Key:   "key3",
-								Value: String("value3"),
+								Value: json.String("value3"),
 							},
 							{
 								Key:   "key4",
-								Value: String("value4"),
+								Value: json.String("value4"),
 							},
 						},
 					},
@@ -778,12 +781,12 @@ var extractTests = []struct {
 	},
 	{
 		Query: TableExpr{},
-		Data:  String("value1"),
+		Data:  json.String("value1"),
 		Error: "json value must be an array or object",
 	},
 	{
 		Query: FieldExpr{},
-		Data:  String("value1"),
+		Data:  json.String("value1"),
 		Error: "invalid expression",
 	},
 }

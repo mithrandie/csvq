@@ -2,13 +2,16 @@ package query
 
 import (
 	"fmt"
-	"github.com/mithrandie/csvq/lib/text"
 	"path/filepath"
 	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/mithrandie/go-text"
+
+	"github.com/mithrandie/go-text/fixedlen"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
@@ -447,12 +450,44 @@ var setFlagTests = []struct {
 		Result: " @@LINE_BREAK: CRLF",
 	},
 	{
+		Name: "Set EncloseAll",
+		Expr: parser.SetFlag{
+			Name:  "@@enclose_all",
+			Value: parser.NewTernaryValueFromString("true"),
+		},
+		Result: " @@ENCLOSE_ALL: (ignored) true",
+	},
+	{
 		Name: "Set PrettyPrint",
 		Expr: parser.SetFlag{
 			Name:  "@@pretty_print",
 			Value: parser.NewTernaryValueFromString("true"),
 		},
 		Result: " @@PRETTY_PRINT: (ignored) true",
+	},
+	{
+		Name: "Set EastAsianEncoding",
+		Expr: parser.SetFlag{
+			Name:  "@@east_asian_encoding",
+			Value: parser.NewTernaryValueFromString("true"),
+		},
+		Result: " @@EAST_ASIAN_ENCODING: true",
+	},
+	{
+		Name: "Set CountDiacriticalSign",
+		Expr: parser.SetFlag{
+			Name:  "@@count_diacritical_sign",
+			Value: parser.NewTernaryValueFromString("true"),
+		},
+		Result: " @@COUNT_DIACRITICAL_SIGN: true",
+	},
+	{
+		Name: "Set CountFormatCode",
+		Expr: parser.SetFlag{
+			Name:  "@@count_format_code",
+			Value: parser.NewTernaryValueFromString("true"),
+		},
+		Result: " @@COUNT_FORMAT_CODE: true",
 	},
 	{
 		Name: "Set Color",
@@ -884,6 +919,40 @@ var showFlagTests = []struct {
 		Result: " \033[34;1m@@LINE_BREAK:\033[0m \033[32mCRLF\033[0m",
 	},
 	{
+		Name: "Show EncloseAll",
+		Expr: parser.ShowFlag{
+			Name: "@@enclose_all",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@enclose_all",
+				Value: parser.NewTernaryValueFromString("true"),
+			},
+			{
+				Name:  "@@format",
+				Value: parser.NewStringValue("CSV"),
+			},
+		},
+		Result: " \033[34;1m@@ENCLOSE_ALL:\033[0m \033[33;1mtrue\033[0m",
+	},
+	{
+		Name: "Show EncloseAll Ignored",
+		Expr: parser.ShowFlag{
+			Name: "@@enclose_all",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@enclose_all",
+				Value: parser.NewTernaryValueFromString("true"),
+			},
+			{
+				Name:  "@@format",
+				Value: parser.NewStringValue("JSON"),
+			},
+		},
+		Result: " \033[34;1m@@ENCLOSE_ALL:\033[0m \033[90m(ignored) true\033[0m",
+	},
+	{
 		Name: "Show PrettyPrint",
 		Expr: parser.ShowFlag{
 			Name: "@@pretty_print",
@@ -912,6 +981,108 @@ var showFlagTests = []struct {
 			},
 		},
 		Result: " \033[34;1m@@PRETTY_PRINT:\033[0m \033[90m(ignored) true\033[0m",
+	},
+	{
+		Name: "Show EastAsianEncoding",
+		Expr: parser.ShowFlag{
+			Name: "@@east_asian_encoding",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@east_asian_encoding",
+				Value: parser.NewTernaryValueFromString("true"),
+			},
+			{
+				Name:  "@@format",
+				Value: parser.NewStringValue("TEXT"),
+			},
+		},
+		Result: " \033[34;1m@@EAST_ASIAN_ENCODING:\033[0m \033[33;1mtrue\033[0m",
+	},
+	{
+		Name: "Show EastAsianEncoding Ignored",
+		Expr: parser.ShowFlag{
+			Name: "@@east_asian_encoding",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@east_asian_encoding",
+				Value: parser.NewTernaryValueFromString("true"),
+			},
+			{
+				Name:  "@@format",
+				Value: parser.NewStringValue("JSON"),
+			},
+		},
+		Result: " \033[34;1m@@EAST_ASIAN_ENCODING:\033[0m \033[90m(ignored) true\033[0m",
+	},
+	{
+		Name: "Show CountDiacriticalSign",
+		Expr: parser.ShowFlag{
+			Name: "@@count_diacritical_sign",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@count_diacritical_sign",
+				Value: parser.NewTernaryValueFromString("true"),
+			},
+			{
+				Name:  "@@format",
+				Value: parser.NewStringValue("TEXT"),
+			},
+		},
+		Result: " \033[34;1m@@COUNT_DIACRITICAL_SIGN:\033[0m \033[33;1mtrue\033[0m",
+	},
+	{
+		Name: "Show CountDiacriticalSign Ignored",
+		Expr: parser.ShowFlag{
+			Name: "@@count_diacritical_sign",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@count_diacritical_sign",
+				Value: parser.NewTernaryValueFromString("true"),
+			},
+			{
+				Name:  "@@format",
+				Value: parser.NewStringValue("JSON"),
+			},
+		},
+		Result: " \033[34;1m@@COUNT_DIACRITICAL_SIGN:\033[0m \033[90m(ignored) true\033[0m",
+	},
+	{
+		Name: "Show CountFormatCode",
+		Expr: parser.ShowFlag{
+			Name: "@@count_format_code",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@count_format_code",
+				Value: parser.NewTernaryValueFromString("true"),
+			},
+			{
+				Name:  "@@format",
+				Value: parser.NewStringValue("TEXT"),
+			},
+		},
+		Result: " \033[34;1m@@COUNT_FORMAT_CODE:\033[0m \033[33;1mtrue\033[0m",
+	},
+	{
+		Name: "Show CountFormatCode Ignored",
+		Expr: parser.ShowFlag{
+			Name: "@@count_format_code",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "@@count_format_code",
+				Value: parser.NewTernaryValueFromString("true"),
+			},
+			{
+				Name:  "@@format",
+				Value: parser.NewStringValue("JSON"),
+			},
+		},
+		Result: " \033[34;1m@@COUNT_FORMAT_CODE:\033[0m \033[90m(ignored) true\033[0m",
 	},
 	{
 		Name: "Show Color",
@@ -1008,13 +1179,13 @@ var showObjectsTests = []struct {
 	Expr                    parser.ShowObjects
 	Filter                  *Filter
 	Delimiter               rune
-	DelimiterPositions      text.DelimiterPositions
+	DelimiterPositions      fixedlen.DelimiterPositions
 	DelimitAutomatically    bool
 	JsonQuery               string
 	Repository              string
 	Format                  cmd.Format
 	WriteDelimiter          rune
-	WriteDelimiterPositions text.DelimiterPositions
+	WriteDelimiterPositions fixedlen.DelimiterPositions
 	ViewCache               ViewMap
 	ExecResults             []ExecResult
 	Expect                  string
@@ -1030,8 +1201,8 @@ var showObjectsTests = []struct {
 					Path:      "table1.csv",
 					Delimiter: '\t',
 					Format:    cmd.CSV,
-					Encoding:  cmd.SJIS,
-					LineBreak: cmd.CRLF,
+					Encoding:  text.SJIS,
+					LineBreak: text.CRLF,
 					NoHeader:  true,
 				},
 			},
@@ -1041,8 +1212,8 @@ var showObjectsTests = []struct {
 					Path:      "table1.tsv",
 					Delimiter: '\t',
 					Format:    cmd.TSV,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 					NoHeader:  false,
 				},
 			},
@@ -1052,8 +1223,8 @@ var showObjectsTests = []struct {
 					Path:        "table1.json",
 					JsonQuery:   "{}",
 					Format:      cmd.JSON,
-					Encoding:    cmd.UTF8,
-					LineBreak:   cmd.LF,
+					Encoding:    text.UTF8,
+					LineBreak:   text.LF,
 					PrettyPrint: false,
 				},
 			},
@@ -1063,8 +1234,8 @@ var showObjectsTests = []struct {
 					Path:        "table2.json",
 					JsonQuery:   "",
 					Format:      cmd.JSON,
-					Encoding:    cmd.UTF8,
-					LineBreak:   cmd.LF,
+					Encoding:    text.UTF8,
+					LineBreak:   text.LF,
 					PrettyPrint: false,
 				},
 			},
@@ -1074,8 +1245,8 @@ var showObjectsTests = []struct {
 					Path:               "table1.txt",
 					DelimiterPositions: []int{3, 12},
 					Format:             cmd.FIXED,
-					Encoding:           cmd.UTF8,
-					LineBreak:          cmd.LF,
+					Encoding:           text.UTF8,
+					LineBreak:          text.LF,
 					NoHeader:           false,
 				},
 			},
@@ -1085,7 +1256,7 @@ var showObjectsTests = []struct {
 			"----------------------------------------------------------\n" +
 			" table1.csv\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: CSV     Delimiter: '\\t'\n" +
+			"     Format: CSV     Delimiter: '\\t'  Enclose All: false\n" +
 			"     Encoding: SJIS  LineBreak: CRLF  Header: false\n" +
 			" table1.json\n" +
 			"     Fields: col1, col2\n" +
@@ -1093,7 +1264,7 @@ var showObjectsTests = []struct {
 			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
 			" table1.tsv\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: TSV     Delimiter: '\\t'\n" +
+			"     Format: TSV     Delimiter: '\\t'  Enclose All: false\n" +
 			"     Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" table1.txt\n" +
 			"     Fields: col1, col2\n" +
@@ -1115,8 +1286,8 @@ var showObjectsTests = []struct {
 					Path:      "table1.csv",
 					Delimiter: '\t',
 					Format:    cmd.CSV,
-					Encoding:  cmd.SJIS,
-					LineBreak: cmd.CRLF,
+					Encoding:  text.SJIS,
+					LineBreak: text.CRLF,
 					NoHeader:  true,
 				},
 			},
@@ -1126,8 +1297,8 @@ var showObjectsTests = []struct {
 					Path:      "table1.tsv",
 					Delimiter: '\t',
 					Format:    cmd.TSV,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 					NoHeader:  false,
 				},
 			},
@@ -1137,8 +1308,8 @@ var showObjectsTests = []struct {
 					Path:        "table1.json",
 					JsonQuery:   "{}",
 					Format:      cmd.JSON,
-					Encoding:    cmd.UTF8,
-					LineBreak:   cmd.LF,
+					Encoding:    text.UTF8,
+					LineBreak:   text.LF,
 					PrettyPrint: false,
 				},
 			},
@@ -1148,8 +1319,8 @@ var showObjectsTests = []struct {
 					Path:        "table2.json",
 					JsonQuery:   "",
 					Format:      cmd.JSON,
-					Encoding:    cmd.UTF8,
-					LineBreak:   cmd.LF,
+					Encoding:    text.UTF8,
+					LineBreak:   text.LF,
 					PrettyPrint: false,
 				},
 			},
@@ -1159,8 +1330,8 @@ var showObjectsTests = []struct {
 					Path:               "table1.txt",
 					DelimiterPositions: []int{3, 12},
 					Format:             cmd.FIXED,
-					Encoding:           cmd.UTF8,
-					LineBreak:          cmd.LF,
+					Encoding:           text.UTF8,
+					LineBreak:          text.LF,
 					NoHeader:           false,
 				},
 			},
@@ -1185,7 +1356,7 @@ var showObjectsTests = []struct {
 			"----------------------------------------------------------\n" +
 			" table1.csv\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: CSV     Delimiter: '\\t'\n" +
+			"     Format: CSV     Delimiter: '\\t'  Enclose All: false\n" +
 			"     Encoding: SJIS  LineBreak: CRLF  Header: false\n" +
 			" table1.json\n" +
 			"     Fields: col1, col2\n" +
@@ -1193,7 +1364,7 @@ var showObjectsTests = []struct {
 			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
 			" *Created* table1.tsv\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: TSV     Delimiter: '\\t'\n" +
+			"     Format: TSV     Delimiter: '\\t'  Enclose All: false\n" +
 			"     Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" table1.txt\n" +
 			"     Fields: col1, col2\n" +
@@ -1215,8 +1386,8 @@ var showObjectsTests = []struct {
 					Path:      "table1.csv",
 					Delimiter: '\t',
 					Format:    cmd.CSV,
-					Encoding:  cmd.SJIS,
-					LineBreak: cmd.CRLF,
+					Encoding:  text.SJIS,
+					LineBreak: text.CRLF,
 					NoHeader:  true,
 				},
 			},
@@ -1227,7 +1398,7 @@ var showObjectsTests = []struct {
 			" table1.csv\n" +
 			"     Fields: colabcdef1, colabcdef2, colabcdef3, colabcdef4, colabcdef5, \n" +
 			"             colabcdef6, colabcdef7\n" +
-			"     Format: CSV     Delimiter: '\\t'\n" +
+			"     Format: CSV     Delimiter: '\\t'  Enclose All: false\n" +
 			"     Encoding: SJIS  LineBreak: CRLF  Header: false\n" +
 			"",
 	},
@@ -1436,27 +1607,31 @@ var showObjectsTests = []struct {
 		Expr:       parser.ShowObjects{Type: parser.Identifier{Literal: "flags"}},
 		Repository: ".",
 		Expect: "\n" +
-			"                Flags\n" +
-			"--------------------------------------\n" +
-			"      @@REPOSITORY: .\n" +
-			"        @@TIMEZONE: UTC\n" +
-			" @@DATETIME_FORMAT: (not set)\n" +
-			"    @@WAIT_TIMEOUT: 15\n" +
-			"       @@DELIMITER: ',' | SPACES\n" +
-			"      @@JSON_QUERY: (ignored) (empty)\n" +
-			"        @@ENCODING: UTF8\n" +
-			"       @@NO_HEADER: false\n" +
-			"    @@WITHOUT_NULL: false\n" +
-			"          @@FORMAT: CSV\n" +
-			"  @@WRITE_ENCODING: UTF8\n" +
-			" @@WRITE_DELIMITER: ',' | SPACES\n" +
-			"  @@WITHOUT_HEADER: false\n" +
-			"      @@LINE_BREAK: LF\n" +
-			"    @@PRETTY_PRINT: (ignored) false\n" +
-			"           @@COLOR: false\n" +
-			"           @@QUIET: false\n" +
-			"             @@CPU: " + strconv.Itoa(cmd.GetFlags().CPU) + "\n" +
-			"           @@STATS: false\n" +
+			"                    Flags\n" +
+			"---------------------------------------------\n" +
+			"             @@REPOSITORY: .\n" +
+			"               @@TIMEZONE: UTC\n" +
+			"        @@DATETIME_FORMAT: (not set)\n" +
+			"           @@WAIT_TIMEOUT: 15\n" +
+			"              @@DELIMITER: ',' | SPACES\n" +
+			"             @@JSON_QUERY: (ignored) (empty)\n" +
+			"               @@ENCODING: UTF8\n" +
+			"              @@NO_HEADER: false\n" +
+			"           @@WITHOUT_NULL: false\n" +
+			"                 @@FORMAT: CSV\n" +
+			"         @@WRITE_ENCODING: UTF8\n" +
+			"        @@WRITE_DELIMITER: ',' | SPACES\n" +
+			"         @@WITHOUT_HEADER: false\n" +
+			"             @@LINE_BREAK: LF\n" +
+			"            @@ENCLOSE_ALL: false\n" +
+			"           @@PRETTY_PRINT: (ignored) false\n" +
+			"    @@EAST_ASIAN_ENCODING: (ignored) false\n" +
+			" @@COUNT_DIACRITICAL_SIGN: (ignored) false\n" +
+			"      @@COUNT_FORMAT_CODE: (ignored) false\n" +
+			"                  @@COLOR: false\n" +
+			"                  @@QUIET: false\n" +
+			"                    @@CPU: " + strconv.Itoa(cmd.GetFlags().CPU) + "\n" +
+			"                  @@STATS: false\n" +
 			"",
 	},
 	{
@@ -1605,8 +1780,8 @@ var showFieldsTests = []struct {
 					Path:      GetTestFilePath("show_fields_create.csv"),
 					Delimiter: ',',
 					Format:    cmd.CSV,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 					NoHeader:  false,
 				},
 			},
@@ -1624,7 +1799,7 @@ var showFieldsTests = []struct {
 			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv", "show_fields_create.csv", 10)) + "\n" +
 			" Type: Table\n" +
 			" Path: " + GetTestFilePath("show_fields_create.csv") + "\n" +
-			" Format: CSV     Delimiter: ','\n" +
+			" Format: CSV     Delimiter: ','   Enclose All: false\n" +
 			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" Status: Created\n" +
 			" Fields:\n" +
@@ -1644,8 +1819,8 @@ var showFieldsTests = []struct {
 					Path:      GetTestFilePath("show_fields_update.csv"),
 					Delimiter: ',',
 					Format:    cmd.CSV,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 					NoHeader:  false,
 				},
 			},
@@ -1664,7 +1839,7 @@ var showFieldsTests = []struct {
 			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv", "show_fields_update.csv", 10)) + "\n" +
 			" Type: Table\n" +
 			" Path: " + GetTestFilePath("show_fields_update.csv") + "\n" +
-			" Format: CSV     Delimiter: ','\n" +
+			" Format: CSV     Delimiter: ','   Enclose All: false\n" +
 			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" Status: Updated\n" +
 			" Fields:\n" +

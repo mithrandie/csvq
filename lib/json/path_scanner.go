@@ -9,6 +9,8 @@ const (
 	PathEscape    = '\\'
 )
 
+const EOF = -1
+
 type PathScanner struct {
 	src    []rune
 	srcPos int

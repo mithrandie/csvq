@@ -2,7 +2,6 @@ package query
 
 import (
 	"fmt"
-	"github.com/mithrandie/csvq/lib/color"
 	"strings"
 	"time"
 
@@ -112,6 +111,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 				Encoding:           flags.WriteEncoding,
 				LineBreak:          flags.LineBreak,
 				NoHeader:           flags.WithoutHeader,
+				EncloseAll:         flags.EncloseAll,
 				PrettyPrint:        flags.PrettyPrint,
 			}
 			viewstr, err = EncodeView(view, fileInfo)
@@ -476,6 +476,6 @@ func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, 
 
 func (proc *Procedure) showExecutionTime() {
 	exectime := cmd.FormatNumber(time.Since(proc.MeasurementStart).Seconds(), 6, ".", ",", "")
-	stats := fmt.Sprintf(color.BlueB(" Query Execution Time: ")+"%s seconds", exectime)
+	stats := fmt.Sprintf(cmd.GetPalette().Render(cmd.LableEffect, " Query Execution Time: ")+"%s seconds", exectime)
 	Log(stats, false)
 }

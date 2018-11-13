@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mithrandie/go-text"
+
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/value"
 )
@@ -108,15 +110,19 @@ func initFlag() {
 	flags.WaitTimeout = 15
 	flags.Delimiter = ','
 	flags.JsonQuery = ""
-	flags.Encoding = cmd.UTF8
+	flags.Encoding = text.UTF8
 	flags.NoHeader = false
 	flags.WithoutNull = false
-	flags.WriteEncoding = cmd.UTF8
+	flags.WriteEncoding = text.UTF8
 	flags.Format = cmd.TEXT
 	flags.WriteDelimiter = ','
 	flags.WithoutHeader = false
-	flags.LineBreak = cmd.LF
+	flags.LineBreak = text.LF
+	flags.EncloseAll = false
 	flags.PrettyPrint = false
+	flags.EastAsianEncoding = false
+	flags.CountDiacriticalSign = false
+	flags.CountFormatCode = false
 	flags.Color = false
 	flags.Quiet = false
 	flags.CPU = cpu

@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mithrandie/go-text"
+
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
@@ -236,7 +238,7 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Logs: "\"column1\",\"column2\"\n1,2\n",
+		Logs: "column1,column2\n1,2\n",
 	},
 	{
 		Input: parser.DisposeView{
@@ -325,7 +327,7 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Logs: "\"multiplication\"\n6\n",
+		Logs: "multiplication\n6\n",
 	},
 	{
 		Input: parser.SelectQuery{
@@ -340,7 +342,7 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Logs: "\"var1\"\n1\n",
+		Logs: "var1\n1\n",
 	},
 	{
 		Input: parser.VariableDeclaration{
@@ -394,8 +396,8 @@ var procedureExecuteStatementTests = []struct {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 				OperatedCount: 2,
 			},
@@ -428,8 +430,8 @@ var procedureExecuteStatementTests = []struct {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 				OperatedCount: 1,
 			},
@@ -460,8 +462,8 @@ var procedureExecuteStatementTests = []struct {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 				OperatedCount: 1,
 			},
@@ -483,8 +485,8 @@ var procedureExecuteStatementTests = []struct {
 					Path:      GetTestFilePath("newtable.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 			},
 		},
@@ -506,8 +508,8 @@ var procedureExecuteStatementTests = []struct {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 				OperatedCount: 1,
 			},
@@ -528,8 +530,8 @@ var procedureExecuteStatementTests = []struct {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 				OperatedCount: 1,
 			},
@@ -549,8 +551,8 @@ var procedureExecuteStatementTests = []struct {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 				OperatedCount: 1,
 			},
@@ -567,7 +569,7 @@ var procedureExecuteStatementTests = []struct {
 			strings.Repeat(" ", (calcShowFieldsWidth("table1.csv", "table1.csv", 22)-(22+len("table1.csv")))/2) + "Attributes Updated in table1.csv\n" +
 			strings.Repeat("-", calcShowFieldsWidth("table1.csv", "table1.csv", 22)) + "\n" +
 			" Path: " + GetTestFilePath("table1.csv") + "\n" +
-			" Format: TSV     Delimiter: '\\t'\n" +
+			" Format: TSV     Delimiter: '\\t'  Enclose All: false\n" +
 			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			"\n",
 	},
@@ -687,7 +689,7 @@ var procedureExecuteStatementTests = []struct {
 			strings.Repeat("-", calcShowFieldsWidth("table1.csv", "table1", 10)) + "\n" +
 			" Type: Table\n" +
 			" Path: " + GetTestFilePath("table1.csv") + "\n" +
-			" Format: CSV     Delimiter: ','\n" +
+			" Format: CSV     Delimiter: ','   Enclose All: false\n" +
 			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" Status: Fixed\n" +
 			" Fields:\n" +

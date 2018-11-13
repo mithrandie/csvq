@@ -12,11 +12,13 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
+
+	"github.com/mithrandie/go-text"
 )
 
 var viewLoadTests = []struct {
 	Name                 string
-	Encoding             cmd.Encoding
+	Encoding             text.Encoding
 	NoHeader             bool
 	From                 parser.FromClause
 	UseInternalId        bool
@@ -98,8 +100,8 @@ var viewLoadTests = []struct {
 			FileInfo: &FileInfo{
 				Path:      "table1.csv",
 				Delimiter: ',',
-				Encoding:  cmd.UTF8,
-				LineBreak: cmd.LF,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
 			},
 			Filter: &Filter{
 				Variables:    []VariableMap{{}},
@@ -144,8 +146,8 @@ var viewLoadTests = []struct {
 			FileInfo: &FileInfo{
 				Path:      "table1.csv",
 				Delimiter: ',',
-				Encoding:  cmd.UTF8,
-				LineBreak: cmd.LF,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
 			},
 			Filter: &Filter{
 				Variables:    []VariableMap{{}},
@@ -179,8 +181,8 @@ var viewLoadTests = []struct {
 			FileInfo: &FileInfo{
 				Path:        "stdin",
 				Delimiter:   ',',
-				Encoding:    cmd.UTF8,
-				LineBreak:   cmd.LF,
+				Encoding:    text.UTF8,
+				LineBreak:   text.LF,
 				IsTemporary: true,
 			},
 			Filter: &Filter{
@@ -220,8 +222,8 @@ var viewLoadTests = []struct {
 			FileInfo: &FileInfo{
 				Path:        "stdin",
 				Delimiter:   ',',
-				Encoding:    cmd.UTF8,
-				LineBreak:   cmd.LF,
+				Encoding:    text.UTF8,
+				LineBreak:   text.LF,
 				IsTemporary: true,
 			},
 			Filter: &Filter{
@@ -264,8 +266,8 @@ var viewLoadTests = []struct {
 				Delimiter:   ',',
 				JsonQuery:   "key{}",
 				Format:      cmd.JSON,
-				Encoding:    cmd.UTF8,
-				LineBreak:   cmd.LF,
+				Encoding:    text.UTF8,
+				LineBreak:   text.LF,
 				IsTemporary: true,
 			},
 			Filter: &Filter{
@@ -311,8 +313,8 @@ var viewLoadTests = []struct {
 				Delimiter:   ',',
 				JsonQuery:   "{}",
 				Format:      cmd.JSONH,
-				Encoding:    cmd.UTF8,
-				LineBreak:   cmd.LF,
+				Encoding:    text.UTF8,
+				LineBreak:   text.LF,
 				IsTemporary: true,
 			},
 			Filter: &Filter{
@@ -358,8 +360,8 @@ var viewLoadTests = []struct {
 				Delimiter:   ',',
 				JsonQuery:   "{}",
 				Format:      cmd.JSONA,
-				Encoding:    cmd.UTF8,
-				LineBreak:   cmd.LF,
+				Encoding:    text.UTF8,
+				LineBreak:   text.LF,
 				IsTemporary: true,
 			},
 			Filter: &Filter{
@@ -422,8 +424,8 @@ var viewLoadTests = []struct {
 				DelimiterPositions: []int{7, 12},
 				Format:             cmd.FIXED,
 				NoHeader:           false,
-				Encoding:           cmd.UTF8,
-				LineBreak:          cmd.LF,
+				Encoding:           text.UTF8,
+				LineBreak:          text.LF,
 			},
 			Filter: &Filter{
 				Variables:    []VariableMap{{}},
@@ -475,8 +477,8 @@ var viewLoadTests = []struct {
 				DelimiterPositions: []int{7, 12},
 				Format:             cmd.FIXED,
 				NoHeader:           true,
-				Encoding:           cmd.UTF8,
-				LineBreak:          cmd.LF,
+				Encoding:           text.UTF8,
+				LineBreak:          text.LF,
 			},
 			Filter: &Filter{
 				Variables:    []VariableMap{{}},
@@ -519,8 +521,8 @@ var viewLoadTests = []struct {
 			FileInfo: &FileInfo{
 				Path:        "stdin",
 				Delimiter:   ',',
-				Encoding:    cmd.UTF8,
-				LineBreak:   cmd.LF,
+				Encoding:    text.UTF8,
+				LineBreak:   text.LF,
 				IsTemporary: true,
 			},
 			Filter: &Filter{
@@ -611,8 +613,8 @@ var viewLoadTests = []struct {
 				Path:      "table5.csv",
 				Delimiter: ',',
 				Format:    cmd.CSV,
-				Encoding:  cmd.SJIS,
-				LineBreak: cmd.LF,
+				Encoding:  text.SJIS,
+				LineBreak: text.LF,
 				NoHeader:  true,
 			},
 			Filter: &Filter{
@@ -656,8 +658,8 @@ var viewLoadTests = []struct {
 				Path:      "table3.tsv",
 				Delimiter: '\t',
 				Format:    cmd.TSV,
-				Encoding:  cmd.UTF8,
-				LineBreak: cmd.LF,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
 			},
 			Filter: &Filter{
 				Variables:    []VariableMap{{}},
@@ -813,8 +815,8 @@ var viewLoadTests = []struct {
 				Delimiter:          ',',
 				DelimiterPositions: []int{7, 12},
 				Format:             cmd.FIXED,
-				Encoding:           cmd.UTF8,
-				LineBreak:          cmd.LF,
+				Encoding:           text.UTF8,
+				LineBreak:          text.LF,
 			},
 			Filter: &Filter{
 				Variables:    []VariableMap{{}},
@@ -912,8 +914,8 @@ var viewLoadTests = []struct {
 				Delimiter: ',',
 				JsonQuery: "{}",
 				Format:    cmd.JSON,
-				Encoding:  cmd.UTF8,
-				LineBreak: cmd.LF,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
 			},
 			Filter: &Filter{
 				Variables:    []VariableMap{{}},
@@ -957,8 +959,8 @@ var viewLoadTests = []struct {
 				Delimiter: ',',
 				JsonQuery: "{}",
 				Format:    cmd.JSONH,
-				Encoding:  cmd.UTF8,
-				LineBreak: cmd.LF,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
 			},
 			Filter: &Filter{
 				Variables:    []VariableMap{{}},
@@ -1002,8 +1004,8 @@ var viewLoadTests = []struct {
 				Delimiter: ',',
 				JsonQuery: "{}",
 				Format:    cmd.JSONA,
-				Encoding:  cmd.UTF8,
-				LineBreak: cmd.LF,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
 			},
 			Filter: &Filter{
 				Variables:    []VariableMap{{}},
@@ -1240,7 +1242,7 @@ var viewLoadTests = []struct {
 	},
 	{
 		Name:     "Load SJIS File",
-		Encoding: cmd.SJIS,
+		Encoding: text.SJIS,
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -1799,8 +1801,8 @@ var viewLoadTests = []struct {
 				Path:        "jt",
 				Format:      cmd.JSON,
 				JsonQuery:   "{column1, column2}",
-				Encoding:    cmd.UTF8,
-				LineBreak:   cmd.LF,
+				Encoding:    text.UTF8,
+				LineBreak:   text.LF,
 				IsTemporary: true,
 			},
 			Filter: &Filter{
@@ -1918,8 +1920,8 @@ var viewLoadTests = []struct {
 				Path:        "jt",
 				Format:      cmd.JSON,
 				JsonQuery:   "{}",
-				Encoding:    cmd.UTF8,
-				LineBreak:   cmd.LF,
+				Encoding:    text.UTF8,
+				LineBreak:   text.LF,
 				IsTemporary: true,
 			},
 			Filter: &Filter{
@@ -2136,7 +2138,7 @@ func TestView_Load(t *testing.T) {
 		if v.Encoding != "" {
 			tf.Encoding = v.Encoding
 		} else {
-			tf.Encoding = cmd.UTF8
+			tf.Encoding = text.UTF8
 		}
 
 		var oldStdin *os.File

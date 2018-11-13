@@ -27,15 +27,6 @@ func InStrSliceWithCaseInsensitive(s string, list []string) bool {
 	return false
 }
 
-func InRuneSlice(r rune, list []rune) bool {
-	for _, v := range list {
-		if r == v {
-			return true
-		}
-	}
-	return false
-}
-
 func Distinguish(list []value.Primary) []value.Primary {
 	values := make(map[string]int)
 	valueKeys := make([]string, 0, len(list))

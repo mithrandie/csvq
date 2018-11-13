@@ -3,18 +3,21 @@ package query
 import (
 	"errors"
 	"fmt"
-	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/csvq/lib/color"
-	"github.com/mithrandie/csvq/lib/file"
-	"github.com/mithrandie/csvq/lib/parser"
-	"github.com/mithrandie/csvq/lib/text"
-	"github.com/mithrandie/csvq/lib/value"
-	"github.com/mithrandie/ternary"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/file"
+	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
+
+	"github.com/mithrandie/go-text"
+	"github.com/mithrandie/go-text/color"
+	"github.com/mithrandie/go-text/fixedlen"
+	"github.com/mithrandie/ternary"
 )
 
 type ObjectStatus int
@@ -164,7 +167,8 @@ func SetFlag(expr parser.SetFlag, filter *Filter) (string, error) {
 	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.DatetimeFormatFlag, cmd.DelimiterFlag, cmd.JsonQuery, cmd.EncodingFlag,
 		cmd.WriteEncodingFlag, cmd.FormatFlag, cmd.WriteDelimiterFlag, cmd.LineBreakFlag:
 		p = value.ToString(p)
-	case cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.PrettyPrintFlag, cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag:
+	case cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAll, cmd.PrettyPrintFlag,
+		cmd.EastAsianEncoding, cmd.CountDiacriticalSign, cmd.CountFormatCode, cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag:
 		p = value.ToBoolean(p)
 	case cmd.WaitTimeoutFlag:
 		p = value.ToFloat(p)
@@ -206,8 +210,16 @@ func SetFlag(expr parser.SetFlag, filter *Filter) (string, error) {
 		cmd.SetWithoutHeader(p.(value.Boolean).Raw())
 	case cmd.LineBreakFlag:
 		err = cmd.SetLineBreak(p.(value.String).Raw())
+	case cmd.EncloseAll:
+		cmd.SetEncloseAll(p.(value.Boolean).Raw())
 	case cmd.PrettyPrintFlag:
 		cmd.SetPrettyPrint(p.(value.Boolean).Raw())
+	case cmd.EastAsianEncoding:
+		cmd.SetEastAsianEncoding(p.(value.Boolean).Raw())
+	case cmd.CountDiacriticalSign:
+		cmd.SetCountDiacriticalSign(p.(value.Boolean).Raw())
+	case cmd.CountFormatCode:
+		cmd.SetCountFormatCode(p.(value.Boolean).Raw())
 	case cmd.ColorFlag:
 		cmd.SetColor(p.(value.Boolean).Raw())
 	case cmd.QuietFlag:
@@ -222,54 +234,48 @@ func SetFlag(expr parser.SetFlag, filter *Filter) (string, error) {
 		return "", NewInvalidFlagValueError(expr, err.Error())
 	}
 
-	palette := color.NewPalette()
-	palette.Enable()
-	s, _ := showFlag(expr.Name, palette)
-
-	return " " + palette.Color(strings.ToUpper(expr.Name)+":", color.FieldLableStyle) + " " + s, nil
+	s, _ := showFlag(expr.Name)
+	return " " + cmd.GetPalette().Render(cmd.LableEffect, strings.ToUpper(expr.Name)+":") + " " + s, nil
 }
 
 func ShowFlag(expr parser.ShowFlag) (string, error) {
-	palette := color.NewPalette()
-	palette.Enable()
-
-	s, err := showFlag(expr.Name, palette)
+	s, err := showFlag(expr.Name)
 	if err != nil {
 		return s, NewInvalidFlagNameError(expr, expr.Name)
 	}
 
-	return " " + palette.Color(strings.ToUpper(expr.Name)+":", color.FieldLableStyle) + " " + s, nil
+	return " " + cmd.GetPalette().Render(cmd.LableEffect, strings.ToUpper(expr.Name)+":") + " " + s, nil
 }
 
-func showFlag(flag string, palette *color.Palette) (string, error) {
+func showFlag(flag string) (string, error) {
 	var s string
 
 	flags := cmd.GetFlags()
 
 	switch strings.ToUpper(flag) {
 	case cmd.RepositoryFlag:
-		s = palette.Color(flags.Repository, color.StringStyle)
+		s = cmd.GetPalette().Render(cmd.StringEffect, flags.Repository)
 	case cmd.TimezoneFlag:
-		s = palette.Color(flags.Location, color.StringStyle)
+		s = cmd.GetPalette().Render(cmd.StringEffect, flags.Location)
 	case cmd.DatetimeFormatFlag:
 		if len(flags.DatetimeFormat) < 1 {
-			s = palette.Color("(not set)", color.NullStyle)
+			s = cmd.GetPalette().Render(cmd.NullEffect, "(not set)")
 		} else {
-			s = palette.Color(flags.DatetimeFormat, color.StringStyle)
+			s = cmd.GetPalette().Render(cmd.StringEffect, flags.DatetimeFormat)
 		}
 	case cmd.WaitTimeoutFlag:
-		s = palette.Color(value.Float64ToStr(flags.WaitTimeout), color.NumberStyle)
+		s = cmd.GetPalette().Render(cmd.NumberEffect, value.Float64ToStr(flags.WaitTimeout))
 	case cmd.DelimiterFlag:
 		d := "'" + cmd.EscapeString(string(flags.Delimiter)) + "'"
-		p := text.DelimiterPositions(flags.DelimiterPositions).String()
+		p := fixedlen.DelimiterPositions(flags.DelimiterPositions).String()
 
 		switch flags.ImportFormat() {
 		case cmd.CSV, cmd.TSV:
-			s = palette.Color(d, color.StringStyle) + palette.Color(" | ", color.FieldLableStyle) + palette.Color(p, color.NullStyle)
+			s = cmd.GetPalette().Render(cmd.StringEffect, d) + cmd.GetPalette().Render(cmd.LableEffect, " | ") + cmd.GetPalette().Render(cmd.NullEffect, p)
 		case cmd.FIXED:
-			s = palette.Color(d, color.NullStyle) + palette.Color(" | ", color.FieldLableStyle) + palette.Color(p, color.StringStyle)
+			s = cmd.GetPalette().Render(cmd.NullEffect, d) + cmd.GetPalette().Render(cmd.LableEffect, " | ") + cmd.GetPalette().Render(cmd.StringEffect, p)
 		default:
-			s = palette.Color(IgnoredFlagPrefix+d+" | "+p, color.NullStyle)
+			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+d+" | "+p)
 		}
 	case cmd.JsonQuery:
 		q := flags.JsonQuery
@@ -279,62 +285,94 @@ func showFlag(flag string, palette *color.Palette) (string, error) {
 
 		switch flags.ImportFormat() {
 		case cmd.JSON:
-			s = palette.Color(q, color.StringStyle)
+			s = cmd.GetPalette().Render(cmd.StringEffect, q)
 		default:
-			s = palette.Color(IgnoredFlagPrefix+q, color.NullStyle)
+			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+q)
 		}
 	case cmd.EncodingFlag:
-		s = palette.Color(flags.Encoding.String(), color.StringStyle)
+		s = cmd.GetPalette().Render(cmd.StringEffect, flags.Encoding.String())
 	case cmd.NoHeaderFlag:
-		s = palette.Color(strconv.FormatBool(flags.NoHeader), color.BooleanStyle)
+		s = cmd.GetPalette().Render(cmd.BooleanEffect, strconv.FormatBool(flags.NoHeader))
 	case cmd.WithoutNullFlag:
-		s = palette.Color(strconv.FormatBool(flags.WithoutNull), color.BooleanStyle)
+		s = cmd.GetPalette().Render(cmd.BooleanEffect, strconv.FormatBool(flags.WithoutNull))
 	case cmd.FormatFlag:
-		s = palette.Color(flags.Format.String(), color.StringStyle)
+		s = cmd.GetPalette().Render(cmd.StringEffect, flags.Format.String())
 	case cmd.WriteEncodingFlag:
 		switch flags.Format {
 		case cmd.JSON, cmd.JSONH, cmd.JSONA:
-			s = palette.Color(IgnoredFlagPrefix+flags.WriteEncoding.String(), color.NullStyle)
+			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+flags.WriteEncoding.String())
 		default:
-			s = palette.Color(flags.WriteEncoding.String(), color.StringStyle)
+			s = cmd.GetPalette().Render(cmd.StringEffect, flags.WriteEncoding.String())
 		}
 	case cmd.WriteDelimiterFlag:
 		d := "'" + cmd.EscapeString(string(flags.WriteDelimiter)) + "'"
-		p := text.DelimiterPositions(flags.WriteDelimiterPositions).String()
+		p := fixedlen.DelimiterPositions(flags.WriteDelimiterPositions).String()
 		switch flags.Format {
 		case cmd.CSV:
-			s = palette.Color(d, color.StringStyle) + palette.Color(" | ", color.FieldLableStyle) + palette.Color(p, color.NullStyle)
+			s = cmd.GetPalette().Render(cmd.StringEffect, d) + cmd.GetPalette().Render(cmd.LableEffect, " | ") + cmd.GetPalette().Render(cmd.NullEffect, p)
 		case cmd.FIXED:
-			s = palette.Color(d, color.NullStyle) + palette.Color(" | ", color.FieldLableStyle) + palette.Color(p, color.StringStyle)
+			s = cmd.GetPalette().Render(cmd.NullEffect, d) + cmd.GetPalette().Render(cmd.LableEffect, " | ") + cmd.GetPalette().Render(cmd.StringEffect, p)
 		default:
-			s = palette.Color(IgnoredFlagPrefix+d+" | "+p, color.NullStyle)
+			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+d+" | "+p)
 		}
 	case cmd.WithoutHeaderFlag:
 		s = strconv.FormatBool(flags.WithoutHeader)
 		switch flags.Format {
 		case cmd.CSV, cmd.TSV, cmd.FIXED, cmd.GFM, cmd.ORG:
-			s = palette.Color(s, color.BooleanStyle)
+			s = cmd.GetPalette().Render(cmd.BooleanEffect, s)
 		default:
-			s = palette.Color(IgnoredFlagPrefix+s, color.NullStyle)
+			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+s)
 		}
 	case cmd.LineBreakFlag:
-		s = palette.Color(flags.LineBreak.String(), color.StringStyle)
+		s = cmd.GetPalette().Render(cmd.StringEffect, flags.LineBreak.String())
+	case cmd.EncloseAll:
+		s = strconv.FormatBool(flags.EncloseAll)
+		switch flags.Format {
+		case cmd.CSV, cmd.TSV:
+			s = cmd.GetPalette().Render(cmd.BooleanEffect, s)
+		default:
+			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+s)
+		}
 	case cmd.PrettyPrintFlag:
 		s = strconv.FormatBool(flags.PrettyPrint)
 		switch flags.Format {
 		case cmd.JSON, cmd.JSONH, cmd.JSONA:
-			s = palette.Color(s, color.BooleanStyle)
+			s = cmd.GetPalette().Render(cmd.BooleanEffect, s)
 		default:
-			s = palette.Color(IgnoredFlagPrefix+s, color.NullStyle)
+			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+s)
+		}
+	case cmd.EastAsianEncoding:
+		s = strconv.FormatBool(flags.EastAsianEncoding)
+		switch flags.Format {
+		case cmd.GFM, cmd.ORG, cmd.TEXT:
+			s = cmd.GetPalette().Render(cmd.BooleanEffect, s)
+		default:
+			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+s)
+		}
+	case cmd.CountDiacriticalSign:
+		s = strconv.FormatBool(flags.CountDiacriticalSign)
+		switch flags.Format {
+		case cmd.GFM, cmd.ORG, cmd.TEXT:
+			s = cmd.GetPalette().Render(cmd.BooleanEffect, s)
+		default:
+			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+s)
+		}
+	case cmd.CountFormatCode:
+		s = strconv.FormatBool(flags.CountFormatCode)
+		switch flags.Format {
+		case cmd.GFM, cmd.ORG, cmd.TEXT:
+			s = cmd.GetPalette().Render(cmd.BooleanEffect, s)
+		default:
+			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+s)
 		}
 	case cmd.ColorFlag:
-		s = palette.Color(strconv.FormatBool(flags.Color), color.BooleanStyle)
+		s = cmd.GetPalette().Render(cmd.BooleanEffect, strconv.FormatBool(flags.Color))
 	case cmd.QuietFlag:
-		s = palette.Color(strconv.FormatBool(flags.Quiet), color.BooleanStyle)
+		s = cmd.GetPalette().Render(cmd.BooleanEffect, strconv.FormatBool(flags.Quiet))
 	case cmd.CPUFlag:
-		s = palette.Color(strconv.Itoa(flags.CPU), color.NumberStyle)
+		s = cmd.GetPalette().Render(cmd.NumberEffect, strconv.Itoa(flags.CPU))
 	case cmd.StatsFlag:
-		s = palette.Color(strconv.FormatBool(flags.Stats), color.BooleanStyle)
+		s = cmd.GetPalette().Render(cmd.BooleanEffect, strconv.FormatBool(flags.Stats))
 	default:
 		return s, errors.New("invalid flag name")
 	}
@@ -345,6 +383,8 @@ func showFlag(flag string, palette *color.Palette) (string, error) {
 func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 	var s string
 
+	w := cmd.NewObjectWriter()
+
 	switch strings.ToUpper(expr.Type.Literal) {
 	case "TABLES":
 		keys := ViewCache.SortedKeys()
@@ -352,8 +392,6 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 		if len(keys) < 1 {
 			s = color.Warn("No table is loaded")
 		} else {
-			w := text.NewObjectWriter()
-
 			createdFiles, updatedFiles := UncommittedFiles()
 
 			for _, key := range keys {
@@ -361,11 +399,11 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 				info := ViewCache[key].FileInfo
 
 				if _, ok := createdFiles[info.Path]; ok {
-					w.WriteColor("*Created* ", color.EmphasisStyle)
+					w.WriteColor("*Created* ", cmd.EmphasisEffect)
 				} else if _, ok := updatedFiles[info.Path]; ok {
-					w.WriteColor("*Updated* ", color.EmphasisStyle)
+					w.WriteColor("*Updated* ", cmd.EmphasisEffect)
 				}
-				w.WriteColorWithoutLineBreak(info.Path, color.ObjectStyle)
+				w.WriteColorWithoutLineBreak(info.Path, cmd.ObjectEffect)
 				writeFields(w, fields)
 
 				w.NewLine()
@@ -379,7 +417,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 			w.Title1 = "Loaded Tables"
 			if 0 < uncommitted {
 				w.Title2 = fmt.Sprintf("(Uncommitted: %s)", FormatCount(uncommitted, "Table"))
-				w.Title2Style = color.EmphasisStyle
+				w.Title2Effect = cmd.EmphasisEffect
 			}
 			s = "\n" + w.String()
 		}
@@ -391,8 +429,6 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 		} else {
 			keys := views.SortedKeys()
 
-			w := text.NewObjectWriter()
-
 			updatedViews := UncommittedTempViews()
 
 			for _, key := range keys {
@@ -400,9 +436,9 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 				info := views[key].FileInfo
 
 				if _, ok := updatedViews[info.Path]; ok {
-					w.WriteColor("*Updated* ", color.EmphasisStyle)
+					w.WriteColor("*Updated* ", cmd.EmphasisEffect)
 				}
-				w.WriteColorWithoutLineBreak(info.Path, color.ObjectStyle)
+				w.WriteColorWithoutLineBreak(info.Path, cmd.ObjectEffect)
 				writeFields(w, fields)
 				w.ClearBlock()
 				w.NewLine()
@@ -413,7 +449,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 			w.Title1 = "Views"
 			if 0 < uncommitted {
 				w.Title2 = fmt.Sprintf("(Uncommitted: %s)", FormatCount(uncommitted, "View"))
-				w.Title2Style = color.EmphasisStyle
+				w.Title2Effect = cmd.EmphasisEffect
 			}
 			s = "\n" + w.String()
 		}
@@ -424,17 +460,15 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 		} else {
 			keys := cursors.SortedKeys()
 
-			w := text.NewObjectWriter()
-
 			for _, key := range keys {
 				cur := cursors[key]
 				isOpen := cur.IsOpen()
 
-				w.WriteColor(cur.name, color.ObjectStyle)
+				w.WriteColor(cur.name, cmd.ObjectEffect)
 				w.BeginBlock()
 
 				w.NewLine()
-				w.WriteColorWithoutLineBreak("Status: ", color.FieldLableStyle)
+				w.WriteColorWithoutLineBreak("Status: ", cmd.LableEffect)
 				if isOpen == ternary.TRUE {
 					nor, _ := cur.Count()
 					inRange, _ := cur.IsInRange()
@@ -442,26 +476,26 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 
 					norStr := cmd.FormatInt(nor, ",")
 
-					w.WriteColorWithoutLineBreak("Open", color.TernaryStyle)
-					w.WriteColorWithoutLineBreak("    Number of Rows: ", color.FieldLableStyle)
-					w.WriteColorWithoutLineBreak(norStr, color.NumberStyle)
+					w.WriteColorWithoutLineBreak("Open", cmd.TernaryEffect)
+					w.WriteColorWithoutLineBreak("    Number of Rows: ", cmd.LableEffect)
+					w.WriteColorWithoutLineBreak(norStr, cmd.NumberEffect)
 					w.WriteSpaces(10 - len(norStr))
-					w.WriteColorWithoutLineBreak("Pointer: ", color.FieldLableStyle)
+					w.WriteColorWithoutLineBreak("Pointer: ", cmd.LableEffect)
 					switch inRange {
 					case ternary.FALSE:
-						w.WriteColorWithoutLineBreak("Out of Range", color.TernaryStyle)
+						w.WriteColorWithoutLineBreak("Out of Range", cmd.TernaryEffect)
 					case ternary.UNKNOWN:
-						w.WriteColorWithoutLineBreak(inRange.String(), color.TernaryStyle)
+						w.WriteColorWithoutLineBreak(inRange.String(), cmd.TernaryEffect)
 					default:
-						w.WriteColorWithoutLineBreak(cmd.FormatInt(position, ","), color.NumberStyle)
+						w.WriteColorWithoutLineBreak(cmd.FormatInt(position, ","), cmd.NumberEffect)
 					}
 				} else {
-					w.WriteColorWithoutLineBreak("Closed", color.TernaryStyle)
+					w.WriteColorWithoutLineBreak("Closed", cmd.TernaryEffect)
 				}
 
 				w.NewLine()
-				w.WriteColorWithoutLineBreak("Query: ", color.FieldLableStyle)
-				w.WriteColorWithoutLineBreak(cur.query.String(), color.IdentifierStyle)
+				w.WriteColorWithoutLineBreak("Query: ", cmd.LableEffect)
+				w.WriteColorWithoutLineBreak(cur.query.String(), cmd.IdentifierEffect)
 
 				w.ClearBlock()
 				w.NewLine()
@@ -475,25 +509,24 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 			s = color.Warn("No function is declared")
 		} else {
 			if 0 < len(scalas) {
-				w := text.NewObjectWriter()
+				w.Clear()
 				writeFunctions(w, scalas)
 				w.Title1 = "Scala Functions"
 				s += "\n" + w.String()
 			}
 			if 0 < len(aggs) {
-				w := text.NewObjectWriter()
+				w.Clear()
 				writeFunctions(w, aggs)
 				w.Title1 = "Aggregate Functions"
 				s += "\n" + w.String()
 			}
 		}
 	case "FLAGS":
-		w := text.NewObjectWriter()
 		for _, flag := range cmd.FlagList {
-			s, _ := showFlag(flag, w.Palette)
-			w.WriteSpaces(17 - len(flag))
-			w.WriteColorWithoutLineBreak(flag, color.FieldLableStyle)
-			w.WriteColorWithoutLineBreak(":", color.FieldLableStyle)
+			s, _ := showFlag(flag)
+			w.WriteSpaces(24 - len(flag))
+			w.WriteColorWithoutLineBreak(flag, cmd.LableEffect)
+			w.WriteColorWithoutLineBreak(":", cmd.LableEffect)
 			w.WriteSpaces(1)
 			w.WriteWithoutLineBreak(s)
 			w.NewLine()
@@ -507,60 +540,67 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 	return s, nil
 }
 
-func writeTableAttribute(w *text.ObjectWriter, info *FileInfo) {
-	w.WriteColor("Format: ", color.FieldLableStyle)
+func writeTableAttribute(w *cmd.ObjectWriter, info *FileInfo) {
+	w.WriteColor("Format: ", cmd.LableEffect)
 	w.WriteWithoutLineBreak(info.Format.String())
 
-	w.WriteSpaces(8 - text.StringWidth(info.Format.String()))
+	w.WriteSpaces(8 - cmd.TextWidth(info.Format.String()))
 	switch info.Format {
 	case cmd.CSV:
-		w.WriteColorWithoutLineBreak("Delimiter: ", color.FieldLableStyle)
+		w.WriteColorWithoutLineBreak("Delimiter: ", cmd.LableEffect)
 		w.WriteWithoutLineBreak("'" + cmd.EscapeString(string(info.Delimiter)) + "'")
 	case cmd.TSV:
-		w.WriteColorWithoutLineBreak("Delimiter: ", color.FieldLableStyle)
-		w.WriteColorWithoutLineBreak("'\\t'", color.NullStyle)
+		w.WriteColorWithoutLineBreak("Delimiter: ", cmd.LableEffect)
+		w.WriteColorWithoutLineBreak("'\\t'", cmd.NullEffect)
 	case cmd.FIXED:
-		w.WriteColorWithoutLineBreak("Delimiter Positions: ", color.FieldLableStyle)
+		w.WriteColorWithoutLineBreak("Delimiter Positions: ", cmd.LableEffect)
 		w.WriteWithoutLineBreak(info.DelimiterPositions.String())
 	case cmd.JSON, cmd.JSONH, cmd.JSONA:
-		w.WriteColorWithoutLineBreak("Query: ", color.FieldLableStyle)
+		w.WriteColorWithoutLineBreak("Query: ", cmd.LableEffect)
 		if len(info.JsonQuery) < 1 {
-			w.WriteColorWithoutLineBreak("(empty)", color.NullStyle)
+			w.WriteColorWithoutLineBreak("(empty)", cmd.NullEffect)
 		} else {
-			w.WriteColorWithoutLineBreak(info.JsonQuery, color.NullStyle)
+			w.WriteColorWithoutLineBreak(info.JsonQuery, cmd.NullEffect)
 		}
+	}
+
+	switch info.Format {
+	case cmd.CSV, cmd.TSV:
+		w.WriteSpaces(4 - (cmd.TextWidth(cmd.EscapeString(string(info.Delimiter)))))
+		w.WriteColorWithoutLineBreak("Enclose All: ", cmd.LableEffect)
+		w.WriteWithoutLineBreak(strconv.FormatBool(info.EncloseAll))
 	}
 
 	w.NewLine()
 
-	w.WriteColor("Encoding: ", color.FieldLableStyle)
+	w.WriteColor("Encoding: ", cmd.LableEffect)
 	switch info.Format {
 	case cmd.JSON, cmd.JSONH, cmd.JSONA:
-		w.WriteColorWithoutLineBreak(cmd.UTF8.String(), color.NullStyle)
+		w.WriteColorWithoutLineBreak(text.UTF8.String(), cmd.NullEffect)
 	default:
 		w.WriteWithoutLineBreak(info.Encoding.String())
 	}
 
-	w.WriteSpaces(6 - (text.StringWidth(info.Encoding.String())))
-	w.WriteColorWithoutLineBreak("LineBreak: ", color.FieldLableStyle)
+	w.WriteSpaces(6 - (cmd.TextWidth(info.Encoding.String())))
+	w.WriteColorWithoutLineBreak("LineBreak: ", cmd.LableEffect)
 	w.WriteWithoutLineBreak(info.LineBreak.String())
 
 	switch info.Format {
 	case cmd.JSON, cmd.JSONH, cmd.JSONA:
-		w.WriteSpaces(6 - (text.StringWidth(info.LineBreak.String())))
-		w.WriteColorWithoutLineBreak("Pretty Print: ", color.FieldLableStyle)
+		w.WriteSpaces(6 - (cmd.TextWidth(info.LineBreak.String())))
+		w.WriteColorWithoutLineBreak("Pretty Print: ", cmd.LableEffect)
 		w.WriteWithoutLineBreak(strconv.FormatBool(info.PrettyPrint))
 	case cmd.CSV, cmd.TSV, cmd.FIXED, cmd.GFM, cmd.ORG:
-		w.WriteSpaces(6 - (text.StringWidth(info.LineBreak.String())))
-		w.WriteColorWithoutLineBreak("Header: ", color.FieldLableStyle)
+		w.WriteSpaces(6 - (cmd.TextWidth(info.LineBreak.String())))
+		w.WriteColorWithoutLineBreak("Header: ", cmd.LableEffect)
 		w.WriteWithoutLineBreak(strconv.FormatBool(!info.NoHeader))
 	}
 }
 
-func writeFields(w *text.ObjectWriter, fields []string) {
+func writeFields(w *cmd.ObjectWriter, fields []string) {
 	w.BeginBlock()
 	w.NewLine()
-	w.WriteColor("Fields: ", color.FieldLableStyle)
+	w.WriteColor("Fields: ", cmd.LableEffect)
 	w.BeginSubBlock()
 	lastIdx := len(fields) - 1
 	for i, f := range fields {
@@ -568,7 +608,7 @@ func writeFields(w *text.ObjectWriter, fields []string) {
 		if i < lastIdx && !w.FitInLine(escaped+", ") {
 			w.NewLine()
 		}
-		w.WriteColor(escaped, color.AttributeStyle)
+		w.WriteColor(escaped, cmd.AttributeEffect)
 		if i < lastIdx {
 			w.WriteWithoutLineBreak(", ")
 		}
@@ -576,17 +616,17 @@ func writeFields(w *text.ObjectWriter, fields []string) {
 	w.EndSubBlock()
 }
 
-func writeFunctions(w *text.ObjectWriter, funcs UserDefinedFunctionMap) {
+func writeFunctions(w *cmd.ObjectWriter, funcs UserDefinedFunctionMap) {
 	keys := funcs.SortedKeys()
 
 	for _, key := range keys {
 		fn := funcs[key]
 
-		w.WriteColor(fn.Name.String(), color.ObjectStyle)
+		w.WriteColor(fn.Name.String(), cmd.ObjectEffect)
 		w.WriteWithoutLineBreak(" (")
 
 		if fn.IsAggregate {
-			w.WriteColorWithoutLineBreak(fn.Cursor.String(), color.IdentifierStyle)
+			w.WriteColorWithoutLineBreak(fn.Cursor.String(), cmd.IdentifierEffect)
 			if 0 < len(fn.Parameters) {
 				w.WriteWithoutLineBreak(", ")
 			}
@@ -597,11 +637,11 @@ func writeFunctions(w *text.ObjectWriter, funcs UserDefinedFunctionMap) {
 				w.WriteWithoutLineBreak(", ")
 			}
 			if def, ok := fn.Defaults[p.String()]; ok {
-				w.WriteColorWithoutLineBreak(p.String(), color.AttributeStyle)
+				w.WriteColorWithoutLineBreak(p.String(), cmd.AttributeEffect)
 				w.WriteWithoutLineBreak(" = ")
-				w.WriteColorWithoutLineBreak(def.String(), color.ValueStyle)
+				w.WriteColorWithoutLineBreak(def.String(), cmd.ValueEffect)
 			} else {
-				w.WriteColorWithoutLineBreak(p.String(), color.AttributeStyle)
+				w.WriteColorWithoutLineBreak(p.String(), cmd.AttributeEffect)
 			}
 		}
 
@@ -639,26 +679,26 @@ func ShowFields(expr parser.ShowFields, filter *Filter) (string, error) {
 		}
 	}
 
-	w := text.NewObjectWriter()
-	w.WriteColorWithoutLineBreak("Type: ", color.FieldLableStyle)
+	w := cmd.NewObjectWriter()
+	w.WriteColorWithoutLineBreak("Type: ", cmd.LableEffect)
 	if view.FileInfo.IsTemporary {
 		w.WriteWithoutLineBreak("View")
 	} else {
 		w.WriteWithoutLineBreak("Table")
 		w.NewLine()
-		w.WriteColorWithoutLineBreak("Path: ", color.FieldLableStyle)
-		w.WriteColorWithoutLineBreak(view.FileInfo.Path, color.ObjectStyle)
+		w.WriteColorWithoutLineBreak("Path: ", cmd.LableEffect)
+		w.WriteColorWithoutLineBreak(view.FileInfo.Path, cmd.ObjectEffect)
 		w.NewLine()
 		writeTableAttribute(w, view.FileInfo)
 	}
 
 	w.NewLine()
-	w.WriteColorWithoutLineBreak("Status: ", color.FieldLableStyle)
+	w.WriteColorWithoutLineBreak("Status: ", cmd.LableEffect)
 	switch status {
 	case ObjectCreated:
-		w.WriteColorWithoutLineBreak("Created", color.EmphasisStyle)
+		w.WriteColorWithoutLineBreak("Created", cmd.EmphasisEffect)
 	case ObjectUpdated:
-		w.WriteColorWithoutLineBreak("Updated", color.EmphasisStyle)
+		w.WriteColorWithoutLineBreak("Updated", cmd.EmphasisEffect)
 	default:
 		w.WriteWithoutLineBreak("Fixed")
 	}
@@ -668,11 +708,11 @@ func ShowFields(expr parser.ShowFields, filter *Filter) (string, error) {
 
 	w.Title1 = "Fields in"
 	w.Title2 = expr.Table.Literal
-	w.Title2Style = color.IdentifierStyle
+	w.Title2Effect = cmd.IdentifierEffect
 	return "\n" + w.String(), nil
 }
 
-func writeFieldList(w *text.ObjectWriter, fields []string) {
+func writeFieldList(w *cmd.ObjectWriter, fields []string) {
 	l := len(fields)
 	digits := len(strconv.Itoa(l))
 	fieldNumbers := make([]string, 0, l)
@@ -681,15 +721,15 @@ func writeFieldList(w *text.ObjectWriter, fields []string) {
 		fieldNumbers = append(fieldNumbers, strings.Repeat(" ", digits-len(idxstr))+idxstr)
 	}
 
-	w.WriteColorWithoutLineBreak("Fields:", color.FieldLableStyle)
+	w.WriteColorWithoutLineBreak("Fields:", cmd.LableEffect)
 	w.NewLine()
 	w.WriteSpaces(2)
 	w.BeginSubBlock()
 	for i := 0; i < l; i++ {
-		w.WriteColor(fieldNumbers[i], color.NumberStyle)
+		w.WriteColor(fieldNumbers[i], cmd.NumberEffect)
 		w.Write(".")
 		w.WriteSpaces(1)
-		w.WriteColorWithoutLineBreak(fields[i], color.AttributeStyle)
+		w.WriteColorWithoutLineBreak(fields[i], cmd.AttributeEffect)
 		w.NewLine()
 	}
 }

@@ -3,37 +3,44 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"github.com/mithrandie/csvq/lib/color"
-	"github.com/mithrandie/csvq/lib/file"
 	"os"
 	"path/filepath"
-	"reflect"
 	"runtime"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/mithrandie/go-text/color"
+
+	"github.com/mithrandie/go-text"
+
+	"github.com/mithrandie/csvq/lib/file"
 )
 
 const (
-	RepositoryFlag     = "@@REPOSITORY"
-	TimezoneFlag       = "@@TIMEZONE"
-	DatetimeFormatFlag = "@@DATETIME_FORMAT"
-	WaitTimeoutFlag    = "@@WAIT_TIMEOUT"
-	DelimiterFlag      = "@@DELIMITER"
-	JsonQuery          = "@@JSON_QUERY"
-	EncodingFlag       = "@@ENCODING"
-	NoHeaderFlag       = "@@NO_HEADER"
-	WithoutNullFlag    = "@@WITHOUT_NULL"
-	FormatFlag         = "@@FORMAT"
-	WriteEncodingFlag  = "@@WRITE_ENCODING"
-	WriteDelimiterFlag = "@@WRITE_DELIMITER"
-	WithoutHeaderFlag  = "@@WITHOUT_HEADER"
-	LineBreakFlag      = "@@LINE_BREAK"
-	PrettyPrintFlag    = "@@PRETTY_PRINT"
-	ColorFlag          = "@@COLOR"
-	QuietFlag          = "@@QUIET"
-	CPUFlag            = "@@CPU"
-	StatsFlag          = "@@STATS"
+	RepositoryFlag       = "@@REPOSITORY"
+	TimezoneFlag         = "@@TIMEZONE"
+	DatetimeFormatFlag   = "@@DATETIME_FORMAT"
+	WaitTimeoutFlag      = "@@WAIT_TIMEOUT"
+	DelimiterFlag        = "@@DELIMITER"
+	JsonQuery            = "@@JSON_QUERY"
+	EncodingFlag         = "@@ENCODING"
+	NoHeaderFlag         = "@@NO_HEADER"
+	WithoutNullFlag      = "@@WITHOUT_NULL"
+	FormatFlag           = "@@FORMAT"
+	WriteEncodingFlag    = "@@WRITE_ENCODING"
+	WriteDelimiterFlag   = "@@WRITE_DELIMITER"
+	WithoutHeaderFlag    = "@@WITHOUT_HEADER"
+	LineBreakFlag        = "@@LINE_BREAK"
+	EncloseAll           = "@@ENCLOSE_ALL"
+	PrettyPrintFlag      = "@@PRETTY_PRINT"
+	EastAsianEncoding    = "@@EAST_ASIAN_ENCODING"
+	CountDiacriticalSign = "@@COUNT_DIACRITICAL_SIGN"
+	CountFormatCode      = "@@COUNT_FORMAT_CODE"
+	ColorFlag            = "@@COLOR"
+	QuietFlag            = "@@QUIET"
+	CPUFlag              = "@@CPU"
+	StatsFlag            = "@@STATS"
 )
 
 var FlagList = []string{
@@ -51,44 +58,15 @@ var FlagList = []string{
 	WriteDelimiterFlag,
 	WithoutHeaderFlag,
 	LineBreakFlag,
+	EncloseAll,
 	PrettyPrintFlag,
+	EastAsianEncoding,
+	CountDiacriticalSign,
+	CountFormatCode,
 	ColorFlag,
 	QuietFlag,
 	CPUFlag,
 	StatsFlag,
-}
-
-type Encoding string
-
-const (
-	UTF8 Encoding = "UTF8"
-	SJIS Encoding = "SJIS"
-)
-
-func (e Encoding) String() string {
-	return reflect.ValueOf(e).String()
-}
-
-type LineBreak string
-
-const (
-	CR   LineBreak = "\r"
-	LF   LineBreak = "\n"
-	CRLF LineBreak = "\r\n"
-)
-
-var lineBreakLiterals = map[LineBreak]string{
-	CR:   "CR",
-	LF:   "LF",
-	CRLF: "CRLF",
-}
-
-func (lb LineBreak) Value() string {
-	return reflect.ValueOf(lb).String()
-}
-
-func (lb LineBreak) String() string {
-	return lineBreakLiterals[lb]
 }
 
 type Format int
@@ -144,18 +122,24 @@ type Flags struct {
 	// For Import
 	Delimiter   rune
 	JsonQuery   string
-	Encoding    Encoding
+	Encoding    text.Encoding
 	NoHeader    bool
 	WithoutNull bool
 
 	// For Export
 	OutFile        string
 	Format         Format
-	WriteEncoding  Encoding
+	WriteEncoding  text.Encoding
 	WriteDelimiter rune
 	WithoutHeader  bool
-	LineBreak      LineBreak
+	LineBreak      text.LineBreak
+	EncloseAll     bool
 	PrettyPrint    bool
+
+	// For Calculation of String Width
+	EastAsianEncoding    bool
+	CountDiacriticalSign bool
+	CountFormatCode      bool
 
 	// ANSI Color Sequence
 	Color bool
@@ -202,16 +186,20 @@ func GetFlags() *Flags {
 			Source:                  "",
 			Delimiter:               ',',
 			JsonQuery:               "",
-			Encoding:                UTF8,
+			Encoding:                text.UTF8,
 			NoHeader:                false,
 			WithoutNull:             false,
 			OutFile:                 "",
 			Format:                  TEXT,
-			WriteEncoding:           UTF8,
+			WriteEncoding:           text.UTF8,
 			WriteDelimiter:          ',',
 			WithoutHeader:           false,
-			LineBreak:               LF,
+			LineBreak:               text.LF,
+			EncloseAll:              false,
 			PrettyPrint:             false,
+			EastAsianEncoding:       false,
+			CountDiacriticalSign:    false,
+			CountFormatCode:         false,
 			Color:                   false,
 			Quiet:                   false,
 			CPU:                     cpu,
@@ -474,10 +462,34 @@ func SetPrettyPrint(b bool) {
 	return
 }
 
+func SetEncloseAll(b bool) {
+	f := GetFlags()
+	f.EncloseAll = b
+	return
+}
+
 func SetColor(b bool) {
 	f := GetFlags()
 	f.Color = b
-	color.UseEscapeSequences = b
+	color.UseEffect = b
+	return
+}
+
+func SetEastAsianEncoding(b bool) {
+	f := GetFlags()
+	f.EastAsianEncoding = b
+	return
+}
+
+func SetCountDiacriticalSign(b bool) {
+	f := GetFlags()
+	f.CountDiacriticalSign = b
+	return
+}
+
+func SetCountFormatCode(b bool) {
+	f := GetFlags()
+	f.CountFormatCode = b
 	return
 }
 
