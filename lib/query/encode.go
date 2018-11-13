@@ -27,12 +27,12 @@ func EncodeView(view *View, fileInfo *FileInfo) (string, error) {
 	case cmd.JSON, cmd.JSONH, cmd.JSONA:
 		return encodeJson(view, fileInfo.Format, fileInfo.LineBreak, fileInfo.PrettyPrint)
 	case cmd.GFM, cmd.ORG, cmd.TEXT:
-		return encodeText(view, fileInfo.Format, fileInfo.LineBreak, false, false, fileInfo.NoHeader, fileInfo.Encoding)
+		return encodeText(view, fileInfo.Format, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding)
 	case cmd.TSV:
 		fileInfo.Delimiter = '\t'
 		fallthrough
 	default: // cmd.CSV
-		return encodeCSV(view, fileInfo.Delimiter, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding)
+		return encodeCSV(view, fileInfo.Delimiter, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding, fileInfo.EncloseAll)
 	}
 }
 
@@ -49,7 +49,7 @@ func bareValues(view *View) ([]string, [][]value.Primary) {
 	return header, records
 }
 
-func encodeCSV(view *View, delimiter rune, lineBreak text.LineBreak, withoutHeader bool, encoding text.Encoding) (string, error) {
+func encodeCSV(view *View, delimiter rune, lineBreak text.LineBreak, withoutHeader bool, encoding text.Encoding, encloseAll bool) (string, error) {
 	header, records := bareValues(view)
 
 	buf := new(bytes.Buffer)
@@ -60,7 +60,7 @@ func encodeCSV(view *View, delimiter rune, lineBreak text.LineBreak, withoutHead
 
 	if !withoutHeader {
 		for i, v := range header {
-			fields[i] = csv.NewField(v, true)
+			fields[i] = csv.NewField(v, encloseAll)
 		}
 		if err := w.Write(fields); err != nil {
 			return "", err
@@ -71,7 +71,7 @@ func encodeCSV(view *View, delimiter rune, lineBreak text.LineBreak, withoutHead
 		for i, v := range record {
 			str, e, _ := convertFieldContents(v, false)
 			quote := false
-			if e == cmd.StringEffect || e == cmd.DatetimeEffect {
+			if encloseAll && (e == cmd.StringEffect || e == cmd.DatetimeEffect) {
 				quote = true
 			}
 			fields[i] = csv.NewField(str, quote)
@@ -168,13 +168,16 @@ func encodeJson(view *View, format cmd.Format, lineBreak text.LineBreak, prettyP
 	}
 	e.LineBreak = lineBreak
 	e.PrettyPrint = prettyPrint
-	e.Palette = cmd.GetPalette()
+	if prettyPrint && cmd.GetFlags().Color {
+		e.Palette = cmd.GetPalette()
+	}
 
 	s := e.Encode(data)
+	cmd.GetPalette().Enable()
 	return s, nil
 }
 
-func encodeText(view *View, format cmd.Format, lineBreak text.LineBreak, eastAsianEncoding bool, countDiacriticalSign bool, withoutHeader bool, encoding text.Encoding) (string, error) {
+func encodeText(view *View, format cmd.Format, lineBreak text.LineBreak, withoutHeader bool, encoding text.Encoding) (string, error) {
 	header, records := bareValues(view)
 
 	isPlainTable := false
@@ -197,8 +200,8 @@ func encodeText(view *View, format cmd.Format, lineBreak text.LineBreak, eastAsi
 
 	e := table.NewEncoder(tableFormat, len(records))
 	e.LineBreak = lineBreak
-	e.EastAsianEncoding = eastAsianEncoding
-	e.CountDiacriticalSign = countDiacriticalSign
+	e.EastAsianEncoding = cmd.GetFlags().EastAsianEncoding
+	e.CountDiacriticalSign = cmd.GetFlags().CountDiacriticalSign
 	e.WithoutHeader = withoutHeader
 	e.Encoding = encoding
 

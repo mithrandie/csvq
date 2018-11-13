@@ -238,7 +238,7 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Logs: "\"column1\",\"column2\"\n1,2\n",
+		Logs: "column1,column2\n1,2\n",
 	},
 	{
 		Input: parser.DisposeView{
@@ -327,7 +327,7 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Logs: "\"multiplication\"\n6\n",
+		Logs: "multiplication\n6\n",
 	},
 	{
 		Input: parser.SelectQuery{
@@ -342,7 +342,7 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Logs: "\"var1\"\n1\n",
+		Logs: "var1\n1\n",
 	},
 	{
 		Input: parser.VariableDeclaration{
@@ -569,7 +569,7 @@ var procedureExecuteStatementTests = []struct {
 			strings.Repeat(" ", (calcShowFieldsWidth("table1.csv", "table1.csv", 22)-(22+len("table1.csv")))/2) + "Attributes Updated in table1.csv\n" +
 			strings.Repeat("-", calcShowFieldsWidth("table1.csv", "table1.csv", 22)) + "\n" +
 			" Path: " + GetTestFilePath("table1.csv") + "\n" +
-			" Format: TSV     Delimiter: '\\t'\n" +
+			" Format: TSV     Delimiter: '\\t'  Enclose All: false\n" +
 			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			"\n",
 	},
@@ -689,7 +689,7 @@ var procedureExecuteStatementTests = []struct {
 			strings.Repeat("-", calcShowFieldsWidth("table1.csv", "table1", 10)) + "\n" +
 			" Type: Table\n" +
 			" Path: " + GetTestFilePath("table1.csv") + "\n" +
-			" Format: CSV     Delimiter: ','\n" +
+			" Format: CSV     Delimiter: ','   Enclose All: false\n" +
 			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" Status: Fixed\n" +
 			" Fields:\n" +

@@ -3842,6 +3842,22 @@ var setTableAttributeTests = []struct {
 		Error: "[L:- C:-] null for header is not allowed",
 	},
 	{
+		Name: "Set EncloseAll to true",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "enclose_all"},
+			Value:     parser.NewStringValue("true"),
+		},
+		Expect: &FileInfo{
+			Path:       GetTestFilePath("table1.csv"),
+			Delimiter:  ',',
+			Format:     cmd.CSV,
+			Encoding:   text.UTF8,
+			LineBreak:  text.LF,
+			EncloseAll: true,
+		},
+	},
+	{
 		Name: "Set PrettyPring to true",
 		Query: parser.SetTableAttribute{
 			Table:     parser.Identifier{Literal: "table.json"},

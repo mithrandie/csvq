@@ -118,7 +118,10 @@ func initFlag() {
 	flags.WriteDelimiter = ','
 	flags.WithoutHeader = false
 	flags.LineBreak = text.LF
+	flags.EncloseAll = false
 	flags.PrettyPrint = false
+	flags.EastAsianEncoding = false
+	flags.CountDiacriticalSign = false
 	flags.Color = false
 	flags.Quiet = false
 	flags.CPU = cpu

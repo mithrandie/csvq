@@ -470,12 +470,39 @@ func TestSetLineBreak(t *testing.T) {
 	}
 }
 
+func TestSetEncloseAll(t *testing.T) {
+	flags := GetFlags()
+
+	SetEncloseAll(true)
+	if !flags.EncloseAll {
+		t.Errorf("enclose-all = %t, expect to set %t", flags.EncloseAll, true)
+	}
+}
+
 func TestSetPrettyPrint(t *testing.T) {
 	flags := GetFlags()
 
 	SetPrettyPrint(true)
 	if !flags.PrettyPrint {
 		t.Errorf("pretty-print = %t, expect to set %t", flags.PrettyPrint, true)
+	}
+}
+
+func TestSetEastAsianEncoding(t *testing.T) {
+	flags := GetFlags()
+
+	SetEastAsianEncoding(true)
+	if !flags.EastAsianEncoding {
+		t.Errorf("east-asian-encoding = %t, expect to set %t", flags.EastAsianEncoding, true)
+	}
+}
+
+func TestSetCountDiacriticalSign(t *testing.T) {
+	flags := GetFlags()
+
+	SetCountDiacriticalSign(true)
+	if !flags.CountDiacriticalSign {
+		t.Errorf("count-diacritical-sign = %t, expect to set %t", flags.CountDiacriticalSign, true)
 	}
 }
 

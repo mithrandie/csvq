@@ -111,6 +111,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 				Encoding:           flags.WriteEncoding,
 				LineBreak:          flags.LineBreak,
 				NoHeader:           flags.WithoutHeader,
+				EncloseAll:         flags.EncloseAll,
 				PrettyPrint:        flags.PrettyPrint,
 			}
 			viewstr, err = EncodeView(view, fileInfo)

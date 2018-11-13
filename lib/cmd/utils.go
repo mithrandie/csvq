@@ -313,3 +313,7 @@ func ParseFormat(s string) (Format, error) {
 	}
 	return fm, nil
 }
+
+func TextWidth(s string) int {
+	return text.Width(s, GetFlags().EastAsianEncoding, GetFlags().CountDiacriticalSign)
+}

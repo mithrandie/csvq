@@ -115,8 +115,20 @@ func main() {
 			Usage: "line break in query results. one of: CRLF|LF|CR",
 		},
 		cli.BoolFlag{
+			Name:  "enclose-all, Q",
+			Usage: "enclose all string values in CSV",
+		},
+		cli.BoolFlag{
 			Name:  "pretty-print, P",
 			Usage: "make JSON output easier to read in query results",
+		},
+		cli.BoolFlag{
+			Name:  "east-asian-encoding, W",
+			Usage: "count ambiguous characters as fullwidth",
+		},
+		cli.BoolFlag{
+			Name:  "count-diacritical-sign, S",
+			Usage: "count diacritical signs as single characters",
 		},
 		cli.BoolFlag{
 			Name:  "color, c",
@@ -288,7 +300,11 @@ func setFlags(c *cli.Context) error {
 	if err := cmd.SetLineBreak(c.String("line-break")); err != nil {
 		return err
 	}
+	cmd.SetEncloseAll(c.GlobalBool("enclose-all"))
 	cmd.SetPrettyPrint(c.GlobalBool("pretty-print"))
+
+	cmd.SetEastAsianEncoding(c.GlobalBool("east-asian-encoding"))
+	cmd.SetCountDiacriticalSign(c.GlobalBool("count-diacritical-sign"))
 
 	cmd.SetQuiet(c.GlobalBool("quiet"))
 	cmd.SetCPU(c.GlobalInt("cpu"))

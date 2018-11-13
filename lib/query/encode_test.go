@@ -19,6 +19,7 @@ var encodeViewTests = []struct {
 	WriteDelimiter          rune
 	WriteDelimiterPositions []int
 	WithoutHeader           bool
+	EncloseAll              bool
 	PrettyPrint             bool
 	Result                  string
 	Error                   string
@@ -143,6 +144,7 @@ var encodeViewTests = []struct {
 		},
 		Format:         cmd.TSV,
 		WriteDelimiter: '\t',
+		EncloseAll:     true,
 		Result: "\"c1\"\t\"c2\nsecond line\"\t\"c3\"\n" +
 			"-1\t\ttrue\n" +
 			"2.0123\t\"2016-02-01T16:00:00.123456-07:00\"\t\"abcdef\"\n" +
@@ -160,6 +162,7 @@ var encodeViewTests = []struct {
 		},
 		Format:        cmd.CSV,
 		WithoutHeader: true,
+		EncloseAll:    true,
 		Result: "-1,,true\n" +
 			"2.0123,\"2016-02-01T16:00:00.123456-07:00\",\"abcdef\"\n" +
 			"34567890,\" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"\"jk\n\",",
@@ -174,8 +177,9 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), value.NewNull()}),
 			},
 		},
-		Format:    cmd.CSV,
-		LineBreak: text.CRLF,
+		Format:     cmd.CSV,
+		LineBreak:  text.CRLF,
+		EncloseAll: true,
 		Result: "\"c1\",\"c2\nsecond line\",\"c3\"\r\n" +
 			"-1,,true\r\n" +
 			"2.0123,\"2016-02-01T16:00:00.123456-07:00\",\"abcdef\"\r\n" +
@@ -325,6 +329,7 @@ var encodeViewTests = []struct {
 		},
 		Format:        cmd.CSV,
 		WriteEncoding: text.SJIS,
+		EncloseAll:    true,
 		Result: "\"c1\",\"c2\nsecond line\",\"c3\"\n" +
 			"-1,,true\n" +
 			"-1,false,true\n" +
@@ -352,6 +357,7 @@ func TestEncodeView(t *testing.T) {
 			Encoding:           v.WriteEncoding,
 			LineBreak:          v.LineBreak,
 			NoHeader:           v.WithoutHeader,
+			EncloseAll:         v.EncloseAll,
 			PrettyPrint:        v.PrettyPrint,
 		}
 

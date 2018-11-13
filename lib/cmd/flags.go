@@ -18,25 +18,28 @@ import (
 )
 
 const (
-	RepositoryFlag     = "@@REPOSITORY"
-	TimezoneFlag       = "@@TIMEZONE"
-	DatetimeFormatFlag = "@@DATETIME_FORMAT"
-	WaitTimeoutFlag    = "@@WAIT_TIMEOUT"
-	DelimiterFlag      = "@@DELIMITER"
-	JsonQuery          = "@@JSON_QUERY"
-	EncodingFlag       = "@@ENCODING"
-	NoHeaderFlag       = "@@NO_HEADER"
-	WithoutNullFlag    = "@@WITHOUT_NULL"
-	FormatFlag         = "@@FORMAT"
-	WriteEncodingFlag  = "@@WRITE_ENCODING"
-	WriteDelimiterFlag = "@@WRITE_DELIMITER"
-	WithoutHeaderFlag  = "@@WITHOUT_HEADER"
-	LineBreakFlag      = "@@LINE_BREAK"
-	PrettyPrintFlag    = "@@PRETTY_PRINT"
-	ColorFlag          = "@@COLOR"
-	QuietFlag          = "@@QUIET"
-	CPUFlag            = "@@CPU"
-	StatsFlag          = "@@STATS"
+	RepositoryFlag       = "@@REPOSITORY"
+	TimezoneFlag         = "@@TIMEZONE"
+	DatetimeFormatFlag   = "@@DATETIME_FORMAT"
+	WaitTimeoutFlag      = "@@WAIT_TIMEOUT"
+	DelimiterFlag        = "@@DELIMITER"
+	JsonQuery            = "@@JSON_QUERY"
+	EncodingFlag         = "@@ENCODING"
+	NoHeaderFlag         = "@@NO_HEADER"
+	WithoutNullFlag      = "@@WITHOUT_NULL"
+	FormatFlag           = "@@FORMAT"
+	WriteEncodingFlag    = "@@WRITE_ENCODING"
+	WriteDelimiterFlag   = "@@WRITE_DELIMITER"
+	WithoutHeaderFlag    = "@@WITHOUT_HEADER"
+	LineBreakFlag        = "@@LINE_BREAK"
+	EncloseAll           = "@@ENCLOSE_ALL"
+	PrettyPrintFlag      = "@@PRETTY_PRINT"
+	EastAsianEncoding    = "@@EAST_ASIAN_ENCODING"
+	CountDiacriticalSign = "@@COUNT_DIACRITICAL_SIGN"
+	ColorFlag            = "@@COLOR"
+	QuietFlag            = "@@QUIET"
+	CPUFlag              = "@@CPU"
+	StatsFlag            = "@@STATS"
 )
 
 var FlagList = []string{
@@ -54,7 +57,10 @@ var FlagList = []string{
 	WriteDelimiterFlag,
 	WithoutHeaderFlag,
 	LineBreakFlag,
+	EncloseAll,
 	PrettyPrintFlag,
+	EastAsianEncoding,
+	CountDiacriticalSign,
 	ColorFlag,
 	QuietFlag,
 	CPUFlag,
@@ -125,14 +131,15 @@ type Flags struct {
 	WriteDelimiter rune
 	WithoutHeader  bool
 	LineBreak      text.LineBreak
+	EncloseAll     bool
 	PrettyPrint    bool
+
+	// For Calculation of String Width
+	EastAsianEncoding    bool
+	CountDiacriticalSign bool
 
 	// ANSI Color Sequence
 	Color bool
-
-	// For Calculation of String Width
-	EastAsiaEncoding     bool
-	CountDiacriticalSign bool
 
 	// System Use
 	Quiet bool
@@ -185,7 +192,10 @@ func GetFlags() *Flags {
 			WriteDelimiter:          ',',
 			WithoutHeader:           false,
 			LineBreak:               text.LF,
+			EncloseAll:              false,
 			PrettyPrint:             false,
+			EastAsianEncoding:       false,
+			CountDiacriticalSign:    false,
 			Color:                   false,
 			Quiet:                   false,
 			CPU:                     cpu,
@@ -448,10 +458,28 @@ func SetPrettyPrint(b bool) {
 	return
 }
 
+func SetEncloseAll(b bool) {
+	f := GetFlags()
+	f.EncloseAll = b
+	return
+}
+
 func SetColor(b bool) {
 	f := GetFlags()
 	f.Color = b
 	color.UseEffect = b
+	return
+}
+
+func SetEastAsianEncoding(b bool) {
+	f := GetFlags()
+	f.EastAsianEncoding = b
+	return
+}
+
+func SetCountDiacriticalSign(b bool) {
+	f := GetFlags()
+	f.CountDiacriticalSign = b
 	return
 }
 

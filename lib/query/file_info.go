@@ -20,6 +20,7 @@ const (
 	TableEncoding    = "ENCODING"
 	TableLineBreak   = "LINE_BREAK"
 	TableHeader      = "HEADER"
+	TableEncloseAll  = "ENCLOSE_ALL"
 	TablePrettyPring = "PRETTY_PRINT"
 )
 
@@ -33,6 +34,7 @@ type FileInfo struct {
 	Encoding           text.Encoding
 	LineBreak          text.LineBreak
 	NoHeader           bool
+	EncloseAll         bool
 	PrettyPrint        bool
 
 	File *os.File
@@ -151,6 +153,10 @@ func (f *FileInfo) SetLineBreak(s string) error {
 
 func (f *FileInfo) SetNoHeader(b bool) {
 	f.NoHeader = b
+}
+
+func (f *FileInfo) SetEncloseAll(b bool) {
+	f.EncloseAll = b
 }
 
 func (f *FileInfo) SetPrettyPrint(b bool) {

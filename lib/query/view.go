@@ -127,6 +127,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 			Encoding:           flags.Encoding,
 			LineBreak:          flags.LineBreak,
 			NoHeader:           flags.NoHeader,
+			EncloseAll:         flags.EncloseAll,
 			IsTemporary:        true,
 		}
 
@@ -310,6 +311,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 			encoding,
 			flags.LineBreak,
 			noHeader,
+			flags.EncloseAll,
 			withoutNull,
 		)
 		if err != nil {
@@ -332,6 +334,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 			flags.Encoding,
 			flags.LineBreak,
 			flags.NoHeader,
+			flags.EncloseAll,
 			flags.WithoutNull,
 		)
 		if err != nil {
@@ -517,6 +520,7 @@ func loadObject(
 	encoding text.Encoding,
 	lineBreak text.LineBreak,
 	noHeader bool,
+	encloseAll bool,
 	withoutNull bool,
 ) (*View, error) {
 	var view *View
@@ -565,6 +569,7 @@ func loadObject(
 				fileInfo.JsonQuery = strings.TrimSpace(jsonQuery)
 				fileInfo.LineBreak = lineBreak
 				fileInfo.NoHeader = noHeader
+				fileInfo.EncloseAll = encloseAll
 
 				alreadyLoaded := ViewCache.Exists(fileInfo.Path)
 				ufpath := strings.ToUpper(fileInfo.Path)
@@ -725,6 +730,7 @@ func loadViewFromCSVFile(fp *os.File, fileInfo *FileInfo, withoutNull bool) (*Vi
 	if reader.DetectedLineBreak != "" {
 		fileInfo.LineBreak = reader.DetectedLineBreak
 	}
+	fileInfo.EncloseAll = reader.EnclosedAll
 
 	view := NewView()
 	view.Header = NewHeader(parser.FormatTableName(fileInfo.Path), header)

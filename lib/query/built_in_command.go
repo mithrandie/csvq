@@ -167,7 +167,8 @@ func SetFlag(expr parser.SetFlag, filter *Filter) (string, error) {
 	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.DatetimeFormatFlag, cmd.DelimiterFlag, cmd.JsonQuery, cmd.EncodingFlag,
 		cmd.WriteEncodingFlag, cmd.FormatFlag, cmd.WriteDelimiterFlag, cmd.LineBreakFlag:
 		p = value.ToString(p)
-	case cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.PrettyPrintFlag, cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag:
+	case cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAll, cmd.PrettyPrintFlag,
+		cmd.EastAsianEncoding, cmd.CountDiacriticalSign, cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag:
 		p = value.ToBoolean(p)
 	case cmd.WaitTimeoutFlag:
 		p = value.ToFloat(p)
@@ -209,8 +210,14 @@ func SetFlag(expr parser.SetFlag, filter *Filter) (string, error) {
 		cmd.SetWithoutHeader(p.(value.Boolean).Raw())
 	case cmd.LineBreakFlag:
 		err = cmd.SetLineBreak(p.(value.String).Raw())
+	case cmd.EncloseAll:
+		cmd.SetEncloseAll(p.(value.Boolean).Raw())
 	case cmd.PrettyPrintFlag:
 		cmd.SetPrettyPrint(p.(value.Boolean).Raw())
+	case cmd.EastAsianEncoding:
+		cmd.SetEastAsianEncoding(p.(value.Boolean).Raw())
+	case cmd.CountDiacriticalSign:
+		cmd.SetCountDiacriticalSign(p.(value.Boolean).Raw())
 	case cmd.ColorFlag:
 		cmd.SetColor(p.(value.Boolean).Raw())
 	case cmd.QuietFlag:
@@ -316,10 +323,34 @@ func showFlag(flag string) (string, error) {
 		}
 	case cmd.LineBreakFlag:
 		s = cmd.GetPalette().Render(cmd.StringEffect, flags.LineBreak.String())
+	case cmd.EncloseAll:
+		s = strconv.FormatBool(flags.EncloseAll)
+		switch flags.Format {
+		case cmd.CSV, cmd.TSV:
+			s = cmd.GetPalette().Render(cmd.BooleanEffect, s)
+		default:
+			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+s)
+		}
 	case cmd.PrettyPrintFlag:
 		s = strconv.FormatBool(flags.PrettyPrint)
 		switch flags.Format {
 		case cmd.JSON, cmd.JSONH, cmd.JSONA:
+			s = cmd.GetPalette().Render(cmd.BooleanEffect, s)
+		default:
+			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+s)
+		}
+	case cmd.EastAsianEncoding:
+		s = strconv.FormatBool(flags.EastAsianEncoding)
+		switch flags.Format {
+		case cmd.GFM, cmd.ORG, cmd.TEXT:
+			s = cmd.GetPalette().Render(cmd.BooleanEffect, s)
+		default:
+			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+s)
+		}
+	case cmd.CountDiacriticalSign:
+		s = strconv.FormatBool(flags.CountDiacriticalSign)
+		switch flags.Format {
+		case cmd.GFM, cmd.ORG, cmd.TEXT:
 			s = cmd.GetPalette().Render(cmd.BooleanEffect, s)
 		default:
 			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+s)
@@ -483,7 +514,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 	case "FLAGS":
 		for _, flag := range cmd.FlagList {
 			s, _ := showFlag(flag)
-			w.WriteSpaces(17 - len(flag))
+			w.WriteSpaces(24 - len(flag))
 			w.WriteColorWithoutLineBreak(flag, cmd.LableEffect)
 			w.WriteColorWithoutLineBreak(":", cmd.LableEffect)
 			w.WriteSpaces(1)
@@ -503,7 +534,7 @@ func writeTableAttribute(w *cmd.ObjectWriter, info *FileInfo) {
 	w.WriteColor("Format: ", cmd.LableEffect)
 	w.WriteWithoutLineBreak(info.Format.String())
 
-	w.WriteSpaces(8 - text.Width(info.Format.String(), w.EastAsianEncoding, w.CountDiacriticalSign))
+	w.WriteSpaces(8 - cmd.TextWidth(info.Format.String()))
 	switch info.Format {
 	case cmd.CSV:
 		w.WriteColorWithoutLineBreak("Delimiter: ", cmd.LableEffect)
@@ -523,6 +554,13 @@ func writeTableAttribute(w *cmd.ObjectWriter, info *FileInfo) {
 		}
 	}
 
+	switch info.Format {
+	case cmd.CSV, cmd.TSV:
+		w.WriteSpaces(4 - (cmd.TextWidth(cmd.EscapeString(string(info.Delimiter)))))
+		w.WriteColorWithoutLineBreak("Enclose All: ", cmd.LableEffect)
+		w.WriteWithoutLineBreak(strconv.FormatBool(info.EncloseAll))
+	}
+
 	w.NewLine()
 
 	w.WriteColor("Encoding: ", cmd.LableEffect)
@@ -533,17 +571,17 @@ func writeTableAttribute(w *cmd.ObjectWriter, info *FileInfo) {
 		w.WriteWithoutLineBreak(info.Encoding.String())
 	}
 
-	w.WriteSpaces(6 - (text.Width(info.Encoding.String(), w.EastAsianEncoding, w.CountDiacriticalSign)))
+	w.WriteSpaces(6 - (cmd.TextWidth(info.Encoding.String())))
 	w.WriteColorWithoutLineBreak("LineBreak: ", cmd.LableEffect)
 	w.WriteWithoutLineBreak(info.LineBreak.String())
 
 	switch info.Format {
 	case cmd.JSON, cmd.JSONH, cmd.JSONA:
-		w.WriteSpaces(6 - (text.Width(info.LineBreak.String(), w.EastAsianEncoding, w.CountDiacriticalSign)))
+		w.WriteSpaces(6 - (cmd.TextWidth(info.LineBreak.String())))
 		w.WriteColorWithoutLineBreak("Pretty Print: ", cmd.LableEffect)
 		w.WriteWithoutLineBreak(strconv.FormatBool(info.PrettyPrint))
 	case cmd.CSV, cmd.TSV, cmd.FIXED, cmd.GFM, cmd.ORG:
-		w.WriteSpaces(6 - (text.Width(info.LineBreak.String(), w.EastAsianEncoding, w.CountDiacriticalSign)))
+		w.WriteSpaces(6 - (cmd.TextWidth(info.LineBreak.String())))
 		w.WriteColorWithoutLineBreak("Header: ", cmd.LableEffect)
 		w.WriteWithoutLineBreak(strconv.FormatBool(!info.NoHeader))
 	}

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"strings"
 
-	"github.com/mithrandie/go-text"
 	"github.com/mithrandie/go-text/color"
 )
 
@@ -14,9 +13,7 @@ const (
 )
 
 type ObjectWriter struct {
-	EastAsianEncoding    bool
-	CountDiacriticalSign bool
-	Palette              *color.Palette
+	Palette *color.Palette
 
 	MaxWidth    int
 	Padding     int
@@ -44,16 +41,14 @@ func NewObjectWriter() *ObjectWriter {
 	}
 
 	return &ObjectWriter{
-		EastAsianEncoding:    false,
-		CountDiacriticalSign: false,
-		MaxWidth:             maxWidth,
-		Indent:               0,
-		IndentWidth:          4,
-		Padding:              DefaultPadding,
-		Palette:              GetPalette(),
-		lineWidth:            0,
-		column:               0,
-		subBlock:             0,
+		MaxWidth:    maxWidth,
+		Indent:      0,
+		IndentWidth: 4,
+		Padding:     DefaultPadding,
+		Palette:     GetPalette(),
+		lineWidth:   0,
+		column:      0,
+		subBlock:    0,
 	}
 }
 
@@ -94,7 +89,7 @@ func (w *ObjectWriter) write(s string, effect string, withoutLineBreak bool) {
 		} else {
 			w.writeToBuf(w.Palette.Render(effect, s))
 		}
-		w.column = w.column + text.Width(s, w.EastAsianEncoding, w.CountDiacriticalSign)
+		w.column = w.column + TextWidth(s)
 	}
 }
 
@@ -107,7 +102,7 @@ func (w *ObjectWriter) leadingSpacesWidth() int {
 }
 
 func (w *ObjectWriter) FitInLine(s string) bool {
-	if w.MaxWidth-w.Padding < w.column+text.Width(s, w.EastAsianEncoding, w.CountDiacriticalSign) {
+	if w.MaxWidth-w.Padding < w.column+TextWidth(s) {
 		return false
 	}
 	return true
@@ -156,7 +151,7 @@ func (w *ObjectWriter) ClearBlock() {
 func (w *ObjectWriter) String() string {
 	var header bytes.Buffer
 	if 0 < len(w.Title1) || 0 < len(w.Title2) {
-		tw := text.Width(w.Title1, w.EastAsianEncoding, w.CountDiacriticalSign) + text.Width(w.Title2, w.EastAsianEncoding, w.CountDiacriticalSign)
+		tw := TextWidth(w.Title1) + TextWidth(w.Title2)
 		if 0 < len(w.Title1) && 0 < len(w.Title2) {
 			tw++
 		}

@@ -580,7 +580,7 @@ func CreateTable(query parser.CreateTable, parentFilter *Filter) (*View, error) 
 	var err error
 
 	flags := cmd.GetFlags()
-	fileInfo, err := NewFileInfoForCreate(query.Table, flags.Repository, flags.Delimiter, flags.Encoding)
+	fileInfo, err := NewFileInfoForCreate(query.Table, flags.Repository, flags.WriteDelimiter, flags.WriteEncoding)
 	if err != nil {
 		return nil, err
 	}
@@ -598,6 +598,9 @@ func CreateTable(query parser.CreateTable, parentFilter *Filter) (*View, error) 
 	}
 
 	fileInfo.LineBreak = flags.LineBreak
+	fileInfo.EncloseAll = flags.EncloseAll
+	fileInfo.NoHeader = flags.WithoutHeader
+	fileInfo.PrettyPrint = flags.PrettyPrint
 
 	if query.Query != nil {
 		view, err = Select(query.Query.(parser.SelectQuery), filter)
@@ -882,7 +885,7 @@ func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (st
 		case TableLineBreak:
 			err = fileInfo.SetLineBreak(s.(value.String).Raw())
 		}
-	case TableHeader, TablePrettyPring:
+	case TableHeader, TableEncloseAll, TablePrettyPring:
 		b := value.ToBoolean(p)
 		if value.IsNull(b) {
 			return log, NewTableAttributeValueNotAllowedFormatError(query)
@@ -890,6 +893,8 @@ func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (st
 		switch attr {
 		case TableHeader:
 			fileInfo.SetNoHeader(!b.(value.Boolean).Raw())
+		case TableEncloseAll:
+			fileInfo.SetEncloseAll(b.(value.Boolean).Raw())
 		case TablePrettyPring:
 			fileInfo.SetPrettyPrint(b.(value.Boolean).Raw())
 		}
