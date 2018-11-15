@@ -3,7 +3,6 @@
 package cmd
 
 import (
-	"bufio"
 	"os"
 	"path/filepath"
 
@@ -55,13 +54,13 @@ func (t ReadLineTerminal) ReadLine() (string, error) {
 }
 
 func (t ReadLineTerminal) Write(s string) error {
-	w := bufio.NewWriter(os.Stdout)
-	_, err := w.WriteString(s)
-	if err != nil {
-		return err
-	}
-	w.Flush()
-	return nil
+	_, err := t.terminal.Write([]byte(s))
+	return err
+}
+
+func (t ReadLineTerminal) WriteError(s string) error {
+	_, err := t.terminal.Stderr().Write([]byte(s))
+	return err
 }
 
 func (t ReadLineTerminal) SetPrompt() {

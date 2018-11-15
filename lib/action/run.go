@@ -146,7 +146,7 @@ func LaunchInteractiveShell() error {
 		if e != nil {
 			syntaxErr := e.(*parser.SyntaxError)
 			e = query.NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)
-			if werr := cmd.Terminal.Write(color.Error(e.Error()) + "\n"); werr != nil {
+			if werr := cmd.Terminal.WriteError(color.Error(e.Error()) + "\n"); werr != nil {
 				return werr
 			}
 			lines = lines[:0]
@@ -160,7 +160,7 @@ func LaunchInteractiveShell() error {
 				err = ex
 				break
 			} else {
-				if werr := cmd.Terminal.Write(color.Error(e.Error()) + "\n"); werr != nil {
+				if werr := cmd.Terminal.WriteError(color.Error(e.Error()) + "\n"); werr != nil {
 					return werr
 				}
 				lines = lines[:0]

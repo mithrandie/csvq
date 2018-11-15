@@ -31,6 +31,7 @@ func NewTerminal() (VirtualTerminal, error) {
 		terminal: terminal.NewTerminal(NewStdIO(), p.Render(PromptEffect, TerminalPrompt)),
 		oldFd:    oldFd,
 		oldState: oldState,
+		palette:  p,
 	}, nil
 }
 
@@ -43,6 +44,11 @@ func (t SSHTerminal) ReadLine() (string, error) {
 }
 
 func (t SSHTerminal) Write(s string) error {
+	_, err := t.terminal.Write([]byte(s))
+	return err
+}
+
+func (t SSHTerminal) WriteError(s string) error {
 	_, err := t.terminal.Write([]byte(s))
 	return err
 }
