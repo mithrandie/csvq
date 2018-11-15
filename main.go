@@ -132,7 +132,7 @@ func main() {
 		},
 		cli.BoolFlag{
 			Name:  "count-format-code, A",
-			Usage: "count format characters or zero-width spaces as halfwidth",
+			Usage: "count format characters and zero-width spaces as halfwidth",
 		},
 		cli.BoolFlag{
 			Name:  "color, c",

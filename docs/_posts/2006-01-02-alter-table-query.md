@@ -97,6 +97,7 @@ _attribute_
   | ENCODING        | string  | File Encoding |
   | LINE_BREAK      | string  | Line Break |
   | HEADER          | boolean | Write header line in the file |
+  | ENCLOSE_ALL     | boolean | Enclose all string values in CSV |
   | PRETTY_PRINT    | boolean | Make JSON output easier to read |
 
 _value_
