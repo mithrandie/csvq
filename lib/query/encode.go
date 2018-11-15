@@ -1,9 +1,10 @@
 package query
 
 import (
-	"bytes"
+	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"strconv"
 	"time"
 
@@ -20,19 +21,19 @@ import (
 	"github.com/mithrandie/ternary"
 )
 
-func EncodeView(view *View, fileInfo *FileInfo) (string, error) {
+func EncodeView(fp io.Writer, view *View, fileInfo *FileInfo) error {
 	switch fileInfo.Format {
 	case cmd.FIXED:
-		return encodeFixedLengthFormat(view, fileInfo.DelimiterPositions, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding)
+		return encodeFixedLengthFormat(fp, view, fileInfo.DelimiterPositions, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding)
 	case cmd.JSON, cmd.JSONH, cmd.JSONA:
-		return encodeJson(view, fileInfo.Format, fileInfo.LineBreak, fileInfo.PrettyPrint)
+		return encodeJson(fp, view, fileInfo.Format, fileInfo.LineBreak, fileInfo.PrettyPrint)
 	case cmd.GFM, cmd.ORG, cmd.TEXT:
-		return encodeText(view, fileInfo.Format, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding)
+		return encodeText(fp, view, fileInfo.Format, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding)
 	case cmd.TSV:
 		fileInfo.Delimiter = '\t'
 		fallthrough
 	default: // cmd.CSV
-		return encodeCSV(view, fileInfo.Delimiter, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding, fileInfo.EncloseAll)
+		return encodeCSV(fp, view, fileInfo.Delimiter, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding, fileInfo.EncloseAll)
 	}
 }
 
@@ -49,11 +50,10 @@ func bareValues(view *View) ([]string, [][]value.Primary) {
 	return header, records
 }
 
-func encodeCSV(view *View, delimiter rune, lineBreak text.LineBreak, withoutHeader bool, encoding text.Encoding, encloseAll bool) (string, error) {
+func encodeCSV(fp io.Writer, view *View, delimiter rune, lineBreak text.LineBreak, withoutHeader bool, encoding text.Encoding, encloseAll bool) error {
 	header, records := bareValues(view)
 
-	buf := new(bytes.Buffer)
-	w := csv.NewWriter(buf, lineBreak, encoding)
+	w := csv.NewWriter(fp, lineBreak, encoding)
 	w.Delimiter = delimiter
 
 	fields := make([]csv.Field, len(header))
@@ -63,13 +63,13 @@ func encodeCSV(view *View, delimiter rune, lineBreak text.LineBreak, withoutHead
 			fields[i] = csv.NewField(v, encloseAll)
 		}
 		if err := w.Write(fields); err != nil {
-			return "", err
+			return err
 		}
 	}
 
 	for _, record := range records {
 		for i, v := range record {
-			str, e, _ := convertFieldContents(v, false)
+			str, e, _ := ConvertFieldContents(v, false)
 			quote := false
 			if encloseAll && (e == cmd.StringEffect || e == cmd.DatetimeEffect) {
 				quote = true
@@ -77,17 +77,15 @@ func encodeCSV(view *View, delimiter rune, lineBreak text.LineBreak, withoutHead
 			fields[i] = csv.NewField(str, quote)
 		}
 		if err := w.Write(fields); err != nil {
-			return "", err
+			return err
 		}
 	}
 	w.Flush()
-	return buf.String(), nil
+	return nil
 }
 
-func encodeFixedLengthFormat(view *View, positions []int, lineBreak text.LineBreak, withoutHeader bool, encoding text.Encoding) (string, error) {
+func encodeFixedLengthFormat(fp io.Writer, view *View, positions []int, lineBreak text.LineBreak, withoutHeader bool, encoding text.Encoding) error {
 	header, records := bareValues(view)
-
-	buf := new(bytes.Buffer)
 
 	if positions == nil {
 		m := fixedlen.NewMeasure()
@@ -106,7 +104,7 @@ func encodeFixedLengthFormat(view *View, positions []int, lineBreak text.LineBre
 		for _, record := range records {
 			fields := make([]fixedlen.Field, 0, len(record))
 			for _, v := range record {
-				str, _, a := convertFieldContents(v, false)
+				str, _, a := ConvertFieldContents(v, false)
 				fields = append(fields, fixedlen.NewField(str, a))
 			}
 			fieldList = append(fieldList, fields)
@@ -114,17 +112,17 @@ func encodeFixedLengthFormat(view *View, positions []int, lineBreak text.LineBre
 		}
 
 		positions = m.GeneratePositions()
-		w := fixedlen.NewWriter(buf, positions, lineBreak, encoding)
+		w := fixedlen.NewWriter(fp, positions, lineBreak, encoding)
 		w.InsertSpace = true
 		for _, fields := range fieldList {
 			if err := w.Write(fields); err != nil {
-				return "", err
+				return err
 			}
 		}
 		w.Flush()
 
 	} else {
-		w := fixedlen.NewWriter(buf, positions, lineBreak, encoding)
+		w := fixedlen.NewWriter(fp, positions, lineBreak, encoding)
 
 		fields := make([]fixedlen.Field, len(header))
 
@@ -133,30 +131,30 @@ func encodeFixedLengthFormat(view *View, positions []int, lineBreak text.LineBre
 				fields[i] = fixedlen.NewField(v, text.NotAligned)
 			}
 			if err := w.Write(fields); err != nil {
-				return "", err
+				return err
 			}
 		}
 
 		for _, record := range records {
 			for i, v := range record {
-				str, _, a := convertFieldContents(v, false)
+				str, _, a := ConvertFieldContents(v, false)
 				fields[i] = fixedlen.NewField(str, a)
 			}
 			if err := w.Write(fields); err != nil {
-				return "", err
+				return err
 			}
 		}
 		w.Flush()
 	}
-	return buf.String(), nil
+	return nil
 }
 
-func encodeJson(view *View, format cmd.Format, lineBreak text.LineBreak, prettyPrint bool) (string, error) {
+func encodeJson(fp io.Writer, view *View, format cmd.Format, lineBreak text.LineBreak, prettyPrint bool) error {
 	header, records := bareValues(view)
 
 	data, err := json.ConvertTableValueToJsonStructure(header, records)
 	if err != nil {
-		return "", errors.New(fmt.Sprintf("encoding to json failed: %s", err.Error()))
+		return errors.New(fmt.Sprintf("encoding to json failed: %s", err.Error()))
 	}
 
 	e := txjson.NewEncoder()
@@ -174,10 +172,15 @@ func encodeJson(view *View, format cmd.Format, lineBreak text.LineBreak, prettyP
 
 	s := e.Encode(data)
 	cmd.GetPalette().Enable()
-	return s, nil
+
+	w := bufio.NewWriter(fp)
+	if _, err := w.WriteString(s); err != nil {
+		return err
+	}
+	return w.Flush()
 }
 
-func encodeText(view *View, format cmd.Format, lineBreak text.LineBreak, withoutHeader bool, encoding text.Encoding) (string, error) {
+func encodeText(fp io.Writer, view *View, format cmd.Format, lineBreak text.LineBreak, withoutHeader bool, encoding text.Encoding) error {
 	header, records := bareValues(view)
 
 	isPlainTable := false
@@ -190,10 +193,18 @@ func encodeText(view *View, format cmd.Format, lineBreak text.LineBreak, without
 		tableFormat = table.OrgTable
 	default:
 		if len(header) < 1 {
-			return color.Warn("Empty Fields"), nil
+			w := bufio.NewWriter(fp)
+			if _, err := w.WriteString(color.Warn("Empty Fields")); err != nil {
+				return err
+			}
+			return w.Flush()
 		}
 		if len(records) < 1 {
-			return color.Warn("Empty RecordSet"), nil
+			w := bufio.NewWriter(fp)
+			if _, err := w.WriteString(color.Warn("Empty RecordSet")); err != nil {
+				return err
+			}
+			return w.Flush()
 		}
 		isPlainTable = true
 	}
@@ -220,7 +231,7 @@ func encodeText(view *View, format cmd.Format, lineBreak text.LineBreak, without
 	for i, record := range records {
 		rfields := make([]table.Field, 0, len(header))
 		for _, v := range record {
-			str, effect, align := convertFieldContents(v, isPlainTable)
+			str, effect, align := ConvertFieldContents(v, isPlainTable)
 			if format == cmd.TEXT {
 				str = palette.Render(effect, str)
 			}
@@ -237,10 +248,18 @@ func encodeText(view *View, format cmd.Format, lineBreak text.LineBreak, without
 		e.SetFieldAlignments(aligns)
 	}
 
-	return e.Encode()
+	s, err := e.Encode()
+	if err != nil {
+		return err
+	}
+	w := bufio.NewWriter(fp)
+	if _, err := w.WriteString(s); err != nil {
+		return err
+	}
+	return w.Flush()
 }
 
-func convertFieldContents(val value.Primary, forTextTable bool) (string, string, text.FieldAlignment) {
+func ConvertFieldContents(val value.Primary, forTextTable bool) (string, string, text.FieldAlignment) {
 	var s string
 	var effect = cmd.NoEffect
 	var align = text.NotAligned

@@ -449,15 +449,15 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 				return nil, err
 			}
 
-			fp, err := file.OpenToRead(fpath)
+			h, err := file.NewHandlerForRead(fpath)
 			if err != nil {
 				if _, ok := err.(*file.TimeoutError); ok {
 					return nil, NewFileLockTimeoutError(jsonPath, fpath)
 				}
 				return nil, NewReadFileError(jsonPath, err.Error())
 			}
-			defer file.Close(fp)
-			reader = fp
+			defer h.Close()
+			reader = h.FileForRead()
 		} else {
 			jsonTextValue, err := filter.Evaluate(jsonQuery.JsonText)
 			if err != nil {
@@ -585,30 +585,30 @@ func loadObject(
 
 					var fp *os.File
 					if forUpdate {
-						fp, err = file.OpenToUpdate(fileInfo.Path)
+						h, err := file.NewHandlerForUpdate(fileInfo.Path)
 						if err != nil {
 							if _, ok := err.(*file.TimeoutError); ok {
 								return nil, NewFileLockTimeoutError(tableIdentifier, fileInfo.Path)
 							}
 							return nil, NewReadFileError(tableIdentifier, err.Error())
 						}
-						fileInfo.File = fp
+						fileInfo.Handler = h
+						fp = h.FileForRead()
 					} else {
-						fp, err = file.OpenToRead(fileInfo.Path)
+						h, err := file.NewHandlerForRead(fileInfo.Path)
 						if err != nil {
 							if _, ok := err.(*file.TimeoutError); ok {
 								return nil, NewFileLockTimeoutError(tableIdentifier, fileInfo.Path)
 							}
 							return nil, NewReadFileError(tableIdentifier, err.Error())
 						}
-						defer file.Close(fp)
+						defer h.Close()
+						fp = h.FileForRead()
 					}
 
 					loadView, err := loadViewFromFile(fp, fileInfo, withoutNull)
 					if err != nil {
-						if forUpdate {
-							file.Close(fp)
-						}
+						fileInfo.Close()
 						return nil, NewDataParsingError(tableIdentifier, fileInfo.Path, err.Error())
 					}
 					loadView.ForUpdate = forUpdate

@@ -1,5 +1,7 @@
 package cmd
 
+var Terminal VirtualTerminal
+
 const (
 	TerminalPrompt           string = "csvq > "
 	TerminalContinuousPrompt string = "     > "

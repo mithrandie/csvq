@@ -13,6 +13,9 @@ func GetTestFilePath(filename string) string {
 
 var TestDir = filepath.Join(os.TempDir(), "csvq_file_test")
 
+var waitTimeoutForTests = 0.1
+var retryIntervalForTests = 10 * time.Millisecond
+
 func TestMain(m *testing.M) {
 	os.Exit(run(m))
 }
@@ -33,22 +36,16 @@ func setup() {
 		os.Mkdir(TestDir, 0755)
 	}
 
-	fp, _ := os.Create(LockFilePath(GetTestFilePath("locked_by_other.txt")))
-	fp.Close()
-
-	fp, _ = os.Create(GetTestFilePath("open.txt"))
+	fp, _ := os.Create(GetTestFilePath("open.txt"))
 	fp.Close()
 
 	fp, _ = os.Create(GetTestFilePath("update.txt"))
 	fp.Close()
 
-	UpdateWaitTimeout(0.1, 10*time.Millisecond)
-	LockFiles = make(LockFileContainer)
+	UpdateWaitTimeout(waitTimeoutForTests, retryIntervalForTests)
 }
 
 func teardown() {
-	UnlockAll()
-
 	if _, err := os.Stat(TestDir); err == nil {
 		os.RemoveAll(TestDir)
 	}

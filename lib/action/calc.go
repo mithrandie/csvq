@@ -2,14 +2,11 @@ package action
 
 import (
 	"errors"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
-	"github.com/mithrandie/csvq/lib/value"
 )
 
 func Calc(expr string) error {
@@ -18,7 +15,11 @@ func Calc(expr string) error {
 	SetSignalHandler()
 
 	defer func() {
-		query.ReleaseResources()
+		if errs := query.ReleaseResourcesWithErrors(); errs != nil {
+			for _, err := range errs {
+				cmd.WriteToStdErr(err.Error() + "\n")
+			}
+		}
 	}()
 
 	q := "select " + expr + " from stdin"
@@ -48,32 +49,9 @@ func Calc(expr string) error {
 		if err != nil {
 			return errors.New("syntax error")
 		}
-		values[i] = formatCalcResult(p)
+		values[i], _, _ = query.ConvertFieldContents(p, true)
 	}
 
-	cmd.ToStdout(strings.Join(values, string(cmd.GetFlags().Delimiter)))
+	cmd.WriteToStdout(strings.Join(values, string(cmd.GetFlags().Delimiter)))
 	return nil
-}
-
-func formatCalcResult(p value.Primary) string {
-	var s string
-
-	switch p.(type) {
-	case value.String:
-		s = strings.TrimSpace(p.(value.String).Raw())
-	case value.Integer:
-		s = value.Int64ToStr(p.(value.Integer).Raw())
-	case value.Float:
-		s = value.Float64ToStr(p.(value.Float).Raw())
-	case value.Boolean:
-		s = strconv.FormatBool(p.(value.Boolean).Raw())
-	case value.Ternary:
-		s = p.(value.Ternary).String()
-	case value.Datetime:
-		s = p.(value.Datetime).Format(time.RFC3339Nano)
-	case value.Null:
-		s = "null"
-	}
-
-	return s
 }

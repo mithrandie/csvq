@@ -2207,7 +2207,10 @@ func TestView_Load(t *testing.T) {
 				t.Errorf("%s: FileInfo.IsTemporary = %t, want %t", v.Name, view.FileInfo.IsTemporary, v.Result.FileInfo.IsTemporary)
 			}
 		}
-		view.FileInfo = nil
+		if view.FileInfo != nil {
+			view.FileInfo.Close()
+			view.FileInfo = nil
+		}
 		v.Result.FileInfo = nil
 
 		if !reflect.DeepEqual(view.Filter.Aliases, v.Result.Filter.Aliases) {

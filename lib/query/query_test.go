@@ -1596,12 +1596,12 @@ func TestInsert(t *testing.T) {
 		}
 
 		for _, v2 := range ViewCache {
-			if v2.FileInfo.File != nil {
-				if v2.FileInfo.Path != v2.FileInfo.File.Name() {
-					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.File.Name(), v2.FileInfo.Path, v.Name)
+			if v2.FileInfo.Handler != nil {
+				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
+					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
 				}
-				file.Close(v2.FileInfo.File)
-				v2.FileInfo.File = nil
+				v2.FileInfo.Close()
+				v2.FileInfo.Handler = nil
 			}
 		}
 
@@ -2109,12 +2109,12 @@ func TestUpdate(t *testing.T) {
 		}
 
 		for _, v2 := range ViewCache {
-			if v2.FileInfo.File != nil {
-				if v2.FileInfo.Path != v2.FileInfo.File.Name() {
-					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.File.Name(), v2.FileInfo.Path, v.Name)
+			if v2.FileInfo.Handler != nil {
+				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
+					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
 				}
-				file.Close(v2.FileInfo.File)
-				v2.FileInfo.File = nil
+				v2.FileInfo.Close()
+				v2.FileInfo.Handler = nil
 			}
 		}
 
@@ -2499,12 +2499,12 @@ func TestDelete(t *testing.T) {
 		}
 
 		for _, v2 := range ViewCache {
-			if v2.FileInfo.File != nil {
-				if v2.FileInfo.Path != v2.FileInfo.File.Name() {
-					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.File.Name(), v2.FileInfo.Path, v.Name)
+			if v2.FileInfo.Handler != nil {
+				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
+					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
 				}
-				file.Close(v2.FileInfo.File)
-				v2.FileInfo.File = nil
+				v2.FileInfo.Close()
+				v2.FileInfo.Handler = nil
 			}
 		}
 
@@ -2552,6 +2552,7 @@ var createTableTests = []struct {
 			},
 			Header:    NewHeader("create_table_1", []string{"column1", "column2"}),
 			RecordSet: RecordSet{},
+			ForUpdate: true,
 		},
 		ViewCache: ViewMap{
 			strings.ToUpper(GetTestFilePath("create_table_1.csv")): &View{
@@ -2564,6 +2565,7 @@ var createTableTests = []struct {
 				},
 				Header:    NewHeader("create_table_1", []string{"column1", "column2"}),
 				RecordSet: RecordSet{},
+				ForUpdate: true,
 			},
 		},
 	},
@@ -2601,6 +2603,7 @@ var createTableTests = []struct {
 					value.NewInteger(2),
 				}),
 			},
+			ForUpdate: true,
 		},
 		ViewCache: ViewMap{
 			strings.ToUpper(GetTestFilePath("create_table_1.csv")): &View{
@@ -2618,6 +2621,7 @@ var createTableTests = []struct {
 						value.NewInteger(2),
 					}),
 				},
+				ForUpdate: true,
 			},
 		},
 	},
@@ -2714,7 +2718,22 @@ func TestCreateTable(t *testing.T) {
 
 	for _, v := range createTableTests {
 		ReleaseResources()
+
 		result, err := CreateTable(v.Query, NewEmptyFilter())
+
+		if result != nil {
+			if result.FileInfo != nil {
+				result.FileInfo.Close()
+				result.FileInfo.Handler = nil
+			}
+		}
+		for _, view := range ViewCache {
+			if view.FileInfo != nil {
+				view.FileInfo.Close()
+				view.FileInfo.Handler = nil
+			}
+		}
+
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2727,6 +2746,7 @@ func TestCreateTable(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
+
 		if !reflect.DeepEqual(result, v.Result) {
 			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
 		}
@@ -3161,12 +3181,12 @@ func TestAddColumns(t *testing.T) {
 		}
 
 		for _, v2 := range ViewCache {
-			if v2.FileInfo.File != nil {
-				if v2.FileInfo.Path != v2.FileInfo.File.Name() {
-					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.File.Name(), v2.FileInfo.Path, v.Name)
+			if v2.FileInfo.Handler != nil {
+				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
+					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
 				}
-				file.Close(v2.FileInfo.File)
-				v2.FileInfo.File = nil
+				v2.FileInfo.Close()
+				v2.FileInfo.Handler = nil
 			}
 		}
 
@@ -3370,12 +3390,12 @@ func TestDropColumns(t *testing.T) {
 		}
 
 		for _, v2 := range ViewCache {
-			if v2.FileInfo.File != nil {
-				if v2.FileInfo.Path != v2.FileInfo.File.Name() {
-					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.File.Name(), v2.FileInfo.Path, v.Name)
+			if v2.FileInfo.Handler != nil {
+				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
+					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
 				}
-				file.Close(v2.FileInfo.File)
-				v2.FileInfo.File = nil
+				v2.FileInfo.Close()
+				v2.FileInfo.Handler = nil
 			}
 		}
 
@@ -3594,12 +3614,12 @@ func TestRenameColumn(t *testing.T) {
 		}
 
 		for _, v2 := range ViewCache {
-			if v2.FileInfo.File != nil {
-				if v2.FileInfo.Path != v2.FileInfo.File.Name() {
-					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.File.Name(), v2.FileInfo.Path, v.Name)
+			if v2.FileInfo.Handler != nil {
+				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
+					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
 				}
-				file.Close(v2.FileInfo.File)
-				v2.FileInfo.File = nil
+				v2.FileInfo.Close()
+				v2.FileInfo.Handler = nil
 			}
 		}
 
@@ -3958,12 +3978,12 @@ func TestSetTableAttribute(t *testing.T) {
 		}
 
 		for _, v2 := range ViewCache {
-			if v2.FileInfo.File != nil {
-				if v2.FileInfo.Path != v2.FileInfo.File.Name() {
-					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.File.Name(), v2.FileInfo.Path, v.Name)
+			if v2.FileInfo.Handler != nil {
+				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
+					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
 				}
-				file.Close(v2.FileInfo.File)
-				v2.FileInfo.File = nil
+				v2.FileInfo.Close()
+				v2.FileInfo.Handler = nil
 			}
 		}
 
@@ -3980,14 +4000,16 @@ func TestSetTableAttribute(t *testing.T) {
 func TestCommit(t *testing.T) {
 	cmd.SetQuiet(false)
 
-	fp, _ := file.OpenToUpdate(GetTestFilePath("updated_file_1.csv"))
+	ch, _ := file.NewHandlerForCreate(GetTestFilePath("create_file.csv"))
+	uh, _ := file.NewHandlerForUpdate(GetTestFilePath("updated_file_1.csv"))
 
 	ViewCache = ViewMap{
 		strings.ToUpper(GetTestFilePath("created_file.csv")): &View{
 			Header:    NewHeader("created_file", []string{"column1", "column2"}),
 			RecordSet: RecordSet{},
 			FileInfo: &FileInfo{
-				Path: GetTestFilePath("created_file.csv"),
+				Path:    GetTestFilePath("created_file.csv"),
+				Handler: ch,
 			},
 		},
 		strings.ToUpper(GetTestFilePath("updated_file_1.csv")): &View{
@@ -4007,8 +4029,8 @@ func TestCommit(t *testing.T) {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path: GetTestFilePath("updated_file_1.csv"),
-				File: fp,
+				Path:    GetTestFilePath("updated_file_1.csv"),
+				Handler: uh,
 			},
 		},
 	}
@@ -4017,14 +4039,15 @@ func TestCommit(t *testing.T) {
 		{
 			Type: CreateTableQuery,
 			FileInfo: &FileInfo{
-				Path: GetTestFilePath("created_file.csv"),
+				Path:    GetTestFilePath("created_file.csv"),
+				Handler: ch,
 			},
 		},
 		{
 			Type: UpdateQuery,
 			FileInfo: &FileInfo{
-				Path: GetTestFilePath("updated_file_1.csv"),
-				File: fp,
+				Path:    GetTestFilePath("updated_file_1.csv"),
+				Handler: uh,
 			},
 			OperatedCount: 1,
 		},
@@ -4082,7 +4105,7 @@ func TestRollback(t *testing.T) {
 	r, w, _ := os.Pipe()
 	os.Stdout = w
 
-	Rollback(NewEmptyFilter())
+	Rollback(nil, NewEmptyFilter())
 
 	w.Close()
 	os.Stdout = oldStdout

@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/mithrandie/csvq/lib/file"
+
 	"github.com/mithrandie/go-text"
 
 	"github.com/mithrandie/go-text/fixedlen"
@@ -37,7 +39,7 @@ type FileInfo struct {
 	EncloseAll         bool
 	PrettyPrint        bool
 
-	File *os.File
+	Handler *file.Handler
 
 	IsTemporary      bool
 	InitialHeader    Header
@@ -161,6 +163,27 @@ func (f *FileInfo) SetEncloseAll(b bool) {
 
 func (f *FileInfo) SetPrettyPrint(b bool) {
 	f.PrettyPrint = b
+}
+
+func (f *FileInfo) Close() error {
+	if f.Handler == nil {
+		return nil
+	}
+	return f.Handler.Close()
+}
+
+func (f *FileInfo) CloseWithErrors() []error {
+	if f.Handler == nil {
+		return nil
+	}
+	return f.Handler.CloseWithErrors()
+}
+
+func (f *FileInfo) Commit() error {
+	if f.Handler == nil {
+		return nil
+	}
+	return f.Handler.Commit()
 }
 
 func SearchFilePath(filename parser.Identifier, repository string, format cmd.Format) (string, cmd.Format, error) {

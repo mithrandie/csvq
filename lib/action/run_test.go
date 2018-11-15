@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mithrandie/csvq/lib/query"
+
 	"github.com/mithrandie/csvq/lib/cmd"
 )
 
@@ -65,6 +67,8 @@ func TestRun(t *testing.T) {
 		if v.Stats {
 			tf.Stats = v.Stats
 		}
+
+		query.OutFile = nil
 
 		oldStdout := os.Stdout
 		r, w, _ := os.Pipe()

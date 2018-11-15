@@ -4,11 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"runtime"
-	"strconv"
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/mithrandie/go-file"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
@@ -22,7 +24,11 @@ func Run(input string, sourceFile string) error {
 	start := time.Now()
 
 	defer func() {
-		query.ReleaseResources()
+		if errs := query.ReleaseResourcesWithErrors(); errs != nil {
+			for _, err := range errs {
+				cmd.WriteToStdErr(err.Error() + "\n")
+			}
+		}
 		showStats(start)
 	}()
 
@@ -32,20 +38,39 @@ func Run(input string, sourceFile string) error {
 		return query.NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)
 	}
 
+	outfile := cmd.GetFlags().OutFile
+	if 0 < len(outfile) {
+		if _, err := os.Stat(outfile); err == nil {
+			return errors.New(fmt.Sprintf("file %s already exists", outfile))
+		}
+
+		fp, err := file.Create(cmd.GetFlags().OutFile)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			if info, err := fp.Stat(); err == nil && info.Size() < 1 {
+				os.Remove(outfile)
+			}
+			fp.Close()
+		}()
+		query.OutFile = fp
+	}
+
 	proc := query.NewProcedure()
 	flow, err := proc.Execute(statements)
 
 	if err == nil && flow == query.Terminate {
-		err = query.Commit(nil, proc.Filter)
+		if e := query.Commit(nil, proc.Filter); e != nil {
+			cmd.WriteToStdErr(e.Error() + "\n")
+		}
+	} else {
+		if e := query.Rollback(nil, proc.Filter); e != nil {
+			cmd.WriteToStdErr(e.Error() + "\n")
+		}
 	}
 
-	if err != nil {
-		return err
-	}
-
-	createSelectLog()
-
-	return nil
+	return err
 }
 
 func LaunchInteractiveShell() error {
@@ -58,7 +83,11 @@ func LaunchInteractiveShell() error {
 	SetSignalHandler()
 
 	defer func() {
-		query.ReleaseResources()
+		if errs := query.ReleaseResourcesWithErrors(); errs != nil {
+			for _, err := range errs {
+				cmd.WriteToStdErr(err.Error() + "\n")
+			}
+		}
 	}()
 
 	var err error
@@ -148,18 +177,11 @@ func LaunchInteractiveShell() error {
 		cmd.Terminal.SetPrompt()
 	}
 
-	return err
-}
-
-func createSelectLog() error {
-	flags := cmd.GetFlags()
-	selectLog := query.ReadSelectLog()
-	if 0 < len(flags.OutFile) && 0 < len(selectLog) {
-		if err := cmd.CreateFile(flags.OutFile, selectLog); err != nil {
-			return err
-		}
+	if e := query.Rollback(nil, proc.Filter); e != nil {
+		cmd.WriteToStdErr(e.Error() + "\n")
 	}
-	return nil
+
+	return err
 }
 
 func showStats(start time.Time) {
@@ -183,25 +205,36 @@ func showStats(start time.Time) {
 			width = len(v)
 		}
 	}
-	w := strconv.Itoa(width)
+	width = width + 1
 
-	palette := cmd.GetPalette()
+	w := cmd.NewObjectWriter()
+	w.WriteColor(" TotalTime:", cmd.LableEffect)
+	w.WriteSpaces(width - len(exectime))
+	w.WriteWithoutLineBreak(exectime + " seconds")
+	w.NewLine()
+	w.WriteColor("     Alloc:", cmd.LableEffect)
+	w.WriteSpaces(width - len(alloc))
+	w.WriteWithoutLineBreak(alloc + " bytes")
+	w.NewLine()
+	w.WriteColor("TotalAlloc:", cmd.LableEffect)
+	w.WriteSpaces(width - len(talloc))
+	w.WriteWithoutLineBreak(talloc + " bytes")
+	w.NewLine()
+	w.WriteColor("   HeapSys:", cmd.LableEffect)
+	w.WriteSpaces(width - len(sys))
+	w.WriteWithoutLineBreak(sys + " bytes")
+	w.NewLine()
+	w.WriteColor("   Mallocs:", cmd.LableEffect)
+	w.WriteSpaces(width - len(mallocs))
+	w.WriteWithoutLineBreak(mallocs + " objects")
+	w.NewLine()
+	w.WriteColor("     Frees:", cmd.LableEffect)
+	w.WriteSpaces(width - len(frees))
+	w.WriteWithoutLineBreak(frees + " objects")
+	w.NewLine()
+	w.NewLine()
 
-	stats := fmt.Sprintf(
-		""+
-			palette.Render(cmd.LableEffect, "   TotalTime: ")+"%"+w+"[2]s seconds %[1]s"+
-			palette.Render(cmd.LableEffect, "       Alloc: ")+"%"+w+"[3]s bytes %[1]s"+
-			palette.Render(cmd.LableEffect, "  TotalAlloc: ")+"%"+w+"[4]s bytes %[1]s"+
-			palette.Render(cmd.LableEffect, "     HeapSys: ")+"%"+w+"[5]s bytes %[1]s"+
-			palette.Render(cmd.LableEffect, "     Mallocs: ")+"%"+w+"[6]s objects %[1]s"+
-			palette.Render(cmd.LableEffect, "       Frees: ")+"%"+w+"[7]s objects %[1]s",
-		"\n",
-		exectime,
-		alloc,
-		talloc,
-		sys,
-		mallocs,
-		frees,
-	)
-	cmd.ToStdout(stats)
+	w.Title1 = "Resource Statistics"
+
+	cmd.WriteToStdout("\n" + w.String())
 }

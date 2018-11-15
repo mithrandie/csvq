@@ -8,7 +8,6 @@ import (
 	"github.com/mithrandie/go-text/color"
 
 	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 )
@@ -195,18 +194,35 @@ func (m ViewMap) DisposeTemporaryTable(table parser.Identifier) error {
 	return NewUndeclaredTemporaryTableError(table)
 }
 
-func (m ViewMap) Dispose(name string) {
+func (m ViewMap) Dispose(name string) error {
 	uname := strings.ToUpper(name)
 	if _, ok := m[uname]; ok {
-		if m[uname].FileInfo.File != nil {
-			file.Close(m[uname].FileInfo.File)
+		if err := m[uname].FileInfo.Close(); err != nil {
+			return err
 		}
 		delete(m, uname)
 	}
+	return nil
 }
 
-func (m ViewMap) Clean() {
+func (m ViewMap) Clean() error {
 	for k := range m {
-		m.Dispose(k)
+		if err := m.Dispose(k); err != nil {
+			return err
+		}
 	}
+	return nil
+}
+
+func (m ViewMap) CleanWithErrors() []error {
+	var errs []error
+	for k := range m {
+		if _, ok := m[k]; ok {
+			if es := m[k].FileInfo.CloseWithErrors(); es != nil {
+				errs = append(errs, es...)
+			}
+			delete(m, k)
+		}
+	}
+	return errs
 }

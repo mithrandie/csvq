@@ -97,13 +97,13 @@ func Source(expr parser.Source, filter *Filter) ([]parser.Statement, error) {
 		return nil, NewSourceFileUnableToReadError(expr, fpath)
 	}
 
-	fp, err := file.OpenToRead(fpath)
+	h, err := file.NewHandlerForRead(fpath)
 	if err != nil {
 		return nil, NewReadFileError(expr, err.Error())
 	}
-	defer file.Close(fp)
+	defer h.Close()
 
-	buf, err := ioutil.ReadAll(fp)
+	buf, err := ioutil.ReadAll(h.FileForRead())
 	if err != nil {
 		return nil, NewReadFileError(expr, err.Error())
 	}

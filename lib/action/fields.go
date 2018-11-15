@@ -3,6 +3,8 @@ package action
 import (
 	"errors"
 
+	"github.com/mithrandie/csvq/lib/cmd"
+
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
 )
@@ -11,7 +13,11 @@ func ShowFields(filename string) error {
 	SetSignalHandler()
 
 	defer func() {
-		query.ReleaseResources()
+		if errs := query.ReleaseResourcesWithErrors(); errs != nil {
+			for _, err := range errs {
+				cmd.WriteToStdErr(err.Error() + "\n")
+			}
+		}
 	}()
 
 	statements := []parser.Statement{

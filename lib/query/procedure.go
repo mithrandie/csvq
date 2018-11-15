@@ -1,9 +1,14 @@
 package query
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"os"
 	"strings"
 	"time"
+
+	"github.com/mithrandie/csvq/lib/file"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
@@ -11,6 +16,67 @@ import (
 
 	"github.com/mithrandie/ternary"
 )
+
+type StatementFlow int
+
+const (
+	Terminate StatementFlow = iota
+	Error
+	Exit
+	Break
+	Continue
+	Return
+)
+
+type OperationType int
+
+const (
+	InsertQuery OperationType = iota
+	UpdateQuery
+	DeleteQuery
+	CreateTableQuery
+	AddColumnsQuery
+	DropColumnsQuery
+	RenameColumnQuery
+)
+
+type ExecResult struct {
+	Type          OperationType
+	FileInfo      *FileInfo
+	OperatedCount int
+}
+
+var ViewCache = make(ViewMap, 10)
+var ExecResults = make([]ExecResult, 0, 10)
+var OutFile *os.File
+var SelectResult = new(bytes.Buffer)
+
+func ReleaseResources() error {
+	if err := ViewCache.Clean(); err != nil {
+		return err
+	}
+	if err := file.UnlockAll(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func ReleaseResourcesWithErrors() []error {
+	var errs []error
+	if es := ViewCache.CleanWithErrors(); es != nil {
+		errs = append(errs, es...)
+	}
+	if es := file.UnlockAllWithErrors(); es != nil {
+		errs = append(errs, es...)
+	}
+	return errs
+}
+
+func Log(log string, quiet bool) {
+	if !quiet {
+		cmd.WriteToStdout(log + "\n")
+	}
+}
 
 type Procedure struct {
 	Filter           *Filter
@@ -103,7 +169,6 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			proc.MeasurementStart = time.Now()
 		}
 		if view, err = Select(stmt.(parser.SelectQuery), proc.Filter); err == nil {
-			var viewstr string
 			fileInfo := &FileInfo{
 				Format:             flags.Format,
 				Delimiter:          flags.WriteDelimiter,
@@ -114,12 +179,20 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 				EncloseAll:         flags.EncloseAll,
 				PrettyPrint:        flags.PrettyPrint,
 			}
-			viewstr, err = EncodeView(view, fileInfo)
+
+			var writer io.Writer
+			if OutFile != nil {
+				writer = OutFile
+			} else {
+				SelectResult.Reset()
+				writer = SelectResult
+			}
+			err = EncodeView(writer, view, fileInfo)
 			if err == nil {
-				if 0 < len(flags.OutFile) {
-					AddSelectLog(viewstr)
+				if OutFile != nil {
+					OutFile.WriteString(cmd.GetFlags().LineBreak.Value())
 				} else {
-					Log(viewstr, false)
+					Log(SelectResult.String(), false)
 				}
 			}
 		}
@@ -246,7 +319,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		case parser.COMMIT:
 			err = Commit(stmt.(parser.Expression), proc.Filter)
 		case parser.ROLLBACK:
-			Rollback(proc.Filter)
+			err = Rollback(stmt.(parser.Expression), proc.Filter)
 		}
 	case parser.FlowControl:
 		switch stmt.(parser.FlowControl).Token {

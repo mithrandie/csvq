@@ -11,7 +11,6 @@ import (
 	"github.com/mithrandie/go-text"
 
 	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -711,7 +710,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 	for _, v := range procedureExecuteStatementTests {
 		ReleaseResources()
 		ExecResults = []ExecResult{}
-		SelectLogs = []string{}
+		SelectResult.Reset()
 
 		oldStdout := os.Stdout
 		r, w, _ := os.Pipe()
@@ -749,12 +748,12 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 
 		if v.Result != nil {
 			for _, r := range ExecResults {
-				if r.FileInfo.File != nil {
-					if r.FileInfo.Path != r.FileInfo.File.Name() {
-						t.Errorf("file pointer = %q, want %q for %q", r.FileInfo.File.Name(), r.FileInfo.Path, v.Input)
+				if r.FileInfo.Handler != nil {
+					if r.FileInfo.Path != r.FileInfo.Handler.Path() {
+						t.Errorf("file pointer = %q, want %q for %q", r.FileInfo.Handler.Path(), r.FileInfo.Path, v.Input)
 					}
-					file.Close(r.FileInfo.File)
-					r.FileInfo.File = nil
+					r.FileInfo.Close()
+					r.FileInfo.Handler = nil
 				}
 			}
 
@@ -768,15 +767,16 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 			}
 		}
 		if v.SelectLogs != nil {
-			if !reflect.DeepEqual(SelectLogs, v.SelectLogs) {
-				t.Errorf("select logs = %s, want %s for %q", SelectLogs, v.SelectLogs, v.Input)
+			selectLog := SelectResult.String()
+			if !reflect.DeepEqual(selectLog, v.SelectLogs) {
+				t.Errorf("select logs = %s, want %s for %q", selectLog, v.SelectLogs, v.Input)
 			}
 		}
 	}
 
 	ReleaseResources()
 	ExecResults = []ExecResult{}
-	SelectLogs = []string{}
+	SelectResult.Reset()
 }
 
 var procedureIfStmtTests = []struct {
