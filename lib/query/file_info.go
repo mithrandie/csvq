@@ -209,7 +209,7 @@ func SearchFilePath(filename parser.Identifier, repository string, format cmd.Fo
 			case cmd.JsonExt:
 				format = cmd.JSON
 			default:
-				format = cmd.GetFlags().ImportFormat()
+				format = cmd.GetFlags().SelectImportFormat()
 			}
 		}
 	}

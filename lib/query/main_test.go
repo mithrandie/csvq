@@ -44,7 +44,7 @@ func setup() {
 		os.RemoveAll(TestDir)
 	}
 
-	cmd.SetLocation(TestLocation)
+	cmd.GetFlags().SetLocation(TestLocation)
 	flags := cmd.GetFlags()
 	flags.Now = "2012-02-03 09:18:15"
 
@@ -103,7 +103,7 @@ func initFlag() {
 		cpu = 1
 	}
 
-	cmd.SetLocation(TestLocation)
+	cmd.GetFlags().SetLocation(TestLocation)
 	flags := cmd.GetFlags()
 	flags.Repository = "."
 	flags.DatetimeFormat = ""
@@ -123,11 +123,10 @@ func initFlag() {
 	flags.EastAsianEncoding = false
 	flags.CountDiacriticalSign = false
 	flags.CountFormatCode = false
-	flags.Color = false
 	flags.Quiet = false
 	flags.CPU = cpu
 	flags.Stats = false
-	cmd.SetColor(false)
+	cmd.GetFlags().SetColor(false)
 }
 
 func copyfile(dstfile string, srcfile string) error {

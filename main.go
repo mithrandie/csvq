@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"runtime"
+
+	"github.com/mithrandie/csvq/lib/file"
 
 	"github.com/mithrandie/csvq/lib/action"
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -208,7 +211,7 @@ func main() {
 	}
 
 	app.Action = func(c *cli.Context) error {
-		queryString, err := readQuery(c)
+		queryString, path, err := readQuery(c)
 		if err != nil {
 			return NewExitError(err.Error(), 1)
 		}
@@ -216,7 +219,7 @@ func main() {
 		if len(queryString) < 1 {
 			err = action.LaunchInteractiveShell()
 		} else {
-			err = action.Run(queryString, cmd.GetFlags().Source)
+			err = action.Run(queryString, path, c.GlobalString("out"))
 		}
 
 		if err != nil {
@@ -235,85 +238,132 @@ func main() {
 	app.Run(os.Args)
 }
 
-func readQuery(c *cli.Context) (string, error) {
+func readQuery(c *cli.Context) (string, string, error) {
 	var queryString string
+	var path string
 
-	flags := cmd.GetFlags()
-	if 0 < len(flags.Source) {
-		fp, err := os.Open(flags.Source)
-		if err != nil {
-			return queryString, err
+	if c.IsSet("source") && 0 < len(c.GlobalString("source")) {
+		path = c.GlobalString("source")
+		if abs, err := filepath.Abs(path); err == nil {
+			path = abs
 		}
-		defer fp.Close()
+		if !file.Exists(path) {
+			return queryString, path, errors.New(fmt.Sprintf("file %q does not exist", path))
+		}
+		h, err := file.NewHandlerForRead(path)
+		if err != nil {
+			return queryString, path, errors.New(fmt.Sprintf("failed to read file: %s", err.Error()))
+		}
+		defer h.Close()
 
-		buf, err := ioutil.ReadAll(fp)
+		buf, err := ioutil.ReadAll(h.FileForRead())
 		if err != nil {
-			return queryString, err
+			return queryString, path, errors.New(fmt.Sprintf("failed to read file: %s", err.Error()))
 		}
+
 		queryString = string(buf)
-
 	} else {
 		if 1 < c.NArg() {
-			return queryString, errors.New("multiple queries or statements were passed")
+			return queryString, path, errors.New("multiple queries or statements were passed")
 		}
 		queryString = c.Args().First()
 	}
 
-	return queryString, nil
+	return queryString, path, nil
 }
 
 func setFlags(c *cli.Context) error {
-	cmd.SetColor(c.GlobalBool("color"))
-
-	if err := cmd.SetRepository(c.GlobalString("repository")); err != nil {
-		return err
-	}
-	if err := cmd.SetLocation(c.String("timezone")); err != nil {
-		return err
-	}
-	cmd.SetDatetimeFormat(c.GlobalString("datetime-format"))
-	cmd.SetWaitTimeout(c.GlobalFloat64("wait-timeout"))
-
-	if err := cmd.SetSource(c.GlobalString("source")); err != nil {
-		return err
+	flags := cmd.GetFlags()
+	if c.IsSet("color") {
+		flags.SetColor(c.GlobalBool("color"))
 	}
 
-	if err := cmd.SetDelimiter(c.GlobalString("delimiter")); err != nil {
-		return err
+	if c.IsSet("repository") {
+		if err := flags.SetRepository(c.GlobalString("repository")); err != nil {
+			return err
+		}
 	}
-	cmd.SetJsonQuery(c.GlobalString("json-query"))
-	if err := cmd.SetEncoding(c.GlobalString("encoding")); err != nil {
-		return err
+	if c.IsSet("timezone") {
+		if err := flags.SetLocation(c.String("timezone")); err != nil {
+			return err
+		}
 	}
-	cmd.SetNoHeader(c.GlobalBool("no-header"))
-	cmd.SetWithoutNull(c.GlobalBool("without-null"))
+	if c.IsSet("datetime-format") {
+		flags.SetDatetimeFormat(c.GlobalString("datetime-format"))
+	}
+	if c.IsSet("wait-timeout") {
+		flags.SetWaitTimeout(c.GlobalFloat64("wait-timeout"))
+	}
 
-	if err := cmd.SetOut(c.GlobalString("out")); err != nil {
-		return err
+	if c.IsSet("delimiter") {
+		if err := flags.SetDelimiter(c.GlobalString("delimiter")); err != nil {
+			return err
+		}
 	}
-	if err := cmd.SetFormat(c.GlobalString("format")); err != nil {
-		return err
+	if c.IsSet("json-query") {
+		flags.SetJsonQuery(c.GlobalString("json-query"))
 	}
-	if err := cmd.SetWriteEncoding(c.GlobalString("write-encoding")); err != nil {
-		return err
+	if c.IsSet("encoding") {
+		if err := flags.SetEncoding(c.GlobalString("encoding")); err != nil {
+			return err
+		}
 	}
-	if err := cmd.SetWriteDelimiter(c.GlobalString("write-delimiter")); err != nil {
-		return err
+	if c.IsSet("no-header") {
+		flags.SetNoHeader(c.GlobalBool("no-header"))
 	}
-	cmd.SetWithoutHeader(c.GlobalBool("without-header"))
-	if err := cmd.SetLineBreak(c.String("line-break")); err != nil {
-		return err
+	if c.IsSet("without-null") {
+		flags.SetWithoutNull(c.GlobalBool("without-null"))
 	}
-	cmd.SetEncloseAll(c.GlobalBool("enclose-all"))
-	cmd.SetPrettyPrint(c.GlobalBool("pretty-print"))
 
-	cmd.SetEastAsianEncoding(c.GlobalBool("east-asian-encoding"))
-	cmd.SetCountDiacriticalSign(c.GlobalBool("count-diacritical-sign"))
-	cmd.SetCountFormatCode(c.GlobalBool("count-format-code"))
+	if c.IsSet("format") {
+		if err := flags.SetFormat(c.GlobalString("format"), c.GlobalString("out")); err != nil {
+			return err
+		}
+	}
+	if c.IsSet("write-encoding") {
+		if err := flags.SetWriteEncoding(c.GlobalString("write-encoding")); err != nil {
+			return err
+		}
+	}
+	if c.IsSet("write-delimiter") {
+		if err := flags.SetWriteDelimiter(c.GlobalString("write-delimiter")); err != nil {
+			return err
+		}
+	}
+	if c.IsSet("without-header") {
+		flags.SetWithoutHeader(c.GlobalBool("without-header"))
+	}
+	if c.IsSet("line-break") {
+		if err := flags.SetLineBreak(c.String("line-break")); err != nil {
+			return err
+		}
+	}
+	if c.IsSet("enclose-all") {
+		flags.SetEncloseAll(c.GlobalBool("enclose-all"))
+	}
+	if c.IsSet("pretty-print") {
+		flags.SetPrettyPrint(c.GlobalBool("pretty-print"))
+	}
 
-	cmd.SetQuiet(c.GlobalBool("quiet"))
-	cmd.SetCPU(c.GlobalInt("cpu"))
-	cmd.SetStats(c.GlobalBool("stats"))
+	if c.IsSet("east-asian-encoding") {
+		flags.SetEastAsianEncoding(c.GlobalBool("east-asian-encoding"))
+	}
+	if c.IsSet("count-diacritical-sign") {
+		flags.SetCountDiacriticalSign(c.GlobalBool("count-diacritical-sign"))
+	}
+	if c.IsSet("count-format-code") {
+		flags.SetCountFormatCode(c.GlobalBool("count-format-code"))
+	}
+
+	if c.IsSet("quiet") {
+		flags.SetQuiet(c.GlobalBool("quiet"))
+	}
+	if c.IsSet("cpu") {
+		flags.SetCPU(c.GlobalInt("cpu"))
+	}
+	if c.IsSet("stats") {
+		flags.SetStats(c.GlobalBool("stats"))
+	}
 
 	return nil
 }

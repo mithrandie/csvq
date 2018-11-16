@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -18,31 +17,32 @@ import (
 )
 
 const FlagSign = "@@"
+const DelimiteAutomatically = "SPACES"
 
 const (
-	RepositoryFlag       = "REPOSITORY"
-	TimezoneFlag         = "TIMEZONE"
-	DatetimeFormatFlag   = "DATETIME_FORMAT"
-	WaitTimeoutFlag      = "WAIT_TIMEOUT"
-	DelimiterFlag        = "DELIMITER"
-	JsonQuery            = "JSON_QUERY"
-	EncodingFlag         = "ENCODING"
-	NoHeaderFlag         = "NO_HEADER"
-	WithoutNullFlag      = "WITHOUT_NULL"
-	FormatFlag           = "FORMAT"
-	WriteEncodingFlag    = "WRITE_ENCODING"
-	WriteDelimiterFlag   = "WRITE_DELIMITER"
-	WithoutHeaderFlag    = "WITHOUT_HEADER"
-	LineBreakFlag        = "LINE_BREAK"
-	EncloseAll           = "ENCLOSE_ALL"
-	PrettyPrintFlag      = "PRETTY_PRINT"
-	EastAsianEncoding    = "EAST_ASIAN_ENCODING"
-	CountDiacriticalSign = "COUNT_DIACRITICAL_SIGN"
-	CountFormatCode      = "COUNT_FORMAT_CODE"
-	ColorFlag            = "COLOR"
-	QuietFlag            = "QUIET"
-	CPUFlag              = "CPU"
-	StatsFlag            = "STATS"
+	RepositoryFlag           = "REPOSITORY"
+	TimezoneFlag             = "TIMEZONE"
+	DatetimeFormatFlag       = "DATETIME_FORMAT"
+	WaitTimeoutFlag          = "WAIT_TIMEOUT"
+	DelimiterFlag            = "DELIMITER"
+	JsonQueryFlag            = "JSON_QUERY"
+	EncodingFlag             = "ENCODING"
+	NoHeaderFlag             = "NO_HEADER"
+	WithoutNullFlag          = "WITHOUT_NULL"
+	FormatFlag               = "FORMAT"
+	WriteEncodingFlag        = "WRITE_ENCODING"
+	WriteDelimiterFlag       = "WRITE_DELIMITER"
+	WithoutHeaderFlag        = "WITHOUT_HEADER"
+	LineBreakFlag            = "LINE_BREAK"
+	EncloseAll               = "ENCLOSE_ALL"
+	PrettyPrintFlag          = "PRETTY_PRINT"
+	EastAsianEncodingFlag    = "EAST_ASIAN_ENCODING"
+	CountDiacriticalSignFlag = "COUNT_DIACRITICAL_SIGN"
+	CountFormatCodeFlag      = "COUNT_FORMAT_CODE"
+	ColorFlag                = "COLOR"
+	QuietFlag                = "QUIET"
+	CPUFlag                  = "CPU"
+	StatsFlag                = "STATS"
 )
 
 var FlagList = []string{
@@ -51,7 +51,7 @@ var FlagList = []string{
 	DatetimeFormatFlag,
 	WaitTimeoutFlag,
 	DelimiterFlag,
-	JsonQuery,
+	JsonQueryFlag,
 	EncodingFlag,
 	NoHeaderFlag,
 	WithoutNullFlag,
@@ -62,9 +62,9 @@ var FlagList = []string{
 	LineBreakFlag,
 	EncloseAll,
 	PrettyPrintFlag,
-	EastAsianEncoding,
-	CountDiacriticalSign,
-	CountFormatCode,
+	EastAsianEncodingFlag,
+	CountDiacriticalSignFlag,
+	CountFormatCodeFlag,
 	ColorFlag,
 	QuietFlag,
 	CPUFlag,
@@ -122,9 +122,6 @@ type Flags struct {
 	DatetimeFormat string
 	WaitTimeout    float64
 
-	// For Procedure
-	Source string
-
 	// For Import
 	Delimiter   rune
 	JsonQuery   string
@@ -133,7 +130,6 @@ type Flags struct {
 	WithoutNull bool
 
 	// For Export
-	OutFile        string
 	Format         Format
 	WriteEncoding  text.Encoding
 	WriteDelimiter rune
@@ -155,13 +151,14 @@ type Flags struct {
 	CPU   int
 	Stats bool
 
-	// Fixed Value
-	RetryInterval time.Duration
-
+	// For CSV
 	// For Fixed-Length Format
 	DelimitAutomatically    bool
 	DelimiterPositions      []int
 	WriteDelimiterPositions []int
+
+	// Fixed Value
+	RetryInterval time.Duration
 
 	// Use in tests
 	Now string
@@ -189,13 +186,11 @@ func GetFlags() *Flags {
 			Location:                "Local",
 			DatetimeFormat:          "",
 			WaitTimeout:             10,
-			Source:                  "",
 			Delimiter:               ',',
 			JsonQuery:               "",
 			Encoding:                text.UTF8,
 			NoHeader:                false,
 			WithoutNull:             false,
-			OutFile:                 "",
 			Format:                  TEXT,
 			WriteEncoding:           text.UTF8,
 			WriteDelimiter:          ',',
@@ -210,17 +205,17 @@ func GetFlags() *Flags {
 			Quiet:                   false,
 			CPU:                     cpu,
 			Stats:                   false,
-			RetryInterval:           10 * time.Millisecond,
 			DelimitAutomatically:    false,
 			DelimiterPositions:      nil,
 			WriteDelimiterPositions: nil,
+			RetryInterval:           10 * time.Millisecond,
 			Now:                     "",
 		}
 	})
 	return flags
 }
 
-func (f *Flags) ImportFormat() Format {
+func (f *Flags) SelectImportFormat() Format {
 	if 0 < len(f.JsonQuery) {
 		return JSON
 	}
@@ -233,7 +228,7 @@ func (f *Flags) ImportFormat() Format {
 	return CSV
 }
 
-func SetRepository(s string) error {
+func (f *Flags) SetRepository(s string) error {
 	if len(s) < 1 {
 		return nil
 	}
@@ -251,12 +246,11 @@ func SetRepository(s string) error {
 		return errors.New("repository must be a directory path")
 	}
 
-	f := GetFlags()
 	f.Repository = path
 	return nil
 }
 
-func SetLocation(s string) error {
+func (f *Flags) SetLocation(s string) error {
 	if len(s) < 1 || strings.EqualFold(s, "Local") {
 		s = "Local"
 	} else if strings.EqualFold(s, "UTC") {
@@ -268,56 +262,29 @@ func SetLocation(s string) error {
 		return errors.New("timezone does not exist")
 	}
 
-	f := GetFlags()
-	f.Location = s
+	f.Location = location.String()
 	time.Local = location
 	return nil
 }
 
-func SetDatetimeFormat(s string) {
-	f := GetFlags()
+func (f *Flags) SetDatetimeFormat(s string) {
 	f.DatetimeFormat = s
-	return
 }
 
-func SetWaitTimeout(f float64) {
-	if f < 0 {
-		f = 0
+func (f *Flags) SetWaitTimeout(t float64) {
+	if t < 0 {
+		t = 0
 	}
 
-	flags := GetFlags()
-	flags.WaitTimeout = f
+	flags.WaitTimeout = t
 	file.UpdateWaitTimeout(flags.WaitTimeout, flags.RetryInterval)
 	return
 }
 
-func SetSource(s string) error {
+func (f *Flags) SetDelimiter(s string) error {
 	if len(s) < 1 {
 		return nil
 	}
-
-	stat, err := os.Stat(s)
-	if err != nil {
-		return errors.New("source file does not exist")
-	}
-	if stat.IsDir() {
-		return errors.New("source file must be a readable file")
-	}
-	if abs, err := filepath.Abs(s); err == nil {
-		s = abs
-	}
-
-	f := GetFlags()
-	f.Source = s
-	return nil
-}
-
-func SetDelimiter(s string) error {
-	if len(s) < 1 {
-		return nil
-	}
-
-	f := GetFlags()
 
 	delimiter, delimiterPositions, delimitAutomatically, err := ParseDelimiter(s, f.Delimiter, f.DelimiterPositions, f.DelimitAutomatically)
 	if err != nil {
@@ -330,13 +297,11 @@ func SetDelimiter(s string) error {
 	return nil
 }
 
-func SetJsonQuery(s string) {
-	f := GetFlags()
+func (f *Flags) SetJsonQuery(s string) {
 	f.JsonQuery = strings.TrimSpace(s)
-	return
 }
 
-func SetEncoding(s string) error {
+func (f *Flags) SetEncoding(s string) error {
 	if len(s) < 1 {
 		return nil
 	}
@@ -346,43 +311,24 @@ func SetEncoding(s string) error {
 		return err
 	}
 
-	f := GetFlags()
 	f.Encoding = encoding
 	return nil
 }
 
-func SetNoHeader(b bool) {
-	f := GetFlags()
+func (f *Flags) SetNoHeader(b bool) {
 	f.NoHeader = b
-	return
 }
 
-func SetWithoutNull(b bool) {
-	f := GetFlags()
+func (f *Flags) SetWithoutNull(b bool) {
 	f.WithoutNull = b
-	return
 }
 
-func SetOut(s string) error {
-	if 0 < len(s) {
-		_, err := os.Stat(s)
-		if err == nil {
-			return errors.New(fmt.Sprintf("file %q already exists", s))
-		}
-	}
-
-	f := GetFlags()
-	f.OutFile = s
-	return nil
-}
-
-func SetFormat(s string) error {
+func (f *Flags) SetFormat(s string, outfile string) error {
 	var fm Format
-	f := GetFlags()
 
 	switch s {
 	case "":
-		switch strings.ToLower(filepath.Ext(f.OutFile)) {
+		switch strings.ToLower(filepath.Ext(outfile)) {
 		case CsvExt:
 			fm = CSV
 		case TsvExt:
@@ -409,7 +355,7 @@ func SetFormat(s string) error {
 	return nil
 }
 
-func SetWriteEncoding(s string) error {
+func (f *Flags) SetWriteEncoding(s string) error {
 	if len(s) < 1 {
 		return nil
 	}
@@ -419,17 +365,14 @@ func SetWriteEncoding(s string) error {
 		return err
 	}
 
-	f := GetFlags()
 	f.WriteEncoding = encoding
 	return nil
 }
 
-func SetWriteDelimiter(s string) error {
+func (f *Flags) SetWriteDelimiter(s string) error {
 	if len(s) < 1 {
 		return nil
 	}
-
-	f := GetFlags()
 
 	delimiter, delimiterPositions, _, err := ParseDelimiter(s, f.WriteDelimiter, f.WriteDelimiterPositions, false)
 	if err != nil {
@@ -441,13 +384,11 @@ func SetWriteDelimiter(s string) error {
 	return nil
 }
 
-func SetWithoutHeader(b bool) {
-	f := GetFlags()
+func (f *Flags) SetWithoutHeader(b bool) {
 	f.WithoutHeader = b
-	return
 }
 
-func SetLineBreak(s string) error {
+func (f *Flags) SetLineBreak(s string) error {
 	if len(s) < 1 {
 		return nil
 	}
@@ -457,55 +398,40 @@ func SetLineBreak(s string) error {
 		return err
 	}
 
-	f := GetFlags()
 	f.LineBreak = lb
 	return nil
 }
 
-func SetPrettyPrint(b bool) {
-	f := GetFlags()
+func (f *Flags) SetPrettyPrint(b bool) {
 	f.PrettyPrint = b
-	return
 }
 
-func SetEncloseAll(b bool) {
-	f := GetFlags()
+func (f *Flags) SetEncloseAll(b bool) {
 	f.EncloseAll = b
-	return
 }
 
-func SetColor(b bool) {
-	f := GetFlags()
+func (f *Flags) SetColor(b bool) {
 	f.Color = b
 	color.UseEffect = b
-	return
 }
 
-func SetEastAsianEncoding(b bool) {
-	f := GetFlags()
+func (f *Flags) SetEastAsianEncoding(b bool) {
 	f.EastAsianEncoding = b
-	return
 }
 
-func SetCountDiacriticalSign(b bool) {
-	f := GetFlags()
+func (f *Flags) SetCountDiacriticalSign(b bool) {
 	f.CountDiacriticalSign = b
-	return
 }
 
-func SetCountFormatCode(b bool) {
-	f := GetFlags()
+func (f *Flags) SetCountFormatCode(b bool) {
 	f.CountFormatCode = b
-	return
 }
 
-func SetQuiet(b bool) {
-	f := GetFlags()
+func (f *Flags) SetQuiet(b bool) {
 	f.Quiet = b
-	return
 }
 
-func SetCPU(i int) {
+func (f *Flags) SetCPU(i int) {
 	if i < 1 {
 		i = 1
 	}
@@ -514,13 +440,9 @@ func SetCPU(i int) {
 		i = runtime.NumCPU()
 	}
 
-	f := GetFlags()
 	f.CPU = i
-	return
 }
 
-func SetStats(b bool) {
-	f := GetFlags()
+func (f *Flags) SetStats(b bool) {
 	f.Stats = b
-	return
 }

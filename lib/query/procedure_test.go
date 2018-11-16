@@ -881,7 +881,7 @@ var procedureIfStmtTests = []struct {
 }
 
 func TestProcedure_IfStmt(t *testing.T) {
-	cmd.SetQuiet(true)
+	cmd.GetFlags().SetQuiet(true)
 	proc := NewProcedure()
 
 	for _, v := range procedureIfStmtTests {
@@ -1055,7 +1055,7 @@ var procedureCaseStmtTests = []struct {
 }
 
 func TestProcedure_Case(t *testing.T) {
-	cmd.SetQuiet(true)
+	cmd.GetFlags().SetQuiet(true)
 	proc := NewProcedure()
 
 	for _, v := range procedureCaseStmtTests {
@@ -1298,7 +1298,7 @@ var procedureWhileTests = []struct {
 }
 
 func TestProcedure_While(t *testing.T) {
-	cmd.SetQuiet(true)
+	cmd.GetFlags().SetQuiet(true)
 	proc := NewProcedure()
 
 	for _, v := range procedureWhileTests {

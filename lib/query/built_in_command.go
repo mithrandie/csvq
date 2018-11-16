@@ -164,11 +164,11 @@ func SetFlag(expr parser.SetFlag, filter *Filter) (string, error) {
 	}
 
 	switch strings.ToUpper(expr.Name) {
-	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.DatetimeFormatFlag, cmd.DelimiterFlag, cmd.JsonQuery, cmd.EncodingFlag,
+	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.DatetimeFormatFlag, cmd.DelimiterFlag, cmd.JsonQueryFlag, cmd.EncodingFlag,
 		cmd.WriteEncodingFlag, cmd.FormatFlag, cmd.WriteDelimiterFlag, cmd.LineBreakFlag:
 		p = value.ToString(p)
 	case cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAll, cmd.PrettyPrintFlag,
-		cmd.EastAsianEncoding, cmd.CountDiacriticalSign, cmd.CountFormatCode, cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag:
+		cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag, cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag:
 		p = value.ToBoolean(p)
 	case cmd.WaitTimeoutFlag:
 		p = value.ToFloat(p)
@@ -181,53 +181,55 @@ func SetFlag(expr parser.SetFlag, filter *Filter) (string, error) {
 		return "", NewFlagValueNotAllowedFormatError(expr)
 	}
 
+	flags := cmd.GetFlags()
+
 	switch strings.ToUpper(expr.Name) {
 	case cmd.RepositoryFlag:
-		err = cmd.SetRepository(p.(value.String).Raw())
+		err = flags.SetRepository(p.(value.String).Raw())
 	case cmd.TimezoneFlag:
-		err = cmd.SetLocation(p.(value.String).Raw())
+		err = flags.SetLocation(p.(value.String).Raw())
 	case cmd.DatetimeFormatFlag:
-		cmd.SetDatetimeFormat(p.(value.String).Raw())
+		flags.SetDatetimeFormat(p.(value.String).Raw())
 	case cmd.WaitTimeoutFlag:
-		cmd.SetWaitTimeout(p.(value.Float).Raw())
+		flags.SetWaitTimeout(p.(value.Float).Raw())
 	case cmd.DelimiterFlag:
-		err = cmd.SetDelimiter(p.(value.String).Raw())
-	case cmd.JsonQuery:
-		cmd.SetJsonQuery(p.(value.String).Raw())
+		err = flags.SetDelimiter(p.(value.String).Raw())
+	case cmd.JsonQueryFlag:
+		flags.SetJsonQuery(p.(value.String).Raw())
 	case cmd.EncodingFlag:
-		err = cmd.SetEncoding(p.(value.String).Raw())
+		err = flags.SetEncoding(p.(value.String).Raw())
 	case cmd.NoHeaderFlag:
-		cmd.SetNoHeader(p.(value.Boolean).Raw())
+		flags.SetNoHeader(p.(value.Boolean).Raw())
 	case cmd.WithoutNullFlag:
-		cmd.SetWithoutNull(p.(value.Boolean).Raw())
+		flags.SetWithoutNull(p.(value.Boolean).Raw())
 	case cmd.FormatFlag:
-		err = cmd.SetFormat(p.(value.String).Raw())
+		err = flags.SetFormat(p.(value.String).Raw(), "")
 	case cmd.WriteEncodingFlag:
-		err = cmd.SetWriteEncoding(p.(value.String).Raw())
+		err = flags.SetWriteEncoding(p.(value.String).Raw())
 	case cmd.WriteDelimiterFlag:
-		err = cmd.SetWriteDelimiter(p.(value.String).Raw())
+		err = flags.SetWriteDelimiter(p.(value.String).Raw())
 	case cmd.WithoutHeaderFlag:
-		cmd.SetWithoutHeader(p.(value.Boolean).Raw())
+		flags.SetWithoutHeader(p.(value.Boolean).Raw())
 	case cmd.LineBreakFlag:
-		err = cmd.SetLineBreak(p.(value.String).Raw())
+		err = flags.SetLineBreak(p.(value.String).Raw())
 	case cmd.EncloseAll:
-		cmd.SetEncloseAll(p.(value.Boolean).Raw())
+		flags.SetEncloseAll(p.(value.Boolean).Raw())
 	case cmd.PrettyPrintFlag:
-		cmd.SetPrettyPrint(p.(value.Boolean).Raw())
-	case cmd.EastAsianEncoding:
-		cmd.SetEastAsianEncoding(p.(value.Boolean).Raw())
-	case cmd.CountDiacriticalSign:
-		cmd.SetCountDiacriticalSign(p.(value.Boolean).Raw())
-	case cmd.CountFormatCode:
-		cmd.SetCountFormatCode(p.(value.Boolean).Raw())
+		flags.SetPrettyPrint(p.(value.Boolean).Raw())
+	case cmd.EastAsianEncodingFlag:
+		flags.SetEastAsianEncoding(p.(value.Boolean).Raw())
+	case cmd.CountDiacriticalSignFlag:
+		flags.SetCountDiacriticalSign(p.(value.Boolean).Raw())
+	case cmd.CountFormatCodeFlag:
+		flags.SetCountFormatCode(p.(value.Boolean).Raw())
 	case cmd.ColorFlag:
-		cmd.SetColor(p.(value.Boolean).Raw())
+		flags.SetColor(p.(value.Boolean).Raw())
 	case cmd.QuietFlag:
-		cmd.SetQuiet(p.(value.Boolean).Raw())
+		flags.SetQuiet(p.(value.Boolean).Raw())
 	case cmd.CPUFlag:
-		cmd.SetCPU(int(p.(value.Integer).Raw()))
+		flags.SetCPU(int(p.(value.Integer).Raw()))
 	case cmd.StatsFlag:
-		cmd.SetStats(p.(value.Boolean).Raw())
+		flags.SetStats(p.(value.Boolean).Raw())
 	}
 
 	if err != nil {
@@ -269,7 +271,7 @@ func showFlag(flag string) (string, error) {
 		d := "'" + cmd.EscapeString(string(flags.Delimiter)) + "'"
 		p := fixedlen.DelimiterPositions(flags.DelimiterPositions).String()
 
-		switch flags.ImportFormat() {
+		switch flags.SelectImportFormat() {
 		case cmd.CSV, cmd.TSV:
 			s = cmd.GetPalette().Render(cmd.StringEffect, d) + cmd.GetPalette().Render(cmd.LableEffect, " | ") + cmd.GetPalette().Render(cmd.NullEffect, p)
 		case cmd.FIXED:
@@ -277,13 +279,13 @@ func showFlag(flag string) (string, error) {
 		default:
 			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+d+" | "+p)
 		}
-	case cmd.JsonQuery:
+	case cmd.JsonQueryFlag:
 		q := flags.JsonQuery
 		if len(q) < 1 {
 			q = "(empty)"
 		}
 
-		switch flags.ImportFormat() {
+		switch flags.SelectImportFormat() {
 		case cmd.JSON:
 			s = cmd.GetPalette().Render(cmd.StringEffect, q)
 		default:
@@ -341,7 +343,7 @@ func showFlag(flag string) (string, error) {
 		default:
 			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+s)
 		}
-	case cmd.EastAsianEncoding:
+	case cmd.EastAsianEncodingFlag:
 		s = strconv.FormatBool(flags.EastAsianEncoding)
 		switch flags.Format {
 		case cmd.GFM, cmd.ORG, cmd.TEXT:
@@ -349,7 +351,7 @@ func showFlag(flag string) (string, error) {
 		default:
 			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+s)
 		}
-	case cmd.CountDiacriticalSign:
+	case cmd.CountDiacriticalSignFlag:
 		s = strconv.FormatBool(flags.CountDiacriticalSign)
 		switch flags.Format {
 		case cmd.GFM, cmd.ORG, cmd.TEXT:
@@ -357,7 +359,7 @@ func showFlag(flag string) (string, error) {
 		default:
 			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+s)
 		}
-	case cmd.CountFormatCode:
+	case cmd.CountFormatCodeFlag:
 		s = strconv.FormatBool(flags.CountFormatCode)
 		switch flags.Format {
 		case cmd.GFM, cmd.ORG, cmd.TEXT:

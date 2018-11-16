@@ -120,7 +120,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 		flags := cmd.GetFlags()
 		fileInfo := &FileInfo{
 			Path:               table.Object.String(),
-			Format:             flags.ImportFormat(),
+			Format:             flags.SelectImportFormat(),
 			Delimiter:          flags.Delimiter,
 			DelimiterPositions: flags.DelimiterPositions,
 			JsonQuery:          flags.JsonQuery,
@@ -198,7 +198,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 		tableObject := table.Object.(parser.TableObject)
 
 		flags := cmd.GetFlags()
-		importFormat := flags.ImportFormat()
+		importFormat := flags.SelectImportFormat()
 		delimiter := flags.Delimiter
 		delimiterPositions := flags.DelimiterPositions
 		jsonQuery := flags.JsonQuery

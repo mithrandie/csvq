@@ -10,7 +10,7 @@ import (
 )
 
 func Calc(expr string) error {
-	cmd.SetNoHeader(true)
+	cmd.GetFlags().SetNoHeader(true)
 
 	SetSignalHandler()
 
@@ -52,6 +52,6 @@ func Calc(expr string) error {
 		values[i], _, _ = query.ConvertFieldContents(p, true)
 	}
 
-	cmd.WriteToStdout(strings.Join(values, string(cmd.GetFlags().Delimiter)))
+	cmd.WriteToStdout(strings.Join(values, string(cmd.GetFlags().WriteDelimiter)))
 	return nil
 }

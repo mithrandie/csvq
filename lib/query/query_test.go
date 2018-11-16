@@ -3998,7 +3998,7 @@ func TestSetTableAttribute(t *testing.T) {
 }
 
 func TestCommit(t *testing.T) {
-	cmd.SetQuiet(false)
+	cmd.GetFlags().SetQuiet(false)
 
 	ch, _ := file.NewHandlerForCreate(GetTestFilePath("create_file.csv"))
 	uh, _ := file.NewHandlerForUpdate(GetTestFilePath("updated_file_1.csv"))
@@ -4076,7 +4076,7 @@ func TestCommit(t *testing.T) {
 }
 
 func TestRollback(t *testing.T) {
-	cmd.SetQuiet(false)
+	cmd.GetFlags().SetQuiet(false)
 
 	ExecResults = []ExecResult{
 		{

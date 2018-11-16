@@ -5,21 +5,22 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
 	"unicode"
 
-	"github.com/mithrandie/go-file"
-
 	"github.com/mithrandie/csvq/lib/cmd"
+	csvqfile "github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
 
+	"github.com/mithrandie/go-file"
 	"github.com/mithrandie/go-text/color"
 )
 
-func Run(input string, sourceFile string) error {
+func Run(input string, sourceFile string, outfile string) error {
 	SetSignalHandler()
 	start := time.Now()
 
@@ -38,15 +39,17 @@ func Run(input string, sourceFile string) error {
 		return query.NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)
 	}
 
-	outfile := cmd.GetFlags().OutFile
 	if 0 < len(outfile) {
-		if _, err := os.Stat(outfile); err == nil {
+		if abs, err := filepath.Abs(outfile); err == nil {
+			outfile = abs
+		}
+		if csvqfile.Exists(outfile) {
 			return errors.New(fmt.Sprintf("file %s already exists", outfile))
 		}
 
-		fp, err := file.Create(cmd.GetFlags().OutFile)
+		fp, err := file.Create(outfile)
 		if err != nil {
-			return err
+			return errors.New(fmt.Sprintf("failed to create file: %s", err.Error()))
 		}
 		defer func() {
 			if info, err := fp.Stat(); err == nil && info.Size() < 1 {
@@ -77,8 +80,6 @@ func LaunchInteractiveShell() error {
 	if cmd.IsReadableFromPipeOrRedirection() {
 		return errors.New("input from pipe or redirection cannot be used in interactive shell")
 	}
-
-	cmd.SetOut("") // Ignore --out option
 
 	SetSignalHandler()
 

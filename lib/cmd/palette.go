@@ -24,6 +24,22 @@ const (
 	PromptEffect     = "prompt"
 )
 
+var PaletteEffectList = []string{
+	LableEffect,
+	NumberEffect,
+	StringEffect,
+	BooleanEffect,
+	TernaryEffect,
+	DatetimeEffect,
+	NullEffect,
+	ObjectEffect,
+	AttributeEffect,
+	IdentifierEffect,
+	ValueEffect,
+	EmphasisEffect,
+	PromptEffect,
+}
+
 var (
 	palette    *color.Palette
 	getPalette sync.Once

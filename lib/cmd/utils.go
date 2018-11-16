@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -263,7 +264,7 @@ func ParseDelimiter(s string, delimiter rune, delimiterPositions []int, delimitA
 	strLen := utf8.RuneCountInString(s)
 
 	if strLen < 1 {
-		return delimiter, delimiterPositions, delimitAutomatically, errors.New("delimiter must be one character, \"SPACES\" or JSON array of integers")
+		return delimiter, delimiterPositions, delimitAutomatically, errors.New(fmt.Sprintf("delimiter must be one character, %q or JSON array of integers", DelimiteAutomatically))
 	}
 
 	if strLen == 1 {
@@ -271,14 +272,14 @@ func ParseDelimiter(s string, delimiter rune, delimiterPositions []int, delimitA
 		delimitAutomatically = false
 		delimiterPositions = nil
 	} else {
-		if strings.EqualFold("SPACES", s) {
+		if strings.EqualFold(DelimiteAutomatically, s) {
 			delimiterPositions = nil
 			delimitAutomatically = true
 		} else {
 			var positions []int
 			err := json.Unmarshal([]byte(s), &positions)
 			if err != nil {
-				return delimiter, delimiterPositions, delimitAutomatically, errors.New("delimiter must be one character, \"SPACES\" or JSON array of integers")
+				return delimiter, delimiterPositions, delimitAutomatically, errors.New(fmt.Sprintf("delimiter must be one character, %q or JSON array of integers", DelimiteAutomatically))
 			}
 			delimiterPositions = positions
 			delimitAutomatically = false

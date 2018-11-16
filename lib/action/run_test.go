@@ -51,7 +51,6 @@ var executeTests = []struct {
 func initFlags() {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
-	tf.OutFile = ""
 	tf.Format = cmd.TEXT
 	tf.Stats = false
 }
@@ -61,9 +60,6 @@ func TestRun(t *testing.T) {
 	for _, v := range executeTests {
 		initFlags()
 		tf := cmd.GetFlags()
-		if v.OutFile != tf.OutFile {
-			tf.OutFile = v.OutFile
-		}
 		if v.Stats {
 			tf.Stats = v.Stats
 		}
@@ -74,7 +70,7 @@ func TestRun(t *testing.T) {
 		r, w, _ := os.Pipe()
 		os.Stdout = w
 
-		err := Run(v.Input, "")
+		err := Run(v.Input, "", v.OutFile)
 
 		w.Close()
 		os.Stdout = oldStdout

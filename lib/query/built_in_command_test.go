@@ -1150,7 +1150,7 @@ func TestShowFlag(t *testing.T) {
 
 	for _, v := range showFlagTests {
 		initFlag()
-		cmd.SetColor(true)
+		cmd.GetFlags().SetColor(true)
 		for _, expr := range v.SetExprs {
 			SetFlag(expr, filter)
 		}

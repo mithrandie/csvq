@@ -41,7 +41,7 @@ func setup() {
 	r, _ := os.Open(filepath.Join(TestDataDir, "empty.txt"))
 	os.Stdin = r
 
-	cmd.SetColor(false)
+	cmd.GetFlags().SetColor(false)
 }
 
 func teardown() {
@@ -49,5 +49,5 @@ func teardown() {
 		os.RemoveAll(TestDir)
 	}
 
-	cmd.SetColor(true)
+	cmd.GetFlags().SetColor(true)
 }
