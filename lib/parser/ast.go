@@ -1,9 +1,10 @@
 package parser
 
 import (
-	"github.com/mithrandie/csvq/lib/cmd"
 	"strings"
 	"time"
+
+	"github.com/mithrandie/csvq/lib/cmd"
 
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -1086,7 +1087,7 @@ type Variable struct {
 }
 
 func (v Variable) String() string {
-	return v.Name
+	return string(VariableSign) + v.Name
 }
 
 type VariableSubstitution struct {

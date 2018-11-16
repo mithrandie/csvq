@@ -224,9 +224,15 @@ func (s *Scanner) Scan() (Token, error) {
 			token = FLAG
 		} else {
 			token = VARIABLE
+			s.offset = 0
 		}
+		s.offset = 0
 		s.scanIdentifier()
 		literal = s.literal()
+
+		if len(literal) < 1 {
+			s.err = errors.New("invalid variable symbol")
+		}
 	case s.isCommentRune(ch):
 		s.scanComment()
 		return s.Scan()

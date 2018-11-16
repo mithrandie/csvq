@@ -2536,11 +2536,11 @@ var filterEvaluateTests = []struct {
 					"USERFUNC": &UserDefinedFunction{
 						Name: parser.Identifier{Literal: "userfunc"},
 						Parameters: []parser.Variable{
-							{Name: "@arg1"},
+							{Name: "arg1"},
 						},
 						RequiredArgs: 1,
 						Statements: []parser.Statement{
-							parser.Return{Value: parser.Variable{Name: "@arg1"}},
+							parser.Return{Value: parser.Variable{Name: "arg1"}},
 						},
 					},
 				},
@@ -2562,11 +2562,11 @@ var filterEvaluateTests = []struct {
 					"USERFUNC": &UserDefinedFunction{
 						Name: parser.Identifier{Literal: "userfunc"},
 						Parameters: []parser.Variable{
-							{Name: "@arg1"},
+							{Name: "arg1"},
 						},
 						RequiredArgs: 1,
 						Statements: []parser.Statement{
-							parser.Return{Value: parser.Variable{Name: "@arg1"}},
+							parser.Return{Value: parser.Variable{Name: "arg1"}},
 						},
 					},
 				},
@@ -2825,29 +2825,29 @@ var filterEvaluateTests = []struct {
 						IsAggregate: true,
 						Cursor:      parser.Identifier{Literal: "column1"},
 						Parameters: []parser.Variable{
-							{Name: "@default"},
+							{Name: "default"},
 						},
 						RequiredArgs: 1,
 						Statements: []parser.Statement{
 							parser.VariableDeclaration{
 								Assignments: []parser.VariableAssignment{
 									{
-										Variable: parser.Variable{Name: "@value"},
+										Variable: parser.Variable{Name: "value"},
 									},
 									{
-										Variable: parser.Variable{Name: "@fetch"},
+										Variable: parser.Variable{Name: "fetch"},
 									},
 								},
 							},
 							parser.WhileInCursor{
 								Variables: []parser.Variable{
-									{Name: "@fetch"},
+									{Name: "fetch"},
 								},
 								Cursor: parser.Identifier{Literal: "column1"},
 								Statements: []parser.Statement{
 									parser.If{
 										Condition: parser.Is{
-											LHS: parser.Variable{Name: "@fetch"},
+											LHS: parser.Variable{Name: "fetch"},
 											RHS: parser.NewNullValue(),
 										},
 										Statements: []parser.Statement{
@@ -2856,22 +2856,22 @@ var filterEvaluateTests = []struct {
 									},
 									parser.If{
 										Condition: parser.Is{
-											LHS: parser.Variable{Name: "@value"},
+											LHS: parser.Variable{Name: "value"},
 											RHS: parser.NewNullValue(),
 										},
 										Statements: []parser.Statement{
 											parser.VariableSubstitution{
-												Variable: parser.Variable{Name: "@value"},
-												Value:    parser.Variable{Name: "@fetch"},
+												Variable: parser.Variable{Name: "value"},
+												Value:    parser.Variable{Name: "fetch"},
 											},
 											parser.FlowControl{Token: parser.CONTINUE},
 										},
 									},
 									parser.VariableSubstitution{
-										Variable: parser.Variable{Name: "@value"},
+										Variable: parser.Variable{Name: "value"},
 										Value: parser.Arithmetic{
-											LHS:      parser.Variable{Name: "@value"},
-											RHS:      parser.Variable{Name: "@fetch"},
+											LHS:      parser.Variable{Name: "value"},
+											RHS:      parser.Variable{Name: "fetch"},
 											Operator: '*',
 										},
 									},
@@ -2880,19 +2880,19 @@ var filterEvaluateTests = []struct {
 
 							parser.If{
 								Condition: parser.Is{
-									LHS: parser.Variable{Name: "@value"},
+									LHS: parser.Variable{Name: "value"},
 									RHS: parser.NewNullValue(),
 								},
 								Statements: []parser.Statement{
 									parser.VariableSubstitution{
-										Variable: parser.Variable{Name: "@value"},
-										Value:    parser.Variable{Name: "@default"},
+										Variable: parser.Variable{Name: "value"},
+										Value:    parser.Variable{Name: "default"},
 									},
 								},
 							},
 
 							parser.Return{
-								Value: parser.Variable{Name: "@value"},
+								Value: parser.Variable{Name: "value"},
 							},
 						},
 					},
@@ -2944,11 +2944,11 @@ var filterEvaluateTests = []struct {
 						IsAggregate: true,
 						Cursor:      parser.Identifier{Literal: "column1"},
 						Parameters: []parser.Variable{
-							{Name: "@default"},
+							{Name: "default"},
 						},
 						Statements: []parser.Statement{
 							parser.Return{
-								Value: parser.Variable{Name: "@value"},
+								Value: parser.Variable{Name: "value"},
 							},
 						},
 					},
@@ -2999,11 +2999,11 @@ var filterEvaluateTests = []struct {
 						IsAggregate: true,
 						Cursor:      parser.Identifier{Literal: "column1"},
 						Parameters: []parser.Variable{
-							{Name: "@default"},
+							{Name: "default"},
 						},
 						Statements: []parser.Statement{
 							parser.Return{
-								Value: parser.Variable{Name: "@value"},
+								Value: parser.Variable{Name: "value"},
 							},
 						},
 					},
@@ -3056,22 +3056,22 @@ var filterEvaluateTests = []struct {
 							parser.VariableDeclaration{
 								Assignments: []parser.VariableAssignment{
 									{
-										Variable: parser.Variable{Name: "@value"},
+										Variable: parser.Variable{Name: "value"},
 									},
 									{
-										Variable: parser.Variable{Name: "@fetch"},
+										Variable: parser.Variable{Name: "fetch"},
 									},
 								},
 							},
 							parser.WhileInCursor{
 								Variables: []parser.Variable{
-									{Name: "@fetch"},
+									{Name: "fetch"},
 								},
 								Cursor: parser.Identifier{Literal: "column1"},
 								Statements: []parser.Statement{
 									parser.If{
 										Condition: parser.Is{
-											LHS: parser.Variable{Name: "@fetch"},
+											LHS: parser.Variable{Name: "fetch"},
 											RHS: parser.NewNullValue(),
 										},
 										Statements: []parser.Statement{
@@ -3080,29 +3080,29 @@ var filterEvaluateTests = []struct {
 									},
 									parser.If{
 										Condition: parser.Is{
-											LHS: parser.Variable{Name: "@value"},
+											LHS: parser.Variable{Name: "value"},
 											RHS: parser.NewNullValue(),
 										},
 										Statements: []parser.Statement{
 											parser.VariableSubstitution{
-												Variable: parser.Variable{Name: "@value"},
-												Value:    parser.Variable{Name: "@fetch"},
+												Variable: parser.Variable{Name: "value"},
+												Value:    parser.Variable{Name: "fetch"},
 											},
 											parser.FlowControl{Token: parser.CONTINUE},
 										},
 									},
 									parser.VariableSubstitution{
-										Variable: parser.Variable{Name: "@value"},
+										Variable: parser.Variable{Name: "value"},
 										Value: parser.Arithmetic{
-											LHS:      parser.Variable{Name: "@value"},
-											RHS:      parser.Variable{Name: "@fetch"},
+											LHS:      parser.Variable{Name: "value"},
+											RHS:      parser.Variable{Name: "fetch"},
 											Operator: '*',
 										},
 									},
 								},
 							},
 							parser.Return{
-								Value: parser.Variable{Name: "@value"},
+								Value: parser.Variable{Name: "value"},
 							},
 						},
 					},
@@ -3153,22 +3153,22 @@ var filterEvaluateTests = []struct {
 							parser.VariableDeclaration{
 								Assignments: []parser.VariableAssignment{
 									{
-										Variable: parser.Variable{Name: "@value"},
+										Variable: parser.Variable{Name: "value"},
 									},
 									{
-										Variable: parser.Variable{Name: "@fetch"},
+										Variable: parser.Variable{Name: "fetch"},
 									},
 								},
 							},
 							parser.WhileInCursor{
 								Variables: []parser.Variable{
-									{Name: "@fetch"},
+									{Name: "fetch"},
 								},
 								Cursor: parser.Identifier{Literal: "column1"},
 								Statements: []parser.Statement{
 									parser.If{
 										Condition: parser.Is{
-											LHS: parser.Variable{Name: "@fetch"},
+											LHS: parser.Variable{Name: "fetch"},
 											RHS: parser.NewNullValue(),
 										},
 										Statements: []parser.Statement{
@@ -3177,29 +3177,29 @@ var filterEvaluateTests = []struct {
 									},
 									parser.If{
 										Condition: parser.Is{
-											LHS: parser.Variable{Name: "@value"},
+											LHS: parser.Variable{Name: "value"},
 											RHS: parser.NewNullValue(),
 										},
 										Statements: []parser.Statement{
 											parser.VariableSubstitution{
-												Variable: parser.Variable{Name: "@value"},
-												Value:    parser.Variable{Name: "@fetch"},
+												Variable: parser.Variable{Name: "value"},
+												Value:    parser.Variable{Name: "fetch"},
 											},
 											parser.FlowControl{Token: parser.CONTINUE},
 										},
 									},
 									parser.VariableSubstitution{
-										Variable: parser.Variable{Name: "@value"},
+										Variable: parser.Variable{Name: "value"},
 										Value: parser.Arithmetic{
-											LHS:      parser.Variable{Name: "@value"},
-											RHS:      parser.Variable{Name: "@fetch"},
+											LHS:      parser.Variable{Name: "value"},
+											RHS:      parser.Variable{Name: "fetch"},
 											Operator: '*',
 										},
 									},
 								},
 							},
 							parser.Return{
-								Value: parser.Variable{Name: "@value"},
+								Value: parser.Variable{Name: "value"},
 							},
 						},
 					},
@@ -3868,21 +3868,21 @@ var filterEvaluateTests = []struct {
 		Name: "Variable",
 		Filter: NewFilter(
 			[]VariableMap{{
-				"@var1": value.NewInteger(1),
+				"var1": value.NewInteger(1),
 			}},
 			[]ViewMap{{}},
 			[]CursorMap{{}},
 			[]UserDefinedFunctionMap{{}},
 		),
 		Expr: parser.Variable{
-			Name: "@var1",
+			Name: "var1",
 		},
 		Result: value.NewInteger(1),
 	},
 	{
 		Name: "Variable Undeclared Error",
 		Expr: parser.Variable{
-			Name: "@undefined",
+			Name: "undefined",
 		},
 		Error: "[L:- C:-] variable @undefined is undeclared",
 	},
@@ -3890,14 +3890,14 @@ var filterEvaluateTests = []struct {
 		Name: "Variable Substitution",
 		Filter: NewFilter(
 			[]VariableMap{{
-				"@var1": value.NewInteger(1),
+				"var1": value.NewInteger(1),
 			}},
 			[]ViewMap{{}},
 			[]CursorMap{{}},
 			[]UserDefinedFunctionMap{{}},
 		),
 		Expr: parser.VariableSubstitution{
-			Variable: parser.Variable{Name: "@var1"},
+			Variable: parser.Variable{Name: "var1"},
 			Value:    parser.NewIntegerValue(2),
 		},
 		Result: value.NewInteger(2),
@@ -3905,7 +3905,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Variable Substitution Undeclared Error",
 		Expr: parser.VariableSubstitution{
-			Variable: parser.Variable{Name: "@undefined"},
+			Variable: parser.Variable{Name: "undefined"},
 			Value:    parser.NewIntegerValue(2),
 		},
 		Error: "[L:- C:-] variable @undefined is undeclared",

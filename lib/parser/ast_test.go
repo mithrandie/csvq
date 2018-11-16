@@ -1496,7 +1496,7 @@ func TestWindowingClause_String(t *testing.T) {
 
 func TestVariable_String(t *testing.T) {
 	e := Variable{
-		Name: "@var",
+		Name: "var",
 	}
 	expect := "@var"
 	if e.String() != expect {
@@ -1507,7 +1507,7 @@ func TestVariable_String(t *testing.T) {
 func TestVariableSubstitution_String(t *testing.T) {
 	e := VariableSubstitution{
 		Variable: Variable{
-			Name: "@var",
+			Name: "var",
 		},
 		Value: NewIntegerValueFromString("1"),
 	}

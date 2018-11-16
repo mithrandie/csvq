@@ -235,7 +235,7 @@ func SetFlag(expr parser.SetFlag, filter *Filter) (string, error) {
 	}
 
 	s, _ := showFlag(expr.Name)
-	return " " + cmd.GetPalette().Render(cmd.LableEffect, strings.ToUpper(expr.Name)+":") + " " + s, nil
+	return " " + cmd.GetPalette().Render(cmd.LableEffect, cmd.FlagSymbol(strings.ToUpper(expr.Name)+":")) + " " + s, nil
 }
 
 func ShowFlag(expr parser.ShowFlag) (string, error) {
@@ -244,7 +244,7 @@ func ShowFlag(expr parser.ShowFlag) (string, error) {
 		return s, NewInvalidFlagNameError(expr, expr.Name)
 	}
 
-	return " " + cmd.GetPalette().Render(cmd.LableEffect, strings.ToUpper(expr.Name)+":") + " " + s, nil
+	return " " + cmd.GetPalette().Render(cmd.LableEffect, cmd.FlagSymbol(strings.ToUpper(expr.Name)+":")) + " " + s, nil
 }
 
 func showFlag(flag string) (string, error) {
@@ -523,9 +523,10 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 		}
 	case "FLAGS":
 		for _, flag := range cmd.FlagList {
+			symbol := cmd.FlagSymbol(flag)
 			s, _ := showFlag(flag)
-			w.WriteSpaces(24 - len(flag))
-			w.WriteColorWithoutLineBreak(flag, cmd.LableEffect)
+			w.WriteSpaces(24 - len(symbol))
+			w.WriteColorWithoutLineBreak(symbol, cmd.LableEffect)
 			w.WriteColorWithoutLineBreak(":", cmd.LableEffect)
 			w.WriteSpaces(1)
 			w.WriteWithoutLineBreak(s)
@@ -636,7 +637,7 @@ func writeFunctions(w *cmd.ObjectWriter, funcs UserDefinedFunctionMap) {
 			if 0 < i {
 				w.WriteWithoutLineBreak(", ")
 			}
-			if def, ok := fn.Defaults[p.String()]; ok {
+			if def, ok := fn.Defaults[p.Name]; ok {
 				w.WriteColorWithoutLineBreak(p.String(), cmd.AttributeEffect)
 				w.WriteWithoutLineBreak(" = ")
 				w.WriteColorWithoutLineBreak(def.String(), cmd.ValueEffect)

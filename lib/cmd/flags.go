@@ -17,30 +17,32 @@ import (
 	"github.com/mithrandie/csvq/lib/file"
 )
 
+const FlagSign = "@@"
+
 const (
-	RepositoryFlag       = "@@REPOSITORY"
-	TimezoneFlag         = "@@TIMEZONE"
-	DatetimeFormatFlag   = "@@DATETIME_FORMAT"
-	WaitTimeoutFlag      = "@@WAIT_TIMEOUT"
-	DelimiterFlag        = "@@DELIMITER"
-	JsonQuery            = "@@JSON_QUERY"
-	EncodingFlag         = "@@ENCODING"
-	NoHeaderFlag         = "@@NO_HEADER"
-	WithoutNullFlag      = "@@WITHOUT_NULL"
-	FormatFlag           = "@@FORMAT"
-	WriteEncodingFlag    = "@@WRITE_ENCODING"
-	WriteDelimiterFlag   = "@@WRITE_DELIMITER"
-	WithoutHeaderFlag    = "@@WITHOUT_HEADER"
-	LineBreakFlag        = "@@LINE_BREAK"
-	EncloseAll           = "@@ENCLOSE_ALL"
-	PrettyPrintFlag      = "@@PRETTY_PRINT"
-	EastAsianEncoding    = "@@EAST_ASIAN_ENCODING"
-	CountDiacriticalSign = "@@COUNT_DIACRITICAL_SIGN"
-	CountFormatCode      = "@@COUNT_FORMAT_CODE"
-	ColorFlag            = "@@COLOR"
-	QuietFlag            = "@@QUIET"
-	CPUFlag              = "@@CPU"
-	StatsFlag            = "@@STATS"
+	RepositoryFlag       = "REPOSITORY"
+	TimezoneFlag         = "TIMEZONE"
+	DatetimeFormatFlag   = "DATETIME_FORMAT"
+	WaitTimeoutFlag      = "WAIT_TIMEOUT"
+	DelimiterFlag        = "DELIMITER"
+	JsonQuery            = "JSON_QUERY"
+	EncodingFlag         = "ENCODING"
+	NoHeaderFlag         = "NO_HEADER"
+	WithoutNullFlag      = "WITHOUT_NULL"
+	FormatFlag           = "FORMAT"
+	WriteEncodingFlag    = "WRITE_ENCODING"
+	WriteDelimiterFlag   = "WRITE_DELIMITER"
+	WithoutHeaderFlag    = "WITHOUT_HEADER"
+	LineBreakFlag        = "LINE_BREAK"
+	EncloseAll           = "ENCLOSE_ALL"
+	PrettyPrintFlag      = "PRETTY_PRINT"
+	EastAsianEncoding    = "EAST_ASIAN_ENCODING"
+	CountDiacriticalSign = "COUNT_DIACRITICAL_SIGN"
+	CountFormatCode      = "COUNT_FORMAT_CODE"
+	ColorFlag            = "COLOR"
+	QuietFlag            = "QUIET"
+	CPUFlag              = "CPU"
+	StatsFlag            = "STATS"
 )
 
 var FlagList = []string{
@@ -67,6 +69,10 @@ var FlagList = []string{
 	QuietFlag,
 	CPUFlag,
 	StatsFlag,
+}
+
+func FlagSymbol(s string) string {
+	return FlagSign + s
 }
 
 type Format int

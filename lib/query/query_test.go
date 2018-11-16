@@ -29,52 +29,52 @@ var fetchCursorTests = []struct {
 		Name:    "Fetch Cursor First Time",
 		CurName: parser.Identifier{Literal: "cur"},
 		Variables: []parser.Variable{
-			{Name: "@var1"},
-			{Name: "@var2"},
+			{Name: "var1"},
+			{Name: "var2"},
 		},
 		Success: true,
 		ResultVars: VariableMap{
-			"@var1": value.NewString("1"),
-			"@var2": value.NewString("str1"),
+			"var1": value.NewString("1"),
+			"var2": value.NewString("str1"),
 		},
 	},
 	{
 		Name:    "Fetch Cursor Second Time",
 		CurName: parser.Identifier{Literal: "cur"},
 		Variables: []parser.Variable{
-			{Name: "@var1"},
-			{Name: "@var2"},
+			{Name: "var1"},
+			{Name: "var2"},
 		},
 		Success: true,
 		ResultVars: VariableMap{
-			"@var1": value.NewString("2"),
-			"@var2": value.NewString("str2"),
+			"var1": value.NewString("2"),
+			"var2": value.NewString("str2"),
 		},
 	},
 	{
 		Name:    "Fetch Cursor Third Time",
 		CurName: parser.Identifier{Literal: "cur"},
 		Variables: []parser.Variable{
-			{Name: "@var1"},
-			{Name: "@var2"},
+			{Name: "var1"},
+			{Name: "var2"},
 		},
 		Success: true,
 		ResultVars: VariableMap{
-			"@var1": value.NewString("3"),
-			"@var2": value.NewString("str3"),
+			"var1": value.NewString("3"),
+			"var2": value.NewString("str3"),
 		},
 	},
 	{
 		Name:    "Fetch Cursor Forth Time",
 		CurName: parser.Identifier{Literal: "cur"},
 		Variables: []parser.Variable{
-			{Name: "@var1"},
-			{Name: "@var2"},
+			{Name: "var1"},
+			{Name: "var2"},
 		},
 		Success: false,
 		ResultVars: VariableMap{
-			"@var1": value.NewString("3"),
-			"@var2": value.NewString("str3"),
+			"var1": value.NewString("3"),
+			"var2": value.NewString("str3"),
 		},
 	},
 	{
@@ -85,21 +85,21 @@ var fetchCursorTests = []struct {
 			Number:   parser.NewIntegerValueFromString("1"),
 		},
 		Variables: []parser.Variable{
-			{Name: "@var1"},
-			{Name: "@var2"},
+			{Name: "var1"},
+			{Name: "var2"},
 		},
 		Success: true,
 		ResultVars: VariableMap{
-			"@var1": value.NewString("2"),
-			"@var2": value.NewString("str2"),
+			"var1": value.NewString("2"),
+			"var2": value.NewString("str2"),
 		},
 	},
 	{
 		Name:    "Fetch Cursor Fetch Error",
 		CurName: parser.Identifier{Literal: "notexist"},
 		Variables: []parser.Variable{
-			{Name: "@var1"},
-			{Name: "@var2"},
+			{Name: "var1"},
+			{Name: "var2"},
 		},
 		Error: "[L:- C:-] cursor notexist is undeclared",
 	},
@@ -107,7 +107,7 @@ var fetchCursorTests = []struct {
 		Name:    "Fetch Cursor Not Match Number Error",
 		CurName: parser.Identifier{Literal: "cur2"},
 		Variables: []parser.Variable{
-			{Name: "@var1"},
+			{Name: "var1"},
 		},
 		Error: "[L:- C:-] fetching from cursor cur2 returns 2 values",
 	},
@@ -115,8 +115,8 @@ var fetchCursorTests = []struct {
 		Name:    "Fetch Cursor Substitution Error",
 		CurName: parser.Identifier{Literal: "cur2"},
 		Variables: []parser.Variable{
-			{Name: "@var1"},
-			{Name: "@notexist"},
+			{Name: "var1"},
+			{Name: "notexist"},
 		},
 		Error: "[L:- C:-] variable @notexist is undeclared",
 	},
@@ -128,8 +128,8 @@ var fetchCursorTests = []struct {
 			Number:   parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 		},
 		Variables: []parser.Variable{
-			{Name: "@var1"},
-			{Name: "@var2"},
+			{Name: "var1"},
+			{Name: "var2"},
 		},
 		Error: "[L:- C:-] field notexist does not exist",
 	},
@@ -141,8 +141,8 @@ var fetchCursorTests = []struct {
 			Number:   parser.NewNullValueFromString("null"),
 		},
 		Variables: []parser.Variable{
-			{Name: "@var1"},
-			{Name: "@var2"},
+			{Name: "var1"},
+			{Name: "var2"},
 		},
 		Error: "[L:- C:-] fetching position null is not an integer value",
 	},
@@ -155,8 +155,8 @@ func TestFetchCursor(t *testing.T) {
 	filter := NewFilter(
 		[]VariableMap{
 			{
-				"@var1": value.NewNull(),
-				"@var2": value.NewNull(),
+				"var1": value.NewNull(),
+				"var2": value.NewNull(),
 			},
 		},
 		[]ViewMap{{}},

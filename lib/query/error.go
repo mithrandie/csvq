@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/mithrandie/csvq/lib/cmd"
+
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 )
@@ -444,7 +446,7 @@ type DuplicateParameterError struct {
 
 func NewDuplicateParameterError(expr parser.Variable) error {
 	return &DuplicateParameterError{
-		NewBaseError(expr, fmt.Sprintf(ErrorDuplicateParameter, expr.Name)),
+		NewBaseError(expr, fmt.Sprintf(ErrorDuplicateParameter, expr.String())),
 	}
 }
 
@@ -994,7 +996,7 @@ type InvalidFlagNameError struct {
 
 func NewInvalidFlagNameError(expr parser.Expression, name string) error {
 	return &InvalidFlagNameError{
-		NewBaseError(expr, fmt.Sprintf(ErrorInvalidFlagName, name)),
+		NewBaseError(expr, fmt.Sprintf(ErrorInvalidFlagName, cmd.FlagSymbol(name))),
 	}
 }
 
@@ -1004,7 +1006,7 @@ type FlagValueNotAllowedFormatError struct {
 
 func NewFlagValueNotAllowedFormatError(setFlag parser.SetFlag) error {
 	return &FlagValueNotAllowedFormatError{
-		NewBaseError(setFlag, fmt.Sprintf(ErrorFlagValueNowAllowedFormat, setFlag.Value, setFlag.Name)),
+		NewBaseError(setFlag, fmt.Sprintf(ErrorFlagValueNowAllowedFormat, setFlag.Value, cmd.FlagSymbol(setFlag.Name))),
 	}
 }
 

@@ -1709,7 +1709,7 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 1},
 						Select:   "select",
 						Fields: []QueryExpression{
-							Field{Object: Variable{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "@var"}},
+							Field{Object: Variable{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "var"}},
 						},
 					},
 				},
@@ -1726,7 +1726,7 @@ var parseTests = []struct {
 						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: VariableSubstitution{
-								Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "@var"},
+								Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "var"},
 								Value:    NewIntegerValueFromString("1"),
 							}},
 						},
@@ -3347,10 +3347,10 @@ var parseTests = []struct {
 			VariableDeclaration{
 				Assignments: []VariableAssignment{
 					{
-						Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 5}, Name: "@var1"},
+						Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 5}, Name: "var1"},
 					},
 					{
-						Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 12}, Name: "@var2"},
+						Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 12}, Name: "var2"},
 						Value:    NewIntegerValueFromString("2"),
 					},
 				},
@@ -3358,7 +3358,7 @@ var parseTests = []struct {
 			VariableSubstitution{
 				Variable: Variable{
 					BaseExpr: &BaseExpr{line: 1, char: 24},
-					Name:     "@var1",
+					Name:     "var1",
 				},
 				Value: NewIntegerValueFromString("1"),
 			},
@@ -3370,7 +3370,7 @@ var parseTests = []struct {
 			VariableDeclaration{
 				Assignments: []VariableAssignment{
 					{
-						Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 9}, Name: "@var1"},
+						Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 9}, Name: "var1"},
 						Value:    NewIntegerValueFromString("1"),
 					},
 				},
@@ -3381,7 +3381,7 @@ var parseTests = []struct {
 		Input: "dispose @var1",
 		Output: []Statement{
 			DisposeVariable{
-				Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 9}, Name: "@var1"},
+				Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 9}, Name: "var1"},
 			},
 		},
 	},
@@ -3977,7 +3977,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			SetFlag{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
-				Name:     "@@delimiter",
+				Name:     "delimiter",
 				Value:    NewStringValue(","),
 			},
 		},
@@ -3987,7 +3987,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			SetFlag{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
-				Name:     "@@encoding",
+				Name:     "encoding",
 				Value:    Identifier{BaseExpr: &BaseExpr{line: 1, char: 18}, Literal: "sjis"},
 			},
 		},
@@ -3997,7 +3997,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			ShowFlag{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
-				Name:     "@@delimiter",
+				Name:     "delimiter",
 			},
 		},
 	},
@@ -4090,8 +4090,8 @@ var parseTests = []struct {
 			FetchCursor{
 				Cursor: Identifier{BaseExpr: &BaseExpr{line: 1, char: 7}, Literal: "cur"},
 				Variables: []Variable{
-					{BaseExpr: &BaseExpr{line: 1, char: 16}, Name: "@var1"},
-					{BaseExpr: &BaseExpr{line: 1, char: 23}, Name: "@var2"},
+					{BaseExpr: &BaseExpr{line: 1, char: 16}, Name: "var1"},
+					{BaseExpr: &BaseExpr{line: 1, char: 23}, Name: "var2"},
 				},
 			},
 		},
@@ -4105,7 +4105,7 @@ var parseTests = []struct {
 					Position: Token{Token: NEXT, Literal: "next", Line: 1, Char: 7},
 				},
 				Variables: []Variable{
-					{BaseExpr: &BaseExpr{line: 1, char: 21}, Name: "@var1"},
+					{BaseExpr: &BaseExpr{line: 1, char: 21}, Name: "var1"},
 				},
 			},
 		},
@@ -4119,7 +4119,7 @@ var parseTests = []struct {
 					Position: Token{Token: PRIOR, Literal: "prior", Line: 1, Char: 7},
 				},
 				Variables: []Variable{
-					{BaseExpr: &BaseExpr{line: 1, char: 22}, Name: "@var1"},
+					{BaseExpr: &BaseExpr{line: 1, char: 22}, Name: "var1"},
 				},
 			},
 		},
@@ -4133,7 +4133,7 @@ var parseTests = []struct {
 					Position: Token{Token: FIRST, Literal: "first", Line: 1, Char: 7},
 				},
 				Variables: []Variable{
-					{BaseExpr: &BaseExpr{line: 1, char: 22}, Name: "@var1"},
+					{BaseExpr: &BaseExpr{line: 1, char: 22}, Name: "var1"},
 				},
 			},
 		},
@@ -4147,7 +4147,7 @@ var parseTests = []struct {
 					Position: Token{Token: LAST, Literal: "last", Line: 1, Char: 7},
 				},
 				Variables: []Variable{
-					{BaseExpr: &BaseExpr{line: 1, char: 21}, Name: "@var1"},
+					{BaseExpr: &BaseExpr{line: 1, char: 21}, Name: "var1"},
 				},
 			},
 		},
@@ -4163,7 +4163,7 @@ var parseTests = []struct {
 					Number:   NewIntegerValueFromString("1"),
 				},
 				Variables: []Variable{
-					{BaseExpr: &BaseExpr{line: 1, char: 27}, Name: "@var1"},
+					{BaseExpr: &BaseExpr{line: 1, char: 27}, Name: "var1"},
 				},
 			},
 		},
@@ -4179,7 +4179,7 @@ var parseTests = []struct {
 					Number:   NewIntegerValueFromString("1"),
 				},
 				Variables: []Variable{
-					{BaseExpr: &BaseExpr{line: 1, char: 27}, Name: "@var1"},
+					{BaseExpr: &BaseExpr{line: 1, char: 27}, Name: "var1"},
 				},
 			},
 		},
@@ -4261,7 +4261,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			If{
 				Condition: Comparison{
-					LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 4}, Name: "@var1"},
+					LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 4}, Name: "var1"},
 					RHS:      NewIntegerValueFromString("1"),
 					Operator: "=",
 				},
@@ -4276,7 +4276,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			If{
 				Condition: Comparison{
-					LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 4}, Name: "@var1"},
+					LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 4}, Name: "var1"},
 					RHS:      NewIntegerValueFromString("1"),
 					Operator: "=",
 				},
@@ -4286,7 +4286,7 @@ var parseTests = []struct {
 				ElseIf: []ElseIf{
 					{
 						Condition: Comparison{
-							LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 35}, Name: "@var1"},
+							LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 35}, Name: "var1"},
 							RHS:      NewIntegerValueFromString("2"),
 							Operator: "=",
 						},
@@ -4296,7 +4296,7 @@ var parseTests = []struct {
 					},
 					{
 						Condition: Comparison{
-							LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 66}, Name: "@var1"},
+							LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 66}, Name: "var1"},
 							RHS:      NewIntegerValueFromString("3"),
 							Operator: "=",
 						},
@@ -4317,9 +4317,9 @@ var parseTests = []struct {
 		Input: "while @var1 do print @var1; end while",
 		Output: []Statement{
 			While{
-				Condition: Variable{BaseExpr: &BaseExpr{line: 1, char: 7}, Name: "@var1"},
+				Condition: Variable{BaseExpr: &BaseExpr{line: 1, char: 7}, Name: "var1"},
 				Statements: []Statement{
-					Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 22}, Name: "@var1"}},
+					Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 22}, Name: "var1"}},
 				},
 			},
 		},
@@ -4329,11 +4329,11 @@ var parseTests = []struct {
 		Output: []Statement{
 			WhileInCursor{
 				Variables: []Variable{
-					{BaseExpr: &BaseExpr{line: 1, char: 7}, Name: "@var1"},
+					{BaseExpr: &BaseExpr{line: 1, char: 7}, Name: "var1"},
 				},
 				Cursor: Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "cur"},
 				Statements: []Statement{
-					Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 29}, Name: "@var1"}},
+					Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 29}, Name: "var1"}},
 				},
 			},
 		},
@@ -4343,12 +4343,12 @@ var parseTests = []struct {
 		Output: []Statement{
 			WhileInCursor{
 				Variables: []Variable{
-					{BaseExpr: &BaseExpr{line: 1, char: 7}, Name: "@var1"},
-					{BaseExpr: &BaseExpr{line: 1, char: 14}, Name: "@var2"},
+					{BaseExpr: &BaseExpr{line: 1, char: 7}, Name: "var1"},
+					{BaseExpr: &BaseExpr{line: 1, char: 14}, Name: "var2"},
 				},
 				Cursor: Identifier{BaseExpr: &BaseExpr{line: 1, char: 23}, Literal: "cur"},
 				Statements: []Statement{
-					Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 36}, Name: "@var1"}},
+					Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 36}, Name: "var1"}},
 				},
 			},
 		},
@@ -4359,11 +4359,11 @@ var parseTests = []struct {
 			WhileInCursor{
 				WithDeclaration: true,
 				Variables: []Variable{
-					{BaseExpr: &BaseExpr{line: 1, char: 11}, Name: "@var1"},
+					{BaseExpr: &BaseExpr{line: 1, char: 11}, Name: "var1"},
 				},
 				Cursor: Identifier{BaseExpr: &BaseExpr{line: 1, char: 20}, Literal: "cur"},
 				Statements: []Statement{
-					Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 33}, Name: "@var1"}},
+					Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 33}, Name: "var1"}},
 				},
 			},
 		},
@@ -4374,12 +4374,12 @@ var parseTests = []struct {
 			WhileInCursor{
 				WithDeclaration: true,
 				Variables: []Variable{
-					{BaseExpr: &BaseExpr{line: 1, char: 15}, Name: "@var1"},
-					{BaseExpr: &BaseExpr{line: 1, char: 22}, Name: "@var2"},
+					{BaseExpr: &BaseExpr{line: 1, char: 15}, Name: "var1"},
+					{BaseExpr: &BaseExpr{line: 1, char: 22}, Name: "var2"},
 				},
 				Cursor: Identifier{BaseExpr: &BaseExpr{line: 1, char: 31}, Literal: "cur"},
 				Statements: []Statement{
-					Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 44}, Name: "@var1"}},
+					Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 44}, Name: "var1"}},
 				},
 			},
 		},
@@ -4392,13 +4392,13 @@ var parseTests = []struct {
 					{
 						Condition: NewTernaryValueFromString("true"),
 						Statements: []Statement{
-							Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 27}, Name: "@var1"}},
+							Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 27}, Name: "var1"}},
 						},
 					},
 					{
 						Condition: NewTernaryValueFromString("false"),
 						Statements: []Statement{
-							Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 56}, Name: "@var2"}},
+							Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 56}, Name: "var2"}},
 						},
 					},
 				},
@@ -4413,19 +4413,19 @@ var parseTests = []struct {
 					{
 						Condition: NewTernaryValueFromString("true"),
 						Statements: []Statement{
-							Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 27}, Name: "@var1"}},
+							Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 27}, Name: "var1"}},
 						},
 					},
 					{
 						Condition: NewTernaryValueFromString("false"),
 						Statements: []Statement{
-							Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 56}, Name: "@var2"}},
+							Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 56}, Name: "var2"}},
 						},
 					},
 				},
 				Else: CaseElse{
 					Statements: []Statement{
-						Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 74}, Name: "@var3"}},
+						Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 74}, Name: "var3"}},
 					},
 				},
 			},
@@ -4449,7 +4449,7 @@ var parseTests = []struct {
 			While{
 				Condition: NewTernaryValueFromString("true"),
 				Statements: []Statement{
-					Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 21}, Name: "@var1"}},
+					Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 21}, Name: "var1"}},
 					FlowControl{Token: CONTINUE},
 				},
 			},
@@ -4485,7 +4485,7 @@ var parseTests = []struct {
 				Statements: []Statement{
 					If{
 						Condition: Comparison{
-							LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 18}, Name: "@var1"},
+							LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 18}, Name: "var1"},
 							RHS:      NewIntegerValueFromString("1"),
 							Operator: "=",
 						},
@@ -4505,7 +4505,7 @@ var parseTests = []struct {
 				Statements: []Statement{
 					If{
 						Condition: Comparison{
-							LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 18}, Name: "@var1"},
+							LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 18}, Name: "var1"},
 							RHS:      NewIntegerValueFromString("1"),
 							Operator: "=",
 						},
@@ -4515,7 +4515,7 @@ var parseTests = []struct {
 						ElseIf: []ElseIf{
 							{
 								Condition: Comparison{
-									LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 50}, Name: "@var1"},
+									LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 50}, Name: "var1"},
 									RHS:      NewIntegerValueFromString("2"),
 									Operator: "=",
 								},
@@ -4525,7 +4525,7 @@ var parseTests = []struct {
 							},
 							{
 								Condition: Comparison{
-									LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 79}, Name: "@var1"},
+									LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 79}, Name: "var1"},
 									RHS:      NewIntegerValueFromString("3"),
 									Operator: "=",
 								},
@@ -4555,7 +4555,7 @@ var parseTests = []struct {
 							{
 								Condition: NewTernaryValueFromString("true"),
 								Statements: []Statement{
-									Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 41}, Name: "@var1"}},
+									Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 41}, Name: "var1"}},
 								},
 							},
 							{
@@ -4581,7 +4581,7 @@ var parseTests = []struct {
 							{
 								Condition: NewTernaryValueFromString("true"),
 								Statements: []Statement{
-									Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 41}, Name: "@var1"}},
+									Print{Value: Variable{BaseExpr: &BaseExpr{line: 1, char: 41}, Name: "var1"}},
 								},
 							},
 							{
@@ -4615,8 +4615,8 @@ var parseTests = []struct {
 			FunctionDeclaration{
 				Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "func1"},
 				Parameters: []VariableAssignment{
-					{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 25}, Name: "@arg1"}, Value: NewIntegerValueFromString("0")},
-					{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 42}, Name: "@arg2"}, Value: NewIntegerValueFromString("1")},
+					{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 25}, Name: "arg1"}, Value: NewIntegerValueFromString("0")},
+					{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 42}, Name: "arg2"}, Value: NewIntegerValueFromString("1")},
 				},
 			},
 		},
@@ -4641,13 +4641,13 @@ var parseTests = []struct {
 			FunctionDeclaration{
 				Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "func1"},
 				Parameters: []VariableAssignment{
-					{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 25}, Name: "@arg1"}},
-					{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 32}, Name: "@arg2"}, Value: NewIntegerValueFromString("0")},
+					{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 25}, Name: "arg1"}},
+					{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 32}, Name: "arg2"}, Value: NewIntegerValueFromString("0")},
 				},
 				Statements: []Statement{
 					If{
 						Condition: Comparison{
-							LHS:      Variable{BaseExpr: &BaseExpr{line: 2, char: 4}, Name: "@var1"},
+							LHS:      Variable{BaseExpr: &BaseExpr{line: 2, char: 4}, Name: "var1"},
 							RHS:      NewIntegerValueFromString("1"),
 							Operator: "=",
 						},
@@ -4657,7 +4657,7 @@ var parseTests = []struct {
 					},
 					If{
 						Condition: Comparison{
-							LHS:      Variable{BaseExpr: &BaseExpr{line: 3, char: 4}, Name: "@var1"},
+							LHS:      Variable{BaseExpr: &BaseExpr{line: 3, char: 4}, Name: "var1"},
 							RHS:      NewIntegerValueFromString("1"),
 							Operator: "=",
 						},
@@ -4667,7 +4667,7 @@ var parseTests = []struct {
 						ElseIf: []ElseIf{
 							{
 								Condition: Comparison{
-									LHS:      Variable{BaseExpr: &BaseExpr{line: 3, char: 35}, Name: "@var1"},
+									LHS:      Variable{BaseExpr: &BaseExpr{line: 3, char: 35}, Name: "var1"},
 									RHS:      NewIntegerValueFromString("2"),
 									Operator: "=",
 								},
@@ -4677,7 +4677,7 @@ var parseTests = []struct {
 							},
 							{
 								Condition: Comparison{
-									LHS:      Variable{BaseExpr: &BaseExpr{line: 3, char: 66}, Name: "@var1"},
+									LHS:      Variable{BaseExpr: &BaseExpr{line: 3, char: 66}, Name: "var1"},
 									RHS:      NewIntegerValueFromString("3"),
 									Operator: "=",
 								},
@@ -4703,7 +4703,7 @@ var parseTests = []struct {
 						Statements: []Statement{
 							If{
 								Condition: Comparison{
-									LHS:      Variable{BaseExpr: &BaseExpr{line: 5, char: 18}, Name: "@var1"},
+									LHS:      Variable{BaseExpr: &BaseExpr{line: 5, char: 18}, Name: "var1"},
 									RHS:      NewIntegerValueFromString("1"),
 									Operator: "=",
 								},
@@ -4718,7 +4718,7 @@ var parseTests = []struct {
 						Statements: []Statement{
 							If{
 								Condition: Comparison{
-									LHS:      Variable{BaseExpr: &BaseExpr{line: 6, char: 18}, Name: "@var1"},
+									LHS:      Variable{BaseExpr: &BaseExpr{line: 6, char: 18}, Name: "var1"},
 									RHS:      NewIntegerValueFromString("1"),
 									Operator: "=",
 								},
@@ -4728,7 +4728,7 @@ var parseTests = []struct {
 								ElseIf: []ElseIf{
 									{
 										Condition: Comparison{
-											LHS:      Variable{BaseExpr: &BaseExpr{line: 6, char: 50}, Name: "@var1"},
+											LHS:      Variable{BaseExpr: &BaseExpr{line: 6, char: 50}, Name: "var1"},
 											RHS:      NewIntegerValueFromString("2"),
 											Operator: "=",
 										},
@@ -4738,7 +4738,7 @@ var parseTests = []struct {
 									},
 									{
 										Condition: Comparison{
-											LHS:      Variable{BaseExpr: &BaseExpr{line: 6, char: 79}, Name: "@var1"},
+											LHS:      Variable{BaseExpr: &BaseExpr{line: 6, char: 79}, Name: "var1"},
 											RHS:      NewIntegerValueFromString("3"),
 											Operator: "=",
 										},
@@ -4757,21 +4757,21 @@ var parseTests = []struct {
 					},
 					WhileInCursor{
 						Variables: []Variable{
-							{BaseExpr: &BaseExpr{line: 7, char: 7}, Name: "@var1"},
+							{BaseExpr: &BaseExpr{line: 7, char: 7}, Name: "var1"},
 						},
 						Cursor: Identifier{BaseExpr: &BaseExpr{line: 7, char: 16}, Literal: "cur"},
 						Statements: []Statement{
-							Print{Value: Variable{BaseExpr: &BaseExpr{line: 7, char: 29}, Name: "@var1"}},
+							Print{Value: Variable{BaseExpr: &BaseExpr{line: 7, char: 29}, Name: "var1"}},
 						},
 					},
 					WhileInCursor{
 						Variables: []Variable{
-							{BaseExpr: &BaseExpr{line: 8, char: 7}, Name: "@var1"},
-							{BaseExpr: &BaseExpr{line: 8, char: 14}, Name: "@var2"},
+							{BaseExpr: &BaseExpr{line: 8, char: 7}, Name: "var1"},
+							{BaseExpr: &BaseExpr{line: 8, char: 14}, Name: "var2"},
 						},
 						Cursor: Identifier{BaseExpr: &BaseExpr{line: 8, char: 23}, Literal: "cur"},
 						Statements: []Statement{
-							Print{Value: Variable{BaseExpr: &BaseExpr{line: 8, char: 36}, Name: "@var1"}},
+							Print{Value: Variable{BaseExpr: &BaseExpr{line: 8, char: 36}, Name: "var1"}},
 						},
 					},
 					Case{
@@ -4779,13 +4779,13 @@ var parseTests = []struct {
 							{
 								Condition: NewTernaryValueFromString("true"),
 								Statements: []Statement{
-									Print{Value: Variable{BaseExpr: &BaseExpr{line: 9, char: 27}, Name: "@var1"}},
+									Print{Value: Variable{BaseExpr: &BaseExpr{line: 9, char: 27}, Name: "var1"}},
 								},
 							},
 							{
 								Condition: NewTernaryValueFromString("false"),
 								Statements: []Statement{
-									Print{Value: Variable{BaseExpr: &BaseExpr{line: 9, char: 56}, Name: "@var2"}},
+									Print{Value: Variable{BaseExpr: &BaseExpr{line: 9, char: 56}, Name: "var2"}},
 								},
 							},
 						},
@@ -4795,7 +4795,7 @@ var parseTests = []struct {
 							{
 								Condition: NewTernaryValueFromString("true"),
 								Statements: []Statement{
-									Print{Value: Variable{BaseExpr: &BaseExpr{line: 10, char: 27}, Name: "@var1"}},
+									Print{Value: Variable{BaseExpr: &BaseExpr{line: 10, char: 27}, Name: "var1"}},
 								},
 							},
 							{
@@ -4819,7 +4819,7 @@ var parseTests = []struct {
 									{
 										Condition: NewTernaryValueFromString("true"),
 										Statements: []Statement{
-											Print{Value: Variable{BaseExpr: &BaseExpr{line: 11, char: 41}, Name: "@var1"}},
+											Print{Value: Variable{BaseExpr: &BaseExpr{line: 11, char: 41}, Name: "var1"}},
 										},
 									},
 									{
@@ -4840,7 +4840,7 @@ var parseTests = []struct {
 									{
 										Condition: NewTernaryValueFromString("true"),
 										Statements: []Statement{
-											Print{Value: Variable{BaseExpr: &BaseExpr{line: 12, char: 41}, Name: "@var1"}},
+											Print{Value: Variable{BaseExpr: &BaseExpr{line: 12, char: 41}, Name: "var1"}},
 										},
 									},
 									{
@@ -4862,7 +4862,7 @@ var parseTests = []struct {
 						Value: NewNullValue(),
 					},
 					Return{
-						Value: Variable{BaseExpr: &BaseExpr{line: 14, char: 8}, Name: "@var1"},
+						Value: Variable{BaseExpr: &BaseExpr{line: 14, char: 8}, Name: "var1"},
 					},
 				},
 			},
@@ -4884,7 +4884,7 @@ var parseTests = []struct {
 				Name:   Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "aggfunc"},
 				Cursor: Identifier{BaseExpr: &BaseExpr{line: 1, char: 28}, Literal: "cur"},
 				Parameters: []VariableAssignment{
-					{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 33}, Name: "@var1"}},
+					{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 33}, Name: "var1"}},
 				},
 			},
 		},
@@ -4896,8 +4896,8 @@ var parseTests = []struct {
 				Name:   Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "aggfunc"},
 				Cursor: Identifier{BaseExpr: &BaseExpr{line: 1, char: 28}, Literal: "cur"},
 				Parameters: []VariableAssignment{
-					{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 33}, Name: "@var1"}},
-					{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 40}, Name: "@var2"}},
+					{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 33}, Name: "var1"}},
+					{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 40}, Name: "var2"}},
 				},
 			},
 		},
@@ -4920,11 +4920,11 @@ var parseTests = []struct {
 					Fields: []QueryExpression{
 						Field{
 							Object: VariableSubstitution{
-								Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "@var1"},
+								Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "var1"},
 								Value: Arithmetic{
-									LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 17}, Name: "@var2"},
+									LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 17}, Name: "var2"},
 									Operator: int('+'),
-									RHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 25}, Name: "@var3"},
+									RHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 25}, Name: "var3"},
 								},
 							},
 						},

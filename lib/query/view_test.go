@@ -3586,37 +3586,37 @@ var viewSelectTests = []struct {
 								parser.VariableDeclaration{
 									Assignments: []parser.VariableAssignment{
 										{
-											Variable: parser.Variable{Name: "@value"},
+											Variable: parser.Variable{Name: "value"},
 										},
 										{
-											Variable: parser.Variable{Name: "@fetch"},
+											Variable: parser.Variable{Name: "fetch"},
 										},
 									},
 								},
 								parser.WhileInCursor{
 									Variables: []parser.Variable{
-										{Name: "@fetch"},
+										{Name: "fetch"},
 									},
 									Cursor: parser.Identifier{Literal: "list"},
 									Statements: []parser.Statement{
 										parser.If{
 											Condition: parser.Is{
-												LHS: parser.Variable{Name: "@value"},
+												LHS: parser.Variable{Name: "value"},
 												RHS: parser.NewNullValue(),
 											},
 											Statements: []parser.Statement{
 												parser.VariableSubstitution{
-													Variable: parser.Variable{Name: "@value"},
-													Value:    parser.Variable{Name: "@fetch"},
+													Variable: parser.Variable{Name: "value"},
+													Value:    parser.Variable{Name: "fetch"},
 												},
 												parser.FlowControl{Token: parser.CONTINUE},
 											},
 										},
 										parser.VariableSubstitution{
-											Variable: parser.Variable{Name: "@value"},
+											Variable: parser.Variable{Name: "value"},
 											Value: parser.Arithmetic{
-												LHS:      parser.Variable{Name: "@value"},
-												RHS:      parser.Variable{Name: "@fetch"},
+												LHS:      parser.Variable{Name: "value"},
+												RHS:      parser.Variable{Name: "fetch"},
 												Operator: '+',
 											},
 										},
@@ -3624,7 +3624,7 @@ var viewSelectTests = []struct {
 								},
 
 								parser.Return{
-									Value: parser.Variable{Name: "@value"},
+									Value: parser.Variable{Name: "value"},
 								},
 							},
 						},
@@ -4063,11 +4063,11 @@ var viewExtendRecordCapacity = []struct {
 						"USERFUNC": &UserDefinedFunction{
 							Name: parser.Identifier{Literal: "userfunc"},
 							Parameters: []parser.Variable{
-								{Name: "@arg1"},
+								{Name: "arg1"},
 							},
 							RequiredArgs: 1,
 							Statements: []parser.Statement{
-								parser.Return{Value: parser.Variable{Name: "@arg1"}},
+								parser.Return{Value: parser.Variable{Name: "arg1"}},
 							},
 							IsAggregate: true,
 						},
@@ -4158,11 +4158,11 @@ var viewExtendRecordCapacity = []struct {
 						"USERFUNC": &UserDefinedFunction{
 							Name: parser.Identifier{Literal: "userfunc"},
 							Parameters: []parser.Variable{
-								{Name: "@arg1"},
+								{Name: "arg1"},
 							},
 							RequiredArgs: 1,
 							Statements: []parser.Statement{
-								parser.Return{Value: parser.Variable{Name: "@arg1"}},
+								parser.Return{Value: parser.Variable{Name: "arg1"}},
 							},
 							IsAggregate: true,
 						},
@@ -4715,7 +4715,7 @@ var viewLimitTests = []struct {
 			Filter: NewEmptyFilter(),
 		},
 		Limit: parser.LimitClause{Value: parser.Variable{Name: "notexist"}},
-		Error: "[L:- C:-] variable notexist is undeclared",
+		Error: "[L:- C:-] variable @notexist is undeclared",
 	},
 	{
 		Name: "Limit Value Error",
@@ -4938,7 +4938,7 @@ var viewOffsetTests = []struct {
 			Filter: NewEmptyFilter(),
 		},
 		Offset: parser.OffsetClause{Value: parser.Variable{Name: "notexist"}},
-		Error:  "[L:- C:-] variable notexist is undeclared",
+		Error:  "[L:- C:-] variable @notexist is undeclared",
 	},
 	{
 		Name: "Offset Value Error",

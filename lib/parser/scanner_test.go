@@ -125,7 +125,7 @@ var scanTests = []struct {
 		Output: []scanResult{
 			{
 				Token:   FLAG,
-				Literal: "@@flag",
+				Literal: "flag",
 			},
 		},
 	},
@@ -135,7 +135,7 @@ var scanTests = []struct {
 		Output: []scanResult{
 			{
 				Token:   VARIABLE,
-				Literal: "@var",
+				Literal: "var",
 			},
 		},
 	},
@@ -380,6 +380,11 @@ var scanTests = []struct {
 		Name:  "LiteralNotTerminatedError 2",
 		Input: "\"",
 		Error: "literal not terminated",
+	},
+	{
+		Name:  "Invalid Variable Symbol",
+		Input: "@@@",
+		Error: "invalid variable symbol",
 	},
 }
 
