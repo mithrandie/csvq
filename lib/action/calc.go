@@ -12,8 +12,6 @@ import (
 func Calc(expr string) error {
 	cmd.GetFlags().SetNoHeader(true)
 
-	SetSignalHandler()
-
 	defer func() {
 		if errs := query.ReleaseResourcesWithErrors(); errs != nil {
 			for _, err := range errs {

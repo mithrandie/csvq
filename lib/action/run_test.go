@@ -70,7 +70,8 @@ func TestRun(t *testing.T) {
 		r, w, _ := os.Pipe()
 		os.Stdout = w
 
-		err := Run(v.Input, "", v.OutFile)
+		proc := query.NewProcedure()
+		err := Run(proc, v.Input, "", v.OutFile)
 
 		w.Close()
 		os.Stdout = oldStdout

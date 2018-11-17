@@ -88,7 +88,6 @@ const (
 	ErrorReplaceValueLength                   = "%s"
 	ErrorSourceInvalidFilePath                = "%s is a invalid file path"
 	ErrorSourceFileNotExist                   = "file %s does not exist"
-	ErrorSourceFileUnableToRead               = "file %s is unable to read"
 	ErrorInvalidFlagName                      = "flag %s does not exist"
 	ErrorFlagValueNowAllowedFormat            = "%s for %s is not allowed"
 	ErrorInvalidFlagValue                     = "%s"
@@ -977,16 +976,6 @@ type SourceFileNotExistError struct {
 func NewSourceFileNotExistError(source parser.Source, fpath string) error {
 	return &SourceFileNotExistError{
 		NewBaseError(source, fmt.Sprintf(ErrorSourceFileNotExist, fpath)),
-	}
-}
-
-type SourceFileUnableToReadError struct {
-	*BaseError
-}
-
-func NewSourceFileUnableToReadError(source parser.Source, fpath string) error {
-	return &SourceFileUnableToReadError{
-		NewBaseError(source, fmt.Sprintf(ErrorSourceFileUnableToRead, fpath)),
 	}
 }
 

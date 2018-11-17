@@ -210,13 +210,6 @@ var sourceTests = []struct {
 		Error: fmt.Sprintf("[L:- C:-] file %s does not exist", GetTestFilePath("notexist.sql")),
 	},
 	{
-		Name: "Source File Not Readable Error",
-		Expr: parser.Source{
-			FilePath: parser.NewStringValue(TestDir),
-		},
-		Error: fmt.Sprintf("[L:- C:-] file %s is unable to read", TestDir),
-	},
-	{
 		Name: "Source Syntax Error",
 		Expr: parser.Source{
 			FilePath: parser.NewStringValue(GetTestFilePath("source_syntaxerror.sql")),

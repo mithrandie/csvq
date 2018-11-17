@@ -81,19 +81,23 @@ func Source(expr parser.Source, filter *Filter) ([]parser.Statement, error) {
 		}
 		fpath = s.(value.String).Raw()
 	}
+
 	if len(fpath) < 1 {
 		return nil, NewSourceInvalidFilePathError(expr, expr.FilePath)
 	}
-	if abs, err := filepath.Abs(fpath); err == nil {
-		fpath = abs
+
+	return LoadStatementsFromFile(expr, fpath)
+}
+
+func LoadStatementsFromFile(expr parser.Source, fpath string) ([]parser.Statement, error) {
+	if !filepath.IsAbs(fpath) {
+		if abs, err := filepath.Abs(fpath); err == nil {
+			fpath = abs
+		}
 	}
 
-	stat, err := os.Stat(fpath)
-	if err != nil {
+	if !file.Exists(fpath) {
 		return nil, NewSourceFileNotExistError(expr, fpath)
-	}
-	if stat.IsDir() {
-		return nil, NewSourceFileUnableToReadError(expr, fpath)
 	}
 
 	h, err := file.NewHandlerForRead(fpath)

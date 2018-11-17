@@ -19,8 +19,7 @@ import (
 	"github.com/mithrandie/go-file"
 )
 
-func Run(input string, sourceFile string, outfile string) error {
-	SetSignalHandler()
+func Run(proc *query.Procedure, input string, sourceFile string, outfile string) error {
 	start := time.Now()
 
 	defer func() {
@@ -59,7 +58,6 @@ func Run(input string, sourceFile string, outfile string) error {
 		query.OutFile = fp
 	}
 
-	proc := query.NewProcedure()
 	flow, err := proc.Execute(statements)
 
 	if err == nil && flow == query.Terminate {
@@ -75,12 +73,10 @@ func Run(input string, sourceFile string, outfile string) error {
 	return err
 }
 
-func LaunchInteractiveShell() error {
+func LaunchInteractiveShell(proc *query.Procedure) error {
 	if cmd.IsReadableFromPipeOrRedirection() {
 		return errors.New("input from pipe or redirection cannot be used in interactive shell")
 	}
-
-	SetSignalHandler()
 
 	defer func() {
 		if errs := query.ReleaseResourcesWithErrors(); errs != nil {
@@ -109,7 +105,6 @@ func LaunchInteractiveShell() error {
 		return werr
 	}
 
-	proc := query.NewProcedure()
 	lines := make([]string, 0)
 
 	for {

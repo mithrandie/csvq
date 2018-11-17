@@ -15,10 +15,10 @@ import (
 )
 
 const (
-	ConfigDir     = ".config"
-	CSVQConfigDir = "csvq"
-	EnvFileName   = "csvq_env.json"
-	RCFileName    = "csvqrc"
+	ConfigDir              = ".config"
+	CSVQConfigDir          = "csvq"
+	EnvFileName            = "csvq_env.json"
+	PreloadCommandFileName = "csvqrc"
 
 	HiddenPrefix = '.'
 )

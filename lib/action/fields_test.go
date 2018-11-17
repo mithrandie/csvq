@@ -21,7 +21,8 @@ var showFieldsTests = []struct {
 func TestShowFields(t *testing.T) {
 	for _, v := range showFieldsTests {
 		query.ReleaseResources()
-		err := ShowFields(v.Input)
+		proc := query.NewProcedure()
+		err := ShowFields(proc, v.Input)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

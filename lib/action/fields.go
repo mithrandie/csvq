@@ -9,9 +9,7 @@ import (
 	"github.com/mithrandie/csvq/lib/query"
 )
 
-func ShowFields(filename string) error {
-	SetSignalHandler()
-
+func ShowFields(proc *query.Procedure, filename string) error {
 	defer func() {
 		if errs := query.ReleaseResourcesWithErrors(); errs != nil {
 			for _, err := range errs {
@@ -27,7 +25,6 @@ func ShowFields(filename string) error {
 		},
 	}
 
-	proc := query.NewProcedure()
 	_, err := proc.Execute(statements)
 	if appErr, ok := err.(query.AppError); ok {
 		err = errors.New(appErr.ErrorMessage())

@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/mithrandie/csvq/lib/parser"
+
 	"github.com/mithrandie/csvq/lib/file"
 
 	"github.com/mithrandie/csvq/lib/action"
@@ -23,6 +25,20 @@ func main() {
 	cli.AppHelpTemplate = appHHelpTemplate
 	cli.CommandHelpTemplate = commandHelpTemplate
 
+	defaultCPU := runtime.NumCPU() / 2
+	if defaultCPU < 1 {
+		defaultCPU = 1
+	}
+
+	proc := query.NewProcedure()
+	defer func() {
+		if errs := query.ReleaseResourcesWithErrors(); errs != nil {
+			for _, err := range errs {
+				cmd.WriteToStdErr(err.Error() + "\n")
+			}
+		}
+	}()
+
 	app := cli.NewApp()
 
 	app.Name = "csvq"
@@ -36,11 +52,6 @@ func main() {
 		}
 
 		return NewExitError(fmt.Sprintf("Incorrect Usage: %s", err.Error()), 1)
-	}
-
-	defaultCPU := runtime.NumCPU() / 2
-	if defaultCPU < 1 {
-		defaultCPU = 1
 	}
 
 	app.Flags = []cli.Flag{
@@ -167,7 +178,7 @@ func main() {
 
 				table := c.Args().First()
 
-				err := action.ShowFields(table)
+				err := action.ShowFields(proc, table)
 				if err != nil {
 					return NewExitError(err.Error(), 1)
 				}
@@ -202,15 +213,21 @@ func main() {
 	}
 
 	app.Before = func(c *cli.Context) error {
+		action.SetSignalHandler()
+
 		// Init Single Objects
+		cmd.GetFlags()
 		if _, err := cmd.GetEnvironment(); err != nil {
 			return NewExitError(err.Error(), 1)
 		}
 		if _, err := cmd.GetPalette(); err != nil {
 			return NewExitError(err.Error(), 1)
 		}
-		flags := cmd.GetFlags()
-		flags.SetColor(false)
+
+		// Run pre-load commands
+		if err := runPreloadCommands(proc); err != nil {
+			return NewExitError(err.Error(), 1)
+		}
 
 		// Overwrite Flags with Command Options
 		if err := overwriteFlags(c); err != nil {
@@ -226,9 +243,9 @@ func main() {
 		}
 
 		if len(queryString) < 1 {
-			err = action.LaunchInteractiveShell()
+			err = action.LaunchInteractiveShell(proc)
 		} else {
-			err = action.Run(queryString, path, c.GlobalString("out"))
+			err = action.Run(proc, queryString, path, c.GlobalString("out"))
 		}
 
 		if err != nil {
@@ -374,6 +391,35 @@ func overwriteFlags(c *cli.Context) error {
 		flags.SetStats(c.GlobalBool("stats"))
 	}
 
+	return nil
+}
+
+func runPreloadCommands(proc *query.Procedure) error {
+	handlers := make([]*file.Handler, 0, 4)
+	defer func() {
+		for _, h := range handlers {
+			h.Close()
+		}
+	}()
+
+	files := cmd.GetSpecialFilePath(cmd.PreloadCommandFileName)
+	for _, fpath := range files {
+		if !file.Exists(fpath) {
+			continue
+		}
+
+		statements, err := query.LoadStatementsFromFile(parser.Source{}, fpath)
+		if err != nil {
+			if e, ok := err.(*query.ReadFileError); ok {
+				err = errors.New(e.ErrorMessage())
+			}
+			return err
+		}
+
+		if _, err := proc.Execute(statements); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
