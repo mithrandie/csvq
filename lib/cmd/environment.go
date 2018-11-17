@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"sync"
 
@@ -17,6 +18,7 @@ const (
 	ConfigDir     = ".config"
 	CSVQConfigDir = "csvq"
 	EnvFileName   = "csvq_env.json"
+	RCFileName    = "csvqrc"
 
 	HiddenPrefix = '.'
 )
@@ -27,62 +29,76 @@ var (
 )
 
 type Environment struct {
-	Palette color.PaletteConfig `json:"palette"`
+	EnvironmentVariables map[string]string   `json:"environment_variables"`
+	Palette              color.PaletteConfig `json:"palette"`
 }
 
 func (e *Environment) Merge(e2 *Environment) {
+	for k, v := range e2.EnvironmentVariables {
+		e.EnvironmentVariables[k] = v
+	}
+
 	for k, v := range e2.Palette.Effectors {
 		e.Palette.Effectors[k] = v
 	}
+}
+
+func LoadEnvironment() error {
+	var err error
+
+	environment = &Environment{}
+	if err = json.Unmarshal([]byte(defaultEnvJson), environment); err != nil {
+		return errors.New(fmt.Sprintf("`json syntax error: %s", err.Error()))
+	}
+
+	handlers := make([]*file.Handler, 0, 4)
+	defer func() {
+		for _, h := range handlers {
+			h.Close()
+		}
+	}()
+
+	files := GetSpecialFilePath(EnvFileName)
+	for _, fpath := range files {
+		if !file.Exists(fpath) {
+			continue
+		}
+
+		var h *file.Handler
+		var buf []byte
+
+		h, err = file.NewHandlerForRead(fpath)
+		if err != nil {
+			return errors.New(fmt.Sprintf("failed to load %q: %s", fpath, err.Error()))
+		}
+		handlers = append(handlers, h)
+
+		buf, err = ioutil.ReadAll(h.FileForRead())
+		if err != nil {
+			return errors.New(fmt.Sprintf("failed to load %q: %s", fpath, err.Error()))
+		}
+		userDefinedEnv := &Environment{}
+		if err = json.Unmarshal(buf, userDefinedEnv); err != nil {
+			return errors.New(fmt.Sprintf("failed to load %q: %s", fpath, err.Error()))
+		}
+
+		environment.Merge(userDefinedEnv)
+	}
+
+	for k, v := range environment.EnvironmentVariables {
+		os.Setenv(k, v)
+	}
+
+	return nil
 }
 
 func GetEnvironment() (*Environment, error) {
 	var err error
 
 	getEnv.Do(func() {
-		environment = &Environment{}
-		if err = json.Unmarshal([]byte(defaultEnvJson), environment); err != nil {
-			err = errors.New(fmt.Sprintf("`json syntax error: %s", err.Error()))
-			return
-		}
-
-		handlers := make([]*file.Handler, 0, 4)
-		defer func() {
-			for _, h := range handlers {
-				h.Close()
-			}
-		}()
-
-		files := GetSpecialFilePath(EnvFileName)
-		for _, fpath := range files {
-			if !file.Exists(fpath) {
-				continue
-			}
-
-			var h *file.Handler
-			var buf []byte
-
-			h, err = file.NewHandlerForRead(fpath)
-			if err != nil {
-				err = errors.New(fmt.Sprintf("failed to load %q: %s", fpath, err.Error()))
-				return
-			}
-			handlers = append(handlers, h)
-
-			buf, err = ioutil.ReadAll(h.FileForRead())
-			if err != nil {
-				err = errors.New(fmt.Sprintf("failed to load %q: %s", fpath, err.Error()))
-				return
-			}
-			userDefinedEnv := &Environment{}
-			if err = json.Unmarshal(buf, userDefinedEnv); err != nil {
-				err = errors.New(fmt.Sprintf("failed to load %q: %s", fpath, err.Error()))
-				return
-			}
-
-			environment.Merge(userDefinedEnv)
-		}
+		err = LoadEnvironment()
 	})
+
 	return environment, err
 }
 

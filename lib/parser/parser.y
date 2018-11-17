@@ -21,6 +21,7 @@ import (
     variables   []Variable
     varassign   VariableAssignment
     varassigns  []VariableAssignment
+    envvar      EnvVar
     updateset   UpdateSet
     updatesets  []UpdateSet
     columndef   ColumnDefault
@@ -53,6 +54,7 @@ import (
 %type<statement>   function_flow_control_statement
 %type<statement>   function_loop_flow_control_statement
 %type<statement>   variable_statement
+%type<statement>   environment_variable_statement
 %type<statement>   transaction_statement
 %type<statement>   table_operation_statement
 %type<columndef>   column_default
@@ -162,6 +164,7 @@ import (
 %type<queryexpr>   variable_substitution
 %type<varassign>   variable_assignment
 %type<varassigns>  variable_assignments
+%type<envvar>      environment_variable
 %type<token>       distinct
 %type<token>       negation
 %type<token>       join_type_inner
@@ -172,8 +175,8 @@ import (
 %type<token>       as
 %type<token>       comparison_operator
 
-%token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME VARIABLE FLAG
-%token<token> SELECT FROM UPDATE SET DELETE WHERE INSERT INTO VALUES AS DUAL STDIN
+%token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME VARIABLE FLAG ENVIRONMENT_VARIABLE
+%token<token> SELECT FROM UPDATE SET UNSET DELETE WHERE INSERT INTO VALUES AS DUAL STDIN
 %token<token> RECURSIVE
 %token<token> CREATE ADD DROP ALTER TABLE FIRST LAST AFTER BEFORE DEFAULT RENAME TO VIEW
 %token<token> ORDER GROUP HAVING BY ASC DESC LIMIT OFFSET PERCENT
@@ -289,6 +292,10 @@ common_statement
         $$ = $1
     }
     | variable_statement
+    {
+        $$ = $1
+    }
+    | environment_variable_statement
     {
         $$ = $1
     }
@@ -545,6 +552,20 @@ variable_statement
     | DISPOSE variable
     {
         $$ = DisposeVariable{Variable:$2}
+    }
+
+environment_variable_statement
+    : SET environment_variable '=' value
+    {
+        $$ = SetEnvVar{EnvVar:$2, Value:$4}
+    }
+    | SET environment_variable '=' identifier
+    {
+        $$ = SetEnvVar{EnvVar:$2, Value:$4}
+    }
+    | UNSET environment_variable
+    {
+        $$ = UnsetEnvVar{EnvVar:$2}
     }
 
 transaction_statement
@@ -815,6 +836,10 @@ command_statement
         $$ = Printf{BaseExpr: NewBaseExpr($1), Format: $2}
     }
     | PRINTF value ',' values
+    {
+        $$ = Printf{BaseExpr: NewBaseExpr($1), Format: $2, Values: $4}
+    }
+    | PRINTF value USING values
     {
         $$ = Printf{BaseExpr: NewBaseExpr($1), Format: $2, Values: $4}
     }
@@ -1144,6 +1169,10 @@ value
         $$ = $1
     }
     | variable_substitution
+    {
+        $$ = $1
+    }
+    | environment_variable
     {
         $$ = $1
     }
@@ -2106,6 +2135,12 @@ variable_assignments
     | variable_assignment ',' variable_assignments
     {
         $$ = append([]VariableAssignment{$1}, $3...)
+    }
+
+environment_variable
+    : ENVIRONMENT_VARIABLE
+    {
+        $$ = EnvVar{BaseExpr: NewBaseExpr($1), Name:$1.Literal}
     }
 
 distinct

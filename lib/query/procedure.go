@@ -139,6 +139,10 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		err = proc.Filter.Variables.Declare(stmt.(parser.VariableDeclaration), proc.Filter)
 	case parser.VariableSubstitution:
 		_, err = proc.Filter.Evaluate(stmt.(parser.QueryExpression))
+	case parser.SetEnvVar:
+		err = SetEnvVar(stmt.(parser.SetEnvVar), proc.Filter)
+	case parser.UnsetEnvVar:
+		err = UnsetEnvVar(stmt.(parser.UnsetEnvVar))
 	case parser.DisposeVariable:
 		err = proc.Filter.Variables.Dispose(stmt.(parser.DisposeVariable).Variable)
 	case parser.CursorDeclaration:

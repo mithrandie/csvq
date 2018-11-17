@@ -1116,6 +1116,32 @@ type DisposeVariable struct {
 	Variable Variable
 }
 
+type EnvVar struct {
+	*BaseExpr
+	Name   string
+	Quoted bool
+}
+
+func (e EnvVar) String() string {
+	name := e.Name
+	if e.Quoted {
+		name = cmd.QuoteIdentifier(name)
+	}
+
+	return string(VariableSign) + string(EnvVarSign) + name
+}
+
+type SetEnvVar struct {
+	*BaseExpr
+	EnvVar EnvVar
+	Value  QueryExpression
+}
+
+type UnsetEnvVar struct {
+	*BaseExpr
+	EnvVar EnvVar
+}
+
 type InsertQuery struct {
 	*BaseExpr
 	WithClause QueryExpression

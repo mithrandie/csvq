@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -1893,4 +1894,78 @@ func TestShowFields(t *testing.T) {
 		}
 	}
 	ReleaseResources()
+}
+
+var setEnvVarTests = []struct {
+	Name   string
+	Expr   parser.SetEnvVar
+	Expect string
+	Error  string
+}{
+	{
+		Name: "Set Environment Variable",
+		Expr: parser.SetEnvVar{
+			EnvVar: parser.EnvVar{
+				Name: "CSVQ_SET_ENV_TEST",
+			},
+			Value: parser.NewStringValue("foo"),
+		},
+		Expect: "foo",
+	},
+	{
+		Name: "Set Environment Variable with Identifier",
+		Expr: parser.SetEnvVar{
+			EnvVar: parser.EnvVar{
+				Name: "CSVQ_SET_ENV_TEST",
+			},
+			Value: parser.Identifier{Literal: "bar"},
+		},
+		Expect: "bar",
+	},
+	{
+		Name: "Set Environment Variable with Null",
+		Expr: parser.SetEnvVar{
+			EnvVar: parser.EnvVar{
+				Name: "CSVQ_SET_ENV_TEST",
+			},
+			Value: parser.NewNullValue(),
+		},
+		Expect: "",
+	},
+	{
+		Name: "Set Environment Variable Evaluation Error",
+		Expr: parser.SetEnvVar{
+			EnvVar: parser.EnvVar{
+				Name: "CSVQ_SET_ENV_TEST",
+			},
+			Value: parser.FieldReference{Column: parser.Identifier{Literal: "err"}},
+		},
+		Error: "[L:- C:-] field err does not exist",
+	},
+}
+
+func TestSetEnvVar(t *testing.T) {
+	filter := NewEmptyFilter()
+
+	for _, v := range setEnvVarTests {
+		err := SetEnvVar(v.Expr, filter)
+
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+
+		val := os.Getenv(v.Expr.EnvVar.Name)
+		if val != v.Expect {
+			t.Errorf("%s: value = %s, want %s", v.Name, val, v.Expect)
+		}
+	}
 }

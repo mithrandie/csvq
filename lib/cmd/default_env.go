@@ -2,6 +2,7 @@ package cmd
 
 const defaultEnvJson = `
 {
+  "environment_variables": {},
   "palette": {
     "effectors": {
       "label": {

@@ -140,6 +140,27 @@ var scanTests = []struct {
 		},
 	},
 	{
+		Name:  "Environment Variable",
+		Input: "@%var",
+		Output: []scanResult{
+			{
+				Token:   ENVIRONMENT_VARIABLE,
+				Literal: "var",
+			},
+		},
+	},
+	{
+		Name:  "Environment Variable Quoted",
+		Input: "@%`var`",
+		Output: []scanResult{
+			{
+				Token:   ENVIRONMENT_VARIABLE,
+				Literal: "var",
+				Quoted:  true,
+			},
+		},
+	},
+	{
 		Name:  "EqualSign",
 		Input: "=",
 		Output: []scanResult{

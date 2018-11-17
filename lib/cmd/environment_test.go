@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -35,5 +36,12 @@ func TestGetConfigDirFilePath(t *testing.T) {
 	result = GetSpecialFilePath(filename)
 	if !reflect.DeepEqual(result, expect) {
 		t.Errorf("result = %v, want %v", result, expect)
+	}
+
+	s := os.ExpandEnv("$HOME/foo")
+	fmt.Println(s)
+	vars := os.Environ()
+	for _, v := range vars {
+		fmt.Println(v)
 	}
 }

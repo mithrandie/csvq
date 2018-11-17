@@ -535,6 +535,37 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 		}
 		w.Title1 = "Flags"
 		s = "\n" + w.String()
+	case "ENV":
+		env := os.Environ()
+		names := make([]string, 0, len(env))
+		vars := make([]string, 0, len(env))
+		nameWidth := 0
+
+		for _, e := range env {
+			words := strings.Split(e, "=")
+			name := string(parser.VariableSign) + string(parser.EnvVarSign) + words[0]
+			if nameWidth < len(name) {
+				nameWidth = len(name)
+			}
+
+			var val string
+			if 1 < len(words) {
+				val = strings.Join(words[1:], "=")
+			}
+			vars = append(vars, val)
+			names = append(names, name)
+		}
+
+		for i, name := range names {
+			w.WriteSpaces(nameWidth - len(name))
+			w.WriteColorWithoutLineBreak(name, cmd.LableEffect)
+			w.WriteColorWithoutLineBreak(":", cmd.LableEffect)
+			w.WriteSpaces(1)
+			w.WriteWithoutLineBreak(vars[i])
+			w.NewLine()
+		}
+		w.Title1 = "Environment Variables"
+		s = "\n" + w.String()
 	default:
 		return "", NewShowInvalidObjectTypeError(expr, expr.Type.String())
 	}
@@ -734,4 +765,28 @@ func writeFieldList(w *cmd.ObjectWriter, fields []string) {
 		w.WriteColorWithoutLineBreak(fields[i], cmd.AttributeEffect)
 		w.NewLine()
 	}
+}
+
+func SetEnvVar(expr parser.SetEnvVar, filter *Filter) error {
+	var p value.Primary
+	var err error
+
+	if ident, ok := expr.Value.(parser.Identifier); ok {
+		p = value.NewString(ident.Literal)
+	} else {
+		p, err = filter.Evaluate(expr.Value)
+		if err != nil {
+			return err
+		}
+	}
+
+	var val string
+	if p = value.ToString(p); !value.IsNull(p) {
+		val = p.(value.String).Raw()
+	}
+	return os.Setenv(expr.EnvVar.Name, val)
+}
+
+func UnsetEnvVar(expr parser.UnsetEnvVar) error {
+	return os.Unsetenv(expr.EnvVar.Name)
 }

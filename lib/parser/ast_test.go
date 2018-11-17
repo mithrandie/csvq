@@ -1517,6 +1517,25 @@ func TestVariableSubstitution_String(t *testing.T) {
 	}
 }
 
+func TestEnvVar_String(t *testing.T) {
+	e := EnvVar{
+		Name: "envvar",
+	}
+	expect := "@%envvar"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+
+	e = EnvVar{
+		Name:   "envvar",
+		Quoted: true,
+	}
+	expect = "@%`envvar`"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
 func TestCursorStatus_String(t *testing.T) {
 	e := CursorStatus{
 		CursorLit: "cursor",

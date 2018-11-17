@@ -26,6 +26,7 @@ const (
 
 const (
 	VariableSign = '@'
+	EnvVarSign   = '%'
 
 	SubstitutionOperator = ":="
 )
@@ -219,16 +220,27 @@ func (s *Scanner) Scan() (Token, error) {
 			token = Uncategorized
 		}
 	case s.isVariableSign(ch):
-		if s.isVariableSign(s.peek()) {
+		switch s.peek() {
+		case EnvVarSign:
+			s.next()
+			token = ENVIRONMENT_VARIABLE
+		case VariableSign:
 			s.next()
 			token = FLAG
-		} else {
+		default:
 			token = VARIABLE
-			s.offset = 0
 		}
+
 		s.offset = 0
-		s.scanIdentifier()
-		literal = s.literal()
+		if token == ENVIRONMENT_VARIABLE && s.peek() == '`' {
+			ch = s.next()
+			s.scanString(ch)
+			literal = cmd.UnescapeIdentifier(s.trimQuotes())
+			quoted = true
+		} else {
+			s.scanIdentifier()
+			literal = s.literal()
+		}
 
 		if len(literal) < 1 {
 			s.err = errors.New("invalid variable symbol")

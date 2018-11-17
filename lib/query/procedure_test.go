@@ -46,6 +46,29 @@ var procedureExecuteStatementTests = []struct {
 		Logs: "@@REPOSITORY: " + TestDir + "\n",
 	},
 	{
+		Input: parser.SetEnvVar{
+			EnvVar: parser.EnvVar{Name: "CSVQ_PROC_TEST"},
+			Value:  parser.NewStringValue("foo"),
+		},
+	},
+	{
+		Input: parser.Print{
+			Value: parser.EnvVar{Name: "CSVQ_PROC_TEST"},
+		},
+		Logs: "\"foo\"\n",
+	},
+	{
+		Input: parser.UnsetEnvVar{
+			EnvVar: parser.EnvVar{Name: "CSVQ_PROC_TEST"},
+		},
+	},
+	{
+		Input: parser.Print{
+			Value: parser.EnvVar{Name: "CSVQ_PROC_TEST"},
+		},
+		Logs: "\"\"\n",
+	},
+	{
 		Input: parser.VariableDeclaration{
 			Assignments: []parser.VariableAssignment{
 				{

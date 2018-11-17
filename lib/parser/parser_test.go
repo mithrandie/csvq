@@ -3386,6 +3386,32 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "set @%var = ident",
+		Output: []Statement{
+			SetEnvVar{
+				EnvVar: EnvVar{BaseExpr: &BaseExpr{line: 1, char: 5}, Name: "var"},
+				Value:  Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "ident"},
+			},
+		},
+	},
+	{
+		Input: "set @%var = 1",
+		Output: []Statement{
+			SetEnvVar{
+				EnvVar: EnvVar{BaseExpr: &BaseExpr{line: 1, char: 5}, Name: "var"},
+				Value:  NewIntegerValueFromString("1"),
+			},
+		},
+	},
+	{
+		Input: "unset @%var",
+		Output: []Statement{
+			UnsetEnvVar{
+				EnvVar: EnvVar{BaseExpr: &BaseExpr{line: 1, char: 7}, Name: "var"},
+			},
+		},
+	},
+	{
 		Input: "func('arg1', 'arg2')",
 		Output: []Statement{
 			Function{
@@ -3923,6 +3949,18 @@ var parseTests = []struct {
 	},
 	{
 		Input: "printf 'foo', 'bar'",
+		Output: []Statement{
+			Printf{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Format:   NewStringValue("foo"),
+				Values: []QueryExpression{
+					NewStringValue("bar"),
+				},
+			},
+		},
+	},
+	{
+		Input: "printf 'foo' using 'bar'",
 		Output: []Statement{
 			Printf{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
@@ -4927,6 +4965,22 @@ var parseTests = []struct {
 									RHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 25}, Name: "var3"},
 								},
 							},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select @%var",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: EnvVar{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "var"},
 						},
 					},
 				},

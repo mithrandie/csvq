@@ -3880,6 +3880,13 @@ var filterEvaluateTests = []struct {
 		Result: value.NewInteger(1),
 	},
 	{
+		Name: "Environment Variable",
+		Expr: parser.EnvVar{
+			Name: "CSVQ_TEST_ENV",
+		},
+		Result: value.NewString("foo"),
+	},
+	{
 		Name: "Variable Undeclared Error",
 		Expr: parser.Variable{
 			Name: "undefined",
