@@ -101,7 +101,7 @@ func TestFlags_SetLocation(t *testing.T) {
 	}
 
 	s = "America/NotExist"
-	expectErr := "timezone does not exist"
+	expectErr := "timezone \"America/NotExist\" does not exist"
 	err := flags.SetLocation(s)
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, s)

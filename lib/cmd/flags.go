@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -259,10 +260,10 @@ func (f *Flags) SetLocation(s string) error {
 
 	location, err := time.LoadLocation(s)
 	if err != nil {
-		return errors.New("timezone does not exist")
+		return errors.New(fmt.Sprintf("timezone %q does not exist", s))
 	}
 
-	f.Location = location.String()
+	f.Location = s
 	time.Local = location
 	return nil
 }
