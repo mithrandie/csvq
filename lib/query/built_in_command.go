@@ -266,7 +266,11 @@ func showFlag(flag string) (string, error) {
 		if len(flags.DatetimeFormat) < 1 {
 			s = palette.Render(cmd.NullEffect, "(not set)")
 		} else {
-			s = palette.Render(cmd.StringEffect, flags.DatetimeFormat)
+			list := make([]string, 0, len(flags.DatetimeFormat))
+			for _, f := range flags.DatetimeFormat {
+				list = append(list, "\""+f+"\"")
+			}
+			s = palette.Render(cmd.StringEffect, "["+strings.Join(list, ", ")+"]")
 		}
 	case cmd.WaitTimeoutFlag:
 		s = palette.Render(cmd.NumberEffect, value.Float64ToStr(flags.WaitTimeout))

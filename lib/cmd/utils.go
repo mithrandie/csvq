@@ -315,6 +315,18 @@ func ParseFormat(s string) (Format, error) {
 	return fm, nil
 }
 
+func AppendStrIfNotExist(list []string, elem string) []string {
+	if len(elem) < 1 {
+		return list
+	}
+	for _, v := range list {
+		if elem == v {
+			return list
+		}
+	}
+	return append(list, elem)
+}
+
 func TextWidth(s string) int {
 	return text.Width(s, GetFlags().EastAsianEncoding, GetFlags().CountDiacriticalSign, GetFlags().CountFormatCode)
 }

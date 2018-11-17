@@ -30,8 +30,8 @@ func StrToTime(s string) (time.Time, error) {
 	s = strings.TrimSpace(s)
 
 	flags := cmd.GetFlags()
-	if 0 < len(flags.DatetimeFormat) {
-		if t, e := time.ParseInLocation(DatetimeFormats.Get(flags.DatetimeFormat), s, cmd.GetLocation()); e == nil {
+	for _, format := range flags.DatetimeFormat {
+		if t, e := time.ParseInLocation(DatetimeFormats.Get(format), s, cmd.GetLocation()); e == nil {
 			return t, nil
 		}
 	}

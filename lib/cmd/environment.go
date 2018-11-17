@@ -29,12 +29,17 @@ var (
 )
 
 type Environment struct {
+	DatetimeFormat       []string            `json:"datetime_format"`
 	InteractiveShell     InteractiveShell    `json:"interactive_shell"`
 	EnvironmentVariables map[string]string   `json:"environment_variables"`
 	Palette              color.PaletteConfig `json:"palette"`
 }
 
 func (e *Environment) Merge(e2 *Environment) {
+	for _, f := range e2.DatetimeFormat {
+		e.DatetimeFormat = AppendStrIfNotExist(e.DatetimeFormat, f)
+	}
+
 	if 0 < len(e2.InteractiveShell.HistoryFile) {
 		e.InteractiveShell.HistoryFile = e2.InteractiveShell.HistoryFile
 	}
@@ -117,23 +122,11 @@ func GetEnvironment() (*Environment, error) {
 }
 
 func GetSpecialFilePath(filename string) []string {
-	var appendToList = func(list []string, fpath string) []string {
-		if len(fpath) < 1 {
-			return list
-		}
-		for _, v := range list {
-			if fpath == v {
-				return list
-			}
-		}
-		return append(list, fpath)
-	}
-
 	files := make([]string, 0, 4)
-	files = appendToList(files, GetHomeDirFilePath(filename))
-	files = appendToList(files, GetCSVQConfigDirFilePath(filename))
-	files = appendToList(files, GetConfigDirFilePath(filename))
-	files = appendToList(files, GetCurrentDirFilePath(filename))
+	files = AppendStrIfNotExist(files, GetHomeDirFilePath(filename))
+	files = AppendStrIfNotExist(files, GetCSVQConfigDirFilePath(filename))
+	files = AppendStrIfNotExist(files, GetConfigDirFilePath(filename))
+	files = AppendStrIfNotExist(files, GetCurrentDirFilePath(filename))
 	return files
 }
 

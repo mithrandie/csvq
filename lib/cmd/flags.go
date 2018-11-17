@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
@@ -119,7 +120,7 @@ type Flags struct {
 	// Common Settings
 	Repository     string
 	Location       string
-	DatetimeFormat string
+	DatetimeFormat []string
 	WaitTimeout    float64
 
 	// For Import
@@ -178,10 +179,12 @@ func GetFlags() *Flags {
 			cpu = 1
 		}
 
+		env, _ := GetEnvironment()
+
 		flags = &Flags{
 			Repository:              pwd,
 			Location:                "Local",
-			DatetimeFormat:          "",
+			DatetimeFormat:          env.DatetimeFormat,
 			WaitTimeout:             10,
 			Delimiter:               ',',
 			JsonQuery:               "",
@@ -265,7 +268,14 @@ func (f *Flags) SetLocation(s string) error {
 }
 
 func (f *Flags) SetDatetimeFormat(s string) {
-	f.DatetimeFormat = s
+	var formats []string
+	if err := json.Unmarshal([]byte(s), &formats); err == nil {
+		for _, v := range formats {
+			f.DatetimeFormat = AppendStrIfNotExist(f.DatetimeFormat, v)
+		}
+	} else {
+		f.DatetimeFormat = append(f.DatetimeFormat, s)
+	}
 }
 
 func (f *Flags) SetWaitTimeout(t float64) {

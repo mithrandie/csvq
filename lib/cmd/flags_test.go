@@ -115,8 +115,21 @@ func TestFlags_SetDatetimeFormat(t *testing.T) {
 
 	format := "%Y-%m-%d"
 	flags.SetDatetimeFormat(format)
-	if flags.DatetimeFormat != format {
-		t.Errorf("datetime format = %s, expect to set %s", flags.DatetimeFormat, format)
+	expect := []string{
+		"%Y-%m-%d",
+	}
+	if !reflect.DeepEqual(flags.DatetimeFormat, expect) {
+		t.Errorf("datetime format = %s, expect to set %s", flags.DatetimeFormat, expect)
+	}
+
+	format = "[\"%Y-%m-%d %H:%i:%s\"]"
+	flags.SetDatetimeFormat(format)
+	expect = []string{
+		"%Y-%m-%d",
+		"%Y-%m-%d %H:%i:%s",
+	}
+	if !reflect.DeepEqual(flags.DatetimeFormat, expect) {
+		t.Errorf("datetime format = %s, expect to set %s", flags.DatetimeFormat, expect)
 	}
 }
 

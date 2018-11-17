@@ -2,6 +2,7 @@ package cmd
 
 const defaultEnvJson = `
 {
+  "datetime_format": [],
   "interactive_shell": {
     "history_file": ".csvq_history",
     "history_limit": 500

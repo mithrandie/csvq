@@ -11,7 +11,7 @@ import (
 
 func TestStrToTime(t *testing.T) {
 	flags := cmd.GetFlags()
-	flags.DatetimeFormat = "01/02/2006"
+	flags.DatetimeFormat = []string{"01/02/2006"}
 
 	s := "01/02/2006"
 	if _, err := StrToTime(s); err != nil {
@@ -384,7 +384,7 @@ func TestToDatetime(t *testing.T) {
 	var p Primary
 	var dt Primary
 
-	flags.DatetimeFormat = "01022006"
+	flags.DatetimeFormat = []string{"01022006"}
 	p = NewString("02012012")
 	dt = ToDatetime(p)
 	if _, ok := dt.(Datetime); !ok {
@@ -523,7 +523,7 @@ func TestToString(t *testing.T) {
 
 func BenchmarkStrToTime1(b *testing.B) {
 	flags := cmd.GetFlags()
-	flags.DatetimeFormat = "01/02/2006"
+	flags.DatetimeFormat = []string{"01/02/2006"}
 
 	for i := 0; i < b.N; i++ {
 		s := "01/02/2006"
@@ -533,7 +533,7 @@ func BenchmarkStrToTime1(b *testing.B) {
 
 func BenchmarkStrToTime2(b *testing.B) {
 	flags := cmd.GetFlags()
-	flags.DatetimeFormat = ""
+	flags.DatetimeFormat = []string{}
 
 	for i := 0; i < b.N; i++ {
 		s := "2006-01-02T15:04:05-07:00"
@@ -543,7 +543,7 @@ func BenchmarkStrToTime2(b *testing.B) {
 
 func BenchmarkStrToTime3(b *testing.B) {
 	flags := cmd.GetFlags()
-	flags.DatetimeFormat = ""
+	flags.DatetimeFormat = []string{}
 
 	for i := 0; i < b.N; i++ {
 		s := "2006-01-02"
@@ -553,7 +553,7 @@ func BenchmarkStrToTime3(b *testing.B) {
 
 func BenchmarkStrToTime4(b *testing.B) {
 	flags := cmd.GetFlags()
-	flags.DatetimeFormat = ""
+	flags.DatetimeFormat = []string{}
 
 	for i := 0; i < b.N; i++ {
 		s := "2006-01-02 15:04:05"
@@ -563,7 +563,7 @@ func BenchmarkStrToTime4(b *testing.B) {
 
 func BenchmarkStrToTime5(b *testing.B) {
 	flags := cmd.GetFlags()
-	flags.DatetimeFormat = ""
+	flags.DatetimeFormat = []string{}
 
 	for i := 0; i < b.N; i++ {
 		s := "2006-01-02 15:04:05 -0700"
@@ -573,7 +573,7 @@ func BenchmarkStrToTime5(b *testing.B) {
 
 func BenchmarkStrToTime6(b *testing.B) {
 	flags := cmd.GetFlags()
-	flags.DatetimeFormat = ""
+	flags.DatetimeFormat = []string{}
 
 	for i := 0; i < b.N; i++ {
 		s := "02 Jan 06 15:04 PDT"
@@ -583,7 +583,7 @@ func BenchmarkStrToTime6(b *testing.B) {
 
 func BenchmarkStrToTime7(b *testing.B) {
 	flags := cmd.GetFlags()
-	flags.DatetimeFormat = ""
+	flags.DatetimeFormat = []string{}
 
 	for i := 0; i < b.N; i++ {
 		s := "abcdefghijklmnopq"

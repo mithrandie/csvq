@@ -108,7 +108,7 @@ func initFlag() {
 	cmd.GetFlags().SetLocation(TestLocation)
 	flags := cmd.GetFlags()
 	flags.Repository = "."
-	flags.DatetimeFormat = ""
+	flags.DatetimeFormat = []string{}
 	flags.WaitTimeout = 15
 	flags.Delimiter = ','
 	flags.JsonQuery = ""

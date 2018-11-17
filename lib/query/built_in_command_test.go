@@ -626,10 +626,10 @@ var showFlagTests = []struct {
 		SetExprs: []parser.SetFlag{
 			{
 				Name:  "datetime_format",
-				Value: parser.NewStringValue("%Y%m%d"),
+				Value: parser.NewStringValue("[\"%Y%m%d\", \"%Y%m%d %H%i%s\"]"),
 			},
 		},
-		Result: "\033[34;1m@@DATETIME_FORMAT:\033[0m \033[32m%Y%m%d\033[0m",
+		Result: "\033[34;1m@@DATETIME_FORMAT:\033[0m \033[32m[\"%Y%m%d\", \"%Y%m%d %H%i%s\"]\033[0m",
 	},
 	{
 		Name: "Show WaitTimeout",

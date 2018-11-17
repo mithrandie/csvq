@@ -8,21 +8,24 @@ import (
 )
 
 var historyFilePathTests = []struct {
-	Filename string
-	Expect   string
-	Error    string
+	Filename    string
+	Expect      string
+	JoinHomeDir bool
+	Error       string
 }{
 	{
-		Filename: ".zsh_history",
-		Expect:   filepath.Join(HomeDir, ".zsh_history"),
+		Filename:    ".zsh_history",
+		Expect:      ".zsh_history",
+		JoinHomeDir: true,
 	},
 	{
-		Filename: "~/.zsh_history",
-		Expect:   filepath.Join(HomeDir, ".zsh_history"),
+		Filename:    filepath.Join("~", ".zsh_history"),
+		Expect:      ".zsh_history",
+		JoinHomeDir: true,
 	},
 	{
-		Filename: "/var/zsh_history",
-		Expect:   filepath.Join(HomeDir, "/var/zsh_history"),
+		Filename: filepath.Join(TestDir, "zsh_history"),
+		Expect:   filepath.Join(TestDir, "zsh_history"),
 	},
 }
 
@@ -41,8 +44,13 @@ func TestHistoryFilePath(t *testing.T) {
 			t.Errorf("no error, want error %q for %q", v.Error, v.Filename)
 			continue
 		}
-		if result != v.Expect {
-			t.Errorf("filepath = %q, want %q for %q", result, v.Expect, v.Filename)
+
+		expect := v.Expect
+		if v.JoinHomeDir {
+			expect = filepath.Join(HomeDir, expect)
+		}
+		if result != expect {
+			t.Errorf("filepath = %q, want %q for %q", result, expect, v.Filename)
 		}
 	}
 }
