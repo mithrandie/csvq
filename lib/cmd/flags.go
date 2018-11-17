@@ -171,10 +171,7 @@ var (
 
 func GetFlags() *Flags {
 	getFlags.Do(func() {
-		pwd, err := filepath.Abs(".")
-		if err != nil {
-			pwd = "."
-		}
+		pwd, _ := os.Getwd()
 
 		cpu := runtime.NumCPU() / 2
 		if cpu < 1 {

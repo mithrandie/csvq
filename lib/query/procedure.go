@@ -130,9 +130,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 
 	switch stmt.(type) {
 	case parser.SetFlag:
-		if printstr, err = SetFlag(stmt.(parser.SetFlag), proc.Filter); err == nil {
-			Log(printstr, flags.Quiet)
-		}
+		err = SetFlag(stmt.(parser.SetFlag), proc.Filter)
 	case parser.ShowFlag:
 		if printstr, err = ShowFlag(stmt.(parser.ShowFlag)); err == nil {
 			Log(printstr, false)
@@ -548,7 +546,8 @@ func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, 
 }
 
 func (proc *Procedure) showExecutionTime() {
+	palette, _ := cmd.GetPalette()
 	exectime := cmd.FormatNumber(time.Since(proc.MeasurementStart).Seconds(), 6, ".", ",", "")
-	stats := fmt.Sprintf(cmd.GetPalette().Render(cmd.LableEffect, " Query Execution Time: ")+"%s seconds", exectime)
+	stats := fmt.Sprintf(palette.Render(cmd.LableEffect, "Query Execution Time: ")+"%s seconds", exectime)
 	Log(stats, false)
 }

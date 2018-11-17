@@ -14,7 +14,6 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/query"
 
-	"github.com/mithrandie/go-text/color"
 	"github.com/urfave/cli"
 )
 
@@ -203,8 +202,18 @@ func main() {
 	}
 
 	app.Before = func(c *cli.Context) error {
-		err := setFlags(c)
-		if err != nil {
+		// Init Single Objects
+		if _, err := cmd.GetEnvironment(); err != nil {
+			return NewExitError(err.Error(), 1)
+		}
+		if _, err := cmd.GetPalette(); err != nil {
+			return NewExitError(err.Error(), 1)
+		}
+		flags := cmd.GetFlags()
+		flags.SetColor(false)
+
+		// Overwrite Flags with Command Options
+		if err := overwriteFlags(c); err != nil {
 			return NewExitError(err.Error(), 1)
 		}
 		return nil
@@ -272,7 +281,7 @@ func readQuery(c *cli.Context) (string, string, error) {
 	return queryString, path, nil
 }
 
-func setFlags(c *cli.Context) error {
+func overwriteFlags(c *cli.Context) error {
 	flags := cmd.GetFlags()
 	if c.IsSet("color") {
 		flags.SetColor(c.GlobalBool("color"))
@@ -369,5 +378,5 @@ func setFlags(c *cli.Context) error {
 }
 
 func NewExitError(message string, code int) *cli.ExitError {
-	return cli.NewExitError(color.Error(message), code)
+	return cli.NewExitError(cmd.Error(message), code)
 }

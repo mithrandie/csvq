@@ -1,10 +1,11 @@
 package cmd
 
 import (
+	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/mithrandie/go-text/color"
-	"github.com/mithrandie/go-text/json"
 )
 
 const (
@@ -22,96 +23,52 @@ const (
 	ValueEffect      = "value"
 	EmphasisEffect   = "emphasis"
 	PromptEffect     = "prompt"
+	ErrorEffect      = "error"
+	WarnEffect       = "warn"
+	NoticeEffect     = "notice"
 )
-
-var PaletteEffectList = []string{
-	LableEffect,
-	NumberEffect,
-	StringEffect,
-	BooleanEffect,
-	TernaryEffect,
-	DatetimeEffect,
-	NullEffect,
-	ObjectEffect,
-	AttributeEffect,
-	IdentifierEffect,
-	ValueEffect,
-	EmphasisEffect,
-	PromptEffect,
-}
 
 var (
 	palette    *color.Palette
 	getPalette sync.Once
 )
 
-func GetPalette() *color.Palette {
+func GetPalette() (*color.Palette, error) {
+	var err error
+
 	getPalette.Do(func() {
-		label := color.NewEffector()
-		label.SetEffect(color.Bold)
-		label.SetFGColor(color.Blue)
+		var env *Environment
+		env, err = GetEnvironment()
+		if err != nil {
+			return
+		}
 
-		num := color.NewEffector()
-		num.SetFGColor(color.Magenta)
-
-		str := color.NewEffector()
-		str.SetFGColor(color.Green)
-
-		b := color.NewEffector()
-		b.SetFGColor(color.Yellow)
-		b.SetEffect(color.Bold)
-
-		t := color.NewEffector()
-		t.SetFGColor(color.Yellow)
-
-		dt := color.NewEffector()
-		dt.SetFGColor(color.Cyan)
-
-		n := color.NewEffector()
-		n.SetFGColor(color.BrightBlack)
-
-		obj := color.NewEffector()
-		obj.SetFGColor(color.Green)
-		obj.SetEffect(color.Bold)
-
-		attr := color.NewEffector()
-		attr.SetFGColor(color.Yellow)
-
-		ident := color.NewEffector()
-		ident.SetFGColor(color.Cyan)
-		ident.SetEffect(color.Bold)
-
-		val := color.NewEffector()
-		val.SetFGColor(color.Blue)
-		val.SetEffect(color.Bold)
-
-		emphasis := color.NewEffector()
-		emphasis.SetFGColor(color.Red)
-		emphasis.SetEffect(color.Bold)
-
-		prompt := color.NewEffector()
-		prompt.SetFGColor(color.Blue)
-
-		palette = color.NewPalette()
-		palette.SetEffector(LableEffect, label)
-		palette.SetEffector(NumberEffect, num)
-		palette.SetEffector(StringEffect, str)
-		palette.SetEffector(BooleanEffect, b)
-		palette.SetEffector(TernaryEffect, t)
-		palette.SetEffector(DatetimeEffect, dt)
-		palette.SetEffector(NullEffect, n)
-		palette.SetEffector(ObjectEffect, obj)
-		palette.SetEffector(AttributeEffect, attr)
-		palette.SetEffector(IdentifierEffect, ident)
-		palette.SetEffector(ValueEffect, val)
-		palette.SetEffector(EmphasisEffect, emphasis)
-		palette.SetEffector(PromptEffect, prompt)
-		palette.SetEffector(json.ObjectKeyEffect, label)
-		palette.SetEffector(json.NumberEffect, num)
-		palette.SetEffector(json.StringEffect, str)
-		palette.SetEffector(json.BooleanEffect, b)
-		palette.SetEffector(json.NullEffect, n)
+		palette, err = color.GeneratePalette(env.Palette)
+		if err != nil {
+			err = errors.New(fmt.Sprintf("palette configuration error: %s", err.Error()))
+		}
 	})
 
-	return palette
+	return palette, err
+}
+
+func Error(s string) string {
+	if p, err := GetPalette(); err == nil && p != nil {
+		return p.Render(ErrorEffect, s)
+	}
+	return s
+}
+
+func Warn(s string) string {
+	if p, err := GetPalette(); err == nil && p != nil {
+		return p.Render(WarnEffect, s)
+	}
+	return s
+}
+
+func Notice(s string) string {
+	if p, err := GetPalette(); err == nil && p != nil {
+		return p.Render(NoticeEffect, s)
+	}
+	return s
 }

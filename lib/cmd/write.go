@@ -3,8 +3,6 @@ package cmd
 import (
 	"bufio"
 	"os"
-
-	"github.com/mithrandie/go-text/color"
 )
 
 func WriteToStdout(s string) error {
@@ -28,7 +26,7 @@ func WriteToStdErr(s string) error {
 	}
 
 	w := bufio.NewWriter(os.Stderr)
-	_, err := w.WriteString(color.Error(s))
+	_, err := w.WriteString(Error(s))
 	if err != nil {
 		return err
 	}

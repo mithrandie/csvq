@@ -27,7 +27,7 @@ func NewTerminal() (VirtualTerminal, error) {
 		return nil, err
 	}
 
-	p := GetPalette()
+	p, _ := GetPalette()
 
 	t, err := readline.NewEx(&readline.Config{
 		Prompt:                 p.Render(PromptEffect, TerminalPrompt),
@@ -81,10 +81,6 @@ func (t ReadLineTerminal) GetSize() (int, int, error) {
 
 func historyFilePath() (string, error) {
 	home, err := homedir.Dir()
-	if err != nil {
-		return "", err
-	}
-	home, err = homedir.Expand(home)
 	if err != nil {
 		return "", err
 	}

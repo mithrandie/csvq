@@ -17,7 +17,6 @@ import (
 	"github.com/mithrandie/csvq/lib/query"
 
 	"github.com/mithrandie/go-file"
-	"github.com/mithrandie/go-text/color"
 )
 
 func Run(input string, sourceFile string, outfile string) error {
@@ -157,7 +156,7 @@ func LaunchInteractiveShell() error {
 		if e != nil {
 			syntaxErr := e.(*parser.SyntaxError)
 			e = query.NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)
-			if werr := cmd.Terminal.WriteError(color.Error(e.Error()) + "\n"); werr != nil {
+			if werr := cmd.Terminal.WriteError(cmd.Error(e.Error()) + "\n"); werr != nil {
 				return werr
 			}
 			lines = lines[:0]
@@ -171,7 +170,7 @@ func LaunchInteractiveShell() error {
 				err = ex
 				break
 			} else {
-				if werr := cmd.Terminal.WriteError(color.Error(e.Error()) + "\n"); werr != nil {
+				if werr := cmd.Terminal.WriteError(cmd.Error(e.Error()) + "\n"); werr != nil {
 					return werr
 				}
 				lines = lines[:0]

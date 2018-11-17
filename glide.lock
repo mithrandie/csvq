@@ -1,5 +1,5 @@
-hash: 47e0b364e56e1bc9cf74bd7162fa6ff72ff1d486d4411fe281d1348708710c71
-updated: 2018-11-16T19:37:15.049206+09:00
+hash: 8f1f17434051282c898425821774fcc86f3052afdf4c966543e4abd2067ea895
+updated: 2018-11-17T19:14:18.917936+09:00
 imports:
 - name: github.com/chzyer/readline
   version: 62c6fe6193755f722b8b8788aa7357be55a50ff1
@@ -8,7 +8,7 @@ imports:
 - name: github.com/mithrandie/go-file
   version: 2066c60a29ce10d93467df8bb519d8e8668d4c2e
 - name: github.com/mithrandie/go-text
-  version: 63c016f5e9b6feefd0fd065437c94ea6cbe29e4a
+  version: d55e10c292ca80eaf7967957897b2f6759745465
   subpackages:
   - color
   - csv
@@ -24,7 +24,7 @@ imports:
   subpackages:
   - ssh/terminal
 - name: golang.org/x/sys
-  version: 66b7b1311ac80bbafcd2daeef9a5e6e2cd1e2399
+  version: 93218def8b18e66adbdab3eca8ec334700329f1f
   subpackages:
   - unix
   - windows

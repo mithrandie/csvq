@@ -40,12 +40,14 @@ func NewObjectWriter() *ObjectWriter {
 		}
 	}
 
+	palette, _ := GetPalette()
+
 	return &ObjectWriter{
 		MaxWidth:    maxWidth,
 		Indent:      0,
 		IndentWidth: 4,
 		Padding:     DefaultPadding,
-		Palette:     GetPalette(),
+		Palette:     palette,
 		lineWidth:   0,
 		column:      0,
 		subBlock:    0,

@@ -38,13 +38,12 @@ var procedureExecuteStatementTests = []struct {
 			Name:  "delimiter",
 			Value: parser.NewStringValue(","),
 		},
-		Logs: " @@DELIMITER: ',' | SPACES\n",
 	},
 	{
 		Input: parser.ShowFlag{
 			Name: "repository",
 		},
-		Logs: " @@REPOSITORY: " + TestDir + "\n",
+		Logs: "@@REPOSITORY: " + TestDir + "\n",
 	},
 	{
 		Input: parser.VariableDeclaration{

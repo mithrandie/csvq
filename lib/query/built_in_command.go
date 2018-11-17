@@ -15,7 +15,6 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mithrandie/go-text"
-	"github.com/mithrandie/go-text/color"
 	"github.com/mithrandie/go-text/fixedlen"
 	"github.com/mithrandie/ternary"
 )
@@ -150,7 +149,7 @@ func ParseExecuteStatements(expr parser.Execute, filter *Filter) ([]parser.State
 	return statements, err
 }
 
-func SetFlag(expr parser.SetFlag, filter *Filter) (string, error) {
+func SetFlag(expr parser.SetFlag, filter *Filter) error {
 	var p value.Primary
 	var err error
 
@@ -159,7 +158,7 @@ func SetFlag(expr parser.SetFlag, filter *Filter) (string, error) {
 	} else {
 		p, err = filter.Evaluate(expr.Value)
 		if err != nil {
-			return "", err
+			return err
 		}
 	}
 
@@ -175,10 +174,10 @@ func SetFlag(expr parser.SetFlag, filter *Filter) (string, error) {
 	case cmd.CPUFlag:
 		p = value.ToInteger(p)
 	default:
-		return "", NewInvalidFlagNameError(expr, expr.Name)
+		return NewInvalidFlagNameError(expr, expr.Name)
 	}
 	if value.IsNull(p) {
-		return "", NewFlagValueNotAllowedFormatError(expr)
+		return NewFlagValueNotAllowedFormatError(expr)
 	}
 
 	flags := cmd.GetFlags()
@@ -233,11 +232,9 @@ func SetFlag(expr parser.SetFlag, filter *Filter) (string, error) {
 	}
 
 	if err != nil {
-		return "", NewInvalidFlagValueError(expr, err.Error())
+		return NewInvalidFlagValueError(expr, err.Error())
 	}
-
-	s, _ := showFlag(expr.Name)
-	return " " + cmd.GetPalette().Render(cmd.LableEffect, cmd.FlagSymbol(strings.ToUpper(expr.Name)+":")) + " " + s, nil
+	return nil
 }
 
 func ShowFlag(expr parser.ShowFlag) (string, error) {
@@ -246,38 +243,40 @@ func ShowFlag(expr parser.ShowFlag) (string, error) {
 		return s, NewInvalidFlagNameError(expr, expr.Name)
 	}
 
-	return " " + cmd.GetPalette().Render(cmd.LableEffect, cmd.FlagSymbol(strings.ToUpper(expr.Name)+":")) + " " + s, nil
+	palette, _ := cmd.GetPalette()
+	return palette.Render(cmd.LableEffect, cmd.FlagSymbol(strings.ToUpper(expr.Name)+":")) + " " + s, nil
 }
 
 func showFlag(flag string) (string, error) {
 	var s string
 
 	flags := cmd.GetFlags()
+	palette, _ := cmd.GetPalette()
 
 	switch strings.ToUpper(flag) {
 	case cmd.RepositoryFlag:
-		s = cmd.GetPalette().Render(cmd.StringEffect, flags.Repository)
+		s = palette.Render(cmd.StringEffect, flags.Repository)
 	case cmd.TimezoneFlag:
-		s = cmd.GetPalette().Render(cmd.StringEffect, flags.Location)
+		s = palette.Render(cmd.StringEffect, flags.Location)
 	case cmd.DatetimeFormatFlag:
 		if len(flags.DatetimeFormat) < 1 {
-			s = cmd.GetPalette().Render(cmd.NullEffect, "(not set)")
+			s = palette.Render(cmd.NullEffect, "(not set)")
 		} else {
-			s = cmd.GetPalette().Render(cmd.StringEffect, flags.DatetimeFormat)
+			s = palette.Render(cmd.StringEffect, flags.DatetimeFormat)
 		}
 	case cmd.WaitTimeoutFlag:
-		s = cmd.GetPalette().Render(cmd.NumberEffect, value.Float64ToStr(flags.WaitTimeout))
+		s = palette.Render(cmd.NumberEffect, value.Float64ToStr(flags.WaitTimeout))
 	case cmd.DelimiterFlag:
 		d := "'" + cmd.EscapeString(string(flags.Delimiter)) + "'"
 		p := fixedlen.DelimiterPositions(flags.DelimiterPositions).String()
 
 		switch flags.SelectImportFormat() {
 		case cmd.CSV, cmd.TSV:
-			s = cmd.GetPalette().Render(cmd.StringEffect, d) + cmd.GetPalette().Render(cmd.LableEffect, " | ") + cmd.GetPalette().Render(cmd.NullEffect, p)
+			s = palette.Render(cmd.StringEffect, d) + palette.Render(cmd.LableEffect, " | ") + palette.Render(cmd.NullEffect, p)
 		case cmd.FIXED:
-			s = cmd.GetPalette().Render(cmd.NullEffect, d) + cmd.GetPalette().Render(cmd.LableEffect, " | ") + cmd.GetPalette().Render(cmd.StringEffect, p)
+			s = palette.Render(cmd.NullEffect, d) + palette.Render(cmd.LableEffect, " | ") + palette.Render(cmd.StringEffect, p)
 		default:
-			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+d+" | "+p)
+			s = palette.Render(cmd.NullEffect, IgnoredFlagPrefix+d+" | "+p)
 		}
 	case cmd.JsonQueryFlag:
 		q := flags.JsonQuery
@@ -287,94 +286,94 @@ func showFlag(flag string) (string, error) {
 
 		switch flags.SelectImportFormat() {
 		case cmd.JSON:
-			s = cmd.GetPalette().Render(cmd.StringEffect, q)
+			s = palette.Render(cmd.StringEffect, q)
 		default:
-			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+q)
+			s = palette.Render(cmd.NullEffect, IgnoredFlagPrefix+q)
 		}
 	case cmd.EncodingFlag:
-		s = cmd.GetPalette().Render(cmd.StringEffect, flags.Encoding.String())
+		s = palette.Render(cmd.StringEffect, flags.Encoding.String())
 	case cmd.NoHeaderFlag:
-		s = cmd.GetPalette().Render(cmd.BooleanEffect, strconv.FormatBool(flags.NoHeader))
+		s = palette.Render(cmd.BooleanEffect, strconv.FormatBool(flags.NoHeader))
 	case cmd.WithoutNullFlag:
-		s = cmd.GetPalette().Render(cmd.BooleanEffect, strconv.FormatBool(flags.WithoutNull))
+		s = palette.Render(cmd.BooleanEffect, strconv.FormatBool(flags.WithoutNull))
 	case cmd.FormatFlag:
-		s = cmd.GetPalette().Render(cmd.StringEffect, flags.Format.String())
+		s = palette.Render(cmd.StringEffect, flags.Format.String())
 	case cmd.WriteEncodingFlag:
 		switch flags.Format {
 		case cmd.JSON, cmd.JSONH, cmd.JSONA:
-			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+flags.WriteEncoding.String())
+			s = palette.Render(cmd.NullEffect, IgnoredFlagPrefix+flags.WriteEncoding.String())
 		default:
-			s = cmd.GetPalette().Render(cmd.StringEffect, flags.WriteEncoding.String())
+			s = palette.Render(cmd.StringEffect, flags.WriteEncoding.String())
 		}
 	case cmd.WriteDelimiterFlag:
 		d := "'" + cmd.EscapeString(string(flags.WriteDelimiter)) + "'"
 		p := fixedlen.DelimiterPositions(flags.WriteDelimiterPositions).String()
 		switch flags.Format {
 		case cmd.CSV:
-			s = cmd.GetPalette().Render(cmd.StringEffect, d) + cmd.GetPalette().Render(cmd.LableEffect, " | ") + cmd.GetPalette().Render(cmd.NullEffect, p)
+			s = palette.Render(cmd.StringEffect, d) + palette.Render(cmd.LableEffect, " | ") + palette.Render(cmd.NullEffect, p)
 		case cmd.FIXED:
-			s = cmd.GetPalette().Render(cmd.NullEffect, d) + cmd.GetPalette().Render(cmd.LableEffect, " | ") + cmd.GetPalette().Render(cmd.StringEffect, p)
+			s = palette.Render(cmd.NullEffect, d) + palette.Render(cmd.LableEffect, " | ") + palette.Render(cmd.StringEffect, p)
 		default:
-			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+d+" | "+p)
+			s = palette.Render(cmd.NullEffect, IgnoredFlagPrefix+d+" | "+p)
 		}
 	case cmd.WithoutHeaderFlag:
 		s = strconv.FormatBool(flags.WithoutHeader)
 		switch flags.Format {
 		case cmd.CSV, cmd.TSV, cmd.FIXED, cmd.GFM, cmd.ORG:
-			s = cmd.GetPalette().Render(cmd.BooleanEffect, s)
+			s = palette.Render(cmd.BooleanEffect, s)
 		default:
-			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+s)
+			s = palette.Render(cmd.NullEffect, IgnoredFlagPrefix+s)
 		}
 	case cmd.LineBreakFlag:
-		s = cmd.GetPalette().Render(cmd.StringEffect, flags.LineBreak.String())
+		s = palette.Render(cmd.StringEffect, flags.LineBreak.String())
 	case cmd.EncloseAll:
 		s = strconv.FormatBool(flags.EncloseAll)
 		switch flags.Format {
 		case cmd.CSV, cmd.TSV:
-			s = cmd.GetPalette().Render(cmd.BooleanEffect, s)
+			s = palette.Render(cmd.BooleanEffect, s)
 		default:
-			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+s)
+			s = palette.Render(cmd.NullEffect, IgnoredFlagPrefix+s)
 		}
 	case cmd.PrettyPrintFlag:
 		s = strconv.FormatBool(flags.PrettyPrint)
 		switch flags.Format {
 		case cmd.JSON, cmd.JSONH, cmd.JSONA:
-			s = cmd.GetPalette().Render(cmd.BooleanEffect, s)
+			s = palette.Render(cmd.BooleanEffect, s)
 		default:
-			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+s)
+			s = palette.Render(cmd.NullEffect, IgnoredFlagPrefix+s)
 		}
 	case cmd.EastAsianEncodingFlag:
 		s = strconv.FormatBool(flags.EastAsianEncoding)
 		switch flags.Format {
 		case cmd.GFM, cmd.ORG, cmd.TEXT:
-			s = cmd.GetPalette().Render(cmd.BooleanEffect, s)
+			s = palette.Render(cmd.BooleanEffect, s)
 		default:
-			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+s)
+			s = palette.Render(cmd.NullEffect, IgnoredFlagPrefix+s)
 		}
 	case cmd.CountDiacriticalSignFlag:
 		s = strconv.FormatBool(flags.CountDiacriticalSign)
 		switch flags.Format {
 		case cmd.GFM, cmd.ORG, cmd.TEXT:
-			s = cmd.GetPalette().Render(cmd.BooleanEffect, s)
+			s = palette.Render(cmd.BooleanEffect, s)
 		default:
-			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+s)
+			s = palette.Render(cmd.NullEffect, IgnoredFlagPrefix+s)
 		}
 	case cmd.CountFormatCodeFlag:
 		s = strconv.FormatBool(flags.CountFormatCode)
 		switch flags.Format {
 		case cmd.GFM, cmd.ORG, cmd.TEXT:
-			s = cmd.GetPalette().Render(cmd.BooleanEffect, s)
+			s = palette.Render(cmd.BooleanEffect, s)
 		default:
-			s = cmd.GetPalette().Render(cmd.NullEffect, IgnoredFlagPrefix+s)
+			s = palette.Render(cmd.NullEffect, IgnoredFlagPrefix+s)
 		}
 	case cmd.ColorFlag:
-		s = cmd.GetPalette().Render(cmd.BooleanEffect, strconv.FormatBool(flags.Color))
+		s = palette.Render(cmd.BooleanEffect, strconv.FormatBool(flags.Color))
 	case cmd.QuietFlag:
-		s = cmd.GetPalette().Render(cmd.BooleanEffect, strconv.FormatBool(flags.Quiet))
+		s = palette.Render(cmd.BooleanEffect, strconv.FormatBool(flags.Quiet))
 	case cmd.CPUFlag:
-		s = cmd.GetPalette().Render(cmd.NumberEffect, strconv.Itoa(flags.CPU))
+		s = palette.Render(cmd.NumberEffect, strconv.Itoa(flags.CPU))
 	case cmd.StatsFlag:
-		s = cmd.GetPalette().Render(cmd.BooleanEffect, strconv.FormatBool(flags.Stats))
+		s = palette.Render(cmd.BooleanEffect, strconv.FormatBool(flags.Stats))
 	default:
 		return s, errors.New("invalid flag name")
 	}
@@ -392,7 +391,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 		keys := ViewCache.SortedKeys()
 
 		if len(keys) < 1 {
-			s = color.Warn("No table is loaded")
+			s = cmd.Warn("No table is loaded")
 		} else {
 			createdFiles, updatedFiles := UncommittedFiles()
 
@@ -427,7 +426,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 		views := filter.TempViews.All()
 
 		if len(views) < 1 {
-			s = color.Warn("No view is declared")
+			s = cmd.Warn("No view is declared")
 		} else {
 			keys := views.SortedKeys()
 
@@ -458,7 +457,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 	case "CURSORS":
 		cursors := filter.Cursors.All()
 		if len(cursors) < 1 {
-			s = color.Warn("No cursor is declared")
+			s = cmd.Warn("No cursor is declared")
 		} else {
 			keys := cursors.SortedKeys()
 
@@ -508,7 +507,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 	case "FUNCTIONS":
 		scalas, aggs := filter.Functions.All()
 		if len(scalas) < 1 && len(aggs) < 1 {
-			s = color.Warn("No function is declared")
+			s = cmd.Warn("No function is declared")
 		} else {
 			if 0 < len(scalas) {
 				w.Clear()

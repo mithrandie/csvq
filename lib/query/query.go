@@ -9,8 +9,6 @@ import (
 	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
-
-	"github.com/mithrandie/go-text/color"
 )
 
 func FetchCursor(name parser.Identifier, fetchPosition parser.FetchPosition, vars []parser.Variable, filter *Filter) (bool, error) {
@@ -903,13 +901,13 @@ func Commit(expr parser.Expression, filter *Filter) error {
 		if err := f.Commit(); err != nil {
 			return NewCommitError(expr, err.Error())
 		}
-		Log(color.Notice(fmt.Sprintf("Commit: file %q is created.", f.Path)), cmd.GetFlags().Quiet)
+		Log(cmd.Notice(fmt.Sprintf("Commit: file %q is created.", f.Path)), cmd.GetFlags().Quiet)
 	}
 	for _, f := range updateFileInfo {
 		if err := f.Commit(); err != nil {
 			return NewCommitError(expr, err.Error())
 		}
-		Log(color.Notice(fmt.Sprintf("Commit: file %q is updated.", f.Path)), cmd.GetFlags().Quiet)
+		Log(cmd.Notice(fmt.Sprintf("Commit: file %q is updated.", f.Path)), cmd.GetFlags().Quiet)
 	}
 
 	filter.TempViews.Store(UncommittedTempViews())
@@ -925,13 +923,13 @@ func Rollback(expr parser.Expression, filter *Filter) error {
 
 	if 0 < len(createdFiles) {
 		for filename := range createdFiles {
-			Log(color.Notice(fmt.Sprintf("Rollback: file %q is deleted.", filename)), cmd.GetFlags().Quiet)
+			Log(cmd.Notice(fmt.Sprintf("Rollback: file %q is deleted.", filename)), cmd.GetFlags().Quiet)
 		}
 	}
 
 	if 0 < len(updatedFiles) {
 		for filename := range updatedFiles {
-			Log(color.Notice(fmt.Sprintf("Rollback: file %q is restored.", filename)), cmd.GetFlags().Quiet)
+			Log(cmd.Notice(fmt.Sprintf("Rollback: file %q is restored.", filename)), cmd.GetFlags().Quiet)
 		}
 	}
 

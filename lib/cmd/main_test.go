@@ -10,10 +10,6 @@ import (
 var TestDir = filepath.Join(os.TempDir(), "csvq_cmd_test")
 var TestDataDir string
 
-func GetTestFilePath(filename string) string {
-	return filepath.Join(TestDir, filename)
-}
-
 func TestMain(m *testing.M) {
 	os.Exit(run(m))
 }

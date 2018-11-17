@@ -13,7 +13,6 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mithrandie/go-text"
-	"github.com/mithrandie/go-text/color"
 	"github.com/mithrandie/go-text/csv"
 	"github.com/mithrandie/go-text/fixedlen"
 	txjson "github.com/mithrandie/go-text/json"
@@ -167,11 +166,13 @@ func encodeJson(fp io.Writer, view *View, format cmd.Format, lineBreak text.Line
 	e.LineBreak = lineBreak
 	e.PrettyPrint = prettyPrint
 	if prettyPrint && cmd.GetFlags().Color {
-		e.Palette = cmd.GetPalette()
+		e.Palette, _ = cmd.GetPalette()
 	}
 
 	s := e.Encode(data)
-	cmd.GetPalette().Enable()
+	if e.Palette != nil {
+		e.Palette.Enable()
+	}
 
 	w := bufio.NewWriter(fp)
 	if _, err := w.WriteString(s); err != nil {
@@ -194,14 +195,14 @@ func encodeText(fp io.Writer, view *View, format cmd.Format, lineBreak text.Line
 	default:
 		if len(header) < 1 {
 			w := bufio.NewWriter(fp)
-			if _, err := w.WriteString(color.Warn("Empty Fields")); err != nil {
+			if _, err := w.WriteString(cmd.Warn("Empty Fields")); err != nil {
 				return err
 			}
 			return w.Flush()
 		}
 		if len(records) < 1 {
 			w := bufio.NewWriter(fp)
-			if _, err := w.WriteString(color.Warn("Empty RecordSet")); err != nil {
+			if _, err := w.WriteString(cmd.Warn("Empty RecordSet")); err != nil {
 				return err
 			}
 			return w.Flush()
@@ -217,7 +218,7 @@ func encodeText(fp io.Writer, view *View, format cmd.Format, lineBreak text.Line
 	e.WithoutHeader = withoutHeader
 	e.Encoding = encoding
 
-	palette := cmd.GetPalette()
+	palette, _ := cmd.GetPalette()
 
 	if !withoutHeader {
 		hfields := make([]table.Field, 0, len(header))
