@@ -3,6 +3,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -10,8 +11,6 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"github.com/mithrandie/go-text/color"
 )
-
-const HistoryFile = ".csvq_history"
 
 type ReadLineTerminal struct {
 	terminal *readline.Instance
@@ -22,17 +21,21 @@ type ReadLineTerminal struct {
 func NewTerminal() (VirtualTerminal, error) {
 	fd := int(os.Stdin.Fd())
 
-	historyFile, err := historyFilePath()
-	if err != nil {
-		return nil, err
-	}
-
 	p, _ := GetPalette()
+	env, _ := GetEnvironment()
+
+	limit := env.InteractiveShell.HistoryLimit
+	historyFile, err := HistoryFilePath(env.InteractiveShell.HistoryFile)
+	if err != nil {
+		WriteToStdErr(fmt.Sprintf("cannot detect filepath: %q\n", env.InteractiveShell.HistoryFile))
+		limit = -1
+	}
 
 	t, err := readline.NewEx(&readline.Config{
 		Prompt:                 p.Render(PromptEffect, TerminalPrompt),
 		HistoryFile:            historyFile,
 		DisableAutoSaveHistory: true,
+		HistoryLimit:           limit,
 	})
 	if err != nil {
 		return nil, err
@@ -79,10 +82,22 @@ func (t ReadLineTerminal) GetSize() (int, int, error) {
 	return readline.GetSize(t.fd)
 }
 
-func historyFilePath() (string, error) {
+func HistoryFilePath(filename string) (string, error) {
+	if filename[0] == '~' {
+		if fpath, err := homedir.Expand(filename); err == nil {
+			return fpath, nil
+		}
+	}
+
+	fpath := os.ExpandEnv(filename)
+
+	if filepath.IsAbs(fpath) {
+		return fpath, nil
+	}
+
 	home, err := homedir.Dir()
 	if err != nil {
-		return "", err
+		return filename, err
 	}
-	return filepath.Join(home, HistoryFile), nil
+	return filepath.Join(home, fpath), nil
 }

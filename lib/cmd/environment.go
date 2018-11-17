@@ -29,11 +29,20 @@ var (
 )
 
 type Environment struct {
+	InteractiveShell     InteractiveShell    `json:"interactive_shell"`
 	EnvironmentVariables map[string]string   `json:"environment_variables"`
 	Palette              color.PaletteConfig `json:"palette"`
 }
 
 func (e *Environment) Merge(e2 *Environment) {
+	if 0 < len(e2.InteractiveShell.HistoryFile) {
+		e.InteractiveShell.HistoryFile = e2.InteractiveShell.HistoryFile
+	}
+
+	if e2.InteractiveShell.HistoryLimit != 0 {
+		e.InteractiveShell.HistoryLimit = e2.InteractiveShell.HistoryLimit
+	}
+
 	for k, v := range e2.EnvironmentVariables {
 		e.EnvironmentVariables[k] = v
 	}
@@ -41,6 +50,11 @@ func (e *Environment) Merge(e2 *Environment) {
 	for k, v := range e2.Palette.Effectors {
 		e.Palette.Effectors[k] = v
 	}
+}
+
+type InteractiveShell struct {
+	HistoryFile  string `json:"history_file"`
+	HistoryLimit int    `json:"history_limit"`
 }
 
 func LoadEnvironment() error {

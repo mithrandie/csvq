@@ -2,6 +2,10 @@ package cmd
 
 const defaultEnvJson = `
 {
+  "interactive_shell": {
+    "history_file": ".csvq_history",
+    "history_limit": 500
+  },
   "environment_variables": {},
   "palette": {
     "effectors": {

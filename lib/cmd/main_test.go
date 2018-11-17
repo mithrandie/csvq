@@ -5,10 +5,13 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/mitchellh/go-homedir"
 )
 
 var TestDir = filepath.Join(os.TempDir(), "csvq_cmd_test")
 var TestDataDir string
+var HomeDir string
 
 func TestMain(m *testing.M) {
 	os.Exit(run(m))
@@ -28,6 +31,8 @@ func setup() {
 
 	wdir, _ := os.Getwd()
 	TestDataDir = filepath.Join(wdir, "..", "..", "testdata", "csv")
+
+	HomeDir, _ = homedir.Dir()
 
 	if _, err := os.Stat(TestDir); os.IsNotExist(err) {
 		os.Mkdir(TestDir, 0755)
