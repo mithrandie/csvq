@@ -136,12 +136,22 @@ func LaunchInteractiveShell() error {
 
 		lines = append(lines, line)
 
-		if len(line) < 1 || line[len(line)-1] != ';' {
-			cmd.Terminal.SetContinuousPrompt()
-			continue
+		saveLines := make([]string, 0, len(lines))
+		for _, l := range lines {
+			s := strings.TrimSpace(l)
+			if len(s) < 1 {
+				continue
+			}
+			saveLines = append(saveLines, s)
 		}
 
-		cmd.Terminal.SaveHistory(strings.Join(lines, " "))
+		saveQuery := strings.Join(saveLines, " ")
+		if len(saveQuery) < 1 || saveQuery == ";" {
+			lines = lines[:0]
+			cmd.Terminal.SetPrompt()
+			continue
+		}
+		cmd.Terminal.SaveHistory(saveQuery)
 
 		statements, e := parser.Parse(strings.Join(lines, "\n"), "")
 		if e != nil {
