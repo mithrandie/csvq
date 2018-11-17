@@ -305,7 +305,7 @@ func (s *Scanner) scanIdentifier() {
 }
 
 func (s *Scanner) isIdentRune(ch rune) bool {
-	return ch == '_' || ch == '$' || unicode.IsLetter(ch) || unicode.IsDigit(ch)
+	return ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch)
 }
 
 func (s *Scanner) isDecimal(ch rune) bool {
