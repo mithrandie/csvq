@@ -2,6 +2,7 @@ package file
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/mithrandie/go-file"
 )
@@ -61,4 +62,22 @@ func NewTimeoutError(path string) error {
 
 func (e TimeoutError) Error() string {
 	return e.message
+}
+
+type ForcedUnlockError struct {
+	Errors []error
+}
+
+func NewForcedUnlockError(errs []error) error {
+	return &ForcedUnlockError{
+		Errors: errs,
+	}
+}
+
+func (e ForcedUnlockError) Error() string {
+	list := make([]string, 0, len(e.Errors))
+	for _, err := range e.Errors {
+		list = append(list, err.Error())
+	}
+	return strings.Join(list, "\n")
 }

@@ -15,13 +15,11 @@ func SetSignalHandler() {
 
 	go func() {
 		<-ch
-		if e := query.Rollback(nil, nil); e != nil {
-			cmd.WriteToStdErr(e.Error() + "\n")
+		if err := query.Rollback(nil, nil); err != nil {
+			cmd.WriteToStdErr(err.Error() + "\n")
 		}
-		if errs := query.ReleaseResourcesWithErrors(); errs != nil {
-			for _, err := range errs {
-				cmd.WriteToStdErr(err.Error() + "\n")
-			}
+		if err := query.ReleaseResourcesWithErrors(); err != nil {
+			cmd.WriteToStdErr(err.Error() + "\n")
 		}
 		os.Exit(-1)
 	}()

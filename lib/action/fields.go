@@ -11,10 +11,8 @@ import (
 
 func ShowFields(proc *query.Procedure, filename string) error {
 	defer func() {
-		if errs := query.ReleaseResourcesWithErrors(); errs != nil {
-			for _, err := range errs {
-				cmd.WriteToStdErr(err.Error() + "\n")
-			}
+		if err := query.ReleaseResourcesWithErrors(); err != nil {
+			cmd.WriteToStdErr(err.Error() + "\n")
 		}
 	}()
 

@@ -22,9 +22,6 @@ import (
 var version = "v1.5.4"
 
 func main() {
-	cli.AppHelpTemplate = appHHelpTemplate
-	cli.CommandHelpTemplate = commandHelpTemplate
-
 	defaultCPU := runtime.NumCPU() / 2
 	if defaultCPU < 1 {
 		defaultCPU = 1
@@ -32,12 +29,13 @@ func main() {
 
 	proc := query.NewProcedure()
 	defer func() {
-		if errs := query.ReleaseResourcesWithErrors(); errs != nil {
-			for _, err := range errs {
-				cmd.WriteToStdErr(err.Error() + "\n")
-			}
+		if err := query.ReleaseResourcesWithErrors(); err != nil {
+			cmd.WriteToStdErr(err.Error() + "\n")
 		}
 	}()
+
+	cli.AppHelpTemplate = appHHelpTemplate
+	cli.CommandHelpTemplate = commandHelpTemplate
 
 	app := cli.NewApp()
 

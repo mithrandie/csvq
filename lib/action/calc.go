@@ -13,10 +13,8 @@ func Calc(expr string) error {
 	cmd.GetFlags().SetNoHeader(true)
 
 	defer func() {
-		if errs := query.ReleaseResourcesWithErrors(); errs != nil {
-			for _, err := range errs {
-				cmd.WriteToStdErr(err.Error() + "\n")
-			}
+		if err := query.ReleaseResourcesWithErrors(); err != nil {
+			cmd.WriteToStdErr(err.Error() + "\n")
 		}
 	}()
 

@@ -17,7 +17,7 @@ const (
 	ErrorMessageWithCustomPrefixTemplate  = "[%s] %s"
 
 	ErrorInvalidSyntax                        = "syntax error: unexpected %s"
-	ErrorReadFile                             = "failed to read from file: %s"
+	ErrorReadFile                             = "failed to read file: %s"
 	ErrorWriteFile                            = "failed to write to file: %s"
 	ErrorCommit                               = "failed to commit: %s"
 	ErrorRollback                             = "failed to rollback: %s"

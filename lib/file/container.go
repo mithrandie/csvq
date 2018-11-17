@@ -34,13 +34,17 @@ func UnlockAll() error {
 	return nil
 }
 
-func UnlockAllWithErrors() []error {
+func UnlockAllWithErrors() error {
 	var errs []error
 	for k := range container {
-		if es := container[k].CloseWithErrors(); es != nil {
-			errs = append(errs, es...)
+		if err := container[k].CloseWithErrors(); err != nil {
+			errs = append(errs, err.(*ForcedUnlockError).Errors...)
 		}
 		delete(container, k)
 	}
-	return errs
+
+	if errs != nil {
+		return NewForcedUnlockError(errs)
+	}
+	return nil
 }

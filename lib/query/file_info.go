@@ -172,7 +172,7 @@ func (f *FileInfo) Close() error {
 	return f.Handler.Close()
 }
 
-func (f *FileInfo) CloseWithErrors() []error {
+func (f *FileInfo) CloseWithErrors() error {
 	if f.Handler == nil {
 		return nil
 	}

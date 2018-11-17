@@ -233,7 +233,7 @@ func (h *Handler) Commit() error {
 	return nil
 }
 
-func (h *Handler) CloseWithErrors() []error {
+func (h *Handler) CloseWithErrors() error {
 	if h.closed {
 		return nil
 	}
@@ -282,7 +282,10 @@ func (h *Handler) CloseWithErrors() []error {
 		}
 	}
 
-	return errs
+	if errs != nil {
+		return NewForcedUnlockError(errs)
+	}
+	return nil
 }
 
 func (h *Handler) TryCreateLockFileWithTimeout() error {

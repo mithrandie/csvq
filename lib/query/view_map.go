@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/mithrandie/csvq/lib/file"
+
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
@@ -212,15 +214,18 @@ func (m ViewMap) Clean() error {
 	return nil
 }
 
-func (m ViewMap) CleanWithErrors() []error {
+func (m ViewMap) CleanWithErrors() error {
 	var errs []error
 	for k := range m {
 		if _, ok := m[k]; ok {
-			if es := m[k].FileInfo.CloseWithErrors(); es != nil {
-				errs = append(errs, es...)
+			if err := m[k].FileInfo.CloseWithErrors(); err != nil {
+				errs = append(errs, err.(*file.ForcedUnlockError).Errors...)
 			}
 			delete(m, k)
 		}
 	}
-	return errs
+	if errs != nil {
+		return file.NewForcedUnlockError(errs)
+	}
+	return nil
 }

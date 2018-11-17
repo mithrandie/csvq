@@ -23,10 +23,8 @@ func Run(proc *query.Procedure, input string, sourceFile string, outfile string)
 	start := time.Now()
 
 	defer func() {
-		if errs := query.ReleaseResourcesWithErrors(); errs != nil {
-			for _, err := range errs {
-				cmd.WriteToStdErr(err.Error() + "\n")
-			}
+		if err := query.ReleaseResourcesWithErrors(); err != nil {
+			cmd.WriteToStdErr(err.Error() + "\n")
 		}
 		showStats(start)
 	}()
@@ -79,10 +77,8 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 	}
 
 	defer func() {
-		if errs := query.ReleaseResourcesWithErrors(); errs != nil {
-			for _, err := range errs {
-				cmd.WriteToStdErr(err.Error() + "\n")
-			}
+		if err := query.ReleaseResourcesWithErrors(); err != nil {
+			cmd.WriteToStdErr(err.Error() + "\n")
 		}
 	}()
 

@@ -61,15 +61,19 @@ func ReleaseResources() error {
 	return nil
 }
 
-func ReleaseResourcesWithErrors() []error {
+func ReleaseResourcesWithErrors() error {
 	var errs []error
-	if es := ViewCache.CleanWithErrors(); es != nil {
-		errs = append(errs, es...)
+	if err := ViewCache.CleanWithErrors(); err != nil {
+		errs = append(errs, err.(*file.ForcedUnlockError).Errors...)
 	}
-	if es := file.UnlockAllWithErrors(); es != nil {
-		errs = append(errs, es...)
+	if err := file.UnlockAllWithErrors(); err != nil {
+		errs = append(errs, err.(*file.ForcedUnlockError).Errors...)
 	}
-	return errs
+
+	if errs != nil {
+		return file.NewForcedUnlockError(errs)
+	}
+	return nil
 }
 
 func Log(log string, quiet bool) {
