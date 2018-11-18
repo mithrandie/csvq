@@ -3,9 +3,10 @@
 package cmd
 
 import (
-	"github.com/mithrandie/csvq/lib/color"
 	"io"
 	"os"
+
+	"github.com/mithrandie/go-text/color"
 
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -14,6 +15,7 @@ type SSHTerminal struct {
 	terminal *terminal.Terminal
 	oldFd    int
 	oldState *terminal.State
+	palette  *color.Palette
 }
 
 func NewTerminal() (VirtualTerminal, error) {
@@ -23,10 +25,13 @@ func NewTerminal() (VirtualTerminal, error) {
 		return nil, err
 	}
 
+	p := GetPalette()
+
 	return SSHTerminal{
-		terminal: terminal.NewTerminal(NewStdIO(), color.Blue(TerminalPrompt)),
+		terminal: terminal.NewTerminal(NewStdIO(), p.Render(PromptEffect, TerminalPrompt)),
 		oldFd:    oldFd,
 		oldState: oldState,
+		palette:  p,
 	}, nil
 }
 
@@ -43,12 +48,17 @@ func (t SSHTerminal) Write(s string) error {
 	return err
 }
 
+func (t SSHTerminal) WriteError(s string) error {
+	_, err := t.terminal.Write([]byte(s))
+	return err
+}
+
 func (t SSHTerminal) SetPrompt() {
-	t.terminal.SetPrompt(color.Blue(TerminalPrompt))
+	t.terminal.SetPrompt(t.palette.Render(PromptEffect, TerminalPrompt))
 }
 
 func (t SSHTerminal) SetContinuousPrompt() {
-	t.terminal.SetPrompt(color.Blue(TerminalContinuousPrompt))
+	t.terminal.SetPrompt(t.palette.Render(PromptEffect, TerminalContinuousPrompt))
 }
 
 func (t SSHTerminal) SaveHistory(s string) {

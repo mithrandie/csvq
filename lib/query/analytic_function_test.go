@@ -594,28 +594,28 @@ var analyzeTests = []struct {
 							IsAggregate: true,
 							Cursor:      parser.Identifier{Literal: "list"},
 							Parameters: []parser.Variable{
-								{Name: "@default"},
+								{Name: "default"},
 							},
 							Statements: []parser.Statement{
 								parser.VariableDeclaration{
 									Assignments: []parser.VariableAssignment{
 										{
-											Variable: parser.Variable{Name: "@value"},
+											Variable: parser.Variable{Name: "value"},
 										},
 										{
-											Variable: parser.Variable{Name: "@fetch"},
+											Variable: parser.Variable{Name: "fetch"},
 										},
 									},
 								},
 								parser.WhileInCursor{
 									Variables: []parser.Variable{
-										{Name: "@fetch"},
+										{Name: "fetch"},
 									},
 									Cursor: parser.Identifier{Literal: "list"},
 									Statements: []parser.Statement{
 										parser.If{
 											Condition: parser.Is{
-												LHS: parser.Variable{Name: "@fetch"},
+												LHS: parser.Variable{Name: "fetch"},
 												RHS: parser.NewNullValue(),
 											},
 											Statements: []parser.Statement{
@@ -624,29 +624,29 @@ var analyzeTests = []struct {
 										},
 										parser.If{
 											Condition: parser.Is{
-												LHS: parser.Variable{Name: "@value"},
+												LHS: parser.Variable{Name: "value"},
 												RHS: parser.NewNullValue(),
 											},
 											Statements: []parser.Statement{
 												parser.VariableSubstitution{
-													Variable: parser.Variable{Name: "@value"},
-													Value:    parser.Variable{Name: "@fetch"},
+													Variable: parser.Variable{Name: "value"},
+													Value:    parser.Variable{Name: "fetch"},
 												},
 												parser.FlowControl{Token: parser.CONTINUE},
 											},
 										},
 										parser.VariableSubstitution{
-											Variable: parser.Variable{Name: "@value"},
+											Variable: parser.Variable{Name: "value"},
 											Value: parser.Arithmetic{
-												LHS:      parser.Variable{Name: "@value"},
-												RHS:      parser.Variable{Name: "@fetch"},
+												LHS:      parser.Variable{Name: "value"},
+												RHS:      parser.Variable{Name: "fetch"},
 												Operator: '*',
 											},
 										},
 									},
 								},
 								parser.Return{
-									Value: parser.Variable{Name: "@value"},
+									Value: parser.Variable{Name: "value"},
 								},
 							},
 						},
@@ -713,28 +713,28 @@ var analyzeTests = []struct {
 							IsAggregate: true,
 							Cursor:      parser.Identifier{Literal: "list"},
 							Parameters: []parser.Variable{
-								{Name: "@default"},
+								{Name: "default"},
 							},
 							Statements: []parser.Statement{
 								parser.VariableDeclaration{
 									Assignments: []parser.VariableAssignment{
 										{
-											Variable: parser.Variable{Name: "@value"},
+											Variable: parser.Variable{Name: "value"},
 										},
 										{
-											Variable: parser.Variable{Name: "@fetch"},
+											Variable: parser.Variable{Name: "fetch"},
 										},
 									},
 								},
 								parser.WhileInCursor{
 									Variables: []parser.Variable{
-										{Name: "@fetch"},
+										{Name: "fetch"},
 									},
 									Cursor: parser.Identifier{Literal: "list"},
 									Statements: []parser.Statement{
 										parser.If{
 											Condition: parser.Is{
-												LHS: parser.Variable{Name: "@fetch"},
+												LHS: parser.Variable{Name: "fetch"},
 												RHS: parser.NewNullValue(),
 											},
 											Statements: []parser.Statement{
@@ -743,29 +743,29 @@ var analyzeTests = []struct {
 										},
 										parser.If{
 											Condition: parser.Is{
-												LHS: parser.Variable{Name: "@value"},
+												LHS: parser.Variable{Name: "value"},
 												RHS: parser.NewNullValue(),
 											},
 											Statements: []parser.Statement{
 												parser.VariableSubstitution{
-													Variable: parser.Variable{Name: "@value"},
-													Value:    parser.Variable{Name: "@fetch"},
+													Variable: parser.Variable{Name: "value"},
+													Value:    parser.Variable{Name: "fetch"},
 												},
 												parser.FlowControl{Token: parser.CONTINUE},
 											},
 										},
 										parser.VariableSubstitution{
-											Variable: parser.Variable{Name: "@value"},
+											Variable: parser.Variable{Name: "value"},
 											Value: parser.Arithmetic{
-												LHS:      parser.Variable{Name: "@value"},
-												RHS:      parser.Variable{Name: "@fetch"},
+												LHS:      parser.Variable{Name: "value"},
+												RHS:      parser.Variable{Name: "fetch"},
 												Operator: '*',
 											},
 										},
 									},
 								},
 								parser.Return{
-									Value: parser.Variable{Name: "@value"},
+									Value: parser.Variable{Name: "value"},
 								},
 							},
 						},
@@ -808,28 +808,28 @@ var analyzeTests = []struct {
 							IsAggregate: true,
 							Cursor:      parser.Identifier{Literal: "list"},
 							Parameters: []parser.Variable{
-								{Name: "@default"},
+								{Name: "default"},
 							},
 							Statements: []parser.Statement{
 								parser.VariableDeclaration{
 									Assignments: []parser.VariableAssignment{
 										{
-											Variable: parser.Variable{Name: "@value"},
+											Variable: parser.Variable{Name: "value"},
 										},
 										{
-											Variable: parser.Variable{Name: "@fetch"},
+											Variable: parser.Variable{Name: "fetch"},
 										},
 									},
 								},
 								parser.WhileInCursor{
 									Variables: []parser.Variable{
-										{Name: "@fetch"},
+										{Name: "fetch"},
 									},
 									Cursor: parser.Identifier{Literal: "list"},
 									Statements: []parser.Statement{
 										parser.If{
 											Condition: parser.Is{
-												LHS: parser.Variable{Name: "@fetch"},
+												LHS: parser.Variable{Name: "fetch"},
 												RHS: parser.NewNullValue(),
 											},
 											Statements: []parser.Statement{
@@ -838,29 +838,29 @@ var analyzeTests = []struct {
 										},
 										parser.If{
 											Condition: parser.Is{
-												LHS: parser.Variable{Name: "@value"},
+												LHS: parser.Variable{Name: "value"},
 												RHS: parser.NewNullValue(),
 											},
 											Statements: []parser.Statement{
 												parser.VariableSubstitution{
-													Variable: parser.Variable{Name: "@value"},
-													Value:    parser.Variable{Name: "@fetch"},
+													Variable: parser.Variable{Name: "value"},
+													Value:    parser.Variable{Name: "fetch"},
 												},
 												parser.FlowControl{Token: parser.CONTINUE},
 											},
 										},
 										parser.VariableSubstitution{
-											Variable: parser.Variable{Name: "@value"},
+											Variable: parser.Variable{Name: "value"},
 											Value: parser.Arithmetic{
-												LHS:      parser.Variable{Name: "@value"},
-												RHS:      parser.Variable{Name: "@fetch"},
+												LHS:      parser.Variable{Name: "value"},
+												RHS:      parser.Variable{Name: "fetch"},
 												Operator: '*',
 											},
 										},
 									},
 								},
 								parser.Return{
-									Value: parser.Variable{Name: "@value"},
+									Value: parser.Variable{Name: "value"},
 								},
 							},
 						},
@@ -938,28 +938,28 @@ var analyzeTests = []struct {
 							IsAggregate: true,
 							Cursor:      parser.Identifier{Literal: "list"},
 							Parameters: []parser.Variable{
-								{Name: "@default"},
+								{Name: "default"},
 							},
 							Statements: []parser.Statement{
 								parser.VariableDeclaration{
 									Assignments: []parser.VariableAssignment{
 										{
-											Variable: parser.Variable{Name: "@value"},
+											Variable: parser.Variable{Name: "value"},
 										},
 										{
-											Variable: parser.Variable{Name: "@fetch"},
+											Variable: parser.Variable{Name: "fetch"},
 										},
 									},
 								},
 								parser.WhileInCursor{
 									Variables: []parser.Variable{
-										{Name: "@fetch"},
+										{Name: "fetch"},
 									},
 									Cursor: parser.Identifier{Literal: "list"},
 									Statements: []parser.Statement{
 										parser.If{
 											Condition: parser.Is{
-												LHS: parser.Variable{Name: "@fetch"},
+												LHS: parser.Variable{Name: "fetch"},
 												RHS: parser.NewNullValue(),
 											},
 											Statements: []parser.Statement{
@@ -968,29 +968,29 @@ var analyzeTests = []struct {
 										},
 										parser.If{
 											Condition: parser.Is{
-												LHS: parser.Variable{Name: "@value"},
+												LHS: parser.Variable{Name: "value"},
 												RHS: parser.NewNullValue(),
 											},
 											Statements: []parser.Statement{
 												parser.VariableSubstitution{
-													Variable: parser.Variable{Name: "@value"},
-													Value:    parser.Variable{Name: "@fetch"},
+													Variable: parser.Variable{Name: "value"},
+													Value:    parser.Variable{Name: "fetch"},
 												},
 												parser.FlowControl{Token: parser.CONTINUE},
 											},
 										},
 										parser.VariableSubstitution{
-											Variable: parser.Variable{Name: "@value"},
+											Variable: parser.Variable{Name: "value"},
 											Value: parser.Arithmetic{
-												LHS:      parser.Variable{Name: "@value"},
-												RHS:      parser.Variable{Name: "@fetch"},
+												LHS:      parser.Variable{Name: "value"},
+												RHS:      parser.Variable{Name: "fetch"},
 												Operator: '*',
 											},
 										},
 									},
 								},
 								parser.Return{
-									Value: parser.Variable{Name: "@value"},
+									Value: parser.Variable{Name: "value"},
 								},
 							},
 						},
@@ -1021,11 +1021,11 @@ var analyzeTests = []struct {
 							IsAggregate: true,
 							Cursor:      parser.Identifier{Literal: "list"},
 							Parameters: []parser.Variable{
-								{Name: "@default"},
+								{Name: "default"},
 							},
 							Statements: []parser.Statement{
 								parser.Return{
-									Value: parser.Variable{Name: "@value"},
+									Value: parser.Variable{Name: "value"},
 								},
 							},
 						},
@@ -1079,11 +1079,11 @@ var analyzeTests = []struct {
 							IsAggregate: true,
 							Cursor:      parser.Identifier{Literal: "list"},
 							Parameters: []parser.Variable{
-								{Name: "@default"},
+								{Name: "default"},
 							},
 							Statements: []parser.Statement{
 								parser.Return{
-									Value: parser.Variable{Name: "@value"},
+									Value: parser.Variable{Name: "value"},
 								},
 							},
 						},
@@ -1130,11 +1130,11 @@ var analyzeTests = []struct {
 							IsAggregate: true,
 							Cursor:      parser.Identifier{Literal: "list"},
 							Parameters: []parser.Variable{
-								{Name: "@default"},
+								{Name: "default"},
 							},
 							Statements: []parser.Statement{
 								parser.Return{
-									Value: parser.Variable{Name: "@value"},
+									Value: parser.Variable{Name: "value"},
 								},
 							},
 						},
@@ -1180,11 +1180,11 @@ var analyzeTests = []struct {
 							IsAggregate: true,
 							Cursor:      parser.Identifier{Literal: "list"},
 							Parameters: []parser.Variable{
-								{Name: "@default"},
+								{Name: "default"},
 							},
 							Statements: []parser.Statement{
 								parser.Return{
-									Value: parser.Variable{Name: "@undefined"},
+									Value: parser.Variable{Name: "undefined"},
 								},
 							},
 						},

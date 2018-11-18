@@ -1,5 +1,7 @@
 package cmd
 
+var Terminal VirtualTerminal
+
 const (
 	TerminalPrompt           string = "csvq > "
 	TerminalContinuousPrompt string = "     > "
@@ -8,6 +10,7 @@ const (
 type VirtualTerminal interface {
 	ReadLine() (string, error)
 	Write(string) error
+	WriteError(string) error
 	SetPrompt()
 	SetContinuousPrompt()
 	SaveHistory(string)

@@ -19,10 +19,10 @@ var userDefinedFunctionScopesDeclareTests = []struct {
 		Expr: parser.FunctionDeclaration{
 			Name: parser.Identifier{Literal: "userfunc1"},
 			Parameters: []parser.VariableAssignment{
-				{Variable: parser.Variable{Name: "@arg1"}},
+				{Variable: parser.Variable{Name: "arg1"}},
 			},
 			Statements: []parser.Statement{
-				parser.Print{Value: parser.Variable{Name: "@arg1"}},
+				parser.Print{Value: parser.Variable{Name: "arg1"}},
 			},
 		},
 		Result: UserDefinedFunctionScopes{
@@ -30,12 +30,12 @@ var userDefinedFunctionScopesDeclareTests = []struct {
 				"USERFUNC1": &UserDefinedFunction{
 					Name: parser.Identifier{Literal: "userfunc1"},
 					Parameters: []parser.Variable{
-						{Name: "@arg1"},
+						{Name: "arg1"},
 					},
 					Defaults:     map[string]parser.QueryExpression{},
 					RequiredArgs: 1,
 					Statements: []parser.Statement{
-						parser.Print{Value: parser.Variable{Name: "@arg1"}},
+						parser.Print{Value: parser.Variable{Name: "arg1"}},
 					},
 				},
 			},
@@ -43,13 +43,13 @@ var userDefinedFunctionScopesDeclareTests = []struct {
 				"USERFUNC2": &UserDefinedFunction{
 					Name: parser.Identifier{Literal: "userfunc2"},
 					Parameters: []parser.Variable{
-						{Name: "@arg1"},
-						{Name: "@arg2"},
+						{Name: "arg1"},
+						{Name: "arg2"},
 					},
 					Defaults:     map[string]parser.QueryExpression{},
 					RequiredArgs: 2,
 					Statements: []parser.Statement{
-						parser.Print{Value: parser.Variable{Name: "@arg2"}},
+						parser.Print{Value: parser.Variable{Name: "arg2"}},
 					},
 				},
 			},
@@ -64,13 +64,13 @@ func TestUserDefinedFunctionScopes_Declare(t *testing.T) {
 			"USERFUNC2": &UserDefinedFunction{
 				Name: parser.Identifier{Literal: "userfunc2"},
 				Parameters: []parser.Variable{
-					{Name: "@arg1"},
-					{Name: "@arg2"},
+					{Name: "arg1"},
+					{Name: "arg2"},
 				},
 				Defaults:     map[string]parser.QueryExpression{},
 				RequiredArgs: 2,
 				Statements: []parser.Statement{
-					parser.Print{Value: parser.Variable{Name: "@arg2"}},
+					parser.Print{Value: parser.Variable{Name: "arg2"}},
 				},
 			},
 		},
@@ -109,15 +109,15 @@ var userDefinedFunctionScopesDeclareAggregateTests = []struct {
 			Cursor: parser.Identifier{Literal: "column1"},
 			Parameters: []parser.VariableAssignment{
 				{
-					Variable: parser.Variable{Name: "@arg1"},
+					Variable: parser.Variable{Name: "arg1"},
 				},
 				{
-					Variable: parser.Variable{Name: "@arg2"},
+					Variable: parser.Variable{Name: "arg2"},
 					Value:    parser.NewIntegerValue(1),
 				},
 			},
 			Statements: []parser.Statement{
-				parser.Print{Value: parser.Variable{Name: "@var1"}},
+				parser.Print{Value: parser.Variable{Name: "var1"}},
 			},
 		},
 		Result: UserDefinedFunctionScopes{
@@ -125,17 +125,17 @@ var userDefinedFunctionScopesDeclareAggregateTests = []struct {
 				"USERAGGFUNC": &UserDefinedFunction{
 					Name: parser.Identifier{Literal: "useraggfunc"},
 					Parameters: []parser.Variable{
-						{Name: "@arg1"},
-						{Name: "@arg2"},
+						{Name: "arg1"},
+						{Name: "arg2"},
 					},
 					Defaults: map[string]parser.QueryExpression{
-						"@arg2": parser.NewIntegerValue(1),
+						"arg2": parser.NewIntegerValue(1),
 					},
 					IsAggregate:  true,
 					RequiredArgs: 1,
 					Cursor:       parser.Identifier{Literal: "column1"},
 					Statements: []parser.Statement{
-						parser.Print{Value: parser.Variable{Name: "@var1"}},
+						parser.Print{Value: parser.Variable{Name: "var1"}},
 					},
 				},
 			},
@@ -143,13 +143,13 @@ var userDefinedFunctionScopesDeclareAggregateTests = []struct {
 				"USERFUNC2": &UserDefinedFunction{
 					Name: parser.Identifier{Literal: "userfunc2"},
 					Parameters: []parser.Variable{
-						{Name: "@arg1"},
-						{Name: "@arg2"},
+						{Name: "arg1"},
+						{Name: "arg2"},
 					},
 					Defaults:     map[string]parser.QueryExpression{},
 					RequiredArgs: 2,
 					Statements: []parser.Statement{
-						parser.Print{Value: parser.Variable{Name: "@arg2"}},
+						parser.Print{Value: parser.Variable{Name: "arg2"}},
 					},
 				},
 			},
@@ -164,13 +164,13 @@ func TestUserDefinedFunctionScopes_DeclareAggregate(t *testing.T) {
 			"USERFUNC2": &UserDefinedFunction{
 				Name: parser.Identifier{Literal: "userfunc2"},
 				Parameters: []parser.Variable{
-					{Name: "@arg1"},
-					{Name: "@arg2"},
+					{Name: "arg1"},
+					{Name: "arg2"},
 				},
 				Defaults:     map[string]parser.QueryExpression{},
 				RequiredArgs: 2,
 				Statements: []parser.Statement{
-					parser.Print{Value: parser.Variable{Name: "@arg2"}},
+					parser.Print{Value: parser.Variable{Name: "arg2"}},
 				},
 			},
 		},
@@ -212,11 +212,11 @@ var userDefinedFunctionScopesGetTests = []struct {
 		Result: &UserDefinedFunction{
 			Name: parser.Identifier{Literal: "userfunc2"},
 			Parameters: []parser.Variable{
-				{Name: "@arg1"},
-				{Name: "@arg2"},
+				{Name: "arg1"},
+				{Name: "arg2"},
 			},
 			Statements: []parser.Statement{
-				parser.Print{Value: parser.Variable{Name: "@arg2"}},
+				parser.Print{Value: parser.Variable{Name: "arg2"}},
 			},
 		},
 	},
@@ -236,10 +236,10 @@ func TestUserDefinedFunctionScopes_Get(t *testing.T) {
 			"USERFUNC1": &UserDefinedFunction{
 				Name: parser.Identifier{Literal: "userfunc1"},
 				Parameters: []parser.Variable{
-					{Name: "@arg1"},
+					{Name: "arg1"},
 				},
 				Statements: []parser.Statement{
-					parser.Print{Value: parser.Variable{Name: "@arg1"}},
+					parser.Print{Value: parser.Variable{Name: "arg1"}},
 				},
 			},
 		},
@@ -247,11 +247,11 @@ func TestUserDefinedFunctionScopes_Get(t *testing.T) {
 			"USERFUNC2": &UserDefinedFunction{
 				Name: parser.Identifier{Literal: "userfunc2"},
 				Parameters: []parser.Variable{
-					{Name: "@arg1"},
-					{Name: "@arg2"},
+					{Name: "arg1"},
+					{Name: "arg2"},
 				},
 				Statements: []parser.Statement{
-					parser.Print{Value: parser.Variable{Name: "@arg2"}},
+					parser.Print{Value: parser.Variable{Name: "arg2"}},
 				},
 			},
 		},
@@ -291,10 +291,10 @@ var userDefinedFunctionScopesDisposeTests = []struct {
 				"USERFUNC1": &UserDefinedFunction{
 					Name: parser.Identifier{Literal: "userfunc1"},
 					Parameters: []parser.Variable{
-						{Name: "@arg1"},
+						{Name: "arg1"},
 					},
 					Statements: []parser.Statement{
-						parser.Print{Value: parser.Variable{Name: "@arg1"}},
+						parser.Print{Value: parser.Variable{Name: "arg1"}},
 					},
 				},
 			},
@@ -314,10 +314,10 @@ func TestUserDefinedFunctionScopes_Dispose(t *testing.T) {
 			"USERFUNC1": &UserDefinedFunction{
 				Name: parser.Identifier{Literal: "userfunc1"},
 				Parameters: []parser.Variable{
-					{Name: "@arg1"},
+					{Name: "arg1"},
 				},
 				Statements: []parser.Statement{
-					parser.Print{Value: parser.Variable{Name: "@arg1"}},
+					parser.Print{Value: parser.Variable{Name: "arg1"}},
 				},
 			},
 		},
@@ -325,11 +325,11 @@ func TestUserDefinedFunctionScopes_Dispose(t *testing.T) {
 			"USERFUNC2": &UserDefinedFunction{
 				Name: parser.Identifier{Literal: "userfunc2"},
 				Parameters: []parser.Variable{
-					{Name: "@arg1"},
-					{Name: "@arg2"},
+					{Name: "arg1"},
+					{Name: "arg2"},
 				},
 				Statements: []parser.Statement{
-					parser.Print{Value: parser.Variable{Name: "@arg2"}},
+					parser.Print{Value: parser.Variable{Name: "arg2"}},
 				},
 			},
 		},
@@ -361,10 +361,10 @@ func TestUserDefinedFunctionScopes_All(t *testing.T) {
 			"USERFUNC1": &UserDefinedFunction{
 				Name: parser.Identifier{Literal: "userfunc1"},
 				Parameters: []parser.Variable{
-					{Name: "@arg1"},
+					{Name: "arg1"},
 				},
 				Statements: []parser.Statement{
-					parser.Print{Value: parser.Variable{Name: "@arg1"}},
+					parser.Print{Value: parser.Variable{Name: "arg1"}},
 				},
 			},
 		},
@@ -372,8 +372,8 @@ func TestUserDefinedFunctionScopes_All(t *testing.T) {
 			"USERAGGFUNC": &UserDefinedFunction{
 				Name: parser.Identifier{Literal: "useraggfunc"},
 				Parameters: []parser.Variable{
-					{Name: "@arg1"},
-					{Name: "@arg2"},
+					{Name: "arg1"},
+					{Name: "arg2"},
 				},
 				Defaults: map[string]parser.QueryExpression{
 					"@arg2": parser.NewIntegerValue(1),
@@ -382,30 +382,30 @@ func TestUserDefinedFunctionScopes_All(t *testing.T) {
 				RequiredArgs: 1,
 				Cursor:       parser.Identifier{Literal: "column1"},
 				Statements: []parser.Statement{
-					parser.Print{Value: parser.Variable{Name: "@var1"}},
+					parser.Print{Value: parser.Variable{Name: "var1"}},
 				},
 			},
 			"USERFUNC2": &UserDefinedFunction{
 				Name: parser.Identifier{Literal: "userfunc2"},
 				Parameters: []parser.Variable{
-					{Name: "@arg1"},
-					{Name: "@arg2"},
+					{Name: "arg1"},
+					{Name: "arg2"},
 				},
 				Defaults: map[string]parser.QueryExpression{
 					"@arg2": parser.NewIntegerValue(3),
 				},
 				RequiredArgs: 1,
 				Statements: []parser.Statement{
-					parser.Print{Value: parser.Variable{Name: "@arg2"}},
+					parser.Print{Value: parser.Variable{Name: "arg2"}},
 				},
 			},
 			"USERFUNC1": &UserDefinedFunction{
 				Name: parser.Identifier{Literal: "userfunc1"},
 				Parameters: []parser.Variable{
-					{Name: "@arg2"},
+					{Name: "arg2"},
 				},
 				Statements: []parser.Statement{
-					parser.Print{Value: parser.Variable{Name: "@arg1"}},
+					parser.Print{Value: parser.Variable{Name: "arg1"}},
 				},
 			},
 		},
@@ -415,24 +415,24 @@ func TestUserDefinedFunctionScopes_All(t *testing.T) {
 		"USERFUNC1": &UserDefinedFunction{
 			Name: parser.Identifier{Literal: "userfunc1"},
 			Parameters: []parser.Variable{
-				{Name: "@arg1"},
+				{Name: "arg1"},
 			},
 			Statements: []parser.Statement{
-				parser.Print{Value: parser.Variable{Name: "@arg1"}},
+				parser.Print{Value: parser.Variable{Name: "arg1"}},
 			},
 		},
 		"USERFUNC2": &UserDefinedFunction{
 			Name: parser.Identifier{Literal: "userfunc2"},
 			Parameters: []parser.Variable{
-				{Name: "@arg1"},
-				{Name: "@arg2"},
+				{Name: "arg1"},
+				{Name: "arg2"},
 			},
 			Defaults: map[string]parser.QueryExpression{
 				"@arg2": parser.NewIntegerValue(3),
 			},
 			RequiredArgs: 1,
 			Statements: []parser.Statement{
-				parser.Print{Value: parser.Variable{Name: "@arg2"}},
+				parser.Print{Value: parser.Variable{Name: "arg2"}},
 			},
 		},
 	}
@@ -441,8 +441,8 @@ func TestUserDefinedFunctionScopes_All(t *testing.T) {
 		"USERAGGFUNC": &UserDefinedFunction{
 			Name: parser.Identifier{Literal: "useraggfunc"},
 			Parameters: []parser.Variable{
-				{Name: "@arg1"},
-				{Name: "@arg2"},
+				{Name: "arg1"},
+				{Name: "arg2"},
 			},
 			Defaults: map[string]parser.QueryExpression{
 				"@arg2": parser.NewIntegerValue(1),
@@ -451,7 +451,7 @@ func TestUserDefinedFunctionScopes_All(t *testing.T) {
 			RequiredArgs: 1,
 			Cursor:       parser.Identifier{Literal: "column1"},
 			Statements: []parser.Statement{
-				parser.Print{Value: parser.Variable{Name: "@var1"}},
+				parser.Print{Value: parser.Variable{Name: "var1"}},
 			},
 		},
 	}
@@ -477,27 +477,27 @@ var userDefinedFunctionMapDeclareTests = []struct {
 			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.VariableAssignment{
 				{
-					Variable: parser.Variable{Name: "@arg1"},
+					Variable: parser.Variable{Name: "arg1"},
 				},
 				{
-					Variable: parser.Variable{Name: "@arg2"},
+					Variable: parser.Variable{Name: "arg2"},
 				},
 			},
 			Statements: []parser.Statement{
-				parser.Print{Value: parser.Variable{Name: "@var1"}},
+				parser.Print{Value: parser.Variable{Name: "var1"}},
 			},
 		},
 		Result: UserDefinedFunctionMap{
 			"USERFUNC": &UserDefinedFunction{
 				Name: parser.Identifier{Literal: "userfunc"},
 				Parameters: []parser.Variable{
-					{Name: "@arg1"},
-					{Name: "@arg2"},
+					{Name: "arg1"},
+					{Name: "arg2"},
 				},
 				Defaults:     map[string]parser.QueryExpression{},
 				RequiredArgs: 2,
 				Statements: []parser.Statement{
-					parser.Print{Value: parser.Variable{Name: "@var1"}},
+					parser.Print{Value: parser.Variable{Name: "var1"}},
 				},
 			},
 		},
@@ -508,14 +508,14 @@ var userDefinedFunctionMapDeclareTests = []struct {
 			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.VariableAssignment{
 				{
-					Variable: parser.Variable{Name: "@arg1"},
+					Variable: parser.Variable{Name: "arg1"},
 				},
 				{
-					Variable: parser.Variable{Name: "@arg2"},
+					Variable: parser.Variable{Name: "arg2"},
 				},
 			},
 			Statements: []parser.Statement{
-				parser.Print{Value: parser.Variable{Name: "@var1"}},
+				parser.Print{Value: parser.Variable{Name: "var1"}},
 			},
 		},
 		Error: "[L:- C:-] function userfunc is redeclared",
@@ -526,14 +526,14 @@ var userDefinedFunctionMapDeclareTests = []struct {
 			Name: parser.Identifier{Literal: "userfunc2"},
 			Parameters: []parser.VariableAssignment{
 				{
-					Variable: parser.Variable{Name: "@arg1"},
+					Variable: parser.Variable{Name: "arg1"},
 				},
 				{
-					Variable: parser.Variable{Name: "@arg1"},
+					Variable: parser.Variable{Name: "arg1"},
 				},
 			},
 			Statements: []parser.Statement{
-				parser.Print{Value: parser.Variable{Name: "@var1"}},
+				parser.Print{Value: parser.Variable{Name: "var1"}},
 			},
 		},
 		Error: "[L:- C:-] parameter @arg1 is a duplicate",
@@ -576,14 +576,14 @@ var userDefinedFunctionMapDeclareAggregateTests = []struct {
 			Cursor: parser.Identifier{Literal: "column1"},
 			Parameters: []parser.VariableAssignment{
 				{
-					Variable: parser.Variable{Name: "@arg1"},
+					Variable: parser.Variable{Name: "arg1"},
 				},
 				{
-					Variable: parser.Variable{Name: "@arg2"},
+					Variable: parser.Variable{Name: "arg2"},
 				},
 			},
 			Statements: []parser.Statement{
-				parser.Print{Value: parser.Variable{Name: "@var1"}},
+				parser.Print{Value: parser.Variable{Name: "var1"}},
 			},
 		},
 		Result: UserDefinedFunctionMap{
@@ -592,13 +592,13 @@ var userDefinedFunctionMapDeclareAggregateTests = []struct {
 				IsAggregate: true,
 				Cursor:      parser.Identifier{Literal: "column1"},
 				Parameters: []parser.Variable{
-					{Name: "@arg1"},
-					{Name: "@arg2"},
+					{Name: "arg1"},
+					{Name: "arg2"},
 				},
 				RequiredArgs: 2,
 				Defaults:     map[string]parser.QueryExpression{},
 				Statements: []parser.Statement{
-					parser.Print{Value: parser.Variable{Name: "@var1"}},
+					parser.Print{Value: parser.Variable{Name: "var1"}},
 				},
 			},
 		},
@@ -609,7 +609,7 @@ var userDefinedFunctionMapDeclareAggregateTests = []struct {
 			Name:   parser.Identifier{Literal: "useraggfunc"},
 			Cursor: parser.Identifier{Literal: "column1"},
 			Statements: []parser.Statement{
-				parser.Print{Value: parser.Variable{Name: "@var1"}},
+				parser.Print{Value: parser.Variable{Name: "var1"}},
 			},
 		},
 		Error: "[L:- C:-] function useraggfunc is redeclared",
@@ -621,14 +621,14 @@ var userDefinedFunctionMapDeclareAggregateTests = []struct {
 			Cursor: parser.Identifier{Literal: "column1"},
 			Parameters: []parser.VariableAssignment{
 				{
-					Variable: parser.Variable{Name: "@arg1"},
+					Variable: parser.Variable{Name: "arg1"},
 				},
 				{
-					Variable: parser.Variable{Name: "@arg1"},
+					Variable: parser.Variable{Name: "arg1"},
 				},
 			},
 			Statements: []parser.Statement{
-				parser.Print{Value: parser.Variable{Name: "@var1"}},
+				parser.Print{Value: parser.Variable{Name: "var1"}},
 			},
 		},
 		Error: "[L:- C:-] parameter @arg1 is a duplicate",
@@ -696,11 +696,11 @@ func TestUserDefinedFunctionMap_CheckDuplicate(t *testing.T) {
 		"USERFUNC": &UserDefinedFunction{
 			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.Variable{
-				{Name: "@arg1"},
-				{Name: "@arg2"},
+				{Name: "arg1"},
+				{Name: "arg2"},
 			},
 			Statements: []parser.Statement{
-				parser.Print{Value: parser.Variable{Name: "@var1"}},
+				parser.Print{Value: parser.Variable{Name: "var1"}},
 			},
 		},
 	}
@@ -741,11 +741,11 @@ var userDefinedFunctionMapGetTests = []struct {
 		Result: &UserDefinedFunction{
 			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.Variable{
-				{Name: "@arg1"},
-				{Name: "@arg2"},
+				{Name: "arg1"},
+				{Name: "arg2"},
 			},
 			Statements: []parser.Statement{
-				parser.Print{Value: parser.Variable{Name: "@var1"}},
+				parser.Print{Value: parser.Variable{Name: "var1"}},
 			},
 		},
 	},
@@ -764,11 +764,11 @@ func TestUserDefinedFunctionMap_Get(t *testing.T) {
 		"USERFUNC": &UserDefinedFunction{
 			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.Variable{
-				{Name: "@arg1"},
-				{Name: "@arg2"},
+				{Name: "arg1"},
+				{Name: "arg2"},
 			},
 			Statements: []parser.Statement{
-				parser.Print{Value: parser.Variable{Name: "@var1"}},
+				parser.Print{Value: parser.Variable{Name: "var1"}},
 			},
 		},
 	}
@@ -805,32 +805,32 @@ var userDefinedFunctionExecuteTests = []struct {
 		Func: &UserDefinedFunction{
 			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.Variable{
-				{Name: "@arg1"},
-				{Name: "@arg2"},
+				{Name: "arg1"},
+				{Name: "arg2"},
 			},
 			Defaults: map[string]parser.QueryExpression{
-				"@arg2": parser.NewIntegerValue(3),
+				"arg2": parser.NewIntegerValue(3),
 			},
 			RequiredArgs: 1,
 			Statements: []parser.Statement{
 				parser.VariableDeclaration{
 					Assignments: []parser.VariableAssignment{
 						{
-							Variable: parser.Variable{Name: "@var2"},
+							Variable: parser.Variable{Name: "var2"},
 							Value: parser.Arithmetic{
 								LHS: parser.Arithmetic{
-									LHS:      parser.Variable{Name: "@arg1"},
-									RHS:      parser.Variable{Name: "@arg2"},
+									LHS:      parser.Variable{Name: "arg1"},
+									RHS:      parser.Variable{Name: "arg2"},
 									Operator: '+',
 								},
-								RHS:      parser.Variable{Name: "@var1"},
+								RHS:      parser.Variable{Name: "var1"},
 								Operator: '+',
 							},
 						},
 					},
 				},
 				parser.Return{
-					Value: parser.Variable{Name: "@var2"},
+					Value: parser.Variable{Name: "var2"},
 				},
 			},
 		},
@@ -844,21 +844,21 @@ var userDefinedFunctionExecuteTests = []struct {
 		Func: &UserDefinedFunction{
 			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.Variable{
-				{Name: "@arg1"},
-				{Name: "@arg2"},
+				{Name: "arg1"},
+				{Name: "arg2"},
 			},
 			Statements: []parser.Statement{
 				parser.VariableDeclaration{
 					Assignments: []parser.VariableAssignment{
 						{
-							Variable: parser.Variable{Name: "@var2"},
+							Variable: parser.Variable{Name: "var2"},
 							Value: parser.Arithmetic{
 								LHS: parser.Arithmetic{
-									LHS:      parser.Variable{Name: "@arg1"},
-									RHS:      parser.Variable{Name: "@arg2"},
+									LHS:      parser.Variable{Name: "arg1"},
+									RHS:      parser.Variable{Name: "arg2"},
 									Operator: '+',
 								},
-								RHS:      parser.Variable{Name: "@var1"},
+								RHS:      parser.Variable{Name: "var1"},
 								Operator: '+',
 							},
 						},
@@ -877,28 +877,28 @@ var userDefinedFunctionExecuteTests = []struct {
 		Func: &UserDefinedFunction{
 			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.Variable{
-				{Name: "@arg1"},
-				{Name: "@arg2"},
+				{Name: "arg1"},
+				{Name: "arg2"},
 			},
 			Statements: []parser.Statement{
 				parser.VariableDeclaration{
 					Assignments: []parser.VariableAssignment{
 						{
-							Variable: parser.Variable{Name: "@var2"},
+							Variable: parser.Variable{Name: "var2"},
 							Value: parser.Arithmetic{
 								LHS: parser.Arithmetic{
-									LHS:      parser.Variable{Name: "@arg1"},
-									RHS:      parser.Variable{Name: "@arg2"},
+									LHS:      parser.Variable{Name: "arg1"},
+									RHS:      parser.Variable{Name: "arg2"},
 									Operator: '+',
 								},
-								RHS:      parser.Variable{Name: "@var1"},
+								RHS:      parser.Variable{Name: "var1"},
 								Operator: '+',
 							},
 						},
 					},
 				},
 				parser.Return{
-					Value: parser.Variable{Name: "@var2"},
+					Value: parser.Variable{Name: "var2"},
 				},
 			},
 		},
@@ -912,32 +912,32 @@ var userDefinedFunctionExecuteTests = []struct {
 		Func: &UserDefinedFunction{
 			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.Variable{
-				{Name: "@arg1"},
-				{Name: "@arg2"},
+				{Name: "arg1"},
+				{Name: "arg2"},
 			},
 			Defaults: map[string]parser.QueryExpression{
-				"@arg2": parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+				"arg2": parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 			RequiredArgs: 1,
 			Statements: []parser.Statement{
 				parser.VariableDeclaration{
 					Assignments: []parser.VariableAssignment{
 						{
-							Variable: parser.Variable{Name: "@var2"},
+							Variable: parser.Variable{Name: "var2"},
 							Value: parser.Arithmetic{
 								LHS: parser.Arithmetic{
-									LHS:      parser.Variable{Name: "@arg1"},
-									RHS:      parser.Variable{Name: "@arg2"},
+									LHS:      parser.Variable{Name: "arg1"},
+									RHS:      parser.Variable{Name: "arg2"},
 									Operator: '+',
 								},
-								RHS:      parser.Variable{Name: "@var1"},
+								RHS:      parser.Variable{Name: "var1"},
 								Operator: '+',
 							},
 						},
 					},
 				},
 				parser.Return{
-					Value: parser.Variable{Name: "@var2"},
+					Value: parser.Variable{Name: "var2"},
 				},
 			},
 		},
@@ -951,14 +951,14 @@ var userDefinedFunctionExecuteTests = []struct {
 		Func: &UserDefinedFunction{
 			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.Variable{
-				{Name: "@arg1"},
-				{Name: "@arg2"},
+				{Name: "arg1"},
+				{Name: "arg2"},
 			},
 			Statements: []parser.Statement{
 				parser.VariableDeclaration{
 					Assignments: []parser.VariableAssignment{
 						{
-							Variable: parser.Variable{Name: "@var2"},
+							Variable: parser.Variable{Name: "var2"},
 							Value: parser.Subquery{
 								Query: parser.SelectQuery{
 									SelectEntity: parser.SelectEntity{
@@ -985,7 +985,7 @@ var userDefinedFunctionExecuteTests = []struct {
 
 func TestUserDefinedFunction_Execute(t *testing.T) {
 	vars := VariableMap{
-		"@var1": value.NewInteger(1),
+		"var1": value.NewInteger(1),
 	}
 	filter := NewFilter(
 		[]VariableMap{vars},
@@ -1032,22 +1032,22 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 				parser.VariableDeclaration{
 					Assignments: []parser.VariableAssignment{
 						{
-							Variable: parser.Variable{Name: "@value"},
+							Variable: parser.Variable{Name: "value"},
 						},
 						{
-							Variable: parser.Variable{Name: "@fetch"},
+							Variable: parser.Variable{Name: "fetch"},
 						},
 					},
 				},
 				parser.WhileInCursor{
 					Variables: []parser.Variable{
-						{Name: "@fetch"},
+						{Name: "fetch"},
 					},
 					Cursor: parser.Identifier{Literal: "list"},
 					Statements: []parser.Statement{
 						parser.If{
 							Condition: parser.Is{
-								LHS: parser.Variable{Name: "@fetch"},
+								LHS: parser.Variable{Name: "fetch"},
 								RHS: parser.NewNullValue(),
 							},
 							Statements: []parser.Statement{
@@ -1056,22 +1056,22 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 						},
 						parser.If{
 							Condition: parser.Is{
-								LHS: parser.Variable{Name: "@value"},
+								LHS: parser.Variable{Name: "value"},
 								RHS: parser.NewNullValue(),
 							},
 							Statements: []parser.Statement{
 								parser.VariableSubstitution{
-									Variable: parser.Variable{Name: "@value"},
-									Value:    parser.Variable{Name: "@fetch"},
+									Variable: parser.Variable{Name: "value"},
+									Value:    parser.Variable{Name: "fetch"},
 								},
 								parser.FlowControl{Token: parser.CONTINUE},
 							},
 						},
 						parser.VariableSubstitution{
-							Variable: parser.Variable{Name: "@value"},
+							Variable: parser.Variable{Name: "value"},
 							Value: parser.Arithmetic{
-								LHS:      parser.Variable{Name: "@value"},
-								RHS:      parser.Variable{Name: "@fetch"},
+								LHS:      parser.Variable{Name: "value"},
+								RHS:      parser.Variable{Name: "fetch"},
 								Operator: '*',
 							},
 						},
@@ -1079,7 +1079,7 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 				},
 
 				parser.Return{
-					Value: parser.Variable{Name: "@value"},
+					Value: parser.Variable{Name: "value"},
 				},
 			},
 		},
@@ -1097,28 +1097,28 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 			IsAggregate: true,
 			Cursor:      parser.Identifier{Literal: "list"},
 			Parameters: []parser.Variable{
-				{Name: "@default"},
+				{Name: "default"},
 			},
 			Statements: []parser.Statement{
 				parser.VariableDeclaration{
 					Assignments: []parser.VariableAssignment{
 						{
-							Variable: parser.Variable{Name: "@value"},
+							Variable: parser.Variable{Name: "value"},
 						},
 						{
-							Variable: parser.Variable{Name: "@fetch"},
+							Variable: parser.Variable{Name: "fetch"},
 						},
 					},
 				},
 				parser.WhileInCursor{
 					Variables: []parser.Variable{
-						{Name: "@fetch"},
+						{Name: "fetch"},
 					},
 					Cursor: parser.Identifier{Literal: "list"},
 					Statements: []parser.Statement{
 						parser.If{
 							Condition: parser.Is{
-								LHS: parser.Variable{Name: "@fetch"},
+								LHS: parser.Variable{Name: "fetch"},
 								RHS: parser.NewNullValue(),
 							},
 							Statements: []parser.Statement{
@@ -1127,22 +1127,22 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 						},
 						parser.If{
 							Condition: parser.Is{
-								LHS: parser.Variable{Name: "@value"},
+								LHS: parser.Variable{Name: "value"},
 								RHS: parser.NewNullValue(),
 							},
 							Statements: []parser.Statement{
 								parser.VariableSubstitution{
-									Variable: parser.Variable{Name: "@value"},
-									Value:    parser.Variable{Name: "@fetch"},
+									Variable: parser.Variable{Name: "value"},
+									Value:    parser.Variable{Name: "fetch"},
 								},
 								parser.FlowControl{Token: parser.CONTINUE},
 							},
 						},
 						parser.VariableSubstitution{
-							Variable: parser.Variable{Name: "@value"},
+							Variable: parser.Variable{Name: "value"},
 							Value: parser.Arithmetic{
-								LHS:      parser.Variable{Name: "@value"},
-								RHS:      parser.Variable{Name: "@fetch"},
+								LHS:      parser.Variable{Name: "value"},
+								RHS:      parser.Variable{Name: "fetch"},
 								Operator: '*',
 							},
 						},
@@ -1151,19 +1151,19 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 
 				parser.If{
 					Condition: parser.Is{
-						LHS: parser.Variable{Name: "@value"},
+						LHS: parser.Variable{Name: "value"},
 						RHS: parser.NewNullValue(),
 					},
 					Statements: []parser.Statement{
 						parser.VariableSubstitution{
-							Variable: parser.Variable{Name: "@value"},
-							Value:    parser.Variable{Name: "@default"},
+							Variable: parser.Variable{Name: "value"},
+							Value:    parser.Variable{Name: "default"},
 						},
 					},
 				},
 
 				parser.Return{
-					Value: parser.Variable{Name: "@value"},
+					Value: parser.Variable{Name: "value"},
 				},
 			},
 		},
@@ -1187,22 +1187,22 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 				parser.VariableDeclaration{
 					Assignments: []parser.VariableAssignment{
 						{
-							Variable: parser.Variable{Name: "@value"},
+							Variable: parser.Variable{Name: "value"},
 						},
 						{
-							Variable: parser.Variable{Name: "@fetch"},
+							Variable: parser.Variable{Name: "fetch"},
 						},
 					},
 				},
 				parser.WhileInCursor{
 					Variables: []parser.Variable{
-						{Name: "@fetch"},
+						{Name: "fetch"},
 					},
 					Cursor: parser.Identifier{Literal: "list"},
 					Statements: []parser.Statement{
 						parser.If{
 							Condition: parser.Is{
-								LHS: parser.Variable{Name: "@fetch"},
+								LHS: parser.Variable{Name: "fetch"},
 								RHS: parser.NewNullValue(),
 							},
 							Statements: []parser.Statement{
@@ -1211,22 +1211,22 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 						},
 						parser.If{
 							Condition: parser.Is{
-								LHS: parser.Variable{Name: "@value"},
+								LHS: parser.Variable{Name: "value"},
 								RHS: parser.NewNullValue(),
 							},
 							Statements: []parser.Statement{
 								parser.VariableSubstitution{
-									Variable: parser.Variable{Name: "@value"},
-									Value:    parser.Variable{Name: "@fetch"},
+									Variable: parser.Variable{Name: "value"},
+									Value:    parser.Variable{Name: "fetch"},
 								},
 								parser.FlowControl{Token: parser.CONTINUE},
 							},
 						},
 						parser.VariableSubstitution{
-							Variable: parser.Variable{Name: "@value"},
+							Variable: parser.Variable{Name: "value"},
 							Value: parser.Arithmetic{
-								LHS:      parser.Variable{Name: "@value"},
-								RHS:      parser.Variable{Name: "@fetch"},
+								LHS:      parser.Variable{Name: "value"},
+								RHS:      parser.Variable{Name: "fetch"},
 								Operator: '*',
 							},
 						},
@@ -1234,7 +1234,7 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 				},
 
 				parser.Return{
-					Value: parser.Variable{Name: "@value"},
+					Value: parser.Variable{Name: "value"},
 				},
 			},
 		},
@@ -1284,11 +1284,11 @@ var userDefinedFunctionCheckArgsLenTests = []struct {
 		Func: &UserDefinedFunction{
 			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.Variable{
-				{Name: "@arg1"},
-				{Name: "@arg2"},
+				{Name: "arg1"},
+				{Name: "arg2"},
 			},
 			Defaults: map[string]parser.QueryExpression{
-				"@arg2": parser.NewIntegerValue(3),
+				"arg2": parser.NewIntegerValue(3),
 			},
 			RequiredArgs: 1,
 			Statements:   []parser.Statement{},
@@ -1301,8 +1301,8 @@ var userDefinedFunctionCheckArgsLenTests = []struct {
 		Func: &UserDefinedFunction{
 			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.Variable{
-				{Name: "@arg1"},
-				{Name: "@arg2"},
+				{Name: "arg1"},
+				{Name: "arg2"},
 			},
 			RequiredArgs: 2,
 			Statements:   []parser.Statement{},
@@ -1315,11 +1315,11 @@ var userDefinedFunctionCheckArgsLenTests = []struct {
 		Func: &UserDefinedFunction{
 			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.Variable{
-				{Name: "@arg1"},
-				{Name: "@arg2"},
+				{Name: "arg1"},
+				{Name: "arg2"},
 			},
 			Defaults: map[string]parser.QueryExpression{
-				"@arg2": parser.NewIntegerValue(3),
+				"arg2": parser.NewIntegerValue(3),
 			},
 			RequiredArgs: 1,
 			Statements:   []parser.Statement{},
@@ -1332,11 +1332,11 @@ var userDefinedFunctionCheckArgsLenTests = []struct {
 		Func: &UserDefinedFunction{
 			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.Variable{
-				{Name: "@arg1"},
-				{Name: "@arg2"},
+				{Name: "arg1"},
+				{Name: "arg2"},
 			},
 			Defaults: map[string]parser.QueryExpression{
-				"@arg2": parser.NewIntegerValue(3),
+				"arg2": parser.NewIntegerValue(3),
 			},
 			RequiredArgs: 1,
 			Statements:   []parser.Statement{},
@@ -1350,8 +1350,8 @@ var userDefinedFunctionCheckArgsLenTests = []struct {
 			Name:        parser.Identifier{Literal: "userfunc"},
 			IsAggregate: true,
 			Parameters: []parser.Variable{
-				{Name: "@arg1"},
-				{Name: "@arg2"},
+				{Name: "arg1"},
+				{Name: "arg2"},
 			},
 			RequiredArgs: 2,
 			Cursor:       parser.Identifier{Literal: "list"},

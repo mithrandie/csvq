@@ -159,6 +159,10 @@ Variable
 Flag
 : A flag is a word starting with "@@" and followed by a character string that contains any unicode letters, any digits or low lines(U+005F '\_').
 
+Environment Variable
+: A environment variable is a word starting with "@%" and followed by a character string that contains any unicode letters, any digits or low lines(U+005F '\_').
+  If a environment variable includes other characters, you can use the variable by enclosing in back quotes(U+0060 '`').
+
 ```sql
 abcde                 -- identifier
 識別子                 -- identifier
@@ -172,6 +176,8 @@ true                  -- ternary
 null                  -- null
 @var                  -- variable
 @@flag                -- flag
+@%ENV_VAR             -- environment variable
+@%`ENV_VAR`           -- environment variable
 ```
 
 ## Comments
@@ -217,7 +223,7 @@ PARTITION PERCENT PERCENT_RANK PRECEDING PRINT PRINTF PRIOR
 RANGE RANK RECURSIVE RELATIVE RENAME RETURN RIGHT ROLLBACK ROW ROW_NUMBER
 SELECT SEPARATOR SET SHOW SOURCE STDIN SUM
 TABLE THEN TO TRIGGER TRUE
-UNBOUNDED UNION UNKNOWN UPDATE USING
+UNBOUNDED UNION UNKNOWN UNSET UPDATE USING
 VALUES VAR VIEW
 WHEN WHERE WHILE WITH WITHIN
 

@@ -3,15 +3,17 @@ package action
 import (
 	"errors"
 
+	"github.com/mithrandie/csvq/lib/cmd"
+
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
 )
 
-func ShowFields(filename string) error {
-	SetSignalHandler()
-
+func ShowFields(proc *query.Procedure, filename string) error {
 	defer func() {
-		query.ReleaseResources()
+		if err := query.ReleaseResourcesWithErrors(); err != nil {
+			cmd.WriteToStdErr(err.Error() + "\n")
+		}
 	}()
 
 	statements := []parser.Statement{
@@ -21,7 +23,6 @@ func ShowFields(filename string) error {
 		},
 	}
 
-	proc := query.NewProcedure()
 	_, err := proc.Execute(statements)
 	if appErr, ok := err.(query.AppError); ok {
 		err = errors.New(appErr.ErrorMessage())

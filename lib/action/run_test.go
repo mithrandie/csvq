@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mithrandie/csvq/lib/query"
+
 	"github.com/mithrandie/csvq/lib/cmd"
 )
 
@@ -19,10 +21,11 @@ var executeTests = []struct {
 	Error   string
 }{
 	{
-		Name:    "Select Query Output To A File",
+		Name:    "Select Query Output To File",
 		Input:   "select 1 from dual",
-		OutFile: GetTestFilePath("select_query_output_a_file.csv"),
-		Content: "+---+\n" +
+		OutFile: GetTestFilePath("select_query_output_file.csv"),
+		Content: "" +
+			"+---+\n" +
 			"| 1 |\n" +
 			"+---+\n" +
 			"| 1 |\n" +
@@ -48,7 +51,6 @@ var executeTests = []struct {
 func initFlags() {
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
-	tf.OutFile = ""
 	tf.Format = cmd.TEXT
 	tf.Stats = false
 }
@@ -58,18 +60,18 @@ func TestRun(t *testing.T) {
 	for _, v := range executeTests {
 		initFlags()
 		tf := cmd.GetFlags()
-		if v.OutFile != tf.OutFile {
-			tf.OutFile = v.OutFile
-		}
 		if v.Stats {
 			tf.Stats = v.Stats
 		}
+
+		query.OutFile = nil
 
 		oldStdout := os.Stdout
 		r, w, _ := os.Pipe()
 		os.Stdout = w
 
-		err := Run(v.Input, "")
+		proc := query.NewProcedure()
+		err := Run(proc, v.Input, "", v.OutFile)
 
 		w.Close()
 		os.Stdout = oldStdout

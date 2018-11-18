@@ -1,10 +1,14 @@
 package query
 
 import (
+	"bytes"
 	"fmt"
-	"github.com/mithrandie/csvq/lib/color"
+	"io"
+	"os"
 	"strings"
 	"time"
+
+	"github.com/mithrandie/csvq/lib/file"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
@@ -12,6 +16,71 @@ import (
 
 	"github.com/mithrandie/ternary"
 )
+
+type StatementFlow int
+
+const (
+	Terminate StatementFlow = iota
+	Error
+	Exit
+	Break
+	Continue
+	Return
+)
+
+type OperationType int
+
+const (
+	InsertQuery OperationType = iota
+	UpdateQuery
+	DeleteQuery
+	CreateTableQuery
+	AddColumnsQuery
+	DropColumnsQuery
+	RenameColumnQuery
+)
+
+type ExecResult struct {
+	Type          OperationType
+	FileInfo      *FileInfo
+	OperatedCount int
+}
+
+var ViewCache = make(ViewMap, 10)
+var ExecResults = make([]ExecResult, 0, 10)
+var OutFile *os.File
+var SelectResult = new(bytes.Buffer)
+
+func ReleaseResources() error {
+	if err := ViewCache.Clean(); err != nil {
+		return err
+	}
+	if err := file.UnlockAll(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func ReleaseResourcesWithErrors() error {
+	var errs []error
+	if err := ViewCache.CleanWithErrors(); err != nil {
+		errs = append(errs, err.(*file.ForcedUnlockError).Errors...)
+	}
+	if err := file.UnlockAllWithErrors(); err != nil {
+		errs = append(errs, err.(*file.ForcedUnlockError).Errors...)
+	}
+
+	if errs != nil {
+		return file.NewForcedUnlockError(errs)
+	}
+	return nil
+}
+
+func Log(log string, quiet bool) {
+	if !quiet {
+		cmd.WriteToStdout(log + "\n")
+	}
+}
 
 type Procedure struct {
 	Filter           *Filter
@@ -65,9 +134,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 
 	switch stmt.(type) {
 	case parser.SetFlag:
-		if printstr, err = SetFlag(stmt.(parser.SetFlag), proc.Filter); err == nil {
-			Log(printstr, flags.Quiet)
-		}
+		err = SetFlag(stmt.(parser.SetFlag), proc.Filter)
 	case parser.ShowFlag:
 		if printstr, err = ShowFlag(stmt.(parser.ShowFlag)); err == nil {
 			Log(printstr, false)
@@ -76,6 +143,10 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		err = proc.Filter.Variables.Declare(stmt.(parser.VariableDeclaration), proc.Filter)
 	case parser.VariableSubstitution:
 		_, err = proc.Filter.Evaluate(stmt.(parser.QueryExpression))
+	case parser.SetEnvVar:
+		err = SetEnvVar(stmt.(parser.SetEnvVar), proc.Filter)
+	case parser.UnsetEnvVar:
+		err = UnsetEnvVar(stmt.(parser.UnsetEnvVar))
 	case parser.DisposeVariable:
 		err = proc.Filter.Variables.Dispose(stmt.(parser.DisposeVariable).Variable)
 	case parser.CursorDeclaration:
@@ -104,7 +175,6 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			proc.MeasurementStart = time.Now()
 		}
 		if view, err = Select(stmt.(parser.SelectQuery), proc.Filter); err == nil {
-			var viewstr string
 			fileInfo := &FileInfo{
 				Format:             flags.Format,
 				Delimiter:          flags.WriteDelimiter,
@@ -112,14 +182,23 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 				Encoding:           flags.WriteEncoding,
 				LineBreak:          flags.LineBreak,
 				NoHeader:           flags.WithoutHeader,
+				EncloseAll:         flags.EncloseAll,
 				PrettyPrint:        flags.PrettyPrint,
 			}
-			viewstr, err = EncodeView(view, fileInfo)
+
+			var writer io.Writer
+			if OutFile != nil {
+				writer = OutFile
+			} else {
+				SelectResult.Reset()
+				writer = SelectResult
+			}
+			err = EncodeView(writer, view, fileInfo)
 			if err == nil {
-				if 0 < len(flags.OutFile) {
-					AddSelectLog(viewstr)
+				if OutFile != nil {
+					OutFile.WriteString(cmd.GetFlags().LineBreak.Value())
 				} else {
-					Log(viewstr, false)
+					Log(SelectResult.String(), false)
 				}
 			}
 		}
@@ -246,7 +325,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		case parser.COMMIT:
 			err = Commit(stmt.(parser.Expression), proc.Filter)
 		case parser.ROLLBACK:
-			Rollback(proc.Filter)
+			err = Rollback(stmt.(parser.Expression), proc.Filter)
 		}
 	case parser.FlowControl:
 		switch stmt.(parser.FlowControl).Token {
@@ -475,7 +554,8 @@ func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, 
 }
 
 func (proc *Procedure) showExecutionTime() {
+	palette, _ := cmd.GetPalette()
 	exectime := cmd.FormatNumber(time.Since(proc.MeasurementStart).Seconds(), 6, ".", ",", "")
-	stats := fmt.Sprintf(color.BlueB(" Query Execution Time: ")+"%s seconds", exectime)
+	stats := fmt.Sprintf(palette.Render(cmd.LableEffect, "Query Execution Time: ")+"%s seconds", exectime)
 	Log(stats, false)
 }

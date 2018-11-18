@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mithrandie/go-text"
+
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
@@ -27,52 +29,52 @@ var fetchCursorTests = []struct {
 		Name:    "Fetch Cursor First Time",
 		CurName: parser.Identifier{Literal: "cur"},
 		Variables: []parser.Variable{
-			{Name: "@var1"},
-			{Name: "@var2"},
+			{Name: "var1"},
+			{Name: "var2"},
 		},
 		Success: true,
 		ResultVars: VariableMap{
-			"@var1": value.NewString("1"),
-			"@var2": value.NewString("str1"),
+			"var1": value.NewString("1"),
+			"var2": value.NewString("str1"),
 		},
 	},
 	{
 		Name:    "Fetch Cursor Second Time",
 		CurName: parser.Identifier{Literal: "cur"},
 		Variables: []parser.Variable{
-			{Name: "@var1"},
-			{Name: "@var2"},
+			{Name: "var1"},
+			{Name: "var2"},
 		},
 		Success: true,
 		ResultVars: VariableMap{
-			"@var1": value.NewString("2"),
-			"@var2": value.NewString("str2"),
+			"var1": value.NewString("2"),
+			"var2": value.NewString("str2"),
 		},
 	},
 	{
 		Name:    "Fetch Cursor Third Time",
 		CurName: parser.Identifier{Literal: "cur"},
 		Variables: []parser.Variable{
-			{Name: "@var1"},
-			{Name: "@var2"},
+			{Name: "var1"},
+			{Name: "var2"},
 		},
 		Success: true,
 		ResultVars: VariableMap{
-			"@var1": value.NewString("3"),
-			"@var2": value.NewString("str3"),
+			"var1": value.NewString("3"),
+			"var2": value.NewString("str3"),
 		},
 	},
 	{
 		Name:    "Fetch Cursor Forth Time",
 		CurName: parser.Identifier{Literal: "cur"},
 		Variables: []parser.Variable{
-			{Name: "@var1"},
-			{Name: "@var2"},
+			{Name: "var1"},
+			{Name: "var2"},
 		},
 		Success: false,
 		ResultVars: VariableMap{
-			"@var1": value.NewString("3"),
-			"@var2": value.NewString("str3"),
+			"var1": value.NewString("3"),
+			"var2": value.NewString("str3"),
 		},
 	},
 	{
@@ -83,21 +85,21 @@ var fetchCursorTests = []struct {
 			Number:   parser.NewIntegerValueFromString("1"),
 		},
 		Variables: []parser.Variable{
-			{Name: "@var1"},
-			{Name: "@var2"},
+			{Name: "var1"},
+			{Name: "var2"},
 		},
 		Success: true,
 		ResultVars: VariableMap{
-			"@var1": value.NewString("2"),
-			"@var2": value.NewString("str2"),
+			"var1": value.NewString("2"),
+			"var2": value.NewString("str2"),
 		},
 	},
 	{
 		Name:    "Fetch Cursor Fetch Error",
 		CurName: parser.Identifier{Literal: "notexist"},
 		Variables: []parser.Variable{
-			{Name: "@var1"},
-			{Name: "@var2"},
+			{Name: "var1"},
+			{Name: "var2"},
 		},
 		Error: "[L:- C:-] cursor notexist is undeclared",
 	},
@@ -105,7 +107,7 @@ var fetchCursorTests = []struct {
 		Name:    "Fetch Cursor Not Match Number Error",
 		CurName: parser.Identifier{Literal: "cur2"},
 		Variables: []parser.Variable{
-			{Name: "@var1"},
+			{Name: "var1"},
 		},
 		Error: "[L:- C:-] fetching from cursor cur2 returns 2 values",
 	},
@@ -113,8 +115,8 @@ var fetchCursorTests = []struct {
 		Name:    "Fetch Cursor Substitution Error",
 		CurName: parser.Identifier{Literal: "cur2"},
 		Variables: []parser.Variable{
-			{Name: "@var1"},
-			{Name: "@notexist"},
+			{Name: "var1"},
+			{Name: "notexist"},
 		},
 		Error: "[L:- C:-] variable @notexist is undeclared",
 	},
@@ -126,8 +128,8 @@ var fetchCursorTests = []struct {
 			Number:   parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 		},
 		Variables: []parser.Variable{
-			{Name: "@var1"},
-			{Name: "@var2"},
+			{Name: "var1"},
+			{Name: "var2"},
 		},
 		Error: "[L:- C:-] field notexist does not exist",
 	},
@@ -139,8 +141,8 @@ var fetchCursorTests = []struct {
 			Number:   parser.NewNullValueFromString("null"),
 		},
 		Variables: []parser.Variable{
-			{Name: "@var1"},
-			{Name: "@var2"},
+			{Name: "var1"},
+			{Name: "var2"},
 		},
 		Error: "[L:- C:-] fetching position null is not an integer value",
 	},
@@ -153,8 +155,8 @@ func TestFetchCursor(t *testing.T) {
 	filter := NewFilter(
 		[]VariableMap{
 			{
-				"@var1": value.NewNull(),
-				"@var2": value.NewNull(),
+				"var1": value.NewNull(),
+				"var2": value.NewNull(),
 			},
 		},
 		[]ViewMap{{}},
@@ -451,8 +453,8 @@ var selectTests = []struct {
 				Path:      GetTestFilePath("group_table.csv"),
 				Delimiter: ',',
 				NoHeader:  false,
-				Encoding:  cmd.UTF8,
-				LineBreak: cmd.LF,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
 			},
 			Header: []HeaderField{
 				{
@@ -504,8 +506,8 @@ var selectTests = []struct {
 				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
 				NoHeader:  false,
-				Encoding:  cmd.UTF8,
-				LineBreak: cmd.LF,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
 			},
 			Header: NewHeader("table1", []string{"column2", "column1"}),
 			RecordSet: []Record{
@@ -1197,8 +1199,8 @@ var insertTests = []struct {
 				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
 				NoHeader:  false,
-				Encoding:  cmd.UTF8,
-				LineBreak: cmd.LF,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
 			},
 			Header: NewHeader("table1", []string{"column1", "column2"}),
 			RecordSet: []Record{
@@ -1232,8 +1234,8 @@ var insertTests = []struct {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2"}),
 				RecordSet: []Record{
@@ -1376,8 +1378,8 @@ var insertTests = []struct {
 				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
 				NoHeader:  false,
-				Encoding:  cmd.UTF8,
-				LineBreak: cmd.LF,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
 			},
 			Header: NewHeader("table1", []string{"column1", "column2"}),
 			RecordSet: []Record{
@@ -1487,8 +1489,8 @@ var insertTests = []struct {
 				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
 				NoHeader:  false,
-				Encoding:  cmd.UTF8,
-				LineBreak: cmd.LF,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
 			},
 			Header: NewHeader("table1", []string{"column1", "column2"}),
 			RecordSet: []Record{
@@ -1594,12 +1596,12 @@ func TestInsert(t *testing.T) {
 		}
 
 		for _, v2 := range ViewCache {
-			if v2.FileInfo.File != nil {
-				if v2.FileInfo.Path != v2.FileInfo.File.Name() {
-					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.File.Name(), v2.FileInfo.Path, v.Name)
+			if v2.FileInfo.Handler != nil {
+				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
+					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
 				}
-				file.Close(v2.FileInfo.File)
-				v2.FileInfo.File = nil
+				v2.FileInfo.Close()
+				v2.FileInfo.Handler = nil
 			}
 		}
 
@@ -1697,8 +1699,8 @@ var updateTests = []struct {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2"}),
 				RecordSet: []Record{
@@ -1725,8 +1727,8 @@ var updateTests = []struct {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2"}),
 				RecordSet: []Record{
@@ -1846,8 +1848,8 @@ var updateTests = []struct {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2"}),
 				RecordSet: []Record{
@@ -2107,12 +2109,12 @@ func TestUpdate(t *testing.T) {
 		}
 
 		for _, v2 := range ViewCache {
-			if v2.FileInfo.File != nil {
-				if v2.FileInfo.Path != v2.FileInfo.File.Name() {
-					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.File.Name(), v2.FileInfo.Path, v.Name)
+			if v2.FileInfo.Handler != nil {
+				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
+					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
 				}
-				file.Close(v2.FileInfo.File)
-				v2.FileInfo.File = nil
+				v2.FileInfo.Close()
+				v2.FileInfo.Handler = nil
 			}
 		}
 
@@ -2204,8 +2206,8 @@ var deleteTests = []struct {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2"}),
 				RecordSet: []Record{
@@ -2228,8 +2230,8 @@ var deleteTests = []struct {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2"}),
 				RecordSet: []Record{
@@ -2337,8 +2339,8 @@ var deleteTests = []struct {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2"}),
 				RecordSet: []Record{
@@ -2497,12 +2499,12 @@ func TestDelete(t *testing.T) {
 		}
 
 		for _, v2 := range ViewCache {
-			if v2.FileInfo.File != nil {
-				if v2.FileInfo.Path != v2.FileInfo.File.Name() {
-					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.File.Name(), v2.FileInfo.Path, v.Name)
+			if v2.FileInfo.Handler != nil {
+				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
+					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
 				}
-				file.Close(v2.FileInfo.File)
-				v2.FileInfo.File = nil
+				v2.FileInfo.Close()
+				v2.FileInfo.Handler = nil
 			}
 		}
 
@@ -2545,11 +2547,12 @@ var createTableTests = []struct {
 				Path:      GetTestFilePath("create_table_1.csv"),
 				Delimiter: ',',
 				NoHeader:  false,
-				Encoding:  cmd.UTF8,
-				LineBreak: cmd.LF,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
 			},
 			Header:    NewHeader("create_table_1", []string{"column1", "column2"}),
 			RecordSet: RecordSet{},
+			ForUpdate: true,
 		},
 		ViewCache: ViewMap{
 			strings.ToUpper(GetTestFilePath("create_table_1.csv")): &View{
@@ -2557,11 +2560,12 @@ var createTableTests = []struct {
 					Path:      GetTestFilePath("create_table_1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 				Header:    NewHeader("create_table_1", []string{"column1", "column2"}),
 				RecordSet: RecordSet{},
+				ForUpdate: true,
 			},
 		},
 	},
@@ -2589,8 +2593,8 @@ var createTableTests = []struct {
 				Path:      GetTestFilePath("create_table_1.csv"),
 				Delimiter: ',',
 				NoHeader:  false,
-				Encoding:  cmd.UTF8,
-				LineBreak: cmd.LF,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
 			},
 			Header: NewHeader("create_table_1", []string{"column1", "column2"}),
 			RecordSet: RecordSet{
@@ -2599,6 +2603,7 @@ var createTableTests = []struct {
 					value.NewInteger(2),
 				}),
 			},
+			ForUpdate: true,
 		},
 		ViewCache: ViewMap{
 			strings.ToUpper(GetTestFilePath("create_table_1.csv")): &View{
@@ -2606,8 +2611,8 @@ var createTableTests = []struct {
 					Path:      GetTestFilePath("create_table_1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 				Header: NewHeader("create_table_1", []string{"column1", "column2"}),
 				RecordSet: RecordSet{
@@ -2616,6 +2621,7 @@ var createTableTests = []struct {
 						value.NewInteger(2),
 					}),
 				},
+				ForUpdate: true,
 			},
 		},
 	},
@@ -2712,7 +2718,22 @@ func TestCreateTable(t *testing.T) {
 
 	for _, v := range createTableTests {
 		ReleaseResources()
+
 		result, err := CreateTable(v.Query, NewEmptyFilter())
+
+		if result != nil {
+			if result.FileInfo != nil {
+				result.FileInfo.Close()
+				result.FileInfo.Handler = nil
+			}
+		}
+		for _, view := range ViewCache {
+			if view.FileInfo != nil {
+				view.FileInfo.Close()
+				view.FileInfo.Handler = nil
+			}
+		}
+
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2725,6 +2746,7 @@ func TestCreateTable(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
+
 		if !reflect.DeepEqual(result, v.Result) {
 			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
 		}
@@ -2764,8 +2786,8 @@ var addColumnsTests = []struct {
 				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
 				NoHeader:  false,
-				Encoding:  cmd.UTF8,
-				LineBreak: cmd.LF,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
 			},
 			Header: NewHeader("table1", []string{"column1", "column2", "column3", "column4"}),
 			RecordSet: []Record{
@@ -2797,8 +2819,8 @@ var addColumnsTests = []struct {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2", "column3", "column4"}),
 				RecordSet: []Record{
@@ -2915,8 +2937,8 @@ var addColumnsTests = []struct {
 				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
 				NoHeader:  false,
-				Encoding:  cmd.UTF8,
-				LineBreak: cmd.LF,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
 			},
 			Header: NewHeader("table1", []string{"column3", "column4", "column1", "column2"}),
 			RecordSet: []Record{
@@ -2966,8 +2988,8 @@ var addColumnsTests = []struct {
 				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
 				NoHeader:  false,
-				Encoding:  cmd.UTF8,
-				LineBreak: cmd.LF,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
 			},
 			Header: NewHeader("table1", []string{"column1", "column3", "column4", "column2"}),
 			RecordSet: []Record{
@@ -3017,8 +3039,8 @@ var addColumnsTests = []struct {
 				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
 				NoHeader:  false,
-				Encoding:  cmd.UTF8,
-				LineBreak: cmd.LF,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
 			},
 			Header: NewHeader("table1", []string{"column1", "column3", "column4", "column2"}),
 			RecordSet: []Record{
@@ -3159,12 +3181,12 @@ func TestAddColumns(t *testing.T) {
 		}
 
 		for _, v2 := range ViewCache {
-			if v2.FileInfo.File != nil {
-				if v2.FileInfo.Path != v2.FileInfo.File.Name() {
-					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.File.Name(), v2.FileInfo.Path, v.Name)
+			if v2.FileInfo.Handler != nil {
+				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
+					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
 				}
-				file.Close(v2.FileInfo.File)
-				v2.FileInfo.File = nil
+				v2.FileInfo.Close()
+				v2.FileInfo.Handler = nil
 			}
 		}
 
@@ -3207,8 +3229,8 @@ var dropColumnsTests = []struct {
 				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
 				NoHeader:  false,
-				Encoding:  cmd.UTF8,
-				LineBreak: cmd.LF,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
 			},
 			Header: NewHeader("table1", []string{"column1"}),
 			RecordSet: []Record{
@@ -3231,8 +3253,8 @@ var dropColumnsTests = []struct {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 				Header: NewHeader("table1", []string{"column1"}),
 				RecordSet: []Record{
@@ -3368,12 +3390,12 @@ func TestDropColumns(t *testing.T) {
 		}
 
 		for _, v2 := range ViewCache {
-			if v2.FileInfo.File != nil {
-				if v2.FileInfo.Path != v2.FileInfo.File.Name() {
-					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.File.Name(), v2.FileInfo.Path, v.Name)
+			if v2.FileInfo.Handler != nil {
+				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
+					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
 				}
-				file.Close(v2.FileInfo.File)
-				v2.FileInfo.File = nil
+				v2.FileInfo.Close()
+				v2.FileInfo.Handler = nil
 			}
 		}
 
@@ -3415,8 +3437,8 @@ var renameColumnTests = []struct {
 				Path:      GetTestFilePath("table1.csv"),
 				Delimiter: ',',
 				NoHeader:  false,
-				Encoding:  cmd.UTF8,
-				LineBreak: cmd.LF,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
 			},
 			Header: NewHeader("table1", []string{"column1", "newcolumn"}),
 			RecordSet: []Record{
@@ -3442,8 +3464,8 @@ var renameColumnTests = []struct {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 				Header: NewHeader("table1", []string{"column1", "newcolumn"}),
 				RecordSet: []Record{
@@ -3592,12 +3614,12 @@ func TestRenameColumn(t *testing.T) {
 		}
 
 		for _, v2 := range ViewCache {
-			if v2.FileInfo.File != nil {
-				if v2.FileInfo.Path != v2.FileInfo.File.Name() {
-					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.File.Name(), v2.FileInfo.Path, v.Name)
+			if v2.FileInfo.Handler != nil {
+				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
+					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
 				}
-				file.Close(v2.FileInfo.File)
-				v2.FileInfo.File = nil
+				v2.FileInfo.Close()
+				v2.FileInfo.Handler = nil
 			}
 		}
 
@@ -3636,8 +3658,8 @@ var setTableAttributeTests = []struct {
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: ';',
 			Format:    cmd.CSV,
-			Encoding:  cmd.UTF8,
-			LineBreak: cmd.LF,
+			Encoding:  text.UTF8,
+			LineBreak: text.LF,
 		},
 	},
 	{
@@ -3651,8 +3673,8 @@ var setTableAttributeTests = []struct {
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: '\t',
 			Format:    cmd.TSV,
-			Encoding:  cmd.UTF8,
-			LineBreak: cmd.LF,
+			Encoding:  text.UTF8,
+			LineBreak: text.LF,
 		},
 	},
 	{
@@ -3666,8 +3688,8 @@ var setTableAttributeTests = []struct {
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: ',',
 			Format:    cmd.FIXED,
-			Encoding:  cmd.UTF8,
-			LineBreak: cmd.LF,
+			Encoding:  text.UTF8,
+			LineBreak: text.LF,
 		},
 	},
 	{
@@ -3699,8 +3721,8 @@ var setTableAttributeTests = []struct {
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: ',',
 			Format:    cmd.TEXT,
-			Encoding:  cmd.UTF8,
-			LineBreak: cmd.LF,
+			Encoding:  text.UTF8,
+			LineBreak: text.LF,
 		},
 	},
 	{
@@ -3714,8 +3736,8 @@ var setTableAttributeTests = []struct {
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: ',',
 			Format:    cmd.JSON,
-			Encoding:  cmd.UTF8,
-			LineBreak: cmd.LF,
+			Encoding:  text.UTF8,
+			LineBreak: text.LF,
 		},
 	},
 	{
@@ -3729,8 +3751,8 @@ var setTableAttributeTests = []struct {
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: '\t',
 			Format:    cmd.TSV,
-			Encoding:  cmd.UTF8,
-			LineBreak: cmd.LF,
+			Encoding:  text.UTF8,
+			LineBreak: text.LF,
 		},
 	},
 	{
@@ -3753,8 +3775,8 @@ var setTableAttributeTests = []struct {
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: ',',
 			Format:    cmd.CSV,
-			Encoding:  cmd.SJIS,
-			LineBreak: cmd.LF,
+			Encoding:  text.SJIS,
+			LineBreak: text.LF,
 		},
 	},
 	{
@@ -3768,8 +3790,8 @@ var setTableAttributeTests = []struct {
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: ',',
 			Format:    cmd.CSV,
-			Encoding:  cmd.SJIS,
-			LineBreak: cmd.LF,
+			Encoding:  text.SJIS,
+			LineBreak: text.LF,
 		},
 	},
 	{
@@ -3801,8 +3823,8 @@ var setTableAttributeTests = []struct {
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: ',',
 			Format:    cmd.CSV,
-			Encoding:  cmd.UTF8,
-			LineBreak: cmd.CRLF,
+			Encoding:  text.UTF8,
+			LineBreak: text.CRLF,
 		},
 	},
 	{
@@ -3825,8 +3847,8 @@ var setTableAttributeTests = []struct {
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: ',',
 			Format:    cmd.CSV,
-			Encoding:  cmd.UTF8,
-			LineBreak: cmd.LF,
+			Encoding:  text.UTF8,
+			LineBreak: text.LF,
 			NoHeader:  true,
 		},
 	},
@@ -3840,6 +3862,22 @@ var setTableAttributeTests = []struct {
 		Error: "[L:- C:-] null for header is not allowed",
 	},
 	{
+		Name: "Set EncloseAll to true",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "enclose_all"},
+			Value:     parser.NewStringValue("true"),
+		},
+		Expect: &FileInfo{
+			Path:       GetTestFilePath("table1.csv"),
+			Delimiter:  ',',
+			Format:     cmd.CSV,
+			Encoding:   text.UTF8,
+			LineBreak:  text.LF,
+			EncloseAll: true,
+		},
+	},
+	{
 		Name: "Set PrettyPring to true",
 		Query: parser.SetTableAttribute{
 			Table:     parser.Identifier{Literal: "table.json"},
@@ -3850,8 +3888,8 @@ var setTableAttributeTests = []struct {
 			Path:        GetTestFilePath("table.json"),
 			Delimiter:   ',',
 			Format:      cmd.JSON,
-			Encoding:    cmd.UTF8,
-			LineBreak:   cmd.LF,
+			Encoding:    text.UTF8,
+			LineBreak:   text.LF,
 			PrettyPrint: true,
 		},
 	},
@@ -3940,12 +3978,12 @@ func TestSetTableAttribute(t *testing.T) {
 		}
 
 		for _, v2 := range ViewCache {
-			if v2.FileInfo.File != nil {
-				if v2.FileInfo.Path != v2.FileInfo.File.Name() {
-					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.File.Name(), v2.FileInfo.Path, v.Name)
+			if v2.FileInfo.Handler != nil {
+				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
+					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
 				}
-				file.Close(v2.FileInfo.File)
-				v2.FileInfo.File = nil
+				v2.FileInfo.Close()
+				v2.FileInfo.Handler = nil
 			}
 		}
 
@@ -3960,16 +3998,18 @@ func TestSetTableAttribute(t *testing.T) {
 }
 
 func TestCommit(t *testing.T) {
-	cmd.SetQuiet(false)
+	cmd.GetFlags().SetQuiet(false)
 
-	fp, _ := file.OpenToUpdate(GetTestFilePath("updated_file_1.csv"))
+	ch, _ := file.NewHandlerForCreate(GetTestFilePath("create_file.csv"))
+	uh, _ := file.NewHandlerForUpdate(GetTestFilePath("updated_file_1.csv"))
 
 	ViewCache = ViewMap{
 		strings.ToUpper(GetTestFilePath("created_file.csv")): &View{
 			Header:    NewHeader("created_file", []string{"column1", "column2"}),
 			RecordSet: RecordSet{},
 			FileInfo: &FileInfo{
-				Path: GetTestFilePath("created_file.csv"),
+				Path:    GetTestFilePath("created_file.csv"),
+				Handler: ch,
 			},
 		},
 		strings.ToUpper(GetTestFilePath("updated_file_1.csv")): &View{
@@ -3989,8 +4029,8 @@ func TestCommit(t *testing.T) {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path: GetTestFilePath("updated_file_1.csv"),
-				File: fp,
+				Path:    GetTestFilePath("updated_file_1.csv"),
+				Handler: uh,
 			},
 		},
 	}
@@ -3999,14 +4039,15 @@ func TestCommit(t *testing.T) {
 		{
 			Type: CreateTableQuery,
 			FileInfo: &FileInfo{
-				Path: GetTestFilePath("created_file.csv"),
+				Path:    GetTestFilePath("created_file.csv"),
+				Handler: ch,
 			},
 		},
 		{
 			Type: UpdateQuery,
 			FileInfo: &FileInfo{
-				Path: GetTestFilePath("updated_file_1.csv"),
-				File: fp,
+				Path:    GetTestFilePath("updated_file_1.csv"),
+				Handler: uh,
 			},
 			OperatedCount: 1,
 		},
@@ -4035,7 +4076,7 @@ func TestCommit(t *testing.T) {
 }
 
 func TestRollback(t *testing.T) {
-	cmd.SetQuiet(false)
+	cmd.GetFlags().SetQuiet(false)
 
 	ExecResults = []ExecResult{
 		{
@@ -4064,7 +4105,7 @@ func TestRollback(t *testing.T) {
 	r, w, _ := os.Pipe()
 	os.Stdout = w
 
-	Rollback(NewEmptyFilter())
+	Rollback(nil, NewEmptyFilter())
 
 	w.Close()
 	os.Stdout = oldStdout

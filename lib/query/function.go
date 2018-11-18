@@ -8,8 +8,6 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"encoding/hex"
-	"github.com/mithrandie/csvq/lib/json"
-	"github.com/mithrandie/csvq/lib/text"
 	"hash"
 	"math"
 	"os/exec"
@@ -18,6 +16,10 @@ import (
 	"time"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/mithrandie/go-text"
+
+	"github.com/mithrandie/csvq/lib/json"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
@@ -676,7 +678,7 @@ func execStringsPadding(fn parser.Function, args []value.Primary, direction Dire
 		}
 	}
 
-	enc := cmd.UTF8
+	enc := text.UTF8
 	if 4 < len(args) {
 		encs := value.ToString(args[4])
 		if !value.IsNull(encs) {
@@ -698,8 +700,8 @@ func execStringsPadding(fn parser.Function, args []value.Primary, direction Dire
 		strLen = text.ByteSize(str, enc)
 		padstrLen = text.ByteSize(padstr, enc)
 	case PaddingWidth:
-		strLen = text.StringWidth(str)
-		padstrLen = text.StringWidth(padstr)
+		strLen = cmd.TextWidth(str)
+		padstrLen = cmd.TextWidth(padstr)
 	}
 
 	if length <= strLen {
@@ -721,7 +723,7 @@ func execStringsPadding(fn parser.Function, args []value.Primary, direction Dire
 			case PaddingByteCount:
 				w = text.RuneByteSize(r, enc)
 			default:
-				w = text.RuneWidth(r)
+				w = cmd.RuneWidth(r)
 			}
 			l = l + w
 			buf = append(buf, r)
@@ -782,7 +784,7 @@ func execCryptoHMAC(fn parser.Function, args []value.Primary, cryptof func() has
 }
 
 func width(s string) int {
-	return text.StringWidth(s)
+	return cmd.TextWidth(s)
 }
 
 func Trim(fn parser.Function, args []value.Primary) (value.Primary, error) {
@@ -835,7 +837,7 @@ func ByteLen(fn parser.Function, args []value.Primary) (value.Primary, error) {
 		return value.NewNull(), nil
 	}
 
-	enc := cmd.UTF8
+	enc := text.UTF8
 	if 1 < len(args) {
 		encs := value.ToString(args[1])
 		if !value.IsNull(encs) {
@@ -1599,9 +1601,5 @@ func JsonObject(fn parser.Function, filter *Filter) (value.Primary, error) {
 		record = append(record, cell.Value())
 	}
 	structure, _ := json.ConvertRecordValueToJsonStructure(pathes, record)
-
-	e := json.NewEncoder()
-	s := e.Encode(structure, false)
-
-	return value.NewString(s), nil
+	return value.NewString(structure.Encode()), nil
 }

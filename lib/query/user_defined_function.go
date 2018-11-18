@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"sort"
+
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
-	"sort"
 )
 
 type UserDefinedFunctionScopes []UserDefinedFunctionMap
@@ -130,7 +131,7 @@ func (m UserDefinedFunctionMap) parseParameters(parameters []parser.VariableAssi
 		if assignment.Value == nil {
 			required = i + 1
 		} else {
-			defaults[assignment.Variable.String()] = assignment.Value
+			defaults[assignment.Variable.Name] = assignment.Value
 		}
 	}
 	return variables, defaults, required, nil
@@ -237,7 +238,7 @@ func (fn *UserDefinedFunction) execute(args []value.Primary, filter *Filter) (va
 		if i < len(args) {
 			filter.Variables[0].Add(v, args[i])
 		} else {
-			defaultValue, _ := fn.Defaults[v.String()]
+			defaultValue, _ := fn.Defaults[v.Name]
 			val, err := filter.Evaluate(defaultValue)
 			if err != nil {
 				return nil, err

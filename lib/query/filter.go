@@ -1,9 +1,11 @@
 package query
 
 import (
-	"github.com/mithrandie/csvq/lib/json"
+	"os"
 	"strings"
 	"time"
+
+	"github.com/mithrandie/csvq/lib/json"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
@@ -195,6 +197,8 @@ func (f *Filter) Evaluate(expr parser.QueryExpression) (value.Primary, error) {
 		val, err = f.evalUnaryLogic(expr.(parser.UnaryLogic))
 	case parser.Variable:
 		val, err = f.Variables.Get(expr.(parser.Variable))
+	case parser.EnvVar:
+		val = value.NewString(os.Getenv(expr.(parser.EnvVar).Name))
 	case parser.VariableSubstitution:
 		val, err = f.Variables.Substitute(expr.(parser.VariableSubstitution), f)
 	case parser.CursorStatus:

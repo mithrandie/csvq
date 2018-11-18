@@ -1,10 +1,10 @@
-package text
+package cmd
 
 import (
 	"bytes"
-	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/csvq/lib/color"
 	"strings"
+
+	"github.com/mithrandie/go-text/color"
 )
 
 const (
@@ -13,18 +13,19 @@ const (
 )
 
 type ObjectWriter struct {
+	Palette *color.Palette
+
 	MaxWidth    int
 	Padding     int
 	Indent      int
 	IndentWidth int
 
-	Title1      string
-	Title1Style color.Style
-	Title2      string
-	Title2Style color.Style
+	Title1       string
+	Title1Effect string
+	Title2       string
+	Title2Effect string
 
-	Palette *color.Palette
-	buf     bytes.Buffer
+	buf bytes.Buffer
 
 	subBlock  int
 	lineWidth int
@@ -32,15 +33,14 @@ type ObjectWriter struct {
 }
 
 func NewObjectWriter() *ObjectWriter {
-	palette := color.NewPalette()
-	palette.Enable()
-
 	maxWidth := DefaultLineWidth
-	if cmd.Terminal != nil {
-		if termw, _, err := cmd.Terminal.GetSize(); err == nil {
+	if Terminal != nil {
+		if termw, _, err := Terminal.GetSize(); err == nil {
 			maxWidth = termw
 		}
 	}
+
+	palette, _ := GetPalette()
 
 	return &ObjectWriter{
 		MaxWidth:    maxWidth,
@@ -54,15 +54,26 @@ func NewObjectWriter() *ObjectWriter {
 	}
 }
 
-func (w *ObjectWriter) WriteColorWithoutLineBreak(s string, style color.Style) {
-	w.write(s, style, true)
+func (w *ObjectWriter) Clear() {
+	w.Title1 = ""
+	w.Title1Effect = ""
+	w.Title2 = ""
+	w.Title2Effect = ""
+	w.lineWidth = 0
+	w.column = 0
+	w.subBlock = 0
+	w.buf.Reset()
 }
 
-func (w *ObjectWriter) WriteColor(s string, style color.Style) {
-	w.write(s, style, false)
+func (w *ObjectWriter) WriteColorWithoutLineBreak(s string, effect string) {
+	w.write(s, effect, true)
 }
 
-func (w *ObjectWriter) write(s string, style color.Style, withoutLineBreak bool) {
+func (w *ObjectWriter) WriteColor(s string, effect string) {
+	w.write(s, effect, false)
+}
+
+func (w *ObjectWriter) write(s string, effect string, withoutLineBreak bool) {
 	startOfLine := w.column < 1
 
 	if startOfLine {
@@ -73,10 +84,14 @@ func (w *ObjectWriter) write(s string, style color.Style, withoutLineBreak bool)
 
 	if !withoutLineBreak && !startOfLine && !w.FitInLine(s) {
 		w.NewLine()
-		w.write(s, style, withoutLineBreak)
+		w.write(s, effect, withoutLineBreak)
 	} else {
-		w.writeToBuf(w.Palette.Color(s, style))
-		w.column = w.column + StringWidth(s)
+		if w.Palette == nil {
+			w.writeToBuf(s)
+		} else {
+			w.writeToBuf(w.Palette.Render(effect, s))
+		}
+		w.column = w.column + TextWidth(s)
 	}
 }
 
@@ -89,18 +104,18 @@ func (w *ObjectWriter) leadingSpacesWidth() int {
 }
 
 func (w *ObjectWriter) FitInLine(s string) bool {
-	if w.MaxWidth-w.Padding < w.column+StringWidth(s) {
+	if w.MaxWidth-w.Padding < w.column+TextWidth(s) {
 		return false
 	}
 	return true
 }
 
 func (w *ObjectWriter) WriteWithoutLineBreak(s string) {
-	w.WriteColorWithoutLineBreak(s, color.PlainStyle)
+	w.WriteColorWithoutLineBreak(s, NoEffect)
 }
 
 func (w *ObjectWriter) Write(s string) {
-	w.WriteColor(s, color.PlainStyle)
+	w.WriteColor(s, NoEffect)
 }
 
 func (w *ObjectWriter) WriteSpaces(l int) {
@@ -138,7 +153,7 @@ func (w *ObjectWriter) ClearBlock() {
 func (w *ObjectWriter) String() string {
 	var header bytes.Buffer
 	if 0 < len(w.Title1) || 0 < len(w.Title2) {
-		tw := StringWidth(w.Title1) + StringWidth(w.Title2)
+		tw := TextWidth(w.Title1) + TextWidth(w.Title2)
 		if 0 < len(w.Title1) && 0 < len(w.Title2) {
 			tw++
 		}
@@ -158,11 +173,19 @@ func (w *ObjectWriter) String() string {
 			header.Write(bytes.Repeat([]byte(" "), (hlLen-tw)/2))
 		}
 		if 0 < len(w.Title1) {
-			header.WriteString(w.Palette.Color(w.Title1, w.Title1Style))
+			if w.Palette == nil {
+				header.WriteString(w.Title1)
+			} else {
+				header.WriteString(w.Palette.Render(w.Title1Effect, w.Title1))
+			}
 		}
 		if 0 < len(w.Title2) {
 			header.WriteRune(' ')
-			header.WriteString(w.Palette.Color(w.Title2, w.Title2Style))
+			if w.Palette == nil {
+				header.WriteString(w.Title2)
+			} else {
+				header.WriteString(w.Palette.Render(w.Title2Effect, w.Title2))
+			}
 		}
 		header.WriteRune('\n')
 		header.Write(bytes.Repeat([]byte("-"), hlLen))

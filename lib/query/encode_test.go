@@ -1,34 +1,26 @@
 package query
 
 import (
-	"io/ioutil"
-	"strings"
+	"bytes"
 	"testing"
-
-	"golang.org/x/text/encoding/japanese"
-	"golang.org/x/text/transform"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/value"
 
+	"github.com/mithrandie/go-text"
 	"github.com/mithrandie/ternary"
 )
-
-func encodeToSJIS(str string) string {
-	r := transform.NewReader(strings.NewReader(str), japanese.ShiftJIS.NewDecoder())
-	bytes, _ := ioutil.ReadAll(r)
-	return string(bytes)
-}
 
 var encodeViewTests = []struct {
 	Name                    string
 	View                    *View
 	Format                  cmd.Format
-	LineBreak               cmd.LineBreak
-	WriteEncoding           cmd.Encoding
+	LineBreak               text.LineBreak
+	WriteEncoding           text.Encoding
 	WriteDelimiter          rune
 	WriteDelimiterPositions []int
 	WithoutHeader           bool
+	EncloseAll              bool
 	PrettyPrint             bool
 	Result                  string
 	Error                   string
@@ -88,8 +80,24 @@ var encodeViewTests = []struct {
 		WriteDelimiterPositions: []int{10, 42, 50},
 		Result: "" +
 			"c1        c2                              c3      \n" +
-			"        -1                                false   \n" +
+			"        -1                                 false  \n" +
 			"    2.01232016-02-01T16:00:00.123456-07:00abcdef  ",
+	},
+	{
+		Name: "Fixed-Length Format Auto Filled",
+		View: &View{
+			Header: NewHeader("test", []string{"c1", "c2", "c3"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(false)}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
+			},
+		},
+		Format:                  cmd.FIXED,
+		WriteDelimiterPositions: nil,
+		Result: "" +
+			"c1     c2                               c3    \n" +
+			"    -1                                  false \n" +
+			"2.0123 2016-02-01T16:00:00.123456-07:00 abcdef",
 	},
 	{
 		Name: "GFM LineBreak CRLF",
@@ -101,11 +109,28 @@ var encodeViewTests = []struct {
 			},
 		},
 		Format:    cmd.GFM,
-		LineBreak: cmd.CRLF,
+		LineBreak: text.CRLF,
 		Result: "" +
 			"|    c1    |                          c2<br />second line                          |   c3   |\r\n" +
 			"| -------: | --------------------------------------------------------------------- | ------ |\r\n" +
 			"|   2.0123 | 2016-02-01T16:00:00.123456-07:00                                      | abcdef |\r\n" +
+			"| 34567890 |  ab\\|cdefghijklmnopqrstuvwxyzabcdefg<br />hi\"jk日本語あアｱＡ（<br />  |        |",
+	},
+	{
+		Name: "Org-mode Table",
+		View: &View{
+			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
+				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" ab|cdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk日本語あアｱＡ（\n"), value.NewNull()}),
+			},
+		},
+		Format:    cmd.ORG,
+		LineBreak: text.LF,
+		Result: "" +
+			"|    c1    |                          c2<br />second line                          |   c3   |\n" +
+			"|----------+-----------------------------------------------------------------------+--------|\n" +
+			"|   2.0123 | 2016-02-01T16:00:00.123456-07:00                                      | abcdef |\n" +
 			"| 34567890 |  ab\\|cdefghijklmnopqrstuvwxyzabcdefg<br />hi\"jk日本語あアｱＡ（<br />  |        |",
 	},
 	{
@@ -120,6 +145,7 @@ var encodeViewTests = []struct {
 		},
 		Format:         cmd.TSV,
 		WriteDelimiter: '\t',
+		EncloseAll:     true,
 		Result: "\"c1\"\t\"c2\nsecond line\"\t\"c3\"\n" +
 			"-1\t\ttrue\n" +
 			"2.0123\t\"2016-02-01T16:00:00.123456-07:00\"\t\"abcdef\"\n" +
@@ -137,6 +163,7 @@ var encodeViewTests = []struct {
 		},
 		Format:        cmd.CSV,
 		WithoutHeader: true,
+		EncloseAll:    true,
 		Result: "-1,,true\n" +
 			"2.0123,\"2016-02-01T16:00:00.123456-07:00\",\"abcdef\"\n" +
 			"34567890,\" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"\"jk\n\",",
@@ -151,8 +178,9 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), value.NewNull()}),
 			},
 		},
-		Format:    cmd.CSV,
-		LineBreak: cmd.CRLF,
+		Format:     cmd.CSV,
+		LineBreak:  text.CRLF,
+		EncloseAll: true,
 		Result: "\"c1\",\"c2\nsecond line\",\"c3\"\r\n" +
 			"-1,,true\r\n" +
 			"2.0123,\"2016-02-01T16:00:00.123456-07:00\",\"abcdef\"\r\n" +
@@ -301,22 +329,25 @@ var encodeViewTests = []struct {
 			},
 		},
 		Format:        cmd.CSV,
-		WriteEncoding: cmd.SJIS,
-		Result: encodeToSJIS("\"c1\",\"c2\nsecond line\",\"c3\"\n" +
+		WriteEncoding: text.SJIS,
+		EncloseAll:    true,
+		Result: "\"c1\",\"c2\nsecond line\",\"c3\"\n" +
 			"-1,,true\n" +
 			"-1,false,true\n" +
 			"2.0123,\"2016-02-01T16:00:00.123456-07:00\",\"abcdef\"\n" +
-			"34567890,\" 日本語ghijklmnopqrstuvwxyzabcdefg\nhi\"\"jk\n\","),
+			"34567890,\" " + string([]byte{0x93, 0xfa, 0x96, 0x7b, 0x8c, 0xea}) + "ghijklmnopqrstuvwxyzabcdefg\nhi\"\"jk\n\",",
 	},
 }
 
 func TestEncodeView(t *testing.T) {
+	buf := new(bytes.Buffer)
+
 	for _, v := range encodeViewTests {
 		if v.WriteEncoding == "" {
-			v.WriteEncoding = cmd.UTF8
+			v.WriteEncoding = text.UTF8
 		}
 		if v.LineBreak == "" {
-			v.LineBreak = cmd.LF
+			v.LineBreak = text.LF
 		}
 		if v.WriteDelimiter == 0 {
 			v.WriteDelimiter = ','
@@ -329,10 +360,12 @@ func TestEncodeView(t *testing.T) {
 			Encoding:           v.WriteEncoding,
 			LineBreak:          v.LineBreak,
 			NoHeader:           v.WithoutHeader,
+			EncloseAll:         v.EncloseAll,
 			PrettyPrint:        v.PrettyPrint,
 		}
 
-		s, err := EncodeView(v.View, fileInfo)
+		buf.Reset()
+		err := EncodeView(buf, v.View, fileInfo)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -345,8 +378,10 @@ func TestEncodeView(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if s != v.Result {
-			t.Errorf("%s: result = %q, want %q", v.Name, s, v.Result)
+
+		result := buf.String()
+		if result != v.Result {
+			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
 		}
 	}
 }

@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mithrandie/go-text"
+
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/value"
 )
@@ -42,7 +44,7 @@ func setup() {
 		os.RemoveAll(TestDir)
 	}
 
-	cmd.SetLocation(TestLocation)
+	cmd.GetFlags().SetLocation(TestLocation)
 	flags := cmd.GetFlags()
 	flags.Now = "2012-02-03 09:18:15"
 
@@ -87,6 +89,8 @@ func setup() {
 
 	copyfile(filepath.Join(TestDir, "source.sql"), filepath.Join(filepath.Join(wdir, "..", "..", "testdata"), "source.sql"))
 	copyfile(filepath.Join(TestDir, "source_syntaxerror.sql"), filepath.Join(filepath.Join(wdir, "..", "..", "testdata"), "source_syntaxerror.sql"))
+
+	os.Setenv("CSVQ_TEST_ENV", "foo")
 }
 
 func teardown() {
@@ -101,27 +105,30 @@ func initFlag() {
 		cpu = 1
 	}
 
-	cmd.SetLocation(TestLocation)
+	cmd.GetFlags().SetLocation(TestLocation)
 	flags := cmd.GetFlags()
 	flags.Repository = "."
-	flags.DatetimeFormat = ""
+	flags.DatetimeFormat = []string{}
 	flags.WaitTimeout = 15
 	flags.Delimiter = ','
 	flags.JsonQuery = ""
-	flags.Encoding = cmd.UTF8
+	flags.Encoding = text.UTF8
 	flags.NoHeader = false
 	flags.WithoutNull = false
-	flags.WriteEncoding = cmd.UTF8
+	flags.WriteEncoding = text.UTF8
 	flags.Format = cmd.TEXT
 	flags.WriteDelimiter = ','
 	flags.WithoutHeader = false
-	flags.LineBreak = cmd.LF
+	flags.LineBreak = text.LF
+	flags.EncloseAll = false
 	flags.PrettyPrint = false
-	flags.Color = false
+	flags.EastAsianEncoding = false
+	flags.CountDiacriticalSign = false
+	flags.CountFormatCode = false
 	flags.Quiet = false
 	flags.CPU = cpu
 	flags.Stats = false
-	cmd.SetColor(false)
+	cmd.GetFlags().SetColor(false)
 }
 
 func copyfile(dstfile string, srcfile string) error {

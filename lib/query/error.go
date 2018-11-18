@@ -2,21 +2,25 @@ package query
 
 import (
 	"fmt"
+	"strconv"
+
+	"github.com/mithrandie/csvq/lib/cmd"
+
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
-	"strconv"
 )
 
 const (
 	ErrorMessageTemplate                  = "[L:%d C:%d] %s"
 	ErrorMessageWithFilepathTemplate      = "%s [L:%d C:%d] %s"
 	ErrorMessageWithEmptyPositionTemplate = "[L:- C:-] %s"
+	ErrorMessageWithCustomPrefixTemplate  = "[%s] %s"
 
 	ErrorInvalidSyntax                        = "syntax error: unexpected %s"
-	ErrorReadFile                             = "failed to read from file: %s"
-	ErrorCreateFile                           = "failed to create file: %s"
+	ErrorReadFile                             = "failed to read file: %s"
 	ErrorWriteFile                            = "failed to write to file: %s"
-	ErrorWriteFileInAutoCommit                = "[Auto-Commit] failed to write to file: %s"
+	ErrorCommit                               = "failed to commit: %s"
+	ErrorRollback                             = "failed to rollback: %s"
 	ErrorFieldAmbiguous                       = "field %s is ambiguous"
 	ErrorFieldNotExist                        = "field %s does not exist"
 	ErrorFieldNotGroupKey                     = "field %s is not a group key"
@@ -84,7 +88,6 @@ const (
 	ErrorReplaceValueLength                   = "%s"
 	ErrorSourceInvalidFilePath                = "%s is a invalid file path"
 	ErrorSourceFileNotExist                   = "file %s does not exist"
-	ErrorSourceFileUnableToRead               = "file %s is unable to read"
 	ErrorInvalidFlagName                      = "flag %s does not exist"
 	ErrorFlagValueNowAllowedFormat            = "%s for %s is not allowed"
 	ErrorInvalidFlagValue                     = "%s"
@@ -132,9 +135,13 @@ type BaseError struct {
 	Char       int
 	Message    string
 	Code       int
+	Prefix     string
 }
 
 func (e BaseError) Error() string {
+	if 0 < len(e.Prefix) {
+		return fmt.Sprintf(ErrorMessageWithCustomPrefixTemplate, e.Prefix, e.Message)
+	}
 	if e.Line < 1 {
 		return fmt.Sprintf(ErrorMessageWithEmptyPositionTemplate, e.Message)
 	}
@@ -172,6 +179,18 @@ func NewBaseErrorWithCode(expr parser.Expression, message string, code int) *Bas
 		Char:       char,
 		Message:    message,
 		Code:       code,
+		Prefix:     "",
+	}
+}
+
+func NewBaseErrorWithPrefix(prefix string, message string, code int) *BaseError {
+	return &BaseError{
+		SourceFile: "",
+		Line:       0,
+		Char:       0,
+		Message:    message,
+		Code:       code,
+		Prefix:     prefix,
 	}
 }
 
@@ -222,16 +241,6 @@ func NewReadFileError(expr parser.Expression, message string) error {
 	}
 }
 
-type CreateFileError struct {
-	*BaseError
-}
-
-func NewCreateFileError(expr parser.Expression, message string) error {
-	return &CreateFileError{
-		NewBaseError(expr, fmt.Sprintf(ErrorCreateFile, message)),
-	}
-}
-
 type WriteFileError struct {
 	*BaseError
 }
@@ -242,17 +251,29 @@ func NewWriteFileError(expr parser.Expression, message string) error {
 	}
 }
 
-type AutoCommitError struct {
-	Message string
+type CommitError struct {
+	*BaseError
 }
 
-func (e AutoCommitError) Error() string {
-	return e.Message
+func NewCommitError(expr parser.Expression, message string) error {
+	if expr == nil {
+		NewBaseErrorWithPrefix("Auto Commit", fmt.Sprintf(ErrorCommit, message), 1)
+	}
+	return &CommitError{
+		NewBaseError(expr, fmt.Sprintf(ErrorCommit, message)),
+	}
 }
 
-func NewAutoCommitError(message string) error {
-	return &AutoCommitError{
-		Message: fmt.Sprintf(ErrorWriteFileInAutoCommit, message),
+type RollbackError struct {
+	*BaseError
+}
+
+func NewRollbackError(expr parser.Expression, message string) error {
+	if expr == nil {
+		NewBaseErrorWithPrefix("Auto Rollback", fmt.Sprintf(ErrorRollback, message), 1)
+	}
+	return &RollbackError{
+		NewBaseError(expr, fmt.Sprintf(ErrorRollback, message)),
 	}
 }
 
@@ -424,7 +445,7 @@ type DuplicateParameterError struct {
 
 func NewDuplicateParameterError(expr parser.Variable) error {
 	return &DuplicateParameterError{
-		NewBaseError(expr, fmt.Sprintf(ErrorDuplicateParameter, expr.Name)),
+		NewBaseError(expr, fmt.Sprintf(ErrorDuplicateParameter, expr.String())),
 	}
 }
 
@@ -958,23 +979,13 @@ func NewSourceFileNotExistError(source parser.Source, fpath string) error {
 	}
 }
 
-type SourceFileUnableToReadError struct {
-	*BaseError
-}
-
-func NewSourceFileUnableToReadError(source parser.Source, fpath string) error {
-	return &SourceFileUnableToReadError{
-		NewBaseError(source, fmt.Sprintf(ErrorSourceFileUnableToRead, fpath)),
-	}
-}
-
 type InvalidFlagNameError struct {
 	*BaseError
 }
 
 func NewInvalidFlagNameError(expr parser.Expression, name string) error {
 	return &InvalidFlagNameError{
-		NewBaseError(expr, fmt.Sprintf(ErrorInvalidFlagName, name)),
+		NewBaseError(expr, fmt.Sprintf(ErrorInvalidFlagName, cmd.FlagSymbol(name))),
 	}
 }
 
@@ -984,7 +995,7 @@ type FlagValueNotAllowedFormatError struct {
 
 func NewFlagValueNotAllowedFormatError(setFlag parser.SetFlag) error {
 	return &FlagValueNotAllowedFormatError{
-		NewBaseError(setFlag, fmt.Sprintf(ErrorFlagValueNowAllowedFormat, setFlag.Value, setFlag.Name)),
+		NewBaseError(setFlag, fmt.Sprintf(ErrorFlagValueNowAllowedFormat, setFlag.Value, cmd.FlagSymbol(setFlag.Name))),
 	}
 }
 

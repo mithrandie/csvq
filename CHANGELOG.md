@@ -1,3 +1,13 @@
+## Release v1.6.0 (2018-11-17)
+
+- Support Environment Variables.
+- Support Configuration Files and Pre-Load Statements.
+- Add command options.
+  - enclose-all
+  - east-asian-encoding
+  - count-diacritical-sign
+  - count-format-code
+
 ## Release v1.5.4 (2018-11-08)
 
 - Fix a bug of string format.

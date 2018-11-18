@@ -16,12 +16,12 @@ var variableScopesGet = []struct {
 }{
 	{
 		Name:   "VariableScopes Get",
-		Expr:   parser.Variable{Name: "@var1"},
+		Expr:   parser.Variable{Name: "var1"},
 		Result: value.NewInteger(1),
 	},
 	{
 		Name:  "VariableScopes Get Undeclared Error",
-		Expr:  parser.Variable{Name: "@undef"},
+		Expr:  parser.Variable{Name: "undef"},
 		Error: "[L:- C:-] variable @undef is undeclared",
 	},
 }
@@ -29,10 +29,10 @@ var variableScopesGet = []struct {
 func TestVariableScopes_Get(t *testing.T) {
 	list := VariableScopes{
 		VariableMap{
-			"@var1": value.NewInteger(1),
+			"var1": value.NewInteger(1),
 		},
 		VariableMap{
-			"@var1": value.NewInteger(2),
+			"var1": value.NewInteger(2),
 		},
 	}
 
@@ -67,15 +67,15 @@ var variableScopesSubstituteTests = []struct {
 	{
 		Name: "VariableScopes Substitute",
 		Expr: parser.VariableSubstitution{
-			Variable: parser.Variable{Name: "@var1"},
+			Variable: parser.Variable{Name: "var1"},
 			Value:    parser.NewIntegerValue(3),
 		},
 		List: VariableScopes{
 			VariableMap{
-				"@var1": value.NewInteger(3),
+				"var1": value.NewInteger(3),
 			},
 			VariableMap{
-				"@var1": value.NewInteger(2),
+				"var1": value.NewInteger(2),
 			},
 		},
 		Result: value.NewInteger(3),
@@ -86,17 +86,17 @@ var variableScopesSubstituteTests = []struct {
 			Variable: parser.Variable{Name: "var2"},
 			Value:    parser.NewIntegerValue(3),
 		},
-		Error: "[L:- C:-] variable var2 is undeclared",
+		Error: "[L:- C:-] variable @var2 is undeclared",
 	},
 }
 
 func TestVariableScopes_Substitute(t *testing.T) {
 	list := VariableScopes{
 		VariableMap{
-			"@var1": value.NewInteger(1),
+			"var1": value.NewInteger(1),
 		},
 		VariableMap{
-			"@var1": value.NewInteger(2),
+			"var1": value.NewInteger(2),
 		},
 	}
 
@@ -131,17 +131,17 @@ var variableScopesDisposeTests = []struct {
 }{
 	{
 		Name: "VariableScopes Dispose",
-		Expr: parser.Variable{Name: "@var1"},
+		Expr: parser.Variable{Name: "var1"},
 		List: VariableScopes{
 			VariableMap{},
 			VariableMap{
-				"@var1": value.NewInteger(2),
+				"var1": value.NewInteger(2),
 			},
 		},
 	},
 	{
 		Name:  "VariableScopes Dispose Undeclared Error",
-		Expr:  parser.Variable{Name: "@undef"},
+		Expr:  parser.Variable{Name: "undef"},
 		Error: "[L:- C:-] variable @undef is undeclared",
 	},
 }
@@ -149,10 +149,10 @@ var variableScopesDisposeTests = []struct {
 func TestVariableScopes_Dispose(t *testing.T) {
 	list := VariableScopes{
 		VariableMap{
-			"@var1": value.NewInteger(1),
+			"var1": value.NewInteger(1),
 		},
 		VariableMap{
-			"@var1": value.NewInteger(2),
+			"var1": value.NewInteger(2),
 		},
 	}
 
@@ -190,12 +190,12 @@ var variableMapDeclareTests = []variableMapTests{
 		Expr: parser.VariableDeclaration{
 			Assignments: []parser.VariableAssignment{
 				{
-					Variable: parser.Variable{Name: "@var1"},
+					Variable: parser.Variable{Name: "var1"},
 				},
 			},
 		},
 		Result: VariableMap{
-			"@var1": value.NewNull(),
+			"var1": value.NewNull(),
 		},
 	},
 	{
@@ -203,14 +203,14 @@ var variableMapDeclareTests = []variableMapTests{
 		Expr: parser.VariableDeclaration{
 			Assignments: []parser.VariableAssignment{
 				{
-					Variable: parser.Variable{Name: "@var2"},
+					Variable: parser.Variable{Name: "var2"},
 					Value:    parser.NewIntegerValue(1),
 				},
 			},
 		},
 		Result: VariableMap{
-			"@var1": value.NewNull(),
-			"@var2": value.NewInteger(1),
+			"var1": value.NewNull(),
+			"var2": value.NewInteger(1),
 		},
 	},
 	{
@@ -218,7 +218,7 @@ var variableMapDeclareTests = []variableMapTests{
 		Expr: parser.VariableDeclaration{
 			Assignments: []parser.VariableAssignment{
 				{
-					Variable: parser.Variable{Name: "@var2"},
+					Variable: parser.Variable{Name: "var2"},
 					Value:    parser.NewIntegerValue(1),
 				},
 			},
@@ -230,7 +230,7 @@ var variableMapDeclareTests = []variableMapTests{
 		Expr: parser.VariableDeclaration{
 			Assignments: []parser.VariableAssignment{
 				{
-					Variable: parser.Variable{Name: "@var3"},
+					Variable: parser.Variable{Name: "var3"},
 					Value:    parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 				},
 			},
@@ -283,7 +283,7 @@ var variableMapSubstituteTests = []variableMapTests{
 			Variable: parser.Variable{Name: "var2"},
 			Value:    parser.NewIntegerValue(2),
 		},
-		Error: "[L:- C:-] variable var2 is undeclared",
+		Error: "[L:- C:-] variable @var2 is undeclared",
 	},
 	{
 		Name: "Substitute Variable Filter Error",
@@ -333,7 +333,7 @@ var variableMapDisposeTests = []variableMapTests{
 	{
 		Name:  "Dispose Variable Undeclared Error",
 		Expr:  parser.Variable{Name: "var2"},
-		Error: "[L:- C:-] variable var2 is undeclared",
+		Error: "[L:- C:-] variable @var2 is undeclared",
 	},
 }
 

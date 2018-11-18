@@ -8,8 +8,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mithrandie/go-text"
+
 	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -26,7 +27,7 @@ var procedureExecuteStatementTests = []struct {
 }{
 	{
 		Input: parser.SetFlag{
-			Name:  "@@invalid",
+			Name:  "invalid",
 			Value: parser.NewStringValue("\t"),
 		},
 		Error:     "[L:- C:-] flag @@invalid does not exist",
@@ -34,22 +35,44 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.SetFlag{
-			Name:  "@@delimiter",
+			Name:  "delimiter",
 			Value: parser.NewStringValue(","),
 		},
-		Logs: " @@DELIMITER: ',' | SPACES\n",
 	},
 	{
 		Input: parser.ShowFlag{
-			Name: "@@repository",
+			Name: "repository",
 		},
-		Logs: " @@REPOSITORY: " + TestDir + "\n",
+		Logs: "@@REPOSITORY: " + TestDir + "\n",
+	},
+	{
+		Input: parser.SetEnvVar{
+			EnvVar: parser.EnvVar{Name: "CSVQ_PROC_TEST"},
+			Value:  parser.NewStringValue("foo"),
+		},
+	},
+	{
+		Input: parser.Print{
+			Value: parser.EnvVar{Name: "CSVQ_PROC_TEST"},
+		},
+		Logs: "\"foo\"\n",
+	},
+	{
+		Input: parser.UnsetEnvVar{
+			EnvVar: parser.EnvVar{Name: "CSVQ_PROC_TEST"},
+		},
+	},
+	{
+		Input: parser.Print{
+			Value: parser.EnvVar{Name: "CSVQ_PROC_TEST"},
+		},
+		Logs: "\"\"\n",
 	},
 	{
 		Input: parser.VariableDeclaration{
 			Assignments: []parser.VariableAssignment{
 				{
-					Variable: parser.Variable{Name: "@var1"},
+					Variable: parser.Variable{Name: "var1"},
 				},
 			},
 		},
@@ -59,7 +82,7 @@ var procedureExecuteStatementTests = []struct {
 		Input: parser.VariableDeclaration{
 			Assignments: []parser.VariableAssignment{
 				{
-					Variable: parser.Variable{Name: "@var2"},
+					Variable: parser.Variable{Name: "var2"},
 				},
 			},
 		},
@@ -69,7 +92,7 @@ var procedureExecuteStatementTests = []struct {
 		Input: parser.VariableDeclaration{
 			Assignments: []parser.VariableAssignment{
 				{
-					Variable: parser.Variable{Name: "@var3"},
+					Variable: parser.Variable{Name: "var3"},
 				},
 			},
 		},
@@ -79,7 +102,7 @@ var procedureExecuteStatementTests = []struct {
 		Input: parser.VariableDeclaration{
 			Assignments: []parser.VariableAssignment{
 				{
-					Variable: parser.Variable{Name: "@var4"},
+					Variable: parser.Variable{Name: "var4"},
 				},
 			},
 		},
@@ -87,27 +110,27 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.VariableSubstitution{
-			Variable: parser.Variable{Name: "@var1"},
+			Variable: parser.Variable{Name: "var1"},
 			Value:    parser.NewIntegerValueFromString("1"),
 		},
 		Result: []ExecResult{},
 	},
 	{
 		Input: parser.Print{
-			Value: parser.Variable{Name: "@var1"},
+			Value: parser.Variable{Name: "var1"},
 		},
 		Logs: "1\n",
 	},
 	{
 		Input: parser.DisposeVariable{
-			Variable: parser.Variable{Name: "@var4"},
+			Variable: parser.Variable{Name: "var4"},
 		},
 	},
 	{
 		Input: parser.VariableDeclaration{
 			Assignments: []parser.VariableAssignment{
 				{
-					Variable: parser.Variable{Name: "@var4"},
+					Variable: parser.Variable{Name: "var4"},
 				},
 			},
 		},
@@ -117,12 +140,12 @@ var procedureExecuteStatementTests = []struct {
 			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.VariableAssignment{
 				{
-					Variable: parser.Variable{Name: "@arg1"},
+					Variable: parser.Variable{Name: "arg1"},
 				},
 			},
 			Statements: []parser.Statement{
 				parser.Print{
-					Value: parser.Variable{Name: "@arg1"},
+					Value: parser.Variable{Name: "arg1"},
 				},
 			},
 		},
@@ -170,20 +193,20 @@ var procedureExecuteStatementTests = []struct {
 				Position: parser.Token{Token: parser.NEXT, Literal: "next"},
 			},
 			Variables: []parser.Variable{
-				{Name: "@var2"},
-				{Name: "@var3"},
+				{Name: "var2"},
+				{Name: "var3"},
 			},
 		},
 	},
 	{
 		Input: parser.Print{
-			Value: parser.Variable{Name: "@var2"},
+			Value: parser.Variable{Name: "var2"},
 		},
 		Logs: "\"1\"\n",
 	},
 	{
 		Input: parser.Print{
-			Value: parser.Variable{Name: "@var3"},
+			Value: parser.Variable{Name: "var3"},
 		},
 		Logs: "\"str1\"\n",
 	},
@@ -236,7 +259,7 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Logs: "\"column1\",\"column2\"\n1,2\n",
+		Logs: "column1,column2\n1,2\n",
 	},
 	{
 		Input: parser.DisposeView{
@@ -251,22 +274,22 @@ var procedureExecuteStatementTests = []struct {
 				parser.VariableDeclaration{
 					Assignments: []parser.VariableAssignment{
 						{
-							Variable: parser.Variable{Name: "@value"},
+							Variable: parser.Variable{Name: "value"},
 						},
 						{
-							Variable: parser.Variable{Name: "@fetch"},
+							Variable: parser.Variable{Name: "fetch"},
 						},
 					},
 				},
 				parser.WhileInCursor{
 					Variables: []parser.Variable{
-						{Name: "@fetch"},
+						{Name: "fetch"},
 					},
 					Cursor: parser.Identifier{Literal: "list"},
 					Statements: []parser.Statement{
 						parser.If{
 							Condition: parser.Is{
-								LHS: parser.Variable{Name: "@fetch"},
+								LHS: parser.Variable{Name: "fetch"},
 								RHS: parser.NewNullValue(),
 							},
 							Statements: []parser.Statement{
@@ -275,29 +298,29 @@ var procedureExecuteStatementTests = []struct {
 						},
 						parser.If{
 							Condition: parser.Is{
-								LHS: parser.Variable{Name: "@value"},
+								LHS: parser.Variable{Name: "value"},
 								RHS: parser.NewNullValue(),
 							},
 							Statements: []parser.Statement{
 								parser.VariableSubstitution{
-									Variable: parser.Variable{Name: "@value"},
-									Value:    parser.Variable{Name: "@fetch"},
+									Variable: parser.Variable{Name: "value"},
+									Value:    parser.Variable{Name: "fetch"},
 								},
 								parser.FlowControl{Token: parser.CONTINUE},
 							},
 						},
 						parser.VariableSubstitution{
-							Variable: parser.Variable{Name: "@value"},
+							Variable: parser.Variable{Name: "value"},
 							Value: parser.Arithmetic{
-								LHS:      parser.Variable{Name: "@value"},
-								RHS:      parser.Variable{Name: "@fetch"},
+								LHS:      parser.Variable{Name: "value"},
+								RHS:      parser.Variable{Name: "fetch"},
 								Operator: '*',
 							},
 						},
 					},
 				},
 				parser.Return{
-					Value: parser.Variable{Name: "@value"},
+					Value: parser.Variable{Name: "value"},
 				},
 			},
 		},
@@ -325,7 +348,7 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Logs: "\"multiplication\"\n6\n",
+		Logs: "multiplication\n6\n",
 	},
 	{
 		Input: parser.SelectQuery{
@@ -333,20 +356,20 @@ var procedureExecuteStatementTests = []struct {
 				SelectClause: parser.SelectClause{
 					Fields: []parser.QueryExpression{
 						parser.Field{
-							Object: parser.Variable{Name: "@var1"},
+							Object: parser.Variable{Name: "var1"},
 							Alias:  parser.Identifier{Literal: "var1"},
 						},
 					},
 				},
 			},
 		},
-		Logs: "\"var1\"\n1\n",
+		Logs: "var1\n1\n",
 	},
 	{
 		Input: parser.VariableDeclaration{
 			Assignments: []parser.VariableAssignment{
 				{
-					Variable: parser.Variable{Name: "@var1"},
+					Variable: parser.Variable{Name: "var1"},
 				},
 			},
 		},
@@ -355,7 +378,7 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.VariableSubstitution{
-			Variable: parser.Variable{Name: "@var9"},
+			Variable: parser.Variable{Name: "var9"},
 			Value:    parser.NewIntegerValueFromString("1"),
 		},
 		Error:     "[L:- C:-] variable @var9 is undeclared",
@@ -394,8 +417,8 @@ var procedureExecuteStatementTests = []struct {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 				OperatedCount: 2,
 			},
@@ -428,8 +451,8 @@ var procedureExecuteStatementTests = []struct {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 				OperatedCount: 1,
 			},
@@ -460,8 +483,8 @@ var procedureExecuteStatementTests = []struct {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 				OperatedCount: 1,
 			},
@@ -483,8 +506,8 @@ var procedureExecuteStatementTests = []struct {
 					Path:      GetTestFilePath("newtable.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 			},
 		},
@@ -506,8 +529,8 @@ var procedureExecuteStatementTests = []struct {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 				OperatedCount: 1,
 			},
@@ -528,8 +551,8 @@ var procedureExecuteStatementTests = []struct {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 				OperatedCount: 1,
 			},
@@ -549,8 +572,8 @@ var procedureExecuteStatementTests = []struct {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
-					Encoding:  cmd.UTF8,
-					LineBreak: cmd.LF,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
 				},
 				OperatedCount: 1,
 			},
@@ -567,7 +590,7 @@ var procedureExecuteStatementTests = []struct {
 			strings.Repeat(" ", (calcShowFieldsWidth("table1.csv", "table1.csv", 22)-(22+len("table1.csv")))/2) + "Attributes Updated in table1.csv\n" +
 			strings.Repeat("-", calcShowFieldsWidth("table1.csv", "table1.csv", 22)) + "\n" +
 			" Path: " + GetTestFilePath("table1.csv") + "\n" +
-			" Format: TSV     Delimiter: '\\t'\n" +
+			" Format: TSV     Delimiter: '\\t'  Enclose All: false\n" +
 			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			"\n",
 	},
@@ -593,20 +616,20 @@ var procedureExecuteStatementTests = []struct {
 	{
 		Input: parser.While{
 			Condition: parser.Comparison{
-				LHS:      parser.Variable{Name: "@while_test"},
+				LHS:      parser.Variable{Name: "while_test"},
 				RHS:      parser.NewIntegerValueFromString("3"),
 				Operator: "<",
 			},
 			Statements: []parser.Statement{
 				parser.VariableSubstitution{
-					Variable: parser.Variable{Name: "@while_test"},
+					Variable: parser.Variable{Name: "while_test"},
 					Value: parser.Arithmetic{
-						LHS:      parser.Variable{Name: "@while_test"},
+						LHS:      parser.Variable{Name: "while_test"},
 						RHS:      parser.NewIntegerValueFromString("1"),
 						Operator: '+',
 					},
 				},
-				parser.Print{Value: parser.Variable{Name: "@while_test"}},
+				parser.Print{Value: parser.Variable{Name: "while_test"}},
 			},
 		},
 		Logs: "1\n2\n3\n",
@@ -687,7 +710,7 @@ var procedureExecuteStatementTests = []struct {
 			strings.Repeat("-", calcShowFieldsWidth("table1.csv", "table1", 10)) + "\n" +
 			" Type: Table\n" +
 			" Path: " + GetTestFilePath("table1.csv") + "\n" +
-			" Format: CSV     Delimiter: ','\n" +
+			" Format: CSV     Delimiter: ','   Enclose All: false\n" +
 			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" Status: Fixed\n" +
 			" Fields:\n" +
@@ -704,12 +727,12 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 	tf.Format = cmd.CSV
 
 	proc := NewProcedure()
-	proc.Filter.Variables[0].Add(parser.Variable{Name: "@while_test"}, value.NewInteger(0))
+	proc.Filter.Variables[0].Add(parser.Variable{Name: "while_test"}, value.NewInteger(0))
 
 	for _, v := range procedureExecuteStatementTests {
 		ReleaseResources()
 		ExecResults = []ExecResult{}
-		SelectLogs = []string{}
+		SelectResult.Reset()
 
 		oldStdout := os.Stdout
 		r, w, _ := os.Pipe()
@@ -747,12 +770,12 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 
 		if v.Result != nil {
 			for _, r := range ExecResults {
-				if r.FileInfo.File != nil {
-					if r.FileInfo.Path != r.FileInfo.File.Name() {
-						t.Errorf("file pointer = %q, want %q for %q", r.FileInfo.File.Name(), r.FileInfo.Path, v.Input)
+				if r.FileInfo.Handler != nil {
+					if r.FileInfo.Path != r.FileInfo.Handler.Path() {
+						t.Errorf("file pointer = %q, want %q for %q", r.FileInfo.Handler.Path(), r.FileInfo.Path, v.Input)
 					}
-					file.Close(r.FileInfo.File)
-					r.FileInfo.File = nil
+					r.FileInfo.Close()
+					r.FileInfo.Handler = nil
 				}
 			}
 
@@ -766,15 +789,16 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 			}
 		}
 		if v.SelectLogs != nil {
-			if !reflect.DeepEqual(SelectLogs, v.SelectLogs) {
-				t.Errorf("select logs = %s, want %s for %q", SelectLogs, v.SelectLogs, v.Input)
+			selectLog := SelectResult.String()
+			if !reflect.DeepEqual(selectLog, v.SelectLogs) {
+				t.Errorf("select logs = %s, want %s for %q", selectLog, v.SelectLogs, v.Input)
 			}
 		}
 	}
 
 	ReleaseResources()
 	ExecResults = []ExecResult{}
-	SelectLogs = []string{}
+	SelectResult.Reset()
 }
 
 var procedureIfStmtTests = []struct {
@@ -879,7 +903,7 @@ var procedureIfStmtTests = []struct {
 }
 
 func TestProcedure_IfStmt(t *testing.T) {
-	cmd.SetQuiet(true)
+	cmd.GetFlags().SetQuiet(true)
 	proc := NewProcedure()
 
 	for _, v := range procedureIfStmtTests {
@@ -1053,7 +1077,7 @@ var procedureCaseStmtTests = []struct {
 }
 
 func TestProcedure_Case(t *testing.T) {
-	cmd.SetQuiet(true)
+	cmd.GetFlags().SetQuiet(true)
 	proc := NewProcedure()
 
 	for _, v := range procedureCaseStmtTests {
@@ -1101,20 +1125,20 @@ var procedureWhileTests = []struct {
 		Name: "While Statement",
 		Stmt: parser.While{
 			Condition: parser.Comparison{
-				LHS:      parser.Variable{Name: "@while_test"},
+				LHS:      parser.Variable{Name: "while_test"},
 				RHS:      parser.NewIntegerValueFromString("3"),
 				Operator: "<",
 			},
 			Statements: []parser.Statement{
 				parser.VariableSubstitution{
-					Variable: parser.Variable{Name: "@while_test"},
+					Variable: parser.Variable{Name: "while_test"},
 					Value: parser.Arithmetic{
-						LHS:      parser.Variable{Name: "@while_test"},
+						LHS:      parser.Variable{Name: "while_test"},
 						RHS:      parser.NewIntegerValueFromString("1"),
 						Operator: '+',
 					},
 				},
-				parser.Print{Value: parser.Variable{Name: "@while_test"}},
+				parser.Print{Value: parser.Variable{Name: "while_test"}},
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
@@ -1125,30 +1149,30 @@ var procedureWhileTests = []struct {
 		Name: "While Statement Continue",
 		Stmt: parser.While{
 			Condition: parser.Comparison{
-				LHS:      parser.Variable{Name: "@while_test_count"},
+				LHS:      parser.Variable{Name: "while_test_count"},
 				RHS:      parser.NewIntegerValueFromString("3"),
 				Operator: "<",
 			},
 			Statements: []parser.Statement{
 				parser.VariableSubstitution{
-					Variable: parser.Variable{Name: "@while_test_count"},
+					Variable: parser.Variable{Name: "while_test_count"},
 					Value: parser.Arithmetic{
-						LHS:      parser.Variable{Name: "@while_test_count"},
+						LHS:      parser.Variable{Name: "while_test_count"},
 						RHS:      parser.NewIntegerValueFromString("1"),
 						Operator: '+',
 					},
 				},
 				parser.VariableSubstitution{
-					Variable: parser.Variable{Name: "@while_test"},
+					Variable: parser.Variable{Name: "while_test"},
 					Value: parser.Arithmetic{
-						LHS:      parser.Variable{Name: "@while_test"},
+						LHS:      parser.Variable{Name: "while_test"},
 						RHS:      parser.NewIntegerValueFromString("1"),
 						Operator: '+',
 					},
 				},
 				parser.If{
 					Condition: parser.Comparison{
-						LHS:      parser.Variable{Name: "@while_test_count"},
+						LHS:      parser.Variable{Name: "while_test_count"},
 						RHS:      parser.NewIntegerValueFromString("2"),
 						Operator: "=",
 					},
@@ -1156,7 +1180,7 @@ var procedureWhileTests = []struct {
 						parser.FlowControl{Token: parser.CONTINUE},
 					},
 				},
-				parser.Print{Value: parser.Variable{Name: "@while_test"}},
+				parser.Print{Value: parser.Variable{Name: "while_test"}},
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
@@ -1167,30 +1191,30 @@ var procedureWhileTests = []struct {
 		Name: "While Statement Break",
 		Stmt: parser.While{
 			Condition: parser.Comparison{
-				LHS:      parser.Variable{Name: "@while_test_count"},
+				LHS:      parser.Variable{Name: "while_test_count"},
 				RHS:      parser.NewIntegerValueFromString("3"),
 				Operator: "<",
 			},
 			Statements: []parser.Statement{
 				parser.VariableSubstitution{
-					Variable: parser.Variable{Name: "@while_test_count"},
+					Variable: parser.Variable{Name: "while_test_count"},
 					Value: parser.Arithmetic{
-						LHS:      parser.Variable{Name: "@while_test_count"},
+						LHS:      parser.Variable{Name: "while_test_count"},
 						RHS:      parser.NewIntegerValueFromString("1"),
 						Operator: '+',
 					},
 				},
 				parser.VariableSubstitution{
-					Variable: parser.Variable{Name: "@while_test"},
+					Variable: parser.Variable{Name: "while_test"},
 					Value: parser.Arithmetic{
-						LHS:      parser.Variable{Name: "@while_test"},
+						LHS:      parser.Variable{Name: "while_test"},
 						RHS:      parser.NewIntegerValueFromString("1"),
 						Operator: '+',
 					},
 				},
 				parser.If{
 					Condition: parser.Comparison{
-						LHS:      parser.Variable{Name: "@while_test_count"},
+						LHS:      parser.Variable{Name: "while_test_count"},
 						RHS:      parser.NewIntegerValueFromString("2"),
 						Operator: "=",
 					},
@@ -1198,7 +1222,7 @@ var procedureWhileTests = []struct {
 						parser.FlowControl{Token: parser.BREAK},
 					},
 				},
-				parser.Print{Value: parser.Variable{Name: "@while_test"}},
+				parser.Print{Value: parser.Variable{Name: "while_test"}},
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
@@ -1209,30 +1233,30 @@ var procedureWhileTests = []struct {
 		Name: "While Statement Exit",
 		Stmt: parser.While{
 			Condition: parser.Comparison{
-				LHS:      parser.Variable{Name: "@while_test_count"},
+				LHS:      parser.Variable{Name: "while_test_count"},
 				RHS:      parser.NewIntegerValueFromString("3"),
 				Operator: "<",
 			},
 			Statements: []parser.Statement{
 				parser.VariableSubstitution{
-					Variable: parser.Variable{Name: "@while_test_count"},
+					Variable: parser.Variable{Name: "while_test_count"},
 					Value: parser.Arithmetic{
-						LHS:      parser.Variable{Name: "@while_test_count"},
+						LHS:      parser.Variable{Name: "while_test_count"},
 						RHS:      parser.NewIntegerValueFromString("1"),
 						Operator: '+',
 					},
 				},
 				parser.VariableSubstitution{
-					Variable: parser.Variable{Name: "@while_test"},
+					Variable: parser.Variable{Name: "while_test"},
 					Value: parser.Arithmetic{
-						LHS:      parser.Variable{Name: "@while_test"},
+						LHS:      parser.Variable{Name: "while_test"},
 						RHS:      parser.NewIntegerValueFromString("1"),
 						Operator: '+',
 					},
 				},
 				parser.If{
 					Condition: parser.Comparison{
-						LHS:      parser.Variable{Name: "@while_test_count"},
+						LHS:      parser.Variable{Name: "while_test_count"},
 						RHS:      parser.NewIntegerValueFromString("2"),
 						Operator: "=",
 					},
@@ -1240,7 +1264,7 @@ var procedureWhileTests = []struct {
 						parser.Exit{},
 					},
 				},
-				parser.Print{Value: parser.Variable{Name: "@while_test"}},
+				parser.Print{Value: parser.Variable{Name: "while_test"}},
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
@@ -1251,20 +1275,20 @@ var procedureWhileTests = []struct {
 		Name: "While Statement Filter Error",
 		Stmt: parser.While{
 			Condition: parser.Comparison{
-				LHS:      parser.Variable{Name: "@while_test"},
+				LHS:      parser.Variable{Name: "while_test"},
 				RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 				Operator: "<",
 			},
 			Statements: []parser.Statement{
 				parser.VariableSubstitution{
-					Variable: parser.Variable{Name: "@while_test"},
+					Variable: parser.Variable{Name: "while_test"},
 					Value: parser.Arithmetic{
-						LHS:      parser.Variable{Name: "@while_test"},
+						LHS:      parser.Variable{Name: "while_test"},
 						RHS:      parser.NewIntegerValueFromString("1"),
 						Operator: '+',
 					},
 				},
-				parser.Print{Value: parser.Variable{Name: "@while_test"}},
+				parser.Print{Value: parser.Variable{Name: "while_test"}},
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
@@ -1274,20 +1298,20 @@ var procedureWhileTests = []struct {
 		Name: "While Statement Execution Error",
 		Stmt: parser.While{
 			Condition: parser.Comparison{
-				LHS:      parser.Variable{Name: "@while_test"},
+				LHS:      parser.Variable{Name: "while_test"},
 				RHS:      parser.NewIntegerValueFromString("3"),
 				Operator: "<",
 			},
 			Statements: []parser.Statement{
 				parser.VariableSubstitution{
-					Variable: parser.Variable{Name: "@while_test"},
+					Variable: parser.Variable{Name: "while_test"},
 					Value: parser.Arithmetic{
-						LHS:      parser.Variable{Name: "@while_test"},
+						LHS:      parser.Variable{Name: "while_test"},
 						RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 						Operator: '+',
 					},
 				},
-				parser.Print{Value: parser.Variable{Name: "@while_test"}},
+				parser.Print{Value: parser.Variable{Name: "while_test"}},
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
@@ -1296,19 +1320,19 @@ var procedureWhileTests = []struct {
 }
 
 func TestProcedure_While(t *testing.T) {
-	cmd.SetQuiet(true)
+	cmd.GetFlags().SetQuiet(true)
 	proc := NewProcedure()
 
 	for _, v := range procedureWhileTests {
-		if _, err := proc.Filter.Variables[0].Get(parser.Variable{Name: "@while_test"}); err != nil {
-			proc.Filter.Variables[0].Add(parser.Variable{Name: "@while_test"}, value.NewInteger(0))
+		if _, err := proc.Filter.Variables[0].Get(parser.Variable{Name: "while_test"}); err != nil {
+			proc.Filter.Variables[0].Add(parser.Variable{Name: "while_test"}, value.NewInteger(0))
 		}
-		proc.Filter.Variables[0].Set(parser.Variable{Name: "@while_test"}, value.NewInteger(0))
+		proc.Filter.Variables[0].Set(parser.Variable{Name: "while_test"}, value.NewInteger(0))
 
-		if _, err := proc.Filter.Variables[0].Get(parser.Variable{Name: "@while_test_count"}); err != nil {
-			proc.Filter.Variables[0].Add(parser.Variable{Name: "@while_test_count"}, value.NewInteger(0))
+		if _, err := proc.Filter.Variables[0].Get(parser.Variable{Name: "while_test_count"}); err != nil {
+			proc.Filter.Variables[0].Add(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
 		}
-		proc.Filter.Variables[0].Set(parser.Variable{Name: "@while_test_count"}, value.NewInteger(0))
+		proc.Filter.Variables[0].Set(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
 
 		oldStdout := os.Stdout
 
@@ -1354,12 +1378,12 @@ var procedureWhileInCursorTests = []struct {
 		Name: "While In Cursor",
 		Stmt: parser.WhileInCursor{
 			Variables: []parser.Variable{
-				{Name: "@var1"},
-				{Name: "@var2"},
+				{Name: "var1"},
+				{Name: "var2"},
 			},
 			Cursor: parser.Identifier{Literal: "cur"},
 			Statements: []parser.Statement{
-				parser.Print{Value: parser.Variable{Name: "@var1"}},
+				parser.Print{Value: parser.Variable{Name: "var1"}},
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
@@ -1371,12 +1395,12 @@ var procedureWhileInCursorTests = []struct {
 		Stmt: parser.WhileInCursor{
 			WithDeclaration: true,
 			Variables: []parser.Variable{
-				{Name: "@declvar1"},
-				{Name: "@declvar2"},
+				{Name: "declvar1"},
+				{Name: "declvar2"},
 			},
 			Cursor: parser.Identifier{Literal: "cur"},
 			Statements: []parser.Statement{
-				parser.Print{Value: parser.Variable{Name: "@declvar1"}},
+				parser.Print{Value: parser.Variable{Name: "declvar1"}},
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
@@ -1387,14 +1411,14 @@ var procedureWhileInCursorTests = []struct {
 		Name: "While In Cursor Continue",
 		Stmt: parser.WhileInCursor{
 			Variables: []parser.Variable{
-				{Name: "@var1"},
-				{Name: "@var2"},
+				{Name: "var1"},
+				{Name: "var2"},
 			},
 			Cursor: parser.Identifier{Literal: "cur"},
 			Statements: []parser.Statement{
 				parser.If{
 					Condition: parser.Comparison{
-						LHS:      parser.Variable{Name: "@var1"},
+						LHS:      parser.Variable{Name: "var1"},
 						RHS:      parser.NewIntegerValueFromString("2"),
 						Operator: "=",
 					},
@@ -1402,7 +1426,7 @@ var procedureWhileInCursorTests = []struct {
 						parser.FlowControl{Token: parser.CONTINUE},
 					},
 				},
-				parser.Print{Value: parser.Variable{Name: "@var1"}},
+				parser.Print{Value: parser.Variable{Name: "var1"}},
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
@@ -1413,14 +1437,14 @@ var procedureWhileInCursorTests = []struct {
 		Name: "While In Cursor Break",
 		Stmt: parser.WhileInCursor{
 			Variables: []parser.Variable{
-				{Name: "@var1"},
-				{Name: "@var2"},
+				{Name: "var1"},
+				{Name: "var2"},
 			},
 			Cursor: parser.Identifier{Literal: "cur"},
 			Statements: []parser.Statement{
 				parser.If{
 					Condition: parser.Comparison{
-						LHS:      parser.Variable{Name: "@var1"},
+						LHS:      parser.Variable{Name: "var1"},
 						RHS:      parser.NewIntegerValueFromString("2"),
 						Operator: "=",
 					},
@@ -1428,7 +1452,7 @@ var procedureWhileInCursorTests = []struct {
 						parser.FlowControl{Token: parser.BREAK},
 					},
 				},
-				parser.Print{Value: parser.Variable{Name: "@var1"}},
+				parser.Print{Value: parser.Variable{Name: "var1"}},
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
@@ -1439,14 +1463,14 @@ var procedureWhileInCursorTests = []struct {
 		Name: "While In Cursor Exit With Code",
 		Stmt: parser.WhileInCursor{
 			Variables: []parser.Variable{
-				{Name: "@var1"},
-				{Name: "@var2"},
+				{Name: "var1"},
+				{Name: "var2"},
 			},
 			Cursor: parser.Identifier{Literal: "cur"},
 			Statements: []parser.Statement{
 				parser.If{
 					Condition: parser.Comparison{
-						LHS:      parser.Variable{Name: "@var1"},
+						LHS:      parser.Variable{Name: "var1"},
 						RHS:      parser.NewIntegerValueFromString("2"),
 						Operator: "=",
 					},
@@ -1454,7 +1478,7 @@ var procedureWhileInCursorTests = []struct {
 						parser.Exit{},
 					},
 				},
-				parser.Print{Value: parser.Variable{Name: "@var1"}},
+				parser.Print{Value: parser.Variable{Name: "var1"}},
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
@@ -1465,12 +1489,12 @@ var procedureWhileInCursorTests = []struct {
 		Name: "While In Cursor Fetch Error",
 		Stmt: parser.WhileInCursor{
 			Variables: []parser.Variable{
-				{Name: "@var1"},
-				{Name: "@var3"},
+				{Name: "var1"},
+				{Name: "var3"},
 			},
 			Cursor: parser.Identifier{Literal: "cur"},
 			Statements: []parser.Statement{
-				parser.Print{Value: parser.Variable{Name: "@var1"}},
+				parser.Print{Value: parser.Variable{Name: "var1"}},
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
@@ -1480,14 +1504,14 @@ var procedureWhileInCursorTests = []struct {
 		Name: "While In Cursor Statement Execution Error",
 		Stmt: parser.WhileInCursor{
 			Variables: []parser.Variable{
-				{Name: "@var1"},
-				{Name: "@var2"},
+				{Name: "var1"},
+				{Name: "var2"},
 			},
 			Cursor: parser.Identifier{Literal: "cur"},
 			Statements: []parser.Statement{
 				parser.If{
 					Condition: parser.Comparison{
-						LHS:      parser.Variable{Name: "@var1"},
+						LHS:      parser.Variable{Name: "var1"},
 						RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 						Operator: "=",
 					},
@@ -1495,7 +1519,7 @@ var procedureWhileInCursorTests = []struct {
 						parser.FlowControl{Token: parser.BREAK},
 					},
 				},
-				parser.Print{Value: parser.Variable{Name: "@var1"}},
+				parser.Print{Value: parser.Variable{Name: "var1"}},
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
@@ -1511,8 +1535,8 @@ func TestProcedure_WhileInCursor(t *testing.T) {
 
 	for _, v := range procedureWhileInCursorTests {
 		proc.Filter.Variables[0] = VariableMap{
-			"@var1": value.NewNull(),
-			"@var2": value.NewNull(),
+			"var1": value.NewNull(),
+			"var2": value.NewNull(),
 		}
 		proc.Filter.Cursors[0] = CursorMap{
 			"CUR": &Cursor{

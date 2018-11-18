@@ -1,9 +1,10 @@
 package parser
 
 import (
-	"github.com/mithrandie/csvq/lib/cmd"
 	"strings"
 	"time"
+
+	"github.com/mithrandie/csvq/lib/cmd"
 
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -1086,7 +1087,7 @@ type Variable struct {
 }
 
 func (v Variable) String() string {
-	return v.Name
+	return string(VariableSign) + v.Name
 }
 
 type VariableSubstitution struct {
@@ -1113,6 +1114,32 @@ type VariableDeclaration struct {
 type DisposeVariable struct {
 	*BaseExpr
 	Variable Variable
+}
+
+type EnvVar struct {
+	*BaseExpr
+	Name   string
+	Quoted bool
+}
+
+func (e EnvVar) String() string {
+	name := e.Name
+	if e.Quoted {
+		name = cmd.QuoteIdentifier(name)
+	}
+
+	return string(VariableSign) + string(EnvVarSign) + name
+}
+
+type SetEnvVar struct {
+	*BaseExpr
+	EnvVar EnvVar
+	Value  QueryExpression
+}
+
+type UnsetEnvVar struct {
+	*BaseExpr
+	EnvVar EnvVar
 }
 
 type InsertQuery struct {

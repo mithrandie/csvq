@@ -1496,7 +1496,7 @@ func TestWindowingClause_String(t *testing.T) {
 
 func TestVariable_String(t *testing.T) {
 	e := Variable{
-		Name: "@var",
+		Name: "var",
 	}
 	expect := "@var"
 	if e.String() != expect {
@@ -1507,11 +1507,30 @@ func TestVariable_String(t *testing.T) {
 func TestVariableSubstitution_String(t *testing.T) {
 	e := VariableSubstitution{
 		Variable: Variable{
-			Name: "@var",
+			Name: "var",
 		},
 		Value: NewIntegerValueFromString("1"),
 	}
 	expect := "@var := 1"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestEnvVar_String(t *testing.T) {
+	e := EnvVar{
+		Name: "envvar",
+	}
+	expect := "@%envvar"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+
+	e = EnvVar{
+		Name:   "envvar",
+		Quoted: true,
+	}
+	expect = "@%`envvar`"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}

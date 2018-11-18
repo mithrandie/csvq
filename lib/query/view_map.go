@@ -2,12 +2,12 @@ package query
 
 import (
 	"fmt"
-	"github.com/mithrandie/csvq/lib/color"
 	"sort"
 	"strings"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/file"
+
+	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 )
@@ -68,7 +68,7 @@ func (list TemporaryViewScopes) Store(uncomittedViews map[string]*FileInfo) {
 			if _, ok := uncomittedViews[view.FileInfo.Path]; ok {
 				view.FileInfo.InitialRecordSet = view.RecordSet.Copy()
 				view.FileInfo.InitialHeader = view.Header.Copy()
-				Log(color.Info(fmt.Sprintf("Commit: restore point of view %q is created.", view.FileInfo.Path)), cmd.GetFlags().Quiet)
+				Log(cmd.Notice(fmt.Sprintf("Commit: restore point of view %q is created.", view.FileInfo.Path)), cmd.GetFlags().Quiet)
 			}
 		}
 	}
@@ -80,7 +80,7 @@ func (list TemporaryViewScopes) Restore(uncomittedViews map[string]*FileInfo) {
 			if _, ok := uncomittedViews[view.FileInfo.Path]; ok {
 				view.RecordSet = view.FileInfo.InitialRecordSet.Copy()
 				view.Header = view.FileInfo.InitialHeader.Copy()
-				Log(color.Info(fmt.Sprintf("Rollback: view %q is restored.", view.FileInfo.Path)), cmd.GetFlags().Quiet)
+				Log(cmd.Notice(fmt.Sprintf("Rollback: view %q is restored.", view.FileInfo.Path)), cmd.GetFlags().Quiet)
 			}
 		}
 	}
@@ -194,18 +194,38 @@ func (m ViewMap) DisposeTemporaryTable(table parser.Identifier) error {
 	return NewUndeclaredTemporaryTableError(table)
 }
 
-func (m ViewMap) Dispose(name string) {
+func (m ViewMap) Dispose(name string) error {
 	uname := strings.ToUpper(name)
 	if _, ok := m[uname]; ok {
-		if m[uname].FileInfo.File != nil {
-			file.Close(m[uname].FileInfo.File)
+		if err := m[uname].FileInfo.Close(); err != nil {
+			return err
 		}
 		delete(m, uname)
 	}
+	return nil
 }
 
-func (m ViewMap) Clean() {
+func (m ViewMap) Clean() error {
 	for k := range m {
-		m.Dispose(k)
+		if err := m.Dispose(k); err != nil {
+			return err
+		}
 	}
+	return nil
+}
+
+func (m ViewMap) CleanWithErrors() error {
+	var errs []error
+	for k := range m {
+		if _, ok := m[k]; ok {
+			if err := m[k].FileInfo.CloseWithErrors(); err != nil {
+				errs = append(errs, err.(*file.ForcedUnlockError).Errors...)
+			}
+			delete(m, k)
+		}
+	}
+	if errs != nil {
+		return file.NewForcedUnlockError(errs)
+	}
+	return nil
 }

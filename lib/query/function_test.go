@@ -1467,6 +1467,19 @@ var lpadTests = []functionTest{
 		Error: "[L:- C:-] cannot split pad string in a byte array of a character for function lpad",
 	},
 	{
+		Name: "Lpad PadType Error",
+		Function: parser.Function{
+			Name: "lpad",
+		},
+		Args: []value.Primary{
+			value.NewString("日本語"),
+			value.NewInteger(11),
+			value.NewString("空白"),
+			value.NewString("invalid"),
+		},
+		Error: "[L:- C:-] padding type must be one of LEN|BYTE|WIDTH for function lpad",
+	},
+	{
 		Name: "Lpad Encoding Error",
 		Function: parser.Function{
 			Name: "lpad",

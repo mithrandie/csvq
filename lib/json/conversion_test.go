@@ -1,53 +1,55 @@
 package json
 
 import (
-	"github.com/mithrandie/csvq/lib/value"
-	"github.com/mithrandie/ternary"
 	"reflect"
 	"testing"
+
+	"github.com/mithrandie/csvq/lib/value"
+	"github.com/mithrandie/go-text/json"
+	"github.com/mithrandie/ternary"
 )
 
 var convertToValueTests = []struct {
-	Input  Structure
+	Input  json.Structure
 	Expect value.Primary
 }{
 	{
-		Input:  Number(-2.34),
+		Input:  json.Number(-2.34),
 		Expect: value.NewFloat(-2.34),
 	},
 	{
-		Input:  Number(234),
+		Input:  json.Number(234),
 		Expect: value.NewInteger(234),
 	},
 	{
-		Input:  String("abc"),
+		Input:  json.String("abc"),
 		Expect: value.NewString("abc"),
 	},
 	{
-		Input:  Boolean(false),
+		Input:  json.Boolean(false),
 		Expect: value.NewBoolean(false),
 	},
 	{
-		Input:  Null{},
+		Input:  json.Null{},
 		Expect: value.NewNull(),
 	},
 	{
-		Input: Array{
-			String("abc"),
-			String("def"),
+		Input: json.Array{
+			json.String("abc"),
+			json.String("def"),
 		},
 		Expect: value.NewString("[\"abc\",\"def\"]"),
 	},
 	{
-		Input: Object{
-			Members: []ObjectMember{
+		Input: json.Object{
+			Members: []json.ObjectMember{
 				{
 					Key:   "key1",
-					Value: String("value1"),
+					Value: json.String("value1"),
 				},
 				{
 					Key:   "key2",
-					Value: String("value2"),
+					Value: json.String("value2"),
 				},
 			},
 		},
@@ -65,13 +67,13 @@ func TestConvertToValue(t *testing.T) {
 }
 
 var convertToArrayTests = []struct {
-	Input  Array
+	Input  json.Array
 	Expect []value.Primary
 }{
 	{
-		Input: Array{
-			String("elem1"),
-			String("elem2"),
+		Input: json.Array{
+			json.String("elem1"),
+			json.String("elem2"),
 		},
 		Expect: []value.Primary{
 			value.NewString("elem1"),
@@ -90,42 +92,42 @@ func TestConvertToArray(t *testing.T) {
 }
 
 var convertToTableValueTests = []struct {
-	Input        Array
+	Input        json.Array
 	ExpectHeader []string
 	ExpectRows   [][]value.Primary
 	Error        string
 }{
 	{
-		Input: Array{
-			Object{
-				Members: []ObjectMember{
+		Input: json.Array{
+			json.Object{
+				Members: []json.ObjectMember{
 					{
 						Key:   "key1",
-						Value: Number(1),
+						Value: json.Number(1),
 					},
 					{
 						Key:   "key2",
-						Value: Number(2),
+						Value: json.Number(2),
 					},
 					{
 						Key:   "key3",
-						Value: Number(3),
+						Value: json.Number(3),
 					},
 				},
 			},
-			Object{
-				Members: []ObjectMember{
+			json.Object{
+				Members: []json.ObjectMember{
 					{
 						Key:   "key2",
-						Value: Number(22),
+						Value: json.Number(22),
 					},
 					{
 						Key:   "key3",
-						Value: Number(23),
+						Value: json.Number(23),
 					},
 					{
 						Key:   "key2",
-						Value: Number(24),
+						Value: json.Number(24),
 					},
 				},
 			},
@@ -149,24 +151,24 @@ var convertToTableValueTests = []struct {
 		},
 	},
 	{
-		Input: Array{
-			Object{
-				Members: []ObjectMember{
+		Input: json.Array{
+			json.Object{
+				Members: []json.ObjectMember{
 					{
 						Key:   "key1",
-						Value: Number(1),
+						Value: json.Number(1),
 					},
 					{
 						Key:   "key2",
-						Value: Number(2),
+						Value: json.Number(2),
 					},
 					{
 						Key:   "key3",
-						Value: Number(3),
+						Value: json.Number(3),
 					},
 				},
 			},
-			String("abc"),
+			json.String("abc"),
 		},
 		Error: "rows loaded from json must be objects",
 	},
@@ -199,7 +201,7 @@ func TestConvertToTableValue(t *testing.T) {
 var convertTableValueToJsonStructureTests = []struct {
 	Fields []string
 	Rows   [][]value.Primary
-	Expect Structure
+	Expect json.Structure
 	Error  string
 }{
 	{
@@ -217,28 +219,28 @@ var convertTableValueToJsonStructureTests = []struct {
 				value.NewInteger(2),
 			},
 		},
-		Expect: Array{
-			Object{
-				Members: []ObjectMember{
+		Expect: json.Array{
+			json.Object{
+				Members: []json.ObjectMember{
 					{
 						Key:   "column1",
-						Value: String("a"),
+						Value: json.String("a"),
 					},
 					{
 						Key:   "column2",
-						Value: Number(1),
+						Value: json.Number(1),
 					},
 				},
 			},
-			Object{
-				Members: []ObjectMember{
+			json.Object{
+				Members: []json.ObjectMember{
 					{
 						Key:   "column1",
-						Value: String("b"),
+						Value: json.String("b"),
 					},
 					{
 						Key:   "column2",
-						Value: Number(2),
+						Value: json.Number(2),
 					},
 				},
 			},
@@ -262,35 +264,35 @@ var convertTableValueToJsonStructureTests = []struct {
 				value.NewInteger(22),
 			},
 		},
-		Expect: Array{
-			Object{
-				Members: []ObjectMember{
+		Expect: json.Array{
+			json.Object{
+				Members: []json.ObjectMember{
 					{
 						Key:   "column1",
-						Value: String("a"),
+						Value: json.String("a"),
 					},
 					{
 						Key: "column2",
-						Value: Object{
-							Members: []ObjectMember{
+						Value: json.Object{
+							Members: []json.ObjectMember{
 								{
 									Key: "child1",
-									Value: Object{
-										Members: []ObjectMember{
+									Value: json.Object{
+										Members: []json.ObjectMember{
 											{
 												Key:   "child11",
-												Value: Number(1),
+												Value: json.Number(1),
 											},
 										},
 									},
 								},
 								{
 									Key: "child2",
-									Value: Object{
-										Members: []ObjectMember{
+									Value: json.Object{
+										Members: []json.ObjectMember{
 											{
 												Key:   "child22",
-												Value: Number(11),
+												Value: json.Number(11),
 											},
 										},
 									},
@@ -300,34 +302,34 @@ var convertTableValueToJsonStructureTests = []struct {
 					},
 				},
 			},
-			Object{
-				Members: []ObjectMember{
+			json.Object{
+				Members: []json.ObjectMember{
 					{
 						Key:   "column1",
-						Value: String("b"),
+						Value: json.String("b"),
 					},
 					{
 						Key: "column2",
-						Value: Object{
-							Members: []ObjectMember{
+						Value: json.Object{
+							Members: []json.ObjectMember{
 								{
 									Key: "child1",
-									Value: Object{
-										Members: []ObjectMember{
+									Value: json.Object{
+										Members: []json.ObjectMember{
 											{
 												Key:   "child11",
-												Value: Number(2),
+												Value: json.Number(2),
 											},
 										},
 									},
 								},
 								{
 									Key: "child2",
-									Value: Object{
-										Members: []ObjectMember{
+									Value: json.Object{
+										Members: []json.ObjectMember{
 											{
 												Key:   "child22",
-												Value: Number(22),
+												Value: json.Number(22),
 											},
 										},
 									},
@@ -362,40 +364,40 @@ var convertTableValueToJsonStructureTests = []struct {
 				value.NewNull(),
 			},
 		},
-		Expect: Array{
-			Object{
-				Members: []ObjectMember{
+		Expect: json.Array{
+			json.Object{
+				Members: []json.ObjectMember{
 					{
 						Key:   "string",
-						Value: String("abc"),
+						Value: json.String("abc"),
 					},
 					{
 						Key:   "integer",
-						Value: Number(1),
+						Value: json.Number(1),
 					},
 					{
 						Key:   "float",
-						Value: Number(1.1),
+						Value: json.Number(1.1),
 					},
 					{
 						Key:   "boolean",
-						Value: Boolean(false),
+						Value: json.Boolean(false),
 					},
 					{
 						Key:   "ternary",
-						Value: Boolean(true),
+						Value: json.Boolean(true),
 					},
 					{
 						Key:   "ternary2",
-						Value: Null{},
+						Value: json.Null{},
 					},
 					{
 						Key:   "datetime",
-						Value: String("2012-02-02T22:22:22-07:00"),
+						Value: json.String("2012-02-02T22:22:22-07:00"),
 					},
 					{
 						Key:   "null",
-						Value: Null{},
+						Value: json.Null{},
 					},
 				},
 			},

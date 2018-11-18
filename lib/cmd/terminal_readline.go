@@ -3,34 +3,39 @@
 package cmd
 
 import (
-	"bufio"
-	"github.com/mithrandie/csvq/lib/color"
+	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/chzyer/readline"
 	"github.com/mitchellh/go-homedir"
+	"github.com/mithrandie/go-text/color"
 )
-
-const HistoryFile = ".csvq_history"
 
 type ReadLineTerminal struct {
 	terminal *readline.Instance
 	fd       int
+	palette  *color.Palette
 }
 
 func NewTerminal() (VirtualTerminal, error) {
 	fd := int(os.Stdin.Fd())
 
-	historyFile, err := historyFilePath()
+	p, _ := GetPalette()
+	env, _ := GetEnvironment()
+
+	limit := env.InteractiveShell.HistoryLimit
+	historyFile, err := HistoryFilePath(env.InteractiveShell.HistoryFile)
 	if err != nil {
-		return nil, err
+		WriteToStdErr(fmt.Sprintf("cannot detect filepath: %q\n", env.InteractiveShell.HistoryFile))
+		limit = -1
 	}
 
 	t, err := readline.NewEx(&readline.Config{
-		Prompt:                 color.Blue(TerminalPrompt),
+		Prompt:                 p.Render(PromptEffect, TerminalPrompt),
 		HistoryFile:            historyFile,
 		DisableAutoSaveHistory: true,
+		HistoryLimit:           limit,
 	})
 	if err != nil {
 		return nil, err
@@ -39,6 +44,7 @@ func NewTerminal() (VirtualTerminal, error) {
 	return ReadLineTerminal{
 		terminal: t,
 		fd:       fd,
+		palette:  p,
 	}, nil
 }
 
@@ -51,21 +57,21 @@ func (t ReadLineTerminal) ReadLine() (string, error) {
 }
 
 func (t ReadLineTerminal) Write(s string) error {
-	w := bufio.NewWriter(os.Stdout)
-	_, err := w.WriteString(s)
-	if err != nil {
-		return err
-	}
-	w.Flush()
-	return nil
+	_, err := t.terminal.Write([]byte(s))
+	return err
+}
+
+func (t ReadLineTerminal) WriteError(s string) error {
+	_, err := t.terminal.Stderr().Write([]byte(s))
+	return err
 }
 
 func (t ReadLineTerminal) SetPrompt() {
-	t.terminal.SetPrompt(color.Blue(TerminalPrompt))
+	t.terminal.SetPrompt(t.palette.Render(PromptEffect, TerminalPrompt))
 }
 
 func (t ReadLineTerminal) SetContinuousPrompt() {
-	t.terminal.SetPrompt(color.Blue(TerminalContinuousPrompt))
+	t.terminal.SetPrompt(t.palette.Render(PromptEffect, TerminalContinuousPrompt))
 }
 
 func (t ReadLineTerminal) SaveHistory(s string) {
@@ -76,14 +82,22 @@ func (t ReadLineTerminal) GetSize() (int, int, error) {
 	return readline.GetSize(t.fd)
 }
 
-func historyFilePath() (string, error) {
+func HistoryFilePath(filename string) (string, error) {
+	if filename[0] == '~' {
+		if fpath, err := homedir.Expand(filename); err == nil {
+			return fpath, nil
+		}
+	}
+
+	fpath := os.ExpandEnv(filename)
+
+	if filepath.IsAbs(fpath) {
+		return fpath, nil
+	}
+
 	home, err := homedir.Dir()
 	if err != nil {
-		return "", err
+		return filename, err
 	}
-	home, err = homedir.Expand(home)
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(home, HistoryFile), nil
+	return filepath.Join(home, fpath), nil
 }

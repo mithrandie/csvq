@@ -4,6 +4,8 @@ import (
 	"errors"
 	"strings"
 	"unicode"
+
+	"github.com/mithrandie/go-text/json"
 )
 
 const AliasSpecifier = "AS"
@@ -96,7 +98,7 @@ func (s *QueryScanner) Scan() (QueryToken, error) {
 			break
 		case '"', '\'', '`':
 			s.scanString(ch)
-			literal, _ = Unescape(s.trimQuotes())
+			literal, _ = json.Unescape(s.trimQuotes())
 			token = PATH_IDENTIFIER
 		}
 	}

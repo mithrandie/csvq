@@ -4,22 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"io"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
 	"unicode/utf8"
 
-	"golang.org/x/text/encoding/japanese"
-	"golang.org/x/text/transform"
+	"github.com/mithrandie/go-text"
 )
-
-func GetReader(r io.Reader, enc Encoding) io.Reader {
-	if enc == SJIS {
-		return transform.NewReader(r, japanese.ShiftJIS.NewDecoder())
-	}
-	return r
-}
 
 func EscapeString(s string) string {
 	runes := []rune(s)
@@ -239,28 +231,28 @@ func IsReadableFromPipeOrRedirection() bool {
 	return false
 }
 
-func ParseEncoding(s string) (Encoding, error) {
-	var encoding Encoding
+func ParseEncoding(s string) (text.Encoding, error) {
+	var encoding text.Encoding
 	switch strings.ToUpper(s) {
 	case "UTF8":
-		encoding = UTF8
+		encoding = text.UTF8
 	case "SJIS":
-		encoding = SJIS
+		encoding = text.SJIS
 	default:
-		return UTF8, errors.New("encoding must be one of UTF8|SJIS")
+		return text.UTF8, errors.New("encoding must be one of UTF8|SJIS")
 	}
 	return encoding, nil
 }
 
-func ParseLineBreak(s string) (LineBreak, error) {
-	var lb LineBreak
+func ParseLineBreak(s string) (text.LineBreak, error) {
+	var lb text.LineBreak
 	switch strings.ToUpper(s) {
 	case "CRLF":
-		lb = CRLF
+		lb = text.CRLF
 	case "CR":
-		lb = CR
+		lb = text.CR
 	case "LF":
-		lb = LF
+		lb = text.LF
 	default:
 		return lb, errors.New("line-break must be one of CRLF|LF|CR")
 	}
@@ -272,7 +264,7 @@ func ParseDelimiter(s string, delimiter rune, delimiterPositions []int, delimitA
 	strLen := utf8.RuneCountInString(s)
 
 	if strLen < 1 {
-		return delimiter, delimiterPositions, delimitAutomatically, errors.New("delimiter must be one character, \"SPACES\" or JSON array of integers")
+		return delimiter, delimiterPositions, delimitAutomatically, errors.New(fmt.Sprintf("delimiter must be one character, %q or JSON array of integers", DelimiteAutomatically))
 	}
 
 	if strLen == 1 {
@@ -280,14 +272,14 @@ func ParseDelimiter(s string, delimiter rune, delimiterPositions []int, delimitA
 		delimitAutomatically = false
 		delimiterPositions = nil
 	} else {
-		if strings.EqualFold("SPACES", s) {
+		if strings.EqualFold(DelimiteAutomatically, s) {
 			delimiterPositions = nil
 			delimitAutomatically = true
 		} else {
 			var positions []int
 			err := json.Unmarshal([]byte(s), &positions)
 			if err != nil {
-				return delimiter, delimiterPositions, delimitAutomatically, errors.New("delimiter must be one character, \"SPACES\" or JSON array of integers")
+				return delimiter, delimiterPositions, delimitAutomatically, errors.New(fmt.Sprintf("delimiter must be one character, %q or JSON array of integers", DelimiteAutomatically))
 			}
 			delimiterPositions = positions
 			delimitAutomatically = false
@@ -321,4 +313,24 @@ func ParseFormat(s string) (Format, error) {
 		return fm, errors.New("format must be one of CSV|TSV|FIXED|JSON|JSONH|JSONA|GFM|ORG|TEXT")
 	}
 	return fm, nil
+}
+
+func AppendStrIfNotExist(list []string, elem string) []string {
+	if len(elem) < 1 {
+		return list
+	}
+	for _, v := range list {
+		if elem == v {
+			return list
+		}
+	}
+	return append(list, elem)
+}
+
+func TextWidth(s string) int {
+	return text.Width(s, GetFlags().EastAsianEncoding, GetFlags().CountDiacriticalSign, GetFlags().CountFormatCode)
+}
+
+func RuneWidth(r rune) int {
+	return text.RuneWidth(r, GetFlags().EastAsianEncoding, GetFlags().CountDiacriticalSign, GetFlags().CountFormatCode)
 }

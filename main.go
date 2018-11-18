@@ -3,20 +3,37 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/mithrandie/csvq/lib/action"
-	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/csvq/lib/color"
-	"github.com/mithrandie/csvq/lib/query"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"runtime"
+
+	"github.com/mithrandie/csvq/lib/parser"
+
+	"github.com/mithrandie/csvq/lib/file"
+
+	"github.com/mithrandie/csvq/lib/action"
+	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/query"
 
 	"github.com/urfave/cli"
 )
 
-var version = "v1.5.4"
+var version = "v1.6.0"
 
 func main() {
+	defaultCPU := runtime.NumCPU() / 2
+	if defaultCPU < 1 {
+		defaultCPU = 1
+	}
+
+	proc := query.NewProcedure()
+	defer func() {
+		if err := query.ReleaseResourcesWithErrors(); err != nil {
+			cmd.WriteToStdErr(err.Error() + "\n")
+		}
+	}()
+
 	cli.AppHelpTemplate = appHHelpTemplate
 	cli.CommandHelpTemplate = commandHelpTemplate
 
@@ -33,11 +50,6 @@ func main() {
 		}
 
 		return NewExitError(fmt.Sprintf("Incorrect Usage: %s", err.Error()), 1)
-	}
-
-	defaultCPU := runtime.NumCPU() / 2
-	if defaultCPU < 1 {
-		defaultCPU = 1
 	}
 
 	app.Flags = []cli.Flag{
@@ -114,8 +126,24 @@ func main() {
 			Usage: "line break in query results. one of: CRLF|LF|CR",
 		},
 		cli.BoolFlag{
+			Name:  "enclose-all, Q",
+			Usage: "enclose all string values in CSV",
+		},
+		cli.BoolFlag{
 			Name:  "pretty-print, P",
 			Usage: "make JSON output easier to read in query results",
+		},
+		cli.BoolFlag{
+			Name:  "east-asian-encoding, W",
+			Usage: "count ambiguous characters as fullwidth",
+		},
+		cli.BoolFlag{
+			Name:  "count-diacritical-sign, S",
+			Usage: "count diacritical signs as halfwidth",
+		},
+		cli.BoolFlag{
+			Name:  "count-format-code, A",
+			Usage: "count format characters and zero-width spaces as halfwidth",
 		},
 		cli.BoolFlag{
 			Name:  "color, c",
@@ -148,7 +176,7 @@ func main() {
 
 				table := c.Args().First()
 
-				err := action.ShowFields(table)
+				err := action.ShowFields(proc, table)
 				if err != nil {
 					return NewExitError(err.Error(), 1)
 				}
@@ -183,23 +211,39 @@ func main() {
 	}
 
 	app.Before = func(c *cli.Context) error {
-		err := setFlags(c)
-		if err != nil {
+		action.SetSignalHandler()
+
+		// Init Single Objects
+		if _, err := cmd.GetEnvironment(); err != nil {
+			return NewExitError(err.Error(), 1)
+		}
+		if _, err := cmd.GetPalette(); err != nil {
+			return NewExitError(err.Error(), 1)
+		}
+		cmd.GetFlags()
+
+		// Run pre-load commands
+		if err := runPreloadCommands(proc); err != nil {
+			return NewExitError(err.Error(), 1)
+		}
+
+		// Overwrite Flags with Command Options
+		if err := overwriteFlags(c); err != nil {
 			return NewExitError(err.Error(), 1)
 		}
 		return nil
 	}
 
 	app.Action = func(c *cli.Context) error {
-		queryString, err := readQuery(c)
+		queryString, path, err := readQuery(c)
 		if err != nil {
 			return NewExitError(err.Error(), 1)
 		}
 
 		if len(queryString) < 1 {
-			err = action.LaunchInteractiveShell()
+			err = action.LaunchInteractiveShell(proc)
 		} else {
-			err = action.Run(queryString, cmd.GetFlags().Source)
+			err = action.Run(proc, queryString, path, c.GlobalString("out"))
 		}
 
 		if err != nil {
@@ -218,84 +262,165 @@ func main() {
 	app.Run(os.Args)
 }
 
-func readQuery(c *cli.Context) (string, error) {
+func readQuery(c *cli.Context) (string, string, error) {
 	var queryString string
+	var path string
 
-	flags := cmd.GetFlags()
-	if 0 < len(flags.Source) {
-		fp, err := os.Open(flags.Source)
-		if err != nil {
-			return queryString, err
+	if c.IsSet("source") && 0 < len(c.GlobalString("source")) {
+		path = c.GlobalString("source")
+		if abs, err := filepath.Abs(path); err == nil {
+			path = abs
 		}
-		defer fp.Close()
+		if !file.Exists(path) {
+			return queryString, path, errors.New(fmt.Sprintf("file %q does not exist", path))
+		}
+		h, err := file.NewHandlerForRead(path)
+		if err != nil {
+			return queryString, path, errors.New(fmt.Sprintf("failed to read file: %s", err.Error()))
+		}
+		defer h.Close()
 
-		buf, err := ioutil.ReadAll(fp)
+		buf, err := ioutil.ReadAll(h.FileForRead())
 		if err != nil {
-			return queryString, err
+			return queryString, path, errors.New(fmt.Sprintf("failed to read file: %s", err.Error()))
 		}
+
 		queryString = string(buf)
-
 	} else {
 		if 1 < c.NArg() {
-			return queryString, errors.New("multiple queries or statements were passed")
+			return queryString, path, errors.New("multiple queries or statements were passed")
 		}
 		queryString = c.Args().First()
 	}
 
-	return queryString, nil
+	return queryString, path, nil
 }
 
-func setFlags(c *cli.Context) error {
-	cmd.SetColor(c.GlobalBool("color"))
-
-	if err := cmd.SetRepository(c.GlobalString("repository")); err != nil {
-		return err
-	}
-	if err := cmd.SetLocation(c.String("timezone")); err != nil {
-		return err
-	}
-	cmd.SetDatetimeFormat(c.GlobalString("datetime-format"))
-	cmd.SetWaitTimeout(c.GlobalFloat64("wait-timeout"))
-
-	if err := cmd.SetSource(c.GlobalString("source")); err != nil {
-		return err
+func overwriteFlags(c *cli.Context) error {
+	flags := cmd.GetFlags()
+	if c.IsSet("color") {
+		flags.SetColor(c.GlobalBool("color"))
 	}
 
-	if err := cmd.SetDelimiter(c.GlobalString("delimiter")); err != nil {
-		return err
+	if c.IsSet("repository") {
+		if err := flags.SetRepository(c.GlobalString("repository")); err != nil {
+			return err
+		}
 	}
-	cmd.SetJsonQuery(c.GlobalString("json-query"))
-	if err := cmd.SetEncoding(c.GlobalString("encoding")); err != nil {
-		return err
+	if c.IsSet("timezone") {
+		if err := flags.SetLocation(c.String("timezone")); err != nil {
+			return err
+		}
 	}
-	cmd.SetNoHeader(c.GlobalBool("no-header"))
-	cmd.SetWithoutNull(c.GlobalBool("without-null"))
+	if c.IsSet("datetime-format") {
+		flags.SetDatetimeFormat(c.GlobalString("datetime-format"))
+	}
+	if c.IsSet("wait-timeout") {
+		flags.SetWaitTimeout(c.GlobalFloat64("wait-timeout"))
+	}
 
-	if err := cmd.SetOut(c.GlobalString("out")); err != nil {
-		return err
+	if c.IsSet("delimiter") {
+		if err := flags.SetDelimiter(c.GlobalString("delimiter")); err != nil {
+			return err
+		}
 	}
-	if err := cmd.SetFormat(c.GlobalString("format")); err != nil {
-		return err
+	if c.IsSet("json-query") {
+		flags.SetJsonQuery(c.GlobalString("json-query"))
 	}
-	if err := cmd.SetWriteEncoding(c.GlobalString("write-encoding")); err != nil {
-		return err
+	if c.IsSet("encoding") {
+		if err := flags.SetEncoding(c.GlobalString("encoding")); err != nil {
+			return err
+		}
 	}
-	if err := cmd.SetWriteDelimiter(c.GlobalString("write-delimiter")); err != nil {
-		return err
+	if c.IsSet("no-header") {
+		flags.SetNoHeader(c.GlobalBool("no-header"))
 	}
-	cmd.SetWithoutHeader(c.GlobalBool("without-header"))
-	if err := cmd.SetLineBreak(c.String("line-break")); err != nil {
-		return err
+	if c.IsSet("without-null") {
+		flags.SetWithoutNull(c.GlobalBool("without-null"))
 	}
-	cmd.SetPrettyPrint(c.GlobalBool("pretty-print"))
 
-	cmd.SetQuiet(c.GlobalBool("quiet"))
-	cmd.SetCPU(c.GlobalInt("cpu"))
-	cmd.SetStats(c.GlobalBool("stats"))
+	if c.IsSet("format") {
+		if err := flags.SetFormat(c.GlobalString("format"), c.GlobalString("out")); err != nil {
+			return err
+		}
+	}
+	if c.IsSet("write-encoding") {
+		if err := flags.SetWriteEncoding(c.GlobalString("write-encoding")); err != nil {
+			return err
+		}
+	}
+	if c.IsSet("write-delimiter") {
+		if err := flags.SetWriteDelimiter(c.GlobalString("write-delimiter")); err != nil {
+			return err
+		}
+	}
+	if c.IsSet("without-header") {
+		flags.SetWithoutHeader(c.GlobalBool("without-header"))
+	}
+	if c.IsSet("line-break") {
+		if err := flags.SetLineBreak(c.String("line-break")); err != nil {
+			return err
+		}
+	}
+	if c.IsSet("enclose-all") {
+		flags.SetEncloseAll(c.GlobalBool("enclose-all"))
+	}
+	if c.IsSet("pretty-print") {
+		flags.SetPrettyPrint(c.GlobalBool("pretty-print"))
+	}
+
+	if c.IsSet("east-asian-encoding") {
+		flags.SetEastAsianEncoding(c.GlobalBool("east-asian-encoding"))
+	}
+	if c.IsSet("count-diacritical-sign") {
+		flags.SetCountDiacriticalSign(c.GlobalBool("count-diacritical-sign"))
+	}
+	if c.IsSet("count-format-code") {
+		flags.SetCountFormatCode(c.GlobalBool("count-format-code"))
+	}
+
+	if c.IsSet("quiet") {
+		flags.SetQuiet(c.GlobalBool("quiet"))
+	}
+	if c.IsSet("cpu") {
+		flags.SetCPU(c.GlobalInt("cpu"))
+	}
+	if c.IsSet("stats") {
+		flags.SetStats(c.GlobalBool("stats"))
+	}
 
 	return nil
 }
 
+func runPreloadCommands(proc *query.Procedure) error {
+	handlers := make([]*file.Handler, 0, 4)
+	defer func() {
+		for _, h := range handlers {
+			h.Close()
+		}
+	}()
+
+	files := cmd.GetSpecialFilePath(cmd.PreloadCommandFileName)
+	for _, fpath := range files {
+		if !file.Exists(fpath) {
+			continue
+		}
+
+		statements, err := query.LoadStatementsFromFile(parser.Source{}, fpath)
+		if err != nil {
+			if e, ok := err.(*query.ReadFileError); ok {
+				err = errors.New(e.ErrorMessage())
+			}
+			return err
+		}
+
+		if _, err := proc.Execute(statements); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func NewExitError(message string, code int) *cli.ExitError {
-	return cli.NewExitError(color.Error(message), code)
+	return cli.NewExitError(cmd.Error(message), code)
 }

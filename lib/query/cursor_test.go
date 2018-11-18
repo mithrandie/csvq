@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/mithrandie/go-text"
+
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
@@ -282,8 +284,8 @@ var cursorScopesOpenTests = []struct {
 							Path:      GetTestFilePath("table1.csv"),
 							Delimiter: ',',
 							NoHeader:  false,
-							Encoding:  cmd.UTF8,
-							LineBreak: cmd.LF,
+							Encoding:  text.UTF8,
+							LineBreak: text.LF,
 						},
 					},
 					index: -1,
@@ -953,8 +955,8 @@ var cursorMapOpenTests = []struct {
 						Path:      GetTestFilePath("table1.csv"),
 						Delimiter: ',',
 						NoHeader:  false,
-						Encoding:  cmd.UTF8,
-						LineBreak: cmd.LF,
+						Encoding:  text.UTF8,
+						LineBreak: text.LF,
 					},
 				},
 				index: -1,

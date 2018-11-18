@@ -1,11 +1,12 @@
 package query
 
 import (
-	"github.com/mithrandie/csvq/lib/json"
 	"sort"
 	"strings"
 
+	"github.com/mithrandie/csvq/lib/json"
 	"github.com/mithrandie/csvq/lib/value"
+	txjson "github.com/mithrandie/go-text/json"
 
 	"github.com/mithrandie/ternary"
 )
@@ -167,14 +168,11 @@ func ListAgg(list []value.Primary, separator string) value.Primary {
 }
 
 func JsonAgg(list []value.Primary) value.Primary {
-	array := make(json.Array, 0, len(list))
+	array := make(txjson.Array, 0, len(list))
 
 	for _, v := range list {
 		array = append(array, json.ParseValueToStructure(v))
 	}
 
-	e := json.NewEncoder()
-	s := e.Encode(array, false)
-
-	return value.NewString(s)
+	return value.NewString(array.Encode())
 }
