@@ -17,7 +17,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var version = "v1.6.0"
+var version = "v1.6.1"
 
 func main() {
 	defaultCPU := runtime.NumCPU() / 2
