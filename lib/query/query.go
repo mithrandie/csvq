@@ -935,7 +935,9 @@ func Rollback(expr parser.Expression, filter *Filter) error {
 		}
 	}
 
-	filter.TempViews.Restore(UncommittedTempViews())
+	if filter != nil {
+		filter.TempViews.Restore(UncommittedTempViews())
+	}
 	ExecResults = make([]ExecResult, 0, 10)
 	if err := ReleaseResources(); err != nil {
 		return NewRollbackError(expr, err.Error())
