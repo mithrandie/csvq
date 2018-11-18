@@ -168,7 +168,7 @@ func SetFlag(expr parser.SetFlag, filter *Filter) error {
 
 	switch strings.ToUpper(expr.Name) {
 	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.DatetimeFormatFlag, cmd.DelimiterFlag, cmd.JsonQueryFlag, cmd.EncodingFlag,
-		cmd.WriteEncodingFlag, cmd.FormatFlag, cmd.WriteDelimiterFlag, cmd.LineBreakFlag:
+		cmd.WriteEncodingFlag, cmd.FormatFlag, cmd.WriteDelimiterFlag, cmd.LineBreakFlag, cmd.JsonEscape:
 		p = value.ToString(p)
 	case cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAll, cmd.PrettyPrintFlag,
 		cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag, cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag:
@@ -217,6 +217,8 @@ func SetFlag(expr parser.SetFlag, filter *Filter) error {
 		err = flags.SetLineBreak(p.(value.String).Raw())
 	case cmd.EncloseAll:
 		flags.SetEncloseAll(p.(value.Boolean).Raw())
+	case cmd.JsonEscape:
+		err = flags.SetJsonEscape(p.(value.String).Raw())
 	case cmd.PrettyPrintFlag:
 		flags.SetPrettyPrint(p.(value.Boolean).Raw())
 	case cmd.EastAsianEncodingFlag:
@@ -308,7 +310,7 @@ func showFlag(flag string) (string, error) {
 		s = palette.Render(cmd.StringEffect, flags.Format.String())
 	case cmd.WriteEncodingFlag:
 		switch flags.Format {
-		case cmd.JSON, cmd.JSONH, cmd.JSONA:
+		case cmd.JSON:
 			s = palette.Render(cmd.NullEffect, IgnoredFlagPrefix+flags.WriteEncoding.String())
 		default:
 			s = palette.Render(cmd.StringEffect, flags.WriteEncoding.String())
@@ -342,10 +344,18 @@ func showFlag(flag string) (string, error) {
 		default:
 			s = palette.Render(cmd.NullEffect, IgnoredFlagPrefix+s)
 		}
+	case cmd.JsonEscape:
+		s = cmd.JsonEscapeTypeToString(flags.JsonEscape)
+		switch flags.Format {
+		case cmd.JSON:
+			s = palette.Render(cmd.StringEffect, s)
+		default:
+			s = palette.Render(cmd.NullEffect, IgnoredFlagPrefix+s)
+		}
 	case cmd.PrettyPrintFlag:
 		s = strconv.FormatBool(flags.PrettyPrint)
 		switch flags.Format {
-		case cmd.JSON, cmd.JSONH, cmd.JSONA:
+		case cmd.JSON:
 			s = palette.Render(cmd.BooleanEffect, s)
 		default:
 			s = palette.Render(cmd.NullEffect, IgnoredFlagPrefix+s)
@@ -596,7 +606,17 @@ func writeTableAttribute(w *cmd.ObjectWriter, info *FileInfo) {
 	case cmd.FIXED:
 		w.WriteColorWithoutLineBreak("Delimiter Positions: ", cmd.LableEffect)
 		w.WriteWithoutLineBreak(info.DelimiterPositions.String())
-	case cmd.JSON, cmd.JSONH, cmd.JSONA:
+	case cmd.JSON:
+		escapeStr := cmd.JsonEscapeTypeToString(info.JsonEscape)
+		w.WriteColorWithoutLineBreak("Escape: ", cmd.LableEffect)
+		w.WriteWithoutLineBreak(escapeStr)
+
+		spaces := 9 - len(escapeStr)
+		if spaces < 2 {
+			spaces = 2
+		}
+		w.WriteSpaces(spaces)
+
 		w.WriteColorWithoutLineBreak("Query: ", cmd.LableEffect)
 		if len(info.JsonQuery) < 1 {
 			w.WriteColorWithoutLineBreak("(empty)", cmd.NullEffect)
@@ -616,7 +636,7 @@ func writeTableAttribute(w *cmd.ObjectWriter, info *FileInfo) {
 
 	w.WriteColor("Encoding: ", cmd.LableEffect)
 	switch info.Format {
-	case cmd.JSON, cmd.JSONH, cmd.JSONA:
+	case cmd.JSON:
 		w.WriteColorWithoutLineBreak(text.UTF8.String(), cmd.NullEffect)
 	default:
 		w.WriteWithoutLineBreak(info.Encoding.String())
@@ -627,7 +647,7 @@ func writeTableAttribute(w *cmd.ObjectWriter, info *FileInfo) {
 	w.WriteWithoutLineBreak(info.LineBreak.String())
 
 	switch info.Format {
-	case cmd.JSON, cmd.JSONH, cmd.JSONA:
+	case cmd.JSON:
 		w.WriteSpaces(6 - (cmd.TextWidth(info.LineBreak.String())))
 		w.WriteColorWithoutLineBreak("Pretty Print: ", cmd.LableEffect)
 		w.WriteWithoutLineBreak(strconv.FormatBool(info.PrettyPrint))

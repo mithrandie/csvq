@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/mithrandie/go-text"
+	"github.com/mithrandie/go-text/json"
 
 	"github.com/mithrandie/csvq/lib/file"
 )
@@ -302,13 +303,19 @@ func TestFlags_SetFormat(t *testing.T) {
 	}
 
 	flags.SetFormat("jsonh", "")
-	if flags.Format != JSONH {
-		t.Errorf("format = %s, expect to set %s for %s", flags.Format, JSONH, "jsonh")
+	if flags.Format != JSON {
+		t.Errorf("format = %s, expect to set %s for %s", flags.Format, JSON, "jsonh")
+	}
+	if flags.JsonEscape != json.HexDigits {
+		t.Errorf("json escape type = %v, expect to set %v for %s", flags.JsonEscape, json.HexDigits, "jsonh")
 	}
 
 	flags.SetFormat("jsona", "")
-	if flags.Format != JSONA {
-		t.Errorf("format = %s, expect to set %s for %s", flags.Format, JSONA, "jsona")
+	if flags.Format != JSON {
+		t.Errorf("format = %s, expect to set %s for %s", flags.Format, JSON, "jsona")
+	}
+	if flags.JsonEscape != json.AllWithHexDigits {
+		t.Errorf("json escape type = %v, expect to set %v for %s", flags.JsonEscape, json.AllWithHexDigits, "jsonh")
 	}
 
 	flags.SetFormat("gfm", "")
@@ -326,7 +333,7 @@ func TestFlags_SetFormat(t *testing.T) {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, TEXT, "text")
 	}
 
-	expectErr := "format must be one of CSV|TSV|FIXED|JSON|JSONH|JSONA|GFM|ORG|TEXT"
+	expectErr := "format must be one of CSV|TSV|FIXED|JSON|GFM|ORG|TEXT|JSONH|JSONA"
 	err := flags.SetFormat("error", "")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "error")
@@ -426,6 +433,37 @@ func TestFlags_SetEncloseAll(t *testing.T) {
 	flags.SetEncloseAll(true)
 	if !flags.EncloseAll {
 		t.Errorf("enclose-all = %t, expect to set %t", flags.EncloseAll, true)
+	}
+}
+
+func TestFlags_SetJsonEscape(t *testing.T) {
+	flags := GetFlags()
+
+	s := "backslash"
+	flags.SetJsonEscape(s)
+	if flags.JsonEscape != json.Backslash {
+		t.Errorf("json-escape = %v, expect to set %v", flags.JsonEscape, json.Backslash)
+	}
+
+	s = "hex"
+	flags.SetJsonEscape(s)
+	if flags.JsonEscape != json.HexDigits {
+		t.Errorf("json-escape = %v, expect to set %v", flags.JsonEscape, json.HexDigits)
+	}
+
+	s = "hexall"
+	flags.SetJsonEscape(s)
+	if flags.JsonEscape != json.AllWithHexDigits {
+		t.Errorf("json-escape = %v, expect to set %v", flags.JsonEscape, json.AllWithHexDigits)
+	}
+
+	s = "error"
+	expectErr := "json-escape must be one of BACKSLASH|HEX|HEXALL"
+	err := flags.SetJsonEscape(s)
+	if err == nil {
+		t.Errorf("no error, want error %q for %s", expectErr, s)
+	} else if err.Error() != expectErr {
+		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, s)
 	}
 }
 

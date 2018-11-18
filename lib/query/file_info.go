@@ -6,13 +6,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/mithrandie/csvq/lib/file"
-
 	"github.com/mithrandie/go-text"
-
 	"github.com/mithrandie/go-text/fixedlen"
+	"github.com/mithrandie/go-text/json"
 
 	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
@@ -23,6 +22,7 @@ const (
 	TableLineBreak   = "LINE_BREAK"
 	TableHeader      = "HEADER"
 	TableEncloseAll  = "ENCLOSE_ALL"
+	TableJsonEscape  = "JSON_ESCAPE"
 	TablePrettyPring = "PRETTY_PRINT"
 )
 
@@ -37,6 +37,7 @@ type FileInfo struct {
 	LineBreak          text.LineBreak
 	NoHeader           bool
 	EncloseAll         bool
+	JsonEscape         json.EscapeType
 	PrettyPrint        bool
 
 	Handler *file.Handler
@@ -110,7 +111,7 @@ func (f *FileInfo) SetDelimiter(s string) error {
 }
 
 func (f *FileInfo) SetFormat(s string) error {
-	format, err := cmd.ParseFormat(s)
+	format, et, err := cmd.ParseFormat(s, f.JsonEscape)
 	if err != nil {
 		return err
 	}
@@ -118,11 +119,12 @@ func (f *FileInfo) SetFormat(s string) error {
 	switch format {
 	case cmd.TSV:
 		f.Delimiter = '\t'
-	case cmd.JSON, cmd.JSONH, cmd.JSONA:
+	case cmd.JSON:
 		f.Encoding = text.UTF8
 	}
 
 	f.Format = format
+	f.JsonEscape = et
 	return nil
 }
 
@@ -133,7 +135,7 @@ func (f *FileInfo) SetEncoding(s string) error {
 	}
 
 	switch f.Format {
-	case cmd.JSON, cmd.JSONH, cmd.JSONA:
+	case cmd.JSON:
 		if encoding != text.UTF8 {
 			return errors.New("json format is supported only UTF8")
 		}
@@ -159,6 +161,16 @@ func (f *FileInfo) SetNoHeader(b bool) {
 
 func (f *FileInfo) SetEncloseAll(b bool) {
 	f.EncloseAll = b
+}
+
+func (f *FileInfo) SetJsonEscape(s string) error {
+	escape, err := cmd.ParseJsonEscapeType(s)
+	if err != nil {
+		return err
+	}
+
+	f.JsonEscape = escape
+	return nil
 }
 
 func (f *FileInfo) SetPrettyPrint(b bool) {

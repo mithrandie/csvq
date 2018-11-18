@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mithrandie/go-text/json"
+
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
@@ -312,9 +314,10 @@ var viewLoadTests = []struct {
 				Path:        "stdin",
 				Delimiter:   ',',
 				JsonQuery:   "{}",
-				Format:      cmd.JSONH,
+				Format:      cmd.JSON,
 				Encoding:    text.UTF8,
 				LineBreak:   text.LF,
+				JsonEscape:  json.HexDigits,
 				IsTemporary: true,
 			},
 			Filter: &Filter{
@@ -359,9 +362,10 @@ var viewLoadTests = []struct {
 				Path:        "stdin",
 				Delimiter:   ',',
 				JsonQuery:   "{}",
-				Format:      cmd.JSONA,
+				Format:      cmd.JSON,
 				Encoding:    text.UTF8,
 				LineBreak:   text.LF,
+				JsonEscape:  json.AllWithHexDigits,
 				IsTemporary: true,
 			},
 			Filter: &Filter{
@@ -955,12 +959,13 @@ var viewLoadTests = []struct {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:      "table_h.json",
-				Delimiter: ',',
-				JsonQuery: "{}",
-				Format:    cmd.JSONH,
-				Encoding:  text.UTF8,
-				LineBreak: text.LF,
+				Path:       "table_h.json",
+				Delimiter:  ',',
+				JsonQuery:  "{}",
+				Format:     cmd.JSON,
+				Encoding:   text.UTF8,
+				LineBreak:  text.LF,
+				JsonEscape: json.HexDigits,
 			},
 			Filter: &Filter{
 				Variables:    []VariableMap{{}},
@@ -1000,12 +1005,13 @@ var viewLoadTests = []struct {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:      "table_a.json",
-				Delimiter: ',',
-				JsonQuery: "{}",
-				Format:    cmd.JSONA,
-				Encoding:  text.UTF8,
-				LineBreak: text.LF,
+				Path:       "table_a.json",
+				Delimiter:  ',',
+				JsonQuery:  "{}",
+				Format:     cmd.JSON,
+				Encoding:   text.UTF8,
+				LineBreak:  text.LF,
+				JsonEscape: json.AllWithHexDigits,
 			},
 			Filter: &Filter{
 				Variables:    []VariableMap{{}},

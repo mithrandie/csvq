@@ -809,7 +809,7 @@ func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (st
 	fileInfo := view.FileInfo
 	attr := strings.ToUpper(query.Attribute.Literal)
 	switch attr {
-	case TableDelimiter, TableFormat, TableEncoding, TableLineBreak:
+	case TableDelimiter, TableFormat, TableEncoding, TableLineBreak, TableJsonEscape:
 		s := value.ToString(p)
 		if value.IsNull(s) {
 			return log, NewTableAttributeValueNotAllowedFormatError(query)
@@ -823,6 +823,8 @@ func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (st
 			err = fileInfo.SetEncoding(s.(value.String).Raw())
 		case TableLineBreak:
 			err = fileInfo.SetLineBreak(s.(value.String).Raw())
+		case TableJsonEscape:
+			err = fileInfo.SetJsonEscape(s.(value.String).Raw())
 		}
 	case TableHeader, TableEncloseAll, TablePrettyPring:
 		b := value.ToBoolean(p)

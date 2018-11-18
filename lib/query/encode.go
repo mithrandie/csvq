@@ -24,8 +24,8 @@ func EncodeView(fp io.Writer, view *View, fileInfo *FileInfo) error {
 	switch fileInfo.Format {
 	case cmd.FIXED:
 		return encodeFixedLengthFormat(fp, view, fileInfo.DelimiterPositions, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding)
-	case cmd.JSON, cmd.JSONH, cmd.JSONA:
-		return encodeJson(fp, view, fileInfo.Format, fileInfo.LineBreak, fileInfo.PrettyPrint)
+	case cmd.JSON:
+		return encodeJson(fp, view, fileInfo.LineBreak, fileInfo.JsonEscape, fileInfo.PrettyPrint)
 	case cmd.GFM, cmd.ORG, cmd.TEXT:
 		return encodeText(fp, view, fileInfo.Format, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding)
 	case cmd.TSV:
@@ -148,7 +148,7 @@ func encodeFixedLengthFormat(fp io.Writer, view *View, positions []int, lineBrea
 	return nil
 }
 
-func encodeJson(fp io.Writer, view *View, format cmd.Format, lineBreak text.LineBreak, prettyPrint bool) error {
+func encodeJson(fp io.Writer, view *View, lineBreak text.LineBreak, escapeType txjson.EscapeType, prettyPrint bool) error {
 	header, records := bareValues(view)
 
 	data, err := json.ConvertTableValueToJsonStructure(header, records)
@@ -157,12 +157,7 @@ func encodeJson(fp io.Writer, view *View, format cmd.Format, lineBreak text.Line
 	}
 
 	e := txjson.NewEncoder()
-	switch format {
-	case cmd.JSONH:
-		e.EscapeType = txjson.HexDigits
-	case cmd.JSONA:
-		e.EscapeType = txjson.AllWithHexDigits
-	}
+	e.EscapeType = escapeType
 	e.LineBreak = lineBreak
 	e.PrettyPrint = prettyPrint
 	if prettyPrint && cmd.GetFlags().Color {

@@ -8,6 +8,8 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mithrandie/go-text"
+	"github.com/mithrandie/go-text/json"
+
 	"github.com/mithrandie/ternary"
 )
 
@@ -21,6 +23,7 @@ var encodeViewTests = []struct {
 	WriteDelimiterPositions []int
 	WithoutHeader           bool
 	EncloseAll              bool
+	JsonEscape              json.EscapeType
 	PrettyPrint             bool
 	Result                  string
 	Error                   string
@@ -231,7 +234,8 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewString("abc\\def")}),
 			},
 		},
-		Format: cmd.JSONH,
+		Format:     cmd.JSON,
+		JsonEscape: json.HexDigits,
 		Result: "[" +
 			"{" +
 			"\"c1\":\"a\"" +
@@ -254,7 +258,8 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewString("abc\\def")}),
 			},
 		},
-		Format: cmd.JSONA,
+		Format:     cmd.JSON,
+		JsonEscape: json.AllWithHexDigits,
 		Result: "[" +
 			"{" +
 			"\"\\u0063\\u0031\":\"\\u0061\"" +
@@ -277,7 +282,8 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewString("abc\\def")}),
 			},
 		},
-		Format:      cmd.JSONH,
+		Format:      cmd.JSON,
+		JsonEscape:  json.HexDigits,
 		PrettyPrint: true,
 		Result: "[\n" +
 			"  {\n" +
@@ -314,8 +320,9 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewString("abc\\def")}),
 			},
 		},
-		Format: cmd.JSONH,
-		Error:  "encoding to json failed: unexpected token \".\" at column 4 in \"c1..\"",
+		Format:     cmd.JSON,
+		JsonEscape: json.HexDigits,
+		Error:      "encoding to json failed: unexpected token \".\" at column 4 in \"c1..\"",
 	},
 	{
 		Name: "CSV Encode Character Code",
@@ -361,6 +368,7 @@ func TestEncodeView(t *testing.T) {
 			LineBreak:          v.LineBreak,
 			NoHeader:           v.WithoutHeader,
 			EncloseAll:         v.EncloseAll,
+			JsonEscape:         v.JsonEscape,
 			PrettyPrint:        v.PrettyPrint,
 		}
 

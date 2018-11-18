@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mithrandie/go-text/json"
+
 	"github.com/mithrandie/go-text"
 
 	"github.com/mithrandie/go-text/fixedlen"
@@ -433,6 +435,13 @@ var setFlagTests = []struct {
 		Expr: parser.SetFlag{
 			Name:  "enclose_all",
 			Value: parser.NewTernaryValueFromString("true"),
+		},
+	},
+	{
+		Name: "Set JsonEscape",
+		Expr: parser.SetFlag{
+			Name:  "json_escape",
+			Value: parser.NewStringValue("hex"),
 		},
 	},
 	{
@@ -919,6 +928,40 @@ var showFlagTests = []struct {
 		Result: "\033[34;1m@@ENCLOSE_ALL:\033[0m \033[90m(ignored) true\033[0m",
 	},
 	{
+		Name: "Show JsonEscape",
+		Expr: parser.ShowFlag{
+			Name: "json_escape",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "json_escape",
+				Value: parser.NewStringValue("HEXALL"),
+			},
+			{
+				Name:  "format",
+				Value: parser.NewStringValue("JSON"),
+			},
+		},
+		Result: "\033[34;1m@@JSON_ESCAPE:\033[0m \033[32mHEXALL\033[0m",
+	},
+	{
+		Name: "Show JsonEscape Ignored",
+		Expr: parser.ShowFlag{
+			Name: "json_escape",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "json_escape",
+				Value: parser.NewStringValue("BACKSLASH"),
+			},
+			{
+				Name:  "format",
+				Value: parser.NewStringValue("CSV"),
+			},
+		},
+		Result: "\033[34;1m@@JSON_ESCAPE:\033[0m \033[90m(ignored) BACKSLASH\033[0m",
+	},
+	{
 		Name: "Show PrettyPrint",
 		Expr: parser.ShowFlag{
 			Name: "pretty_print",
@@ -1202,6 +1245,7 @@ var showObjectsTests = []struct {
 					Format:      cmd.JSON,
 					Encoding:    text.UTF8,
 					LineBreak:   text.LF,
+					JsonEscape:  json.HexDigits,
 					PrettyPrint: false,
 				},
 			},
@@ -1226,7 +1270,7 @@ var showObjectsTests = []struct {
 			"     Encoding: SJIS  LineBreak: CRLF  Header: false\n" +
 			" table1.json\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: JSON    Query: {}\n" +
+			"     Format: JSON    Escape: BACKSLASH  Query: {}\n" +
 			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
 			" table1.tsv\n" +
 			"     Fields: col1, col2\n" +
@@ -1238,7 +1282,7 @@ var showObjectsTests = []struct {
 			"     Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" table2.json\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: JSON    Query: (empty)\n" +
+			"     Format: JSON    Escape: HEX      Query: (empty)\n" +
 			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
 			"",
 	},
@@ -1326,7 +1370,7 @@ var showObjectsTests = []struct {
 			"     Encoding: SJIS  LineBreak: CRLF  Header: false\n" +
 			" table1.json\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: JSON    Query: {}\n" +
+			"     Format: JSON    Escape: BACKSLASH  Query: {}\n" +
 			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
 			" *Created* table1.tsv\n" +
 			"     Fields: col1, col2\n" +
@@ -1338,7 +1382,7 @@ var showObjectsTests = []struct {
 			"     Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" *Updated* table2.json\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: JSON    Query: (empty)\n" +
+			"     Format: JSON    Escape: BACKSLASH  Query: (empty)\n" +
 			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
 			"",
 	},
@@ -1573,8 +1617,8 @@ var showObjectsTests = []struct {
 		Expr:       parser.ShowObjects{Type: parser.Identifier{Literal: "flags"}},
 		Repository: ".",
 		Expect: "\n" +
-			"                    Flags\n" +
-			"---------------------------------------------\n" +
+			"                     Flags\n" +
+			"-----------------------------------------------\n" +
 			"             @@REPOSITORY: .\n" +
 			"               @@TIMEZONE: UTC\n" +
 			"        @@DATETIME_FORMAT: (not set)\n" +
@@ -1590,6 +1634,7 @@ var showObjectsTests = []struct {
 			"         @@WITHOUT_HEADER: false\n" +
 			"             @@LINE_BREAK: LF\n" +
 			"            @@ENCLOSE_ALL: false\n" +
+			"            @@JSON_ESCAPE: (ignored) BACKSLASH\n" +
 			"           @@PRETTY_PRINT: (ignored) false\n" +
 			"    @@EAST_ASIAN_ENCODING: (ignored) false\n" +
 			" @@COUNT_DIACRITICAL_SIGN: (ignored) false\n" +
