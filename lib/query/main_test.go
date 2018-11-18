@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mithrandie/go-text/json"
+
 	"github.com/mithrandie/go-text"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -121,6 +123,7 @@ func initFlag() {
 	flags.WithoutHeader = false
 	flags.LineBreak = text.LF
 	flags.EncloseAll = false
+	flags.JsonEscape = json.Backslash
 	flags.PrettyPrint = false
 	flags.EastAsianEncoding = false
 	flags.CountDiacriticalSign = false

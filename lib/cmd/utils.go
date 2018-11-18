@@ -11,6 +11,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/mithrandie/go-text"
+	txjson "github.com/mithrandie/go-text/json"
 )
 
 func EscapeString(s string) string {
@@ -288,7 +289,7 @@ func ParseDelimiter(s string, delimiter rune, delimiterPositions []int, delimitA
 	return delimiter, delimiterPositions, delimitAutomatically, nil
 }
 
-func ParseFormat(s string) (Format, error) {
+func ParseFormat(s string, et txjson.EscapeType) (Format, txjson.EscapeType, error) {
 	var fm Format
 	switch strings.ToUpper(s) {
 	case "CSV":
@@ -299,20 +300,37 @@ func ParseFormat(s string) (Format, error) {
 		fm = FIXED
 	case "JSON":
 		fm = JSON
-	case "JSONH":
-		fm = JSONH
-	case "JSONA":
-		fm = JSONA
 	case "GFM":
 		fm = GFM
 	case "ORG":
 		fm = ORG
 	case "TEXT":
 		fm = TEXT
+	case "JSONH":
+		fm = JSON
+		et = txjson.HexDigits
+	case "JSONA":
+		fm = JSON
+		et = txjson.AllWithHexDigits
 	default:
-		return fm, errors.New("format must be one of CSV|TSV|FIXED|JSON|JSONH|JSONA|GFM|ORG|TEXT")
+		return fm, et, errors.New("format must be one of CSV|TSV|FIXED|JSON|GFM|ORG|TEXT|JSONH|JSONA")
 	}
-	return fm, nil
+	return fm, et, nil
+}
+
+func ParseJsonEscapeType(s string) (txjson.EscapeType, error) {
+	var escape txjson.EscapeType
+	switch strings.ToUpper(s) {
+	case "BACKSLASH":
+		escape = txjson.Backslash
+	case "HEX":
+		escape = txjson.HexDigits
+	case "HEXALL":
+		escape = txjson.AllWithHexDigits
+	default:
+		return escape, errors.New("json-escape must be one of BACKSLASH|HEX|HEXALL")
+	}
+	return escape, nil
 }
 
 func AppendStrIfNotExist(list []string, elem string) []string {

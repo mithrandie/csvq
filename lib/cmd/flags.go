@@ -11,9 +11,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mithrandie/go-text/color"
-
 	"github.com/mithrandie/go-text"
+	"github.com/mithrandie/go-text/color"
+	txjson "github.com/mithrandie/go-text/json"
 
 	"github.com/mithrandie/csvq/lib/file"
 )
@@ -37,6 +37,7 @@ const (
 	WithoutHeaderFlag        = "WITHOUT_HEADER"
 	LineBreakFlag            = "LINE_BREAK"
 	EncloseAll               = "ENCLOSE_ALL"
+	JsonEscape               = "JSON_ESCAPE"
 	PrettyPrintFlag          = "PRETTY_PRINT"
 	EastAsianEncodingFlag    = "EAST_ASIAN_ENCODING"
 	CountDiacriticalSignFlag = "COUNT_DIACRITICAL_SIGN"
@@ -63,6 +64,7 @@ var FlagList = []string{
 	WithoutHeaderFlag,
 	LineBreakFlag,
 	EncloseAll,
+	JsonEscape,
 	PrettyPrintFlag,
 	EastAsianEncodingFlag,
 	CountDiacriticalSignFlag,
@@ -85,8 +87,6 @@ const (
 	TSV
 	FIXED
 	JSON
-	JSONH
-	JSONA
 	GFM
 	ORG
 	TEXT
@@ -97,8 +97,6 @@ var formatLiterals = map[Format]string{
 	TSV:   "TSV",
 	FIXED: "FIXED",
 	JSON:  "JSON",
-	JSONH: "JSONH",
-	JSONA: "JSONA",
 	GFM:   "GFM",
 	ORG:   "ORG",
 	TEXT:  "TEXT",
@@ -106,6 +104,16 @@ var formatLiterals = map[Format]string{
 
 func (f Format) String() string {
 	return formatLiterals[f]
+}
+
+var jsonEscapeTypeLiterals = map[txjson.EscapeType]string{
+	txjson.Backslash:        "BACKSLASH",
+	txjson.HexDigits:        "HEX",
+	txjson.AllWithHexDigits: "HEXALL",
+}
+
+func JsonEscapeTypeToString(escapeType txjson.EscapeType) string {
+	return jsonEscapeTypeLiterals[escapeType]
 }
 
 const (
@@ -138,6 +146,7 @@ type Flags struct {
 	WithoutHeader  bool
 	LineBreak      text.LineBreak
 	EncloseAll     bool
+	JsonEscape     txjson.EscapeType
 	PrettyPrint    bool
 
 	// For Calculation of String Width
@@ -198,6 +207,7 @@ func GetFlags() *Flags {
 			WithoutHeader:           false,
 			LineBreak:               text.LF,
 			EncloseAll:              false,
+			JsonEscape:              txjson.Backslash,
 			PrettyPrint:             false,
 			EastAsianEncoding:       false,
 			CountDiacriticalSign:    false,
@@ -333,6 +343,8 @@ func (f *Flags) SetWithoutNull(b bool) {
 
 func (f *Flags) SetFormat(s string, outfile string) error {
 	var fm Format
+	var escape txjson.EscapeType
+	var err error
 
 	switch s {
 	case "":
@@ -353,13 +365,13 @@ func (f *Flags) SetFormat(s string, outfile string) error {
 			return nil
 		}
 	default:
-		var err error
-		if fm, err = ParseFormat(s); err != nil {
+		if fm, escape, err = ParseFormat(s, f.JsonEscape); err != nil {
 			return err
 		}
 	}
 
 	f.Format = fm
+	f.JsonEscape = escape
 	return nil
 }
 
@@ -407,6 +419,18 @@ func (f *Flags) SetLineBreak(s string) error {
 	}
 
 	f.LineBreak = lb
+	return nil
+}
+
+func (f *Flags) SetJsonEscape(s string) error {
+	var escape txjson.EscapeType
+	var err error
+
+	if escape, err = ParseJsonEscapeType(s); err != nil {
+		return err
+	}
+
+	f.JsonEscape = escape
 	return nil
 }
 

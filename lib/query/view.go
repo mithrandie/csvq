@@ -128,6 +128,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 			LineBreak:          flags.LineBreak,
 			NoHeader:           flags.NoHeader,
 			EncloseAll:         flags.EncloseAll,
+			JsonEscape:         flags.JsonEscape,
 			IsTemporary:        true,
 		}
 
@@ -154,7 +155,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 					return nil, NewReadFileError(table.Object.(parser.Stdin), err.Error())
 				}
 
-				headerLabels, rows, encodeType, err := json.LoadTable(fileInfo.JsonQuery, string(buf))
+				headerLabels, rows, escapeType, err := json.LoadTable(fileInfo.JsonQuery, string(buf))
 				if err != nil {
 					return nil, NewJsonQueryError(parser.JsonQuery{BaseExpr: table.Object.GetBaseExpr()}, err.Error())
 				}
@@ -164,12 +165,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 					records = append(records, NewRecord(row))
 				}
 
-				switch encodeType {
-				case txjson.HexDigits:
-					fileInfo.Format = cmd.JSONH
-				case txjson.AllWithHexDigits:
-					fileInfo.Format = cmd.JSONA
-				}
+				fileInfo.JsonEscape = escapeType
 
 				loadView = NewView()
 				loadView.Header = NewHeader(parser.FormatTableName(fileInfo.Path), headerLabels)
@@ -312,6 +308,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 			flags.LineBreak,
 			noHeader,
 			flags.EncloseAll,
+			flags.JsonEscape,
 			withoutNull,
 		)
 		if err != nil {
@@ -335,6 +332,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 			flags.LineBreak,
 			flags.NoHeader,
 			flags.EncloseAll,
+			flags.JsonEscape,
 			flags.WithoutNull,
 		)
 		if err != nil {
@@ -521,6 +519,7 @@ func loadObject(
 	lineBreak text.LineBreak,
 	noHeader bool,
 	encloseAll bool,
+	jsonEscape txjson.EscapeType,
 	withoutNull bool,
 ) (*View, error) {
 	var view *View
@@ -570,6 +569,7 @@ func loadObject(
 				fileInfo.LineBreak = lineBreak
 				fileInfo.NoHeader = noHeader
 				fileInfo.EncloseAll = encloseAll
+				fileInfo.JsonEscape = jsonEscape
 
 				alreadyLoaded := ViewCache.Exists(fileInfo.Path)
 				ufpath := strings.ToUpper(fileInfo.Path)
@@ -808,7 +808,7 @@ func loadViewFromJsonFile(fp io.Reader, fileInfo *FileInfo) (*View, error) {
 		return nil, err
 	}
 
-	headerLabels, rows, encodeType, err := json.LoadTable(fileInfo.JsonQuery, string(jsonText))
+	headerLabels, rows, escapeType, err := json.LoadTable(fileInfo.JsonQuery, string(jsonText))
 	if err != nil {
 		return nil, err
 	}
@@ -818,12 +818,7 @@ func loadViewFromJsonFile(fp io.Reader, fileInfo *FileInfo) (*View, error) {
 		records = append(records, NewRecord(row))
 	}
 
-	switch encodeType {
-	case txjson.HexDigits:
-		fileInfo.Format = cmd.JSONH
-	case txjson.AllWithHexDigits:
-		fileInfo.Format = cmd.JSONA
-	}
+	fileInfo.JsonEscape = escapeType
 
 	view := NewView()
 	view.Header = NewHeader(parser.FormatTableName(fileInfo.Path), headerLabels)

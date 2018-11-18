@@ -1,3 +1,8 @@
+## Release v1.6.1 (2018-11-18)
+
+- Fix a bug of colorize in JSON pretty print.
+- Add --json-escape option.
+
 ## Release v1.6.0 (2018-11-17)
 
 - Support Environment Variables.

@@ -8,18 +8,16 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/mithrandie/csvq/lib/parser"
-
-	"github.com/mithrandie/csvq/lib/file"
-
 	"github.com/mithrandie/csvq/lib/action"
 	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/file"
+	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
 
 	"github.com/urfave/cli"
 )
 
-var version = "v1.6.0"
+var version = "v1.6.1"
 
 func main() {
 	defaultCPU := runtime.NumCPU() / 2
@@ -78,7 +76,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "delimiter, d",
 			Value: ",",
-			Usage: "field delimiter for csv, or delimiter positions for fixed-length format",
+			Usage: "field delimiter for CSV, or delimiter positions for Fixed-Length Format",
 		},
 		cli.StringFlag{
 			Name:  "json-query, j",
@@ -104,7 +102,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "format, f",
 			Value: "TEXT",
-			Usage: "format of query results. one of: CSV|TSV|FIXED|JSON|JSONH|JSONA|GFM|ORG|TEXT",
+			Usage: "format of query results. one of: CSV|TSV|FIXED|JSON|GFM|ORG|TEXT|JSONH|JSONA",
 		},
 		cli.StringFlag{
 			Name:  "write-encoding, E",
@@ -128,6 +126,11 @@ func main() {
 		cli.BoolFlag{
 			Name:  "enclose-all, Q",
 			Usage: "enclose all string values in CSV",
+		},
+		cli.StringFlag{
+			Name:  "json-escape, J",
+			Value: "BACKSLASH",
+			Usage: "JSON escape type. one of: BACKSLASH|HEX|HEXALL",
 		},
 		cli.BoolFlag{
 			Name:  "pretty-print, P",
@@ -364,6 +367,11 @@ func overwriteFlags(c *cli.Context) error {
 	}
 	if c.IsSet("enclose-all") {
 		flags.SetEncloseAll(c.GlobalBool("enclose-all"))
+	}
+	if c.IsSet("json-escape") {
+		if err := flags.SetJsonEscape(c.GlobalString("json-escape")); err != nil {
+			return err
+		}
 	}
 	if c.IsSet("pretty-print") {
 		flags.SetPrettyPrint(c.GlobalBool("pretty-print"))

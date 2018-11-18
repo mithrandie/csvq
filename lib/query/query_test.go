@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mithrandie/go-text/json"
+
 	"github.com/mithrandie/go-text"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -3762,7 +3764,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "format"},
 			Value:     parser.NewStringValue("invalid"),
 		},
-		Error: "[L:- C:-] format must be one of CSV|TSV|FIXED|JSON|JSONH|JSONA|GFM|ORG|TEXT",
+		Error: "[L:- C:-] format must be one of CSV|TSV|FIXED|JSON|GFM|ORG|TEXT|JSONH|JSONA",
 	},
 	{
 		Name: "Set Encoding to SJIS",
@@ -3876,6 +3878,32 @@ var setTableAttributeTests = []struct {
 			LineBreak:  text.LF,
 			EncloseAll: true,
 		},
+	},
+	{
+		Name: "Set JsonEscape to HEX",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table.json"},
+			Attribute: parser.Identifier{Literal: "json_escape"},
+			Value:     parser.NewStringValue("hex"),
+		},
+		Expect: &FileInfo{
+			Path:        GetTestFilePath("table.json"),
+			Delimiter:   ',',
+			Format:      cmd.JSON,
+			Encoding:    text.UTF8,
+			LineBreak:   text.LF,
+			JsonEscape:  json.HexDigits,
+			PrettyPrint: false,
+		},
+	},
+	{
+		Name: "Set JsonEscape Error",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table.json"},
+			Attribute: parser.Identifier{Literal: "json_escape"},
+			Value:     parser.NewStringValue("invalid"),
+		},
+		Error: "[L:- C:-] json-escape must be one of BACKSLASH|HEX|HEXALL",
 	},
 	{
 		Name: "Set PrettyPring to true",

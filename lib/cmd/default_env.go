@@ -82,6 +82,35 @@ const defaultEnvJson = `
         "foreground": "Red",
         "background": null
       },
+      "json_object_key": {
+        "effects": [
+          "Bold"
+        ],
+        "foreground": "Blue",
+        "background": null
+      },
+      "json_number": {
+        "effects": [],
+        "foreground": "Magenta",
+        "background": null
+      },
+      "json_string": {
+        "effects": [],
+        "foreground": "Green",
+        "background": null
+      },
+      "json_boolean": {
+        "effects": [
+          "Bold"
+        ],
+        "foreground": "Yellow",
+        "background": null
+      },
+      "json_null": {
+        "effects": [],
+        "foreground": "BrightBlack",
+        "background": null
+      },
       "prompt": {
         "effects": [],
         "foreground": "Blue",
