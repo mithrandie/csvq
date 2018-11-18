@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -96,6 +97,7 @@ func LoadEnvironment() error {
 		if err != nil {
 			return errors.New(fmt.Sprintf("failed to load %q: %s", fpath, err.Error()))
 		}
+		buf = bytes.TrimSuffix(buf, []byte{0x00})
 		userDefinedEnv := &Environment{}
 		if err = json.Unmarshal(buf, userDefinedEnv); err != nil {
 			return errors.New(fmt.Sprintf("failed to load %q: %s", fpath, err.Error()))

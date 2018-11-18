@@ -214,13 +214,13 @@ func main() {
 		action.SetSignalHandler()
 
 		// Init Single Objects
-		cmd.GetFlags()
 		if _, err := cmd.GetEnvironment(); err != nil {
 			return NewExitError(err.Error(), 1)
 		}
 		if _, err := cmd.GetPalette(); err != nil {
 			return NewExitError(err.Error(), 1)
 		}
+		cmd.GetFlags()
 
 		// Run pre-load commands
 		if err := runPreloadCommands(proc); err != nil {
