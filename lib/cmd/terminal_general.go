@@ -25,7 +25,7 @@ func NewTerminal() (VirtualTerminal, error) {
 		return nil, err
 	}
 
-	p := GetPalette()
+	p, _ := GetPalette()
 
 	return SSHTerminal{
 		terminal: terminal.NewTerminal(NewStdIO(), p.Render(PromptEffect, TerminalPrompt)),
