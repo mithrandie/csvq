@@ -1135,7 +1135,7 @@ type ExternalCommandError struct {
 	*BaseError
 }
 
-func NewExternalCommandError(expr parser.ExternalCommand, message string) error {
+func NewExternalCommandError(expr parser.Expression, message string) error {
 	return &ExternalCommandError{
 		NewBaseError(expr, fmt.Sprintf(ErrorExternalCommand, message)),
 	}

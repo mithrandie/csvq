@@ -49,6 +49,8 @@ var ViewCache = make(ViewMap, 10)
 var ExecResults = make([]ExecResult, 0, 10)
 var OutFile io.Writer
 
+var Formatter = NewStringFormatter()
+
 func ReleaseResources() error {
 	if err := ViewCache.Clean(); err != nil {
 		return err
@@ -565,8 +567,7 @@ func (proc *Procedure) ExecExternalCommand(stmt parser.ExternalCommand) error {
 			}
 			return err
 		}
-		f := NewStringFormatter()
-		s, _ := f.Format("%s", []value.Primary{p})
+		s, _ := Formatter.Format("%s", []value.Primary{p})
 		buf.WriteString(s)
 		if err != nil {
 			err = NewExternalCommandError(stmt, err.Error())
