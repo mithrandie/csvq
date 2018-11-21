@@ -4,13 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/file"
-
 	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/excmd"
+	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -48,8 +47,7 @@ type ExecResult struct {
 
 var ViewCache = make(ViewMap, 10)
 var ExecResults = make([]ExecResult, 0, 10)
-var OutFile *os.File
-var SelectResult = new(bytes.Buffer)
+var OutFile io.Writer
 
 func ReleaseResources() error {
 	if err := ViewCache.Clean(); err != nil {
@@ -190,16 +188,11 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			if OutFile != nil {
 				writer = OutFile
 			} else {
-				SelectResult.Reset()
-				writer = SelectResult
+				writer = cmd.Stdout
 			}
 			err = EncodeView(writer, view, fileInfo)
 			if err == nil {
-				if OutFile != nil {
-					OutFile.WriteString(cmd.GetFlags().LineBreak.Value())
-				} else {
-					Log(SelectResult.String(), false)
-				}
+				writer.Write([]byte(cmd.GetFlags().LineBreak.Value()))
 			}
 		}
 		if flags.Stats {
@@ -360,12 +353,14 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		flow, err = proc.While(stmt.(parser.While))
 	case parser.WhileInCursor:
 		flow, err = proc.WhileInCursor(stmt.(parser.WhileInCursor))
+	case parser.Echo:
+		if printstr, err = Echo(stmt.(parser.Echo), proc.Filter); err == nil {
+			Log(printstr, false)
+		}
 	case parser.Print:
 		if printstr, err = Print(stmt.(parser.Print), proc.Filter); err == nil {
 			Log(printstr, false)
 		}
-	case parser.Function:
-		_, err = proc.Filter.Evaluate(stmt.(parser.Function))
 	case parser.Printf:
 		if printstr, err = Printf(stmt.(parser.Printf), proc.Filter); err == nil {
 			Log(printstr, false)
@@ -410,6 +405,12 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			}
 		default:
 			err = NewInvalidEventNameError(trigger.Event)
+		}
+	case parser.ExternalCommand:
+		err = proc.ExecExternalCommand(stmt.(parser.ExternalCommand))
+	default:
+		if expr, ok := stmt.(parser.QueryExpression); ok {
+			_, err = proc.Filter.Evaluate(expr)
 		}
 	}
 
@@ -551,6 +552,93 @@ func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, 
 	}
 
 	return Terminate, nil
+}
+
+func (proc *Procedure) ExecExternalCommand(stmt parser.ExternalCommand) error {
+	var writeQueryExpression = func(buf *bytes.Buffer, expr parser.QueryExpression) error {
+		p, err := proc.Filter.Evaluate(expr)
+		if err != nil {
+			if _, ok := err.(*SyntaxError); ok {
+				err = NewExternalCommandError(stmt, "only an expression that represents a value are allowd in a brackets")
+			} else if ae, ok := err.(AppError); ok {
+				err = NewExternalCommandError(stmt, ae.ErrorMessage())
+			}
+			return err
+		}
+		f := NewStringFormatter()
+		s, _ := f.Format("%s", []value.Primary{p})
+		buf.WriteString(s)
+		if err != nil {
+			err = NewExternalCommandError(stmt, err.Error())
+		}
+		return err
+	}
+
+	splitter := new(excmd.ArgsSplitter).Init(stmt.Command)
+	var argStrs = make([]string, 0, 8)
+	for splitter.Scan() {
+		argStrs = append(argStrs, splitter.Text())
+	}
+	err := splitter.Err()
+	if err != nil {
+		return NewExternalCommandError(stmt, err.Error())
+	}
+
+	scanner := new(excmd.ArgumentScanner)
+	args := make([]string, 0, len(argStrs))
+	arg := new(bytes.Buffer)
+	for _, argStr := range argStrs {
+		arg.Reset()
+		scanner.Init(argStr)
+		for scanner.Scan() {
+
+			switch scanner.NodeType() {
+			case excmd.FixedString:
+				arg.WriteString(scanner.Text())
+			case excmd.Variable:
+				if err = writeQueryExpression(arg, parser.Variable{Name: scanner.Text()}); err != nil {
+					return err
+				}
+			case excmd.EnvironmentVariable:
+				if err = writeQueryExpression(arg, parser.EnvVar{Name: scanner.Text()}); err != nil {
+					return err
+				}
+			case excmd.CsvqExpression:
+				command := scanner.Text()
+				statements, err := parser.Parse(command, "")
+				if err != nil {
+					syntaxErr := err.(*parser.SyntaxError)
+					return NewExternalCommandError(stmt, syntaxErr.Message)
+				}
+
+				switch len(statements) {
+				case 0:
+					args = append(args, "")
+				case 1:
+					expr, ok := statements[0].(parser.QueryExpression)
+					if !ok {
+						return NewExternalCommandError(stmt, "only an expression that represents a value are allowd in a brackets")
+					}
+					if err = writeQueryExpression(arg, expr); err != nil {
+						return err
+					}
+				default:
+					return NewExternalCommandError(stmt, "only an expression that represents a value are allowd in a brackets")
+				}
+			}
+		}
+		if err = scanner.Err(); err != nil {
+			return NewExternalCommandError(stmt, err.Error())
+		}
+
+		args = append(args, arg.String())
+	}
+
+	err = excmd.Exec(args)
+	if err != nil {
+		err = NewExternalCommandError(stmt, err.Error())
+	}
+	return err
 }
 
 func (proc *Procedure) showExecutionTime() {

@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/mithrandie/csvq/lib/cmd"
-
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 )
@@ -103,6 +102,7 @@ const (
 	ErrorFormatStringLengthNotMatch           = "number of replace values does not match"
 	ErrorUnknownFormatPlaceholder             = "unknown placeholder: %q"
 	ErrorFormatUnexpectedTermination          = "unexpected termination of format string"
+	ErrorExternalCommand                      = "external command: %s"
 )
 
 type ForcedExit struct {
@@ -1128,6 +1128,16 @@ type FormatUnexpectedTerminationError struct {
 func NewFormatUnexpectedTerminationError() error {
 	return &FormatUnexpectedTerminationError{
 		BaseError: NewBaseError(parser.NewNullValue(), ErrorFormatUnexpectedTermination),
+	}
+}
+
+type ExternalCommandError struct {
+	*BaseError
+}
+
+func NewExternalCommandError(expr parser.ExternalCommand, message string) error {
+	return &ExternalCommandError{
+		NewBaseError(expr, fmt.Sprintf(ErrorExternalCommand, message)),
 	}
 }
 

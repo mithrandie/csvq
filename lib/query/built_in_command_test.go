@@ -10,16 +10,61 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mithrandie/go-text/json"
-
-	"github.com/mithrandie/go-text"
-
-	"github.com/mithrandie/go-text/fixedlen"
-
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
+
+	"github.com/mithrandie/go-text"
+	"github.com/mithrandie/go-text/fixedlen"
+	"github.com/mithrandie/go-text/json"
 )
+
+var echoTests = []struct {
+	Name   string
+	Expr   parser.Echo
+	Result string
+	Error  string
+}{
+	{
+		Name: "Echo",
+		Expr: parser.Echo{
+			Value: parser.NewStringValue("var"),
+		},
+		Result: "var",
+	},
+	{
+		Name: "Echo Evaluate Error",
+		Expr: parser.Echo{
+			Value: parser.Variable{
+				Name: "var",
+			},
+		},
+		Error: "[L:- C:-] variable @var is undeclared",
+	},
+}
+
+func TestEcho(t *testing.T) {
+	filter := NewEmptyFilter()
+
+	for _, v := range echoTests {
+		result, err := Echo(v.Expr, filter)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if result != v.Result {
+			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+		}
+	}
+}
 
 var printTests = []struct {
 	Name   string

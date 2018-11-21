@@ -8,14 +8,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mithrandie/go-text/json"
-
-	"github.com/mithrandie/go-text"
-
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
+
+	"github.com/mithrandie/go-text"
+	"github.com/mithrandie/go-text/json"
 )
 
 var fetchCursorTests = []struct {
@@ -4088,14 +4087,14 @@ func TestCommit(t *testing.T) {
 	}
 	expect := fmt.Sprintf("Commit: file %q is created.\nCommit: file %q is updated.\n", GetTestFilePath("created_file.csv"), GetTestFilePath("updated_file_1.csv"))
 
-	oldStdout := os.Stdout
+	oldStdout := cmd.Stdout
 	r, w, _ := os.Pipe()
-	os.Stdout = w
+	cmd.Stdout = w
 
 	Commit(parser.TransactionControl{Token: parser.COMMIT}, NewEmptyFilter())
 
 	w.Close()
-	os.Stdout = oldStdout
+	cmd.Stdout = oldStdout
 	log, _ := ioutil.ReadAll(r)
 
 	if string(log) != expect {
@@ -4129,14 +4128,14 @@ func TestRollback(t *testing.T) {
 	}
 	expect := "Rollback: file \"created_file.csv\" is deleted.\nRollback: file \"updated_file_1.csv\" is restored.\n"
 
-	oldStdout := os.Stdout
+	oldStdout := cmd.Stdout
 	r, w, _ := os.Pipe()
-	os.Stdout = w
+	cmd.Stdout = w
 
 	Rollback(nil, NewEmptyFilter())
 
 	w.Close()
-	os.Stdout = oldStdout
+	cmd.Stdout = oldStdout
 	log, _ := ioutil.ReadAll(r)
 
 	if string(log) != expect {

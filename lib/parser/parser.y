@@ -175,7 +175,7 @@ import (
 %type<token>       as
 %type<token>       comparison_operator
 
-%token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME VARIABLE FLAG ENVIRONMENT_VARIABLE
+%token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME VARIABLE FLAG ENVIRONMENT_VARIABLE EXTERNAL_COMMAND
 %token<token> SELECT FROM UPDATE SET UNSET DELETE WHERE INSERT INTO VALUES AS DUAL STDIN
 %token<token> RECURSIVE
 %token<token> CREATE ADD DROP ALTER TABLE FIRST LAST AFTER BEFORE DEFAULT RENAME TO VIEW
@@ -192,7 +192,7 @@ import (
 %token<token> SEPARATOR PARTITION OVER
 %token<token> COMMIT ROLLBACK
 %token<token> CONTINUE BREAK EXIT
-%token<token> PRINT PRINTF SOURCE EXECUTE TRIGGER
+%token<token> ECHO PRINT PRINTF SOURCE EXECUTE TRIGGER
 %token<token> FUNCTION AGGREGATE BEGIN RETURN
 %token<token> IGNORE WITHIN
 %token<token> VAR SHOW
@@ -283,10 +283,6 @@ common_statement
     {
         $$ = $1
     }
-    | function
-    {
-        $$ = $1
-    }
     | table_operation_statement
     {
         $$ = $1
@@ -322,6 +318,14 @@ common_statement
     | trigger_statement
     {
         $$ = $1
+    }
+    | value
+    {
+        $$ = $1
+    }
+    | EXTERNAL_COMMAND
+    {
+        $$ = ExternalCommand{BaseExpr: NewBaseExpr($1), Command: $1.Literal}
     }
 
 common_loop_flow_control_statement
@@ -826,6 +830,10 @@ command_statement
     | SHOW FLAG
     {
         $$ = ShowFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal}
+    }
+    | ECHO value
+    {
+        $$ = Echo{Value: $2}
     }
     | PRINT value
     {

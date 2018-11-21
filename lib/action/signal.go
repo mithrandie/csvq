@@ -21,6 +21,9 @@ func SetSignalHandler() {
 		if err := query.ReleaseResourcesWithErrors(); err != nil {
 			cmd.WriteToStdErr(err.Error() + "\n")
 		}
+		if cmd.Terminal != nil {
+			cmd.Terminal.Teardown()
+		}
 		os.Exit(-1)
 	}()
 }

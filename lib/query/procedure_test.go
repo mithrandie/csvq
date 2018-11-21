@@ -8,12 +8,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mithrandie/go-text"
-
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
+	"github.com/mithrandie/go-text"
 	"github.com/mithrandie/ternary"
 )
 
@@ -50,6 +49,12 @@ var procedureExecuteStatementTests = []struct {
 			EnvVar: parser.EnvVar{Name: "CSVQ_PROC_TEST"},
 			Value:  parser.NewStringValue("foo"),
 		},
+	},
+	{
+		Input: parser.Echo{
+			Value: parser.EnvVar{Name: "CSVQ_PROC_TEST"},
+		},
+		Logs: "foo\n",
 	},
 	{
 		Input: parser.Print{
@@ -732,16 +737,15 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 	for _, v := range procedureExecuteStatementTests {
 		ReleaseResources()
 		ExecResults = []ExecResult{}
-		SelectResult.Reset()
 
-		oldStdout := os.Stdout
+		oldStdout := cmd.Stdout
 		r, w, _ := os.Pipe()
-		os.Stdout = w
+		cmd.Stdout = w
 
 		_, err := proc.ExecuteStatement(v.Input)
 
 		w.Close()
-		os.Stdout = oldStdout
+		cmd.Stdout = oldStdout
 
 		log, _ := ioutil.ReadAll(r)
 
@@ -789,7 +793,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 			}
 		}
 		if v.SelectLogs != nil {
-			selectLog := SelectResult.String()
+			selectLog := string(log)
 			if !reflect.DeepEqual(selectLog, v.SelectLogs) {
 				t.Errorf("select logs = %s, want %s for %q", selectLog, v.SelectLogs, v.Input)
 			}
@@ -798,7 +802,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 
 	ReleaseResources()
 	ExecResults = []ExecResult{}
-	SelectResult.Reset()
+	OutFile = nil
 }
 
 var procedureIfStmtTests = []struct {
@@ -907,15 +911,15 @@ func TestProcedure_IfStmt(t *testing.T) {
 	proc := NewProcedure()
 
 	for _, v := range procedureIfStmtTests {
-		oldStdout := os.Stdout
+		oldStdout := cmd.Stdout
 
 		r, w, _ := os.Pipe()
-		os.Stdout = w
+		cmd.Stdout = w
 
 		flow, err := proc.IfStmt(v.Stmt)
 
 		w.Close()
-		os.Stdout = oldStdout
+		cmd.Stdout = oldStdout
 
 		log, _ := ioutil.ReadAll(r)
 
@@ -1081,15 +1085,15 @@ func TestProcedure_Case(t *testing.T) {
 	proc := NewProcedure()
 
 	for _, v := range procedureCaseStmtTests {
-		oldStdout := os.Stdout
+		oldStdout := cmd.Stdout
 
 		r, w, _ := os.Pipe()
-		os.Stdout = w
+		cmd.Stdout = w
 
 		flow, err := proc.Case(v.Stmt)
 
 		w.Close()
-		os.Stdout = oldStdout
+		cmd.Stdout = oldStdout
 
 		log, _ := ioutil.ReadAll(r)
 
@@ -1334,15 +1338,15 @@ func TestProcedure_While(t *testing.T) {
 		}
 		proc.Filter.Variables[0].Set(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
 
-		oldStdout := os.Stdout
+		oldStdout := cmd.Stdout
 
 		r, w, _ := os.Pipe()
-		os.Stdout = w
+		cmd.Stdout = w
 
 		flow, err := proc.While(v.Stmt)
 
 		w.Close()
-		os.Stdout = oldStdout
+		cmd.Stdout = oldStdout
 
 		log, _ := ioutil.ReadAll(r)
 
@@ -1546,14 +1550,14 @@ func TestProcedure_WhileInCursor(t *testing.T) {
 		ViewCache.Clean()
 		proc.Filter.Cursors.Open(parser.Identifier{Literal: "cur"}, proc.Filter)
 
-		oldStdout := os.Stdout
+		oldStdout := cmd.Stdout
 		r, w, _ := os.Pipe()
-		os.Stdout = w
+		cmd.Stdout = w
 
 		flow, err := proc.WhileInCursor(v.Stmt)
 
 		w.Close()
-		os.Stdout = oldStdout
+		cmd.Stdout = oldStdout
 
 		log, _ := ioutil.ReadAll(r)
 
@@ -1574,6 +1578,83 @@ func TestProcedure_WhileInCursor(t *testing.T) {
 		}
 		if string(log) != v.Result {
 			t.Errorf("%s: result = %q, want %q", v.Name, string(log), v.Result)
+		}
+	}
+}
+
+var procedureExecExternalCommand = []struct {
+	Name  string
+	Stmt  parser.ExternalCommand
+	Error string
+}{
+	{
+		Name: "Error in Splitting Arguments",
+		Stmt: parser.ExternalCommand{
+			Command: "cmd arg 'arg",
+		},
+		Error: "[L:- C:-] external command: string not terminated",
+	},
+	{
+		Name: "Error in Scanning Argument",
+		Stmt: parser.ExternalCommand{
+			Command: "cmd 'arg arg@'",
+		},
+		Error: "[L:- C:-] external command: invalid variable symbol",
+	},
+	{
+		Name: "Error in Evaluation of Variable",
+		Stmt: parser.ExternalCommand{
+			Command: "cmd @__not_exist__",
+		},
+		Error: "[L:- C:-] external command: variable @__not_exist__ is undeclared",
+	},
+	{
+		Name: "Error in Parsing CSVQ Expression",
+		Stmt: parser.ExternalCommand{
+			Command: "cmd ${invalid invalid}",
+		},
+		Error: "[L:- C:-] external command: syntax error: unexpected token \"invalid\"",
+	},
+	{
+		Name: "Type Error in Parsing CSVQ Expression",
+		Stmt: parser.ExternalCommand{
+			Command: "cmd ${print 1;}",
+		},
+		Error: "[L:- C:-] external command: only an expression that represents a value are allowd in a brackets",
+	},
+	{
+		Name: "Evaluation Error in Parsing CSVQ Expression",
+		Stmt: parser.ExternalCommand{
+			Command: "cmd ${select 1;}",
+		},
+		Error: "[L:- C:-] external command: only an expression that represents a value are allowd in a brackets",
+	},
+	{
+		Name: "Multiple Expressions Error in Parsing CSVQ Expression",
+		Stmt: parser.ExternalCommand{
+			Command: "cmd ${1;2}",
+		},
+		Error: "[L:- C:-] external command: only an expression that represents a value are allowd in a brackets",
+	},
+}
+
+func TestProcedure_ExecExternalCommand(t *testing.T) {
+	proc := NewProcedure()
+
+	for _, v := range procedureExecExternalCommand {
+		err := proc.ExecExternalCommand(v.Stmt)
+
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
 		}
 	}
 }

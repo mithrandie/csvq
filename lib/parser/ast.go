@@ -1245,6 +1245,11 @@ type Return struct {
 	Value QueryExpression
 }
 
+type Echo struct {
+	*BaseExpr
+	Value QueryExpression
+}
+
 type Print struct {
 	*BaseExpr
 	Value QueryExpression
@@ -1437,6 +1442,11 @@ type Execute struct {
 type Exit struct {
 	*BaseExpr
 	Code value.Primary
+}
+
+type ExternalCommand struct {
+	*BaseExpr
+	Command string
 }
 
 func putParentheses(s string) string {

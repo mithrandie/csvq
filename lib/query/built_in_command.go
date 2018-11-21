@@ -29,6 +29,16 @@ const (
 
 const IgnoredFlagPrefix = "(ignored) "
 
+func Echo(expr parser.Echo, filter *Filter) (string, error) {
+	p, err := filter.Evaluate(expr.Value)
+	if err != nil {
+		return "", err
+	}
+
+	f := NewStringFormatter()
+	return f.Format("%s", []value.Primary{p})
+}
+
 func Print(expr parser.Print, filter *Filter) (string, error) {
 	p, err := filter.Evaluate(expr.Value)
 	if err != nil {

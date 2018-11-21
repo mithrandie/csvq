@@ -36,6 +36,9 @@ func NewTerminal() (VirtualTerminal, error) {
 		HistoryFile:            historyFile,
 		DisableAutoSaveHistory: true,
 		HistoryLimit:           limit,
+		Stdin:                  Stdin,
+		Stdout:                 Stdout,
+		Stderr:                 Stderr,
 	})
 	if err != nil {
 		return nil, err
@@ -50,6 +53,14 @@ func NewTerminal() (VirtualTerminal, error) {
 
 func (t ReadLineTerminal) Teardown() {
 	t.terminal.Close()
+}
+
+func (t ReadLineTerminal) RestoreRawMode() error {
+	return t.terminal.Terminal.EnterRawMode()
+}
+
+func (t ReadLineTerminal) RestoreOriginalMode() error {
+	return t.terminal.Terminal.ExitRawMode()
 }
 
 func (t ReadLineTerminal) ReadLine() (string, error) {

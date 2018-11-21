@@ -3931,6 +3931,14 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "echo 'foo'",
+		Output: []Statement{
+			Echo{
+				Value: NewStringValue("foo"),
+			},
+		},
+	},
+	{
 		Input: "print 'foo'",
 		Output: []Statement{
 			Print{
@@ -5113,6 +5121,41 @@ var parseTests = []struct {
 					},
 				},
 			}},
+		},
+	},
+	{
+		Input: "'abc'",
+		Output: []Statement{
+			NewStringValue("abc"),
+		},
+	},
+	{
+		Input: "select c1;\n$echo foo;",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
+						},
+					},
+				},
+			}},
+			ExternalCommand{
+				BaseExpr: &BaseExpr{line: 2, char: 1},
+				Command:  "echo foo",
+			},
+		},
+	},
+	{
+		Input: "$",
+		Output: []Statement{
+			ExternalCommand{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Command:  "",
+			},
 		},
 	},
 	{

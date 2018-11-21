@@ -12,15 +12,21 @@ import (
 )
 
 type SSHTerminal struct {
-	terminal *terminal.Terminal
-	oldFd    int
-	oldState *terminal.State
-	palette  *color.Palette
+	terminal  *terminal.Terminal
+	stdin     int
+	origState *terminal.State
+	rawState  *terminal.State
+	palette   *color.Palette
 }
 
 func NewTerminal() (VirtualTerminal, error) {
-	oldFd := int(os.Stdin.Fd())
-	oldState, err := terminal.MakeRaw(oldFd)
+	stdin := int(os.Stdin.Fd())
+	origState, err := terminal.MakeRaw(stdin)
+	if err != nil {
+		return nil, err
+	}
+
+	rawState, err := terminal.GetState(stdin)
 	if err != nil {
 		return nil, err
 	}
@@ -28,15 +34,24 @@ func NewTerminal() (VirtualTerminal, error) {
 	p, _ := GetPalette()
 
 	return SSHTerminal{
-		terminal: terminal.NewTerminal(NewStdIO(), p.Render(PromptEffect, TerminalPrompt)),
-		oldFd:    oldFd,
-		oldState: oldState,
-		palette:  p,
+		terminal:  terminal.NewTerminal(NewStdIO(), p.Render(PromptEffect, TerminalPrompt)),
+		stdin:     stdin,
+		origState: origState,
+		rawState:  rawState,
+		palette:   p,
 	}, nil
 }
 
 func (t SSHTerminal) Teardown() {
-	terminal.Restore(t.oldFd, t.oldState)
+	t.RestoreOriginalMode()
+}
+
+func (t SSHTerminal) RestoreRawMode() error {
+	return terminal.Restore(t.stdin, t.rawState)
+}
+
+func (t SSHTerminal) RestoreOriginalMode() error {
+	return terminal.Restore(t.stdin, t.origState)
 }
 
 func (t SSHTerminal) ReadLine() (string, error) {
@@ -66,7 +81,7 @@ func (t SSHTerminal) SaveHistory(s string) {
 }
 
 func (t SSHTerminal) GetSize() (int, int, error) {
-	return terminal.GetSize(t.oldFd)
+	return terminal.GetSize(t.stdin)
 }
 
 type StdIO struct {
@@ -84,7 +99,7 @@ func (sh *StdIO) Write(p []byte) (n int, err error) {
 
 func NewStdIO() *StdIO {
 	return &StdIO{
-		reader: os.Stdin,
-		writer: os.Stdout,
+		reader: Stdin,
+		writer: Stdout,
 	}
 }
