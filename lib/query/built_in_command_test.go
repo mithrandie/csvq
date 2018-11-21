@@ -1329,7 +1329,7 @@ var showObjectsTests = []struct {
 			"     Fields: col1, col2\n" +
 			"     Format: JSON    Escape: HEX      Query: (empty)\n" +
 			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
-			"",
+			"\n",
 	},
 	{
 		Name: "ShowObjects Tables Uncommitted",
@@ -1429,7 +1429,7 @@ var showObjectsTests = []struct {
 			"     Fields: col1, col2\n" +
 			"     Format: JSON    Escape: BACKSLASH  Query: (empty)\n" +
 			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
-			"",
+			"\n",
 	},
 	{
 		Name: "ShowObjects Tables Long Fields",
@@ -1455,7 +1455,7 @@ var showObjectsTests = []struct {
 			"             colabcdef6, colabcdef7\n" +
 			"     Format: CSV     Delimiter: '\\t'  Enclose All: false\n" +
 			"     Encoding: SJIS  LineBreak: CRLF  Header: false\n" +
-			"",
+			"\n",
 	},
 	{
 		Name:       "ShowObjects No Table is Loaded",
@@ -1511,7 +1511,8 @@ var showObjectsTests = []struct {
 			" view1\n" +
 			"     Fields: column1, column2\n" +
 			" *Updated* view2\n" +
-			"     Fields: column1, column2\n",
+			"     Fields: column1, column2\n" +
+			"\n",
 	},
 	{
 		Name:   "ShowObjects Views Empty",
@@ -1600,7 +1601,7 @@ var showObjectsTests = []struct {
 			" cur4\n" +
 			"     Status: Open    Number of Rows: 2         Pointer: Out of Range\n" +
 			"     Query: select column1, column2 from table1\n" +
-			"",
+			"\n",
 	},
 	{
 		Name:   "ShowObjects Cursors Empty",
@@ -1650,7 +1651,8 @@ var showObjectsTests = []struct {
 			"\n" +
 			"           Aggregate Functions\n" +
 			"-----------------------------------------\n" +
-			" useraggfunc (column1, @arg1, @arg2 = 1)\n",
+			" useraggfunc (column1, @arg1, @arg2 = 1)\n" +
+			"\n",
 	},
 	{
 		Name:   "ShowObjects Functions Empty",
@@ -1688,7 +1690,7 @@ var showObjectsTests = []struct {
 			"                  @@QUIET: false\n" +
 			"                    @@CPU: " + strconv.Itoa(cmd.GetFlags().CPU) + "\n" +
 			"                  @@STATS: false\n" +
-			"",
+			"\n",
 	},
 	{
 		Name:  "ShowObjects Invalid Object Type",
@@ -1783,7 +1785,8 @@ var showFieldsTests = []struct {
 			" Status: Fixed\n" +
 			" Fields:\n" +
 			"   1. column1\n" +
-			"   2. column2\n",
+			"   2. column2\n" +
+			"\n",
 	},
 	{
 		Name: "ShowFields Updated Temporary Table",
@@ -1821,7 +1824,8 @@ var showFieldsTests = []struct {
 			" Status: Updated\n" +
 			" Fields:\n" +
 			"   1. column1\n" +
-			"   2. column2\n",
+			"   2. column2\n" +
+			"\n",
 	},
 	{
 		Name: "ShowFields Created Table",
@@ -1860,7 +1864,8 @@ var showFieldsTests = []struct {
 			" Status: Created\n" +
 			" Fields:\n" +
 			"   1. column1\n" +
-			"   2. column2\n",
+			"   2. column2\n" +
+			"\n",
 	},
 	{
 		Name: "ShowFields Updated Table",
@@ -1900,7 +1905,8 @@ var showFieldsTests = []struct {
 			" Status: Updated\n" +
 			" Fields:\n" +
 			"   1. column1\n" +
-			"   2. column2\n",
+			"   2. column2\n" +
+			"\n",
 	},
 	{
 		Name: "ShowFields Load Error",

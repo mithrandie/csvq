@@ -23,8 +23,11 @@ func Run(proc *query.Procedure, input string, sourceFile string, outfile string)
 	start := time.Now()
 
 	defer func() {
+		if e := query.Rollback(nil, proc.Filter); e != nil {
+			cmd.WriteToStderrWithLineBreak(e.Error())
+		}
 		if err := query.ReleaseResourcesWithErrors(); err != nil {
-			cmd.WriteToStdErr(err.Error() + "\n")
+			cmd.WriteToStderrWithLineBreak(err.Error())
 		}
 		showStats(start)
 	}()
@@ -60,11 +63,7 @@ func Run(proc *query.Procedure, input string, sourceFile string, outfile string)
 
 	if err == nil && flow == query.Terminate {
 		if e := query.Commit(nil, proc.Filter); e != nil {
-			cmd.WriteToStdErr(e.Error() + "\n")
-		}
-	} else {
-		if e := query.Rollback(nil, proc.Filter); e != nil {
-			cmd.WriteToStdErr(e.Error() + "\n")
+			cmd.WriteToStderrWithLineBreak(e.Error())
 		}
 	}
 
@@ -77,8 +76,11 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 	}
 
 	defer func() {
+		if e := query.Rollback(nil, proc.Filter); e != nil {
+			cmd.WriteToStderrWithLineBreak(e.Error())
+		}
 		if err := query.ReleaseResourcesWithErrors(); err != nil {
-			cmd.WriteToStdErr(err.Error() + "\n")
+			cmd.WriteToStderrWithLineBreak(err.Error())
 		}
 	}()
 
@@ -176,10 +178,6 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 
 		lines = lines[:0]
 		cmd.Terminal.SetPrompt()
-	}
-
-	if e := query.Rollback(nil, proc.Filter); e != nil {
-		cmd.WriteToStdErr(e.Error() + "\n")
 	}
 
 	return err

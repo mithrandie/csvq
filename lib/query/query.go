@@ -857,7 +857,7 @@ func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (st
 	w.Title1 = "Attributes Updated in"
 	w.Title2 = query.Table.(parser.Identifier).Literal
 	w.Title2Effect = cmd.IdentifierEffect
-	log = "\n" + w.String()
+	log = "\n" + w.String() + "\n"
 	return log, nil
 }
 

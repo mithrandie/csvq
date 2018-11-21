@@ -14,7 +14,7 @@ func Calc(expr string) error {
 
 	defer func() {
 		if err := query.ReleaseResourcesWithErrors(); err != nil {
-			cmd.WriteToStdErr(err.Error() + "\n")
+			cmd.WriteToStderrWithLineBreak(err.Error())
 		}
 	}()
 

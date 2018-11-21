@@ -445,7 +445,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 				w.Title2 = fmt.Sprintf("(Uncommitted: %s)", FormatCount(uncommitted, "Table"))
 				w.Title2Effect = cmd.EmphasisEffect
 			}
-			s = "\n" + w.String()
+			s = "\n" + w.String() + "\n"
 		}
 	case "VIEWS":
 		views := filter.TempViews.All()
@@ -477,7 +477,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 				w.Title2 = fmt.Sprintf("(Uncommitted: %s)", FormatCount(uncommitted, "View"))
 				w.Title2Effect = cmd.EmphasisEffect
 			}
-			s = "\n" + w.String()
+			s = "\n" + w.String() + "\n"
 		}
 	case "CURSORS":
 		cursors := filter.Cursors.All()
@@ -527,7 +527,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 				w.NewLine()
 			}
 			w.Title1 = "Cursors"
-			s = "\n" + w.String()
+			s = "\n" + w.String() + "\n"
 		}
 	case "FUNCTIONS":
 		scalas, aggs := filter.Functions.All()
@@ -544,7 +544,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 				w.Clear()
 				writeFunctions(w, aggs)
 				w.Title1 = "Aggregate Functions"
-				s += "\n" + w.String()
+				s += "\n" + w.String() + "\n"
 			}
 		}
 	case "FLAGS":
@@ -559,7 +559,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 			w.NewLine()
 		}
 		w.Title1 = "Flags"
-		s = "\n" + w.String()
+		s = "\n" + w.String() + "\n"
 	case "ENV":
 		env := os.Environ()
 		names := make([]string, 0, len(env))
@@ -590,7 +590,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 			w.NewLine()
 		}
 		w.Title1 = "Environment Variables"
-		s = "\n" + w.String()
+		s = "\n" + w.String() + "\n"
 	default:
 		return "", NewShowInvalidObjectTypeError(expr, expr.Type.String())
 	}
@@ -777,7 +777,7 @@ func ShowFields(expr parser.ShowFields, filter *Filter) (string, error) {
 	w.Title1 = "Fields in"
 	w.Title2 = expr.Table.Literal
 	w.Title2Effect = cmd.IdentifierEffect
-	return "\n" + w.String(), nil
+	return "\n" + w.String() + "\n", nil
 }
 
 func writeFieldList(w *cmd.ObjectWriter, fields []string) {

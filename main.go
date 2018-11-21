@@ -20,17 +20,12 @@ import (
 var version = "v1.6.1"
 
 func main() {
-	defaultCPU := runtime.NumCPU() / 2
+	var proc *query.Procedure
+
+	var defaultCPU = runtime.NumCPU() / 2
 	if defaultCPU < 1 {
 		defaultCPU = 1
 	}
-
-	proc := query.NewProcedure()
-	defer func() {
-		if err := query.ReleaseResourcesWithErrors(); err != nil {
-			cmd.WriteToStdErr(err.Error() + "\n")
-		}
-	}()
 
 	cli.AppHelpTemplate = appHHelpTemplate
 	cli.CommandHelpTemplate = commandHelpTemplate
@@ -215,6 +210,8 @@ func main() {
 
 	app.Before = func(c *cli.Context) error {
 		action.SetSignalHandler()
+
+		proc = query.NewProcedure()
 
 		// Init Single Objects
 		if _, err := cmd.GetEnvironment(); err != nil {

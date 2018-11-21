@@ -78,7 +78,7 @@ func ReleaseResourcesWithErrors() error {
 
 func Log(log string, quiet bool) {
 	if !quiet {
-		cmd.WriteToStdout(log + "\n")
+		cmd.WriteToStdoutWithLineBreak(log)
 	}
 }
 

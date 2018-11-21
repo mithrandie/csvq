@@ -27,7 +27,7 @@ func NewTerminal() (VirtualTerminal, error) {
 	limit := env.InteractiveShell.HistoryLimit
 	historyFile, err := HistoryFilePath(env.InteractiveShell.HistoryFile)
 	if err != nil {
-		WriteToStdErr(fmt.Sprintf("cannot detect filepath: %q\n", env.InteractiveShell.HistoryFile))
+		WriteToStderrWithLineBreak(fmt.Sprintf("cannot detect filepath: %q", env.InteractiveShell.HistoryFile))
 		limit = -1
 	}
 
