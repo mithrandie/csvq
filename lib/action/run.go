@@ -34,8 +34,7 @@ func Run(proc *query.Procedure, input string, sourceFile string, outfile string)
 
 	statements, err := parser.Parse(input, sourceFile)
 	if err != nil {
-		syntaxErr := err.(*parser.SyntaxError)
-		return query.NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)
+		return query.NewSyntaxError(err.(*parser.SyntaxError))
 	}
 
 	if 0 < len(outfile) {
@@ -147,8 +146,7 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 
 		statements, e := parser.Parse(strings.Join(lines, "\n"), "")
 		if e != nil {
-			syntaxErr := e.(*parser.SyntaxError)
-			e = query.NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)
+			e = query.NewSyntaxError(e.(*parser.SyntaxError))
 			if werr := cmd.Terminal.WriteError(cmd.Error(e.Error()) + "\n"); werr != nil {
 				return werr
 			}

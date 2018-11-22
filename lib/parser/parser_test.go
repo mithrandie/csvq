@@ -4019,6 +4019,32 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "chdir `dirpath`",
+		Output: []Statement{
+			Chdir{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				DirPath:  Identifier{BaseExpr: &BaseExpr{line: 1, char: 7}, Literal: "dirpath", Quoted: true},
+			},
+		},
+	},
+	{
+		Input: "chdir 'dirpath'",
+		Output: []Statement{
+			Chdir{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				DirPath:  NewStringValue("dirpath"),
+			},
+		},
+	},
+	{
+		Input: "pwd",
+		Output: []Statement{
+			Pwd{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+			},
+		},
+	},
+	{
 		Input: "set @@delimiter = ','",
 		Output: []Statement{
 			SetFlag{
@@ -4044,6 +4070,15 @@ var parseTests = []struct {
 			ShowFlag{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
 				Name:     "delimiter",
+			},
+		},
+	},
+	{
+		Input: "show tables",
+		Output: []Statement{
+			ShowObjects{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Type:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "tables"},
 			},
 		},
 	},

@@ -30,9 +30,9 @@ var filterEvaluateTests = []struct {
 		Result: value.NewString("str"),
 	},
 	{
-		Name:  "Syntax Error",
+		Name:  "Invalid Value Error",
 		Expr:  parser.AllColumns{},
-		Error: "[L:- C:-] syntax error: unexpected *",
+		Error: "[L:- C:-] *: cannot evaluate as a value",
 	},
 	{
 		Name: "Parentheses",

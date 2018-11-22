@@ -1266,6 +1266,21 @@ type Source struct {
 	FilePath QueryExpression
 }
 
+type Chdir struct {
+	*BaseExpr
+	DirPath QueryExpression
+}
+
+type Pwd struct {
+	*BaseExpr
+}
+
+type Execute struct {
+	*BaseExpr
+	Statements QueryExpression
+	Values     []QueryExpression
+}
+
 type SetFlag struct {
 	*BaseExpr
 	Name  string
@@ -1431,12 +1446,6 @@ type Trigger struct {
 	Event   Identifier
 	Message QueryExpression
 	Code    value.Primary
-}
-
-type Execute struct {
-	*BaseExpr
-	Statements QueryExpression
-	Values     []QueryExpression
 }
 
 type Exit struct {

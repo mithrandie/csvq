@@ -377,6 +377,14 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		if externalStatements, err = ParseExecuteStatements(stmt.(parser.Execute), proc.Filter); err == nil {
 			flow, err = proc.Execute(externalStatements)
 		}
+	case parser.Chdir:
+		err = Chdir(stmt.(parser.Chdir), proc.Filter)
+	case parser.Pwd:
+		var dirpath string
+		dirpath, err = Pwd(stmt.(parser.Pwd))
+		if err == nil {
+			Log(dirpath, false)
+		}
 	case parser.ShowObjects:
 		if printstr, err = ShowObjects(stmt.(parser.ShowObjects), proc.Filter); err == nil {
 			Log(printstr, false)
@@ -560,8 +568,8 @@ func (proc *Procedure) ExecExternalCommand(stmt parser.ExternalCommand) error {
 	var writeQueryExpression = func(buf *bytes.Buffer, expr parser.QueryExpression) error {
 		p, err := proc.Filter.Evaluate(expr)
 		if err != nil {
-			if _, ok := err.(*SyntaxError); ok {
-				err = NewExternalCommandError(stmt, "only an expression that represents a value are allowd in a brackets")
+			if _, ok := err.(*InvalidValueError); ok {
+				err = NewExternalCommandValueExpressionError(stmt)
 			} else if ae, ok := err.(AppError); ok {
 				err = NewExternalCommandError(stmt, ae.ErrorMessage())
 			}
@@ -618,13 +626,13 @@ func (proc *Procedure) ExecExternalCommand(stmt parser.ExternalCommand) error {
 				case 1:
 					expr, ok := statements[0].(parser.QueryExpression)
 					if !ok {
-						return NewExternalCommandError(stmt, "only an expression that represents a value are allowd in a brackets")
+						return NewExternalCommandValueExpressionError(stmt)
 					}
 					if err = writeQueryExpression(arg, expr); err != nil {
 						return err
 					}
 				default:
-					return NewExternalCommandError(stmt, "only an expression that represents a value are allowd in a brackets")
+					return NewExternalCommandValueExpressionError(stmt)
 				}
 			}
 		}

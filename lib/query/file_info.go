@@ -248,6 +248,9 @@ func SearchFilePathFromAllTypes(filename parser.Identifier, repository string) (
 func SearchFilePathWithExtType(filename parser.Identifier, repository string, extTypes []string) (string, error) {
 	fpath := filename.Literal
 	if !filepath.IsAbs(fpath) {
+		if len(repository) < 1 {
+			repository, _ = os.Getwd()
+		}
 		fpath = filepath.Join(repository, fpath)
 	}
 
@@ -320,6 +323,9 @@ func NewFileInfoForCreate(filename parser.Identifier, repository string, delimit
 func CreateFilePath(filename parser.Identifier, repository string) (string, error) {
 	fpath := filename.Literal
 	if !filepath.IsAbs(fpath) {
+		if len(repository) < 1 {
+			repository, _ = os.Getwd()
+		}
 		fpath = filepath.Join(repository, fpath)
 	}
 	return filepath.Abs(fpath)

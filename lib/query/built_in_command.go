@@ -122,8 +122,7 @@ func LoadStatementsFromFile(expr parser.Source, fpath string) ([]parser.Statemen
 
 	statements, err := parser.Parse(input, fpath)
 	if err != nil {
-		syntaxErr := err.(*parser.SyntaxError)
-		err = NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)
+		err = NewSyntaxError(err.(*parser.SyntaxError))
 	}
 	return statements, err
 }
@@ -154,8 +153,7 @@ func ParseExecuteStatements(expr parser.Execute, filter *Filter) ([]parser.State
 	}
 	statements, err := parser.Parse(input, fmt.Sprintf("(L:%d C:%d) EXECUTE", expr.Line(), expr.Char()))
 	if err != nil {
-		syntaxErr := err.(*parser.SyntaxError)
-		err = NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)
+		err = NewSyntaxError(err.(*parser.SyntaxError))
 	}
 	return statements, err
 }
@@ -268,7 +266,12 @@ func showFlag(flag string) (string, error) {
 
 	switch strings.ToUpper(flag) {
 	case cmd.RepositoryFlag:
-		s = palette.Render(cmd.StringEffect, flags.Repository)
+		if len(flags.Repository) < 1 {
+			wd, _ := os.Getwd()
+			s = palette.Render(cmd.NullEffect, fmt.Sprintf("(current dir: %s)", wd))
+		} else {
+			s = palette.Render(cmd.StringEffect, flags.Repository)
+		}
 	case cmd.TimezoneFlag:
 		s = palette.Render(cmd.StringEffect, flags.Location)
 	case cmd.DatetimeFormatFlag:
@@ -824,4 +827,40 @@ func SetEnvVar(expr parser.SetEnvVar, filter *Filter) error {
 
 func UnsetEnvVar(expr parser.UnsetEnvVar) error {
 	return os.Unsetenv(expr.EnvVar.Name)
+}
+
+func Chdir(expr parser.Chdir, filter *Filter) error {
+	var dirpath string
+	var err error
+
+	if ident, ok := expr.DirPath.(parser.Identifier); ok {
+		dirpath = ident.Literal
+	} else {
+		p, err := filter.Evaluate(expr.DirPath)
+		if err != nil {
+			return err
+		}
+		s := value.ToString(p)
+		if value.IsNull(s) {
+			return NewPathError(expr, expr.DirPath.String(), "invalid directory path")
+		}
+		dirpath = s.(value.String).Raw()
+	}
+
+	if err = os.Chdir(dirpath); err != nil {
+		if patherr, ok := err.(*os.PathError); ok {
+			err = NewPathError(expr, patherr.Path, patherr.Err.Error())
+		}
+	}
+	return err
+}
+
+func Pwd(expr parser.Pwd) (string, error) {
+	dirpath, err := os.Getwd()
+	if err != nil {
+		if patherr, ok := err.(*os.PathError); ok {
+			err = NewPathError(expr, patherr.Path, patherr.Err.Error())
+		}
+	}
+	return dirpath, err
 }

@@ -192,7 +192,7 @@ import (
 %token<token> SEPARATOR PARTITION OVER
 %token<token> COMMIT ROLLBACK
 %token<token> CONTINUE BREAK EXIT
-%token<token> ECHO PRINT PRINTF SOURCE EXECUTE TRIGGER
+%token<token> ECHO PRINT PRINTF SOURCE EXECUTE CHDIR PWD TRIGGER
 %token<token> FUNCTION AGGREGATE BEGIN RETURN
 %token<token> IGNORE WITHIN
 %token<token> VAR SHOW
@@ -874,6 +874,18 @@ command_statement
     | SHOW identifier FROM identifier
     {
         $$ = ShowFields{BaseExpr: NewBaseExpr($1), Type: $2, Table: $4}
+    }
+    | CHDIR identifier
+    {
+        $$ = Chdir{BaseExpr: NewBaseExpr($1), DirPath: $2}
+    }
+    | CHDIR value
+    {
+        $$ = Chdir{BaseExpr: NewBaseExpr($1), DirPath: $2}
+    }
+    | PWD
+    {
+        $$ = Pwd{BaseExpr: NewBaseExpr($1)}
     }
 
 trigger_statement

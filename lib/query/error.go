@@ -15,8 +15,9 @@ const (
 	ErrorMessageWithEmptyPositionTemplate = "[L:- C:-] %s"
 	ErrorMessageWithCustomPrefixTemplate  = "[%s] %s"
 
-	ErrorInvalidSyntax                        = "syntax error: unexpected %s"
-	ErrorReadFile                             = "failed to read file: %s"
+	ErrorInvalidValue                         = "%s: cannot evaluate as a value"
+	ErrorPath                                 = "%s: %s"
+	ErrorReadFile                             = "failed to read from file: %s"
 	ErrorWriteFile                            = "failed to write to file: %s"
 	ErrorCommit                               = "failed to commit: %s"
 	ErrorRollback                             = "failed to rollback: %s"
@@ -103,6 +104,7 @@ const (
 	ErrorUnknownFormatPlaceholder             = "unknown placeholder: %q"
 	ErrorFormatUnexpectedTermination          = "unexpected termination of format string"
 	ErrorExternalCommand                      = "external command: %s"
+	ErrorExternalCommandValueExpression       = "external command: only an expression that represents a value are allowd in a brackets"
 )
 
 type ForcedExit struct {
@@ -213,8 +215,24 @@ type SyntaxError struct {
 	*BaseError
 }
 
-func NewSyntaxError(message string, line int, char int, sourceFile string) error {
+func NewSyntaxError(err *parser.SyntaxError) error {
 	return &SyntaxError{
+		&BaseError{
+			SourceFile: err.SourceFile,
+			Line:       err.Line,
+			Char:       err.Char,
+			Message:    err.Message,
+			Code:       1,
+		},
+	}
+}
+
+type InvalidValueError struct {
+	*BaseError
+}
+
+func NewInvalidValueError(message string, line int, char int, sourceFile string) error {
+	return &InvalidValueError{
 		&BaseError{
 			SourceFile: sourceFile,
 			Line:       line,
@@ -225,9 +243,19 @@ func NewSyntaxError(message string, line int, char int, sourceFile string) error
 	}
 }
 
-func NewSyntaxErrorFromExpr(expr parser.QueryExpression) error {
-	return &SyntaxError{
-		NewBaseError(expr, fmt.Sprintf(ErrorInvalidSyntax, expr)),
+func NewInvalidValueErrorFromExpr(expr parser.QueryExpression) error {
+	return &InvalidValueError{
+		NewBaseError(expr, fmt.Sprintf(ErrorInvalidValue, expr)),
+	}
+}
+
+type PathError struct {
+	*BaseError
+}
+
+func NewPathError(expr parser.Expression, path string, message string) error {
+	return &PathError{
+		NewBaseError(expr, fmt.Sprintf(ErrorPath, path, message)),
 	}
 }
 
@@ -1138,6 +1166,16 @@ type ExternalCommandError struct {
 func NewExternalCommandError(expr parser.Expression, message string) error {
 	return &ExternalCommandError{
 		NewBaseError(expr, fmt.Sprintf(ErrorExternalCommand, message)),
+	}
+}
+
+type ExternalCommandValueExpressionError struct {
+	*BaseError
+}
+
+func NewExternalCommandValueExpressionError(expr parser.Expression) error {
+	return &ExternalCommandValueExpressionError{
+		NewBaseError(expr, fmt.Sprintf(ErrorExternalCommandValueExpression)),
 	}
 }
 

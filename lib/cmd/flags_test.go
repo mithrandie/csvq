@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"os"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -49,11 +48,9 @@ func TestFlags_SelectImportFormat(t *testing.T) {
 func TestFlags_SetRepository(t *testing.T) {
 	flags := GetFlags()
 
-	pwd, _ := os.Getwd()
-
 	flags.SetRepository("")
-	if flags.Repository != pwd {
-		t.Errorf("repository = %s, expect to set %s for %q", flags.Repository, pwd, "")
+	if flags.Repository != "" {
+		t.Errorf("repository = %s, expect to set %q for %q", flags.Repository, "", "")
 	}
 
 	dir := filepath.Join("..", "..", "lib", "cmd")
