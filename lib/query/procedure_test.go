@@ -17,12 +17,12 @@ import (
 )
 
 var procedureExecuteStatementTests = []struct {
-	Input      parser.Statement
-	Result     []ExecResult
-	Logs       string
-	SelectLogs []string
-	Error      string
-	ErrorCode  int
+	Input            parser.Statement
+	UncommittedViews *UncommittedViewMap
+	Logs             string
+	SelectLogs       []string
+	Error            string
+	ErrorCode        int
 }{
 	{
 		Input: parser.SetFlag{
@@ -81,7 +81,6 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Result: []ExecResult{},
 	},
 	{
 		Input: parser.VariableDeclaration{
@@ -91,7 +90,6 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Result: []ExecResult{},
 	},
 	{
 		Input: parser.VariableDeclaration{
@@ -101,7 +99,6 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Result: []ExecResult{},
 	},
 	{
 		Input: parser.VariableDeclaration{
@@ -111,14 +108,12 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Result: []ExecResult{},
 	},
 	{
 		Input: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "var1"},
 			Value:    parser.NewIntegerValueFromString("1"),
 		},
-		Result: []ExecResult{},
 	},
 	{
 		Input: parser.Print{
@@ -415,17 +410,16 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Result: []ExecResult{
-			{
-				Type: InsertQuery,
-				FileInfo: &FileInfo{
+		UncommittedViews: &UncommittedViewMap{
+			Created: map[string]*FileInfo{},
+			Updated: map[string]*FileInfo{
+				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
 				},
-				OperatedCount: 2,
 			},
 		},
 		Logs: fmt.Sprintf("2 records inserted on %q.\n", GetTestFilePath("table1.csv")),
@@ -449,17 +443,16 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Result: []ExecResult{
-			{
-				Type: UpdateQuery,
-				FileInfo: &FileInfo{
+		UncommittedViews: &UncommittedViewMap{
+			Created: map[string]*FileInfo{},
+			Updated: map[string]*FileInfo{
+				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
 				},
-				OperatedCount: 1,
 			},
 		},
 		Logs: fmt.Sprintf("1 record updated on %q.\n", GetTestFilePath("table1.csv")),
@@ -481,17 +474,16 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Result: []ExecResult{
-			{
-				Type: DeleteQuery,
-				FileInfo: &FileInfo{
+		UncommittedViews: &UncommittedViewMap{
+			Created: map[string]*FileInfo{},
+			Updated: map[string]*FileInfo{
+				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
 				},
-				OperatedCount: 1,
 			},
 		},
 		Logs: fmt.Sprintf("1 record deleted on %q.\n", GetTestFilePath("table1.csv")),
@@ -504,10 +496,9 @@ var procedureExecuteStatementTests = []struct {
 				parser.Identifier{Literal: "column2"},
 			},
 		},
-		Result: []ExecResult{
-			{
-				Type: CreateTableQuery,
-				FileInfo: &FileInfo{
+		UncommittedViews: &UncommittedViewMap{
+			Created: map[string]*FileInfo{
+				strings.ToUpper(GetTestFilePath("NEWTABLE.CSV")): {
 					Path:      GetTestFilePath("newtable.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
@@ -515,6 +506,7 @@ var procedureExecuteStatementTests = []struct {
 					LineBreak: text.LF,
 				},
 			},
+			Updated: map[string]*FileInfo{},
 		},
 		Logs: fmt.Sprintf("file %q is created.\n", GetTestFilePath("newtable.csv")),
 	},
@@ -527,17 +519,16 @@ var procedureExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Result: []ExecResult{
-			{
-				Type: AddColumnsQuery,
-				FileInfo: &FileInfo{
+		UncommittedViews: &UncommittedViewMap{
+			Created: map[string]*FileInfo{},
+			Updated: map[string]*FileInfo{
+				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
 				},
-				OperatedCount: 1,
 			},
 		},
 		Logs: fmt.Sprintf("1 field added on %q.\n", GetTestFilePath("table1.csv")),
@@ -549,17 +540,16 @@ var procedureExecuteStatementTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 		},
-		Result: []ExecResult{
-			{
-				Type: DropColumnsQuery,
-				FileInfo: &FileInfo{
+		UncommittedViews: &UncommittedViewMap{
+			Created: map[string]*FileInfo{},
+			Updated: map[string]*FileInfo{
+				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
 				},
-				OperatedCount: 1,
 			},
 		},
 		Logs: fmt.Sprintf("1 field dropped on %q.\n", GetTestFilePath("table1.csv")),
@@ -570,17 +560,16 @@ var procedureExecuteStatementTests = []struct {
 			Old:   parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			New:   parser.Identifier{Literal: "newcolumn"},
 		},
-		Result: []ExecResult{
-			{
-				Type: RenameColumnQuery,
-				FileInfo: &FileInfo{
+		UncommittedViews: &UncommittedViewMap{
+			Created: map[string]*FileInfo{},
+			Updated: map[string]*FileInfo{
+				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
 					Path:      GetTestFilePath("table1.csv"),
 					Delimiter: ',',
 					NoHeader:  false,
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
 				},
-				OperatedCount: 1,
 			},
 		},
 		Logs: fmt.Sprintf("1 field renamed on %q.\n", GetTestFilePath("table1.csv")),
@@ -591,13 +580,26 @@ var procedureExecuteStatementTests = []struct {
 			Attribute: parser.Identifier{Literal: "delimiter"},
 			Value:     parser.NewStringValue(","),
 		},
-		Logs: "Table attributes of " + GetTestFilePath("table1.csv") + " remain unchanged\n",
+		Logs: "Table attributes of " + GetTestFilePath("table1.csv") + " remain unchanged.\n",
 	},
 	{
 		Input: parser.SetTableAttribute{
 			Table:     parser.Identifier{Literal: "table1.csv"},
 			Attribute: parser.Identifier{Literal: "delimiter"},
 			Value:     parser.NewStringValue("\t"),
+		},
+		UncommittedViews: &UncommittedViewMap{
+			Created: map[string]*FileInfo{},
+			Updated: map[string]*FileInfo{
+				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: '\t',
+					NoHeader:  false,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+					Format:    cmd.TSV,
+				},
+			},
 		},
 		Logs: "\n" +
 			strings.Repeat(" ", (calcShowFieldsWidth("table1.csv", "table1.csv", 22)-(22+len("table1.csv")))/2) + "Attributes Updated in table1.csv\n" +
@@ -744,7 +746,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 
 	for _, v := range procedureExecuteStatementTests {
 		ReleaseResources()
-		ExecResults = []ExecResult{}
+		UncommittedViews = NewUncommittedViewMap()
 
 		oldStdout := cmd.Stdout
 		r, w, _ := os.Pipe()
@@ -780,19 +782,28 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 			continue
 		}
 
-		if v.Result != nil {
-			for _, r := range ExecResults {
-				if r.FileInfo.Handler != nil {
-					if r.FileInfo.Path != r.FileInfo.Handler.Path() {
-						t.Errorf("file pointer = %q, want %q for %q", r.FileInfo.Handler.Path(), r.FileInfo.Path, v.Input)
+		if v.UncommittedViews != nil {
+			for _, r := range UncommittedViews.Created {
+				if r.Handler != nil {
+					if r.Path != r.Handler.Path() {
+						t.Errorf("file pointer = %q, want %q for %q", r.Handler.Path(), r.Path, v.Input)
 					}
-					r.FileInfo.Close()
-					r.FileInfo.Handler = nil
+					r.Close()
+					r.Handler = nil
+				}
+			}
+			for _, r := range UncommittedViews.Updated {
+				if r.Handler != nil {
+					if r.Path != r.Handler.Path() {
+						t.Errorf("file pointer = %q, want %q for %q", r.Handler.Path(), r.Path, v.Input)
+					}
+					r.Close()
+					r.Handler = nil
 				}
 			}
 
-			if !reflect.DeepEqual(ExecResults, v.Result) {
-				t.Errorf("results = %v, want %v for %q", ExecResults, v.Result, v.Input)
+			if !reflect.DeepEqual(UncommittedViews, v.UncommittedViews) {
+				t.Errorf("uncomitted views = %v, want %v for %q", UncommittedViews, v.UncommittedViews, v.Input)
 			}
 		}
 		if 0 < len(v.Logs) {
@@ -809,7 +820,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 	}
 
 	ReleaseResources()
-	ExecResults = []ExecResult{}
+	UncommittedViews.Clean()
 	OutFile = nil
 }
 

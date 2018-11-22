@@ -8,13 +8,13 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/mithrandie/go-text"
-	"github.com/mithrandie/go-text/fixedlen"
-	"github.com/mithrandie/go-text/json"
-
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
+
+	"github.com/mithrandie/go-text"
+	"github.com/mithrandie/go-text/fixedlen"
+	"github.com/mithrandie/go-text/json"
 )
 
 const (
@@ -90,19 +90,6 @@ func NewFileInfo(
 		Delimiter: delimiter,
 		Encoding:  encoding,
 	}, nil
-}
-
-func (f *FileInfo) Equivalent(f2 *FileInfo) bool {
-	if f.Path != f2.Path ||
-		f.Format != f2.Format ||
-		f.Delimiter != f2.Delimiter ||
-		(f2.DelimiterPositions != nil && !f.DelimiterPositions.Equal(f2.DelimiterPositions)) ||
-		f.JsonQuery != f2.JsonQuery ||
-		f.Encoding != f2.Encoding ||
-		f.NoHeader != f2.NoHeader {
-		return false
-	}
-	return true
 }
 
 func (f *FileInfo) SetDelimiter(s string) error {

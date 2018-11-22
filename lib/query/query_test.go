@@ -1128,7 +1128,8 @@ func TestSelect(t *testing.T) {
 var insertTests = []struct {
 	Name         string
 	Query        parser.InsertQuery
-	Result       *View
+	ResultFile   *FileInfo
+	UpdateCount  int
 	ViewCache    ViewMap
 	TempViewList TemporaryViewScopes
 	Error        string
@@ -1195,40 +1196,14 @@ var insertTests = []struct {
 				},
 			},
 		},
-		Result: &View{
-			FileInfo: &FileInfo{
-				Path:      GetTestFilePath("table1.csv"),
-				Delimiter: ',',
-				NoHeader:  false,
-				Encoding:  text.UTF8,
-				LineBreak: text.LF,
-			},
-			Header: NewHeader("table1", []string{"column1", "column2"}),
-			RecordSet: []Record{
-				NewRecord([]value.Primary{
-					value.NewString("1"),
-					value.NewString("str1"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("2"),
-					value.NewString("str2"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("3"),
-					value.NewString("str3"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewInteger(4),
-					value.NewNull(),
-				}),
-				NewRecord([]value.Primary{
-					value.NewInteger(2),
-					value.NewNull(),
-				}),
-			},
-			ForUpdate:       true,
-			OperatedRecords: 2,
+		ResultFile: &FileInfo{
+			Path:      GetTestFilePath("table1.csv"),
+			Delimiter: ',',
+			NoHeader:  false,
+			Encoding:  text.UTF8,
+			LineBreak: text.LF,
 		},
+		UpdateCount: 2,
 		ViewCache: ViewMap{
 			strings.ToUpper(GetTestFilePath("table1.csv")): &View{
 				FileInfo: &FileInfo{
@@ -1261,8 +1236,7 @@ var insertTests = []struct {
 						value.NewNull(),
 					}),
 				},
-				ForUpdate:       true,
-				OperatedRecords: 2,
+				ForUpdate: true,
 			},
 		},
 	},
@@ -1290,34 +1264,12 @@ var insertTests = []struct {
 				},
 			},
 		},
-		Result: &View{
-			FileInfo: &FileInfo{
-				Path:        "tmpview",
-				Delimiter:   ',',
-				IsTemporary: true,
-			},
-			Header: NewHeader("tmpview", []string{"column1", "column2"}),
-			RecordSet: []Record{
-				NewRecord([]value.Primary{
-					value.NewString("1"),
-					value.NewString("str1"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("2"),
-					value.NewString("str2"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewInteger(4),
-					value.NewNull(),
-				}),
-				NewRecord([]value.Primary{
-					value.NewInteger(2),
-					value.NewNull(),
-				}),
-			},
-			ForUpdate:       true,
-			OperatedRecords: 2,
+		ResultFile: &FileInfo{
+			Path:        "tmpview",
+			Delimiter:   ',',
+			IsTemporary: true,
 		},
+		UpdateCount: 2,
 		TempViewList: TemporaryViewScopes{
 			ViewMap{
 				"TMPVIEW": &View{
@@ -1345,8 +1297,7 @@ var insertTests = []struct {
 						Delimiter:   ',',
 						IsTemporary: true,
 					},
-					ForUpdate:       true,
-					OperatedRecords: 2,
+					ForUpdate: true,
 				},
 			},
 		},
@@ -1374,40 +1325,14 @@ var insertTests = []struct {
 				},
 			},
 		},
-		Result: &View{
-			FileInfo: &FileInfo{
-				Path:      GetTestFilePath("table1.csv"),
-				Delimiter: ',',
-				NoHeader:  false,
-				Encoding:  text.UTF8,
-				LineBreak: text.LF,
-			},
-			Header: NewHeader("table1", []string{"column1", "column2"}),
-			RecordSet: []Record{
-				NewRecord([]value.Primary{
-					value.NewString("1"),
-					value.NewString("str1"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("2"),
-					value.NewString("str2"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("3"),
-					value.NewString("str3"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewInteger(4),
-					value.NewString("str4"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewInteger(5),
-					value.NewString("str5"),
-				}),
-			},
-			ForUpdate:       true,
-			OperatedRecords: 2,
+		ResultFile: &FileInfo{
+			Path:      GetTestFilePath("table1.csv"),
+			Delimiter: ',',
+			NoHeader:  false,
+			Encoding:  text.UTF8,
+			LineBreak: text.LF,
 		},
+		UpdateCount: 2,
 	},
 	{
 		Name: "Insert Query File Does Not Exist Error",
@@ -1485,44 +1410,14 @@ var insertTests = []struct {
 				},
 			},
 		},
-		Result: &View{
-			FileInfo: &FileInfo{
-				Path:      GetTestFilePath("table1.csv"),
-				Delimiter: ',',
-				NoHeader:  false,
-				Encoding:  text.UTF8,
-				LineBreak: text.LF,
-			},
-			Header: NewHeader("table1", []string{"column1", "column2"}),
-			RecordSet: []Record{
-				NewRecord([]value.Primary{
-					value.NewString("1"),
-					value.NewString("str1"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("2"),
-					value.NewString("str2"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("3"),
-					value.NewString("str3"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("2"),
-					value.NewString("str22"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("3"),
-					value.NewString("str33"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("4"),
-					value.NewString("str44"),
-				}),
-			},
-			ForUpdate:       true,
-			OperatedRecords: 3,
+		ResultFile: &FileInfo{
+			Path:      GetTestFilePath("table1.csv"),
+			Delimiter: ',',
+			NoHeader:  false,
+			Encoding:  text.UTF8,
+			LineBreak: text.LF,
 		},
+		UpdateCount: 3,
 	},
 	{
 		Name: "Insert Select Query Field Does Not Exist Error",
@@ -1582,7 +1477,7 @@ func TestInsert(t *testing.T) {
 
 	for _, v := range insertTests {
 		ReleaseResources()
-		result, err := Insert(v.Query, filter)
+		result, cnt, err := Insert(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1606,8 +1501,12 @@ func TestInsert(t *testing.T) {
 			}
 		}
 
-		if !reflect.DeepEqual(result, v.Result) {
-			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
+		if !reflect.DeepEqual(result, v.ResultFile) {
+			t.Errorf("%s: fileinfo = %v, want %v", v.Name, result, v.ResultFile)
+		}
+
+		if !reflect.DeepEqual(cnt, v.UpdateCount) {
+			t.Errorf("%s: update count = %d, want %d", v.Name, cnt, v.UpdateCount)
 		}
 
 		if v.ViewCache != nil {
@@ -1627,7 +1526,8 @@ func TestInsert(t *testing.T) {
 var updateTests = []struct {
 	Name         string
 	Query        parser.UpdateQuery
-	Result       []*View
+	ResultFiles  []*FileInfo
+	UpdateCounts []int
 	ViewCache    ViewMap
 	TempViewList TemporaryViewScopes
 	Error        string
@@ -1694,34 +1594,16 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Result: []*View{
+		ResultFiles: []*FileInfo{
 			{
-				FileInfo: &FileInfo{
-					Path:      GetTestFilePath("table1.csv"),
-					Delimiter: ',',
-					NoHeader:  false,
-					Encoding:  text.UTF8,
-					LineBreak: text.LF,
-				},
-				Header: NewHeader("table1", []string{"column1", "column2"}),
-				RecordSet: []Record{
-					NewRecord([]value.Primary{
-						value.NewString("1"),
-						value.NewString("str1"),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("update1"),
-						value.NewString("update2"),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("3"),
-						value.NewString("str3"),
-					}),
-				},
-				ForUpdate:       true,
-				OperatedRecords: 1,
+				Path:      GetTestFilePath("table1.csv"),
+				Delimiter: ',',
+				NoHeader:  false,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
 			},
 		},
+		UpdateCounts: []int{1},
 		ViewCache: ViewMap{
 			strings.ToUpper(GetTestFilePath("table1.csv")): &View{
 				FileInfo: &FileInfo{
@@ -1746,8 +1628,7 @@ var updateTests = []struct {
 						value.NewString("str3"),
 					}),
 				},
-				ForUpdate:       true,
-				OperatedRecords: 1,
+				ForUpdate: true,
 			},
 		},
 	},
@@ -1764,27 +1645,14 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Result: []*View{
+		ResultFiles: []*FileInfo{
 			{
-				FileInfo: &FileInfo{
-					Path:        "tmpview",
-					Delimiter:   ',',
-					IsTemporary: true,
-				},
-				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				RecordSet: []Record{
-					NewRecord([]value.Primary{
-						value.NewString("1"),
-						value.NewString("update"),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("2"),
-						value.NewString("update"),
-					}),
-				},
-				OperatedRecords: 2,
+				Path:        "tmpview",
+				Delimiter:   ',',
+				IsTemporary: true,
 			},
 		},
+		UpdateCounts: []int{2},
 		TempViewList: TemporaryViewScopes{
 			ViewMap{
 				"TMPVIEW": &View{
@@ -1804,7 +1672,6 @@ var updateTests = []struct {
 						Delimiter:   ',',
 						IsTemporary: true,
 					},
-					OperatedRecords: 2,
 				},
 			},
 		},
@@ -1843,34 +1710,16 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Result: []*View{
+		ResultFiles: []*FileInfo{
 			{
-				FileInfo: &FileInfo{
-					Path:      GetTestFilePath("table1.csv"),
-					Delimiter: ',',
-					NoHeader:  false,
-					Encoding:  text.UTF8,
-					LineBreak: text.LF,
-				},
-				Header: NewHeader("table1", []string{"column1", "column2"}),
-				RecordSet: []Record{
-					NewRecord([]value.Primary{
-						value.NewString("1"),
-						value.NewString("str1"),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("2"),
-						value.NewString("str22"),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("3"),
-						value.NewString("str33"),
-					}),
-				},
-				ForUpdate:       true,
-				OperatedRecords: 2,
+				Path:      GetTestFilePath("table1.csv"),
+				Delimiter: ',',
+				NoHeader:  false,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
 			},
 		},
+		UpdateCounts: []int{2},
 	},
 	{
 		Name: "Update Query File Does Not Exist Error",
@@ -2095,7 +1944,7 @@ func TestUpdate(t *testing.T) {
 
 	for _, v := range updateTests {
 		ReleaseResources()
-		result, err := Update(v.Query, filter)
+		files, cnt, err := Update(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2119,8 +1968,12 @@ func TestUpdate(t *testing.T) {
 			}
 		}
 
-		if !reflect.DeepEqual(result, v.Result) {
-			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
+		if !reflect.DeepEqual(files, v.ResultFiles) {
+			t.Errorf("%s: fileinfo = %v, want %v", v.Name, files, v.ResultFiles)
+		}
+
+		if !reflect.DeepEqual(cnt, v.UpdateCounts) {
+			t.Errorf("%s: update count = %v, want %v", v.Name, cnt, v.UpdateCounts)
 		}
 
 		if v.ViewCache != nil {
@@ -2140,7 +1993,8 @@ func TestUpdate(t *testing.T) {
 var deleteTests = []struct {
 	Name         string
 	Query        parser.DeleteQuery
-	Result       []*View
+	ResultFiles  []*FileInfo
+	UpdateCounts []int
 	ViewCache    ViewMap
 	TempViewList TemporaryViewScopes
 	Error        string
@@ -2201,30 +2055,16 @@ var deleteTests = []struct {
 				},
 			},
 		},
-		Result: []*View{
+		ResultFiles: []*FileInfo{
 			{
-				FileInfo: &FileInfo{
-					Path:      GetTestFilePath("table1.csv"),
-					Delimiter: ',',
-					NoHeader:  false,
-					Encoding:  text.UTF8,
-					LineBreak: text.LF,
-				},
-				Header: NewHeader("table1", []string{"column1", "column2"}),
-				RecordSet: []Record{
-					NewRecord([]value.Primary{
-						value.NewString("1"),
-						value.NewString("str1"),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("3"),
-						value.NewString("str3"),
-					}),
-				},
-				ForUpdate:       true,
-				OperatedRecords: 1,
+				Path:      GetTestFilePath("table1.csv"),
+				Delimiter: ',',
+				NoHeader:  false,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
 			},
 		},
+		UpdateCounts: []int{1},
 		ViewCache: ViewMap{
 			strings.ToUpper(GetTestFilePath("table1.csv")): &View{
 				FileInfo: &FileInfo{
@@ -2245,8 +2085,7 @@ var deleteTests = []struct {
 						value.NewString("str3"),
 					}),
 				},
-				ForUpdate:       true,
-				OperatedRecords: 1,
+				ForUpdate: true,
 			},
 		},
 	},
@@ -2269,23 +2108,14 @@ var deleteTests = []struct {
 				},
 			},
 		},
-		Result: []*View{
+		ResultFiles: []*FileInfo{
 			{
-				FileInfo: &FileInfo{
-					Path:        "tmpview",
-					Delimiter:   ',',
-					IsTemporary: true,
-				},
-				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				RecordSet: []Record{
-					NewRecord([]value.Primary{
-						value.NewString("1"),
-						value.NewString("str1"),
-					}),
-				},
-				OperatedRecords: 1,
+				Path:        "tmpview",
+				Delimiter:   ',',
+				IsTemporary: true,
 			},
 		},
+		UpdateCounts: []int{1},
 		TempViewList: TemporaryViewScopes{
 			ViewMap{
 				"TMPVIEW": &View{
@@ -2301,7 +2131,6 @@ var deleteTests = []struct {
 						Delimiter:   ',',
 						IsTemporary: true,
 					},
-					OperatedRecords: 1,
 				},
 			},
 		},
@@ -2334,26 +2163,16 @@ var deleteTests = []struct {
 				},
 			},
 		},
-		Result: []*View{
+		ResultFiles: []*FileInfo{
 			{
-				FileInfo: &FileInfo{
-					Path:      GetTestFilePath("table1.csv"),
-					Delimiter: ',',
-					NoHeader:  false,
-					Encoding:  text.UTF8,
-					LineBreak: text.LF,
-				},
-				Header: NewHeader("table1", []string{"column1", "column2"}),
-				RecordSet: []Record{
-					NewRecord([]value.Primary{
-						value.NewString("1"),
-						value.NewString("str1"),
-					}),
-				},
-				ForUpdate:       true,
-				OperatedRecords: 2,
+				Path:      GetTestFilePath("table1.csv"),
+				Delimiter: ',',
+				NoHeader:  false,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
 			},
 		},
+		UpdateCounts: []int{2},
 	},
 	{
 		Name: "Delete Query Tables Not Specified Error",
@@ -2485,7 +2304,7 @@ func TestDelete(t *testing.T) {
 
 	for _, v := range deleteTests {
 		ReleaseResources()
-		result, err := Delete(v.Query, filter)
+		files, cnt, err := Delete(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2509,8 +2328,12 @@ func TestDelete(t *testing.T) {
 			}
 		}
 
-		if !reflect.DeepEqual(result, v.Result) {
-			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
+		if !reflect.DeepEqual(files, v.ResultFiles) {
+			t.Errorf("%s: fileinfo = %v, want %v", v.Name, files, v.ResultFiles)
+		}
+
+		if !reflect.DeepEqual(cnt, v.UpdateCounts) {
+			t.Errorf("%s: update count = %v, want %v", v.Name, cnt, v.UpdateCounts)
 		}
 
 		if v.ViewCache != nil {
@@ -2528,11 +2351,11 @@ func TestDelete(t *testing.T) {
 }
 
 var createTableTests = []struct {
-	Name      string
-	Query     parser.CreateTable
-	Result    *View
-	ViewCache ViewMap
-	Error     string
+	Name       string
+	Query      parser.CreateTable
+	ResultFile *FileInfo
+	ViewCache  ViewMap
+	Error      string
 }{
 	{
 		Name: "Create Table",
@@ -2543,17 +2366,12 @@ var createTableTests = []struct {
 				parser.Identifier{Literal: "column2"},
 			},
 		},
-		Result: &View{
-			FileInfo: &FileInfo{
-				Path:      GetTestFilePath("create_table_1.csv"),
-				Delimiter: ',',
-				NoHeader:  false,
-				Encoding:  text.UTF8,
-				LineBreak: text.LF,
-			},
-			Header:    NewHeader("create_table_1", []string{"column1", "column2"}),
-			RecordSet: RecordSet{},
-			ForUpdate: true,
+		ResultFile: &FileInfo{
+			Path:      GetTestFilePath("create_table_1.csv"),
+			Delimiter: ',',
+			NoHeader:  false,
+			Encoding:  text.UTF8,
+			LineBreak: text.LF,
 		},
 		ViewCache: ViewMap{
 			strings.ToUpper(GetTestFilePath("create_table_1.csv")): &View{
@@ -2589,22 +2407,12 @@ var createTableTests = []struct {
 				},
 			},
 		},
-		Result: &View{
-			FileInfo: &FileInfo{
-				Path:      GetTestFilePath("create_table_1.csv"),
-				Delimiter: ',',
-				NoHeader:  false,
-				Encoding:  text.UTF8,
-				LineBreak: text.LF,
-			},
-			Header: NewHeader("create_table_1", []string{"column1", "column2"}),
-			RecordSet: RecordSet{
-				NewRecord([]value.Primary{
-					value.NewInteger(1),
-					value.NewInteger(2),
-				}),
-			},
-			ForUpdate: true,
+		ResultFile: &FileInfo{
+			Path:      GetTestFilePath("create_table_1.csv"),
+			Delimiter: ',',
+			NoHeader:  false,
+			Encoding:  text.UTF8,
+			LineBreak: text.LF,
 		},
 		ViewCache: ViewMap{
 			strings.ToUpper(GetTestFilePath("create_table_1.csv")): &View{
@@ -2723,10 +2531,8 @@ func TestCreateTable(t *testing.T) {
 		result, err := CreateTable(v.Query, NewEmptyFilter())
 
 		if result != nil {
-			if result.FileInfo != nil {
-				result.FileInfo.Close()
-				result.FileInfo.Handler = nil
-			}
+			result.Close()
+			result.Handler = nil
 		}
 		for _, view := range ViewCache {
 			if view.FileInfo != nil {
@@ -2748,8 +2554,8 @@ func TestCreateTable(t *testing.T) {
 			continue
 		}
 
-		if !reflect.DeepEqual(result, v.Result) {
-			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
+		if !reflect.DeepEqual(result, v.ResultFile) {
+			t.Errorf("%s: result = %v, want %v", v.Name, result, v.ResultFile)
 		}
 
 		if v.ViewCache != nil {
@@ -2764,7 +2570,8 @@ func TestCreateTable(t *testing.T) {
 var addColumnsTests = []struct {
 	Name         string
 	Query        parser.AddColumns
-	Result       *View
+	ResultFile   *FileInfo
+	UpdateCount  int
 	ViewCache    ViewMap
 	TempViewList TemporaryViewScopes
 	Error        string
@@ -2782,38 +2589,14 @@ var addColumnsTests = []struct {
 				},
 			},
 		},
-		Result: &View{
-			FileInfo: &FileInfo{
-				Path:      GetTestFilePath("table1.csv"),
-				Delimiter: ',',
-				NoHeader:  false,
-				Encoding:  text.UTF8,
-				LineBreak: text.LF,
-			},
-			Header: NewHeader("table1", []string{"column1", "column2", "column3", "column4"}),
-			RecordSet: []Record{
-				NewRecord([]value.Primary{
-					value.NewString("1"),
-					value.NewString("str1"),
-					value.NewNull(),
-					value.NewNull(),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("2"),
-					value.NewString("str2"),
-					value.NewNull(),
-					value.NewNull(),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("3"),
-					value.NewString("str3"),
-					value.NewNull(),
-					value.NewNull(),
-				}),
-			},
-			ForUpdate:      true,
-			OperatedFields: 2,
+		ResultFile: &FileInfo{
+			Path:      GetTestFilePath("table1.csv"),
+			Delimiter: ',',
+			NoHeader:  false,
+			Encoding:  text.UTF8,
+			LineBreak: text.LF,
 		},
+		UpdateCount: 2,
 		ViewCache: ViewMap{
 			strings.ToUpper(GetTestFilePath("table1.csv")): &View{
 				FileInfo: &FileInfo{
@@ -2844,8 +2627,7 @@ var addColumnsTests = []struct {
 						value.NewNull(),
 					}),
 				},
-				ForUpdate:      true,
-				OperatedFields: 2,
+				ForUpdate: true,
 			},
 		},
 	},
@@ -2862,30 +2644,12 @@ var addColumnsTests = []struct {
 				},
 			},
 		},
-		Result: &View{
-			FileInfo: &FileInfo{
-				Path:        "tmpview",
-				Delimiter:   ',',
-				IsTemporary: true,
-			},
-			Header: NewHeader("tmpview", []string{"column1", "column2", "column3", "column4"}),
-			RecordSet: []Record{
-				NewRecord([]value.Primary{
-					value.NewString("1"),
-					value.NewString("str1"),
-					value.NewNull(),
-					value.NewNull(),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("2"),
-					value.NewString("str2"),
-					value.NewNull(),
-					value.NewNull(),
-				}),
-			},
-			ForUpdate:      true,
-			OperatedFields: 2,
+		ResultFile: &FileInfo{
+			Path:        "tmpview",
+			Delimiter:   ',',
+			IsTemporary: true,
 		},
+		UpdateCount: 2,
 		TempViewList: TemporaryViewScopes{
 			ViewMap{
 				"TMPVIEW": &View{
@@ -2909,8 +2673,7 @@ var addColumnsTests = []struct {
 						Delimiter:   ',',
 						IsTemporary: true,
 					},
-					ForUpdate:      true,
-					OperatedFields: 2,
+					ForUpdate: true,
 				},
 			},
 		},
@@ -2933,37 +2696,46 @@ var addColumnsTests = []struct {
 				Position: parser.Token{Token: parser.FIRST},
 			},
 		},
-		Result: &View{
-			FileInfo: &FileInfo{
-				Path:      GetTestFilePath("table1.csv"),
-				Delimiter: ',',
-				NoHeader:  false,
-				Encoding:  text.UTF8,
-				LineBreak: text.LF,
+		ResultFile: &FileInfo{
+			Path:      GetTestFilePath("table1.csv"),
+			Delimiter: ',',
+			NoHeader:  false,
+			Encoding:  text.UTF8,
+			LineBreak: text.LF,
+		},
+		UpdateCount: 2,
+		ViewCache: ViewMap{
+			strings.ToUpper(GetTestFilePath("table1.csv")): &View{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+				},
+				Header: NewHeader("table1", []string{"column3", "column4", "column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewInteger(2),
+						value.NewInteger(1),
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewInteger(2),
+						value.NewInteger(1),
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewInteger(2),
+						value.NewInteger(1),
+						value.NewString("3"),
+						value.NewString("str3"),
+					}),
+				},
+				ForUpdate: true,
 			},
-			Header: NewHeader("table1", []string{"column3", "column4", "column1", "column2"}),
-			RecordSet: []Record{
-				NewRecord([]value.Primary{
-					value.NewInteger(2),
-					value.NewInteger(1),
-					value.NewString("1"),
-					value.NewString("str1"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewInteger(2),
-					value.NewInteger(1),
-					value.NewString("2"),
-					value.NewString("str2"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewInteger(2),
-					value.NewInteger(1),
-					value.NewString("3"),
-					value.NewString("str3"),
-				}),
-			},
-			ForUpdate:      true,
-			OperatedFields: 2,
 		},
 	},
 	{
@@ -2984,37 +2756,46 @@ var addColumnsTests = []struct {
 				Column:   parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 		},
-		Result: &View{
-			FileInfo: &FileInfo{
-				Path:      GetTestFilePath("table1.csv"),
-				Delimiter: ',',
-				NoHeader:  false,
-				Encoding:  text.UTF8,
-				LineBreak: text.LF,
+		ResultFile: &FileInfo{
+			Path:      GetTestFilePath("table1.csv"),
+			Delimiter: ',',
+			NoHeader:  false,
+			Encoding:  text.UTF8,
+			LineBreak: text.LF,
+		},
+		UpdateCount: 2,
+		ViewCache: ViewMap{
+			strings.ToUpper(GetTestFilePath("table1.csv")): &View{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+				},
+				Header: NewHeader("table1", []string{"column1", "column3", "column4", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewNull(),
+						value.NewInteger(1),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewNull(),
+						value.NewInteger(1),
+						value.NewString("str2"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
+						value.NewNull(),
+						value.NewInteger(1),
+						value.NewString("str3"),
+					}),
+				},
+				ForUpdate: true,
 			},
-			Header: NewHeader("table1", []string{"column1", "column3", "column4", "column2"}),
-			RecordSet: []Record{
-				NewRecord([]value.Primary{
-					value.NewString("1"),
-					value.NewNull(),
-					value.NewInteger(1),
-					value.NewString("str1"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("2"),
-					value.NewNull(),
-					value.NewInteger(1),
-					value.NewString("str2"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("3"),
-					value.NewNull(),
-					value.NewInteger(1),
-					value.NewString("str3"),
-				}),
-			},
-			ForUpdate:      true,
-			OperatedFields: 2,
 		},
 	},
 	{
@@ -3035,37 +2816,46 @@ var addColumnsTests = []struct {
 				Column:   parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: value.NewInteger(2)},
 			},
 		},
-		Result: &View{
-			FileInfo: &FileInfo{
-				Path:      GetTestFilePath("table1.csv"),
-				Delimiter: ',',
-				NoHeader:  false,
-				Encoding:  text.UTF8,
-				LineBreak: text.LF,
+		ResultFile: &FileInfo{
+			Path:      GetTestFilePath("table1.csv"),
+			Delimiter: ',',
+			NoHeader:  false,
+			Encoding:  text.UTF8,
+			LineBreak: text.LF,
+		},
+		UpdateCount: 2,
+		ViewCache: ViewMap{
+			strings.ToUpper(GetTestFilePath("table1.csv")): &View{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+				},
+				Header: NewHeader("table1", []string{"column1", "column3", "column4", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewNull(),
+						value.NewInteger(1),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewNull(),
+						value.NewInteger(1),
+						value.NewString("str2"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
+						value.NewNull(),
+						value.NewInteger(1),
+						value.NewString("str3"),
+					}),
+				},
+				ForUpdate: true,
 			},
-			Header: NewHeader("table1", []string{"column1", "column3", "column4", "column2"}),
-			RecordSet: []Record{
-				NewRecord([]value.Primary{
-					value.NewString("1"),
-					value.NewNull(),
-					value.NewInteger(1),
-					value.NewString("str1"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("2"),
-					value.NewNull(),
-					value.NewInteger(1),
-					value.NewString("str2"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("3"),
-					value.NewNull(),
-					value.NewInteger(1),
-					value.NewString("str3"),
-				}),
-			},
-			ForUpdate:      true,
-			OperatedFields: 2,
 		},
 	},
 	{
@@ -3167,7 +2957,7 @@ func TestAddColumns(t *testing.T) {
 	}
 	for _, v := range addColumnsTests {
 		ReleaseResources()
-		result, err := AddColumns(v.Query, filter)
+		result, cnt, err := AddColumns(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -3191,8 +2981,12 @@ func TestAddColumns(t *testing.T) {
 			}
 		}
 
-		if !reflect.DeepEqual(result, v.Result) {
-			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
+		if !reflect.DeepEqual(result, v.ResultFile) {
+			t.Errorf("%s: fileinfo = %v, want %v", v.Name, result, v.ResultFile)
+		}
+
+		if cnt != v.UpdateCount {
+			t.Errorf("%s: update count = %d, want %d", v.Name, cnt, v.UpdateCount)
 		}
 
 		if v.ViewCache != nil {
@@ -3212,7 +3006,8 @@ func TestAddColumns(t *testing.T) {
 var dropColumnsTests = []struct {
 	Name         string
 	Query        parser.DropColumns
-	Result       *View
+	Result       *FileInfo
+	UpdateCount  int
 	ViewCache    ViewMap
 	TempViewList TemporaryViewScopes
 	Error        string
@@ -3225,29 +3020,14 @@ var dropColumnsTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 		},
-		Result: &View{
-			FileInfo: &FileInfo{
-				Path:      GetTestFilePath("table1.csv"),
-				Delimiter: ',',
-				NoHeader:  false,
-				Encoding:  text.UTF8,
-				LineBreak: text.LF,
-			},
-			Header: NewHeader("table1", []string{"column1"}),
-			RecordSet: []Record{
-				NewRecord([]value.Primary{
-					value.NewString("1"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("2"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("3"),
-				}),
-			},
-			ForUpdate:      true,
-			OperatedFields: 1,
+		Result: &FileInfo{
+			Path:      GetTestFilePath("table1.csv"),
+			Delimiter: ',',
+			NoHeader:  false,
+			Encoding:  text.UTF8,
+			LineBreak: text.LF,
 		},
+		UpdateCount: 1,
 		ViewCache: ViewMap{
 			strings.ToUpper(GetTestFilePath("table1.csv")): &View{
 				FileInfo: &FileInfo{
@@ -3269,8 +3049,7 @@ var dropColumnsTests = []struct {
 						value.NewString("3"),
 					}),
 				},
-				ForUpdate:      true,
-				OperatedFields: 1,
+				ForUpdate: true,
 			},
 		},
 	},
@@ -3282,24 +3061,12 @@ var dropColumnsTests = []struct {
 				parser.ColumnNumber{View: parser.Identifier{Literal: "tmpview"}, Number: value.NewInteger(2)},
 			},
 		},
-		Result: &View{
-			FileInfo: &FileInfo{
-				Path:        "tmpview",
-				Delimiter:   ',',
-				IsTemporary: true,
-			},
-			Header: NewHeader("tmpview", []string{"column1"}),
-			RecordSet: []Record{
-				NewRecord([]value.Primary{
-					value.NewString("1"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("2"),
-				}),
-			},
-			ForUpdate:      true,
-			OperatedFields: 1,
+		Result: &FileInfo{
+			Path:        "tmpview",
+			Delimiter:   ',',
+			IsTemporary: true,
 		},
+		UpdateCount: 1,
 		TempViewList: TemporaryViewScopes{
 			ViewMap{
 				"TMPVIEW": &View{
@@ -3317,8 +3084,7 @@ var dropColumnsTests = []struct {
 						Delimiter:   ',',
 						IsTemporary: true,
 					},
-					ForUpdate:      true,
-					OperatedFields: 1,
+					ForUpdate: true,
 				},
 			},
 		},
@@ -3376,7 +3142,7 @@ func TestDropColumns(t *testing.T) {
 
 	for _, v := range dropColumnsTests {
 		ReleaseResources()
-		result, err := DropColumns(v.Query, filter)
+		result, cnt, err := DropColumns(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -3401,7 +3167,11 @@ func TestDropColumns(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(result, v.Result) {
-			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
+			t.Errorf("%s: fileinfo = %v, want %v", v.Name, result, v.Result)
+		}
+
+		if cnt != v.UpdateCount {
+			t.Errorf("%s: update count = %d, want %d", v.Name, cnt, v.UpdateCount)
 		}
 
 		if v.ViewCache != nil {
@@ -3421,7 +3191,7 @@ func TestDropColumns(t *testing.T) {
 var renameColumnTests = []struct {
 	Name         string
 	Query        parser.RenameColumn
-	Result       *View
+	Result       *FileInfo
 	ViewCache    ViewMap
 	TempViewList TemporaryViewScopes
 	Error        string
@@ -3433,31 +3203,12 @@ var renameColumnTests = []struct {
 			Old:   parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			New:   parser.Identifier{Literal: "newcolumn"},
 		},
-		Result: &View{
-			FileInfo: &FileInfo{
-				Path:      GetTestFilePath("table1.csv"),
-				Delimiter: ',',
-				NoHeader:  false,
-				Encoding:  text.UTF8,
-				LineBreak: text.LF,
-			},
-			Header: NewHeader("table1", []string{"column1", "newcolumn"}),
-			RecordSet: []Record{
-				NewRecord([]value.Primary{
-					value.NewString("1"),
-					value.NewString("str1"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("2"),
-					value.NewString("str2"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("3"),
-					value.NewString("str3"),
-				}),
-			},
-			ForUpdate:      true,
-			OperatedFields: 1,
+		Result: &FileInfo{
+			Path:      GetTestFilePath("table1.csv"),
+			Delimiter: ',',
+			NoHeader:  false,
+			Encoding:  text.UTF8,
+			LineBreak: text.LF,
 		},
 		ViewCache: ViewMap{
 			strings.ToUpper(GetTestFilePath("table1.csv")): &View{
@@ -3483,8 +3234,7 @@ var renameColumnTests = []struct {
 						value.NewString("str3"),
 					}),
 				},
-				ForUpdate:      true,
-				OperatedFields: 1,
+				ForUpdate: true,
 			},
 		},
 	},
@@ -3495,25 +3245,10 @@ var renameColumnTests = []struct {
 			Old:   parser.ColumnNumber{View: parser.Identifier{Literal: "tmpview"}, Number: value.NewInteger(2)},
 			New:   parser.Identifier{Literal: "newcolumn"},
 		},
-		Result: &View{
-			FileInfo: &FileInfo{
-				Path:        "tmpview",
-				Delimiter:   ',',
-				IsTemporary: true,
-			},
-			Header: NewHeader("tmpview", []string{"column1", "newcolumn"}),
-			RecordSet: []Record{
-				NewRecord([]value.Primary{
-					value.NewString("1"),
-					value.NewString("str1"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("2"),
-					value.NewString("str2"),
-				}),
-			},
-			ForUpdate:      true,
-			OperatedFields: 1,
+		Result: &FileInfo{
+			Path:        "tmpview",
+			Delimiter:   ',',
+			IsTemporary: true,
 		},
 		TempViewList: TemporaryViewScopes{
 			ViewMap{
@@ -3534,8 +3269,7 @@ var renameColumnTests = []struct {
 						Delimiter:   ',',
 						IsTemporary: true,
 					},
-					ForUpdate:      true,
-					OperatedFields: 1,
+					ForUpdate: true,
 				},
 			},
 		},
@@ -4069,29 +3803,21 @@ func TestCommit(t *testing.T) {
 		},
 	}
 
-	ExecResults = []ExecResult{
-		{
-			Type: CreateTableQuery,
-			FileInfo: &FileInfo{
+	UncommittedViews = &UncommittedViewMap{
+		Created: map[string]*FileInfo{
+			strings.ToUpper(GetTestFilePath("created_file.csv")): {
 				Path:    GetTestFilePath("created_file.csv"),
 				Handler: ch,
 			},
 		},
-		{
-			Type: UpdateQuery,
-			FileInfo: &FileInfo{
+		Updated: map[string]*FileInfo{
+			strings.ToUpper(GetTestFilePath("updated_file_1.csv")): {
 				Path:    GetTestFilePath("updated_file_1.csv"),
 				Handler: uh,
 			},
-			OperatedCount: 1,
-		},
-		{
-			Type: UpdateQuery,
-			FileInfo: &FileInfo{
-				Path: GetTestFilePath("updated_file_2.csv"),
-			},
 		},
 	}
+
 	expect := fmt.Sprintf("Commit: file %q is created.\nCommit: file %q is updated.\n", GetTestFilePath("created_file.csv"), GetTestFilePath("updated_file_1.csv"))
 
 	oldStdout := cmd.Stdout
@@ -4112,28 +3838,20 @@ func TestCommit(t *testing.T) {
 func TestRollback(t *testing.T) {
 	cmd.GetFlags().SetQuiet(false)
 
-	ExecResults = []ExecResult{
-		{
-			Type: CreateTableQuery,
-			FileInfo: &FileInfo{
-				Path: "created_file.csv",
+	UncommittedViews = &UncommittedViewMap{
+		Created: map[string]*FileInfo{
+			strings.ToUpper(GetTestFilePath("created_file.csv")): {
+				Path: GetTestFilePath("created_file.csv"),
 			},
 		},
-		{
-			Type: UpdateQuery,
-			FileInfo: &FileInfo{
-				Path: "updated_file_1.csv",
-			},
-			OperatedCount: 1,
-		},
-		{
-			Type: UpdateQuery,
-			FileInfo: &FileInfo{
-				Path: "updated_file_2.csv",
+		Updated: map[string]*FileInfo{
+			strings.ToUpper(GetTestFilePath("updated_file_1.csv")): {
+				Path: GetTestFilePath("updated_file_1.csv"),
 			},
 		},
 	}
-	expect := "Rollback: file \"created_file.csv\" is deleted.\nRollback: file \"updated_file_1.csv\" is restored.\n"
+
+	expect := fmt.Sprintf("Rollback: file %q is deleted.\nRollback: file %q is restored.\n", GetTestFilePath("created_file.csv"), GetTestFilePath("updated_file_1.csv"))
 
 	oldStdout := cmd.Stdout
 	r, w, _ := os.Pipe()

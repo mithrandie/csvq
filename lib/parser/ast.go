@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/mithrandie/csvq/lib/cmd"
-
 	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mithrandie/ternary"

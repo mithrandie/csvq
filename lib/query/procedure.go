@@ -27,27 +27,8 @@ const (
 	Return
 )
 
-type OperationType int
-
-const (
-	InsertQuery OperationType = iota
-	UpdateQuery
-	DeleteQuery
-	CreateTableQuery
-	AddColumnsQuery
-	DropColumnsQuery
-	RenameColumnQuery
-	AlterTableAttribute
-)
-
-type ExecResult struct {
-	Type          OperationType
-	FileInfo      *FileInfo
-	OperatedCount int
-}
-
 var ViewCache = make(ViewMap, 10)
-var ExecResults = make([]ExecResult, 0, 10)
+var UncommittedViews = NewUncommittedViewMap()
 var OutFile io.Writer
 
 var Formatter = NewStringFormatter()
@@ -128,9 +109,6 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 
 	var err error
 
-	var results []ExecResult
-	var view *View
-	var views []*View
 	var printstr string
 
 	switch stmt.(type) {
@@ -175,7 +153,9 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		if flags.Stats {
 			proc.MeasurementStart = time.Now()
 		}
-		if view, err = Select(stmt.(parser.SelectQuery), proc.Filter); err == nil {
+
+		view, e := Select(stmt.(parser.SelectQuery), proc.Filter)
+		if e == nil {
 			fileInfo := &FileInfo{
 				Format:             flags.Format,
 				Delimiter:          flags.WriteDelimiter,
@@ -197,7 +177,10 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			if err == nil {
 				writer.Write([]byte(cmd.GetFlags().LineBreak.Value()))
 			}
+		} else {
+			err = e
 		}
+
 		if flags.Stats {
 			proc.showExecutionTime()
 		}
@@ -205,18 +188,17 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		if flags.Stats {
 			proc.MeasurementStart = time.Now()
 		}
-		if view, err = Insert(stmt.(parser.InsertQuery), proc.Filter); err == nil {
-			results = []ExecResult{
-				{
-					Type:          InsertQuery,
-					FileInfo:      view.FileInfo,
-					OperatedCount: view.OperatedRecords,
-				},
-			}
-			Log(fmt.Sprintf("%s inserted on %q.", FormatCount(view.OperatedRecords, "record"), view.FileInfo.Path), flags.Quiet)
 
-			view.OperatedRecords = 0
+		fileInfo, cnt, e := Insert(stmt.(parser.InsertQuery), proc.Filter)
+		if e == nil {
+			if 0 < cnt {
+				UncommittedViews.SetForUpdatedView(fileInfo)
+			}
+			Log(fmt.Sprintf("%s inserted on %q.", FormatCount(cnt, "record"), fileInfo.Path), flags.Quiet)
+		} else {
+			err = e
 		}
+
 		if flags.Stats {
 			proc.showExecutionTime()
 		}
@@ -224,19 +206,19 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		if flags.Stats {
 			proc.MeasurementStart = time.Now()
 		}
-		if views, err = Update(stmt.(parser.UpdateQuery), proc.Filter); err == nil {
-			results = make([]ExecResult, len(views))
-			for i, v := range views {
-				results[i] = ExecResult{
-					Type:          UpdateQuery,
-					FileInfo:      v.FileInfo,
-					OperatedCount: v.OperatedRecords,
-				}
-				Log(fmt.Sprintf("%s updated on %q.", FormatCount(v.OperatedRecords, "record"), v.FileInfo.Path), flags.Quiet)
 
-				v.OperatedRecords = 0
+		infos, cnts, e := Update(stmt.(parser.UpdateQuery), proc.Filter)
+		if e == nil {
+			for i, info := range infos {
+				if 0 < cnts[i] {
+					UncommittedViews.SetForUpdatedView(info)
+				}
+				Log(fmt.Sprintf("%s updated on %q.", FormatCount(cnts[i], "record"), info.Path), flags.Quiet)
 			}
+		} else {
+			err = e
 		}
+
 		if flags.Stats {
 			proc.showExecutionTime()
 		}
@@ -244,88 +226,65 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		if flags.Stats {
 			proc.MeasurementStart = time.Now()
 		}
-		if views, err = Delete(stmt.(parser.DeleteQuery), proc.Filter); err == nil {
-			results = make([]ExecResult, len(views))
-			for i, v := range views {
-				results[i] = ExecResult{
-					Type:          DeleteQuery,
-					FileInfo:      v.FileInfo,
-					OperatedCount: v.OperatedRecords,
-				}
-				Log(fmt.Sprintf("%s deleted on %q.", FormatCount(v.OperatedRecords, "record"), v.FileInfo.Path), flags.Quiet)
 
-				v.OperatedRecords = 0
+		infos, cnts, e := Delete(stmt.(parser.DeleteQuery), proc.Filter)
+		if e == nil {
+			for i, info := range infos {
+				if 0 < cnts[i] {
+					UncommittedViews.SetForUpdatedView(info)
+				}
+				Log(fmt.Sprintf("%s deleted on %q.", FormatCount(cnts[i], "record"), info.Path), flags.Quiet)
 			}
+		} else {
+			err = e
 		}
+
 		if flags.Stats {
 			proc.showExecutionTime()
 		}
 	case parser.CreateTable:
-		if view, err = CreateTable(stmt.(parser.CreateTable), proc.Filter); err == nil {
-			results = []ExecResult{
-				{
-					Type:     CreateTableQuery,
-					FileInfo: view.FileInfo,
-				},
-			}
-			Log(fmt.Sprintf("file %q is created.", view.FileInfo.Path), flags.Quiet)
-
-			view.OperatedRecords = 0
+		info, e := CreateTable(stmt.(parser.CreateTable), proc.Filter)
+		if e == nil {
+			UncommittedViews.SetForCreatedView(info)
+			Log(fmt.Sprintf("file %q is created.", info.Path), flags.Quiet)
+		} else {
+			err = e
 		}
 	case parser.AddColumns:
-		if view, err = AddColumns(stmt.(parser.AddColumns), proc.Filter); err == nil {
-			results = []ExecResult{
-				{
-					Type:          AddColumnsQuery,
-					FileInfo:      view.FileInfo,
-					OperatedCount: view.OperatedFields,
-				},
-			}
-			Log(fmt.Sprintf("%s added on %q.", FormatCount(view.OperatedFields, "field"), view.FileInfo.Path), flags.Quiet)
-
-			view.OperatedRecords = 0
+		info, cnt, e := AddColumns(stmt.(parser.AddColumns), proc.Filter)
+		if e == nil {
+			UncommittedViews.SetForUpdatedView(info)
+			Log(fmt.Sprintf("%s added on %q.", FormatCount(cnt, "field"), info.Path), flags.Quiet)
+		} else {
+			err = e
 		}
 	case parser.DropColumns:
-		if view, err = DropColumns(stmt.(parser.DropColumns), proc.Filter); err == nil {
-			results = []ExecResult{
-				{
-					Type:          DropColumnsQuery,
-					FileInfo:      view.FileInfo,
-					OperatedCount: view.OperatedFields,
-				},
-			}
-			Log(fmt.Sprintf("%s dropped on %q.", FormatCount(view.OperatedFields, "field"), view.FileInfo.Path), flags.Quiet)
-
-			view.OperatedRecords = 0
+		info, cnt, e := DropColumns(stmt.(parser.DropColumns), proc.Filter)
+		if e == nil {
+			UncommittedViews.SetForUpdatedView(info)
+			Log(fmt.Sprintf("%s dropped on %q.", FormatCount(cnt, "field"), info.Path), flags.Quiet)
+		} else {
+			err = e
 		}
 	case parser.RenameColumn:
-		if view, err = RenameColumn(stmt.(parser.RenameColumn), proc.Filter); err == nil {
-			results = []ExecResult{
-				{
-					Type:          RenameColumnQuery,
-					FileInfo:      view.FileInfo,
-					OperatedCount: view.OperatedFields,
-				},
-			}
-			Log(fmt.Sprintf("%s renamed on %q.", FormatCount(view.OperatedFields, "field"), view.FileInfo.Path), flags.Quiet)
-
-			view.OperatedRecords = 0
+		info, e := RenameColumn(stmt.(parser.RenameColumn), proc.Filter)
+		if e == nil {
+			UncommittedViews.SetForUpdatedView(info)
+			Log(fmt.Sprintf("%s renamed on %q.", FormatCount(1, "field"), info.Path), flags.Quiet)
+		} else {
+			err = e
 		}
 	case parser.SetTableAttribute:
 		expr := stmt.(parser.SetTableAttribute)
-		if view, printstr, err = SetTableAttribute(expr, proc.Filter); err == nil {
-			results = []ExecResult{
-				{
-					Type:          AlterTableAttribute,
-					FileInfo:      view.FileInfo,
-					OperatedCount: 1,
-				},
-			}
-			Log(printstr, flags.Quiet)
+		info, log, e := SetTableAttribute(expr, proc.Filter)
+		if e == nil {
+			UncommittedViews.SetForUpdatedView(info)
+			Log(log, flags.Quiet)
 		} else {
-			if unchanged, ok := err.(*TableAttributeUnchangedError); ok {
-				Log(fmt.Sprintf("Table attributes of %s remain unchanged", unchanged.Path), flags.Quiet)
-				err = nil
+			if unchanged, ok := e.(*TableAttributeUnchangedError); ok {
+				Log(fmt.Sprintf("Table attributes of %s remain unchanged.", unchanged.Path), flags.Quiet)
+			} else {
+				err = e
 			}
 		}
 	case parser.TransactionControl:
@@ -435,10 +394,6 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		if expr, ok := stmt.(parser.QueryExpression); ok {
 			_, err = proc.Filter.Evaluate(expr)
 		}
-	}
-
-	if results != nil {
-		ExecResults = append(ExecResults, results...)
 	}
 
 	if err != nil {

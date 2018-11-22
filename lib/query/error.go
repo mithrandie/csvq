@@ -46,7 +46,6 @@ const (
 	ErrorTableObjectInvalidDelimiter          = "invalid delimiter: %s"
 	ErrorTableObjectInvalidDelimiterPositions = "invalid delimiter positions: %s"
 	ErrorTableObjectInvalidJsonQuery          = "invalid json query: %s"
-	ErrorTableObjectMultipleRead              = "file %s has already been loaded"
 	ErrorTableObjectArgumentsLength           = "table object %s takes at most %d arguments"
 	ErrorTableObjectJsonArgumentsLength       = "table object %s takes exactly %d arguments"
 	ErrorTableObjectInvalidArgument           = "invalid argument for %s: %s"
@@ -562,16 +561,6 @@ type TableObjectInvalidJsonQueryError struct {
 func NewTableObjectInvalidJsonQueryError(expr parser.TableObject, jsonQuery string) error {
 	return &TableObjectInvalidObjectError{
 		NewBaseError(expr, fmt.Sprintf(ErrorTableObjectInvalidJsonQuery, jsonQuery)),
-	}
-}
-
-type TableObjectMultipleReadError struct {
-	*BaseError
-}
-
-func NewTableObjectMultipleReadError(tableIdentifier parser.Identifier) error {
-	return &TableObjectMultipleReadError{
-		NewBaseError(tableIdentifier, fmt.Sprintf(ErrorTableObjectMultipleRead, tableIdentifier)),
 	}
 }
 

@@ -48,9 +48,6 @@ type View struct {
 
 	offset int
 
-	OperatedRecords int
-	OperatedFields  int
-
 	UseInternalId bool
 	ForUpdate     bool
 }
@@ -571,16 +568,7 @@ func loadObject(
 				fileInfo.EncloseAll = encloseAll
 				fileInfo.JsonEscape = jsonEscape
 
-				alreadyLoaded := ViewCache.Exists(fileInfo.Path)
-				ufpath := strings.ToUpper(fileInfo.Path)
-
-				if alreadyLoaded {
-					if importFormat != cmd.AutoSelect && !fileInfo.Equivalent(ViewCache[ufpath].FileInfo) {
-						return nil, NewTableObjectMultipleReadError(tableIdentifier)
-					}
-				}
-
-				if !alreadyLoaded || (forUpdate && !ViewCache[ufpath].ForUpdate) {
+				if !ViewCache.Exists(fileInfo.Path) || (forUpdate && !ViewCache[strings.ToUpper(fileInfo.Path)].ForUpdate) {
 					ViewCache.Dispose(fileInfo.Path)
 
 					var fp *os.File
@@ -1564,17 +1552,17 @@ func (view *View) Limit(clause parser.LimitClause) error {
 	return nil
 }
 
-func (view *View) InsertValues(fields []parser.QueryExpression, list []parser.QueryExpression) error {
+func (view *View) InsertValues(fields []parser.QueryExpression, list []parser.QueryExpression) (int, error) {
 	valuesList := make([][]value.Primary, len(list))
 
 	for i, item := range list {
 		rv := item.(parser.RowValue)
 		values, err := view.Filter.evalRowValue(rv)
 		if err != nil {
-			return err
+			return 0, err
 		}
 		if len(fields) != len(values) {
-			return NewInsertRowValueLengthError(rv, len(fields))
+			return 0, NewInsertRowValueLengthError(rv, len(fields))
 		}
 
 		valuesList[i] = values
@@ -1583,13 +1571,13 @@ func (view *View) InsertValues(fields []parser.QueryExpression, list []parser.Qu
 	return view.insert(fields, valuesList)
 }
 
-func (view *View) InsertFromQuery(fields []parser.QueryExpression, query parser.SelectQuery) error {
+func (view *View) InsertFromQuery(fields []parser.QueryExpression, query parser.SelectQuery) (int, error) {
 	insertView, err := Select(query, view.Filter)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	if len(fields) != insertView.FieldLen() {
-		return NewInsertSelectFieldLengthError(query, len(fields))
+		return 0, NewInsertSelectFieldLengthError(query, len(fields))
 	}
 
 	valuesList := make([][]value.Primary, insertView.RecordLen())
@@ -1605,7 +1593,7 @@ func (view *View) InsertFromQuery(fields []parser.QueryExpression, query parser.
 	return view.insert(fields, valuesList)
 }
 
-func (view *View) insert(fields []parser.QueryExpression, valuesList [][]value.Primary) error {
+func (view *View) insert(fields []parser.QueryExpression, valuesList [][]value.Primary) (int, error) {
 	var valueIndex = func(i int, list []int) int {
 		for j, v := range list {
 			if i == v {
@@ -1615,9 +1603,11 @@ func (view *View) insert(fields []parser.QueryExpression, valuesList [][]value.P
 		return -1
 	}
 
+	var insertRecords int
+
 	fieldIndices, err := view.FieldIndices(fields)
 	if err != nil {
-		return err
+		return insertRecords, err
 	}
 
 	records := make([]Record, len(valuesList))
@@ -1635,8 +1625,7 @@ func (view *View) insert(fields []parser.QueryExpression, valuesList [][]value.P
 	}
 
 	view.RecordSet = append(view.RecordSet, records...)
-	view.OperatedRecords = len(valuesList)
-	return nil
+	return len(valuesList), nil
 }
 
 func (view *View) Fix() {

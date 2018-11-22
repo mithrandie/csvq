@@ -30,6 +30,11 @@ func GetTestLocation() *time.Location {
 	return l
 }
 
+func GetWD() string {
+	wdir, _ := os.Getwd()
+	return wdir
+}
+
 func TestMain(m *testing.M) {
 	os.Exit(run(m))
 }
@@ -50,8 +55,7 @@ func setup() {
 	flags := cmd.GetFlags()
 	flags.Now = "2012-02-03 09:18:15"
 
-	wdir, _ := os.Getwd()
-	TestDataDir = filepath.Join(wdir, "..", "..", "testdata", "csv")
+	TestDataDir = filepath.Join(GetWD(), "..", "..", "testdata", "csv")
 
 	r, _ := os.Open(filepath.Join(TestDataDir, "empty.txt"))
 	os.Stdin = r
@@ -89,8 +93,8 @@ func setup() {
 
 	copyfile(filepath.Join(TestDir, "autoselect"), filepath.Join(TestDataDir, "autoselect"))
 
-	copyfile(filepath.Join(TestDir, "source.sql"), filepath.Join(filepath.Join(wdir, "..", "..", "testdata"), "source.sql"))
-	copyfile(filepath.Join(TestDir, "source_syntaxerror.sql"), filepath.Join(filepath.Join(wdir, "..", "..", "testdata"), "source_syntaxerror.sql"))
+	copyfile(filepath.Join(TestDir, "source.sql"), filepath.Join(filepath.Join(GetWD(), "..", "..", "testdata"), "source.sql"))
+	copyfile(filepath.Join(TestDir, "source_syntaxerror.sql"), filepath.Join(filepath.Join(GetWD(), "..", "..", "testdata"), "source_syntaxerror.sql"))
 
 	os.Setenv("CSVQ_TEST_ENV", "foo")
 }

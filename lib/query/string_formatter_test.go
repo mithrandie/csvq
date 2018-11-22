@@ -1,10 +1,11 @@
 package query
 
 import (
-	"github.com/mithrandie/csvq/lib/value"
-	"github.com/mithrandie/ternary"
 	"testing"
 	"time"
+
+	"github.com/mithrandie/csvq/lib/value"
+	"github.com/mithrandie/ternary"
 )
 
 var stringFormatterFormatTests = []struct {

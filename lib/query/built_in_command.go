@@ -421,15 +421,16 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 		if len(keys) < 1 {
 			s = cmd.Warn("No table is loaded")
 		} else {
-			createdFiles, updatedFiles := UncommittedFiles()
+			createdFiles, updatedFiles := UncommittedViews.UncommittedFiles()
 
 			for _, key := range keys {
 				fields := ViewCache[key].Header.TableColumnNames()
 				info := ViewCache[key].FileInfo
+				ufpath := strings.ToUpper(info.Path)
 
-				if _, ok := createdFiles[info.Path]; ok {
+				if _, ok := createdFiles[ufpath]; ok {
 					w.WriteColor("*Created* ", cmd.EmphasisEffect)
-				} else if _, ok := updatedFiles[info.Path]; ok {
+				} else if _, ok := updatedFiles[ufpath]; ok {
 					w.WriteColor("*Updated* ", cmd.EmphasisEffect)
 				}
 				w.WriteColorWithoutLineBreak(info.Path, cmd.ObjectEffect)
@@ -458,13 +459,14 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 		} else {
 			keys := views.SortedKeys()
 
-			updatedViews := UncommittedTempViews()
+			updatedViews := UncommittedViews.UncommittedTempViews()
 
 			for _, key := range keys {
 				fields := views[key].Header.TableColumnNames()
 				info := views[key].FileInfo
+				ufpath := strings.ToUpper(info.Path)
 
-				if _, ok := updatedViews[info.Path]; ok {
+				if _, ok := updatedViews[ufpath]; ok {
 					w.WriteColor("*Updated* ", cmd.EmphasisEffect)
 				}
 				w.WriteColorWithoutLineBreak(info.Path, cmd.ObjectEffect)
@@ -736,16 +738,19 @@ func ShowFields(expr parser.ShowFields, filter *Filter) (string, error) {
 	}
 
 	if view.FileInfo.IsTemporary {
-		updatedViews := UncommittedTempViews()
+		updatedViews := UncommittedViews.UncommittedTempViews()
+		ufpath := strings.ToUpper(view.FileInfo.Path)
 
-		if _, ok := updatedViews[view.FileInfo.Path]; ok {
+		if _, ok := updatedViews[ufpath]; ok {
 			status = ObjectUpdated
 		}
 	} else {
-		createdViews, updatedView := UncommittedFiles()
-		if _, ok := createdViews[view.FileInfo.Path]; ok {
+		createdViews, updatedView := UncommittedViews.UncommittedFiles()
+		ufpath := strings.ToUpper(view.FileInfo.Path)
+
+		if _, ok := createdViews[ufpath]; ok {
 			status = ObjectCreated
-		} else if _, ok := updatedView[view.FileInfo.Path]; ok {
+		} else if _, ok := updatedView[ufpath]; ok {
 			status = ObjectUpdated
 		}
 	}

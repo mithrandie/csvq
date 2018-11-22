@@ -9,13 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mithrandie/go-text/json"
-
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mithrandie/go-text"
+	"github.com/mithrandie/go-text/json"
 )
 
 var viewLoadTests = []struct {
@@ -5042,11 +5041,12 @@ func TestView_Offset(t *testing.T) {
 }
 
 var viewInsertValuesTests = []struct {
-	Name       string
-	Fields     []parser.QueryExpression
-	ValuesList []parser.QueryExpression
-	Result     *View
-	Error      string
+	Name        string
+	Fields      []parser.QueryExpression
+	ValuesList  []parser.QueryExpression
+	Result      *View
+	UpdateCount int
+	Error       string
 }{
 	{
 		Name: "InsertValues",
@@ -5093,9 +5093,9 @@ var viewInsertValuesTests = []struct {
 					value.NewNull(),
 				}),
 			},
-			Filter:          NewEmptyFilter(),
-			OperatedRecords: 2,
+			Filter: NewEmptyFilter(),
 		},
+		UpdateCount: 2,
 	},
 	{
 		Name: "InsertValues Field Length Does Not Match Error",
@@ -5165,7 +5165,7 @@ func TestView_InsertValues(t *testing.T) {
 	}
 
 	for _, v := range viewInsertValuesTests {
-		err := view.InsertValues(v.Fields, v.ValuesList)
+		cnt, err := view.InsertValues(v.Fields, v.ValuesList)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -5181,15 +5181,20 @@ func TestView_InsertValues(t *testing.T) {
 		if !reflect.DeepEqual(view, v.Result) {
 			t.Errorf("%s: result = %v, want %v", v.Name, view, v.Result)
 		}
+		if cnt != v.UpdateCount {
+			t.Errorf("%s: update count = %d, want %d", v.Name, cnt, v.UpdateCount)
+		}
+
 	}
 }
 
 var viewInsertFromQueryTests = []struct {
-	Name   string
-	Fields []parser.QueryExpression
-	Query  parser.SelectQuery
-	Result *View
-	Error  string
+	Name        string
+	Fields      []parser.QueryExpression
+	Query       parser.SelectQuery
+	Result      *View
+	UpdateCount int
+	Error       string
 }{
 	{
 		Name: "InsertFromQuery",
@@ -5224,9 +5229,9 @@ var viewInsertFromQueryTests = []struct {
 					value.NewNull(),
 				}),
 			},
-			Filter:          NewEmptyFilter(),
-			OperatedRecords: 1,
+			Filter: NewEmptyFilter(),
 		},
+		UpdateCount: 1,
 	},
 	{
 		Name: "InsertFromQuery Field Lenght Does Not Match Error",
@@ -5280,7 +5285,7 @@ func TestView_InsertFromQuery(t *testing.T) {
 	}
 
 	for _, v := range viewInsertFromQueryTests {
-		err := view.InsertFromQuery(v.Fields, v.Query)
+		cnt, err := view.InsertFromQuery(v.Fields, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -5295,6 +5300,9 @@ func TestView_InsertFromQuery(t *testing.T) {
 		}
 		if !reflect.DeepEqual(view, v.Result) {
 			t.Errorf("%s: result = %v, want %v", v.Name, view, v.Result)
+		}
+		if cnt != v.UpdateCount {
+			t.Errorf("%s: update count = %d, want %d", v.Name, cnt, v.UpdateCount)
 		}
 	}
 }

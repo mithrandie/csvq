@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/mithrandie/go-text"
-
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
+
+	"github.com/mithrandie/go-text"
 )
 
 var fileInfoTests = []struct {
@@ -341,13 +341,4 @@ var fileInfoEquivalentTests = []struct {
 		},
 		Expect: false,
 	},
-}
-
-func TestFileInfo_Equivalent(t *testing.T) {
-	for _, v := range fileInfoEquivalentTests {
-		result := v.FileInfo1.Equivalent(v.FileInfo2)
-		if result != v.Expect {
-			t.Errorf("result = %t, want %t for %v, %v", result, v.Expect, v.FileInfo1, v.FileInfo2)
-		}
-	}
 }

@@ -653,6 +653,19 @@ var showFlagTests = []struct {
 		Result: "\033[34;1m@@REPOSITORY:\033[0m \033[32m" + TestDir + "\033[0m",
 	},
 	{
+		Name: "Show Repository Not Set",
+		Expr: parser.ShowFlag{
+			Name: "repository",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "repository",
+				Value: parser.NewStringValue(""),
+			},
+		},
+		Result: "\033[34;1m@@REPOSITORY:\033[0m \033[90m(current dir: " + GetWD() + ")\033[0m",
+	},
+	{
 		Name: "Show Timezone",
 		Expr: parser.ShowFlag{
 			Name: "timezone",
@@ -1241,7 +1254,7 @@ var showObjectsTests = []struct {
 	WriteDelimiter          rune
 	WriteDelimiterPositions fixedlen.DelimiterPositions
 	ViewCache               ViewMap
-	ExecResults             []ExecResult
+	UncommittedViews        *UncommittedViewMap
 	Expect                  string
 	Error                   string
 }{
@@ -1391,19 +1404,12 @@ var showObjectsTests = []struct {
 				},
 			},
 		},
-		ExecResults: []ExecResult{
-			{
-				Type: CreateTableQuery,
-				FileInfo: &FileInfo{
-					Path: "table1.tsv",
-				},
+		UncommittedViews: &UncommittedViewMap{
+			Created: map[string]*FileInfo{
+				"TABLE1.TSV": {Path: "table1.tsv"},
 			},
-			{
-				Type: UpdateQuery,
-				FileInfo: &FileInfo{
-					Path: "table2.json",
-				},
-				OperatedCount: 2,
+			Updated: map[string]*FileInfo{
+				"TABLE2.JSON": {Path: "table2.json"},
 			},
 		},
 		Expect: "\n" +
@@ -1495,14 +1501,10 @@ var showObjectsTests = []struct {
 				},
 			},
 		},
-		ExecResults: []ExecResult{
-			{
-				Type: UpdateQuery,
-				FileInfo: &FileInfo{
-					Path:        "view2",
-					IsTemporary: true,
-				},
-				OperatedCount: 2,
+		UncommittedViews: &UncommittedViewMap{
+			Created: map[string]*FileInfo{},
+			Updated: map[string]*FileInfo{
+				"VIEW2": {Path: "view2", IsTemporary: true},
 			},
 		},
 		Expect: "\n" +
@@ -1715,12 +1717,13 @@ func TestShowObjects(t *testing.T) {
 		flags.WriteDelimiterPositions = v.WriteDelimiterPositions
 		flags.Format = v.Format
 		ViewCache.Clean()
-		ExecResults = make([]ExecResult, 0)
 		if 0 < len(v.ViewCache) {
 			ViewCache = v.ViewCache
 		}
-		if 0 < len(v.ExecResults) {
-			ExecResults = v.ExecResults
+		if v.UncommittedViews == nil {
+			UncommittedViews = NewUncommittedViewMap()
+		} else {
+			UncommittedViews = v.UncommittedViews
 		}
 
 		var filter *Filter
@@ -1748,16 +1751,17 @@ func TestShowObjects(t *testing.T) {
 		}
 	}
 	ReleaseResources()
+	UncommittedViews.Clean()
 }
 
 var showFieldsTests = []struct {
-	Name        string
-	Expr        parser.ShowFields
-	Filter      *Filter
-	ViewCache   ViewMap
-	ExecResults []ExecResult
-	Expect      string
-	Error       string
+	Name             string
+	Expr             parser.ShowFields
+	Filter           *Filter
+	ViewCache        ViewMap
+	UncommittedViews *UncommittedViewMap
+	Expect           string
+	Error            string
 }{
 	{
 		Name: "ShowFields Temporary Table",
@@ -1807,14 +1811,10 @@ var showFieldsTests = []struct {
 				},
 			},
 		},
-		ExecResults: []ExecResult{
-			{
-				Type: UpdateQuery,
-				FileInfo: &FileInfo{
-					Path:        "view1",
-					IsTemporary: true,
-				},
-				OperatedCount: 2,
+		UncommittedViews: &UncommittedViewMap{
+			Created: map[string]*FileInfo{},
+			Updated: map[string]*FileInfo{
+				"VIEW1": {Path: "view1", IsTemporary: true},
 			},
 		},
 		Expect: "\n" +
@@ -1846,13 +1846,11 @@ var showFieldsTests = []struct {
 				},
 			},
 		},
-		ExecResults: []ExecResult{
-			{
-				Type: CreateTableQuery,
-				FileInfo: &FileInfo{
-					Path: GetTestFilePath("show_fields_create.csv"),
-				},
+		UncommittedViews: &UncommittedViewMap{
+			Created: map[string]*FileInfo{
+				strings.ToUpper(GetTestFilePath("show_fields_create.csv")): {Path: "show_fields_create.csv"},
 			},
+			Updated: map[string]*FileInfo{},
 		},
 		Expect: "\n" +
 			strings.Repeat(" ", (calcShowFieldsWidth("show_fields_create.csv", "show_fields_create.csv", 10)-(10+len("show_fields_create.csv")))/2) + "Fields in show_fields_create.csv\n" +
@@ -1886,13 +1884,10 @@ var showFieldsTests = []struct {
 				},
 			},
 		},
-		ExecResults: []ExecResult{
-			{
-				Type: UpdateQuery,
-				FileInfo: &FileInfo{
-					Path: GetTestFilePath("show_fields_update.csv"),
-				},
-				OperatedCount: 2,
+		UncommittedViews: &UncommittedViewMap{
+			Created: map[string]*FileInfo{},
+			Updated: map[string]*FileInfo{
+				strings.ToUpper(GetTestFilePath("show_fields_update.csv")): {Path: "show_fields_updated.csv"},
 			},
 		},
 		Expect: "\n" +
@@ -1950,12 +1945,13 @@ func TestShowFields(t *testing.T) {
 
 	for _, v := range showFieldsTests {
 		ViewCache.Clean()
-		ExecResults = make([]ExecResult, 0)
 		if 0 < len(v.ViewCache) {
 			ViewCache = v.ViewCache
 		}
-		if 0 < len(v.ExecResults) {
-			ExecResults = v.ExecResults
+		if v.UncommittedViews == nil {
+			UncommittedViews = NewUncommittedViewMap()
+		} else {
+			UncommittedViews = v.UncommittedViews
 		}
 
 		var filter *Filter
@@ -1983,6 +1979,7 @@ func TestShowFields(t *testing.T) {
 		}
 	}
 	ReleaseResources()
+	UncommittedViews.Clean()
 }
 
 var setEnvVarTests = []struct {
