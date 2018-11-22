@@ -26,6 +26,7 @@ func main() {
 	if defaultCPU < 1 {
 		defaultCPU = 1
 	}
+	query.Version = version
 
 	cli.AppHelpTemplate = appHHelpTemplate
 	cli.CommandHelpTemplate = commandHelpTemplate

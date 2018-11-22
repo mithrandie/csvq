@@ -115,3 +115,36 @@ func TestUncommittedViewMap_Unset(t *testing.T) {
 		t.Errorf("map = %v, want %v", m, expect)
 	}
 }
+
+func TestUncommittedViewMap_IsEmpty(t *testing.T) {
+	var expect bool
+
+	m := &UncommittedViewMap{
+		Created: map[string]*FileInfo{
+			"PRE_CREATED.TXT": {Path: "pre_created.txt"},
+		},
+	}
+	expect = false
+	result := m.IsEmpty()
+	if result != expect {
+		t.Errorf("result = %t, want %t", result, expect)
+	}
+
+	m = &UncommittedViewMap{
+		Updated: map[string]*FileInfo{
+			"PRE_UPDATED.TXT": {Path: "pre_updated.txt"},
+		},
+	}
+	expect = false
+	result = m.IsEmpty()
+	if result != expect {
+		t.Errorf("result = %t, want %t", result, expect)
+	}
+
+	m = &UncommittedViewMap{}
+	expect = true
+	result = m.IsEmpty()
+	if result != expect {
+		t.Errorf("result = %t, want %t", result, expect)
+	}
+}

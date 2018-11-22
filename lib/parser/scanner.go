@@ -26,9 +26,10 @@ const (
 )
 
 const (
-	VariableSign        = '@'
-	EnvVarSign          = '%'
-	ExternalCommandSign = '$'
+	VariableSign            = '@'
+	EnvironmentVariableSign = '%'
+	ExternalCommandSign     = '$'
+	RuntimeInformationSign  = '#'
 
 	SubstitutionOperator = ":="
 
@@ -199,9 +200,12 @@ func (s *Scanner) Scan() (Token, error) {
 		}
 	case ch == VariableSign:
 		switch s.peek() {
-		case EnvVarSign:
+		case EnvironmentVariableSign:
 			s.next()
 			token = ENVIRONMENT_VARIABLE
+		case RuntimeInformationSign:
+			s.next()
+			token = RUNTIME_INFORMATION
 		case VariableSign:
 			s.next()
 			token = FLAG

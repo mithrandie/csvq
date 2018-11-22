@@ -38,6 +38,38 @@ var argsSplitterScanTests = []struct {
 		},
 	},
 	{
+		Args: "cmd arg1 @var",
+		Expect: []string{
+			"cmd",
+			"arg1",
+			"@var",
+		},
+	},
+	{
+		Args: "cmd arg1 @%var",
+		Expect: []string{
+			"cmd",
+			"arg1",
+			"@%var",
+		},
+	},
+	{
+		Args: "cmd arg1 @%`var \\`2`",
+		Expect: []string{
+			"cmd",
+			"arg1",
+			"@%`var \\`2`",
+		},
+	},
+	{
+		Args: "cmd arg1 @#var",
+		Expect: []string{
+			"cmd",
+			"arg1",
+			"@#var",
+		},
+	},
+	{
 		Args: "sh -c ${format('echo %s | wc', @%HOME)}",
 		Expect: []string{
 			"sh",
@@ -64,6 +96,10 @@ var argsSplitterScanTests = []struct {
 	{
 		Args:  "sh -c $format('echo %s | wc', @%HOME)",
 		Error: "invalid command symbol",
+	},
+	{
+		Args:  "cmd @%`var",
+		Error: "environment variable not terminated",
 	},
 }
 

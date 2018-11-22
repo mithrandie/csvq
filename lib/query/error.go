@@ -90,6 +90,7 @@ const (
 	ErrorInvalidFlagName                      = "flag %s does not exist"
 	ErrorFlagValueNowAllowedFormat            = "%s for %s is not allowed"
 	ErrorInvalidFlagValue                     = "%s"
+	ErrorInvalidRuntimeInformation            = "runtime information %s does not exist"
 	ErrorNotTable                             = "%s is not a table that has attributes"
 	ErrorInvalidTableAttributeName            = "table attribute %s does not exist"
 	ErrorTableAttributeValueNotAllowedFormat  = "%s for %s is not allowed"
@@ -991,6 +992,16 @@ type InvalidFlagNameError struct {
 func NewInvalidFlagNameError(expr parser.Expression, name string) error {
 	return &InvalidFlagNameError{
 		NewBaseError(expr, fmt.Sprintf(ErrorInvalidFlagName, cmd.FlagSymbol(name))),
+	}
+}
+
+type InvalidRuntimeInformationError struct {
+	*BaseError
+}
+
+func NewInvalidRuntimeInformationError(expr parser.RuntimeInformation) error {
+	return &InvalidRuntimeInformationError{
+		NewBaseError(expr, fmt.Sprintf(ErrorInvalidRuntimeInformation, expr)),
 	}
 }
 

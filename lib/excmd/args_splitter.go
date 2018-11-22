@@ -61,6 +61,20 @@ func (s *ArgsSplitter) Scan() bool {
 	switch ch {
 	case EOF:
 		return false
+	case parser.VariableSign:
+		s.text.WriteRune(ch)
+
+		if s.peek() == parser.EnvironmentVariableSign {
+			s.text.WriteRune(s.next())
+			if s.peek() == '`' {
+				s.text.WriteRune(s.next())
+				s.scanQuotedVariable('`')
+			} else {
+				s.scanString()
+			}
+		} else {
+			s.scanString()
+		}
 	case parser.ExternalCommandSign:
 		s.text.WriteRune(ch)
 		if s.peek() != parser.BeginExpression {
@@ -77,6 +91,29 @@ func (s *ArgsSplitter) Scan() bool {
 	}
 
 	return s.err == nil
+}
+
+func (s *ArgsSplitter) scanQuotedVariable(quote rune) {
+	for {
+		ch := s.next()
+		if ch == EOF {
+			s.err = errors.New("environment variable not terminated")
+			break
+		}
+
+		s.text.WriteRune(ch)
+
+		if ch == quote {
+			break
+		}
+
+		if ch == '\\' {
+			switch s.peek() {
+			case '\\', quote:
+				s.text.WriteRune(s.next())
+			}
+		}
+	}
 }
 
 func (s *ArgsSplitter) scanQuotedString(quote rune) {

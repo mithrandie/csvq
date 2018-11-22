@@ -27,6 +27,7 @@ const (
 	Return
 )
 
+var Version string
 var ViewCache = make(ViewMap, 10)
 var UncommittedViews = NewUncommittedViewMap()
 var OutFile io.Writer
@@ -577,7 +578,11 @@ func (proc *Procedure) ExecExternalCommand(stmt parser.ExternalCommand) error {
 					return err
 				}
 			case excmd.EnvironmentVariable:
-				if err = writeQueryExpression(arg, parser.EnvVar{Name: scanner.Text()}); err != nil {
+				if err = writeQueryExpression(arg, parser.EnvironmentVariable{Name: scanner.Text()}); err != nil {
+					return err
+				}
+			case excmd.RuntimeInformation:
+				if err = writeQueryExpression(arg, parser.RuntimeInformation{Name: scanner.Text()}); err != nil {
 					return err
 				}
 			case excmd.CsvqExpression:

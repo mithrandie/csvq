@@ -1517,8 +1517,8 @@ func TestVariableSubstitution_String(t *testing.T) {
 	}
 }
 
-func TestEnvVar_String(t *testing.T) {
-	e := EnvVar{
+func TestEnvironmentVariable_String(t *testing.T) {
+	e := EnvironmentVariable{
 		Name: "envvar",
 	}
 	expect := "@%envvar"
@@ -1526,11 +1526,21 @@ func TestEnvVar_String(t *testing.T) {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 
-	e = EnvVar{
+	e = EnvironmentVariable{
 		Name:   "envvar",
 		Quoted: true,
 	}
 	expect = "@%`envvar`"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestRuntimeInformation_String(t *testing.T) {
+	e := RuntimeInformation{
+		Name: "ri",
+	}
+	expect := "@#ri"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}

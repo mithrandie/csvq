@@ -21,7 +21,7 @@ import (
     variables   []Variable
     varassign   VariableAssignment
     varassigns  []VariableAssignment
-    envvar      EnvVar
+    envvar      EnvironmentVariable
     updateset   UpdateSet
     updatesets  []UpdateSet
     columndef   ColumnDefault
@@ -165,6 +165,7 @@ import (
 %type<varassign>   variable_assignment
 %type<varassigns>  variable_assignments
 %type<envvar>      environment_variable
+%type<queryexpr>   runtime_information
 %type<token>       distinct
 %type<token>       negation
 %type<token>       join_type_inner
@@ -175,7 +176,8 @@ import (
 %type<token>       as
 %type<token>       comparison_operator
 
-%token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME VARIABLE FLAG ENVIRONMENT_VARIABLE EXTERNAL_COMMAND
+%token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME
+%token<token> VARIABLE FLAG ENVIRONMENT_VARIABLE RUNTIME_INFORMATION EXTERNAL_COMMAND
 %token<token> SELECT FROM UPDATE SET UNSET DELETE WHERE INSERT INTO VALUES AS DUAL STDIN
 %token<token> RECURSIVE
 %token<token> CREATE ADD DROP ALTER TABLE FIRST LAST AFTER BEFORE DEFAULT RENAME TO VIEW
@@ -1196,6 +1198,10 @@ value
     {
         $$ = $1
     }
+    | runtime_information
+    {
+        $$ = $1
+    }
     | cursor_status
     {
         $$ = $1
@@ -2160,7 +2166,13 @@ variable_assignments
 environment_variable
     : ENVIRONMENT_VARIABLE
     {
-        $$ = EnvVar{BaseExpr: NewBaseExpr($1), Name:$1.Literal}
+        $$ = EnvironmentVariable{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Quoted: $1.Quoted}
+    }
+
+runtime_information
+    : RUNTIME_INFORMATION
+    {
+        $$ = RuntimeInformation{BaseExpr: NewBaseExpr($1), Name: $1.Literal}
     }
 
 distinct

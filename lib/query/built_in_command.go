@@ -573,7 +573,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 
 		for _, e := range env {
 			words := strings.Split(e, "=")
-			name := string(parser.VariableSign) + string(parser.EnvVarSign) + words[0]
+			name := string(parser.VariableSign) + string(parser.EnvironmentVariableSign) + words[0]
 			if nameWidth < len(name) {
 				nameWidth = len(name)
 			}

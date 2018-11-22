@@ -66,9 +66,12 @@ func (s *ArgumentScanner) Scan() bool {
 		s.next()
 
 		switch s.peek() {
-		case parser.EnvVarSign:
+		case parser.EnvironmentVariableSign:
 			s.next()
 			s.nodeType = EnvironmentVariable
+		case parser.RuntimeInformationSign:
+			s.next()
+			s.nodeType = RuntimeInformation
 		default:
 			s.nodeType = Variable
 		}
@@ -104,7 +107,7 @@ func (s *ArgumentScanner) scanQuotedEnvironmentVariable(quote rune) {
 	for {
 		ch := s.next()
 		if ch == EOF {
-			s.err = errors.New("environment variable name not terminated")
+			s.err = errors.New("environment variable not terminated")
 			break
 		}
 

@@ -85,3 +85,37 @@ func (m *UncommittedViewMap) UncommittedTempViews() map[string]*FileInfo {
 
 	return updatedViews
 }
+
+func (m *UncommittedViewMap) IsEmpty() bool {
+	if 0 < len(m.Created) {
+		return false
+	}
+	if 0 < len(m.Updated) {
+		return false
+	}
+	return true
+}
+
+func (m *UncommittedViewMap) CountCreatedTables() int {
+	return len(m.Created)
+}
+
+func (m *UncommittedViewMap) CountUpdatedTables() int {
+	cnt := 0
+	for _, v := range m.Updated {
+		if !v.IsTemporary {
+			cnt++
+		}
+	}
+	return cnt
+}
+
+func (m *UncommittedViewMap) CountUpdatedViews() int {
+	cnt := 0
+	for _, v := range m.Updated {
+		if v.IsTemporary {
+			cnt++
+		}
+	}
+	return cnt
+}

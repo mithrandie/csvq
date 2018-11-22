@@ -97,6 +97,8 @@ func setup() {
 	copyfile(filepath.Join(TestDir, "source_syntaxerror.sql"), filepath.Join(filepath.Join(GetWD(), "..", "..", "testdata"), "source_syntaxerror.sql"))
 
 	os.Setenv("CSVQ_TEST_ENV", "foo")
+
+	Version = "v1.0.0"
 }
 
 func teardown() {

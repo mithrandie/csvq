@@ -3389,7 +3389,7 @@ var parseTests = []struct {
 		Input: "set @%var = ident",
 		Output: []Statement{
 			SetEnvVar{
-				EnvVar: EnvVar{BaseExpr: &BaseExpr{line: 1, char: 5}, Name: "var"},
+				EnvVar: EnvironmentVariable{BaseExpr: &BaseExpr{line: 1, char: 5}, Name: "var"},
 				Value:  Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "ident"},
 			},
 		},
@@ -3398,7 +3398,7 @@ var parseTests = []struct {
 		Input: "set @%var = 1",
 		Output: []Statement{
 			SetEnvVar{
-				EnvVar: EnvVar{BaseExpr: &BaseExpr{line: 1, char: 5}, Name: "var"},
+				EnvVar: EnvironmentVariable{BaseExpr: &BaseExpr{line: 1, char: 5}, Name: "var"},
 				Value:  NewIntegerValueFromString("1"),
 			},
 		},
@@ -3407,7 +3407,7 @@ var parseTests = []struct {
 		Input: "unset @%var",
 		Output: []Statement{
 			UnsetEnvVar{
-				EnvVar: EnvVar{BaseExpr: &BaseExpr{line: 1, char: 7}, Name: "var"},
+				EnvVar: EnvironmentVariable{BaseExpr: &BaseExpr{line: 1, char: 7}, Name: "var"},
 			},
 		},
 	},
@@ -5023,7 +5023,39 @@ var parseTests = []struct {
 					Select:   "select",
 					Fields: []QueryExpression{
 						Field{
-							Object: EnvVar{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "var"},
+							Object: EnvironmentVariable{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "var"},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select @%`var`",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: EnvironmentVariable{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "var", Quoted: true},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select @#var",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: RuntimeInformation{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "var"},
 						},
 					},
 				},

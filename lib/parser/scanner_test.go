@@ -161,6 +161,16 @@ var scanTests = []struct {
 		},
 	},
 	{
+		Name:  "Runtime Information",
+		Input: "@#var",
+		Output: []scanResult{
+			{
+				Token:   RUNTIME_INFORMATION,
+				Literal: "var",
+			},
+		},
+	},
+	{
 		Name:  "EqualSign",
 		Input: "=",
 		Output: []scanResult{

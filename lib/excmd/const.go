@@ -8,5 +8,6 @@ const (
 	FixedString         NodeType = 1
 	Variable            NodeType = 2
 	EnvironmentVariable NodeType = 3
-	CsvqExpression      NodeType = 4
+	RuntimeInformation  NodeType = 4
+	CsvqExpression      NodeType = 5
 )

@@ -46,30 +46,30 @@ var procedureExecuteStatementTests = []struct {
 	},
 	{
 		Input: parser.SetEnvVar{
-			EnvVar: parser.EnvVar{Name: "CSVQ_PROC_TEST"},
+			EnvVar: parser.EnvironmentVariable{Name: "CSVQ_PROC_TEST"},
 			Value:  parser.NewStringValue("foo"),
 		},
 	},
 	{
 		Input: parser.Echo{
-			Value: parser.EnvVar{Name: "CSVQ_PROC_TEST"},
+			Value: parser.EnvironmentVariable{Name: "CSVQ_PROC_TEST"},
 		},
 		Logs: "foo\n",
 	},
 	{
 		Input: parser.Print{
-			Value: parser.EnvVar{Name: "CSVQ_PROC_TEST"},
+			Value: parser.EnvironmentVariable{Name: "CSVQ_PROC_TEST"},
 		},
 		Logs: "\"foo\"\n",
 	},
 	{
 		Input: parser.UnsetEnvVar{
-			EnvVar: parser.EnvVar{Name: "CSVQ_PROC_TEST"},
+			EnvVar: parser.EnvironmentVariable{Name: "CSVQ_PROC_TEST"},
 		},
 	},
 	{
 		Input: parser.Print{
-			Value: parser.EnvVar{Name: "CSVQ_PROC_TEST"},
+			Value: parser.EnvironmentVariable{Name: "CSVQ_PROC_TEST"},
 		},
 		Logs: "\"\"\n",
 	},
@@ -1626,6 +1626,13 @@ var procedureExecExternalCommand = []struct {
 			Command: "cmd @__not_exist__",
 		},
 		Error: "[L:- C:-] external command: variable @__not_exist__ is undeclared",
+	},
+	{
+		Name: "Error in Evaluation of Runtime Information",
+		Stmt: parser.ExternalCommand{
+			Command: "cmd @#notexist",
+		},
+		Error: "[L:- C:-] external command: runtime information @#notexist does not exist",
 	},
 	{
 		Name: "Error in Parsing CSVQ Expression",

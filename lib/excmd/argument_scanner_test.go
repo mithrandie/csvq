@@ -62,6 +62,12 @@ var argumentScannerScanTests = []struct {
 		},
 	},
 	{
+		Input: "@#var",
+		Expect: []argumentScannerResult{
+			{Text: "var", NodeType: RuntimeInformation},
+		},
+	},
+	{
 		Input: "${print @a}",
 		Expect: []argumentScannerResult{
 			{Text: "print @a", NodeType: CsvqExpression},
@@ -89,7 +95,7 @@ var argumentScannerScanTests = []struct {
 	},
 	{
 		Input: "@%`var",
-		Error: "environment variable name not terminated",
+		Error: "environment variable not terminated",
 	},
 	{
 		Input: "arg@%",

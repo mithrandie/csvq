@@ -1991,7 +1991,7 @@ var setEnvVarTests = []struct {
 	{
 		Name: "Set Environment Variable",
 		Expr: parser.SetEnvVar{
-			EnvVar: parser.EnvVar{
+			EnvVar: parser.EnvironmentVariable{
 				Name: "CSVQ_SET_ENV_TEST",
 			},
 			Value: parser.NewStringValue("foo"),
@@ -2001,7 +2001,7 @@ var setEnvVarTests = []struct {
 	{
 		Name: "Set Environment Variable with Identifier",
 		Expr: parser.SetEnvVar{
-			EnvVar: parser.EnvVar{
+			EnvVar: parser.EnvironmentVariable{
 				Name: "CSVQ_SET_ENV_TEST",
 			},
 			Value: parser.Identifier{Literal: "bar"},
@@ -2011,7 +2011,7 @@ var setEnvVarTests = []struct {
 	{
 		Name: "Set Environment Variable with Null",
 		Expr: parser.SetEnvVar{
-			EnvVar: parser.EnvVar{
+			EnvVar: parser.EnvironmentVariable{
 				Name: "CSVQ_SET_ENV_TEST",
 			},
 			Value: parser.NewNullValue(),
@@ -2021,7 +2021,7 @@ var setEnvVarTests = []struct {
 	{
 		Name: "Set Environment Variable Evaluation Error",
 		Expr: parser.SetEnvVar{
-			EnvVar: parser.EnvVar{
+			EnvVar: parser.EnvironmentVariable{
 				Name: "CSVQ_SET_ENV_TEST",
 			},
 			Value: parser.FieldReference{Column: parser.Identifier{Literal: "err"}},
