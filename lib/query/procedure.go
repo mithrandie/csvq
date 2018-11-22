@@ -37,6 +37,7 @@ const (
 	AddColumnsQuery
 	DropColumnsQuery
 	RenameColumnQuery
+	AlterTableAttribute
 )
 
 type ExecResult struct {
@@ -312,8 +313,20 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		}
 	case parser.SetTableAttribute:
 		expr := stmt.(parser.SetTableAttribute)
-		if printstr, err = SetTableAttribute(expr, proc.Filter); err == nil {
+		if view, printstr, err = SetTableAttribute(expr, proc.Filter); err == nil {
+			results = []ExecResult{
+				{
+					Type:          AlterTableAttribute,
+					FileInfo:      view.FileInfo,
+					OperatedCount: 1,
+				},
+			}
 			Log(printstr, flags.Quiet)
+		} else {
+			if unchanged, ok := err.(*TableAttributeUnchangedError); ok {
+				Log(fmt.Sprintf("Table attributes of %s remain unchanged", unchanged.Path), flags.Quiet)
+				err = nil
+			}
 		}
 	case parser.TransactionControl:
 		switch stmt.(parser.TransactionControl).Token {

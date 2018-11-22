@@ -589,6 +589,14 @@ var procedureExecuteStatementTests = []struct {
 		Input: parser.SetTableAttribute{
 			Table:     parser.Identifier{Literal: "table1.csv"},
 			Attribute: parser.Identifier{Literal: "delimiter"},
+			Value:     parser.NewStringValue(","),
+		},
+		Logs: "Table attributes of " + GetTestFilePath("table1.csv") + " remain unchanged\n",
+	},
+	{
+		Input: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "delimiter"},
 			Value:     parser.NewStringValue("\t"),
 		},
 		Logs: "\n" +

@@ -206,7 +206,7 @@ func (f *Filter) Evaluate(expr parser.QueryExpression) (value.Primary, error) {
 	case parser.CursorAttrebute:
 		val, err = f.evalCursorAttribute(expr.(parser.CursorAttrebute))
 	default:
-		return nil, NewInvalidValueErrorFromExpr(expr)
+		return nil, NewInvalidValueError(expr)
 	}
 
 	return val, err

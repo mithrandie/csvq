@@ -231,19 +231,7 @@ type InvalidValueError struct {
 	*BaseError
 }
 
-func NewInvalidValueError(message string, line int, char int, sourceFile string) error {
-	return &InvalidValueError{
-		&BaseError{
-			SourceFile: sourceFile,
-			Line:       line,
-			Char:       char,
-			Message:    message,
-			Code:       1,
-		},
-	}
-}
-
-func NewInvalidValueErrorFromExpr(expr parser.QueryExpression) error {
+func NewInvalidValueError(expr parser.QueryExpression) error {
 	return &InvalidValueError{
 		NewBaseError(expr, fmt.Sprintf(ErrorInvalidValue, expr)),
 	}
@@ -1175,7 +1163,7 @@ type ExternalCommandValueExpressionError struct {
 
 func NewExternalCommandValueExpressionError(expr parser.Expression) error {
 	return &ExternalCommandValueExpressionError{
-		NewBaseError(expr, fmt.Sprintf(ErrorExternalCommandValueExpression)),
+		NewBaseError(expr, ErrorExternalCommandValueExpression),
 	}
 }
 

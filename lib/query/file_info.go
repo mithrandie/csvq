@@ -2,8 +2,10 @@ package query
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"github.com/mithrandie/go-text"
@@ -25,6 +27,22 @@ const (
 	TableJsonEscape  = "JSON_ESCAPE"
 	TablePrettyPring = "PRETTY_PRINT"
 )
+
+type TableAttributeUnchangedError struct {
+	Path    string
+	Message string
+}
+
+func NewTableAttributeUnchangedError(fpath string) error {
+	return &TableAttributeUnchangedError{
+		Path:    fpath,
+		Message: "table attributes of %s remain unchanged",
+	}
+}
+
+func (e TableAttributeUnchangedError) Error() string {
+	return fmt.Sprintf(e.Message, e.Path)
+}
 
 type FileInfo struct {
 	Path      string
@@ -76,6 +94,7 @@ func NewFileInfo(
 
 func (f *FileInfo) Equivalent(f2 *FileInfo) bool {
 	if f.Path != f2.Path ||
+		f.Format != f2.Format ||
 		f.Delimiter != f2.Delimiter ||
 		(f2.DelimiterPositions != nil && !f.DelimiterPositions.Equal(f2.DelimiterPositions)) ||
 		f.JsonQuery != f2.JsonQuery ||
@@ -87,7 +106,7 @@ func (f *FileInfo) Equivalent(f2 *FileInfo) bool {
 }
 
 func (f *FileInfo) SetDelimiter(s string) error {
-	delimiter, delimiterPositions, auto, err := cmd.ParseDelimiter(
+	delimiter, dp, auto, err := cmd.ParseDelimiter(
 		s,
 		f.Delimiter,
 		f.DelimiterPositions,
@@ -96,35 +115,57 @@ func (f *FileInfo) SetDelimiter(s string) error {
 	if err != nil {
 		return err
 	}
+	delimiterPositions := fixedlen.DelimiterPositions(dp)
+
+	var format cmd.Format
+	if auto || delimiterPositions != nil {
+		format = cmd.FIXED
+	} else if delimiter == '\t' {
+		format = cmd.TSV
+	} else {
+		format = cmd.CSV
+	}
+
+	if f.Delimiter == delimiter &&
+		reflect.DeepEqual(f.DelimiterPositions, delimiterPositions) &&
+		f.Format == format {
+		return NewTableAttributeUnchangedError(f.Path)
+	}
 
 	f.Delimiter = delimiter
 	f.DelimiterPositions = delimiterPositions
-	if auto || f.DelimiterPositions != nil {
-		f.Format = cmd.FIXED
-	} else if delimiter == '\t' {
-		f.Format = cmd.TSV
-	} else {
-		f.Format = cmd.CSV
-	}
+	f.Format = format
 
 	return nil
 }
 
 func (f *FileInfo) SetFormat(s string) error {
-	format, et, err := cmd.ParseFormat(s, f.JsonEscape)
+	format, escapeType, err := cmd.ParseFormat(s, f.JsonEscape)
 	if err != nil {
 		return err
 	}
 
+	delimiter := f.Delimiter
+	encoding := f.Encoding
+
 	switch format {
 	case cmd.TSV:
-		f.Delimiter = '\t'
+		delimiter = '\t'
 	case cmd.JSON:
-		f.Encoding = text.UTF8
+		encoding = text.UTF8
+	}
+
+	if f.Delimiter == delimiter &&
+		f.Encoding == encoding &&
+		f.Format == format &&
+		f.JsonEscape == escapeType {
+		return NewTableAttributeUnchangedError(f.Path)
 	}
 
 	f.Format = format
-	f.JsonEscape = et
+	f.JsonEscape = escapeType
+	f.Delimiter = delimiter
+	f.Encoding = encoding
 	return nil
 }
 
@@ -141,6 +182,10 @@ func (f *FileInfo) SetEncoding(s string) error {
 		}
 	}
 
+	if f.Encoding == encoding {
+		return NewTableAttributeUnchangedError(f.Path)
+	}
+
 	f.Encoding = encoding
 	return nil
 }
@@ -151,16 +196,28 @@ func (f *FileInfo) SetLineBreak(s string) error {
 		return err
 	}
 
+	if f.LineBreak == lb {
+		return NewTableAttributeUnchangedError(f.Path)
+	}
+
 	f.LineBreak = lb
 	return nil
 }
 
-func (f *FileInfo) SetNoHeader(b bool) {
+func (f *FileInfo) SetNoHeader(b bool) error {
+	if b == f.NoHeader {
+		return NewTableAttributeUnchangedError(f.Path)
+	}
 	f.NoHeader = b
+	return nil
 }
 
-func (f *FileInfo) SetEncloseAll(b bool) {
+func (f *FileInfo) SetEncloseAll(b bool) error {
+	if b == f.EncloseAll {
+		return NewTableAttributeUnchangedError(f.Path)
+	}
 	f.EncloseAll = b
+	return nil
 }
 
 func (f *FileInfo) SetJsonEscape(s string) error {
@@ -169,12 +226,20 @@ func (f *FileInfo) SetJsonEscape(s string) error {
 		return err
 	}
 
+	if escape == f.JsonEscape {
+		return NewTableAttributeUnchangedError(f.Path)
+	}
+
 	f.JsonEscape = escape
 	return nil
 }
 
-func (f *FileInfo) SetPrettyPrint(b bool) {
+func (f *FileInfo) SetPrettyPrint(b bool) error {
+	if b == f.PrettyPrint {
+		return NewTableAttributeUnchangedError(f.Path)
+	}
 	f.PrettyPrint = b
+	return nil
 }
 
 func (f *FileInfo) Close() error {

@@ -782,7 +782,7 @@ func RenameColumn(query parser.RenameColumn, parentFilter *Filter) (*View, error
 	return view, nil
 }
 
-func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (string, error) {
+func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (*View, string, error) {
 	var log string
 	filter := parentFilter.CreateNode()
 
@@ -790,10 +790,10 @@ func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (st
 	view.ForUpdate = true
 	err := view.LoadFromTableIdentifier(query.Table, filter)
 	if err != nil {
-		return log, err
+		return view, log, err
 	}
 	if view.FileInfo.IsTemporary {
-		return log, NewNotTableError(query.Table)
+		return view, log, NewNotTableError(query.Table)
 	}
 
 	var p value.Primary
@@ -802,7 +802,7 @@ func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (st
 	} else {
 		p, err = filter.Evaluate(query.Value)
 		if err != nil {
-			return "", err
+			return view, log, err
 		}
 	}
 
@@ -812,7 +812,7 @@ func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (st
 	case TableDelimiter, TableFormat, TableEncoding, TableLineBreak, TableJsonEscape:
 		s := value.ToString(p)
 		if value.IsNull(s) {
-			return log, NewTableAttributeValueNotAllowedFormatError(query)
+			return view, log, NewTableAttributeValueNotAllowedFormatError(query)
 		}
 		switch attr {
 		case TableDelimiter:
@@ -829,22 +829,25 @@ func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (st
 	case TableHeader, TableEncloseAll, TablePrettyPring:
 		b := value.ToBoolean(p)
 		if value.IsNull(b) {
-			return log, NewTableAttributeValueNotAllowedFormatError(query)
+			return view, log, NewTableAttributeValueNotAllowedFormatError(query)
 		}
 		switch attr {
 		case TableHeader:
-			fileInfo.SetNoHeader(!b.(value.Boolean).Raw())
+			err = fileInfo.SetNoHeader(!b.(value.Boolean).Raw())
 		case TableEncloseAll:
-			fileInfo.SetEncloseAll(b.(value.Boolean).Raw())
+			err = fileInfo.SetEncloseAll(b.(value.Boolean).Raw())
 		case TablePrettyPring:
-			fileInfo.SetPrettyPrint(b.(value.Boolean).Raw())
+			err = fileInfo.SetPrettyPrint(b.(value.Boolean).Raw())
 		}
 	default:
-		return log, NewInvalidTableAttributeNameError(query.Attribute)
+		return view, log, NewInvalidTableAttributeNameError(query.Attribute)
 	}
 
 	if err != nil {
-		return log, NewInvalidTableAttributeValueError(query, err.Error())
+		if _, ok := err.(*TableAttributeUnchangedError); ok {
+			return view, log, err
+		}
+		return view, log, NewInvalidTableAttributeValueError(query, err.Error())
 	}
 
 	w := cmd.NewObjectWriter()
@@ -858,7 +861,10 @@ func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (st
 	w.Title2 = query.Table.(parser.Identifier).Literal
 	w.Title2Effect = cmd.IdentifierEffect
 	log = "\n" + w.String() + "\n"
-	return log, nil
+
+	ViewCache.Replace(view)
+
+	return view, log, nil
 }
 
 func Commit(expr parser.Expression, filter *Filter) error {

@@ -3990,7 +3990,7 @@ func TestSetTableAttribute(t *testing.T) {
 	for _, v := range setTableAttributeTests {
 		ReleaseResources()
 
-		_, err := SetTableAttribute(v.Query, filter)
+		_, _, err := SetTableAttribute(v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -4019,6 +4019,13 @@ func TestSetTableAttribute(t *testing.T) {
 
 		if !reflect.DeepEqual(view.FileInfo, v.Expect) {
 			t.Errorf("%s: result = %v, want %v", v.Name, view.FileInfo, v.Expect)
+		}
+
+		_, _, err = SetTableAttribute(v.Query, filter)
+		if err == nil {
+			t.Errorf("%s: no error, want TableAttributeUnchangedError for duplicate set", v.Name)
+		} else if _, ok := err.(*TableAttributeUnchangedError); !ok {
+			t.Errorf("%s: error = %T, want TableAttributeUnchangedError for duplicate set", v.Name, err)
 		}
 	}
 	ReleaseResources()
