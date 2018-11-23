@@ -87,11 +87,11 @@ const (
 	ErrorReplaceValueLength                   = "%s"
 	ErrorSourceInvalidFilePath                = "%s is a invalid file path"
 	ErrorSourceFileNotExist                   = "file %s does not exist"
-	ErrorInvalidFlagName                      = "flag %s does not exist"
+	ErrorInvalidFlagName                      = "%s is an unknown flag"
 	ErrorFlagValueNowAllowedFormat            = "%s for %s is not allowed"
 	ErrorInvalidFlagValue                     = "%s"
-	ErrorInvalidRuntimeInformation            = "runtime information %s does not exist"
-	ErrorNotTable                             = "%s is not a table that has attributes"
+	ErrorInvalidRuntimeInformation            = "%s is an unknown runtime information"
+	ErrorNotTable                             = "view has no attributes"
 	ErrorInvalidTableAttributeName            = "table attribute %s does not exist"
 	ErrorTableAttributeValueNotAllowedFormat  = "%s for %s is not allowed"
 	ErrorInvalidTableAttributeValue           = "%s"
@@ -101,10 +101,9 @@ const (
 	ErrorFieldLengthNotMatch                  = "field length does not match"
 	ErrorRowValueLengthInList                 = "row value length does not match at index %d"
 	ErrorFormatStringLengthNotMatch           = "number of replace values does not match"
-	ErrorUnknownFormatPlaceholder             = "unknown placeholder: %q"
+	ErrorUnknownFormatPlaceholder             = "%q is an unknown placeholder"
 	ErrorFormatUnexpectedTermination          = "unexpected termination of format string"
 	ErrorExternalCommand                      = "external command: %s"
-	ErrorExternalCommandValueExpression       = "external command: only an expression that represents a value are allowd in a brackets"
 )
 
 type ForcedExit struct {
@@ -1031,7 +1030,7 @@ type NotTableError struct {
 
 func NewNotTableError(expr parser.QueryExpression) error {
 	return &NotTableError{
-		NewBaseError(expr, fmt.Sprintf(ErrorNotTable, expr)),
+		NewBaseError(expr, ErrorNotTable),
 	}
 }
 
@@ -1154,16 +1153,6 @@ type ExternalCommandError struct {
 func NewExternalCommandError(expr parser.Expression, message string) error {
 	return &ExternalCommandError{
 		NewBaseError(expr, fmt.Sprintf(ErrorExternalCommand, message)),
-	}
-}
-
-type ExternalCommandValueExpressionError struct {
-	*BaseError
-}
-
-func NewExternalCommandValueExpressionError(expr parser.Expression) error {
-	return &ExternalCommandValueExpressionError{
-		NewBaseError(expr, ErrorExternalCommandValueExpression),
 	}
 }
 

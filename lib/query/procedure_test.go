@@ -29,7 +29,7 @@ var procedureExecuteStatementTests = []struct {
 			Name:  "invalid",
 			Value: parser.NewStringValue("\t"),
 		},
-		Error:     "[L:- C:-] flag @@invalid does not exist",
+		Error:     "[L:- C:-] @@invalid is an unknown flag",
 		ErrorCode: 1,
 	},
 	{
@@ -1626,41 +1626,6 @@ var procedureExecExternalCommand = []struct {
 			Command: "cmd @__not_exist__",
 		},
 		Error: "[L:- C:-] external command: variable @__not_exist__ is undeclared",
-	},
-	{
-		Name: "Error in Evaluation of Runtime Information",
-		Stmt: parser.ExternalCommand{
-			Command: "cmd @#notexist",
-		},
-		Error: "[L:- C:-] external command: runtime information @#notexist does not exist",
-	},
-	{
-		Name: "Error in Parsing CSVQ Expression",
-		Stmt: parser.ExternalCommand{
-			Command: "cmd ${invalid invalid}",
-		},
-		Error: "[L:- C:-] external command: syntax error: unexpected token \"invalid\"",
-	},
-	{
-		Name: "Type Error in Parsing CSVQ Expression",
-		Stmt: parser.ExternalCommand{
-			Command: "cmd ${print 1;}",
-		},
-		Error: "[L:- C:-] external command: only an expression that represents a value are allowd in a brackets",
-	},
-	{
-		Name: "Evaluation Error in Parsing CSVQ Expression",
-		Stmt: parser.ExternalCommand{
-			Command: "cmd ${select 1;}",
-		},
-		Error: "[L:- C:-] external command: only an expression that represents a value are allowd in a brackets",
-	},
-	{
-		Name: "Multiple Expressions Error in Parsing CSVQ Expression",
-		Stmt: parser.ExternalCommand{
-			Command: "cmd ${1;2}",
-		},
-		Error: "[L:- C:-] external command: only an expression that represents a value are allowd in a brackets",
 	},
 }
 

@@ -99,7 +99,7 @@ var stringFormatterFormatTests = []struct {
 		Values: []value.Primary{
 			value.NewString("str"),
 		},
-		Error: "[L:- C:-] unknown placeholder: \"w\"",
+		Error: "[L:- C:-] \"w\" is an unknown placeholder",
 	},
 	{
 		Format: "--%0",

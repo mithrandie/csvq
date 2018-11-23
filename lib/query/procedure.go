@@ -1,7 +1,6 @@
 package query
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"os/exec"
@@ -528,24 +527,6 @@ func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, 
 }
 
 func (proc *Procedure) ExecExternalCommand(stmt parser.ExternalCommand) error {
-	var writeQueryExpression = func(buf *bytes.Buffer, expr parser.QueryExpression) error {
-		p, err := proc.Filter.Evaluate(expr)
-		if err != nil {
-			if _, ok := err.(*InvalidValueError); ok {
-				err = NewExternalCommandValueExpressionError(stmt)
-			} else if ae, ok := err.(AppError); ok {
-				err = NewExternalCommandError(stmt, ae.ErrorMessage())
-			}
-			return err
-		}
-		s, _ := Formatter.Format("%s", []value.Primary{p})
-		buf.WriteString(s)
-		if err != nil {
-			err = NewExternalCommandError(stmt, err.Error())
-		}
-		return err
-	}
-
 	splitter := new(excmd.ArgsSplitter).Init(stmt.Command)
 	var argStrs = make([]string, 0, 8)
 	for splitter.Scan() {
@@ -556,58 +537,18 @@ func (proc *Procedure) ExecExternalCommand(stmt parser.ExternalCommand) error {
 		return NewExternalCommandError(stmt, err.Error())
 	}
 
-	scanner := new(excmd.ArgumentScanner)
 	args := make([]string, 0, len(argStrs))
-	arg := new(bytes.Buffer)
 	for _, argStr := range argStrs {
-		arg.Reset()
-		scanner.Init(argStr)
-		for scanner.Scan() {
-
-			switch scanner.NodeType() {
-			case excmd.FixedString:
-				arg.WriteString(scanner.Text())
-			case excmd.Variable:
-				if err = writeQueryExpression(arg, parser.Variable{Name: scanner.Text()}); err != nil {
-					return err
-				}
-			case excmd.EnvironmentVariable:
-				if err = writeQueryExpression(arg, parser.EnvironmentVariable{Name: scanner.Text()}); err != nil {
-					return err
-				}
-			case excmd.RuntimeInformation:
-				if err = writeQueryExpression(arg, parser.RuntimeInformation{Name: scanner.Text()}); err != nil {
-					return err
-				}
-			case excmd.CsvqExpression:
-				command := scanner.Text()
-				statements, err := parser.Parse(command, "")
-				if err != nil {
-					syntaxErr := err.(*parser.SyntaxError)
-					return NewExternalCommandError(stmt, syntaxErr.Message)
-				}
-
-				switch len(statements) {
-				case 0:
-					args = append(args, "")
-				case 1:
-					expr, ok := statements[0].(parser.QueryExpression)
-					if !ok {
-						return NewExternalCommandValueExpressionError(stmt)
-					}
-					if err = writeQueryExpression(arg, expr); err != nil {
-						return err
-					}
-				default:
-					return NewExternalCommandValueExpressionError(stmt)
-				}
+		arg, err := proc.Filter.EvaluateEmbeddedString(argStr)
+		if err != nil {
+			if appErr, ok := err.(AppError); ok {
+				err = NewExternalCommandError(stmt, appErr.ErrorMessage())
+			} else {
+				err = NewExternalCommandError(stmt, err.Error())
 			}
+			return err
 		}
-		if err = scanner.Err(); err != nil {
-			return NewExternalCommandError(stmt, err.Error())
-		}
-
-		args = append(args, arg.String())
+		args = append(args, arg)
 	}
 
 	if len(args) < 1 {

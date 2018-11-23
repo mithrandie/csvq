@@ -3670,7 +3670,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "delimiter"},
 			Value:     parser.NewStringValue(","),
 		},
-		Error: "[L:- C:-] tmpview is not a table that has attributes",
+		Error: "[L:- C:-] view has no attributes",
 	},
 	{
 		Name: "Value Evaluation Error",

@@ -598,7 +598,7 @@ var setFlagTests = []struct {
 			Name:  "invalid",
 			Value: parser.NewStringValue("string"),
 		},
-		Error: "[L:- C:-] flag @@invalid does not exist",
+		Error: "[L:- C:-] @@invalid is an unknown flag",
 	},
 	{
 		Name: "Invalid Flag Value Error",
@@ -1208,7 +1208,7 @@ var showFlagTests = []struct {
 		Expr: parser.ShowFlag{
 			Name: "invalid",
 		},
-		Error: "[L:- C:-] flag @@invalid does not exist",
+		Error: "[L:- C:-] @@invalid is an unknown flag",
 	},
 }
 
