@@ -85,7 +85,7 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 
 	var err error
 
-	term, err := query.NewTerminal()
+	term, err := query.NewTerminal(proc.Filter)
 	if err != nil {
 		return err
 	}

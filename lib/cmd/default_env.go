@@ -1,6 +1,6 @@
 package cmd
 
-const defaultEnvJson = `
+var DefaultEnvJson = `
 {
   "datetime_format": [],
   "interactive_shell": {
@@ -8,6 +8,8 @@ const defaultEnvJson = `
     "history_limit": 500
   },
   "environment_variables": {},
+  "prompt": "\u001b[34;1m@#WORKING_DIRECTORY${(IF(@#UNCOMMITTED, ' \u001b[33;1m(Uncommitted:' || @#CREATED + @#UPDATED + @#UPDATED_VIEWS || ')', ''))}\u001b[34;1m >\u001b[0m ",
+  "continuous_prompt": " > ",
   "palette": {
     "effectors": {
       "label": {

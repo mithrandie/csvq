@@ -6,8 +6,8 @@ import (
 )
 
 type argumentScannerResult struct {
-	Text     string
-	NodeType NodeType
+	Text        string
+	ElementType ElementType
 }
 
 var argumentScannerScanTests = []struct {
@@ -22,75 +22,75 @@ var argumentScannerScanTests = []struct {
 	{
 		Input: "arg",
 		Expect: []argumentScannerResult{
-			{Text: "arg", NodeType: FixedString},
+			{Text: "arg", ElementType: FixedString},
 		},
 	},
 	{
 		Input: "\\$",
 		Expect: []argumentScannerResult{
-			{Text: "$", NodeType: FixedString},
+			{Text: "$", ElementType: FixedString},
 		},
 	},
 	{
 		Input: "\\@",
 		Expect: []argumentScannerResult{
-			{Text: "@", NodeType: FixedString},
+			{Text: "@", ElementType: FixedString},
 		},
 	},
 	{
 		Input: "arg\\@arg\\\\\\$arg\\arg",
 		Expect: []argumentScannerResult{
-			{Text: "arg@arg\\$arg\\arg", NodeType: FixedString},
+			{Text: "arg@arg\\$arg\\arg", ElementType: FixedString},
 		},
 	},
 	{
 		Input: "@var",
 		Expect: []argumentScannerResult{
-			{Text: "var", NodeType: Variable},
+			{Text: "var", ElementType: Variable},
 		},
 	},
 	{
 		Input: "@%var",
 		Expect: []argumentScannerResult{
-			{Text: "var", NodeType: EnvironmentVariable},
+			{Text: "var", ElementType: EnvironmentVariable},
 		},
 	},
 	{
 		Input: "@%`var\\\\var\\`var`",
 		Expect: []argumentScannerResult{
-			{Text: "var\\var`var", NodeType: EnvironmentVariable},
+			{Text: "var\\var`var", ElementType: EnvironmentVariable},
 		},
 	},
 	{
 		Input: "@#var",
 		Expect: []argumentScannerResult{
-			{Text: "var", NodeType: RuntimeInformation},
+			{Text: "var", ElementType: RuntimeInformation},
 		},
 	},
 	{
 		Input: "${print @a}",
 		Expect: []argumentScannerResult{
-			{Text: "print @a", NodeType: CsvqExpression},
+			{Text: "print @a", ElementType: CsvqExpression},
 		},
 	},
 	{
 		Input: "${print 'a\\{bc\\}de'}",
 		Expect: []argumentScannerResult{
-			{Text: "print 'a{bc}de'", NodeType: CsvqExpression},
+			{Text: "print 'a{bc}de'", ElementType: CsvqExpression},
 		},
 	},
 	{
 		Input: "cmd --option arg1 'arg 2' arg3",
 		Expect: []argumentScannerResult{
-			{Text: "cmd --option arg1 'arg 2' arg3", NodeType: FixedString},
+			{Text: "cmd --option arg1 'arg 2' arg3", ElementType: FixedString},
 		},
 	},
 	{
 		Input: "arg${print @a}arg",
 		Expect: []argumentScannerResult{
-			{Text: "arg", NodeType: FixedString},
-			{Text: "print @a", NodeType: CsvqExpression},
-			{Text: "arg", NodeType: FixedString},
+			{Text: "arg", ElementType: FixedString},
+			{Text: "print @a", ElementType: CsvqExpression},
+			{Text: "arg", ElementType: FixedString},
 		},
 	},
 	{
@@ -116,7 +116,7 @@ func TestArgumentScanner_Scan(t *testing.T) {
 		scanner := new(ArgumentScanner).Init(v.Input)
 		var args []argumentScannerResult
 		for scanner.Scan() {
-			args = append(args, argumentScannerResult{Text: scanner.Text(), NodeType: scanner.NodeType()})
+			args = append(args, argumentScannerResult{Text: scanner.Text(), ElementType: scanner.ElementType()})
 		}
 		err := scanner.Err()
 

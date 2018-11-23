@@ -1283,6 +1283,11 @@ type Pwd struct {
 	*BaseExpr
 }
 
+type Reload struct {
+	*BaseExpr
+	Type Identifier
+}
+
 type Execute struct {
 	*BaseExpr
 	Statements QueryExpression

@@ -33,6 +33,8 @@ type Environment struct {
 	DatetimeFormat       []string            `json:"datetime_format"`
 	InteractiveShell     InteractiveShell    `json:"interactive_shell"`
 	EnvironmentVariables map[string]string   `json:"environment_variables"`
+	Prompt               string              `json:"prompt"`
+	ContinuousPrompt     string              `json:"continuous_prompt"`
 	Palette              color.PaletteConfig `json:"palette"`
 }
 
@@ -53,6 +55,14 @@ func (e *Environment) Merge(e2 *Environment) {
 		e.EnvironmentVariables[k] = v
 	}
 
+	if 0 < len(e2.Prompt) {
+		e.Prompt = e2.Prompt
+	}
+
+	if 0 < len(e2.ContinuousPrompt) {
+		e.ContinuousPrompt = e2.ContinuousPrompt
+	}
+
 	for k, v := range e2.Palette.Effectors {
 		e.Palette.Effectors[k] = v
 	}
@@ -67,7 +77,7 @@ func LoadEnvironment() error {
 	var err error
 
 	environment = &Environment{}
-	if err = json.Unmarshal([]byte(defaultEnvJson), environment); err != nil {
+	if err = json.Unmarshal([]byte(DefaultEnvJson), environment); err != nil {
 		return errors.New(fmt.Sprintf("`json syntax error: %s", err.Error()))
 	}
 

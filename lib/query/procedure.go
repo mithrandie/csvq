@@ -165,6 +165,10 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			if OutFile != nil {
 				writer = OutFile
 			} else {
+				if Terminal != nil {
+					Terminal.RestoreOriginalMode()
+					defer Terminal.RestoreRawMode()
+				}
 				writer = Stdout
 			}
 			err = EncodeView(writer, view, fileInfo)
@@ -351,6 +355,8 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		if err == nil {
 			Log(dirpath, false)
 		}
+	case parser.Reload:
+		err = Reload(stmt.(parser.Reload))
 	case parser.ShowObjects:
 		if printstr, err = ShowObjects(stmt.(parser.ShowObjects), proc.Filter); err == nil {
 			Log(printstr, false)

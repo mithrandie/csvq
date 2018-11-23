@@ -9,10 +9,10 @@ import (
 )
 
 type ArgumentScanner struct {
-	src      []rune
-	srcPos   int
-	text     bytes.Buffer
-	nodeType NodeType
+	src         []rune
+	srcPos      int
+	text        bytes.Buffer
+	elementType ElementType
 
 	err error
 }
@@ -21,7 +21,7 @@ func (s *ArgumentScanner) Init(src string) *ArgumentScanner {
 	s.src = []rune(src)
 	s.srcPos = 0
 	s.text.Reset()
-	s.nodeType = 0
+	s.elementType = 0
 	s.err = nil
 	return s
 }
@@ -34,8 +34,8 @@ func (s *ArgumentScanner) Text() string {
 	return s.text.String()
 }
 
-func (s *ArgumentScanner) NodeType() NodeType {
-	return s.nodeType
+func (s *ArgumentScanner) ElementType() ElementType {
+	return s.elementType
 }
 
 func (s *ArgumentScanner) peek() rune {
@@ -68,15 +68,15 @@ func (s *ArgumentScanner) Scan() bool {
 		switch s.peek() {
 		case parser.EnvironmentVariableSign:
 			s.next()
-			s.nodeType = EnvironmentVariable
+			s.elementType = EnvironmentVariable
 		case parser.RuntimeInformationSign:
 			s.next()
-			s.nodeType = RuntimeInformation
+			s.elementType = RuntimeInformation
 		default:
-			s.nodeType = Variable
+			s.elementType = Variable
 		}
 
-		if s.nodeType == EnvironmentVariable && s.peek() == '`' {
+		if s.elementType == EnvironmentVariable && s.peek() == '`' {
 			s.scanQuotedEnvironmentVariable(s.next())
 		} else {
 			s.scanVariable()
@@ -88,7 +88,7 @@ func (s *ArgumentScanner) Scan() bool {
 	case parser.ExternalCommandSign:
 		s.next()
 
-		s.nodeType = CsvqExpression
+		s.elementType = CsvqExpression
 		if s.peek() != parser.BeginExpression {
 			s.err = errors.New("invalid command symbol")
 		} else {
@@ -96,7 +96,7 @@ func (s *ArgumentScanner) Scan() bool {
 			s.scanCsvqExpression()
 		}
 	default:
-		s.nodeType = FixedString
+		s.elementType = FixedString
 		s.scanString()
 	}
 

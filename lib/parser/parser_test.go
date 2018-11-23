@@ -4045,6 +4045,15 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "reload config",
+		Output: []Statement{
+			Reload{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Type:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "config"},
+			},
+		},
+	},
+	{
 		Input: "set @@delimiter = ','",
 		Output: []Statement{
 			SetFlag{
@@ -5194,6 +5203,22 @@ var parseTests = []struct {
 		Input: "'abc'",
 		Output: []Statement{
 			NewStringValue("abc"),
+		},
+	},
+	{
+		Input: "(if(column1, column2, column3))",
+		Output: []Statement{
+			Parentheses{
+				Expr: Function{
+					BaseExpr: &BaseExpr{line: 1, char: 2},
+					Name:     "if",
+					Args: []QueryExpression{
+						FieldReference{BaseExpr: &BaseExpr{line: 1, char: 5}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 5}, Literal: "column1"}},
+						FieldReference{BaseExpr: &BaseExpr{line: 1, char: 14}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 14}, Literal: "column2"}},
+						FieldReference{BaseExpr: &BaseExpr{line: 1, char: 23}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 23}, Literal: "column3"}},
+					},
+				},
+			},
 		},
 	},
 	{

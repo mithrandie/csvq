@@ -10,16 +10,15 @@ import (
 	"github.com/chzyer/readline"
 	"github.com/mitchellh/go-homedir"
 	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/go-text/color"
 )
 
 type ReadLineTerminal struct {
 	terminal *readline.Instance
 	fd       int
-	palette  *color.Palette
+	prompt   *Prompt
 }
 
-func NewTerminal() (VirtualTerminal, error) {
+func NewTerminal(filter *Filter) (VirtualTerminal, error) {
 	fd := int(ScreenFd)
 
 	p, _ := cmd.GetPalette()
@@ -32,8 +31,10 @@ func NewTerminal() (VirtualTerminal, error) {
 		limit = -1
 	}
 
+	prompt := NewPrompt(filter, p)
+	prompt.LoadConfig()
+
 	t, err := readline.NewEx(&readline.Config{
-		Prompt:                 p.Render(cmd.PromptEffect, TerminalPrompt),
 		HistoryFile:            historyFile,
 		DisableAutoSaveHistory: true,
 		HistoryLimit:           limit,
@@ -45,11 +46,14 @@ func NewTerminal() (VirtualTerminal, error) {
 		return nil, err
 	}
 
-	return ReadLineTerminal{
+	terminal := ReadLineTerminal{
 		terminal: t,
 		fd:       fd,
-		palette:  p,
-	}, nil
+		prompt:   prompt,
+	}
+
+	terminal.SetPrompt()
+	return terminal, nil
 }
 
 func (t ReadLineTerminal) Teardown() {
@@ -79,11 +83,19 @@ func (t ReadLineTerminal) WriteError(s string) error {
 }
 
 func (t ReadLineTerminal) SetPrompt() {
-	t.terminal.SetPrompt(t.palette.Render(cmd.PromptEffect, TerminalPrompt))
+	str, err := t.prompt.RenderPrompt()
+	if err != nil {
+		WriteToStderrWithLineBreak(cmd.Error(err.Error()))
+	}
+	t.terminal.SetPrompt(str)
 }
 
 func (t ReadLineTerminal) SetContinuousPrompt() {
-	t.terminal.SetPrompt(t.palette.Render(cmd.PromptEffect, TerminalContinuousPrompt))
+	str, err := t.prompt.RenderContinuousPrompt()
+	if err != nil {
+		WriteToStderrWithLineBreak(cmd.Error(err.Error()))
+	}
+	t.terminal.SetPrompt(str)
 }
 
 func (t ReadLineTerminal) SaveHistory(s string) {
@@ -92,6 +104,10 @@ func (t ReadLineTerminal) SaveHistory(s string) {
 
 func (t ReadLineTerminal) GetSize() (int, int, error) {
 	return readline.GetSize(t.fd)
+}
+
+func (t ReadLineTerminal) ReloadPromptConfig() error {
+	return t.prompt.LoadConfig()
 }
 
 func HistoryFilePath(filename string) (string, error) {

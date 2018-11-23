@@ -5,7 +5,7 @@ package query
 import (
 	"io"
 
-	"github.com/mithrandie/go-text/color"
+	"github.com/mithrandie/csvq/lib/cmd"
 
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -15,10 +15,10 @@ type SSHTerminal struct {
 	stdin     int
 	origState *terminal.State
 	rawState  *terminal.State
-	palette   *color.Palette
+	prompt    *Prompt
 }
 
-func NewTerminal() (VirtualTerminal, error) {
+func NewTerminal(filter *Filter) (VirtualTerminal, error) {
 	stdin := int(ScreenFd)
 	origState, err := terminal.MakeRaw(stdin)
 	if err != nil {
@@ -30,15 +30,20 @@ func NewTerminal() (VirtualTerminal, error) {
 		return nil, err
 	}
 
-	p, _ := GetPalette()
+	p, _ := cmd.GetPalette()
+	prompt := NewPrompt(filter, p)
+	prompt.LoadConfig()
 
-	return SSHTerminal{
-		terminal:  terminal.NewTerminal(NewStdIO(), p.Render(PromptEffect, TerminalPrompt)),
+	t := SSHTerminal{
+		terminal:  terminal.NewTerminal(NewStdIO(), p.Render(cmd.PromptEffect, TerminalPrompt)),
 		stdin:     stdin,
 		origState: origState,
 		rawState:  rawState,
-		palette:   p,
-	}, nil
+		prompt:    prompt,
+	}
+
+	t.SetPrompt()
+	return t, nil
 }
 
 func (t SSHTerminal) Teardown() {
@@ -68,11 +73,19 @@ func (t SSHTerminal) WriteError(s string) error {
 }
 
 func (t SSHTerminal) SetPrompt() {
-	t.terminal.SetPrompt(t.palette.Render(PromptEffect, TerminalPrompt))
+	str, err := t.prompt.RenderPrompt()
+	if err != nil {
+		WriteToStderrWithLineBreak(cmd.Error(err.Error()))
+	}
+	t.terminal.SetPrompt(str)
 }
 
 func (t SSHTerminal) SetContinuousPrompt() {
-	t.terminal.SetPrompt(t.palette.Render(PromptEffect, TerminalContinuousPrompt))
+	str, err := t.prompt.RenderContinuousPrompt()
+	if err != nil {
+		WriteToStderrWithLineBreak(cmd.Error(err.Error()))
+	}
+	t.terminal.SetPrompt(str)
 }
 
 func (t SSHTerminal) SaveHistory(s string) {
@@ -81,6 +94,10 @@ func (t SSHTerminal) SaveHistory(s string) {
 
 func (t SSHTerminal) GetSize() (int, int, error) {
 	return terminal.GetSize(t.stdin)
+}
+
+func (t SSHTerminal) ReloadPromptConfig() error {
+	return t.prompt.LoadConfig()
 }
 
 type StdIO struct {

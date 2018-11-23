@@ -1148,7 +1148,7 @@ func (f *Filter) EvaluateEmbeddedString(embedded string) (string, error) {
 	var err error
 
 	for scanner.Scan() {
-		switch scanner.NodeType() {
+		switch scanner.ElementType() {
 		case excmd.FixedString:
 			buf.WriteString(scanner.Text())
 		case excmd.Variable:

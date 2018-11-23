@@ -15,6 +15,7 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mithrandie/go-text"
+	"github.com/mithrandie/go-text/color"
 	"github.com/mithrandie/go-text/fixedlen"
 	"github.com/mithrandie/ternary"
 )
@@ -28,6 +29,10 @@ const (
 )
 
 const IgnoredFlagPrefix = "(ignored) "
+
+const (
+	ReloadConfig = "CONFIG"
+)
 
 func Echo(expr parser.Echo, filter *Filter) (string, error) {
 	p, err := filter.Evaluate(expr.Value)
@@ -868,4 +873,32 @@ func Pwd(expr parser.Pwd) (string, error) {
 		}
 	}
 	return dirpath, err
+}
+
+func Reload(expr parser.Reload) error {
+	switch strings.ToUpper(expr.Type.Literal) {
+	case ReloadConfig:
+		if err := cmd.LoadEnvironment(); err != nil {
+			return NewLoadConfigurationError(expr, err.Error())
+		}
+
+		env, _ := cmd.GetEnvironment()
+		palette, err := color.GeneratePalette(env.Palette)
+		if err != nil {
+			return NewLoadConfigurationError(expr, err.Error())
+		}
+		oldPalette, _ := cmd.GetPalette()
+		oldPalette.Merge(palette)
+
+		if Terminal != nil {
+			if err := Terminal.ReloadPromptConfig(); err != nil {
+				return NewLoadConfigurationError(expr, err.Error())
+			}
+
+		}
+
+	default:
+		return NewInvalidReloadTypeError(expr, expr.Type.Literal)
+	}
+	return nil
 }

@@ -194,7 +194,7 @@ import (
 %token<token> SEPARATOR PARTITION OVER
 %token<token> COMMIT ROLLBACK
 %token<token> CONTINUE BREAK EXIT
-%token<token> ECHO PRINT PRINTF SOURCE EXECUTE CHDIR PWD TRIGGER
+%token<token> ECHO PRINT PRINTF SOURCE EXECUTE CHDIR PWD RELOAD TRIGGER
 %token<token> FUNCTION AGGREGATE BEGIN RETURN
 %token<token> IGNORE WITHIN
 %token<token> VAR SHOW
@@ -888,6 +888,10 @@ command_statement
     | PWD
     {
         $$ = Pwd{BaseExpr: NewBaseExpr($1)}
+    }
+    | RELOAD identifier
+    {
+        $$ = Reload{BaseExpr: NewBaseExpr($1), Type: $2}
     }
 
 trigger_statement

@@ -104,6 +104,8 @@ const (
 	ErrorUnknownFormatPlaceholder             = "%q is an unknown placeholder"
 	ErrorFormatUnexpectedTermination          = "unexpected termination of format string"
 	ErrorExternalCommand                      = "external command: %s"
+	ErrorInvalidReloadType                    = "%s is an unknown reload type"
+	ErrorLoadConfiguration                    = "configuration loading error: %s"
 )
 
 type ForcedExit struct {
@@ -1153,6 +1155,26 @@ type ExternalCommandError struct {
 func NewExternalCommandError(expr parser.Expression, message string) error {
 	return &ExternalCommandError{
 		NewBaseError(expr, fmt.Sprintf(ErrorExternalCommand, message)),
+	}
+}
+
+type InvalidReloadTypeError struct {
+	*BaseError
+}
+
+func NewInvalidReloadTypeError(expr parser.Reload, name string) error {
+	return &InvalidReloadTypeError{
+		NewBaseError(expr, fmt.Sprintf(ErrorInvalidReloadType, name)),
+	}
+}
+
+type LoadConfigurationError struct {
+	*BaseError
+}
+
+func NewLoadConfigurationError(expr parser.Reload, message string) error {
+	return &LoadConfigurationError{
+		NewBaseError(expr, fmt.Sprintf(ErrorLoadConfiguration, message)),
 	}
 }
 
