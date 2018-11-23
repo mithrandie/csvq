@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 )
@@ -672,14 +671,14 @@ func TestTemporaryViewScopes_Store(t *testing.T) {
 		"/path/to/table1.csv": nil,
 	}
 
-	oldStdout := cmd.Stdout
+	oldStdout := Stdout
 	r, w, _ := os.Pipe()
-	cmd.Stdout = w
+	Stdout = w
 
 	list.Store(UncommittedViews)
 
 	w.Close()
-	cmd.Stdout = oldStdout
+	Stdout = oldStdout
 
 	log, _ := ioutil.ReadAll(r)
 
@@ -798,14 +797,14 @@ func TestTemporaryViewScopes_Restore(t *testing.T) {
 		"/path/to/table2.csv": nil,
 	}
 
-	oldStdout := cmd.Stdout
+	oldStdout := Stdout
 	r, w, _ := os.Pipe()
-	cmd.Stdout = w
+	Stdout = w
 
 	list.Restore(UncommittedViews)
 
 	w.Close()
-	cmd.Stdout = oldStdout
+	Stdout = oldStdout
 
 	log, _ := ioutil.ReadAll(r)
 

@@ -8,12 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mithrandie/go-text/json"
-
-	"github.com/mithrandie/go-text"
-
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/value"
+
+	"github.com/mitchellh/go-homedir"
+	"github.com/mithrandie/go-text"
+	"github.com/mithrandie/go-text/json"
 )
 
 func GetTestFilePath(filename string) string {
@@ -24,6 +24,7 @@ var TestDir = filepath.Join(os.TempDir(), "csvq_query_test")
 var TestDataDir string
 var TestLocation = "UTC"
 var NowForTest = time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())
+var HomeDir string
 
 func GetTestLocation() *time.Location {
 	l, _ := time.LoadLocation(TestLocation)
@@ -99,6 +100,7 @@ func setup() {
 	os.Setenv("CSVQ_TEST_ENV", "foo")
 
 	Version = "v1.0.0"
+	HomeDir, _ = homedir.Dir()
 }
 
 func teardown() {

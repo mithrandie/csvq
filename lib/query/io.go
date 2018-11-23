@@ -1,4 +1,24 @@
-package cmd
+package query
+
+import (
+	"io"
+	"os"
+)
+
+var (
+	ScreenFd                = os.Stdin.Fd()
+	Stdin    io.ReadCloser  = os.Stdin
+	Stdout   io.WriteCloser = os.Stdout
+	Stderr   io.WriteCloser = os.Stderr
+	OutFile  io.Writer
+	Terminal VirtualTerminal
+)
+
+func Log(log string, quiet bool) {
+	if !quiet {
+		WriteToStdoutWithLineBreak(log)
+	}
+}
 
 func WriteToStdout(s string) error {
 	if Terminal != nil {

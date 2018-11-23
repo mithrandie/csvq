@@ -748,14 +748,14 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 		ReleaseResources()
 		UncommittedViews = NewUncommittedViewMap()
 
-		oldStdout := cmd.Stdout
+		oldStdout := Stdout
 		r, w, _ := os.Pipe()
-		cmd.Stdout = w
+		Stdout = w
 
 		_, err := proc.ExecuteStatement(v.Input)
 
 		w.Close()
-		cmd.Stdout = oldStdout
+		Stdout = oldStdout
 
 		log, _ := ioutil.ReadAll(r)
 
@@ -930,15 +930,15 @@ func TestProcedure_IfStmt(t *testing.T) {
 	proc := NewProcedure()
 
 	for _, v := range procedureIfStmtTests {
-		oldStdout := cmd.Stdout
+		oldStdout := Stdout
 
 		r, w, _ := os.Pipe()
-		cmd.Stdout = w
+		Stdout = w
 
 		flow, err := proc.IfStmt(v.Stmt)
 
 		w.Close()
-		cmd.Stdout = oldStdout
+		Stdout = oldStdout
 
 		log, _ := ioutil.ReadAll(r)
 
@@ -1104,15 +1104,15 @@ func TestProcedure_Case(t *testing.T) {
 	proc := NewProcedure()
 
 	for _, v := range procedureCaseStmtTests {
-		oldStdout := cmd.Stdout
+		oldStdout := Stdout
 
 		r, w, _ := os.Pipe()
-		cmd.Stdout = w
+		Stdout = w
 
 		flow, err := proc.Case(v.Stmt)
 
 		w.Close()
-		cmd.Stdout = oldStdout
+		Stdout = oldStdout
 
 		log, _ := ioutil.ReadAll(r)
 
@@ -1357,15 +1357,15 @@ func TestProcedure_While(t *testing.T) {
 		}
 		proc.Filter.Variables[0].Set(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
 
-		oldStdout := cmd.Stdout
+		oldStdout := Stdout
 
 		r, w, _ := os.Pipe()
-		cmd.Stdout = w
+		Stdout = w
 
 		flow, err := proc.While(v.Stmt)
 
 		w.Close()
-		cmd.Stdout = oldStdout
+		Stdout = oldStdout
 
 		log, _ := ioutil.ReadAll(r)
 
@@ -1569,14 +1569,14 @@ func TestProcedure_WhileInCursor(t *testing.T) {
 		ViewCache.Clean()
 		proc.Filter.Cursors.Open(parser.Identifier{Literal: "cur"}, proc.Filter)
 
-		oldStdout := cmd.Stdout
+		oldStdout := Stdout
 		r, w, _ := os.Pipe()
-		cmd.Stdout = w
+		Stdout = w
 
 		flow, err := proc.WhileInCursor(v.Stmt)
 
 		w.Close()
-		cmd.Stdout = oldStdout
+		Stdout = oldStdout
 
 		log, _ := ioutil.ReadAll(r)
 

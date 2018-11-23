@@ -1,7 +1,9 @@
-package cmd
+package query
 
 import (
 	"testing"
+
+	"github.com/mithrandie/csvq/lib/cmd"
 )
 
 func TestObjectWriter_String(t *testing.T) {
@@ -113,18 +115,18 @@ func TestObjectWriter_String(t *testing.T) {
 		t.Errorf("result = %q, want %q", result, expect)
 	}
 
-	GetFlags().SetColor(true)
+	cmd.GetFlags().SetColor(true)
 	w = NewObjectWriter()
 	w.MaxWidth = 20
 
 	w.Title1 = "title1"
 	w.Title2 = "title2"
-	w.Title2Effect = IdentifierEffect
+	w.Title2Effect = cmd.IdentifierEffect
 
 	w.Write("aaa")
 	w.BeginBlock()
 	w.NewLine()
-	w.WriteColor("bbbbbbbbbb", StringEffect)
+	w.WriteColor("bbbbbbbbbb", cmd.StringEffect)
 	w.Write(", ")
 	w.Write("bbbbbbbbbb")
 
@@ -140,5 +142,5 @@ func TestObjectWriter_String(t *testing.T) {
 		t.Errorf("result = %q, want %q", result, expect)
 	}
 
-	GetFlags().SetColor(false)
+	cmd.GetFlags().SetColor(false)
 }

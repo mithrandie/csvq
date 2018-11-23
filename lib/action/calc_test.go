@@ -5,7 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/query"
 )
 
@@ -54,9 +53,9 @@ func TestCalc(t *testing.T) {
 			w.Close()
 			os.Stdin = r
 		}
-		oldStdout := cmd.Stdout
+		oldStdout := query.Stdout
 		r, w, _ := os.Pipe()
-		cmd.Stdout = w
+		query.Stdout = w
 
 		err := Calc(v.Input)
 
@@ -64,7 +63,7 @@ func TestCalc(t *testing.T) {
 			os.Stdin = oldStdin
 		}
 		w.Close()
-		cmd.Stdout = oldStdout
+		query.Stdout = oldStdout
 		stdout, _ := ioutil.ReadAll(r)
 
 		if err != nil {

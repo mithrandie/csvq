@@ -65,15 +65,15 @@ func TestRun(t *testing.T) {
 
 		query.OutFile = nil
 
-		oldStdout := cmd.Stdout
+		oldStdout := query.Stdout
 		r, w, _ := os.Pipe()
-		cmd.Stdout = w
+		query.Stdout = w
 
 		proc := query.NewProcedure()
 		err := Run(proc, v.Input, "", v.OutFile)
 
 		w.Close()
-		cmd.Stdout = oldStdout
+		query.Stdout = oldStdout
 		stdout, _ := ioutil.ReadAll(r)
 
 		if err != nil {

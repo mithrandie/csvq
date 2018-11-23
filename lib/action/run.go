@@ -24,10 +24,10 @@ func Run(proc *query.Procedure, input string, sourceFile string, outfile string)
 
 	defer func() {
 		if e := query.Rollback(nil, proc.Filter); e != nil {
-			cmd.WriteToStderrWithLineBreak(e.Error())
+			query.WriteToStderrWithLineBreak(e.Error())
 		}
 		if err := query.ReleaseResourcesWithErrors(); err != nil {
-			cmd.WriteToStderrWithLineBreak(err.Error())
+			query.WriteToStderrWithLineBreak(err.Error())
 		}
 		showStats(start)
 	}()
@@ -62,7 +62,7 @@ func Run(proc *query.Procedure, input string, sourceFile string, outfile string)
 
 	if err == nil && flow == query.Terminate {
 		if e := query.Commit(nil, proc.Filter); e != nil {
-			cmd.WriteToStderrWithLineBreak(e.Error())
+			query.WriteToStderrWithLineBreak(e.Error())
 		}
 	}
 
@@ -76,36 +76,36 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 
 	defer func() {
 		if e := query.Rollback(nil, proc.Filter); e != nil {
-			cmd.WriteToStderrWithLineBreak(e.Error())
+			query.WriteToStderrWithLineBreak(e.Error())
 		}
 		if err := query.ReleaseResourcesWithErrors(); err != nil {
-			cmd.WriteToStderrWithLineBreak(err.Error())
+			query.WriteToStderrWithLineBreak(err.Error())
 		}
 	}()
 
 	var err error
 
-	term, err := cmd.NewTerminal()
+	term, err := query.NewTerminal()
 	if err != nil {
 		return err
 	}
-	cmd.Terminal = term
+	query.Terminal = term
 	defer func() {
-		cmd.Terminal.Teardown()
-		cmd.Terminal = nil
+		query.Terminal.Teardown()
+		query.Terminal = nil
 	}()
 
 	StartUpMessage := "" +
 		"csvq interactive shell\n" +
 		"Press Ctrl+D or execute \"EXIT;\" to terminate this shell.\n\n"
-	if werr := cmd.Terminal.Write(StartUpMessage); werr != nil {
+	if werr := query.Terminal.Write(StartUpMessage); werr != nil {
 		return werr
 	}
 
 	lines := make([]string, 0)
 
 	for {
-		line, e := cmd.Terminal.ReadLine()
+		line, e := query.Terminal.ReadLine()
 		if e != nil {
 			if e == io.EOF {
 				break
@@ -121,7 +121,7 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 
 		if 0 < len(line) && line[len(line)-1] == '\\' {
 			lines = append(lines, line[:len(line)-1])
-			cmd.Terminal.SetContinuousPrompt()
+			query.Terminal.SetContinuousPrompt()
 			continue
 		}
 
@@ -139,19 +139,19 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 		saveQuery := strings.Join(saveLines, " ")
 		if len(saveQuery) < 1 || saveQuery == ";" {
 			lines = lines[:0]
-			cmd.Terminal.SetPrompt()
+			query.Terminal.SetPrompt()
 			continue
 		}
-		cmd.Terminal.SaveHistory(saveQuery)
+		query.Terminal.SaveHistory(saveQuery)
 
 		statements, e := parser.Parse(strings.Join(lines, "\n"), "")
 		if e != nil {
 			e = query.NewSyntaxError(e.(*parser.SyntaxError))
-			if werr := cmd.Terminal.WriteError(cmd.Error(e.Error()) + "\n"); werr != nil {
+			if werr := query.Terminal.WriteError(cmd.Error(e.Error()) + "\n"); werr != nil {
 				return werr
 			}
 			lines = lines[:0]
-			cmd.Terminal.SetPrompt()
+			query.Terminal.SetPrompt()
 			continue
 		}
 
@@ -161,11 +161,11 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 				err = ex
 				break
 			} else {
-				if werr := cmd.Terminal.WriteError(cmd.Error(e.Error()) + "\n"); werr != nil {
+				if werr := query.Terminal.WriteError(cmd.Error(e.Error()) + "\n"); werr != nil {
 					return werr
 				}
 				lines = lines[:0]
-				cmd.Terminal.SetPrompt()
+				query.Terminal.SetPrompt()
 				continue
 			}
 		}
@@ -175,7 +175,7 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 		}
 
 		lines = lines[:0]
-		cmd.Terminal.SetPrompt()
+		query.Terminal.SetPrompt()
 	}
 
 	return err
@@ -204,7 +204,7 @@ func showStats(start time.Time) {
 	}
 	width = width + 1
 
-	w := cmd.NewObjectWriter()
+	w := query.NewObjectWriter()
 	w.WriteColor(" TotalTime:", cmd.LableEffect)
 	w.WriteSpaces(width - len(exectime))
 	w.WriteWithoutLineBreak(exectime + " seconds")
@@ -233,5 +233,5 @@ func showStats(start time.Time) {
 
 	w.Title1 = "Resource Statistics"
 
-	cmd.WriteToStdout("\n" + w.String())
+	query.WriteToStdout("\n" + w.String())
 }

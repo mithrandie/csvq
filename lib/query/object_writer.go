@@ -1,9 +1,10 @@
-package cmd
+package query
 
 import (
 	"bytes"
 	"strings"
 
+	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/go-text/color"
 )
 
@@ -40,7 +41,7 @@ func NewObjectWriter() *ObjectWriter {
 		}
 	}
 
-	palette, _ := GetPalette()
+	palette, _ := cmd.GetPalette()
 
 	return &ObjectWriter{
 		MaxWidth:    maxWidth,
@@ -91,7 +92,7 @@ func (w *ObjectWriter) write(s string, effect string, withoutLineBreak bool) {
 		} else {
 			w.writeToBuf(w.Palette.Render(effect, s))
 		}
-		w.column = w.column + TextWidth(s)
+		w.column = w.column + cmd.TextWidth(s)
 	}
 }
 
@@ -104,18 +105,18 @@ func (w *ObjectWriter) leadingSpacesWidth() int {
 }
 
 func (w *ObjectWriter) FitInLine(s string) bool {
-	if w.MaxWidth-w.Padding < w.column+TextWidth(s) {
+	if w.MaxWidth-w.Padding < w.column+cmd.TextWidth(s) {
 		return false
 	}
 	return true
 }
 
 func (w *ObjectWriter) WriteWithoutLineBreak(s string) {
-	w.WriteColorWithoutLineBreak(s, NoEffect)
+	w.WriteColorWithoutLineBreak(s, cmd.NoEffect)
 }
 
 func (w *ObjectWriter) Write(s string) {
-	w.WriteColor(s, NoEffect)
+	w.WriteColor(s, cmd.NoEffect)
 }
 
 func (w *ObjectWriter) WriteSpaces(l int) {
@@ -153,7 +154,7 @@ func (w *ObjectWriter) ClearBlock() {
 func (w *ObjectWriter) String() string {
 	var header bytes.Buffer
 	if 0 < len(w.Title1) || 0 < len(w.Title2) {
-		tw := TextWidth(w.Title1) + TextWidth(w.Title2)
+		tw := cmd.TextWidth(w.Title1) + cmd.TextWidth(w.Title2)
 		if 0 < len(w.Title1) && 0 < len(w.Title2) {
 			tw++
 		}

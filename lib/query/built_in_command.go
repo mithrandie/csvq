@@ -412,7 +412,7 @@ func showFlag(flag string) (string, error) {
 func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 	var s string
 
-	w := cmd.NewObjectWriter()
+	w := NewObjectWriter()
 
 	switch strings.ToUpper(expr.Type.Literal) {
 	case "TABLES":
@@ -603,7 +603,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 	return s, nil
 }
 
-func writeTableAttribute(w *cmd.ObjectWriter, info *FileInfo) {
+func writeTableAttribute(w *ObjectWriter, info *FileInfo) {
 	w.WriteColor("Format: ", cmd.LableEffect)
 	w.WriteWithoutLineBreak(info.Format.String())
 
@@ -670,7 +670,7 @@ func writeTableAttribute(w *cmd.ObjectWriter, info *FileInfo) {
 	}
 }
 
-func writeFields(w *cmd.ObjectWriter, fields []string) {
+func writeFields(w *ObjectWriter, fields []string) {
 	w.BeginBlock()
 	w.NewLine()
 	w.WriteColor("Fields: ", cmd.LableEffect)
@@ -689,7 +689,7 @@ func writeFields(w *cmd.ObjectWriter, fields []string) {
 	w.EndSubBlock()
 }
 
-func writeFunctions(w *cmd.ObjectWriter, funcs UserDefinedFunctionMap) {
+func writeFunctions(w *ObjectWriter, funcs UserDefinedFunctionMap) {
 	keys := funcs.SortedKeys()
 
 	for _, key := range keys {
@@ -755,7 +755,7 @@ func ShowFields(expr parser.ShowFields, filter *Filter) (string, error) {
 		}
 	}
 
-	w := cmd.NewObjectWriter()
+	w := NewObjectWriter()
 	w.WriteColorWithoutLineBreak("Type: ", cmd.LableEffect)
 	if view.FileInfo.IsTemporary {
 		w.WriteWithoutLineBreak("View")
@@ -788,7 +788,7 @@ func ShowFields(expr parser.ShowFields, filter *Filter) (string, error) {
 	return "\n" + w.String() + "\n", nil
 }
 
-func writeFieldList(w *cmd.ObjectWriter, fields []string) {
+func writeFieldList(w *ObjectWriter, fields []string) {
 	l := len(fields)
 	digits := len(strconv.Itoa(l))
 	fieldNumbers := make([]string, 0, l)

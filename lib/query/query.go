@@ -851,7 +851,7 @@ func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (*F
 		return nil, log, NewInvalidTableAttributeValueError(query, err.Error())
 	}
 
-	w := cmd.NewObjectWriter()
+	w := NewObjectWriter()
 	w.WriteColorWithoutLineBreak("Path: ", cmd.LableEffect)
 	w.WriteColorWithoutLineBreak(fileInfo.Path, cmd.ObjectEffect)
 	w.NewLine()

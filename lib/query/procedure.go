@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -30,7 +31,6 @@ const (
 var Version string
 var ViewCache = make(ViewMap, 10)
 var UncommittedViews = NewUncommittedViewMap()
-var OutFile io.Writer
 
 var Formatter = NewStringFormatter()
 
@@ -57,12 +57,6 @@ func ReleaseResourcesWithErrors() error {
 		return file.NewForcedUnlockError(errs)
 	}
 	return nil
-}
-
-func Log(log string, quiet bool) {
-	if !quiet {
-		cmd.WriteToStdoutWithLineBreak(log)
-	}
 }
 
 type Procedure struct {
@@ -172,7 +166,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			if OutFile != nil {
 				writer = OutFile
 			} else {
-				writer = cmd.Stdout
+				writer = Stdout
 			}
 			err = EncodeView(writer, view, fileInfo)
 			if err == nil {
@@ -616,7 +610,21 @@ func (proc *Procedure) ExecExternalCommand(stmt parser.ExternalCommand) error {
 		args = append(args, arg.String())
 	}
 
-	err = excmd.Exec(args)
+	if len(args) < 1 {
+		return nil
+	}
+
+	if Terminal != nil {
+		Terminal.RestoreOriginalMode()
+		defer Terminal.RestoreRawMode()
+	}
+
+	c := exec.Command(args[0], args[1:]...)
+	c.Stdin = Stdin
+	c.Stdout = Stdout
+	c.Stderr = Stderr
+
+	err = c.Run()
 	if err != nil {
 		err = NewExternalCommandError(stmt, err.Error())
 	}

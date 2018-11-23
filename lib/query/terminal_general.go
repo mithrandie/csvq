@@ -1,10 +1,9 @@
 // +build !darwin,!dragonfly,!freebsd,!linux,!netbsd,!openbsd,!solaris,!windows
 
-package cmd
+package query
 
 import (
 	"io"
-	"os"
 
 	"github.com/mithrandie/go-text/color"
 
@@ -20,7 +19,7 @@ type SSHTerminal struct {
 }
 
 func NewTerminal() (VirtualTerminal, error) {
-	stdin := int(os.Stdin.Fd())
+	stdin := int(ScreenFd)
 	origState, err := terminal.MakeRaw(stdin)
 	if err != nil {
 		return nil, err

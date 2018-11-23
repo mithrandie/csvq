@@ -1,6 +1,6 @@
 // +build darwin dragonfly freebsd linux netbsd openbsd solaris windows
 
-package cmd
+package query
 
 import (
 	"fmt"
@@ -9,6 +9,7 @@ import (
 
 	"github.com/chzyer/readline"
 	"github.com/mitchellh/go-homedir"
+	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/go-text/color"
 )
 
@@ -19,10 +20,10 @@ type ReadLineTerminal struct {
 }
 
 func NewTerminal() (VirtualTerminal, error) {
-	fd := int(os.Stdin.Fd())
+	fd := int(ScreenFd)
 
-	p, _ := GetPalette()
-	env, _ := GetEnvironment()
+	p, _ := cmd.GetPalette()
+	env, _ := cmd.GetEnvironment()
 
 	limit := env.InteractiveShell.HistoryLimit
 	historyFile, err := HistoryFilePath(env.InteractiveShell.HistoryFile)
@@ -32,7 +33,7 @@ func NewTerminal() (VirtualTerminal, error) {
 	}
 
 	t, err := readline.NewEx(&readline.Config{
-		Prompt:                 p.Render(PromptEffect, TerminalPrompt),
+		Prompt:                 p.Render(cmd.PromptEffect, TerminalPrompt),
 		HistoryFile:            historyFile,
 		DisableAutoSaveHistory: true,
 		HistoryLimit:           limit,
@@ -78,11 +79,11 @@ func (t ReadLineTerminal) WriteError(s string) error {
 }
 
 func (t ReadLineTerminal) SetPrompt() {
-	t.terminal.SetPrompt(t.palette.Render(PromptEffect, TerminalPrompt))
+	t.terminal.SetPrompt(t.palette.Render(cmd.PromptEffect, TerminalPrompt))
 }
 
 func (t ReadLineTerminal) SetContinuousPrompt() {
-	t.terminal.SetPrompt(t.palette.Render(PromptEffect, TerminalContinuousPrompt))
+	t.terminal.SetPrompt(t.palette.Render(cmd.PromptEffect, TerminalContinuousPrompt))
 }
 
 func (t ReadLineTerminal) SaveHistory(s string) {

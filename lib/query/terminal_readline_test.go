@@ -1,6 +1,6 @@
 // +build darwin dragonfly freebsd linux netbsd openbsd solaris windows
 
-package cmd
+package query
 
 import (
 	"path/filepath"

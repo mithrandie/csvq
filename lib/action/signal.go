@@ -4,7 +4,6 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/query"
 )
 
@@ -15,13 +14,13 @@ func SetSignalHandler() {
 	go func() {
 		<-ch
 		if err := query.Rollback(nil, nil); err != nil {
-			cmd.WriteToStderrWithLineBreak(err.Error())
+			query.WriteToStderrWithLineBreak(err.Error())
 		}
 		if err := query.ReleaseResourcesWithErrors(); err != nil {
-			cmd.WriteToStderrWithLineBreak(err.Error())
+			query.WriteToStderrWithLineBreak(err.Error())
 		}
-		if cmd.Terminal != nil {
-			cmd.Terminal.Teardown()
+		if query.Terminal != nil {
+			query.Terminal.Teardown()
 		}
 		os.Exit(-1)
 	}()

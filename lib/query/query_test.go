@@ -3820,14 +3820,14 @@ func TestCommit(t *testing.T) {
 
 	expect := fmt.Sprintf("Commit: file %q is created.\nCommit: file %q is updated.\n", GetTestFilePath("created_file.csv"), GetTestFilePath("updated_file_1.csv"))
 
-	oldStdout := cmd.Stdout
+	oldStdout := Stdout
 	r, w, _ := os.Pipe()
-	cmd.Stdout = w
+	Stdout = w
 
 	Commit(parser.TransactionControl{Token: parser.COMMIT}, NewEmptyFilter())
 
 	w.Close()
-	cmd.Stdout = oldStdout
+	Stdout = oldStdout
 	log, _ := ioutil.ReadAll(r)
 
 	if string(log) != expect {
@@ -3853,14 +3853,14 @@ func TestRollback(t *testing.T) {
 
 	expect := fmt.Sprintf("Rollback: file %q is deleted.\nRollback: file %q is restored.\n", GetTestFilePath("created_file.csv"), GetTestFilePath("updated_file_1.csv"))
 
-	oldStdout := cmd.Stdout
+	oldStdout := Stdout
 	r, w, _ := os.Pipe()
-	cmd.Stdout = w
+	Stdout = w
 
 	Rollback(nil, NewEmptyFilter())
 
 	w.Close()
-	cmd.Stdout = oldStdout
+	Stdout = oldStdout
 	log, _ := ioutil.ReadAll(r)
 
 	if string(log) != expect {
