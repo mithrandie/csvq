@@ -59,6 +59,10 @@ func (t SSHTerminal) RestoreOriginalMode() error {
 }
 
 func (t SSHTerminal) ReadLine() (string, error) {
+	if w, h, err := terminal.GetSize(t.stdin); err == nil {
+		t.terminal.SetSize(w, h)
+	}
+
 	return t.terminal.ReadLine()
 }
 
