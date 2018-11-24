@@ -1695,6 +1695,22 @@ var showObjectsTests = []struct {
 			"\n",
 	},
 	{
+		Name:       "ShowObjects Runtime Information",
+		Expr:       parser.ShowObjects{Type: parser.Identifier{Literal: "runinfo"}},
+		Repository: ".",
+		Expect: "\n" +
+			strings.Repeat(" ", (calcShowRuninfoWidth(GetWD())-19)/2) + "Runtime Information\n" +
+			strings.Repeat("-", calcShowRuninfoWidth(GetWD())) + "\n" +
+			"       @#UNCOMMITTED: false\n" +
+			"           @#CREATED: 0\n" +
+			"           @#UPDATED: 0\n" +
+			"     @#UPDATED_VIEWS: 0\n" +
+			"     @#LOADED_TABLES: 0\n" +
+			" @#WORKING_DIRECTORY: " + GetWD() + "\n" +
+			"           @#VERSION: v1.0.0\n" +
+			"\n",
+	},
+	{
 		Name:  "ShowObjects Invalid Object Type",
 		Expr:  parser.ShowObjects{Type: parser.Identifier{Literal: "invalid"}},
 		Error: "[L:- C:-] object type invalid is invalid",
@@ -1932,6 +1948,19 @@ func calcShowFieldsWidth(fileName string, fileNameInTitle string, prefixLen int)
 	if w < pathLen {
 		w = pathLen
 	}
+	if 75 < w {
+		w = 75
+	}
+	return w
+}
+
+func calcShowRuninfoWidth(wd string) int {
+	w := 28
+	pathLen := 22 + len(wd)
+	if w < pathLen {
+		w = pathLen
+	}
+	w++
 	if 75 < w {
 		w = 75
 	}

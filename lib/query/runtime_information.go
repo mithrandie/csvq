@@ -18,6 +18,16 @@ const (
 	VersionInformation      = "VERSION"
 )
 
+var RuntimeInformatinList = []string{
+	UncommittedInformation,
+	CreatedInformation,
+	UpdatedInformation,
+	UpdatedViewsInformation,
+	LoadedTablesInformation,
+	WorkingDirectory,
+	VersionInformation,
+}
+
 func GetRuntimeInformation(expr parser.RuntimeInformation) (value.Primary, error) {
 	var p value.Primary
 

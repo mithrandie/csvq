@@ -601,6 +601,27 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 		}
 		w.Title1 = "Environment Variables"
 		s = "\n" + w.String() + "\n"
+	case "RUNINFO":
+		for _, ri := range RuntimeInformatinList {
+			label := string(parser.VariableSign) + string(parser.RuntimeInformationSign) + ri
+			p, _ := GetRuntimeInformation(parser.RuntimeInformation{Name: ri})
+
+			w.WriteSpaces(19 - len(label))
+			w.WriteColorWithoutLineBreak(label, cmd.LableEffect)
+			w.WriteColorWithoutLineBreak(":", cmd.LableEffect)
+			w.WriteSpaces(1)
+			switch ri {
+			case WorkingDirectory, VersionInformation:
+				w.WriteColorWithoutLineBreak(p.(value.String).Raw(), cmd.StringEffect)
+			case UncommittedInformation:
+				w.WriteColorWithoutLineBreak(p.(value.Boolean).String(), cmd.BooleanEffect)
+			default:
+				w.WriteColorWithoutLineBreak(p.(value.Integer).String(), cmd.NumberEffect)
+			}
+			w.NewLine()
+		}
+		w.Title1 = "Runtime Information"
+		s = "\n" + w.String() + "\n"
 	default:
 		return "", NewShowInvalidObjectTypeError(expr, expr.Type.String())
 	}
