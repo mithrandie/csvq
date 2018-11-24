@@ -44,6 +44,7 @@ var comparisonOperators = []string{
 	"<=",
 	"<>",
 	"!=",
+	"==",
 }
 
 var stringOperators = []string{

@@ -108,6 +108,53 @@ func CompareCombinedly(p1 Primary, p2 Primary) ComparisonResult {
 	return IsIncommensurable
 }
 
+func Identical(p1 Primary, p2 Primary) ternary.Value {
+	if t, ok := p1.(Ternary); (ok && t.value == ternary.UNKNOWN) || IsNull(p1) {
+		return ternary.UNKNOWN
+	}
+	if t, ok := p2.(Ternary); (ok && t.value == ternary.UNKNOWN) || IsNull(p2) {
+		return ternary.UNKNOWN
+	}
+
+	if v1, ok := p1.(Integer); ok {
+		if v2, ok := p2.(Integer); ok {
+			return ternary.ConvertFromBool(v1.value == v2.value)
+		}
+	}
+
+	if v1, ok := p1.(Float); ok {
+		if v2, ok := p2.(Float); ok {
+			return ternary.ConvertFromBool(v1.value == v2.value)
+		}
+	}
+
+	if v1, ok := p1.(Datetime); ok {
+		if v2, ok := p2.(Datetime); ok {
+			return ternary.ConvertFromBool(v1.value.Equal(v2.value))
+		}
+	}
+
+	if v1, ok := p1.(Boolean); ok {
+		if v2, ok := p2.(Boolean); ok {
+			return ternary.ConvertFromBool(v1.value == v2.value)
+		}
+	}
+
+	if v1, ok := p1.(Ternary); ok {
+		if v2, ok := p2.(Ternary); ok {
+			return ternary.ConvertFromBool(v1.value == v2.value)
+		}
+	}
+
+	if v1, ok := p1.(String); ok {
+		if v2, ok := p2.(String); ok {
+			return ternary.ConvertFromBool(v1.literal == v2.literal)
+		}
+	}
+
+	return ternary.FALSE
+}
+
 func Equal(p1 Primary, p2 Primary) ternary.Value {
 	if r := CompareCombinedly(p1, p2); r != IsIncommensurable {
 		return ternary.ConvertFromBool(r == IsEqual || r == IsBoolEqual)
@@ -154,6 +201,8 @@ func Compare(p1 Primary, p2 Primary, operator string) ternary.Value {
 	switch operator {
 	case "=":
 		return Equal(p1, p2)
+	case "==":
+		return Identical(p1, p2)
 	case ">":
 		return Greater(p1, p2)
 	case "<":
@@ -178,6 +227,17 @@ func CompareRowValues(rowValue1 RowValue, rowValue2 RowValue, operator string) (
 
 	unknown := false
 	for i := 0; i < len(rowValue1); i++ {
+		if operator == "==" {
+			t := Identical(rowValue1[i], rowValue2[i])
+			if t == ternary.FALSE {
+				return ternary.FALSE, nil
+			}
+			if t == ternary.UNKNOWN {
+				unknown = true
+			}
+			continue
+		}
+
 		r := CompareCombinedly(rowValue1[i], rowValue2[i])
 
 		if r == IsIncommensurable {
