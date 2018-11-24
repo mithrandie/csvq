@@ -18,7 +18,7 @@ You can pass a query or statements(it's also called procedure) as a csvq command
 Statements have to be encoded in UTF-8.
 
 A statement is terminated with a semicolon. 
-In statements, character cases of keywords are ignored.
+In statements, character case of keywords is ignored.
 
 If you want to execute a single query, you can omit the terminal semicolon.  
 
@@ -98,17 +98,17 @@ csvq > EXIT;
 You can use following types in statements.
 
 Identifier
-: A identifier is a word starting with any unicode letter or a low line(U+005F '\_') and followed by a character string that contains any unicode letters, any digits or low lines(U+005F '\_').
+: A identifier is a word starting with any unicode letter or a Low Line(U+005F `_`) and followed by a character string that contains any unicode letters, any digits or Low Lines(U+005F `_`).
   You cannot use [reserved words](#reserved_words) as a identifier.
 
-  Notwithstanding above naming restriction, you can use most character strings as a identifier by enclosing in back quotes(U+0060 '`').
+  Notwithstanding above naming restriction, you can use most character strings as a identifier by enclosing in Grave Accents(U+0060 ` ).
   Back quotes are escaped by back slashes.
   
   Identifiers represent tables, columns, functions or cursors.
-  These character cases are insensitive except file paths, and whether file paths are case insensitive or not depends on your file system.
+  Character case is insensitive except file paths, and whether file paths are case insensitive or not depends on your file system.
   
 String
-: A string is a character string enclosed in single quotes or double quotes.
+: A string is a character string enclosed in Apostrophes(U+0027 `'`) or Quotation Marks(U+0022 `"`).
   In a string, single quotes or double quotes are escaped by back slashes.
 
 Integer
@@ -154,14 +154,17 @@ Null
 : A null is represented by a keyword NULL.
 
 Variable
-: A variable is a word starting with "@" and followed by a character string that contains any unicode letters, any digits or low lines(U+005F '\_').
+: A [variable]({{ '/reference/variable.html' | relative_url }}) is a word starting with "@" and followed by a character string that contains any unicode letters, any digits or low lines(U+005F `_`).
 
 Flag
-: A flag is a word starting with "@@" and followed by a character string that contains any unicode letters, any digits or low lines(U+005F '\_').
+: A [flag]({{ '/reference/flag.html' | relative_url }}) is a word starting with "@@" and followed by a character string that contains any unicode letters, any digits or low lines(U+005F `_`). Character case is ignored.
 
 Environment Variable
-: A environment variable is a word starting with "@%" and followed by a character string that contains any unicode letters, any digits or low lines(U+005F '\_').
-  If a environment variable includes other characters, you can use the variable by enclosing in back quotes(U+0060 '`').
+: A [environment variable]({{ '/reference/environment-variable.html' | relative_url }}) is a word starting with "@%" and followed by a character string that contains any unicode letters, any digits or low lines(U+005F `_`).
+  If a environment variable includes other characters, you can use the variable by enclosing in back quotes(U+0060 ` ).
+
+Runtime Information
+: A [runtime information]({{ '/reference/runtime-information.html' | relative_url }}) is a word starting with "@#" and followed by a character string that contains any unicode letters, any digits or low lines(U+005F `_`). Character case is ignored.
 
 ```sql
 abcde                 -- identifier
@@ -175,9 +178,10 @@ true                  -- ternary
 '2012-03-15 12:03:01' -- datetime
 null                  -- null
 @var                  -- variable
-@@flag                -- flag
+@@FLAG                -- flag
 @%ENV_VAR             -- environment variable
 @%`ENV_VAR`           -- environment variable
+@#INFO                -- runtime information
 ```
 
 ## Comments
