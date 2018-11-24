@@ -75,7 +75,7 @@ func (p *Prompt) LoadConfig() error {
 
 	scanner := new(excmd.ArgumentScanner)
 
-	scanner.Init(env.Prompt)
+	scanner.Init(env.InteractiveShell.Prompt)
 	for scanner.Scan() {
 		p.sequence = append(p.sequence, PromptElement{
 			Text: scanner.Text(),
@@ -86,7 +86,7 @@ func (p *Prompt) LoadConfig() error {
 		return NewPromptEvaluationError(err.Error())
 	}
 
-	scanner.Init(env.ContinuousPrompt)
+	scanner.Init(env.InteractiveShell.ContinuousPrompt)
 	for scanner.Scan() {
 		p.continuousSequence = append(p.continuousSequence, PromptElement{
 			Text: scanner.Text(),

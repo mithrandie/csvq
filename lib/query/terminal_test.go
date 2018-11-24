@@ -19,16 +19,16 @@ var promptLoadConfigTests = []struct {
 	Error                    string
 }{
 	{
-		Config:                   `{"prompt": "TEST P > ","continuous_prompt": "TEST C > "}`,
+		Config:                   `{"interactive_shell": {"prompt": "TEST P > ","continuous_prompt": "TEST C > "}}`,
 		ExpectSequence:           []PromptElement{{Text: "TEST P > ", Type: excmd.FixedString}},
 		ExpectContinuousSequence: []PromptElement{{Text: "TEST C > ", Type: excmd.FixedString}},
 	},
 	{
-		Config: `{"prompt": "TEST P @ > ","continuous_prompt": "TEST C > "}`,
+		Config: `{"interactive_shell": {"prompt": "TEST P @ > ","continuous_prompt": "TEST C > "}}`,
 		Error:  "prompt: invalid variable symbol",
 	},
 	{
-		Config: `{"prompt": "TEST P > ","continuous_prompt": "TEST C @ > "}`,
+		Config: `{"interactive_shell": {"prompt": "TEST P > ","continuous_prompt": "TEST C @ > "}}`,
 		Error:  "prompt: invalid variable symbol",
 	},
 }

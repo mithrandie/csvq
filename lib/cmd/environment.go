@@ -33,8 +33,6 @@ type Environment struct {
 	DatetimeFormat       []string            `json:"datetime_format"`
 	InteractiveShell     InteractiveShell    `json:"interactive_shell"`
 	EnvironmentVariables map[string]string   `json:"environment_variables"`
-	Prompt               string              `json:"prompt"`
-	ContinuousPrompt     string              `json:"continuous_prompt"`
 	Palette              color.PaletteConfig `json:"palette"`
 }
 
@@ -51,16 +49,16 @@ func (e *Environment) Merge(e2 *Environment) {
 		e.InteractiveShell.HistoryLimit = e2.InteractiveShell.HistoryLimit
 	}
 
+	if 0 < len(e2.InteractiveShell.Prompt) {
+		e.InteractiveShell.Prompt = e2.InteractiveShell.Prompt
+	}
+
+	if 0 < len(e2.InteractiveShell.ContinuousPrompt) {
+		e.InteractiveShell.ContinuousPrompt = e2.InteractiveShell.ContinuousPrompt
+	}
+
 	for k, v := range e2.EnvironmentVariables {
 		e.EnvironmentVariables[k] = v
-	}
-
-	if 0 < len(e2.Prompt) {
-		e.Prompt = e2.Prompt
-	}
-
-	if 0 < len(e2.ContinuousPrompt) {
-		e.ContinuousPrompt = e2.ContinuousPrompt
 	}
 
 	for k, v := range e2.Palette.Effectors {
@@ -69,8 +67,10 @@ func (e *Environment) Merge(e2 *Environment) {
 }
 
 type InteractiveShell struct {
-	HistoryFile  string `json:"history_file"`
-	HistoryLimit int    `json:"history_limit"`
+	HistoryFile      string `json:"history_file"`
+	HistoryLimit     int    `json:"history_limit"`
+	Prompt           string `json:"prompt"`
+	ContinuousPrompt string `json:"continuous_prompt"`
 }
 
 func LoadEnvironment() error {
