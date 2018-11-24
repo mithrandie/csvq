@@ -14,10 +14,11 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
 
+	"github.com/mithrandie/go-text/color"
 	"github.com/urfave/cli"
 )
 
-var version = "v1.6.2"
+var version = "v1.6.3"
 
 func main() {
 	var proc *query.Procedure
@@ -211,6 +212,7 @@ func main() {
 
 	app.Before = func(c *cli.Context) error {
 		action.SetSignalHandler()
+		color.UseEffect = false
 
 		proc = query.NewProcedure()
 

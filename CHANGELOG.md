@@ -1,3 +1,8 @@
+## Release v1.6.3 (2018-11-24)
+
+- Fix following bug
+  - Color output is on by default. (Github Issue #3)
+
 ## Release v1.6.2 (2018-11-24)
 
 - Implement run-external-command statement.

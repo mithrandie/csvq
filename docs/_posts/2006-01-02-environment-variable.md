@@ -23,7 +23,7 @@ _value_
 A set environment variable statement is used to set the value to the environment variable. 
 
 
-### Set Environment Variable
+### Unset Environment Variable
 {: #unset_env}
 
 ```sql
