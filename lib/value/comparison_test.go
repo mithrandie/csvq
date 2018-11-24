@@ -108,6 +108,82 @@ func TestCompareCombinedly(t *testing.T) {
 	}
 }
 
+var identicalTests = []struct {
+	LHS    Primary
+	RHS    Primary
+	Result ternary.Value
+}{
+	{
+		LHS:    NewNull(),
+		RHS:    NewString("R"),
+		Result: ternary.UNKNOWN,
+	},
+	{
+		LHS:    NewTernary(ternary.UNKNOWN),
+		RHS:    NewString("R"),
+		Result: ternary.UNKNOWN,
+	},
+	{
+		LHS:    NewString("L"),
+		RHS:    NewNull(),
+		Result: ternary.UNKNOWN,
+	},
+	{
+		LHS:    NewString("L"),
+		RHS:    NewTernary(ternary.UNKNOWN),
+		Result: ternary.UNKNOWN,
+	},
+	{
+		LHS:    NewInteger(1),
+		RHS:    NewInteger(1),
+		Result: ternary.TRUE,
+	},
+	{
+		LHS:    NewFloat(1),
+		RHS:    NewFloat(1),
+		Result: ternary.TRUE,
+	},
+	{
+		LHS:    NewDatetimeFromString("2006-02-02T15:04:05-07:00"),
+		RHS:    NewDatetimeFromString("2006-02-02T15:04:05-07:00"),
+		Result: ternary.TRUE,
+	},
+	{
+		LHS:    NewBoolean(true),
+		RHS:    NewBoolean(true),
+		Result: ternary.TRUE,
+	},
+	{
+		LHS:    NewTernary(ternary.TRUE),
+		RHS:    NewTernary(ternary.TRUE),
+		Result: ternary.TRUE,
+	},
+	{
+		LHS:    NewString("L"),
+		RHS:    NewString("R"),
+		Result: ternary.FALSE,
+	},
+	{
+		LHS:    NewString("A"),
+		RHS:    NewString("A"),
+		Result: ternary.TRUE,
+	},
+	{
+		LHS:    NewInteger(1),
+		RHS:    NewFloat(1),
+		Result: ternary.FALSE,
+	},
+}
+
+func TestIdentical(t *testing.T) {
+	for _, v := range identicalTests {
+		r := Identical(v.LHS, v.RHS)
+		if r != v.Result {
+			t.Errorf("result = %s, want %s for comparison with %s and %s", r, v.Result, v.LHS, v.RHS)
+		}
+	}
+}
+
 var compareTests = []struct {
 	LHS    Primary
 	RHS    Primary
@@ -131,6 +207,18 @@ var compareTests = []struct {
 		RHS:    NewNull(),
 		Op:     "=",
 		Result: ternary.UNKNOWN,
+	},
+	{
+		LHS:    NewString("0001"),
+		RHS:    NewInteger(1),
+		Op:     "=",
+		Result: ternary.TRUE,
+	},
+	{
+		LHS:    NewString("0001"),
+		RHS:    NewInteger(1),
+		Op:     "==",
+		Result: ternary.FALSE,
 	},
 	{
 		LHS:    NewInteger(1),
@@ -309,6 +397,48 @@ var compareRowValuesTests = []struct {
 		},
 		Op:     "=",
 		Result: ternary.FALSE,
+	},
+	{
+		LHS: RowValue{
+			NewInteger(1),
+			NewInteger(2),
+			NewInteger(3),
+		},
+		RHS: RowValue{
+			NewInteger(1),
+			NewInteger(2),
+			NewInteger(3),
+		},
+		Op:     "==",
+		Result: ternary.TRUE,
+	},
+	{
+		LHS: RowValue{
+			NewInteger(1),
+			NewInteger(2),
+			NewInteger(3),
+		},
+		RHS: RowValue{
+			NewInteger(1),
+			NewNull(),
+			NewInteger(2),
+		},
+		Op:     "==",
+		Result: ternary.FALSE,
+	},
+	{
+		LHS: RowValue{
+			NewInteger(1),
+			NewInteger(2),
+			NewInteger(3),
+		},
+		RHS: RowValue{
+			NewInteger(1),
+			NewNull(),
+			NewInteger(3),
+		},
+		Op:     "==",
+		Result: ternary.UNKNOWN,
 	},
 	{
 		LHS: RowValue{

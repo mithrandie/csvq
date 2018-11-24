@@ -23,13 +23,14 @@ A comparison operator returns a ternary value.
 {: #relational_operators}
 
 | operator | description |
-| :- | :- |
-| \=      | Equal to |
-| <       | Less than |
-| <\=     | Less than or equal to |
-| >       | Greater than |
-| >\=     | Greater than or equal to |
-| <>, !\= | Not equal to |
+| :------- | :---------- |
+| \=       | LHS is equal to RHS |
+| \=\=     | LHS and RHS are of the same type, and LHS is equal to RHS |
+| <        | LHS is less than RHS |
+| <\=      | LHS is less than or equal to RHS |
+| >        | LHS is greater than RHS |
+| >\=      | LHS is greater than or equal to RHS |
+| <>, !\=  | LHS is not equal to RHS |
 
 ```sql
 relational_operation
@@ -43,13 +44,17 @@ _value_
 _row_value_
 : [Row Value]({{ '/reference/row-value.html' | relative_url }})
 
-At first, a relational operator attempt to convert both of operands to integer values, and if both convertions are successful then compare them.
-If conversions failed, next a relational operater attempt to convert to float, and next to datetime, boolean, at last to string.
+Except for identical operator("=="), at first, the relational operator attempts to convert both of operands to integer values, and if both convertions are successful then compares them.
+If conversions failed, next the relational operater attempts to convert the values to float, and next to datetime, boolean, at last to string.
 
-If either of operands is null or all conversion failed, return UNKNOWN.
+If either of operands is null or all conversions failed, then the comparison returns UNKNOWN.
+
+Identical operator does not perform automatic type conversion.
+The result will be true only when both operands are of the same type.
 
 In case of _row_values_ comparison, both of _row_values_ must be tha same lengths.
 Values at the same indices are compared in order from left to right.
+
 
 ## IS
 {: #is}

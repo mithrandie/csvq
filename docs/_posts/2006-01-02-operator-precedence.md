@@ -20,6 +20,7 @@ The following table list operators from highest precedence to lowest.
 |    | [-]({{ '/reference/arithmetic-operators.html' | relative_url }})       | Left-to-right | 
 | 4  | [\|\|]({{ '/reference/string-operators.html' | relative_url }})    | Left-to-right | 
 | 5  | [\=]({{ '/reference/comparison-operators.html#relational_operators' | relative_url }})  | nonassoc | 
+|    | [\=\=]({{ '/reference/comparison-operators.html#relational_operators' | relative_url }})   | nonassoc | 
 |    | [<]({{ '/reference/comparison-operators.html#relational_operators' | relative_url }})   | nonassoc | 
 |    | [<\=]({{ '/reference/comparison-operators.html#relational_operators' | relative_url }}) | nonassoc | 
 |    | [>]({{ '/reference/comparison-operators.html#relational_operators' | relative_url }})   | nonassoc | 
