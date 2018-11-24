@@ -1,3 +1,7 @@
+## Release v1.6.4 (2018-11-24)
+
+- Implement Identical Operator ("==").
+
 ## Release v1.6.3 (2018-11-24)
 
 - Fix following bug
