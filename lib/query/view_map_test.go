@@ -671,14 +671,14 @@ func TestTemporaryViewScopes_Store(t *testing.T) {
 		"/path/to/table1.csv": nil,
 	}
 
-	oldStdout := os.Stdout
+	oldStdout := Stdout
 	r, w, _ := os.Pipe()
-	os.Stdout = w
+	Stdout = w
 
 	list.Store(UncommittedViews)
 
 	w.Close()
-	os.Stdout = oldStdout
+	Stdout = oldStdout
 
 	log, _ := ioutil.ReadAll(r)
 
@@ -797,14 +797,14 @@ func TestTemporaryViewScopes_Restore(t *testing.T) {
 		"/path/to/table2.csv": nil,
 	}
 
-	oldStdout := os.Stdout
+	oldStdout := Stdout
 	r, w, _ := os.Pipe()
-	os.Stdout = w
+	Stdout = w
 
 	list.Restore(UncommittedViews)
 
 	w.Close()
-	os.Stdout = oldStdout
+	Stdout = oldStdout
 
 	log, _ := ioutil.ReadAll(r)
 

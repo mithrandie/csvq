@@ -25,6 +25,7 @@ var encodeViewTests = []struct {
 	EncloseAll              bool
 	JsonEscape              json.EscapeType
 	PrettyPrint             bool
+	UseColor                bool
 	Result                  string
 	Error                   string
 }{
@@ -69,6 +70,26 @@ var encodeViewTests = []struct {
 			"|          | hi\"jk日本語あアｱＡ（                |        |\n" +
 			"|          |                                     |        |\n" +
 			"+----------+-------------------------------------+--------+",
+	},
+	{
+		Name: "Text with colors",
+		View: &View{
+			Header: NewHeader("test", []string{"c1", "c2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewInteger(-1), value.NewString("abcde")}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewString("abcdef\r\nghijkl")}),
+			},
+		},
+		Format:   cmd.TEXT,
+		UseColor: true,
+		Result: "" +
+			"+--------+--------+\n" +
+			"|   c1   |   c2   |\n" +
+			"+--------+--------+\n" +
+			"|     \033[35m-1\033[0m | \033[32mabcde\033[0m  |\n" +
+			"| \033[35m2.0123\033[0m | \033[32mabcdef\033[0m |\n" +
+			"|        | \033[32mghijkl\033[0m |\n" +
+			"+--------+--------+",
 	},
 	{
 		Name: "Fixed-Length Format",
@@ -359,6 +380,7 @@ func TestEncodeView(t *testing.T) {
 		if v.WriteDelimiter == 0 {
 			v.WriteDelimiter = ','
 		}
+		cmd.GetFlags().SetColor(v.UseColor)
 
 		fileInfo := &FileInfo{
 			Format:             v.Format,
@@ -389,7 +411,7 @@ func TestEncodeView(t *testing.T) {
 
 		result := buf.String()
 		if result != v.Result {
-			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
 		}
 	}
 }

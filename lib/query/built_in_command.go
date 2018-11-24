@@ -15,6 +15,7 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mithrandie/go-text"
+	"github.com/mithrandie/go-text/color"
 	"github.com/mithrandie/go-text/fixedlen"
 	"github.com/mithrandie/ternary"
 )
@@ -28,6 +29,19 @@ const (
 )
 
 const IgnoredFlagPrefix = "(ignored) "
+
+const (
+	ReloadConfig = "CONFIG"
+)
+
+func Echo(expr parser.Echo, filter *Filter) (string, error) {
+	p, err := filter.Evaluate(expr.Value)
+	if err != nil {
+		return "", err
+	}
+
+	return Formatter.Format("%s", []value.Primary{p})
+}
 
 func Print(expr parser.Print, filter *Filter) (string, error) {
 	p, err := filter.Evaluate(expr.Value)
@@ -57,8 +71,7 @@ func Printf(expr parser.Printf, filter *Filter) (string, error) {
 		args[i] = p
 	}
 
-	f := NewStringFormatter()
-	message, err := f.Format(format, args)
+	message, err := Formatter.Format(format, args)
 	if err != nil {
 		return "", NewReplaceValueLengthError(expr, err.(AppError).ErrorMessage())
 	}
@@ -114,8 +127,7 @@ func LoadStatementsFromFile(expr parser.Source, fpath string) ([]parser.Statemen
 
 	statements, err := parser.Parse(input, fpath)
 	if err != nil {
-		syntaxErr := err.(*parser.SyntaxError)
-		err = NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)
+		err = NewSyntaxError(err.(*parser.SyntaxError))
 	}
 	return statements, err
 }
@@ -140,15 +152,13 @@ func ParseExecuteStatements(expr parser.Execute, filter *Filter) ([]parser.State
 		args[i] = p
 	}
 
-	f := NewStringFormatter()
-	input, err = f.Format(input, args)
+	input, err = Formatter.Format(input, args)
 	if err != nil {
 		return nil, NewReplaceValueLengthError(expr, err.(AppError).ErrorMessage())
 	}
 	statements, err := parser.Parse(input, fmt.Sprintf("(L:%d C:%d) EXECUTE", expr.Line(), expr.Char()))
 	if err != nil {
-		syntaxErr := err.(*parser.SyntaxError)
-		err = NewSyntaxError(syntaxErr.Message, syntaxErr.Line, syntaxErr.Char, syntaxErr.SourceFile)
+		err = NewSyntaxError(err.(*parser.SyntaxError))
 	}
 	return statements, err
 }
@@ -261,7 +271,12 @@ func showFlag(flag string) (string, error) {
 
 	switch strings.ToUpper(flag) {
 	case cmd.RepositoryFlag:
-		s = palette.Render(cmd.StringEffect, flags.Repository)
+		if len(flags.Repository) < 1 {
+			wd, _ := os.Getwd()
+			s = palette.Render(cmd.NullEffect, fmt.Sprintf("(current dir: %s)", wd))
+		} else {
+			s = palette.Render(cmd.StringEffect, flags.Repository)
+		}
 	case cmd.TimezoneFlag:
 		s = palette.Render(cmd.StringEffect, flags.Location)
 	case cmd.DatetimeFormatFlag:
@@ -402,7 +417,7 @@ func showFlag(flag string) (string, error) {
 func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 	var s string
 
-	w := cmd.NewObjectWriter()
+	w := NewObjectWriter()
 
 	switch strings.ToUpper(expr.Type.Literal) {
 	case "TABLES":
@@ -411,15 +426,16 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 		if len(keys) < 1 {
 			s = cmd.Warn("No table is loaded")
 		} else {
-			createdFiles, updatedFiles := UncommittedFiles()
+			createdFiles, updatedFiles := UncommittedViews.UncommittedFiles()
 
 			for _, key := range keys {
 				fields := ViewCache[key].Header.TableColumnNames()
 				info := ViewCache[key].FileInfo
+				ufpath := strings.ToUpper(info.Path)
 
-				if _, ok := createdFiles[info.Path]; ok {
+				if _, ok := createdFiles[ufpath]; ok {
 					w.WriteColor("*Created* ", cmd.EmphasisEffect)
-				} else if _, ok := updatedFiles[info.Path]; ok {
+				} else if _, ok := updatedFiles[ufpath]; ok {
 					w.WriteColor("*Updated* ", cmd.EmphasisEffect)
 				}
 				w.WriteColorWithoutLineBreak(info.Path, cmd.ObjectEffect)
@@ -438,7 +454,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 				w.Title2 = fmt.Sprintf("(Uncommitted: %s)", FormatCount(uncommitted, "Table"))
 				w.Title2Effect = cmd.EmphasisEffect
 			}
-			s = "\n" + w.String()
+			s = "\n" + w.String() + "\n"
 		}
 	case "VIEWS":
 		views := filter.TempViews.All()
@@ -448,13 +464,14 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 		} else {
 			keys := views.SortedKeys()
 
-			updatedViews := UncommittedTempViews()
+			updatedViews := UncommittedViews.UncommittedTempViews()
 
 			for _, key := range keys {
 				fields := views[key].Header.TableColumnNames()
 				info := views[key].FileInfo
+				ufpath := strings.ToUpper(info.Path)
 
-				if _, ok := updatedViews[info.Path]; ok {
+				if _, ok := updatedViews[ufpath]; ok {
 					w.WriteColor("*Updated* ", cmd.EmphasisEffect)
 				}
 				w.WriteColorWithoutLineBreak(info.Path, cmd.ObjectEffect)
@@ -470,7 +487,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 				w.Title2 = fmt.Sprintf("(Uncommitted: %s)", FormatCount(uncommitted, "View"))
 				w.Title2Effect = cmd.EmphasisEffect
 			}
-			s = "\n" + w.String()
+			s = "\n" + w.String() + "\n"
 		}
 	case "CURSORS":
 		cursors := filter.Cursors.All()
@@ -520,7 +537,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 				w.NewLine()
 			}
 			w.Title1 = "Cursors"
-			s = "\n" + w.String()
+			s = "\n" + w.String() + "\n"
 		}
 	case "FUNCTIONS":
 		scalas, aggs := filter.Functions.All()
@@ -537,7 +554,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 				w.Clear()
 				writeFunctions(w, aggs)
 				w.Title1 = "Aggregate Functions"
-				s += "\n" + w.String()
+				s += "\n" + w.String() + "\n"
 			}
 		}
 	case "FLAGS":
@@ -552,7 +569,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 			w.NewLine()
 		}
 		w.Title1 = "Flags"
-		s = "\n" + w.String()
+		s = "\n" + w.String() + "\n"
 	case "ENV":
 		env := os.Environ()
 		names := make([]string, 0, len(env))
@@ -561,7 +578,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 
 		for _, e := range env {
 			words := strings.Split(e, "=")
-			name := string(parser.VariableSign) + string(parser.EnvVarSign) + words[0]
+			name := string(parser.VariableSign) + string(parser.EnvironmentVariableSign) + words[0]
 			if nameWidth < len(name) {
 				nameWidth = len(name)
 			}
@@ -583,7 +600,28 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 			w.NewLine()
 		}
 		w.Title1 = "Environment Variables"
-		s = "\n" + w.String()
+		s = "\n" + w.String() + "\n"
+	case "RUNINFO":
+		for _, ri := range RuntimeInformatinList {
+			label := string(parser.VariableSign) + string(parser.RuntimeInformationSign) + ri
+			p, _ := GetRuntimeInformation(parser.RuntimeInformation{Name: ri})
+
+			w.WriteSpaces(19 - len(label))
+			w.WriteColorWithoutLineBreak(label, cmd.LableEffect)
+			w.WriteColorWithoutLineBreak(":", cmd.LableEffect)
+			w.WriteSpaces(1)
+			switch ri {
+			case WorkingDirectory, VersionInformation:
+				w.WriteColorWithoutLineBreak(p.(value.String).Raw(), cmd.StringEffect)
+			case UncommittedInformation:
+				w.WriteColorWithoutLineBreak(p.(value.Boolean).String(), cmd.BooleanEffect)
+			default:
+				w.WriteColorWithoutLineBreak(p.(value.Integer).String(), cmd.NumberEffect)
+			}
+			w.NewLine()
+		}
+		w.Title1 = "Runtime Information"
+		s = "\n" + w.String() + "\n"
 	default:
 		return "", NewShowInvalidObjectTypeError(expr, expr.Type.String())
 	}
@@ -591,7 +629,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 	return s, nil
 }
 
-func writeTableAttribute(w *cmd.ObjectWriter, info *FileInfo) {
+func writeTableAttribute(w *ObjectWriter, info *FileInfo) {
 	w.WriteColor("Format: ", cmd.LableEffect)
 	w.WriteWithoutLineBreak(info.Format.String())
 
@@ -658,7 +696,7 @@ func writeTableAttribute(w *cmd.ObjectWriter, info *FileInfo) {
 	}
 }
 
-func writeFields(w *cmd.ObjectWriter, fields []string) {
+func writeFields(w *ObjectWriter, fields []string) {
 	w.BeginBlock()
 	w.NewLine()
 	w.WriteColor("Fields: ", cmd.LableEffect)
@@ -677,7 +715,7 @@ func writeFields(w *cmd.ObjectWriter, fields []string) {
 	w.EndSubBlock()
 }
 
-func writeFunctions(w *cmd.ObjectWriter, funcs UserDefinedFunctionMap) {
+func writeFunctions(w *ObjectWriter, funcs UserDefinedFunctionMap) {
 	keys := funcs.SortedKeys()
 
 	for _, key := range keys {
@@ -726,21 +764,24 @@ func ShowFields(expr parser.ShowFields, filter *Filter) (string, error) {
 	}
 
 	if view.FileInfo.IsTemporary {
-		updatedViews := UncommittedTempViews()
+		updatedViews := UncommittedViews.UncommittedTempViews()
+		ufpath := strings.ToUpper(view.FileInfo.Path)
 
-		if _, ok := updatedViews[view.FileInfo.Path]; ok {
+		if _, ok := updatedViews[ufpath]; ok {
 			status = ObjectUpdated
 		}
 	} else {
-		createdViews, updatedView := UncommittedFiles()
-		if _, ok := createdViews[view.FileInfo.Path]; ok {
+		createdViews, updatedView := UncommittedViews.UncommittedFiles()
+		ufpath := strings.ToUpper(view.FileInfo.Path)
+
+		if _, ok := createdViews[ufpath]; ok {
 			status = ObjectCreated
-		} else if _, ok := updatedView[view.FileInfo.Path]; ok {
+		} else if _, ok := updatedView[ufpath]; ok {
 			status = ObjectUpdated
 		}
 	}
 
-	w := cmd.NewObjectWriter()
+	w := NewObjectWriter()
 	w.WriteColorWithoutLineBreak("Type: ", cmd.LableEffect)
 	if view.FileInfo.IsTemporary {
 		w.WriteWithoutLineBreak("View")
@@ -770,10 +811,10 @@ func ShowFields(expr parser.ShowFields, filter *Filter) (string, error) {
 	w.Title1 = "Fields in"
 	w.Title2 = expr.Table.Literal
 	w.Title2Effect = cmd.IdentifierEffect
-	return "\n" + w.String(), nil
+	return "\n" + w.String() + "\n", nil
 }
 
-func writeFieldList(w *cmd.ObjectWriter, fields []string) {
+func writeFieldList(w *ObjectWriter, fields []string) {
 	l := len(fields)
 	digits := len(strconv.Itoa(l))
 	fieldNumbers := make([]string, 0, l)
@@ -817,4 +858,68 @@ func SetEnvVar(expr parser.SetEnvVar, filter *Filter) error {
 
 func UnsetEnvVar(expr parser.UnsetEnvVar) error {
 	return os.Unsetenv(expr.EnvVar.Name)
+}
+
+func Chdir(expr parser.Chdir, filter *Filter) error {
+	var dirpath string
+	var err error
+
+	if ident, ok := expr.DirPath.(parser.Identifier); ok {
+		dirpath = ident.Literal
+	} else {
+		p, err := filter.Evaluate(expr.DirPath)
+		if err != nil {
+			return err
+		}
+		s := value.ToString(p)
+		if value.IsNull(s) {
+			return NewPathError(expr, expr.DirPath.String(), "invalid directory path")
+		}
+		dirpath = s.(value.String).Raw()
+	}
+
+	if err = os.Chdir(dirpath); err != nil {
+		if patherr, ok := err.(*os.PathError); ok {
+			err = NewPathError(expr, patherr.Path, patherr.Err.Error())
+		}
+	}
+	return err
+}
+
+func Pwd(expr parser.Pwd) (string, error) {
+	dirpath, err := os.Getwd()
+	if err != nil {
+		if patherr, ok := err.(*os.PathError); ok {
+			err = NewPathError(expr, patherr.Path, patherr.Err.Error())
+		}
+	}
+	return dirpath, err
+}
+
+func Reload(expr parser.Reload) error {
+	switch strings.ToUpper(expr.Type.Literal) {
+	case ReloadConfig:
+		if err := cmd.LoadEnvironment(); err != nil {
+			return NewLoadConfigurationError(expr, err.Error())
+		}
+
+		env, _ := cmd.GetEnvironment()
+		palette, err := color.GeneratePalette(env.Palette)
+		if err != nil {
+			return NewLoadConfigurationError(expr, err.Error())
+		}
+		oldPalette, _ := cmd.GetPalette()
+		oldPalette.Merge(palette)
+
+		if Terminal != nil {
+			if err := Terminal.ReloadPromptConfig(); err != nil {
+				return NewLoadConfigurationError(expr, err.Error())
+			}
+
+		}
+
+	default:
+		return NewInvalidReloadTypeError(expr, expr.Type.Literal)
+	}
+	return nil
 }

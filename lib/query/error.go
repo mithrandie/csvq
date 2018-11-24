@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/mithrandie/csvq/lib/cmd"
-
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 )
@@ -16,8 +15,9 @@ const (
 	ErrorMessageWithEmptyPositionTemplate = "[L:- C:-] %s"
 	ErrorMessageWithCustomPrefixTemplate  = "[%s] %s"
 
-	ErrorInvalidSyntax                        = "syntax error: unexpected %s"
-	ErrorReadFile                             = "failed to read file: %s"
+	ErrorInvalidValue                         = "%s: cannot evaluate as a value"
+	ErrorPath                                 = "%s: %s"
+	ErrorReadFile                             = "failed to read from file: %s"
 	ErrorWriteFile                            = "failed to write to file: %s"
 	ErrorCommit                               = "failed to commit: %s"
 	ErrorRollback                             = "failed to rollback: %s"
@@ -46,7 +46,6 @@ const (
 	ErrorTableObjectInvalidDelimiter          = "invalid delimiter: %s"
 	ErrorTableObjectInvalidDelimiterPositions = "invalid delimiter positions: %s"
 	ErrorTableObjectInvalidJsonQuery          = "invalid json query: %s"
-	ErrorTableObjectMultipleRead              = "file %s has already been loaded"
 	ErrorTableObjectArgumentsLength           = "table object %s takes at most %d arguments"
 	ErrorTableObjectJsonArgumentsLength       = "table object %s takes exactly %d arguments"
 	ErrorTableObjectInvalidArgument           = "invalid argument for %s: %s"
@@ -88,10 +87,11 @@ const (
 	ErrorReplaceValueLength                   = "%s"
 	ErrorSourceInvalidFilePath                = "%s is a invalid file path"
 	ErrorSourceFileNotExist                   = "file %s does not exist"
-	ErrorInvalidFlagName                      = "flag %s does not exist"
+	ErrorInvalidFlagName                      = "%s is an unknown flag"
 	ErrorFlagValueNowAllowedFormat            = "%s for %s is not allowed"
 	ErrorInvalidFlagValue                     = "%s"
-	ErrorNotTable                             = "%s is not a table that has attributes"
+	ErrorInvalidRuntimeInformation            = "%s is an unknown runtime information"
+	ErrorNotTable                             = "view has no attributes"
 	ErrorInvalidTableAttributeName            = "table attribute %s does not exist"
 	ErrorTableAttributeValueNotAllowedFormat  = "%s for %s is not allowed"
 	ErrorInvalidTableAttributeValue           = "%s"
@@ -101,8 +101,11 @@ const (
 	ErrorFieldLengthNotMatch                  = "field length does not match"
 	ErrorRowValueLengthInList                 = "row value length does not match at index %d"
 	ErrorFormatStringLengthNotMatch           = "number of replace values does not match"
-	ErrorUnknownFormatPlaceholder             = "unknown placeholder: %q"
+	ErrorUnknownFormatPlaceholder             = "%q is an unknown placeholder"
 	ErrorFormatUnexpectedTermination          = "unexpected termination of format string"
+	ErrorExternalCommand                      = "external command: %s"
+	ErrorInvalidReloadType                    = "%s is an unknown reload type"
+	ErrorLoadConfiguration                    = "configuration loading error: %s"
 )
 
 type ForcedExit struct {
@@ -213,21 +216,35 @@ type SyntaxError struct {
 	*BaseError
 }
 
-func NewSyntaxError(message string, line int, char int, sourceFile string) error {
+func NewSyntaxError(err *parser.SyntaxError) error {
 	return &SyntaxError{
 		&BaseError{
-			SourceFile: sourceFile,
-			Line:       line,
-			Char:       char,
-			Message:    message,
+			SourceFile: err.SourceFile,
+			Line:       err.Line,
+			Char:       err.Char,
+			Message:    err.Message,
 			Code:       1,
 		},
 	}
 }
 
-func NewSyntaxErrorFromExpr(expr parser.QueryExpression) error {
-	return &SyntaxError{
-		NewBaseError(expr, fmt.Sprintf(ErrorInvalidSyntax, expr)),
+type InvalidValueError struct {
+	*BaseError
+}
+
+func NewInvalidValueError(expr parser.QueryExpression) error {
+	return &InvalidValueError{
+		NewBaseError(expr, fmt.Sprintf(ErrorInvalidValue, expr)),
+	}
+}
+
+type PathError struct {
+	*BaseError
+}
+
+func NewPathError(expr parser.Expression, path string, message string) error {
+	return &PathError{
+		NewBaseError(expr, fmt.Sprintf(ErrorPath, path, message)),
 	}
 }
 
@@ -546,16 +563,6 @@ type TableObjectInvalidJsonQueryError struct {
 func NewTableObjectInvalidJsonQueryError(expr parser.TableObject, jsonQuery string) error {
 	return &TableObjectInvalidObjectError{
 		NewBaseError(expr, fmt.Sprintf(ErrorTableObjectInvalidJsonQuery, jsonQuery)),
-	}
-}
-
-type TableObjectMultipleReadError struct {
-	*BaseError
-}
-
-func NewTableObjectMultipleReadError(tableIdentifier parser.Identifier) error {
-	return &TableObjectMultipleReadError{
-		NewBaseError(tableIdentifier, fmt.Sprintf(ErrorTableObjectMultipleRead, tableIdentifier)),
 	}
 }
 
@@ -989,6 +996,16 @@ func NewInvalidFlagNameError(expr parser.Expression, name string) error {
 	}
 }
 
+type InvalidRuntimeInformationError struct {
+	*BaseError
+}
+
+func NewInvalidRuntimeInformationError(expr parser.RuntimeInformation) error {
+	return &InvalidRuntimeInformationError{
+		NewBaseError(expr, fmt.Sprintf(ErrorInvalidRuntimeInformation, expr)),
+	}
+}
+
 type FlagValueNotAllowedFormatError struct {
 	*BaseError
 }
@@ -1015,7 +1032,7 @@ type NotTableError struct {
 
 func NewNotTableError(expr parser.QueryExpression) error {
 	return &NotTableError{
-		NewBaseError(expr, fmt.Sprintf(ErrorNotTable, expr)),
+		NewBaseError(expr, ErrorNotTable),
 	}
 }
 
@@ -1128,6 +1145,36 @@ type FormatUnexpectedTerminationError struct {
 func NewFormatUnexpectedTerminationError() error {
 	return &FormatUnexpectedTerminationError{
 		BaseError: NewBaseError(parser.NewNullValue(), ErrorFormatUnexpectedTermination),
+	}
+}
+
+type ExternalCommandError struct {
+	*BaseError
+}
+
+func NewExternalCommandError(expr parser.Expression, message string) error {
+	return &ExternalCommandError{
+		NewBaseError(expr, fmt.Sprintf(ErrorExternalCommand, message)),
+	}
+}
+
+type InvalidReloadTypeError struct {
+	*BaseError
+}
+
+func NewInvalidReloadTypeError(expr parser.Reload, name string) error {
+	return &InvalidReloadTypeError{
+		NewBaseError(expr, fmt.Sprintf(ErrorInvalidReloadType, name)),
+	}
+}
+
+type LoadConfigurationError struct {
+	*BaseError
+}
+
+func NewLoadConfigurationError(expr parser.Reload, message string) error {
+	return &LoadConfigurationError{
+		NewBaseError(expr, fmt.Sprintf(ErrorLoadConfiguration, message)),
 	}
 }
 

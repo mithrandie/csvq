@@ -53,9 +53,9 @@ func TestCalc(t *testing.T) {
 			w.Close()
 			os.Stdin = r
 		}
-		oldStdout := os.Stdout
+		oldStdout := query.Stdout
 		r, w, _ := os.Pipe()
-		os.Stdout = w
+		query.Stdout = w
 
 		err := Calc(v.Input)
 
@@ -63,7 +63,7 @@ func TestCalc(t *testing.T) {
 			os.Stdin = oldStdin
 		}
 		w.Close()
-		os.Stdout = oldStdout
+		query.Stdout = oldStdout
 		stdout, _ := ioutil.ReadAll(r)
 
 		if err != nil {

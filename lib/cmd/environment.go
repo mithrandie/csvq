@@ -49,6 +49,14 @@ func (e *Environment) Merge(e2 *Environment) {
 		e.InteractiveShell.HistoryLimit = e2.InteractiveShell.HistoryLimit
 	}
 
+	if 0 < len(e2.InteractiveShell.Prompt) {
+		e.InteractiveShell.Prompt = e2.InteractiveShell.Prompt
+	}
+
+	if 0 < len(e2.InteractiveShell.ContinuousPrompt) {
+		e.InteractiveShell.ContinuousPrompt = e2.InteractiveShell.ContinuousPrompt
+	}
+
 	for k, v := range e2.EnvironmentVariables {
 		e.EnvironmentVariables[k] = v
 	}
@@ -59,15 +67,17 @@ func (e *Environment) Merge(e2 *Environment) {
 }
 
 type InteractiveShell struct {
-	HistoryFile  string `json:"history_file"`
-	HistoryLimit int    `json:"history_limit"`
+	HistoryFile      string `json:"history_file"`
+	HistoryLimit     int    `json:"history_limit"`
+	Prompt           string `json:"prompt"`
+	ContinuousPrompt string `json:"continuous_prompt"`
 }
 
 func LoadEnvironment() error {
 	var err error
 
 	environment = &Environment{}
-	if err = json.Unmarshal([]byte(defaultEnvJson), environment); err != nil {
+	if err = json.Unmarshal([]byte(DefaultEnvJson), environment); err != nil {
 		return errors.New(fmt.Sprintf("`json syntax error: %s", err.Error()))
 	}
 

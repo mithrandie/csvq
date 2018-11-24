@@ -3389,7 +3389,7 @@ var parseTests = []struct {
 		Input: "set @%var = ident",
 		Output: []Statement{
 			SetEnvVar{
-				EnvVar: EnvVar{BaseExpr: &BaseExpr{line: 1, char: 5}, Name: "var"},
+				EnvVar: EnvironmentVariable{BaseExpr: &BaseExpr{line: 1, char: 5}, Name: "var"},
 				Value:  Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "ident"},
 			},
 		},
@@ -3398,7 +3398,7 @@ var parseTests = []struct {
 		Input: "set @%var = 1",
 		Output: []Statement{
 			SetEnvVar{
-				EnvVar: EnvVar{BaseExpr: &BaseExpr{line: 1, char: 5}, Name: "var"},
+				EnvVar: EnvironmentVariable{BaseExpr: &BaseExpr{line: 1, char: 5}, Name: "var"},
 				Value:  NewIntegerValueFromString("1"),
 			},
 		},
@@ -3407,7 +3407,7 @@ var parseTests = []struct {
 		Input: "unset @%var",
 		Output: []Statement{
 			UnsetEnvVar{
-				EnvVar: EnvVar{BaseExpr: &BaseExpr{line: 1, char: 7}, Name: "var"},
+				EnvVar: EnvironmentVariable{BaseExpr: &BaseExpr{line: 1, char: 7}, Name: "var"},
 			},
 		},
 	},
@@ -3931,6 +3931,14 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "echo 'foo'",
+		Output: []Statement{
+			Echo{
+				Value: NewStringValue("foo"),
+			},
+		},
+	},
+	{
 		Input: "print 'foo'",
 		Output: []Statement{
 			Print{
@@ -4011,6 +4019,41 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "chdir `dirpath`",
+		Output: []Statement{
+			Chdir{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				DirPath:  Identifier{BaseExpr: &BaseExpr{line: 1, char: 7}, Literal: "dirpath", Quoted: true},
+			},
+		},
+	},
+	{
+		Input: "chdir 'dirpath'",
+		Output: []Statement{
+			Chdir{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				DirPath:  NewStringValue("dirpath"),
+			},
+		},
+	},
+	{
+		Input: "pwd",
+		Output: []Statement{
+			Pwd{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+			},
+		},
+	},
+	{
+		Input: "reload config",
+		Output: []Statement{
+			Reload{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Type:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "config"},
+			},
+		},
+	},
+	{
 		Input: "set @@delimiter = ','",
 		Output: []Statement{
 			SetFlag{
@@ -4036,6 +4079,15 @@ var parseTests = []struct {
 			ShowFlag{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
 				Name:     "delimiter",
+			},
+		},
+	},
+	{
+		Input: "show tables",
+		Output: []Statement{
+			ShowObjects{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Type:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "tables"},
 			},
 		},
 	},
@@ -4980,7 +5032,39 @@ var parseTests = []struct {
 					Select:   "select",
 					Fields: []QueryExpression{
 						Field{
-							Object: EnvVar{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "var"},
+							Object: EnvironmentVariable{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "var"},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select @%`var`",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: EnvironmentVariable{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "var", Quoted: true},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select @#var",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: RuntimeInformation{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "var"},
 						},
 					},
 				},
@@ -5113,6 +5197,57 @@ var parseTests = []struct {
 					},
 				},
 			}},
+		},
+	},
+	{
+		Input: "'abc'",
+		Output: []Statement{
+			NewStringValue("abc"),
+		},
+	},
+	{
+		Input: "(if(column1, column2, column3))",
+		Output: []Statement{
+			Parentheses{
+				Expr: Function{
+					BaseExpr: &BaseExpr{line: 1, char: 2},
+					Name:     "if",
+					Args: []QueryExpression{
+						FieldReference{BaseExpr: &BaseExpr{line: 1, char: 5}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 5}, Literal: "column1"}},
+						FieldReference{BaseExpr: &BaseExpr{line: 1, char: 14}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 14}, Literal: "column2"}},
+						FieldReference{BaseExpr: &BaseExpr{line: 1, char: 23}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 23}, Literal: "column3"}},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select c1;\n$echo foo;",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
+						},
+					},
+				},
+			}},
+			ExternalCommand{
+				BaseExpr: &BaseExpr{line: 2, char: 1},
+				Command:  "echo foo",
+			},
+		},
+	},
+	{
+		Input: "$",
+		Output: []Statement{
+			ExternalCommand{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Command:  "",
+			},
 		},
 	},
 	{

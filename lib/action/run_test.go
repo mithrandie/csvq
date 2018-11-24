@@ -6,9 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mithrandie/csvq/lib/query"
-
 	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/query"
 )
 
 var executeTests = []struct {
@@ -66,15 +65,15 @@ func TestRun(t *testing.T) {
 
 		query.OutFile = nil
 
-		oldStdout := os.Stdout
+		oldStdout := query.Stdout
 		r, w, _ := os.Pipe()
-		os.Stdout = w
+		query.Stdout = w
 
 		proc := query.NewProcedure()
 		err := Run(proc, v.Input, "", v.OutFile)
 
 		w.Close()
-		os.Stdout = oldStdout
+		query.Stdout = oldStdout
 		stdout, _ := ioutil.ReadAll(r)
 
 		if err != nil {

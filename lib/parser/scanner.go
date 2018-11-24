@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"strings"
@@ -25,10 +26,15 @@ const (
 )
 
 const (
-	VariableSign = '@'
-	EnvVarSign   = '%'
+	VariableSign            = '@'
+	EnvironmentVariableSign = '%'
+	ExternalCommandSign     = '$'
+	RuntimeInformationSign  = '#'
 
 	SubstitutionOperator = ":="
+
+	BeginExpression = '{'
+	EndExpression   = '}'
 )
 
 var comparisonOperators = []string{
@@ -85,10 +91,10 @@ func TokenLiteral(token int) string {
 }
 
 type Scanner struct {
-	src    []rune
-	srcPos int
-	offset int
-	err    error
+	src     []rune
+	srcPos  int
+	literal *bytes.Buffer
+	err     error
 
 	line       int
 	char       int
@@ -98,7 +104,7 @@ type Scanner struct {
 func (s *Scanner) Init(src string, sourceFile string) *Scanner {
 	s.src = []rune(src)
 	s.srcPos = 0
-	s.offset = 0
+	s.literal = new(bytes.Buffer)
 	s.err = nil
 	s.line = 1
 	s.char = 0
@@ -110,6 +116,7 @@ func (s *Scanner) peek() rune {
 	if len(s.src) <= s.srcPos {
 		return EOF
 	}
+
 	return s.src[s.srcPos]
 }
 
@@ -120,7 +127,6 @@ func (s *Scanner) next() rune {
 	}
 
 	s.srcPos++
-	s.offset++
 	s.char++
 
 	ch = s.checkNewLine(ch)
@@ -135,7 +141,6 @@ func (s *Scanner) checkNewLine(ch rune) rune {
 
 	if ch == '\r' && s.peek() == '\n' {
 		s.srcPos++
-		s.offset++
 	}
 
 	s.line++
@@ -143,38 +148,12 @@ func (s *Scanner) checkNewLine(ch rune) rune {
 	return s.src[s.srcPos-1]
 }
 
-func (s *Scanner) runes() []rune {
-	return s.src[(s.srcPos - s.offset):s.srcPos]
-}
-
-func (s *Scanner) literal() string {
-	return string(s.runes())
-}
-
-func (s *Scanner) trimQuotes() string {
-	runes := s.runes()
-	quote := runes[0]
-	switch quote {
-	case '"', '\'', '`':
-		if 1 < len(runes) && runes[len(runes)-1] == quote {
-			runes = runes[1:(len(runes) - 1)]
-		} else {
-			runes = runes[1:]
-		}
-	}
-	return string(runes)
-}
-
 func (s *Scanner) Scan() (Token, error) {
-	ch := s.peek()
-
-	for unicode.IsSpace(ch) {
+	for unicode.IsSpace(s.peek()) {
 		s.next()
-		ch = s.peek()
 	}
 
-	s.offset = 0
-	ch = s.next()
+	ch := s.next()
 	token := ch
 	literal := string(ch)
 	quoted := false
@@ -184,11 +163,11 @@ func (s *Scanner) Scan() (Token, error) {
 	switch {
 	case s.isDecimal(ch):
 		token = s.scanNumber(ch)
-		literal = s.literal()
+		literal = s.literal.String()
 	case s.isIdentRune(ch):
-		s.scanIdentifier()
+		s.scanIdentifier(ch)
 
-		literal = s.literal()
+		literal = s.literal.String()
 		if _, e := ternary.ConvertFromString(literal); e == nil {
 			token = TERNARY
 		} else if t, e := s.searchKeyword(literal); e == nil {
@@ -207,9 +186,9 @@ func (s *Scanner) Scan() (Token, error) {
 			token = IDENTIFIER
 		}
 	case s.isOperatorRune(ch):
-		s.scanOperator()
+		s.scanOperator(ch)
 
-		literal = s.literal()
+		literal = s.literal.String()
 		if s.isComparisonOperators(literal) {
 			token = COMPARISON_OP
 		} else if s.isStringOperators(literal) {
@@ -219,11 +198,14 @@ func (s *Scanner) Scan() (Token, error) {
 		} else if 1 < len(literal) {
 			token = Uncategorized
 		}
-	case s.isVariableSign(ch):
+	case ch == VariableSign:
 		switch s.peek() {
-		case EnvVarSign:
+		case EnvironmentVariableSign:
 			s.next()
 			token = ENVIRONMENT_VARIABLE
+		case RuntimeInformationSign:
+			s.next()
+			token = RUNTIME_INFORMATION
 		case VariableSign:
 			s.next()
 			token = FLAG
@@ -231,20 +213,26 @@ func (s *Scanner) Scan() (Token, error) {
 			token = VARIABLE
 		}
 
-		s.offset = 0
 		if token == ENVIRONMENT_VARIABLE && s.peek() == '`' {
-			ch = s.next()
-			s.scanString(ch)
-			literal = cmd.UnescapeIdentifier(s.trimQuotes())
+			s.scanString(s.next())
+			literal = cmd.UnescapeIdentifier(s.literal.String())
 			quoted = true
 		} else {
-			s.scanIdentifier()
-			literal = s.literal()
+			if s.isIdentRune(s.peek()) {
+				s.scanIdentifier(s.next())
+				literal = s.literal.String()
+			} else {
+				literal = ""
+			}
 		}
 
 		if len(literal) < 1 {
 			s.err = errors.New("invalid variable symbol")
 		}
+	case ch == ExternalCommandSign:
+		s.scanExternalCommand()
+		literal = s.literal.String()
+		token = EXTERNAL_COMMAND
 	case s.isCommentRune(ch):
 		s.scanComment()
 		return s.Scan()
@@ -257,7 +245,7 @@ func (s *Scanner) Scan() (Token, error) {
 			break
 		case '"', '\'':
 			s.scanString(ch)
-			literal = cmd.UnescapeString(s.trimQuotes())
+			literal = cmd.UnescapeString(s.literal.String())
 			if _, e := value.StrToTime(literal); e == nil {
 				token = DATETIME
 			} else {
@@ -265,7 +253,7 @@ func (s *Scanner) Scan() (Token, error) {
 			}
 		case '`':
 			s.scanString(ch)
-			literal = cmd.UnescapeIdentifier(s.trimQuotes())
+			literal = cmd.UnescapeIdentifier(s.literal.String())
 			token = IDENTIFIER
 			quoted = true
 		}
@@ -275,8 +263,11 @@ func (s *Scanner) Scan() (Token, error) {
 }
 
 func (s *Scanner) scanString(quote rune) {
+	s.literal.Reset()
+
 	for {
 		ch := s.next()
+
 		if ch == EOF {
 			s.err = errors.New("literal not terminated")
 			break
@@ -289,19 +280,20 @@ func (s *Scanner) scanString(quote rune) {
 		if ch == '\\' {
 			switch s.peek() {
 			case '\\', quote:
-				s.next()
+				ch = s.next()
 			}
 		}
+		s.literal.WriteRune(ch)
 	}
-
-	return
 }
 
-func (s *Scanner) scanIdentifier() {
+func (s *Scanner) scanIdentifier(head rune) {
+	s.literal.Reset()
+
+	s.literal.WriteRune(head)
 	for s.isIdentRune(s.peek()) {
-		s.next()
+		s.literal.WriteRune(s.next())
 	}
-	return
 }
 
 func (s *Scanner) isIdentRune(ch rune) bool {
@@ -312,15 +304,18 @@ func (s *Scanner) isDecimal(ch rune) bool {
 	return '0' <= ch && ch <= '9'
 }
 
-func (s *Scanner) scanNumber(ch rune) rune {
+func (s *Scanner) scanNumber(head rune) rune {
+	s.literal.Reset()
+
+	s.literal.WriteRune(head)
 	for s.isDecimal(s.peek()) {
-		s.next()
+		s.literal.WriteRune(s.next())
 	}
 
 	if s.peek() == '.' {
-		s.next()
+		s.literal.WriteRune(s.next())
 		for s.isDecimal(s.peek()) {
-			s.next()
+			s.literal.WriteRune(s.next())
 		}
 		return FLOAT
 	}
@@ -328,23 +323,18 @@ func (s *Scanner) scanNumber(ch rune) rune {
 	return INTEGER
 }
 
-func (s *Scanner) scanOperator() {
+func (s *Scanner) scanOperator(head rune) {
+	s.literal.Reset()
+
+	s.literal.WriteRune(head)
 	for s.isOperatorRune(s.peek()) {
-		s.next()
+		s.literal.WriteRune(s.next())
 	}
-	return
 }
 
 func (s *Scanner) isOperatorRune(ch rune) bool {
 	switch ch {
 	case '=', '>', '<', '!', '|', ':':
-		return true
-	}
-	return false
-}
-
-func (s *Scanner) isVariableSign(ch rune) bool {
-	if ch == VariableSign {
 		return true
 	}
 	return false
@@ -442,7 +432,6 @@ func (s *Scanner) scanComment() {
 			}
 		}
 	}
-	return
 }
 
 func (s *Scanner) isLineCommentRune(ch rune) bool {
@@ -461,5 +450,73 @@ func (s *Scanner) scanLineComment() {
 		}
 		s.next()
 	}
-	return
+}
+
+func (s *Scanner) scanExternalCommand() {
+	s.literal.Reset()
+
+	for {
+		ch := s.peek()
+		if ch == ';' || ch == EOF {
+			break
+		}
+
+		s.literal.WriteRune(s.next())
+
+		if ch == '"' || ch == '\'' || ch == '`' {
+			s.scanExternalCommandQuotedString(ch)
+			continue
+		}
+
+		if ch == ExternalCommandSign && s.peek() == BeginExpression {
+			s.literal.WriteRune(s.next())
+			s.scanExternalCommandCSVQExpression()
+		}
+	}
+}
+
+func (s *Scanner) scanExternalCommandQuotedString(quote rune) {
+	for {
+		ch := s.peek()
+
+		if ch == EOF {
+			break
+		}
+
+		s.literal.WriteRune(s.next())
+
+		if ch == quote {
+			break
+		}
+
+		if ch == '\\' {
+			switch s.peek() {
+			case '\\', quote:
+				s.literal.WriteRune(s.next())
+			}
+		}
+	}
+}
+
+func (s *Scanner) scanExternalCommandCSVQExpression() {
+	for {
+		ch := s.peek()
+
+		if ch == EOF {
+			break
+		}
+
+		s.literal.WriteRune(s.next())
+
+		if ch == EndExpression {
+			break
+		}
+
+		if ch == '\\' {
+			switch s.peek() {
+			case '\\', BeginExpression, EndExpression:
+				s.literal.WriteRune(s.next())
+			}
+		}
+	}
 }

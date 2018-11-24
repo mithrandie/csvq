@@ -1,6 +1,6 @@
 // +build darwin dragonfly freebsd linux netbsd openbsd solaris windows
 
-package cmd
+package query
 
 import (
 	"fmt"
@@ -9,47 +9,63 @@ import (
 
 	"github.com/chzyer/readline"
 	"github.com/mitchellh/go-homedir"
-	"github.com/mithrandie/go-text/color"
+	"github.com/mithrandie/csvq/lib/cmd"
 )
 
 type ReadLineTerminal struct {
 	terminal *readline.Instance
 	fd       int
-	palette  *color.Palette
+	prompt   *Prompt
 }
 
-func NewTerminal() (VirtualTerminal, error) {
-	fd := int(os.Stdin.Fd())
+func NewTerminal(filter *Filter) (VirtualTerminal, error) {
+	fd := int(ScreenFd)
 
-	p, _ := GetPalette()
-	env, _ := GetEnvironment()
+	p, _ := cmd.GetPalette()
+	env, _ := cmd.GetEnvironment()
 
 	limit := env.InteractiveShell.HistoryLimit
 	historyFile, err := HistoryFilePath(env.InteractiveShell.HistoryFile)
 	if err != nil {
-		WriteToStdErr(fmt.Sprintf("cannot detect filepath: %q\n", env.InteractiveShell.HistoryFile))
+		WriteToStderrWithLineBreak(fmt.Sprintf("cannot detect filepath: %q", env.InteractiveShell.HistoryFile))
 		limit = -1
 	}
 
+	prompt := NewPrompt(filter, p)
+	prompt.LoadConfig()
+
 	t, err := readline.NewEx(&readline.Config{
-		Prompt:                 p.Render(PromptEffect, TerminalPrompt),
 		HistoryFile:            historyFile,
 		DisableAutoSaveHistory: true,
 		HistoryLimit:           limit,
+		Stdin:                  Stdin,
+		Stdout:                 Stdout,
+		Stderr:                 Stderr,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return ReadLineTerminal{
+	terminal := ReadLineTerminal{
 		terminal: t,
 		fd:       fd,
-		palette:  p,
-	}, nil
+		prompt:   prompt,
+	}
+
+	terminal.SetPrompt()
+	return terminal, nil
 }
 
 func (t ReadLineTerminal) Teardown() {
 	t.terminal.Close()
+}
+
+func (t ReadLineTerminal) RestoreRawMode() error {
+	return t.terminal.Terminal.EnterRawMode()
+}
+
+func (t ReadLineTerminal) RestoreOriginalMode() error {
+	return t.terminal.Terminal.ExitRawMode()
 }
 
 func (t ReadLineTerminal) ReadLine() (string, error) {
@@ -67,11 +83,19 @@ func (t ReadLineTerminal) WriteError(s string) error {
 }
 
 func (t ReadLineTerminal) SetPrompt() {
-	t.terminal.SetPrompt(t.palette.Render(PromptEffect, TerminalPrompt))
+	str, err := t.prompt.RenderPrompt()
+	if err != nil {
+		WriteToStderrWithLineBreak(cmd.Error(err.Error()))
+	}
+	t.terminal.SetPrompt(str)
 }
 
 func (t ReadLineTerminal) SetContinuousPrompt() {
-	t.terminal.SetPrompt(t.palette.Render(PromptEffect, TerminalContinuousPrompt))
+	str, err := t.prompt.RenderContinuousPrompt()
+	if err != nil {
+		WriteToStderrWithLineBreak(cmd.Error(err.Error()))
+	}
+	t.terminal.SetPrompt(str)
 }
 
 func (t ReadLineTerminal) SaveHistory(s string) {
@@ -80,6 +104,10 @@ func (t ReadLineTerminal) SaveHistory(s string) {
 
 func (t ReadLineTerminal) GetSize() (int, int, error) {
 	return readline.GetSize(t.fd)
+}
+
+func (t ReadLineTerminal) ReloadPromptConfig() error {
+	return t.prompt.LoadConfig()
 }
 
 func HistoryFilePath(filename string) (string, error) {

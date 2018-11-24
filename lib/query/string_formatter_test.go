@@ -1,10 +1,11 @@
 package query
 
 import (
-	"github.com/mithrandie/csvq/lib/value"
-	"github.com/mithrandie/ternary"
 	"testing"
 	"time"
+
+	"github.com/mithrandie/csvq/lib/value"
+	"github.com/mithrandie/ternary"
 )
 
 var stringFormatterFormatTests = []struct {
@@ -98,7 +99,7 @@ var stringFormatterFormatTests = []struct {
 		Values: []value.Primary{
 			value.NewString("str"),
 		},
-		Error: "[L:- C:-] unknown placeholder: \"w\"",
+		Error: "[L:- C:-] \"w\" is an unknown placeholder",
 	},
 	{
 		Format: "--%0",

@@ -21,7 +21,7 @@ import (
     variables   []Variable
     varassign   VariableAssignment
     varassigns  []VariableAssignment
-    envvar      EnvVar
+    envvar      EnvironmentVariable
     updateset   UpdateSet
     updatesets  []UpdateSet
     columndef   ColumnDefault
@@ -165,6 +165,7 @@ import (
 %type<varassign>   variable_assignment
 %type<varassigns>  variable_assignments
 %type<envvar>      environment_variable
+%type<queryexpr>   runtime_information
 %type<token>       distinct
 %type<token>       negation
 %type<token>       join_type_inner
@@ -175,7 +176,8 @@ import (
 %type<token>       as
 %type<token>       comparison_operator
 
-%token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME VARIABLE FLAG ENVIRONMENT_VARIABLE
+%token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME
+%token<token> VARIABLE FLAG ENVIRONMENT_VARIABLE RUNTIME_INFORMATION EXTERNAL_COMMAND
 %token<token> SELECT FROM UPDATE SET UNSET DELETE WHERE INSERT INTO VALUES AS DUAL STDIN
 %token<token> RECURSIVE
 %token<token> CREATE ADD DROP ALTER TABLE FIRST LAST AFTER BEFORE DEFAULT RENAME TO VIEW
@@ -192,7 +194,7 @@ import (
 %token<token> SEPARATOR PARTITION OVER
 %token<token> COMMIT ROLLBACK
 %token<token> CONTINUE BREAK EXIT
-%token<token> PRINT PRINTF SOURCE EXECUTE TRIGGER
+%token<token> ECHO PRINT PRINTF SOURCE EXECUTE CHDIR PWD RELOAD TRIGGER
 %token<token> FUNCTION AGGREGATE BEGIN RETURN
 %token<token> IGNORE WITHIN
 %token<token> VAR SHOW
@@ -283,10 +285,6 @@ common_statement
     {
         $$ = $1
     }
-    | function
-    {
-        $$ = $1
-    }
     | table_operation_statement
     {
         $$ = $1
@@ -322,6 +320,14 @@ common_statement
     | trigger_statement
     {
         $$ = $1
+    }
+    | value
+    {
+        $$ = $1
+    }
+    | EXTERNAL_COMMAND
+    {
+        $$ = ExternalCommand{BaseExpr: NewBaseExpr($1), Command: $1.Literal}
     }
 
 common_loop_flow_control_statement
@@ -827,6 +833,10 @@ command_statement
     {
         $$ = ShowFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal}
     }
+    | ECHO value
+    {
+        $$ = Echo{Value: $2}
+    }
     | PRINT value
     {
         $$ = Print{Value: $2}
@@ -866,6 +876,22 @@ command_statement
     | SHOW identifier FROM identifier
     {
         $$ = ShowFields{BaseExpr: NewBaseExpr($1), Type: $2, Table: $4}
+    }
+    | CHDIR identifier
+    {
+        $$ = Chdir{BaseExpr: NewBaseExpr($1), DirPath: $2}
+    }
+    | CHDIR value
+    {
+        $$ = Chdir{BaseExpr: NewBaseExpr($1), DirPath: $2}
+    }
+    | PWD
+    {
+        $$ = Pwd{BaseExpr: NewBaseExpr($1)}
+    }
+    | RELOAD identifier
+    {
+        $$ = Reload{BaseExpr: NewBaseExpr($1), Type: $2}
     }
 
 trigger_statement
@@ -1173,6 +1199,10 @@ value
         $$ = $1
     }
     | environment_variable
+    {
+        $$ = $1
+    }
+    | runtime_information
     {
         $$ = $1
     }
@@ -2140,7 +2170,13 @@ variable_assignments
 environment_variable
     : ENVIRONMENT_VARIABLE
     {
-        $$ = EnvVar{BaseExpr: NewBaseExpr($1), Name:$1.Literal}
+        $$ = EnvironmentVariable{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Quoted: $1.Quoted}
+    }
+
+runtime_information
+    : RUNTIME_INFORMATION
+    {
+        $$ = RuntimeInformation{BaseExpr: NewBaseExpr($1), Name: $1.Literal}
     }
 
 distinct

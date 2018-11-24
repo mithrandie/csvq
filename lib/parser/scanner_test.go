@@ -161,6 +161,16 @@ var scanTests = []struct {
 		},
 	},
 	{
+		Name:  "Runtime Information",
+		Input: "@#var",
+		Output: []scanResult{
+			{
+				Token:   RUNTIME_INFORMATION,
+				Literal: "var",
+			},
+		},
+	},
+	{
 		Name:  "EqualSign",
 		Input: "=",
 		Output: []scanResult{
@@ -329,8 +339,42 @@ var scanTests = []struct {
 		},
 	},
 	{
+		Name:  "External Command",
+		Input: "$abc",
+		Output: []scanResult{
+			{
+				Token:   EXTERNAL_COMMAND,
+				Literal: "abc",
+			},
+		},
+	},
+	{
+		Name:  "External Command with LineBreak",
+		Input: "$abc\nd\\ef\n ghi\\",
+		Output: []scanResult{
+			{
+				Token:   EXTERNAL_COMMAND,
+				Literal: "abc\nd\\ef\n ghi\\",
+			},
+		},
+	},
+	{
+		Name:  "External Command with Terminator",
+		Input: "$abc 'def;' ${ghi;} @%`var;`;",
+		Output: []scanResult{
+			{
+				Token:   EXTERNAL_COMMAND,
+				Literal: "abc 'def;' ${ghi;} @%`var;`",
+			},
+			{
+				Token:   ';',
+				Literal: ";",
+			},
+		},
+	},
+	{
 		Name:  "LineComment",
-		Input: "identifier-- comment 'string', \n 1-2",
+		Input: "identifier-- comment 'string', \n 1-2 -- comment \r 2 -- comment",
 		Output: []scanResult{
 			{
 				Token:   IDENTIFIER,
@@ -343,6 +387,10 @@ var scanTests = []struct {
 			{
 				Token:   int('-'),
 				Literal: "-",
+			},
+			{
+				Token:   INTEGER,
+				Literal: "2",
 			},
 			{
 				Token:   INTEGER,
@@ -409,7 +457,7 @@ var scanTests = []struct {
 	},
 }
 
-func TestScan(t *testing.T) {
+func TestScanner_Scan(t *testing.T) {
 	for _, v := range scanTests {
 		s := new(Scanner).Init(v.Input, "")
 
@@ -432,10 +480,15 @@ func TestScan(t *testing.T) {
 			}
 
 			if token.Token == EOF {
+				tokenCount--
+				if tokenCount != len(v.Output) {
+					t.Errorf("%s: scan %d token(s) in a statement, want %d token(s)", v.Name, tokenCount, len(v.Output))
+				}
 				break
 			}
 
 			if len(v.Output) < tokenCount {
+				t.Errorf("%s: scan %d token(s) in a statement, want %d token(s)", v.Name, tokenCount, len(v.Output))
 				break
 			}
 			expect := v.Output[tokenCount-1]
@@ -456,11 +509,6 @@ func TestScan(t *testing.T) {
 					t.Errorf("%s, token %d: char %d: want %d", v.Name, tokenCount, token.Char, expect.Char)
 				}
 			}
-		}
-
-		tokenCount--
-		if tokenCount != len(v.Output) {
-			t.Errorf("%s: scan %d token(s) in a statement, want %d token(s)", v.Name, tokenCount, len(v.Output))
 		}
 	}
 }

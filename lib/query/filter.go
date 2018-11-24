@@ -1,13 +1,14 @@
 package query
 
 import (
+	"bytes"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/json"
-
 	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/excmd"
+	"github.com/mithrandie/csvq/lib/json"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -197,8 +198,10 @@ func (f *Filter) Evaluate(expr parser.QueryExpression) (value.Primary, error) {
 		val, err = f.evalUnaryLogic(expr.(parser.UnaryLogic))
 	case parser.Variable:
 		val, err = f.Variables.Get(expr.(parser.Variable))
-	case parser.EnvVar:
-		val = value.NewString(os.Getenv(expr.(parser.EnvVar).Name))
+	case parser.EnvironmentVariable:
+		val = value.NewString(os.Getenv(expr.(parser.EnvironmentVariable).Name))
+	case parser.RuntimeInformation:
+		val, err = GetRuntimeInformation(expr.(parser.RuntimeInformation))
 	case parser.VariableSubstitution:
 		val, err = f.Variables.Substitute(expr.(parser.VariableSubstitution), f)
 	case parser.CursorStatus:
@@ -206,7 +209,7 @@ func (f *Filter) Evaluate(expr parser.QueryExpression) (value.Primary, error) {
 	case parser.CursorAttrebute:
 		val, err = f.evalCursorAttribute(expr.(parser.CursorAttrebute))
 	default:
-		return nil, NewSyntaxErrorFromExpr(expr)
+		return nil, NewInvalidValueError(expr)
 	}
 
 	return val, err
@@ -1137,4 +1140,66 @@ func (f *Filter) evalJsonQueryParameters(expr parser.JsonQuery) (value.Primary, 
 	jsonText := value.ToString(jsonTextValue)
 
 	return query, jsonText, nil
+}
+
+func (f *Filter) EvaluateEmbeddedString(embedded string) (string, error) {
+	scanner := new(excmd.ArgumentScanner).Init(embedded)
+	buf := new(bytes.Buffer)
+	var err error
+
+	for scanner.Scan() {
+		switch scanner.ElementType() {
+		case excmd.FixedString:
+			buf.WriteString(scanner.Text())
+		case excmd.Variable:
+			if err = f.writeEmbeddedExpression(buf, parser.Variable{Name: scanner.Text()}); err != nil {
+				return buf.String(), err
+			}
+		case excmd.EnvironmentVariable:
+			buf.WriteString(os.Getenv(scanner.Text()))
+		case excmd.RuntimeInformation:
+			if err = f.writeEmbeddedExpression(buf, parser.RuntimeInformation{Name: scanner.Text()}); err != nil {
+				return buf.String(), err
+			}
+		case excmd.CsvqExpression:
+			expr := scanner.Text()
+			if 0 < len(expr) {
+				statements, err := parser.Parse(expr, "")
+				if err != nil {
+					if syntaxErr, ok := err.(*parser.SyntaxError); ok {
+						err = NewSyntaxError(syntaxErr)
+					}
+					return buf.String(), err
+				}
+
+				switch len(statements) {
+				case 1:
+					qexpr, ok := statements[0].(parser.QueryExpression)
+					if !ok {
+						return buf.String(), NewInvalidValueError(parser.NewStringValue(expr))
+					}
+					if err = f.writeEmbeddedExpression(buf, qexpr); err != nil {
+						return buf.String(), err
+					}
+				default:
+					return buf.String(), NewInvalidValueError(parser.NewStringValue(expr))
+				}
+			}
+		}
+	}
+	if err = scanner.Err(); err != nil {
+		return buf.String(), err
+	}
+
+	return buf.String(), nil
+}
+
+func (f *Filter) writeEmbeddedExpression(buf *bytes.Buffer, expr parser.QueryExpression) error {
+	p, err := f.Evaluate(expr)
+	if err != nil {
+		return err
+	}
+	s, _ := Formatter.Format("%s", []value.Primary{p})
+	buf.WriteString(s)
+	return nil
 }

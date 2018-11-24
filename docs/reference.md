@@ -25,7 +25,10 @@ title: Reference Manual - csvq
   * [Control Flow]({{ '/reference/control-flow.html' | relative_url }})
   * [Transaction Management]({{ '/reference/transaction.html' | relative_url }})
   * [Built-in Commands]({{ '/reference/built-in.html' | relative_url }})
+  * [External Command]({{ '/reference/external-command.html' | relative_url }})
   * [Flag]({{ '/reference/flag.html' | relative_url }})
+  * [Environment Variable]({{ '/reference/environment-variable.html' | relative_url }})
+  * [Runtime Information]({{ '/reference/runtime-information.html' | relative_url }})
   * [JSON]({{ '/reference/json.html' | relative_url }})
 * Operators
   * [Operator Precedence]({{ '/reference/operator-precedence.html' | relative_url }})

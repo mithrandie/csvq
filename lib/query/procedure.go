@@ -1,16 +1,15 @@
 package query
 
 import (
-	"bytes"
 	"fmt"
 	"io"
-	"os"
+	"os/exec"
 	"strings"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/file"
-
 	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/excmd"
+	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -28,28 +27,11 @@ const (
 	Return
 )
 
-type OperationType int
-
-const (
-	InsertQuery OperationType = iota
-	UpdateQuery
-	DeleteQuery
-	CreateTableQuery
-	AddColumnsQuery
-	DropColumnsQuery
-	RenameColumnQuery
-)
-
-type ExecResult struct {
-	Type          OperationType
-	FileInfo      *FileInfo
-	OperatedCount int
-}
-
+var Version string
 var ViewCache = make(ViewMap, 10)
-var ExecResults = make([]ExecResult, 0, 10)
-var OutFile *os.File
-var SelectResult = new(bytes.Buffer)
+var UncommittedViews = NewUncommittedViewMap()
+
+var Formatter = NewStringFormatter()
 
 func ReleaseResources() error {
 	if err := ViewCache.Clean(); err != nil {
@@ -74,12 +56,6 @@ func ReleaseResourcesWithErrors() error {
 		return file.NewForcedUnlockError(errs)
 	}
 	return nil
-}
-
-func Log(log string, quiet bool) {
-	if !quiet {
-		cmd.WriteToStdout(log + "\n")
-	}
 }
 
 type Procedure struct {
@@ -127,9 +103,6 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 
 	var err error
 
-	var results []ExecResult
-	var view *View
-	var views []*View
 	var printstr string
 
 	switch stmt.(type) {
@@ -174,7 +147,9 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		if flags.Stats {
 			proc.MeasurementStart = time.Now()
 		}
-		if view, err = Select(stmt.(parser.SelectQuery), proc.Filter); err == nil {
+
+		view, e := Select(stmt.(parser.SelectQuery), proc.Filter)
+		if e == nil {
 			fileInfo := &FileInfo{
 				Format:             flags.Format,
 				Delimiter:          flags.WriteDelimiter,
@@ -190,18 +165,20 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			if OutFile != nil {
 				writer = OutFile
 			} else {
-				SelectResult.Reset()
-				writer = SelectResult
+				if Terminal != nil {
+					Terminal.RestoreOriginalMode()
+					defer Terminal.RestoreRawMode()
+				}
+				writer = Stdout
 			}
 			err = EncodeView(writer, view, fileInfo)
 			if err == nil {
-				if OutFile != nil {
-					OutFile.WriteString(cmd.GetFlags().LineBreak.Value())
-				} else {
-					Log(SelectResult.String(), false)
-				}
+				writer.Write([]byte(cmd.GetFlags().LineBreak.Value()))
 			}
+		} else {
+			err = e
 		}
+
 		if flags.Stats {
 			proc.showExecutionTime()
 		}
@@ -209,18 +186,17 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		if flags.Stats {
 			proc.MeasurementStart = time.Now()
 		}
-		if view, err = Insert(stmt.(parser.InsertQuery), proc.Filter); err == nil {
-			results = []ExecResult{
-				{
-					Type:          InsertQuery,
-					FileInfo:      view.FileInfo,
-					OperatedCount: view.OperatedRecords,
-				},
-			}
-			Log(fmt.Sprintf("%s inserted on %q.", FormatCount(view.OperatedRecords, "record"), view.FileInfo.Path), flags.Quiet)
 
-			view.OperatedRecords = 0
+		fileInfo, cnt, e := Insert(stmt.(parser.InsertQuery), proc.Filter)
+		if e == nil {
+			if 0 < cnt {
+				UncommittedViews.SetForUpdatedView(fileInfo)
+			}
+			Log(fmt.Sprintf("%s inserted on %q.", FormatCount(cnt, "record"), fileInfo.Path), flags.Quiet)
+		} else {
+			err = e
 		}
+
 		if flags.Stats {
 			proc.showExecutionTime()
 		}
@@ -228,19 +204,19 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		if flags.Stats {
 			proc.MeasurementStart = time.Now()
 		}
-		if views, err = Update(stmt.(parser.UpdateQuery), proc.Filter); err == nil {
-			results = make([]ExecResult, len(views))
-			for i, v := range views {
-				results[i] = ExecResult{
-					Type:          UpdateQuery,
-					FileInfo:      v.FileInfo,
-					OperatedCount: v.OperatedRecords,
-				}
-				Log(fmt.Sprintf("%s updated on %q.", FormatCount(v.OperatedRecords, "record"), v.FileInfo.Path), flags.Quiet)
 
-				v.OperatedRecords = 0
+		infos, cnts, e := Update(stmt.(parser.UpdateQuery), proc.Filter)
+		if e == nil {
+			for i, info := range infos {
+				if 0 < cnts[i] {
+					UncommittedViews.SetForUpdatedView(info)
+				}
+				Log(fmt.Sprintf("%s updated on %q.", FormatCount(cnts[i], "record"), info.Path), flags.Quiet)
 			}
+		} else {
+			err = e
 		}
+
 		if flags.Stats {
 			proc.showExecutionTime()
 		}
@@ -248,77 +224,66 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		if flags.Stats {
 			proc.MeasurementStart = time.Now()
 		}
-		if views, err = Delete(stmt.(parser.DeleteQuery), proc.Filter); err == nil {
-			results = make([]ExecResult, len(views))
-			for i, v := range views {
-				results[i] = ExecResult{
-					Type:          DeleteQuery,
-					FileInfo:      v.FileInfo,
-					OperatedCount: v.OperatedRecords,
-				}
-				Log(fmt.Sprintf("%s deleted on %q.", FormatCount(v.OperatedRecords, "record"), v.FileInfo.Path), flags.Quiet)
 
-				v.OperatedRecords = 0
+		infos, cnts, e := Delete(stmt.(parser.DeleteQuery), proc.Filter)
+		if e == nil {
+			for i, info := range infos {
+				if 0 < cnts[i] {
+					UncommittedViews.SetForUpdatedView(info)
+				}
+				Log(fmt.Sprintf("%s deleted on %q.", FormatCount(cnts[i], "record"), info.Path), flags.Quiet)
 			}
+		} else {
+			err = e
 		}
+
 		if flags.Stats {
 			proc.showExecutionTime()
 		}
 	case parser.CreateTable:
-		if view, err = CreateTable(stmt.(parser.CreateTable), proc.Filter); err == nil {
-			results = []ExecResult{
-				{
-					Type:     CreateTableQuery,
-					FileInfo: view.FileInfo,
-				},
-			}
-			Log(fmt.Sprintf("file %q is created.", view.FileInfo.Path), flags.Quiet)
-
-			view.OperatedRecords = 0
+		info, e := CreateTable(stmt.(parser.CreateTable), proc.Filter)
+		if e == nil {
+			UncommittedViews.SetForCreatedView(info)
+			Log(fmt.Sprintf("file %q is created.", info.Path), flags.Quiet)
+		} else {
+			err = e
 		}
 	case parser.AddColumns:
-		if view, err = AddColumns(stmt.(parser.AddColumns), proc.Filter); err == nil {
-			results = []ExecResult{
-				{
-					Type:          AddColumnsQuery,
-					FileInfo:      view.FileInfo,
-					OperatedCount: view.OperatedFields,
-				},
-			}
-			Log(fmt.Sprintf("%s added on %q.", FormatCount(view.OperatedFields, "field"), view.FileInfo.Path), flags.Quiet)
-
-			view.OperatedRecords = 0
+		info, cnt, e := AddColumns(stmt.(parser.AddColumns), proc.Filter)
+		if e == nil {
+			UncommittedViews.SetForUpdatedView(info)
+			Log(fmt.Sprintf("%s added on %q.", FormatCount(cnt, "field"), info.Path), flags.Quiet)
+		} else {
+			err = e
 		}
 	case parser.DropColumns:
-		if view, err = DropColumns(stmt.(parser.DropColumns), proc.Filter); err == nil {
-			results = []ExecResult{
-				{
-					Type:          DropColumnsQuery,
-					FileInfo:      view.FileInfo,
-					OperatedCount: view.OperatedFields,
-				},
-			}
-			Log(fmt.Sprintf("%s dropped on %q.", FormatCount(view.OperatedFields, "field"), view.FileInfo.Path), flags.Quiet)
-
-			view.OperatedRecords = 0
+		info, cnt, e := DropColumns(stmt.(parser.DropColumns), proc.Filter)
+		if e == nil {
+			UncommittedViews.SetForUpdatedView(info)
+			Log(fmt.Sprintf("%s dropped on %q.", FormatCount(cnt, "field"), info.Path), flags.Quiet)
+		} else {
+			err = e
 		}
 	case parser.RenameColumn:
-		if view, err = RenameColumn(stmt.(parser.RenameColumn), proc.Filter); err == nil {
-			results = []ExecResult{
-				{
-					Type:          RenameColumnQuery,
-					FileInfo:      view.FileInfo,
-					OperatedCount: view.OperatedFields,
-				},
-			}
-			Log(fmt.Sprintf("%s renamed on %q.", FormatCount(view.OperatedFields, "field"), view.FileInfo.Path), flags.Quiet)
-
-			view.OperatedRecords = 0
+		info, e := RenameColumn(stmt.(parser.RenameColumn), proc.Filter)
+		if e == nil {
+			UncommittedViews.SetForUpdatedView(info)
+			Log(fmt.Sprintf("%s renamed on %q.", FormatCount(1, "field"), info.Path), flags.Quiet)
+		} else {
+			err = e
 		}
 	case parser.SetTableAttribute:
 		expr := stmt.(parser.SetTableAttribute)
-		if printstr, err = SetTableAttribute(expr, proc.Filter); err == nil {
-			Log(printstr, flags.Quiet)
+		info, log, e := SetTableAttribute(expr, proc.Filter)
+		if e == nil {
+			UncommittedViews.SetForUpdatedView(info)
+			Log(log, flags.Quiet)
+		} else {
+			if unchanged, ok := e.(*TableAttributeUnchangedError); ok {
+				Log(fmt.Sprintf("Table attributes of %s remain unchanged.", unchanged.Path), flags.Quiet)
+			} else {
+				err = e
+			}
 		}
 	case parser.TransactionControl:
 		switch stmt.(parser.TransactionControl).Token {
@@ -360,12 +325,14 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		flow, err = proc.While(stmt.(parser.While))
 	case parser.WhileInCursor:
 		flow, err = proc.WhileInCursor(stmt.(parser.WhileInCursor))
+	case parser.Echo:
+		if printstr, err = Echo(stmt.(parser.Echo), proc.Filter); err == nil {
+			Log(printstr, false)
+		}
 	case parser.Print:
 		if printstr, err = Print(stmt.(parser.Print), proc.Filter); err == nil {
 			Log(printstr, false)
 		}
-	case parser.Function:
-		_, err = proc.Filter.Evaluate(stmt.(parser.Function))
 	case parser.Printf:
 		if printstr, err = Printf(stmt.(parser.Printf), proc.Filter); err == nil {
 			Log(printstr, false)
@@ -380,6 +347,16 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		if externalStatements, err = ParseExecuteStatements(stmt.(parser.Execute), proc.Filter); err == nil {
 			flow, err = proc.Execute(externalStatements)
 		}
+	case parser.Chdir:
+		err = Chdir(stmt.(parser.Chdir), proc.Filter)
+	case parser.Pwd:
+		var dirpath string
+		dirpath, err = Pwd(stmt.(parser.Pwd))
+		if err == nil {
+			Log(dirpath, false)
+		}
+	case parser.Reload:
+		err = Reload(stmt.(parser.Reload))
 	case parser.ShowObjects:
 		if printstr, err = ShowObjects(stmt.(parser.ShowObjects), proc.Filter); err == nil {
 			Log(printstr, false)
@@ -411,10 +388,12 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		default:
 			err = NewInvalidEventNameError(trigger.Event)
 		}
-	}
-
-	if results != nil {
-		ExecResults = append(ExecResults, results...)
+	case parser.ExternalCommand:
+		err = proc.ExecExternalCommand(stmt.(parser.ExternalCommand))
+	default:
+		if expr, ok := stmt.(parser.QueryExpression); ok {
+			_, err = proc.Filter.Evaluate(expr)
+		}
 	}
 
 	if err != nil {
@@ -551,6 +530,52 @@ func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, 
 	}
 
 	return Terminate, nil
+}
+
+func (proc *Procedure) ExecExternalCommand(stmt parser.ExternalCommand) error {
+	splitter := new(excmd.ArgsSplitter).Init(stmt.Command)
+	var argStrs = make([]string, 0, 8)
+	for splitter.Scan() {
+		argStrs = append(argStrs, splitter.Text())
+	}
+	err := splitter.Err()
+	if err != nil {
+		return NewExternalCommandError(stmt, err.Error())
+	}
+
+	args := make([]string, 0, len(argStrs))
+	for _, argStr := range argStrs {
+		arg, err := proc.Filter.EvaluateEmbeddedString(argStr)
+		if err != nil {
+			if appErr, ok := err.(AppError); ok {
+				err = NewExternalCommandError(stmt, appErr.ErrorMessage())
+			} else {
+				err = NewExternalCommandError(stmt, err.Error())
+			}
+			return err
+		}
+		args = append(args, arg)
+	}
+
+	if len(args) < 1 {
+		return nil
+	}
+
+	if Terminal != nil {
+		Terminal.RestoreOriginalMode()
+		defer Terminal.RestoreRawMode()
+	}
+
+	c := exec.Command(args[0], args[1:]...)
+	c.Stdin = Stdin
+	c.Stdout = Stdout
+	c.Stderr = Stderr
+
+	err = c.Run()
+	if err != nil {
+		err = NewExternalCommandError(stmt, err.Error())
+	}
+	return err
 }
 
 func (proc *Procedure) showExecutionTime() {

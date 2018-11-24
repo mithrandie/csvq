@@ -17,14 +17,12 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/mithrandie/go-text"
-
-	"github.com/mithrandie/csvq/lib/json"
-
 	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/json"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
+	"github.com/mithrandie/go-text"
 	"github.com/mithrandie/ternary"
 )
 
@@ -998,8 +996,7 @@ func Format(fn parser.Function, args []value.Primary) (value.Primary, error) {
 		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, "the first argument must be a string")
 	}
 
-	f := NewStringFormatter()
-	str, err := f.Format(format.(value.String).Raw(), args[1:])
+	str, err := Formatter.Format(format.(value.String).Raw(), args[1:])
 	if err != nil {
 		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, err.(AppError).ErrorMessage())
 	}
@@ -1531,31 +1528,15 @@ func Call(fn parser.Function, args []value.Primary) (value.Primary, error) {
 		return nil, NewFunctionArgumentLengthErrorWithCustomArgs(fn, fn.Name, "at least 1 argument")
 	}
 
-	cmdargs := make([]string, len(args))
-	for i, v := range args {
-		var s string
-		switch v.(type) {
-		case value.String:
-			s = v.(value.String).Raw()
-		case value.Integer:
-			s = v.(value.Integer).String()
-		case value.Float:
-			s = v.(value.Float).String()
-		case value.Boolean:
-			s = v.(value.Boolean).String()
-		case value.Ternary:
-			s = v.(value.Ternary).String()
-		case value.Datetime:
-			s = v.(value.Datetime).Format(time.RFC3339Nano)
-		case value.Null:
-			s = ""
-		}
-		cmdargs[i] = s
+	cmdargs := make([]string, 0, len(args))
+	for _, v := range args {
+		s, _ := Formatter.Format("%s", []value.Primary{v})
+		cmdargs = append(cmdargs, s)
 	}
 
 	buf, err := exec.Command(cmdargs[0], cmdargs[1:]...).Output()
 	if err != nil {
-		return nil, err
+		return nil, NewExternalCommandError(fn, err.Error())
 	}
 	return value.NewString(string(buf)), nil
 }

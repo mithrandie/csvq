@@ -14,7 +14,7 @@ func Calc(expr string) error {
 
 	defer func() {
 		if err := query.ReleaseResourcesWithErrors(); err != nil {
-			cmd.WriteToStdErr(err.Error() + "\n")
+			query.WriteToStderrWithLineBreak(err.Error())
 		}
 	}()
 
@@ -48,6 +48,6 @@ func Calc(expr string) error {
 		values[i], _, _ = query.ConvertFieldContents(p, true)
 	}
 
-	cmd.WriteToStdout(strings.Join(values, string(cmd.GetFlags().WriteDelimiter)))
+	query.WriteToStdout(strings.Join(values, string(cmd.GetFlags().WriteDelimiter)))
 	return nil
 }

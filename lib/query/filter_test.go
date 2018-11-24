@@ -1,6 +1,7 @@
 package query
 
 import (
+	"os"
 	"reflect"
 	"sync"
 	"testing"
@@ -30,9 +31,9 @@ var filterEvaluateTests = []struct {
 		Result: value.NewString("str"),
 	},
 	{
-		Name:  "Syntax Error",
+		Name:  "Invalid Value Error",
 		Expr:  parser.AllColumns{},
-		Error: "[L:- C:-] syntax error: unexpected *",
+		Error: "[L:- C:-] *: cannot evaluate as a value",
 	},
 	{
 		Name: "Parentheses",
@@ -3881,10 +3882,17 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Environment Variable",
-		Expr: parser.EnvVar{
+		Expr: parser.EnvironmentVariable{
 			Name: "CSVQ_TEST_ENV",
 		},
 		Result: value.NewString("foo"),
+	},
+	{
+		Name: "Runtime Information",
+		Expr: parser.RuntimeInformation{
+			Name: "version",
+		},
+		Result: value.NewString("v1.0.0"),
 	},
 	{
 		Name: "Variable Undeclared Error",
@@ -4019,6 +4027,88 @@ func TestFilter_Evaluate(t *testing.T) {
 		}
 		if !reflect.DeepEqual(result, v.Result) {
 			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+		}
+	}
+}
+
+var filterEvaluateEmbeddedStringTests = []struct {
+	Input  string
+	Expect string
+	Error  string
+}{
+	{
+		Input:  "str",
+		Expect: "str",
+	},
+	{
+		Input:  "@var",
+		Expect: "1",
+	},
+	{
+		Input:  "@%CSVQ_TEST_FILTER",
+		Expect: "FILTER_TEST",
+	},
+	{
+		Input:  "@#version",
+		Expect: "v1.0.0",
+	},
+	{
+		Input:  "abc${}def",
+		Expect: "abcdef",
+	},
+	{
+		Input:  "abc${@var}def",
+		Expect: "abc1def",
+	},
+	{
+		Input: "@notexist",
+		Error: "[L:- C:-] variable @notexist is undeclared",
+	},
+	{
+		Input: "@#notexist",
+		Error: "[L:- C:-] @#notexist is an unknown runtime information",
+	},
+	{
+		Input: "abc${invalid expr}def",
+		Error: "[L:1 C:9] syntax error: unexpected token \"expr\"",
+	},
+	{
+		Input: "abc${print 1;}def",
+		Error: "[L:- C:-] 'print 1;': cannot evaluate as a value",
+	},
+	{
+		Input: "abc${print 1;print2;}def",
+		Error: "[L:- C:-] 'print 1;print2;': cannot evaluate as a value",
+	},
+	{
+		Input: "abc${@notexist}def",
+		Error: "[L:1 C:1] variable @notexist is undeclared",
+	},
+}
+
+func TestFilter_EvaluateEmbeddedString(t *testing.T) {
+	filter := NewEmptyFilter()
+	filter.Variables[0].Add(parser.Variable{Name: "var"}, value.NewInteger(1))
+	os.Setenv("CSVQ_TEST_FILTER", "FILTER_TEST")
+
+	for _, v := range filterEvaluateEmbeddedStringTests {
+		result, err := filter.EvaluateEmbeddedString(v.Input)
+
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("unexpected error %q for %q", err, v.Input)
+			} else if err.Error() != v.Error {
+				t.Errorf("error %q, want error %q for %q", err.Error(), v.Error, v.Input)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("no error, want error %q for %q", v.Error, v.Input)
+			continue
+		}
+
+		if result != v.Expect {
+			t.Errorf("result = %q, want %q for %q", result, v.Expect, v.Input)
 		}
 	}
 }

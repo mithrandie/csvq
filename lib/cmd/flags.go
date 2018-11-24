@@ -182,8 +182,6 @@ var (
 
 func GetFlags() *Flags {
 	getFlags.Do(func() {
-		pwd, _ := os.Getwd()
-
 		cpu := runtime.NumCPU() / 2
 		if cpu < 1 {
 			cpu = 1
@@ -192,7 +190,7 @@ func GetFlags() *Flags {
 		env, _ := GetEnvironment()
 
 		flags = &Flags{
-			Repository:              pwd,
+			Repository:              "",
 			Location:                "Local",
 			DatetimeFormat:          env.DatetimeFormat,
 			WaitTimeout:             10,
@@ -241,6 +239,7 @@ func (f *Flags) SelectImportFormat() Format {
 
 func (f *Flags) SetRepository(s string) error {
 	if len(s) < 1 {
+		f.Repository = ""
 		return nil
 	}
 

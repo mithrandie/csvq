@@ -2,6 +2,7 @@ package query
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -224,12 +225,47 @@ func encodeText(fp io.Writer, view *View, format cmd.Format, lineBreak text.Line
 	}
 
 	aligns := make([]text.FieldAlignment, 0, len(header))
+
+	var textStrBuf bytes.Buffer
+	var textLineBuf bytes.Buffer
 	for i, record := range records {
 		rfields := make([]table.Field, 0, len(header))
 		for _, v := range record {
 			str, effect, align := ConvertFieldContents(v, isPlainTable)
 			if format == cmd.TEXT {
-				str = palette.Render(effect, str)
+				textStrBuf.Reset()
+				textLineBuf.Reset()
+
+				runes := []rune(str)
+				pos := 0
+				for {
+					if len(runes) <= pos {
+						if 0 < textLineBuf.Len() {
+							textStrBuf.WriteString(palette.Render(effect, textLineBuf.String()))
+						}
+						break
+					}
+
+					r := runes[pos]
+					switch r {
+					case '\r':
+						if (pos+1) < len(runes) && runes[pos+1] == '\n' {
+							pos++
+						}
+						fallthrough
+					case '\n':
+						if 0 < textLineBuf.Len() {
+							textStrBuf.WriteString(palette.Render(effect, textLineBuf.String()))
+						}
+						textStrBuf.WriteByte('\n')
+						textLineBuf.Reset()
+					default:
+						textLineBuf.WriteRune(r)
+					}
+
+					pos++
+				}
+				str = textStrBuf.String()
 			}
 			rfields = append(rfields, table.NewField(str, align))
 

@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/mithrandie/csvq/lib/cmd"
-
 	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mithrandie/ternary"
@@ -1116,30 +1115,39 @@ type DisposeVariable struct {
 	Variable Variable
 }
 
-type EnvVar struct {
+type EnvironmentVariable struct {
 	*BaseExpr
 	Name   string
 	Quoted bool
 }
 
-func (e EnvVar) String() string {
+func (e EnvironmentVariable) String() string {
 	name := e.Name
 	if e.Quoted {
 		name = cmd.QuoteIdentifier(name)
 	}
 
-	return string(VariableSign) + string(EnvVarSign) + name
+	return string(VariableSign) + string(EnvironmentVariableSign) + name
+}
+
+type RuntimeInformation struct {
+	*BaseExpr
+	Name string
+}
+
+func (e RuntimeInformation) String() string {
+	return string(VariableSign) + string(RuntimeInformationSign) + e.Name
 }
 
 type SetEnvVar struct {
 	*BaseExpr
-	EnvVar EnvVar
+	EnvVar EnvironmentVariable
 	Value  QueryExpression
 }
 
 type UnsetEnvVar struct {
 	*BaseExpr
-	EnvVar EnvVar
+	EnvVar EnvironmentVariable
 }
 
 type InsertQuery struct {
@@ -1245,6 +1253,11 @@ type Return struct {
 	Value QueryExpression
 }
 
+type Echo struct {
+	*BaseExpr
+	Value QueryExpression
+}
+
 type Print struct {
 	*BaseExpr
 	Value QueryExpression
@@ -1259,6 +1272,26 @@ type Printf struct {
 type Source struct {
 	*BaseExpr
 	FilePath QueryExpression
+}
+
+type Chdir struct {
+	*BaseExpr
+	DirPath QueryExpression
+}
+
+type Pwd struct {
+	*BaseExpr
+}
+
+type Reload struct {
+	*BaseExpr
+	Type Identifier
+}
+
+type Execute struct {
+	*BaseExpr
+	Statements QueryExpression
+	Values     []QueryExpression
 }
 
 type SetFlag struct {
@@ -1428,15 +1461,14 @@ type Trigger struct {
 	Code    value.Primary
 }
 
-type Execute struct {
-	*BaseExpr
-	Statements QueryExpression
-	Values     []QueryExpression
-}
-
 type Exit struct {
 	*BaseExpr
 	Code value.Primary
+}
+
+type ExternalCommand struct {
+	*BaseExpr
+	Command string
 }
 
 func putParentheses(s string) string {

@@ -10,16 +10,61 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mithrandie/go-text/json"
-
-	"github.com/mithrandie/go-text"
-
-	"github.com/mithrandie/go-text/fixedlen"
-
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
+
+	"github.com/mithrandie/go-text"
+	"github.com/mithrandie/go-text/fixedlen"
+	"github.com/mithrandie/go-text/json"
 )
+
+var echoTests = []struct {
+	Name   string
+	Expr   parser.Echo
+	Result string
+	Error  string
+}{
+	{
+		Name: "Echo",
+		Expr: parser.Echo{
+			Value: parser.NewStringValue("var"),
+		},
+		Result: "var",
+	},
+	{
+		Name: "Echo Evaluate Error",
+		Expr: parser.Echo{
+			Value: parser.Variable{
+				Name: "var",
+			},
+		},
+		Error: "[L:- C:-] variable @var is undeclared",
+	},
+}
+
+func TestEcho(t *testing.T) {
+	filter := NewEmptyFilter()
+
+	for _, v := range echoTests {
+		result, err := Echo(v.Expr, filter)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if result != v.Result {
+			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+		}
+	}
+}
 
 var printTests = []struct {
 	Name   string
@@ -553,7 +598,7 @@ var setFlagTests = []struct {
 			Name:  "invalid",
 			Value: parser.NewStringValue("string"),
 		},
-		Error: "[L:- C:-] flag @@invalid does not exist",
+		Error: "[L:- C:-] @@invalid is an unknown flag",
 	},
 	{
 		Name: "Invalid Flag Value Error",
@@ -606,6 +651,19 @@ var showFlagTests = []struct {
 			},
 		},
 		Result: "\033[34;1m@@REPOSITORY:\033[0m \033[32m" + TestDir + "\033[0m",
+	},
+	{
+		Name: "Show Repository Not Set",
+		Expr: parser.ShowFlag{
+			Name: "repository",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "repository",
+				Value: parser.NewStringValue(""),
+			},
+		},
+		Result: "\033[34;1m@@REPOSITORY:\033[0m \033[90m(current dir: " + GetWD() + ")\033[0m",
 	},
 	{
 		Name: "Show Timezone",
@@ -1150,7 +1208,7 @@ var showFlagTests = []struct {
 		Expr: parser.ShowFlag{
 			Name: "invalid",
 		},
-		Error: "[L:- C:-] flag @@invalid does not exist",
+		Error: "[L:- C:-] @@invalid is an unknown flag",
 	},
 }
 
@@ -1196,7 +1254,7 @@ var showObjectsTests = []struct {
 	WriteDelimiter          rune
 	WriteDelimiterPositions fixedlen.DelimiterPositions
 	ViewCache               ViewMap
-	ExecResults             []ExecResult
+	UncommittedViews        *UncommittedViewMap
 	Expect                  string
 	Error                   string
 }{
@@ -1284,7 +1342,7 @@ var showObjectsTests = []struct {
 			"     Fields: col1, col2\n" +
 			"     Format: JSON    Escape: HEX      Query: (empty)\n" +
 			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
-			"",
+			"\n",
 	},
 	{
 		Name: "ShowObjects Tables Uncommitted",
@@ -1346,19 +1404,12 @@ var showObjectsTests = []struct {
 				},
 			},
 		},
-		ExecResults: []ExecResult{
-			{
-				Type: CreateTableQuery,
-				FileInfo: &FileInfo{
-					Path: "table1.tsv",
-				},
+		UncommittedViews: &UncommittedViewMap{
+			Created: map[string]*FileInfo{
+				"TABLE1.TSV": {Path: "table1.tsv"},
 			},
-			{
-				Type: UpdateQuery,
-				FileInfo: &FileInfo{
-					Path: "table2.json",
-				},
-				OperatedCount: 2,
+			Updated: map[string]*FileInfo{
+				"TABLE2.JSON": {Path: "table2.json"},
 			},
 		},
 		Expect: "\n" +
@@ -1384,7 +1435,7 @@ var showObjectsTests = []struct {
 			"     Fields: col1, col2\n" +
 			"     Format: JSON    Escape: BACKSLASH  Query: (empty)\n" +
 			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
-			"",
+			"\n",
 	},
 	{
 		Name: "ShowObjects Tables Long Fields",
@@ -1410,7 +1461,7 @@ var showObjectsTests = []struct {
 			"             colabcdef6, colabcdef7\n" +
 			"     Format: CSV     Delimiter: '\\t'  Enclose All: false\n" +
 			"     Encoding: SJIS  LineBreak: CRLF  Header: false\n" +
-			"",
+			"\n",
 	},
 	{
 		Name:       "ShowObjects No Table is Loaded",
@@ -1450,14 +1501,10 @@ var showObjectsTests = []struct {
 				},
 			},
 		},
-		ExecResults: []ExecResult{
-			{
-				Type: UpdateQuery,
-				FileInfo: &FileInfo{
-					Path:        "view2",
-					IsTemporary: true,
-				},
-				OperatedCount: 2,
+		UncommittedViews: &UncommittedViewMap{
+			Created: map[string]*FileInfo{},
+			Updated: map[string]*FileInfo{
+				"VIEW2": {Path: "view2", IsTemporary: true},
 			},
 		},
 		Expect: "\n" +
@@ -1466,7 +1513,8 @@ var showObjectsTests = []struct {
 			" view1\n" +
 			"     Fields: column1, column2\n" +
 			" *Updated* view2\n" +
-			"     Fields: column1, column2\n",
+			"     Fields: column1, column2\n" +
+			"\n",
 	},
 	{
 		Name:   "ShowObjects Views Empty",
@@ -1555,7 +1603,7 @@ var showObjectsTests = []struct {
 			" cur4\n" +
 			"     Status: Open    Number of Rows: 2         Pointer: Out of Range\n" +
 			"     Query: select column1, column2 from table1\n" +
-			"",
+			"\n",
 	},
 	{
 		Name:   "ShowObjects Cursors Empty",
@@ -1605,7 +1653,8 @@ var showObjectsTests = []struct {
 			"\n" +
 			"           Aggregate Functions\n" +
 			"-----------------------------------------\n" +
-			" useraggfunc (column1, @arg1, @arg2 = 1)\n",
+			" useraggfunc (column1, @arg1, @arg2 = 1)\n" +
+			"\n",
 	},
 	{
 		Name:   "ShowObjects Functions Empty",
@@ -1643,7 +1692,23 @@ var showObjectsTests = []struct {
 			"                  @@QUIET: false\n" +
 			"                    @@CPU: " + strconv.Itoa(cmd.GetFlags().CPU) + "\n" +
 			"                  @@STATS: false\n" +
-			"",
+			"\n",
+	},
+	{
+		Name:       "ShowObjects Runtime Information",
+		Expr:       parser.ShowObjects{Type: parser.Identifier{Literal: "runinfo"}},
+		Repository: ".",
+		Expect: "\n" +
+			strings.Repeat(" ", (calcShowRuninfoWidth(GetWD())-19)/2) + "Runtime Information\n" +
+			strings.Repeat("-", calcShowRuninfoWidth(GetWD())) + "\n" +
+			"       @#UNCOMMITTED: false\n" +
+			"           @#CREATED: 0\n" +
+			"           @#UPDATED: 0\n" +
+			"     @#UPDATED_VIEWS: 0\n" +
+			"     @#LOADED_TABLES: 0\n" +
+			" @#WORKING_DIRECTORY: " + GetWD() + "\n" +
+			"           @#VERSION: v1.0.0\n" +
+			"\n",
 	},
 	{
 		Name:  "ShowObjects Invalid Object Type",
@@ -1668,12 +1733,13 @@ func TestShowObjects(t *testing.T) {
 		flags.WriteDelimiterPositions = v.WriteDelimiterPositions
 		flags.Format = v.Format
 		ViewCache.Clean()
-		ExecResults = make([]ExecResult, 0)
 		if 0 < len(v.ViewCache) {
 			ViewCache = v.ViewCache
 		}
-		if 0 < len(v.ExecResults) {
-			ExecResults = v.ExecResults
+		if v.UncommittedViews == nil {
+			UncommittedViews = NewUncommittedViewMap()
+		} else {
+			UncommittedViews = v.UncommittedViews
 		}
 
 		var filter *Filter
@@ -1701,16 +1767,17 @@ func TestShowObjects(t *testing.T) {
 		}
 	}
 	ReleaseResources()
+	UncommittedViews.Clean()
 }
 
 var showFieldsTests = []struct {
-	Name        string
-	Expr        parser.ShowFields
-	Filter      *Filter
-	ViewCache   ViewMap
-	ExecResults []ExecResult
-	Expect      string
-	Error       string
+	Name             string
+	Expr             parser.ShowFields
+	Filter           *Filter
+	ViewCache        ViewMap
+	UncommittedViews *UncommittedViewMap
+	Expect           string
+	Error            string
 }{
 	{
 		Name: "ShowFields Temporary Table",
@@ -1738,7 +1805,8 @@ var showFieldsTests = []struct {
 			" Status: Fixed\n" +
 			" Fields:\n" +
 			"   1. column1\n" +
-			"   2. column2\n",
+			"   2. column2\n" +
+			"\n",
 	},
 	{
 		Name: "ShowFields Updated Temporary Table",
@@ -1759,14 +1827,10 @@ var showFieldsTests = []struct {
 				},
 			},
 		},
-		ExecResults: []ExecResult{
-			{
-				Type: UpdateQuery,
-				FileInfo: &FileInfo{
-					Path:        "view1",
-					IsTemporary: true,
-				},
-				OperatedCount: 2,
+		UncommittedViews: &UncommittedViewMap{
+			Created: map[string]*FileInfo{},
+			Updated: map[string]*FileInfo{
+				"VIEW1": {Path: "view1", IsTemporary: true},
 			},
 		},
 		Expect: "\n" +
@@ -1776,7 +1840,8 @@ var showFieldsTests = []struct {
 			" Status: Updated\n" +
 			" Fields:\n" +
 			"   1. column1\n" +
-			"   2. column2\n",
+			"   2. column2\n" +
+			"\n",
 	},
 	{
 		Name: "ShowFields Created Table",
@@ -1797,13 +1862,11 @@ var showFieldsTests = []struct {
 				},
 			},
 		},
-		ExecResults: []ExecResult{
-			{
-				Type: CreateTableQuery,
-				FileInfo: &FileInfo{
-					Path: GetTestFilePath("show_fields_create.csv"),
-				},
+		UncommittedViews: &UncommittedViewMap{
+			Created: map[string]*FileInfo{
+				strings.ToUpper(GetTestFilePath("show_fields_create.csv")): {Path: "show_fields_create.csv"},
 			},
+			Updated: map[string]*FileInfo{},
 		},
 		Expect: "\n" +
 			strings.Repeat(" ", (calcShowFieldsWidth("show_fields_create.csv", "show_fields_create.csv", 10)-(10+len("show_fields_create.csv")))/2) + "Fields in show_fields_create.csv\n" +
@@ -1815,7 +1878,8 @@ var showFieldsTests = []struct {
 			" Status: Created\n" +
 			" Fields:\n" +
 			"   1. column1\n" +
-			"   2. column2\n",
+			"   2. column2\n" +
+			"\n",
 	},
 	{
 		Name: "ShowFields Updated Table",
@@ -1836,13 +1900,10 @@ var showFieldsTests = []struct {
 				},
 			},
 		},
-		ExecResults: []ExecResult{
-			{
-				Type: UpdateQuery,
-				FileInfo: &FileInfo{
-					Path: GetTestFilePath("show_fields_update.csv"),
-				},
-				OperatedCount: 2,
+		UncommittedViews: &UncommittedViewMap{
+			Created: map[string]*FileInfo{},
+			Updated: map[string]*FileInfo{
+				strings.ToUpper(GetTestFilePath("show_fields_update.csv")): {Path: "show_fields_updated.csv"},
 			},
 		},
 		Expect: "\n" +
@@ -1855,7 +1916,8 @@ var showFieldsTests = []struct {
 			" Status: Updated\n" +
 			" Fields:\n" +
 			"   1. column1\n" +
-			"   2. column2\n",
+			"   2. column2\n" +
+			"\n",
 	},
 	{
 		Name: "ShowFields Load Error",
@@ -1892,6 +1954,19 @@ func calcShowFieldsWidth(fileName string, fileNameInTitle string, prefixLen int)
 	return w
 }
 
+func calcShowRuninfoWidth(wd string) int {
+	w := 28
+	pathLen := 22 + len(wd)
+	if w < pathLen {
+		w = pathLen
+	}
+	w++
+	if 75 < w {
+		w = 75
+	}
+	return w
+}
+
 func TestShowFields(t *testing.T) {
 	initFlag()
 	flags := cmd.GetFlags()
@@ -1899,12 +1974,13 @@ func TestShowFields(t *testing.T) {
 
 	for _, v := range showFieldsTests {
 		ViewCache.Clean()
-		ExecResults = make([]ExecResult, 0)
 		if 0 < len(v.ViewCache) {
 			ViewCache = v.ViewCache
 		}
-		if 0 < len(v.ExecResults) {
-			ExecResults = v.ExecResults
+		if v.UncommittedViews == nil {
+			UncommittedViews = NewUncommittedViewMap()
+		} else {
+			UncommittedViews = v.UncommittedViews
 		}
 
 		var filter *Filter
@@ -1932,6 +2008,7 @@ func TestShowFields(t *testing.T) {
 		}
 	}
 	ReleaseResources()
+	UncommittedViews.Clean()
 }
 
 var setEnvVarTests = []struct {
@@ -1943,7 +2020,7 @@ var setEnvVarTests = []struct {
 	{
 		Name: "Set Environment Variable",
 		Expr: parser.SetEnvVar{
-			EnvVar: parser.EnvVar{
+			EnvVar: parser.EnvironmentVariable{
 				Name: "CSVQ_SET_ENV_TEST",
 			},
 			Value: parser.NewStringValue("foo"),
@@ -1953,7 +2030,7 @@ var setEnvVarTests = []struct {
 	{
 		Name: "Set Environment Variable with Identifier",
 		Expr: parser.SetEnvVar{
-			EnvVar: parser.EnvVar{
+			EnvVar: parser.EnvironmentVariable{
 				Name: "CSVQ_SET_ENV_TEST",
 			},
 			Value: parser.Identifier{Literal: "bar"},
@@ -1963,7 +2040,7 @@ var setEnvVarTests = []struct {
 	{
 		Name: "Set Environment Variable with Null",
 		Expr: parser.SetEnvVar{
-			EnvVar: parser.EnvVar{
+			EnvVar: parser.EnvironmentVariable{
 				Name: "CSVQ_SET_ENV_TEST",
 			},
 			Value: parser.NewNullValue(),
@@ -1973,7 +2050,7 @@ var setEnvVarTests = []struct {
 	{
 		Name: "Set Environment Variable Evaluation Error",
 		Expr: parser.SetEnvVar{
-			EnvVar: parser.EnvVar{
+			EnvVar: parser.EnvironmentVariable{
 				Name: "CSVQ_SET_ENV_TEST",
 			},
 			Value: parser.FieldReference{Column: parser.Identifier{Literal: "err"}},

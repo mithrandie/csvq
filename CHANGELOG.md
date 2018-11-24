@@ -1,3 +1,18 @@
+## Release v1.6.2 (2018-11-24)
+
+- Implement run-external-command statement.
+- Add value expressions.
+  - Runtime Information.
+- Add built-in commands.
+  - ECHO
+  - CHDIR
+  - PWD
+  - RELOAD CONFIG
+- Add configuration items to csvq_env.json.
+  - interactive_shell.prompt
+  - interactive_shell.continuous_prompt
+- Bug Fixes
+
 ## Release v1.6.1 (2018-11-18)
 
 - Fix a bug of colorize in JSON pretty print.

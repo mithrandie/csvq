@@ -46,7 +46,7 @@ _column_
 
 ```sql
 ALTER TABLE table_name DROP column
-ALTER TABLE table_name DROP (column, [column, ...])
+ALTER TABLE table_name DROP (column [, column ...])
 ```
 
 _table_name_
