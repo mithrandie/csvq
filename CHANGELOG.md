@@ -1,10 +1,17 @@
+## Release v1.6.5 (2018-11-25)
+
+- Implement Flag Related Statements.
+  - ADD FLAG ELEMENT
+  - REMOVE FLAG ELEMENT
+- Fix a bug of datetime formats configuration.
+
 ## Release v1.6.4 (2018-11-24)
 
 - Implement Identical Operator ("==").
 
 ## Release v1.6.3 (2018-11-24)
 
-- Fix following bug
+- Fix the following bug.
   - Color output is on by default. (Github Issue #3)
 
 ## Release v1.6.2 (2018-11-24)
