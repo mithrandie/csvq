@@ -1,6 +1,7 @@
 package query
 
 import (
+	"bytes"
 	"testing"
 	"time"
 
@@ -22,7 +23,9 @@ func TestSortValues_Serialize(t *testing.T) {
 	}
 	expect := "[N]:[I]1[B]true:[F]1.234:[I]1328289495:[F]1328289495.123:[D]1328289495123456789:[I]0[B]false:[S]STR"
 
-	result := values.Serialize()
+	buf := new(bytes.Buffer)
+	values.Serialize(buf)
+	result := buf.String()
 	if result != expect {
 		t.Errorf("result = %q, want %q", result, expect)
 	}

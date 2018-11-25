@@ -917,6 +917,7 @@ func (view *View) group(items []parser.QueryExpression) error {
 
 			filter := NewFilterForSequentialEvaluation(view, view.Filter)
 			values := make([]value.Primary, len(items))
+			keyBuf := new(bytes.Buffer)
 
 		GroupLoop:
 			for i := start; i < end; i++ {
@@ -933,7 +934,9 @@ func (view *View) group(items []parser.QueryExpression) error {
 					}
 					values[j] = p
 				}
-				keys[i] = SerializeComparisonKeys(values)
+				keyBuf.Reset()
+				SerializeComparisonKeys(keyBuf, values)
+				keys[i] = keyBuf.String()
 			}
 
 			gm.Done()
@@ -1151,20 +1154,24 @@ func (view *View) GenerateComparisonKeys() {
 		go func(thIdx int) {
 			start, end := gm.RecordRange(thIdx)
 
+			keyBuf := new(bytes.Buffer)
+
 			var primaries []value.Primary
 			if view.selectFields != nil {
 				primaries = make([]value.Primary, len(view.selectFields))
 			}
 
 			for i := start; i < end; i++ {
+				keyBuf.Reset()
 				if view.selectFields != nil {
 					for j, idx := range view.selectFields {
 						primaries[j] = view.RecordSet[i][idx].Value()
 					}
-					view.comparisonKeysInEachRecord[i] = SerializeComparisonKeys(primaries)
+					SerializeComparisonKeys(keyBuf, primaries)
 				} else {
-					view.comparisonKeysInEachRecord[i] = view.RecordSet[i].SerializeComparisonKeys()
+					view.RecordSet[i].SerializeComparisonKeys(keyBuf)
 				}
+				view.comparisonKeysInEachRecord[i] = keyBuf.String()
 			}
 
 			gm.Done()

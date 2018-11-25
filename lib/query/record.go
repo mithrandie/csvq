@@ -1,7 +1,7 @@
 package query
 
 import (
-	"strings"
+	"bytes"
 
 	"github.com/mithrandie/csvq/lib/value"
 )
@@ -60,25 +60,13 @@ func (r Record) Copy() Record {
 
 }
 
-func (r Record) SerializeComparisonKeys() string {
-	list := make([]string, len(r))
-
+func (r Record) SerializeComparisonKeys(buf *bytes.Buffer) {
 	for i, cell := range r {
-		list[i] = SerializeKey(cell.Value())
+		if 0 < i {
+			buf.WriteRune(':')
+		}
+		SerializeKey(buf, cell.Value())
 	}
-
-	return strings.Join(list, ":")
-}
-
-func MergeRecord(r1 Record, r2 Record) Record {
-	r := make(Record, len(r1)+len(r2))
-	for i, v := range r1 {
-		r[i] = v
-	}
-	for i, v := range r2 {
-		r[i+len(r1)] = v
-	}
-	return r
 }
 
 func MergeRecordSetList(list []RecordSet) RecordSet {
@@ -90,13 +78,9 @@ func MergeRecordSetList(list []RecordSet) RecordSet {
 		for _, v := range list {
 			recordLen += len(v)
 		}
-		records = make(RecordSet, recordLen)
-		idx := 0
+		records = make(RecordSet, 0, recordLen)
 		for _, v := range list {
-			for _, r := range v {
-				records[idx] = r
-				idx++
-			}
+			records = append(records, v...)
 		}
 	}
 	return records

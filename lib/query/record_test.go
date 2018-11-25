@@ -1,6 +1,7 @@
 package query
 
 import (
+	"bytes"
 	"reflect"
 	"testing"
 	"time"
@@ -48,7 +49,11 @@ var recordSerializeComparisonKeysBenchmarkRecord = NewRecord([]value.Primary{
 })
 
 func BenchmarkRecord_SerializeComparisonKeys(b *testing.B) {
+	buf := new(bytes.Buffer)
+
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = recordSerializeComparisonKeysBenchmarkRecord.SerializeComparisonKeys()
+		buf.Reset()
+		recordSerializeComparisonKeysBenchmarkRecord.SerializeComparisonKeys(buf)
 	}
 }

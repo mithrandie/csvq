@@ -113,7 +113,7 @@ func CrossJoin(view *View, joinView *View) {
 
 			for _, viewRecord := range view.RecordSet[start:end] {
 				for _, joinViewRecord := range joinView.RecordSet {
-					records[idx] = MergeRecord(viewRecord, joinViewRecord)
+					records[idx] = append(viewRecord, joinViewRecord...)
 					idx++
 				}
 			}
@@ -181,7 +181,7 @@ func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, par
 						break InnerJoinLoop
 					}
 
-					mergedRecord := MergeRecord(view.RecordSet[i], joinView.RecordSet[j])
+					mergedRecord := append(view.RecordSet[i], joinView.RecordSet[j]...)
 					filter.Records[0].View.RecordSet[0] = mergedRecord
 
 					primary, e := filter.Evaluate(condition)
@@ -277,9 +277,9 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 					var mergedRecord Record
 					switch direction {
 					case parser.RIGHT:
-						mergedRecord = MergeRecord(joinView.RecordSet[j], view.RecordSet[i])
+						mergedRecord = append(joinView.RecordSet[j], view.RecordSet[i]...)
 					default:
-						mergedRecord = MergeRecord(view.RecordSet[i], joinView.RecordSet[j])
+						mergedRecord = append(view.RecordSet[i], joinView.RecordSet[j]...)
 					}
 					filter.Records[0].View.RecordSet[0] = mergedRecord
 
@@ -301,9 +301,9 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 					var record Record
 					switch direction {
 					case parser.RIGHT:
-						record = MergeRecord(joinViewEmptyRecord, view.RecordSet[i])
+						record = append(joinViewEmptyRecord, view.RecordSet[i]...)
 					default:
-						record = MergeRecord(view.RecordSet[i], joinViewEmptyRecord)
+						record = append(view.RecordSet[i], joinViewEmptyRecord...)
 					}
 					records = append(records, record)
 
@@ -331,7 +331,7 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 				}
 			}
 			if !match {
-				record := MergeRecord(viewEmptyRecord, joinView.RecordSet[i])
+				record := append(viewEmptyRecord, joinView.RecordSet[i]...)
 				recordsList[len(recordsList)-1] = append(recordsList[len(recordsList)-1], record)
 			}
 		}

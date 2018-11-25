@@ -1,6 +1,7 @@
 package query
 
 import (
+	"bytes"
 	"sort"
 	"strings"
 
@@ -92,6 +93,7 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 		go func(thIdx int) {
 			start, end := gm.RecordRange(thIdx)
 			sortValues := make(SortValues, len(partitionIndices))
+			keyBuf := new(bytes.Buffer)
 
 			for i := start; i < end; i++ {
 				var partitionKey string
@@ -109,7 +111,9 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 							}
 						}
 					}
-					partitionKey = sortValues.Serialize()
+					keyBuf.Reset()
+					sortValues.Serialize(keyBuf)
+					partitionKey = keyBuf.String()
 				}
 
 				partitionKeys[i] = partitionKey

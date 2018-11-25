@@ -1,6 +1,7 @@
 package query
 
 import (
+	"bytes"
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/parser"
@@ -64,27 +65,27 @@ func (values SortValues) EquivalentTo(compareValues SortValues) bool {
 	return true
 }
 
-func (values SortValues) Serialize() string {
-	list := make([]string, len(values))
-
+func (values SortValues) Serialize(buf *bytes.Buffer) {
 	for i, val := range values {
+		if 0 < i {
+			buf.WriteRune(':')
+		}
+
 		switch val.Type {
 		case NullType:
-			list[i] = serializeNull()
+			serializeNull(buf)
 		case IntegerType:
-			list[i] = serializeInteger(val.Integer)
+			serializeInteger(buf, val.Integer)
 		case FloatType:
-			list[i] = serializeFlaot(val.Float)
+			serializeFlaot(buf, val.Float)
 		case DatetimeType:
-			list[i] = serializeDatetimeFromUnixNano(val.Datetime)
+			serializeDatetimeFromUnixNano(buf, val.Datetime)
 		case BooleanType:
-			list[i] = serializeBoolean(val.Boolean)
+			serializeBoolean(buf, val.Boolean)
 		case StringType:
-			list[i] = serializeString(val.String)
+			serializeString(buf, val.String)
 		}
 	}
-
-	return strings.Join(list, ":")
 }
 
 type SortValue struct {
