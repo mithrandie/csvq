@@ -904,6 +904,12 @@ func Reload(expr parser.Reload) error {
 		}
 
 		env, _ := cmd.GetEnvironment()
+
+		flags := cmd.GetFlags()
+		for _, v := range env.DatetimeFormat {
+			flags.DatetimeFormat = cmd.AppendStrIfNotExist(flags.DatetimeFormat, v)
+		}
+
 		palette, err := color.GeneratePalette(env.Palette)
 		if err != nil {
 			return NewLoadConfigurationError(expr, err.Error())
@@ -915,7 +921,6 @@ func Reload(expr parser.Reload) error {
 			if err := Terminal.ReloadPromptConfig(); err != nil {
 				return NewLoadConfigurationError(expr, err.Error())
 			}
-
 		}
 
 	default:

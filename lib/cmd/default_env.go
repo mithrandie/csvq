@@ -1,6 +1,6 @@
 package cmd
 
-var DefaultEnvJson = `
+const DefaultEnvJson = `
 {
   "datetime_format": [],
   "interactive_shell": {

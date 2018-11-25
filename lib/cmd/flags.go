@@ -189,10 +189,15 @@ func GetFlags() *Flags {
 
 		env, _ := GetEnvironment()
 
+		datetimeFormat := make([]string, 0, len(env.DatetimeFormat))
+		for _, v := range env.DatetimeFormat {
+			datetimeFormat = AppendStrIfNotExist(datetimeFormat, v)
+		}
+
 		flags = &Flags{
 			Repository:              "",
 			Location:                "Local",
-			DatetimeFormat:          env.DatetimeFormat,
+			DatetimeFormat:          datetimeFormat,
 			WaitTimeout:             10,
 			Delimiter:               ',',
 			JsonQuery:               "",

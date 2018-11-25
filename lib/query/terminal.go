@@ -83,6 +83,8 @@ func (p *Prompt) LoadConfig() error {
 		})
 	}
 	if err := scanner.Err(); err != nil {
+		p.sequence = nil
+		p.continuousSequence = nil
 		return NewPromptEvaluationError(err.Error())
 	}
 
@@ -94,6 +96,8 @@ func (p *Prompt) LoadConfig() error {
 		})
 	}
 	if err := scanner.Err(); err != nil {
+		p.sequence = nil
+		p.continuousSequence = nil
 		return NewPromptEvaluationError(err.Error())
 	}
 	return nil
