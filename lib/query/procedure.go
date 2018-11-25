@@ -108,6 +108,10 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 	switch stmt.(type) {
 	case parser.SetFlag:
 		err = SetFlag(stmt.(parser.SetFlag), proc.Filter)
+	case parser.AddFlagElement:
+		err = AddFlagElement(stmt.(parser.AddFlagElement), proc.Filter)
+	case parser.RemoveFlagElement:
+		err = RemoveFlagElement(stmt.(parser.RemoveFlagElement), proc.Filter)
 	case parser.ShowFlag:
 		if printstr, err = ShowFlag(stmt.(parser.ShowFlag)); err == nil {
 			Log(printstr, false)

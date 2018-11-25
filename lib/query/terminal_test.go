@@ -13,58 +13,62 @@ import (
 )
 
 var promptLoadConfigTests = []struct {
-	Config                   string
+	Prompt                   string
+	ContinuousPrompt         string
 	ExpectSequence           []PromptElement
 	ExpectContinuousSequence []PromptElement
 	Error                    string
 }{
 	{
-		Config:                   `{"interactive_shell": {"prompt": "TEST P > ","continuous_prompt": "TEST C > "}}`,
+		Prompt:                   "TEST P > ",
+		ContinuousPrompt:         "TEST C > ",
 		ExpectSequence:           []PromptElement{{Text: "TEST P > ", Type: excmd.FixedString}},
 		ExpectContinuousSequence: []PromptElement{{Text: "TEST C > ", Type: excmd.FixedString}},
 	},
 	{
-		Config: `{"interactive_shell": {"prompt": "TEST P @ > ","continuous_prompt": "TEST C > "}}`,
-		Error:  "prompt: invalid variable symbol",
+		Prompt:                   "TEST P @ > ",
+		ContinuousPrompt:         "TEST C > ",
+		ExpectSequence:           nil,
+		ExpectContinuousSequence: nil,
+		Error:                    "prompt: invalid variable symbol",
 	},
 	{
-		Config: `{"interactive_shell": {"prompt": "TEST P > ","continuous_prompt": "TEST C @ > "}}`,
-		Error:  "prompt: invalid variable symbol",
+		Prompt:                   "TEST P > ",
+		ContinuousPrompt:         "TEST C @ > ",
+		ExpectSequence:           nil,
+		ExpectContinuousSequence: nil,
+		Error:                    "prompt: invalid variable symbol",
 	},
 }
 
 func TestPrompt_LoadConfig(t *testing.T) {
 	prompt := NewPrompt(NewEmptyFilter(), &color.Palette{})
 
-	oldConfig := cmd.DefaultEnvJson
+	env, _ := cmd.GetEnvironment()
 
 	for _, v := range promptLoadConfigTests {
-		cmd.DefaultEnvJson = v.Config
-		cmd.LoadEnvironment()
+		env.InteractiveShell.Prompt = v.Prompt
+		env.InteractiveShell.ContinuousPrompt = v.ContinuousPrompt
 
 		err := prompt.LoadConfig()
 		if err != nil {
 			if len(v.Error) < 1 {
-				t.Errorf("unexpected error %q for %s", err, v.Config)
+				t.Errorf("unexpected error %q for %s, %s", err, v.Prompt, v.ContinuousPrompt)
 			} else if err.Error() != v.Error {
-				t.Errorf("error %q, want error %q for %s", err.Error(), v.Error, v.Config)
+				t.Errorf("error %q, want error %q for %s, %s", err.Error(), v.Error, v.Prompt, v.ContinuousPrompt)
 			}
-			continue
-		}
-		if 0 < len(v.Error) {
-			t.Errorf("no error, want error %q for %s", v.Error, v.Config)
-			continue
+		} else if 0 < len(v.Error) {
+			t.Errorf("no error, want error %q for %s, %s", v.Error, v.Prompt, v.ContinuousPrompt)
 		}
 
 		if !reflect.DeepEqual(prompt.sequence, v.ExpectSequence) {
-			t.Errorf("sequence = %v, want %v for %s", prompt.sequence, v.ExpectSequence, v.Config)
+			t.Errorf("sequence = %v, want %v for %s, %s", prompt.sequence, v.ExpectSequence, v.Prompt, v.ContinuousPrompt)
 		}
 		if !reflect.DeepEqual(prompt.continuousSequence, v.ExpectContinuousSequence) {
-			t.Errorf("continuous sequence = %v, want %v for %s", prompt.continuousSequence, v.ExpectContinuousSequence, v.Config)
+			t.Errorf("continuous sequence = %v, want %v for %s, %s", prompt.continuousSequence, v.ExpectContinuousSequence, v.Prompt, v.ContinuousPrompt)
 		}
 	}
 
-	cmd.DefaultEnvJson = oldConfig
 	cmd.LoadEnvironment()
 }
 

@@ -52,9 +52,7 @@ func setup() {
 		os.RemoveAll(TestDir)
 	}
 
-	cmd.GetFlags().SetLocation(TestLocation)
-	flags := cmd.GetFlags()
-	flags.Now = "2012-02-03 09:18:15"
+	initCmdFlag()
 
 	TestDataDir = filepath.Join(GetWD(), "..", "..", "testdata", "csv")
 
@@ -109,15 +107,21 @@ func teardown() {
 	}
 }
 
-func initFlag() {
+func initCmdFlag() {
+	flags := cmd.GetFlags()
+	initFlag(flags)
+	cmd.GetFlags().SetLocation(TestLocation)
+	cmd.GetFlags().SetColor(false)
+}
+
+func initFlag(flags *cmd.Flags) {
 	cpu := runtime.NumCPU() / 2
 	if cpu < 1 {
 		cpu = 1
 	}
 
-	cmd.GetFlags().SetLocation(TestLocation)
-	flags := cmd.GetFlags()
 	flags.Repository = "."
+	flags.Location = TestLocation
 	flags.DatetimeFormat = []string{}
 	flags.WaitTimeout = 15
 	flags.Delimiter = ','
@@ -125,8 +129,8 @@ func initFlag() {
 	flags.Encoding = text.UTF8
 	flags.NoHeader = false
 	flags.WithoutNull = false
-	flags.WriteEncoding = text.UTF8
 	flags.Format = cmd.TEXT
+	flags.WriteEncoding = text.UTF8
 	flags.WriteDelimiter = ','
 	flags.WithoutHeader = false
 	flags.LineBreak = text.LF
@@ -136,10 +140,15 @@ func initFlag() {
 	flags.EastAsianEncoding = false
 	flags.CountDiacriticalSign = false
 	flags.CountFormatCode = false
+	flags.Color = false
 	flags.Quiet = false
 	flags.CPU = cpu
 	flags.Stats = false
-	cmd.GetFlags().SetColor(false)
+	flags.DelimitAutomatically = false
+	flags.DelimiterPositions = nil
+	flags.WriteDelimiterPositions = nil
+	flags.RetryInterval = 10 * time.Millisecond
+	flags.Now = "2012-02-03 09:18:15"
 }
 
 func copyfile(dstfile string, srcfile string) error {

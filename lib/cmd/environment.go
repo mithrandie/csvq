@@ -25,7 +25,7 @@ const (
 )
 
 var (
-	environment *Environment
+	environment = &Environment{}
 	getEnv      sync.Once
 )
 
@@ -76,9 +76,7 @@ type InteractiveShell struct {
 func LoadEnvironment() error {
 	var err error
 
-	environment = &Environment{}
-	if err = json.Unmarshal([]byte(DefaultEnvJson), environment); err != nil {
-		return errors.New(fmt.Sprintf("`json syntax error: %s", err.Error()))
+	if environment == nil {
 	}
 
 	handlers := make([]*file.Handler, 0, 4)
@@ -127,6 +125,11 @@ func GetEnvironment() (*Environment, error) {
 	var err error
 
 	getEnv.Do(func() {
+		if err = json.Unmarshal([]byte(DefaultEnvJson), environment); err != nil {
+			err = errors.New(fmt.Sprintf("`json syntax error: %s", err.Error()))
+			return
+		}
+
 		err = LoadEnvironment()
 	})
 

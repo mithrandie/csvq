@@ -3404,6 +3404,24 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "set @%var to ident",
+		Output: []Statement{
+			SetEnvVar{
+				EnvVar: EnvironmentVariable{BaseExpr: &BaseExpr{line: 1, char: 5}, Name: "var"},
+				Value:  Identifier{BaseExpr: &BaseExpr{line: 1, char: 14}, Literal: "ident"},
+			},
+		},
+	},
+	{
+		Input: "set @%var to 1",
+		Output: []Statement{
+			SetEnvVar{
+				EnvVar: EnvironmentVariable{BaseExpr: &BaseExpr{line: 1, char: 5}, Name: "var"},
+				Value:  NewIntegerValueFromString("1"),
+			},
+		},
+	},
+	{
 		Input: "unset @%var",
 		Output: []Statement{
 			UnsetEnvVar{
@@ -4070,6 +4088,46 @@ var parseTests = []struct {
 				BaseExpr: &BaseExpr{line: 1, char: 1},
 				Name:     "encoding",
 				Value:    Identifier{BaseExpr: &BaseExpr{line: 1, char: 18}, Literal: "sjis"},
+			},
+		},
+	},
+	{
+		Input: "set @@delimiter to ','",
+		Output: []Statement{
+			SetFlag{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Name:     "delimiter",
+				Value:    NewStringValue(","),
+			},
+		},
+	},
+	{
+		Input: "set @@encoding to sjis",
+		Output: []Statement{
+			SetFlag{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Name:     "encoding",
+				Value:    Identifier{BaseExpr: &BaseExpr{line: 1, char: 19}, Literal: "sjis"},
+			},
+		},
+	},
+	{
+		Input: "add '%Y%m%d' to @@datetime_format",
+		Output: []Statement{
+			AddFlagElement{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Name:     "datetime_format",
+				Value:    NewStringValue("%Y%m%d"),
+			},
+		},
+	},
+	{
+		Input: "remove '%Y%m%d' from @@datetime_format",
+		Output: []Statement{
+			RemoveFlagElement{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Name:     "datetime_format",
+				Value:    NewStringValue("%Y%m%d"),
 			},
 		},
 	},

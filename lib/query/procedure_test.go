@@ -39,6 +39,66 @@ var procedureExecuteStatementTests = []struct {
 		},
 	},
 	{
+		Input: parser.Echo{
+			Value: parser.Function{
+				Name: "trunc_time",
+				Args: []parser.QueryExpression{
+					parser.Function{
+						Name: "datetime",
+						Args: []parser.QueryExpression{
+							parser.NewStringValue("2001::01::01"),
+						},
+					},
+				},
+			},
+		},
+		Logs: "NULL\n",
+	},
+	{
+		Input: parser.AddFlagElement{
+			Name:  "datetime_format",
+			Value: parser.NewStringValue("%Y::%m::%d"),
+		},
+	},
+	{
+		Input: parser.Echo{
+			Value: parser.Function{
+				Name: "trunc_time",
+				Args: []parser.QueryExpression{
+					parser.Function{
+						Name: "datetime",
+						Args: []parser.QueryExpression{
+							parser.NewStringValue("2001::01::01"),
+						},
+					},
+				},
+			},
+		},
+		Logs: "2001-01-01T00:00:00Z\n",
+	},
+	{
+		Input: parser.RemoveFlagElement{
+			Name:  "datetime_format",
+			Value: parser.NewStringValue("%Y::%m::%d"),
+		},
+	},
+	{
+		Input: parser.Echo{
+			Value: parser.Function{
+				Name: "trunc_time",
+				Args: []parser.QueryExpression{
+					parser.Function{
+						Name: "datetime",
+						Args: []parser.QueryExpression{
+							parser.NewStringValue("2001::01::01"),
+						},
+					},
+				},
+			},
+		},
+		Logs: "NULL\n",
+	},
+	{
 		Input: parser.ShowFlag{
 			Name: "repository",
 		},
@@ -736,7 +796,7 @@ var procedureExecuteStatementTests = []struct {
 }
 
 func TestProcedure_ExecuteStatement(t *testing.T) {
-	initFlag()
+	initCmdFlag()
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 	tf.Format = cmd.CSV

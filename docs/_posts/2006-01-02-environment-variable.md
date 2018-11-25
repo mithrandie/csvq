@@ -14,6 +14,7 @@ category: reference
 {: #set_env}
 
 ```sql
+SET @%env_var_name TO value;
 SET @%env_var_name = value;
 ```
 
