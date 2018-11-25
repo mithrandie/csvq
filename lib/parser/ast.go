@@ -1300,6 +1300,18 @@ type SetFlag struct {
 	Value QueryExpression
 }
 
+type AddFlagElement struct {
+	*BaseExpr
+	Name  string
+	Value QueryExpression
+}
+
+type RemoveFlagElement struct {
+	*BaseExpr
+	Name  string
+	Value QueryExpression
+}
+
 type ShowFlag struct {
 	*BaseExpr
 	Name string

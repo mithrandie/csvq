@@ -194,7 +194,7 @@ import (
 %token<token> SEPARATOR PARTITION OVER
 %token<token> COMMIT ROLLBACK
 %token<token> CONTINUE BREAK EXIT
-%token<token> ECHO PRINT PRINTF SOURCE EXECUTE CHDIR PWD RELOAD TRIGGER
+%token<token> ECHO PRINT PRINTF SOURCE EXECUTE CHDIR PWD RELOAD REMOVE TRIGGER
 %token<token> FUNCTION AGGREGATE BEGIN RETURN
 %token<token> IGNORE WITHIN
 %token<token> VAR SHOW
@@ -569,6 +569,14 @@ environment_variable_statement
     {
         $$ = SetEnvVar{EnvVar:$2, Value:$4}
     }
+    | SET environment_variable TO value
+    {
+        $$ = SetEnvVar{EnvVar:$2, Value:$4}
+    }
+    | SET environment_variable TO identifier
+    {
+        $$ = SetEnvVar{EnvVar:$2, Value:$4}
+    }
     | UNSET environment_variable
     {
         $$ = UnsetEnvVar{EnvVar:$2}
@@ -828,6 +836,22 @@ command_statement
     | SET FLAG '=' value
     {
         $$ = SetFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal, Value: $4}
+    }
+    | SET FLAG TO identifier
+    {
+        $$ = SetFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal, Value: $4}
+    }
+    | SET FLAG TO value
+    {
+        $$ = SetFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal, Value: $4}
+    }
+    | ADD value TO FLAG
+    {
+        $$ = AddFlagElement{BaseExpr: NewBaseExpr($1), Name: $4.Literal, Value: $2}
+    }
+    | REMOVE value FROM FLAG
+    {
+        $$ = RemoveFlagElement{BaseExpr: NewBaseExpr($1), Name: $4.Literal, Value: $2}
     }
     | SHOW FLAG
     {

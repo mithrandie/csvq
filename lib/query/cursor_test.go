@@ -311,7 +311,7 @@ var cursorScopesOpenTests = []struct {
 }
 
 func TestCursorScopes_Open(t *testing.T) {
-	initFlag()
+	initCmdFlag()
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
@@ -401,7 +401,7 @@ var cursorScopesCloseTests = []struct {
 }
 
 func TestCursorScopes_Close(t *testing.T) {
-	initFlag()
+	initCmdFlag()
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
@@ -481,7 +481,7 @@ var cursorScopesFetchTests = []struct {
 }
 
 func TestCursorScopes_Fetch(t *testing.T) {
-	initFlag()
+	initCmdFlag()
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
@@ -539,7 +539,7 @@ var cursorScopesIsOpenTests = []struct {
 }
 
 func TestCursorScopes_IsOpen(t *testing.T) {
-	initFlag()
+	initCmdFlag()
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
@@ -600,7 +600,7 @@ var cursorScopesIsInRangeTests = []struct {
 }
 
 func TestCursorScopes_IsInRange(t *testing.T) {
-	initFlag()
+	initCmdFlag()
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
@@ -663,7 +663,7 @@ var cursorScopesCountTests = []struct {
 }
 
 func TestCursorScopes_Count(t *testing.T) {
-	initFlag()
+	initCmdFlag()
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 
@@ -1000,7 +1000,7 @@ var cursorMapOpenTests = []struct {
 }
 
 func TestCursorMap_Open(t *testing.T) {
-	initFlag()
+	initCmdFlag()
 	tf := cmd.GetFlags()
 	tf.Repository = TestDir
 

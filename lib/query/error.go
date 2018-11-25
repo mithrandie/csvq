@@ -90,6 +90,9 @@ const (
 	ErrorInvalidFlagName                      = "%s is an unknown flag"
 	ErrorFlagValueNowAllowedFormat            = "%s for %s is not allowed"
 	ErrorInvalidFlagValue                     = "%s"
+	ErrorAddFlagNotSupportedName              = "add flag element syntax does not support %s"
+	ErrorRemoveFlagNotSupportedName           = "remove flag element syntax does not support %s"
+	ErrorInvalidFlagValueToBeRemoved          = "%s is an invalid value for %s to specify the element"
 	ErrorInvalidRuntimeInformation            = "%s is an unknown runtime information"
 	ErrorNotTable                             = "view has no attributes"
 	ErrorInvalidTableAttributeName            = "table attribute %s does not exist"
@@ -1020,9 +1023,39 @@ type InvalidFlagValueError struct {
 	*BaseError
 }
 
-func NewInvalidFlagValueError(setFlag parser.SetFlag, message string) error {
+func NewInvalidFlagValueError(expr parser.SetFlag, message string) error {
 	return &InvalidFlagValueError{
-		NewBaseError(setFlag, fmt.Sprintf(ErrorInvalidFlagValue, message)),
+		NewBaseError(expr, fmt.Sprintf(ErrorInvalidFlagValue, message)),
+	}
+}
+
+type AddFlagNotSupportedNameError struct {
+	*BaseError
+}
+
+func NewAddFlagNotSupportedNameError(expr parser.AddFlagElement) error {
+	return &AddFlagNotSupportedNameError{
+		NewBaseError(expr, fmt.Sprintf(ErrorAddFlagNotSupportedName, cmd.FlagSymbol(expr.Name))),
+	}
+}
+
+type RemoveFlagNotSupportedNameError struct {
+	*BaseError
+}
+
+func NewRemoveFlagNotSupportedNameError(expr parser.RemoveFlagElement) error {
+	return &RemoveFlagNotSupportedNameError{
+		NewBaseError(expr, fmt.Sprintf(ErrorRemoveFlagNotSupportedName, cmd.FlagSymbol(expr.Name))),
+	}
+}
+
+type InvalidFlagValueToBeRemoveError struct {
+	*BaseError
+}
+
+func NewInvalidFlagValueToBeRemovedError(unsetFlag parser.RemoveFlagElement) error {
+	return &InvalidFlagValueToBeRemoveError{
+		NewBaseError(unsetFlag, fmt.Sprintf(ErrorInvalidFlagValueToBeRemoved, unsetFlag.Value, cmd.FlagSymbol(unsetFlag.Name))),
 	}
 }
 

@@ -253,6 +253,74 @@ func SetFlag(expr parser.SetFlag, filter *Filter) error {
 	return nil
 }
 
+func AddFlagElement(expr parser.AddFlagElement, filter *Filter) error {
+	switch strings.ToUpper(expr.Name) {
+	case cmd.DatetimeFormatFlag:
+		e := parser.SetFlag{
+			BaseExpr: expr.GetBaseExpr(),
+			Name:     expr.Name,
+			Value:    expr.Value,
+		}
+		return SetFlag(e, filter)
+	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.DelimiterFlag, cmd.JsonQueryFlag, cmd.EncodingFlag,
+		cmd.WriteEncodingFlag, cmd.FormatFlag, cmd.WriteDelimiterFlag, cmd.LineBreakFlag, cmd.JsonEscape,
+		cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAll, cmd.PrettyPrintFlag,
+		cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag, cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag,
+		cmd.WaitTimeoutFlag,
+		cmd.CPUFlag:
+
+		return NewAddFlagNotSupportedNameError(expr)
+	default:
+		return NewInvalidFlagNameError(expr, expr.Name)
+	}
+}
+
+func RemoveFlagElement(expr parser.RemoveFlagElement, filter *Filter) error {
+	var p value.Primary
+	var err error
+
+	p, err = filter.Evaluate(expr.Value)
+	if err != nil {
+		return err
+	}
+
+	switch strings.ToUpper(expr.Name) {
+	case cmd.DatetimeFormatFlag:
+		flags := cmd.GetFlags()
+
+		if i := value.ToInteger(p); !value.IsNull(i) {
+			idx := int(i.(value.Integer).Raw())
+			if -1 < idx && idx < len(flags.DatetimeFormat) {
+				flags.DatetimeFormat = append(flags.DatetimeFormat[:idx], flags.DatetimeFormat[idx+1:]...)
+			}
+
+		} else if s := value.ToString(p); !value.IsNull(s) {
+			val := s.(value.String).Raw()
+			formats := make([]string, 0, len(flags.DatetimeFormat))
+			for _, v := range flags.DatetimeFormat {
+				if val != v {
+					formats = append(formats, v)
+				}
+			}
+			flags.DatetimeFormat = formats
+		} else {
+			return NewInvalidFlagValueToBeRemovedError(expr)
+		}
+	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.DelimiterFlag, cmd.JsonQueryFlag, cmd.EncodingFlag,
+		cmd.WriteEncodingFlag, cmd.FormatFlag, cmd.WriteDelimiterFlag, cmd.LineBreakFlag, cmd.JsonEscape,
+		cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAll, cmd.PrettyPrintFlag,
+		cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag, cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag,
+		cmd.WaitTimeoutFlag,
+		cmd.CPUFlag:
+
+		return NewRemoveFlagNotSupportedNameError(expr)
+	default:
+		return NewInvalidFlagNameError(expr, expr.Name)
+	}
+
+	return nil
+}
+
 func ShowFlag(expr parser.ShowFlag) (string, error) {
 	s, err := showFlag(expr.Name)
 	if err != nil {

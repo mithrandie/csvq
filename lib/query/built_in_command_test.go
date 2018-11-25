@@ -614,7 +614,7 @@ func TestSetFlag(t *testing.T) {
 	filter := NewEmptyFilter()
 
 	for _, v := range setFlagTests {
-		initFlag()
+		initCmdFlag()
 		err := SetFlag(v.Expr, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -629,7 +629,191 @@ func TestSetFlag(t *testing.T) {
 			continue
 		}
 	}
-	initFlag()
+	initCmdFlag()
+}
+
+var addFlagElementTests = []struct {
+	Name   string
+	Expr   parser.AddFlagElement
+	Init   func(*cmd.Flags)
+	Expect func() *cmd.Flags
+	Error  string
+}{
+	{
+		Name: "Add Element To DatetimeFormat",
+		Expr: parser.AddFlagElement{
+			Name:  "datetime_format",
+			Value: parser.NewStringValue("%Y%m%d"),
+		},
+		Init: func(flags *cmd.Flags) {
+			flags.DatetimeFormat = []string{"%Y:%m:%d"}
+		},
+		Expect: func() *cmd.Flags {
+			expect := new(cmd.Flags)
+			initFlag(expect)
+			expect.DatetimeFormat = []string{"%Y:%m:%d", "%Y%m%d"}
+			return expect
+		},
+	},
+	{
+		Name: "Add Element Unsupported Flag Name",
+		Expr: parser.AddFlagElement{
+			Name:  "format",
+			Value: parser.NewStringValue("%Y%m%d"),
+		},
+		Init: func(flags *cmd.Flags) {
+			flags.DatetimeFormat = []string{"%Y:%m:%d"}
+		},
+		Error: "[L:- C:-] add flag element syntax does not support @@format",
+	},
+	{
+		Name: "Add Element Invalid Flag Name",
+		Expr: parser.AddFlagElement{
+			Name:  "invalid",
+			Value: parser.NewStringValue("%Y%m%d"),
+		},
+		Init: func(flags *cmd.Flags) {
+			flags.DatetimeFormat = []string{"%Y:%m:%d"}
+		},
+		Error: "[L:- C:-] @@invalid is an unknown flag",
+	},
+}
+
+func TestAddFlagElement(t *testing.T) {
+	filter := NewEmptyFilter()
+
+	for _, v := range addFlagElementTests {
+		initCmdFlag()
+		flags := cmd.GetFlags()
+		v.Init(flags)
+
+		err := AddFlagElement(v.Expr, filter)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+
+		expect := v.Expect()
+		if !reflect.DeepEqual(flags, expect) {
+			t.Errorf("%s: result = %v, want %v", v.Name, flags, expect)
+		}
+	}
+	initCmdFlag()
+}
+
+var removeFlagElementTests = []struct {
+	Name   string
+	Expr   parser.RemoveFlagElement
+	Init   func(*cmd.Flags)
+	Expect func() *cmd.Flags
+	Error  string
+}{
+	{
+		Name: "Remove Element from DatetimeFormat",
+		Expr: parser.RemoveFlagElement{
+			Name:  "datetime_format",
+			Value: parser.NewStringValue("%Y%m%d"),
+		},
+		Init: func(flags *cmd.Flags) {
+			flags.DatetimeFormat = []string{"%Y%m%d", "%Y:%m:%d"}
+		},
+		Expect: func() *cmd.Flags {
+			expect := new(cmd.Flags)
+			initFlag(expect)
+			expect.DatetimeFormat = []string{"%Y:%m:%d"}
+			return expect
+		},
+	},
+	{
+		Name: "Remove Element from DatetimeFormat with List Index",
+		Expr: parser.RemoveFlagElement{
+			Name:  "datetime_format",
+			Value: parser.NewIntegerValue(1),
+		},
+		Init: func(flags *cmd.Flags) {
+			flags.DatetimeFormat = []string{"%Y%m%d", "%Y:%m:%d"}
+		},
+		Expect: func() *cmd.Flags {
+			expect := new(cmd.Flags)
+			initFlag(expect)
+			expect.DatetimeFormat = []string{"%Y%m%d"}
+			return expect
+		},
+	},
+	{
+		Name: "Remove Element Invalid Flag Value",
+		Expr: parser.RemoveFlagElement{
+			Name:  "datetime_format",
+			Value: parser.NewNullValueFromString("null"),
+		},
+		Init:  func(flags *cmd.Flags) {},
+		Error: "[L:- C:-] null is an invalid value for @@datetime_format to specify the element",
+	},
+	{
+		Name: "Remove Element Evaluation Error",
+		Expr: parser.RemoveFlagElement{
+			Name:  "format",
+			Value: parser.FieldReference{Column: parser.Identifier{Literal: "err"}},
+		},
+		Init:  func(flags *cmd.Flags) {},
+		Error: "[L:- C:-] field err does not exist",
+	},
+	{
+		Name: "Remove Element Unsupported Flag Name",
+		Expr: parser.RemoveFlagElement{
+			Name:  "format",
+			Value: parser.NewIntegerValue(1),
+		},
+		Init:  func(flags *cmd.Flags) {},
+		Error: "[L:- C:-] remove flag element syntax does not support @@format",
+	},
+	{
+		Name: "Remove Element Invalid Flag Name",
+		Expr: parser.RemoveFlagElement{
+			Name:  "invalid",
+			Value: parser.NewIntegerValue(1),
+		},
+		Init:  func(flags *cmd.Flags) {},
+		Error: "[L:- C:-] @@invalid is an unknown flag",
+	},
+}
+
+func TestRemoveFlagElement(t *testing.T) {
+	filter := NewEmptyFilter()
+
+	for _, v := range removeFlagElementTests {
+		initCmdFlag()
+		flags := cmd.GetFlags()
+		v.Init(flags)
+
+		err := RemoveFlagElement(v.Expr, filter)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+
+		expect := v.Expect()
+		if !reflect.DeepEqual(flags, expect) {
+			t.Errorf("%s: result = %v, want %v", v.Name, flags, expect)
+		}
+	}
+	initCmdFlag()
 }
 
 var showFlagTests = []struct {
@@ -1216,7 +1400,7 @@ func TestShowFlag(t *testing.T) {
 	filter := NewEmptyFilter()
 
 	for _, v := range showFlagTests {
-		initFlag()
+		initCmdFlag()
 		cmd.GetFlags().SetColor(true)
 		for _, expr := range v.SetExprs {
 			SetFlag(expr, filter)
@@ -1238,7 +1422,7 @@ func TestShowFlag(t *testing.T) {
 			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
 		}
 	}
-	initFlag()
+	initCmdFlag()
 }
 
 var showObjectsTests = []struct {
@@ -1718,7 +1902,7 @@ var showObjectsTests = []struct {
 }
 
 func TestShowObjects(t *testing.T) {
-	initFlag()
+	initCmdFlag()
 	flags := cmd.GetFlags()
 
 	for _, v := range showObjectsTests {
@@ -1968,7 +2152,7 @@ func calcShowRuninfoWidth(wd string) int {
 }
 
 func TestShowFields(t *testing.T) {
-	initFlag()
+	initCmdFlag()
 	flags := cmd.GetFlags()
 	flags.Repository = TestDir
 
