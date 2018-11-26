@@ -28,12 +28,12 @@ var variableScopesGet = []struct {
 
 func TestVariableScopes_Get(t *testing.T) {
 	list := VariableScopes{
-		VariableMap{
+		GenerateVariableMap(map[string]value.Primary{
 			"var1": value.NewInteger(1),
-		},
-		VariableMap{
+		}),
+		GenerateVariableMap(map[string]value.Primary{
 			"var1": value.NewInteger(2),
-		},
+		}),
 	}
 
 	for _, v := range variableScopesGet {
@@ -71,12 +71,12 @@ var variableScopesSubstituteTests = []struct {
 			Value:    parser.NewIntegerValue(3),
 		},
 		List: VariableScopes{
-			VariableMap{
+			GenerateVariableMap(map[string]value.Primary{
 				"var1": value.NewInteger(3),
-			},
-			VariableMap{
+			}),
+			GenerateVariableMap(map[string]value.Primary{
 				"var1": value.NewInteger(2),
-			},
+			}),
 		},
 		Result: value.NewInteger(3),
 	},
@@ -92,12 +92,12 @@ var variableScopesSubstituteTests = []struct {
 
 func TestVariableScopes_Substitute(t *testing.T) {
 	list := VariableScopes{
-		VariableMap{
+		GenerateVariableMap(map[string]value.Primary{
 			"var1": value.NewInteger(1),
-		},
-		VariableMap{
+		}),
+		GenerateVariableMap(map[string]value.Primary{
 			"var1": value.NewInteger(2),
-		},
+		}),
 	}
 
 	for _, v := range variableScopesSubstituteTests {
@@ -114,11 +114,11 @@ func TestVariableScopes_Substitute(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(list, v.List) {
-			t.Errorf("%s: list = %s, want %s", v.Name, list, v.List)
+		if !list.Equal(v.List) {
+			t.Errorf("%s: list = %v, want %v", v.Name, list, v.List)
 		}
 		if !reflect.DeepEqual(result, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
+			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
 		}
 	}
 }
@@ -133,10 +133,10 @@ var variableScopesDisposeTests = []struct {
 		Name: "VariableScopes Dispose",
 		Expr: parser.Variable{Name: "var1"},
 		List: VariableScopes{
-			VariableMap{},
-			VariableMap{
+			NewVariableMap(),
+			GenerateVariableMap(map[string]value.Primary{
 				"var1": value.NewInteger(2),
-			},
+			}),
 		},
 	},
 	{
@@ -148,12 +148,12 @@ var variableScopesDisposeTests = []struct {
 
 func TestVariableScopes_Dispose(t *testing.T) {
 	list := VariableScopes{
-		VariableMap{
+		GenerateVariableMap(map[string]value.Primary{
 			"var1": value.NewInteger(1),
-		},
-		VariableMap{
+		}),
+		GenerateVariableMap(map[string]value.Primary{
 			"var1": value.NewInteger(2),
-		},
+		}),
 	}
 
 	for _, v := range variableScopesDisposeTests {
@@ -170,8 +170,88 @@ func TestVariableScopes_Dispose(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(list, v.List) {
-			t.Errorf("%s: list = %s, want %s", v.Name, list, v.List)
+		if !list.Equal(v.List) {
+			t.Errorf("%s: list = %v, want %v", v.Name, list, v.List)
+		}
+	}
+}
+
+var variableScopesEqualTests = []struct {
+	Name   string
+	List1  VariableScopes
+	List2  VariableScopes
+	Expect bool
+}{
+	{
+		Name: "Equal",
+		List1: VariableScopes{
+			GenerateVariableMap(map[string]value.Primary{
+				"var1": value.NewInteger(1),
+			}),
+			GenerateVariableMap(map[string]value.Primary{
+				"var1": value.NewInteger(2),
+			}),
+		},
+		List2: VariableScopes{
+			GenerateVariableMap(map[string]value.Primary{
+				"var1": value.NewInteger(1),
+			}),
+			GenerateVariableMap(map[string]value.Primary{
+				"var1": value.NewInteger(2),
+			}),
+		},
+		Expect: true,
+	},
+	{
+		Name: "Different Length",
+		List1: VariableScopes{
+			GenerateVariableMap(map[string]value.Primary{
+				"var1": value.NewInteger(1),
+			}),
+			GenerateVariableMap(map[string]value.Primary{
+				"var1": value.NewInteger(2),
+			}),
+			GenerateVariableMap(map[string]value.Primary{
+				"var1": value.NewInteger(3),
+			}),
+		},
+		List2: VariableScopes{
+			GenerateVariableMap(map[string]value.Primary{
+				"var1": value.NewInteger(1),
+			}),
+			GenerateVariableMap(map[string]value.Primary{
+				"var1": value.NewInteger(2),
+			}),
+		},
+		Expect: false,
+	},
+	{
+		Name: "Different Value",
+		List1: VariableScopes{
+			GenerateVariableMap(map[string]value.Primary{
+				"var1": value.NewInteger(1),
+			}),
+			GenerateVariableMap(map[string]value.Primary{
+				"var1": value.NewInteger(2),
+			}),
+		},
+		List2: VariableScopes{
+			GenerateVariableMap(map[string]value.Primary{
+				"var1": value.NewInteger(1),
+			}),
+			GenerateVariableMap(map[string]value.Primary{
+				"var1": value.NewInteger(3),
+			}),
+		},
+		Expect: false,
+	},
+}
+
+func TestVariableScopes_Equal(t *testing.T) {
+	for _, v := range variableScopesEqualTests {
+		result := v.List1.Equal(v.List2)
+		if result != v.Expect {
+			t.Errorf("%s: result = %t, want %t", v.Name, result, v.Expect)
 		}
 	}
 }
@@ -194,9 +274,9 @@ var variableMapDeclareTests = []variableMapTests{
 				},
 			},
 		},
-		Result: VariableMap{
+		Result: GenerateVariableMap(map[string]value.Primary{
 			"var1": value.NewNull(),
-		},
+		}),
 	},
 	{
 		Name: "Declare Variable With Initial Value",
@@ -208,10 +288,10 @@ var variableMapDeclareTests = []variableMapTests{
 				},
 			},
 		},
-		Result: VariableMap{
+		Result: GenerateVariableMap(map[string]value.Primary{
 			"var1": value.NewNull(),
 			"var2": value.NewInteger(1),
-		},
+		}),
 	},
 	{
 		Name: "Declare Variable Redeclaration Error",
@@ -240,7 +320,7 @@ var variableMapDeclareTests = []variableMapTests{
 }
 
 func TestVariableMap_Declare(t *testing.T) {
-	vars := VariableMap{}
+	vars := NewVariableMap()
 
 	for _, v := range variableMapDeclareTests {
 		if v.Filter == nil {
@@ -260,8 +340,8 @@ func TestVariableMap_Declare(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(vars, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, vars, v.Result)
+		if !vars.Equal(&v.Result) {
+			t.Errorf("%s: result = %v, want %v", v.Name, vars, v.Result)
 		}
 	}
 }
@@ -273,9 +353,9 @@ var variableMapSubstituteTests = []variableMapTests{
 			Variable: parser.Variable{Name: "var1"},
 			Value:    parser.NewIntegerValue(2),
 		},
-		Result: VariableMap{
+		Result: GenerateVariableMap(map[string]value.Primary{
 			"var1": value.NewInteger(2),
-		},
+		}),
 	},
 	{
 		Name: "Substitute Variable Undeclared Error",
@@ -296,9 +376,9 @@ var variableMapSubstituteTests = []variableMapTests{
 }
 
 func TestVariableMap_Substitute(t *testing.T) {
-	vars := VariableMap{
+	vars := GenerateVariableMap(map[string]value.Primary{
 		"var1": value.NewInteger(1),
-	}
+	})
 
 	for _, v := range variableMapSubstituteTests {
 		if v.Filter == nil {
@@ -318,8 +398,8 @@ func TestVariableMap_Substitute(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(vars, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, vars, v.Result)
+		if !vars.Equal(&v.Result) {
+			t.Errorf("%s: result = %v, want %v", v.Name, vars, v.Result)
 		}
 	}
 }
@@ -328,7 +408,7 @@ var variableMapDisposeTests = []variableMapTests{
 	{
 		Name:   "Dispose Variable",
 		Expr:   parser.Variable{Name: "var1"},
-		Result: VariableMap{},
+		Result: NewVariableMap(),
 	},
 	{
 		Name:  "Dispose Variable Undeclared Error",
@@ -338,9 +418,9 @@ var variableMapDisposeTests = []variableMapTests{
 }
 
 func TestVariableMap_Dispose(t *testing.T) {
-	vars := VariableMap{
+	vars := GenerateVariableMap(map[string]value.Primary{
 		"var1": value.NewInteger(1),
-	}
+	})
 
 	for _, v := range variableMapDisposeTests {
 		err := vars.Dispose(v.Expr.(parser.Variable))
@@ -356,8 +436,8 @@ func TestVariableMap_Dispose(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(vars, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, vars, v.Result)
+		if !vars.Equal(&v.Result) {
+			t.Errorf("%s: result = %v, want %v", v.Name, vars, v.Result)
 		}
 	}
 }

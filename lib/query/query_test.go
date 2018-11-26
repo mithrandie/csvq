@@ -34,10 +34,10 @@ var fetchCursorTests = []struct {
 			{Name: "var2"},
 		},
 		Success: true,
-		ResultVars: VariableMap{
+		ResultVars: GenerateVariableMap(map[string]value.Primary{
 			"var1": value.NewString("1"),
 			"var2": value.NewString("str1"),
-		},
+		}),
 	},
 	{
 		Name:    "Fetch Cursor Second Time",
@@ -47,10 +47,10 @@ var fetchCursorTests = []struct {
 			{Name: "var2"},
 		},
 		Success: true,
-		ResultVars: VariableMap{
+		ResultVars: GenerateVariableMap(map[string]value.Primary{
 			"var1": value.NewString("2"),
 			"var2": value.NewString("str2"),
-		},
+		}),
 	},
 	{
 		Name:    "Fetch Cursor Third Time",
@@ -60,10 +60,10 @@ var fetchCursorTests = []struct {
 			{Name: "var2"},
 		},
 		Success: true,
-		ResultVars: VariableMap{
+		ResultVars: GenerateVariableMap(map[string]value.Primary{
 			"var1": value.NewString("3"),
 			"var2": value.NewString("str3"),
-		},
+		}),
 	},
 	{
 		Name:    "Fetch Cursor Forth Time",
@@ -73,10 +73,10 @@ var fetchCursorTests = []struct {
 			{Name: "var2"},
 		},
 		Success: false,
-		ResultVars: VariableMap{
+		ResultVars: GenerateVariableMap(map[string]value.Primary{
 			"var1": value.NewString("3"),
 			"var2": value.NewString("str3"),
-		},
+		}),
 	},
 	{
 		Name:    "Fetch Cursor Absolute",
@@ -90,10 +90,10 @@ var fetchCursorTests = []struct {
 			{Name: "var2"},
 		},
 		Success: true,
-		ResultVars: VariableMap{
+		ResultVars: GenerateVariableMap(map[string]value.Primary{
 			"var1": value.NewString("2"),
 			"var2": value.NewString("str2"),
-		},
+		}),
 	},
 	{
 		Name:    "Fetch Cursor Fetch Error",
@@ -155,10 +155,10 @@ func TestFetchCursor(t *testing.T) {
 
 	filter := NewFilter(
 		[]VariableMap{
-			{
+			GenerateVariableMap(map[string]value.Primary{
 				"var1": value.NewNull(),
 				"var2": value.NewNull(),
-			},
+			}),
 		},
 		[]ViewMap{{}},
 		[]CursorMap{
@@ -196,7 +196,7 @@ func TestFetchCursor(t *testing.T) {
 		if success != v.Success {
 			t.Errorf("%s: success = %t, want %t", v.Name, success, v.Success)
 		}
-		if !reflect.DeepEqual(filter.Variables[0], v.ResultVars) {
+		if !filter.Variables[0].Equal(&v.ResultVars) {
 			t.Errorf("%s: global vars = %q, want %q", v.Name, filter.Variables[0], v.ResultVars)
 		}
 	}

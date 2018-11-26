@@ -1332,7 +1332,7 @@ var analyticFunctionTestFilter = &Filter{
 					}),
 				},
 				Filter: &Filter{
-					Variables: VariableScopes{{}},
+					Variables: VariableScopes{NewVariableMap()},
 					TempViews: TemporaryViewScopes{{}},
 					Cursors:   CursorScopes{{}},
 					Functions: UserDefinedFunctionScopes{{}},
@@ -1341,7 +1341,7 @@ var analyticFunctionTestFilter = &Filter{
 			RecordIndex: 0,
 		},
 	},
-	Variables: VariableScopes{{}},
+	Variables: VariableScopes{NewVariableMap()},
 	TempViews: TemporaryViewScopes{{}},
 	Cursors:   CursorScopes{{}},
 	Functions: UserDefinedFunctionScopes{{}},

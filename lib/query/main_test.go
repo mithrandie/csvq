@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sync"
 	"testing"
 	"time"
 
@@ -170,6 +171,16 @@ func copyfile(dstfile string, srcfile string) error {
 	}
 
 	return nil
+}
+
+func GenerateVariableMap(values map[string]value.Primary) VariableMap {
+	m := sync.Map{}
+	for k, v := range values {
+		m.Store(k, v)
+	}
+	return VariableMap{
+		variables: m,
+	}
 }
 
 func GenerateBenchGroupedViewFilter() Filter {

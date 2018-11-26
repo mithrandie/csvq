@@ -1617,10 +1617,10 @@ func TestProcedure_WhileInCursor(t *testing.T) {
 	proc := NewProcedure()
 
 	for _, v := range procedureWhileInCursorTests {
-		proc.Filter.Variables[0] = VariableMap{
+		proc.Filter.Variables[0] = GenerateVariableMap(map[string]value.Primary{
 			"var1": value.NewNull(),
 			"var2": value.NewNull(),
-		}
+		})
 		proc.Filter.Cursors[0] = CursorMap{
 			"CUR": &Cursor{
 				query: selectQueryForCursorTest,

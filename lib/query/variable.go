@@ -1,6 +1,9 @@
 package query
 
 import (
+	"reflect"
+	"sync"
+
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 )
@@ -53,40 +56,60 @@ func (list VariableScopes) Dispose(expr parser.Variable) error {
 	return NewUndeclaredVariableError(expr)
 }
 
-type VariableMap map[string]value.Primary
+func (list VariableScopes) Equal(list2 VariableScopes) bool {
+	if len(list) != len(list2) {
+		return false
+	}
+	for i := 0; i < len(list); i++ {
+		if !list[i].Equal(&list2[i]) {
+			return false
+		}
+	}
+	return true
+}
 
-func (v VariableMap) Add(variable parser.Variable, value value.Primary) error {
-	if _, ok := v[variable.Name]; ok {
+type VariableMap struct {
+	variables sync.Map
+}
+
+func NewVariableMap() VariableMap {
+	return VariableMap{
+		variables: sync.Map{},
+	}
+}
+
+func (m *VariableMap) Add(variable parser.Variable, value value.Primary) error {
+	if _, ok := m.variables.Load(variable.Name); ok {
 		return NewVariableRedeclaredError(variable)
 	}
-	v[variable.Name] = value
+	m.variables.Store(variable.Name, value)
 	return nil
 }
 
-func (v VariableMap) Set(variable parser.Variable, value value.Primary) error {
-	if _, ok := v[variable.Name]; !ok {
+func (m *VariableMap) Set(variable parser.Variable, value value.Primary) error {
+	if _, ok := m.variables.Load(variable.Name); !ok {
 		return NewUndeclaredVariableError(variable)
 	}
-	v[variable.Name] = value
+	m.variables.Store(variable.Name, value)
 	return nil
 }
 
-func (v VariableMap) Get(variable parser.Variable) (value.Primary, error) {
-	if v, ok := v[variable.Name]; ok {
-		return v, nil
+func (m *VariableMap) Get(variable parser.Variable) (value.Primary, error) {
+	if v, ok := m.variables.Load(variable.Name); ok {
+		return v.(value.Primary), nil
 	}
 	return nil, NewUndeclaredVariableError(variable)
 }
 
-func (v VariableMap) Dispose(variable parser.Variable) error {
-	if _, ok := v[variable.Name]; !ok {
+func (m *VariableMap) Dispose(variable parser.Variable) error {
+	if _, ok := m.variables.Load(variable.Name); !ok {
 		return NewUndeclaredVariableError(variable)
 	}
-	delete(v, variable.Name)
+	m.variables.Delete(variable.Name)
 	return nil
 }
 
-func (v VariableMap) Declare(declaration parser.VariableDeclaration, filter *Filter) error {
+func (m *VariableMap) Declare(declaration parser.VariableDeclaration, filter *Filter) error {
 	for _, assignment := range declaration.Assignments {
 		var val value.Primary
 		var err error
@@ -98,7 +121,7 @@ func (v VariableMap) Declare(declaration parser.VariableDeclaration, filter *Fil
 				return err
 			}
 		}
-		err = v.Add(assignment.Variable, val)
+		err = m.Add(assignment.Variable, val)
 		if err != nil {
 			return err
 		}
@@ -106,15 +129,31 @@ func (v VariableMap) Declare(declaration parser.VariableDeclaration, filter *Fil
 	return nil
 }
 
-func (v VariableMap) Substitute(substitution parser.VariableSubstitution, filter *Filter) (value.Primary, error) {
+func (m *VariableMap) Substitute(substitution parser.VariableSubstitution, filter *Filter) (value.Primary, error) {
 	val, err := filter.Evaluate(substitution.Value)
 	if err != nil {
 		return nil, err
 	}
-	return v.SubstituteDirectly(substitution.Variable, val)
+	return m.SubstituteDirectly(substitution.Variable, val)
 }
 
-func (v VariableMap) SubstituteDirectly(variable parser.Variable, value value.Primary) (value.Primary, error) {
-	err := v.Set(variable, value)
+func (m *VariableMap) SubstituteDirectly(variable parser.Variable, value value.Primary) (value.Primary, error) {
+	err := m.Set(variable, value)
 	return value, err
+}
+
+func (m *VariableMap) Equal(m2 *VariableMap) bool {
+	mvalues := make(map[interface{}]interface{})
+	m2values := make(map[interface{}]interface{})
+
+	m.variables.Range(func(key, value interface{}) bool {
+		mvalues[key] = value
+		return true
+	})
+	m2.variables.Range(func(key, value interface{}) bool {
+		m2values[key] = value
+		return true
+	})
+
+	return reflect.DeepEqual(mvalues, m2values)
 }

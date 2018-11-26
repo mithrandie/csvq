@@ -104,8 +104,8 @@ func CrossJoin(view *View, joinView *View) {
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 	records := make(RecordSet, view.RecordLen()*joinView.RecordLen())
 
-	gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
-	for i := 0; i < gm.CPU; i++ {
+	gm := NewGoroutineTaskManager(view.RecordLen(), -1)
+	for i := 0; i < gm.Number; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			start, end := gm.RecordRange(thIdx)
@@ -136,19 +136,19 @@ func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, par
 
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 
-	var gm *GoroutineManager
+	var gm *GoroutineTaskManager
 	var splitLeft bool
 	if joinView.RecordLen() < view.RecordLen() {
-		gm = NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
+		gm = NewGoroutineTaskManager(view.RecordLen(), -1)
 		splitLeft = true
 	} else {
-		gm = NewGoroutineManager(joinView.RecordLen(), MinimumRequiredForParallelRoutine)
+		gm = NewGoroutineTaskManager(joinView.RecordLen(), -1)
 		splitLeft = false
 	}
 
-	recordsList := make([]RecordSet, gm.CPU)
+	recordsList := make([]RecordSet, gm.Number)
 
-	for i := 0; i < gm.CPU; i++ {
+	for i := 0; i < gm.Number; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			var lstart, lend, rstart, rend int
@@ -202,7 +202,7 @@ func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, par
 	gm.Wait()
 
 	if gm.HasError() {
-		return gm.Error()
+		return gm.Err()
 	}
 
 	view.Header = mergedHeader
@@ -225,20 +225,20 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 	viewEmptyRecord := NewEmptyRecord(view.FieldLen())
 	joinViewEmptyRecord := NewEmptyRecord(joinView.FieldLen())
 
-	var gm *GoroutineManager
+	var gm *GoroutineTaskManager
 	var splitLeft bool
 	if joinView.RecordLen() < view.RecordLen() {
-		gm = NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
+		gm = NewGoroutineTaskManager(view.RecordLen(), -1)
 		splitLeft = true
 	} else {
-		gm = NewGoroutineManager(joinView.RecordLen(), MinimumRequiredForParallelRoutine)
+		gm = NewGoroutineTaskManager(joinView.RecordLen(), -1)
 		splitLeft = false
 	}
 
-	recordsList := make([]RecordSet, gm.CPU)
-	joinViewMatchesList := make([][]bool, gm.CPU)
+	recordsList := make([]RecordSet, gm.Number)
+	joinViewMatchesList := make([][]bool, gm.Number)
 
-	for i := 0; i < gm.CPU; i++ {
+	for i := 0; i < gm.Number; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			var lstart, lend, rstart, rend int
@@ -318,7 +318,7 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 	gm.Wait()
 
 	if gm.HasError() {
-		return gm.Error()
+		return gm.Err()
 	}
 
 	if direction == parser.FULL {

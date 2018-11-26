@@ -1119,7 +1119,7 @@ var viewLoadTests = []struct {
 			},
 		},
 		Filter: &Filter{
-			Variables: VariableScopes{{}},
+			Variables: VariableScopes{NewVariableMap()},
 			TempViews: TemporaryViewScopes{{}},
 			Cursors:   CursorScopes{{}},
 			InlineTables: InlineTableNodes{
@@ -1168,7 +1168,7 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				Variables: VariableScopes{{}},
+				Variables: VariableScopes{NewVariableMap()},
 				TempViews: TemporaryViewScopes{{}},
 				Cursors:   CursorScopes{{}},
 				InlineTables: InlineTableNodes{
@@ -1214,7 +1214,7 @@ var viewLoadTests = []struct {
 			},
 		},
 		Filter: &Filter{
-			Variables: VariableScopes{{}},
+			Variables: VariableScopes{NewVariableMap()},
 			TempViews: TemporaryViewScopes{{}},
 			Cursors:   CursorScopes{{}},
 			InlineTables: InlineTableNodes{

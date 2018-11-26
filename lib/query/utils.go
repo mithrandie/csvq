@@ -152,16 +152,3 @@ func serializeString(buf *bytes.Buffer, s string) {
 	buf.WriteString("[S]")
 	buf.WriteString(strings.ToUpper(strings.TrimSpace(s)))
 }
-
-func RecordRange(cpuIndex int, totalLen int, numberOfCPU int) (int, int) {
-	calcLen := totalLen / numberOfCPU
-
-	var start = cpuIndex * calcLen
-	var end int
-	if cpuIndex == numberOfCPU-1 {
-		end = totalLen
-	} else {
-		end = (cpuIndex + 1) * calcLen
-	}
-	return start, end
-}
