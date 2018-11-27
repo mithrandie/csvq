@@ -60,14 +60,6 @@ func (t ReadLineTerminal) Teardown() {
 	t.terminal.Close()
 }
 
-func (t ReadLineTerminal) RestoreRawMode() error {
-	return t.terminal.Terminal.EnterRawMode()
-}
-
-func (t ReadLineTerminal) RestoreOriginalMode() error {
-	return t.terminal.Terminal.ExitRawMode()
-}
-
 func (t ReadLineTerminal) ReadLine() (string, error) {
 	return t.terminal.Readline()
 }

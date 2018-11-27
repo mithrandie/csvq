@@ -169,10 +169,6 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			if OutFile != nil {
 				writer = OutFile
 			} else {
-				if Terminal != nil {
-					Terminal.RestoreOriginalMode()
-					defer Terminal.RestoreRawMode()
-				}
 				writer = Stdout
 			}
 			err = EncodeView(writer, view, fileInfo)
@@ -563,11 +559,6 @@ func (proc *Procedure) ExecExternalCommand(stmt parser.ExternalCommand) error {
 
 	if len(args) < 1 {
 		return nil
-	}
-
-	if Terminal != nil {
-		Terminal.RestoreOriginalMode()
-		defer Terminal.RestoreRawMode()
 	}
 
 	c := exec.Command(args[0], args[1:]...)

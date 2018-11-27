@@ -27,8 +27,6 @@ type VirtualTerminal interface {
 	SaveHistory(string)
 	Teardown()
 	GetSize() (int, int, error)
-	RestoreRawMode() error
-	RestoreOriginalMode() error
 	ReloadPromptConfig() error
 }
 

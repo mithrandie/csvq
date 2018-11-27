@@ -63,7 +63,10 @@ func (t SSHTerminal) ReadLine() (string, error) {
 		t.terminal.SetSize(w, h)
 	}
 
-	return t.terminal.ReadLine()
+	t.RestoreRawMode()
+	s, e := t.terminal.ReadLine()
+	t.RestoreOriginalMode()
+	return s, e
 }
 
 func (t SSHTerminal) Write(s string) error {
