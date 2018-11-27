@@ -1,3 +1,7 @@
+## Release v1.6.6 (2018-11-27)
+
+- Fix fatal error of variable substitution in multithreading.
+
 ## Release v1.6.5 (2018-11-25)
 
 - Implement Flag Related Statements.
