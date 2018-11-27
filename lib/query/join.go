@@ -104,8 +104,8 @@ func CrossJoin(view *View, joinView *View) {
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 	records := make(RecordSet, view.RecordLen()*joinView.RecordLen())
 
-	gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
-	for i := 0; i < gm.CPU; i++ {
+	gm := NewGoroutineTaskManager(view.RecordLen(), -1)
+	for i := 0; i < gm.Number; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			start, end := gm.RecordRange(thIdx)
@@ -113,7 +113,7 @@ func CrossJoin(view *View, joinView *View) {
 
 			for _, viewRecord := range view.RecordSet[start:end] {
 				for _, joinViewRecord := range joinView.RecordSet {
-					records[idx] = MergeRecord(viewRecord, joinViewRecord)
+					records[idx] = append(viewRecord, joinViewRecord...)
 					idx++
 				}
 			}
@@ -136,19 +136,19 @@ func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, par
 
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 
-	var gm *GoroutineManager
+	var gm *GoroutineTaskManager
 	var splitLeft bool
 	if joinView.RecordLen() < view.RecordLen() {
-		gm = NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
+		gm = NewGoroutineTaskManager(view.RecordLen(), -1)
 		splitLeft = true
 	} else {
-		gm = NewGoroutineManager(joinView.RecordLen(), MinimumRequiredForParallelRoutine)
+		gm = NewGoroutineTaskManager(joinView.RecordLen(), -1)
 		splitLeft = false
 	}
 
-	recordsList := make([]RecordSet, gm.CPU)
+	recordsList := make([]RecordSet, gm.Number)
 
-	for i := 0; i < gm.CPU; i++ {
+	for i := 0; i < gm.Number; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			var lstart, lend, rstart, rend int
@@ -181,7 +181,7 @@ func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, par
 						break InnerJoinLoop
 					}
 
-					mergedRecord := MergeRecord(view.RecordSet[i], joinView.RecordSet[j])
+					mergedRecord := append(view.RecordSet[i], joinView.RecordSet[j]...)
 					filter.Records[0].View.RecordSet[0] = mergedRecord
 
 					primary, e := filter.Evaluate(condition)
@@ -202,7 +202,7 @@ func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, par
 	gm.Wait()
 
 	if gm.HasError() {
-		return gm.Error()
+		return gm.Err()
 	}
 
 	view.Header = mergedHeader
@@ -225,20 +225,20 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 	viewEmptyRecord := NewEmptyRecord(view.FieldLen())
 	joinViewEmptyRecord := NewEmptyRecord(joinView.FieldLen())
 
-	var gm *GoroutineManager
+	var gm *GoroutineTaskManager
 	var splitLeft bool
 	if joinView.RecordLen() < view.RecordLen() {
-		gm = NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
+		gm = NewGoroutineTaskManager(view.RecordLen(), -1)
 		splitLeft = true
 	} else {
-		gm = NewGoroutineManager(joinView.RecordLen(), MinimumRequiredForParallelRoutine)
+		gm = NewGoroutineTaskManager(joinView.RecordLen(), -1)
 		splitLeft = false
 	}
 
-	recordsList := make([]RecordSet, gm.CPU)
-	joinViewMatchesList := make([][]bool, gm.CPU)
+	recordsList := make([]RecordSet, gm.Number)
+	joinViewMatchesList := make([][]bool, gm.Number)
 
-	for i := 0; i < gm.CPU; i++ {
+	for i := 0; i < gm.Number; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			var lstart, lend, rstart, rend int
@@ -277,9 +277,9 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 					var mergedRecord Record
 					switch direction {
 					case parser.RIGHT:
-						mergedRecord = MergeRecord(joinView.RecordSet[j], view.RecordSet[i])
+						mergedRecord = append(joinView.RecordSet[j], view.RecordSet[i]...)
 					default:
-						mergedRecord = MergeRecord(view.RecordSet[i], joinView.RecordSet[j])
+						mergedRecord = append(view.RecordSet[i], joinView.RecordSet[j]...)
 					}
 					filter.Records[0].View.RecordSet[0] = mergedRecord
 
@@ -301,9 +301,9 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 					var record Record
 					switch direction {
 					case parser.RIGHT:
-						record = MergeRecord(joinViewEmptyRecord, view.RecordSet[i])
+						record = append(joinViewEmptyRecord, view.RecordSet[i]...)
 					default:
-						record = MergeRecord(view.RecordSet[i], joinViewEmptyRecord)
+						record = append(view.RecordSet[i], joinViewEmptyRecord...)
 					}
 					records = append(records, record)
 
@@ -318,7 +318,7 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 	gm.Wait()
 
 	if gm.HasError() {
-		return gm.Error()
+		return gm.Err()
 	}
 
 	if direction == parser.FULL {
@@ -331,7 +331,7 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 				}
 			}
 			if !match {
-				record := MergeRecord(viewEmptyRecord, joinView.RecordSet[i])
+				record := append(viewEmptyRecord, joinView.RecordSet[i]...)
 				recordsList[len(recordsList)-1] = append(recordsList[len(recordsList)-1], record)
 			}
 		}

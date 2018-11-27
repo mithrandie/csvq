@@ -3868,9 +3868,11 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Variable",
 		Filter: NewFilter(
-			[]VariableMap{{
-				"var1": value.NewInteger(1),
-			}},
+			[]VariableMap{
+				GenerateVariableMap(map[string]value.Primary{
+					"var1": value.NewInteger(1),
+				}),
+			},
 			[]ViewMap{{}},
 			[]CursorMap{{}},
 			[]UserDefinedFunctionMap{{}},
@@ -3904,9 +3906,11 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Variable Substitution",
 		Filter: NewFilter(
-			[]VariableMap{{
-				"var1": value.NewInteger(1),
-			}},
+			[]VariableMap{
+				GenerateVariableMap(map[string]value.Primary{
+					"var1": value.NewInteger(1),
+				}),
+			},
 			[]ViewMap{{}},
 			[]CursorMap{{}},
 			[]UserDefinedFunctionMap{{}},
@@ -4027,6 +4031,194 @@ func TestFilter_Evaluate(t *testing.T) {
 		}
 		if !reflect.DeepEqual(result, v.Result) {
 			t.Errorf("%s: result = %q, want %q", v.Name, result, v.Result)
+		}
+	}
+}
+
+var filterEvaluateSequentiallyResults []value.Primary
+
+var filterEvaluateSequentiallyTests = []struct {
+	Name       string
+	Filter     *Filter
+	Expression parser.QueryExpression
+	Function   func(*Filter, int) error
+	Expect     []value.Primary
+	Error      string
+}{
+	{
+		Name: "Multi Threading",
+		Filter: &Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						RecordSet: []Record{
+							NewRecord([]value.Primary{value.NewInteger(1), value.NewString("str1")}),
+							NewRecord([]value.Primary{value.NewInteger(2), value.NewString("str2")}),
+							NewRecord([]value.Primary{value.NewInteger(3), value.NewString("str3")}),
+						},
+						Filter: NewEmptyFilter(),
+					},
+					RecordIndex: 0,
+				},
+			},
+		},
+		Expression: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+		Function: func(f *Filter, idx int) error {
+			p, err := f.Evaluate(parser.FieldReference{Column: parser.Identifier{Literal: "column1"}})
+			if err != nil {
+				return err
+			}
+			filterEvaluateSequentiallyResults = append(filterEvaluateSequentiallyResults, p)
+			return nil
+		},
+		Expect: []value.Primary{
+			value.NewInteger(1),
+			value.NewInteger(2),
+			value.NewInteger(3),
+		},
+	},
+	{
+		Name: "Error in Multi Threading",
+		Filter: &Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						RecordSet: []Record{
+							NewRecord([]value.Primary{value.NewInteger(1), value.NewString("str1")}),
+							NewRecord([]value.Primary{value.NewInteger(2), value.NewString("str2")}),
+							NewRecord([]value.Primary{value.NewInteger(3), value.NewString("str3")}),
+						},
+						Filter: NewEmptyFilter(),
+					},
+					RecordIndex: 0,
+				},
+			},
+		},
+		Expression: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+		Function: func(f *Filter, idx int) error {
+			p, err := f.Evaluate(parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}})
+			if err != nil {
+				return err
+			}
+			filterEvaluateSequentiallyResults = append(filterEvaluateSequentiallyResults, p)
+			return nil
+		},
+		Error: "[L:- C:-] field notexist does not exist",
+	},
+	{
+		Name: "Single Threading",
+		Filter: &Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						RecordSet: []Record{
+							NewRecord([]value.Primary{value.NewInteger(1), value.NewString("str1")}),
+							NewRecord([]value.Primary{value.NewInteger(2), value.NewString("str2")}),
+							NewRecord([]value.Primary{value.NewInteger(3), value.NewString("str3")}),
+						},
+						Filter: NewEmptyFilter(),
+					},
+					RecordIndex: 0,
+				},
+			},
+			Variables: VariableScopes{
+				GenerateVariableMap(map[string]value.Primary{
+					"value": value.NewInteger(10),
+				}),
+			},
+		},
+		Expression: parser.VariableSubstitution{
+			Variable: parser.Variable{Name: "value"},
+			Value:    parser.Variable{Name: "fetch"},
+		},
+		Function: func(f *Filter, idx int) error {
+			p, err := f.Evaluate(parser.VariableSubstitution{
+				Variable: parser.Variable{Name: "value"},
+				Value: parser.Arithmetic{
+					LHS:      parser.Variable{Name: "value"},
+					RHS:      parser.NewIntegerValue(1),
+					Operator: '+',
+				},
+			})
+			if err != nil {
+				return err
+			}
+			filterEvaluateSequentiallyResults = append(filterEvaluateSequentiallyResults, p)
+			return nil
+		},
+		Expect: []value.Primary{
+			value.NewInteger(11),
+			value.NewInteger(12),
+			value.NewInteger(13),
+		},
+	},
+	{
+		Name: "Error in Single Threading",
+		Filter: &Filter{
+			Records: []FilterRecord{
+				{
+					View: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						RecordSet: []Record{
+							NewRecord([]value.Primary{value.NewInteger(1), value.NewString("str1")}),
+							NewRecord([]value.Primary{value.NewInteger(2), value.NewString("str2")}),
+							NewRecord([]value.Primary{value.NewInteger(3), value.NewString("str3")}),
+						},
+						Filter: NewEmptyFilter(),
+					},
+					RecordIndex: 0,
+				},
+			},
+			Variables: VariableScopes{
+				GenerateVariableMap(map[string]value.Primary{
+					"value": value.NewInteger(10),
+				}),
+			},
+		},
+		Expression: parser.VariableSubstitution{
+			Variable: parser.Variable{Name: "value"},
+			Value:    parser.Variable{Name: "fetch"},
+		},
+		Function: func(f *Filter, idx int) error {
+			p, err := f.Evaluate(parser.VariableSubstitution{
+				Variable: parser.Variable{Name: "value"},
+				Value: parser.Arithmetic{
+					LHS:      parser.Variable{Name: "value"},
+					RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+					Operator: '+',
+				},
+			})
+			if err != nil {
+				return err
+			}
+			filterEvaluateSequentiallyResults = append(filterEvaluateSequentiallyResults, p)
+			return nil
+		},
+		Error: "[L:- C:-] field notexist does not exist",
+	},
+}
+
+func TestFilter_EvaluateSequentially(t *testing.T) {
+	for _, v := range filterEvaluateSequentiallyTests {
+		filterEvaluateSequentiallyResults = make([]value.Primary, 0)
+		err := v.Filter.EvaluateSequentially(v.Expression, v.Function)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(filterEvaluateSequentiallyResults, v.Expect) {
+			t.Errorf("%s: result = %q, want %q", v.Name, filterEvaluateSequentiallyResults, v.Expect)
 		}
 	}
 }

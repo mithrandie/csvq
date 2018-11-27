@@ -984,9 +984,9 @@ var userDefinedFunctionExecuteTests = []struct {
 }
 
 func TestUserDefinedFunction_Execute(t *testing.T) {
-	vars := VariableMap{
+	vars := GenerateVariableMap(map[string]value.Primary{
 		"var1": value.NewInteger(1),
-	}
+	})
 	filter := NewFilter(
 		[]VariableMap{vars},
 		[]ViewMap{{}},

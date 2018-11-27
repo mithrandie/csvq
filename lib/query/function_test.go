@@ -3300,7 +3300,7 @@ var nowTests = []struct {
 			Name: "now",
 		},
 		Filter: &Filter{
-			Variables: VariableScopes{{}},
+			Variables: VariableScopes{NewVariableMap()},
 			TempViews: TemporaryViewScopes{{}},
 			Cursors:   CursorScopes{{}},
 			Functions: UserDefinedFunctionScopes{{}},

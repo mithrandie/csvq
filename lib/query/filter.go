@@ -37,7 +37,15 @@ type Filter struct {
 	RecursiveTmpView  *View
 	tmpViewIsAccessed bool
 
+	checkAvailableParallelRoutine bool
+
 	Now time.Time
+}
+
+type ContainsSubstitusion struct{}
+
+func (c *ContainsSubstitusion) Error() string {
+	return "contains substitusion"
 }
 
 func NewFilter(variableScopes VariableScopes, tempViewScopes TemporaryViewScopes, cursorScopes CursorScopes, functionScopes UserDefinedFunctionScopes) *Filter {
@@ -51,7 +59,7 @@ func NewFilter(variableScopes VariableScopes, tempViewScopes TemporaryViewScopes
 
 func NewEmptyFilter() *Filter {
 	return NewFilter(
-		VariableScopes{{}},
+		VariableScopes{NewVariableMap()},
 		TemporaryViewScopes{{}},
 		CursorScopes{{}},
 		UserDefinedFunctionScopes{{}},
@@ -77,6 +85,7 @@ func NewFilterForSequentialEvaluation(view *View, parentFilter *Filter) *Filter 
 		Records: []FilterRecord{
 			{
 				View:                  view,
+				RecordIndex:           -1,
 				fieldReferenceIndices: make(map[string]int),
 			},
 		},
@@ -98,7 +107,7 @@ func (f *Filter) Merge(filter *Filter) {
 
 func (f *Filter) CreateChildScope() *Filter {
 	return NewFilter(
-		append(VariableScopes{{}}, f.Variables...),
+		append(VariableScopes{NewVariableMap()}, f.Variables...),
 		append(TemporaryViewScopes{{}}, f.TempViews...),
 		append(CursorScopes{{}}, f.Cursors...),
 		append(UserDefinedFunctionScopes{{}}, f.Functions...),
@@ -106,9 +115,10 @@ func (f *Filter) CreateChildScope() *Filter {
 }
 
 func (f *Filter) ResetCurrentScope() {
-	for k := range f.Variables[0] {
-		delete(f.Variables[0], k)
-	}
+	f.Variables[0].variables.Range(func(k interface{}, v interface{}) bool {
+		f.Variables[0].variables.Delete(k)
+		return true
+	})
 	for k := range f.TempViews[0] {
 		delete(f.TempViews[0], k)
 	}
@@ -203,7 +213,11 @@ func (f *Filter) Evaluate(expr parser.QueryExpression) (value.Primary, error) {
 	case parser.RuntimeInformation:
 		val, err = GetRuntimeInformation(expr.(parser.RuntimeInformation))
 	case parser.VariableSubstitution:
-		val, err = f.Variables.Substitute(expr.(parser.VariableSubstitution), f)
+		if f.checkAvailableParallelRoutine {
+			err = &ContainsSubstitusion{}
+		} else {
+			val, err = f.Variables.Substitute(expr.(parser.VariableSubstitution), f)
+		}
 	case parser.CursorStatus:
 		val, err = f.evalCursorStatus(expr.(parser.CursorStatus))
 	case parser.CursorAttrebute:
@@ -213,6 +227,107 @@ func (f *Filter) Evaluate(expr parser.QueryExpression) (value.Primary, error) {
 	}
 
 	return val, err
+}
+
+func (f *Filter) EvaluateSequentially(expr interface{}, fn func(*Filter, int) error) error {
+	if f.CanUseMultithreading(expr) {
+		header := f.Records[0].View.Header
+		recordSet := f.Records[0].View.RecordSet
+		isGrouped := f.Records[0].View.isGrouped
+		f.Records = f.Records[1:]
+
+		gm := NewGoroutineTaskManager(len(recordSet), -1)
+		for i := 0; i < gm.Number; i++ {
+			gm.Add()
+			go func(thIdx int) {
+				start, end := gm.RecordRange(thIdx)
+				filter := NewFilterForSequentialEvaluation(
+					&View{
+						Header:    header,
+						RecordSet: recordSet[start:end],
+						isGrouped: isGrouped,
+					},
+					f,
+				)
+				filter.init()
+
+			FilterSequentialEvaluationLoop:
+				for filter.next() {
+					if gm.HasError() {
+						break FilterSequentialEvaluationLoop
+					}
+
+					if err := fn(filter, start); err != nil {
+						gm.SetError(err)
+						break FilterSequentialEvaluationLoop
+					}
+				}
+
+				gm.Done()
+			}(i)
+		}
+		gm.Wait()
+
+		if gm.HasError() {
+			return gm.Err()
+		}
+	} else {
+		f.init()
+		for f.next() {
+			if err := fn(f, 0); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (f *Filter) next() bool {
+	f.Records[0].RecordIndex++
+
+	if f.Records[0].View.Len() <= f.Records[0].RecordIndex {
+		return false
+	}
+	return true
+}
+
+func (f *Filter) init() {
+	f.Records[0].RecordIndex = -1
+}
+
+func (f *Filter) currentIndex() int {
+	return f.Records[0].RecordIndex
+}
+
+func (f *Filter) CanUseMultithreading(expr interface{}) bool {
+	if 0 < len(f.Records) && f.Records[0].View != nil && 0 < f.Records[0].View.Len() {
+		f.init()
+		f.checkAvailableParallelRoutine = true
+		f.next()
+
+		if qe, ok := expr.(parser.QueryExpression); ok {
+			_, err := f.Evaluate(qe)
+			f.checkAvailableParallelRoutine = false
+
+			if err != nil {
+				if _, ok := err.(*ContainsSubstitusion); ok {
+					return false
+				}
+			}
+		} else if elist, ok := expr.([]parser.QueryExpression); ok {
+			for _, expr := range elist {
+				_, err := f.Evaluate(expr)
+				if err != nil {
+					if _, ok := err.(*ContainsSubstitusion); ok {
+						f.checkAvailableParallelRoutine = false
+						return false
+					}
+				}
+			}
+			f.checkAvailableParallelRoutine = false
+		}
+	}
+	return true
 }
 
 func (f *Filter) evalFieldReference(expr parser.QueryExpression) (value.Primary, error) {

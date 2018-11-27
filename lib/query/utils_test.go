@@ -1,8 +1,10 @@
 package query
 
 import (
-	"github.com/mithrandie/csvq/lib/value"
+	"bytes"
 	"testing"
+
+	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mithrandie/ternary"
 )
@@ -24,7 +26,9 @@ func TestSerializeComparisonKeys(t *testing.T) {
 	}
 	expect := "[S]STR:[I]1[B]true:[I]0[B]false:[I]3:[F]1.234:[I]1328289495:[F]1328289495.123:[D]1328289495123456789:[I]1[B]true:[I]0[B]false:[N]:[N]"
 
-	result := SerializeComparisonKeys(values)
+	buf := new(bytes.Buffer)
+	SerializeComparisonKeys(buf, values)
+	result := buf.String()
 	if result != expect {
 		t.Errorf("result = %q, want %q", result, expect)
 	}
@@ -42,5 +46,20 @@ func BenchmarkDistinguish(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		Distinguish(values)
+	}
+}
+
+func BenchmarkSerializeKey(b *testing.B) {
+	plist := []value.Primary{
+		value.NewString("str"),
+		value.NewInteger(123),
+	}
+
+	buf := new(bytes.Buffer)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		buf.Reset()
+		SerializeComparisonKeys(buf, plist)
 	}
 }

@@ -1,6 +1,7 @@
 package query
 
 import (
+	"bytes"
 	"sort"
 	"strings"
 
@@ -84,14 +85,15 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 		view.sortValuesInEachCell = make([][]*SortValue, view.RecordLen())
 	}
 
-	gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
+	gm := NewGoroutineTaskManager(view.RecordLen(), -1)
 	partitionKeys := make([]string, view.RecordLen())
 
-	for i := 0; i < gm.CPU; i++ {
+	for i := 0; i < gm.Number; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			start, end := gm.RecordRange(thIdx)
 			sortValues := make(SortValues, len(partitionIndices))
+			keyBuf := new(bytes.Buffer)
 
 			for i := start; i < end; i++ {
 				var partitionKey string
@@ -109,7 +111,9 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 							}
 						}
 					}
-					partitionKey = sortValues.Serialize()
+					keyBuf.Reset()
+					sortValues.Serialize(keyBuf)
+					partitionKey = keyBuf.String()
 				}
 
 				partitionKeys[i] = partitionKey
@@ -132,8 +136,8 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 		}
 	}
 
-	gm = NewGoroutineManager(len(partitionMapKeys), 0)
-	for i := 0; i < gm.CPU; i++ {
+	gm = NewGoroutineTaskManager(len(partitionMapKeys), 0)
+	for i := 0; i < gm.Number; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			start, end := gm.RecordRange(thIdx)
@@ -226,7 +230,7 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 
 	gm.Wait()
 
-	return gm.Error()
+	return gm.Err()
 }
 
 type WindowFrame struct {

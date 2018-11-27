@@ -1,8 +1,8 @@
 package query
 
 import (
+	"bytes"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -31,8 +31,12 @@ func Distinguish(list []value.Primary) []value.Primary {
 	values := make(map[string]int)
 	valueKeys := make([]string, 0, len(list))
 
+	keyBuf := new(bytes.Buffer)
+
 	for i, v := range list {
-		key := SerializeComparisonKeys([]value.Primary{v})
+		keyBuf.Reset()
+		SerializeComparisonKeys(keyBuf, []value.Primary{v})
+		key := keyBuf.String()
 		if _, ok := values[key]; !ok {
 			values[key] = i
 			valueKeys = append(valueKeys, key)
@@ -59,95 +63,92 @@ func FormatCount(i int, obj string) string {
 	return s
 }
 
-func SerializeComparisonKeys(values []value.Primary) string {
-	list := make([]string, len(values))
-
+func SerializeComparisonKeys(buf *bytes.Buffer, values []value.Primary) {
 	for i, val := range values {
-		list[i] = SerializeKey(val)
+		if 0 < i {
+			buf.WriteString(":")
+		}
+		SerializeKey(buf, val)
 	}
-
-	return strings.Join(list, ":")
 }
 
-func SerializeKey(val value.Primary) string {
+func SerializeKey(buf *bytes.Buffer, val value.Primary) {
 	if value.IsNull(val) {
-		return serializeNull()
+		serializeNull(buf)
 	} else if in := value.ToInteger(val); !value.IsNull(in) {
-		return serializeInteger(in.(value.Integer).Raw())
+		serializeInteger(buf, in.(value.Integer).Raw())
 	} else if f := value.ToFloat(val); !value.IsNull(f) {
-		return serializeFlaot(f.(value.Float).Raw())
+		serializeFlaot(buf, f.(value.Float).Raw())
 	} else if dt := value.ToDatetime(val); !value.IsNull(dt) {
 		t := dt.(value.Datetime).Raw()
 		if t.Nanosecond() > 0 {
 			f := float64(t.Unix()) + float64(t.Nanosecond())/1e9
 			t2 := value.Float64ToTime(f)
 			if t.Equal(t2) {
-				return serializeFlaot(f)
+				serializeFlaot(buf, f)
 			} else {
-				return serializeDatetime(t)
+				serializeDatetime(buf, t)
 			}
 		} else {
-			return serializeInteger(t.Unix())
+			serializeInteger(buf, t.Unix())
 		}
 	} else if b := value.ToBoolean(val); !value.IsNull(b) {
-		return serializeBoolean(b.(value.Boolean).Raw())
+		serializeBoolean(buf, b.(value.Boolean).Raw())
 	} else if s, ok := val.(value.String); ok {
-		return serializeString(s.Raw())
+		serializeString(buf, s.Raw())
 	} else {
-		return serializeNull()
+		serializeNull(buf)
 	}
 }
 
-func serializeNull() string {
-	return "[N]"
+func serializeNull(buf *bytes.Buffer) {
+	buf.WriteString("[N]")
 }
 
-func serializeInteger(i int64) string {
-	var b string
+func serializeInteger(buf *bytes.Buffer, i int64) {
+	buf.WriteString("[I]")
+	buf.WriteString(value.Int64ToStr(i))
 	switch i {
 	case 0:
-		b = "[B]" + strconv.FormatBool(false)
+		buf.WriteString("[B]")
+		buf.WriteString("false")
 	case 1:
-		b = "[B]" + strconv.FormatBool(true)
+		buf.WriteString("[B]")
+		buf.WriteString("true")
 	}
-	return "[I]" + value.Int64ToStr(i) + b
 }
 
-func serializeFlaot(f float64) string {
-	return "[F]" + value.Float64ToStr(f)
+func serializeFlaot(buf *bytes.Buffer, f float64) {
+	buf.WriteString("[F]")
+	buf.WriteString(value.Float64ToStr(f))
 }
 
-func serializeDatetime(t time.Time) string {
-	return "[D]" + value.Int64ToStr(t.UnixNano())
+func serializeDatetime(buf *bytes.Buffer, t time.Time) {
+	buf.WriteString("[D]")
+	buf.WriteString(value.Int64ToStr(t.UnixNano()))
 }
 
-func serializeDatetimeFromUnixNano(t int64) string {
-	return "[D]" + value.Int64ToStr(t)
+func serializeDatetimeFromUnixNano(buf *bytes.Buffer, t int64) {
+	buf.WriteString("[D]")
+	buf.WriteString(value.Int64ToStr(t))
 }
 
-func serializeBoolean(b bool) string {
-	var intliteral string
+func serializeBoolean(buf *bytes.Buffer, b bool) {
+	buf.WriteString("[I]")
 	if b {
-		intliteral = "1"
+		buf.WriteString("1")
 	} else {
-		intliteral = "0"
+		buf.WriteString("0")
 	}
-	return "[I]" + intliteral + "[B]" + strconv.FormatBool(b)
+	buf.WriteString("[B]")
+	if b {
+		buf.WriteString("true")
+	} else {
+		buf.WriteString("false")
+	}
 }
 
-func serializeString(s string) string {
-	return "[S]" + strings.ToUpper(strings.TrimSpace(s))
-}
-
-func RecordRange(cpuIndex int, totalLen int, numberOfCPU int) (int, int) {
-	calcLen := totalLen / numberOfCPU
-
-	var start = cpuIndex * calcLen
-	var end int
-	if cpuIndex == numberOfCPU-1 {
-		end = totalLen
-	} else {
-		end = (cpuIndex + 1) * calcLen
-	}
-	return start, end
+func serializeString(buf *bytes.Buffer, s string) {
+	buf.WriteString("[S]")
+	buf.WriteString(strings.ToUpper(strings.TrimSpace(s)))
 }

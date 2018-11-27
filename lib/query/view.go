@@ -402,8 +402,8 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 			}
 			view.Header = header
 
-			gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
-			for i := 0; i < gm.CPU; i++ {
+			gm := NewGoroutineTaskManager(view.RecordLen(), -1)
+			for i := 0; i < gm.Number; i++ {
 				gm.Add()
 				go func(thIdx int) {
 					start, end := gm.RecordRange(thIdx)
@@ -853,37 +853,19 @@ func (view *View) Where(clause parser.WhereClause) error {
 func (view *View) filter(condition parser.QueryExpression) error {
 	results := make([]bool, view.RecordLen())
 
-	gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
-	for i := 0; i < gm.CPU; i++ {
-		gm.Add()
-		go func(thIdx int) {
-			start, end := gm.RecordRange(thIdx)
-			filter := NewFilterForSequentialEvaluation(view, view.Filter)
+	err := NewFilterForSequentialEvaluation(view, view.Filter).EvaluateSequentially(condition, func(f *Filter, startIdx int) error {
+		primary, e := f.Evaluate(condition)
+		if e != nil {
+			return e
+		}
 
-		FilterLoop:
-			for i := start; i < end; i++ {
-				if gm.HasError() {
-					break FilterLoop
-				}
-
-				filter.Records[0].RecordIndex = i
-				primary, e := filter.Evaluate(condition)
-				if e != nil {
-					gm.SetError(e)
-					break FilterLoop
-				}
-				if primary.Ternary() == ternary.TRUE {
-					results[i] = true
-				}
-			}
-
-			gm.Done()
-		}(i)
-	}
-	gm.Wait()
-
-	if gm.HasError() {
-		return gm.Error()
+		if primary.Ternary() == ternary.TRUE {
+			results[f.currentIndex()+startIdx] = true
+		}
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	records := make(RecordSet, 0, len(results))
@@ -909,40 +891,23 @@ func (view *View) group(items []parser.QueryExpression) error {
 
 	keys := make([]string, view.RecordLen())
 
-	gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
-	for i := 0; i < gm.CPU; i++ {
-		gm.Add()
-		go func(thIdx int) {
-			start, end := gm.RecordRange(thIdx)
+	err := NewFilterForSequentialEvaluation(view, view.Filter).EvaluateSequentially(items, func(f *Filter, startIdx int) error {
+		values := make([]value.Primary, len(items))
+		keyBuf := new(bytes.Buffer)
 
-			filter := NewFilterForSequentialEvaluation(view, view.Filter)
-			values := make([]value.Primary, len(items))
-
-		GroupLoop:
-			for i := start; i < end; i++ {
-				if gm.HasError() {
-					break GroupLoop
-				}
-
-				filter.Records[0].RecordIndex = i
-				for j, item := range items {
-					p, e := filter.Evaluate(item)
-					if e != nil {
-						gm.SetError(e)
-						break GroupLoop
-					}
-					values[j] = p
-				}
-				keys[i] = SerializeComparisonKeys(values)
+		for i, item := range items {
+			p, e := f.Evaluate(item)
+			if e != nil {
+				return e
 			}
-
-			gm.Done()
-		}(i)
-	}
-	gm.Wait()
-
-	if gm.HasError() {
-		return gm.Error()
+			values[i] = p
+		}
+		SerializeComparisonKeys(keyBuf, values)
+		keys[f.currentIndex()+startIdx] = keyBuf.String()
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	groups := make(map[string][]int)
@@ -1145,11 +1110,13 @@ func (view *View) Select(clause parser.SelectClause) error {
 func (view *View) GenerateComparisonKeys() {
 	view.comparisonKeysInEachRecord = make([]string, view.RecordLen())
 
-	gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
-	for i := 0; i < gm.CPU; i++ {
+	gm := NewGoroutineTaskManager(view.RecordLen(), -1)
+	for i := 0; i < gm.Number; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			start, end := gm.RecordRange(thIdx)
+
+			keyBuf := new(bytes.Buffer)
 
 			var primaries []value.Primary
 			if view.selectFields != nil {
@@ -1157,14 +1124,16 @@ func (view *View) GenerateComparisonKeys() {
 			}
 
 			for i := start; i < end; i++ {
+				keyBuf.Reset()
 				if view.selectFields != nil {
 					for j, idx := range view.selectFields {
 						primaries[j] = view.RecordSet[i][idx].Value()
 					}
-					view.comparisonKeysInEachRecord[i] = SerializeComparisonKeys(primaries)
+					SerializeComparisonKeys(keyBuf, primaries)
 				} else {
-					view.comparisonKeysInEachRecord[i] = view.RecordSet[i].SerializeComparisonKeys()
+					view.RecordSet[i].SerializeComparisonKeys(keyBuf)
 				}
+				view.comparisonKeysInEachRecord[i] = keyBuf.String()
 			}
 
 			gm.Done()
@@ -1225,8 +1194,8 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 		}
 	}
 
-	gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
-	for i := 0; i < gm.CPU; i++ {
+	gm := NewGoroutineTaskManager(view.RecordLen(), -1)
+	for i := 0; i < gm.Number; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			start, end := gm.RecordRange(thIdx)
@@ -1347,8 +1316,8 @@ func (view *View) ExtendRecordCapacity(exprs []parser.QueryExpression) error {
 		return nil
 	}
 
-	gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
-	for i := 0; i < gm.CPU; i++ {
+	gm := NewGoroutineTaskManager(view.RecordLen(), -1)
+	for i := 0; i < gm.Number; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			start, end := gm.RecordRange(thIdx)
@@ -1385,36 +1354,17 @@ func (view *View) evalColumn(obj parser.QueryExpression, alias string) (idx int,
 					return
 				}
 			} else {
-				gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
-				for i := 0; i < gm.CPU; i++ {
-					gm.Add()
-					go func(thIdx int) {
-						start, end := gm.RecordRange(thIdx)
-						filter := NewFilterForSequentialEvaluation(view, view.Filter)
+				err = NewFilterForSequentialEvaluation(view, view.Filter).EvaluateSequentially(obj, func(f *Filter, startIdx int) error {
+					primary, e := f.Evaluate(obj)
+					if e != nil {
+						return e
+					}
 
-					EvalColumnLoop:
-						for i := start; i < end; i++ {
-							if gm.HasError() {
-								break EvalColumnLoop
-							}
-
-							filter.Records[0].RecordIndex = i
-
-							primary, e := filter.Evaluate(obj)
-							if e != nil {
-								gm.SetError(e)
-								break EvalColumnLoop
-							}
-							view.RecordSet[i] = append(view.RecordSet[i], NewCell(primary))
-						}
-
-						gm.Done()
-					}(i)
-				}
-				gm.Wait()
-
-				if gm.HasError() {
-					err = gm.Error()
+					idx := f.currentIndex() + startIdx
+					view.RecordSet[idx] = append(view.RecordSet[idx], NewCell(primary))
+					return nil
+				})
+				if err != nil {
 					return
 				}
 			}
@@ -1642,8 +1592,8 @@ func (view *View) Fix() {
 	}
 
 	if resize {
-		gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
-		for i := 0; i < gm.CPU; i++ {
+		gm := NewGoroutineTaskManager(view.RecordLen(), -1)
+		for i := 0; i < gm.Number; i++ {
 			gm.Add()
 			go func(thIdx int) {
 				start, end := gm.RecordRange(thIdx)
@@ -1780,39 +1730,19 @@ func (view *View) Intersect(calcView *View, all bool) {
 func (view *View) ListValuesForAggregateFunctions(expr parser.QueryExpression, arg parser.QueryExpression, distinct bool, filter *Filter) ([]value.Primary, error) {
 	list := make([]value.Primary, view.RecordLen())
 
-	gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
-	for i := 0; i < gm.CPU; i++ {
-		gm.Add()
-		go func(thIdx int) {
-			start, end := gm.RecordRange(thIdx)
-			filter := NewFilterForSequentialEvaluation(view, filter)
-
-		ListAggregateFunctionLoop:
-			for i := start; i < end; i++ {
-				if gm.HasError() {
-					break ListAggregateFunctionLoop
-				}
-
-				filter.Records[0].RecordIndex = i
-				p, e := filter.Evaluate(arg)
-				if e != nil {
-					if _, ok := e.(*NotGroupingRecordsError); ok {
-						gm.SetError(NewNestedAggregateFunctionsError(expr))
-					} else {
-						gm.SetError(e)
-					}
-					break ListAggregateFunctionLoop
-				}
-				list[i] = p
+	err := NewFilterForSequentialEvaluation(view, filter).EvaluateSequentially(arg, func(f *Filter, startIdx int) error {
+		p, e := f.Evaluate(arg)
+		if e != nil {
+			if _, ok := e.(*NotGroupingRecordsError); ok {
+				e = NewNestedAggregateFunctionsError(expr)
 			}
-
-			gm.Done()
-		}(i)
-	}
-	gm.Wait()
-
-	if gm.HasError() {
-		return nil, gm.Error()
+			return e
+		}
+		list[f.currentIndex()+startIdx] = p
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	if distinct {

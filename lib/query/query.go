@@ -650,54 +650,35 @@ func AddColumns(query parser.AddColumns, parentFilter *Filter) (*FileInfo, int, 
 
 	records := make(RecordSet, view.RecordLen())
 
-	gm := NewGoroutineManager(view.RecordLen(), MinimumRequiredForParallelRoutine)
-	for i := 0; i < gm.CPU; i++ {
-		gm.Add()
-		go func(thIdx int) {
-			start, end := gm.RecordRange(thIdx)
+	err = NewFilterForSequentialEvaluation(view, filter).EvaluateSequentially(defaults, func(f *Filter, startIdx int) error {
+		idx := f.currentIndex() + startIdx
 
-			filter := NewFilterForSequentialEvaluation(view, filter)
-
-		AddColumnLoop:
-			for i := start; i < end; i++ {
-				if gm.HasError() {
-					break AddColumnLoop
-				}
-
-				record := make(Record, newFieldLen)
-				for j, cell := range view.RecordSet[i] {
-					var idx int
-					if j < insertPos {
-						idx = j
-					} else {
-						idx = j + len(fields)
-					}
-					record[idx] = cell
-				}
-
-				filter.Records[0].RecordIndex = i
-
-				for j, v := range defaults {
-					if v == nil {
-						v = parser.NewNullValue()
-					}
-					val, e := filter.Evaluate(v)
-					if e != nil {
-						gm.SetError(e)
-						break AddColumnLoop
-					}
-					record[j+insertPos] = NewCell(val)
-				}
-				records[i] = record
+		record := make(Record, newFieldLen)
+		for i, cell := range view.RecordSet[idx] {
+			var idx int
+			if i < insertPos {
+				idx = i
+			} else {
+				idx = i + len(fields)
 			}
+			record[idx] = cell
+		}
 
-			gm.Done()
-		}(i)
-	}
-	gm.Wait()
-
-	if gm.HasError() {
-		return nil, 0, gm.Error()
+		for j, v := range defaults {
+			if v == nil {
+				v = parser.NewNullValue()
+			}
+			val, e := f.Evaluate(v)
+			if e != nil {
+				return e
+			}
+			record[j+insertPos] = NewCell(val)
+		}
+		records[idx] = record
+		return nil
+	})
+	if err != nil {
+		return nil, 0, err
 	}
 
 	view.Header = header
