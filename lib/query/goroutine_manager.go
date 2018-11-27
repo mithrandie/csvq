@@ -132,3 +132,19 @@ func (m *GoroutineTaskManager) Done() {
 func (m *GoroutineTaskManager) Wait() {
 	m.waitGroup.Wait()
 }
+
+func (m *GoroutineTaskManager) Run(fn func(int)) {
+	for i := 0; i < m.Number; i++ {
+		m.Add()
+		go func(thIdx int) {
+			start, end := m.RecordRange(thIdx)
+
+			for j := start; j < end; j++ {
+				fn(j)
+			}
+
+			m.Done()
+		}(i)
+	}
+	m.Wait()
+}

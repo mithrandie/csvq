@@ -650,21 +650,19 @@ func AddColumns(query parser.AddColumns, parentFilter *Filter) (*FileInfo, int, 
 
 	records := make(RecordSet, view.RecordLen())
 
-	err = NewFilterForSequentialEvaluation(view, filter).EvaluateSequentially(defaults, func(f *Filter, startIdx int) error {
-		idx := f.currentIndex() + startIdx
-
+	err = NewFilterForSequentialEvaluation(view, filter).EvaluateSequentially(func(f *Filter, rIdx int) error {
 		record := make(Record, newFieldLen)
-		for i, cell := range view.RecordSet[idx] {
-			var idx int
+		for i, cell := range view.RecordSet[rIdx] {
+			var cellIdx int
 			if i < insertPos {
-				idx = i
+				cellIdx = i
 			} else {
-				idx = i + len(fields)
+				cellIdx = i + len(fields)
 			}
-			record[idx] = cell
+			record[cellIdx] = cell
 		}
 
-		for j, v := range defaults {
+		for i, v := range defaults {
 			if v == nil {
 				v = parser.NewNullValue()
 			}
@@ -672,11 +670,11 @@ func AddColumns(query parser.AddColumns, parentFilter *Filter) (*FileInfo, int, 
 			if e != nil {
 				return e
 			}
-			record[j+insertPos] = NewCell(val)
+			record[i+insertPos] = NewCell(val)
 		}
-		records[idx] = record
+		records[rIdx] = record
 		return nil
-	})
+	}, defaults)
 	if err != nil {
 		return nil, 0, err
 	}

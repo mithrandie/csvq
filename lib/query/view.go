@@ -402,24 +402,13 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 			}
 			view.Header = header
 
-			gm := NewGoroutineTaskManager(view.RecordLen(), -1)
-			for i := 0; i < gm.Number; i++ {
-				gm.Add()
-				go func(thIdx int) {
-					start, end := gm.RecordRange(thIdx)
-
-					for i := start; i < end; i++ {
-						record := make(Record, len(fieldIndices))
-						for j, idx := range fieldIndices {
-							record[j] = view.RecordSet[i][idx]
-						}
-						view.RecordSet[i] = record
-					}
-
-					gm.Done()
-				}(i)
-			}
-			gm.Wait()
+			NewGoroutineTaskManager(view.RecordLen(), -1).Run(func(index int) {
+				record := make(Record, len(fieldIndices))
+				for i, idx := range fieldIndices {
+					record[i] = view.RecordSet[index][idx]
+				}
+				view.RecordSet[index] = record
+			})
 		}
 
 	case parser.JsonQuery:
@@ -853,17 +842,17 @@ func (view *View) Where(clause parser.WhereClause) error {
 func (view *View) filter(condition parser.QueryExpression) error {
 	results := make([]bool, view.RecordLen())
 
-	err := NewFilterForSequentialEvaluation(view, view.Filter).EvaluateSequentially(condition, func(f *Filter, startIdx int) error {
+	err := NewFilterForSequentialEvaluation(view, view.Filter).EvaluateSequentially(func(f *Filter, rIdx int) error {
 		primary, e := f.Evaluate(condition)
 		if e != nil {
 			return e
 		}
 
 		if primary.Ternary() == ternary.TRUE {
-			results[f.currentIndex()+startIdx] = true
+			results[rIdx] = true
 		}
 		return nil
-	})
+	}, nil)
 	if err != nil {
 		return err
 	}
@@ -891,7 +880,7 @@ func (view *View) group(items []parser.QueryExpression) error {
 
 	keys := make([]string, view.RecordLen())
 
-	err := NewFilterForSequentialEvaluation(view, view.Filter).EvaluateSequentially(items, func(f *Filter, startIdx int) error {
+	err := NewFilterForSequentialEvaluation(view, view.Filter).EvaluateSequentially(func(f *Filter, rIdx int) error {
 		values := make([]value.Primary, len(items))
 		keyBuf := new(bytes.Buffer)
 
@@ -903,9 +892,9 @@ func (view *View) group(items []parser.QueryExpression) error {
 			values[i] = p
 		}
 		SerializeComparisonKeys(keyBuf, values)
-		keys[f.currentIndex()+startIdx] = keyBuf.String()
+		keys[rIdx] = keyBuf.String()
 		return nil
-	})
+	}, nil)
 	if err != nil {
 		return err
 	}
@@ -1110,36 +1099,19 @@ func (view *View) Select(clause parser.SelectClause) error {
 func (view *View) GenerateComparisonKeys() {
 	view.comparisonKeysInEachRecord = make([]string, view.RecordLen())
 
-	gm := NewGoroutineTaskManager(view.RecordLen(), -1)
-	for i := 0; i < gm.Number; i++ {
-		gm.Add()
-		go func(thIdx int) {
-			start, end := gm.RecordRange(thIdx)
-
-			keyBuf := new(bytes.Buffer)
-
-			var primaries []value.Primary
-			if view.selectFields != nil {
-				primaries = make([]value.Primary, len(view.selectFields))
+	NewGoroutineTaskManager(view.RecordLen(), -1).Run(func(index int) {
+		buf := new(bytes.Buffer)
+		if view.selectFields != nil {
+			primaries := make([]value.Primary, len(view.selectFields))
+			for j, idx := range view.selectFields {
+				primaries[j] = view.RecordSet[index][idx].Value()
 			}
-
-			for i := start; i < end; i++ {
-				keyBuf.Reset()
-				if view.selectFields != nil {
-					for j, idx := range view.selectFields {
-						primaries[j] = view.RecordSet[i][idx].Value()
-					}
-					SerializeComparisonKeys(keyBuf, primaries)
-				} else {
-					view.RecordSet[i].SerializeComparisonKeys(keyBuf)
-				}
-				view.comparisonKeysInEachRecord[i] = keyBuf.String()
-			}
-
-			gm.Done()
-		}(i)
-	}
-	gm.Wait()
+			SerializeComparisonKeys(buf, primaries)
+		} else {
+			view.RecordSet[index].SerializeComparisonKeys(buf)
+		}
+		view.comparisonKeysInEachRecord[index] = buf.String()
+	})
 }
 
 func (view *View) SelectAllColumns() error {
@@ -1194,35 +1166,24 @@ func (view *View) OrderBy(clause parser.OrderByClause) error {
 		}
 	}
 
-	gm := NewGoroutineTaskManager(view.RecordLen(), -1)
-	for i := 0; i < gm.Number; i++ {
-		gm.Add()
-		go func(thIdx int) {
-			start, end := gm.RecordRange(thIdx)
+	NewGoroutineTaskManager(view.RecordLen(), -1).Run(func(index int) {
+		if view.sortValuesInEachCell != nil && view.sortValuesInEachCell[index] == nil {
+			view.sortValuesInEachCell[index] = make([]*SortValue, cap(view.RecordSet[index]))
+		}
 
-			for i := start; i < end; i++ {
-				if view.sortValuesInEachCell != nil && view.sortValuesInEachCell[i] == nil {
-					view.sortValuesInEachCell[i] = make([]*SortValue, cap(view.RecordSet[i]))
+		sortValues := make(SortValues, len(sortIndices))
+		for j, idx := range sortIndices {
+			if view.sortValuesInEachCell != nil && idx < len(view.sortValuesInEachCell[index]) && view.sortValuesInEachCell[index][idx] != nil {
+				sortValues[j] = view.sortValuesInEachCell[index][idx]
+			} else {
+				sortValues[j] = NewSortValue(view.RecordSet[index][idx].Value())
+				if view.sortValuesInEachCell != nil && idx < len(view.sortValuesInEachCell[index]) {
+					view.sortValuesInEachCell[index][idx] = sortValues[j]
 				}
-
-				sortValues := make(SortValues, len(sortIndices))
-				for j, idx := range sortIndices {
-					if view.sortValuesInEachCell != nil && idx < len(view.sortValuesInEachCell[i]) && view.sortValuesInEachCell[i][idx] != nil {
-						sortValues[j] = view.sortValuesInEachCell[i][idx]
-					} else {
-						sortValues[j] = NewSortValue(view.RecordSet[i][idx].Value())
-						if view.sortValuesInEachCell != nil && idx < len(view.sortValuesInEachCell[i]) {
-							view.sortValuesInEachCell[i][idx] = sortValues[j]
-						}
-					}
-				}
-				view.sortValuesInEachRecord[i] = sortValues
 			}
-
-			gm.Done()
-		}(i)
-	}
-	gm.Wait()
+		}
+		view.sortValuesInEachRecord[index] = sortValues
+	})
 
 	sort.Sort(view)
 	return nil
@@ -1316,20 +1277,11 @@ func (view *View) ExtendRecordCapacity(exprs []parser.QueryExpression) error {
 		return nil
 	}
 
-	gm := NewGoroutineTaskManager(view.RecordLen(), -1)
-	for i := 0; i < gm.Number; i++ {
-		gm.Add()
-		go func(thIdx int) {
-			start, end := gm.RecordRange(thIdx)
-			for i := start; i < end; i++ {
-				record := make(Record, currentLen, fieldCap)
-				copy(record, view.RecordSet[i])
-				view.RecordSet[i] = record
-			}
-			gm.Done()
-		}(i)
-	}
-	gm.Wait()
+	NewGoroutineTaskManager(view.RecordLen(), -1).Run(func(index int) {
+		record := make(Record, currentLen, fieldCap)
+		copy(record, view.RecordSet[index])
+		view.RecordSet[index] = record
+	})
 	return nil
 }
 
@@ -1354,16 +1306,15 @@ func (view *View) evalColumn(obj parser.QueryExpression, alias string) (idx int,
 					return
 				}
 			} else {
-				err = NewFilterForSequentialEvaluation(view, view.Filter).EvaluateSequentially(obj, func(f *Filter, startIdx int) error {
+				err = NewFilterForSequentialEvaluation(view, view.Filter).EvaluateSequentially(func(f *Filter, rIdx int) error {
 					primary, e := f.Evaluate(obj)
 					if e != nil {
 						return e
 					}
 
-					idx := f.currentIndex() + startIdx
-					view.RecordSet[idx] = append(view.RecordSet[idx], NewCell(primary))
+					view.RecordSet[rIdx] = append(view.RecordSet[rIdx], NewCell(primary))
 					return nil
-				})
+				}, obj)
 				if err != nil {
 					return
 				}
@@ -1592,28 +1543,17 @@ func (view *View) Fix() {
 	}
 
 	if resize {
-		gm := NewGoroutineTaskManager(view.RecordLen(), -1)
-		for i := 0; i < gm.Number; i++ {
-			gm.Add()
-			go func(thIdx int) {
-				start, end := gm.RecordRange(thIdx)
-
-				for i := start; i < end; i++ {
-					record := make(Record, len(view.selectFields))
-					for j, idx := range view.selectFields {
-						if 1 < view.RecordSet[i].GroupLen() {
-							record[j] = NewCell(view.RecordSet[i][idx].Value())
-						} else {
-							record[j] = view.RecordSet[i][idx]
-						}
-					}
-					view.RecordSet[i] = record
+		NewGoroutineTaskManager(view.RecordLen(), -1).Run(func(index int) {
+			record := make(Record, len(view.selectFields))
+			for j, idx := range view.selectFields {
+				if 1 < view.RecordSet[index].GroupLen() {
+					record[j] = NewCell(view.RecordSet[index][idx].Value())
+				} else {
+					record[j] = view.RecordSet[index][idx]
 				}
-
-				gm.Done()
-			}(i)
-		}
-		gm.Wait()
+			}
+			view.RecordSet[index] = record
+		})
 	}
 
 	hfields := NewEmptyHeader(len(view.selectFields))
@@ -1730,7 +1670,7 @@ func (view *View) Intersect(calcView *View, all bool) {
 func (view *View) ListValuesForAggregateFunctions(expr parser.QueryExpression, arg parser.QueryExpression, distinct bool, filter *Filter) ([]value.Primary, error) {
 	list := make([]value.Primary, view.RecordLen())
 
-	err := NewFilterForSequentialEvaluation(view, filter).EvaluateSequentially(arg, func(f *Filter, startIdx int) error {
+	err := NewFilterForSequentialEvaluation(view, filter).EvaluateSequentially(func(f *Filter, rIdx int) error {
 		p, e := f.Evaluate(arg)
 		if e != nil {
 			if _, ok := e.(*NotGroupingRecordsError); ok {
@@ -1738,9 +1678,9 @@ func (view *View) ListValuesForAggregateFunctions(expr parser.QueryExpression, a
 			}
 			return e
 		}
-		list[f.currentIndex()+startIdx] = p
+		list[rIdx] = p
 		return nil
-	})
+	}, arg)
 	if err != nil {
 		return nil, err
 	}

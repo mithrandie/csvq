@@ -229,8 +229,8 @@ func (f *Filter) Evaluate(expr parser.QueryExpression) (value.Primary, error) {
 	return val, err
 }
 
-func (f *Filter) EvaluateSequentially(expr interface{}, fn func(*Filter, int) error) error {
-	if f.CanUseMultithreading(expr) {
+func (f *Filter) EvaluateSequentially(fn func(*Filter, int) error, expr interface{}) error {
+	if expr == nil || f.CanUseMultithreading(expr) {
 		header := f.Records[0].View.Header
 		recordSet := f.Records[0].View.RecordSet
 		isGrouped := f.Records[0].View.isGrouped
@@ -251,15 +251,14 @@ func (f *Filter) EvaluateSequentially(expr interface{}, fn func(*Filter, int) er
 				)
 				filter.init()
 
-			FilterSequentialEvaluationLoop:
 				for filter.next() {
 					if gm.HasError() {
-						break FilterSequentialEvaluationLoop
+						break
 					}
 
-					if err := fn(filter, start); err != nil {
+					if err := fn(filter, start+filter.currentIndex()); err != nil {
 						gm.SetError(err)
-						break FilterSequentialEvaluationLoop
+						break
 					}
 				}
 
@@ -274,7 +273,7 @@ func (f *Filter) EvaluateSequentially(expr interface{}, fn func(*Filter, int) er
 	} else {
 		f.init()
 		for f.next() {
-			if err := fn(f, 0); err != nil {
+			if err := fn(f, f.currentIndex()); err != nil {
 				return err
 			}
 		}
@@ -303,11 +302,13 @@ func (f *Filter) CanUseMultithreading(expr interface{}) bool {
 	if 0 < len(f.Records) && f.Records[0].View != nil && 0 < f.Records[0].View.Len() {
 		f.init()
 		f.checkAvailableParallelRoutine = true
+		defer func() {
+			f.checkAvailableParallelRoutine = false
+		}()
 		f.next()
 
 		if qe, ok := expr.(parser.QueryExpression); ok {
 			_, err := f.Evaluate(qe)
-			f.checkAvailableParallelRoutine = false
 
 			if err != nil {
 				if _, ok := err.(*ContainsSubstitusion); ok {
@@ -319,12 +320,10 @@ func (f *Filter) CanUseMultithreading(expr interface{}) bool {
 				_, err := f.Evaluate(expr)
 				if err != nil {
 					if _, ok := err.(*ContainsSubstitusion); ok {
-						f.checkAvailableParallelRoutine = false
 						return false
 					}
 				}
 			}
-			f.checkAvailableParallelRoutine = false
 		}
 	}
 	return true

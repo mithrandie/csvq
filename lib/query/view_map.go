@@ -126,26 +126,10 @@ func (m ViewMap) GetWithInternalId(fpath parser.Identifier) (*View, error) {
 		ret := view.Copy()
 
 		ret.Header = MergeHeader(NewHeaderWithId(ret.Header[0].View, []string{}), ret.Header)
-		fieldLen := ret.FieldLen()
 
-		gm := NewGoroutineTaskManager(ret.RecordLen(), -1)
-		for i := 0; i < gm.Number; i++ {
-			gm.Add()
-			go func(thIdx int) {
-				start, end := gm.RecordRange(thIdx)
-
-				for i := start; i < end; i++ {
-					record := make(Record, fieldLen)
-					record[0] = NewCell(value.NewInteger(int64(i)))
-					for j, cell := range ret.RecordSet[i] {
-						record[j+1] = cell
-					}
-					ret.RecordSet[i] = record
-				}
-				gm.Done()
-			}(i)
-		}
-		gm.Wait()
+		NewGoroutineTaskManager(ret.RecordLen(), -1).Run(func(index int) {
+			ret.RecordSet[index] = append(Record{NewCell(value.NewInteger(int64(index)))}, ret.RecordSet[index]...)
+		})
 
 		return ret, nil
 	}
