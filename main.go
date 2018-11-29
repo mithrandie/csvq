@@ -94,7 +94,7 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "out, o",
-			Usage: "export query results and logs to `FILE`",
+			Usage: "export result sets of select queries to `FILE`",
 		},
 		cli.StringFlag{
 			Name:  "format, f",
@@ -113,7 +113,7 @@ func main() {
 		},
 		cli.BoolFlag{
 			Name:  "without-header, N",
-			Usage: "write without the header line in query results",
+			Usage: "export result sets of select queries without the header line",
 		},
 		cli.StringFlag{
 			Name:  "line-break, l",
