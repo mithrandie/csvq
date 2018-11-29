@@ -174,6 +174,8 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 			err = EncodeView(writer, view, fileInfo)
 			if err == nil {
 				writer.Write([]byte(cmd.GetFlags().LineBreak.Value()))
+			} else if _, ok := err.(*EmptyResultSetError); ok {
+				err = nil
 			}
 		} else {
 			err = e

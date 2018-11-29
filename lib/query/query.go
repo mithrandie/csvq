@@ -890,14 +890,14 @@ func Commit(expr parser.Expression, filter *Filter) error {
 			return NewCommitError(expr, err.Error())
 		}
 		UncommittedViews.Unset(f)
-		Log(cmd.Notice(fmt.Sprintf("Commit: file %q is created.", f.Path)), cmd.GetFlags().Quiet)
+		LogNotice(fmt.Sprintf("Commit: file %q is created.", f.Path), cmd.GetFlags().Quiet)
 	}
 	for _, f := range updateFileInfo {
 		if err := f.Commit(); err != nil {
 			return NewCommitError(expr, err.Error())
 		}
 		UncommittedViews.Unset(f)
-		Log(cmd.Notice(fmt.Sprintf("Commit: file %q is updated.", f.Path)), cmd.GetFlags().Quiet)
+		LogNotice(fmt.Sprintf("Commit: file %q is updated.", f.Path), cmd.GetFlags().Quiet)
 	}
 
 	filter.TempViews.Store(UncommittedViews.UncommittedTempViews())
@@ -913,13 +913,13 @@ func Rollback(expr parser.Expression, filter *Filter) error {
 
 	if 0 < len(createdFiles) {
 		for _, fileinfo := range createdFiles {
-			Log(cmd.Notice(fmt.Sprintf("Rollback: file %q is deleted.", fileinfo.Path)), cmd.GetFlags().Quiet)
+			LogNotice(fmt.Sprintf("Rollback: file %q is deleted.", fileinfo.Path), cmd.GetFlags().Quiet)
 		}
 	}
 
 	if 0 < len(updatedFiles) {
 		for _, fileinfo := range updatedFiles {
-			Log(cmd.Notice(fmt.Sprintf("Rollback: file %q is restored.", fileinfo.Path)), cmd.GetFlags().Quiet)
+			LogNotice(fmt.Sprintf("Rollback: file %q is restored.", fileinfo.Path), cmd.GetFlags().Quiet)
 		}
 	}
 

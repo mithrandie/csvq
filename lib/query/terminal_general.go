@@ -42,7 +42,9 @@ func NewTerminal(filter *Filter) (VirtualTerminal, error) {
 		prompt:    prompt,
 	}
 
+	t.RestoreOriginalMode()
 	t.SetPrompt()
+	t.RestoreRawMode()
 	return t, nil
 }
 
@@ -75,14 +77,14 @@ func (t SSHTerminal) Write(s string) error {
 }
 
 func (t SSHTerminal) WriteError(s string) error {
-	_, err := t.terminal.Write([]byte(s))
+	_, err := Stderr.Write([]byte(s))
 	return err
 }
 
 func (t SSHTerminal) SetPrompt() {
 	str, err := t.prompt.RenderPrompt()
 	if err != nil {
-		WriteToStderrWithLineBreak(cmd.Error(err.Error()))
+		LogError(err.Error())
 	}
 	t.terminal.SetPrompt(str)
 }
@@ -90,7 +92,7 @@ func (t SSHTerminal) SetPrompt() {
 func (t SSHTerminal) SetContinuousPrompt() {
 	str, err := t.prompt.RenderContinuousPrompt()
 	if err != nil {
-		WriteToStderrWithLineBreak(cmd.Error(err.Error()))
+		LogError(err.Error())
 	}
 	t.terminal.SetPrompt(str)
 }

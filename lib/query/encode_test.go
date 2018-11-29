@@ -36,7 +36,7 @@ var encodeViewTests = []struct {
 			RecordSet: []Record{},
 		},
 		Format: cmd.TEXT,
-		Result: "Empty RecordSet",
+		Error:  "empty result set",
 	},
 	{
 		Name: "Empty Fields",
@@ -47,7 +47,7 @@ var encodeViewTests = []struct {
 			},
 		},
 		Format: cmd.TEXT,
-		Result: "Empty Fields",
+		Error:  "empty result set",
 	},
 	{
 		Name: "Text",

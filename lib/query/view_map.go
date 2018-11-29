@@ -68,7 +68,7 @@ func (list TemporaryViewScopes) Store(uncomittedViews map[string]*FileInfo) {
 			if _, ok := uncomittedViews[view.FileInfo.Path]; ok {
 				view.FileInfo.InitialRecordSet = view.RecordSet.Copy()
 				view.FileInfo.InitialHeader = view.Header.Copy()
-				Log(cmd.Notice(fmt.Sprintf("Commit: restore point of view %q is created.", view.FileInfo.Path)), cmd.GetFlags().Quiet)
+				LogNotice(fmt.Sprintf("Commit: restore point of view %q is created.", view.FileInfo.Path), cmd.GetFlags().Quiet)
 			}
 		}
 	}
@@ -80,7 +80,7 @@ func (list TemporaryViewScopes) Restore(uncomittedViews map[string]*FileInfo) {
 			if _, ok := uncomittedViews[view.FileInfo.Path]; ok {
 				view.RecordSet = view.FileInfo.InitialRecordSet.Copy()
 				view.Header = view.FileInfo.InitialHeader.Copy()
-				Log(cmd.Notice(fmt.Sprintf("Rollback: view %q is restored.", view.FileInfo.Path)), cmd.GetFlags().Quiet)
+				LogNotice(fmt.Sprintf("Rollback: view %q is restored.", view.FileInfo.Path), cmd.GetFlags().Quiet)
 			}
 		}
 	}

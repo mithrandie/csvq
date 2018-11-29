@@ -21,6 +21,16 @@ import (
 	"github.com/mithrandie/ternary"
 )
 
+type EmptyResultSetError struct{}
+
+func (e EmptyResultSetError) Error() string {
+	return "empty result set"
+}
+
+func NewEmptyResultSetError() *EmptyResultSetError {
+	return &EmptyResultSetError{}
+}
+
 func EncodeView(fp io.Writer, view *View, fileInfo *FileInfo) error {
 	switch fileInfo.Format {
 	case cmd.FIXED:
@@ -190,18 +200,12 @@ func encodeText(fp io.Writer, view *View, format cmd.Format, lineBreak text.Line
 		tableFormat = table.OrgTable
 	default:
 		if len(header) < 1 {
-			w := bufio.NewWriter(fp)
-			if _, err := w.WriteString(cmd.Warn("Empty Fields")); err != nil {
-				return err
-			}
-			return w.Flush()
+			LogWarn("Empty Fields", cmd.GetFlags().Quiet)
+			return NewEmptyResultSetError()
 		}
 		if len(records) < 1 {
-			w := bufio.NewWriter(fp)
-			if _, err := w.WriteString(cmd.Warn("Empty RecordSet")); err != nil {
-				return err
-			}
-			return w.Flush()
+			LogWarn("Empty RecordSet", cmd.GetFlags().Quiet)
+			return NewEmptyResultSetError()
 		}
 		isPlainTable = true
 	}

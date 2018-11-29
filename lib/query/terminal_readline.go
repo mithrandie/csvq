@@ -27,7 +27,7 @@ func NewTerminal(filter *Filter) (VirtualTerminal, error) {
 	limit := env.InteractiveShell.HistoryLimit
 	historyFile, err := HistoryFilePath(env.InteractiveShell.HistoryFile)
 	if err != nil {
-		WriteToStderrWithLineBreak(fmt.Sprintf("cannot detect filepath: %q", env.InteractiveShell.HistoryFile))
+		LogError(fmt.Sprintf("cannot detect filepath: %q", env.InteractiveShell.HistoryFile))
 		limit = -1
 	}
 
@@ -77,7 +77,7 @@ func (t ReadLineTerminal) WriteError(s string) error {
 func (t ReadLineTerminal) SetPrompt() {
 	str, err := t.prompt.RenderPrompt()
 	if err != nil {
-		WriteToStderrWithLineBreak(cmd.Error(err.Error()))
+		LogError(err.Error())
 	}
 	t.terminal.SetPrompt(str)
 }
@@ -85,7 +85,7 @@ func (t ReadLineTerminal) SetPrompt() {
 func (t ReadLineTerminal) SetContinuousPrompt() {
 	str, err := t.prompt.RenderContinuousPrompt()
 	if err != nil {
-		WriteToStderrWithLineBreak(cmd.Error(err.Error()))
+		LogError(err.Error())
 	}
 	t.terminal.SetPrompt(str)
 }
