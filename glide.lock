@@ -1,8 +1,6 @@
-hash: 8f1f17434051282c898425821774fcc86f3052afdf4c966543e4abd2067ea895
-updated: 2018-11-17T19:14:18.917936+09:00
+hash: 1aadc744e2cff772bf7d7352b3a391dff079b2ffdbd5b40002eafc6849e859d4
+updated: 2018-12-02T23:29:34.009717+09:00
 imports:
-- name: github.com/chzyer/readline
-  version: 62c6fe6193755f722b8b8788aa7357be55a50ff1
 - name: github.com/mitchellh/go-homedir
   version: ae18d6b8b3205b561c79e8e5f69bff09736185f4
 - name: github.com/mithrandie/go-file
@@ -15,16 +13,18 @@ imports:
   - fixedlen
   - json
   - table
+- name: github.com/mithrandie/readline-csvq
+  version: 3d60e565d7a299207ec7046c51d8c0703455fe14
 - name: github.com/mithrandie/ternary
   version: a21bbf9aa7eb3b2102af2c54588fc5280f6670f7
 - name: github.com/urfave/cli
   version: cfb38830724cc34fedffe9a2a29fb54fa9169cd1
 - name: golang.org/x/crypto
-  version: 3d3f9f413869b949e48070b5bc593aa22cc2b8f2
+  version: eb0de9b17e854e9b1ccd9963efafc79862359959
   subpackages:
   - ssh/terminal
 - name: golang.org/x/sys
-  version: 93218def8b18e66adbdab3eca8ec334700329f1f
+  version: 4ed8d59d0b35e1e29334a206d1b3f38b1e5dfb31
   subpackages:
   - unix
   - windows

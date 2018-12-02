@@ -7,9 +7,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/chzyer/readline"
-	"github.com/mitchellh/go-homedir"
 	"github.com/mithrandie/csvq/lib/cmd"
+
+	"github.com/mitchellh/go-homedir"
+	"github.com/mithrandie/readline-csvq"
 )
 
 type ReadLineTerminal struct {
