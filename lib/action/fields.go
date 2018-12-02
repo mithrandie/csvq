@@ -10,7 +10,7 @@ import (
 func ShowFields(proc *query.Procedure, filename string) error {
 	defer func() {
 		if err := query.ReleaseResourcesWithErrors(); err != nil {
-			query.WriteToStderrWithLineBreak(err.Error())
+			query.LogError(err.Error())
 		}
 	}()
 

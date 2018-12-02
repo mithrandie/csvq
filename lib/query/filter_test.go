@@ -4204,7 +4204,7 @@ var filterEvaluateSequentiallyTests = []struct {
 func TestFilter_EvaluateSequentially(t *testing.T) {
 	for _, v := range filterEvaluateSequentiallyTests {
 		filterEvaluateSequentiallyResults = make([]value.Primary, 0)
-		err := v.Filter.EvaluateSequentially(v.Expression, v.Function)
+		err := v.Filter.EvaluateSequentially(v.Function, v.Expression)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

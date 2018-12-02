@@ -85,45 +85,30 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 		view.sortValuesInEachCell = make([][]*SortValue, view.RecordLen())
 	}
 
-	gm := NewGoroutineTaskManager(view.RecordLen(), -1)
 	partitionKeys := make([]string, view.RecordLen())
+	NewGoroutineTaskManager(view.RecordLen(), -1).Run(func(index int) {
+		keyBuf := new(bytes.Buffer)
 
-	for i := 0; i < gm.Number; i++ {
-		gm.Add()
-		go func(thIdx int) {
-			start, end := gm.RecordRange(thIdx)
+		if view.sortValuesInEachCell[index] == nil {
+			view.sortValuesInEachCell[index] = make([]*SortValue, cap(view.RecordSet[index]))
+		}
+		if partitionIndices != nil {
 			sortValues := make(SortValues, len(partitionIndices))
-			keyBuf := new(bytes.Buffer)
-
-			for i := start; i < end; i++ {
-				var partitionKey string
-				if view.sortValuesInEachCell[i] == nil {
-					view.sortValuesInEachCell[i] = make([]*SortValue, cap(view.RecordSet[i]))
-				}
-				if partitionIndices != nil {
-					for j, idx := range partitionIndices {
-						if idx < len(view.sortValuesInEachCell[i]) && view.sortValuesInEachCell[i][idx] != nil {
-							sortValues[j] = view.sortValuesInEachCell[i][idx]
-						} else {
-							sortValues[j] = NewSortValue(view.RecordSet[i][idx].Value())
-							if idx < len(view.sortValuesInEachCell[i]) {
-								view.sortValuesInEachCell[i][idx] = sortValues[j]
-							}
-						}
+			for j, idx := range partitionIndices {
+				if idx < len(view.sortValuesInEachCell[index]) && view.sortValuesInEachCell[index][idx] != nil {
+					sortValues[j] = view.sortValuesInEachCell[index][idx]
+				} else {
+					sortValues[j] = NewSortValue(view.RecordSet[index][idx].Value())
+					if idx < len(view.sortValuesInEachCell[index]) {
+						view.sortValuesInEachCell[index][idx] = sortValues[j]
 					}
-					keyBuf.Reset()
-					sortValues.Serialize(keyBuf)
-					partitionKey = keyBuf.String()
 				}
-
-				partitionKeys[i] = partitionKey
 			}
+			sortValues.Serialize(keyBuf)
+		}
 
-			gm.Done()
-		}(i)
-	}
-
-	gm.Wait()
+		partitionKeys[index] = keyBuf.String()
+	})
 
 	partitions := Partitions{}
 	partitionMapKeys := make([]string, 0)
@@ -136,7 +121,7 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 		}
 	}
 
-	gm = NewGoroutineTaskManager(len(partitionMapKeys), 0)
+	gm := NewGoroutineTaskManager(len(partitionMapKeys), 0)
 	for i := 0; i < gm.Number; i++ {
 		gm.Add()
 		go func(thIdx int) {

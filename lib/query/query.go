@@ -650,21 +650,19 @@ func AddColumns(query parser.AddColumns, parentFilter *Filter) (*FileInfo, int, 
 
 	records := make(RecordSet, view.RecordLen())
 
-	err = NewFilterForSequentialEvaluation(view, filter).EvaluateSequentially(defaults, func(f *Filter, startIdx int) error {
-		idx := f.currentIndex() + startIdx
-
+	err = NewFilterForSequentialEvaluation(view, filter).EvaluateSequentially(func(f *Filter, rIdx int) error {
 		record := make(Record, newFieldLen)
-		for i, cell := range view.RecordSet[idx] {
-			var idx int
+		for i, cell := range view.RecordSet[rIdx] {
+			var cellIdx int
 			if i < insertPos {
-				idx = i
+				cellIdx = i
 			} else {
-				idx = i + len(fields)
+				cellIdx = i + len(fields)
 			}
-			record[idx] = cell
+			record[cellIdx] = cell
 		}
 
-		for j, v := range defaults {
+		for i, v := range defaults {
 			if v == nil {
 				v = parser.NewNullValue()
 			}
@@ -672,11 +670,11 @@ func AddColumns(query parser.AddColumns, parentFilter *Filter) (*FileInfo, int, 
 			if e != nil {
 				return e
 			}
-			record[j+insertPos] = NewCell(val)
+			record[i+insertPos] = NewCell(val)
 		}
-		records[idx] = record
+		records[rIdx] = record
 		return nil
-	})
+	}, defaults)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -892,14 +890,14 @@ func Commit(expr parser.Expression, filter *Filter) error {
 			return NewCommitError(expr, err.Error())
 		}
 		UncommittedViews.Unset(f)
-		Log(cmd.Notice(fmt.Sprintf("Commit: file %q is created.", f.Path)), cmd.GetFlags().Quiet)
+		LogNotice(fmt.Sprintf("Commit: file %q is created.", f.Path), cmd.GetFlags().Quiet)
 	}
 	for _, f := range updateFileInfo {
 		if err := f.Commit(); err != nil {
 			return NewCommitError(expr, err.Error())
 		}
 		UncommittedViews.Unset(f)
-		Log(cmd.Notice(fmt.Sprintf("Commit: file %q is updated.", f.Path)), cmd.GetFlags().Quiet)
+		LogNotice(fmt.Sprintf("Commit: file %q is updated.", f.Path), cmd.GetFlags().Quiet)
 	}
 
 	filter.TempViews.Store(UncommittedViews.UncommittedTempViews())
@@ -915,13 +913,13 @@ func Rollback(expr parser.Expression, filter *Filter) error {
 
 	if 0 < len(createdFiles) {
 		for _, fileinfo := range createdFiles {
-			Log(cmd.Notice(fmt.Sprintf("Rollback: file %q is deleted.", fileinfo.Path)), cmd.GetFlags().Quiet)
+			LogNotice(fmt.Sprintf("Rollback: file %q is deleted.", fileinfo.Path), cmd.GetFlags().Quiet)
 		}
 	}
 
 	if 0 < len(updatedFiles) {
 		for _, fileinfo := range updatedFiles {
-			Log(cmd.Notice(fmt.Sprintf("Rollback: file %q is restored.", fileinfo.Path)), cmd.GetFlags().Quiet)
+			LogNotice(fmt.Sprintf("Rollback: file %q is restored.", fileinfo.Path), cmd.GetFlags().Quiet)
 		}
 	}
 

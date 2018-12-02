@@ -1,3 +1,7 @@
+## Release v1.6.7 (2018-12-01)
+
+- Fork github.com/chzyer/readline and change dependency to github.com/mithrandie/readline-csvq to use the latest update that is not versioned. 
+
 ## Release v1.6.6 (2018-11-27)
 
 - Fix fatal error of variable substitution in multithreading.

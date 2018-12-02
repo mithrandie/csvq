@@ -2,7 +2,6 @@ package query
 
 import (
 	"github.com/mithrandie/csvq/lib/parser"
-
 	"github.com/mithrandie/ternary"
 )
 
@@ -104,24 +103,12 @@ func CrossJoin(view *View, joinView *View) {
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 	records := make(RecordSet, view.RecordLen()*joinView.RecordLen())
 
-	gm := NewGoroutineTaskManager(view.RecordLen(), -1)
-	for i := 0; i < gm.Number; i++ {
-		gm.Add()
-		go func(thIdx int) {
-			start, end := gm.RecordRange(thIdx)
-			idx := start * joinView.RecordLen()
-
-			for _, viewRecord := range view.RecordSet[start:end] {
-				for _, joinViewRecord := range joinView.RecordSet {
-					records[idx] = append(viewRecord, joinViewRecord...)
-					idx++
-				}
-			}
-
-			gm.Done()
-		}(i)
-	}
-	gm.Wait()
+	NewGoroutineTaskManager(view.RecordLen(), -1).Run(func(index int) {
+		start := index * joinView.RecordLen()
+		for i := 0; i < joinView.RecordLen(); i++ {
+			records[start+i] = append(view.RecordSet[index], joinView.RecordSet[i]...)
+		}
+	})
 
 	view.Header = mergedHeader
 	view.RecordSet = records

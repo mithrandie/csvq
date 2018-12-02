@@ -26,9 +26,8 @@ If you want to execute a single query, you can omit the terminal semicolon.
 
 When the csvq command is called with no argument and no "--source" (or "-s") option, the interactive shell is launched.
 You can use the interactive shell in order to sequencial input and execution.
-In the interactive shell, statements are executed when a line ends with a semicolon.
 
-If you want to continue to input a statement on the next line even though the end of the line is a semicolon, you can use a backslash at the end of the line to continue.
+If you want to continue to input a statement on the next line, you can use a backslash at the end of the line to continue.
 
 #### Command options in the interactive shell
 
@@ -123,7 +122,7 @@ Ternary
 Datetime
 : A datetime is a string formatted as datetime.
 
-  Strings of the form passed by the ["datetime-format" option]({{ '/reference/command.html#global_options' | relative_url }}) or the following forms can be converted to datetime values.
+  Strings of the form passed by the ["datetime-format" option]({{ '/reference/command.html#global_options' | relative_url }}) and defined in the [configuration files]({{ '/reference/command.html#configurations' | relative_url }}),  or the following forms can be converted to datetime values.
   
   | DateFormat | Example |
   | :- | :- |

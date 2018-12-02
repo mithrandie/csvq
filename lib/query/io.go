@@ -3,6 +3,8 @@ package query
 import (
 	"io"
 	"os"
+
+	"github.com/mithrandie/csvq/lib/cmd"
 )
 
 var (
@@ -18,6 +20,22 @@ func Log(log string, quiet bool) {
 	if !quiet {
 		WriteToStdoutWithLineBreak(log)
 	}
+}
+
+func LogNotice(log string, quiet bool) {
+	if !quiet {
+		WriteToStdoutWithLineBreak(cmd.Notice(log))
+	}
+}
+
+func LogWarn(log string, quiet bool) {
+	if !quiet {
+		WriteToStdoutWithLineBreak(cmd.Warn(log))
+	}
+}
+
+func LogError(log string) {
+	WriteToStderrWithLineBreak(cmd.Error(log))
 }
 
 func WriteToStdout(s string) error {
@@ -38,7 +56,7 @@ func WriteToStdoutWithLineBreak(s string) error {
 
 func WriteToStderr(s string) error {
 	if Terminal != nil {
-		return Terminal.Write(s)
+		return Terminal.WriteError(s)
 	}
 
 	_, err := Stderr.Write([]byte(s))

@@ -14,10 +14,10 @@ func SetSignalHandler() {
 	go func() {
 		<-ch
 		if err := query.Rollback(nil, nil); err != nil {
-			query.WriteToStderrWithLineBreak(err.Error())
+			query.LogError(err.Error())
 		}
 		if err := query.ReleaseResourcesWithErrors(); err != nil {
-			query.WriteToStderrWithLineBreak(err.Error())
+			query.LogError(err.Error())
 		}
 		if query.Terminal != nil {
 			query.Terminal.Teardown()

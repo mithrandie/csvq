@@ -24,10 +24,10 @@ func Run(proc *query.Procedure, input string, sourceFile string, outfile string)
 
 	defer func() {
 		if e := query.Rollback(nil, proc.Filter); e != nil {
-			query.WriteToStderrWithLineBreak(e.Error())
+			query.LogError(e.Error())
 		}
 		if err := query.ReleaseResourcesWithErrors(); err != nil {
-			query.WriteToStderrWithLineBreak(err.Error())
+			query.LogError(err.Error())
 		}
 		showStats(start)
 	}()
@@ -62,7 +62,7 @@ func Run(proc *query.Procedure, input string, sourceFile string, outfile string)
 
 	if err == nil && flow == query.Terminate {
 		if e := query.Commit(nil, proc.Filter); e != nil {
-			query.WriteToStderrWithLineBreak(e.Error())
+			query.LogError(e.Error())
 		}
 	}
 
@@ -76,10 +76,10 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 
 	defer func() {
 		if e := query.Rollback(nil, proc.Filter); e != nil {
-			query.WriteToStderrWithLineBreak(e.Error())
+			query.LogError(e.Error())
 		}
 		if err := query.ReleaseResourcesWithErrors(); err != nil {
-			query.WriteToStderrWithLineBreak(err.Error())
+			query.LogError(err.Error())
 		}
 	}()
 
@@ -98,9 +98,7 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 	StartUpMessage := "" +
 		"csvq interactive shell\n" +
 		"Press Ctrl+D or execute \"EXIT;\" to terminate this shell.\n\n"
-	if werr := query.Terminal.Write(StartUpMessage); werr != nil {
-		return werr
-	}
+	query.Log(StartUpMessage, false)
 
 	lines := make([]string, 0)
 
@@ -147,9 +145,7 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 		statements, e := parser.Parse(strings.Join(lines, "\n"), "")
 		if e != nil {
 			e = query.NewSyntaxError(e.(*parser.SyntaxError))
-			if werr := query.Terminal.WriteError(cmd.Error(e.Error()) + "\n"); werr != nil {
-				return werr
-			}
+			query.LogError(e.Error())
 			lines = lines[:0]
 			query.Terminal.SetPrompt()
 			continue
@@ -161,9 +157,7 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 				err = ex
 				break
 			} else {
-				if werr := query.Terminal.WriteError(cmd.Error(e.Error()) + "\n"); werr != nil {
-					return werr
-				}
+				query.LogError(e.Error())
 				lines = lines[:0]
 				query.Terminal.SetPrompt()
 				continue
@@ -233,5 +227,5 @@ func showStats(start time.Time) {
 
 	w.Title1 = "Resource Statistics"
 
-	query.WriteToStdout("\n" + w.String())
+	query.Log("\n"+w.String(), false)
 }
