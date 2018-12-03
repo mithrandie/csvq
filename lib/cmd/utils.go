@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/mithrandie/go-text"
@@ -176,6 +177,44 @@ func QuoteString(s string) string {
 
 func QuoteIdentifier(s string) string {
 	return "`" + EscapeIdentifier(s) + "`"
+}
+
+func VariableSymbol(s string) string {
+	return VariableSign + s
+}
+
+func FlagSymbol(s string) string {
+	return FlagSign + s
+}
+
+func EnvironmentVariableSymbol(s string) string {
+	if MustBeEnclosed(s) {
+		s = QuoteIdentifier(s)
+	}
+	return EnvironmentVariableSign + s
+}
+
+func EnclosedEnvironmentVariableSymbol(s string) string {
+	return EnvironmentVariableSign + QuoteIdentifier(s)
+}
+
+func MustBeEnclosed(s string) bool {
+	runes := []rune(s)
+
+	if runes[0] != '_' && !unicode.IsLetter(runes[0]) {
+		return true
+	}
+
+	for i := 1; i < len(runes); i++ {
+		if s[i] != '_' && !unicode.IsLetter(runes[i]) && !unicode.IsDigit(runes[i]) {
+			return true
+		}
+	}
+	return false
+}
+
+func RuntimeInformationSymbol(s string) string {
+	return RuntimeInformationSign + s
 }
 
 func FormatInt(i int, thousandsSeparator string) string {

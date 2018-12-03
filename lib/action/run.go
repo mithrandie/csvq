@@ -103,6 +103,7 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 	lines := make([]string, 0)
 
 	for {
+		query.Terminal.UpdateCompleter()
 		line, e := query.Terminal.ReadLine()
 		if e != nil {
 			if e == io.EOF {

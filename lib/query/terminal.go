@@ -28,6 +28,7 @@ type VirtualTerminal interface {
 	Teardown()
 	GetSize() (int, int, error)
 	ReloadPromptConfig() error
+	UpdateCompleter()
 }
 
 type PromptEvaluationError struct {

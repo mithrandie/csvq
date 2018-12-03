@@ -18,7 +18,12 @@ import (
 	"github.com/mithrandie/csvq/lib/file"
 )
 
-const FlagSign = "@@"
+const (
+	VariableSign            = "@"
+	FlagSign                = "@@"
+	EnvironmentVariableSign = "@%"
+	RuntimeInformationSign  = "@#"
+)
 const DelimiteAutomatically = "SPACES"
 
 const (
@@ -75,10 +80,6 @@ var FlagList = []string{
 	StatsFlag,
 }
 
-func FlagSymbol(s string) string {
-	return FlagSign + s
-}
-
 type Format int
 
 const (
@@ -92,7 +93,7 @@ const (
 	TEXT
 )
 
-var formatLiterals = map[Format]string{
+var FormatLiteral = map[Format]string{
 	CSV:   "CSV",
 	TSV:   "TSV",
 	FIXED: "FIXED",
@@ -103,26 +104,28 @@ var formatLiterals = map[Format]string{
 }
 
 func (f Format) String() string {
-	return formatLiterals[f]
+	return FormatLiteral[f]
 }
 
-var jsonEscapeTypeLiterals = map[txjson.EscapeType]string{
+var JsonEscapeTypeLiteral = map[txjson.EscapeType]string{
 	txjson.Backslash:        "BACKSLASH",
 	txjson.HexDigits:        "HEX",
 	txjson.AllWithHexDigits: "HEXALL",
 }
 
 func JsonEscapeTypeToString(escapeType txjson.EscapeType) string {
-	return jsonEscapeTypeLiterals[escapeType]
+	return JsonEscapeTypeLiteral[escapeType]
 }
 
 const (
-	CsvExt   = ".csv"
-	TsvExt   = ".tsv"
-	FixedExt = ".txt"
-	JsonExt  = ".json"
-	GfmExt   = ".md"
-	OrgExt   = ".org"
+	CsvExt      = ".csv"
+	TsvExt      = ".tsv"
+	FixedExt    = ".txt"
+	JsonExt     = ".json"
+	GfmExt      = ".md"
+	OrgExt      = ".org"
+	SqlExt      = ".sql"
+	CsvqProcExt = ".cql"
 )
 
 type Flags struct {
@@ -283,6 +286,10 @@ func (f *Flags) SetLocation(s string) error {
 }
 
 func (f *Flags) SetDatetimeFormat(s string) {
+	if len(s) < 1 {
+		return
+	}
+
 	var formats []string
 	if err := json.Unmarshal([]byte(s), &formats); err == nil {
 		for _, v := range formats {

@@ -34,6 +34,26 @@ const (
 	ReloadConfig = "CONFIG"
 )
 
+const (
+	ShowTables    = "TABLES"
+	ShowViews     = "VIEWS"
+	ShowCursors   = "CURSORS"
+	ShowFunctions = "FUNCTIONS"
+	ShowFlags     = "FLAGS"
+	ShowEnv       = "ENV"
+	ShowRuninfo   = "RUNINFO"
+)
+
+var ShowObjectList = []string{
+	ShowTables,
+	ShowViews,
+	ShowCursors,
+	ShowFunctions,
+	ShowFlags,
+	ShowEnv,
+	ShowRuninfo,
+}
+
 func Echo(expr parser.Echo, filter *Filter) (string, error) {
 	p, err := filter.Evaluate(expr.Value)
 	if err != nil {
@@ -488,7 +508,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 	w := NewObjectWriter()
 
 	switch strings.ToUpper(expr.Type.Literal) {
-	case "TABLES":
+	case ShowTables:
 		keys := ViewCache.SortedKeys()
 
 		if len(keys) < 1 {
@@ -524,7 +544,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 			}
 			s = "\n" + w.String() + "\n"
 		}
-	case "VIEWS":
+	case ShowViews:
 		views := filter.TempViews.All()
 
 		if len(views) < 1 {
@@ -557,7 +577,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 			}
 			s = "\n" + w.String() + "\n"
 		}
-	case "CURSORS":
+	case ShowCursors:
 		cursors := filter.Cursors.All()
 		if len(cursors) < 1 {
 			s = cmd.Warn("No cursor is declared")
@@ -607,7 +627,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 			w.Title1 = "Cursors"
 			s = "\n" + w.String() + "\n"
 		}
-	case "FUNCTIONS":
+	case ShowFunctions:
 		scalas, aggs := filter.Functions.All()
 		if len(scalas) < 1 && len(aggs) < 1 {
 			s = cmd.Warn("No function is declared")
@@ -623,9 +643,11 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 				writeFunctions(w, aggs)
 				w.Title1 = "Aggregate Functions"
 				s += "\n" + w.String() + "\n"
+			} else {
+				s += "\n"
 			}
 		}
-	case "FLAGS":
+	case ShowFlags:
 		for _, flag := range cmd.FlagList {
 			symbol := cmd.FlagSymbol(flag)
 			s, _ := showFlag(flag)
@@ -638,7 +660,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 		}
 		w.Title1 = "Flags"
 		s = "\n" + w.String() + "\n"
-	case "ENV":
+	case ShowEnv:
 		env := os.Environ()
 		names := make([]string, 0, len(env))
 		vars := make([]string, 0, len(env))
@@ -669,7 +691,7 @@ func ShowObjects(expr parser.ShowObjects, filter *Filter) (string, error) {
 		}
 		w.Title1 = "Environment Variables"
 		s = "\n" + w.String() + "\n"
-	case "RUNINFO":
+	case ShowRuninfo:
 		for _, ri := range RuntimeInformatinList {
 			label := string(parser.VariableSign) + string(parser.RuntimeInformationSign) + ri
 			p, _ := GetRuntimeInformation(parser.RuntimeInformation{Name: ri})
