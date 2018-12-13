@@ -25,8 +25,19 @@ const (
 	TableHeader      = "HEADER"
 	TableEncloseAll  = "ENCLOSE_ALL"
 	TableJsonEscape  = "JSON_ESCAPE"
-	TablePrettyPring = "PRETTY_PRINT"
+	TablePrettyPrint = "PRETTY_PRINT"
 )
+
+var FileAttributeList = []string{
+	TableDelimiter,
+	TableFormat,
+	TableEncoding,
+	TableLineBreak,
+	TableHeader,
+	TableEncloseAll,
+	TableJsonEscape,
+	TablePrettyPrint,
+}
 
 type TableAttributeUnchangedError struct {
 	Path    string

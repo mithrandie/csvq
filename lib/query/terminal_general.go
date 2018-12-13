@@ -105,13 +105,17 @@ func (t SSHTerminal) GetSize() (int, int, error) {
 	return terminal.GetSize(t.stdin)
 }
 
-func (t SSHTerminal) ReloadPromptConfig() error {
+func (t SSHTerminal) ReloadConfig() error {
 	return t.prompt.LoadConfig()
 }
 
 type StdIO struct {
 	reader io.Reader
 	writer io.Writer
+}
+
+func (t SSHTerminal) UpdateCompleter() {
+	//Do Nothing
 }
 
 func (sh *StdIO) Read(p []byte) (n int, err error) {

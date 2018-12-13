@@ -806,7 +806,7 @@ func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (*F
 		case TableJsonEscape:
 			err = fileInfo.SetJsonEscape(s.(value.String).Raw())
 		}
-	case TableHeader, TableEncloseAll, TablePrettyPring:
+	case TableHeader, TableEncloseAll, TablePrettyPrint:
 		b := value.ToBoolean(p)
 		if value.IsNull(b) {
 			return nil, log, NewTableAttributeValueNotAllowedFormatError(query)
@@ -816,7 +816,7 @@ func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (*F
 			err = fileInfo.SetNoHeader(!b.(value.Boolean).Raw())
 		case TableEncloseAll:
 			err = fileInfo.SetEncloseAll(b.(value.Boolean).Raw())
-		case TablePrettyPring:
+		case TablePrettyPrint:
 			err = fileInfo.SetPrettyPrint(b.(value.Boolean).Raw())
 		}
 	default:

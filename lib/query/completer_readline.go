@@ -1,0 +1,2078 @@
+// +build darwin dragonfly freebsd linux netbsd openbsd solaris windows
+
+package query
+
+import (
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+	"unicode"
+
+	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/parser"
+
+	"github.com/mithrandie/go-text"
+	"github.com/mithrandie/readline-csvq"
+	"github.com/mithrandie/ternary"
+)
+
+const (
+	dummySubquery    = "____subquery____"
+	dummyTableObject = "____table_object____"
+	dummyTable       = "____table____"
+)
+
+var statementPrefix = []string{
+	"WITH",
+	"SELECT",
+	"INSERT",
+	"UPDATE",
+	"DELETE",
+	"CREATE",
+	"ALTER",
+	"DECLARE",
+	"VAR",
+	"SET",
+	"UNSET",
+	"ADD",
+	"REMOVE",
+	"ECHO",
+	"PRINT",
+	"PRINTF",
+	"CHDIR",
+	"EXECUTE",
+	"SHOW",
+	"SOURCE",
+	"RELOAD",
+}
+
+var singleCommandStatement = []string{
+	"COMMIT",
+	"ROLLBACK",
+	"EXIT",
+	"PWD",
+}
+
+var delimiterCandidates = []string{
+	"','",
+	"'\\t'",
+	"'SPACES'",
+	"'[]'",
+}
+
+var joinCandidates = []string{
+	"JOIN",
+	"CROSS",
+	"INNER",
+	"FULL",
+	"LEFT",
+	"RIGHT",
+	"NATURAL",
+}
+
+var tableObjectCandidates = []string{
+	"CSV()",
+	"FIXED()",
+	"JSON()",
+	"JSON_TABLE()",
+}
+var tableObjects = []string{
+	cmd.CSV.String(),
+	cmd.FIXED.String(),
+	cmd.JSON.String(),
+}
+
+type ReadlineListener struct {
+	scanner parser.Scanner
+}
+
+func (l ReadlineListener) OnChange(line []rune, pos int, key rune) (newLine []rune, newPos int, ok bool) {
+	if (readline.IsQuotationMark(key) && !readline.LiteralIsEnclosed(key, line)) || (readline.IsBracket(key) && !readline.BracketIsEnclosed(key, line)) {
+		tail := append([]rune{readline.EncloseMark[key]}, line[pos:]...)
+		line = append(line[:pos], tail...)
+		return line, pos, true
+	}
+	return line, pos, false
+}
+
+type Completer struct {
+	completer *readline.PrefixCompleter
+	filter    *Filter
+
+	flagList    []string
+	runinfoList []string
+
+	viewList         []string
+	cursorList       []string
+	userFuncList     []string
+	funcList         []string
+	aggFuncList      []string
+	analyticFuncList []string
+	varList          []string
+	envList          []string
+	enclosedEnvList  []string
+	allColumns       []string
+	tableColumns     map[string][]string
+
+	tokens  []parser.Token
+	lastIdx int
+}
+
+func NewCompleter(filter *Filter) *Completer {
+	completer := &Completer{
+		completer:    readline.NewPrefixCompleter(),
+		filter:       filter,
+		tableColumns: make(map[string][]string),
+	}
+
+	completer.flagList = make([]string, 0, len(cmd.FlagList))
+	for _, v := range cmd.FlagList {
+		completer.flagList = append(completer.flagList, cmd.FlagSymbol(v))
+	}
+	completer.runinfoList = make([]string, 0, len(RuntimeInformatinList))
+	for _, v := range RuntimeInformatinList {
+		completer.runinfoList = append(completer.runinfoList, cmd.RuntimeInformationSymbol(v))
+	}
+
+	sort.Strings(completer.flagList)
+	sort.Strings(completer.runinfoList)
+
+	completer.tokens = make([]parser.Token, 0, 20)
+
+	return completer
+}
+
+func (c *Completer) Do(line []rune, pos int, index int) (readline.CandidateList, int) {
+	return c.completer.Do(line, pos, index)
+}
+
+func (c *Completer) Update() {
+	c.updateViews()
+	c.updateCursors()
+	c.updateFunctions()
+	c.updateVariables()
+	c.updateEnvironmentVariables()
+	c.updateAllColumns()
+
+	completer := readline.NewPrefixCompleter()
+	statements := readline.PcItemDynamic(c.Statements)
+	statements.AppendOnly = true
+	completer.SetChildren([]readline.PrefixCompleterInterface{statements})
+	c.completer = completer
+}
+
+func (c *Completer) updateViews() {
+	views := c.filter.TempViews.All()
+	viewKeys := views.SortedKeys()
+	c.viewList = make([]string, 0, len(viewKeys))
+	for _, key := range viewKeys {
+		c.viewList = append(c.viewList, views[key].FileInfo.Path)
+	}
+}
+
+func (c *Completer) updateCursors() {
+	cursors := c.filter.Cursors.All()
+	cursorKeys := cursors.SortedKeys()
+	c.cursorList = make([]string, 0, len(cursorKeys))
+	for _, key := range cursorKeys {
+		c.cursorList = append(c.cursorList, cursors[key].name)
+	}
+}
+
+func (c *Completer) updateFunctions() {
+	userfuncs, userAggFuncs := c.filter.Functions.All()
+
+	c.userFuncList = make([]string, 0, len(userfuncs)+len(userAggFuncs))
+
+	funcKeys := make([]string, 0, len(Functions)+len(userfuncs)+2)
+	for k := range Functions {
+		funcKeys = append(funcKeys, k+"()")
+	}
+	for _, f := range userfuncs {
+		funcKeys = append(funcKeys, f.Name.String()+"()")
+		c.userFuncList = append(c.userFuncList, f.Name.String())
+	}
+	funcKeys = append(funcKeys, "NOW()")
+	funcKeys = append(funcKeys, "JSON_OBJECT()")
+	sort.Strings(funcKeys)
+	c.funcList = funcKeys
+
+	aggFuncKeys := make([]string, 0, len(AggregateFunctions)+len(userAggFuncs))
+	for k := range AggregateFunctions {
+		aggFuncKeys = append(aggFuncKeys, k+"()")
+	}
+	for _, f := range userAggFuncs {
+		aggFuncKeys = append(aggFuncKeys, f.Name.String()+"()")
+		c.userFuncList = append(c.userFuncList, f.Name.String())
+	}
+	sort.Strings(aggFuncKeys)
+	c.aggFuncList = aggFuncKeys
+	sort.Strings(c.userFuncList)
+
+	analyticFuncKeys := make([]string, 0, len(AnalyticFunctions)+len(userAggFuncs))
+	for k := range AnalyticFunctions {
+		analyticFuncKeys = append(analyticFuncKeys, k+"() OVER ()")
+	}
+	for _, f := range userAggFuncs {
+		analyticFuncKeys = append(analyticFuncKeys, f.Name.String()+"() OVER ()")
+	}
+	sort.Strings(analyticFuncKeys)
+	c.analyticFuncList = analyticFuncKeys
+}
+
+func (c *Completer) updateVariables() {
+	vars := c.filter.Variables.All()
+	varKeys := vars.SortedKeys()
+
+	c.varList = make([]string, 0, len(varKeys))
+	for _, k := range varKeys {
+		c.varList = append(c.varList, cmd.VariableSymbol(k))
+	}
+}
+
+func (c *Completer) updateEnvironmentVariables() {
+	env := os.Environ()
+	c.envList = make([]string, 0, len(env))
+	c.enclosedEnvList = make([]string, 0, len(env))
+	for _, e := range env {
+		words := strings.Split(e, "=")
+		c.envList = append(c.envList, cmd.EnvironmentVariableSymbol(words[0]))
+		c.enclosedEnvList = append(c.enclosedEnvList, cmd.EnclosedEnvironmentVariableSymbol(words[0]))
+	}
+	sort.Strings(c.envList)
+	sort.Strings(c.enclosedEnvList)
+}
+
+func (c *Completer) updateAllColumns() {
+	c.allColumns = c.AllColumnList()
+}
+
+func (c *Completer) GetStatementPrefix(line string, origLine string, index int) readline.CandidateList {
+	prefix := statementPrefix
+	if 0 < len(c.cursorList) || 0 < len(c.userFuncList) || 0 < len(c.viewList) || 0 < len(c.varList) {
+		prefix = append(prefix, "DISPOSE")
+	}
+	if 0 < len(c.cursorList) {
+		prefix = append(prefix,
+			"OPEN",
+			"CLOSE",
+			"FETCH",
+		)
+	}
+
+	var cands readline.CandidateList
+	for _, p := range prefix {
+		cands = append(cands, c.candidate(p, true))
+	}
+	for _, p := range singleCommandStatement {
+		cands = append(cands, c.candidate(p, false))
+	}
+	cands = append(cands, c.SearchValues(line, origLine, index)...)
+
+	cands.Sort()
+	return cands
+}
+
+func (c *Completer) Statements(line string, origLine string, index int) readline.CandidateList {
+	origRunes := []rune(origLine)
+	c.UpdateTokens(line, string(origRunes[:index]))
+
+	token := parser.EOF
+	if (1 == len(c.tokens) && unicode.IsSpace(origRunes[index-1])) || 1 < len(c.tokens) {
+		token = c.tokens[0].Token
+	}
+
+	switch token {
+	case parser.WITH:
+		return c.WithArgs(line, origLine, index)
+	case parser.SELECT:
+		return c.SelectArgs(line, origLine, index)
+	case parser.INSERT:
+		return c.InsertArgs(line, origLine, index)
+	case parser.UPDATE:
+		return c.UpdateArgs(line, origLine, index)
+	case parser.DELETE:
+		return c.DeleteArgs(line, origLine, index)
+	case parser.CREATE:
+		return c.CreateArgs(line, origLine, index)
+	case parser.ALTER:
+		return c.AlterArgs(line, origLine, index)
+	case parser.DECLARE, parser.VAR:
+		return c.DeclareArgs(line, origLine, index)
+	case parser.SET:
+		return c.SetArgs(line, origLine, index)
+	case parser.UNSET:
+		return c.candidateList(c.environmentVariableList(line), false)
+	case parser.ADD:
+		return c.AddFlagArgs(line, origLine, index)
+	case parser.REMOVE:
+		return c.RemoveFlagArgs(line, origLine, index)
+	case parser.ECHO:
+		return c.SearchValues(line, origLine, index)
+	case parser.PRINT:
+		return c.SearchValues(line, origLine, index)
+	case parser.PRINTF:
+		return c.UsingArgs(line, origLine, index)
+	case parser.CHDIR:
+		return c.SearchDirs(line, origLine, index)
+	case parser.EXECUTE:
+		return c.UsingArgs(line, origLine, index)
+	case parser.SHOW:
+		return c.ShowArgs(line, origLine, index)
+	case parser.SOURCE:
+		return c.SearchExecutableFiles(line, origLine, index)
+	case parser.RELOAD:
+		if 0 < len(line) && len(c.tokens) == 2 || len(line) < 1 && len(c.tokens) == 1 {
+			return readline.CandidateList{c.candidate("CONFIG", false)}
+		} else {
+			return nil
+		}
+	case parser.DISPOSE:
+		return c.DisposeArgs(line, origLine, index)
+	case parser.OPEN, parser.CLOSE:
+		return c.candidateList(c.cursorList, false)
+	case parser.FETCH:
+		return c.FetchArgs(line, origLine, index)
+	case parser.COMMIT:
+		return nil
+	case parser.ROLLBACK:
+		return nil
+	case parser.EXIT:
+		return nil
+	case parser.PWD:
+		return nil
+	case parser.EOF:
+		return c.GetStatementPrefix(line, origLine, index)
+	default:
+		if 0 < len(c.tokens) && c.isTableObject(c.tokens[0]) {
+			return c.TableObjectArgs(line, origLine, index)
+		}
+	}
+
+	cands := c.SearchValues(line, origLine, index)
+	cands.Sort()
+	return cands
+}
+
+func (c *Completer) TableObjectArgs(line string, origLine string, index int) readline.CandidateList {
+	commaCnt := 0
+	for _, t := range c.tokens {
+		if t.Token == ',' {
+			commaCnt++
+		}
+	}
+
+	var cands readline.CandidateList
+	switch commaCnt {
+	case 0:
+		if c.tokens[c.lastIdx].Token == '(' {
+			switch strings.ToUpper(c.tokens[0].Literal) {
+			case cmd.CSV.String():
+				cands = c.candidateList([]string{"','", "'\\t'"}, false)
+			case cmd.FIXED.String():
+				cands = c.candidateList([]string{"'SPACES'", "'[]'"}, false)
+			}
+		}
+	case 1:
+		if c.tokens[c.lastIdx].Token == ',' {
+			cands = c.SearchAllTables(line, origLine, index)
+		}
+	case 2:
+		if c.tokens[c.lastIdx].Token == ',' {
+			switch strings.ToUpper(c.tokens[0].Literal) {
+			case cmd.CSV.String(), cmd.FIXED.String():
+				cands = c.candidateList(c.encodingList(), false)
+			}
+		}
+	case 3, 4:
+		if c.tokens[c.lastIdx].Token == ',' {
+			switch strings.ToUpper(c.tokens[0].Literal) {
+			case cmd.CSV.String(), cmd.FIXED.String():
+				cands = c.candidateList([]string{ternary.TRUE.String(), ternary.FALSE.String()}, false)
+			}
+		}
+	}
+	cands = append(cands, c.SearchValues(line, origLine, index)...)
+	return cands
+}
+
+func (c *Completer) WithArgs(line string, origLine string, index int) readline.CandidateList {
+	var searchQuery = func() int {
+		blockLevel := 0
+		for i := 0; i < len(c.tokens); i++ {
+			switch c.tokens[i].Token {
+			case ')':
+				blockLevel++
+			case '(':
+				blockLevel--
+			case parser.SELECT, parser.INSERT, parser.UPDATE, parser.DELETE:
+				if blockLevel == 0 {
+					return i
+				}
+			}
+		}
+		return -1
+	}
+
+	if queryStart := searchQuery(); -1 < queryStart {
+		c.tokens = c.tokens[queryStart:]
+		c.SetLastIndex(line)
+
+		switch c.tokens[0].Token {
+		case parser.SELECT:
+			return c.SelectArgs(line, origLine, index)
+		case parser.INSERT:
+			return c.InsertArgs(line, origLine, index)
+		case parser.UPDATE:
+			return c.UpdateArgs(line, origLine, index)
+		case parser.DELETE:
+			return c.DeleteArgs(line, origLine, index)
+		}
+	}
+
+	blockLevel := 0
+
+	return c.completeArgs(
+		line,
+		origLine,
+		index,
+		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
+			switch c.tokens[i].Token {
+			case ')':
+				blockLevel++
+				if blockLevel == 1 && i == c.lastIdx {
+					keywords = append(keywords, "AS")
+				}
+			case '(':
+				blockLevel--
+				if blockLevel == -1 && i == c.lastIdx && c.tokens[c.lastIdx-1].Token == parser.AS {
+					keywords = append(keywords, "SELECT")
+				}
+			case parser.WITH:
+				if blockLevel == 0 {
+					switch {
+					case i == c.lastIdx || c.tokens[c.lastIdx].Token == ',':
+						keywords = append(keywords, "RECURSIVE")
+					case c.tokens[c.lastIdx].Token == parser.IDENTIFIER:
+						if c.tokens[c.lastIdx].Literal == dummySubquery && c.tokens[c.lastIdx-1].Token == parser.AS {
+							keywords = append(keywords,
+								"SELECT",
+								"INSERT",
+								"UPDATE",
+								"DELETE",
+							)
+						} else {
+							keywords = append(keywords, "AS")
+						}
+					}
+				}
+			default:
+				return nil, nil, false
+			}
+			return keywords, customList, true
+		},
+	)
+}
+
+func (c *Completer) combineTableAlias(fromIdx int) {
+	combined := make([]parser.Token, 0, cap(c.tokens))
+	temp := make([]parser.Token, 0, cap(c.tokens))
+	blockLevel := 0
+	for i := 0; i < len(c.tokens); i++ {
+		if i <= fromIdx {
+			combined = append(combined, c.tokens[i])
+			continue
+		}
+
+		if 0 != blockLevel {
+			temp = append(temp, c.tokens[i])
+
+			switch c.tokens[i].Token {
+			case '(':
+				blockLevel++
+			case ')':
+				blockLevel--
+				if 0 == blockLevel {
+					combined = append(combined, parser.Token{Token: parser.IDENTIFIER, Literal: dummyTable, Quoted: true})
+					temp = temp[:0]
+				}
+			}
+			continue
+		}
+
+		if c.tokens[i].Token == '(' {
+			blockLevel++
+			temp = append(temp, c.tokens[i])
+			continue
+		}
+
+		combined = append(combined, c.tokens[i])
+
+		if c.tokens[i].Token == parser.IDENTIFIER {
+			combined[len(combined)-1].Quoted = false
+			if i+2 <= c.lastIdx && c.tokens[i+1].Token == parser.AS && c.tokens[i+2].Token == parser.IDENTIFIER {
+				i = i + 2
+				combined[len(combined)-1].Quoted = true
+			} else if i+1 <= c.lastIdx && c.tokens[i+1].Token == parser.IDENTIFIER {
+				i = i + 1
+				combined[len(combined)-1].Quoted = true
+			}
+		}
+	}
+	if 0 < len(temp) {
+		combined = append(combined, temp...)
+	}
+
+	c.tokens = combined
+}
+
+func (c *Completer) allTableCandidates(line string, origLine string, index int) readline.CandidateList {
+	list := c.candidateList(tableObjectCandidates, true)
+	list.Sort()
+	list = append(list, c.SearchAllTables(line, origLine, index)...)
+	return list
+}
+
+func (c *Completer) allTableCandidatesWithSpace(line string, origLine string, index int) readline.CandidateList {
+	list := c.candidateList(tableObjectCandidates, true)
+	list.Sort()
+	list = append(list, c.SearchAllTablesWithSpace(line, origLine, index)...)
+	return list
+}
+
+func (c *Completer) fromClause(i int, line string, origLine string, index int) (keywords []string, customList readline.CandidateList, restrict bool) {
+	c.combineTableAlias(i)
+	c.SetLastIndex(line)
+
+	var isInUsing = func() bool {
+		for j := len(c.tokens) - 1; j > i; j-- {
+			switch c.tokens[j].Token {
+			case parser.IDENTIFIER, ',':
+				//OK
+			case '(':
+				return c.tokens[j-1].Token == parser.USING
+			default:
+				return false
+			}
+		}
+		return false
+	}
+
+	var isInOn = func() bool {
+		blockLevel := 0
+		for j := len(c.tokens) - 1; j > i; j-- {
+			switch c.tokens[j].Token {
+			case '(':
+				blockLevel--
+			case ')':
+				blockLevel++
+			case parser.JOIN:
+				if blockLevel <= 0 {
+					return false
+				}
+			case parser.ON:
+				if blockLevel <= 0 {
+					return true
+				}
+			}
+		}
+		return false
+	}
+
+	var joinConditionRequired = func() bool {
+		if c.tokens[c.lastIdx-1].Token != parser.JOIN {
+			return false
+		}
+		if c.tokens[c.lastIdx-2].Token == parser.CROSS ||
+			c.tokens[c.lastIdx-2].Token == parser.NATURAL ||
+			c.tokens[c.lastIdx-3].Token == parser.NATURAL ||
+			c.tokens[c.lastIdx-4].Token == parser.NATURAL {
+			return false
+		}
+		return true
+	}
+
+	if isInUsing() {
+		restrict = true
+		return
+	}
+
+	if isInOn() {
+		customList = append(customList, c.whereClause(line, origLine, index)...)
+		customList.Sort()
+		if c.tokens[c.lastIdx].Token == parser.ON {
+			restrict = true
+		} else {
+			keywords = append(keywords, joinCandidates...)
+		}
+		return
+	}
+
+	switch c.tokens[c.lastIdx].Token {
+	case parser.CROSS, parser.INNER, parser.OUTER:
+		keywords = append(keywords, "JOIN")
+		restrict = true
+	case parser.LEFT, parser.RIGHT, parser.FULL:
+		keywords = append(keywords, "JOIN", "OUTER")
+		restrict = true
+	case parser.NATURAL:
+		keywords = append(keywords, "INNER", "LEFT", "RIGHT")
+		restrict = true
+	case parser.AS, parser.USING:
+		restrict = true
+	}
+
+	if joinConditionRequired() {
+		keywords = append(keywords, "ON")
+
+		if c.tokens[c.lastIdx-2].Token != parser.FULL &&
+			c.tokens[c.lastIdx-3].Token != parser.FULL {
+
+			keywords = append(keywords, "USING ()")
+		}
+
+		if c.tokens[c.lastIdx].Quoted == false {
+			keywords = append(keywords, "AS")
+		}
+		restrict = true
+	} else {
+		switch c.tokens[c.lastIdx].Token {
+		case '(':
+			keywords = append(keywords, "SELECT")
+			fallthrough
+		case parser.FROM, parser.JOIN, ',':
+			customList = append(customList, c.allTableCandidates(line, origLine, index)...)
+			restrict = true
+		}
+	}
+
+	if restrict {
+		return
+	}
+
+	if c.tokens[c.lastIdx].Token == parser.IDENTIFIER {
+		keywords = append(keywords, joinCandidates...)
+
+		if c.tokens[c.lastIdx].Quoted == false {
+			keywords = append(keywords, "AS")
+		}
+	}
+
+	return
+}
+
+func (c *Completer) whereClause(line string, origLine string, index int) readline.CandidateList {
+	cands := c.SearchValues(line, origLine, index)
+	if 0 < len(line) {
+		cands = append(cands, c.candidate("JSON_ROW()", false))
+	}
+	return cands
+}
+
+func (c *Completer) SelectArgs(line string, origLine string, index int) readline.CandidateList {
+	return c.completeArgs(
+		line,
+		origLine,
+		index,
+		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
+			switch c.tokens[i].Token {
+			case parser.OFFSET:
+				values := c.SearchValues(line, origLine, index)
+				values.Sort()
+				return nil, values, true
+			case parser.LIMIT:
+				if i < c.lastIdx {
+					switch c.tokens[c.lastIdx].Token {
+					case parser.PERCENT:
+						keywords = append(keywords,
+							"WITH TIES",
+							"OFFSET",
+						)
+					case parser.WITH:
+						keywords = append(keywords, "TIES")
+					case parser.TIES:
+						keywords = append(keywords,
+							"OFFSET",
+						)
+					default:
+						keywords = append(keywords,
+							"WITH TIES",
+							"PERCENT",
+							"OFFSET",
+						)
+					}
+				}
+				values := c.SearchValues(line, origLine, index)
+				values.Sort()
+				return keywords, values, true
+			case parser.ORDER:
+				if i == c.lastIdx {
+					keywords = append(keywords, "BY")
+				} else if i < c.lastIdx-1 && c.tokens[c.lastIdx].Token != ',' {
+					switch c.tokens[c.lastIdx].Token {
+					case parser.ASC, parser.DESC:
+						keywords = append(keywords,
+							"NULLS FIRST",
+							"NULLS LAST",
+							"LIMIT",
+							"OFFSET",
+						)
+					case parser.NULLS:
+						keywords = append(keywords,
+							"FIRST",
+							"LAST",
+						)
+					case parser.FIRST, parser.LAST:
+						keywords = append(keywords,
+							"LIMIT",
+							"OFFSET",
+						)
+					default:
+						keywords = append(keywords,
+							"ASC",
+							"DESC",
+							"NULLS FIRST",
+							"NULLS LAST",
+							"LIMIT",
+							"OFFSET",
+						)
+					}
+				}
+				values := append(c.SearchValues(line, origLine, index), c.analyticFunctionCandidateList(line)...)
+				values.Sort()
+				return keywords, values, true
+			case parser.ALL:
+				if i == c.lastIdx && 0 <= c.lastIdx-1 {
+					switch c.tokens[i-1].Token {
+					case parser.UNION, parser.EXCEPT, parser.INTERSECT:
+						keywords = append(keywords, "SELECT")
+						return keywords, nil, true
+					}
+				}
+			case parser.UNION, parser.EXCEPT, parser.INTERSECT:
+				if i == c.lastIdx {
+					keywords = append(keywords,
+						"ALL",
+						"SELECT",
+					)
+				}
+				return keywords, nil, true
+			case parser.HAVING:
+				customList = append(customList, c.whereClause(line, origLine, index)...)
+				customList.Sort()
+				if i < c.lastIdx {
+					keywords = append(keywords,
+						"ORDER BY",
+						"LIMIT",
+						"OFFSET",
+						"UNION",
+						"EXCEPT",
+						"INTERSECT",
+					)
+				}
+				return keywords, customList, true
+			case parser.GROUP:
+				if i == c.lastIdx {
+					keywords = append(keywords, "BY")
+				} else {
+					customList = append(customList, c.whereClause(line, origLine, index)...)
+					customList.Sort()
+					if i < c.lastIdx-1 && c.tokens[c.lastIdx].Token != ',' {
+						keywords = append(keywords,
+							"HAVING",
+							"ORDER BY",
+							"LIMIT",
+							"OFFSET",
+							"UNION",
+							"EXCEPT",
+							"INTERSECT",
+						)
+					}
+				}
+				return keywords, customList, true
+			case parser.WHERE:
+				customList = append(customList, c.whereClause(line, origLine, index)...)
+				customList.Sort()
+				if i < c.lastIdx {
+					keywords = append(keywords,
+						"GROUP BY",
+						"HAVING",
+						"ORDER BY",
+						"LIMIT",
+						"OFFSET",
+						"UNION",
+						"EXCEPT",
+						"INTERSECT",
+					)
+				}
+				return keywords, customList, true
+			case parser.FROM:
+				list, clist, restrict := c.fromClause(i, line, origLine, index)
+				if !restrict {
+					if i < c.lastIdx && c.tokens[c.lastIdx].Token != ',' {
+						list = append(list,
+							"WHERE",
+							"GROUP BY",
+							"HAVING",
+							"ORDER BY",
+							"LIMIT",
+							"OFFSET",
+							"UNION",
+							"EXCEPT",
+							"INTERSECT",
+						)
+					}
+				}
+				return list, clist, true
+			case parser.SELECT:
+				if i == c.lastIdx {
+					keywords = append(keywords, "DISTINCT")
+				} else {
+					lastIdx := c.lastIdx
+					if i+1 < len(c.tokens) && c.tokens[i+1].Token == parser.DISTINCT {
+						lastIdx--
+					}
+					if i < lastIdx && c.tokens[c.lastIdx].Token != ',' {
+						keywords = append(keywords,
+							"AS",
+							"FROM",
+							"WHERE",
+							"GROUP BY",
+							"HAVING",
+							"ORDER BY",
+							"LIMIT",
+							"OFFSET",
+							"UNION",
+							"EXCEPT",
+							"INTERSECT",
+						)
+					}
+				}
+				values := append(c.SearchValues(line, origLine, index), c.analyticFunctionCandidateList(line)...)
+				values.Sort()
+				return keywords, values, true
+			}
+			return nil, nil, false
+		},
+	)
+}
+
+func (c *Completer) InsertArgs(line string, origLine string, index int) readline.CandidateList {
+	return c.completeArgs(
+		line,
+		origLine,
+		index,
+		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
+			switch c.tokens[i].Token {
+			case parser.SELECT:
+				return nil, c.SelectArgs(line, origLine, index), true
+			case parser.VALUES:
+				customList = c.SearchValues(line, origLine, index)
+				if 0 < len(line) {
+					customList = append(customList, c.candidate("JSON_ROW()", false))
+				}
+				customList.Sort()
+				return nil, customList, true
+			case parser.INTO:
+				if i == c.lastIdx {
+					customList = c.allTableCandidates(line, origLine, index)
+				} else {
+					if c.tokens[c.lastIdx-1].Token == parser.INTO || c.tokens[c.lastIdx].Token == ')' {
+						keywords = append(keywords, "VALUES", "SELECT")
+					}
+				}
+				return keywords, customList, true
+			case parser.INSERT:
+				if i == c.lastIdx {
+					keywords = append(keywords, "INTO")
+				}
+				return keywords, nil, true
+			}
+			return nil, nil, false
+		},
+	)
+}
+
+func (c *Completer) UpdateArgs(line string, origLine string, index int) readline.CandidateList {
+	return c.completeArgs(
+		line,
+		origLine,
+		index,
+		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
+			switch c.tokens[i].Token {
+			case parser.WHERE:
+				customList = append(customList, c.whereClause(line, origLine, index)...)
+				customList.Sort()
+				return nil, customList, true
+			case parser.FROM:
+				list, clist, restrict := c.fromClause(i, line, origLine, index)
+				if !restrict {
+					if i < c.lastIdx && c.tokens[c.lastIdx].Token != ',' {
+						list = append(list, "WHERE")
+					}
+				}
+				keywords = list
+				customList = clist
+				return keywords, customList, true
+			case parser.SET:
+				if c.tokens[c.lastIdx].Token != parser.SET && c.tokens[c.lastIdx].Token != ',' &&
+					c.tokens[c.lastIdx-1].Token != parser.SET && c.tokens[c.lastIdx-1].Token != ',' {
+
+					customList = append(customList, c.SearchValues(line, origLine, index)...)
+					customList.Sort()
+					if c.tokens[c.lastIdx].Token != '=' {
+						keywords = append(keywords, "FROM", "WHERE")
+					}
+				}
+				return keywords, customList, true
+			case parser.UPDATE:
+				if c.tokens[c.lastIdx].Token == parser.UPDATE || c.tokens[c.lastIdx].Token == ',' {
+					customList = c.allTableCandidates(line, origLine, index)
+				} else {
+					keywords = append(keywords, "SET")
+				}
+				return keywords, customList, true
+			}
+			return nil, nil, false
+		},
+	)
+}
+
+func (c *Completer) DeleteArgs(line string, origLine string, index int) readline.CandidateList {
+	return c.completeArgs(
+		line,
+		origLine,
+		index,
+		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
+			switch c.tokens[i].Token {
+			case parser.WHERE:
+				customList = append(customList, c.whereClause(line, origLine, index)...)
+				customList.Sort()
+				return nil, customList, true
+			case parser.FROM:
+				if c.tokens[i-1].Token == parser.DELETE {
+					if c.tokens[c.lastIdx].Token == parser.FROM || c.tokens[c.lastIdx].Token == ',' {
+						customList = c.allTableCandidates(line, origLine, index)
+					} else {
+						keywords = append(keywords, "WHERE")
+					}
+				} else {
+					list, clist, restrict := c.fromClause(i, line, origLine, index)
+					if !restrict {
+						if i < c.lastIdx && c.tokens[c.lastIdx].Token != ',' {
+							list = append(list, "WHERE")
+						}
+					}
+					keywords = list
+					customList = clist
+				}
+				return keywords, customList, true
+			case parser.DELETE:
+				if c.tokens[c.lastIdx].Token != ',' {
+					keywords = append(keywords, "FROM")
+				}
+				return keywords, nil, true
+			}
+			return nil, nil, false
+		},
+	)
+}
+
+func (c *Completer) CreateArgs(line string, origLine string, index int) readline.CandidateList {
+	var isPrepositionOfSelect = func(i int) bool {
+		for j := i; j >= 0; j-- {
+			if c.tokens[j].Token == ';' || c.tokens[j].Token == parser.TABLE {
+				break
+			}
+			if c.tokens[j].Token == parser.SELECT {
+				return false
+			}
+		}
+		return true
+	}
+
+	return c.completeArgs(
+		line,
+		origLine,
+		index,
+		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
+			switch c.tokens[i].Token {
+			case parser.SELECT:
+				return nil, c.SelectArgs(line, origLine, index), true
+			case parser.AS:
+				if isPrepositionOfSelect(i) {
+					return []string{"SELECT"}, nil, true
+				}
+			case parser.TABLE:
+				if (c.tokens[c.lastIdx].Token == ')' && c.BracketIsEnclosed()) ||
+					i == c.lastIdx-1 {
+					return []string{"AS", "SELECT"}, nil, true
+				}
+			case parser.CREATE:
+				if i == c.lastIdx {
+					return []string{"TABLE"}, nil, true
+				}
+			}
+			return nil, nil, false
+		},
+	)
+}
+
+func (c *Completer) AlterArgs(line string, origLine string, index int) readline.CandidateList {
+	operations := []string{
+		"ADD",
+		"DROP",
+		"RENAME",
+		"SET",
+	}
+
+	addPositions := []string{
+		"FIRST",
+		"LAST",
+		"AFTER",
+		"BEFORE",
+	}
+
+	var columnsInTable = func(i int, appendSpace bool) readline.CandidateList {
+		var tableName string
+		for j := i; j >= 0; j-- {
+			if c.tokens[j].Token == parser.TABLE {
+				tableName = c.tokens[j+1].Literal
+				break
+			}
+		}
+
+		var clist readline.CandidateList
+		if 0 < len(tableName) {
+			clist = c.identifierList(c.ColumnList(tableName, cmd.GetFlags().Repository), appendSpace)
+		}
+		return clist
+	}
+
+	return c.completeArgs(
+		line,
+		origLine,
+		index,
+		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
+			switch c.tokens[i].Token {
+			case parser.AFTER, parser.BEFORE:
+				return nil, columnsInTable(i, false), true
+			case parser.ADD:
+				prevToken := c.tokens[c.lastIdx].Token
+
+				if i+1 < len(c.tokens) && c.tokens[i+1].Token == '(' {
+					if c.BracketIsEnclosed() {
+						if prevToken == ')' {
+							return nil, c.candidateList(addPositions, true), true
+						}
+					} else {
+						switch {
+						case prevToken == '(' || prevToken == ',':
+							//Column
+						case c.tokens[c.lastIdx-1].Token == '(' || c.tokens[c.lastIdx-1].Token == ',':
+							return []string{"DEFAULT"}, nil, true
+						default:
+							return nil, c.SearchValues(line, origLine, index), true
+						}
+					}
+				} else {
+					switch i {
+					case c.lastIdx:
+						//Column
+					case c.lastIdx - 1:
+						return []string{"DEFAULT"}, c.candidateList(addPositions, true), true
+					default:
+						return nil, c.SearchValues(line, origLine, index), true
+					}
+				}
+			case parser.DROP:
+				if i+1 < len(c.tokens) && c.tokens[i+1].Token == '(' {
+					if !c.BracketIsEnclosed() {
+						return nil, columnsInTable(i, false), true
+					}
+				} else {
+					switch i {
+					case c.lastIdx:
+						return nil, columnsInTable(i, false), true
+					}
+				}
+			case parser.RENAME:
+				switch i {
+				case c.lastIdx:
+					return nil, columnsInTable(i, true), true
+				case c.lastIdx - 1:
+					return []string{"TO"}, nil, true
+				}
+			case parser.SET:
+				switch i {
+				case c.lastIdx:
+					return FileAttributeList, nil, true
+				case c.lastIdx - 1:
+					return []string{"TO"}, nil, true
+				case c.lastIdx - 2:
+					switch strings.ToUpper(c.tokens[c.lastIdx-1].Literal) {
+					case TableFormat:
+						return nil, c.candidateList(c.tableFormatList(), false), true
+					case TableDelimiter:
+						return nil, c.candidateList(delimiterCandidates, false), true
+					case TableEncoding:
+						return nil, c.candidateList(c.encodingList(), false), true
+					case TableLineBreak:
+						return nil, c.candidateList(c.lineBreakList(), false), true
+					case TableJsonEscape:
+						return nil, c.candidateList(c.jsonEscapeTypeList(), false), true
+					case TableHeader, TableEncloseAll, TablePrettyPrint:
+						return nil, c.candidateList([]string{ternary.TRUE.String(), ternary.FALSE.String()}, false), true
+					}
+				}
+			case parser.TABLE:
+				switch i {
+				case c.lastIdx:
+					return nil, c.allTableCandidatesWithSpace(line, origLine, index), true
+				case c.lastIdx - 1:
+					return operations, nil, true
+				}
+			case parser.ALTER:
+				if i == c.lastIdx {
+					return []string{"TABLE"}, nil, true
+				}
+			default:
+				return nil, nil, false
+			}
+			return nil, nil, true
+		},
+	)
+}
+
+func (c *Completer) DeclareArgs(line string, origLine string, index int) readline.CandidateList {
+	return c.completeArgs(
+		line,
+		origLine,
+		index,
+		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
+			switch c.tokens[i].Token {
+			case parser.SELECT:
+				return nil, c.SelectArgs(line, origLine, index), true
+			case parser.FOR:
+				if i == c.lastIdx {
+					return []string{"SELECT"}, nil, true
+				}
+			case parser.CURSOR:
+				if i == c.lastIdx {
+					return []string{"FOR"}, nil, true
+				}
+			case parser.AGGREGATE, parser.FUNCTION, parser.VIEW, parser.VAR:
+			case parser.DECLARE:
+				if i == c.lastIdx-1 && c.tokens[c.lastIdx].Token != parser.VARIABLE {
+					obj := []string{
+						"CURSOR",
+						"VIEW",
+						"FUNCTION",
+						"AGGREGATE",
+					}
+					return obj, nil, true
+				}
+			default:
+				return nil, nil, false
+			}
+
+			if c.tokens[c.lastIdx].Token == parser.SUBSTITUTION_OP {
+				return nil, c.SearchValues(line, origLine, index), true
+			}
+
+			return nil, nil, true
+		},
+	)
+}
+
+func (c *Completer) FetchArgs(line string, origLine string, index int) readline.CandidateList {
+	positions := []string{
+		"NEXT",
+		"PRIOR",
+		"FIRST",
+		"LAST",
+		"ABSOLUTE",
+		"RELATIVE",
+	}
+
+	return c.completeArgs(
+		line,
+		origLine,
+		index,
+		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
+			switch c.tokens[i].Token {
+			case parser.INTO:
+				return nil, c.SearchValues(line, origLine, index), true
+			case parser.NEXT, parser.PRIOR, parser.FIRST, parser.LAST:
+				switch i {
+				case c.lastIdx:
+					return c.cursorList, nil, true
+				case c.lastIdx - 1:
+					return []string{"INTO"}, nil, true
+				}
+				return nil, nil, true
+			case parser.ABSOLUTE, parser.RELATIVE:
+				switch i {
+				case c.lastIdx:
+					return nil, c.SearchValuesWithSpace(line, origLine, index), true
+				default:
+					if c.tokens[c.lastIdx].Token == parser.IDENTIFIER {
+						return []string{"INTO"}, nil, true
+					} else {
+						return c.cursorList, nil, true
+					}
+				}
+			case parser.FETCH:
+				switch i {
+				case c.lastIdx:
+					return c.cursorList, c.candidateList(positions, true), true
+				case c.lastIdx - 1:
+					return []string{"INTO"}, nil, true
+				}
+				return nil, nil, true
+			}
+			return nil, nil, false
+		},
+	)
+}
+
+func (c *Completer) SetArgs(line string, origLine string, index int) readline.CandidateList {
+	return c.completeArgs(
+		line,
+		origLine,
+		index,
+		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
+			switch c.tokens[i].Token {
+			case parser.TO:
+				if i == c.lastIdx && c.tokens[c.lastIdx-1].Token == parser.FLAG {
+					switch strings.ToUpper(c.tokens[c.lastIdx-1].Literal) {
+					case cmd.RepositoryFlag:
+						return nil, c.SearchDirs(line, origLine, index), true
+					case cmd.TimezoneFlag:
+						return nil, c.candidateList([]string{"Local", "UTC"}, false), true
+					case cmd.DelimiterFlag, cmd.WriteDelimiterFlag:
+						return nil, c.candidateList(delimiterCandidates, false), true
+					case cmd.EncodingFlag, cmd.WriteEncodingFlag:
+						return nil, c.candidateList(c.encodingList(), false), true
+					case cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAll, cmd.PrettyPrintFlag,
+						cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag,
+						cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag:
+						return nil, c.candidateList([]string{ternary.TRUE.String(), ternary.FALSE.String()}, false), true
+					case cmd.FormatFlag:
+						return nil, c.candidateList(c.tableFormatList(), false), true
+					case cmd.LineBreakFlag:
+						return nil, c.candidateList(c.lineBreakList(), false), true
+					case cmd.JsonEscape:
+						return nil, c.candidateList(c.jsonEscapeTypeList(), false), true
+					}
+				}
+				return nil, c.SearchValues(line, origLine, index), true
+			case parser.SET:
+				switch i {
+				case c.lastIdx:
+					return nil, append(c.candidateList(c.flagList, true), c.candidateList(c.environmentVariableList(line), true)...), true
+				case c.lastIdx - 1:
+					return []string{"TO"}, nil, true
+				}
+				return nil, nil, true
+			}
+			return nil, nil, false
+		},
+	)
+}
+
+func (c *Completer) UsingArgs(line string, origLine string, index int) readline.CandidateList {
+	return c.completeArgs(
+		line,
+		origLine,
+		index,
+		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
+			switch c.tokens[i].Token {
+			case parser.USING:
+				return nil, c.SearchValues(line, origLine, index), true
+			case parser.EXECUTE, parser.PRINTF:
+				if i < c.lastIdx {
+					keywords = append(keywords, "USING")
+				}
+				return keywords, c.SearchValues(line, origLine, index), true
+			}
+			return nil, nil, false
+		},
+	)
+}
+
+func (c *Completer) AddFlagArgs(line string, origLine string, index int) readline.CandidateList {
+	return c.completeArgs(
+		line,
+		origLine,
+		index,
+		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
+			switch c.tokens[i].Token {
+			case parser.TO:
+				return nil, c.candidateList([]string{cmd.FlagSymbol(cmd.DatetimeFormatFlag)}, false), true
+			case parser.ADD:
+				if i < c.lastIdx {
+					keywords = append(keywords, "TO")
+				}
+				return keywords, c.SearchValues(line, origLine, index), true
+			}
+			return nil, nil, false
+		},
+	)
+}
+
+func (c *Completer) RemoveFlagArgs(line string, origLine string, index int) readline.CandidateList {
+	return c.completeArgs(
+		line,
+		origLine,
+		index,
+		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
+			switch c.tokens[i].Token {
+			case parser.FROM:
+				return nil, c.candidateList([]string{cmd.FlagSymbol(cmd.DatetimeFormatFlag)}, false), true
+			case parser.REMOVE:
+				if i < c.lastIdx {
+					keywords = append(keywords, "FROM")
+				}
+				return keywords, c.SearchValues(line, origLine, index), true
+			}
+			return nil, nil, false
+		},
+	)
+
+}
+
+func (c *Completer) DisposeArgs(line string, origLine string, index int) readline.CandidateList {
+	return c.completeArgs(
+		line,
+		origLine,
+		index,
+		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
+			switch c.tokens[i].Token {
+			case parser.CURSOR:
+				switch i {
+				case c.lastIdx:
+					return nil, c.candidateList(c.cursorList, false), true
+				}
+			case parser.FUNCTION:
+				switch i {
+				case c.lastIdx:
+					return nil, c.candidateList(c.userFuncList, false), true
+				}
+			case parser.VIEW:
+				switch i {
+				case c.lastIdx:
+					return nil, c.candidateList(c.viewList, false), true
+				}
+			case parser.DISPOSE:
+				switch i {
+				case c.lastIdx:
+					var items []string
+					if 0 < len(c.cursorList) {
+						items = append(items, "CURSOR")
+					}
+					if 0 < len(c.userFuncList) {
+						items = append(items, "FUNCTION")
+					}
+					if 0 < len(c.viewList) {
+						items = append(items, "VIEW")
+					}
+					sort.Strings(items)
+					list := append(c.candidateList(items, true), c.candidateList(c.varList, false)...)
+					return nil, list, true
+				}
+			default:
+				return nil, nil, false
+			}
+			return nil, nil, true
+		},
+	)
+}
+
+func (c *Completer) ShowArgs(line string, origLine string, index int) readline.CandidateList {
+	var showChild = func() readline.CandidateList {
+		cands := c.candidateList(ShowObjectList, false)
+		cands = append(cands, c.candidate("FIELDS", true))
+		cands.Sort()
+		cands = append(cands, c.candidateList(c.flagList, false)...)
+		return cands
+	}
+
+	return c.completeArgs(
+		line,
+		origLine,
+		index,
+		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
+			switch c.tokens[i].Token {
+			case parser.FROM:
+				switch i {
+				case c.lastIdx:
+					return nil, c.SearchAllTables(line, origLine, index), true
+				}
+			case parser.SHOW:
+				switch i {
+				case c.lastIdx:
+					return nil, showChild(), true
+				case c.lastIdx - 1:
+					if c.tokens[c.lastIdx].Token == parser.IDENTIFIER && strings.ToUpper(c.tokens[c.lastIdx].Literal) == "FIELDS" {
+						return []string{"FROM"}, nil, true
+					}
+				}
+			default:
+				return nil, nil, false
+			}
+			return nil, nil, true
+		},
+	)
+}
+
+func (c *Completer) SearchAllTablesWithSpace(line string, origLine string, index int) readline.CandidateList {
+	cands := c.SearchAllTables(line, origLine, index)
+	for i := range cands {
+		cands[i].AppendSpace = true
+	}
+	return cands
+}
+
+func (c *Completer) SearchAllTables(line string, origLine string, index int) readline.CandidateList {
+	tableKeys := ViewCache.SortedKeys()
+	files := c.ListFiles(line, []string{cmd.CsvExt, cmd.TsvExt, cmd.FixedExt, cmd.JsonExt}, cmd.GetFlags().Repository)
+
+	defaultDir := cmd.GetFlags().Repository
+	if len(defaultDir) < 1 {
+		defaultDir, _ = os.Getwd()
+	}
+
+	items := make([]string, 0, len(tableKeys)+len(files)+len(c.viewList))
+	tablePath := make(map[string]bool)
+	for _, k := range tableKeys {
+		lpath := ViewCache[k].FileInfo.Path
+		tablePath[lpath] = true
+		if filepath.Dir(lpath) == defaultDir {
+			items = append(items, filepath.Base(lpath))
+		} else {
+			items = append(items, lpath)
+		}
+	}
+
+	items = append(items, c.viewList...)
+	sort.Strings(items)
+
+	for _, f := range files {
+		if f != "." && f != ".." {
+			abs := f
+			if !filepath.IsAbs(abs) {
+				abs = filepath.Join(defaultDir, abs)
+			}
+			if _, ok := tablePath[abs]; ok {
+				continue
+			}
+		}
+		items = append(items, f)
+	}
+
+	cands := make(readline.CandidateList, 0, len(items))
+	for _, t := range items {
+		cands = append(cands, readline.Candidate{Name: []rune(t), FormatAsIdentifier: true, AppendSpace: false})
+	}
+	return cands
+}
+
+func (c *Completer) SearchExecutableFiles(line string, origLine string, index int) readline.CandidateList {
+	cands := c.SearchValues(line, origLine, index)
+	files := c.ListFiles(line, []string{cmd.SqlExt, cmd.CsvqProcExt}, "")
+	return append(cands, c.identifierList(files, false)...)
+}
+
+func (c *Completer) SearchDirs(line string, origLine string, index int) readline.CandidateList {
+	cands := c.SearchValues(line, origLine, index)
+	files := c.ListFiles(line, nil, "")
+	return append(cands, c.identifierList(files, false)...)
+}
+
+func (c *Completer) SearchValuesWithSpace(line string, origLine string, index int) readline.CandidateList {
+	cands := c.SearchValues(line, origLine, index)
+	for i := range cands {
+		cands[i].AppendSpace = true
+	}
+	return cands
+}
+
+func (c *Completer) SearchValues(line string, origLine string, index int) readline.CandidateList {
+	if cands := c.EncloseQuotation(line, origLine, index); cands != nil {
+		return cands
+	}
+
+	searchWord := strings.ToUpper(line)
+
+	if 0 < len(c.cursorList) {
+		if cands := c.CursorStatus(line, origLine, index); 0 < len(cands) {
+			return cands
+		}
+	}
+
+	var cands readline.CandidateList
+	if len(searchWord) < 1 {
+		return cands
+	}
+
+	var list []string
+	if 1 < len(line) {
+		list = append(list, c.runinfoList...)
+		list = append(list, c.environmentVariableList(line)...)
+	}
+	list = append(list, c.varList...)
+	list = append(list, c.funcList...)
+	list = append(list,
+		"TRUE",
+		"FALSE",
+		"UNKNOWN",
+		"NULL",
+	)
+
+	for _, s := range list {
+		if strings.HasPrefix(strings.ToUpper(s), searchWord) {
+			cands = append(cands, readline.Candidate{Name: []rune(s), FormatAsIdentifier: false, AppendSpace: false})
+		}
+	}
+
+	list = list[:0]
+	list = append(list,
+		"AND",
+		"OR",
+		"NOT",
+		"IS",
+		"BETWEEN",
+		"LIKE",
+		"IN",
+		"ANY",
+		"ALL",
+		"EXISTS",
+		"CASE",
+	)
+
+	if 0 < len(c.cursorList) {
+		list = append(list, "CURSOR")
+	}
+
+	if 0 <= c.lastIdx && c.tokens[c.lastIdx].Token == '(' {
+		list = append(list, "SELECT")
+	}
+
+	for _, s := range list {
+		if strings.HasPrefix(strings.ToUpper(s), searchWord) {
+			cands = append(cands, readline.Candidate{Name: []rune(s), FormatAsIdentifier: false, AppendSpace: true})
+		}
+	}
+
+	if caseCands := c.CaseExpression(line, origLine, index); 0 < len(caseCands) {
+		cands = append(cands, caseCands...)
+	}
+
+	return cands
+}
+
+func (c *Completer) CursorStatus(line string, origLine string, index int) readline.CandidateList {
+	return c.completeArgs(
+		line,
+		origLine,
+		index,
+		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
+			switch c.tokens[i].Token {
+			case parser.IN:
+				switch i {
+				case c.lastIdx:
+					if (0 < c.lastIdx-3 &&
+						c.tokens[c.lastIdx-3].Token == parser.CURSOR &&
+						c.tokens[c.lastIdx-1].Token == parser.IS) ||
+						0 < c.lastIdx-4 &&
+							c.tokens[c.lastIdx-4].Token == parser.CURSOR &&
+							c.tokens[c.lastIdx-2].Token == parser.IS &&
+							c.tokens[c.lastIdx-1].Token == parser.NOT {
+						return nil, c.filteredCandidateList(line, []string{"RANGE"}, false), true
+					}
+				}
+			case parser.NOT:
+				switch i {
+				case c.lastIdx:
+					if 0 < c.lastIdx-3 &&
+						c.tokens[c.lastIdx-3].Token == parser.CURSOR &&
+						c.tokens[c.lastIdx-1].Token == parser.IS {
+						return []string{"IN"}, c.filteredCandidateList(line, []string{"OPEN"}, false), true
+					}
+				}
+			case parser.IS:
+				switch i {
+				case c.lastIdx:
+					if 0 < c.lastIdx-2 && c.tokens[c.lastIdx-2].Token == parser.CURSOR {
+						return []string{"NOT", "IN"}, c.filteredCandidateList(line, []string{"OPEN"}, false), true
+					}
+				}
+			case parser.CURSOR:
+				switch i {
+				case c.lastIdx:
+					return c.cursorList, nil, true
+				case c.lastIdx - 1:
+					return []string{"IS"}, c.filteredCandidateList(line, []string{"COUNT"}, false), true
+				}
+			case parser.IDENTIFIER, parser.COUNT, parser.OPEN, parser.RANGE:
+				return nil, nil, false
+			}
+			return nil, nil, true
+		},
+	)
+}
+
+func (c *Completer) caseExpressionIsNotEnclosed() bool {
+	if 0 < len(c.tokens) && c.tokens[0].Token == parser.CASE {
+		return false
+	}
+
+	var blockLevel = 0
+	for i := 0; i < len(c.tokens); i++ {
+		switch c.tokens[i].Token {
+		case parser.CASE:
+			blockLevel++
+		case parser.END:
+			blockLevel--
+		}
+	}
+	return 0 < blockLevel
+}
+
+func (c *Completer) CaseExpression(line string, origLine string, index int) readline.CandidateList {
+	caseExperEnclosed := true
+
+	return c.completeArgs(
+		line,
+		origLine,
+		index,
+		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
+			if caseExperEnclosed {
+				if caseExperEnclosed = !c.caseExpressionIsNotEnclosed(); caseExperEnclosed {
+					return nil, nil, true
+				}
+			}
+
+			switch c.tokens[i].Token {
+			case parser.ELSE:
+				if i < c.lastIdx {
+					return nil, c.filteredCandidateList(line, []string{"END"}, false), true
+				}
+				return nil, nil, true
+			case parser.THEN:
+				if i < c.lastIdx {
+					return []string{"WHEN", "ELSE"}, c.filteredCandidateList(line, []string{"END"}, false), true
+				}
+				return nil, nil, true
+			case parser.WHEN:
+				if i < c.lastIdx {
+					return []string{"THEN"}, nil, true
+				}
+				return nil, nil, true
+			case parser.CASE:
+				return []string{"WHEN"}, nil, true
+			}
+			return nil, nil, false
+		},
+	)
+}
+
+func (c *Completer) EncloseQuotation(line string, origLine string, index int) readline.CandidateList {
+	runes := []rune(line)
+	if 0 < len(runes) && readline.IsQuotationMark(runes[0]) && !readline.LiteralIsEnclosed(runes[0], []rune(origLine)) {
+		return c.candidateList([]string{string(append([]rune(line), runes[0]))}, false)
+	}
+
+	return nil
+}
+
+func (c *Completer) ListFiles(path string, includeExt []string, repository string) []string {
+	list := make([]string, 0, 10)
+
+	if 0 < len(path) && (path[0] == '"' || path[0] == '\'' || path[0] == '`') {
+		path = path[1:]
+	}
+	searchWord := strings.ToUpper(path)
+
+	var defaultDir string
+	if len(path) < 1 || (!filepath.IsAbs(path) && path != "." && path != ".." && filepath.Base(path) == path) {
+		if 0 < len(repository) {
+			defaultDir = repository
+		} else {
+			defaultDir, _ = os.Getwd()
+		}
+		path = defaultDir
+
+		for _, v := range []string{".", ".."} {
+			if len(searchWord) < 1 || strings.HasPrefix(strings.ToUpper(v), searchWord) {
+				list = append(list, v)
+			}
+		}
+	}
+
+	if _, err := os.Stat(path); err != nil {
+		path = filepath.Dir(path)
+	}
+
+	if files, err := ioutil.ReadDir(path); err == nil {
+
+		for _, f := range files {
+			if f.Name()[0] == '.' {
+				continue
+			}
+
+			if !f.IsDir() && (len(includeExt) < 1 || !InStrSliceWithCaseInsensitive(filepath.Ext(f.Name()), includeExt)) {
+				continue
+			}
+
+			fpath := f.Name()
+			if len(defaultDir) < 1 {
+				if path == "." || path == "."+string(os.PathSeparator) {
+					fpath = "." + string(os.PathSeparator) + fpath
+				} else {
+					fpath = filepath.Join(path, fpath)
+				}
+			}
+			if f.IsDir() {
+				fpath = fpath + string(os.PathSeparator)
+			}
+			if len(searchWord) < 1 || strings.HasPrefix(strings.ToUpper(fpath), searchWord) {
+				list = append(list, fpath)
+			}
+		}
+	}
+
+	return list
+}
+
+func (c *Completer) AllColumnList() []string {
+	m := make(map[string]bool)
+	for _, view := range c.filter.TempViews[0] {
+		col := c.columnList(view)
+		for _, s := range col {
+			if _, ok := m[s]; !ok {
+				m[s] = true
+			}
+		}
+	}
+
+	for _, view := range ViewCache {
+		col := c.columnList(view)
+		for _, s := range col {
+			if _, ok := m[s]; !ok {
+				m[s] = true
+			}
+		}
+	}
+
+	list := make([]string, 0, len(m))
+	for k := range m {
+		list = append(list, k)
+	}
+	sort.Strings(list)
+	return list
+}
+
+func (c *Completer) ColumnList(tableName string, repository string) []string {
+	if list, ok := c.tableColumns[tableName]; ok {
+		return list
+	}
+
+	if view, ok := c.filter.TempViews[0][strings.ToUpper(tableName)]; ok {
+		list := c.columnList(view)
+		c.tableColumns[tableName] = list
+		return list
+	}
+
+	if fpath, err := CreateFilePath(parser.Identifier{Literal: tableName}, repository); err == nil {
+		if view, ok := ViewCache[strings.ToUpper(fpath)]; ok {
+			list := c.columnList(view)
+			c.tableColumns[tableName] = list
+			return list
+		}
+	}
+	if fpath, err := SearchFilePathFromAllTypes(parser.Identifier{Literal: tableName}, repository); err == nil {
+		if view, ok := ViewCache[strings.ToUpper(fpath)]; ok {
+			list := c.columnList(view)
+			c.tableColumns[tableName] = list
+			return list
+		}
+	}
+
+	return nil
+}
+
+func (*Completer) columnList(view *View) []string {
+	var list []string
+	for _, h := range view.Header {
+		list = append(list, h.Column)
+	}
+	return list
+}
+
+func (c *Completer) completeArgs(
+	line string,
+	origLine string,
+	index int,
+	fn func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool),
+) readline.CandidateList {
+	if cands := c.EncloseQuotation(line, origLine, index); cands != nil {
+		return cands
+	}
+
+	baseInterval := 1
+	if 0 < len(line) {
+		baseInterval++
+	}
+	if 0 < len(c.tokens) && 0 < len(line) {
+		c.tokens[len(c.tokens)-1].Token = parser.IDENTIFIER
+	}
+
+	var keywords []string
+	var customList readline.CandidateList
+	var breakLoop bool
+
+	for i := len(c.tokens) - 1; i >= 0; i-- {
+		if keywords, customList, breakLoop = fn(i); breakLoop {
+			break
+		}
+	}
+
+	cands := c.filteredCandidateList(line, keywords, true)
+	cands.Sort()
+	if 0 < len(customList) {
+		cands = append(cands, customList...)
+	}
+	return cands
+}
+
+func (c *Completer) UpdateTokens(line string, origLine string) {
+	c.tokens = c.tokens[:0]
+	s := new(parser.Scanner)
+	s.Init(origLine, "")
+	for {
+		t, _ := s.Scan()
+		if t.Token == parser.EOF {
+			break
+		}
+		c.tokens = append(c.tokens, t)
+	}
+
+	if 0 < len(c.tokens) {
+		c.tokens = c.tokens[c.searchStartIndex():]
+	}
+
+	c.combineSubqueryTokens()
+	c.combineTableObject()
+	c.SetLastIndex(line)
+}
+
+func (c *Completer) SetLastIndex(line string) {
+	c.lastIdx = len(c.tokens) - 1
+	if 0 < len(c.tokens) && 0 < len(line) {
+		c.tokens[len(c.tokens)-1].Token = parser.IDENTIFIER
+		c.lastIdx--
+	}
+}
+
+func (c *Completer) searchStartIndex() int {
+	idx := 0
+	blockLevel := 0
+
+StartIndexLoop:
+	for i := len(c.tokens) - 1; i >= 0; i-- {
+		switch c.tokens[i].Token {
+		case ';':
+			idx = i + 1
+			break StartIndexLoop
+		case '(':
+			blockLevel--
+			if blockLevel < 0 {
+				switch {
+				case i+1 < len(c.tokens) && c.tokens[i+1].Token == parser.SELECT:
+					idx = i + 1
+					break StartIndexLoop
+				case 0 <= i-1 && c.isTableObject(c.tokens[i-1]):
+					idx = i - 1
+					break StartIndexLoop
+				}
+			}
+		case ')':
+			blockLevel++
+		}
+	}
+
+	return idx
+}
+
+func (c *Completer) combineSubqueryTokens() {
+	combined := make([]parser.Token, 0, cap(c.tokens))
+	blockLevel := 0
+	for i := 0; i < len(c.tokens); i++ {
+		if 0 < blockLevel {
+			switch c.tokens[i].Token {
+			case '(':
+				blockLevel++
+			case ')':
+				blockLevel--
+				if blockLevel == 0 {
+					combined = append(combined, parser.Token{Token: parser.IDENTIFIER, Literal: dummySubquery})
+				}
+			}
+			continue
+		}
+
+		if c.tokens[i].Token == '(' && i+1 < len(c.tokens) && c.tokens[i+1].Token == parser.SELECT {
+			blockLevel++
+			i++
+		} else {
+			combined = append(combined, c.tokens[i])
+		}
+
+	}
+	c.tokens = combined
+}
+
+func (c *Completer) combineTableObject() {
+	combined := make([]parser.Token, 0, cap(c.tokens))
+	blockLevel := 0
+	tableIdx := 0
+	for i := 0; i < len(c.tokens); i++ {
+		if 0 < blockLevel {
+			switch c.tokens[i].Token {
+			case '(':
+				blockLevel++
+			case ')':
+				blockLevel--
+				if blockLevel == 0 {
+					lit := dummyTableObject
+					if 0 < tableIdx {
+						lit = c.tokens[tableIdx].Literal
+					}
+					combined = append(combined, parser.Token{Token: parser.IDENTIFIER, Literal: lit})
+				}
+			case ',':
+				if tableIdx == 0 && blockLevel == 1 {
+					tableIdx = i + 1
+				}
+			}
+			continue
+		}
+
+		if 1 < i && c.isTableObject(c.tokens[i]) && i+1 < len(c.tokens) && c.tokens[i+1].Token == '(' {
+			blockLevel++
+			i++
+		} else {
+			combined = append(combined, c.tokens[i])
+		}
+
+	}
+	c.tokens = combined
+}
+
+func (c *Completer) isTableObject(token parser.Token) bool {
+	return (token.Token == parser.IDENTIFIER && InStrSliceWithCaseInsensitive(token.Literal, tableObjects)) ||
+		token.Token == parser.JSON_TABLE
+}
+
+func (c *Completer) BracketIsEnclosed() bool {
+	var blockLevel = 0
+	for i := 0; i < len(c.tokens); i++ {
+		switch c.tokens[i].Token {
+		case '(':
+			blockLevel++
+		case ')':
+			blockLevel--
+		}
+	}
+	return blockLevel < 1
+}
+
+func (c *Completer) candidateList(list []string, appendSpace bool) readline.CandidateList {
+	cands := make(readline.CandidateList, 0, len(list))
+	for _, v := range list {
+		cands = append(cands, c.candidate(v, appendSpace))
+	}
+	return cands
+}
+
+func (c *Completer) identifierList(list []string, appendSpace bool) readline.CandidateList {
+	cands := make(readline.CandidateList, 0, len(list))
+	for _, v := range list {
+		cands = append(cands, c.identifier(v, appendSpace))
+	}
+	return cands
+}
+
+func (c *Completer) filteredCandidateList(line string, list []string, appendSpace bool) readline.CandidateList {
+	searchWord := strings.ToUpper(line)
+
+	cands := make(readline.CandidateList, 0, len(list))
+	for _, v := range list {
+		if len(searchWord) < 1 || strings.HasPrefix(strings.ToUpper(v), searchWord) {
+			cands = append(cands, c.candidate(v, appendSpace))
+		}
+	}
+	return cands
+}
+
+func (c *Completer) candidate(candidate string, appendSpace bool) readline.Candidate {
+	return readline.Candidate{Name: []rune(candidate), FormatAsIdentifier: false, AppendSpace: appendSpace}
+}
+
+func (c *Completer) identifier(candidate string, appendSpace bool) readline.Candidate {
+	return readline.Candidate{Name: []rune(candidate), FormatAsIdentifier: true, AppendSpace: appendSpace}
+}
+
+func (c *Completer) analyticFunctionCandidateList(line string) readline.CandidateList {
+	if len(line) < 1 {
+		return nil
+	}
+	return c.filteredCandidateList(line, c.analyticFuncList, false)
+}
+
+func (c *Completer) environmentVariableList(line string) []string {
+	if 2 < len(line) && strings.HasPrefix(line, cmd.EnvironmentVariableSign+"`") {
+		return c.enclosedEnvList
+	}
+	return c.envList
+}
+
+func (c *Completer) tableFormatList() []string {
+	list := make([]string, 0, len(cmd.FormatLiteral))
+	for _, v := range cmd.FormatLiteral {
+		list = append(list, v)
+	}
+	sort.Strings(list)
+	return list
+}
+
+func (c *Completer) encodingList() []string {
+	list := make([]string, 0, len(text.EncodingLiteral))
+	for _, v := range text.EncodingLiteral {
+		list = append(list, v)
+	}
+	sort.Strings(list)
+	return list
+}
+
+func (c *Completer) lineBreakList() []string {
+	list := make([]string, 0, len(text.LineBreakLiteral))
+	for _, v := range text.LineBreakLiteral {
+		list = append(list, v)
+	}
+	sort.Strings(list)
+	return list
+}
+
+func (c *Completer) jsonEscapeTypeList() []string {
+	list := make([]string, 0, len(cmd.JsonEscapeTypeLiteral))
+	for _, v := range cmd.JsonEscapeTypeLiteral {
+		list = append(list, v)
+	}
+	sort.Strings(list)
+	return list
+}

@@ -6,10 +6,10 @@ github.com/mitchellh/go-homedir v1.0.0 h1:vKb8ShqSby24Yrqr/yDYkuFz8d0WUjys40rvnG
 github.com/mitchellh/go-homedir v1.0.0/go.mod h1:SfyaCUpYCn1Vlf4IUYiD9fPX4A5wJrkLzIz1N1q0pr0=
 github.com/mithrandie/go-file v1.1.0 h1:XtPgw6ureMfrHytkyE7FBX12smfz7+8PWZD8wHgQFns=
 github.com/mithrandie/go-file v1.1.0/go.mod h1:9dZVuG483umReJ+yxSZIsgsfPC2MWuztzEpkyPL8ma4=
-github.com/mithrandie/go-text v1.0.10 h1:Fy08WUx+IO1dSKM3evAGV9WBAX/P1VC5cYEWMFjCBc0=
-github.com/mithrandie/go-text v1.0.10/go.mod h1:YLvRM8Joe+DAwO6fj2/gUxjBj4qRVIHRNJyauZ6G68Q=
-github.com/mithrandie/readline-csvq v0.1.0 h1:SZOKYWrqMsU4E2q/+ibRaCShqf/AdB699LGne1C1T3U=
-github.com/mithrandie/readline-csvq v0.1.0/go.mod h1:nzAZWT61x/QPrTuX/UeWc8CuPuazhY5OyRphtyyfkxA=
+github.com/mithrandie/go-text v1.0.11 h1:2WX6SWkkWHHUcaf0jLtGOpL4w4JwMaKYFzYdpUdfHG0=
+github.com/mithrandie/go-text v1.0.11/go.mod h1:YLvRM8Joe+DAwO6fj2/gUxjBj4qRVIHRNJyauZ6G68Q=
+github.com/mithrandie/readline-csvq v1.0.1 h1:LeLc2jdP4LMBgWxgIQ2QY6P2LQmmgsS4NVJt8Czb0/M=
+github.com/mithrandie/readline-csvq v1.0.1/go.mod h1:nzAZWT61x/QPrTuX/UeWc8CuPuazhY5OyRphtyyfkxA=
 github.com/mithrandie/ternary v1.1.0 h1:BlN8EoTsIYjhuWkfXHrh7+G+/Y0VvvWGVVldyjNH2VU=
 github.com/mithrandie/ternary v1.1.0/go.mod h1:0D9Ba3+09K2TdSZO7/bFCC0GjSXetCvYuYq0u8FY/1g=
 github.com/nbutton23/zxcvbn-go v0.0.0-20180912185939-ae427f1e4c1d/go.mod h1:o96djdrsSGy3AWPyBgZMAGfxZNfgntdJG+11KU4QvbU=
@@ -21,3 +21,4 @@ golang.org/x/sys v0.0.0-20181107165924-66b7b1311ac8 h1:YoY1wS6JYVRpIfFngRf2HHo9R
 golang.org/x/sys v0.0.0-20181107165924-66b7b1311ac8/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/text v0.3.0 h1:g61tztE5qeGQ89tm6NTjjM9VPIm088od1l6aSorWRWg=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
+golang.org/x/tools v0.0.0-20181207222222-4c874b978acb/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=

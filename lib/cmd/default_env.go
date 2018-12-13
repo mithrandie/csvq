@@ -7,7 +7,10 @@ const DefaultEnvJson = `
     "history_file": ".csvq_history",
     "history_limit": 500,
     "prompt": "\u001b[34;1m@#WORKING_DIRECTORY${(IF(@#UNCOMMITTED, ' \u001b[33;1m(Uncommitted:' || @#CREATED + @#UPDATED + @#UPDATED_VIEWS || ')', ''))}\u001b[34;1m >\u001b[0m ",
-    "continuous_prompt": " > "
+    "continuous_prompt": " > ",
+    "completion": true,
+    "kill_whole_line": false,
+    "vi_mode": false
   },
   "environment_variables": {},
   "palette": {

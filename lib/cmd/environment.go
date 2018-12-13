@@ -45,7 +45,7 @@ func (e *Environment) Merge(e2 *Environment) {
 		e.InteractiveShell.HistoryFile = e2.InteractiveShell.HistoryFile
 	}
 
-	if e2.InteractiveShell.HistoryLimit != 0 {
+	if e2.InteractiveShell.HistoryLimit != nil {
 		e.InteractiveShell.HistoryLimit = e2.InteractiveShell.HistoryLimit
 	}
 
@@ -55,6 +55,18 @@ func (e *Environment) Merge(e2 *Environment) {
 
 	if 0 < len(e2.InteractiveShell.ContinuousPrompt) {
 		e.InteractiveShell.ContinuousPrompt = e2.InteractiveShell.ContinuousPrompt
+	}
+
+	if e2.InteractiveShell.Completion != nil {
+		e.InteractiveShell.Completion = e2.InteractiveShell.Completion
+	}
+
+	if e2.InteractiveShell.KillWholeLine != nil {
+		e.InteractiveShell.KillWholeLine = e2.InteractiveShell.KillWholeLine
+	}
+
+	if e2.InteractiveShell.ViMode != nil {
+		e.InteractiveShell.ViMode = e2.InteractiveShell.ViMode
 	}
 
 	for k, v := range e2.EnvironmentVariables {
@@ -68,9 +80,12 @@ func (e *Environment) Merge(e2 *Environment) {
 
 type InteractiveShell struct {
 	HistoryFile      string `json:"history_file"`
-	HistoryLimit     int    `json:"history_limit"`
+	HistoryLimit     *int   `json:"history_limit"`
 	Prompt           string `json:"prompt"`
 	ContinuousPrompt string `json:"continuous_prompt"`
+	Completion       *bool  `json:"completion"`
+	KillWholeLine    *bool  `json:"kill_whole_line"`
+	ViMode           *bool  `json:"vi_mode"`
 }
 
 func LoadEnvironment() error {
