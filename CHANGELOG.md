@@ -1,3 +1,10 @@
+## Release v1.7.0 (2018-12-14)
+
+- Enhance the interactive shell.
+  - Completion (default: true)
+  - Kill Whole Line (default: false)
+  - Vi-mode (default: false)
+
 ## Release v1.6.7 (2018-12-01)
 
 - Fork github.com/chzyer/readline and change dependency to github.com/mithrandie/readline-csvq to use the latest update that is not versioned. 
