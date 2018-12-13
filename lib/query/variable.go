@@ -2,6 +2,7 @@ package query
 
 import (
 	"reflect"
+	"sort"
 	"sync"
 
 	"github.com/mithrandie/csvq/lib/parser"
@@ -68,6 +69,19 @@ func (list VariableScopes) Equal(list2 VariableScopes) bool {
 	return true
 }
 
+func (list VariableScopes) All() VariableMap {
+	all := NewVariableMap()
+	for _, m := range list {
+		m.variables.Range(func(key, value interface{}) bool {
+			if _, ok := all.variables.Load(key); !ok {
+				all.variables.Store(key, value)
+			}
+			return true
+		})
+	}
+	return all
+}
+
 type VariableMap struct {
 	variables sync.Map
 }
@@ -99,6 +113,16 @@ func (m *VariableMap) Get(variable parser.Variable) (value.Primary, error) {
 		return v.(value.Primary), nil
 	}
 	return nil, NewUndeclaredVariableError(variable)
+}
+
+func (m *VariableMap) SortedKeys() []string {
+	keys := make([]string, 0, 10)
+	m.variables.Range(func(key, value interface{}) bool {
+		keys = append(keys, key.(string))
+		return true
+	})
+	sort.Strings(keys)
+	return keys
 }
 
 func (m *VariableMap) Dispose(variable parser.Variable) error {

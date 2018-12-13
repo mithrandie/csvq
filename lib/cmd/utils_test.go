@@ -63,6 +63,83 @@ func TestQuoteIdentifier(t *testing.T) {
 	}
 }
 
+func TestVariableSymbol(t *testing.T) {
+	s := "var"
+	expect := "@var"
+	result := VariableSymbol(s)
+	if result != expect {
+		t.Errorf("variable symbol = %q, want %q for %q", result, expect, s)
+	}
+}
+
+func TestFlagSymbol(t *testing.T) {
+	s := "flag"
+	expect := "@@flag"
+	result := FlagSymbol(s)
+	if result != expect {
+		t.Errorf("flag symbol = %q, want %q for %q", result, expect, s)
+	}
+}
+
+func TestEnvironmentVariableSymbol(t *testing.T) {
+	s := "env"
+	expect := "@%env"
+	result := EnvironmentVariableSymbol(s)
+	if result != expect {
+		t.Errorf("environment variable symbol = %q, want %q for %q", result, expect, s)
+	}
+
+	s = "1env"
+	expect = "@%`1env`"
+	result = EnvironmentVariableSymbol(s)
+	if result != expect {
+		t.Errorf("environment variable symbol = %q, want %q for %q", result, expect, s)
+	}
+}
+
+func TestEnclosedEnvironmentVariableSymbol(t *testing.T) {
+	s := "env"
+	expect := "@%`env`"
+	result := EnclosedEnvironmentVariableSymbol(s)
+	if result != expect {
+		t.Errorf("environment variable symbol = %q, want %q for %q", result, expect, s)
+	}
+}
+
+func TestRuntimeInformationSymbol(t *testing.T) {
+	s := "info"
+	expect := "@#info"
+	result := RuntimeInformationSymbol(s)
+	if result != expect {
+		t.Errorf("runtime information symbol = %q, want %q for %q", result, expect, s)
+	}
+}
+
+func TestMustBeEnclosed(t *testing.T) {
+	var expect bool
+
+	s := "1abc123"
+	expect = true
+	result := MustBeEnclosed(s)
+	if result != expect {
+		t.Errorf("must be enclosed = %t, want %t for %q", result, expect, s)
+	}
+
+	s = "abc123"
+	expect = false
+	result = MustBeEnclosed(s)
+	if result != expect {
+		t.Errorf("must be enclosed = %t, want %t for %q", result, expect, s)
+	}
+
+	s = "abc12#3"
+	expect = true
+	result = MustBeEnclosed(s)
+	if result != expect {
+		t.Errorf("must be enclosed = %t, want %t for %q", result, expect, s)
+	}
+}
+
 func TestFormatInt(t *testing.T) {
 	i := 1234567
 	sep := ","
@@ -143,21 +220,6 @@ func TestIsReadableFromPipeOrRedirection(t *testing.T) {
 
 	if result != true {
 		t.Errorf("readable from pipe or redirection = %t, want %t", result, true)
-	}
-}
-
-var unescapeStringBenchString = "fo\\o\\a\\b\\f\\n\\r\\t\\v\\\\\\\\'\\\"bar\\"
-var unescapeStringBenchString2 = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"
-
-func BenchmarkUnescapeString(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		_ = UnescapeString(unescapeStringBenchString)
-	}
-}
-
-func BenchmarkUnescapeString2(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		_ = UnescapeString(unescapeStringBenchString2)
 	}
 }
 
@@ -270,5 +332,20 @@ func TestParseDelimiter(t *testing.T) {
 		} else if err.Error() != expectErr {
 			t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "error")
 		}
+	}
+}
+
+var unescapeStringBenchString = "fo\\o\\a\\b\\f\\n\\r\\t\\v\\\\\\\\'\\\"bar\\"
+var unescapeStringBenchString2 = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"
+
+func BenchmarkUnescapeString(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = UnescapeString(unescapeStringBenchString)
+	}
+}
+
+func BenchmarkUnescapeString2(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = UnescapeString(unescapeStringBenchString2)
 	}
 }

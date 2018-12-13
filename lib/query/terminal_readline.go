@@ -14,9 +14,10 @@ import (
 )
 
 type ReadLineTerminal struct {
-	terminal *readline.Instance
-	fd       int
-	prompt   *Prompt
+	terminal  *readline.Instance
+	fd        int
+	prompt    *Prompt
+	completer *Completer
 }
 
 func NewTerminal(filter *Filter) (VirtualTerminal, error) {
@@ -34,11 +35,15 @@ func NewTerminal(filter *Filter) (VirtualTerminal, error) {
 
 	prompt := NewPrompt(filter, p)
 	prompt.LoadConfig()
+	completer := NewCompleter(filter)
 
 	t, err := readline.NewEx(&readline.Config{
 		HistoryFile:            historyFile,
 		DisableAutoSaveHistory: true,
 		HistoryLimit:           limit,
+		HistorySearchFold:      true,
+		AutoComplete:           completer,
+		Listener:               new(ReadlineListener),
 		Stdin:                  Stdin,
 		Stdout:                 Stdout,
 		Stderr:                 Stderr,
@@ -48,9 +53,10 @@ func NewTerminal(filter *Filter) (VirtualTerminal, error) {
 	}
 
 	terminal := ReadLineTerminal{
-		terminal: t,
-		fd:       fd,
-		prompt:   prompt,
+		terminal:  t,
+		fd:        fd,
+		prompt:    prompt,
+		completer: completer,
 	}
 
 	terminal.SetPrompt()
@@ -101,6 +107,10 @@ func (t ReadLineTerminal) GetSize() (int, int, error) {
 
 func (t ReadLineTerminal) ReloadPromptConfig() error {
 	return t.prompt.LoadConfig()
+}
+
+func (t ReadLineTerminal) UpdateCompleter() {
+	t.completer.Update()
 }
 
 func HistoryFilePath(filename string) (string, error) {

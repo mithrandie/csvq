@@ -21,8 +21,11 @@ func GetTestFilePath(filename string) string {
 	return filepath.Join(TestDir, filename)
 }
 
-var TestDir = filepath.Join(os.TempDir(), "csvq_query_test")
+var tempdir, _ = filepath.Abs(os.TempDir())
+var TestDir = filepath.Join(tempdir, "csvq_query_test")
 var TestDataDir string
+var CompletionTestDir = filepath.Join(TestDir, "completion")
+var CompletionTestSubDir = filepath.Join(TestDir, "completion", "sub")
 var TestLocation = "UTC"
 var NowForTest = time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())
 var HomeDir string
@@ -97,6 +100,17 @@ func setup() {
 	copyfile(filepath.Join(TestDir, "source_syntaxerror.sql"), filepath.Join(filepath.Join(GetWD(), "..", "..", "testdata"), "source_syntaxerror.sql"))
 
 	os.Setenv("CSVQ_TEST_ENV", "foo")
+
+	if _, err := os.Stat(CompletionTestDir); os.IsNotExist(err) {
+		os.Mkdir(CompletionTestDir, 0755)
+	}
+	if _, err := os.Stat(CompletionTestSubDir); os.IsNotExist(err) {
+		os.Mkdir(CompletionTestSubDir, 0755)
+	}
+	copyfile(filepath.Join(CompletionTestDir, "table1.csv"), filepath.Join(TestDataDir, "table1.csv"))
+	copyfile(filepath.Join(CompletionTestDir, ".table1.csv"), filepath.Join(TestDataDir, "table1.csv"))
+	copyfile(filepath.Join(CompletionTestDir, "source.sql"), filepath.Join(filepath.Join(GetWD(), "..", "..", "testdata"), "source.sql"))
+	copyfile(filepath.Join(CompletionTestSubDir, "table2.csv"), filepath.Join(TestDataDir, "table2.csv"))
 
 	Version = "v1.0.0"
 	HomeDir, _ = homedir.Dir()

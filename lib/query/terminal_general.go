@@ -114,6 +114,10 @@ type StdIO struct {
 	writer io.Writer
 }
 
+func (t SSHTerminal) UpdateCompleter() {
+	//Do Nothing
+}
+
 func (sh *StdIO) Read(p []byte) (n int, err error) {
 	return sh.reader.Read(p)
 }
