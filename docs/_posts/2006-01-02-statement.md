@@ -27,7 +27,7 @@ If you want to execute a single query, you can omit the terminal semicolon.
 When the csvq command is called with no argument and no "--source" (or "-s") option, the interactive shell is launched.
 You can use the interactive shell in order to sequencial input and execution.
 
-If you want to continue to input a statement on the next line, you can use a backslash at the end of the line to continue.
+If you want to continue to input the statement on the next line, you can use Backslash(U+005C `\`) at the end of the line to continue.
 
 #### Command options in the interactive shell
 
@@ -36,15 +36,6 @@ If you want to continue to input a statement on the next line, you can use a bac
 
 --stats
 : Show only Query Execution Time
-
-#### Line editor in the interactive shell
-
-On the some systems, the interactive shell provides a more powerful line editor by using the package [https://github.com/chzyer/readline](https://github.com/chzyer/readline).
-Not all features of the readline package are available, but its short cut keys, command history and features like that will help you.
-
-The readline package is used on the following systems.
-- darwin dragonfly freebsd linux netbsd openbsd solaris windows
-
 
 ```bash
 # Execute a single query

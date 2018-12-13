@@ -1008,7 +1008,7 @@ func Reload(expr parser.Reload) error {
 		oldPalette.Merge(palette)
 
 		if Terminal != nil {
-			if err := Terminal.ReloadPromptConfig(); err != nil {
+			if err := Terminal.ReloadConfig(); err != nil {
 				return NewLoadConfigurationError(expr, err.Error())
 			}
 		}

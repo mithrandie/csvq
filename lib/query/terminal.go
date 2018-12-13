@@ -27,7 +27,7 @@ type VirtualTerminal interface {
 	SaveHistory(string)
 	Teardown()
 	GetSize() (int, int, error)
-	ReloadPromptConfig() error
+	ReloadConfig() error
 	UpdateCompleter()
 }
 

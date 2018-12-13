@@ -17,6 +17,7 @@ type ReadLineTerminal struct {
 	terminal  *readline.Instance
 	fd        int
 	prompt    *Prompt
+	env       *cmd.Environment
 	completer *Completer
 }
 
@@ -26,7 +27,7 @@ func NewTerminal(filter *Filter) (VirtualTerminal, error) {
 	p, _ := cmd.GetPalette()
 	env, _ := cmd.GetEnvironment()
 
-	limit := env.InteractiveShell.HistoryLimit
+	limit := *env.InteractiveShell.HistoryLimit
 	historyFile, err := HistoryFilePath(env.InteractiveShell.HistoryFile)
 	if err != nil {
 		LogError(fmt.Sprintf("cannot detect filepath: %q", env.InteractiveShell.HistoryFile))
@@ -34,7 +35,6 @@ func NewTerminal(filter *Filter) (VirtualTerminal, error) {
 	}
 
 	prompt := NewPrompt(filter, p)
-	prompt.LoadConfig()
 	completer := NewCompleter(filter)
 
 	t, err := readline.NewEx(&readline.Config{
@@ -42,7 +42,6 @@ func NewTerminal(filter *Filter) (VirtualTerminal, error) {
 		DisableAutoSaveHistory: true,
 		HistoryLimit:           limit,
 		HistorySearchFold:      true,
-		AutoComplete:           completer,
 		Listener:               new(ReadlineListener),
 		Stdin:                  Stdin,
 		Stdout:                 Stdout,
@@ -56,8 +55,14 @@ func NewTerminal(filter *Filter) (VirtualTerminal, error) {
 		terminal:  t,
 		fd:        fd,
 		prompt:    prompt,
+		env:       env,
 		completer: completer,
 	}
+
+	terminal.setCompleter()
+	terminal.setKillWholeLine()
+	terminal.setViMode()
+	prompt.LoadConfig()
 
 	terminal.SetPrompt()
 	return terminal, nil
@@ -105,12 +110,37 @@ func (t ReadLineTerminal) GetSize() (int, int, error) {
 	return readline.GetSize(t.fd)
 }
 
-func (t ReadLineTerminal) ReloadPromptConfig() error {
+func (t ReadLineTerminal) ReloadConfig() error {
+	t.setCompleter()
+	t.setKillWholeLine()
+	t.setViMode()
 	return t.prompt.LoadConfig()
 }
 
 func (t ReadLineTerminal) UpdateCompleter() {
-	t.completer.Update()
+	if t.completer != nil {
+		t.completer.Update()
+	}
+}
+
+func (t ReadLineTerminal) setCompleter() {
+	if *t.env.InteractiveShell.Completion {
+		t.terminal.Config.AutoComplete = t.completer
+	} else {
+		t.terminal.Config.AutoComplete = nil
+	}
+}
+
+func (t ReadLineTerminal) setKillWholeLine() {
+	if *t.env.InteractiveShell.KillWholeLine {
+		t.terminal.EnableKillWholeLine()
+	} else {
+		t.terminal.DisableKillWholeLine()
+	}
+}
+
+func (t ReadLineTerminal) setViMode() {
+	t.terminal.SetVimMode(*t.env.InteractiveShell.ViMode)
 }
 
 func HistoryFilePath(filename string) (string, error) {

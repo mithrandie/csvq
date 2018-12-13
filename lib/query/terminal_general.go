@@ -105,7 +105,7 @@ func (t SSHTerminal) GetSize() (int, int, error) {
 	return terminal.GetSize(t.stdin)
 }
 
-func (t SSHTerminal) ReloadPromptConfig() error {
+func (t SSHTerminal) ReloadConfig() error {
 	return t.prompt.LoadConfig()
 }
 
