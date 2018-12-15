@@ -640,6 +640,9 @@ var viewLoadTests = []struct {
 						Type:          parser.Identifier{Literal: "csv"},
 						FormatElement: parser.NewStringValue("\t"),
 						Path:          parser.Identifier{Literal: "table3"},
+						Args: []parser.QueryExpression{
+							parser.FieldReference{Column: parser.Identifier{Literal: "UTF8"}},
+						},
 					},
 					Alias: parser.Identifier{Literal: "t"},
 				},
@@ -746,7 +749,7 @@ var viewLoadTests = []struct {
 		Error: "[L:- C:-] table object csv takes at most 5 arguments",
 	},
 	{
-		Name: "Load TableObject From CSV File Argument Evaluation Error",
+		Name: "Load TableObject From CSV File 3rd Argument Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -755,14 +758,55 @@ var viewLoadTests = []struct {
 						FormatElement: parser.NewStringValue(","),
 						Path:          parser.Identifier{Literal: "table5"},
 						Args: []parser.QueryExpression{
-							parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+							parser.NewTernaryValueFromString("true"),
 						},
 					},
 					Alias: parser.Identifier{Literal: "t"},
 				},
 			},
 		},
-		Error: "[L:- C:-] invalid argument for csv: field notexist does not exist",
+		Error: "[L:- C:-] invalid argument for csv: 3rd argument cannot be converted as a encoding value",
+	},
+	{
+		Name: "Load TableObject From CSV File 4th Argument Error",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type:          parser.Identifier{Literal: "csv"},
+						FormatElement: parser.NewStringValue(","),
+						Path:          parser.Identifier{Literal: "table5"},
+						Args: []parser.QueryExpression{
+							parser.NewStringValue("SJIS"),
+							parser.NewStringValue("SJIS"),
+						},
+					},
+					Alias: parser.Identifier{Literal: "t"},
+				},
+			},
+		},
+		Error: "[L:- C:-] invalid argument for csv: 4th argument cannot be converted as a no-header value",
+	},
+	{
+		Name: "Load TableObject From CSV File 5th Argument Error",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type:          parser.Identifier{Literal: "csv"},
+						FormatElement: parser.NewStringValue(","),
+						Path:          parser.Identifier{Literal: "table5"},
+						Args: []parser.QueryExpression{
+							parser.NewStringValue("SJIS"),
+							parser.NewTernaryValueFromString("true"),
+							parser.NewStringValue("SJIS"),
+						},
+					},
+					Alias: parser.Identifier{Literal: "t"},
+				},
+			},
+		},
+		Error: "[L:- C:-] invalid argument for csv: 5th argument cannot be converted as a without-null value",
 	},
 	{
 		Name: "Load TableObject From CSV File Invalid Encoding Type",
