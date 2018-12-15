@@ -1,3 +1,8 @@
+## Release v1.7.1 (2018-12-15)
+
+- Fix the following bus.
+  - TableObject does not accept identifier as an argument.
+
 ## Release v1.7.0 (2018-12-14)
 
 - Enhance the interactive shell.
