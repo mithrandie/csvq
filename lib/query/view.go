@@ -258,23 +258,39 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 
 		args := make([]value.Primary, 3)
 		for i, a := range tableObject.Args {
-			p, err := filter.Evaluate(a)
-			if err != nil {
-				if appErr, ok := err.(AppError); ok {
-					err = NewTableObjectInvalidArgumentError(tableObject, appErr.ErrorMessage())
-				}
-				return nil, err
+			if pt, ok := a.(parser.PrimitiveType); ok && value.IsNull(pt.Value) {
+				continue
 			}
+
+			var p value.Primary = value.NewNull()
+			if fr, ok := a.(parser.FieldReference); ok {
+				a = parser.NewStringValue(fr.Column.Literal)
+			}
+			if pv, err := filter.Evaluate(a); err == nil {
+				p = pv
+			}
+
 			switch i {
 			case 0:
 				v := value.ToString(p)
 				if !value.IsNull(v) {
 					args[i] = v
+				} else {
+					return nil, NewTableObjectInvalidArgumentError(tableObject, "3rd argument cannot be converted as a encoding value")
 				}
-			default:
+			case 1:
 				v := value.ToBoolean(p)
 				if !value.IsNull(v) {
 					args[i] = v
+				} else {
+					return nil, NewTableObjectInvalidArgumentError(tableObject, "4th argument cannot be converted as a no-header value")
+				}
+			case 2:
+				v := value.ToBoolean(p)
+				if !value.IsNull(v) {
+					args[i] = v
+				} else {
+					return nil, NewTableObjectInvalidArgumentError(tableObject, "5th argument cannot be converted as a without-null value")
 				}
 			}
 		}

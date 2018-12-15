@@ -151,7 +151,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select c1 from csv(',', `table.csv`, null, 'utf8')",
+		Input: "select c1 from csv(',', `table.csv`, 'utf8', null)",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -171,7 +171,7 @@ var parseTests = []struct {
 								Type:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "csv"},
 								FormatElement: NewStringValue(","),
 								Path:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 25}, Literal: "table.csv", Quoted: true},
-								Args:          []QueryExpression{NewNullValueFromString("null"), NewStringValue("utf8")},
+								Args:          []QueryExpression{NewStringValue("utf8"), NewNullValueFromString("null")},
 							},
 						},
 					}},

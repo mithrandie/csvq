@@ -207,7 +207,7 @@ _delimiter_positions_
   "SPACES" or JSON Array of integers
 
 _encoding_
-: [string]({{ '/reference/value.html#string' | relative_url }})
+: [string]({{ '/reference/value.html#string' | relative_url }}) or [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
   
   "UTF8" or "SJIS"
 
