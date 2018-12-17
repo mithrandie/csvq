@@ -1,11 +1,14 @@
 package query
 
 import (
+	"bufio"
 	"bytes"
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/go-text/color"
+
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 const (
@@ -38,6 +41,10 @@ func NewObjectWriter() *ObjectWriter {
 	if Terminal != nil {
 		if termw, _, err := Terminal.GetSize(); err == nil {
 			maxWidth = termw
+		}
+	} else {
+		if w, _, err := terminal.GetSize(int(ScreenFd)); err == nil {
+			maxWidth = w
 		}
 	}
 
@@ -117,6 +124,56 @@ func (w *ObjectWriter) WriteWithoutLineBreak(s string) {
 
 func (w *ObjectWriter) Write(s string) {
 	w.WriteColor(s, cmd.NoEffect)
+}
+
+func (w *ObjectWriter) WriteWithAutoLineBreak(s string) {
+	scanner := bufio.NewScanner(strings.NewReader(s))
+	firstLine := true
+	blockQuote := false
+	preformatted := false
+	for scanner.Scan() {
+		if blockQuote {
+			w.EndBlock()
+			blockQuote = false
+		}
+
+		line := scanner.Text()
+		if strings.TrimSpace(line) == "```" {
+			preformatted = !preformatted
+			continue
+		} else {
+			if firstLine {
+				firstLine = false
+			} else {
+				w.NewLine()
+			}
+		}
+
+		if preformatted {
+			w.Write(line)
+			continue
+		}
+
+		wscanner := bufio.NewScanner(strings.NewReader(line))
+		wscanner.Split(bufio.ScanWords)
+		firstWord := true
+		for wscanner.Scan() {
+			word := wscanner.Text()
+			if firstWord {
+				firstWord = false
+				if blockQuote == false && word == ">" {
+					blockQuote = true
+					w.BeginBlock()
+					continue
+				}
+			}
+			w.Write(word + " ")
+		}
+	}
+
+	if blockQuote {
+		w.EndBlock()
+	}
 }
 
 func (w *ObjectWriter) WriteSpaces(l int) {

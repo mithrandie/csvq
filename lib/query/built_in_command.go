@@ -12,6 +12,7 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/syntax"
 	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mithrandie/go-text"
@@ -1017,4 +1018,101 @@ func Reload(expr parser.Reload) error {
 		return NewInvalidReloadTypeError(expr, expr.Type.Literal)
 	}
 	return nil
+}
+
+func Syntax(expr parser.Syntax, filter *Filter) string {
+	keys := make([]string, 0, len(expr.Keywords))
+	for _, key := range expr.Keywords {
+		var keystr string
+		if fr, ok := key.(parser.FieldReference); ok {
+			keystr = fr.Column.Literal
+		} else {
+			if p, err := filter.Evaluate(key); err == nil {
+				if s := value.ToString(p); !value.IsNull(s) {
+					keystr = s.(value.String).Raw()
+				}
+			}
+		}
+
+		if 0 < len(keystr) {
+			words := strings.Split(strings.TrimSpace(keystr), " ")
+			for _, w := range words {
+				w = strings.TrimSpace(w)
+				if 0 < len(w) {
+					keys = append(keys, w)
+				}
+			}
+		}
+	}
+
+	store := syntax.NewStore()
+	exps := store.Search(keys)
+
+	var p *color.Palette
+	if cmd.GetFlags().Color {
+		p, _ = cmd.GetPalette()
+	}
+
+	w := NewObjectWriter()
+
+	for _, exp := range exps {
+		w.WriteColor(exp.Label, cmd.LableEffect)
+		w.NewLine()
+		if len(exps) < 4 {
+			w.BeginBlock()
+
+			if 0 < len(exp.Description.Template) {
+				w.WriteWithAutoLineBreak(exp.Description.Format(p))
+				w.NewLine()
+				w.NewLine()
+			}
+
+			for _, def := range exp.Grammar {
+				w.Write(def.Name.Format(p))
+				w.NewLine()
+				w.BeginBlock()
+				for i, gram := range def.Group {
+					if i == 0 {
+						w.Write(": ")
+					} else {
+						w.Write("| ")
+					}
+					w.BeginSubBlock()
+					w.WriteWithAutoLineBreak(gram.Format(p))
+					w.EndSubBlock()
+					w.NewLine()
+				}
+
+				if 0 < len(def.Description.Template) {
+					if 0 < len(def.Group) {
+						w.NewLine()
+					}
+					w.WriteWithAutoLineBreak(def.Description.Format(p))
+					w.NewLine()
+				}
+
+				w.EndBlock()
+				w.NewLine()
+			}
+			w.EndBlock()
+		}
+
+		if 0 < len(exp.Children) && (len(keys) < 1 || strings.EqualFold(exp.Label, strings.Join(keys, " "))) {
+			w.BeginBlock()
+			for _, child := range exp.Children {
+				w.WriteColor(child.Label, cmd.LableEffect)
+				w.NewLine()
+			}
+		}
+
+		w.ClearBlock()
+	}
+
+	if len(keys) < 1 {
+		w.Title1 = "Contents"
+	} else {
+		w.Title1 = "Search: " + strings.Join(keys, " ")
+	}
+	return "\n" + w.String() + "\n"
+
 }

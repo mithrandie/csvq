@@ -4037,6 +4037,25 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "syntax",
+		Output: []Statement{
+			Syntax{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+			},
+		},
+	},
+	{
+		Input: "syntax foo",
+		Output: []Statement{
+			Syntax{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Keywords: []QueryExpression{
+					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "foo"}},
+				},
+			},
+		},
+	},
+	{
 		Input: "chdir `dirpath`",
 		Output: []Statement{
 			Chdir{

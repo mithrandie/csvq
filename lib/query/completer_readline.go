@@ -45,6 +45,7 @@ var statementPrefix = []string{
 	"EXECUTE",
 	"SHOW",
 	"SOURCE",
+	"SYNTAX",
 	"RELOAD",
 }
 
@@ -342,6 +343,8 @@ func (c *Completer) Statements(line string, origLine string, index int) readline
 	case parser.EXIT:
 		return nil
 	case parser.PWD:
+		return nil
+	case parser.SYNTAX:
 		return nil
 	case parser.EOF:
 		return c.GetStatementPrefix(line, origLine, index)

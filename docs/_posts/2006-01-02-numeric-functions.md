@@ -36,7 +36,7 @@ category: reference
 | [OCT](#oct) | Convert an integer to a string representing the octal number |
 | [HEX](#hex) | Convert an integer to a string representing the hexadecimal number |
 | [ENOTATION](#enotation) | Convert a float to a string representing the number with exponential notation |
-| [NUMBER_FORMAT](#number_format) | Convert a number to a string representing the number with thousands separators |
+| [NUMBER_FORMAT](#number_format) | Convert a number to a string representing the number with separators |
 | [RAND](#rand) | Return a pseudo-random number |
 
 > _e_ is the base of natural logarithms
@@ -56,7 +56,7 @@ _number_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Round _number_ up to an integer value.
+Rounds _number_ up to an integer value.
 
 ```
 CEIL(number, place)
@@ -71,8 +71,8 @@ _place_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Round _number_ up to _place_ decimal place.
-If _place_ is a negative number, _place_ representing a place in the integer part. 
+Rounds _number_ up to _place_ decimal place.
+If _place_ is a negative number, _place_ represents the place in the integer part. 
 
 ### FLOOR
 {: #floor}
@@ -87,7 +87,7 @@ _number_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Round _number_ down to an integer value.
+Rounds _number_ down to an integer value.
 
 ```
 FLOOR(number, place)
@@ -102,8 +102,8 @@ _place_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Round _number_ down to _place_ decimal place.
-If _place_ is a negative number, _place_ representing a place in the integer part. 
+Rounds _number_ down to _place_ decimal place.
+If _place_ is a negative number, _place_ represents the place in the integer part. 
 
 ### ROUND
 {: #round}
@@ -118,7 +118,7 @@ _number_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Round _number_ to an integer value.
+Rounds _number_ to an integer value.
 
 ```
 ROUND(number, place)
@@ -133,8 +133,8 @@ _place_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Round _number_ to _place_ decimal place.
-If _place_ is a negative number, _place_ representing a place in the integer part. 
+Rounds _number_ to _place_ decimal place.
+If _place_ is a negative number, _place_ represents the place in the integer part. 
 
 ### ABS
 {: #abs}
@@ -149,7 +149,7 @@ _number_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the absolute value of _number_
+Returns the absolute value of _number_
 
 ### ACOS
 {: #acos}
@@ -164,7 +164,7 @@ _number_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the arc cosine of _number_.
+Returns the arc cosine of _number_.
 
 ### ASIN
 {: #asin}
@@ -179,7 +179,7 @@ _number_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the arc sine of _number_.
+Returns the arc sine of _number_.
 
 ### ATAN
 {: #atan}
@@ -194,7 +194,7 @@ _number_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the arc tangent of _number_.
+Returns the arc tangent of _number_.
 
 ### ATAN2
 {: #atan2}
@@ -212,7 +212,7 @@ _number1_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the arc tangent of _number2_ / _number1_, using the signs of the two to determine the quadrant of the return value.
+Returns the arc tangent of _number2_ / _number1_, using the signs of the two to determine the quadrant of the returns value.
 
 ### COS
 {: #cos}
@@ -227,7 +227,7 @@ _number_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the cosine of _number_.
+Returns the cosine of _number_.
 
 ### SIN
 {: #sin}
@@ -242,7 +242,7 @@ _number_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the sine of _number_.
+Returns the sine of _number_.
 
 ### TAN
 {: #tan}
@@ -257,7 +257,7 @@ _number_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the tangent of _number_.
+Returns the tangent of _number_.
 
 ### EXP
 {: #exp}
@@ -272,7 +272,7 @@ _number_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the value of base _e_ raised to the power of _number_.
+Returns the value of base _e_ raised to the power of _number_.
 
 ### EXP2
 {: #exp2}
@@ -287,7 +287,7 @@ _number_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the value of base _2_ raised to the power of _number_.
+Returns the value of base _2_ raised to the power of _number_.
 
 ### EXPM1
 {: #expm1}
@@ -302,7 +302,7 @@ _number_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the value of base _e_ rised to the power of _number_ minus 1.
+Returns the value of base _e_ rised to the power of _number_ minus 1.
 
 ### LOG
 {: #log}
@@ -317,7 +317,7 @@ _number_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the natural logarithm of _number_.
+Returns the natural logarithm of _number_.
 
 ### LOG10
 {: #log10}
@@ -332,7 +332,7 @@ _number_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the decimal logarithm of _number_.
+Returns the decimal logarithm of _number_.
 
 ### LOG2
 {: #log2}
@@ -347,7 +347,7 @@ _number_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the binary logarithm of _number_.
+Returns the binary logarithm of _number_.
 
 ### LOG1P
 {: #log1p}
@@ -362,7 +362,7 @@ _number_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the natural logarithm of 1 plus _number_.
+Returns the natural logarithm of 1 plus _number_.
 
 ### SQRT
 {: #sqrt}
@@ -377,7 +377,7 @@ _number_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the square root of _number_.
+Returns the square root of _number_.
  
 ### POW
 {: #pow}
@@ -410,7 +410,7 @@ _bin_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Convert a string _bin_ representing a binary number to an integer.
+Converts _bin_ representing a binary number to an integer.
 
 ### OCT_TO_DEC
 {: #oct_to_dec}
@@ -425,7 +425,7 @@ _oct_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Convert a string _hex_ representing a octal number to an integer.
+Converts _hex_ representing a octal number to an integer.
 
 ### HEX_TO_DEC
 {: #hex_to_dec}
@@ -440,13 +440,13 @@ _hex_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Convert a string _hex_ representing a hexadecimal number to an integer.
+Converts _hex_ representing a hexadecimal number to an integer.
 
 ### ENOTATION_TO_DEC
 {: #enotation_to_dec}
 
 ```
-HEX_TO_DEC(enotation)
+ENOTATION_TO_DEC(enotation)
 ```
 
 _enotation_
@@ -455,7 +455,7 @@ _enotation_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }}) or [float]({{ '/reference/value.html#float' | relative_url }})
 
-Convert a string _enotation_ representing a number with exponential notation to an integer or a float.
+Converts _enotation_ representing a number with exponential notation to an integer or a float.
 
 ### BIN
 {: #bin}
@@ -470,7 +470,7 @@ _integer_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Convert an _integer_ to a string representing the binary number.
+Converts _integer_ to a string representing the binary number.
 
 ### OCT
 {: #oct}
@@ -485,7 +485,7 @@ _integer_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Convert an _integer_ to a string representing the octal number.
+Converts _integer_ to a string representing the octal number.
 
 ### HEX
 {: #hex}
@@ -500,7 +500,7 @@ _integer_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Convert an _integer_ to a string representing the hexadecimal number.
+Converts _integer_ to a string representing the hexadecimal number.
 
 ### ENOTATION
 {: #enotation}
@@ -515,7 +515,7 @@ _float_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Convert a _float_ to a string representing the number with exponential notation.
+Converts _float_ to a string representing the number with exponential notation.
 
 
 ### NUMBER_FORMAT
@@ -552,7 +552,7 @@ _decimalSeparator_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Convert a number to a string representing the number with thousands separators.
+Converts _number_ to a string representing the number with separators.
 
 
 ### RAND
@@ -565,7 +565,7 @@ RAND()
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }})
 
-Return a random float greater than or equal to 0.0 and less than 1.0. 
+Returns a random float greater than or equal to 0.0 and less than 1.0. 
 
 ```
 RAND(min, max)
@@ -580,4 +580,4 @@ _max_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return a random integer between _min_ and _max_.
+Returns a random integer between _min_ and _max_.

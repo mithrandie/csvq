@@ -116,6 +116,55 @@ const DefaultEnvJson = `
         "foreground": "BrightBlack",
         "background": null
       },
+      "syntax_name": {
+        "effects": [
+          "Italic"
+        ],
+        "foreground": null,
+        "background": null
+      },
+      "syntax_keyword": {
+        "effects": [
+          "Bold"
+        ],
+        "foreground": "Green",
+        "background": null
+      },
+      "syntax_link": {
+        "effects": [
+          "Bold",
+          "Italic"
+        ],
+        "foreground": "Magenta",
+        "background": null
+      },
+      "syntax_variable": {
+        "effects": [
+          "Bold",
+          "Italic"
+        ],
+        "foreground": "Yellow",
+        "background": null
+      },
+      "syntax_flag": {
+        "effects": [
+          "Italic"
+        ],
+        "foreground": "Yellow",
+        "background": null
+      },
+      "syntax_italic": {
+        "effects": [
+          "Italic"
+        ],
+        "foreground": null,
+        "background": null
+      },
+      "syntax_type": {
+        "effects": [],
+        "foreground": "BrightBlack",
+        "background": null
+      },
       "prompt": {
         "effects": [],
         "foreground": "Blue",

@@ -208,6 +208,23 @@ func main() {
 				return NewExitError(fmt.Sprintf("Incorrect Usage: %s", err.Error()), 1)
 			},
 		},
+		{
+			Name:      "syntax",
+			Usage:     "Print syntax",
+			ArgsUsage: "[search_word ...]",
+			Action: func(c *cli.Context) error {
+				words := append([]string{c.Args().First()}, c.Args().Tail()...)
+				err := action.Syntax(proc, words)
+				if err != nil {
+					return NewExitError(err.Error(), 1)
+				}
+
+				return nil
+			},
+			OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
+				return NewExitError(fmt.Sprintf("Incorrect Usage: %s", err.Error()), 1)
+			},
+		},
 	}
 
 	app.Before = func(c *cli.Context) error {

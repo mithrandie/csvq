@@ -252,10 +252,10 @@ _condition_
 The Group By clause is used to group records.
 
 ```sql
-GROUP BY value [, value ...] 
+GROUP BY field [, field ...] 
 ```
 
-_value_
+_field_
 : [value]({{ '/reference/value.html' | relative_url }})
 
 ## Having Clause
@@ -283,7 +283,7 @@ ORDER BY order_item [, order_item ...]
 
 ```sql
 order_item
-  : field_name [order_direction] [null_position]
+  : field [order_direction] [null_position]
   
 order_direction
   : {ASC|DESC}
@@ -292,10 +292,10 @@ null_position
   : NULLS {FIRST|LAST}
 ```
 
-_field_name_
+_field_
 : [value]({{ '/reference/value.html' | relative_url }})
   
-  If DISTINCT keyword is specified in the select clause, you can use only enumerated fields in the select clause as _field_name_.
+  If DISTINCT keyword is specified in the select clause, you can use only enumerated fields in the select clause as _field_.
 
 _order_direction_
 : _ASC_ sorts records in ascending order. _DESC_ sorts in descending order. _ASC_ is the default.
@@ -333,8 +333,8 @@ If there is no _Order By Clause_ in the query, _WITH TIES_ keywords are ignored.
 The Offset clause is used to exclude the first set of records.
 
 ```sql
-OFFSET number
+OFFSET row_number
 ```
 
-_number_
+_row_number_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})

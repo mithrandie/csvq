@@ -219,6 +219,7 @@ var completerStatementsTests = []completerTest{
 			{Name: []rune("SET"), AppendSpace: true},
 			{Name: []rune("SHOW"), AppendSpace: true},
 			{Name: []rune("SOURCE"), AppendSpace: true},
+			{Name: []rune("SYNTAX"), AppendSpace: true},
 			{Name: []rune("UNSET"), AppendSpace: true},
 			{Name: []rune("UPDATE"), AppendSpace: true},
 			{Name: []rune("VAR"), AppendSpace: true},
@@ -505,6 +506,13 @@ var completerStatementsTests = []completerTest{
 		Line:     "",
 		OrigLine: "pwd ",
 		Index:    4,
+		Expect:   readline.CandidateList(nil),
+	},
+	{
+		Name:     "Statements Syntax",
+		Line:     "",
+		OrigLine: "syntax ",
+		Index:    7,
 		Expect:   readline.CandidateList(nil),
 	},
 	{

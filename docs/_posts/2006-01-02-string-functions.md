@@ -8,27 +8,27 @@ category: reference
 
 | name | description |
 | :- | :- |
-| [TRIM](#trim) | Returns the string with all leading and trailing characters removed |
-| [LTRIM](#ltrim) | Returns the string with all leading characters removed |
-| [RTRIM](#rtrim) | Returns the string with all trailing characters removed |
-| [UPPER](#upper) | Returns the string with all characters mapped to their upper case |
-| [LOWER](#lower) | Returns the string with all characters mapped to their lower case |
-| [BASE64_ENCODE](#base64_encode) | Returns the base64 encoding of string |
-| [BASE64_DECODE](#base64_decode) | Returns the string represented by the base64 encoding |
-| [HEX_ENCODE](#hex_encode) | Returns the hexadecimal encoding of string |
-| [HEX_DECODE](#hex_decode) | Returns the string represented by the hexadecimal encoding |
-| [LEN](#len) | Returns the character length of the string |
-| [BYTE_LEN](#byte_len) | Returns the byte length in utf-8 encoding of the string |
-| [WIDTH](#width) | Returns the string width |
-| [LPAD](#lpad) | Returns the string left-side padded |
-| [RPAD](#rpad) | Returns the string right-side padded |
-| [SUBSTR](#substr) | Returns a substring of the string |
-| [INSTR](#instr) | Returns the index of the first occurrence of the substring |
-| [LIST_ELEM](#list_elem) | Returns the element of the list |
-| [REPLACE](#replace) | Returns the string with substrings replaced another strings |
-| [FORMAT](#format) | Returns the formatted string |
-| [JSON_VALUE](#json_value) | Returns a value from json |
-| [JSON_OBJECT](#json_object) | Returns a string formatted in json object |
+| [TRIM](#trim) | Return a string with all leading and trailing characters removed |
+| [LTRIM](#ltrim) | Return a string with all leading characters removed |
+| [RTRIM](#rtrim) | Return a string with all trailing characters removed |
+| [UPPER](#upper) | Return a string with all characters mapped to their upper case |
+| [LOWER](#lower) | Return a string with all characters mapped to their lower case |
+| [BASE64_ENCODE](#base64_encode) | Return a base64 encoding of a string |
+| [BASE64_DECODE](#base64_decode) | Return a string represented by a base64 encoding |
+| [HEX_ENCODE](#hex_encode) | Return a hexadecimal encoding of a string |
+| [HEX_DECODE](#hex_decode) | Return a string represented by a hexadecimal encoding |
+| [LEN](#len) | Return the number of characters of a string |
+| [BYTE_LEN](#byte_len) | Return the byte length of a string |
+| [WIDTH](#width) | Return the string width of a string |
+| [LPAD](#lpad) | Return a string left-side padded |
+| [RPAD](#rpad) | Return a string right-side padded |
+| [SUBSTR](#substr) | Return the substring of a string |
+| [INSTR](#instr) | Return the index of the first occurrence of a substring |
+| [LIST_ELEM](#list_elem) | Return a element of a list |
+| [REPLACE](#replace) | Return a string replaced the substrings with another string |
+| [FORMAT](#format) | Return a formatted string |
+| [JSON_VALUE](#json_value) | Return a value from json |
+| [JSON_OBJECT](#json_object) | Return a string formatted in json object |
 
 ## Definitions
 
@@ -45,7 +45,7 @@ _str_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Returns the string _str_ with all leading and trailing white space removed.
+Returns the string value that is removed all leading and trailing white spaces from _str_.
 
 ```
 TRIM(str, charset)
@@ -60,7 +60,7 @@ _charset_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Returns the string _str_ with all leading and trailing character contained in _charset_ removed.
+Returns the string value that is removed all leading and trailing characters contained in _charset_ from _str_.
 
 ### LTRIM
 {: #ltrim}
@@ -75,7 +75,7 @@ _str_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Returns the string _str_ with all leading white space removed.
+Returns the string value that is removed all leading white spaces from _str_.
 
 ```
 LTRIM(str, charset)
@@ -90,7 +90,7 @@ _charset_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Returns the string _str_ with all leading character contained in _charset_ removed.
+Returns the string value that is removed all leading characters contained in _charset_ from _str_.
 
 
 ### RTRIM
@@ -108,7 +108,7 @@ _str_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Returns the string _str_ with all trailing white space removed.
+Returns the string value that is removed all trailing white spaces from _str_.
 
 ```
 RTRIM(str, charset)
@@ -123,7 +123,7 @@ _charset_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Returns the string _str_ with all trailing character contained in _charset_ removed.
+Returns the string value that is removed all trailing characters contained in _charset_ from _str_.
 
 ### UPPER
 {: #upper}
@@ -138,7 +138,7 @@ _str_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Returns the string _str_ with all characters mapped to their upper case. 
+Returns the string value replaced _str_ with characters mapped to their upper case.
 
 ### LOWER
 {: #lower}
@@ -153,7 +153,7 @@ _str_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Returns the string _str_ with all characters mapped to their lower case. 
+Returns the string value replaced _str_ with characters mapped to their upper case.
 
 ### BASE64_ENCODE
 {: #base64_encode}
@@ -168,7 +168,7 @@ _str_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Return the base64 encoding of string _str_.
+Returns the Base64 encoding of _str_.
 
 ### BASE64_DECODE
 {: #base64_decode}
@@ -183,7 +183,7 @@ _str_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Return the string represented by the base64 string _str_.
+Returns the string value represented by _str_ that is encoded with Base64.
 
 ### HEX_ENCODE
 {: #hex_encode}
@@ -198,7 +198,7 @@ _str_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Return the hexadecimal encoding of string _str_.
+Returns the hexadecimal encoding of _str_.
 
 ### HEX_DECODE
 {: #hex_decode}
@@ -213,7 +213,7 @@ _str_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Return the string represented by the hexadecimal string _str_.
+Returns the string value represented by _str_ that is encoded with hexadecimal.
 
 ### LEN
 {: #len}
@@ -228,7 +228,7 @@ _str_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the character length of the string _str_.
+Returns the number of characters of _str_.
 
 ### BYTE_LEN
 {: #byte_len}
@@ -248,7 +248,7 @@ _encoding_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the byte length in utf-8 encoding of the string _str_.
+Returns the byte length of _str_.
 
 ### WIDTH
 {: #width}
@@ -263,7 +263,7 @@ _str_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the string width. Half-width characters are counted as 1, and full-width characters are counted as 2.
+Returns the string width of _str_. Half-width characters are counted as 1, and full-width characters are counted as 2.
 
 ### LPAD
 {: #lpad}
@@ -294,7 +294,7 @@ _encoding_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Return the string _str_ padded with leading _padstr_ to a length specified by _len_.
+Returns the string value of _str_ padded with leading _padstr_ to a length specified by _len_.
 
 ### RPAD
 {: #rpad}
@@ -325,7 +325,7 @@ _encoding_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Return the string _str_ padded with trailing _padstr_ to a length specified by _len_.
+Returns the string value of _str_ padded with trailing _padstr_ to a length specified by _len_.
 
 ### SUBSTR
 {: #substr}
@@ -343,8 +343,8 @@ _position_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Return a substring of the string _str_ from at _position_ to the end.
-If _position_ is negative, starting position is _position_ from the end of the str.
+Returns the substring of _str_ from at _position_ to the end.
+If _position_ is negative, then starting position is _position_ from the end of the _str_.
 
 ```
 SUBSTR(str, position, len)
@@ -362,8 +362,8 @@ _len_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Return a _len_ characters substring of the string _str_ from at _position_.
-if _len_ is less than the length from _position_ to the end, return a substring from _position_ to the end. 
+Returns the _len_ characters in _str_ from at _position_.
+if _len_ is less than the length from _position_ to the end, then returns the substring from _position_ to the end. 
 
 ### INSTR
 {: #instr}
@@ -379,10 +379,10 @@ _substr_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
 _return_
-: [string]({{ '/reference/value.html#string' | relative_url }})
+: [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the index of the first occurrence of _substr_ in _str_,
-or null if _substr_ is not present in _str_, returns null.
+Returns the index of the first occurrence of _substr_ in _str_, 
+or null if _substr_ is not present in _str_.
 
 ### LIST_ELEM
 {: #list_elem}
@@ -403,7 +403,7 @@ _index_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Return the string at _index_ in the list generated by splitting with _sep_ from _str_.
+Returns the string at _index_ in the list generated by splitting with _sep_ from _str_.
 
 ### REPLACE
 {: #replace}
@@ -424,22 +424,22 @@ _new_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Return the string _str_ with all occurrences of the string _old_ replaced by the string _new_.
+Returns the string that is replaced all occurrences of _old_ with _new_ in _str_.
 
 ### FORMAT
 {: #format}
 
 ```
-FORMAT(format [, replace ... ])
+FORMAT(format [, replace_value ... ])
 ```
 
 _format_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-_replace_
+_replace_value_
 : [value]({{ '/reference/value.html' | relative_url }})
 
-Return the formatted string.
+Returns the formatted string replaced placeholders with _replace_ in _format_.
 
 #### Format Placeholder
 
@@ -450,13 +450,15 @@ Return the formatted string.
 flag
 : | flag | description |
   | :- | :- |
-  | + | print a plus sign for numeric values |
-  | '&nbsp;' (U+0020 Space) | print a space instead of a plus sign |
-  | - | pad on the right |
-  | 0 | pad with zeros |
+  | + | Print a plus sign for numeric values |
+  | '&nbsp;' (U+0020 Space) | Print a space instead of a plus sign |
+  | - | Pad on the right |
+  | 0 | Pad with zeros |
 
 width
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+  Width of the replaced string.
 
 precision
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
@@ -467,18 +469,18 @@ precision
 specifier
 : | specifier | description |
   | :- | :- |
-  | b | base 2 integer |
-  | o | base 8 integer |
-  | d | base 10 integer |
-  | x | base 16 integer with lower cases |
-  | X | base 16 integer with upper cases |
-  | e | exponential notation with lower cases |
-  | E | exponential notation with upper cases |
-  | f | floating point decimal number |
-  | s | string representation of the value |
-  | q | quoted string representation of the value |
-  | i | quoted identifier representation of the value |
-  | T | type of the value |
+  | b | Base 2 integer |
+  | o | Base 8 integer |
+  | d | Base 10 integer |
+  | x | Base 16 integer with lower cases |
+  | X | Base 16 integer with upper cases |
+  | e | Exponential notation with lower cases |
+  | E | Exponential notation with upper cases |
+  | f | Floating point decimal number |
+  | s | String representation of the value |
+  | q | Quoted string representation of the value |
+  | i | Quoted identifier representation of the value |
+  | T | Type of the value |
   | % | '%' |
 
   > Quoted string and identifier representations are escaped for [special characters]({{ '/reference/command.html#special_characters' | relative_url }}).
@@ -487,21 +489,21 @@ specifier
 {: #json_value}
 
 ```
-JSON_VALUE(query, json)
+JSON_VALUE(json_query, json_data)
 ```
 
-_query_
+_json_query_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-  [JSON Query]({{ '/reference/json.html#query' |relative_url }}) to uniquely specify data.
+  [JSON Query]({{ '/reference/json.html#query' |relative_url }}) to uniquely specify a value.
 
-_json_
+_json_data_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
 _return_
 : [value]({{ '/reference/value.html' | relative_url }})
 
-Return a value from json.
+Returns a value in _json_data.
 
 A JSON values are converted to following types.
 
@@ -537,6 +539,6 @@ _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
 
-Returns a string formatted in json object.
+Returns a string formatted in JSON.
 
 If no arguments are passed, then the object include all fields in the view.

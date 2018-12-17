@@ -108,7 +108,7 @@ Float
 : A float is a word that contains only \[0-9\] with a decimal point.
 
 Ternary
-: A ternary is represented by any one keyword of TRUE, FALSE or UNKNOWN.
+: A ternary is represented by any one keyword of TRUE, UNKNOWN or FALSE.
 
 Datetime
 : A datetime is a string formatted as datetime.
@@ -144,17 +144,17 @@ Null
 : A null is represented by a keyword NULL.
 
 Variable
-: A [variable]({{ '/reference/variable.html' | relative_url }}) is a word starting with "@" and followed by a character string that contains any unicode letters, any digits or low lines(U+005F `_`).
+: A [variable]({{ '/reference/variable.html' | relative_url }}) is a word starting with "@" and followed by a character string that contains any unicode letters, any digits or Low Lines(U+005F `_`).
 
 Flag
-: A [flag]({{ '/reference/flag.html' | relative_url }}) is a word starting with "@@" and followed by a character string that contains any unicode letters, any digits or low lines(U+005F `_`). Character case is ignored.
+: A [flag]({{ '/reference/flag.html' | relative_url }}) is a word starting with "@@" and followed by a character string that contains any unicode letters, any digits or Low Lines(U+005F `_`). Character case is ignored.
 
 Environment Variable
-: A [environment variable]({{ '/reference/environment-variable.html' | relative_url }}) is a word starting with "@%" and followed by a character string that contains any unicode letters, any digits or low lines(U+005F `_`).
-  If a environment variable includes other characters, you can use the variable by enclosing in back quotes(U+0060 ` ).
+: A [environment variable]({{ '/reference/environment-variable.html' | relative_url }}) is a word starting with "@%" and followed by a character string that contains any unicode letters, any digits or Low Lines(U+005F `_`).
+  If a environment variable includes other characters, you can use the variable by enclosing in Back Quotes(U+0060 ` ).
 
 Runtime Information
-: A [runtime information]({{ '/reference/runtime-information.html' | relative_url }}) is a word starting with "@#" and followed by a character string that contains any unicode letters, any digits or low lines(U+005F `_`). Character case is ignored.
+: A [runtime information]({{ '/reference/runtime-information.html' | relative_url }}) is a word starting with "@#" and followed by a character string that contains any unicode letters, any digits or Low Lines(U+005F `_`). Character case is ignored.
 
 ```sql
 abcde                 -- identifier

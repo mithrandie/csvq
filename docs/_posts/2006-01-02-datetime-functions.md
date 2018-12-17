@@ -8,44 +8,44 @@ category: reference
 
 | name | description |
 | :- | :- |
-| [NOW](#now) | Return the datetime value of current date and time |
-| [DATETIME_FORMAT](#datetime_format) | Format the datetime |
-| [YEAR](#year) | Return year of the datetime |
-| [MONTH](#month) | Return month of the datetime |
-| [DAY](#day) | Return day of the datetime |
-| [HOUR](#hour) | Return hour of the datetime |
-| [MINUTE](#minute) | Return minute of the datetime |
-| [SECOND](#second) | Return second of the datetime |
-| [MILLISECOND](#millisecond) | Return millisecond of the datetime |
-| [MICROSECOND](#microsecond) | Return microsecond of the datetime |
-| [NANOSECOND](#nanosecond) | Return nanosecond of the datetime |
-| [WEEKDAY](#weekday) | Return weekday number of the datetime |
-| [UNIX_TIME](#unix_time) | Return Unix time of the datetime |
-| [UNIX_NANO_TIME](#unix_nano_time) | Return Unix nano time of the datetime |
-| [DAY_OF_YEAR](#day_of_year) | Return day of year of the datetime |
-| [WEEK_OF_YEAR](#week_of_year) | Return week number of year of the datetime |
-| [ADD_YEAR](#add_year) | Add years to the datetime |
-| [ADD_MONTH](#add_month) | Add monthes to the datetime |
-| [ADD_DAY](#add_day) | Add days to the datetime |
-| [ADD_HOUR](#add_hour) | Add hours to the datetime |
-| [ADD_MINUTE](#add_minute) | Add minutes to the datetime |
-| [ADD_SECOND](#add_second) | Add seconds to the datetime |
-| [ADD_MILLI](#add_milli) | Add milliseconds to the datetime |
-| [ADD_MICRO](#add_micro) | Add microseconds to the datetime |
-| [ADD_NANO](#add_nano) | Add nanoseconds to the datetime |
-| [TRUNC_MONTH](#trunc_month)   | Truncate time information less than 1 year from the datetime |
-| [TRUNC_DAY](#trunc_day)       | Truncate time information less than 1 month from the datetime |
-| [TRUNC_TIME](#trunc_time)     | Truncate time information less than 1 day from the datetime |
+| [NOW](#now) | Return a datetime value of current date and time |
+| [DATETIME_FORMAT](#datetime_format) | Format a datetime |
+| [YEAR](#year) | Return year of a datetime |
+| [MONTH](#month) | Return month of a datetime |
+| [DAY](#day) | Return day of a datetime |
+| [HOUR](#hour) | Return hour of a datetime |
+| [MINUTE](#minute) | Return minute of a datetime |
+| [SECOND](#second) | Return second of a datetime |
+| [MILLISECOND](#millisecond) | Return millisecond of a datetime |
+| [MICROSECOND](#microsecond) | Return microsecond of a datetime |
+| [NANOSECOND](#nanosecond) | Return nanosecond of a datetime |
+| [WEEKDAY](#weekday) | Return weekday number of a datetime |
+| [UNIX_TIME](#unix_time) | Return Unix time of a datetime |
+| [UNIX_NANO_TIME](#unix_nano_time) | Return Unix nano time of a datetime |
+| [DAY_OF_YEAR](#day_of_year) | Return day of year of a datetime |
+| [WEEK_OF_YEAR](#week_of_year) | Return week number of year of a datetime |
+| [ADD_YEAR](#add_year) | Add years to a datetime |
+| [ADD_MONTH](#add_month) | Add monthes to a datetime |
+| [ADD_DAY](#add_day) | Add days to a datetime |
+| [ADD_HOUR](#add_hour) | Add hours to a datetime |
+| [ADD_MINUTE](#add_minute) | Add minutes to a datetime |
+| [ADD_SECOND](#add_second) | Add seconds to a datetime |
+| [ADD_MILLI](#add_milli) | Add milliseconds to a datetime |
+| [ADD_MICRO](#add_micro) | Add microseconds to a datetime |
+| [ADD_NANO](#add_nano) | Add nanoseconds to a datetime |
+| [TRUNC_MONTH](#trunc_month)   | Truncate time information less than 1 year from a datetime |
+| [TRUNC_DAY](#trunc_day)       | Truncate time information less than 1 month from a datetime |
+| [TRUNC_TIME](#trunc_time)     | Truncate time information less than 1 day from a datetime |
 | [TRUNC_HOUR](#trunc_time)     | Alias for TRUNC_TIME |
-| [TRUNC_MINUTE](#trunc_minute) | Truncate time information less than 1 hour from the datetime |
-| [TRUNC_SECOND](#trunc_second) | Truncate time information less than 1 minute from the datetime |
-| [TRUNC_MILLI](#trunc_milli)   | Truncate time information less than 1 second from the datetime |
-| [TRUNC_MICRO](#trunc_micro)   | Truncate time information less than 1 millisecond from the datetime |
-| [TRUNC_NANO](#trunc_nano)     | Truncate time information less than 1 microsecond from the datetime |
+| [TRUNC_MINUTE](#trunc_minute) | Truncate time information less than 1 hour from a datetime |
+| [TRUNC_SECOND](#trunc_second) | Truncate time information less than 1 minute from a datetime |
+| [TRUNC_MILLI](#trunc_milli)   | Truncate time information less than 1 second from a datetime |
+| [TRUNC_MICRO](#trunc_micro)   | Truncate time information less than 1 millisecond from a datetime |
+| [TRUNC_NANO](#trunc_nano)     | Truncate time information less than 1 microsecond from a datetime |
 | [DATE_DIFF](#date_diff) | Return the difference of days between two datetime values |
 | [TIME_DIFF](#time_diff) | Return the difference of time between two datetime values as seconds |
 | [TIME_NANO_DIFF](#time_nano_diff) | Return the difference of time between two datetime values as nanoseconds |
-| [UTC](#utc) | Return the datetime in UTC |
+| [UTC](#utc) | Return a datetime in UTC |
 
 ## Definitions
 
@@ -59,8 +59,8 @@ NOW()
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Return the datetime value of current date and time.
-In a single query, all _NOW_ functions return the same value. 
+Returns a datetime value of current date and time.
+In a single query, every this function returns the same value. 
 
 ### DATETIME_FORMAT
 {: #datetime_format}
@@ -78,7 +78,7 @@ _format_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Format the _datetime_ according to the string _format_. 
+Formats _datetime_ according to _format_. 
 
 #### Format Placeholders
 
@@ -126,7 +126,7 @@ _datetime_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return year of the _datetime_ as integer.
+Returns the year of _datetime_ as an integer.
 
 ### MONTH
 {: #month}
@@ -141,7 +141,7 @@ _datetime_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return month number of the _datetime_ as integer.
+Returns the month number of _datetime_ as an integer.
 
 ### DAY
 {: #day}
@@ -156,7 +156,7 @@ _datetime_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return day of month of the _datetime_ as integer.
+Returns the day of month of _datetime_ as an integer.
 
 ### HOUR
 {: #hour}
@@ -171,7 +171,7 @@ _datetime_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return hour of the _datetime_ as integer.
+Returns the hour of _datetime_ as an integer.
 
 ### MINUTE
 {: #minute}
@@ -186,7 +186,7 @@ _datetime_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return minute of the _datetime_ as integer.
+Returns the minute of _datetime_ as an integer.
 
 ### SECOND
 {: #second}
@@ -201,7 +201,7 @@ _datetime_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return seconds of the _datetime_ as integer.
+Returns the seconds of _datetime_ as an integer.
 
 ### MILLISECOND
 {: #millisecond}
@@ -216,7 +216,7 @@ _datetime_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return millisecond of the _datetime_ as integer.
+Returns the millisecond of _datetime_ as an integer.
 
 ### MICROSECOND
 {: #microsecond}
@@ -231,7 +231,7 @@ _datetime_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return microsecond of the _datetime_ as integer.
+Returns the microsecond of _datetime_ as an integer.
 
 ### NANOSECOND
 {: #nanosecond}
@@ -246,7 +246,7 @@ _datetime_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return nanosecond of the _datetime_ as integer.
+Returns the nanosecond of _datetime_ as an integer.
 
 ### WEEKDAY
 {: #weekday}
@@ -261,7 +261,7 @@ _datetime_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return weekday number of the _datetime_ as integer.
+Returns the weekday number of _datetime_ as an integer.
 
 #### Weekday number
 
@@ -288,7 +288,7 @@ _datetime_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the number of seconds elapsed since January 1, 1970 UTC of the _datetime_ as integer.
+Returns the number of seconds elapsed since January 1, 1970 UTC of _datetime_ as an integer.
 
 ### UNIX_NANO_TIME
 {: #unix_nano_time}
@@ -303,7 +303,7 @@ _datetime_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the number of nanoseconds elapsed since January 1, 1970 UTC of the _datetime_ as integer.
+Returns the number of nanoseconds elapsed since January 1, 1970 UTC of _datetime_ as an integer.
 
 ### DAY_OF_YEAR
 {: #day_of_year}
@@ -318,7 +318,7 @@ _datetime_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return day of year of the _datetime_ as integer.
+Returns the day of the year of _datetime_ as an integer.
 
 ### WEEK_OF_YEAR
 {: #week_of_year}
@@ -333,9 +333,9 @@ _datetime_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return week number of year of the _datetime_ as integer.
+Returns the week number of the year of _datetime_ as an integer.
 The week number is in the range from 1 to 53.
-Jan 01 to Jan 03 of year might return week 52 or 53 of the last year, and Dec 29 to Dec 31 might return week 1 of next year.
+Jan 01 to Jan 03 of a year might returns week 52 or 53 of the last year, and Dec 29 to Dec 31 might returns week 1 of the next year.
 
 ### ADD_YEAR
 {: #add_year}
@@ -353,7 +353,7 @@ _duration_
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Add _duration_ years to the _datetime_.
+Adds _duration_ years to _datetime_.
 
 ### ADD_MONTH
 {: #add_month}
@@ -371,7 +371,7 @@ _duration_
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Add _duration_ monthes to the _datetime_.
+Adds _duration_ monthes to _datetime_.
 
 ### ADD_DAY
 {: #add_day}
@@ -389,7 +389,7 @@ _duration_
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Add _duration_ days to the _datetime_.
+Adds _duration_ days to _datetime_.
 
 ### ADD_HOUR
 {: #add_hour}
@@ -407,7 +407,7 @@ _duration_
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Add _duration_ hours to the _datetime_.
+Adds _duration_ hours to _datetime_.
 
 ### ADD_MINUTE
 {: #add_minute}
@@ -425,7 +425,7 @@ _duration_
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Add _duration_ minutes to the _datetime_.
+Adds _duration_ minutes to _datetime_.
 
 ### ADD_SECOND
 {: #add_second}
@@ -443,7 +443,7 @@ _duration_
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Add _duration_ seconds to the _datetime_.
+Adds _duration_ seconds to _datetime_.
 
 ### ADD_MILLI
 {: #add_milli}
@@ -461,7 +461,7 @@ _duration_
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Add _duration_ milliseconds to the _datetime_.
+Adds _duration_ milliseconds to _datetime_.
 
 ### ADD_MICRO
 {: #add_micro}
@@ -479,7 +479,7 @@ _duration_
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Add _duration_ microseconds to the _datetime_.
+Adds _duration_ microseconds to _datetime_.
 
 ### ADD_NANO
 {: #add_nano}
@@ -497,7 +497,7 @@ _duration_
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Add _duration_ nanoseconds to the _datetime_.
+Adds _duration_ nanoseconds to _datetime_.
 
 
 ### TRUNC_MONTH
@@ -513,7 +513,7 @@ _datetime_
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Truncate time information less than 1 year from the _datetime_.
+Truncates time information less than 1 year from _datetime_.
 
 
 ### TRUNC_DAY
@@ -529,7 +529,7 @@ _datetime_
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Truncate time information less than 1 month from the _datetime_.
+Truncates time information less than 1 month from _datetime_.
 
 
 ### TRUNC_TIME
@@ -545,7 +545,7 @@ _datetime_
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Truncate time information less than 1 day from the _datetime_.
+Truncates time information less than 1 day from _datetime_.
 
 
 ### TRUNC_MINUTE
@@ -561,7 +561,7 @@ _datetime_
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Truncate time information less than 1 hour from the _datetime_.
+Truncates time information less than 1 hour from _datetime_.
 
 
 ### TRUNC_SECOND
@@ -577,7 +577,7 @@ _datetime_
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Truncate time information less than 1 minute from the _datetime_.
+Truncates time information less than 1 minute from _datetime_.
 
 
 ### TRUNC_MILLI
@@ -593,7 +593,7 @@ _datetime_
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Truncate time information less than 1 second from the _datetime_.
+Truncates time information less than 1 second from _datetime_.
 
 
 ### TRUNC_MICRO
@@ -609,7 +609,7 @@ _datetime_
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Truncate time information less than 1 millisecond from the _datetime_.
+Truncates time information less than 1 millisecond from _datetime_.
 
 
 ### TRUNC_NANO
@@ -625,7 +625,7 @@ _datetime_
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Truncate time information less than 1 microsecond from the _datetime_.
+Truncates time information less than 1 microsecond from _datetime_.
 
 
 
@@ -645,8 +645,8 @@ _duration2_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the difference of days between two _datetime_ values.
-The time and nanoseconds are ignored in the calculation. 
+Returns the difference of days between two _datetime_ values.
+The time information less than 1 day are ignored in the calculation. 
 
 ### TIME_DIFF
 {: #time_diff}
@@ -664,8 +664,8 @@ _duration2_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the difference of time between two _datetime_ values as seconds.
-In the return value, the integer part representing seconds and the fractional part representing nanoseconds.
+Returns the difference of time between two _datetime_ values as seconds.
+In the return value, the integer part represents seconds and the fractional part represents nanoseconds.
 
 ### TIME_NANO_DIFF
 {: #time_nano_diff}
@@ -683,7 +683,7 @@ _duration2_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Return the difference of time between two _datetime_ values as nanoseconds.
+Returns the difference of time between two _datetime_ values as nanoseconds.
 
 ### UTC
 {: #utc}
@@ -698,5 +698,5 @@ _datetime_
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Return the _datetime_ in UTC.
+Returns the datetime value of _datetime_ in UTC.
 
