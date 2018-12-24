@@ -1,3 +1,7 @@
+## Release v1.7.2 (2018-12-24)
+
+- Implement Syntax subcommand.
+
 ## Release v1.7.1 (2018-12-15)
 
 - Fix the following bus.
