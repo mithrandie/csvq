@@ -18,7 +18,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var version = "v1.7.1"
+var version = "v1.7.2"
 
 func main() {
 	var proc *query.Procedure
@@ -198,6 +198,23 @@ func main() {
 
 				expr := c.Args().First()
 				err := action.Calc(expr)
+				if err != nil {
+					return NewExitError(err.Error(), 1)
+				}
+
+				return nil
+			},
+			OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
+				return NewExitError(fmt.Sprintf("Incorrect Usage: %s", err.Error()), 1)
+			},
+		},
+		{
+			Name:      "syntax",
+			Usage:     "Print syntax",
+			ArgsUsage: "[search_word ...]",
+			Action: func(c *cli.Context) error {
+				words := append([]string{c.Args().First()}, c.Args().Tail()...)
+				err := action.Syntax(proc, words)
 				if err != nil {
 					return NewExitError(err.Error(), 1)
 				}

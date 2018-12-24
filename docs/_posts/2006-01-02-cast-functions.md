@@ -30,7 +30,7 @@ _value_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Convert a value to a string.
+Convert _value_ to a string.
 
 | value type | descriptin |
 | :- | :- |
@@ -55,7 +55,7 @@ _value_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Convert a value to an integer.
+Convert _value_ to an integer.
 
 | value type | descriptin |
 | :- | :- |
@@ -79,7 +79,7 @@ _value_
 _return_
 : [float]({{ '/reference/value.html#float' | relative_url }})
 
-Convert a value to a float.
+Convert _value_ to a float.
 
 | value type | descriptin |
 | :- | :- |
@@ -103,7 +103,7 @@ _value_
 _return_
 : [datetime]({{ '/reference/value.html#datetime' | relative_url }})
 
-Convert a value to a datetime.
+Convert _value_ to a datetime.
 
 | value type | descriptin |
 | :- | :- |
@@ -127,7 +127,7 @@ _value_
 _boolean_
 : [boolean]({{ '/reference/value.html#boolean' | relative_url }})
 
-Convert a value to a boolean.
+Convert _value_ to a boolean.
 
 | value type | descriptin |
 | :- | :- |
@@ -151,7 +151,7 @@ _value_
 _return_
 : [ternary]({{ '/reference/value.html#ternary' | relative_url }})
 
-Convert a value to a ternary.
+Convert _value_ to a ternary.
 
 | value type | descriptin |
 | :- | :- |

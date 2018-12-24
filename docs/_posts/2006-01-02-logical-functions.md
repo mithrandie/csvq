@@ -11,7 +11,7 @@ category: reference
 | [COALESCE](#coalesce) | Return the first non-null value in arguments |
 | [IF](#if) | Return a value by condition |
 | [IFNULL](#ifnull) | Return a value whether passed value is null |
-| [NULLIF](#nullif) | Return null wheter passed values are equal |
+| [NULLIF](#nullif) | Return null whether passed values are equal |
 
 ## Definitions
 
@@ -28,7 +28,7 @@ _value_
 _return_
 : [primitive type]({{ '/reference/value.html#primitive_types' | relative_url }})
 
-Returns the first non-null _value_ in arguments. If there is no non-null _value_, then returns a null.
+Returns the first non-null _value_ in arguments. If there is no non-null _value_, then returns null.
 
 ### IF
 {: #if}
@@ -85,5 +85,5 @@ _value2_
 _return_
 : [primitive type]({{ '/reference/value.html#primitive_types' | relative_url }})
 
-If _value1_ is equal to _value2_, returns a null. Otherwise returns _value1_.
+If _value1_ is equal to _value2_, returns null. Otherwise returns _value1_.
 

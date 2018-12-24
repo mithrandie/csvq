@@ -40,6 +40,8 @@ _value_
 _column_
 : [field reference]({{ '/reference/value.html#field_reference' | relative_url }})
 
+_LAST_ is the default position.
+
 
 ## Drop Columns
 {: #drop-columns}
@@ -59,13 +61,13 @@ _column_
 {: #rename-column}
 
 ```sql
-ALTER TABLE table_name RENAME old_column TO new_column_name
+ALTER TABLE table_name RENAME old_column_name TO new_column_name
 ```
 
 _table_name_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
 
-_old_column_
+_old_column_name_
 : [field reference]({{ '/reference/value.html#field_reference' | relative_url }})
 
 _new_column_name_

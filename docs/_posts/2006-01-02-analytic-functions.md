@@ -11,25 +11,25 @@ Analytic Functions can be used only in [Select Clause]({{ '/reference/select-que
 
 | name | description |
 | :- | :- |
-| [ROW_NUMBER](#row_number)     | Returns the sequential numbers |
-| [RANK](#rank)                 | Returns the ranks |
-| [DENSE_RANK](#dense_rank)     | Returns the ranks without any gaps in the ranking |
-| [CUME_DIST](#cume_dist)       | Returns the cumulative distributions |
-| [PERCENT_RANK](#percent_rank) | Returns the relative ranks |
-| [NTILE](#ntile)               | Returns the number of the group |
-| [FIRST_VALUE](#first_value)   | Returns the first value |
-| [LAST_VALUE](#last_value)     | Returns the last value |
-| [NTH_VALUE](#nth_value)       | Returns the n-th value |
-| [LAG](#lag)                   | Returns the value in a previous row |
-| [LEAD](#lead)                 | Returns the value in a following row |
-| [COUNT](#count)               | Returns the number of values |
-| [MIN](#min)                   | Returns the minimum value |
-| [MAX](#max)                   | Returns the maximum value |
-| [SUM](#sum)                   | Returns the sum of values |
-| [AVG](#avg)                   | Returns the average of values |
-| [MEDIAN](#median)             | Returns the median of values |
-| [LISTAGG](#listagg)           | Returns the concatenated string of values |
-| [JSON_AGG](#json_agg)         | Returns the string formatted in JSON array |
+| [ROW_NUMBER](#row_number)     | Return sequential numbers |
+| [RANK](#rank)                 | Return ranks |
+| [DENSE_RANK](#dense_rank)     | Return ranks without any gaps in the ranking |
+| [CUME_DIST](#cume_dist)       | Return cumulative distributions |
+| [PERCENT_RANK](#percent_rank) | Return relative ranks |
+| [NTILE](#ntile)               | Return the number of groups |
+| [FIRST_VALUE](#first_value)   | Return the first value in a group |
+| [LAST_VALUE](#last_value)     | Return the last value in a group |
+| [NTH_VALUE](#nth_value)       | Return the n-th value in a group |
+| [LAG](#lag)                   | Return the value in a previous row |
+| [LEAD](#lead)                 | Return the value in a following row |
+| [COUNT](#count)               | Return the number of values in a group |
+| [MIN](#min)                   | Return the minimum value in a group |
+| [MAX](#max)                   | Return the maximum value in a group |
+| [SUM](#sum)                   | Return the sum of values in a group |
+| [AVG](#avg)                   | Return the average of values in a group |
+| [MEDIAN](#median)             | Return the median of values in a group |
+| [LISTAGG](#listagg)           | Return the concatenated string of values in a group |
+| [JSON_AGG](#json_agg)         | Return the string formatted in JSON array of values in a group |
 
 ## Basic Syntax
 {: #syntax}
@@ -52,10 +52,10 @@ window_position
   : {UNBOUNDED PRECEDING|offset PRECEDING|CURRENT ROW}
 
 window_frame_low
-  : {UNBOUNDED PRECEDING|offset PRECEDING|offset FOLLOWING|CURRENT_ROW}
+  : {UNBOUNDED PRECEDING|offset PRECEDING|offset FOLLOWING|CURRENT ROW}
 
 window_frame_high
-  : {UNBOUNDED FOLLOWING|offset PRECEDING|offset FOLLOWING|CURRENT_ROW}
+  : {UNBOUNDED FOLLOWING|offset PRECEDING|offset FOLLOWING|CURRENT ROW}
 
 ```
 
@@ -190,7 +190,7 @@ _order_by_clause_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-The NTILE function splits the records into _number_of_groups_ groups, then returns the sequential numbers of the groups.
+Splits the records into _number_of_groups_ groups, then returns the sequential numbers of the groups.
 
 
 ### FIRST_VALUE
@@ -296,7 +296,7 @@ _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
 Returns the value in a previous row.
-If _IGNORE NULLS_ keywords are specified, then rows that _expr_ values are nulls are skipped. 
+If _IGNORE NULLS_ keywords are specified, then rows that _expr_ values are null will be skipped. 
 
 
 ### LEAD
@@ -330,7 +330,7 @@ _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
 Returns the value in a following row.
-If _IGNORE NULLS_ keywords are specified, then rows that _expr_ values are nulls are skipped. 
+If _IGNORE NULLS_ keywords are specified, then rows that _expr_ values are null will be skipped. 
 
 
 ### COUNT
@@ -463,7 +463,7 @@ _return_
 Returns the median of float or datetime values of _expr_.
 If all values are null, then returns a null.
 
-Even if _expr_ values are datetime values, the _MEDIAN_ function returns a float or integer value.
+Even if _expr_ values are datetime values, this function returns a float or integer value.
 The return value can be converted to a datetime value by using the [DATETIME function]({{ '/reference/cast-functions.html#datetime' | relative_url }}).
 
 
@@ -489,7 +489,7 @@ _order_by_clause_
 Returns the string result with the concatenated non-null values of _expr_.
 If all values are null, then returns a null.
 
-Separator string _separator_ is placed between values. Empty string is the default.
+_separator_ is placed between values. Empty string is the default.
 
 
 
@@ -509,4 +509,4 @@ _partition_clause_
 _order_by_clause_
 : [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
 
-Returns the string formatted in JSON array.
+Returns the string formatted in JSON array of _expr_.
