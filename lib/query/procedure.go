@@ -367,6 +367,9 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 		if printstr, err = ShowFields(stmt.(parser.ShowFields), proc.Filter); err == nil {
 			Log(printstr, false)
 		}
+	case parser.Syntax:
+		printstr = Syntax(stmt.(parser.Syntax), proc.Filter)
+		Log(printstr, false)
 	case parser.Trigger:
 		trigger := stmt.(parser.Trigger)
 		switch strings.ToUpper(trigger.Event.Literal) {

@@ -13,14 +13,14 @@ If distinct option is specified, aggregate functions calculate only unique value
 
 | name | description |
 | :- | :- |
-| [COUNT](#count) | Returns the number of values |
-| [MIN](#min) | Returns the minimum value |
-| [MAX](#max) | Returns the maximum value |
-| [SUM](#sum) | Returns the sum of values |
-| [AVG](#avg) | Returns the average of values |
-| [MEDIAN](#median) | Returns the median of values |
-| [LISTAGG](#listagg) | Returns the concatenated string of values |
-| [JSON_AGG](#json_agg) | Returns the string formatted in JSON array |
+| [COUNT](#count) | Return a number of values |
+| [MIN](#min) | Return a minimum value |
+| [MAX](#max) | Return a maximum value |
+| [SUM](#sum) | Return a sum of values |
+| [AVG](#avg) | Return a average of values |
+| [MEDIAN](#median) | Return a median of values |
+| [LISTAGG](#listagg) | Return a concatenated string of values |
+| [JSON_AGG](#json_agg) | Return a string formatted in JSON array |
 
 ## Definitions
 
@@ -62,7 +62,7 @@ _return_
 : [primitive type]({{ '/reference/value.html#primitive_types' | relative_url }})
 
 Returns the minimum value of non-null values of _expr_.
-If all values are null, then returns a null.
+If all values are null, then returns null.
 
 ### MAX
 {: #max}
@@ -128,7 +128,7 @@ _return_
 Returns the median of float or datetime values of _expr_.
 If all values are null, then returns a null.
 
-Even if _expr_ values are datetime values, the _MEDIAN_ function returns a float or integer value.
+Even if _expr_ represents datetime values, this function returns a float or integer value.
 The return value can be converted to a datetime value by using the [DATETIME function]({{ '/reference/cast-functions.html#datetime' | relative_url }}).
 
 ### LISTAGG
@@ -153,8 +153,7 @@ _return_
 Returns the string result with the concatenated non-null values of _expr_.
 If all values are null, then returns a null.
 
-Separator string _separator_ is placed between values. Empty string is the default.
-
+_separator_ is placed between values. Empty string is the default.
 By using _order_by_clause_, you can sort values.
 
 ### JSON_AGG
@@ -173,4 +172,4 @@ _order_by_clause_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Returns the string formatted in JSON array.
+Returns the string formatted in JSON array of _expr_.

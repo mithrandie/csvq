@@ -12,6 +12,7 @@ import (
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/syntax"
 	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mithrandie/go-text"
@@ -2267,4 +2268,215 @@ func TestSetEnvVar(t *testing.T) {
 			t.Errorf("%s: value = %s, want %s", v.Name, val, v.Expect)
 		}
 	}
+}
+
+var syntaxTests = []struct {
+	Expr   parser.Syntax
+	Expect string
+}{
+	{
+		Expr: parser.Syntax{},
+		Expect: "\n" +
+			"        Contents\n" +
+			"-------------------------\n" +
+			" SELECT Statement\n" +
+			"     WITH Clause\n" +
+			"     SELECT Clause\n" +
+			" INSERT Statement\n" +
+			" UPDATE Statement\n" +
+			" DELETE Statement\n" +
+			" Operators\n" +
+			"     Operator Precedence\n" +
+			"     String Operators\n" +
+			"\n",
+	},
+	{
+		Expr: parser.Syntax{Keywords: []parser.QueryExpression{parser.NewStringValue("select clause")}},
+		Expect: "\n" +
+			"                Search: select clause\n" +
+			"------------------------------------------------------\n" +
+			" SELECT Clause\n" +
+			"     select_clause\n" +
+			"         : SELECT [DISTINCT] <field> [, <field> ...] \n" +
+			"\n" +
+			"     field\n" +
+			"         : <value> \n" +
+			"         | <value> AS alias \n" +
+			"\n" +
+			"\n",
+	},
+	{
+		Expr: parser.Syntax{Keywords: []parser.QueryExpression{parser.NewStringValue(" select  "), parser.NewStringValue("clause")}},
+		Expect: "\n" +
+			"                Search: select clause\n" +
+			"------------------------------------------------------\n" +
+			" SELECT Clause\n" +
+			"     select_clause\n" +
+			"         : SELECT [DISTINCT] <field> [, <field> ...] \n" +
+			"\n" +
+			"     field\n" +
+			"         : <value> \n" +
+			"         | <value> AS alias \n" +
+			"\n" +
+			"\n",
+	},
+	{
+		Expr: parser.Syntax{Keywords: []parser.QueryExpression{parser.FieldReference{Column: parser.Identifier{Literal: "select clause"}}}},
+		Expect: "\n" +
+			"                Search: select clause\n" +
+			"------------------------------------------------------\n" +
+			" SELECT Clause\n" +
+			"     select_clause\n" +
+			"         : SELECT [DISTINCT] <field> [, <field> ...] \n" +
+			"\n" +
+			"     field\n" +
+			"         : <value> \n" +
+			"         | <value> AS alias \n" +
+			"\n" +
+			"\n",
+	},
+	{
+		Expr: parser.Syntax{Keywords: []parser.QueryExpression{parser.NewStringValue("operator prec")}},
+		Expect: "\n" +
+			"         Search: operator prec\n" +
+			"---------------------------------------\n" +
+			" Operator Precedence\n" +
+			"     Operator Precedence Description. \n" +
+			"\n" +
+			"\n",
+	},
+	{
+		Expr: parser.Syntax{Keywords: []parser.QueryExpression{parser.NewStringValue("string  op")}},
+		Expect: "\n" +
+			"       Search: string op\n" +
+			"-------------------------------\n" +
+			" String Operators\n" +
+			"     concatenation\n" +
+			"         : <value> || <value> \n" +
+			"\n" +
+			"         description \n" +
+			"\n" +
+			"\n",
+	},
+}
+
+func TestSyntax(t *testing.T) {
+	origSyntax := syntax.CsvqSyntax
+
+	syntax.CsvqSyntax = []syntax.Expression{
+		{
+			Label: "SELECT Statement",
+			Grammar: []syntax.Definition{
+				{
+					Name: "select_statement",
+					Group: []syntax.Grammar{
+						{syntax.Option{syntax.Link("with_clause")}, syntax.Link("select_query")},
+					},
+				},
+				{
+					Name: "select_query",
+					Group: []syntax.Grammar{
+						{syntax.Link("select_entity"), syntax.Option{syntax.Link("order_by_clause")}, syntax.Option{syntax.Link("limit_clause")}, syntax.Option{syntax.Link("offset_clause")}},
+					},
+				},
+			},
+			Children: []syntax.Expression{
+				{
+					Label: "WITH Clause",
+					Grammar: []syntax.Definition{
+						{
+							Name: "with_clause",
+							Group: []syntax.Grammar{
+								{syntax.Keyword("WITH"), syntax.ContinuousOption{syntax.Link("common_table_expression")}},
+							},
+						},
+						{
+							Name: "common_table_expression",
+							Group: []syntax.Grammar{
+								{syntax.Option{syntax.Keyword("RECURSIVE")}, syntax.Identifier("table_name"), syntax.Option{syntax.Parentheses{syntax.ContinuousOption{syntax.Identifier("column_name")}}}, syntax.Keyword("AS"), syntax.Parentheses{syntax.Link("select_query")}},
+							},
+						},
+					},
+				},
+				{
+					Label: "SELECT Clause",
+					Grammar: []syntax.Definition{
+						{
+							Name: "select_clause",
+							Group: []syntax.Grammar{
+								{syntax.Keyword("SELECT"), syntax.Option{syntax.Keyword("DISTINCT")}, syntax.ContinuousOption{syntax.Link("field")}},
+							},
+						},
+						{
+							Name: "field",
+							Group: []syntax.Grammar{
+								{syntax.Link("value")},
+								{syntax.Link("value"), syntax.Keyword("AS"), syntax.Identifier("alias")},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			Label: "INSERT Statement",
+			Grammar: []syntax.Definition{
+				{
+					Name: "insert_statement",
+					Group: []syntax.Grammar{
+						{syntax.Option{syntax.Link("with_clause")}, syntax.Link("insert_query")},
+					},
+				},
+				{
+					Name: "insert_query",
+					Group: []syntax.Grammar{
+						{syntax.Keyword("INSERT"), syntax.Keyword("INTO"), syntax.Identifier("table_name"), syntax.Option{syntax.Parentheses{syntax.ContinuousOption{syntax.Identifier("column_name")}}}, syntax.Keyword("VALUES"), syntax.ContinuousOption{syntax.Link("row_value")}},
+						{syntax.Keyword("INSERT"), syntax.Keyword("INTO"), syntax.Identifier("table_name"), syntax.Option{syntax.Parentheses{syntax.ContinuousOption{syntax.Identifier("column_name")}}}, syntax.Link("select_query")},
+					},
+				},
+			},
+		},
+		{
+			Label:   "UPDATE Statement",
+			Grammar: []syntax.Definition{},
+		},
+		{
+			Label:   "DELETE Statement",
+			Grammar: []syntax.Definition{},
+		},
+		{
+			Label: "Operators",
+			Children: []syntax.Expression{
+				{
+					Label: "Operator Precedence",
+					Description: syntax.Description{
+						Template: "Operator Precedence Description.",
+					},
+				},
+				{
+					Label: "String Operators",
+					Grammar: []syntax.Definition{
+						{
+							Name: "concatenation",
+							Group: []syntax.Grammar{
+								{syntax.Link("value"), syntax.Keyword("||"), syntax.Link("value")},
+							},
+							Description: syntax.Description{Template: "description"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	filter := NewEmptyFilter()
+
+	for _, v := range syntaxTests {
+		result := Syntax(v.Expr, filter)
+		if result != v.Expect {
+			t.Errorf("result = %s, want %s for %v", result, v.Expect, v.Expr)
+		}
+	}
+
+	syntax.CsvqSyntax = origSyntax
 }

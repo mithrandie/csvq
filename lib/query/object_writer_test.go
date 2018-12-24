@@ -84,6 +84,10 @@ func TestObjectWriter_String(t *testing.T) {
 	w.Write(", ")
 	w.Write("bbbbbbbbbbbbbbbbbbbbbbbbb")
 	w.WriteWithoutLineBreak(", ")
+	w.NewLine()
+	w.WriteWithAutoLineBreak("aaaaa bbbbb ccccc\n > ddddd \n eeeee")
+	w.NewLine()
+	w.WriteWithAutoLineBreak("```\naaaaa     bbbbb\n```\nccccc")
 
 	expect = "" +
 		"       title\n" +
@@ -91,11 +95,18 @@ func TestObjectWriter_String(t *testing.T) {
 		" aaa\n" +
 		"     bbbbbbbbbb, \n" +
 		"     bbbbbbbbbb, \n" +
-		"     bbbbbbbbbbbbbbbbbbbbbbbbb, "
+		"     bbbbbbbbbbbbbbbbbbbbbbbbb, \n" +
+		"     aaaaa bbbbb \n" +
+		"     ccccc \n" +
+		"         ddddd \n" +
+		"     eeeee \n" +
+		"     aaaaa     bbbbb\n" +
+		"     ccccc " +
+		""
 	result = w.String()
 
 	if result != expect {
-		t.Errorf("result = %q, want %q", result, expect)
+		t.Errorf("result = %s, want %s", result, expect)
 	}
 
 	w = NewObjectWriter()
@@ -112,7 +123,7 @@ func TestObjectWriter_String(t *testing.T) {
 	result = w.String()
 
 	if result != expect {
-		t.Errorf("result = %q, want %q", result, expect)
+		t.Errorf("result = %s, want %s", result, expect)
 	}
 
 	cmd.GetFlags().SetColor(true)
@@ -139,7 +150,7 @@ func TestObjectWriter_String(t *testing.T) {
 	result = w.String()
 
 	if result != expect {
-		t.Errorf("result = %q, want %q", result, expect)
+		t.Errorf("result = %s, want %s", result, expect)
 	}
 
 	cmd.GetFlags().SetColor(false)

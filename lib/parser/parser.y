@@ -194,7 +194,7 @@ import (
 %token<token> SEPARATOR PARTITION OVER
 %token<token> COMMIT ROLLBACK
 %token<token> CONTINUE BREAK EXIT
-%token<token> ECHO PRINT PRINTF SOURCE EXECUTE CHDIR PWD RELOAD REMOVE TRIGGER
+%token<token> ECHO PRINT PRINTF SOURCE EXECUTE CHDIR PWD RELOAD REMOVE SYNTAX TRIGGER
 %token<token> FUNCTION AGGREGATE BEGIN RETURN
 %token<token> IGNORE WITHIN
 %token<token> VAR SHOW
@@ -892,6 +892,14 @@ command_statement
     | EXECUTE value USING values
     {
         $$ = Execute{BaseExpr: NewBaseExpr($1), Statements: $2, Values: $4}
+    }
+    | SYNTAX
+    {
+        $$ = Syntax{BaseExpr: NewBaseExpr($1)}
+    }
+    | SYNTAX values
+    {
+        $$ = Syntax{BaseExpr: NewBaseExpr($1), Keywords: $2}
     }
     | SHOW identifier
     {

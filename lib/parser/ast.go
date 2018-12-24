@@ -1294,6 +1294,11 @@ type Execute struct {
 	Values     []QueryExpression
 }
 
+type Syntax struct {
+	*BaseExpr
+	Keywords []QueryExpression
+}
+
 type SetFlag struct {
 	*BaseExpr
 	Name  string
