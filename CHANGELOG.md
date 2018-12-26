@@ -1,10 +1,14 @@
+## Release v1.7.3 (2018-12-26)
+
+- Improve logics of parallel routine.
+
 ## Release v1.7.2 (2018-12-24)
 
 - Implement Syntax subcommand.
-
+g
 ## Release v1.7.1 (2018-12-15)
 
-- Fix the following bus.
+- Fix the following bugs.
   - TableObject does not accept identifier as an argument.
 
 ## Release v1.7.0 (2018-12-14)
