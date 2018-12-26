@@ -7,44 +7,54 @@ import (
 )
 
 var goroutineManagerAssignRoutineNumberTests = []struct {
-	Name                   string
-	PresetCPU              int
-	DefaultMinimumRequired int
-	PresetCount            int
-	RecordLen              int
-	MinimumRequired        int
-	Expect                 int
-	ExpectCount            int
+	Name                          string
+	PresetCPU                     int
+	DefaultMinimumRequiredPerCore int
+	PresetCount                   int
+	RecordLen                     int
+	MinimumRequired               int
+	Expect                        int
+	ExpectCount                   int
 }{
 	{
-		Name:                   "First Assign",
-		PresetCPU:              4,
-		DefaultMinimumRequired: 150,
-		PresetCount:            0,
-		RecordLen:              10000,
-		MinimumRequired:        -1,
-		Expect:                 4,
-		ExpectCount:            3,
+		Name:                          "First Assign",
+		PresetCPU:                     4,
+		DefaultMinimumRequiredPerCore: 40,
+		PresetCount:                   0,
+		RecordLen:                     10000,
+		MinimumRequired:               -1,
+		Expect:                        4,
+		ExpectCount:                   3,
 	},
 	{
-		Name:                   "Already Assigned",
-		PresetCPU:              4,
-		DefaultMinimumRequired: 150,
-		PresetCount:            4,
-		RecordLen:              10000,
-		MinimumRequired:        -1,
-		Expect:                 1,
-		ExpectCount:            4,
+		Name:                          "Already Assigned",
+		PresetCPU:                     4,
+		DefaultMinimumRequiredPerCore: 40,
+		PresetCount:                   4,
+		RecordLen:                     10000,
+		MinimumRequired:               -1,
+		Expect:                        1,
+		ExpectCount:                   4,
 	},
 	{
-		Name:                   "Few Record",
-		PresetCPU:              4,
-		DefaultMinimumRequired: 150,
-		PresetCount:            0,
-		RecordLen:              10,
-		MinimumRequired:        -1,
-		Expect:                 1,
-		ExpectCount:            0,
+		Name:                          "Use One CPU Core",
+		PresetCPU:                     4,
+		DefaultMinimumRequiredPerCore: 40,
+		PresetCount:                   0,
+		RecordLen:                     10,
+		MinimumRequired:               -1,
+		Expect:                        1,
+		ExpectCount:                   0,
+	},
+	{
+		Name:                          "Use Two CPU Cores",
+		PresetCPU:                     4,
+		DefaultMinimumRequiredPerCore: 40,
+		PresetCount:                   0,
+		RecordLen:                     90,
+		MinimumRequired:               -1,
+		Expect:                        2,
+		ExpectCount:                   1,
 	},
 }
 
@@ -57,7 +67,7 @@ func TestGoroutineManager_AssignRoutineNumber(t *testing.T) {
 	for _, v := range goroutineManagerAssignRoutineNumberTests {
 		flags.CPU = v.PresetCPU
 		gm.Count = v.PresetCount
-		gm.MinimumRequired = v.DefaultMinimumRequired
+		gm.MinimumRequiredPerCore = v.DefaultMinimumRequiredPerCore
 
 		result := gm.AssignRoutineNumber(v.RecordLen, v.MinimumRequired)
 		if result != v.Expect {
@@ -70,7 +80,7 @@ func TestGoroutineManager_AssignRoutineNumber(t *testing.T) {
 
 	flags.CPU = oldCPU
 	gm.Count = 0
-	gm.MinimumRequired = MinimumRequiredForParallelRoutine
+	gm.MinimumRequiredPerCore = MinimumRequiredPerCPUCore
 }
 
 var goroutineTaskManagerRecordRangeTests = []struct {

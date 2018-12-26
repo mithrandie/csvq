@@ -1003,6 +1003,53 @@ func TestOuterJoin(t *testing.T) {
 	}
 }
 
+var calcMinimumRequiredTests = []struct {
+	Int1    int
+	Int2    int
+	Default int
+	Expect  int
+}{
+	{
+		Int1:    13,
+		Int2:    20,
+		Default: 80,
+		Expect:  5,
+	},
+	{
+		Int1:    1,
+		Int2:    200,
+		Default: 80,
+		Expect:  1,
+	},
+	{
+		Int1:    199,
+		Int2:    1,
+		Default: 80,
+		Expect:  100,
+	},
+	{
+		Int1:    1,
+		Int2:    0,
+		Default: 80,
+		Expect:  80,
+	},
+	{
+		Int1:    1,
+		Int2:    1,
+		Default: 80,
+		Expect:  80,
+	},
+}
+
+func TestCalcMinimumRequired(t *testing.T) {
+	for _, v := range calcMinimumRequiredTests {
+		result := CalcMinimumRequired(v.Int1, v.Int2, v.Default)
+		if result != v.Expect {
+			t.Errorf("result = %d, want %d for %d, %d, %d", result, v.Expect, v.Int1, v.Int2, v.Default)
+		}
+	}
+}
+
 func BenchmarkCrossJoin(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		view := GenerateBenchView("t1", 100)

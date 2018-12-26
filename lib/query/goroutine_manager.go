@@ -1,6 +1,7 @@
 package query
 
 import (
+	"math"
 	"sync"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -11,48 +12,52 @@ var (
 	getGm sync.Once
 )
 
-const MinimumRequiredForParallelRoutine = 150
+const MinimumRequiredPerCPUCore = 80
 
 func GetGoroutineManager() *GoroutineManager {
 	getGm.Do(func() {
 		gm = &GoroutineManager{
-			Count:           0,
-			CountMutex:      new(sync.Mutex),
-			MinimumRequired: MinimumRequiredForParallelRoutine,
+			Count:                  0,
+			CountMutex:             new(sync.Mutex),
+			MinimumRequiredPerCore: MinimumRequiredPerCPUCore,
 		}
 	})
 	return gm
 }
 
 type GoroutineManager struct {
-	Count           int
-	CountMutex      *sync.Mutex
-	MinimumRequired int
+	Count                  int
+	CountMutex             *sync.Mutex
+	MinimumRequiredPerCore int
 }
 
-func (m *GoroutineManager) AssignRoutineNumber(recordLen int, minimumRequired int) int {
-	number := cmd.GetFlags().CPU
-	if minimumRequired < 0 {
-		minimumRequired = m.MinimumRequired
+func (m *GoroutineManager) AssignRoutineNumber(recordLen int, minimumRequiredPerCore int) int {
+	var greaterThanZero = func(i int) int {
+		if i < 1 {
+			return 1
+		}
+		return i
 	}
+	var min = func(i1 int, i2 int) int {
+		if i1 < i2 {
+			return i1
+		}
+		return i2
+	}
+
+	number := cmd.GetFlags().CPU
+	if minimumRequiredPerCore < 1 {
+		minimumRequiredPerCore = m.MinimumRequiredPerCore
+	}
+
+	number = min(number, greaterThanZero(int(math.Floor(float64(recordLen)/float64(minimumRequiredPerCore)))))
 
 	m.CountMutex.Lock()
 	defer m.CountMutex.Unlock()
 
-	max := number - m.Count
-	if max < 1 {
-		max = 1
-	}
-	if max < number {
-		number = max
-	}
-	if 1 < number && recordLen < minimumRequired {
-		number = 1
-	}
+	number = min(number, greaterThanZero(number-m.Count))
 
-	if 0 < number {
-		m.Count += number - 1
-	}
+	m.Count += number - 1
 	return number
 }
 
@@ -74,8 +79,8 @@ type GoroutineTaskManager struct {
 	err          error
 }
 
-func NewGoroutineTaskManager(recordLen int, minimumRequired int) *GoroutineTaskManager {
-	number := GetGoroutineManager().AssignRoutineNumber(recordLen, minimumRequired)
+func NewGoroutineTaskManager(recordLen int, minimumRequiredPerCore int) *GoroutineTaskManager {
+	number := GetGoroutineManager().AssignRoutineNumber(recordLen, minimumRequiredPerCore)
 
 	return &GoroutineTaskManager{
 		Number:    number,
