@@ -303,5 +303,5 @@ func CalcMinimumRequired(i1 int, i2 int, defaultMinimumRequired int) int {
 	if p <= defaultMinimumRequired {
 		return defaultMinimumRequired
 	}
-	return int(math.Ceil(float64(i1) / math.Floor(float64(i1*i2)/float64(defaultMinimumRequired))))
+	return int(math.Ceil(float64(i1) / math.Floor(float64(p)/float64(defaultMinimumRequired))))
 }
