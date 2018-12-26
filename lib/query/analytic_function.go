@@ -121,7 +121,7 @@ func Analyze(view *View, fn parser.AnalyticFunction, partitionIndices []int) err
 		}
 	}
 
-	gm := NewGoroutineTaskManager(len(partitionMapKeys), 0)
+	gm := NewGoroutineTaskManager(len(partitionMapKeys), -1)
 	for i := 0; i < gm.Number; i++ {
 		gm.Add()
 		go func(thIdx int) {

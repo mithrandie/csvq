@@ -1,6 +1,8 @@
 package query
 
 import (
+	"math"
+
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/ternary"
 )
@@ -103,7 +105,7 @@ func CrossJoin(view *View, joinView *View) {
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 	records := make(RecordSet, view.RecordLen()*joinView.RecordLen())
 
-	NewGoroutineTaskManager(view.RecordLen(), -1).Run(func(index int) {
+	NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore)).Run(func(index int) {
 		start := index * joinView.RecordLen()
 		for i := 0; i < joinView.RecordLen(); i++ {
 			records[start+i] = append(view.RecordSet[index], joinView.RecordSet[i]...)
@@ -123,35 +125,13 @@ func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, par
 
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 
-	var gm *GoroutineTaskManager
-	var splitLeft bool
-	if joinView.RecordLen() < view.RecordLen() {
-		gm = NewGoroutineTaskManager(view.RecordLen(), -1)
-		splitLeft = true
-	} else {
-		gm = NewGoroutineTaskManager(joinView.RecordLen(), -1)
-		splitLeft = false
-	}
-
+	gm := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore))
 	recordsList := make([]RecordSet, gm.Number)
-
 	for i := 0; i < gm.Number; i++ {
 		gm.Add()
 		go func(thIdx int) {
-			var lstart, lend, rstart, rend int
-			var records RecordSet
-			if splitLeft {
-				lstart, lend = gm.RecordRange(thIdx)
-				rstart = 0
-				rend = joinView.RecordLen()
-				records = make(RecordSet, 0, lend-lstart)
-			} else {
-				lstart = 0
-				lend = view.RecordLen()
-				rstart, rend = gm.RecordRange(thIdx)
-				records = make(RecordSet, 0, rend-rstart)
-			}
-
+			start, end := gm.RecordRange(thIdx)
+			records := make(RecordSet, 0, end-start)
 			filter := NewFilterForRecord(
 				&View{
 					Header:    mergedHeader,
@@ -162,8 +142,8 @@ func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, par
 			)
 
 		InnerJoinLoop:
-			for i := lstart; i < lend; i++ {
-				for j := rstart; j < rend; j++ {
+			for i := start; i < end; i++ {
+				for j := 0; j < joinView.RecordLen(); j++ {
 					if gm.HasError() {
 						break InnerJoinLoop
 					}
@@ -212,15 +192,7 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 	viewEmptyRecord := NewEmptyRecord(view.FieldLen())
 	joinViewEmptyRecord := NewEmptyRecord(joinView.FieldLen())
 
-	var gm *GoroutineTaskManager
-	var splitLeft bool
-	if joinView.RecordLen() < view.RecordLen() {
-		gm = NewGoroutineTaskManager(view.RecordLen(), -1)
-		splitLeft = true
-	} else {
-		gm = NewGoroutineTaskManager(joinView.RecordLen(), -1)
-		splitLeft = false
-	}
+	gm := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore))
 
 	recordsList := make([]RecordSet, gm.Number)
 	joinViewMatchesList := make([][]bool, gm.Number)
@@ -228,20 +200,8 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 	for i := 0; i < gm.Number; i++ {
 		gm.Add()
 		go func(thIdx int) {
-			var lstart, lend, rstart, rend int
-			var records RecordSet
-			if splitLeft {
-				lstart, lend = gm.RecordRange(thIdx)
-				rstart = 0
-				rend = joinView.RecordLen()
-				records = make(RecordSet, 0, lend-lstart)
-			} else {
-				lstart = 0
-				lend = view.RecordLen()
-				rstart, rend = gm.RecordRange(thIdx)
-				records = make(RecordSet, 0, rend-rstart)
-			}
-
+			start, end := gm.RecordRange(thIdx)
+			records := make(RecordSet, 0, end-start)
 			filter := NewFilterForRecord(
 				&View{
 					Header:    mergedHeader,
@@ -254,9 +214,9 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 			joinViewMatches := make([]bool, joinView.RecordLen())
 
 		OuterJoinLoop:
-			for i := lstart; i < lend; i++ {
+			for i := start; i < end; i++ {
 				match := false
-				for j := rstart; j < rend; j++ {
+				for j := 0; j < joinView.RecordLen(); j++ {
 					if gm.HasError() {
 						break OuterJoinLoop
 					}
@@ -332,4 +292,16 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 	view.RecordSet = MergeRecordSetList(recordsList)
 	view.FileInfo = nil
 	return nil
+}
+
+func CalcMinimumRequired(i1 int, i2 int, defaultMinimumRequired int) int {
+	if i1 < 1 || i2 < 1 {
+		return defaultMinimumRequired
+	}
+
+	p := i1 * i2
+	if p <= defaultMinimumRequired {
+		return defaultMinimumRequired
+	}
+	return int(math.Ceil(float64(i1) / math.Floor(float64(i1*i2)/float64(defaultMinimumRequired))))
 }
