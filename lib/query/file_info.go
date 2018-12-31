@@ -272,6 +272,8 @@ func SearchFilePath(filename parser.Identifier, repository string, format cmd.Fo
 		fpath, err = SearchJsonFilePath(filename, repository)
 	case cmd.FIXED:
 		fpath, err = SearchFixedLengthFilePath(filename, repository)
+	case cmd.LTSV:
+		fpath, err = SearchLTSVFilePath(filename, repository)
 	default: // AutoSelect
 		if fpath, err = SearchFilePathFromAllTypes(filename, repository); err == nil {
 			switch strings.ToLower(filepath.Ext(fpath)) {
@@ -283,6 +285,8 @@ func SearchFilePath(filename parser.Identifier, repository string, format cmd.Fo
 				format = cmd.FIXED
 			case cmd.JsonExt:
 				format = cmd.JSON
+			case cmd.LtsvExt:
+				format = cmd.LTSV
 			default:
 				format = cmd.GetFlags().SelectImportFormat()
 			}
@@ -304,8 +308,12 @@ func SearchFixedLengthFilePath(filename parser.Identifier, repository string) (s
 	return SearchFilePathWithExtType(filename, repository, []string{cmd.FixedExt})
 }
 
+func SearchLTSVFilePath(filename parser.Identifier, repository string) (string, error) {
+	return SearchFilePathWithExtType(filename, repository, []string{cmd.LtsvExt})
+}
+
 func SearchFilePathFromAllTypes(filename parser.Identifier, repository string) (string, error) {
-	return SearchFilePathWithExtType(filename, repository, []string{cmd.CsvExt, cmd.TsvExt, cmd.JsonExt, cmd.FixedExt})
+	return SearchFilePathWithExtType(filename, repository, []string{cmd.CsvExt, cmd.TsvExt, cmd.JsonExt, cmd.FixedExt, cmd.LtsvExt})
 }
 
 func SearchFilePathWithExtType(filename parser.Identifier, repository string, extTypes []string) (string, error) {
@@ -367,6 +375,8 @@ func NewFileInfoForCreate(filename parser.Identifier, repository string, delimit
 	case cmd.JsonExt:
 		encoding = text.UTF8
 		format = cmd.JSON
+	case cmd.LtsvExt:
+		format = cmd.LTSV
 	case cmd.GfmExt:
 		format = cmd.GFM
 	case cmd.OrgExt:

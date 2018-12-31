@@ -180,6 +180,61 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select c1 from ltsv(`table.ltsv`)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{
+								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
+							},
+						},
+					},
+					FromClause: FromClause{From: "from", Tables: []QueryExpression{
+						Table{
+							Object: TableObject{
+								BaseExpr: &BaseExpr{line: 1, char: 16},
+								Type:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "ltsv"},
+								Path:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 21}, Literal: "table.ltsv", Quoted: true},
+							},
+						},
+					}},
+				},
+			},
+		},
+	},
+	{
+		Input: "select c1 from ltsv(`table.ltsv`, 'utf8')",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{
+								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
+							},
+						},
+					},
+					FromClause: FromClause{From: "from", Tables: []QueryExpression{
+						Table{
+							Object: TableObject{
+								BaseExpr: &BaseExpr{line: 1, char: 16},
+								Type:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "ltsv"},
+								Path:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 21}, Literal: "table.ltsv", Quoted: true},
+								Args:     []QueryExpression{NewStringValue("utf8")},
+							},
+						},
+					}},
+				},
+			},
+		},
+	},
+	{
 		Input: "select c1 from json_table('key', `table.json`)",
 		Output: []Statement{
 			SelectQuery{

@@ -17,6 +17,7 @@ import (
 	"github.com/mithrandie/go-text/csv"
 	"github.com/mithrandie/go-text/fixedlen"
 	txjson "github.com/mithrandie/go-text/json"
+	"github.com/mithrandie/go-text/ltsv"
 	"github.com/mithrandie/go-text/table"
 	"github.com/mithrandie/ternary"
 )
@@ -37,6 +38,8 @@ func EncodeView(fp io.Writer, view *View, fileInfo *FileInfo) error {
 		return encodeFixedLengthFormat(fp, view, fileInfo.DelimiterPositions, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding)
 	case cmd.JSON:
 		return encodeJson(fp, view, fileInfo.LineBreak, fileInfo.JsonEscape, fileInfo.PrettyPrint)
+	case cmd.LTSV:
+		return encodeLTSV(fp, view, fileInfo.LineBreak, fileInfo.Encoding)
 	case cmd.GFM, cmd.ORG, cmd.TEXT:
 		return encodeText(fp, view, fileInfo.Format, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding)
 	case cmd.TSV:
@@ -293,6 +296,26 @@ func encodeText(fp io.Writer, view *View, format cmd.Format, lineBreak text.Line
 		return err
 	}
 	return w.Flush()
+}
+
+func encodeLTSV(fp io.Writer, view *View, lineBreak text.LineBreak, encoding text.Encoding) error {
+	header, records := bareValues(view)
+	w, err := ltsv.NewWriter(fp, header, lineBreak, encoding)
+	if err != nil {
+		return err
+	}
+
+	fields := make([]string, len(header))
+	for _, record := range records {
+		for i, v := range record {
+			fields[i], _, _ = ConvertFieldContents(v, false)
+		}
+		if err := w.Write(fields); err != nil {
+			return err
+		}
+	}
+	w.Flush()
+	return nil
 }
 
 func ConvertFieldContents(val value.Primary, forTextTable bool) (string, string, text.FieldAlignment) {

@@ -77,12 +77,14 @@ var tableObjectCandidates = []string{
 	"CSV()",
 	"FIXED()",
 	"JSON()",
+	"LTSV()",
 	"JSON_TABLE()",
 }
 var tableObjects = []string{
 	cmd.CSV.String(),
 	cmd.FIXED.String(),
 	cmd.JSON.String(),
+	cmd.LTSV.String(),
 }
 
 type ReadlineListener struct {
@@ -368,35 +370,55 @@ func (c *Completer) TableObjectArgs(line string, origLine string, index int) rea
 	}
 
 	var cands readline.CandidateList
-	switch commaCnt {
-	case 0:
-		if c.tokens[c.lastIdx].Token == '(' {
-			switch strings.ToUpper(c.tokens[0].Literal) {
-			case cmd.CSV.String():
-				cands = c.candidateList([]string{"','", "'\\t'"}, false)
-			case cmd.FIXED.String():
-				cands = c.candidateList([]string{"'SPACES'", "'[]'"}, false)
+
+	switch strings.ToUpper(c.tokens[0].Literal) {
+	case "LTSV":
+		switch commaCnt {
+		case 0:
+			if c.tokens[c.lastIdx].Token == '(' {
+				cands = c.SearchAllTables(line, origLine, index)
 			}
-		}
-	case 1:
-		if c.tokens[c.lastIdx].Token == ',' {
-			cands = c.SearchAllTables(line, origLine, index)
-		}
-	case 2:
-		if c.tokens[c.lastIdx].Token == ',' {
-			switch strings.ToUpper(c.tokens[0].Literal) {
-			case cmd.CSV.String(), cmd.FIXED.String():
+		case 1:
+			if c.tokens[c.lastIdx].Token == ',' {
 				cands = c.candidateList(c.encodingList(), false)
 			}
-		}
-	case 3, 4:
-		if c.tokens[c.lastIdx].Token == ',' {
-			switch strings.ToUpper(c.tokens[0].Literal) {
-			case cmd.CSV.String(), cmd.FIXED.String():
+		case 2:
+			if c.tokens[c.lastIdx].Token == ',' {
 				cands = c.candidateList([]string{ternary.TRUE.String(), ternary.FALSE.String()}, false)
 			}
 		}
+	default:
+		switch commaCnt {
+		case 0:
+			if c.tokens[c.lastIdx].Token == '(' {
+				switch strings.ToUpper(c.tokens[0].Literal) {
+				case cmd.CSV.String():
+					cands = c.candidateList([]string{"','", "'\\t'"}, false)
+				case cmd.FIXED.String():
+					cands = c.candidateList([]string{"'SPACES'", "'[]'"}, false)
+				}
+			}
+		case 1:
+			if c.tokens[c.lastIdx].Token == ',' {
+				cands = c.SearchAllTables(line, origLine, index)
+			}
+		case 2:
+			if c.tokens[c.lastIdx].Token == ',' {
+				switch strings.ToUpper(c.tokens[0].Literal) {
+				case cmd.CSV.String(), cmd.FIXED.String():
+					cands = c.candidateList(c.encodingList(), false)
+				}
+			}
+		case 3, 4:
+			if c.tokens[c.lastIdx].Token == ',' {
+				switch strings.ToUpper(c.tokens[0].Literal) {
+				case cmd.CSV.String(), cmd.FIXED.String():
+					cands = c.candidateList([]string{ternary.TRUE.String(), ternary.FALSE.String()}, false)
+				}
+			}
+		}
 	}
+
 	cands = append(cands, c.SearchValues(line, origLine, index)...)
 	return cands
 }
@@ -1441,7 +1463,7 @@ func (c *Completer) SearchAllTablesWithSpace(line string, origLine string, index
 
 func (c *Completer) SearchAllTables(line string, origLine string, index int) readline.CandidateList {
 	tableKeys := ViewCache.SortedKeys()
-	files := c.ListFiles(line, []string{cmd.CsvExt, cmd.TsvExt, cmd.FixedExt, cmd.JsonExt}, cmd.GetFlags().Repository)
+	files := c.ListFiles(line, []string{cmd.CsvExt, cmd.TsvExt, cmd.FixedExt, cmd.JsonExt, cmd.LtsvExt}, cmd.GetFlags().Repository)
 
 	defaultDir := cmd.GetFlags().Repository
 	if len(defaultDir) < 1 {

@@ -101,6 +101,7 @@ var CsvqSyntax = []Expression{
 						Group: []Grammar{
 							{Identifier("table_name")},
 							{Link("table_object")},
+							{Link("json_inline_table")},
 							{Parentheses{Link("select_query")}},
 							{Keyword("STDIN")},
 						},
@@ -129,6 +130,12 @@ var CsvqSyntax = []Expression{
 							{Function{Name: "CSV", Args: []Element{String("delimiter"), Identifier("table_name"), Option{String("encoding"), Boolean("no_header"), Boolean("without_null")}}}},
 							{Function{Name: "FIXED", Args: []Element{String("delimiter_positions"), Identifier("table_name"), Option{String("encoding"), Boolean("no_header"), Boolean("without_null")}}}},
 							{Function{Name: "JSON", Args: []Element{String("json_query"), Identifier("table_name")}}},
+							{Function{Name: "LTSV", Args: []Element{Identifier("table_name"), Option{String("encoding"), Boolean("without_null")}}}},
+						},
+					},
+					{
+						Name: "json_inline_table",
+						Group: []Grammar{
 							{Function{Name: "JSON_TABLE", Args: []Element{String("json_query"), Identifier("table_name")}}},
 							{Function{Name: "JSON_TABLE", Args: []Element{String("json_query"), String("json_data")}}},
 						},
@@ -2832,6 +2839,7 @@ var CsvqSyntax = []Expression{
 						"| TSV   | Tab separated values                     |\n" +
 						"| FIXED | Fixed-Length Format                      |\n" +
 						"| JSON  | JSON Format                              |\n" +
+						"| LTSV  | Labeled Tab-separated Values             |\n" +
 						"| GFM   | Text Table for GitHub Flavored Markdown  |\n" +
 						"| ORG   | Text Table for Emacs Org-Mode            |\n" +
 						"| TEXT  | Text Table for console                   |\n" +

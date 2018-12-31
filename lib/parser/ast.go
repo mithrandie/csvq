@@ -490,7 +490,9 @@ type TableObject struct {
 
 func (e TableObject) String() string {
 	allArgs := make([]QueryExpression, 0, len(e.Args)+2)
-	allArgs = append(allArgs, e.FormatElement)
+	if e.FormatElement != nil {
+		allArgs = append(allArgs, e.FormatElement)
+	}
 	allArgs = append(allArgs, e.Path)
 	if e.Args != nil {
 		allArgs = append(allArgs, e.Args...)

@@ -88,6 +88,7 @@ const (
 	TSV
 	FIXED
 	JSON
+	LTSV
 	GFM
 	ORG
 	TEXT
@@ -98,6 +99,7 @@ var FormatLiteral = map[Format]string{
 	TSV:   "TSV",
 	FIXED: "FIXED",
 	JSON:  "JSON",
+	LTSV:  "LTSV",
 	GFM:   "GFM",
 	ORG:   "ORG",
 	TEXT:  "TEXT",
@@ -122,6 +124,7 @@ const (
 	TsvExt      = ".tsv"
 	FixedExt    = ".txt"
 	JsonExt     = ".json"
+	LtsvExt     = ".ltsv"
 	GfmExt      = ".md"
 	OrgExt      = ".org"
 	SqlExt      = ".sql"
@@ -368,6 +371,8 @@ func (f *Flags) SetFormat(s string, outfile string) error {
 			fm = FIXED
 		case JsonExt:
 			fm = JSON
+		case LtsvExt:
+			fm = LTSV
 		case GfmExt:
 			fm = GFM
 		case OrgExt:

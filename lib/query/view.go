@@ -3,6 +3,7 @@ package query
 import (
 	"bytes"
 	gojson "encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"math"
@@ -22,6 +23,7 @@ import (
 	"github.com/mithrandie/go-text/csv"
 	"github.com/mithrandie/go-text/fixedlen"
 	txjson "github.com/mithrandie/go-text/json"
+	"github.com/mithrandie/go-text/ltsv"
 	"github.com/mithrandie/ternary"
 )
 
@@ -199,18 +201,28 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 		noHeader := flags.NoHeader
 		withoutNull := flags.WithoutNull
 
-		felem, err := filter.Evaluate(tableObject.FormatElement)
-		if err != nil {
-			return nil, err
+		var felem value.Primary
+		if tableObject.FormatElement != nil {
+			felem, err = filter.Evaluate(tableObject.FormatElement)
+			if err != nil {
+				return nil, err
+			}
+			felem = value.ToString(felem)
 		}
-		felemStr := value.ToString(felem)
+
+		encodingIdx := 0
+		noHeaderIdx := 1
+		withoutNullIdx := 2
 
 		switch strings.ToUpper(tableObject.Type.Literal) {
 		case cmd.CSV.String():
-			if value.IsNull(felemStr) {
+			if felem == nil {
+				return nil, NewTableObjectInvalidArgumentError(tableObject, "delimiter is not specified")
+			}
+			if value.IsNull(felem) {
 				return nil, NewTableObjectInvalidDelimiterError(tableObject, tableObject.FormatElement.String())
 			}
-			s := cmd.UnescapeString(felemStr.(value.String).Raw())
+			s := cmd.UnescapeString(felem.(value.String).Raw())
 			d := []rune(s)
 			if 1 != len(d) {
 				return nil, NewTableObjectInvalidDelimiterError(tableObject, tableObject.FormatElement.String())
@@ -225,10 +237,13 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 				importFormat = cmd.CSV
 			}
 		case cmd.FIXED.String():
-			if value.IsNull(felemStr) {
+			if felem == nil {
+				return nil, NewTableObjectInvalidArgumentError(tableObject, "delimiter positions are not specified")
+			}
+			if value.IsNull(felem) {
 				return nil, NewTableObjectInvalidDelimiterPositionsError(tableObject, tableObject.FormatElement.String())
 			}
-			s := felemStr.(value.String).Raw()
+			s := felem.(value.String).Raw()
 
 			var positions []int
 			if !strings.EqualFold("SPACES", s) {
@@ -243,15 +258,24 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 			delimiterPositions = positions
 			importFormat = cmd.FIXED
 		case cmd.JSON.String():
-			if value.IsNull(felemStr) {
+			if felem == nil {
+				return nil, NewTableObjectInvalidArgumentError(tableObject, "json query is not specified")
+			}
+			if value.IsNull(felem) {
 				return nil, NewTableObjectInvalidJsonQueryError(tableObject, tableObject.FormatElement.String())
 			}
 			if 0 < len(tableObject.Args) {
 				return nil, NewTableObjectJsonArgumentsLengthError(tableObject, 2)
 			}
-			jsonQuery = felemStr.(value.String).Raw()
+			jsonQuery = felem.(value.String).Raw()
 			importFormat = cmd.JSON
 			encoding = text.UTF8
+		case cmd.LTSV.String():
+			if 2 < len(tableObject.Args) {
+				return nil, NewTableObjectJsonArgumentsLengthError(tableObject, 3)
+			}
+			importFormat = cmd.LTSV
+			withoutNullIdx, noHeaderIdx = noHeaderIdx, withoutNullIdx
 		default:
 			return nil, NewTableObjectInvalidObjectError(tableObject, tableObject.Type.Literal)
 		}
@@ -271,40 +295,40 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 			}
 
 			switch i {
-			case 0:
+			case encodingIdx:
 				v := value.ToString(p)
 				if !value.IsNull(v) {
 					args[i] = v
 				} else {
-					return nil, NewTableObjectInvalidArgumentError(tableObject, "3rd argument cannot be converted as a encoding value")
+					return nil, NewTableObjectInvalidArgumentError(tableObject, fmt.Sprintf("cannot be converted as a encoding value: %s", tableObject.Args[encodingIdx].String()))
 				}
-			case 1:
+			case noHeaderIdx:
 				v := value.ToBoolean(p)
 				if !value.IsNull(v) {
 					args[i] = v
 				} else {
-					return nil, NewTableObjectInvalidArgumentError(tableObject, "4th argument cannot be converted as a no-header value")
+					return nil, NewTableObjectInvalidArgumentError(tableObject, fmt.Sprintf("cannot be converted as a no-header value: %s", tableObject.Args[noHeaderIdx].String()))
 				}
-			case 2:
+			case withoutNullIdx:
 				v := value.ToBoolean(p)
 				if !value.IsNull(v) {
 					args[i] = v
 				} else {
-					return nil, NewTableObjectInvalidArgumentError(tableObject, "5th argument cannot be converted as a without-null value")
+					return nil, NewTableObjectInvalidArgumentError(tableObject, fmt.Sprintf("cannot be converted as a without-null value: %s", tableObject.Args[withoutNullIdx].String()))
 				}
 			}
 		}
 
-		if args[0] != nil {
+		if args[encodingIdx] != nil {
 			if encoding, err = cmd.ParseEncoding(args[0].(value.String).Raw()); err != nil {
 				return nil, NewTableObjectInvalidArgumentError(tableObject, err.Error())
 			}
 		}
-		if args[1] != nil {
-			noHeader = args[1].(value.Boolean).Raw()
+		if args[noHeaderIdx] != nil {
+			noHeader = args[noHeaderIdx].(value.Boolean).Raw()
 		}
-		if args[2] != nil {
-			withoutNull = args[2].(value.Boolean).Raw()
+		if args[withoutNullIdx] != nil {
+			withoutNull = args[withoutNullIdx].(value.Boolean).Raw()
 		}
 
 		view, err = loadObject(
@@ -633,6 +657,8 @@ func loadViewFromFile(fp *os.File, fileInfo *FileInfo, withoutNull bool) (*View,
 	switch fileInfo.Format {
 	case cmd.FIXED:
 		return loadViewFromFixedLengthTextFile(fp, fileInfo, withoutNull)
+	case cmd.LTSV:
+		return loadViewFromLTSVFile(fp, fileInfo, withoutNull)
 	case cmd.JSON:
 		return loadViewFromJsonFile(fp, fileInfo)
 	}
@@ -724,6 +750,37 @@ func loadViewFromCSVFile(fp *os.File, fileInfo *FileInfo, withoutNull bool) (*Vi
 		fileInfo.LineBreak = reader.DetectedLineBreak
 	}
 	fileInfo.EncloseAll = reader.EnclosedAll
+
+	view := NewView()
+	view.Header = NewHeader(parser.FormatTableName(fileInfo.Path), header)
+	view.RecordSet = records
+	view.FileInfo = fileInfo
+	return view, nil
+}
+
+func loadViewFromLTSVFile(fp *os.File, fileInfo *FileInfo, withoutNull bool) (*View, error) {
+	reader := ltsv.NewReader(fp, fileInfo.Encoding)
+	reader.WithoutNull = withoutNull
+
+	records, err := readRecordSet(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	header := reader.Header.Fields()
+	NewGoroutineTaskManager(len(records), -1).Run(func(index int) {
+		for j := len(records[index]); j < len(header); j++ {
+			if withoutNull {
+				records[index] = append(records[index], NewCell(value.NewString("")))
+			} else {
+				records[index] = append(records[index], NewCell(value.NewNull()))
+			}
+		}
+	})
+
+	if reader.DetectedLineBreak != "" {
+		fileInfo.LineBreak = reader.DetectedLineBreak
+	}
 
 	view := NewView()
 	view.Header = NewHeader(parser.FormatTableName(fileInfo.Path), header)
