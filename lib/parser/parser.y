@@ -1732,6 +1732,14 @@ virtual_table_object
     {
         $$ = JsonQuery{BaseExpr: NewBaseExpr($1), JsonQuery: $1.Literal, Query: $3, JsonText: $5}
     }
+    | identifier '(' identifier ')'
+    {
+        $$ = TableObject{BaseExpr: $1.BaseExpr, Type: $1, Path: $3, Args: nil}
+    }
+    | identifier '(' identifier ',' arguments ')'
+    {
+        $$ = TableObject{BaseExpr: $1.BaseExpr, Type: $1, Path: $3, Args: $5}
+    }
     | identifier '(' value ',' identifier ')'
     {
         $$ = TableObject{BaseExpr: $1.BaseExpr, Type: $1, FormatElement: $3, Path: $5, Args: nil}

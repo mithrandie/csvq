@@ -278,6 +278,11 @@ func TestFlags_SetFormat(t *testing.T) {
 		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, JSON, "foo.json")
 	}
 
+	flags.SetFormat("", "foo.ltsv")
+	if flags.Format != LTSV {
+		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, LTSV, "foo.ltsv")
+	}
+
 	flags.SetFormat("", "foo.md")
 	if flags.Format != GFM {
 		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, GFM, "foo.md")
@@ -306,6 +311,11 @@ func TestFlags_SetFormat(t *testing.T) {
 	flags.SetFormat("json", "")
 	if flags.Format != JSON {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, JSON, "json")
+	}
+
+	flags.SetFormat("ltsv", "")
+	if flags.Format != LTSV {
+		t.Errorf("format = %s, expect to set %s for %s", flags.Format, LTSV, "ltsv")
 	}
 
 	flags.SetFormat("jsonh", "")
@@ -339,7 +349,7 @@ func TestFlags_SetFormat(t *testing.T) {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, TEXT, "text")
 	}
 
-	expectErr := "format must be one of CSV|TSV|FIXED|JSON|GFM|ORG|TEXT|JSONH|JSONA"
+	expectErr := "format must be one of CSV|TSV|FIXED|JSON|LTSV|GFM|ORG|TEXT"
 	err := flags.SetFormat("error", "")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "error")

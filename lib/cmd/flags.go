@@ -88,6 +88,7 @@ const (
 	TSV
 	FIXED
 	JSON
+	LTSV
 	GFM
 	ORG
 	TEXT
@@ -98,6 +99,7 @@ var FormatLiteral = map[Format]string{
 	TSV:   "TSV",
 	FIXED: "FIXED",
 	JSON:  "JSON",
+	LTSV:  "LTSV",
 	GFM:   "GFM",
 	ORG:   "ORG",
 	TEXT:  "TEXT",
@@ -122,6 +124,7 @@ const (
 	TsvExt      = ".tsv"
 	FixedExt    = ".txt"
 	JsonExt     = ".json"
+	LtsvExt     = ".ltsv"
 	GfmExt      = ".md"
 	OrgExt      = ".org"
 	SqlExt      = ".sql"
@@ -183,13 +186,16 @@ var (
 	getFlags sync.Once
 )
 
+func GetDefaultNumberOfCPU() int {
+	n := runtime.NumCPU() / 2
+	if n < 1 {
+		n = 1
+	}
+	return n
+}
+
 func GetFlags() *Flags {
 	getFlags.Do(func() {
-		cpu := runtime.NumCPU() / 2
-		if cpu < 1 {
-			cpu = 1
-		}
-
 		env, _ := GetEnvironment()
 
 		datetimeFormat := make([]string, 0, len(env.DatetimeFormat))
@@ -220,7 +226,7 @@ func GetFlags() *Flags {
 			CountFormatCode:         false,
 			Color:                   false,
 			Quiet:                   false,
-			CPU:                     cpu,
+			CPU:                     GetDefaultNumberOfCPU(),
 			Stats:                   false,
 			DelimitAutomatically:    false,
 			DelimiterPositions:      nil,
@@ -368,6 +374,8 @@ func (f *Flags) SetFormat(s string, outfile string) error {
 			fm = FIXED
 		case JsonExt:
 			fm = JSON
+		case LtsvExt:
+			fm = LTSV
 		case GfmExt:
 			fm = GFM
 		case OrgExt:

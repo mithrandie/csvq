@@ -1,3 +1,7 @@
+## Release v1.8.0 (2018-12-31)
+
+- Support LTSV Format.
+
 ## Release v1.7.3 (2018-12-26)
 
 - Improve logics of parallel routine.

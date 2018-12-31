@@ -643,6 +643,16 @@ func TestTableObject_String(t *testing.T) {
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
+
+	e = TableObject{
+		Type: Identifier{Literal: "ltsv"},
+		Path: Identifier{Literal: "table.ltsv", Quoted: true},
+		Args: []QueryExpression{NewStringValue("utf8")},
+	}
+	expect = "ltsv(`table.ltsv`, 'utf8')"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
 }
 
 func TestJsonQuery_String(t *testing.T) {
