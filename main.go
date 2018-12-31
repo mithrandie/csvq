@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"runtime"
 
 	"github.com/mithrandie/csvq/lib/action"
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -22,11 +21,6 @@ var version = "v1.8.0"
 
 func main() {
 	var proc *query.Procedure
-
-	var defaultCPU = runtime.NumCPU() / 2
-	if defaultCPU < 1 {
-		defaultCPU = 1
-	}
 	query.Version = version
 
 	cli.AppHelpTemplate = appHHelpTemplate
@@ -155,7 +149,7 @@ func main() {
 		},
 		cli.IntFlag{
 			Name:  "cpu, p",
-			Value: defaultCPU,
+			Value: cmd.GetDefaultNumberOfCPU(),
 			Usage: "hint for the number of cpu cores to be used",
 		},
 		cli.BoolFlag{
