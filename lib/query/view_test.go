@@ -695,6 +695,21 @@ var viewLoadTests = []struct {
 		Error: "[L:- C:-] field notexist does not exist",
 	},
 	{
+		Name: "Load TableObject From CSV File FormatElement Is Not Specified",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type: parser.Identifier{Literal: "csv"},
+						Path: parser.Identifier{Literal: "table1"},
+					},
+					Alias: parser.Identifier{Literal: "t"},
+				},
+			},
+		},
+		Error: "[L:- C:-] invalid argument for csv: delimiter is not specified",
+	},
+	{
 		Name: "Load TableObject From CSV File FormatElement is Null",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
@@ -765,7 +780,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] invalid argument for csv: 3rd argument cannot be converted as a encoding value",
+		Error: "[L:- C:-] invalid argument for csv: cannot be converted as a encoding value: true",
 	},
 	{
 		Name: "Load TableObject From CSV File 4th Argument Error",
@@ -785,7 +800,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] invalid argument for csv: 4th argument cannot be converted as a no-header value",
+		Error: "[L:- C:-] invalid argument for csv: cannot be converted as a no-header value: 'SJIS'",
 	},
 	{
 		Name: "Load TableObject From CSV File 5th Argument Error",
@@ -806,7 +821,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] invalid argument for csv: 5th argument cannot be converted as a without-null value",
+		Error: "[L:- C:-] invalid argument for csv: cannot be converted as a without-null value: 'SJIS'",
 	},
 	{
 		Name: "Load TableObject From CSV File Invalid Encoding Type",
@@ -875,6 +890,21 @@ var viewLoadTests = []struct {
 				}},
 			},
 		},
+	},
+	{
+		Name: "Load TableObject From Fixed-Length File FormatElement Is Not Specified",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type: parser.Identifier{Literal: "fixed"},
+						Path: parser.Identifier{Literal: "fixed_length.txt", Quoted: true},
+					},
+					Alias: parser.Identifier{Literal: "t"},
+				},
+			},
+		},
+		Error: "[L:- C:-] invalid argument for fixed: delimiter positions are not specified",
 	},
 	{
 		Name: "Load TableObject From Fixed-Length File FormatElement is Null",
@@ -1068,6 +1098,21 @@ var viewLoadTests = []struct {
 		},
 	},
 	{
+		Name: "Load TableObject From Json File FormatElement Is Not Specified",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type: parser.Identifier{Literal: "json"},
+						Path: parser.Identifier{Literal: "table"},
+					},
+					Alias: parser.Identifier{Literal: "jt"},
+				},
+			},
+		},
+		Error: "[L:- C:-] invalid argument for json: json query is not specified",
+	},
+	{
 		Name: "Load TableObject From Json File FormatElement is Null",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
@@ -1098,6 +1143,124 @@ var viewLoadTests = []struct {
 			},
 		},
 		Error: "[L:- C:-] file notexist does not exist",
+	},
+	{
+		Name: "Load TableObject From LTSV File",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type: parser.Identifier{Literal: "ltsv"},
+						Path: parser.Identifier{Literal: "table6"},
+					},
+					Alias: parser.Identifier{Literal: "t"},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("t", []string{"f1", "f2", "f3", "f4"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("value1"),
+					value.NewString("value2"),
+					value.NewString("value3"),
+					value.NewNull(),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("value4"),
+					value.NewString("value5"),
+					value.NewNull(),
+					value.NewString("value6"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "table6.ltsv",
+				Delimiter: ',',
+				Format:    cmd.LTSV,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
+			},
+			Filter: &Filter{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{{
+					"T": strings.ToUpper(GetTestFilePath("table6.ltsv")),
+				}},
+			},
+		},
+	},
+	{
+		Name: "Load TableObject From LTSV File Without Null",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type: parser.Identifier{Literal: "ltsv"},
+						Path: parser.Identifier{Literal: "table6"},
+						Args: []parser.QueryExpression{
+							parser.NewStringValue("UTF8"),
+							parser.NewTernaryValueFromString("true"),
+						},
+					},
+					Alias: parser.Identifier{Literal: "t"},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("t", []string{"f1", "f2", "f3", "f4"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("value1"),
+					value.NewString("value2"),
+					value.NewString("value3"),
+					value.NewString(""),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("value4"),
+					value.NewString("value5"),
+					value.NewString(""),
+					value.NewString("value6"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "table6.ltsv",
+				Delimiter: ',',
+				Format:    cmd.LTSV,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
+			},
+			Filter: &Filter{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{{
+					"T": strings.ToUpper(GetTestFilePath("table6.ltsv")),
+				}},
+			},
+		},
+	},
+	{
+		Name: "Load TableObject From LTSV File Arguments Length Error",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type: parser.Identifier{Literal: "ltsv"},
+						Path: parser.Identifier{Literal: "table6"},
+						Args: []parser.QueryExpression{
+							parser.NewStringValue("UTF8"),
+							parser.NewTernaryValueFromString("true"),
+							parser.NewStringValue("extra"),
+						},
+					},
+					Alias: parser.Identifier{Literal: "t"},
+				},
+			},
+		},
+		Error: "[L:- C:-] table object ltsv takes exactly 3 arguments",
 	},
 	{
 		Name: "Load TableObject Invalid Object Type",

@@ -99,7 +99,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "format, f",
 			Value: "TEXT",
-			Usage: "format of query results. one of: CSV|TSV|FIXED|JSON|GFM|ORG|TEXT|JSONH|JSONA",
+			Usage: "format of query results. one of: CSV|TSV|FIXED|JSON|LTSV|GFM|ORG|TEXT",
 		},
 		cli.StringFlag{
 			Name:  "write-encoding, E",

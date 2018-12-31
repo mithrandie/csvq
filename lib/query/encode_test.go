@@ -319,6 +319,19 @@ var encodeViewTests = []struct {
 			"]",
 	},
 	{
+		Name: "LTSV",
+		View: &View{
+			Header: NewHeader("test", []string{"c1", "c2", "c3"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.FALSE), value.NewBoolean(true)}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
+			},
+		},
+		Format: cmd.LTSV,
+		Result: "c1:-1\tc2:false\tc3:true\n" +
+			"c1:2.0123\tc2:2016-02-01T16:00:00.123456-07:00\tc3:abcdef",
+	},
+	{
 		Name: "Fixed-Length Format Invalid Positions",
 		View: &View{
 			Header: NewHeader("test", []string{"c1", "c2", "c3"}),
@@ -344,6 +357,30 @@ var encodeViewTests = []struct {
 		Format:     cmd.JSON,
 		JsonEscape: json.HexDigits,
 		Error:      "encoding to json failed: unexpected token \".\" at column 4 in \"c1..\"",
+	},
+	{
+		Name: "LTSV Invalid Character in Label",
+		View: &View{
+			Header: NewHeader("test", []string{"c1:", "c2", "c3"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.FALSE), value.NewBoolean(true)}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
+			},
+		},
+		Format: cmd.LTSV,
+		Error:  "unpermitted character in label: U+003A",
+	},
+	{
+		Name: "LTSV Invalid Character in Field-Value",
+		View: &View{
+			Header: NewHeader("test", []string{"c1", "c2", "c3"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.FALSE), value.NewBoolean(true)}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abc\tdef")}),
+			},
+		},
+		Format: cmd.LTSV,
+		Error:  "unpermitted character in field-value: U+0009",
 	},
 	{
 		Name: "CSV Encode Character Code",
