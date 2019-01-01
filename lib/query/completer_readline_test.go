@@ -112,10 +112,10 @@ func TestCompleter_Update(t *testing.T) {
 	if len(c.funcList) != len(Functions)+2+1 || !strings.HasSuffix(c.funcList[0], "()") {
 		t.Error("functions are not set correctly")
 	}
-	if len(c.aggFuncList) != len(AggregateFunctions)+1 || !strings.HasSuffix(c.aggFuncList[0], "()") {
+	if len(c.aggFuncList) != len(AggregateFunctions)+2+1 || !strings.HasSuffix(c.aggFuncList[0], "()") {
 		t.Error("aggregate functions are not set correctly")
 	}
-	if len(c.analyticFuncList) != len(AnalyticFunctions)+1 || !strings.HasSuffix(c.analyticFuncList[0], "() OVER ()") {
+	if len(c.analyticFuncList) != len(AnalyticFunctions)+len(AggregateFunctions)+1 || !strings.HasSuffix(c.analyticFuncList[0], "() OVER ()") {
 		t.Error("analytic functions are not set correctly")
 	}
 	if !reflect.DeepEqual(c.varList, []string{"@var"}) {
@@ -2662,6 +2662,7 @@ var completerSearchValuesTests = []completerTest{
 		OrigLine: "select c",
 		Index:    8,
 		Expect: readline.CandidateList{
+			{Name: []rune("COUNT()"), AppendSpace: false},
 			{Name: []rune("CASE"), AppendSpace: true},
 			{Name: []rune("CURSOR"), AppendSpace: true},
 		},

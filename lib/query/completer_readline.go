@@ -202,10 +202,12 @@ func (c *Completer) updateFunctions() {
 	sort.Strings(funcKeys)
 	c.funcList = funcKeys
 
-	aggFuncKeys := make([]string, 0, len(AggregateFunctions)+len(userAggFuncs))
+	aggFuncKeys := make([]string, 0, len(AggregateFunctions)+2+len(userAggFuncs))
 	for k := range AggregateFunctions {
 		aggFuncKeys = append(aggFuncKeys, k+"()")
 	}
+	aggFuncKeys = append(aggFuncKeys, "LISTAGG()")
+	aggFuncKeys = append(aggFuncKeys, "JSON_AGG()")
 	for _, f := range userAggFuncs {
 		aggFuncKeys = append(aggFuncKeys, f.Name.String()+"()")
 		c.userFuncList = append(c.userFuncList, f.Name.String())
@@ -214,8 +216,11 @@ func (c *Completer) updateFunctions() {
 	c.aggFuncList = aggFuncKeys
 	sort.Strings(c.userFuncList)
 
-	analyticFuncKeys := make([]string, 0, len(AnalyticFunctions)+len(userAggFuncs))
+	analyticFuncKeys := make([]string, 0, len(AnalyticFunctions)+len(AggregateFunctions)+len(userAggFuncs))
 	for k := range AnalyticFunctions {
+		analyticFuncKeys = append(analyticFuncKeys, k+"() OVER ()")
+	}
+	for k := range AggregateFunctions {
 		analyticFuncKeys = append(analyticFuncKeys, k+"() OVER ()")
 	}
 	for _, f := range userAggFuncs {
@@ -1550,6 +1555,7 @@ func (c *Completer) SearchValues(line string, origLine string, index int) readli
 	}
 	list = append(list, c.varList...)
 	list = append(list, c.funcList...)
+	list = append(list, c.aggFuncList...)
 	list = append(list,
 		"TRUE",
 		"FALSE",

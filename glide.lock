@@ -1,5 +1,5 @@
-hash: e78ff2d459c312ac30168ae39e004b7a6f569eadf4779c6e9498f21ce9808f49
-updated: 2018-12-31T21:24:25.609395+09:00
+hash: 005f26d1cb47747eefede5daae2fc851ec66bce221ef34190235a2ea02222a79
+updated: 2019-01-01T16:06:46.271702+09:00
 imports:
 - name: github.com/mitchellh/go-homedir
   version: ae18d6b8b3205b561c79e8e5f69bff09736185f4
@@ -15,7 +15,7 @@ imports:
   - ltsv
   - table
 - name: github.com/mithrandie/readline-csvq
-  version: bf0b00d2b982cb86a08a61532674316d0aa85446
+  version: 734bb6ee4432da11c3be52b9f5fde2ef5839467d
 - name: github.com/mithrandie/ternary
   version: a21bbf9aa7eb3b2102af2c54588fc5280f6670f7
 - name: github.com/urfave/cli
