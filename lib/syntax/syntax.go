@@ -2175,6 +2175,15 @@ var CsvqSyntax = []Expression{
 			},
 			{
 				Label: "Aggregate Functions",
+				Description: Description{
+					Template: "" +
+						"Aggregate functions calculate groupd records retrieved by a select query. " +
+						"If records are not grouped, all records are dealt with as one group. " +
+						"If %s keyword is specified, aggregate functions calculate only unique values.\n" +
+						"\n" +
+						"Analytic Functions can be used only in %s, %s and %s",
+					Values: []Element{Keyword("DISTINCT"), Link("Select Clause"), Link("Having Clause"), Link("Order By Clause")},
+				},
 				Grammar: []Definition{
 					{
 						Name: "count",
@@ -2275,6 +2284,10 @@ var CsvqSyntax = []Expression{
 			},
 			{
 				Label: "Analytic Functions",
+				Description: Description{
+					Template: "Analytic functions calculate values of groups. Analytic Functions can be used only in %s and %s",
+					Values:   []Element{Link("Select Clause"), Link("Order By Clause")},
+				},
 				Grammar: []Definition{
 					{
 						Name: "row_number",

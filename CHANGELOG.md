@@ -1,3 +1,8 @@
+## Release v1.8.1 (2019-01-05)
+
+- Improve completer.
+- Fix some bugs of completer.
+
 ## Release v1.8.0 (2018-12-31)
 
 - Support LTSV Format.

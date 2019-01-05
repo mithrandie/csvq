@@ -11,6 +11,9 @@ If records are not grouped, all records are dealt with as one group.
 
 If distinct option is specified, aggregate functions calculate only unique values.
 
+Aggregate Functions can be used only in [Select Clause]({{ '/reference/select-query.html#select_clause' | relative_url }}), [Having Clause]({{ '/reference/select-query.html#having_clause' | relative_url }}) and [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
+
+
 | name | description |
 | :- | :- |
 | [COUNT](#count) | Return a number of values |

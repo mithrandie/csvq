@@ -140,8 +140,6 @@ table_object
   | FIXED(delimiter_positions, table_name [, encoding [, no_header [, without_null]]])
   | JSON(json_query, table_name)
   | LTSV(table_name [, encoding [, without_null]])
-  | JSON_TABLE(json_query, json_file)
-  | JSON_TABLE(json_query, json_data)
 
 json_inline_table
   : JSON_TABLE(json_query, json_file)
