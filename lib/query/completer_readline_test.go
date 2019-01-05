@@ -98,6 +98,15 @@ func TestCompleter_Update(t *testing.T) {
 	if len(c.runinfoList) != len(RuntimeInformatinList) || !strings.HasPrefix(c.runinfoList[0], cmd.RuntimeInformationSign) {
 		t.Error("runtime information are not set correctly")
 	}
+	if len(c.funcs) != len(Functions)+2 {
+		t.Error("functions are not set correctly")
+	}
+	if len(c.aggFuncs) != len(AggregateFunctions)+2 {
+		t.Error("aggregate functions are not set correctly")
+	}
+	if len(c.analyticFuncs) != len(AnalyticFunctions)+len(AggregateFunctions) {
+		t.Error("analytic functions are not set correctly")
+	}
 
 	c.Update()
 	if !reflect.DeepEqual(c.viewList, []string{"view1", "view2"}) {
@@ -110,13 +119,13 @@ func TestCompleter_Update(t *testing.T) {
 		t.Error("user defined functions are not set correctly")
 	}
 	if len(c.funcList) != len(Functions)+2+1 || !strings.HasSuffix(c.funcList[0], "()") {
-		t.Error("functions are not set correctly")
+		t.Error("function list are not set correctly")
 	}
-	if len(c.aggFuncList) != len(AggregateFunctions)+1 || !strings.HasSuffix(c.aggFuncList[0], "()") {
-		t.Error("aggregate functions are not set correctly")
+	if len(c.aggFuncList) != len(AggregateFunctions)+2+1 || !strings.HasSuffix(c.aggFuncList[0], "()") {
+		t.Error("aggregate function list are not set correctly")
 	}
-	if len(c.analyticFuncList) != len(AnalyticFunctions)+1 || !strings.HasSuffix(c.analyticFuncList[0], "() OVER ()") {
-		t.Error("analytic functions are not set correctly")
+	if len(c.analyticFuncList) != len(AnalyticFunctions)+len(AggregateFunctions)+1 || !strings.HasSuffix(c.analyticFuncList[0], "() OVER ()") {
+		t.Error("analytic function list are not set correctly")
 	}
 	if !reflect.DeepEqual(c.varList, []string{"@var"}) {
 		t.Error("variables are not set correctly")
@@ -143,12 +152,17 @@ type completerTest struct {
 
 func testCompleter(t *testing.T, f func(line string, origLine string, index int) readline.CandidateList, tests []completerTest) {
 	completer.runinfoList = []string{"@#INFO1", "@#INFO2"}
+	completer.funcs = []string{"NOW"}
+	completer.aggFuncs = []string{"COUNT"}
+	completer.analyticFuncs = []string{"RANK", "FIRST_VALUE"}
 	completer.viewList = []string{"tempview"}
 	completer.cursorList = []string{"cur1", "cur2"}
-	completer.userFuncList = []string{"userfunc()", "aggfunc()"}
+	completer.userFuncs = []string{"userfunc"}
+	completer.userAggFuncs = []string{"aggfunc"}
+	completer.userFuncList = []string{"userfunc", "aggfunc"}
 	completer.funcList = []string{"NOW()", "userfunc()"}
 	completer.aggFuncList = []string{"COUNT()", "aggfunc()"}
-	completer.analyticFuncList = []string{"RANK() OVER ()", "aggfunc"}
+	completer.analyticFuncList = []string{"RANK() OVER ()", "FIRST_VALUE() OVER ()", "aggfunc"}
 	completer.varList = []string{"@var1", "@var2"}
 	completer.envList = []string{"@%ENV1", "@%ENV2"}
 	completer.enclosedEnvList = []string{"@%`ENV1`", "@%`ENV2`"}
@@ -535,6 +549,15 @@ var completerStatementsTests = []completerTest{
 			{Name: []rune("'\\t'")},
 		},
 	},
+	{
+		Name:     "Statements Function",
+		Line:     "d",
+		OrigLine: "select count(d",
+		Index:    14,
+		Expect: readline.CandidateList{
+			{Name: []rune("DISTINCT"), AppendSpace: true},
+		},
+	},
 }
 
 func TestCompleter_Statements(t *testing.T) {
@@ -660,6 +683,246 @@ func TestCompleter_TableObjectArgs(t *testing.T) {
 	testCompleter(t, completer.TableObjectArgs, completerTableObjectArgsTests)
 }
 
+var completerFunctionArgs = []completerTest{
+	{
+		Name:     "FunctionArgs",
+		Line:     "@v",
+		OrigLine: "trim(@v",
+		Index:    7,
+		Expect: readline.CandidateList{
+			{Name: []rune("@var1"), AppendSpace: false},
+			{Name: []rune("@var2"), AppendSpace: false},
+		},
+	},
+	{
+		Name:     "FunctionArgs DISTINCT",
+		Line:     "d",
+		OrigLine: "count(d",
+		Index:    7,
+		Expect: readline.CandidateList{
+			{Name: []rune("DISTINCT"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "FunctionArgs After OVER",
+		Line:     "",
+		OrigLine: "count(1) over (",
+		Index:    15,
+		Expect: readline.CandidateList{
+			{Name: []rune("ORDER BY"), AppendSpace: true},
+			{Name: []rune("PARTITION BY"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "FunctionArgs After PARTITION",
+		Line:     "",
+		OrigLine: "count(1) over (partition ",
+		Index:    25,
+		Expect: readline.CandidateList{
+			{Name: []rune("BY"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "FunctionArgs After PARTITION BY",
+		Line:     "@v",
+		OrigLine: "count(1) over (partition by @v",
+		Index:    30,
+		Expect: readline.CandidateList{
+			{Name: []rune("@var1"), AppendSpace: false},
+			{Name: []rune("@var2"), AppendSpace: false},
+		},
+	},
+	{
+		Name:     "FunctionArgs After Partition Clause",
+		Line:     "",
+		OrigLine: "count(1) over (partition by f1 ",
+		Index:    31,
+		Expect: readline.CandidateList{
+			{Name: []rune("ORDER BY"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "FunctionArgs After ORDER",
+		Line:     "",
+		OrigLine: "count(1) over (order ",
+		Index:    21,
+		Expect: readline.CandidateList{
+			{Name: []rune("BY"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "FunctionArgs After ORDER BY",
+		Line:     "@v",
+		OrigLine: "count(1) over (order by @v",
+		Index:    26,
+		Expect: readline.CandidateList{
+			{Name: []rune("@var1"), AppendSpace: false},
+			{Name: []rune("@var2"), AppendSpace: false},
+		},
+	},
+	{
+		Name:     "FunctionArgs After Order Value in Order By Clause",
+		Line:     "",
+		OrigLine: "count(1) over (order by f1 ",
+		Index:    27,
+		Expect: readline.CandidateList{
+			{Name: []rune("ASC")},
+			{Name: []rune("DESC")},
+			{Name: []rune("NULLS FIRST")},
+			{Name: []rune("NULLS LAST")},
+			{Name: []rune("ROWS"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "FunctionArgs After ASC in Order By Clause",
+		Line:     "",
+		OrigLine: "count(1) over (order by f1 asc ",
+		Index:    31,
+		Expect: readline.CandidateList{
+			{Name: []rune("NULLS FIRST")},
+			{Name: []rune("NULLS LAST")},
+			{Name: []rune("ROWS"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "FunctionArgs After NULLS in Order By Clause",
+		Line:     "",
+		OrigLine: "count(1) over (order by f1 asc nulls ",
+		Index:    37,
+		Expect: readline.CandidateList{
+			{Name: []rune("FIRST")},
+			{Name: []rune("LAST")},
+		},
+	},
+	{
+		Name:     "FunctionArgs After NULLS FIRST in Order By Clause",
+		Line:     "",
+		OrigLine: "count(1) over (order by f1 asc nulls first ",
+		Index:    43,
+		Expect: readline.CandidateList{
+			{Name: []rune("ROWS"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "FunctionArgs After ROWS in Windowing Clause",
+		Line:     "",
+		OrigLine: "count(1) over (order by f1 rows ",
+		Index:    32,
+		Expect: readline.CandidateList{
+			{Name: []rune("BETWEEN"), AppendSpace: true},
+			{Name: []rune("CURRENT ROW")},
+			{Name: []rune("UNBOUNDED PRECEDING")},
+		},
+	},
+	{
+		Name:     "FunctionArgs After CURRENT in Windowing Clause",
+		Line:     "",
+		OrigLine: "count(1) over (order by f1 rows current ",
+		Index:    40,
+		Expect: readline.CandidateList{
+			{Name: []rune("ROW")},
+		},
+	},
+	{
+		Name:     "FunctionArgs After UNBOUNDED in Windowing Clause",
+		Line:     "",
+		OrigLine: "count(1) over (order by f1 rows unbounded ",
+		Index:    42,
+		Expect: readline.CandidateList{
+			{Name: []rune("PRECEDING")},
+		},
+	},
+	{
+		Name:     "FunctionArgs After BETWEEN in Windowing Clause",
+		Line:     "",
+		OrigLine: "count(1) over (order by f1 rows between ",
+		Index:    40,
+		Expect: readline.CandidateList{
+			{Name: []rune("CURRENT ROW"), AppendSpace: true},
+			{Name: []rune("UNBOUNDED PRECEDING"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "FunctionArgs After CURRENT in Windowing Clause",
+		Line:     "",
+		OrigLine: "count(1) over (order by f1 rows between current ",
+		Index:    48,
+		Expect: readline.CandidateList{
+			{Name: []rune("ROW"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "FunctionArgs After UNBOUNDED in Windowing Clause",
+		Line:     "",
+		OrigLine: "count(1) over (order by f1 rows between unbounded ",
+		Index:    50,
+		Expect: readline.CandidateList{
+			{Name: []rune("PRECEDING"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "FunctionArgs After Offset in Windowing Clause",
+		Line:     "",
+		OrigLine: "count(1) over (order by f1 rows between 1 ",
+		Index:    42,
+		Expect: readline.CandidateList{
+			{Name: []rune("FOLLOWING"), AppendSpace: true},
+			{Name: []rune("PRECEDING"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "FunctionArgs After Low Frame in Windowing Clause",
+		Line:     "",
+		OrigLine: "count(1) over (order by f1 rows between 1 preceding ",
+		Index:    52,
+		Expect: readline.CandidateList{
+			{Name: []rune("AND"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "FunctionArgs After AND in Windowing Clause",
+		Line:     "",
+		OrigLine: "count(1) over (order by f1 rows between 1 preceding and ",
+		Index:    56,
+		Expect: readline.CandidateList{
+			{Name: []rune("CURRENT ROW")},
+			{Name: []rune("UNBOUNDED FOLLOWING")},
+		},
+	},
+	{
+		Name:     "FunctionArgs After UNBOUNDED in Windowing Clause High Frame",
+		Line:     "",
+		OrigLine: "count(1) over (order by f1 rows between 1 preceding and unbounded ",
+		Index:    66,
+		Expect: readline.CandidateList{
+			{Name: []rune("FOLLOWING")},
+		},
+	},
+	{
+		Name:     "FunctionArgs After UNBOUNDED in Windowing Clause High Frame",
+		Line:     "",
+		OrigLine: "count(1) over (order by f1 rows between 1 preceding and current ",
+		Index:    64,
+		Expect: readline.CandidateList{
+			{Name: []rune("ROW")},
+		},
+	},
+	{
+		Name:     "FunctionArgs After Offset in Windowing Clause High Frame",
+		Line:     "",
+		OrigLine: "count(1) over (order by f1 rows between 1 preceding and 1 ",
+		Index:    58,
+		Expect: readline.CandidateList{
+			{Name: []rune("FOLLOWING")},
+			{Name: []rune("PRECEDING")},
+		},
+	},
+}
+
+func TestCompleter_FunctionArgs(t *testing.T) {
+	testCompleter(t, completer.FunctionArgs, completerFunctionArgs)
+}
+
 var completerWithArgsTests = []completerTest{
 	{
 		Name:     "WithArgs",
@@ -779,9 +1042,9 @@ func TestCompleter_WithArgs(t *testing.T) {
 var completerSelectArgsTests = []completerTest{
 	{
 		Name:     "SelectArgs",
-		Line:     "",
-		OrigLine: "select ",
-		Index:    7,
+		Line:     "d",
+		OrigLine: "select d",
+		Index:    8,
 		Expect: readline.CandidateList{
 			{Name: []rune("DISTINCT"), AppendSpace: true},
 		},
@@ -838,6 +1101,27 @@ var completerSelectArgsTests = []completerTest{
 		Index:    14,
 		Expect: readline.CandidateList{
 			{Name: []rune("RANK() OVER ()")},
+		},
+	},
+	{
+		Name:     "SelectArgs Before OVER of Analytic Function in Select Clause",
+		Line:     "",
+		OrigLine: "select col1, first_value(col1) ",
+		Index:    31,
+		Expect: readline.CandidateList{
+			{Name: []rune("AS"), AppendSpace: true},
+			{Name: []rune("EXCEPT"), AppendSpace: true},
+			{Name: []rune("FROM"), AppendSpace: true},
+			{Name: []rune("GROUP BY"), AppendSpace: true},
+			{Name: []rune("HAVING"), AppendSpace: true},
+			{Name: []rune("INTERSECT"), AppendSpace: true},
+			{Name: []rune("LIMIT"), AppendSpace: true},
+			{Name: []rune("OFFSET"), AppendSpace: true},
+			{Name: []rune("ORDER BY"), AppendSpace: true},
+			{Name: []rune("UNION"), AppendSpace: true},
+			{Name: []rune("WHERE"), AppendSpace: true},
+			{Name: []rune("IGNORE NULLS"), AppendSpace: true},
+			{Name: []rune("OVER"), AppendSpace: true},
 		},
 	},
 	{
@@ -1215,16 +1499,26 @@ var completerSelectArgsTests = []completerTest{
 		},
 	},
 	{
+		Name:     "SelectArgs After ORDER BY",
+		Line:     "@v",
+		OrigLine: "select 1 from t1 where 1 order by @v",
+		Index:    36,
+		Expect: readline.CandidateList{
+			{Name: []rune("@var1")},
+			{Name: []rune("@var2")},
+		},
+	},
+	{
 		Name:     "SelectArgs After First Item in Order By Clause",
 		Line:     "",
 		OrigLine: "select 1 from t1 where 1 order by 1 ",
 		Index:    36,
 		Expect: readline.CandidateList{
-			{Name: []rune("ASC"), AppendSpace: true},
-			{Name: []rune("DESC"), AppendSpace: true},
+			{Name: []rune("ASC")},
+			{Name: []rune("DESC")},
 			{Name: []rune("LIMIT"), AppendSpace: true},
-			{Name: []rune("NULLS FIRST"), AppendSpace: true},
-			{Name: []rune("NULLS LAST"), AppendSpace: true},
+			{Name: []rune("NULLS FIRST")},
+			{Name: []rune("NULLS LAST")},
 			{Name: []rune("OFFSET"), AppendSpace: true},
 		},
 	},
@@ -1235,8 +1529,8 @@ var completerSelectArgsTests = []completerTest{
 		Index:    41,
 		Expect: readline.CandidateList{
 			{Name: []rune("LIMIT"), AppendSpace: true},
-			{Name: []rune("NULLS FIRST"), AppendSpace: true},
-			{Name: []rune("NULLS LAST"), AppendSpace: true},
+			{Name: []rune("NULLS FIRST")},
+			{Name: []rune("NULLS LAST")},
 			{Name: []rune("OFFSET"), AppendSpace: true},
 		},
 	},
@@ -1246,8 +1540,8 @@ var completerSelectArgsTests = []completerTest{
 		OrigLine: "select 1 from t1 where 1 order by 1 desc nulls ",
 		Index:    47,
 		Expect: readline.CandidateList{
-			{Name: []rune("FIRST"), AppendSpace: true},
-			{Name: []rune("LAST"), AppendSpace: true},
+			{Name: []rune("FIRST")},
+			{Name: []rune("LAST")},
 		},
 	},
 	{
@@ -1258,6 +1552,16 @@ var completerSelectArgsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("LIMIT"), AppendSpace: true},
 			{Name: []rune("OFFSET"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "SelectArgs After LIMIT",
+		Line:     "@v",
+		OrigLine: "select 1 from t1 where 1 limit @v",
+		Index:    33,
+		Expect: readline.CandidateList{
+			{Name: []rune("@var1")},
+			{Name: []rune("@var2")},
 		},
 	},
 	{
@@ -2390,8 +2694,8 @@ var completerDisposeArgsTests = []completerTest{
 		OrigLine: "dispose function ",
 		Index:    17,
 		Expect: readline.CandidateList{
-			{Name: []rune("userfunc()")},
-			{Name: []rune("aggfunc()")},
+			{Name: []rune("userfunc")},
+			{Name: []rune("aggfunc")},
 		},
 	},
 	{
@@ -3197,10 +3501,101 @@ var completerUpdateTokensTests = []struct {
 		},
 		LastIdx: 0,
 	},
+	{
+		SearchWord: "",
+		Statements: "select trim(",
+		Expect: []parser.Token{
+			{Token: parser.IDENTIFIER, Literal: "trim", Line: 1, Char: 8},
+			{Token: '(', Literal: "(", Line: 1, Char: 12},
+		},
+		LastIdx: 1,
+	},
+	{
+		SearchWord: "",
+		Statements: "select trim(",
+		Expect: []parser.Token{
+			{Token: parser.IDENTIFIER, Literal: "trim", Line: 1, Char: 8},
+			{Token: '(', Literal: "(", Line: 1, Char: 12},
+		},
+		LastIdx: 1,
+	},
+	{
+		SearchWord: "",
+		Statements: "select userfunc(",
+		Expect: []parser.Token{
+			{Token: parser.IDENTIFIER, Literal: "userfunc", Line: 1, Char: 8},
+			{Token: '(', Literal: "(", Line: 1, Char: 16},
+		},
+		LastIdx: 1,
+	},
+	{
+		SearchWord: "",
+		Statements: "select count(",
+		Expect: []parser.Token{
+			{Token: parser.COUNT, Literal: "count", Line: 1, Char: 8},
+			{Token: '(', Literal: "(", Line: 1, Char: 13},
+		},
+		LastIdx: 1,
+	},
+	{
+		SearchWord: "",
+		Statements: "select rank() over ",
+		Expect: []parser.Token{
+			{Token: parser.SELECT, Literal: "select", Line: 1, Char: 1},
+			{Token: parser.FUNCTION, Literal: "rank"},
+			{Token: parser.OVER, Literal: "over", Line: 1, Char: 15},
+		},
+		LastIdx: 2,
+	},
+	{
+		SearchWord: "",
+		Statements: "select rank() over (",
+		Expect: []parser.Token{
+			{Token: parser.ANALYTIC_FUNCTION, Literal: "rank", Line: 1, Char: 8},
+			{Token: '(', Literal: "(", Line: 1, Char: 12},
+			{Token: ')', Literal: ")", Line: 1, Char: 13},
+			{Token: parser.OVER, Literal: "over", Line: 1, Char: 15},
+			{Token: '(', Literal: "(", Line: 1, Char: 20},
+		},
+		LastIdx: 4,
+	},
+	{
+		SearchWord: "",
+		Statements: "select count((1)) as",
+		Expect: []parser.Token{
+			{Token: parser.SELECT, Literal: "select", Line: 1, Char: 1},
+			{Token: parser.FUNCTION, Literal: "count"},
+			{Token: parser.AS, Literal: "as", Line: 1, Char: 19},
+		},
+		LastIdx: 2,
+	},
+	{
+		SearchWord: "",
+		Statements: "select rank() over () as",
+		Expect: []parser.Token{
+			{Token: parser.SELECT, Literal: "select", Line: 1, Char: 1},
+			{Token: parser.FUNCTION, Literal: "rank"},
+			{Token: parser.AS, Literal: "as", Line: 1, Char: 23},
+		},
+		LastIdx: 2,
+	},
+	{
+		SearchWord: "",
+		Statements: "select first_value() ignore nulls over () as",
+		Expect: []parser.Token{
+			{Token: parser.SELECT, Literal: "select", Line: 1, Char: 1},
+			{Token: parser.FUNCTION, Literal: "first_value"},
+			{Token: parser.AS, Literal: "as", Line: 1, Char: 43},
+		},
+		LastIdx: 2,
+	},
 }
 
 func TestCompleter_UpdateTokens(t *testing.T) {
 	c := NewCompleter(NewEmptyFilter())
+	c.userFuncs = []string{"userfunc"}
+	c.userAggFuncs = []string{"aggfunc"}
+	c.userFuncList = []string{"userfunc", "aggfunc"}
 	for _, v := range completerUpdateTokensTests {
 		c.UpdateTokens(v.SearchWord, v.Statements)
 		if !reflect.DeepEqual(c.tokens, v.Expect) {
