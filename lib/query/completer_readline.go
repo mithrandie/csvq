@@ -104,12 +104,17 @@ type Completer struct {
 	completer *readline.PrefixCompleter
 	filter    *Filter
 
-	flagList    []string
-	runinfoList []string
+	flagList      []string
+	runinfoList   []string
+	funcs         []string
+	aggFuncs      []string
+	analyticFuncs []string
 
+	userFuncs        []string
+	userAggFuncs     []string
+	userFuncList     []string
 	viewList         []string
 	cursorList       []string
-	userFuncList     []string
 	funcList         []string
 	aggFuncList      []string
 	analyticFuncList []string
@@ -141,6 +146,25 @@ func NewCompleter(filter *Filter) *Completer {
 
 	sort.Strings(completer.flagList)
 	sort.Strings(completer.runinfoList)
+
+	completer.funcs = make([]string, 0, len(Functions)+2)
+	for k := range Functions {
+		completer.funcs = append(completer.funcs, k)
+	}
+	completer.funcs = append(completer.funcs, "NOW")
+	completer.funcs = append(completer.funcs, "JSON_OBJECT")
+
+	completer.aggFuncs = make([]string, 0, len(AggregateFunctions)+2)
+	completer.analyticFuncs = make([]string, 0, len(AnalyticFunctions)+len(AggregateFunctions))
+	for k := range AggregateFunctions {
+		completer.aggFuncs = append(completer.aggFuncs, k)
+		completer.analyticFuncs = append(completer.analyticFuncs, k)
+	}
+	completer.aggFuncs = append(completer.aggFuncs, "LISTAGG")
+	completer.aggFuncs = append(completer.aggFuncs, "JSON_AGG")
+	for k := range AnalyticFunctions {
+		completer.analyticFuncs = append(completer.analyticFuncs, k)
+	}
 
 	completer.tokens = make([]parser.Token, 0, 20)
 
@@ -186,42 +210,37 @@ func (c *Completer) updateCursors() {
 
 func (c *Completer) updateFunctions() {
 	userfuncs, userAggFuncs := c.filter.Functions.All()
+	c.userFuncs = make([]string, 0, len(userfuncs))
+	c.userAggFuncs = make([]string, 0, len(userAggFuncs))
 
-	c.userFuncList = make([]string, 0, len(userfuncs)+len(userAggFuncs))
-
-	funcKeys := make([]string, 0, len(Functions)+len(userfuncs)+2)
-	for k := range Functions {
-		funcKeys = append(funcKeys, k+"()")
+	funcKeys := make([]string, 0, len(c.funcs)+len(userfuncs))
+	for _, v := range c.funcs {
+		funcKeys = append(funcKeys, v+"()")
 	}
 	for _, f := range userfuncs {
 		funcKeys = append(funcKeys, f.Name.String()+"()")
-		c.userFuncList = append(c.userFuncList, f.Name.String())
+		c.userFuncs = append(c.userFuncs, f.Name.String())
 	}
-	funcKeys = append(funcKeys, "NOW()")
-	funcKeys = append(funcKeys, "JSON_OBJECT()")
 	sort.Strings(funcKeys)
 	c.funcList = funcKeys
 
-	aggFuncKeys := make([]string, 0, len(AggregateFunctions)+2+len(userAggFuncs))
-	for k := range AggregateFunctions {
-		aggFuncKeys = append(aggFuncKeys, k+"()")
+	aggFuncKeys := make([]string, 0, len(c.aggFuncs)+len(userAggFuncs))
+	for _, v := range c.aggFuncs {
+		aggFuncKeys = append(aggFuncKeys, v+"()")
 	}
-	aggFuncKeys = append(aggFuncKeys, "LISTAGG()")
-	aggFuncKeys = append(aggFuncKeys, "JSON_AGG()")
 	for _, f := range userAggFuncs {
 		aggFuncKeys = append(aggFuncKeys, f.Name.String()+"()")
-		c.userFuncList = append(c.userFuncList, f.Name.String())
+		c.userAggFuncs = append(c.userAggFuncs, f.Name.String())
 	}
 	sort.Strings(aggFuncKeys)
 	c.aggFuncList = aggFuncKeys
+
+	c.userFuncList = append(c.userFuncs, c.userAggFuncs...)
 	sort.Strings(c.userFuncList)
 
-	analyticFuncKeys := make([]string, 0, len(AnalyticFunctions)+len(AggregateFunctions)+len(userAggFuncs))
-	for k := range AnalyticFunctions {
-		analyticFuncKeys = append(analyticFuncKeys, k+"() OVER ()")
-	}
-	for k := range AggregateFunctions {
-		analyticFuncKeys = append(analyticFuncKeys, k+"() OVER ()")
+	analyticFuncKeys := make([]string, 0, len(c.analyticFuncs)+len(userAggFuncs))
+	for _, v := range c.analyticFuncs {
+		analyticFuncKeys = append(analyticFuncKeys, v+"() OVER ()")
 	}
 	for _, f := range userAggFuncs {
 		analyticFuncKeys = append(analyticFuncKeys, f.Name.String()+"() OVER ()")
@@ -356,8 +375,13 @@ func (c *Completer) Statements(line string, origLine string, index int) readline
 	case parser.EOF:
 		return c.GetStatementPrefix(line, origLine, index)
 	default:
-		if 0 < len(c.tokens) && c.isTableObject(c.tokens[0]) {
-			return c.TableObjectArgs(line, origLine, index)
+		if 0 < len(c.tokens) {
+			switch {
+			case c.isTableObject(c.tokens[0]):
+				return c.TableObjectArgs(line, origLine, index)
+			case c.isFunction(c.tokens[0]):
+				return c.FunctionArgs(line, origLine, index)
+			}
 		}
 	}
 
@@ -426,6 +450,157 @@ func (c *Completer) TableObjectArgs(line string, origLine string, index int) rea
 
 	cands = append(cands, c.SearchValues(line, origLine, index)...)
 	return cands
+}
+
+func (c *Completer) FunctionArgs(line string, origLine string, index int) readline.CandidateList {
+	return c.completeArgs(
+		line,
+		origLine,
+		index,
+		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
+			switch c.tokens[i].Token {
+			case parser.BETWEEN:
+				if i == c.lastIdx {
+					customList = append(customList, c.candidateList([]string{
+						"UNBOUNDED PRECEDING",
+						"CURRENT ROW",
+					}, true)...)
+				} else if i == c.lastIdx-1 {
+					switch c.tokens[c.lastIdx].Token {
+					case parser.UNBOUNDED:
+						customList = c.candidateList([]string{"PRECEDING"}, true)
+					case parser.CURRENT:
+						customList = c.candidateList([]string{"ROW"}, true)
+					default:
+						customList = c.candidateList([]string{
+							"PRECEDING",
+							"FOLLOWING",
+						}, true)
+					}
+				} else if c.tokens[c.lastIdx].Token == parser.PRECEDING ||
+					c.tokens[c.lastIdx].Token == parser.FOLLOWING ||
+					c.tokens[c.lastIdx].Token == parser.ROW {
+
+					keywords = append(keywords, "AND")
+				} else if c.tokens[c.lastIdx].Token == parser.AND {
+					customList = append(customList, c.candidateList([]string{
+						"UNBOUNDED FOLLOWING",
+						"CURRENT ROW",
+					}, false)...)
+				} else {
+					switch c.tokens[c.lastIdx].Token {
+					case parser.UNBOUNDED:
+						customList = c.candidateList([]string{"FOLLOWING"}, false)
+					case parser.CURRENT:
+						customList = c.candidateList([]string{"ROW"}, false)
+					default:
+						customList = c.candidateList([]string{
+							"PRECEDING",
+							"FOLLOWING",
+						}, false)
+					}
+				}
+			case parser.ROWS:
+				if i == c.lastIdx {
+					customList = append(customList, c.candidateList([]string{
+						"UNBOUNDED PRECEDING",
+						"CURRENT ROW",
+					}, false)...)
+
+					customList = append(customList, c.candidate("BETWEEN", true))
+				} else if i == c.lastIdx-1 {
+					switch c.tokens[c.lastIdx].Token {
+					case parser.CURRENT:
+						customList = c.candidateList([]string{"ROW"}, false)
+					default:
+						customList = c.candidateList([]string{"PRECEDING"}, false)
+					}
+				}
+			case parser.ORDER:
+				if i == c.lastIdx {
+					keywords = append(keywords, "BY")
+				} else {
+					if i < c.lastIdx-1 && c.tokens[c.lastIdx].Token != ',' {
+						canUseWindowingClause := false
+
+						switch c.tokens[c.lastIdx].Token {
+						case parser.ASC, parser.DESC:
+							customList = append(customList, c.candidateList([]string{
+								"NULLS FIRST",
+								"NULLS LAST",
+							}, false)...)
+							canUseWindowingClause = true
+						case parser.NULLS:
+							customList = append(customList, c.candidateList([]string{
+								"FIRST",
+								"LAST",
+							}, false)...)
+						case parser.FIRST, parser.LAST:
+							canUseWindowingClause = true
+						default:
+							customList = append(customList, c.candidateList([]string{
+								"ASC",
+								"DESC",
+								"NULLS FIRST",
+								"NULLS LAST",
+							}, false)...)
+							customList = append(customList, c.SearchValues(line, origLine, index)...)
+
+							canUseWindowingClause = true
+						}
+
+						if canUseWindowingClause {
+							funcName := strings.ToUpper(c.tokens[0].Literal)
+							if funcName == "FIRST_VALUE" ||
+								funcName == "LAST_VALUE" ||
+								funcName == "NTH_VALUE" ||
+								(funcName != "LISTAGG" && funcName != "JSON_AGG" && InStrSliceWithCaseInsensitive(funcName, c.aggFuncs)) ||
+								InStrSliceWithCaseInsensitive(funcName, c.userAggFuncs) {
+
+								customList = append(customList, c.candidate("ROWS", true))
+							}
+						}
+					} else {
+						customList = append(customList, c.SearchValues(line, origLine, index)...)
+					}
+				}
+			case parser.PARTITION:
+				if i == c.lastIdx {
+					keywords = append(keywords,
+						"BY",
+					)
+				} else {
+					if i < c.lastIdx-1 && c.tokens[c.lastIdx].Token != ',' {
+						keywords = append(keywords,
+							"ORDER BY",
+						)
+					}
+					customList = append(customList, c.SearchValues(line, origLine, index)...)
+				}
+			case parser.OVER:
+				if i == c.lastIdx-1 && c.tokens[c.lastIdx].Token == '(' {
+					keywords = append(keywords,
+						"PARTITION BY",
+						"ORDER BY",
+					)
+				}
+			default:
+				if i == 0 {
+					if 0 < len(line) && i == c.lastIdx-1 {
+						if InStrSliceWithCaseInsensitive(c.tokens[i].Literal, c.aggFuncs) ||
+							InStrSliceWithCaseInsensitive(c.tokens[i].Literal, c.userAggFuncs) {
+							keywords = append(keywords, "DISTINCT")
+						}
+					}
+					customList = append(customList, c.SearchValues(line, origLine, index)...)
+				} else {
+					return nil, nil, false
+				}
+			}
+			customList.Sort()
+			return keywords, customList, true
+		},
+	)
 }
 
 func (c *Completer) WithArgs(line string, origLine string, index int) readline.CandidateList {
@@ -732,47 +907,59 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 							"PERCENT",
 							"OFFSET",
 						)
+						customList = append(customList, c.SearchValues(line, origLine, index)...)
 					}
+				} else {
+					customList = append(customList, c.SearchValues(line, origLine, index)...)
 				}
-				values := c.SearchValues(line, origLine, index)
-				values.Sort()
-				return keywords, values, true
+				customList.Sort()
+				return keywords, customList, true
 			case parser.ORDER:
 				if i == c.lastIdx {
 					keywords = append(keywords, "BY")
 				} else if i < c.lastIdx-1 && c.tokens[c.lastIdx].Token != ',' {
 					switch c.tokens[c.lastIdx].Token {
 					case parser.ASC, parser.DESC:
-						keywords = append(keywords,
+						customList = append(customList, c.candidateList([]string{
 							"NULLS FIRST",
 							"NULLS LAST",
+						}, false)...)
+						customList = append(customList, c.candidateList([]string{
 							"LIMIT",
 							"OFFSET",
-						)
+						}, true)...)
 					case parser.NULLS:
-						keywords = append(keywords,
+						customList = append(customList, c.candidateList([]string{
 							"FIRST",
 							"LAST",
-						)
+						}, false)...)
 					case parser.FIRST, parser.LAST:
 						keywords = append(keywords,
 							"LIMIT",
 							"OFFSET",
 						)
 					default:
-						keywords = append(keywords,
+						customList = append(customList, c.candidateList([]string{
 							"ASC",
 							"DESC",
 							"NULLS FIRST",
 							"NULLS LAST",
+						}, false)...)
+						customList = append(customList, c.candidateList([]string{
 							"LIMIT",
 							"OFFSET",
-						)
+						}, true)...)
+						customList = append(customList, c.SearchValues(line, origLine, index)...)
+						customList = append(customList, c.aggregateFunctionCandidateList(line)...)
+						customList = append(customList, c.analyticFunctionCandidateList(line)...)
 					}
+				} else {
+					customList = append(customList, c.SearchValues(line, origLine, index)...)
+					customList = append(customList, c.aggregateFunctionCandidateList(line)...)
+					customList = append(customList, c.analyticFunctionCandidateList(line)...)
 				}
-				values := append(c.SearchValues(line, origLine, index), c.analyticFunctionCandidateList(line)...)
-				values.Sort()
-				return keywords, values, true
+				customList.Sort()
+				return keywords, customList, true
 			case parser.ALL:
 				if i == c.lastIdx && 0 <= c.lastIdx-1 {
 					switch c.tokens[i-1].Token {
@@ -791,6 +978,7 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 				return keywords, nil, true
 			case parser.HAVING:
 				customList = append(customList, c.whereClause(line, origLine, index)...)
+				customList = append(customList, c.aggregateFunctionCandidateList(line)...)
 				customList.Sort()
 				if i < c.lastIdx {
 					keywords = append(keywords,
@@ -858,7 +1046,9 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 				return list, clist, true
 			case parser.SELECT:
 				if i == c.lastIdx {
-					keywords = append(keywords, "DISTINCT")
+					if 0 < len(line) {
+						keywords = append(keywords, "DISTINCT")
+					}
 				} else {
 					lastIdx := c.lastIdx
 					if i+1 < len(c.tokens) && c.tokens[i+1].Token == parser.DISTINCT {
@@ -880,9 +1070,10 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 						)
 					}
 				}
-				values := append(c.SearchValues(line, origLine, index), c.analyticFunctionCandidateList(line)...)
-				values.Sort()
-				return keywords, values, true
+				customList = append(c.SearchValues(line, origLine, index), c.aggregateFunctionCandidateList(line)...)
+				customList = append(customList, c.analyticFunctionCandidateList(line)...)
+				customList.Sort()
+				return keywords, customList, true
 			}
 			return nil, nil, false
 		},
@@ -1555,7 +1746,6 @@ func (c *Completer) SearchValues(line string, origLine string, index int) readli
 	}
 	list = append(list, c.varList...)
 	list = append(list, c.funcList...)
-	list = append(list, c.aggFuncList...)
 	list = append(list,
 		"TRUE",
 		"FALSE",
@@ -1898,6 +2088,7 @@ func (c *Completer) UpdateTokens(line string, origLine string) {
 
 	c.combineSubqueryTokens()
 	c.combineTableObject()
+	c.combineFunction()
 	c.SetLastIndex(line)
 }
 
@@ -1921,12 +2112,16 @@ StartIndexLoop:
 			break StartIndexLoop
 		case '(':
 			blockLevel--
-			if blockLevel < 0 {
+			switch {
+			case blockLevel < 0:
 				switch {
 				case i+1 < len(c.tokens) && c.tokens[i+1].Token == parser.SELECT:
 					idx = i + 1
 					break StartIndexLoop
 				case 0 <= i-1 && c.isTableObject(c.tokens[i-1]):
+					idx = i - 1
+					break StartIndexLoop
+				case 0 <= i-1 && c.isFunction(c.tokens[i-1]):
 					idx = i - 1
 					break StartIndexLoop
 				}
@@ -2004,9 +2199,65 @@ func (c *Completer) combineTableObject() {
 	c.tokens = combined
 }
 
+func (c *Completer) combineFunction() {
+	combined := make([]parser.Token, 0, cap(c.tokens))
+	blockLevel := 0
+	funcName := ""
+	for i := 0; i < len(c.tokens); i++ {
+		if 0 < blockLevel {
+			switch c.tokens[i].Token {
+			case '(':
+				blockLevel++
+			case ')':
+				blockLevel--
+				if blockLevel == 0 {
+					if i+2 < len(c.tokens) && c.tokens[i+1].Token == parser.OVER && c.tokens[i+2].Token == '(' {
+						blockLevel++
+						i = i + 2
+					} else if i+4 < len(c.tokens) && c.tokens[i+3].Token == parser.OVER && c.tokens[i+4].Token == '(' {
+						blockLevel++
+						i = i + 4
+					} else {
+						combined = append(combined, parser.Token{Token: parser.FUNCTION, Literal: funcName})
+					}
+				}
+			}
+			continue
+		}
+
+		if 0 < i && c.isFunction(c.tokens[i]) && i+1 < len(c.tokens) && c.tokens[i+1].Token == '(' {
+			funcName = c.tokens[i].Literal
+			blockLevel++
+			i++
+		} else {
+			combined = append(combined, c.tokens[i])
+		}
+
+	}
+	c.tokens = combined
+}
+
 func (c *Completer) isTableObject(token parser.Token) bool {
 	return (token.Token == parser.IDENTIFIER && InStrSliceWithCaseInsensitive(token.Literal, tableObjects)) ||
 		token.Token == parser.JSON_TABLE
+}
+
+func (c *Completer) isFunction(token parser.Token) bool {
+	if token.Token == parser.IDENTIFIER {
+		if _, ok := Functions[strings.ToUpper(token.Literal)]; ok {
+			return true
+		}
+		return InStrSliceWithCaseInsensitive(token.Literal, c.userFuncList)
+	}
+
+	return token.Token == parser.JSON_OBJECT ||
+		token.Token == parser.IF ||
+		token.Token == parser.AGGREGATE_FUNCTION ||
+		token.Token == parser.COUNT ||
+		token.Token == parser.LIST_FUNCTION ||
+		token.Token == parser.ANALYTIC_FUNCTION ||
+		token.Token == parser.FUNCTION_NTH ||
+		token.Token == parser.FUNCTION_WITH_INS
 }
 
 func (c *Completer) BracketIsEnclosed() bool {
@@ -2058,11 +2309,35 @@ func (c *Completer) identifier(candidate string, appendSpace bool) readline.Cand
 	return readline.Candidate{Name: []rune(candidate), FormatAsIdentifier: true, AppendSpace: appendSpace}
 }
 
-func (c *Completer) analyticFunctionCandidateList(line string) readline.CandidateList {
+func (c *Completer) aggregateFunctionCandidateList(line string) readline.CandidateList {
 	if len(line) < 1 {
 		return nil
 	}
-	return c.filteredCandidateList(line, c.analyticFuncList, false)
+	return c.filteredCandidateList(line, c.aggFuncList, false)
+}
+
+func (c *Completer) analyticFunctionCandidateList(line string) readline.CandidateList {
+	var cands readline.CandidateList
+	if 0 <= c.lastIdx && c.tokens[c.lastIdx].Token == parser.FUNCTION {
+		if InStrSliceWithCaseInsensitive(c.tokens[c.lastIdx].Literal, []string{
+			"FIRST_VALUE",
+			"LAST_VALUE",
+			"NTH_VALUE",
+			"LAG_VALUE",
+			"LEAD_VALUE",
+		}) {
+			cands = append(cands, c.candidate("IGNORE NULLS", true))
+		}
+
+		if InStrSliceWithCaseInsensitive(c.tokens[c.lastIdx].Literal, c.analyticFuncs) {
+			cands = append(cands, c.candidate("OVER", true))
+		}
+	}
+
+	if 0 < len(line) {
+		cands = append(cands, c.filteredCandidateList(line, c.analyticFuncList, false)...)
+	}
+	return cands
 }
 
 func (c *Completer) environmentVariableList(line string) []string {
