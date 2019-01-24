@@ -11,6 +11,13 @@ You can read, update, delete CSV records with SQL-like query.
 You can also execute multiple operations sequentially in managed transactions by passing a procedure or using the interactive shell.
 In the multiple operations, you can use variables, cursors, temporary tables, and other features. 
 
+## Latest Release
+
+[v1.8.1](https://github.com/mithrandie/csvq/releases/tag/v1.8.1)
+: Released on January 05, 2019
+
+[Change Log]({{ '/changelog.html' | relative_url }})
+
 ## Features
 
 * CSV File Operation
