@@ -199,6 +199,10 @@ func EnclosedEnvironmentVariableSymbol(s string) string {
 }
 
 func MustBeEnclosed(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+
 	runes := []rune(s)
 
 	if runes[0] != '_' && !unicode.IsLetter(runes[0]) {

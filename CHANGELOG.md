@@ -1,3 +1,8 @@
+## Release v1.8.2 (2019-02-13)
+
+- Fix the following bug.
+  - Panic occurs when an empty environment variable is passed. (Github Pull Request #4)
+
 ## Release v1.8.1 (2019-01-05)
 
 - Improve completer.
