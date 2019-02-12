@@ -17,7 +17,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var version = "v1.8.1"
+var version = "v1.8.2"
 
 func main() {
 	var proc *query.Procedure
