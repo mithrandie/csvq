@@ -118,9 +118,16 @@ func TestRuntimeInformationSymbol(t *testing.T) {
 func TestMustBeEnclosed(t *testing.T) {
 	var expect bool
 
-	s := "1abc123"
-	expect = true
+	s := ""
+	expect = false
 	result := MustBeEnclosed(s)
+	if result != expect {
+		t.Errorf("must be enclosed = %t, want %t for %q", result, expect, s)
+	}
+
+	s = "1abc123"
+	expect = true
+	result = MustBeEnclosed(s)
 	if result != expect {
 		t.Errorf("must be enclosed = %t, want %t for %q", result, expect, s)
 	}
