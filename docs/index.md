@@ -13,8 +13,8 @@ In the multiple operations, you can use variables, cursors, temporary tables, an
 
 ## Latest Release
 
-[v1.8.2](https://github.com/mithrandie/csvq/releases/tag/v1.8.2)
-: Released on February 13, 2019
+[v1.8.3](https://github.com/mithrandie/csvq/releases/tag/v1.8.3)
+: Released on February 17, 2019
 
 [Change Log]({{ '/changelog.html' | relative_url }})
 

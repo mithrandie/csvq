@@ -885,11 +885,12 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 }
 
 var procedureIfStmtTests = []struct {
-	Name       string
-	Stmt       parser.If
-	ResultFlow StatementFlow
-	Result     string
-	Error      string
+	Name        string
+	Stmt        parser.If
+	ResultFlow  StatementFlow
+	ReturnValue value.Primary
+	Result      string
+	Error       string
 }{
 	{
 		Name: "If Statement",
@@ -983,6 +984,18 @@ var procedureIfStmtTests = []struct {
 		},
 		Error: "[L:- C:-] field notexist does not exist",
 	},
+	{
+		Name: "If Statement Return Value",
+		Stmt: parser.If{
+			Condition: parser.NewTernaryValue(ternary.TRUE),
+			Statements: []parser.Statement{
+				parser.Return{Value: parser.NewStringValue("1")},
+			},
+		},
+		ResultFlow:  Return,
+		ReturnValue: value.NewString("1"),
+		Result:      "",
+	},
 }
 
 func TestProcedure_IfStmt(t *testing.T) {
@@ -995,6 +1008,7 @@ func TestProcedure_IfStmt(t *testing.T) {
 		r, w, _ := os.Pipe()
 		Stdout = w
 
+		proc.ReturnVal = nil
 		flow, err := proc.IfStmt(v.Stmt)
 
 		w.Close()
@@ -1016,6 +1030,9 @@ func TestProcedure_IfStmt(t *testing.T) {
 		}
 		if flow != v.ResultFlow {
 			t.Errorf("%s: result flow = %q, want %q", v.Name, flow, v.ResultFlow)
+		}
+		if !reflect.DeepEqual(proc.ReturnVal, v.ReturnValue) {
+			t.Errorf("%s: return = %t, want %t", v.Name, proc.ReturnVal, v.ReturnValue)
 		}
 		if string(log) != v.Result {
 			t.Errorf("%s: result = %q, want %q", v.Name, string(log), v.Result)
@@ -1198,11 +1215,12 @@ func TestProcedure_Case(t *testing.T) {
 }
 
 var procedureWhileTests = []struct {
-	Name       string
-	Stmt       parser.While
-	ResultFlow StatementFlow
-	Result     string
-	Error      string
+	Name        string
+	Stmt        parser.While
+	ResultFlow  StatementFlow
+	ReturnValue value.Primary
+	Result      string
+	Error       string
 }{
 	{
 		Name: "While Statement",
@@ -1400,6 +1418,31 @@ var procedureWhileTests = []struct {
 		},
 		Error: "[L:- C:-] field notexist does not exist",
 	},
+	{
+		Name: "While Statement Return Value",
+		Stmt: parser.While{
+			Condition: parser.Comparison{
+				LHS:      parser.Variable{Name: "while_test"},
+				RHS:      parser.NewIntegerValueFromString("3"),
+				Operator: "<",
+			},
+			Statements: []parser.Statement{
+				parser.Return{Value: parser.NewStringValue("1")},
+				parser.VariableSubstitution{
+					Variable: parser.Variable{Name: "while_test"},
+					Value: parser.Arithmetic{
+						LHS:      parser.Variable{Name: "while_test"},
+						RHS:      parser.NewIntegerValueFromString("1"),
+						Operator: '+',
+					},
+				},
+				parser.Print{Value: parser.Variable{Name: "while_test"}},
+				parser.TransactionControl{Token: parser.COMMIT},
+			},
+		},
+		ResultFlow:  Return,
+		ReturnValue: value.NewString("1"),
+	},
 }
 
 func TestProcedure_While(t *testing.T) {
@@ -1407,6 +1450,7 @@ func TestProcedure_While(t *testing.T) {
 	proc := NewProcedure()
 
 	for _, v := range procedureWhileTests {
+		proc.ReturnVal = nil
 		if _, err := proc.Filter.Variables[0].Get(parser.Variable{Name: "while_test"}); err != nil {
 			proc.Filter.Variables[0].Add(parser.Variable{Name: "while_test"}, value.NewInteger(0))
 		}
@@ -1444,6 +1488,9 @@ func TestProcedure_While(t *testing.T) {
 		if flow != v.ResultFlow {
 			t.Errorf("%s: result flow = %q, want %q", v.Name, flow, v.ResultFlow)
 		}
+		if !reflect.DeepEqual(proc.ReturnVal, v.ReturnValue) {
+			t.Errorf("%s: return = %t, want %t", v.Name, proc.ReturnVal, v.ReturnValue)
+		}
 		if string(log) != v.Result {
 			t.Errorf("%s: result = %q, want %q", v.Name, string(log), v.Result)
 		}
@@ -1451,11 +1498,12 @@ func TestProcedure_While(t *testing.T) {
 }
 
 var procedureWhileInCursorTests = []struct {
-	Name       string
-	Stmt       parser.WhileInCursor
-	ResultFlow StatementFlow
-	Result     string
-	Error      string
+	Name        string
+	Stmt        parser.WhileInCursor
+	ResultFlow  StatementFlow
+	ReturnValue value.Primary
+	Result      string
+	Error       string
 }{
 	{
 		Name: "While In Cursor",
@@ -1608,6 +1656,23 @@ var procedureWhileInCursorTests = []struct {
 		},
 		Error: "[L:- C:-] field notexist does not exist",
 	},
+	{
+		Name: "While In Cursor Return Value",
+		Stmt: parser.WhileInCursor{
+			Variables: []parser.Variable{
+				{Name: "var1"},
+				{Name: "var2"},
+			},
+			Cursor: parser.Identifier{Literal: "cur"},
+			Statements: []parser.Statement{
+				parser.Return{Value: parser.NewStringValue("1")},
+				parser.Print{Value: parser.Variable{Name: "var1"}},
+				parser.TransactionControl{Token: parser.COMMIT},
+			},
+		},
+		ResultFlow:  Return,
+		ReturnValue: value.NewString("1"),
+	},
 }
 
 func TestProcedure_WhileInCursor(t *testing.T) {
@@ -1654,6 +1719,9 @@ func TestProcedure_WhileInCursor(t *testing.T) {
 		}
 		if flow != v.ResultFlow {
 			t.Errorf("%s: result flow = %q, want %q", v.Name, flow, v.ResultFlow)
+		}
+		if !reflect.DeepEqual(proc.ReturnVal, v.ReturnValue) {
+			t.Errorf("%s: return = %t, want %t", v.Name, proc.ReturnVal, v.ReturnValue)
 		}
 		if string(log) != v.Result {
 			t.Errorf("%s: result = %q, want %q", v.Name, string(log), v.Result)
