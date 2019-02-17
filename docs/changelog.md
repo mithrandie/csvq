@@ -5,6 +5,12 @@ title: Change Log - csvq
 
 # Change Log
 
+## Release v1.8.3 (2019-02-17)
+
+- Fix the following bugs.
+  - RETURN statement does not return a value in IF and WHILE statements.
+  - NOW Function returns different time from the specification in user-defined functions.
+
 ## Release v1.8.2 (2019-02-13)
 
 - Fix the following bug.
