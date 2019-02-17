@@ -78,7 +78,11 @@ func (proc *Procedure) NewChildProcedure() *Procedure {
 
 func (proc *Procedure) ExecuteChild(statements []parser.Statement) (StatementFlow, error) {
 	child := proc.NewChildProcedure()
-	return child.Execute(statements)
+	flow, err := child.Execute(statements)
+	if child.ReturnVal != nil {
+		proc.ReturnVal = child.ReturnVal
+	}
+	return flow, err
 }
 
 func (proc *Procedure) Execute(statements []parser.Statement) (StatementFlow, error) {
@@ -486,11 +490,14 @@ func (proc *Procedure) While(stmt parser.While) (StatementFlow, error) {
 			return Error, err
 		}
 
-		if f == Break {
+		switch f {
+		case Break:
 			return Terminate, nil
-		}
-		if f == Exit {
+		case Exit:
 			return Exit, nil
+		case Return:
+			proc.ReturnVal = childProc.ReturnVal
+			return Return, nil
 		}
 	}
 	return Terminate, nil
@@ -526,11 +533,14 @@ func (proc *Procedure) WhileInCursor(stmt parser.WhileInCursor) (StatementFlow, 
 			return Error, err
 		}
 
-		if f == Break {
+		switch f {
+		case Break:
 			return Terminate, nil
-		}
-		if f == Exit {
+		case Exit:
 			return Exit, nil
+		case Return:
+			proc.ReturnVal = childProc.ReturnVal
+			return Return, nil
 		}
 	}
 

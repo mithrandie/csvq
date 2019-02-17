@@ -106,12 +106,14 @@ func (f *Filter) Merge(filter *Filter) {
 }
 
 func (f *Filter) CreateChildScope() *Filter {
-	return NewFilter(
+	child := NewFilter(
 		append(VariableScopes{NewVariableMap()}, f.Variables...),
 		append(TemporaryViewScopes{{}}, f.TempViews...),
 		append(CursorScopes{{}}, f.Cursors...),
 		append(UserDefinedFunctionScopes{{}}, f.Functions...),
 	)
+	child.Now = f.Now
+	return child
 }
 
 func (f *Filter) ResetCurrentScope() {
