@@ -1,8 +1,8 @@
 hash: 005f26d1cb47747eefede5daae2fc851ec66bce221ef34190235a2ea02222a79
-updated: 2019-01-01T16:06:46.271702+09:00
+updated: 2019-02-22T22:23:36.943529+09:00
 imports:
 - name: github.com/mitchellh/go-homedir
-  version: ae18d6b8b3205b561c79e8e5f69bff09736185f4
+  version: af06845cf3004701891bf4fdb884bfe4920b3727
 - name: github.com/mithrandie/go-file
   version: 2066c60a29ce10d93467df8bb519d8e8668d4c2e
 - name: github.com/mithrandie/go-text
@@ -21,16 +21,16 @@ imports:
 - name: github.com/urfave/cli
   version: cfb38830724cc34fedffe9a2a29fb54fa9169cd1
 - name: golang.org/x/crypto
-  version: eb0de9b17e854e9b1ccd9963efafc79862359959
+  version: a4c6cb3142f211c99e4bf4cd769535b29a9b616f
   subpackages:
   - ssh/terminal
 - name: golang.org/x/sys
-  version: 4ed8d59d0b35e1e29334a206d1b3f38b1e5dfb31
+  version: a9d3bda3a223baa6bba6ef412cb273f0fd163c05
   subpackages:
   - unix
   - windows
 - name: golang.org/x/text
-  version: 6f44c5a2ea40ee3593d98cdcc905cc1fdaa660e2
+  version: 6c92c7dc7f53607809182301b96e4cc1975143f1
   subpackages:
   - encoding
   - encoding/internal

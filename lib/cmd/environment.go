@@ -91,9 +91,6 @@ type InteractiveShell struct {
 func LoadEnvironment() error {
 	var err error
 
-	if environment == nil {
-	}
-
 	handlers := make([]*file.Handler, 0, 4)
 	defer func() {
 		for _, h := range handlers {

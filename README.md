@@ -27,6 +27,7 @@ In the multiple operations, you can use variables, cursors, temporary tables, an
 * Support loading data from Standard Input
 * Support JSON Format
 * Support Fixed-Length Format 
+* Support LTSV Format 
 * Support following file encodings
   * UTF-8
   * Shift-JIS (except for JSON Format)
