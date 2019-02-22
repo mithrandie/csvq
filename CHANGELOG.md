@@ -1,5 +1,11 @@
 # Change Log
 
+## Version 1.8.4
+
+Released on February 22, 2019
+
+- Implement Check Update subcommand.
+
 ## Version 1.8.3
 
 Released on February 17, 2019
