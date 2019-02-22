@@ -16,7 +16,7 @@ In the multiple operations, you can use variables, cursors, temporary tables, an
 Version 1.8.4
 : Released on February 22, 2019
 
-  <a class="waves-effect waves-light btn" href="https://github.com/mithrandie/csvq/releases/tag/v1.8.3">
+  <a class="waves-effect waves-light btn" href="https://github.com/mithrandie/csvq/releases/tag/v1.8.4">
     <i class="material-icons left">file_download</i>download
   </a>
 
