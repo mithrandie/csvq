@@ -9,7 +9,7 @@ USAGE:
    {{if .UsageText}}{{.UsageText}}{{else}}{{.HelpName}} {{if .VisibleFlags}}[options]{{end}}{{if .Commands}} [subcommand]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}{{end}}{{if .Version}}{{if not .HideVersion}}
 
 VERSION:
-   {{.Version}}{{end}}{{end}}{{if .Description}}
+   Version {{.Version}}{{end}}{{end}}{{if .Description}}
 
 DESCRIPTION:
    {{.Description}}{{end}}{{if len .Authors}}

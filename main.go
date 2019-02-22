@@ -21,6 +21,10 @@ var version = "v1.8.3"
 
 func main() {
 	var proc *query.Procedure
+	action.CurrentVersion, _ = action.ParseVersion(version)
+	if action.CurrentVersion != nil {
+		version = action.CurrentVersion.String()
+	}
 	query.Version = version
 
 	cli.AppHelpTemplate = appHHelpTemplate
@@ -29,7 +33,7 @@ func main() {
 	app := cli.NewApp()
 
 	app.Name = "csvq"
-	app.Usage = "SQL like query language for csv"
+	app.Usage = "SQL-like query language for csv"
 	app.ArgsUsage = "[\"query\"|argument]"
 	app.Version = version
 
@@ -217,6 +221,18 @@ func main() {
 			},
 			OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
 				return NewExitError(fmt.Sprintf("Incorrect Usage: %s", err.Error()), 1)
+			},
+		},
+		{
+			Name:  "check-update",
+			Usage: "Check for updates",
+			Action: func(c *cli.Context) error {
+				err := action.CheckUpdate()
+				if err != nil {
+					return NewExitError(err.Error(), 1)
+				}
+
+				return nil
 			},
 		},
 	}
