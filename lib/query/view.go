@@ -583,7 +583,7 @@ func loadObject(
 				return nil, err
 			}
 
-			if !ViewCache.Exists(filePath) {
+			if !ViewCache.Exists(filePath) || (forUpdate && !ViewCache[strings.ToUpper(filePath)].ForUpdate) {
 				fileInfo, err := NewFileInfo(tableIdentifier, cmd.GetFlags().Repository, importFormat, delimiter, encoding)
 				if err != nil {
 					return nil, err
