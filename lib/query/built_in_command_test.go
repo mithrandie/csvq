@@ -2123,7 +2123,7 @@ var showFieldsTests = []struct {
 }
 
 func calcShowFieldsWidth(fileName string, fileNameInTitle string, prefixLen int) int {
-	w := 53
+	w := 54
 	pathLen := 8 + len(GetTestFilePath(fileName))
 	titleLen := prefixLen + len(fileNameInTitle)
 
