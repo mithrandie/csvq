@@ -118,6 +118,50 @@ var viewLoadTests = []struct {
 		},
 	},
 	{
+		Name: "Load File with UTF-8 BOM",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.Identifier{Literal: "table1_bom.csv"},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("table1_bom", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "table1_bom.csv",
+				Delimiter: ',',
+				Encoding:  text.UTF8M,
+				LineBreak: text.LF,
+			},
+			Filter: &Filter{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{
+					{
+						"TABLE1_BOM": strings.ToUpper(GetTestFilePath("table1_bom.csv")),
+					},
+				},
+			},
+		},
+	},
+	{
 		Name: "Load with Parentheses",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
@@ -840,7 +884,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] invalid argument for csv: encoding must be one of UTF8|SJIS",
+		Error: "[L:- C:-] invalid argument for csv: encoding must be one of UTF8|UTF8M|SJIS",
 	},
 	{
 		Name: "Load TableObject From Fixed-Length File",
@@ -887,6 +931,55 @@ var viewLoadTests = []struct {
 				InlineTables: InlineTableNodes{{}},
 				Aliases: AliasNodes{{
 					"T": strings.ToUpper(GetTestFilePath("fixed_length.txt")),
+				}},
+			},
+		},
+	},
+	{
+		Name: "Load TableObject From Fixed-Length File with UTF-8 BOM",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type:          parser.Identifier{Literal: "fixed"},
+						FormatElement: parser.NewStringValue("spaces"),
+						Path:          parser.Identifier{Literal: "fixed_length_bom.txt", Quoted: true},
+					},
+					Alias: parser.Identifier{Literal: "t"},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("t", []string{"column1", "__@2__"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:               "fixed_length_bom.txt",
+				Delimiter:          ',',
+				DelimiterPositions: []int{7, 12},
+				Format:             cmd.FIXED,
+				Encoding:           text.UTF8M,
+				LineBreak:          text.LF,
+			},
+			Filter: &Filter{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{{
+					"T": strings.ToUpper(GetTestFilePath("fixed_length_bom.txt")),
 				}},
 			},
 		},
@@ -1238,6 +1331,53 @@ var viewLoadTests = []struct {
 				InlineTables: InlineTableNodes{{}},
 				Aliases: AliasNodes{{
 					"T": strings.ToUpper(GetTestFilePath("table6.ltsv")),
+				}},
+			},
+		},
+	},
+	{
+		Name: "Load TableObject From LTSV File with UTF-8 BOM",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type: parser.Identifier{Literal: "ltsv"},
+						Path: parser.Identifier{Literal: "table6_bom"},
+					},
+					Alias: parser.Identifier{Literal: "t"},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("t", []string{"f1", "f2", "f3", "f4"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("value1"),
+					value.NewString("value2"),
+					value.NewString("value3"),
+					value.NewNull(),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("value4"),
+					value.NewString("value5"),
+					value.NewNull(),
+					value.NewString("value6"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "table6_bom.ltsv",
+				Delimiter: ',',
+				Format:    cmd.LTSV,
+				Encoding:  text.UTF8M,
+				LineBreak: text.LF,
+			},
+			Filter: &Filter{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{{
+					"T": strings.ToUpper(GetTestFilePath("table6_bom.ltsv")),
 				}},
 			},
 		},

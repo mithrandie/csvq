@@ -1,11 +1,13 @@
+github.com/chzyer/logex v1.1.10 h1:Swpa1K6QvQznwJRcfTfQJmTE72DqScAa40E+fbHEXEE=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
+github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1 h1:q763qf9huN11kDQavWsoZXJNW3xEE4JJyHa5Q25/sd8=
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
 github.com/mitchellh/go-homedir v1.0.0 h1:vKb8ShqSby24Yrqr/yDYkuFz8d0WUjys40rvnGC8aR0=
 github.com/mitchellh/go-homedir v1.0.0/go.mod h1:SfyaCUpYCn1Vlf4IUYiD9fPX4A5wJrkLzIz1N1q0pr0=
 github.com/mithrandie/go-file v1.1.0 h1:XtPgw6ureMfrHytkyE7FBX12smfz7+8PWZD8wHgQFns=
 github.com/mithrandie/go-file v1.1.0/go.mod h1:9dZVuG483umReJ+yxSZIsgsfPC2MWuztzEpkyPL8ma4=
-github.com/mithrandie/go-text v1.1.0 h1:1Vi2tk1GWqQO4jUnKkjhv1vEXlCkjLAjhuqAtGiI28Y=
-github.com/mithrandie/go-text v1.1.0/go.mod h1:YLvRM8Joe+DAwO6fj2/gUxjBj4qRVIHRNJyauZ6G68Q=
+github.com/mithrandie/go-text v1.1.2 h1:QdVzIC3z2jAmv9OgX1ktdFOywO+7wKrN6o+/igHjlXs=
+github.com/mithrandie/go-text v1.1.2/go.mod h1:YLvRM8Joe+DAwO6fj2/gUxjBj4qRVIHRNJyauZ6G68Q=
 github.com/mithrandie/readline-csvq v1.0.3 h1:axQ/yd2cQSA0jKVqPdr4cI7YJ7VcdapcInyIu4cqlsI=
 github.com/mithrandie/readline-csvq v1.0.3/go.mod h1:vEphKc6sQMA0hlS4B6MDviaqFI1b9/vGRC3ishGoAbY=
 github.com/mithrandie/ternary v1.1.0 h1:BlN8EoTsIYjhuWkfXHrh7+G+/Y0VvvWGVVldyjNH2VU=

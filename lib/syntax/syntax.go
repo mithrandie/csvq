@@ -1946,7 +1946,7 @@ var CsvqSyntax = []Expression{
 						Group: []Grammar{
 							{Function{Name: "BYTE_LEN", Args: []Element{String("str"), ArgWithDefValue{Arg: String("encoding"), Default: String("'UTF8'")}}, Return: Return("integer")}},
 						},
-						Description: Description{Template: "Returns the byte length of %s.", Values: []Element{String("str"), Keyword("UTF8"), String("encoding")}},
+						Description: Description{Template: "Returns the byte length of %s.", Values: []Element{String("str")}},
 					},
 					{
 						Name: "width",
@@ -2816,12 +2816,13 @@ var CsvqSyntax = []Expression{
 				Description: Description{
 					Template: "" +
 						"```\n" +
-						"+-------+--------------------+\n" +
-						"| Value | Character Encoding |\n" +
-						"+-------+--------------------+\n" +
-						"| UTF8  | UTF-8              |\n" +
-						"| SJIS  | Shift-JIS          |\n" +
-						"+-------+--------------------+\n" +
+						"+-------+----------------------------+\n" +
+						"| Value |     Character Encoding     |\n" +
+						"+-------+----------------------------+\n" +
+						"| UTF8  | UTF-8                      |\n" +
+						"| UTF8M | UTF-8 with Byte order mark |\n" +
+						"| SJIS  | Shift-JIS                  |\n" +
+						"+-------+----------------------------+\n" +
 						"```",
 				},
 			},

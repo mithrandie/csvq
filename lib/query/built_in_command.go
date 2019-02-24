@@ -724,7 +724,7 @@ func writeTableAttribute(w *ObjectWriter, info *FileInfo) {
 	w.WriteColor("Format: ", cmd.LableEffect)
 	w.WriteWithoutLineBreak(info.Format.String())
 
-	w.WriteSpaces(8 - cmd.TextWidth(info.Format.String()))
+	w.WriteSpaces(9 - cmd.TextWidth(info.Format.String()))
 	switch info.Format {
 	case cmd.CSV:
 		w.WriteColorWithoutLineBreak("Delimiter: ", cmd.LableEffect)
@@ -771,7 +771,7 @@ func writeTableAttribute(w *ObjectWriter, info *FileInfo) {
 		w.WriteWithoutLineBreak(info.Encoding.String())
 	}
 
-	w.WriteSpaces(6 - (cmd.TextWidth(info.Encoding.String())))
+	w.WriteSpaces(7 - (cmd.TextWidth(info.Encoding.String())))
 	w.WriteColorWithoutLineBreak("LineBreak: ", cmd.LableEffect)
 	w.WriteWithoutLineBreak(info.LineBreak.String())
 
