@@ -601,6 +601,10 @@ func loadObject(
 				fileInfo.JsonEscape = jsonEscape
 
 				if !ViewCache.Exists(fileInfo.Path) || (forUpdate && !ViewCache[strings.ToUpper(fileInfo.Path)].ForUpdate) {
+					if ViewCache.Exists(fileInfo.Path) {
+						fileInfo = ViewCache[strings.ToUpper(fileInfo.Path)].FileInfo
+					}
+
 					ViewCache.Dispose(fileInfo.Path)
 
 					var fp *os.File
