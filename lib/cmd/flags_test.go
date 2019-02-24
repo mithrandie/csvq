@@ -223,7 +223,7 @@ func TestFlags_SetEncoding(t *testing.T) {
 		t.Errorf("encoding = %s, expect to set %s for %s", flags.Encoding, text.SJIS, "sjis")
 	}
 
-	expectErr := "encoding must be one of UTF8|SJIS"
+	expectErr := "encoding must be one of UTF8|UTF8M|SJIS"
 	err := flags.SetEncoding("error")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "error")
@@ -366,7 +366,7 @@ func TestFlags_SetWriteEncoding(t *testing.T) {
 		t.Errorf("encoding = %s, expect to set %s for %s", flags.WriteEncoding, text.SJIS, "sjis")
 	}
 
-	expectErr := "encoding must be one of UTF8|SJIS"
+	expectErr := "encoding must be one of UTF8|UTF8M|SJIS"
 	err := flags.SetWriteEncoding("error")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "error")
@@ -474,7 +474,7 @@ func TestFlags_SetJsonEscape(t *testing.T) {
 	}
 
 	s = "error"
-	expectErr := "json-escape must be one of BACKSLASH|HEX|HEXALL"
+	expectErr := "json escape type must be one of BACKSLASH|HEX|HEXALL"
 	err := flags.SetJsonEscape(s)
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, s)

@@ -1392,7 +1392,7 @@ var byteLenTests = []functionTest{
 			value.NewString("abc日本語"),
 			value.NewString("invalid"),
 		},
-		Error: "[L:- C:-] encoding must be one of UTF8|SJIS for function byte_len",
+		Error: "[L:- C:-] encoding must be one of UTF8|UTF8M|SJIS for function byte_len",
 	},
 }
 
@@ -1491,7 +1491,7 @@ var lpadTests = []functionTest{
 			value.NewString("byte"),
 			value.NewString("invalid"),
 		},
-		Error: "[L:- C:-] encoding must be one of UTF8|SJIS for function lpad",
+		Error: "[L:- C:-] encoding must be one of UTF8|UTF8M|SJIS for function lpad",
 	},
 	{
 		Name: "Lpad by Width",

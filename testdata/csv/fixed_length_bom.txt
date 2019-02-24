@@ -1,0 +1,4 @@
+﻿column1
+1       str1
+2       str2
+3       str3

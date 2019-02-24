@@ -276,31 +276,19 @@ func IsReadableFromPipeOrRedirection() bool {
 }
 
 func ParseEncoding(s string) (text.Encoding, error) {
-	var encoding text.Encoding
-	switch strings.ToUpper(s) {
-	case "UTF8":
-		encoding = text.UTF8
-	case "SJIS":
-		encoding = text.SJIS
-	default:
-		return text.UTF8, errors.New("encoding must be one of UTF8|SJIS")
+	encoding, err := text.ParseEncoding(s)
+	if err != nil {
+		err = errors.New("encoding must be one of UTF8|UTF8M|SJIS")
 	}
-	return encoding, nil
+	return encoding, err
 }
 
 func ParseLineBreak(s string) (text.LineBreak, error) {
-	var lb text.LineBreak
-	switch strings.ToUpper(s) {
-	case "CRLF":
-		lb = text.CRLF
-	case "CR":
-		lb = text.CR
-	case "LF":
-		lb = text.LF
-	default:
-		return lb, errors.New("line-break must be one of CRLF|LF|CR")
+	lb, err := text.ParseLineBreak(s)
+	if err != nil {
+		err = errors.New("line-break must be one of CRLF|LF|CR")
 	}
-	return lb, nil
+	return lb, err
 }
 
 func ParseDelimiter(s string, delimiter rune, delimiterPositions []int, delimitAutomatically bool) (rune, []int, bool, error) {
@@ -373,7 +361,7 @@ func ParseJsonEscapeType(s string) (txjson.EscapeType, error) {
 	case "HEXALL":
 		escape = txjson.AllWithHexDigits
 	default:
-		return escape, errors.New("json-escape must be one of BACKSLASH|HEX|HEXALL")
+		return escape, errors.New("json escape type must be one of BACKSLASH|HEX|HEXALL")
 	}
 	return escape, nil
 }

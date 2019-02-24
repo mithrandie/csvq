@@ -1,12 +1,12 @@
-hash: a668f785a76b8f93bc76521bdee14df82a68fb1b8efa2b97cd7a0a482852a0ba
-updated: 2019-02-23T03:06:49.095266+09:00
+hash: ac5c6281a3d6ffcb19e57dfbddd1b9a02c74e62b4e8f2aa1379300142a7c8275
+updated: 2019-02-25T05:04:01.063455+09:00
 imports:
 - name: github.com/mitchellh/go-homedir
   version: af06845cf3004701891bf4fdb884bfe4920b3727
 - name: github.com/mithrandie/go-file
   version: 2066c60a29ce10d93467df8bb519d8e8668d4c2e
 - name: github.com/mithrandie/go-text
-  version: 83eb0c129cd467130d4fbabf43064abeee5bfee1
+  version: ad493bc2fc1f3f17822d5d1c0c9bc34a30254607
   subpackages:
   - color
   - csv
@@ -21,7 +21,7 @@ imports:
 - name: github.com/urfave/cli
   version: cfb38830724cc34fedffe9a2a29fb54fa9169cd1
 - name: golang.org/x/crypto
-  version: a4c6cb3142f211c99e4bf4cd769535b29a9b616f
+  version: ffb98f73852f696ea2bb21a617a5c4b3e067a439
   subpackages:
   - ssh/terminal
 - name: golang.org/x/sys

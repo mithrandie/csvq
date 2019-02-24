@@ -139,10 +139,13 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 			var loadView *View
 
 			if fileInfo.Format != cmd.JSON {
-				fp := os.Stdin
-				defer fp.Close()
+				buf, err := ioutil.ReadAll(os.Stdin)
+				if err != nil {
+					return nil, NewReadFileError(table.Object.(parser.Stdin), err.Error())
+				}
 
-				loadView, err = loadViewFromFile(fp, fileInfo, flags.WithoutNull)
+				br := bytes.NewReader(buf)
+				loadView, err = loadViewFromFile(br, fileInfo, flags.WithoutNull)
 				if err != nil {
 					return nil, NewDataParsingError(table.Object, fileInfo.Path, err.Error())
 				}
@@ -653,7 +656,7 @@ func loadObject(
 	return view, nil
 }
 
-func loadViewFromFile(fp *os.File, fileInfo *FileInfo, withoutNull bool) (*View, error) {
+func loadViewFromFile(fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool) (*View, error) {
 	switch fileInfo.Format {
 	case cmd.FIXED:
 		return loadViewFromFixedLengthTextFile(fp, fileInfo, withoutNull)
@@ -665,8 +668,10 @@ func loadViewFromFile(fp *os.File, fileInfo *FileInfo, withoutNull bool) (*View,
 	return loadViewFromCSVFile(fp, fileInfo, withoutNull)
 }
 
-func loadViewFromFixedLengthTextFile(fp *os.File, fileInfo *FileInfo, withoutNull bool) (*View, error) {
-	var err error
+func loadViewFromFixedLengthTextFile(fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool) (*View, error) {
+	if enc, err := text.DetectEncoding(fp); err == nil {
+		fileInfo.Encoding = enc
+	}
 
 	data, err := ioutil.ReadAll(fp)
 	if err != nil {
@@ -675,7 +680,10 @@ func loadViewFromFixedLengthTextFile(fp *os.File, fileInfo *FileInfo, withoutNul
 	r := bytes.NewReader(data)
 
 	if fileInfo.DelimiterPositions == nil {
-		d := fixedlen.NewDelimiter(r, fileInfo.Encoding)
+		d, err := fixedlen.NewDelimiter(r, fileInfo.Encoding)
+		if err != nil {
+			return nil, err
+		}
 		d.NoHeader = fileInfo.NoHeader
 		d.Encoding = fileInfo.Encoding
 		fileInfo.DelimiterPositions, err = d.Delimit()
@@ -685,7 +693,10 @@ func loadViewFromFixedLengthTextFile(fp *os.File, fileInfo *FileInfo, withoutNul
 	}
 
 	r.Seek(0, io.SeekStart)
-	reader := fixedlen.NewReader(r, fileInfo.DelimiterPositions, fileInfo.Encoding)
+	reader, err := fixedlen.NewReader(r, fileInfo.DelimiterPositions, fileInfo.Encoding)
+	if err != nil {
+		return nil, err
+	}
 	reader.WithoutNull = withoutNull
 	reader.Encoding = fileInfo.Encoding
 
@@ -720,12 +731,18 @@ func loadViewFromFixedLengthTextFile(fp *os.File, fileInfo *FileInfo, withoutNul
 	return view, nil
 }
 
-func loadViewFromCSVFile(fp *os.File, fileInfo *FileInfo, withoutNull bool) (*View, error) {
-	reader := csv.NewReader(fp, fileInfo.Encoding)
+func loadViewFromCSVFile(fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool) (*View, error) {
+	if enc, err := text.DetectEncoding(fp); err == nil {
+		fileInfo.Encoding = enc
+	}
+
+	reader, err := csv.NewReader(fp, fileInfo.Encoding)
+	if err != nil {
+		return nil, err
+	}
 	reader.Delimiter = fileInfo.Delimiter
 	reader.WithoutNull = withoutNull
 
-	var err error
 	var header []string
 	if !fileInfo.NoHeader {
 		header, err = reader.ReadHeader()
@@ -758,8 +775,15 @@ func loadViewFromCSVFile(fp *os.File, fileInfo *FileInfo, withoutNull bool) (*Vi
 	return view, nil
 }
 
-func loadViewFromLTSVFile(fp *os.File, fileInfo *FileInfo, withoutNull bool) (*View, error) {
-	reader := ltsv.NewReader(fp, fileInfo.Encoding)
+func loadViewFromLTSVFile(fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool) (*View, error) {
+	if enc, err := text.DetectEncoding(fp); err == nil {
+		fileInfo.Encoding = enc
+	}
+
+	reader, err := ltsv.NewReader(fp, fileInfo.Encoding)
+	if err != nil {
+		return nil, err
+	}
 	reader.WithoutNull = withoutNull
 
 	records, err := readRecordSet(reader)
