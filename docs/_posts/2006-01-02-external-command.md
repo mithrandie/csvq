@@ -6,7 +6,7 @@ category: reference
 
 # External Command
 
-You can run external command by placing a Dollar Sign(U+0024 `$`) at the beggining of the line.
+You can run an external command by placing a Dollar Sign(U+0024 `$`) at the beggining of the line.
 The result is written to the standard output.
 
 [CALL Function]({{ '/reference/system-functions.html#call' | relative_url }}) also runs an external command, but the result is returned as a string.

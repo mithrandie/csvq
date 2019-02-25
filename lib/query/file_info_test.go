@@ -349,36 +349,3 @@ func TestNewFileInfoForCreate(t *testing.T) {
 		}
 	}
 }
-
-var fileInfoEquivalentTests = []struct {
-	FileInfo1 *FileInfo
-	FileInfo2 *FileInfo
-	Expect    bool
-}{
-	{
-		FileInfo1: &FileInfo{
-			Path:      "table1.csv",
-			Delimiter: ',',
-			Format:    cmd.CSV,
-		},
-		FileInfo2: &FileInfo{
-			Path:      "table1.csv",
-			Delimiter: ',',
-			Format:    cmd.CSV,
-		},
-		Expect: true,
-	},
-	{
-		FileInfo1: &FileInfo{
-			Path:      "table1.csv",
-			Delimiter: ',',
-			Format:    cmd.CSV,
-		},
-		FileInfo2: &FileInfo{
-			Path:      "table1.csv",
-			Delimiter: '\t',
-			Format:    cmd.CSV,
-		},
-		Expect: false,
-	},
-}

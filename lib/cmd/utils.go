@@ -276,39 +276,28 @@ func IsReadableFromPipeOrRedirection() bool {
 }
 
 func ParseEncoding(s string) (text.Encoding, error) {
-	var encoding text.Encoding
-	switch strings.ToUpper(s) {
-	case "UTF8":
-		encoding = text.UTF8
-	case "SJIS":
-		encoding = text.SJIS
-	default:
-		return text.UTF8, errors.New("encoding must be one of UTF8|SJIS")
+	encoding, err := text.ParseEncoding(s)
+	if err != nil {
+		err = errors.New("encoding must be one of UTF8|UTF8M|SJIS")
 	}
-	return encoding, nil
+	return encoding, err
 }
 
 func ParseLineBreak(s string) (text.LineBreak, error) {
-	var lb text.LineBreak
-	switch strings.ToUpper(s) {
-	case "CRLF":
-		lb = text.CRLF
-	case "CR":
-		lb = text.CR
-	case "LF":
-		lb = text.LF
-	default:
-		return lb, errors.New("line-break must be one of CRLF|LF|CR")
+	lb, err := text.ParseLineBreak(s)
+	if err != nil {
+		err = errors.New("line-break must be one of CRLF|LF|CR")
 	}
-	return lb, nil
+	return lb, err
 }
 
-func ParseDelimiter(s string, delimiter rune, delimiterPositions []int, delimitAutomatically bool) (rune, []int, bool, error) {
+func ParseDelimiter(s string, delimiter rune, delimiterPositions []int, delimitAutomatically bool) (rune, []int, bool, bool, error) {
 	s = UnescapeString(s)
 	strLen := utf8.RuneCountInString(s)
+	singleLine := false
 
 	if strLen < 1 {
-		return delimiter, delimiterPositions, delimitAutomatically, errors.New(fmt.Sprintf("delimiter must be one character, %q or JSON array of integers", DelimiteAutomatically))
+		return delimiter, delimiterPositions, delimitAutomatically, false, errors.New(fmt.Sprintf("delimiter must be one character, %q or JSON array of integers", DelimiteAutomatically))
 	}
 
 	if strLen == 1 {
@@ -320,16 +309,20 @@ func ParseDelimiter(s string, delimiter rune, delimiterPositions []int, delimitA
 			delimiterPositions = nil
 			delimitAutomatically = true
 		} else {
+			if strings.HasPrefix(s, "s[") || strings.HasPrefix(s, "S[") {
+				singleLine = true
+				s = s[1:]
+			}
 			var positions []int
 			err := json.Unmarshal([]byte(s), &positions)
 			if err != nil {
-				return delimiter, delimiterPositions, delimitAutomatically, errors.New(fmt.Sprintf("delimiter must be one character, %q or JSON array of integers", DelimiteAutomatically))
+				return delimiter, delimiterPositions, delimitAutomatically, singleLine, errors.New(fmt.Sprintf("delimiter must be one character, %q or JSON array of integers", DelimiteAutomatically))
 			}
 			delimiterPositions = positions
 			delimitAutomatically = false
 		}
 	}
-	return delimiter, delimiterPositions, delimitAutomatically, nil
+	return delimiter, delimiterPositions, delimitAutomatically, singleLine, nil
 }
 
 func ParseFormat(s string, et txjson.EscapeType) (Format, txjson.EscapeType, error) {
@@ -373,7 +366,7 @@ func ParseJsonEscapeType(s string) (txjson.EscapeType, error) {
 	case "HEXALL":
 		escape = txjson.AllWithHexDigits
 	default:
-		return escape, errors.New("json-escape must be one of BACKSLASH|HEX|HEXALL")
+		return escape, errors.New("json escape type must be one of BACKSLASH|HEX|HEXALL")
 	}
 	return escape, nil
 }

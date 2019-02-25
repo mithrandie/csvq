@@ -35,7 +35,7 @@ func NewEmptyResultSetError() *EmptyResultSetError {
 func EncodeView(fp io.Writer, view *View, fileInfo *FileInfo) error {
 	switch fileInfo.Format {
 	case cmd.FIXED:
-		return encodeFixedLengthFormat(fp, view, fileInfo.DelimiterPositions, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding)
+		return encodeFixedLengthFormat(fp, view, fileInfo.DelimiterPositions, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding, fileInfo.SingleLine)
 	case cmd.JSON:
 		return encodeJson(fp, view, fileInfo.LineBreak, fileInfo.JsonEscape, fileInfo.PrettyPrint)
 	case cmd.LTSV:
@@ -97,7 +97,7 @@ func encodeCSV(fp io.Writer, view *View, delimiter rune, lineBreak text.LineBrea
 	return nil
 }
 
-func encodeFixedLengthFormat(fp io.Writer, view *View, positions []int, lineBreak text.LineBreak, withoutHeader bool, encoding text.Encoding) error {
+func encodeFixedLengthFormat(fp io.Writer, view *View, positions []int, lineBreak text.LineBreak, withoutHeader bool, encoding text.Encoding, singleLine bool) error {
 	header, records := bareValues(view)
 
 	if positions == nil {
@@ -136,10 +136,11 @@ func encodeFixedLengthFormat(fp io.Writer, view *View, positions []int, lineBrea
 
 	} else {
 		w := fixedlen.NewWriter(fp, positions, lineBreak, encoding)
+		w.SingleLine = singleLine
 
 		fields := make([]fixedlen.Field, len(header))
 
-		if !withoutHeader {
+		if !withoutHeader && !singleLine {
 			for i, v := range header {
 				fields[i] = fixedlen.NewField(v, text.NotAligned)
 			}

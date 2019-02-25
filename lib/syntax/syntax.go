@@ -627,11 +627,17 @@ var CsvqSyntax = []Expression{
 				Group: []Grammar{
 					{Keyword("ECHO"), Link("value")},
 				},
+				Description: Description{
+					Template: "Print a value. This command returns the same result as \"PRINTF '%%s' USING value\".",
+				},
 			},
 			{
 				Name: "print",
 				Group: []Grammar{
 					{Keyword("PRINT"), Link("value")},
+				},
+				Description: Description{
+					Template: "Print a value formatted according to the type.",
 				},
 			},
 			{
@@ -640,11 +646,27 @@ var CsvqSyntax = []Expression{
 					{Keyword("PRINTF"), String("format")},
 					{Keyword("PRINTF"), String("format"), Keyword("USING"), ContinuousOption{Link("replace_value")}},
 				},
+				Description: Description{
+					Template: "Print a formatted value.",
+				},
 			},
 			{
 				Name: "source",
 				Group: []Grammar{
 					{Keyword("SOURCE"), Identifier("file_path")},
+				},
+				Description: Description{
+					Template: "Load and execute an external file as a part of the procedure.",
+				},
+			},
+			{
+				Name: "execute",
+				Group: []Grammar{
+					{Keyword("EXECUTE"), String("statements")},
+					{Keyword("EXECUTE"), String("statements_format"), Keyword("USING"), ContinuousOption{Link("replace_value")}},
+				},
+				Description: Description{
+					Template: "Execute a string as statements.",
 				},
 			},
 			{
@@ -652,11 +674,17 @@ var CsvqSyntax = []Expression{
 				Group: []Grammar{
 					{Keyword("SHOW"), AnyOne{Keyword("TABLES"), Keyword("VIEWS"), Keyword("CURSORS"), Keyword("FUNCTIONS"), Keyword("FLAGS"), Keyword("ENV"), Keyword("RUNINFO")}},
 				},
+				Description: Description{
+					Template: "Show objects.",
+				},
 			},
 			{
 				Name: "show_fields",
 				Group: []Grammar{
 					{Keyword("SHOW"), Keyword("FIELDS"), Keyword("FROM"), Identifier("table_name")},
+				},
+				Description: Description{
+					Template: "Show fields in a table or a view.",
 				},
 			},
 			{
@@ -664,11 +692,17 @@ var CsvqSyntax = []Expression{
 				Group: []Grammar{
 					{Keyword("CHDIR"), Identifier("directory_path")},
 				},
+				Description: Description{
+					Template: "Change current working directory.",
+				},
 			},
 			{
 				Name: "pwd",
 				Group: []Grammar{
 					{Keyword("PWD")},
+				},
+				Description: Description{
+					Template: "Print current working directory.",
 				},
 			},
 			{
@@ -676,11 +710,17 @@ var CsvqSyntax = []Expression{
 				Group: []Grammar{
 					{Keyword("RELOAD"), Keyword("CONFIG")},
 				},
+				Description: Description{
+					Template: "Reload configuration json files.",
+				},
 			},
 			{
 				Name: "syntax",
 				Group: []Grammar{
 					{Keyword("SYNTAX"), Option{ContinuousOption{String("search_word")}}},
+				},
+				Description: Description{
+					Template: "Print syntax.",
 				},
 			},
 		},
@@ -692,6 +732,9 @@ var CsvqSyntax = []Expression{
 				Name: "external_command",
 				Group: []Grammar{
 					{Token("$"), Token("command"), Option{Token("args"), Token("...")}},
+				},
+				Description: Description{
+					Template: "Run an external command. The result is written to the standard output.",
 				},
 			},
 		},
@@ -1946,7 +1989,7 @@ var CsvqSyntax = []Expression{
 						Group: []Grammar{
 							{Function{Name: "BYTE_LEN", Args: []Element{String("str"), ArgWithDefValue{Arg: String("encoding"), Default: String("'UTF8'")}}, Return: Return("integer")}},
 						},
-						Description: Description{Template: "Returns the byte length of %s.", Values: []Element{String("str"), Keyword("UTF8"), String("encoding")}},
+						Description: Description{Template: "Returns the byte length of %s.", Values: []Element{String("str")}},
 					},
 					{
 						Name: "width",
@@ -2816,12 +2859,13 @@ var CsvqSyntax = []Expression{
 				Description: Description{
 					Template: "" +
 						"```\n" +
-						"+-------+--------------------+\n" +
-						"| Value | Character Encoding |\n" +
-						"+-------+--------------------+\n" +
-						"| UTF8  | UTF-8              |\n" +
-						"| SJIS  | Shift-JIS          |\n" +
-						"+-------+--------------------+\n" +
+						"+-------+----------------------------+\n" +
+						"| Value |     Character Encoding     |\n" +
+						"+-------+----------------------------+\n" +
+						"| UTF8  | UTF-8                      |\n" +
+						"| UTF8M | UTF-8 with Byte order mark |\n" +
+						"| SJIS  | Shift-JIS                  |\n" +
+						"+-------+----------------------------+\n" +
 						"```",
 				},
 			},

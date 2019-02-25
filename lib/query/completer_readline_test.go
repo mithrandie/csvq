@@ -608,6 +608,7 @@ var completerTableObjectArgsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("SJIS")},
 			{Name: []rune("UTF8")},
+			{Name: []rune("UTF8M")},
 		},
 	},
 	{
@@ -665,6 +666,7 @@ var completerTableObjectArgsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("SJIS")},
 			{Name: []rune("UTF8")},
+			{Name: []rune("UTF8M")},
 		},
 	},
 	{
@@ -2143,6 +2145,7 @@ var completerAlterArgsTests = []completerTest{
 			{Name: []rune("','")},
 			{Name: []rune("'\\t'")},
 			{Name: []rune("'SPACES'")},
+			{Name: []rune("'S[]'")},
 			{Name: []rune("'[]'")},
 		},
 	},
@@ -2170,6 +2173,7 @@ var completerAlterArgsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("SJIS")},
 			{Name: []rune("UTF8")},
+			{Name: []rune("UTF8M")},
 		},
 	},
 	{
@@ -2444,6 +2448,7 @@ var completerSetArgsTests = []completerTest{
 			{Name: []rune("','")},
 			{Name: []rune("'\\t'")},
 			{Name: []rune("'SPACES'")},
+			{Name: []rune("'S[]'")},
 			{Name: []rune("'[]'")},
 		},
 	},
@@ -2455,6 +2460,7 @@ var completerSetArgsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("SJIS")},
 			{Name: []rune("UTF8")},
+			{Name: []rune("UTF8M")},
 		},
 	},
 	{

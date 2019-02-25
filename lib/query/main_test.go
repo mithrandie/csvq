@@ -71,6 +71,7 @@ func setup() {
 	copyfile(filepath.Join(TestDir, "table_noheader.csv"), filepath.Join(TestDataDir, "table_noheader.csv"))
 	copyfile(filepath.Join(TestDir, "table_broken.csv"), filepath.Join(TestDataDir, "table_broken.csv"))
 	copyfile(filepath.Join(TestDir, "table1.csv"), filepath.Join(TestDataDir, "table1.csv"))
+	copyfile(filepath.Join(TestDir, "table1_bom.csv"), filepath.Join(TestDataDir, "table1_bom.csv"))
 	copyfile(filepath.Join(TestDir, "table1b.csv"), filepath.Join(TestDataDir, "table1b.csv"))
 	copyfile(filepath.Join(TestDir, "table2.csv"), filepath.Join(TestDataDir, "table2.csv"))
 	copyfile(filepath.Join(TestDir, "table4.csv"), filepath.Join(TestDataDir, "table4.csv"))
@@ -93,8 +94,11 @@ func setup() {
 	copyfile(filepath.Join(TestDir, "table_a.json"), filepath.Join(TestDataDir, "table_a.json"))
 
 	copyfile(filepath.Join(TestDir, "table6.ltsv"), filepath.Join(TestDataDir, "table6.ltsv"))
+	copyfile(filepath.Join(TestDir, "table6_bom.ltsv"), filepath.Join(TestDataDir, "table6_bom.ltsv"))
 
 	copyfile(filepath.Join(TestDir, "fixed_length.txt"), filepath.Join(TestDataDir, "fixed_length.txt"))
+	copyfile(filepath.Join(TestDir, "fixed_length_bom.txt"), filepath.Join(TestDataDir, "fixed_length_bom.txt"))
+	copyfile(filepath.Join(TestDir, "fixed_length_sl.txt"), filepath.Join(TestDataDir, "fixed_length_sl.txt"))
 
 	copyfile(filepath.Join(TestDir, "autoselect"), filepath.Join(TestDataDir, "autoselect"))
 

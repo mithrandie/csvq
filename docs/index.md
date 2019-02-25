@@ -13,10 +13,10 @@ In the multiple operations, you can use variables, cursors, temporary tables, an
 
 ## Latest Release
 
-Version 1.8.4
-: Released on February 22, 2019
+Version 1.8.5
+: Released on February 25, 2019
 
-  <a class="waves-effect waves-light btn" href="https://github.com/mithrandie/csvq/releases/tag/v1.8.4">
+  <a class="waves-effect waves-light btn" href="https://github.com/mithrandie/csvq/releases/tag/v1.8.5">
     <i class="material-icons left">file_download</i>download
   </a>
 
@@ -33,12 +33,16 @@ Version 1.8.4
 * [Temporary Table]({{ '/reference/temporary-table.html' | relative_url }})
 * [Transaction Management]({{ '/reference/transaction.html' | relative_url }})
 * Support loading data from Standard Input
-* Support [JSON]({{ '/reference/json.html' | relative_url }}) Format
-* Support Fixed-Length Format 
-* Support LTSV Format 
+* Support following file formats
+  * CSV
+  * TSV
+  * LTSV
+  * Fixed-Length Format
+  * [JSON]({{ '/reference/json.html' | relative_url }})
 * Support following file encodings
   * UTF-8
   * Shift-JIS (except for JSON Format)
+  
 
 ## Install
 

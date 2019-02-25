@@ -173,12 +173,26 @@ func TestFlags_SetDelimiter(t *testing.T) {
 		t.Errorf("delimiter = %q, expect to set %q for %q", flags.Delimiter, "\t", "\t")
 	}
 
+	flags.SetDelimiter("s[1, 2, 3]")
+	if flags.DelimitAutomatically != false {
+		t.Errorf("delimitAutomatically = %t, expect to set %t for %q", flags.DelimitAutomatically, false, "[1, 2, 3]")
+	}
+	if flags.SingleLine != true {
+		t.Errorf("singleLine = %t, expect to set %t for %q", flags.SingleLine, true, "s[1, 2, 3]")
+	}
+	if !reflect.DeepEqual(flags.DelimiterPositions, []int{1, 2, 3}) {
+		t.Errorf("delimitPositions = %v, expect to set %v for %q", flags.DelimiterPositions, []int{1, 2, 3}, "[1, 2, 3]")
+	}
+
 	flags.SetDelimiter("[1, 2, 3]")
 	if flags.DelimitAutomatically != false {
 		t.Errorf("delimitAutomatically = %t, expect to set %t for %q", flags.DelimitAutomatically, false, "[1, 2, 3]")
 	}
 	if !reflect.DeepEqual(flags.DelimiterPositions, []int{1, 2, 3}) {
 		t.Errorf("delimitPositions = %v, expect to set %v for %q", flags.DelimiterPositions, []int{1, 2, 3}, "[1, 2, 3]")
+	}
+	if flags.SingleLine != false {
+		t.Errorf("singleLine = %t, expect to set %t for %q", flags.SingleLine, false, "s[1, 2, 3]")
 	}
 
 	flags.SetDelimiter("spaces")
@@ -223,7 +237,7 @@ func TestFlags_SetEncoding(t *testing.T) {
 		t.Errorf("encoding = %s, expect to set %s for %s", flags.Encoding, text.SJIS, "sjis")
 	}
 
-	expectErr := "encoding must be one of UTF8|SJIS"
+	expectErr := "encoding must be one of UTF8|UTF8M|SJIS"
 	err := flags.SetEncoding("error")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "error")
@@ -366,7 +380,7 @@ func TestFlags_SetWriteEncoding(t *testing.T) {
 		t.Errorf("encoding = %s, expect to set %s for %s", flags.WriteEncoding, text.SJIS, "sjis")
 	}
 
-	expectErr := "encoding must be one of UTF8|SJIS"
+	expectErr := "encoding must be one of UTF8|UTF8M|SJIS"
 	err := flags.SetWriteEncoding("error")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "error")
@@ -474,7 +488,7 @@ func TestFlags_SetJsonEscape(t *testing.T) {
 	}
 
 	s = "error"
-	expectErr := "json-escape must be one of BACKSLASH|HEX|HEXALL"
+	expectErr := "json escape type must be one of BACKSLASH|HEX|HEXALL"
 	err := flags.SetJsonEscape(s)
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, s)

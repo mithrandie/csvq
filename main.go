@@ -17,7 +17,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var version = "v1.8.4"
+var version = "v1.8.5"
 
 func main() {
 	var proc *query.Procedure
@@ -80,7 +80,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "encoding, e",
 			Value: "UTF8",
-			Usage: "file encoding. one of: UTF8|SJIS",
+			Usage: "file encoding. one of: UTF8|UTF8M|SJIS",
 		},
 		cli.BoolFlag{
 			Name:  "no-header, n",
@@ -102,7 +102,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "write-encoding, E",
 			Value: "UTF8",
-			Usage: "character encoding of query results. one of: UTF8|SJIS",
+			Usage: "character encoding of query results. one of: UTF8|UTF8M|SJIS",
 		},
 		cli.StringFlag{
 			Name:  "write-delimiter, D",

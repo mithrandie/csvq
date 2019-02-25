@@ -3536,7 +3536,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "encoding"},
 			Value:     parser.NewStringValue("invalid"),
 		},
-		Error: "[L:- C:-] encoding must be one of UTF8|SJIS",
+		Error: "[L:- C:-] encoding must be one of UTF8|UTF8M|SJIS",
 	},
 	{
 		Name: "Set Encoding Error in JSON Format",
@@ -3636,7 +3636,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "json_escape"},
 			Value:     parser.NewStringValue("invalid"),
 		},
-		Error: "[L:- C:-] json-escape must be one of BACKSLASH|HEX|HEXALL",
+		Error: "[L:- C:-] json escape type must be one of BACKSLASH|HEX|HEXALL",
 	},
 	{
 		Name: "Set PrettyPring to true",
