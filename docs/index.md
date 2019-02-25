@@ -33,12 +33,16 @@ Version 1.8.4
 * [Temporary Table]({{ '/reference/temporary-table.html' | relative_url }})
 * [Transaction Management]({{ '/reference/transaction.html' | relative_url }})
 * Support loading data from Standard Input
-* Support [JSON]({{ '/reference/json.html' | relative_url }}) Format
-* Support Fixed-Length Format 
-* Support LTSV Format 
+* Support following file formats
+  * CSV
+  * TSV
+  * LTSV
+  * Fixed-Length Format
+  * [JSON]({{ '/reference/json.html' | relative_url }})
 * Support following file encodings
   * UTF-8
   * Shift-JIS (except for JSON Format)
+  
 
 ## Install
 
