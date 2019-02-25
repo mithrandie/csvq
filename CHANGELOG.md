@@ -1,5 +1,12 @@
 # Change Log
 
+## Version 1.8.5
+
+Released on February 25, 2019
+
+- Support UTF-8 with Byte order mark.
+- Support Single-Line Fixed-Length Format.
+
 ## Version 1.8.4
 
 Released on February 22, 2019
