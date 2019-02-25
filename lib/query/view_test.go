@@ -985,6 +985,56 @@ var viewLoadTests = []struct {
 		},
 	},
 	{
+		Name: "Load TableObject From Single-Line Fixed-Length File",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type:          parser.Identifier{Literal: "fixed"},
+						FormatElement: parser.NewStringValue("s[1,5]"),
+						Path:          parser.Identifier{Literal: "fixed_length_sl.txt", Quoted: true},
+					},
+					Alias: parser.Identifier{Literal: "t"},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("t", []string{"c1", "c2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:               "fixed_length_sl.txt",
+				Delimiter:          ',',
+				DelimiterPositions: []int{1, 5},
+				Format:             cmd.FIXED,
+				Encoding:           text.UTF8,
+				LineBreak:          text.LF,
+				SingleLine:         true,
+			},
+			Filter: &Filter{
+				Variables:    []VariableMap{{}},
+				TempViews:    []ViewMap{{}},
+				Cursors:      []CursorMap{{}},
+				InlineTables: InlineTableNodes{{}},
+				Aliases: AliasNodes{{
+					"T": strings.ToUpper(GetTestFilePath("fixed_length_sl.txt")),
+				}},
+			},
+		},
+	},
+	{
 		Name: "Load TableObject From Fixed-Length File FormatElement Is Not Specified",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{

@@ -199,6 +199,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 		importFormat := flags.SelectImportFormat()
 		delimiter := flags.Delimiter
 		delimiterPositions := flags.DelimiterPositions
+		singleLine := flags.SingleLine
 		jsonQuery := flags.JsonQuery
 		encoding := flags.Encoding
 		noHeader := flags.NoHeader
@@ -250,6 +251,10 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 
 			var positions []int
 			if !strings.EqualFold("SPACES", s) {
+				if strings.HasPrefix(s, "s[") || strings.HasPrefix(s, "S[") {
+					singleLine = true
+					s = s[1:]
+				}
 				err = gojson.Unmarshal([]byte(s), &positions)
 				if err != nil {
 					return nil, NewTableObjectInvalidDelimiterPositionsError(tableObject, tableObject.FormatElement.String())
@@ -343,6 +348,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 			importFormat,
 			delimiter,
 			delimiterPositions,
+			singleLine,
 			jsonQuery,
 			encoding,
 			flags.LineBreak,
@@ -367,6 +373,7 @@ func loadView(tableExpr parser.QueryExpression, filter *Filter, useInternalId bo
 			cmd.AutoSelect,
 			flags.Delimiter,
 			flags.DelimiterPositions,
+			flags.SingleLine,
 			flags.JsonQuery,
 			flags.Encoding,
 			flags.LineBreak,
@@ -543,6 +550,7 @@ func loadObject(
 	importFormat cmd.Format,
 	delimiter rune,
 	delimiterPositions []int,
+	singleLine bool,
 	jsonQuery string,
 	encoding text.Encoding,
 	lineBreak text.LineBreak,
@@ -594,6 +602,7 @@ func loadObject(
 				filePath = fileInfo.Path
 
 				fileInfo.DelimiterPositions = delimiterPositions
+				fileInfo.SingleLine = singleLine
 				fileInfo.JsonQuery = strings.TrimSpace(jsonQuery)
 				fileInfo.LineBreak = lineBreak
 				fileInfo.NoHeader = noHeader
@@ -677,14 +686,16 @@ func loadViewFromFixedLengthTextFile(fp io.ReadSeeker, fileInfo *FileInfo, witho
 		fileInfo.Encoding = enc
 	}
 
-	data, err := ioutil.ReadAll(fp)
-	if err != nil {
-		return nil, err
-	}
-	r := bytes.NewReader(data)
+	var r io.Reader
 
 	if fileInfo.DelimiterPositions == nil {
-		d, err := fixedlen.NewDelimiter(r, fileInfo.Encoding)
+		data, err := ioutil.ReadAll(fp)
+		if err != nil {
+			return nil, err
+		}
+		br := bytes.NewReader(data)
+
+		d, err := fixedlen.NewDelimiter(br, fileInfo.Encoding)
 		if err != nil {
 			return nil, err
 		}
@@ -694,18 +705,23 @@ func loadViewFromFixedLengthTextFile(fp io.ReadSeeker, fileInfo *FileInfo, witho
 		if err != nil {
 			return nil, err
 		}
+
+		br.Seek(0, io.SeekStart)
+		r = br
+	} else {
+		r = fp
 	}
 
-	r.Seek(0, io.SeekStart)
 	reader, err := fixedlen.NewReader(r, fileInfo.DelimiterPositions, fileInfo.Encoding)
 	if err != nil {
 		return nil, err
 	}
 	reader.WithoutNull = withoutNull
 	reader.Encoding = fileInfo.Encoding
+	reader.SingleLine = fileInfo.SingleLine
 
 	var header []string
-	if !fileInfo.NoHeader {
+	if !fileInfo.NoHeader && !fileInfo.SingleLine {
 		header, err = reader.ReadHeader()
 		if err != nil && err != io.EOF {
 			return nil, err

@@ -168,11 +168,12 @@ type Flags struct {
 	CPU   int
 	Stats bool
 
-	// For CSV
 	// For Fixed-Length Format
 	DelimitAutomatically    bool
 	DelimiterPositions      []int
 	WriteDelimiterPositions []int
+	SingleLine              bool
+	WriteAsSingleLine       bool
 
 	// Fixed Value
 	RetryInterval time.Duration
@@ -231,6 +232,8 @@ func GetFlags() *Flags {
 			DelimitAutomatically:    false,
 			DelimiterPositions:      nil,
 			WriteDelimiterPositions: nil,
+			SingleLine:              false,
+			WriteAsSingleLine:       false,
 			RetryInterval:           10 * time.Millisecond,
 			Now:                     "",
 		}
@@ -321,7 +324,7 @@ func (f *Flags) SetDelimiter(s string) error {
 		return nil
 	}
 
-	delimiter, delimiterPositions, delimitAutomatically, err := ParseDelimiter(s, f.Delimiter, f.DelimiterPositions, f.DelimitAutomatically)
+	delimiter, delimiterPositions, delimitAutomatically, singleLine, err := ParseDelimiter(s, f.Delimiter, f.DelimiterPositions, f.DelimitAutomatically)
 	if err != nil {
 		return err
 	}
@@ -329,6 +332,7 @@ func (f *Flags) SetDelimiter(s string) error {
 	f.Delimiter = delimiter
 	f.DelimiterPositions = delimiterPositions
 	f.DelimitAutomatically = delimitAutomatically
+	f.SingleLine = singleLine
 	return nil
 }
 
@@ -413,13 +417,14 @@ func (f *Flags) SetWriteDelimiter(s string) error {
 		return nil
 	}
 
-	delimiter, delimiterPositions, _, err := ParseDelimiter(s, f.WriteDelimiter, f.WriteDelimiterPositions, false)
+	delimiter, delimiterPositions, _, singleLine, err := ParseDelimiter(s, f.WriteDelimiter, f.WriteDelimiterPositions, false)
 	if err != nil {
 		return errors.New("write-delimiter must be one character, \"SPACES\" or JSON array of integers")
 	}
 
 	f.WriteDelimiter = delimiter
 	f.WriteDelimiterPositions = delimiterPositions
+	f.WriteAsSingleLine = singleLine
 	return nil
 }
 

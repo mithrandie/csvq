@@ -98,6 +98,7 @@ func setup() {
 
 	copyfile(filepath.Join(TestDir, "fixed_length.txt"), filepath.Join(TestDataDir, "fixed_length.txt"))
 	copyfile(filepath.Join(TestDir, "fixed_length_bom.txt"), filepath.Join(TestDataDir, "fixed_length_bom.txt"))
+	copyfile(filepath.Join(TestDir, "fixed_length_sl.txt"), filepath.Join(TestDataDir, "fixed_length_sl.txt"))
 
 	copyfile(filepath.Join(TestDir, "autoselect"), filepath.Join(TestDataDir, "autoselect"))
 

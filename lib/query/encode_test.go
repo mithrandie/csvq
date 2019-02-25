@@ -21,6 +21,7 @@ var encodeViewTests = []struct {
 	WriteEncoding           text.Encoding
 	WriteDelimiter          rune
 	WriteDelimiterPositions []int
+	WriteAsSingleLine       bool
 	WithoutHeader           bool
 	EncloseAll              bool
 	JsonEscape              json.EscapeType
@@ -105,6 +106,22 @@ var encodeViewTests = []struct {
 		Result: "" +
 			"c1        c2                              c3      \n" +
 			"        -1                                 false  \n" +
+			"    2.01232016-02-01T16:00:00.123456-07:00abcdef  ",
+	},
+	{
+		Name: "Fixed-Length Format Single Line",
+		View: &View{
+			Header: NewHeader("test", []string{"c1", "c2", "c3"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(false)}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
+			},
+		},
+		Format:                  cmd.FIXED,
+		WriteDelimiterPositions: []int{10, 42, 50},
+		WriteAsSingleLine:       true,
+		Result: "" +
+			"        -1                                 false  " +
 			"    2.01232016-02-01T16:00:00.123456-07:00abcdef  ",
 	},
 	{
@@ -429,6 +446,7 @@ func TestEncodeView(t *testing.T) {
 			EncloseAll:         v.EncloseAll,
 			JsonEscape:         v.JsonEscape,
 			PrettyPrint:        v.PrettyPrint,
+			SingleLine:         v.WriteAsSingleLine,
 		}
 
 		buf.Reset()

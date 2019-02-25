@@ -265,6 +265,7 @@ func TestParseDelimiter(t *testing.T) {
 	var expectD rune
 	var expectP []int
 	var expectA bool
+	var expectSL bool
 
 	s = "\t"
 	delimiter = ','
@@ -274,11 +275,12 @@ func TestParseDelimiter(t *testing.T) {
 	expectD = '\t'
 	expectP = []int(nil)
 	expectA = false
-	d, p, a, err := ParseDelimiter(s, delimiter, delimiterPositions, delimitAutomatically)
+	expectSL = false
+	d, p, a, sl, err := ParseDelimiter(s, delimiter, delimiterPositions, delimitAutomatically)
 	if err != nil {
 		t.Errorf("unexpected error: %q", err.Error())
-	} else if expectD != d || !reflect.DeepEqual(expectP, p) || expectA != a {
-		t.Errorf("result = %q, %v, %t, expect to set  %q, %v, %t", d, p, a, expectD, expectP, expectA)
+	} else if expectD != d || !reflect.DeepEqual(expectP, p) || expectA != a || expectSL != sl {
+		t.Errorf("result = %q, %v, %t, %t, expect to set  %q, %v, %t, %t", d, p, a, sl, expectD, expectP, expectA, expectSL)
 	}
 
 	s = "spaces"
@@ -289,11 +291,12 @@ func TestParseDelimiter(t *testing.T) {
 	expectD = ','
 	expectP = []int(nil)
 	expectA = true
-	d, p, a, err = ParseDelimiter(s, delimiter, delimiterPositions, delimitAutomatically)
+	expectSL = false
+	d, p, a, sl, err = ParseDelimiter(s, delimiter, delimiterPositions, delimitAutomatically)
 	if err != nil {
 		t.Errorf("unexpected error: %q", err.Error())
-	} else if expectD != d || !reflect.DeepEqual(expectP, p) || expectA != a {
-		t.Errorf("result = %q, %v, %t, expect to set  %q, %v, %t", d, p, a, expectD, expectP, expectA)
+	} else if expectD != d || !reflect.DeepEqual(expectP, p) || expectA != a || expectSL != sl {
+		t.Errorf("result = %q, %v, %t, %t, expect to set  %q, %v, %t, %t", d, p, a, sl, expectD, expectP, expectA, expectSL)
 	}
 
 	s = "[1, 4, 6]"
@@ -304,11 +307,28 @@ func TestParseDelimiter(t *testing.T) {
 	expectD = ','
 	expectP = []int{1, 4, 6}
 	expectA = false
-	d, p, a, err = ParseDelimiter(s, delimiter, delimiterPositions, delimitAutomatically)
+	expectSL = false
+	d, p, a, sl, err = ParseDelimiter(s, delimiter, delimiterPositions, delimitAutomatically)
 	if err != nil {
 		t.Errorf("unexpected error: %q", err.Error())
 	} else if expectD != d || !reflect.DeepEqual(expectP, p) || expectA != a {
-		t.Errorf("result = %q, %v, %t, expect to set  %q, %v, %t", d, p, a, expectD, expectP, expectA)
+		t.Errorf("result = %q, %v, %t, %t, expect to set  %q, %v, %t, %t", d, p, a, sl, expectD, expectP, expectA, expectSL)
+	}
+
+	s = "S[1, 4, 6]"
+	delimiter = ','
+	delimiterPositions = nil
+	delimitAutomatically = false
+
+	expectD = ','
+	expectP = []int{1, 4, 6}
+	expectA = false
+	expectSL = true
+	d, p, a, sl, err = ParseDelimiter(s, delimiter, delimiterPositions, delimitAutomatically)
+	if err != nil {
+		t.Errorf("unexpected error: %q", err.Error())
+	} else if expectD != d || !reflect.DeepEqual(expectP, p) || expectA != a {
+		t.Errorf("result = %q, %v, %t, %t, expect to set  %q, %v, %t, %t", d, p, a, sl, expectD, expectP, expectA, expectSL)
 	}
 
 	s = ""
@@ -317,7 +337,7 @@ func TestParseDelimiter(t *testing.T) {
 	delimitAutomatically = false
 
 	expectErr := "delimiter must be one character, \"SPACES\" or JSON array of integers"
-	d, p, a, err = ParseDelimiter(s, delimiter, delimiterPositions, delimitAutomatically)
+	d, p, a, sl, err = ParseDelimiter(s, delimiter, delimiterPositions, delimitAutomatically)
 	if err == nil {
 		if err == nil {
 			t.Errorf("no error, want error %q for %s", expectErr, "error")
@@ -332,7 +352,7 @@ func TestParseDelimiter(t *testing.T) {
 	delimitAutomatically = false
 
 	expectErr = "delimiter must be one character, \"SPACES\" or JSON array of integers"
-	d, p, a, err = ParseDelimiter(s, delimiter, delimiterPositions, delimitAutomatically)
+	d, p, a, sl, err = ParseDelimiter(s, delimiter, delimiterPositions, delimitAutomatically)
 	if err == nil {
 		if err == nil {
 			t.Errorf("no error, want error %q for %s", expectErr, "error")

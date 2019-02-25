@@ -167,6 +167,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 				NoHeader:           flags.WithoutHeader,
 				EncloseAll:         flags.EncloseAll,
 				PrettyPrint:        flags.PrettyPrint,
+				SingleLine:         flags.WriteAsSingleLine,
 			}
 
 			var writer io.Writer
@@ -176,7 +177,7 @@ func (proc *Procedure) ExecuteStatement(stmt parser.Statement) (StatementFlow, e
 				writer = Stdout
 			}
 			err = EncodeView(writer, view, fileInfo)
-			if err == nil {
+			if err == nil && !(OutFile != nil && fileInfo.Format == cmd.FIXED && fileInfo.SingleLine) {
 				writer.Write([]byte(cmd.GetFlags().LineBreak.Value()))
 			} else if _, ok := err.(*EmptyResultSetError); ok {
 				err = nil

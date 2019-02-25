@@ -69,6 +69,8 @@ type FileInfo struct {
 	JsonEscape         json.EscapeType
 	PrettyPrint        bool
 
+	SingleLine bool
+
 	Handler *file.Handler
 
 	IsTemporary      bool
@@ -104,7 +106,7 @@ func NewFileInfo(
 }
 
 func (f *FileInfo) SetDelimiter(s string) error {
-	delimiter, dp, auto, err := cmd.ParseDelimiter(
+	delimiter, dp, auto, singleLine, err := cmd.ParseDelimiter(
 		s,
 		f.Delimiter,
 		f.DelimiterPositions,
@@ -133,6 +135,7 @@ func (f *FileInfo) SetDelimiter(s string) error {
 	f.Delimiter = delimiter
 	f.DelimiterPositions = delimiterPositions
 	f.Format = format
+	f.SingleLine = singleLine
 
 	return nil
 }

@@ -383,6 +383,9 @@ func showFlag(flag string) (string, error) {
 	case cmd.DelimiterFlag:
 		d := "'" + cmd.EscapeString(string(flags.Delimiter)) + "'"
 		p := fixedlen.DelimiterPositions(flags.DelimiterPositions).String()
+		if flags.SingleLine {
+			p = "S" + p
+		}
 
 		switch flags.SelectImportFormat() {
 		case cmd.CSV, cmd.TSV:
@@ -422,6 +425,10 @@ func showFlag(flag string) (string, error) {
 	case cmd.WriteDelimiterFlag:
 		d := "'" + cmd.EscapeString(string(flags.WriteDelimiter)) + "'"
 		p := fixedlen.DelimiterPositions(flags.WriteDelimiterPositions).String()
+		if flags.WriteAsSingleLine {
+			p = "S" + p
+		}
+
 		switch flags.Format {
 		case cmd.CSV:
 			s = palette.Render(cmd.StringEffect, d) + palette.Render(cmd.LableEffect, " | ") + palette.Render(cmd.NullEffect, p)
@@ -733,8 +740,13 @@ func writeTableAttribute(w *ObjectWriter, info *FileInfo) {
 		w.WriteColorWithoutLineBreak("Delimiter: ", cmd.LableEffect)
 		w.WriteColorWithoutLineBreak("'\\t'", cmd.NullEffect)
 	case cmd.FIXED:
+		dp := info.DelimiterPositions.String()
+		if info.SingleLine {
+			dp = "S" + dp
+		}
+
 		w.WriteColorWithoutLineBreak("Delimiter Positions: ", cmd.LableEffect)
-		w.WriteWithoutLineBreak(info.DelimiterPositions.String())
+		w.WriteWithoutLineBreak(dp)
 	case cmd.JSON:
 		escapeStr := cmd.JsonEscapeTypeToString(info.JsonEscape)
 		w.WriteColorWithoutLineBreak("Escape: ", cmd.LableEffect)
@@ -771,9 +783,11 @@ func writeTableAttribute(w *ObjectWriter, info *FileInfo) {
 		w.WriteWithoutLineBreak(info.Encoding.String())
 	}
 
-	w.WriteSpaces(7 - (cmd.TextWidth(info.Encoding.String())))
-	w.WriteColorWithoutLineBreak("LineBreak: ", cmd.LableEffect)
-	w.WriteWithoutLineBreak(info.LineBreak.String())
+	if !(info.Format == cmd.FIXED && info.SingleLine) {
+		w.WriteSpaces(7 - (cmd.TextWidth(info.Encoding.String())))
+		w.WriteColorWithoutLineBreak("LineBreak: ", cmd.LableEffect)
+		w.WriteWithoutLineBreak(info.LineBreak.String())
+	}
 
 	switch info.Format {
 	case cmd.JSON:
@@ -781,9 +795,11 @@ func writeTableAttribute(w *ObjectWriter, info *FileInfo) {
 		w.WriteColorWithoutLineBreak("Pretty Print: ", cmd.LableEffect)
 		w.WriteWithoutLineBreak(strconv.FormatBool(info.PrettyPrint))
 	case cmd.CSV, cmd.TSV, cmd.FIXED, cmd.GFM, cmd.ORG:
-		w.WriteSpaces(6 - (cmd.TextWidth(info.LineBreak.String())))
-		w.WriteColorWithoutLineBreak("Header: ", cmd.LableEffect)
-		w.WriteWithoutLineBreak(strconv.FormatBool(!info.NoHeader))
+		if !(info.Format == cmd.FIXED && info.SingleLine) {
+			w.WriteSpaces(6 - (cmd.TextWidth(info.LineBreak.String())))
+			w.WriteColorWithoutLineBreak("Header: ", cmd.LableEffect)
+			w.WriteWithoutLineBreak(strconv.FormatBool(!info.NoHeader))
+		}
 	}
 }
 

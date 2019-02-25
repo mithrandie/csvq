@@ -60,6 +60,7 @@ var delimiterCandidates = []string{
 	"','",
 	"'\\t'",
 	"'SPACES'",
+	"'S[]'",
 	"'[]'",
 }
 
