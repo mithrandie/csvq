@@ -5,6 +5,12 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.8.6
+
+Released on February 27, 2019
+
+- Modify ".txt" to be an extension that does not link to any file format. ([Github #5](https://github.com/mithrandie/csvq/issues/5))
+
 ## Version 1.8.5
 
 Released on February 25, 2019
@@ -31,7 +37,7 @@ Released on February 17, 2019
 Released on February 13, 2019
 
 - Fix the following bug.
-  - Panic occurs when an empty environment variable is passed. (Github Pull Request #4)
+  - Panic occurs when an empty environment variable is passed. ([Github #4](https://github.com/mithrandie/csvq/pull/4))
 
 ## Version 1.8.1
 
@@ -106,7 +112,7 @@ Released on November 25, 2018
 Released on November 24, 2018
 
 - Fix the following bug.
-  - Color output is on by default. (Github Issue #3)
+  - Color output is on by default. ([Github #3](https://github.com/mithrandie/csvq/issues/3))
 
 ## Version 1.6.2
 

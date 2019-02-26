@@ -284,8 +284,6 @@ func SearchFilePath(filename parser.Identifier, repository string, format cmd.Fo
 				format = cmd.CSV
 			case cmd.TsvExt:
 				format = cmd.TSV
-			case cmd.FixedExt:
-				format = cmd.FIXED
 			case cmd.JsonExt:
 				format = cmd.JSON
 			case cmd.LtsvExt:
@@ -300,7 +298,7 @@ func SearchFilePath(filename parser.Identifier, repository string, format cmd.Fo
 }
 
 func SearchCSVFilePath(filename parser.Identifier, repository string) (string, error) {
-	return SearchFilePathWithExtType(filename, repository, []string{cmd.CsvExt, cmd.TsvExt})
+	return SearchFilePathWithExtType(filename, repository, []string{cmd.CsvExt, cmd.TsvExt, cmd.TextExt})
 }
 
 func SearchJsonFilePath(filename parser.Identifier, repository string) (string, error) {
@@ -308,15 +306,15 @@ func SearchJsonFilePath(filename parser.Identifier, repository string) (string, 
 }
 
 func SearchFixedLengthFilePath(filename parser.Identifier, repository string) (string, error) {
-	return SearchFilePathWithExtType(filename, repository, []string{cmd.FixedExt})
+	return SearchFilePathWithExtType(filename, repository, []string{cmd.TextExt})
 }
 
 func SearchLTSVFilePath(filename parser.Identifier, repository string) (string, error) {
-	return SearchFilePathWithExtType(filename, repository, []string{cmd.LtsvExt})
+	return SearchFilePathWithExtType(filename, repository, []string{cmd.LtsvExt, cmd.TextExt})
 }
 
 func SearchFilePathFromAllTypes(filename parser.Identifier, repository string) (string, error) {
-	return SearchFilePathWithExtType(filename, repository, []string{cmd.CsvExt, cmd.TsvExt, cmd.JsonExt, cmd.FixedExt, cmd.LtsvExt})
+	return SearchFilePathWithExtType(filename, repository, []string{cmd.CsvExt, cmd.TsvExt, cmd.JsonExt, cmd.LtsvExt, cmd.TextExt})
 }
 
 func SearchFilePathWithExtType(filename parser.Identifier, repository string, extTypes []string) (string, error) {
@@ -373,8 +371,6 @@ func NewFileInfoForCreate(filename parser.Identifier, repository string, delimit
 	case cmd.TsvExt:
 		delimiter = '\t'
 		format = cmd.TSV
-	case cmd.FixedExt:
-		format = cmd.FIXED
 	case cmd.JsonExt:
 		encoding = text.UTF8
 		format = cmd.JSON
