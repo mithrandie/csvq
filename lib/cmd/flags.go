@@ -122,13 +122,13 @@ func JsonEscapeTypeToString(escapeType txjson.EscapeType) string {
 const (
 	CsvExt      = ".csv"
 	TsvExt      = ".tsv"
-	FixedExt    = ".txt"
 	JsonExt     = ".json"
 	LtsvExt     = ".ltsv"
 	GfmExt      = ".md"
 	OrgExt      = ".org"
 	SqlExt      = ".sql"
 	CsvqProcExt = ".cql"
+	TextExt     = ".txt"
 )
 
 type Flags struct {
@@ -374,8 +374,6 @@ func (f *Flags) SetFormat(s string, outfile string) error {
 			fm = CSV
 		case TsvExt:
 			fm = TSV
-		case FixedExt:
-			fm = FIXED
 		case JsonExt:
 			fm = JSON
 		case LtsvExt:

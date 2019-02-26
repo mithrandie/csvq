@@ -254,18 +254,6 @@ var fileInfoForCreateTests = []struct {
 		},
 	},
 	{
-		Name:      "FIXED",
-		FilePath:  parser.Identifier{Literal: "table1.txt"},
-		Delimiter: ',',
-		Encoding:  text.UTF8,
-		Result: &FileInfo{
-			Path:      "table1.txt",
-			Delimiter: ',',
-			Format:    cmd.FIXED,
-			Encoding:  text.UTF8,
-		},
-	},
-	{
 		Name:      "JSON",
 		FilePath:  parser.Identifier{Literal: "table1.json"},
 		Delimiter: ',',

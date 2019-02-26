@@ -282,11 +282,6 @@ func TestFlags_SetFormat(t *testing.T) {
 		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, TSV, "foo.tsv")
 	}
 
-	flags.SetFormat("", "foo.txt")
-	if flags.Format != FIXED {
-		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, FIXED, "foo.txt")
-	}
-
 	flags.SetFormat("", "foo.json")
 	if flags.Format != JSON {
 		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, JSON, "foo.json")

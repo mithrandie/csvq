@@ -1660,7 +1660,7 @@ func (c *Completer) SearchAllTablesWithSpace(line string, origLine string, index
 
 func (c *Completer) SearchAllTables(line string, origLine string, index int) readline.CandidateList {
 	tableKeys := ViewCache.SortedKeys()
-	files := c.ListFiles(line, []string{cmd.CsvExt, cmd.TsvExt, cmd.FixedExt, cmd.JsonExt, cmd.LtsvExt}, cmd.GetFlags().Repository)
+	files := c.ListFiles(line, []string{cmd.CsvExt, cmd.TsvExt, cmd.JsonExt, cmd.LtsvExt, cmd.TextExt}, cmd.GetFlags().Repository)
 
 	defaultDir := cmd.GetFlags().Repository
 	if len(defaultDir) < 1 {
