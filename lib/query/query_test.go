@@ -197,7 +197,7 @@ func TestFetchCursor(t *testing.T) {
 			t.Errorf("%s: success = %t, want %t", v.Name, success, v.Success)
 		}
 		if !filter.Variables[0].Equal(&v.ResultVars) {
-			t.Errorf("%s: global vars = %q, want %q", v.Name, filter.Variables[0], v.ResultVars)
+			t.Errorf("%s: global vars = %v, want %v", v.Name, filter.Variables[0], v.ResultVars)
 		}
 	}
 }
