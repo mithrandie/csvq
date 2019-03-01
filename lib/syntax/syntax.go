@@ -371,7 +371,7 @@ var CsvqSyntax = []Expression{
 			{
 				Name: "table_attribute",
 				Group: []Grammar{
-					{AnyOne{Keyword("FORMAT"), Keyword("DELIMITER"), Keyword("ENCODING"), Keyword("LINE_BREAK"), Keyword("HEADER"), Keyword("ENCLOSE_ALL"), Keyword("PRETTY_PRINT")}},
+					{AnyOne{Keyword("FORMAT"), Keyword("DELIMITER"), Keyword("DELIMITER_POSITIONS"), Keyword("JSON_ESCAPE"), Keyword("ENCODING"), Keyword("LINE_BREAK"), Keyword("HEADER"), Keyword("ENCLOSE_ALL"), Keyword("PRETTY_PRINT")}},
 				},
 			},
 		},
@@ -920,7 +920,11 @@ var CsvqSyntax = []Expression{
 				"%s  <type::%s>\n" +
 				"  > Limit of the waiting time in seconds to wait for locked files to be released.\n" +
 				"%s  <type::%s>\n" +
-				"  > Field delimiter for CSV, or delimiter positions for Fixed-Length Format.\n" +
+				"  > Default format to load files.\n" +
+				"%s  <type::%s>\n" +
+				"  > Field delimiter for CSV.\n" +
+				"%s  <type::%s>\n" +
+				"  > Delimiter positions for Fixed-Length Format.\n" +
 				"%s  <type::%s>\n" +
 				"  > Query for JSON data.\n" +
 				"%s  <type::%s>\n" +
@@ -934,7 +938,9 @@ var CsvqSyntax = []Expression{
 				"%s  <type::%s>\n" +
 				"  > Character %s of query results.\n" +
 				"%s  <type::%s>\n" +
-				"  > Field delimiter or delimiter positions in query results.\n" +
+				"  > Field delimiter for query results in CSV.\n" +
+				"%s  <type::%s>\n" +
+				"  > Delimiter positions for query results in Fixed-Length Format.\n" +
 				"%s  <type::%s>\n" +
 				"  > Write without the header line in query results.\n" +
 				"%s  <type::%s>\n" +
@@ -965,7 +971,9 @@ var CsvqSyntax = []Expression{
 				Flag("@@TIMEZONE"), String("string"), Link("Timezone"),
 				Flag("@@DATETIME_FORMAT"), String("string"),
 				Flag("@@WAIT_TIMEOUT"), Float("float"),
+				Flag("@@IMPORT_FORMAT"), String("string"),
 				Flag("@@DELIMITER"), String("string"),
+				Flag("@@DELIMITER_POSITIONS"), String("string"),
 				Flag("@@JSON_QUERY"), String("string"),
 				Flag("@@ENCODING"), String("string"), Link("Encoding"),
 				Flag("@@NO_HEADER"), Boolean("boolean"),
@@ -973,6 +981,7 @@ var CsvqSyntax = []Expression{
 				Flag("@@FORMAT"), String("string"), Link("Format"),
 				Flag("@@WRITE_ENCODING"), String("string"), Link("Encoding"),
 				Flag("@@WRITE_DELIMITER"), String("string"),
+				Flag("@@WRITE_DELIMITER_POSITIONS"), String("string"),
 				Flag("@@WITHOUT_HEADER"), Boolean("boolean"),
 				Flag("@@LINE_BREAK"), String("string"), Link("Line Break"),
 				Flag("@@ENCLOSE_ALL"), Boolean("boolean"),
@@ -2898,7 +2907,7 @@ var CsvqSyntax = []Expression{
 						"| JSON  | JSON Format                              |\n" +
 						"| LTSV  | Labeled Tab-separated Values             |\n" +
 						"| GFM   | Text Table for GitHub Flavored Markdown  |\n" +
-						"| ORG   | Text Table for Emacs Org-Mode            |\n" +
+						"| ORG   | Text Table for Emacs Org-mode            |\n" +
 						"| TEXT  | Text Table for console                   |\n" +
 						"+-------+------------------------------------------+\n" +
 						"```",

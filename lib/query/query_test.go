@@ -3383,21 +3383,6 @@ var setTableAttributeTests = []struct {
 	Error  string
 }{
 	{
-		Name: "Set Delimiter to CSV",
-		Query: parser.SetTableAttribute{
-			Table:     parser.Identifier{Literal: "table1.csv"},
-			Attribute: parser.Identifier{Literal: "delimiter"},
-			Value:     parser.NewStringValue(";"),
-		},
-		Expect: &FileInfo{
-			Path:      GetTestFilePath("table1.csv"),
-			Delimiter: ';',
-			Format:    cmd.CSV,
-			Encoding:  text.UTF8,
-			LineBreak: text.LF,
-		},
-	},
-	{
 		Name: "Set Delimiter to TSV",
 		Query: parser.SetTableAttribute{
 			Table:     parser.Identifier{Literal: "table1.csv"},
@@ -3413,16 +3398,16 @@ var setTableAttributeTests = []struct {
 		},
 	},
 	{
-		Name: "Set Delimiter to FIXED",
+		Name: "Set Delimiter to CSV",
 		Query: parser.SetTableAttribute{
 			Table:     parser.Identifier{Literal: "table1.csv"},
 			Attribute: parser.Identifier{Literal: "delimiter"},
-			Value:     parser.NewStringValue("SPACES"),
+			Value:     parser.NewStringValue(";"),
 		},
 		Expect: &FileInfo{
 			Path:      GetTestFilePath("table1.csv"),
-			Delimiter: ',',
-			Format:    cmd.FIXED,
+			Delimiter: ';',
+			Format:    cmd.CSV,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
 		},
@@ -3434,7 +3419,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "delimiter"},
 			Value:     parser.NewStringValue("aa"),
 		},
-		Error: "[L:- C:-] delimiter must be one character, \"SPACES\" or JSON array of integers",
+		Error: "[L:- C:-] delimiter must be one character",
 	},
 	{
 		Name: "Set Delimiter Not Allowed Value",
@@ -3444,6 +3429,32 @@ var setTableAttributeTests = []struct {
 			Value:     parser.NewNullValueFromString("null"),
 		},
 		Error: "[L:- C:-] null for delimiter is not allowed",
+	},
+	{
+		Name: "Set DelimiterPositions",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "delimiter_positions"},
+			Value:     parser.NewStringValue("S[2, 5, 10]"),
+		},
+		Expect: &FileInfo{
+			Path:               GetTestFilePath("table1.csv"),
+			Delimiter:          ',',
+			DelimiterPositions: []int{2, 5, 10},
+			Format:             cmd.FIXED,
+			Encoding:           text.UTF8,
+			SingleLine:         true,
+			LineBreak:          text.LF,
+		},
+	},
+	{
+		Name: "Set DelimiterPositions Error",
+		Query: parser.SetTableAttribute{
+			Table:     parser.Identifier{Literal: "table1.csv"},
+			Attribute: parser.Identifier{Literal: "delimiter_positions"},
+			Value:     parser.NewStringValue("invalid"),
+		},
+		Error: "[L:- C:-] delimiter positions must be \"SPACES\" or a JSON array of integers",
 	},
 	{
 		Name: "Set Format to Text",

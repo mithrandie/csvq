@@ -18,18 +18,20 @@ import (
 )
 
 var viewLoadTests = []struct {
-	Name                 string
-	Encoding             text.Encoding
-	NoHeader             bool
-	From                 parser.FromClause
-	UseInternalId        bool
-	Stdin                string
-	JsonQuery            string
-	DelimiterPositions   []int
-	DelimitAutomatically bool
-	Filter               *Filter
-	Result               *View
-	Error                string
+	Name               string
+	Encoding           text.Encoding
+	NoHeader           bool
+	From               parser.FromClause
+	UseInternalId      bool
+	Stdin              string
+	ImportFormat       cmd.Format
+	Delimiter          rune
+	DelimiterPositions []int
+	SingleLine         bool
+	JsonQuery          string
+	Filter             *Filter
+	Result             *View
+	Error              string
 }{
 	{
 		Name: "Dual View",
@@ -296,8 +298,9 @@ var viewLoadTests = []struct {
 				parser.Table{Object: parser.Stdin{Stdin: "stdin"}, Alias: parser.Identifier{Literal: "t"}},
 			},
 		},
-		Stdin:     "{\"key\":[{\"column1\": 1, \"column2\": \"str1\"}]}",
-		JsonQuery: "key{}",
+		Stdin:        "{\"key\":[{\"column1\": 1, \"column2\": \"str1\"}]}",
+		ImportFormat: cmd.JSON,
+		JsonQuery:    "key{}",
 		Result: &View{
 			Header: NewHeader("t", []string{"column1", "column2"}),
 			RecordSet: []Record{
@@ -339,8 +342,9 @@ var viewLoadTests = []struct {
 				parser.Table{Object: parser.Stdin{Stdin: "stdin"}, Alias: parser.Identifier{Literal: "t"}},
 			},
 		},
-		Stdin:     "[{\"item1\": \"value\\u00221\",\"item2\": 1},{\"item1\": \"value2\",\"item2\": 2}]",
-		JsonQuery: "{}",
+		Stdin:        "[{\"item1\": \"value\\u00221\",\"item2\": 1},{\"item1\": \"value2\",\"item2\": 2}]",
+		ImportFormat: cmd.JSON,
+		JsonQuery:    "{}",
 		Result: &View{
 			Header: NewHeader("t", []string{"item1", "item2"}),
 			RecordSet: []Record{
@@ -387,8 +391,9 @@ var viewLoadTests = []struct {
 				parser.Table{Object: parser.Stdin{Stdin: "stdin"}, Alias: parser.Identifier{Literal: "t"}},
 			},
 		},
-		Stdin:     "[{\"item1\": \"\\u0076\\u0061\\u006c\\u0075\\u0065\\u0031\",\"item2\": 1},{\"item1\": \"\\u0076\\u0061\\u006c\\u0075\\u0065\\u0032\",\"item2\": 2}]",
-		JsonQuery: "{}",
+		Stdin:        "[{\"item1\": \"\\u0076\\u0061\\u006c\\u0075\\u0065\\u0031\",\"item2\": 1},{\"item1\": \"\\u0076\\u0061\\u006c\\u0075\\u0065\\u0032\",\"item2\": 2}]",
+		ImportFormat: cmd.JSON,
+		JsonQuery:    "{}",
 		Result: &View{
 			Header: NewHeader("t", []string{"item1", "item2"}),
 			RecordSet: []Record{
@@ -435,13 +440,14 @@ var viewLoadTests = []struct {
 				parser.Table{Object: parser.Stdin{Stdin: "stdin"}, Alias: parser.Identifier{Literal: "t"}},
 			},
 		},
-		Stdin:     "{\"key\":[{\"column1\": 1, \"column2\": \"str1\"}]}",
-		JsonQuery: "key{",
-		Error:     "[L:- C:-] json query error: column 4: unexpected termination",
+		Stdin:        "{\"key\":[{\"column1\": 1, \"column2\": \"str1\"}]}",
+		ImportFormat: cmd.JSON,
+		JsonQuery:    "key{",
+		Error:        "[L:- C:-] json query error: column 4: unexpected termination",
 	},
 	{
-		Name:                 "Load Fixed-Length Text File",
-		DelimitAutomatically: true,
+		Name:         "Load Fixed-Length Text File",
+		ImportFormat: cmd.FIXED,
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -488,9 +494,9 @@ var viewLoadTests = []struct {
 		},
 	},
 	{
-		Name:                 "Load Fixed-Length Text File NoHeader",
-		DelimitAutomatically: true,
-		NoHeader:             true,
+		Name:         "Load Fixed-Length Text File NoHeader",
+		NoHeader:     true,
+		ImportFormat: cmd.FIXED,
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -541,9 +547,9 @@ var viewLoadTests = []struct {
 		},
 	},
 	{
-		Name:                 "Load Fixed-Length Text File Position Error",
-		DelimitAutomatically: false,
-		DelimiterPositions:   []int{6, 2},
+		Name:               "Load Fixed-Length Text File Position Error",
+		ImportFormat:       cmd.FIXED,
+		DelimiterPositions: []int{6, 2},
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -2532,9 +2538,13 @@ func TestView_Load(t *testing.T) {
 	for _, v := range viewLoadTests {
 		ViewCache.Clean()
 
+		tf.ImportFormat = v.ImportFormat
 		tf.Delimiter = ','
+		if v.Delimiter != 0 {
+			tf.Delimiter = v.Delimiter
+		}
 		tf.DelimiterPositions = v.DelimiterPositions
-		tf.DelimitAutomatically = v.DelimitAutomatically
+		tf.SingleLine = v.SingleLine
 		tf.JsonQuery = v.JsonQuery
 		tf.NoHeader = v.NoHeader
 		if v.Encoding != "" {

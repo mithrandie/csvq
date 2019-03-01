@@ -12,39 +12,6 @@ import (
 	"github.com/mithrandie/csvq/lib/file"
 )
 
-func TestFlags_SelectImportFormat(t *testing.T) {
-	flags := GetFlags()
-
-	flags.SetJsonQuery("{}")
-	format := flags.SelectImportFormat()
-	expect := JSON
-	if format != expect {
-		t.Errorf("import-format = %q, want %q", format.String(), expect.String())
-	}
-
-	flags.SetJsonQuery("")
-	flags.SetDelimiter("SPACES")
-	format = flags.SelectImportFormat()
-	expect = FIXED
-	if format != expect {
-		t.Errorf("import-format = %q, want %q", format.String(), expect.String())
-	}
-
-	flags.SetDelimiter("\\t")
-	format = flags.SelectImportFormat()
-	expect = TSV
-	if format != expect {
-		t.Errorf("import-format = %q, want %q", format.String(), expect.String())
-	}
-
-	flags.SetDelimiter(",")
-	format = flags.SelectImportFormat()
-	expect = CSV
-	if format != expect {
-		t.Errorf("import-format = %q, want %q", format.String(), expect.String())
-	}
-}
-
 func TestFlags_SetRepository(t *testing.T) {
 	flags := GetFlags()
 
@@ -160,6 +127,35 @@ func TestFlags_SetWaitTimeout(t *testing.T) {
 	}
 }
 
+func TestFlags_SetImportFormat(t *testing.T) {
+	flags := GetFlags()
+
+	flags.SetImportFormat("")
+	if flags.ImportFormat != CSV {
+		t.Errorf("importFormat = %s, expect to set %s for empty string", flags.ImportFormat, CSV)
+	}
+
+	flags.SetImportFormat("json")
+	if flags.ImportFormat != JSON {
+		t.Errorf("importFormat = %s, expect to set %s for empty string", flags.ImportFormat, JSON)
+	}
+
+	expectErr := "import format must be one of CSV|TSV|FIXED|JSON|LTSV"
+	err := flags.SetImportFormat("error")
+	if err == nil {
+		t.Errorf("no error, want error %q for %s", expectErr, "error")
+	} else if err.Error() != expectErr {
+		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "error")
+	}
+
+	err = flags.SetImportFormat("text")
+	if err == nil {
+		t.Errorf("no error, want error %q for %s", expectErr, "error")
+	} else if err.Error() != expectErr {
+		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "error")
+	}
+}
+
 func TestFlags_SetDelimiter(t *testing.T) {
 	flags := GetFlags()
 
@@ -173,37 +169,7 @@ func TestFlags_SetDelimiter(t *testing.T) {
 		t.Errorf("delimiter = %q, expect to set %q for %q", flags.Delimiter, "\t", "\t")
 	}
 
-	flags.SetDelimiter("s[1, 2, 3]")
-	if flags.DelimitAutomatically != false {
-		t.Errorf("delimitAutomatically = %t, expect to set %t for %q", flags.DelimitAutomatically, false, "[1, 2, 3]")
-	}
-	if flags.SingleLine != true {
-		t.Errorf("singleLine = %t, expect to set %t for %q", flags.SingleLine, true, "s[1, 2, 3]")
-	}
-	if !reflect.DeepEqual(flags.DelimiterPositions, []int{1, 2, 3}) {
-		t.Errorf("delimitPositions = %v, expect to set %v for %q", flags.DelimiterPositions, []int{1, 2, 3}, "[1, 2, 3]")
-	}
-
-	flags.SetDelimiter("[1, 2, 3]")
-	if flags.DelimitAutomatically != false {
-		t.Errorf("delimitAutomatically = %t, expect to set %t for %q", flags.DelimitAutomatically, false, "[1, 2, 3]")
-	}
-	if !reflect.DeepEqual(flags.DelimiterPositions, []int{1, 2, 3}) {
-		t.Errorf("delimitPositions = %v, expect to set %v for %q", flags.DelimiterPositions, []int{1, 2, 3}, "[1, 2, 3]")
-	}
-	if flags.SingleLine != false {
-		t.Errorf("singleLine = %t, expect to set %t for %q", flags.SingleLine, false, "s[1, 2, 3]")
-	}
-
-	flags.SetDelimiter("spaces")
-	if flags.DelimitAutomatically != true {
-		t.Errorf("delimitAutomatically = %t, expect to set %t for %q", flags.DelimitAutomatically, true, "spaces")
-	}
-	if flags.DelimiterPositions != nil {
-		t.Errorf("delimitPositions = %v, expect to set %v for %q", flags.DelimiterPositions, nil, "spaces")
-	}
-
-	expectErr := "delimiter must be one character, \"SPACES\" or JSON array of integers"
+	expectErr := "delimiter must be one character"
 	err := flags.SetDelimiter("[a]")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "//")
@@ -211,8 +177,56 @@ func TestFlags_SetDelimiter(t *testing.T) {
 		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "//")
 	}
 
-	expectErr = "delimiter must be one character, \"SPACES\" or JSON array of integers"
+	expectErr = "delimiter must be one character"
 	err = flags.SetDelimiter("//")
+	if err == nil {
+		t.Errorf("no error, want error %q for %s", expectErr, "//")
+	} else if err.Error() != expectErr {
+		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "//")
+	}
+}
+
+func TestFlags_SetDelimiterPositions(t *testing.T) {
+	flags := GetFlags()
+
+	flags.SetDelimiterPositions("")
+	if flags.DelimiterPositions != nil {
+		t.Errorf("delimiter-positions = %v, expect to set %v for %q", flags.DelimiterPositions, nil, "")
+	}
+
+	flags.SetDelimiterPositions("s[1, 2, 3]")
+	if flags.SingleLine != true {
+		t.Errorf("singleLine = %t, expect to set %t for %q", flags.SingleLine, true, "s[1, 2, 3]")
+	}
+	if !reflect.DeepEqual(flags.DelimiterPositions, []int{1, 2, 3}) {
+		t.Errorf("delimitPositions = %v, expect to set %v for %q", flags.DelimiterPositions, []int{1, 2, 3}, "[1, 2, 3]")
+	}
+
+	flags.SetDelimiterPositions("[1, 2, 3]")
+	if flags.SingleLine != false {
+		t.Errorf("singleLine = %t, expect to set %t for %q", flags.SingleLine, false, "[1, 2, 3]")
+	}
+	if !reflect.DeepEqual(flags.DelimiterPositions, []int{1, 2, 3}) {
+		t.Errorf("delimitPositions = %v, expect to set %v for %q", flags.DelimiterPositions, []int{1, 2, 3}, "[1, 2, 3]")
+	}
+
+	flags.SetDelimiterPositions("spaces")
+	if flags.SingleLine != false {
+		t.Errorf("singleLine = %t, expect to set %t for %q", flags.SingleLine, false, "spaces")
+	}
+	if flags.DelimiterPositions != nil {
+		t.Errorf("delimitPositions = %v, expect to set %v for %q", flags.DelimiterPositions, nil, "spaces")
+	}
+
+	expectErr := "delimiter positions must be \"SPACES\" or a JSON array of integers"
+	err := flags.SetDelimiterPositions("[a]")
+	if err == nil {
+		t.Errorf("no error, want error %q for %s", expectErr, "//")
+	} else if err.Error() != expectErr {
+		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "//")
+	}
+
+	err = flags.SetDelimiterPositions("//")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "//")
 	} else if err.Error() != expectErr {
@@ -397,13 +411,36 @@ func TestFlags_SetWriteDelimiter(t *testing.T) {
 		t.Errorf("write-delimiter = %q, expect to set %q for %q", flags.WriteDelimiter, "\t", "\t")
 	}
 
-	flags.SetWriteDelimiter("[1, 2, 3]")
+	expectErr := "write-delimiter must be one character"
+	err := flags.SetWriteDelimiter("//")
+	if err == nil {
+		t.Errorf("no error, want error %q for %s", expectErr, "//")
+	} else if err.Error() != expectErr {
+		t.Errorf("error = %q, want error %q for %s", err.Error(), expectErr, "//")
+	}
+}
+
+func TestFlags_SetWriteDelimiterPositions(t *testing.T) {
+	flags := GetFlags()
+
+	flags.SetWriteDelimiterPositions("s[1, 2, 3]")
+	if flags.WriteAsSingleLine != true {
+		t.Errorf("WriteAsSingleLine = %t, expect to set %t for %q", flags.WriteAsSingleLine, true, "s[1, 2, 3]")
+	}
 	if !reflect.DeepEqual(flags.WriteDelimiterPositions, []int{1, 2, 3}) {
-		t.Errorf("writeDelimitPositions = %v, expect to set %v for %q", flags.WriteDelimiterPositions, []int{1, 2, 3}, "[1, 2, 3]")
+		t.Errorf("WriteDelimiterPositions = %v, expect to set %v for %q", flags.WriteDelimiterPositions, []int{1, 2, 3}, "s[1, 2, 3]")
 	}
 
-	expectErr := "write-delimiter must be one character, \"SPACES\" or JSON array of integers"
-	err := flags.SetWriteDelimiter("//")
+	flags.SetWriteDelimiterPositions("[1, 2, 3]")
+	if flags.WriteAsSingleLine != false {
+		t.Errorf("WriteAsSingleLine = %t, expect to set %t for %q", flags.WriteAsSingleLine, false, "[1, 2, 3]")
+	}
+	if !reflect.DeepEqual(flags.WriteDelimiterPositions, []int{1, 2, 3}) {
+		t.Errorf("WriteDelimiterPositions = %v, expect to set %v for %q", flags.WriteDelimiterPositions, []int{1, 2, 3}, "[1, 2, 3]")
+	}
+
+	expectErr := "write-delimiter-positions must be \"SPACES\" or a JSON array of integers"
+	err := flags.SetWriteDelimiterPositions("//")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "//")
 	} else if err.Error() != expectErr {

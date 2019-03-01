@@ -27,30 +27,33 @@ const (
 const DelimiteAutomatically = "SPACES"
 
 const (
-	RepositoryFlag           = "REPOSITORY"
-	TimezoneFlag             = "TIMEZONE"
-	DatetimeFormatFlag       = "DATETIME_FORMAT"
-	WaitTimeoutFlag          = "WAIT_TIMEOUT"
-	DelimiterFlag            = "DELIMITER"
-	JsonQueryFlag            = "JSON_QUERY"
-	EncodingFlag             = "ENCODING"
-	NoHeaderFlag             = "NO_HEADER"
-	WithoutNullFlag          = "WITHOUT_NULL"
-	FormatFlag               = "FORMAT"
-	WriteEncodingFlag        = "WRITE_ENCODING"
-	WriteDelimiterFlag       = "WRITE_DELIMITER"
-	WithoutHeaderFlag        = "WITHOUT_HEADER"
-	LineBreakFlag            = "LINE_BREAK"
-	EncloseAll               = "ENCLOSE_ALL"
-	JsonEscape               = "JSON_ESCAPE"
-	PrettyPrintFlag          = "PRETTY_PRINT"
-	EastAsianEncodingFlag    = "EAST_ASIAN_ENCODING"
-	CountDiacriticalSignFlag = "COUNT_DIACRITICAL_SIGN"
-	CountFormatCodeFlag      = "COUNT_FORMAT_CODE"
-	ColorFlag                = "COLOR"
-	QuietFlag                = "QUIET"
-	CPUFlag                  = "CPU"
-	StatsFlag                = "STATS"
+	RepositoryFlag              = "REPOSITORY"
+	TimezoneFlag                = "TIMEZONE"
+	DatetimeFormatFlag          = "DATETIME_FORMAT"
+	WaitTimeoutFlag             = "WAIT_TIMEOUT"
+	ImportFormatFlag            = "IMPORT_FORMAT"
+	DelimiterFlag               = "DELIMITER"
+	DelimiterPositionsFlag      = "DELIMITER_POSITIONS"
+	JsonQueryFlag               = "JSON_QUERY"
+	EncodingFlag                = "ENCODING"
+	NoHeaderFlag                = "NO_HEADER"
+	WithoutNullFlag             = "WITHOUT_NULL"
+	FormatFlag                  = "FORMAT"
+	WriteEncodingFlag           = "WRITE_ENCODING"
+	WriteDelimiterFlag          = "WRITE_DELIMITER"
+	WriteDelimiterPositionsFlag = "WRITE_DELIMITER_POSITIONS"
+	WithoutHeaderFlag           = "WITHOUT_HEADER"
+	LineBreakFlag               = "LINE_BREAK"
+	EncloseAll                  = "ENCLOSE_ALL"
+	JsonEscape                  = "JSON_ESCAPE"
+	PrettyPrintFlag             = "PRETTY_PRINT"
+	EastAsianEncodingFlag       = "EAST_ASIAN_ENCODING"
+	CountDiacriticalSignFlag    = "COUNT_DIACRITICAL_SIGN"
+	CountFormatCodeFlag         = "COUNT_FORMAT_CODE"
+	ColorFlag                   = "COLOR"
+	QuietFlag                   = "QUIET"
+	CPUFlag                     = "CPU"
+	StatsFlag                   = "STATS"
 )
 
 var FlagList = []string{
@@ -58,7 +61,9 @@ var FlagList = []string{
 	TimezoneFlag,
 	DatetimeFormatFlag,
 	WaitTimeoutFlag,
+	ImportFormatFlag,
 	DelimiterFlag,
+	DelimiterPositionsFlag,
 	JsonQueryFlag,
 	EncodingFlag,
 	NoHeaderFlag,
@@ -66,6 +71,7 @@ var FlagList = []string{
 	FormatFlag,
 	WriteEncodingFlag,
 	WriteDelimiterFlag,
+	WriteDelimiterPositionsFlag,
 	WithoutHeaderFlag,
 	LineBreakFlag,
 	EncloseAll,
@@ -109,6 +115,14 @@ func (f Format) String() string {
 	return FormatLiteral[f]
 }
 
+var ImportFormats = []Format{
+	CSV,
+	TSV,
+	FIXED,
+	JSON,
+	LTSV,
+}
+
 var JsonEscapeTypeLiteral = map[txjson.EscapeType]string{
 	txjson.Backslash:        "BACKSLASH",
 	txjson.HexDigits:        "HEX",
@@ -139,21 +153,26 @@ type Flags struct {
 	WaitTimeout    float64
 
 	// For Import
-	Delimiter   rune
-	JsonQuery   string
-	Encoding    text.Encoding
-	NoHeader    bool
-	WithoutNull bool
+	ImportFormat       Format
+	Delimiter          rune
+	DelimiterPositions []int
+	SingleLine         bool
+	JsonQuery          string
+	Encoding           text.Encoding
+	NoHeader           bool
+	WithoutNull        bool
 
 	// For Export
-	Format         Format
-	WriteEncoding  text.Encoding
-	WriteDelimiter rune
-	WithoutHeader  bool
-	LineBreak      text.LineBreak
-	EncloseAll     bool
-	JsonEscape     txjson.EscapeType
-	PrettyPrint    bool
+	Format                  Format
+	WriteEncoding           text.Encoding
+	WriteDelimiter          rune
+	WriteDelimiterPositions []int
+	WriteAsSingleLine       bool
+	WithoutHeader           bool
+	LineBreak               text.LineBreak
+	EncloseAll              bool
+	JsonEscape              txjson.EscapeType
+	PrettyPrint             bool
 
 	// For Calculation of String Width
 	EastAsianEncoding    bool
@@ -167,13 +186,6 @@ type Flags struct {
 	Quiet bool
 	CPU   int
 	Stats bool
-
-	// For Fixed-Length Format
-	DelimitAutomatically    bool
-	DelimiterPositions      []int
-	WriteDelimiterPositions []int
-	SingleLine              bool
-	WriteAsSingleLine       bool
 
 	// Fixed Value
 	RetryInterval time.Duration
@@ -209,7 +221,10 @@ func GetFlags() *Flags {
 			Location:                "Local",
 			DatetimeFormat:          datetimeFormat,
 			WaitTimeout:             10,
+			ImportFormat:            CSV,
 			Delimiter:               ',',
+			DelimiterPositions:      nil,
+			SingleLine:              false,
 			JsonQuery:               "",
 			Encoding:                text.UTF8,
 			NoHeader:                false,
@@ -217,6 +232,8 @@ func GetFlags() *Flags {
 			Format:                  TEXT,
 			WriteEncoding:           text.UTF8,
 			WriteDelimiter:          ',',
+			WriteDelimiterPositions: nil,
+			WriteAsSingleLine:       false,
 			WithoutHeader:           false,
 			LineBreak:               text.LF,
 			EncloseAll:              false,
@@ -229,29 +246,11 @@ func GetFlags() *Flags {
 			Quiet:                   false,
 			CPU:                     GetDefaultNumberOfCPU(),
 			Stats:                   false,
-			DelimitAutomatically:    false,
-			DelimiterPositions:      nil,
-			WriteDelimiterPositions: nil,
-			SingleLine:              false,
-			WriteAsSingleLine:       false,
 			RetryInterval:           10 * time.Millisecond,
 			Now:                     "",
 		}
 	})
 	return flags
-}
-
-func (f *Flags) SelectImportFormat() Format {
-	if 0 < len(f.JsonQuery) {
-		return JSON
-	}
-	if f.DelimitAutomatically || f.DelimiterPositions != nil {
-		return FIXED
-	}
-	if f.Delimiter == '\t' {
-		return TSV
-	}
-	return CSV
 }
 
 func (f *Flags) SetRepository(s string) error {
@@ -319,19 +318,47 @@ func (f *Flags) SetWaitTimeout(t float64) {
 	return
 }
 
+func (f *Flags) SetImportFormat(s string) error {
+	fm, _, err := ParseFormat(s, f.JsonEscape)
+	if err != nil {
+		return errors.New("import format must be one of CSV|TSV|FIXED|JSON|LTSV")
+	}
+
+	switch fm {
+	case CSV, TSV, FIXED, JSON, LTSV:
+		f.ImportFormat = fm
+		return nil
+	}
+
+	return errors.New("import format must be one of CSV|TSV|FIXED|JSON|LTSV")
+}
+
 func (f *Flags) SetDelimiter(s string) error {
 	if len(s) < 1 {
 		return nil
 	}
 
-	delimiter, delimiterPositions, delimitAutomatically, singleLine, err := ParseDelimiter(s, f.Delimiter, f.DelimiterPositions, f.DelimitAutomatically)
+	delimiter, err := ParseDelimiter(s)
 	if err != nil {
 		return err
 	}
 
 	f.Delimiter = delimiter
+	return nil
+}
+
+func (f *Flags) SetDelimiterPositions(s string) error {
+	if len(s) < 1 {
+		return nil
+	}
+	s = UnescapeString(s)
+
+	delimiterPositions, singleLine, err := ParseDelimiterPositions(s)
+	if err != nil {
+		return err
+	}
+
 	f.DelimiterPositions = delimiterPositions
-	f.DelimitAutomatically = delimitAutomatically
 	f.SingleLine = singleLine
 	return nil
 }
@@ -415,12 +442,26 @@ func (f *Flags) SetWriteDelimiter(s string) error {
 		return nil
 	}
 
-	delimiter, delimiterPositions, _, singleLine, err := ParseDelimiter(s, f.WriteDelimiter, f.WriteDelimiterPositions, false)
+	delimiter, err := ParseDelimiter(s)
 	if err != nil {
-		return errors.New("write-delimiter must be one character, \"SPACES\" or JSON array of integers")
+		return errors.New("write-delimiter must be one character")
 	}
 
 	f.WriteDelimiter = delimiter
+	return nil
+}
+
+func (f *Flags) SetWriteDelimiterPositions(s string) error {
+	if len(s) < 1 {
+		return nil
+	}
+	s = UnescapeString(s)
+
+	delimiterPositions, singleLine, err := ParseDelimiterPositions(s)
+	if err != nil {
+		return errors.New(fmt.Sprintf("write-delimiter-positions must be %q or a JSON array of integers", DelimiteAutomatically))
+	}
+
 	f.WriteDelimiterPositions = delimiterPositions
 	f.WriteAsSingleLine = singleLine
 	return nil

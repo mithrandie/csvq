@@ -145,7 +145,10 @@ func initFlag(flags *cmd.Flags) {
 	flags.Location = TestLocation
 	flags.DatetimeFormat = []string{}
 	flags.WaitTimeout = 15
+	flags.ImportFormat = cmd.CSV
 	flags.Delimiter = ','
+	flags.DelimiterPositions = nil
+	flags.SingleLine = false
 	flags.JsonQuery = ""
 	flags.Encoding = text.UTF8
 	flags.NoHeader = false
@@ -153,6 +156,8 @@ func initFlag(flags *cmd.Flags) {
 	flags.Format = cmd.TEXT
 	flags.WriteEncoding = text.UTF8
 	flags.WriteDelimiter = ','
+	flags.WriteDelimiterPositions = nil
+	flags.WriteAsSingleLine = false
 	flags.WithoutHeader = false
 	flags.LineBreak = text.LF
 	flags.EncloseAll = false
@@ -165,9 +170,6 @@ func initFlag(flags *cmd.Flags) {
 	flags.Quiet = false
 	flags.CPU = cpu
 	flags.Stats = false
-	flags.DelimitAutomatically = false
-	flags.DelimiterPositions = nil
-	flags.WriteDelimiterPositions = nil
 	flags.RetryInterval = 10 * time.Millisecond
 	flags.Now = "2012-02-03 09:18:15"
 }

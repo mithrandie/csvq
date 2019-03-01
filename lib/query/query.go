@@ -789,7 +789,7 @@ func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (*F
 	fileInfo := view.FileInfo
 	attr := strings.ToUpper(query.Attribute.Literal)
 	switch attr {
-	case TableDelimiter, TableFormat, TableEncoding, TableLineBreak, TableJsonEscape:
+	case TableDelimiter, TableDelimiterPositions, TableFormat, TableEncoding, TableLineBreak, TableJsonEscape:
 		s := value.ToString(p)
 		if value.IsNull(s) {
 			return nil, log, NewTableAttributeValueNotAllowedFormatError(query)
@@ -797,6 +797,8 @@ func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (*F
 		switch attr {
 		case TableDelimiter:
 			err = fileInfo.SetDelimiter(s.(value.String).Raw())
+		case TableDelimiterPositions:
+			err = fileInfo.SetDelimiterPositions(s.(value.String).Raw())
 		case TableFormat:
 			err = fileInfo.SetFormat(s.(value.String).Raw())
 		case TableEncoding:

@@ -53,7 +53,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "timezone, z",
 			Value: "Local",
-			Usage: "default timezone. \"Local\", \"UTC\" or a timezone name(e.g. \"America/Los_Angeles\")",
+			Usage: "default timezone. \"Local\", \"UTC\" or a timezone name",
 		},
 		cli.StringFlag{
 			Name:  "datetime-format, t",
@@ -69,13 +69,22 @@ func main() {
 			Usage: "load query or statements from `FILE`",
 		},
 		cli.StringFlag{
+			Name:  "import-format, i",
+			Value: "CSV",
+			Usage: "default format to load files. one of: CSV|TSV|FIXED|JSON|LTSV",
+		},
+		cli.StringFlag{
 			Name:  "delimiter, d",
 			Value: ",",
-			Usage: "field delimiter for CSV, or delimiter positions for Fixed-Length Format",
+			Usage: "field delimiter for CSV",
+		},
+		cli.StringFlag{
+			Name:  "delimiter-positions, m",
+			Usage: "delimiter positions for FIXED",
 		},
 		cli.StringFlag{
 			Name:  "json-query, j",
-			Usage: "`QUERY` for JSON data passed from standard input",
+			Usage: "`QUERY` for JSON",
 		},
 		cli.StringFlag{
 			Name:  "encoding, e",
@@ -107,7 +116,11 @@ func main() {
 		cli.StringFlag{
 			Name:  "write-delimiter, D",
 			Value: ",",
-			Usage: "field delimiter or delimiter positions in query results",
+			Usage: "field delimiter for CSV in query results",
+		},
+		cli.StringFlag{
+			Name:  "write-delimiter-positions, M",
+			Usage: "delimiter positions for FIXED in query results",
 		},
 		cli.BoolFlag{
 			Name:  "without-header, N",
@@ -120,7 +133,7 @@ func main() {
 		},
 		cli.BoolFlag{
 			Name:  "enclose-all, Q",
-			Usage: "enclose all string values in CSV",
+			Usage: "enclose all string values in CSV and TSV",
 		},
 		cli.StringFlag{
 			Name:  "json-escape, J",
@@ -349,8 +362,18 @@ func overwriteFlags(c *cli.Context) error {
 		flags.SetWaitTimeout(c.GlobalFloat64("wait-timeout"))
 	}
 
+	if c.IsSet("import-format") {
+		if err := flags.SetImportFormat(c.GlobalString("import-format")); err != nil {
+			return err
+		}
+	}
 	if c.IsSet("delimiter") {
 		if err := flags.SetDelimiter(c.GlobalString("delimiter")); err != nil {
+			return err
+		}
+	}
+	if c.IsSet("delimiter-positions") {
+		if err := flags.SetDelimiterPositions(c.GlobalString("delimiter-positions")); err != nil {
 			return err
 		}
 	}
@@ -381,6 +404,11 @@ func overwriteFlags(c *cli.Context) error {
 	}
 	if c.IsSet("write-delimiter") {
 		if err := flags.SetWriteDelimiter(c.GlobalString("write-delimiter")); err != nil {
+			return err
+		}
+	}
+	if c.IsSet("write-delimiter-positions") {
+		if err := flags.SetWriteDelimiterPositions(c.GlobalString("write-delimiter-positions")); err != nil {
 			return err
 		}
 	}
