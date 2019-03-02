@@ -91,10 +91,10 @@ csvq "select * from stdin" < user.csv
 cat user.csv | csvq "select *"
 
 # Load from Fixed-Length Format
-cat /var/log/syslog | csvq -n -d "[15, 24, 124]" "select *"
+cat /var/log/syslog | csvq -n -i fixed -m "[15, 24, 124]" "select *"
 
 # Split lines with spaces automatically
-ps | csvq -d spaces "select * from stdin"
+ps | csvq -i fixed -m spaces "select * from stdin"
 
 # Output in JSON format
 csvq -f json "select integer(id) as id, name from user"
