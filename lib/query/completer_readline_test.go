@@ -582,6 +582,7 @@ var completerTableObjectArgsTests = []completerTest{
 		Index:    6,
 		Expect: readline.CandidateList{
 			{Name: []rune("'SPACES'")},
+			{Name: []rune("'S[]'")},
 			{Name: []rune("'[]'")},
 		},
 	},
@@ -2118,6 +2119,7 @@ var completerAlterArgsTests = []completerTest{
 		Index:    31,
 		Expect: readline.CandidateList{
 			{Name: []rune("DELIMITER"), AppendSpace: true},
+			{Name: []rune("DELIMITER_POSITIONS"), AppendSpace: true},
 			{Name: []rune("ENCLOSE_ALL"), AppendSpace: true},
 			{Name: []rune("ENCODING"), AppendSpace: true},
 			{Name: []rune("FORMAT"), AppendSpace: true},
@@ -2144,6 +2146,14 @@ var completerAlterArgsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("','")},
 			{Name: []rune("'\\t'")},
+		},
+	},
+	{
+		Name:     "AlterArgs Set DelimiterPositions Values",
+		Line:     "",
+		OrigLine: "alter table `newtable.csv` set delimiter_positions to ",
+		Index:    53,
+		Expect: readline.CandidateList{
 			{Name: []rune("'SPACES'")},
 			{Name: []rune("'S[]'")},
 			{Name: []rune("'[]'")},
@@ -2440,6 +2450,19 @@ var completerSetArgsTests = []completerTest{
 		},
 	},
 	{
+		Name:     "SetArgs After TO for Import Format Flag",
+		Line:     "",
+		OrigLine: "set @@import_format to ",
+		Index:    23,
+		Expect: readline.CandidateList{
+			{Name: []rune("CSV")},
+			{Name: []rune("FIXED")},
+			{Name: []rune("JSON")},
+			{Name: []rune("LTSV")},
+			{Name: []rune("TSV")},
+		},
+	},
+	{
 		Name:     "SetArgs After TO for Delimiter Flag",
 		Line:     "",
 		OrigLine: "set @@delimiter to ",
@@ -2447,6 +2470,14 @@ var completerSetArgsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("','")},
 			{Name: []rune("'\\t'")},
+		},
+	},
+	{
+		Name:     "SetArgs After TO for Delimiter Positions Flag",
+		Line:     "",
+		OrigLine: "set @@delimiter_positions to ",
+		Index:    29,
+		Expect: readline.CandidateList{
 			{Name: []rune("'SPACES'")},
 			{Name: []rune("'S[]'")},
 			{Name: []rune("'[]'")},

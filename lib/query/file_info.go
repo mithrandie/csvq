@@ -18,18 +18,20 @@ import (
 )
 
 const (
-	TableDelimiter   = "DELIMITER"
-	TableFormat      = "FORMAT"
-	TableEncoding    = "ENCODING"
-	TableLineBreak   = "LINE_BREAK"
-	TableHeader      = "HEADER"
-	TableEncloseAll  = "ENCLOSE_ALL"
-	TableJsonEscape  = "JSON_ESCAPE"
-	TablePrettyPrint = "PRETTY_PRINT"
+	TableDelimiter          = "DELIMITER"
+	TableDelimiterPositions = "DELIMITER_POSITIONS"
+	TableFormat             = "FORMAT"
+	TableEncoding           = "ENCODING"
+	TableLineBreak          = "LINE_BREAK"
+	TableHeader             = "HEADER"
+	TableEncloseAll         = "ENCLOSE_ALL"
+	TableJsonEscape         = "JSON_ESCAPE"
+	TablePrettyPrint        = "PRETTY_PRINT"
 )
 
 var FileAttributeList = []string{
 	TableDelimiter,
+	TableDelimiterPositions,
 	TableFormat,
 	TableEncoding,
 	TableLineBreak,
@@ -56,10 +58,10 @@ func (e TableAttributeUnchangedError) Error() string {
 }
 
 type FileInfo struct {
-	Path      string
-	Delimiter rune
+	Path string
 
 	Format             cmd.Format
+	Delimiter          rune
 	DelimiterPositions fixedlen.DelimiterPositions
 	JsonQuery          string
 	Encoding           text.Encoding
@@ -106,35 +108,43 @@ func NewFileInfo(
 }
 
 func (f *FileInfo) SetDelimiter(s string) error {
-	delimiter, dp, auto, singleLine, err := cmd.ParseDelimiter(
-		s,
-		f.Delimiter,
-		f.DelimiterPositions,
-		f.Format == cmd.FIXED && f.DelimiterPositions == nil,
-	)
+	delimiter, err := cmd.ParseDelimiter(s)
 	if err != nil {
 		return err
 	}
-	delimiterPositions := fixedlen.DelimiterPositions(dp)
 
 	var format cmd.Format
-	if auto || delimiterPositions != nil {
-		format = cmd.FIXED
-	} else if delimiter == '\t' {
+	if delimiter == '\t' {
 		format = cmd.TSV
 	} else {
 		format = cmd.CSV
 	}
 
-	if f.Delimiter == delimiter &&
-		reflect.DeepEqual(f.DelimiterPositions, delimiterPositions) &&
-		f.Format == format {
+	if f.Delimiter == delimiter && f.Format == format {
 		return NewTableAttributeUnchangedError(f.Path)
 	}
 
 	f.Delimiter = delimiter
-	f.DelimiterPositions = delimiterPositions
 	f.Format = format
+	return nil
+}
+
+func (f *FileInfo) SetDelimiterPositions(s string) error {
+	pos, singleLine, err := cmd.ParseDelimiterPositions(s)
+	if err != nil {
+		return err
+	}
+	delimiterPositions := fixedlen.DelimiterPositions(pos)
+	format := cmd.FIXED
+
+	if reflect.DeepEqual(f.DelimiterPositions, delimiterPositions) &&
+		f.SingleLine == singleLine &&
+		f.Format == format {
+		return NewTableAttributeUnchangedError(f.Path)
+	}
+
+	f.Format = format
+	f.DelimiterPositions = delimiterPositions
 	f.SingleLine = singleLine
 
 	return nil
@@ -146,6 +156,11 @@ func (f *FileInfo) SetFormat(s string) error {
 		return err
 	}
 
+	if f.Format == format &&
+		f.JsonEscape == escapeType {
+		return NewTableAttributeUnchangedError(f.Path)
+	}
+
 	delimiter := f.Delimiter
 	encoding := f.Encoding
 
@@ -154,13 +169,6 @@ func (f *FileInfo) SetFormat(s string) error {
 		delimiter = '\t'
 	case cmd.JSON:
 		encoding = text.UTF8
-	}
-
-	if f.Delimiter == delimiter &&
-		f.Encoding == encoding &&
-		f.Format == format &&
-		f.JsonEscape == escapeType {
-		return NewTableAttributeUnchangedError(f.Path)
 	}
 
 	f.Format = format
@@ -289,7 +297,7 @@ func SearchFilePath(filename parser.Identifier, repository string, format cmd.Fo
 			case cmd.LtsvExt:
 				format = cmd.LTSV
 			default:
-				format = cmd.GetFlags().SelectImportFormat()
+				format = cmd.GetFlags().ImportFormat
 			}
 		}
 	}

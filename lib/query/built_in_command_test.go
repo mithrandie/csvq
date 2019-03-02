@@ -897,7 +897,20 @@ var showFlagTests = []struct {
 		Result: "\033[34;1m@@WAIT_TIMEOUT:\033[0m \033[35m15\033[0m",
 	},
 	{
-		Name: "Show Delimiter for CSV",
+		Name: "Show Import Format",
+		Expr: parser.ShowFlag{
+			Name: "import_format",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "import_format",
+				Value: parser.NewStringValue("tsv"),
+			},
+		},
+		Result: "\033[34;1m@@IMPORT_FORMAT:\033[0m \033[32mTSV\033[0m",
+	},
+	{
+		Name: "Show Delimiter",
 		Expr: parser.ShowFlag{
 			Name: "delimiter",
 		},
@@ -907,46 +920,33 @@ var showFlagTests = []struct {
 				Value: parser.NewStringValue("\t"),
 			},
 		},
-		Result: "\033[34;1m@@DELIMITER:\033[0m \033[32m'\\t'\033[0m\033[34;1m | \033[0m\033[90mSPACES\033[0m",
+		Result: "\033[34;1m@@DELIMITER:\033[0m \033[32m'\\t'\033[0m",
 	},
 	{
-		Name: "Show Delimiter for Single-Line FIXED",
+		Name: "Show Delimiter Positions",
 		Expr: parser.ShowFlag{
-			Name: "delimiter",
+			Name: "delimiter_positions",
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "delimiter",
+				Name:  "delimiter_positions",
 				Value: parser.NewStringValue("s[2, 5, 10]"),
 			},
 		},
-		Result: "\033[34;1m@@DELIMITER:\033[0m \033[90m','\033[0m\033[34;1m | \033[0m\033[32mS[2, 5, 10]\033[0m",
+		Result: "\033[34;1m@@DELIMITER_POSITIONS:\033[0m \033[32mS[2, 5, 10]\033[0m",
 	},
 	{
-		Name: "Show Delimiter for FIXED",
+		Name: "Show Delimiter Positions as spaces",
 		Expr: parser.ShowFlag{
-			Name: "delimiter",
+			Name: "delimiter_positions",
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "delimiter",
+				Name:  "delimiter_positions",
 				Value: parser.NewStringValue("SPACES"),
 			},
 		},
-		Result: "\033[34;1m@@DELIMITER:\033[0m \033[90m','\033[0m\033[34;1m | \033[0m\033[32mSPACES\033[0m",
-	},
-	{
-		Name: "Show Delimiter Ignored",
-		Expr: parser.ShowFlag{
-			Name: "delimiter",
-		},
-		SetExprs: []parser.SetFlag{
-			{
-				Name:  "json_query",
-				Value: parser.NewStringValue("{}"),
-			},
-		},
-		Result: "\033[34;1m@@DELIMITER:\033[0m \033[90m(ignored) ',' | SPACES\033[0m",
+		Result: "\033[34;1m@@DELIMITER_POSITIONS:\033[0m \033[32mSPACES\033[0m",
 	},
 	{
 		Name: "Show JsonQuery",
@@ -962,12 +962,12 @@ var showFlagTests = []struct {
 		Result: "\033[34;1m@@JSON_QUERY:\033[0m \033[32m{}\033[0m",
 	},
 	{
-		Name: "Show JsonQuery Ignored",
+		Name: "Show JsonQuery Empty",
 		Expr: parser.ShowFlag{
 			Name: "json_query",
 		},
 		SetExprs: []parser.SetFlag{},
-		Result:   "\033[34;1m@@JSON_QUERY:\033[0m \033[90m(ignored) (empty)\033[0m",
+		Result:   "\033[34;1m@@JSON_QUERY:\033[0m \033[90m(empty)\033[0m",
 	},
 	{
 		Name: "Show Encoding",
@@ -1052,7 +1052,7 @@ var showFlagTests = []struct {
 		Result: "\033[34;1m@@WRITE_ENCODING:\033[0m \033[90m(ignored) SJIS\033[0m",
 	},
 	{
-		Name: "Show WriteDelimiter for CSV",
+		Name: "Show WriteDelimiter",
 		Expr: parser.ShowFlag{
 			Name: "write_delimiter",
 		},
@@ -1066,41 +1066,7 @@ var showFlagTests = []struct {
 				Value: parser.NewStringValue("CSV"),
 			},
 		},
-		Result: "\033[34;1m@@WRITE_DELIMITER:\033[0m \033[32m'\\t'\033[0m\033[34;1m | \033[0m\033[90mSPACES\033[0m",
-	},
-	{
-		Name: "Show WriteDelimiter for Single-Line FIXED",
-		Expr: parser.ShowFlag{
-			Name: "write_delimiter",
-		},
-		SetExprs: []parser.SetFlag{
-			{
-				Name:  "write_delimiter",
-				Value: parser.NewStringValue("s[2, 5, 10]"),
-			},
-			{
-				Name:  "format",
-				Value: parser.NewStringValue("FIXED"),
-			},
-		},
-		Result: "\033[34;1m@@WRITE_DELIMITER:\033[0m \033[90m','\033[0m\033[34;1m | \033[0m\033[32mS[2, 5, 10]\033[0m",
-	},
-	{
-		Name: "Show WriteDelimiter for FIXED",
-		Expr: parser.ShowFlag{
-			Name: "write_delimiter",
-		},
-		SetExprs: []parser.SetFlag{
-			{
-				Name:  "write_delimiter",
-				Value: parser.NewStringValue("\t"),
-			},
-			{
-				Name:  "format",
-				Value: parser.NewStringValue("FIXED"),
-			},
-		},
-		Result: "\033[34;1m@@WRITE_DELIMITER:\033[0m \033[90m'\\t'\033[0m\033[34;1m | \033[0m\033[32mSPACES\033[0m",
+		Result: "\033[34;1m@@WRITE_DELIMITER:\033[0m \033[32m'\\t'\033[0m",
 	},
 	{
 		Name: "Show WriteDelimiter Ignored",
@@ -1117,7 +1083,58 @@ var showFlagTests = []struct {
 				Value: parser.NewStringValue("JSON"),
 			},
 		},
-		Result: "\033[34;1m@@WRITE_DELIMITER:\033[0m \033[90m(ignored) '\\t' | SPACES\033[0m",
+		Result: "\033[34;1m@@WRITE_DELIMITER:\033[0m \033[90m(ignored) '\\t'\033[0m",
+	},
+	{
+		Name: "Show WriteDelimiterPositions for Single-Line FIXED",
+		Expr: parser.ShowFlag{
+			Name: "write_delimiter_positions",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "write_delimiter_positions",
+				Value: parser.NewStringValue("s[2, 5, 10]"),
+			},
+			{
+				Name:  "format",
+				Value: parser.NewStringValue("FIXED"),
+			},
+		},
+		Result: "\033[34;1m@@WRITE_DELIMITER_POSITIONS:\033[0m \033[32mS[2, 5, 10]\033[0m",
+	},
+	{
+		Name: "Show WriteDelimiterPositions for FIXED",
+		Expr: parser.ShowFlag{
+			Name: "write_delimiter_positions",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "write_delimiter_positions",
+				Value: parser.NewStringValue("spaces"),
+			},
+			{
+				Name:  "format",
+				Value: parser.NewStringValue("FIXED"),
+			},
+		},
+		Result: "\033[34;1m@@WRITE_DELIMITER_POSITIONS:\033[0m \033[32mSPACES\033[0m",
+	},
+	{
+		Name: "Show WriteDelimiterPositions Ignored",
+		Expr: parser.ShowFlag{
+			Name: "write_delimiter_positions",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "write_delimiter_positions",
+				Value: parser.NewStringValue("spaces"),
+			},
+			{
+				Name:  "format",
+				Value: parser.NewStringValue("JSON"),
+			},
+		},
+		Result: "\033[34;1m@@WRITE_DELIMITER_POSITIONS:\033[0m \033[90m(ignored) SPACES\033[0m",
 	},
 	{
 		Name: "Show WithoutHeader",
@@ -1154,6 +1171,27 @@ var showFlagTests = []struct {
 		Result: "\033[34;1m@@WITHOUT_HEADER:\033[0m \033[90m(ignored) true\033[0m",
 	},
 	{
+		Name: "Show WithoutHeader with Single-Line Fixed-Length",
+		Expr: parser.ShowFlag{
+			Name: "without_header",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "format",
+				Value: parser.NewStringValue("fixed"),
+			},
+			{
+				Name:  "write_delimiter_positions",
+				Value: parser.NewStringValue("s[2, 5, 10]"),
+			},
+			{
+				Name:  "without_header",
+				Value: parser.NewTernaryValueFromString("true"),
+			},
+		},
+		Result: "\033[34;1m@@WITHOUT_HEADER:\033[0m \033[90m(ignored) true\033[0m",
+	},
+	{
 		Name: "Show lineBreak",
 		Expr: parser.ShowFlag{
 			Name: "line_break",
@@ -1165,6 +1203,27 @@ var showFlagTests = []struct {
 			},
 		},
 		Result: "\033[34;1m@@LINE_BREAK:\033[0m \033[32mCRLF\033[0m",
+	},
+	{
+		Name: "Show lineBreak with Single-Line Fixed-Length",
+		Expr: parser.ShowFlag{
+			Name: "line_break",
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Name:  "format",
+				Value: parser.NewStringValue("fixed"),
+			},
+			{
+				Name:  "write_delimiter_positions",
+				Value: parser.NewStringValue("s[2, 5, 10]"),
+			},
+			{
+				Name:  "line_break",
+				Value: parser.NewStringValue("CRLF"),
+			},
+		},
+		Result: "\033[34;1m@@LINE_BREAK:\033[0m \033[90m(ignored) CRLF\033[0m",
 	},
 	{
 		Name: "Show EncloseAll",
@@ -1460,14 +1519,16 @@ var showObjectsTests = []struct {
 	Name                    string
 	Expr                    parser.ShowObjects
 	Filter                  *Filter
+	ImportFormat            cmd.Format
 	Delimiter               rune
 	DelimiterPositions      fixedlen.DelimiterPositions
-	DelimitAutomatically    bool
+	SingleLine              bool
 	JsonQuery               string
 	Repository              string
 	Format                  cmd.Format
 	WriteDelimiter          rune
 	WriteDelimiterPositions fixedlen.DelimiterPositions
+	WriteAsSingleLine       bool
 	ViewCache               ViewMap
 	UncommittedViews        *UncommittedViewMap
 	Expect                  string
@@ -1533,6 +1594,18 @@ var showObjectsTests = []struct {
 					NoHeader:           false,
 				},
 			},
+			"TABLE2.TXT": &View{
+				Header: NewHeader("table2", []string{"col1", "col2"}),
+				FileInfo: &FileInfo{
+					Path:               "table2.txt",
+					DelimiterPositions: []int{3, 12},
+					SingleLine:         true,
+					Format:             cmd.FIXED,
+					Encoding:           text.UTF8,
+					LineBreak:          text.LF,
+					NoHeader:           false,
+				},
+			},
 		},
 		Expect: "\n" +
 			"                       Loaded Tables\n" +
@@ -1557,6 +1630,10 @@ var showObjectsTests = []struct {
 			"     Fields: col1, col2\n" +
 			"     Format: JSON     Escape: HEX      Query: (empty)\n" +
 			"     Encoding: UTF8   LineBreak: LF    Pretty Print: false\n" +
+			" table2.txt\n" +
+			"     Fields: col1, col2\n" +
+			"     Format: FIXED    Delimiter Positions: S[3, 12]\n" +
+			"     Encoding: UTF8\n" +
 			"\n",
 	},
 	{
@@ -1897,32 +1974,35 @@ var showObjectsTests = []struct {
 		Expr:       parser.ShowObjects{Type: parser.Identifier{Literal: "flags"}},
 		Repository: ".",
 		Expect: "\n" +
-			"                     Flags\n" +
-			"-----------------------------------------------\n" +
-			"             @@REPOSITORY: .\n" +
-			"               @@TIMEZONE: UTC\n" +
-			"        @@DATETIME_FORMAT: (not set)\n" +
-			"           @@WAIT_TIMEOUT: 15\n" +
-			"              @@DELIMITER: ',' | SPACES\n" +
-			"             @@JSON_QUERY: (ignored) (empty)\n" +
-			"               @@ENCODING: UTF8\n" +
-			"              @@NO_HEADER: false\n" +
-			"           @@WITHOUT_NULL: false\n" +
-			"                 @@FORMAT: CSV\n" +
-			"         @@WRITE_ENCODING: UTF8\n" +
-			"        @@WRITE_DELIMITER: ',' | SPACES\n" +
-			"         @@WITHOUT_HEADER: false\n" +
-			"             @@LINE_BREAK: LF\n" +
-			"            @@ENCLOSE_ALL: false\n" +
-			"            @@JSON_ESCAPE: (ignored) BACKSLASH\n" +
-			"           @@PRETTY_PRINT: (ignored) false\n" +
-			"    @@EAST_ASIAN_ENCODING: (ignored) false\n" +
-			" @@COUNT_DIACRITICAL_SIGN: (ignored) false\n" +
-			"      @@COUNT_FORMAT_CODE: (ignored) false\n" +
-			"                  @@COLOR: false\n" +
-			"                  @@QUIET: false\n" +
-			"                    @@CPU: " + strconv.Itoa(cmd.GetFlags().CPU) + "\n" +
-			"                  @@STATS: false\n" +
+			"                      Flags\n" +
+			"--------------------------------------------------\n" +
+			"                @@REPOSITORY: .\n" +
+			"                  @@TIMEZONE: UTC\n" +
+			"           @@DATETIME_FORMAT: (not set)\n" +
+			"              @@WAIT_TIMEOUT: 15\n" +
+			"             @@IMPORT_FORMAT: CSV\n" +
+			"                 @@DELIMITER: ','\n" +
+			"       @@DELIMITER_POSITIONS: SPACES\n" +
+			"                @@JSON_QUERY: (empty)\n" +
+			"                  @@ENCODING: UTF8\n" +
+			"                 @@NO_HEADER: false\n" +
+			"              @@WITHOUT_NULL: false\n" +
+			"                    @@FORMAT: CSV\n" +
+			"            @@WRITE_ENCODING: UTF8\n" +
+			"           @@WRITE_DELIMITER: ','\n" +
+			" @@WRITE_DELIMITER_POSITIONS: (ignored) SPACES\n" +
+			"            @@WITHOUT_HEADER: false\n" +
+			"                @@LINE_BREAK: LF\n" +
+			"               @@ENCLOSE_ALL: false\n" +
+			"               @@JSON_ESCAPE: (ignored) BACKSLASH\n" +
+			"              @@PRETTY_PRINT: (ignored) false\n" +
+			"       @@EAST_ASIAN_ENCODING: (ignored) false\n" +
+			"    @@COUNT_DIACRITICAL_SIGN: (ignored) false\n" +
+			"         @@COUNT_FORMAT_CODE: (ignored) false\n" +
+			"                     @@COLOR: false\n" +
+			"                     @@QUIET: false\n" +
+			"                       @@CPU: " + strconv.Itoa(cmd.GetFlags().CPU) + "\n" +
+			"                     @@STATS: false\n" +
 			"\n",
 	},
 	{
@@ -1954,14 +2034,20 @@ func TestShowObjects(t *testing.T) {
 
 	for _, v := range showObjectsTests {
 		flags.Repository = v.Repository
+		flags.ImportFormat = v.ImportFormat
 		flags.Delimiter = ','
 		if v.Delimiter != 0 {
 			flags.Delimiter = v.Delimiter
 		}
 		flags.DelimiterPositions = v.DelimiterPositions
-		flags.DelimitAutomatically = v.DelimitAutomatically
+		flags.SingleLine = v.SingleLine
 		flags.JsonQuery = v.JsonQuery
+		flags.WriteDelimiter = ','
+		if v.WriteDelimiter != 0 {
+			flags.WriteDelimiter = v.WriteDelimiter
+		}
 		flags.WriteDelimiterPositions = v.WriteDelimiterPositions
+		flags.WriteAsSingleLine = v.WriteAsSingleLine
 		flags.Format = v.Format
 		ViewCache.Clean()
 		if 0 < len(v.ViewCache) {

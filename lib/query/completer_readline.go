@@ -59,6 +59,9 @@ var singleCommandStatement = []string{
 var delimiterCandidates = []string{
 	"','",
 	"'\\t'",
+}
+
+var delimiterPositionsCandidates = []string{
 	"'SPACES'",
 	"'S[]'",
 	"'[]'",
@@ -423,9 +426,9 @@ func (c *Completer) TableObjectArgs(line string, origLine string, index int) rea
 			if c.tokens[c.lastIdx].Token == '(' {
 				switch strings.ToUpper(c.tokens[0].Literal) {
 				case cmd.CSV.String():
-					cands = c.candidateList([]string{"','", "'\\t'"}, false)
+					cands = c.candidateList(delimiterCandidates, false)
 				case cmd.FIXED.String():
-					cands = c.candidateList([]string{"'SPACES'", "'[]'"}, false)
+					cands = c.candidateList(delimiterPositionsCandidates, false)
 				}
 			}
 		case 1:
@@ -1339,6 +1342,8 @@ func (c *Completer) AlterArgs(line string, origLine string, index int) readline.
 						return nil, c.candidateList(c.tableFormatList(), false), true
 					case TableDelimiter:
 						return nil, c.candidateList(delimiterCandidates, false), true
+					case TableDelimiterPositions:
+						return nil, c.candidateList(delimiterPositionsCandidates, false), true
 					case TableEncoding:
 						return nil, c.candidateList(c.encodingList(), false), true
 					case TableLineBreak:
@@ -1474,8 +1479,12 @@ func (c *Completer) SetArgs(line string, origLine string, index int) readline.Ca
 						return nil, c.SearchDirs(line, origLine, index), true
 					case cmd.TimezoneFlag:
 						return nil, c.candidateList([]string{"Local", "UTC"}, false), true
+					case cmd.ImportFormatFlag:
+						return nil, c.candidateList(c.importFormatList(), false), true
 					case cmd.DelimiterFlag, cmd.WriteDelimiterFlag:
 						return nil, c.candidateList(delimiterCandidates, false), true
+					case cmd.DelimiterPositionsFlag, cmd.WriteDelimiterPositionsFlag:
+						return nil, c.candidateList(delimiterPositionsCandidates, false), true
 					case cmd.EncodingFlag, cmd.WriteEncodingFlag:
 						return nil, c.candidateList(c.encodingList(), false), true
 					case cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAll, cmd.PrettyPrintFlag,
@@ -2352,6 +2361,15 @@ func (c *Completer) tableFormatList() []string {
 	list := make([]string, 0, len(cmd.FormatLiteral))
 	for _, v := range cmd.FormatLiteral {
 		list = append(list, v)
+	}
+	sort.Strings(list)
+	return list
+}
+
+func (c *Completer) importFormatList() []string {
+	list := make([]string, 0, len(cmd.ImportFormats))
+	for _, v := range cmd.ImportFormats {
+		list = append(list, cmd.FormatLiteral[v])
 	}
 	sort.Strings(list)
 	return list
