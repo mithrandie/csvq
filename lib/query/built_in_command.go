@@ -925,7 +925,11 @@ func ShowFields(expr parser.ShowFields, filter *Filter) (string, error) {
 	writeFieldList(w, view.Header.TableColumnNames())
 
 	w.Title1 = "Fields in"
-	w.Title2 = expr.Table.Literal
+	if i, ok := expr.Table.(parser.Identifier); ok {
+		w.Title2 = i.Literal
+	} else if to, ok := expr.Table.(parser.TableObject); ok {
+		w.Title2 = to.Path.Literal
+	}
 	w.Title2Effect = cmd.IdentifierEffect
 	return "\n" + w.String() + "\n", nil
 }

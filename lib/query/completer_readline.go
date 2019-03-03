@@ -82,13 +82,6 @@ var tableObjectCandidates = []string{
 	"FIXED()",
 	"JSON()",
 	"LTSV()",
-	"JSON_TABLE()",
-}
-var tableObjects = []string{
-	cmd.CSV.String(),
-	cmd.FIXED.String(),
-	cmd.JSON.String(),
-	cmd.LTSV.String(),
 }
 
 type ReadlineListener struct {
@@ -738,13 +731,27 @@ func (c *Completer) combineTableAlias(fromIdx int) {
 }
 
 func (c *Completer) allTableCandidates(line string, origLine string, index int) readline.CandidateList {
-	list := c.candidateList(tableObjectCandidates, true)
+	list := c.candidateList(append(tableObjectCandidates, "JSON_TABLE()"), false)
+	list.Sort()
+	list = append(list, c.SearchAllTables(line, origLine, index)...)
+	return list
+}
+
+func (c *Completer) allTableCandidatesForUpdate(line string, origLine string, index int) readline.CandidateList {
+	list := c.candidateList(tableObjectCandidates, false)
 	list.Sort()
 	list = append(list, c.SearchAllTables(line, origLine, index)...)
 	return list
 }
 
 func (c *Completer) allTableCandidatesWithSpace(line string, origLine string, index int) readline.CandidateList {
+	list := c.candidateList(append(tableObjectCandidates, "JSON_TABLE()"), true)
+	list.Sort()
+	list = append(list, c.SearchAllTablesWithSpace(line, origLine, index)...)
+	return list
+}
+
+func (c *Completer) allTableCandidatesWithSpaceForUpdate(line string, origLine string, index int) readline.CandidateList {
 	list := c.candidateList(tableObjectCandidates, true)
 	list.Sort()
 	list = append(list, c.SearchAllTablesWithSpace(line, origLine, index)...)
@@ -1102,7 +1109,7 @@ func (c *Completer) InsertArgs(line string, origLine string, index int) readline
 				return nil, customList, true
 			case parser.INTO:
 				if i == c.lastIdx {
-					customList = c.allTableCandidates(line, origLine, index)
+					customList = c.allTableCandidatesWithSpaceForUpdate(line, origLine, index)
 				} else {
 					if c.tokens[c.lastIdx-1].Token == parser.INTO || c.tokens[c.lastIdx].Token == ')' {
 						keywords = append(keywords, "VALUES", "SELECT")
@@ -1154,7 +1161,7 @@ func (c *Completer) UpdateArgs(line string, origLine string, index int) readline
 				return keywords, customList, true
 			case parser.UPDATE:
 				if c.tokens[c.lastIdx].Token == parser.UPDATE || c.tokens[c.lastIdx].Token == ',' {
-					customList = c.allTableCandidates(line, origLine, index)
+					customList = c.allTableCandidatesForUpdate(line, origLine, index)
 				} else {
 					keywords = append(keywords, "SET")
 				}
@@ -1357,7 +1364,7 @@ func (c *Completer) AlterArgs(line string, origLine string, index int) readline.
 			case parser.TABLE:
 				switch i {
 				case c.lastIdx:
-					return nil, c.allTableCandidatesWithSpace(line, origLine, index), true
+					return nil, c.allTableCandidatesWithSpaceForUpdate(line, origLine, index), true
 				case c.lastIdx - 1:
 					return operations, nil, true
 				}
@@ -1640,7 +1647,7 @@ func (c *Completer) ShowArgs(line string, origLine string, index int) readline.C
 			case parser.FROM:
 				switch i {
 				case c.lastIdx:
-					return nil, c.SearchAllTables(line, origLine, index), true
+					return nil, c.allTableCandidatesForUpdate(line, origLine, index), true
 				}
 			case parser.SHOW:
 				switch i {
@@ -2248,8 +2255,11 @@ func (c *Completer) combineFunction() {
 }
 
 func (c *Completer) isTableObject(token parser.Token) bool {
-	return (token.Token == parser.IDENTIFIER && InStrSliceWithCaseInsensitive(token.Literal, tableObjects)) ||
-		token.Token == parser.JSON_TABLE
+	switch token.Token {
+	case parser.CSV, parser.JSON, parser.FIXED, parser.LTSV, parser.JSON_TABLE:
+		return true
+	}
+	return false
 }
 
 func (c *Completer) isFunction(token parser.Token) bool {

@@ -3398,6 +3398,25 @@ var setTableAttributeTests = []struct {
 		},
 	},
 	{
+		Name: "Set Delimiter to TSV with TableObject",
+		Query: parser.SetTableAttribute{
+			Table: parser.TableObject{
+				Type:          parser.Identifier{Literal: "csv"},
+				Path:          parser.Identifier{Literal: "table1.csv"},
+				FormatElement: parser.NewStringValue(","),
+			},
+			Attribute: parser.Identifier{Literal: "delimiter"},
+			Value:     parser.NewStringValue("\t"),
+		},
+		Expect: &FileInfo{
+			Path:      GetTestFilePath("table1.csv"),
+			Delimiter: '\t',
+			Format:    cmd.TSV,
+			Encoding:  text.UTF8,
+			LineBreak: text.LF,
+		},
+	},
+	{
 		Name: "Set Delimiter to CSV",
 		Query: parser.SetTableAttribute{
 			Table:     parser.Identifier{Literal: "table1.csv"},
