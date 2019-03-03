@@ -1,5 +1,27 @@
 # Change Log
 
+## Version 1.9.0
+
+Released on March 3, 2019
+
+- Add the following command options.
+  - import-format
+  - delimiter-positions
+  - write-delimiter-positions
+
+- Modify the behavior of the following command options.
+  - delimiter
+  - write-delimiter
+
+- Add the following table attribute.
+  - DELIMITER_POSITIONS
+
+- Make the Table Object Expressions available in the following statements.
+  - Insert Query
+  - Update Query
+  - Alter Table Query
+  - Show Fields Statement
+
 ## Version 1.8.6
 
 Released on February 27, 2019
