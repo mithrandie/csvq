@@ -27,7 +27,7 @@ ALTER TABLE table_name
 ```
 
 _table_name_
-: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+: [identifier]({{ '/reference/statement.html#parsing' | relative_url }}) or [Table Object]({{ '/reference/select-query.html#from_clause' | relative_url }})
 
 _column_name_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
@@ -52,7 +52,7 @@ ALTER TABLE table_name DROP (column [, column ...])
 ```
 
 _table_name_
-: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+: [identifier]({{ '/reference/statement.html#parsing' | relative_url }}) or [Table Object]({{ '/reference/select-query.html#from_clause' | relative_url }})
 
 _column_
 : [field reference]({{ '/reference/value.html#field_reference' | relative_url }})
@@ -65,7 +65,7 @@ ALTER TABLE table_name RENAME old_column_name TO new_column_name
 ```
 
 _table_name_
-: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+: [identifier]({{ '/reference/statement.html#parsing' | relative_url }}) or [Table Object]({{ '/reference/select-query.html#from_clause' | relative_url }})
 
 _old_column_name_
 : [field reference]({{ '/reference/value.html#field_reference' | relative_url }})
@@ -87,20 +87,22 @@ ALTER TABLE table_name SET attribute TO value
 ```
 
 _table_name_
-: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+: [identifier]({{ '/reference/statement.html#parsing' | relative_url }}) or [Table Object]({{ '/reference/select-query.html#from_clause' | relative_url }})
 
 _attribute_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
 
   | name | type | description |
   | :- | :- | :- |
-  | FORMAT          | string  | Format |
-  | DELIMITER       | string  | Field delimiter for CSV, or delimiter positions for Fixed-Length Format |
-  | ENCODING        | string  | File Encoding |
-  | LINE_BREAK      | string  | Line Break |
-  | HEADER          | boolean | Write header line in the file |
-  | ENCLOSE_ALL     | boolean | Enclose all string values in CSV |
-  | PRETTY_PRINT    | boolean | Make JSON output easier to read |
+  | FORMAT              | string  | Format |
+  | DELIMITER           | string  | Field delimiter for CSV |
+  | DELIMITER_POSITIONS | string  | Delimiter positions for Fixed-Length Format |
+  | JSON_ESCAPE         | string  | JSON escape type |
+  | ENCODING            | string  | File Encoding |
+  | LINE_BREAK          | string  | Line Break |
+  | HEADER              | boolean | Write header line in the file |
+  | ENCLOSE_ALL         | boolean | Enclose all string values in CSV |
+  | PRETTY_PRINT        | boolean | Make JSON output easier to read |
 
 _value_
 : [value]({{ '/reference/value.html' | relative_url }}) or [identifier]({{ '/reference/statement.html#parsing' | relative_url }})

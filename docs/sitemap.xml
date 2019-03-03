@@ -6,7 +6,7 @@
             http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
     <url>
         <loc>https://mithrandie.github.io/csvq/</loc>
-        <lastmod>2019-02-25T02:16:03+00:00</lastmod>
+        <lastmod>2019-03-03T13:45:30+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference.html</loc>
@@ -34,11 +34,11 @@
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/insert-query.html</loc>
-        <lastmod>2017-07-10T08:31:44+00:00</lastmod>
+        <lastmod>2019-03-03T13:34:11+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/update-query.html</loc>
-        <lastmod>2017-07-10T08:31:44+00:00</lastmod>
+        <lastmod>2019-03-03T13:34:11+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/delete-query.html</loc>
@@ -50,7 +50,7 @@
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/alter-table-query.html</loc>
-        <lastmod>2018-11-15T17:17:03+00:00</lastmod>
+        <lastmod>2019-03-03T13:34:11+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/common-table-expression.html</loc>
@@ -86,7 +86,7 @@
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/built-in.html</loc>
-        <lastmod>2018-11-24T06:47:39+00:00</lastmod>
+        <lastmod>2019-03-03T13:34:11+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/external-command.html</loc>

@@ -1332,7 +1332,7 @@ type ShowObjects struct {
 type ShowFields struct {
 	*BaseExpr
 	Type  Identifier
-	Table Identifier
+	Table QueryExpression
 }
 
 type If struct {

@@ -59,6 +59,9 @@ var singleCommandStatement = []string{
 var delimiterCandidates = []string{
 	"','",
 	"'\\t'",
+}
+
+var delimiterPositionsCandidates = []string{
 	"'SPACES'",
 	"'S[]'",
 	"'[]'",
@@ -79,13 +82,6 @@ var tableObjectCandidates = []string{
 	"FIXED()",
 	"JSON()",
 	"LTSV()",
-	"JSON_TABLE()",
-}
-var tableObjects = []string{
-	cmd.CSV.String(),
-	cmd.FIXED.String(),
-	cmd.JSON.String(),
-	cmd.LTSV.String(),
 }
 
 type ReadlineListener struct {
@@ -423,9 +419,9 @@ func (c *Completer) TableObjectArgs(line string, origLine string, index int) rea
 			if c.tokens[c.lastIdx].Token == '(' {
 				switch strings.ToUpper(c.tokens[0].Literal) {
 				case cmd.CSV.String():
-					cands = c.candidateList([]string{"','", "'\\t'"}, false)
+					cands = c.candidateList(delimiterCandidates, false)
 				case cmd.FIXED.String():
-					cands = c.candidateList([]string{"'SPACES'", "'[]'"}, false)
+					cands = c.candidateList(delimiterPositionsCandidates, false)
 				}
 			}
 		case 1:
@@ -735,13 +731,27 @@ func (c *Completer) combineTableAlias(fromIdx int) {
 }
 
 func (c *Completer) allTableCandidates(line string, origLine string, index int) readline.CandidateList {
-	list := c.candidateList(tableObjectCandidates, true)
+	list := c.candidateList(append(tableObjectCandidates, "JSON_TABLE()"), false)
+	list.Sort()
+	list = append(list, c.SearchAllTables(line, origLine, index)...)
+	return list
+}
+
+func (c *Completer) allTableCandidatesForUpdate(line string, origLine string, index int) readline.CandidateList {
+	list := c.candidateList(tableObjectCandidates, false)
 	list.Sort()
 	list = append(list, c.SearchAllTables(line, origLine, index)...)
 	return list
 }
 
 func (c *Completer) allTableCandidatesWithSpace(line string, origLine string, index int) readline.CandidateList {
+	list := c.candidateList(append(tableObjectCandidates, "JSON_TABLE()"), true)
+	list.Sort()
+	list = append(list, c.SearchAllTablesWithSpace(line, origLine, index)...)
+	return list
+}
+
+func (c *Completer) allTableCandidatesWithSpaceForUpdate(line string, origLine string, index int) readline.CandidateList {
 	list := c.candidateList(tableObjectCandidates, true)
 	list.Sort()
 	list = append(list, c.SearchAllTablesWithSpace(line, origLine, index)...)
@@ -1099,7 +1109,7 @@ func (c *Completer) InsertArgs(line string, origLine string, index int) readline
 				return nil, customList, true
 			case parser.INTO:
 				if i == c.lastIdx {
-					customList = c.allTableCandidates(line, origLine, index)
+					customList = c.allTableCandidatesWithSpaceForUpdate(line, origLine, index)
 				} else {
 					if c.tokens[c.lastIdx-1].Token == parser.INTO || c.tokens[c.lastIdx].Token == ')' {
 						keywords = append(keywords, "VALUES", "SELECT")
@@ -1151,7 +1161,7 @@ func (c *Completer) UpdateArgs(line string, origLine string, index int) readline
 				return keywords, customList, true
 			case parser.UPDATE:
 				if c.tokens[c.lastIdx].Token == parser.UPDATE || c.tokens[c.lastIdx].Token == ',' {
-					customList = c.allTableCandidates(line, origLine, index)
+					customList = c.allTableCandidatesForUpdate(line, origLine, index)
 				} else {
 					keywords = append(keywords, "SET")
 				}
@@ -1339,6 +1349,8 @@ func (c *Completer) AlterArgs(line string, origLine string, index int) readline.
 						return nil, c.candidateList(c.tableFormatList(), false), true
 					case TableDelimiter:
 						return nil, c.candidateList(delimiterCandidates, false), true
+					case TableDelimiterPositions:
+						return nil, c.candidateList(delimiterPositionsCandidates, false), true
 					case TableEncoding:
 						return nil, c.candidateList(c.encodingList(), false), true
 					case TableLineBreak:
@@ -1352,7 +1364,7 @@ func (c *Completer) AlterArgs(line string, origLine string, index int) readline.
 			case parser.TABLE:
 				switch i {
 				case c.lastIdx:
-					return nil, c.allTableCandidatesWithSpace(line, origLine, index), true
+					return nil, c.allTableCandidatesWithSpaceForUpdate(line, origLine, index), true
 				case c.lastIdx - 1:
 					return operations, nil, true
 				}
@@ -1474,8 +1486,12 @@ func (c *Completer) SetArgs(line string, origLine string, index int) readline.Ca
 						return nil, c.SearchDirs(line, origLine, index), true
 					case cmd.TimezoneFlag:
 						return nil, c.candidateList([]string{"Local", "UTC"}, false), true
+					case cmd.ImportFormatFlag:
+						return nil, c.candidateList(c.importFormatList(), false), true
 					case cmd.DelimiterFlag, cmd.WriteDelimiterFlag:
 						return nil, c.candidateList(delimiterCandidates, false), true
+					case cmd.DelimiterPositionsFlag, cmd.WriteDelimiterPositionsFlag:
+						return nil, c.candidateList(delimiterPositionsCandidates, false), true
 					case cmd.EncodingFlag, cmd.WriteEncodingFlag:
 						return nil, c.candidateList(c.encodingList(), false), true
 					case cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAll, cmd.PrettyPrintFlag,
@@ -1631,7 +1647,7 @@ func (c *Completer) ShowArgs(line string, origLine string, index int) readline.C
 			case parser.FROM:
 				switch i {
 				case c.lastIdx:
-					return nil, c.SearchAllTables(line, origLine, index), true
+					return nil, c.allTableCandidatesForUpdate(line, origLine, index), true
 				}
 			case parser.SHOW:
 				switch i {
@@ -2239,8 +2255,11 @@ func (c *Completer) combineFunction() {
 }
 
 func (c *Completer) isTableObject(token parser.Token) bool {
-	return (token.Token == parser.IDENTIFIER && InStrSliceWithCaseInsensitive(token.Literal, tableObjects)) ||
-		token.Token == parser.JSON_TABLE
+	switch token.Token {
+	case parser.CSV, parser.JSON, parser.FIXED, parser.LTSV, parser.JSON_TABLE:
+		return true
+	}
+	return false
 }
 
 func (c *Completer) isFunction(token parser.Token) bool {
@@ -2352,6 +2371,15 @@ func (c *Completer) tableFormatList() []string {
 	list := make([]string, 0, len(cmd.FormatLiteral))
 	for _, v := range cmd.FormatLiteral {
 		list = append(list, v)
+	}
+	sort.Strings(list)
+	return list
+}
+
+func (c *Completer) importFormatList() []string {
+	list := make([]string, 0, len(cmd.ImportFormats))
+	for _, v := range cmd.ImportFormats {
+		list = append(list, cmd.FormatLiteral[v])
 	}
 	sort.Strings(list)
 	return list

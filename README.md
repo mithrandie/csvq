@@ -58,7 +58,7 @@ Go 1.9 or later (ref. [Getting Started - The Go Programming Language](https://go
 
 1. ```$ go get github.com/mithrandie/csvq```
 
-##### Build with strict dependencies (Go 1.11)
+##### Build with strict dependencies (Go 1.11 or later)
 
 1. ```$ go get -d github.com/mithrandie/csvq```
 2. Change directory to $GOPATH/github.com/mithrandie/csvq
@@ -91,10 +91,10 @@ csvq "select * from stdin" < user.csv
 cat user.csv | csvq "select *"
 
 # Load from Fixed-Length Format
-cat /var/log/syslog | csvq -n -d "[15, 24, 124]" "select *"
+cat /var/log/syslog | csvq -n -i fixed -m "[15, 24, 124]" "select *"
 
 # Split lines with spaces automatically
-ps | csvq -d spaces "select * from stdin"
+ps | csvq -i fixed -m spaces "select * from stdin"
 
 # Output in JSON format
 csvq -f json "select integer(id) as id, name from user"

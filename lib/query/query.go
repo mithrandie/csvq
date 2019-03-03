@@ -440,12 +440,12 @@ func Delete(query parser.DeleteQuery, parentFilter *Filter) ([]*FileInfo, []int,
 			return nil, nil, NewDeleteTableNotSpecifiedError(query)
 		}
 		table := fromClause.Tables[0].(parser.Table)
-		if _, ok := table.Object.(parser.Identifier); !ok {
-			if _, ok := table.Object.(parser.Stdin); !ok {
-				return nil, nil, NewDeleteTableNotSpecifiedError(query)
-			}
+		switch table.Object.(type) {
+		case parser.Identifier, parser.TableObject, parser.Stdin:
+			query.Tables = fromClause.Tables
+		default:
+			return nil, nil, NewDeleteTableNotSpecifiedError(query)
 		}
-		query.Tables = fromClause.Tables
 	}
 
 	view := NewView()
@@ -789,7 +789,7 @@ func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (*F
 	fileInfo := view.FileInfo
 	attr := strings.ToUpper(query.Attribute.Literal)
 	switch attr {
-	case TableDelimiter, TableFormat, TableEncoding, TableLineBreak, TableJsonEscape:
+	case TableDelimiter, TableDelimiterPositions, TableFormat, TableEncoding, TableLineBreak, TableJsonEscape:
 		s := value.ToString(p)
 		if value.IsNull(s) {
 			return nil, log, NewTableAttributeValueNotAllowedFormatError(query)
@@ -797,6 +797,8 @@ func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (*F
 		switch attr {
 		case TableDelimiter:
 			err = fileInfo.SetDelimiter(s.(value.String).Raw())
+		case TableDelimiterPositions:
+			err = fileInfo.SetDelimiterPositions(s.(value.String).Raw())
 		case TableFormat:
 			err = fileInfo.SetFormat(s.(value.String).Raw())
 		case TableEncoding:
@@ -838,7 +840,11 @@ func SetTableAttribute(query parser.SetTableAttribute, parentFilter *Filter) (*F
 	w.NewLine()
 
 	w.Title1 = "Attributes Updated in"
-	w.Title2 = query.Table.(parser.Identifier).Literal
+	if i, ok := query.Table.(parser.Identifier); ok {
+		w.Title2 = i.Literal
+	} else if to, ok := query.Table.(parser.TableObject); ok {
+		w.Title2 = to.Path.Literal
+	}
 	w.Title2Effect = cmd.IdentifierEffect
 	log = "\n" + w.String() + "\n"
 

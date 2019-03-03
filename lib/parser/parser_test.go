@@ -180,6 +180,36 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select c1 from json('{}', `table.txt`) as t",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{
+								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
+							},
+						},
+					},
+					FromClause: FromClause{From: "from", Tables: []QueryExpression{
+						Table{
+							Object: TableObject{
+								BaseExpr:      &BaseExpr{line: 1, char: 16},
+								Type:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "json"},
+								FormatElement: NewStringValue("{}"),
+								Path:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 27}, Literal: "table.txt", Quoted: true},
+							},
+							As:    "as",
+							Alias: Identifier{BaseExpr: &BaseExpr{line: 1, char: 43}, Literal: "t"},
+						},
+					}},
+				},
+			},
+		},
+	},
+	{
 		Input: "select c1 from ltsv(`table.ltsv`)",
 		Output: []Statement{
 			SelectQuery{
@@ -3668,6 +3698,30 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "update csv(',', table1) set column1 = 1, column2 = 2, table1.3 = 3 where true",
+		Output: []Statement{
+			UpdateQuery{
+				Tables: []QueryExpression{
+					Table{Object: TableObject{
+						BaseExpr:      &BaseExpr{line: 1, char: 8},
+						Type:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "csv"},
+						FormatElement: NewStringValue(","),
+						Path:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 17}, Literal: "table1"},
+					}},
+				},
+				SetList: []UpdateSet{
+					{Field: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 29}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 29}, Literal: "column1"}}, Value: NewIntegerValueFromString("1")},
+					{Field: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 42}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 42}, Literal: "column2"}}, Value: NewIntegerValueFromString("2")},
+					{Field: ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 55}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 55}, Literal: "table1"}, Number: value.NewInteger(3)}, Value: NewIntegerValueFromString("3")},
+				},
+				WhereClause: WhereClause{
+					Where:  "where",
+					Filter: NewTernaryValueFromString("true"),
+				},
+			},
+		},
+	},
+	{
 		Input: "with ct as (select 1) delete from table1",
 		Output: []Statement{
 			DeleteQuery{
@@ -3846,6 +3900,24 @@ var parseTests = []struct {
 				Columns: []ColumnDefault{
 					{
 						Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 24}, Literal: "column1"},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "alter table csv(',', table1) add column1",
+		Output: []Statement{
+			AddColumns{
+				Table: TableObject{
+					BaseExpr:      &BaseExpr{line: 1, char: 13},
+					Type:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "csv"},
+					FormatElement: NewStringValue(","),
+					Path:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 22}, Literal: "table1"},
+				},
+				Columns: []ColumnDefault{
+					{
+						Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "column1"},
 					},
 				},
 			},
@@ -4230,6 +4302,21 @@ var parseTests = []struct {
 				BaseExpr: &BaseExpr{line: 1, char: 1},
 				Type:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "fields"},
 				Table:    Identifier{BaseExpr: &BaseExpr{line: 1, char: 18}, Literal: "table1"},
+			},
+		},
+	},
+	{
+		Input: "show fields from csv(',', table1)",
+		Output: []Statement{
+			ShowFields{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Type:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "fields"},
+				Table: TableObject{
+					BaseExpr:      &BaseExpr{line: 1, char: 18},
+					Type:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 18}, Literal: "csv"},
+					FormatElement: NewStringValue(","),
+					Path:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 27}, Literal: "table1"},
+				},
 			},
 		},
 	},
@@ -5309,6 +5396,70 @@ var parseTests = []struct {
 					Fields: []QueryExpression{
 						Field{
 							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "rows"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select csv",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "csv"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select json",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "json"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select fixed",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "fixed"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select ltsv",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "ltsv"}},
 						},
 					},
 				},

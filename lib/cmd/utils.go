@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
-	"unicode/utf8"
 
 	"github.com/mithrandie/go-text"
 	txjson "github.com/mithrandie/go-text/json"
@@ -290,39 +289,30 @@ func ParseLineBreak(s string) (text.LineBreak, error) {
 	}
 	return lb, err
 }
+func ParseDelimiter(s string) (rune, error) {
+	r := []rune(UnescapeString(s))
+	if len(r) != 1 {
+		return 0, errors.New("delimiter must be one character")
+	}
+	return r[0], nil
+}
 
-func ParseDelimiter(s string, delimiter rune, delimiterPositions []int, delimitAutomatically bool) (rune, []int, bool, bool, error) {
+func ParseDelimiterPositions(s string) ([]int, bool, error) {
 	s = UnescapeString(s)
-	strLen := utf8.RuneCountInString(s)
+	var delimiterPositions []int = nil
 	singleLine := false
 
-	if strLen < 1 {
-		return delimiter, delimiterPositions, delimitAutomatically, false, errors.New(fmt.Sprintf("delimiter must be one character, %q or JSON array of integers", DelimiteAutomatically))
-	}
-
-	if strLen == 1 {
-		delimiter = []rune(s)[0]
-		delimitAutomatically = false
-		delimiterPositions = nil
-	} else {
-		if strings.EqualFold(DelimiteAutomatically, s) {
-			delimiterPositions = nil
-			delimitAutomatically = true
-		} else {
-			if strings.HasPrefix(s, "s[") || strings.HasPrefix(s, "S[") {
-				singleLine = true
-				s = s[1:]
-			}
-			var positions []int
-			err := json.Unmarshal([]byte(s), &positions)
-			if err != nil {
-				return delimiter, delimiterPositions, delimitAutomatically, singleLine, errors.New(fmt.Sprintf("delimiter must be one character, %q or JSON array of integers", DelimiteAutomatically))
-			}
-			delimiterPositions = positions
-			delimitAutomatically = false
+	if !strings.EqualFold(DelimiteAutomatically, s) {
+		if strings.HasPrefix(s, "s[") || strings.HasPrefix(s, "S[") {
+			singleLine = true
+			s = s[1:]
+		}
+		err := json.Unmarshal([]byte(s), &delimiterPositions)
+		if err != nil {
+			return delimiterPositions, singleLine, errors.New(fmt.Sprintf("delimiter positions must be %q or a JSON array of integers", DelimiteAutomatically))
 		}
 	}
-	return delimiter, delimiterPositions, delimitAutomatically, singleLine, nil
+	return delimiterPositions, singleLine, nil
 }
 
 func ParseFormat(s string, et txjson.EscapeType) (Format, txjson.EscapeType, error) {
