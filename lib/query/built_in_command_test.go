@@ -2161,6 +2161,48 @@ var showFieldsTests = []struct {
 			"\n",
 	},
 	{
+		Name: "ShowFields",
+		Expr: parser.ShowFields{
+			Type: parser.Identifier{Literal: "fields"},
+			Table: parser.TableObject{
+				Type:          parser.Identifier{Literal: "csv"},
+				FormatElement: parser.NewStringValue(","),
+				Path:          parser.Identifier{Literal: "show_fields_create.csv"},
+			},
+		},
+		ViewCache: ViewMap{
+			strings.ToUpper(GetTestFilePath("show_fields_create.csv")): &View{
+				Header: NewHeader("show_fields_create", []string{"column1", "column2"}),
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("show_fields_create.csv"),
+					Delimiter: ',',
+					Format:    cmd.CSV,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+					NoHeader:  false,
+				},
+			},
+		},
+		UncommittedViews: &UncommittedViewMap{
+			Created: map[string]*FileInfo{
+				strings.ToUpper(GetTestFilePath("show_fields_create.csv")): {Path: "show_fields_create.csv"},
+			},
+			Updated: map[string]*FileInfo{},
+		},
+		Expect: "\n" +
+			strings.Repeat(" ", (calcShowFieldsWidth("show_fields_create.csv", "show_fields_create.csv", 10)-(10+len("show_fields_create.csv")))/2) + "Fields in show_fields_create.csv\n" +
+			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv", "show_fields_create.csv", 10)) + "\n" +
+			" Type: Table\n" +
+			" Path: " + GetTestFilePath("show_fields_create.csv") + "\n" +
+			" Format: CSV      Delimiter: ','   Enclose All: false\n" +
+			" Encoding: UTF8   LineBreak: LF    Header: true\n" +
+			" Status: Created\n" +
+			" Fields:\n" +
+			"   1. column1\n" +
+			"   2. column2\n" +
+			"\n",
+	},
+	{
 		Name: "ShowFields Created Table",
 		Expr: parser.ShowFields{
 			Type:  parser.Identifier{Literal: "fields"},

@@ -16,7 +16,6 @@ import (
     expression  Expression
     expressions []Expression
     identifier  Identifier
-    table       Table
     variable    Variable
     variables   []Variable
     varassign   VariableAssignment
@@ -120,8 +119,11 @@ import (
 %type<queryexpr>   window_frame_low
 %type<queryexpr>   window_frame_high
 %type<queryexpr>   table_identifier
-%type<table>       identified_table
-%type<queryexprs>  operate_tables
+%type<identifier>  table_object_identifier
+%type<queryexpr>   table_object
+%type<queryexpr>   updatable_table_identifier
+%type<queryexprs>  identified_tables
+%type<queryexprs>  updatable_tables
 %type<queryexpr>   virtual_table_object
 %type<queryexpr>   table
 %type<queryexpr>   join
@@ -199,6 +201,7 @@ import (
 %token<token> IGNORE WITHIN
 %token<token> VAR SHOW
 %token<token> TIES NULLS ROWS
+%token<token> CSV JSON FIXED LTSV
 %token<token> JSON_ROW JSON_TABLE
 %token<token> COUNT JSON_OBJECT
 %token<token> AGGREGATE_FUNCTION LIST_FUNCTION ANALYTIC_FUNCTION FUNCTION_NTH FUNCTION_WITH_INS
@@ -605,31 +608,31 @@ table_operation_statement
     {
         $$ = CreateTable{Table: $3, Query: $5}
     }
-    | ALTER TABLE table_identifier ADD column_default column_position
+    | ALTER TABLE updatable_table_identifier ADD column_default column_position
     {
         $$ = AddColumns{Table: $3, Columns: []ColumnDefault{$5}, Position: $6}
     }
-    | ALTER TABLE table_identifier ADD '(' column_defaults ')' column_position
+    | ALTER TABLE updatable_table_identifier ADD '(' column_defaults ')' column_position
     {
         $$ = AddColumns{Table: $3, Columns: $6, Position: $8}
     }
-    | ALTER TABLE table_identifier DROP field_reference
+    | ALTER TABLE updatable_table_identifier DROP field_reference
     {
         $$ = DropColumns{Table: $3, Columns: []QueryExpression{$5}}
     }
-    | ALTER TABLE table_identifier DROP '(' field_references ')'
+    | ALTER TABLE updatable_table_identifier DROP '(' field_references ')'
     {
         $$ = DropColumns{Table: $3, Columns: $6}
     }
-    | ALTER TABLE table_identifier RENAME field_reference TO identifier
+    | ALTER TABLE updatable_table_identifier RENAME field_reference TO identifier
     {
         $$ = RenameColumn{Table: $3, Old: $5, New: $7}
     }
-    | ALTER TABLE table_identifier SET identifier TO identifier
+    | ALTER TABLE updatable_table_identifier SET identifier TO identifier
     {
         $$ = SetTableAttribute{BaseExpr: NewBaseExpr($1), Table: $3, Attribute: $5, Value: $7}
     }
-    | ALTER TABLE table_identifier SET identifier TO value
+    | ALTER TABLE updatable_table_identifier SET identifier TO value
     {
         $$ = SetTableAttribute{BaseExpr: NewBaseExpr($1), Table: $3, Attribute: $5, Value: $7}
     }
@@ -905,7 +908,7 @@ command_statement
     {
         $$ = ShowObjects{BaseExpr: NewBaseExpr($1), Type: $2}
     }
-    | SHOW identifier FROM identifier
+    | SHOW identifier FROM updatable_table_identifier
     {
         $$ = ShowFields{BaseExpr: NewBaseExpr($1), Type: $2, Table: $4}
     }
@@ -1705,22 +1708,54 @@ table_identifier
         $$ = Stdin{BaseExpr: NewBaseExpr($1), Stdin: $1.Literal}
     }
 
-identified_table
+table_object_identifier
+    : CSV
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | JSON
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | FIXED
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | LTSV
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+
+table_object
+    : table_object_identifier '(' identifier ')'
+    {
+        $$ = TableObject{BaseExpr: $1.BaseExpr, Type: $1, Path: $3, Args: nil}
+    }
+    | table_object_identifier '(' identifier ',' arguments ')'
+    {
+        $$ = TableObject{BaseExpr: $1.BaseExpr, Type: $1, Path: $3, Args: $5}
+    }
+    | table_object_identifier '(' value ',' identifier ')'
+    {
+        $$ = TableObject{BaseExpr: $1.BaseExpr, Type: $1, FormatElement: $3, Path: $5, Args: nil}
+    }
+    | table_object_identifier '(' value ',' identifier ',' arguments ')'
+    {
+        $$ = TableObject{BaseExpr: $1.BaseExpr, Type: $1, FormatElement: $3, Path: $5, Args: $7}
+    }
+
+updatable_table_identifier
     : table_identifier
     {
-        $$ = Table{Object: $1}
+        $$ = $1
     }
-    | table_identifier identifier
+    | table_object
     {
-        $$ = Table{Object: $1, Alias: $2}
-    }
-    | table_identifier AS identifier
-    {
-        $$ = Table{Object: $1, As: $2.Literal, Alias: $3}
+        $$ = $1
     }
 
 virtual_table_object
-    : subquery
+    : updatable_table_identifier
     {
         $$ = $1
     }
@@ -1732,29 +1767,13 @@ virtual_table_object
     {
         $$ = JsonQuery{BaseExpr: NewBaseExpr($1), JsonQuery: $1.Literal, Query: $3, JsonText: $5}
     }
-    | identifier '(' identifier ')'
-    {
-        $$ = TableObject{BaseExpr: $1.BaseExpr, Type: $1, Path: $3, Args: nil}
-    }
-    | identifier '(' identifier ',' arguments ')'
-    {
-        $$ = TableObject{BaseExpr: $1.BaseExpr, Type: $1, Path: $3, Args: $5}
-    }
-    | identifier '(' value ',' identifier ')'
-    {
-        $$ = TableObject{BaseExpr: $1.BaseExpr, Type: $1, FormatElement: $3, Path: $5, Args: nil}
-    }
-    | identifier '(' value ',' identifier ',' arguments ')'
-    {
-        $$ = TableObject{BaseExpr: $1.BaseExpr, Type: $1, FormatElement: $3, Path: $5, Args: $7}
-    }
-
-table
-    : identified_table
+    | subquery
     {
         $$ = $1
     }
-    | virtual_table_object
+
+table
+    : virtual_table_object
     {
         $$ = Table{Object: $1}
     }
@@ -1905,12 +1924,22 @@ tables
         $$ = append([]QueryExpression{$1}, $3...)
     }
 
-operate_tables
+identified_tables
     : table_identifier
     {
         $$ = []QueryExpression{Table{Object: $1}}
     }
-    | table_identifier ',' operate_tables
+    | table_identifier ',' identified_tables
+    {
+        $$ = append([]QueryExpression{Table{Object: $1}}, $3...)
+    }
+
+updatable_tables
+    : updatable_table_identifier
+    {
+        $$ = []QueryExpression{Table{Object: $1}}
+    }
+    | updatable_table_identifier ',' updatable_tables
     {
         $$ = append([]QueryExpression{Table{Object: $1}}, $3...)
     }
@@ -1936,25 +1965,25 @@ fields
     }
 
 insert_query
-    : with_clause INSERT INTO identified_table VALUES row_values
+    : with_clause INSERT INTO updatable_table_identifier VALUES row_values
     {
-        $$ = InsertQuery{WithClause: $1, Table: $4, ValuesList: $6}
+        $$ = InsertQuery{WithClause: $1, Table: Table{Object: $4}, ValuesList: $6}
     }
-    | with_clause INSERT INTO identified_table '(' field_references ')' VALUES row_values
+    | with_clause INSERT INTO updatable_table_identifier '(' field_references ')' VALUES row_values
     {
-        $$ = InsertQuery{WithClause: $1, Table: $4, Fields: $6, ValuesList: $9}
+        $$ = InsertQuery{WithClause: $1, Table: Table{Object: $4}, Fields: $6, ValuesList: $9}
     }
-    | with_clause INSERT INTO identified_table select_query
+    | with_clause INSERT INTO updatable_table_identifier select_query
     {
-        $$ = InsertQuery{WithClause: $1, Table: $4, Query: $5.(SelectQuery)}
+        $$ = InsertQuery{WithClause: $1, Table: Table{Object: $4}, Query: $5.(SelectQuery)}
     }
-    | with_clause INSERT INTO identified_table '(' field_references ')' select_query
+    | with_clause INSERT INTO updatable_table_identifier '(' field_references ')' select_query
     {
-        $$ = InsertQuery{WithClause: $1, Table: $4, Fields: $6, Query: $8.(SelectQuery)}
+        $$ = InsertQuery{WithClause: $1, Table: Table{Object: $4}, Fields: $6, Query: $8.(SelectQuery)}
     }
 
 update_query
-    : with_clause UPDATE operate_tables SET update_set_list from_clause where_clause
+    : with_clause UPDATE updatable_tables SET update_set_list from_clause where_clause
     {
         $$ = UpdateQuery{WithClause: $1, Tables: $3, SetList: $5, FromClause: $6, WhereClause: $7}
     }
@@ -1981,7 +2010,7 @@ delete_query
         from := FromClause{From: $3.Literal, Tables: $4}
         $$ = DeleteQuery{BaseExpr: NewBaseExpr($2), WithClause: $1, FromClause: from, WhereClause: $5}
     }
-    | with_clause DELETE operate_tables FROM tables where_clause
+    | with_clause DELETE identified_tables FROM tables where_clause
     {
         from := FromClause{From: $4.Literal, Tables: $5}
         $$ = DeleteQuery{BaseExpr: NewBaseExpr($2), WithClause: $1, Tables: $3, FromClause: from, WhereClause: $6}
@@ -2161,6 +2190,22 @@ identifier
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }
     | ROWS
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | CSV
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | JSON
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | FIXED
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | LTSV
     {
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }
