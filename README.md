@@ -58,7 +58,7 @@ Go 1.9 or later (ref. [Getting Started - The Go Programming Language](https://go
 
 1. ```$ go get github.com/mithrandie/csvq```
 
-##### Build with strict dependencies (Go 1.11)
+##### Build with strict dependencies (Go 1.11 or later)
 
 1. ```$ go get -d github.com/mithrandie/csvq```
 2. Change directory to $GOPATH/github.com/mithrandie/csvq
