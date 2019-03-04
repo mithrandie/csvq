@@ -1,12 +1,12 @@
-hash: ac5c6281a3d6ffcb19e57dfbddd1b9a02c74e62b4e8f2aa1379300142a7c8275
-updated: 2019-02-25T05:04:01.063455+09:00
+hash: a6f900b0329241407a994705a2b15bbc67d4a5dcd3c949dd93b68096ff36bc07
+updated: 2019-03-04T19:41:48.130789+09:00
 imports:
 - name: github.com/mitchellh/go-homedir
   version: af06845cf3004701891bf4fdb884bfe4920b3727
 - name: github.com/mithrandie/go-file
   version: 2066c60a29ce10d93467df8bb519d8e8668d4c2e
 - name: github.com/mithrandie/go-text
-  version: ad493bc2fc1f3f17822d5d1c0c9bc34a30254607
+  version: cabdadc7dc403b8a644638d5e5a88b09749c31d0
   subpackages:
   - color
   - csv
@@ -21,16 +21,16 @@ imports:
 - name: github.com/urfave/cli
   version: cfb38830724cc34fedffe9a2a29fb54fa9169cd1
 - name: golang.org/x/crypto
-  version: ffb98f73852f696ea2bb21a617a5c4b3e067a439
+  version: 8dd112bcdc25174059e45e07517d9fc663123347
   subpackages:
   - ssh/terminal
 - name: golang.org/x/sys
-  version: cd391775e71e684db52b63df9affd58269495083
+  version: c2f5717e611cf8e89a852a41081355194d80c943
   subpackages:
   - unix
   - windows
 - name: golang.org/x/text
-  version: 6c92c7dc7f53607809182301b96e4cc1975143f1
+  version: d14c52b222ee852cdba8b07206ca0c614b389876
   subpackages:
   - encoding
   - encoding/internal

@@ -216,7 +216,7 @@ var convertTableValueToJsonStructureTests = []struct {
 			},
 			{
 				value.NewString("b"),
-				value.NewInteger(2),
+				value.NewFloat(0.2),
 			},
 		},
 		Expect: json.Array{
@@ -228,7 +228,7 @@ var convertTableValueToJsonStructureTests = []struct {
 					},
 					{
 						Key:   "column2",
-						Value: json.Number(1),
+						Value: json.Integer(1),
 					},
 				},
 			},
@@ -240,7 +240,7 @@ var convertTableValueToJsonStructureTests = []struct {
 					},
 					{
 						Key:   "column2",
-						Value: json.Number(2),
+						Value: json.Float(0.2),
 					},
 				},
 			},
@@ -281,7 +281,7 @@ var convertTableValueToJsonStructureTests = []struct {
 										Members: []json.ObjectMember{
 											{
 												Key:   "child11",
-												Value: json.Number(1),
+												Value: json.Integer(1),
 											},
 										},
 									},
@@ -292,7 +292,7 @@ var convertTableValueToJsonStructureTests = []struct {
 										Members: []json.ObjectMember{
 											{
 												Key:   "child22",
-												Value: json.Number(11),
+												Value: json.Integer(11),
 											},
 										},
 									},
@@ -318,7 +318,7 @@ var convertTableValueToJsonStructureTests = []struct {
 										Members: []json.ObjectMember{
 											{
 												Key:   "child11",
-												Value: json.Number(2),
+												Value: json.Integer(2),
 											},
 										},
 									},
@@ -329,7 +329,7 @@ var convertTableValueToJsonStructureTests = []struct {
 										Members: []json.ObjectMember{
 											{
 												Key:   "child22",
-												Value: json.Number(22),
+												Value: json.Integer(22),
 											},
 										},
 									},
@@ -373,11 +373,11 @@ var convertTableValueToJsonStructureTests = []struct {
 					},
 					{
 						Key:   "integer",
-						Value: json.Number(1),
+						Value: json.Integer(1),
 					},
 					{
 						Key:   "float",
-						Value: json.Number(1.1),
+						Value: json.Float(1.1),
 					},
 					{
 						Key:   "boolean",
