@@ -24,7 +24,7 @@ const (
 	EnvironmentVariableSign = "@%"
 	RuntimeInformationSign  = "@#"
 )
-const DelimiteAutomatically = "SPACES"
+const DelimitAutomatically = "SPACES"
 
 const (
 	RepositoryFlag              = "REPOSITORY"
@@ -459,7 +459,7 @@ func (f *Flags) SetWriteDelimiterPositions(s string) error {
 
 	delimiterPositions, singleLine, err := ParseDelimiterPositions(s)
 	if err != nil {
-		return errors.New(fmt.Sprintf("write-delimiter-positions must be %q or a JSON array of integers", DelimiteAutomatically))
+		return errors.New(fmt.Sprintf("write-delimiter-positions must be %q or a JSON array of integers", DelimitAutomatically))
 	}
 
 	f.WriteDelimiterPositions = delimiterPositions

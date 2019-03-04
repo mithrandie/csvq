@@ -302,14 +302,14 @@ func ParseDelimiterPositions(s string) ([]int, bool, error) {
 	var delimiterPositions []int = nil
 	singleLine := false
 
-	if !strings.EqualFold(DelimiteAutomatically, s) {
+	if !strings.EqualFold(DelimitAutomatically, s) {
 		if strings.HasPrefix(s, "s[") || strings.HasPrefix(s, "S[") {
 			singleLine = true
 			s = s[1:]
 		}
 		err := json.Unmarshal([]byte(s), &delimiterPositions)
 		if err != nil {
-			return delimiterPositions, singleLine, errors.New(fmt.Sprintf("delimiter positions must be %q or a JSON array of integers", DelimiteAutomatically))
+			return delimiterPositions, singleLine, errors.New(fmt.Sprintf("delimiter positions must be %q or a JSON array of integers", DelimitAutomatically))
 		}
 	}
 	return delimiterPositions, singleLine, nil
