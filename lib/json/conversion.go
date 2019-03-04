@@ -16,11 +16,15 @@ func ConvertToValue(structure json.Structure) value.Primary {
 
 	switch structure.(type) {
 	case json.Number:
-		p = value.ParseFloat64(float64(structure.(json.Number)))
+		p = value.ParseFloat64(structure.(json.Number).Raw())
+	case json.Float:
+		p = value.NewFloat(structure.(json.Float).Raw())
+	case json.Integer:
+		p = value.NewInteger(structure.(json.Integer).Raw())
 	case json.String:
-		p = value.NewString(string(structure.(json.String)))
+		p = value.NewString(structure.(json.String).Raw())
 	case json.Boolean:
-		p = value.NewBoolean(bool(structure.(json.Boolean)))
+		p = value.NewBoolean(structure.(json.Boolean).Raw())
 	case json.Null:
 		p = value.NewNull()
 	default:
@@ -163,9 +167,9 @@ func ParseValueToStructure(val value.Primary) json.Structure {
 	case value.String:
 		s = json.String(val.(value.String).Raw())
 	case value.Integer:
-		s = json.Number(val.(value.Integer).Raw())
+		s = json.Integer(val.(value.Integer).Raw())
 	case value.Float:
-		s = json.Number(val.(value.Float).Raw())
+		s = json.Float(val.(value.Float).Raw())
 	case value.Boolean:
 		s = json.Boolean(val.(value.Boolean).Raw())
 	case value.Ternary:
