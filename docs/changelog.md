@@ -5,6 +5,13 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.9.1
+
+Released on March 4, 2019
+
+- Fix the following bug.
+  - JSON parsing error in numeric values.
+
 ## Version 1.9.0
 
 Released on March 3, 2019
