@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -113,7 +114,7 @@ func TestPrompt_RenderPrompt(t *testing.T) {
 	for _, v := range promptRenderPromptTests {
 		cmd.GetFlags().SetColor(v.UseColor)
 		prompt.sequence = v.Sequence
-		result, err := prompt.RenderPrompt()
+		result, err := prompt.RenderPrompt(context.Background())
 
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -177,7 +178,7 @@ func TestPrompt_RenderContinuousPrompt(t *testing.T) {
 	for _, v := range promptRenderContinuousPromptTests {
 		cmd.GetFlags().SetColor(v.UseColor)
 		prompt.continuousSequence = v.Sequence
-		result, err := prompt.RenderContinuousPrompt()
+		result, err := prompt.RenderContinuousPrompt(context.Background())
 
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -269,7 +270,7 @@ func TestPrompt_Render(t *testing.T) {
 	prompt := NewPrompt(filter, &color.Palette{})
 
 	for _, v := range promptRenderTests {
-		result, err := prompt.Render(v.Input)
+		result, err := prompt.Render(context.Background(), v.Input)
 
 		if err != nil {
 			if len(v.Error) < 1 {

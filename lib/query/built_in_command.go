@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -55,8 +56,8 @@ var ShowObjectList = []string{
 	ShowRuninfo,
 }
 
-func Echo(expr parser.Echo, filter *Filter) (string, error) {
-	p, err := filter.Evaluate(expr.Value)
+func Echo(ctx context.Context, expr parser.Echo, filter *Filter) (string, error) {
+	p, err := filter.Evaluate(ctx, expr.Value)
 	if err != nil {
 		return "", err
 	}
@@ -64,17 +65,17 @@ func Echo(expr parser.Echo, filter *Filter) (string, error) {
 	return Formatter.Format("%s", []value.Primary{p})
 }
 
-func Print(expr parser.Print, filter *Filter) (string, error) {
-	p, err := filter.Evaluate(expr.Value)
+func Print(ctx context.Context, expr parser.Print, filter *Filter) (string, error) {
+	p, err := filter.Evaluate(ctx, expr.Value)
 	if err != nil {
 		return "", err
 	}
 	return p.String(), err
 }
 
-func Printf(expr parser.Printf, filter *Filter) (string, error) {
+func Printf(ctx context.Context, expr parser.Printf, filter *Filter) (string, error) {
 	var format string
-	formatValue, err := filter.Evaluate(expr.Format)
+	formatValue, err := filter.Evaluate(ctx, expr.Format)
 	if err != nil {
 		return "", err
 	}
@@ -85,7 +86,7 @@ func Printf(expr parser.Printf, filter *Filter) (string, error) {
 
 	args := make([]value.Primary, len(expr.Values))
 	for i, v := range expr.Values {
-		p, err := filter.Evaluate(v)
+		p, err := filter.Evaluate(ctx, v)
 		if err != nil {
 			return "", err
 		}
@@ -99,13 +100,13 @@ func Printf(expr parser.Printf, filter *Filter) (string, error) {
 	return message, nil
 }
 
-func Source(expr parser.Source, filter *Filter) ([]parser.Statement, error) {
+func Source(ctx context.Context, expr parser.Source, filter *Filter) ([]parser.Statement, error) {
 	var fpath string
 
 	if ident, ok := expr.FilePath.(parser.Identifier); ok {
 		fpath = ident.Literal
 	} else {
-		p, err := filter.Evaluate(expr.FilePath)
+		p, err := filter.Evaluate(ctx, expr.FilePath)
 		if err != nil {
 			return nil, err
 		}
@@ -120,10 +121,10 @@ func Source(expr parser.Source, filter *Filter) ([]parser.Statement, error) {
 		return nil, NewSourceInvalidFilePathError(expr, expr.FilePath)
 	}
 
-	return LoadStatementsFromFile(expr, fpath)
+	return LoadStatementsFromFile(ctx, expr, fpath)
 }
 
-func LoadStatementsFromFile(expr parser.Source, fpath string) ([]parser.Statement, error) {
+func LoadStatementsFromFile(ctx context.Context, expr parser.Source, fpath string) ([]parser.Statement, error) {
 	if !filepath.IsAbs(fpath) {
 		if abs, err := filepath.Abs(fpath); err == nil {
 			fpath = abs
@@ -134,7 +135,7 @@ func LoadStatementsFromFile(expr parser.Source, fpath string) ([]parser.Statemen
 		return nil, NewSourceFileNotExistError(expr, fpath)
 	}
 
-	h, err := file.NewHandlerForRead(fpath)
+	h, err := file.NewHandlerForRead(ctx, fpath)
 	if err != nil {
 		return nil, NewReadFileError(expr, err.Error())
 	}
@@ -153,9 +154,9 @@ func LoadStatementsFromFile(expr parser.Source, fpath string) ([]parser.Statemen
 	return statements, err
 }
 
-func ParseExecuteStatements(expr parser.Execute, filter *Filter) ([]parser.Statement, error) {
+func ParseExecuteStatements(ctx context.Context, expr parser.Execute, filter *Filter) ([]parser.Statement, error) {
 	var input string
-	stmt, err := filter.Evaluate(expr.Statements)
+	stmt, err := filter.Evaluate(ctx, expr.Statements)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +167,7 @@ func ParseExecuteStatements(expr parser.Execute, filter *Filter) ([]parser.State
 
 	args := make([]value.Primary, len(expr.Values))
 	for i, v := range expr.Values {
-		p, err := filter.Evaluate(v)
+		p, err := filter.Evaluate(ctx, v)
 		if err != nil {
 			return nil, err
 		}
@@ -184,14 +185,14 @@ func ParseExecuteStatements(expr parser.Execute, filter *Filter) ([]parser.State
 	return statements, err
 }
 
-func SetFlag(expr parser.SetFlag, filter *Filter) error {
+func SetFlag(ctx context.Context, expr parser.SetFlag, filter *Filter) error {
 	var p value.Primary
 	var err error
 
 	if ident, ok := expr.Value.(parser.Identifier); ok {
 		p = value.NewString(ident.Literal)
 	} else {
-		p, err = filter.Evaluate(expr.Value)
+		p, err = filter.Evaluate(ctx, expr.Value)
 		if err != nil {
 			return err
 		}
@@ -281,7 +282,7 @@ func SetFlag(expr parser.SetFlag, filter *Filter) error {
 	return nil
 }
 
-func AddFlagElement(expr parser.AddFlagElement, filter *Filter) error {
+func AddFlagElement(ctx context.Context, expr parser.AddFlagElement, filter *Filter) error {
 	switch strings.ToUpper(expr.Name) {
 	case cmd.DatetimeFormatFlag:
 		e := parser.SetFlag{
@@ -289,7 +290,7 @@ func AddFlagElement(expr parser.AddFlagElement, filter *Filter) error {
 			Name:     expr.Name,
 			Value:    expr.Value,
 		}
-		return SetFlag(e, filter)
+		return SetFlag(ctx, e, filter)
 	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.DelimiterFlag, cmd.JsonQueryFlag, cmd.EncodingFlag,
 		cmd.WriteEncodingFlag, cmd.FormatFlag, cmd.WriteDelimiterFlag, cmd.LineBreakFlag, cmd.JsonEscape,
 		cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAll, cmd.PrettyPrintFlag,
@@ -303,11 +304,11 @@ func AddFlagElement(expr parser.AddFlagElement, filter *Filter) error {
 	}
 }
 
-func RemoveFlagElement(expr parser.RemoveFlagElement, filter *Filter) error {
+func RemoveFlagElement(ctx context.Context, expr parser.RemoveFlagElement, filter *Filter) error {
 	var p value.Primary
 	var err error
 
-	p, err = filter.Evaluate(expr.Value)
+	p, err = filter.Evaluate(ctx, expr.Value)
 	if err != nil {
 		return err
 	}
@@ -866,7 +867,7 @@ func writeFunctions(w *ObjectWriter, funcs UserDefinedFunctionMap) {
 	}
 }
 
-func ShowFields(expr parser.ShowFields, filter *Filter) (string, error) {
+func ShowFields(ctx context.Context, expr parser.ShowFields, filter *Filter) (string, error) {
 	if !strings.EqualFold(expr.Type.Literal, "FIELDS") {
 		return "", NewShowInvalidObjectTypeError(expr, expr.Type.Literal)
 	}
@@ -874,7 +875,7 @@ func ShowFields(expr parser.ShowFields, filter *Filter) (string, error) {
 	var status = ObjectFixed
 
 	view := NewView()
-	err := view.LoadFromTableIdentifier(expr.Table, filter.CreateNode())
+	err := view.LoadFromTableIdentifier(ctx, expr.Table, filter.CreateNode())
 	if err != nil {
 		return "", err
 	}
@@ -956,14 +957,14 @@ func writeFieldList(w *ObjectWriter, fields []string) {
 	}
 }
 
-func SetEnvVar(expr parser.SetEnvVar, filter *Filter) error {
+func SetEnvVar(ctx context.Context, expr parser.SetEnvVar, filter *Filter) error {
 	var p value.Primary
 	var err error
 
 	if ident, ok := expr.Value.(parser.Identifier); ok {
 		p = value.NewString(ident.Literal)
 	} else {
-		p, err = filter.Evaluate(expr.Value)
+		p, err = filter.Evaluate(ctx, expr.Value)
 		if err != nil {
 			return err
 		}
@@ -980,14 +981,14 @@ func UnsetEnvVar(expr parser.UnsetEnvVar) error {
 	return os.Unsetenv(expr.EnvVar.Name)
 }
 
-func Chdir(expr parser.Chdir, filter *Filter) error {
+func Chdir(ctx context.Context, expr parser.Chdir, filter *Filter) error {
 	var dirpath string
 	var err error
 
 	if ident, ok := expr.DirPath.(parser.Identifier); ok {
 		dirpath = ident.Literal
 	} else {
-		p, err := filter.Evaluate(expr.DirPath)
+		p, err := filter.Evaluate(ctx, expr.DirPath)
 		if err != nil {
 			return err
 		}
@@ -1016,10 +1017,10 @@ func Pwd(expr parser.Pwd) (string, error) {
 	return dirpath, err
 }
 
-func Reload(expr parser.Reload) error {
+func Reload(ctx context.Context, expr parser.Reload) error {
 	switch strings.ToUpper(expr.Type.Literal) {
 	case ReloadConfig:
-		if err := cmd.LoadEnvironment(); err != nil {
+		if err := cmd.LoadEnvironmentContext(ctx); err != nil {
 			return NewLoadConfigurationError(expr, err.Error())
 		}
 
@@ -1049,14 +1050,14 @@ func Reload(expr parser.Reload) error {
 	return nil
 }
 
-func Syntax(expr parser.Syntax, filter *Filter) string {
+func Syntax(ctx context.Context, expr parser.Syntax, filter *Filter) string {
 	keys := make([]string, 0, len(expr.Keywords))
 	for _, key := range expr.Keywords {
 		var keystr string
 		if fr, ok := key.(parser.FieldReference); ok {
 			keystr = fr.Column.Literal
 		} else {
-			if p, err := filter.Evaluate(key); err == nil {
+			if p, err := filter.Evaluate(ctx, key); err == nil {
 				if s := value.ToString(p); !value.IsNull(s) {
 					keystr = s.(value.String).Raw()
 				}

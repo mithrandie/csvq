@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -32,9 +33,9 @@ func (list TemporaryViewScopes) Get(name parser.Identifier) (*View, error) {
 	return nil, NewTableNotLoadedError(name)
 }
 
-func (list TemporaryViewScopes) GetWithInternalId(name parser.Identifier) (*View, error) {
+func (list TemporaryViewScopes) GetWithInternalId(ctx context.Context, name parser.Identifier) (*View, error) {
 	for _, m := range list {
-		if view, err := m.GetWithInternalId(name); err == nil {
+		if view, err := m.GetWithInternalId(ctx, name); err == nil {
 			return view, nil
 		}
 	}
@@ -120,16 +121,19 @@ func (m ViewMap) Get(fpath parser.Identifier) (*View, error) {
 	return nil, NewTableNotLoadedError(fpath)
 }
 
-func (m ViewMap) GetWithInternalId(fpath parser.Identifier) (*View, error) {
+func (m ViewMap) GetWithInternalId(ctx context.Context, fpath parser.Identifier) (*View, error) {
 	ufpath := strings.ToUpper(fpath.Literal)
 	if view, ok := m[ufpath]; ok {
 		ret := view.Copy()
 
 		ret.Header = MergeHeader(NewHeaderWithId(ret.Header[0].View, []string{}), ret.Header)
 
-		NewGoroutineTaskManager(ret.RecordLen(), -1).Run(func(index int) {
+		if err := NewGoroutineTaskManager(ret.RecordLen(), -1).Run(ctx, func(index int) error {
 			ret.RecordSet[index] = append(Record{NewCell(value.NewInteger(int64(index)))}, ret.RecordSet[index]...)
-		})
+			return nil
+		}); err != nil {
+			return nil, err
+		}
 
 		return ret, nil
 	}

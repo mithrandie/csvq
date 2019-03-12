@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"runtime"
 	"testing"
+	"time"
 
 	"github.com/mithrandie/go-text"
 	"github.com/mithrandie/go-text/json"
@@ -122,8 +123,8 @@ func TestFlags_SetWaitTimeout(t *testing.T) {
 		t.Errorf("wait timeout = %f, expect to set %f for %f", flags.WaitTimeout, 15.0, f)
 	}
 
-	if file.WaitTimeout != 15 {
-		t.Errorf("wait timeout in the file package = %f, expect to set %f for %f", file.WaitTimeout, 15.0, f)
+	if file.WaitTimeout != 15*time.Second {
+		t.Errorf("wait timeout in the file package = %v, expect to set %v for %f", file.WaitTimeout, 15*time.Second, f)
 	}
 }
 

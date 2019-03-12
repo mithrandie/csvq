@@ -170,7 +170,7 @@ func initFlag(flags *cmd.Flags) {
 	flags.Quiet = false
 	flags.CPU = cpu
 	flags.Stats = false
-	flags.RetryInterval = 10 * time.Millisecond
+	flags.RetryDelay = 10 * time.Millisecond
 	flags.Now = "2012-02-03 09:18:15"
 }
 

@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -197,15 +198,15 @@ type UserDefinedFunction struct {
 	Cursor      parser.Identifier // For Aggregate Functions
 }
 
-func (fn *UserDefinedFunction) Execute(args []value.Primary, filter *Filter) (value.Primary, error) {
+func (fn *UserDefinedFunction) Execute(ctx context.Context, args []value.Primary, filter *Filter) (value.Primary, error) {
 	childScope := filter.CreateChildScope()
-	return fn.execute(args, childScope)
+	return fn.execute(ctx, args, childScope)
 }
 
-func (fn *UserDefinedFunction) ExecuteAggregate(values []value.Primary, args []value.Primary, filter *Filter) (value.Primary, error) {
+func (fn *UserDefinedFunction) ExecuteAggregate(ctx context.Context, values []value.Primary, args []value.Primary, filter *Filter) (value.Primary, error) {
 	childScope := filter.CreateChildScope()
 	childScope.Cursors.AddPseudoCursor(fn.Cursor, values)
-	return fn.execute(args, childScope)
+	return fn.execute(ctx, args, childScope)
 }
 
 func (fn *UserDefinedFunction) CheckArgsLen(expr parser.QueryExpression, name string, argsLen int) error {
@@ -229,7 +230,7 @@ func (fn *UserDefinedFunction) CheckArgsLen(expr parser.QueryExpression, name st
 	return nil
 }
 
-func (fn *UserDefinedFunction) execute(args []value.Primary, filter *Filter) (value.Primary, error) {
+func (fn *UserDefinedFunction) execute(ctx context.Context, args []value.Primary, filter *Filter) (value.Primary, error) {
 	if err := fn.CheckArgsLen(fn.Name, fn.Name.Literal, len(args)); err != nil {
 		return nil, err
 	}
@@ -239,7 +240,7 @@ func (fn *UserDefinedFunction) execute(args []value.Primary, filter *Filter) (va
 			filter.Variables[0].Add(v, args[i])
 		} else {
 			defaultValue, _ := fn.Defaults[v.Name]
-			val, err := filter.Evaluate(defaultValue)
+			val, err := filter.Evaluate(ctx, defaultValue)
 			if err != nil {
 				return nil, err
 			}
@@ -250,7 +251,7 @@ func (fn *UserDefinedFunction) execute(args []value.Primary, filter *Filter) (va
 	proc := NewProcedure()
 	proc.Filter = filter
 
-	if _, err := proc.Execute(fn.Statements); err != nil {
+	if _, err := proc.Execute(ctx, fn.Statements); err != nil {
 		return nil, err
 	}
 

@@ -1,6 +1,7 @@
 package action
 
 import (
+	"context"
 	"errors"
 
 	"github.com/mithrandie/csvq/lib/parser"
@@ -25,7 +26,7 @@ func Syntax(proc *query.Procedure, words []string) error {
 		},
 	}
 
-	_, err := proc.Execute(statements)
+	_, err := proc.Execute(context.Background(), statements)
 	if appErr, ok := err.(query.AppError); ok {
 		err = errors.New(appErr.ErrorMessage())
 	}

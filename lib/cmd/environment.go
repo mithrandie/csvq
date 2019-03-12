@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -89,6 +90,10 @@ type InteractiveShell struct {
 }
 
 func LoadEnvironment() error {
+	return LoadEnvironmentContext(context.Background())
+}
+
+func LoadEnvironmentContext(ctx context.Context) error {
 	var err error
 
 	handlers := make([]*file.Handler, 0, 4)
@@ -107,7 +112,7 @@ func LoadEnvironment() error {
 		var h *file.Handler
 		var buf []byte
 
-		h, err = file.NewHandlerForRead(fpath)
+		h, err = file.NewHandlerForRead(ctx, fpath)
 		if err != nil {
 			return errors.New(fmt.Sprintf("failed to load %q: %s", fpath, err.Error()))
 		}
@@ -134,6 +139,10 @@ func LoadEnvironment() error {
 }
 
 func GetEnvironment() (*Environment, error) {
+	return GetEnvironmentContext(context.Background())
+}
+
+func GetEnvironmentContext(ctx context.Context) (*Environment, error) {
 	var err error
 
 	getEnv.Do(func() {
@@ -142,7 +151,7 @@ func GetEnvironment() (*Environment, error) {
 			return
 		}
 
-		err = LoadEnvironment()
+		err = LoadEnvironmentContext(ctx)
 	})
 
 	return environment, err

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -188,7 +189,7 @@ type Flags struct {
 	Stats bool
 
 	// Fixed Value
-	RetryInterval time.Duration
+	RetryDelay time.Duration
 
 	// Use in tests
 	Now string
@@ -208,8 +209,12 @@ func GetDefaultNumberOfCPU() int {
 }
 
 func GetFlags() *Flags {
+	return GetFlagsContext(context.Background())
+}
+
+func GetFlagsContext(ctx context.Context) *Flags {
 	getFlags.Do(func() {
-		env, _ := GetEnvironment()
+		env, _ := GetEnvironmentContext(ctx)
 
 		datetimeFormat := make([]string, 0, len(env.DatetimeFormat))
 		for _, v := range env.DatetimeFormat {
@@ -246,7 +251,7 @@ func GetFlags() *Flags {
 			Quiet:                   false,
 			CPU:                     GetDefaultNumberOfCPU(),
 			Stats:                   false,
-			RetryInterval:           10 * time.Millisecond,
+			RetryDelay:              10 * time.Millisecond,
 			Now:                     "",
 		}
 	})
@@ -314,7 +319,7 @@ func (f *Flags) SetWaitTimeout(t float64) {
 	}
 
 	flags.WaitTimeout = t
-	file.UpdateWaitTimeout(flags.WaitTimeout, flags.RetryInterval)
+	file.UpdateWaitTimeout(flags.WaitTimeout, flags.RetryDelay)
 	return
 }
 

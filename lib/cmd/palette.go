@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -34,11 +35,15 @@ var (
 )
 
 func GetPalette() (*color.Palette, error) {
+	return GetPaletteContext(context.Background())
+}
+
+func GetPaletteContext(ctx context.Context) (*color.Palette, error) {
 	var err error
 
 	getPalette.Do(func() {
 		var env *Environment
-		env, err = GetEnvironment()
+		env, err = GetEnvironmentContext(ctx)
 		if err != nil {
 			return
 		}

@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -101,7 +102,7 @@ func TestVariableScopes_Substitute(t *testing.T) {
 	}
 
 	for _, v := range variableScopesSubstituteTests {
-		result, err := list.Substitute(v.Expr, v.Filter)
+		result, err := list.Substitute(context.Background(), v.Expr, v.Filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -327,7 +328,7 @@ func TestVariableMap_Declare(t *testing.T) {
 			v.Filter = NewEmptyFilter()
 		}
 
-		err := vars.Declare(v.Expr.(parser.VariableDeclaration), v.Filter)
+		err := vars.Declare(context.Background(), v.Expr.(parser.VariableDeclaration), v.Filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -385,7 +386,7 @@ func TestVariableMap_Substitute(t *testing.T) {
 			v.Filter = NewEmptyFilter()
 		}
 
-		_, err := vars.Substitute(v.Expr.(parser.VariableSubstitution), v.Filter)
+		_, err := vars.Substitute(context.Background(), v.Expr.(parser.VariableSubstitution), v.Filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

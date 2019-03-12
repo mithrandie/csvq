@@ -3,6 +3,7 @@
 package query
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -89,7 +90,7 @@ func TestCompleter_Update(t *testing.T) {
 	filter.Cursors.Declare(parser.CursorDeclaration{Cursor: parser.Identifier{Literal: "cur1"}})
 	filter.Functions.Declare(parser.FunctionDeclaration{Name: parser.Identifier{Literal: "scalafunc"}})
 	filter.Functions.DeclareAggregate(parser.AggregateDeclaration{Name: parser.Identifier{Literal: "aggfunc"}})
-	filter.Variables.Declare(parser.VariableDeclaration{Assignments: []parser.VariableAssignment{{Variable: parser.Variable{Name: "var"}}}}, filter)
+	filter.Variables.Declare(context.Background(), parser.VariableDeclaration{Assignments: []parser.VariableAssignment{{Variable: parser.Variable{Name: "var"}}}}, filter)
 
 	c := NewCompleter(filter)
 	if len(c.flagList) != len(cmd.FlagList) || !strings.HasPrefix(c.flagList[0], cmd.FlagSign) {

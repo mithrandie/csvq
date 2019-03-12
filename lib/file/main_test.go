@@ -29,24 +29,24 @@ func run(m *testing.M) int {
 
 func setup() {
 	if _, err := os.Stat(TestDir); err == nil {
-		os.RemoveAll(TestDir)
+		_ = os.RemoveAll(TestDir)
 	}
 
 	if _, err := os.Stat(TestDir); os.IsNotExist(err) {
-		os.Mkdir(TestDir, 0755)
+		_ = os.Mkdir(TestDir, 0755)
 	}
 
 	fp, _ := os.Create(GetTestFilePath("open.txt"))
-	fp.Close()
+	_ = fp.Close()
 
 	fp, _ = os.Create(GetTestFilePath("update.txt"))
-	fp.Close()
+	_ = fp.Close()
 
 	UpdateWaitTimeout(waitTimeoutForTests, retryIntervalForTests)
 }
 
 func teardown() {
 	if _, err := os.Stat(TestDir); err == nil {
-		os.RemoveAll(TestDir)
+		_ = os.RemoveAll(TestDir)
 	}
 }

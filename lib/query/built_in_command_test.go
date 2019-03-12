@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -48,7 +49,7 @@ func TestEcho(t *testing.T) {
 	filter := NewEmptyFilter()
 
 	for _, v := range echoTests {
-		result, err := Echo(v.Expr, filter)
+		result, err := Echo(context.Background(), v.Expr, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -95,7 +96,7 @@ func TestPrint(t *testing.T) {
 	filter := NewEmptyFilter()
 
 	for _, v := range printTests {
-		result, err := Print(v.Expr, filter)
+		result, err := Print(context.Background(), v.Expr, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -182,7 +183,7 @@ func TestPrintf(t *testing.T) {
 	filter := NewEmptyFilter()
 
 	for _, v := range printfTests {
-		result, err := Printf(v.Expr, filter)
+		result, err := Printf(context.Background(), v.Expr, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -270,7 +271,7 @@ func TestSource(t *testing.T) {
 	filter := NewEmptyFilter()
 
 	for _, v := range sourceTests {
-		result, err := Source(v.Expr, filter)
+		result, err := Source(context.Background(), v.Expr, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -354,7 +355,7 @@ func TestParseExecuteStatements(t *testing.T) {
 	filter := NewEmptyFilter()
 
 	for _, v := range parseExecuteStatementsTests {
-		result, err := ParseExecuteStatements(v.Expr, filter)
+		result, err := ParseExecuteStatements(context.Background(), v.Expr, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -616,7 +617,7 @@ func TestSetFlag(t *testing.T) {
 
 	for _, v := range setFlagTests {
 		initCmdFlag()
-		err := SetFlag(v.Expr, filter)
+		err := SetFlag(context.Background(), v.Expr, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -688,7 +689,7 @@ func TestAddFlagElement(t *testing.T) {
 		flags := cmd.GetFlags()
 		v.Init(flags)
 
-		err := AddFlagElement(v.Expr, filter)
+		err := AddFlagElement(context.Background(), v.Expr, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -795,7 +796,7 @@ func TestRemoveFlagElement(t *testing.T) {
 		flags := cmd.GetFlags()
 		v.Init(flags)
 
-		err := RemoveFlagElement(v.Expr, filter)
+		err := RemoveFlagElement(context.Background(), v.Expr, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1493,7 +1494,7 @@ func TestShowFlag(t *testing.T) {
 		initCmdFlag()
 		cmd.GetFlags().SetColor(true)
 		for _, expr := range v.SetExprs {
-			SetFlag(expr, filter)
+			SetFlag(context.Background(), expr, filter)
 		}
 		result, err := ShowFlag(v.Expr)
 		if err != nil {
@@ -2349,7 +2350,7 @@ func TestShowFields(t *testing.T) {
 			filter = NewEmptyFilter()
 		}
 
-		result, err := ShowFields(v.Expr, filter)
+		result, err := ShowFields(context.Background(), v.Expr, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2422,7 +2423,7 @@ func TestSetEnvVar(t *testing.T) {
 	filter := NewEmptyFilter()
 
 	for _, v := range setEnvVarTests {
-		err := SetEnvVar(v.Expr, filter)
+		err := SetEnvVar(context.Background(), v.Expr, filter)
 
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -2646,7 +2647,7 @@ func TestSyntax(t *testing.T) {
 	filter := NewEmptyFilter()
 
 	for _, v := range syntaxTests {
-		result := Syntax(v.Expr, filter)
+		result := Syntax(context.Background(), v.Expr, filter)
 		if result != v.Expect {
 			t.Errorf("result = %s, want %s for %v", result, v.Expect, v.Expr)
 		}

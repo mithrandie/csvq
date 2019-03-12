@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"os"
 	"reflect"
 	"sync"
@@ -4005,7 +4006,7 @@ func TestFilter_Evaluate(t *testing.T) {
 		},
 	}
 	ViewCache.Clean()
-	cursors.Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+	cursors.Open(context.Background(), parser.Identifier{Literal: "cur"}, NewEmptyFilter())
 	cursors.Fetch(parser.Identifier{Literal: "cur"}, parser.NEXT, 0)
 
 	for _, v := range filterEvaluateTests {
@@ -4016,7 +4017,7 @@ func TestFilter_Evaluate(t *testing.T) {
 		}
 
 		v.Filter.Cursors = append(v.Filter.Cursors, cursors)
-		result, err := v.Filter.Evaluate(v.Expr)
+		result, err := v.Filter.Evaluate(context.Background(), v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -4065,7 +4066,7 @@ var filterEvaluateSequentiallyTests = []struct {
 		},
 		Expression: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 		Function: func(f *Filter, idx int) error {
-			p, err := f.Evaluate(parser.FieldReference{Column: parser.Identifier{Literal: "column1"}})
+			p, err := f.Evaluate(context.Background(), parser.FieldReference{Column: parser.Identifier{Literal: "column1"}})
 			if err != nil {
 				return err
 			}
@@ -4098,7 +4099,7 @@ var filterEvaluateSequentiallyTests = []struct {
 		},
 		Expression: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 		Function: func(f *Filter, idx int) error {
-			p, err := f.Evaluate(parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}})
+			p, err := f.Evaluate(context.Background(), parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}})
 			if err != nil {
 				return err
 			}
@@ -4135,7 +4136,7 @@ var filterEvaluateSequentiallyTests = []struct {
 			Value:    parser.Variable{Name: "fetch"},
 		},
 		Function: func(f *Filter, idx int) error {
-			p, err := f.Evaluate(parser.VariableSubstitution{
+			p, err := f.Evaluate(context.Background(), parser.VariableSubstitution{
 				Variable: parser.Variable{Name: "value"},
 				Value: parser.Arithmetic{
 					LHS:      parser.Variable{Name: "value"},
@@ -4183,7 +4184,7 @@ var filterEvaluateSequentiallyTests = []struct {
 			Value:    parser.Variable{Name: "fetch"},
 		},
 		Function: func(f *Filter, idx int) error {
-			p, err := f.Evaluate(parser.VariableSubstitution{
+			p, err := f.Evaluate(context.Background(), parser.VariableSubstitution{
 				Variable: parser.Variable{Name: "value"},
 				Value: parser.Arithmetic{
 					LHS:      parser.Variable{Name: "value"},
@@ -4204,7 +4205,7 @@ var filterEvaluateSequentiallyTests = []struct {
 func TestFilter_EvaluateSequentially(t *testing.T) {
 	for _, v := range filterEvaluateSequentiallyTests {
 		filterEvaluateSequentiallyResults = make([]value.Primary, 0)
-		err := v.Filter.EvaluateSequentially(v.Function, v.Expression)
+		err := v.Filter.EvaluateSequentially(context.Background(), v.Function, v.Expression)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -4284,7 +4285,7 @@ func TestFilter_EvaluateEmbeddedString(t *testing.T) {
 	os.Setenv("CSVQ_TEST_FILTER", "FILTER_TEST")
 
 	for _, v := range filterEvaluateEmbeddedStringTests {
-		result, err := filter.EvaluateEmbeddedString(v.Input)
+		result, err := filter.EvaluateEmbeddedString(context.Background(), v.Input)
 
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -4306,12 +4307,13 @@ func TestFilter_EvaluateEmbeddedString(t *testing.T) {
 }
 
 func BenchmarkFilter_EvaluateCountAllColumns(b *testing.B) {
+	ctx := context.Background()
 	filter := GenerateBenchGroupedViewFilter()
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		filter.Evaluate(parser.AggregateFunction{
+		_, _ = filter.Evaluate(ctx, parser.AggregateFunction{
 			Name:     "count",
 			Distinct: parser.Token{},
 			Args: []parser.QueryExpression{
@@ -4322,12 +4324,13 @@ func BenchmarkFilter_EvaluateCountAllColumns(b *testing.B) {
 }
 
 func BenchmarkFilter_EvaluateCount(b *testing.B) {
+	ctx := context.Background()
 	filter := GenerateBenchGroupedViewFilter()
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		filter.Evaluate(parser.AggregateFunction{
+		_, _ = filter.Evaluate(ctx, parser.AggregateFunction{
 			Name:     "count",
 			Distinct: parser.Token{},
 			Args: []parser.QueryExpression{
@@ -4338,11 +4341,13 @@ func BenchmarkFilter_EvaluateCount(b *testing.B) {
 }
 
 func BenchmarkFilter_EvaluateSingleThread(b *testing.B) {
+	ctx := context.Background()
+
 	for i := 0; i < b.N; i++ {
 		filter := NewEmptyFilter()
 
 		for j := 0; j < 150; j++ {
-			filter.Evaluate(parser.Comparison{
+			_, _ = filter.Evaluate(ctx, parser.Comparison{
 				LHS:      parser.NewIntegerValue(1),
 				RHS:      parser.NewStringValue("1"),
 				Operator: "=",
@@ -4352,6 +4357,8 @@ func BenchmarkFilter_EvaluateSingleThread(b *testing.B) {
 }
 
 func BenchmarkFilter_EvaluateMultiThread(b *testing.B) {
+	ctx := context.Background()
+
 	for i := 0; i < b.N; i++ {
 		wg := sync.WaitGroup{}
 		for i := 0; i < 3; i++ {
@@ -4360,7 +4367,7 @@ func BenchmarkFilter_EvaluateMultiThread(b *testing.B) {
 				filter := NewEmptyFilter()
 
 				for j := 0; j < 50; j++ {
-					filter.Evaluate(parser.Comparison{
+					_, _ = filter.Evaluate(ctx, parser.Comparison{
 						LHS:      parser.NewIntegerValue(1),
 						RHS:      parser.NewStringValue("1"),
 						Operator: "=",
@@ -4415,17 +4422,19 @@ var filterEvaluateFieldReferenceBenchExpr = parser.FieldReference{
 }
 
 func BenchmarkFilter_EvaluateFieldReference(b *testing.B) {
+	ctx := context.Background()
 	filter := filterEvaluateFieldReferenceBenchFilter
 	expr := filterEvaluateFieldReferenceBenchExpr
 	for i := 0; i < b.N; i++ {
-		_, _ = filter.Evaluate(expr)
+		_, _ = filter.Evaluate(ctx, expr)
 	}
 }
 
 func BenchmarkFilter_EvaluateFieldReferenceWithIndexCache(b *testing.B) {
+	ctx := context.Background()
 	filter := filterEvaluateFieldReferenceWithIndexCacheBenchFilter
 	expr := filterEvaluateFieldReferenceBenchExpr
 	for i := 0; i < b.N; i++ {
-		_, _ = filter.Evaluate(expr)
+		_, _ = filter.Evaluate(ctx, expr)
 	}
 }

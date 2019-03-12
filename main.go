@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -317,7 +318,7 @@ func readQuery(c *cli.Context) (string, string, error) {
 		if !file.Exists(path) {
 			return queryString, path, errors.New(fmt.Sprintf("file %q does not exist", path))
 		}
-		h, err := file.NewHandlerForRead(path)
+		h, err := file.NewHandlerForRead(context.Background(), path)
 		if err != nil {
 			return queryString, path, errors.New(fmt.Sprintf("failed to read file: %s", err.Error()))
 		}
@@ -463,13 +464,14 @@ func runPreloadCommands(proc *query.Procedure) error {
 		}
 	}()
 
+	ctx := context.Background()
 	files := cmd.GetSpecialFilePath(cmd.PreloadCommandFileName)
 	for _, fpath := range files {
 		if !file.Exists(fpath) {
 			continue
 		}
 
-		statements, err := query.LoadStatementsFromFile(parser.Source{}, fpath)
+		statements, err := query.LoadStatementsFromFile(ctx, parser.Source{}, fpath)
 		if err != nil {
 			if e, ok := err.(*query.ReadFileError); ok {
 				err = errors.New(e.ErrorMessage())
@@ -477,7 +479,7 @@ func runPreloadCommands(proc *query.Procedure) error {
 			return err
 		}
 
-		if _, err := proc.Execute(statements); err != nil {
+		if _, err := proc.Execute(ctx, statements); err != nil {
 			return err
 		}
 	}

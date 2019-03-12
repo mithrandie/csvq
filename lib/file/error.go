@@ -17,6 +17,8 @@ func ParseError(err error) error {
 		return &TimeoutError{
 			message: err.Error(),
 		}
+	case *file.ContextIsDone:
+		return NewContextIsDone(err.Error())
 	default:
 		return err
 	}
@@ -61,6 +63,20 @@ func NewTimeoutError(path string) error {
 }
 
 func (e TimeoutError) Error() string {
+	return e.message
+}
+
+type ContextIsDone struct {
+	message string
+}
+
+func NewContextIsDone(message string) error {
+	return &ContextIsDone{
+		message: message,
+	}
+}
+
+func (e ContextIsDone) Error() string {
 	return e.message
 }
 

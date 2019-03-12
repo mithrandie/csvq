@@ -9,5 +9,4 @@ require (
 	github.com/urfave/cli v1.20.0
 	golang.org/x/crypto v0.0.0-20181112202954-3d3f9f413869
 	golang.org/x/sys v0.0.0-20181107165924-66b7b1311ac8
-	golang.org/x/tools v0.0.0-20181207222222-4c874b978acb // indirect
 )

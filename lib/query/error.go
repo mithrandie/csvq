@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 )
@@ -231,6 +232,16 @@ func NewSyntaxError(err *parser.SyntaxError) error {
 	}
 }
 
+type ContextIsDone struct {
+	*BaseError
+}
+
+func NewContextIsDone(message string) error {
+	return &ContextIsDone{
+		NewBaseErrorWithPrefix("Context", message, 1),
+	}
+}
+
 type InvalidValueError struct {
 	*BaseError
 }
@@ -277,7 +288,9 @@ type CommitError struct {
 
 func NewCommitError(expr parser.Expression, message string) error {
 	if expr == nil {
-		NewBaseErrorWithPrefix("Auto Commit", fmt.Sprintf(ErrorCommit, message), 1)
+		return &CommitError{
+			NewBaseErrorWithPrefix("Auto Commit", fmt.Sprintf(ErrorCommit, message), 1),
+		}
 	}
 	return &CommitError{
 		NewBaseError(expr, fmt.Sprintf(ErrorCommit, message)),
@@ -290,7 +303,9 @@ type RollbackError struct {
 
 func NewRollbackError(expr parser.Expression, message string) error {
 	if expr == nil {
-		NewBaseErrorWithPrefix("Auto Rollback", fmt.Sprintf(ErrorRollback, message), 1)
+		return &CommitError{
+			NewBaseErrorWithPrefix("Auto Rollback", fmt.Sprintf(ErrorRollback, message), 1),
+		}
 	}
 	return &RollbackError{
 		NewBaseError(expr, fmt.Sprintf(ErrorRollback, message)),
@@ -1227,4 +1242,16 @@ func searchSelectClauseInSelectSetEntity(selectSetEntity parser.QueryExpression)
 		return searchSelectClause(subquery.Query)
 	}
 	return searchSelectClauseInSelectEntity(selectSetEntity)
+}
+
+func ConvertFileHandlerError(err error, ident parser.Identifier, fpath string) error {
+	switch err.(type) {
+	case *file.TimeoutError:
+		err = NewFileLockTimeoutError(ident, fpath)
+	case *file.ContextIsDone:
+		err = NewContextIsDone(err.Error())
+	default:
+		err = NewReadFileError(ident, err.Error())
+	}
+	return err
 }

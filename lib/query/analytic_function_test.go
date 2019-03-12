@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -1240,7 +1241,7 @@ func TestAnalyze(t *testing.T) {
 		} else {
 			v.CPU = 1
 		}
-		err := Analyze(v.View, v.Function, v.PartitionIndices)
+		err := Analyze(context.Background(), v.View, v.Function, v.PartitionIndices)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1359,7 +1360,7 @@ func testAnalyticFunctionExecute(t *testing.T, fn AnalyticFunction, tests []anal
 			analyticFunctionTestFilter.Records[0].View.sortValuesInEachRecord = nil
 		}
 
-		result, err := fn.Execute(v.Items, v.Function, analyticFunctionTestFilter)
+		result, err := fn.Execute(context.Background(), v.Items, v.Function, analyticFunctionTestFilter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

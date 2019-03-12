@@ -3,6 +3,7 @@
 package query
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -21,7 +22,7 @@ type ReadLineTerminal struct {
 	completer *Completer
 }
 
-func NewTerminal(filter *Filter) (VirtualTerminal, error) {
+func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
 	fd := int(ScreenFd)
 
 	p, _ := cmd.GetPalette()
@@ -64,7 +65,7 @@ func NewTerminal(filter *Filter) (VirtualTerminal, error) {
 	terminal.setViMode()
 	prompt.LoadConfig()
 
-	terminal.SetPrompt()
+	terminal.SetPrompt(ctx)
 	return terminal, nil
 }
 
@@ -86,16 +87,16 @@ func (t ReadLineTerminal) WriteError(s string) error {
 	return err
 }
 
-func (t ReadLineTerminal) SetPrompt() {
-	str, err := t.prompt.RenderPrompt()
+func (t ReadLineTerminal) SetPrompt(ctx context.Context) {
+	str, err := t.prompt.RenderPrompt(ctx)
 	if err != nil {
 		LogError(err.Error())
 	}
 	t.terminal.SetPrompt(str)
 }
 
-func (t ReadLineTerminal) SetContinuousPrompt() {
-	str, err := t.prompt.RenderContinuousPrompt()
+func (t ReadLineTerminal) SetContinuousPrompt(ctx context.Context) {
+	str, err := t.prompt.RenderContinuousPrompt(ctx)
 	if err != nil {
 		LogError(err.Error())
 	}

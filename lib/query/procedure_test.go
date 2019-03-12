@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -812,7 +813,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 		r, w, _ := os.Pipe()
 		Stdout = w
 
-		_, err := proc.ExecuteStatement(v.Input)
+		_, err := proc.ExecuteStatement(context.Background(), v.Input)
 
 		w.Close()
 		Stdout = oldStdout
@@ -1009,7 +1010,7 @@ func TestProcedure_IfStmt(t *testing.T) {
 		Stdout = w
 
 		proc.ReturnVal = nil
-		flow, err := proc.IfStmt(v.Stmt)
+		flow, err := proc.IfStmt(context.Background(), v.Stmt)
 
 		w.Close()
 		Stdout = oldStdout
@@ -1186,7 +1187,7 @@ func TestProcedure_Case(t *testing.T) {
 		r, w, _ := os.Pipe()
 		Stdout = w
 
-		flow, err := proc.Case(v.Stmt)
+		flow, err := proc.Case(context.Background(), v.Stmt)
 
 		w.Close()
 		Stdout = oldStdout
@@ -1466,7 +1467,7 @@ func TestProcedure_While(t *testing.T) {
 		r, w, _ := os.Pipe()
 		Stdout = w
 
-		flow, err := proc.While(v.Stmt)
+		flow, err := proc.While(context.Background(), v.Stmt)
 
 		w.Close()
 		Stdout = oldStdout
@@ -1692,13 +1693,13 @@ func TestProcedure_WhileInCursor(t *testing.T) {
 			},
 		}
 		ViewCache.Clean()
-		proc.Filter.Cursors.Open(parser.Identifier{Literal: "cur"}, proc.Filter)
+		proc.Filter.Cursors.Open(context.Background(), parser.Identifier{Literal: "cur"}, proc.Filter)
 
 		oldStdout := Stdout
 		r, w, _ := os.Pipe()
 		Stdout = w
 
-		flow, err := proc.WhileInCursor(v.Stmt)
+		flow, err := proc.WhileInCursor(context.Background(), v.Stmt)
 
 		w.Close()
 		Stdout = oldStdout
@@ -1761,7 +1762,7 @@ func TestProcedure_ExecExternalCommand(t *testing.T) {
 	proc := NewProcedure()
 
 	for _, v := range procedureExecExternalCommand {
-		err := proc.ExecExternalCommand(v.Stmt)
+		err := proc.ExecExternalCommand(context.Background(), v.Stmt)
 
 		if err != nil {
 			if len(v.Error) < 1 {

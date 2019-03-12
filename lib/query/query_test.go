@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -175,12 +176,12 @@ func TestFetchCursor(t *testing.T) {
 	)
 
 	ViewCache.Clean()
-	filter.Cursors.Open(parser.Identifier{Literal: "cur"}, filter)
+	filter.Cursors.Open(context.Background(), parser.Identifier{Literal: "cur"}, filter)
 	ViewCache.Clean()
-	filter.Cursors.Open(parser.Identifier{Literal: "cur2"}, filter)
+	filter.Cursors.Open(context.Background(), parser.Identifier{Literal: "cur2"}, filter)
 
 	for _, v := range fetchCursorTests {
-		success, err := FetchCursor(v.CurName, v.FetchPosition, v.Variables, filter)
+		success, err := FetchCursor(context.Background(), v.CurName, v.FetchPosition, v.Variables, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -377,7 +378,7 @@ func TestDeclareView(t *testing.T) {
 			filter.TempViews = []ViewMap{v.ViewMap}
 		}
 
-		err := DeclareView(v.Expr, filter)
+		err := DeclareView(context.Background(), v.Expr, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1106,7 +1107,7 @@ func TestSelect(t *testing.T) {
 
 	for _, v := range selectTests {
 		ViewCache.Clean()
-		result, err := Select(v.Query, filter)
+		result, err := Select(context.Background(), v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1477,7 +1478,7 @@ func TestInsert(t *testing.T) {
 
 	for _, v := range insertTests {
 		ReleaseResources()
-		result, cnt, err := Insert(v.Query, filter)
+		result, cnt, err := Insert(context.Background(), v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1944,7 +1945,7 @@ func TestUpdate(t *testing.T) {
 
 	for _, v := range updateTests {
 		ReleaseResources()
-		files, cnt, err := Update(v.Query, filter)
+		files, cnt, err := Update(context.Background(), v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2304,7 +2305,7 @@ func TestDelete(t *testing.T) {
 
 	for _, v := range deleteTests {
 		ReleaseResources()
-		files, cnt, err := Delete(v.Query, filter)
+		files, cnt, err := Delete(context.Background(), v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2528,7 +2529,7 @@ func TestCreateTable(t *testing.T) {
 	for _, v := range createTableTests {
 		ReleaseResources()
 
-		result, err := CreateTable(v.Query, NewEmptyFilter())
+		result, err := CreateTable(context.Background(), v.Query, NewEmptyFilter())
 
 		if result != nil {
 			result.Close()
@@ -2957,7 +2958,7 @@ func TestAddColumns(t *testing.T) {
 	}
 	for _, v := range addColumnsTests {
 		ReleaseResources()
-		result, cnt, err := AddColumns(v.Query, filter)
+		result, cnt, err := AddColumns(context.Background(), v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -3142,7 +3143,7 @@ func TestDropColumns(t *testing.T) {
 
 	for _, v := range dropColumnsTests {
 		ReleaseResources()
-		result, cnt, err := DropColumns(v.Query, filter)
+		result, cnt, err := DropColumns(context.Background(), v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -3334,7 +3335,7 @@ func TestRenameColumn(t *testing.T) {
 
 	for _, v := range renameColumnTests {
 		ReleaseResources()
-		result, err := RenameColumn(v.Query, filter)
+		result, err := RenameColumn(context.Background(), v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -3754,7 +3755,7 @@ func TestSetTableAttribute(t *testing.T) {
 	for _, v := range setTableAttributeTests {
 		ReleaseResources()
 
-		_, _, err := SetTableAttribute(v.Query, filter)
+		_, _, err := SetTableAttribute(context.Background(), v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -3779,13 +3780,13 @@ func TestSetTableAttribute(t *testing.T) {
 		}
 
 		view := NewView()
-		view.LoadFromTableIdentifier(v.Query.Table, filter.CreateNode())
+		view.LoadFromTableIdentifier(context.Background(), v.Query.Table, filter.CreateNode())
 
 		if !reflect.DeepEqual(view.FileInfo, v.Expect) {
 			t.Errorf("%s: result = %v, want %v", v.Name, view.FileInfo, v.Expect)
 		}
 
-		_, _, err = SetTableAttribute(v.Query, filter)
+		_, _, err = SetTableAttribute(context.Background(), v.Query, filter)
 		if err == nil {
 			t.Errorf("%s: no error, want TableAttributeUnchangedError for duplicate set", v.Name)
 		} else if _, ok := err.(*TableAttributeUnchangedError); !ok {
@@ -3799,7 +3800,7 @@ func TestCommit(t *testing.T) {
 	cmd.GetFlags().SetQuiet(false)
 
 	ch, _ := file.NewHandlerForCreate(GetTestFilePath("create_file.csv"))
-	uh, _ := file.NewHandlerForUpdate(GetTestFilePath("updated_file_1.csv"))
+	uh, _ := file.NewHandlerForUpdate(context.Background(), GetTestFilePath("updated_file_1.csv"))
 
 	ViewCache = ViewMap{
 		strings.ToUpper(GetTestFilePath("created_file.csv")): &View{

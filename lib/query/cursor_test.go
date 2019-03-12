@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -339,7 +340,7 @@ func TestCursorScopes_Open(t *testing.T) {
 	for _, v := range cursorScopesOpenTests {
 		ViewCache.Clean()
 
-		err := list.Open(v.CurName, NewEmptyFilter())
+		err := list.Open(context.Background(), v.CurName, NewEmptyFilter())
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -427,7 +428,7 @@ func TestCursorScopes_Close(t *testing.T) {
 	}
 
 	ViewCache.Clean()
-	list[1]["CUR"].Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+	list[1]["CUR"].Open(context.Background(), parser.Identifier{Literal: "cur"}, NewEmptyFilter())
 
 	for _, v := range cursorScopesCloseTests {
 		err := list.Close(v.CurName)
@@ -498,7 +499,7 @@ func TestCursorScopes_Fetch(t *testing.T) {
 	}
 
 	ViewCache.Clean()
-	list[1]["CUR"].Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+	list[1]["CUR"].Open(context.Background(), parser.Identifier{Literal: "cur"}, NewEmptyFilter())
 
 	for _, v := range cursorScopesFetchTests {
 		result, err := list.Fetch(v.CurName, v.Position, v.Number)
@@ -553,7 +554,7 @@ func TestCursorScopes_IsOpen(t *testing.T) {
 	}
 
 	ViewCache.Clean()
-	list[1]["CUR"].Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+	list[1]["CUR"].Open(context.Background(), parser.Identifier{Literal: "cur"}, NewEmptyFilter())
 
 	for _, v := range cursorScopesIsOpenTests {
 		result, err := list.IsOpen(v.CurName)
@@ -617,7 +618,7 @@ func TestCursorScopes_IsInRange(t *testing.T) {
 	}
 
 	ViewCache.Clean()
-	list[1]["CUR"].Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+	list[1]["CUR"].Open(context.Background(), parser.Identifier{Literal: "cur"}, NewEmptyFilter())
 
 	for _, v := range cursorScopesIsInRangeTests {
 		result, err := list.IsInRange(v.CurName)
@@ -680,7 +681,7 @@ func TestCursorScopes_Count(t *testing.T) {
 	}
 
 	ViewCache.Clean()
-	list[1]["CUR"].Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+	list[1]["CUR"].Open(context.Background(), parser.Identifier{Literal: "cur"}, NewEmptyFilter())
 
 	for _, v := range cursorScopesCountTests {
 		result, err := list.Count(v.CurName)
@@ -1022,7 +1023,7 @@ func TestCursorMap_Open(t *testing.T) {
 
 	for _, v := range cursorMapOpenTests {
 		ViewCache.Clean()
-		err := cursors.Open(v.CurName, NewEmptyFilter())
+		err := cursors.Open(context.Background(), v.CurName, NewEmptyFilter())
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1096,7 +1097,7 @@ func TestCursorMap_Close(t *testing.T) {
 		},
 	)
 	ViewCache.Clean()
-	cursors.Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+	cursors.Open(context.Background(), parser.Identifier{Literal: "cur"}, NewEmptyFilter())
 
 	for _, v := range cursorMapCloseTests {
 		err := cursors.Close(v.CurName)
@@ -1247,7 +1248,7 @@ func TestCursorMap_Fetch(t *testing.T) {
 		},
 	}
 	ViewCache.Clean()
-	cursors.Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+	cursors.Open(context.Background(), parser.Identifier{Literal: "cur"}, NewEmptyFilter())
 
 	for _, v := range cursorMapFetchTests {
 		result, err := cursors.Fetch(v.CurName, v.Position, v.Number)
@@ -1305,7 +1306,7 @@ func TestCursorMap_IsOpen(t *testing.T) {
 		},
 	}
 	ViewCache.Clean()
-	cursors.Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+	cursors.Open(context.Background(), parser.Identifier{Literal: "cur"}, NewEmptyFilter())
 
 	for _, v := range cursorMapIsOpenTests {
 		result, err := cursors.IsOpen(v.CurName)
@@ -1379,9 +1380,9 @@ func TestCursorMap_IsInRange(t *testing.T) {
 		},
 	}
 	ViewCache.Clean()
-	cursors.Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+	cursors.Open(context.Background(), parser.Identifier{Literal: "cur"}, NewEmptyFilter())
 	ViewCache.Clean()
-	cursors.Open(parser.Identifier{Literal: "cur2"}, NewEmptyFilter())
+	cursors.Open(context.Background(), parser.Identifier{Literal: "cur2"}, NewEmptyFilter())
 	cursors.Fetch(parser.Identifier{Literal: "cur2"}, parser.NEXT, 0)
 
 	for _, v := range cursorMapIsInRangeTests {
@@ -1443,7 +1444,7 @@ func TestCursorMap_Count(t *testing.T) {
 		},
 	}
 	ViewCache.Clean()
-	cursors.Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+	cursors.Open(context.Background(), parser.Identifier{Literal: "cur"}, NewEmptyFilter())
 
 	for _, v := range cursorMapCountTests {
 		result, err := cursors.Count(v.CurName)

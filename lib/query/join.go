@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"math"
 
 	"github.com/mithrandie/csvq/lib/parser"
@@ -101,25 +102,29 @@ func ParseJoinCondition(join parser.Join, view *View, joinView *View) (parser.Qu
 	return logic, includeFields, excludeFields, nil
 }
 
-func CrossJoin(view *View, joinView *View) {
+func CrossJoin(ctx context.Context, view *View, joinView *View) error {
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 	records := make(RecordSet, view.RecordLen()*joinView.RecordLen())
 
-	NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore)).Run(func(index int) {
+	if err := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore)).Run(ctx, func(index int) error {
 		start := index * joinView.RecordLen()
 		for i := 0; i < joinView.RecordLen(); i++ {
 			records[start+i] = append(view.RecordSet[index], joinView.RecordSet[i]...)
 		}
-	})
+		return nil
+	}); err != nil {
+		return err
+	}
 
 	view.Header = mergedHeader
 	view.RecordSet = records
 	view.FileInfo = nil
+	return nil
 }
 
-func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, parentFilter *Filter) error {
+func InnerJoin(ctx context.Context, view *View, joinView *View, condition parser.QueryExpression, parentFilter *Filter) error {
 	if condition == nil {
-		CrossJoin(view, joinView)
+		CrossJoin(ctx, view, joinView)
 		return nil
 	}
 
@@ -144,14 +149,14 @@ func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, par
 		InnerJoinLoop:
 			for i := start; i < end; i++ {
 				for j := 0; j < joinView.RecordLen(); j++ {
-					if gm.HasError() {
+					if gm.HasError() || ctx.Err() != nil {
 						break InnerJoinLoop
 					}
 
 					mergedRecord := append(view.RecordSet[i], joinView.RecordSet[j]...)
 					filter.Records[0].View.RecordSet[0] = mergedRecord
 
-					primary, e := filter.Evaluate(condition)
+					primary, e := filter.Evaluate(ctx, condition)
 					if e != nil {
 						gm.SetError(e)
 						break InnerJoinLoop
@@ -171,6 +176,9 @@ func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, par
 	if gm.HasError() {
 		return gm.Err()
 	}
+	if ctx.Err() != nil {
+		return NewContextIsDone(ctx.Err().Error())
+	}
 
 	view.Header = mergedHeader
 	view.RecordSet = MergeRecordSetList(recordsList)
@@ -178,7 +186,7 @@ func InnerJoin(view *View, joinView *View, condition parser.QueryExpression, par
 	return nil
 }
 
-func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, direction int, parentFilter *Filter) error {
+func OuterJoin(ctx context.Context, view *View, joinView *View, condition parser.QueryExpression, direction int, parentFilter *Filter) error {
 	if direction == parser.TokenUndefined {
 		direction = parser.LEFT
 	}
@@ -217,7 +225,7 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 			for i := start; i < end; i++ {
 				match := false
 				for j := 0; j < joinView.RecordLen(); j++ {
-					if gm.HasError() {
+					if gm.HasError() || ctx.Err() != nil {
 						break OuterJoinLoop
 					}
 
@@ -230,7 +238,7 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 					}
 					filter.Records[0].View.RecordSet[0] = mergedRecord
 
-					primary, e := filter.Evaluate(condition)
+					primary, e := filter.Evaluate(ctx, condition)
 					if e != nil {
 						gm.SetError(e)
 						break OuterJoinLoop
@@ -266,6 +274,9 @@ func OuterJoin(view *View, joinView *View, condition parser.QueryExpression, dir
 
 	if gm.HasError() {
 		return gm.Err()
+	}
+	if ctx.Err() != nil {
+		return NewContextIsDone(ctx.Err().Error())
 	}
 
 	if direction == parser.FULL {

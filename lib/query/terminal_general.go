@@ -3,6 +3,7 @@
 package query
 
 import (
+	"context"
 	"io"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -18,7 +19,7 @@ type SSHTerminal struct {
 	prompt    *Prompt
 }
 
-func NewTerminal(filter *Filter) (VirtualTerminal, error) {
+func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
 	stdin := int(ScreenFd)
 	origState, err := terminal.MakeRaw(stdin)
 	if err != nil {
@@ -43,7 +44,7 @@ func NewTerminal(filter *Filter) (VirtualTerminal, error) {
 	}
 
 	t.RestoreOriginalMode()
-	t.SetPrompt()
+	t.SetPrompt(ctx)
 	t.RestoreRawMode()
 	return t, nil
 }
@@ -81,16 +82,16 @@ func (t SSHTerminal) WriteError(s string) error {
 	return err
 }
 
-func (t SSHTerminal) SetPrompt() {
-	str, err := t.prompt.RenderPrompt()
+func (t SSHTerminal) SetPrompt(ctx context.Context) {
+	str, err := t.prompt.RenderPrompt(ctx)
 	if err != nil {
 		LogError(err.Error())
 	}
 	t.terminal.SetPrompt(str)
 }
 
-func (t SSHTerminal) SetContinuousPrompt() {
-	str, err := t.prompt.RenderContinuousPrompt()
+func (t SSHTerminal) SetContinuousPrompt(ctx context.Context) {
+	str, err := t.prompt.RenderContinuousPrompt(ctx)
 	if err != nil {
 		LogError(err.Error())
 	}

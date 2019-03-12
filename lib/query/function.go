@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/md5"
 	"crypto/sha1"
@@ -1552,7 +1553,7 @@ func Now(fn parser.Function, args []value.Primary, filter *Filter) (value.Primar
 	return value.NewDatetime(filter.Now), nil
 }
 
-func JsonObject(fn parser.Function, filter *Filter) (value.Primary, error) {
+func JsonObject(ctx context.Context, fn parser.Function, filter *Filter) (value.Primary, error) {
 	if len(filter.Records) < 1 {
 		return nil, NewUnpermittedStatementFunctionError(fn, fn.Name)
 	}
@@ -1563,14 +1564,14 @@ func JsonObject(fn parser.Function, filter *Filter) (value.Primary, error) {
 	view.Filter = filter.CreateNode()
 
 	if len(fn.Args) < 1 {
-		view.SelectAllColumns()
+		view.SelectAllColumns(ctx)
 	} else {
 		selectClause := parser.SelectClause{
 			Fields: fn.Args,
 		}
-		view.Select(selectClause)
+		view.Select(ctx, selectClause)
 	}
-	view.Fix()
+	view.Fix(ctx)
 
 	pathes, err := json.ParsePathes(view.Header.TableColumnNames())
 	if err != nil {

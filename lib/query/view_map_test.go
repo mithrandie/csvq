@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -232,7 +233,7 @@ func TestTemporaryViewScopes_GetWithInternalId(t *testing.T) {
 	}
 
 	for _, v := range temporaryViewScopesGetWithInternalIdTests {
-		view, err := list.GetWithInternalId(v.Path)
+		view, err := list.GetWithInternalId(context.Background(), v.Path)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1036,7 +1037,7 @@ func TestViewMap_GetWithInternalId(t *testing.T) {
 	}
 
 	for _, v := range viewMapGetWithInternalIdTests {
-		view, err := viewMap.GetWithInternalId(v.Path)
+		view, err := viewMap.GetWithInternalId(context.Background(), v.Path)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1391,6 +1392,6 @@ func generateViewMapGetWithInternalIdBenchViewMap() ViewMap {
 
 func BenchmarkViewMap_GetWithInternalId(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		viewMapGetWithInternalIdBench.GetWithInternalId(parser.Identifier{Literal: "BENCH_VIEW"})
+		_, _ = viewMapGetWithInternalIdBench.GetWithInternalId(context.Background(), parser.Identifier{Literal: "BENCH_VIEW"})
 	}
 }

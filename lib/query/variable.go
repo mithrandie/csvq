@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"reflect"
 	"sort"
 	"sync"
@@ -11,8 +12,8 @@ import (
 
 type VariableScopes []VariableMap
 
-func (list VariableScopes) Declare(expr parser.VariableDeclaration, filter *Filter) error {
-	return list[0].Declare(expr, filter)
+func (list VariableScopes) Declare(ctx context.Context, expr parser.VariableDeclaration, filter *Filter) error {
+	return list[0].Declare(ctx, expr, filter)
 }
 
 func (list VariableScopes) Get(expr parser.Variable) (value value.Primary, err error) {
@@ -25,9 +26,9 @@ func (list VariableScopes) Get(expr parser.Variable) (value value.Primary, err e
 	return
 }
 
-func (list VariableScopes) Substitute(expr parser.VariableSubstitution, filter *Filter) (value value.Primary, err error) {
+func (list VariableScopes) Substitute(ctx context.Context, expr parser.VariableSubstitution, filter *Filter) (value value.Primary, err error) {
 	for _, v := range list {
-		if value, err = v.Substitute(expr, filter); err == nil {
+		if value, err = v.Substitute(ctx, expr, filter); err == nil {
 			return
 		}
 		if _, ok := err.(*UndeclaredVariableError); !ok {
@@ -133,14 +134,14 @@ func (m *VariableMap) Dispose(variable parser.Variable) error {
 	return nil
 }
 
-func (m *VariableMap) Declare(declaration parser.VariableDeclaration, filter *Filter) error {
+func (m *VariableMap) Declare(ctx context.Context, declaration parser.VariableDeclaration, filter *Filter) error {
 	for _, assignment := range declaration.Assignments {
 		var val value.Primary
 		var err error
 		if assignment.Value == nil {
 			val = value.NewNull()
 		} else {
-			val, err = filter.Evaluate(assignment.Value)
+			val, err = filter.Evaluate(ctx, assignment.Value)
 			if err != nil {
 				return err
 			}
@@ -153,8 +154,8 @@ func (m *VariableMap) Declare(declaration parser.VariableDeclaration, filter *Fi
 	return nil
 }
 
-func (m *VariableMap) Substitute(substitution parser.VariableSubstitution, filter *Filter) (value.Primary, error) {
-	val, err := filter.Evaluate(substitution.Value)
+func (m *VariableMap) Substitute(ctx context.Context, substitution parser.VariableSubstitution, filter *Filter) (value.Primary, error) {
+	val, err := filter.Evaluate(ctx, substitution.Value)
 	if err != nil {
 		return nil, err
 	}

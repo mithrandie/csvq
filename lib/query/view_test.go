@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -2568,7 +2569,7 @@ func TestView_Load(t *testing.T) {
 		}
 		view.UseInternalId = v.UseInternalId
 
-		err := view.Load(v.From, v.Filter.CreateNode())
+		err := view.Load(context.Background(), v.From, v.Filter.CreateNode())
 
 		if 0 < len(v.Stdin) {
 			os.Stdin = oldStdin
@@ -2797,7 +2798,7 @@ func TestView_Where(t *testing.T) {
 			flags.CPU = v.CPU
 		}
 
-		err := v.View.Where(v.Where)
+		err := v.View.Where(context.Background(), v.Where)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -3101,7 +3102,7 @@ var viewGroupByTests = []struct {
 
 func TestView_GroupBy(t *testing.T) {
 	for _, v := range viewGroupByTests {
-		err := v.View.GroupBy(v.GroupBy)
+		err := v.View.GroupBy(context.Background(), v.GroupBy)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -3325,7 +3326,7 @@ var viewHavingTests = []struct {
 
 func TestView_Having(t *testing.T) {
 	for _, v := range viewHavingTests {
-		err := v.View.Having(v.Having)
+		err := v.View.Having(context.Background(), v.Having)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -4100,7 +4101,7 @@ var viewSelectTests = []struct {
 
 func TestView_Select(t *testing.T) {
 	for _, v := range viewSelectTests {
-		err := v.View.Select(v.Select)
+		err := v.View.Select(context.Background(), v.Select)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -4430,7 +4431,7 @@ var viewOrderByTests = []struct {
 
 func TestView_OrderBy(t *testing.T) {
 	for _, v := range viewOrderByTests {
-		err := v.View.OrderBy(v.OrderBy)
+		err := v.View.OrderBy(context.Background(), v.OrderBy)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -4727,7 +4728,7 @@ var viewExtendRecordCapacity = []struct {
 
 func TestView_ExtendRecordCapacity(t *testing.T) {
 	for _, v := range viewExtendRecordCapacity {
-		err := v.View.ExtendRecordCapacity(v.Exprs)
+		err := v.View.ExtendRecordCapacity(context.Background(), v.Exprs)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -5210,7 +5211,7 @@ var viewLimitTests = []struct {
 
 func TestView_Limit(t *testing.T) {
 	for _, v := range viewLimitTests {
-		err := v.View.Limit(v.Limit)
+		err := v.View.Limit(context.Background(), v.Limit)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -5428,7 +5429,7 @@ var viewOffsetTests = []struct {
 
 func TestView_Offset(t *testing.T) {
 	for _, v := range viewOffsetTests {
-		err := v.View.Offset(v.Offset)
+		err := v.View.Offset(context.Background(), v.Offset)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -5572,7 +5573,7 @@ func TestView_InsertValues(t *testing.T) {
 	}
 
 	for _, v := range viewInsertValuesTests {
-		cnt, err := view.InsertValues(v.Fields, v.ValuesList)
+		cnt, err := view.InsertValues(context.Background(), v.Fields, v.ValuesList)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -5692,7 +5693,7 @@ func TestView_InsertFromQuery(t *testing.T) {
 	}
 
 	for _, v := range viewInsertFromQueryTests {
-		cnt, err := view.InsertFromQuery(v.Fields, v.Query)
+		cnt, err := view.InsertFromQuery(context.Background(), v.Fields, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -5746,7 +5747,7 @@ func TestView_Fix(t *testing.T) {
 		selectFields: []int(nil),
 	}
 
-	view.Fix()
+	view.Fix(context.Background())
 	if !reflect.DeepEqual(view, expect) {
 		t.Errorf("fix: view = %v, want %v", view, expect)
 	}
@@ -5816,7 +5817,7 @@ func TestView_Union(t *testing.T) {
 		},
 	}
 
-	view.Union(calcView, false)
+	view.Union(context.Background(), calcView, false)
 	if !reflect.DeepEqual(view, expect) {
 		t.Errorf("union: view = %v, want %v", view, expect)
 	}
@@ -5879,7 +5880,7 @@ func TestView_Union(t *testing.T) {
 		},
 	}
 
-	view.Union(calcView, true)
+	view.Union(context.Background(), calcView, true)
 	if !reflect.DeepEqual(view, expect) {
 		t.Errorf("union all: view = %v, want %v", view, expect)
 	}
@@ -5941,7 +5942,7 @@ func TestView_Except(t *testing.T) {
 		},
 	}
 
-	view.Except(calcView, false)
+	view.Except(context.Background(), calcView, false)
 	if !reflect.DeepEqual(view, expect) {
 		t.Errorf("except: view = %v, want %v", view, expect)
 	}
@@ -5988,7 +5989,7 @@ func TestView_Except(t *testing.T) {
 		},
 	}
 
-	view.Except(calcView, true)
+	view.Except(context.Background(), calcView, true)
 	if !reflect.DeepEqual(view, expect) {
 		t.Errorf("except all: view = %v, want %v", view, expect)
 	}
@@ -6050,7 +6051,7 @@ func TestView_Intersect(t *testing.T) {
 		},
 	}
 
-	view.Intersect(calcView, false)
+	view.Intersect(context.Background(), calcView, false)
 	if !reflect.DeepEqual(view, expect) {
 		t.Errorf("intersect: view = %v, want %v", view, expect)
 	}
@@ -6097,7 +6098,7 @@ func TestView_Intersect(t *testing.T) {
 		},
 	}
 
-	view.Intersect(calcView, true)
+	view.Intersect(context.Background(), calcView, true)
 	if !reflect.DeepEqual(view, expect) {
 		t.Errorf("intersect all: view = %v, want %v", view, expect)
 	}

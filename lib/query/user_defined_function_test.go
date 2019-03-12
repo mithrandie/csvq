@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -995,7 +996,7 @@ func TestUserDefinedFunction_Execute(t *testing.T) {
 	)
 
 	for _, v := range userDefinedFunctionExecuteTests {
-		result, err := v.Func.Execute(v.Args, filter)
+		result, err := v.Func.Execute(context.Background(), v.Args, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1254,7 +1255,7 @@ func TestUserDefinedFunction_ExecuteAggregate(t *testing.T) {
 	filter := NewEmptyFilter()
 
 	for _, v := range userDefinedFunctionExecuteAggregateTests {
-		result, err := v.Func.ExecuteAggregate(v.Values, v.Args, filter)
+		result, err := v.Func.ExecuteAggregate(context.Background(), v.Values, v.Args, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

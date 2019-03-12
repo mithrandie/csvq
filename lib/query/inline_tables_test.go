@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -101,7 +102,7 @@ func TestInlineTableNodes_Set(t *testing.T) {
 
 	for _, v := range inlineTableNodesSetTests {
 		ViewCache.Clean()
-		err := list.Set(v.Expr, NewEmptyFilter())
+		err := list.Set(context.Background(), v.Expr, NewEmptyFilter())
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -399,7 +400,7 @@ func TestInlineTableNodes_Load(t *testing.T) {
 	}
 
 	for _, v := range inlineTableNodesLoadTests {
-		err := list.Load(v.Expr, NewEmptyFilter())
+		err := list.Load(context.Background(), v.Expr, NewEmptyFilter())
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -691,7 +692,7 @@ func TestInlineTableMap_Set(t *testing.T) {
 
 	for _, v := range inlineTableMapSetTests {
 		ViewCache.Clean()
-		err := it.Set(v.Expr, NewEmptyFilter())
+		err := it.Set(context.Background(), v.Expr, NewEmptyFilter())
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

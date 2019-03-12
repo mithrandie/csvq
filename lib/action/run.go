@@ -1,6 +1,7 @@
 package action
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -58,7 +59,7 @@ func Run(proc *query.Procedure, input string, sourceFile string, outfile string)
 		query.OutFile = fp
 	}
 
-	flow, err := proc.Execute(statements)
+	flow, err := proc.Execute(context.Background(), statements)
 
 	if err == nil && flow == query.Terminate {
 		if e := query.Commit(nil, proc.Filter); e != nil {
@@ -85,7 +86,8 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 
 	var err error
 
-	term, err := query.NewTerminal(proc.Filter)
+	ctx := context.Background()
+	term, err := query.NewTerminal(ctx, proc.Filter)
 	if err != nil {
 		return err
 	}
@@ -120,7 +122,7 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 
 		if 0 < len(line) && line[len(line)-1] == '\\' {
 			lines = append(lines, line[:len(line)-1])
-			query.Terminal.SetContinuousPrompt()
+			query.Terminal.SetContinuousPrompt(ctx)
 			continue
 		}
 
@@ -138,7 +140,7 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 		saveQuery := strings.Join(saveLines, " ")
 		if len(saveQuery) < 1 || saveQuery == ";" {
 			lines = lines[:0]
-			query.Terminal.SetPrompt()
+			query.Terminal.SetPrompt(ctx)
 			continue
 		}
 		query.Terminal.SaveHistory(saveQuery)
@@ -148,11 +150,11 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 			e = query.NewSyntaxError(e.(*parser.SyntaxError))
 			query.LogError(e.Error())
 			lines = lines[:0]
-			query.Terminal.SetPrompt()
+			query.Terminal.SetPrompt(ctx)
 			continue
 		}
 
-		flow, e := proc.Execute(statements)
+		flow, e := proc.Execute(ctx, statements)
 		if e != nil {
 			if ex, ok := e.(*query.ForcedExit); ok {
 				err = ex
@@ -160,7 +162,7 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 			} else {
 				query.LogError(e.Error())
 				lines = lines[:0]
-				query.Terminal.SetPrompt()
+				query.Terminal.SetPrompt(ctx)
 				continue
 			}
 		}
@@ -170,7 +172,7 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 		}
 
 		lines = lines[:0]
-		query.Terminal.SetPrompt()
+		query.Terminal.SetPrompt(ctx)
 	}
 
 	return err

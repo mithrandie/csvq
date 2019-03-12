@@ -1,6 +1,7 @@
 package action
 
 import (
+	"context"
 	"errors"
 	"strings"
 
@@ -18,6 +19,8 @@ func Calc(expr string) error {
 		}
 	}()
 
+	ctx := context.Background()
+
 	q := "select " + expr + " from stdin"
 
 	program, err := parser.Parse(q, "")
@@ -27,7 +30,7 @@ func Calc(expr string) error {
 	selectEntity, _ := program[0].(parser.SelectQuery).SelectEntity.(parser.SelectEntity)
 
 	view := query.NewView()
-	err = view.Load(selectEntity.FromClause.(parser.FromClause), query.NewEmptyFilter().CreateNode())
+	err = view.Load(ctx, selectEntity.FromClause.(parser.FromClause), query.NewEmptyFilter().CreateNode())
 	if err != nil {
 		if appErr, ok := err.(query.AppError); ok {
 			return errors.New(appErr.ErrorMessage())
@@ -41,7 +44,7 @@ func Calc(expr string) error {
 	values := make([]string, len(clause.Fields))
 	for i, v := range clause.Fields {
 		field := v.(parser.Field)
-		p, err := filter.Evaluate(field.Object)
+		p, err := filter.Evaluate(ctx, field.Object)
 		if err != nil {
 			return errors.New("syntax error")
 		}

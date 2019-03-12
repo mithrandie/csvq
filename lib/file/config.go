@@ -2,8 +2,8 @@ package file
 
 import "time"
 
-var WaitTimeout = 30.0
-var RetryInterval = 50 * time.Millisecond
+var WaitTimeout = 10 * time.Second
+var RetryDelay = 10 * time.Millisecond
 
 const (
 	LockFileSuffix = ".lock"

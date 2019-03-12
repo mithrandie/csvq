@@ -1,6 +1,7 @@
 package file
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
@@ -31,17 +32,20 @@ type Handler struct {
 	closed bool
 }
 
-func NewHandlerForRead(path string) (*Handler, error) {
+func NewHandlerForRead(ctx context.Context, path string) (*Handler, error) {
+	tctx, cancel := GetTimeoutContext(ctx)
+	defer cancel()
+
 	h := &Handler{
 		path:     path,
 		openType: ForRead,
 	}
 
-	if err := h.PrepareToRead(); err != nil {
+	if err := h.PrepareToRead(tctx); err != nil {
 		return h, err
 	}
 
-	fp, err := file.OpenToReadWithTimeout(h.path)
+	fp, err := file.OpenToReadContext(tctx, RetryDelay, h.path)
 	if err != nil {
 		return h, ParseError(err)
 	}
@@ -76,7 +80,10 @@ func NewHandlerForCreate(path string) (*Handler, error) {
 	return h, nil
 }
 
-func NewHandlerForUpdate(path string) (*Handler, error) {
+func NewHandlerForUpdate(ctx context.Context, path string) (*Handler, error) {
+	tctx, cancel := GetTimeoutContext(ctx)
+	defer cancel()
+
 	h := &Handler{
 		path:     path,
 		openType: ForUpdate,
@@ -86,11 +93,11 @@ func NewHandlerForUpdate(path string) (*Handler, error) {
 		return h, NewIOError(fmt.Sprintf("file %s does not exist", h.path))
 	}
 
-	if err := h.TryCreateLockFileWithTimeout(); err != nil {
+	if err := h.CreateLockFileContext(tctx); err != nil {
 		return h, err
 	}
 
-	fp, err := file.OpenToUpdateWithTimeout(path)
+	fp, err := file.OpenToUpdateContext(tctx, RetryDelay, path)
 	if err != nil {
 		h.Close()
 		return h, ParseError(err)
@@ -288,22 +295,23 @@ func (h *Handler) CloseWithErrors() error {
 	return nil
 }
 
-func (h *Handler) TryCreateLockFileWithTimeout() error {
-	var start time.Time
+func (h *Handler) CreateLockFileContext(ctx context.Context) error {
+	if ctx.Err() != nil {
+		return NewContextIsDone(ctx.Err().Error())
+	}
 
 	for {
-		if start.IsZero() {
-			start = time.Now()
-		} else if time.Since(start).Seconds() > WaitTimeout {
-			return NewTimeoutError(h.path)
+		if err := h.TryCreateLockFile(); err == nil {
+			return nil
 		}
 
-		if err := h.TryCreateLockFile(); err == nil {
-			break
+		select {
+		case <-ctx.Done():
+			return NewTimeoutError(h.path)
+		case <-time.After(RetryDelay):
+			// try again
 		}
-		time.Sleep(RetryInterval)
 	}
-	return nil
 }
 
 func (h *Handler) TryCreateLockFile() error {
@@ -344,28 +352,27 @@ func (h *Handler) TryCreateTempFile() error {
 	return nil
 }
 
-func (h *Handler) PrepareToRead() error {
+func (h *Handler) PrepareToRead(ctx context.Context) error {
+	if ctx.Err() != nil {
+		return NewContextIsDone(ctx.Err().Error())
+	}
+
 	if !Exists(h.path) {
 		return NewIOError(fmt.Sprintf("file %s does not exist", h.path))
 	}
 
 	lockFilePath := LockFilePath(h.path)
 
-	var start time.Time
-
 	for {
-		if start.IsZero() {
-			start = time.Now()
-		} else if time.Since(start).Seconds() > WaitTimeout {
-			return NewTimeoutError(h.path)
-		}
-
 		if _, err := os.Stat(lockFilePath); err != nil {
-			break
+			return nil
 		}
 
-		time.Sleep(RetryInterval)
+		select {
+		case <-ctx.Done():
+			return NewTimeoutError(h.path)
+		case <-time.After(RetryDelay):
+			// try again
+		}
 	}
-
-	return nil
 }

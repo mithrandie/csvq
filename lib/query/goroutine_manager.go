@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"math"
 	"sync"
 
@@ -138,18 +139,30 @@ func (m *GoroutineTaskManager) Wait() {
 	m.waitGroup.Wait()
 }
 
-func (m *GoroutineTaskManager) Run(fn func(int)) {
+func (m *GoroutineTaskManager) Run(ctx context.Context, fn func(int) error) error {
 	for i := 0; i < m.Number; i++ {
 		m.Add()
 		go func(thIdx int) {
 			start, end := m.RecordRange(thIdx)
 
 			for j := start; j < end; j++ {
-				fn(j)
+				if m.HasError() || ctx.Err() != nil {
+					break
+				}
+
+				if err := fn(j); err != nil {
+					m.SetError(err)
+					break
+				}
 			}
 
 			m.Done()
 		}(i)
 	}
 	m.Wait()
+
+	if ctx.Err() != nil {
+		return NewContextIsDone(ctx.Err().Error())
+	}
+	return nil
 }

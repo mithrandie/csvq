@@ -2,6 +2,7 @@ package query
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
 	"unicode"
@@ -22,8 +23,8 @@ type VirtualTerminal interface {
 	ReadLine() (string, error)
 	Write(string) error
 	WriteError(string) error
-	SetPrompt()
-	SetContinuousPrompt()
+	SetPrompt(ctx context.Context)
+	SetContinuousPrompt(ctx context.Context)
 	SaveHistory(string)
 	Teardown()
 	GetSize() (int, int, error)
@@ -102,8 +103,8 @@ func (p *Prompt) LoadConfig() error {
 	return nil
 }
 
-func (p *Prompt) RenderPrompt() (string, error) {
-	s, err := p.Render(p.sequence)
+func (p *Prompt) RenderPrompt(ctx context.Context) (string, error) {
+	s, err := p.Render(ctx, p.sequence)
 	if err != nil || len(s) < 1 {
 		s = TerminalPrompt
 	}
@@ -117,8 +118,8 @@ func (p *Prompt) RenderPrompt() (string, error) {
 	return s, err
 }
 
-func (p *Prompt) RenderContinuousPrompt() (string, error) {
-	s, err := p.Render(p.continuousSequence)
+func (p *Prompt) RenderContinuousPrompt(ctx context.Context) (string, error) {
+	s, err := p.Render(ctx, p.continuousSequence)
 	if err != nil || len(s) < 1 {
 		s = TerminalContinuousPrompt
 	}
@@ -132,7 +133,7 @@ func (p *Prompt) RenderContinuousPrompt() (string, error) {
 	return s, err
 }
 
-func (p *Prompt) Render(sequence []PromptElement) (string, error) {
+func (p *Prompt) Render(ctx context.Context, sequence []PromptElement) (string, error) {
 	p.buf.Reset()
 	var err error
 
@@ -141,15 +142,15 @@ func (p *Prompt) Render(sequence []PromptElement) (string, error) {
 		case excmd.FixedString:
 			p.buf.WriteString(element.Text)
 		case excmd.Variable:
-			if err = p.evaluate(parser.Variable{Name: element.Text}); err != nil {
+			if err = p.evaluate(ctx, parser.Variable{Name: element.Text}); err != nil {
 				return "", err
 			}
 		case excmd.EnvironmentVariable:
-			if err = p.evaluate(parser.EnvironmentVariable{Name: element.Text}); err != nil {
+			if err = p.evaluate(ctx, parser.EnvironmentVariable{Name: element.Text}); err != nil {
 				return "", err
 			}
 		case excmd.RuntimeInformation:
-			if err = p.evaluate(parser.RuntimeInformation{Name: element.Text}); err != nil {
+			if err = p.evaluate(ctx, parser.RuntimeInformation{Name: element.Text}); err != nil {
 				return "", err
 			}
 		case excmd.CsvqExpression:
@@ -167,7 +168,7 @@ func (p *Prompt) Render(sequence []PromptElement) (string, error) {
 					if !ok {
 						return "", NewPromptEvaluationError(fmt.Sprintf(ErrorInvalidValue, command))
 					}
-					if err = p.evaluate(expr); err != nil {
+					if err = p.evaluate(ctx, expr); err != nil {
 						return "", err
 					}
 				default:
@@ -180,8 +181,8 @@ func (p *Prompt) Render(sequence []PromptElement) (string, error) {
 	return p.buf.String(), nil
 }
 
-func (p *Prompt) evaluate(expr parser.QueryExpression) error {
-	val, err := p.filter.Evaluate(expr)
+func (p *Prompt) evaluate(ctx context.Context, expr parser.QueryExpression) error {
+	val, err := p.filter.Evaluate(ctx, expr)
 	if err != nil {
 		if ae, ok := err.(AppError); ok {
 			err = NewPromptEvaluationError(ae.ErrorMessage())

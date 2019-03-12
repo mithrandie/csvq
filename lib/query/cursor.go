@@ -1,14 +1,16 @@
 package query
 
 import (
+	"context"
 	"errors"
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
-	"github.com/mithrandie/ternary"
 	"sort"
+
+	"github.com/mithrandie/ternary"
 )
 
 type CursorScopes []CursorMap
@@ -34,11 +36,11 @@ func (list CursorScopes) Dispose(name parser.Identifier) error {
 	return NewUndeclaredCursorError(name)
 }
 
-func (list CursorScopes) Open(name parser.Identifier, filter *Filter) error {
+func (list CursorScopes) Open(ctx context.Context, name parser.Identifier, filter *Filter) error {
 	var err error
 
 	for _, m := range list {
-		err = m.Open(name, filter)
+		err = m.Open(ctx, name, filter)
 		if err == nil {
 			return nil
 		}
@@ -167,9 +169,9 @@ func (m CursorMap) Dispose(name parser.Identifier) error {
 	return NewUndeclaredCursorError(name)
 }
 
-func (m CursorMap) Open(name parser.Identifier, filter *Filter) error {
+func (m CursorMap) Open(ctx context.Context, name parser.Identifier, filter *Filter) error {
 	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
-		return cur.Open(name, filter)
+		return cur.Open(ctx, name, filter)
 	}
 	return NewUndeclaredCursorError(name)
 }
@@ -267,7 +269,7 @@ func NewPseudoCursor(values []value.Primary) *Cursor {
 	}
 }
 
-func (c *Cursor) Open(name parser.Identifier, filter *Filter) error {
+func (c *Cursor) Open(ctx context.Context, name parser.Identifier, filter *Filter) error {
 	if c.isPseudo {
 		return NewPseudoCursorError(name)
 	}
@@ -276,7 +278,7 @@ func (c *Cursor) Open(name parser.Identifier, filter *Filter) error {
 		return NewCursorOpenError(name)
 	}
 
-	view, err := Select(c.query, filter)
+	view, err := Select(ctx, c.query, filter)
 	if err != nil {
 		return err
 	}

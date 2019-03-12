@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"reflect"
 	"testing"
 	"time"
@@ -3430,7 +3431,7 @@ var jsonObjectTests = []struct {
 
 func TestJsonObject(t *testing.T) {
 	for _, v := range jsonObjectTests {
-		result, err := JsonObject(v.Function, v.Filter)
+		result, err := JsonObject(context.Background(), v.Function, v.Filter)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
