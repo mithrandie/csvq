@@ -523,7 +523,9 @@ func (proc *Procedure) WhileInCursor(ctx context.Context, stmt parser.WhileInCur
 				assigns[i] = parser.VariableAssignment{Variable: v}
 			}
 			decl := parser.VariableDeclaration{Assignments: assigns}
-			childProc.Filter.Variables.Declare(ctx, decl, childProc.Filter)
+			if err := childProc.Filter.Variables.Declare(ctx, decl, childProc.Filter); err != nil {
+				return Error, err
+			}
 		}
 
 		success, err := FetchCursor(ctx, stmt.Cursor, fetchPosition, stmt.Variables, childProc.Filter)

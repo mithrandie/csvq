@@ -25,19 +25,19 @@ func run(m *testing.M) int {
 
 func setup() {
 	if _, err := os.Stat(TestDir); err == nil {
-		os.RemoveAll(TestDir)
+		_ = os.RemoveAll(TestDir)
 	}
 
 	if _, err := os.Stat(TestDir); os.IsNotExist(err) {
-		os.Mkdir(TestDir, 0755)
+		_ = os.Mkdir(TestDir, 0755)
 	}
 
 	fp, _ := os.Create(GetTestFilePath("dummy.sql"))
-	defer fp.Close()
+	defer func() { _ = fp.Close() }()
 }
 
 func teardown() {
 	if _, err := os.Stat(TestDir); err == nil {
-		os.RemoveAll(TestDir)
+		_ = os.RemoveAll(TestDir)
 	}
 }

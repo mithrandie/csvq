@@ -17,7 +17,7 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
 
-	"github.com/mithrandie/go-file"
+	"github.com/mithrandie/go-file/v2"
 )
 
 func Run(proc *query.Procedure, input string, sourceFile string, outfile string) error {
@@ -52,9 +52,13 @@ func Run(proc *query.Procedure, input string, sourceFile string, outfile string)
 		}
 		defer func() {
 			if info, err := fp.Stat(); err == nil && info.Size() < 1 {
-				os.Remove(outfile)
+				if err = os.Remove(outfile); err != nil {
+					query.LogError(err.Error())
+				}
 			}
-			fp.Close()
+			if err = fp.Close(); err != nil {
+				query.LogError(err.Error())
+			}
 		}()
 		query.OutFile = fp
 	}
@@ -93,7 +97,9 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 	}
 	query.Terminal = term
 	defer func() {
-		query.Terminal.Teardown()
+		if e := query.Terminal.Teardown(); e != nil {
+			query.LogError(e.Error())
+		}
 		query.Terminal = nil
 	}()
 
@@ -143,7 +149,9 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 			query.Terminal.SetPrompt(ctx)
 			continue
 		}
-		query.Terminal.SaveHistory(saveQuery)
+		if e := query.Terminal.SaveHistory(saveQuery); e != nil {
+			query.LogError(e.Error())
+		}
 
 		statements, e := parser.Parse(strings.Join(lines, "\n"), "")
 		if e != nil {

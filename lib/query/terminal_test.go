@@ -70,7 +70,7 @@ func TestPrompt_LoadConfig(t *testing.T) {
 		}
 	}
 
-	cmd.LoadEnvironment()
+	_ = cmd.LoadEnvironment()
 }
 
 var promptRenderPromptTests = []struct {
@@ -266,7 +266,7 @@ var promptRenderTests = []struct {
 
 func TestPrompt_Render(t *testing.T) {
 	filter := NewEmptyFilter()
-	filter.Variables[0].Add(parser.Variable{Name: "var"}, value.NewString("abc"))
+	_ = filter.Variables[0].Add(parser.Variable{Name: "var"}, value.NewString("abc"))
 	prompt := NewPrompt(filter, &color.Palette{})
 
 	for _, v := range promptRenderTests {

@@ -303,41 +303,51 @@ func main() {
 		return nil
 	}
 
-	app.Run(os.Args)
+	if err := app.Run(os.Args); err != nil {
+		println(err.Error())
+	}
 }
 
-func readQuery(c *cli.Context) (string, string, error) {
-	var queryString string
-	var path string
-
+func readQuery(c *cli.Context) (queryString string, path string, err error) {
 	if c.IsSet("source") && 0 < len(c.GlobalString("source")) {
 		path = c.GlobalString("source")
 		if abs, err := filepath.Abs(path); err == nil {
 			path = abs
 		}
 		if !file.Exists(path) {
-			return queryString, path, errors.New(fmt.Sprintf("file %q does not exist", path))
+			err = errors.New(fmt.Sprintf("file %q does not exist", path))
+			return
 		}
-		h, err := file.NewHandlerForRead(context.Background(), path)
-		if err != nil {
-			return queryString, path, errors.New(fmt.Sprintf("failed to read file: %s", err.Error()))
+		h, e := file.NewHandlerForRead(context.Background(), path)
+		if e != nil {
+			err = errors.New(fmt.Sprintf("failed to read file: %s", e.Error()))
+			return
 		}
-		defer h.Close()
+		defer func() {
+			if e := h.Close(); e != nil {
+				if err == nil {
+					err = e
+				} else {
+					err = errors.New(err.Error() + "\n" + e.Error())
+				}
+			}
+		}()
 
-		buf, err := ioutil.ReadAll(h.FileForRead())
-		if err != nil {
-			return queryString, path, errors.New(fmt.Sprintf("failed to read file: %s", err.Error()))
+		buf, e := ioutil.ReadAll(h.FileForRead())
+		if e != nil {
+			err = errors.New(fmt.Sprintf("failed to read file: %s", e.Error()))
+			return
 		}
 
 		queryString = string(buf)
 	} else {
 		if 1 < c.NArg() {
-			return queryString, path, errors.New("multiple queries or statements were passed")
+			err = errors.New("multiple queries or statements were passed")
+			return
 		}
 		queryString = c.Args().First()
 	}
-
-	return queryString, path, nil
+	return
 }
 
 func overwriteFlags(c *cli.Context) error {
@@ -456,11 +466,17 @@ func overwriteFlags(c *cli.Context) error {
 	return nil
 }
 
-func runPreloadCommands(proc *query.Procedure) error {
+func runPreloadCommands(proc *query.Procedure) (err error) {
 	handlers := make([]*file.Handler, 0, 4)
 	defer func() {
 		for _, h := range handlers {
-			h.Close()
+			if e := h.Close(); e != nil {
+				if err == nil {
+					err = e
+				} else {
+					err = errors.New(err.Error() + "\n" + e.Error())
+				}
+			}
 		}
 	}()
 

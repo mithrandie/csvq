@@ -20,7 +20,7 @@ var showFieldsTests = []struct {
 
 func TestShowFields(t *testing.T) {
 	for _, v := range showFieldsTests {
-		query.ReleaseResources()
+		_ = query.ReleaseResources()
 		proc := query.NewProcedure()
 		err := ShowFields(proc, v.Input)
 		if err != nil {
@@ -36,5 +36,5 @@ func TestShowFields(t *testing.T) {
 			continue
 		}
 	}
-	query.ReleaseResources()
+	_ = query.ReleaseResources()
 }

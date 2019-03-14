@@ -63,14 +63,16 @@ func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
 	terminal.setCompleter()
 	terminal.setKillWholeLine()
 	terminal.setViMode()
-	prompt.LoadConfig()
+	if err = prompt.LoadConfig(); err != nil {
+		return nil, err
+	}
 
 	terminal.SetPrompt(ctx)
 	return terminal, nil
 }
 
-func (t ReadLineTerminal) Teardown() {
-	t.terminal.Close()
+func (t ReadLineTerminal) Teardown() error {
+	return t.terminal.Close()
 }
 
 func (t ReadLineTerminal) ReadLine() (string, error) {
@@ -103,8 +105,8 @@ func (t ReadLineTerminal) SetContinuousPrompt(ctx context.Context) {
 	t.terminal.SetPrompt(str)
 }
 
-func (t ReadLineTerminal) SaveHistory(s string) {
-	t.terminal.SaveHistory(s)
+func (t ReadLineTerminal) SaveHistory(s string) error {
+	return t.terminal.SaveHistory(s)
 }
 
 func (t ReadLineTerminal) GetSize() (int, int, error) {

@@ -2,7 +2,9 @@ package file
 
 import "time"
 
-var WaitTimeout = 10 * time.Second
+const DefaultWaitTimeout = 10 * time.Second
+
+var WaitTimeout = DefaultWaitTimeout
 var RetryDelay = 10 * time.Millisecond
 
 const (

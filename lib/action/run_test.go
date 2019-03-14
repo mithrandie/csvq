@@ -72,7 +72,7 @@ func TestRun(t *testing.T) {
 		proc := query.NewProcedure()
 		err := Run(proc, v.Input, "", v.OutFile)
 
-		w.Close()
+		_ = w.Close()
 		query.Stdout = oldStdout
 		stdout, _ := ioutil.ReadAll(r)
 

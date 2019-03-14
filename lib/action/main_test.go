@@ -28,14 +28,14 @@ func run(m *testing.M) int {
 
 func setup() {
 	if _, err := os.Stat(TestDir); err == nil {
-		os.RemoveAll(TestDir)
+		_ = os.RemoveAll(TestDir)
 	}
 
 	wdir, _ := os.Getwd()
 	TestDataDir = filepath.Join(wdir, "..", "..", "testdata", "csv")
 
 	if _, err := os.Stat(TestDir); os.IsNotExist(err) {
-		os.Mkdir(TestDir, 0755)
+		_ = os.Mkdir(TestDir, 0755)
 	}
 
 	r, _ := os.Open(filepath.Join(TestDataDir, "empty.txt"))
@@ -46,7 +46,7 @@ func setup() {
 
 func teardown() {
 	if _, err := os.Stat(TestDir); err == nil {
-		os.RemoveAll(TestDir)
+		_ = os.RemoveAll(TestDir)
 	}
 
 	cmd.GetFlags().SetColor(true)

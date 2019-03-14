@@ -124,8 +124,7 @@ func CrossJoin(ctx context.Context, view *View, joinView *View) error {
 
 func InnerJoin(ctx context.Context, view *View, joinView *View, condition parser.QueryExpression, parentFilter *Filter) error {
 	if condition == nil {
-		CrossJoin(ctx, view, joinView)
-		return nil
+		return CrossJoin(ctx, view, joinView)
 	}
 
 	mergedHeader := MergeHeader(view.Header, joinView.Header)

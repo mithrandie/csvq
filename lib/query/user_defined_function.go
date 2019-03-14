@@ -205,7 +205,9 @@ func (fn *UserDefinedFunction) Execute(ctx context.Context, args []value.Primary
 
 func (fn *UserDefinedFunction) ExecuteAggregate(ctx context.Context, values []value.Primary, args []value.Primary, filter *Filter) (value.Primary, error) {
 	childScope := filter.CreateChildScope()
-	childScope.Cursors.AddPseudoCursor(fn.Cursor, values)
+	if err := childScope.Cursors.AddPseudoCursor(fn.Cursor, values); err != nil {
+		return nil, err
+	}
 	return fn.execute(ctx, args, childScope)
 }
 
@@ -237,14 +239,18 @@ func (fn *UserDefinedFunction) execute(ctx context.Context, args []value.Primary
 
 	for i, v := range fn.Parameters {
 		if i < len(args) {
-			filter.Variables[0].Add(v, args[i])
+			if err := filter.Variables[0].Add(v, args[i]); err != nil {
+				return nil, err
+			}
 		} else {
 			defaultValue, _ := fn.Defaults[v.Name]
 			val, err := filter.Evaluate(ctx, defaultValue)
 			if err != nil {
 				return nil, err
 			}
-			filter.Variables[0].Add(v, val)
+			if err = filter.Variables[0].Add(v, val); err != nil {
+				return nil, err
+			}
 		}
 	}
 

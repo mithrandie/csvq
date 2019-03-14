@@ -51,6 +51,5 @@ func Calc(expr string) error {
 		values[i], _, _ = query.ConvertFieldContents(p, true)
 	}
 
-	query.WriteToStdout(strings.Join(values, string(cmd.GetFlags().WriteDelimiter)))
-	return nil
+	return query.WriteToStdout(strings.Join(values, string(cmd.GetFlags().WriteDelimiter)))
 }

@@ -2537,7 +2537,7 @@ func TestView_Load(t *testing.T) {
 	tf.Repository = TestDir
 
 	for _, v := range viewLoadTests {
-		ViewCache.Clean()
+		_ = ViewCache.Clean()
 
 		tf.ImportFormat = v.ImportFormat
 		tf.Delimiter = ','
@@ -2558,8 +2558,8 @@ func TestView_Load(t *testing.T) {
 		if 0 < len(v.Stdin) {
 			oldStdin = os.Stdin
 			r, w, _ := os.Pipe()
-			w.WriteString(v.Stdin)
-			w.Close()
+			_, _ = w.WriteString(v.Stdin)
+			_ = w.Close()
 			os.Stdin = r
 		}
 
@@ -2621,7 +2621,7 @@ func TestView_Load(t *testing.T) {
 			}
 		}
 		if view.FileInfo != nil {
-			view.FileInfo.Close()
+			_ = view.FileInfo.Close()
 			view.FileInfo = nil
 		}
 		v.Result.FileInfo = nil
@@ -5747,7 +5747,7 @@ func TestView_Fix(t *testing.T) {
 		selectFields: []int(nil),
 	}
 
-	view.Fix(context.Background())
+	_ = view.Fix(context.Background())
 	if !reflect.DeepEqual(view, expect) {
 		t.Errorf("fix: view = %v, want %v", view, expect)
 	}
@@ -5817,7 +5817,7 @@ func TestView_Union(t *testing.T) {
 		},
 	}
 
-	view.Union(context.Background(), calcView, false)
+	_ = view.Union(context.Background(), calcView, false)
 	if !reflect.DeepEqual(view, expect) {
 		t.Errorf("union: view = %v, want %v", view, expect)
 	}
@@ -5880,7 +5880,7 @@ func TestView_Union(t *testing.T) {
 		},
 	}
 
-	view.Union(context.Background(), calcView, true)
+	_ = view.Union(context.Background(), calcView, true)
 	if !reflect.DeepEqual(view, expect) {
 		t.Errorf("union all: view = %v, want %v", view, expect)
 	}
@@ -5942,7 +5942,7 @@ func TestView_Except(t *testing.T) {
 		},
 	}
 
-	view.Except(context.Background(), calcView, false)
+	_ = view.Except(context.Background(), calcView, false)
 	if !reflect.DeepEqual(view, expect) {
 		t.Errorf("except: view = %v, want %v", view, expect)
 	}
@@ -5989,7 +5989,7 @@ func TestView_Except(t *testing.T) {
 		},
 	}
 
-	view.Except(context.Background(), calcView, true)
+	_ = view.Except(context.Background(), calcView, true)
 	if !reflect.DeepEqual(view, expect) {
 		t.Errorf("except all: view = %v, want %v", view, expect)
 	}
@@ -6051,7 +6051,7 @@ func TestView_Intersect(t *testing.T) {
 		},
 	}
 
-	view.Intersect(context.Background(), calcView, false)
+	_ = view.Intersect(context.Background(), calcView, false)
 	if !reflect.DeepEqual(view, expect) {
 		t.Errorf("intersect: view = %v, want %v", view, expect)
 	}
@@ -6098,7 +6098,7 @@ func TestView_Intersect(t *testing.T) {
 		},
 	}
 
-	view.Intersect(context.Background(), calcView, true)
+	_ = view.Intersect(context.Background(), calcView, true)
 	if !reflect.DeepEqual(view, expect) {
 		t.Errorf("intersect all: view = %v, want %v", view, expect)
 	}

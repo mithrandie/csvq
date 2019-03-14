@@ -17,8 +17,8 @@ func (list VariableScopes) Declare(ctx context.Context, expr parser.VariableDecl
 }
 
 func (list VariableScopes) Get(expr parser.Variable) (value value.Primary, err error) {
-	for _, v := range list {
-		if value, err = v.Get(expr); err == nil {
+	for i := range list {
+		if value, err = list[i].Get(expr); err == nil {
 			return
 		}
 	}
@@ -27,8 +27,8 @@ func (list VariableScopes) Get(expr parser.Variable) (value value.Primary, err e
 }
 
 func (list VariableScopes) Substitute(ctx context.Context, expr parser.VariableSubstitution, filter *Filter) (value value.Primary, err error) {
-	for _, v := range list {
-		if value, err = v.Substitute(ctx, expr, filter); err == nil {
+	for i := range list {
+		if value, err = list[i].Substitute(ctx, expr, filter); err == nil {
 			return
 		}
 		if _, ok := err.(*UndeclaredVariableError); !ok {
@@ -41,8 +41,8 @@ func (list VariableScopes) Substitute(ctx context.Context, expr parser.VariableS
 
 func (list VariableScopes) SubstituteDirectly(variable parser.Variable, value value.Primary) (value.Primary, error) {
 	var err error
-	for _, v := range list {
-		if value, err = v.SubstituteDirectly(variable, value); err == nil {
+	for i := range list {
+		if value, err = list[i].SubstituteDirectly(variable, value); err == nil {
 			return value, nil
 		}
 	}
@@ -50,8 +50,8 @@ func (list VariableScopes) SubstituteDirectly(variable parser.Variable, value va
 }
 
 func (list VariableScopes) Dispose(expr parser.Variable) error {
-	for _, v := range list {
-		if err := v.Dispose(expr); err == nil {
+	for i := range list {
+		if err := list[i].Dispose(expr); err == nil {
 			return nil
 		}
 	}
@@ -72,8 +72,8 @@ func (list VariableScopes) Equal(list2 VariableScopes) bool {
 
 func (list VariableScopes) All() VariableMap {
 	all := NewVariableMap()
-	for _, m := range list {
-		m.variables.Range(func(key, value interface{}) bool {
+	for i := range list {
+		list[i].variables.Range(func(key, value interface{}) bool {
 			if _, ok := all.variables.Load(key); !ok {
 				all.variables.Store(key, value)
 			}
@@ -84,12 +84,12 @@ func (list VariableScopes) All() VariableMap {
 }
 
 type VariableMap struct {
-	variables sync.Map
+	variables *sync.Map
 }
 
 func NewVariableMap() VariableMap {
 	return VariableMap{
-		variables: sync.Map{},
+		variables: &sync.Map{},
 	}
 }
 

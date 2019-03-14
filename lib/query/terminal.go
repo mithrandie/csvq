@@ -25,8 +25,8 @@ type VirtualTerminal interface {
 	WriteError(string) error
 	SetPrompt(ctx context.Context)
 	SetContinuousPrompt(ctx context.Context)
-	SaveHistory(string)
-	Teardown()
+	SaveHistory(string) error
+	Teardown() error
 	GetSize() (int, int, error)
 	ReloadConfig() error
 	UpdateCompleter()

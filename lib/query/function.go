@@ -1564,14 +1564,20 @@ func JsonObject(ctx context.Context, fn parser.Function, filter *Filter) (value.
 	view.Filter = filter.CreateNode()
 
 	if len(fn.Args) < 1 {
-		view.SelectAllColumns(ctx)
+		if err := view.SelectAllColumns(ctx); err != nil {
+			return nil, err
+		}
 	} else {
 		selectClause := parser.SelectClause{
 			Fields: fn.Args,
 		}
-		view.Select(ctx, selectClause)
+		if err := view.Select(ctx, selectClause); err != nil {
+			return nil, err
+		}
 	}
-	view.Fix(ctx)
+	if err := view.Fix(ctx); err != nil {
+		return nil, err
+	}
 
 	pathes, err := json.ParsePathes(view.Header.TableColumnNames())
 	if err != nil {

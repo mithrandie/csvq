@@ -18,15 +18,14 @@ func GetTimeoutContext(ctx context.Context) (context.Context, context.CancelFunc
 	return context.WithTimeout(context.Background(), WaitTimeout)
 }
 
-func UpdateWaitTimeout(waitTimeout float64, retryDelay time.Duration) error {
+func UpdateWaitTimeout(waitTimeout float64, retryDelay time.Duration) {
 	d, err := time.ParseDuration(strconv.FormatFloat(waitTimeout, 'f', -1, 64) + "s")
 	if err != nil {
-		return err
+		d = DefaultWaitTimeout
 	}
 
 	WaitTimeout = d
 	RetryDelay = retryDelay
-	return nil
 }
 
 func LockFilePath(path string) string {

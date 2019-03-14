@@ -3,6 +3,7 @@ package query
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/file"
@@ -134,18 +135,34 @@ type AppError interface {
 	Error() string
 	ErrorMessage() string
 	GetCode() int
+	AppendCompositeError(AppError)
 }
 
 type BaseError struct {
-	SourceFile string
-	Line       int
-	Char       int
-	Message    string
-	Code       int
-	Prefix     string
+	SourceFile    string
+	Line          int
+	Char          int
+	Message       string
+	Code          int
+	Prefix        string
+	CompositeErrs []AppError
 }
 
-func (e BaseError) Error() string {
+func (e *BaseError) Error() string {
+	msg := e.err()
+	if e.CompositeErrs != nil {
+		msglist := make([]string, 0, len(e.CompositeErrs)+1)
+		msglist = append(msglist, "composite error:")
+		msglist = append(msglist, msg)
+		for _, ce := range e.CompositeErrs {
+			msglist = append(msglist, ce.Error())
+		}
+		msg = strings.Join(msglist, "\n  ")
+	}
+	return msg
+}
+
+func (e *BaseError) err() string {
 	if 0 < len(e.Prefix) {
 		return fmt.Sprintf(ErrorMessageWithCustomPrefixTemplate, e.Prefix, e.Message)
 	}
@@ -158,12 +175,35 @@ func (e BaseError) Error() string {
 	return fmt.Sprintf(ErrorMessageTemplate, e.Line, e.Char, e.Message)
 }
 
-func (e BaseError) ErrorMessage() string {
+func (e *BaseError) ErrorMessage() string {
 	return e.Message
 }
 
-func (e BaseError) GetCode() int {
+func (e *BaseError) GetCode() int {
 	return e.Code
+}
+
+func (e *BaseError) AppendCompositeError(err AppError) {
+	e.CompositeErrs = append(e.CompositeErrs, err)
+}
+
+func AppendCompositeError(e1 error, e2 error) error {
+	if e1 == nil {
+		return e2
+	}
+	if e2 == nil {
+		return e1
+	}
+	appe1, ok := e1.(AppError)
+	if !ok {
+		appe1 = NewSystemError(e1.Error()).(AppError)
+	}
+	appe2, ok := e2.(AppError)
+	if !ok {
+		appe2 = NewSystemError(e2.Error()).(AppError)
+	}
+	appe1.AppendCompositeError(appe2)
+	return appe1
 }
 
 func NewBaseError(expr parser.Expression, message string) *BaseError {
@@ -198,6 +238,16 @@ func NewBaseErrorWithPrefix(prefix string, message string, code int) *BaseError 
 		Message:    message,
 		Code:       code,
 		Prefix:     prefix,
+	}
+}
+
+type SystemError struct {
+	*BaseError
+}
+
+func NewSystemError(message string) error {
+	return &SystemError{
+		NewBaseErrorWithPrefix("System Error", message, 1),
 	}
 }
 

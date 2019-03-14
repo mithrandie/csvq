@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mithrandie/go-file"
+	"github.com/mithrandie/go-file/v2"
 )
 
 func ParseError(err error) error {
@@ -95,5 +95,19 @@ func (e ForcedUnlockError) Error() string {
 	for _, err := range e.Errors {
 		list = append(list, err.Error())
 	}
-	return strings.Join(list, "\n")
+	return strings.Join(list, "\n  ")
+}
+
+type CompositeError struct {
+	message string
+}
+
+func NewCompositeError(err1 error, err2 error) error {
+	return &CompositeError{
+		message: err1.Error() + "\n  " + err2.Error(),
+	}
+}
+
+func (e CompositeError) Error() string {
+	return e.message
 }

@@ -4005,12 +4005,12 @@ func TestFilter_Evaluate(t *testing.T) {
 			query: selectQueryForCursorTest,
 		},
 	}
-	ViewCache.Clean()
-	cursors.Open(context.Background(), parser.Identifier{Literal: "cur"}, NewEmptyFilter())
-	cursors.Fetch(parser.Identifier{Literal: "cur"}, parser.NEXT, 0)
+	_ = ViewCache.Clean()
+	_ = cursors.Open(context.Background(), parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+	_, _ = cursors.Fetch(parser.Identifier{Literal: "cur"}, parser.NEXT, 0)
 
 	for _, v := range filterEvaluateTests {
-		ViewCache.Clean()
+		_ = ViewCache.Clean()
 
 		if v.Filter == nil {
 			v.Filter = NewEmptyFilter()
@@ -4281,8 +4281,8 @@ var filterEvaluateEmbeddedStringTests = []struct {
 
 func TestFilter_EvaluateEmbeddedString(t *testing.T) {
 	filter := NewEmptyFilter()
-	filter.Variables[0].Add(parser.Variable{Name: "var"}, value.NewInteger(1))
-	os.Setenv("CSVQ_TEST_FILTER", "FILTER_TEST")
+	_ = filter.Variables[0].Add(parser.Variable{Name: "var"}, value.NewInteger(1))
+	_ = os.Setenv("CSVQ_TEST_FILTER", "FILTER_TEST")
 
 	for _, v := range filterEvaluateEmbeddedStringTests {
 		result, err := filter.EvaluateEmbeddedString(context.Background(), v.Input)

@@ -66,7 +66,10 @@ func bareValues(view *View) ([]string, [][]value.Primary) {
 func encodeCSV(fp io.Writer, view *View, delimiter rune, lineBreak text.LineBreak, withoutHeader bool, encoding text.Encoding, encloseAll bool) error {
 	header, records := bareValues(view)
 
-	w := csv.NewWriter(fp, lineBreak, encoding)
+	w, err := csv.NewWriter(fp, lineBreak, encoding)
+	if err != nil {
+		return err
+	}
 	w.Delimiter = delimiter
 
 	fields := make([]csv.Field, len(header))
@@ -93,12 +96,12 @@ func encodeCSV(fp io.Writer, view *View, delimiter rune, lineBreak text.LineBrea
 			return err
 		}
 	}
-	w.Flush()
-	return nil
+	return w.Flush()
 }
 
 func encodeFixedLengthFormat(fp io.Writer, view *View, positions []int, lineBreak text.LineBreak, withoutHeader bool, encoding text.Encoding, singleLine bool) error {
 	header, records := bareValues(view)
+	var err error
 
 	if positions == nil {
 		m := fixedlen.NewMeasure()
@@ -125,17 +128,23 @@ func encodeFixedLengthFormat(fp io.Writer, view *View, positions []int, lineBrea
 		}
 
 		positions = m.GeneratePositions()
-		w := fixedlen.NewWriter(fp, positions, lineBreak, encoding)
+		w, err := fixedlen.NewWriter(fp, positions, lineBreak, encoding)
+		if err != nil {
+			return err
+		}
 		w.InsertSpace = true
 		for _, fields := range fieldList {
 			if err := w.Write(fields); err != nil {
 				return err
 			}
 		}
-		w.Flush()
+		err = w.Flush()
 
 	} else {
-		w := fixedlen.NewWriter(fp, positions, lineBreak, encoding)
+		w, err := fixedlen.NewWriter(fp, positions, lineBreak, encoding)
+		if err != nil {
+			return err
+		}
 		w.SingleLine = singleLine
 
 		fields := make([]fixedlen.Field, len(header))
@@ -158,9 +167,9 @@ func encodeFixedLengthFormat(fp io.Writer, view *View, positions []int, lineBrea
 				return err
 			}
 		}
-		w.Flush()
+		err = w.Flush()
 	}
-	return nil
+	return err
 }
 
 func encodeJson(fp io.Writer, view *View, lineBreak text.LineBreak, escapeType txjson.EscapeType, prettyPrint bool) error {
@@ -315,8 +324,7 @@ func encodeLTSV(fp io.Writer, view *View, lineBreak text.LineBreak, encoding tex
 			return err
 		}
 	}
-	w.Flush()
-	return nil
+	return w.Flush()
 }
 
 func ConvertFieldContents(val value.Primary, forTextTable bool) (string, string, text.FieldAlignment) {

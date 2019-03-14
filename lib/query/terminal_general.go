@@ -49,8 +49,8 @@ func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
 	return t, nil
 }
 
-func (t SSHTerminal) Teardown() {
-	t.RestoreOriginalMode()
+func (t SSHTerminal) Teardown() error {
+	return t.RestoreOriginalMode()
 }
 
 func (t SSHTerminal) RestoreRawMode() error {
@@ -98,8 +98,8 @@ func (t SSHTerminal) SetContinuousPrompt(ctx context.Context) {
 	t.terminal.SetPrompt(str)
 }
 
-func (t SSHTerminal) SaveHistory(s string) {
-	return
+func (t SSHTerminal) SaveHistory(s string) error {
+	return nil
 }
 
 func (t SSHTerminal) GetSize() (int, int, error) {

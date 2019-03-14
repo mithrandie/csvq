@@ -20,7 +20,9 @@ func SetSignalHandler() {
 			query.LogError(err.Error())
 		}
 		if query.Terminal != nil {
-			query.Terminal.Teardown()
+			if err := query.Terminal.Teardown(); err != nil {
+				query.LogError(err.Error())
+			}
 		}
 		os.Exit(-1)
 	}()

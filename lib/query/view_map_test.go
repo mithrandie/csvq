@@ -678,7 +678,7 @@ func TestTemporaryViewScopes_Store(t *testing.T) {
 
 	list.Store(UncommittedViews)
 
-	w.Close()
+	_ = w.Close()
 	Stdout = oldStdout
 
 	log, _ := ioutil.ReadAll(r)
@@ -804,7 +804,7 @@ func TestTemporaryViewScopes_Restore(t *testing.T) {
 
 	list.Restore(UncommittedViews)
 
-	w.Close()
+	_ = w.Close()
 	Stdout = oldStdout
 
 	log, _ := ioutil.ReadAll(r)
@@ -1363,7 +1363,7 @@ func TestViewMap_Clear(t *testing.T) {
 
 	expect := ViewMap{}
 
-	viewMap.Clean()
+	_ = viewMap.Clean()
 	if !reflect.DeepEqual(viewMap, expect) {
 		t.Errorf("result = %v, want %v", viewMap, expect)
 	}

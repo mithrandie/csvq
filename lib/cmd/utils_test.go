@@ -207,7 +207,7 @@ func TestIsReadableFromPipeOrRedirection(t *testing.T) {
 
 	result := IsReadableFromPipeOrRedirection()
 
-	r.Close()
+	_ = r.Close()
 
 	if result != false {
 		t.Errorf("readable from pipe or redirection = %t, want %t", result, false)
@@ -217,12 +217,12 @@ func TestIsReadableFromPipeOrRedirection(t *testing.T) {
 	r, w, _ := os.Pipe()
 	os.Stdin = r
 
-	w.Write([]byte("abcde"))
-	w.Close()
+	_, _ = w.Write([]byte("abcde"))
+	_ = w.Close()
 
 	result = IsReadableFromPipeOrRedirection()
 
-	r.Close()
+	_ = r.Close()
 	os.Stdin = oldStdin
 
 	if result != true {

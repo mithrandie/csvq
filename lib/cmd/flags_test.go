@@ -16,14 +16,14 @@ import (
 func TestFlags_SetRepository(t *testing.T) {
 	flags := GetFlags()
 
-	flags.SetRepository("")
+	_ = flags.SetRepository("")
 	if flags.Repository != "" {
 		t.Errorf("repository = %s, expect to set %q for %q", flags.Repository, "", "")
 	}
 
 	dir := filepath.Join("..", "..", "lib", "cmd")
 	absdir, _ := filepath.Abs(dir)
-	flags.SetRepository(dir)
+	_ = flags.SetRepository(dir)
 	if flags.Repository != absdir {
 		t.Errorf("repository = %s, expect to set %s for %s", flags.Repository, absdir, dir)
 	}
@@ -49,19 +49,19 @@ func TestFlags_SetLocation(t *testing.T) {
 	flags := GetFlags()
 
 	s := ""
-	flags.SetLocation(s)
+	_ = flags.SetLocation(s)
 	if flags.Location != "Local" {
 		t.Errorf("location = %s, expect to set %s for %q", flags.Location, "Local", "")
 	}
 
 	s = "local"
-	flags.SetLocation(s)
+	_ = flags.SetLocation(s)
 	if flags.Location != "Local" {
 		t.Errorf("location = %s, expect to set %s for %q", flags.Location, "Local", s)
 	}
 
 	s = "utc"
-	flags.SetLocation(s)
+	_ = flags.SetLocation(s)
 	if flags.Location != "UTC" {
 		t.Errorf("location = %s, expect to set %s for %q", flags.Location, "UTC", s)
 	}
@@ -131,12 +131,12 @@ func TestFlags_SetWaitTimeout(t *testing.T) {
 func TestFlags_SetImportFormat(t *testing.T) {
 	flags := GetFlags()
 
-	flags.SetImportFormat("")
+	_ = flags.SetImportFormat("")
 	if flags.ImportFormat != CSV {
 		t.Errorf("importFormat = %s, expect to set %s for empty string", flags.ImportFormat, CSV)
 	}
 
-	flags.SetImportFormat("json")
+	_ = flags.SetImportFormat("json")
 	if flags.ImportFormat != JSON {
 		t.Errorf("importFormat = %s, expect to set %s for empty string", flags.ImportFormat, JSON)
 	}
@@ -160,12 +160,12 @@ func TestFlags_SetImportFormat(t *testing.T) {
 func TestFlags_SetDelimiter(t *testing.T) {
 	flags := GetFlags()
 
-	flags.SetDelimiter("")
+	_ = flags.SetDelimiter("")
 	if flags.Delimiter != ',' {
 		t.Errorf("delimiter = %q, expect to set %q for %q", flags.Delimiter, ',', "")
 	}
 
-	flags.SetDelimiter("\\t")
+	_ = flags.SetDelimiter("\\t")
 	if flags.Delimiter != '\t' {
 		t.Errorf("delimiter = %q, expect to set %q for %q", flags.Delimiter, "\t", "\t")
 	}
@@ -190,12 +190,12 @@ func TestFlags_SetDelimiter(t *testing.T) {
 func TestFlags_SetDelimiterPositions(t *testing.T) {
 	flags := GetFlags()
 
-	flags.SetDelimiterPositions("")
+	_ = flags.SetDelimiterPositions("")
 	if flags.DelimiterPositions != nil {
 		t.Errorf("delimiter-positions = %v, expect to set %v for %q", flags.DelimiterPositions, nil, "")
 	}
 
-	flags.SetDelimiterPositions("s[1, 2, 3]")
+	_ = flags.SetDelimiterPositions("s[1, 2, 3]")
 	if flags.SingleLine != true {
 		t.Errorf("singleLine = %t, expect to set %t for %q", flags.SingleLine, true, "s[1, 2, 3]")
 	}
@@ -203,7 +203,7 @@ func TestFlags_SetDelimiterPositions(t *testing.T) {
 		t.Errorf("delimitPositions = %v, expect to set %v for %q", flags.DelimiterPositions, []int{1, 2, 3}, "[1, 2, 3]")
 	}
 
-	flags.SetDelimiterPositions("[1, 2, 3]")
+	_ = flags.SetDelimiterPositions("[1, 2, 3]")
 	if flags.SingleLine != false {
 		t.Errorf("singleLine = %t, expect to set %t for %q", flags.SingleLine, false, "[1, 2, 3]")
 	}
@@ -211,7 +211,7 @@ func TestFlags_SetDelimiterPositions(t *testing.T) {
 		t.Errorf("delimitPositions = %v, expect to set %v for %q", flags.DelimiterPositions, []int{1, 2, 3}, "[1, 2, 3]")
 	}
 
-	flags.SetDelimiterPositions("spaces")
+	_ = flags.SetDelimiterPositions("spaces")
 	if flags.SingleLine != false {
 		t.Errorf("singleLine = %t, expect to set %t for %q", flags.SingleLine, false, "spaces")
 	}
@@ -247,7 +247,7 @@ func TestFlags_SetJsonQuery(t *testing.T) {
 func TestFlags_SetEncoding(t *testing.T) {
 	flags := GetFlags()
 
-	flags.SetEncoding("sjis")
+	_ = flags.SetEncoding("sjis")
 	if flags.Encoding != text.SJIS {
 		t.Errorf("encoding = %s, expect to set %s for %s", flags.Encoding, text.SJIS, "sjis")
 	}
@@ -282,67 +282,67 @@ func TestFlags_SetWithoutNull(t *testing.T) {
 func TestFlags_SetFormat(t *testing.T) {
 	flags := GetFlags()
 
-	flags.SetFormat("", "")
+	_ = flags.SetFormat("", "")
 	if flags.Format != TEXT {
 		t.Errorf("format = %s, expect to set %s for empty string", flags.Format, TEXT)
 	}
 
-	flags.SetFormat("", "foo.csv")
+	_ = flags.SetFormat("", "foo.csv")
 	if flags.Format != CSV {
 		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, CSV, "foo.csv")
 	}
 
-	flags.SetFormat("", "foo.tsv")
+	_ = flags.SetFormat("", "foo.tsv")
 	if flags.Format != TSV {
 		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, TSV, "foo.tsv")
 	}
 
-	flags.SetFormat("", "foo.json")
+	_ = flags.SetFormat("", "foo.json")
 	if flags.Format != JSON {
 		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, JSON, "foo.json")
 	}
 
-	flags.SetFormat("", "foo.ltsv")
+	_ = flags.SetFormat("", "foo.ltsv")
 	if flags.Format != LTSV {
 		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, LTSV, "foo.ltsv")
 	}
 
-	flags.SetFormat("", "foo.md")
+	_ = flags.SetFormat("", "foo.md")
 	if flags.Format != GFM {
 		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, GFM, "foo.md")
 	}
 
-	flags.SetFormat("", "foo.org")
+	_ = flags.SetFormat("", "foo.org")
 	if flags.Format != ORG {
 		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, ORG, "foo.org")
 	}
 
-	flags.SetFormat("csv", "")
+	_ = flags.SetFormat("csv", "")
 	if flags.Format != CSV {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, CSV, "csv")
 	}
 
-	flags.SetFormat("tsv", "")
+	_ = flags.SetFormat("tsv", "")
 	if flags.Format != TSV {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, TSV, "tsv")
 	}
 
-	flags.SetFormat("fixed", "")
+	_ = flags.SetFormat("fixed", "")
 	if flags.Format != FIXED {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, FIXED, "fixed")
 	}
 
-	flags.SetFormat("json", "")
+	_ = flags.SetFormat("json", "")
 	if flags.Format != JSON {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, JSON, "json")
 	}
 
-	flags.SetFormat("ltsv", "")
+	_ = flags.SetFormat("ltsv", "")
 	if flags.Format != LTSV {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, LTSV, "ltsv")
 	}
 
-	flags.SetFormat("jsonh", "")
+	_ = flags.SetFormat("jsonh", "")
 	if flags.Format != JSON {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, JSON, "jsonh")
 	}
@@ -350,7 +350,7 @@ func TestFlags_SetFormat(t *testing.T) {
 		t.Errorf("json escape type = %v, expect to set %v for %s", flags.JsonEscape, json.HexDigits, "jsonh")
 	}
 
-	flags.SetFormat("jsona", "")
+	_ = flags.SetFormat("jsona", "")
 	if flags.Format != JSON {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, JSON, "jsona")
 	}
@@ -358,17 +358,17 @@ func TestFlags_SetFormat(t *testing.T) {
 		t.Errorf("json escape type = %v, expect to set %v for %s", flags.JsonEscape, json.AllWithHexDigits, "jsonh")
 	}
 
-	flags.SetFormat("gfm", "")
+	_ = flags.SetFormat("gfm", "")
 	if flags.Format != GFM {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, GFM, "gfm")
 	}
 
-	flags.SetFormat("org", "")
+	_ = flags.SetFormat("org", "")
 	if flags.Format != ORG {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, ORG, "org")
 	}
 
-	flags.SetFormat("text", "")
+	_ = flags.SetFormat("text", "")
 	if flags.Format != TEXT {
 		t.Errorf("format = %s, expect to set %s for %s", flags.Format, TEXT, "text")
 	}
@@ -385,7 +385,7 @@ func TestFlags_SetFormat(t *testing.T) {
 func TestFlags_SetWriteEncoding(t *testing.T) {
 	flags := GetFlags()
 
-	flags.SetWriteEncoding("sjis")
+	_ = flags.SetWriteEncoding("sjis")
 	if flags.Encoding != text.SJIS {
 		t.Errorf("encoding = %s, expect to set %s for %s", flags.WriteEncoding, text.SJIS, "sjis")
 	}
@@ -402,12 +402,12 @@ func TestFlags_SetWriteEncoding(t *testing.T) {
 func TestFlags_SetWriteDelimiter(t *testing.T) {
 	flags := GetFlags()
 
-	flags.SetWriteDelimiter("")
+	_ = flags.SetWriteDelimiter("")
 	if flags.WriteDelimiter != ',' {
 		t.Errorf("write-delimiter = %q, expect to set %q for %q, format = %s", flags.WriteDelimiter, ',', "", flags.Format)
 	}
 
-	flags.SetWriteDelimiter("\\t")
+	_ = flags.SetWriteDelimiter("\\t")
 	if flags.WriteDelimiter != '\t' {
 		t.Errorf("write-delimiter = %q, expect to set %q for %q", flags.WriteDelimiter, "\t", "\t")
 	}
@@ -424,7 +424,7 @@ func TestFlags_SetWriteDelimiter(t *testing.T) {
 func TestFlags_SetWriteDelimiterPositions(t *testing.T) {
 	flags := GetFlags()
 
-	flags.SetWriteDelimiterPositions("s[1, 2, 3]")
+	_ = flags.SetWriteDelimiterPositions("s[1, 2, 3]")
 	if flags.WriteAsSingleLine != true {
 		t.Errorf("WriteAsSingleLine = %t, expect to set %t for %q", flags.WriteAsSingleLine, true, "s[1, 2, 3]")
 	}
@@ -432,7 +432,7 @@ func TestFlags_SetWriteDelimiterPositions(t *testing.T) {
 		t.Errorf("WriteDelimiterPositions = %v, expect to set %v for %q", flags.WriteDelimiterPositions, []int{1, 2, 3}, "s[1, 2, 3]")
 	}
 
-	flags.SetWriteDelimiterPositions("[1, 2, 3]")
+	_ = flags.SetWriteDelimiterPositions("[1, 2, 3]")
 	if flags.WriteAsSingleLine != false {
 		t.Errorf("WriteAsSingleLine = %t, expect to set %t for %q", flags.WriteAsSingleLine, false, "[1, 2, 3]")
 	}
@@ -461,22 +461,22 @@ func TestFlags_SetWithoutHeader(t *testing.T) {
 func TestFlags_SetLineBreak(t *testing.T) {
 	flags := GetFlags()
 
-	flags.SetLineBreak("")
+	_ = flags.SetLineBreak("")
 	if flags.LineBreak != text.LF {
 		t.Errorf("line-break = %s, expect to set %s for %q", flags.LineBreak, text.LF, "")
 	}
 
-	flags.SetLineBreak("crlf")
+	_ = flags.SetLineBreak("crlf")
 	if flags.LineBreak != text.CRLF {
 		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, text.CRLF, "crlf")
 	}
 
-	flags.SetLineBreak("cr")
+	_ = flags.SetLineBreak("cr")
 	if flags.LineBreak != text.CR {
 		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, text.CR, "cr")
 	}
 
-	flags.SetLineBreak("lf")
+	_ = flags.SetLineBreak("lf")
 	if flags.LineBreak != text.LF {
 		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, text.LF, "LF")
 	}
@@ -503,19 +503,19 @@ func TestFlags_SetJsonEscape(t *testing.T) {
 	flags := GetFlags()
 
 	s := "backslash"
-	flags.SetJsonEscape(s)
+	_ = flags.SetJsonEscape(s)
 	if flags.JsonEscape != json.Backslash {
 		t.Errorf("json-escape = %v, expect to set %v", flags.JsonEscape, json.Backslash)
 	}
 
 	s = "hex"
-	flags.SetJsonEscape(s)
+	_ = flags.SetJsonEscape(s)
 	if flags.JsonEscape != json.HexDigits {
 		t.Errorf("json-escape = %v, expect to set %v", flags.JsonEscape, json.HexDigits)
 	}
 
 	s = "hexall"
-	flags.SetJsonEscape(s)
+	_ = flags.SetJsonEscape(s)
 	if flags.JsonEscape != json.AllWithHexDigits {
 		t.Errorf("json-escape = %v, expect to set %v", flags.JsonEscape, json.AllWithHexDigits)
 	}

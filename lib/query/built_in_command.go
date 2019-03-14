@@ -124,7 +124,7 @@ func Source(ctx context.Context, expr parser.Source, filter *Filter) ([]parser.S
 	return LoadStatementsFromFile(ctx, expr, fpath)
 }
 
-func LoadStatementsFromFile(ctx context.Context, expr parser.Source, fpath string) ([]parser.Statement, error) {
+func LoadStatementsFromFile(ctx context.Context, expr parser.Source, fpath string) (statements []parser.Statement, err error) {
 	if !filepath.IsAbs(fpath) {
 		if abs, err := filepath.Abs(fpath); err == nil {
 			fpath = abs
@@ -139,7 +139,11 @@ func LoadStatementsFromFile(ctx context.Context, expr parser.Source, fpath strin
 	if err != nil {
 		return nil, NewReadFileError(expr, err.Error())
 	}
-	defer h.Close()
+	defer func() {
+		if e := h.Close(); e != nil {
+			err = AppendCompositeError(err, e)
+		}
+	}()
 
 	buf, err := ioutil.ReadAll(h.FileForRead())
 	if err != nil {
@@ -147,7 +151,7 @@ func LoadStatementsFromFile(ctx context.Context, expr parser.Source, fpath strin
 	}
 	input := string(buf)
 
-	statements, err := parser.Parse(input, fpath)
+	statements, err = parser.Parse(input, fpath)
 	if err != nil {
 		err = NewSyntaxError(err.(*parser.SyntaxError))
 	}

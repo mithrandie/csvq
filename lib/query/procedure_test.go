@@ -803,10 +803,10 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 	tf.Format = cmd.CSV
 
 	proc := NewProcedure()
-	proc.Filter.Variables[0].Add(parser.Variable{Name: "while_test"}, value.NewInteger(0))
+	_ = proc.Filter.Variables[0].Add(parser.Variable{Name: "while_test"}, value.NewInteger(0))
 
 	for _, v := range procedureExecuteStatementTests {
-		ReleaseResources()
+		_ = ReleaseResources()
 		UncommittedViews = NewUncommittedViewMap()
 
 		oldStdout := Stdout
@@ -815,7 +815,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 
 		_, err := proc.ExecuteStatement(context.Background(), v.Input)
 
-		w.Close()
+		_ = w.Close()
 		Stdout = oldStdout
 
 		log, _ := ioutil.ReadAll(r)
@@ -849,7 +849,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 					if r.Path != r.Handler.Path() {
 						t.Errorf("file pointer = %q, want %q for %q", r.Handler.Path(), r.Path, v.Input)
 					}
-					r.Close()
+					_ = r.Close()
 					r.Handler = nil
 				}
 			}
@@ -858,7 +858,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 					if r.Path != r.Handler.Path() {
 						t.Errorf("file pointer = %q, want %q for %q", r.Handler.Path(), r.Path, v.Input)
 					}
-					r.Close()
+					_ = r.Close()
 					r.Handler = nil
 				}
 			}
@@ -880,7 +880,7 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 		}
 	}
 
-	ReleaseResources()
+	_ = ReleaseResources()
 	UncommittedViews.Clean()
 	OutFile = nil
 }
@@ -1012,7 +1012,7 @@ func TestProcedure_IfStmt(t *testing.T) {
 		proc.ReturnVal = nil
 		flow, err := proc.IfStmt(context.Background(), v.Stmt)
 
-		w.Close()
+		_ = w.Close()
 		Stdout = oldStdout
 
 		log, _ := ioutil.ReadAll(r)
@@ -1189,7 +1189,7 @@ func TestProcedure_Case(t *testing.T) {
 
 		flow, err := proc.Case(context.Background(), v.Stmt)
 
-		w.Close()
+		_ = w.Close()
 		Stdout = oldStdout
 
 		log, _ := ioutil.ReadAll(r)
@@ -1453,14 +1453,14 @@ func TestProcedure_While(t *testing.T) {
 	for _, v := range procedureWhileTests {
 		proc.ReturnVal = nil
 		if _, err := proc.Filter.Variables[0].Get(parser.Variable{Name: "while_test"}); err != nil {
-			proc.Filter.Variables[0].Add(parser.Variable{Name: "while_test"}, value.NewInteger(0))
+			_ = proc.Filter.Variables[0].Add(parser.Variable{Name: "while_test"}, value.NewInteger(0))
 		}
-		proc.Filter.Variables[0].Set(parser.Variable{Name: "while_test"}, value.NewInteger(0))
+		_ = proc.Filter.Variables[0].Set(parser.Variable{Name: "while_test"}, value.NewInteger(0))
 
 		if _, err := proc.Filter.Variables[0].Get(parser.Variable{Name: "while_test_count"}); err != nil {
-			proc.Filter.Variables[0].Add(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
+			_ = proc.Filter.Variables[0].Add(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
 		}
-		proc.Filter.Variables[0].Set(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
+		_ = proc.Filter.Variables[0].Set(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
 
 		oldStdout := Stdout
 
@@ -1469,7 +1469,7 @@ func TestProcedure_While(t *testing.T) {
 
 		flow, err := proc.While(context.Background(), v.Stmt)
 
-		w.Close()
+		_ = w.Close()
 		Stdout = oldStdout
 
 		log, _ := ioutil.ReadAll(r)
@@ -1692,8 +1692,8 @@ func TestProcedure_WhileInCursor(t *testing.T) {
 				query: selectQueryForCursorTest,
 			},
 		}
-		ViewCache.Clean()
-		proc.Filter.Cursors.Open(context.Background(), parser.Identifier{Literal: "cur"}, proc.Filter)
+		_ = ViewCache.Clean()
+		_ = proc.Filter.Cursors.Open(context.Background(), parser.Identifier{Literal: "cur"}, proc.Filter)
 
 		oldStdout := Stdout
 		r, w, _ := os.Pipe()
@@ -1701,7 +1701,7 @@ func TestProcedure_WhileInCursor(t *testing.T) {
 
 		flow, err := proc.WhileInCursor(context.Background(), v.Stmt)
 
-		w.Close()
+		_ = w.Close()
 		Stdout = oldStdout
 
 		log, _ := ioutil.ReadAll(r)

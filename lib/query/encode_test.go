@@ -422,6 +422,9 @@ var encodeViewTests = []struct {
 }
 
 func TestEncodeView(t *testing.T) {
+	oldStdout := Stdout
+	Stdout = NewDiscard()
+
 	buf := new(bytes.Buffer)
 
 	for _, v := range encodeViewTests {
@@ -469,4 +472,6 @@ func TestEncodeView(t *testing.T) {
 			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
 		}
 	}
+
+	Stdout = oldStdout
 }

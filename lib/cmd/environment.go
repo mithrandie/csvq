@@ -93,13 +93,17 @@ func LoadEnvironment() error {
 	return LoadEnvironmentContext(context.Background())
 }
 
-func LoadEnvironmentContext(ctx context.Context) error {
-	var err error
-
+func LoadEnvironmentContext(ctx context.Context) (err error) {
 	handlers := make([]*file.Handler, 0, 4)
 	defer func() {
 		for _, h := range handlers {
-			h.Close()
+			if e := h.Close(); e != nil {
+				if err == nil {
+					err = e
+				} else {
+					err = errors.New(err.Error() + "\n" + e.Error())
+				}
+			}
 		}
 	}()
 
@@ -114,28 +118,37 @@ func LoadEnvironmentContext(ctx context.Context) error {
 
 		h, err = file.NewHandlerForRead(ctx, fpath)
 		if err != nil {
-			return errors.New(fmt.Sprintf("failed to load %q: %s", fpath, err.Error()))
+			err = errors.New(fmt.Sprintf("failed to load %q: %s", fpath, err.Error()))
+			return
 		}
 		handlers = append(handlers, h)
 
 		buf, err = ioutil.ReadAll(h.FileForRead())
 		if err != nil {
-			return errors.New(fmt.Sprintf("failed to load %q: %s", fpath, err.Error()))
+			err = errors.New(fmt.Sprintf("failed to load %q: %s", fpath, err.Error()))
+			return
 		}
 		buf = bytes.TrimSuffix(buf, []byte{0x00})
 		userDefinedEnv := &Environment{}
 		if err = json.Unmarshal(buf, userDefinedEnv); err != nil {
-			return errors.New(fmt.Sprintf("failed to load %q: %s", fpath, err.Error()))
+			err = errors.New(fmt.Sprintf("failed to load %q: %s", fpath, err.Error()))
+			return
 		}
 
 		environment.Merge(userDefinedEnv)
 	}
 
 	for k, v := range environment.EnvironmentVariables {
-		os.Setenv(k, v)
+		if e := os.Setenv(k, v); e != nil {
+			if err == nil {
+				err = e
+			} else {
+				err = errors.New(err.Error() + "\n" + e.Error())
+			}
+		}
 	}
 
-	return nil
+	return
 }
 
 func GetEnvironment() (*Environment, error) {

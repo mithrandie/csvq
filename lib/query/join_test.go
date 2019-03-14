@@ -301,7 +301,7 @@ func TestCrossJoin(t *testing.T) {
 		},
 	}
 
-	CrossJoin(context.Background(), view, joinView)
+	_ = CrossJoin(context.Background(), view, joinView)
 	if !reflect.DeepEqual(view, expect) {
 		t.Errorf("Cross Join: result = %v, want %v", view, expect)
 	}

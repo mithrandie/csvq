@@ -1494,7 +1494,7 @@ func TestShowFlag(t *testing.T) {
 		initCmdFlag()
 		cmd.GetFlags().SetColor(true)
 		for _, expr := range v.SetExprs {
-			SetFlag(context.Background(), expr, filter)
+			_ = SetFlag(context.Background(), expr, filter)
 		}
 		result, err := ShowFlag(v.Expr)
 		if err != nil {
@@ -2050,7 +2050,7 @@ func TestShowObjects(t *testing.T) {
 		flags.WriteDelimiterPositions = v.WriteDelimiterPositions
 		flags.WriteAsSingleLine = v.WriteAsSingleLine
 		flags.Format = v.Format
-		ViewCache.Clean()
+		_ = ViewCache.Clean()
 		if 0 < len(v.ViewCache) {
 			ViewCache = v.ViewCache
 		}
@@ -2084,7 +2084,7 @@ func TestShowObjects(t *testing.T) {
 			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Expect)
 		}
 	}
-	ReleaseResources()
+	_ = ReleaseResources()
 	UncommittedViews.Clean()
 }
 
@@ -2333,7 +2333,7 @@ func TestShowFields(t *testing.T) {
 	flags.Repository = TestDir
 
 	for _, v := range showFieldsTests {
-		ViewCache.Clean()
+		_ = ViewCache.Clean()
 		if 0 < len(v.ViewCache) {
 			ViewCache = v.ViewCache
 		}
@@ -2367,7 +2367,7 @@ func TestShowFields(t *testing.T) {
 			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Expect)
 		}
 	}
-	ReleaseResources()
+	_ = ReleaseResources()
 	UncommittedViews.Clean()
 }
 

@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/mithrandie/go-file"
+	"github.com/mithrandie/go-file/v2"
 )
 
 type OpenType int
@@ -97,10 +97,14 @@ func NewHandlerForUpdate(ctx context.Context, path string) (*Handler, error) {
 		return h, err
 	}
 
-	fp, err := file.OpenToUpdateContext(tctx, RetryDelay, path)
+	//fp, err := file.OpenToUpdateContext(tctx, RetryDelay, path)
+	fp, err := file.OpenToUpdate(path)
 	if err != nil {
-		h.Close()
-		return h, ParseError(err)
+		err = ParseError(err)
+		if e := h.Close(); e != nil {
+			err = NewCompositeError(err, e)
+		}
+		return h, err
 	}
 	h.fp = fp
 

@@ -87,10 +87,10 @@ func TestCompleter_Update(t *testing.T) {
 		FileInfo: &FileInfo{Path: "view2", IsTemporary: true},
 		Header:   NewHeader("view1", []string{"col3", "col4"}),
 	})
-	filter.Cursors.Declare(parser.CursorDeclaration{Cursor: parser.Identifier{Literal: "cur1"}})
-	filter.Functions.Declare(parser.FunctionDeclaration{Name: parser.Identifier{Literal: "scalafunc"}})
-	filter.Functions.DeclareAggregate(parser.AggregateDeclaration{Name: parser.Identifier{Literal: "aggfunc"}})
-	filter.Variables.Declare(context.Background(), parser.VariableDeclaration{Assignments: []parser.VariableAssignment{{Variable: parser.Variable{Name: "var"}}}}, filter)
+	_ = filter.Cursors.Declare(parser.CursorDeclaration{Cursor: parser.Identifier{Literal: "cur1"}})
+	_ = filter.Functions.Declare(parser.FunctionDeclaration{Name: parser.Identifier{Literal: "scalafunc"}})
+	_ = filter.Functions.DeclareAggregate(parser.AggregateDeclaration{Name: parser.Identifier{Literal: "aggfunc"}})
+	_ = filter.Variables.Declare(context.Background(), parser.VariableDeclaration{Assignments: []parser.VariableAssignment{{Variable: parser.Variable{Name: "var"}}}}, filter)
 
 	c := NewCompleter(filter)
 	if len(c.flagList) != len(cmd.FlagList) || !strings.HasPrefix(c.flagList[0], cmd.FlagSign) {
@@ -182,7 +182,7 @@ func testCompleter(t *testing.T, f func(line string, origLine string, index int)
 	cmd.GetFlags().Repository = CompletionTestDir
 
 	wd, _ := os.Getwd()
-	os.Chdir(CompletionTestDir)
+	_ = os.Chdir(CompletionTestDir)
 	for _, v := range tests {
 		completer.UpdateTokens(v.Line, string([]rune(v.OrigLine)[:v.Index]))
 		result := f(v.Line, v.OrigLine, v.Index)
@@ -197,9 +197,9 @@ func testCompleter(t *testing.T, f func(line string, origLine string, index int)
 		}
 	}
 
-	os.Chdir(wd)
+	_ = os.Chdir(wd)
 	initCmdFlag()
-	ViewCache.Clean()
+	_ = ViewCache.Clean()
 }
 
 var completerStatementsTests = []completerTest{
@@ -3328,7 +3328,7 @@ var completerListFilesTests = []struct {
 func TestCompleter_ListFiles(t *testing.T) {
 	wd, _ := os.Getwd()
 
-	os.Chdir(CompletionTestDir)
+	_ = os.Chdir(CompletionTestDir)
 	filter := NewEmptyFilter()
 	completer := NewCompleter(filter)
 	for _, v := range completerListFilesTests {
@@ -3338,7 +3338,7 @@ func TestCompleter_ListFiles(t *testing.T) {
 		}
 	}
 
-	os.Chdir(wd)
+	_ = os.Chdir(wd)
 }
 
 func TestCompleter_AllColumnList(t *testing.T) {
@@ -3373,7 +3373,7 @@ func TestCompleter_AllColumnList(t *testing.T) {
 		t.Errorf("result = %v, want %v", result, expect)
 	}
 
-	ViewCache.Clean()
+	_ = ViewCache.Clean()
 }
 
 var completerColumnListTests = []struct {
@@ -3429,7 +3429,7 @@ func TestCompleter_ColumnList(t *testing.T) {
 	cmd.GetFlags().Format = cmd.CSV
 	wd, _ := os.Getwd()
 
-	os.Chdir(CompletionTestDir)
+	_ = os.Chdir(CompletionTestDir)
 	completer := NewCompleter(filter)
 	for _, v := range completerColumnListTests {
 		result := completer.ColumnList(v.TableName, CompletionTestDir)
@@ -3438,9 +3438,9 @@ func TestCompleter_ColumnList(t *testing.T) {
 		}
 	}
 
-	os.Chdir(wd)
+	_ = os.Chdir(wd)
 	initCmdFlag()
-	ViewCache.Clean()
+	_ = ViewCache.Clean()
 }
 
 var completerUpdateTokensTests = []struct {

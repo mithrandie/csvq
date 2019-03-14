@@ -43,14 +43,14 @@ var calcTests = []struct {
 
 func TestCalc(t *testing.T) {
 	for _, v := range calcTests {
-		query.ViewCache.Clean()
+		_ = query.ViewCache.Clean()
 
 		var oldStdin *os.File
 		if 0 < len(v.Stdin) {
 			oldStdin = os.Stdin
 			r, w, _ := os.Pipe()
-			w.WriteString(v.Stdin)
-			w.Close()
+			_, _ = w.WriteString(v.Stdin)
+			_ = w.Close()
 			os.Stdin = r
 		}
 		oldStdout := query.Stdout
@@ -62,7 +62,7 @@ func TestCalc(t *testing.T) {
 		if 0 < len(v.Stdin) {
 			os.Stdin = oldStdin
 		}
-		w.Close()
+		_ = w.Close()
 		query.Stdout = oldStdout
 		stdout, _ := ioutil.ReadAll(r)
 

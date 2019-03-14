@@ -18,24 +18,32 @@ var (
 
 func Log(log string, quiet bool) {
 	if !quiet {
-		WriteToStdoutWithLineBreak(log)
+		if err := WriteToStdoutWithLineBreak(log); err != nil {
+			println(err.Error())
+		}
 	}
 }
 
 func LogNotice(log string, quiet bool) {
 	if !quiet {
-		WriteToStdoutWithLineBreak(cmd.Notice(log))
+		if err := WriteToStdoutWithLineBreak(cmd.Notice(log)); err != nil {
+			println(err.Error())
+		}
 	}
 }
 
 func LogWarn(log string, quiet bool) {
 	if !quiet {
-		WriteToStdoutWithLineBreak(cmd.Warn(log))
+		if err := WriteToStdoutWithLineBreak(cmd.Warn(log)); err != nil {
+			println(err.Error())
+		}
 	}
 }
 
 func LogError(log string) {
-	WriteToStderrWithLineBreak(cmd.Error(log))
+	if err := WriteToStderrWithLineBreak(cmd.Error(log)); err != nil {
+		println(err.Error())
+	}
 }
 
 func WriteToStdout(s string) error {

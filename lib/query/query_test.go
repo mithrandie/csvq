@@ -175,10 +175,10 @@ func TestFetchCursor(t *testing.T) {
 		[]UserDefinedFunctionMap{{}},
 	)
 
-	ViewCache.Clean()
-	filter.Cursors.Open(context.Background(), parser.Identifier{Literal: "cur"}, filter)
-	ViewCache.Clean()
-	filter.Cursors.Open(context.Background(), parser.Identifier{Literal: "cur2"}, filter)
+	_ = ViewCache.Clean()
+	_ = filter.Cursors.Open(context.Background(), parser.Identifier{Literal: "cur"}, filter)
+	_ = ViewCache.Clean()
+	_ = filter.Cursors.Open(context.Background(), parser.Identifier{Literal: "cur2"}, filter)
 
 	for _, v := range fetchCursorTests {
 		success, err := FetchCursor(context.Background(), v.CurName, v.FetchPosition, v.Variables, filter)
@@ -1106,7 +1106,7 @@ func TestSelect(t *testing.T) {
 	filter := NewEmptyFilter()
 
 	for _, v := range selectTests {
-		ViewCache.Clean()
+		_ = ViewCache.Clean()
 		result, err := Select(context.Background(), v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -1477,7 +1477,7 @@ func TestInsert(t *testing.T) {
 	}
 
 	for _, v := range insertTests {
-		ReleaseResources()
+		_ = ReleaseResources()
 		result, cnt, err := Insert(context.Background(), v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -1497,7 +1497,7 @@ func TestInsert(t *testing.T) {
 				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
 					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
 				}
-				v2.FileInfo.Close()
+				_ = v2.FileInfo.Close()
 				v2.FileInfo.Handler = nil
 			}
 		}
@@ -1521,7 +1521,7 @@ func TestInsert(t *testing.T) {
 			}
 		}
 	}
-	ReleaseResources()
+	_ = ReleaseResources()
 }
 
 var updateTests = []struct {
@@ -1944,7 +1944,7 @@ func TestUpdate(t *testing.T) {
 	}
 
 	for _, v := range updateTests {
-		ReleaseResources()
+		_ = ReleaseResources()
 		files, cnt, err := Update(context.Background(), v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -1964,7 +1964,7 @@ func TestUpdate(t *testing.T) {
 				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
 					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
 				}
-				v2.FileInfo.Close()
+				_ = v2.FileInfo.Close()
 				v2.FileInfo.Handler = nil
 			}
 		}
@@ -1988,7 +1988,7 @@ func TestUpdate(t *testing.T) {
 			}
 		}
 	}
-	ReleaseResources()
+	_ = ReleaseResources()
 }
 
 var deleteTests = []struct {
@@ -2304,7 +2304,7 @@ func TestDelete(t *testing.T) {
 	}
 
 	for _, v := range deleteTests {
-		ReleaseResources()
+		_ = ReleaseResources()
 		files, cnt, err := Delete(context.Background(), v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -2324,7 +2324,7 @@ func TestDelete(t *testing.T) {
 				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
 					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
 				}
-				v2.FileInfo.Close()
+				_ = v2.FileInfo.Close()
 				v2.FileInfo.Handler = nil
 			}
 		}
@@ -2348,7 +2348,7 @@ func TestDelete(t *testing.T) {
 			}
 		}
 	}
-	ReleaseResources()
+	_ = ReleaseResources()
 }
 
 var createTableTests = []struct {
@@ -2527,17 +2527,17 @@ func TestCreateTable(t *testing.T) {
 	tf.Quiet = false
 
 	for _, v := range createTableTests {
-		ReleaseResources()
+		_ = ReleaseResources()
 
 		result, err := CreateTable(context.Background(), v.Query, NewEmptyFilter())
 
 		if result != nil {
-			result.Close()
+			_ = result.Close()
 			result.Handler = nil
 		}
 		for _, view := range ViewCache {
 			if view.FileInfo != nil {
-				view.FileInfo.Close()
+				_ = view.FileInfo.Close()
 				view.FileInfo.Handler = nil
 			}
 		}
@@ -2565,7 +2565,7 @@ func TestCreateTable(t *testing.T) {
 			}
 		}
 	}
-	ReleaseResources()
+	_ = ReleaseResources()
 }
 
 var addColumnsTests = []struct {
@@ -2957,7 +2957,7 @@ func TestAddColumns(t *testing.T) {
 		},
 	}
 	for _, v := range addColumnsTests {
-		ReleaseResources()
+		_ = ReleaseResources()
 		result, cnt, err := AddColumns(context.Background(), v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -2977,7 +2977,7 @@ func TestAddColumns(t *testing.T) {
 				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
 					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
 				}
-				v2.FileInfo.Close()
+				_ = v2.FileInfo.Close()
 				v2.FileInfo.Handler = nil
 			}
 		}
@@ -3001,7 +3001,7 @@ func TestAddColumns(t *testing.T) {
 			}
 		}
 	}
-	ReleaseResources()
+	_ = ReleaseResources()
 }
 
 var dropColumnsTests = []struct {
@@ -3142,7 +3142,7 @@ func TestDropColumns(t *testing.T) {
 	}
 
 	for _, v := range dropColumnsTests {
-		ReleaseResources()
+		_ = ReleaseResources()
 		result, cnt, err := DropColumns(context.Background(), v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -3162,7 +3162,7 @@ func TestDropColumns(t *testing.T) {
 				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
 					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
 				}
-				v2.FileInfo.Close()
+				_ = v2.FileInfo.Close()
 				v2.FileInfo.Handler = nil
 			}
 		}
@@ -3186,7 +3186,7 @@ func TestDropColumns(t *testing.T) {
 			}
 		}
 	}
-	ReleaseResources()
+	_ = ReleaseResources()
 }
 
 var renameColumnTests = []struct {
@@ -3334,7 +3334,7 @@ func TestRenameColumn(t *testing.T) {
 	}
 
 	for _, v := range renameColumnTests {
-		ReleaseResources()
+		_ = ReleaseResources()
 		result, err := RenameColumn(context.Background(), v.Query, filter)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -3354,7 +3354,7 @@ func TestRenameColumn(t *testing.T) {
 				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
 					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
 				}
-				v2.FileInfo.Close()
+				_ = v2.FileInfo.Close()
 				v2.FileInfo.Handler = nil
 			}
 		}
@@ -3374,7 +3374,7 @@ func TestRenameColumn(t *testing.T) {
 			}
 		}
 	}
-	ReleaseResources()
+	_ = ReleaseResources()
 }
 
 var setTableAttributeTests = []struct {
@@ -3753,7 +3753,7 @@ func TestSetTableAttribute(t *testing.T) {
 	}
 
 	for _, v := range setTableAttributeTests {
-		ReleaseResources()
+		_ = ReleaseResources()
 
 		_, _, err := SetTableAttribute(context.Background(), v.Query, filter)
 		if err != nil {
@@ -3774,13 +3774,13 @@ func TestSetTableAttribute(t *testing.T) {
 				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
 					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
 				}
-				v2.FileInfo.Close()
+				_ = v2.FileInfo.Close()
 				v2.FileInfo.Handler = nil
 			}
 		}
 
 		view := NewView()
-		view.LoadFromTableIdentifier(context.Background(), v.Query.Table, filter.CreateNode())
+		_ = view.LoadFromTableIdentifier(context.Background(), v.Query.Table, filter.CreateNode())
 
 		if !reflect.DeepEqual(view.FileInfo, v.Expect) {
 			t.Errorf("%s: result = %v, want %v", v.Name, view.FileInfo, v.Expect)
@@ -3793,7 +3793,7 @@ func TestSetTableAttribute(t *testing.T) {
 			t.Errorf("%s: error = %T, want TableAttributeUnchangedError for duplicate set", v.Name, err)
 		}
 	}
-	ReleaseResources()
+	_ = ReleaseResources()
 }
 
 func TestCommit(t *testing.T) {
@@ -3855,9 +3855,9 @@ func TestCommit(t *testing.T) {
 	r, w, _ := os.Pipe()
 	Stdout = w
 
-	Commit(parser.TransactionControl{Token: parser.COMMIT}, NewEmptyFilter())
+	_ = Commit(parser.TransactionControl{Token: parser.COMMIT}, NewEmptyFilter())
 
-	w.Close()
+	_ = w.Close()
 	Stdout = oldStdout
 	log, _ := ioutil.ReadAll(r)
 
@@ -3888,9 +3888,9 @@ func TestRollback(t *testing.T) {
 	r, w, _ := os.Pipe()
 	Stdout = w
 
-	Rollback(nil, NewEmptyFilter())
+	_ = Rollback(nil, NewEmptyFilter())
 
-	w.Close()
+	_ = w.Close()
 	Stdout = oldStdout
 	log, _ := ioutil.ReadAll(r)
 
