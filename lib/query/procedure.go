@@ -34,6 +34,9 @@ var UncommittedViews = NewUncommittedViewMap()
 
 var Formatter = NewStringFormatter()
 
+var SelectedView *View
+var AffectedRows int
+
 func ReleaseResources() error {
 	if err := ViewCache.Clean(); err != nil {
 		return err
@@ -107,6 +110,9 @@ func (proc *Procedure) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 		return Error, NewContextIsDone(ctx.Err().Error())
 	}
 
+	SelectedView = nil
+	AffectedRows = 0
+
 	flags := cmd.GetFlags()
 	flow := Terminate
 
@@ -175,17 +181,21 @@ func (proc *Procedure) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 				SingleLine:         flags.WriteAsSingleLine,
 			}
 
-			var writer io.Writer
-			if OutFile != nil {
-				writer = OutFile
+			if _, ok := Stdout.(*Discard); ok {
+				SelectedView = view
 			} else {
-				writer = Stdout
-			}
-			err = EncodeView(writer, view, fileInfo)
-			if err == nil && !(OutFile != nil && fileInfo.Format == cmd.FIXED && fileInfo.SingleLine) {
-				writer.Write([]byte(cmd.GetFlags().LineBreak.Value()))
-			} else if _, ok := err.(*EmptyResultSetError); ok {
-				err = nil
+				var writer io.Writer
+				if OutFile != nil {
+					writer = OutFile
+				} else {
+					writer = Stdout
+				}
+				err = EncodeView(writer, view, fileInfo)
+				if err == nil && !(OutFile != nil && fileInfo.Format == cmd.FIXED && fileInfo.SingleLine) {
+					_, err = writer.Write([]byte(cmd.GetFlags().LineBreak.Value()))
+				} else if _, ok := err.(*EmptyResultSetError); ok {
+					err = nil
+				}
 			}
 		} else {
 			err = e
@@ -205,6 +215,7 @@ func (proc *Procedure) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 				UncommittedViews.SetForUpdatedView(fileInfo)
 			}
 			Log(fmt.Sprintf("%s inserted on %q.", FormatCount(cnt, "record"), fileInfo.Path), flags.Quiet)
+			AffectedRows = cnt
 		} else {
 			err = e
 		}
@@ -219,12 +230,15 @@ func (proc *Procedure) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 
 		infos, cnts, e := Update(ctx, stmt.(parser.UpdateQuery), proc.Filter)
 		if e == nil {
+			cntTotal := 0
 			for i, info := range infos {
 				if 0 < cnts[i] {
 					UncommittedViews.SetForUpdatedView(info)
+					cntTotal += cnts[i]
 				}
 				Log(fmt.Sprintf("%s updated on %q.", FormatCount(cnts[i], "record"), info.Path), flags.Quiet)
 			}
+			AffectedRows = cntTotal
 		} else {
 			err = e
 		}
@@ -239,12 +253,15 @@ func (proc *Procedure) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 
 		infos, cnts, e := Delete(ctx, stmt.(parser.DeleteQuery), proc.Filter)
 		if e == nil {
+			cntTotal := 0
 			for i, info := range infos {
 				if 0 < cnts[i] {
 					UncommittedViews.SetForUpdatedView(info)
+					cntTotal += cnts[i]
 				}
 				Log(fmt.Sprintf("%s deleted on %q.", FormatCount(cnts[i], "record"), info.Path), flags.Quiet)
 			}
+			AffectedRows = cntTotal
 		} else {
 			err = e
 		}
