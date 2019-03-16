@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,14 +8,11 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/mithrandie/go-text"
 	"github.com/mithrandie/go-text/color"
 	txjson "github.com/mithrandie/go-text/json"
-
-	"github.com/mithrandie/csvq/lib/file"
 )
 
 const (
@@ -151,7 +147,9 @@ type Flags struct {
 	Repository     string
 	Location       string
 	DatetimeFormat []string
-	WaitTimeout    float64
+
+	// Must be updated from Transaction
+	WaitTimeout float64
 
 	// For Import
 	ImportFormat       Format
@@ -187,18 +185,7 @@ type Flags struct {
 	Quiet bool
 	CPU   int
 	Stats bool
-
-	// Fixed Value
-	RetryDelay time.Duration
-
-	// Use in tests
-	Now string
 }
-
-var (
-	flags    *Flags
-	getFlags sync.Once
-)
 
 func GetDefaultNumberOfCPU() int {
 	n := runtime.NumCPU() / 2
@@ -208,54 +195,48 @@ func GetDefaultNumberOfCPU() int {
 	return n
 }
 
-func GetFlags() *Flags {
-	return GetFlagsContext(context.Background())
-}
-
-func GetFlagsContext(ctx context.Context) *Flags {
-	getFlags.Do(func() {
-		env, _ := GetEnvironmentContext(ctx)
-
-		datetimeFormat := make([]string, 0, len(env.DatetimeFormat))
+func NewFlags(env *Environment) *Flags {
+	var datetimeFormat []string
+	if env != nil {
+		datetimeFormat = make([]string, 0, len(env.DatetimeFormat))
 		for _, v := range env.DatetimeFormat {
 			datetimeFormat = AppendStrIfNotExist(datetimeFormat, v)
 		}
+	} else {
+		datetimeFormat = make([]string, 0, 4)
+	}
 
-		flags = &Flags{
-			Repository:              "",
-			Location:                "Local",
-			DatetimeFormat:          datetimeFormat,
-			WaitTimeout:             10,
-			ImportFormat:            CSV,
-			Delimiter:               ',',
-			DelimiterPositions:      nil,
-			SingleLine:              false,
-			JsonQuery:               "",
-			Encoding:                text.UTF8,
-			NoHeader:                false,
-			WithoutNull:             false,
-			Format:                  TEXT,
-			WriteEncoding:           text.UTF8,
-			WriteDelimiter:          ',',
-			WriteDelimiterPositions: nil,
-			WriteAsSingleLine:       false,
-			WithoutHeader:           false,
-			LineBreak:               text.LF,
-			EncloseAll:              false,
-			JsonEscape:              txjson.Backslash,
-			PrettyPrint:             false,
-			EastAsianEncoding:       false,
-			CountDiacriticalSign:    false,
-			CountFormatCode:         false,
-			Color:                   false,
-			Quiet:                   false,
-			CPU:                     GetDefaultNumberOfCPU(),
-			Stats:                   false,
-			RetryDelay:              10 * time.Millisecond,
-			Now:                     "",
-		}
-	})
-	return flags
+	return &Flags{
+		Repository:              "",
+		Location:                "Local",
+		DatetimeFormat:          datetimeFormat,
+		WaitTimeout:             10,
+		ImportFormat:            CSV,
+		Delimiter:               ',',
+		DelimiterPositions:      nil,
+		SingleLine:              false,
+		JsonQuery:               "",
+		Encoding:                text.UTF8,
+		NoHeader:                false,
+		WithoutNull:             false,
+		Format:                  TEXT,
+		WriteEncoding:           text.UTF8,
+		WriteDelimiter:          ',',
+		WriteDelimiterPositions: nil,
+		WriteAsSingleLine:       false,
+		WithoutHeader:           false,
+		LineBreak:               text.LF,
+		EncloseAll:              false,
+		JsonEscape:              txjson.Backslash,
+		PrettyPrint:             false,
+		EastAsianEncoding:       false,
+		CountDiacriticalSign:    false,
+		CountFormatCode:         false,
+		Color:                   false,
+		Quiet:                   false,
+		CPU:                     GetDefaultNumberOfCPU(),
+		Stats:                   false,
+	}
 }
 
 func (f *Flags) SetRepository(s string) error {
@@ -318,8 +299,7 @@ func (f *Flags) SetWaitTimeout(t float64) {
 		t = 0
 	}
 
-	flags.WaitTimeout = t
-	file.UpdateWaitTimeout(flags.WaitTimeout, flags.RetryDelay)
+	f.WaitTimeout = t
 	return
 }
 

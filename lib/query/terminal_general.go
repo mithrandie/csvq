@@ -17,9 +17,10 @@ type SSHTerminal struct {
 	origState *terminal.State
 	rawState  *terminal.State
 	prompt    *Prompt
+	session   *Session
 }
 
-func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
+func NewTerminal(ctx context.Context, session *Session, filter *Filter) (VirtualTerminal, error) {
 	stdin := int(ScreenFd)
 	origState, err := terminal.MakeRaw(stdin)
 	if err != nil {
@@ -41,6 +42,7 @@ func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
 		origState: origState,
 		rawState:  rawState,
 		prompt:    prompt,
+		session:   session,
 	}
 
 	t.RestoreOriginalMode()

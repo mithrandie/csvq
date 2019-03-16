@@ -7,21 +7,21 @@ import (
 	"github.com/mithrandie/csvq/lib/query"
 )
 
-func SetSignalHandler() {
+func SetSignalHandler(proc *query.Processor) {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, os.Kill)
 
 	go func() {
 		<-ch
-		if err := query.Rollback(nil, nil); err != nil {
-			query.LogError(err.Error())
+		if err := proc.AutoRollback(); err != nil {
+			proc.LogError(err.Error())
 		}
-		if err := query.ReleaseResourcesWithErrors(); err != nil {
-			query.LogError(err.Error())
+		if err := proc.ReleaseResourcesWithErrors(); err != nil {
+			proc.LogError(err.Error())
 		}
-		if query.Terminal != nil {
-			if err := query.Terminal.Teardown(); err != nil {
-				query.LogError(err.Error())
+		if proc.Tx.Session.Terminal != nil {
+			if err := proc.Tx.Session.Terminal.Teardown(); err != nil {
+				proc.LogError(err.Error())
 			}
 		}
 		os.Exit(-1)

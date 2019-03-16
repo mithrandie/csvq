@@ -28,7 +28,7 @@ var AnalyticFunctions = map[string]AnalyticFunction{
 
 type AnalyticFunction interface {
 	CheckArgsLen(expr parser.AnalyticFunction) error
-	Execute(context.Context, Partition, parser.AnalyticFunction, *Filter) (map[int]value.Primary, error)
+	Execute(context.Context, *Filter, Partition, parser.AnalyticFunction) (map[int]value.Primary, error)
 }
 
 type Partition []int
@@ -87,7 +87,7 @@ func Analyze(ctx context.Context, view *View, fn parser.AnalyticFunction, partit
 	}
 
 	partitionKeys := make([]string, view.RecordLen())
-	if err = NewGoroutineTaskManager(view.RecordLen(), -1).Run(ctx, func(index int) error {
+	if err = NewGoroutineTaskManager(view.RecordLen(), -1, view.Tx.Flags.CPU).Run(ctx, func(index int) error {
 		keyBuf := new(bytes.Buffer)
 
 		if view.sortValuesInEachCell[index] == nil {
@@ -99,7 +99,7 @@ func Analyze(ctx context.Context, view *View, fn parser.AnalyticFunction, partit
 				if idx < len(view.sortValuesInEachCell[index]) && view.sortValuesInEachCell[index][idx] != nil {
 					sortValues[j] = view.sortValuesInEachCell[index][idx]
 				} else {
-					sortValues[j] = NewSortValue(view.RecordSet[index][idx].Value())
+					sortValues[j] = NewSortValue(view.RecordSet[index][idx].Value(), view.Tx.Flags)
 					if idx < len(view.sortValuesInEachCell[index]) {
 						view.sortValuesInEachCell[index][idx] = sortValues[j]
 					}
@@ -125,12 +125,12 @@ func Analyze(ctx context.Context, view *View, fn parser.AnalyticFunction, partit
 		}
 	}
 
-	gm := NewGoroutineTaskManager(len(partitionMapKeys), -1)
+	gm := NewGoroutineTaskManager(len(partitionMapKeys), -1, view.Tx.Flags.CPU)
 	for i := 0; i < gm.Number; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			start, end := gm.RecordRange(thIdx)
-			filter := NewFilterForSequentialEvaluation(view, view.Filter)
+			filter := NewFilterForSequentialEvaluation(view.Filter, view)
 
 		AnalyzeLoop:
 			for i := start; i < end; i++ {
@@ -139,7 +139,7 @@ func Analyze(ctx context.Context, view *View, fn parser.AnalyticFunction, partit
 				}
 
 				if fnType == Analytic {
-					list, e := anfn.Execute(ctx, partitions[partitionMapKeys[i]], fn, filter)
+					list, e := anfn.Execute(ctx, filter, partitions[partitionMapKeys[i]], fn)
 					if e != nil {
 						gm.SetError(e)
 						break AnalyzeLoop
@@ -161,12 +161,12 @@ func Analyze(ctx context.Context, view *View, fn parser.AnalyticFunction, partit
 						valueCache := make(map[int]value.Primary, len(partition))
 
 						for _, frame := range frameSet {
-							values, e := windowValues(ctx, frame, partition, fn, filter, valueCache)
+							values, e := windowValues(ctx, filter, frame, partition, fn, valueCache)
 							if e != nil {
 								gm.SetError(e)
 								break AnalyzeLoop
 							}
-							val := aggfn(values)
+							val := aggfn(values, view.Tx.Flags)
 
 							for _, idx := range frame.Records {
 								view.RecordSet[idx] = append(view.RecordSet[idx], NewCell(val))
@@ -179,7 +179,7 @@ func Analyze(ctx context.Context, view *View, fn parser.AnalyticFunction, partit
 						valueCache := make(map[int]value.Primary, len(partition))
 
 						for _, frame := range frameSet {
-							values, e := windowValues(ctx, frame, partition, fn, filter, valueCache)
+							values, e := windowValues(ctx, filter, frame, partition, fn, valueCache)
 							if e != nil {
 								gm.SetError(e)
 								break AnalyzeLoop
@@ -200,7 +200,7 @@ func Analyze(ctx context.Context, view *View, fn parser.AnalyticFunction, partit
 									args[i] = arg
 								}
 
-								val, e := udfn.ExecuteAggregate(ctx, values, args, view.Filter)
+								val, e := udfn.ExecuteAggregate(ctx, view.Filter, values, args)
 								if e != nil {
 									gm.SetError(e)
 									break AnalyzeLoop
@@ -313,7 +313,7 @@ func WindowFrameSet(partition Partition, expr parser.AnalyticClause) []WindowFra
 	return frameSet
 }
 
-func windowValues(ctx context.Context, frame WindowFrame, partition Partition, expr parser.AnalyticFunction, filter *Filter, valueCache map[int]value.Primary) ([]value.Primary, error) {
+func windowValues(ctx context.Context, filter *Filter, frame WindowFrame, partition Partition, expr parser.AnalyticFunction, valueCache map[int]value.Primary) ([]value.Primary, error) {
 	values := make([]value.Primary, 0, frame.High-frame.Low+1)
 
 	for i := frame.Low; i <= frame.High; i++ {
@@ -336,7 +336,7 @@ func windowValues(ctx context.Context, frame WindowFrame, partition Partition, e
 	}
 
 	if expr.IsDistinct() {
-		values = Distinguish(values)
+		values = Distinguish(values, filter.Tx.Flags)
 	}
 	return values, nil
 }
@@ -363,7 +363,7 @@ func (fn RowNumber) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{0})
 }
 
-func (fn RowNumber) Execute(ctx context.Context, partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]value.Primary, error) {
+func (fn RowNumber) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	list := make(map[int]value.Primary, len(partition))
 	var number int64 = 0
 	for _, idx := range partition {
@@ -380,7 +380,7 @@ func (fn Rank) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{0})
 }
 
-func (fn Rank) Execute(ctx context.Context, partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]value.Primary, error) {
+func (fn Rank) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	list := make(map[int]value.Primary, len(partition))
 	var number int64 = 0
 	var rank int64 = 0
@@ -405,7 +405,7 @@ func (fn DenseRank) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{0})
 }
 
-func (fn DenseRank) Execute(ctx context.Context, partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]value.Primary, error) {
+func (fn DenseRank) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	list := make(map[int]value.Primary, len(partition))
 	var rank int64 = 0
 	var currentRank SortValues
@@ -428,7 +428,7 @@ func (fn CumeDist) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{0})
 }
 
-func (fn CumeDist) Execute(ctx context.Context, partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]value.Primary, error) {
+func (fn CumeDist) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	list := make(map[int]value.Primary, len(partition))
 
 	groups := perseCumulativeGroups(partition, filter.Records[0].View)
@@ -452,7 +452,7 @@ func (fn PercentRank) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{0})
 }
 
-func (fn PercentRank) Execute(ctx context.Context, partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]value.Primary, error) {
+func (fn PercentRank) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	list := make(map[int]value.Primary, len(partition))
 
 	groups := perseCumulativeGroups(partition, filter.Records[0].View)
@@ -496,7 +496,7 @@ func (fn NTile) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{1})
 }
 
-func (fn NTile) Execute(ctx context.Context, partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]value.Primary, error) {
+func (fn NTile) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	argsFilter := filter.CreateNode()
 	argsFilter.Records = nil
 
@@ -553,8 +553,8 @@ func (fn FirstValue) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{1})
 }
 
-func (fn FirstValue) Execute(ctx context.Context, partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]value.Primary, error) {
-	return setNthValue(ctx, partition, expr, filter, 1)
+func (fn FirstValue) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
+	return setNthValue(ctx, filter, partition, expr, 1)
 }
 
 type LastValue struct{}
@@ -563,9 +563,9 @@ func (fn LastValue) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{1})
 }
 
-func (fn LastValue) Execute(ctx context.Context, partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]value.Primary, error) {
+func (fn LastValue) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	partition.Reverse()
-	return setNthValue(ctx, partition, expr, filter, 1)
+	return setNthValue(ctx, filter, partition, expr, 1)
 }
 
 type NthValue struct{}
@@ -574,7 +574,7 @@ func (fn NthValue) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{2})
 }
 
-func (fn NthValue) Execute(ctx context.Context, partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]value.Primary, error) {
+func (fn NthValue) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	argsFilter := filter.CreateNode()
 	argsFilter.Records = nil
 
@@ -592,10 +592,10 @@ func (fn NthValue) Execute(ctx context.Context, partition Partition, expr parser
 		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be greater than 0")
 	}
 
-	return setNthValue(ctx, partition, expr, filter, n)
+	return setNthValue(ctx, filter, partition, expr, n)
 }
 
-func setNthValue(ctx context.Context, partition Partition, expr parser.AnalyticFunction, filter *Filter, n int) (map[int]value.Primary, error) {
+func setNthValue(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction, n int) (map[int]value.Primary, error) {
 	frameSet := WindowFrameSet(partition, expr.AnalyticClause)
 	list := make(map[int]value.Primary, len(partition))
 
@@ -646,8 +646,8 @@ func (fn Lag) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{1, 3})
 }
 
-func (fn Lag) Execute(ctx context.Context, partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]value.Primary, error) {
-	return setLag(ctx, partition, expr, filter)
+func (fn Lag) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
+	return setLag(ctx, filter, partition, expr)
 }
 
 type Lead struct{}
@@ -656,12 +656,12 @@ func (fn Lead) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{1, 3})
 }
 
-func (fn Lead) Execute(ctx context.Context, partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]value.Primary, error) {
+func (fn Lead) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	partition.Reverse()
-	return setLag(ctx, partition, expr, filter)
+	return setLag(ctx, filter, partition, expr)
 }
 
-func setLag(ctx context.Context, partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]value.Primary, error) {
+func setLag(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	argsFilter := filter.CreateNode()
 	argsFilter.Records = nil
 
@@ -721,7 +721,7 @@ func (fn AnalyticListAgg) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{1, 2})
 }
 
-func (fn AnalyticListAgg) Execute(ctx context.Context, partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]value.Primary, error) {
+func (fn AnalyticListAgg) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	argsFilter := filter.CreateNode()
 	argsFilter.Records = nil
 
@@ -748,7 +748,7 @@ func (fn AnalyticListAgg) Execute(ctx context.Context, partition Partition, expr
 		values[i] = val
 	}
 	if expr.IsDistinct() {
-		values = Distinguish(values)
+		values = Distinguish(values, filter.Tx.Flags)
 	}
 
 	val := ListAgg(values, separator)
@@ -767,7 +767,7 @@ func (fn AnalyticJsonAgg) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{1})
 }
 
-func (fn AnalyticJsonAgg) Execute(ctx context.Context, partition Partition, expr parser.AnalyticFunction, filter *Filter) (map[int]value.Primary, error) {
+func (fn AnalyticJsonAgg) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	argsFilter := filter.CreateNode()
 	argsFilter.Records = nil
 
@@ -781,7 +781,7 @@ func (fn AnalyticJsonAgg) Execute(ctx context.Context, partition Partition, expr
 		values[i] = val
 	}
 	if expr.IsDistinct() {
-		values = Distinguish(values)
+		values = Distinguish(values, filter.Tx.Flags)
 	}
 
 	val := JsonAgg(values)

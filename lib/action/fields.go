@@ -8,10 +8,10 @@ import (
 	"github.com/mithrandie/csvq/lib/query"
 )
 
-func ShowFields(proc *query.Procedure, filename string) error {
+func ShowFields(proc *query.Processor, filename string) error {
 	defer func() {
-		if err := query.ReleaseResourcesWithErrors(); err != nil {
-			query.LogError(err.Error())
+		if err := proc.ReleaseResourcesWithErrors(); err != nil {
+			proc.LogError(err.Error())
 		}
 	}()
 

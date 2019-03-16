@@ -102,11 +102,11 @@ func ParseJoinCondition(join parser.Join, view *View, joinView *View) (parser.Qu
 	return logic, includeFields, excludeFields, nil
 }
 
-func CrossJoin(ctx context.Context, view *View, joinView *View) error {
+func CrossJoin(ctx context.Context, filter *Filter, view *View, joinView *View) error {
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 	records := make(RecordSet, view.RecordLen()*joinView.RecordLen())
 
-	if err := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore)).Run(ctx, func(index int) error {
+	if err := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore), filter.Tx.Flags.CPU).Run(ctx, func(index int) error {
 		start := index * joinView.RecordLen()
 		for i := 0; i < joinView.RecordLen(); i++ {
 			records[start+i] = append(view.RecordSet[index], joinView.RecordSet[i]...)
@@ -122,14 +122,14 @@ func CrossJoin(ctx context.Context, view *View, joinView *View) error {
 	return nil
 }
 
-func InnerJoin(ctx context.Context, view *View, joinView *View, condition parser.QueryExpression, parentFilter *Filter) error {
+func InnerJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *View, condition parser.QueryExpression) error {
 	if condition == nil {
-		return CrossJoin(ctx, view, joinView)
+		return CrossJoin(ctx, parentFilter, view, joinView)
 	}
 
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 
-	gm := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore))
+	gm := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore), parentFilter.Tx.Flags.CPU)
 	recordsList := make([]RecordSet, gm.Number)
 	for i := 0; i < gm.Number; i++ {
 		gm.Add()
@@ -137,12 +137,13 @@ func InnerJoin(ctx context.Context, view *View, joinView *View, condition parser
 			start, end := gm.RecordRange(thIdx)
 			records := make(RecordSet, 0, end-start)
 			filter := NewFilterForRecord(
+				parentFilter,
 				&View{
+					Tx:        parentFilter.Tx,
 					Header:    mergedHeader,
 					RecordSet: make(RecordSet, 1),
 				},
 				0,
-				parentFilter,
 			)
 
 		InnerJoinLoop:
@@ -185,7 +186,7 @@ func InnerJoin(ctx context.Context, view *View, joinView *View, condition parser
 	return nil
 }
 
-func OuterJoin(ctx context.Context, view *View, joinView *View, condition parser.QueryExpression, direction int, parentFilter *Filter) error {
+func OuterJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *View, condition parser.QueryExpression, direction int) error {
 	if direction == parser.TokenUndefined {
 		direction = parser.LEFT
 	}
@@ -199,7 +200,7 @@ func OuterJoin(ctx context.Context, view *View, joinView *View, condition parser
 	viewEmptyRecord := NewEmptyRecord(view.FieldLen())
 	joinViewEmptyRecord := NewEmptyRecord(joinView.FieldLen())
 
-	gm := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore))
+	gm := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore), parentFilter.Tx.Flags.CPU)
 
 	recordsList := make([]RecordSet, gm.Number)
 	joinViewMatchesList := make([][]bool, gm.Number)
@@ -210,12 +211,13 @@ func OuterJoin(ctx context.Context, view *View, joinView *View, condition parser
 			start, end := gm.RecordRange(thIdx)
 			records := make(RecordSet, 0, end-start)
 			filter := NewFilterForRecord(
+				parentFilter,
 				&View{
+					Tx:        parentFilter.Tx,
 					Header:    mergedHeader,
 					RecordSet: make(RecordSet, 1),
 				},
 				0,
-				parentFilter,
 			)
 
 			joinViewMatches := make([]bool, joinView.RecordLen())

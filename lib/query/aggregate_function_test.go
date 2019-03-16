@@ -35,7 +35,7 @@ var countTests = []aggregateTests{
 
 func TestCount(t *testing.T) {
 	for _, v := range countTests {
-		r := Count(v.List)
+		r := Count(v.List, TestTx.Flags)
 		if !reflect.DeepEqual(r, v.Result) {
 			t.Errorf("count list = %s: result = %s, want %s", v.List, r, v.Result)
 		}
@@ -64,7 +64,7 @@ var maxTests = []aggregateTests{
 
 func TestMax(t *testing.T) {
 	for _, v := range maxTests {
-		r := Max(v.List)
+		r := Max(v.List, TestTx.Flags)
 		if !reflect.DeepEqual(r, v.Result) {
 			t.Errorf("max list = %s: result = %s, want %s", v.List, r, v.Result)
 		}
@@ -93,7 +93,7 @@ var minTests = []aggregateTests{
 
 func TestMin(t *testing.T) {
 	for _, v := range minTests {
-		r := Min(v.List)
+		r := Min(v.List, TestTx.Flags)
 		if !reflect.DeepEqual(r, v.Result) {
 			t.Errorf("min list = %s: result = %s, want %s", v.List, r, v.Result)
 		}
@@ -122,7 +122,7 @@ var sumTests = []aggregateTests{
 
 func TestSum(t *testing.T) {
 	for _, v := range sumTests {
-		r := Sum(v.List)
+		r := Sum(v.List, TestTx.Flags)
 		if !reflect.DeepEqual(r, v.Result) {
 			t.Errorf("sum list = %s: result = %s, want %s", v.List, r, v.Result)
 		}
@@ -151,7 +151,7 @@ var avgTests = []aggregateTests{
 
 func TestAvg(t *testing.T) {
 	for _, v := range avgTests {
-		r := Avg(v.List)
+		r := Avg(v.List, TestTx.Flags)
 		if !reflect.DeepEqual(r, v.Result) {
 			t.Errorf("avg list = %s: result = %s, want %s", v.List, r, v.Result)
 		}
@@ -201,7 +201,7 @@ var medianTests = []aggregateTests{
 
 func TestMedian(t *testing.T) {
 	for _, v := range medianTests {
-		r := Median(v.List)
+		r := Median(v.List, TestTx.Flags)
 		if !reflect.DeepEqual(r, v.Result) {
 			t.Errorf("median list = %s: result = %s, want %s", v.List, r, v.Result)
 		}

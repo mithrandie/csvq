@@ -5,16 +5,13 @@ import (
 	"reflect"
 	"runtime"
 	"testing"
-	"time"
 
 	"github.com/mithrandie/go-text"
 	"github.com/mithrandie/go-text/json"
-
-	"github.com/mithrandie/csvq/lib/file"
 )
 
 func TestFlags_SetRepository(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	_ = flags.SetRepository("")
 	if flags.Repository != "" {
@@ -46,7 +43,7 @@ func TestFlags_SetRepository(t *testing.T) {
 }
 
 func TestFlags_SetLocation(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	s := ""
 	_ = flags.SetLocation(s)
@@ -77,7 +74,7 @@ func TestFlags_SetLocation(t *testing.T) {
 }
 
 func TestFlags_SetDatetimeFormat(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	format := "%Y-%m-%d"
 	flags.SetDatetimeFormat(format)
@@ -109,7 +106,7 @@ func TestFlags_SetDatetimeFormat(t *testing.T) {
 }
 
 func TestFlags_SetWaitTimeout(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	var f float64 = -1
 	flags.SetWaitTimeout(f)
@@ -122,14 +119,10 @@ func TestFlags_SetWaitTimeout(t *testing.T) {
 	if flags.WaitTimeout != 15 {
 		t.Errorf("wait timeout = %f, expect to set %f for %f", flags.WaitTimeout, 15.0, f)
 	}
-
-	if file.WaitTimeout != 15*time.Second {
-		t.Errorf("wait timeout in the file package = %v, expect to set %v for %f", file.WaitTimeout, 15*time.Second, f)
-	}
 }
 
 func TestFlags_SetImportFormat(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	_ = flags.SetImportFormat("")
 	if flags.ImportFormat != CSV {
@@ -158,7 +151,7 @@ func TestFlags_SetImportFormat(t *testing.T) {
 }
 
 func TestFlags_SetDelimiter(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	_ = flags.SetDelimiter("")
 	if flags.Delimiter != ',' {
@@ -188,7 +181,7 @@ func TestFlags_SetDelimiter(t *testing.T) {
 }
 
 func TestFlags_SetDelimiterPositions(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	_ = flags.SetDelimiterPositions("")
 	if flags.DelimiterPositions != nil {
@@ -236,7 +229,7 @@ func TestFlags_SetDelimiterPositions(t *testing.T) {
 }
 
 func TestFlags_SetJsonQuery(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	flags.SetJsonQuery("{}")
 	if flags.JsonQuery != "{}" {
@@ -245,7 +238,7 @@ func TestFlags_SetJsonQuery(t *testing.T) {
 }
 
 func TestFlags_SetEncoding(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	_ = flags.SetEncoding("sjis")
 	if flags.Encoding != text.SJIS {
@@ -262,7 +255,7 @@ func TestFlags_SetEncoding(t *testing.T) {
 }
 
 func TestFlags_SetNoHeader(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	flags.SetNoHeader(true)
 	if !flags.NoHeader {
@@ -271,7 +264,7 @@ func TestFlags_SetNoHeader(t *testing.T) {
 }
 
 func TestFlags_SetWithoutNull(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	flags.SetWithoutNull(true)
 	if !flags.WithoutNull {
@@ -280,7 +273,7 @@ func TestFlags_SetWithoutNull(t *testing.T) {
 }
 
 func TestFlags_SetFormat(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	_ = flags.SetFormat("", "")
 	if flags.Format != TEXT {
@@ -383,10 +376,10 @@ func TestFlags_SetFormat(t *testing.T) {
 }
 
 func TestFlags_SetWriteEncoding(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	_ = flags.SetWriteEncoding("sjis")
-	if flags.Encoding != text.SJIS {
+	if flags.WriteEncoding != text.SJIS {
 		t.Errorf("encoding = %s, expect to set %s for %s", flags.WriteEncoding, text.SJIS, "sjis")
 	}
 
@@ -400,7 +393,7 @@ func TestFlags_SetWriteEncoding(t *testing.T) {
 }
 
 func TestFlags_SetWriteDelimiter(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	_ = flags.SetWriteDelimiter("")
 	if flags.WriteDelimiter != ',' {
@@ -422,7 +415,7 @@ func TestFlags_SetWriteDelimiter(t *testing.T) {
 }
 
 func TestFlags_SetWriteDelimiterPositions(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	_ = flags.SetWriteDelimiterPositions("s[1, 2, 3]")
 	if flags.WriteAsSingleLine != true {
@@ -450,16 +443,16 @@ func TestFlags_SetWriteDelimiterPositions(t *testing.T) {
 }
 
 func TestFlags_SetWithoutHeader(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	flags.SetWithoutHeader(true)
-	if !flags.NoHeader {
+	if !flags.WithoutHeader {
 		t.Errorf("without-header = %t, expect to set %t", flags.WithoutHeader, true)
 	}
 }
 
 func TestFlags_SetLineBreak(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	_ = flags.SetLineBreak("")
 	if flags.LineBreak != text.LF {
@@ -491,7 +484,7 @@ func TestFlags_SetLineBreak(t *testing.T) {
 }
 
 func TestFlags_SetEncloseAll(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	flags.SetEncloseAll(true)
 	if !flags.EncloseAll {
@@ -500,7 +493,7 @@ func TestFlags_SetEncloseAll(t *testing.T) {
 }
 
 func TestFlags_SetJsonEscape(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	s := "backslash"
 	_ = flags.SetJsonEscape(s)
@@ -531,7 +524,7 @@ func TestFlags_SetJsonEscape(t *testing.T) {
 }
 
 func TestFlags_SetPrettyPrint(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	flags.SetPrettyPrint(true)
 	if !flags.PrettyPrint {
@@ -540,7 +533,7 @@ func TestFlags_SetPrettyPrint(t *testing.T) {
 }
 
 func TestFlags_SetEastAsianEncoding(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	flags.SetEastAsianEncoding(true)
 	if !flags.EastAsianEncoding {
@@ -549,7 +542,7 @@ func TestFlags_SetEastAsianEncoding(t *testing.T) {
 }
 
 func TestFlags_SetCountDiacriticalSign(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	flags.SetCountDiacriticalSign(true)
 	if !flags.CountDiacriticalSign {
@@ -558,7 +551,7 @@ func TestFlags_SetCountDiacriticalSign(t *testing.T) {
 }
 
 func TestFlags_SetCountFormatCode(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	flags.SetCountFormatCode(true)
 	if !flags.CountFormatCode {
@@ -567,7 +560,7 @@ func TestFlags_SetCountFormatCode(t *testing.T) {
 }
 
 func TestFlags_SetColor(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	flags.SetColor(true)
 	if !flags.Color {
@@ -577,7 +570,7 @@ func TestFlags_SetColor(t *testing.T) {
 }
 
 func TestFlags_SetQuiet(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	flags.SetQuiet(true)
 	if !flags.Quiet {
@@ -586,7 +579,7 @@ func TestFlags_SetQuiet(t *testing.T) {
 }
 
 func TestFlags_SetCPU(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	flags.SetCPU(0)
 	expect := 1
@@ -601,7 +594,7 @@ func TestFlags_SetCPU(t *testing.T) {
 }
 
 func TestFlags_SetStats(t *testing.T) {
-	flags := GetFlags()
+	flags := NewFlags(nil)
 
 	flags.SetStats(true)
 	if !flags.Stats {

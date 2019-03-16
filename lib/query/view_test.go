@@ -55,6 +55,7 @@ var viewLoadTests = []struct {
 				InlineTables: InlineTableNodes{{}},
 				Aliases:      AliasNodes{{}},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -74,6 +75,7 @@ var viewLoadTests = []struct {
 				InlineTables: InlineTableNodes{{}},
 				Aliases:      AliasNodes{{}},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -118,6 +120,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -162,6 +165,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -208,6 +212,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -248,6 +253,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -289,6 +295,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
+			Tx:            TestTx,
 			UseInternalId: true,
 		},
 	},
@@ -334,6 +341,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -383,6 +391,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -432,6 +441,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -492,6 +502,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -545,6 +556,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -594,6 +606,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -680,6 +693,7 @@ var viewLoadTests = []struct {
 					"T": strings.ToUpper(GetTestFilePath("table5.csv")),
 				}},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -727,6 +741,7 @@ var viewLoadTests = []struct {
 					"T": strings.ToUpper(GetTestFilePath("table3.tsv")),
 				}},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -940,6 +955,7 @@ var viewLoadTests = []struct {
 					"T": strings.ToUpper(GetTestFilePath("fixed_length.txt")),
 				}},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -989,6 +1005,7 @@ var viewLoadTests = []struct {
 					"T": strings.ToUpper(GetTestFilePath("fixed_length_bom.txt")),
 				}},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -1039,6 +1056,7 @@ var viewLoadTests = []struct {
 					"T": strings.ToUpper(GetTestFilePath("fixed_length_sl.txt")),
 				}},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -1153,6 +1171,7 @@ var viewLoadTests = []struct {
 					"JT": strings.ToUpper(GetTestFilePath("table.json")),
 				}},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -1199,6 +1218,7 @@ var viewLoadTests = []struct {
 					"JT": strings.ToUpper(GetTestFilePath("table_h.json")),
 				}},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -1245,6 +1265,7 @@ var viewLoadTests = []struct {
 					"JT": strings.ToUpper(GetTestFilePath("table_a.json")),
 				}},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -1339,6 +1360,7 @@ var viewLoadTests = []struct {
 					"T": strings.ToUpper(GetTestFilePath("table6.ltsv")),
 				}},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -1390,6 +1412,7 @@ var viewLoadTests = []struct {
 					"T": strings.ToUpper(GetTestFilePath("table6.ltsv")),
 				}},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -1437,6 +1460,7 @@ var viewLoadTests = []struct {
 					"T": strings.ToUpper(GetTestFilePath("table6_bom.ltsv")),
 				}},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -1607,6 +1631,7 @@ var viewLoadTests = []struct {
 					{},
 				},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -1682,6 +1707,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -1717,6 +1743,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -1806,6 +1833,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -1900,6 +1928,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -1958,6 +1987,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -2016,6 +2046,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -2081,6 +2112,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -2141,6 +2173,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -2223,6 +2256,7 @@ var viewLoadTests = []struct {
 					"JT": "",
 				}},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -2342,6 +2376,7 @@ var viewLoadTests = []struct {
 					"JT": "",
 				}},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -2413,6 +2448,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -2533,25 +2569,30 @@ var viewLoadTests = []struct {
 }
 
 func TestView_Load(t *testing.T) {
-	tf := cmd.GetFlags()
-	tf.Repository = TestDir
+	defer func() {
+		_ = TestTx.ReleaseResources()
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		initFlag(TestTx.Flags)
+	}()
+
+	TestTx.Flags.Repository = TestDir
 
 	for _, v := range viewLoadTests {
-		_ = ViewCache.Clean()
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 
-		tf.ImportFormat = v.ImportFormat
-		tf.Delimiter = ','
+		TestTx.Flags.ImportFormat = v.ImportFormat
+		TestTx.Flags.Delimiter = ','
 		if v.Delimiter != 0 {
-			tf.Delimiter = v.Delimiter
+			TestTx.Flags.Delimiter = v.Delimiter
 		}
-		tf.DelimiterPositions = v.DelimiterPositions
-		tf.SingleLine = v.SingleLine
-		tf.JsonQuery = v.JsonQuery
-		tf.NoHeader = v.NoHeader
+		TestTx.Flags.DelimiterPositions = v.DelimiterPositions
+		TestTx.Flags.SingleLine = v.SingleLine
+		TestTx.Flags.JsonQuery = v.JsonQuery
+		TestTx.Flags.NoHeader = v.NoHeader
 		if v.Encoding != "" {
-			tf.Encoding = v.Encoding
+			TestTx.Flags.Encoding = v.Encoding
 		} else {
-			tf.Encoding = text.UTF8
+			TestTx.Flags.Encoding = text.UTF8
 		}
 
 		var oldStdin *os.File
@@ -2563,13 +2604,15 @@ func TestView_Load(t *testing.T) {
 			os.Stdin = r
 		}
 
-		view := NewView()
+		view := NewView(TestTx)
 		if v.Filter == nil {
-			v.Filter = NewEmptyFilter()
+			v.Filter = NewEmptyFilter(TestTx)
+		} else {
+			v.Filter.Tx = TestTx
 		}
 		view.UseInternalId = v.UseInternalId
 
-		err := view.Load(context.Background(), v.From, v.Filter.CreateNode())
+		err := view.Load(context.Background(), v.Filter.CreateNode(), v.From)
 
 		if 0 < len(v.Stdin) {
 			os.Stdin = oldStdin
@@ -2621,7 +2664,7 @@ func TestView_Load(t *testing.T) {
 			}
 		}
 		if view.FileInfo != nil {
-			_ = view.FileInfo.Close()
+			_ = TestTx.FileContainer.Close(view.FileInfo.Handler)
 			view.FileInfo = nil
 		}
 		v.Result.FileInfo = nil
@@ -2643,8 +2686,8 @@ func TestView_Load(t *testing.T) {
 			}
 		}
 
-		view.Filter = NewEmptyFilter()
-		v.Result.Filter = NewEmptyFilter()
+		view.Filter = NewEmptyFilter(TestTx)
+		v.Result.Filter = NewEmptyFilter(TestTx)
 
 		if !reflect.DeepEqual(view, v.Result) {
 			t.Errorf("%s: result = %v, want %v", v.Name, view, v.Result)
@@ -2707,7 +2750,7 @@ var viewWhereTests = []struct {
 					value.NewString("str3"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 		},
 		Where: parser.WhereClause{
 			Filter: parser.Comparison{
@@ -2742,7 +2785,7 @@ var viewWhereTests = []struct {
 					value.NewString("str3"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 		},
 		Where: parser.WhereClause{
 			Filter: parser.Comparison{
@@ -2776,7 +2819,7 @@ var viewWhereTests = []struct {
 					value.NewString("str3"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 		},
 		Where: parser.WhereClause{
 			Filter: parser.Comparison{
@@ -2790,12 +2833,12 @@ var viewWhereTests = []struct {
 }
 
 func TestView_Where(t *testing.T) {
-	flags := cmd.GetFlags()
+	defer initFlag(TestTx.Flags)
 
 	for _, v := range viewWhereTests {
-		flags.CPU = 1
+		TestTx.Flags.CPU = 1
 		if v.CPU != 0 {
-			flags.CPU = v.CPU
+			TestTx.Flags.CPU = v.CPU
 		}
 
 		err := v.View.Where(context.Background(), v.Where)
@@ -2852,7 +2895,8 @@ var viewGroupByTests = []struct {
 					value.NewString("group2"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 		GroupBy: parser.GroupByClause{
 			Items: []parser.QueryExpression{
@@ -2899,8 +2943,9 @@ var viewGroupByTests = []struct {
 					NewGroupCell([]value.Primary{value.NewString("group2"), value.NewString("group2")}),
 				},
 			},
-			Filter:    NewEmptyFilter(),
+			Filter:    NewEmptyFilter(TestTx),
 			isGrouped: true,
+			Tx:        TestTx,
 		},
 	},
 	{
@@ -2929,7 +2974,8 @@ var viewGroupByTests = []struct {
 					value.NewString("group2"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 		GroupBy: parser.GroupByClause{
 			Items: []parser.QueryExpression{
@@ -2976,8 +3022,9 @@ var viewGroupByTests = []struct {
 					NewGroupCell([]value.Primary{value.NewString("group2"), value.NewString("group2")}),
 				},
 			},
-			Filter:    NewEmptyFilter(),
+			Filter:    NewEmptyFilter(TestTx),
 			isGrouped: true,
+			Tx:        TestTx,
 		},
 	},
 	{
@@ -3006,7 +3053,8 @@ var viewGroupByTests = []struct {
 					value.NewString("group2"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 		GroupBy: parser.GroupByClause{
 			Items: []parser.QueryExpression{
@@ -3020,7 +3068,8 @@ var viewGroupByTests = []struct {
 		View: &View{
 			Header:    NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
 			RecordSet: []Record{},
-			Filter:    NewEmptyFilter(),
+			Filter:    NewEmptyFilter(TestTx),
+			Tx:        TestTx,
 		},
 		GroupBy: parser.GroupByClause{
 			Items: []parser.QueryExpression{
@@ -3054,8 +3103,9 @@ var viewGroupByTests = []struct {
 				},
 			},
 			RecordSet: []Record{},
-			Filter:    NewEmptyFilter(),
+			Filter:    NewEmptyFilter(TestTx),
 			isGrouped: true,
+			Tx:        TestTx,
 		},
 	},
 	{
@@ -3063,7 +3113,8 @@ var viewGroupByTests = []struct {
 		View: &View{
 			Header:    NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
 			RecordSet: []Record{},
-			Filter:    NewEmptyFilter(),
+			Filter:    NewEmptyFilter(TestTx),
+			Tx:        TestTx,
 		},
 		GroupBy: parser.GroupByClause{
 			Items: nil,
@@ -3094,8 +3145,9 @@ var viewGroupByTests = []struct {
 				},
 			},
 			RecordSet: []Record{},
-			Filter:    NewEmptyFilter(),
+			Filter:    NewEmptyFilter(TestTx),
 			isGrouped: true,
+			Tx:        TestTx,
 		},
 	},
 }
@@ -3168,7 +3220,7 @@ var viewHavingTests = []struct {
 					NewGroupCell([]value.Primary{value.NewString("group2"), value.NewString("group2")}),
 				},
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 		},
 		Having: parser.HavingClause{
 			Filter: parser.Comparison{
@@ -3232,7 +3284,7 @@ var viewHavingTests = []struct {
 					NewGroupCell([]value.Primary{value.NewString("group2"), value.NewString("group2")}),
 				},
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 		},
 		Having: parser.HavingClause{
 			Filter: parser.Comparison{
@@ -3265,7 +3317,7 @@ var viewHavingTests = []struct {
 					value.NewString("group2"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 		},
 		Having: parser.HavingClause{
 			Filter: parser.Comparison{
@@ -3305,7 +3357,7 @@ var viewHavingTests = []struct {
 					value.NewString("group2"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 		},
 		Having: parser.HavingClause{
 			Filter: parser.Comparison{
@@ -3397,7 +3449,8 @@ var viewSelectTests = []struct {
 					value.NewString("str22"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 		Select: parser.SelectClause{
 			Fields: []parser.QueryExpression{
@@ -3466,8 +3519,9 @@ var viewSelectTests = []struct {
 					value.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
 				}),
 			},
-			Filter:       NewEmptyFilter(),
+			Filter:       NewEmptyFilter(TestTx),
 			selectFields: []int{2, 1, 2, 4, 5, 6, 2, 4, 4, 7},
+			Tx:           TestTx,
 		},
 	},
 	{
@@ -3515,7 +3569,8 @@ var viewSelectTests = []struct {
 					value.NewString("str22"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 		Select: parser.SelectClause{
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
@@ -3539,8 +3594,9 @@ var viewSelectTests = []struct {
 					value.NewInteger(1),
 				}),
 			},
-			Filter:       NewEmptyFilter(),
+			Filter:       NewEmptyFilter(TestTx),
 			selectFields: []int{0, 1},
+			Tx:           TestTx,
 		},
 	},
 	{
@@ -3561,7 +3617,8 @@ var viewSelectTests = []struct {
 					value.NewString("str2"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 		Select: parser.SelectClause{
 			Fields: []parser.QueryExpression{
@@ -3591,8 +3648,9 @@ var viewSelectTests = []struct {
 					NewCell(value.NewInteger(3)),
 				},
 			},
-			Filter:       NewEmptyFilter(),
+			Filter:       NewEmptyFilter(TestTx),
 			selectFields: []int{3},
+			Tx:           TestTx,
 		},
 	},
 	{
@@ -3613,7 +3671,8 @@ var viewSelectTests = []struct {
 					value.NewString("str2"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 		Select: parser.SelectClause{
 			Fields: []parser.QueryExpression{
@@ -3649,7 +3708,8 @@ var viewSelectTests = []struct {
 					value.NewString("str2"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 		Select: parser.SelectClause{
 			Fields: []parser.QueryExpression{
@@ -3686,8 +3746,9 @@ var viewSelectTests = []struct {
 					NewCell(value.NewInteger(4)),
 				},
 			},
-			Filter:       NewEmptyFilter(),
+			Filter:       NewEmptyFilter(TestTx),
 			selectFields: []int{3, 4},
+			Tx:           TestTx,
 		},
 	},
 	{
@@ -3716,7 +3777,8 @@ var viewSelectTests = []struct {
 					value.NewInteger(4),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 		Select: parser.SelectClause{
 			Fields: []parser.QueryExpression{
@@ -3780,8 +3842,9 @@ var viewSelectTests = []struct {
 					value.NewInteger(3),
 				}),
 			},
-			Filter:       NewEmptyFilter(),
+			Filter:       NewEmptyFilter(TestTx),
 			selectFields: []int{0, 1, 2},
+			Tx:           TestTx,
 		},
 	},
 	{
@@ -3810,7 +3873,8 @@ var viewSelectTests = []struct {
 					value.NewInteger(4),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 		Select: parser.SelectClause{
 			Fields: []parser.QueryExpression{
@@ -3869,7 +3933,8 @@ var viewSelectTests = []struct {
 					value.NewInteger(4),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 		Select: parser.SelectClause{
 			Fields: []parser.QueryExpression{
@@ -3928,7 +3993,8 @@ var viewSelectTests = []struct {
 					value.NewInteger(4),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 		Select: parser.SelectClause{
 			Fields: []parser.QueryExpression{
@@ -4044,6 +4110,7 @@ var viewSelectTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 		Select: parser.SelectClause{
 			Fields: []parser.QueryExpression{
@@ -4095,6 +4162,7 @@ var viewSelectTests = []struct {
 				}),
 			},
 			selectFields: []int{0, 1, 2},
+			Tx:           TestTx,
 		},
 	},
 }
@@ -4169,7 +4237,8 @@ var viewOrderByTests = []struct {
 					value.NewString("4"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 		OrderBy: parser.OrderByClause{
 			Items: []parser.QueryExpression{
@@ -4228,7 +4297,8 @@ var viewOrderByTests = []struct {
 					value.NewInteger(1),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 	},
 	{
@@ -4262,14 +4332,15 @@ var viewOrderByTests = []struct {
 					value.NewString("4"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 			sortValuesInEachCell: [][]*SortValue{
-				{nil, nil, NewSortValue(value.NewString("3")), nil},
-				{nil, nil, NewSortValue(value.NewString("4")), nil},
-				{nil, nil, NewSortValue(value.NewString("4")), nil},
-				{nil, nil, NewSortValue(value.NewString("3")), nil},
-				{nil, nil, NewSortValue(value.NewString("2")), nil},
+				{nil, nil, NewSortValue(value.NewString("3"), TestTx.Flags), nil},
+				{nil, nil, NewSortValue(value.NewString("4"), TestTx.Flags), nil},
+				{nil, nil, NewSortValue(value.NewString("4"), TestTx.Flags), nil},
+				{nil, nil, NewSortValue(value.NewString("3"), TestTx.Flags), nil},
+				{nil, nil, NewSortValue(value.NewString("2"), TestTx.Flags), nil},
 			},
+			Tx: TestTx,
 		},
 		OrderBy: parser.OrderByClause{
 			Items: []parser.QueryExpression{
@@ -4307,14 +4378,15 @@ var viewOrderByTests = []struct {
 					value.NewString("3"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 			sortValuesInEachCell: [][]*SortValue{
-				{nil, nil, NewSortValue(value.NewString("2")), nil},
-				{nil, nil, NewSortValue(value.NewString("3")), nil},
-				{nil, nil, NewSortValue(value.NewString("3")), nil},
-				{nil, nil, NewSortValue(value.NewString("4")), nil},
-				{nil, nil, NewSortValue(value.NewString("4")), nil},
+				{nil, nil, NewSortValue(value.NewString("2"), TestTx.Flags), nil},
+				{nil, nil, NewSortValue(value.NewString("3"), TestTx.Flags), nil},
+				{nil, nil, NewSortValue(value.NewString("3"), TestTx.Flags), nil},
+				{nil, nil, NewSortValue(value.NewString("4"), TestTx.Flags), nil},
+				{nil, nil, NewSortValue(value.NewString("4"), TestTx.Flags), nil},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -4347,7 +4419,8 @@ var viewOrderByTests = []struct {
 					value.NewString("2"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 		OrderBy: parser.OrderByClause{
 			Items: []parser.QueryExpression{
@@ -4389,7 +4462,8 @@ var viewOrderByTests = []struct {
 					value.NewString("2"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 	},
 	{
@@ -4410,7 +4484,8 @@ var viewOrderByTests = []struct {
 					value.NewString("2"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 		OrderBy: parser.OrderByClause{
 			Items: []parser.QueryExpression{
@@ -4488,6 +4563,7 @@ var viewExtendRecordCapacity = []struct {
 				},
 			},
 			isGrouped: true,
+			Tx:        TestTx,
 		},
 		Exprs: []parser.QueryExpression{
 			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
@@ -4582,6 +4658,7 @@ var viewExtendRecordCapacity = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 		Exprs: []parser.QueryExpression{
 			parser.Function{
@@ -4603,6 +4680,7 @@ var viewExtendRecordCapacity = []struct {
 					value.NewInteger(2),
 				}),
 			},
+			Tx: TestTx,
 		},
 		Exprs: []parser.QueryExpression{
 			parser.AggregateFunction{
@@ -4624,6 +4702,7 @@ var viewExtendRecordCapacity = []struct {
 					value.NewInteger(2),
 				}),
 			},
+			Tx: TestTx,
 		},
 		Exprs: []parser.QueryExpression{
 			parser.ListFunction{
@@ -4652,6 +4731,7 @@ var viewExtendRecordCapacity = []struct {
 					value.NewInteger(2),
 				}),
 			},
+			Tx: TestTx,
 		},
 		Exprs: []parser.QueryExpression{
 			parser.AnalyticFunction{
@@ -4693,6 +4773,7 @@ var viewExtendRecordCapacity = []struct {
 					value.NewInteger(2),
 				}),
 			},
+			Tx: TestTx,
 		},
 		Exprs: []parser.QueryExpression{
 			parser.AnalyticFunction{
@@ -4784,7 +4865,7 @@ var viewLimitTests = []struct {
 					value.NewString("str3"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 		},
 		Limit: parser.LimitClause{Value: parser.NewIntegerValueFromString("2")},
 		Result: &View{
@@ -4803,7 +4884,7 @@ var viewLimitTests = []struct {
 					value.NewString("str1"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 		},
 	},
 	{
@@ -4836,7 +4917,7 @@ var viewLimitTests = []struct {
 					value.NewString("str3"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 			sortValuesInEachRecord: []SortValues{
 				{
 					&SortValue{Type: IntegerType, Integer: 1},
@@ -4881,7 +4962,7 @@ var viewLimitTests = []struct {
 					value.NewString("str1"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 			sortValuesInEachRecord: []SortValues{
 				{
 					&SortValue{Type: IntegerType, Integer: 1},
@@ -4932,7 +5013,7 @@ var viewLimitTests = []struct {
 					value.NewString("str3"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 			offset: 1,
 		},
 		Limit: parser.LimitClause{Value: parser.NewFloatValue(50.5), Percent: "percent"},
@@ -4956,7 +5037,7 @@ var viewLimitTests = []struct {
 					value.NewString("str2"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 			offset: 1,
 		},
 	},
@@ -4990,7 +5071,7 @@ var viewLimitTests = []struct {
 					value.NewString("str3"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 		},
 		Limit: parser.LimitClause{Value: parser.NewFloatValue(150), Percent: "percent"},
 		Result: &View{
@@ -5021,7 +5102,7 @@ var viewLimitTests = []struct {
 					value.NewString("str3"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 		},
 	},
 	{
@@ -5054,7 +5135,7 @@ var viewLimitTests = []struct {
 					value.NewString("str3"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 		},
 		Limit: parser.LimitClause{Value: parser.NewFloatValue(-10), Percent: "percent"},
 		Result: &View{
@@ -5064,7 +5145,7 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
 			RecordSet: []Record{},
-			Filter:    NewEmptyFilter(),
+			Filter:    NewEmptyFilter(TestTx),
 		},
 	},
 	{
@@ -5085,7 +5166,7 @@ var viewLimitTests = []struct {
 					value.NewString("str1"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 		},
 		Limit: parser.LimitClause{Value: parser.NewIntegerValueFromString("5")},
 		Result: &View{
@@ -5104,7 +5185,7 @@ var viewLimitTests = []struct {
 					value.NewString("str1"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 		},
 	},
 	{
@@ -5125,7 +5206,7 @@ var viewLimitTests = []struct {
 					value.NewString("str1"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 		},
 		Limit: parser.LimitClause{Value: parser.Variable{Name: "notexist"}},
 		Error: "[L:- C:-] variable @notexist is undeclared",
@@ -5148,7 +5229,7 @@ var viewLimitTests = []struct {
 					value.NewString("str1"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 		},
 		Limit: parser.LimitClause{Value: parser.NewStringValue("str")},
 		Error: "[L:- C:-] limit number of records 'str' is not an integer value",
@@ -5171,7 +5252,7 @@ var viewLimitTests = []struct {
 					value.NewString("str1"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 		},
 		Limit: parser.LimitClause{Value: parser.NewIntegerValue(-1)},
 		Result: &View{
@@ -5181,7 +5262,7 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
 			RecordSet: []Record{},
-			Filter:    NewEmptyFilter(),
+			Filter:    NewEmptyFilter(TestTx),
 		},
 	},
 	{
@@ -5202,7 +5283,7 @@ var viewLimitTests = []struct {
 					value.NewString("str1"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 		},
 		Limit: parser.LimitClause{Value: parser.NewStringValue("str"), Percent: "percent"},
 		Error: "[L:- C:-] limit percentage 'str' is not a float value",
@@ -5263,7 +5344,7 @@ var viewOffsetTests = []struct {
 					value.NewString("str2"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 		},
 		Offset: parser.OffsetClause{Value: parser.NewIntegerValueFromString("3")},
 		Result: &View{
@@ -5278,7 +5359,7 @@ var viewOffsetTests = []struct {
 					value.NewString("str2"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 			offset: 3,
 		},
 	},
@@ -5308,7 +5389,7 @@ var viewOffsetTests = []struct {
 					value.NewString("str2"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 		},
 		Offset: parser.OffsetClause{Value: parser.NewIntegerValueFromString("4")},
 		Result: &View{
@@ -5318,7 +5399,7 @@ var viewOffsetTests = []struct {
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
 			RecordSet: []Record{},
-			Filter:    NewEmptyFilter(),
+			Filter:    NewEmptyFilter(TestTx),
 			offset:    4,
 		},
 	},
@@ -5348,7 +5429,7 @@ var viewOffsetTests = []struct {
 					value.NewString("str2"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 		},
 		Offset: parser.OffsetClause{Value: parser.Variable{Name: "notexist"}},
 		Error:  "[L:- C:-] variable @notexist is undeclared",
@@ -5379,7 +5460,7 @@ var viewOffsetTests = []struct {
 					value.NewString("str2"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 		},
 		Offset: parser.OffsetClause{Value: parser.NewStringValue("str")},
 		Error:  "[L:- C:-] offset number 'str' is not an integer value",
@@ -5402,7 +5483,7 @@ var viewOffsetTests = []struct {
 					value.NewString("str1"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 		},
 		Offset: parser.OffsetClause{Value: parser.NewIntegerValue(-3)},
 		Result: &View{
@@ -5421,7 +5502,7 @@ var viewOffsetTests = []struct {
 					value.NewString("str1"),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 			offset: 0,
 		},
 	},
@@ -5501,7 +5582,7 @@ var viewInsertValuesTests = []struct {
 					value.NewNull(),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(nil),
 		},
 		UpdateCount: 2,
 	},
@@ -5569,7 +5650,7 @@ func TestView_InsertValues(t *testing.T) {
 				value.NewString("str2"),
 			}),
 		},
-		Filter: NewEmptyFilter(),
+		Filter: NewEmptyFilter(nil),
 	}
 
 	for _, v := range viewInsertValuesTests {
@@ -5637,7 +5718,8 @@ var viewInsertFromQueryTests = []struct {
 					value.NewNull(),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 		UpdateCount: 1,
 	},
@@ -5689,7 +5771,8 @@ func TestView_InsertFromQuery(t *testing.T) {
 				value.NewString("str2"),
 			}),
 		},
-		Filter: NewEmptyFilter(),
+		Filter: NewEmptyFilter(TestTx),
+		Tx:     TestTx,
 	}
 
 	for _, v := range viewInsertFromQueryTests {
@@ -5733,6 +5816,7 @@ func TestView_Fix(t *testing.T) {
 			}),
 		},
 		selectFields: []int{2},
+		Tx:           TestTx,
 	}
 	expect := &View{
 		Header: NewHeader("table1", []string{"column2"}),
@@ -5745,6 +5829,7 @@ func TestView_Fix(t *testing.T) {
 			}),
 		},
 		selectFields: []int(nil),
+		Tx:           TestTx,
 	}
 
 	_ = view.Fix(context.Background())
@@ -5777,6 +5862,7 @@ func TestView_Union(t *testing.T) {
 				value.NewString("str2"),
 			}),
 		},
+		Tx: TestTx,
 	}
 
 	calcView := &View{
@@ -5794,6 +5880,7 @@ func TestView_Union(t *testing.T) {
 				value.NewString("str3"),
 			}),
 		},
+		Tx: TestTx,
 	}
 
 	expect := &View{
@@ -5815,6 +5902,7 @@ func TestView_Union(t *testing.T) {
 				value.NewString("str3"),
 			}),
 		},
+		Tx: TestTx,
 	}
 
 	_ = view.Union(context.Background(), calcView, false)
@@ -5845,6 +5933,7 @@ func TestView_Union(t *testing.T) {
 				value.NewString("str2"),
 			}),
 		},
+		Tx: TestTx,
 	}
 
 	expect = &View{
@@ -5878,6 +5967,7 @@ func TestView_Union(t *testing.T) {
 				value.NewString("str3"),
 			}),
 		},
+		Tx: TestTx,
 	}
 
 	_ = view.Union(context.Background(), calcView, true)
@@ -5910,6 +6000,7 @@ func TestView_Except(t *testing.T) {
 				value.NewString("str2"),
 			}),
 		},
+		Tx: TestTx,
 	}
 
 	calcView := &View{
@@ -5927,6 +6018,7 @@ func TestView_Except(t *testing.T) {
 				value.NewString("str3"),
 			}),
 		},
+		Tx: TestTx,
 	}
 
 	expect := &View{
@@ -5940,6 +6032,7 @@ func TestView_Except(t *testing.T) {
 				value.NewString("str1"),
 			}),
 		},
+		Tx: TestTx,
 	}
 
 	_ = view.Except(context.Background(), calcView, false)
@@ -5970,6 +6063,7 @@ func TestView_Except(t *testing.T) {
 				value.NewString("str2"),
 			}),
 		},
+		Tx: TestTx,
 	}
 
 	expect = &View{
@@ -5987,6 +6081,7 @@ func TestView_Except(t *testing.T) {
 				value.NewString("str1"),
 			}),
 		},
+		Tx: TestTx,
 	}
 
 	_ = view.Except(context.Background(), calcView, true)
@@ -6019,6 +6114,7 @@ func TestView_Intersect(t *testing.T) {
 				value.NewString("str2"),
 			}),
 		},
+		Tx: TestTx,
 	}
 
 	calcView := &View{
@@ -6036,6 +6132,7 @@ func TestView_Intersect(t *testing.T) {
 				value.NewString("str3"),
 			}),
 		},
+		Tx: TestTx,
 	}
 
 	expect := &View{
@@ -6049,6 +6146,7 @@ func TestView_Intersect(t *testing.T) {
 				value.NewString("str2"),
 			}),
 		},
+		Tx: TestTx,
 	}
 
 	_ = view.Intersect(context.Background(), calcView, false)
@@ -6079,6 +6177,7 @@ func TestView_Intersect(t *testing.T) {
 				value.NewString("str2"),
 			}),
 		},
+		Tx: TestTx,
 	}
 
 	expect = &View{
@@ -6096,6 +6195,7 @@ func TestView_Intersect(t *testing.T) {
 				value.NewString("str2"),
 			}),
 		},
+		Tx: TestTx,
 	}
 
 	_ = view.Intersect(context.Background(), calcView, true)

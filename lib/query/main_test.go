@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"io"
 	"os"
 	"path/filepath"
@@ -8,6 +9,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/mithrandie/csvq/lib/file"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/value"
@@ -29,6 +32,8 @@ var CompletionTestSubDir = filepath.Join(TestDir, "completion", "sub")
 var TestLocation = "UTC"
 var NowForTest = time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())
 var HomeDir string
+
+var TestTx, _ = NewTransaction(context.Background(), file.DefaultWaitTimeout, file.DefaultRetryDelay, NewSession())
 
 func GetTestLocation() *time.Location {
 	l, _ := time.LoadLocation(TestLocation)
@@ -56,7 +61,7 @@ func setup() {
 		_ = os.RemoveAll(TestDir)
 	}
 
-	initCmdFlag()
+	cmd.TestTime = NowForTest
 
 	TestDataDir = filepath.Join(GetWD(), "..", "..", "testdata", "csv")
 
@@ -128,13 +133,6 @@ func teardown() {
 	}
 }
 
-func initCmdFlag() {
-	flags := cmd.GetFlags()
-	initFlag(flags)
-	_ = cmd.GetFlags().SetLocation(TestLocation)
-	cmd.GetFlags().SetColor(false)
-}
-
 func initFlag(flags *cmd.Flags) {
 	cpu := runtime.NumCPU() / 2
 	if cpu < 1 {
@@ -166,12 +164,10 @@ func initFlag(flags *cmd.Flags) {
 	flags.EastAsianEncoding = false
 	flags.CountDiacriticalSign = false
 	flags.CountFormatCode = false
-	flags.Color = false
 	flags.Quiet = false
 	flags.CPU = cpu
 	flags.Stats = false
-	flags.RetryDelay = 10 * time.Millisecond
-	flags.Now = "2012-02-03 09:18:15"
+	flags.SetColor(false)
 }
 
 func copyfile(dstfile string, srcfile string) error {
@@ -221,10 +217,13 @@ func GenerateBenchGroupedViewFilter() Filter {
 		isGrouped: true,
 	}
 
+	tx, _ := NewTransaction(context.Background(), file.DefaultWaitTimeout, file.DefaultRetryDelay, NewSession())
+
 	return Filter{
 		Records: []FilterRecord{
 			{View: view},
 		},
+		Tx: tx,
 	}
 }
 

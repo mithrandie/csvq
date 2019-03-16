@@ -1,12 +1,14 @@
 package action
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/file"
+
 	"github.com/mithrandie/csvq/lib/query"
 )
 
@@ -47,33 +49,24 @@ var executeTests = []struct {
 	},
 }
 
-func initFlags() {
-	tf := cmd.GetFlags()
-	tf.Repository = TestDir
-	tf.Format = cmd.TEXT
-	tf.Stats = false
-}
-
 func TestRun(t *testing.T) {
+	tx, _ := query.NewTransaction(context.Background(), file.DefaultWaitTimeout, file.DefaultRetryDelay, query.NewSession())
+	tx.Flags.SetColor(false)
 
 	for _, v := range executeTests {
-		initFlags()
-		tf := cmd.GetFlags()
 		if v.Stats {
-			tf.Stats = v.Stats
+			tx.Flags.Stats = v.Stats
 		}
 
-		query.OutFile = nil
+		tx.Session.OutFile = nil
 
-		oldStdout := query.Stdout
 		r, w, _ := os.Pipe()
-		query.Stdout = w
+		tx.Session.Stdout = w
 
-		proc := query.NewProcedure()
+		proc := query.NewProcessor(tx)
 		err := Run(proc, v.Input, "", v.OutFile)
 
 		_ = w.Close()
-		query.Stdout = oldStdout
 		stdout, _ := ioutil.ReadAll(r)
 
 		if err != nil {

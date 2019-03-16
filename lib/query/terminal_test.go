@@ -43,13 +43,11 @@ var promptLoadConfigTests = []struct {
 }
 
 func TestPrompt_LoadConfig(t *testing.T) {
-	prompt := NewPrompt(NewEmptyFilter(), &color.Palette{})
-
-	env, _ := cmd.GetEnvironment()
+	prompt := NewPrompt(NewEmptyFilter(TestTx), &color.Palette{})
 
 	for _, v := range promptLoadConfigTests {
-		env.InteractiveShell.Prompt = v.Prompt
-		env.InteractiveShell.ContinuousPrompt = v.ContinuousPrompt
+		TestTx.Environment.InteractiveShell.Prompt = v.Prompt
+		TestTx.Environment.InteractiveShell.ContinuousPrompt = v.ContinuousPrompt
 
 		err := prompt.LoadConfig()
 		if err != nil {
@@ -69,8 +67,6 @@ func TestPrompt_LoadConfig(t *testing.T) {
 			t.Errorf("continuous sequence = %v, want %v for %s, %s", prompt.continuousSequence, v.ExpectContinuousSequence, v.Prompt, v.ContinuousPrompt)
 		}
 	}
-
-	_ = cmd.LoadEnvironment()
 }
 
 var promptRenderPromptTests = []struct {
@@ -108,11 +104,11 @@ var promptRenderPromptTests = []struct {
 }
 
 func TestPrompt_RenderPrompt(t *testing.T) {
-	palette, _ := cmd.GetPalette()
-	prompt := NewPrompt(NewEmptyFilter(), palette)
+	palette := cmd.GetPalette()
+	prompt := NewPrompt(NewEmptyFilter(TestTx), palette)
 
 	for _, v := range promptRenderPromptTests {
-		cmd.GetFlags().SetColor(v.UseColor)
+		TestTx.Flags.SetColor(v.UseColor)
 		prompt.sequence = v.Sequence
 		result, err := prompt.RenderPrompt(context.Background())
 
@@ -134,7 +130,7 @@ func TestPrompt_RenderPrompt(t *testing.T) {
 		}
 	}
 
-	cmd.GetFlags().SetColor(false)
+	initFlag(TestTx.Flags)
 }
 
 var promptRenderContinuousPromptTests = []struct {
@@ -172,11 +168,11 @@ var promptRenderContinuousPromptTests = []struct {
 }
 
 func TestPrompt_RenderContinuousPrompt(t *testing.T) {
-	palette, _ := cmd.GetPalette()
-	prompt := NewPrompt(NewEmptyFilter(), palette)
+	palette := cmd.GetPalette()
+	prompt := NewPrompt(NewEmptyFilter(TestTx), palette)
 
 	for _, v := range promptRenderContinuousPromptTests {
-		cmd.GetFlags().SetColor(v.UseColor)
+		TestTx.Flags.SetColor(v.UseColor)
 		prompt.continuousSequence = v.Sequence
 		result, err := prompt.RenderContinuousPrompt(context.Background())
 
@@ -198,7 +194,7 @@ func TestPrompt_RenderContinuousPrompt(t *testing.T) {
 		}
 	}
 
-	cmd.GetFlags().SetColor(false)
+	initFlag(TestTx.Flags)
 }
 
 var promptRenderTests = []struct {
@@ -265,7 +261,7 @@ var promptRenderTests = []struct {
 }
 
 func TestPrompt_Render(t *testing.T) {
-	filter := NewEmptyFilter()
+	filter := NewEmptyFilter(TestTx)
 	_ = filter.Variables[0].Add(parser.Variable{Name: "var"}, value.NewString("abc"))
 	prompt := NewPrompt(filter, &color.Palette{})
 
@@ -302,7 +298,7 @@ var promptStripEscapeSequenceTests = []struct {
 }
 
 func TestPrompt_StripEscapeSequence(t *testing.T) {
-	prompt := NewPrompt(NewEmptyFilter(), &color.Palette{})
+	prompt := NewPrompt(NewEmptyFilter(TestTx), &color.Palette{})
 
 	for _, v := range promptStripEscapeSequenceTests {
 		result := prompt.StripEscapeSequence(v.Input)

@@ -17,7 +17,7 @@ import (
 	"github.com/mithrandie/ternary"
 )
 
-var procedureExecuteStatementTests = []struct {
+var processorExecuteStatementTests = []struct {
 	Input            parser.Statement
 	UncommittedViews *UncommittedViewMap
 	Logs             string
@@ -796,27 +796,28 @@ var procedureExecuteStatementTests = []struct {
 	},
 }
 
-func TestProcedure_ExecuteStatement(t *testing.T) {
-	initCmdFlag()
-	tf := cmd.GetFlags()
-	tf.Repository = TestDir
-	tf.Format = cmd.CSV
+func TestProcessor_ExecuteStatement(t *testing.T) {
+	defer func() {
+		_ = TestTx.ReleaseResources()
+		TestTx.UncommittedViews.Clean()
+		initFlag(TestTx.Flags)
+	}()
 
-	proc := NewProcedure()
+	TestTx.Flags.Repository = TestDir
+	TestTx.Flags.Format = cmd.CSV
+
+	tx := TestTx
+	proc := NewProcessor(tx)
 	_ = proc.Filter.Variables[0].Add(parser.Variable{Name: "while_test"}, value.NewInteger(0))
 
-	for _, v := range procedureExecuteStatementTests {
-		_ = ReleaseResources()
-		UncommittedViews = NewUncommittedViewMap()
+	for _, v := range processorExecuteStatementTests {
+		_ = TestTx.ReleaseResources()
+		TestTx.UncommittedViews = NewUncommittedViewMap()
 
-		oldStdout := Stdout
 		r, w, _ := os.Pipe()
-		Stdout = w
-
+		tx.Session.Stdout = w
 		_, err := proc.ExecuteStatement(context.Background(), v.Input)
-
 		_ = w.Close()
-		Stdout = oldStdout
 
 		log, _ := ioutil.ReadAll(r)
 
@@ -844,27 +845,27 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 		}
 
 		if v.UncommittedViews != nil {
-			for _, r := range UncommittedViews.Created {
+			for _, r := range TestTx.UncommittedViews.Created {
 				if r.Handler != nil {
 					if r.Path != r.Handler.Path() {
 						t.Errorf("file pointer = %q, want %q for %q", r.Handler.Path(), r.Path, v.Input)
 					}
-					_ = r.Close()
+					_ = TestTx.FileContainer.Close(r.Handler)
 					r.Handler = nil
 				}
 			}
-			for _, r := range UncommittedViews.Updated {
+			for _, r := range TestTx.UncommittedViews.Updated {
 				if r.Handler != nil {
 					if r.Path != r.Handler.Path() {
 						t.Errorf("file pointer = %q, want %q for %q", r.Handler.Path(), r.Path, v.Input)
 					}
-					_ = r.Close()
+					_ = TestTx.FileContainer.Close(r.Handler)
 					r.Handler = nil
 				}
 			}
 
-			if !reflect.DeepEqual(UncommittedViews, v.UncommittedViews) {
-				t.Errorf("uncomitted views = %v, want %v for %q", UncommittedViews, v.UncommittedViews, v.Input)
+			if !reflect.DeepEqual(TestTx.UncommittedViews, v.UncommittedViews) {
+				t.Errorf("uncomitted views = %v, want %v for %q", TestTx.UncommittedViews, v.UncommittedViews, v.Input)
 			}
 		}
 		if 0 < len(v.Logs) {
@@ -879,13 +880,9 @@ func TestProcedure_ExecuteStatement(t *testing.T) {
 			}
 		}
 	}
-
-	_ = ReleaseResources()
-	UncommittedViews.Clean()
-	OutFile = nil
 }
 
-var procedureIfStmtTests = []struct {
+var processorIfStmtTests = []struct {
 	Name        string
 	Stmt        parser.If
 	ResultFlow  StatementFlow
@@ -999,21 +996,20 @@ var procedureIfStmtTests = []struct {
 	},
 }
 
-func TestProcedure_IfStmt(t *testing.T) {
-	cmd.GetFlags().SetQuiet(true)
-	proc := NewProcedure()
+func TestProcessor_IfStmt(t *testing.T) {
+	defer initFlag(TestTx.Flags)
 
-	for _, v := range procedureIfStmtTests {
-		oldStdout := Stdout
+	TestTx.Flags.SetQuiet(true)
+	tx := TestTx
+	proc := NewProcessor(tx)
 
+	for _, v := range processorIfStmtTests {
 		r, w, _ := os.Pipe()
-		Stdout = w
+		tx.Session.Stdout = w
 
 		proc.ReturnVal = nil
 		flow, err := proc.IfStmt(context.Background(), v.Stmt)
-
 		_ = w.Close()
-		Stdout = oldStdout
 
 		log, _ := ioutil.ReadAll(r)
 
@@ -1041,7 +1037,7 @@ func TestProcedure_IfStmt(t *testing.T) {
 	}
 }
 
-var procedureCaseStmtTests = []struct {
+var processorCaseStmtTests = []struct {
 	Name       string
 	Stmt       parser.Case
 	ResultFlow StatementFlow
@@ -1177,20 +1173,18 @@ var procedureCaseStmtTests = []struct {
 	},
 }
 
-func TestProcedure_Case(t *testing.T) {
-	cmd.GetFlags().SetQuiet(true)
-	proc := NewProcedure()
+func TestProcessor_Case(t *testing.T) {
+	defer initFlag(TestTx.Flags)
 
-	for _, v := range procedureCaseStmtTests {
-		oldStdout := Stdout
+	TestTx.Flags.SetQuiet(true)
+	tx := TestTx
+	proc := NewProcessor(tx)
 
+	for _, v := range processorCaseStmtTests {
 		r, w, _ := os.Pipe()
-		Stdout = w
-
+		tx.Session.Stdout = w
 		flow, err := proc.Case(context.Background(), v.Stmt)
-
 		_ = w.Close()
-		Stdout = oldStdout
 
 		log, _ := ioutil.ReadAll(r)
 
@@ -1215,7 +1209,7 @@ func TestProcedure_Case(t *testing.T) {
 	}
 }
 
-var procedureWhileTests = []struct {
+var processorWhileTests = []struct {
 	Name        string
 	Stmt        parser.While
 	ResultFlow  StatementFlow
@@ -1446,11 +1440,14 @@ var procedureWhileTests = []struct {
 	},
 }
 
-func TestProcedure_While(t *testing.T) {
-	cmd.GetFlags().SetQuiet(true)
-	proc := NewProcedure()
+func TestProcessor_While(t *testing.T) {
+	defer initFlag(TestTx.Flags)
 
-	for _, v := range procedureWhileTests {
+	TestTx.Flags.SetQuiet(true)
+	tx := TestTx
+	proc := NewProcessor(tx)
+
+	for _, v := range processorWhileTests {
 		proc.ReturnVal = nil
 		if _, err := proc.Filter.Variables[0].Get(parser.Variable{Name: "while_test"}); err != nil {
 			_ = proc.Filter.Variables[0].Add(parser.Variable{Name: "while_test"}, value.NewInteger(0))
@@ -1462,15 +1459,10 @@ func TestProcedure_While(t *testing.T) {
 		}
 		_ = proc.Filter.Variables[0].Set(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
 
-		oldStdout := Stdout
-
 		r, w, _ := os.Pipe()
-		Stdout = w
-
+		tx.Session.Stdout = w
 		flow, err := proc.While(context.Background(), v.Stmt)
-
 		_ = w.Close()
-		Stdout = oldStdout
 
 		log, _ := ioutil.ReadAll(r)
 
@@ -1498,7 +1490,7 @@ func TestProcedure_While(t *testing.T) {
 	}
 }
 
-var procedureWhileInCursorTests = []struct {
+var processorWhileInCursorTests = []struct {
 	Name        string
 	Stmt        parser.WhileInCursor
 	ResultFlow  StatementFlow
@@ -1676,13 +1668,18 @@ var procedureWhileInCursorTests = []struct {
 	},
 }
 
-func TestProcedure_WhileInCursor(t *testing.T) {
-	tf := cmd.GetFlags()
-	tf.Repository = TestDir
+func TestProcessor_WhileInCursor(t *testing.T) {
+	defer func() {
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		initFlag(TestTx.Flags)
+	}()
 
-	proc := NewProcedure()
+	TestTx.Flags.Repository = TestDir
 
-	for _, v := range procedureWhileInCursorTests {
+	tx := TestTx
+	proc := NewProcessor(tx)
+
+	for _, v := range processorWhileInCursorTests {
 		proc.Filter.Variables[0] = GenerateVariableMap(map[string]value.Primary{
 			"var1": value.NewNull(),
 			"var2": value.NewNull(),
@@ -1692,17 +1689,13 @@ func TestProcedure_WhileInCursor(t *testing.T) {
 				query: selectQueryForCursorTest,
 			},
 		}
-		_ = ViewCache.Clean()
-		_ = proc.Filter.Cursors.Open(context.Background(), parser.Identifier{Literal: "cur"}, proc.Filter)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = proc.Filter.Cursors.Open(context.Background(), proc.Filter, parser.Identifier{Literal: "cur"})
 
-		oldStdout := Stdout
 		r, w, _ := os.Pipe()
-		Stdout = w
-
+		tx.Session.Stdout = w
 		flow, err := proc.WhileInCursor(context.Background(), v.Stmt)
-
 		_ = w.Close()
-		Stdout = oldStdout
 
 		log, _ := ioutil.ReadAll(r)
 
@@ -1730,7 +1723,7 @@ func TestProcedure_WhileInCursor(t *testing.T) {
 	}
 }
 
-var procedureExecExternalCommand = []struct {
+var processorExecExternalCommand = []struct {
 	Name  string
 	Stmt  parser.ExternalCommand
 	Error string
@@ -1758,10 +1751,10 @@ var procedureExecExternalCommand = []struct {
 	},
 }
 
-func TestProcedure_ExecExternalCommand(t *testing.T) {
-	proc := NewProcedure()
+func TestProcessor_ExecExternalCommand(t *testing.T) {
+	proc := NewProcessor(TestTx)
 
-	for _, v := range procedureExecExternalCommand {
+	for _, v := range processorExecExternalCommand {
 		err := proc.ExecExternalCommand(context.Background(), v.Stmt)
 
 		if err != nil {

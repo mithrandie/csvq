@@ -3,6 +3,8 @@ package query
 import (
 	"bytes"
 
+	"github.com/mithrandie/csvq/lib/cmd"
+
 	"github.com/mithrandie/csvq/lib/value"
 )
 
@@ -60,12 +62,12 @@ func (r Record) Copy() Record {
 
 }
 
-func (r Record) SerializeComparisonKeys(buf *bytes.Buffer) {
+func (r Record) SerializeComparisonKeys(buf *bytes.Buffer, flags *cmd.Flags) {
 	for i, cell := range r {
 		if 0 < i {
 			buf.WriteRune(':')
 		}
-		SerializeKey(buf, cell.Value())
+		SerializeKey(buf, cell.Value(), flags)
 	}
 }
 

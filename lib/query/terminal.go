@@ -71,11 +71,9 @@ func (p *Prompt) LoadConfig() error {
 	p.sequence = nil
 	p.continuousSequence = nil
 
-	env, _ := cmd.GetEnvironment()
-
 	scanner := new(excmd.ArgumentScanner)
 
-	scanner.Init(env.InteractiveShell.Prompt)
+	scanner.Init(p.filter.Tx.Environment.InteractiveShell.Prompt)
 	for scanner.Scan() {
 		p.sequence = append(p.sequence, PromptElement{
 			Text: scanner.Text(),
@@ -88,7 +86,7 @@ func (p *Prompt) LoadConfig() error {
 		return NewPromptEvaluationError(err.Error())
 	}
 
-	scanner.Init(env.InteractiveShell.ContinuousPrompt)
+	scanner.Init(p.filter.Tx.Environment.InteractiveShell.ContinuousPrompt)
 	for scanner.Scan() {
 		p.continuousSequence = append(p.continuousSequence, PromptElement{
 			Text: scanner.Text(),
@@ -108,7 +106,7 @@ func (p *Prompt) RenderPrompt(ctx context.Context) (string, error) {
 	if err != nil || len(s) < 1 {
 		s = TerminalPrompt
 	}
-	if cmd.GetFlags().Color {
+	if p.filter.Tx.Flags.Color {
 		if strings.IndexByte(s, 0x1b) < 0 {
 			s = p.palette.Render(cmd.PromptEffect, s)
 		}
@@ -123,7 +121,7 @@ func (p *Prompt) RenderContinuousPrompt(ctx context.Context) (string, error) {
 	if err != nil || len(s) < 1 {
 		s = TerminalContinuousPrompt
 	}
-	if cmd.GetFlags().Color {
+	if p.filter.Tx.Flags.Color {
 		if strings.IndexByte(s, 0x1b) < 0 {
 			s = p.palette.Render(cmd.PromptEffect, s)
 		}
@@ -156,7 +154,7 @@ func (p *Prompt) Render(ctx context.Context, sequence []PromptElement) (string, 
 		case excmd.CsvqExpression:
 			if 0 < len(element.Text) {
 				command := element.Text
-				statements, err := parser.Parse(command, "")
+				statements, err := parser.Parse(command, "", p.filter.Tx.Flags.DatetimeFormat)
 				if err != nil {
 					syntaxErr := err.(*parser.SyntaxError)
 					return "", NewPromptEvaluationError(syntaxErr.Message)
@@ -189,7 +187,7 @@ func (p *Prompt) evaluate(ctx context.Context, expr parser.QueryExpression) erro
 		}
 		return err
 	}
-	s, _ := Formatter.Format("%s", []value.Primary{val})
+	s, _ := NewStringFormatter().Format("%s", []value.Primary{val})
 	p.buf.WriteString(s)
 	if err != nil {
 		err = NewPromptEvaluationError(err.Error())

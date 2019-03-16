@@ -373,10 +373,10 @@ func AppendStrIfNotExist(list []string, elem string) []string {
 	return append(list, elem)
 }
 
-func TextWidth(s string) int {
-	return text.Width(s, GetFlags().EastAsianEncoding, GetFlags().CountDiacriticalSign, GetFlags().CountFormatCode)
+func TextWidth(s string, flags *Flags) int {
+	return text.Width(s, flags.EastAsianEncoding, flags.CountDiacriticalSign, flags.CountFormatCode)
 }
 
-func RuneWidth(r rune) int {
-	return text.RuneWidth(r, GetFlags().EastAsianEncoding, GetFlags().CountDiacriticalSign, GetFlags().CountFormatCode)
+func RuneWidth(r rune, flags *Flags) int {
+	return text.RuneWidth(r, flags.EastAsianEncoding, flags.CountDiacriticalSign, flags.CountFormatCode)
 }

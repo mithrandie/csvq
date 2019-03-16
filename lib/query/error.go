@@ -251,6 +251,16 @@ func NewSystemError(message string) error {
 	}
 }
 
+type TransactionError struct {
+	*BaseError
+}
+
+func NewTransactionError(message string) error {
+	return &TransactionError{
+		NewBaseErrorWithPrefix("System Error", message, 1),
+	}
+}
+
 type UserTriggeredError struct {
 	*BaseError
 }

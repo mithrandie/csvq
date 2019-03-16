@@ -4,6 +4,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/mithrandie/csvq/lib/cmd"
+
 	"github.com/mithrandie/csvq/lib/json"
 	"github.com/mithrandie/csvq/lib/value"
 	txjson "github.com/mithrandie/go-text/json"
@@ -11,7 +13,7 @@ import (
 	"github.com/mithrandie/ternary"
 )
 
-type AggregateFunction func([]value.Primary) value.Primary
+type AggregateFunction func([]value.Primary, *cmd.Flags) value.Primary
 
 var AggregateFunctions = map[string]AggregateFunction{
 	"COUNT":  Count,
@@ -22,7 +24,7 @@ var AggregateFunctions = map[string]AggregateFunction{
 	"MEDIAN": Median,
 }
 
-func Count(list []value.Primary) value.Primary {
+func Count(list []value.Primary, _ *cmd.Flags) value.Primary {
 	var count int64
 	for _, v := range list {
 		if !value.IsNull(v) {
@@ -33,7 +35,7 @@ func Count(list []value.Primary) value.Primary {
 	return value.NewInteger(count)
 }
 
-func Max(list []value.Primary) value.Primary {
+func Max(list []value.Primary, flags *cmd.Flags) value.Primary {
 	var result value.Primary
 	result = value.NewNull()
 
@@ -47,7 +49,7 @@ func Max(list []value.Primary) value.Primary {
 			continue
 		}
 
-		if value.Greater(v, result) == ternary.TRUE {
+		if value.Greater(v, result, flags.DatetimeFormat) == ternary.TRUE {
 			result = v
 		}
 	}
@@ -55,7 +57,7 @@ func Max(list []value.Primary) value.Primary {
 	return result
 }
 
-func Min(list []value.Primary) value.Primary {
+func Min(list []value.Primary, flags *cmd.Flags) value.Primary {
 	var result value.Primary
 	result = value.NewNull()
 
@@ -69,7 +71,7 @@ func Min(list []value.Primary) value.Primary {
 			continue
 		}
 
-		if value.Less(v, result) == ternary.TRUE {
+		if value.Less(v, result, flags.DatetimeFormat) == ternary.TRUE {
 			result = v
 		}
 	}
@@ -77,7 +79,7 @@ func Min(list []value.Primary) value.Primary {
 	return result
 }
 
-func Sum(list []value.Primary) value.Primary {
+func Sum(list []value.Primary, _ *cmd.Flags) value.Primary {
 	var sum float64
 	var count int
 
@@ -97,7 +99,7 @@ func Sum(list []value.Primary) value.Primary {
 	return value.ParseFloat64(sum)
 }
 
-func Avg(list []value.Primary) value.Primary {
+func Avg(list []value.Primary, _ *cmd.Flags) value.Primary {
 	var sum float64
 	var count int
 
@@ -119,7 +121,7 @@ func Avg(list []value.Primary) value.Primary {
 	return value.ParseFloat64(avg)
 }
 
-func Median(list []value.Primary) value.Primary {
+func Median(list []value.Primary, flags *cmd.Flags) value.Primary {
 	var values []float64
 
 	for _, v := range list {
@@ -127,7 +129,7 @@ func Median(list []value.Primary) value.Primary {
 			values = append(values, f.(value.Float).Raw())
 			continue
 		}
-		if d := value.ToDatetime(v); !value.IsNull(d) {
+		if d := value.ToDatetime(v, flags.DatetimeFormat); !value.IsNull(d) {
 			values = append(values, float64(d.(value.Datetime).Raw().UnixNano())/1e9)
 			continue
 		}

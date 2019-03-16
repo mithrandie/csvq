@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"sync"
+	"time"
 
 	"github.com/mitchellh/go-homedir"
 	"github.com/mithrandie/csvq/lib/file"
@@ -25,16 +25,22 @@ const (
 	HiddenPrefix = '.'
 )
 
-var (
-	environment = &Environment{}
-	getEnv      sync.Once
-)
-
 type Environment struct {
 	DatetimeFormat       []string            `json:"datetime_format"`
 	InteractiveShell     InteractiveShell    `json:"interactive_shell"`
 	EnvironmentVariables map[string]string   `json:"environment_variables"`
 	Palette              color.PaletteConfig `json:"palette"`
+}
+
+func NewEnvironment(ctx context.Context, defaultWaitTimeout time.Duration, retryDelay time.Duration) (*Environment, error) {
+	env := &Environment{}
+	if err := json.Unmarshal([]byte(DefaultEnvJson), env); err != nil {
+		err = errors.New(fmt.Sprintf("`json syntax error: %s", err.Error()))
+		return nil, err
+	}
+
+	err := env.Load(ctx, defaultWaitTimeout, retryDelay)
+	return env, err
 }
 
 func (e *Environment) Merge(e2 *Environment) {
@@ -89,22 +95,10 @@ type InteractiveShell struct {
 	ViMode           *bool  `json:"vi_mode"`
 }
 
-func LoadEnvironment() error {
-	return LoadEnvironmentContext(context.Background())
-}
-
-func LoadEnvironmentContext(ctx context.Context) (err error) {
-	handlers := make([]*file.Handler, 0, 4)
+func (e *Environment) Load(ctx context.Context, defaultWaitTimeout time.Duration, retryDelay time.Duration) (err error) {
+	container := file.NewContainer()
 	defer func() {
-		for _, h := range handlers {
-			if e := h.Close(); e != nil {
-				if err == nil {
-					err = e
-				} else {
-					err = errors.New(err.Error() + "\n" + e.Error())
-				}
-			}
-		}
+		err = container.UnlockAll()
 	}()
 
 	files := GetSpecialFilePath(EnvFileName)
@@ -116,12 +110,11 @@ func LoadEnvironmentContext(ctx context.Context) (err error) {
 		var h *file.Handler
 		var buf []byte
 
-		h, err = file.NewHandlerForRead(ctx, fpath)
+		h, err = file.NewHandlerForRead(ctx, container, fpath, defaultWaitTimeout, retryDelay)
 		if err != nil {
 			err = errors.New(fmt.Sprintf("failed to load %q: %s", fpath, err.Error()))
 			return
 		}
-		handlers = append(handlers, h)
 
 		buf, err = ioutil.ReadAll(h.FileForRead())
 		if err != nil {
@@ -135,10 +128,10 @@ func LoadEnvironmentContext(ctx context.Context) (err error) {
 			return
 		}
 
-		environment.Merge(userDefinedEnv)
+		e.Merge(userDefinedEnv)
 	}
 
-	for k, v := range environment.EnvironmentVariables {
+	for k, v := range e.EnvironmentVariables {
 		if e := os.Setenv(k, v); e != nil {
 			if err == nil {
 				err = e
@@ -149,25 +142,6 @@ func LoadEnvironmentContext(ctx context.Context) (err error) {
 	}
 
 	return
-}
-
-func GetEnvironment() (*Environment, error) {
-	return GetEnvironmentContext(context.Background())
-}
-
-func GetEnvironmentContext(ctx context.Context) (*Environment, error) {
-	var err error
-
-	getEnv.Do(func() {
-		if err = json.Unmarshal([]byte(DefaultEnvJson), environment); err != nil {
-			err = errors.New(fmt.Sprintf("`json syntax error: %s", err.Error()))
-			return
-		}
-
-		err = LoadEnvironmentContext(ctx)
-	})
-
-	return environment, err
 }
 
 func GetSpecialFilePath(filename string) []string {

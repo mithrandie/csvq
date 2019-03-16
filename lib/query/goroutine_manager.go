@@ -4,8 +4,6 @@ import (
 	"context"
 	"math"
 	"sync"
-
-	"github.com/mithrandie/csvq/lib/cmd"
 )
 
 var (
@@ -32,7 +30,7 @@ type GoroutineManager struct {
 	MinimumRequiredPerCore int
 }
 
-func (m *GoroutineManager) AssignRoutineNumber(recordLen int, minimumRequiredPerCore int) int {
+func (m *GoroutineManager) AssignRoutineNumber(recordLen int, minimumRequiredPerCore int, cpuNum int) int {
 	var greaterThanZero = func(i int) int {
 		if i < 1 {
 			return 1
@@ -46,7 +44,7 @@ func (m *GoroutineManager) AssignRoutineNumber(recordLen int, minimumRequiredPer
 		return i2
 	}
 
-	number := cmd.GetFlags().CPU
+	number := cpuNum
 	if minimumRequiredPerCore < 1 {
 		minimumRequiredPerCore = m.MinimumRequiredPerCore
 	}
@@ -80,8 +78,8 @@ type GoroutineTaskManager struct {
 	err          error
 }
 
-func NewGoroutineTaskManager(recordLen int, minimumRequiredPerCore int) *GoroutineTaskManager {
-	number := GetGoroutineManager().AssignRoutineNumber(recordLen, minimumRequiredPerCore)
+func NewGoroutineTaskManager(recordLen int, minimumRequiredPerCore int, cpuNum int) *GoroutineTaskManager {
+	number := GetGoroutineManager().AssignRoutineNumber(recordLen, minimumRequiredPerCore, cpuNum)
 
 	return &GoroutineTaskManager{
 		Number:    number,

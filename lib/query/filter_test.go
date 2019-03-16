@@ -7,7 +7,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -60,6 +59,7 @@ var filterEvaluateTests = []struct {
 								value.NewString("strstr"),
 							}),
 						},
+						Tx: TestTx,
 					},
 					RecordIndex: 1,
 				},
@@ -85,6 +85,7 @@ var filterEvaluateTests = []struct {
 								value.NewString("strstr"),
 							}),
 						},
+						Tx: TestTx,
 					},
 					RecordIndex: 1,
 				},
@@ -110,6 +111,7 @@ var filterEvaluateTests = []struct {
 								value.NewString("strstr"),
 							}),
 						},
+						Tx: TestTx,
 					},
 					RecordIndex: 1,
 				},
@@ -150,6 +152,7 @@ var filterEvaluateTests = []struct {
 							},
 						},
 						isGrouped: true,
+						Tx:        TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -175,6 +178,7 @@ var filterEvaluateTests = []struct {
 								value.NewString("strstr"),
 							}),
 						},
+						Tx: TestTx,
 					},
 					RecordIndex: 1,
 				},
@@ -200,6 +204,7 @@ var filterEvaluateTests = []struct {
 								value.NewString("strstr"),
 							}),
 						},
+						Tx: TestTx,
 					},
 					RecordIndex: 1,
 				},
@@ -244,6 +249,7 @@ var filterEvaluateTests = []struct {
 							},
 						},
 						isGrouped: true,
+						Tx:        TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -1331,6 +1337,7 @@ var filterEvaluateTests = []struct {
 								value.NewString("str2"),
 							}),
 						},
+						Tx: TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -1361,6 +1368,7 @@ var filterEvaluateTests = []struct {
 								value.NewString("str2"),
 							}),
 						},
+						Tx: TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -1421,6 +1429,7 @@ var filterEvaluateTests = []struct {
 								value.NewString("str2"),
 							}),
 						},
+						Tx: TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -1451,6 +1460,7 @@ var filterEvaluateTests = []struct {
 								value.NewString("str2"),
 							}),
 						},
+						Tx: TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -2282,6 +2292,7 @@ var filterEvaluateTests = []struct {
 								value.NewString("str2"),
 							}),
 						},
+						Tx: TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -2384,6 +2395,7 @@ var filterEvaluateTests = []struct {
 								value.NewString("str2"),
 							}),
 						},
+						Tx: TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -2629,6 +2641,7 @@ var filterEvaluateTests = []struct {
 							},
 						},
 						isGrouped: true,
+						Tx:        TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -2665,6 +2678,7 @@ var filterEvaluateTests = []struct {
 							},
 						},
 						isGrouped: true,
+						Tx:        TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -2689,6 +2703,7 @@ var filterEvaluateTests = []struct {
 								value.NewString("str2"),
 							}),
 						},
+						Tx: TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -2725,6 +2740,7 @@ var filterEvaluateTests = []struct {
 							},
 						},
 						isGrouped: true,
+						Tx:        TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -2766,6 +2782,7 @@ var filterEvaluateTests = []struct {
 							},
 						},
 						isGrouped: true,
+						Tx:        TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -2816,6 +2833,7 @@ var filterEvaluateTests = []struct {
 							},
 						},
 						isGrouped: true,
+						Tx:        TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -2935,6 +2953,7 @@ var filterEvaluateTests = []struct {
 							},
 						},
 						isGrouped: true,
+						Tx:        TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -2990,6 +3009,7 @@ var filterEvaluateTests = []struct {
 							},
 						},
 						isGrouped: true,
+						Tx:        TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -3044,6 +3064,7 @@ var filterEvaluateTests = []struct {
 							},
 						},
 						isGrouped: true,
+						Tx:        TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -3141,6 +3162,7 @@ var filterEvaluateTests = []struct {
 							},
 						},
 						isGrouped: true,
+						Tx:        TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -3245,8 +3267,9 @@ var filterEvaluateTests = []struct {
 								}),
 							},
 						},
-						Filter:    NewEmptyFilter(),
+						Filter:    NewEmptyFilter(TestTx),
 						isGrouped: true,
+						Tx:        TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -3296,8 +3319,9 @@ var filterEvaluateTests = []struct {
 								}),
 							},
 						},
-						Filter:    NewEmptyFilter(),
+						Filter:    NewEmptyFilter(TestTx),
 						isGrouped: true,
+						Tx:        TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -3325,7 +3349,8 @@ var filterEvaluateTests = []struct {
 								value.NewString("str2"),
 							}),
 						},
-						Filter: NewEmptyFilter(),
+						Filter: NewEmptyFilter(TestTx),
+						Tx:     TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -3355,7 +3380,8 @@ var filterEvaluateTests = []struct {
 								value.NewString("str2"),
 							}),
 						},
-						Filter: NewEmptyFilter(),
+						Filter: NewEmptyFilter(TestTx),
+						Tx:     TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -3399,8 +3425,9 @@ var filterEvaluateTests = []struct {
 								}),
 							},
 						},
-						Filter:    NewEmptyFilter(),
+						Filter:    NewEmptyFilter(TestTx),
 						isGrouped: true,
+						Tx:        TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -3442,8 +3469,9 @@ var filterEvaluateTests = []struct {
 								}),
 							},
 						},
-						Filter:    NewEmptyFilter(),
+						Filter:    NewEmptyFilter(TestTx),
 						isGrouped: true,
+						Tx:        TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -3484,8 +3512,9 @@ var filterEvaluateTests = []struct {
 								}),
 							},
 						},
-						Filter:    NewEmptyFilter(),
+						Filter:    NewEmptyFilter(TestTx),
 						isGrouped: true,
+						Tx:        TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -3521,8 +3550,9 @@ var filterEvaluateTests = []struct {
 								}),
 							},
 						},
-						Filter:    NewEmptyFilter(),
+						Filter:    NewEmptyFilter(TestTx),
 						isGrouped: true,
+						Tx:        TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -3584,8 +3614,9 @@ var filterEvaluateTests = []struct {
 								}),
 							},
 						},
-						Filter:    NewEmptyFilter(),
+						Filter:    NewEmptyFilter(TestTx),
 						isGrouped: true,
+						Tx:        TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -3628,8 +3659,9 @@ var filterEvaluateTests = []struct {
 								}),
 							},
 						},
-						Filter:    NewEmptyFilter(),
+						Filter:    NewEmptyFilter(TestTx),
 						isGrouped: true,
+						Tx:        TestTx,
 					},
 					RecordIndex: 0,
 				},
@@ -3869,6 +3901,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Variable",
 		Filter: NewFilter(
+			TestTx,
 			[]VariableMap{
 				GenerateVariableMap(map[string]value.Primary{
 					"var1": value.NewInteger(1),
@@ -3907,6 +3940,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Variable Substitution",
 		Filter: NewFilter(
+			TestTx,
 			[]VariableMap{
 				GenerateVariableMap(map[string]value.Primary{
 					"var1": value.NewInteger(1),
@@ -3996,24 +4030,31 @@ var filterEvaluateTests = []struct {
 }
 
 func TestFilter_Evaluate(t *testing.T) {
-	initCmdFlag()
-	tf := cmd.GetFlags()
-	tf.Repository = TestDataDir
+	defer func() {
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		initFlag(TestTx.Flags)
+	}()
+
+	TestTx.Flags.Repository = TestDataDir
 
 	cursors := CursorMap{
 		"CUR": &Cursor{
 			query: selectQueryForCursorTest,
 		},
 	}
-	_ = ViewCache.Clean()
-	_ = cursors.Open(context.Background(), parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+	_ = cursors.Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
 	_, _ = cursors.Fetch(parser.Identifier{Literal: "cur"}, parser.NEXT, 0)
 
 	for _, v := range filterEvaluateTests {
-		_ = ViewCache.Clean()
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 
 		if v.Filter == nil {
-			v.Filter = NewEmptyFilter()
+			v.Filter = NewEmptyFilter(TestTx)
+		} else {
+			v.Filter.Tx = TestTx
+		}
+		for i := range v.Filter.Records {
+			v.Filter.Records[i].View.Filter = v.Filter
 		}
 
 		v.Filter.Cursors = append(v.Filter.Cursors, cursors)
@@ -4058,7 +4099,7 @@ var filterEvaluateSequentiallyTests = []struct {
 							NewRecord([]value.Primary{value.NewInteger(2), value.NewString("str2")}),
 							NewRecord([]value.Primary{value.NewInteger(3), value.NewString("str3")}),
 						},
-						Filter: NewEmptyFilter(),
+						Filter: NewEmptyFilter(TestTx),
 					},
 					RecordIndex: 0,
 				},
@@ -4091,7 +4132,7 @@ var filterEvaluateSequentiallyTests = []struct {
 							NewRecord([]value.Primary{value.NewInteger(2), value.NewString("str2")}),
 							NewRecord([]value.Primary{value.NewInteger(3), value.NewString("str3")}),
 						},
-						Filter: NewEmptyFilter(),
+						Filter: NewEmptyFilter(TestTx),
 					},
 					RecordIndex: 0,
 				},
@@ -4120,7 +4161,7 @@ var filterEvaluateSequentiallyTests = []struct {
 							NewRecord([]value.Primary{value.NewInteger(2), value.NewString("str2")}),
 							NewRecord([]value.Primary{value.NewInteger(3), value.NewString("str3")}),
 						},
-						Filter: NewEmptyFilter(),
+						Filter: NewEmptyFilter(TestTx),
 					},
 					RecordIndex: 0,
 				},
@@ -4168,7 +4209,7 @@ var filterEvaluateSequentiallyTests = []struct {
 							NewRecord([]value.Primary{value.NewInteger(2), value.NewString("str2")}),
 							NewRecord([]value.Primary{value.NewInteger(3), value.NewString("str3")}),
 						},
-						Filter: NewEmptyFilter(),
+						Filter: NewEmptyFilter(TestTx),
 					},
 					RecordIndex: 0,
 				},
@@ -4204,6 +4245,8 @@ var filterEvaluateSequentiallyTests = []struct {
 
 func TestFilter_EvaluateSequentially(t *testing.T) {
 	for _, v := range filterEvaluateSequentiallyTests {
+		v.Filter.Tx = TestTx
+
 		filterEvaluateSequentiallyResults = make([]value.Primary, 0)
 		err := v.Filter.EvaluateSequentially(context.Background(), v.Function, v.Expression)
 		if err != nil {
@@ -4280,7 +4323,7 @@ var filterEvaluateEmbeddedStringTests = []struct {
 }
 
 func TestFilter_EvaluateEmbeddedString(t *testing.T) {
-	filter := NewEmptyFilter()
+	filter := NewEmptyFilter(TestTx)
 	_ = filter.Variables[0].Add(parser.Variable{Name: "var"}, value.NewInteger(1))
 	_ = os.Setenv("CSVQ_TEST_FILTER", "FILTER_TEST")
 
@@ -4344,7 +4387,7 @@ func BenchmarkFilter_EvaluateSingleThread(b *testing.B) {
 	ctx := context.Background()
 
 	for i := 0; i < b.N; i++ {
-		filter := NewEmptyFilter()
+		filter := NewEmptyFilter(TestTx)
 
 		for j := 0; j < 150; j++ {
 			_, _ = filter.Evaluate(ctx, parser.Comparison{
@@ -4364,7 +4407,7 @@ func BenchmarkFilter_EvaluateMultiThread(b *testing.B) {
 		for i := 0; i < 3; i++ {
 			wg.Add(1)
 			go func(thIdx int) {
-				filter := NewEmptyFilter()
+				filter := NewEmptyFilter(TestTx)
 
 				for j := 0; j < 50; j++ {
 					_, _ = filter.Evaluate(ctx, parser.Comparison{

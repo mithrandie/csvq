@@ -144,10 +144,11 @@ func NewCompleter(filter *Filter) *Completer {
 	sort.Strings(completer.flagList)
 	sort.Strings(completer.runinfoList)
 
-	completer.funcs = make([]string, 0, len(Functions)+2)
+	completer.funcs = make([]string, 0, len(Functions)+3)
 	for k := range Functions {
 		completer.funcs = append(completer.funcs, k)
 	}
+	completer.funcs = append(completer.funcs, "CALL")
 	completer.funcs = append(completer.funcs, "NOW")
 	completer.funcs = append(completer.funcs, "JSON_OBJECT")
 
@@ -1278,7 +1279,7 @@ func (c *Completer) AlterArgs(line string, origLine string, index int) readline.
 
 		var clist readline.CandidateList
 		if 0 < len(tableName) {
-			clist = c.identifierList(c.ColumnList(tableName, cmd.GetFlags().Repository), appendSpace)
+			clist = c.identifierList(c.ColumnList(tableName, c.filter.Tx.Flags.Repository), appendSpace)
 		}
 		return clist
 	}
@@ -1675,10 +1676,10 @@ func (c *Completer) SearchAllTablesWithSpace(line string, origLine string, index
 }
 
 func (c *Completer) SearchAllTables(line string, origLine string, index int) readline.CandidateList {
-	tableKeys := ViewCache.SortedKeys()
-	files := c.ListFiles(line, []string{cmd.CsvExt, cmd.TsvExt, cmd.JsonExt, cmd.LtsvExt, cmd.TextExt}, cmd.GetFlags().Repository)
+	tableKeys := c.filter.Tx.CachedViews.SortedKeys()
+	files := c.ListFiles(line, []string{cmd.CsvExt, cmd.TsvExt, cmd.JsonExt, cmd.LtsvExt, cmd.TextExt}, c.filter.Tx.Flags.Repository)
 
-	defaultDir := cmd.GetFlags().Repository
+	defaultDir := c.filter.Tx.Flags.Repository
 	if len(defaultDir) < 1 {
 		defaultDir, _ = os.Getwd()
 	}
@@ -1686,7 +1687,7 @@ func (c *Completer) SearchAllTables(line string, origLine string, index int) rea
 	items := make([]string, 0, len(tableKeys)+len(files)+len(c.viewList))
 	tablePath := make(map[string]bool)
 	for _, k := range tableKeys {
-		lpath := ViewCache[k].FileInfo.Path
+		lpath := c.filter.Tx.CachedViews[k].FileInfo.Path
 		tablePath[lpath] = true
 		if filepath.Dir(lpath) == defaultDir {
 			items = append(items, filepath.Base(lpath))
@@ -1997,7 +1998,7 @@ func (c *Completer) AllColumnList() []string {
 		}
 	}
 
-	for _, view := range ViewCache {
+	for _, view := range c.filter.Tx.CachedViews {
 		col := c.columnList(view)
 		for _, s := range col {
 			if _, ok := m[s]; !ok {
@@ -2026,14 +2027,14 @@ func (c *Completer) ColumnList(tableName string, repository string) []string {
 	}
 
 	if fpath, err := CreateFilePath(parser.Identifier{Literal: tableName}, repository); err == nil {
-		if view, ok := ViewCache[strings.ToUpper(fpath)]; ok {
+		if view, ok := c.filter.Tx.CachedViews[strings.ToUpper(fpath)]; ok {
 			list := c.columnList(view)
 			c.tableColumns[tableName] = list
 			return list
 		}
 	}
 	if fpath, err := SearchFilePathFromAllTypes(parser.Identifier{Literal: tableName}, repository); err == nil {
-		if view, ok := ViewCache[strings.ToUpper(fpath)]; ok {
+		if view, ok := c.filter.Tx.CachedViews[strings.ToUpper(fpath)]; ok {
 			list := c.columnList(view)
 			c.tableColumns[tableName] = list
 			return list
@@ -2090,7 +2091,7 @@ func (c *Completer) completeArgs(
 func (c *Completer) UpdateTokens(line string, origLine string) {
 	c.tokens = c.tokens[:0]
 	s := new(parser.Scanner)
-	s.Init(origLine, "")
+	s.Init(origLine, "", c.filter.Tx.Flags.DatetimeFormat)
 	for {
 		t, _ := s.Scan()
 		if t.Token == parser.EOF {

@@ -56,7 +56,7 @@ var encodeViewTests = []struct {
 			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(true)}),
-				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil), value.NewString("abcdef")}),
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk日本語あアｱＡ（\n"), value.NewNull()}),
 			},
 		},
@@ -98,7 +98,7 @@ var encodeViewTests = []struct {
 			Header: NewHeader("test", []string{"c1", "c2", "c3"}),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(false)}),
-				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil), value.NewString("abcdef")}),
 			},
 		},
 		Format:                  cmd.FIXED,
@@ -114,7 +114,7 @@ var encodeViewTests = []struct {
 			Header: NewHeader("test", []string{"c1", "c2", "c3"}),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(false)}),
-				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil), value.NewString("abcdef")}),
 			},
 		},
 		Format:                  cmd.FIXED,
@@ -130,7 +130,7 @@ var encodeViewTests = []struct {
 			Header: NewHeader("test", []string{"c1", "c2", "c3"}),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(false)}),
-				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil), value.NewString("abcdef")}),
 			},
 		},
 		Format:                  cmd.FIXED,
@@ -145,7 +145,7 @@ var encodeViewTests = []struct {
 		View: &View{
 			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
 			RecordSet: []Record{
-				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil), value.NewString("abcdef")}),
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" ab|cdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk日本語あアｱＡ（\n"), value.NewNull()}),
 			},
 		},
@@ -162,7 +162,7 @@ var encodeViewTests = []struct {
 		View: &View{
 			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
 			RecordSet: []Record{
-				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil), value.NewString("abcdef")}),
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" ab|cdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk日本語あアｱＡ（\n"), value.NewNull()}),
 			},
 		},
@@ -180,7 +180,7 @@ var encodeViewTests = []struct {
 			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(true)}),
-				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil), value.NewString("abcdef")}),
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), value.NewNull()}),
 			},
 		},
@@ -198,7 +198,7 @@ var encodeViewTests = []struct {
 			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(true)}),
-				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil), value.NewString("abcdef")}),
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), value.NewNull()}),
 			},
 		},
@@ -215,7 +215,7 @@ var encodeViewTests = []struct {
 			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(true)}),
-				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil), value.NewString("abcdef")}),
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), value.NewNull()}),
 			},
 		},
@@ -234,7 +234,7 @@ var encodeViewTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(true)}),
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.FALSE), value.NewBoolean(true)}),
-				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil), value.NewString("abcdef")}),
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abc\\defghi/jk\rlmn\topqrstuvwxyzabcdefg\nhi\"jk\n"), value.NewNull()}),
 			},
 		},
@@ -341,7 +341,7 @@ var encodeViewTests = []struct {
 			Header: NewHeader("test", []string{"c1", "c2", "c3"}),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.FALSE), value.NewBoolean(true)}),
-				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil), value.NewString("abcdef")}),
 			},
 		},
 		Format: cmd.LTSV,
@@ -354,7 +354,7 @@ var encodeViewTests = []struct {
 			Header: NewHeader("test", []string{"c1", "c2", "c3"}),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(false)}),
-				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil), value.NewString("abcdef")}),
 			},
 		},
 		Format:                  cmd.FIXED,
@@ -381,7 +381,7 @@ var encodeViewTests = []struct {
 			Header: NewHeader("test", []string{"c1:", "c2", "c3"}),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.FALSE), value.NewBoolean(true)}),
-				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil), value.NewString("abcdef")}),
 			},
 		},
 		Format: cmd.LTSV,
@@ -393,7 +393,7 @@ var encodeViewTests = []struct {
 			Header: NewHeader("test", []string{"c1", "c2", "c3"}),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.FALSE), value.NewBoolean(true)}),
-				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abc\tdef")}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil), value.NewString("abc\tdef")}),
 			},
 		},
 		Format: cmd.LTSV,
@@ -406,7 +406,7 @@ var encodeViewTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(true)}),
 				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.FALSE), value.NewBoolean(true)}),
-				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00"), value.NewString("abcdef")}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil), value.NewString("abcdef")}),
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" 日本語ghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), value.NewNull()}),
 			},
 		},
@@ -422,9 +422,6 @@ var encodeViewTests = []struct {
 }
 
 func TestEncodeView(t *testing.T) {
-	oldStdout := Stdout
-	Stdout = NewDiscard()
-
 	buf := new(bytes.Buffer)
 
 	for _, v := range encodeViewTests {
@@ -437,7 +434,7 @@ func TestEncodeView(t *testing.T) {
 		if v.WriteDelimiter == 0 {
 			v.WriteDelimiter = ','
 		}
-		cmd.GetFlags().SetColor(v.UseColor)
+		TestTx.Flags.SetColor(v.UseColor)
 
 		fileInfo := &FileInfo{
 			Format:             v.Format,
@@ -453,7 +450,7 @@ func TestEncodeView(t *testing.T) {
 		}
 
 		buf.Reset()
-		err := EncodeView(buf, v.View, fileInfo)
+		_, err := EncodeView(buf, v.View, fileInfo, TestTx.Flags)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -472,6 +469,4 @@ func TestEncodeView(t *testing.T) {
 			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
 		}
 	}
-
-	Stdout = oldStdout
 }

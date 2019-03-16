@@ -13,8 +13,8 @@ func GetTestFilePath(filename string) string {
 
 var TestDir = filepath.Join(os.TempDir(), "csvq_file_test")
 
-var waitTimeoutForTests = 0.1
-var retryIntervalForTests = 10 * time.Millisecond
+var waitTimeoutForTests = 100 * time.Millisecond
+var retryDelayForTests = 10 * time.Millisecond
 
 func TestMain(m *testing.M) {
 	os.Exit(run(m))
@@ -41,8 +41,6 @@ func setup() {
 
 	fp, _ = os.Create(GetTestFilePath("update.txt"))
 	_ = fp.Close()
-
-	UpdateWaitTimeout(waitTimeoutForTests, retryIntervalForTests)
 }
 
 func teardown() {

@@ -6,6 +6,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -13,24 +14,43 @@ import (
 	"github.com/mithrandie/ternary"
 )
 
-type DatetimeFormatMap map[string]string
+var DatetimeFormats = NewDatetimeFormatMap()
 
-func (m DatetimeFormatMap) Get(s string) string {
-	if f, ok := m[s]; ok {
+type DatetimeFormatMap struct {
+	m *sync.Map
+}
+
+func NewDatetimeFormatMap() *DatetimeFormatMap {
+	return &DatetimeFormatMap{
+		m: &sync.Map{},
+	}
+}
+
+func (dfmap *DatetimeFormatMap) Store(key string, value string) {
+	dfmap.m.Store(key, value)
+}
+
+func (dfmap *DatetimeFormatMap) Load(key string) (string, bool) {
+	v, ok := dfmap.m.Load(key)
+	if ok {
+		return v.(string), ok
+	}
+	return "", ok
+}
+
+func (dfmap DatetimeFormatMap) Get(s string) string {
+	if f, ok := dfmap.Load(s); ok {
 		return f
 	}
 	f := ConvertDatetimeFormat(s)
-	m[s] = f
+	dfmap.Store(s, f)
 	return f
 }
 
-var DatetimeFormats = DatetimeFormatMap{}
-
-func StrToTime(s string) (time.Time, error) {
+func StrToTime(s string, formats []string) (time.Time, error) {
 	s = strings.TrimSpace(s)
 
-	flags := cmd.GetFlags()
-	for _, format := range flags.DatetimeFormat {
+	for _, format := range formats {
 		if t, e := time.ParseInLocation(DatetimeFormats.Get(format), s, cmd.GetLocation()); e == nil {
 			return t, nil
 		}
@@ -290,7 +310,7 @@ func maybeNumber(s string) bool {
 	return false
 }
 
-func ToDatetime(p Primary) Primary {
+func ToDatetime(p Primary, formats []string) Primary {
 	switch p.(type) {
 	case Integer:
 		dt := time.Unix(p.(Integer).Raw(), 0)
@@ -302,7 +322,7 @@ func ToDatetime(p Primary) Primary {
 		return p
 	case String:
 		s := strings.TrimSpace(p.(String).Raw())
-		if dt, e := StrToTime(s); e == nil {
+		if dt, e := StrToTime(s, formats); e == nil {
 			return NewDatetime(dt)
 		}
 		if maybeNumber(s) {

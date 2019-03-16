@@ -193,7 +193,7 @@ var fileInfoTests = []struct {
 
 func TestNewFileInfo(t *testing.T) {
 	for _, v := range fileInfoTests {
-		fileInfo, err := NewFileInfo(v.FilePath, v.Repository, v.Format, v.Delimiter, v.Encoding)
+		fileInfo, err := NewFileInfo(v.FilePath, v.Repository, v.Format, v.Delimiter, v.Encoding, TestTx.Flags)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

@@ -1,10 +1,11 @@
 package value
 
 import (
-	"github.com/mithrandie/csvq/lib/cmd"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/mithrandie/csvq/lib/cmd"
 
 	"github.com/mithrandie/ternary"
 )
@@ -170,8 +171,8 @@ type Datetime struct {
 	value time.Time
 }
 
-func NewDatetimeFromString(s string) Datetime {
-	t, _ := StrToTime(s)
+func NewDatetimeFromString(s string, formats []string) Datetime {
+	t, _ := StrToTime(s, formats)
 	return Datetime{
 		value: t,
 	}

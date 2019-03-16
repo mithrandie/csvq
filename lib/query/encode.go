@@ -32,21 +32,21 @@ func NewEmptyResultSetError() *EmptyResultSetError {
 	return &EmptyResultSetError{}
 }
 
-func EncodeView(fp io.Writer, view *View, fileInfo *FileInfo) error {
+func EncodeView(fp io.Writer, view *View, fileInfo *FileInfo, flags *cmd.Flags) (string, error) {
 	switch fileInfo.Format {
 	case cmd.FIXED:
-		return encodeFixedLengthFormat(fp, view, fileInfo.DelimiterPositions, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding, fileInfo.SingleLine)
+		return "", encodeFixedLengthFormat(fp, view, fileInfo.DelimiterPositions, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding, fileInfo.SingleLine)
 	case cmd.JSON:
-		return encodeJson(fp, view, fileInfo.LineBreak, fileInfo.JsonEscape, fileInfo.PrettyPrint)
+		return "", encodeJson(fp, view, fileInfo.LineBreak, fileInfo.JsonEscape, fileInfo.PrettyPrint, flags)
 	case cmd.LTSV:
-		return encodeLTSV(fp, view, fileInfo.LineBreak, fileInfo.Encoding)
+		return "", encodeLTSV(fp, view, fileInfo.LineBreak, fileInfo.Encoding)
 	case cmd.GFM, cmd.ORG, cmd.TEXT:
-		return encodeText(fp, view, fileInfo.Format, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding)
+		return encodeText(fp, view, fileInfo.Format, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding, flags)
 	case cmd.TSV:
 		fileInfo.Delimiter = '\t'
 		fallthrough
 	default: // cmd.CSV
-		return encodeCSV(fp, view, fileInfo.Delimiter, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding, fileInfo.EncloseAll)
+		return "", encodeCSV(fp, view, fileInfo.Delimiter, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding, fileInfo.EncloseAll)
 	}
 }
 
@@ -172,7 +172,7 @@ func encodeFixedLengthFormat(fp io.Writer, view *View, positions []int, lineBrea
 	return err
 }
 
-func encodeJson(fp io.Writer, view *View, lineBreak text.LineBreak, escapeType txjson.EscapeType, prettyPrint bool) error {
+func encodeJson(fp io.Writer, view *View, lineBreak text.LineBreak, escapeType txjson.EscapeType, prettyPrint bool, flags *cmd.Flags) error {
 	header, records := bareValues(view)
 
 	data, err := json.ConvertTableValueToJsonStructure(header, records)
@@ -184,8 +184,8 @@ func encodeJson(fp io.Writer, view *View, lineBreak text.LineBreak, escapeType t
 	e.EscapeType = escapeType
 	e.LineBreak = lineBreak
 	e.PrettyPrint = prettyPrint
-	if prettyPrint && cmd.GetFlags().Color {
-		e.Palette, _ = cmd.GetPalette()
+	if prettyPrint && flags.Color {
+		e.Palette = cmd.GetPalette()
 	}
 
 	s := e.Encode(data)
@@ -200,7 +200,7 @@ func encodeJson(fp io.Writer, view *View, lineBreak text.LineBreak, escapeType t
 	return w.Flush()
 }
 
-func encodeText(fp io.Writer, view *View, format cmd.Format, lineBreak text.LineBreak, withoutHeader bool, encoding text.Encoding) error {
+func encodeText(fp io.Writer, view *View, format cmd.Format, lineBreak text.LineBreak, withoutHeader bool, encoding text.Encoding, flags *cmd.Flags) (string, error) {
 	header, records := bareValues(view)
 
 	isPlainTable := false
@@ -213,25 +213,23 @@ func encodeText(fp io.Writer, view *View, format cmd.Format, lineBreak text.Line
 		tableFormat = table.OrgTable
 	default:
 		if len(header) < 1 {
-			LogWarn("Empty Fields", cmd.GetFlags().Quiet)
-			return NewEmptyResultSetError()
+			return "Empty Fields", NewEmptyResultSetError()
 		}
 		if len(records) < 1 {
-			LogWarn("Empty RecordSet", cmd.GetFlags().Quiet)
-			return NewEmptyResultSetError()
+			return "Empty RecordSet", NewEmptyResultSetError()
 		}
 		isPlainTable = true
 	}
 
 	e := table.NewEncoder(tableFormat, len(records))
 	e.LineBreak = lineBreak
-	e.EastAsianEncoding = cmd.GetFlags().EastAsianEncoding
-	e.CountDiacriticalSign = cmd.GetFlags().CountDiacriticalSign
-	e.CountFormatCode = cmd.GetFlags().CountFormatCode
+	e.EastAsianEncoding = flags.EastAsianEncoding
+	e.CountDiacriticalSign = flags.CountDiacriticalSign
+	e.CountFormatCode = flags.CountFormatCode
 	e.WithoutHeader = withoutHeader
 	e.Encoding = encoding
 
-	palette, _ := cmd.GetPalette()
+	palette := cmd.GetPalette()
 
 	if !withoutHeader {
 		hfields := make([]table.Field, 0, len(header))
@@ -299,13 +297,13 @@ func encodeText(fp io.Writer, view *View, format cmd.Format, lineBreak text.Line
 
 	s, err := e.Encode()
 	if err != nil {
-		return err
+		return "", err
 	}
 	w := bufio.NewWriter(fp)
 	if _, err := w.WriteString(s); err != nil {
-		return err
+		return "", err
 	}
-	return w.Flush()
+	return "", w.Flush()
 }
 
 func encodeLTSV(fp io.Writer, view *View, lineBreak text.LineBreak, encoding text.Encoding) error {

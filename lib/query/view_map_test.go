@@ -2,8 +2,6 @@ package query
 
 import (
 	"context"
-	"io/ioutil"
-	"os"
 	"reflect"
 	"testing"
 
@@ -233,7 +231,7 @@ func TestTemporaryViewScopes_GetWithInternalId(t *testing.T) {
 	}
 
 	for _, v := range temporaryViewScopesGetWithInternalIdTests {
-		view, err := list.GetWithInternalId(context.Background(), v.Path)
+		view, err := list.GetWithInternalId(context.Background(), v.Path, TestTx.Flags)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -666,29 +664,20 @@ func TestTemporaryViewScopes_Store(t *testing.T) {
 			},
 		},
 	}
-	expectOut := "Commit: restore point of view \"/path/to/table1.csv\" is created.\n"
+	expectOut := []string{"Commit: restore point of view \"/path/to/table1.csv\" is created.\n"}
 
 	UncommittedViews := map[string]*FileInfo{
 		"/path/to/table1.csv": nil,
 	}
 
-	oldStdout := Stdout
-	r, w, _ := os.Pipe()
-	Stdout = w
-
-	list.Store(UncommittedViews)
-
-	_ = w.Close()
-	Stdout = oldStdout
-
-	log, _ := ioutil.ReadAll(r)
+	log := list.Store(UncommittedViews)
 
 	if !reflect.DeepEqual(list, expect) {
 		t.Errorf("Store: view = %v, want %v", list, expect)
 	}
 
-	if string(log) != expectOut {
-		t.Errorf("Store: log = %s, want %s", string(log), expectOut)
+	if reflect.DeepEqual(log, expectOut) {
+		t.Errorf("Store: log = %s, want %s", log, expectOut)
 	}
 }
 
@@ -791,30 +780,21 @@ func TestTemporaryViewScopes_Restore(t *testing.T) {
 			},
 		},
 	}
-	expectOut := "Rollback: view \"/path/to/table1.csv\" is restored.\nRollback: view \"/path/to/table2.csv\" is restored.\n"
+	expectOut := []string{"Rollback: view \"/path/to/table1.csv\" is restored.\nRollback: view \"/path/to/table2.csv\" is restored.\n"}
 
 	UncommittedViews := map[string]*FileInfo{
 		"/path/to/table1.csv": nil,
 		"/path/to/table2.csv": nil,
 	}
 
-	oldStdout := Stdout
-	r, w, _ := os.Pipe()
-	Stdout = w
-
-	list.Restore(UncommittedViews)
-
-	_ = w.Close()
-	Stdout = oldStdout
-
-	log, _ := ioutil.ReadAll(r)
+	log := list.Restore(UncommittedViews)
 
 	if !reflect.DeepEqual(list, expect) {
 		t.Errorf("Restore: view = %v, want %v", list, expect)
 	}
 
-	if string(log) != expectOut {
-		t.Errorf("Restore: log = %s, want %s", string(log), expectOut)
+	if reflect.DeepEqual(log, expectOut) {
+		t.Errorf("Restore: log = %s, want %s", log, expectOut)
 	}
 }
 
@@ -1037,7 +1017,7 @@ func TestViewMap_GetWithInternalId(t *testing.T) {
 	}
 
 	for _, v := range viewMapGetWithInternalIdTests {
-		view, err := viewMap.GetWithInternalId(context.Background(), v.Path)
+		view, err := viewMap.GetWithInternalId(context.Background(), v.Path, TestTx.Flags)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1363,7 +1343,7 @@ func TestViewMap_Clear(t *testing.T) {
 
 	expect := ViewMap{}
 
-	_ = viewMap.Clean()
+	_ = viewMap.Clean(TestTx.FileContainer)
 	if !reflect.DeepEqual(viewMap, expect) {
 		t.Errorf("result = %v, want %v", viewMap, expect)
 	}
@@ -1392,6 +1372,6 @@ func generateViewMapGetWithInternalIdBenchViewMap() ViewMap {
 
 func BenchmarkViewMap_GetWithInternalId(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_, _ = viewMapGetWithInternalIdBench.GetWithInternalId(context.Background(), parser.Identifier{Literal: "BENCH_VIEW"})
+		_, _ = viewMapGetWithInternalIdBench.GetWithInternalId(context.Background(), parser.Identifier{Literal: "BENCH_VIEW"}, TestTx.Flags)
 	}
 }

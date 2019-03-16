@@ -20,18 +20,18 @@ type ReadLineTerminal struct {
 	prompt    *Prompt
 	env       *cmd.Environment
 	completer *Completer
+	tx        *Transaction
 }
 
 func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
-	fd := int(ScreenFd)
+	fd := int(filter.Tx.Session.ScreenFd)
 
-	p, _ := cmd.GetPalette()
-	env, _ := cmd.GetEnvironment()
+	p := cmd.GetPalette()
 
-	limit := *env.InteractiveShell.HistoryLimit
-	historyFile, err := HistoryFilePath(env.InteractiveShell.HistoryFile)
+	limit := *filter.Tx.Environment.InteractiveShell.HistoryLimit
+	historyFile, err := HistoryFilePath(filter.Tx.Environment.InteractiveShell.HistoryFile)
 	if err != nil {
-		LogError(fmt.Sprintf("cannot detect filepath: %q", env.InteractiveShell.HistoryFile))
+		filter.Tx.Session.LogWarn(fmt.Sprintf("cannot detect filepath: %q", filter.Tx.Environment.InteractiveShell.HistoryFile), false)
 		limit = -1
 	}
 
@@ -44,9 +44,9 @@ func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
 		HistoryLimit:           limit,
 		HistorySearchFold:      true,
 		Listener:               new(ReadlineListener),
-		Stdin:                  Stdin,
-		Stdout:                 Stdout,
-		Stderr:                 Stderr,
+		Stdin:                  filter.Tx.Session.Stdin,
+		Stdout:                 filter.Tx.Session.Stdout,
+		Stderr:                 filter.Tx.Session.Stderr,
 	})
 	if err != nil {
 		return nil, err
@@ -56,8 +56,9 @@ func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
 		terminal:  t,
 		fd:        fd,
 		prompt:    prompt,
-		env:       env,
+		env:       filter.Tx.Environment,
 		completer: completer,
+		tx:        filter.Tx,
 	}
 
 	terminal.setCompleter()
@@ -92,7 +93,7 @@ func (t ReadLineTerminal) WriteError(s string) error {
 func (t ReadLineTerminal) SetPrompt(ctx context.Context) {
 	str, err := t.prompt.RenderPrompt(ctx)
 	if err != nil {
-		LogError(err.Error())
+		t.tx.Session.LogError(err.Error())
 	}
 	t.terminal.SetPrompt(str)
 }
@@ -100,7 +101,7 @@ func (t ReadLineTerminal) SetPrompt(ctx context.Context) {
 func (t ReadLineTerminal) SetContinuousPrompt(ctx context.Context) {
 	str, err := t.prompt.RenderContinuousPrompt(ctx)
 	if err != nil {
-		LogError(err.Error())
+		t.tx.Session.LogError(err.Error())
 	}
 	t.terminal.SetPrompt(str)
 }

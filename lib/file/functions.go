@@ -4,28 +4,17 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"strconv"
 	"time"
 )
 
-func GetTimeoutContext(ctx context.Context) (context.Context, context.CancelFunc) {
+func GetTimeoutContext(ctx context.Context, waitTimeOut time.Duration) (context.Context, context.CancelFunc) {
 	if _, ok := ctx.Deadline(); ok {
 		return ctx, func() {
 			// Dummy function
 		}
 	}
 
-	return context.WithTimeout(context.Background(), WaitTimeout)
-}
-
-func UpdateWaitTimeout(waitTimeout float64, retryDelay time.Duration) {
-	d, err := time.ParseDuration(strconv.FormatFloat(waitTimeout, 'f', -1, 64) + "s")
-	if err != nil {
-		d = DefaultWaitTimeout
-	}
-
-	WaitTimeout = d
-	RetryDelay = retryDelay
+	return context.WithTimeout(context.Background(), waitTimeOut)
 }
 
 func LockFilePath(path string) string {

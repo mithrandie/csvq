@@ -32,8 +32,8 @@ type Handler struct {
 	closed bool
 }
 
-func NewHandlerForRead(ctx context.Context, path string) (*Handler, error) {
-	tctx, cancel := GetTimeoutContext(ctx)
+func NewHandlerForRead(ctx context.Context, container *Container, path string, defaultWaitTimeout time.Duration, retryDelay time.Duration) (*Handler, error) {
+	tctx, cancel := GetTimeoutContext(ctx, defaultWaitTimeout)
 	defer cancel()
 
 	h := &Handler{
@@ -41,20 +41,23 @@ func NewHandlerForRead(ctx context.Context, path string) (*Handler, error) {
 		openType: ForRead,
 	}
 
-	if err := h.PrepareToRead(tctx); err != nil {
+	if err := h.PrepareToRead(tctx, retryDelay); err != nil {
 		return h, err
 	}
 
-	fp, err := file.OpenToReadContext(tctx, RetryDelay, h.path)
+	fp, err := file.OpenToReadContext(tctx, retryDelay, h.path)
 	if err != nil {
 		return h, ParseError(err)
 	}
 	h.fp = fp
 
+	if err := container.Add(h.path, h); err != nil {
+		return h, err
+	}
 	return h, nil
 }
 
-func NewHandlerForCreate(path string) (*Handler, error) {
+func NewHandlerForCreate(container *Container, path string) (*Handler, error) {
 	h := &Handler{
 		path:     path,
 		openType: ForCreate,
@@ -74,14 +77,14 @@ func NewHandlerForCreate(path string) (*Handler, error) {
 	}
 	h.fp = fp
 
-	if err := addToContainer(h.path, h); err != nil {
+	if err := container.Add(h.path, h); err != nil {
 		return h, err
 	}
 	return h, nil
 }
 
-func NewHandlerForUpdate(ctx context.Context, path string) (*Handler, error) {
-	tctx, cancel := GetTimeoutContext(ctx)
+func NewHandlerForUpdate(ctx context.Context, container *Container, path string, defaultWaitTimeout time.Duration, retryDelay time.Duration) (*Handler, error) {
+	tctx, cancel := GetTimeoutContext(ctx, defaultWaitTimeout)
 	defer cancel()
 
 	h := &Handler{
@@ -93,7 +96,7 @@ func NewHandlerForUpdate(ctx context.Context, path string) (*Handler, error) {
 		return h, NewIOError(fmt.Sprintf("file %s does not exist", h.path))
 	}
 
-	if err := h.CreateLockFileContext(tctx); err != nil {
+	if err := h.CreateLockFileContext(tctx, retryDelay); err != nil {
 		return h, err
 	}
 
@@ -101,7 +104,7 @@ func NewHandlerForUpdate(ctx context.Context, path string) (*Handler, error) {
 	fp, err := file.OpenToUpdate(path)
 	if err != nil {
 		err = ParseError(err)
-		if e := h.Close(); e != nil {
+		if e := h.close(); e != nil {
 			err = NewCompositeError(err, e)
 		}
 		return h, err
@@ -112,7 +115,7 @@ func NewHandlerForUpdate(ctx context.Context, path string) (*Handler, error) {
 		return h, err
 	}
 
-	if err := addToContainer(h.path, h); err != nil {
+	if err := container.Add(h.path, h); err != nil {
 		return h, err
 	}
 	return h, nil
@@ -133,7 +136,7 @@ func (h *Handler) FileForUpdate() *os.File {
 	return h.fp
 }
 
-func (h *Handler) Close() error {
+func (h *Handler) close() error {
 	if h.closed {
 		return nil
 	}
@@ -178,11 +181,10 @@ func (h *Handler) Close() error {
 	}
 
 	h.closed = true
-	removeFromContainer(h.path)
 	return nil
 }
 
-func (h *Handler) Commit() error {
+func (h *Handler) commit() error {
 	if h.closed {
 		return nil
 	}
@@ -240,11 +242,10 @@ func (h *Handler) Commit() error {
 	}
 
 	h.closed = true
-	removeFromContainer(h.path)
 	return nil
 }
 
-func (h *Handler) CloseWithErrors() error {
+func (h *Handler) closeWithErrors() error {
 	if h.closed {
 		return nil
 	}
@@ -299,7 +300,7 @@ func (h *Handler) CloseWithErrors() error {
 	return nil
 }
 
-func (h *Handler) CreateLockFileContext(ctx context.Context) error {
+func (h *Handler) CreateLockFileContext(ctx context.Context, retryDelay time.Duration) error {
 	if ctx.Err() != nil {
 		return NewContextIsDone(ctx.Err().Error())
 	}
@@ -312,7 +313,7 @@ func (h *Handler) CreateLockFileContext(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			return NewTimeoutError(h.path)
-		case <-time.After(RetryDelay):
+		case <-time.After(retryDelay):
 			// try again
 		}
 	}
@@ -356,7 +357,7 @@ func (h *Handler) TryCreateTempFile() error {
 	return nil
 }
 
-func (h *Handler) PrepareToRead(ctx context.Context) error {
+func (h *Handler) PrepareToRead(ctx context.Context, retryDelay time.Duration) error {
 	if ctx.Err() != nil {
 		return NewContextIsDone(ctx.Err().Error())
 	}
@@ -375,7 +376,7 @@ func (h *Handler) PrepareToRead(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			return NewTimeoutError(h.path)
-		case <-time.After(RetryDelay):
+		case <-time.After(retryDelay):
 			// try again
 		}
 	}

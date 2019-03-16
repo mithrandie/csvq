@@ -141,7 +141,7 @@ func (m UserDefinedFunctionMap) parseParameters(parameters []parser.VariableAssi
 func (m UserDefinedFunctionMap) CheckDuplicate(name parser.Identifier) error {
 	uname := strings.ToUpper(name.Literal)
 
-	if _, ok := Functions[uname]; ok || uname == "NOW" || uname == "JSON_OBJECT" {
+	if _, ok := Functions[uname]; ok || uname == "CALL" || uname == "NOW" || uname == "JSON_OBJECT" {
 		return NewBuiltInFunctionDeclaredError(name)
 	}
 	if _, ok := AggregateFunctions[uname]; ok {
@@ -198,17 +198,17 @@ type UserDefinedFunction struct {
 	Cursor      parser.Identifier // For Aggregate Functions
 }
 
-func (fn *UserDefinedFunction) Execute(ctx context.Context, args []value.Primary, filter *Filter) (value.Primary, error) {
+func (fn *UserDefinedFunction) Execute(ctx context.Context, filter *Filter, args []value.Primary) (value.Primary, error) {
 	childScope := filter.CreateChildScope()
-	return fn.execute(ctx, args, childScope)
+	return fn.execute(ctx, childScope, args)
 }
 
-func (fn *UserDefinedFunction) ExecuteAggregate(ctx context.Context, values []value.Primary, args []value.Primary, filter *Filter) (value.Primary, error) {
+func (fn *UserDefinedFunction) ExecuteAggregate(ctx context.Context, filter *Filter, values []value.Primary, args []value.Primary) (value.Primary, error) {
 	childScope := filter.CreateChildScope()
-	if err := childScope.Cursors.AddPseudoCursor(fn.Cursor, values); err != nil {
+	if err := childScope.Cursors.AddPseudoCursor(filter.Tx, fn.Cursor, values); err != nil {
 		return nil, err
 	}
-	return fn.execute(ctx, args, childScope)
+	return fn.execute(ctx, childScope, args)
 }
 
 func (fn *UserDefinedFunction) CheckArgsLen(expr parser.QueryExpression, name string, argsLen int) error {
@@ -232,7 +232,7 @@ func (fn *UserDefinedFunction) CheckArgsLen(expr parser.QueryExpression, name st
 	return nil
 }
 
-func (fn *UserDefinedFunction) execute(ctx context.Context, args []value.Primary, filter *Filter) (value.Primary, error) {
+func (fn *UserDefinedFunction) execute(ctx context.Context, filter *Filter, args []value.Primary) (value.Primary, error) {
 	if err := fn.CheckArgsLen(fn.Name, fn.Name.Literal, len(args)); err != nil {
 		return nil, err
 	}
@@ -254,10 +254,8 @@ func (fn *UserDefinedFunction) execute(ctx context.Context, args []value.Primary
 		}
 	}
 
-	proc := NewProcedure()
-	proc.Filter = filter
-
-	if _, err := proc.Execute(ctx, fn.Statements); err != nil {
+	proc := NewProcessorWithFilter(filter.Tx, filter)
+	if _, err := proc.execute(ctx, fn.Statements); err != nil {
 		return nil, err
 	}
 

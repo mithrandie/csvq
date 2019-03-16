@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/mithrandie/csvq/lib/file"
+
 	"github.com/mithrandie/go-text/color"
 )
 
@@ -30,49 +32,52 @@ const (
 )
 
 var (
-	palette    *color.Palette
-	getPalette sync.Once
+	palette     *color.Palette
+	loadPalette sync.Once
 )
 
-func GetPalette() (*color.Palette, error) {
-	return GetPaletteContext(context.Background())
+func GetPalette() *color.Palette {
+	if palette == nil {
+		env, err := NewEnvironment(context.Background(), file.DefaultWaitTimeout, file.DefaultRetryDelay)
+		if err != nil {
+			println(err.Error())
+		}
+		if err := LoadPalette(env); err != nil {
+			println(err.Error())
+		}
+	}
+	return palette
 }
 
-func GetPaletteContext(ctx context.Context) (*color.Palette, error) {
-	var err error
-
-	getPalette.Do(func() {
-		var env *Environment
-		env, err = GetEnvironmentContext(ctx)
+func LoadPalette(env *Environment) (err error) {
+	loadPalette.Do(func() {
+		p, err := color.GeneratePalette(env.Palette)
 		if err != nil {
+			err = errors.New(fmt.Sprintf("palette configuration error: %s", err.Error()))
 			return
 		}
 
-		palette, err = color.GeneratePalette(env.Palette)
-		if err != nil {
-			err = errors.New(fmt.Sprintf("palette configuration error: %s", err.Error()))
-		}
+		palette = p
 	})
-
-	return palette, err
+	return
 }
 
 func Error(s string) string {
-	if p, err := GetPalette(); err == nil && p != nil {
+	if p := GetPalette(); p != nil {
 		return p.Render(ErrorEffect, s)
 	}
 	return s
 }
 
 func Warn(s string) string {
-	if p, err := GetPalette(); err == nil && p != nil {
+	if p := GetPalette(); p != nil {
 		return p.Render(WarnEffect, s)
 	}
 	return s
 }
 
 func Notice(s string) string {
-	if p, err := GetPalette(); err == nil && p != nil {
+	if p := GetPalette(); p != nil {
 		return p.Render(NoticeEffect, s)
 	}
 	return s

@@ -126,11 +126,11 @@ func stringPattern(pattern []rune, position int) (int, int, string, int) {
 	return anyRunesMinLen, anyRunesMaxLen, string(search), returnPostion
 }
 
-func InRowValueList(rowValue value.RowValue, list []value.RowValue, matchType int, operator string) (ternary.Value, error) {
+func InRowValueList(rowValue value.RowValue, list []value.RowValue, matchType int, operator string, datetimeFormats []string) (ternary.Value, error) {
 	results := make([]ternary.Value, len(list))
 
 	for i, v := range list {
-		t, err := value.CompareRowValues(rowValue, v, operator)
+		t, err := value.CompareRowValues(rowValue, v, operator, datetimeFormats)
 		if err != nil {
 			return ternary.FALSE, NewRowValueLengthInListError(i)
 		}
@@ -156,10 +156,10 @@ func InRowValueList(rowValue value.RowValue, list []value.RowValue, matchType in
 	}
 }
 
-func Any(rowValue value.RowValue, list []value.RowValue, operator string) (ternary.Value, error) {
-	return InRowValueList(rowValue, list, parser.ANY, operator)
+func Any(rowValue value.RowValue, list []value.RowValue, operator string, datetimeFormats []string) (ternary.Value, error) {
+	return InRowValueList(rowValue, list, parser.ANY, operator, datetimeFormats)
 }
 
-func All(rowValue value.RowValue, list []value.RowValue, operator string) (ternary.Value, error) {
-	return InRowValueList(rowValue, list, parser.ALL, operator)
+func All(rowValue value.RowValue, list []value.RowValue, operator string, datetimeFormats []string) (ternary.Value, error) {
+	return InRowValueList(rowValue, list, parser.ALL, operator, datetimeFormats)
 }

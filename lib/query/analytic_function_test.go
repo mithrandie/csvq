@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 )
@@ -54,16 +53,17 @@ var analyzeTests = []struct {
 					value.NewInteger(2),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 			sortValuesInEachRecord: []SortValues{
-				{NewSortValue(value.NewInteger(1))},
-				{NewSortValue(value.NewInteger(1))},
-				{NewSortValue(value.NewInteger(1))},
-				{NewSortValue(value.NewInteger(2))},
-				{NewSortValue(value.NewInteger(2))},
-				{NewSortValue(value.NewInteger(3))},
-				{NewSortValue(value.NewInteger(2))},
+				{NewSortValue(value.NewInteger(1), TestTx.Flags)},
+				{NewSortValue(value.NewInteger(1), TestTx.Flags)},
+				{NewSortValue(value.NewInteger(1), TestTx.Flags)},
+				{NewSortValue(value.NewInteger(2), TestTx.Flags)},
+				{NewSortValue(value.NewInteger(2), TestTx.Flags)},
+				{NewSortValue(value.NewInteger(3), TestTx.Flags)},
+				{NewSortValue(value.NewInteger(2), TestTx.Flags)},
 			},
+			Tx: TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "rank",
@@ -122,25 +122,26 @@ var analyzeTests = []struct {
 					value.NewInteger(2),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 			sortValuesInEachCell: [][]*SortValue{
-				{NewSortValue(value.NewString("a")), nil},
-				{NewSortValue(value.NewString("b")), nil},
-				{NewSortValue(value.NewString("b")), nil},
-				{NewSortValue(value.NewString("b")), nil},
-				{NewSortValue(value.NewString("b")), nil},
-				{NewSortValue(value.NewString("b")), nil},
-				{NewSortValue(value.NewString("a")), nil},
+				{NewSortValue(value.NewString("a"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("a"), TestTx.Flags), nil},
 			},
 			sortValuesInEachRecord: []SortValues{
-				{NewSortValue(value.NewInteger(1))},
-				{NewSortValue(value.NewInteger(1))},
-				{NewSortValue(value.NewInteger(1))},
-				{NewSortValue(value.NewInteger(2))},
-				{NewSortValue(value.NewInteger(2))},
-				{NewSortValue(value.NewInteger(3))},
-				{NewSortValue(value.NewInteger(2))},
+				{NewSortValue(value.NewInteger(1), TestTx.Flags)},
+				{NewSortValue(value.NewInteger(1), TestTx.Flags)},
+				{NewSortValue(value.NewInteger(1), TestTx.Flags)},
+				{NewSortValue(value.NewInteger(2), TestTx.Flags)},
+				{NewSortValue(value.NewInteger(2), TestTx.Flags)},
+				{NewSortValue(value.NewInteger(3), TestTx.Flags)},
+				{NewSortValue(value.NewInteger(2), TestTx.Flags)},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -149,8 +150,9 @@ var analyzeTests = []struct {
 		View: &View{
 			Header:                 NewHeader("table1", []string{"column1", "column2"}),
 			RecordSet:              []Record{},
-			Filter:                 NewEmptyFilter(),
+			Filter:                 NewEmptyFilter(TestTx),
 			sortValuesInEachRecord: []SortValues{},
+			Tx:                     TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "rank",
@@ -173,9 +175,10 @@ var analyzeTests = []struct {
 		Result: &View{
 			Header:                 NewHeader("table1", []string{"column1", "column2"}),
 			RecordSet:              []Record{},
-			Filter:                 NewEmptyFilter(),
+			Filter:                 NewEmptyFilter(TestTx),
 			sortValuesInEachCell:   [][]*SortValue{},
 			sortValuesInEachRecord: []SortValues{},
+			Tx:                     TestTx,
 		},
 	},
 	{
@@ -192,7 +195,8 @@ var analyzeTests = []struct {
 					value.NewInteger(2),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "rank",
@@ -230,7 +234,8 @@ var analyzeTests = []struct {
 					value.NewInteger(2),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "first_value",
@@ -266,7 +271,8 @@ var analyzeTests = []struct {
 					value.NewInteger(1),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "count",
@@ -311,14 +317,15 @@ var analyzeTests = []struct {
 					value.NewInteger(3),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 			sortValuesInEachCell: [][]*SortValue{
-				{NewSortValue(value.NewString("a")), nil},
-				{NewSortValue(value.NewString("a")), nil},
-				{NewSortValue(value.NewString("b")), nil},
-				{NewSortValue(value.NewString("b")), nil},
-				{NewSortValue(value.NewString("b")), nil},
+				{NewSortValue(value.NewString("a"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("a"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -347,7 +354,8 @@ var analyzeTests = []struct {
 					value.NewInteger(1),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "sum",
@@ -403,14 +411,15 @@ var analyzeTests = []struct {
 					value.NewInteger(2),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 			sortValuesInEachCell: [][]*SortValue{
-				{NewSortValue(value.NewString("a")), nil},
-				{NewSortValue(value.NewString("a")), nil},
-				{NewSortValue(value.NewString("b")), nil},
-				{NewSortValue(value.NewString("b")), nil},
-				{NewSortValue(value.NewString("b")), nil},
+				{NewSortValue(value.NewString("a"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("a"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -439,14 +448,15 @@ var analyzeTests = []struct {
 					value.NewInteger(1),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 			sortValuesInEachCell: [][]*SortValue{
-				{NewSortValue(value.NewString("a")), nil},
-				{NewSortValue(value.NewString("a")), nil},
-				{NewSortValue(value.NewString("b")), nil},
-				{NewSortValue(value.NewString("b")), nil},
-				{NewSortValue(value.NewString("b")), nil},
+				{NewSortValue(value.NewString("a"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("a"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
 			},
+			Tx: TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name:     "count",
@@ -492,14 +502,15 @@ var analyzeTests = []struct {
 					value.NewInteger(1),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
 			sortValuesInEachCell: [][]*SortValue{
-				{NewSortValue(value.NewString("a")), nil},
-				{NewSortValue(value.NewString("a")), nil},
-				{NewSortValue(value.NewString("b")), nil},
-				{NewSortValue(value.NewString("b")), nil},
-				{NewSortValue(value.NewString("b")), nil},
+				{NewSortValue(value.NewString("a"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("a"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -516,7 +527,8 @@ var analyzeTests = []struct {
 					value.NewInteger(2),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "count",
@@ -544,7 +556,8 @@ var analyzeTests = []struct {
 					value.NewInteger(2),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "count",
@@ -654,6 +667,7 @@ var analyzeTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "useraggfunc",
@@ -700,11 +714,11 @@ var analyzeTests = []struct {
 				}),
 			},
 			sortValuesInEachCell: [][]*SortValue{
-				{NewSortValue(value.NewString("a")), nil},
-				{NewSortValue(value.NewString("a")), nil},
-				{NewSortValue(value.NewString("b")), nil},
-				{NewSortValue(value.NewString("b")), nil},
-				{NewSortValue(value.NewString("b")), nil},
+				{NewSortValue(value.NewString("a"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("a"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
 			},
 			Filter: &Filter{
 				Functions: UserDefinedFunctionScopes{
@@ -773,6 +787,7 @@ var analyzeTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -868,6 +883,7 @@ var analyzeTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "useraggfunc",
@@ -925,11 +941,11 @@ var analyzeTests = []struct {
 				}),
 			},
 			sortValuesInEachCell: [][]*SortValue{
-				{NewSortValue(value.NewString("a")), nil},
-				{NewSortValue(value.NewString("a")), nil},
-				{NewSortValue(value.NewString("b")), nil},
-				{NewSortValue(value.NewString("b")), nil},
-				{NewSortValue(value.NewString("b")), nil},
+				{NewSortValue(value.NewString("a"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("a"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
+				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
 			},
 			Filter: &Filter{
 				Functions: UserDefinedFunctionScopes{
@@ -998,6 +1014,7 @@ var analyzeTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 	},
 	{
@@ -1033,6 +1050,7 @@ var analyzeTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "useraggfunc",
@@ -1091,6 +1109,7 @@ var analyzeTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "useraggfunc",
@@ -1142,6 +1161,7 @@ var analyzeTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "useraggfunc",
@@ -1192,6 +1212,7 @@ var analyzeTests = []struct {
 					},
 				},
 			},
+			Tx: TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "useraggfunc",
@@ -1223,7 +1244,8 @@ var analyzeTests = []struct {
 					value.NewInteger(2),
 				}),
 			},
-			Filter: NewEmptyFilter(),
+			Filter: NewEmptyFilter(TestTx),
+			Tx:     TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "notexist",
@@ -1233,14 +1255,15 @@ var analyzeTests = []struct {
 }
 
 func TestAnalyze(t *testing.T) {
-	flag := cmd.GetFlags()
+	defer initFlag(TestTx.Flags)
 
 	for _, v := range analyzeTests {
 		if 0 < v.CPU {
-			flag.CPU = v.CPU
+			TestTx.Flags.CPU = v.CPU
 		} else {
-			v.CPU = 1
+			TestTx.Flags.CPU = 1
 		}
+
 		err := Analyze(context.Background(), v.View, v.Function, v.PartitionIndices)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -1254,6 +1277,7 @@ func TestAnalyze(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
+
 		if !reflect.DeepEqual(v.View, v.Result) {
 			t.Errorf("%s: result = %v, want %v", v.Name, v.View, v.Result)
 		}
@@ -1346,6 +1370,7 @@ var analyticFunctionTestFilter = &Filter{
 	TempViews: TemporaryViewScopes{{}},
 	Cursors:   CursorScopes{{}},
 	Functions: UserDefinedFunctionScopes{{}},
+	Tx:        TestTx,
 }
 
 func testAnalyticFunctionExecute(t *testing.T, fn AnalyticFunction, tests []analyticFunctionExecuteTests) {
@@ -1360,7 +1385,7 @@ func testAnalyticFunctionExecute(t *testing.T, fn AnalyticFunction, tests []anal
 			analyticFunctionTestFilter.Records[0].View.sortValuesInEachRecord = nil
 		}
 
-		result, err := fn.Execute(context.Background(), v.Items, v.Function, analyticFunctionTestFilter)
+		result, err := fn.Execute(context.Background(), analyticFunctionTestFilter, v.Items, v.Function)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1446,11 +1471,11 @@ var rankExecuteTests = []analyticFunctionExecuteTests{
 		Name:  "Rank Execute",
 		Items: Partition{2, 4, 1, 3, 5},
 		SortValues: map[int]SortValues{
-			2: {NewSortValue(value.NewString("1"))},
-			4: {NewSortValue(value.NewString("1"))},
-			1: {NewSortValue(value.NewString("2"))},
-			3: {NewSortValue(value.NewString("2"))},
-			5: {NewSortValue(value.NewString("3"))},
+			2: {NewSortValue(value.NewString("1"), TestTx.Flags)},
+			4: {NewSortValue(value.NewString("1"), TestTx.Flags)},
+			1: {NewSortValue(value.NewString("2"), TestTx.Flags)},
+			3: {NewSortValue(value.NewString("2"), TestTx.Flags)},
+			5: {NewSortValue(value.NewString("3"), TestTx.Flags)},
 		},
 		Function: parser.AnalyticFunction{
 			Name: "rank",
@@ -1491,11 +1516,11 @@ var denseRankExecuteTests = []analyticFunctionExecuteTests{
 		Name:  "DenseRank Execute",
 		Items: Partition{2, 4, 1, 3, 5},
 		SortValues: map[int]SortValues{
-			2: {NewSortValue(value.NewString("1"))},
-			4: {NewSortValue(value.NewString("1"))},
-			1: {NewSortValue(value.NewString("2"))},
-			3: {NewSortValue(value.NewString("2"))},
-			5: {NewSortValue(value.NewString("3"))},
+			2: {NewSortValue(value.NewString("1"), TestTx.Flags)},
+			4: {NewSortValue(value.NewString("1"), TestTx.Flags)},
+			1: {NewSortValue(value.NewString("2"), TestTx.Flags)},
+			3: {NewSortValue(value.NewString("2"), TestTx.Flags)},
+			5: {NewSortValue(value.NewString("3"), TestTx.Flags)},
 		},
 		Function: parser.AnalyticFunction{
 			Name: "dense_rank",
@@ -1536,10 +1561,10 @@ var cumeDistExecuteTests = []analyticFunctionExecuteTests{
 		Name:  "CumeDist Execute",
 		Items: Partition{2, 4, 1, 3},
 		SortValues: map[int]SortValues{
-			2: {NewSortValue(value.NewString("1"))},
-			4: {NewSortValue(value.NewString("2"))},
-			1: {NewSortValue(value.NewString("2"))},
-			3: {NewSortValue(value.NewString("3"))},
+			2: {NewSortValue(value.NewString("1"), TestTx.Flags)},
+			4: {NewSortValue(value.NewString("2"), TestTx.Flags)},
+			1: {NewSortValue(value.NewString("2"), TestTx.Flags)},
+			3: {NewSortValue(value.NewString("3"), TestTx.Flags)},
 		},
 		Function: parser.AnalyticFunction{
 			Name: "cume_dist",
@@ -1579,11 +1604,11 @@ var percentRankExecuteTests = []analyticFunctionExecuteTests{
 		Name:  "PercentRank Execute",
 		Items: Partition{2, 4, 1, 3, 5},
 		SortValues: map[int]SortValues{
-			2: {NewSortValue(value.NewString("1"))},
-			4: {NewSortValue(value.NewString("2"))},
-			1: {NewSortValue(value.NewString("2"))},
-			3: {NewSortValue(value.NewString("3"))},
-			5: {NewSortValue(value.NewString("4"))},
+			2: {NewSortValue(value.NewString("1"), TestTx.Flags)},
+			4: {NewSortValue(value.NewString("2"), TestTx.Flags)},
+			1: {NewSortValue(value.NewString("2"), TestTx.Flags)},
+			3: {NewSortValue(value.NewString("3"), TestTx.Flags)},
+			5: {NewSortValue(value.NewString("4"), TestTx.Flags)},
 		},
 		Function: parser.AnalyticFunction{
 			Name: "percent_rank",
