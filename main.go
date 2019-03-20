@@ -255,7 +255,7 @@ func main() {
 
 		defaultWaitTimeout := file.DefaultWaitTimeout
 		if c.IsSet("wait-timeout") {
-			if d, err := time.ParseDuration(strconv.FormatFloat(c.GlobalFloat64("wait-timeout"), 'f', -1, 64) + "s"); err != nil {
+			if d, err := time.ParseDuration(strconv.FormatFloat(c.GlobalFloat64("wait-timeout"), 'f', -1, 64) + "s"); err == nil {
 				defaultWaitTimeout = d
 			}
 		}
