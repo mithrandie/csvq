@@ -2,8 +2,6 @@ package query
 
 import (
 	"testing"
-
-	"github.com/mithrandie/csvq/lib/cmd"
 )
 
 var goroutineManagerAssignRoutineNumberTests = []struct {
@@ -59,17 +57,13 @@ var goroutineManagerAssignRoutineNumberTests = []struct {
 }
 
 func TestGoroutineManager_AssignRoutineNumber(t *testing.T) {
-	flags := cmd.GetFlags()
 	gm := GetGoroutineManager()
 
-	oldCPU := flags.CPU
-
 	for _, v := range goroutineManagerAssignRoutineNumberTests {
-		flags.CPU = v.PresetCPU
 		gm.Count = v.PresetCount
 		gm.MinimumRequiredPerCore = v.DefaultMinimumRequiredPerCore
 
-		result := gm.AssignRoutineNumber(v.RecordLen, v.MinimumRequired)
+		result := gm.AssignRoutineNumber(v.RecordLen, v.MinimumRequired, v.PresetCPU)
 		if result != v.Expect {
 			t.Errorf("%s: result = %d, want %d", v.Name, result, v.Expect)
 		}
@@ -78,7 +72,6 @@ func TestGoroutineManager_AssignRoutineNumber(t *testing.T) {
 		}
 	}
 
-	flags.CPU = oldCPU
 	gm.Count = 0
 	gm.MinimumRequiredPerCore = MinimumRequiredPerCPUCore
 }

@@ -31,7 +31,7 @@ func (cr ComparisonResult) String() string {
 	return comparisonResultLiterals[cr]
 }
 
-func CompareCombinedly(p1 Primary, p2 Primary) ComparisonResult {
+func CompareCombinedly(p1 Primary, p2 Primary, datetimeFormats []string) ComparisonResult {
 	if IsNull(p1) || IsNull(p2) {
 		return IsIncommensurable
 	}
@@ -64,8 +64,8 @@ func CompareCombinedly(p1 Primary, p2 Primary) ComparisonResult {
 		}
 	}
 
-	if d1 := ToDatetime(p1); !IsNull(d1) {
-		if d2 := ToDatetime(p2); !IsNull(d2) {
+	if d1 := ToDatetime(p1, datetimeFormats); !IsNull(d1) {
+		if d2 := ToDatetime(p2, datetimeFormats); !IsNull(d2) {
 			v1 := d1.(Datetime).Raw()
 			v2 := d2.(Datetime).Raw()
 			if v1.Equal(v2) {
@@ -155,68 +155,68 @@ func Identical(p1 Primary, p2 Primary) ternary.Value {
 	return ternary.FALSE
 }
 
-func Equal(p1 Primary, p2 Primary) ternary.Value {
-	if r := CompareCombinedly(p1, p2); r != IsIncommensurable {
+func Equal(p1 Primary, p2 Primary, datetimeFormats []string) ternary.Value {
+	if r := CompareCombinedly(p1, p2, datetimeFormats); r != IsIncommensurable {
 		return ternary.ConvertFromBool(r == IsEqual || r == IsBoolEqual)
 	}
 	return ternary.UNKNOWN
 }
 
-func NotEqual(p1 Primary, p2 Primary) ternary.Value {
-	if r := CompareCombinedly(p1, p2); r != IsIncommensurable {
+func NotEqual(p1 Primary, p2 Primary, datetimeFormats []string) ternary.Value {
+	if r := CompareCombinedly(p1, p2, datetimeFormats); r != IsIncommensurable {
 		return ternary.ConvertFromBool(r != IsEqual && r != IsBoolEqual)
 	}
 	return ternary.UNKNOWN
 }
 
-func Less(p1 Primary, p2 Primary) ternary.Value {
-	if r := CompareCombinedly(p1, p2); r != IsIncommensurable && r != IsNotEqual && r != IsBoolEqual {
+func Less(p1 Primary, p2 Primary, datetimeFormats []string) ternary.Value {
+	if r := CompareCombinedly(p1, p2, datetimeFormats); r != IsIncommensurable && r != IsNotEqual && r != IsBoolEqual {
 		return ternary.ConvertFromBool(r == IsLess)
 	}
 	return ternary.UNKNOWN
 }
 
-func Greater(p1 Primary, p2 Primary) ternary.Value {
-	if r := CompareCombinedly(p1, p2); r != IsIncommensurable && r != IsNotEqual && r != IsBoolEqual {
+func Greater(p1 Primary, p2 Primary, datetimeFormats []string) ternary.Value {
+	if r := CompareCombinedly(p1, p2, datetimeFormats); r != IsIncommensurable && r != IsNotEqual && r != IsBoolEqual {
 		return ternary.ConvertFromBool(r == IsGreater)
 	}
 	return ternary.UNKNOWN
 }
 
-func LessOrEqual(p1 Primary, p2 Primary) ternary.Value {
-	if r := CompareCombinedly(p1, p2); r != IsIncommensurable && r != IsNotEqual && r != IsBoolEqual {
+func LessOrEqual(p1 Primary, p2 Primary, datetimeFormats []string) ternary.Value {
+	if r := CompareCombinedly(p1, p2, datetimeFormats); r != IsIncommensurable && r != IsNotEqual && r != IsBoolEqual {
 		return ternary.ConvertFromBool(r != IsGreater)
 	}
 	return ternary.UNKNOWN
 }
 
-func GreaterOrEqual(p1 Primary, p2 Primary) ternary.Value {
-	if r := CompareCombinedly(p1, p2); r != IsIncommensurable && r != IsNotEqual && r != IsBoolEqual {
+func GreaterOrEqual(p1 Primary, p2 Primary, datetimeFormats []string) ternary.Value {
+	if r := CompareCombinedly(p1, p2, datetimeFormats); r != IsIncommensurable && r != IsNotEqual && r != IsBoolEqual {
 		return ternary.ConvertFromBool(r != IsLess)
 	}
 	return ternary.UNKNOWN
 }
 
-func Compare(p1 Primary, p2 Primary, operator string) ternary.Value {
+func Compare(p1 Primary, p2 Primary, operator string, datetimeFormats []string) ternary.Value {
 	switch operator {
 	case "=":
-		return Equal(p1, p2)
+		return Equal(p1, p2, datetimeFormats)
 	case "==":
 		return Identical(p1, p2)
 	case ">":
-		return Greater(p1, p2)
+		return Greater(p1, p2, datetimeFormats)
 	case "<":
-		return Less(p1, p2)
+		return Less(p1, p2, datetimeFormats)
 	case ">=":
-		return GreaterOrEqual(p1, p2)
+		return GreaterOrEqual(p1, p2, datetimeFormats)
 	case "<=":
-		return LessOrEqual(p1, p2)
+		return LessOrEqual(p1, p2, datetimeFormats)
 	default: //case "<>", "!=":
-		return NotEqual(p1, p2)
+		return NotEqual(p1, p2, datetimeFormats)
 	}
 }
 
-func CompareRowValues(rowValue1 RowValue, rowValue2 RowValue, operator string) (ternary.Value, error) {
+func CompareRowValues(rowValue1 RowValue, rowValue2 RowValue, operator string, datetimeFormats []string) (ternary.Value, error) {
 	if rowValue1 == nil || rowValue2 == nil {
 		return ternary.UNKNOWN, nil
 	}
@@ -238,7 +238,7 @@ func CompareRowValues(rowValue1 RowValue, rowValue2 RowValue, operator string) (
 			continue
 		}
 
-		r := CompareCombinedly(rowValue1[i], rowValue2[i])
+		r := CompareCombinedly(rowValue1[i], rowValue2[i], datetimeFormats)
 
 		if r == IsIncommensurable {
 			switch operator {
@@ -296,9 +296,9 @@ func CompareRowValues(rowValue1 RowValue, rowValue2 RowValue, operator string) (
 	return ternary.TRUE, nil
 }
 
-func Equivalent(p1 Primary, p2 Primary) ternary.Value {
+func Equivalent(p1 Primary, p2 Primary, datetimeFormats []string) ternary.Value {
 	if IsNull(p1) && IsNull(p2) {
 		return ternary.TRUE
 	}
-	return Equal(p1, p2)
+	return Equal(p1, p2, datetimeFormats)
 }

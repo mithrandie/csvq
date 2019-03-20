@@ -1,33 +1,35 @@
 package action
 
 import (
+	"context"
 	"errors"
 	"strings"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
 )
 
-func Calc(expr string) error {
-	cmd.GetFlags().SetNoHeader(true)
+func Calc(proc *query.Processor, expr string) error {
+	proc.Tx.Flags.SetNoHeader(true)
 
 	defer func() {
-		if err := query.ReleaseResourcesWithErrors(); err != nil {
-			query.LogError(err.Error())
+		if err := proc.ReleaseResourcesWithErrors(); err != nil {
+			proc.LogError(err.Error())
 		}
 	}()
 
+	ctx := context.Background()
+
 	q := "select " + expr + " from stdin"
 
-	program, err := parser.Parse(q, "")
+	program, err := parser.Parse(q, "", proc.Tx.Flags.DatetimeFormat)
 	if err != nil {
 		return errors.New("syntax error")
 	}
 	selectEntity, _ := program[0].(parser.SelectQuery).SelectEntity.(parser.SelectEntity)
 
-	view := query.NewView()
-	err = view.Load(selectEntity.FromClause.(parser.FromClause), query.NewEmptyFilter().CreateNode())
+	view := query.NewView(proc.Tx)
+	err = view.Load(ctx, query.NewEmptyFilter(proc.Tx).CreateNode(), selectEntity.FromClause.(parser.FromClause))
 	if err != nil {
 		if appErr, ok := err.(query.AppError); ok {
 			return errors.New(appErr.ErrorMessage())
@@ -37,17 +39,16 @@ func Calc(expr string) error {
 
 	clause := selectEntity.SelectClause.(parser.SelectClause)
 
-	filter := query.NewFilterForRecord(view, 0, query.NewEmptyFilter())
+	filter := query.NewFilterForRecord(query.NewEmptyFilter(proc.Tx), view, 0)
 	values := make([]string, len(clause.Fields))
 	for i, v := range clause.Fields {
 		field := v.(parser.Field)
-		p, err := filter.Evaluate(field.Object)
+		p, err := filter.Evaluate(ctx, field.Object)
 		if err != nil {
 			return errors.New("syntax error")
 		}
 		values[i], _, _ = query.ConvertFieldContents(p, true)
 	}
 
-	query.WriteToStdout(strings.Join(values, string(cmd.GetFlags().WriteDelimiter)))
-	return nil
+	return proc.Tx.Session.WriteToStdout(strings.Join(values, string(proc.Tx.Flags.WriteDelimiter)))
 }

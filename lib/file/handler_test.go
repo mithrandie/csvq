@@ -1,6 +1,7 @@
 package file
 
 import (
+	"context"
 	"testing"
 )
 
@@ -9,127 +10,130 @@ func TestHandler(t *testing.T) {
 	fileForUpdate := GetTestFilePath("update.txt")
 	fileForCreate := GetTestFilePath("create.txt")
 
-	rh, err := NewHandlerForRead(fileForCreate)
+	ctx := context.Background()
+	container := NewContainer()
+
+	rh, err := NewHandlerForRead(ctx, container, fileForCreate, waitTimeoutForTests, retryDelayForTests)
 	if err == nil {
-		rh.Close()
+		_ = container.Close(rh)
 		t.Fatalf("no error, want IOError")
 	}
 	if _, ok := err.(*IOError); !ok {
 		t.Fatalf("error = %#v, want IOError", err)
 	}
 
-	rh, err = NewHandlerForRead(fileForRead)
+	rh, err = NewHandlerForRead(ctx, container, fileForRead, waitTimeoutForTests, retryDelayForTests)
 	if err != nil {
 		t.Fatalf("error = %#v, expect no error", err)
 	}
-	rh.Close()
+	_ = container.Close(rh)
 
-	uh, err := NewHandlerForUpdate(fileForCreate)
+	uh, err := NewHandlerForUpdate(ctx, container, fileForCreate, waitTimeoutForTests, retryDelayForTests)
 	if err == nil {
-		uh.Close()
+		_ = container.Close(uh)
 		t.Fatalf("no error, want IOError")
 	}
 	if _, ok := err.(*IOError); !ok {
 		t.Fatalf("error = %#v, want IOError", err)
 	}
 
-	ch, err := NewHandlerForCreate(fileForRead)
+	ch, err := NewHandlerForCreate(container, fileForRead)
 	if err == nil {
-		ch.Close()
+		_ = container.Close(ch)
 		t.Fatalf("no error, want IOError")
 	}
 	if _, ok := err.(*IOError); !ok {
 		t.Fatalf("error = %#v, want IOError", err)
 	}
 
-	ch, err = NewHandlerForCreate(fileForCreate)
+	ch, err = NewHandlerForCreate(container, fileForCreate)
 	if err != nil {
 		t.Fatalf("error = %#v, expect no error", err)
 	}
 
 	if ch.FileForRead().Name() != fileForCreate {
-		uh.Close()
+		_ = container.Close(uh)
 		t.Fatalf("filename to read = %q, expect %q", ch.FileForRead().Name(), fileForCreate)
 	}
 
 	if ch.FileForUpdate().Name() != fileForCreate {
-		uh.Close()
+		_ = container.Close(uh)
 		t.Fatalf("filename to update = %q, expect %q", ch.FileForUpdate().Name(), fileForCreate)
 	}
 
-	rh, err = NewHandlerForRead(fileForCreate)
+	rh, err = NewHandlerForRead(ctx, container, fileForCreate, waitTimeoutForTests, retryDelayForTests)
 	if err == nil {
-		rh.Close()
-		ch.Close()
+		_ = container.Close(rh)
+		_ = container.Close(ch)
 		t.Fatalf("no error, want TimeoutError")
 	}
 	if _, ok := err.(*TimeoutError); !ok {
-		ch.Close()
+		_ = container.Close(ch)
 		t.Fatalf("error = %#v, want TimeoutError", err)
 	}
 
-	ch2, err := NewHandlerForCreate(fileForCreate)
+	ch2, err := NewHandlerForCreate(container, fileForCreate)
 	if err == nil {
-		ch.Close()
-		ch2.Close()
+		_ = container.Close(ch)
+		_ = container.Close(ch2)
 		t.Fatalf("no error, want TimeoutError")
 	}
 	if _, ok := err.(*IOError); !ok {
-		ch.Close()
+		_ = container.Close(ch)
 		t.Fatalf("error = %#v, want IOError", err)
 	}
 
-	ch.Commit()
+	_ = container.Commit(ch)
 
-	rh, err = NewHandlerForRead(fileForCreate)
+	rh, err = NewHandlerForRead(ctx, container, fileForCreate, waitTimeoutForTests, retryDelayForTests)
 	if err != nil {
 		t.Fatalf("error = %#v, expect no error", err)
 	}
-	rh.Close()
+	_ = container.Close(rh)
 
-	uh, err = NewHandlerForUpdate(fileForUpdate)
+	uh, err = NewHandlerForUpdate(ctx, container, fileForUpdate, waitTimeoutForTests, retryDelayForTests)
 	if err != nil {
-		uh.Close()
+		_ = container.Close(uh)
 		t.Fatalf("error = %#v, expect no error", err)
 	}
 
 	if uh.FileForRead().Name() != fileForUpdate {
-		uh.Close()
+		_ = container.Close(uh)
 		t.Fatalf("filename to read = %q, expect %q", uh.FileForRead().Name(), fileForUpdate)
 	}
 
 	if uh.FileForUpdate().Name() != TempFilePath(fileForUpdate) {
-		uh.Close()
+		_ = container.Close(uh)
 		t.Fatalf("filename to update = %q, expect %q", uh.FileForUpdate().Name(), TempFilePath(fileForUpdate))
 	}
 
-	rh, err = NewHandlerForRead(fileForUpdate)
+	rh, err = NewHandlerForRead(ctx, container, fileForUpdate, waitTimeoutForTests, retryDelayForTests)
 	if err == nil {
-		rh.Close()
-		uh.Close()
+		_ = container.Close(rh)
+		_ = container.Close(uh)
 		t.Fatalf("no error, want TimeoutError")
 	}
 	if _, ok := err.(*TimeoutError); !ok {
-		uh.Close()
+		_ = container.Close(uh)
 		t.Fatalf("error = %#v, want TimeoutError", err)
 	}
 
-	uh2, err := NewHandlerForUpdate(fileForUpdate)
+	uh2, err := NewHandlerForUpdate(ctx, container, fileForUpdate, waitTimeoutForTests, retryDelayForTests)
 	if err == nil {
-		uh2.Close()
-		uh.Close()
+		_ = container.Close(uh2)
+		_ = container.Close(uh)
 		t.Fatalf("no error, want TimeoutError")
 	}
 	if _, ok := err.(*TimeoutError); !ok {
-		uh.Close()
+		_ = container.Close(uh)
 		t.Fatalf("error = %#v, want TimeoutError", err)
 	}
 
-	uh.Commit()
+	_ = container.Commit(uh)
 
-	rh, err = NewHandlerForRead(fileForUpdate)
+	rh, err = NewHandlerForRead(ctx, container, fileForUpdate, waitTimeoutForTests, retryDelayForTests)
 	if err != nil {
 		t.Fatalf("error = %#v, expect no error", err)
 	}
-	rh.Close()
+	_ = container.Close(rh)
 }

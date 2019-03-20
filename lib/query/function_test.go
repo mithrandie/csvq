@@ -1,9 +1,12 @@
 package query
 
 import (
+	"context"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/mithrandie/csvq/lib/cmd"
 
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
@@ -19,9 +22,9 @@ type functionTest struct {
 	Error    string
 }
 
-func testFunction(t *testing.T, f func(parser.Function, []value.Primary) (value.Primary, error), tests []functionTest) {
+func testFunction(t *testing.T, f func(parser.Function, []value.Primary, *cmd.Flags) (value.Primary, error), tests []functionTest) {
 	for _, v := range tests {
-		result, err := f(v.Function, v.Args)
+		result, err := f(v.Function, v.Args, TestTx.Flags)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1047,7 +1050,7 @@ var randTests = []struct {
 
 func TestRand(t *testing.T) {
 	for _, v := range randTests {
-		result, err := Rand(v.Function, v.Args)
+		result, err := Rand(v.Function, v.Args, TestTx.Flags)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -3275,7 +3278,25 @@ var callTests = []functionTest{
 }
 
 func TestCall(t *testing.T) {
-	testFunction(t, Call, callTests)
+	ctx := context.Background()
+	for _, v := range callTests {
+		result, err := Call(ctx, v.Function, v.Args)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if v.Error != "environment-dependent" && err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(result, v.Result) {
+			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
+		}
+	}
 }
 
 var nowTests = []struct {
@@ -3291,7 +3312,7 @@ var nowTests = []struct {
 		Function: parser.Function{
 			Name: "now",
 		},
-		Filter: NewEmptyFilter(),
+		Filter: NewEmptyFilter(TestTx),
 		Result: value.NewDatetime(NowForTest),
 	},
 	{
@@ -3316,14 +3337,15 @@ var nowTests = []struct {
 		Args: []value.Primary{
 			value.NewInteger(1),
 		},
-		Filter: NewEmptyFilter(),
+		Filter: NewEmptyFilter(TestTx),
 		Error:  "[L:- C:-] function now takes no argument",
 	},
 }
 
 func TestNow(t *testing.T) {
+	initFlag(TestTx.Flags)
 	for _, v := range nowTests {
-		result, err := Now(v.Function, v.Args, v.Filter)
+		result, err := Now(v.Filter, v.Function, v.Args)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -3402,7 +3424,7 @@ var jsonObjectTests = []struct {
 				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 			},
 		},
-		Filter: NewEmptyFilter(),
+		Filter: NewEmptyFilter(TestTx),
 		Error:  "[L:- C:-] function json_object cannot be used as a statement",
 	},
 	{
@@ -3430,7 +3452,8 @@ var jsonObjectTests = []struct {
 
 func TestJsonObject(t *testing.T) {
 	for _, v := range jsonObjectTests {
-		result, err := JsonObject(v.Function, v.Filter)
+		v.Filter.Tx = TestTx
+		result, err := JsonObject(context.Background(), v.Filter, v.Function)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

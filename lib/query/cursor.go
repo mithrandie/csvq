@@ -1,14 +1,16 @@
 package query
 
 import (
+	"context"
 	"errors"
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
-	"github.com/mithrandie/ternary"
 	"sort"
+
+	"github.com/mithrandie/ternary"
 )
 
 type CursorScopes []CursorMap
@@ -17,8 +19,8 @@ func (list CursorScopes) Declare(expr parser.CursorDeclaration) error {
 	return list[0].Declare(expr)
 }
 
-func (list CursorScopes) AddPseudoCursor(name parser.Identifier, values []value.Primary) error {
-	return list[0].AddPseudoCursor(name, values)
+func (list CursorScopes) AddPseudoCursor(tx *Transaction, name parser.Identifier, values []value.Primary) error {
+	return list[0].AddPseudoCursor(tx, name, values)
 }
 
 func (list CursorScopes) Dispose(name parser.Identifier) error {
@@ -34,11 +36,11 @@ func (list CursorScopes) Dispose(name parser.Identifier) error {
 	return NewUndeclaredCursorError(name)
 }
 
-func (list CursorScopes) Open(name parser.Identifier, filter *Filter) error {
+func (list CursorScopes) Open(ctx context.Context, filter *Filter, name parser.Identifier) error {
 	var err error
 
 	for _, m := range list {
-		err = m.Open(name, filter)
+		err = m.Open(ctx, filter, name)
 		if err == nil {
 			return nil
 		}
@@ -146,12 +148,12 @@ func (m CursorMap) Declare(expr parser.CursorDeclaration) error {
 	return nil
 }
 
-func (m CursorMap) AddPseudoCursor(name parser.Identifier, values []value.Primary) error {
+func (m CursorMap) AddPseudoCursor(tx *Transaction, name parser.Identifier, values []value.Primary) error {
 	uname := strings.ToUpper(name.Literal)
 	if _, ok := m[uname]; ok {
 		return NewCursorRedeclaredError(name)
 	}
-	m[uname] = NewPseudoCursor(values)
+	m[uname] = NewPseudoCursor(tx, values)
 	return nil
 }
 
@@ -167,9 +169,9 @@ func (m CursorMap) Dispose(name parser.Identifier) error {
 	return NewUndeclaredCursorError(name)
 }
 
-func (m CursorMap) Open(name parser.Identifier, filter *Filter) error {
+func (m CursorMap) Open(ctx context.Context, filter *Filter, name parser.Identifier) error {
 	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
-		return cur.Open(name, filter)
+		return cur.Open(ctx, filter, name)
 	}
 	return NewUndeclaredCursorError(name)
 }
@@ -248,14 +250,14 @@ func NewCursor(name string, query parser.SelectQuery) *Cursor {
 	}
 }
 
-func NewPseudoCursor(values []value.Primary) *Cursor {
+func NewPseudoCursor(tx *Transaction, values []value.Primary) *Cursor {
 	header := NewHeader("", []string{"c1"})
 
 	records := make(RecordSet, len(values))
 	for i, v := range values {
 		records[i] = NewRecord([]value.Primary{v})
 	}
-	view := NewView()
+	view := NewView(tx)
 	view.Header = header
 	view.RecordSet = records
 
@@ -267,7 +269,7 @@ func NewPseudoCursor(values []value.Primary) *Cursor {
 	}
 }
 
-func (c *Cursor) Open(name parser.Identifier, filter *Filter) error {
+func (c *Cursor) Open(ctx context.Context, filter *Filter, name parser.Identifier) error {
 	if c.isPseudo {
 		return NewPseudoCursorError(name)
 	}
@@ -276,7 +278,7 @@ func (c *Cursor) Open(name parser.Identifier, filter *Filter) error {
 		return NewCursorOpenError(name)
 	}
 
-	view, err := Select(c.query, filter)
+	view, err := Select(ctx, filter, c.query)
 	if err != nil {
 		return err
 	}

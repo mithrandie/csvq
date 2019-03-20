@@ -367,9 +367,9 @@ func SetDebugLevel(level int, verbose bool) {
 	yyErrorVerbose = verbose
 }
 
-func Parse(s string, sourceFile string) ([]Statement, error) {
+func Parse(s string, sourceFile string, datetimeFormats []string) ([]Statement, error) {
 	l := new(Lexer)
-	l.Init(s, sourceFile)
+	l.Init(s, sourceFile, datetimeFormats)
 	yyParse(l)
 	return l.program, l.err
 }
@@ -3054,7 +3054,7 @@ yydefault:
 		yyDollar = yyS[yypt-1 : yypt+1]
 		//line parser.y:1145
 		{
-			yyVAL.queryexpr = NewDatetimeValueFromString(yyDollar[1].token.Literal)
+			yyVAL.queryexpr = NewDatetimeValueFromString(yyDollar[1].token.Literal, yylex.(*Lexer).GetDatetimeFormats())
 		}
 	case 197:
 		yyDollar = yyS[yypt-1 : yypt+1]

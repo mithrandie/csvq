@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"strings"
 
+	"github.com/mithrandie/csvq/lib/cmd"
+
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -98,7 +100,7 @@ type SortValue struct {
 	Boolean  bool
 }
 
-func NewSortValue(val value.Primary) *SortValue {
+func NewSortValue(val value.Primary, flags *cmd.Flags) *SortValue {
 	sortValue := &SortValue{}
 
 	if value.IsNull(val) {
@@ -116,7 +118,7 @@ func NewSortValue(val value.Primary) *SortValue {
 		sortValue.Float = f.(value.Float).Raw()
 		sortValue.Datetime = int64(sortValue.Float * 1e9)
 		sortValue.String = s.(value.String).Raw()
-	} else if dt := value.ToDatetime(val); !value.IsNull(dt) {
+	} else if dt := value.ToDatetime(val, flags.DatetimeFormat); !value.IsNull(dt) {
 		t := dt.(value.Datetime).Raw()
 		if t.Nanosecond() > 0 {
 			f := float64(t.Unix()) + float64(t.Nanosecond())/1e9

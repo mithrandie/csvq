@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mithrandie/csvq/lib/cmd"
+
 	"github.com/mithrandie/csvq/lib/value"
 )
 
@@ -27,7 +29,7 @@ func InStrSliceWithCaseInsensitive(s string, list []string) bool {
 	return false
 }
 
-func Distinguish(list []value.Primary) []value.Primary {
+func Distinguish(list []value.Primary, flags *cmd.Flags) []value.Primary {
 	values := make(map[string]int)
 	valueKeys := make([]string, 0, len(list))
 
@@ -35,7 +37,7 @@ func Distinguish(list []value.Primary) []value.Primary {
 
 	for i, v := range list {
 		keyBuf.Reset()
-		SerializeComparisonKeys(keyBuf, []value.Primary{v})
+		SerializeComparisonKeys(keyBuf, []value.Primary{v}, flags)
 		key := keyBuf.String()
 		if _, ok := values[key]; !ok {
 			values[key] = i
@@ -63,23 +65,23 @@ func FormatCount(i int, obj string) string {
 	return s
 }
 
-func SerializeComparisonKeys(buf *bytes.Buffer, values []value.Primary) {
+func SerializeComparisonKeys(buf *bytes.Buffer, values []value.Primary, flags *cmd.Flags) {
 	for i, val := range values {
 		if 0 < i {
 			buf.WriteString(":")
 		}
-		SerializeKey(buf, val)
+		SerializeKey(buf, val, flags)
 	}
 }
 
-func SerializeKey(buf *bytes.Buffer, val value.Primary) {
+func SerializeKey(buf *bytes.Buffer, val value.Primary, flags *cmd.Flags) {
 	if value.IsNull(val) {
 		serializeNull(buf)
 	} else if in := value.ToInteger(val); !value.IsNull(in) {
 		serializeInteger(buf, in.(value.Integer).Raw())
 	} else if f := value.ToFloat(val); !value.IsNull(f) {
 		serializeFlaot(buf, f.(value.Float).Raw())
-	} else if dt := value.ToDatetime(val); !value.IsNull(dt) {
+	} else if dt := value.ToDatetime(val, flags.DatetimeFormat); !value.IsNull(dt) {
 		t := dt.(value.Datetime).Raw()
 		if t.Nanosecond() > 0 {
 			f := float64(t.Unix()) + float64(t.Nanosecond())/1e9

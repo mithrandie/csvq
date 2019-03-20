@@ -1,10 +1,10 @@
 package query
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 )
@@ -300,7 +300,7 @@ func TestCrossJoin(t *testing.T) {
 		},
 	}
 
-	CrossJoin(view, joinView)
+	_ = CrossJoin(context.Background(), NewEmptyFilter(TestTx), view, joinView)
 	if !reflect.DeepEqual(view, expect) {
 		t.Errorf("Cross Join: result = %v, want %v", view, expect)
 	}
@@ -565,19 +565,19 @@ var innerJoinTests = []struct {
 }
 
 func TestInnerJoin(t *testing.T) {
-	flags := cmd.GetFlags()
+	defer initFlag(TestTx.Flags)
 
 	for _, v := range innerJoinTests {
-		flags.CPU = 1
+		TestTx.Flags.CPU = 1
 		if v.CPU != 0 {
-			flags.CPU = v.CPU
+			TestTx.Flags.CPU = v.CPU
 		}
 
 		if v.Filter == nil {
-			v.Filter = NewEmptyFilter()
+			v.Filter = NewEmptyFilter(TestTx)
 		}
 
-		err := InnerJoin(v.View, v.JoinView, v.Condition, v.Filter)
+		err := InnerJoin(context.Background(), v.Filter, v.View, v.JoinView, v.Condition)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -979,10 +979,10 @@ var outerJoinTests = []struct {
 func TestOuterJoin(t *testing.T) {
 	for _, v := range outerJoinTests {
 		if v.Filter == nil {
-			v.Filter = NewEmptyFilter()
+			v.Filter = NewEmptyFilter(TestTx)
 		}
 
-		err := OuterJoin(v.View, v.JoinView, v.Condition, v.Direction, v.Filter)
+		err := OuterJoin(context.Background(), v.Filter, v.View, v.JoinView, v.Condition, v.Direction)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1051,11 +1051,14 @@ func TestCalcMinimumRequired(t *testing.T) {
 }
 
 func BenchmarkCrossJoin(b *testing.B) {
+	ctx := context.Background()
+	filter := NewEmptyFilter(TestTx)
+
 	for i := 0; i < b.N; i++ {
 		view := GenerateBenchView("t1", 100)
 		joinView := GenerateBenchView("t2", 100)
 
-		CrossJoin(view, joinView)
+		_ = CrossJoin(ctx, filter, view, joinView)
 	}
 }
 
@@ -1066,13 +1069,14 @@ func BenchmarkInnerJoin(b *testing.B) {
 		Operator: "=",
 	}
 
-	filter := NewEmptyFilter()
+	ctx := context.Background()
+	filter := NewEmptyFilter(TestTx)
 
 	for i := 0; i < b.N; i++ {
 		view := GenerateBenchView("t1", 100)
 		joinView := GenerateBenchView("t2", 100)
 
-		InnerJoin(view, joinView, condition, filter)
+		_ = InnerJoin(ctx, filter, view, joinView, condition)
 	}
 }
 
@@ -1083,12 +1087,13 @@ func BenchmarkOuterJoin(b *testing.B) {
 		Operator: "=",
 	}
 
-	filter := NewEmptyFilter()
+	ctx := context.Background()
+	filter := NewEmptyFilter(TestTx)
 
 	for i := 0; i < b.N; i++ {
 		view := GenerateBenchView("t1", 100)
 		joinView := GenerateBenchView("t2", 50)
 
-		InnerJoin(view, joinView, condition, filter)
+		_ = InnerJoin(ctx, filter, view, joinView, condition)
 	}
 }

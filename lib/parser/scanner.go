@@ -100,9 +100,11 @@ type Scanner struct {
 	line       int
 	char       int
 	sourceFile string
+
+	datetimeFormats []string
 }
 
-func (s *Scanner) Init(src string, sourceFile string) *Scanner {
+func (s *Scanner) Init(src string, sourceFile string, datetimeFormats []string) *Scanner {
 	s.src = []rune(src)
 	s.srcPos = 0
 	s.literal = new(bytes.Buffer)
@@ -110,7 +112,12 @@ func (s *Scanner) Init(src string, sourceFile string) *Scanner {
 	s.line = 1
 	s.char = 0
 	s.sourceFile = sourceFile
+	datetimeFormats = datetimeFormats
 	return s
+}
+
+func (s *Scanner) GetDatetimeFormats() []string {
+	return s.datetimeFormats
 }
 
 func (s *Scanner) peek() rune {
@@ -247,7 +254,7 @@ func (s *Scanner) Scan() (Token, error) {
 		case '"', '\'':
 			s.scanString(ch)
 			literal = cmd.UnescapeString(s.literal.String())
-			if _, e := value.StrToTime(literal); e == nil {
+			if _, e := value.StrToTime(literal, s.datetimeFormats); e == nil {
 				token = DATETIME
 			} else {
 				token = STRING

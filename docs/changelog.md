@@ -5,6 +5,14 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.9.2
+
+Released on March 20, 2019
+
+- Refactor and modify internal processes for [csvq-driver](https://github.com/mithrandie/csvq-driver).
+  
+  This update does not include any functional changes to the csvq command except for bugs that will be found in the future.
+
 ## Version 1.9.1
 
 Released on March 4, 2019

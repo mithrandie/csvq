@@ -14,7 +14,7 @@ func TestFormatFieldIdentifier(t *testing.T) {
 		t.Errorf("field identifier = %q, want %q for %#v", result, expect, e)
 	}
 
-	e = NewDatetimeValueFromString("2006-01-02 15:04:05 -08:00")
+	e = NewDatetimeValueFromString("2006-01-02 15:04:05 -08:00", nil)
 	expect = "2006-01-02T15:04:05-08:00"
 	result = FormatFieldIdentifier(e)
 	if result != expect {

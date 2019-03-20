@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/md5"
 	"crypto/sha1"
@@ -26,7 +27,7 @@ import (
 	"github.com/mithrandie/ternary"
 )
 
-var Functions = map[string]func(parser.Function, []value.Primary) (value.Primary, error){
+var Functions = map[string]func(parser.Function, []value.Primary, *cmd.Flags) (value.Primary, error){
 	"COALESCE":         Coalesce,
 	"IF":               If,
 	"IFNULL":           Ifnull,
@@ -132,7 +133,6 @@ var Functions = map[string]func(parser.Function, []value.Primary) (value.Primary
 	"BOOLEAN":          Boolean,
 	"TERNARY":          Ternary,
 	"DATETIME":         Datetime,
-	"CALL":             Call,
 }
 
 type Direction string
@@ -150,7 +150,7 @@ const (
 	PaddingWidth     PaddingType = "WIDTH"
 )
 
-func Coalesce(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Coalesce(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	if len(args) < 1 {
 		return nil, NewFunctionArgumentLengthErrorWithCustomArgs(fn, fn.Name, "at least 1 argument")
 	}
@@ -163,7 +163,7 @@ func Coalesce(fn parser.Function, args []value.Primary) (value.Primary, error) {
 	return value.NewNull(), nil
 }
 
-func If(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func If(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	if len(args) != 3 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{3})
 	}
@@ -174,7 +174,7 @@ func If(fn parser.Function, args []value.Primary) (value.Primary, error) {
 	return args[2], nil
 }
 
-func Ifnull(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Ifnull(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	if len(args) != 2 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2})
 	}
@@ -185,12 +185,12 @@ func Ifnull(fn parser.Function, args []value.Primary) (value.Primary, error) {
 	return args[0], nil
 }
 
-func Nullif(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Nullif(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
 	if len(args) != 2 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2})
 	}
 
-	if value.Equal(args[0], args[1]) == ternary.TRUE {
+	if value.Equal(args[0], args[1], flags.DatetimeFormat) == ternary.TRUE {
 		return value.NewNull(), nil
 	}
 	return args[0], nil
@@ -220,7 +220,7 @@ func roundParams(args []value.Primary) (number float64, place float64, isnull bo
 	return
 }
 
-func Ceil(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Ceil(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	number, place, isnull, argsErr := roundParams(args)
 	if argsErr {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1, 2})
@@ -234,7 +234,7 @@ func Ceil(fn parser.Function, args []value.Primary) (value.Primary, error) {
 	return value.ParseFloat64(r), nil
 }
 
-func Floor(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Floor(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	number, place, isnull, argsErr := roundParams(args)
 	if argsErr {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1, 2})
@@ -259,7 +259,7 @@ func round(f float64, place float64) float64 {
 	return r
 }
 
-func Round(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Round(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	number, place, isnull, argsErr := roundParams(args)
 	if argsErr {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1, 2})
@@ -310,71 +310,71 @@ func execMath2Args(fn parser.Function, args []value.Primary, mathf func(float64,
 	return value.ParseFloat64(result), nil
 }
 
-func Abs(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Abs(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execMath1Arg(fn, args, math.Abs)
 }
 
-func Acos(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Acos(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execMath1Arg(fn, args, math.Acos)
 }
 
-func Asin(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Asin(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execMath1Arg(fn, args, math.Asin)
 }
 
-func Atan(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Atan(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execMath1Arg(fn, args, math.Atan)
 }
 
-func Atan2(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Atan2(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execMath2Args(fn, args, math.Atan2)
 }
 
-func Cos(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Cos(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execMath1Arg(fn, args, math.Cos)
 }
 
-func Sin(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Sin(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execMath1Arg(fn, args, math.Sin)
 }
 
-func Tan(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Tan(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execMath1Arg(fn, args, math.Tan)
 }
 
-func Exp(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Exp(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execMath1Arg(fn, args, math.Exp)
 }
 
-func Exp2(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Exp2(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execMath1Arg(fn, args, math.Exp2)
 }
 
-func Expm1(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Expm1(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execMath1Arg(fn, args, math.Expm1)
 }
 
-func MathLog(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func MathLog(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execMath1Arg(fn, args, math.Log)
 }
 
-func Log10(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Log10(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execMath1Arg(fn, args, math.Log10)
 }
 
-func Log2(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Log2(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execMath1Arg(fn, args, math.Log2)
 }
 
-func Log1p(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Log1p(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execMath1Arg(fn, args, math.Log1p)
 }
 
-func Sqrt(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Sqrt(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execMath1Arg(fn, args, math.Sqrt)
 }
 
-func Pow(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Pow(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execMath2Args(fn, args, math.Pow)
 }
 
@@ -415,19 +415,19 @@ func execFormatInt(fn parser.Function, args []value.Primary, base int) (value.Pr
 	return value.NewString(s), nil
 }
 
-func BinToDec(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func BinToDec(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execParseInt(fn, args, 2)
 }
 
-func OctToDec(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func OctToDec(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execParseInt(fn, args, 8)
 }
 
-func HexToDec(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func HexToDec(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execParseInt(fn, args, 16)
 }
 
-func EnotationToDec(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func EnotationToDec(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	if len(args) != 1 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
@@ -447,19 +447,19 @@ func EnotationToDec(fn parser.Function, args []value.Primary) (value.Primary, er
 	return value.ParseFloat64(f), nil
 }
 
-func Bin(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Bin(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execFormatInt(fn, args, 2)
 }
 
-func Oct(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Oct(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execFormatInt(fn, args, 8)
 }
 
-func Hex(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Hex(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execFormatInt(fn, args, 16)
 }
 
-func Enotation(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Enotation(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	if len(args) != 1 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
@@ -473,7 +473,7 @@ func Enotation(fn parser.Function, args []value.Primary) (value.Primary, error) 
 	return value.NewString(s), nil
 }
 
-func NumberFormat(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func NumberFormat(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	if len(args) < 1 || 5 < len(args) {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1, 2, 3, 4, 5})
 	}
@@ -517,7 +517,7 @@ func NumberFormat(fn parser.Function, args []value.Primary) (value.Primary, erro
 	return value.NewString(s), nil
 }
 
-func Rand(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Rand(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	if 0 < len(args) && len(args) != 2 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{0, 2})
 	}
@@ -636,7 +636,7 @@ func execStringsLen(fn parser.Function, args []value.Primary, stringsf func(stri
 	return value.NewInteger(int64(result)), nil
 }
 
-func execStringsPadding(fn parser.Function, args []value.Primary, direction Direction) (value.Primary, error) {
+func execStringsPadding(fn parser.Function, args []value.Primary, direction Direction, flags *cmd.Flags) (value.Primary, error) {
 	if len(args) < 3 || 5 < len(args) {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{3, 4, 5})
 	}
@@ -698,8 +698,8 @@ func execStringsPadding(fn parser.Function, args []value.Primary, direction Dire
 		strLen = text.ByteSize(str, enc)
 		padstrLen = text.ByteSize(padstr, enc)
 	case PaddingWidth:
-		strLen = cmd.TextWidth(str)
-		padstrLen = cmd.TextWidth(padstr)
+		strLen = cmd.TextWidth(str, flags)
+		padstrLen = cmd.TextWidth(padstr, flags)
 	}
 
 	if length <= strLen {
@@ -721,7 +721,7 @@ func execStringsPadding(fn parser.Function, args []value.Primary, direction Dire
 			case PaddingByteCount:
 				w = text.RuneByteSize(r, enc)
 			default:
-				w = cmd.RuneWidth(r)
+				w = cmd.RuneWidth(r, flags)
 			}
 			l = l + w
 			buf = append(buf, r)
@@ -781,51 +781,47 @@ func execCryptoHMAC(fn parser.Function, args []value.Primary, cryptof func() has
 	return value.NewString(r), nil
 }
 
-func width(s string) int {
-	return cmd.TextWidth(s)
-}
-
-func Trim(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Trim(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execStringsTrim(fn, args, trim)
 }
 
-func Ltrim(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Ltrim(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execStringsTrim(fn, args, ltrim)
 }
 
-func Rtrim(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Rtrim(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execStringsTrim(fn, args, rtrim)
 }
 
-func Upper(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Upper(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execStrings1Arg(fn, args, strings.ToUpper)
 }
 
-func Lower(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Lower(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execStrings1Arg(fn, args, strings.ToLower)
 }
 
-func Base64Encode(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Base64Encode(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execStrings1Arg(fn, args, base64Encode)
 }
 
-func Base64Decode(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Base64Decode(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execStrings1Arg(fn, args, base64Decode)
 }
 
-func HexEncode(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func HexEncode(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execStrings1Arg(fn, args, hexEncode)
 }
 
-func HexDecode(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func HexDecode(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execStrings1Arg(fn, args, hexDecode)
 }
 
-func Len(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Len(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execStringsLen(fn, args, utf8.RuneCountInString)
 }
 
-func ByteLen(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func ByteLen(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	if len(args) < 1 || 2 < len(args) {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1, 2})
 	}
@@ -850,19 +846,29 @@ func ByteLen(fn parser.Function, args []value.Primary) (value.Primary, error) {
 	return value.NewInteger(int64(text.ByteSize(s.(value.String).Raw(), enc))), nil
 }
 
-func Width(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execStringsLen(fn, args, width)
+func Width(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	if len(args) != 1 {
+		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
+	}
+
+	s := value.ToString(args[0])
+	if value.IsNull(s) {
+		return value.NewNull(), nil
+	}
+
+	result := cmd.TextWidth(s.(value.String).Raw(), flags)
+	return value.NewInteger(int64(result)), nil
 }
 
-func Lpad(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execStringsPadding(fn, args, LeftDirection)
+func Lpad(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execStringsPadding(fn, args, LeftDirection, flags)
 }
 
-func Rpad(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execStringsPadding(fn, args, RightDirection)
+func Rpad(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execStringsPadding(fn, args, RightDirection, flags)
 }
 
-func Substr(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Substr(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	if len(args) < 2 || 3 < len(args) {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2, 3})
 	}
@@ -907,7 +913,7 @@ func Substr(fn parser.Function, args []value.Primary) (value.Primary, error) {
 	return value.NewString(string(runes[start:end])), nil
 }
 
-func Instr(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Instr(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	if len(args) < 2 || 2 < len(args) {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2})
 	}
@@ -930,7 +936,7 @@ func Instr(fn parser.Function, args []value.Primary) (value.Primary, error) {
 	return value.NewInteger(int64(index)), nil
 }
 
-func ListElem(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func ListElem(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	if len(args) < 3 || 3 < len(args) {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{3})
 	}
@@ -962,7 +968,7 @@ func ListElem(fn parser.Function, args []value.Primary) (value.Primary, error) {
 	return value.NewString(list[index]), nil
 }
 
-func Replace(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Replace(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	if 3 != len(args) {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{3})
 	}
@@ -986,7 +992,7 @@ func Replace(fn parser.Function, args []value.Primary) (value.Primary, error) {
 	return value.NewString(r), nil
 }
 
-func Format(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Format(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	if len(args) < 1 {
 		return nil, NewFunctionArgumentLengthErrorWithCustomArgs(fn, fn.Name, "at least 1 argument")
 	}
@@ -996,14 +1002,14 @@ func Format(fn parser.Function, args []value.Primary) (value.Primary, error) {
 		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, "the first argument must be a string")
 	}
 
-	str, err := Formatter.Format(format.(value.String).Raw(), args[1:])
+	str, err := NewStringFormatter().Format(format.(value.String).Raw(), args[1:])
 	if err != nil {
 		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, err.(AppError).ErrorMessage())
 	}
 	return value.NewString(str), nil
 }
 
-func JsonValue(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func JsonValue(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	if len(args) != 2 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2})
 	}
@@ -1025,44 +1031,44 @@ func JsonValue(fn parser.Function, args []value.Primary) (value.Primary, error) 
 	return v, nil
 }
 
-func Md5(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Md5(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execCrypto(fn, args, md5.New)
 }
 
-func Sha1(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Sha1(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execCrypto(fn, args, sha1.New)
 }
 
-func Sha256(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Sha256(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execCrypto(fn, args, sha256.New)
 }
 
-func Sha512(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Sha512(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execCrypto(fn, args, sha512.New)
 }
 
-func Md5Hmac(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Md5Hmac(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execCryptoHMAC(fn, args, md5.New)
 }
 
-func Sha1Hmac(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Sha1Hmac(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execCryptoHMAC(fn, args, sha1.New)
 }
 
-func Sha256Hmac(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Sha256Hmac(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execCryptoHMAC(fn, args, sha256.New)
 }
 
-func Sha512Hmac(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Sha512Hmac(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execCryptoHMAC(fn, args, sha512.New)
 }
 
-func DatetimeFormat(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func DatetimeFormat(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
 	if len(args) != 2 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2})
 	}
 
-	p := value.ToDatetime(args[0])
+	p := value.ToDatetime(args[0], flags.DatetimeFormat)
 	if value.IsNull(p) {
 		return value.NewNull(), nil
 	}
@@ -1075,12 +1081,12 @@ func DatetimeFormat(fn parser.Function, args []value.Primary) (value.Primary, er
 	return value.NewString(dt.Format(value.DatetimeFormats.Get(format.(value.String).Raw()))), nil
 }
 
-func execDatetimeToInt(fn parser.Function, args []value.Primary, timef func(time.Time) int64) (value.Primary, error) {
+func execDatetimeToInt(fn parser.Function, args []value.Primary, timef func(time.Time) int64, flags *cmd.Flags) (value.Primary, error) {
 	if len(args) != 1 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	dt := value.ToDatetime(args[0])
+	dt := value.ToDatetime(args[0], flags.DatetimeFormat)
 	if value.IsNull(dt) {
 		return value.NewNull(), nil
 	}
@@ -1089,12 +1095,12 @@ func execDatetimeToInt(fn parser.Function, args []value.Primary, timef func(time
 	return value.NewInteger(result), nil
 }
 
-func execDatetimeAdd(fn parser.Function, args []value.Primary, timef func(time.Time, int) time.Time) (value.Primary, error) {
+func execDatetimeAdd(fn parser.Function, args []value.Primary, timef func(time.Time, int) time.Time, flags *cmd.Flags) (value.Primary, error) {
 	if len(args) != 2 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2})
 	}
 
-	p1 := value.ToDatetime(args[0])
+	p1 := value.ToDatetime(args[0], flags.DatetimeFormat)
 	if value.IsNull(p1) {
 		return value.NewNull(), nil
 	}
@@ -1207,104 +1213,104 @@ func addNano(t time.Time, duration int) time.Time {
 	return t.Add(dur * time.Nanosecond)
 }
 
-func Year(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execDatetimeToInt(fn, args, year)
+func Year(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execDatetimeToInt(fn, args, year, flags)
 }
 
-func Month(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execDatetimeToInt(fn, args, month)
+func Month(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execDatetimeToInt(fn, args, month, flags)
 }
 
-func Day(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execDatetimeToInt(fn, args, day)
+func Day(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execDatetimeToInt(fn, args, day, flags)
 }
 
-func Hour(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execDatetimeToInt(fn, args, hour)
+func Hour(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execDatetimeToInt(fn, args, hour, flags)
 }
 
-func Minute(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execDatetimeToInt(fn, args, minute)
+func Minute(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execDatetimeToInt(fn, args, minute, flags)
 }
 
-func Second(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execDatetimeToInt(fn, args, second)
+func Second(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execDatetimeToInt(fn, args, second, flags)
 }
 
-func Millisecond(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execDatetimeToInt(fn, args, millisecond)
+func Millisecond(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execDatetimeToInt(fn, args, millisecond, flags)
 }
 
-func Microsecond(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execDatetimeToInt(fn, args, microsecond)
+func Microsecond(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execDatetimeToInt(fn, args, microsecond, flags)
 }
 
-func Nanosecond(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execDatetimeToInt(fn, args, nanosecond)
+func Nanosecond(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execDatetimeToInt(fn, args, nanosecond, flags)
 }
 
-func Weekday(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execDatetimeToInt(fn, args, weekday)
+func Weekday(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execDatetimeToInt(fn, args, weekday, flags)
 }
 
-func UnixTime(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execDatetimeToInt(fn, args, unixTime)
+func UnixTime(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execDatetimeToInt(fn, args, unixTime, flags)
 }
 
-func UnixNanoTime(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execDatetimeToInt(fn, args, unixNanoTime)
+func UnixNanoTime(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execDatetimeToInt(fn, args, unixNanoTime, flags)
 }
 
-func DayOfYear(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execDatetimeToInt(fn, args, dayOfYear)
+func DayOfYear(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execDatetimeToInt(fn, args, dayOfYear, flags)
 }
 
-func WeekOfYear(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execDatetimeToInt(fn, args, weekOfYear)
+func WeekOfYear(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execDatetimeToInt(fn, args, weekOfYear, flags)
 }
 
-func AddYear(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execDatetimeAdd(fn, args, addYear)
+func AddYear(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execDatetimeAdd(fn, args, addYear, flags)
 }
 
-func AddMonth(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execDatetimeAdd(fn, args, addMonth)
+func AddMonth(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execDatetimeAdd(fn, args, addMonth, flags)
 }
 
-func AddDay(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execDatetimeAdd(fn, args, addDay)
+func AddDay(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execDatetimeAdd(fn, args, addDay, flags)
 }
 
-func AddHour(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execDatetimeAdd(fn, args, addHour)
+func AddHour(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execDatetimeAdd(fn, args, addHour, flags)
 }
 
-func AddMinute(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execDatetimeAdd(fn, args, addMinute)
+func AddMinute(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execDatetimeAdd(fn, args, addMinute, flags)
 }
 
-func AddSecond(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execDatetimeAdd(fn, args, addSecond)
+func AddSecond(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execDatetimeAdd(fn, args, addSecond, flags)
 }
 
-func AddMilli(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execDatetimeAdd(fn, args, addMilli)
+func AddMilli(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execDatetimeAdd(fn, args, addMilli, flags)
 }
 
-func AddMicro(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execDatetimeAdd(fn, args, addMicro)
+func AddMicro(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execDatetimeAdd(fn, args, addMicro, flags)
 }
 
-func AddNano(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return execDatetimeAdd(fn, args, addNano)
+func AddNano(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return execDatetimeAdd(fn, args, addNano, flags)
 }
 
-func truncateDate(fn parser.Function, args []value.Primary, place int8) (value.Primary, error) {
+func truncateDate(fn parser.Function, args []value.Primary, place int8, flags *cmd.Flags) (value.Primary, error) {
 	if len(args) != 1 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	dt := value.ToDatetime(args[0])
+	dt := value.ToDatetime(args[0], flags.DatetimeFormat)
 	if value.IsNull(dt) {
 		return value.NewNull(), nil
 	}
@@ -1321,24 +1327,24 @@ func truncateDate(fn parser.Function, args []value.Primary, place int8) (value.P
 	return value.NewDatetime(time.Date(y, m, d, 0, 0, 0, 0, t.Location())), nil
 }
 
-func TruncMonth(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return truncateDate(fn, args, 2)
+func TruncMonth(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return truncateDate(fn, args, 2, flags)
 }
 
-func TruncDay(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return truncateDate(fn, args, 1)
+func TruncDay(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return truncateDate(fn, args, 1, flags)
 }
 
-func TruncTime(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return truncateDate(fn, args, 0)
+func TruncTime(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return truncateDate(fn, args, 0, flags)
 }
 
-func truncateDuration(fn parser.Function, args []value.Primary, dur time.Duration) (value.Primary, error) {
+func truncateDuration(fn parser.Function, args []value.Primary, dur time.Duration, flags *cmd.Flags) (value.Primary, error) {
 	if len(args) != 1 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	dt := value.ToDatetime(args[0])
+	dt := value.ToDatetime(args[0], flags.DatetimeFormat)
 	if value.IsNull(dt) {
 		return value.NewNull(), nil
 	}
@@ -1346,36 +1352,36 @@ func truncateDuration(fn parser.Function, args []value.Primary, dur time.Duratio
 	return value.NewDatetime(dt.(value.Datetime).Raw().Truncate(dur)), nil
 }
 
-func TruncMinute(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return truncateDuration(fn, args, time.Hour)
+func TruncMinute(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return truncateDuration(fn, args, time.Hour, flags)
 }
 
-func TruncSecond(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return truncateDuration(fn, args, time.Minute)
+func TruncSecond(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return truncateDuration(fn, args, time.Minute, flags)
 }
 
-func TruncMilli(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return truncateDuration(fn, args, time.Second)
+func TruncMilli(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return truncateDuration(fn, args, time.Second, flags)
 }
 
-func TruncMicro(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return truncateDuration(fn, args, time.Millisecond)
+func TruncMicro(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return truncateDuration(fn, args, time.Millisecond, flags)
 }
 
-func TruncNano(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return truncateDuration(fn, args, time.Microsecond)
+func TruncNano(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return truncateDuration(fn, args, time.Microsecond, flags)
 }
 
-func DateDiff(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func DateDiff(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
 	if len(args) != 2 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2})
 	}
 
-	p1 := value.ToDatetime(args[0])
+	p1 := value.ToDatetime(args[0], flags.DatetimeFormat)
 	if value.IsNull(p1) {
 		return value.NewNull(), nil
 	}
-	p2 := value.ToDatetime(args[1])
+	p2 := value.ToDatetime(args[1], flags.DatetimeFormat)
 	if value.IsNull(p2) {
 		return value.NewNull(), nil
 	}
@@ -1390,16 +1396,16 @@ func DateDiff(fn parser.Function, args []value.Primary) (value.Primary, error) {
 	return value.NewInteger(int64(dur.Hours() / 24)), nil
 }
 
-func timeDiff(fn parser.Function, args []value.Primary, durf func(time.Duration) value.Primary) (value.Primary, error) {
+func timeDiff(fn parser.Function, args []value.Primary, durf func(time.Duration) value.Primary, flags *cmd.Flags) (value.Primary, error) {
 	if len(args) != 2 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2})
 	}
 
-	p1 := value.ToDatetime(args[0])
+	p1 := value.ToDatetime(args[0], flags.DatetimeFormat)
 	if value.IsNull(p1) {
 		return value.NewNull(), nil
 	}
-	p2 := value.ToDatetime(args[1])
+	p2 := value.ToDatetime(args[1], flags.DatetimeFormat)
 	if value.IsNull(p2) {
 		return value.NewNull(), nil
 	}
@@ -1419,20 +1425,20 @@ func durationNanoseconds(dur time.Duration) value.Primary {
 	return value.NewInteger(dur.Nanoseconds())
 }
 
-func TimeDiff(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return timeDiff(fn, args, durationSeconds)
+func TimeDiff(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return timeDiff(fn, args, durationSeconds, flags)
 }
 
-func TimeNanoDiff(fn parser.Function, args []value.Primary) (value.Primary, error) {
-	return timeDiff(fn, args, durationNanoseconds)
+func TimeNanoDiff(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	return timeDiff(fn, args, durationNanoseconds, flags)
 }
 
-func UTC(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func UTC(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
 	if len(args) != 1 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	dt := value.ToDatetime(args[0])
+	dt := value.ToDatetime(args[0], flags.DatetimeFormat)
 	if value.IsNull(dt) {
 		return value.NewNull(), nil
 	}
@@ -1440,7 +1446,7 @@ func UTC(fn parser.Function, args []value.Primary) (value.Primary, error) {
 	return value.NewDatetime(dt.(value.Datetime).Raw().UTC()), nil
 }
 
-func String(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func String(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	if len(args) != 1 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
@@ -1457,7 +1463,7 @@ func String(fn parser.Function, args []value.Primary) (value.Primary, error) {
 	}
 }
 
-func Integer(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Integer(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	if len(args) != 1 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
@@ -1481,7 +1487,7 @@ func Integer(fn parser.Function, args []value.Primary) (value.Primary, error) {
 	return value.NewNull(), nil
 }
 
-func Float(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Float(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	if len(args) != 1 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
@@ -1499,7 +1505,7 @@ func Float(fn parser.Function, args []value.Primary) (value.Primary, error) {
 	}
 }
 
-func Boolean(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Boolean(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	if len(args) != 1 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
@@ -1507,7 +1513,7 @@ func Boolean(fn parser.Function, args []value.Primary) (value.Primary, error) {
 	return value.ToBoolean(args[0]), nil
 }
 
-func Ternary(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Ternary(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	if len(args) != 1 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
@@ -1515,33 +1521,33 @@ func Ternary(fn parser.Function, args []value.Primary) (value.Primary, error) {
 	return value.NewTernary(args[0].Ternary()), nil
 }
 
-func Datetime(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Datetime(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
 	if len(args) != 1 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	return value.ToDatetime(args[0]), nil
+	return value.ToDatetime(args[0], flags.DatetimeFormat), nil
 }
 
-func Call(fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Call(ctx context.Context, fn parser.Function, args []value.Primary) (value.Primary, error) {
 	if len(args) < 1 {
 		return nil, NewFunctionArgumentLengthErrorWithCustomArgs(fn, fn.Name, "at least 1 argument")
 	}
 
 	cmdargs := make([]string, 0, len(args))
 	for _, v := range args {
-		s, _ := Formatter.Format("%s", []value.Primary{v})
+		s, _ := NewStringFormatter().Format("%s", []value.Primary{v})
 		cmdargs = append(cmdargs, s)
 	}
 
-	buf, err := exec.Command(cmdargs[0], cmdargs[1:]...).Output()
+	buf, err := exec.CommandContext(ctx, cmdargs[0], cmdargs[1:]...).Output()
 	if err != nil {
 		return nil, NewExternalCommandError(fn, err.Error())
 	}
 	return value.NewString(string(buf)), nil
 }
 
-func Now(fn parser.Function, args []value.Primary, filter *Filter) (value.Primary, error) {
+func Now(filter *Filter, fn parser.Function, args []value.Primary) (value.Primary, error) {
 	if 0 < len(args) {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{0})
 	}
@@ -1552,25 +1558,31 @@ func Now(fn parser.Function, args []value.Primary, filter *Filter) (value.Primar
 	return value.NewDatetime(filter.Now), nil
 }
 
-func JsonObject(fn parser.Function, filter *Filter) (value.Primary, error) {
+func JsonObject(ctx context.Context, filter *Filter, fn parser.Function) (value.Primary, error) {
 	if len(filter.Records) < 1 {
 		return nil, NewUnpermittedStatementFunctionError(fn, fn.Name)
 	}
 
-	view := &View{}
+	view := NewView(filter.Tx)
 	view.Header = filter.Records[0].View.Header.Copy()
 	view.RecordSet = RecordSet{filter.Records[0].View.RecordSet[filter.Records[0].RecordIndex]}
 	view.Filter = filter.CreateNode()
 
 	if len(fn.Args) < 1 {
-		view.SelectAllColumns()
+		if err := view.SelectAllColumns(ctx); err != nil {
+			return nil, err
+		}
 	} else {
 		selectClause := parser.SelectClause{
 			Fields: fn.Args,
 		}
-		view.Select(selectClause)
+		if err := view.Select(ctx, selectClause); err != nil {
+			return nil, err
+		}
 	}
-	view.Fix()
+	if err := view.Fix(ctx); err != nil {
+		return nil, err
+	}
 
 	pathes, err := json.ParsePathes(view.Header.TableColumnNames())
 	if err != nil {

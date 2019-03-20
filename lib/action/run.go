@@ -1,6 +1,7 @@
 package action
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -16,23 +17,23 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
 
-	"github.com/mithrandie/go-file"
+	"github.com/mithrandie/go-file/v2"
 )
 
-func Run(proc *query.Procedure, input string, sourceFile string, outfile string) error {
+func Run(proc *query.Processor, input string, sourceFile string, outfile string) error {
 	start := time.Now()
 
 	defer func() {
-		if e := query.Rollback(nil, proc.Filter); e != nil {
-			query.LogError(e.Error())
+		if e := proc.AutoRollback(); e != nil {
+			proc.LogError(e.Error())
 		}
-		if err := query.ReleaseResourcesWithErrors(); err != nil {
-			query.LogError(err.Error())
+		if err := proc.ReleaseResourcesWithErrors(); err != nil {
+			proc.LogError(err.Error())
 		}
-		showStats(start)
+		showStats(proc, start)
 	}()
 
-	statements, err := parser.Parse(input, sourceFile)
+	statements, err := parser.Parse(input, sourceFile, proc.Tx.Flags.DatetimeFormat)
 	if err != nil {
 		return query.NewSyntaxError(err.(*parser.SyntaxError))
 	}
@@ -51,60 +52,61 @@ func Run(proc *query.Procedure, input string, sourceFile string, outfile string)
 		}
 		defer func() {
 			if info, err := fp.Stat(); err == nil && info.Size() < 1 {
-				os.Remove(outfile)
+				if err = os.Remove(outfile); err != nil {
+					proc.LogError(err.Error())
+				}
 			}
-			fp.Close()
+			if err = fp.Close(); err != nil {
+				proc.LogError(err.Error())
+			}
 		}()
-		query.OutFile = fp
+		proc.Tx.Session.OutFile = fp
 	}
 
-	flow, err := proc.Execute(statements)
-
-	if err == nil && flow == query.Terminate {
-		if e := query.Commit(nil, proc.Filter); e != nil {
-			query.LogError(e.Error())
-		}
-	}
-
+	proc.Tx.AutoCommit = true
+	_, err = proc.Execute(context.Background(), statements)
 	return err
 }
 
-func LaunchInteractiveShell(proc *query.Procedure) error {
+func LaunchInteractiveShell(proc *query.Processor) error {
 	if cmd.IsReadableFromPipeOrRedirection() {
 		return errors.New("input from pipe or redirection cannot be used in interactive shell")
 	}
 
 	defer func() {
-		if e := query.Rollback(nil, proc.Filter); e != nil {
-			query.LogError(e.Error())
+		if e := proc.AutoRollback(); e != nil {
+			proc.LogError(e.Error())
 		}
-		if err := query.ReleaseResourcesWithErrors(); err != nil {
-			query.LogError(err.Error())
+		if err := proc.ReleaseResourcesWithErrors(); err != nil {
+			proc.LogError(err.Error())
 		}
 	}()
 
 	var err error
 
-	term, err := query.NewTerminal(proc.Filter)
+	ctx := context.Background()
+	term, err := query.NewTerminal(ctx, proc.Filter)
 	if err != nil {
 		return err
 	}
-	query.Terminal = term
+	proc.Tx.Session.Terminal = term
 	defer func() {
-		query.Terminal.Teardown()
-		query.Terminal = nil
+		if e := proc.Tx.Session.Terminal.Teardown(); e != nil {
+			proc.LogError(e.Error())
+		}
+		proc.Tx.Session.Terminal = nil
 	}()
 
 	StartUpMessage := "" +
 		"csvq interactive shell\n" +
 		"Press Ctrl+D or execute \"EXIT;\" to terminate this shell.\n\n"
-	query.Log(StartUpMessage, false)
+	proc.Log(StartUpMessage, false)
 
 	lines := make([]string, 0)
 
 	for {
-		query.Terminal.UpdateCompleter()
-		line, e := query.Terminal.ReadLine()
+		proc.Tx.Session.Terminal.UpdateCompleter()
+		line, e := proc.Tx.Session.Terminal.ReadLine()
 		if e != nil {
 			if e == io.EOF {
 				break
@@ -120,7 +122,7 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 
 		if 0 < len(line) && line[len(line)-1] == '\\' {
 			lines = append(lines, line[:len(line)-1])
-			query.Terminal.SetContinuousPrompt()
+			proc.Tx.Session.Terminal.SetContinuousPrompt(ctx)
 			continue
 		}
 
@@ -138,29 +140,31 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 		saveQuery := strings.Join(saveLines, " ")
 		if len(saveQuery) < 1 || saveQuery == ";" {
 			lines = lines[:0]
-			query.Terminal.SetPrompt()
+			proc.Tx.Session.Terminal.SetPrompt(ctx)
 			continue
 		}
-		query.Terminal.SaveHistory(saveQuery)
+		if e := proc.Tx.Session.Terminal.SaveHistory(saveQuery); e != nil {
+			proc.LogError(e.Error())
+		}
 
-		statements, e := parser.Parse(strings.Join(lines, "\n"), "")
+		statements, e := parser.Parse(strings.Join(lines, "\n"), "", proc.Tx.Flags.DatetimeFormat)
 		if e != nil {
 			e = query.NewSyntaxError(e.(*parser.SyntaxError))
-			query.LogError(e.Error())
+			proc.LogError(e.Error())
 			lines = lines[:0]
-			query.Terminal.SetPrompt()
+			proc.Tx.Session.Terminal.SetPrompt(ctx)
 			continue
 		}
 
-		flow, e := proc.Execute(statements)
+		flow, e := proc.Execute(ctx, statements)
 		if e != nil {
 			if ex, ok := e.(*query.ForcedExit); ok {
 				err = ex
 				break
 			} else {
-				query.LogError(e.Error())
+				proc.LogError(e.Error())
 				lines = lines[:0]
-				query.Terminal.SetPrompt()
+				proc.Tx.Session.Terminal.SetPrompt(ctx)
 				continue
 			}
 		}
@@ -170,15 +174,14 @@ func LaunchInteractiveShell(proc *query.Procedure) error {
 		}
 
 		lines = lines[:0]
-		query.Terminal.SetPrompt()
+		proc.Tx.Session.Terminal.SetPrompt(ctx)
 	}
 
 	return err
 }
 
-func showStats(start time.Time) {
-	flags := cmd.GetFlags()
-	if !flags.Stats {
+func showStats(proc *query.Processor, start time.Time) {
+	if !proc.Tx.Flags.Stats {
 		return
 	}
 	var mem runtime.MemStats
@@ -199,7 +202,7 @@ func showStats(start time.Time) {
 	}
 	width = width + 1
 
-	w := query.NewObjectWriter()
+	w := query.NewObjectWriter(proc.Tx)
 	w.WriteColor(" TotalTime:", cmd.LableEffect)
 	w.WriteSpaces(width - len(exectime))
 	w.WriteWithoutLineBreak(exectime + " seconds")
@@ -228,5 +231,5 @@ func showStats(start time.Time) {
 
 	w.Title1 = "Resource Statistics"
 
-	query.Log("\n"+w.String(), false)
+	proc.Log("\n"+w.String(), false)
 }

@@ -723,7 +723,7 @@ var parseTests = []struct {
 							Field{Object: NewIntegerValueFromString("1")},
 							Field{Object: NewFloatValueFromString("1.234")},
 							Field{Object: NewTernaryValueFromString("true")},
-							Field{Object: NewDatetimeValueFromString("2010-01-01 12:00:00")},
+							Field{Object: NewDatetimeValueFromString("2010-01-01 12:00:00", nil)},
 							Field{Object: NewNullValueFromString("null")},
 							Field{Object: Parentheses{Expr: NewStringValue("bar")}},
 						},
@@ -5579,7 +5579,7 @@ var parseTests = []struct {
 
 func TestParse(t *testing.T) {
 	for _, v := range parseTests {
-		prog, err := Parse(v.Input, v.SourceFile)
+		prog, err := Parse(v.Input, v.SourceFile, nil)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("unexpected error %q for %q", err, v.Input)

@@ -23,22 +23,22 @@ func run(m *testing.M) int {
 
 func setup() {
 	if _, err := os.Stat(TestDir); err == nil {
-		os.RemoveAll(TestDir)
+		_ = os.RemoveAll(TestDir)
 	}
 
 	wdir, _ := os.Getwd()
 	TestDataDir = filepath.Join(wdir, "..", "..", "testdata", "csv")
 
 	if _, err := os.Stat(TestDir); os.IsNotExist(err) {
-		os.Mkdir(TestDir, 0755)
+		_ = os.Mkdir(TestDir, 0755)
 	}
 
-	copyfile(filepath.Join(TestDir, "table1.csv"), filepath.Join(TestDataDir, "table1.csv"))
+	_ = copyfile(filepath.Join(TestDir, "table1.csv"), filepath.Join(TestDataDir, "table1.csv"))
 }
 
 func teardown() {
 	if _, err := os.Stat(TestDir); err == nil {
-		os.RemoveAll(TestDir)
+		_ = os.RemoveAll(TestDir)
 	}
 }
 
@@ -47,13 +47,13 @@ func copyfile(dstfile string, srcfile string) error {
 	if err != nil {
 		return err
 	}
-	defer src.Close()
+	defer func() { _ = src.Close() }()
 
 	dst, err := os.Create(dstfile)
 	if err != nil {
 		return err
 	}
-	defer dst.Close()
+	defer func() { _ = dst.Close() }()
 
 	_, err = io.Copy(dst, src)
 	if err != nil {

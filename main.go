@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
+	"time"
 
 	"github.com/mithrandie/csvq/lib/action"
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -17,15 +20,12 @@ import (
 	"github.com/urfave/cli"
 )
 
-var version = "v1.9.1"
-
 func main() {
-	var proc *query.Procedure
-	action.CurrentVersion, _ = action.ParseVersion(version)
+	var proc *query.Processor
+	action.CurrentVersion, _ = action.ParseVersion(query.Version)
 	if action.CurrentVersion != nil {
-		version = action.CurrentVersion.String()
+		query.Version = action.CurrentVersion.String()
 	}
-	query.Version = version
 
 	cli.AppHelpTemplate = appHHelpTemplate
 	cli.CommandHelpTemplate = commandHelpTemplate
@@ -35,7 +35,7 @@ func main() {
 	app.Name = "csvq"
 	app.Usage = "SQL-like query language for csv"
 	app.ArgsUsage = "[\"query\"|argument]"
-	app.Version = version
+	app.Version = query.Version
 
 	app.OnUsageError = func(c *cli.Context, err error, isSubcommand bool) error {
 		if isSubcommand {
@@ -208,7 +208,7 @@ func main() {
 				}
 
 				expr := c.Args().First()
-				err := action.Calc(expr)
+				err := action.Calc(proc, expr)
 				if err != nil {
 					return NewExitError(err.Error(), 1)
 				}
@@ -240,7 +240,7 @@ func main() {
 			Name:  "check-update",
 			Usage: "Check for updates",
 			Action: func(c *cli.Context) error {
-				err := action.CheckUpdate()
+				err := action.CheckUpdate(proc)
 				if err != nil {
 					return NewExitError(err.Error(), 1)
 				}
@@ -251,19 +251,24 @@ func main() {
 	}
 
 	app.Before = func(c *cli.Context) error {
-		action.SetSignalHandler()
 		color.UseEffect = false
 
-		proc = query.NewProcedure()
+		defaultWaitTimeout := file.DefaultWaitTimeout
+		if c.IsSet("wait-timeout") {
+			if d, err := time.ParseDuration(strconv.FormatFloat(c.GlobalFloat64("wait-timeout"), 'f', -1, 64) + "s"); err != nil {
+				defaultWaitTimeout = d
+			}
+		}
 
-		// Init Single Objects
-		if _, err := cmd.GetEnvironment(); err != nil {
+		session := query.NewSession()
+		tx, err := query.NewTransaction(context.Background(), defaultWaitTimeout, file.DefaultRetryDelay, session)
+		if err != nil {
 			return NewExitError(err.Error(), 1)
 		}
-		if _, err := cmd.GetPalette(); err != nil {
-			return NewExitError(err.Error(), 1)
-		}
-		cmd.GetFlags()
+
+		proc = query.NewProcessor(tx)
+
+		action.SetSignalHandler(proc)
 
 		// Run pre-load commands
 		if err := runPreloadCommands(proc); err != nil {
@@ -271,14 +276,14 @@ func main() {
 		}
 
 		// Overwrite Flags with Command Options
-		if err := overwriteFlags(c); err != nil {
+		if err := overwriteFlags(c, tx); err != nil {
 			return NewExitError(err.Error(), 1)
 		}
 		return nil
 	}
 
 	app.Action = func(c *cli.Context) error {
-		queryString, path, err := readQuery(c)
+		queryString, path, err := readQuery(c, proc.Tx)
 		if err != nil {
 			return NewExitError(err.Error(), 1)
 		}
@@ -302,45 +307,57 @@ func main() {
 		return nil
 	}
 
-	app.Run(os.Args)
+	if err := app.Run(os.Args); err != nil {
+		println(err.Error())
+	}
 }
 
-func readQuery(c *cli.Context) (string, string, error) {
-	var queryString string
-	var path string
-
+func readQuery(c *cli.Context, tx *query.Transaction) (queryString string, path string, err error) {
 	if c.IsSet("source") && 0 < len(c.GlobalString("source")) {
 		path = c.GlobalString("source")
 		if abs, err := filepath.Abs(path); err == nil {
 			path = abs
 		}
 		if !file.Exists(path) {
-			return queryString, path, errors.New(fmt.Sprintf("file %q does not exist", path))
+			err = errors.New(fmt.Sprintf("file %q does not exist", path))
+			return
 		}
-		h, err := file.NewHandlerForRead(path)
-		if err != nil {
-			return queryString, path, errors.New(fmt.Sprintf("failed to read file: %s", err.Error()))
-		}
-		defer h.Close()
 
-		buf, err := ioutil.ReadAll(h.FileForRead())
-		if err != nil {
-			return queryString, path, errors.New(fmt.Sprintf("failed to read file: %s", err.Error()))
+		h, e := file.NewHandlerForRead(context.Background(), tx.FileContainer, path, tx.WaitTimeout, tx.RetryDelay)
+		if e != nil {
+			err = errors.New(fmt.Sprintf("failed to read file: %s", e.Error()))
+			return
+		}
+		defer func() {
+			if e := tx.FileContainer.Close(h); e != nil {
+				if err == nil {
+					err = e
+				} else {
+					err = errors.New(err.Error() + "\n" + e.Error())
+				}
+			}
+		}()
+
+		buf, e := ioutil.ReadAll(h.FileForRead())
+		if e != nil {
+			err = errors.New(fmt.Sprintf("failed to read file: %s", e.Error()))
+			return
 		}
 
 		queryString = string(buf)
 	} else {
 		if 1 < c.NArg() {
-			return queryString, path, errors.New("multiple queries or statements were passed")
+			err = errors.New("multiple queries or statements were passed")
+			return
 		}
 		queryString = c.Args().First()
 	}
-
-	return queryString, path, nil
+	return
 }
 
-func overwriteFlags(c *cli.Context) error {
-	flags := cmd.GetFlags()
+func overwriteFlags(c *cli.Context, tx *query.Transaction) error {
+	flags := tx.Flags
+
 	if c.IsSet("color") {
 		flags.SetColor(c.GlobalBool("color"))
 	}
@@ -359,7 +376,7 @@ func overwriteFlags(c *cli.Context) error {
 		flags.SetDatetimeFormat(c.GlobalString("datetime-format"))
 	}
 	if c.IsSet("wait-timeout") {
-		flags.SetWaitTimeout(c.GlobalFloat64("wait-timeout"))
+		tx.UpdateWaitTimeout(c.GlobalFloat64("wait-timeout"), file.DefaultRetryDelay)
 	}
 
 	if c.IsSet("import-format") {
@@ -455,21 +472,15 @@ func overwriteFlags(c *cli.Context) error {
 	return nil
 }
 
-func runPreloadCommands(proc *query.Procedure) error {
-	handlers := make([]*file.Handler, 0, 4)
-	defer func() {
-		for _, h := range handlers {
-			h.Close()
-		}
-	}()
-
+func runPreloadCommands(proc *query.Processor) (err error) {
+	ctx := context.Background()
 	files := cmd.GetSpecialFilePath(cmd.PreloadCommandFileName)
 	for _, fpath := range files {
 		if !file.Exists(fpath) {
 			continue
 		}
 
-		statements, err := query.LoadStatementsFromFile(parser.Source{}, fpath)
+		statements, err := query.LoadStatementsFromFile(ctx, proc.Tx, parser.Source{}, fpath)
 		if err != nil {
 			if e, ok := err.(*query.ReadFileError); ok {
 				err = errors.New(e.ErrorMessage())
@@ -477,7 +488,7 @@ func runPreloadCommands(proc *query.Procedure) error {
 			return err
 		}
 
-		if _, err := proc.Execute(statements); err != nil {
+		if _, err := proc.Execute(ctx, statements); err != nil {
 			return err
 		}
 	}

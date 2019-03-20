@@ -53,18 +53,18 @@ var compareCombinedlyTests = []struct {
 		Result: IsGreater,
 	},
 	{
-		LHS:    NewDatetimeFromString("2006-01-02T15:04:05-07:00"),
-		RHS:    NewDatetimeFromString("2006-01-02T15:04:05-07:00"),
+		LHS:    NewDatetimeFromString("2006-01-02T15:04:05-07:00", nil),
+		RHS:    NewDatetimeFromString("2006-01-02T15:04:05-07:00", nil),
 		Result: IsEqual,
 	},
 	{
-		LHS:    NewDatetimeFromString("2006-01-02T15:04:05-07:00"),
-		RHS:    NewDatetimeFromString("2006-02-02T15:04:05-07:00"),
+		LHS:    NewDatetimeFromString("2006-01-02T15:04:05-07:00", nil),
+		RHS:    NewDatetimeFromString("2006-02-02T15:04:05-07:00", nil),
 		Result: IsLess,
 	},
 	{
-		LHS:    NewDatetimeFromString("2006-02-02T15:04:05-07:00"),
-		RHS:    NewDatetimeFromString("2006-01-02T15:04:05-07:00"),
+		LHS:    NewDatetimeFromString("2006-02-02T15:04:05-07:00", nil),
+		RHS:    NewDatetimeFromString("2006-01-02T15:04:05-07:00", nil),
 		Result: IsGreater,
 	},
 	{
@@ -101,7 +101,7 @@ var compareCombinedlyTests = []struct {
 
 func TestCompareCombinedly(t *testing.T) {
 	for _, v := range compareCombinedlyTests {
-		r := CompareCombinedly(v.LHS, v.RHS)
+		r := CompareCombinedly(v.LHS, v.RHS, nil)
 		if r != v.Result {
 			t.Errorf("result = %s, want %s for comparison with %s and %s", r, v.Result, v.LHS, v.RHS)
 		}
@@ -144,8 +144,8 @@ var identicalTests = []struct {
 		Result: ternary.TRUE,
 	},
 	{
-		LHS:    NewDatetimeFromString("2006-02-02T15:04:05-07:00"),
-		RHS:    NewDatetimeFromString("2006-02-02T15:04:05-07:00"),
+		LHS:    NewDatetimeFromString("2006-02-02T15:04:05-07:00", nil),
+		RHS:    NewDatetimeFromString("2006-02-02T15:04:05-07:00", nil),
 		Result: ternary.TRUE,
 	},
 	{
@@ -314,7 +314,7 @@ var compareTests = []struct {
 
 func TestCompare(t *testing.T) {
 	for _, v := range compareTests {
-		r := Compare(v.LHS, v.RHS, v.Op)
+		r := Compare(v.LHS, v.RHS, v.Op, nil)
 		if r != v.Result {
 			t.Errorf("result = %s, want %s for (%s %s %s)", r, v.Result, v.LHS, v.Op, v.RHS)
 		}
@@ -649,7 +649,7 @@ var compareRowValuesTests = []struct {
 
 func TestCompareRowValues(t *testing.T) {
 	for _, v := range compareRowValuesTests {
-		r, err := CompareRowValues(v.LHS, v.RHS, v.Op)
+		r, err := CompareRowValues(v.LHS, v.RHS, v.Op, nil)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("unexpected error %q for (%s %s %s)", err, v.LHS, v.Op, v.RHS)
@@ -687,7 +687,7 @@ var equivalentToTests = []struct {
 
 func TestEquivalentTo(t *testing.T) {
 	for _, v := range equivalentToTests {
-		r := Equivalent(v.LHS, v.RHS)
+		r := Equivalent(v.LHS, v.RHS, nil)
 		if r != v.Result {
 			t.Errorf("result = %s, want %s for (%s is equivalent to %s)", r, v.Result, v.LHS, v.RHS)
 		}

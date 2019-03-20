@@ -7,7 +7,9 @@ import (
 )
 
 func TestObjectWriter_String(t *testing.T) {
-	w := NewObjectWriter()
+	defer initFlag(TestTx.Flags)
+
+	w := NewObjectWriter(TestTx)
 	w.MaxWidth = 20
 
 	w.Write("aaa")
@@ -70,7 +72,7 @@ func TestObjectWriter_String(t *testing.T) {
 		t.Errorf("result = %q, want %q", result, expect)
 	}
 
-	w = NewObjectWriter()
+	w = NewObjectWriter(TestTx)
 	w.MaxWidth = 20
 
 	w.Title1 = "title"
@@ -109,7 +111,7 @@ func TestObjectWriter_String(t *testing.T) {
 		t.Errorf("result = %s, want %s", result, expect)
 	}
 
-	w = NewObjectWriter()
+	w = NewObjectWriter(TestTx)
 	w.MaxWidth = 20
 
 	w.Title1 = "title"
@@ -126,8 +128,8 @@ func TestObjectWriter_String(t *testing.T) {
 		t.Errorf("result = %s, want %s", result, expect)
 	}
 
-	cmd.GetFlags().SetColor(true)
-	w = NewObjectWriter()
+	TestTx.Flags.SetColor(true)
+	w = NewObjectWriter(TestTx)
 	w.MaxWidth = 20
 
 	w.Title1 = "title1"
@@ -152,6 +154,4 @@ func TestObjectWriter_String(t *testing.T) {
 	if result != expect {
 		t.Errorf("result = %s, want %s", result, expect)
 	}
-
-	cmd.GetFlags().SetColor(false)
 }

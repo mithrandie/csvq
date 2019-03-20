@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -45,10 +46,10 @@ var echoTests = []struct {
 }
 
 func TestEcho(t *testing.T) {
-	filter := NewEmptyFilter()
+	filter := NewEmptyFilter(TestTx)
 
 	for _, v := range echoTests {
-		result, err := Echo(v.Expr, filter)
+		result, err := Echo(context.Background(), filter, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -92,10 +93,10 @@ var printTests = []struct {
 }
 
 func TestPrint(t *testing.T) {
-	filter := NewEmptyFilter()
+	filter := NewEmptyFilter(TestTx)
 
 	for _, v := range printTests {
-		result, err := Print(v.Expr, filter)
+		result, err := Print(context.Background(), filter, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -179,10 +180,10 @@ var printfTests = []struct {
 }
 
 func TestPrintf(t *testing.T) {
-	filter := NewEmptyFilter()
+	filter := NewEmptyFilter(TestTx)
 
 	for _, v := range printfTests {
-		result, err := Printf(v.Expr, filter)
+		result, err := Printf(context.Background(), filter, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -267,10 +268,10 @@ var sourceTests = []struct {
 }
 
 func TestSource(t *testing.T) {
-	filter := NewEmptyFilter()
+	filter := NewEmptyFilter(TestTx)
 
 	for _, v := range sourceTests {
-		result, err := Source(v.Expr, filter)
+		result, err := Source(context.Background(), filter, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -351,10 +352,10 @@ var parseExecuteStatementsTests = []struct {
 }
 
 func TestParseExecuteStatements(t *testing.T) {
-	filter := NewEmptyFilter()
+	filter := NewEmptyFilter(TestTx)
 
 	for _, v := range parseExecuteStatementsTests {
-		result, err := ParseExecuteStatements(v.Expr, filter)
+		result, err := ParseExecuteStatements(context.Background(), filter, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -612,11 +613,13 @@ var setFlagTests = []struct {
 }
 
 func TestSetFlag(t *testing.T) {
-	filter := NewEmptyFilter()
+	defer initFlag(TestTx.Flags)
+
+	filter := NewEmptyFilter(TestTx)
 
 	for _, v := range setFlagTests {
-		initCmdFlag()
-		err := SetFlag(v.Expr, filter)
+		initFlag(TestTx.Flags)
+		err := SetFlag(context.Background(), filter, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -630,7 +633,6 @@ func TestSetFlag(t *testing.T) {
 			continue
 		}
 	}
-	initCmdFlag()
 }
 
 var addFlagElementTests = []struct {
@@ -681,14 +683,15 @@ var addFlagElementTests = []struct {
 }
 
 func TestAddFlagElement(t *testing.T) {
-	filter := NewEmptyFilter()
+	defer initFlag(TestTx.Flags)
+
+	filter := NewEmptyFilter(TestTx)
 
 	for _, v := range addFlagElementTests {
-		initCmdFlag()
-		flags := cmd.GetFlags()
-		v.Init(flags)
+		initFlag(TestTx.Flags)
+		v.Init(TestTx.Flags)
 
-		err := AddFlagElement(v.Expr, filter)
+		err := AddFlagElement(context.Background(), filter, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -703,11 +706,10 @@ func TestAddFlagElement(t *testing.T) {
 		}
 
 		expect := v.Expect()
-		if !reflect.DeepEqual(flags, expect) {
-			t.Errorf("%s: result = %v, want %v", v.Name, flags, expect)
+		if !reflect.DeepEqual(TestTx.Flags, expect) {
+			t.Errorf("%s: result = %v, want %v", v.Name, TestTx.Flags, expect)
 		}
 	}
-	initCmdFlag()
 }
 
 var removeFlagElementTests = []struct {
@@ -788,14 +790,15 @@ var removeFlagElementTests = []struct {
 }
 
 func TestRemoveFlagElement(t *testing.T) {
-	filter := NewEmptyFilter()
+	defer initFlag(TestTx.Flags)
+
+	filter := NewEmptyFilter(TestTx)
 
 	for _, v := range removeFlagElementTests {
-		initCmdFlag()
-		flags := cmd.GetFlags()
-		v.Init(flags)
+		initFlag(TestTx.Flags)
+		v.Init(TestTx.Flags)
 
-		err := RemoveFlagElement(v.Expr, filter)
+		err := RemoveFlagElement(context.Background(), filter, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -810,11 +813,10 @@ func TestRemoveFlagElement(t *testing.T) {
 		}
 
 		expect := v.Expect()
-		if !reflect.DeepEqual(flags, expect) {
-			t.Errorf("%s: result = %v, want %v", v.Name, flags, expect)
+		if !reflect.DeepEqual(TestTx.Flags, expect) {
+			t.Errorf("%s: result = %v, want %v", v.Name, TestTx.Flags, expect)
 		}
 	}
-	initCmdFlag()
 }
 
 var showFlagTests = []struct {
@@ -1487,15 +1489,17 @@ var showFlagTests = []struct {
 }
 
 func TestShowFlag(t *testing.T) {
-	filter := NewEmptyFilter()
+	defer initFlag(TestTx.Flags)
+
+	filter := NewEmptyFilter(TestTx)
 
 	for _, v := range showFlagTests {
-		initCmdFlag()
-		cmd.GetFlags().SetColor(true)
+		initFlag(TestTx.Flags)
+		TestTx.Flags.SetColor(true)
 		for _, expr := range v.SetExprs {
-			SetFlag(expr, filter)
+			_ = SetFlag(context.Background(), filter, expr)
 		}
-		result, err := ShowFlag(v.Expr)
+		result, err := ShowFlag(TestTx.Flags, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1512,7 +1516,6 @@ func TestShowFlag(t *testing.T) {
 			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
 		}
 	}
-	initCmdFlag()
 }
 
 var showObjectsTests = []struct {
@@ -2001,7 +2004,7 @@ var showObjectsTests = []struct {
 			"         @@COUNT_FORMAT_CODE: (ignored) false\n" +
 			"                     @@COLOR: false\n" +
 			"                     @@QUIET: false\n" +
-			"                       @@CPU: " + strconv.Itoa(cmd.GetFlags().CPU) + "\n" +
+			"                       @@CPU: " + strconv.Itoa(TestTx.Flags.CPU) + "\n" +
 			"                     @@STATS: false\n" +
 			"\n",
 	},
@@ -2029,44 +2032,50 @@ var showObjectsTests = []struct {
 }
 
 func TestShowObjects(t *testing.T) {
-	initCmdFlag()
-	flags := cmd.GetFlags()
+	defer func() {
+		_ = TestTx.ReleaseResources()
+		TestTx.UncommittedViews.Clean()
+		initFlag(TestTx.Flags)
+	}()
 
 	for _, v := range showObjectsTests {
-		flags.Repository = v.Repository
-		flags.ImportFormat = v.ImportFormat
-		flags.Delimiter = ','
+		initFlag(TestTx.Flags)
+
+		TestTx.Flags.Repository = v.Repository
+		TestTx.Flags.ImportFormat = v.ImportFormat
+		TestTx.Flags.Delimiter = ','
 		if v.Delimiter != 0 {
-			flags.Delimiter = v.Delimiter
+			TestTx.Flags.Delimiter = v.Delimiter
 		}
-		flags.DelimiterPositions = v.DelimiterPositions
-		flags.SingleLine = v.SingleLine
-		flags.JsonQuery = v.JsonQuery
-		flags.WriteDelimiter = ','
+		TestTx.Flags.DelimiterPositions = v.DelimiterPositions
+		TestTx.Flags.SingleLine = v.SingleLine
+		TestTx.Flags.JsonQuery = v.JsonQuery
+		TestTx.Flags.WriteDelimiter = ','
 		if v.WriteDelimiter != 0 {
-			flags.WriteDelimiter = v.WriteDelimiter
+			TestTx.Flags.WriteDelimiter = v.WriteDelimiter
 		}
-		flags.WriteDelimiterPositions = v.WriteDelimiterPositions
-		flags.WriteAsSingleLine = v.WriteAsSingleLine
-		flags.Format = v.Format
-		ViewCache.Clean()
+		TestTx.Flags.WriteDelimiterPositions = v.WriteDelimiterPositions
+		TestTx.Flags.WriteAsSingleLine = v.WriteAsSingleLine
+		TestTx.Flags.Format = v.Format
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		if 0 < len(v.ViewCache) {
-			ViewCache = v.ViewCache
+			TestTx.CachedViews = v.ViewCache
 		}
 		if v.UncommittedViews == nil {
-			UncommittedViews = NewUncommittedViewMap()
+			TestTx.UncommittedViews = NewUncommittedViewMap()
 		} else {
-			UncommittedViews = v.UncommittedViews
+			TestTx.UncommittedViews = v.UncommittedViews
 		}
 
 		var filter *Filter
 		if v.Filter != nil {
 			filter = v.Filter
+			filter.Tx = TestTx
 		} else {
-			filter = NewEmptyFilter()
+			filter = NewEmptyFilter(TestTx)
 		}
 
-		result, err := ShowObjects(v.Expr, filter)
+		result, err := ShowObjects(filter, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2083,8 +2092,6 @@ func TestShowObjects(t *testing.T) {
 			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Expect)
 		}
 	}
-	ReleaseResources()
-	UncommittedViews.Clean()
 }
 
 var showFieldsTests = []struct {
@@ -2327,29 +2334,35 @@ func calcShowRuninfoWidth(wd string) int {
 }
 
 func TestShowFields(t *testing.T) {
-	initCmdFlag()
-	flags := cmd.GetFlags()
-	flags.Repository = TestDir
+	defer func() {
+		_ = TestTx.ReleaseResources()
+		TestTx.UncommittedViews.Clean()
+		initFlag(TestTx.Flags)
+	}()
+
+	initFlag(TestTx.Flags)
+	TestTx.Flags.Repository = TestDir
 
 	for _, v := range showFieldsTests {
-		ViewCache.Clean()
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		if 0 < len(v.ViewCache) {
-			ViewCache = v.ViewCache
+			TestTx.CachedViews = v.ViewCache
 		}
 		if v.UncommittedViews == nil {
-			UncommittedViews = NewUncommittedViewMap()
+			TestTx.UncommittedViews = NewUncommittedViewMap()
 		} else {
-			UncommittedViews = v.UncommittedViews
+			TestTx.UncommittedViews = v.UncommittedViews
 		}
 
 		var filter *Filter
 		if v.Filter != nil {
 			filter = v.Filter
+			filter.Tx = TestTx
 		} else {
-			filter = NewEmptyFilter()
+			filter = NewEmptyFilter(TestTx)
 		}
 
-		result, err := ShowFields(v.Expr, filter)
+		result, err := ShowFields(context.Background(), filter, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2366,8 +2379,6 @@ func TestShowFields(t *testing.T) {
 			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Expect)
 		}
 	}
-	ReleaseResources()
-	UncommittedViews.Clean()
 }
 
 var setEnvVarTests = []struct {
@@ -2419,10 +2430,10 @@ var setEnvVarTests = []struct {
 }
 
 func TestSetEnvVar(t *testing.T) {
-	filter := NewEmptyFilter()
+	filter := NewEmptyFilter(TestTx)
 
 	for _, v := range setEnvVarTests {
-		err := SetEnvVar(v.Expr, filter)
+		err := SetEnvVar(context.Background(), filter, v.Expr)
 
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -2643,10 +2654,10 @@ func TestSyntax(t *testing.T) {
 		},
 	}
 
-	filter := NewEmptyFilter()
+	filter := NewEmptyFilter(TestTx)
 
 	for _, v := range syntaxTests {
-		result := Syntax(v.Expr, filter)
+		result := Syntax(context.Background(), filter, v.Expr)
 		if result != v.Expect {
 			t.Errorf("result = %s, want %s for %v", result, v.Expect, v.Expr)
 		}

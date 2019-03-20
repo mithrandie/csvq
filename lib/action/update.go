@@ -119,13 +119,13 @@ func PickVersionNumber(s string) string {
 	return s
 }
 
-func CheckUpdate() error {
+func CheckUpdate(proc *query.Processor) error {
 	msg, err := CheckForUpdates(NewClient(), runtime.GOOS, runtime.GOARCH)
 	if err != nil {
 		return err
 	}
 
-	query.Log(msg, false)
+	proc.Log(msg, false)
 	return nil
 }
 

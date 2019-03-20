@@ -28,20 +28,20 @@ var RuntimeInformatinList = []string{
 	VersionInformation,
 }
 
-func GetRuntimeInformation(expr parser.RuntimeInformation) (value.Primary, error) {
+func GetRuntimeInformation(tx *Transaction, expr parser.RuntimeInformation) (value.Primary, error) {
 	var p value.Primary
 
 	switch strings.ToUpper(expr.Name) {
 	case UncommittedInformation:
-		p = value.NewBoolean(!UncommittedViews.IsEmpty())
+		p = value.NewBoolean(!tx.UncommittedViews.IsEmpty())
 	case CreatedInformation:
-		p = value.NewInteger(int64(UncommittedViews.CountCreatedTables()))
+		p = value.NewInteger(int64(tx.UncommittedViews.CountCreatedTables()))
 	case UpdatedInformation:
-		p = value.NewInteger(int64(UncommittedViews.CountUpdatedTables()))
+		p = value.NewInteger(int64(tx.UncommittedViews.CountUpdatedTables()))
 	case UpdatedViewsInformation:
-		p = value.NewInteger(int64(UncommittedViews.CountUpdatedViews()))
+		p = value.NewInteger(int64(tx.UncommittedViews.CountUpdatedViews()))
 	case LoadedTablesInformation:
-		p = value.NewInteger(int64(len(ViewCache)))
+		p = value.NewInteger(int64(len(tx.CachedViews)))
 	case WorkingDirectory:
 		wd, err := os.Getwd()
 		if err != nil {

@@ -1,9 +1,12 @@
 package action
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/mithrandie/csvq/lib/file"
 
 	"github.com/mithrandie/csvq/lib/query"
 )
@@ -42,28 +45,28 @@ var calcTests = []struct {
 }
 
 func TestCalc(t *testing.T) {
+	tx, _ := query.NewTransaction(context.Background(), file.DefaultWaitTimeout, file.DefaultRetryDelay, query.NewSession())
+
 	for _, v := range calcTests {
-		query.ViewCache.Clean()
+		_ = tx.CachedViews.Clean(tx.FileContainer)
 
 		var oldStdin *os.File
 		if 0 < len(v.Stdin) {
 			oldStdin = os.Stdin
 			r, w, _ := os.Pipe()
-			w.WriteString(v.Stdin)
-			w.Close()
+			_, _ = w.WriteString(v.Stdin)
+			_ = w.Close()
 			os.Stdin = r
 		}
-		oldStdout := query.Stdout
 		r, w, _ := os.Pipe()
-		query.Stdout = w
+		tx.Session.Stdout = w
 
-		err := Calc(v.Input)
+		err := Calc(query.NewProcessor(tx), v.Input)
 
 		if 0 < len(v.Stdin) {
 			os.Stdin = oldStdin
 		}
-		w.Close()
-		query.Stdout = oldStdout
+		_ = w.Close()
 		stdout, _ := ioutil.ReadAll(r)
 
 		if err != nil {

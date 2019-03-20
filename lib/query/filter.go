@@ -2,6 +2,7 @@ package query
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"strings"
 	"time"
@@ -23,6 +24,8 @@ type FilterRecord struct {
 }
 
 type Filter struct {
+	Tx *Transaction
+
 	Records []FilterRecord
 
 	Variables VariableScopes
@@ -48,8 +51,9 @@ func (c *ContainsSubstitusion) Error() string {
 	return "contains substitusion"
 }
 
-func NewFilter(variableScopes VariableScopes, tempViewScopes TemporaryViewScopes, cursorScopes CursorScopes, functionScopes UserDefinedFunctionScopes) *Filter {
+func NewFilter(tx *Transaction, variableScopes VariableScopes, tempViewScopes TemporaryViewScopes, cursorScopes CursorScopes, functionScopes UserDefinedFunctionScopes) *Filter {
 	return &Filter{
+		Tx:        tx,
 		Variables: variableScopes,
 		TempViews: tempViewScopes,
 		Cursors:   cursorScopes,
@@ -57,8 +61,9 @@ func NewFilter(variableScopes VariableScopes, tempViewScopes TemporaryViewScopes
 	}
 }
 
-func NewEmptyFilter() *Filter {
+func NewEmptyFilter(tx *Transaction) *Filter {
 	return NewFilter(
+		tx,
 		VariableScopes{NewVariableMap()},
 		TemporaryViewScopes{{}},
 		CursorScopes{{}},
@@ -66,8 +71,9 @@ func NewEmptyFilter() *Filter {
 	)
 }
 
-func NewFilterForRecord(view *View, recordIndex int, parentFilter *Filter) *Filter {
+func NewFilterForRecord(parentFilter *Filter, view *View, recordIndex int) *Filter {
 	f := &Filter{
+		Tx: parentFilter.Tx,
 		Records: []FilterRecord{
 			{
 				View:                  view,
@@ -80,8 +86,9 @@ func NewFilterForRecord(view *View, recordIndex int, parentFilter *Filter) *Filt
 	return f
 }
 
-func NewFilterForSequentialEvaluation(view *View, parentFilter *Filter) *Filter {
+func NewFilterForSequentialEvaluation(parentFilter *Filter, view *View) *Filter {
 	f := &Filter{
+		Tx: parentFilter.Tx,
 		Records: []FilterRecord{
 			{
 				View:                  view,
@@ -107,6 +114,7 @@ func (f *Filter) Merge(filter *Filter) {
 
 func (f *Filter) CreateChildScope() *Filter {
 	child := NewFilter(
+		f.Tx,
 		append(VariableScopes{NewVariableMap()}, f.Variables...),
 		append(TemporaryViewScopes{{}}, f.TempViews...),
 		append(CursorScopes{{}}, f.Cursors...),
@@ -134,6 +142,7 @@ func (f *Filter) ResetCurrentScope() {
 
 func (f *Filter) CreateNode() *Filter {
 	filter := &Filter{
+		Tx:               f.Tx,
 		Records:          f.Records,
 		Variables:        f.Variables,
 		TempViews:        f.TempViews,
@@ -153,11 +162,15 @@ func (f *Filter) CreateNode() *Filter {
 	return filter
 }
 
-func (f *Filter) LoadInlineTable(clause parser.WithClause) error {
-	return f.InlineTables.Load(clause, f)
+func (f *Filter) LoadInlineTable(ctx context.Context, clause parser.WithClause) error {
+	return f.InlineTables.Load(ctx, f, clause)
 }
 
-func (f *Filter) Evaluate(expr parser.QueryExpression) (value.Primary, error) {
+func (f *Filter) Evaluate(ctx context.Context, expr parser.QueryExpression) (value.Primary, error) {
+	if ctx.Err() != nil {
+		return nil, NewContextIsDone(ctx.Err().Error())
+	}
+
 	if expr == nil {
 		return value.NewTernary(ternary.TRUE), nil
 	}
@@ -169,56 +182,56 @@ func (f *Filter) Evaluate(expr parser.QueryExpression) (value.Primary, error) {
 	case parser.PrimitiveType:
 		return expr.(parser.PrimitiveType).Value, nil
 	case parser.Parentheses:
-		val, err = f.Evaluate(expr.(parser.Parentheses).Expr)
+		val, err = f.Evaluate(ctx, expr.(parser.Parentheses).Expr)
 	case parser.FieldReference, parser.ColumnNumber:
 		val, err = f.evalFieldReference(expr)
 	case parser.Arithmetic:
-		val, err = f.evalArithmetic(expr.(parser.Arithmetic))
+		val, err = f.evalArithmetic(ctx, expr.(parser.Arithmetic))
 	case parser.UnaryArithmetic:
-		val, err = f.evalUnaryArithmetic(expr.(parser.UnaryArithmetic))
+		val, err = f.evalUnaryArithmetic(ctx, expr.(parser.UnaryArithmetic))
 	case parser.Concat:
-		val, err = f.evalConcat(expr.(parser.Concat))
+		val, err = f.evalConcat(ctx, expr.(parser.Concat))
 	case parser.Comparison:
-		val, err = f.evalComparison(expr.(parser.Comparison))
+		val, err = f.evalComparison(ctx, expr.(parser.Comparison))
 	case parser.Is:
-		val, err = f.evalIs(expr.(parser.Is))
+		val, err = f.evalIs(ctx, expr.(parser.Is))
 	case parser.Between:
-		val, err = f.evalBetween(expr.(parser.Between))
+		val, err = f.evalBetween(ctx, expr.(parser.Between))
 	case parser.Like:
-		val, err = f.evalLike(expr.(parser.Like))
+		val, err = f.evalLike(ctx, expr.(parser.Like))
 	case parser.In:
-		val, err = f.evalIn(expr.(parser.In))
+		val, err = f.evalIn(ctx, expr.(parser.In))
 	case parser.Any:
-		val, err = f.evalAny(expr.(parser.Any))
+		val, err = f.evalAny(ctx, expr.(parser.Any))
 	case parser.All:
-		val, err = f.evalAll(expr.(parser.All))
+		val, err = f.evalAll(ctx, expr.(parser.All))
 	case parser.Exists:
-		val, err = f.evalExists(expr.(parser.Exists))
+		val, err = f.evalExists(ctx, expr.(parser.Exists))
 	case parser.Subquery:
-		val, err = f.evalSubqueryForValue(expr.(parser.Subquery))
+		val, err = f.evalSubqueryForValue(ctx, expr.(parser.Subquery))
 	case parser.Function:
-		val, err = f.evalFunction(expr.(parser.Function))
+		val, err = f.evalFunction(ctx, expr.(parser.Function))
 	case parser.AggregateFunction:
-		val, err = f.evalAggregateFunction(expr.(parser.AggregateFunction))
+		val, err = f.evalAggregateFunction(ctx, expr.(parser.AggregateFunction))
 	case parser.ListFunction:
-		val, err = f.evalListFunction(expr.(parser.ListFunction))
+		val, err = f.evalListFunction(ctx, expr.(parser.ListFunction))
 	case parser.CaseExpr:
-		val, err = f.evalCaseExpr(expr.(parser.CaseExpr))
+		val, err = f.evalCaseExpr(ctx, expr.(parser.CaseExpr))
 	case parser.Logic:
-		val, err = f.evalLogic(expr.(parser.Logic))
+		val, err = f.evalLogic(ctx, expr.(parser.Logic))
 	case parser.UnaryLogic:
-		val, err = f.evalUnaryLogic(expr.(parser.UnaryLogic))
+		val, err = f.evalUnaryLogic(ctx, expr.(parser.UnaryLogic))
 	case parser.Variable:
 		val, err = f.Variables.Get(expr.(parser.Variable))
 	case parser.EnvironmentVariable:
 		val = value.NewString(os.Getenv(expr.(parser.EnvironmentVariable).Name))
 	case parser.RuntimeInformation:
-		val, err = GetRuntimeInformation(expr.(parser.RuntimeInformation))
+		val, err = GetRuntimeInformation(f.Tx, expr.(parser.RuntimeInformation))
 	case parser.VariableSubstitution:
 		if f.checkAvailableParallelRoutine {
 			err = &ContainsSubstitusion{}
 		} else {
-			val, err = f.Variables.Substitute(expr.(parser.VariableSubstitution), f)
+			val, err = f.Variables.Substitute(ctx, f, expr.(parser.VariableSubstitution))
 		}
 	case parser.CursorStatus:
 		val, err = f.evalCursorStatus(expr.(parser.CursorStatus))
@@ -231,30 +244,31 @@ func (f *Filter) Evaluate(expr parser.QueryExpression) (value.Primary, error) {
 	return val, err
 }
 
-func (f *Filter) EvaluateSequentially(fn func(*Filter, int) error, expr interface{}) error {
-	if expr == nil || f.CanUseMultithreading(expr) {
+func (f *Filter) EvaluateSequentially(ctx context.Context, fn func(*Filter, int) error, expr interface{}) error {
+	if expr == nil || f.CanUseMultithreading(ctx, expr) {
 		header := f.Records[0].View.Header
 		recordSet := f.Records[0].View.RecordSet
 		isGrouped := f.Records[0].View.isGrouped
 		f.Records = f.Records[1:]
 
-		gm := NewGoroutineTaskManager(len(recordSet), -1)
+		gm := NewGoroutineTaskManager(len(recordSet), -1, f.Tx.Flags.CPU)
 		for i := 0; i < gm.Number; i++ {
 			gm.Add()
 			go func(thIdx int) {
 				start, end := gm.RecordRange(thIdx)
 				filter := NewFilterForSequentialEvaluation(
+					f,
 					&View{
+						Tx:        f.Tx,
 						Header:    header,
 						RecordSet: recordSet[start:end],
 						isGrouped: isGrouped,
 					},
-					f,
 				)
 				filter.init()
 
 				for filter.next() {
-					if gm.HasError() {
+					if gm.HasError() || ctx.Err() != nil {
 						break
 					}
 
@@ -271,6 +285,9 @@ func (f *Filter) EvaluateSequentially(fn func(*Filter, int) error, expr interfac
 
 		if gm.HasError() {
 			return gm.Err()
+		}
+		if ctx.Err() != nil {
+			return NewContextIsDone(ctx.Err().Error())
 		}
 	} else {
 		f.init()
@@ -300,7 +317,7 @@ func (f *Filter) currentIndex() int {
 	return f.Records[0].RecordIndex
 }
 
-func (f *Filter) CanUseMultithreading(expr interface{}) bool {
+func (f *Filter) CanUseMultithreading(ctx context.Context, expr interface{}) bool {
 	if 0 < len(f.Records) && f.Records[0].View != nil && 0 < f.Records[0].View.Len() {
 		f.init()
 		f.checkAvailableParallelRoutine = true
@@ -310,7 +327,7 @@ func (f *Filter) CanUseMultithreading(expr interface{}) bool {
 		f.next()
 
 		if qe, ok := expr.(parser.QueryExpression); ok {
-			_, err := f.Evaluate(qe)
+			_, err := f.Evaluate(ctx, qe)
 
 			if err != nil {
 				if _, ok := err.(*ContainsSubstitusion); ok {
@@ -319,7 +336,7 @@ func (f *Filter) CanUseMultithreading(expr interface{}) bool {
 			}
 		} else if elist, ok := expr.([]parser.QueryExpression); ok {
 			for _, expr := range elist {
-				_, err := f.Evaluate(expr)
+				_, err := f.Evaluate(ctx, expr)
 				if err != nil {
 					if _, ok := err.(*ContainsSubstitusion); ok {
 						return false
@@ -365,8 +382,8 @@ func (f *Filter) evalFieldReference(expr parser.QueryExpression) (value.Primary,
 	return p, nil
 }
 
-func (f *Filter) evalArithmetic(expr parser.Arithmetic) (value.Primary, error) {
-	lhs, err := f.Evaluate(expr.LHS)
+func (f *Filter) evalArithmetic(ctx context.Context, expr parser.Arithmetic) (value.Primary, error) {
+	lhs, err := f.Evaluate(ctx, expr.LHS)
 	if err != nil {
 		return nil, err
 	}
@@ -374,7 +391,7 @@ func (f *Filter) evalArithmetic(expr parser.Arithmetic) (value.Primary, error) {
 		return value.NewNull(), nil
 	}
 
-	rhs, err := f.Evaluate(expr.RHS)
+	rhs, err := f.Evaluate(ctx, expr.RHS)
 	if err != nil {
 		return nil, err
 	}
@@ -382,8 +399,8 @@ func (f *Filter) evalArithmetic(expr parser.Arithmetic) (value.Primary, error) {
 	return Calculate(lhs, rhs, expr.Operator), nil
 }
 
-func (f *Filter) evalUnaryArithmetic(expr parser.UnaryArithmetic) (value.Primary, error) {
-	ope, err := f.Evaluate(expr.Operand)
+func (f *Filter) evalUnaryArithmetic(ctx context.Context, expr parser.UnaryArithmetic) (value.Primary, error) {
+	ope, err := f.Evaluate(ctx, expr.Operand)
 	if err != nil {
 		return nil, err
 	}
@@ -412,10 +429,10 @@ func (f *Filter) evalUnaryArithmetic(expr parser.UnaryArithmetic) (value.Primary
 	return value.ParseFloat64(val), nil
 }
 
-func (f *Filter) evalConcat(expr parser.Concat) (value.Primary, error) {
+func (f *Filter) evalConcat(ctx context.Context, expr parser.Concat) (value.Primary, error) {
 	items := make([]string, len(expr.Items))
 	for i, v := range expr.Items {
-		s, err := f.Evaluate(v)
+		s, err := f.Evaluate(ctx, v)
 		if err != nil {
 			return nil, err
 		}
@@ -428,10 +445,10 @@ func (f *Filter) evalConcat(expr parser.Concat) (value.Primary, error) {
 	return value.NewString(strings.Join(items, "")), nil
 }
 
-func (f *Filter) evalComparison(expr parser.Comparison) (value.Primary, error) {
+func (f *Filter) evalComparison(ctx context.Context, expr parser.Comparison) (value.Primary, error) {
 	var t ternary.Value
 
-	lhs, err := f.evalRowValue(expr.LHS)
+	lhs, err := f.evalRowValue(ctx, expr.LHS)
 	if err != nil {
 		return nil, err
 	}
@@ -446,19 +463,19 @@ func (f *Filter) evalComparison(expr parser.Comparison) (value.Primary, error) {
 			return value.NewTernary(ternary.UNKNOWN), nil
 		}
 
-		rhs, err := f.Evaluate(expr.RHS)
+		rhs, err := f.Evaluate(ctx, expr.RHS)
 		if err != nil {
 			return nil, err
 		}
 
-		t = value.Compare(lhsVal, rhs, expr.Operator)
+		t = value.Compare(lhsVal, rhs, expr.Operator, f.Tx.Flags.DatetimeFormat)
 	} else {
-		rhs, err := f.evalRowValue(expr.RHS.(parser.RowValue))
+		rhs, err := f.evalRowValue(ctx, expr.RHS.(parser.RowValue))
 		if err != nil {
 			return nil, err
 		}
 
-		t, err = value.CompareRowValues(lhs, rhs, expr.Operator)
+		t, err = value.CompareRowValues(lhs, rhs, expr.Operator, f.Tx.Flags.DatetimeFormat)
 		if err != nil {
 			return nil, NewRowValueLengthInComparisonError(expr.RHS.(parser.RowValue), len(lhs))
 		}
@@ -467,12 +484,12 @@ func (f *Filter) evalComparison(expr parser.Comparison) (value.Primary, error) {
 	return value.NewTernary(t), nil
 }
 
-func (f *Filter) evalIs(expr parser.Is) (value.Primary, error) {
-	lhs, err := f.Evaluate(expr.LHS)
+func (f *Filter) evalIs(ctx context.Context, expr parser.Is) (value.Primary, error) {
+	lhs, err := f.Evaluate(ctx, expr.LHS)
 	if err != nil {
 		return nil, err
 	}
-	rhs, err := f.Evaluate(expr.RHS)
+	rhs, err := f.Evaluate(ctx, expr.RHS)
 	if err != nil {
 		return nil, err
 	}
@@ -484,10 +501,10 @@ func (f *Filter) evalIs(expr parser.Is) (value.Primary, error) {
 	return value.NewTernary(t), nil
 }
 
-func (f *Filter) evalBetween(expr parser.Between) (value.Primary, error) {
+func (f *Filter) evalBetween(ctx context.Context, expr parser.Between) (value.Primary, error) {
 	var t ternary.Value
 
-	lhs, err := f.evalRowValue(expr.LHS)
+	lhs, err := f.evalRowValue(ctx, expr.LHS)
 	if err != nil {
 		return nil, err
 	}
@@ -502,29 +519,29 @@ func (f *Filter) evalBetween(expr parser.Between) (value.Primary, error) {
 			return value.NewTernary(ternary.UNKNOWN), nil
 		}
 
-		low, err := f.Evaluate(expr.Low)
+		low, err := f.Evaluate(ctx, expr.Low)
 		if err != nil {
 			return nil, err
 		}
 
-		lowResult := value.GreaterOrEqual(lhsVal, low)
+		lowResult := value.GreaterOrEqual(lhsVal, low, f.Tx.Flags.DatetimeFormat)
 		if lowResult == ternary.FALSE {
 			t = ternary.FALSE
 		} else {
-			high, err := f.Evaluate(expr.High)
+			high, err := f.Evaluate(ctx, expr.High)
 			if err != nil {
 				return nil, err
 			}
 
-			highResult := value.LessOrEqual(lhsVal, high)
+			highResult := value.LessOrEqual(lhsVal, high, f.Tx.Flags.DatetimeFormat)
 			t = ternary.And(lowResult, highResult)
 		}
 	} else {
-		low, err := f.evalRowValue(expr.Low.(parser.RowValue))
+		low, err := f.evalRowValue(ctx, expr.Low.(parser.RowValue))
 		if err != nil {
 			return nil, err
 		}
-		lowResult, err := value.CompareRowValues(lhs, low, ">=")
+		lowResult, err := value.CompareRowValues(lhs, low, ">=", f.Tx.Flags.DatetimeFormat)
 		if err != nil {
 			return nil, NewRowValueLengthInComparisonError(expr.Low.(parser.RowValue), len(lhs))
 		}
@@ -532,12 +549,12 @@ func (f *Filter) evalBetween(expr parser.Between) (value.Primary, error) {
 		if lowResult == ternary.FALSE {
 			t = ternary.FALSE
 		} else {
-			high, err := f.evalRowValue(expr.High.(parser.RowValue))
+			high, err := f.evalRowValue(ctx, expr.High.(parser.RowValue))
 			if err != nil {
 				return nil, err
 			}
 
-			highResult, err := value.CompareRowValues(lhs, high, "<=")
+			highResult, err := value.CompareRowValues(lhs, high, "<=", f.Tx.Flags.DatetimeFormat)
 			if err != nil {
 				return nil, NewRowValueLengthInComparisonError(expr.High.(parser.RowValue), len(lhs))
 			}
@@ -552,32 +569,32 @@ func (f *Filter) evalBetween(expr parser.Between) (value.Primary, error) {
 	return value.NewTernary(t), nil
 }
 
-func (f *Filter) valuesForRowValueListComparison(lhs parser.QueryExpression, values parser.QueryExpression) (value.RowValue, []value.RowValue, error) {
+func (f *Filter) valuesForRowValueListComparison(ctx context.Context, lhs parser.QueryExpression, values parser.QueryExpression) (value.RowValue, []value.RowValue, error) {
 	var rowValue value.RowValue
 	var list []value.RowValue
 	var err error
 
-	rowValue, err = f.evalRowValue(lhs)
+	rowValue, err = f.evalRowValue(ctx, lhs)
 	if err != nil {
 		return rowValue, list, err
 	}
 
 	if rowValue != nil && 1 < len(rowValue) {
-		list, err = f.evalRowValueList(values)
+		list, err = f.evalRowValueList(ctx, values)
 	} else {
-		list, err = f.evalArray(values)
+		list, err = f.evalArray(ctx, values)
 	}
 
 	return rowValue, list, err
 }
 
-func (f *Filter) evalIn(expr parser.In) (value.Primary, error) {
-	val, list, err := f.valuesForRowValueListComparison(expr.LHS, expr.Values)
+func (f *Filter) evalIn(ctx context.Context, expr parser.In) (value.Primary, error) {
+	val, list, err := f.valuesForRowValueListComparison(ctx, expr.LHS, expr.Values)
 	if err != nil {
 		return nil, err
 	}
 
-	t, err := Any(val, list, "=")
+	t, err := Any(val, list, "=", f.Tx.Flags.DatetimeFormat)
 	if err != nil {
 		if subquery, ok := expr.Values.(parser.Subquery); ok {
 			return nil, NewSelectFieldLengthInComparisonError(subquery, len(val))
@@ -596,13 +613,13 @@ func (f *Filter) evalIn(expr parser.In) (value.Primary, error) {
 	return value.NewTernary(t), nil
 }
 
-func (f *Filter) evalAny(expr parser.Any) (value.Primary, error) {
-	val, list, err := f.valuesForRowValueListComparison(expr.LHS, expr.Values)
+func (f *Filter) evalAny(ctx context.Context, expr parser.Any) (value.Primary, error) {
+	val, list, err := f.valuesForRowValueListComparison(ctx, expr.LHS, expr.Values)
 	if err != nil {
 		return nil, err
 	}
 
-	t, err := Any(val, list, expr.Operator)
+	t, err := Any(val, list, expr.Operator, f.Tx.Flags.DatetimeFormat)
 	if err != nil {
 		if subquery, ok := expr.Values.(parser.Subquery); ok {
 			return nil, NewSelectFieldLengthInComparisonError(subquery, len(val))
@@ -617,13 +634,13 @@ func (f *Filter) evalAny(expr parser.Any) (value.Primary, error) {
 	return value.NewTernary(t), nil
 }
 
-func (f *Filter) evalAll(expr parser.All) (value.Primary, error) {
-	val, list, err := f.valuesForRowValueListComparison(expr.LHS, expr.Values)
+func (f *Filter) evalAll(ctx context.Context, expr parser.All) (value.Primary, error) {
+	val, list, err := f.valuesForRowValueListComparison(ctx, expr.LHS, expr.Values)
 	if err != nil {
 		return nil, err
 	}
 
-	t, err := All(val, list, expr.Operator)
+	t, err := All(val, list, expr.Operator, f.Tx.Flags.DatetimeFormat)
 	if err != nil {
 		if subquery, ok := expr.Values.(parser.Subquery); ok {
 			return nil, NewSelectFieldLengthInComparisonError(subquery, len(val))
@@ -638,12 +655,12 @@ func (f *Filter) evalAll(expr parser.All) (value.Primary, error) {
 	return value.NewTernary(t), nil
 }
 
-func (f *Filter) evalLike(expr parser.Like) (value.Primary, error) {
-	lhs, err := f.Evaluate(expr.LHS)
+func (f *Filter) evalLike(ctx context.Context, expr parser.Like) (value.Primary, error) {
+	lhs, err := f.Evaluate(ctx, expr.LHS)
 	if err != nil {
 		return nil, err
 	}
-	pattern, err := f.Evaluate(expr.Pattern)
+	pattern, err := f.Evaluate(ctx, expr.Pattern)
 	if err != nil {
 		return nil, err
 	}
@@ -655,8 +672,8 @@ func (f *Filter) evalLike(expr parser.Like) (value.Primary, error) {
 	return value.NewTernary(t), nil
 }
 
-func (f *Filter) evalExists(expr parser.Exists) (value.Primary, error) {
-	view, err := Select(expr.Query.Query, f)
+func (f *Filter) evalExists(ctx context.Context, expr parser.Exists) (value.Primary, error) {
+	view, err := Select(ctx, f, expr.Query.Query)
 	if err != nil {
 		return nil, err
 	}
@@ -666,8 +683,8 @@ func (f *Filter) evalExists(expr parser.Exists) (value.Primary, error) {
 	return value.NewTernary(ternary.TRUE), nil
 }
 
-func (f *Filter) evalSubqueryForValue(expr parser.Subquery) (value.Primary, error) {
-	view, err := Select(expr.Query, f)
+func (f *Filter) evalSubqueryForValue(ctx context.Context, expr parser.Subquery) (value.Primary, error) {
+	view, err := Select(ctx, f, expr.Query)
 	if err != nil {
 		return nil, err
 	}
@@ -687,10 +704,10 @@ func (f *Filter) evalSubqueryForValue(expr parser.Subquery) (value.Primary, erro
 	return view.RecordSet[0][0].Value(), nil
 }
 
-func (f *Filter) evalFunction(expr parser.Function) (value.Primary, error) {
+func (f *Filter) evalFunction(ctx context.Context, expr parser.Function) (value.Primary, error) {
 	name := strings.ToUpper(expr.Name)
 
-	if _, ok := Functions[name]; !ok && name != "NOW" && name != "JSON_OBJECT" {
+	if _, ok := Functions[name]; !ok && name != "CALL" && name != "NOW" && name != "JSON_OBJECT" {
 		udfn, err := f.Functions.Get(expr, name)
 		if err != nil {
 			return nil, NewFunctionNotExistError(expr, expr.Name)
@@ -701,7 +718,7 @@ func (f *Filter) evalFunction(expr parser.Function) (value.Primary, error) {
 				Name:     expr.Name,
 				Args:     expr.Args,
 			}
-			return f.evalAggregateFunction(aggrdcl)
+			return f.evalAggregateFunction(ctx, aggrdcl)
 		}
 
 		if err = udfn.CheckArgsLen(expr, expr.Name, len(expr.Args)); err != nil {
@@ -710,32 +727,34 @@ func (f *Filter) evalFunction(expr parser.Function) (value.Primary, error) {
 	}
 
 	if name == "JSON_OBJECT" {
-		return JsonObject(expr, f)
+		return JsonObject(ctx, f, expr)
 	}
 
 	args := make([]value.Primary, len(expr.Args))
 	for i, v := range expr.Args {
-		arg, err := f.Evaluate(v)
+		arg, err := f.Evaluate(ctx, v)
 		if err != nil {
 			return nil, err
 		}
 		args[i] = arg
 	}
 
-	if name == "NOW" {
-		return Now(expr, args, f)
+	if name == "CALL" {
+		return Call(ctx, expr, args)
+	} else if name == "NOW" {
+		return Now(f, expr, args)
 	}
 
 	if fn, ok := Functions[name]; ok {
-		return fn(expr, args)
+		return fn(expr, args, f.Tx.Flags)
 	}
 
 	udfn, _ := f.Functions.Get(expr, name)
-	return udfn.Execute(args, f)
+	return udfn.Execute(ctx, f, args)
 }
 
-func (f *Filter) evalAggregateFunction(expr parser.AggregateFunction) (value.Primary, error) {
-	var aggfn func([]value.Primary) value.Primary
+func (f *Filter) evalAggregateFunction(ctx context.Context, expr parser.AggregateFunction) (value.Primary, error) {
+	var aggfn func([]value.Primary, *cmd.Flags) value.Primary
 	var udfn *UserDefinedFunction
 	var useUserDefined bool
 	var err error
@@ -780,7 +799,7 @@ func (f *Filter) evalAggregateFunction(expr parser.AggregateFunction) (value.Pri
 	}
 
 	view := NewViewFromGroupedRecord(f.Records[0])
-	list, err := view.ListValuesForAggregateFunctions(expr, listExpr, expr.IsDistinct(), f)
+	list, err := view.ListValuesForAggregateFunctions(ctx, expr, listExpr, expr.IsDistinct(), f)
 	if err != nil {
 		return nil, err
 	}
@@ -789,19 +808,19 @@ func (f *Filter) evalAggregateFunction(expr parser.AggregateFunction) (value.Pri
 		argsExprs := expr.Args[1:]
 		args := make([]value.Primary, len(argsExprs))
 		for i, v := range argsExprs {
-			arg, err := f.Evaluate(v)
+			arg, err := f.Evaluate(ctx, v)
 			if err != nil {
 				return nil, err
 			}
 			args[i] = arg
 		}
-		return udfn.ExecuteAggregate(list, args, f)
+		return udfn.ExecuteAggregate(ctx, f, list, args)
 	}
 
-	return aggfn(list), nil
+	return aggfn(list, f.Tx.Flags), nil
 }
 
-func (f *Filter) evalListFunction(expr parser.ListFunction) (value.Primary, error) {
+func (f *Filter) evalListFunction(ctx context.Context, expr parser.ListFunction) (value.Primary, error) {
 	var separator string
 	var err error
 
@@ -809,7 +828,7 @@ func (f *Filter) evalListFunction(expr parser.ListFunction) (value.Primary, erro
 	case "JSON_AGG":
 		err = f.checkArgsForJsonAgg(expr)
 	default: // LISTAGG
-		separator, err = f.checkArgsForListFunction(expr)
+		separator, err = f.checkArgsForListFunction(ctx, expr)
 	}
 
 	if err != nil {
@@ -826,13 +845,13 @@ func (f *Filter) evalListFunction(expr parser.ListFunction) (value.Primary, erro
 
 	view := NewViewFromGroupedRecord(f.Records[0])
 	if expr.OrderBy != nil {
-		err := view.OrderBy(expr.OrderBy.(parser.OrderByClause))
+		err := view.OrderBy(ctx, expr.OrderBy.(parser.OrderByClause))
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	list, err := view.ListValuesForAggregateFunctions(expr, expr.Args[0], expr.IsDistinct(), f)
+	list, err := view.ListValuesForAggregateFunctions(ctx, expr, expr.Args[0], expr.IsDistinct(), f)
 	if err != nil {
 		return nil, err
 	}
@@ -844,7 +863,7 @@ func (f *Filter) evalListFunction(expr parser.ListFunction) (value.Primary, erro
 	return ListAgg(list, separator), nil
 }
 
-func (f *Filter) checkArgsForListFunction(expr parser.ListFunction) (string, error) {
+func (f *Filter) checkArgsForListFunction(ctx context.Context, expr parser.ListFunction) (string, error) {
 	var separator string
 
 	if expr.Args == nil || 2 < len(expr.Args) {
@@ -852,7 +871,7 @@ func (f *Filter) checkArgsForListFunction(expr parser.ListFunction) (string, err
 	}
 
 	if len(expr.Args) == 2 {
-		p, err := f.Evaluate(expr.Args[1])
+		p, err := f.Evaluate(ctx, expr.Args[1])
 		if err != nil {
 			return separator, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be a string")
 		}
@@ -872,11 +891,11 @@ func (f *Filter) checkArgsForJsonAgg(expr parser.ListFunction) error {
 	return nil
 }
 
-func (f *Filter) evalCaseExpr(expr parser.CaseExpr) (value.Primary, error) {
+func (f *Filter) evalCaseExpr(ctx context.Context, expr parser.CaseExpr) (value.Primary, error) {
 	var val value.Primary
 	var err error
 	if expr.Value != nil {
-		val, err = f.Evaluate(expr.Value)
+		val, err = f.Evaluate(ctx, expr.Value)
 		if err != nil {
 			return nil, err
 		}
@@ -886,7 +905,7 @@ func (f *Filter) evalCaseExpr(expr parser.CaseExpr) (value.Primary, error) {
 		when := v.(parser.CaseExprWhen)
 		var t ternary.Value
 
-		cond, err := f.Evaluate(when.Condition)
+		cond, err := f.Evaluate(ctx, when.Condition)
 		if err != nil {
 			return nil, err
 		}
@@ -894,11 +913,11 @@ func (f *Filter) evalCaseExpr(expr parser.CaseExpr) (value.Primary, error) {
 		if val == nil {
 			t = cond.Ternary()
 		} else {
-			t = value.Equal(val, cond)
+			t = value.Equal(val, cond, f.Tx.Flags.DatetimeFormat)
 		}
 
 		if t == ternary.TRUE {
-			result, err := f.Evaluate(when.Result)
+			result, err := f.Evaluate(ctx, when.Result)
 			if err != nil {
 				return nil, err
 			}
@@ -909,15 +928,15 @@ func (f *Filter) evalCaseExpr(expr parser.CaseExpr) (value.Primary, error) {
 	if expr.Else == nil {
 		return value.NewNull(), nil
 	}
-	result, err := f.Evaluate(expr.Else.(parser.CaseExprElse).Result)
+	result, err := f.Evaluate(ctx, expr.Else.(parser.CaseExprElse).Result)
 	if err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
-func (f *Filter) evalLogic(expr parser.Logic) (value.Primary, error) {
-	lhs, err := f.Evaluate(expr.LHS)
+func (f *Filter) evalLogic(ctx context.Context, expr parser.Logic) (value.Primary, error) {
+	lhs, err := f.Evaluate(ctx, expr.LHS)
 	if err != nil {
 		return nil, err
 	}
@@ -932,7 +951,7 @@ func (f *Filter) evalLogic(expr parser.Logic) (value.Primary, error) {
 		}
 	}
 
-	rhs, err := f.Evaluate(expr.RHS)
+	rhs, err := f.Evaluate(ctx, expr.RHS)
 	if err != nil {
 		return nil, err
 	}
@@ -947,8 +966,8 @@ func (f *Filter) evalLogic(expr parser.Logic) (value.Primary, error) {
 	return value.NewTernary(t), nil
 }
 
-func (f *Filter) evalUnaryLogic(expr parser.UnaryLogic) (value.Primary, error) {
-	ope, err := f.Evaluate(expr.Operand)
+func (f *Filter) evalUnaryLogic(ctx context.Context, expr parser.UnaryLogic) (value.Primary, error) {
+	ope, err := f.Evaluate(ctx, expr.Operand)
 	if err != nil {
 		return nil, err
 	}
@@ -1001,21 +1020,21 @@ func (f *Filter) evalCursorAttribute(expr parser.CursorAttrebute) (value.Primary
 /*
  * Returns single or multiple fields, single record
  */
-func (f *Filter) evalRowValue(expr parser.QueryExpression) (value.RowValue, error) {
+func (f *Filter) evalRowValue(ctx context.Context, expr parser.QueryExpression) (value.RowValue, error) {
 	var rowValue value.RowValue
 	var err error
 
 	switch expr.(type) {
 	case parser.Subquery:
-		rowValue, err = f.evalSubqueryForRowValue(expr.(parser.Subquery))
+		rowValue, err = f.evalSubqueryForRowValue(ctx, expr.(parser.Subquery))
 	case parser.JsonQuery:
-		rowValue, err = f.evalJsonQueryForRowValue(expr.(parser.JsonQuery))
+		rowValue, err = f.evalJsonQueryForRowValue(ctx, expr.(parser.JsonQuery))
 	case parser.ValueList:
-		rowValue, err = f.evalValueList(expr.(parser.ValueList))
+		rowValue, err = f.evalValueList(ctx, expr.(parser.ValueList))
 	case parser.RowValue:
-		rowValue, err = f.evalRowValue(expr.(parser.RowValue).Value)
+		rowValue, err = f.evalRowValue(ctx, expr.(parser.RowValue).Value)
 	default:
-		p, e := f.Evaluate(expr)
+		p, e := f.Evaluate(ctx, expr)
 		if e != nil {
 			return rowValue, e
 		}
@@ -1027,20 +1046,20 @@ func (f *Filter) evalRowValue(expr parser.QueryExpression) (value.RowValue, erro
 /*
  * Returns multiple fields, multiple records
  */
-func (f *Filter) evalRowValueList(expr parser.QueryExpression) ([]value.RowValue, error) {
+func (f *Filter) evalRowValueList(ctx context.Context, expr parser.QueryExpression) ([]value.RowValue, error) {
 	var list []value.RowValue
 	var err error
 
 	switch expr.(type) {
 	case parser.Subquery:
-		list, err = f.evalSubqueryForRowValueList(expr.(parser.Subquery))
+		list, err = f.evalSubqueryForRowValueList(ctx, expr.(parser.Subquery))
 	case parser.JsonQuery:
-		list, err = f.evalJsonQueryForRowValueList(expr.(parser.JsonQuery))
+		list, err = f.evalJsonQueryForRowValueList(ctx, expr.(parser.JsonQuery))
 	case parser.RowValueList:
 		rowValueList := expr.(parser.RowValueList)
 		list = make([]value.RowValue, len(rowValueList.RowValues))
 		for i, v := range rowValueList.RowValues {
-			rowValue, e := f.evalRowValue(v.(parser.RowValue))
+			rowValue, e := f.evalRowValue(ctx, v.(parser.RowValue))
 			if e != nil {
 				return list, e
 			}
@@ -1054,17 +1073,17 @@ func (f *Filter) evalRowValueList(expr parser.QueryExpression) ([]value.RowValue
 /*
  * Returns single fields, multiple records
  */
-func (f *Filter) evalArray(expr parser.QueryExpression) ([]value.RowValue, error) {
+func (f *Filter) evalArray(ctx context.Context, expr parser.QueryExpression) ([]value.RowValue, error) {
 	var array []value.RowValue
 	var err error
 
 	switch expr.(type) {
 	case parser.Subquery:
-		array, err = f.evalSubqueryForArray(expr.(parser.Subquery))
+		array, err = f.evalSubqueryForArray(ctx, expr.(parser.Subquery))
 	case parser.JsonQuery:
-		array, err = f.evalJsonQueryForArray(expr.(parser.JsonQuery))
+		array, err = f.evalJsonQueryForArray(ctx, expr.(parser.JsonQuery))
 	case parser.ValueList:
-		values, e := f.evalValueList(expr.(parser.ValueList))
+		values, e := f.evalValueList(ctx, expr.(parser.ValueList))
 		if e != nil {
 			return array, e
 		}
@@ -1073,14 +1092,14 @@ func (f *Filter) evalArray(expr parser.QueryExpression) ([]value.RowValue, error
 			array[i] = value.RowValue{v}
 		}
 	case parser.RowValue:
-		array, err = f.evalArray(expr.(parser.RowValue).Value)
+		array, err = f.evalArray(ctx, expr.(parser.RowValue).Value)
 	}
 
 	return array, err
 }
 
-func (f *Filter) evalSubqueryForRowValue(expr parser.Subquery) (value.RowValue, error) {
-	view, err := Select(expr.Query, f)
+func (f *Filter) evalSubqueryForRowValue(ctx context.Context, expr parser.Subquery) (value.RowValue, error) {
+	view, err := Select(ctx, f, expr.Query)
 	if err != nil {
 		return nil, err
 	}
@@ -1101,8 +1120,8 @@ func (f *Filter) evalSubqueryForRowValue(expr parser.Subquery) (value.RowValue, 
 	return rowValue, nil
 }
 
-func (f *Filter) evalJsonQueryForRowValue(expr parser.JsonQuery) (value.RowValue, error) {
-	query, jsonText, err := f.evalJsonQueryParameters(expr)
+func (f *Filter) evalJsonQueryForRowValue(ctx context.Context, expr parser.JsonQuery) (value.RowValue, error) {
+	query, jsonText, err := f.evalJsonQueryParameters(ctx, expr)
 	if err != nil {
 		return nil, err
 	}
@@ -1132,10 +1151,10 @@ func (f *Filter) evalJsonQueryForRowValue(expr parser.JsonQuery) (value.RowValue
 	return rowValue, nil
 }
 
-func (f *Filter) evalValueList(expr parser.ValueList) (value.RowValue, error) {
+func (f *Filter) evalValueList(ctx context.Context, expr parser.ValueList) (value.RowValue, error) {
 	values := make(value.RowValue, len(expr.Values))
 	for i, v := range expr.Values {
-		val, err := f.Evaluate(v)
+		val, err := f.Evaluate(ctx, v)
 		if err != nil {
 			return nil, err
 		}
@@ -1144,8 +1163,8 @@ func (f *Filter) evalValueList(expr parser.ValueList) (value.RowValue, error) {
 	return values, nil
 }
 
-func (f *Filter) evalSubqueryForRowValueList(expr parser.Subquery) ([]value.RowValue, error) {
-	view, err := Select(expr.Query, f)
+func (f *Filter) evalSubqueryForRowValueList(ctx context.Context, expr parser.Subquery) ([]value.RowValue, error) {
+	view, err := Select(ctx, f, expr.Query)
 	if err != nil {
 		return nil, err
 	}
@@ -1166,8 +1185,8 @@ func (f *Filter) evalSubqueryForRowValueList(expr parser.Subquery) ([]value.RowV
 	return list, nil
 }
 
-func (f *Filter) evalJsonQueryForRowValueList(expr parser.JsonQuery) ([]value.RowValue, error) {
-	query, jsonText, err := f.evalJsonQueryParameters(expr)
+func (f *Filter) evalJsonQueryForRowValueList(ctx context.Context, expr parser.JsonQuery) ([]value.RowValue, error) {
+	query, jsonText, err := f.evalJsonQueryParameters(ctx, expr)
 	if err != nil {
 		return nil, err
 	}
@@ -1193,8 +1212,8 @@ func (f *Filter) evalJsonQueryForRowValueList(expr parser.JsonQuery) ([]value.Ro
 	return list, nil
 }
 
-func (f *Filter) evalSubqueryForArray(expr parser.Subquery) ([]value.RowValue, error) {
-	view, err := Select(expr.Query, f)
+func (f *Filter) evalSubqueryForArray(ctx context.Context, expr parser.Subquery) ([]value.RowValue, error) {
+	view, err := Select(ctx, f, expr.Query)
 	if err != nil {
 		return nil, err
 	}
@@ -1215,8 +1234,8 @@ func (f *Filter) evalSubqueryForArray(expr parser.Subquery) ([]value.RowValue, e
 	return list, nil
 }
 
-func (f *Filter) evalJsonQueryForArray(expr parser.JsonQuery) ([]value.RowValue, error) {
-	query, jsonText, err := f.evalJsonQueryParameters(expr)
+func (f *Filter) evalJsonQueryForArray(ctx context.Context, expr parser.JsonQuery) ([]value.RowValue, error) {
+	query, jsonText, err := f.evalJsonQueryParameters(ctx, expr)
 	if err != nil {
 		return nil, err
 	}
@@ -1242,14 +1261,14 @@ func (f *Filter) evalJsonQueryForArray(expr parser.JsonQuery) ([]value.RowValue,
 	return list, nil
 }
 
-func (f *Filter) evalJsonQueryParameters(expr parser.JsonQuery) (value.Primary, value.Primary, error) {
-	queryValue, err := f.Evaluate(expr.Query)
+func (f *Filter) evalJsonQueryParameters(ctx context.Context, expr parser.JsonQuery) (value.Primary, value.Primary, error) {
+	queryValue, err := f.Evaluate(ctx, expr.Query)
 	if err != nil {
 		return nil, nil, err
 	}
 	query := value.ToString(queryValue)
 
-	jsonTextValue, err := f.Evaluate(expr.JsonText)
+	jsonTextValue, err := f.Evaluate(ctx, expr.JsonText)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -1258,7 +1277,7 @@ func (f *Filter) evalJsonQueryParameters(expr parser.JsonQuery) (value.Primary, 
 	return query, jsonText, nil
 }
 
-func (f *Filter) EvaluateEmbeddedString(embedded string) (string, error) {
+func (f *Filter) EvaluateEmbeddedString(ctx context.Context, embedded string) (string, error) {
 	scanner := new(excmd.ArgumentScanner).Init(embedded)
 	buf := new(bytes.Buffer)
 	var err error
@@ -1268,19 +1287,19 @@ func (f *Filter) EvaluateEmbeddedString(embedded string) (string, error) {
 		case excmd.FixedString:
 			buf.WriteString(scanner.Text())
 		case excmd.Variable:
-			if err = f.writeEmbeddedExpression(buf, parser.Variable{Name: scanner.Text()}); err != nil {
+			if err = f.writeEmbeddedExpression(ctx, buf, parser.Variable{Name: scanner.Text()}); err != nil {
 				return buf.String(), err
 			}
 		case excmd.EnvironmentVariable:
 			buf.WriteString(os.Getenv(scanner.Text()))
 		case excmd.RuntimeInformation:
-			if err = f.writeEmbeddedExpression(buf, parser.RuntimeInformation{Name: scanner.Text()}); err != nil {
+			if err = f.writeEmbeddedExpression(ctx, buf, parser.RuntimeInformation{Name: scanner.Text()}); err != nil {
 				return buf.String(), err
 			}
 		case excmd.CsvqExpression:
 			expr := scanner.Text()
 			if 0 < len(expr) {
-				statements, err := parser.Parse(expr, "")
+				statements, err := parser.Parse(expr, "", f.Tx.Flags.DatetimeFormat)
 				if err != nil {
 					if syntaxErr, ok := err.(*parser.SyntaxError); ok {
 						err = NewSyntaxError(syntaxErr)
@@ -1294,7 +1313,7 @@ func (f *Filter) EvaluateEmbeddedString(embedded string) (string, error) {
 					if !ok {
 						return buf.String(), NewInvalidValueError(parser.NewStringValue(expr))
 					}
-					if err = f.writeEmbeddedExpression(buf, qexpr); err != nil {
+					if err = f.writeEmbeddedExpression(ctx, buf, qexpr); err != nil {
 						return buf.String(), err
 					}
 				default:
@@ -1310,12 +1329,12 @@ func (f *Filter) EvaluateEmbeddedString(embedded string) (string, error) {
 	return buf.String(), nil
 }
 
-func (f *Filter) writeEmbeddedExpression(buf *bytes.Buffer, expr parser.QueryExpression) error {
-	p, err := f.Evaluate(expr)
+func (f *Filter) writeEmbeddedExpression(ctx context.Context, buf *bytes.Buffer, expr parser.QueryExpression) error {
+	p, err := f.Evaluate(ctx, expr)
 	if err != nil {
 		return err
 	}
-	s, _ := Formatter.Format("%s", []value.Primary{p})
+	s, _ := NewStringFormatter().Format("%s", []value.Primary{p})
 	buf.WriteString(s)
 	return nil
 }

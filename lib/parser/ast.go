@@ -121,10 +121,10 @@ func NewTernaryValue(t ternary.Value) PrimitiveType {
 	}
 }
 
-func NewDatetimeValueFromString(s string) PrimitiveType {
+func NewDatetimeValueFromString(s string, formats []string) PrimitiveType {
 	return PrimitiveType{
 		Literal: s,
-		Value:   value.NewDatetimeFromString(s),
+		Value:   value.NewDatetimeFromString(s, formats),
 	}
 }
 

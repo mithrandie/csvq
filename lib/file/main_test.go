@@ -13,8 +13,8 @@ func GetTestFilePath(filename string) string {
 
 var TestDir = filepath.Join(os.TempDir(), "csvq_file_test")
 
-var waitTimeoutForTests = 0.1
-var retryIntervalForTests = 10 * time.Millisecond
+var waitTimeoutForTests = 100 * time.Millisecond
+var retryDelayForTests = 10 * time.Millisecond
 
 func TestMain(m *testing.M) {
 	os.Exit(run(m))
@@ -29,24 +29,22 @@ func run(m *testing.M) int {
 
 func setup() {
 	if _, err := os.Stat(TestDir); err == nil {
-		os.RemoveAll(TestDir)
+		_ = os.RemoveAll(TestDir)
 	}
 
 	if _, err := os.Stat(TestDir); os.IsNotExist(err) {
-		os.Mkdir(TestDir, 0755)
+		_ = os.Mkdir(TestDir, 0755)
 	}
 
 	fp, _ := os.Create(GetTestFilePath("open.txt"))
-	fp.Close()
+	_ = fp.Close()
 
 	fp, _ = os.Create(GetTestFilePath("update.txt"))
-	fp.Close()
-
-	UpdateWaitTimeout(waitTimeoutForTests, retryIntervalForTests)
+	_ = fp.Close()
 }
 
 func teardown() {
 	if _, err := os.Stat(TestDir); err == nil {
-		os.RemoveAll(TestDir)
+		_ = os.RemoveAll(TestDir)
 	}
 }

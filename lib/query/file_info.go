@@ -86,8 +86,9 @@ func NewFileInfo(
 	format cmd.Format,
 	delimiter rune,
 	encoding text.Encoding,
+	flags *cmd.Flags,
 ) (*FileInfo, error) {
-	fpath, format, err := SearchFilePath(filename, repository, format)
+	fpath, format, err := SearchFilePath(filename, repository, format, flags)
 	if err != nil {
 		return nil, err
 	}
@@ -251,28 +252,7 @@ func (f *FileInfo) SetPrettyPrint(b bool) error {
 	return nil
 }
 
-func (f *FileInfo) Close() error {
-	if f.Handler == nil {
-		return nil
-	}
-	return f.Handler.Close()
-}
-
-func (f *FileInfo) CloseWithErrors() error {
-	if f.Handler == nil {
-		return nil
-	}
-	return f.Handler.CloseWithErrors()
-}
-
-func (f *FileInfo) Commit() error {
-	if f.Handler == nil {
-		return nil
-	}
-	return f.Handler.Commit()
-}
-
-func SearchFilePath(filename parser.Identifier, repository string, format cmd.Format) (string, cmd.Format, error) {
+func SearchFilePath(filename parser.Identifier, repository string, format cmd.Format, flags *cmd.Flags) (string, cmd.Format, error) {
 	var fpath string
 	var err error
 
@@ -297,7 +277,7 @@ func SearchFilePath(filename parser.Identifier, repository string, format cmd.Fo
 			case cmd.LtsvExt:
 				format = cmd.LTSV
 			default:
-				format = cmd.GetFlags().ImportFormat
+				format = flags.ImportFormat
 			}
 		}
 	}

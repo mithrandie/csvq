@@ -24,8 +24,8 @@ func TestGetLocation(t *testing.T) {
 }
 
 func TestNow(t *testing.T) {
-	flag := GetFlags()
-	flag.Now = "2012-02-01 12:03:23"
+	TestTime, _ = time.ParseInLocation("2006-01-02 15:04:05.999999999", "2012-02-01 12:03:23", GetLocation())
+
 	expect := time.Date(2012, 2, 1, 12, 3, 23, 0, GetLocation())
 
 	if !Now().Equal(expect) {
@@ -33,7 +33,7 @@ func TestNow(t *testing.T) {
 		t.Log(Now())
 	}
 
-	flag.Now = ""
+	TestTime = time.Time{}
 	if Now().Equal(expect) {
 		t.Errorf("function Now() returns fixed time")
 		t.Log(Now())
