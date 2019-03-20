@@ -360,7 +360,7 @@ var convertTableValueToJsonStructureTests = []struct {
 				value.NewBoolean(false),
 				value.NewTernary(ternary.TRUE),
 				value.NewTernary(ternary.UNKNOWN),
-				value.NewDatetimeFromString("2012-02-02 22:22:22 -07:00"),
+				value.NewDatetimeFromString("2012-02-02 22:22:22 -07:00", nil),
 				value.NewNull(),
 			},
 		},

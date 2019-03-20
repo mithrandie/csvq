@@ -8,7 +8,7 @@ import (
 	"github.com/mithrandie/go-text/color"
 )
 
-var syntaxTestPalette, _ = cmd.GetPalette()
+var syntaxTestPalette = cmd.GetPalette()
 
 func TestName_Format(t *testing.T) {
 	var e Name = "str"
@@ -292,7 +292,7 @@ func TestGrammar_Format(t *testing.T) {
 
 	for _, v := range grammarFormatTests {
 		if v.UsePalette {
-			palette, _ = cmd.GetPalette()
+			palette = cmd.GetPalette()
 		} else {
 			palette = nil
 		}

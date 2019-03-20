@@ -1168,7 +1168,7 @@ func TestField_Name(t *testing.T) {
 	}
 
 	e = Field{
-		Object: NewDatetimeValueFromString("2012-01-01 00:00:00 +00:00"),
+		Object: NewDatetimeValueFromString("2012-01-01 00:00:00 +00:00", nil),
 	}
 	expect = "2012-01-01 00:00:00 +00:00"
 	if e.Name() != expect {

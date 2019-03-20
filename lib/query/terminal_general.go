@@ -3,6 +3,7 @@
 package query
 
 import (
+	"context"
 	"io"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -16,9 +17,10 @@ type SSHTerminal struct {
 	origState *terminal.State
 	rawState  *terminal.State
 	prompt    *Prompt
+	session   *Session
 }
 
-func NewTerminal(filter *Filter) (VirtualTerminal, error) {
+func NewTerminal(ctx context.Context, session *Session, filter *Filter) (VirtualTerminal, error) {
 	stdin := int(ScreenFd)
 	origState, err := terminal.MakeRaw(stdin)
 	if err != nil {
@@ -40,16 +42,17 @@ func NewTerminal(filter *Filter) (VirtualTerminal, error) {
 		origState: origState,
 		rawState:  rawState,
 		prompt:    prompt,
+		session:   session,
 	}
 
 	t.RestoreOriginalMode()
-	t.SetPrompt()
+	t.SetPrompt(ctx)
 	t.RestoreRawMode()
 	return t, nil
 }
 
-func (t SSHTerminal) Teardown() {
-	t.RestoreOriginalMode()
+func (t SSHTerminal) Teardown() error {
+	return t.RestoreOriginalMode()
 }
 
 func (t SSHTerminal) RestoreRawMode() error {
@@ -81,24 +84,24 @@ func (t SSHTerminal) WriteError(s string) error {
 	return err
 }
 
-func (t SSHTerminal) SetPrompt() {
-	str, err := t.prompt.RenderPrompt()
+func (t SSHTerminal) SetPrompt(ctx context.Context) {
+	str, err := t.prompt.RenderPrompt(ctx)
 	if err != nil {
 		LogError(err.Error())
 	}
 	t.terminal.SetPrompt(str)
 }
 
-func (t SSHTerminal) SetContinuousPrompt() {
-	str, err := t.prompt.RenderContinuousPrompt()
+func (t SSHTerminal) SetContinuousPrompt(ctx context.Context) {
+	str, err := t.prompt.RenderContinuousPrompt(ctx)
 	if err != nil {
 		LogError(err.Error())
 	}
 	t.terminal.SetPrompt(str)
 }
 
-func (t SSHTerminal) SaveHistory(s string) {
-	return
+func (t SSHTerminal) SaveHistory(s string) error {
+	return nil
 }
 
 func (t SSHTerminal) GetSize() (int, int, error) {

@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"reflect"
 	"sort"
 	"sync"
@@ -11,13 +12,13 @@ import (
 
 type VariableScopes []VariableMap
 
-func (list VariableScopes) Declare(expr parser.VariableDeclaration, filter *Filter) error {
-	return list[0].Declare(expr, filter)
+func (list VariableScopes) Declare(ctx context.Context, filter *Filter, expr parser.VariableDeclaration) error {
+	return list[0].Declare(ctx, filter, expr)
 }
 
 func (list VariableScopes) Get(expr parser.Variable) (value value.Primary, err error) {
-	for _, v := range list {
-		if value, err = v.Get(expr); err == nil {
+	for i := range list {
+		if value, err = list[i].Get(expr); err == nil {
 			return
 		}
 	}
@@ -25,9 +26,9 @@ func (list VariableScopes) Get(expr parser.Variable) (value value.Primary, err e
 	return
 }
 
-func (list VariableScopes) Substitute(expr parser.VariableSubstitution, filter *Filter) (value value.Primary, err error) {
-	for _, v := range list {
-		if value, err = v.Substitute(expr, filter); err == nil {
+func (list VariableScopes) Substitute(ctx context.Context, filter *Filter, expr parser.VariableSubstitution) (value value.Primary, err error) {
+	for i := range list {
+		if value, err = list[i].Substitute(ctx, filter, expr); err == nil {
 			return
 		}
 		if _, ok := err.(*UndeclaredVariableError); !ok {
@@ -40,8 +41,8 @@ func (list VariableScopes) Substitute(expr parser.VariableSubstitution, filter *
 
 func (list VariableScopes) SubstituteDirectly(variable parser.Variable, value value.Primary) (value.Primary, error) {
 	var err error
-	for _, v := range list {
-		if value, err = v.SubstituteDirectly(variable, value); err == nil {
+	for i := range list {
+		if value, err = list[i].SubstituteDirectly(variable, value); err == nil {
 			return value, nil
 		}
 	}
@@ -49,8 +50,8 @@ func (list VariableScopes) SubstituteDirectly(variable parser.Variable, value va
 }
 
 func (list VariableScopes) Dispose(expr parser.Variable) error {
-	for _, v := range list {
-		if err := v.Dispose(expr); err == nil {
+	for i := range list {
+		if err := list[i].Dispose(expr); err == nil {
 			return nil
 		}
 	}
@@ -71,8 +72,8 @@ func (list VariableScopes) Equal(list2 VariableScopes) bool {
 
 func (list VariableScopes) All() VariableMap {
 	all := NewVariableMap()
-	for _, m := range list {
-		m.variables.Range(func(key, value interface{}) bool {
+	for i := range list {
+		list[i].variables.Range(func(key, value interface{}) bool {
 			if _, ok := all.variables.Load(key); !ok {
 				all.variables.Store(key, value)
 			}
@@ -83,12 +84,12 @@ func (list VariableScopes) All() VariableMap {
 }
 
 type VariableMap struct {
-	variables sync.Map
+	variables *sync.Map
 }
 
 func NewVariableMap() VariableMap {
 	return VariableMap{
-		variables: sync.Map{},
+		variables: &sync.Map{},
 	}
 }
 
@@ -133,14 +134,14 @@ func (m *VariableMap) Dispose(variable parser.Variable) error {
 	return nil
 }
 
-func (m *VariableMap) Declare(declaration parser.VariableDeclaration, filter *Filter) error {
+func (m *VariableMap) Declare(ctx context.Context, filter *Filter, declaration parser.VariableDeclaration) error {
 	for _, assignment := range declaration.Assignments {
 		var val value.Primary
 		var err error
 		if assignment.Value == nil {
 			val = value.NewNull()
 		} else {
-			val, err = filter.Evaluate(assignment.Value)
+			val, err = filter.Evaluate(ctx, assignment.Value)
 			if err != nil {
 				return err
 			}
@@ -153,8 +154,8 @@ func (m *VariableMap) Declare(declaration parser.VariableDeclaration, filter *Fi
 	return nil
 }
 
-func (m *VariableMap) Substitute(substitution parser.VariableSubstitution, filter *Filter) (value.Primary, error) {
-	val, err := filter.Evaluate(substitution.Value)
+func (m *VariableMap) Substitute(ctx context.Context, filter *Filter, substitution parser.VariableSubstitution) (value.Primary, error) {
+	val, err := filter.Evaluate(ctx, substitution.Value)
 	if err != nil {
 		return nil, err
 	}

@@ -1,18 +1,20 @@
 package file
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"time"
-
-	"github.com/mithrandie/go-file"
 )
 
-func UpdateWaitTimeout(waitTimeout float64, retryInterval time.Duration) {
-	WaitTimeout = waitTimeout
-	RetryInterval = retryInterval
-	file.WaitTimeout = waitTimeout
-	file.RetryInterval = retryInterval
+func GetTimeoutContext(ctx context.Context, waitTimeOut time.Duration) (context.Context, context.CancelFunc) {
+	if _, ok := ctx.Deadline(); ok {
+		return ctx, func() {
+			// Dummy function
+		}
+	}
+
+	return context.WithTimeout(context.Background(), waitTimeOut)
 }
 
 func LockFilePath(path string) string {

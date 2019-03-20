@@ -160,7 +160,7 @@ func TestTernary_Ternary(t *testing.T) {
 
 func TestDatetime_String(t *testing.T) {
 	s := "2012-01-01T12:34:56Z"
-	p := NewDatetimeFromString(s)
+	p := NewDatetimeFromString(s, nil)
 
 	expect := "\"" + s + "\""
 	if p.String() != expect {
@@ -169,14 +169,14 @@ func TestDatetime_String(t *testing.T) {
 }
 
 func TestDatetime_Value(t *testing.T) {
-	d := NewDatetimeFromString("2012-01-01 12:34:56")
+	d := NewDatetimeFromString("2012-01-01 12:34:56", nil)
 	expect := time.Date(2012, time.January, 1, 12, 34, 56, 0, time.Local)
 
 	if d.Raw() != expect {
 		t.Errorf("value = %v, want %v for %#v", d.Raw(), expect, d)
 	}
 
-	d = NewDatetimeFromString("2012-01-01T12:34:56-08:00")
+	d = NewDatetimeFromString("2012-01-01T12:34:56-08:00", nil)
 	l, _ := time.LoadLocation("America/Los_Angeles")
 	expect = time.Date(2012, time.January, 1, 12, 34, 56, 0, l)
 
@@ -186,7 +186,7 @@ func TestDatetime_Value(t *testing.T) {
 }
 
 func TestDatetime_Ternary(t *testing.T) {
-	p := NewDatetimeFromString("2012-01-01T12:34:56-08:00")
+	p := NewDatetimeFromString("2012-01-01T12:34:56-08:00", nil)
 	if p.Ternary() != ternary.UNKNOWN {
 		t.Errorf("ternary = %s, want %s for %#v", p.Ternary(), ternary.UNKNOWN, p)
 	}
@@ -194,7 +194,7 @@ func TestDatetime_Ternary(t *testing.T) {
 
 func TestDatetime_Format(t *testing.T) {
 	dtstring := "2012-08-01T04:03:05.123-08:00"
-	dt := NewDatetimeFromString(dtstring)
+	dt := NewDatetimeFromString(dtstring, nil)
 	expect := "2012-08-01T04:03:05-08:00"
 	if dt.Format(time.RFC3339) != expect {
 		t.Errorf("result = %q, want %q for %q ", dt.Format(time.RFC3339), expect, dtstring)

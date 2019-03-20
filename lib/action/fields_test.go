@@ -1,7 +1,10 @@
 package action
 
 import (
+	"context"
 	"testing"
+
+	"github.com/mithrandie/csvq/lib/file"
 
 	"github.com/mithrandie/csvq/lib/query"
 )
@@ -20,8 +23,8 @@ var showFieldsTests = []struct {
 
 func TestShowFields(t *testing.T) {
 	for _, v := range showFieldsTests {
-		query.ReleaseResources()
-		proc := query.NewProcedure()
+		tx, _ := query.NewTransaction(context.Background(), file.DefaultWaitTimeout, file.DefaultRetryDelay, query.NewSession())
+		proc := query.NewProcessor(tx)
 		err := ShowFields(proc, v.Input)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -36,5 +39,4 @@ func TestShowFields(t *testing.T) {
 			continue
 		}
 	}
-	query.ReleaseResources()
 }

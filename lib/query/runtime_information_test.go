@@ -48,13 +48,19 @@ var getRuntimeInformationTests = []struct {
 }
 
 func TestGetRuntimeInformation(t *testing.T) {
-	ViewCache = ViewMap{
-		"TABLE1": &View{},
-		"TABLE2": &View{},
-		"TABLE3": &View{},
-		"TABLE4": &View{},
+	defer func() {
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		TestTx.UncommittedViews.Clean()
+		initFlag(TestTx.Flags)
+	}()
+
+	TestTx.CachedViews = ViewMap{
+		"TABLE1": &View{FileInfo: &FileInfo{}},
+		"TABLE2": &View{FileInfo: &FileInfo{}},
+		"TABLE3": &View{FileInfo: &FileInfo{}},
+		"TABLE4": &View{FileInfo: &FileInfo{}},
 	}
-	UncommittedViews = &UncommittedViewMap{
+	TestTx.UncommittedViews = &UncommittedViewMap{
 		Created: map[string]*FileInfo{
 			"TABLE1": {},
 			"TABLE2": {},
@@ -68,7 +74,7 @@ func TestGetRuntimeInformation(t *testing.T) {
 	}
 
 	for _, v := range getRuntimeInformationTests {
-		result, err := GetRuntimeInformation(v.Input)
+		result, err := GetRuntimeInformation(TestTx, v.Input)
 
 		if err != nil {
 			if v.Error == "" {
@@ -87,7 +93,4 @@ func TestGetRuntimeInformation(t *testing.T) {
 			t.Errorf("result = %#v, want %#v for %q", result, v.Expect, v.Input)
 		}
 	}
-
-	ViewCache = make(ViewMap)
-	UncommittedViews = NewUncommittedViewMap()
 }

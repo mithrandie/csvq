@@ -17,6 +17,7 @@ const (
 )
 
 type ObjectWriter struct {
+	Flags   *cmd.Flags
 	Palette *color.Palette
 
 	MaxWidth    int
@@ -36,26 +37,25 @@ type ObjectWriter struct {
 	column    int
 }
 
-func NewObjectWriter() *ObjectWriter {
+func NewObjectWriter(tx *Transaction) *ObjectWriter {
 	maxWidth := DefaultLineWidth
-	if Terminal != nil {
-		if termw, _, err := Terminal.GetSize(); err == nil {
+	if tx.Session.Terminal != nil {
+		if termw, _, err := tx.Session.Terminal.GetSize(); err == nil {
 			maxWidth = termw
 		}
 	} else {
-		if w, _, err := terminal.GetSize(int(ScreenFd)); err == nil {
+		if w, _, err := terminal.GetSize(int(tx.Session.ScreenFd)); err == nil {
 			maxWidth = w
 		}
 	}
 
-	palette, _ := cmd.GetPalette()
-
 	return &ObjectWriter{
+		Flags:       tx.Flags,
+		Palette:     cmd.GetPalette(),
 		MaxWidth:    maxWidth,
 		Indent:      0,
 		IndentWidth: 4,
 		Padding:     DefaultPadding,
-		Palette:     palette,
 		lineWidth:   0,
 		column:      0,
 		subBlock:    0,
@@ -99,7 +99,7 @@ func (w *ObjectWriter) write(s string, effect string, withoutLineBreak bool) {
 		} else {
 			w.writeToBuf(w.Palette.Render(effect, s))
 		}
-		w.column = w.column + cmd.TextWidth(s)
+		w.column = w.column + cmd.TextWidth(s, w.Flags)
 	}
 }
 
@@ -112,7 +112,7 @@ func (w *ObjectWriter) leadingSpacesWidth() int {
 }
 
 func (w *ObjectWriter) FitInLine(s string) bool {
-	if w.MaxWidth-w.Padding < w.column+cmd.TextWidth(s) {
+	if w.MaxWidth-w.Padding < w.column+cmd.TextWidth(s, w.Flags) {
 		return false
 	}
 	return true
@@ -211,7 +211,7 @@ func (w *ObjectWriter) ClearBlock() {
 func (w *ObjectWriter) String() string {
 	var header bytes.Buffer
 	if 0 < len(w.Title1) || 0 < len(w.Title2) {
-		tw := cmd.TextWidth(w.Title1) + cmd.TextWidth(w.Title2)
+		tw := cmd.TextWidth(w.Title1, w.Flags) + cmd.TextWidth(w.Title2, w.Flags)
 		if 0 < len(w.Title1) && 0 < len(w.Title2) {
 			tw++
 		}

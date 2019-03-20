@@ -3,6 +3,7 @@
 package query
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -19,18 +20,18 @@ type ReadLineTerminal struct {
 	prompt    *Prompt
 	env       *cmd.Environment
 	completer *Completer
+	tx        *Transaction
 }
 
-func NewTerminal(filter *Filter) (VirtualTerminal, error) {
-	fd := int(ScreenFd)
+func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
+	fd := int(filter.Tx.Session.ScreenFd)
 
-	p, _ := cmd.GetPalette()
-	env, _ := cmd.GetEnvironment()
+	p := cmd.GetPalette()
 
-	limit := *env.InteractiveShell.HistoryLimit
-	historyFile, err := HistoryFilePath(env.InteractiveShell.HistoryFile)
+	limit := *filter.Tx.Environment.InteractiveShell.HistoryLimit
+	historyFile, err := HistoryFilePath(filter.Tx.Environment.InteractiveShell.HistoryFile)
 	if err != nil {
-		LogError(fmt.Sprintf("cannot detect filepath: %q", env.InteractiveShell.HistoryFile))
+		filter.Tx.Session.LogWarn(fmt.Sprintf("cannot detect filepath: %q", filter.Tx.Environment.InteractiveShell.HistoryFile), false)
 		limit = -1
 	}
 
@@ -43,9 +44,9 @@ func NewTerminal(filter *Filter) (VirtualTerminal, error) {
 		HistoryLimit:           limit,
 		HistorySearchFold:      true,
 		Listener:               new(ReadlineListener),
-		Stdin:                  Stdin,
-		Stdout:                 Stdout,
-		Stderr:                 Stderr,
+		Stdin:                  filter.Tx.Session.Stdin,
+		Stdout:                 filter.Tx.Session.Stdout,
+		Stderr:                 filter.Tx.Session.Stderr,
 	})
 	if err != nil {
 		return nil, err
@@ -55,21 +56,24 @@ func NewTerminal(filter *Filter) (VirtualTerminal, error) {
 		terminal:  t,
 		fd:        fd,
 		prompt:    prompt,
-		env:       env,
+		env:       filter.Tx.Environment,
 		completer: completer,
+		tx:        filter.Tx,
 	}
 
 	terminal.setCompleter()
 	terminal.setKillWholeLine()
 	terminal.setViMode()
-	prompt.LoadConfig()
+	if err = prompt.LoadConfig(); err != nil {
+		return nil, err
+	}
 
-	terminal.SetPrompt()
+	terminal.SetPrompt(ctx)
 	return terminal, nil
 }
 
-func (t ReadLineTerminal) Teardown() {
-	t.terminal.Close()
+func (t ReadLineTerminal) Teardown() error {
+	return t.terminal.Close()
 }
 
 func (t ReadLineTerminal) ReadLine() (string, error) {
@@ -86,24 +90,24 @@ func (t ReadLineTerminal) WriteError(s string) error {
 	return err
 }
 
-func (t ReadLineTerminal) SetPrompt() {
-	str, err := t.prompt.RenderPrompt()
+func (t ReadLineTerminal) SetPrompt(ctx context.Context) {
+	str, err := t.prompt.RenderPrompt(ctx)
 	if err != nil {
-		LogError(err.Error())
+		t.tx.Session.LogError(err.Error())
 	}
 	t.terminal.SetPrompt(str)
 }
 
-func (t ReadLineTerminal) SetContinuousPrompt() {
-	str, err := t.prompt.RenderContinuousPrompt()
+func (t ReadLineTerminal) SetContinuousPrompt(ctx context.Context) {
+	str, err := t.prompt.RenderContinuousPrompt(ctx)
 	if err != nil {
-		LogError(err.Error())
+		t.tx.Session.LogError(err.Error())
 	}
 	t.terminal.SetPrompt(str)
 }
 
-func (t ReadLineTerminal) SaveHistory(s string) {
-	t.terminal.SaveHistory(s)
+func (t ReadLineTerminal) SaveHistory(s string) error {
+	return t.terminal.SaveHistory(s)
 }
 
 func (t ReadLineTerminal) GetSize() (int, int, error) {

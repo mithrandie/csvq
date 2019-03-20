@@ -54,6 +54,6 @@ func BenchmarkRecord_SerializeComparisonKeys(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		buf.Reset()
-		recordSerializeComparisonKeysBenchmarkRecord.SerializeComparisonKeys(buf)
+		recordSerializeComparisonKeysBenchmarkRecord.SerializeComparisonKeys(buf, TestTx.Flags)
 	}
 }

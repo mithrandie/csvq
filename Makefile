@@ -4,7 +4,7 @@ VERSION=$(shell git describe --tags --always)
 SOURCEDIR=.
 SOURCES := $(shell find $(SOURCEDIR) -name '*.go')
 
-LDFLAGS := -ldflags="-X main.version=$(VERSION)"
+LDFLAGS := -ldflags="-X github.com/mithrandie/csvq/lib/query.Version=$(VERSION)"
 
 DIST_DIRS := find * -type d -exec
 

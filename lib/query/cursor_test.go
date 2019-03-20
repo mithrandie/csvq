@@ -1,12 +1,12 @@
 package query
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
 	"github.com/mithrandie/go-text"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -122,6 +122,7 @@ var cursorScopesAddPseudoCursorTests = []struct {
 							NewRecord([]value.Primary{value.NewInteger(1)}),
 							NewRecord([]value.Primary{value.NewInteger(2)}),
 						},
+						Tx: TestTx,
 					},
 					index:    -1,
 					isPseudo: true,
@@ -139,7 +140,7 @@ func TestCursorScopes_AddPseudoCursor(t *testing.T) {
 	}
 
 	for _, v := range cursorScopesAddPseudoCursorTests {
-		err := list.AddPseudoCursor(v.CurName, v.Values)
+		err := list.AddPseudoCursor(TestTx, v.CurName, v.Values)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -256,6 +257,7 @@ var cursorScopesOpenTests = []struct {
 							NewRecord([]value.Primary{value.NewInteger(1)}),
 							NewRecord([]value.Primary{value.NewInteger(2)}),
 						},
+						Tx: TestTx,
 					},
 					index:    -1,
 					isPseudo: true,
@@ -287,6 +289,7 @@ var cursorScopesOpenTests = []struct {
 							Encoding:  text.UTF8,
 							LineBreak: text.LF,
 						},
+						Tx: TestTx,
 					},
 					index: -1,
 				},
@@ -311,9 +314,12 @@ var cursorScopesOpenTests = []struct {
 }
 
 func TestCursorScopes_Open(t *testing.T) {
-	initCmdFlag()
-	tf := cmd.GetFlags()
-	tf.Repository = TestDir
+	defer func() {
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		initFlag(TestTx.Flags)
+	}()
+
+	TestTx.Flags.Repository = TestDir
 
 	list := CursorScopes{
 		{
@@ -324,6 +330,7 @@ func TestCursorScopes_Open(t *testing.T) {
 						NewRecord([]value.Primary{value.NewInteger(1)}),
 						NewRecord([]value.Primary{value.NewInteger(2)}),
 					},
+					Tx: TestTx,
 				},
 				index:    -1,
 				isPseudo: true,
@@ -337,9 +344,9 @@ func TestCursorScopes_Open(t *testing.T) {
 	}
 
 	for _, v := range cursorScopesOpenTests {
-		ViewCache.Clean()
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 
-		err := list.Open(v.CurName, NewEmptyFilter())
+		err := list.Open(context.Background(), NewEmptyFilter(TestTx), v.CurName)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -401,9 +408,12 @@ var cursorScopesCloseTests = []struct {
 }
 
 func TestCursorScopes_Close(t *testing.T) {
-	initCmdFlag()
-	tf := cmd.GetFlags()
-	tf.Repository = TestDir
+	defer func() {
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		initFlag(TestTx.Flags)
+	}()
+
+	TestTx.Flags.Repository = TestDir
 
 	list := CursorScopes{
 		{
@@ -426,8 +436,7 @@ func TestCursorScopes_Close(t *testing.T) {
 		},
 	}
 
-	ViewCache.Clean()
-	list[1]["CUR"].Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+	_ = list[1]["CUR"].Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorScopesCloseTests {
 		err := list.Close(v.CurName)
@@ -481,9 +490,12 @@ var cursorScopesFetchTests = []struct {
 }
 
 func TestCursorScopes_Fetch(t *testing.T) {
-	initCmdFlag()
-	tf := cmd.GetFlags()
-	tf.Repository = TestDir
+	defer func() {
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		initFlag(TestTx.Flags)
+	}()
+
+	TestTx.Flags.Repository = TestDir
 
 	list := CursorScopes{
 		{},
@@ -497,8 +509,7 @@ func TestCursorScopes_Fetch(t *testing.T) {
 		},
 	}
 
-	ViewCache.Clean()
-	list[1]["CUR"].Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+	_ = list[1]["CUR"].Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorScopesFetchTests {
 		result, err := list.Fetch(v.CurName, v.Position, v.Number)
@@ -539,9 +550,12 @@ var cursorScopesIsOpenTests = []struct {
 }
 
 func TestCursorScopes_IsOpen(t *testing.T) {
-	initCmdFlag()
-	tf := cmd.GetFlags()
-	tf.Repository = TestDir
+	defer func() {
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		initFlag(TestTx.Flags)
+	}()
+
+	TestTx.Flags.Repository = TestDir
 
 	list := CursorScopes{
 		{},
@@ -552,8 +566,7 @@ func TestCursorScopes_IsOpen(t *testing.T) {
 		},
 	}
 
-	ViewCache.Clean()
-	list[1]["CUR"].Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+	_ = list[1]["CUR"].Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorScopesIsOpenTests {
 		result, err := list.IsOpen(v.CurName)
@@ -600,9 +613,12 @@ var cursorScopesIsInRangeTests = []struct {
 }
 
 func TestCursorScopes_IsInRange(t *testing.T) {
-	initCmdFlag()
-	tf := cmd.GetFlags()
-	tf.Repository = TestDir
+	defer func() {
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		initFlag(TestTx.Flags)
+	}()
+
+	TestTx.Flags.Repository = TestDir
 
 	list := CursorScopes{
 		{},
@@ -616,8 +632,7 @@ func TestCursorScopes_IsInRange(t *testing.T) {
 		},
 	}
 
-	ViewCache.Clean()
-	list[1]["CUR"].Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+	_ = list[1]["CUR"].Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorScopesIsInRangeTests {
 		result, err := list.IsInRange(v.CurName)
@@ -663,9 +678,12 @@ var cursorScopesCountTests = []struct {
 }
 
 func TestCursorScopes_Count(t *testing.T) {
-	initCmdFlag()
-	tf := cmd.GetFlags()
-	tf.Repository = TestDir
+	defer func() {
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		initFlag(TestTx.Flags)
+	}()
+
+	TestTx.Flags.Repository = TestDir
 
 	list := CursorScopes{
 		{},
@@ -679,8 +697,7 @@ func TestCursorScopes_Count(t *testing.T) {
 		},
 	}
 
-	ViewCache.Clean()
-	list[1]["CUR"].Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+	_ = list[1]["CUR"].Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorScopesCountTests {
 		result, err := list.Count(v.CurName)
@@ -818,6 +835,7 @@ var cursorMapAddPseudoCursorTests = []struct {
 						NewRecord([]value.Primary{value.NewInteger(1)}),
 						NewRecord([]value.Primary{value.NewInteger(2)}),
 					},
+					Tx: TestTx,
 				},
 				index:    -1,
 				isPseudo: true,
@@ -835,7 +853,7 @@ var cursorMapAddPseudoCursorTests = []struct {
 func TestCursorMap_AddPseudoCursor(t *testing.T) {
 	cursors := CursorMap{}
 	for _, v := range cursorMapAddPseudoCursorTests {
-		err := cursors.AddPseudoCursor(v.Cursor, v.Values)
+		err := cursors.AddPseudoCursor(TestTx, v.Cursor, v.Values)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -871,6 +889,7 @@ var cursorMapDisposeTests = []struct {
 						NewRecord([]value.Primary{value.NewInteger(1)}),
 						NewRecord([]value.Primary{value.NewInteger(2)}),
 					},
+					Tx: TestTx,
 				},
 				index:    -1,
 				isPseudo: true,
@@ -895,7 +914,8 @@ func TestCursorMap_Dispose(t *testing.T) {
 			query: selectQueryForCursorTest,
 		},
 	}
-	cursors.AddPseudoCursor(
+	_ = cursors.AddPseudoCursor(
+		TestTx,
 		parser.Identifier{Literal: "pcur"},
 		[]value.Primary{
 			value.NewInteger(1),
@@ -958,6 +978,7 @@ var cursorMapOpenTests = []struct {
 						Encoding:  text.UTF8,
 						LineBreak: text.LF,
 					},
+					Tx: TestTx,
 				},
 				index: -1,
 			},
@@ -971,6 +992,7 @@ var cursorMapOpenTests = []struct {
 						NewRecord([]value.Primary{value.NewInteger(1)}),
 						NewRecord([]value.Primary{value.NewInteger(2)}),
 					},
+					Tx: TestTx,
 				},
 				index:    -1,
 				isPseudo: true,
@@ -1000,9 +1022,12 @@ var cursorMapOpenTests = []struct {
 }
 
 func TestCursorMap_Open(t *testing.T) {
-	initCmdFlag()
-	tf := cmd.GetFlags()
-	tf.Repository = TestDir
+	defer func() {
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		initFlag(TestTx.Flags)
+	}()
+
+	TestTx.Flags.Repository = TestDir
 
 	cursors := CursorMap{
 		"CUR": &Cursor{
@@ -1012,7 +1037,8 @@ func TestCursorMap_Open(t *testing.T) {
 			query: selectQueryForCursorQueryErrorTest,
 		},
 	}
-	cursors.AddPseudoCursor(
+	_ = cursors.AddPseudoCursor(
+		TestTx,
 		parser.Identifier{Literal: "pcur"},
 		[]value.Primary{
 			value.NewInteger(1),
@@ -1021,8 +1047,8 @@ func TestCursorMap_Open(t *testing.T) {
 	)
 
 	for _, v := range cursorMapOpenTests {
-		ViewCache.Clean()
-		err := cursors.Open(v.CurName, NewEmptyFilter())
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		err := cursors.Open(context.Background(), NewEmptyFilter(TestTx), v.CurName)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1061,6 +1087,7 @@ var cursorMapCloseTests = []struct {
 						NewRecord([]value.Primary{value.NewInteger(1)}),
 						NewRecord([]value.Primary{value.NewInteger(2)}),
 					},
+					Tx: TestTx,
 				},
 				index:    -1,
 				isPseudo: true,
@@ -1080,23 +1107,27 @@ var cursorMapCloseTests = []struct {
 }
 
 func TestCursorMap_Close(t *testing.T) {
-	tf := cmd.GetFlags()
-	tf.Repository = TestDir
+	defer func() {
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		initFlag(TestTx.Flags)
+	}()
+
+	TestTx.Flags.Repository = TestDir
 
 	cursors := CursorMap{
 		"CUR": &Cursor{
 			query: selectQueryForCursorTest,
 		},
 	}
-	cursors.AddPseudoCursor(
+	_ = cursors.AddPseudoCursor(
+		TestTx,
 		parser.Identifier{Literal: "pcur"},
 		[]value.Primary{
 			value.NewInteger(1),
 			value.NewInteger(2),
 		},
 	)
-	ViewCache.Clean()
-	cursors.Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+	_ = cursors.Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorMapCloseTests {
 		err := cursors.Close(v.CurName)
@@ -1235,8 +1266,12 @@ var cursorMapFetchTests = []struct {
 }
 
 func TestCursorMap_Fetch(t *testing.T) {
-	tf := cmd.GetFlags()
-	tf.Repository = TestDir
+	defer func() {
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		initFlag(TestTx.Flags)
+	}()
+
+	TestTx.Flags.Repository = TestDir
 
 	cursors := CursorMap{
 		"CUR": &Cursor{
@@ -1246,8 +1281,7 @@ func TestCursorMap_Fetch(t *testing.T) {
 			query: selectQueryForCursorTest,
 		},
 	}
-	ViewCache.Clean()
-	cursors.Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+	_ = cursors.Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorMapFetchTests {
 		result, err := cursors.Fetch(v.CurName, v.Position, v.Number)
@@ -1293,8 +1327,12 @@ var cursorMapIsOpenTests = []struct {
 }
 
 func TestCursorMap_IsOpen(t *testing.T) {
-	tf := cmd.GetFlags()
-	tf.Repository = TestDir
+	defer func() {
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		initFlag(TestTx.Flags)
+	}()
+
+	TestTx.Flags.Repository = TestDir
 
 	cursors := CursorMap{
 		"CUR": &Cursor{
@@ -1304,8 +1342,7 @@ func TestCursorMap_IsOpen(t *testing.T) {
 			query: selectQueryForCursorTest,
 		},
 	}
-	ViewCache.Clean()
-	cursors.Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+	_ = cursors.Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorMapIsOpenTests {
 		result, err := cursors.IsOpen(v.CurName)
@@ -1364,8 +1401,12 @@ var cursorMapIsInRangeTests = []struct {
 }
 
 func TestCursorMap_IsInRange(t *testing.T) {
-	tf := cmd.GetFlags()
-	tf.Repository = TestDir
+	defer func() {
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		initFlag(TestTx.Flags)
+	}()
+
+	TestTx.Flags.Repository = TestDir
 
 	cursors := CursorMap{
 		"CUR": &Cursor{
@@ -1378,11 +1419,11 @@ func TestCursorMap_IsInRange(t *testing.T) {
 			query: selectQueryForCursorTest,
 		},
 	}
-	ViewCache.Clean()
-	cursors.Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
-	ViewCache.Clean()
-	cursors.Open(parser.Identifier{Literal: "cur2"}, NewEmptyFilter())
-	cursors.Fetch(parser.Identifier{Literal: "cur2"}, parser.NEXT, 0)
+	_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+	_ = cursors.Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
+	_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+	_ = cursors.Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur2"})
+	_, _ = cursors.Fetch(parser.Identifier{Literal: "cur2"}, parser.NEXT, 0)
 
 	for _, v := range cursorMapIsInRangeTests {
 		if 0 != v.Index {
@@ -1431,8 +1472,12 @@ var cursorMapCountTests = []struct {
 }
 
 func TestCursorMap_Count(t *testing.T) {
-	tf := cmd.GetFlags()
-	tf.Repository = TestDir
+	defer func() {
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		initFlag(TestTx.Flags)
+	}()
+
+	TestTx.Flags.Repository = TestDir
 
 	cursors := CursorMap{
 		"CUR": &Cursor{
@@ -1442,8 +1487,8 @@ func TestCursorMap_Count(t *testing.T) {
 			query: selectQueryForCursorTest,
 		},
 	}
-	ViewCache.Clean()
-	cursors.Open(parser.Identifier{Literal: "cur"}, NewEmptyFilter())
+	_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+	_ = cursors.Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorMapCountTests {
 		result, err := cursors.Count(v.CurName)

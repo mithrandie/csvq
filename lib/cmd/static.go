@@ -7,6 +7,8 @@ import (
 )
 
 var (
+	TestTime time.Time // For Tests
+
 	random  *rand.Rand
 	getRand sync.Once
 )
@@ -23,9 +25,8 @@ func GetLocation() *time.Location {
 }
 
 func Now() time.Time {
-	if 0 < len(GetFlags().Now) {
-		t, _ := time.ParseInLocation("2006-01-02 15:04:05.999999999", GetFlags().Now, GetLocation())
-		return t
+	if !TestTime.IsZero() {
+		return TestTime
 	}
 	return time.Now()
 }

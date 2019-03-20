@@ -1143,7 +1143,7 @@ primitive_type
     }
     | DATETIME
     {
-        $$ = NewDatetimeValueFromString($1.Literal)
+        $$ = NewDatetimeValueFromString($1.Literal, yylex.(*Lexer).GetDatetimeFormats())
     }
     | null
     {
@@ -2362,9 +2362,9 @@ func SetDebugLevel(level int, verbose bool) {
 	yyErrorVerbose = verbose
 }
 
-func Parse(s string, sourceFile string) ([]Statement, error) {
+func Parse(s string, sourceFile string, datetimeFormats []string) ([]Statement, error) {
     l := new(Lexer)
-    l.Init(s, sourceFile)
+    l.Init(s, sourceFile, datetimeFormats)
     yyParse(l)
     return l.program, l.err
 }
