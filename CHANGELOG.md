@@ -1,6 +1,6 @@
 # Change Log
 
-## Version 1.9.2
+## Version 1.9.3
 
 Released on March 20, 2019
 
