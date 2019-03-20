@@ -17,11 +17,11 @@ type SSHTerminal struct {
 	origState *terminal.State
 	rawState  *terminal.State
 	prompt    *Prompt
-	session   *Session
+	tx        *Transaction
 }
 
-func NewTerminal(ctx context.Context, session *Session, filter *Filter) (VirtualTerminal, error) {
-	stdin := int(ScreenFd)
+func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
+	stdin := int(filter.Tx.Session.ScreenFd)
 	origState, err := terminal.MakeRaw(stdin)
 	if err != nil {
 		return nil, err
@@ -32,22 +32,24 @@ func NewTerminal(ctx context.Context, session *Session, filter *Filter) (Virtual
 		return nil, err
 	}
 
-	p, _ := cmd.GetPalette()
+	p := cmd.GetPalette()
 	prompt := NewPrompt(filter, p)
-	prompt.LoadConfig()
+	if err = prompt.LoadConfig(); err != nil {
+		return nil, err
+	}
 
 	t := SSHTerminal{
-		terminal:  terminal.NewTerminal(NewStdIO(), p.Render(cmd.PromptEffect, TerminalPrompt)),
+		terminal:  terminal.NewTerminal(NewStdIO(filter.Tx.Session), p.Render(cmd.PromptEffect, TerminalPrompt)),
 		stdin:     stdin,
 		origState: origState,
 		rawState:  rawState,
 		prompt:    prompt,
-		session:   session,
+		tx:        filter.Tx,
 	}
 
-	t.RestoreOriginalMode()
+	_ = t.RestoreOriginalMode()
 	t.SetPrompt(ctx)
-	t.RestoreRawMode()
+	_ = t.RestoreRawMode()
 	return t, nil
 }
 
@@ -65,13 +67,15 @@ func (t SSHTerminal) RestoreOriginalMode() error {
 
 func (t SSHTerminal) ReadLine() (string, error) {
 	if w, h, err := terminal.GetSize(t.stdin); err == nil {
-		t.terminal.SetSize(w, h)
+		if err = t.terminal.SetSize(w, h); err != nil {
+			return "", err
+		}
 	}
 
-	t.RestoreRawMode()
-	s, e := t.terminal.ReadLine()
-	t.RestoreOriginalMode()
-	return s, e
+	_ = t.RestoreRawMode()
+	s, err := t.terminal.ReadLine()
+	_ = t.RestoreOriginalMode()
+	return s, err
 }
 
 func (t SSHTerminal) Write(s string) error {
@@ -80,14 +84,14 @@ func (t SSHTerminal) Write(s string) error {
 }
 
 func (t SSHTerminal) WriteError(s string) error {
-	_, err := Stderr.Write([]byte(s))
+	_, err := t.tx.Session.Stderr.Write([]byte(s))
 	return err
 }
 
 func (t SSHTerminal) SetPrompt(ctx context.Context) {
 	str, err := t.prompt.RenderPrompt(ctx)
 	if err != nil {
-		LogError(err.Error())
+		t.tx.Session.LogError(err.Error())
 	}
 	t.terminal.SetPrompt(str)
 }
@@ -95,7 +99,7 @@ func (t SSHTerminal) SetPrompt(ctx context.Context) {
 func (t SSHTerminal) SetContinuousPrompt(ctx context.Context) {
 	str, err := t.prompt.RenderContinuousPrompt(ctx)
 	if err != nil {
-		LogError(err.Error())
+		t.tx.Session.LogError(err.Error())
 	}
 	t.terminal.SetPrompt(str)
 }
@@ -129,9 +133,9 @@ func (sh *StdIO) Write(p []byte) (n int, err error) {
 	return sh.writer.Write(p)
 }
 
-func NewStdIO() *StdIO {
+func NewStdIO(sess *Session) *StdIO {
 	return &StdIO{
-		reader: Stdin,
-		writer: Stdout,
+		reader: sess.Stdin,
+		writer: sess.Stdout,
 	}
 }
