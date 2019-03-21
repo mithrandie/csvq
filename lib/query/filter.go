@@ -238,7 +238,7 @@ func (f *Filter) Evaluate(ctx context.Context, expr parser.QueryExpression) (val
 	case parser.CursorAttrebute:
 		val, err = f.evalCursorAttribute(expr.(parser.CursorAttrebute))
 	default:
-		return nil, NewInvalidValueError(expr)
+		return nil, NewInvalidValueExpressionError(expr)
 	}
 
 	return val, err
@@ -780,7 +780,7 @@ func (f *Filter) evalAggregateFunction(ctx context.Context, expr parser.Aggregat
 	}
 
 	if len(f.records) < 1 {
-		return nil, NewUnpermittedStatementFunctionError(expr, expr.Name)
+		return nil, NewUnpermittedFunctionStatementError(expr, expr.Name)
 	}
 
 	if !f.records[0].view.isGrouped {
@@ -836,7 +836,7 @@ func (f *Filter) evalListFunction(ctx context.Context, expr parser.ListFunction)
 	}
 
 	if len(f.records) < 1 {
-		return nil, NewUnpermittedStatementFunctionError(expr, expr.Name)
+		return nil, NewUnpermittedFunctionStatementError(expr, expr.Name)
 	}
 
 	if !f.records[0].view.isGrouped {
@@ -1132,7 +1132,7 @@ func (f *Filter) evalJsonQueryForRowValue(ctx context.Context, expr parser.JsonQ
 
 	_, values, _, err := json.LoadTable(query.(value.String).Raw(), jsonText.(value.String).Raw())
 	if err != nil {
-		return nil, NewJsonQueryError(expr, err.Error())
+		return nil, NewLoadJsonError(expr, err.Error())
 	}
 
 	if len(values) < 1 {
@@ -1197,7 +1197,7 @@ func (f *Filter) evalJsonQueryForRowValueList(ctx context.Context, expr parser.J
 
 	_, values, _, err := json.LoadTable(query.(value.String).Raw(), jsonText.(value.String).Raw())
 	if err != nil {
-		return nil, NewJsonQueryError(expr, err.Error())
+		return nil, NewLoadJsonError(expr, err.Error())
 	}
 
 	if len(values) < 1 {
@@ -1246,7 +1246,7 @@ func (f *Filter) evalJsonQueryForArray(ctx context.Context, expr parser.JsonQuer
 
 	values, err := json.LoadArray(query.(value.String).Raw(), jsonText.(value.String).Raw())
 	if err != nil {
-		return nil, NewJsonQueryError(expr, err.Error())
+		return nil, NewLoadJsonError(expr, err.Error())
 	}
 
 	if len(values) < 1 {
@@ -1311,13 +1311,13 @@ func (f *Filter) EvaluateEmbeddedString(ctx context.Context, embedded string) (s
 				case 1:
 					qexpr, ok := statements[0].(parser.QueryExpression)
 					if !ok {
-						return buf.String(), NewInvalidValueError(parser.NewStringValue(expr))
+						return buf.String(), NewInvalidValueExpressionError(parser.NewStringValue(expr))
 					}
 					if err = f.writeEmbeddedExpression(ctx, buf, qexpr); err != nil {
 						return buf.String(), err
 					}
 				default:
-					return buf.String(), NewInvalidValueError(parser.NewStringValue(expr))
+					return buf.String(), NewInvalidValueExpressionError(parser.NewStringValue(expr))
 				}
 			}
 		}

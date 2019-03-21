@@ -161,7 +161,7 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 
 				headerLabels, rows, escapeType, err := json.LoadTable(fileInfo.JsonQuery, string(buf))
 				if err != nil {
-					return nil, NewJsonQueryError(parser.JsonQuery{BaseExpr: table.Object.GetBaseExpr()}, err.Error())
+					return nil, NewLoadJsonError(parser.JsonQuery{BaseExpr: table.Object.GetBaseExpr()}, err.Error())
 				}
 
 				records := make([]Record, 0, len(rows))
@@ -288,7 +288,7 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 			importFormat = cmd.LTSV
 			withoutNullIdx, noHeaderIdx = noHeaderIdx, withoutNullIdx
 		default:
-			return nil, NewTableObjectInvalidObjectError(tableObject, tableObject.Type.Literal)
+			return nil, NewInvalidTableObjectError(tableObject, tableObject.Type.Literal)
 		}
 
 		args := make([]value.Primary, 3)
@@ -480,7 +480,7 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 		queryValue = value.ToString(queryValue)
 
 		if value.IsNull(queryValue) {
-			return nil, NewJsonQueryEmptyError(jsonQuery)
+			return nil, NewEmptyJsonQueryError(jsonQuery)
 		}
 
 		var reader io.Reader
@@ -509,7 +509,7 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 			jsonTextValue = value.ToString(jsonTextValue)
 
 			if value.IsNull(jsonTextValue) {
-				return nil, NewJsonTableEmptyError(jsonQuery)
+				return nil, NewEmptyJsonTableError(jsonQuery)
 			}
 
 			reader = strings.NewReader(jsonTextValue.(value.String).Raw())
@@ -526,7 +526,7 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 
 		view, err = loadViewFromJsonFile(filter.tx, reader, fileInfo)
 		if err != nil {
-			return nil, NewJsonQueryError(jsonQuery, err.Error())
+			return nil, NewLoadJsonError(jsonQuery, err.Error())
 		}
 
 		if err = filter.aliases.Add(table.Name(), ""); err != nil {

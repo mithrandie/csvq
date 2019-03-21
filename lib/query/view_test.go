@@ -454,7 +454,7 @@ var viewLoadTests = []struct {
 		Stdin:        "{\"key\":[{\"column1\": 1, \"column2\": \"str1\"}]}",
 		ImportFormat: cmd.JSON,
 		JsonQuery:    "key{",
-		Error:        "json query error: column 4: unexpected termination",
+		Error:        "json loading error: column 4: unexpected termination",
 	},
 	{
 		Name:         "Load Fixed-Length Text File",
@@ -2332,7 +2332,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "json query error: column 17: unexpected termination",
+		Error: "json loading error: column 17: unexpected termination",
 	},
 	{
 		Name: "Load Json Table From File",

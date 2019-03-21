@@ -23,15 +23,15 @@ var processorExecuteStatementTests = []struct {
 	Logs             string
 	SelectLogs       []string
 	Error            string
-	ErrorCode        int
+	ReturnCode       int
 }{
 	{
 		Input: parser.SetFlag{
 			Name:  "invalid",
 			Value: parser.NewStringValue("\t"),
 		},
-		Error:     "@@invalid is an unknown flag",
-		ErrorCode: 1,
+		Error:      "@@invalid is an unknown flag",
+		ReturnCode: ReturnCodeApplicationError,
 	},
 	{
 		Input: parser.SetFlag{
@@ -233,8 +233,8 @@ var processorExecuteStatementTests = []struct {
 				parser.NewIntegerValueFromString("1"),
 			},
 		},
-		Error:     "function userfunc does not exist",
-		ErrorCode: 1,
+		Error:      "function userfunc does not exist",
+		ReturnCode: ReturnCodeApplicationError,
 	},
 	{
 		Input: parser.CursorDeclaration{
@@ -434,16 +434,16 @@ var processorExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Error:     "variable @var1 is redeclared",
-		ErrorCode: 1,
+		Error:      "variable @var1 is redeclared",
+		ReturnCode: ReturnCodeApplicationError,
 	},
 	{
 		Input: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "var9"},
 			Value:    parser.NewIntegerValueFromString("1"),
 		},
-		Error:     "variable @var9 is undeclared",
-		ErrorCode: 1,
+		Error:      "variable @var9 is undeclared",
+		ReturnCode: ReturnCodeApplicationError,
 	},
 	{
 		Input: parser.InsertQuery{
@@ -714,8 +714,8 @@ var processorExecuteStatementTests = []struct {
 		Input: parser.Exit{
 			Code: value.NewInteger(1),
 		},
-		Error:     "",
-		ErrorCode: 1,
+		Error:      ExitMessage,
+		ReturnCode: 1,
 	},
 	{
 		Input: parser.Print{
@@ -751,24 +751,24 @@ var processorExecuteStatementTests = []struct {
 			Message: parser.NewStringValue("user error"),
 			Code:    value.NewInteger(200),
 		},
-		Error:     "user error",
-		ErrorCode: 200,
+		Error:      "user error",
+		ReturnCode: 200,
 	},
 	{
 		Input: parser.Trigger{
 			Event:   parser.Identifier{Literal: "error"},
 			Message: parser.NewIntegerValue(200),
 		},
-		Error:     DefaultUserTriggeredErrorMessage,
-		ErrorCode: 200,
+		Error:      DefaultUserTriggeredErrorMessage,
+		ReturnCode: 200,
 	},
 	{
 		Input: parser.Trigger{
 			Event:   parser.Identifier{Literal: "invalid"},
 			Message: parser.NewIntegerValue(200),
 		},
-		Error:     "invalid is an unknown event",
-		ErrorCode: 1,
+		Error:      "invalid is an unknown event",
+		ReturnCode: ReturnCodeApplicationError,
 	},
 	{
 		Input: parser.ShowObjects{
@@ -830,12 +830,10 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 					t.Errorf("error %q, want error %q for %q", err, v.Error, v.Input)
 				}
 
-				code = apperr.GetCode()
-			} else if ex, ok := err.(*ForcedExit); ok {
-				code = ex.GetCode()
+				code = apperr.ReturnCode()
 			}
-			if code != v.ErrorCode {
-				t.Errorf("error code %d, want error code %d for %q", code, v.ErrorCode, v.Input)
+			if code != v.ReturnCode {
+				t.Errorf("error code %d, want error code %d for %q", code, v.ReturnCode, v.Input)
 			}
 			continue
 		}

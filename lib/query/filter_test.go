@@ -748,7 +748,7 @@ var filterEvaluateTests = []struct {
 			},
 			Operator: "=",
 		},
-		Error: "json query error: json value must be an array",
+		Error: "json loading error: json value must be an array",
 	},
 	{
 		Name: "Comparison with Row Value and JsonQuery Empty Result Set",
@@ -1476,7 +1476,7 @@ var filterEvaluateTests = []struct {
 			},
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
-		Error: "json query error: column 4: string not terminated",
+		Error: "json loading error: column 4: string not terminated",
 	},
 	{
 		Name: "In JsonArray Empty Result Set",
@@ -1745,7 +1745,7 @@ var filterEvaluateTests = []struct {
 				JsonText: parser.NewStringValue("{\"key\":[]}"),
 			},
 		},
-		Error: "json query error: column 4: unexpected termination",
+		Error: "json loading error: column 4: unexpected termination",
 	},
 	{
 		Name: "In with Row Value and JsonQuery Empty Result Set",

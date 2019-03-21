@@ -132,7 +132,7 @@ func LoadStatementsFromFile(ctx context.Context, tx *Transaction, expr parser.So
 	}
 
 	if !file.Exists(fpath) {
-		return nil, NewSourceFileNotExistError(expr, fpath)
+		return nil, NewFileNotExistError(expr.FilePath)
 	}
 
 	h, err := file.NewHandlerForRead(ctx, tx.FileContainer, fpath, tx.WaitTimeout, tx.RetryDelay)
@@ -993,14 +993,14 @@ func Chdir(ctx context.Context, filter *Filter, expr parser.Chdir) error {
 		}
 		s := value.ToString(p)
 		if value.IsNull(s) {
-			return NewPathError(expr, expr.DirPath.String(), "invalid directory path")
+			return NewInvalidPathError(expr, expr.DirPath.String(), "invalid directory path")
 		}
 		dirpath = s.(value.String).Raw()
 	}
 
 	if err = os.Chdir(dirpath); err != nil {
 		if patherr, ok := err.(*os.PathError); ok {
-			err = NewPathError(expr, patherr.Path, patherr.Err.Error())
+			err = NewInvalidPathError(expr, patherr.Path, patherr.Err.Error())
 		}
 	}
 	return err
@@ -1010,7 +1010,7 @@ func Pwd(expr parser.Pwd) (string, error) {
 	dirpath, err := os.Getwd()
 	if err != nil {
 		if patherr, ok := err.(*os.PathError); ok {
-			err = NewPathError(expr, patherr.Path, patherr.Err.Error())
+			err = NewInvalidPathError(expr, patherr.Path, patherr.Err.Error())
 		}
 	}
 	return dirpath, err

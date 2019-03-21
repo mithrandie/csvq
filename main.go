@@ -297,9 +297,11 @@ func main() {
 		if err != nil {
 			code := 1
 			if apperr, ok := err.(query.Error); ok {
-				code = apperr.GetCode()
-			} else if ex, ok := err.(*query.ForcedExit); ok {
-				code = ex.GetCode()
+				code = apperr.ReturnCode()
+			}
+
+			if _, ok := err.(*query.ForcedExit); ok && code == 0 {
+				return nil
 			}
 			return NewExitError(err.Error(), code)
 		}

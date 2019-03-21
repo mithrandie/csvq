@@ -164,13 +164,13 @@ func (p *Prompt) Render(ctx context.Context, sequence []PromptElement) (string, 
 				case 1:
 					expr, ok := statements[0].(parser.QueryExpression)
 					if !ok {
-						return "", NewPromptEvaluationError(fmt.Sprintf(ErrorInvalidValue, command))
+						return "", NewPromptEvaluationError(fmt.Sprintf(ErrMsgInvalidValueExpression, command))
 					}
 					if err = p.evaluate(ctx, expr); err != nil {
 						return "", err
 					}
 				default:
-					return "", NewPromptEvaluationError(fmt.Sprintf(ErrorInvalidValue, command))
+					return "", NewPromptEvaluationError(fmt.Sprintf(ErrMsgInvalidValueExpression, command))
 				}
 			}
 		}
