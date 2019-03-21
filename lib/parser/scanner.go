@@ -102,9 +102,12 @@ type Scanner struct {
 	sourceFile string
 
 	datetimeFormats []string
+	forPrepared     bool
+
+	holderOrdinal int
 }
 
-func (s *Scanner) Init(src string, sourceFile string, datetimeFormats []string) *Scanner {
+func (s *Scanner) Init(src string, sourceFile string, datetimeFormats []string, forPrepared bool) *Scanner {
 	s.src = []rune(src)
 	s.srcPos = 0
 	s.literal = new(bytes.Buffer)
@@ -112,12 +115,18 @@ func (s *Scanner) Init(src string, sourceFile string, datetimeFormats []string) 
 	s.line = 1
 	s.char = 0
 	s.sourceFile = sourceFile
-	datetimeFormats = datetimeFormats
+	s.datetimeFormats = datetimeFormats
+	s.forPrepared = forPrepared
+	s.holderOrdinal = 0
 	return s
 }
 
 func (s *Scanner) GetDatetimeFormats() []string {
 	return s.datetimeFormats
+}
+
+func (s *Scanner) HolderNumber() int {
+	return s.holderOrdinal
 }
 
 func (s *Scanner) peek() rune {
@@ -167,6 +176,20 @@ func (s *Scanner) Scan() (Token, error) {
 	quoted := false
 	line := s.line
 	char := s.char
+
+	if s.forPrepared {
+		switch ch {
+		case '?':
+			s.holderOrdinal++
+			return Token{Token: PLACEHOLDER, Literal: literal, HolderOrdinal: s.holderOrdinal, Line: line, Char: char, SourceFile: s.sourceFile}, s.err
+		case ':':
+			if s.isIdentRune(s.peek()) {
+				s.scanIdentifier(ch)
+				s.holderOrdinal++
+				return Token{Token: PLACEHOLDER, Literal: s.literal.String(), HolderOrdinal: s.holderOrdinal, Line: line, Char: char, SourceFile: s.sourceFile}, s.err
+			}
+		}
+	}
 
 	switch {
 	case s.isDecimal(ch):
@@ -310,6 +333,10 @@ func (s *Scanner) isIdentRune(ch rune) bool {
 
 func (s *Scanner) isDecimal(ch rune) bool {
 	return '0' <= ch && ch <= '9'
+}
+
+func (s *Scanner) isPositiveDecimal(ch rune) bool {
+	return '1' <= ch && ch <= '9'
 }
 
 func (s *Scanner) scanNumber(head rune) rune {

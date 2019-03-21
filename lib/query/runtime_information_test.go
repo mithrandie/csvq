@@ -60,7 +60,7 @@ func TestGetRuntimeInformation(t *testing.T) {
 		"TABLE3": &View{FileInfo: &FileInfo{}},
 		"TABLE4": &View{FileInfo: &FileInfo{}},
 	}
-	TestTx.uncommittedViews = &UncommittedViewMap{
+	TestTx.uncommittedViews = &UncommittedViews{
 		Created: map[string]*FileInfo{
 			"TABLE1": {},
 			"TABLE2": {},

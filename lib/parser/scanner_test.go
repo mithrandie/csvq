@@ -5,18 +5,21 @@ import (
 )
 
 type scanResult struct {
-	Token   int
-	Literal string
-	Quoted  bool
-	Line    int
-	Char    int
+	Token         int
+	Literal       string
+	Quoted        bool
+	HolderOrdinal int
+	Line          int
+	Char          int
 }
 
 var scanTests = []struct {
-	Name   string
-	Input  string
-	Output []scanResult
-	Error  string
+	Name        string
+	Input       string
+	DTFormats   []string
+	ForPrepared bool
+	Output      []scanResult
+	Error       string
 }{
 	{
 		Name:  "Identifier",
@@ -116,6 +119,17 @@ var scanTests = []struct {
 			{
 				Token:   DATETIME,
 				Literal: "2012-05-21T12:00:00-12:00",
+			},
+		},
+	},
+	{
+		Name:      "Datetime",
+		Input:     "\"20120521\"",
+		DTFormats: []string{"%Y%m%d"},
+		Output: []scanResult{
+			{
+				Token:   DATETIME,
+				Literal: "20120521",
 			},
 		},
 	},
@@ -455,11 +469,54 @@ var scanTests = []struct {
 		Input: "@@@",
 		Error: "invalid variable symbol",
 	},
+	{
+		Name:        "Placeholders",
+		Input:       "? :foo",
+		ForPrepared: true,
+		Output: []scanResult{
+			{
+				Token:         PLACEHOLDER,
+				Literal:       "?",
+				HolderOrdinal: 1,
+			},
+			{
+				Token:         PLACEHOLDER,
+				Literal:       ":foo",
+				HolderOrdinal: 2,
+			},
+		},
+	},
+	{
+		Name:        "Placeholder Disabled",
+		Input:       "?",
+		ForPrepared: false,
+		Output: []scanResult{
+			{
+				Token:   '?',
+				Literal: "?",
+			},
+		},
+	},
+	{
+		Name:        "Placeholder Disabled",
+		Input:       ":foo",
+		ForPrepared: false,
+		Output: []scanResult{
+			{
+				Token:   ':',
+				Literal: ":",
+			},
+			{
+				Token:   IDENTIFIER,
+				Literal: "foo",
+			},
+		},
+	},
 }
 
 func TestScanner_Scan(t *testing.T) {
 	for _, v := range scanTests {
-		s := new(Scanner).Init(v.Input, "", nil)
+		s := new(Scanner).Init(v.Input, "", v.DTFormats, v.ForPrepared)
 
 		tokenCount := 0
 		for {
@@ -500,6 +557,9 @@ func TestScanner_Scan(t *testing.T) {
 			}
 			if token.Quoted != expect.Quoted {
 				t.Errorf("%s, token %d: quoted = %t, want %t", v.Name, tokenCount, token.Quoted, expect.Quoted)
+			}
+			if token.HolderOrdinal != expect.HolderOrdinal {
+				t.Errorf("%s, token %d: holder ordinal = %d, want %d", v.Name, tokenCount, token.HolderOrdinal, expect.HolderOrdinal)
 			}
 			if 0 < expect.Line {
 				if token.Line != expect.Line {

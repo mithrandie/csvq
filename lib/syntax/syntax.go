@@ -377,6 +377,48 @@ var CsvqSyntax = []Expression{
 		},
 	},
 	{
+		Label: "Prepared Statement",
+		Grammar: []Definition{
+			{
+				Name: "prepare_statement",
+				Group: []Grammar{
+					{Keyword("PREPARE"), Identifier("statement_name"), Keyword("FROM"), String("statement")},
+				},
+			},
+			{
+				Name: "execute_prepared_statement",
+				Group: []Grammar{
+					{Keyword("EXECUTE"), Identifier("statement_name")},
+					{Keyword("EXECUTE"), Identifier("statement_name"), Keyword("USING"), ContinuousOption{Link("statement_replace_value")}},
+				},
+			},
+			{
+				Name: "statement_replace_value",
+				Group: []Grammar{
+					{Link("value")},
+					{Link("value"), Keyword("AS"), Identifier("placeholder_name")},
+				},
+			},
+			{
+				Name: "dispose_prepared_statement",
+				Group: []Grammar{
+					{Keyword("DISPOSE"), Keyword("PREPARE"), Identifier("statement_name")},
+				},
+			},
+			{
+				Name: "statement_placeholder",
+				Description: Description{
+					Template: "" +
+						"Positional Placeholder\n" +
+						"  > Question Mark(U+003F `?`)\n" +
+						"Named Placeholder\n" +
+						"  > Colon(U+003A `:`) and followd by %s",
+					Values: []Element{Link("identifier")},
+				},
+			},
+		},
+	},
+	{
 		Label: "Variables",
 		Grammar: []Definition{
 			{
@@ -2720,7 +2762,7 @@ var CsvqSyntax = []Expression{
 						"JSON_AGG JSON_OBJECT JSON_ROW JSON_TABLE LAG LAST LAST_VALUE LEAD " +
 						"LEFT LIKE LIMIT LISTAGG MAX MEDIAN MIN NATURAL NEXT NOT NTH_VALUE " +
 						"NTILE NULL OFFSET ON OPEN OR ORDER OUTER OVER PARTITION PERCENT " +
-						"PERCENT_RANK PRECEDING PRINT PRINTF PRIOR PWD RANGE RANK RECURSIVE " +
+						"PERCENT_RANK PRECEDING PREPARE PRINT PRINTF PRIOR PWD RANGE RANK RECURSIVE " +
 						"RELATIVE RELOAD REMOVE RENAME RETURN RIGHT ROLLBACK ROW ROW_NUMBER " +
 						"SELECT SEPARATOR SET SHOW SOURCE STDIN SUM SYNTAX TABLE THEN TO TRIGGER TRUE " +
 						"UNBOUNDED UNION UNKNOWN UNSET UPDATE USING VALUES VAR VIEW WHEN WHERE " +

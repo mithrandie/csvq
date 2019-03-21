@@ -237,6 +237,8 @@ func (f *Filter) Evaluate(ctx context.Context, expr parser.QueryExpression) (val
 		val, err = f.evalCursorStatus(expr.(parser.CursorStatus))
 	case parser.CursorAttrebute:
 		val, err = f.evalCursorAttribute(expr.(parser.CursorAttrebute))
+	case parser.Placeholder:
+		val, err = f.evalPlaceholder(ctx, expr.(parser.Placeholder))
 	default:
 		return nil, NewInvalidValueExpressionError(expr)
 	}
@@ -1017,6 +1019,29 @@ func (f *Filter) evalCursorAttribute(expr parser.CursorAttrebute) (value.Primary
 	return value.NewInteger(int64(i)), nil
 }
 
+func (f *Filter) evalPlaceholder(ctx context.Context, expr parser.Placeholder) (value.Primary, error) {
+	v := ctx.Value(StatementReplaceValuesContextKey)
+	if v == nil {
+		return nil, NewStatementReplaceValueNotSpecifiedError(expr)
+	}
+	replace := v.(*ReplaceValues)
+
+	var idx int
+	if 0 < len(expr.Name) {
+		i, ok := replace.Names[expr.Name]
+		if !ok {
+			return nil, NewStatementReplaceValueNotSpecifiedError(expr)
+		}
+		idx = i
+	} else {
+		idx = expr.Ordinal - 1
+		if len(replace.Values) <= idx {
+			return nil, NewStatementReplaceValueNotSpecifiedError(expr)
+		}
+	}
+	return f.Evaluate(ctx, replace.Values[idx])
+}
+
 /*
  * Returns single or multiple fields, single record
  */
@@ -1299,7 +1324,7 @@ func (f *Filter) EvaluateEmbeddedString(ctx context.Context, embedded string) (s
 		case excmd.CsvqExpression:
 			expr := scanner.Text()
 			if 0 < len(expr) {
-				statements, err := parser.Parse(expr, "", f.tx.Flags.DatetimeFormat)
+				statements, _, err := parser.Parse(expr, "", f.tx.Flags.DatetimeFormat, false)
 				if err != nil {
 					if syntaxErr, ok := err.(*parser.SyntaxError); ok {
 						err = NewSyntaxError(syntaxErr)

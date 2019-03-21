@@ -1522,6 +1522,7 @@ var showObjectsTests = []struct {
 	Name                    string
 	Expr                    parser.ShowObjects
 	Filter                  *Filter
+	PreparedStatements      PreparedStatementMap
 	ImportFormat            cmd.Format
 	Delimiter               rune
 	DelimiterPositions      fixedlen.DelimiterPositions
@@ -1533,7 +1534,7 @@ var showObjectsTests = []struct {
 	WriteDelimiterPositions fixedlen.DelimiterPositions
 	WriteAsSingleLine       bool
 	ViewCache               ViewMap
-	UncommittedViews        *UncommittedViewMap
+	UncommittedViews        *UncommittedViews
 	Expect                  string
 	Error                   string
 }{
@@ -1711,7 +1712,7 @@ var showObjectsTests = []struct {
 				},
 			},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{
 				"TABLE1.TSV": {Path: "table1.tsv"},
 			},
@@ -1812,7 +1813,7 @@ var showObjectsTests = []struct {
 				},
 			},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				"VIEW2": {Path: "view2", IsTemporary: true},
@@ -1973,6 +1974,67 @@ var showObjectsTests = []struct {
 		Expect: "No function is declared",
 	},
 	{
+		Name: "ShowObjects Statements",
+		Expr: parser.ShowObjects{Type: parser.Identifier{Literal: "statements"}},
+		PreparedStatements: PreparedStatementMap{
+			"STMT1": &PreparedStatement{
+				Name:            "stmt1",
+				StatementString: "select 1",
+				Statements: []parser.Statement{
+					parser.SelectQuery{
+						SelectEntity: parser.SelectEntity{
+							SelectClause: parser.SelectClause{
+								BaseExpr: parser.NewBaseExpr(parser.Token{Line: 1, Char: 1, SourceFile: "stmt"}),
+								Select:   "select",
+								Fields: []parser.QueryExpression{
+									parser.Field{
+										Object: parser.NewIntegerValueFromString("1"),
+									},
+								},
+							},
+						},
+					},
+				},
+				HolderNumber: 0,
+			},
+			"STMT2": &PreparedStatement{
+				Name:            "stmt2",
+				StatementString: "select ?",
+				Statements: []parser.Statement{
+					parser.SelectQuery{
+						SelectEntity: parser.SelectEntity{
+							SelectClause: parser.SelectClause{
+								BaseExpr: parser.NewBaseExpr(parser.Token{Line: 1, Char: 1, SourceFile: "stmt"}),
+								Select:   "select",
+								Fields: []parser.QueryExpression{
+									parser.Field{
+										Object: parser.Placeholder{Literal: "?", Ordinal: 1},
+									},
+								},
+							},
+						},
+					},
+				},
+				HolderNumber: 1,
+			},
+		},
+		Expect: "\n" +
+			"    Prepared Statements\n" +
+			"---------------------------\n" +
+			" stmt1\n" +
+			"     Placeholder Number: 0\n" +
+			"     Statement: select 1\n" +
+			" stmt2\n" +
+			"     Placeholder Number: 1\n" +
+			"     Statement: select ?\n" +
+			"\n",
+	},
+	{
+		Name:   "ShowObjects Statements Empty",
+		Expr:   parser.ShowObjects{Type: parser.Identifier{Literal: "statements"}},
+		Expect: "No statement is prepared",
+	},
+	{
 		Name:       "ShowObjects Flags",
 		Expr:       parser.ShowObjects{Type: parser.Identifier{Literal: "flags"}},
 		Repository: ".",
@@ -2035,6 +2097,7 @@ func TestShowObjects(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
 		TestTx.uncommittedViews.Clean()
+		TestTx.PreparedStatements = make(PreparedStatementMap)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -2062,9 +2125,13 @@ func TestShowObjects(t *testing.T) {
 			TestTx.cachedViews = v.ViewCache
 		}
 		if v.UncommittedViews == nil {
-			TestTx.uncommittedViews = NewUncommittedViewMap()
+			TestTx.uncommittedViews = NewUncommittedViews()
 		} else {
 			TestTx.uncommittedViews = v.UncommittedViews
+		}
+		TestTx.PreparedStatements = make(PreparedStatementMap)
+		if v.PreparedStatements != nil {
+			TestTx.PreparedStatements = v.PreparedStatements
 		}
 
 		var filter *Filter
@@ -2099,7 +2166,7 @@ var showFieldsTests = []struct {
 	Expr             parser.ShowFields
 	Filter           *Filter
 	ViewCache        ViewMap
-	UncommittedViews *UncommittedViewMap
+	UncommittedViews *UncommittedViews
 	Expect           string
 	Error            string
 }{
@@ -2151,7 +2218,7 @@ var showFieldsTests = []struct {
 				},
 			},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				"VIEW1": {Path: "view1", IsTemporary: true},
@@ -2190,7 +2257,7 @@ var showFieldsTests = []struct {
 				},
 			},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("show_fields_create.csv")): {Path: "show_fields_create.csv"},
 			},
@@ -2228,7 +2295,7 @@ var showFieldsTests = []struct {
 				},
 			},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("show_fields_create.csv")): {Path: "show_fields_create.csv"},
 			},
@@ -2266,7 +2333,7 @@ var showFieldsTests = []struct {
 				},
 			},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("show_fields_update.csv")): {Path: "show_fields_updated.csv"},
@@ -2349,7 +2416,7 @@ func TestShowFields(t *testing.T) {
 			TestTx.cachedViews = v.ViewCache
 		}
 		if v.UncommittedViews == nil {
-			TestTx.uncommittedViews = NewUncommittedViewMap()
+			TestTx.uncommittedViews = NewUncommittedViews()
 		} else {
 			TestTx.uncommittedViews = v.UncommittedViews
 		}

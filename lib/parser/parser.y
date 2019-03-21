@@ -30,6 +30,8 @@ import (
     casewhen    []CaseWhen
     caseelse    CaseElse
     fetchpos    FetchPosition
+    replaceval  ReplaceValue
+    replacevals []ReplaceValue
     token       Token
 }
 
@@ -61,6 +63,9 @@ import (
 %type<expression>  column_position
 %type<statement>   cursor_statement
 %type<statement>   temporary_table_statement
+%type<replaceval>  replace_value
+%type<replacevals> replace_values
+%type<statement>   prepared_statement
 %type<varassign>   parameter
 %type<varassigns>  parameters
 %type<varassign>   optional_parameter
@@ -179,7 +184,7 @@ import (
 %type<token>       comparison_operator
 
 %token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME
-%token<token> VARIABLE FLAG ENVIRONMENT_VARIABLE RUNTIME_INFORMATION EXTERNAL_COMMAND
+%token<token> VARIABLE FLAG ENVIRONMENT_VARIABLE RUNTIME_INFORMATION EXTERNAL_COMMAND PLACEHOLDER
 %token<token> SELECT FROM UPDATE SET UNSET DELETE WHERE INSERT INTO VALUES AS DUAL STDIN
 %token<token> RECURSIVE
 %token<token> CREATE ADD DROP ALTER TABLE FIRST LAST AFTER BEFORE DEFAULT RENAME TO VIEW
@@ -191,7 +196,7 @@ import (
 %token<token> DISTINCT WITH
 %token<token> RANGE UNBOUNDED PRECEDING FOLLOWING CURRENT ROW
 %token<token> CASE IF ELSEIF WHILE WHEN THEN ELSE DO END
-%token<token> DECLARE CURSOR FOR FETCH OPEN CLOSE DISPOSE
+%token<token> DECLARE CURSOR FOR FETCH OPEN CLOSE DISPOSE PREPARE
 %token<token> NEXT PRIOR ABSOLUTE RELATIVE
 %token<token> SEPARATOR PARTITION OVER
 %token<token> COMMIT ROLLBACK
@@ -305,6 +310,10 @@ common_statement
         $$ = $1
     }
     | temporary_table_statement
+    {
+        $$ = $1
+    }
+    | prepared_statement
     {
         $$ = $1
     }
@@ -717,6 +726,44 @@ temporary_table_statement
     | DISPOSE VIEW identifier
     {
         $$ = DisposeView{View: $3}
+    }
+
+replace_value
+    : value
+    {
+        $$ = ReplaceValue{Value: $1}
+    }
+    | value AS identifier
+    {
+        $$ = ReplaceValue{Value: $1, Name: $3}
+    }
+
+replace_values
+    : replace_value
+    {
+        $$ = []ReplaceValue{$1}
+    }
+    | replace_value ',' replace_values
+    {
+        $$ = append([]ReplaceValue{$1}, $3...)
+    }
+
+prepared_statement
+    : PREPARE identifier FROM STRING
+    {
+        $$ = StatementPreparation{Name: $2, Statement: value.NewString($4.Literal)}
+    }
+    | EXECUTE identifier
+    {
+        $$ = ExecuteStatement{BaseExpr: NewBaseExpr($1), Name: $2}
+    }
+    | EXECUTE identifier USING replace_values
+    {
+        $$ = ExecuteStatement{BaseExpr: NewBaseExpr($1), Name: $2, Values: $4}
+    }
+    | DISPOSE PREPARE identifier
+    {
+        $$ = DisposeStatement{Name: $3}
     }
 
 parameter
@@ -1248,6 +1295,14 @@ value
     | '(' value ')'
     {
         $$ = Parentheses{Expr: $2}
+    }
+    | PLACEHOLDER
+    {
+        name := ""
+        if $1.Literal[0] == ':' {
+            name = $1.Literal[1:]
+        }
+        $$ = Placeholder{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Ordinal: $1.HolderOrdinal, Name: name}
     }
 
 wildcard
@@ -2362,9 +2417,9 @@ func SetDebugLevel(level int, verbose bool) {
 	yyErrorVerbose = verbose
 }
 
-func Parse(s string, sourceFile string, datetimeFormats []string) ([]Statement, error) {
+func Parse(s string, sourceFile string, datetimeFormats []string, forPrepared bool) ([]Statement, int, error) {
     l := new(Lexer)
-    l.Init(s, sourceFile, datetimeFormats)
+    l.Init(s, sourceFile, datetimeFormats, forPrepared)
     yyParse(l)
-    return l.program, l.err
+    return l.program, l.HolderNumber(), l.err
 }

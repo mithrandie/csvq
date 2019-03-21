@@ -28,9 +28,14 @@ const (
 )
 
 const StoringResultsContextKey = "store_query_results"
+const StatementReplaceValuesContextKey = "statement_replace_values"
 
 func ContextForStoringResults(ctx context.Context) context.Context {
 	return context.WithValue(ctx, StoringResultsContextKey, true)
+}
+
+func ContextForPreparedStatement(ctx context.Context, values *ReplaceValues) context.Context {
+	return context.WithValue(ctx, StatementReplaceValuesContextKey, values)
 }
 
 type Processor struct {
@@ -156,6 +161,18 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 		err = proc.Filter.functions.Dispose(stmt.(parser.DisposeFunction).Name)
 	case parser.AggregateDeclaration:
 		err = proc.Filter.functions.DeclareAggregate(stmt.(parser.AggregateDeclaration))
+	case parser.StatementPreparation:
+		err = proc.Tx.PreparedStatements.Prepare(proc.Filter, stmt.(parser.StatementPreparation))
+	case parser.ExecuteStatement:
+		execStmt := stmt.(parser.ExecuteStatement)
+		prepared, e := proc.Tx.PreparedStatements.Get(execStmt.Name)
+		if e != nil {
+			err = e
+		} else {
+			flow, err = proc.execute(ContextForPreparedStatement(ctx, NewReplaceValues(execStmt.Values)), prepared.Statements)
+		}
+	case parser.DisposeStatement:
+		err = proc.Tx.PreparedStatements.Dispose(stmt.(parser.DisposeStatement))
 	case parser.SelectQuery:
 		if proc.Tx.Flags.Stats {
 			proc.measurementStart = time.Now()

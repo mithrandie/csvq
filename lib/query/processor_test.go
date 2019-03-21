@@ -19,7 +19,7 @@ import (
 
 var processorExecuteStatementTests = []struct {
 	Input            parser.Statement
-	UncommittedViews *UncommittedViewMap
+	UncommittedViews *UncommittedViews
 	Logs             string
 	SelectLogs       []string
 	Error            string
@@ -301,6 +301,30 @@ var processorExecuteStatementTests = []struct {
 		},
 	},
 	{
+		Input: parser.StatementPreparation{
+			Name:      parser.Identifier{Literal: "stmt"},
+			Statement: value.NewString("select 1"),
+		},
+	},
+	{
+		Input: parser.ExecuteStatement{
+			Name: parser.Identifier{Literal: "invalidstmt"},
+		},
+		Error:      "statement invalidstmt does not exist",
+		ReturnCode: ReturnCodeApplicationError,
+	},
+	{
+		Input: parser.ExecuteStatement{
+			Name: parser.Identifier{Literal: "stmt"},
+		},
+		Logs: "1\n1\n",
+	},
+	{
+		Input: parser.DisposeStatement{
+			Name: parser.Identifier{Literal: "stmt"},
+		},
+	},
+	{
 		Input: parser.SelectQuery{
 			SelectEntity: parser.SelectEntity{
 				SelectClause: parser.SelectClause{
@@ -471,7 +495,7 @@ var processorExecuteStatementTests = []struct {
 				},
 			},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
@@ -504,7 +528,7 @@ var processorExecuteStatementTests = []struct {
 				},
 			},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
@@ -535,7 +559,7 @@ var processorExecuteStatementTests = []struct {
 				},
 			},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
@@ -557,7 +581,7 @@ var processorExecuteStatementTests = []struct {
 				parser.Identifier{Literal: "column2"},
 			},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("NEWTABLE.CSV")): {
 					Path:      GetTestFilePath("newtable.csv"),
@@ -580,7 +604,7 @@ var processorExecuteStatementTests = []struct {
 				},
 			},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
@@ -601,7 +625,7 @@ var processorExecuteStatementTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
@@ -621,7 +645,7 @@ var processorExecuteStatementTests = []struct {
 			Old:   parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			New:   parser.Identifier{Literal: "newcolumn"},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
@@ -649,7 +673,7 @@ var processorExecuteStatementTests = []struct {
 			Attribute: parser.Identifier{Literal: "delimiter"},
 			Value:     parser.NewStringValue("\t"),
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
@@ -812,7 +836,7 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 
 	for _, v := range processorExecuteStatementTests {
 		_ = TestTx.ReleaseResources()
-		TestTx.uncommittedViews = NewUncommittedViewMap()
+		TestTx.uncommittedViews = NewUncommittedViews()
 
 		r, w, _ := os.Pipe()
 		tx.Session.Stdout = w

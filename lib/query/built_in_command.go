@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -37,13 +38,14 @@ const (
 )
 
 const (
-	ShowTables    = "TABLES"
-	ShowViews     = "VIEWS"
-	ShowCursors   = "CURSORS"
-	ShowFunctions = "FUNCTIONS"
-	ShowFlags     = "FLAGS"
-	ShowEnv       = "ENV"
-	ShowRuninfo   = "RUNINFO"
+	ShowTables     = "TABLES"
+	ShowViews      = "VIEWS"
+	ShowCursors    = "CURSORS"
+	ShowFunctions  = "FUNCTIONS"
+	ShowStatements = "STATEMENTS"
+	ShowFlags      = "FLAGS"
+	ShowEnv        = "ENV"
+	ShowRuninfo    = "RUNINFO"
 )
 
 var ShowObjectList = []string{
@@ -51,6 +53,7 @@ var ShowObjectList = []string{
 	ShowViews,
 	ShowCursors,
 	ShowFunctions,
+	ShowStatements,
 	ShowFlags,
 	ShowEnv,
 	ShowRuninfo,
@@ -151,7 +154,7 @@ func LoadStatementsFromFile(ctx context.Context, tx *Transaction, expr parser.So
 	}
 	input := string(buf)
 
-	statements, err = parser.Parse(input, fpath, tx.Flags.DatetimeFormat)
+	statements, _, err = parser.Parse(input, fpath, tx.Flags.DatetimeFormat, false)
 	if err != nil {
 		err = NewSyntaxError(err.(*parser.SyntaxError))
 	}
@@ -182,7 +185,7 @@ func ParseExecuteStatements(ctx context.Context, filter *Filter, expr parser.Exe
 	if err != nil {
 		return nil, NewReplaceValueLengthError(expr, err.(Error).ErrorMessage())
 	}
-	statements, err := parser.Parse(input, fmt.Sprintf("(L:%d C:%d) EXECUTE", expr.Line(), expr.Char()), filter.tx.Flags.DatetimeFormat)
+	statements, _, err := parser.Parse(input, fmt.Sprintf("(L:%d C:%d) EXECUTE", expr.Line(), expr.Char()), filter.tx.Flags.DatetimeFormat, false)
 	if err != nil {
 		err = NewSyntaxError(err.(*parser.SyntaxError))
 	}
@@ -663,6 +666,36 @@ func ShowObjects(filter *Filter, expr parser.ShowObjects) (string, error) {
 			} else {
 				s += "\n"
 			}
+		}
+	case ShowStatements:
+		if len(filter.tx.PreparedStatements) < 1 {
+			s = cmd.Warn("No statement is prepared")
+		} else {
+			keys := make([]string, 0, len(filter.tx.PreparedStatements))
+			for k := range filter.tx.PreparedStatements {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+
+			for _, key := range keys {
+				stmt := filter.tx.PreparedStatements[key]
+
+				w.WriteColor(stmt.Name, cmd.ObjectEffect)
+				w.BeginBlock()
+
+				w.NewLine()
+				w.WriteColorWithoutLineBreak("Placeholder Number: ", cmd.LableEffect)
+				w.WriteColorWithoutLineBreak(strconv.Itoa(stmt.HolderNumber), cmd.NumberEffect)
+				w.NewLine()
+				w.WriteColorWithoutLineBreak("Statement: ", cmd.LableEffect)
+				w.WriteWithoutLineBreak(stmt.StatementString)
+
+				w.ClearBlock()
+				w.NewLine()
+			}
+			w.Title1 = "Prepared Statements"
+			s = "\n" + w.String() + "\n"
+
 		}
 	case ShowFlags:
 		for _, flag := range cmd.FlagList {

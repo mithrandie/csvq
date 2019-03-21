@@ -25,7 +25,9 @@ type Transaction struct {
 	FileContainer *file.Container
 
 	cachedViews      ViewMap
-	uncommittedViews *UncommittedViewMap
+	uncommittedViews *UncommittedViews
+
+	PreparedStatements PreparedStatementMap
 
 	SelectedViews []*View
 	AffectedRows  int
@@ -45,17 +47,18 @@ func NewTransaction(ctx context.Context, defaultWaitTimeout time.Duration, retry
 	}
 
 	return &Transaction{
-		Session:          session,
-		Environment:      environment,
-		Flags:            flags,
-		WaitTimeout:      file.DefaultWaitTimeout,
-		RetryDelay:       file.DefaultRetryDelay,
-		FileContainer:    file.NewContainer(),
-		cachedViews:      make(ViewMap, 10),
-		uncommittedViews: NewUncommittedViewMap(),
-		SelectedViews:    nil,
-		AffectedRows:     0,
-		AutoCommit:       false,
+		Session:            session,
+		Environment:        environment,
+		Flags:              flags,
+		WaitTimeout:        file.DefaultWaitTimeout,
+		RetryDelay:         file.DefaultRetryDelay,
+		FileContainer:      file.NewContainer(),
+		cachedViews:        make(ViewMap, 10),
+		uncommittedViews:   NewUncommittedViews(),
+		PreparedStatements: make(PreparedStatementMap, 4),
+		SelectedViews:      nil,
+		AffectedRows:       0,
+		AutoCommit:         false,
 	}, nil
 }
 

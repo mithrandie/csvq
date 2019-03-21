@@ -14,11 +14,12 @@ import (
 )
 
 var filterEvaluateTests = []struct {
-	Name   string
-	Filter *Filter
-	Expr   parser.QueryExpression
-	Result value.Primary
-	Error  string
+	Name          string
+	Filter        *Filter
+	Expr          parser.QueryExpression
+	ReplaceValues *ReplaceValues
+	Result        value.Primary
+	Error         string
 }{
 	{
 		Name:   "nil",
@@ -4027,6 +4028,63 @@ var filterEvaluateTests = []struct {
 		},
 		Error: "cursor notexist is undeclared",
 	},
+	{
+		Name: "Placeholder Ordinal",
+		Expr: parser.Placeholder{
+			Literal: "?",
+			Ordinal: 1,
+		},
+		ReplaceValues: &ReplaceValues{
+			Values: []parser.QueryExpression{parser.NewIntegerValueFromString("1")},
+			Names:  map[string]int{},
+		},
+		Result: value.NewInteger(1),
+	},
+	{
+		Name: "Placeholder Named",
+		Expr: parser.Placeholder{
+			Literal: ":val",
+			Ordinal: 1,
+			Name:    "val",
+		},
+		ReplaceValues: &ReplaceValues{
+			Values: []parser.QueryExpression{parser.NewIntegerValueFromString("1")},
+			Names:  map[string]int{"val": 0},
+		},
+		Result: value.NewInteger(1),
+	},
+	{
+		Name: "Placeholder Replace Values Not Exist Error",
+		Expr: parser.Placeholder{
+			Literal: "?",
+			Ordinal: 1,
+		},
+		Error: "replace value for ? is not specified",
+	},
+	{
+		Name: "Placeholder Ordinal Replace Value Not Exist Error",
+		Expr: parser.Placeholder{
+			Literal: "?",
+			Ordinal: 10,
+		},
+		ReplaceValues: &ReplaceValues{
+			Values: []parser.QueryExpression{parser.NewIntegerValueFromString("1")},
+		},
+		Error: "replace value for ? is not specified",
+	},
+	{
+		Name: "Placeholder Named Replace Value Not Exist Error",
+		Expr: parser.Placeholder{
+			Literal: ":notexist",
+			Ordinal: 1,
+			Name:    "notexist",
+		},
+		ReplaceValues: &ReplaceValues{
+			Values: []parser.QueryExpression{parser.NewIntegerValueFromString("1")},
+			Names:  map[string]int{"val": 0},
+		},
+		Error: "replace value for :notexist is not specified",
+	},
 }
 
 func TestFilter_Evaluate(t *testing.T) {
@@ -4042,7 +4100,9 @@ func TestFilter_Evaluate(t *testing.T) {
 			query: selectQueryForCursorTest,
 		},
 	}
-	_ = cursors.Open(context.Background(), NewFilter(TestTx), parser.Identifier{Literal: "cur"})
+
+	ctx := context.Background()
+	_ = cursors.Open(ctx, NewFilter(TestTx), parser.Identifier{Literal: "cur"})
 	_, _ = cursors.Fetch(parser.Identifier{Literal: "cur"}, parser.NEXT, 0)
 
 	for _, v := range filterEvaluateTests {
@@ -4058,7 +4118,12 @@ func TestFilter_Evaluate(t *testing.T) {
 		}
 
 		v.Filter.cursors = append(v.Filter.cursors, cursors)
-		result, err := v.Filter.Evaluate(context.Background(), v.Expr)
+
+		evalCtx := ctx
+		if v.ReplaceValues != nil {
+			evalCtx = ContextForPreparedStatement(ctx, v.ReplaceValues)
+		}
+		result, err := v.Filter.Evaluate(evalCtx, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

@@ -33,6 +33,7 @@ const (
 	ErrorInvalidValueExpression       = 8001
 	ErrorUnpermittedFunctionStatement = 8002
 	ErrorNestedAggregateFunctions     = 8003
+	ErrorPreparedStatementSyntaxError = 8004
 
 	//Application Error
 	ErrorFieldAmbiguous                       = 16001
@@ -116,6 +117,9 @@ const (
 	ErrorExternalCommand                      = 16079
 	ErrorInvalidReloadType                    = 16080
 	ErrorLoadConfiguration                    = 16081
+	ErrorDuplicateStatementName               = 16082
+	ErrorStatementNotExist                    = 16083
+	ErrorStatementReplaceValueNotSpecified    = 16084
 
 	//User Triggered Error
 	ErrorExit          = 32000

@@ -22,7 +22,7 @@ func Calc(proc *query.Processor, expr string) error {
 
 	q := "select " + expr + " from stdin"
 
-	program, err := parser.Parse(q, "", proc.Tx.Flags.DatetimeFormat)
+	program, _, err := parser.Parse(q, "", proc.Tx.Flags.DatetimeFormat, false)
 	if err != nil {
 		return errors.New("syntax error")
 	}

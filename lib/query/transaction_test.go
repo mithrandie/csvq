@@ -57,7 +57,7 @@ func TestTransaction_Commit(t *testing.T) {
 		},
 	}
 
-	TestTx.uncommittedViews = &UncommittedViewMap{
+	TestTx.uncommittedViews = &UncommittedViews{
 		Created: map[string]*FileInfo{
 			strings.ToUpper(GetTestFilePath("created_file.csv")): {
 				Path:    GetTestFilePath("created_file.csv"),
@@ -98,7 +98,7 @@ func TestTransaction_Rollback(t *testing.T) {
 
 	TestTx.Flags.SetQuiet(false)
 
-	TestTx.uncommittedViews = &UncommittedViewMap{
+	TestTx.uncommittedViews = &UncommittedViews{
 		Created: map[string]*FileInfo{
 			strings.ToUpper(GetTestFilePath("created_file.csv")): {
 				Path: GetTestFilePath("created_file.csv"),

@@ -112,6 +112,9 @@ const (
 	ErrMsgExternalCommand                      = "external command: %s"
 	ErrMsgInvalidReloadType                    = "%s is an unknown reload type"
 	ErrMsgLoadConfiguration                    = "configuration loading error: %s"
+	ErrMsgDuplicateStatementName               = "statement %s is a duplicate"
+	ErrMsgStatementNotExist                    = "statement %s does not exist"
+	ErrMsgStatementReplaceValueNotSpecified    = "replace value for %s is not specified"
 )
 
 type Error interface {
@@ -292,6 +295,23 @@ func NewSyntaxError(err *parser.SyntaxError) error {
 			message:    err.Message,
 			returnCode: ReturnCodeSyntaxError,
 			number:     ErrorSyntaxError,
+		},
+	}
+}
+
+type PreparedStatementSyntaxError struct {
+	*BaseError
+}
+
+func NewPreparedStatementSyntaxError(err *parser.SyntaxError) error {
+	return &PreparedStatementSyntaxError{
+		&BaseError{
+			sourceFile: fmt.Sprintf("prepare %s", err.SourceFile),
+			line:       err.Line,
+			char:       err.Char,
+			message:    err.Message,
+			returnCode: ReturnCodeSyntaxError,
+			number:     ErrorPreparedStatementSyntaxError,
 		},
 	}
 }
@@ -1277,6 +1297,36 @@ type LoadConfigurationError struct {
 func NewLoadConfigurationError(expr parser.Reload, message string) error {
 	return &LoadConfigurationError{
 		NewBaseError(expr, fmt.Sprintf(ErrMsgLoadConfiguration, message), ReturnCodeApplicationError, ErrorLoadConfiguration),
+	}
+}
+
+type DuplicateStatementNameError struct {
+	*BaseError
+}
+
+func NewDuplicateStatementNameError(name parser.Identifier) error {
+	return &DuplicateStatementNameError{
+		NewBaseError(name, fmt.Sprintf(ErrMsgDuplicateStatementName, name.Literal), ReturnCodeApplicationError, ErrorDuplicateStatementName),
+	}
+}
+
+type StatementNotExistError struct {
+	*BaseError
+}
+
+func NewStatementNotExistError(name parser.Identifier) error {
+	return &DuplicateStatementNameError{
+		NewBaseError(name, fmt.Sprintf(ErrMsgStatementNotExist, name.Literal), ReturnCodeApplicationError, ErrorStatementNotExist),
+	}
+}
+
+type StatementReplaceValueNotSpecifiedError struct {
+	*BaseError
+}
+
+func NewStatementReplaceValueNotSpecifiedError(placeholder parser.Placeholder) error {
+	return &StatementReplaceValueNotSpecifiedError{
+		NewBaseError(placeholder, fmt.Sprintf(ErrMsgStatementReplaceValueNotSpecified, placeholder), ReturnCodeApplicationError, ErrorStatementReplaceValueNotSpecified),
 	}
 }
 
