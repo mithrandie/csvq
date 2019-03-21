@@ -23,7 +23,7 @@ var variableScopesGet = []struct {
 	{
 		Name:  "VariableScopes Get Undeclared Error",
 		Expr:  parser.Variable{Name: "undef"},
-		Error: "[L:- C:-] variable @undef is undeclared",
+		Error: "variable @undef is undeclared",
 	},
 }
 
@@ -87,7 +87,7 @@ var variableScopesSubstituteTests = []struct {
 			Variable: parser.Variable{Name: "var2"},
 			Value:    parser.NewIntegerValue(3),
 		},
-		Error: "[L:- C:-] variable @var2 is undeclared",
+		Error: "variable @var2 is undeclared",
 	},
 }
 
@@ -143,7 +143,7 @@ var variableScopesDisposeTests = []struct {
 	{
 		Name:  "VariableScopes Dispose Undeclared Error",
 		Expr:  parser.Variable{Name: "undef"},
-		Error: "[L:- C:-] variable @undef is undeclared",
+		Error: "variable @undef is undeclared",
 	},
 }
 
@@ -304,7 +304,7 @@ var variableMapDeclareTests = []variableMapTests{
 				},
 			},
 		},
-		Error: "[L:- C:-] variable @var2 is redeclared",
+		Error: "variable @var2 is redeclared",
 	},
 	{
 		Name: "Declare Variable Filter Error",
@@ -316,7 +316,7 @@ var variableMapDeclareTests = []variableMapTests{
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
@@ -364,7 +364,7 @@ var variableMapSubstituteTests = []variableMapTests{
 			Variable: parser.Variable{Name: "var2"},
 			Value:    parser.NewIntegerValue(2),
 		},
-		Error: "[L:- C:-] variable @var2 is undeclared",
+		Error: "variable @var2 is undeclared",
 	},
 	{
 		Name: "Substitute Variable Filter Error",
@@ -372,7 +372,7 @@ var variableMapSubstituteTests = []variableMapTests{
 			Variable: parser.Variable{Name: "var1"},
 			Value:    parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
@@ -414,7 +414,7 @@ var variableMapDisposeTests = []variableMapTests{
 	{
 		Name:  "Dispose Variable Undeclared Error",
 		Expr:  parser.Variable{Name: "var2"},
-		Error: "[L:- C:-] variable @var2 is undeclared",
+		Error: "variable @var2 is undeclared",
 	},
 }
 

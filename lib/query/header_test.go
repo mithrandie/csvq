@@ -98,11 +98,11 @@ var headerContainsObjectTests = []struct {
 	},
 	{
 		Expr:  parser.NewIntegerValueFromString("1"),
-		Error: "[L:- C:-] field 1 is ambiguous",
+		Error: "field 1 is ambiguous",
 	},
 	{
 		Expr:  parser.NewIntegerValueFromString("2"),
-		Error: "[L:- C:-] field 2 does not exist",
+		Error: "field 2 does not exist",
 	},
 }
 
@@ -190,14 +190,14 @@ var headerContainsNumberTests = []struct {
 			View:   parser.Identifier{Literal: "t1"},
 			Number: value.NewInteger(0),
 		},
-		Error: "[L:- C:-] field t1.0 does not exist",
+		Error: "field t1.0 does not exist",
 	},
 	{
 		Number: parser.ColumnNumber{
 			View:   parser.Identifier{Literal: "t1"},
 			Number: value.NewInteger(9),
 		},
-		Error: "[L:- C:-] field t1.9 does not exist",
+		Error: "field t1.9 does not exist",
 	},
 }
 
@@ -284,13 +284,13 @@ var headerContainsTests = []struct {
 		Ref: parser.FieldReference{
 			Column: parser.Identifier{Literal: "c1"},
 		},
-		Error: "[L:- C:-] field c1 is ambiguous",
+		Error: "field c1 is ambiguous",
 	},
 	{
 		Ref: parser.FieldReference{
 			Column: parser.Identifier{Literal: "d1"},
 		},
-		Error: "[L:- C:-] field d1 does not exist",
+		Error: "field d1 does not exist",
 	},
 }
 
@@ -502,7 +502,7 @@ var headerUpdateTests = []struct {
 			parser.Identifier{Literal: "c1"},
 			parser.Identifier{Literal: "c2"},
 		},
-		Error: "[L:- C:-] field length does not match",
+		Error: "field length does not match",
 	},
 	{
 		Name: "Header Update Field Name Duplicate Error",
@@ -528,7 +528,7 @@ var headerUpdateTests = []struct {
 			parser.Identifier{Literal: "c2"},
 			parser.Identifier{Literal: "c2"},
 		},
-		Error: "[L:- C:-] field name c2 is a duplicate",
+		Error: "field name c2 is a duplicate",
 	},
 }
 

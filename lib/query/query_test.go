@@ -99,7 +99,7 @@ var fetchCursorTests = []struct {
 			{Name: "var1"},
 			{Name: "var2"},
 		},
-		Error: "[L:- C:-] cursor notexist is undeclared",
+		Error: "cursor notexist is undeclared",
 	},
 	{
 		Name:    "Fetch Cursor Not Match Number Error",
@@ -107,7 +107,7 @@ var fetchCursorTests = []struct {
 		Variables: []parser.Variable{
 			{Name: "var1"},
 		},
-		Error: "[L:- C:-] fetching from cursor cur2 returns 2 values",
+		Error: "fetching from cursor cur2 returns 2 values",
 	},
 	{
 		Name:    "Fetch Cursor Substitution Error",
@@ -116,7 +116,7 @@ var fetchCursorTests = []struct {
 			{Name: "var1"},
 			{Name: "notexist"},
 		},
-		Error: "[L:- C:-] variable @notexist is undeclared",
+		Error: "variable @notexist is undeclared",
 	},
 	{
 		Name:    "Fetch Cursor Number Value Error",
@@ -129,7 +129,7 @@ var fetchCursorTests = []struct {
 			{Name: "var1"},
 			{Name: "var2"},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name:    "Fetch Cursor Number Not Integer Error",
@@ -142,7 +142,7 @@ var fetchCursorTests = []struct {
 			{Name: "var1"},
 			{Name: "var2"},
 		},
-		Error: "[L:- C:-] fetching position null is not an integer value",
+		Error: "fetching position null is not an integer value",
 	},
 }
 
@@ -243,7 +243,7 @@ var declareViewTests = []struct {
 				parser.Identifier{Literal: "column1"},
 			},
 		},
-		Error: "[L:- C:-] field name column1 is a duplicate",
+		Error: "field name column1 is a duplicate",
 	},
 	{
 		Name: "Declare View From Query",
@@ -307,7 +307,7 @@ var declareViewTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Declare View From Query Field Update Error",
@@ -327,7 +327,7 @@ var declareViewTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] select query should return exactly 1 field for view tbl",
+		Error: "select query should return exactly 1 field for view tbl",
 	},
 	{
 		Name: "Declare View  From Query Field Duplicate Error",
@@ -348,7 +348,7 @@ var declareViewTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field name column1 is a duplicate",
+		Error: "field name column1 is a duplicate",
 	},
 	{
 		Name: "Declare View Redeclaration Error",
@@ -367,7 +367,7 @@ var declareViewTests = []struct {
 				parser.Identifier{Literal: "column2"},
 			},
 		},
-		Error: "[L:- C:-] view tbl is redeclared",
+		Error: "view tbl is redeclared",
 	},
 }
 
@@ -765,7 +765,7 @@ var selectTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] result set to be combined should contain exactly 2 fields",
+		Error: "result set to be combined should contain exactly 2 fields",
 	},
 	{
 		Name: "Union LHS Error",
@@ -800,7 +800,7 @@ var selectTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Union RHS Error",
@@ -835,7 +835,7 @@ var selectTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Inline Tables",
@@ -944,7 +944,7 @@ var selectTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] select query should return exactly 1 field for inline table it",
+		Error: "select query should return exactly 1 field for inline table it",
 	},
 	{
 		Name: "Inline Tables Recursion",
@@ -1106,7 +1106,7 @@ var selectTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] result set to be combined should contain exactly 1 field",
+		Error: "result set to be combined should contain exactly 1 field",
 	},
 }
 
@@ -1376,7 +1376,7 @@ var insertTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] file notexist does not exist",
+		Error: "file notexist does not exist",
 	},
 	{
 		Name: "Insert Query Field Does Not Exist Error",
@@ -1402,7 +1402,7 @@ var insertTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Insert Select Query",
@@ -1460,7 +1460,7 @@ var insertTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] select query should return exactly 1 field",
+		Error: "select query should return exactly 1 field",
 	},
 }
 
@@ -1764,7 +1764,7 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] file notexist does not exist",
+		Error: "file notexist does not exist",
 	},
 	{
 		Name: "Update Query Filter Error",
@@ -1786,7 +1786,7 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Update Query File Is Not Loaded Error",
@@ -1822,7 +1822,7 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] table notexist is not loaded",
+		Error: "table notexist is not loaded",
 	},
 	{
 		Name: "Update Query Update Table Is Not Specified Error",
@@ -1858,7 +1858,7 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field t1.column2 does not exist in the tables to update",
+		Error: "field t1.column2 does not exist in the tables to update",
 	},
 	{
 		Name: "Update Query Update Field Error",
@@ -1880,7 +1880,7 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Update Query Update Value Error",
@@ -1902,7 +1902,7 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Update Query Record Is Ambiguous Error",
@@ -1932,7 +1932,7 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] value column4 to set in the field column2 is ambiguous",
+		Error: "value column4 to set in the field column2 is ambiguous",
 	},
 }
 
@@ -2226,7 +2226,7 @@ var deleteTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] tables to delete records are not specified",
+		Error: "tables to delete records are not specified",
 	},
 	{
 		Name: "Delete Query File Does Not Exist Error",
@@ -2246,7 +2246,7 @@ var deleteTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] file notexist does not exist",
+		Error: "file notexist does not exist",
 	},
 	{
 		Name: "Delete Query Filter Error",
@@ -2266,7 +2266,7 @@ var deleteTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Delete Query File Is Not Loaded Error",
@@ -2296,7 +2296,7 @@ var deleteTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] table notexist is not loaded",
+		Error: "table notexist is not loaded",
 	},
 }
 
@@ -2475,7 +2475,7 @@ var createTableTests = []struct {
 				parser.Identifier{Literal: "column2"},
 			},
 		},
-		Error: "[L:- C:-] file table1.csv already exists",
+		Error: "file table1.csv already exists",
 	},
 	{
 		Name: "Create Table Field Duplicate Error",
@@ -2486,7 +2486,7 @@ var createTableTests = []struct {
 				parser.Identifier{Literal: "column1"},
 			},
 		},
-		Error: "[L:- C:-] field name column1 is a duplicate",
+		Error: "field name column1 is a duplicate",
 	},
 	{
 		Name: "Create Table Select Query Execution Error",
@@ -2507,7 +2507,7 @@ var createTableTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Create Table From Select Query Field Length Not Match Error",
@@ -2527,7 +2527,7 @@ var createTableTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] select query should return exactly 1 field for table create_table_1.csv",
+		Error: "select query should return exactly 1 field for table create_table_1.csv",
 	},
 	{
 		Name: "Create Table From Select Query Field Name Duplicate Error",
@@ -2548,7 +2548,7 @@ var createTableTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field name column1 is a duplicate",
+		Error: "field name column1 is a duplicate",
 	},
 }
 
@@ -2912,7 +2912,7 @@ var addColumnsTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] file notexist does not exist",
+		Error: "file notexist does not exist",
 	},
 	{
 		Name: "Add Fields Position Column Does Not Exist Error",
@@ -2932,7 +2932,7 @@ var addColumnsTests = []struct {
 				Column:   parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Add Fields Field Duplicate Error",
@@ -2948,7 +2948,7 @@ var addColumnsTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field name column1 is a duplicate",
+		Error: "field name column1 is a duplicate",
 	},
 	{
 		Name: "Add Fields Default Value Error",
@@ -2964,7 +2964,7 @@ var addColumnsTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
@@ -3145,7 +3145,7 @@ var dropColumnsTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 		},
-		Error: "[L:- C:-] file notexist does not exist",
+		Error: "file notexist does not exist",
 	},
 	{
 		Name: "Drop Fields Field Does Not Exist Error",
@@ -3155,7 +3155,7 @@ var dropColumnsTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
@@ -3336,7 +3336,7 @@ var renameColumnTests = []struct {
 			Old:   parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			New:   parser.Identifier{Literal: "newcolumn"},
 		},
-		Error: "[L:- C:-] file notexist does not exist",
+		Error: "file notexist does not exist",
 	},
 	{
 		Name: "Rename Column Field Duplicate Error",
@@ -3345,7 +3345,7 @@ var renameColumnTests = []struct {
 			Old:   parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			New:   parser.Identifier{Literal: "column1"},
 		},
-		Error: "[L:- C:-] field name column1 is a duplicate",
+		Error: "field name column1 is a duplicate",
 	},
 	{
 		Name: "Rename Column Field Does Not Exist Error",
@@ -3354,7 +3354,7 @@ var renameColumnTests = []struct {
 			Old:   parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			New:   parser.Identifier{Literal: "newcolumn"},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
@@ -3498,7 +3498,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "delimiter"},
 			Value:     parser.NewStringValue("aa"),
 		},
-		Error: "[L:- C:-] delimiter must be one character",
+		Error: "delimiter must be one character",
 	},
 	{
 		Name: "Set Delimiter Not Allowed Value",
@@ -3507,7 +3507,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "delimiter"},
 			Value:     parser.NewNullValueFromString("null"),
 		},
-		Error: "[L:- C:-] null for delimiter is not allowed",
+		Error: "null for delimiter is not allowed",
 	},
 	{
 		Name: "Set DelimiterPositions",
@@ -3533,7 +3533,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "delimiter_positions"},
 			Value:     parser.NewStringValue("invalid"),
 		},
-		Error: "[L:- C:-] delimiter positions must be \"SPACES\" or a JSON array of integers",
+		Error: "delimiter positions must be \"SPACES\" or a JSON array of integers",
 	},
 	{
 		Name: "Set Format to Text",
@@ -3587,7 +3587,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "format"},
 			Value:     parser.NewStringValue("invalid"),
 		},
-		Error: "[L:- C:-] format must be one of CSV|TSV|FIXED|JSON|LTSV|GFM|ORG|TEXT",
+		Error: "format must be one of CSV|TSV|FIXED|JSON|LTSV|GFM|ORG|TEXT",
 	},
 	{
 		Name: "Set Encoding to SJIS",
@@ -3626,7 +3626,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "encoding"},
 			Value:     parser.NewStringValue("invalid"),
 		},
-		Error: "[L:- C:-] encoding must be one of UTF8|UTF8M|SJIS",
+		Error: "encoding must be one of UTF8|UTF8M|SJIS",
 	},
 	{
 		Name: "Set Encoding Error in JSON Format",
@@ -3635,7 +3635,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "encoding"},
 			Value:     parser.NewStringValue("sjis"),
 		},
-		Error: "[L:- C:-] json format is supported only UTF8",
+		Error: "json format is supported only UTF8",
 	},
 	{
 		Name: "Set LineBreak to CRLF",
@@ -3659,7 +3659,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "line_break"},
 			Value:     parser.NewStringValue("invalid"),
 		},
-		Error: "[L:- C:-] line-break must be one of CRLF|LF|CR",
+		Error: "line-break must be one of CRLF|LF|CR",
 	},
 	{
 		Name: "Set NoHeader to true",
@@ -3684,7 +3684,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "header"},
 			Value:     parser.NewNullValueFromString("null"),
 		},
-		Error: "[L:- C:-] null for header is not allowed",
+		Error: "null for header is not allowed",
 	},
 	{
 		Name: "Set EncloseAll to true",
@@ -3726,7 +3726,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "json_escape"},
 			Value:     parser.NewStringValue("invalid"),
 		},
-		Error: "[L:- C:-] json escape type must be one of BACKSLASH|HEX|HEXALL",
+		Error: "json escape type must be one of BACKSLASH|HEX|HEXALL",
 	},
 	{
 		Name: "Set PrettyPring to true",
@@ -3751,7 +3751,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "delimiter"},
 			Value:     parser.NewStringValue(","),
 		},
-		Error: "[L:- C:-] file notexist.csv does not exist",
+		Error: "file notexist.csv does not exist",
 	},
 	{
 		Name: "Temporary View Error",
@@ -3760,7 +3760,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "delimiter"},
 			Value:     parser.NewStringValue(","),
 		},
-		Error: "[L:- C:-] view has no attributes",
+		Error: "view has no attributes",
 	},
 	{
 		Name: "Value Evaluation Error",
@@ -3769,7 +3769,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "delimiter"},
 			Value:     parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Not Exist Attribute Error",
@@ -3778,7 +3778,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "notexist"},
 			Value:     parser.NewStringValue(","),
 		},
-		Error: "[L:- C:-] table attribute notexist does not exist",
+		Error: "table attribute notexist does not exist",
 	},
 }
 

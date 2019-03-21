@@ -41,7 +41,7 @@ var echoTests = []struct {
 				Name: "var",
 			},
 		},
-		Error: "[L:- C:-] variable @var is undeclared",
+		Error: "variable @var is undeclared",
 	},
 }
 
@@ -88,7 +88,7 @@ var printTests = []struct {
 				Name: "var",
 			},
 		},
-		Error: "[L:- C:-] variable @var is undeclared",
+		Error: "variable @var is undeclared",
 	},
 }
 
@@ -141,7 +141,7 @@ var printfTests = []struct {
 				parser.NewIntegerValue(1),
 			},
 		},
-		Error: "[L:- C:-] variable @var is undeclared",
+		Error: "variable @var is undeclared",
 	},
 	{
 		Name: "Printf Evaluate Error",
@@ -153,7 +153,7 @@ var printfTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] variable @var is undeclared",
+		Error: "variable @var is undeclared",
 	},
 	{
 		Name: "Printf Less Values Error",
@@ -163,7 +163,7 @@ var printfTests = []struct {
 				parser.NewStringValue("str"),
 			},
 		},
-		Error: "[L:- C:-] number of replace values does not match",
+		Error: "number of replace values does not match",
 	},
 	{
 		Name: "Printf Greater Values Error",
@@ -175,7 +175,7 @@ var printfTests = []struct {
 				parser.NewIntegerValue(2),
 			},
 		},
-		Error: "[L:- C:-] number of replace values does not match",
+		Error: "number of replace values does not match",
 	},
 }
 
@@ -235,28 +235,28 @@ var sourceTests = []struct {
 		Expr: parser.Source{
 			FilePath: parser.FieldReference{Column: parser.Identifier{Literal: "ident"}},
 		},
-		Error: "[L:- C:-] field ident does not exist",
+		Error: "field ident does not exist",
 	},
 	{
 		Name: "Source File Invalid File Path Error",
 		Expr: parser.Source{
 			FilePath: parser.NewNullValueFromString("NULL"),
 		},
-		Error: "[L:- C:-] NULL is a invalid file path",
+		Error: "NULL is a invalid file path",
 	},
 	{
 		Name: "Source File Empty File Path Error",
 		Expr: parser.Source{
 			FilePath: parser.Identifier{Literal: "", Quoted: true},
 		},
-		Error: "[L:- C:-] `` is a invalid file path",
+		Error: "`` is a invalid file path",
 	},
 	{
 		Name: "Source File Not Exist Error",
 		Expr: parser.Source{
 			FilePath: parser.NewStringValue(GetTestFilePath("notexist.sql")),
 		},
-		Error: fmt.Sprintf("[L:- C:-] file %s does not exist", GetTestFilePath("notexist.sql")),
+		Error: fmt.Sprintf("file %s does not exist", GetTestFilePath("notexist.sql")),
 	},
 	{
 		Name: "Source Syntax Error",
@@ -320,7 +320,7 @@ var parseExecuteStatementsTests = []struct {
 				parser.NewStringValue("executable string"),
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "ParseExecuteStatements Format Error",
@@ -328,7 +328,7 @@ var parseExecuteStatementsTests = []struct {
 			BaseExpr:   parser.NewBaseExpr(parser.Token{}),
 			Statements: parser.NewStringValue("print %q;"),
 		},
-		Error: "[L:- C:-] number of replace values does not match",
+		Error: "number of replace values does not match",
 	},
 	{
 		Name: "ParseExecuteStatements Replace Value Error",
@@ -339,7 +339,7 @@ var parseExecuteStatementsTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "ParseExecuteStatements Parsing Error",
@@ -560,7 +560,7 @@ var setFlagTests = []struct {
 			Name:  "delimiter",
 			Value: parser.FieldReference{Column: parser.Identifier{Literal: "err"}},
 		},
-		Error: "[L:- C:-] field err does not exist",
+		Error: "field err does not exist",
 	},
 	{
 		Name: "Set Delimiter Value Error",
@@ -568,7 +568,7 @@ var setFlagTests = []struct {
 			Name:  "delimiter",
 			Value: parser.NewTernaryValueFromString("true"),
 		},
-		Error: "[L:- C:-] true for @@delimiter is not allowed",
+		Error: "true for @@delimiter is not allowed",
 	},
 	{
 		Name: "Set WaitTimeout Value Error",
@@ -576,7 +576,7 @@ var setFlagTests = []struct {
 			Name:  "wait_timeout",
 			Value: parser.NewTernaryValueFromString("true"),
 		},
-		Error: "[L:- C:-] true for @@wait_timeout is not allowed",
+		Error: "true for @@wait_timeout is not allowed",
 	},
 	{
 		Name: "Set WithoutNull Value Error",
@@ -584,7 +584,7 @@ var setFlagTests = []struct {
 			Name:  "without_null",
 			Value: parser.NewStringValue("string"),
 		},
-		Error: "[L:- C:-] 'string' for @@without_null is not allowed",
+		Error: "'string' for @@without_null is not allowed",
 	},
 	{
 		Name: "Set CPU Value Error",
@@ -592,7 +592,7 @@ var setFlagTests = []struct {
 			Name:  "cpu",
 			Value: parser.NewStringValue("invalid"),
 		},
-		Error: "[L:- C:-] 'invalid' for @@cpu is not allowed",
+		Error: "'invalid' for @@cpu is not allowed",
 	},
 	{
 		Name: "Invalid Flag Name Error",
@@ -600,7 +600,7 @@ var setFlagTests = []struct {
 			Name:  "invalid",
 			Value: parser.NewStringValue("string"),
 		},
-		Error: "[L:- C:-] @@invalid is an unknown flag",
+		Error: "@@invalid is an unknown flag",
 	},
 	{
 		Name: "Invalid Flag Value Error",
@@ -608,7 +608,7 @@ var setFlagTests = []struct {
 			Name:  "line_break",
 			Value: parser.NewStringValue("invalid"),
 		},
-		Error: "[L:- C:-] line-break must be one of CRLF|LF|CR",
+		Error: "line-break must be one of CRLF|LF|CR",
 	},
 }
 
@@ -667,7 +667,7 @@ var addFlagElementTests = []struct {
 		Init: func(flags *cmd.Flags) {
 			flags.DatetimeFormat = []string{"%Y:%m:%d"}
 		},
-		Error: "[L:- C:-] add flag element syntax does not support @@format",
+		Error: "add flag element syntax does not support @@format",
 	},
 	{
 		Name: "Add Element Invalid Flag Name",
@@ -678,7 +678,7 @@ var addFlagElementTests = []struct {
 		Init: func(flags *cmd.Flags) {
 			flags.DatetimeFormat = []string{"%Y:%m:%d"}
 		},
-		Error: "[L:- C:-] @@invalid is an unknown flag",
+		Error: "@@invalid is an unknown flag",
 	},
 }
 
@@ -758,7 +758,7 @@ var removeFlagElementTests = []struct {
 			Value: parser.NewNullValueFromString("null"),
 		},
 		Init:  func(flags *cmd.Flags) {},
-		Error: "[L:- C:-] null is an invalid value for @@datetime_format to specify the element",
+		Error: "null is an invalid value for @@datetime_format to specify the element",
 	},
 	{
 		Name: "Remove Element Evaluation Error",
@@ -767,7 +767,7 @@ var removeFlagElementTests = []struct {
 			Value: parser.FieldReference{Column: parser.Identifier{Literal: "err"}},
 		},
 		Init:  func(flags *cmd.Flags) {},
-		Error: "[L:- C:-] field err does not exist",
+		Error: "field err does not exist",
 	},
 	{
 		Name: "Remove Element Unsupported Flag Name",
@@ -776,7 +776,7 @@ var removeFlagElementTests = []struct {
 			Value: parser.NewIntegerValue(1),
 		},
 		Init:  func(flags *cmd.Flags) {},
-		Error: "[L:- C:-] remove flag element syntax does not support @@format",
+		Error: "remove flag element syntax does not support @@format",
 	},
 	{
 		Name: "Remove Element Invalid Flag Name",
@@ -785,7 +785,7 @@ var removeFlagElementTests = []struct {
 			Value: parser.NewIntegerValue(1),
 		},
 		Init:  func(flags *cmd.Flags) {},
-		Error: "[L:- C:-] @@invalid is an unknown flag",
+		Error: "@@invalid is an unknown flag",
 	},
 }
 
@@ -1484,7 +1484,7 @@ var showFlagTests = []struct {
 		Expr: parser.ShowFlag{
 			Name: "invalid",
 		},
-		Error: "[L:- C:-] @@invalid is an unknown flag",
+		Error: "@@invalid is an unknown flag",
 	},
 }
 
@@ -2027,7 +2027,7 @@ var showObjectsTests = []struct {
 	{
 		Name:  "ShowObjects Invalid Object Type",
 		Expr:  parser.ShowObjects{Type: parser.Identifier{Literal: "invalid"}},
-		Error: "[L:- C:-] object type invalid is invalid",
+		Error: "object type invalid is invalid",
 	},
 }
 
@@ -2291,7 +2291,7 @@ var showFieldsTests = []struct {
 			Type:  parser.Identifier{Literal: "fields"},
 			Table: parser.Identifier{Literal: "notexist"},
 		},
-		Error: "[L:- C:-] file notexist does not exist",
+		Error: "file notexist does not exist",
 	},
 	{
 		Name: "ShowFields Invalid Object Type",
@@ -2299,7 +2299,7 @@ var showFieldsTests = []struct {
 			Type:  parser.Identifier{Literal: "invalid"},
 			Table: parser.Identifier{Literal: "table2"},
 		},
-		Error: "[L:- C:-] object type invalid is invalid",
+		Error: "object type invalid is invalid",
 	},
 }
 
@@ -2425,7 +2425,7 @@ var setEnvVarTests = []struct {
 			},
 			Value: parser.FieldReference{Column: parser.Identifier{Literal: "err"}},
 		},
-		Error: "[L:- C:-] field err does not exist",
+		Error: "field err does not exist",
 	},
 }
 

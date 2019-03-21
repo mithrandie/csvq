@@ -154,7 +154,7 @@ var inlineTableNodesGetTests = []struct {
 	{
 		Name:      "InlineTableNodes Get Undefined Error",
 		TableName: parser.Identifier{Literal: "notexist"},
-		Error:     "[L:- C:-] inline table notexist is undefined",
+		Error:     "inline table notexist is undefined",
 	},
 }
 
@@ -374,7 +374,7 @@ var inlineTableNodesLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] inline table it is redefined",
+		Error: "inline table it is redefined",
 	},
 }
 
@@ -619,7 +619,7 @@ var inlineTableMapSetTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] inline table it is redefined",
+		Error: "inline table it is redefined",
 	},
 	{
 		Name: "InlineTableMap Set Query Error",
@@ -648,7 +648,7 @@ var inlineTableMapSetTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "InlineTableMap Set Field Length Error",
@@ -676,7 +676,7 @@ var inlineTableMapSetTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] select query should return exactly 1 field for inline table it2",
+		Error: "select query should return exactly 1 field for inline table it2",
 	},
 	{
 		Name: "InlineTableMap Set Duplicate Field Name Error",
@@ -705,7 +705,7 @@ var inlineTableMapSetTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field name c1 is a duplicate",
+		Error: "field name c1 is a duplicate",
 	},
 }
 
@@ -773,7 +773,7 @@ var inlineTableMapGetTests = []struct {
 	{
 		Name:      "InlineTableMap Get Undefined Error",
 		TableName: parser.Identifier{Literal: "notexist"},
-		Error:     "[L:- C:-] inline table notexist is undefined",
+		Error:     "inline table notexist is undefined",
 	},
 }
 

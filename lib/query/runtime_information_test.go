@@ -43,7 +43,7 @@ var getRuntimeInformationTests = []struct {
 	},
 	{
 		Input: parser.RuntimeInformation{Name: "invalid"},
-		Error: "[L:- C:-] @#invalid is an unknown runtime information",
+		Error: "@#invalid is an unknown runtime information",
 	},
 }
 

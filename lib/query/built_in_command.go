@@ -95,7 +95,7 @@ func Printf(ctx context.Context, filter *Filter, expr parser.Printf) (string, er
 
 	message, err := NewStringFormatter().Format(format, args)
 	if err != nil {
-		return "", NewReplaceValueLengthError(expr, err.(AppError).ErrorMessage())
+		return "", NewReplaceValueLengthError(expr, err.(Error).ErrorMessage())
 	}
 	return message, nil
 }
@@ -180,7 +180,7 @@ func ParseExecuteStatements(ctx context.Context, filter *Filter, expr parser.Exe
 
 	input, err = NewStringFormatter().Format(input, args)
 	if err != nil {
-		return nil, NewReplaceValueLengthError(expr, err.(AppError).ErrorMessage())
+		return nil, NewReplaceValueLengthError(expr, err.(Error).ErrorMessage())
 	}
 	statements, err := parser.Parse(input, fmt.Sprintf("(L:%d C:%d) EXECUTE", expr.Line(), expr.Char()), filter.tx.Flags.DatetimeFormat)
 	if err != nil {

@@ -218,7 +218,7 @@ var analyzeTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] function rank takes no argument",
+		Error: "function rank takes no argument",
 	},
 	{
 		Name: "Analyze AnalyticFunction Execution Error",
@@ -243,7 +243,7 @@ var analyzeTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Analyze AggregateFunction",
@@ -540,7 +540,7 @@ var analyzeTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] function count takes exactly 1 argument",
+		Error: "function count takes exactly 1 argument",
 	},
 	{
 		Name: "Analyze AggregateFunction Aggregate Value Error",
@@ -572,7 +572,7 @@ var analyzeTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Analyze UserDefinedFunction",
@@ -1062,7 +1062,7 @@ var analyzeTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] function useraggfunc takes exactly 2 arguments",
+		Error: "function useraggfunc takes exactly 2 arguments",
 	},
 	{
 		Name: "Analyze UserDefinedFunction Cursor Value Error",
@@ -1126,7 +1126,7 @@ var analyzeTests = []struct {
 			},
 		},
 		PartitionIndices: []int{0},
-		Error:            "[L:- C:-] field notexist does not exist",
+		Error:            "field notexist does not exist",
 	},
 	{
 		Name: "Analyze UserDefinedFunction Argument Value Error",
@@ -1177,7 +1177,7 @@ var analyzeTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Analyze UserDefinedFunction Execution Error",
@@ -1228,7 +1228,7 @@ var analyzeTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] variable @undefined is undeclared",
+		Error: "variable @undefined is undeclared",
 	},
 	{
 		Name: "Analyze Not Exist Function Error",
@@ -1250,7 +1250,7 @@ var analyzeTests = []struct {
 		Function: parser.AnalyticFunction{
 			Name: "notexist",
 		},
-		Error: "[L:- C:-] function notexist does not exist",
+		Error: "function notexist does not exist",
 	},
 }
 
@@ -1420,7 +1420,7 @@ var rowNumberCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{
 				parser.NewIntegerValue(1),
 			},
 		},
-		Error: "[L:- C:-] function row_number takes no argument",
+		Error: "function row_number takes no argument",
 	},
 }
 
@@ -1458,7 +1458,7 @@ var rankCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{
 				parser.NewIntegerValue(1),
 			},
 		},
-		Error: "[L:- C:-] function rank takes no argument",
+		Error: "function rank takes no argument",
 	},
 }
 
@@ -1503,7 +1503,7 @@ var denseRankCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{
 				parser.NewIntegerValue(1),
 			},
 		},
-		Error: "[L:- C:-] function dense_rank takes no argument",
+		Error: "function dense_rank takes no argument",
 	},
 }
 
@@ -1548,7 +1548,7 @@ var cumeDistCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{
 				parser.NewIntegerValue(1),
 			},
 		},
-		Error: "[L:- C:-] function cume_dist takes no argument",
+		Error: "function cume_dist takes no argument",
 	},
 }
 
@@ -1591,7 +1591,7 @@ var percentRankCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{
 				parser.NewIntegerValue(1),
 			},
 		},
-		Error: "[L:- C:-] function percent_rank takes no argument",
+		Error: "function percent_rank takes no argument",
 	},
 }
 
@@ -1633,7 +1633,7 @@ var nTileCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{
 		Function: parser.AnalyticFunction{
 			Name: "ntile",
 		},
-		Error: "[L:- C:-] function ntile takes exactly 1 argument",
+		Error: "function ntile takes exactly 1 argument",
 	},
 }
 
@@ -1684,7 +1684,7 @@ var ntileValueExecuteTests = []analyticFunctionExecuteTests{
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
-		Error: "[L:- C:-] the first argument must be an integer for function ntile",
+		Error: "the first argument must be an integer for function ntile",
 	},
 	{
 		Name:  "NTile Execute Argument Type Error",
@@ -1695,7 +1695,7 @@ var ntileValueExecuteTests = []analyticFunctionExecuteTests{
 				parser.NewNullValue(),
 			},
 		},
-		Error: "[L:- C:-] the first argument must be an integer for function ntile",
+		Error: "the first argument must be an integer for function ntile",
 	},
 	{
 		Name:  "NTile Execute Argument Value Error",
@@ -1706,7 +1706,7 @@ var ntileValueExecuteTests = []analyticFunctionExecuteTests{
 				parser.NewIntegerValue(0),
 			},
 		},
-		Error: "[L:- C:-] the first argument must be greater than 0 for function ntile",
+		Error: "the first argument must be greater than 0 for function ntile",
 	},
 }
 
@@ -1720,7 +1720,7 @@ var firstValueCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{
 		Function: parser.AnalyticFunction{
 			Name: "first_value",
 		},
-		Error: "[L:- C:-] function first_value takes exactly 1 argument",
+		Error: "function first_value takes exactly 1 argument",
 	},
 }
 
@@ -1775,7 +1775,7 @@ var firstValueExecuteTests = []analyticFunctionExecuteTests{
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
@@ -1789,7 +1789,7 @@ var lastValueCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{
 		Function: parser.AnalyticFunction{
 			Name: "last_value",
 		},
-		Error: "[L:- C:-] function last_value takes exactly 1 argument",
+		Error: "function last_value takes exactly 1 argument",
 	},
 }
 
@@ -1847,7 +1847,7 @@ var nthValueCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{
 		Function: parser.AnalyticFunction{
 			Name: "nth_value",
 		},
-		Error: "[L:- C:-] function nth_value takes exactly 2 arguments",
+		Error: "function nth_value takes exactly 2 arguments",
 	},
 }
 
@@ -2050,7 +2050,7 @@ var nthValueExecuteTests = []analyticFunctionExecuteTests{
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
-		Error: "[L:- C:-] the second argument must be an integer for function nth_value",
+		Error: "the second argument must be an integer for function nth_value",
 	},
 	{
 		Name:  "NthValue Execute Second Argument Type Error",
@@ -2062,7 +2062,7 @@ var nthValueExecuteTests = []analyticFunctionExecuteTests{
 				parser.NewNullValue(),
 			},
 		},
-		Error: "[L:- C:-] the second argument must be an integer for function nth_value",
+		Error: "the second argument must be an integer for function nth_value",
 	},
 	{
 		Name:  "NthValue Execute Second Argument Value Error",
@@ -2074,7 +2074,7 @@ var nthValueExecuteTests = []analyticFunctionExecuteTests{
 				parser.NewIntegerValue(0),
 			},
 		},
-		Error: "[L:- C:-] the second argument must be greater than 0 for function nth_value",
+		Error: "the second argument must be greater than 0 for function nth_value",
 	},
 }
 
@@ -2088,7 +2088,7 @@ var lagCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{
 		Function: parser.AnalyticFunction{
 			Name: "lag",
 		},
-		Error: "[L:- C:-] function lag takes at least 1 argument",
+		Error: "function lag takes at least 1 argument",
 	},
 	{
 		Name: "Lag CheckArgsLen Too Many Error",
@@ -2101,7 +2101,7 @@ var lagCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{
 				parser.NewIntegerValue(0),
 			},
 		},
-		Error: "[L:- C:-] function lag takes at most 3 arguments",
+		Error: "function lag takes at most 3 arguments",
 	},
 }
 
@@ -2180,7 +2180,7 @@ var lagExecuteTests = []analyticFunctionExecuteTests{
 				parser.NewIntegerValue(0),
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name:  "Lag Execute Second Argument Evaluation Error",
@@ -2193,7 +2193,7 @@ var lagExecuteTests = []analyticFunctionExecuteTests{
 				parser.NewIntegerValue(0),
 			},
 		},
-		Error: "[L:- C:-] the second argument must be an integer for function lag",
+		Error: "the second argument must be an integer for function lag",
 	},
 	{
 		Name:  "Lag Execute Second Argument Type Error",
@@ -2206,7 +2206,7 @@ var lagExecuteTests = []analyticFunctionExecuteTests{
 				parser.NewIntegerValue(0),
 			},
 		},
-		Error: "[L:- C:-] the second argument must be an integer for function lag",
+		Error: "the second argument must be an integer for function lag",
 	},
 	{
 		Name:  "Lag Execute Third Argument Type Error",
@@ -2219,7 +2219,7 @@ var lagExecuteTests = []analyticFunctionExecuteTests{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 		},
-		Error: "[L:- C:-] the third argument must be a primitive type for function lag",
+		Error: "the third argument must be a primitive type for function lag",
 	},
 }
 
@@ -2233,7 +2233,7 @@ var leadCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{
 		Function: parser.AnalyticFunction{
 			Name: "lead",
 		},
-		Error: "[L:- C:-] function lead takes at least 1 argument",
+		Error: "function lead takes at least 1 argument",
 	},
 }
 
@@ -2272,7 +2272,7 @@ var analyticListAggCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{
 		Function: parser.AnalyticFunction{
 			Name: "listagg",
 		},
-		Error: "[L:- C:-] function listagg takes at least 1 argument",
+		Error: "function listagg takes at least 1 argument",
 	},
 }
 
@@ -2345,7 +2345,7 @@ var analyticListAggExecuteTests = []analyticFunctionExecuteTests{
 				parser.NewStringValue(","),
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name:  "AnalyticListAgg Execute Second Argument Evaluation Error",
@@ -2357,7 +2357,7 @@ var analyticListAggExecuteTests = []analyticFunctionExecuteTests{
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
-		Error: "[L:- C:-] the second argument must be a string for function listagg",
+		Error: "the second argument must be a string for function listagg",
 	},
 	{
 		Name:  "AnalyticListAgg Execute Second Argument Type Error",
@@ -2369,7 +2369,7 @@ var analyticListAggExecuteTests = []analyticFunctionExecuteTests{
 				parser.NewNullValue(),
 			},
 		},
-		Error: "[L:- C:-] the second argument must be a string for function listagg",
+		Error: "the second argument must be a string for function listagg",
 	},
 }
 
@@ -2383,7 +2383,7 @@ var analyticJsonAggCheckArgsLenTests = []analyticFunctionCheckArgsLenTests{
 		Function: parser.AnalyticFunction{
 			Name: "json_agg",
 		},
-		Error: "[L:- C:-] function json_agg takes exactly 1 argument",
+		Error: "function json_agg takes exactly 1 argument",
 	},
 }
 
@@ -2436,7 +2436,7 @@ var analyticJsonAggExecuteTests = []analyticFunctionExecuteTests{
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 

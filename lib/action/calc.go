@@ -31,7 +31,7 @@ func Calc(proc *query.Processor, expr string) error {
 	view := query.NewView(proc.Tx)
 	err = view.Load(ctx, query.NewFilter(proc.Tx).CreateNode(), selectEntity.FromClause.(parser.FromClause))
 	if err != nil {
-		if appErr, ok := err.(query.AppError); ok {
+		if appErr, ok := err.(query.Error); ok {
 			return errors.New(appErr.ErrorMessage())
 		}
 		return err

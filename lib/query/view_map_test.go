@@ -88,7 +88,7 @@ var temporaryViewScopesGetTests = []struct {
 	{
 		Name:  "TempViewScopes Get Not Loaded Error",
 		Path:  parser.Identifier{Literal: "/path/to/table9.csv"},
-		Error: "[L:- C:-] table /path/to/table9.csv is not loaded",
+		Error: "table /path/to/table9.csv is not loaded",
 	},
 }
 
@@ -184,7 +184,7 @@ var temporaryViewScopesGetWithInternalIdTests = []struct {
 	{
 		Name:  "TempViewScopes GetWithInternalId Not Loaded Error",
 		Path:  parser.Identifier{Literal: "/path/to/table9.csv"},
-		Error: "[L:- C:-] table /path/to/table9.csv is not loaded",
+		Error: "table /path/to/table9.csv is not loaded",
 	},
 }
 
@@ -502,7 +502,7 @@ var temporaryViewScopesDisposeTests = []struct {
 	{
 		Name:  "TempViewScopes Dispose Not Loaded Error",
 		Path:  parser.Identifier{Literal: "/path/to/table9.csv"},
-		Error: "[L:- C:-] view /path/to/table9.csv is undeclared",
+		Error: "view /path/to/table9.csv is undeclared",
 	},
 }
 
@@ -916,7 +916,7 @@ var viewMapGetTests = []struct {
 	{
 		Name:  "ViewMap Get Not Loaded Error",
 		Path:  parser.Identifier{Literal: "/path/to/table2.csv"},
-		Error: "[L:- C:-] table /path/to/table2.csv is not loaded",
+		Error: "table /path/to/table2.csv is not loaded",
 	},
 }
 
@@ -991,7 +991,7 @@ var viewMapGetWithInternalIdTests = []struct {
 	{
 		Name:  "ViewMap GetWithInternalId Not Loaded Error",
 		Path:  parser.Identifier{Literal: "/path/to/table2.csv"},
-		Error: "[L:- C:-] table /path/to/table2.csv is not loaded",
+		Error: "table /path/to/table2.csv is not loaded",
 	},
 }
 
@@ -1157,7 +1157,7 @@ var viewMapReplaceTests = []struct {
 				Delimiter: ',',
 			},
 		},
-		Error: "[L:- C:-] table /path/to/table2.csv is not loaded",
+		Error: "table /path/to/table2.csv is not loaded",
 	},
 }
 
@@ -1234,12 +1234,12 @@ var viewMapDisposeTemporaryTable = []struct {
 	{
 		Name:  "ViewMap DisposeTemporaryTable Not Temporary Table",
 		Table: parser.Identifier{Literal: "/path/to/table2.csv"},
-		Error: "[L:- C:-] view /path/to/table2.csv is undeclared",
+		Error: "view /path/to/table2.csv is undeclared",
 	},
 	{
 		Name:  "ViewMap DisposeTemporaryTable Undeclared Error",
 		Table: parser.Identifier{Literal: "/path/to/undef.csv"},
-		Error: "[L:- C:-] view /path/to/undef.csv is undeclared",
+		Error: "view /path/to/undef.csv is undeclared",
 	},
 }
 

@@ -11,10 +11,12 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 )
 
+const DefaultUserTriggeredErrorMessage = "triggered error"
+
 const (
 	ErrorMessageTemplate                  = "[L:%d C:%d] %s"
 	ErrorMessageWithFilepathTemplate      = "%s [L:%d C:%d] %s"
-	ErrorMessageWithEmptyPositionTemplate = "[L:- C:-] %s"
+	ErrorMessageWithEmptyPositionTemplate = "%s"
 	ErrorMessageWithCustomPrefixTemplate  = "[%s] %s"
 
 	ErrorInvalidValue                         = "%s: cannot evaluate as a value"
@@ -131,11 +133,11 @@ func (e ForcedExit) GetCode() int {
 	return e.Code
 }
 
-type AppError interface {
+type Error interface {
 	Error() string
 	ErrorMessage() string
 	GetCode() int
-	AppendCompositeError(AppError)
+	AppendCompositeError(Error)
 }
 
 type BaseError struct {
@@ -145,7 +147,7 @@ type BaseError struct {
 	Message       string
 	Code          int
 	Prefix        string
-	CompositeErrs []AppError
+	CompositeErrs []Error
 }
 
 func (e *BaseError) Error() string {
@@ -183,7 +185,7 @@ func (e *BaseError) GetCode() int {
 	return e.Code
 }
 
-func (e *BaseError) AppendCompositeError(err AppError) {
+func (e *BaseError) AppendCompositeError(err Error) {
 	e.CompositeErrs = append(e.CompositeErrs, err)
 }
 
@@ -194,13 +196,13 @@ func AppendCompositeError(e1 error, e2 error) error {
 	if e2 == nil {
 		return e1
 	}
-	appe1, ok := e1.(AppError)
+	appe1, ok := e1.(Error)
 	if !ok {
-		appe1 = NewSystemError(e1.Error()).(AppError)
+		appe1 = NewSystemError(e1.Error()).(Error)
 	}
-	appe2, ok := e2.(AppError)
+	appe2, ok := e2.(Error)
 	if !ok {
-		appe2 = NewSystemError(e2.Error()).(AppError)
+		appe2 = NewSystemError(e2.Error()).(Error)
 	}
 	appe1.AppendCompositeError(appe2)
 	return appe1
@@ -269,6 +271,10 @@ func NewUserTriggeredError(expr parser.Trigger, message string) error {
 	code := 1
 	if expr.Code != nil {
 		code = int(expr.Code.(value.Integer).Raw())
+	}
+
+	if len(message) < 1 {
+		message = DefaultUserTriggeredErrorMessage
 	}
 
 	return &UserTriggeredError{

@@ -296,7 +296,7 @@ func main() {
 
 		if err != nil {
 			code := 1
-			if apperr, ok := err.(query.AppError); ok {
+			if apperr, ok := err.(query.Error); ok {
 				code = apperr.GetCode()
 			} else if ex, ok := err.(*query.ForcedExit); ok {
 				code = ex.GetCode()

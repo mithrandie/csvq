@@ -30,7 +30,7 @@ var processorExecuteStatementTests = []struct {
 			Name:  "invalid",
 			Value: parser.NewStringValue("\t"),
 		},
-		Error:     "[L:- C:-] @@invalid is an unknown flag",
+		Error:     "@@invalid is an unknown flag",
 		ErrorCode: 1,
 	},
 	{
@@ -233,7 +233,7 @@ var processorExecuteStatementTests = []struct {
 				parser.NewIntegerValueFromString("1"),
 			},
 		},
-		Error:     "[L:- C:-] function userfunc does not exist",
+		Error:     "function userfunc does not exist",
 		ErrorCode: 1,
 	},
 	{
@@ -434,7 +434,7 @@ var processorExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Error:     "[L:- C:-] variable @var1 is redeclared",
+		Error:     "variable @var1 is redeclared",
 		ErrorCode: 1,
 	},
 	{
@@ -442,7 +442,7 @@ var processorExecuteStatementTests = []struct {
 			Variable: parser.Variable{Name: "var9"},
 			Value:    parser.NewIntegerValueFromString("1"),
 		},
-		Error:     "[L:- C:-] variable @var9 is undeclared",
+		Error:     "variable @var9 is undeclared",
 		ErrorCode: 1,
 	},
 	{
@@ -751,7 +751,7 @@ var processorExecuteStatementTests = []struct {
 			Message: parser.NewStringValue("user error"),
 			Code:    value.NewInteger(200),
 		},
-		Error:     "[L:- C:-] user error",
+		Error:     "user error",
 		ErrorCode: 200,
 	},
 	{
@@ -759,7 +759,7 @@ var processorExecuteStatementTests = []struct {
 			Event:   parser.Identifier{Literal: "error"},
 			Message: parser.NewIntegerValue(200),
 		},
-		Error:     "[L:- C:-] ",
+		Error:     DefaultUserTriggeredErrorMessage,
 		ErrorCode: 200,
 	},
 	{
@@ -767,7 +767,7 @@ var processorExecuteStatementTests = []struct {
 			Event:   parser.Identifier{Literal: "invalid"},
 			Message: parser.NewIntegerValue(200),
 		},
-		Error:     "[L:- C:-] invalid is an unknown event",
+		Error:     "invalid is an unknown event",
 		ErrorCode: 1,
 	},
 	{
@@ -823,7 +823,7 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 
 		if err != nil {
 			var code int
-			if apperr, ok := err.(AppError); ok {
+			if apperr, ok := err.(Error); ok {
 				if len(v.Error) < 1 {
 					t.Errorf("unexpected error %q for %q", err, v.Input)
 				} else if err.Error() != v.Error {
@@ -980,7 +980,7 @@ var processorIfStmtTests = []struct {
 				parser.Print{Value: parser.NewStringValue("1")},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "If Statement Return Value",
@@ -1154,7 +1154,7 @@ var processorCaseStmtTests = []struct {
 			},
 		},
 		ResultFlow: TerminateWithError,
-		Error:      "[L:- C:-] field notexist does not exist",
+		Error:      "field notexist does not exist",
 	},
 	{
 		Name: "Case Condition Error",
@@ -1169,7 +1169,7 @@ var processorCaseStmtTests = []struct {
 			},
 		},
 		ResultFlow: TerminateWithError,
-		Error:      "[L:- C:-] field notexist does not exist",
+		Error:      "field notexist does not exist",
 	},
 }
 
@@ -1388,7 +1388,7 @@ var processorWhileTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "While Statement Execution Error",
@@ -1411,7 +1411,7 @@ var processorWhileTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "While Statement Return Value",
@@ -1622,7 +1622,7 @@ var processorWhileInCursorTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		Error: "[L:- C:-] variable @var3 is undeclared",
+		Error: "variable @var3 is undeclared",
 	},
 	{
 		Name: "While In Cursor Statement Execution Error",
@@ -1647,7 +1647,7 @@ var processorWhileInCursorTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "While In Cursor Return Value",
@@ -1733,21 +1733,21 @@ var processorExecExternalCommand = []struct {
 		Stmt: parser.ExternalCommand{
 			Command: "cmd arg 'arg",
 		},
-		Error: "[L:- C:-] external command: string not terminated",
+		Error: "external command: string not terminated",
 	},
 	{
 		Name: "Error in Scanning Argument",
 		Stmt: parser.ExternalCommand{
 			Command: "cmd 'arg arg@'",
 		},
-		Error: "[L:- C:-] external command: invalid variable symbol",
+		Error: "external command: invalid variable symbol",
 	},
 	{
 		Name: "Error in Evaluation of Variable",
 		Stmt: parser.ExternalCommand{
 			Command: "cmd @__not_exist__",
 		},
-		Error: "[L:- C:-] external command: variable @__not_exist__ is undeclared",
+		Error: "external command: variable @__not_exist__ is undeclared",
 	},
 }
 

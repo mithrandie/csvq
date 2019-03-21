@@ -182,7 +182,7 @@ func (p *Prompt) Render(ctx context.Context, sequence []PromptElement) (string, 
 func (p *Prompt) evaluate(ctx context.Context, expr parser.QueryExpression) error {
 	val, err := p.filter.Evaluate(ctx, expr)
 	if err != nil {
-		if ae, ok := err.(AppError); ok {
+		if ae, ok := err.(Error); ok {
 			err = NewPromptEvaluationError(ae.ErrorMessage())
 		}
 		return err

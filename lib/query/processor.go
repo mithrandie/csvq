@@ -595,7 +595,7 @@ func (proc *Processor) ExecExternalCommand(ctx context.Context, stmt parser.Exte
 	for _, argStr := range argStrs {
 		arg, err := proc.Filter.EvaluateEmbeddedString(ctx, argStr)
 		if err != nil {
-			if appErr, ok := err.(AppError); ok {
+			if appErr, ok := err.(Error); ok {
 				err = NewExternalCommandError(stmt, appErr.ErrorMessage())
 			} else {
 				err = NewExternalCommandError(stmt, err.Error())

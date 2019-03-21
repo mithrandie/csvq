@@ -182,7 +182,7 @@ var parseJoinConditionTests = []struct {
 		},
 		View:     &View{Header: NewHeaderWithId("t1", []string{"key1", "key2", "key3", "key1", "value1", "value2", "value3"})},
 		JoinView: &View{Header: NewHeaderWithId("t2", []string{"key1", "key2", "key3", "value4"})},
-		Error:    "[L:- C:-] field key1 is ambiguous",
+		Error:    "field key1 is ambiguous",
 	},
 	{
 		Name: "Using Condition JoinView Field Error",
@@ -197,7 +197,7 @@ var parseJoinConditionTests = []struct {
 		},
 		View:     &View{Header: NewHeaderWithId("t1", []string{"key1", "key2", "key3", "value1", "value2", "value3"})},
 		JoinView: &View{Header: NewHeaderWithId("t2", []string{"key2", "key3", "value4"})},
-		Error:    "[L:- C:-] field key1 does not exist",
+		Error:    "field key1 does not exist",
 	},
 }
 
@@ -560,7 +560,7 @@ var innerJoinTests = []struct {
 			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "notexist"}},
 			Operator: "=",
 		},
-		Error: "[L:- C:-] field table2.notexist does not exist",
+		Error: "field table2.notexist does not exist",
 	},
 }
 
@@ -893,7 +893,7 @@ var outerJoinTests = []struct {
 			Operator: "=",
 		},
 		Direction: parser.LEFT,
-		Error:     "[L:- C:-] field table1.notexist does not exist",
+		Error:     "field table1.notexist does not exist",
 	},
 	{
 		Name: "Outer Join Direction Undefined",
