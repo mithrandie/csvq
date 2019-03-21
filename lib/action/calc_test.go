@@ -46,9 +46,10 @@ var calcTests = []struct {
 
 func TestCalc(t *testing.T) {
 	tx, _ := query.NewTransaction(context.Background(), file.DefaultWaitTimeout, file.DefaultRetryDelay, query.NewSession())
+	filter := query.NewFilter(tx)
 
 	for _, v := range calcTests {
-		_ = tx.CachedViews.Clean(tx.FileContainer)
+		_ = tx.Rollback(filter, nil)
 
 		var oldStdin *os.File
 		if 0 < len(v.Stdin) {

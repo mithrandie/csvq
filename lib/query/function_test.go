@@ -3312,7 +3312,7 @@ var nowTests = []struct {
 		Function: parser.Function{
 			Name: "now",
 		},
-		Filter: NewEmptyFilter(TestTx),
+		Filter: NewFilter(TestTx),
 		Result: value.NewDatetime(NowForTest),
 	},
 	{
@@ -3321,11 +3321,11 @@ var nowTests = []struct {
 			Name: "now",
 		},
 		Filter: &Filter{
-			Variables: VariableScopes{NewVariableMap()},
-			TempViews: TemporaryViewScopes{{}},
-			Cursors:   CursorScopes{{}},
-			Functions: UserDefinedFunctionScopes{{}},
-			Now:       time.Date(2013, 2, 3, 0, 0, 0, 0, GetTestLocation()),
+			variables: VariableScopes{NewVariableMap()},
+			tempViews: TemporaryViewScopes{{}},
+			cursors:   CursorScopes{{}},
+			functions: UserDefinedFunctionScopes{{}},
+			now:       time.Date(2013, 2, 3, 0, 0, 0, 0, GetTestLocation()),
 		},
 		Result: value.NewDatetime(time.Date(2013, 2, 3, 0, 0, 0, 0, GetTestLocation())),
 	},
@@ -3337,7 +3337,7 @@ var nowTests = []struct {
 		Args: []value.Primary{
 			value.NewInteger(1),
 		},
-		Filter: NewEmptyFilter(TestTx),
+		Filter: NewFilter(TestTx),
 		Error:  "[L:- C:-] function now takes no argument",
 	},
 }
@@ -3380,16 +3380,16 @@ var jsonObjectTests = []struct {
 			},
 		},
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							NewRecordWithId(0, []value.Primary{value.NewInteger(1), value.NewInteger(2)}),
 							NewRecordWithId(1, []value.Primary{value.NewInteger(11), value.NewInteger(12)}),
 						},
 					},
-					RecordIndex: 1,
+					recordIndex: 1,
 				},
 			},
 		},
@@ -3401,16 +3401,16 @@ var jsonObjectTests = []struct {
 			Name: "json_object",
 		},
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2.child1"}),
 						RecordSet: []Record{
 							NewRecordWithId(0, []value.Primary{value.NewInteger(1), value.NewInteger(2)}),
 							NewRecordWithId(1, []value.Primary{value.NewInteger(11), value.NewInteger(12)}),
 						},
 					},
-					RecordIndex: 1,
+					recordIndex: 1,
 				},
 			},
 		},
@@ -3424,7 +3424,7 @@ var jsonObjectTests = []struct {
 				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 			},
 		},
-		Filter: NewEmptyFilter(TestTx),
+		Filter: NewFilter(TestTx),
 		Error:  "[L:- C:-] function json_object cannot be used as a statement",
 	},
 	{
@@ -3433,16 +3433,16 @@ var jsonObjectTests = []struct {
 			Name: "json_object",
 		},
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2.."}),
 						RecordSet: []Record{
 							NewRecordWithId(0, []value.Primary{value.NewInteger(1), value.NewInteger(2)}),
 							NewRecordWithId(1, []value.Primary{value.NewInteger(11), value.NewInteger(12)}),
 						},
 					},
-					RecordIndex: 1,
+					recordIndex: 1,
 				},
 			},
 		},
@@ -3452,7 +3452,7 @@ var jsonObjectTests = []struct {
 
 func TestJsonObject(t *testing.T) {
 	for _, v := range jsonObjectTests {
-		v.Filter.Tx = TestTx
+		v.Filter.tx = TestTx
 		result, err := JsonObject(context.Background(), v.Filter, v.Function)
 		if err != nil {
 			if len(v.Error) < 1 {

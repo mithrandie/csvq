@@ -315,7 +315,7 @@ var cursorScopesOpenTests = []struct {
 
 func TestCursorScopes_Open(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -344,9 +344,9 @@ func TestCursorScopes_Open(t *testing.T) {
 	}
 
 	for _, v := range cursorScopesOpenTests {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 
-		err := list.Open(context.Background(), NewEmptyFilter(TestTx), v.CurName)
+		err := list.Open(context.Background(), NewFilter(TestTx), v.CurName)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -409,7 +409,7 @@ var cursorScopesCloseTests = []struct {
 
 func TestCursorScopes_Close(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -436,7 +436,7 @@ func TestCursorScopes_Close(t *testing.T) {
 		},
 	}
 
-	_ = list[1]["CUR"].Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
+	_ = list[1]["CUR"].Open(context.Background(), NewFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorScopesCloseTests {
 		err := list.Close(v.CurName)
@@ -491,7 +491,7 @@ var cursorScopesFetchTests = []struct {
 
 func TestCursorScopes_Fetch(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -509,7 +509,7 @@ func TestCursorScopes_Fetch(t *testing.T) {
 		},
 	}
 
-	_ = list[1]["CUR"].Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
+	_ = list[1]["CUR"].Open(context.Background(), NewFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorScopesFetchTests {
 		result, err := list.Fetch(v.CurName, v.Position, v.Number)
@@ -551,7 +551,7 @@ var cursorScopesIsOpenTests = []struct {
 
 func TestCursorScopes_IsOpen(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -566,7 +566,7 @@ func TestCursorScopes_IsOpen(t *testing.T) {
 		},
 	}
 
-	_ = list[1]["CUR"].Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
+	_ = list[1]["CUR"].Open(context.Background(), NewFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorScopesIsOpenTests {
 		result, err := list.IsOpen(v.CurName)
@@ -614,7 +614,7 @@ var cursorScopesIsInRangeTests = []struct {
 
 func TestCursorScopes_IsInRange(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -632,7 +632,7 @@ func TestCursorScopes_IsInRange(t *testing.T) {
 		},
 	}
 
-	_ = list[1]["CUR"].Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
+	_ = list[1]["CUR"].Open(context.Background(), NewFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorScopesIsInRangeTests {
 		result, err := list.IsInRange(v.CurName)
@@ -679,7 +679,7 @@ var cursorScopesCountTests = []struct {
 
 func TestCursorScopes_Count(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -697,7 +697,7 @@ func TestCursorScopes_Count(t *testing.T) {
 		},
 	}
 
-	_ = list[1]["CUR"].Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
+	_ = list[1]["CUR"].Open(context.Background(), NewFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorScopesCountTests {
 		result, err := list.Count(v.CurName)
@@ -1023,7 +1023,7 @@ var cursorMapOpenTests = []struct {
 
 func TestCursorMap_Open(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -1047,8 +1047,8 @@ func TestCursorMap_Open(t *testing.T) {
 	)
 
 	for _, v := range cursorMapOpenTests {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
-		err := cursors.Open(context.Background(), NewEmptyFilter(TestTx), v.CurName)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		err := cursors.Open(context.Background(), NewFilter(TestTx), v.CurName)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1108,7 +1108,7 @@ var cursorMapCloseTests = []struct {
 
 func TestCursorMap_Close(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -1127,7 +1127,7 @@ func TestCursorMap_Close(t *testing.T) {
 			value.NewInteger(2),
 		},
 	)
-	_ = cursors.Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
+	_ = cursors.Open(context.Background(), NewFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorMapCloseTests {
 		err := cursors.Close(v.CurName)
@@ -1267,7 +1267,7 @@ var cursorMapFetchTests = []struct {
 
 func TestCursorMap_Fetch(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -1281,7 +1281,7 @@ func TestCursorMap_Fetch(t *testing.T) {
 			query: selectQueryForCursorTest,
 		},
 	}
-	_ = cursors.Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
+	_ = cursors.Open(context.Background(), NewFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorMapFetchTests {
 		result, err := cursors.Fetch(v.CurName, v.Position, v.Number)
@@ -1328,7 +1328,7 @@ var cursorMapIsOpenTests = []struct {
 
 func TestCursorMap_IsOpen(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -1342,7 +1342,7 @@ func TestCursorMap_IsOpen(t *testing.T) {
 			query: selectQueryForCursorTest,
 		},
 	}
-	_ = cursors.Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
+	_ = cursors.Open(context.Background(), NewFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorMapIsOpenTests {
 		result, err := cursors.IsOpen(v.CurName)
@@ -1402,7 +1402,7 @@ var cursorMapIsInRangeTests = []struct {
 
 func TestCursorMap_IsInRange(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -1419,10 +1419,10 @@ func TestCursorMap_IsInRange(t *testing.T) {
 			query: selectQueryForCursorTest,
 		},
 	}
-	_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
-	_ = cursors.Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
-	_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
-	_ = cursors.Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur2"})
+	_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+	_ = cursors.Open(context.Background(), NewFilter(TestTx), parser.Identifier{Literal: "cur"})
+	_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+	_ = cursors.Open(context.Background(), NewFilter(TestTx), parser.Identifier{Literal: "cur2"})
 	_, _ = cursors.Fetch(parser.Identifier{Literal: "cur2"}, parser.NEXT, 0)
 
 	for _, v := range cursorMapIsInRangeTests {
@@ -1473,7 +1473,7 @@ var cursorMapCountTests = []struct {
 
 func TestCursorMap_Count(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -1487,8 +1487,8 @@ func TestCursorMap_Count(t *testing.T) {
 			query: selectQueryForCursorTest,
 		},
 	}
-	_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
-	_ = cursors.Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
+	_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+	_ = cursors.Open(context.Background(), NewFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorMapCountTests {
 		result, err := cursors.Count(v.CurName)

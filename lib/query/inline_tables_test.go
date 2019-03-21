@@ -87,7 +87,7 @@ var inlineTableNodesSetTests = []struct {
 
 func TestInlineTableNodes_Set(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -111,8 +111,8 @@ func TestInlineTableNodes_Set(t *testing.T) {
 	_ = TestTx.Flags.SetRepository(TestDataDir)
 
 	for _, v := range inlineTableNodesSetTests {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
-		err := list.Set(context.Background(), NewEmptyFilter(TestTx), v.Expr)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		err := list.Set(context.Background(), NewFilter(TestTx), v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -160,7 +160,7 @@ var inlineTableNodesGetTests = []struct {
 
 func TestInlineTableNodes_Get(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 	}()
 
 	list := InlineTableNodes{
@@ -201,7 +201,7 @@ func TestInlineTableNodes_Get(t *testing.T) {
 	}
 
 	for _, v := range inlineTableNodesGetTests {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		view, err := list.Get(v.TableName)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -419,7 +419,7 @@ func TestInlineTableNodes_Load(t *testing.T) {
 	}
 
 	for _, v := range inlineTableNodesLoadTests {
-		err := list.Load(context.Background(), NewEmptyFilter(TestTx), v.Expr)
+		err := list.Load(context.Background(), NewFilter(TestTx), v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -711,7 +711,7 @@ var inlineTableMapSetTests = []struct {
 
 func TestInlineTableMap_Set(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -720,8 +720,8 @@ func TestInlineTableMap_Set(t *testing.T) {
 	it := InlineTableMap{}
 
 	for _, v := range inlineTableMapSetTests {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
-		err := it.Set(context.Background(), NewEmptyFilter(TestTx), v.Expr)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		err := it.Set(context.Background(), NewFilter(TestTx), v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

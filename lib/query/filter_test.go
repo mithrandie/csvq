@@ -45,9 +45,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "FieldReference",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
@@ -61,7 +61,7 @@ var filterEvaluateTests = []struct {
 						},
 						Tx: TestTx,
 					},
-					RecordIndex: 1,
+					recordIndex: 1,
 				},
 			},
 		},
@@ -71,9 +71,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "FieldReference ColumnNotExist Error",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
@@ -87,7 +87,7 @@ var filterEvaluateTests = []struct {
 						},
 						Tx: TestTx,
 					},
-					RecordIndex: 1,
+					recordIndex: 1,
 				},
 			},
 		},
@@ -97,9 +97,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "FieldReference FieldAmbigous Error",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column1"}),
 						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
@@ -113,7 +113,7 @@ var filterEvaluateTests = []struct {
 						},
 						Tx: TestTx,
 					},
-					RecordIndex: 1,
+					recordIndex: 1,
 				},
 			},
 		},
@@ -123,9 +123,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "FieldReference Not Group Key Error",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: []HeaderField{
 							{
 								View:        "table1",
@@ -154,7 +154,7 @@ var filterEvaluateTests = []struct {
 						isGrouped: true,
 						Tx:        TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -164,9 +164,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "ColumnNumber",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
@@ -180,7 +180,7 @@ var filterEvaluateTests = []struct {
 						},
 						Tx: TestTx,
 					},
-					RecordIndex: 1,
+					recordIndex: 1,
 				},
 			},
 		},
@@ -190,9 +190,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "ColumnNumber Not Exist Error",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
@@ -206,7 +206,7 @@ var filterEvaluateTests = []struct {
 						},
 						Tx: TestTx,
 					},
-					RecordIndex: 1,
+					recordIndex: 1,
 				},
 			},
 		},
@@ -216,9 +216,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "ColumnNumber Not Group Key Error",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: []HeaderField{
 							{
 								View:        "table1",
@@ -251,7 +251,7 @@ var filterEvaluateTests = []struct {
 						isGrouped: true,
 						Tx:        TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -1186,9 +1186,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "In Subquery",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
 						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
@@ -1197,7 +1197,7 @@ var filterEvaluateTests = []struct {
 							}),
 						},
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -1327,9 +1327,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "In JsonArray",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
 						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
@@ -1339,7 +1339,7 @@ var filterEvaluateTests = []struct {
 						},
 						Tx: TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -1358,9 +1358,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "In JsonArray Query is Null",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
 						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
@@ -1370,7 +1370,7 @@ var filterEvaluateTests = []struct {
 						},
 						Tx: TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -1389,9 +1389,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "In JsonArray Query Evaluation Error",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
 						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
@@ -1400,7 +1400,7 @@ var filterEvaluateTests = []struct {
 							}),
 						},
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -1419,9 +1419,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "In JsonArray JsonText Evaluation Error",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
 						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
@@ -1431,7 +1431,7 @@ var filterEvaluateTests = []struct {
 						},
 						Tx: TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -1450,9 +1450,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "In JsonArray Query Load Error",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
 						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
@@ -1462,7 +1462,7 @@ var filterEvaluateTests = []struct {
 						},
 						Tx: TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -1481,9 +1481,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "In JsonArray Empty Result Set",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
 						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
@@ -1492,7 +1492,7 @@ var filterEvaluateTests = []struct {
 							}),
 						},
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -2282,9 +2282,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Exists",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
 						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
@@ -2294,7 +2294,7 @@ var filterEvaluateTests = []struct {
 						},
 						Tx: TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -2385,9 +2385,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Subquery",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
 						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
@@ -2397,7 +2397,7 @@ var filterEvaluateTests = []struct {
 						},
 						Tx: TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -2545,7 +2545,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "User Defined Function",
 		Filter: &Filter{
-			Functions: UserDefinedFunctionScopes{
+			functions: UserDefinedFunctionScopes{
 				UserDefinedFunctionMap{
 					"USERFUNC": &UserDefinedFunction{
 						Name: parser.Identifier{Literal: "userfunc"},
@@ -2571,7 +2571,7 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "User Defined Function Argument Length Error",
 		Filter: &Filter{
-			Functions: UserDefinedFunctionScopes{
+			functions: UserDefinedFunctionScopes{
 				UserDefinedFunctionMap{
 					"USERFUNC": &UserDefinedFunction{
 						Name: parser.Identifier{Literal: "userfunc"},
@@ -2617,9 +2617,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Aggregate Function",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							{
@@ -2643,7 +2643,7 @@ var filterEvaluateTests = []struct {
 						isGrouped: true,
 						Tx:        TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -2659,9 +2659,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Aggregate Function Argument Length Error",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							{
@@ -2680,7 +2680,7 @@ var filterEvaluateTests = []struct {
 						isGrouped: true,
 						Tx:        TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -2693,9 +2693,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Aggregate Function Not Grouped Error",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
@@ -2705,7 +2705,7 @@ var filterEvaluateTests = []struct {
 						},
 						Tx: TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -2721,9 +2721,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Aggregate Function Nested Error",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							{
@@ -2742,7 +2742,7 @@ var filterEvaluateTests = []struct {
 						isGrouped: true,
 						Tx:        TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -2763,9 +2763,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Aggregate Function Count With AllColumns",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							{
@@ -2784,7 +2784,7 @@ var filterEvaluateTests = []struct {
 						isGrouped: true,
 						Tx:        TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -2812,9 +2812,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Aggregate Function User Defined",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							{
@@ -2835,10 +2835,10 @@ var filterEvaluateTests = []struct {
 						isGrouped: true,
 						Tx:        TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
-			Functions: UserDefinedFunctionScopes{
+			functions: UserDefinedFunctionScopes{
 				{
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:        parser.Identifier{Literal: "useraggfunc"},
@@ -2932,9 +2932,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Aggregate Function User Defined Argument Length Error",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							{
@@ -2955,10 +2955,10 @@ var filterEvaluateTests = []struct {
 						isGrouped: true,
 						Tx:        TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
-			Functions: UserDefinedFunctionScopes{
+			functions: UserDefinedFunctionScopes{
 				{
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:        parser.Identifier{Literal: "useraggfunc"},
@@ -2988,9 +2988,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Aggregate Function User Defined Argument Evaluation Error",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							{
@@ -3011,10 +3011,10 @@ var filterEvaluateTests = []struct {
 						isGrouped: true,
 						Tx:        TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
-			Functions: UserDefinedFunctionScopes{
+			functions: UserDefinedFunctionScopes{
 				{
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:        parser.Identifier{Literal: "useraggfunc"},
@@ -3045,9 +3045,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Aggregate Function Execute User Defined Aggregate Function Passed As Scala Function",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							{
@@ -3066,10 +3066,10 @@ var filterEvaluateTests = []struct {
 						isGrouped: true,
 						Tx:        TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
-			Functions: UserDefinedFunctionScopes{
+			functions: UserDefinedFunctionScopes{
 				{
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:        parser.Identifier{Literal: "useraggfunc"},
@@ -3143,9 +3143,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "Aggregate Function Execute User Defined Aggregate Function Undeclared Error",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							{
@@ -3164,10 +3164,10 @@ var filterEvaluateTests = []struct {
 						isGrouped: true,
 						Tx:        TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
-			Functions: UserDefinedFunctionScopes{
+			functions: UserDefinedFunctionScopes{
 				{
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:        parser.Identifier{Literal: "useraggfunc"},
@@ -3241,9 +3241,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "ListAgg Function",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							{
@@ -3267,11 +3267,11 @@ var filterEvaluateTests = []struct {
 								}),
 							},
 						},
-						Filter:    NewEmptyFilter(TestTx),
+						Filter:    NewFilter(TestTx),
 						isGrouped: true,
 						Tx:        TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -3293,9 +3293,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "ListAgg Function Null",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							{
@@ -3319,11 +3319,11 @@ var filterEvaluateTests = []struct {
 								}),
 							},
 						},
-						Filter:    NewEmptyFilter(TestTx),
+						Filter:    NewFilter(TestTx),
 						isGrouped: true,
 						Tx:        TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -3339,9 +3339,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "ListAgg Function Argument Length Error",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
@@ -3349,10 +3349,10 @@ var filterEvaluateTests = []struct {
 								value.NewString("str2"),
 							}),
 						},
-						Filter: NewEmptyFilter(TestTx),
+						Filter: NewFilter(TestTx),
 						Tx:     TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -3370,9 +3370,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "ListAgg Function Not Grouped Error",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							NewRecordWithId(1, []value.Primary{
@@ -3380,10 +3380,10 @@ var filterEvaluateTests = []struct {
 								value.NewString("str2"),
 							}),
 						},
-						Filter: NewEmptyFilter(TestTx),
+						Filter: NewFilter(TestTx),
 						Tx:     TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -3405,9 +3405,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "ListAgg Function Sort Error",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							{
@@ -3425,11 +3425,11 @@ var filterEvaluateTests = []struct {
 								}),
 							},
 						},
-						Filter:    NewEmptyFilter(TestTx),
+						Filter:    NewFilter(TestTx),
 						isGrouped: true,
 						Tx:        TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -3451,9 +3451,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "ListAgg Function Nested Error",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							{
@@ -3469,11 +3469,11 @@ var filterEvaluateTests = []struct {
 								}),
 							},
 						},
-						Filter:    NewEmptyFilter(TestTx),
+						Filter:    NewFilter(TestTx),
 						isGrouped: true,
 						Tx:        TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -3494,9 +3494,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "ListAgg Function Second Argument Evaluation Error",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							{
@@ -3512,11 +3512,11 @@ var filterEvaluateTests = []struct {
 								}),
 							},
 						},
-						Filter:    NewEmptyFilter(TestTx),
+						Filter:    NewFilter(TestTx),
 						isGrouped: true,
 						Tx:        TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -3532,9 +3532,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "ListAgg Function Second Argument Not String Error",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							{
@@ -3550,11 +3550,11 @@ var filterEvaluateTests = []struct {
 								}),
 							},
 						},
-						Filter:    NewEmptyFilter(TestTx),
+						Filter:    NewFilter(TestTx),
 						isGrouped: true,
 						Tx:        TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -3588,9 +3588,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "JsonAgg Function",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							{
@@ -3614,11 +3614,11 @@ var filterEvaluateTests = []struct {
 								}),
 							},
 						},
-						Filter:    NewEmptyFilter(TestTx),
+						Filter:    NewFilter(TestTx),
 						isGrouped: true,
 						Tx:        TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -3639,9 +3639,9 @@ var filterEvaluateTests = []struct {
 	{
 		Name: "JsonAgg Function Arguments Error",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							{
@@ -3659,11 +3659,11 @@ var filterEvaluateTests = []struct {
 								}),
 							},
 						},
-						Filter:    NewEmptyFilter(TestTx),
+						Filter:    NewFilter(TestTx),
 						isGrouped: true,
 						Tx:        TestTx,
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -3900,7 +3900,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Variable",
-		Filter: NewFilter(
+		Filter: NewFilterWithScopes(
 			TestTx,
 			[]VariableMap{
 				GenerateVariableMap(map[string]value.Primary{
@@ -3939,7 +3939,7 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Variable Substitution",
-		Filter: NewFilter(
+		Filter: NewFilterWithScopes(
 			TestTx,
 			[]VariableMap{
 				GenerateVariableMap(map[string]value.Primary{
@@ -4031,7 +4031,7 @@ var filterEvaluateTests = []struct {
 
 func TestFilter_Evaluate(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -4042,22 +4042,22 @@ func TestFilter_Evaluate(t *testing.T) {
 			query: selectQueryForCursorTest,
 		},
 	}
-	_ = cursors.Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
+	_ = cursors.Open(context.Background(), NewFilter(TestTx), parser.Identifier{Literal: "cur"})
 	_, _ = cursors.Fetch(parser.Identifier{Literal: "cur"}, parser.NEXT, 0)
 
 	for _, v := range filterEvaluateTests {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 
 		if v.Filter == nil {
-			v.Filter = NewEmptyFilter(TestTx)
+			v.Filter = NewFilter(TestTx)
 		} else {
-			v.Filter.Tx = TestTx
+			v.Filter.tx = TestTx
 		}
-		for i := range v.Filter.Records {
-			v.Filter.Records[i].View.Filter = v.Filter
+		for i := range v.Filter.records {
+			v.Filter.records[i].view.Filter = v.Filter
 		}
 
-		v.Filter.Cursors = append(v.Filter.Cursors, cursors)
+		v.Filter.cursors = append(v.Filter.cursors, cursors)
 		result, err := v.Filter.Evaluate(context.Background(), v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -4090,18 +4090,18 @@ var filterEvaluateSequentiallyTests = []struct {
 	{
 		Name: "Multi Threading",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							NewRecord([]value.Primary{value.NewInteger(1), value.NewString("str1")}),
 							NewRecord([]value.Primary{value.NewInteger(2), value.NewString("str2")}),
 							NewRecord([]value.Primary{value.NewInteger(3), value.NewString("str3")}),
 						},
-						Filter: NewEmptyFilter(TestTx),
+						Filter: NewFilter(TestTx),
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -4123,18 +4123,18 @@ var filterEvaluateSequentiallyTests = []struct {
 	{
 		Name: "Error in Multi Threading",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							NewRecord([]value.Primary{value.NewInteger(1), value.NewString("str1")}),
 							NewRecord([]value.Primary{value.NewInteger(2), value.NewString("str2")}),
 							NewRecord([]value.Primary{value.NewInteger(3), value.NewString("str3")}),
 						},
-						Filter: NewEmptyFilter(TestTx),
+						Filter: NewFilter(TestTx),
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
 		},
@@ -4152,21 +4152,21 @@ var filterEvaluateSequentiallyTests = []struct {
 	{
 		Name: "Single Threading",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							NewRecord([]value.Primary{value.NewInteger(1), value.NewString("str1")}),
 							NewRecord([]value.Primary{value.NewInteger(2), value.NewString("str2")}),
 							NewRecord([]value.Primary{value.NewInteger(3), value.NewString("str3")}),
 						},
-						Filter: NewEmptyFilter(TestTx),
+						Filter: NewFilter(TestTx),
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
-			Variables: VariableScopes{
+			variables: VariableScopes{
 				GenerateVariableMap(map[string]value.Primary{
 					"value": value.NewInteger(10),
 				}),
@@ -4200,21 +4200,21 @@ var filterEvaluateSequentiallyTests = []struct {
 	{
 		Name: "Error in Single Threading",
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeader("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							NewRecord([]value.Primary{value.NewInteger(1), value.NewString("str1")}),
 							NewRecord([]value.Primary{value.NewInteger(2), value.NewString("str2")}),
 							NewRecord([]value.Primary{value.NewInteger(3), value.NewString("str3")}),
 						},
-						Filter: NewEmptyFilter(TestTx),
+						Filter: NewFilter(TestTx),
 					},
-					RecordIndex: 0,
+					recordIndex: 0,
 				},
 			},
-			Variables: VariableScopes{
+			variables: VariableScopes{
 				GenerateVariableMap(map[string]value.Primary{
 					"value": value.NewInteger(10),
 				}),
@@ -4245,7 +4245,7 @@ var filterEvaluateSequentiallyTests = []struct {
 
 func TestFilter_EvaluateSequentially(t *testing.T) {
 	for _, v := range filterEvaluateSequentiallyTests {
-		v.Filter.Tx = TestTx
+		v.Filter.tx = TestTx
 
 		filterEvaluateSequentiallyResults = make([]value.Primary, 0)
 		err := v.Filter.EvaluateSequentially(context.Background(), v.Function, v.Expression)
@@ -4323,8 +4323,8 @@ var filterEvaluateEmbeddedStringTests = []struct {
 }
 
 func TestFilter_EvaluateEmbeddedString(t *testing.T) {
-	filter := NewEmptyFilter(TestTx)
-	_ = filter.Variables[0].Add(parser.Variable{Name: "var"}, value.NewInteger(1))
+	filter := NewFilter(TestTx)
+	_ = filter.variables[0].Add(parser.Variable{Name: "var"}, value.NewInteger(1))
 	_ = os.Setenv("CSVQ_TEST_FILTER", "FILTER_TEST")
 
 	for _, v := range filterEvaluateEmbeddedStringTests {
@@ -4387,7 +4387,7 @@ func BenchmarkFilter_EvaluateSingleThread(b *testing.B) {
 	ctx := context.Background()
 
 	for i := 0; i < b.N; i++ {
-		filter := NewEmptyFilter(TestTx)
+		filter := NewFilter(TestTx)
 
 		for j := 0; j < 150; j++ {
 			_, _ = filter.Evaluate(ctx, parser.Comparison{
@@ -4407,7 +4407,7 @@ func BenchmarkFilter_EvaluateMultiThread(b *testing.B) {
 		for i := 0; i < 3; i++ {
 			wg.Add(1)
 			go func(thIdx int) {
-				filter := NewEmptyFilter(TestTx)
+				filter := NewFilter(TestTx)
 
 				for j := 0; j < 50; j++ {
 					_, _ = filter.Evaluate(ctx, parser.Comparison{
@@ -4424,9 +4424,9 @@ func BenchmarkFilter_EvaluateMultiThread(b *testing.B) {
 }
 
 var filterEvaluateFieldReferenceBenchFilter = &Filter{
-	Records: []FilterRecord{
+	records: []filterRecord{
 		{
-			View: &View{
+			view: &View{
 				Header: NewHeader("table1", []string{"column1", "column2", "column3"}),
 				RecordSet: RecordSet{
 					NewRecord([]value.Primary{
@@ -4436,15 +4436,15 @@ var filterEvaluateFieldReferenceBenchFilter = &Filter{
 					}),
 				},
 			},
-			RecordIndex: 0,
+			recordIndex: 0,
 		},
 	},
 }
 
 var filterEvaluateFieldReferenceWithIndexCacheBenchFilter = &Filter{
-	Records: []FilterRecord{
+	records: []filterRecord{
 		{
-			View: &View{
+			view: &View{
 				Header: NewHeader("table1", []string{"column1", "column2", "column3"}),
 				RecordSet: RecordSet{
 					NewRecord([]value.Primary{
@@ -4454,7 +4454,7 @@ var filterEvaluateFieldReferenceWithIndexCacheBenchFilter = &Filter{
 					}),
 				},
 			},
-			RecordIndex:           0,
+			recordIndex:           0,
 			fieldReferenceIndices: make(map[string]int),
 		},
 	},

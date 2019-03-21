@@ -799,7 +799,7 @@ var processorExecuteStatementTests = []struct {
 func TestProcessor_ExecuteStatement(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		TestTx.UncommittedViews.Clean()
+		TestTx.uncommittedViews.Clean()
 		initFlag(TestTx.Flags)
 	}()
 
@@ -808,11 +808,11 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 
 	tx := TestTx
 	proc := NewProcessor(tx)
-	_ = proc.Filter.Variables[0].Add(parser.Variable{Name: "while_test"}, value.NewInteger(0))
+	_ = proc.Filter.variables[0].Add(parser.Variable{Name: "while_test"}, value.NewInteger(0))
 
 	for _, v := range processorExecuteStatementTests {
 		_ = TestTx.ReleaseResources()
-		TestTx.UncommittedViews = NewUncommittedViewMap()
+		TestTx.uncommittedViews = NewUncommittedViewMap()
 
 		r, w, _ := os.Pipe()
 		tx.Session.Stdout = w
@@ -845,7 +845,7 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 		}
 
 		if v.UncommittedViews != nil {
-			for _, r := range TestTx.UncommittedViews.Created {
+			for _, r := range TestTx.uncommittedViews.Created {
 				if r.Handler != nil {
 					if r.Path != r.Handler.Path() {
 						t.Errorf("file pointer = %q, want %q for %q", r.Handler.Path(), r.Path, v.Input)
@@ -854,7 +854,7 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 					r.Handler = nil
 				}
 			}
-			for _, r := range TestTx.UncommittedViews.Updated {
+			for _, r := range TestTx.uncommittedViews.Updated {
 				if r.Handler != nil {
 					if r.Path != r.Handler.Path() {
 						t.Errorf("file pointer = %q, want %q for %q", r.Handler.Path(), r.Path, v.Input)
@@ -864,8 +864,8 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 				}
 			}
 
-			if !reflect.DeepEqual(TestTx.UncommittedViews, v.UncommittedViews) {
-				t.Errorf("uncomitted views = %v, want %v for %q", TestTx.UncommittedViews, v.UncommittedViews, v.Input)
+			if !reflect.DeepEqual(TestTx.uncommittedViews, v.UncommittedViews) {
+				t.Errorf("uncomitted views = %v, want %v for %q", TestTx.uncommittedViews, v.UncommittedViews, v.Input)
 			}
 		}
 		if 0 < len(v.Logs) {
@@ -1007,7 +1007,7 @@ func TestProcessor_IfStmt(t *testing.T) {
 		r, w, _ := os.Pipe()
 		tx.Session.Stdout = w
 
-		proc.ReturnVal = nil
+		proc.returnVal = nil
 		flow, err := proc.IfStmt(context.Background(), v.Stmt)
 		_ = w.Close()
 
@@ -1028,8 +1028,8 @@ func TestProcessor_IfStmt(t *testing.T) {
 		if flow != v.ResultFlow {
 			t.Errorf("%s: result flow = %q, want %q", v.Name, flow, v.ResultFlow)
 		}
-		if !reflect.DeepEqual(proc.ReturnVal, v.ReturnValue) {
-			t.Errorf("%s: return = %t, want %t", v.Name, proc.ReturnVal, v.ReturnValue)
+		if !reflect.DeepEqual(proc.returnVal, v.ReturnValue) {
+			t.Errorf("%s: return = %t, want %t", v.Name, proc.returnVal, v.ReturnValue)
 		}
 		if string(log) != v.Result {
 			t.Errorf("%s: result = %q, want %q", v.Name, string(log), v.Result)
@@ -1153,7 +1153,7 @@ var processorCaseStmtTests = []struct {
 				},
 			},
 		},
-		ResultFlow: Error,
+		ResultFlow: TerminateWithError,
 		Error:      "[L:- C:-] field notexist does not exist",
 	},
 	{
@@ -1168,7 +1168,7 @@ var processorCaseStmtTests = []struct {
 				},
 			},
 		},
-		ResultFlow: Error,
+		ResultFlow: TerminateWithError,
 		Error:      "[L:- C:-] field notexist does not exist",
 	},
 }
@@ -1448,16 +1448,16 @@ func TestProcessor_While(t *testing.T) {
 	proc := NewProcessor(tx)
 
 	for _, v := range processorWhileTests {
-		proc.ReturnVal = nil
-		if _, err := proc.Filter.Variables[0].Get(parser.Variable{Name: "while_test"}); err != nil {
-			_ = proc.Filter.Variables[0].Add(parser.Variable{Name: "while_test"}, value.NewInteger(0))
+		proc.returnVal = nil
+		if _, err := proc.Filter.variables[0].Get(parser.Variable{Name: "while_test"}); err != nil {
+			_ = proc.Filter.variables[0].Add(parser.Variable{Name: "while_test"}, value.NewInteger(0))
 		}
-		_ = proc.Filter.Variables[0].Set(parser.Variable{Name: "while_test"}, value.NewInteger(0))
+		_ = proc.Filter.variables[0].Set(parser.Variable{Name: "while_test"}, value.NewInteger(0))
 
-		if _, err := proc.Filter.Variables[0].Get(parser.Variable{Name: "while_test_count"}); err != nil {
-			_ = proc.Filter.Variables[0].Add(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
+		if _, err := proc.Filter.variables[0].Get(parser.Variable{Name: "while_test_count"}); err != nil {
+			_ = proc.Filter.variables[0].Add(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
 		}
-		_ = proc.Filter.Variables[0].Set(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
+		_ = proc.Filter.variables[0].Set(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
 
 		r, w, _ := os.Pipe()
 		tx.Session.Stdout = w
@@ -1481,8 +1481,8 @@ func TestProcessor_While(t *testing.T) {
 		if flow != v.ResultFlow {
 			t.Errorf("%s: result flow = %q, want %q", v.Name, flow, v.ResultFlow)
 		}
-		if !reflect.DeepEqual(proc.ReturnVal, v.ReturnValue) {
-			t.Errorf("%s: return = %t, want %t", v.Name, proc.ReturnVal, v.ReturnValue)
+		if !reflect.DeepEqual(proc.returnVal, v.ReturnValue) {
+			t.Errorf("%s: return = %t, want %t", v.Name, proc.returnVal, v.ReturnValue)
 		}
 		if string(log) != v.Result {
 			t.Errorf("%s: result = %q, want %q", v.Name, string(log), v.Result)
@@ -1670,7 +1670,7 @@ var processorWhileInCursorTests = []struct {
 
 func TestProcessor_WhileInCursor(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -1680,17 +1680,17 @@ func TestProcessor_WhileInCursor(t *testing.T) {
 	proc := NewProcessor(tx)
 
 	for _, v := range processorWhileInCursorTests {
-		proc.Filter.Variables[0] = GenerateVariableMap(map[string]value.Primary{
+		proc.Filter.variables[0] = GenerateVariableMap(map[string]value.Primary{
 			"var1": value.NewNull(),
 			"var2": value.NewNull(),
 		})
-		proc.Filter.Cursors[0] = CursorMap{
+		proc.Filter.cursors[0] = CursorMap{
 			"CUR": &Cursor{
 				query: selectQueryForCursorTest,
 			},
 		}
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
-		_ = proc.Filter.Cursors.Open(context.Background(), proc.Filter, parser.Identifier{Literal: "cur"})
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = proc.Filter.cursors.Open(context.Background(), proc.Filter, parser.Identifier{Literal: "cur"})
 
 		r, w, _ := os.Pipe()
 		tx.Session.Stdout = w
@@ -1714,8 +1714,8 @@ func TestProcessor_WhileInCursor(t *testing.T) {
 		if flow != v.ResultFlow {
 			t.Errorf("%s: result flow = %q, want %q", v.Name, flow, v.ResultFlow)
 		}
-		if !reflect.DeepEqual(proc.ReturnVal, v.ReturnValue) {
-			t.Errorf("%s: return = %t, want %t", v.Name, proc.ReturnVal, v.ReturnValue)
+		if !reflect.DeepEqual(proc.returnVal, v.ReturnValue) {
+			t.Errorf("%s: return = %t, want %t", v.Name, proc.returnVal, v.ReturnValue)
 		}
 		if string(log) != v.Result {
 			t.Errorf("%s: result = %q, want %q", v.Name, string(log), v.Result)

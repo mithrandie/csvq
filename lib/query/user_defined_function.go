@@ -205,7 +205,7 @@ func (fn *UserDefinedFunction) Execute(ctx context.Context, filter *Filter, args
 
 func (fn *UserDefinedFunction) ExecuteAggregate(ctx context.Context, filter *Filter, values []value.Primary, args []value.Primary) (value.Primary, error) {
 	childScope := filter.CreateChildScope()
-	if err := childScope.Cursors.AddPseudoCursor(filter.Tx, fn.Cursor, values); err != nil {
+	if err := childScope.cursors.AddPseudoCursor(filter.tx, fn.Cursor, values); err != nil {
 		return nil, err
 	}
 	return fn.execute(ctx, childScope, args)
@@ -239,7 +239,7 @@ func (fn *UserDefinedFunction) execute(ctx context.Context, filter *Filter, args
 
 	for i, v := range fn.Parameters {
 		if i < len(args) {
-			if err := filter.Variables[0].Add(v, args[i]); err != nil {
+			if err := filter.variables[0].Add(v, args[i]); err != nil {
 				return nil, err
 			}
 		} else {
@@ -248,18 +248,18 @@ func (fn *UserDefinedFunction) execute(ctx context.Context, filter *Filter, args
 			if err != nil {
 				return nil, err
 			}
-			if err = filter.Variables[0].Add(v, val); err != nil {
+			if err = filter.variables[0].Add(v, val); err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	proc := NewProcessorWithFilter(filter.Tx, filter)
+	proc := NewProcessorWithFilter(filter.tx, filter)
 	if _, err := proc.execute(ctx, fn.Statements); err != nil {
 		return nil, err
 	}
 
-	ret := proc.ReturnVal
+	ret := proc.returnVal
 	if ret == nil {
 		ret = value.NewNull()
 	}

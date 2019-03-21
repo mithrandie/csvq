@@ -988,7 +988,7 @@ func TestUserDefinedFunction_Execute(t *testing.T) {
 	vars := GenerateVariableMap(map[string]value.Primary{
 		"var1": value.NewInteger(1),
 	})
-	filter := NewFilter(
+	filter := NewFilterWithScopes(
 		TestTx,
 		[]VariableMap{vars},
 		[]ViewMap{{}},
@@ -1253,7 +1253,7 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 }
 
 func TestUserDefinedFunction_ExecuteAggregate(t *testing.T) {
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range userDefinedFunctionExecuteAggregateTests {
 		result, err := v.Func.ExecuteAggregate(context.Background(), filter, v.Values, v.Args)

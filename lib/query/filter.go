@@ -16,33 +16,33 @@ import (
 	"github.com/mithrandie/ternary"
 )
 
-type FilterRecord struct {
-	View        *View
-	RecordIndex int
+type filterRecord struct {
+	view        *View
+	recordIndex int
 
 	fieldReferenceIndices map[string]int
 }
 
 type Filter struct {
-	Tx *Transaction
+	tx *Transaction
 
-	Records []FilterRecord
+	records []filterRecord
 
-	Variables VariableScopes
-	TempViews TemporaryViewScopes
-	Cursors   CursorScopes
-	Functions UserDefinedFunctionScopes
+	variables VariableScopes
+	tempViews TemporaryViewScopes
+	cursors   CursorScopes
+	functions UserDefinedFunctionScopes
 
-	InlineTables InlineTableNodes
-	Aliases      AliasNodes
+	inlineTables InlineTableNodes
+	aliases      AliasNodes
 
-	RecursiveTable    *parser.InlineTable
-	RecursiveTmpView  *View
+	recursiveTable    *parser.InlineTable
+	recursiveTmpView  *View
 	tmpViewIsAccessed bool
 
 	checkAvailableParallelRoutine bool
 
-	Now time.Time
+	now time.Time
 }
 
 type ContainsSubstitusion struct{}
@@ -51,18 +51,8 @@ func (c *ContainsSubstitusion) Error() string {
 	return "contains substitusion"
 }
 
-func NewFilter(tx *Transaction, variableScopes VariableScopes, tempViewScopes TemporaryViewScopes, cursorScopes CursorScopes, functionScopes UserDefinedFunctionScopes) *Filter {
-	return &Filter{
-		Tx:        tx,
-		Variables: variableScopes,
-		TempViews: tempViewScopes,
-		Cursors:   cursorScopes,
-		Functions: functionScopes,
-	}
-}
-
-func NewEmptyFilter(tx *Transaction) *Filter {
-	return NewFilter(
+func NewFilter(tx *Transaction) *Filter {
+	return NewFilterWithScopes(
 		tx,
 		VariableScopes{NewVariableMap()},
 		TemporaryViewScopes{{}},
@@ -71,13 +61,23 @@ func NewEmptyFilter(tx *Transaction) *Filter {
 	)
 }
 
+func NewFilterWithScopes(tx *Transaction, variableScopes VariableScopes, tempViewScopes TemporaryViewScopes, cursorScopes CursorScopes, functionScopes UserDefinedFunctionScopes) *Filter {
+	return &Filter{
+		tx:        tx,
+		variables: variableScopes,
+		tempViews: tempViewScopes,
+		cursors:   cursorScopes,
+		functions: functionScopes,
+	}
+}
+
 func NewFilterForRecord(parentFilter *Filter, view *View, recordIndex int) *Filter {
 	f := &Filter{
-		Tx: parentFilter.Tx,
-		Records: []FilterRecord{
+		tx: parentFilter.tx,
+		records: []filterRecord{
 			{
-				View:                  view,
-				RecordIndex:           recordIndex,
+				view:                  view,
+				recordIndex:           recordIndex,
 				fieldReferenceIndices: make(map[string]int),
 			},
 		},
@@ -88,11 +88,11 @@ func NewFilterForRecord(parentFilter *Filter, view *View, recordIndex int) *Filt
 
 func NewFilterForSequentialEvaluation(parentFilter *Filter, view *View) *Filter {
 	f := &Filter{
-		Tx: parentFilter.Tx,
-		Records: []FilterRecord{
+		tx: parentFilter.tx,
+		records: []filterRecord{
 			{
-				View:                  view,
-				RecordIndex:           -1,
+				view:                  view,
+				recordIndex:           -1,
 				fieldReferenceIndices: make(map[string]int),
 			},
 		},
@@ -102,68 +102,68 @@ func NewFilterForSequentialEvaluation(parentFilter *Filter, view *View) *Filter 
 }
 
 func (f *Filter) Merge(filter *Filter) {
-	f.Records = append(f.Records, filter.Records...)
-	f.Variables = filter.Variables
-	f.TempViews = filter.TempViews
-	f.Cursors = filter.Cursors
-	f.Functions = filter.Functions
-	f.InlineTables = filter.InlineTables
-	f.Aliases = filter.Aliases
-	f.Now = filter.Now
+	f.records = append(f.records, filter.records...)
+	f.variables = filter.variables
+	f.tempViews = filter.tempViews
+	f.cursors = filter.cursors
+	f.functions = filter.functions
+	f.inlineTables = filter.inlineTables
+	f.aliases = filter.aliases
+	f.now = filter.now
 }
 
 func (f *Filter) CreateChildScope() *Filter {
-	child := NewFilter(
-		f.Tx,
-		append(VariableScopes{NewVariableMap()}, f.Variables...),
-		append(TemporaryViewScopes{{}}, f.TempViews...),
-		append(CursorScopes{{}}, f.Cursors...),
-		append(UserDefinedFunctionScopes{{}}, f.Functions...),
+	child := NewFilterWithScopes(
+		f.tx,
+		append(VariableScopes{NewVariableMap()}, f.variables...),
+		append(TemporaryViewScopes{{}}, f.tempViews...),
+		append(CursorScopes{{}}, f.cursors...),
+		append(UserDefinedFunctionScopes{{}}, f.functions...),
 	)
-	child.Now = f.Now
+	child.now = f.now
 	return child
 }
 
 func (f *Filter) ResetCurrentScope() {
-	f.Variables[0].variables.Range(func(k interface{}, v interface{}) bool {
-		f.Variables[0].variables.Delete(k)
+	f.variables[0].variables.Range(func(k interface{}, v interface{}) bool {
+		f.variables[0].variables.Delete(k)
 		return true
 	})
-	for k := range f.TempViews[0] {
-		delete(f.TempViews[0], k)
+	for k := range f.tempViews[0] {
+		delete(f.tempViews[0], k)
 	}
-	for k := range f.Cursors[0] {
-		delete(f.Cursors[0], k)
+	for k := range f.cursors[0] {
+		delete(f.cursors[0], k)
 	}
-	for k := range f.Functions[0] {
-		delete(f.Functions[0], k)
+	for k := range f.functions[0] {
+		delete(f.functions[0], k)
 	}
 }
 
 func (f *Filter) CreateNode() *Filter {
 	filter := &Filter{
-		Tx:               f.Tx,
-		Records:          f.Records,
-		Variables:        f.Variables,
-		TempViews:        f.TempViews,
-		Cursors:          f.Cursors,
-		Functions:        f.Functions,
-		InlineTables:     append(InlineTableNodes{{}}, f.InlineTables...),
-		Aliases:          append(AliasNodes{{}}, f.Aliases...),
-		RecursiveTable:   f.RecursiveTable,
-		RecursiveTmpView: f.RecursiveTmpView,
-		Now:              f.Now,
+		tx:               f.tx,
+		records:          f.records,
+		variables:        f.variables,
+		tempViews:        f.tempViews,
+		cursors:          f.cursors,
+		functions:        f.functions,
+		inlineTables:     append(InlineTableNodes{{}}, f.inlineTables...),
+		aliases:          append(AliasNodes{{}}, f.aliases...),
+		recursiveTable:   f.recursiveTable,
+		recursiveTmpView: f.recursiveTmpView,
+		now:              f.now,
 	}
 
-	if filter.Now.IsZero() {
-		filter.Now = cmd.Now()
+	if filter.now.IsZero() {
+		filter.now = cmd.Now()
 	}
 
 	return filter
 }
 
 func (f *Filter) LoadInlineTable(ctx context.Context, clause parser.WithClause) error {
-	return f.InlineTables.Load(ctx, f, clause)
+	return f.inlineTables.Load(ctx, f, clause)
 }
 
 func (f *Filter) Evaluate(ctx context.Context, expr parser.QueryExpression) (value.Primary, error) {
@@ -222,16 +222,16 @@ func (f *Filter) Evaluate(ctx context.Context, expr parser.QueryExpression) (val
 	case parser.UnaryLogic:
 		val, err = f.evalUnaryLogic(ctx, expr.(parser.UnaryLogic))
 	case parser.Variable:
-		val, err = f.Variables.Get(expr.(parser.Variable))
+		val, err = f.variables.Get(expr.(parser.Variable))
 	case parser.EnvironmentVariable:
 		val = value.NewString(os.Getenv(expr.(parser.EnvironmentVariable).Name))
 	case parser.RuntimeInformation:
-		val, err = GetRuntimeInformation(f.Tx, expr.(parser.RuntimeInformation))
+		val, err = GetRuntimeInformation(f.tx, expr.(parser.RuntimeInformation))
 	case parser.VariableSubstitution:
 		if f.checkAvailableParallelRoutine {
 			err = &ContainsSubstitusion{}
 		} else {
-			val, err = f.Variables.Substitute(ctx, f, expr.(parser.VariableSubstitution))
+			val, err = f.variables.Substitute(ctx, f, expr.(parser.VariableSubstitution))
 		}
 	case parser.CursorStatus:
 		val, err = f.evalCursorStatus(expr.(parser.CursorStatus))
@@ -245,13 +245,13 @@ func (f *Filter) Evaluate(ctx context.Context, expr parser.QueryExpression) (val
 }
 
 func (f *Filter) EvaluateSequentially(ctx context.Context, fn func(*Filter, int) error, expr interface{}) error {
-	if expr == nil || f.CanUseMultithreading(ctx, expr) {
-		header := f.Records[0].View.Header
-		recordSet := f.Records[0].View.RecordSet
-		isGrouped := f.Records[0].View.isGrouped
-		f.Records = f.Records[1:]
+	if expr == nil || f.canUseMultithreading(ctx, expr) {
+		header := f.records[0].view.Header
+		recordSet := f.records[0].view.RecordSet
+		isGrouped := f.records[0].view.isGrouped
+		f.records = f.records[1:]
 
-		gm := NewGoroutineTaskManager(len(recordSet), -1, f.Tx.Flags.CPU)
+		gm := NewGoroutineTaskManager(len(recordSet), -1, f.tx.Flags.CPU)
 		for i := 0; i < gm.Number; i++ {
 			gm.Add()
 			go func(thIdx int) {
@@ -259,7 +259,7 @@ func (f *Filter) EvaluateSequentially(ctx context.Context, fn func(*Filter, int)
 				filter := NewFilterForSequentialEvaluation(
 					f,
 					&View{
-						Tx:        f.Tx,
+						Tx:        f.tx,
 						Header:    header,
 						RecordSet: recordSet[start:end],
 						isGrouped: isGrouped,
@@ -301,24 +301,24 @@ func (f *Filter) EvaluateSequentially(ctx context.Context, fn func(*Filter, int)
 }
 
 func (f *Filter) next() bool {
-	f.Records[0].RecordIndex++
+	f.records[0].recordIndex++
 
-	if f.Records[0].View.Len() <= f.Records[0].RecordIndex {
+	if f.records[0].view.Len() <= f.records[0].recordIndex {
 		return false
 	}
 	return true
 }
 
 func (f *Filter) init() {
-	f.Records[0].RecordIndex = -1
+	f.records[0].recordIndex = -1
 }
 
 func (f *Filter) currentIndex() int {
-	return f.Records[0].RecordIndex
+	return f.records[0].recordIndex
 }
 
-func (f *Filter) CanUseMultithreading(ctx context.Context, expr interface{}) bool {
-	if 0 < len(f.Records) && f.Records[0].View != nil && 0 < f.Records[0].View.Len() {
+func (f *Filter) canUseMultithreading(ctx context.Context, expr interface{}) bool {
+	if 0 < len(f.records) && f.records[0].view != nil && 0 < f.records[0].view.Len() {
 		f.init()
 		f.checkAvailableParallelRoutine = true
 		defer func() {
@@ -352,20 +352,20 @@ func (f *Filter) evalFieldReference(expr parser.QueryExpression) (value.Primary,
 	exprStr := expr.String()
 
 	var p value.Primary
-	for _, v := range f.Records {
+	for _, v := range f.records {
 		if v.fieldReferenceIndices != nil {
 			if idx, ok := v.fieldReferenceIndices[exprStr]; ok {
-				p = v.View.RecordSet[v.RecordIndex][idx].Value()
+				p = v.view.RecordSet[v.recordIndex][idx].Value()
 				break
 			}
 		}
 
-		idx, err := v.View.FieldIndex(expr)
+		idx, err := v.view.FieldIndex(expr)
 		if err == nil {
-			if v.View.isGrouped && v.View.Header[idx].IsFromTable && !v.View.Header[idx].IsGroupKey {
+			if v.view.isGrouped && v.view.Header[idx].IsFromTable && !v.view.Header[idx].IsGroupKey {
 				return nil, NewFieldNotGroupKeyError(expr)
 			}
-			p = v.View.RecordSet[v.RecordIndex][idx].Value()
+			p = v.view.RecordSet[v.recordIndex][idx].Value()
 			if v.fieldReferenceIndices != nil {
 				v.fieldReferenceIndices[exprStr] = idx
 			}
@@ -468,14 +468,14 @@ func (f *Filter) evalComparison(ctx context.Context, expr parser.Comparison) (va
 			return nil, err
 		}
 
-		t = value.Compare(lhsVal, rhs, expr.Operator, f.Tx.Flags.DatetimeFormat)
+		t = value.Compare(lhsVal, rhs, expr.Operator, f.tx.Flags.DatetimeFormat)
 	} else {
 		rhs, err := f.evalRowValue(ctx, expr.RHS.(parser.RowValue))
 		if err != nil {
 			return nil, err
 		}
 
-		t, err = value.CompareRowValues(lhs, rhs, expr.Operator, f.Tx.Flags.DatetimeFormat)
+		t, err = value.CompareRowValues(lhs, rhs, expr.Operator, f.tx.Flags.DatetimeFormat)
 		if err != nil {
 			return nil, NewRowValueLengthInComparisonError(expr.RHS.(parser.RowValue), len(lhs))
 		}
@@ -524,7 +524,7 @@ func (f *Filter) evalBetween(ctx context.Context, expr parser.Between) (value.Pr
 			return nil, err
 		}
 
-		lowResult := value.GreaterOrEqual(lhsVal, low, f.Tx.Flags.DatetimeFormat)
+		lowResult := value.GreaterOrEqual(lhsVal, low, f.tx.Flags.DatetimeFormat)
 		if lowResult == ternary.FALSE {
 			t = ternary.FALSE
 		} else {
@@ -533,7 +533,7 @@ func (f *Filter) evalBetween(ctx context.Context, expr parser.Between) (value.Pr
 				return nil, err
 			}
 
-			highResult := value.LessOrEqual(lhsVal, high, f.Tx.Flags.DatetimeFormat)
+			highResult := value.LessOrEqual(lhsVal, high, f.tx.Flags.DatetimeFormat)
 			t = ternary.And(lowResult, highResult)
 		}
 	} else {
@@ -541,7 +541,7 @@ func (f *Filter) evalBetween(ctx context.Context, expr parser.Between) (value.Pr
 		if err != nil {
 			return nil, err
 		}
-		lowResult, err := value.CompareRowValues(lhs, low, ">=", f.Tx.Flags.DatetimeFormat)
+		lowResult, err := value.CompareRowValues(lhs, low, ">=", f.tx.Flags.DatetimeFormat)
 		if err != nil {
 			return nil, NewRowValueLengthInComparisonError(expr.Low.(parser.RowValue), len(lhs))
 		}
@@ -554,7 +554,7 @@ func (f *Filter) evalBetween(ctx context.Context, expr parser.Between) (value.Pr
 				return nil, err
 			}
 
-			highResult, err := value.CompareRowValues(lhs, high, "<=", f.Tx.Flags.DatetimeFormat)
+			highResult, err := value.CompareRowValues(lhs, high, "<=", f.tx.Flags.DatetimeFormat)
 			if err != nil {
 				return nil, NewRowValueLengthInComparisonError(expr.High.(parser.RowValue), len(lhs))
 			}
@@ -594,7 +594,7 @@ func (f *Filter) evalIn(ctx context.Context, expr parser.In) (value.Primary, err
 		return nil, err
 	}
 
-	t, err := Any(val, list, "=", f.Tx.Flags.DatetimeFormat)
+	t, err := Any(val, list, "=", f.tx.Flags.DatetimeFormat)
 	if err != nil {
 		if subquery, ok := expr.Values.(parser.Subquery); ok {
 			return nil, NewSelectFieldLengthInComparisonError(subquery, len(val))
@@ -619,7 +619,7 @@ func (f *Filter) evalAny(ctx context.Context, expr parser.Any) (value.Primary, e
 		return nil, err
 	}
 
-	t, err := Any(val, list, expr.Operator, f.Tx.Flags.DatetimeFormat)
+	t, err := Any(val, list, expr.Operator, f.tx.Flags.DatetimeFormat)
 	if err != nil {
 		if subquery, ok := expr.Values.(parser.Subquery); ok {
 			return nil, NewSelectFieldLengthInComparisonError(subquery, len(val))
@@ -640,7 +640,7 @@ func (f *Filter) evalAll(ctx context.Context, expr parser.All) (value.Primary, e
 		return nil, err
 	}
 
-	t, err := All(val, list, expr.Operator, f.Tx.Flags.DatetimeFormat)
+	t, err := All(val, list, expr.Operator, f.tx.Flags.DatetimeFormat)
 	if err != nil {
 		if subquery, ok := expr.Values.(parser.Subquery); ok {
 			return nil, NewSelectFieldLengthInComparisonError(subquery, len(val))
@@ -708,7 +708,7 @@ func (f *Filter) evalFunction(ctx context.Context, expr parser.Function) (value.
 	name := strings.ToUpper(expr.Name)
 
 	if _, ok := Functions[name]; !ok && name != "CALL" && name != "NOW" && name != "JSON_OBJECT" {
-		udfn, err := f.Functions.Get(expr, name)
+		udfn, err := f.functions.Get(expr, name)
 		if err != nil {
 			return nil, NewFunctionNotExistError(expr, expr.Name)
 		}
@@ -746,10 +746,10 @@ func (f *Filter) evalFunction(ctx context.Context, expr parser.Function) (value.
 	}
 
 	if fn, ok := Functions[name]; ok {
-		return fn(expr, args, f.Tx.Flags)
+		return fn(expr, args, f.tx.Flags)
 	}
 
-	udfn, _ := f.Functions.Get(expr, name)
+	udfn, _ := f.functions.Get(expr, name)
 	return udfn.Execute(ctx, f, args)
 }
 
@@ -763,7 +763,7 @@ func (f *Filter) evalAggregateFunction(ctx context.Context, expr parser.Aggregat
 	if fn, ok := AggregateFunctions[uname]; ok {
 		aggfn = fn
 	} else {
-		if udfn, err = f.Functions.Get(expr, uname); err != nil || !udfn.IsAggregate {
+		if udfn, err = f.functions.Get(expr, uname); err != nil || !udfn.IsAggregate {
 			return nil, NewFunctionNotExistError(expr, expr.Name)
 		}
 		useUserDefined = true
@@ -779,11 +779,11 @@ func (f *Filter) evalAggregateFunction(ctx context.Context, expr parser.Aggregat
 		}
 	}
 
-	if len(f.Records) < 1 {
+	if len(f.records) < 1 {
 		return nil, NewUnpermittedStatementFunctionError(expr, expr.Name)
 	}
 
-	if !f.Records[0].View.isGrouped {
+	if !f.records[0].view.isGrouped {
 		return nil, NewNotGroupingRecordsError(expr, expr.Name)
 	}
 
@@ -794,11 +794,11 @@ func (f *Filter) evalAggregateFunction(ctx context.Context, expr parser.Aggregat
 
 	if uname == "COUNT" {
 		if _, ok := listExpr.(parser.PrimitiveType); ok {
-			return value.NewInteger(int64(f.Records[0].View.RecordSet[f.Records[0].RecordIndex].GroupLen())), nil
+			return value.NewInteger(int64(f.records[0].view.RecordSet[f.records[0].recordIndex].GroupLen())), nil
 		}
 	}
 
-	view := NewViewFromGroupedRecord(f.Records[0])
+	view := NewViewFromGroupedRecord(f.records[0])
 	list, err := view.ListValuesForAggregateFunctions(ctx, expr, listExpr, expr.IsDistinct(), f)
 	if err != nil {
 		return nil, err
@@ -817,7 +817,7 @@ func (f *Filter) evalAggregateFunction(ctx context.Context, expr parser.Aggregat
 		return udfn.ExecuteAggregate(ctx, f, list, args)
 	}
 
-	return aggfn(list, f.Tx.Flags), nil
+	return aggfn(list, f.tx.Flags), nil
 }
 
 func (f *Filter) evalListFunction(ctx context.Context, expr parser.ListFunction) (value.Primary, error) {
@@ -835,15 +835,15 @@ func (f *Filter) evalListFunction(ctx context.Context, expr parser.ListFunction)
 		return nil, err
 	}
 
-	if len(f.Records) < 1 {
+	if len(f.records) < 1 {
 		return nil, NewUnpermittedStatementFunctionError(expr, expr.Name)
 	}
 
-	if !f.Records[0].View.isGrouped {
+	if !f.records[0].view.isGrouped {
 		return nil, NewNotGroupingRecordsError(expr, expr.Name)
 	}
 
-	view := NewViewFromGroupedRecord(f.Records[0])
+	view := NewViewFromGroupedRecord(f.records[0])
 	if expr.OrderBy != nil {
 		err := view.OrderBy(ctx, expr.OrderBy.(parser.OrderByClause))
 		if err != nil {
@@ -913,7 +913,7 @@ func (f *Filter) evalCaseExpr(ctx context.Context, expr parser.CaseExpr) (value.
 		if val == nil {
 			t = cond.Ternary()
 		} else {
-			t = value.Equal(val, cond, f.Tx.Flags.DatetimeFormat)
+			t = value.Equal(val, cond, f.tx.Flags.DatetimeFormat)
 		}
 
 		if t == ternary.TRUE {
@@ -986,12 +986,12 @@ func (f *Filter) evalCursorStatus(expr parser.CursorStatus) (value.Primary, erro
 
 	switch expr.Type {
 	case parser.OPEN:
-		t, err = f.Cursors.IsOpen(expr.Cursor)
+		t, err = f.cursors.IsOpen(expr.Cursor)
 		if err != nil {
 			return nil, err
 		}
 	case parser.RANGE:
-		t, err = f.Cursors.IsInRange(expr.Cursor)
+		t, err = f.cursors.IsInRange(expr.Cursor)
 		if err != nil {
 			return nil, err
 		}
@@ -1009,7 +1009,7 @@ func (f *Filter) evalCursorAttribute(expr parser.CursorAttrebute) (value.Primary
 
 	switch expr.Attrebute.Token {
 	case parser.COUNT:
-		i, err = f.Cursors.Count(expr.Cursor)
+		i, err = f.cursors.Count(expr.Cursor)
 		if err != nil {
 			return nil, err
 		}
@@ -1299,7 +1299,7 @@ func (f *Filter) EvaluateEmbeddedString(ctx context.Context, embedded string) (s
 		case excmd.CsvqExpression:
 			expr := scanner.Text()
 			if 0 < len(expr) {
-				statements, err := parser.Parse(expr, "", f.Tx.Flags.DatetimeFormat)
+				statements, err := parser.Parse(expr, "", f.tx.Flags.DatetimeFormat)
 				if err != nil {
 					if syntaxErr, ok := err.(*parser.SyntaxError); ok {
 						err = NewSyntaxError(syntaxErr)

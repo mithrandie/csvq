@@ -300,7 +300,7 @@ func TestCrossJoin(t *testing.T) {
 		},
 	}
 
-	_ = CrossJoin(context.Background(), NewEmptyFilter(TestTx), view, joinView)
+	_ = CrossJoin(context.Background(), NewFilter(TestTx), view, joinView)
 	if !reflect.DeepEqual(view, expect) {
 		t.Errorf("Cross Join: result = %v, want %v", view, expect)
 	}
@@ -574,7 +574,7 @@ func TestInnerJoin(t *testing.T) {
 		}
 
 		if v.Filter == nil {
-			v.Filter = NewEmptyFilter(TestTx)
+			v.Filter = NewFilter(TestTx)
 		}
 
 		err := InnerJoin(context.Background(), v.Filter, v.View, v.JoinView, v.Condition)
@@ -979,7 +979,7 @@ var outerJoinTests = []struct {
 func TestOuterJoin(t *testing.T) {
 	for _, v := range outerJoinTests {
 		if v.Filter == nil {
-			v.Filter = NewEmptyFilter(TestTx)
+			v.Filter = NewFilter(TestTx)
 		}
 
 		err := OuterJoin(context.Background(), v.Filter, v.View, v.JoinView, v.Condition, v.Direction)
@@ -1052,7 +1052,7 @@ func TestCalcMinimumRequired(t *testing.T) {
 
 func BenchmarkCrossJoin(b *testing.B) {
 	ctx := context.Background()
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for i := 0; i < b.N; i++ {
 		view := GenerateBenchView("t1", 100)
@@ -1070,7 +1070,7 @@ func BenchmarkInnerJoin(b *testing.B) {
 	}
 
 	ctx := context.Background()
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for i := 0; i < b.N; i++ {
 		view := GenerateBenchView("t1", 100)
@@ -1088,7 +1088,7 @@ func BenchmarkOuterJoin(b *testing.B) {
 	}
 
 	ctx := context.Background()
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for i := 0; i < b.N; i++ {
 		view := GenerateBenchView("t1", 100)

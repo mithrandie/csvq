@@ -78,19 +78,19 @@ func TestReadlineListener_OnChange(t *testing.T) {
 }
 
 func TestCompleter_Update(t *testing.T) {
-	filter := NewEmptyFilter(TestTx)
-	filter.TempViews.Set(&View{
+	filter := NewFilter(TestTx)
+	filter.tempViews.Set(&View{
 		FileInfo: &FileInfo{Path: "view1", IsTemporary: true},
 		Header:   NewHeader("view1", []string{"col1", "col2"}),
 	})
-	filter.TempViews.Set(&View{
+	filter.tempViews.Set(&View{
 		FileInfo: &FileInfo{Path: "view2", IsTemporary: true},
 		Header:   NewHeader("view1", []string{"col3", "col4"}),
 	})
-	_ = filter.Cursors.Declare(parser.CursorDeclaration{Cursor: parser.Identifier{Literal: "cur1"}})
-	_ = filter.Functions.Declare(parser.FunctionDeclaration{Name: parser.Identifier{Literal: "scalafunc"}})
-	_ = filter.Functions.DeclareAggregate(parser.AggregateDeclaration{Name: parser.Identifier{Literal: "aggfunc"}})
-	_ = filter.Variables.Declare(context.Background(), filter, parser.VariableDeclaration{Assignments: []parser.VariableAssignment{{Variable: parser.Variable{Name: "var"}}}})
+	_ = filter.cursors.Declare(parser.CursorDeclaration{Cursor: parser.Identifier{Literal: "cur1"}})
+	_ = filter.functions.Declare(parser.FunctionDeclaration{Name: parser.Identifier{Literal: "scalafunc"}})
+	_ = filter.functions.DeclareAggregate(parser.AggregateDeclaration{Name: parser.Identifier{Literal: "aggfunc"}})
+	_ = filter.variables.Declare(context.Background(), filter, parser.VariableDeclaration{Assignments: []parser.VariableAssignment{{Variable: parser.Variable{Name: "var"}}}})
 
 	c := NewCompleter(filter)
 	if len(c.flagList) != len(cmd.FlagList) || !strings.HasPrefix(c.flagList[0], cmd.FlagSign) {
@@ -141,7 +141,7 @@ func TestCompleter_Update(t *testing.T) {
 	}
 }
 
-var completer = NewCompleter(NewEmptyFilter(TestTx))
+var completer = NewCompleter(NewFilter(TestTx))
 
 type completerTest struct {
 	Name     string
@@ -156,7 +156,7 @@ func testCompleter(t *testing.T, f func(line string, origLine string, index int)
 
 	defer func() {
 		_ = os.Chdir(wd)
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -175,13 +175,13 @@ func testCompleter(t *testing.T, f func(line string, origLine string, index int)
 	completer.varList = []string{"@var1", "@var2"}
 	completer.envList = []string{"@%ENV1", "@%ENV2"}
 	completer.enclosedEnvList = []string{"@%`ENV1`", "@%`ENV2`"}
-	TestTx.CachedViews.Set(&View{
+	TestTx.cachedViews.Set(&View{
 		FileInfo: &FileInfo{
 			Path: filepath.Join(CompletionTestDir, "newtable.csv"),
 		},
 		Header: NewHeader("newtable", []string{"ncol1", "ncol2", "ncol3"}),
 	})
-	TestTx.CachedViews.Set(&View{
+	TestTx.cachedViews.Set(&View{
 		FileInfo: &FileInfo{
 			Path: filepath.Join(CompletionTestDir, "sub", "table2.csv"),
 		},
@@ -3332,7 +3332,7 @@ func TestCompleter_ListFiles(t *testing.T) {
 	wd, _ := os.Getwd()
 
 	_ = os.Chdir(CompletionTestDir)
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 	completer := NewCompleter(filter)
 	for _, v := range completerListFilesTests {
 		result := completer.ListFiles(v.Line, v.IncludeExt, v.Repository)
@@ -3346,16 +3346,16 @@ func TestCompleter_ListFiles(t *testing.T) {
 
 func TestCompleter_AllColumnList(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 	}()
 
-	filter := NewEmptyFilter(TestTx)
-	filter.TempViews.Set(&View{
+	filter := NewFilter(TestTx)
+	filter.tempViews.Set(&View{
 		FileInfo: &FileInfo{Path: "view1", IsTemporary: true},
 		Header:   NewHeader("view1", []string{"v1col1", "v1col2", "v1col3"}),
 	})
-	filter.TempViews.Set(&View{FileInfo: &FileInfo{Path: "view2", IsTemporary: true}})
-	TestTx.CachedViews.Set(
+	filter.tempViews.Set(&View{FileInfo: &FileInfo{Path: "view2", IsTemporary: true}})
+	TestTx.cachedViews.Set(
 		&View{
 			FileInfo: &FileInfo{
 				Path: filepath.Join(CompletionTestDir, "newtable.csv"),
@@ -3363,7 +3363,7 @@ func TestCompleter_AllColumnList(t *testing.T) {
 			Header: NewHeader("newtable", []string{"ncol1", "col2", "ncol3"}),
 		},
 	)
-	TestTx.CachedViews.Set(
+	TestTx.cachedViews.Set(
 		&View{
 			FileInfo: &FileInfo{
 				Path: filepath.Join(CompletionTestDir, "table1.csv"),
@@ -3412,17 +3412,17 @@ func TestCompleter_ColumnList(t *testing.T) {
 
 	defer func() {
 		_ = os.Chdir(wd)
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
-	filter := NewEmptyFilter(TestTx)
-	filter.TempViews.Set(&View{
+	filter := NewFilter(TestTx)
+	filter.tempViews.Set(&View{
 		FileInfo: &FileInfo{Path: "view1", IsTemporary: true},
 		Header:   NewHeader("view1", []string{"v1col1", "v1col2", "v1col3"}),
 	})
-	filter.TempViews.Set(&View{FileInfo: &FileInfo{Path: "view2", IsTemporary: true}})
-	TestTx.CachedViews.Set(
+	filter.tempViews.Set(&View{FileInfo: &FileInfo{Path: "view2", IsTemporary: true}})
+	TestTx.cachedViews.Set(
 		&View{
 			FileInfo: &FileInfo{
 				Path: filepath.Join(CompletionTestDir, "newtable.csv"),
@@ -3430,7 +3430,7 @@ func TestCompleter_ColumnList(t *testing.T) {
 			Header: NewHeader("newtable", []string{"ncol3", "ncol2", "ncol1"}),
 		},
 	)
-	TestTx.CachedViews.Set(
+	TestTx.cachedViews.Set(
 		&View{
 			FileInfo: &FileInfo{
 				Path: filepath.Join(CompletionTestDir, "table1.csv"),
@@ -3639,7 +3639,7 @@ var completerUpdateTokensTests = []struct {
 }
 
 func TestCompleter_UpdateTokens(t *testing.T) {
-	c := NewCompleter(NewEmptyFilter(TestTx))
+	c := NewCompleter(NewFilter(TestTx))
 	c.userFuncs = []string{"userfunc"}
 	c.userAggFuncs = []string{"aggfunc"}
 	c.userFuncList = []string{"userfunc", "aggfunc"}

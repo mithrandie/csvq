@@ -106,7 +106,7 @@ func CrossJoin(ctx context.Context, filter *Filter, view *View, joinView *View) 
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 	records := make(RecordSet, view.RecordLen()*joinView.RecordLen())
 
-	if err := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore), filter.Tx.Flags.CPU).Run(ctx, func(index int) error {
+	if err := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore), filter.tx.Flags.CPU).Run(ctx, func(index int) error {
 		start := index * joinView.RecordLen()
 		for i := 0; i < joinView.RecordLen(); i++ {
 			records[start+i] = append(view.RecordSet[index], joinView.RecordSet[i]...)
@@ -129,7 +129,7 @@ func InnerJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 
 	mergedHeader := MergeHeader(view.Header, joinView.Header)
 
-	gm := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore), parentFilter.Tx.Flags.CPU)
+	gm := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore), parentFilter.tx.Flags.CPU)
 	recordsList := make([]RecordSet, gm.Number)
 	for i := 0; i < gm.Number; i++ {
 		gm.Add()
@@ -139,7 +139,7 @@ func InnerJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 			filter := NewFilterForRecord(
 				parentFilter,
 				&View{
-					Tx:        parentFilter.Tx,
+					Tx:        parentFilter.tx,
 					Header:    mergedHeader,
 					RecordSet: make(RecordSet, 1),
 				},
@@ -154,7 +154,7 @@ func InnerJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 					}
 
 					mergedRecord := append(view.RecordSet[i], joinView.RecordSet[j]...)
-					filter.Records[0].View.RecordSet[0] = mergedRecord
+					filter.records[0].view.RecordSet[0] = mergedRecord
 
 					primary, e := filter.Evaluate(ctx, condition)
 					if e != nil {
@@ -200,7 +200,7 @@ func OuterJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 	viewEmptyRecord := NewEmptyRecord(view.FieldLen())
 	joinViewEmptyRecord := NewEmptyRecord(joinView.FieldLen())
 
-	gm := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore), parentFilter.Tx.Flags.CPU)
+	gm := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore), parentFilter.tx.Flags.CPU)
 
 	recordsList := make([]RecordSet, gm.Number)
 	joinViewMatchesList := make([][]bool, gm.Number)
@@ -213,7 +213,7 @@ func OuterJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 			filter := NewFilterForRecord(
 				parentFilter,
 				&View{
-					Tx:        parentFilter.Tx,
+					Tx:        parentFilter.tx,
 					Header:    mergedHeader,
 					RecordSet: make(RecordSet, 1),
 				},
@@ -237,7 +237,7 @@ func OuterJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 					default:
 						mergedRecord = append(view.RecordSet[i], joinView.RecordSet[j]...)
 					}
-					filter.Records[0].View.RecordSet[0] = mergedRecord
+					filter.records[0].view.RecordSet[0] = mergedRecord
 
 					primary, e := filter.Evaluate(ctx, condition)
 					if e != nil {

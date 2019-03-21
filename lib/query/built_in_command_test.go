@@ -46,7 +46,7 @@ var echoTests = []struct {
 }
 
 func TestEcho(t *testing.T) {
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range echoTests {
 		result, err := Echo(context.Background(), filter, v.Expr)
@@ -93,7 +93,7 @@ var printTests = []struct {
 }
 
 func TestPrint(t *testing.T) {
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range printTests {
 		result, err := Print(context.Background(), filter, v.Expr)
@@ -180,7 +180,7 @@ var printfTests = []struct {
 }
 
 func TestPrintf(t *testing.T) {
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range printfTests {
 		result, err := Printf(context.Background(), filter, v.Expr)
@@ -268,7 +268,7 @@ var sourceTests = []struct {
 }
 
 func TestSource(t *testing.T) {
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range sourceTests {
 		result, err := Source(context.Background(), filter, v.Expr)
@@ -352,7 +352,7 @@ var parseExecuteStatementsTests = []struct {
 }
 
 func TestParseExecuteStatements(t *testing.T) {
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range parseExecuteStatementsTests {
 		result, err := ParseExecuteStatements(context.Background(), filter, v.Expr)
@@ -615,7 +615,7 @@ var setFlagTests = []struct {
 func TestSetFlag(t *testing.T) {
 	defer initFlag(TestTx.Flags)
 
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range setFlagTests {
 		initFlag(TestTx.Flags)
@@ -685,7 +685,7 @@ var addFlagElementTests = []struct {
 func TestAddFlagElement(t *testing.T) {
 	defer initFlag(TestTx.Flags)
 
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range addFlagElementTests {
 		initFlag(TestTx.Flags)
@@ -792,7 +792,7 @@ var removeFlagElementTests = []struct {
 func TestRemoveFlagElement(t *testing.T) {
 	defer initFlag(TestTx.Flags)
 
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range removeFlagElementTests {
 		initFlag(TestTx.Flags)
@@ -1491,7 +1491,7 @@ var showFlagTests = []struct {
 func TestShowFlag(t *testing.T) {
 	defer initFlag(TestTx.Flags)
 
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range showFlagTests {
 		initFlag(TestTx.Flags)
@@ -1784,7 +1784,7 @@ var showObjectsTests = []struct {
 		Name: "ShowObjects Views",
 		Expr: parser.ShowObjects{Type: parser.Identifier{Literal: "views"}},
 		Filter: &Filter{
-			TempViews: TemporaryViewScopes{
+			tempViews: TemporaryViewScopes{
 				ViewMap{
 					"VIEW1": &View{
 						FileInfo: &FileInfo{
@@ -1836,7 +1836,7 @@ var showObjectsTests = []struct {
 		Name: "ShowObjects Cursors",
 		Expr: parser.ShowObjects{Type: parser.Identifier{Literal: "cursors"}},
 		Filter: &Filter{
-			Cursors: CursorScopes{
+			cursors: CursorScopes{
 				{
 					"CUR": &Cursor{
 						name:  "cur",
@@ -1925,7 +1925,7 @@ var showObjectsTests = []struct {
 		Name: "ShowObjects Functions",
 		Expr: parser.ShowObjects{Type: parser.Identifier{Literal: "functions"}},
 		Filter: &Filter{
-			Functions: UserDefinedFunctionScopes{
+			functions: UserDefinedFunctionScopes{
 				UserDefinedFunctionMap{
 					"USERFUNC1": &UserDefinedFunction{
 						Name: parser.Identifier{Literal: "userfunc1"},
@@ -2034,7 +2034,7 @@ var showObjectsTests = []struct {
 func TestShowObjects(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		TestTx.UncommittedViews.Clean()
+		TestTx.uncommittedViews.Clean()
 		initFlag(TestTx.Flags)
 	}()
 
@@ -2057,22 +2057,22 @@ func TestShowObjects(t *testing.T) {
 		TestTx.Flags.WriteDelimiterPositions = v.WriteDelimiterPositions
 		TestTx.Flags.WriteAsSingleLine = v.WriteAsSingleLine
 		TestTx.Flags.Format = v.Format
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		if 0 < len(v.ViewCache) {
-			TestTx.CachedViews = v.ViewCache
+			TestTx.cachedViews = v.ViewCache
 		}
 		if v.UncommittedViews == nil {
-			TestTx.UncommittedViews = NewUncommittedViewMap()
+			TestTx.uncommittedViews = NewUncommittedViewMap()
 		} else {
-			TestTx.UncommittedViews = v.UncommittedViews
+			TestTx.uncommittedViews = v.UncommittedViews
 		}
 
 		var filter *Filter
 		if v.Filter != nil {
 			filter = v.Filter
-			filter.Tx = TestTx
+			filter.tx = TestTx
 		} else {
-			filter = NewEmptyFilter(TestTx)
+			filter = NewFilter(TestTx)
 		}
 
 		result, err := ShowObjects(filter, v.Expr)
@@ -2110,7 +2110,7 @@ var showFieldsTests = []struct {
 			Table: parser.Identifier{Literal: "view1"},
 		},
 		Filter: &Filter{
-			TempViews: TemporaryViewScopes{
+			tempViews: TemporaryViewScopes{
 				ViewMap{
 					"VIEW1": &View{
 						Header: NewHeader("view1", []string{"column1", "column2"}),
@@ -2139,7 +2139,7 @@ var showFieldsTests = []struct {
 			Table: parser.Identifier{Literal: "view1"},
 		},
 		Filter: &Filter{
-			TempViews: TemporaryViewScopes{
+			tempViews: TemporaryViewScopes{
 				ViewMap{
 					"VIEW1": &View{
 						Header: NewHeader("view1", []string{"column1", "column2"}),
@@ -2336,7 +2336,7 @@ func calcShowRuninfoWidth(wd string) int {
 func TestShowFields(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		TestTx.UncommittedViews.Clean()
+		TestTx.uncommittedViews.Clean()
 		initFlag(TestTx.Flags)
 	}()
 
@@ -2344,22 +2344,22 @@ func TestShowFields(t *testing.T) {
 	TestTx.Flags.Repository = TestDir
 
 	for _, v := range showFieldsTests {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		if 0 < len(v.ViewCache) {
-			TestTx.CachedViews = v.ViewCache
+			TestTx.cachedViews = v.ViewCache
 		}
 		if v.UncommittedViews == nil {
-			TestTx.UncommittedViews = NewUncommittedViewMap()
+			TestTx.uncommittedViews = NewUncommittedViewMap()
 		} else {
-			TestTx.UncommittedViews = v.UncommittedViews
+			TestTx.uncommittedViews = v.UncommittedViews
 		}
 
 		var filter *Filter
 		if v.Filter != nil {
 			filter = v.Filter
-			filter.Tx = TestTx
+			filter.tx = TestTx
 		} else {
-			filter = NewEmptyFilter(TestTx)
+			filter = NewFilter(TestTx)
 		}
 
 		result, err := ShowFields(context.Background(), filter, v.Expr)
@@ -2430,7 +2430,7 @@ var setEnvVarTests = []struct {
 }
 
 func TestSetEnvVar(t *testing.T) {
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range setEnvVarTests {
 		err := SetEnvVar(context.Background(), filter, v.Expr)
@@ -2654,7 +2654,7 @@ func TestSyntax(t *testing.T) {
 		},
 	}
 
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range syntaxTests {
 		result := Syntax(context.Background(), filter, v.Expr)

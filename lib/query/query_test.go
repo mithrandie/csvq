@@ -148,13 +148,13 @@ var fetchCursorTests = []struct {
 
 func TestFetchCursor(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
 	TestTx.Flags.Repository = TestDir
 
-	filter := NewFilter(
+	filter := NewFilterWithScopes(
 		TestTx,
 		[]VariableMap{
 			GenerateVariableMap(map[string]value.Primary{
@@ -176,10 +176,10 @@ func TestFetchCursor(t *testing.T) {
 		[]UserDefinedFunctionMap{{}},
 	)
 
-	_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
-	_ = filter.Cursors.Open(context.Background(), filter, parser.Identifier{Literal: "cur"})
-	_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
-	_ = filter.Cursors.Open(context.Background(), filter, parser.Identifier{Literal: "cur2"})
+	_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+	_ = filter.cursors.Open(context.Background(), filter, parser.Identifier{Literal: "cur"})
+	_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+	_ = filter.cursors.Open(context.Background(), filter, parser.Identifier{Literal: "cur2"})
 
 	for _, v := range fetchCursorTests {
 		success, err := FetchCursor(context.Background(), filter, v.CurName, v.FetchPosition, v.Variables)
@@ -198,8 +198,8 @@ func TestFetchCursor(t *testing.T) {
 		if success != v.Success {
 			t.Errorf("%s: success = %t, want %t", v.Name, success, v.Success)
 		}
-		if !filter.Variables[0].Equal(&v.ResultVars) {
-			t.Errorf("%s: global vars = %v, want %v", v.Name, filter.Variables[0], v.ResultVars)
+		if !filter.variables[0].Equal(&v.ResultVars) {
+			t.Errorf("%s: global vars = %v, want %v", v.Name, filter.variables[0], v.ResultVars)
 		}
 	}
 }
@@ -372,13 +372,13 @@ var declareViewTests = []struct {
 }
 
 func TestDeclareView(t *testing.T) {
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range declareViewTests {
 		if v.ViewMap == nil {
-			filter.TempViews = []ViewMap{{}}
+			filter.tempViews = []ViewMap{{}}
 		} else {
-			filter.TempViews = []ViewMap{v.ViewMap}
+			filter.tempViews = []ViewMap{v.ViewMap}
 		}
 
 		err := DeclareView(context.Background(), filter, v.Expr)
@@ -394,8 +394,8 @@ func TestDeclareView(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(filter.TempViews[0], v.Result) {
-			t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.Result)
+		if !reflect.DeepEqual(filter.tempViews[0], v.Result) {
+			t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.Result)
 		}
 	}
 }
@@ -1112,16 +1112,16 @@ var selectTests = []struct {
 
 func TestSelect(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
 	TestTx.Flags.Repository = TestDir
 
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range selectTests {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		result, err := Select(context.Background(), filter, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -1467,15 +1467,15 @@ var insertTests = []struct {
 func TestInsert(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
 	TestTx.Flags.Repository = TestDir
 	TestTx.Flags.Quiet = false
 
-	filter := NewEmptyFilter(TestTx)
-	filter.TempViews = TemporaryViewScopes{
+	filter := NewFilter(TestTx)
+	filter.tempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
@@ -1515,7 +1515,7 @@ func TestInsert(t *testing.T) {
 			continue
 		}
 
-		for _, v2 := range TestTx.CachedViews {
+		for _, v2 := range TestTx.cachedViews {
 			if v2.FileInfo.Handler != nil {
 				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
 					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
@@ -1534,13 +1534,13 @@ func TestInsert(t *testing.T) {
 		}
 
 		if v.ViewCache != nil {
-			if !reflect.DeepEqual(TestTx.CachedViews, v.ViewCache) {
-				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.ViewCache)
+			if !reflect.DeepEqual(TestTx.cachedViews, v.ViewCache) {
+				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.TempViews, v.TempViewList)
+			if !reflect.DeepEqual(filter.tempViews, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
 			}
 		}
 	}
@@ -1939,15 +1939,15 @@ var updateTests = []struct {
 func TestUpdate(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
 	TestTx.Flags.Repository = TestDir
 	TestTx.Flags.Quiet = false
 
-	filter := NewEmptyFilter(TestTx)
-	filter.TempViews = TemporaryViewScopes{
+	filter := NewFilter(TestTx)
+	filter.tempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
@@ -1986,7 +1986,7 @@ func TestUpdate(t *testing.T) {
 			continue
 		}
 
-		for _, v2 := range TestTx.CachedViews {
+		for _, v2 := range TestTx.cachedViews {
 			if v2.FileInfo.Handler != nil {
 				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
 					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
@@ -2005,13 +2005,13 @@ func TestUpdate(t *testing.T) {
 		}
 
 		if v.ViewCache != nil {
-			if !reflect.DeepEqual(TestTx.CachedViews, v.ViewCache) {
-				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.ViewCache)
+			if !reflect.DeepEqual(TestTx.cachedViews, v.ViewCache) {
+				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.TempViews, v.TempViewList)
+			if !reflect.DeepEqual(filter.tempViews, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
 			}
 		}
 	}
@@ -2303,15 +2303,15 @@ var deleteTests = []struct {
 func TestDelete(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
 	TestTx.Flags.Repository = TestDir
 	TestTx.Flags.Quiet = false
 
-	filter := NewEmptyFilter(TestTx)
-	filter.TempViews = TemporaryViewScopes{
+	filter := NewFilter(TestTx)
+	filter.tempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
@@ -2350,7 +2350,7 @@ func TestDelete(t *testing.T) {
 			continue
 		}
 
-		for _, v2 := range TestTx.CachedViews {
+		for _, v2 := range TestTx.cachedViews {
 			if v2.FileInfo.Handler != nil {
 				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
 					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
@@ -2369,13 +2369,13 @@ func TestDelete(t *testing.T) {
 		}
 
 		if v.ViewCache != nil {
-			if !reflect.DeepEqual(TestTx.CachedViews, v.ViewCache) {
-				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.ViewCache)
+			if !reflect.DeepEqual(TestTx.cachedViews, v.ViewCache) {
+				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.TempViews, v.TempViewList)
+			if !reflect.DeepEqual(filter.tempViews, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
 			}
 		}
 	}
@@ -2555,7 +2555,7 @@ var createTableTests = []struct {
 func TestCreateTable(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -2565,13 +2565,13 @@ func TestCreateTable(t *testing.T) {
 	for _, v := range createTableTests {
 		_ = TestTx.ReleaseResources()
 
-		result, err := CreateTable(context.Background(), NewEmptyFilter(TestTx), v.Query)
+		result, err := CreateTable(context.Background(), NewFilter(TestTx), v.Query)
 
 		if result != nil {
 			_ = TestTx.FileContainer.Close(result.Handler)
 			result.Handler = nil
 		}
-		for _, view := range TestTx.CachedViews {
+		for _, view := range TestTx.cachedViews {
 			if view.FileInfo != nil {
 				_ = TestTx.FileContainer.Close(view.FileInfo.Handler)
 				view.FileInfo.Handler = nil
@@ -2596,8 +2596,8 @@ func TestCreateTable(t *testing.T) {
 		}
 
 		if v.ViewCache != nil {
-			if !reflect.DeepEqual(TestTx.CachedViews, v.ViewCache) {
-				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.ViewCache)
+			if !reflect.DeepEqual(TestTx.cachedViews, v.ViewCache) {
+				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
 	}
@@ -2971,15 +2971,15 @@ var addColumnsTests = []struct {
 func TestAddColumns(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
 	TestTx.Flags.Repository = TestDir
 	TestTx.Flags.Quiet = false
 
-	filter := NewEmptyFilter(TestTx)
-	filter.TempViews = TemporaryViewScopes{
+	filter := NewFilter(TestTx)
+	filter.tempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
@@ -3018,7 +3018,7 @@ func TestAddColumns(t *testing.T) {
 			continue
 		}
 
-		for _, v2 := range TestTx.CachedViews {
+		for _, v2 := range TestTx.cachedViews {
 			if v2.FileInfo.Handler != nil {
 				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
 					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
@@ -3037,13 +3037,13 @@ func TestAddColumns(t *testing.T) {
 		}
 
 		if v.ViewCache != nil {
-			if !reflect.DeepEqual(TestTx.CachedViews, v.ViewCache) {
-				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.ViewCache)
+			if !reflect.DeepEqual(TestTx.cachedViews, v.ViewCache) {
+				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.TempViews, v.TempViewList)
+			if !reflect.DeepEqual(filter.tempViews, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
 			}
 		}
 	}
@@ -3162,15 +3162,15 @@ var dropColumnsTests = []struct {
 func TestDropColumns(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
 	TestTx.Flags.Repository = TestDir
 	TestTx.Flags.Quiet = false
 
-	filter := NewEmptyFilter(TestTx)
-	filter.TempViews = TemporaryViewScopes{
+	filter := NewFilter(TestTx)
+	filter.tempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
@@ -3210,7 +3210,7 @@ func TestDropColumns(t *testing.T) {
 			continue
 		}
 
-		for _, v2 := range TestTx.CachedViews {
+		for _, v2 := range TestTx.cachedViews {
 			if v2.FileInfo.Handler != nil {
 				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
 					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
@@ -3229,13 +3229,13 @@ func TestDropColumns(t *testing.T) {
 		}
 
 		if v.ViewCache != nil {
-			if !reflect.DeepEqual(TestTx.CachedViews, v.ViewCache) {
-				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.ViewCache)
+			if !reflect.DeepEqual(TestTx.cachedViews, v.ViewCache) {
+				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.TempViews, v.TempViewList)
+			if !reflect.DeepEqual(filter.tempViews, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
 			}
 		}
 	}
@@ -3361,15 +3361,15 @@ var renameColumnTests = []struct {
 func TestRenameColumn(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
 	TestTx.Flags.Repository = TestDir
 	TestTx.Flags.Quiet = false
 
-	filter := NewEmptyFilter(TestTx)
-	filter.TempViews = TemporaryViewScopes{
+	filter := NewFilter(TestTx)
+	filter.tempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
@@ -3409,7 +3409,7 @@ func TestRenameColumn(t *testing.T) {
 			continue
 		}
 
-		for _, v2 := range TestTx.CachedViews {
+		for _, v2 := range TestTx.cachedViews {
 			if v2.FileInfo.Handler != nil {
 				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
 					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
@@ -3424,13 +3424,13 @@ func TestRenameColumn(t *testing.T) {
 		}
 
 		if v.ViewCache != nil {
-			if !reflect.DeepEqual(TestTx.CachedViews, v.ViewCache) {
-				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.ViewCache)
+			if !reflect.DeepEqual(TestTx.cachedViews, v.ViewCache) {
+				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.TempViews, v.TempViewList)
+			if !reflect.DeepEqual(filter.tempViews, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
 			}
 		}
 	}
@@ -3785,15 +3785,15 @@ var setTableAttributeTests = []struct {
 func TestSetTableAttribute(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
 	TestTx.Flags.Repository = TestDir
 	TestTx.Flags.Quiet = false
 
-	filter := NewEmptyFilter(TestTx)
-	filter.TempViews = TemporaryViewScopes{
+	filter := NewFilter(TestTx)
+	filter.tempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
@@ -3833,7 +3833,7 @@ func TestSetTableAttribute(t *testing.T) {
 			continue
 		}
 
-		for _, v2 := range TestTx.CachedViews {
+		for _, v2 := range TestTx.cachedViews {
 			if v2.FileInfo.Handler != nil {
 				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
 					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)

@@ -325,7 +325,7 @@ func TestVariableMap_Declare(t *testing.T) {
 
 	for _, v := range variableMapDeclareTests {
 		if v.Filter == nil {
-			v.Filter = NewEmptyFilter(TestTx)
+			v.Filter = NewFilter(TestTx)
 		}
 
 		err := vars.Declare(context.Background(), v.Filter, v.Expr.(parser.VariableDeclaration))
@@ -383,7 +383,7 @@ func TestVariableMap_Substitute(t *testing.T) {
 
 	for _, v := range variableMapSubstituteTests {
 		if v.Filter == nil {
-			v.Filter = NewEmptyFilter(TestTx)
+			v.Filter = NewFilter(TestTx)
 		}
 
 		_, err := vars.Substitute(context.Background(), v.Filter, v.Expr.(parser.VariableSubstitution))
