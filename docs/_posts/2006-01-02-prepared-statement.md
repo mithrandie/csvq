@@ -88,5 +88,5 @@ EXECUTE stmt1 USING 'a', 'b', 'c';
 
 -- Named Placeholder
 PREPARE stmt2 FROM 'SELECT :second, :third, :first;';
-EXECUTE stmt2 USING 'a' AS first, 'b' AS second, 'c' AS third;
+EXECUTE stmt2 USING 'a' AS `first`, 'b' AS `second`, 'c' AS `third`;
 ```
