@@ -182,7 +182,7 @@ var parseJoinConditionTests = []struct {
 		},
 		View:     &View{Header: NewHeaderWithId("t1", []string{"key1", "key2", "key3", "key1", "value1", "value2", "value3"})},
 		JoinView: &View{Header: NewHeaderWithId("t2", []string{"key1", "key2", "key3", "value4"})},
-		Error:    "[L:- C:-] field key1 is ambiguous",
+		Error:    "field key1 is ambiguous",
 	},
 	{
 		Name: "Using Condition JoinView Field Error",
@@ -197,7 +197,7 @@ var parseJoinConditionTests = []struct {
 		},
 		View:     &View{Header: NewHeaderWithId("t1", []string{"key1", "key2", "key3", "value1", "value2", "value3"})},
 		JoinView: &View{Header: NewHeaderWithId("t2", []string{"key2", "key3", "value4"})},
-		Error:    "[L:- C:-] field key1 does not exist",
+		Error:    "field key1 does not exist",
 	},
 }
 
@@ -300,7 +300,7 @@ func TestCrossJoin(t *testing.T) {
 		},
 	}
 
-	_ = CrossJoin(context.Background(), NewEmptyFilter(TestTx), view, joinView)
+	_ = CrossJoin(context.Background(), NewFilter(TestTx), view, joinView)
 	if !reflect.DeepEqual(view, expect) {
 		t.Errorf("Cross Join: result = %v, want %v", view, expect)
 	}
@@ -560,7 +560,7 @@ var innerJoinTests = []struct {
 			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "notexist"}},
 			Operator: "=",
 		},
-		Error: "[L:- C:-] field table2.notexist does not exist",
+		Error: "field table2.notexist does not exist",
 	},
 }
 
@@ -574,7 +574,7 @@ func TestInnerJoin(t *testing.T) {
 		}
 
 		if v.Filter == nil {
-			v.Filter = NewEmptyFilter(TestTx)
+			v.Filter = NewFilter(TestTx)
 		}
 
 		err := InnerJoin(context.Background(), v.Filter, v.View, v.JoinView, v.Condition)
@@ -893,7 +893,7 @@ var outerJoinTests = []struct {
 			Operator: "=",
 		},
 		Direction: parser.LEFT,
-		Error:     "[L:- C:-] field table1.notexist does not exist",
+		Error:     "field table1.notexist does not exist",
 	},
 	{
 		Name: "Outer Join Direction Undefined",
@@ -979,7 +979,7 @@ var outerJoinTests = []struct {
 func TestOuterJoin(t *testing.T) {
 	for _, v := range outerJoinTests {
 		if v.Filter == nil {
-			v.Filter = NewEmptyFilter(TestTx)
+			v.Filter = NewFilter(TestTx)
 		}
 
 		err := OuterJoin(context.Background(), v.Filter, v.View, v.JoinView, v.Condition, v.Direction)
@@ -1052,7 +1052,7 @@ func TestCalcMinimumRequired(t *testing.T) {
 
 func BenchmarkCrossJoin(b *testing.B) {
 	ctx := context.Background()
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for i := 0; i < b.N; i++ {
 		view := GenerateBenchView("t1", 100)
@@ -1070,7 +1070,7 @@ func BenchmarkInnerJoin(b *testing.B) {
 	}
 
 	ctx := context.Background()
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for i := 0; i < b.N; i++ {
 		view := GenerateBenchView("t1", 100)
@@ -1088,7 +1088,7 @@ func BenchmarkOuterJoin(b *testing.B) {
 	}
 
 	ctx := context.Background()
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for i := 0; i < b.N; i++ {
 		view := GenerateBenchView("t1", 100)

@@ -16,7 +16,7 @@ import (
 func TestTransaction_Commit(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -25,7 +25,7 @@ func TestTransaction_Commit(t *testing.T) {
 	ch, _ := file.NewHandlerForCreate(TestTx.FileContainer, GetTestFilePath("create_file.csv"))
 	uh, _ := file.NewHandlerForUpdate(context.Background(), TestTx.FileContainer, GetTestFilePath("updated_file_1.csv"), TestTx.WaitTimeout, TestTx.RetryDelay)
 
-	TestTx.CachedViews = ViewMap{
+	TestTx.cachedViews = ViewMap{
 		strings.ToUpper(GetTestFilePath("created_file.csv")): &View{
 			Header:    NewHeader("created_file", []string{"column1", "column2"}),
 			RecordSet: RecordSet{},
@@ -57,7 +57,7 @@ func TestTransaction_Commit(t *testing.T) {
 		},
 	}
 
-	TestTx.UncommittedViews = &UncommittedViewMap{
+	TestTx.uncommittedViews = &UncommittedViews{
 		Created: map[string]*FileInfo{
 			strings.ToUpper(GetTestFilePath("created_file.csv")): {
 				Path:    GetTestFilePath("created_file.csv"),
@@ -79,7 +79,7 @@ func TestTransaction_Commit(t *testing.T) {
 	r, w, _ := os.Pipe()
 	tx.Session.Stdout = w
 
-	_ = TestTx.Commit(NewEmptyFilter(tx), parser.TransactionControl{Token: parser.COMMIT})
+	_ = TestTx.Commit(NewFilter(tx), parser.TransactionControl{Token: parser.COMMIT})
 
 	_ = w.Close()
 	log, _ := ioutil.ReadAll(r)
@@ -92,13 +92,13 @@ func TestTransaction_Commit(t *testing.T) {
 func TestTransaction_Rollback(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
 	TestTx.Flags.SetQuiet(false)
 
-	TestTx.UncommittedViews = &UncommittedViewMap{
+	TestTx.uncommittedViews = &UncommittedViews{
 		Created: map[string]*FileInfo{
 			strings.ToUpper(GetTestFilePath("created_file.csv")): {
 				Path: GetTestFilePath("created_file.csv"),
@@ -118,7 +118,7 @@ func TestTransaction_Rollback(t *testing.T) {
 	r, w, _ := os.Pipe()
 	tx.Session.Stdout = w
 
-	_ = TestTx.Rollback(NewEmptyFilter(tx), nil)
+	_ = TestTx.Rollback(NewFilter(tx), nil)
 
 	_ = w.Close()
 	log, _ := ioutil.ReadAll(r)

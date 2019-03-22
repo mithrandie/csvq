@@ -61,7 +61,7 @@ var coalesceTests = []functionTest{
 			Name: "coalesce",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function coalesce takes at least 1 argument",
+		Error: "function coalesce takes at least 1 argument",
 	},
 	{
 		Name: "Coalesce No Match",
@@ -113,7 +113,7 @@ var ifTests = []functionTest{
 		Args: []value.Primary{
 			value.NewTernary(ternary.FALSE),
 		},
-		Error: "[L:- C:-] function if takes exactly 3 arguments",
+		Error: "function if takes exactly 3 arguments",
 	},
 }
 
@@ -152,7 +152,7 @@ var ifnullTests = []functionTest{
 		Args: []value.Primary{
 			value.NewInteger(1),
 		},
-		Error: "[L:- C:-] function ifnull takes exactly 2 arguments",
+		Error: "function ifnull takes exactly 2 arguments",
 	},
 }
 
@@ -191,7 +191,7 @@ var nullifTests = []functionTest{
 		Args: []value.Primary{
 			value.NewInteger(1),
 		},
-		Error: "[L:- C:-] function nullif takes exactly 2 arguments",
+		Error: "function nullif takes exactly 2 arguments",
 	},
 }
 
@@ -237,7 +237,7 @@ var ceilTests = []functionTest{
 			Name: "ceil",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function ceil takes 1 or 2 arguments",
+		Error: "function ceil takes 1 or 2 arguments",
 	},
 }
 
@@ -273,7 +273,7 @@ var floorTests = []functionTest{
 			Name: "floor",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function floor takes 1 or 2 arguments",
+		Error: "function floor takes 1 or 2 arguments",
 	},
 }
 
@@ -320,7 +320,7 @@ var roundTests = []functionTest{
 			Name: "round",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function round takes 1 or 2 arguments",
+		Error: "function round takes 1 or 2 arguments",
 	},
 }
 
@@ -355,7 +355,7 @@ var absTests = []functionTest{
 			Name: "abs",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function abs takes exactly 1 argument",
+		Error: "function abs takes exactly 1 argument",
 	},
 }
 
@@ -680,7 +680,7 @@ var powTests = []functionTest{
 			Name: "pow",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function pow takes exactly 2 arguments",
+		Error: "function pow takes exactly 2 arguments",
 	},
 }
 
@@ -725,7 +725,7 @@ var binToDecTests = []functionTest{
 			Name: "bin_to_dec",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function bin_to_dec takes exactly 1 argument",
+		Error: "function bin_to_dec takes exactly 1 argument",
 	},
 }
 
@@ -814,7 +814,7 @@ var enotationToDecTests = []functionTest{
 			Name: "enotation_to_dec",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function enotation_to_dec takes exactly 1 argument",
+		Error: "function enotation_to_dec takes exactly 1 argument",
 	},
 }
 
@@ -849,7 +849,7 @@ var binTests = []functionTest{
 			Name: "bin",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function bin takes exactly 1 argument",
+		Error: "function bin takes exactly 1 argument",
 	},
 }
 
@@ -928,7 +928,7 @@ var enotationTests = []functionTest{
 			Name: "enotation",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function enotation takes exactly 1 argument",
+		Error: "function enotation takes exactly 1 argument",
 	},
 }
 
@@ -967,7 +967,7 @@ var numberFormatTests = []functionTest{
 			Name: "number_format",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function number_format takes 1 to 5 arguments",
+		Error: "function number_format takes 1 to 5 arguments",
 	},
 }
 
@@ -1011,7 +1011,7 @@ var randTests = []struct {
 		Args: []value.Primary{
 			value.NewInteger(1),
 		},
-		Error: "[L:- C:-] function rand takes 0 or 2 arguments",
+		Error: "function rand takes 0 or 2 arguments",
 	},
 	{
 		Name: "Range First Arguments Error",
@@ -1022,7 +1022,7 @@ var randTests = []struct {
 			value.NewString("a"),
 			value.NewInteger(2),
 		},
-		Error: "[L:- C:-] the first argument must be an integer for function rand",
+		Error: "the first argument must be an integer for function rand",
 	},
 	{
 		Name: "Range Second Arguments Error",
@@ -1033,7 +1033,7 @@ var randTests = []struct {
 			value.NewInteger(1),
 			value.NewString("a"),
 		},
-		Error: "[L:- C:-] the second argument must be an integer for function rand",
+		Error: "the second argument must be an integer for function rand",
 	},
 	{
 		Name: "Range Arguments Value Error",
@@ -1044,7 +1044,7 @@ var randTests = []struct {
 			value.NewInteger(1),
 			value.NewInteger(1),
 		},
-		Error: "[L:- C:-] the second argument must be greater than the first argument for function rand",
+		Error: "the second argument must be greater than the first argument for function rand",
 	},
 }
 
@@ -1127,7 +1127,7 @@ var trimTests = []functionTest{
 			Name: "trim",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function trim takes 1 or 2 arguments",
+		Error: "function trim takes 1 or 2 arguments",
 	},
 }
 
@@ -1218,7 +1218,7 @@ var upperTests = []functionTest{
 			Name: "upper",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function upper takes exactly 1 argument",
+		Error: "function upper takes exactly 1 argument",
 	},
 }
 
@@ -1338,7 +1338,7 @@ var lenTests = []functionTest{
 			Name: "len",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function len takes exactly 1 argument",
+		Error: "function len takes exactly 1 argument",
 	},
 }
 
@@ -1384,7 +1384,7 @@ var byteLenTests = []functionTest{
 			Name: "byte_len",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function byte_len takes 1 or 2 arguments",
+		Error: "function byte_len takes 1 or 2 arguments",
 	},
 	{
 		Name: "ByteLen Invalid Encoding Error",
@@ -1395,7 +1395,7 @@ var byteLenTests = []functionTest{
 			value.NewString("abc日本語"),
 			value.NewString("invalid"),
 		},
-		Error: "[L:- C:-] encoding must be one of UTF8|UTF8M|SJIS for function byte_len",
+		Error: "encoding must be one of UTF8|UTF8M|SJIS for function byte_len",
 	},
 }
 
@@ -1420,7 +1420,7 @@ var widthTests = []functionTest{
 			Name: "width",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function width takes exactly 1 argument",
+		Error: "function width takes exactly 1 argument",
 	},
 }
 
@@ -1467,7 +1467,7 @@ var lpadTests = []functionTest{
 			value.NewString("byte"),
 			value.NewString("sjis"),
 		},
-		Error: "[L:- C:-] cannot split pad string in a byte array of a character for function lpad",
+		Error: "cannot split pad string in a byte array of a character for function lpad",
 	},
 	{
 		Name: "Lpad PadType Error",
@@ -1480,7 +1480,7 @@ var lpadTests = []functionTest{
 			value.NewString("空白"),
 			value.NewString("invalid"),
 		},
-		Error: "[L:- C:-] padding type must be one of LEN|BYTE|WIDTH for function lpad",
+		Error: "padding type must be one of LEN|BYTE|WIDTH for function lpad",
 	},
 	{
 		Name: "Lpad Encoding Error",
@@ -1494,7 +1494,7 @@ var lpadTests = []functionTest{
 			value.NewString("byte"),
 			value.NewString("invalid"),
 		},
-		Error: "[L:- C:-] encoding must be one of UTF8|UTF8M|SJIS for function lpad",
+		Error: "encoding must be one of UTF8|UTF8M|SJIS for function lpad",
 	},
 	{
 		Name: "Lpad by Width",
@@ -1520,7 +1520,7 @@ var lpadTests = []functionTest{
 			value.NewString("空白"),
 			value.NewString("width"),
 		},
-		Error: "[L:- C:-] cannot split pad string in a byte array of a character for function lpad",
+		Error: "cannot split pad string in a byte array of a character for function lpad",
 	},
 	{
 		Name: "Lpad No Padding",
@@ -1576,7 +1576,7 @@ var lpadTests = []functionTest{
 			Name: "lpad",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function lpad takes 3 to 5 arguments",
+		Error: "function lpad takes 3 to 5 arguments",
 	},
 }
 
@@ -1681,7 +1681,7 @@ var substrTests = []functionTest{
 			Name: "substr",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function substr takes 2 or 3 arguments",
+		Error: "function substr takes 2 or 3 arguments",
 	},
 }
 
@@ -1740,7 +1740,7 @@ var instrTests = []functionTest{
 			Name: "instr",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function instr takes exactly 2 arguments",
+		Error: "function instr takes exactly 2 arguments",
 	},
 }
 
@@ -1827,7 +1827,7 @@ var listElemTests = []functionTest{
 			Name: "list_elem",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function list_elem takes exactly 3 arguments",
+		Error: "function list_elem takes exactly 3 arguments",
 	},
 }
 
@@ -1890,7 +1890,7 @@ var replaceTests = []functionTest{
 			Name: "replace",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function replace takes exactly 3 arguments",
+		Error: "function replace takes exactly 3 arguments",
 	},
 }
 
@@ -1917,7 +1917,7 @@ var formatTests = []functionTest{
 			Name: "format",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function format takes at least 1 argument",
+		Error: "function format takes at least 1 argument",
 	},
 	{
 		Name: "Format Argument Value Error",
@@ -1929,7 +1929,7 @@ var formatTests = []functionTest{
 			value.NewString("str"),
 			value.NewInteger(1),
 		},
-		Error: "[L:- C:-] the first argument must be a string for function format",
+		Error: "the first argument must be a string for function format",
 	},
 	{
 		Name: "Format Replace Holder Length Not Match Error",
@@ -1940,7 +1940,7 @@ var formatTests = []functionTest{
 			value.NewString("string = %s, integer = %s"),
 			value.NewString("str"),
 		},
-		Error: "[L:- C:-] number of replace values does not match for function format",
+		Error: "number of replace values does not match for function format",
 	},
 }
 
@@ -1990,7 +1990,7 @@ var jsonValueTests = []functionTest{
 		Args: []value.Primary{
 			value.NewString("key1.key2"),
 		},
-		Error: "[L:- C:-] function json_value takes exactly 2 arguments",
+		Error: "function json_value takes exactly 2 arguments",
 	},
 	{
 		Name: "JsonValue Json Loading Error",
@@ -2001,7 +2001,7 @@ var jsonValueTests = []functionTest{
 			value.NewString("key1.key2"),
 			value.NewString("{key1:{\"key2\":\"value\"}}"),
 		},
-		Error: "[L:- C:-] line 1, column 2: unexpected token \"key\" for function json_value",
+		Error: "line 1, column 2: unexpected token \"key\" for function json_value",
 	},
 }
 
@@ -2036,7 +2036,7 @@ var md5Tests = []functionTest{
 			Name: "md5",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function md5 takes exactly 1 argument",
+		Error: "function md5 takes exactly 1 argument",
 	},
 }
 
@@ -2135,7 +2135,7 @@ var md5HmacTests = []functionTest{
 			Name: "md5_hmac",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function md5_hmac takes exactly 2 arguments",
+		Error: "function md5_hmac takes exactly 2 arguments",
 	},
 }
 
@@ -2239,7 +2239,7 @@ var datetimeFormatTests = []functionTest{
 		Args: []value.Primary{
 			value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 		},
-		Error: "[L:- C:-] function datetime_format takes exactly 2 arguments",
+		Error: "function datetime_format takes exactly 2 arguments",
 	},
 }
 
@@ -2274,7 +2274,7 @@ var yearTests = []functionTest{
 			Name: "year",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function year takes exactly 1 argument",
+		Error: "function year takes exactly 1 argument",
 	},
 }
 
@@ -2543,7 +2543,7 @@ var addYearTests = []functionTest{
 			Name: "add_year",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function add_year takes exactly 2 arguments",
+		Error: "function add_year takes exactly 2 arguments",
 	},
 }
 
@@ -2712,7 +2712,7 @@ var truncMonthTests = []functionTest{
 			Name: "trunc_month",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function trunc_month takes exactly 1 argument",
+		Error: "function trunc_month takes exactly 1 argument",
 	},
 	{
 		Name: "TruncMonth Argument Is Null",
@@ -2781,7 +2781,7 @@ var truncMinuteTests = []functionTest{
 			Name: "trunc_minute",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function trunc_minute takes exactly 1 argument",
+		Error: "function trunc_minute takes exactly 1 argument",
 	},
 	{
 		Name: "TruncMinute Argument Is Null",
@@ -2907,7 +2907,7 @@ var dateDiffTests = []functionTest{
 			Name: "date_diff",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function date_diff takes exactly 2 arguments",
+		Error: "function date_diff takes exactly 2 arguments",
 	},
 }
 
@@ -2955,7 +2955,7 @@ var timeDiffTests = []functionTest{
 			Name: "time_diff",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function time_diff takes exactly 2 arguments",
+		Error: "function time_diff takes exactly 2 arguments",
 	},
 }
 
@@ -2998,7 +2998,7 @@ var utcTests = []functionTest{
 			Name: "utc",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function utc takes exactly 1 argument",
+		Error: "function utc takes exactly 1 argument",
 	},
 	{
 		Name: "UTC Argument Is Null",
@@ -3063,7 +3063,7 @@ var stringTests = []functionTest{
 			Name: "string",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function string takes exactly 1 argument",
+		Error: "function string takes exactly 1 argument",
 	},
 }
 
@@ -3138,7 +3138,7 @@ var integerTests = []functionTest{
 			Name: "integer",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function integer takes exactly 1 argument",
+		Error: "function integer takes exactly 1 argument",
 	},
 }
 
@@ -3173,7 +3173,7 @@ var floatTests = []functionTest{
 			Name: "float",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function float takes exactly 1 argument",
+		Error: "function float takes exactly 1 argument",
 	},
 }
 
@@ -3198,7 +3198,7 @@ var booleanTests = []functionTest{
 			Name: "boolean",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function boolean takes exactly 1 argument",
+		Error: "function boolean takes exactly 1 argument",
 	},
 }
 
@@ -3223,7 +3223,7 @@ var ternaryTest = []functionTest{
 			Name: "ternary",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function ternary takes exactly 1 argument",
+		Error: "function ternary takes exactly 1 argument",
 	},
 }
 
@@ -3248,7 +3248,7 @@ var datetimeTests = []functionTest{
 			Name: "datetime",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function datetime takes exactly 1 argument",
+		Error: "function datetime takes exactly 1 argument",
 	},
 }
 
@@ -3263,7 +3263,7 @@ var callTests = []functionTest{
 			Name: "call",
 		},
 		Args:  []value.Primary{},
-		Error: "[L:- C:-] function call takes at least 1 argument",
+		Error: "function call takes at least 1 argument",
 	},
 	{
 		Name: "Call Command Error",
@@ -3312,7 +3312,7 @@ var nowTests = []struct {
 		Function: parser.Function{
 			Name: "now",
 		},
-		Filter: NewEmptyFilter(TestTx),
+		Filter: NewFilter(TestTx),
 		Result: value.NewDatetime(NowForTest),
 	},
 	{
@@ -3321,11 +3321,11 @@ var nowTests = []struct {
 			Name: "now",
 		},
 		Filter: &Filter{
-			Variables: VariableScopes{NewVariableMap()},
-			TempViews: TemporaryViewScopes{{}},
-			Cursors:   CursorScopes{{}},
-			Functions: UserDefinedFunctionScopes{{}},
-			Now:       time.Date(2013, 2, 3, 0, 0, 0, 0, GetTestLocation()),
+			variables: VariableScopes{NewVariableMap()},
+			tempViews: TemporaryViewScopes{{}},
+			cursors:   CursorScopes{{}},
+			functions: UserDefinedFunctionScopes{{}},
+			now:       time.Date(2013, 2, 3, 0, 0, 0, 0, GetTestLocation()),
 		},
 		Result: value.NewDatetime(time.Date(2013, 2, 3, 0, 0, 0, 0, GetTestLocation())),
 	},
@@ -3337,8 +3337,8 @@ var nowTests = []struct {
 		Args: []value.Primary{
 			value.NewInteger(1),
 		},
-		Filter: NewEmptyFilter(TestTx),
-		Error:  "[L:- C:-] function now takes no argument",
+		Filter: NewFilter(TestTx),
+		Error:  "function now takes no argument",
 	},
 }
 
@@ -3380,16 +3380,16 @@ var jsonObjectTests = []struct {
 			},
 		},
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 						RecordSet: []Record{
 							NewRecordWithId(0, []value.Primary{value.NewInteger(1), value.NewInteger(2)}),
 							NewRecordWithId(1, []value.Primary{value.NewInteger(11), value.NewInteger(12)}),
 						},
 					},
-					RecordIndex: 1,
+					recordIndex: 1,
 				},
 			},
 		},
@@ -3401,16 +3401,16 @@ var jsonObjectTests = []struct {
 			Name: "json_object",
 		},
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2.child1"}),
 						RecordSet: []Record{
 							NewRecordWithId(0, []value.Primary{value.NewInteger(1), value.NewInteger(2)}),
 							NewRecordWithId(1, []value.Primary{value.NewInteger(11), value.NewInteger(12)}),
 						},
 					},
-					RecordIndex: 1,
+					recordIndex: 1,
 				},
 			},
 		},
@@ -3424,8 +3424,8 @@ var jsonObjectTests = []struct {
 				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 			},
 		},
-		Filter: NewEmptyFilter(TestTx),
-		Error:  "[L:- C:-] function json_object cannot be used as a statement",
+		Filter: NewFilter(TestTx),
+		Error:  "function json_object cannot be used as a statement",
 	},
 	{
 		Name: "Json Object Path Error",
@@ -3433,26 +3433,26 @@ var jsonObjectTests = []struct {
 			Name: "json_object",
 		},
 		Filter: &Filter{
-			Records: []FilterRecord{
+			records: []filterRecord{
 				{
-					View: &View{
+					view: &View{
 						Header: NewHeaderWithId("table1", []string{"column1", "column2.."}),
 						RecordSet: []Record{
 							NewRecordWithId(0, []value.Primary{value.NewInteger(1), value.NewInteger(2)}),
 							NewRecordWithId(1, []value.Primary{value.NewInteger(11), value.NewInteger(12)}),
 						},
 					},
-					RecordIndex: 1,
+					recordIndex: 1,
 				},
 			},
 		},
-		Error: "[L:- C:-] unexpected token \".\" at column 9 in \"column2..\" for function json_object",
+		Error: "unexpected token \".\" at column 9 in \"column2..\" for function json_object",
 	},
 }
 
 func TestJsonObject(t *testing.T) {
 	for _, v := range jsonObjectTests {
-		v.Filter.Tx = TestTx
+		v.Filter.tx = TestTx
 		result, err := JsonObject(context.Background(), v.Filter, v.Function)
 		if err != nil {
 			if len(v.Error) < 1 {

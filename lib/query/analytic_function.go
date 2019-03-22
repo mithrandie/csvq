@@ -61,7 +61,7 @@ func Analyze(ctx context.Context, view *View, fn parser.AnalyticFunction, partit
 		aggfn = f
 		fnType = Aggregate
 	} else {
-		if udfn, err = view.Filter.Functions.Get(fn, uname); err != nil || !udfn.IsAggregate {
+		if udfn, err = view.Filter.functions.Get(fn, uname); err != nil || !udfn.IsAggregate {
 			return NewFunctionNotExistError(fn, fn.Name)
 		}
 		fnType = UserDefined
@@ -186,7 +186,7 @@ func Analyze(ctx context.Context, view *View, fn parser.AnalyticFunction, partit
 							}
 
 							for _, idx := range frame.Records {
-								filter.Records[0].RecordIndex = idx
+								filter.records[0].recordIndex = idx
 
 								var args []value.Primary
 								argsExprs := fn.Args[1:]
@@ -325,7 +325,7 @@ func windowValues(ctx context.Context, filter *Filter, frame WindowFrame, partit
 		if v, ok := valueCache[recordIdx]; ok {
 			values = append(values, v)
 		} else {
-			filter.Records[0].RecordIndex = recordIdx
+			filter.records[0].recordIndex = recordIdx
 			p, e := filter.Evaluate(ctx, expr.Args[0])
 			if e != nil {
 				return nil, e
@@ -336,7 +336,7 @@ func windowValues(ctx context.Context, filter *Filter, frame WindowFrame, partit
 	}
 
 	if expr.IsDistinct() {
-		values = Distinguish(values, filter.Tx.Flags)
+		values = Distinguish(values, filter.tx.Flags)
 	}
 	return values, nil
 }
@@ -387,10 +387,10 @@ func (fn Rank) Execute(ctx context.Context, filter *Filter, partition Partition,
 	var currentRank SortValues
 	for _, idx := range partition {
 		number++
-		if filter.Records[0].View.sortValuesInEachRecord == nil || !filter.Records[0].View.sortValuesInEachRecord[idx].EquivalentTo(currentRank) {
+		if filter.records[0].view.sortValuesInEachRecord == nil || !filter.records[0].view.sortValuesInEachRecord[idx].EquivalentTo(currentRank) {
 			rank = number
-			if filter.Records[0].View.sortValuesInEachRecord != nil {
-				currentRank = filter.Records[0].View.sortValuesInEachRecord[idx]
+			if filter.records[0].view.sortValuesInEachRecord != nil {
+				currentRank = filter.records[0].view.sortValuesInEachRecord[idx]
 			}
 		}
 		list[idx] = value.NewInteger(rank)
@@ -410,10 +410,10 @@ func (fn DenseRank) Execute(ctx context.Context, filter *Filter, partition Parti
 	var rank int64 = 0
 	var currentRank SortValues
 	for _, idx := range partition {
-		if filter.Records[0].View.sortValuesInEachRecord == nil || !filter.Records[0].View.sortValuesInEachRecord[idx].EquivalentTo(currentRank) {
+		if filter.records[0].view.sortValuesInEachRecord == nil || !filter.records[0].view.sortValuesInEachRecord[idx].EquivalentTo(currentRank) {
 			rank++
-			if filter.Records[0].View.sortValuesInEachRecord != nil {
-				currentRank = filter.Records[0].View.sortValuesInEachRecord[idx]
+			if filter.records[0].view.sortValuesInEachRecord != nil {
+				currentRank = filter.records[0].view.sortValuesInEachRecord[idx]
 			}
 		}
 		list[idx] = value.NewInteger(rank)
@@ -431,7 +431,7 @@ func (fn CumeDist) CheckArgsLen(expr parser.AnalyticFunction) error {
 func (fn CumeDist) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	list := make(map[int]value.Primary, len(partition))
 
-	groups := perseCumulativeGroups(partition, filter.Records[0].View)
+	groups := perseCumulativeGroups(partition, filter.records[0].view)
 	total := float64(len(partition))
 	cumulative := float64(0)
 	for _, group := range groups {
@@ -455,7 +455,7 @@ func (fn PercentRank) CheckArgsLen(expr parser.AnalyticFunction) error {
 func (fn PercentRank) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	list := make(map[int]value.Primary, len(partition))
 
-	groups := perseCumulativeGroups(partition, filter.Records[0].View)
+	groups := perseCumulativeGroups(partition, filter.records[0].view)
 	denom := float64(len(partition) - 1)
 	cumulative := float64(0)
 	for _, group := range groups {
@@ -498,7 +498,7 @@ func (fn NTile) CheckArgsLen(expr parser.AnalyticFunction) error {
 
 func (fn NTile) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	argsFilter := filter.CreateNode()
-	argsFilter.Records = nil
+	argsFilter.records = nil
 
 	tileNumber := 0
 	p, err := argsFilter.Evaluate(ctx, expr.Args[0])
@@ -576,7 +576,7 @@ func (fn NthValue) CheckArgsLen(expr parser.AnalyticFunction) error {
 
 func (fn NthValue) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	argsFilter := filter.CreateNode()
-	argsFilter.Records = nil
+	argsFilter.records = nil
 
 	n := 0
 	p, err := argsFilter.Evaluate(ctx, expr.Args[1])
@@ -614,7 +614,7 @@ func setNthValue(ctx context.Context, filter *Filter, partition Partition, expr 
 			if v, ok := valueCache[recordIdx]; ok {
 				val = v
 			} else {
-				filter.Records[0].RecordIndex = recordIdx
+				filter.records[0].recordIndex = recordIdx
 				p, err := filter.Evaluate(ctx, expr.Args[0])
 				if err != nil {
 					return nil, err
@@ -663,7 +663,7 @@ func (fn Lead) Execute(ctx context.Context, filter *Filter, partition Partition,
 
 func setLag(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	argsFilter := filter.CreateNode()
-	argsFilter.Records = nil
+	argsFilter.records = nil
 
 	offset := 1
 	if 1 < len(expr.Args) {
@@ -690,7 +690,7 @@ func setLag(ctx context.Context, filter *Filter, partition Partition, expr parse
 	list := make(map[int]value.Primary, len(partition))
 	values := make([]value.Primary, 0)
 	for _, idx := range partition {
-		filter.Records[0].RecordIndex = idx
+		filter.records[0].recordIndex = idx
 		p, err := filter.Evaluate(ctx, expr.Args[0])
 		if err != nil {
 			return nil, err
@@ -723,7 +723,7 @@ func (fn AnalyticListAgg) CheckArgsLen(expr parser.AnalyticFunction) error {
 
 func (fn AnalyticListAgg) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	argsFilter := filter.CreateNode()
-	argsFilter.Records = nil
+	argsFilter.records = nil
 
 	separator := ""
 	if len(expr.Args) == 2 {
@@ -740,7 +740,7 @@ func (fn AnalyticListAgg) Execute(ctx context.Context, filter *Filter, partition
 
 	values := make([]value.Primary, len(partition))
 	for i, idx := range partition {
-		filter.Records[0].RecordIndex = idx
+		filter.records[0].recordIndex = idx
 		val, e := filter.Evaluate(ctx, expr.Args[0])
 		if e != nil {
 			return nil, e
@@ -748,7 +748,7 @@ func (fn AnalyticListAgg) Execute(ctx context.Context, filter *Filter, partition
 		values[i] = val
 	}
 	if expr.IsDistinct() {
-		values = Distinguish(values, filter.Tx.Flags)
+		values = Distinguish(values, filter.tx.Flags)
 	}
 
 	val := ListAgg(values, separator)
@@ -769,11 +769,11 @@ func (fn AnalyticJsonAgg) CheckArgsLen(expr parser.AnalyticFunction) error {
 
 func (fn AnalyticJsonAgg) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	argsFilter := filter.CreateNode()
-	argsFilter.Records = nil
+	argsFilter.records = nil
 
 	values := make([]value.Primary, len(partition))
 	for i, idx := range partition {
-		filter.Records[0].RecordIndex = idx
+		filter.records[0].recordIndex = idx
 		val, e := filter.Evaluate(ctx, expr.Args[0])
 		if e != nil {
 			return nil, e
@@ -781,7 +781,7 @@ func (fn AnalyticJsonAgg) Execute(ctx context.Context, filter *Filter, partition
 		values[i] = val
 	}
 	if expr.IsDistinct() {
-		values = Distinguish(values, filter.Tx.Flags)
+		values = Distinguish(values, filter.tx.Flags)
 	}
 
 	val := JsonAgg(values)

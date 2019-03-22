@@ -17,6 +17,7 @@ title: Reference Manual - csvq
   * [Create Table Query]({{ '/reference/create-table-query.html' | relative_url }})
   * [Alter Table Query]({{ '/reference/alter-table-query.html' | relative_url }})
   * [Common Table Expression]({{ '/reference/common-table-expression.html' | relative_url }})
+  * [Prepared Statement]({{ '/reference/prepared-statement.html' | relative_url }})
   * [Variable]({{ '/reference/variable.html' | relative_url }})
   * [Row Value]({{ '/reference/row-value.html' | relative_url }})
   * [Cursor]({{ '/reference/cursor.html' | relative_url }})

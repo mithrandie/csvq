@@ -169,7 +169,7 @@ var fileInfoTests = []struct {
 		Format:     cmd.CSV,
 		Delimiter:  ',',
 		Encoding:   text.UTF8,
-		Error:      "[L:- C:-] file notexist does not exist",
+		Error:      "file notexist does not exist",
 	},
 	{
 		Name:       "File Read Error",
@@ -178,7 +178,7 @@ var fileInfoTests = []struct {
 		Format:     cmd.CSV,
 		Delimiter:  ',',
 		Encoding:   text.UTF8,
-		Error:      fmt.Sprintf("[L:- C:-] file %s is unable to be read", TestDir),
+		Error:      fmt.Sprintf("file %s is unable to be read", TestDir),
 	},
 	{
 		Name:       "Filenames Ambiguous",
@@ -187,7 +187,7 @@ var fileInfoTests = []struct {
 		Format:     cmd.AutoSelect,
 		Delimiter:  ',',
 		Encoding:   text.UTF8,
-		Error:      fmt.Sprintf("[L:- C:-] filename dup_name is ambiguous"),
+		Error:      fmt.Sprintf("filename dup_name is ambiguous"),
 	},
 }
 

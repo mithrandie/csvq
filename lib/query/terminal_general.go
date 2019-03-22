@@ -21,7 +21,7 @@ type SSHTerminal struct {
 }
 
 func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
-	stdin := int(filter.Tx.Session.ScreenFd)
+	stdin := int(filter.tx.Session.ScreenFd)
 	origState, err := terminal.MakeRaw(stdin)
 	if err != nil {
 		return nil, err
@@ -39,12 +39,12 @@ func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
 	}
 
 	t := SSHTerminal{
-		terminal:  terminal.NewTerminal(NewStdIO(filter.Tx.Session), p.Render(cmd.PromptEffect, TerminalPrompt)),
+		terminal:  terminal.NewTerminal(NewStdIO(filter.tx.Session), p.Render(cmd.PromptEffect, TerminalPrompt)),
 		stdin:     stdin,
 		origState: origState,
 		rawState:  rawState,
 		prompt:    prompt,
-		tx:        filter.Tx,
+		tx:        filter.tx,
 	}
 
 	_ = t.RestoreOriginalMode()

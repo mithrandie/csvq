@@ -164,6 +164,17 @@ func (e PrimitiveType) IsInteger() bool {
 	return ok
 }
 
+type Placeholder struct {
+	*BaseExpr
+	Literal string
+	Ordinal int
+	Name    string
+}
+
+func (e Placeholder) String() string {
+	return e.Literal
+}
+
 type Identifier struct {
 	*BaseExpr
 	Literal string
@@ -1461,6 +1472,29 @@ type ViewDeclaration struct {
 type DisposeView struct {
 	*BaseExpr
 	View Identifier
+}
+
+type StatementPreparation struct {
+	*BaseExpr
+	Name      Identifier
+	Statement value.String
+}
+
+type ReplaceValue struct {
+	*BaseExpr
+	Value QueryExpression
+	Name  Identifier
+}
+
+type ExecuteStatement struct {
+	*BaseExpr
+	Name   Identifier
+	Values []ReplaceValue
+}
+
+type DisposeStatement struct {
+	*BaseExpr
+	Name Identifier
 }
 
 type TransactionControl struct {

@@ -43,24 +43,24 @@ var getRuntimeInformationTests = []struct {
 	},
 	{
 		Input: parser.RuntimeInformation{Name: "invalid"},
-		Error: "[L:- C:-] @#invalid is an unknown runtime information",
+		Error: "@#invalid is an unknown runtime information",
 	},
 }
 
 func TestGetRuntimeInformation(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
-		TestTx.UncommittedViews.Clean()
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		TestTx.uncommittedViews.Clean()
 		initFlag(TestTx.Flags)
 	}()
 
-	TestTx.CachedViews = ViewMap{
+	TestTx.cachedViews = ViewMap{
 		"TABLE1": &View{FileInfo: &FileInfo{}},
 		"TABLE2": &View{FileInfo: &FileInfo{}},
 		"TABLE3": &View{FileInfo: &FileInfo{}},
 		"TABLE4": &View{FileInfo: &FileInfo{}},
 	}
-	TestTx.UncommittedViews = &UncommittedViewMap{
+	TestTx.uncommittedViews = &UncommittedViews{
 		Created: map[string]*FileInfo{
 			"TABLE1": {},
 			"TABLE2": {},

@@ -255,7 +255,7 @@ func main() {
 
 		defaultWaitTimeout := file.DefaultWaitTimeout
 		if c.IsSet("wait-timeout") {
-			if d, err := time.ParseDuration(strconv.FormatFloat(c.GlobalFloat64("wait-timeout"), 'f', -1, 64) + "s"); err != nil {
+			if d, err := time.ParseDuration(strconv.FormatFloat(c.GlobalFloat64("wait-timeout"), 'f', -1, 64) + "s"); err == nil {
 				defaultWaitTimeout = d
 			}
 		}
@@ -296,10 +296,12 @@ func main() {
 
 		if err != nil {
 			code := 1
-			if apperr, ok := err.(query.AppError); ok {
-				code = apperr.GetCode()
-			} else if ex, ok := err.(*query.ForcedExit); ok {
-				code = ex.GetCode()
+			if apperr, ok := err.(query.Error); ok {
+				code = apperr.ReturnCode()
+			}
+
+			if _, ok := err.(*query.ForcedExit); ok && code == 0 {
+				return nil
 			}
 			return NewExitError(err.Error(), code)
 		}

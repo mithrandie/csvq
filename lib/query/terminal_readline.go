@@ -24,14 +24,14 @@ type ReadLineTerminal struct {
 }
 
 func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
-	fd := int(filter.Tx.Session.ScreenFd)
+	fd := int(filter.tx.Session.ScreenFd)
 
 	p := cmd.GetPalette()
 
-	limit := *filter.Tx.Environment.InteractiveShell.HistoryLimit
-	historyFile, err := HistoryFilePath(filter.Tx.Environment.InteractiveShell.HistoryFile)
+	limit := *filter.tx.Environment.InteractiveShell.HistoryLimit
+	historyFile, err := HistoryFilePath(filter.tx.Environment.InteractiveShell.HistoryFile)
 	if err != nil {
-		filter.Tx.Session.LogWarn(fmt.Sprintf("cannot detect filepath: %q", filter.Tx.Environment.InteractiveShell.HistoryFile), false)
+		filter.tx.Session.LogWarn(fmt.Sprintf("cannot detect filepath: %q", filter.tx.Environment.InteractiveShell.HistoryFile), false)
 		limit = -1
 	}
 
@@ -44,9 +44,9 @@ func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
 		HistoryLimit:           limit,
 		HistorySearchFold:      true,
 		Listener:               new(ReadlineListener),
-		Stdin:                  filter.Tx.Session.Stdin,
-		Stdout:                 filter.Tx.Session.Stdout,
-		Stderr:                 filter.Tx.Session.Stderr,
+		Stdin:                  filter.tx.Session.Stdin,
+		Stdout:                 filter.tx.Session.Stdout,
+		Stderr:                 filter.tx.Session.Stderr,
 	})
 	if err != nil {
 		return nil, err
@@ -56,9 +56,9 @@ func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
 		terminal:  t,
 		fd:        fd,
 		prompt:    prompt,
-		env:       filter.Tx.Environment,
+		env:       filter.tx.Environment,
 		completer: completer,
-		tx:        filter.Tx,
+		tx:        filter.tx,
 	}
 
 	terminal.setCompleter()

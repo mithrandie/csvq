@@ -44,7 +44,7 @@ func (it InlineTableMap) Set(ctx context.Context, parentFilter *Filter, inlineTa
 
 	filter := parentFilter.CreateNode()
 	if inlineTable.IsRecursive() {
-		filter.RecursiveTable = &inlineTable
+		filter.recursiveTable = &inlineTable
 	}
 	view, err := Select(ctx, filter, inlineTable.Query)
 	if err != nil {

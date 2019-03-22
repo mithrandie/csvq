@@ -1004,7 +1004,7 @@ func Format(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Prima
 
 	str, err := NewStringFormatter().Format(format.(value.String).Raw(), args[1:])
 	if err != nil {
-		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, err.(AppError).ErrorMessage())
+		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, err.(Error).ErrorMessage())
 	}
 	return value.NewString(str), nil
 }
@@ -1552,20 +1552,20 @@ func Now(filter *Filter, fn parser.Function, args []value.Primary) (value.Primar
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{0})
 	}
 
-	if filter.Now.IsZero() {
+	if filter.now.IsZero() {
 		return value.NewDatetime(cmd.Now()), nil
 	}
-	return value.NewDatetime(filter.Now), nil
+	return value.NewDatetime(filter.now), nil
 }
 
 func JsonObject(ctx context.Context, filter *Filter, fn parser.Function) (value.Primary, error) {
-	if len(filter.Records) < 1 {
-		return nil, NewUnpermittedStatementFunctionError(fn, fn.Name)
+	if len(filter.records) < 1 {
+		return nil, NewUnpermittedFunctionStatementError(fn, fn.Name)
 	}
 
-	view := NewView(filter.Tx)
-	view.Header = filter.Records[0].View.Header.Copy()
-	view.RecordSet = RecordSet{filter.Records[0].View.RecordSet[filter.Records[0].RecordIndex]}
+	view := NewView(filter.tx)
+	view.Header = filter.records[0].view.Header.Copy()
+	view.RecordSet = RecordSet{filter.records[0].view.RecordSet[filter.records[0].recordIndex]}
 	view.Filter = filter.CreateNode()
 
 	if len(fn.Args) < 1 {

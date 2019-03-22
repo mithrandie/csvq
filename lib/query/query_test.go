@@ -99,7 +99,7 @@ var fetchCursorTests = []struct {
 			{Name: "var1"},
 			{Name: "var2"},
 		},
-		Error: "[L:- C:-] cursor notexist is undeclared",
+		Error: "cursor notexist is undeclared",
 	},
 	{
 		Name:    "Fetch Cursor Not Match Number Error",
@@ -107,7 +107,7 @@ var fetchCursorTests = []struct {
 		Variables: []parser.Variable{
 			{Name: "var1"},
 		},
-		Error: "[L:- C:-] fetching from cursor cur2 returns 2 values",
+		Error: "fetching from cursor cur2 returns 2 values",
 	},
 	{
 		Name:    "Fetch Cursor Substitution Error",
@@ -116,7 +116,7 @@ var fetchCursorTests = []struct {
 			{Name: "var1"},
 			{Name: "notexist"},
 		},
-		Error: "[L:- C:-] variable @notexist is undeclared",
+		Error: "variable @notexist is undeclared",
 	},
 	{
 		Name:    "Fetch Cursor Number Value Error",
@@ -129,7 +129,7 @@ var fetchCursorTests = []struct {
 			{Name: "var1"},
 			{Name: "var2"},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name:    "Fetch Cursor Number Not Integer Error",
@@ -142,19 +142,19 @@ var fetchCursorTests = []struct {
 			{Name: "var1"},
 			{Name: "var2"},
 		},
-		Error: "[L:- C:-] fetching position null is not an integer value",
+		Error: "fetching position null is not an integer value",
 	},
 }
 
 func TestFetchCursor(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
 	TestTx.Flags.Repository = TestDir
 
-	filter := NewFilter(
+	filter := NewFilterWithScopes(
 		TestTx,
 		[]VariableMap{
 			GenerateVariableMap(map[string]value.Primary{
@@ -176,10 +176,10 @@ func TestFetchCursor(t *testing.T) {
 		[]UserDefinedFunctionMap{{}},
 	)
 
-	_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
-	_ = filter.Cursors.Open(context.Background(), filter, parser.Identifier{Literal: "cur"})
-	_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
-	_ = filter.Cursors.Open(context.Background(), filter, parser.Identifier{Literal: "cur2"})
+	_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+	_ = filter.cursors.Open(context.Background(), filter, parser.Identifier{Literal: "cur"})
+	_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+	_ = filter.cursors.Open(context.Background(), filter, parser.Identifier{Literal: "cur2"})
 
 	for _, v := range fetchCursorTests {
 		success, err := FetchCursor(context.Background(), filter, v.CurName, v.FetchPosition, v.Variables)
@@ -198,8 +198,8 @@ func TestFetchCursor(t *testing.T) {
 		if success != v.Success {
 			t.Errorf("%s: success = %t, want %t", v.Name, success, v.Success)
 		}
-		if !filter.Variables[0].Equal(&v.ResultVars) {
-			t.Errorf("%s: global vars = %v, want %v", v.Name, filter.Variables[0], v.ResultVars)
+		if !filter.variables[0].Equal(&v.ResultVars) {
+			t.Errorf("%s: global vars = %v, want %v", v.Name, filter.variables[0], v.ResultVars)
 		}
 	}
 }
@@ -243,7 +243,7 @@ var declareViewTests = []struct {
 				parser.Identifier{Literal: "column1"},
 			},
 		},
-		Error: "[L:- C:-] field name column1 is a duplicate",
+		Error: "field name column1 is a duplicate",
 	},
 	{
 		Name: "Declare View From Query",
@@ -307,7 +307,7 @@ var declareViewTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Declare View From Query Field Update Error",
@@ -327,7 +327,7 @@ var declareViewTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] select query should return exactly 1 field for view tbl",
+		Error: "select query should return exactly 1 field for view tbl",
 	},
 	{
 		Name: "Declare View  From Query Field Duplicate Error",
@@ -348,7 +348,7 @@ var declareViewTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field name column1 is a duplicate",
+		Error: "field name column1 is a duplicate",
 	},
 	{
 		Name: "Declare View Redeclaration Error",
@@ -367,18 +367,18 @@ var declareViewTests = []struct {
 				parser.Identifier{Literal: "column2"},
 			},
 		},
-		Error: "[L:- C:-] view tbl is redeclared",
+		Error: "view tbl is redeclared",
 	},
 }
 
 func TestDeclareView(t *testing.T) {
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range declareViewTests {
 		if v.ViewMap == nil {
-			filter.TempViews = []ViewMap{{}}
+			filter.tempViews = []ViewMap{{}}
 		} else {
-			filter.TempViews = []ViewMap{v.ViewMap}
+			filter.tempViews = []ViewMap{v.ViewMap}
 		}
 
 		err := DeclareView(context.Background(), filter, v.Expr)
@@ -394,8 +394,8 @@ func TestDeclareView(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(filter.TempViews[0], v.Result) {
-			t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.Result)
+		if !reflect.DeepEqual(filter.tempViews[0], v.Result) {
+			t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.Result)
 		}
 	}
 }
@@ -765,7 +765,7 @@ var selectTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] result set to be combined should contain exactly 2 fields",
+		Error: "result set to be combined should contain exactly 2 fields",
 	},
 	{
 		Name: "Union LHS Error",
@@ -800,7 +800,7 @@ var selectTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Union RHS Error",
@@ -835,7 +835,7 @@ var selectTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Inline Tables",
@@ -944,7 +944,7 @@ var selectTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] select query should return exactly 1 field for inline table it",
+		Error: "select query should return exactly 1 field for inline table it",
 	},
 	{
 		Name: "Inline Tables Recursion",
@@ -1106,22 +1106,22 @@ var selectTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] result set to be combined should contain exactly 1 field",
+		Error: "result set to be combined should contain exactly 1 field",
 	},
 }
 
 func TestSelect(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
 	TestTx.Flags.Repository = TestDir
 
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range selectTests {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		result, err := Select(context.Background(), filter, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -1376,7 +1376,7 @@ var insertTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] file notexist does not exist",
+		Error: "file notexist does not exist",
 	},
 	{
 		Name: "Insert Query Field Does Not Exist Error",
@@ -1402,7 +1402,7 @@ var insertTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Insert Select Query",
@@ -1460,22 +1460,22 @@ var insertTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] select query should return exactly 1 field",
+		Error: "select query should return exactly 1 field",
 	},
 }
 
 func TestInsert(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
 	TestTx.Flags.Repository = TestDir
 	TestTx.Flags.Quiet = false
 
-	filter := NewEmptyFilter(TestTx)
-	filter.TempViews = TemporaryViewScopes{
+	filter := NewFilter(TestTx)
+	filter.tempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
@@ -1515,7 +1515,7 @@ func TestInsert(t *testing.T) {
 			continue
 		}
 
-		for _, v2 := range TestTx.CachedViews {
+		for _, v2 := range TestTx.cachedViews {
 			if v2.FileInfo.Handler != nil {
 				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
 					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
@@ -1534,13 +1534,13 @@ func TestInsert(t *testing.T) {
 		}
 
 		if v.ViewCache != nil {
-			if !reflect.DeepEqual(TestTx.CachedViews, v.ViewCache) {
-				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.ViewCache)
+			if !reflect.DeepEqual(TestTx.cachedViews, v.ViewCache) {
+				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.TempViews, v.TempViewList)
+			if !reflect.DeepEqual(filter.tempViews, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
 			}
 		}
 	}
@@ -1764,7 +1764,7 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] file notexist does not exist",
+		Error: "file notexist does not exist",
 	},
 	{
 		Name: "Update Query Filter Error",
@@ -1786,7 +1786,7 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Update Query File Is Not Loaded Error",
@@ -1822,7 +1822,7 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] table notexist is not loaded",
+		Error: "table notexist is not loaded",
 	},
 	{
 		Name: "Update Query Update Table Is Not Specified Error",
@@ -1858,7 +1858,7 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field t1.column2 does not exist in the tables to update",
+		Error: "field t1.column2 does not exist in the tables to update",
 	},
 	{
 		Name: "Update Query Update Field Error",
@@ -1880,7 +1880,7 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Update Query Update Value Error",
@@ -1902,7 +1902,7 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Update Query Record Is Ambiguous Error",
@@ -1932,22 +1932,22 @@ var updateTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] value column4 to set in the field column2 is ambiguous",
+		Error: "value column4 to set in the field column2 is ambiguous",
 	},
 }
 
 func TestUpdate(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
 	TestTx.Flags.Repository = TestDir
 	TestTx.Flags.Quiet = false
 
-	filter := NewEmptyFilter(TestTx)
-	filter.TempViews = TemporaryViewScopes{
+	filter := NewFilter(TestTx)
+	filter.tempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
@@ -1986,7 +1986,7 @@ func TestUpdate(t *testing.T) {
 			continue
 		}
 
-		for _, v2 := range TestTx.CachedViews {
+		for _, v2 := range TestTx.cachedViews {
 			if v2.FileInfo.Handler != nil {
 				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
 					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
@@ -2005,13 +2005,13 @@ func TestUpdate(t *testing.T) {
 		}
 
 		if v.ViewCache != nil {
-			if !reflect.DeepEqual(TestTx.CachedViews, v.ViewCache) {
-				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.ViewCache)
+			if !reflect.DeepEqual(TestTx.cachedViews, v.ViewCache) {
+				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.TempViews, v.TempViewList)
+			if !reflect.DeepEqual(filter.tempViews, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
 			}
 		}
 	}
@@ -2226,7 +2226,7 @@ var deleteTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] tables to delete records are not specified",
+		Error: "tables to delete records are not specified",
 	},
 	{
 		Name: "Delete Query File Does Not Exist Error",
@@ -2246,7 +2246,7 @@ var deleteTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] file notexist does not exist",
+		Error: "file notexist does not exist",
 	},
 	{
 		Name: "Delete Query Filter Error",
@@ -2266,7 +2266,7 @@ var deleteTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Delete Query File Is Not Loaded Error",
@@ -2296,22 +2296,22 @@ var deleteTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] table notexist is not loaded",
+		Error: "table notexist is not loaded",
 	},
 }
 
 func TestDelete(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
 	TestTx.Flags.Repository = TestDir
 	TestTx.Flags.Quiet = false
 
-	filter := NewEmptyFilter(TestTx)
-	filter.TempViews = TemporaryViewScopes{
+	filter := NewFilter(TestTx)
+	filter.tempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
@@ -2350,7 +2350,7 @@ func TestDelete(t *testing.T) {
 			continue
 		}
 
-		for _, v2 := range TestTx.CachedViews {
+		for _, v2 := range TestTx.cachedViews {
 			if v2.FileInfo.Handler != nil {
 				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
 					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
@@ -2369,13 +2369,13 @@ func TestDelete(t *testing.T) {
 		}
 
 		if v.ViewCache != nil {
-			if !reflect.DeepEqual(TestTx.CachedViews, v.ViewCache) {
-				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.ViewCache)
+			if !reflect.DeepEqual(TestTx.cachedViews, v.ViewCache) {
+				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.TempViews, v.TempViewList)
+			if !reflect.DeepEqual(filter.tempViews, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
 			}
 		}
 	}
@@ -2475,7 +2475,7 @@ var createTableTests = []struct {
 				parser.Identifier{Literal: "column2"},
 			},
 		},
-		Error: "[L:- C:-] file table1.csv already exists",
+		Error: "file table1.csv already exists",
 	},
 	{
 		Name: "Create Table Field Duplicate Error",
@@ -2486,7 +2486,7 @@ var createTableTests = []struct {
 				parser.Identifier{Literal: "column1"},
 			},
 		},
-		Error: "[L:- C:-] field name column1 is a duplicate",
+		Error: "field name column1 is a duplicate",
 	},
 	{
 		Name: "Create Table Select Query Execution Error",
@@ -2507,7 +2507,7 @@ var createTableTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Create Table From Select Query Field Length Not Match Error",
@@ -2527,7 +2527,7 @@ var createTableTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] select query should return exactly 1 field for table create_table_1.csv",
+		Error: "select query should return exactly 1 field for table create_table_1.csv",
 	},
 	{
 		Name: "Create Table From Select Query Field Name Duplicate Error",
@@ -2548,14 +2548,14 @@ var createTableTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field name column1 is a duplicate",
+		Error: "field name column1 is a duplicate",
 	},
 }
 
 func TestCreateTable(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -2565,13 +2565,13 @@ func TestCreateTable(t *testing.T) {
 	for _, v := range createTableTests {
 		_ = TestTx.ReleaseResources()
 
-		result, err := CreateTable(context.Background(), NewEmptyFilter(TestTx), v.Query)
+		result, err := CreateTable(context.Background(), NewFilter(TestTx), v.Query)
 
 		if result != nil {
 			_ = TestTx.FileContainer.Close(result.Handler)
 			result.Handler = nil
 		}
-		for _, view := range TestTx.CachedViews {
+		for _, view := range TestTx.cachedViews {
 			if view.FileInfo != nil {
 				_ = TestTx.FileContainer.Close(view.FileInfo.Handler)
 				view.FileInfo.Handler = nil
@@ -2596,8 +2596,8 @@ func TestCreateTable(t *testing.T) {
 		}
 
 		if v.ViewCache != nil {
-			if !reflect.DeepEqual(TestTx.CachedViews, v.ViewCache) {
-				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.ViewCache)
+			if !reflect.DeepEqual(TestTx.cachedViews, v.ViewCache) {
+				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
 	}
@@ -2912,7 +2912,7 @@ var addColumnsTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] file notexist does not exist",
+		Error: "file notexist does not exist",
 	},
 	{
 		Name: "Add Fields Position Column Does Not Exist Error",
@@ -2932,7 +2932,7 @@ var addColumnsTests = []struct {
 				Column:   parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Add Fields Field Duplicate Error",
@@ -2948,7 +2948,7 @@ var addColumnsTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field name column1 is a duplicate",
+		Error: "field name column1 is a duplicate",
 	},
 	{
 		Name: "Add Fields Default Value Error",
@@ -2964,22 +2964,22 @@ var addColumnsTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
 func TestAddColumns(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
 	TestTx.Flags.Repository = TestDir
 	TestTx.Flags.Quiet = false
 
-	filter := NewEmptyFilter(TestTx)
-	filter.TempViews = TemporaryViewScopes{
+	filter := NewFilter(TestTx)
+	filter.tempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
@@ -3018,7 +3018,7 @@ func TestAddColumns(t *testing.T) {
 			continue
 		}
 
-		for _, v2 := range TestTx.CachedViews {
+		for _, v2 := range TestTx.cachedViews {
 			if v2.FileInfo.Handler != nil {
 				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
 					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
@@ -3037,13 +3037,13 @@ func TestAddColumns(t *testing.T) {
 		}
 
 		if v.ViewCache != nil {
-			if !reflect.DeepEqual(TestTx.CachedViews, v.ViewCache) {
-				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.ViewCache)
+			if !reflect.DeepEqual(TestTx.cachedViews, v.ViewCache) {
+				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.TempViews, v.TempViewList)
+			if !reflect.DeepEqual(filter.tempViews, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
 			}
 		}
 	}
@@ -3145,7 +3145,7 @@ var dropColumnsTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
 		},
-		Error: "[L:- C:-] file notexist does not exist",
+		Error: "file notexist does not exist",
 	},
 	{
 		Name: "Drop Fields Field Does Not Exist Error",
@@ -3155,22 +3155,22 @@ var dropColumnsTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
 func TestDropColumns(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
 	TestTx.Flags.Repository = TestDir
 	TestTx.Flags.Quiet = false
 
-	filter := NewEmptyFilter(TestTx)
-	filter.TempViews = TemporaryViewScopes{
+	filter := NewFilter(TestTx)
+	filter.tempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
@@ -3210,7 +3210,7 @@ func TestDropColumns(t *testing.T) {
 			continue
 		}
 
-		for _, v2 := range TestTx.CachedViews {
+		for _, v2 := range TestTx.cachedViews {
 			if v2.FileInfo.Handler != nil {
 				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
 					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
@@ -3229,13 +3229,13 @@ func TestDropColumns(t *testing.T) {
 		}
 
 		if v.ViewCache != nil {
-			if !reflect.DeepEqual(TestTx.CachedViews, v.ViewCache) {
-				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.ViewCache)
+			if !reflect.DeepEqual(TestTx.cachedViews, v.ViewCache) {
+				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.TempViews, v.TempViewList)
+			if !reflect.DeepEqual(filter.tempViews, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
 			}
 		}
 	}
@@ -3336,7 +3336,7 @@ var renameColumnTests = []struct {
 			Old:   parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			New:   parser.Identifier{Literal: "newcolumn"},
 		},
-		Error: "[L:- C:-] file notexist does not exist",
+		Error: "file notexist does not exist",
 	},
 	{
 		Name: "Rename Column Field Duplicate Error",
@@ -3345,7 +3345,7 @@ var renameColumnTests = []struct {
 			Old:   parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			New:   parser.Identifier{Literal: "column1"},
 		},
-		Error: "[L:- C:-] field name column1 is a duplicate",
+		Error: "field name column1 is a duplicate",
 	},
 	{
 		Name: "Rename Column Field Does Not Exist Error",
@@ -3354,22 +3354,22 @@ var renameColumnTests = []struct {
 			Old:   parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			New:   parser.Identifier{Literal: "newcolumn"},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
 func TestRenameColumn(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
 	TestTx.Flags.Repository = TestDir
 	TestTx.Flags.Quiet = false
 
-	filter := NewEmptyFilter(TestTx)
-	filter.TempViews = TemporaryViewScopes{
+	filter := NewFilter(TestTx)
+	filter.tempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
@@ -3409,7 +3409,7 @@ func TestRenameColumn(t *testing.T) {
 			continue
 		}
 
-		for _, v2 := range TestTx.CachedViews {
+		for _, v2 := range TestTx.cachedViews {
 			if v2.FileInfo.Handler != nil {
 				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
 					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
@@ -3424,13 +3424,13 @@ func TestRenameColumn(t *testing.T) {
 		}
 
 		if v.ViewCache != nil {
-			if !reflect.DeepEqual(TestTx.CachedViews, v.ViewCache) {
-				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.ViewCache)
+			if !reflect.DeepEqual(TestTx.cachedViews, v.ViewCache) {
+				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.TempViews, v.TempViewList) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.TempViews, v.TempViewList)
+			if !reflect.DeepEqual(filter.tempViews, v.TempViewList) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
 			}
 		}
 	}
@@ -3498,7 +3498,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "delimiter"},
 			Value:     parser.NewStringValue("aa"),
 		},
-		Error: "[L:- C:-] delimiter must be one character",
+		Error: "delimiter must be one character",
 	},
 	{
 		Name: "Set Delimiter Not Allowed Value",
@@ -3507,7 +3507,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "delimiter"},
 			Value:     parser.NewNullValueFromString("null"),
 		},
-		Error: "[L:- C:-] null for delimiter is not allowed",
+		Error: "null for delimiter is not allowed",
 	},
 	{
 		Name: "Set DelimiterPositions",
@@ -3533,7 +3533,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "delimiter_positions"},
 			Value:     parser.NewStringValue("invalid"),
 		},
-		Error: "[L:- C:-] delimiter positions must be \"SPACES\" or a JSON array of integers",
+		Error: "delimiter positions must be \"SPACES\" or a JSON array of integers",
 	},
 	{
 		Name: "Set Format to Text",
@@ -3587,7 +3587,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "format"},
 			Value:     parser.NewStringValue("invalid"),
 		},
-		Error: "[L:- C:-] format must be one of CSV|TSV|FIXED|JSON|LTSV|GFM|ORG|TEXT",
+		Error: "format must be one of CSV|TSV|FIXED|JSON|LTSV|GFM|ORG|TEXT",
 	},
 	{
 		Name: "Set Encoding to SJIS",
@@ -3626,7 +3626,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "encoding"},
 			Value:     parser.NewStringValue("invalid"),
 		},
-		Error: "[L:- C:-] encoding must be one of UTF8|UTF8M|SJIS",
+		Error: "encoding must be one of UTF8|UTF8M|SJIS",
 	},
 	{
 		Name: "Set Encoding Error in JSON Format",
@@ -3635,7 +3635,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "encoding"},
 			Value:     parser.NewStringValue("sjis"),
 		},
-		Error: "[L:- C:-] json format is supported only UTF8",
+		Error: "json format is supported only UTF8",
 	},
 	{
 		Name: "Set LineBreak to CRLF",
@@ -3659,7 +3659,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "line_break"},
 			Value:     parser.NewStringValue("invalid"),
 		},
-		Error: "[L:- C:-] line-break must be one of CRLF|LF|CR",
+		Error: "line-break must be one of CRLF|LF|CR",
 	},
 	{
 		Name: "Set NoHeader to true",
@@ -3684,7 +3684,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "header"},
 			Value:     parser.NewNullValueFromString("null"),
 		},
-		Error: "[L:- C:-] null for header is not allowed",
+		Error: "null for header is not allowed",
 	},
 	{
 		Name: "Set EncloseAll to true",
@@ -3726,7 +3726,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "json_escape"},
 			Value:     parser.NewStringValue("invalid"),
 		},
-		Error: "[L:- C:-] json escape type must be one of BACKSLASH|HEX|HEXALL",
+		Error: "json escape type must be one of BACKSLASH|HEX|HEXALL",
 	},
 	{
 		Name: "Set PrettyPring to true",
@@ -3751,7 +3751,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "delimiter"},
 			Value:     parser.NewStringValue(","),
 		},
-		Error: "[L:- C:-] file notexist.csv does not exist",
+		Error: "file notexist.csv does not exist",
 	},
 	{
 		Name: "Temporary View Error",
@@ -3760,7 +3760,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "delimiter"},
 			Value:     parser.NewStringValue(","),
 		},
-		Error: "[L:- C:-] view has no attributes",
+		Error: "view has no attributes",
 	},
 	{
 		Name: "Value Evaluation Error",
@@ -3769,7 +3769,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "delimiter"},
 			Value:     parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Not Exist Attribute Error",
@@ -3778,22 +3778,22 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "notexist"},
 			Value:     parser.NewStringValue(","),
 		},
-		Error: "[L:- C:-] table attribute notexist does not exist",
+		Error: "table attribute notexist does not exist",
 	},
 }
 
 func TestSetTableAttribute(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
 	TestTx.Flags.Repository = TestDir
 	TestTx.Flags.Quiet = false
 
-	filter := NewEmptyFilter(TestTx)
-	filter.TempViews = TemporaryViewScopes{
+	filter := NewFilter(TestTx)
+	filter.tempViews = TemporaryViewScopes{
 		ViewMap{
 			"TMPVIEW": &View{
 				Header: NewHeader("tmpview", []string{"column1", "column2"}),
@@ -3833,7 +3833,7 @@ func TestSetTableAttribute(t *testing.T) {
 			continue
 		}
 
-		for _, v2 := range TestTx.CachedViews {
+		for _, v2 := range TestTx.cachedViews {
 			if v2.FileInfo.Handler != nil {
 				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
 					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)

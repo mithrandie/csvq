@@ -9,7 +9,7 @@ var preCreatedFileInfo = &FileInfo{Path: "pre_created.txt"}
 var preUpdatedFileInfo = &FileInfo{Path: "pre_updated.txt"}
 
 func TestUncommittedViewMap_SetForCreatedView(t *testing.T) {
-	m := &UncommittedViewMap{
+	m := &UncommittedViews{
 		Created: map[string]*FileInfo{
 			"PRE_CREATED.TXT": {Path: "pre_created.txt"},
 		},
@@ -21,7 +21,7 @@ func TestUncommittedViewMap_SetForCreatedView(t *testing.T) {
 	info := &FileInfo{
 		Path: "create.txt",
 	}
-	expect := &UncommittedViewMap{
+	expect := &UncommittedViews{
 		Created: map[string]*FileInfo{
 			"PRE_CREATED.TXT": {Path: "pre_created.txt"},
 			"CREATE.TXT":      {Path: "create.txt"},
@@ -47,7 +47,7 @@ func TestUncommittedViewMap_SetForCreatedView(t *testing.T) {
 }
 
 func TestUncommittedViewMap_SetForUpdatedView(t *testing.T) {
-	m := &UncommittedViewMap{
+	m := &UncommittedViews{
 		Created: map[string]*FileInfo{
 			"PRE_CREATED.TXT": {Path: "pre_created.txt"},
 		},
@@ -59,7 +59,7 @@ func TestUncommittedViewMap_SetForUpdatedView(t *testing.T) {
 	info := &FileInfo{
 		Path: "update.txt",
 	}
-	expect := &UncommittedViewMap{
+	expect := &UncommittedViews{
 		Created: map[string]*FileInfo{
 			"PRE_CREATED.TXT": {Path: "pre_created.txt"},
 		},
@@ -85,7 +85,7 @@ func TestUncommittedViewMap_SetForUpdatedView(t *testing.T) {
 }
 
 func TestUncommittedViewMap_Unset(t *testing.T) {
-	m := &UncommittedViewMap{
+	m := &UncommittedViews{
 		Created: map[string]*FileInfo{
 			"PRE_CREATED.TXT": {Path: "pre_created.txt"},
 		},
@@ -94,7 +94,7 @@ func TestUncommittedViewMap_Unset(t *testing.T) {
 		},
 	}
 
-	expect := &UncommittedViewMap{
+	expect := &UncommittedViews{
 		Created: map[string]*FileInfo{},
 		Updated: map[string]*FileInfo{
 			"PRE_UPDATED.TXT": {Path: "pre_updated.txt"},
@@ -106,7 +106,7 @@ func TestUncommittedViewMap_Unset(t *testing.T) {
 		t.Errorf("map = %v, want %v", m, expect)
 	}
 
-	expect = &UncommittedViewMap{
+	expect = &UncommittedViews{
 		Created: map[string]*FileInfo{},
 		Updated: map[string]*FileInfo{},
 	}
@@ -119,7 +119,7 @@ func TestUncommittedViewMap_Unset(t *testing.T) {
 func TestUncommittedViewMap_IsEmpty(t *testing.T) {
 	var expect bool
 
-	m := &UncommittedViewMap{
+	m := &UncommittedViews{
 		Created: map[string]*FileInfo{
 			"PRE_CREATED.TXT": {Path: "pre_created.txt"},
 		},
@@ -130,7 +130,7 @@ func TestUncommittedViewMap_IsEmpty(t *testing.T) {
 		t.Errorf("result = %t, want %t", result, expect)
 	}
 
-	m = &UncommittedViewMap{
+	m = &UncommittedViews{
 		Updated: map[string]*FileInfo{
 			"PRE_UPDATED.TXT": {Path: "pre_updated.txt"},
 		},
@@ -141,7 +141,7 @@ func TestUncommittedViewMap_IsEmpty(t *testing.T) {
 		t.Errorf("result = %t, want %t", result, expect)
 	}
 
-	m = &UncommittedViewMap{}
+	m = &UncommittedViews{}
 	expect = true
 	result = m.IsEmpty()
 	if result != expect {

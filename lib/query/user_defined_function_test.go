@@ -227,7 +227,7 @@ var userDefinedFunctionScopesGetTests = []struct {
 			Name: "notexist",
 		},
 		FuncName: "notexist",
-		Error:    "[L:- C:-] function notexist does not exist",
+		Error:    "function notexist does not exist",
 	},
 }
 
@@ -305,7 +305,7 @@ var userDefinedFunctionScopesDisposeTests = []struct {
 	{
 		Name:     "UserDefinedFunctionScopes Despose Not Exist Error",
 		FuncName: parser.Identifier{Literal: "notexist"},
-		Error:    "[L:- C:-] function notexist does not exist",
+		Error:    "function notexist does not exist",
 	},
 }
 
@@ -519,7 +519,7 @@ var userDefinedFunctionMapDeclareTests = []struct {
 				parser.Print{Value: parser.Variable{Name: "var1"}},
 			},
 		},
-		Error: "[L:- C:-] function userfunc is redeclared",
+		Error: "function userfunc is redeclared",
 	},
 	{
 		Name: "UserDefinedFunctionMap Declare Duplicate Prameters Error",
@@ -537,7 +537,7 @@ var userDefinedFunctionMapDeclareTests = []struct {
 				parser.Print{Value: parser.Variable{Name: "var1"}},
 			},
 		},
-		Error: "[L:- C:-] parameter @arg1 is a duplicate",
+		Error: "parameter @arg1 is a duplicate",
 	},
 }
 
@@ -613,7 +613,7 @@ var userDefinedFunctionMapDeclareAggregateTests = []struct {
 				parser.Print{Value: parser.Variable{Name: "var1"}},
 			},
 		},
-		Error: "[L:- C:-] function useraggfunc is redeclared",
+		Error: "function useraggfunc is redeclared",
 	},
 	{
 		Name: "UserDefinedFunctionMap DeclareAggregate Duplicate Parameters Error",
@@ -632,7 +632,7 @@ var userDefinedFunctionMapDeclareAggregateTests = []struct {
 				parser.Print{Value: parser.Variable{Name: "var1"}},
 			},
 		},
-		Error: "[L:- C:-] parameter @arg1 is a duplicate",
+		Error: "parameter @arg1 is a duplicate",
 	},
 }
 
@@ -668,22 +668,22 @@ var userDefinedFunctionMapCheckDuplicateTests = []struct {
 	{
 		Name:     "UserDefinedFunctionMap CheckDuplicate Redeclaration Error",
 		FuncName: parser.Identifier{Literal: "userfunc"},
-		Error:    "[L:- C:-] function userfunc is redeclared",
+		Error:    "function userfunc is redeclared",
 	},
 	{
 		Name:     "UserDefinedFunctionMap CheckDuplicate Duplicate with Built-in Function Error",
 		FuncName: parser.Identifier{Literal: "now"},
-		Error:    "[L:- C:-] function now is a built-in function",
+		Error:    "function now is a built-in function",
 	},
 	{
 		Name:     "UserDefinedFunctionMap CheckDuplicate Duplicate with Aggregate Function Error",
 		FuncName: parser.Identifier{Literal: "count"},
-		Error:    "[L:- C:-] function count is a built-in function",
+		Error:    "function count is a built-in function",
 	},
 	{
 		Name:     "UserDefinedFunctionMap CheckDuplicate Duplicate with Analytic Function Error",
 		FuncName: parser.Identifier{Literal: "row_number"},
-		Error:    "[L:- C:-] function row_number is a built-in function",
+		Error:    "function row_number is a built-in function",
 	},
 	{
 		Name:     "UserDefinedFunctionMap CheckDuplicate OK",
@@ -756,7 +756,7 @@ var userDefinedFunctionMapGetTests = []struct {
 			Name: "notexist",
 		},
 		FuncName: "notexist",
-		Error:    "[L:- C:-] function notexist does not exist",
+		Error:    "function notexist does not exist",
 	},
 }
 
@@ -906,7 +906,7 @@ var userDefinedFunctionExecuteTests = []struct {
 		Args: []value.Primary{
 			value.NewInteger(2),
 		},
-		Error: "[L:- C:-] function userfunc takes exactly 2 arguments",
+		Error: "function userfunc takes exactly 2 arguments",
 	},
 	{
 		Name: "UserDefinedFunction Execute Argument Evaluation Error",
@@ -945,7 +945,7 @@ var userDefinedFunctionExecuteTests = []struct {
 		Args: []value.Primary{
 			value.NewInteger(2),
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "UserDefinedFunction Execute Execution Error",
@@ -980,7 +980,7 @@ var userDefinedFunctionExecuteTests = []struct {
 			value.NewInteger(2),
 			value.NewInteger(3),
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
@@ -988,7 +988,7 @@ func TestUserDefinedFunction_Execute(t *testing.T) {
 	vars := GenerateVariableMap(map[string]value.Primary{
 		"var1": value.NewInteger(1),
 	})
-	filter := NewFilter(
+	filter := NewFilterWithScopes(
 		TestTx,
 		[]VariableMap{vars},
 		[]ViewMap{{}},
@@ -1248,12 +1248,12 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 		Args: []value.Primary{
 			value.NewInteger(0),
 		},
-		Error: "[L:- C:-] function useraggfunc takes exactly 1 argument",
+		Error: "function useraggfunc takes exactly 1 argument",
 	},
 }
 
 func TestUserDefinedFunction_ExecuteAggregate(t *testing.T) {
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range userDefinedFunctionExecuteAggregateTests {
 		result, err := v.Func.ExecuteAggregate(context.Background(), filter, v.Values, v.Args)
@@ -1310,7 +1310,7 @@ var userDefinedFunctionCheckArgsLenTests = []struct {
 			Statements:   []parser.Statement{},
 		},
 		ArgsLen: 1,
-		Error:   "[L:- C:-] function userfunc takes exactly 2 arguments",
+		Error:   "function userfunc takes exactly 2 arguments",
 	},
 	{
 		Name: "UserDefinedFunction CheckArgsLen Too Little Argument Error",
@@ -1327,7 +1327,7 @@ var userDefinedFunctionCheckArgsLenTests = []struct {
 			Statements:   []parser.Statement{},
 		},
 		ArgsLen: 0,
-		Error:   "[L:- C:-] function userfunc takes at least 1 argument",
+		Error:   "function userfunc takes at least 1 argument",
 	},
 	{
 		Name: "UserDefinedFunction CheckArgsLen Too Many Argument Length Error",
@@ -1344,7 +1344,7 @@ var userDefinedFunctionCheckArgsLenTests = []struct {
 			Statements:   []parser.Statement{},
 		},
 		ArgsLen: 3,
-		Error:   "[L:- C:-] function userfunc takes at most 2 arguments",
+		Error:   "function userfunc takes at most 2 arguments",
 	},
 	{
 		Name: "UserDefinedFunction CheckArgsLen Aggregate Argument Length Error",
@@ -1360,7 +1360,7 @@ var userDefinedFunctionCheckArgsLenTests = []struct {
 			Statements:   []parser.Statement{},
 		},
 		ArgsLen: 1,
-		Error:   "[L:- C:-] function userfunc takes exactly 3 arguments",
+		Error:   "function userfunc takes exactly 3 arguments",
 	},
 }
 

@@ -64,12 +64,12 @@ var aliasNodesGetTests = []struct {
 	{
 		Name:  "AliasMap Get Empty Path",
 		Alias: parser.Identifier{Literal: "tbl2"},
-		Error: "[L:- C:-] table tbl2 is not loaded",
+		Error: "table tbl2 is not loaded",
 	},
 	{
 		Name:  "AliasMap Get Not Loaded Error",
 		Alias: parser.Identifier{Literal: "notloaded"},
-		Error: "[L:- C:-] table notloaded is not loaded",
+		Error: "table notloaded is not loaded",
 	},
 }
 
@@ -122,7 +122,7 @@ var aliasMapAddTests = []struct {
 		Name:  "AliasMap Add Table Name Duplicate Error",
 		Alias: parser.Identifier{Literal: "tbl"},
 		Path:  "/path/to/tbl2.csv",
-		Error: "[L:- C:-] table name tbl is a duplicate",
+		Error: "table name tbl is a duplicate",
 	},
 }
 
@@ -163,12 +163,12 @@ var aliasMapGetTests = []struct {
 	{
 		Name:  "AliasMap Get Empty Path",
 		Alias: parser.Identifier{Literal: "tbl2"},
-		Error: "[L:- C:-] table tbl2 is not loaded",
+		Error: "table tbl2 is not loaded",
 	},
 	{
 		Name:  "AliasMap Get Not Loaded Error",
 		Alias: parser.Identifier{Literal: "notloaded"},
-		Error: "[L:- C:-] table notloaded is not loaded",
+		Error: "table notloaded is not loaded",
 	},
 }
 

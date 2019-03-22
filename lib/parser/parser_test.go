@@ -8,13 +8,15 @@ import (
 )
 
 var parseTests = []struct {
-	Input      string
-	Output     []Statement
-	SourceFile string
-	Error      string
-	ErrorLine  int
-	ErrorChar  int
-	ErrorFile  string
+	Input       string
+	ForPrepared bool
+	Output      []Statement
+	SourceFile  string
+	HolderNum   int
+	Error       string
+	ErrorLine   int
+	ErrorChar   int
+	ErrorFile   string
 }{
 	{
 		Input: "select foo; select bar;",
@@ -4566,6 +4568,45 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "prepare stmt from 'select :val'",
+		Output: []Statement{
+			StatementPreparation{
+				Name:      Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "stmt"},
+				Statement: value.NewString("select :val"),
+			},
+		},
+	},
+	{
+		Input: "execute stmt",
+		Output: []Statement{
+			ExecuteStatement{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Name:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "stmt"},
+			},
+		},
+	},
+	{
+		Input: "execute stmt using 'a', 1 as val",
+		Output: []Statement{
+			ExecuteStatement{
+				BaseExpr: &BaseExpr{line: 1, char: 1},
+				Name:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "stmt"},
+				Values: []ReplaceValue{
+					{Value: NewStringValue("a")},
+					{Value: NewIntegerValueFromString("1"), Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 30}, Literal: "val"}},
+				},
+			},
+		},
+	},
+	{
+		Input: "dispose prepare stmt",
+		Output: []Statement{
+			DisposeStatement{
+				Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 17}, Literal: "stmt"},
+			},
+		},
+	},
+	{
 		Input: "if @var1 = 1 then print 1; end if",
 		Output: []Statement{
 			If{
@@ -5534,6 +5575,22 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input:       "select ?, :val",
+		ForPrepared: true,
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select: "select",
+					Fields: []QueryExpression{
+						Field{Object: Placeholder{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "?", Ordinal: 1}},
+						Field{Object: Placeholder{BaseExpr: &BaseExpr{line: 1, char: 11}, Literal: ":val", Ordinal: 2, Name: "val"}},
+					},
+				},
+			}},
+		},
+		HolderNum: 2,
+	},
+	{
 		Input:     "select 1 = 1 = 1",
 		Error:     "syntax error: unexpected token \"=\"",
 		ErrorLine: 1,
@@ -5579,7 +5636,7 @@ var parseTests = []struct {
 
 func TestParse(t *testing.T) {
 	for _, v := range parseTests {
-		prog, err := Parse(v.Input, v.SourceFile, nil)
+		prog, holderNum, err := Parse(v.Input, v.SourceFile, nil, v.ForPrepared)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("unexpected error %q for %q", err, v.Input)
@@ -5602,6 +5659,12 @@ func TestParse(t *testing.T) {
 		if 0 < len(v.Error) {
 			t.Errorf("no error, want error %q for %q", v.Error, v.Input)
 			continue
+		}
+
+		if v.ForPrepared {
+			if holderNum != v.HolderNum {
+				t.Errorf("holder number = %d, want %d for %q", holderNum, v.HolderNum, v.Input)
+			}
 		}
 
 		if len(v.Output) != len(prog) {

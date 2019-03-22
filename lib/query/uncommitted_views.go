@@ -2,19 +2,19 @@ package query
 
 import "strings"
 
-type UncommittedViewMap struct {
+type UncommittedViews struct {
 	Created map[string]*FileInfo
 	Updated map[string]*FileInfo
 }
 
-func NewUncommittedViewMap() *UncommittedViewMap {
-	return &UncommittedViewMap{
+func NewUncommittedViews() *UncommittedViews {
+	return &UncommittedViews{
 		Created: make(map[string]*FileInfo),
 		Updated: make(map[string]*FileInfo),
 	}
 }
 
-func (m *UncommittedViewMap) SetForCreatedView(fileInfo *FileInfo) {
+func (m *UncommittedViews) SetForCreatedView(fileInfo *FileInfo) {
 	ufpath := strings.ToUpper(fileInfo.Path)
 
 	if _, ok := m.Created[ufpath]; !ok {
@@ -24,7 +24,7 @@ func (m *UncommittedViewMap) SetForCreatedView(fileInfo *FileInfo) {
 	}
 }
 
-func (m *UncommittedViewMap) SetForUpdatedView(fileInfo *FileInfo) {
+func (m *UncommittedViews) SetForUpdatedView(fileInfo *FileInfo) {
 	ufpath := strings.ToUpper(fileInfo.Path)
 
 	if _, ok := m.Created[ufpath]; !ok {
@@ -34,7 +34,7 @@ func (m *UncommittedViewMap) SetForUpdatedView(fileInfo *FileInfo) {
 	}
 }
 
-func (m *UncommittedViewMap) Unset(fileInfo *FileInfo) {
+func (m *UncommittedViews) Unset(fileInfo *FileInfo) {
 	ufpath := strings.ToUpper(fileInfo.Path)
 
 	if _, ok := m.Updated[ufpath]; ok {
@@ -47,7 +47,7 @@ func (m *UncommittedViewMap) Unset(fileInfo *FileInfo) {
 	}
 }
 
-func (m *UncommittedViewMap) Clean() {
+func (m *UncommittedViews) Clean() {
 	for k := range m.Updated {
 		delete(m.Updated, k)
 	}
@@ -56,7 +56,7 @@ func (m *UncommittedViewMap) Clean() {
 	}
 }
 
-func (m *UncommittedViewMap) UncommittedFiles() (map[string]*FileInfo, map[string]*FileInfo) {
+func (m *UncommittedViews) UncommittedFiles() (map[string]*FileInfo, map[string]*FileInfo) {
 	var createdFiles = make(map[string]*FileInfo)
 	var updatedFiles = make(map[string]*FileInfo)
 
@@ -74,7 +74,7 @@ func (m *UncommittedViewMap) UncommittedFiles() (map[string]*FileInfo, map[strin
 	return createdFiles, updatedFiles
 }
 
-func (m *UncommittedViewMap) UncommittedTempViews() map[string]*FileInfo {
+func (m *UncommittedViews) UncommittedTempViews() map[string]*FileInfo {
 	var updatedViews = map[string]*FileInfo{}
 
 	for k, v := range m.Updated {
@@ -86,7 +86,7 @@ func (m *UncommittedViewMap) UncommittedTempViews() map[string]*FileInfo {
 	return updatedViews
 }
 
-func (m *UncommittedViewMap) IsEmpty() bool {
+func (m *UncommittedViews) IsEmpty() bool {
 	if 0 < len(m.Created) {
 		return false
 	}
@@ -96,11 +96,11 @@ func (m *UncommittedViewMap) IsEmpty() bool {
 	return true
 }
 
-func (m *UncommittedViewMap) CountCreatedTables() int {
+func (m *UncommittedViews) CountCreatedTables() int {
 	return len(m.Created)
 }
 
-func (m *UncommittedViewMap) CountUpdatedTables() int {
+func (m *UncommittedViews) CountUpdatedTables() int {
 	cnt := 0
 	for _, v := range m.Updated {
 		if !v.IsTemporary {
@@ -110,7 +110,7 @@ func (m *UncommittedViewMap) CountUpdatedTables() int {
 	return cnt
 }
 
-func (m *UncommittedViewMap) CountUpdatedViews() int {
+func (m *UncommittedViews) CountUpdatedViews() int {
 	cnt := 0
 	for _, v := range m.Updated {
 		if v.IsTemporary {

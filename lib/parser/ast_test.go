@@ -106,6 +106,24 @@ func TestPrimitiveType_IsInteger(t *testing.T) {
 	}
 }
 
+func TestPlaceHolder_String(t *testing.T) {
+	s := "?"
+	ordinal := 3
+	e := Placeholder{Literal: s, Ordinal: ordinal, Name: ""}
+	expect := "?"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+
+	s = ":foo"
+	ordinal = 5
+	e = Placeholder{Literal: s, Ordinal: ordinal, Name: "foo"}
+	expect = ":foo"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
 func TestIdentifier_String(t *testing.T) {
 	s := "abcde"
 	e := Identifier{Literal: s}

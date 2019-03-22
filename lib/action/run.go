@@ -33,7 +33,7 @@ func Run(proc *query.Processor, input string, sourceFile string, outfile string)
 		showStats(proc, start)
 	}()
 
-	statements, err := parser.Parse(input, sourceFile, proc.Tx.Flags.DatetimeFormat)
+	statements, _, err := parser.Parse(input, sourceFile, proc.Tx.Flags.DatetimeFormat, false)
 	if err != nil {
 		return query.NewSyntaxError(err.(*parser.SyntaxError))
 	}
@@ -147,7 +147,7 @@ func LaunchInteractiveShell(proc *query.Processor) error {
 			proc.LogError(e.Error())
 		}
 
-		statements, e := parser.Parse(strings.Join(lines, "\n"), "", proc.Tx.Flags.DatetimeFormat)
+		statements, _, e := parser.Parse(strings.Join(lines, "\n"), "", proc.Tx.Flags.DatetimeFormat, false)
 		if e != nil {
 			e = query.NewSyntaxError(e.(*parser.SyntaxError))
 			proc.LogError(e.Error())

@@ -22,16 +22,16 @@ func Calc(proc *query.Processor, expr string) error {
 
 	q := "select " + expr + " from stdin"
 
-	program, err := parser.Parse(q, "", proc.Tx.Flags.DatetimeFormat)
+	program, _, err := parser.Parse(q, "", proc.Tx.Flags.DatetimeFormat, false)
 	if err != nil {
 		return errors.New("syntax error")
 	}
 	selectEntity, _ := program[0].(parser.SelectQuery).SelectEntity.(parser.SelectEntity)
 
 	view := query.NewView(proc.Tx)
-	err = view.Load(ctx, query.NewEmptyFilter(proc.Tx).CreateNode(), selectEntity.FromClause.(parser.FromClause))
+	err = view.Load(ctx, query.NewFilter(proc.Tx).CreateNode(), selectEntity.FromClause.(parser.FromClause))
 	if err != nil {
-		if appErr, ok := err.(query.AppError); ok {
+		if appErr, ok := err.(query.Error); ok {
 			return errors.New(appErr.ErrorMessage())
 		}
 		return err
@@ -39,7 +39,7 @@ func Calc(proc *query.Processor, expr string) error {
 
 	clause := selectEntity.SelectClause.(parser.SelectClause)
 
-	filter := query.NewFilterForRecord(query.NewEmptyFilter(proc.Tx), view, 0)
+	filter := query.NewFilterForRecord(query.NewFilter(proc.Tx), view, 0)
 	values := make([]string, len(clause.Fields))
 	for i, v := range clause.Fields {
 		field := v.(parser.Field)

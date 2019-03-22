@@ -220,10 +220,10 @@ func GenerateBenchGroupedViewFilter() Filter {
 	tx, _ := NewTransaction(context.Background(), file.DefaultWaitTimeout, file.DefaultRetryDelay, NewSession())
 
 	return Filter{
-		Records: []FilterRecord{
-			{View: view},
+		records: []filterRecord{
+			{view: view},
 		},
-		Tx: tx,
+		tx: tx,
 	}
 }
 

@@ -84,7 +84,7 @@ var stringFormatterFormatTests = []struct {
 	{
 		Format: "--%s--",
 		Values: []value.Primary{},
-		Error:  "[L:- C:-] number of replace values does not match",
+		Error:  "number of replace values does not match",
 	},
 	{
 		Format: "--%s--",
@@ -92,21 +92,21 @@ var stringFormatterFormatTests = []struct {
 			value.NewString("str"),
 			value.NewString("str"),
 		},
-		Error: "[L:- C:-] number of replace values does not match",
+		Error: "number of replace values does not match",
 	},
 	{
 		Format: "--%w--",
 		Values: []value.Primary{
 			value.NewString("str"),
 		},
-		Error: "[L:- C:-] \"w\" is an unknown placeholder",
+		Error: "\"w\" is an unknown placeholder",
 	},
 	{
 		Format: "--%0",
 		Values: []value.Primary{
 			value.NewString("str"),
 		},
-		Error: "[L:- C:-] unexpected termination of format string",
+		Error: "unexpected termination of format string",
 	},
 }
 

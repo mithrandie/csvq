@@ -188,12 +188,12 @@ var cursorScopesDisposeTests = []struct {
 	{
 		Name:    "CursorScopes Dispose Pseudo Cursor Error",
 		CurName: parser.Identifier{Literal: "pcur"},
-		Error:   "[L:- C:-] cursor pcur is a pseudo cursor",
+		Error:   "cursor pcur is a pseudo cursor",
 	},
 	{
 		Name:    "CursorScopes Dispose Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "[L:- C:-] cursor notexist is undeclared",
+		Error:   "cursor notexist is undeclared",
 	},
 }
 
@@ -299,23 +299,23 @@ var cursorScopesOpenTests = []struct {
 	{
 		Name:    "CursorScopes Open Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "[L:- C:-] cursor notexist is undeclared",
+		Error:   "cursor notexist is undeclared",
 	},
 	{
 		Name:    "CursorScopes Open Open Error",
 		CurName: parser.Identifier{Literal: "cur"},
-		Error:   "[L:- C:-] cursor cur is already open",
+		Error:   "cursor cur is already open",
 	},
 	{
 		Name:    "CursorScopes Close Pseudo Cursor Error",
 		CurName: parser.Identifier{Literal: "pcur"},
-		Error:   "[L:- C:-] cursor pcur is a pseudo cursor",
+		Error:   "cursor pcur is a pseudo cursor",
 	},
 }
 
 func TestCursorScopes_Open(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -344,9 +344,9 @@ func TestCursorScopes_Open(t *testing.T) {
 	}
 
 	for _, v := range cursorScopesOpenTests {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 
-		err := list.Open(context.Background(), NewEmptyFilter(TestTx), v.CurName)
+		err := list.Open(context.Background(), NewFilter(TestTx), v.CurName)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -398,18 +398,18 @@ var cursorScopesCloseTests = []struct {
 	{
 		Name:    "CursorScopes Close Pseudo Cursor Error",
 		CurName: parser.Identifier{Literal: "pcur"},
-		Error:   "[L:- C:-] cursor pcur is a pseudo cursor",
+		Error:   "cursor pcur is a pseudo cursor",
 	},
 	{
 		Name:    "CursorScopes Close Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "[L:- C:-] cursor notexist is undeclared",
+		Error:   "cursor notexist is undeclared",
 	},
 }
 
 func TestCursorScopes_Close(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -436,7 +436,7 @@ func TestCursorScopes_Close(t *testing.T) {
 		},
 	}
 
-	_ = list[1]["CUR"].Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
+	_ = list[1]["CUR"].Open(context.Background(), NewFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorScopesCloseTests {
 		err := list.Close(v.CurName)
@@ -479,19 +479,19 @@ var cursorScopesFetchTests = []struct {
 		Name:     "CursorScopes Fetch Undeclared Error",
 		CurName:  parser.Identifier{Literal: "notexist"},
 		Position: parser.NEXT,
-		Error:    "[L:- C:-] cursor notexist is undeclared",
+		Error:    "cursor notexist is undeclared",
 	},
 	{
 		Name:     "CursorScopes Fetch Closed Error",
 		CurName:  parser.Identifier{Literal: "cur2"},
 		Position: parser.NEXT,
-		Error:    "[L:- C:-] cursor cur2 is closed",
+		Error:    "cursor cur2 is closed",
 	},
 }
 
 func TestCursorScopes_Fetch(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -509,7 +509,7 @@ func TestCursorScopes_Fetch(t *testing.T) {
 		},
 	}
 
-	_ = list[1]["CUR"].Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
+	_ = list[1]["CUR"].Open(context.Background(), NewFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorScopesFetchTests {
 		result, err := list.Fetch(v.CurName, v.Position, v.Number)
@@ -545,13 +545,13 @@ var cursorScopesIsOpenTests = []struct {
 	{
 		Name:    "CursorScopes IsOpen Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "[L:- C:-] cursor notexist is undeclared",
+		Error:   "cursor notexist is undeclared",
 	},
 }
 
 func TestCursorScopes_IsOpen(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -566,7 +566,7 @@ func TestCursorScopes_IsOpen(t *testing.T) {
 		},
 	}
 
-	_ = list[1]["CUR"].Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
+	_ = list[1]["CUR"].Open(context.Background(), NewFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorScopesIsOpenTests {
 		result, err := list.IsOpen(v.CurName)
@@ -603,18 +603,18 @@ var cursorScopesIsInRangeTests = []struct {
 	{
 		Name:    "CursorMap Is In Range Not Open Error",
 		CurName: parser.Identifier{Literal: "cur2"},
-		Error:   "[L:- C:-] cursor cur2 is closed",
+		Error:   "cursor cur2 is closed",
 	},
 	{
 		Name:    "CursorMap Is In Range Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "[L:- C:-] cursor notexist is undeclared",
+		Error:   "cursor notexist is undeclared",
 	},
 }
 
 func TestCursorScopes_IsInRange(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -632,7 +632,7 @@ func TestCursorScopes_IsInRange(t *testing.T) {
 		},
 	}
 
-	_ = list[1]["CUR"].Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
+	_ = list[1]["CUR"].Open(context.Background(), NewFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorScopesIsInRangeTests {
 		result, err := list.IsInRange(v.CurName)
@@ -668,18 +668,18 @@ var cursorScopesCountTests = []struct {
 	{
 		Name:    "CursorScopes Count Not Open Error",
 		CurName: parser.Identifier{Literal: "cur2"},
-		Error:   "[L:- C:-] cursor cur2 is closed",
+		Error:   "cursor cur2 is closed",
 	},
 	{
 		Name:    "CursorScopes Count Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "[L:- C:-] cursor notexist is undeclared",
+		Error:   "cursor notexist is undeclared",
 	},
 }
 
 func TestCursorScopes_Count(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -697,7 +697,7 @@ func TestCursorScopes_Count(t *testing.T) {
 		},
 	}
 
-	_ = list[1]["CUR"].Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
+	_ = list[1]["CUR"].Open(context.Background(), NewFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorScopesCountTests {
 		result, err := list.Count(v.CurName)
@@ -786,7 +786,7 @@ var cursorMapDeclareTests = []struct {
 			Cursor: parser.Identifier{Literal: "cur"},
 			Query:  parser.SelectQuery{},
 		},
-		Error: "[L:- C:-] cursor cur is redeclared",
+		Error: "cursor cur is redeclared",
 	},
 }
 
@@ -846,7 +846,7 @@ var cursorMapAddPseudoCursorTests = []struct {
 		Name:   "CursorMap AddPseudoCursor Redeclaration Error",
 		Cursor: parser.Identifier{Literal: "pcur"},
 		Values: []value.Primary{},
-		Error:  "[L:- C:-] cursor pcur is redeclared",
+		Error:  "cursor pcur is redeclared",
 	},
 }
 
@@ -899,12 +899,12 @@ var cursorMapDisposeTests = []struct {
 	{
 		Name:    "CursorMap Dispose Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "[L:- C:-] cursor notexist is undeclared",
+		Error:   "cursor notexist is undeclared",
 	},
 	{
 		Name:    "CursorMap Dispose Rseudo Cursor Error",
 		CurName: parser.Identifier{Literal: "pcur"},
-		Error:   "[L:- C:-] cursor pcur is a pseudo cursor",
+		Error:   "cursor pcur is a pseudo cursor",
 	},
 }
 
@@ -1002,28 +1002,28 @@ var cursorMapOpenTests = []struct {
 	{
 		Name:    "CursorMap Open Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "[L:- C:-] cursor notexist is undeclared",
+		Error:   "cursor notexist is undeclared",
 	},
 	{
 		Name:    "CursorMap Open Open Error",
 		CurName: parser.Identifier{Literal: "cur"},
-		Error:   "[L:- C:-] cursor cur is already open",
+		Error:   "cursor cur is already open",
 	},
 	{
 		Name:    "CursorMap Open Query Error",
 		CurName: parser.Identifier{Literal: "cur2"},
-		Error:   "[L:- C:-] field notexist does not exist",
+		Error:   "field notexist does not exist",
 	},
 	{
 		Name:    "CursorMap Open Rseudo Cursor Error",
 		CurName: parser.Identifier{Literal: "pcur"},
-		Error:   "[L:- C:-] cursor pcur is a pseudo cursor",
+		Error:   "cursor pcur is a pseudo cursor",
 	},
 }
 
 func TestCursorMap_Open(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -1047,8 +1047,8 @@ func TestCursorMap_Open(t *testing.T) {
 	)
 
 	for _, v := range cursorMapOpenTests {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
-		err := cursors.Open(context.Background(), NewEmptyFilter(TestTx), v.CurName)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		err := cursors.Open(context.Background(), NewFilter(TestTx), v.CurName)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1097,18 +1097,18 @@ var cursorMapCloseTests = []struct {
 	{
 		Name:    "CursorMap Close Rseudo Cursor Error",
 		CurName: parser.Identifier{Literal: "pcur"},
-		Error:   "[L:- C:-] cursor pcur is a pseudo cursor",
+		Error:   "cursor pcur is a pseudo cursor",
 	},
 	{
 		Name:    "CursorMap Close Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "[L:- C:-] cursor notexist is undeclared",
+		Error:   "cursor notexist is undeclared",
 	},
 }
 
 func TestCursorMap_Close(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -1127,7 +1127,7 @@ func TestCursorMap_Close(t *testing.T) {
 			value.NewInteger(2),
 		},
 	)
-	_ = cursors.Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
+	_ = cursors.Open(context.Background(), NewFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorMapCloseTests {
 		err := cursors.Close(v.CurName)
@@ -1255,19 +1255,19 @@ var cursorMapFetchTests = []struct {
 		Name:     "CursorMap Fetch Undeclared Error",
 		CurName:  parser.Identifier{Literal: "notexist"},
 		Position: parser.NEXT,
-		Error:    "[L:- C:-] cursor notexist is undeclared",
+		Error:    "cursor notexist is undeclared",
 	},
 	{
 		Name:     "CursorMap Fetch Closed Error",
 		CurName:  parser.Identifier{Literal: "cur2"},
 		Position: parser.NEXT,
-		Error:    "[L:- C:-] cursor cur2 is closed",
+		Error:    "cursor cur2 is closed",
 	},
 }
 
 func TestCursorMap_Fetch(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -1281,7 +1281,7 @@ func TestCursorMap_Fetch(t *testing.T) {
 			query: selectQueryForCursorTest,
 		},
 	}
-	_ = cursors.Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
+	_ = cursors.Open(context.Background(), NewFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorMapFetchTests {
 		result, err := cursors.Fetch(v.CurName, v.Position, v.Number)
@@ -1322,13 +1322,13 @@ var cursorMapIsOpenTests = []struct {
 	{
 		Name:    "CursorMap IsOpen Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "[L:- C:-] cursor notexist is undeclared",
+		Error:   "cursor notexist is undeclared",
 	},
 }
 
 func TestCursorMap_IsOpen(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -1342,7 +1342,7 @@ func TestCursorMap_IsOpen(t *testing.T) {
 			query: selectQueryForCursorTest,
 		},
 	}
-	_ = cursors.Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
+	_ = cursors.Open(context.Background(), NewFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorMapIsOpenTests {
 		result, err := cursors.IsOpen(v.CurName)
@@ -1391,18 +1391,18 @@ var cursorMapIsInRangeTests = []struct {
 	{
 		Name:    "CursorMap Is In Range Not Open Error",
 		CurName: parser.Identifier{Literal: "cur3"},
-		Error:   "[L:- C:-] cursor cur3 is closed",
+		Error:   "cursor cur3 is closed",
 	},
 	{
 		Name:    "CursorMap Is In Range Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "[L:- C:-] cursor notexist is undeclared",
+		Error:   "cursor notexist is undeclared",
 	},
 }
 
 func TestCursorMap_IsInRange(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -1419,10 +1419,10 @@ func TestCursorMap_IsInRange(t *testing.T) {
 			query: selectQueryForCursorTest,
 		},
 	}
-	_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
-	_ = cursors.Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
-	_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
-	_ = cursors.Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur2"})
+	_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+	_ = cursors.Open(context.Background(), NewFilter(TestTx), parser.Identifier{Literal: "cur"})
+	_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+	_ = cursors.Open(context.Background(), NewFilter(TestTx), parser.Identifier{Literal: "cur2"})
 	_, _ = cursors.Fetch(parser.Identifier{Literal: "cur2"}, parser.NEXT, 0)
 
 	for _, v := range cursorMapIsInRangeTests {
@@ -1462,18 +1462,18 @@ var cursorMapCountTests = []struct {
 	{
 		Name:    "CursorMap Count Not Open Error",
 		CurName: parser.Identifier{Literal: "cur2"},
-		Error:   "[L:- C:-] cursor cur2 is closed",
+		Error:   "cursor cur2 is closed",
 	},
 	{
 		Name:    "CursorMap Count Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "[L:- C:-] cursor notexist is undeclared",
+		Error:   "cursor notexist is undeclared",
 	},
 }
 
 func TestCursorMap_Count(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -1487,8 +1487,8 @@ func TestCursorMap_Count(t *testing.T) {
 			query: selectQueryForCursorTest,
 		},
 	}
-	_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
-	_ = cursors.Open(context.Background(), NewEmptyFilter(TestTx), parser.Identifier{Literal: "cur"})
+	_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+	_ = cursors.Open(context.Background(), NewFilter(TestTx), parser.Identifier{Literal: "cur"})
 
 	for _, v := range cursorMapCountTests {
 		result, err := cursors.Count(v.CurName)

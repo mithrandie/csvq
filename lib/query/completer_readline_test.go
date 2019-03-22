@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mithrandie/csvq/lib/value"
+
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 
@@ -78,19 +80,28 @@ func TestReadlineListener_OnChange(t *testing.T) {
 }
 
 func TestCompleter_Update(t *testing.T) {
-	filter := NewEmptyFilter(TestTx)
-	filter.TempViews.Set(&View{
+	defer func() {
+		TestTx.PreparedStatements = make(PreparedStatementMap)
+	}()
+
+	filter := NewFilter(TestTx)
+	filter.tempViews.Set(&View{
 		FileInfo: &FileInfo{Path: "view1", IsTemporary: true},
 		Header:   NewHeader("view1", []string{"col1", "col2"}),
 	})
-	filter.TempViews.Set(&View{
+	filter.tempViews.Set(&View{
 		FileInfo: &FileInfo{Path: "view2", IsTemporary: true},
 		Header:   NewHeader("view1", []string{"col3", "col4"}),
 	})
-	_ = filter.Cursors.Declare(parser.CursorDeclaration{Cursor: parser.Identifier{Literal: "cur1"}})
-	_ = filter.Functions.Declare(parser.FunctionDeclaration{Name: parser.Identifier{Literal: "scalafunc"}})
-	_ = filter.Functions.DeclareAggregate(parser.AggregateDeclaration{Name: parser.Identifier{Literal: "aggfunc"}})
-	_ = filter.Variables.Declare(context.Background(), filter, parser.VariableDeclaration{Assignments: []parser.VariableAssignment{{Variable: parser.Variable{Name: "var"}}}})
+	_ = filter.cursors.Declare(parser.CursorDeclaration{Cursor: parser.Identifier{Literal: "cur1"}})
+	_ = filter.functions.Declare(parser.FunctionDeclaration{Name: parser.Identifier{Literal: "scalafunc"}})
+	_ = filter.functions.DeclareAggregate(parser.AggregateDeclaration{Name: parser.Identifier{Literal: "aggfunc"}})
+	_ = filter.variables.Declare(context.Background(), filter, parser.VariableDeclaration{Assignments: []parser.VariableAssignment{{Variable: parser.Variable{Name: "var"}}}})
+
+	_ = TestTx.PreparedStatements.Prepare(filter, parser.StatementPreparation{
+		Name:      parser.Identifier{Literal: "stmt"},
+		Statement: value.NewString("select 1"),
+	})
 
 	c := NewCompleter(filter)
 	if len(c.flagList) != len(cmd.FlagList) || !strings.HasPrefix(c.flagList[0], cmd.FlagSign) {
@@ -119,14 +130,17 @@ func TestCompleter_Update(t *testing.T) {
 	if !reflect.DeepEqual(c.userFuncList, []string{"aggfunc", "scalafunc"}) {
 		t.Error("user defined functions are not set correctly")
 	}
+	if len(c.statementList) != 1 {
+		t.Error("statement list is not set correctly")
+	}
 	if len(c.funcList) != len(Functions)+3+1 || !strings.HasSuffix(c.funcList[0], "()") {
-		t.Error("function list are not set correctly")
+		t.Error("function list is not set correctly")
 	}
 	if len(c.aggFuncList) != len(AggregateFunctions)+2+1 || !strings.HasSuffix(c.aggFuncList[0], "()") {
-		t.Error("aggregate function list are not set correctly")
+		t.Error("aggregate function list is not set correctly")
 	}
 	if len(c.analyticFuncList) != len(AnalyticFunctions)+len(AggregateFunctions)+1 || !strings.HasSuffix(c.analyticFuncList[0], "() OVER ()") {
-		t.Error("analytic function list are not set correctly")
+		t.Error("analytic function list is not set correctly")
 	}
 	if !reflect.DeepEqual(c.varList, []string{"@var"}) {
 		t.Error("variables are not set correctly")
@@ -141,7 +155,7 @@ func TestCompleter_Update(t *testing.T) {
 	}
 }
 
-var completer = NewCompleter(NewEmptyFilter(TestTx))
+var completer = NewCompleter(NewFilter(TestTx))
 
 type completerTest struct {
 	Name     string
@@ -156,11 +170,13 @@ func testCompleter(t *testing.T, f func(line string, origLine string, index int)
 
 	defer func() {
 		_ = os.Chdir(wd)
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		TestTx.PreparedStatements = make(PreparedStatementMap)
 		initFlag(TestTx.Flags)
 	}()
 
 	completer.runinfoList = []string{"@#INFO1", "@#INFO2"}
+	completer.statementList = []string{"stmt"}
 	completer.funcs = []string{"NOW"}
 	completer.aggFuncs = []string{"COUNT"}
 	completer.analyticFuncs = []string{"RANK", "FIRST_VALUE"}
@@ -175,13 +191,13 @@ func testCompleter(t *testing.T, f func(line string, origLine string, index int)
 	completer.varList = []string{"@var1", "@var2"}
 	completer.envList = []string{"@%ENV1", "@%ENV2"}
 	completer.enclosedEnvList = []string{"@%`ENV1`", "@%`ENV2`"}
-	TestTx.CachedViews.Set(&View{
+	TestTx.cachedViews.Set(&View{
 		FileInfo: &FileInfo{
 			Path: filepath.Join(CompletionTestDir, "newtable.csv"),
 		},
 		Header: NewHeader("newtable", []string{"ncol1", "ncol2", "ncol3"}),
 	})
-	TestTx.CachedViews.Set(&View{
+	TestTx.cachedViews.Set(&View{
 		FileInfo: &FileInfo{
 			Path: filepath.Join(CompletionTestDir, "sub", "table2.csv"),
 		},
@@ -227,6 +243,7 @@ var completerStatementsTests = []completerTest{
 			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("INSERT"), AppendSpace: true},
 			{Name: []rune("OPEN"), AppendSpace: true},
+			{Name: []rune("PREPARE"), AppendSpace: true},
 			{Name: []rune("PRINT"), AppendSpace: true},
 			{Name: []rune("PRINTF"), AppendSpace: true},
 			{Name: []rune("PWD")},
@@ -318,6 +335,13 @@ var completerStatementsTests = []completerTest{
 			{Name: []rune("FUNCTION"), AppendSpace: true},
 			{Name: []rune("VIEW"), AppendSpace: true},
 		},
+	},
+	{
+		Name:     "Statements PREPARE",
+		Line:     "",
+		OrigLine: "prepare ",
+		Index:    8,
+		Expect:   readline.CandidateList{},
 	},
 	{
 		Name:     "Statements SET",
@@ -417,6 +441,7 @@ var completerStatementsTests = []completerTest{
 			{Name: []rune("FLAGS")},
 			{Name: []rune("FUNCTIONS")},
 			{Name: []rune("RUNINFO")},
+			{Name: []rune("STATEMENTS")},
 			{Name: []rune("TABLES")},
 			{Name: []rune("VIEWS")},
 		}, completer.candidateList(completer.flagList, false)...),
@@ -457,6 +482,7 @@ var completerStatementsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("CURSOR"), AppendSpace: true},
 			{Name: []rune("FUNCTION"), AppendSpace: true},
+			{Name: []rune("PREPARE"), AppendSpace: true},
 			{Name: []rune("VIEW"), AppendSpace: true},
 			{Name: []rune("@var1")},
 			{Name: []rune("@var2")},
@@ -2305,6 +2331,29 @@ func TestCompleter_DeclareArgs(t *testing.T) {
 	testCompleter(t, completer.DeclareArgs, completerDeclareArgsTests)
 }
 
+var completerPrepareArgsTests = []completerTest{
+	{
+		Name:     "PrepareArgs",
+		Line:     "",
+		OrigLine: "prepare ",
+		Index:    8,
+		Expect:   readline.CandidateList{},
+	},
+	{
+		Name:     "PrepareArgs After Statement Name",
+		Line:     "",
+		OrigLine: "prepare stmt ",
+		Index:    13,
+		Expect: readline.CandidateList{
+			{Name: []rune("FROM"), AppendSpace: true},
+		},
+	},
+}
+
+func TestCompleter_PrepareArgs(t *testing.T) {
+	testCompleter(t, completer.PrepareArgs, completerPrepareArgsTests)
+}
+
 var completerFetchArgsTests = []completerTest{
 	{
 		Name:     "FetchArgs",
@@ -2568,11 +2617,13 @@ func TestCompleter_SetArgs(t *testing.T) {
 
 var completerUsingArgsTests = []completerTest{
 	{
-		Name:     "UsingArgs EXECUTE",
+		Name:     "UsingArgs After EXECUTE for Prepared Statement",
 		Line:     "",
 		OrigLine: "execute ",
 		Index:    8,
-		Expect:   readline.CandidateList{},
+		Expect: readline.CandidateList{
+			{Name: []rune("stmt"), AppendSpace: true},
+		},
 	},
 	{
 		Name:     "UsingArgs After EXECUTE",
@@ -2610,6 +2661,15 @@ var completerUsingArgsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("@var1")},
 			{Name: []rune("@var2")},
+		},
+	},
+	{
+		Name:     "UsingArgs After Value in USING",
+		Line:     "",
+		OrigLine: "execute '%s' using 'a'",
+		Index:    22,
+		Expect: readline.CandidateList{
+			{Name: []rune("AS"), AppendSpace: true},
 		},
 	},
 }
@@ -2711,6 +2771,7 @@ var completerDisposeArgsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("CURSOR"), AppendSpace: true},
 			{Name: []rune("FUNCTION"), AppendSpace: true},
+			{Name: []rune("PREPARE"), AppendSpace: true},
 			{Name: []rune("VIEW"), AppendSpace: true},
 			{Name: []rune("@var1")},
 			{Name: []rune("@var2")},
@@ -2746,6 +2807,15 @@ var completerDisposeArgsTests = []completerTest{
 		},
 	},
 	{
+		Name:     "DisposeArgs After PREPARE",
+		Line:     "",
+		OrigLine: "dispose prepare ",
+		Index:    16,
+		Expect: readline.CandidateList{
+			{Name: []rune("stmt")},
+		},
+	},
+	{
 		Name:     "DisposeArgs Invalid Syntax",
 		Line:     "",
 		OrigLine: "dispose 1 ",
@@ -2771,6 +2841,7 @@ var completerShowArgsTests = []completerTest{
 			{Name: []rune("FLAGS")},
 			{Name: []rune("FUNCTIONS")},
 			{Name: []rune("RUNINFO")},
+			{Name: []rune("STATEMENTS")},
 			{Name: []rune("TABLES")},
 			{Name: []rune("VIEWS")},
 		}, completer.candidateList(completer.flagList, false)...),
@@ -2787,6 +2858,7 @@ var completerShowArgsTests = []completerTest{
 			{Name: []rune("FLAGS")},
 			{Name: []rune("FUNCTIONS")},
 			{Name: []rune("RUNINFO")},
+			{Name: []rune("STATEMENTS")},
 			{Name: []rune("TABLES")},
 			{Name: []rune("VIEWS")},
 		}, completer.candidateList(completer.flagList, false)...),
@@ -2803,6 +2875,7 @@ var completerShowArgsTests = []completerTest{
 			{Name: []rune("FLAGS")},
 			{Name: []rune("FUNCTIONS")},
 			{Name: []rune("RUNINFO")},
+			{Name: []rune("STATEMENTS")},
 			{Name: []rune("TABLES")},
 			{Name: []rune("VIEWS")},
 		}, completer.candidateList(completer.flagList, false)...),
@@ -3332,7 +3405,7 @@ func TestCompleter_ListFiles(t *testing.T) {
 	wd, _ := os.Getwd()
 
 	_ = os.Chdir(CompletionTestDir)
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 	completer := NewCompleter(filter)
 	for _, v := range completerListFilesTests {
 		result := completer.ListFiles(v.Line, v.IncludeExt, v.Repository)
@@ -3346,16 +3419,16 @@ func TestCompleter_ListFiles(t *testing.T) {
 
 func TestCompleter_AllColumnList(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 	}()
 
-	filter := NewEmptyFilter(TestTx)
-	filter.TempViews.Set(&View{
+	filter := NewFilter(TestTx)
+	filter.tempViews.Set(&View{
 		FileInfo: &FileInfo{Path: "view1", IsTemporary: true},
 		Header:   NewHeader("view1", []string{"v1col1", "v1col2", "v1col3"}),
 	})
-	filter.TempViews.Set(&View{FileInfo: &FileInfo{Path: "view2", IsTemporary: true}})
-	TestTx.CachedViews.Set(
+	filter.tempViews.Set(&View{FileInfo: &FileInfo{Path: "view2", IsTemporary: true}})
+	TestTx.cachedViews.Set(
 		&View{
 			FileInfo: &FileInfo{
 				Path: filepath.Join(CompletionTestDir, "newtable.csv"),
@@ -3363,7 +3436,7 @@ func TestCompleter_AllColumnList(t *testing.T) {
 			Header: NewHeader("newtable", []string{"ncol1", "col2", "ncol3"}),
 		},
 	)
-	TestTx.CachedViews.Set(
+	TestTx.cachedViews.Set(
 		&View{
 			FileInfo: &FileInfo{
 				Path: filepath.Join(CompletionTestDir, "table1.csv"),
@@ -3412,17 +3485,17 @@ func TestCompleter_ColumnList(t *testing.T) {
 
 	defer func() {
 		_ = os.Chdir(wd)
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
-	filter := NewEmptyFilter(TestTx)
-	filter.TempViews.Set(&View{
+	filter := NewFilter(TestTx)
+	filter.tempViews.Set(&View{
 		FileInfo: &FileInfo{Path: "view1", IsTemporary: true},
 		Header:   NewHeader("view1", []string{"v1col1", "v1col2", "v1col3"}),
 	})
-	filter.TempViews.Set(&View{FileInfo: &FileInfo{Path: "view2", IsTemporary: true}})
-	TestTx.CachedViews.Set(
+	filter.tempViews.Set(&View{FileInfo: &FileInfo{Path: "view2", IsTemporary: true}})
+	TestTx.cachedViews.Set(
 		&View{
 			FileInfo: &FileInfo{
 				Path: filepath.Join(CompletionTestDir, "newtable.csv"),
@@ -3430,7 +3503,7 @@ func TestCompleter_ColumnList(t *testing.T) {
 			Header: NewHeader("newtable", []string{"ncol3", "ncol2", "ncol1"}),
 		},
 	)
-	TestTx.CachedViews.Set(
+	TestTx.cachedViews.Set(
 		&View{
 			FileInfo: &FileInfo{
 				Path: filepath.Join(CompletionTestDir, "table1.csv"),
@@ -3639,7 +3712,7 @@ var completerUpdateTokensTests = []struct {
 }
 
 func TestCompleter_UpdateTokens(t *testing.T) {
-	c := NewCompleter(NewEmptyFilter(TestTx))
+	c := NewCompleter(NewFilter(TestTx))
 	c.userFuncs = []string{"userfunc"}
 	c.userAggFuncs = []string{"aggfunc"}
 	c.userFuncList = []string{"userfunc", "aggfunc"}

@@ -212,7 +212,7 @@ var inRowValueListTests = []struct {
 		},
 		Type:     parser.ALL,
 		Operator: "=",
-		Error:    "[L:- C:-] row value length does not match at index 1",
+		Error:    "row value length does not match at index 1",
 	},
 }
 

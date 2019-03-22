@@ -23,7 +23,7 @@ func ShowFields(proc *query.Processor, filename string) error {
 	}
 
 	_, err := proc.Execute(context.Background(), statements)
-	if appErr, ok := err.(query.AppError); ok {
+	if appErr, ok := err.(query.Error); ok {
 		err = errors.New(appErr.ErrorMessage())
 	}
 

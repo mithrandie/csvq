@@ -41,12 +41,12 @@ var echoTests = []struct {
 				Name: "var",
 			},
 		},
-		Error: "[L:- C:-] variable @var is undeclared",
+		Error: "variable @var is undeclared",
 	},
 }
 
 func TestEcho(t *testing.T) {
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range echoTests {
 		result, err := Echo(context.Background(), filter, v.Expr)
@@ -88,12 +88,12 @@ var printTests = []struct {
 				Name: "var",
 			},
 		},
-		Error: "[L:- C:-] variable @var is undeclared",
+		Error: "variable @var is undeclared",
 	},
 }
 
 func TestPrint(t *testing.T) {
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range printTests {
 		result, err := Print(context.Background(), filter, v.Expr)
@@ -141,7 +141,7 @@ var printfTests = []struct {
 				parser.NewIntegerValue(1),
 			},
 		},
-		Error: "[L:- C:-] variable @var is undeclared",
+		Error: "variable @var is undeclared",
 	},
 	{
 		Name: "Printf Evaluate Error",
@@ -153,7 +153,7 @@ var printfTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] variable @var is undeclared",
+		Error: "variable @var is undeclared",
 	},
 	{
 		Name: "Printf Less Values Error",
@@ -163,7 +163,7 @@ var printfTests = []struct {
 				parser.NewStringValue("str"),
 			},
 		},
-		Error: "[L:- C:-] number of replace values does not match",
+		Error: "number of replace values does not match",
 	},
 	{
 		Name: "Printf Greater Values Error",
@@ -175,12 +175,12 @@ var printfTests = []struct {
 				parser.NewIntegerValue(2),
 			},
 		},
-		Error: "[L:- C:-] number of replace values does not match",
+		Error: "number of replace values does not match",
 	},
 }
 
 func TestPrintf(t *testing.T) {
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range printfTests {
 		result, err := Printf(context.Background(), filter, v.Expr)
@@ -235,28 +235,28 @@ var sourceTests = []struct {
 		Expr: parser.Source{
 			FilePath: parser.FieldReference{Column: parser.Identifier{Literal: "ident"}},
 		},
-		Error: "[L:- C:-] field ident does not exist",
+		Error: "field ident does not exist",
 	},
 	{
 		Name: "Source File Invalid File Path Error",
 		Expr: parser.Source{
 			FilePath: parser.NewNullValueFromString("NULL"),
 		},
-		Error: "[L:- C:-] NULL is a invalid file path",
+		Error: "NULL is a invalid file path",
 	},
 	{
 		Name: "Source File Empty File Path Error",
 		Expr: parser.Source{
 			FilePath: parser.Identifier{Literal: "", Quoted: true},
 		},
-		Error: "[L:- C:-] `` is a invalid file path",
+		Error: "`` is a invalid file path",
 	},
 	{
 		Name: "Source File Not Exist Error",
 		Expr: parser.Source{
 			FilePath: parser.NewStringValue(GetTestFilePath("notexist.sql")),
 		},
-		Error: fmt.Sprintf("[L:- C:-] file %s does not exist", GetTestFilePath("notexist.sql")),
+		Error: fmt.Sprintf("file '%s' does not exist", GetTestFilePath("notexist.sql")),
 	},
 	{
 		Name: "Source Syntax Error",
@@ -268,7 +268,7 @@ var sourceTests = []struct {
 }
 
 func TestSource(t *testing.T) {
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range sourceTests {
 		result, err := Source(context.Background(), filter, v.Expr)
@@ -320,7 +320,7 @@ var parseExecuteStatementsTests = []struct {
 				parser.NewStringValue("executable string"),
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "ParseExecuteStatements Format Error",
@@ -328,7 +328,7 @@ var parseExecuteStatementsTests = []struct {
 			BaseExpr:   parser.NewBaseExpr(parser.Token{}),
 			Statements: parser.NewStringValue("print %q;"),
 		},
-		Error: "[L:- C:-] number of replace values does not match",
+		Error: "number of replace values does not match",
 	},
 	{
 		Name: "ParseExecuteStatements Replace Value Error",
@@ -339,7 +339,7 @@ var parseExecuteStatementsTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "ParseExecuteStatements Parsing Error",
@@ -352,7 +352,7 @@ var parseExecuteStatementsTests = []struct {
 }
 
 func TestParseExecuteStatements(t *testing.T) {
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range parseExecuteStatementsTests {
 		result, err := ParseExecuteStatements(context.Background(), filter, v.Expr)
@@ -560,7 +560,7 @@ var setFlagTests = []struct {
 			Name:  "delimiter",
 			Value: parser.FieldReference{Column: parser.Identifier{Literal: "err"}},
 		},
-		Error: "[L:- C:-] field err does not exist",
+		Error: "field err does not exist",
 	},
 	{
 		Name: "Set Delimiter Value Error",
@@ -568,7 +568,7 @@ var setFlagTests = []struct {
 			Name:  "delimiter",
 			Value: parser.NewTernaryValueFromString("true"),
 		},
-		Error: "[L:- C:-] true for @@delimiter is not allowed",
+		Error: "true for @@delimiter is not allowed",
 	},
 	{
 		Name: "Set WaitTimeout Value Error",
@@ -576,7 +576,7 @@ var setFlagTests = []struct {
 			Name:  "wait_timeout",
 			Value: parser.NewTernaryValueFromString("true"),
 		},
-		Error: "[L:- C:-] true for @@wait_timeout is not allowed",
+		Error: "true for @@wait_timeout is not allowed",
 	},
 	{
 		Name: "Set WithoutNull Value Error",
@@ -584,7 +584,7 @@ var setFlagTests = []struct {
 			Name:  "without_null",
 			Value: parser.NewStringValue("string"),
 		},
-		Error: "[L:- C:-] 'string' for @@without_null is not allowed",
+		Error: "'string' for @@without_null is not allowed",
 	},
 	{
 		Name: "Set CPU Value Error",
@@ -592,7 +592,7 @@ var setFlagTests = []struct {
 			Name:  "cpu",
 			Value: parser.NewStringValue("invalid"),
 		},
-		Error: "[L:- C:-] 'invalid' for @@cpu is not allowed",
+		Error: "'invalid' for @@cpu is not allowed",
 	},
 	{
 		Name: "Invalid Flag Name Error",
@@ -600,7 +600,7 @@ var setFlagTests = []struct {
 			Name:  "invalid",
 			Value: parser.NewStringValue("string"),
 		},
-		Error: "[L:- C:-] @@invalid is an unknown flag",
+		Error: "@@invalid is an unknown flag",
 	},
 	{
 		Name: "Invalid Flag Value Error",
@@ -608,14 +608,14 @@ var setFlagTests = []struct {
 			Name:  "line_break",
 			Value: parser.NewStringValue("invalid"),
 		},
-		Error: "[L:- C:-] line-break must be one of CRLF|LF|CR",
+		Error: "line-break must be one of CRLF|LF|CR",
 	},
 }
 
 func TestSetFlag(t *testing.T) {
 	defer initFlag(TestTx.Flags)
 
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range setFlagTests {
 		initFlag(TestTx.Flags)
@@ -667,7 +667,7 @@ var addFlagElementTests = []struct {
 		Init: func(flags *cmd.Flags) {
 			flags.DatetimeFormat = []string{"%Y:%m:%d"}
 		},
-		Error: "[L:- C:-] add flag element syntax does not support @@format",
+		Error: "add flag element syntax does not support @@format",
 	},
 	{
 		Name: "Add Element Invalid Flag Name",
@@ -678,14 +678,14 @@ var addFlagElementTests = []struct {
 		Init: func(flags *cmd.Flags) {
 			flags.DatetimeFormat = []string{"%Y:%m:%d"}
 		},
-		Error: "[L:- C:-] @@invalid is an unknown flag",
+		Error: "@@invalid is an unknown flag",
 	},
 }
 
 func TestAddFlagElement(t *testing.T) {
 	defer initFlag(TestTx.Flags)
 
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range addFlagElementTests {
 		initFlag(TestTx.Flags)
@@ -758,7 +758,7 @@ var removeFlagElementTests = []struct {
 			Value: parser.NewNullValueFromString("null"),
 		},
 		Init:  func(flags *cmd.Flags) {},
-		Error: "[L:- C:-] null is an invalid value for @@datetime_format to specify the element",
+		Error: "null is an invalid value for @@datetime_format to specify the element",
 	},
 	{
 		Name: "Remove Element Evaluation Error",
@@ -767,7 +767,7 @@ var removeFlagElementTests = []struct {
 			Value: parser.FieldReference{Column: parser.Identifier{Literal: "err"}},
 		},
 		Init:  func(flags *cmd.Flags) {},
-		Error: "[L:- C:-] field err does not exist",
+		Error: "field err does not exist",
 	},
 	{
 		Name: "Remove Element Unsupported Flag Name",
@@ -776,7 +776,7 @@ var removeFlagElementTests = []struct {
 			Value: parser.NewIntegerValue(1),
 		},
 		Init:  func(flags *cmd.Flags) {},
-		Error: "[L:- C:-] remove flag element syntax does not support @@format",
+		Error: "remove flag element syntax does not support @@format",
 	},
 	{
 		Name: "Remove Element Invalid Flag Name",
@@ -785,14 +785,14 @@ var removeFlagElementTests = []struct {
 			Value: parser.NewIntegerValue(1),
 		},
 		Init:  func(flags *cmd.Flags) {},
-		Error: "[L:- C:-] @@invalid is an unknown flag",
+		Error: "@@invalid is an unknown flag",
 	},
 }
 
 func TestRemoveFlagElement(t *testing.T) {
 	defer initFlag(TestTx.Flags)
 
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range removeFlagElementTests {
 		initFlag(TestTx.Flags)
@@ -1484,14 +1484,14 @@ var showFlagTests = []struct {
 		Expr: parser.ShowFlag{
 			Name: "invalid",
 		},
-		Error: "[L:- C:-] @@invalid is an unknown flag",
+		Error: "@@invalid is an unknown flag",
 	},
 }
 
 func TestShowFlag(t *testing.T) {
 	defer initFlag(TestTx.Flags)
 
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range showFlagTests {
 		initFlag(TestTx.Flags)
@@ -1522,6 +1522,7 @@ var showObjectsTests = []struct {
 	Name                    string
 	Expr                    parser.ShowObjects
 	Filter                  *Filter
+	PreparedStatements      PreparedStatementMap
 	ImportFormat            cmd.Format
 	Delimiter               rune
 	DelimiterPositions      fixedlen.DelimiterPositions
@@ -1533,7 +1534,7 @@ var showObjectsTests = []struct {
 	WriteDelimiterPositions fixedlen.DelimiterPositions
 	WriteAsSingleLine       bool
 	ViewCache               ViewMap
-	UncommittedViews        *UncommittedViewMap
+	UncommittedViews        *UncommittedViews
 	Expect                  string
 	Error                   string
 }{
@@ -1711,7 +1712,7 @@ var showObjectsTests = []struct {
 				},
 			},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{
 				"TABLE1.TSV": {Path: "table1.tsv"},
 			},
@@ -1784,7 +1785,7 @@ var showObjectsTests = []struct {
 		Name: "ShowObjects Views",
 		Expr: parser.ShowObjects{Type: parser.Identifier{Literal: "views"}},
 		Filter: &Filter{
-			TempViews: TemporaryViewScopes{
+			tempViews: TemporaryViewScopes{
 				ViewMap{
 					"VIEW1": &View{
 						FileInfo: &FileInfo{
@@ -1812,7 +1813,7 @@ var showObjectsTests = []struct {
 				},
 			},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				"VIEW2": {Path: "view2", IsTemporary: true},
@@ -1836,7 +1837,7 @@ var showObjectsTests = []struct {
 		Name: "ShowObjects Cursors",
 		Expr: parser.ShowObjects{Type: parser.Identifier{Literal: "cursors"}},
 		Filter: &Filter{
-			Cursors: CursorScopes{
+			cursors: CursorScopes{
 				{
 					"CUR": &Cursor{
 						name:  "cur",
@@ -1925,7 +1926,7 @@ var showObjectsTests = []struct {
 		Name: "ShowObjects Functions",
 		Expr: parser.ShowObjects{Type: parser.Identifier{Literal: "functions"}},
 		Filter: &Filter{
-			Functions: UserDefinedFunctionScopes{
+			functions: UserDefinedFunctionScopes{
 				UserDefinedFunctionMap{
 					"USERFUNC1": &UserDefinedFunction{
 						Name: parser.Identifier{Literal: "userfunc1"},
@@ -1971,6 +1972,67 @@ var showObjectsTests = []struct {
 		Name:   "ShowObjects Functions Empty",
 		Expr:   parser.ShowObjects{Type: parser.Identifier{Literal: "functions"}},
 		Expect: "No function is declared",
+	},
+	{
+		Name: "ShowObjects Statements",
+		Expr: parser.ShowObjects{Type: parser.Identifier{Literal: "statements"}},
+		PreparedStatements: PreparedStatementMap{
+			"STMT1": &PreparedStatement{
+				Name:            "stmt1",
+				StatementString: "select 1",
+				Statements: []parser.Statement{
+					parser.SelectQuery{
+						SelectEntity: parser.SelectEntity{
+							SelectClause: parser.SelectClause{
+								BaseExpr: parser.NewBaseExpr(parser.Token{Line: 1, Char: 1, SourceFile: "stmt"}),
+								Select:   "select",
+								Fields: []parser.QueryExpression{
+									parser.Field{
+										Object: parser.NewIntegerValueFromString("1"),
+									},
+								},
+							},
+						},
+					},
+				},
+				HolderNumber: 0,
+			},
+			"STMT2": &PreparedStatement{
+				Name:            "stmt2",
+				StatementString: "select ?",
+				Statements: []parser.Statement{
+					parser.SelectQuery{
+						SelectEntity: parser.SelectEntity{
+							SelectClause: parser.SelectClause{
+								BaseExpr: parser.NewBaseExpr(parser.Token{Line: 1, Char: 1, SourceFile: "stmt"}),
+								Select:   "select",
+								Fields: []parser.QueryExpression{
+									parser.Field{
+										Object: parser.Placeholder{Literal: "?", Ordinal: 1},
+									},
+								},
+							},
+						},
+					},
+				},
+				HolderNumber: 1,
+			},
+		},
+		Expect: "\n" +
+			"    Prepared Statements\n" +
+			"---------------------------\n" +
+			" stmt1\n" +
+			"     Placeholder Number: 0\n" +
+			"     Statement: select 1\n" +
+			" stmt2\n" +
+			"     Placeholder Number: 1\n" +
+			"     Statement: select ?\n" +
+			"\n",
+	},
+	{
+		Name:   "ShowObjects Statements Empty",
+		Expr:   parser.ShowObjects{Type: parser.Identifier{Literal: "statements"}},
+		Expect: "No statement is prepared",
 	},
 	{
 		Name:       "ShowObjects Flags",
@@ -2027,14 +2089,15 @@ var showObjectsTests = []struct {
 	{
 		Name:  "ShowObjects Invalid Object Type",
 		Expr:  parser.ShowObjects{Type: parser.Identifier{Literal: "invalid"}},
-		Error: "[L:- C:-] object type invalid is invalid",
+		Error: "object type invalid is invalid",
 	},
 }
 
 func TestShowObjects(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		TestTx.UncommittedViews.Clean()
+		TestTx.uncommittedViews.Clean()
+		TestTx.PreparedStatements = make(PreparedStatementMap)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -2057,22 +2120,26 @@ func TestShowObjects(t *testing.T) {
 		TestTx.Flags.WriteDelimiterPositions = v.WriteDelimiterPositions
 		TestTx.Flags.WriteAsSingleLine = v.WriteAsSingleLine
 		TestTx.Flags.Format = v.Format
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		if 0 < len(v.ViewCache) {
-			TestTx.CachedViews = v.ViewCache
+			TestTx.cachedViews = v.ViewCache
 		}
 		if v.UncommittedViews == nil {
-			TestTx.UncommittedViews = NewUncommittedViewMap()
+			TestTx.uncommittedViews = NewUncommittedViews()
 		} else {
-			TestTx.UncommittedViews = v.UncommittedViews
+			TestTx.uncommittedViews = v.UncommittedViews
+		}
+		TestTx.PreparedStatements = make(PreparedStatementMap)
+		if v.PreparedStatements != nil {
+			TestTx.PreparedStatements = v.PreparedStatements
 		}
 
 		var filter *Filter
 		if v.Filter != nil {
 			filter = v.Filter
-			filter.Tx = TestTx
+			filter.tx = TestTx
 		} else {
-			filter = NewEmptyFilter(TestTx)
+			filter = NewFilter(TestTx)
 		}
 
 		result, err := ShowObjects(filter, v.Expr)
@@ -2099,7 +2166,7 @@ var showFieldsTests = []struct {
 	Expr             parser.ShowFields
 	Filter           *Filter
 	ViewCache        ViewMap
-	UncommittedViews *UncommittedViewMap
+	UncommittedViews *UncommittedViews
 	Expect           string
 	Error            string
 }{
@@ -2110,7 +2177,7 @@ var showFieldsTests = []struct {
 			Table: parser.Identifier{Literal: "view1"},
 		},
 		Filter: &Filter{
-			TempViews: TemporaryViewScopes{
+			tempViews: TemporaryViewScopes{
 				ViewMap{
 					"VIEW1": &View{
 						Header: NewHeader("view1", []string{"column1", "column2"}),
@@ -2139,7 +2206,7 @@ var showFieldsTests = []struct {
 			Table: parser.Identifier{Literal: "view1"},
 		},
 		Filter: &Filter{
-			TempViews: TemporaryViewScopes{
+			tempViews: TemporaryViewScopes{
 				ViewMap{
 					"VIEW1": &View{
 						Header: NewHeader("view1", []string{"column1", "column2"}),
@@ -2151,7 +2218,7 @@ var showFieldsTests = []struct {
 				},
 			},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				"VIEW1": {Path: "view1", IsTemporary: true},
@@ -2190,7 +2257,7 @@ var showFieldsTests = []struct {
 				},
 			},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("show_fields_create.csv")): {Path: "show_fields_create.csv"},
 			},
@@ -2228,7 +2295,7 @@ var showFieldsTests = []struct {
 				},
 			},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("show_fields_create.csv")): {Path: "show_fields_create.csv"},
 			},
@@ -2266,7 +2333,7 @@ var showFieldsTests = []struct {
 				},
 			},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("show_fields_update.csv")): {Path: "show_fields_updated.csv"},
@@ -2291,7 +2358,7 @@ var showFieldsTests = []struct {
 			Type:  parser.Identifier{Literal: "fields"},
 			Table: parser.Identifier{Literal: "notexist"},
 		},
-		Error: "[L:- C:-] file notexist does not exist",
+		Error: "file notexist does not exist",
 	},
 	{
 		Name: "ShowFields Invalid Object Type",
@@ -2299,7 +2366,7 @@ var showFieldsTests = []struct {
 			Type:  parser.Identifier{Literal: "invalid"},
 			Table: parser.Identifier{Literal: "table2"},
 		},
-		Error: "[L:- C:-] object type invalid is invalid",
+		Error: "object type invalid is invalid",
 	},
 }
 
@@ -2336,7 +2403,7 @@ func calcShowRuninfoWidth(wd string) int {
 func TestShowFields(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		TestTx.UncommittedViews.Clean()
+		TestTx.uncommittedViews.Clean()
 		initFlag(TestTx.Flags)
 	}()
 
@@ -2344,22 +2411,22 @@ func TestShowFields(t *testing.T) {
 	TestTx.Flags.Repository = TestDir
 
 	for _, v := range showFieldsTests {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		if 0 < len(v.ViewCache) {
-			TestTx.CachedViews = v.ViewCache
+			TestTx.cachedViews = v.ViewCache
 		}
 		if v.UncommittedViews == nil {
-			TestTx.UncommittedViews = NewUncommittedViewMap()
+			TestTx.uncommittedViews = NewUncommittedViews()
 		} else {
-			TestTx.UncommittedViews = v.UncommittedViews
+			TestTx.uncommittedViews = v.UncommittedViews
 		}
 
 		var filter *Filter
 		if v.Filter != nil {
 			filter = v.Filter
-			filter.Tx = TestTx
+			filter.tx = TestTx
 		} else {
-			filter = NewEmptyFilter(TestTx)
+			filter = NewFilter(TestTx)
 		}
 
 		result, err := ShowFields(context.Background(), filter, v.Expr)
@@ -2425,12 +2492,12 @@ var setEnvVarTests = []struct {
 			},
 			Value: parser.FieldReference{Column: parser.Identifier{Literal: "err"}},
 		},
-		Error: "[L:- C:-] field err does not exist",
+		Error: "field err does not exist",
 	},
 }
 
 func TestSetEnvVar(t *testing.T) {
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range setEnvVarTests {
 		err := SetEnvVar(context.Background(), filter, v.Expr)
@@ -2654,7 +2721,7 @@ func TestSyntax(t *testing.T) {
 		},
 	}
 
-	filter := NewEmptyFilter(TestTx)
+	filter := NewFilter(TestTx)
 
 	for _, v := range syntaxTests {
 		result := Syntax(context.Background(), filter, v.Expr)

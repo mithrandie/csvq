@@ -33,6 +33,7 @@ var statementPrefix = []string{
 	"CREATE",
 	"ALTER",
 	"DECLARE",
+	"PREPARE",
 	"VAR",
 	"SET",
 	"UNSET",
@@ -107,6 +108,7 @@ type Completer struct {
 	aggFuncs      []string
 	analyticFuncs []string
 
+	statementList    []string
 	userFuncs        []string
 	userAggFuncs     []string
 	userFuncList     []string
@@ -174,6 +176,7 @@ func (c *Completer) Do(line []rune, pos int, index int) (readline.CandidateList,
 }
 
 func (c *Completer) Update() {
+	c.updateStatements()
 	c.updateViews()
 	c.updateCursors()
 	c.updateFunctions()
@@ -188,8 +191,16 @@ func (c *Completer) Update() {
 	c.completer = completer
 }
 
+func (c *Completer) updateStatements() {
+	c.statementList = make([]string, 0, len(c.filter.tx.PreparedStatements))
+	for k := range c.filter.tx.PreparedStatements {
+		c.statementList = append(c.statementList, c.filter.tx.PreparedStatements[k].Name)
+	}
+	sort.Strings(c.statementList)
+}
+
 func (c *Completer) updateViews() {
-	views := c.filter.TempViews.All()
+	views := c.filter.tempViews.All()
 	viewKeys := views.SortedKeys()
 	c.viewList = make([]string, 0, len(viewKeys))
 	for _, key := range viewKeys {
@@ -198,7 +209,7 @@ func (c *Completer) updateViews() {
 }
 
 func (c *Completer) updateCursors() {
-	cursors := c.filter.Cursors.All()
+	cursors := c.filter.cursors.All()
 	cursorKeys := cursors.SortedKeys()
 	c.cursorList = make([]string, 0, len(cursorKeys))
 	for _, key := range cursorKeys {
@@ -207,7 +218,7 @@ func (c *Completer) updateCursors() {
 }
 
 func (c *Completer) updateFunctions() {
-	userfuncs, userAggFuncs := c.filter.Functions.All()
+	userfuncs, userAggFuncs := c.filter.functions.All()
 	c.userFuncs = make([]string, 0, len(userfuncs))
 	c.userAggFuncs = make([]string, 0, len(userAggFuncs))
 
@@ -248,7 +259,7 @@ func (c *Completer) updateFunctions() {
 }
 
 func (c *Completer) updateVariables() {
-	vars := c.filter.Variables.All()
+	vars := c.filter.variables.All()
 	varKeys := vars.SortedKeys()
 
 	c.varList = make([]string, 0, len(varKeys))
@@ -276,7 +287,7 @@ func (c *Completer) updateAllColumns() {
 
 func (c *Completer) GetStatementPrefix(line string, origLine string, index int) readline.CandidateList {
 	prefix := statementPrefix
-	if 0 < len(c.cursorList) || 0 < len(c.userFuncList) || 0 < len(c.viewList) || 0 < len(c.varList) {
+	if 0 < len(c.cursorList) || 0 < len(c.userFuncList) || 0 < len(c.viewList) || 0 < len(c.varList) || 0 < len(c.statementList) {
 		prefix = append(prefix, "DISPOSE")
 	}
 	if 0 < len(c.cursorList) {
@@ -326,6 +337,8 @@ func (c *Completer) Statements(line string, origLine string, index int) readline
 		return c.AlterArgs(line, origLine, index)
 	case parser.DECLARE, parser.VAR:
 		return c.DeclareArgs(line, origLine, index)
+	case parser.PREPARE:
+		return c.PrepareArgs(line, origLine, index)
 	case parser.SET:
 		return c.SetArgs(line, origLine, index)
 	case parser.UNSET:
@@ -1279,7 +1292,7 @@ func (c *Completer) AlterArgs(line string, origLine string, index int) readline.
 
 		var clist readline.CandidateList
 		if 0 < len(tableName) {
-			clist = c.identifierList(c.ColumnList(tableName, c.filter.Tx.Flags.Repository), appendSpace)
+			clist = c.identifierList(c.ColumnList(tableName, c.filter.tx.Flags.Repository), appendSpace)
 		}
 		return clist
 	}
@@ -1422,6 +1435,26 @@ func (c *Completer) DeclareArgs(line string, origLine string, index int) readlin
 	)
 }
 
+func (c *Completer) PrepareArgs(line string, origLine string, index int) readline.CandidateList {
+	return c.completeArgs(
+		line,
+		origLine,
+		index,
+		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
+			switch c.tokens[i].Token {
+			case parser.PREPARE:
+				if i == c.lastIdx-1 {
+					return []string{"FROM"}, nil, true
+				}
+			default:
+				return nil, nil, false
+			}
+
+			return nil, nil, true
+		},
+	)
+}
+
 func (c *Completer) FetchArgs(line string, origLine string, index int) readline.CandidateList {
 	positions := []string{
 		"NEXT",
@@ -1530,9 +1563,14 @@ func (c *Completer) UsingArgs(line string, origLine string, index int) readline.
 		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
 			switch c.tokens[i].Token {
 			case parser.USING:
-				return nil, c.SearchValues(line, origLine, index), true
+				if c.tokens[c.lastIdx-1].Token == parser.USING || c.tokens[c.lastIdx-1].Token == ',' {
+					keywords = []string{"AS"}
+				}
+				return keywords, c.SearchValues(line, origLine, index), true
 			case parser.EXECUTE, parser.PRINTF:
-				if i < c.lastIdx {
+				if i == c.lastIdx && c.tokens[i].Token == parser.EXECUTE && 0 < len(c.statementList) {
+					keywords = c.statementList
+				} else if i < c.lastIdx {
 					keywords = append(keywords, "USING")
 				}
 				return keywords, c.SearchValues(line, origLine, index), true
@@ -1605,6 +1643,11 @@ func (c *Completer) DisposeArgs(line string, origLine string, index int) readlin
 				case c.lastIdx:
 					return nil, c.candidateList(c.viewList, false), true
 				}
+			case parser.PREPARE:
+				switch i {
+				case c.lastIdx:
+					return nil, c.candidateList(c.statementList, false), true
+				}
 			case parser.DISPOSE:
 				switch i {
 				case c.lastIdx:
@@ -1617,6 +1660,9 @@ func (c *Completer) DisposeArgs(line string, origLine string, index int) readlin
 					}
 					if 0 < len(c.viewList) {
 						items = append(items, "VIEW")
+					}
+					if 0 < len(c.statementList) {
+						items = append(items, "PREPARE")
 					}
 					sort.Strings(items)
 					list := append(c.candidateList(items, true), c.candidateList(c.varList, false)...)
@@ -1676,10 +1722,10 @@ func (c *Completer) SearchAllTablesWithSpace(line string, origLine string, index
 }
 
 func (c *Completer) SearchAllTables(line string, origLine string, index int) readline.CandidateList {
-	tableKeys := c.filter.Tx.CachedViews.SortedKeys()
-	files := c.ListFiles(line, []string{cmd.CsvExt, cmd.TsvExt, cmd.JsonExt, cmd.LtsvExt, cmd.TextExt}, c.filter.Tx.Flags.Repository)
+	tableKeys := c.filter.tx.cachedViews.SortedKeys()
+	files := c.ListFiles(line, []string{cmd.CsvExt, cmd.TsvExt, cmd.JsonExt, cmd.LtsvExt, cmd.TextExt}, c.filter.tx.Flags.Repository)
 
-	defaultDir := c.filter.Tx.Flags.Repository
+	defaultDir := c.filter.tx.Flags.Repository
 	if len(defaultDir) < 1 {
 		defaultDir, _ = os.Getwd()
 	}
@@ -1687,7 +1733,7 @@ func (c *Completer) SearchAllTables(line string, origLine string, index int) rea
 	items := make([]string, 0, len(tableKeys)+len(files)+len(c.viewList))
 	tablePath := make(map[string]bool)
 	for _, k := range tableKeys {
-		lpath := c.filter.Tx.CachedViews[k].FileInfo.Path
+		lpath := c.filter.tx.cachedViews[k].FileInfo.Path
 		tablePath[lpath] = true
 		if filepath.Dir(lpath) == defaultDir {
 			items = append(items, filepath.Base(lpath))
@@ -1989,7 +2035,7 @@ func (c *Completer) ListFiles(path string, includeExt []string, repository strin
 
 func (c *Completer) AllColumnList() []string {
 	m := make(map[string]bool)
-	for _, view := range c.filter.TempViews[0] {
+	for _, view := range c.filter.tempViews[0] {
 		col := c.columnList(view)
 		for _, s := range col {
 			if _, ok := m[s]; !ok {
@@ -1998,7 +2044,7 @@ func (c *Completer) AllColumnList() []string {
 		}
 	}
 
-	for _, view := range c.filter.Tx.CachedViews {
+	for _, view := range c.filter.tx.cachedViews {
 		col := c.columnList(view)
 		for _, s := range col {
 			if _, ok := m[s]; !ok {
@@ -2020,21 +2066,21 @@ func (c *Completer) ColumnList(tableName string, repository string) []string {
 		return list
 	}
 
-	if view, ok := c.filter.TempViews[0][strings.ToUpper(tableName)]; ok {
+	if view, ok := c.filter.tempViews[0][strings.ToUpper(tableName)]; ok {
 		list := c.columnList(view)
 		c.tableColumns[tableName] = list
 		return list
 	}
 
 	if fpath, err := CreateFilePath(parser.Identifier{Literal: tableName}, repository); err == nil {
-		if view, ok := c.filter.Tx.CachedViews[strings.ToUpper(fpath)]; ok {
+		if view, ok := c.filter.tx.cachedViews[strings.ToUpper(fpath)]; ok {
 			list := c.columnList(view)
 			c.tableColumns[tableName] = list
 			return list
 		}
 	}
 	if fpath, err := SearchFilePathFromAllTypes(parser.Identifier{Literal: tableName}, repository); err == nil {
-		if view, ok := c.filter.Tx.CachedViews[strings.ToUpper(fpath)]; ok {
+		if view, ok := c.filter.tx.cachedViews[strings.ToUpper(fpath)]; ok {
 			list := c.columnList(view)
 			c.tableColumns[tableName] = list
 			return list
@@ -2091,7 +2137,7 @@ func (c *Completer) completeArgs(
 func (c *Completer) UpdateTokens(line string, origLine string) {
 	c.tokens = c.tokens[:0]
 	s := new(parser.Scanner)
-	s.Init(origLine, "", c.filter.Tx.Flags.DatetimeFormat)
+	s.Init(origLine, "", c.filter.tx.Flags.DatetimeFormat, false)
 	for {
 		t, _ := s.Scan()
 		if t.Token == parser.EOF {

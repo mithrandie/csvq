@@ -73,7 +73,7 @@ func (p *Prompt) LoadConfig() error {
 
 	scanner := new(excmd.ArgumentScanner)
 
-	scanner.Init(p.filter.Tx.Environment.InteractiveShell.Prompt)
+	scanner.Init(p.filter.tx.Environment.InteractiveShell.Prompt)
 	for scanner.Scan() {
 		p.sequence = append(p.sequence, PromptElement{
 			Text: scanner.Text(),
@@ -86,7 +86,7 @@ func (p *Prompt) LoadConfig() error {
 		return NewPromptEvaluationError(err.Error())
 	}
 
-	scanner.Init(p.filter.Tx.Environment.InteractiveShell.ContinuousPrompt)
+	scanner.Init(p.filter.tx.Environment.InteractiveShell.ContinuousPrompt)
 	for scanner.Scan() {
 		p.continuousSequence = append(p.continuousSequence, PromptElement{
 			Text: scanner.Text(),
@@ -106,7 +106,7 @@ func (p *Prompt) RenderPrompt(ctx context.Context) (string, error) {
 	if err != nil || len(s) < 1 {
 		s = TerminalPrompt
 	}
-	if p.filter.Tx.Flags.Color {
+	if p.filter.tx.Flags.Color {
 		if strings.IndexByte(s, 0x1b) < 0 {
 			s = p.palette.Render(cmd.PromptEffect, s)
 		}
@@ -121,7 +121,7 @@ func (p *Prompt) RenderContinuousPrompt(ctx context.Context) (string, error) {
 	if err != nil || len(s) < 1 {
 		s = TerminalContinuousPrompt
 	}
-	if p.filter.Tx.Flags.Color {
+	if p.filter.tx.Flags.Color {
 		if strings.IndexByte(s, 0x1b) < 0 {
 			s = p.palette.Render(cmd.PromptEffect, s)
 		}
@@ -154,7 +154,7 @@ func (p *Prompt) Render(ctx context.Context, sequence []PromptElement) (string, 
 		case excmd.CsvqExpression:
 			if 0 < len(element.Text) {
 				command := element.Text
-				statements, err := parser.Parse(command, "", p.filter.Tx.Flags.DatetimeFormat)
+				statements, _, err := parser.Parse(command, "", p.filter.tx.Flags.DatetimeFormat, false)
 				if err != nil {
 					syntaxErr := err.(*parser.SyntaxError)
 					return "", NewPromptEvaluationError(syntaxErr.Message)
@@ -164,13 +164,13 @@ func (p *Prompt) Render(ctx context.Context, sequence []PromptElement) (string, 
 				case 1:
 					expr, ok := statements[0].(parser.QueryExpression)
 					if !ok {
-						return "", NewPromptEvaluationError(fmt.Sprintf(ErrorInvalidValue, command))
+						return "", NewPromptEvaluationError(fmt.Sprintf(ErrMsgInvalidValueExpression, command))
 					}
 					if err = p.evaluate(ctx, expr); err != nil {
 						return "", err
 					}
 				default:
-					return "", NewPromptEvaluationError(fmt.Sprintf(ErrorInvalidValue, command))
+					return "", NewPromptEvaluationError(fmt.Sprintf(ErrMsgInvalidValueExpression, command))
 				}
 			}
 		}
@@ -182,7 +182,7 @@ func (p *Prompt) Render(ctx context.Context, sequence []PromptElement) (string, 
 func (p *Prompt) evaluate(ctx context.Context, expr parser.QueryExpression) error {
 	val, err := p.filter.Evaluate(ctx, expr)
 	if err != nil {
-		if ae, ok := err.(AppError); ok {
+		if ae, ok := err.(Error); ok {
 			err = NewPromptEvaluationError(ae.ErrorMessage())
 		}
 		return err

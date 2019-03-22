@@ -87,7 +87,7 @@ var inlineTableNodesSetTests = []struct {
 
 func TestInlineTableNodes_Set(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -111,8 +111,8 @@ func TestInlineTableNodes_Set(t *testing.T) {
 	_ = TestTx.Flags.SetRepository(TestDataDir)
 
 	for _, v := range inlineTableNodesSetTests {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
-		err := list.Set(context.Background(), NewEmptyFilter(TestTx), v.Expr)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		err := list.Set(context.Background(), NewFilter(TestTx), v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -154,13 +154,13 @@ var inlineTableNodesGetTests = []struct {
 	{
 		Name:      "InlineTableNodes Get Undefined Error",
 		TableName: parser.Identifier{Literal: "notexist"},
-		Error:     "[L:- C:-] inline table notexist is undefined",
+		Error:     "inline table notexist is undefined",
 	},
 }
 
 func TestInlineTableNodes_Get(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 	}()
 
 	list := InlineTableNodes{
@@ -201,7 +201,7 @@ func TestInlineTableNodes_Get(t *testing.T) {
 	}
 
 	for _, v := range inlineTableNodesGetTests {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		view, err := list.Get(v.TableName)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -374,7 +374,7 @@ var inlineTableNodesLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] inline table it is redefined",
+		Error: "inline table it is redefined",
 	},
 }
 
@@ -419,7 +419,7 @@ func TestInlineTableNodes_Load(t *testing.T) {
 	}
 
 	for _, v := range inlineTableNodesLoadTests {
-		err := list.Load(context.Background(), NewEmptyFilter(TestTx), v.Expr)
+		err := list.Load(context.Background(), NewFilter(TestTx), v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -619,7 +619,7 @@ var inlineTableMapSetTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] inline table it is redefined",
+		Error: "inline table it is redefined",
 	},
 	{
 		Name: "InlineTableMap Set Query Error",
@@ -648,7 +648,7 @@ var inlineTableMapSetTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "InlineTableMap Set Field Length Error",
@@ -676,7 +676,7 @@ var inlineTableMapSetTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] select query should return exactly 1 field for inline table it2",
+		Error: "select query should return exactly 1 field for inline table it2",
 	},
 	{
 		Name: "InlineTableMap Set Duplicate Field Name Error",
@@ -705,13 +705,13 @@ var inlineTableMapSetTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field name c1 is a duplicate",
+		Error: "field name c1 is a duplicate",
 	},
 }
 
 func TestInlineTableMap_Set(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -720,8 +720,8 @@ func TestInlineTableMap_Set(t *testing.T) {
 	it := InlineTableMap{}
 
 	for _, v := range inlineTableMapSetTests {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
-		err := it.Set(context.Background(), NewEmptyFilter(TestTx), v.Expr)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		err := it.Set(context.Background(), NewFilter(TestTx), v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -773,7 +773,7 @@ var inlineTableMapGetTests = []struct {
 	{
 		Name:      "InlineTableMap Get Undefined Error",
 		TableName: parser.Identifier{Literal: "notexist"},
-		Error:     "[L:- C:-] inline table notexist is undefined",
+		Error:     "inline table notexist is undefined",
 	},
 }
 

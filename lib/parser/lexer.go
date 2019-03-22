@@ -33,12 +33,13 @@ func (l *Lexer) Error(e string) {
 }
 
 type Token struct {
-	Token      int
-	Literal    string
-	Quoted     bool
-	Line       int
-	Char       int
-	SourceFile string
+	Token         int
+	Literal       string
+	Quoted        bool
+	HolderOrdinal int
+	Line          int
+	Char          int
+	SourceFile    string
 }
 
 func (t *Token) IsEmpty() bool {

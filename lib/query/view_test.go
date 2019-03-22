@@ -49,11 +49,11 @@ var viewLoadTests = []struct {
 				},
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases:      AliasNodes{{}},
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases:      AliasNodes{{}},
 			},
 			Tx: TestTx,
 		},
@@ -69,11 +69,11 @@ var viewLoadTests = []struct {
 				},
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases:      AliasNodes{{}},
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases:      AliasNodes{{}},
 			},
 			Tx: TestTx,
 		},
@@ -110,11 +110,11 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
 					},
@@ -155,11 +155,11 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{
 					{
 						"TABLE1_BOM": strings.ToUpper(GetTestFilePath("table1_bom.csv")),
 					},
@@ -202,11 +202,11 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
 					},
@@ -239,15 +239,15 @@ var viewLoadTests = []struct {
 				IsTemporary: true,
 			},
 			Filter: &Filter{
-				Variables: []VariableMap{{}},
-				TempViews: []ViewMap{
+				variables: []VariableMap{{}},
+				tempViews: []ViewMap{
 					{
 						"STDIN": nil,
 					},
 				},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{
 					{
 						"T": "STDIN",
 					},
@@ -281,15 +281,15 @@ var viewLoadTests = []struct {
 				IsTemporary: true,
 			},
 			Filter: &Filter{
-				Variables: []VariableMap{{}},
-				TempViews: []ViewMap{
+				variables: []VariableMap{{}},
+				tempViews: []ViewMap{
 					{
 						"STDIN": nil,
 					},
 				},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{
 					{
 						"T": "STDIN",
 					},
@@ -327,15 +327,15 @@ var viewLoadTests = []struct {
 				IsTemporary: true,
 			},
 			Filter: &Filter{
-				Variables: []VariableMap{{}},
-				TempViews: []ViewMap{
+				variables: []VariableMap{{}},
+				tempViews: []ViewMap{
 					{
 						"STDIN": nil,
 					},
 				},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{
 					{
 						"T": "STDIN",
 					},
@@ -377,15 +377,15 @@ var viewLoadTests = []struct {
 				IsTemporary: true,
 			},
 			Filter: &Filter{
-				Variables: []VariableMap{{}},
-				TempViews: []ViewMap{
+				variables: []VariableMap{{}},
+				tempViews: []ViewMap{
 					{
 						"STDIN": nil,
 					},
 				},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{
 					{
 						"T": "STDIN",
 					},
@@ -427,15 +427,15 @@ var viewLoadTests = []struct {
 				IsTemporary: true,
 			},
 			Filter: &Filter{
-				Variables: []VariableMap{{}},
-				TempViews: []ViewMap{
+				variables: []VariableMap{{}},
+				tempViews: []ViewMap{
 					{
 						"STDIN": nil,
 					},
 				},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{
 					{
 						"T": "STDIN",
 					},
@@ -454,7 +454,7 @@ var viewLoadTests = []struct {
 		Stdin:        "{\"key\":[{\"column1\": 1, \"column2\": \"str1\"}]}",
 		ImportFormat: cmd.JSON,
 		JsonQuery:    "key{",
-		Error:        "[L:- C:-] json query error: column 4: unexpected termination",
+		Error:        "json loading error: column 4: unexpected termination",
 	},
 	{
 		Name:         "Load Fixed-Length Text File",
@@ -492,11 +492,11 @@ var viewLoadTests = []struct {
 				LineBreak:          text.LF,
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{
 					{
 						"FIXED_LENGTH": strings.ToUpper(GetTestFilePath("fixed_length.txt")),
 					},
@@ -546,11 +546,11 @@ var viewLoadTests = []struct {
 				LineBreak:          text.LF,
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{
 					{
 						"FIXED_LENGTH": strings.ToUpper(GetTestFilePath("fixed_length.txt")),
 					},
@@ -570,7 +570,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: fmt.Sprintf("[L:- C:-] data parse error in file %s: invalid delimiter position: [6, 2]", GetTestFilePath("fixed_length.txt")),
+		Error: fmt.Sprintf("data parse error in file %s: invalid delimiter position: [6, 2]", GetTestFilePath("fixed_length.txt")),
 	},
 	{
 		Name:  "Load From Stdin With Omitted FromClause",
@@ -592,15 +592,15 @@ var viewLoadTests = []struct {
 				IsTemporary: true,
 			},
 			Filter: &Filter{
-				Variables: []VariableMap{{}},
-				TempViews: []ViewMap{
+				variables: []VariableMap{{}},
+				tempViews: []ViewMap{
 					{
 						"STDIN": nil,
 					},
 				},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{
 					{
 						"STDIN": "STDIN",
 					},
@@ -617,7 +617,7 @@ var viewLoadTests = []struct {
 			},
 		},
 		Stdin: "column1,column2\n1\"str1\"",
-		Error: "[L:- C:-] data parse error in file stdin: line 1, column 8: wrong number of fields in line",
+		Error: "data parse error in file stdin: line 1, column 8: wrong number of fields in line",
 	},
 	{
 		Name: "Load From Stdin Duplicate Table Name Error",
@@ -628,7 +628,7 @@ var viewLoadTests = []struct {
 			},
 		},
 		Stdin: "column1,column2\n1,\"str1\"",
-		Error: "[L:- C:-] table name t is a duplicate",
+		Error: "table name t is a duplicate",
 	},
 	{
 		Name: "Stdin Empty Error",
@@ -639,7 +639,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] stdin is empty",
+		Error: "stdin is empty",
 	},
 	{
 		Name: "Load TableObject From CSV File",
@@ -685,11 +685,11 @@ var viewLoadTests = []struct {
 				NoHeader:  true,
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{{
 					"T": strings.ToUpper(GetTestFilePath("table5.csv")),
 				}},
 			},
@@ -733,11 +733,11 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{{
 					"T": strings.ToUpper(GetTestFilePath("table3.tsv")),
 				}},
 			},
@@ -758,7 +758,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Load TableObject From CSV File FormatElement Is Not Specified",
@@ -773,7 +773,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] invalid argument for csv: delimiter is not specified",
+		Error: "invalid argument for csv: delimiter is not specified",
 	},
 	{
 		Name: "Load TableObject From CSV File FormatElement is Null",
@@ -789,7 +789,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] invalid delimiter: null",
+		Error: "invalid delimiter: null",
 	},
 	{
 		Name: "Load TableObject From CSV File FormatElement Invalid Delimiter",
@@ -805,7 +805,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] invalid delimiter: 'invalid'",
+		Error: "invalid delimiter: 'invalid'",
 	},
 	{
 		Name: "Load TableObject From CSV File Arguments Length Error",
@@ -827,7 +827,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] table object csv takes at most 5 arguments",
+		Error: "table object csv takes at most 5 arguments",
 	},
 	{
 		Name: "Load TableObject From CSV File 3rd Argument Error",
@@ -846,7 +846,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] invalid argument for csv: cannot be converted as a encoding value: true",
+		Error: "invalid argument for csv: cannot be converted as a encoding value: true",
 	},
 	{
 		Name: "Load TableObject From CSV File 4th Argument Error",
@@ -866,7 +866,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] invalid argument for csv: cannot be converted as a no-header value: 'SJIS'",
+		Error: "invalid argument for csv: cannot be converted as a no-header value: 'SJIS'",
 	},
 	{
 		Name: "Load TableObject From CSV File 5th Argument Error",
@@ -887,7 +887,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] invalid argument for csv: cannot be converted as a without-null value: 'SJIS'",
+		Error: "invalid argument for csv: cannot be converted as a without-null value: 'SJIS'",
 	},
 	{
 		Name: "Load TableObject From CSV File Invalid Encoding Type",
@@ -906,7 +906,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] invalid argument for csv: encoding must be one of UTF8|UTF8M|SJIS",
+		Error: "invalid argument for csv: encoding must be one of UTF8|UTF8M|SJIS",
 	},
 	{
 		Name: "Load TableObject From Fixed-Length File",
@@ -947,11 +947,11 @@ var viewLoadTests = []struct {
 				LineBreak:          text.LF,
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{{
 					"T": strings.ToUpper(GetTestFilePath("fixed_length.txt")),
 				}},
 			},
@@ -997,11 +997,11 @@ var viewLoadTests = []struct {
 				LineBreak:          text.LF,
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{{
 					"T": strings.ToUpper(GetTestFilePath("fixed_length_bom.txt")),
 				}},
 			},
@@ -1048,11 +1048,11 @@ var viewLoadTests = []struct {
 				SingleLine:         true,
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{{
 					"T": strings.ToUpper(GetTestFilePath("fixed_length_sl.txt")),
 				}},
 			},
@@ -1072,7 +1072,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] invalid argument for fixed: delimiter positions are not specified",
+		Error: "invalid argument for fixed: delimiter positions are not specified",
 	},
 	{
 		Name: "Load TableObject From Fixed-Length File FormatElement is Null",
@@ -1088,7 +1088,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] invalid delimiter positions: null",
+		Error: "invalid delimiter positions: null",
 	},
 	{
 		Name: "Load TableObject From Fixed-Length File Invalid Delimiter Positions",
@@ -1104,7 +1104,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] invalid delimiter positions: 'invalid'",
+		Error: "invalid delimiter positions: 'invalid'",
 	},
 	{
 		Name: "Load TableObject From Fixed-Length File Arguments Length Error",
@@ -1126,7 +1126,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] table object fixed takes at most 5 arguments",
+		Error: "table object fixed takes at most 5 arguments",
 	},
 	{
 		Name: "Load TableObject From Json File",
@@ -1163,11 +1163,11 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{{
 					"JT": strings.ToUpper(GetTestFilePath("table.json")),
 				}},
 			},
@@ -1210,11 +1210,11 @@ var viewLoadTests = []struct {
 				JsonEscape: json.HexDigits,
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{{
 					"JT": strings.ToUpper(GetTestFilePath("table_h.json")),
 				}},
 			},
@@ -1257,11 +1257,11 @@ var viewLoadTests = []struct {
 				JsonEscape: json.AllWithHexDigits,
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{{
 					"JT": strings.ToUpper(GetTestFilePath("table_a.json")),
 				}},
 			},
@@ -1281,7 +1281,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] invalid argument for json: json query is not specified",
+		Error: "invalid argument for json: json query is not specified",
 	},
 	{
 		Name: "Load TableObject From Json File FormatElement is Null",
@@ -1297,7 +1297,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] invalid json query: null",
+		Error: "invalid json query: null",
 	},
 	{
 		Name: "Load Table Object From Json File Path Error",
@@ -1313,7 +1313,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] file notexist does not exist",
+		Error: "file notexist does not exist",
 	},
 	{
 		Name: "Load TableObject From LTSV File",
@@ -1352,11 +1352,11 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{{
 					"T": strings.ToUpper(GetTestFilePath("table6.ltsv")),
 				}},
 			},
@@ -1404,11 +1404,11 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{{
 					"T": strings.ToUpper(GetTestFilePath("table6.ltsv")),
 				}},
 			},
@@ -1452,11 +1452,11 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{{
 					"T": strings.ToUpper(GetTestFilePath("table6_bom.ltsv")),
 				}},
 			},
@@ -1481,7 +1481,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] table object ltsv takes exactly 3 arguments",
+		Error: "table object ltsv takes exactly 3 arguments",
 	},
 	{
 		Name: "Load TableObject Invalid Object Type",
@@ -1497,7 +1497,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] invalid table object: invalid",
+		Error: "invalid table object: invalid",
 	},
 	{
 		Name: "Load TableObject From Json File Arguments Length Error",
@@ -1516,7 +1516,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] table object json takes exactly 2 arguments",
+		Error: "table object json takes exactly 2 arguments",
 	},
 	{
 		Name: "Load File Error",
@@ -1527,7 +1527,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] file notexist does not exist",
+		Error: "file notexist does not exist",
 	},
 	{
 		Name: "Load From File Duplicate Table Name Error",
@@ -1537,7 +1537,7 @@ var viewLoadTests = []struct {
 				parser.Table{Object: parser.Identifier{Literal: "table2"}, Alias: parser.Identifier{Literal: "t"}},
 			},
 		},
-		Error: "[L:- C:-] table name t is a duplicate",
+		Error: "table name t is a duplicate",
 	},
 	{
 		Name: "Load From File Inline Table",
@@ -1547,10 +1547,10 @@ var viewLoadTests = []struct {
 			},
 		},
 		Filter: &Filter{
-			Variables: VariableScopes{NewVariableMap()},
-			TempViews: TemporaryViewScopes{{}},
-			Cursors:   CursorScopes{{}},
-			InlineTables: InlineTableNodes{
+			variables: VariableScopes{NewVariableMap()},
+			tempViews: TemporaryViewScopes{{}},
+			cursors:   CursorScopes{{}},
+			inlineTables: InlineTableNodes{
 				InlineTableMap{
 					"IT": &View{
 						Header: NewHeader("it", []string{"c1", "c2", "num"}),
@@ -1574,7 +1574,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
-			Aliases: AliasNodes{{}},
+			aliases: AliasNodes{{}},
 		},
 		Result: &View{
 			Header: NewHeader("t", []string{"c1", "c2", "num"}),
@@ -1596,10 +1596,10 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				Variables: VariableScopes{NewVariableMap()},
-				TempViews: TemporaryViewScopes{{}},
-				Cursors:   CursorScopes{{}},
-				InlineTables: InlineTableNodes{
+				variables: VariableScopes{NewVariableMap()},
+				tempViews: TemporaryViewScopes{{}},
+				cursors:   CursorScopes{{}},
+				inlineTables: InlineTableNodes{
 					{},
 					InlineTableMap{
 						"IT": &View{
@@ -1624,7 +1624,7 @@ var viewLoadTests = []struct {
 						},
 					},
 				},
-				Aliases: AliasNodes{
+				aliases: AliasNodes{
 					{
 						"T": "",
 					},
@@ -1643,10 +1643,10 @@ var viewLoadTests = []struct {
 			},
 		},
 		Filter: &Filter{
-			Variables: VariableScopes{NewVariableMap()},
-			TempViews: TemporaryViewScopes{{}},
-			Cursors:   CursorScopes{{}},
-			InlineTables: InlineTableNodes{
+			variables: VariableScopes{NewVariableMap()},
+			tempViews: TemporaryViewScopes{{}},
+			cursors:   CursorScopes{{}},
+			inlineTables: InlineTableNodes{
 				InlineTableMap{
 					"IT": &View{
 						Header: NewHeader("it", []string{"c1", "c2", "num"}),
@@ -1670,9 +1670,9 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
-			Aliases: AliasNodes{{}},
+			aliases: AliasNodes{{}},
 		},
-		Error: "[L:- C:-] table name t is a duplicate",
+		Error: "table name t is a duplicate",
 	},
 	{
 		Name:     "Load SJIS File",
@@ -1697,11 +1697,11 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{
 					{
 						"TABLE_SJIS": strings.ToUpper(GetTestFilePath("table_sjis.csv")),
 					},
@@ -1733,11 +1733,11 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{
 					{
 						"TABLE_NOHEADER": strings.ToUpper(GetTestFilePath("table_noheader.csv")),
 					},
@@ -1822,11 +1822,11 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
 						"TABLE2": strings.ToUpper(GetTestFilePath("table2.csv")),
@@ -1917,11 +1917,11 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
 						"TABLE2": strings.ToUpper(GetTestFilePath("table2.csv")),
@@ -1976,11 +1976,11 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
 						"TABLE2": strings.ToUpper(GetTestFilePath("table2.csv")),
@@ -2035,11 +2035,11 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{
 					{
 						"TABLE1":  strings.ToUpper(GetTestFilePath("table1.csv")),
 						"TABLE1B": strings.ToUpper(GetTestFilePath("table1b.csv")),
@@ -2101,11 +2101,11 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{
 					{
 						"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
 						"TABLE2": strings.ToUpper(GetTestFilePath("table2.csv")),
@@ -2162,11 +2162,11 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{
 					{
 						"TABLE1":  strings.ToUpper(GetTestFilePath("table1.csv")),
 						"TABLE1B": strings.ToUpper(GetTestFilePath("table1b.csv")),
@@ -2193,7 +2193,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] file notexist does not exist",
+		Error: "file notexist does not exist",
 	},
 	{
 		Name: "Join Right Side Table File Not Exist Error",
@@ -2212,7 +2212,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] file notexist does not exist",
+		Error: "file notexist does not exist",
 	},
 	{
 		Name: "Load Json Table",
@@ -2248,11 +2248,11 @@ var viewLoadTests = []struct {
 				IsTemporary: true,
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{{
 					"JT": "",
 				}},
 			},
@@ -2272,7 +2272,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexists does not exist",
+		Error: "field notexists does not exist",
 	},
 	{
 		Name: "Load Json Table JsonText Evaluation Error",
@@ -2287,7 +2287,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexists does not exist",
+		Error: "field notexists does not exist",
 	},
 	{
 		Name: "Load Json Table Query is Null",
@@ -2302,7 +2302,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] json query is empty",
+		Error: "json query is empty",
 	},
 	{
 		Name: "Load Json Table JsonText is Null",
@@ -2317,7 +2317,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] json table is empty",
+		Error: "json table is empty",
 	},
 	{
 		Name: "Load Json Table Loading Error",
@@ -2332,7 +2332,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] json query error: column 17: unexpected termination",
+		Error: "json loading error: column 17: unexpected termination",
 	},
 	{
 		Name: "Load Json Table From File",
@@ -2368,11 +2368,11 @@ var viewLoadTests = []struct {
 				IsTemporary: true,
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{{
 					"JT": "",
 				}},
 			},
@@ -2392,7 +2392,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] file notexist does not exist",
+		Error: "file notexist does not exist",
 	},
 	{
 		Name: "Load Subquery",
@@ -2438,11 +2438,11 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				Variables:    []VariableMap{{}},
-				TempViews:    []ViewMap{{}},
-				Cursors:      []CursorMap{{}},
-				InlineTables: InlineTableNodes{{}},
-				Aliases: AliasNodes{
+				variables:    []VariableMap{{}},
+				tempViews:    []ViewMap{{}},
+				cursors:      []CursorMap{{}},
+				inlineTables: InlineTableNodes{{}},
+				aliases: AliasNodes{
 					{
 						"ALIAS": "",
 					},
@@ -2479,7 +2479,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] table name t is a duplicate",
+		Error: "table name t is a duplicate",
 	},
 	{
 		Name: "Load CSV Parse Error",
@@ -2490,7 +2490,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: fmt.Sprintf("[L:- C:-] data parse error in file %s: line 3, column 7: wrong number of fields in line", GetTestFilePath("table_broken.csv")),
+		Error: fmt.Sprintf("data parse error in file %s: line 3, column 7: wrong number of fields in line", GetTestFilePath("table_broken.csv")),
 	},
 	{
 		Name: "Inner Join Join Error",
@@ -2515,7 +2515,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field table1.notexist does not exist",
+		Error: "field table1.notexist does not exist",
 	},
 	{
 		Name: "Outer Join Join Error",
@@ -2541,7 +2541,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field table2.notexist does not exist",
+		Error: "field table2.notexist does not exist",
 	},
 	{
 		Name: "Inner Join Using Condition Error",
@@ -2564,21 +2564,21 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
 func TestView_Load(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
 	TestTx.Flags.Repository = TestDir
 
 	for _, v := range viewLoadTests {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 
 		TestTx.Flags.ImportFormat = v.ImportFormat
 		TestTx.Flags.Delimiter = ','
@@ -2606,9 +2606,9 @@ func TestView_Load(t *testing.T) {
 
 		view := NewView(TestTx)
 		if v.Filter == nil {
-			v.Filter = NewEmptyFilter(TestTx)
+			v.Filter = NewFilter(TestTx)
 		} else {
-			v.Filter.Tx = TestTx
+			v.Filter.tx = TestTx
 		}
 		view.UseInternalId = v.UseInternalId
 
@@ -2669,25 +2669,25 @@ func TestView_Load(t *testing.T) {
 		}
 		v.Result.FileInfo = nil
 
-		if !reflect.DeepEqual(view.Filter.Aliases, v.Result.Filter.Aliases) {
-			t.Errorf("%s: alias list = %q, want %q", v.Name, view.Filter.Aliases, v.Result.Filter.Aliases)
+		if !reflect.DeepEqual(view.Filter.aliases, v.Result.Filter.aliases) {
+			t.Errorf("%s: alias list = %q, want %q", v.Name, view.Filter.aliases, v.Result.Filter.aliases)
 		}
-		for i, tviews := range v.Result.Filter.TempViews {
+		for i, tviews := range v.Result.Filter.tempViews {
 			resultKeys := make([]string, len(tviews))
 			for key := range tviews {
 				resultKeys = append(resultKeys, key)
 			}
-			viewKeys := make([]string, len(view.Filter.TempViews[i]))
-			for key := range view.Filter.TempViews[i] {
+			viewKeys := make([]string, len(view.Filter.tempViews[i]))
+			for key := range view.Filter.tempViews[i] {
 				viewKeys = append(viewKeys, key)
 			}
 			if !reflect.DeepEqual(resultKeys, viewKeys) {
-				t.Errorf("%s: temp view list = %v, want %v", v.Name, view.Filter.TempViews, v.Result.Filter.TempViews)
+				t.Errorf("%s: temp view list = %v, want %v", v.Name, view.Filter.tempViews, v.Result.Filter.tempViews)
 			}
 		}
 
-		view.Filter = NewEmptyFilter(TestTx)
-		v.Result.Filter = NewEmptyFilter(TestTx)
+		view.Filter = NewFilter(TestTx)
+		v.Result.Filter = NewFilter(TestTx)
 
 		if !reflect.DeepEqual(view, v.Result) {
 			t.Errorf("%s: result = %v, want %v", v.Name, view, v.Result)
@@ -2696,8 +2696,8 @@ func TestView_Load(t *testing.T) {
 }
 
 func TestNewViewFromGroupedRecord(t *testing.T) {
-	fr := FilterRecord{
-		View: &View{
+	fr := filterRecord{
+		view: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 			RecordSet: []Record{
 				{
@@ -2707,7 +2707,7 @@ func TestNewViewFromGroupedRecord(t *testing.T) {
 				},
 			},
 		},
-		RecordIndex: 0,
+		recordIndex: 0,
 	}
 	expect := &View{
 		Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
@@ -2750,7 +2750,7 @@ var viewWhereTests = []struct {
 					value.NewString("str3"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 		},
 		Where: parser.WhereClause{
 			Filter: parser.Comparison{
@@ -2785,7 +2785,7 @@ var viewWhereTests = []struct {
 					value.NewString("str3"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 		},
 		Where: parser.WhereClause{
 			Filter: parser.Comparison{
@@ -2819,7 +2819,7 @@ var viewWhereTests = []struct {
 					value.NewString("str3"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 		},
 		Where: parser.WhereClause{
 			Filter: parser.Comparison{
@@ -2828,7 +2828,7 @@ var viewWhereTests = []struct {
 				Operator: "=",
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
@@ -2895,7 +2895,7 @@ var viewGroupByTests = []struct {
 					value.NewString("group2"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			Tx:     TestTx,
 		},
 		GroupBy: parser.GroupByClause{
@@ -2943,7 +2943,7 @@ var viewGroupByTests = []struct {
 					NewGroupCell([]value.Primary{value.NewString("group2"), value.NewString("group2")}),
 				},
 			},
-			Filter:    NewEmptyFilter(TestTx),
+			Filter:    NewFilter(TestTx),
 			isGrouped: true,
 			Tx:        TestTx,
 		},
@@ -2974,7 +2974,7 @@ var viewGroupByTests = []struct {
 					value.NewString("group2"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			Tx:     TestTx,
 		},
 		GroupBy: parser.GroupByClause{
@@ -3022,7 +3022,7 @@ var viewGroupByTests = []struct {
 					NewGroupCell([]value.Primary{value.NewString("group2"), value.NewString("group2")}),
 				},
 			},
-			Filter:    NewEmptyFilter(TestTx),
+			Filter:    NewFilter(TestTx),
 			isGrouped: true,
 			Tx:        TestTx,
 		},
@@ -3053,7 +3053,7 @@ var viewGroupByTests = []struct {
 					value.NewString("group2"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			Tx:     TestTx,
 		},
 		GroupBy: parser.GroupByClause{
@@ -3061,14 +3061,14 @@ var viewGroupByTests = []struct {
 				parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: value.NewInteger(0)},
 			},
 		},
-		Error: "[L:- C:-] field table1.0 does not exist",
+		Error: "field table1.0 does not exist",
 	},
 	{
 		Name: "Group By Empty Record",
 		View: &View{
 			Header:    NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
 			RecordSet: []Record{},
-			Filter:    NewEmptyFilter(TestTx),
+			Filter:    NewFilter(TestTx),
 			Tx:        TestTx,
 		},
 		GroupBy: parser.GroupByClause{
@@ -3103,7 +3103,7 @@ var viewGroupByTests = []struct {
 				},
 			},
 			RecordSet: []Record{},
-			Filter:    NewEmptyFilter(TestTx),
+			Filter:    NewFilter(TestTx),
 			isGrouped: true,
 			Tx:        TestTx,
 		},
@@ -3113,7 +3113,7 @@ var viewGroupByTests = []struct {
 		View: &View{
 			Header:    NewHeaderWithId("table1", []string{"column1", "column2", "column3"}),
 			RecordSet: []Record{},
-			Filter:    NewEmptyFilter(TestTx),
+			Filter:    NewFilter(TestTx),
 			Tx:        TestTx,
 		},
 		GroupBy: parser.GroupByClause{
@@ -3145,7 +3145,7 @@ var viewGroupByTests = []struct {
 				},
 			},
 			RecordSet: []Record{},
-			Filter:    NewEmptyFilter(TestTx),
+			Filter:    NewFilter(TestTx),
 			isGrouped: true,
 			Tx:        TestTx,
 		},
@@ -3220,7 +3220,7 @@ var viewHavingTests = []struct {
 					NewGroupCell([]value.Primary{value.NewString("group2"), value.NewString("group2")}),
 				},
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 		},
 		Having: parser.HavingClause{
 			Filter: parser.Comparison{
@@ -3284,7 +3284,7 @@ var viewHavingTests = []struct {
 					NewGroupCell([]value.Primary{value.NewString("group2"), value.NewString("group2")}),
 				},
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 		},
 		Having: parser.HavingClause{
 			Filter: parser.Comparison{
@@ -3299,7 +3299,7 @@ var viewHavingTests = []struct {
 				Operator: ">",
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Having Not Grouped",
@@ -3317,7 +3317,7 @@ var viewHavingTests = []struct {
 					value.NewString("group2"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 		},
 		Having: parser.HavingClause{
 			Filter: parser.Comparison{
@@ -3357,7 +3357,7 @@ var viewHavingTests = []struct {
 					value.NewString("group2"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 		},
 		Having: parser.HavingClause{
 			Filter: parser.Comparison{
@@ -3372,7 +3372,7 @@ var viewHavingTests = []struct {
 				Operator: ">",
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
@@ -3449,7 +3449,7 @@ var viewSelectTests = []struct {
 					value.NewString("str22"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			Tx:     TestTx,
 		},
 		Select: parser.SelectClause{
@@ -3519,7 +3519,7 @@ var viewSelectTests = []struct {
 					value.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
 				}),
 			},
-			Filter:       NewEmptyFilter(TestTx),
+			Filter:       NewFilter(TestTx),
 			selectFields: []int{2, 1, 2, 4, 5, 6, 2, 4, 4, 7},
 			Tx:           TestTx,
 		},
@@ -3569,7 +3569,7 @@ var viewSelectTests = []struct {
 					value.NewString("str22"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			Tx:     TestTx,
 		},
 		Select: parser.SelectClause{
@@ -3594,7 +3594,7 @@ var viewSelectTests = []struct {
 					value.NewInteger(1),
 				}),
 			},
-			Filter:       NewEmptyFilter(TestTx),
+			Filter:       NewFilter(TestTx),
 			selectFields: []int{0, 1},
 			Tx:           TestTx,
 		},
@@ -3617,7 +3617,7 @@ var viewSelectTests = []struct {
 					value.NewString("str2"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			Tx:     TestTx,
 		},
 		Select: parser.SelectClause{
@@ -3648,7 +3648,7 @@ var viewSelectTests = []struct {
 					NewCell(value.NewInteger(3)),
 				},
 			},
-			Filter:       NewEmptyFilter(TestTx),
+			Filter:       NewFilter(TestTx),
 			selectFields: []int{3},
 			Tx:           TestTx,
 		},
@@ -3671,7 +3671,7 @@ var viewSelectTests = []struct {
 					value.NewString("str2"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			Tx:     TestTx,
 		},
 		Select: parser.SelectClause{
@@ -3688,7 +3688,7 @@ var viewSelectTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field column2 is not a group key",
+		Error: "field column2 is not a group key",
 	},
 	{
 		Name: "Select Aggregate Function All RecordSet Lazy Evaluation",
@@ -3708,7 +3708,7 @@ var viewSelectTests = []struct {
 					value.NewString("str2"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			Tx:     TestTx,
 		},
 		Select: parser.SelectClause{
@@ -3746,7 +3746,7 @@ var viewSelectTests = []struct {
 					NewCell(value.NewInteger(4)),
 				},
 			},
-			Filter:       NewEmptyFilter(TestTx),
+			Filter:       NewFilter(TestTx),
 			selectFields: []int{3, 4},
 			Tx:           TestTx,
 		},
@@ -3777,7 +3777,7 @@ var viewSelectTests = []struct {
 					value.NewInteger(4),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			Tx:     TestTx,
 		},
 		Select: parser.SelectClause{
@@ -3842,7 +3842,7 @@ var viewSelectTests = []struct {
 					value.NewInteger(3),
 				}),
 			},
-			Filter:       NewEmptyFilter(TestTx),
+			Filter:       NewFilter(TestTx),
 			selectFields: []int{0, 1, 2},
 			Tx:           TestTx,
 		},
@@ -3873,7 +3873,7 @@ var viewSelectTests = []struct {
 					value.NewInteger(4),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			Tx:     TestTx,
 		},
 		Select: parser.SelectClause{
@@ -3905,7 +3905,7 @@ var viewSelectTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] function notexist does not exist",
+		Error: "function notexist does not exist",
 	},
 	{
 		Name: "Select Analytic Function Partition Error",
@@ -3933,7 +3933,7 @@ var viewSelectTests = []struct {
 					value.NewInteger(4),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			Tx:     TestTx,
 		},
 		Select: parser.SelectClause{
@@ -3965,7 +3965,7 @@ var viewSelectTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Select Analytic Function Order Error",
@@ -3993,7 +3993,7 @@ var viewSelectTests = []struct {
 					value.NewInteger(4),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			Tx:     TestTx,
 		},
 		Select: parser.SelectClause{
@@ -4025,7 +4025,7 @@ var viewSelectTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "Select User Defined Analytic Function",
@@ -4054,7 +4054,7 @@ var viewSelectTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				Functions: UserDefinedFunctionScopes{
+				functions: UserDefinedFunctionScopes{
 					UserDefinedFunctionMap{
 						"USERAGGFUNC": &UserDefinedFunction{
 							Name:         parser.Identifier{Literal: "useraggfunc"},
@@ -4237,7 +4237,7 @@ var viewOrderByTests = []struct {
 					value.NewString("4"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			Tx:     TestTx,
 		},
 		OrderBy: parser.OrderByClause{
@@ -4297,7 +4297,7 @@ var viewOrderByTests = []struct {
 					value.NewInteger(1),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			Tx:     TestTx,
 		},
 	},
@@ -4332,7 +4332,7 @@ var viewOrderByTests = []struct {
 					value.NewString("4"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			sortValuesInEachCell: [][]*SortValue{
 				{nil, nil, NewSortValue(value.NewString("3"), TestTx.Flags), nil},
 				{nil, nil, NewSortValue(value.NewString("4"), TestTx.Flags), nil},
@@ -4378,7 +4378,7 @@ var viewOrderByTests = []struct {
 					value.NewString("3"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			sortValuesInEachCell: [][]*SortValue{
 				{nil, nil, NewSortValue(value.NewString("2"), TestTx.Flags), nil},
 				{nil, nil, NewSortValue(value.NewString("3"), TestTx.Flags), nil},
@@ -4419,7 +4419,7 @@ var viewOrderByTests = []struct {
 					value.NewString("2"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			Tx:     TestTx,
 		},
 		OrderBy: parser.OrderByClause{
@@ -4462,7 +4462,7 @@ var viewOrderByTests = []struct {
 					value.NewString("2"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			Tx:     TestTx,
 		},
 	},
@@ -4484,7 +4484,7 @@ var viewOrderByTests = []struct {
 					value.NewString("2"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			Tx:     TestTx,
 		},
 		OrderBy: parser.OrderByClause{
@@ -4500,7 +4500,7 @@ var viewOrderByTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] function sum cannot aggregate not grouping records",
+		Error: "function sum cannot aggregate not grouping records",
 	},
 }
 
@@ -4546,7 +4546,7 @@ var viewExtendRecordCapacity = []struct {
 				}),
 			},
 			Filter: &Filter{
-				Functions: UserDefinedFunctionScopes{
+				functions: UserDefinedFunctionScopes{
 					UserDefinedFunctionMap{
 						"USERFUNC": &UserDefinedFunction{
 							Name: parser.Identifier{Literal: "userfunc"},
@@ -4642,7 +4642,7 @@ var viewExtendRecordCapacity = []struct {
 				}),
 			},
 			Filter: &Filter{
-				Functions: UserDefinedFunctionScopes{
+				functions: UserDefinedFunctionScopes{
 					UserDefinedFunctionMap{
 						"USERFUNC": &UserDefinedFunction{
 							Name: parser.Identifier{Literal: "userfunc"},
@@ -4668,7 +4668,7 @@ var viewExtendRecordCapacity = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] function userfunc cannot aggregate not grouping records",
+		Error: "function userfunc cannot aggregate not grouping records",
 	},
 	{
 		Name: "ExtendRecordCapacity AggregateFunction Not Grouped Error",
@@ -4690,7 +4690,7 @@ var viewExtendRecordCapacity = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] function avg cannot aggregate not grouping records",
+		Error: "function avg cannot aggregate not grouping records",
 	},
 	{
 		Name: "ExtendRecordCapacity ListAgg Not Grouped Error",
@@ -4719,7 +4719,7 @@ var viewExtendRecordCapacity = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] function listagg cannot aggregate not grouping records",
+		Error: "function listagg cannot aggregate not grouping records",
 	},
 	{
 		Name: "ExtendRecordCapacity AnalyticFunction Partition Value Error",
@@ -4761,7 +4761,7 @@ var viewExtendRecordCapacity = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] function avg cannot aggregate not grouping records",
+		Error: "function avg cannot aggregate not grouping records",
 	},
 	{
 		Name: "ExtendRecordCapacity AnalyticFunction OrderBy Value Error",
@@ -4803,7 +4803,7 @@ var viewExtendRecordCapacity = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] function avg cannot aggregate not grouping records",
+		Error: "function avg cannot aggregate not grouping records",
 	},
 }
 
@@ -4865,7 +4865,7 @@ var viewLimitTests = []struct {
 					value.NewString("str3"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 		},
 		Limit: parser.LimitClause{Value: parser.NewIntegerValueFromString("2")},
 		Result: &View{
@@ -4884,7 +4884,7 @@ var viewLimitTests = []struct {
 					value.NewString("str1"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 		},
 	},
 	{
@@ -4917,7 +4917,7 @@ var viewLimitTests = []struct {
 					value.NewString("str3"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			sortValuesInEachRecord: []SortValues{
 				{
 					&SortValue{Type: IntegerType, Integer: 1},
@@ -4962,7 +4962,7 @@ var viewLimitTests = []struct {
 					value.NewString("str1"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			sortValuesInEachRecord: []SortValues{
 				{
 					&SortValue{Type: IntegerType, Integer: 1},
@@ -5013,7 +5013,7 @@ var viewLimitTests = []struct {
 					value.NewString("str3"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			offset: 1,
 		},
 		Limit: parser.LimitClause{Value: parser.NewFloatValue(50.5), Percent: "percent"},
@@ -5037,7 +5037,7 @@ var viewLimitTests = []struct {
 					value.NewString("str2"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			offset: 1,
 		},
 	},
@@ -5071,7 +5071,7 @@ var viewLimitTests = []struct {
 					value.NewString("str3"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 		},
 		Limit: parser.LimitClause{Value: parser.NewFloatValue(150), Percent: "percent"},
 		Result: &View{
@@ -5102,7 +5102,7 @@ var viewLimitTests = []struct {
 					value.NewString("str3"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 		},
 	},
 	{
@@ -5135,7 +5135,7 @@ var viewLimitTests = []struct {
 					value.NewString("str3"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 		},
 		Limit: parser.LimitClause{Value: parser.NewFloatValue(-10), Percent: "percent"},
 		Result: &View{
@@ -5145,7 +5145,7 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
 			RecordSet: []Record{},
-			Filter:    NewEmptyFilter(TestTx),
+			Filter:    NewFilter(TestTx),
 		},
 	},
 	{
@@ -5166,7 +5166,7 @@ var viewLimitTests = []struct {
 					value.NewString("str1"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 		},
 		Limit: parser.LimitClause{Value: parser.NewIntegerValueFromString("5")},
 		Result: &View{
@@ -5185,7 +5185,7 @@ var viewLimitTests = []struct {
 					value.NewString("str1"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 		},
 	},
 	{
@@ -5206,10 +5206,10 @@ var viewLimitTests = []struct {
 					value.NewString("str1"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 		},
 		Limit: parser.LimitClause{Value: parser.Variable{Name: "notexist"}},
-		Error: "[L:- C:-] variable @notexist is undeclared",
+		Error: "variable @notexist is undeclared",
 	},
 	{
 		Name: "Limit Value Error",
@@ -5229,10 +5229,10 @@ var viewLimitTests = []struct {
 					value.NewString("str1"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 		},
 		Limit: parser.LimitClause{Value: parser.NewStringValue("str")},
-		Error: "[L:- C:-] limit number of records 'str' is not an integer value",
+		Error: "limit number of records 'str' is not an integer value",
 	},
 	{
 		Name: "Limit Negative Value",
@@ -5252,7 +5252,7 @@ var viewLimitTests = []struct {
 					value.NewString("str1"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 		},
 		Limit: parser.LimitClause{Value: parser.NewIntegerValue(-1)},
 		Result: &View{
@@ -5262,7 +5262,7 @@ var viewLimitTests = []struct {
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
 			RecordSet: []Record{},
-			Filter:    NewEmptyFilter(TestTx),
+			Filter:    NewFilter(TestTx),
 		},
 	},
 	{
@@ -5283,10 +5283,10 @@ var viewLimitTests = []struct {
 					value.NewString("str1"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 		},
 		Limit: parser.LimitClause{Value: parser.NewStringValue("str"), Percent: "percent"},
-		Error: "[L:- C:-] limit percentage 'str' is not a float value",
+		Error: "limit percentage 'str' is not a float value",
 	},
 }
 
@@ -5344,7 +5344,7 @@ var viewOffsetTests = []struct {
 					value.NewString("str2"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 		},
 		Offset: parser.OffsetClause{Value: parser.NewIntegerValueFromString("3")},
 		Result: &View{
@@ -5359,7 +5359,7 @@ var viewOffsetTests = []struct {
 					value.NewString("str2"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			offset: 3,
 		},
 	},
@@ -5389,7 +5389,7 @@ var viewOffsetTests = []struct {
 					value.NewString("str2"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 		},
 		Offset: parser.OffsetClause{Value: parser.NewIntegerValueFromString("4")},
 		Result: &View{
@@ -5399,7 +5399,7 @@ var viewOffsetTests = []struct {
 				{View: "table1", Column: "column2", IsFromTable: true},
 			},
 			RecordSet: []Record{},
-			Filter:    NewEmptyFilter(TestTx),
+			Filter:    NewFilter(TestTx),
 			offset:    4,
 		},
 	},
@@ -5429,10 +5429,10 @@ var viewOffsetTests = []struct {
 					value.NewString("str2"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 		},
 		Offset: parser.OffsetClause{Value: parser.Variable{Name: "notexist"}},
-		Error:  "[L:- C:-] variable @notexist is undeclared",
+		Error:  "variable @notexist is undeclared",
 	},
 	{
 		Name: "Offset Value Error",
@@ -5460,10 +5460,10 @@ var viewOffsetTests = []struct {
 					value.NewString("str2"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 		},
 		Offset: parser.OffsetClause{Value: parser.NewStringValue("str")},
-		Error:  "[L:- C:-] offset number 'str' is not an integer value",
+		Error:  "offset number 'str' is not an integer value",
 	},
 	{
 		Name: "Offset Negative Number",
@@ -5483,7 +5483,7 @@ var viewOffsetTests = []struct {
 					value.NewString("str1"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 		},
 		Offset: parser.OffsetClause{Value: parser.NewIntegerValue(-3)},
 		Result: &View{
@@ -5502,7 +5502,7 @@ var viewOffsetTests = []struct {
 					value.NewString("str1"),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			offset: 0,
 		},
 	},
@@ -5582,7 +5582,7 @@ var viewInsertValuesTests = []struct {
 					value.NewNull(),
 				}),
 			},
-			Filter: NewEmptyFilter(nil),
+			Filter: NewFilter(nil),
 		},
 		UpdateCount: 2,
 	},
@@ -5601,7 +5601,7 @@ var viewInsertValuesTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] row value should contain exactly 2 values",
+		Error: "row value should contain exactly 2 values",
 	},
 	{
 		Name: "InsertValues Value Evaluation Error",
@@ -5617,7 +5617,7 @@ var viewInsertValuesTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "InsertValues Field Does Not Exist Error",
@@ -5633,7 +5633,7 @@ var viewInsertValuesTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
@@ -5650,7 +5650,7 @@ func TestView_InsertValues(t *testing.T) {
 				value.NewString("str2"),
 			}),
 		},
-		Filter: NewEmptyFilter(nil),
+		Filter: NewFilter(nil),
 	}
 
 	for _, v := range viewInsertValuesTests {
@@ -5718,7 +5718,7 @@ var viewInsertFromQueryTests = []struct {
 					value.NewNull(),
 				}),
 			},
-			Filter: NewEmptyFilter(TestTx),
+			Filter: NewFilter(TestTx),
 			Tx:     TestTx,
 		},
 		UpdateCount: 1,
@@ -5738,7 +5738,7 @@ var viewInsertFromQueryTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] select query should return exactly 2 fields",
+		Error: "select query should return exactly 2 fields",
 	},
 	{
 		Name: "Insert Values Query Exuecution Error",
@@ -5754,7 +5754,7 @@ var viewInsertFromQueryTests = []struct {
 				},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 }
 
@@ -5771,7 +5771,7 @@ func TestView_InsertFromQuery(t *testing.T) {
 				value.NewString("str2"),
 			}),
 		},
-		Filter: NewEmptyFilter(TestTx),
+		Filter: NewFilter(TestTx),
 		Tx:     TestTx,
 	}
 
@@ -6255,7 +6255,7 @@ func TestView_FieldIndices(t *testing.T) {
 		parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 		parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 	}
-	expectErr := "[L:- C:-] field notexist does not exist"
+	expectErr := "field notexist does not exist"
 	_, err := view.FieldIndices(fields)
 	if err.Error() != expectErr {
 		t.Errorf("error = %s, want %s", err, expectErr)
@@ -6282,7 +6282,7 @@ func TestView_FieldViewName(t *testing.T) {
 	fieldRef = parser.FieldReference{
 		Column: parser.Identifier{Literal: "notexist"},
 	}
-	expectErr := "[L:- C:-] field notexist does not exist"
+	expectErr := "field notexist does not exist"
 	_, err := view.FieldViewName(fieldRef)
 	if err.Error() != expectErr {
 		t.Errorf("error = %s, want %s", err, expectErr)
@@ -6308,7 +6308,7 @@ func TestView_InternalRecordId(t *testing.T) {
 	}
 
 	view.RecordSet[1][0] = NewCell(value.NewNull())
-	expectError := "[L:- C:-] internal record id is empty"
+	expectError := "internal record id is empty"
 	_, err := view.InternalRecordId(ref, recordIndex)
 	if err.Error() != expectError {
 		t.Errorf("error = %q, want error %q", err, expectError)
@@ -6320,7 +6320,7 @@ func TestView_InternalRecordId(t *testing.T) {
 			{View: "table2", Column: "column2", IsFromTable: true},
 		},
 	}
-	expectError = "[L:- C:-] internal record id does not exist"
+	expectError = "internal record id does not exist"
 	_, err = view.InternalRecordId(ref, recordIndex)
 	if err.Error() != expectError {
 		t.Errorf("error = %q, want error %q", err, expectError)

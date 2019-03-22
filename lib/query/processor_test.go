@@ -19,19 +19,19 @@ import (
 
 var processorExecuteStatementTests = []struct {
 	Input            parser.Statement
-	UncommittedViews *UncommittedViewMap
+	UncommittedViews *UncommittedViews
 	Logs             string
 	SelectLogs       []string
 	Error            string
-	ErrorCode        int
+	ReturnCode       int
 }{
 	{
 		Input: parser.SetFlag{
 			Name:  "invalid",
 			Value: parser.NewStringValue("\t"),
 		},
-		Error:     "[L:- C:-] @@invalid is an unknown flag",
-		ErrorCode: 1,
+		Error:      "@@invalid is an unknown flag",
+		ReturnCode: ReturnCodeApplicationError,
 	},
 	{
 		Input: parser.SetFlag{
@@ -233,8 +233,8 @@ var processorExecuteStatementTests = []struct {
 				parser.NewIntegerValueFromString("1"),
 			},
 		},
-		Error:     "[L:- C:-] function userfunc does not exist",
-		ErrorCode: 1,
+		Error:      "function userfunc does not exist",
+		ReturnCode: ReturnCodeApplicationError,
 	},
 	{
 		Input: parser.CursorDeclaration{
@@ -298,6 +298,30 @@ var processorExecuteStatementTests = []struct {
 					},
 				},
 			},
+		},
+	},
+	{
+		Input: parser.StatementPreparation{
+			Name:      parser.Identifier{Literal: "stmt"},
+			Statement: value.NewString("select 1"),
+		},
+	},
+	{
+		Input: parser.ExecuteStatement{
+			Name: parser.Identifier{Literal: "invalidstmt"},
+		},
+		Error:      "statement invalidstmt does not exist",
+		ReturnCode: ReturnCodeApplicationError,
+	},
+	{
+		Input: parser.ExecuteStatement{
+			Name: parser.Identifier{Literal: "stmt"},
+		},
+		Logs: "1\n1\n",
+	},
+	{
+		Input: parser.DisposeStatement{
+			Name: parser.Identifier{Literal: "stmt"},
 		},
 	},
 	{
@@ -434,16 +458,16 @@ var processorExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Error:     "[L:- C:-] variable @var1 is redeclared",
-		ErrorCode: 1,
+		Error:      "variable @var1 is redeclared",
+		ReturnCode: ReturnCodeApplicationError,
 	},
 	{
 		Input: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "var9"},
 			Value:    parser.NewIntegerValueFromString("1"),
 		},
-		Error:     "[L:- C:-] variable @var9 is undeclared",
-		ErrorCode: 1,
+		Error:      "variable @var9 is undeclared",
+		ReturnCode: ReturnCodeApplicationError,
 	},
 	{
 		Input: parser.InsertQuery{
@@ -471,7 +495,7 @@ var processorExecuteStatementTests = []struct {
 				},
 			},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
@@ -504,7 +528,7 @@ var processorExecuteStatementTests = []struct {
 				},
 			},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
@@ -535,7 +559,7 @@ var processorExecuteStatementTests = []struct {
 				},
 			},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
@@ -557,7 +581,7 @@ var processorExecuteStatementTests = []struct {
 				parser.Identifier{Literal: "column2"},
 			},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("NEWTABLE.CSV")): {
 					Path:      GetTestFilePath("newtable.csv"),
@@ -580,7 +604,7 @@ var processorExecuteStatementTests = []struct {
 				},
 			},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
@@ -601,7 +625,7 @@ var processorExecuteStatementTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
@@ -621,7 +645,7 @@ var processorExecuteStatementTests = []struct {
 			Old:   parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			New:   parser.Identifier{Literal: "newcolumn"},
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
@@ -649,7 +673,7 @@ var processorExecuteStatementTests = []struct {
 			Attribute: parser.Identifier{Literal: "delimiter"},
 			Value:     parser.NewStringValue("\t"),
 		},
-		UncommittedViews: &UncommittedViewMap{
+		UncommittedViews: &UncommittedViews{
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
@@ -714,8 +738,8 @@ var processorExecuteStatementTests = []struct {
 		Input: parser.Exit{
 			Code: value.NewInteger(1),
 		},
-		Error:     "",
-		ErrorCode: 1,
+		Error:      ExitMessage,
+		ReturnCode: 1,
 	},
 	{
 		Input: parser.Print{
@@ -751,24 +775,24 @@ var processorExecuteStatementTests = []struct {
 			Message: parser.NewStringValue("user error"),
 			Code:    value.NewInteger(200),
 		},
-		Error:     "[L:- C:-] user error",
-		ErrorCode: 200,
+		Error:      "user error",
+		ReturnCode: 200,
 	},
 	{
 		Input: parser.Trigger{
 			Event:   parser.Identifier{Literal: "error"},
 			Message: parser.NewIntegerValue(200),
 		},
-		Error:     "[L:- C:-] ",
-		ErrorCode: 200,
+		Error:      DefaultUserTriggeredErrorMessage,
+		ReturnCode: 200,
 	},
 	{
 		Input: parser.Trigger{
 			Event:   parser.Identifier{Literal: "invalid"},
 			Message: parser.NewIntegerValue(200),
 		},
-		Error:     "[L:- C:-] invalid is an unknown event",
-		ErrorCode: 1,
+		Error:      "invalid is an unknown event",
+		ReturnCode: ReturnCodeApplicationError,
 	},
 	{
 		Input: parser.ShowObjects{
@@ -799,7 +823,7 @@ var processorExecuteStatementTests = []struct {
 func TestProcessor_ExecuteStatement(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		TestTx.UncommittedViews.Clean()
+		TestTx.uncommittedViews.Clean()
 		initFlag(TestTx.Flags)
 	}()
 
@@ -808,11 +832,11 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 
 	tx := TestTx
 	proc := NewProcessor(tx)
-	_ = proc.Filter.Variables[0].Add(parser.Variable{Name: "while_test"}, value.NewInteger(0))
+	_ = proc.Filter.variables[0].Add(parser.Variable{Name: "while_test"}, value.NewInteger(0))
 
 	for _, v := range processorExecuteStatementTests {
 		_ = TestTx.ReleaseResources()
-		TestTx.UncommittedViews = NewUncommittedViewMap()
+		TestTx.uncommittedViews = NewUncommittedViews()
 
 		r, w, _ := os.Pipe()
 		tx.Session.Stdout = w
@@ -823,19 +847,17 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 
 		if err != nil {
 			var code int
-			if apperr, ok := err.(AppError); ok {
+			if apperr, ok := err.(Error); ok {
 				if len(v.Error) < 1 {
 					t.Errorf("unexpected error %q for %q", err, v.Input)
 				} else if err.Error() != v.Error {
 					t.Errorf("error %q, want error %q for %q", err, v.Error, v.Input)
 				}
 
-				code = apperr.GetCode()
-			} else if ex, ok := err.(*ForcedExit); ok {
-				code = ex.GetCode()
+				code = apperr.ReturnCode()
 			}
-			if code != v.ErrorCode {
-				t.Errorf("error code %d, want error code %d for %q", code, v.ErrorCode, v.Input)
+			if code != v.ReturnCode {
+				t.Errorf("error code %d, want error code %d for %q", code, v.ReturnCode, v.Input)
 			}
 			continue
 		}
@@ -845,7 +867,7 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 		}
 
 		if v.UncommittedViews != nil {
-			for _, r := range TestTx.UncommittedViews.Created {
+			for _, r := range TestTx.uncommittedViews.Created {
 				if r.Handler != nil {
 					if r.Path != r.Handler.Path() {
 						t.Errorf("file pointer = %q, want %q for %q", r.Handler.Path(), r.Path, v.Input)
@@ -854,7 +876,7 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 					r.Handler = nil
 				}
 			}
-			for _, r := range TestTx.UncommittedViews.Updated {
+			for _, r := range TestTx.uncommittedViews.Updated {
 				if r.Handler != nil {
 					if r.Path != r.Handler.Path() {
 						t.Errorf("file pointer = %q, want %q for %q", r.Handler.Path(), r.Path, v.Input)
@@ -864,8 +886,8 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 				}
 			}
 
-			if !reflect.DeepEqual(TestTx.UncommittedViews, v.UncommittedViews) {
-				t.Errorf("uncomitted views = %v, want %v for %q", TestTx.UncommittedViews, v.UncommittedViews, v.Input)
+			if !reflect.DeepEqual(TestTx.uncommittedViews, v.UncommittedViews) {
+				t.Errorf("uncomitted views = %v, want %v for %q", TestTx.uncommittedViews, v.UncommittedViews, v.Input)
 			}
 		}
 		if 0 < len(v.Logs) {
@@ -980,7 +1002,7 @@ var processorIfStmtTests = []struct {
 				parser.Print{Value: parser.NewStringValue("1")},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "If Statement Return Value",
@@ -1007,7 +1029,7 @@ func TestProcessor_IfStmt(t *testing.T) {
 		r, w, _ := os.Pipe()
 		tx.Session.Stdout = w
 
-		proc.ReturnVal = nil
+		proc.returnVal = nil
 		flow, err := proc.IfStmt(context.Background(), v.Stmt)
 		_ = w.Close()
 
@@ -1028,8 +1050,8 @@ func TestProcessor_IfStmt(t *testing.T) {
 		if flow != v.ResultFlow {
 			t.Errorf("%s: result flow = %q, want %q", v.Name, flow, v.ResultFlow)
 		}
-		if !reflect.DeepEqual(proc.ReturnVal, v.ReturnValue) {
-			t.Errorf("%s: return = %t, want %t", v.Name, proc.ReturnVal, v.ReturnValue)
+		if !reflect.DeepEqual(proc.returnVal, v.ReturnValue) {
+			t.Errorf("%s: return = %t, want %t", v.Name, proc.returnVal, v.ReturnValue)
 		}
 		if string(log) != v.Result {
 			t.Errorf("%s: result = %q, want %q", v.Name, string(log), v.Result)
@@ -1153,8 +1175,8 @@ var processorCaseStmtTests = []struct {
 				},
 			},
 		},
-		ResultFlow: Error,
-		Error:      "[L:- C:-] field notexist does not exist",
+		ResultFlow: TerminateWithError,
+		Error:      "field notexist does not exist",
 	},
 	{
 		Name: "Case Condition Error",
@@ -1168,8 +1190,8 @@ var processorCaseStmtTests = []struct {
 				},
 			},
 		},
-		ResultFlow: Error,
-		Error:      "[L:- C:-] field notexist does not exist",
+		ResultFlow: TerminateWithError,
+		Error:      "field notexist does not exist",
 	},
 }
 
@@ -1388,7 +1410,7 @@ var processorWhileTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "While Statement Execution Error",
@@ -1411,7 +1433,7 @@ var processorWhileTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "While Statement Return Value",
@@ -1448,16 +1470,16 @@ func TestProcessor_While(t *testing.T) {
 	proc := NewProcessor(tx)
 
 	for _, v := range processorWhileTests {
-		proc.ReturnVal = nil
-		if _, err := proc.Filter.Variables[0].Get(parser.Variable{Name: "while_test"}); err != nil {
-			_ = proc.Filter.Variables[0].Add(parser.Variable{Name: "while_test"}, value.NewInteger(0))
+		proc.returnVal = nil
+		if _, err := proc.Filter.variables[0].Get(parser.Variable{Name: "while_test"}); err != nil {
+			_ = proc.Filter.variables[0].Add(parser.Variable{Name: "while_test"}, value.NewInteger(0))
 		}
-		_ = proc.Filter.Variables[0].Set(parser.Variable{Name: "while_test"}, value.NewInteger(0))
+		_ = proc.Filter.variables[0].Set(parser.Variable{Name: "while_test"}, value.NewInteger(0))
 
-		if _, err := proc.Filter.Variables[0].Get(parser.Variable{Name: "while_test_count"}); err != nil {
-			_ = proc.Filter.Variables[0].Add(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
+		if _, err := proc.Filter.variables[0].Get(parser.Variable{Name: "while_test_count"}); err != nil {
+			_ = proc.Filter.variables[0].Add(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
 		}
-		_ = proc.Filter.Variables[0].Set(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
+		_ = proc.Filter.variables[0].Set(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
 
 		r, w, _ := os.Pipe()
 		tx.Session.Stdout = w
@@ -1481,8 +1503,8 @@ func TestProcessor_While(t *testing.T) {
 		if flow != v.ResultFlow {
 			t.Errorf("%s: result flow = %q, want %q", v.Name, flow, v.ResultFlow)
 		}
-		if !reflect.DeepEqual(proc.ReturnVal, v.ReturnValue) {
-			t.Errorf("%s: return = %t, want %t", v.Name, proc.ReturnVal, v.ReturnValue)
+		if !reflect.DeepEqual(proc.returnVal, v.ReturnValue) {
+			t.Errorf("%s: return = %t, want %t", v.Name, proc.returnVal, v.ReturnValue)
 		}
 		if string(log) != v.Result {
 			t.Errorf("%s: result = %q, want %q", v.Name, string(log), v.Result)
@@ -1622,7 +1644,7 @@ var processorWhileInCursorTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		Error: "[L:- C:-] variable @var3 is undeclared",
+		Error: "variable @var3 is undeclared",
 	},
 	{
 		Name: "While In Cursor Statement Execution Error",
@@ -1647,7 +1669,7 @@ var processorWhileInCursorTests = []struct {
 				parser.TransactionControl{Token: parser.COMMIT},
 			},
 		},
-		Error: "[L:- C:-] field notexist does not exist",
+		Error: "field notexist does not exist",
 	},
 	{
 		Name: "While In Cursor Return Value",
@@ -1670,7 +1692,7 @@ var processorWhileInCursorTests = []struct {
 
 func TestProcessor_WhileInCursor(t *testing.T) {
 	defer func() {
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -1680,17 +1702,17 @@ func TestProcessor_WhileInCursor(t *testing.T) {
 	proc := NewProcessor(tx)
 
 	for _, v := range processorWhileInCursorTests {
-		proc.Filter.Variables[0] = GenerateVariableMap(map[string]value.Primary{
+		proc.Filter.variables[0] = GenerateVariableMap(map[string]value.Primary{
 			"var1": value.NewNull(),
 			"var2": value.NewNull(),
 		})
-		proc.Filter.Cursors[0] = CursorMap{
+		proc.Filter.cursors[0] = CursorMap{
 			"CUR": &Cursor{
 				query: selectQueryForCursorTest,
 			},
 		}
-		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
-		_ = proc.Filter.Cursors.Open(context.Background(), proc.Filter, parser.Identifier{Literal: "cur"})
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = proc.Filter.cursors.Open(context.Background(), proc.Filter, parser.Identifier{Literal: "cur"})
 
 		r, w, _ := os.Pipe()
 		tx.Session.Stdout = w
@@ -1714,8 +1736,8 @@ func TestProcessor_WhileInCursor(t *testing.T) {
 		if flow != v.ResultFlow {
 			t.Errorf("%s: result flow = %q, want %q", v.Name, flow, v.ResultFlow)
 		}
-		if !reflect.DeepEqual(proc.ReturnVal, v.ReturnValue) {
-			t.Errorf("%s: return = %t, want %t", v.Name, proc.ReturnVal, v.ReturnValue)
+		if !reflect.DeepEqual(proc.returnVal, v.ReturnValue) {
+			t.Errorf("%s: return = %t, want %t", v.Name, proc.returnVal, v.ReturnValue)
 		}
 		if string(log) != v.Result {
 			t.Errorf("%s: result = %q, want %q", v.Name, string(log), v.Result)
@@ -1733,21 +1755,21 @@ var processorExecExternalCommand = []struct {
 		Stmt: parser.ExternalCommand{
 			Command: "cmd arg 'arg",
 		},
-		Error: "[L:- C:-] external command: string not terminated",
+		Error: "external command: string not terminated",
 	},
 	{
 		Name: "Error in Scanning Argument",
 		Stmt: parser.ExternalCommand{
 			Command: "cmd 'arg arg@'",
 		},
-		Error: "[L:- C:-] external command: invalid variable symbol",
+		Error: "external command: invalid variable symbol",
 	},
 	{
 		Name: "Error in Evaluation of Variable",
 		Stmt: parser.ExternalCommand{
 			Command: "cmd @__not_exist__",
 		},
-		Error: "[L:- C:-] external command: variable @__not_exist__ is undeclared",
+		Error: "external command: variable @__not_exist__ is undeclared",
 	},
 }
 
