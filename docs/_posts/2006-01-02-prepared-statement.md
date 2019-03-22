@@ -45,7 +45,7 @@ execute_statement
   
 replace_value
   : value
-  : value AS placeholder_name
+  | value AS placeholder_name
 ```
 
 _statement_name_
