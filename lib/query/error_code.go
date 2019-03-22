@@ -11,7 +11,8 @@ const (
 
 const (
 	//System Error
-	ErrorSystemError = 1000
+	ErrorSystemError     = 1000
+	ErrorExternalCommand = 1100
 
 	//IO Error
 	ErrorIOError          = 2000
@@ -114,7 +115,6 @@ const (
 	ErrorFormatStringLengthNotMatch           = 16076
 	ErrorUnknownFormatPlaceholder             = 16077
 	ErrorFormatUnexpectedTermination          = 16078
-	ErrorExternalCommand                      = 16079
 	ErrorInvalidReloadType                    = 16080
 	ErrorLoadConfiguration                    = 16081
 	ErrorDuplicateStatementName               = 16082

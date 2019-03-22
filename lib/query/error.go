@@ -1276,7 +1276,7 @@ type ExternalCommandError struct {
 
 func NewExternalCommandError(expr parser.Expression, message string) error {
 	return &ExternalCommandError{
-		NewBaseError(expr, fmt.Sprintf(ErrMsgExternalCommand, message), ReturnCodeApplicationError, ErrorExternalCommand),
+		NewBaseError(expr, fmt.Sprintf(ErrMsgExternalCommand, message), ReturnCodeSystemError, ErrorExternalCommand),
 	}
 }
 
