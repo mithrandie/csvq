@@ -5,6 +5,13 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.9.4
+
+Released on March 22, 2019
+
+- Support prepared statement syntax.
+- Organize the command return code.
+
 ## Version 1.9.3
 
 Released on March 20, 2019
