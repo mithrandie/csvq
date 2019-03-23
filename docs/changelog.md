@@ -5,6 +5,15 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.9.5
+
+Released on March 24, 2019
+
+- Make file operations safety in parallel processing.
+- Modify the return code of external command errors from 16 to 1.
+- Fix the following bug.
+  - Temporary tables have not been affected by transactions. 
+
 ## Version 1.9.4
 
 Released on March 22, 2019
