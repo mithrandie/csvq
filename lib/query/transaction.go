@@ -6,6 +6,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/mithrandie/csvq/lib/parser"
@@ -26,6 +27,8 @@ type Transaction struct {
 
 	cachedViews      ViewMap
 	uncommittedViews *UncommittedViews
+
+	viewLoadingMutex *sync.Mutex
 
 	PreparedStatements PreparedStatementMap
 
@@ -55,6 +58,7 @@ func NewTransaction(ctx context.Context, defaultWaitTimeout time.Duration, retry
 		FileContainer:      file.NewContainer(),
 		cachedViews:        make(ViewMap, 10),
 		uncommittedViews:   NewUncommittedViews(),
+		viewLoadingMutex:   new(sync.Mutex),
 		PreparedStatements: make(PreparedStatementMap, 4),
 		SelectedViews:      nil,
 		AffectedRows:       0,

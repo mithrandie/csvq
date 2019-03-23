@@ -42,7 +42,8 @@ type Filter struct {
 
 	checkAvailableParallelRoutine bool
 
-	now time.Time
+	cachedFilePath map[string]string
+	now            time.Time
 }
 
 type ContainsSubstitusion struct{}
@@ -109,6 +110,7 @@ func (f *Filter) Merge(filter *Filter) {
 	f.functions = filter.functions
 	f.inlineTables = filter.inlineTables
 	f.aliases = filter.aliases
+	f.cachedFilePath = filter.cachedFilePath
 	f.now = filter.now
 }
 
@@ -120,6 +122,7 @@ func (f *Filter) CreateChildScope() *Filter {
 		append(CursorScopes{{}}, f.cursors...),
 		append(UserDefinedFunctionScopes{{}}, f.functions...),
 	)
+	child.cachedFilePath = f.cachedFilePath
 	child.now = f.now
 	return child
 }
@@ -152,14 +155,33 @@ func (f *Filter) CreateNode() *Filter {
 		aliases:          append(AliasNodes{{}}, f.aliases...),
 		recursiveTable:   f.recursiveTable,
 		recursiveTmpView: f.recursiveTmpView,
+		cachedFilePath:   f.cachedFilePath,
 		now:              f.now,
 	}
 
+	if filter.cachedFilePath == nil {
+		filter.cachedFilePath = make(map[string]string)
+	}
 	if filter.now.IsZero() {
 		filter.now = cmd.Now()
 	}
 
 	return filter
+}
+
+func (f *Filter) storeFilePath(identifier string, fpath string) {
+	if f.cachedFilePath != nil {
+		f.cachedFilePath[identifier] = fpath
+	}
+}
+
+func (f *Filter) loadFilePath(identifier string) (string, bool) {
+	if f.cachedFilePath != nil {
+		if p, ok := f.cachedFilePath[identifier]; ok {
+			return p, true
+		}
+	}
+	return "", false
 }
 
 func (f *Filter) LoadInlineTable(ctx context.Context, clause parser.WithClause) error {
