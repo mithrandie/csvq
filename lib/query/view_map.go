@@ -67,8 +67,8 @@ func (list TemporaryViewScopes) Dispose(name parser.Identifier) error {
 func (list TemporaryViewScopes) Store(uncomittedViews map[string]*FileInfo) []string {
 	msglist := make([]string, 0, len(uncomittedViews))
 	for _, m := range list {
-		for _, view := range m {
-			if _, ok := uncomittedViews[view.FileInfo.Path]; ok {
+		for viewKey, view := range m {
+			if _, ok := uncomittedViews[viewKey]; ok {
 				view.FileInfo.InitialRecordSet = view.RecordSet.Copy()
 				view.FileInfo.InitialHeader = view.Header.Copy()
 				msglist = append(msglist, fmt.Sprintf("Commit: restore point of view %q is created.", view.FileInfo.Path))
@@ -81,8 +81,8 @@ func (list TemporaryViewScopes) Store(uncomittedViews map[string]*FileInfo) []st
 func (list TemporaryViewScopes) Restore(uncomittedViews map[string]*FileInfo) []string {
 	msglist := make([]string, 0, len(uncomittedViews))
 	for _, m := range list {
-		for _, view := range m {
-			if _, ok := uncomittedViews[view.FileInfo.Path]; ok {
+		for viewKey, view := range m {
+			if _, ok := uncomittedViews[viewKey]; ok {
 				view.RecordSet = view.FileInfo.InitialRecordSet.Copy()
 				view.Header = view.FileInfo.InitialHeader.Copy()
 				msglist = append(msglist, fmt.Sprintf("Rollback: view %q is restored.", view.FileInfo.Path))

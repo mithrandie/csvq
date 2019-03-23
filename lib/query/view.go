@@ -28,6 +28,8 @@ import (
 	"github.com/mithrandie/ternary"
 )
 
+var stdinLoadingMutex = new(sync.Mutex)
+
 type RecordReader interface {
 	Read() ([]text.RawText, error)
 }
@@ -133,54 +135,10 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 			IsTemporary:        true,
 		}
 
-		if !filter.tempViews[len(filter.tempViews)-1].Exists(fileInfo.Path) {
-			if !cmd.IsReadableFromPipeOrRedirection() {
-				return nil, NewStdinEmptyError(table.Object.(parser.Stdin))
-			}
-
-			var loadView *View
-
-			if fileInfo.Format != cmd.JSON {
-				buf, err := ioutil.ReadAll(os.Stdin)
-				if err != nil {
-					return nil, NewReadFileError(table.Object.(parser.Stdin), err.Error())
-				}
-
-				br := bytes.NewReader(buf)
-				loadView, err = loadViewFromFile(ctx, filter.tx, br, fileInfo, filter.tx.Flags.WithoutNull)
-				if err != nil {
-					return nil, NewDataParsingError(table.Object, fileInfo.Path, err.Error())
-				}
-			} else {
-				fileInfo.Encoding = text.UTF8
-
-				buf, err := ioutil.ReadAll(os.Stdin)
-				if err != nil {
-					return nil, NewReadFileError(table.Object.(parser.Stdin), err.Error())
-				}
-
-				headerLabels, rows, escapeType, err := json.LoadTable(fileInfo.JsonQuery, string(buf))
-				if err != nil {
-					return nil, NewLoadJsonError(parser.JsonQuery{BaseExpr: table.Object.GetBaseExpr()}, err.Error())
-				}
-
-				records := make([]Record, 0, len(rows))
-				for _, row := range rows {
-					records = append(records, NewRecord(row))
-				}
-
-				fileInfo.JsonEscape = escapeType
-
-				loadView = NewView(filter.tx)
-				loadView.Header = NewHeader(parser.FormatTableName(fileInfo.Path), headerLabels)
-				loadView.RecordSet = records
-				loadView.FileInfo = fileInfo
-			}
-
-			loadView.FileInfo.InitialHeader = loadView.Header.Copy()
-			loadView.FileInfo.InitialRecordSet = loadView.RecordSet.Copy()
-			filter.tempViews[len(filter.tempViews)-1].Set(loadView)
+		if err := loadStdin(ctx, filter, table, fileInfo); err != nil {
+			return nil, err
 		}
+
 		if err = filter.aliases.Add(table.Name(), fileInfo.Path); err != nil {
 			return nil, err
 		}
@@ -552,6 +510,61 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 	return view, err
 }
 
+func loadStdin(ctx context.Context, filter *Filter, table parser.Table, fileInfo *FileInfo) error {
+	stdinLoadingMutex.Lock()
+	defer stdinLoadingMutex.Unlock()
+
+	if !filter.tempViews[len(filter.tempViews)-1].Exists(fileInfo.Path) {
+		if !cmd.IsReadableFromPipeOrRedirection() {
+			return NewStdinEmptyError(table.Object.(parser.Stdin))
+		}
+
+		var loadView *View
+
+		if fileInfo.Format != cmd.JSON {
+			buf, err := ioutil.ReadAll(os.Stdin)
+			if err != nil {
+				return NewReadFileError(table.Object.(parser.Stdin), err.Error())
+			}
+
+			br := bytes.NewReader(buf)
+			loadView, err = loadViewFromFile(ctx, filter.tx, br, fileInfo, filter.tx.Flags.WithoutNull)
+			if err != nil {
+				return NewDataParsingError(table.Object, fileInfo.Path, err.Error())
+			}
+		} else {
+			fileInfo.Encoding = text.UTF8
+
+			buf, err := ioutil.ReadAll(os.Stdin)
+			if err != nil {
+				return NewReadFileError(table.Object.(parser.Stdin), err.Error())
+			}
+
+			headerLabels, rows, escapeType, err := json.LoadTable(fileInfo.JsonQuery, string(buf))
+			if err != nil {
+				return NewLoadJsonError(parser.JsonQuery{BaseExpr: table.Object.GetBaseExpr()}, err.Error())
+			}
+
+			records := make([]Record, 0, len(rows))
+			for _, row := range rows {
+				records = append(records, NewRecord(row))
+			}
+
+			fileInfo.JsonEscape = escapeType
+
+			loadView = NewView(filter.tx)
+			loadView.Header = NewHeader(parser.FormatTableName(fileInfo.Path), headerLabels)
+			loadView.RecordSet = records
+			loadView.FileInfo = fileInfo
+		}
+
+		loadView.FileInfo.InitialHeader = loadView.Header.Copy()
+		loadView.FileInfo.InitialRecordSet = loadView.RecordSet.Copy()
+		filter.tempViews[len(filter.tempViews)-1].Set(loadView)
+	}
+	return nil
+}
+
 func loadObject(
 	ctx context.Context,
 	tableIdentifier parser.Identifier,
@@ -570,122 +583,183 @@ func loadObject(
 	encloseAll bool,
 	jsonEscape txjson.EscapeType,
 	withoutNull bool,
-) (view *View, err error) {
+) (*View, error) {
 	if filter.recursiveTable != nil && strings.EqualFold(tableIdentifier.Literal, filter.recursiveTable.Name.Literal) && filter.recursiveTmpView != nil {
-		view = filter.recursiveTmpView
+		view := filter.recursiveTmpView
 		if !strings.EqualFold(filter.recursiveTable.Name.Literal, tableName.Literal) {
-			if err = view.Header.Update(tableName.Literal, nil); err != nil {
+			if err := view.Header.Update(tableName.Literal, nil); err != nil {
 				return nil, err
 			}
 		}
-	} else if it, err := filter.inlineTables.Get(tableIdentifier); err == nil {
+		return view, nil
+	}
+
+	if view, err := filter.inlineTables.Get(tableIdentifier); err == nil {
 		if err = filter.aliases.Add(tableName, ""); err != nil {
 			return nil, err
 		}
-		view = it
 		if tableIdentifier.Literal != tableName.Literal {
 			if err = view.Header.Update(tableName.Literal, nil); err != nil {
 				return nil, err
 			}
 		}
-	} else {
-		var filePath string
-		var commonTableName string
+		return view, nil
+	}
 
-		filePath = tableIdentifier.Literal
-		if filter.tempViews.Exists(filePath) {
-			commonTableName = parser.FormatTableName(filePath)
-
-			pathIdent := parser.Identifier{Literal: filePath}
-			if useInternalId {
-				view, _ = filter.tempViews.GetWithInternalId(ctx, pathIdent, filter.tx.Flags)
-			} else {
-				view, _ = filter.tempViews.Get(pathIdent)
-			}
+	filePath := tableIdentifier.Literal
+	if filter.tempViews.Exists(filePath) {
+		var view *View
+		pathIdent := parser.Identifier{Literal: filePath}
+		if useInternalId {
+			view, _ = filter.tempViews.GetWithInternalId(ctx, pathIdent, filter.tx.Flags)
 		} else {
-			filePath, err = CreateFilePath(tableIdentifier, filter.tx.Flags.Repository)
-			if err != nil {
-				return nil, err
-			}
-
-			if !filter.tx.cachedViews.Exists(filePath) || (forUpdate && !filter.tx.cachedViews[strings.ToUpper(filePath)].ForUpdate) {
-				fileInfo, err := NewFileInfo(tableIdentifier, filter.tx.Flags.Repository, importFormat, delimiter, encoding, filter.tx.Flags)
-				if err != nil {
-					return nil, err
-				}
-				filePath = fileInfo.Path
-
-				fileInfo.DelimiterPositions = delimiterPositions
-				fileInfo.SingleLine = singleLine
-				fileInfo.JsonQuery = strings.TrimSpace(jsonQuery)
-				fileInfo.LineBreak = lineBreak
-				fileInfo.NoHeader = noHeader
-				fileInfo.EncloseAll = encloseAll
-				fileInfo.JsonEscape = jsonEscape
-
-				if !filter.tx.cachedViews.Exists(fileInfo.Path) || (forUpdate && !filter.tx.cachedViews[strings.ToUpper(fileInfo.Path)].ForUpdate) {
-					if filter.tx.cachedViews.Exists(fileInfo.Path) {
-						fileInfo = filter.tx.cachedViews[strings.ToUpper(fileInfo.Path)].FileInfo
-					}
-
-					if err = filter.tx.cachedViews.Dispose(filter.tx.FileContainer, fileInfo.Path); err != nil {
-						return nil, err
-					}
-
-					var fp *os.File
-					if forUpdate {
-						h, err := file.NewHandlerForUpdate(ctx, filter.tx.FileContainer, fileInfo.Path, filter.tx.WaitTimeout, filter.tx.RetryDelay)
-						if err != nil {
-							return nil, ConvertFileHandlerError(err, tableIdentifier, fileInfo.Path)
-						}
-						fileInfo.Handler = h
-						fp = h.FileForRead()
-					} else {
-						h, err := file.NewHandlerForRead(ctx, filter.tx.FileContainer, fileInfo.Path, filter.tx.WaitTimeout, filter.tx.RetryDelay)
-						if err != nil {
-							return nil, ConvertFileHandlerError(err, tableIdentifier, fileInfo.Path)
-						}
-						defer func() {
-							if e := filter.tx.FileContainer.Close(h); e != nil {
-								err = AppendCompositeError(err, e)
-							}
-						}()
-						fp = h.FileForRead()
-					}
-
-					loadView, err := loadViewFromFile(ctx, filter.tx, fp, fileInfo, withoutNull)
-					if err != nil {
-						err = NewDataParsingError(tableIdentifier, fileInfo.Path, err.Error())
-						if e := filter.tx.FileContainer.Close(fileInfo.Handler); e != nil {
-							err = AppendCompositeError(err, e)
-						}
-						return nil, err
-					}
-					loadView.ForUpdate = forUpdate
-					filter.tx.cachedViews.Set(loadView)
-				}
-			}
-			commonTableName = parser.FormatTableName(filePath)
-
-			pathIdent := parser.Identifier{Literal: filePath}
-			if useInternalId {
-				view, _ = filter.tx.cachedViews.GetWithInternalId(ctx, pathIdent, filter.tx.Flags)
-			} else {
-				view, _ = filter.tx.cachedViews.Get(pathIdent)
-			}
+			view, _ = filter.tempViews.Get(pathIdent)
 		}
 
-		if err = filter.aliases.Add(tableName, filePath); err != nil {
+		if err := filter.aliases.Add(tableName, filePath); err != nil {
 			return nil, err
 		}
 
-		if !strings.EqualFold(commonTableName, tableName.Literal) {
-			if err = view.Header.Update(tableName.Literal, nil); err != nil {
+		if !strings.EqualFold(parser.FormatTableName(filePath), tableName.Literal) {
+			if err := view.Header.Update(tableName.Literal, nil); err != nil {
 				return nil, err
 			}
 		}
+
+		return view, nil
+	}
+
+	filePath, err := cacheViewFromFile(
+		ctx,
+		tableIdentifier,
+		filter,
+		forUpdate,
+		importFormat,
+		delimiter,
+		delimiterPositions,
+		singleLine,
+		jsonQuery,
+		encoding,
+		lineBreak,
+		noHeader,
+		encloseAll,
+		jsonEscape,
+		withoutNull,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var view *View
+	pathIdent := parser.Identifier{Literal: filePath}
+	if useInternalId {
+		view, _ = filter.tx.cachedViews.GetWithInternalId(ctx, pathIdent, filter.tx.Flags)
+	} else {
+		view, _ = filter.tx.cachedViews.Get(pathIdent)
+	}
+
+	if err = filter.aliases.Add(tableName, filePath); err != nil {
+		return nil, err
+	}
+
+	if !strings.EqualFold(parser.FormatTableName(filePath), tableName.Literal) {
+		if err = view.Header.Update(tableName.Literal, nil); err != nil {
+			return nil, err
+		}
 	}
 	return view, nil
+}
+
+func cacheViewFromFile(
+	ctx context.Context,
+	tableIdentifier parser.Identifier,
+	filter *Filter,
+	forUpdate bool,
+	importFormat cmd.Format,
+	delimiter rune,
+	delimiterPositions []int,
+	singleLine bool,
+	jsonQuery string,
+	encoding text.Encoding,
+	lineBreak text.LineBreak,
+	noHeader bool,
+	encloseAll bool,
+	jsonEscape txjson.EscapeType,
+	withoutNull bool,
+) (string, error) {
+	filter.tx.viewLoadingMutex.Lock()
+	defer filter.tx.viewLoadingMutex.Unlock()
+
+	filePath, cacheExists := filter.loadFilePath(tableIdentifier.Literal)
+	if !cacheExists {
+		p, err := CreateFilePath(tableIdentifier, filter.tx.Flags.Repository)
+		if err != nil {
+			return filePath, err
+		}
+		filePath = p
+	}
+
+	if !filter.tx.cachedViews.Exists(filePath) || (forUpdate && !filter.tx.cachedViews[strings.ToUpper(filePath)].ForUpdate) {
+		fileInfo, err := NewFileInfo(tableIdentifier, filter.tx.Flags.Repository, importFormat, delimiter, encoding, filter.tx.Flags)
+		if err != nil {
+			return filePath, err
+		}
+		filePath = fileInfo.Path
+
+		if !filter.tx.cachedViews.Exists(fileInfo.Path) || (forUpdate && !filter.tx.cachedViews[strings.ToUpper(fileInfo.Path)].ForUpdate) {
+			fileInfo.DelimiterPositions = delimiterPositions
+			fileInfo.SingleLine = singleLine
+			fileInfo.JsonQuery = strings.TrimSpace(jsonQuery)
+			fileInfo.LineBreak = lineBreak
+			fileInfo.NoHeader = noHeader
+			fileInfo.EncloseAll = encloseAll
+			fileInfo.JsonEscape = jsonEscape
+
+			if filter.tx.cachedViews.Exists(fileInfo.Path) {
+				fileInfo = filter.tx.cachedViews[strings.ToUpper(fileInfo.Path)].FileInfo
+			}
+
+			if err = filter.tx.cachedViews.Dispose(filter.tx.FileContainer, fileInfo.Path); err != nil {
+				return filePath, err
+			}
+
+			var fp *os.File
+			if forUpdate {
+				h, err := file.NewHandlerForUpdate(ctx, filter.tx.FileContainer, fileInfo.Path, filter.tx.WaitTimeout, filter.tx.RetryDelay)
+				if err != nil {
+					return filePath, ConvertFileHandlerError(err, tableIdentifier, fileInfo.Path)
+				}
+				fileInfo.Handler = h
+				fp = h.FileForRead()
+			} else {
+				h, err := file.NewHandlerForRead(ctx, filter.tx.FileContainer, fileInfo.Path, filter.tx.WaitTimeout, filter.tx.RetryDelay)
+				if err != nil {
+					return filePath, ConvertFileHandlerError(err, tableIdentifier, fileInfo.Path)
+				}
+				defer func() {
+					if e := filter.tx.FileContainer.Close(h); e != nil {
+						err = AppendCompositeError(err, e)
+					}
+				}()
+				fp = h.FileForRead()
+			}
+
+			loadView, err := loadViewFromFile(ctx, filter.tx, fp, fileInfo, withoutNull)
+			if err != nil {
+				err = NewDataParsingError(tableIdentifier, fileInfo.Path, err.Error())
+				if e := filter.tx.FileContainer.Close(fileInfo.Handler); e != nil {
+					err = AppendCompositeError(err, e)
+				}
+				return filePath, err
+			}
+			loadView.ForUpdate = forUpdate
+			filter.tx.cachedViews.Set(loadView)
+		}
+	}
+	if !cacheExists {
+		filter.storeFilePath(tableIdentifier.Literal, filePath)
+	}
+	return filePath, nil
 }
 
 func loadViewFromFile(ctx context.Context, tx *Transaction, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool) (*View, error) {

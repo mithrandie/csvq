@@ -667,7 +667,7 @@ func TestTemporaryViewScopes_Store(t *testing.T) {
 	expectOut := []string{"Commit: restore point of view \"/path/to/table1.csv\" is created.\n"}
 
 	UncommittedViews := map[string]*FileInfo{
-		"/path/to/table1.csv": nil,
+		"/PATH/TO/TABLE1.CSV": nil,
 	}
 
 	log := list.Store(UncommittedViews)
@@ -783,8 +783,8 @@ func TestTemporaryViewScopes_Restore(t *testing.T) {
 	expectOut := []string{"Rollback: view \"/path/to/table1.csv\" is restored.\nRollback: view \"/path/to/table2.csv\" is restored.\n"}
 
 	UncommittedViews := map[string]*FileInfo{
-		"/path/to/table1.csv": nil,
-		"/path/to/table2.csv": nil,
+		"/PATH/TO/TABLE1.CSV": nil,
+		"/PATH/TO/TABLE2.CSV": nil,
 	}
 
 	log := list.Restore(UncommittedViews)
