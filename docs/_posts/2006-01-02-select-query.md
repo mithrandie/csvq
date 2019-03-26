@@ -9,12 +9,9 @@ category: reference
 Select query is used to retrieve data from csv files.
 
 ```
-select_statement
-  : [with_clause]
-      select_query
-
 select_query
-  : select_entity
+  : [with_clause]
+      select_entity
       [order_by_clause]
       [limit_clause]
       [offset_clause]
