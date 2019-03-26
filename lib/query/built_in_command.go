@@ -907,7 +907,7 @@ func ShowFields(ctx context.Context, filter *Filter, expr parser.ShowFields) (st
 	var status = ObjectFixed
 
 	view := NewView(filter.tx)
-	err := view.LoadFromTableIdentifier(ctx, filter.CreateNode(), expr.Table)
+	err := view.LoadFromTableIdentifier(ctx, filter.CreateNode(), expr.Table, false, false)
 	if err != nil {
 		return "", err
 	}

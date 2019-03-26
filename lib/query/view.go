@@ -53,19 +53,15 @@ type View struct {
 	sortNullPositions          []int
 
 	offset int
-
-	UseInternalId bool
-	ForUpdate     bool
 }
 
 func NewView(tx *Transaction) *View {
 	return &View{
-		Tx:            tx,
-		UseInternalId: false,
+		Tx: tx,
 	}
 }
 
-func (view *View) Load(ctx context.Context, filter *Filter, clause parser.FromClause) error {
+func (view *View) Load(ctx context.Context, filter *Filter, clause parser.FromClause, forUpdate bool, useInternalId bool) error {
 	if clause.Tables == nil {
 		var obj parser.QueryExpression
 		if cmd.IsReadableFromPipeOrRedirection() {
@@ -78,7 +74,7 @@ func (view *View) Load(ctx context.Context, filter *Filter, clause parser.FromCl
 
 	views := make([]*View, len(clause.Tables))
 	for i, v := range clause.Tables {
-		loaded, err := loadView(ctx, filter, v, view.UseInternalId, view.ForUpdate)
+		loaded, err := loadView(ctx, filter, v, forUpdate, useInternalId)
 		if err != nil {
 			return err
 		}
@@ -99,19 +95,19 @@ func (view *View) Load(ctx context.Context, filter *Filter, clause parser.FromCl
 	return nil
 }
 
-func (view *View) LoadFromTableIdentifier(ctx context.Context, filter *Filter, table parser.QueryExpression) error {
+func (view *View) LoadFromTableIdentifier(ctx context.Context, filter *Filter, table parser.QueryExpression, forUpdate bool, useInternalId bool) error {
 	fromClause := parser.FromClause{
 		Tables: []parser.QueryExpression{
 			parser.Table{Object: table},
 		},
 	}
 
-	return view.Load(ctx, filter, fromClause)
+	return view.Load(ctx, filter, fromClause, forUpdate, useInternalId)
 }
 
-func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpression, useInternalId bool, forUpdate bool) (view *View, err error) {
+func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpression, forUpdate bool, useInternalId bool) (view *View, err error) {
 	if parentheses, ok := tableExpr.(parser.Parentheses); ok {
-		return loadView(ctx, filter, parentheses.Expr, useInternalId, forUpdate)
+		return loadView(ctx, filter, parentheses.Expr, forUpdate, useInternalId)
 	}
 
 	table := tableExpr.(parser.Table)
@@ -304,9 +300,9 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 			ctx,
 			table.Object.(parser.TableObject).Path,
 			table.Name(),
-			filter,
-			useInternalId,
 			forUpdate,
+			useInternalId,
+			filter,
 			importFormat,
 			delimiter,
 			delimiterPositions,
@@ -328,9 +324,9 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 			ctx,
 			table.Object.(parser.Identifier),
 			table.Name(),
-			filter,
-			useInternalId,
 			forUpdate,
+			useInternalId,
+			filter,
 			cmd.AutoSelect,
 			filter.tx.Flags.Delimiter,
 			filter.tx.Flags.DelimiterPositions,
@@ -348,11 +344,11 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 		}
 	case parser.Join:
 		join := table.Object.(parser.Join)
-		view, err = loadView(ctx, filter, join.Table, useInternalId, forUpdate)
+		view, err = loadView(ctx, filter, join.Table, forUpdate, useInternalId)
 		if err != nil {
 			return nil, err
 		}
-		view2, err := loadView(ctx, filter, join.JoinTable, useInternalId, forUpdate)
+		view2, err := loadView(ctx, filter, join.JoinTable, forUpdate, useInternalId)
 		if err != nil {
 			return nil, err
 		}
@@ -569,9 +565,9 @@ func loadObject(
 	ctx context.Context,
 	tableIdentifier parser.Identifier,
 	tableName parser.Identifier,
-	filter *Filter,
-	useInternalId bool,
 	forUpdate bool,
+	useInternalId bool,
+	filter *Filter,
 	importFormat cmd.Format,
 	delimiter rune,
 	delimiterPositions []int,
@@ -632,8 +628,8 @@ func loadObject(
 	filePath, err := cacheViewFromFile(
 		ctx,
 		tableIdentifier,
-		filter,
 		forUpdate,
+		filter,
 		importFormat,
 		delimiter,
 		delimiterPositions,
@@ -673,8 +669,8 @@ func loadObject(
 func cacheViewFromFile(
 	ctx context.Context,
 	tableIdentifier parser.Identifier,
-	filter *Filter,
 	forUpdate bool,
+	filter *Filter,
 	importFormat cmd.Format,
 	delimiter rune,
 	delimiterPositions []int,
@@ -699,14 +695,14 @@ func cacheViewFromFile(
 		filePath = p
 	}
 
-	if !filter.tx.cachedViews.Exists(filePath) || (forUpdate && !filter.tx.cachedViews[strings.ToUpper(filePath)].ForUpdate) {
+	if !filter.tx.cachedViews.Exists(filePath) || (forUpdate && !filter.tx.cachedViews[strings.ToUpper(filePath)].FileInfo.ForUpdate) {
 		fileInfo, err := NewFileInfo(tableIdentifier, filter.tx.Flags.Repository, importFormat, delimiter, encoding, filter.tx.Flags)
 		if err != nil {
 			return filePath, err
 		}
 		filePath = fileInfo.Path
 
-		if !filter.tx.cachedViews.Exists(fileInfo.Path) || (forUpdate && !filter.tx.cachedViews[strings.ToUpper(fileInfo.Path)].ForUpdate) {
+		if !filter.tx.cachedViews.Exists(fileInfo.Path) || (forUpdate && !filter.tx.cachedViews[strings.ToUpper(fileInfo.Path)].FileInfo.ForUpdate) {
 			fileInfo.DelimiterPositions = delimiterPositions
 			fileInfo.SingleLine = singleLine
 			fileInfo.JsonQuery = strings.TrimSpace(jsonQuery)
@@ -752,7 +748,7 @@ func cacheViewFromFile(
 				}
 				return filePath, err
 			}
-			loadView.ForUpdate = forUpdate
+			loadView.FileInfo.ForUpdate = forUpdate
 			filter.tx.cachedViews.Set(loadView)
 		}
 	}
@@ -2013,6 +2009,5 @@ func (view *View) Copy() *View {
 		Header:    header,
 		RecordSet: records,
 		FileInfo:  view.FileInfo,
-		ForUpdate: view.ForUpdate,
 	}
 }

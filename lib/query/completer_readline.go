@@ -772,7 +772,7 @@ func (c *Completer) allTableCandidatesWithSpaceForUpdate(line string, origLine s
 	return list
 }
 
-func (c *Completer) fromClause(i int, line string, origLine string, index int) (keywords []string, customList readline.CandidateList, restrict bool) {
+func (c *Completer) fromClause(i int, line string, origLine string, index int) (tables readline.CandidateList, customList readline.CandidateList, restrict bool) {
 	c.combineTableAlias(i)
 	c.SetLastIndex(line)
 
@@ -831,49 +831,48 @@ func (c *Completer) fromClause(i int, line string, origLine string, index int) (
 
 	if isInOn() {
 		customList = append(customList, c.whereClause(line, origLine, index)...)
-		customList.Sort()
 		if c.tokens[c.lastIdx].Token == parser.ON {
 			restrict = true
 		} else {
-			keywords = append(keywords, joinCandidates...)
+			customList = append(customList, c.candidateList(joinCandidates, true)...)
 		}
 		return
 	}
 
 	switch c.tokens[c.lastIdx].Token {
 	case parser.CROSS, parser.INNER, parser.OUTER:
-		keywords = append(keywords, "JOIN")
+		customList = append(customList, c.candidate("JOIN", true))
 		restrict = true
 	case parser.LEFT, parser.RIGHT, parser.FULL:
-		keywords = append(keywords, "JOIN", "OUTER")
+		customList = append(customList, c.candidateList([]string{"JOIN", "OUTER"}, true)...)
 		restrict = true
 	case parser.NATURAL:
-		keywords = append(keywords, "INNER", "LEFT", "RIGHT")
+		customList = append(customList, c.candidateList([]string{"INNER", "LEFT", "RIGHT"}, true)...)
 		restrict = true
 	case parser.AS, parser.USING:
 		restrict = true
 	}
 
 	if joinConditionRequired() {
-		keywords = append(keywords, "ON")
+		customList = append(customList, c.candidate("ON", true))
 
 		if c.tokens[c.lastIdx-2].Token != parser.FULL &&
 			c.tokens[c.lastIdx-3].Token != parser.FULL {
 
-			keywords = append(keywords, "USING ()")
+			customList = append(customList, c.candidate("USING ()", true))
 		}
 
 		if c.tokens[c.lastIdx].Quoted == false {
-			keywords = append(keywords, "AS")
+			customList = append(customList, c.candidate("AS", true))
 		}
 		restrict = true
 	} else {
 		switch c.tokens[c.lastIdx].Token {
 		case '(':
-			keywords = append(keywords, "SELECT")
+			customList = append(customList, c.candidate("SELECT", true))
 			fallthrough
 		case parser.FROM, parser.JOIN, ',':
-			customList = append(customList, c.allTableCandidates(line, origLine, index)...)
+			tables = c.allTableCandidates(line, origLine, index)
 			restrict = true
 		}
 	}
@@ -883,13 +882,12 @@ func (c *Completer) fromClause(i int, line string, origLine string, index int) (
 	}
 
 	if c.tokens[c.lastIdx].Token == parser.IDENTIFIER {
-		keywords = append(keywords, joinCandidates...)
+		customList = append(customList, c.candidateList(joinCandidates, true)...)
 
 		if c.tokens[c.lastIdx].Quoted == false {
-			keywords = append(keywords, "AS")
+			customList = append(customList, c.candidate("AS", true))
 		}
 	}
-
 	return
 }
 
@@ -908,30 +906,50 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 		index,
 		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
 			switch c.tokens[i].Token {
+			case parser.FOR:
+				if i == c.lastIdx {
+					customList = append(customList, c.candidateList([]string{
+						"UPDATE",
+					}, false)...)
+				}
+				customList.Sort()
+				return nil, customList, true
 			case parser.OFFSET:
-				values := c.SearchValues(line, origLine, index)
-				values.Sort()
-				return nil, values, true
+				if i < c.lastIdx {
+					customList = append(customList, c.candidateList([]string{
+						"FOR UPDATE",
+					}, false)...)
+				}
+				customList = append(customList, c.SearchValues(line, origLine, index)...)
+				customList.Sort()
+				return nil, customList, true
 			case parser.LIMIT:
 				if i < c.lastIdx {
 					switch c.tokens[c.lastIdx].Token {
 					case parser.PERCENT:
-						keywords = append(keywords,
-							"WITH TIES",
+						customList = append(customList, c.candidateList([]string{
 							"OFFSET",
-						)
+						}, true)...)
+						customList = append(customList, c.candidateList([]string{
+							"WITH TIES",
+							"FOR UPDATE",
+						}, false)...)
 					case parser.WITH:
-						keywords = append(keywords, "TIES")
+						customList = append(customList, c.candidate("TIES", false))
 					case parser.TIES:
-						keywords = append(keywords,
+						customList = append(customList, c.candidateList([]string{
 							"OFFSET",
-						)
+						}, true)...)
+						customList = append(customList, c.candidate("FOR UPDATE", false))
 					default:
-						keywords = append(keywords,
-							"WITH TIES",
-							"PERCENT",
+						customList = append(customList, c.candidateList([]string{
 							"OFFSET",
-						)
+						}, true)...)
+						customList = append(customList, c.candidateList([]string{
+							"PERCENT",
+							"WITH TIES",
+							"FOR UPDATE",
+						}, false)...)
 						customList = append(customList, c.SearchValues(line, origLine, index)...)
 					}
 				} else {
@@ -948,6 +966,7 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 						customList = append(customList, c.candidateList([]string{
 							"NULLS FIRST",
 							"NULLS LAST",
+							"FOR UPDATE",
 						}, false)...)
 						customList = append(customList, c.candidateList([]string{
 							"LIMIT",
@@ -959,16 +978,20 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 							"LAST",
 						}, false)...)
 					case parser.FIRST, parser.LAST:
-						keywords = append(keywords,
+						customList = append(customList, c.candidateList([]string{
 							"LIMIT",
 							"OFFSET",
-						)
+						}, true)...)
+						customList = append(customList, c.candidateList([]string{
+							"FOR UPDATE",
+						}, false)...)
 					default:
 						customList = append(customList, c.candidateList([]string{
 							"ASC",
 							"DESC",
 							"NULLS FIRST",
 							"NULLS LAST",
+							"FOR UPDATE",
 						}, false)...)
 						customList = append(customList, c.candidateList([]string{
 							"LIMIT",
@@ -1004,26 +1027,28 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 			case parser.HAVING:
 				customList = append(customList, c.whereClause(line, origLine, index)...)
 				customList = append(customList, c.aggregateFunctionCandidateList(line)...)
-				customList.Sort()
 				if i < c.lastIdx {
-					keywords = append(keywords,
+					customList = append(customList, c.candidateList([]string{
 						"ORDER BY",
 						"LIMIT",
 						"OFFSET",
 						"UNION",
 						"EXCEPT",
 						"INTERSECT",
-					)
+					}, true)...)
+					customList = append(customList, c.candidateList([]string{
+						"FOR UPDATE",
+					}, false)...)
 				}
+				customList.Sort()
 				return keywords, customList, true
 			case parser.GROUP:
 				if i == c.lastIdx {
 					keywords = append(keywords, "BY")
 				} else {
 					customList = append(customList, c.whereClause(line, origLine, index)...)
-					customList.Sort()
 					if i < c.lastIdx-1 && c.tokens[c.lastIdx].Token != ',' {
-						keywords = append(keywords,
+						customList = append(customList, c.candidateList([]string{
 							"HAVING",
 							"ORDER BY",
 							"LIMIT",
@@ -1031,15 +1056,18 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 							"UNION",
 							"EXCEPT",
 							"INTERSECT",
-						)
+						}, true)...)
+						customList = append(customList, c.candidateList([]string{
+							"FOR UPDATE",
+						}, false)...)
 					}
+					customList.Sort()
 				}
 				return keywords, customList, true
 			case parser.WHERE:
 				customList = append(customList, c.whereClause(line, origLine, index)...)
-				customList.Sort()
 				if i < c.lastIdx {
-					keywords = append(keywords,
+					customList = append(customList, c.candidateList([]string{
 						"GROUP BY",
 						"HAVING",
 						"ORDER BY",
@@ -1048,14 +1076,18 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 						"UNION",
 						"EXCEPT",
 						"INTERSECT",
-					)
+					}, true)...)
+					customList = append(customList, c.candidateList([]string{
+						"FOR UPDATE",
+					}, false)...)
 				}
+				customList.Sort()
 				return keywords, customList, true
 			case parser.FROM:
-				list, clist, restrict := c.fromClause(i, line, origLine, index)
+				tables, clist, restrict := c.fromClause(i, line, origLine, index)
 				if !restrict {
 					if i < c.lastIdx && c.tokens[c.lastIdx].Token != ',' {
-						list = append(list,
+						clist = append(clist, c.candidateList([]string{
 							"WHERE",
 							"GROUP BY",
 							"HAVING",
@@ -1065,10 +1097,14 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 							"UNION",
 							"EXCEPT",
 							"INTERSECT",
-						)
+						}, true)...)
+						clist = append(clist, c.candidateList([]string{
+							"FOR UPDATE",
+						}, false)...)
 					}
 				}
-				return list, clist, true
+				clist.Sort()
+				return nil, append(tables, clist...), true
 			case parser.SELECT:
 				if i == c.lastIdx {
 					if 0 < len(line) {
@@ -1080,7 +1116,7 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 						lastIdx--
 					}
 					if i < lastIdx && c.tokens[c.lastIdx].Token != ',' {
-						keywords = append(keywords,
+						customList = append(customList, c.candidateList([]string{
 							"AS",
 							"FROM",
 							"WHERE",
@@ -1092,10 +1128,14 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 							"UNION",
 							"EXCEPT",
 							"INTERSECT",
-						)
+						}, true)...)
+						customList = append(customList, c.candidateList([]string{
+							"FOR UPDATE",
+						}, false)...)
 					}
 				}
-				customList = append(c.SearchValues(line, origLine, index), c.aggregateFunctionCandidateList(line)...)
+				customList = append(customList, c.SearchValues(line, origLine, index)...)
+				customList = append(customList, c.aggregateFunctionCandidateList(line)...)
 				customList = append(customList, c.analyticFunctionCandidateList(line)...)
 				customList.Sort()
 				return keywords, customList, true
@@ -1153,15 +1193,14 @@ func (c *Completer) UpdateArgs(line string, origLine string, index int) readline
 				customList.Sort()
 				return nil, customList, true
 			case parser.FROM:
-				list, clist, restrict := c.fromClause(i, line, origLine, index)
+				tables, clist, restrict := c.fromClause(i, line, origLine, index)
 				if !restrict {
 					if i < c.lastIdx && c.tokens[c.lastIdx].Token != ',' {
-						list = append(list, "WHERE")
+						clist = append(clist, c.candidate("WHERE", true))
 					}
 				}
-				keywords = list
-				customList = clist
-				return keywords, customList, true
+				clist.Sort()
+				return nil, append(tables, clist...), true
 			case parser.SET:
 				if c.tokens[c.lastIdx].Token != parser.SET && c.tokens[c.lastIdx].Token != ',' &&
 					c.tokens[c.lastIdx-1].Token != parser.SET && c.tokens[c.lastIdx-1].Token != ',' {
@@ -1202,17 +1241,17 @@ func (c *Completer) DeleteArgs(line string, origLine string, index int) readline
 					if c.tokens[c.lastIdx].Token == parser.FROM || c.tokens[c.lastIdx].Token == ',' {
 						customList = c.allTableCandidates(line, origLine, index)
 					} else {
-						keywords = append(keywords, "WHERE")
+						customList = append(customList, c.candidate("WHERE", true))
 					}
 				} else {
-					list, clist, restrict := c.fromClause(i, line, origLine, index)
+					tables, clist, restrict := c.fromClause(i, line, origLine, index)
 					if !restrict {
 						if i < c.lastIdx && c.tokens[c.lastIdx].Token != ',' {
-							list = append(list, "WHERE")
+							clist = append(clist, c.candidate("WHERE", true))
 						}
 					}
-					keywords = list
-					customList = clist
+					clist.Sort()
+					customList = append(tables, clist...)
 				}
 				return keywords, customList, true
 			case parser.DELETE:
@@ -1403,13 +1442,11 @@ func (c *Completer) DeclareArgs(line string, origLine string, index int) readlin
 			switch c.tokens[i].Token {
 			case parser.SELECT:
 				return nil, c.SelectArgs(line, origLine, index), true
-			case parser.FOR:
-				if i == c.lastIdx {
-					return []string{"SELECT"}, nil, true
-				}
 			case parser.CURSOR:
 				if i == c.lastIdx {
 					return []string{"FOR"}, nil, true
+				} else if i == c.lastIdx-1 && c.tokens[c.lastIdx].Token == parser.FOR {
+					return []string{"SELECT"}, nil, true
 				}
 			case parser.AGGREGATE, parser.FUNCTION, parser.VIEW, parser.VAR:
 			case parser.DECLARE:

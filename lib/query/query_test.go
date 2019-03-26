@@ -1218,6 +1218,7 @@ var insertTests = []struct {
 			NoHeader:  false,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
+			ForUpdate: true,
 		},
 		UpdateCount: 2,
 		ViewCache: ViewMap{
@@ -1228,6 +1229,7 @@ var insertTests = []struct {
 					NoHeader:  false,
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
+					ForUpdate: true,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2"}),
 				RecordSet: []Record{
@@ -1252,8 +1254,7 @@ var insertTests = []struct {
 						value.NewNull(),
 					}),
 				},
-				ForUpdate: true,
-				Tx:        TestTx,
+				Tx: TestTx,
 			},
 		},
 	},
@@ -1314,8 +1315,7 @@ var insertTests = []struct {
 						Delimiter:   ',',
 						IsTemporary: true,
 					},
-					ForUpdate: true,
-					Tx:        TestTx,
+					Tx: TestTx,
 				},
 			},
 		},
@@ -1349,6 +1349,7 @@ var insertTests = []struct {
 			NoHeader:  false,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
+			ForUpdate: true,
 		},
 		UpdateCount: 2,
 	},
@@ -1434,6 +1435,7 @@ var insertTests = []struct {
 			NoHeader:  false,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
+			ForUpdate: true,
 		},
 		UpdateCount: 3,
 	},
@@ -1624,6 +1626,7 @@ var updateTests = []struct {
 				NoHeader:  false,
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
+				ForUpdate: true,
 			},
 		},
 		UpdateCounts: []int{1},
@@ -1635,6 +1638,7 @@ var updateTests = []struct {
 					NoHeader:  false,
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
+					ForUpdate: true,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2"}),
 				RecordSet: []Record{
@@ -1651,7 +1655,6 @@ var updateTests = []struct {
 						value.NewString("str3"),
 					}),
 				},
-				ForUpdate: true,
 			},
 		},
 	},
@@ -1740,6 +1743,7 @@ var updateTests = []struct {
 				NoHeader:  false,
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
+				ForUpdate: true,
 			},
 		},
 		UpdateCounts: []int{2},
@@ -2089,6 +2093,7 @@ var deleteTests = []struct {
 				NoHeader:  false,
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
+				ForUpdate: true,
 			},
 		},
 		UpdateCounts: []int{1},
@@ -2100,6 +2105,7 @@ var deleteTests = []struct {
 					NoHeader:  false,
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
+					ForUpdate: true,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2"}),
 				RecordSet: []Record{
@@ -2112,7 +2118,6 @@ var deleteTests = []struct {
 						value.NewString("str3"),
 					}),
 				},
-				ForUpdate: true,
 			},
 		},
 	},
@@ -2197,6 +2202,7 @@ var deleteTests = []struct {
 				NoHeader:  false,
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
+				ForUpdate: true,
 			},
 		},
 		UpdateCounts: []int{2},
@@ -2403,6 +2409,7 @@ var createTableTests = []struct {
 			NoHeader:  false,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
+			ForUpdate: true,
 		},
 		ViewCache: ViewMap{
 			strings.ToUpper(GetTestFilePath("create_table_1.csv")): &View{
@@ -2412,10 +2419,10 @@ var createTableTests = []struct {
 					NoHeader:  false,
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
+					ForUpdate: true,
 				},
 				Header:    NewHeader("create_table_1", []string{"column1", "column2"}),
 				RecordSet: RecordSet{},
-				ForUpdate: true,
 			},
 		},
 	},
@@ -2444,6 +2451,7 @@ var createTableTests = []struct {
 			NoHeader:  false,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
+			ForUpdate: true,
 		},
 		ViewCache: ViewMap{
 			strings.ToUpper(GetTestFilePath("create_table_1.csv")): &View{
@@ -2453,6 +2461,7 @@ var createTableTests = []struct {
 					NoHeader:  false,
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
+					ForUpdate: true,
 				},
 				Header: NewHeader("create_table_1", []string{"column1", "column2"}),
 				RecordSet: RecordSet{
@@ -2461,8 +2470,7 @@ var createTableTests = []struct {
 						value.NewInteger(2),
 					}),
 				},
-				ForUpdate: true,
-				Tx:        TestTx,
+				Tx: TestTx,
 			},
 		},
 	},
@@ -2631,6 +2639,7 @@ var addColumnsTests = []struct {
 			NoHeader:  false,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
+			ForUpdate: true,
 		},
 		UpdateCount: 2,
 		ViewCache: ViewMap{
@@ -2641,6 +2650,7 @@ var addColumnsTests = []struct {
 					NoHeader:  false,
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
+					ForUpdate: true,
 				},
 				Header: NewHeader("table1", []string{"column1", "column2", "column3", "column4"}),
 				RecordSet: []Record{
@@ -2663,8 +2673,7 @@ var addColumnsTests = []struct {
 						value.NewNull(),
 					}),
 				},
-				ForUpdate: true,
-				Tx:        TestTx,
+				Tx: TestTx,
 			},
 		},
 	},
@@ -2710,8 +2719,7 @@ var addColumnsTests = []struct {
 						Delimiter:   ',',
 						IsTemporary: true,
 					},
-					ForUpdate: true,
-					Tx:        TestTx,
+					Tx: TestTx,
 				},
 			},
 		},
@@ -2740,6 +2748,7 @@ var addColumnsTests = []struct {
 			NoHeader:  false,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
+			ForUpdate: true,
 		},
 		UpdateCount: 2,
 		ViewCache: ViewMap{
@@ -2750,6 +2759,7 @@ var addColumnsTests = []struct {
 					NoHeader:  false,
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
+					ForUpdate: true,
 				},
 				Header: NewHeader("table1", []string{"column3", "column4", "column1", "column2"}),
 				RecordSet: []Record{
@@ -2772,8 +2782,7 @@ var addColumnsTests = []struct {
 						value.NewString("str3"),
 					}),
 				},
-				ForUpdate: true,
-				Tx:        TestTx,
+				Tx: TestTx,
 			},
 		},
 	},
@@ -2801,6 +2810,7 @@ var addColumnsTests = []struct {
 			NoHeader:  false,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
+			ForUpdate: true,
 		},
 		UpdateCount: 2,
 		ViewCache: ViewMap{
@@ -2811,6 +2821,7 @@ var addColumnsTests = []struct {
 					NoHeader:  false,
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
+					ForUpdate: true,
 				},
 				Header: NewHeader("table1", []string{"column1", "column3", "column4", "column2"}),
 				RecordSet: []Record{
@@ -2833,8 +2844,7 @@ var addColumnsTests = []struct {
 						value.NewString("str3"),
 					}),
 				},
-				ForUpdate: true,
-				Tx:        TestTx,
+				Tx: TestTx,
 			},
 		},
 	},
@@ -2862,6 +2872,7 @@ var addColumnsTests = []struct {
 			NoHeader:  false,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
+			ForUpdate: true,
 		},
 		UpdateCount: 2,
 		ViewCache: ViewMap{
@@ -2872,6 +2883,7 @@ var addColumnsTests = []struct {
 					NoHeader:  false,
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
+					ForUpdate: true,
 				},
 				Header: NewHeader("table1", []string{"column1", "column3", "column4", "column2"}),
 				RecordSet: []Record{
@@ -2894,8 +2906,7 @@ var addColumnsTests = []struct {
 						value.NewString("str3"),
 					}),
 				},
-				ForUpdate: true,
-				Tx:        TestTx,
+				Tx: TestTx,
 			},
 		},
 	},
@@ -3072,6 +3083,7 @@ var dropColumnsTests = []struct {
 			NoHeader:  false,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
+			ForUpdate: true,
 		},
 		UpdateCount: 1,
 		ViewCache: ViewMap{
@@ -3082,6 +3094,7 @@ var dropColumnsTests = []struct {
 					NoHeader:  false,
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
+					ForUpdate: true,
 				},
 				Header: NewHeader("table1", []string{"column1"}),
 				RecordSet: []Record{
@@ -3095,8 +3108,7 @@ var dropColumnsTests = []struct {
 						value.NewString("3"),
 					}),
 				},
-				ForUpdate: true,
-				Tx:        TestTx,
+				Tx: TestTx,
 			},
 		},
 	},
@@ -3131,8 +3143,7 @@ var dropColumnsTests = []struct {
 						Delimiter:   ',',
 						IsTemporary: true,
 					},
-					ForUpdate: true,
-					Tx:        TestTx,
+					Tx: TestTx,
 				},
 			},
 		},
@@ -3262,6 +3273,7 @@ var renameColumnTests = []struct {
 			NoHeader:  false,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
+			ForUpdate: true,
 		},
 		ViewCache: ViewMap{
 			strings.ToUpper(GetTestFilePath("table1.csv")): &View{
@@ -3271,6 +3283,7 @@ var renameColumnTests = []struct {
 					NoHeader:  false,
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
+					ForUpdate: true,
 				},
 				Header: NewHeader("table1", []string{"column1", "newcolumn"}),
 				RecordSet: []Record{
@@ -3287,8 +3300,7 @@ var renameColumnTests = []struct {
 						value.NewString("str3"),
 					}),
 				},
-				ForUpdate: true,
-				Tx:        TestTx,
+				Tx: TestTx,
 			},
 		},
 	},
@@ -3323,8 +3335,7 @@ var renameColumnTests = []struct {
 						Delimiter:   ',',
 						IsTemporary: true,
 					},
-					ForUpdate: true,
-					Tx:        TestTx,
+					Tx: TestTx,
 				},
 			},
 		},
@@ -3455,6 +3466,7 @@ var setTableAttributeTests = []struct {
 			Format:    cmd.TSV,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
+			ForUpdate: true,
 		},
 	},
 	{
@@ -3474,6 +3486,7 @@ var setTableAttributeTests = []struct {
 			Format:    cmd.TSV,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
+			ForUpdate: true,
 		},
 	},
 	{
@@ -3489,6 +3502,7 @@ var setTableAttributeTests = []struct {
 			Format:    cmd.CSV,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
+			ForUpdate: true,
 		},
 	},
 	{
@@ -3524,6 +3538,7 @@ var setTableAttributeTests = []struct {
 			Encoding:           text.UTF8,
 			SingleLine:         true,
 			LineBreak:          text.LF,
+			ForUpdate:          true,
 		},
 	},
 	{
@@ -3548,6 +3563,7 @@ var setTableAttributeTests = []struct {
 			Format:    cmd.TEXT,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
+			ForUpdate: true,
 		},
 	},
 	{
@@ -3563,6 +3579,7 @@ var setTableAttributeTests = []struct {
 			Format:    cmd.JSON,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
+			ForUpdate: true,
 		},
 	},
 	{
@@ -3578,6 +3595,7 @@ var setTableAttributeTests = []struct {
 			Format:    cmd.TSV,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
+			ForUpdate: true,
 		},
 	},
 	{
@@ -3602,6 +3620,7 @@ var setTableAttributeTests = []struct {
 			Format:    cmd.CSV,
 			Encoding:  text.SJIS,
 			LineBreak: text.LF,
+			ForUpdate: true,
 		},
 	},
 	{
@@ -3617,6 +3636,7 @@ var setTableAttributeTests = []struct {
 			Format:    cmd.CSV,
 			Encoding:  text.SJIS,
 			LineBreak: text.LF,
+			ForUpdate: true,
 		},
 	},
 	{
@@ -3650,6 +3670,7 @@ var setTableAttributeTests = []struct {
 			Format:    cmd.CSV,
 			Encoding:  text.UTF8,
 			LineBreak: text.CRLF,
+			ForUpdate: true,
 		},
 	},
 	{
@@ -3675,6 +3696,7 @@ var setTableAttributeTests = []struct {
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
 			NoHeader:  true,
+			ForUpdate: true,
 		},
 	},
 	{
@@ -3700,6 +3722,7 @@ var setTableAttributeTests = []struct {
 			Encoding:   text.UTF8,
 			LineBreak:  text.LF,
 			EncloseAll: true,
+			ForUpdate:  true,
 		},
 	},
 	{
@@ -3717,6 +3740,7 @@ var setTableAttributeTests = []struct {
 			LineBreak:   text.LF,
 			JsonEscape:  json.HexDigits,
 			PrettyPrint: false,
+			ForUpdate:   true,
 		},
 	},
 	{
@@ -3742,6 +3766,7 @@ var setTableAttributeTests = []struct {
 			Encoding:    text.UTF8,
 			LineBreak:   text.LF,
 			PrettyPrint: true,
+			ForUpdate:   true,
 		},
 	},
 	{
@@ -3844,7 +3869,7 @@ func TestSetTableAttribute(t *testing.T) {
 		}
 
 		view := NewView(TestTx)
-		_ = view.LoadFromTableIdentifier(context.Background(), filter.CreateNode(), v.Query.Table)
+		_ = view.LoadFromTableIdentifier(context.Background(), filter.CreateNode(), v.Query.Table, false, false)
 
 		if !reflect.DeepEqual(view.FileInfo, v.Expect) {
 			t.Errorf("%s: result = %v, want %v", v.Name, view.FileInfo, v.Expect)

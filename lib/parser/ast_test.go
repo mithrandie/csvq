@@ -275,8 +275,10 @@ func TestSelectQuery_String(t *testing.T) {
 			Offset: "offset",
 			Value:  NewIntegerValueFromString("10"),
 		},
+		ForUpdate:        true,
+		ForUpdateLiteral: "for update",
 	}
-	expect := "with ct as (select 1) select column from table order by column limit 10 offset 10"
+	expect := "with ct as (select 1) select column from table order by column limit 10 offset 10 for update"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}

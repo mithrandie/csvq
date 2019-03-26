@@ -30,6 +30,18 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select foo for update",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "foo"}}}}},
+				},
+				ForUpdate:        true,
+				ForUpdateLiteral: "for update",
+			},
+		},
+	},
+	{
 		Input: "select 1 union all select 2 intersect select 3 except select 4",
 		Output: []Statement{
 			SelectQuery{

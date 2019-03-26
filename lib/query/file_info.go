@@ -75,6 +75,7 @@ type FileInfo struct {
 
 	Handler *file.Handler
 
+	ForUpdate        bool
 	IsTemporary      bool
 	InitialHeader    Header
 	InitialRecordSet RecordSet

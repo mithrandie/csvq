@@ -1001,6 +1001,18 @@ select_query
             OffsetClause:  $5,
         }
     }
+    | with_clause select_entity order_by_clause limit_clause offset_clause FOR UPDATE
+    {
+        $$ = SelectQuery{
+            WithClause:    $1,
+            SelectEntity:  $2,
+            OrderByClause: $3,
+            LimitClause:   $4,
+            OffsetClause:  $5,
+            ForUpdate:     true,
+            ForUpdateLiteral: $6.Literal + " " + $7.Literal,
+        }
+    }
 
 select_entity
     : select_clause from_clause where_clause group_by_clause having_clause

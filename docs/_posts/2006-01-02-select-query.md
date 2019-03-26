@@ -18,6 +18,7 @@ select_query
       [order_by_clause]
       [limit_clause]
       [offset_clause]
+      [FOR UPDATE]
 
 select_entity
   : select_clause

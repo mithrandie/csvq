@@ -295,8 +295,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
-			Tx:            TestTx,
-			UseInternalId: true,
+			Tx: TestTx,
 		},
 	},
 	{
@@ -2610,9 +2609,8 @@ func TestView_Load(t *testing.T) {
 		} else {
 			v.Filter.tx = TestTx
 		}
-		view.UseInternalId = v.UseInternalId
 
-		err := view.Load(context.Background(), v.Filter.CreateNode(), v.From)
+		err := view.Load(context.Background(), v.Filter.CreateNode(), v.From, false, v.UseInternalId)
 
 		if 0 < len(v.Stdin) {
 			os.Stdin = oldStdin
@@ -2658,6 +2656,9 @@ func TestView_Load(t *testing.T) {
 			}
 			if view.FileInfo.PrettyPrint != v.Result.FileInfo.PrettyPrint {
 				t.Errorf("%s: FileInfo.PrettyPrint = %t, want %t", v.Name, view.FileInfo.PrettyPrint, v.Result.FileInfo.PrettyPrint)
+			}
+			if view.FileInfo.ForUpdate != v.Result.FileInfo.ForUpdate {
+				t.Errorf("%s: FileInfo.ForUpdate = %t, want %t", v.Name, view.FileInfo.ForUpdate, v.Result.FileInfo.ForUpdate)
 			}
 			if view.FileInfo.IsTemporary != v.Result.FileInfo.IsTemporary {
 				t.Errorf("%s: FileInfo.IsTemporary = %t, want %t", v.Name, view.FileInfo.IsTemporary, v.Result.FileInfo.IsTemporary)
