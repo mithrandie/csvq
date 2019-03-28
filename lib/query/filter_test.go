@@ -4102,7 +4102,7 @@ func TestFilter_Evaluate(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	_ = cursors.Open(ctx, NewFilter(TestTx), parser.Identifier{Literal: "cur"})
+	_ = cursors.Open(ctx, NewFilter(TestTx), parser.Identifier{Literal: "cur"}, nil)
 	_, _ = cursors.Fetch(parser.Identifier{Literal: "cur"}, parser.NEXT, 0)
 
 	for _, v := range filterEvaluateTests {

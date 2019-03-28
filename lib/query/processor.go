@@ -143,7 +143,8 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 	case parser.CursorDeclaration:
 		err = proc.Filter.cursors.Declare(stmt.(parser.CursorDeclaration))
 	case parser.OpenCursor:
-		err = proc.Filter.cursors.Open(ctx, proc.Filter, stmt.(parser.OpenCursor).Cursor)
+		openCur := stmt.(parser.OpenCursor)
+		err = proc.Filter.cursors.Open(ctx, proc.Filter, openCur.Cursor, openCur.Values)
 	case parser.CloseCursor:
 		err = proc.Filter.cursors.Close(stmt.(parser.CloseCursor).Cursor)
 	case parser.DisposeCursor:

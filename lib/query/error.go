@@ -57,6 +57,7 @@ const (
 	ErrMsgUndeclaredCursor                     = "cursor %s is undeclared"
 	ErrMsgCursorClosed                         = "cursor %s is closed"
 	ErrMsgCursorOpen                           = "cursor %s is already open"
+	ErrMsgInvalidCursorStatement               = "invalid cursor statement: %s"
 	ErrMsgPseudoCursor                         = "cursor %s is a pseudo cursor"
 	ErrMsgCursorFetchLength                    = "fetching from cursor %s returns %s"
 	ErrMsgInvalidFetchPosition                 = "fetching position %s is not an integer value"
@@ -735,6 +736,16 @@ type CursorOpenError struct {
 func NewCursorOpenError(cursor parser.Identifier) error {
 	return &CursorOpenError{
 		NewBaseError(cursor, fmt.Sprintf(ErrMsgCursorOpen, cursor), ReturnCodeApplicationError, ErrorCursorOpen),
+	}
+}
+
+type InvalidCursorStatementError struct {
+	*BaseError
+}
+
+func NewInvalidCursorStatementError(statement parser.Identifier) error {
+	return &InvalidCursorStatementError{
+		NewBaseError(statement, fmt.Sprintf(ErrMsgInvalidCursorStatement, statement), ReturnCodeApplicationError, ErrorInvalidCursorStatement),
 	}
 }
 

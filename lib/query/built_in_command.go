@@ -636,8 +636,13 @@ func ShowObjects(filter *Filter, expr parser.ShowObjects) (string, error) {
 				}
 
 				w.NewLine()
-				w.WriteColorWithoutLineBreak("Query: ", cmd.LableEffect)
-				w.WriteColorWithoutLineBreak(cur.query.String(), cmd.IdentifierEffect)
+				if cur.query.SelectEntity != nil {
+					w.WriteColor("Query: ", cmd.LableEffect)
+					writeQuery(w, cur.query.String())
+				} else {
+					w.WriteColorWithoutLineBreak("Statement: ", cmd.LableEffect)
+					w.WriteColorWithoutLineBreak(cur.statement.String(), cmd.IdentifierEffect)
+				}
 
 				w.ClearBlock()
 				w.NewLine()
@@ -686,7 +691,7 @@ func ShowObjects(filter *Filter, expr parser.ShowObjects) (string, error) {
 				w.WriteColorWithoutLineBreak(strconv.Itoa(stmt.HolderNumber), cmd.NumberEffect)
 				w.NewLine()
 				w.WriteColorWithoutLineBreak("Statement: ", cmd.LableEffect)
-				w.WriteWithoutLineBreak(stmt.StatementString)
+				writeQuery(w, stmt.StatementString)
 
 				w.ClearBlock()
 				w.NewLine()
@@ -985,6 +990,19 @@ func writeFieldList(w *ObjectWriter, fields []string) {
 		w.WriteColorWithoutLineBreak(fields[i], cmd.AttributeEffect)
 		w.NewLine()
 	}
+}
+
+func writeQuery(w *ObjectWriter, s string) {
+	words := strings.Split(s, " ")
+
+	w.BeginSubBlock()
+	for _, v := range words {
+		if !w.FitInLine(v + " ") {
+			w.NewLine()
+		}
+		w.Write(v + " ")
+	}
+	w.EndSubBlock()
 }
 
 func SetEnvVar(ctx context.Context, filter *Filter, expr parser.SetEnvVar) error {

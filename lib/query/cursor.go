@@ -3,12 +3,11 @@ package query
 import (
 	"context"
 	"errors"
+	"sort"
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
-
-	"sort"
 
 	"github.com/mithrandie/ternary"
 )
@@ -36,11 +35,11 @@ func (list CursorScopes) Dispose(name parser.Identifier) error {
 	return NewUndeclaredCursorError(name)
 }
 
-func (list CursorScopes) Open(ctx context.Context, filter *Filter, name parser.Identifier) error {
+func (list CursorScopes) Open(ctx context.Context, filter *Filter, name parser.Identifier, values []parser.ReplaceValue) error {
 	var err error
 
 	for _, m := range list {
-		err = m.Open(ctx, filter, name)
+		err = m.Open(ctx, filter, name, values)
 		if err == nil {
 			return nil
 		}
@@ -144,7 +143,7 @@ func (m CursorMap) Declare(expr parser.CursorDeclaration) error {
 	if _, ok := m[uname]; ok {
 		return NewCursorRedeclaredError(expr.Cursor)
 	}
-	m[uname] = NewCursor(expr.Cursor.Literal, expr.Query)
+	m[uname] = NewCursor(expr)
 	return nil
 }
 
@@ -169,9 +168,9 @@ func (m CursorMap) Dispose(name parser.Identifier) error {
 	return NewUndeclaredCursorError(name)
 }
 
-func (m CursorMap) Open(ctx context.Context, filter *Filter, name parser.Identifier) error {
+func (m CursorMap) Open(ctx context.Context, filter *Filter, name parser.Identifier, values []parser.ReplaceValue) error {
 	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
-		return cur.Open(ctx, filter, name)
+		return cur.Open(ctx, filter, name, values)
 	}
 	return NewUndeclaredCursorError(name)
 }
@@ -234,19 +233,21 @@ func (m CursorMap) SortedKeys() []string {
 }
 
 type Cursor struct {
-	name    string
-	query   parser.SelectQuery
-	view    *View
-	index   int
-	fetched bool
+	name      string
+	query     parser.SelectQuery
+	statement parser.Identifier
+	view      *View
+	index     int
+	fetched   bool
 
 	isPseudo bool
 }
 
-func NewCursor(name string, query parser.SelectQuery) *Cursor {
+func NewCursor(e parser.CursorDeclaration) *Cursor {
 	return &Cursor{
-		name:  name,
-		query: query,
+		name:      e.Cursor.Literal,
+		query:     e.Query,
+		statement: e.Statement,
 	}
 }
 
@@ -269,7 +270,7 @@ func NewPseudoCursor(tx *Transaction, values []value.Primary) *Cursor {
 	}
 }
 
-func (c *Cursor) Open(ctx context.Context, filter *Filter, name parser.Identifier) error {
+func (c *Cursor) Open(ctx context.Context, filter *Filter, name parser.Identifier, values []parser.ReplaceValue) error {
 	if c.isPseudo {
 		return NewPseudoCursorError(name)
 	}
@@ -278,7 +279,24 @@ func (c *Cursor) Open(ctx context.Context, filter *Filter, name parser.Identifie
 		return NewCursorOpenError(name)
 	}
 
-	view, err := Select(ctx, filter, c.query)
+	var view *View
+	var err error
+	if c.query.SelectEntity != nil {
+		view, err = Select(ctx, filter, c.query)
+	} else {
+		prepared, e := filter.tx.PreparedStatements.Get(c.statement)
+		if e != nil {
+			return e
+		}
+		if len(prepared.Statements) != 1 {
+			return NewInvalidCursorStatementError(c.statement)
+		}
+		stmt, ok := prepared.Statements[0].(parser.SelectQuery)
+		if !ok {
+			return NewInvalidCursorStatementError(c.statement)
+		}
+		view, err = Select(ContextForPreparedStatement(ctx, NewReplaceValues(values)), filter, stmt)
+	}
 	if err != nil {
 		return err
 	}

@@ -10,10 +10,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mithrandie/csvq/lib/value"
-
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mithrandie/readline-csvq"
 )
@@ -505,8 +504,8 @@ var completerStatementsTests = []completerTest{
 		OrigLine: "open ",
 		Index:    5,
 		Expect: readline.CandidateList{
-			{Name: []rune("cur1")},
-			{Name: []rune("cur2")},
+			{Name: []rune("cur1"), AppendSpace: true},
+			{Name: []rune("cur2"), AppendSpace: true},
 		},
 	},
 	{
@@ -2413,6 +2412,7 @@ var completerDeclareArgsTests = []completerTest{
 		Index:    23,
 		Expect: readline.CandidateList{
 			{Name: []rune("SELECT"), AppendSpace: true},
+			{Name: []rune("stmt")},
 		},
 	},
 	{
@@ -3244,8 +3244,8 @@ var completerCursorStatusTests = []completerTest{
 		OrigLine: "select cursor cur1 is ",
 		Index:    22,
 		Expect: readline.CandidateList{
-			{Name: []rune("IN"), AppendSpace: true},
 			{Name: []rune("NOT"), AppendSpace: true},
+			{Name: []rune("IN RANGE")},
 			{Name: []rune("OPEN")},
 		},
 	},
@@ -3255,7 +3255,7 @@ var completerCursorStatusTests = []completerTest{
 		OrigLine: "select cursor cur1 is not ",
 		Index:    26,
 		Expect: readline.CandidateList{
-			{Name: []rune("IN"), AppendSpace: true},
+			{Name: []rune("IN RANGE")},
 			{Name: []rune("OPEN")},
 		},
 	},

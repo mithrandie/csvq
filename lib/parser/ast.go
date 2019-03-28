@@ -1404,13 +1404,15 @@ type WhileInCursor struct {
 
 type CursorDeclaration struct {
 	*BaseExpr
-	Cursor Identifier
-	Query  SelectQuery
+	Cursor    Identifier
+	Query     SelectQuery
+	Statement Identifier
 }
 
 type OpenCursor struct {
 	*BaseExpr
 	Cursor Identifier
+	Values []ReplaceValue
 }
 
 type CloseCursor struct {

@@ -1720,7 +1720,7 @@ func TestProcessor_WhileInCursor(t *testing.T) {
 			},
 		}
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-		_ = proc.Filter.cursors.Open(context.Background(), proc.Filter, parser.Identifier{Literal: "cur"})
+		_ = proc.Filter.cursors.Open(context.Background(), proc.Filter, parser.Identifier{Literal: "cur"}, nil)
 
 		r, w, _ := os.Pipe()
 		tx.Session.Stdout = w

@@ -460,12 +460,14 @@ var CsvqSyntax = []Expression{
 				Name: "declare_cursor_statement",
 				Group: []Grammar{
 					{Keyword("DECLARE"), Identifier("cursor_name"), Keyword("CURSOR"), Keyword("FOR"), Link("select_query")},
+					{Keyword("DECLARE"), Identifier("cursor_name"), Keyword("CURSOR"), Keyword("FOR"), Identifier("prepared_statement_name")},
 				},
 			},
 			{
 				Name: "open_cursor_statement",
 				Group: []Grammar{
 					{Keyword("OPEN"), Identifier("cursor_name")},
+					{Keyword("OPEN"), Identifier("cursor_name"), Keyword("USING"), ContinuousOption{Link("replace_value")}},
 				},
 			},
 			{

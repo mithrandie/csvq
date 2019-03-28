@@ -4384,10 +4384,31 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "declare cur cursor for stmt",
+		Output: []Statement{
+			CursorDeclaration{
+				Cursor:    Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "cur"},
+				Statement: Identifier{BaseExpr: &BaseExpr{line: 1, char: 24}, Literal: "stmt"},
+			},
+		},
+	},
+	{
 		Input: "open cur",
 		Output: []Statement{
 			OpenCursor{
 				Cursor: Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "cur"},
+			},
+		},
+	},
+	{
+		Input: "open cur using 1, 'a' as a",
+		Output: []Statement{
+			OpenCursor{
+				Cursor: Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "cur"},
+				Values: []ReplaceValue{
+					{Value: NewIntegerValueFromString("1")},
+					{Value: NewStringValue("a"), Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 26}, Literal: "a"}},
+				},
 			},
 		},
 	},

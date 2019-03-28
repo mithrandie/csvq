@@ -177,9 +177,9 @@ func TestFetchCursor(t *testing.T) {
 	)
 
 	_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-	_ = filter.cursors.Open(context.Background(), filter, parser.Identifier{Literal: "cur"})
+	_ = filter.cursors.Open(context.Background(), filter, parser.Identifier{Literal: "cur"}, nil)
 	_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-	_ = filter.cursors.Open(context.Background(), filter, parser.Identifier{Literal: "cur2"})
+	_ = filter.cursors.Open(context.Background(), filter, parser.Identifier{Literal: "cur2"}, nil)
 
 	for _, v := range fetchCursorTests {
 		success, err := FetchCursor(context.Background(), filter, v.CurName, v.FetchPosition, v.Variables)

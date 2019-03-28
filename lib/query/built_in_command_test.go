@@ -1897,6 +1897,10 @@ var showObjectsTests = []struct {
 						fetched: true,
 						index:   2,
 					},
+					"CUR5": &Cursor{
+						name:      "stmtcur",
+						statement: parser.Identifier{Literal: "stmt"},
+					},
 				},
 			},
 		},
@@ -1905,16 +1909,19 @@ var showObjectsTests = []struct {
 			"---------------------------------------------------------------------\n" +
 			" cur\n" +
 			"     Status: Closed\n" +
-			"     Query: select column1, column2 from table1\n" +
+			"     Query: select column1, column2 from table1 \n" +
 			" cur2\n" +
 			"     Status: Open    Number of Rows: 2         Pointer: UNKNOWN\n" +
-			"     Query: select column1, column2 from table1\n" +
+			"     Query: select column1, column2 from table1 \n" +
 			" cur3\n" +
 			"     Status: Open    Number of Rows: 2         Pointer: 1\n" +
-			"     Query: select column1, column2 from table1\n" +
+			"     Query: select column1, column2 from table1 \n" +
 			" cur4\n" +
 			"     Status: Open    Number of Rows: 2         Pointer: Out of Range\n" +
-			"     Query: select column1, column2 from table1\n" +
+			"     Query: select column1, column2 from table1 \n" +
+			" stmtcur\n" +
+			"     Status: Closed\n" +
+			"     Statement: stmt\n" +
 			"\n",
 	},
 	{
@@ -2023,10 +2030,10 @@ var showObjectsTests = []struct {
 			"---------------------------\n" +
 			" stmt1\n" +
 			"     Placeholder Number: 0\n" +
-			"     Statement: select 1\n" +
+			"     Statement: select 1 \n" +
 			" stmt2\n" +
 			"     Placeholder Number: 1\n" +
-			"     Statement: select ?\n" +
+			"     Statement: select ? \n" +
 			"\n",
 	},
 	{

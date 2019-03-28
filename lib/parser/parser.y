@@ -693,9 +693,17 @@ cursor_statement
     {
         $$ = CursorDeclaration{Cursor:$2, Query: $5.(SelectQuery)}
     }
+    | DECLARE identifier CURSOR FOR identifier
+    {
+        $$ = CursorDeclaration{Cursor:$2, Statement: $5}
+    }
     | OPEN identifier
     {
         $$ = OpenCursor{Cursor: $2}
+    }
+    | OPEN identifier USING replace_values
+    {
+        $$ = OpenCursor{Cursor: $2, Values: $4}
     }
     | CLOSE identifier
     {

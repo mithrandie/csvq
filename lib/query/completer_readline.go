@@ -369,7 +369,9 @@ func (c *Completer) Statements(line string, origLine string, index int) readline
 		}
 	case parser.DISPOSE:
 		return c.DisposeArgs(line, origLine, index)
-	case parser.OPEN, parser.CLOSE:
+	case parser.OPEN:
+		return c.UsingArgs(line, origLine, index)
+	case parser.CLOSE:
 		return c.candidateList(c.cursorList, false)
 	case parser.FETCH:
 		return c.FetchArgs(line, origLine, index)
@@ -1446,7 +1448,7 @@ func (c *Completer) DeclareArgs(line string, origLine string, index int) readlin
 				if i == c.lastIdx {
 					return []string{"FOR"}, nil, true
 				} else if i == c.lastIdx-1 && c.tokens[c.lastIdx].Token == parser.FOR {
-					return []string{"SELECT"}, nil, true
+					return []string{"SELECT"}, c.candidateList(c.statementList, false), true
 				}
 			case parser.AGGREGATE, parser.FUNCTION, parser.VIEW, parser.VAR:
 			case parser.DECLARE:
@@ -1604,10 +1606,15 @@ func (c *Completer) UsingArgs(line string, origLine string, index int) readline.
 					keywords = []string{"AS"}
 				}
 				return keywords, c.SearchValues(line, origLine, index), true
-			case parser.EXECUTE, parser.PRINTF:
-				if i == c.lastIdx && c.tokens[i].Token == parser.EXECUTE && 0 < len(c.statementList) {
-					keywords = c.statementList
-				} else if i < c.lastIdx {
+			case parser.EXECUTE, parser.PRINTF, parser.OPEN:
+				if i == c.lastIdx {
+					switch c.tokens[i].Token {
+					case parser.EXECUTE:
+						keywords = c.statementList
+					case parser.OPEN:
+						keywords = c.cursorList
+					}
+				} else {
 					keywords = append(keywords, "USING")
 				}
 				return keywords, c.SearchValues(line, origLine, index), true
@@ -1913,7 +1920,7 @@ func (c *Completer) CursorStatus(line string, origLine string, index int) readli
 							c.tokens[c.lastIdx-4].Token == parser.CURSOR &&
 							c.tokens[c.lastIdx-2].Token == parser.IS &&
 							c.tokens[c.lastIdx-1].Token == parser.NOT {
-						return nil, c.filteredCandidateList(line, []string{"RANGE"}, false), true
+						return nil, c.candidateList([]string{"RANGE"}, false), true
 					}
 				}
 			case parser.NOT:
@@ -1922,14 +1929,20 @@ func (c *Completer) CursorStatus(line string, origLine string, index int) readli
 					if 0 < c.lastIdx-3 &&
 						c.tokens[c.lastIdx-3].Token == parser.CURSOR &&
 						c.tokens[c.lastIdx-1].Token == parser.IS {
-						return []string{"IN"}, c.filteredCandidateList(line, []string{"OPEN"}, false), true
+						return nil, c.candidateList([]string{
+							"IN RANGE",
+							"OPEN",
+						}, false), true
 					}
 				}
 			case parser.IS:
 				switch i {
 				case c.lastIdx:
 					if 0 < c.lastIdx-2 && c.tokens[c.lastIdx-2].Token == parser.CURSOR {
-						return []string{"NOT", "IN"}, c.filteredCandidateList(line, []string{"OPEN"}, false), true
+						return []string{"NOT"}, c.candidateList([]string{
+							"IN RANGE",
+							"OPEN",
+						}, false), true
 					}
 				}
 			case parser.CURSOR:
@@ -1937,7 +1950,7 @@ func (c *Completer) CursorStatus(line string, origLine string, index int) readli
 				case c.lastIdx:
 					return c.cursorList, nil, true
 				case c.lastIdx - 1:
-					return []string{"IS"}, c.filteredCandidateList(line, []string{"COUNT"}, false), true
+					return []string{"IS"}, c.candidateList([]string{"COUNT"}, false), true
 				}
 			case parser.IDENTIFIER, parser.COUNT, parser.OPEN, parser.RANGE:
 				return nil, nil, false
