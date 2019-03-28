@@ -45,6 +45,7 @@ A transaction is terminated when a commit or rollback statement is executed.
 
 When the interactive shell is terminated, then roll all of the changes back automatically.
 
+
 ## File Locking
 {: #file_locking}
 
@@ -59,13 +60,14 @@ Shared locks are unlocked immediately after reading, and exclusive locks remain 
 Once you load files, that data is cached until the termination of the transaction, so in a transaction, that data is basically unaffected by the other transactions.
 However, as an exception, when trying to update a file that has been loaded by a SELECT query, the file will be reloaded.
 In that case, there is a probability the data is changed in tha same transaction.
-You can use [SELECT FOR UPDATE]({{ '/reference/select-query.html' | relative_url }}) syntax to use exclusive locks and prevent the probability. 
+You can use [FOR UPDATE]({{ '/reference/select-query.html' | relative_url }}) keywords in SELECT queries to use exclusive locks and prevent the probability. 
 
 ### Recover files lockings
 
 Program panics and unterminated transactions remain lock files.
-In that case, you must manually remove following files created by csvq.
+In that case, you must manually remove following hidden files created by csvq.
 
+- ._FILE_NAME_.[0-9a-zA-Z]{12}.rlock 
 - ._FILE_NAME_.lock 
 - ._FILE_NAME_.temp
 
