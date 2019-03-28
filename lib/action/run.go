@@ -149,8 +149,9 @@ func LaunchInteractiveShell(proc *query.Processor) error {
 
 		statements, _, e := parser.Parse(strings.Join(lines, "\n"), "", proc.Tx.Flags.DatetimeFormat, false)
 		if e != nil {
-			e = query.NewSyntaxError(e.(*parser.SyntaxError))
-			proc.LogError(e.Error())
+			if e = query.NewSyntaxError(e.(*parser.SyntaxError)); e != nil {
+				proc.LogError(e.Error())
+			}
 			lines = lines[:0]
 			proc.Tx.Session.Terminal.SetPrompt(ctx)
 			continue

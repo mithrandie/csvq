@@ -87,7 +87,7 @@ func (tx *Transaction) Commit(filter *Filter, expr parser.Expression) error {
 		for _, fileinfo := range createdFiles {
 			view, _ := tx.cachedViews.Get(parser.Identifier{Literal: fileinfo.Path})
 
-			fp := view.FileInfo.Handler.FileForUpdate()
+			fp, _ := view.FileInfo.Handler.FileForUpdate()
 			if err := fp.Truncate(0); err != nil {
 				return NewSystemError(err.Error())
 			}
@@ -107,7 +107,7 @@ func (tx *Transaction) Commit(filter *Filter, expr parser.Expression) error {
 		for _, fileinfo := range updatedFiles {
 			view, _ := tx.cachedViews.Get(parser.Identifier{Literal: fileinfo.Path})
 
-			fp := view.FileInfo.Handler.FileForUpdate()
+			fp, _ := view.FileInfo.Handler.FileForUpdate()
 			if err := fp.Truncate(0); err != nil {
 				return NewSystemError(err.Error())
 			}
@@ -181,7 +181,7 @@ func (tx *Transaction) ReleaseResources() error {
 	if err := tx.cachedViews.Clean(tx.FileContainer); err != nil {
 		return err
 	}
-	if err := tx.FileContainer.UnlockAll(); err != nil {
+	if err := tx.FileContainer.CloseAll(); err != nil {
 		return err
 	}
 	return nil
@@ -192,12 +192,9 @@ func (tx *Transaction) ReleaseResourcesWithErrors() error {
 	if err := tx.cachedViews.CleanWithErrors(tx.FileContainer); err != nil {
 		errs = append(errs, err.(*file.ForcedUnlockError).Errors...)
 	}
-	if err := tx.FileContainer.UnlockAllWithErrors(); err != nil {
+	if err := tx.FileContainer.CloseAllWithErrors(); err != nil {
 		errs = append(errs, err.(*file.ForcedUnlockError).Errors...)
 	}
 
-	if errs != nil {
-		return file.NewForcedUnlockError(errs)
-	}
-	return nil
+	return file.NewForcedUnlockError(errs)
 }

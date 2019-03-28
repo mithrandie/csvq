@@ -217,8 +217,6 @@ func (m ViewMap) CleanWithErrors(container *file.Container) error {
 			delete(m, k)
 		}
 	}
-	if errs != nil {
-		return file.NewForcedUnlockError(errs)
-	}
-	return nil
+
+	return file.NewForcedUnlockError(errs)
 }

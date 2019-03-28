@@ -85,6 +85,10 @@ type ForcedUnlockError struct {
 }
 
 func NewForcedUnlockError(errs []error) error {
+	if errs == nil {
+		return nil
+	}
+
 	return &ForcedUnlockError{
 		Errors: errs,
 	}
@@ -103,6 +107,13 @@ type CompositeError struct {
 }
 
 func NewCompositeError(err1 error, err2 error) error {
+	if err1 == nil {
+		return err2
+	}
+	if err2 == nil {
+		return err1
+	}
+
 	return &CompositeError{
 		message: err1.Error() + "\n  " + err2.Error(),
 	}

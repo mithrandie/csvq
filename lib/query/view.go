@@ -450,11 +450,9 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 				return nil, ConvertFileHandlerError(err, jsonPath, fpath)
 			}
 			defer func() {
-				if e := filter.tx.FileContainer.Close(h); e != nil {
-					err = AppendCompositeError(err, e)
-				}
+				err = AppendCompositeError(err, filter.tx.FileContainer.Close(h))
 			}()
-			reader = h.FileForRead()
+			reader = h.File()
 		} else {
 			jsonTextValue, err := filter.Evaluate(ctx, jsonQuery.JsonText)
 			if err != nil {
@@ -726,27 +724,22 @@ func cacheViewFromFile(
 					return filePath, ConvertFileHandlerError(err, tableIdentifier, fileInfo.Path)
 				}
 				fileInfo.Handler = h
-				fp = h.FileForRead()
+				fp = h.File()
 			} else {
 				h, err := file.NewHandlerForRead(ctx, filter.tx.FileContainer, fileInfo.Path, filter.tx.WaitTimeout, filter.tx.RetryDelay)
 				if err != nil {
 					return filePath, ConvertFileHandlerError(err, tableIdentifier, fileInfo.Path)
 				}
 				defer func() {
-					if e := filter.tx.FileContainer.Close(h); e != nil {
-						err = AppendCompositeError(err, e)
-					}
+					err = AppendCompositeError(err, filter.tx.FileContainer.Close(h))
 				}()
-				fp = h.FileForRead()
+				fp = h.File()
 			}
 
 			loadView, err := loadViewFromFile(ctx, filter.tx, fp, fileInfo, withoutNull)
 			if err != nil {
 				err = NewDataParsingError(tableIdentifier, fileInfo.Path, err.Error())
-				if e := filter.tx.FileContainer.Close(fileInfo.Handler); e != nil {
-					err = AppendCompositeError(err, e)
-				}
-				return filePath, err
+				return filePath, AppendCompositeError(err, filter.tx.FileContainer.Close(fileInfo.Handler))
 			}
 			loadView.FileInfo.ForUpdate = forUpdate
 			filter.tx.cachedViews.Set(loadView)

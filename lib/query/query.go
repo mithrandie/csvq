@@ -564,20 +564,14 @@ func CreateTable(ctx context.Context, parentFilter *Filter, query parser.CreateT
 	if query.Query != nil {
 		view, err = Select(ctx, filter, query.Query.(parser.SelectQuery))
 		if err != nil {
-			if e := filter.tx.FileContainer.Close(fileInfo.Handler); e != nil {
-				err = AppendCompositeError(err, e)
-			}
-			return nil, err
+			return nil, AppendCompositeError(err, filter.tx.FileContainer.Close(fileInfo.Handler))
 		}
 
 		if err = view.Header.Update(parser.FormatTableName(fileInfo.Path), query.Fields); err != nil {
 			if _, ok := err.(*FieldLengthNotMatchError); ok {
 				err = NewTableFieldLengthError(query.Query.(parser.SelectQuery), query.Table, len(query.Fields))
 			}
-			if e := filter.tx.FileContainer.Close(fileInfo.Handler); e != nil {
-				err = AppendCompositeError(err, e)
-			}
-			return nil, err
+			return nil, AppendCompositeError(err, filter.tx.FileContainer.Close(fileInfo.Handler))
 		}
 	} else {
 		fields := make([]string, len(query.Fields))
@@ -585,10 +579,7 @@ func CreateTable(ctx context.Context, parentFilter *Filter, query parser.CreateT
 			f, _ := v.(parser.Identifier)
 			if InStrSliceWithCaseInsensitive(f.Literal, fields) {
 				err = NewDuplicateFieldNameError(f)
-				if e := filter.tx.FileContainer.Close(fileInfo.Handler); e != nil {
-					err = AppendCompositeError(err, e)
-				}
-				return nil, err
+				return nil, AppendCompositeError(err, filter.tx.FileContainer.Close(fileInfo.Handler))
 			}
 			fields[i] = f.Literal
 		}

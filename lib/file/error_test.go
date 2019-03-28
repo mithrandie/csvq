@@ -1,6 +1,7 @@
 package file
 
 import (
+	"errors"
 	"reflect"
 	"testing"
 
@@ -43,5 +44,66 @@ func TestParseError(t *testing.T) {
 		if e.Error() != v.Message {
 			t.Errorf("message = %q, want %q for %#v", e.Error(), v.Message, v.Error)
 		}
+	}
+}
+
+func TestForcedUnlockError_Error(t *testing.T) {
+	errs := []error{
+		errors.New("err1"),
+		errors.New("err2"),
+	}
+
+	err := NewForcedUnlockError(errs)
+	expect := "err1\n  err2"
+	if err == nil {
+		t.Fatalf("no error, want error %q", expect)
+	}
+	if err.Error() != expect {
+		t.Fatalf("err = %q, want error %q", err.Error(), expect)
+	}
+
+	err = NewForcedUnlockError(nil)
+	if err != nil {
+		t.Fatalf("error = %q, want no error", err.Error())
+	}
+}
+
+func TestCompositeError_Error(t *testing.T) {
+	err1 := NewForcedUnlockError([]error{
+		errors.New("ferr1"),
+		errors.New("ferr2"),
+	})
+	err2 := errors.New("err2")
+
+	err := NewCompositeError(err1, err2)
+	expect := "ferr1\n  ferr2\n  err2"
+	if err == nil {
+		t.Fatalf("no error, want error %q", expect)
+	}
+	if err.Error() != expect {
+		t.Fatalf("err = %q, want error %q", err.Error(), expect)
+	}
+
+	err = NewCompositeError(err1, nil)
+	expect = "ferr1\n  ferr2"
+	if err == nil {
+		t.Fatalf("no error, want error %q", expect)
+	}
+	if err.Error() != expect {
+		t.Fatalf("err = %q, want error %q", err.Error(), expect)
+	}
+
+	err = NewCompositeError(nil, err2)
+	expect = "err2"
+	if err == nil {
+		t.Fatalf("no error, want error %q", expect)
+	}
+	if err.Error() != expect {
+		t.Fatalf("err = %q, want error %q", err.Error(), expect)
+	}
+
+	err = NewCompositeError(nil, nil)
+	if err != nil {
+		t.Fatalf("error = %q, want no error", err.Error())
 	}
 }

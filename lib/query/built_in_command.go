@@ -143,12 +143,10 @@ func LoadStatementsFromFile(ctx context.Context, tx *Transaction, expr parser.So
 		return nil, NewReadFileError(expr, err.Error())
 	}
 	defer func() {
-		if e := tx.FileContainer.Close(h); e != nil {
-			err = AppendCompositeError(err, e)
-		}
+		err = AppendCompositeError(err, tx.FileContainer.Close(h))
 	}()
 
-	buf, err := ioutil.ReadAll(h.FileForRead())
+	buf, err := ioutil.ReadAll(h.File())
 	if err != nil {
 		return nil, NewReadFileError(expr, err.Error())
 	}
