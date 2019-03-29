@@ -192,12 +192,9 @@ func copyfile(dstfile string, srcfile string) error {
 }
 
 func GenerateVariableMap(values map[string]value.Primary) VariableMap {
-	m := &sync.Map{}
-	for k, v := range values {
-		m.Store(k, v)
-	}
 	return VariableMap{
-		variables: m,
+		mtx:       &sync.RWMutex{},
+		variables: values,
 	}
 }
 

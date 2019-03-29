@@ -2,6 +2,7 @@ package query
 
 import (
 	"reflect"
+	"sync"
 	"testing"
 
 	"github.com/mithrandie/csvq/lib/parser"
@@ -55,12 +56,16 @@ func TestGetRuntimeInformation(t *testing.T) {
 	}()
 
 	TestTx.cachedViews = ViewMap{
-		"TABLE1": &View{FileInfo: &FileInfo{}},
-		"TABLE2": &View{FileInfo: &FileInfo{}},
-		"TABLE3": &View{FileInfo: &FileInfo{}},
-		"TABLE4": &View{FileInfo: &FileInfo{}},
+		mtx: &sync.RWMutex{},
+		views: map[string]*View{
+			"TABLE1": {FileInfo: &FileInfo{}},
+			"TABLE2": {FileInfo: &FileInfo{}},
+			"TABLE3": {FileInfo: &FileInfo{}},
+			"TABLE4": {FileInfo: &FileInfo{}},
+		},
 	}
 	TestTx.uncommittedViews = &UncommittedViews{
+		mtx: &sync.RWMutex{},
 		Created: map[string]*FileInfo{
 			"TABLE1": {},
 			"TABLE2": {},

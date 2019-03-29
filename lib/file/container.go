@@ -83,7 +83,7 @@ func (c *Container) CloseWithErrors(h *Handler) (err error) {
 	return
 }
 
-func (c *Container) UnlockAll() error {
+func (c *Container) CloseAll() error {
 	for k := range c.m {
 		if err := c.Close(c.m[k]); err != nil {
 			return err
@@ -92,7 +92,7 @@ func (c *Container) UnlockAll() error {
 	return nil
 }
 
-func (c *Container) UnlockAllWithErrors() error {
+func (c *Container) CloseAllWithErrors() error {
 	var errs []error
 	for k := range c.m {
 		if err := c.CloseWithErrors(c.m[k]); err != nil {
@@ -100,8 +100,5 @@ func (c *Container) UnlockAllWithErrors() error {
 		}
 	}
 
-	if errs != nil {
-		return NewForcedUnlockError(errs)
-	}
-	return nil
+	return NewForcedUnlockError(errs)
 }

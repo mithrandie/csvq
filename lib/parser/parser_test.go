@@ -30,6 +30,18 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select foo for update",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "foo"}}}}},
+				},
+				ForUpdate:        true,
+				ForUpdateLiteral: "for update",
+			},
+		},
+	},
+	{
 		Input: "select 1 union all select 2 intersect select 3 except select 4",
 		Output: []Statement{
 			SelectQuery{
@@ -4372,10 +4384,31 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "declare cur cursor for stmt",
+		Output: []Statement{
+			CursorDeclaration{
+				Cursor:    Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "cur"},
+				Statement: Identifier{BaseExpr: &BaseExpr{line: 1, char: 24}, Literal: "stmt"},
+			},
+		},
+	},
+	{
 		Input: "open cur",
 		Output: []Statement{
 			OpenCursor{
 				Cursor: Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "cur"},
+			},
+		},
+	},
+	{
+		Input: "open cur using 1, 'a' as a",
+		Output: []Statement{
+			OpenCursor{
+				Cursor: Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "cur"},
+				Values: []ReplaceValue{
+					{Value: NewIntegerValueFromString("1")},
+					{Value: NewStringValue("a"), Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 26}, Literal: "a"}},
+				},
 			},
 		},
 	},

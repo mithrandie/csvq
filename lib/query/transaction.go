@@ -56,7 +56,7 @@ func NewTransaction(ctx context.Context, defaultWaitTimeout time.Duration, retry
 		WaitTimeout:        file.DefaultWaitTimeout,
 		RetryDelay:         file.DefaultRetryDelay,
 		FileContainer:      file.NewContainer(),
-		cachedViews:        make(ViewMap, 10),
+		cachedViews:        NewViewMap(),
 		uncommittedViews:   NewUncommittedViews(),
 		viewLoadingMutex:   new(sync.Mutex),
 		PreparedStatements: make(PreparedStatementMap, 4),
@@ -87,7 +87,7 @@ func (tx *Transaction) Commit(filter *Filter, expr parser.Expression) error {
 		for _, fileinfo := range createdFiles {
 			view, _ := tx.cachedViews.Get(parser.Identifier{Literal: fileinfo.Path})
 
-			fp := view.FileInfo.Handler.FileForUpdate()
+			fp, _ := view.FileInfo.Handler.FileForUpdate()
 			if err := fp.Truncate(0); err != nil {
 				return NewSystemError(err.Error())
 			}
@@ -107,7 +107,7 @@ func (tx *Transaction) Commit(filter *Filter, expr parser.Expression) error {
 		for _, fileinfo := range updatedFiles {
 			view, _ := tx.cachedViews.Get(parser.Identifier{Literal: fileinfo.Path})
 
-			fp := view.FileInfo.Handler.FileForUpdate()
+			fp, _ := view.FileInfo.Handler.FileForUpdate()
 			if err := fp.Truncate(0); err != nil {
 				return NewSystemError(err.Error())
 			}
@@ -140,7 +140,7 @@ func (tx *Transaction) Commit(filter *Filter, expr parser.Expression) error {
 
 	msglist := filter.tempViews.Store(tx.uncommittedViews.UncommittedTempViews())
 	if 0 < len(msglist) {
-		tx.Session.LogNotice(strings.Join(msglist, "\n"), tx.Flags.Quiet)
+		tx.Session.LogNotice(strings.Join(msglist, "\n"), tx.quietForTemporaryViews(expr))
 	}
 	tx.uncommittedViews.Clean()
 	if err := tx.ReleaseResources(); err != nil {
@@ -167,7 +167,7 @@ func (tx *Transaction) Rollback(filter *Filter, expr parser.Expression) error {
 	if filter != nil {
 		msglist := filter.tempViews.Restore(tx.uncommittedViews.UncommittedTempViews())
 		if 0 < len(msglist) {
-			tx.Session.LogNotice(strings.Join(msglist, "\n"), tx.Flags.Quiet)
+			tx.Session.LogNotice(strings.Join(msglist, "\n"), tx.quietForTemporaryViews(expr))
 		}
 	}
 	tx.uncommittedViews.Clean()
@@ -177,11 +177,15 @@ func (tx *Transaction) Rollback(filter *Filter, expr parser.Expression) error {
 	return nil
 }
 
+func (tx *Transaction) quietForTemporaryViews(expr parser.Expression) bool {
+	return tx.Flags.Quiet || expr == nil
+}
+
 func (tx *Transaction) ReleaseResources() error {
 	if err := tx.cachedViews.Clean(tx.FileContainer); err != nil {
 		return err
 	}
-	if err := tx.FileContainer.UnlockAll(); err != nil {
+	if err := tx.FileContainer.CloseAll(); err != nil {
 		return err
 	}
 	return nil
@@ -192,12 +196,9 @@ func (tx *Transaction) ReleaseResourcesWithErrors() error {
 	if err := tx.cachedViews.CleanWithErrors(tx.FileContainer); err != nil {
 		errs = append(errs, err.(*file.ForcedUnlockError).Errors...)
 	}
-	if err := tx.FileContainer.UnlockAllWithErrors(); err != nil {
+	if err := tx.FileContainer.CloseAllWithErrors(); err != nil {
 		errs = append(errs, err.(*file.ForcedUnlockError).Errors...)
 	}
 
-	if errs != nil {
-		return file.NewForcedUnlockError(errs)
-	}
-	return nil
+	return file.NewForcedUnlockError(errs)
 }

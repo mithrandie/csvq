@@ -340,7 +340,7 @@ func readQuery(c *cli.Context, tx *query.Transaction) (queryString string, path 
 			}
 		}()
 
-		buf, e := ioutil.ReadAll(h.FileForRead())
+		buf, e := ioutil.ReadAll(h.File())
 		if e != nil {
 			err = errors.New(fmt.Sprintf("failed to read file: %s", e.Error()))
 			return

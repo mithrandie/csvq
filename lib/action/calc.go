@@ -29,7 +29,7 @@ func Calc(proc *query.Processor, expr string) error {
 	selectEntity, _ := program[0].(parser.SelectQuery).SelectEntity.(parser.SelectEntity)
 
 	view := query.NewView(proc.Tx)
-	err = view.Load(ctx, query.NewFilter(proc.Tx).CreateNode(), selectEntity.FromClause.(parser.FromClause))
+	err = view.Load(ctx, query.NewFilter(proc.Tx).CreateNode(), selectEntity.FromClause.(parser.FromClause), false, false)
 	if err != nil {
 		if appErr, ok := err.(query.Error); ok {
 			return errors.New(appErr.ErrorMessage())

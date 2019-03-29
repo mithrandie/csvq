@@ -693,9 +693,17 @@ cursor_statement
     {
         $$ = CursorDeclaration{Cursor:$2, Query: $5.(SelectQuery)}
     }
+    | DECLARE identifier CURSOR FOR identifier
+    {
+        $$ = CursorDeclaration{Cursor:$2, Statement: $5}
+    }
     | OPEN identifier
     {
         $$ = OpenCursor{Cursor: $2}
+    }
+    | OPEN identifier USING replace_values
+    {
+        $$ = OpenCursor{Cursor: $2, Values: $4}
     }
     | CLOSE identifier
     {
@@ -999,6 +1007,18 @@ select_query
             OrderByClause: $3,
             LimitClause:   $4,
             OffsetClause:  $5,
+        }
+    }
+    | with_clause select_entity order_by_clause limit_clause offset_clause FOR UPDATE
+    {
+        $$ = SelectQuery{
+            WithClause:    $1,
+            SelectEntity:  $2,
+            OrderByClause: $3,
+            LimitClause:   $4,
+            OffsetClause:  $5,
+            ForUpdate:     true,
+            ForUpdateLiteral: $6.Literal + " " + $7.Literal,
         }
     }
 

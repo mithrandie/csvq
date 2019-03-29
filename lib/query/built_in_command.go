@@ -143,12 +143,10 @@ func LoadStatementsFromFile(ctx context.Context, tx *Transaction, expr parser.So
 		return nil, NewReadFileError(expr, err.Error())
 	}
 	defer func() {
-		if e := tx.FileContainer.Close(h); e != nil {
-			err = AppendCompositeError(err, e)
-		}
+		err = AppendCompositeError(err, tx.FileContainer.Close(h))
 	}()
 
-	buf, err := ioutil.ReadAll(h.FileForRead())
+	buf, err := ioutil.ReadAll(h.File())
 	if err != nil {
 		return nil, NewReadFileError(expr, err.Error())
 	}
@@ -537,8 +535,8 @@ func ShowObjects(filter *Filter, expr parser.ShowObjects) (string, error) {
 			createdFiles, updatedFiles := filter.tx.uncommittedViews.UncommittedFiles()
 
 			for _, key := range keys {
-				fields := filter.tx.cachedViews[key].Header.TableColumnNames()
-				info := filter.tx.cachedViews[key].FileInfo
+				fields := filter.tx.cachedViews.views[key].Header.TableColumnNames()
+				info := filter.tx.cachedViews.views[key].FileInfo
 				ufpath := strings.ToUpper(info.Path)
 
 				if _, ok := createdFiles[ufpath]; ok {
@@ -567,7 +565,7 @@ func ShowObjects(filter *Filter, expr parser.ShowObjects) (string, error) {
 	case ShowViews:
 		views := filter.tempViews.All()
 
-		if len(views) < 1 {
+		if len(views.views) < 1 {
 			s = cmd.Warn("No view is declared")
 		} else {
 			keys := views.SortedKeys()
@@ -575,8 +573,8 @@ func ShowObjects(filter *Filter, expr parser.ShowObjects) (string, error) {
 			updatedViews := filter.tx.uncommittedViews.UncommittedTempViews()
 
 			for _, key := range keys {
-				fields := views[key].Header.TableColumnNames()
-				info := views[key].FileInfo
+				fields := views.views[key].Header.TableColumnNames()
+				info := views.views[key].FileInfo
 				ufpath := strings.ToUpper(info.Path)
 
 				if _, ok := updatedViews[ufpath]; ok {
@@ -638,8 +636,13 @@ func ShowObjects(filter *Filter, expr parser.ShowObjects) (string, error) {
 				}
 
 				w.NewLine()
-				w.WriteColorWithoutLineBreak("Query: ", cmd.LableEffect)
-				w.WriteColorWithoutLineBreak(cur.query.String(), cmd.IdentifierEffect)
+				if cur.query.SelectEntity != nil {
+					w.WriteColor("Query: ", cmd.LableEffect)
+					writeQuery(w, cur.query.String())
+				} else {
+					w.WriteColorWithoutLineBreak("Statement: ", cmd.LableEffect)
+					w.WriteColorWithoutLineBreak(cur.statement.String(), cmd.IdentifierEffect)
+				}
 
 				w.ClearBlock()
 				w.NewLine()
@@ -688,7 +691,7 @@ func ShowObjects(filter *Filter, expr parser.ShowObjects) (string, error) {
 				w.WriteColorWithoutLineBreak(strconv.Itoa(stmt.HolderNumber), cmd.NumberEffect)
 				w.NewLine()
 				w.WriteColorWithoutLineBreak("Statement: ", cmd.LableEffect)
-				w.WriteWithoutLineBreak(stmt.StatementString)
+				writeQuery(w, stmt.StatementString)
 
 				w.ClearBlock()
 				w.NewLine()
@@ -907,7 +910,7 @@ func ShowFields(ctx context.Context, filter *Filter, expr parser.ShowFields) (st
 	var status = ObjectFixed
 
 	view := NewView(filter.tx)
-	err := view.LoadFromTableIdentifier(ctx, filter.CreateNode(), expr.Table)
+	err := view.LoadFromTableIdentifier(ctx, filter.CreateNode(), expr.Table, false, false)
 	if err != nil {
 		return "", err
 	}
@@ -987,6 +990,19 @@ func writeFieldList(w *ObjectWriter, fields []string) {
 		w.WriteColorWithoutLineBreak(fields[i], cmd.AttributeEffect)
 		w.NewLine()
 	}
+}
+
+func writeQuery(w *ObjectWriter, s string) {
+	words := strings.Split(s, " ")
+
+	w.BeginSubBlock()
+	for _, v := range words {
+		if !w.FitInLine(v + " ") {
+			w.NewLine()
+		}
+		w.Write(v + " ")
+	}
+	w.EndSubBlock()
 }
 
 func SetEnvVar(ctx context.Context, filter *Filter, expr parser.SetEnvVar) error {

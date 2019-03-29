@@ -250,11 +250,13 @@ func (e RowValueList) String() string {
 
 type SelectQuery struct {
 	*BaseExpr
-	WithClause    QueryExpression
-	SelectEntity  QueryExpression
-	OrderByClause QueryExpression
-	LimitClause   QueryExpression
-	OffsetClause  QueryExpression
+	WithClause       QueryExpression
+	SelectEntity     QueryExpression
+	OrderByClause    QueryExpression
+	LimitClause      QueryExpression
+	OffsetClause     QueryExpression
+	ForUpdate        bool
+	ForUpdateLiteral string
 }
 
 func (e SelectQuery) String() string {
@@ -271,6 +273,9 @@ func (e SelectQuery) String() string {
 	}
 	if e.OffsetClause != nil {
 		s = append(s, e.OffsetClause.String())
+	}
+	if e.ForUpdate {
+		s = append(s, e.ForUpdateLiteral)
 	}
 	return joinWithSpace(s)
 }
@@ -1399,13 +1404,15 @@ type WhileInCursor struct {
 
 type CursorDeclaration struct {
 	*BaseExpr
-	Cursor Identifier
-	Query  SelectQuery
+	Cursor    Identifier
+	Query     SelectQuery
+	Statement Identifier
 }
 
 type OpenCursor struct {
 	*BaseExpr
 	Cursor Identifier
+	Values []ReplaceValue
 }
 
 type CloseCursor struct {

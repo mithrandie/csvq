@@ -40,8 +40,6 @@ type Filter struct {
 	recursiveTmpView  *View
 	tmpViewIsAccessed bool
 
-	checkAvailableParallelRoutine bool
-
 	cachedFilePath map[string]string
 	now            time.Time
 }
@@ -56,7 +54,7 @@ func NewFilter(tx *Transaction) *Filter {
 	return NewFilterWithScopes(
 		tx,
 		VariableScopes{NewVariableMap()},
-		TemporaryViewScopes{{}},
+		TemporaryViewScopes{NewViewMap()},
 		CursorScopes{{}},
 		UserDefinedFunctionScopes{{}},
 	)
@@ -118,7 +116,7 @@ func (f *Filter) CreateChildScope() *Filter {
 	child := NewFilterWithScopes(
 		f.tx,
 		append(VariableScopes{NewVariableMap()}, f.variables...),
-		append(TemporaryViewScopes{{}}, f.tempViews...),
+		append(TemporaryViewScopes{NewViewMap()}, f.tempViews...),
 		append(CursorScopes{{}}, f.cursors...),
 		append(UserDefinedFunctionScopes{{}}, f.functions...),
 	)
@@ -128,12 +126,11 @@ func (f *Filter) CreateChildScope() *Filter {
 }
 
 func (f *Filter) ResetCurrentScope() {
-	f.variables[0].variables.Range(func(k interface{}, v interface{}) bool {
-		f.variables[0].variables.Delete(k)
-		return true
-	})
-	for k := range f.tempViews[0] {
-		delete(f.tempViews[0], k)
+	for k := range f.variables[0].variables {
+		delete(f.variables[0].variables, k)
+	}
+	for k := range f.tempViews[0].views {
+		delete(f.tempViews[0].views, k)
 	}
 	for k := range f.cursors[0] {
 		delete(f.cursors[0], k)
@@ -250,11 +247,7 @@ func (f *Filter) Evaluate(ctx context.Context, expr parser.QueryExpression) (val
 	case parser.RuntimeInformation:
 		val, err = GetRuntimeInformation(f.tx, expr.(parser.RuntimeInformation))
 	case parser.VariableSubstitution:
-		if f.checkAvailableParallelRoutine {
-			err = &ContainsSubstitusion{}
-		} else {
-			val, err = f.variables.Substitute(ctx, f, expr.(parser.VariableSubstitution))
-		}
+		val, err = f.variables.Substitute(ctx, f, expr.(parser.VariableSubstitution))
 	case parser.CursorStatus:
 		val, err = f.evalCursorStatus(expr.(parser.CursorStatus))
 	case parser.CursorAttrebute:
@@ -268,58 +261,44 @@ func (f *Filter) Evaluate(ctx context.Context, expr parser.QueryExpression) (val
 	return val, err
 }
 
-func (f *Filter) EvaluateSequentially(ctx context.Context, fn func(*Filter, int) error, expr interface{}) error {
-	if expr == nil || f.canUseMultithreading(ctx, expr) {
-		header := f.records[0].view.Header
-		recordSet := f.records[0].view.RecordSet
-		isGrouped := f.records[0].view.isGrouped
-		f.records = f.records[1:]
+func (f *Filter) EvaluateSequentially(ctx context.Context, fn func(*Filter, int) error) error {
+	gm := NewGoroutineTaskManager(f.records[0].view.Len(), -1, f.tx.Flags.CPU)
+	for i := 0; i < gm.Number; i++ {
+		gm.Add()
+		go func(thIdx int) {
+			start, end := gm.RecordRange(thIdx)
+			filter := NewFilterForSequentialEvaluation(
+				f,
+				&View{
+					Tx:        f.tx,
+					Header:    f.records[0].view.Header,
+					RecordSet: f.records[0].view.RecordSet[start:end],
+					isGrouped: f.records[0].view.isGrouped,
+				},
+			)
+			filter.records[0].recordIndex = -1
 
-		gm := NewGoroutineTaskManager(len(recordSet), -1, f.tx.Flags.CPU)
-		for i := 0; i < gm.Number; i++ {
-			gm.Add()
-			go func(thIdx int) {
-				start, end := gm.RecordRange(thIdx)
-				filter := NewFilterForSequentialEvaluation(
-					f,
-					&View{
-						Tx:        f.tx,
-						Header:    header,
-						RecordSet: recordSet[start:end],
-						isGrouped: isGrouped,
-					},
-				)
-				filter.init()
-
-				for filter.next() {
-					if gm.HasError() || ctx.Err() != nil {
-						break
-					}
-
-					if err := fn(filter, start+filter.currentIndex()); err != nil {
-						gm.SetError(err)
-						break
-					}
+			for filter.next() {
+				if gm.HasError() || ctx.Err() != nil {
+					break
 				}
 
-				gm.Done()
-			}(i)
-		}
-		gm.Wait()
-
-		if gm.HasError() {
-			return gm.Err()
-		}
-		if ctx.Err() != nil {
-			return NewContextIsDone(ctx.Err().Error())
-		}
-	} else {
-		f.init()
-		for f.next() {
-			if err := fn(f, f.currentIndex()); err != nil {
-				return err
+				if err := fn(filter, start+filter.records[0].recordIndex); err != nil {
+					gm.SetError(err)
+					break
+				}
 			}
-		}
+
+			gm.Done()
+		}(i)
+	}
+	gm.Wait()
+
+	if gm.HasError() {
+		return gm.Err()
+	}
+	if ctx.Err() != nil {
+		return NewContextIsDone(ctx.Err().Error())
 	}
 	return nil
 }
@@ -329,45 +308,6 @@ func (f *Filter) next() bool {
 
 	if f.records[0].view.Len() <= f.records[0].recordIndex {
 		return false
-	}
-	return true
-}
-
-func (f *Filter) init() {
-	f.records[0].recordIndex = -1
-}
-
-func (f *Filter) currentIndex() int {
-	return f.records[0].recordIndex
-}
-
-func (f *Filter) canUseMultithreading(ctx context.Context, expr interface{}) bool {
-	if 0 < len(f.records) && f.records[0].view != nil && 0 < f.records[0].view.Len() {
-		f.init()
-		f.checkAvailableParallelRoutine = true
-		defer func() {
-			f.checkAvailableParallelRoutine = false
-		}()
-		f.next()
-
-		if qe, ok := expr.(parser.QueryExpression); ok {
-			_, err := f.Evaluate(ctx, qe)
-
-			if err != nil {
-				if _, ok := err.(*ContainsSubstitusion); ok {
-					return false
-				}
-			}
-		} else if elist, ok := expr.([]parser.QueryExpression); ok {
-			for _, expr := range elist {
-				_, err := f.Evaluate(ctx, expr)
-				if err != nil {
-					if _, ok := err.(*ContainsSubstitusion); ok {
-						return false
-					}
-				}
-			}
-		}
 	}
 	return true
 }
@@ -780,7 +720,6 @@ func (f *Filter) evalFunction(ctx context.Context, expr parser.Function) (value.
 func (f *Filter) evalAggregateFunction(ctx context.Context, expr parser.AggregateFunction) (value.Primary, error) {
 	var aggfn func([]value.Primary, *cmd.Flags) value.Primary
 	var udfn *UserDefinedFunction
-	var useUserDefined bool
 	var err error
 
 	uname := strings.ToUpper(expr.Name)
@@ -790,10 +729,9 @@ func (f *Filter) evalAggregateFunction(ctx context.Context, expr parser.Aggregat
 		if udfn, err = f.functions.Get(expr, uname); err != nil || !udfn.IsAggregate {
 			return nil, NewFunctionNotExistError(expr, expr.Name)
 		}
-		useUserDefined = true
 	}
 
-	if useUserDefined {
+	if aggfn == nil {
 		if err = udfn.CheckArgsLen(expr, expr.Name, len(expr.Args)-1); err != nil {
 			return nil, err
 		}
@@ -828,7 +766,7 @@ func (f *Filter) evalAggregateFunction(ctx context.Context, expr parser.Aggregat
 		return nil, err
 	}
 
-	if useUserDefined {
+	if aggfn == nil {
 		argsExprs := expr.Args[1:]
 		args := make([]value.Primary, len(argsExprs))
 		for i, v := range argsExprs {

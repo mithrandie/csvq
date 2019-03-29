@@ -2,7 +2,6 @@ package query
 
 import (
 	"context"
-	"reflect"
 	"sort"
 	"sync"
 
@@ -58,79 +57,82 @@ func (list VariableScopes) Dispose(expr parser.Variable) error {
 	return NewUndeclaredVariableError(expr)
 }
 
-func (list VariableScopes) Equal(list2 VariableScopes) bool {
-	if len(list) != len(list2) {
-		return false
-	}
-	for i := 0; i < len(list); i++ {
-		if !list[i].Equal(&list2[i]) {
-			return false
-		}
-	}
-	return true
-}
-
 func (list VariableScopes) All() VariableMap {
 	all := NewVariableMap()
 	for i := range list {
-		list[i].variables.Range(func(key, value interface{}) bool {
-			if _, ok := all.variables.Load(key); !ok {
-				all.variables.Store(key, value)
+		for k, v := range list[i].variables {
+			if _, ok := all.variables[k]; !ok {
+				all.variables[k] = v
 			}
-			return true
-		})
+		}
 	}
 	return all
 }
 
 type VariableMap struct {
-	variables *sync.Map
+	mtx       *sync.RWMutex
+	variables map[string]value.Primary
 }
 
 func NewVariableMap() VariableMap {
 	return VariableMap{
-		variables: &sync.Map{},
+		mtx:       &sync.RWMutex{},
+		variables: make(map[string]value.Primary),
 	}
 }
 
 func (m *VariableMap) Add(variable parser.Variable, value value.Primary) error {
-	if _, ok := m.variables.Load(variable.Name); ok {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
+	if _, ok := m.variables[variable.Name]; ok {
 		return NewVariableRedeclaredError(variable)
 	}
-	m.variables.Store(variable.Name, value)
+	m.variables[variable.Name] = value
 	return nil
 }
 
 func (m *VariableMap) Set(variable parser.Variable, value value.Primary) error {
-	if _, ok := m.variables.Load(variable.Name); !ok {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
+	if _, ok := m.variables[variable.Name]; !ok {
 		return NewUndeclaredVariableError(variable)
 	}
-	m.variables.Store(variable.Name, value)
+	m.variables[variable.Name] = value
 	return nil
 }
 
 func (m *VariableMap) Get(variable parser.Variable) (value.Primary, error) {
-	if v, ok := m.variables.Load(variable.Name); ok {
-		return v.(value.Primary), nil
+	m.mtx.RLock()
+	defer m.mtx.RUnlock()
+
+	if v, ok := m.variables[variable.Name]; ok {
+		return v, nil
 	}
 	return nil, NewUndeclaredVariableError(variable)
 }
 
 func (m *VariableMap) SortedKeys() []string {
-	keys := make([]string, 0, 10)
-	m.variables.Range(func(key, value interface{}) bool {
-		keys = append(keys, key.(string))
-		return true
-	})
+	m.mtx.RLock()
+	defer m.mtx.RUnlock()
+
+	keys := make([]string, 0, len(m.variables))
+	for k := range m.variables {
+		keys = append(keys, k)
+	}
 	sort.Strings(keys)
 	return keys
 }
 
 func (m *VariableMap) Dispose(variable parser.Variable) error {
-	if _, ok := m.variables.Load(variable.Name); !ok {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
+	if _, ok := m.variables[variable.Name]; !ok {
 		return NewUndeclaredVariableError(variable)
 	}
-	m.variables.Delete(variable.Name)
+	delete(m.variables, variable.Name)
 	return nil
 }
 
@@ -165,20 +167,4 @@ func (m *VariableMap) Substitute(ctx context.Context, filter *Filter, substituti
 func (m *VariableMap) SubstituteDirectly(variable parser.Variable, value value.Primary) (value.Primary, error) {
 	err := m.Set(variable, value)
 	return value, err
-}
-
-func (m *VariableMap) Equal(m2 *VariableMap) bool {
-	mvalues := make(map[interface{}]interface{})
-	m2values := make(map[interface{}]interface{})
-
-	m.variables.Range(func(key, value interface{}) bool {
-		mvalues[key] = value
-		return true
-	})
-	m2.variables.Range(func(key, value interface{}) bool {
-		m2values[key] = value
-		return true
-	})
-
-	return reflect.DeepEqual(mvalues, m2values)
 }

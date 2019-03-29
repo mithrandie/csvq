@@ -98,7 +98,7 @@ type InteractiveShell struct {
 func (e *Environment) Load(ctx context.Context, defaultWaitTimeout time.Duration, retryDelay time.Duration) (err error) {
 	container := file.NewContainer()
 	defer func() {
-		err = container.UnlockAll()
+		err = container.CloseAll()
 	}()
 
 	files := GetSpecialFilePath(EnvFileName)
@@ -116,7 +116,7 @@ func (e *Environment) Load(ctx context.Context, defaultWaitTimeout time.Duration
 			return
 		}
 
-		buf, err = ioutil.ReadAll(h.FileForRead())
+		buf, err = ioutil.ReadAll(h.File())
 		if err != nil {
 			err = errors.New(fmt.Sprintf("failed to load %q: %s", fpath, err.Error()))
 			return

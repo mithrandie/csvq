@@ -1358,7 +1358,7 @@ var analyticFunctionTestFilter = &Filter{
 				},
 				Filter: &Filter{
 					variables: VariableScopes{NewVariableMap()},
-					tempViews: TemporaryViewScopes{{}},
+					tempViews: TemporaryViewScopes{NewViewMap()},
 					cursors:   CursorScopes{{}},
 					functions: UserDefinedFunctionScopes{{}},
 				},
@@ -1367,7 +1367,7 @@ var analyticFunctionTestFilter = &Filter{
 		},
 	},
 	variables: VariableScopes{NewVariableMap()},
-	tempViews: TemporaryViewScopes{{}},
+	tempViews: TemporaryViewScopes{NewViewMap()},
 	cursors:   CursorScopes{{}},
 	functions: UserDefinedFunctionScopes{{}},
 	tx:        TestTx,
