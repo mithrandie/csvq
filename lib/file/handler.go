@@ -408,7 +408,7 @@ func (h *Handler) tryCreateLockFile() error {
 	}
 
 	filePath := LockFilePath(h.path)
-	if RLockExists(h.path) || LockExists(h.path) {
+	if LockExists(h.path) || RLockExists(h.path) {
 		return NewLockError(fmt.Sprintf("failed to create %s file for %q", fileTypeLock, h.path))
 	}
 
@@ -416,8 +416,12 @@ func (h *Handler) tryCreateLockFile() error {
 	if err != nil {
 		return NewLockError(fmt.Sprintf("failed to create %s file for %q", fileTypeLock, h.path))
 	}
-
 	h.lockFile = newMngFile(filePath, fp)
+
+	if RLockExists(h.path) {
+		return NewLockError(fmt.Sprintf("failed to create %s file for %q", fileTypeLock, h.path))
+	}
+
 	return nil
 }
 
