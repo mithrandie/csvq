@@ -14,15 +14,9 @@ var CsvqSyntax = []Expression{
 		Label: "SELECT Statement",
 		Grammar: []Definition{
 			{
-				Name: "select_statement",
-				Group: []Grammar{
-					{Option{Link("with_clause")}, Link("select_query")},
-				},
-			},
-			{
 				Name: "select_query",
 				Group: []Grammar{
-					{Link("select_entity"), Option{Link("order_by_clause")}, Option{Link("limit_clause")}, Option{Link("offset_clause")}},
+					{Option{Link("with_clause")}, Link("select_entity"), Option{Link("order_by_clause")}, Option{Link("limit_clause")}, Option{Link("offset_clause")}, Option{Keyword("FOR"), Keyword("UPDATE")}},
 				},
 			},
 			{
@@ -413,7 +407,7 @@ var CsvqSyntax = []Expression{
 						"  > Question Mark(U+003F `?`)\n" +
 						"Named Placeholder\n" +
 						"  > Colon(U+003A `:`) and followd by %s",
-					Values: []Element{Link("identifier")},
+					Values: []Element{Identifier("identifier")},
 				},
 			},
 		},
