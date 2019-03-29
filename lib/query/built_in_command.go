@@ -535,8 +535,8 @@ func ShowObjects(filter *Filter, expr parser.ShowObjects) (string, error) {
 			createdFiles, updatedFiles := filter.tx.uncommittedViews.UncommittedFiles()
 
 			for _, key := range keys {
-				fields := filter.tx.cachedViews[key].Header.TableColumnNames()
-				info := filter.tx.cachedViews[key].FileInfo
+				fields := filter.tx.cachedViews.views[key].Header.TableColumnNames()
+				info := filter.tx.cachedViews.views[key].FileInfo
 				ufpath := strings.ToUpper(info.Path)
 
 				if _, ok := createdFiles[ufpath]; ok {
@@ -565,7 +565,7 @@ func ShowObjects(filter *Filter, expr parser.ShowObjects) (string, error) {
 	case ShowViews:
 		views := filter.tempViews.All()
 
-		if len(views) < 1 {
+		if len(views.views) < 1 {
 			s = cmd.Warn("No view is declared")
 		} else {
 			keys := views.SortedKeys()
@@ -573,8 +573,8 @@ func ShowObjects(filter *Filter, expr parser.ShowObjects) (string, error) {
 			updatedViews := filter.tx.uncommittedViews.UncommittedTempViews()
 
 			for _, key := range keys {
-				fields := views[key].Header.TableColumnNames()
-				info := views[key].FileInfo
+				fields := views.views[key].Header.TableColumnNames()
+				info := views.views[key].FileInfo
 				ufpath := strings.ToUpper(info.Path)
 
 				if _, ok := updatedViews[ufpath]; ok {

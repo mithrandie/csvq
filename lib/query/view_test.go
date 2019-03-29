@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -49,8 +50,8 @@ var viewLoadTests = []struct {
 				},
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases:      AliasNodes{{}},
@@ -69,8 +70,8 @@ var viewLoadTests = []struct {
 				},
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases:      AliasNodes{{}},
@@ -110,8 +111,8 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{
@@ -155,8 +156,8 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{
@@ -202,8 +203,8 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{
@@ -239,10 +240,13 @@ var viewLoadTests = []struct {
 				IsTemporary: true,
 			},
 			Filter: &Filter{
-				variables: []VariableMap{{}},
+				variables: []VariableMap{NewVariableMap()},
 				tempViews: []ViewMap{
 					{
-						"STDIN": nil,
+						mtx: &sync.RWMutex{},
+						views: map[string]*View{
+							"STDIN": nil,
+						},
 					},
 				},
 				cursors:      []CursorMap{{}},
@@ -281,10 +285,13 @@ var viewLoadTests = []struct {
 				IsTemporary: true,
 			},
 			Filter: &Filter{
-				variables: []VariableMap{{}},
+				variables: []VariableMap{NewVariableMap()},
 				tempViews: []ViewMap{
 					{
-						"STDIN": nil,
+						mtx: &sync.RWMutex{},
+						views: map[string]*View{
+							"STDIN": nil,
+						},
 					},
 				},
 				cursors:      []CursorMap{{}},
@@ -326,10 +333,13 @@ var viewLoadTests = []struct {
 				IsTemporary: true,
 			},
 			Filter: &Filter{
-				variables: []VariableMap{{}},
+				variables: []VariableMap{NewVariableMap()},
 				tempViews: []ViewMap{
 					{
-						"STDIN": nil,
+						mtx: &sync.RWMutex{},
+						views: map[string]*View{
+							"STDIN": nil,
+						},
 					},
 				},
 				cursors:      []CursorMap{{}},
@@ -376,10 +386,13 @@ var viewLoadTests = []struct {
 				IsTemporary: true,
 			},
 			Filter: &Filter{
-				variables: []VariableMap{{}},
+				variables: []VariableMap{NewVariableMap()},
 				tempViews: []ViewMap{
 					{
-						"STDIN": nil,
+						mtx: &sync.RWMutex{},
+						views: map[string]*View{
+							"STDIN": nil,
+						},
 					},
 				},
 				cursors:      []CursorMap{{}},
@@ -426,10 +439,13 @@ var viewLoadTests = []struct {
 				IsTemporary: true,
 			},
 			Filter: &Filter{
-				variables: []VariableMap{{}},
+				variables: []VariableMap{NewVariableMap()},
 				tempViews: []ViewMap{
 					{
-						"STDIN": nil,
+						mtx: &sync.RWMutex{},
+						views: map[string]*View{
+							"STDIN": nil,
+						},
 					},
 				},
 				cursors:      []CursorMap{{}},
@@ -491,8 +507,8 @@ var viewLoadTests = []struct {
 				LineBreak:          text.LF,
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{
@@ -545,8 +561,8 @@ var viewLoadTests = []struct {
 				LineBreak:          text.LF,
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{
@@ -591,10 +607,13 @@ var viewLoadTests = []struct {
 				IsTemporary: true,
 			},
 			Filter: &Filter{
-				variables: []VariableMap{{}},
+				variables: []VariableMap{NewVariableMap()},
 				tempViews: []ViewMap{
 					{
-						"STDIN": nil,
+						mtx: &sync.RWMutex{},
+						views: map[string]*View{
+							"STDIN": nil,
+						},
 					},
 				},
 				cursors:      []CursorMap{{}},
@@ -684,8 +703,8 @@ var viewLoadTests = []struct {
 				NoHeader:  true,
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{{
@@ -732,8 +751,8 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{{
@@ -946,8 +965,8 @@ var viewLoadTests = []struct {
 				LineBreak:          text.LF,
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{{
@@ -996,8 +1015,8 @@ var viewLoadTests = []struct {
 				LineBreak:          text.LF,
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{{
@@ -1047,8 +1066,8 @@ var viewLoadTests = []struct {
 				SingleLine:         true,
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{{
@@ -1162,8 +1181,8 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{{
@@ -1209,8 +1228,8 @@ var viewLoadTests = []struct {
 				JsonEscape: json.HexDigits,
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{{
@@ -1256,8 +1275,8 @@ var viewLoadTests = []struct {
 				JsonEscape: json.AllWithHexDigits,
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{{
@@ -1351,8 +1370,8 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{{
@@ -1403,8 +1422,8 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{{
@@ -1451,8 +1470,8 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{{
@@ -1547,7 +1566,7 @@ var viewLoadTests = []struct {
 		},
 		Filter: &Filter{
 			variables: VariableScopes{NewVariableMap()},
-			tempViews: TemporaryViewScopes{{}},
+			tempViews: TemporaryViewScopes{NewViewMap()},
 			cursors:   CursorScopes{{}},
 			inlineTables: InlineTableNodes{
 				InlineTableMap{
@@ -1596,7 +1615,7 @@ var viewLoadTests = []struct {
 			},
 			Filter: &Filter{
 				variables: VariableScopes{NewVariableMap()},
-				tempViews: TemporaryViewScopes{{}},
+				tempViews: TemporaryViewScopes{NewViewMap()},
 				cursors:   CursorScopes{{}},
 				inlineTables: InlineTableNodes{
 					{},
@@ -1643,7 +1662,7 @@ var viewLoadTests = []struct {
 		},
 		Filter: &Filter{
 			variables: VariableScopes{NewVariableMap()},
-			tempViews: TemporaryViewScopes{{}},
+			tempViews: TemporaryViewScopes{NewViewMap()},
 			cursors:   CursorScopes{{}},
 			inlineTables: InlineTableNodes{
 				InlineTableMap{
@@ -1696,8 +1715,8 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{
@@ -1732,8 +1751,8 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{
@@ -1821,8 +1840,8 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{
@@ -1916,8 +1935,8 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{
@@ -1975,8 +1994,8 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{
@@ -2034,8 +2053,8 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{
@@ -2100,8 +2119,8 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{
@@ -2161,8 +2180,8 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{
@@ -2247,8 +2266,8 @@ var viewLoadTests = []struct {
 				IsTemporary: true,
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{{
@@ -2367,8 +2386,8 @@ var viewLoadTests = []struct {
 				IsTemporary: true,
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{{
@@ -2437,8 +2456,8 @@ var viewLoadTests = []struct {
 				}),
 			},
 			Filter: &Filter{
-				variables:    []VariableMap{{}},
-				tempViews:    []ViewMap{{}},
+				variables:    []VariableMap{NewVariableMap()},
+				tempViews:    []ViewMap{NewViewMap()},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
 				aliases: AliasNodes{
@@ -2674,12 +2693,12 @@ func TestView_Load(t *testing.T) {
 			t.Errorf("%s: alias list = %q, want %q", v.Name, view.Filter.aliases, v.Result.Filter.aliases)
 		}
 		for i, tviews := range v.Result.Filter.tempViews {
-			resultKeys := make([]string, len(tviews))
-			for key := range tviews {
+			resultKeys := make([]string, len(tviews.views))
+			for key := range tviews.views {
 				resultKeys = append(resultKeys, key)
 			}
-			viewKeys := make([]string, len(view.Filter.tempViews[i]))
-			for key := range view.Filter.tempViews[i] {
+			viewKeys := make([]string, len(view.Filter.tempViews[i].views))
+			for key := range view.Filter.tempViews[i].views {
 				viewKeys = append(viewKeys, key)
 			}
 			if !reflect.DeepEqual(resultKeys, viewKeys) {
@@ -6258,7 +6277,9 @@ func TestView_FieldIndices(t *testing.T) {
 	}
 	expectErr := "field notexist does not exist"
 	_, err := view.FieldIndices(fields)
-	if err.Error() != expectErr {
+	if err == nil {
+		t.Errorf("no error, want error %s", expectErr)
+	} else if err.Error() != expectErr {
 		t.Errorf("error = %s, want %s", err, expectErr)
 	}
 }
@@ -6285,7 +6306,9 @@ func TestView_FieldViewName(t *testing.T) {
 	}
 	expectErr := "field notexist does not exist"
 	_, err := view.FieldViewName(fieldRef)
-	if err.Error() != expectErr {
+	if err == nil {
+		t.Errorf("no error, want error %s", expectErr)
+	} else if err.Error() != expectErr {
 		t.Errorf("error = %s, want %s", err, expectErr)
 	}
 }
@@ -6309,10 +6332,12 @@ func TestView_InternalRecordId(t *testing.T) {
 	}
 
 	view.RecordSet[1][0] = NewCell(value.NewNull())
-	expectError := "internal record id is empty"
+	expectErr := "internal record id is empty"
 	_, err := view.InternalRecordId(ref, recordIndex)
-	if err.Error() != expectError {
-		t.Errorf("error = %q, want error %q", err, expectError)
+	if err == nil {
+		t.Errorf("no error, want error %s", expectErr)
+	} else if err.Error() != expectErr {
+		t.Errorf("error = %s, want %s", err, expectErr)
 	}
 
 	view = &View{
@@ -6321,9 +6346,11 @@ func TestView_InternalRecordId(t *testing.T) {
 			{View: "table2", Column: "column2", IsFromTable: true},
 		},
 	}
-	expectError = "internal record id does not exist"
+	expectErr = "internal record id does not exist"
 	_, err = view.InternalRecordId(ref, recordIndex)
-	if err.Error() != expectError {
-		t.Errorf("error = %q, want error %q", err, expectError)
+	if err == nil {
+		t.Errorf("no error, want error %s", expectErr)
+	} else if err.Error() != expectErr {
+		t.Errorf("error = %s, want %s", err, expectErr)
 	}
 }

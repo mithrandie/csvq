@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 
@@ -67,7 +68,7 @@ func (list TemporaryViewScopes) Dispose(name parser.Identifier) error {
 func (list TemporaryViewScopes) Store(uncomittedViews map[string]*FileInfo) []string {
 	msglist := make([]string, 0, len(uncomittedViews))
 	for _, m := range list {
-		for viewKey, view := range m {
+		for viewKey, view := range m.views {
 			if _, ok := uncomittedViews[viewKey]; ok {
 				view.FileInfo.InitialRecordSet = view.RecordSet.Copy()
 				view.FileInfo.InitialHeader = view.Header.Copy()
@@ -81,7 +82,7 @@ func (list TemporaryViewScopes) Store(uncomittedViews map[string]*FileInfo) []st
 func (list TemporaryViewScopes) Restore(uncomittedViews map[string]*FileInfo) []string {
 	msglist := make([]string, 0, len(uncomittedViews))
 	for _, m := range list {
-		for viewKey, view := range m {
+		for viewKey, view := range m.views {
 			if _, ok := uncomittedViews[viewKey]; ok {
 				view.RecordSet = view.FileInfo.InitialRecordSet.Copy()
 				view.Header = view.FileInfo.InitialHeader.Copy()
@@ -93,26 +94,40 @@ func (list TemporaryViewScopes) Restore(uncomittedViews map[string]*FileInfo) []
 }
 
 func (list TemporaryViewScopes) All() ViewMap {
-	all := make(ViewMap, 10)
+	all := NewViewMap()
 
 	for _, m := range list {
-		for key, view := range m {
+		for key, view := range m.views {
 			if !view.FileInfo.IsTemporary {
 				continue
 			}
-			if _, ok := all[key]; !ok {
-				all[key] = view
+			if _, ok := all.views[key]; !ok {
+				all.views[key] = view
 			}
 		}
 	}
 	return all
 }
 
-type ViewMap map[string]*View
+type ViewMap struct {
+	mtx   *sync.RWMutex
+	views map[string]*View
+}
+
+func NewViewMap() ViewMap {
+	return ViewMap{
+		mtx:   &sync.RWMutex{},
+		views: make(map[string]*View),
+	}
+}
 
 func (m ViewMap) Exists(fpath string) bool {
 	ufpath := strings.ToUpper(fpath)
-	if _, ok := m[ufpath]; ok {
+
+	m.mtx.RLock()
+	defer m.mtx.RUnlock()
+
+	if _, ok := m.views[ufpath]; ok {
 		return true
 	}
 	return false
@@ -120,7 +135,11 @@ func (m ViewMap) Exists(fpath string) bool {
 
 func (m ViewMap) Get(fpath parser.Identifier) (*View, error) {
 	ufpath := strings.ToUpper(fpath.Literal)
-	if view, ok := m[ufpath]; ok {
+
+	m.mtx.RLock()
+	defer m.mtx.RUnlock()
+
+	if view, ok := m.views[ufpath]; ok {
 		return view.Copy(), nil
 	}
 	return nil, NewTableNotLoadedError(fpath)
@@ -128,7 +147,11 @@ func (m ViewMap) Get(fpath parser.Identifier) (*View, error) {
 
 func (m ViewMap) GetWithInternalId(ctx context.Context, fpath parser.Identifier, flags *cmd.Flags) (*View, error) {
 	ufpath := strings.ToUpper(fpath.Literal)
-	if view, ok := m[ufpath]; ok {
+
+	m.mtx.RLock()
+	defer m.mtx.RUnlock()
+
+	if view, ok := m.views[ufpath]; ok {
 		ret := view.Copy()
 
 		ret.Header = MergeHeader(NewHeaderWithId(ret.Header[0].View, []string{}), ret.Header)
@@ -147,22 +170,32 @@ func (m ViewMap) GetWithInternalId(ctx context.Context, fpath parser.Identifier,
 
 func (m ViewMap) Set(view *View) {
 	if view.FileInfo != nil {
-		m[strings.ToUpper(view.FileInfo.Path)] = view
+		m.mtx.Lock()
+		defer m.mtx.Unlock()
+
+		m.views[strings.ToUpper(view.FileInfo.Path)] = view
 	}
 }
 
 func (m ViewMap) Replace(view *View) error {
 	ufpath := strings.ToUpper(view.FileInfo.Path)
+
 	if ok := m.Exists(ufpath); ok {
-		m[ufpath] = view
+		m.mtx.Lock()
+		defer m.mtx.Unlock()
+
+		m.views[ufpath] = view
 		return nil
 	}
 	return NewTableNotLoadedError(parser.Identifier{Literal: view.FileInfo.Path})
 }
 
 func (m ViewMap) Keys() []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
+	m.mtx.RLock()
+	defer m.mtx.RUnlock()
+
+	keys := make([]string, 0, len(m.views))
+	for k := range m.views {
 		keys = append(keys, k)
 	}
 	return keys
@@ -176,9 +209,13 @@ func (m ViewMap) SortedKeys() []string {
 
 func (m ViewMap) DisposeTemporaryTable(table parser.Identifier) error {
 	uname := strings.ToUpper(table.Literal)
-	if v, ok := m[uname]; ok {
+
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
+	if v, ok := m.views[uname]; ok {
 		if v.FileInfo.IsTemporary {
-			delete(m, uname)
+			delete(m.views, uname)
 			return nil
 		} else {
 			return NewUndeclaredTemporaryTableError(table)
@@ -189,17 +226,21 @@ func (m ViewMap) DisposeTemporaryTable(table parser.Identifier) error {
 
 func (m ViewMap) Dispose(container *file.Container, name string) error {
 	uname := strings.ToUpper(name)
-	if _, ok := m[uname]; ok {
-		if err := container.Close(m[uname].FileInfo.Handler); err != nil {
+
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
+	if _, ok := m.views[uname]; ok {
+		if err := container.Close(m.views[uname].FileInfo.Handler); err != nil {
 			return err
 		}
-		delete(m, uname)
+		delete(m.views, uname)
 	}
 	return nil
 }
 
 func (m ViewMap) Clean(container *file.Container) error {
-	for k := range m {
+	for k := range m.views {
 		if err := m.Dispose(container, k); err != nil {
 			return err
 		}
@@ -209,12 +250,12 @@ func (m ViewMap) Clean(container *file.Container) error {
 
 func (m ViewMap) CleanWithErrors(container *file.Container) error {
 	var errs []error
-	for k := range m {
-		if _, ok := m[k]; ok {
-			if err := container.CloseWithErrors(m[k].FileInfo.Handler); err != nil {
+	for k := range m.views {
+		if _, ok := m.views[k]; ok {
+			if err := container.CloseWithErrors(m.views[k].FileInfo.Handler); err != nil {
 				errs = append(errs, err.(*file.ForcedUnlockError).Errors...)
 			}
-			delete(m, k)
+			delete(m.views, k)
 		}
 	}
 

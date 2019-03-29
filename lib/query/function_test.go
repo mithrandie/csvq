@@ -3322,7 +3322,7 @@ var nowTests = []struct {
 		},
 		Filter: &Filter{
 			variables: VariableScopes{NewVariableMap()},
-			tempViews: TemporaryViewScopes{{}},
+			tempViews: TemporaryViewScopes{NewViewMap()},
 			cursors:   CursorScopes{{}},
 			functions: UserDefinedFunctionScopes{{}},
 			now:       time.Date(2013, 2, 3, 0, 0, 0, 0, GetTestLocation()),

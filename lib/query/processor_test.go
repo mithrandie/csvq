@@ -7,6 +7,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -496,6 +497,7 @@ var processorExecuteStatementTests = []struct {
 			},
 		},
 		UncommittedViews: &UncommittedViews{
+			mtx:     &sync.RWMutex{},
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
@@ -530,6 +532,7 @@ var processorExecuteStatementTests = []struct {
 			},
 		},
 		UncommittedViews: &UncommittedViews{
+			mtx:     &sync.RWMutex{},
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
@@ -562,6 +565,7 @@ var processorExecuteStatementTests = []struct {
 			},
 		},
 		UncommittedViews: &UncommittedViews{
+			mtx:     &sync.RWMutex{},
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
@@ -585,6 +589,7 @@ var processorExecuteStatementTests = []struct {
 			},
 		},
 		UncommittedViews: &UncommittedViews{
+			mtx: &sync.RWMutex{},
 			Created: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("NEWTABLE.CSV")): {
 					Path:      GetTestFilePath("newtable.csv"),
@@ -609,6 +614,7 @@ var processorExecuteStatementTests = []struct {
 			},
 		},
 		UncommittedViews: &UncommittedViews{
+			mtx:     &sync.RWMutex{},
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
@@ -631,6 +637,7 @@ var processorExecuteStatementTests = []struct {
 			},
 		},
 		UncommittedViews: &UncommittedViews{
+			mtx:     &sync.RWMutex{},
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
@@ -652,6 +659,7 @@ var processorExecuteStatementTests = []struct {
 			New:   parser.Identifier{Literal: "newcolumn"},
 		},
 		UncommittedViews: &UncommittedViews{
+			mtx:     &sync.RWMutex{},
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
@@ -681,6 +689,7 @@ var processorExecuteStatementTests = []struct {
 			Value:     parser.NewStringValue("\t"),
 		},
 		UncommittedViews: &UncommittedViews{
+			mtx:     &sync.RWMutex{},
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {

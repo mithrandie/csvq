@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/mithrandie/csvq/lib/file"
@@ -26,38 +27,42 @@ func TestTransaction_Commit(t *testing.T) {
 	uh, _ := file.NewHandlerForUpdate(context.Background(), TestTx.FileContainer, GetTestFilePath("updated_file_1.csv"), TestTx.WaitTimeout, TestTx.RetryDelay)
 
 	TestTx.cachedViews = ViewMap{
-		strings.ToUpper(GetTestFilePath("created_file.csv")): &View{
-			Header:    NewHeader("created_file", []string{"column1", "column2"}),
-			RecordSet: RecordSet{},
-			FileInfo: &FileInfo{
-				Path:    GetTestFilePath("created_file.csv"),
-				Handler: ch,
+		mtx: &sync.RWMutex{},
+		views: map[string]*View{
+			strings.ToUpper(GetTestFilePath("created_file.csv")): {
+				Header:    NewHeader("created_file", []string{"column1", "column2"}),
+				RecordSet: RecordSet{},
+				FileInfo: &FileInfo{
+					Path:    GetTestFilePath("created_file.csv"),
+					Handler: ch,
+				},
 			},
-		},
-		strings.ToUpper(GetTestFilePath("updated_file_1.csv")): &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
-			RecordSet: []Record{
-				NewRecord([]value.Primary{
-					value.NewString("1"),
-					value.NewString("str1"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("update1"),
-					value.NewString("update2"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("3"),
-					value.NewString("str3"),
-				}),
-			},
-			FileInfo: &FileInfo{
-				Path:    GetTestFilePath("updated_file_1.csv"),
-				Handler: uh,
+			strings.ToUpper(GetTestFilePath("updated_file_1.csv")): {
+				Header: NewHeader("table1", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("update1"),
+						value.NewString("update2"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
+						value.NewString("str3"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:    GetTestFilePath("updated_file_1.csv"),
+					Handler: uh,
+				},
 			},
 		},
 	}
 
 	TestTx.uncommittedViews = &UncommittedViews{
+		mtx: &sync.RWMutex{},
 		Created: map[string]*FileInfo{
 			strings.ToUpper(GetTestFilePath("created_file.csv")): {
 				Path:    GetTestFilePath("created_file.csv"),
@@ -99,6 +104,7 @@ func TestTransaction_Rollback(t *testing.T) {
 	TestTx.Flags.SetQuiet(false)
 
 	TestTx.uncommittedViews = &UncommittedViews{
+		mtx: &sync.RWMutex{},
 		Created: map[string]*FileInfo{
 			strings.ToUpper(GetTestFilePath("created_file.csv")): {
 				Path: GetTestFilePath("created_file.csv"),

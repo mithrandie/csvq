@@ -56,7 +56,7 @@ func NewTransaction(ctx context.Context, defaultWaitTimeout time.Duration, retry
 		WaitTimeout:        file.DefaultWaitTimeout,
 		RetryDelay:         file.DefaultRetryDelay,
 		FileContainer:      file.NewContainer(),
-		cachedViews:        make(ViewMap, 10),
+		cachedViews:        NewViewMap(),
 		uncommittedViews:   NewUncommittedViews(),
 		viewLoadingMutex:   new(sync.Mutex),
 		PreparedStatements: make(PreparedStatementMap, 4),

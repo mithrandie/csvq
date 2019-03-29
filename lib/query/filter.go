@@ -54,7 +54,7 @@ func NewFilter(tx *Transaction) *Filter {
 	return NewFilterWithScopes(
 		tx,
 		VariableScopes{NewVariableMap()},
-		TemporaryViewScopes{{}},
+		TemporaryViewScopes{NewViewMap()},
 		CursorScopes{{}},
 		UserDefinedFunctionScopes{{}},
 	)
@@ -116,7 +116,7 @@ func (f *Filter) CreateChildScope() *Filter {
 	child := NewFilterWithScopes(
 		f.tx,
 		append(VariableScopes{NewVariableMap()}, f.variables...),
-		append(TemporaryViewScopes{{}}, f.tempViews...),
+		append(TemporaryViewScopes{NewViewMap()}, f.tempViews...),
 		append(CursorScopes{{}}, f.cursors...),
 		append(UserDefinedFunctionScopes{{}}, f.functions...),
 	)
@@ -126,12 +126,11 @@ func (f *Filter) CreateChildScope() *Filter {
 }
 
 func (f *Filter) ResetCurrentScope() {
-	f.variables[0].variables.Range(func(k interface{}, v interface{}) bool {
-		f.variables[0].variables.Delete(k)
-		return true
-	})
-	for k := range f.tempViews[0] {
-		delete(f.tempViews[0], k)
+	for k := range f.variables[0].variables {
+		delete(f.variables[0].variables, k)
+	}
+	for k := range f.tempViews[0].views {
+		delete(f.tempViews[0].views, k)
 	}
 	for k := range f.cursors[0] {
 		delete(f.cursors[0], k)
@@ -721,7 +720,6 @@ func (f *Filter) evalFunction(ctx context.Context, expr parser.Function) (value.
 func (f *Filter) evalAggregateFunction(ctx context.Context, expr parser.AggregateFunction) (value.Primary, error) {
 	var aggfn func([]value.Primary, *cmd.Flags) value.Primary
 	var udfn *UserDefinedFunction
-	var useUserDefined bool
 	var err error
 
 	uname := strings.ToUpper(expr.Name)
@@ -731,10 +729,9 @@ func (f *Filter) evalAggregateFunction(ctx context.Context, expr parser.Aggregat
 		if udfn, err = f.functions.Get(expr, uname); err != nil || !udfn.IsAggregate {
 			return nil, NewFunctionNotExistError(expr, expr.Name)
 		}
-		useUserDefined = true
 	}
 
-	if useUserDefined {
+	if aggfn == nil {
 		if err = udfn.CheckArgsLen(expr, expr.Name, len(expr.Args)-1); err != nil {
 			return nil, err
 		}
@@ -769,7 +766,7 @@ func (f *Filter) evalAggregateFunction(ctx context.Context, expr parser.Aggregat
 		return nil, err
 	}
 
-	if useUserDefined {
+	if aggfn == nil {
 		argsExprs := expr.Args[1:]
 		args := make([]value.Primary, len(argsExprs))
 		for i, v := range argsExprs {

@@ -693,14 +693,14 @@ func cacheViewFromFile(
 		filePath = p
 	}
 
-	if !filter.tx.cachedViews.Exists(filePath) || (forUpdate && !filter.tx.cachedViews[strings.ToUpper(filePath)].FileInfo.ForUpdate) {
+	if !filter.tx.cachedViews.Exists(filePath) || (forUpdate && !filter.tx.cachedViews.views[strings.ToUpper(filePath)].FileInfo.ForUpdate) {
 		fileInfo, err := NewFileInfo(tableIdentifier, filter.tx.Flags.Repository, importFormat, delimiter, encoding, filter.tx.Flags)
 		if err != nil {
 			return filePath, err
 		}
 		filePath = fileInfo.Path
 
-		if !filter.tx.cachedViews.Exists(fileInfo.Path) || (forUpdate && !filter.tx.cachedViews[strings.ToUpper(fileInfo.Path)].FileInfo.ForUpdate) {
+		if !filter.tx.cachedViews.Exists(fileInfo.Path) || (forUpdate && !filter.tx.cachedViews.views[strings.ToUpper(fileInfo.Path)].FileInfo.ForUpdate) {
 			fileInfo.DelimiterPositions = delimiterPositions
 			fileInfo.SingleLine = singleLine
 			fileInfo.JsonQuery = strings.TrimSpace(jsonQuery)
@@ -710,7 +710,7 @@ func cacheViewFromFile(
 			fileInfo.JsonEscape = jsonEscape
 
 			if filter.tx.cachedViews.Exists(fileInfo.Path) {
-				fileInfo = filter.tx.cachedViews[strings.ToUpper(fileInfo.Path)].FileInfo
+				fileInfo = filter.tx.cachedViews.views[strings.ToUpper(fileInfo.Path)].FileInfo
 			}
 
 			if err = filter.tx.cachedViews.Dispose(filter.tx.FileContainer, fileInfo.Path); err != nil {
