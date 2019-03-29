@@ -5,6 +5,14 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.9.6
+
+Released on March 30, 2019
+
+- Support SELECT FOR UPDATE syntax.
+- Support cursor with a prepared statement.
+- Make update operations safety in parallel processing.
+
 ## Version 1.9.5
 
 Released on March 24, 2019
