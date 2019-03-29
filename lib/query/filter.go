@@ -40,8 +40,6 @@ type Filter struct {
 	recursiveTmpView  *View
 	tmpViewIsAccessed bool
 
-	checkAvailableParallelRoutine bool
-
 	cachedFilePath map[string]string
 	now            time.Time
 }
@@ -250,11 +248,7 @@ func (f *Filter) Evaluate(ctx context.Context, expr parser.QueryExpression) (val
 	case parser.RuntimeInformation:
 		val, err = GetRuntimeInformation(f.tx, expr.(parser.RuntimeInformation))
 	case parser.VariableSubstitution:
-		if f.checkAvailableParallelRoutine {
-			err = &ContainsSubstitusion{}
-		} else {
-			val, err = f.variables.Substitute(ctx, f, expr.(parser.VariableSubstitution))
-		}
+		val, err = f.variables.Substitute(ctx, f, expr.(parser.VariableSubstitution))
 	case parser.CursorStatus:
 		val, err = f.evalCursorStatus(expr.(parser.CursorStatus))
 	case parser.CursorAttrebute:
@@ -268,58 +262,44 @@ func (f *Filter) Evaluate(ctx context.Context, expr parser.QueryExpression) (val
 	return val, err
 }
 
-func (f *Filter) EvaluateSequentially(ctx context.Context, fn func(*Filter, int) error, expr interface{}) error {
-	if expr == nil || f.canUseMultithreading(ctx, expr) {
-		header := f.records[0].view.Header
-		recordSet := f.records[0].view.RecordSet
-		isGrouped := f.records[0].view.isGrouped
-		f.records = f.records[1:]
+func (f *Filter) EvaluateSequentially(ctx context.Context, fn func(*Filter, int) error) error {
+	gm := NewGoroutineTaskManager(f.records[0].view.Len(), -1, f.tx.Flags.CPU)
+	for i := 0; i < gm.Number; i++ {
+		gm.Add()
+		go func(thIdx int) {
+			start, end := gm.RecordRange(thIdx)
+			filter := NewFilterForSequentialEvaluation(
+				f,
+				&View{
+					Tx:        f.tx,
+					Header:    f.records[0].view.Header,
+					RecordSet: f.records[0].view.RecordSet[start:end],
+					isGrouped: f.records[0].view.isGrouped,
+				},
+			)
+			filter.records[0].recordIndex = -1
 
-		gm := NewGoroutineTaskManager(len(recordSet), -1, f.tx.Flags.CPU)
-		for i := 0; i < gm.Number; i++ {
-			gm.Add()
-			go func(thIdx int) {
-				start, end := gm.RecordRange(thIdx)
-				filter := NewFilterForSequentialEvaluation(
-					f,
-					&View{
-						Tx:        f.tx,
-						Header:    header,
-						RecordSet: recordSet[start:end],
-						isGrouped: isGrouped,
-					},
-				)
-				filter.init()
-
-				for filter.next() {
-					if gm.HasError() || ctx.Err() != nil {
-						break
-					}
-
-					if err := fn(filter, start+filter.currentIndex()); err != nil {
-						gm.SetError(err)
-						break
-					}
+			for filter.next() {
+				if gm.HasError() || ctx.Err() != nil {
+					break
 				}
 
-				gm.Done()
-			}(i)
-		}
-		gm.Wait()
-
-		if gm.HasError() {
-			return gm.Err()
-		}
-		if ctx.Err() != nil {
-			return NewContextIsDone(ctx.Err().Error())
-		}
-	} else {
-		f.init()
-		for f.next() {
-			if err := fn(f, f.currentIndex()); err != nil {
-				return err
+				if err := fn(filter, start+filter.records[0].recordIndex); err != nil {
+					gm.SetError(err)
+					break
+				}
 			}
-		}
+
+			gm.Done()
+		}(i)
+	}
+	gm.Wait()
+
+	if gm.HasError() {
+		return gm.Err()
+	}
+	if ctx.Err() != nil {
+		return NewContextIsDone(ctx.Err().Error())
 	}
 	return nil
 }
@@ -329,45 +309,6 @@ func (f *Filter) next() bool {
 
 	if f.records[0].view.Len() <= f.records[0].recordIndex {
 		return false
-	}
-	return true
-}
-
-func (f *Filter) init() {
-	f.records[0].recordIndex = -1
-}
-
-func (f *Filter) currentIndex() int {
-	return f.records[0].recordIndex
-}
-
-func (f *Filter) canUseMultithreading(ctx context.Context, expr interface{}) bool {
-	if 0 < len(f.records) && f.records[0].view != nil && 0 < f.records[0].view.Len() {
-		f.init()
-		f.checkAvailableParallelRoutine = true
-		defer func() {
-			f.checkAvailableParallelRoutine = false
-		}()
-		f.next()
-
-		if qe, ok := expr.(parser.QueryExpression); ok {
-			_, err := f.Evaluate(ctx, qe)
-
-			if err != nil {
-				if _, ok := err.(*ContainsSubstitusion); ok {
-					return false
-				}
-			}
-		} else if elist, ok := expr.([]parser.QueryExpression); ok {
-			for _, expr := range elist {
-				_, err := f.Evaluate(ctx, expr)
-				if err != nil {
-					if _, ok := err.(*ContainsSubstitusion); ok {
-						return false
-					}
-				}
-			}
-		}
 	}
 	return true
 }

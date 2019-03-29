@@ -1062,7 +1062,7 @@ func (view *View) filter(ctx context.Context, condition parser.QueryExpression) 
 			results[rIdx] = true
 		}
 		return nil
-	}, nil)
+	})
 	if err != nil {
 		return err
 	}
@@ -1104,7 +1104,7 @@ func (view *View) group(ctx context.Context, items []parser.QueryExpression) err
 		SerializeComparisonKeys(keyBuf, values, view.Tx.Flags)
 		keys[rIdx] = keyBuf.String()
 		return nil
-	}, nil)
+	})
 	if err != nil {
 		return err
 	}
@@ -1532,7 +1532,7 @@ func (view *View) evalColumn(ctx context.Context, obj parser.QueryExpression, al
 
 					view.RecordSet[rIdx] = append(view.RecordSet[rIdx], NewCell(primary))
 					return nil
-				}, obj)
+				})
 				if err != nil {
 					return
 				}
@@ -1915,7 +1915,7 @@ func (view *View) ListValuesForAggregateFunctions(ctx context.Context, expr pars
 		}
 		list[rIdx] = p
 		return nil
-	}, arg)
+	})
 	if err != nil {
 		return nil, err
 	}

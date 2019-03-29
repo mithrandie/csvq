@@ -690,7 +690,7 @@ func AddColumns(ctx context.Context, parentFilter *Filter, query parser.AddColum
 		}
 		records[rIdx] = record
 		return nil
-	}, defaults)
+	})
 	if err != nil {
 		return nil, 0, err
 	}
