@@ -140,7 +140,7 @@ func (tx *Transaction) Commit(filter *Filter, expr parser.Expression) error {
 
 	msglist := filter.tempViews.Store(tx.uncommittedViews.UncommittedTempViews())
 	if 0 < len(msglist) {
-		tx.Session.LogNotice(strings.Join(msglist, "\n"), tx.Flags.Quiet)
+		tx.Session.LogNotice(strings.Join(msglist, "\n"), tx.quietForTemporaryViews(expr))
 	}
 	tx.uncommittedViews.Clean()
 	if err := tx.ReleaseResources(); err != nil {
@@ -167,7 +167,7 @@ func (tx *Transaction) Rollback(filter *Filter, expr parser.Expression) error {
 	if filter != nil {
 		msglist := filter.tempViews.Restore(tx.uncommittedViews.UncommittedTempViews())
 		if 0 < len(msglist) {
-			tx.Session.LogNotice(strings.Join(msglist, "\n"), tx.Flags.Quiet)
+			tx.Session.LogNotice(strings.Join(msglist, "\n"), tx.quietForTemporaryViews(expr))
 		}
 	}
 	tx.uncommittedViews.Clean()
@@ -175,6 +175,10 @@ func (tx *Transaction) Rollback(filter *Filter, expr parser.Expression) error {
 		return NewRollbackError(expr, err.Error())
 	}
 	return nil
+}
+
+func (tx *Transaction) quietForTemporaryViews(expr parser.Expression) bool {
+	return tx.Flags.Quiet || expr == nil
 }
 
 func (tx *Transaction) ReleaseResources() error {
