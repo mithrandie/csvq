@@ -56,6 +56,10 @@ Version 1.9.6
 
 [Reference Manual - csvq]({{ '/reference.html' | relative_url }})
 
+## Execute csvq statements in Go
+
+[csvq-driver](https://github.com/mithrandie/csvq-driver)
+
 ## Example of cooperation with other applications
 
 - [csvq emacs extension](https://github.com/mithrandie/csvq-emacs-extension)
