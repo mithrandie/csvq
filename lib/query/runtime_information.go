@@ -41,7 +41,7 @@ func GetRuntimeInformation(tx *Transaction, expr parser.RuntimeInformation) (val
 	case UpdatedViewsInformation:
 		p = value.NewInteger(int64(tx.uncommittedViews.CountUpdatedViews()))
 	case LoadedTablesInformation:
-		p = value.NewInteger(int64(len(tx.cachedViews.views)))
+		p = value.NewInteger(int64(tx.cachedViews.Len()))
 	case WorkingDirectory:
 		wd, err := os.Getwd()
 		if err != nil {

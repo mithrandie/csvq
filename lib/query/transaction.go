@@ -26,8 +26,9 @@ type Transaction struct {
 	FileContainer *file.Container
 
 	cachedViews      ViewMap
-	uncommittedViews *UncommittedViews
+	uncommittedViews UncommittedViews
 
+	operationMutex   *sync.Mutex
 	viewLoadingMutex *sync.Mutex
 
 	PreparedStatements PreparedStatementMap
@@ -58,8 +59,9 @@ func NewTransaction(ctx context.Context, defaultWaitTimeout time.Duration, retry
 		FileContainer:      file.NewContainer(),
 		cachedViews:        NewViewMap(),
 		uncommittedViews:   NewUncommittedViews(),
-		viewLoadingMutex:   new(sync.Mutex),
-		PreparedStatements: make(PreparedStatementMap, 4),
+		viewLoadingMutex:   &sync.Mutex{},
+		operationMutex:     &sync.Mutex{},
+		PreparedStatements: NewPreparedStatementMap(),
 		SelectedViews:      nil,
 		AffectedRows:       0,
 		AutoCommit:         false,
@@ -78,6 +80,9 @@ func (tx *Transaction) UpdateWaitTimeout(waitTimeout float64, retryDelay time.Du
 }
 
 func (tx *Transaction) Commit(filter *Filter, expr parser.Expression) error {
+	tx.operationMutex.Lock()
+	defer tx.operationMutex.Unlock()
+
 	createdFiles, updatedFiles := tx.uncommittedViews.UncommittedFiles()
 
 	createFileInfo := make([]*FileInfo, 0, len(createdFiles))
@@ -150,6 +155,9 @@ func (tx *Transaction) Commit(filter *Filter, expr parser.Expression) error {
 }
 
 func (tx *Transaction) Rollback(filter *Filter, expr parser.Expression) error {
+	tx.operationMutex.Lock()
+	defer tx.operationMutex.Unlock()
+
 	createdFiles, updatedFiles := tx.uncommittedViews.UncommittedFiles()
 
 	if 0 < len(createdFiles) {

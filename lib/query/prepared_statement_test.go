@@ -10,7 +10,7 @@ import (
 )
 
 func TestPreparedStatementMap_Prepare(t *testing.T) {
-	m := make(PreparedStatementMap)
+	m := NewPreparedStatementMap()
 	filter := NewFilter(TestTx)
 
 	expr := parser.StatementPreparation{
@@ -18,8 +18,8 @@ func TestPreparedStatementMap_Prepare(t *testing.T) {
 		Statement: value.NewString("select 1"),
 	}
 
-	expect := PreparedStatementMap{
-		"STMT": &PreparedStatement{
+	expect := GenerateStatementMap([]*PreparedStatement{
+		{
 			Name:            "stmt",
 			StatementString: "select 1",
 			Statements: []parser.Statement{
@@ -39,13 +39,13 @@ func TestPreparedStatementMap_Prepare(t *testing.T) {
 			},
 			HolderNumber: 0,
 		},
-	}
+	})
 
 	err := m.Prepare(filter, expr)
 	if err != nil {
 		t.Errorf("unexpected error %q", err)
 	} else {
-		if !reflect.DeepEqual(m, expect) {
+		if !SyncMapEqual(m, expect) {
 			t.Errorf("result = %v, want %v", m, expect)
 		}
 	}
@@ -76,8 +76,8 @@ func TestPreparedStatementMap_Prepare(t *testing.T) {
 }
 
 func TestPreparedStatementMap_Get(t *testing.T) {
-	m := PreparedStatementMap{
-		"STMT": &PreparedStatement{
+	m := GenerateStatementMap([]*PreparedStatement{
+		{
 			Name: "stmt",
 			Statements: []parser.Statement{
 				parser.SelectQuery{
@@ -95,7 +95,7 @@ func TestPreparedStatementMap_Get(t *testing.T) {
 				},
 			},
 		},
-	}
+	})
 
 	name := parser.Identifier{Literal: "stmt"}
 	expect := &PreparedStatement{
@@ -138,8 +138,8 @@ func TestPreparedStatementMap_Get(t *testing.T) {
 }
 
 func TestPreparedStatementMap_Dispose(t *testing.T) {
-	m := PreparedStatementMap{
-		"STMT": &PreparedStatement{
+	m := GenerateStatementMap([]*PreparedStatement{
+		{
 			Name: "stmt",
 			Statements: []parser.Statement{
 				parser.SelectQuery{
@@ -157,19 +157,19 @@ func TestPreparedStatementMap_Dispose(t *testing.T) {
 				},
 			},
 		},
-	}
+	})
 
 	expr := parser.DisposeStatement{
 		Name: parser.Identifier{Literal: "stmt"},
 	}
 
-	expect := PreparedStatementMap{}
+	expect := NewPreparedStatementMap()
 
 	err := m.Dispose(expr)
 	if err != nil {
 		t.Errorf("unexpected error %q", err)
 	} else {
-		if !reflect.DeepEqual(m, expect) {
+		if !SyncMapEqual(m, expect) {
 			t.Errorf("result = %v, want %v", m, expect)
 		}
 	}

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
@@ -241,6 +242,8 @@ type Cursor struct {
 	fetched   bool
 
 	isPseudo bool
+
+	mtx *sync.Mutex
 }
 
 func NewCursor(e parser.CursorDeclaration) *Cursor {
@@ -248,6 +251,7 @@ func NewCursor(e parser.CursorDeclaration) *Cursor {
 		name:      e.Cursor.Literal,
 		query:     e.Query,
 		statement: e.Statement,
+		mtx:       &sync.Mutex{},
 	}
 }
 
@@ -267,6 +271,7 @@ func NewPseudoCursor(tx *Transaction, values []value.Primary) *Cursor {
 		index:    -1,
 		fetched:  false,
 		isPseudo: true,
+		mtx:      &sync.Mutex{},
 	}
 }
 
@@ -274,6 +279,9 @@ func (c *Cursor) Open(ctx context.Context, filter *Filter, name parser.Identifie
 	if c.isPseudo {
 		return NewPseudoCursorError(name)
 	}
+
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
 
 	if c.view != nil {
 		return NewCursorOpenError(name)
@@ -312,10 +320,13 @@ func (c *Cursor) Close(name parser.Identifier) error {
 		return NewPseudoCursorError(name)
 	}
 
+	c.mtx.Lock()
+
 	c.view = nil
 	c.index = 0
 	c.fetched = false
 
+	c.mtx.Unlock()
 	return nil
 }
 
@@ -323,6 +334,9 @@ func (c *Cursor) Fetch(name parser.Identifier, position int, number int) ([]valu
 	if c.view == nil {
 		return nil, NewCursorClosedError(name)
 	}
+
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
 
 	if !c.fetched {
 		c.fetched = true

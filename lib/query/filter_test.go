@@ -4098,6 +4098,7 @@ func TestFilter_Evaluate(t *testing.T) {
 	cursors := CursorMap{
 		"CUR": &Cursor{
 			query: selectQueryForCursorTest,
+			mtx:   &sync.Mutex{},
 		},
 	}
 

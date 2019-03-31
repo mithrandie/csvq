@@ -17,7 +17,7 @@ func GetGoroutineManager() *GoroutineManager {
 	getGm.Do(func() {
 		gm = &GoroutineManager{
 			Count:                  0,
-			CountMutex:             new(sync.Mutex),
+			CountMutex:             &sync.Mutex{},
 			MinimumRequiredPerCore: MinimumRequiredPerCPUCore,
 		}
 	})
@@ -71,7 +71,7 @@ func (m *GoroutineManager) Release() {
 type GoroutineTaskManager struct {
 	Number int
 
-	grCountMutex sync.Mutex
+	grCountMutex *sync.Mutex
 	grCount      int
 	recordLen    int
 	waitGroup    sync.WaitGroup
@@ -82,9 +82,10 @@ func NewGoroutineTaskManager(recordLen int, minimumRequiredPerCore int, cpuNum i
 	number := GetGoroutineManager().AssignRoutineNumber(recordLen, minimumRequiredPerCore, cpuNum)
 
 	return &GoroutineTaskManager{
-		Number:    number,
-		grCount:   number - 1,
-		recordLen: recordLen,
+		Number:       number,
+		grCountMutex: &sync.Mutex{},
+		grCount:      number - 1,
+		recordLen:    recordLen,
 	}
 }
 

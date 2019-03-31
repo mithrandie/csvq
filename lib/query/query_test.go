@@ -3,7 +3,6 @@ package query
 import (
 	"context"
 	"reflect"
-	"strings"
 	"sync"
 	"testing"
 
@@ -168,9 +167,11 @@ func TestFetchCursor(t *testing.T) {
 			{
 				"CUR": &Cursor{
 					query: selectQueryForCursorTest,
+					mtx:   &sync.Mutex{},
 				},
 				"CUR2": &Cursor{
 					query: selectQueryForCursorTest,
+					mtx:   &sync.Mutex{},
 				},
 			},
 		},
@@ -199,7 +200,7 @@ func TestFetchCursor(t *testing.T) {
 		if success != v.Success {
 			t.Errorf("%s: success = %t, want %t", v.Name, success, v.Success)
 		}
-		if !reflect.DeepEqual(filter.variables[0], v.ResultVars) {
+		if !SyncMapEqual(filter.variables[0], v.ResultVars) {
 			t.Errorf("%s: global vars = %v, want %v", v.Name, filter.variables[0], v.ResultVars)
 		}
 	}
@@ -221,22 +222,19 @@ var declareViewTests = []struct {
 				parser.Identifier{Literal: "column2"},
 			},
 		},
-		Result: ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"TBL": {
-					FileInfo: &FileInfo{
-						Path:             "tbl",
-						IsTemporary:      true,
-						InitialHeader:    NewHeader("tbl", []string{"column1", "column2"}),
-						InitialRecordSet: RecordSet{},
-					},
-					Header:    NewHeader("tbl", []string{"column1", "column2"}),
-					RecordSet: RecordSet{},
-					Tx:        TestTx,
+		Result: GenerateViewMap([]*View{
+			{
+				FileInfo: &FileInfo{
+					Path:             "tbl",
+					IsTemporary:      true,
+					InitialHeader:    NewHeader("tbl", []string{"column1", "column2"}),
+					InitialRecordSet: RecordSet{},
 				},
+				Header:    NewHeader("tbl", []string{"column1", "column2"}),
+				RecordSet: RecordSet{},
+				Tx:        TestTx,
 			},
-		},
+		}),
 	},
 	{
 		Name: "Declare View Field Duplicate Error",
@@ -268,32 +266,29 @@ var declareViewTests = []struct {
 				},
 			},
 		},
-		Result: ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"TBL": {
-					FileInfo: &FileInfo{
-						Path:          "tbl",
-						IsTemporary:   true,
-						InitialHeader: NewHeader("tbl", []string{"column1", "column2"}),
-						InitialRecordSet: RecordSet{
-							NewRecord([]value.Primary{
-								value.NewInteger(1),
-								value.NewInteger(2),
-							}),
-						},
-					},
-					Header: NewHeader("tbl", []string{"column1", "column2"}),
-					RecordSet: RecordSet{
+		Result: GenerateViewMap([]*View{
+			{
+				FileInfo: &FileInfo{
+					Path:          "tbl",
+					IsTemporary:   true,
+					InitialHeader: NewHeader("tbl", []string{"column1", "column2"}),
+					InitialRecordSet: RecordSet{
 						NewRecord([]value.Primary{
 							value.NewInteger(1),
 							value.NewInteger(2),
 						}),
 					},
-					Tx: TestTx,
 				},
+				Header: NewHeader("tbl", []string{"column1", "column2"}),
+				RecordSet: RecordSet{
+					NewRecord([]value.Primary{
+						value.NewInteger(1),
+						value.NewInteger(2),
+					}),
+				},
+				Tx: TestTx,
 			},
-		},
+		}),
 	},
 	{
 		Name: "Declare View From Query Query Error",
@@ -359,17 +354,14 @@ var declareViewTests = []struct {
 	},
 	{
 		Name: "Declare View Redeclaration Error",
-		ViewMap: ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"TBL": {
-					FileInfo: &FileInfo{
-						Path:        "tbl",
-						IsTemporary: true,
-					},
+		ViewMap: GenerateViewMap([]*View{
+			{
+				FileInfo: &FileInfo{
+					Path:        "tbl",
+					IsTemporary: true,
 				},
 			},
-		},
+		}),
 		Expr: parser.ViewDeclaration{
 			View: parser.Identifier{Literal: "tbl"},
 			Fields: []parser.QueryExpression{
@@ -385,7 +377,7 @@ func TestDeclareView(t *testing.T) {
 	filter := NewFilter(TestTx)
 
 	for _, v := range declareViewTests {
-		if v.ViewMap.mtx == nil {
+		if v.ViewMap.SyncMap == nil {
 			filter.tempViews = []ViewMap{NewViewMap()}
 		} else {
 			filter.tempViews = []ViewMap{v.ViewMap}
@@ -404,7 +396,7 @@ func TestDeclareView(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(filter.tempViews[0], v.Result) {
+		if !SyncMapEqual(filter.tempViews[0], v.Result) {
 			t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.Result)
 		}
 	}
@@ -1231,45 +1223,42 @@ var insertTests = []struct {
 			ForUpdate: true,
 		},
 		UpdateCount: 2,
-		ViewCache: ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				strings.ToUpper(GetTestFilePath("table1.csv")): {
-					FileInfo: &FileInfo{
-						Path:      GetTestFilePath("table1.csv"),
-						Delimiter: ',',
-						NoHeader:  false,
-						Encoding:  text.UTF8,
-						LineBreak: text.LF,
-						ForUpdate: true,
-					},
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("str2"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("3"),
-							value.NewString("str3"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewInteger(4),
-							value.NewNull(),
-						}),
-						NewRecord([]value.Primary{
-							value.NewInteger(2),
-							value.NewNull(),
-						}),
-					},
-					Tx: TestTx,
+		ViewCache: GenerateViewMap([]*View{
+			{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+					ForUpdate: true,
 				},
+				Header: NewHeader("table1", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
+						value.NewString("str3"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewInteger(4),
+						value.NewNull(),
+					}),
+					NewRecord([]value.Primary{
+						value.NewInteger(2),
+						value.NewNull(),
+					}),
+				},
+				Tx: TestTx,
 			},
-		},
+		}),
 	},
 	{
 		Name: "Insert Query For Temporary View",
@@ -1302,38 +1291,35 @@ var insertTests = []struct {
 		},
 		UpdateCount: 2,
 		TempViewList: TemporaryViewScopes{
-			ViewMap{
-				mtx: &sync.RWMutex{},
-				views: map[string]*View{
-					"TMPVIEW": {
-						Header: NewHeader("tmpview", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							NewRecord([]value.Primary{
-								value.NewString("1"),
-								value.NewString("str1"),
-							}),
-							NewRecord([]value.Primary{
-								value.NewString("2"),
-								value.NewString("str2"),
-							}),
-							NewRecord([]value.Primary{
-								value.NewInteger(4),
-								value.NewNull(),
-							}),
-							NewRecord([]value.Primary{
-								value.NewInteger(2),
-								value.NewNull(),
-							}),
-						},
-						FileInfo: &FileInfo{
-							Path:        "tmpview",
-							Delimiter:   ',',
-							IsTemporary: true,
-						},
-						Tx: TestTx,
+			GenerateViewMap([]*View{
+				{
+					Header: NewHeader("tmpview", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
+						}),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
+							value.NewString("str2"),
+						}),
+						NewRecord([]value.Primary{
+							value.NewInteger(4),
+							value.NewNull(),
+						}),
+						NewRecord([]value.Primary{
+							value.NewInteger(2),
+							value.NewNull(),
+						}),
 					},
+					FileInfo: &FileInfo{
+						Path:        "tmpview",
+						Delimiter:   ',',
+						IsTemporary: true,
+					},
+					Tx: TestTx,
 				},
-			},
+			}),
 		},
 	},
 	{
@@ -1494,30 +1480,27 @@ func TestInsert(t *testing.T) {
 
 	filter := NewFilter(TestTx)
 	filter.tempViews = TemporaryViewScopes{
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"TMPVIEW": {
-					Header: NewHeader("tmpview", []string{"column1", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("str2"),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:        "tmpview",
-						Delimiter:   ',',
-						IsTemporary: true,
-					},
-					Tx: TestTx,
+		GenerateViewMap([]*View{
+			{
+				Header: NewHeader("tmpview", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
 				},
+				FileInfo: &FileInfo{
+					Path:        "tmpview",
+					Delimiter:   ',',
+					IsTemporary: true,
+				},
+				Tx: TestTx,
 			},
-		},
+		}),
 	}
 
 	for _, v := range insertTests {
@@ -1536,15 +1519,17 @@ func TestInsert(t *testing.T) {
 			continue
 		}
 
-		for _, v2 := range TestTx.cachedViews.views {
-			if v2.FileInfo.Handler != nil {
-				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
-					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
+		TestTx.cachedViews.Range(func(key, value interface{}) bool {
+			view := value.(*View)
+			if view.FileInfo.Handler != nil {
+				if view.FileInfo.Path != view.FileInfo.Handler.Path() {
+					t.Errorf("file pointer = %q, want %q for %q", view.FileInfo.Handler.Path(), view.FileInfo.Path, v.Name)
 				}
-				_ = TestTx.FileContainer.Close(v2.FileInfo.Handler)
-				v2.FileInfo.Handler = nil
+				_ = TestTx.FileContainer.Close(view.FileInfo.Handler)
+				view.FileInfo.Handler = nil
 			}
-		}
+			return true
+		})
 
 		if !reflect.DeepEqual(result, v.ResultFile) {
 			t.Errorf("%s: fileinfo = %v, want %v", v.Name, result, v.ResultFile)
@@ -1554,13 +1539,13 @@ func TestInsert(t *testing.T) {
 			t.Errorf("%s: update count = %d, want %d", v.Name, cnt, v.UpdateCount)
 		}
 
-		if v.ViewCache.views != nil {
-			if !reflect.DeepEqual(TestTx.cachedViews, v.ViewCache) {
+		if v.ViewCache.SyncMap != nil {
+			if !SyncMapEqual(TestTx.cachedViews, v.ViewCache) {
 				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.tempViews, v.TempViewList) {
+			if !SyncMapListEqual(TempViewScopesToSyncMapList(filter.tempViews), TempViewScopesToSyncMapList(v.TempViewList)) {
 				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
 			}
 		}
@@ -1649,36 +1634,33 @@ var updateTests = []struct {
 			},
 		},
 		UpdateCounts: []int{1},
-		ViewCache: ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				strings.ToUpper(GetTestFilePath("table1.csv")): {
-					FileInfo: &FileInfo{
-						Path:      GetTestFilePath("table1.csv"),
-						Delimiter: ',',
-						NoHeader:  false,
-						Encoding:  text.UTF8,
-						LineBreak: text.LF,
-						ForUpdate: true,
-					},
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("update1"),
-							value.NewString("update2"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("3"),
-							value.NewString("str3"),
-						}),
-					},
+		ViewCache: GenerateViewMap([]*View{
+			{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+					ForUpdate: true,
+				},
+				Header: NewHeader("table1", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("update1"),
+						value.NewString("update2"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
+						value.NewString("str3"),
+					}),
 				},
 			},
-		},
+		}),
 	},
 	{
 		Name: "Update Query For Temporary View",
@@ -1702,29 +1684,26 @@ var updateTests = []struct {
 		},
 		UpdateCounts: []int{2},
 		TempViewList: TemporaryViewScopes{
-			ViewMap{
-				mtx: &sync.RWMutex{},
-				views: map[string]*View{
-					"TMPVIEW": {
-						Header: NewHeader("tmpview", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							NewRecord([]value.Primary{
-								value.NewString("1"),
-								value.NewString("update"),
-							}),
-							NewRecord([]value.Primary{
-								value.NewString("2"),
-								value.NewString("update"),
-							}),
-						},
-						FileInfo: &FileInfo{
-							Path:        "tmpview",
-							Delimiter:   ',',
-							IsTemporary: true,
-						},
+			GenerateViewMap([]*View{
+				{
+					Header: NewHeader("tmpview", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("update"),
+						}),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
+							value.NewString("update"),
+						}),
+					},
+					FileInfo: &FileInfo{
+						Path:        "tmpview",
+						Delimiter:   ',',
+						IsTemporary: true,
 					},
 				},
-			},
+			}),
 		},
 	},
 	{
@@ -1977,29 +1956,26 @@ func TestUpdate(t *testing.T) {
 
 	filter := NewFilter(TestTx)
 	filter.tempViews = TemporaryViewScopes{
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"TMPVIEW": {
-					Header: NewHeader("tmpview", []string{"column1", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("str2"),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:        "tmpview",
-						Delimiter:   ',',
-						IsTemporary: true,
-					},
+		GenerateViewMap([]*View{
+			{
+				Header: NewHeader("tmpview", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:        "tmpview",
+					Delimiter:   ',',
+					IsTemporary: true,
 				},
 			},
-		},
+		}),
 	}
 
 	for _, v := range updateTests {
@@ -2018,15 +1994,17 @@ func TestUpdate(t *testing.T) {
 			continue
 		}
 
-		for _, v2 := range TestTx.cachedViews.views {
-			if v2.FileInfo.Handler != nil {
-				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
-					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
+		TestTx.cachedViews.Range(func(key, value interface{}) bool {
+			view := value.(*View)
+			if view.FileInfo.Handler != nil {
+				if view.FileInfo.Path != view.FileInfo.Handler.Path() {
+					t.Errorf("file pointer = %q, want %q for %q", view.FileInfo.Handler.Path(), view.FileInfo.Path, v.Name)
 				}
-				_ = TestTx.FileContainer.Close(v2.FileInfo.Handler)
-				v2.FileInfo.Handler = nil
+				_ = TestTx.FileContainer.Close(view.FileInfo.Handler)
+				view.FileInfo.Handler = nil
 			}
-		}
+			return true
+		})
 
 		if !reflect.DeepEqual(files, v.ResultFiles) {
 			t.Errorf("%s: fileinfo = %v, want %v", v.Name, files, v.ResultFiles)
@@ -2036,13 +2014,13 @@ func TestUpdate(t *testing.T) {
 			t.Errorf("%s: update count = %v, want %v", v.Name, cnt, v.UpdateCounts)
 		}
 
-		if v.ViewCache.views != nil {
-			if !reflect.DeepEqual(TestTx.cachedViews, v.ViewCache) {
+		if v.ViewCache.SyncMap != nil {
+			if !SyncMapEqual(TestTx.cachedViews, v.ViewCache) {
 				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.tempViews, v.TempViewList) {
+			if !SyncMapListEqual(TempViewScopesToSyncMapList(filter.tempViews), TempViewScopesToSyncMapList(v.TempViewList)) {
 				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
 			}
 		}
@@ -2125,32 +2103,29 @@ var deleteTests = []struct {
 			},
 		},
 		UpdateCounts: []int{1},
-		ViewCache: ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				strings.ToUpper(GetTestFilePath("table1.csv")): {
-					FileInfo: &FileInfo{
-						Path:      GetTestFilePath("table1.csv"),
-						Delimiter: ',',
-						NoHeader:  false,
-						Encoding:  text.UTF8,
-						LineBreak: text.LF,
-						ForUpdate: true,
-					},
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("3"),
-							value.NewString("str3"),
-						}),
-					},
+		ViewCache: GenerateViewMap([]*View{
+			{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+					ForUpdate: true,
+				},
+				Header: NewHeader("table1", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
+						value.NewString("str3"),
+					}),
 				},
 			},
-		},
+		}),
 	},
 	{
 		Name: "Delete Query For Temporary View",
@@ -2180,25 +2155,22 @@ var deleteTests = []struct {
 		},
 		UpdateCounts: []int{1},
 		TempViewList: TemporaryViewScopes{
-			ViewMap{
-				mtx: &sync.RWMutex{},
-				views: map[string]*View{
-					"TMPVIEW": {
-						Header: NewHeader("tmpview", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							NewRecord([]value.Primary{
-								value.NewString("1"),
-								value.NewString("str1"),
-							}),
-						},
-						FileInfo: &FileInfo{
-							Path:        "tmpview",
-							Delimiter:   ',',
-							IsTemporary: true,
-						},
+			GenerateViewMap([]*View{
+				{
+					Header: NewHeader("tmpview", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
+						}),
+					},
+					FileInfo: &FileInfo{
+						Path:        "tmpview",
+						Delimiter:   ',',
+						IsTemporary: true,
 					},
 				},
-			},
+			}),
 		},
 	},
 	{
@@ -2352,29 +2324,26 @@ func TestDelete(t *testing.T) {
 
 	filter := NewFilter(TestTx)
 	filter.tempViews = TemporaryViewScopes{
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"TMPVIEW": {
-					Header: NewHeader("tmpview", []string{"column1", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("str2"),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:        "tmpview",
-						Delimiter:   ',',
-						IsTemporary: true,
-					},
+		GenerateViewMap([]*View{
+			{
+				Header: NewHeader("tmpview", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:        "tmpview",
+					Delimiter:   ',',
+					IsTemporary: true,
 				},
 			},
-		},
+		}),
 	}
 
 	for _, v := range deleteTests {
@@ -2393,15 +2362,17 @@ func TestDelete(t *testing.T) {
 			continue
 		}
 
-		for _, v2 := range TestTx.cachedViews.views {
-			if v2.FileInfo.Handler != nil {
-				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
-					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
+		TestTx.cachedViews.Range(func(key, value interface{}) bool {
+			view := value.(*View)
+			if view.FileInfo.Handler != nil {
+				if view.FileInfo.Path != view.FileInfo.Handler.Path() {
+					t.Errorf("file pointer = %q, want %q for %q", view.FileInfo.Handler.Path(), view.FileInfo.Path, v.Name)
 				}
-				_ = TestTx.FileContainer.Close(v2.FileInfo.Handler)
-				v2.FileInfo.Handler = nil
+				_ = TestTx.FileContainer.Close(view.FileInfo.Handler)
+				view.FileInfo.Handler = nil
 			}
-		}
+			return true
+		})
 
 		if !reflect.DeepEqual(files, v.ResultFiles) {
 			t.Errorf("%s: fileinfo = %v, want %v", v.Name, files, v.ResultFiles)
@@ -2411,13 +2382,13 @@ func TestDelete(t *testing.T) {
 			t.Errorf("%s: update count = %v, want %v", v.Name, cnt, v.UpdateCounts)
 		}
 
-		if v.ViewCache.views != nil {
-			if !reflect.DeepEqual(TestTx.cachedViews, v.ViewCache) {
+		if v.ViewCache.SyncMap != nil {
+			if !SyncMapEqual(TestTx.cachedViews, v.ViewCache) {
 				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.tempViews, v.TempViewList) {
+			if !SyncMapListEqual(TempViewScopesToSyncMapList(filter.tempViews), TempViewScopesToSyncMapList(v.TempViewList)) {
 				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
 			}
 		}
@@ -2448,23 +2419,20 @@ var createTableTests = []struct {
 			LineBreak: text.LF,
 			ForUpdate: true,
 		},
-		ViewCache: ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				strings.ToUpper(GetTestFilePath("create_table_1.csv")): {
-					FileInfo: &FileInfo{
-						Path:      GetTestFilePath("create_table_1.csv"),
-						Delimiter: ',',
-						NoHeader:  false,
-						Encoding:  text.UTF8,
-						LineBreak: text.LF,
-						ForUpdate: true,
-					},
-					Header:    NewHeader("create_table_1", []string{"column1", "column2"}),
-					RecordSet: RecordSet{},
+		ViewCache: GenerateViewMap([]*View{
+			{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("create_table_1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+					ForUpdate: true,
 				},
+				Header:    NewHeader("create_table_1", []string{"column1", "column2"}),
+				RecordSet: RecordSet{},
 			},
-		},
+		}),
 	},
 	{
 		Name: "Create Table From Select Query",
@@ -2493,29 +2461,26 @@ var createTableTests = []struct {
 			LineBreak: text.LF,
 			ForUpdate: true,
 		},
-		ViewCache: ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				strings.ToUpper(GetTestFilePath("create_table_1.csv")): {
-					FileInfo: &FileInfo{
-						Path:      GetTestFilePath("create_table_1.csv"),
-						Delimiter: ',',
-						NoHeader:  false,
-						Encoding:  text.UTF8,
-						LineBreak: text.LF,
-						ForUpdate: true,
-					},
-					Header: NewHeader("create_table_1", []string{"column1", "column2"}),
-					RecordSet: RecordSet{
-						NewRecord([]value.Primary{
-							value.NewInteger(1),
-							value.NewInteger(2),
-						}),
-					},
-					Tx: TestTx,
+		ViewCache: GenerateViewMap([]*View{
+			{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("create_table_1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+					ForUpdate: true,
 				},
+				Header: NewHeader("create_table_1", []string{"column1", "column2"}),
+				RecordSet: RecordSet{
+					NewRecord([]value.Primary{
+						value.NewInteger(1),
+						value.NewInteger(2),
+					}),
+				},
+				Tx: TestTx,
 			},
-		},
+		}),
 	},
 	{
 		Name: "Create Table File Already Exist Error",
@@ -2622,12 +2587,14 @@ func TestCreateTable(t *testing.T) {
 			_ = TestTx.FileContainer.Close(result.Handler)
 			result.Handler = nil
 		}
-		for _, view := range TestTx.cachedViews.views {
+		TestTx.cachedViews.Range(func(key, value interface{}) bool {
+			view := value.(*View)
 			if view.FileInfo != nil {
 				_ = TestTx.FileContainer.Close(view.FileInfo.Handler)
 				view.FileInfo.Handler = nil
 			}
-		}
+			return true
+		})
 
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -2646,8 +2613,8 @@ func TestCreateTable(t *testing.T) {
 			t.Errorf("%s: result = %v, want %v", v.Name, result, v.ResultFile)
 		}
 
-		if v.ViewCache.views != nil {
-			if !reflect.DeepEqual(TestTx.cachedViews, v.ViewCache) {
+		if v.ViewCache.SyncMap != nil {
+			if !SyncMapEqual(TestTx.cachedViews, v.ViewCache) {
 				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
@@ -2685,43 +2652,40 @@ var addColumnsTests = []struct {
 			ForUpdate: true,
 		},
 		UpdateCount: 2,
-		ViewCache: ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				strings.ToUpper(GetTestFilePath("table1.csv")): {
-					FileInfo: &FileInfo{
-						Path:      GetTestFilePath("table1.csv"),
-						Delimiter: ',',
-						NoHeader:  false,
-						Encoding:  text.UTF8,
-						LineBreak: text.LF,
-						ForUpdate: true,
-					},
-					Header: NewHeader("table1", []string{"column1", "column2", "column3", "column4"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-							value.NewNull(),
-							value.NewNull(),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("str2"),
-							value.NewNull(),
-							value.NewNull(),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("3"),
-							value.NewString("str3"),
-							value.NewNull(),
-							value.NewNull(),
-						}),
-					},
-					Tx: TestTx,
+		ViewCache: GenerateViewMap([]*View{
+			{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+					ForUpdate: true,
 				},
+				Header: NewHeader("table1", []string{"column1", "column2", "column3", "column4"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+						value.NewNull(),
+						value.NewNull(),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+						value.NewNull(),
+						value.NewNull(),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
+						value.NewString("str3"),
+						value.NewNull(),
+						value.NewNull(),
+					}),
+				},
+				Tx: TestTx,
 			},
-		},
+		}),
 	},
 	{
 		Name: "Add Fields For Temporary View",
@@ -2743,34 +2707,31 @@ var addColumnsTests = []struct {
 		},
 		UpdateCount: 2,
 		TempViewList: TemporaryViewScopes{
-			ViewMap{
-				mtx: &sync.RWMutex{},
-				views: map[string]*View{
-					"TMPVIEW": {
-						Header: NewHeader("tmpview", []string{"column1", "column2", "column3", "column4"}),
-						RecordSet: []Record{
-							NewRecord([]value.Primary{
-								value.NewString("1"),
-								value.NewString("str1"),
-								value.NewNull(),
-								value.NewNull(),
-							}),
-							NewRecord([]value.Primary{
-								value.NewString("2"),
-								value.NewString("str2"),
-								value.NewNull(),
-								value.NewNull(),
-							}),
-						},
-						FileInfo: &FileInfo{
-							Path:        "tmpview",
-							Delimiter:   ',',
-							IsTemporary: true,
-						},
-						Tx: TestTx,
+			GenerateViewMap([]*View{
+				{
+					Header: NewHeader("tmpview", []string{"column1", "column2", "column3", "column4"}),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
+							value.NewNull(),
+							value.NewNull(),
+						}),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
+							value.NewString("str2"),
+							value.NewNull(),
+							value.NewNull(),
+						}),
 					},
+					FileInfo: &FileInfo{
+						Path:        "tmpview",
+						Delimiter:   ',',
+						IsTemporary: true,
+					},
+					Tx: TestTx,
 				},
-			},
+			}),
 		},
 	},
 	{
@@ -2800,43 +2761,40 @@ var addColumnsTests = []struct {
 			ForUpdate: true,
 		},
 		UpdateCount: 2,
-		ViewCache: ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				strings.ToUpper(GetTestFilePath("table1.csv")): {
-					FileInfo: &FileInfo{
-						Path:      GetTestFilePath("table1.csv"),
-						Delimiter: ',',
-						NoHeader:  false,
-						Encoding:  text.UTF8,
-						LineBreak: text.LF,
-						ForUpdate: true,
-					},
-					Header: NewHeader("table1", []string{"column3", "column4", "column1", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewInteger(2),
-							value.NewInteger(1),
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewInteger(2),
-							value.NewInteger(1),
-							value.NewString("2"),
-							value.NewString("str2"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewInteger(2),
-							value.NewInteger(1),
-							value.NewString("3"),
-							value.NewString("str3"),
-						}),
-					},
-					Tx: TestTx,
+		ViewCache: GenerateViewMap([]*View{
+			{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+					ForUpdate: true,
 				},
+				Header: NewHeader("table1", []string{"column3", "column4", "column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewInteger(2),
+						value.NewInteger(1),
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewInteger(2),
+						value.NewInteger(1),
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewInteger(2),
+						value.NewInteger(1),
+						value.NewString("3"),
+						value.NewString("str3"),
+					}),
+				},
+				Tx: TestTx,
 			},
-		},
+		}),
 	},
 	{
 		Name: "Add Fields After",
@@ -2865,43 +2823,40 @@ var addColumnsTests = []struct {
 			ForUpdate: true,
 		},
 		UpdateCount: 2,
-		ViewCache: ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				strings.ToUpper(GetTestFilePath("table1.csv")): {
-					FileInfo: &FileInfo{
-						Path:      GetTestFilePath("table1.csv"),
-						Delimiter: ',',
-						NoHeader:  false,
-						Encoding:  text.UTF8,
-						LineBreak: text.LF,
-						ForUpdate: true,
-					},
-					Header: NewHeader("table1", []string{"column1", "column3", "column4", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewNull(),
-							value.NewInteger(1),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewNull(),
-							value.NewInteger(1),
-							value.NewString("str2"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("3"),
-							value.NewNull(),
-							value.NewInteger(1),
-							value.NewString("str3"),
-						}),
-					},
-					Tx: TestTx,
+		ViewCache: GenerateViewMap([]*View{
+			{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+					ForUpdate: true,
 				},
+				Header: NewHeader("table1", []string{"column1", "column3", "column4", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewNull(),
+						value.NewInteger(1),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewNull(),
+						value.NewInteger(1),
+						value.NewString("str2"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
+						value.NewNull(),
+						value.NewInteger(1),
+						value.NewString("str3"),
+					}),
+				},
+				Tx: TestTx,
 			},
-		},
+		}),
 	},
 	{
 		Name: "Add Fields Before",
@@ -2930,43 +2885,40 @@ var addColumnsTests = []struct {
 			ForUpdate: true,
 		},
 		UpdateCount: 2,
-		ViewCache: ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				strings.ToUpper(GetTestFilePath("table1.csv")): {
-					FileInfo: &FileInfo{
-						Path:      GetTestFilePath("table1.csv"),
-						Delimiter: ',',
-						NoHeader:  false,
-						Encoding:  text.UTF8,
-						LineBreak: text.LF,
-						ForUpdate: true,
-					},
-					Header: NewHeader("table1", []string{"column1", "column3", "column4", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewNull(),
-							value.NewInteger(1),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewNull(),
-							value.NewInteger(1),
-							value.NewString("str2"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("3"),
-							value.NewNull(),
-							value.NewInteger(1),
-							value.NewString("str3"),
-						}),
-					},
-					Tx: TestTx,
+		ViewCache: GenerateViewMap([]*View{
+			{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+					ForUpdate: true,
 				},
+				Header: NewHeader("table1", []string{"column1", "column3", "column4", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewNull(),
+						value.NewInteger(1),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewNull(),
+						value.NewInteger(1),
+						value.NewString("str2"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
+						value.NewNull(),
+						value.NewInteger(1),
+						value.NewString("str3"),
+					}),
+				},
+				Tx: TestTx,
 			},
-		},
+		}),
 	},
 	{
 		Name: "Add Fields Load Error",
@@ -3049,30 +3001,27 @@ func TestAddColumns(t *testing.T) {
 
 	filter := NewFilter(TestTx)
 	filter.tempViews = TemporaryViewScopes{
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"TMPVIEW": {
-					Header: NewHeader("tmpview", []string{"column1", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("str2"),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:        "tmpview",
-						Delimiter:   ',',
-						IsTemporary: true,
-					},
-					Tx: TestTx,
+		GenerateViewMap([]*View{
+			{
+				Header: NewHeader("tmpview", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
 				},
+				FileInfo: &FileInfo{
+					Path:        "tmpview",
+					Delimiter:   ',',
+					IsTemporary: true,
+				},
+				Tx: TestTx,
 			},
-		},
+		}),
 	}
 	for _, v := range addColumnsTests {
 		_ = TestTx.ReleaseResources()
@@ -3090,15 +3039,17 @@ func TestAddColumns(t *testing.T) {
 			continue
 		}
 
-		for _, v2 := range TestTx.cachedViews.views {
-			if v2.FileInfo.Handler != nil {
-				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
-					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
+		TestTx.cachedViews.Range(func(key, value interface{}) bool {
+			view := value.(*View)
+			if view.FileInfo.Handler != nil {
+				if view.FileInfo.Path != view.FileInfo.Handler.Path() {
+					t.Errorf("file pointer = %q, want %q for %q", view.FileInfo.Handler.Path(), view.FileInfo.Path, v.Name)
 				}
-				_ = TestTx.FileContainer.Close(v2.FileInfo.Handler)
-				v2.FileInfo.Handler = nil
+				_ = TestTx.FileContainer.Close(view.FileInfo.Handler)
+				view.FileInfo.Handler = nil
 			}
-		}
+			return true
+		})
 
 		if !reflect.DeepEqual(result, v.ResultFile) {
 			t.Errorf("%s: fileinfo = %v, want %v", v.Name, result, v.ResultFile)
@@ -3108,13 +3059,13 @@ func TestAddColumns(t *testing.T) {
 			t.Errorf("%s: update count = %d, want %d", v.Name, cnt, v.UpdateCount)
 		}
 
-		if v.ViewCache.views != nil {
-			if !reflect.DeepEqual(TestTx.cachedViews, v.ViewCache) {
+		if v.ViewCache.SyncMap != nil {
+			if !SyncMapEqual(TestTx.cachedViews, v.ViewCache) {
 				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.tempViews, v.TempViewList) {
+			if !SyncMapListEqual(TempViewScopesToSyncMapList(filter.tempViews), TempViewScopesToSyncMapList(v.TempViewList)) {
 				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
 			}
 		}
@@ -3147,34 +3098,31 @@ var dropColumnsTests = []struct {
 			ForUpdate: true,
 		},
 		UpdateCount: 1,
-		ViewCache: ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				strings.ToUpper(GetTestFilePath("table1.csv")): {
-					FileInfo: &FileInfo{
-						Path:      GetTestFilePath("table1.csv"),
-						Delimiter: ',',
-						NoHeader:  false,
-						Encoding:  text.UTF8,
-						LineBreak: text.LF,
-						ForUpdate: true,
-					},
-					Header: NewHeader("table1", []string{"column1"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("3"),
-						}),
-					},
-					Tx: TestTx,
+		ViewCache: GenerateViewMap([]*View{
+			{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+					ForUpdate: true,
 				},
+				Header: NewHeader("table1", []string{"column1"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
+					}),
+				},
+				Tx: TestTx,
 			},
-		},
+		}),
 	},
 	{
 		Name: "Drop Fields For Temporary View",
@@ -3191,28 +3139,25 @@ var dropColumnsTests = []struct {
 		},
 		UpdateCount: 1,
 		TempViewList: TemporaryViewScopes{
-			ViewMap{
-				mtx: &sync.RWMutex{},
-				views: map[string]*View{
-					"TMPVIEW": {
-						Header: NewHeader("tmpview", []string{"column1"}),
-						RecordSet: []Record{
-							NewRecord([]value.Primary{
-								value.NewString("1"),
-							}),
-							NewRecord([]value.Primary{
-								value.NewString("2"),
-							}),
-						},
-						FileInfo: &FileInfo{
-							Path:        "tmpview",
-							Delimiter:   ',',
-							IsTemporary: true,
-						},
-						Tx: TestTx,
+			GenerateViewMap([]*View{
+				{
+					Header: NewHeader("tmpview", []string{"column1"}),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+						}),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
+						}),
 					},
+					FileInfo: &FileInfo{
+						Path:        "tmpview",
+						Delimiter:   ',',
+						IsTemporary: true,
+					},
+					Tx: TestTx,
 				},
-			},
+			}),
 		},
 	},
 	{
@@ -3249,30 +3194,27 @@ func TestDropColumns(t *testing.T) {
 
 	filter := NewFilter(TestTx)
 	filter.tempViews = TemporaryViewScopes{
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"TMPVIEW": {
-					Header: NewHeader("tmpview", []string{"column1", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("str2"),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:        "tmpview",
-						Delimiter:   ',',
-						IsTemporary: true,
-					},
-					Tx: TestTx,
+		GenerateViewMap([]*View{
+			{
+				Header: NewHeader("tmpview", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
 				},
+				FileInfo: &FileInfo{
+					Path:        "tmpview",
+					Delimiter:   ',',
+					IsTemporary: true,
+				},
+				Tx: TestTx,
 			},
-		},
+		}),
 	}
 
 	for _, v := range dropColumnsTests {
@@ -3291,15 +3233,17 @@ func TestDropColumns(t *testing.T) {
 			continue
 		}
 
-		for _, v2 := range TestTx.cachedViews.views {
-			if v2.FileInfo.Handler != nil {
-				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
-					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
+		TestTx.cachedViews.Range(func(key, value interface{}) bool {
+			view := value.(*View)
+			if view.FileInfo.Handler != nil {
+				if view.FileInfo.Path != view.FileInfo.Handler.Path() {
+					t.Errorf("file pointer = %q, want %q for %q", view.FileInfo.Handler.Path(), view.FileInfo.Path, v.Name)
 				}
-				_ = TestTx.FileContainer.Close(v2.FileInfo.Handler)
-				v2.FileInfo.Handler = nil
+				_ = TestTx.FileContainer.Close(view.FileInfo.Handler)
+				view.FileInfo.Handler = nil
 			}
-		}
+			return true
+		})
 
 		if !reflect.DeepEqual(result, v.Result) {
 			t.Errorf("%s: fileinfo = %v, want %v", v.Name, result, v.Result)
@@ -3309,13 +3253,13 @@ func TestDropColumns(t *testing.T) {
 			t.Errorf("%s: update count = %d, want %d", v.Name, cnt, v.UpdateCount)
 		}
 
-		if v.ViewCache.views != nil {
-			if !reflect.DeepEqual(TestTx.cachedViews, v.ViewCache) {
+		if v.ViewCache.SyncMap != nil {
+			if !SyncMapEqual(TestTx.cachedViews, v.ViewCache) {
 				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.tempViews, v.TempViewList) {
+			if !SyncMapListEqual(TempViewScopesToSyncMapList(filter.tempViews), TempViewScopesToSyncMapList(v.TempViewList)) {
 				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
 			}
 		}
@@ -3345,37 +3289,34 @@ var renameColumnTests = []struct {
 			LineBreak: text.LF,
 			ForUpdate: true,
 		},
-		ViewCache: ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				strings.ToUpper(GetTestFilePath("table1.csv")): {
-					FileInfo: &FileInfo{
-						Path:      GetTestFilePath("table1.csv"),
-						Delimiter: ',',
-						NoHeader:  false,
-						Encoding:  text.UTF8,
-						LineBreak: text.LF,
-						ForUpdate: true,
-					},
-					Header: NewHeader("table1", []string{"column1", "newcolumn"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("str2"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("3"),
-							value.NewString("str3"),
-						}),
-					},
-					Tx: TestTx,
+		ViewCache: GenerateViewMap([]*View{
+			{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+					ForUpdate: true,
 				},
+				Header: NewHeader("table1", []string{"column1", "newcolumn"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
+						value.NewString("str3"),
+					}),
+				},
+				Tx: TestTx,
 			},
-		},
+		}),
 	},
 	{
 		Name: "Rename Column For Temporary View",
@@ -3390,30 +3331,27 @@ var renameColumnTests = []struct {
 			IsTemporary: true,
 		},
 		TempViewList: TemporaryViewScopes{
-			ViewMap{
-				mtx: &sync.RWMutex{},
-				views: map[string]*View{
-					"TMPVIEW": {
-						Header: NewHeader("tmpview", []string{"column1", "newcolumn"}),
-						RecordSet: []Record{
-							NewRecord([]value.Primary{
-								value.NewString("1"),
-								value.NewString("str1"),
-							}),
-							NewRecord([]value.Primary{
-								value.NewString("2"),
-								value.NewString("str2"),
-							}),
-						},
-						FileInfo: &FileInfo{
-							Path:        "tmpview",
-							Delimiter:   ',',
-							IsTemporary: true,
-						},
-						Tx: TestTx,
+			GenerateViewMap([]*View{
+				{
+					Header: NewHeader("tmpview", []string{"column1", "newcolumn"}),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
+						}),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
+							value.NewString("str2"),
+						}),
 					},
+					FileInfo: &FileInfo{
+						Path:        "tmpview",
+						Delimiter:   ',',
+						IsTemporary: true,
+					},
+					Tx: TestTx,
 				},
-			},
+			}),
 		},
 	},
 	{
@@ -3457,30 +3395,27 @@ func TestRenameColumn(t *testing.T) {
 
 	filter := NewFilter(TestTx)
 	filter.tempViews = TemporaryViewScopes{
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"TMPVIEW": {
-					Header: NewHeader("tmpview", []string{"column1", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("str2"),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:        "tmpview",
-						Delimiter:   ',',
-						IsTemporary: true,
-					},
-					Tx: TestTx,
+		GenerateViewMap([]*View{
+			{
+				Header: NewHeader("tmpview", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
 				},
+				FileInfo: &FileInfo{
+					Path:        "tmpview",
+					Delimiter:   ',',
+					IsTemporary: true,
+				},
+				Tx: TestTx,
 			},
-		},
+		}),
 	}
 
 	for _, v := range renameColumnTests {
@@ -3499,27 +3434,29 @@ func TestRenameColumn(t *testing.T) {
 			continue
 		}
 
-		for _, v2 := range TestTx.cachedViews.views {
-			if v2.FileInfo.Handler != nil {
-				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
-					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
+		TestTx.cachedViews.Range(func(key, value interface{}) bool {
+			view := value.(*View)
+			if view.FileInfo.Handler != nil {
+				if view.FileInfo.Path != view.FileInfo.Handler.Path() {
+					t.Errorf("file pointer = %q, want %q for %q", view.FileInfo.Handler.Path(), view.FileInfo.Path, v.Name)
 				}
-				_ = TestTx.FileContainer.Close(v2.FileInfo.Handler)
-				v2.FileInfo.Handler = nil
+				_ = TestTx.FileContainer.Close(view.FileInfo.Handler)
+				view.FileInfo.Handler = nil
 			}
-		}
+			return true
+		})
 
 		if !reflect.DeepEqual(result, v.Result) {
 			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
 		}
 
-		if v.ViewCache.views != nil {
-			if !reflect.DeepEqual(TestTx.cachedViews, v.ViewCache) {
+		if v.ViewCache.SyncMap != nil {
+			if !SyncMapEqual(TestTx.cachedViews, v.ViewCache) {
 				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
 		if v.TempViewList != nil {
-			if !reflect.DeepEqual(filter.tempViews, v.TempViewList) {
+			if !SyncMapListEqual(TempViewScopesToSyncMapList(filter.tempViews), TempViewScopesToSyncMapList(v.TempViewList)) {
 				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
 			}
 		}
@@ -3898,29 +3835,26 @@ func TestSetTableAttribute(t *testing.T) {
 
 	filter := NewFilter(TestTx)
 	filter.tempViews = TemporaryViewScopes{
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"TMPVIEW": {
-					Header: NewHeader("tmpview", []string{"column1", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("str2"),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:        "tmpview",
-						Delimiter:   ',',
-						IsTemporary: true,
-					},
+		GenerateViewMap([]*View{
+			{
+				Header: NewHeader("tmpview", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:        "tmpview",
+					Delimiter:   ',',
+					IsTemporary: true,
 				},
 			},
-		},
+		}),
 	}
 
 	for _, v := range setTableAttributeTests {
@@ -3940,15 +3874,17 @@ func TestSetTableAttribute(t *testing.T) {
 			continue
 		}
 
-		for _, v2 := range TestTx.cachedViews.views {
-			if v2.FileInfo.Handler != nil {
-				if v2.FileInfo.Path != v2.FileInfo.Handler.Path() {
-					t.Errorf("file pointer = %q, want %q for %q", v2.FileInfo.Handler.Path(), v2.FileInfo.Path, v.Name)
+		TestTx.cachedViews.Range(func(key, value interface{}) bool {
+			view := value.(*View)
+			if view.FileInfo.Handler != nil {
+				if view.FileInfo.Path != view.FileInfo.Handler.Path() {
+					t.Errorf("file pointer = %q, want %q for %q", view.FileInfo.Handler.Path(), view.FileInfo.Path, v.Name)
 				}
-				_ = TestTx.FileContainer.Close(v2.FileInfo.Handler)
-				v2.FileInfo.Handler = nil
+				_ = TestTx.FileContainer.Close(view.FileInfo.Handler)
+				view.FileInfo.Handler = nil
 			}
-		}
+			return true
+		})
 
 		view := NewView(TestTx)
 		_ = view.LoadFromTableIdentifier(context.Background(), filter.CreateNode(), v.Query.Table, false, false)

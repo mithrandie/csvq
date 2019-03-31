@@ -126,12 +126,14 @@ func (f *Filter) CreateChildScope() *Filter {
 }
 
 func (f *Filter) ResetCurrentScope() {
-	for k := range f.variables[0].variables {
-		delete(f.variables[0].variables, k)
-	}
-	for k := range f.tempViews[0].views {
-		delete(f.tempViews[0].views, k)
-	}
+	f.variables[0].Range(func(key, val interface{}) bool {
+		f.variables[0].Delete(key.(string))
+		return true
+	})
+	f.tempViews[0].Range(func(key, val interface{}) bool {
+		f.tempViews[0].Delete(key.(string))
+		return true
+	})
 	for k := range f.cursors[0] {
 		delete(f.cursors[0], k)
 	}

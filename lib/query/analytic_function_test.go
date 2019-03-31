@@ -601,6 +601,7 @@ var analyzeTests = []struct {
 				}),
 			},
 			Filter: &Filter{
+				tempViews: TemporaryViewScopes{NewViewMap()},
 				functions: UserDefinedFunctionScopes{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
@@ -721,6 +722,7 @@ var analyzeTests = []struct {
 				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
 			},
 			Filter: &Filter{
+				tempViews: TemporaryViewScopes{NewViewMap()},
 				functions: UserDefinedFunctionScopes{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
@@ -817,6 +819,7 @@ var analyzeTests = []struct {
 				}),
 			},
 			Filter: &Filter{
+				tempViews: TemporaryViewScopes{NewViewMap()},
 				functions: UserDefinedFunctionScopes{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
@@ -948,6 +951,7 @@ var analyzeTests = []struct {
 				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
 			},
 			Filter: &Filter{
+				tempViews: TemporaryViewScopes{NewViewMap()},
 				functions: UserDefinedFunctionScopes{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
@@ -1032,6 +1036,7 @@ var analyzeTests = []struct {
 				}),
 			},
 			Filter: &Filter{
+				tempViews: TemporaryViewScopes{NewViewMap()},
 				functions: UserDefinedFunctionScopes{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
@@ -1091,6 +1096,7 @@ var analyzeTests = []struct {
 				}),
 			},
 			Filter: &Filter{
+				tempViews: TemporaryViewScopes{NewViewMap()},
 				functions: UserDefinedFunctionScopes{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
@@ -1143,6 +1149,7 @@ var analyzeTests = []struct {
 				}),
 			},
 			Filter: &Filter{
+				tempViews: TemporaryViewScopes{NewViewMap()},
 				functions: UserDefinedFunctionScopes{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
@@ -1194,6 +1201,7 @@ var analyzeTests = []struct {
 				}),
 			},
 			Filter: &Filter{
+				tempViews: TemporaryViewScopes{NewViewMap()},
 				functions: UserDefinedFunctionScopes{
 					{
 						"USERAGGFUNC": &UserDefinedFunction{
