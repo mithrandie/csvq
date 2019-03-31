@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -222,6 +221,9 @@ func SetFlag(ctx context.Context, filter *Filter, expr parser.SetFlag) error {
 		return NewFlagValueNotAllowedFormatError(expr)
 	}
 
+	filter.tx.operationMutex.Lock()
+	defer filter.tx.operationMutex.Unlock()
+
 	switch strings.ToUpper(expr.Name) {
 	case cmd.RepositoryFlag:
 		err = filter.tx.Flags.SetRepository(p.(value.String).Raw())
@@ -315,6 +317,9 @@ func RemoveFlagElement(ctx context.Context, filter *Filter, expr parser.RemoveFl
 	if err != nil {
 		return err
 	}
+
+	filter.tx.operationMutex.Lock()
+	defer filter.tx.operationMutex.Unlock()
 
 	switch strings.ToUpper(expr.Name) {
 	case cmd.DatetimeFormatFlag:
@@ -535,22 +540,24 @@ func ShowObjects(filter *Filter, expr parser.ShowObjects) (string, error) {
 			createdFiles, updatedFiles := filter.tx.uncommittedViews.UncommittedFiles()
 
 			for _, key := range keys {
-				fields := filter.tx.cachedViews.views[key].Header.TableColumnNames()
-				info := filter.tx.cachedViews.views[key].FileInfo
-				ufpath := strings.ToUpper(info.Path)
+				if view, ok := filter.tx.cachedViews.Load(key); ok {
+					fields := view.Header.TableColumnNames()
+					info := view.FileInfo
+					ufpath := strings.ToUpper(info.Path)
 
-				if _, ok := createdFiles[ufpath]; ok {
-					w.WriteColor("*Created* ", cmd.EmphasisEffect)
-				} else if _, ok := updatedFiles[ufpath]; ok {
-					w.WriteColor("*Updated* ", cmd.EmphasisEffect)
+					if _, ok := createdFiles[ufpath]; ok {
+						w.WriteColor("*Created* ", cmd.EmphasisEffect)
+					} else if _, ok := updatedFiles[ufpath]; ok {
+						w.WriteColor("*Updated* ", cmd.EmphasisEffect)
+					}
+					w.WriteColorWithoutLineBreak(info.Path, cmd.ObjectEffect)
+					writeFields(w, fields)
+
+					w.NewLine()
+					writeTableAttribute(w, filter.tx.Flags, info)
+					w.ClearBlock()
+					w.NewLine()
 				}
-				w.WriteColorWithoutLineBreak(info.Path, cmd.ObjectEffect)
-				writeFields(w, fields)
-
-				w.NewLine()
-				writeTableAttribute(w, filter.tx.Flags, info)
-				w.ClearBlock()
-				w.NewLine()
 			}
 
 			uncommitted := len(createdFiles) + len(updatedFiles)
@@ -565,7 +572,7 @@ func ShowObjects(filter *Filter, expr parser.ShowObjects) (string, error) {
 	case ShowViews:
 		views := filter.tempViews.All()
 
-		if len(views.views) < 1 {
+		if views.Len() < 1 {
 			s = cmd.Warn("No view is declared")
 		} else {
 			keys := views.SortedKeys()
@@ -573,17 +580,19 @@ func ShowObjects(filter *Filter, expr parser.ShowObjects) (string, error) {
 			updatedViews := filter.tx.uncommittedViews.UncommittedTempViews()
 
 			for _, key := range keys {
-				fields := views.views[key].Header.TableColumnNames()
-				info := views.views[key].FileInfo
-				ufpath := strings.ToUpper(info.Path)
+				if view, ok := views.Load(key); ok {
+					fields := view.Header.TableColumnNames()
+					info := view.FileInfo
+					ufpath := strings.ToUpper(info.Path)
 
-				if _, ok := updatedViews[ufpath]; ok {
-					w.WriteColor("*Updated* ", cmd.EmphasisEffect)
+					if _, ok := updatedViews[ufpath]; ok {
+						w.WriteColor("*Updated* ", cmd.EmphasisEffect)
+					}
+					w.WriteColorWithoutLineBreak(info.Path, cmd.ObjectEffect)
+					writeFields(w, fields)
+					w.ClearBlock()
+					w.NewLine()
 				}
-				w.WriteColorWithoutLineBreak(info.Path, cmd.ObjectEffect)
-				writeFields(w, fields)
-				w.ClearBlock()
-				w.NewLine()
 			}
 
 			uncommitted := len(updatedViews)
@@ -671,30 +680,26 @@ func ShowObjects(filter *Filter, expr parser.ShowObjects) (string, error) {
 			}
 		}
 	case ShowStatements:
-		if len(filter.tx.PreparedStatements) < 1 {
+		if filter.tx.PreparedStatements.Len() < 1 {
 			s = cmd.Warn("No statement is prepared")
 		} else {
-			keys := make([]string, 0, len(filter.tx.PreparedStatements))
-			for k := range filter.tx.PreparedStatements {
-				keys = append(keys, k)
-			}
-			sort.Strings(keys)
+			keys := filter.tx.PreparedStatements.SortedKeys()
 
 			for _, key := range keys {
-				stmt := filter.tx.PreparedStatements[key]
+				if stmt, ok := filter.tx.PreparedStatements.Load(key); ok {
+					w.WriteColor(stmt.Name, cmd.ObjectEffect)
+					w.BeginBlock()
 
-				w.WriteColor(stmt.Name, cmd.ObjectEffect)
-				w.BeginBlock()
+					w.NewLine()
+					w.WriteColorWithoutLineBreak("Placeholder Number: ", cmd.LableEffect)
+					w.WriteColorWithoutLineBreak(strconv.Itoa(stmt.HolderNumber), cmd.NumberEffect)
+					w.NewLine()
+					w.WriteColorWithoutLineBreak("Statement: ", cmd.LableEffect)
+					writeQuery(w, stmt.StatementString)
 
-				w.NewLine()
-				w.WriteColorWithoutLineBreak("Placeholder Number: ", cmd.LableEffect)
-				w.WriteColorWithoutLineBreak(strconv.Itoa(stmt.HolderNumber), cmd.NumberEffect)
-				w.NewLine()
-				w.WriteColorWithoutLineBreak("Statement: ", cmd.LableEffect)
-				writeQuery(w, stmt.StatementString)
-
-				w.ClearBlock()
-				w.NewLine()
+					w.ClearBlock()
+					w.NewLine()
+				}
 			}
 			w.Title1 = "Prepared Statements"
 			s = "\n" + w.String() + "\n"
@@ -1066,6 +1071,9 @@ func Pwd(expr parser.Pwd) (string, error) {
 }
 
 func Reload(ctx context.Context, tx *Transaction, expr parser.Reload) error {
+	tx.operationMutex.Lock()
+	defer tx.operationMutex.Unlock()
+
 	switch strings.ToUpper(expr.Type.Literal) {
 	case ReloadConfig:
 		if err := tx.Environment.Load(ctx, tx.WaitTimeout, tx.RetryDelay); err != nil {

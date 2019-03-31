@@ -3,7 +3,6 @@ package query
 import (
 	"context"
 	"reflect"
-	"sync"
 	"testing"
 
 	"github.com/mithrandie/csvq/lib/parser"
@@ -29,32 +28,26 @@ var temporaryViewScopesExistsTests = []struct {
 
 func TestTemporaryViewScopes_Exists(t *testing.T) {
 	list := TemporaryViewScopes{
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"/PATH/TO/TABLE1.CSV": {
-					Header:    NewHeader("table1", []string{"column1", "column2"}),
-					RecordSet: []Record{},
-					FileInfo: &FileInfo{
-						Path:      "/path/to/table1.csv",
-						Delimiter: ',',
-					},
+		GenerateViewMap([]*View{
+			{
+				Header:    NewHeader("table1", []string{"column1", "column2"}),
+				RecordSet: []Record{},
+				FileInfo: &FileInfo{
+					Path:      "/path/to/table1.csv",
+					Delimiter: ',',
 				},
 			},
-		},
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"/PATH/TO/TABLE2.CSV": {
-					Header:    NewHeader("table1", []string{"column1", "column2"}),
-					RecordSet: []Record{},
-					FileInfo: &FileInfo{
-						Path:      "/path/to/table1.csv",
-						Delimiter: ',',
-					},
+		}),
+		GenerateViewMap([]*View{
+			{
+				Header:    NewHeader("table1", []string{"column1", "column2"}),
+				RecordSet: []Record{},
+				FileInfo: &FileInfo{
+					Path:      "/path/to/table1.csv",
+					Delimiter: ',',
 				},
 			},
-		},
+		}),
 	}
 
 	for _, v := range temporaryViewScopesExistsTests {
@@ -101,50 +94,44 @@ var temporaryViewScopesGetTests = []struct {
 
 func TestTemporaryViewScopes_Get(t *testing.T) {
 	list := TemporaryViewScopes{
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"/PATH/TO/TABLE1.CSV": {
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("str2"),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:      "/path/to/table1.csv",
-						Delimiter: ',',
-					},
+		GenerateViewMap([]*View{
+			{
+				Header: NewHeader("table1", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:      "/path/to/table1.csv",
+					Delimiter: ',',
 				},
 			},
-		},
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"/PATH/TO/TABLE2.CSV": {
-					Header: NewHeader("table2", []string{"column1", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("str2"),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:      "/path/to/table2.csv",
-						Delimiter: ',',
-					},
+		}),
+		GenerateViewMap([]*View{
+			{
+				Header: NewHeader("table2", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:      "/path/to/table2.csv",
+					Delimiter: ',',
 				},
 			},
-		},
+		}),
 	}
 
 	for _, v := range temporaryViewScopesGetTests {
@@ -203,50 +190,44 @@ var temporaryViewScopesGetWithInternalIdTests = []struct {
 
 func TestTemporaryViewScopes_GetWithInternalId(t *testing.T) {
 	list := TemporaryViewScopes{
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"/PATH/TO/TABLE1.CSV": {
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("str2"),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:      "/path/to/table1.csv",
-						Delimiter: ',',
-					},
+		GenerateViewMap([]*View{
+			{
+				Header: NewHeader("table1", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:      "/path/to/table1.csv",
+					Delimiter: ',',
 				},
 			},
-		},
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"/PATH/TO/TABLE2.CSV": {
-					Header: NewHeader("table2", []string{"column1", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("str2"),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:      "/path/to/table2.csv",
-						Delimiter: ',',
-					},
+		}),
+		GenerateViewMap([]*View{
+			{
+				Header: NewHeader("table2", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:      "/path/to/table2.csv",
+					Delimiter: ',',
 				},
 			},
-		},
+		}),
 	}
 
 	for _, v := range temporaryViewScopesGetWithInternalIdTests {
@@ -294,61 +275,27 @@ var temporaryViewScopesSetTests = []struct {
 			},
 		},
 		Result: TemporaryViewScopes{
-			ViewMap{
-				mtx: &sync.RWMutex{},
-				views: map[string]*View{
-					"/PATH/TO/TABLE1.CSV": {
-						Header: NewHeader("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							NewRecord([]value.Primary{
-								value.NewString("1"),
-								value.NewString("str1"),
-							}),
-							NewRecord([]value.Primary{
-								value.NewString("2"),
-								value.NewString("str2"),
-							}),
-						},
-						FileInfo: &FileInfo{
-							Path:      "/path/to/table1.csv",
-							Delimiter: ',',
-						},
+			GenerateViewMap([]*View{
+				{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
+						}),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
+							value.NewString("str2"),
+						}),
+					},
+					FileInfo: &FileInfo{
+						Path:      "/path/to/table1.csv",
+						Delimiter: ',',
 					},
 				},
-			},
-			ViewMap{
-				mtx: &sync.RWMutex{},
-				views: map[string]*View{
-					"/PATH/TO/TABLE2.CSV": {
-						Header: NewHeader("table2", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							NewRecord([]value.Primary{
-								value.NewString("1"),
-								value.NewString("str1"),
-							}),
-							NewRecord([]value.Primary{
-								value.NewString("2"),
-								value.NewString("str2"),
-							}),
-						},
-						FileInfo: &FileInfo{
-							Path:      "/path/to/table2.csv",
-							Delimiter: ',',
-						},
-					},
-				},
-			},
-		},
-	},
-}
-
-func TestTemporaryViewScopes_Set(t *testing.T) {
-	list := TemporaryViewScopes{
-		NewViewMap(),
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"/PATH/TO/TABLE2.CSV": {
+			}),
+			GenerateViewMap([]*View{
+				{
 					Header: NewHeader("table2", []string{"column1", "column2"}),
 					RecordSet: []Record{
 						NewRecord([]value.Primary{
@@ -365,13 +312,38 @@ func TestTemporaryViewScopes_Set(t *testing.T) {
 						Delimiter: ',',
 					},
 				},
-			},
+			}),
 		},
+	},
+}
+
+func TestTemporaryViewScopes_Set(t *testing.T) {
+	list := TemporaryViewScopes{
+		NewViewMap(),
+		GenerateViewMap([]*View{
+			{
+				Header: NewHeader("table2", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:      "/path/to/table2.csv",
+					Delimiter: ',',
+				},
+			},
+		}),
 	}
 
 	for _, v := range temporaryViewScopesSetTests {
 		list.Set(v.SetView)
-		if !reflect.DeepEqual(list, v.Result) {
+		if !SyncMapListEqual(TempViewScopesToSyncMapList(list), TempViewScopesToSyncMapList(v.Result)) {
 			t.Errorf("%s: map = %v, want %v", v.Name, list, v.Result)
 		}
 	}
@@ -403,60 +375,8 @@ var temporaryViewScopesReplaceTests = []struct {
 			},
 		},
 		Result: TemporaryViewScopes{
-			ViewMap{
-				mtx: &sync.RWMutex{},
-				views: map[string]*View{
-					"/PATH/TO/TABLE1.CSV": {
-						Header: NewHeader("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							NewRecord([]value.Primary{
-								value.NewString("1"),
-								value.NewString("str1"),
-							}),
-							NewRecord([]value.Primary{
-								value.NewString("2"),
-								value.NewString("str2"),
-							}),
-						},
-						FileInfo: &FileInfo{
-							Path:      "/path/to/table1.csv",
-							Delimiter: ',',
-						},
-					},
-				},
-			},
-			ViewMap{
-				mtx: &sync.RWMutex{},
-				views: map[string]*View{
-					"/PATH/TO/TABLE2.CSV": {
-						Header: NewHeader("table2", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							NewRecord([]value.Primary{
-								value.NewString("1"),
-								value.NewString("updated"),
-							}),
-							NewRecord([]value.Primary{
-								value.NewString("2"),
-								value.NewString("updated"),
-							}),
-						},
-						FileInfo: &FileInfo{
-							Path:      "/path/to/table2.csv",
-							Delimiter: ',',
-						},
-					},
-				},
-			},
-		},
-	},
-}
-
-func TestTemporaryViewScopes_Replace(t *testing.T) {
-	list := TemporaryViewScopes{
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"/PATH/TO/TABLE1.CSV": {
+			GenerateViewMap([]*View{
+				{
 					Header: NewHeader("table1", []string{"column1", "column2"}),
 					RecordSet: []Record{
 						NewRecord([]value.Primary{
@@ -473,21 +393,18 @@ func TestTemporaryViewScopes_Replace(t *testing.T) {
 						Delimiter: ',',
 					},
 				},
-			},
-		},
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"/PATH/TO/TABLE2.CSV": {
+			}),
+			GenerateViewMap([]*View{
+				{
 					Header: NewHeader("table2", []string{"column1", "column2"}),
 					RecordSet: []Record{
 						NewRecord([]value.Primary{
 							value.NewString("1"),
-							value.NewString("str1"),
+							value.NewString("updated"),
 						}),
 						NewRecord([]value.Primary{
 							value.NewString("2"),
-							value.NewString("str2"),
+							value.NewString("updated"),
 						}),
 					},
 					FileInfo: &FileInfo{
@@ -495,13 +412,56 @@ func TestTemporaryViewScopes_Replace(t *testing.T) {
 						Delimiter: ',',
 					},
 				},
-			},
+			}),
 		},
+	},
+}
+
+func TestTemporaryViewScopes_Replace(t *testing.T) {
+	list := TemporaryViewScopes{
+		GenerateViewMap([]*View{
+			{
+				Header: NewHeader("table1", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:      "/path/to/table1.csv",
+					Delimiter: ',',
+				},
+			},
+		}),
+		GenerateViewMap([]*View{
+			{
+				Header: NewHeader("table2", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:      "/path/to/table2.csv",
+					Delimiter: ',',
+				},
+			},
+		}),
 	}
 
 	for _, v := range temporaryViewScopesReplaceTests {
 		list.Replace(v.SetView)
-		if !reflect.DeepEqual(list, v.Result) {
+		if !SyncMapListEqual(TempViewScopesToSyncMapList(list), TempViewScopesToSyncMapList(v.Result)) {
 			t.Errorf("%s: map = %v, want %v", v.Name, list, v.Result)
 		}
 	}
@@ -518,66 +478,8 @@ var temporaryViewScopesDisposeTests = []struct {
 		Path: parser.Identifier{Literal: "/path/to/table1.csv"},
 		Result: TemporaryViewScopes{
 			NewViewMap(),
-			ViewMap{
-				mtx: &sync.RWMutex{},
-				views: map[string]*View{
-					"/PATH/TO/TABLE2.CSV": {
-						Header: NewHeader("table2", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							NewRecord([]value.Primary{
-								value.NewString("1"),
-								value.NewString("updated"),
-							}),
-							NewRecord([]value.Primary{
-								value.NewString("2"),
-								value.NewString("updated"),
-							}),
-						},
-						FileInfo: &FileInfo{
-							Path:      "/path/to/table2.csv",
-							Delimiter: ',',
-						},
-					},
-				},
-			},
-		},
-	},
-	{
-		Name:  "TempViewScopes Dispose Not Loaded Error",
-		Path:  parser.Identifier{Literal: "/path/to/table9.csv"},
-		Error: "view /path/to/table9.csv is undeclared",
-	},
-}
-
-func TestTemporaryViewScopesDispose(t *testing.T) {
-	list := TemporaryViewScopes{
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"/PATH/TO/TABLE1.CSV": {
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("str2"),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:        "/path/to/table1.csv",
-						Delimiter:   ',',
-						IsTemporary: true,
-					},
-				},
-			},
-		},
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"/PATH/TO/TABLE2.CSV": {
+			GenerateViewMap([]*View{
+				{
 					Header: NewHeader("table2", []string{"column1", "column2"}),
 					RecordSet: []Record{
 						NewRecord([]value.Primary{
@@ -594,8 +496,57 @@ func TestTemporaryViewScopesDispose(t *testing.T) {
 						Delimiter: ',',
 					},
 				},
-			},
+			}),
 		},
+	},
+	{
+		Name:  "TempViewScopes Dispose Not Loaded Error",
+		Path:  parser.Identifier{Literal: "/path/to/table9.csv"},
+		Error: "view /path/to/table9.csv is undeclared",
+	},
+}
+
+func TestTemporaryViewScopesDispose(t *testing.T) {
+	list := TemporaryViewScopes{
+		GenerateViewMap([]*View{
+			{
+				Header: NewHeader("table1", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:        "/path/to/table1.csv",
+					Delimiter:   ',',
+					IsTemporary: true,
+				},
+			},
+		}),
+		GenerateViewMap([]*View{
+			{
+				Header: NewHeader("table2", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("updated"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("updated"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:      "/path/to/table2.csv",
+					Delimiter: ',',
+				},
+			},
+		}),
 	}
 
 	for _, v := range temporaryViewScopesDisposeTests {
@@ -612,7 +563,7 @@ func TestTemporaryViewScopesDispose(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(list, v.Result) {
+		if !SyncMapListEqual(TempViewScopesToSyncMapList(list), TempViewScopesToSyncMapList(v.Result)) {
 			t.Errorf("%s: view = %v, want %v", v.Name, list, v.Result)
 		}
 	}
@@ -620,86 +571,67 @@ func TestTemporaryViewScopesDispose(t *testing.T) {
 
 func TestTemporaryViewScopes_Store(t *testing.T) {
 	list := TemporaryViewScopes{
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"/PATH/TO/TABLE1.CSV": {
-					Header: NewHeader("table1", []string{"column1", "column2", "column3"}),
-					RecordSet: RecordSet{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("str2"),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:             "/path/to/table1.csv",
-						Delimiter:        ',',
-						InitialHeader:    NewHeader("table1", []string{"column1", "column2"}),
-						InitialRecordSet: RecordSet{},
-					},
+		GenerateViewMap([]*View{
+			{
+				Header: NewHeader("table1", []string{"column1", "column2", "column3"}),
+				RecordSet: RecordSet{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
 				},
-				"/PATH/TO/TABLE2.CSV": {
-					Header: NewHeader("table2", []string{"column1", "column2", "column3"}),
-					RecordSet: RecordSet{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("str2"),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:             "/path/to/table2.csv",
-						Delimiter:        ',',
-						InitialHeader:    NewHeader("table2", []string{"column1", "column2", "column3"}),
-						InitialRecordSet: RecordSet{},
-					},
+				FileInfo: &FileInfo{
+					Path:             "/path/to/table1.csv",
+					Delimiter:        ',',
+					InitialHeader:    NewHeader("table1", []string{"column1", "column2"}),
+					InitialRecordSet: RecordSet{},
 				},
 			},
-		},
+			{
+				Header: NewHeader("table2", []string{"column1", "column2", "column3"}),
+				RecordSet: RecordSet{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:             "/path/to/table2.csv",
+					Delimiter:        ',',
+					InitialHeader:    NewHeader("table2", []string{"column1", "column2", "column3"}),
+					InitialRecordSet: RecordSet{},
+				},
+			},
+		}),
 	}
 
 	expect := TemporaryViewScopes{
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"/PATH/TO/TABLE1.CSV": {
-					Header: NewHeader("table1", []string{"column1", "column2", "column3"}),
-					RecordSet: RecordSet{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("str2"),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:          "/path/to/table1.csv",
-						Delimiter:     ',',
-						InitialHeader: NewHeader("table1", []string{"column1", "column2", "column3"}),
-						InitialRecordSet: RecordSet{
-							NewRecord([]value.Primary{
-								value.NewString("1"),
-								value.NewString("str1"),
-							}),
-							NewRecord([]value.Primary{
-								value.NewString("2"),
-								value.NewString("str2"),
-							}),
-						},
-					},
+		GenerateViewMap([]*View{
+			{
+				Header: NewHeader("table1", []string{"column1", "column2", "column3"}),
+				RecordSet: RecordSet{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
 				},
-				"/PATH/TO/TABLE2.CSV": {
-					Header: NewHeader("table2", []string{"column1", "column2", "column3"}),
-					RecordSet: RecordSet{
+				FileInfo: &FileInfo{
+					Path:          "/path/to/table1.csv",
+					Delimiter:     ',',
+					InitialHeader: NewHeader("table1", []string{"column1", "column2", "column3"}),
+					InitialRecordSet: RecordSet{
 						NewRecord([]value.Primary{
 							value.NewString("1"),
 							value.NewString("str1"),
@@ -708,16 +640,29 @@ func TestTemporaryViewScopes_Store(t *testing.T) {
 							value.NewString("2"),
 							value.NewString("str2"),
 						}),
-					},
-					FileInfo: &FileInfo{
-						Path:             "/path/to/table2.csv",
-						Delimiter:        ',',
-						InitialHeader:    NewHeader("table2", []string{"column1", "column2", "column3"}),
-						InitialRecordSet: RecordSet{},
 					},
 				},
 			},
-		},
+			{
+				Header: NewHeader("table2", []string{"column1", "column2", "column3"}),
+				RecordSet: RecordSet{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:             "/path/to/table2.csv",
+					Delimiter:        ',',
+					InitialHeader:    NewHeader("table2", []string{"column1", "column2", "column3"}),
+					InitialRecordSet: RecordSet{},
+				},
+			},
+		}),
 	}
 	expectOut := []string{"Commit: restore point of view \"/path/to/table1.csv\" is created.\n"}
 
@@ -727,7 +672,7 @@ func TestTemporaryViewScopes_Store(t *testing.T) {
 
 	log := list.Store(UncommittedViews)
 
-	if !reflect.DeepEqual(list, expect) {
+	if !SyncMapListEqual(TempViewScopesToSyncMapList(list), TempViewScopesToSyncMapList(expect)) {
 		t.Errorf("Store: view = %v, want %v", list, expect)
 	}
 
@@ -738,12 +683,45 @@ func TestTemporaryViewScopes_Store(t *testing.T) {
 
 func TestTemporaryViewScopes_Restore(t *testing.T) {
 	list := TemporaryViewScopes{
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"/PATH/TO/TABLE1.CSV": {
-					Header: NewHeader("table1", []string{"column1", "column2", "column3"}),
-					RecordSet: []Record{
+		GenerateViewMap([]*View{
+			{
+				Header: NewHeader("table1", []string{"column1", "column2", "column3"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:             "/path/to/table1.csv",
+					Delimiter:        ',',
+					InitialHeader:    NewHeader("table1", []string{"column1", "column2"}),
+					InitialRecordSet: RecordSet{},
+				},
+			},
+		}),
+		GenerateViewMap([]*View{
+			{
+				Header: NewHeader("table2", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("updated"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("updated"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:          "/path/to/table2.csv",
+					Delimiter:     ',',
+					InitialHeader: NewHeader("table2", []string{"column1", "column2"}),
+					InitialRecordSet: []Record{
 						NewRecord([]value.Primary{
 							value.NewString("1"),
 							value.NewString("str1"),
@@ -753,72 +731,42 @@ func TestTemporaryViewScopes_Restore(t *testing.T) {
 							value.NewString("str2"),
 						}),
 					},
-					FileInfo: &FileInfo{
-						Path:             "/path/to/table1.csv",
-						Delimiter:        ',',
-						InitialHeader:    NewHeader("table1", []string{"column1", "column2"}),
-						InitialRecordSet: RecordSet{},
-					},
 				},
 			},
-		},
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"/PATH/TO/TABLE2.CSV": {
-					Header: NewHeader("table2", []string{"column1", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("updated"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("updated"),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:          "/path/to/table2.csv",
-						Delimiter:     ',',
-						InitialHeader: NewHeader("table2", []string{"column1", "column2"}),
-						InitialRecordSet: []Record{
-							NewRecord([]value.Primary{
-								value.NewString("1"),
-								value.NewString("str1"),
-							}),
-							NewRecord([]value.Primary{
-								value.NewString("2"),
-								value.NewString("str2"),
-							}),
-						},
-					},
-				},
-			},
-		},
+		}),
 	}
 
 	expect := TemporaryViewScopes{
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"/PATH/TO/TABLE1.CSV": {
-					Header:    NewHeader("table1", []string{"column1", "column2"}),
-					RecordSet: []Record{},
-					FileInfo: &FileInfo{
-						Path:             "/path/to/table1.csv",
-						Delimiter:        ',',
-						InitialHeader:    NewHeader("table1", []string{"column1", "column2"}),
-						InitialRecordSet: RecordSet{},
-					},
+		GenerateViewMap([]*View{
+			{
+				Header:    NewHeader("table1", []string{"column1", "column2"}),
+				RecordSet: []Record{},
+				FileInfo: &FileInfo{
+					Path:             "/path/to/table1.csv",
+					Delimiter:        ',',
+					InitialHeader:    NewHeader("table1", []string{"column1", "column2"}),
+					InitialRecordSet: RecordSet{},
 				},
 			},
-		},
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"/PATH/TO/TABLE2.CSV": {
-					Header: NewHeader("table2", []string{"column1", "column2"}),
-					RecordSet: []Record{
+		}),
+		GenerateViewMap([]*View{
+			{
+				Header: NewHeader("table2", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:          "/path/to/table2.csv",
+					Delimiter:     ',',
+					InitialHeader: NewHeader("table2", []string{"column1", "column2"}),
+					InitialRecordSet: []Record{
 						NewRecord([]value.Primary{
 							value.NewString("1"),
 							value.NewString("str1"),
@@ -828,24 +776,9 @@ func TestTemporaryViewScopes_Restore(t *testing.T) {
 							value.NewString("str2"),
 						}),
 					},
-					FileInfo: &FileInfo{
-						Path:          "/path/to/table2.csv",
-						Delimiter:     ',',
-						InitialHeader: NewHeader("table2", []string{"column1", "column2"}),
-						InitialRecordSet: []Record{
-							NewRecord([]value.Primary{
-								value.NewString("1"),
-								value.NewString("str1"),
-							}),
-							NewRecord([]value.Primary{
-								value.NewString("2"),
-								value.NewString("str2"),
-							}),
-						},
-					},
 				},
 			},
-		},
+		}),
 	}
 	expectOut := []string{"Rollback: view \"/path/to/table1.csv\" is restored.\nRollback: view \"/path/to/table2.csv\" is restored.\n"}
 
@@ -856,7 +789,7 @@ func TestTemporaryViewScopes_Restore(t *testing.T) {
 
 	log := list.Restore(UncommittedViews)
 
-	if !reflect.DeepEqual(list, expect) {
+	if !SyncMapListEqual(TempViewScopesToSyncMapList(list), TempViewScopesToSyncMapList(expect)) {
 		t.Errorf("Restore: view = %v, want %v", list, expect)
 	}
 
@@ -867,60 +800,51 @@ func TestTemporaryViewScopes_Restore(t *testing.T) {
 
 func TestTemporaryViewScopes_All(t *testing.T) {
 	scopes := TemporaryViewScopes{
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"VIEW1": {
-					FileInfo: &FileInfo{
-						Path:        "view1",
-						IsTemporary: true,
-					},
-					Header: NewHeader("view1", []string{"column1", "column2"}),
-				},
-			},
-		},
-		ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"VIEW1": {
-					FileInfo: &FileInfo{
-						Path: "view1",
-					},
-					Header: NewHeader("view1", []string{"column1", "column2", "column3"}),
-				},
-				"VIEW2": {
-					FileInfo: &FileInfo{
-						Path:        "view2",
-						IsTemporary: true,
-					},
-					Header: NewHeader("view2", []string{"column1", "column2"}),
-				},
-			},
-		},
-	}
-
-	expect := ViewMap{
-		mtx: &sync.RWMutex{},
-		views: map[string]*View{
-			"VIEW1": {
+		GenerateViewMap([]*View{
+			{
 				FileInfo: &FileInfo{
 					Path:        "view1",
 					IsTemporary: true,
 				},
 				Header: NewHeader("view1", []string{"column1", "column2"}),
 			},
-			"VIEW2": {
+		}),
+		GenerateViewMap([]*View{
+			{
+				FileInfo: &FileInfo{
+					Path: "view1",
+				},
+				Header: NewHeader("view1", []string{"column1", "column2", "column3"}),
+			},
+			{
 				FileInfo: &FileInfo{
 					Path:        "view2",
 					IsTemporary: true,
 				},
 				Header: NewHeader("view2", []string{"column1", "column2"}),
 			},
-		},
+		}),
 	}
 
+	expect := GenerateViewMap([]*View{
+		{
+			FileInfo: &FileInfo{
+				Path:        "view1",
+				IsTemporary: true,
+			},
+			Header: NewHeader("view1", []string{"column1", "column2"}),
+		},
+		{
+			FileInfo: &FileInfo{
+				Path:        "view2",
+				IsTemporary: true,
+			},
+			Header: NewHeader("view2", []string{"column1", "column2"}),
+		},
+	})
+
 	list := scopes.All()
-	if !reflect.DeepEqual(list, expect) {
+	if !SyncMapEqual(list, expect) {
 		t.Errorf("List: list = %v, want %v", list, expect)
 	}
 }
@@ -943,19 +867,16 @@ var viewMapExistsTests = []struct {
 }
 
 func TestViewMap_Exists(t *testing.T) {
-	viewMap := ViewMap{
-		mtx: &sync.RWMutex{},
-		views: map[string]*View{
-			"/PATH/TO/TABLE1.CSV": {
-				Header:    NewHeader("table1", []string{"column1", "column2"}),
-				RecordSet: []Record{},
-				FileInfo: &FileInfo{
-					Path:      "/path/to/table1.csv",
-					Delimiter: ',',
-				},
+	viewMap := GenerateViewMap([]*View{
+		{
+			Header:    NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet: []Record{},
+			FileInfo: &FileInfo{
+				Path:      "/path/to/table1.csv",
+				Delimiter: ',',
 			},
 		},
-	}
+	})
 
 	for _, v := range viewMapExistsTests {
 		result := viewMap.Exists(v.Path)
@@ -1000,28 +921,25 @@ var viewMapGetTests = []struct {
 }
 
 func TestViewMap_Get(t *testing.T) {
-	viewMap := ViewMap{
-		mtx: &sync.RWMutex{},
-		views: map[string]*View{
-			"/PATH/TO/TABLE1.CSV": {
-				Header: NewHeader("table1", []string{"column1", "column2"}),
-				RecordSet: []Record{
-					NewRecord([]value.Primary{
-						value.NewString("1"),
-						value.NewString("str1"),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("2"),
-						value.NewString("str2"),
-					}),
-				},
-				FileInfo: &FileInfo{
-					Path:      "/path/to/table1.csv",
-					Delimiter: ',',
-				},
+	viewMap := GenerateViewMap([]*View{
+		{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "/path/to/table1.csv",
+				Delimiter: ',',
 			},
 		},
-	}
+	})
 
 	for _, v := range viewMapGetTests {
 		view, err := viewMap.Get(v.Path)
@@ -1078,28 +996,25 @@ var viewMapGetWithInternalIdTests = []struct {
 }
 
 func TestViewMap_GetWithInternalId(t *testing.T) {
-	viewMap := ViewMap{
-		mtx: &sync.RWMutex{},
-		views: map[string]*View{
-			"/PATH/TO/TABLE1.CSV": {
-				Header: NewHeader("table1", []string{"column1", "column2"}),
-				RecordSet: []Record{
-					NewRecord([]value.Primary{
-						value.NewString("1"),
-						value.NewString("str1"),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("2"),
-						value.NewString("str2"),
-					}),
-				},
-				FileInfo: &FileInfo{
-					Path:      "/path/to/table1.csv",
-					Delimiter: ',',
-				},
+	viewMap := GenerateViewMap([]*View{
+		{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "/path/to/table1.csv",
+				Delimiter: ',',
 			},
 		},
-	}
+	})
 
 	for _, v := range viewMapGetWithInternalIdTests {
 		view, err := viewMap.GetWithInternalId(context.Background(), v.Path, TestTx.Flags)
@@ -1145,118 +1060,8 @@ var viewMapSetTests = []struct {
 				Delimiter: ',',
 			},
 		},
-		Result: ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"/PATH/TO/TABLE1.CSV": {
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("str2"),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:      "/path/to/table1.csv",
-						Delimiter: ',',
-					},
-				},
-			},
-		},
-	},
-}
-
-func TestViewMap_Set(t *testing.T) {
-	viewMap := NewViewMap()
-
-	for _, v := range viewMapSetTests {
-		viewMap.Set(v.SetView)
-		if !reflect.DeepEqual(viewMap, v.Result) {
-			t.Errorf("%s: map = %v, want %v", v.Name, viewMap, v.Result)
-		}
-	}
-}
-
-var viewMapReplaceTests = []struct {
-	Name    string
-	SetView *View
-	Result  ViewMap
-	Error   string
-}{
-	{
-		Name: "ViewMap Replace",
-		SetView: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
-			RecordSet: []Record{
-				NewRecord([]value.Primary{
-					value.NewString("1"),
-					value.NewString("updated"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("2"),
-					value.NewString("updated"),
-				}),
-			},
-			FileInfo: &FileInfo{
-				Path:      "/path/to/table1.csv",
-				Delimiter: ',',
-			},
-		},
-		Result: ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"/PATH/TO/TABLE1.CSV": {
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("updated"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("updated"),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:      "/path/to/table1.csv",
-						Delimiter: ',',
-					},
-				},
-			},
-		},
-	},
-	{
-		Name: "ViewMap Replace Not Loaded Error",
-		SetView: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
-			RecordSet: []Record{
-				NewRecord([]value.Primary{
-					value.NewString("1"),
-					value.NewString("updated"),
-				}),
-				NewRecord([]value.Primary{
-					value.NewString("2"),
-					value.NewString("updated"),
-				}),
-			},
-			FileInfo: &FileInfo{
-				Path:      "/path/to/table2.csv",
-				Delimiter: ',',
-			},
-		},
-		Error: "table /path/to/table2.csv is not loaded",
-	},
-}
-
-func TestViewMap_Replace(t *testing.T) {
-	viewMap := ViewMap{
-		mtx: &sync.RWMutex{},
-		views: map[string]*View{
-			"/PATH/TO/TABLE1.CSV": {
+		Result: GenerateViewMap([]*View{
+			{
 				Header: NewHeader("table1", []string{"column1", "column2"}),
 				RecordSet: []Record{
 					NewRecord([]value.Primary{
@@ -1273,24 +1078,16 @@ func TestViewMap_Replace(t *testing.T) {
 					Delimiter: ',',
 				},
 			},
-		},
-	}
+		}),
+	},
+}
 
-	for _, v := range viewMapReplaceTests {
-		err := viewMap.Replace(v.SetView)
-		if err != nil {
-			if len(v.Error) < 1 {
-				t.Errorf("%s: unexpected error %q", v.Name, err)
-			} else if err.Error() != v.Error {
-				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
-			}
-			continue
-		}
-		if 0 < len(v.Error) {
-			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
-			continue
-		}
-		if !reflect.DeepEqual(viewMap, v.Result) {
+func TestViewMap_Set(t *testing.T) {
+	viewMap := NewViewMap()
+
+	for _, v := range viewMapSetTests {
+		viewMap.Set(v.SetView)
+		if !SyncMapEqual(viewMap, v.Result) {
 			t.Errorf("%s: map = %v, want %v", v.Name, viewMap, v.Result)
 		}
 	}
@@ -1305,64 +1102,8 @@ var viewMapDisposeTemporaryTable = []struct {
 	{
 		Name:  "ViewMap DisposeTemporaryTable",
 		Table: parser.Identifier{Literal: "/path/to/table1.csv"},
-		Result: ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"/PATH/TO/TABLE2.CSV": {
-					Header: NewHeader("table1", []string{"column1", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("str2"),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:      "/path/to/table2.csv",
-						Delimiter: ',',
-					},
-				},
-			},
-		},
-	},
-	{
-		Name:  "ViewMap DisposeTemporaryTable Not Temporary Table",
-		Table: parser.Identifier{Literal: "/path/to/table2.csv"},
-		Error: "view /path/to/table2.csv is undeclared",
-	},
-	{
-		Name:  "ViewMap DisposeTemporaryTable Undeclared Error",
-		Table: parser.Identifier{Literal: "/path/to/undef.csv"},
-		Error: "view /path/to/undef.csv is undeclared",
-	},
-}
-
-func TestViewMap_DisposeTemporaryTable(t *testing.T) {
-	viewMap := ViewMap{
-		mtx: &sync.RWMutex{},
-		views: map[string]*View{
-			"/PATH/TO/TABLE1.CSV": {
-				Header: NewHeader("table1", []string{"column1", "column2"}),
-				RecordSet: []Record{
-					NewRecord([]value.Primary{
-						value.NewString("1"),
-						value.NewString("str1"),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("2"),
-						value.NewString("str2"),
-					}),
-				},
-				FileInfo: &FileInfo{
-					Path:        "/path/to/table1.csv",
-					Delimiter:   ',',
-					IsTemporary: true,
-				},
-			},
-			"/PATH/TO/TABLE2.CSV": {
+		Result: GenerateViewMap([]*View{
+			{
 				Header: NewHeader("table1", []string{"column1", "column2"}),
 				RecordSet: []Record{
 					NewRecord([]value.Primary{
@@ -1379,8 +1120,58 @@ func TestViewMap_DisposeTemporaryTable(t *testing.T) {
 					Delimiter: ',',
 				},
 			},
+		}),
+	},
+	{
+		Name:  "ViewMap DisposeTemporaryTable Not Temporary Table",
+		Table: parser.Identifier{Literal: "/path/to/table2.csv"},
+		Error: "view /path/to/table2.csv is undeclared",
+	},
+	{
+		Name:  "ViewMap DisposeTemporaryTable Undeclared Error",
+		Table: parser.Identifier{Literal: "/path/to/undef.csv"},
+		Error: "view /path/to/undef.csv is undeclared",
+	},
+}
+
+func TestViewMap_DisposeTemporaryTable(t *testing.T) {
+	viewMap := GenerateViewMap([]*View{
+		{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:        "/path/to/table1.csv",
+				Delimiter:   ',',
+				IsTemporary: true,
+			},
 		},
-	}
+		{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "/path/to/table2.csv",
+				Delimiter: ',',
+			},
+		},
+	})
 
 	for _, v := range viewMapDisposeTemporaryTable {
 		err := viewMap.DisposeTemporaryTable(v.Table)
@@ -1396,58 +1187,55 @@ func TestViewMap_DisposeTemporaryTable(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(viewMap, v.Result) {
+		if !SyncMapEqual(viewMap, v.Result) {
 			t.Errorf("%s: map = %v, want %v", v.Name, viewMap, v.Result)
 		}
 	}
 }
 
 func TestViewMap_Clear(t *testing.T) {
-	viewMap := ViewMap{
-		mtx: &sync.RWMutex{},
-		views: map[string]*View{
-			"/PATH/TO/TABLE1.CSV": {
-				Header: NewHeader("table1", []string{"column1", "column2"}),
-				RecordSet: []Record{
-					NewRecord([]value.Primary{
-						value.NewString("1"),
-						value.NewString("str1"),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("2"),
-						value.NewString("str2"),
-					}),
-				},
-				FileInfo: &FileInfo{
-					Path:        "/path/to/table1.csv",
-					Delimiter:   ',',
-					IsTemporary: true,
-				},
+	viewMap := GenerateViewMap([]*View{
+		{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+				}),
 			},
-			"/PATH/TO/TABLE2.CSV": {
-				Header: NewHeader("table1", []string{"column1", "column2"}),
-				RecordSet: []Record{
-					NewRecord([]value.Primary{
-						value.NewString("1"),
-						value.NewString("str1"),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("2"),
-						value.NewString("str2"),
-					}),
-				},
-				FileInfo: &FileInfo{
-					Path:      "/path/to/table2.csv",
-					Delimiter: ',',
-				},
+			FileInfo: &FileInfo{
+				Path:        "/path/to/table1.csv",
+				Delimiter:   ',',
+				IsTemporary: true,
 			},
 		},
-	}
+		{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "/path/to/table2.csv",
+				Delimiter: ',',
+			},
+		},
+	})
 
 	expect := NewViewMap()
 
 	_ = viewMap.Clean(TestTx.FileContainer)
-	if !reflect.DeepEqual(viewMap, expect) {
+	if !SyncMapEqual(viewMap, expect) {
 		t.Errorf("result = %v, want %v", viewMap, expect)
 	}
 }
@@ -1455,15 +1243,13 @@ func TestViewMap_Clear(t *testing.T) {
 var viewMapGetWithInternalIdBench = generateViewMapGetWithInternalIdBenchViewMap()
 
 func generateViewMapGetWithInternalIdBenchViewMap() ViewMap {
-	m := ViewMap{
-		mtx: &sync.RWMutex{},
-		views: map[string]*View{
-			"BENCH_VIEW": {
-				Header: NewHeader("bench_view", []string{"c1", "c2", "c3", "c4"}),
-			},
+	m := GenerateViewMap([]*View{{
+		Header: NewHeader("bench_view", []string{"c1", "c2", "c3", "c4"}),
+		FileInfo: &FileInfo{
+			Path: "bench_view",
 		},
-	}
-	view := m.views["BENCH_VIEW"]
+	}})
+	view, _ := m.Load("bench_view")
 	view.RecordSet = make(RecordSet, 10000)
 	for i := 0; i < 10000; i++ {
 		view.RecordSet[i] = NewRecord([]value.Primary{

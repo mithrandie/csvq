@@ -115,7 +115,7 @@ func TestVariableScopes_Substitute(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(list, v.List) {
+		if !SyncMapListEqual(VariableScopesToSyncMapList(list), VariableScopesToSyncMapList(v.List)) {
 			t.Errorf("%s: list = %v, want %v", v.Name, list, v.List)
 		}
 		if !reflect.DeepEqual(result, v.Result) {
@@ -171,7 +171,7 @@ func TestVariableScopes_Dispose(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(list, v.List) {
+		if !SyncMapListEqual(VariableScopesToSyncMapList(list), VariableScopesToSyncMapList(v.List)) {
 			t.Errorf("%s: list = %v, want %v", v.Name, list, v.List)
 		}
 	}
@@ -250,7 +250,7 @@ var variableScopesEqualTests = []struct {
 
 func TestVariableScopes_Equal(t *testing.T) {
 	for _, v := range variableScopesEqualTests {
-		result := reflect.DeepEqual(v.List1, v.List2)
+		result := SyncMapListEqual(VariableScopesToSyncMapList(v.List1), VariableScopesToSyncMapList(v.List2))
 		if result != v.Expect {
 			t.Errorf("%s: result = %t, want %t", v.Name, result, v.Expect)
 		}
@@ -341,7 +341,7 @@ func TestVariableMap_Declare(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(vars, v.Result) {
+		if !SyncMapEqual(vars, v.Result) {
 			t.Errorf("%s: result = %v, want %v", v.Name, vars, v.Result)
 		}
 	}
@@ -399,7 +399,7 @@ func TestVariableMap_Substitute(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(vars, v.Result) {
+		if !SyncMapEqual(vars, v.Result) {
 			t.Errorf("%s: result = %v, want %v", v.Name, vars, v.Result)
 		}
 	}
@@ -437,7 +437,7 @@ func TestVariableMap_Dispose(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(vars, v.Result) {
+		if !SyncMapEqual(vars, v.Result) {
 			t.Errorf("%s: result = %v, want %v", v.Name, vars, v.Result)
 		}
 	}

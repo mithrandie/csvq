@@ -80,7 +80,7 @@ func TestReadlineListener_OnChange(t *testing.T) {
 
 func TestCompleter_Update(t *testing.T) {
 	defer func() {
-		TestTx.PreparedStatements = make(PreparedStatementMap)
+		TestTx.PreparedStatements = NewPreparedStatementMap()
 	}()
 
 	filter := NewFilter(TestTx)
@@ -170,7 +170,7 @@ func testCompleter(t *testing.T, f func(line string, origLine string, index int)
 	defer func() {
 		_ = os.Chdir(wd)
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-		TestTx.PreparedStatements = make(PreparedStatementMap)
+		TestTx.PreparedStatements = NewPreparedStatementMap()
 		initFlag(TestTx.Flags)
 	}()
 

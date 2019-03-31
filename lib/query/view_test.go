@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -242,12 +241,11 @@ var viewLoadTests = []struct {
 			Filter: &Filter{
 				variables: []VariableMap{NewVariableMap()},
 				tempViews: []ViewMap{
-					{
-						mtx: &sync.RWMutex{},
-						views: map[string]*View{
-							"STDIN": nil,
+					GenerateViewMap([]*View{
+						{
+							FileInfo: &FileInfo{Path: "STDIN"},
 						},
-					},
+					}),
 				},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
@@ -287,12 +285,11 @@ var viewLoadTests = []struct {
 			Filter: &Filter{
 				variables: []VariableMap{NewVariableMap()},
 				tempViews: []ViewMap{
-					{
-						mtx: &sync.RWMutex{},
-						views: map[string]*View{
-							"STDIN": nil,
+					GenerateViewMap([]*View{
+						{
+							FileInfo: &FileInfo{Path: "STDIN"},
 						},
-					},
+					}),
 				},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
@@ -335,12 +332,11 @@ var viewLoadTests = []struct {
 			Filter: &Filter{
 				variables: []VariableMap{NewVariableMap()},
 				tempViews: []ViewMap{
-					{
-						mtx: &sync.RWMutex{},
-						views: map[string]*View{
-							"STDIN": nil,
+					GenerateViewMap([]*View{
+						{
+							FileInfo: &FileInfo{Path: "STDIN"},
 						},
-					},
+					}),
 				},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
@@ -388,12 +384,11 @@ var viewLoadTests = []struct {
 			Filter: &Filter{
 				variables: []VariableMap{NewVariableMap()},
 				tempViews: []ViewMap{
-					{
-						mtx: &sync.RWMutex{},
-						views: map[string]*View{
-							"STDIN": nil,
+					GenerateViewMap([]*View{
+						{
+							FileInfo: &FileInfo{Path: "STDIN"},
 						},
-					},
+					}),
 				},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
@@ -441,12 +436,11 @@ var viewLoadTests = []struct {
 			Filter: &Filter{
 				variables: []VariableMap{NewVariableMap()},
 				tempViews: []ViewMap{
-					{
-						mtx: &sync.RWMutex{},
-						views: map[string]*View{
-							"STDIN": nil,
+					GenerateViewMap([]*View{
+						{
+							FileInfo: &FileInfo{Path: "STDIN"},
 						},
-					},
+					}),
 				},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
@@ -609,12 +603,11 @@ var viewLoadTests = []struct {
 			Filter: &Filter{
 				variables: []VariableMap{NewVariableMap()},
 				tempViews: []ViewMap{
-					{
-						mtx: &sync.RWMutex{},
-						views: map[string]*View{
-							"STDIN": nil,
+					GenerateViewMap([]*View{
+						{
+							FileInfo: &FileInfo{Path: "STDIN"},
 						},
-					},
+					}),
 				},
 				cursors:      []CursorMap{{}},
 				inlineTables: InlineTableNodes{{}},
@@ -2693,14 +2686,8 @@ func TestView_Load(t *testing.T) {
 			t.Errorf("%s: alias list = %q, want %q", v.Name, view.Filter.aliases, v.Result.Filter.aliases)
 		}
 		for i, tviews := range v.Result.Filter.tempViews {
-			resultKeys := make([]string, len(tviews.views))
-			for key := range tviews.views {
-				resultKeys = append(resultKeys, key)
-			}
-			viewKeys := make([]string, len(view.Filter.tempViews[i].views))
-			for key := range view.Filter.tempViews[i].views {
-				viewKeys = append(viewKeys, key)
-			}
+			resultKeys := tviews.Keys()
+			viewKeys := view.Filter.tempViews[i].Keys()
 			if !reflect.DeepEqual(resultKeys, viewKeys) {
 				t.Errorf("%s: temp view list = %v, want %v", v.Name, view.Filter.tempViews, v.Result.Filter.tempViews)
 			}

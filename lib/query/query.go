@@ -287,6 +287,10 @@ func Insert(ctx context.Context, parentFilter *Filter, query parser.InsertQuery)
 			query.Table,
 		},
 	}
+
+	filter.tx.operationMutex.Lock()
+	defer filter.tx.operationMutex.Unlock()
+
 	view := NewView(parentFilter.tx)
 	err := view.Load(ctx, filter, fromClause, true, false)
 	if err != nil {
@@ -316,7 +320,7 @@ func Insert(ctx context.Context, parentFilter *Filter, query parser.InsertQuery)
 	if view.FileInfo.IsTemporary {
 		filter.tempViews.Replace(view)
 	} else {
-		err = filter.tx.cachedViews.Replace(view)
+		filter.tx.cachedViews.Set(view)
 	}
 
 	return view.FileInfo, insertRecords, err
@@ -334,6 +338,9 @@ func Update(ctx context.Context, parentFilter *Filter, query parser.UpdateQuery)
 	if query.FromClause == nil {
 		query.FromClause = parser.FromClause{Tables: query.Tables}
 	}
+
+	filter.tx.operationMutex.Lock()
+	defer filter.tx.operationMutex.Unlock()
 
 	view := NewView(parentFilter.tx)
 	err := view.Load(ctx, filter, query.FromClause.(parser.FromClause), true, true)
@@ -428,9 +435,7 @@ func Update(ctx context.Context, parentFilter *Filter, query parser.UpdateQuery)
 		if v.FileInfo.IsTemporary {
 			filter.tempViews.Replace(v)
 		} else {
-			if err = filter.tx.cachedViews.Replace(v); err != nil {
-				return nil, nil, err
-			}
+			filter.tx.cachedViews.Set(v)
 		}
 
 		fileInfos = append(fileInfos, v.FileInfo)
@@ -462,6 +467,9 @@ func Delete(ctx context.Context, parentFilter *Filter, query parser.DeleteQuery)
 			return nil, nil, NewDeleteTableNotSpecifiedError(query)
 		}
 	}
+
+	filter.tx.operationMutex.Lock()
+	defer filter.tx.operationMutex.Unlock()
 
 	view := NewView(parentFilter.tx)
 	err := view.Load(ctx, filter, query.FromClause, true, true)
@@ -526,9 +534,7 @@ func Delete(ctx context.Context, parentFilter *Filter, query parser.DeleteQuery)
 		if v.FileInfo.IsTemporary {
 			filter.tempViews.Replace(v)
 		} else {
-			if err = filter.tx.cachedViews.Replace(v); err != nil {
-				return nil, nil, err
-			}
+			filter.tx.cachedViews.Set(v)
 		}
 
 		fileInfos = append(fileInfos, v.FileInfo)
@@ -605,6 +611,9 @@ func AddColumns(ctx context.Context, parentFilter *Filter, query parser.AddColum
 			Position: parser.Token{Token: parser.LAST, Literal: parser.TokenLiteral(parser.LAST)},
 		}
 	}
+
+	filter.tx.operationMutex.Lock()
+	defer filter.tx.operationMutex.Unlock()
 
 	view := NewView(parentFilter.tx)
 	err := view.LoadFromTableIdentifier(ctx, filter, query.Table, true, false)
@@ -702,7 +711,7 @@ func AddColumns(ctx context.Context, parentFilter *Filter, query parser.AddColum
 	if view.FileInfo.IsTemporary {
 		filter.tempViews.Replace(view)
 	} else {
-		err = filter.tx.cachedViews.Replace(view)
+		filter.tx.cachedViews.Set(view)
 	}
 
 	return view.FileInfo, len(fields), err
@@ -710,6 +719,9 @@ func AddColumns(ctx context.Context, parentFilter *Filter, query parser.AddColum
 
 func DropColumns(ctx context.Context, parentFilter *Filter, query parser.DropColumns) (*FileInfo, int, error) {
 	filter := parentFilter.CreateNode()
+
+	filter.tx.operationMutex.Lock()
+	defer filter.tx.operationMutex.Unlock()
 
 	view := NewView(parentFilter.tx)
 	err := view.LoadFromTableIdentifier(ctx, filter, query.Table, true, false)
@@ -740,7 +752,7 @@ func DropColumns(ctx context.Context, parentFilter *Filter, query parser.DropCol
 	if view.FileInfo.IsTemporary {
 		filter.tempViews.Replace(view)
 	} else {
-		err = filter.tx.cachedViews.Replace(view)
+		filter.tx.cachedViews.Set(view)
 	}
 
 	return view.FileInfo, len(dropIndices), err
@@ -749,6 +761,9 @@ func DropColumns(ctx context.Context, parentFilter *Filter, query parser.DropCol
 
 func RenameColumn(ctx context.Context, parentFilter *Filter, query parser.RenameColumn) (*FileInfo, error) {
 	filter := parentFilter.CreateNode()
+
+	filter.tx.operationMutex.Lock()
+	defer filter.tx.operationMutex.Unlock()
 
 	view := NewView(parentFilter.tx)
 	err := view.LoadFromTableIdentifier(ctx, filter, query.Table, true, false)
@@ -772,7 +787,7 @@ func RenameColumn(ctx context.Context, parentFilter *Filter, query parser.Rename
 	if view.FileInfo.IsTemporary {
 		filter.tempViews.Replace(view)
 	} else {
-		err = filter.tx.cachedViews.Replace(view)
+		filter.tx.cachedViews.Set(view)
 	}
 
 	return view.FileInfo, err
@@ -781,6 +796,9 @@ func RenameColumn(ctx context.Context, parentFilter *Filter, query parser.Rename
 func SetTableAttribute(ctx context.Context, parentFilter *Filter, query parser.SetTableAttribute) (*FileInfo, string, error) {
 	var log string
 	filter := parentFilter.CreateNode()
+
+	filter.tx.operationMutex.Lock()
+	defer filter.tx.operationMutex.Unlock()
 
 	view := NewView(parentFilter.tx)
 	err := view.LoadFromTableIdentifier(ctx, filter, query.Table, true, false)
@@ -863,6 +881,6 @@ func SetTableAttribute(ctx context.Context, parentFilter *Filter, query parser.S
 	w.Title2Effect = cmd.IdentifierEffect
 	log = "\n" + w.String() + "\n"
 
-	err = filter.tx.cachedViews.Replace(view)
+	filter.tx.cachedViews.Set(view)
 	return view.FileInfo, log, err
 }

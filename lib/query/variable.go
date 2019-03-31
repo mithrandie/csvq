@@ -2,8 +2,6 @@ package query
 
 import (
 	"context"
-	"sort"
-	"sync"
 
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
@@ -60,83 +58,77 @@ func (list VariableScopes) Dispose(expr parser.Variable) error {
 func (list VariableScopes) All() VariableMap {
 	all := NewVariableMap()
 	for i := range list {
-		for k, v := range list[i].variables {
-			if _, ok := all.variables[k]; !ok {
-				all.variables[k] = v
+		list[i].Range(func(key, val interface{}) bool {
+			if !all.Exists(key.(string)) {
+				all.Store(key.(string), val.(value.Primary))
 			}
-		}
+			return true
+		})
 	}
 	return all
 }
 
 type VariableMap struct {
-	mtx       *sync.RWMutex
-	variables map[string]value.Primary
+	*SyncMap
 }
 
 func NewVariableMap() VariableMap {
 	return VariableMap{
-		mtx:       &sync.RWMutex{},
-		variables: make(map[string]value.Primary),
+		NewSyncMap(),
 	}
 }
 
-func (m *VariableMap) Add(variable parser.Variable, value value.Primary) error {
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
+func (m VariableMap) Store(name string, value value.Primary) {
+	m.store(name, value)
+}
 
-	if _, ok := m.variables[variable.Name]; ok {
+func (m VariableMap) Load(name string) (value.Primary, bool) {
+	if v, ok := m.load(name); ok {
+		return v.(value.Primary), true
+	}
+	return nil, false
+}
+
+func (m VariableMap) Delete(name string) {
+	m.delete(name)
+}
+
+func (m VariableMap) Exists(name string) bool {
+	return m.exists(name)
+}
+
+func (m VariableMap) Add(variable parser.Variable, value value.Primary) error {
+	if m.Exists(variable.Name) {
 		return NewVariableRedeclaredError(variable)
 	}
-	m.variables[variable.Name] = value
+	m.Store(variable.Name, value)
 	return nil
 }
 
-func (m *VariableMap) Set(variable parser.Variable, value value.Primary) error {
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
-
-	if _, ok := m.variables[variable.Name]; !ok {
+func (m VariableMap) Set(variable parser.Variable, value value.Primary) error {
+	if !m.Exists(variable.Name) {
 		return NewUndeclaredVariableError(variable)
 	}
-	m.variables[variable.Name] = value
+	m.Store(variable.Name, value)
 	return nil
 }
 
-func (m *VariableMap) Get(variable parser.Variable) (value.Primary, error) {
-	m.mtx.RLock()
-	defer m.mtx.RUnlock()
-
-	if v, ok := m.variables[variable.Name]; ok {
+func (m VariableMap) Get(variable parser.Variable) (value.Primary, error) {
+	if v, ok := m.Load(variable.Name); ok {
 		return v, nil
 	}
 	return nil, NewUndeclaredVariableError(variable)
 }
 
-func (m *VariableMap) SortedKeys() []string {
-	m.mtx.RLock()
-	defer m.mtx.RUnlock()
-
-	keys := make([]string, 0, len(m.variables))
-	for k := range m.variables {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-func (m *VariableMap) Dispose(variable parser.Variable) error {
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
-
-	if _, ok := m.variables[variable.Name]; !ok {
+func (m VariableMap) Dispose(variable parser.Variable) error {
+	if !m.Exists(variable.Name) {
 		return NewUndeclaredVariableError(variable)
 	}
-	delete(m.variables, variable.Name)
+	m.Delete(variable.Name)
 	return nil
 }
 
-func (m *VariableMap) Declare(ctx context.Context, filter *Filter, declaration parser.VariableDeclaration) error {
+func (m VariableMap) Declare(ctx context.Context, filter *Filter, declaration parser.VariableDeclaration) error {
 	for _, assignment := range declaration.Assignments {
 		var val value.Primary
 		var err error
@@ -156,7 +148,7 @@ func (m *VariableMap) Declare(ctx context.Context, filter *Filter, declaration p
 	return nil
 }
 
-func (m *VariableMap) Substitute(ctx context.Context, filter *Filter, substitution parser.VariableSubstitution) (value.Primary, error) {
+func (m VariableMap) Substitute(ctx context.Context, filter *Filter, substitution parser.VariableSubstitution) (value.Primary, error) {
 	val, err := filter.Evaluate(ctx, substitution.Value)
 	if err != nil {
 		return nil, err
@@ -164,7 +156,7 @@ func (m *VariableMap) Substitute(ctx context.Context, filter *Filter, substituti
 	return m.SubstituteDirectly(substitution.Variable, val)
 }
 
-func (m *VariableMap) SubstituteDirectly(variable parser.Variable, value value.Primary) (value.Primary, error) {
+func (m VariableMap) SubstituteDirectly(variable parser.Variable, value value.Primary) (value.Primary, error) {
 	err := m.Set(variable, value)
 	return value, err
 }

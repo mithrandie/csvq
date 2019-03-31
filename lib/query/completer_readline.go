@@ -192,10 +192,11 @@ func (c *Completer) Update() {
 }
 
 func (c *Completer) updateStatements() {
-	c.statementList = make([]string, 0, len(c.filter.tx.PreparedStatements))
-	for k := range c.filter.tx.PreparedStatements {
-		c.statementList = append(c.statementList, c.filter.tx.PreparedStatements[k].Name)
-	}
+	c.statementList = make([]string, 0, 10)
+	c.filter.tx.PreparedStatements.Range(func(key, value interface{}) bool {
+		c.statementList = append(c.statementList, value.(*PreparedStatement).Name)
+		return true
+	})
 	sort.Strings(c.statementList)
 }
 
@@ -204,7 +205,9 @@ func (c *Completer) updateViews() {
 	viewKeys := views.SortedKeys()
 	c.viewList = make([]string, 0, len(viewKeys))
 	for _, key := range viewKeys {
-		c.viewList = append(c.viewList, views.views[key].FileInfo.Path)
+		if view, ok := views.Load(key); ok {
+			c.viewList = append(c.viewList, view.FileInfo.Path)
+		}
 	}
 }
 
@@ -610,7 +613,10 @@ func (c *Completer) FunctionArgs(line string, origLine string, index int) readli
 					return nil, nil, false
 				}
 			}
-			customList.Sort()
+
+			if customList != nil {
+				customList.Sort()
+			}
 			return keywords, customList, true
 		},
 	)
@@ -913,8 +919,8 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 					customList = append(customList, c.candidateList([]string{
 						"UPDATE",
 					}, false)...)
+					customList.Sort()
 				}
-				customList.Sort()
 				return nil, customList, true
 			case parser.OFFSET:
 				if i < c.lastIdx {
@@ -1008,7 +1014,10 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 					customList = append(customList, c.aggregateFunctionCandidateList(line)...)
 					customList = append(customList, c.analyticFunctionCandidateList(line)...)
 				}
-				customList.Sort()
+
+				if customList != nil {
+					customList.Sort()
+				}
 				return keywords, customList, true
 			case parser.ALL:
 				if i == c.lastIdx && 0 <= c.lastIdx-1 {
@@ -1777,12 +1786,14 @@ func (c *Completer) SearchAllTables(line string, origLine string, index int) rea
 	items := make([]string, 0, len(tableKeys)+len(files)+len(c.viewList))
 	tablePath := make(map[string]bool)
 	for _, k := range tableKeys {
-		lpath := c.filter.tx.cachedViews.views[k].FileInfo.Path
-		tablePath[lpath] = true
-		if filepath.Dir(lpath) == defaultDir {
-			items = append(items, filepath.Base(lpath))
-		} else {
-			items = append(items, lpath)
+		if view, ok := c.filter.tx.cachedViews.Load(k); ok {
+			lpath := view.FileInfo.Path
+			tablePath[lpath] = true
+			if filepath.Dir(lpath) == defaultDir {
+				items = append(items, filepath.Base(lpath))
+			} else {
+				items = append(items, lpath)
+			}
 		}
 	}
 
@@ -2085,23 +2096,25 @@ func (c *Completer) ListFiles(path string, includeExt []string, repository strin
 
 func (c *Completer) AllColumnList() []string {
 	m := make(map[string]bool)
-	for _, view := range c.filter.tempViews[0].views {
-		col := c.columnList(view)
+	c.filter.tempViews[0].Range(func(key, value interface{}) bool {
+		col := c.columnList(value.(*View))
 		for _, s := range col {
 			if _, ok := m[s]; !ok {
 				m[s] = true
 			}
 		}
-	}
+		return true
+	})
 
-	for _, view := range c.filter.tx.cachedViews.views {
-		col := c.columnList(view)
+	c.filter.tx.cachedViews.Range(func(key, value interface{}) bool {
+		col := c.columnList(value.(*View))
 		for _, s := range col {
 			if _, ok := m[s]; !ok {
 				m[s] = true
 			}
 		}
-	}
+		return true
+	})
 
 	list := make([]string, 0, len(m))
 	for k := range m {
@@ -2116,21 +2129,21 @@ func (c *Completer) ColumnList(tableName string, repository string) []string {
 		return list
 	}
 
-	if view, ok := c.filter.tempViews[0].views[strings.ToUpper(tableName)]; ok {
+	if view, ok := c.filter.tempViews[0].Load(tableName); ok {
 		list := c.columnList(view)
 		c.tableColumns[tableName] = list
 		return list
 	}
 
 	if fpath, err := CreateFilePath(parser.Identifier{Literal: tableName}, repository); err == nil {
-		if view, ok := c.filter.tx.cachedViews.views[strings.ToUpper(fpath)]; ok {
+		if view, ok := c.filter.tx.cachedViews.Load(fpath); ok {
 			list := c.columnList(view)
 			c.tableColumns[tableName] = list
 			return list
 		}
 	}
 	if fpath, err := SearchFilePathFromAllTypes(parser.Identifier{Literal: tableName}, repository); err == nil {
-		if view, ok := c.filter.tx.cachedViews.views[strings.ToUpper(fpath)]; ok {
+		if view, ok := c.filter.tx.cachedViews.Load(fpath); ok {
 			list := c.columnList(view)
 			c.tableColumns[tableName] = list
 			return list

@@ -5,8 +5,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
-	"sync"
 	"testing"
 	"time"
 
@@ -19,6 +19,55 @@ import (
 	"github.com/mithrandie/go-text"
 	"github.com/mithrandie/go-text/json"
 )
+
+type SyncMapStruct interface {
+	SortedKeys() []string
+	load(string) (interface{}, bool)
+}
+
+func SyncMapEqual(m1 SyncMapStruct, m2 SyncMapStruct) bool {
+	mkeys := m1.SortedKeys()
+	vlist := make([]interface{}, 0, len(mkeys))
+	for _, key := range mkeys {
+		v, _ := m1.load(key)
+		vlist = append(vlist, v)
+	}
+
+	m2keys := m2.SortedKeys()
+	vlist2 := make([]interface{}, 0, len(m2keys))
+	for _, key := range m2keys {
+		v, _ := m2.load(key)
+		vlist2 = append(vlist2, v)
+	}
+	return reflect.DeepEqual(vlist, vlist2)
+}
+
+func SyncMapListEqual(l1 []SyncMapStruct, l2 []SyncMapStruct) bool {
+	if len(l1) != len(l2) {
+		return false
+	}
+	for i := 0; i < len(l1); i++ {
+		if !SyncMapEqual(l1[i], l2[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+func TempViewScopesToSyncMapList(scopes TemporaryViewScopes) []SyncMapStruct {
+	l := make([]SyncMapStruct, 0, len(scopes))
+	for _, v := range scopes {
+		l = append(l, v)
+	}
+	return l
+}
+func VariableScopesToSyncMapList(scopes VariableScopes) []SyncMapStruct {
+	l := make([]SyncMapStruct, 0, len(scopes))
+	for _, v := range scopes {
+		l = append(l, v)
+	}
+	return l
+}
 
 func GetTestFilePath(filename string) string {
 	return filepath.Join(TestDir, filename)
@@ -192,10 +241,27 @@ func copyfile(dstfile string, srcfile string) error {
 }
 
 func GenerateVariableMap(values map[string]value.Primary) VariableMap {
-	return VariableMap{
-		mtx:       &sync.RWMutex{},
-		variables: values,
+	m := NewVariableMap()
+	for k, v := range values {
+		m.Store(k, v)
 	}
+	return m
+}
+
+func GenerateViewMap(values []*View) ViewMap {
+	m := NewViewMap()
+	for _, v := range values {
+		m.Store(v.FileInfo.Path, v)
+	}
+	return m
+}
+
+func GenerateStatementMap(values []*PreparedStatement) PreparedStatementMap {
+	m := NewPreparedStatementMap()
+	for _, v := range values {
+		m.Store(v.Name, v)
+	}
+	return m
 }
 
 func GenerateBenchGroupedViewFilter() Filter {

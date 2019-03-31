@@ -40,43 +40,32 @@ func (p Partition) Reverse() {
 type Partitions map[string]Partition
 
 func Analyze(ctx context.Context, view *View, fn parser.AnalyticFunction, partitionIndices []int) error {
-	const (
-		Analytic = iota
-		Aggregate
-		UserDefined
-	)
-
 	var anfn AnalyticFunction
 	var aggfn AggregateFunction
 	var udfn *UserDefinedFunction
 
-	fnType := -1
 	var err error
 
 	uname := strings.ToUpper(fn.Name)
 	if f, ok := AnalyticFunctions[uname]; ok {
 		anfn = f
-		fnType = Analytic
 	} else if f, ok := AggregateFunctions[uname]; ok {
 		aggfn = f
-		fnType = Aggregate
 	} else {
 		if udfn, err = view.Filter.functions.Get(fn, uname); err != nil || !udfn.IsAggregate {
 			return NewFunctionNotExistError(fn, fn.Name)
 		}
-		fnType = UserDefined
 	}
 
-	switch fnType {
-	case Analytic:
+	if anfn != nil {
 		if err := anfn.CheckArgsLen(fn); err != nil {
 			return err
 		}
-	case Aggregate:
+	} else if aggfn != nil {
 		if len(fn.Args) != 1 {
 			return NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 		}
-	case UserDefined:
+	} else {
 		if err := udfn.CheckArgsLen(fn, fn.Name, len(fn.Args)-1); err != nil {
 			return err
 		}
@@ -138,7 +127,7 @@ func Analyze(ctx context.Context, view *View, fn parser.AnalyticFunction, partit
 					break AnalyzeLoop
 				}
 
-				if fnType == Analytic {
+				if anfn != nil {
 					list, e := anfn.Execute(ctx, filter, partitions[partitionMapKeys[i]], fn)
 					if e != nil {
 						gm.SetError(e)
@@ -154,7 +143,7 @@ func Analyze(ctx context.Context, view *View, fn parser.AnalyticFunction, partit
 						}
 					}
 
-					if fnType == Aggregate {
+					if aggfn != nil {
 						partition := partitions[partitionMapKeys[i]]
 						frameSet := WindowFrameSet(partition, fn.AnalyticClause)
 

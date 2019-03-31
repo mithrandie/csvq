@@ -1535,86 +1535,83 @@ var showObjectsTests = []struct {
 	WriteDelimiterPositions fixedlen.DelimiterPositions
 	WriteAsSingleLine       bool
 	ViewCache               ViewMap
-	UncommittedViews        *UncommittedViews
+	UncommittedViews        UncommittedViews
 	Expect                  string
 	Error                   string
 }{
 	{
 		Name: "ShowObjects Tables",
 		Expr: parser.ShowObjects{Type: parser.Identifier{Literal: "tables"}},
-		ViewCache: ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"TABLE1.CSV": {
-					Header: NewHeader("table1", []string{"col1", "col2"}),
-					FileInfo: &FileInfo{
-						Path:      "table1.csv",
-						Delimiter: '\t',
-						Format:    cmd.CSV,
-						Encoding:  text.SJIS,
-						LineBreak: text.CRLF,
-						NoHeader:  true,
-					},
-				},
-				"TABLE1.TSV": {
-					Header: NewHeader("table1", []string{"col1", "col2"}),
-					FileInfo: &FileInfo{
-						Path:      "table1.tsv",
-						Delimiter: '\t',
-						Format:    cmd.TSV,
-						Encoding:  text.UTF8,
-						LineBreak: text.LF,
-						NoHeader:  false,
-					},
-				},
-				"TABLE1.JSON": {
-					Header: NewHeader("table1", []string{"col1", "col2"}),
-					FileInfo: &FileInfo{
-						Path:        "table1.json",
-						JsonQuery:   "{}",
-						Format:      cmd.JSON,
-						Encoding:    text.UTF8,
-						LineBreak:   text.LF,
-						PrettyPrint: false,
-					},
-				},
-				"TABLE2.JSON": {
-					Header: NewHeader("table2", []string{"col1", "col2"}),
-					FileInfo: &FileInfo{
-						Path:        "table2.json",
-						JsonQuery:   "",
-						Format:      cmd.JSON,
-						Encoding:    text.UTF8,
-						LineBreak:   text.LF,
-						JsonEscape:  json.HexDigits,
-						PrettyPrint: false,
-					},
-				},
-				"TABLE1.TXT": {
-					Header: NewHeader("table1", []string{"col1", "col2"}),
-					FileInfo: &FileInfo{
-						Path:               "table1.txt",
-						DelimiterPositions: []int{3, 12},
-						Format:             cmd.FIXED,
-						Encoding:           text.UTF8,
-						LineBreak:          text.LF,
-						NoHeader:           false,
-					},
-				},
-				"TABLE2.TXT": {
-					Header: NewHeader("table2", []string{"col1", "col2"}),
-					FileInfo: &FileInfo{
-						Path:               "table2.txt",
-						DelimiterPositions: []int{3, 12},
-						SingleLine:         true,
-						Format:             cmd.FIXED,
-						Encoding:           text.UTF8,
-						LineBreak:          text.LF,
-						NoHeader:           false,
-					},
+		ViewCache: GenerateViewMap([]*View{
+			{
+				Header: NewHeader("table1", []string{"col1", "col2"}),
+				FileInfo: &FileInfo{
+					Path:      "table1.csv",
+					Delimiter: '\t',
+					Format:    cmd.CSV,
+					Encoding:  text.SJIS,
+					LineBreak: text.CRLF,
+					NoHeader:  true,
 				},
 			},
-		},
+			{
+				Header: NewHeader("table1", []string{"col1", "col2"}),
+				FileInfo: &FileInfo{
+					Path:      "table1.tsv",
+					Delimiter: '\t',
+					Format:    cmd.TSV,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+					NoHeader:  false,
+				},
+			},
+			{
+				Header: NewHeader("table1", []string{"col1", "col2"}),
+				FileInfo: &FileInfo{
+					Path:        "table1.json",
+					JsonQuery:   "{}",
+					Format:      cmd.JSON,
+					Encoding:    text.UTF8,
+					LineBreak:   text.LF,
+					PrettyPrint: false,
+				},
+			},
+			{
+				Header: NewHeader("table2", []string{"col1", "col2"}),
+				FileInfo: &FileInfo{
+					Path:        "table2.json",
+					JsonQuery:   "",
+					Format:      cmd.JSON,
+					Encoding:    text.UTF8,
+					LineBreak:   text.LF,
+					JsonEscape:  json.HexDigits,
+					PrettyPrint: false,
+				},
+			},
+			{
+				Header: NewHeader("table1", []string{"col1", "col2"}),
+				FileInfo: &FileInfo{
+					Path:               "table1.txt",
+					DelimiterPositions: []int{3, 12},
+					Format:             cmd.FIXED,
+					Encoding:           text.UTF8,
+					LineBreak:          text.LF,
+					NoHeader:           false,
+				},
+			},
+			{
+				Header: NewHeader("table2", []string{"col1", "col2"}),
+				FileInfo: &FileInfo{
+					Path:               "table2.txt",
+					DelimiterPositions: []int{3, 12},
+					SingleLine:         true,
+					Format:             cmd.FIXED,
+					Encoding:           text.UTF8,
+					LineBreak:          text.LF,
+					NoHeader:           false,
+				},
+			},
+		}),
 		Expect: "\n" +
 			"                       Loaded Tables\n" +
 			"-----------------------------------------------------------\n" +
@@ -1647,79 +1644,76 @@ var showObjectsTests = []struct {
 	{
 		Name: "ShowObjects Tables Uncommitted",
 		Expr: parser.ShowObjects{Type: parser.Identifier{Literal: "tables"}},
-		ViewCache: ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"TABLE1.CSV": {
-					Header: NewHeader("table1", []string{"col1", "col2"}),
-					FileInfo: &FileInfo{
-						Path:      "table1.csv",
-						Delimiter: '\t',
-						Format:    cmd.CSV,
-						Encoding:  text.SJIS,
-						LineBreak: text.CRLF,
-						NoHeader:  true,
-					},
-				},
-				"TABLE1.TSV": {
-					Header: NewHeader("table1", []string{"col1", "col2"}),
-					FileInfo: &FileInfo{
-						Path:      "table1.tsv",
-						Delimiter: '\t',
-						Format:    cmd.TSV,
-						Encoding:  text.UTF8,
-						LineBreak: text.LF,
-						NoHeader:  false,
-					},
-				},
-				"TABLE1.JSON": {
-					Header: NewHeader("table1", []string{"col1", "col2"}),
-					FileInfo: &FileInfo{
-						Path:        "table1.json",
-						JsonQuery:   "{}",
-						Format:      cmd.JSON,
-						Encoding:    text.UTF8,
-						LineBreak:   text.LF,
-						PrettyPrint: false,
-					},
-				},
-				"TABLE2.JSON": {
-					Header: NewHeader("table2", []string{"col1", "col2"}),
-					FileInfo: &FileInfo{
-						Path:        "table2.json",
-						JsonQuery:   "",
-						Format:      cmd.JSON,
-						Encoding:    text.UTF8,
-						LineBreak:   text.LF,
-						PrettyPrint: false,
-					},
-				},
-				"TABLE1.TXT": {
-					Header: NewHeader("table1", []string{"col1", "col2"}),
-					FileInfo: &FileInfo{
-						Path:               "table1.txt",
-						DelimiterPositions: []int{3, 12},
-						Format:             cmd.FIXED,
-						Encoding:           text.UTF8,
-						LineBreak:          text.LF,
-						NoHeader:           false,
-					},
-				},
-				"TABLE2.TXT": {
-					Header: NewHeader("table2", []string{"col1", "col2"}),
-					FileInfo: &FileInfo{
-						Path:               "table2.txt",
-						DelimiterPositions: []int{3, 12},
-						Format:             cmd.FIXED,
-						Encoding:           text.UTF8,
-						LineBreak:          text.LF,
-						NoHeader:           false,
-						SingleLine:         true,
-					},
+		ViewCache: GenerateViewMap([]*View{
+			{
+				Header: NewHeader("table1", []string{"col1", "col2"}),
+				FileInfo: &FileInfo{
+					Path:      "table1.csv",
+					Delimiter: '\t',
+					Format:    cmd.CSV,
+					Encoding:  text.SJIS,
+					LineBreak: text.CRLF,
+					NoHeader:  true,
 				},
 			},
-		},
-		UncommittedViews: &UncommittedViews{
+			{
+				Header: NewHeader("table1", []string{"col1", "col2"}),
+				FileInfo: &FileInfo{
+					Path:      "table1.tsv",
+					Delimiter: '\t',
+					Format:    cmd.TSV,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+					NoHeader:  false,
+				},
+			},
+			{
+				Header: NewHeader("table1", []string{"col1", "col2"}),
+				FileInfo: &FileInfo{
+					Path:        "table1.json",
+					JsonQuery:   "{}",
+					Format:      cmd.JSON,
+					Encoding:    text.UTF8,
+					LineBreak:   text.LF,
+					PrettyPrint: false,
+				},
+			},
+			{
+				Header: NewHeader("table2", []string{"col1", "col2"}),
+				FileInfo: &FileInfo{
+					Path:        "table2.json",
+					JsonQuery:   "",
+					Format:      cmd.JSON,
+					Encoding:    text.UTF8,
+					LineBreak:   text.LF,
+					PrettyPrint: false,
+				},
+			},
+			{
+				Header: NewHeader("table1", []string{"col1", "col2"}),
+				FileInfo: &FileInfo{
+					Path:               "table1.txt",
+					DelimiterPositions: []int{3, 12},
+					Format:             cmd.FIXED,
+					Encoding:           text.UTF8,
+					LineBreak:          text.LF,
+					NoHeader:           false,
+				},
+			},
+			{
+				Header: NewHeader("table2", []string{"col1", "col2"}),
+				FileInfo: &FileInfo{
+					Path:               "table2.txt",
+					DelimiterPositions: []int{3, 12},
+					Format:             cmd.FIXED,
+					Encoding:           text.UTF8,
+					LineBreak:          text.LF,
+					NoHeader:           false,
+					SingleLine:         true,
+				},
+			},
+		}),
+		UncommittedViews: UncommittedViews{
 			mtx: &sync.RWMutex{},
 			Created: map[string]*FileInfo{
 				"TABLE1.TSV": {Path: "table1.tsv"},
@@ -1760,22 +1754,19 @@ var showObjectsTests = []struct {
 	{
 		Name: "ShowObjects Tables Long Fields",
 		Expr: parser.ShowObjects{Type: parser.Identifier{Literal: "tables"}},
-		ViewCache: ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				"TABLE1.CSV": {
-					Header: NewHeader("table1", []string{"colabcdef1", "colabcdef2", "colabcdef3", "colabcdef4", "colabcdef5", "colabcdef6", "colabcdef7"}),
-					FileInfo: &FileInfo{
-						Path:      "table1.csv",
-						Delimiter: '\t',
-						Format:    cmd.CSV,
-						Encoding:  text.SJIS,
-						LineBreak: text.CRLF,
-						NoHeader:  true,
-					},
+		ViewCache: GenerateViewMap([]*View{
+			{
+				Header: NewHeader("table1", []string{"colabcdef1", "colabcdef2", "colabcdef3", "colabcdef4", "colabcdef5", "colabcdef6", "colabcdef7"}),
+				FileInfo: &FileInfo{
+					Path:      "table1.csv",
+					Delimiter: '\t',
+					Format:    cmd.CSV,
+					Encoding:  text.SJIS,
+					LineBreak: text.CRLF,
+					NoHeader:  true,
 				},
 			},
-		},
+		}),
 		Expect: "\n" +
 			"                              Loaded Tables\n" +
 			"--------------------------------------------------------------------------\n" +
@@ -1797,40 +1788,34 @@ var showObjectsTests = []struct {
 		Expr: parser.ShowObjects{Type: parser.Identifier{Literal: "views"}},
 		Filter: &Filter{
 			tempViews: TemporaryViewScopes{
-				ViewMap{
-					mtx: &sync.RWMutex{},
-					views: map[string]*View{
-						"VIEW1": {
-							FileInfo: &FileInfo{
-								Path:        "view1",
-								IsTemporary: true,
-							},
-							Header: NewHeader("view1", []string{"column1", "column2"}),
+				GenerateViewMap([]*View{
+					{
+						FileInfo: &FileInfo{
+							Path:        "view1",
+							IsTemporary: true,
 						},
+						Header: NewHeader("view1", []string{"column1", "column2"}),
 					},
-				},
-				ViewMap{
-					mtx: &sync.RWMutex{},
-					views: map[string]*View{
-						"VIEW1": {
-							FileInfo: &FileInfo{
-								Path:        "view1",
-								IsTemporary: true,
-							},
-							Header: NewHeader("view1", []string{"column1", "column2", "column3"}),
+				}),
+				GenerateViewMap([]*View{
+					{
+						FileInfo: &FileInfo{
+							Path:        "view1",
+							IsTemporary: true,
 						},
-						"VIEW2": {
-							FileInfo: &FileInfo{
-								Path:        "view2",
-								IsTemporary: true,
-							},
-							Header: NewHeader("view2", []string{"column1", "column2"}),
-						},
+						Header: NewHeader("view1", []string{"column1", "column2", "column3"}),
 					},
-				},
+					{
+						FileInfo: &FileInfo{
+							Path:        "view2",
+							IsTemporary: true,
+						},
+						Header: NewHeader("view2", []string{"column1", "column2"}),
+					},
+				}),
 			},
 		},
-		UncommittedViews: &UncommittedViews{
+		UncommittedViews: UncommittedViews{
 			mtx:     &sync.RWMutex{},
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
@@ -2001,8 +1986,8 @@ var showObjectsTests = []struct {
 	{
 		Name: "ShowObjects Statements",
 		Expr: parser.ShowObjects{Type: parser.Identifier{Literal: "statements"}},
-		PreparedStatements: PreparedStatementMap{
-			"STMT1": &PreparedStatement{
+		PreparedStatements: GenerateStatementMap([]*PreparedStatement{
+			{
 				Name:            "stmt1",
 				StatementString: "select 1",
 				Statements: []parser.Statement{
@@ -2022,7 +2007,7 @@ var showObjectsTests = []struct {
 				},
 				HolderNumber: 0,
 			},
-			"STMT2": &PreparedStatement{
+			{
 				Name:            "stmt2",
 				StatementString: "select ?",
 				Statements: []parser.Statement{
@@ -2042,7 +2027,7 @@ var showObjectsTests = []struct {
 				},
 				HolderNumber: 1,
 			},
-		},
+		}),
 		Expect: "\n" +
 			"    Prepared Statements\n" +
 			"---------------------------\n" +
@@ -2122,7 +2107,7 @@ func TestShowObjects(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
 		TestTx.uncommittedViews.Clean()
-		TestTx.PreparedStatements = make(PreparedStatementMap)
+		TestTx.PreparedStatements = NewPreparedStatementMap()
 		initFlag(TestTx.Flags)
 	}()
 
@@ -2146,16 +2131,16 @@ func TestShowObjects(t *testing.T) {
 		TestTx.Flags.WriteAsSingleLine = v.WriteAsSingleLine
 		TestTx.Flags.Format = v.Format
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-		if 0 < len(v.ViewCache.views) {
+		if v.ViewCache.SyncMap != nil {
 			TestTx.cachedViews = v.ViewCache
 		}
-		if v.UncommittedViews == nil {
+		if v.UncommittedViews.mtx == nil {
 			TestTx.uncommittedViews = NewUncommittedViews()
 		} else {
 			TestTx.uncommittedViews = v.UncommittedViews
 		}
-		TestTx.PreparedStatements = make(PreparedStatementMap)
-		if v.PreparedStatements != nil {
+		TestTx.PreparedStatements = NewPreparedStatementMap()
+		if v.PreparedStatements.SyncMap != nil {
 			TestTx.PreparedStatements = v.PreparedStatements
 		}
 
@@ -2191,7 +2176,7 @@ var showFieldsTests = []struct {
 	Expr             parser.ShowFields
 	Filter           *Filter
 	ViewCache        ViewMap
-	UncommittedViews *UncommittedViews
+	UncommittedViews UncommittedViews
 	Expect           string
 	Error            string
 }{
@@ -2203,18 +2188,15 @@ var showFieldsTests = []struct {
 		},
 		Filter: &Filter{
 			tempViews: TemporaryViewScopes{
-				ViewMap{
-					mtx: &sync.RWMutex{},
-					views: map[string]*View{
-						"VIEW1": {
-							Header: NewHeader("view1", []string{"column1", "column2"}),
-							FileInfo: &FileInfo{
-								Path:        "view1",
-								IsTemporary: true,
-							},
+				GenerateViewMap([]*View{
+					{
+						Header: NewHeader("view1", []string{"column1", "column2"}),
+						FileInfo: &FileInfo{
+							Path:        "view1",
+							IsTemporary: true,
 						},
 					},
-				},
+				}),
 			},
 		},
 		Expect: "\n" +
@@ -2235,21 +2217,18 @@ var showFieldsTests = []struct {
 		},
 		Filter: &Filter{
 			tempViews: TemporaryViewScopes{
-				ViewMap{
-					mtx: &sync.RWMutex{},
-					views: map[string]*View{
-						"VIEW1": {
-							Header: NewHeader("view1", []string{"column1", "column2"}),
-							FileInfo: &FileInfo{
-								Path:        "view1",
-								IsTemporary: true,
-							},
+				GenerateViewMap([]*View{
+					{
+						Header: NewHeader("view1", []string{"column1", "column2"}),
+						FileInfo: &FileInfo{
+							Path:        "view1",
+							IsTemporary: true,
 						},
 					},
-				},
+				}),
 			},
 		},
-		UncommittedViews: &UncommittedViews{
+		UncommittedViews: UncommittedViews{
 			mtx:     &sync.RWMutex{},
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
@@ -2276,23 +2255,20 @@ var showFieldsTests = []struct {
 				Path:          parser.Identifier{Literal: "show_fields_create.csv"},
 			},
 		},
-		ViewCache: ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				strings.ToUpper(GetTestFilePath("show_fields_create.csv")): {
-					Header: NewHeader("show_fields_create", []string{"column1", "column2"}),
-					FileInfo: &FileInfo{
-						Path:      GetTestFilePath("show_fields_create.csv"),
-						Delimiter: ',',
-						Format:    cmd.CSV,
-						Encoding:  text.UTF8,
-						LineBreak: text.LF,
-						NoHeader:  false,
-					},
+		ViewCache: GenerateViewMap([]*View{
+			{
+				Header: NewHeader("show_fields_create", []string{"column1", "column2"}),
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("show_fields_create.csv"),
+					Delimiter: ',',
+					Format:    cmd.CSV,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+					NoHeader:  false,
 				},
 			},
-		},
-		UncommittedViews: &UncommittedViews{
+		}),
+		UncommittedViews: UncommittedViews{
 			mtx: &sync.RWMutex{},
 			Created: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("show_fields_create.csv")): {Path: "show_fields_create.csv"},
@@ -2318,23 +2294,20 @@ var showFieldsTests = []struct {
 			Type:  parser.Identifier{Literal: "fields"},
 			Table: parser.Identifier{Literal: "show_fields_create.csv"},
 		},
-		ViewCache: ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				strings.ToUpper(GetTestFilePath("show_fields_create.csv")): {
-					Header: NewHeader("show_fields_create", []string{"column1", "column2"}),
-					FileInfo: &FileInfo{
-						Path:      GetTestFilePath("show_fields_create.csv"),
-						Delimiter: ',',
-						Format:    cmd.CSV,
-						Encoding:  text.UTF8,
-						LineBreak: text.LF,
-						NoHeader:  false,
-					},
+		ViewCache: GenerateViewMap([]*View{
+			{
+				Header: NewHeader("show_fields_create", []string{"column1", "column2"}),
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("show_fields_create.csv"),
+					Delimiter: ',',
+					Format:    cmd.CSV,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+					NoHeader:  false,
 				},
 			},
-		},
-		UncommittedViews: &UncommittedViews{
+		}),
+		UncommittedViews: UncommittedViews{
 			mtx: &sync.RWMutex{},
 			Created: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("show_fields_create.csv")): {Path: "show_fields_create.csv"},
@@ -2360,23 +2333,20 @@ var showFieldsTests = []struct {
 			Type:  parser.Identifier{Literal: "fields"},
 			Table: parser.Identifier{Literal: "show_fields_update.csv"},
 		},
-		ViewCache: ViewMap{
-			mtx: &sync.RWMutex{},
-			views: map[string]*View{
-				strings.ToUpper(GetTestFilePath("show_fields_update.csv")): {
-					Header: NewHeader("show_fields_update", []string{"column1", "column2"}),
-					FileInfo: &FileInfo{
-						Path:      GetTestFilePath("show_fields_update.csv"),
-						Delimiter: ',',
-						Format:    cmd.CSV,
-						Encoding:  text.UTF8,
-						LineBreak: text.LF,
-						NoHeader:  false,
-					},
+		ViewCache: GenerateViewMap([]*View{
+			{
+				Header: NewHeader("show_fields_update", []string{"column1", "column2"}),
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("show_fields_update.csv"),
+					Delimiter: ',',
+					Format:    cmd.CSV,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+					NoHeader:  false,
 				},
 			},
-		},
-		UncommittedViews: &UncommittedViews{
+		}),
+		UncommittedViews: UncommittedViews{
 			mtx:     &sync.RWMutex{},
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
@@ -2456,10 +2426,10 @@ func TestShowFields(t *testing.T) {
 
 	for _, v := range showFieldsTests {
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-		if 0 < len(v.ViewCache.views) {
+		if v.ViewCache.SyncMap != nil {
 			TestTx.cachedViews = v.ViewCache
 		}
-		if v.UncommittedViews == nil {
+		if v.UncommittedViews.mtx == nil {
 			TestTx.uncommittedViews = NewUncommittedViews()
 		} else {
 			TestTx.uncommittedViews = v.UncommittedViews

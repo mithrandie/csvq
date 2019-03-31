@@ -5,6 +5,13 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.9.7
+
+Released on April 1, 2019
+
+- Fix syntax text.
+- Improve mutual exclusion.
+
 ## Version 1.9.6
 
 Released on March 30, 2019

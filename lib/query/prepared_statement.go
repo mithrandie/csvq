@@ -6,36 +6,61 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
-type PreparedStatementMap map[string]*PreparedStatement
+type PreparedStatementMap struct {
+	*SyncMap
+}
+
+func NewPreparedStatementMap() PreparedStatementMap {
+	return PreparedStatementMap{
+		NewSyncMap(),
+	}
+}
+
+func (m PreparedStatementMap) Store(name string, statement *PreparedStatement) {
+	m.store(strings.ToUpper(name), statement)
+}
+
+func (m PreparedStatementMap) Load(name string) (*PreparedStatement, bool) {
+	if v, ok := m.load(strings.ToUpper(name)); ok {
+		return v.(*PreparedStatement), true
+	}
+	return nil, false
+}
+
+func (m PreparedStatementMap) Delete(name string) {
+	m.delete(strings.ToUpper(name))
+}
+
+func (m PreparedStatementMap) Exists(name string) bool {
+	return m.exists(strings.ToUpper(name))
+}
 
 func (m PreparedStatementMap) Prepare(filter *Filter, expr parser.StatementPreparation) error {
-	uname := strings.ToUpper(expr.Name.Literal)
-	if _, ok := m[uname]; ok {
-		return NewDuplicateStatementNameError(expr.Name)
-	}
 	stmt, err := NewPreparedStatement(filter, expr)
 	if err != nil {
 		return err
 	}
-	m[uname] = stmt
+
+	if m.Exists(expr.Name.Literal) {
+		return NewDuplicateStatementNameError(expr.Name)
+	}
+	m.Store(expr.Name.Literal, stmt)
 	return nil
 }
 
 func (m PreparedStatementMap) Get(name parser.Identifier) (*PreparedStatement, error) {
-	uname := strings.ToUpper(name.Literal)
-	if stmt, ok := m[uname]; ok {
+	if stmt, ok := m.Load(name.Literal); ok {
 		return stmt, nil
 	}
 	return nil, NewStatementNotExistError(name)
 }
 
 func (m PreparedStatementMap) Dispose(expr parser.DisposeStatement) error {
-	uname := strings.ToUpper(expr.Name.Literal)
-	if _, ok := m[uname]; ok {
-		delete(m, uname)
-		return nil
+	if !m.Exists(expr.Name.Literal) {
+		return NewStatementNotExistError(expr.Name)
 	}
-	return NewStatementNotExistError(expr.Name)
+	m.Delete(expr.Name.Literal)
+	return nil
 }
 
 type PreparedStatement struct {

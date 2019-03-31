@@ -55,16 +55,13 @@ func TestGetRuntimeInformation(t *testing.T) {
 		initFlag(TestTx.Flags)
 	}()
 
-	TestTx.cachedViews = ViewMap{
-		mtx: &sync.RWMutex{},
-		views: map[string]*View{
-			"TABLE1": {FileInfo: &FileInfo{}},
-			"TABLE2": {FileInfo: &FileInfo{}},
-			"TABLE3": {FileInfo: &FileInfo{}},
-			"TABLE4": {FileInfo: &FileInfo{}},
-		},
-	}
-	TestTx.uncommittedViews = &UncommittedViews{
+	TestTx.cachedViews = GenerateViewMap([]*View{
+		{FileInfo: &FileInfo{Path: "table1"}},
+		{FileInfo: &FileInfo{Path: "table2"}},
+		{FileInfo: &FileInfo{Path: "table3"}},
+		{FileInfo: &FileInfo{Path: "table4"}},
+	})
+	TestTx.uncommittedViews = UncommittedViews{
 		mtx: &sync.RWMutex{},
 		Created: map[string]*FileInfo{
 			"TABLE1": {},

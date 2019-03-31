@@ -11,8 +11,8 @@ type UncommittedViews struct {
 	Updated map[string]*FileInfo
 }
 
-func NewUncommittedViews() *UncommittedViews {
-	return &UncommittedViews{
+func NewUncommittedViews() UncommittedViews {
+	return UncommittedViews{
 		mtx:     &sync.RWMutex{},
 		Created: make(map[string]*FileInfo),
 		Updated: make(map[string]*FileInfo),

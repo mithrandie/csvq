@@ -20,7 +20,7 @@ import (
 
 var processorExecuteStatementTests = []struct {
 	Input            parser.Statement
-	UncommittedViews *UncommittedViews
+	UncommittedViews UncommittedViews
 	Logs             string
 	SelectLogs       []string
 	Error            string
@@ -496,7 +496,7 @@ var processorExecuteStatementTests = []struct {
 				},
 			},
 		},
-		UncommittedViews: &UncommittedViews{
+		UncommittedViews: UncommittedViews{
 			mtx:     &sync.RWMutex{},
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
@@ -531,7 +531,7 @@ var processorExecuteStatementTests = []struct {
 				},
 			},
 		},
-		UncommittedViews: &UncommittedViews{
+		UncommittedViews: UncommittedViews{
 			mtx:     &sync.RWMutex{},
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
@@ -564,7 +564,7 @@ var processorExecuteStatementTests = []struct {
 				},
 			},
 		},
-		UncommittedViews: &UncommittedViews{
+		UncommittedViews: UncommittedViews{
 			mtx:     &sync.RWMutex{},
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
@@ -588,7 +588,7 @@ var processorExecuteStatementTests = []struct {
 				parser.Identifier{Literal: "column2"},
 			},
 		},
-		UncommittedViews: &UncommittedViews{
+		UncommittedViews: UncommittedViews{
 			mtx: &sync.RWMutex{},
 			Created: map[string]*FileInfo{
 				strings.ToUpper(GetTestFilePath("NEWTABLE.CSV")): {
@@ -613,7 +613,7 @@ var processorExecuteStatementTests = []struct {
 				},
 			},
 		},
-		UncommittedViews: &UncommittedViews{
+		UncommittedViews: UncommittedViews{
 			mtx:     &sync.RWMutex{},
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
@@ -636,7 +636,7 @@ var processorExecuteStatementTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 		},
-		UncommittedViews: &UncommittedViews{
+		UncommittedViews: UncommittedViews{
 			mtx:     &sync.RWMutex{},
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
@@ -658,7 +658,7 @@ var processorExecuteStatementTests = []struct {
 			Old:   parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			New:   parser.Identifier{Literal: "newcolumn"},
 		},
-		UncommittedViews: &UncommittedViews{
+		UncommittedViews: UncommittedViews{
 			mtx:     &sync.RWMutex{},
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
@@ -688,7 +688,7 @@ var processorExecuteStatementTests = []struct {
 			Attribute: parser.Identifier{Literal: "delimiter"},
 			Value:     parser.NewStringValue("\t"),
 		},
-		UncommittedViews: &UncommittedViews{
+		UncommittedViews: UncommittedViews{
 			mtx:     &sync.RWMutex{},
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
@@ -883,7 +883,7 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 			continue
 		}
 
-		if v.UncommittedViews != nil {
+		if v.UncommittedViews.mtx != nil {
 			for _, r := range TestTx.uncommittedViews.Created {
 				if r.Handler != nil {
 					if r.Path != r.Handler.Path() {
@@ -1726,6 +1726,7 @@ func TestProcessor_WhileInCursor(t *testing.T) {
 		proc.Filter.cursors[0] = CursorMap{
 			"CUR": &Cursor{
 				query: selectQueryForCursorTest,
+				mtx:   &sync.Mutex{},
 			},
 		}
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
