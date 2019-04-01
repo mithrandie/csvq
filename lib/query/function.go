@@ -1004,7 +1004,7 @@ func Format(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Prima
 
 	str, err := NewStringFormatter().Format(format.(value.String).Raw(), args[1:])
 	if err != nil {
-		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, err.(Error).ErrorMessage())
+		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, err.(Error).Message())
 	}
 	return value.NewString(str), nil
 }

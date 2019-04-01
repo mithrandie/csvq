@@ -97,7 +97,7 @@ func Printf(ctx context.Context, filter *Filter, expr parser.Printf) (string, er
 
 	message, err := NewStringFormatter().Format(format, args)
 	if err != nil {
-		return "", NewReplaceValueLengthError(expr, err.(Error).ErrorMessage())
+		return "", NewReplaceValueLengthError(expr, err.(Error).Message())
 	}
 	return message, nil
 }
@@ -142,7 +142,7 @@ func LoadStatementsFromFile(ctx context.Context, tx *Transaction, expr parser.So
 		return nil, NewReadFileError(expr, err.Error())
 	}
 	defer func() {
-		err = AppendCompositeError(err, tx.FileContainer.Close(h))
+		err = appendCompositeError(err, tx.FileContainer.Close(h))
 	}()
 
 	buf, err := ioutil.ReadAll(h.File())
@@ -180,7 +180,7 @@ func ParseExecuteStatements(ctx context.Context, filter *Filter, expr parser.Exe
 
 	input, err = NewStringFormatter().Format(input, args)
 	if err != nil {
-		return nil, NewReplaceValueLengthError(expr, err.(Error).ErrorMessage())
+		return nil, NewReplaceValueLengthError(expr, err.(Error).Message())
 	}
 	statements, _, err := parser.Parse(input, fmt.Sprintf("(L:%d C:%d) EXECUTE", expr.Line(), expr.Char()), filter.tx.Flags.DatetimeFormat, false)
 	if err != nil {

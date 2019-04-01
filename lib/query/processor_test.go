@@ -871,7 +871,7 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 					t.Errorf("error %q, want error %q for %q", err, v.Error, v.Input)
 				}
 
-				code = apperr.ReturnCode()
+				code = apperr.Code()
 			}
 			if code != v.ReturnCode {
 				t.Errorf("error code %d, want error code %d for %q", code, v.ReturnCode, v.Input)

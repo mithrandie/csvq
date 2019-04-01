@@ -297,7 +297,7 @@ func main() {
 		if err != nil {
 			code := 1
 			if apperr, ok := err.(query.Error); ok {
-				code = apperr.ReturnCode()
+				code = apperr.Code()
 			}
 
 			if _, ok := err.(*query.ForcedExit); ok && code == 0 {
@@ -485,7 +485,7 @@ func runPreloadCommands(proc *query.Processor) (err error) {
 		statements, err := query.LoadStatementsFromFile(ctx, proc.Tx, parser.Source{}, fpath)
 		if err != nil {
 			if e, ok := err.(*query.ReadFileError); ok {
-				err = errors.New(e.ErrorMessage())
+				err = errors.New(e.Message())
 			}
 			return err
 		}

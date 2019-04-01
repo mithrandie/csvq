@@ -450,7 +450,7 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 				return nil, ConvertFileHandlerError(err, jsonPath, fpath)
 			}
 			defer func() {
-				err = AppendCompositeError(err, filter.tx.FileContainer.Close(h))
+				err = appendCompositeError(err, filter.tx.FileContainer.Close(h))
 			}()
 			reader = h.File()
 		} else {
@@ -733,7 +733,7 @@ func cacheViewFromFile(
 					return filePath, ConvertFileHandlerError(err, tableIdentifier, fileInfo.Path)
 				}
 				defer func() {
-					err = AppendCompositeError(err, filter.tx.FileContainer.Close(h))
+					err = appendCompositeError(err, filter.tx.FileContainer.Close(h))
 				}()
 				fp = h.File()
 			}
@@ -741,7 +741,7 @@ func cacheViewFromFile(
 			loadView, err := loadViewFromFile(ctx, filter.tx, fp, fileInfo, withoutNull)
 			if err != nil {
 				err = NewDataParsingError(tableIdentifier, fileInfo.Path, err.Error())
-				return filePath, AppendCompositeError(err, filter.tx.FileContainer.Close(fileInfo.Handler))
+				return filePath, appendCompositeError(err, filter.tx.FileContainer.Close(fileInfo.Handler))
 			}
 			loadView.FileInfo.ForUpdate = forUpdate
 			filter.tx.cachedViews.Set(loadView)

@@ -28,7 +28,7 @@ func Syntax(proc *query.Processor, words []string) error {
 
 	_, err := proc.Execute(context.Background(), statements)
 	if appErr, ok := err.(query.Error); ok {
-		err = errors.New(appErr.ErrorMessage())
+		err = errors.New(appErr.Message())
 	}
 
 	return err

@@ -614,7 +614,7 @@ func (proc *Processor) ExecExternalCommand(ctx context.Context, stmt parser.Exte
 		arg, err := proc.Filter.EvaluateEmbeddedString(ctx, argStr)
 		if err != nil {
 			if appErr, ok := err.(Error); ok {
-				err = NewExternalCommandError(stmt, appErr.ErrorMessage())
+				err = NewExternalCommandError(stmt, appErr.Message())
 			} else {
 				err = NewExternalCommandError(stmt, err.Error())
 			}
