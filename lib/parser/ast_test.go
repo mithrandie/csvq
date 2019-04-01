@@ -110,7 +110,7 @@ func TestPlaceHolder_String(t *testing.T) {
 	s := "?"
 	ordinal := 3
 	e := Placeholder{Literal: s, Ordinal: ordinal, Name: ""}
-	expect := "?"
+	expect := "?{3}"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
