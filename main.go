@@ -2,11 +2,8 @@ package main
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"io/ioutil"
+	"log"
 	"os"
-	"path/filepath"
 	"strconv"
 	"time"
 
@@ -21,7 +18,6 @@ import (
 )
 
 func main() {
-	var proc *query.Processor
 	action.CurrentVersion, _ = action.ParseVersion(query.Version)
 	if action.CurrentVersion != nil {
 		query.Version = action.CurrentVersion.String()
@@ -42,7 +38,7 @@ func main() {
 			return err
 		}
 
-		return NewExitError(fmt.Sprintf("Incorrect Usage: %s", err.Error()), 1)
+		return Exit(query.NewIncorrectCommandUsageError(err.Error()))
 	}
 
 	app.Flags = []cli.Flag{
@@ -180,112 +176,60 @@ func main() {
 			Name:      "fields",
 			Usage:     "Show fields in a file",
 			ArgsUsage: "CSV_FILE_PATH",
-			Action: func(c *cli.Context) error {
+			Action: commandAction(func(c *cli.Context, proc *query.Processor) error {
 				if c.NArg() != 1 {
-					return NewExitError("table is not specified", 1)
+					return query.NewIncorrectCommandUsageError("table is not specified")
 				}
 
 				table := c.Args().First()
 
-				err := action.ShowFields(proc, table)
-				if err != nil {
-					return NewExitError(err.Error(), 1)
-				}
-
-				return nil
-			},
+				return action.ShowFields(proc, table)
+			}),
 			OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
-				return NewExitError(fmt.Sprintf("Incorrect Usage: %s", err.Error()), 1)
+				return Exit(query.NewIncorrectCommandUsageError(err.Error()))
 			},
 		},
 		{
 			Name:      "calc",
 			Usage:     "Calculate a value from stdin",
 			ArgsUsage: "\"expression\"",
-			Action: func(c *cli.Context) error {
+			Action: commandAction(func(c *cli.Context, proc *query.Processor) error {
 				if c.NArg() != 1 {
-					return NewExitError("expression is empty", 1)
+					return query.NewIncorrectCommandUsageError("expression is empty")
 				}
 
 				expr := c.Args().First()
-				err := action.Calc(proc, expr)
-				if err != nil {
-					return NewExitError(err.Error(), 1)
-				}
-
-				return nil
-			},
+				return action.Calc(proc, expr)
+			}),
 			OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
-				return NewExitError(fmt.Sprintf("Incorrect Usage: %s", err.Error()), 1)
+				return Exit(query.NewIncorrectCommandUsageError(err.Error()))
 			},
 		},
 		{
 			Name:      "syntax",
 			Usage:     "Print syntax",
 			ArgsUsage: "[search_word ...]",
-			Action: func(c *cli.Context) error {
+			Action: commandAction(func(c *cli.Context, proc *query.Processor) error {
 				words := append([]string{c.Args().First()}, c.Args().Tail()...)
-				err := action.Syntax(proc, words)
-				if err != nil {
-					return NewExitError(err.Error(), 1)
-				}
-
-				return nil
-			},
+				return action.Syntax(proc, words)
+			}),
 			OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
-				return NewExitError(fmt.Sprintf("Incorrect Usage: %s", err.Error()), 1)
+				return Exit(query.NewIncorrectCommandUsageError(err.Error()))
 			},
 		},
 		{
 			Name:  "check-update",
 			Usage: "Check for updates",
 			Action: func(c *cli.Context) error {
-				err := action.CheckUpdate(proc)
-				if err != nil {
-					return NewExitError(err.Error(), 1)
-				}
-
-				return nil
+				return Exit(action.CheckUpdate())
 			},
 		},
 	}
 
-	app.Before = func(c *cli.Context) error {
-		color.UseEffect = false
-
-		defaultWaitTimeout := file.DefaultWaitTimeout
-		if c.IsSet("wait-timeout") {
-			if d, err := time.ParseDuration(strconv.FormatFloat(c.GlobalFloat64("wait-timeout"), 'f', -1, 64) + "s"); err == nil {
-				defaultWaitTimeout = d
-			}
-		}
-
-		session := query.NewSession()
-		tx, err := query.NewTransaction(context.Background(), defaultWaitTimeout, file.DefaultRetryDelay, session)
-		if err != nil {
-			return NewExitError(err.Error(), 1)
-		}
-
-		proc = query.NewProcessor(tx)
-
-		action.SetSignalHandler(proc)
-
-		// Run pre-load commands
-		if err := runPreloadCommands(proc); err != nil {
-			return NewExitError(err.Error(), 1)
-		}
-
-		// Overwrite Flags with Command Options
-		if err := overwriteFlags(c, tx); err != nil {
-			return NewExitError(err.Error(), 1)
-		}
-		return nil
-	}
-
-	app.Action = func(c *cli.Context) error {
+	app.Action = commandAction(func(c *cli.Context, proc *query.Processor) error {
 		queryString, path, err := readQuery(c, proc.Tx)
 		if err != nil {
-			return NewExitError(err.Error(), 1)
+			return err
 		}
 
 		if len(queryString) < 1 {
@@ -294,67 +238,62 @@ func main() {
 			err = action.Run(proc, queryString, path, c.GlobalString("out"))
 		}
 
-		if err != nil {
-			code := 1
-			if apperr, ok := err.(query.Error); ok {
-				code = apperr.Code()
-			}
-
-			if _, ok := err.(*query.ForcedExit); ok && code == 0 {
-				return nil
-			}
-			return NewExitError(err.Error(), code)
-		}
-
-		return nil
-	}
+		return err
+	})
 
 	if err := app.Run(os.Args); err != nil {
-		println(err.Error())
+		log.Fatalln(err.Error())
 	}
 }
 
-func readQuery(c *cli.Context, tx *query.Transaction) (queryString string, path string, err error) {
-	if c.IsSet("source") && 0 < len(c.GlobalString("source")) {
-		path = c.GlobalString("source")
-		if abs, err := filepath.Abs(path); err == nil {
-			path = abs
-		}
-		if !file.Exists(path) {
-			err = errors.New(fmt.Sprintf("file %q does not exist", path))
-			return
-		}
-
-		h, e := file.NewHandlerForRead(context.Background(), tx.FileContainer, path, tx.WaitTimeout, tx.RetryDelay)
-		if e != nil {
-			err = errors.New(fmt.Sprintf("failed to read file: %s", e.Error()))
-			return
+func commandAction(fn func(c *cli.Context, proc *query.Processor) error) func(c *cli.Context) error {
+	return func(c *cli.Context) error {
+		ctx := context.Background()
+		proc, err := generateProcessor(ctx, c)
+		if err != nil {
+			return Exit(err)
 		}
 		defer func() {
-			if e := tx.FileContainer.Close(h); e != nil {
-				if err == nil {
-					err = e
-				} else {
-					err = errors.New(err.Error() + "\n" + e.Error())
-				}
+			if e := proc.AutoRollback(); e != nil {
+				proc.LogError(e.Error())
+			}
+			if err := proc.ReleaseResourcesWithErrors(); err != nil {
+				proc.LogError(err.Error())
 			}
 		}()
+		action.SetSignalHandler(proc)
 
-		buf, e := ioutil.ReadAll(h.File())
-		if e != nil {
-			err = errors.New(fmt.Sprintf("failed to read file: %s", e.Error()))
-			return
+		// Run pre-load commands
+		if err := runPreloadCommands(ctx, proc); err != nil {
+			return Exit(err)
 		}
 
-		queryString = string(buf)
-	} else {
-		if 1 < c.NArg() {
-			err = errors.New("multiple queries or statements were passed")
-			return
+		// Overwrite Flags with Command Options
+		if err := overwriteFlags(c, proc.Tx); err != nil {
+			return Exit(query.NewIncorrectCommandUsageError(err.Error()))
 		}
-		queryString = c.Args().First()
+
+		return Exit(fn(c, proc))
 	}
-	return
+}
+
+func generateProcessor(ctx context.Context, c *cli.Context) (*query.Processor, error) {
+	color.UseEffect = false
+
+	defaultWaitTimeout := file.DefaultWaitTimeout
+	if c.IsSet("wait-timeout") {
+		if d, err := time.ParseDuration(strconv.FormatFloat(c.GlobalFloat64("wait-timeout"), 'f', -1, 64) + "s"); err == nil {
+			defaultWaitTimeout = d
+		}
+	}
+
+	session := query.NewSession()
+	tx, err := query.NewTransaction(ctx, defaultWaitTimeout, file.DefaultRetryDelay, session)
+	if err != nil {
+		return nil, err
+	}
+
+	return query.NewProcessor(tx), nil
 }
 
 func overwriteFlags(c *cli.Context, tx *query.Transaction) error {
@@ -474,19 +413,15 @@ func overwriteFlags(c *cli.Context, tx *query.Transaction) error {
 	return nil
 }
 
-func runPreloadCommands(proc *query.Processor) (err error) {
-	ctx := context.Background()
+func runPreloadCommands(ctx context.Context, proc *query.Processor) (err error) {
 	files := cmd.GetSpecialFilePath(cmd.PreloadCommandFileName)
 	for _, fpath := range files {
 		if !file.Exists(fpath) {
 			continue
 		}
 
-		statements, err := query.LoadStatementsFromFile(ctx, proc.Tx, parser.Source{}, fpath)
+		statements, err := query.LoadStatementsFromFile(ctx, proc.Tx, parser.Identifier{Literal: fpath})
 		if err != nil {
-			if e, ok := err.(*query.ReadFileError); ok {
-				err = errors.New(e.Message())
-			}
 			return err
 		}
 
@@ -497,6 +432,36 @@ func runPreloadCommands(proc *query.Processor) (err error) {
 	return nil
 }
 
-func NewExitError(message string, code int) *cli.ExitError {
+func readQuery(c *cli.Context, tx *query.Transaction) (queryString string, path string, err error) {
+	if c.IsSet("source") && 0 < len(c.GlobalString("source")) {
+		path = c.GlobalString("source")
+
+		queryString, err = query.LoadContentsFromFile(context.Background(), tx, parser.Identifier{Literal: path})
+	} else {
+		switch c.NArg() {
+		case 0: //Launch interactive shell
+		case 1:
+			queryString = c.Args().First()
+		default:
+			err = Exit(query.NewIncorrectCommandUsageError("multiple queries or statements were passed"))
+		}
+	}
+	return
+}
+
+func Exit(err error) error {
+	if err == nil {
+		return nil
+	}
+	if exit, ok := err.(*query.ForcedExit); ok && exit.Code() == 0 {
+		return nil
+	}
+
+	code := query.ReturnCodeApplicationError
+	message := err.Error()
+
+	if apperr, ok := err.(query.Error); ok {
+		code = apperr.Code()
+	}
 	return cli.NewExitError(cmd.Error(message), code)
 }

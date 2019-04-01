@@ -450,7 +450,6 @@ func TestConvertTableValueToJsonStructure(t *testing.T) {
 			continue
 		}
 		if 0 < len(v.Error) {
-			//fmt.Printf("%#v\n", result)
 			t.Errorf("no error, want error %q for %s, %s", v.Error, v.Fields, v.Rows)
 			continue
 		}

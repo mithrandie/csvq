@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"sync"
 	"testing"
@@ -2491,7 +2492,7 @@ var createTableTests = []struct {
 				parser.Identifier{Literal: "column2"},
 			},
 		},
-		Error: "file table1.csv already exists",
+		Error: fmt.Sprintf("file %s already exists", GetTestFilePath("table1.csv")),
 	},
 	{
 		Name: "Create Table Field Duplicate Error",

@@ -123,23 +123,24 @@ func Source(ctx context.Context, filter *Filter, expr parser.Source) ([]parser.S
 		return nil, NewSourceInvalidFilePathError(expr, expr.FilePath)
 	}
 
-	return LoadStatementsFromFile(ctx, filter.tx, expr, fpath)
+	return LoadStatementsFromFile(ctx, filter.tx, parser.Identifier{BaseExpr: expr.BaseExpr, Literal: fpath})
 }
 
-func LoadStatementsFromFile(ctx context.Context, tx *Transaction, expr parser.Source, fpath string) (statements []parser.Statement, err error) {
-	if !filepath.IsAbs(fpath) {
-		if abs, err := filepath.Abs(fpath); err == nil {
-			fpath = abs
+func LoadContentsFromFile(ctx context.Context, tx *Transaction, fpath parser.Identifier) (content string, err error) {
+	p := fpath.Literal
+	if !filepath.IsAbs(p) {
+		if abs, err := filepath.Abs(p); err == nil {
+			p = abs
 		}
 	}
 
-	if !file.Exists(fpath) {
-		return nil, NewFileNotExistError(expr.FilePath)
+	if !file.Exists(p) {
+		return content, NewFileNotExistError(fpath)
 	}
 
-	h, err := file.NewHandlerForRead(ctx, tx.FileContainer, fpath, tx.WaitTimeout, tx.RetryDelay)
+	h, err := file.NewHandlerWithoutLock(ctx, tx.FileContainer, p, tx.WaitTimeout, tx.RetryDelay)
 	if err != nil {
-		return nil, NewReadFileError(expr, err.Error())
+		return content, ConvertFileHandlerError(err, fpath)
 	}
 	defer func() {
 		err = appendCompositeError(err, tx.FileContainer.Close(h))
@@ -147,11 +148,18 @@ func LoadStatementsFromFile(ctx context.Context, tx *Transaction, expr parser.So
 
 	buf, err := ioutil.ReadAll(h.File())
 	if err != nil {
-		return nil, NewReadFileError(expr, err.Error())
+		return content, ConvertFileHandlerError(err, fpath)
 	}
-	input := string(buf)
+	return string(buf), nil
+}
 
-	statements, _, err = parser.Parse(input, fpath, tx.Flags.DatetimeFormat, false)
+func LoadStatementsFromFile(ctx context.Context, tx *Transaction, fpath parser.Identifier) (statements []parser.Statement, err error) {
+	content, err := LoadContentsFromFile(ctx, tx, fpath)
+	if err != nil {
+		return nil, err
+	}
+
+	statements, _, err = parser.Parse(content, fpath.Literal, tx.Flags.DatetimeFormat, false)
 	if err != nil {
 		err = NewSyntaxError(err.(*parser.SyntaxError))
 	}

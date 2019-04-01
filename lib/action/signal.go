@@ -24,6 +24,6 @@ func SetSignalHandler(proc *query.Processor) {
 				proc.LogError(err.Error())
 			}
 		}
-		os.Exit(-1)
+		os.Exit(query.ReturnCodeSystemError)
 	}()
 }

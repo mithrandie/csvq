@@ -10,21 +10,19 @@ import (
 )
 
 func Calc(proc *query.Processor, expr string) error {
-	proc.Tx.Flags.SetNoHeader(true)
-
-	defer func() {
-		if err := proc.ReleaseResourcesWithErrors(); err != nil {
-			proc.LogError(err.Error())
-		}
-	}()
-
 	ctx := context.Background()
 
-	q := "select " + expr + " from stdin"
+	proc.Tx.Flags.SetNoHeader(true)
+	q := "SELECT " + expr + " FROM STDIN"
 
 	program, _, err := parser.Parse(q, "", proc.Tx.Flags.DatetimeFormat, false)
 	if err != nil {
-		return errors.New("syntax error")
+		e := err.(*parser.SyntaxError)
+		e.SourceFile = ""
+		e.Line = 0
+		e.Char = 0
+		e.Message = "syntax error"
+		return query.NewSyntaxError(e)
 	}
 	selectEntity, _ := program[0].(parser.SelectQuery).SelectEntity.(parser.SelectEntity)
 
@@ -32,20 +30,23 @@ func Calc(proc *query.Processor, expr string) error {
 	err = view.Load(ctx, query.NewFilter(proc.Tx).CreateNode(), selectEntity.FromClause.(parser.FromClause), false, false)
 	if err != nil {
 		if appErr, ok := err.(query.Error); ok {
-			return errors.New(appErr.Message())
+			err = errors.New(appErr.Message())
 		}
 		return err
 	}
 
 	clause := selectEntity.SelectClause.(parser.SelectClause)
 
-	filter := query.NewFilterForRecord(query.NewFilter(proc.Tx), view, 0)
+	filter := query.NewFilterForRecord(proc.Filter, view, 0)
 	values := make([]string, len(clause.Fields))
 	for i, v := range clause.Fields {
 		field := v.(parser.Field)
 		p, err := filter.Evaluate(ctx, field.Object)
 		if err != nil {
-			return errors.New("syntax error")
+			if appErr, ok := err.(query.Error); ok {
+				err = errors.New(appErr.Message())
+			}
+			return err
 		}
 		values[i], _, _ = query.ConvertFieldContents(p, true)
 	}

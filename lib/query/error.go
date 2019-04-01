@@ -19,10 +19,10 @@ const (
 	ErrorMessageWithFilepathTemplate     = "%s [L:%d C:%d] %s"
 	ErrorMessageWithCustomPrefixTemplate = "[%s] %s"
 
+	ErrMsgIncorrectCommandUsage                = "incorrect usage: %s"
 	ErrMsgInvalidValueExpression               = "%s: cannot evaluate as a value"
 	ErrMsgInvalidPath                          = "%s: %s"
-	ErrMsgReadFile                             = "failed to read from file: %s"
-	ErrMsgWriteFile                            = "failed to write to file: %s"
+	ErrMsgIO                                   = "%s"
 	ErrMsgCommit                               = "failed to commit: %s"
 	ErrMsgRollback                             = "failed to rollback: %s"
 	ErrMsgFieldAmbiguous                       = "field %s is ambiguous"
@@ -215,14 +215,10 @@ func appendCompositeError(e1 error, e2 error) error {
 }
 
 func NewBaseError(expr parser.Expression, message string, code int, number int) *BaseError {
-	return NewBaseErrorWithCode(expr, message, code, number)
-}
-
-func NewBaseErrorWithCode(expr parser.Expression, message string, code int, number int) *BaseError {
 	var sourceFile string
 	var line int
 	var char int
-	if expr.HasParseInfo() {
+	if expr != nil && expr.HasParseInfo() {
 		sourceFile = expr.SourceFile()
 		line = expr.Line()
 		char = expr.Char()
@@ -261,16 +257,6 @@ func NewSystemError(message string) error {
 	}
 }
 
-type TransactionOpenError struct {
-	*BaseError
-}
-
-func NewTransactionOpenError(message string) error {
-	return &TransactionOpenError{
-		NewBaseErrorWithPrefix("IO Error", message, ReturnCodeIOError, ErrorIOError),
-	}
-}
-
 type ForcedExit struct {
 	*BaseError
 }
@@ -294,7 +280,7 @@ func NewUserTriggeredError(expr parser.Trigger, message string) error {
 	}
 
 	return &UserTriggeredError{
-		NewBaseErrorWithCode(expr, message, code, ErrorUserTriggered),
+		NewBaseError(expr, message, code, ErrorUserTriggered),
 	}
 }
 
@@ -342,6 +328,16 @@ func NewContextIsDone(message string) error {
 	}
 }
 
+type IncorrectCommandUsageError struct {
+	*BaseError
+}
+
+func NewIncorrectCommandUsageError(message string) error {
+	return &IncorrectCommandUsageError{
+		NewBaseErrorWithPrefix("", fmt.Sprintf(ErrMsgIncorrectCommandUsage, message), ReturnCodeApplicationError, ErrorIncorrectCommandUsage),
+	}
+}
+
 type InvalidValueExpressionError struct {
 	*BaseError
 }
@@ -362,23 +358,13 @@ func NewInvalidPathError(expr parser.Expression, path string, message string) er
 	}
 }
 
-type ReadFileError struct {
+type IOError struct {
 	*BaseError
 }
 
-func NewReadFileError(expr parser.Expression, message string) error {
-	return &ReadFileError{
-		NewBaseError(expr, fmt.Sprintf(ErrMsgReadFile, message), ReturnCodeIOError, ErrorReadFile),
-	}
-}
-
-type WriteFileError struct {
-	*BaseError
-}
-
-func NewWriteFileError(expr parser.Expression, message string) error {
-	return &WriteFileError{
-		NewBaseError(expr, fmt.Sprintf(ErrMsgWriteFile, message), ReturnCodeIOError, ErrorWriteFile),
+func NewIOError(expr parser.Expression, message string) error {
+	return &IOError{
+		NewBaseError(expr, fmt.Sprintf(ErrMsgIO, message), ReturnCodeIOError, ErrorIO),
 	}
 }
 
@@ -860,9 +846,9 @@ type FileLockTimeoutError struct {
 	*BaseError
 }
 
-func NewFileLockTimeoutError(file parser.Identifier, path string) error {
+func NewFileLockTimeoutError(file parser.Identifier) error {
 	return &FileLockTimeoutError{
-		NewBaseError(file, fmt.Sprintf(ErrMsgFileLockTimeout, path), ReturnCodeContextIsDone, ErrorFileLockTimeout),
+		NewBaseError(file, fmt.Sprintf(ErrMsgFileLockTimeout, file.Literal), ReturnCodeContextIsDone, ErrorFileLockTimeout),
 	}
 }
 
@@ -1320,7 +1306,7 @@ type LoadConfigurationError struct {
 	*BaseError
 }
 
-func NewLoadConfigurationError(expr parser.Reload, message string) error {
+func NewLoadConfigurationError(expr parser.Expression, message string) error {
 	return &LoadConfigurationError{
 		NewBaseError(expr, fmt.Sprintf(ErrMsgLoadConfiguration, message), ReturnCodeApplicationError, ErrorLoadConfiguration),
 	}
@@ -1374,14 +1360,28 @@ func searchSelectClauseInSelectSetEntity(selectSetEntity parser.QueryExpression)
 	return searchSelectClauseInSelectEntity(selectSetEntity)
 }
 
-func ConvertFileHandlerError(err error, ident parser.Identifier, fpath string) error {
+func ConvertFileHandlerError(err error, ident parser.Identifier) error {
 	switch err.(type) {
 	case *file.TimeoutError:
-		err = NewFileLockTimeoutError(ident, fpath)
+		err = NewFileLockTimeoutError(ident)
+	case *file.ContextIsDone:
+		err = NewContextIsDone(err.Error())
+	case *file.NotExistError:
+		err = NewFileNotExistError(ident)
+	case *file.AlreadyExistError:
+		err = NewFileAlreadyExistError(ident)
+	default:
+		err = NewIOError(ident, err.Error())
+	}
+	return err
+}
+
+func ConvertLoadConfigurationError(err error) error {
+	switch err.(type) {
 	case *file.ContextIsDone:
 		err = NewContextIsDone(err.Error())
 	default:
-		err = NewReadFileError(ident, err.Error())
+		err = NewLoadConfigurationError(nil, err.Error())
 	}
 	return err
 }

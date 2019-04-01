@@ -119,14 +119,13 @@ func PickVersionNumber(s string) string {
 	return s
 }
 
-func CheckUpdate(proc *query.Processor) error {
+func CheckUpdate() error {
 	msg, err := CheckForUpdates(NewClient(), runtime.GOOS, runtime.GOARCH)
 	if err != nil {
 		return err
 	}
 
-	proc.Log(msg, false)
-	return nil
+	return query.NewSession().WriteToStdoutWithLineBreak(msg)
 }
 
 func CheckForUpdates(client GithubClient, goos string, goarch string) (string, error) {

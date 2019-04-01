@@ -40,7 +40,7 @@ var calcTests = []struct {
 	{
 		Stdin: "foo",
 		Input: "error",
-		Error: "syntax error",
+		Error: "field error does not exist",
 	},
 }
 

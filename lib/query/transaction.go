@@ -42,12 +42,12 @@ type Transaction struct {
 func NewTransaction(ctx context.Context, defaultWaitTimeout time.Duration, retryDelay time.Duration, session *Session) (*Transaction, error) {
 	environment, err := cmd.NewEnvironment(ctx, defaultWaitTimeout, retryDelay)
 	if err != nil {
-		return nil, NewTransactionOpenError(err.Error())
+		return nil, ConvertLoadConfigurationError(err)
 	}
 	flags := cmd.NewFlags(environment)
 
 	if err := cmd.LoadPalette(environment); err != nil {
-		return nil, NewTransactionOpenError(err.Error())
+		return nil, ConvertLoadConfigurationError(err)
 	}
 
 	return &Transaction{

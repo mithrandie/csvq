@@ -557,7 +557,8 @@ func CreateTable(ctx context.Context, parentFilter *Filter, query parser.CreateT
 	}
 	h, err := file.NewHandlerForCreate(filter.tx.FileContainer, fileInfo.Path)
 	if err != nil {
-		return nil, NewFileAlreadyExistError(query.Table)
+		query.Table.Literal = fileInfo.Path
+		return nil, ConvertFileHandlerError(err, query.Table)
 	}
 	fileInfo.Handler = h
 

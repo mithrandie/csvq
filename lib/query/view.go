@@ -447,7 +447,8 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 
 			h, err := file.NewHandlerForRead(ctx, filter.tx.FileContainer, fpath, filter.tx.WaitTimeout, filter.tx.RetryDelay)
 			if err != nil {
-				return nil, ConvertFileHandlerError(err, jsonPath, fpath)
+				jsonPath.Literal = fpath
+				return nil, ConvertFileHandlerError(err, jsonPath)
 			}
 			defer func() {
 				err = appendCompositeError(err, filter.tx.FileContainer.Close(h))
@@ -518,7 +519,7 @@ func loadStdin(ctx context.Context, filter *Filter, table parser.Table, fileInfo
 		if fileInfo.Format != cmd.JSON {
 			buf, err := ioutil.ReadAll(os.Stdin)
 			if err != nil {
-				return NewReadFileError(table.Object.(parser.Stdin), err.Error())
+				return NewIOError(table.Object.(parser.Stdin), err.Error())
 			}
 
 			br := bytes.NewReader(buf)
@@ -531,7 +532,7 @@ func loadStdin(ctx context.Context, filter *Filter, table parser.Table, fileInfo
 
 			buf, err := ioutil.ReadAll(os.Stdin)
 			if err != nil {
-				return NewReadFileError(table.Object.(parser.Stdin), err.Error())
+				return NewIOError(table.Object.(parser.Stdin), err.Error())
 			}
 
 			headerLabels, rows, escapeType, err := json.LoadTable(fileInfo.JsonQuery, string(buf))
@@ -723,14 +724,16 @@ func cacheViewFromFile(
 			if forUpdate {
 				h, err := file.NewHandlerForUpdate(ctx, filter.tx.FileContainer, fileInfo.Path, filter.tx.WaitTimeout, filter.tx.RetryDelay)
 				if err != nil {
-					return filePath, ConvertFileHandlerError(err, tableIdentifier, fileInfo.Path)
+					tableIdentifier.Literal = fileInfo.Path
+					return filePath, ConvertFileHandlerError(err, tableIdentifier)
 				}
 				fileInfo.Handler = h
 				fp = h.File()
 			} else {
 				h, err := file.NewHandlerForRead(ctx, filter.tx.FileContainer, fileInfo.Path, filter.tx.WaitTimeout, filter.tx.RetryDelay)
 				if err != nil {
-					return filePath, ConvertFileHandlerError(err, tableIdentifier, fileInfo.Path)
+					tableIdentifier.Literal = fileInfo.Path
+					return filePath, ConvertFileHandlerError(err, tableIdentifier)
 				}
 				defer func() {
 					err = appendCompositeError(err, filter.tx.FileContainer.Close(h))

@@ -257,7 +257,7 @@ var sourceTests = []struct {
 		Expr: parser.Source{
 			FilePath: parser.NewStringValue(GetTestFilePath("notexist.sql")),
 		},
-		Error: fmt.Sprintf("file '%s' does not exist", GetTestFilePath("notexist.sql")),
+		Error: fmt.Sprintf("file %s does not exist", GetTestFilePath("notexist.sql")),
 	},
 	{
 		Name: "Source Syntax Error",

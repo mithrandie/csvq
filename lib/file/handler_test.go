@@ -21,6 +21,21 @@ func TestHandler(t *testing.T) {
 		}
 	}()
 
+	h, err := NewHandlerWithoutLock(ctx, container, fileForCreate, waitTimeoutForTests, retryDelayForTests)
+	if err == nil {
+		t.Fatalf("no error, want NotExistError")
+	}
+	if _, ok := err.(*NotExistError); !ok {
+		t.Fatalf("error = %#v, want NotExistError", err)
+	}
+	_ = container.Close(h)
+
+	h, err = NewHandlerWithoutLock(ctx, container, fileForRead, waitTimeoutForTests, retryDelayForTests)
+	if err != nil {
+		t.Fatalf("unexpected error %#v", err)
+	}
+	_ = container.Close(h)
+
 	rh, err := NewHandlerForRead(doneCtx, container, fileForRead, waitTimeoutForTests, retryDelayForTests)
 	if err == nil {
 		t.Fatalf("no error, want ContextIsDone")
@@ -32,10 +47,10 @@ func TestHandler(t *testing.T) {
 
 	rh, err = NewHandlerForRead(ctx, container, fileForCreate, waitTimeoutForTests, retryDelayForTests)
 	if err == nil {
-		t.Fatalf("no error, want IOError")
+		t.Fatalf("no error, want NotExistError")
 	}
-	if _, ok := err.(*IOError); !ok {
-		t.Fatalf("error = %#v, want IOError", err)
+	if _, ok := err.(*NotExistError); !ok {
+		t.Fatalf("error = %#v, want NotExistError", err)
 	}
 
 	rh, err = NewHandlerForRead(ctx, container, fileForRead, waitTimeoutForTests, retryDelayForTests)
@@ -55,18 +70,18 @@ func TestHandler(t *testing.T) {
 
 	uh, err := NewHandlerForUpdate(ctx, container, fileForCreate, waitTimeoutForTests, retryDelayForTests)
 	if err == nil {
-		t.Fatalf("no error, want IOError")
+		t.Fatalf("no error, want NotExistError")
 	}
-	if _, ok := err.(*IOError); !ok {
-		t.Fatalf("error = %#v, want IOError", err)
+	if _, ok := err.(*NotExistError); !ok {
+		t.Fatalf("error = %#v, want NotExistError", err)
 	}
 
 	ch, err := NewHandlerForCreate(container, fileForRead)
 	if err == nil {
-		t.Fatalf("no error, want IOError")
+		t.Fatalf("no error, want AlreadyExistError")
 	}
-	if _, ok := err.(*IOError); !ok {
-		t.Fatalf("error = %#v, want IOError", err)
+	if _, ok := err.(*AlreadyExistError); !ok {
+		t.Fatalf("error = %#v, want AlreadyExistError", err)
 	}
 
 	ch, err = NewHandlerForCreate(container, fileForCreate)
@@ -96,10 +111,10 @@ func TestHandler(t *testing.T) {
 
 	_, err = NewHandlerForCreate(container, fileForCreate)
 	if err == nil {
-		t.Fatalf("no error, want TimeoutError")
+		t.Fatalf("no error, want AlreadyExistError")
 	}
-	if _, ok := err.(*IOError); !ok {
-		t.Fatalf("error = %#v, want IOError", err)
+	if _, ok := err.(*AlreadyExistError); !ok {
+		t.Fatalf("error = %#v, want AlreadyExistError", err)
 	}
 
 	_ = container.Commit(ch)
