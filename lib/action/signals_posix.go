@@ -9,6 +9,6 @@ import (
 
 var Signals = []os.Signal{
 	syscall.SIGINT,
-	syscall.SIGTERM,
 	syscall.SIGQUIT,
+	syscall.SIGTERM,
 }

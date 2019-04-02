@@ -1,5 +1,13 @@
 # Change Log
 
+## Version 1.9.8
+
+Released on April 2, 2019
+
+- Improve signal handling to catch SIGINT, SIGQUIT, SIGTERM on several systems.
+- Fix the following bug.
+  - Ordinal placeholders in select clause not recognized correctly.
+
 ## Version 1.9.7
 
 Released on April 1, 2019
