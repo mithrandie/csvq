@@ -378,7 +378,7 @@ type IOError struct {
 	*BaseError
 }
 
-func NewIOError(expr parser.Expression, message string) error {
+func NewIOError(expr parser.QueryExpression, message string) error {
 	return &IOError{
 		NewBaseError(expr, fmt.Sprintf(ErrMsgIO, message), ReturnCodeIOError, ErrorIO),
 	}
@@ -620,7 +620,7 @@ type LoadJsonError struct {
 	*BaseError
 }
 
-func NewLoadJsonError(expr parser.JsonQuery, message string) error {
+func NewLoadJsonError(expr parser.QueryExpression, message string) error {
 	return &LoadJsonError{
 		NewBaseError(expr, fmt.Sprintf(ErrMsgLoadJson, message), ReturnCodeApplicationError, ErrorLoadJson),
 	}
