@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -269,10 +268,11 @@ func commandAction(fn func(ctx context.Context, c *cli.Context, proc *query.Proc
 		// Handle signals
 		ch := make(chan os.Signal, 1)
 		signal.Notify(ch, action.Signals...)
+		var signalReceived error
 
 		go func() {
 			sig := <-ch
-			proc.LogWarn(fmt.Sprintf("signal received: %s", sig.String()), false)
+			signalReceived = query.NewSignalReceived(sig)
 			cancel()
 		}()
 
@@ -287,8 +287,8 @@ func commandAction(fn func(ctx context.Context, c *cli.Context, proc *query.Proc
 		}
 
 		err = fn(ctx, c, proc)
-		if _, ok := err.(*query.ContextIsDone); ok {
-			err = nil
+		if signalReceived != nil {
+			err = signalReceived
 		}
 		return Exit(err)
 	}

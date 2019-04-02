@@ -2,6 +2,8 @@ package query
 
 import (
 	"fmt"
+	"os"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -18,6 +20,8 @@ const (
 	ErrorMessageTemplate                 = "[L:%d C:%d] %s"
 	ErrorMessageWithFilepathTemplate     = "%s [L:%d C:%d] %s"
 	ErrorMessageWithCustomPrefixTemplate = "[%s] %s"
+
+	ErrMsgSignalReceived = "signal received: %s"
 
 	ErrMsgIncorrectCommandUsage                = "incorrect usage: %s"
 	ErrMsgInvalidValueExpression               = "%s: cannot evaluate as a value"
@@ -284,6 +288,18 @@ func NewUserTriggeredError(expr parser.Trigger, message string) error {
 	}
 }
 
+type SignalReceived struct {
+	*BaseError
+}
+
+func NewSignalReceived(sig os.Signal) error {
+	v := reflect.ValueOf(sig)
+	code := int(v.Int())
+	return &SignalReceived{
+		NewBaseErrorWithPrefix("", fmt.Sprintf(ErrMsgSignalReceived, sig.String()), returnCodeBaseSignal+code, errorSignalBase+code),
+	}
+}
+
 type SyntaxError struct {
 	*BaseError
 }
@@ -334,7 +350,7 @@ type IncorrectCommandUsageError struct {
 
 func NewIncorrectCommandUsageError(message string) error {
 	return &IncorrectCommandUsageError{
-		NewBaseErrorWithPrefix("", fmt.Sprintf(ErrMsgIncorrectCommandUsage, message), ReturnCodeApplicationError, ErrorIncorrectCommandUsage),
+		NewBaseErrorWithPrefix("", fmt.Sprintf(ErrMsgIncorrectCommandUsage, message), ReturnCodeIncorrectUsage, ErrorIncorrectCommandUsage),
 	}
 }
 
