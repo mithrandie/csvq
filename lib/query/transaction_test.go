@@ -3,8 +3,6 @@ package query
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"strings"
 	"sync"
 	"testing"
@@ -18,6 +16,7 @@ func TestTransaction_Commit(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		TestTx.Session.Stdout = NewDiscard()
 		initFlag(TestTx.Flags)
 	}()
 
@@ -78,13 +77,12 @@ func TestTransaction_Commit(t *testing.T) {
 
 	tx := TestTx
 
-	r, w, _ := os.Pipe()
-	tx.Session.Stdout = w
+	out := NewOutput()
+	tx.Session.Stdout = out
 
-	_ = TestTx.Commit(NewFilter(tx), parser.TransactionControl{Token: parser.COMMIT})
+	_ = TestTx.Commit(context.Background(), NewFilter(tx), parser.TransactionControl{Token: parser.COMMIT})
 
-	_ = w.Close()
-	log, _ := ioutil.ReadAll(r)
+	log := out.String()
 
 	if string(log) != expect {
 		t.Errorf("Commit: log = %q, want %q", string(log), expect)
@@ -95,6 +93,7 @@ func TestTransaction_Rollback(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		TestTx.Session.Stdout = NewDiscard()
 		initFlag(TestTx.Flags)
 	}()
 
@@ -118,13 +117,12 @@ func TestTransaction_Rollback(t *testing.T) {
 
 	tx := TestTx
 
-	r, w, _ := os.Pipe()
-	tx.Session.Stdout = w
+	out := NewOutput()
+	tx.Session.Stdout = out
 
 	_ = TestTx.Rollback(NewFilter(tx), nil)
 
-	_ = w.Close()
-	log, _ := ioutil.ReadAll(r)
+	log := out.String()
 
 	if string(log) != expect {
 		t.Errorf("Rollback: log = %q, want %q", string(log), expect)

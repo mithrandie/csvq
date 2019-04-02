@@ -1,11 +1,58 @@
 package query
 
 import (
+	"bytes"
 	"io"
 	"os"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 )
+
+type Discard struct {
+}
+
+func NewDiscard() *Discard {
+	return &Discard{}
+}
+
+func (d Discard) Write(p []byte) (int, error) {
+	return len(p), nil
+}
+
+func (d Discard) Close() error {
+	return nil
+}
+
+type Input struct {
+	reader io.Reader
+}
+
+func NewInput(r io.Reader) *Input {
+	return &Input{reader: r}
+}
+
+func (r *Input) Read(p []byte) (int, error) {
+	return r.reader.Read(p)
+}
+
+func (r *Input) Close() error {
+	if rc, ok := r.reader.(io.ReadCloser); ok {
+		return rc.Close()
+	}
+	return nil
+}
+
+type Output struct {
+	*bytes.Buffer
+}
+
+func NewOutput() *Output {
+	return &Output{new(bytes.Buffer)}
+}
+
+func (w *Output) Close() error {
+	return nil
+}
 
 type Session struct {
 	ScreenFd uintptr
@@ -25,6 +72,16 @@ func NewSession() *Session {
 		OutFile:  nil,
 		Terminal: nil,
 	}
+}
+
+func (sess *Session) CanReadStdin() bool {
+	if sess.Stdin == nil {
+		return false
+	}
+	if f, ok := sess.Stdin.(*os.File); ok {
+		return cmd.IsReadableFromPipeOrRedirection(f)
+	}
+	return true
 }
 
 func (sess *Session) Log(log string, quiet bool) {

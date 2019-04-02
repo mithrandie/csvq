@@ -9,9 +9,7 @@ import (
 	"github.com/mithrandie/csvq/lib/query"
 )
 
-func Calc(proc *query.Processor, expr string) error {
-	ctx := context.Background()
-
+func Calc(ctx context.Context, proc *query.Processor, expr string) error {
 	proc.Tx.Flags.SetNoHeader(true)
 	q := "SELECT " + expr + " FROM STDIN"
 

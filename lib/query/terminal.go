@@ -188,7 +188,7 @@ func (p *Prompt) evaluate(ctx context.Context, expr parser.QueryExpression) erro
 		return err
 	}
 	s, _ := NewStringFormatter().Format("%s", []value.Primary{val})
-	p.buf.WriteString(s)
+	_, err = p.buf.WriteString(s)
 	if err != nil {
 		err = NewPromptEvaluationError(err.Error())
 	}

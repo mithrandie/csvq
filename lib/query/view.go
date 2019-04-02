@@ -64,7 +64,7 @@ func NewView(tx *Transaction) *View {
 func (view *View) Load(ctx context.Context, filter *Filter, clause parser.FromClause, forUpdate bool, useInternalId bool) error {
 	if clause.Tables == nil {
 		var obj parser.QueryExpression
-		if cmd.IsReadableFromPipeOrRedirection() {
+		if filter.tx.Session.CanReadStdin() {
 			obj = parser.Stdin{Stdin: "stdin"}
 		} else {
 			obj = parser.Dual{}
@@ -510,14 +510,14 @@ func loadStdin(ctx context.Context, filter *Filter, table parser.Table, fileInfo
 	defer stdinLoadingMutex.Unlock()
 
 	if !filter.tempViews[len(filter.tempViews)-1].Exists(fileInfo.Path) {
-		if !cmd.IsReadableFromPipeOrRedirection() {
+		if !filter.tx.Session.CanReadStdin() {
 			return NewStdinEmptyError(table.Object.(parser.Stdin))
 		}
 
 		var loadView *View
 
 		if fileInfo.Format != cmd.JSON {
-			buf, err := ioutil.ReadAll(os.Stdin)
+			buf, err := ioutil.ReadAll(filter.tx.Session.Stdin)
 			if err != nil {
 				return NewIOError(table.Object.(parser.Stdin), err.Error())
 			}
@@ -525,12 +525,15 @@ func loadStdin(ctx context.Context, filter *Filter, table parser.Table, fileInfo
 			br := bytes.NewReader(buf)
 			loadView, err = loadViewFromFile(ctx, filter.tx, br, fileInfo, filter.tx.Flags.WithoutNull)
 			if err != nil {
-				return NewDataParsingError(table.Object, fileInfo.Path, err.Error())
+				if _, ok := err.(*ContextIsDone); !ok {
+					err = NewDataParsingError(table.Object, fileInfo.Path, err.Error())
+				}
+				return err
 			}
 		} else {
 			fileInfo.Encoding = text.UTF8
 
-			buf, err := ioutil.ReadAll(os.Stdin)
+			buf, err := ioutil.ReadAll(filter.tx.Session.Stdin)
 			if err != nil {
 				return NewIOError(table.Object.(parser.Stdin), err.Error())
 			}
@@ -743,7 +746,9 @@ func cacheViewFromFile(
 
 			loadView, err := loadViewFromFile(ctx, filter.tx, fp, fileInfo, withoutNull)
 			if err != nil {
-				err = NewDataParsingError(tableIdentifier, fileInfo.Path, err.Error())
+				if _, ok := err.(*ContextIsDone); !ok {
+					err = NewDataParsingError(tableIdentifier, fileInfo.Path, err.Error())
+				}
 				return filePath, appendCompositeError(err, filter.tx.FileContainer.Close(fileInfo.Handler))
 			}
 			loadView.FileInfo.ForUpdate = forUpdate

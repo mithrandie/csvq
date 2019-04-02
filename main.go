@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"strconv"
 	"time"
 
@@ -176,14 +178,14 @@ func main() {
 			Name:      "fields",
 			Usage:     "Show fields in a file",
 			ArgsUsage: "CSV_FILE_PATH",
-			Action: commandAction(func(c *cli.Context, proc *query.Processor) error {
+			Action: commandAction(func(ctx context.Context, c *cli.Context, proc *query.Processor) error {
 				if c.NArg() != 1 {
 					return query.NewIncorrectCommandUsageError("table is not specified")
 				}
 
 				table := c.Args().First()
 
-				return action.ShowFields(proc, table)
+				return action.ShowFields(ctx, proc, table)
 			}),
 			OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
 				return Exit(query.NewIncorrectCommandUsageError(err.Error()))
@@ -193,13 +195,13 @@ func main() {
 			Name:      "calc",
 			Usage:     "Calculate a value from stdin",
 			ArgsUsage: "\"expression\"",
-			Action: commandAction(func(c *cli.Context, proc *query.Processor) error {
+			Action: commandAction(func(ctx context.Context, c *cli.Context, proc *query.Processor) error {
 				if c.NArg() != 1 {
 					return query.NewIncorrectCommandUsageError("expression is empty")
 				}
 
 				expr := c.Args().First()
-				return action.Calc(proc, expr)
+				return action.Calc(ctx, proc, expr)
 			}),
 			OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
 				return Exit(query.NewIncorrectCommandUsageError(err.Error()))
@@ -209,9 +211,9 @@ func main() {
 			Name:      "syntax",
 			Usage:     "Print syntax",
 			ArgsUsage: "[search_word ...]",
-			Action: commandAction(func(c *cli.Context, proc *query.Processor) error {
+			Action: commandAction(func(ctx context.Context, c *cli.Context, proc *query.Processor) error {
 				words := append([]string{c.Args().First()}, c.Args().Tail()...)
-				return action.Syntax(proc, words)
+				return action.Syntax(ctx, proc, words)
 			}),
 			OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
 				return Exit(query.NewIncorrectCommandUsageError(err.Error()))
@@ -226,16 +228,16 @@ func main() {
 		},
 	}
 
-	app.Action = commandAction(func(c *cli.Context, proc *query.Processor) error {
+	app.Action = commandAction(func(ctx context.Context, c *cli.Context, proc *query.Processor) error {
 		queryString, path, err := readQuery(c, proc.Tx)
 		if err != nil {
 			return err
 		}
 
 		if len(queryString) < 1 {
-			err = action.LaunchInteractiveShell(proc)
+			err = action.LaunchInteractiveShell(ctx, proc)
 		} else {
-			err = action.Run(proc, queryString, path, c.GlobalString("out"))
+			err = action.Run(ctx, proc, queryString, path, c.GlobalString("out"))
 		}
 
 		return err
@@ -246,9 +248,11 @@ func main() {
 	}
 }
 
-func commandAction(fn func(c *cli.Context, proc *query.Processor) error) func(c *cli.Context) error {
+func commandAction(fn func(ctx context.Context, c *cli.Context, proc *query.Processor) error) func(c *cli.Context) error {
 	return func(c *cli.Context) error {
-		ctx := context.Background()
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
 		proc, err := generateProcessor(ctx, c)
 		if err != nil {
 			return Exit(err)
@@ -261,7 +265,16 @@ func commandAction(fn func(c *cli.Context, proc *query.Processor) error) func(c 
 				proc.LogError(err.Error())
 			}
 		}()
-		action.SetSignalHandler(proc)
+
+		// Handle signals
+		ch := make(chan os.Signal, 1)
+		signal.Notify(ch, action.Signals...)
+
+		go func() {
+			sig := <-ch
+			proc.LogWarn(fmt.Sprintf("signal received: %s", sig.String()), false)
+			cancel()
+		}()
 
 		// Run pre-load commands
 		if err := runPreloadCommands(ctx, proc); err != nil {
@@ -273,7 +286,11 @@ func commandAction(fn func(c *cli.Context, proc *query.Processor) error) func(c 
 			return Exit(query.NewIncorrectCommandUsageError(err.Error()))
 		}
 
-		return Exit(fn(c, proc))
+		err = fn(ctx, c, proc)
+		if _, ok := err.(*query.ContextIsDone); ok {
+			err = nil
+		}
+		return Exit(err)
 	}
 }
 

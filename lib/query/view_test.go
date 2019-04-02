@@ -2583,6 +2583,7 @@ func TestView_Load(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		TestTx.Session.Stdin = os.Stdin
 		initFlag(TestTx.Flags)
 	}()
 
@@ -2591,6 +2592,7 @@ func TestView_Load(t *testing.T) {
 	for _, v := range viewLoadTests {
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 
+		TestTx.Session.Stdin = os.Stdin
 		TestTx.Flags.ImportFormat = v.ImportFormat
 		TestTx.Flags.Delimiter = ','
 		if v.Delimiter != 0 {
@@ -2606,13 +2608,8 @@ func TestView_Load(t *testing.T) {
 			TestTx.Flags.Encoding = text.UTF8
 		}
 
-		var oldStdin *os.File
 		if 0 < len(v.Stdin) {
-			oldStdin = os.Stdin
-			r, w, _ := os.Pipe()
-			_, _ = w.WriteString(v.Stdin)
-			_ = w.Close()
-			os.Stdin = r
+			TestTx.Session.Stdin = NewInput(strings.NewReader(v.Stdin))
 		}
 
 		view := NewView(TestTx)
@@ -2623,10 +2620,6 @@ func TestView_Load(t *testing.T) {
 		}
 
 		err := view.Load(context.Background(), v.Filter.CreateNode(), v.From, false, v.UseInternalId)
-
-		if 0 < len(v.Stdin) {
-			os.Stdin = oldStdin
-		}
 
 		if err != nil {
 			if len(v.Error) < 1 {

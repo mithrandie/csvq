@@ -71,21 +71,21 @@ func (m *GoroutineManager) Release() {
 type GoroutineTaskManager struct {
 	Number int
 
-	grCountMutex *sync.Mutex
-	grCount      int
-	recordLen    int
-	waitGroup    sync.WaitGroup
-	err          error
+	grTaskMutex *sync.Mutex
+	grCount     int
+	recordLen   int
+	waitGroup   sync.WaitGroup
+	err         error
 }
 
 func NewGoroutineTaskManager(recordLen int, minimumRequiredPerCore int, cpuNum int) *GoroutineTaskManager {
 	number := GetGoroutineManager().AssignRoutineNumber(recordLen, minimumRequiredPerCore, cpuNum)
 
 	return &GoroutineTaskManager{
-		Number:       number,
-		grCountMutex: &sync.Mutex{},
-		grCount:      number - 1,
-		recordLen:    recordLen,
+		Number:      number,
+		grTaskMutex: &sync.Mutex{},
+		grCount:     number - 1,
+		recordLen:   recordLen,
 	}
 }
 
@@ -94,7 +94,11 @@ func (m *GoroutineTaskManager) HasError() bool {
 }
 
 func (m *GoroutineTaskManager) SetError(e error) {
-	m.err = e
+	m.grTaskMutex.Lock()
+	if m.err == nil {
+		m.err = e
+	}
+	m.grTaskMutex.Unlock()
 }
 
 func (m *GoroutineTaskManager) Err() error {
@@ -124,12 +128,12 @@ func (m *GoroutineTaskManager) Add() {
 }
 
 func (m *GoroutineTaskManager) Done() {
-	m.grCountMutex.Lock()
+	m.grTaskMutex.Lock()
 	if 0 < m.grCount {
 		m.grCount--
 		GetGoroutineManager().Release()
 	}
-	m.grCountMutex.Unlock()
+	m.grTaskMutex.Unlock()
 
 	m.waitGroup.Done()
 }

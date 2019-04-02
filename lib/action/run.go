@@ -18,11 +18,11 @@ import (
 	"github.com/mithrandie/go-file/v2"
 )
 
-func Run(proc *query.Processor, input string, sourceFile string, outfile string) error {
+func Run(ctx context.Context, proc *query.Processor, input string, sourceFile string, outfile string) error {
 	start := time.Now()
 
 	defer func() {
-		showStats(proc, start)
+		showStats(ctx, proc, start)
 	}()
 
 	statements, _, err := parser.Parse(input, sourceFile, proc.Tx.Flags.DatetimeFormat, false)
@@ -56,18 +56,17 @@ func Run(proc *query.Processor, input string, sourceFile string, outfile string)
 	}
 
 	proc.Tx.AutoCommit = true
-	_, err = proc.Execute(context.Background(), statements)
+	_, err = proc.Execute(ctx, statements)
 	return err
 }
 
-func LaunchInteractiveShell(proc *query.Processor) error {
-	if cmd.IsReadableFromPipeOrRedirection() {
-		return query.NewIOError(nil, "input from pipe or redirection cannot be used in interactive shell")
+func LaunchInteractiveShell(ctx context.Context, proc *query.Processor) error {
+	if cmd.IsReadableFromPipeOrRedirection(os.Stdin) {
+		return query.NewIncorrectCommandUsageError("input from pipe or redirection cannot be used in interactive shell")
 	}
 
 	var err error
 
-	ctx := context.Background()
 	term, err := query.NewTerminal(ctx, proc.Filter)
 	if err != nil {
 		return query.ConvertLoadConfigurationError(err)
@@ -88,6 +87,11 @@ func LaunchInteractiveShell(proc *query.Processor) error {
 	lines := make([]string, 0)
 
 	for {
+		if ctx.Err() != nil {
+			err = query.NewContextIsDone(ctx.Err().Error())
+			break
+		}
+
 		proc.Tx.Session.Terminal.UpdateCompleter()
 		line, e := proc.Tx.Session.Terminal.ReadLine()
 		if e != nil {
@@ -164,7 +168,11 @@ func LaunchInteractiveShell(proc *query.Processor) error {
 	return err
 }
 
-func showStats(proc *query.Processor, start time.Time) {
+func showStats(ctx context.Context, proc *query.Processor, start time.Time) {
+	if ctx.Err() != nil {
+		return
+	}
+
 	if !proc.Tx.Flags.Stats {
 		return
 	}

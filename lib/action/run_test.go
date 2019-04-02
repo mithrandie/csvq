@@ -52,6 +52,7 @@ var executeTests = []struct {
 func TestRun(t *testing.T) {
 	tx, _ := query.NewTransaction(context.Background(), file.DefaultWaitTimeout, file.DefaultRetryDelay, query.NewSession())
 	tx.Flags.SetColor(false)
+	ctx := context.Background()
 
 	for _, v := range executeTests {
 		if v.Stats {
@@ -60,14 +61,13 @@ func TestRun(t *testing.T) {
 
 		tx.Session.OutFile = nil
 
-		r, w, _ := os.Pipe()
-		tx.Session.Stdout = w
+		out := query.NewOutput()
+		tx.Session.Stdout = out
 
 		proc := query.NewProcessor(tx)
-		err := Run(proc, v.Input, "", v.OutFile)
+		err := Run(ctx, proc, v.Input, "", v.OutFile)
 
-		_ = w.Close()
-		stdout, _ := ioutil.ReadAll(r)
+		stdout := out.String()
 
 		if err != nil {
 			if len(v.Error) < 1 {

@@ -7,7 +7,7 @@ import (
 	"github.com/mithrandie/csvq/lib/query"
 )
 
-func Syntax(proc *query.Processor, words []string) error {
+func Syntax(ctx context.Context, proc *query.Processor, words []string) error {
 	keywords := make([]parser.QueryExpression, 0, len(words))
 	for _, w := range words {
 		keywords = append(keywords, parser.NewStringValue(w))
@@ -19,6 +19,6 @@ func Syntax(proc *query.Processor, words []string) error {
 		},
 	}
 
-	_, err := proc.Execute(context.Background(), statements)
+	_, err := proc.Execute(ctx, statements)
 	return err
 }

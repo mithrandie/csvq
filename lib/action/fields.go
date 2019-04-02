@@ -7,7 +7,7 @@ import (
 	"github.com/mithrandie/csvq/lib/query"
 )
 
-func ShowFields(proc *query.Processor, filename string) error {
+func ShowFields(ctx context.Context, proc *query.Processor, filename string) error {
 	statements := []parser.Statement{
 		parser.ShowFields{
 			Type:  parser.Identifier{Literal: "FIELDS"},
@@ -15,6 +15,6 @@ func ShowFields(proc *query.Processor, filename string) error {
 		},
 	}
 
-	_, err := proc.Execute(context.Background(), statements)
+	_, err := proc.Execute(ctx, statements)
 	return err
 }
