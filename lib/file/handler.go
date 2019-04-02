@@ -95,6 +95,31 @@ type Handler struct {
 	closed bool
 }
 
+func NewHandlerWithoutLock(ctx context.Context, container *Container, path string, defaultWaitTimeout time.Duration, retryDelay time.Duration) (*Handler, error) {
+	tctx, cancel := GetTimeoutContext(ctx, defaultWaitTimeout)
+	defer cancel()
+
+	h := &Handler{
+		path:     path,
+		openType: ForRead,
+	}
+
+	if !Exists(h.path) {
+		return h, NewNotExistError(fmt.Sprintf("file %s does not exist", h.path))
+	}
+
+	fp, err := file.OpenToReadContext(tctx, retryDelay, h.path)
+	if err != nil {
+		return h, closeIsolatedHandler(h, err)
+	}
+	h.fp = fp
+
+	if err := container.Add(h.path, h); err != nil {
+		return h, closeIsolatedHandler(h, err)
+	}
+	return h, nil
+}
+
 func NewHandlerForRead(ctx context.Context, container *Container, path string, defaultWaitTimeout time.Duration, retryDelay time.Duration) (*Handler, error) {
 	tctx, cancel := GetTimeoutContext(ctx, defaultWaitTimeout)
 	defer cancel()
@@ -105,7 +130,7 @@ func NewHandlerForRead(ctx context.Context, container *Container, path string, d
 	}
 
 	if !Exists(h.path) {
-		return h, NewIOError(fmt.Sprintf("file %s does not exist", h.path))
+		return h, NewNotExistError(fmt.Sprintf("file %s does not exist", h.path))
 	}
 
 	if err := h.CreateManagementFileContext(tctx, retryDelay, fileTypeRLock); err != nil {
@@ -131,7 +156,7 @@ func NewHandlerForCreate(container *Container, path string) (*Handler, error) {
 	}
 
 	if Exists(h.path) {
-		return h, NewIOError(fmt.Sprintf("file %s already exists", h.path))
+		return h, NewAlreadyExistError(fmt.Sprintf("file %s already exists", h.path))
 	}
 
 	if err := h.tryCreateManagementFile(fileTypeLock); err != nil {
@@ -160,7 +185,7 @@ func NewHandlerForUpdate(ctx context.Context, container *Container, path string,
 	}
 
 	if !Exists(h.path) {
-		return h, NewIOError(fmt.Sprintf("file %s does not exist", h.path))
+		return h, NewNotExistError(fmt.Sprintf("file %s does not exist", h.path))
 	}
 
 	if err := h.CreateManagementFileContext(tctx, retryDelay, fileTypeLock); err != nil {

@@ -205,7 +205,7 @@ func TestIsReadableFromPipeOrRedirection(t *testing.T) {
 	r, _ := os.Open(filepath.Join(TestDataDir, "empty.txt"))
 	os.Stdin = r
 
-	result := IsReadableFromPipeOrRedirection()
+	result := IsReadableFromPipeOrRedirection(os.Stdin)
 
 	_ = r.Close()
 
@@ -220,7 +220,7 @@ func TestIsReadableFromPipeOrRedirection(t *testing.T) {
 	_, _ = w.Write([]byte("abcde"))
 	_ = w.Close()
 
-	result = IsReadableFromPipeOrRedirection()
+	result = IsReadableFromPipeOrRedirection(os.Stdin)
 
 	_ = r.Close()
 	os.Stdin = oldStdin

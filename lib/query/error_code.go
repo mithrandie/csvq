@@ -15,9 +15,7 @@ const (
 	ErrorExternalCommand = 1100
 
 	//IO Error
-	ErrorIOError          = 2000
-	ErrorReadFile         = 2001
-	ErrorWriteFile        = 2002
+	ErrorIO               = 2000
 	ErrorCommit           = 2100
 	ErrorRollback         = 2101
 	ErrorInvalidPath      = 2200
@@ -121,6 +119,8 @@ const (
 	ErrorDuplicateStatementName               = 20601
 	ErrorStatementNotExist                    = 20602
 	ErrorStatementReplaceValueNotSpecified    = 20603
+
+	ErrorIncorrectCommandUsage = 30000
 
 	//User Triggered Error
 	ErrorExit          = 32000

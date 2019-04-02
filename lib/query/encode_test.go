@@ -2,6 +2,7 @@ package query
 
 import (
 	"bytes"
+	"context"
 	"testing"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -423,6 +424,7 @@ var encodeViewTests = []struct {
 
 func TestEncodeView(t *testing.T) {
 	buf := new(bytes.Buffer)
+	ctx := context.Background()
 
 	for _, v := range encodeViewTests {
 		if v.WriteEncoding == "" {
@@ -450,7 +452,7 @@ func TestEncodeView(t *testing.T) {
 		}
 
 		buf.Reset()
-		_, err := EncodeView(buf, v.View, fileInfo, TestTx.Flags)
+		_, err := EncodeView(ctx, buf, v.View, fileInfo, TestTx.Flags)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

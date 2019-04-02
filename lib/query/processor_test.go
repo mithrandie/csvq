@@ -3,8 +3,6 @@ package query
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"reflect"
 	"strings"
 	"sync"
@@ -841,6 +839,7 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
 		TestTx.uncommittedViews.Clean()
+		TestTx.Session.Stdout = NewDiscard()
 		initFlag(TestTx.Flags)
 	}()
 
@@ -855,12 +854,10 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 		_ = TestTx.ReleaseResources()
 		TestTx.uncommittedViews = NewUncommittedViews()
 
-		r, w, _ := os.Pipe()
-		tx.Session.Stdout = w
+		out := NewOutput()
+		tx.Session.Stdout = out
 		_, err := proc.ExecuteStatement(context.Background(), v.Input)
-		_ = w.Close()
-
-		log, _ := ioutil.ReadAll(r)
+		log := out.String()
 
 		if err != nil {
 			var code int
@@ -871,7 +868,7 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 					t.Errorf("error %q, want error %q for %q", err, v.Error, v.Input)
 				}
 
-				code = apperr.ReturnCode()
+				code = apperr.Code()
 			}
 			if code != v.ReturnCode {
 				t.Errorf("error code %d, want error code %d for %q", code, v.ReturnCode, v.Input)
@@ -1036,21 +1033,22 @@ var processorIfStmtTests = []struct {
 }
 
 func TestProcessor_IfStmt(t *testing.T) {
-	defer initFlag(TestTx.Flags)
+	defer func() {
+		TestTx.Session.Stdout = NewDiscard()
+		initFlag(TestTx.Flags)
+	}()
 
 	TestTx.Flags.SetQuiet(true)
 	tx := TestTx
 	proc := NewProcessor(tx)
 
 	for _, v := range processorIfStmtTests {
-		r, w, _ := os.Pipe()
-		tx.Session.Stdout = w
+		out := NewOutput()
+		tx.Session.Stdout = out
 
 		proc.returnVal = nil
 		flow, err := proc.IfStmt(context.Background(), v.Stmt)
-		_ = w.Close()
-
-		log, _ := ioutil.ReadAll(r)
+		log := out.String()
 
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -1213,19 +1211,20 @@ var processorCaseStmtTests = []struct {
 }
 
 func TestProcessor_Case(t *testing.T) {
-	defer initFlag(TestTx.Flags)
+	defer func() {
+		TestTx.Session.Stdout = NewDiscard()
+		initFlag(TestTx.Flags)
+	}()
 
 	TestTx.Flags.SetQuiet(true)
 	tx := TestTx
 	proc := NewProcessor(tx)
 
 	for _, v := range processorCaseStmtTests {
-		r, w, _ := os.Pipe()
-		tx.Session.Stdout = w
+		out := NewOutput()
+		tx.Session.Stdout = out
 		flow, err := proc.Case(context.Background(), v.Stmt)
-		_ = w.Close()
-
-		log, _ := ioutil.ReadAll(r)
+		log := out.String()
 
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -1480,7 +1479,10 @@ var processorWhileTests = []struct {
 }
 
 func TestProcessor_While(t *testing.T) {
-	defer initFlag(TestTx.Flags)
+	defer func() {
+		TestTx.Session.Stdout = NewDiscard()
+		initFlag(TestTx.Flags)
+	}()
 
 	TestTx.Flags.SetQuiet(true)
 	tx := TestTx
@@ -1498,12 +1500,10 @@ func TestProcessor_While(t *testing.T) {
 		}
 		_ = proc.Filter.variables[0].Set(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
 
-		r, w, _ := os.Pipe()
-		tx.Session.Stdout = w
+		out := NewOutput()
+		tx.Session.Stdout = out
 		flow, err := proc.While(context.Background(), v.Stmt)
-		_ = w.Close()
-
-		log, _ := ioutil.ReadAll(r)
+		log := out.String()
 
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -1710,6 +1710,7 @@ var processorWhileInCursorTests = []struct {
 func TestProcessor_WhileInCursor(t *testing.T) {
 	defer func() {
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		TestTx.Session.Stdout = NewDiscard()
 		initFlag(TestTx.Flags)
 	}()
 
@@ -1732,12 +1733,10 @@ func TestProcessor_WhileInCursor(t *testing.T) {
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		_ = proc.Filter.cursors.Open(context.Background(), proc.Filter, parser.Identifier{Literal: "cur"}, nil)
 
-		r, w, _ := os.Pipe()
-		tx.Session.Stdout = w
+		out := NewOutput()
+		tx.Session.Stdout = out
 		flow, err := proc.WhileInCursor(context.Background(), v.Stmt)
-		_ = w.Close()
-
-		log, _ := ioutil.ReadAll(r)
+		log := out.String()
 
 		if err != nil {
 			if len(v.Error) < 1 {

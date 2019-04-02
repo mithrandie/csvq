@@ -42,12 +42,12 @@ type Transaction struct {
 func NewTransaction(ctx context.Context, defaultWaitTimeout time.Duration, retryDelay time.Duration, session *Session) (*Transaction, error) {
 	environment, err := cmd.NewEnvironment(ctx, defaultWaitTimeout, retryDelay)
 	if err != nil {
-		return nil, NewTransactionOpenError(err.Error())
+		return nil, ConvertLoadConfigurationError(err)
 	}
 	flags := cmd.NewFlags(environment)
 
 	if err := cmd.LoadPalette(environment); err != nil {
-		return nil, NewTransactionOpenError(err.Error())
+		return nil, ConvertLoadConfigurationError(err)
 	}
 
 	return &Transaction{
@@ -79,7 +79,7 @@ func (tx *Transaction) UpdateWaitTimeout(waitTimeout float64, retryDelay time.Du
 	tx.Flags.SetWaitTimeout(waitTimeout)
 }
 
-func (tx *Transaction) Commit(filter *Filter, expr parser.Expression) error {
+func (tx *Transaction) Commit(ctx context.Context, filter *Filter, expr parser.Expression) error {
 	tx.operationMutex.Lock()
 	defer tx.operationMutex.Unlock()
 
@@ -100,7 +100,7 @@ func (tx *Transaction) Commit(filter *Filter, expr parser.Expression) error {
 				return NewSystemError(err.Error())
 			}
 
-			_, err := EncodeView(fp, view, fileinfo, tx.Flags)
+			_, err := EncodeView(ctx, fp, view, fileinfo, tx.Flags)
 			if err != nil {
 				return NewCommitError(expr, err.Error())
 			}
@@ -120,7 +120,7 @@ func (tx *Transaction) Commit(filter *Filter, expr parser.Expression) error {
 				return NewSystemError(err.Error())
 			}
 
-			if _, err := EncodeView(fp, view, fileinfo, tx.Flags); err != nil {
+			if _, err := EncodeView(ctx, fp, view, fileinfo, tx.Flags); err != nil {
 				return NewCommitError(expr, err.Error())
 			}
 

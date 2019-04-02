@@ -4059,7 +4059,7 @@ var filterEvaluateTests = []struct {
 			Literal: "?",
 			Ordinal: 1,
 		},
-		Error: "replace value for ? is not specified",
+		Error: "replace value for ?{1} is not specified",
 	},
 	{
 		Name: "Placeholder Ordinal Replace Value Not Exist Error",
@@ -4070,7 +4070,7 @@ var filterEvaluateTests = []struct {
 		ReplaceValues: &ReplaceValues{
 			Values: []parser.QueryExpression{parser.NewIntegerValueFromString("1")},
 		},
-		Error: "replace value for ? is not specified",
+		Error: "replace value for ?{10} is not specified",
 	},
 	{
 		Name: "Placeholder Named Replace Value Not Exist Error",

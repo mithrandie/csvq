@@ -38,6 +38,34 @@ func (e IOError) Error() string {
 	return e.message
 }
 
+type NotExistError struct {
+	message string
+}
+
+func NewNotExistError(message string) error {
+	return &NotExistError{
+		message: message,
+	}
+}
+
+func (e NotExistError) Error() string {
+	return e.message
+}
+
+type AlreadyExistError struct {
+	message string
+}
+
+func NewAlreadyExistError(message string) error {
+	return &AlreadyExistError{
+		message: message,
+	}
+}
+
+func (e AlreadyExistError) Error() string {
+	return e.message
+}
+
 type LockError struct {
 	message string
 }

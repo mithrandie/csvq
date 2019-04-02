@@ -5608,7 +5608,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input:       "select ?, :val",
+		Input:       "select ?, :val, :val",
 		ForPrepared: true,
 		Output: []Statement{
 			SelectQuery{SelectEntity: SelectEntity{
@@ -5617,6 +5617,7 @@ var parseTests = []struct {
 					Fields: []QueryExpression{
 						Field{Object: Placeholder{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "?", Ordinal: 1}},
 						Field{Object: Placeholder{BaseExpr: &BaseExpr{line: 1, char: 11}, Literal: ":val", Ordinal: 2, Name: "val"}},
+						Field{Object: Placeholder{BaseExpr: &BaseExpr{line: 1, char: 17}, Literal: ":val", Ordinal: 3, Name: "val"}},
 					},
 				},
 			}},

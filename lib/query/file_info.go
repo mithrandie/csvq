@@ -352,7 +352,7 @@ func SearchFilePathWithExtType(filename parser.Identifier, repository string, ex
 func NewFileInfoForCreate(filename parser.Identifier, repository string, delimiter rune, encoding text.Encoding) (*FileInfo, error) {
 	fpath, err := CreateFilePath(filename, repository)
 	if err != nil {
-		return nil, NewWriteFileError(filename, err.Error())
+		return nil, NewIOError(filename, err.Error())
 	}
 
 	var format cmd.Format

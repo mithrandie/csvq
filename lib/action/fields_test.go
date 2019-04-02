@@ -22,10 +22,12 @@ var showFieldsTests = []struct {
 }
 
 func TestShowFields(t *testing.T) {
+	tx, _ := query.NewTransaction(context.Background(), file.DefaultWaitTimeout, file.DefaultRetryDelay, query.NewSession())
+	ctx := context.Background()
+
 	for _, v := range showFieldsTests {
-		tx, _ := query.NewTransaction(context.Background(), file.DefaultWaitTimeout, file.DefaultRetryDelay, query.NewSession())
 		proc := query.NewProcessor(tx)
-		err := ShowFields(proc, v.Input)
+		err := ShowFields(ctx, proc, v.Input)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

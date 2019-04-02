@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -172,6 +173,9 @@ type Placeholder struct {
 }
 
 func (e Placeholder) String() string {
+	if len(e.Name) < 1 {
+		return fmt.Sprintf("%s{%d}", e.Literal, e.Ordinal)
+	}
 	return e.Literal
 }
 

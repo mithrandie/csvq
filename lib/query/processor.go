@@ -78,7 +78,7 @@ func (proc *Processor) Execute(ctx context.Context, statements []parser.Statemen
 
 	flow, err := proc.execute(ctx, statements)
 	if err == nil && flow == Terminate && proc.Tx.AutoCommit {
-		err = proc.AutoCommit()
+		err = proc.AutoCommit(ctx)
 	}
 	return flow, err
 }
@@ -183,8 +183,9 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 		if e == nil {
 			if proc.storeResults {
 				proc.Tx.SelectedViews = append(proc.Tx.SelectedViews, view)
+			}
 
-			} else {
+			if _, ok := proc.Tx.Session.Stdout.(*Discard); !ok || proc.Tx.Session.OutFile != nil {
 				fileInfo := &FileInfo{
 					Format:             proc.Tx.Flags.Format,
 					Delimiter:          proc.Tx.Flags.WriteDelimiter,
@@ -203,7 +204,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 				} else {
 					writer = proc.Tx.Session.Stdout
 				}
-				warnmsg, e := EncodeView(writer, view, fileInfo, proc.Tx.Flags)
+				warnmsg, e := EncodeView(ctx, writer, view, fileInfo, proc.Tx.Flags)
 
 				if e != nil {
 					if _, ok := e.(*EmptyResultSetError); ok {
@@ -222,7 +223,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 		}
 
 		if proc.Tx.Flags.Stats {
-			proc.showExecutionTime()
+			proc.showExecutionTime(ctx)
 		}
 	case parser.InsertQuery:
 		if proc.Tx.Flags.Stats {
@@ -243,7 +244,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 		}
 
 		if proc.Tx.Flags.Stats {
-			proc.showExecutionTime()
+			proc.showExecutionTime(ctx)
 		}
 	case parser.UpdateQuery:
 		if proc.Tx.Flags.Stats {
@@ -268,7 +269,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 		}
 
 		if proc.Tx.Flags.Stats {
-			proc.showExecutionTime()
+			proc.showExecutionTime(ctx)
 		}
 	case parser.DeleteQuery:
 		if proc.Tx.Flags.Stats {
@@ -293,7 +294,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 		}
 
 		if proc.Tx.Flags.Stats {
-			proc.showExecutionTime()
+			proc.showExecutionTime(ctx)
 		}
 	case parser.CreateTable:
 		info, e := CreateTable(ctx, proc.Filter, stmt.(parser.CreateTable))
@@ -343,7 +344,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 	case parser.TransactionControl:
 		switch stmt.(parser.TransactionControl).Token {
 		case parser.COMMIT:
-			err = proc.Commit(stmt.(parser.Expression))
+			err = proc.Commit(ctx, stmt.(parser.Expression))
 		case parser.ROLLBACK:
 			err = proc.Rollback(stmt.(parser.Expression))
 		}
@@ -614,7 +615,7 @@ func (proc *Processor) ExecExternalCommand(ctx context.Context, stmt parser.Exte
 		arg, err := proc.Filter.EvaluateEmbeddedString(ctx, argStr)
 		if err != nil {
 			if appErr, ok := err.(Error); ok {
-				err = NewExternalCommandError(stmt, appErr.ErrorMessage())
+				err = NewExternalCommandError(stmt, appErr.Message())
 			} else {
 				err = NewExternalCommandError(stmt, err.Error())
 			}
@@ -639,7 +640,11 @@ func (proc *Processor) ExecExternalCommand(ctx context.Context, stmt parser.Exte
 	return err
 }
 
-func (proc *Processor) showExecutionTime() {
+func (proc *Processor) showExecutionTime(ctx context.Context) {
+	if ctx.Err() != nil {
+		return
+	}
+
 	palette := cmd.GetPalette()
 	exectime := cmd.FormatNumber(time.Since(proc.measurementStart).Seconds(), 6, ".", ",", "")
 	stats := fmt.Sprintf(palette.Render(cmd.LableEffect, "Query Execution Time: ")+"%s seconds", exectime)
@@ -662,12 +667,12 @@ func (proc *Processor) LogError(log string) {
 	proc.Tx.Session.LogError(log)
 }
 
-func (proc *Processor) AutoCommit() error {
-	return proc.Commit(nil)
+func (proc *Processor) AutoCommit(ctx context.Context) error {
+	return proc.Commit(ctx, nil)
 }
 
-func (proc *Processor) Commit(expr parser.Expression) error {
-	return proc.Tx.Commit(proc.Filter, expr)
+func (proc *Processor) Commit(ctx context.Context, expr parser.Expression) error {
+	return proc.Tx.Commit(ctx, proc.Filter, expr)
 }
 
 func (proc *Processor) AutoRollback() error {

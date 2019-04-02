@@ -487,6 +487,27 @@ var scanTests = []struct {
 		},
 	},
 	{
+		Name:        "Placeholders",
+		Input:       "? :?",
+		ForPrepared: true,
+		Output: []scanResult{
+			{
+				Token:         PLACEHOLDER,
+				Literal:       "?",
+				HolderOrdinal: 1,
+			},
+			{
+				Token:   ':',
+				Literal: ":",
+			},
+			{
+				Token:         PLACEHOLDER,
+				Literal:       "?",
+				HolderOrdinal: 2,
+			},
+		},
+	},
+	{
 		Name:        "Placeholder Disabled",
 		Input:       "?",
 		ForPrepared: false,

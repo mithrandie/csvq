@@ -31,7 +31,7 @@ var appendCompositeErrorTests = []struct {
 
 func TestAppendCompositeError(t *testing.T) {
 	for _, v := range appendCompositeErrorTests {
-		result := AppendCompositeError(v.Err1, v.Err2)
+		result := appendCompositeError(v.Err1, v.Err2)
 		if result.Error() != v.Expect {
 			t.Errorf("result = %s, want %s for %v, %v", result, v.Expect, v.Err1, v.Err2)
 		}

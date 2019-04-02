@@ -2,8 +2,6 @@ package action
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -20,17 +18,11 @@ import (
 	"github.com/mithrandie/go-file/v2"
 )
 
-func Run(proc *query.Processor, input string, sourceFile string, outfile string) error {
+func Run(ctx context.Context, proc *query.Processor, input string, sourceFile string, outfile string) error {
 	start := time.Now()
 
 	defer func() {
-		if e := proc.AutoRollback(); e != nil {
-			proc.LogError(e.Error())
-		}
-		if err := proc.ReleaseResourcesWithErrors(); err != nil {
-			proc.LogError(err.Error())
-		}
-		showStats(proc, start)
+		showStats(ctx, proc, start)
 	}()
 
 	statements, _, err := parser.Parse(input, sourceFile, proc.Tx.Flags.DatetimeFormat, false)
@@ -43,12 +35,12 @@ func Run(proc *query.Processor, input string, sourceFile string, outfile string)
 			outfile = abs
 		}
 		if csvqfile.Exists(outfile) {
-			return errors.New(fmt.Sprintf("file %s already exists", outfile))
+			return query.NewFileAlreadyExistError(parser.Identifier{Literal: outfile})
 		}
 
 		fp, err := file.Create(outfile)
 		if err != nil {
-			return errors.New(fmt.Sprintf("failed to create file: %s", err.Error()))
+			return query.NewIOError(nil, err.Error())
 		}
 		defer func() {
 			if info, err := fp.Stat(); err == nil && info.Size() < 1 {
@@ -64,30 +56,20 @@ func Run(proc *query.Processor, input string, sourceFile string, outfile string)
 	}
 
 	proc.Tx.AutoCommit = true
-	_, err = proc.Execute(context.Background(), statements)
+	_, err = proc.Execute(ctx, statements)
 	return err
 }
 
-func LaunchInteractiveShell(proc *query.Processor) error {
-	if cmd.IsReadableFromPipeOrRedirection() {
-		return errors.New("input from pipe or redirection cannot be used in interactive shell")
+func LaunchInteractiveShell(ctx context.Context, proc *query.Processor) error {
+	if cmd.IsReadableFromPipeOrRedirection(os.Stdin) {
+		return query.NewIncorrectCommandUsageError("input from pipe or redirection cannot be used in interactive shell")
 	}
-
-	defer func() {
-		if e := proc.AutoRollback(); e != nil {
-			proc.LogError(e.Error())
-		}
-		if err := proc.ReleaseResourcesWithErrors(); err != nil {
-			proc.LogError(err.Error())
-		}
-	}()
 
 	var err error
 
-	ctx := context.Background()
 	term, err := query.NewTerminal(ctx, proc.Filter)
 	if err != nil {
-		return err
+		return query.ConvertLoadConfigurationError(err)
 	}
 	proc.Tx.Session.Terminal = term
 	defer func() {
@@ -105,13 +87,18 @@ func LaunchInteractiveShell(proc *query.Processor) error {
 	lines := make([]string, 0)
 
 	for {
+		if ctx.Err() != nil {
+			err = query.NewContextIsDone(ctx.Err().Error())
+			break
+		}
+
 		proc.Tx.Session.Terminal.UpdateCompleter()
 		line, e := proc.Tx.Session.Terminal.ReadLine()
 		if e != nil {
 			if e == io.EOF {
 				break
 			}
-			return e
+			return query.NewIOError(nil, e.Error())
 		}
 
 		line = strings.TrimRightFunc(line, unicode.IsSpace)
@@ -181,7 +168,11 @@ func LaunchInteractiveShell(proc *query.Processor) error {
 	return err
 }
 
-func showStats(proc *query.Processor, start time.Time) {
+func showStats(ctx context.Context, proc *query.Processor, start time.Time) {
+	if ctx.Err() != nil {
+		return
+	}
+
 	if !proc.Tx.Flags.Stats {
 		return
 	}

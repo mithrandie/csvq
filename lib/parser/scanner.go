@@ -105,6 +105,8 @@ type Scanner struct {
 	forPrepared     bool
 
 	holderOrdinal int
+	holderNames   []string
+	holderNumber  int
 }
 
 func (s *Scanner) Init(src string, sourceFile string, datetimeFormats []string, forPrepared bool) *Scanner {
@@ -118,6 +120,8 @@ func (s *Scanner) Init(src string, sourceFile string, datetimeFormats []string, 
 	s.datetimeFormats = datetimeFormats
 	s.forPrepared = forPrepared
 	s.holderOrdinal = 0
+	s.holderNames = make([]string, 0, 10)
+	s.holderNumber = 0
 	return s
 }
 
@@ -126,7 +130,16 @@ func (s *Scanner) GetDatetimeFormats() []string {
 }
 
 func (s *Scanner) HolderNumber() int {
-	return s.holderOrdinal
+	return s.holderNumber
+}
+
+func (s *Scanner) holderNameExists(name string) bool {
+	for _, v := range s.holderNames {
+		if name == v {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Scanner) peek() rune {
@@ -181,12 +194,18 @@ func (s *Scanner) Scan() (Token, error) {
 		switch ch {
 		case '?':
 			s.holderOrdinal++
+			s.holderNumber++
 			return Token{Token: PLACEHOLDER, Literal: literal, HolderOrdinal: s.holderOrdinal, Line: line, Char: char, SourceFile: s.sourceFile}, s.err
 		case ':':
 			if s.isIdentRune(s.peek()) {
 				s.scanIdentifier(ch)
+				holderName := s.literal.String()
 				s.holderOrdinal++
-				return Token{Token: PLACEHOLDER, Literal: s.literal.String(), HolderOrdinal: s.holderOrdinal, Line: line, Char: char, SourceFile: s.sourceFile}, s.err
+				if !s.holderNameExists(holderName) {
+					s.holderNames = append(s.holderNames, holderName)
+					s.holderNumber++
+				}
+				return Token{Token: PLACEHOLDER, Literal: holderName, HolderOrdinal: s.holderOrdinal, Line: line, Char: char, SourceFile: s.sourceFile}, s.err
 			}
 		}
 	}

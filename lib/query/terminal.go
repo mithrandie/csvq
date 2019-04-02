@@ -183,12 +183,12 @@ func (p *Prompt) evaluate(ctx context.Context, expr parser.QueryExpression) erro
 	val, err := p.filter.Evaluate(ctx, expr)
 	if err != nil {
 		if ae, ok := err.(Error); ok {
-			err = NewPromptEvaluationError(ae.ErrorMessage())
+			err = NewPromptEvaluationError(ae.Message())
 		}
 		return err
 	}
 	s, _ := NewStringFormatter().Format("%s", []value.Primary{val})
-	p.buf.WriteString(s)
+	_, err = p.buf.WriteString(s)
 	if err != nil {
 		err = NewPromptEvaluationError(err.Error())
 	}

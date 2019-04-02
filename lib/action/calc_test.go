@@ -2,8 +2,8 @@ package action
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/mithrandie/csvq/lib/file"
@@ -40,35 +40,30 @@ var calcTests = []struct {
 	{
 		Stdin: "foo",
 		Input: "error",
-		Error: "syntax error",
+		Error: "field error does not exist",
 	},
 }
 
 func TestCalc(t *testing.T) {
 	tx, _ := query.NewTransaction(context.Background(), file.DefaultWaitTimeout, file.DefaultRetryDelay, query.NewSession())
 	filter := query.NewFilter(tx)
+	ctx := context.Background()
 
 	for _, v := range calcTests {
 		_ = tx.Rollback(filter, nil)
 
-		var oldStdin *os.File
 		if 0 < len(v.Stdin) {
-			oldStdin = os.Stdin
-			r, w, _ := os.Pipe()
-			_, _ = w.WriteString(v.Stdin)
-			_ = w.Close()
-			os.Stdin = r
+			tx.Session.Stdin = query.NewInput(strings.NewReader(v.Stdin))
 		}
-		r, w, _ := os.Pipe()
-		tx.Session.Stdout = w
+		out := query.NewOutput()
+		tx.Session.Stdout = out
 
-		err := Calc(query.NewProcessor(tx), v.Input)
+		err := Calc(ctx, query.NewProcessor(tx), v.Input)
 
 		if 0 < len(v.Stdin) {
-			os.Stdin = oldStdin
+			tx.Session.Stdin = os.Stdin
 		}
-		_ = w.Close()
-		stdout, _ := ioutil.ReadAll(r)
+		stdout := out.String()
 
 		if err != nil {
 			if len(v.Error) < 1 {
