@@ -181,6 +181,8 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 
 		view, e := Select(ctx, proc.Filter, stmt.(parser.SelectQuery))
 		if e == nil {
+			proc.Tx.Session.outfileMtx.Lock()
+
 			if proc.storeResults {
 				proc.Tx.SelectedViews = append(proc.Tx.SelectedViews, view)
 			}
@@ -207,17 +209,17 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 				warnmsg, e := EncodeView(ctx, writer, view, fileInfo, proc.Tx.Flags)
 
 				if e != nil {
-					if _, ok := e.(*EmptyResultSetError); ok {
-						if 0 < len(warnmsg) {
-							proc.LogWarn(warnmsg, proc.Tx.Flags.Quiet)
-						}
-					} else {
+					if _, ok := e.(*EmptyResultSetError); !ok {
 						err = e
+					} else if 0 < len(warnmsg) {
+						proc.LogWarn(warnmsg, proc.Tx.Flags.Quiet)
 					}
 				} else if !(proc.Tx.Session.OutFile != nil && fileInfo.Format == cmd.FIXED && fileInfo.SingleLine) {
 					_, err = writer.Write([]byte(proc.Tx.Flags.LineBreak.Value()))
 				}
 			}
+
+			proc.Tx.Session.outfileMtx.Unlock()
 		} else {
 			err = e
 		}
