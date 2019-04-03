@@ -1,128 +1,133 @@
 package query
 
+const returnCodeBaseSignal = 128
+const errorSignalBase = 91280
+
 const (
-	ReturnCodeSystemError               = 1
-	ReturnCodeIOError                   = 2
-	ReturnCodeContextIsDone             = 4
-	ReturnCodeSyntaxError               = 8
-	ReturnCodeApplicationError          = 16
-	ReturnCodeDefaultUserTriggeredError = 32
+	ReturnCodeApplicationError          = 1
+	ReturnCodeIncorrectUsage            = 2
+	ReturnCodeSyntaxError               = 4
+	ReturnCodeContextIsDone             = 8
+	ReturnCodeIOError                   = 16
+	ReturnCodeSystemError               = 32
+	ReturnCodeDefaultUserTriggeredError = 64
 )
 
 const (
-	//System Error
-	ErrorSystemError     = 1000
-	ErrorExternalCommand = 1100
+	//Application Error
+	ErrorFieldAmbiguous                       = 101
+	ErrorFieldNotExist                        = 102
+	ErrorFieldNotGroupKey                     = 103
+	ErrorDuplicateFieldName                   = 104
+	ErrorNotGroupingRecords                   = 201
+	ErrorUndeclaredVariable                   = 301
+	ErrorVariableRedeclared                   = 302
+	ErrorFunctionNotExist                     = 401
+	ErrorFunctionArgumentsLength              = 402
+	ErrorFunctionInvalidArgument              = 403
+	ErrorFunctionRedeclared                   = 501
+	ErrorBuiltInFunctionDeclared              = 502
+	ErrorDuplicateParameter                   = 503
+	ErrorSubqueryTooManyRecords               = 601
+	ErrorSubqueryTooManyFields                = 602
+	ErrorJsonQueryTooManyRecords              = 701
+	ErrorLoadJson                             = 702
+	ErrorEmptyJsonQuery                       = 703
+	ErrorEmptyJsonTable                       = 801
+	ErrorInvalidTableObject                   = 901
+	ErrorTableObjectInvalidDelimiter          = 902
+	ErrorTableObjectInvalidDelimiterPositions = 903
+	ErrorTableObjectInvalidJsonQuery          = 904
+	ErrorTableObjectArgumentsLength           = 905
+	ErrorTableObjectJsonArgumentsLength       = 906
+	ErrorTableObjectInvalidArgument           = 907
+	ErrorCursorRedeclared                     = 1001
+	ErrorUndeclaredCursor                     = 1002
+	ErrorCursorClosed                         = 1003
+	ErrorCursorOpen                           = 1004
+	ErrorInvalidCursorStatement               = 1005
+	ErrorPseudoCursor                         = 1006
+	ErrorCursorFetchLength                    = 1007
+	ErrorInvalidFetchPosition                 = 1008
+	ErrorInlineTableRedefined                 = 1101
+	ErrorUndefinedInlineTable                 = 1102
+	ErrorInlineTableFieldLength               = 1103
+	ErrorFileNameAmbiguous                    = 1201
+	ErrorDataParsing                          = 1301
+	ErrorTableFieldLength                     = 1401
+	ErrorTemporaryTableRedeclared             = 1501
+	ErrorUndeclaredTemporaryTable             = 1502
+	ErrorTemporaryTableFieldLength            = 1503
+	ErrorDuplicateTableName                   = 1601
+	ErrorTableNotLoaded                       = 1602
+	ErrorStdinEmpty                           = 1603
+	ErrorRowValueLengthInComparison           = 1701
+	ErrorFieldLengthInComparison              = 1702
+	ErrorInvalidLimitPercentage               = 1801
+	ErrorInvalidLimitNumber                   = 1802
+	ErrorInvalidOffsetNumber                  = 1901
+	ErrorCombinedSetFieldLength               = 2001
+	ErrorInsertRowValueLength                 = 2101
+	ErrorInsertSelectFieldLength              = 2102
+	ErrorUpdateFieldNotExist                  = 2201
+	ErrorUpdateValueAmbiguous                 = 2202
+	ErrorDeleteTableNotSpecified              = 2301
+	ErrorShowInvalidObjectType                = 2401
+	ErrorReplaceValueLength                   = 2501
+	ErrorSourceInvalidFilePath                = 2601
+	ErrorInvalidFlagName                      = 2701
+	ErrorFlagValueNowAllowedFormat            = 2702
+	ErrorInvalidFlagValue                     = 2703
+	ErrorAddFlagNotSupportedName              = 2801
+	ErrorRemoveFlagNotSupportedName           = 2802
+	ErrorInvalidFlagValueToBeRemoved          = 2803
+	ErrorInvalidRuntimeInformation            = 2901
+	ErrorNotTable                             = 3001
+	ErrorInvalidTableAttributeName            = 3002
+	ErrorTableAttributeValueNotAllowedFormat  = 3003
+	ErrorInvalidTableAttributeValue           = 3004
+	ErrorInvalidEventName                     = 3101
+	ErrorInternalRecordIdNotExist             = 3201
+	ErrorInternalRecordIdEmpty                = 3202
+	ErrorFieldLengthNotMatch                  = 3301
+	ErrorRowValueLengthInList                 = 3401
+	ErrorFormatStringLengthNotMatch           = 3501
+	ErrorUnknownFormatPlaceholder             = 3502
+	ErrorFormatUnexpectedTermination          = 3503
+	ErrorInvalidReloadType                    = 3601
+	ErrorLoadConfiguration                    = 3701
+	ErrorDuplicateStatementName               = 3801
+	ErrorStatementNotExist                    = 3802
+	ErrorStatementReplaceValueNotSpecified    = 3803
 
-	//IO Error
-	ErrorIO               = 2000
-	ErrorCommit           = 2100
-	ErrorRollback         = 2101
-	ErrorInvalidPath      = 2200
-	ErrorFileNotExist     = 2201
-	ErrorFileAlreadyExist = 2202
-	ErrorFileUnableToRead = 2203
-
-	//Context Error
-	ErrorContextIsDone   = 4000
-	ErrorFileLockTimeout = 4001
+	//Incorrect Command Usage
+	ErrorIncorrectCommandUsage = 90020
 
 	//Syntax Error
-	ErrorSyntaxError                  = 8000
-	ErrorInvalidValueExpression       = 8001
-	ErrorUnpermittedFunctionStatement = 8002
-	ErrorNestedAggregateFunctions     = 8003
-	ErrorPreparedStatementSyntaxError = 8004
+	ErrorSyntaxError                  = 90040
+	ErrorInvalidValueExpression       = 90041
+	ErrorUnpermittedFunctionStatement = 90042
+	ErrorNestedAggregateFunctions     = 90043
+	ErrorPreparedStatementSyntaxError = 90044
 
-	//Application Error
-	ErrorFieldAmbiguous                       = 16001
-	ErrorFieldNotExist                        = 16002
-	ErrorFieldNotGroupKey                     = 16003
-	ErrorDuplicateFieldName                   = 16004
-	ErrorNotGroupingRecords                   = 16101
-	ErrorUndeclaredVariable                   = 16201
-	ErrorVariableRedeclared                   = 16202
-	ErrorFunctionNotExist                     = 16301
-	ErrorFunctionArgumentsLength              = 16302
-	ErrorFunctionInvalidArgument              = 16303
-	ErrorFunctionRedeclared                   = 16401
-	ErrorBuiltInFunctionDeclared              = 16402
-	ErrorDuplicateParameter                   = 16403
-	ErrorSubqueryTooManyRecords               = 16501
-	ErrorSubqueryTooManyFields                = 16502
-	ErrorJsonQueryTooManyRecords              = 16601
-	ErrorLoadJson                             = 16602
-	ErrorEmptyJsonQuery                       = 16603
-	ErrorEmptyJsonTable                       = 16701
-	ErrorInvalidTableObject                   = 16801
-	ErrorTableObjectInvalidDelimiter          = 16802
-	ErrorTableObjectInvalidDelimiterPositions = 16803
-	ErrorTableObjectInvalidJsonQuery          = 16804
-	ErrorTableObjectArgumentsLength           = 16805
-	ErrorTableObjectJsonArgumentsLength       = 16806
-	ErrorTableObjectInvalidArgument           = 16807
-	ErrorCursorRedeclared                     = 16901
-	ErrorUndeclaredCursor                     = 16902
-	ErrorCursorClosed                         = 16903
-	ErrorCursorOpen                           = 16904
-	ErrorInvalidCursorStatement               = 16905
-	ErrorPseudoCursor                         = 16906
-	ErrorCursorFetchLength                    = 16907
-	ErrorInvalidFetchPosition                 = 16908
-	ErrorInlineTableRedefined                 = 17001
-	ErrorUndefinedInlineTable                 = 17002
-	ErrorInlineTableFieldLength               = 17003
-	ErrorFileNameAmbiguous                    = 17101
-	ErrorDataParsing                          = 17201
-	ErrorTableFieldLength                     = 17301
-	ErrorTemporaryTableRedeclared             = 17401
-	ErrorUndeclaredTemporaryTable             = 17402
-	ErrorTemporaryTableFieldLength            = 17403
-	ErrorDuplicateTableName                   = 17501
-	ErrorTableNotLoaded                       = 17502
-	ErrorStdinEmpty                           = 17503
-	ErrorRowValueLengthInComparison           = 17601
-	ErrorFieldLengthInComparison              = 17602
-	ErrorInvalidLimitPercentage               = 17701
-	ErrorInvalidLimitNumber                   = 17702
-	ErrorInvalidOffsetNumber                  = 17801
-	ErrorCombinedSetFieldLength               = 17901
-	ErrorInsertRowValueLength                 = 18001
-	ErrorInsertSelectFieldLength              = 18002
-	ErrorUpdateFieldNotExist                  = 19001
-	ErrorUpdateValueAmbiguous                 = 19002
-	ErrorDeleteTableNotSpecified              = 19101
-	ErrorShowInvalidObjectType                = 19201
-	ErrorReplaceValueLength                   = 19301
-	ErrorSourceInvalidFilePath                = 19401
-	ErrorInvalidFlagName                      = 19501
-	ErrorFlagValueNowAllowedFormat            = 19502
-	ErrorInvalidFlagValue                     = 19503
-	ErrorAddFlagNotSupportedName              = 19601
-	ErrorRemoveFlagNotSupportedName           = 19602
-	ErrorInvalidFlagValueToBeRemoved          = 19603
-	ErrorInvalidRuntimeInformation            = 19701
-	ErrorNotTable                             = 19801
-	ErrorInvalidTableAttributeName            = 19802
-	ErrorTableAttributeValueNotAllowedFormat  = 19803
-	ErrorInvalidTableAttributeValue           = 19804
-	ErrorInvalidEventName                     = 19901
-	ErrorInternalRecordIdNotExist             = 20001
-	ErrorInternalRecordIdEmpty                = 20002
-	ErrorFieldLengthNotMatch                  = 20101
-	ErrorRowValueLengthInList                 = 20201
-	ErrorFormatStringLengthNotMatch           = 20301
-	ErrorUnknownFormatPlaceholder             = 20302
-	ErrorFormatUnexpectedTermination          = 20303
-	ErrorInvalidReloadType                    = 20401
-	ErrorLoadConfiguration                    = 20501
-	ErrorDuplicateStatementName               = 20601
-	ErrorStatementNotExist                    = 20602
-	ErrorStatementReplaceValueNotSpecified    = 20603
+	//Context Error
+	ErrorContextIsDone   = 90080
+	ErrorFileLockTimeout = 90081
 
-	ErrorIncorrectCommandUsage = 30000
+	//IO Error
+	ErrorIO               = 90160
+	ErrorCommit           = 90171
+	ErrorRollback         = 90172
+	ErrorInvalidPath      = 90180
+	ErrorFileNotExist     = 90181
+	ErrorFileAlreadyExist = 90182
+	ErrorFileUnableToRead = 90183
+
+	//System Error
+	ErrorSystemError     = 90320
+	ErrorExternalCommand = 30330
 
 	//User Triggered Error
-	ErrorExit          = 32000
-	ErrorUserTriggered = 32001
+	ErrorExit          = 90640
+	ErrorUserTriggered = 90650
 )

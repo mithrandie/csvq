@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"sync"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 )
@@ -61,6 +62,9 @@ type Session struct {
 	Stderr   io.WriteCloser
 	OutFile  io.Writer
 	Terminal VirtualTerminal
+
+	logMtx     *sync.Mutex
+	outfileMtx *sync.Mutex
 }
 
 func NewSession() *Session {
@@ -71,6 +75,9 @@ func NewSession() *Session {
 		Stderr:   os.Stderr,
 		OutFile:  nil,
 		Terminal: nil,
+
+		logMtx:     &sync.Mutex{},
+		outfileMtx: &sync.Mutex{},
 	}
 }
 
@@ -114,13 +121,15 @@ func (sess *Session) LogError(log string) {
 	}
 }
 
-func (sess *Session) WriteToStdout(s string) error {
+func (sess *Session) WriteToStdout(s string) (err error) {
+	sess.logMtx.Lock()
 	if sess.Terminal != nil {
-		return sess.Terminal.Write(s)
+		err = sess.Terminal.Write(s)
+	} else {
+		_, err = sess.Stdout.Write([]byte(s))
 	}
-
-	_, err := sess.Stdout.Write([]byte(s))
-	return err
+	sess.logMtx.Unlock()
+	return
 }
 
 func (sess *Session) WriteToStdoutWithLineBreak(s string) error {
@@ -130,13 +139,15 @@ func (sess *Session) WriteToStdoutWithLineBreak(s string) error {
 	return sess.WriteToStdout(s)
 }
 
-func (sess *Session) WriteToStderr(s string) error {
+func (sess *Session) WriteToStderr(s string) (err error) {
+	sess.logMtx.Lock()
 	if sess.Terminal != nil {
-		return sess.Terminal.WriteError(s)
+		err = sess.Terminal.WriteError(s)
+	} else {
+		_, err = sess.Stderr.Write([]byte(s))
 	}
-
-	_, err := sess.Stderr.Write([]byte(s))
-	return err
+	sess.logMtx.Unlock()
+	return
 }
 
 func (sess *Session) WriteToStderrWithLineBreak(s string) error {

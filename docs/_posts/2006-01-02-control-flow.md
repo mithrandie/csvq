@@ -168,7 +168,7 @@ TRIGGER ERROR [exit_code] [error_message];
 _exit_code_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-  32 is the default.
+  64 is the default.
 
 _error_message_
 : [string]({{ '/reference/value.html#string' | relative_url }})

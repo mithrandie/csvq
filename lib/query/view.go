@@ -477,9 +477,12 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 			IsTemporary: true,
 		}
 
-		view, err = loadViewFromJsonFile(filter.tx, reader, fileInfo)
+		view, err = loadViewFromJsonFile(filter.tx, reader, fileInfo, jsonQuery)
 		if err != nil {
-			return nil, NewLoadJsonError(jsonQuery, err.Error())
+			if _, ok := err.(Error); !ok {
+				err = NewLoadJsonError(jsonQuery, err.Error())
+			}
+			return nil, err
 		}
 
 		if err = filter.aliases.Add(table.Name(), ""); err != nil {
@@ -514,46 +517,18 @@ func loadStdin(ctx context.Context, filter *Filter, table parser.Table, fileInfo
 			return NewStdinEmptyError(table.Object.(parser.Stdin))
 		}
 
-		var loadView *View
+		buf, err := ioutil.ReadAll(filter.tx.Session.Stdin)
+		if err != nil {
+			return NewIOError(table.Object, err.Error())
+		}
 
-		if fileInfo.Format != cmd.JSON {
-			buf, err := ioutil.ReadAll(filter.tx.Session.Stdin)
-			if err != nil {
-				return NewIOError(table.Object.(parser.Stdin), err.Error())
+		br := bytes.NewReader(buf)
+		loadView, err := loadViewFromFile(ctx, filter.tx, br, fileInfo, filter.tx.Flags.WithoutNull, table.Object)
+		if err != nil {
+			if _, ok := err.(Error); !ok {
+				err = NewDataParsingError(table.Object, fileInfo.Path, err.Error())
 			}
-
-			br := bytes.NewReader(buf)
-			loadView, err = loadViewFromFile(ctx, filter.tx, br, fileInfo, filter.tx.Flags.WithoutNull)
-			if err != nil {
-				if _, ok := err.(*ContextIsDone); !ok {
-					err = NewDataParsingError(table.Object, fileInfo.Path, err.Error())
-				}
-				return err
-			}
-		} else {
-			fileInfo.Encoding = text.UTF8
-
-			buf, err := ioutil.ReadAll(filter.tx.Session.Stdin)
-			if err != nil {
-				return NewIOError(table.Object.(parser.Stdin), err.Error())
-			}
-
-			headerLabels, rows, escapeType, err := json.LoadTable(fileInfo.JsonQuery, string(buf))
-			if err != nil {
-				return NewLoadJsonError(parser.JsonQuery{BaseExpr: table.Object.GetBaseExpr()}, err.Error())
-			}
-
-			records := make([]Record, 0, len(rows))
-			for _, row := range rows {
-				records = append(records, NewRecord(row))
-			}
-
-			fileInfo.JsonEscape = escapeType
-
-			loadView = NewView(filter.tx)
-			loadView.Header = NewHeader(parser.FormatTableName(fileInfo.Path), headerLabels)
-			loadView.RecordSet = records
-			loadView.FileInfo = fileInfo
+			return err
 		}
 
 		loadView.FileInfo.InitialHeader = loadView.Header.Copy()
@@ -744,9 +719,9 @@ func cacheViewFromFile(
 				fp = h.File()
 			}
 
-			loadView, err := loadViewFromFile(ctx, filter.tx, fp, fileInfo, withoutNull)
+			loadView, err := loadViewFromFile(ctx, filter.tx, fp, fileInfo, withoutNull, tableIdentifier)
 			if err != nil {
-				if _, ok := err.(*ContextIsDone); !ok {
+				if _, ok := err.(Error); !ok {
 					err = NewDataParsingError(tableIdentifier, fileInfo.Path, err.Error())
 				}
 				return filePath, appendCompositeError(err, filter.tx.FileContainer.Close(fileInfo.Handler))
@@ -761,19 +736,19 @@ func cacheViewFromFile(
 	return filePath, nil
 }
 
-func loadViewFromFile(ctx context.Context, tx *Transaction, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool) (*View, error) {
+func loadViewFromFile(ctx context.Context, tx *Transaction, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool, expr parser.QueryExpression) (*View, error) {
 	switch fileInfo.Format {
 	case cmd.FIXED:
-		return loadViewFromFixedLengthTextFile(ctx, tx, fp, fileInfo, withoutNull)
+		return loadViewFromFixedLengthTextFile(ctx, tx, fp, fileInfo, withoutNull, expr)
 	case cmd.LTSV:
-		return loadViewFromLTSVFile(ctx, tx, fp, fileInfo, withoutNull)
+		return loadViewFromLTSVFile(ctx, tx, fp, fileInfo, withoutNull, expr)
 	case cmd.JSON:
-		return loadViewFromJsonFile(tx, fp, fileInfo)
+		return loadViewFromJsonFile(tx, fp, fileInfo, expr)
 	}
 	return loadViewFromCSVFile(ctx, tx, fp, fileInfo, withoutNull)
 }
 
-func loadViewFromFixedLengthTextFile(ctx context.Context, tx *Transaction, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool) (*View, error) {
+func loadViewFromFixedLengthTextFile(ctx context.Context, tx *Transaction, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool, expr parser.QueryExpression) (*View, error) {
 	if enc, err := text.DetectEncoding(fp); err == nil {
 		fileInfo.Encoding = enc
 	}
@@ -783,7 +758,7 @@ func loadViewFromFixedLengthTextFile(ctx context.Context, tx *Transaction, fp io
 	if fileInfo.DelimiterPositions == nil {
 		data, err := ioutil.ReadAll(fp)
 		if err != nil {
-			return nil, err
+			return nil, NewIOError(expr, err.Error())
 		}
 		br := bytes.NewReader(data)
 
@@ -889,14 +864,14 @@ func loadViewFromCSVFile(ctx context.Context, tx *Transaction, fp io.ReadSeeker,
 	return view, nil
 }
 
-func loadViewFromLTSVFile(ctx context.Context, tx *Transaction, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool) (*View, error) {
+func loadViewFromLTSVFile(ctx context.Context, tx *Transaction, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool, expr parser.QueryExpression) (*View, error) {
 	if enc, err := text.DetectEncoding(fp); err == nil {
 		fileInfo.Encoding = enc
 	}
 
 	reader, err := ltsv.NewReader(fp, fileInfo.Encoding)
 	if err != nil {
-		return nil, err
+		return nil, NewIOError(expr, err.Error())
 	}
 	reader.WithoutNull = withoutNull
 
@@ -998,15 +973,15 @@ func readRecordSet(ctx context.Context, reader RecordReader) (RecordSet, error) 
 	return records, err
 }
 
-func loadViewFromJsonFile(tx *Transaction, fp io.Reader, fileInfo *FileInfo) (*View, error) {
+func loadViewFromJsonFile(tx *Transaction, fp io.Reader, fileInfo *FileInfo, expr parser.QueryExpression) (*View, error) {
 	jsonText, err := ioutil.ReadAll(fp)
 	if err != nil {
-		return nil, err
+		return nil, NewIOError(expr, err.Error())
 	}
 
 	headerLabels, rows, escapeType, err := json.LoadTable(fileInfo.JsonQuery, string(jsonText))
 	if err != nil {
-		return nil, err
+		return nil, NewLoadJsonError(expr, err.Error())
 	}
 
 	records := make([]Record, 0, len(rows))
@@ -1014,6 +989,7 @@ func loadViewFromJsonFile(tx *Transaction, fp io.Reader, fileInfo *FileInfo) (*V
 		records = append(records, NewRecord(row))
 	}
 
+	fileInfo.Encoding = text.UTF8
 	fileInfo.JsonEscape = escapeType
 
 	view := NewView(tx)
