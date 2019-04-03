@@ -1,5 +1,11 @@
 # Change Log
 
+## Version 1.9.9
+
+Released on April 3, 2019
+
+- Reorganize return code. Maybe finalized.
+
 ## Version 1.9.8
 
 Released on April 2, 2019
