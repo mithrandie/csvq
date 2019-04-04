@@ -59,10 +59,10 @@ func TestRun(t *testing.T) {
 			tx.Flags.Stats = v.Stats
 		}
 
-		tx.Session.OutFile = nil
+		tx.Session.SetOutFile(nil)
 
 		out := query.NewOutput()
-		tx.Session.Stdout = out
+		tx.Session.SetStdout(out)
 
 		proc := query.NewProcessor(tx)
 		err := Run(ctx, proc, v.Input, "", v.OutFile)

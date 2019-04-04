@@ -16,7 +16,7 @@ func TestTransaction_Commit(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-		TestTx.Session.Stdout = NewDiscard()
+		TestTx.Session.SetStdout(NewDiscard())
 		initFlag(TestTx.Flags)
 	}()
 
@@ -78,7 +78,7 @@ func TestTransaction_Commit(t *testing.T) {
 	tx := TestTx
 
 	out := NewOutput()
-	tx.Session.Stdout = out
+	tx.Session.SetStdout(out)
 
 	_ = TestTx.Commit(context.Background(), NewFilter(tx), parser.TransactionControl{Token: parser.COMMIT})
 
@@ -93,7 +93,7 @@ func TestTransaction_Rollback(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-		TestTx.Session.Stdout = NewDiscard()
+		TestTx.Session.SetStdout(NewDiscard())
 		initFlag(TestTx.Flags)
 	}()
 
@@ -118,7 +118,7 @@ func TestTransaction_Rollback(t *testing.T) {
 	tx := TestTx
 
 	out := NewOutput()
-	tx.Session.Stdout = out
+	tx.Session.SetStdout(out)
 
 	_ = TestTx.Rollback(NewFilter(tx), nil)
 

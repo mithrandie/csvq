@@ -39,12 +39,12 @@ type ObjectWriter struct {
 
 func NewObjectWriter(tx *Transaction) *ObjectWriter {
 	maxWidth := DefaultLineWidth
-	if tx.Session.Terminal != nil {
-		if termw, _, err := tx.Session.Terminal.GetSize(); err == nil {
+	if tx.Session.Terminal() != nil {
+		if termw, _, err := tx.Session.Terminal().GetSize(); err == nil {
 			maxWidth = termw
 		}
 	} else {
-		if w, _, err := terminal.GetSize(int(tx.Session.ScreenFd)); err == nil {
+		if w, _, err := terminal.GetSize(int(tx.Session.ScreenFd())); err == nil {
 			maxWidth = w
 		}
 	}

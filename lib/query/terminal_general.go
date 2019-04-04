@@ -21,7 +21,7 @@ type SSHTerminal struct {
 }
 
 func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
-	stdin := int(filter.tx.Session.ScreenFd)
+	stdin := int(filter.tx.Session.ScreenFd())
 	origState, err := terminal.MakeRaw(stdin)
 	if err != nil {
 		return nil, err
@@ -84,7 +84,7 @@ func (t SSHTerminal) Write(s string) error {
 }
 
 func (t SSHTerminal) WriteError(s string) error {
-	_, err := t.tx.Session.Stderr.Write([]byte(s))
+	_, err := t.tx.Session.stderr.Write([]byte(s))
 	return err
 }
 
@@ -135,7 +135,7 @@ func (sh *StdIO) Write(p []byte) (n int, err error) {
 
 func NewStdIO(sess *Session) *StdIO {
 	return &StdIO{
-		reader: sess.Stdin,
-		writer: sess.Stdout,
+		reader: sess.stdin,
+		writer: sess.stdout,
 	}
 }

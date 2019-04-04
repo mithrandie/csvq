@@ -1099,8 +1099,8 @@ func Reload(ctx context.Context, tx *Transaction, expr parser.Reload) error {
 		oldPalette := cmd.GetPalette()
 		oldPalette.Merge(palette)
 
-		if tx.Session.Terminal != nil {
-			if err := tx.Session.Terminal.ReloadConfig(); err != nil {
+		if tx.Session.Terminal() != nil {
+			if err := tx.Session.Terminal().ReloadConfig(); err != nil {
 				return NewLoadConfigurationError(expr, err.Error())
 			}
 		}

@@ -24,7 +24,7 @@ type ReadLineTerminal struct {
 }
 
 func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
-	fd := int(filter.tx.Session.ScreenFd)
+	fd := int(filter.tx.Session.ScreenFd())
 
 	p := cmd.GetPalette()
 
@@ -44,9 +44,9 @@ func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
 		HistoryLimit:           limit,
 		HistorySearchFold:      true,
 		Listener:               new(ReadlineListener),
-		Stdin:                  filter.tx.Session.Stdin,
-		Stdout:                 filter.tx.Session.Stdout,
-		Stderr:                 filter.tx.Session.Stderr,
+		Stdin:                  filter.tx.Session.Stdin(),
+		Stdout:                 filter.tx.Session.Stdout(),
+		Stderr:                 filter.tx.Session.Stderr(),
 	})
 	if err != nil {
 		return nil, err

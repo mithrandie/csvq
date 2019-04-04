@@ -517,7 +517,7 @@ func loadStdin(ctx context.Context, filter *Filter, table parser.Table, fileInfo
 			return NewStdinEmptyError(table.Object.(parser.Stdin))
 		}
 
-		buf, err := ioutil.ReadAll(filter.tx.Session.Stdin)
+		buf, err := ioutil.ReadAll(filter.tx.Session.Stdin())
 		if err != nil {
 			return NewIOError(table.Object, err.Error())
 		}

@@ -52,7 +52,7 @@ func Run(ctx context.Context, proc *query.Processor, input string, sourceFile st
 				proc.LogError(err.Error())
 			}
 		}()
-		proc.Tx.Session.OutFile = fp
+		proc.Tx.Session.SetOutFile(fp)
 	}
 
 	proc.Tx.AutoCommit = true
@@ -71,12 +71,12 @@ func LaunchInteractiveShell(ctx context.Context, proc *query.Processor) error {
 	if err != nil {
 		return query.ConvertLoadConfigurationError(err)
 	}
-	proc.Tx.Session.Terminal = term
+	proc.Tx.Session.SetTerminal(term)
 	defer func() {
-		if e := proc.Tx.Session.Terminal.Teardown(); e != nil {
+		if e := proc.Tx.Session.Terminal().Teardown(); e != nil {
 			proc.LogError(e.Error())
 		}
-		proc.Tx.Session.Terminal = nil
+		proc.Tx.Session.SetTerminal(nil)
 	}()
 
 	StartUpMessage := "" +
@@ -92,8 +92,8 @@ func LaunchInteractiveShell(ctx context.Context, proc *query.Processor) error {
 			break
 		}
 
-		proc.Tx.Session.Terminal.UpdateCompleter()
-		line, e := proc.Tx.Session.Terminal.ReadLine()
+		proc.Tx.Session.Terminal().UpdateCompleter()
+		line, e := proc.Tx.Session.Terminal().ReadLine()
 		if e != nil {
 			if e == io.EOF {
 				break
@@ -109,7 +109,7 @@ func LaunchInteractiveShell(ctx context.Context, proc *query.Processor) error {
 
 		if 0 < len(line) && line[len(line)-1] == '\\' {
 			lines = append(lines, line[:len(line)-1])
-			proc.Tx.Session.Terminal.SetContinuousPrompt(ctx)
+			proc.Tx.Session.Terminal().SetContinuousPrompt(ctx)
 			continue
 		}
 
@@ -127,10 +127,10 @@ func LaunchInteractiveShell(ctx context.Context, proc *query.Processor) error {
 		saveQuery := strings.Join(saveLines, " ")
 		if len(saveQuery) < 1 || saveQuery == ";" {
 			lines = lines[:0]
-			proc.Tx.Session.Terminal.SetPrompt(ctx)
+			proc.Tx.Session.Terminal().SetPrompt(ctx)
 			continue
 		}
-		if e := proc.Tx.Session.Terminal.SaveHistory(saveQuery); e != nil {
+		if e := proc.Tx.Session.Terminal().SaveHistory(saveQuery); e != nil {
 			proc.LogError(e.Error())
 		}
 
@@ -140,7 +140,7 @@ func LaunchInteractiveShell(ctx context.Context, proc *query.Processor) error {
 				proc.LogError(e.Error())
 			}
 			lines = lines[:0]
-			proc.Tx.Session.Terminal.SetPrompt(ctx)
+			proc.Tx.Session.Terminal().SetPrompt(ctx)
 			continue
 		}
 
@@ -152,7 +152,7 @@ func LaunchInteractiveShell(ctx context.Context, proc *query.Processor) error {
 			} else {
 				proc.LogError(e.Error())
 				lines = lines[:0]
-				proc.Tx.Session.Terminal.SetPrompt(ctx)
+				proc.Tx.Session.Terminal().SetPrompt(ctx)
 				continue
 			}
 		}
@@ -162,7 +162,7 @@ func LaunchInteractiveShell(ctx context.Context, proc *query.Processor) error {
 		}
 
 		lines = lines[:0]
-		proc.Tx.Session.Terminal.SetPrompt(ctx)
+		proc.Tx.Session.Terminal().SetPrompt(ctx)
 	}
 
 	return err
