@@ -51,7 +51,7 @@ var executeTests = []struct {
 
 func TestRun(t *testing.T) {
 	tx, _ := query.NewTransaction(context.Background(), file.DefaultWaitTimeout, file.DefaultRetryDelay, query.NewSession())
-	tx.Flags.SetColor(false)
+	tx.UseColor(false)
 	ctx := context.Background()
 
 	for _, v := range executeTests {

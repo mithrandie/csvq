@@ -7,8 +7,6 @@ import (
 	"sync"
 
 	"github.com/mithrandie/csvq/lib/cmd"
-
-	"github.com/mithrandie/go-text/color"
 )
 
 type Discard struct {
@@ -69,8 +67,6 @@ type Session struct {
 }
 
 func NewSession() *Session {
-	color.UseEffect = false
-
 	return &Session{
 		screenFd: os.Stdin.Fd(),
 		stdin:    os.Stdin,
@@ -145,36 +141,6 @@ func (sess *Session) CanReadStdin() bool {
 		return cmd.IsReadableFromPipeOrRedirection(f)
 	}
 	return true
-}
-
-func (sess *Session) Log(log string, quiet bool) {
-	if !quiet {
-		if err := sess.WriteToStdoutWithLineBreak(log); err != nil {
-			println(err.Error())
-		}
-	}
-}
-
-func (sess *Session) LogNotice(log string, quiet bool) {
-	if !quiet {
-		if err := sess.WriteToStdoutWithLineBreak(cmd.Notice(log)); err != nil {
-			println(err.Error())
-		}
-	}
-}
-
-func (sess *Session) LogWarn(log string, quiet bool) {
-	if !quiet {
-		if err := sess.WriteToStdoutWithLineBreak(cmd.Warn(log)); err != nil {
-			println(err.Error())
-		}
-	}
-}
-
-func (sess *Session) LogError(log string) {
-	if err := sess.WriteToStderrWithLineBreak(cmd.Error(log)); err != nil {
-		println(err.Error())
-	}
 }
 
 func (sess *Session) WriteToStdout(s string) (err error) {

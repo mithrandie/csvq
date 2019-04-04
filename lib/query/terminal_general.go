@@ -32,14 +32,13 @@ func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
 		return nil, err
 	}
 
-	p := cmd.GetPalette()
-	prompt := NewPrompt(filter, p)
+	prompt := NewPrompt(filter)
 	if err = prompt.LoadConfig(); err != nil {
 		return nil, err
 	}
 
 	t := SSHTerminal{
-		terminal:  terminal.NewTerminal(NewStdIO(filter.tx.Session), p.Render(cmd.PromptEffect, TerminalPrompt)),
+		terminal:  terminal.NewTerminal(NewStdIO(filter.tx.Session), filter.tx.Palette.Render(cmd.PromptEffect, TerminalPrompt)),
 		stdin:     stdin,
 		origState: origState,
 		rawState:  rawState,
@@ -91,7 +90,7 @@ func (t SSHTerminal) WriteError(s string) error {
 func (t SSHTerminal) SetPrompt(ctx context.Context) {
 	str, err := t.prompt.RenderPrompt(ctx)
 	if err != nil {
-		t.tx.Session.LogError(err.Error())
+		t.tx.LogError(err.Error())
 	}
 	t.terminal.SetPrompt(str)
 }
@@ -99,7 +98,7 @@ func (t SSHTerminal) SetPrompt(ctx context.Context) {
 func (t SSHTerminal) SetContinuousPrompt(ctx context.Context) {
 	str, err := t.prompt.RenderContinuousPrompt(ctx)
 	if err != nil {
-		t.tx.Session.LogError(err.Error())
+		t.tx.LogError(err.Error())
 	}
 	t.terminal.SetPrompt(str)
 }

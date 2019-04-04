@@ -5,12 +5,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/excmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
-
-	"github.com/mithrandie/go-text/color"
 )
 
 var promptLoadConfigTests = []struct {
@@ -43,7 +40,7 @@ var promptLoadConfigTests = []struct {
 }
 
 func TestPrompt_LoadConfig(t *testing.T) {
-	prompt := NewPrompt(NewFilter(TestTx), &color.Palette{})
+	prompt := NewPrompt(NewFilter(TestTx))
 
 	for _, v := range promptLoadConfigTests {
 		TestTx.Environment.InteractiveShell.Prompt = v.Prompt
@@ -104,11 +101,15 @@ var promptRenderPromptTests = []struct {
 }
 
 func TestPrompt_RenderPrompt(t *testing.T) {
-	palette := cmd.GetPalette()
-	prompt := NewPrompt(NewFilter(TestTx), palette)
+	defer func() {
+		TestTx.UseColor(false)
+		initFlag(TestTx.Flags)
+	}()
+
+	prompt := NewPrompt(NewFilter(TestTx))
 
 	for _, v := range promptRenderPromptTests {
-		TestTx.Flags.SetColor(v.UseColor)
+		TestTx.UseColor(v.UseColor)
 		prompt.sequence = v.Sequence
 		result, err := prompt.RenderPrompt(context.Background())
 
@@ -129,8 +130,6 @@ func TestPrompt_RenderPrompt(t *testing.T) {
 			t.Errorf("result = %q, want %q for %v", result, v.Expect, v.Sequence)
 		}
 	}
-
-	initFlag(TestTx.Flags)
 }
 
 var promptRenderContinuousPromptTests = []struct {
@@ -168,11 +167,15 @@ var promptRenderContinuousPromptTests = []struct {
 }
 
 func TestPrompt_RenderContinuousPrompt(t *testing.T) {
-	palette := cmd.GetPalette()
-	prompt := NewPrompt(NewFilter(TestTx), palette)
+	defer func() {
+		TestTx.UseColor(false)
+		initFlag(TestTx.Flags)
+	}()
+
+	prompt := NewPrompt(NewFilter(TestTx))
 
 	for _, v := range promptRenderContinuousPromptTests {
-		TestTx.Flags.SetColor(v.UseColor)
+		TestTx.UseColor(v.UseColor)
 		prompt.continuousSequence = v.Sequence
 		result, err := prompt.RenderContinuousPrompt(context.Background())
 
@@ -193,8 +196,6 @@ func TestPrompt_RenderContinuousPrompt(t *testing.T) {
 			t.Errorf("result = %q, want %q for %v", result, v.Expect, v.Sequence)
 		}
 	}
-
-	initFlag(TestTx.Flags)
 }
 
 var promptRenderTests = []struct {
@@ -263,7 +264,7 @@ var promptRenderTests = []struct {
 func TestPrompt_Render(t *testing.T) {
 	filter := NewFilter(TestTx)
 	_ = filter.variables[0].Add(parser.Variable{Name: "var"}, value.NewString("abc"))
-	prompt := NewPrompt(filter, &color.Palette{})
+	prompt := NewPrompt(filter)
 
 	for _, v := range promptRenderTests {
 		result, err := prompt.Render(context.Background(), v.Input)
@@ -298,7 +299,7 @@ var promptStripEscapeSequenceTests = []struct {
 }
 
 func TestPrompt_StripEscapeSequence(t *testing.T) {
-	prompt := NewPrompt(NewFilter(TestTx), &color.Palette{})
+	prompt := NewPrompt(NewFilter(TestTx))
 
 	for _, v := range promptStripEscapeSequenceTests {
 		result := prompt.StripEscapeSequence(v.Input)

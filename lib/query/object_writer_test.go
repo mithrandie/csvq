@@ -128,7 +128,9 @@ func TestObjectWriter_String(t *testing.T) {
 		t.Errorf("result = %s, want %s", result, expect)
 	}
 
-	TestTx.Flags.SetColor(true)
+	TestTx.UseColor(true)
+	defer TestTx.UseColor(false)
+
 	w = NewObjectWriter(TestTx)
 	w.MaxWidth = 20
 

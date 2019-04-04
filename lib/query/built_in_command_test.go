@@ -1490,17 +1490,21 @@ var showFlagTests = []struct {
 }
 
 func TestShowFlag(t *testing.T) {
-	defer initFlag(TestTx.Flags)
+	defer func() {
+		TestTx.UseColor(false)
+		initFlag(TestTx.Flags)
+	}()
 
+	TestTx.UseColor(true)
 	filter := NewFilter(TestTx)
 
 	for _, v := range showFlagTests {
 		initFlag(TestTx.Flags)
-		TestTx.Flags.SetColor(true)
+		TestTx.UseColor(true)
 		for _, expr := range v.SetExprs {
 			_ = SetFlag(context.Background(), filter, expr)
 		}
-		result, err := ShowFlag(TestTx.Flags, v.Expr)
+		result, err := ShowFlag(TestTx, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

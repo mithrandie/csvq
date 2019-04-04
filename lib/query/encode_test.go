@@ -423,6 +423,8 @@ var encodeViewTests = []struct {
 }
 
 func TestEncodeView(t *testing.T) {
+	defer TestTx.UseColor(false)
+
 	buf := new(bytes.Buffer)
 	ctx := context.Background()
 
@@ -436,7 +438,7 @@ func TestEncodeView(t *testing.T) {
 		if v.WriteDelimiter == 0 {
 			v.WriteDelimiter = ','
 		}
-		TestTx.Flags.SetColor(v.UseColor)
+		TestTx.UseColor(v.UseColor)
 
 		fileInfo := &FileInfo{
 			Format:             v.Format,
@@ -452,7 +454,7 @@ func TestEncodeView(t *testing.T) {
 		}
 
 		buf.Reset()
-		_, err := EncodeView(ctx, buf, v.View, fileInfo, TestTx.Flags)
+		_, err := EncodeView(ctx, buf, v.View, fileInfo, TestTx)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

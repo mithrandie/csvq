@@ -1,14 +1,17 @@
 package syntax
 
 import (
+	"context"
 	"testing"
 
 	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/file"
 
 	"github.com/mithrandie/go-text/color"
 )
 
-var syntaxTestPalette = cmd.GetPalette()
+var syntaxTestEnv, _ = cmd.NewEnvironment(context.Background(), file.DefaultWaitTimeout, file.DefaultRetryDelay)
+var syntaxTestPalette, _ = cmd.NewPalette(syntaxTestEnv)
 
 func TestName_Format(t *testing.T) {
 	var e Name = "str"
@@ -292,7 +295,7 @@ func TestGrammar_Format(t *testing.T) {
 
 	for _, v := range grammarFormatTests {
 		if v.UsePalette {
-			palette = cmd.GetPalette()
+			palette = syntaxTestPalette
 		} else {
 			palette = nil
 		}

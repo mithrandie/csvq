@@ -51,7 +51,7 @@ func NewObjectWriter(tx *Transaction) *ObjectWriter {
 
 	return &ObjectWriter{
 		Flags:       tx.Flags,
-		Palette:     cmd.GetPalette(),
+		Palette:     tx.Palette,
 		MaxWidth:    maxWidth,
 		Indent:      0,
 		IndentWidth: 4,

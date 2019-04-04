@@ -127,7 +127,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 	case parser.RemoveFlagElement:
 		err = RemoveFlagElement(ctx, proc.Filter, stmt.(parser.RemoveFlagElement))
 	case parser.ShowFlag:
-		if printstr, err = ShowFlag(proc.Tx.Flags, stmt.(parser.ShowFlag)); err == nil {
+		if printstr, err = ShowFlag(proc.Tx, stmt.(parser.ShowFlag)); err == nil {
 			proc.Log(printstr, false)
 		}
 	case parser.VariableDeclaration:
@@ -208,7 +208,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 				} else {
 					writer = proc.Tx.Session.Stdout()
 				}
-				warn, e := EncodeView(ctx, writer, view, fileInfo, proc.Tx.Flags)
+				warn, e := EncodeView(ctx, writer, view, fileInfo, proc.Tx)
 
 				if e != nil {
 					if _, ok := e.(*EmptyResultSetError); !ok {
@@ -653,26 +653,25 @@ func (proc *Processor) showExecutionTime(ctx context.Context) {
 		return
 	}
 
-	palette := cmd.GetPalette()
 	exectime := cmd.FormatNumber(time.Since(proc.measurementStart).Seconds(), 6, ".", ",", "")
-	stats := fmt.Sprintf(palette.Render(cmd.LableEffect, "Query Execution Time: ")+"%s seconds", exectime)
+	stats := fmt.Sprintf(proc.Tx.Palette.Render(cmd.LableEffect, "Query Execution Time: ")+"%s seconds", exectime)
 	proc.Log(stats, false)
 }
 
 func (proc *Processor) Log(log string, quiet bool) {
-	proc.Tx.Session.Log(log, quiet)
+	proc.Tx.Log(log, quiet)
 }
 
 func (proc *Processor) LogNotice(log string, quiet bool) {
-	proc.Tx.Session.LogNotice(log, quiet)
+	proc.Tx.LogNotice(log, quiet)
 }
 
 func (proc *Processor) LogWarn(log string, quiet bool) {
-	proc.Tx.Session.LogWarn(log, quiet)
+	proc.Tx.LogWarn(log, quiet)
 }
 
 func (proc *Processor) LogError(log string) {
-	proc.Tx.Session.LogError(log)
+	proc.Tx.LogError(log)
 }
 
 func (proc *Processor) AutoCommit(ctx context.Context) error {
