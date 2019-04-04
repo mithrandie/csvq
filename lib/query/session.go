@@ -7,6 +7,8 @@ import (
 	"sync"
 
 	"github.com/mithrandie/csvq/lib/cmd"
+
+	"github.com/mithrandie/go-text/color"
 )
 
 type Discard struct {
@@ -68,6 +70,8 @@ type Session struct {
 }
 
 func NewSession() *Session {
+	color.UseEffect = false
+
 	return &Session{
 		ScreenFd: os.Stdin.Fd(),
 		Stdin:    os.Stdin,

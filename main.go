@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"os"
 	"os/signal"
@@ -14,7 +15,6 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
 
-	"github.com/mithrandie/go-text/color"
 	"github.com/urfave/cli"
 )
 
@@ -36,9 +36,8 @@ func main() {
 
 	app.OnUsageError = func(c *cli.Context, err error, isSubcommand bool) error {
 		if isSubcommand {
-			return err
+			return subCommandOnUsageError(c, err, isSubcommand)
 		}
-
 		return Exit(query.NewIncorrectCommandUsageError(err.Error()))
 	}
 
@@ -178,33 +177,37 @@ func main() {
 			Usage:     "Show fields in a file",
 			ArgsUsage: "CSV_FILE_PATH",
 			Action: commandAction(func(ctx context.Context, c *cli.Context, proc *query.Processor) error {
-				if c.NArg() != 1 {
-					return query.NewIncorrectCommandUsageError("table is not specified")
+				switch c.NArg() {
+				case 0:
+					return query.NewIncorrectCommandUsageError("file is not specified")
+				case 1:
+					// OK
+				default:
+					return query.NewIncorrectCommandUsageError("too many files")
 				}
-
 				table := c.Args().First()
-
 				return action.ShowFields(ctx, proc, table)
 			}),
-			OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
-				return Exit(query.NewIncorrectCommandUsageError(err.Error()))
-			},
 		},
 		{
 			Name:      "calc",
 			Usage:     "Calculate a value from stdin",
 			ArgsUsage: "\"expression\"",
 			Action: commandAction(func(ctx context.Context, c *cli.Context, proc *query.Processor) error {
-				if c.NArg() != 1 {
-					return query.NewIncorrectCommandUsageError("expression is empty")
+				if !cmd.IsReadableFromPipeOrRedirection(os.Stdin) {
+					return query.NewIncorrectCommandUsageError(query.ErrMsgStdinEmpty)
 				}
-
+				switch c.NArg() {
+				case 0:
+					return query.NewIncorrectCommandUsageError("expression is empty")
+				case 1:
+					// OK
+				default:
+					return query.NewIncorrectCommandUsageError("too many expressions")
+				}
 				expr := c.Args().First()
 				return action.Calc(ctx, proc, expr)
 			}),
-			OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
-				return Exit(query.NewIncorrectCommandUsageError(err.Error()))
-			},
 		},
 		{
 			Name:      "syntax",
@@ -214,9 +217,6 @@ func main() {
 				words := append([]string{c.Args().First()}, c.Args().Tail()...)
 				return action.Syntax(ctx, proc, words)
 			}),
-			OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
-				return Exit(query.NewIncorrectCommandUsageError(err.Error()))
-			},
 		},
 		{
 			Name:  "check-update",
@@ -225,6 +225,10 @@ func main() {
 				return Exit(action.CheckUpdate())
 			},
 		},
+	}
+
+	for i := range app.Commands {
+		app.Commands[i].OnUsageError = subCommandOnUsageError
 	}
 
 	app.Action = commandAction(func(ctx context.Context, c *cli.Context, proc *query.Processor) error {
@@ -290,13 +294,14 @@ func commandAction(fn func(ctx context.Context, c *cli.Context, proc *query.Proc
 		if signalReceived != nil {
 			err = signalReceived
 		}
+		if ierr, ok := err.(*query.IncorrectCommandUsageError); ok {
+			return subCommandOnUsageError(c, errors.New(ierr.Error()), c.Command.Name != "csvq")
+		}
 		return Exit(err)
 	}
 }
 
 func generateProcessor(ctx context.Context, c *cli.Context) (*query.Processor, error) {
-	color.UseEffect = false
-
 	defaultWaitTimeout := file.DefaultWaitTimeout
 	if c.IsSet("wait-timeout") {
 		if d, err := time.ParseDuration(strconv.FormatFloat(c.GlobalFloat64("wait-timeout"), 'f', -1, 64) + "s"); err == nil {
@@ -311,6 +316,13 @@ func generateProcessor(ctx context.Context, c *cli.Context) (*query.Processor, e
 	}
 
 	return query.NewProcessor(tx), nil
+}
+
+func subCommandOnUsageError(c *cli.Context, err error, _ bool) error {
+	if err := cli.ShowCommandHelp(c, c.Command.Name); err != nil {
+		println(err.Error())
+	}
+	return Exit(query.NewIncorrectCommandUsageError(err.Error()))
 }
 
 func overwriteFlags(c *cli.Context, tx *query.Transaction) error {
