@@ -5640,7 +5640,7 @@ var parseTests = []struct {
 		Input:     "select 'literal not terminated",
 		Error:     "literal not terminated",
 		ErrorLine: 1,
-		ErrorChar: 30,
+		ErrorChar: 8,
 	},
 	{
 		Input:      "select select",

@@ -95,7 +95,6 @@ type Scanner struct {
 	src     []rune
 	srcPos  int
 	literal *bytes.Buffer
-	err     error
 
 	line       int
 	char       int
@@ -113,7 +112,6 @@ func (s *Scanner) Init(src string, sourceFile string, datetimeFormats []string, 
 	s.src = []rune(src)
 	s.srcPos = 0
 	s.literal = new(bytes.Buffer)
-	s.err = nil
 	s.line = 1
 	s.char = 0
 	s.sourceFile = sourceFile
@@ -189,13 +187,14 @@ func (s *Scanner) Scan() (Token, error) {
 	quoted := false
 	line := s.line
 	char := s.char
+	var err error
 
 	if s.forPrepared {
 		switch ch {
 		case '?':
 			s.holderOrdinal++
 			s.holderNumber++
-			return Token{Token: PLACEHOLDER, Literal: literal, HolderOrdinal: s.holderOrdinal, Line: line, Char: char, SourceFile: s.sourceFile}, s.err
+			return Token{Token: PLACEHOLDER, Literal: literal, HolderOrdinal: s.holderOrdinal, Line: line, Char: char, SourceFile: s.sourceFile}, err
 		case ':':
 			if s.isIdentRune(s.peek()) {
 				s.scanIdentifier(ch)
@@ -205,7 +204,7 @@ func (s *Scanner) Scan() (Token, error) {
 					s.holderNames = append(s.holderNames, holderName)
 					s.holderNumber++
 				}
-				return Token{Token: PLACEHOLDER, Literal: holderName, HolderOrdinal: s.holderOrdinal, Line: line, Char: char, SourceFile: s.sourceFile}, s.err
+				return Token{Token: PLACEHOLDER, Literal: holderName, HolderOrdinal: s.holderOrdinal, Line: line, Char: char, SourceFile: s.sourceFile}, err
 			}
 		}
 	}
@@ -264,7 +263,7 @@ func (s *Scanner) Scan() (Token, error) {
 		}
 
 		if token == ENVIRONMENT_VARIABLE && s.peek() == '`' {
-			s.scanString(s.next())
+			err = s.scanString(s.next())
 			literal = cmd.UnescapeIdentifier(s.literal.String())
 			quoted = true
 		} else {
@@ -277,7 +276,7 @@ func (s *Scanner) Scan() (Token, error) {
 		}
 
 		if len(literal) < 1 {
-			s.err = errors.New("invalid variable symbol")
+			err = errors.New("invalid variable symbol")
 		}
 	case ch == ExternalCommandSign:
 		s.scanExternalCommand()
@@ -294,7 +293,7 @@ func (s *Scanner) Scan() (Token, error) {
 		case EOF:
 			break
 		case '"', '\'':
-			s.scanString(ch)
+			err = s.scanString(ch)
 			literal = cmd.UnescapeString(s.literal.String())
 			if _, e := value.StrToTime(literal, s.datetimeFormats); e == nil {
 				token = DATETIME
@@ -302,25 +301,24 @@ func (s *Scanner) Scan() (Token, error) {
 				token = STRING
 			}
 		case '`':
-			s.scanString(ch)
+			err = s.scanString(ch)
 			literal = cmd.UnescapeIdentifier(s.literal.String())
 			token = IDENTIFIER
 			quoted = true
 		}
 	}
 
-	return Token{Token: int(token), Literal: literal, Quoted: quoted, Line: line, Char: char, SourceFile: s.sourceFile}, s.err
+	return Token{Token: int(token), Literal: literal, Quoted: quoted, Line: line, Char: char, SourceFile: s.sourceFile}, err
 }
 
-func (s *Scanner) scanString(quote rune) {
+func (s *Scanner) scanString(quote rune) error {
 	s.literal.Reset()
 
 	for {
 		ch := s.next()
 
 		if ch == EOF {
-			s.err = errors.New("literal not terminated")
-			break
+			return errors.New("literal not terminated")
 		}
 
 		if ch == quote {
@@ -335,6 +333,7 @@ func (s *Scanner) scanString(quote rune) {
 		}
 		s.literal.WriteRune(ch)
 	}
+	return nil
 }
 
 func (s *Scanner) scanIdentifier(head rune) {
