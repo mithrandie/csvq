@@ -64,14 +64,18 @@ func (list TemporaryViewScopes) Dispose(name parser.Identifier) error {
 	return NewUndeclaredTemporaryTableError(name)
 }
 
-func (list TemporaryViewScopes) Store(uncomittedViews map[string]*FileInfo) []string {
+func (list TemporaryViewScopes) Store(session *Session, uncomittedViews map[string]*FileInfo) []string {
 	msglist := make([]string, 0, len(uncomittedViews))
 	for _, m := range list {
 		m.Range(func(key, value interface{}) bool {
 			if _, ok := uncomittedViews[key.(string)]; ok {
 				view := value.(*View)
-				view.FileInfo.InitialRecordSet = view.RecordSet.Copy()
-				view.FileInfo.InitialHeader = view.Header.Copy()
+
+				if view.FileInfo.IsStdin() {
+					session.updateStdinView(view.Copy())
+				} else {
+					view.CreateRestorePoint()
+				}
 				msglist = append(msglist, fmt.Sprintf("Commit: restore point of view %q is created.", view.FileInfo.Path))
 			}
 			return true
@@ -86,8 +90,12 @@ func (list TemporaryViewScopes) Restore(uncomittedViews map[string]*FileInfo) []
 		m.Range(func(key, value interface{}) bool {
 			if _, ok := uncomittedViews[key.(string)]; ok {
 				view := value.(*View)
-				view.RecordSet = view.FileInfo.InitialRecordSet.Copy()
-				view.Header = view.FileInfo.InitialHeader.Copy()
+
+				if view.FileInfo.IsStdin() {
+					m.Delete(view.FileInfo.Path)
+				} else {
+					view.Restore()
+				}
 				msglist = append(msglist, fmt.Sprintf("Rollback: view %q is restored.", view.FileInfo.Path))
 			}
 			return true
@@ -101,7 +109,7 @@ func (list TemporaryViewScopes) All() ViewMap {
 
 	for _, m := range list {
 		m.Range(func(key, value interface{}) bool {
-			if value.(*View).FileInfo.IsTemporary {
+			if !value.(*View).FileInfo.IsFile() {
 				k := key.(string)
 				if !all.Exists(k) {
 					all.Store(k, value.(*View))
@@ -175,7 +183,7 @@ func (m ViewMap) Set(view *View) {
 
 func (m ViewMap) DisposeTemporaryTable(table parser.Identifier) error {
 	if v, ok := m.Load(table.Literal); ok {
-		if v.FileInfo.IsTemporary {
+		if !v.FileInfo.IsFile() {
 			m.Delete(table.Literal)
 			return nil
 		} else {

@@ -1286,7 +1286,7 @@ func (f *Filter) EvaluateEmbeddedString(ctx context.Context, embedded string) (s
 		case excmd.CsvqExpression:
 			expr := scanner.Text()
 			if 0 < len(expr) {
-				statements, _, err := parser.Parse(expr, "", f.tx.Flags.DatetimeFormat, false)
+				statements, _, err := parser.Parse(expr, expr, f.tx.Flags.DatetimeFormat, false)
 				if err != nil {
 					if syntaxErr, ok := err.(*parser.SyntaxError); ok {
 						err = NewSyntaxError(syntaxErr)

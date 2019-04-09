@@ -28,8 +28,6 @@ import (
 	"github.com/mithrandie/ternary"
 )
 
-var stdinLoadingMutex = &sync.Mutex{}
-
 type RecordReader interface {
 	Read() ([]text.RawText, error)
 }
@@ -115,41 +113,6 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 	switch table.Object.(type) {
 	case parser.Dual:
 		view = loadDualView(filter.tx)
-	case parser.Stdin:
-		fileInfo := &FileInfo{
-			Path:               table.Object.String(),
-			Format:             filter.tx.Flags.ImportFormat,
-			Delimiter:          filter.tx.Flags.Delimiter,
-			DelimiterPositions: filter.tx.Flags.DelimiterPositions,
-			SingleLine:         filter.tx.Flags.SingleLine,
-			JsonQuery:          filter.tx.Flags.JsonQuery,
-			Encoding:           filter.tx.Flags.Encoding,
-			LineBreak:          filter.tx.Flags.LineBreak,
-			NoHeader:           filter.tx.Flags.NoHeader,
-			EncloseAll:         filter.tx.Flags.EncloseAll,
-			JsonEscape:         filter.tx.Flags.JsonEscape,
-			IsTemporary:        true,
-		}
-
-		if err := loadStdin(ctx, filter, table, fileInfo); err != nil {
-			return nil, err
-		}
-
-		if err = filter.aliases.Add(table.Name(), fileInfo.Path); err != nil {
-			return nil, err
-		}
-
-		pathIdent := parser.Identifier{Literal: table.Object.String()}
-		if useInternalId {
-			view, _ = filter.tempViews[len(filter.tempViews)-1].GetWithInternalId(ctx, pathIdent, filter.tx.Flags)
-		} else {
-			view, _ = filter.tempViews[len(filter.tempViews)-1].Get(pathIdent)
-		}
-		if !strings.EqualFold(table.Object.String(), table.Name().Literal) {
-			if err = view.Header.Update(table.Name().Literal, nil); err != nil {
-				return nil, err
-			}
-		}
 	case parser.TableObject:
 		tableObject := table.Object.(parser.TableObject)
 
@@ -319,10 +282,10 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 			return nil, err
 		}
 
-	case parser.Identifier:
+	case parser.Identifier, parser.Stdin:
 		view, err = loadObject(
 			ctx,
-			table.Object.(parser.Identifier),
+			table.Object,
 			table.Name(),
 			forUpdate,
 			useInternalId,
@@ -469,12 +432,12 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 		}
 
 		fileInfo := &FileInfo{
-			Path:        alias,
-			Format:      cmd.JSON,
-			JsonQuery:   queryValue.(value.String).Raw(),
-			Encoding:    text.UTF8,
-			LineBreak:   filter.tx.Flags.LineBreak,
-			IsTemporary: true,
+			Path:      alias,
+			Format:    cmd.JSON,
+			JsonQuery: queryValue.(value.String).Raw(),
+			Encoding:  text.UTF8,
+			LineBreak: filter.tx.Flags.LineBreak,
+			ViewType:  ViewTypeTemporaryTable,
 		}
 
 		view, err = loadViewFromJsonFile(filter.tx, reader, fileInfo, jsonQuery)
@@ -508,39 +471,47 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 	return view, err
 }
 
-func loadStdin(ctx context.Context, filter *Filter, table parser.Table, fileInfo *FileInfo) error {
-	stdinLoadingMutex.Lock()
-	defer stdinLoadingMutex.Unlock()
+func loadStdin(ctx context.Context, filter *Filter, fileInfo *FileInfo, stdin parser.Stdin, tableName parser.Identifier, forUpdate bool, useInternalId bool) (*View, error) {
+	filter.tx.viewLoadingMutex.Lock()
+	defer filter.tx.viewLoadingMutex.Unlock()
 
-	if !filter.tempViews[len(filter.tempViews)-1].Exists(fileInfo.Path) {
-		if !filter.tx.Session.CanReadStdin() {
-			return NewStdinEmptyError(table.Object.(parser.Stdin))
-		}
-
-		buf, err := ioutil.ReadAll(filter.tx.Session.Stdin())
-		if err != nil {
-			return NewIOError(table.Object, err.Error())
-		}
-
-		br := bytes.NewReader(buf)
-		loadView, err := loadViewFromFile(ctx, filter.tx, br, fileInfo, filter.tx.Flags.WithoutNull, table.Object)
-		if err != nil {
-			if _, ok := err.(Error); !ok {
-				err = NewDataParsingError(table.Object, fileInfo.Path, err.Error())
+	view, ok := filter.tempViews[len(filter.tempViews)-1].Load(stdin.String())
+	if !ok || (forUpdate && !view.FileInfo.ForUpdate) {
+		if forUpdate {
+			if err := filter.tx.LockStdinContext(ctx); err != nil {
+				return nil, err
 			}
-			return err
+		} else {
+			if err := filter.tx.RLockStdinContext(ctx); err != nil {
+				return nil, err
+			}
+			defer filter.tx.RUnlockStdin()
 		}
-
-		loadView.FileInfo.InitialHeader = loadView.Header.Copy()
-		loadView.FileInfo.InitialRecordSet = loadView.RecordSet.Copy()
-		filter.tempViews[len(filter.tempViews)-1].Set(loadView)
+		view, err := filter.tx.Session.GetStdinView(ctx, filter, fileInfo, stdin)
+		if err != nil {
+			return nil, err
+		}
+		filter.tempViews[len(filter.tempViews)-1].Set(view)
 	}
-	return nil
+
+	pathIdent := parser.Identifier{Literal: stdin.String()}
+	if useInternalId {
+		view, _ = filter.tempViews[len(filter.tempViews)-1].GetWithInternalId(ctx, pathIdent, filter.tx.Flags)
+	} else {
+		view, _ = filter.tempViews[len(filter.tempViews)-1].Get(pathIdent)
+	}
+	if !strings.EqualFold(stdin.String(), tableName.Literal) {
+		if err := view.Header.Update(tableName.Literal, nil); err != nil {
+			return nil, err
+		}
+	}
+
+	return view, filter.aliases.Add(tableName, view.FileInfo.Path)
 }
 
 func loadObject(
 	ctx context.Context,
-	tableIdentifier parser.Identifier,
+	tableExpr parser.QueryExpression,
 	tableName parser.Identifier,
 	forUpdate bool,
 	useInternalId bool,
@@ -557,6 +528,28 @@ func loadObject(
 	jsonEscape txjson.EscapeType,
 	withoutNull bool,
 ) (*View, error) {
+	if stdin, ok := tableExpr.(parser.Stdin); ok {
+		if importFormat == cmd.AutoSelect {
+			importFormat = filter.tx.Flags.ImportFormat
+		}
+
+		fileInfo := &FileInfo{
+			Path:               stdin.String(),
+			Format:             importFormat,
+			Delimiter:          delimiter,
+			DelimiterPositions: delimiterPositions,
+			SingleLine:         singleLine,
+			JsonQuery:          jsonQuery,
+			Encoding:           encoding,
+			LineBreak:          lineBreak,
+			NoHeader:           noHeader,
+			ViewType:           ViewTypeStdin,
+		}
+		return loadStdin(ctx, filter, fileInfo, stdin, tableName, forUpdate, useInternalId)
+	}
+
+	tableIdentifier := tableExpr.(parser.Identifier)
+
 	if filter.recursiveTable != nil && strings.EqualFold(tableIdentifier.Literal, filter.recursiveTable.Name.Literal) && filter.recursiveTmpView != nil {
 		view := filter.recursiveTmpView
 		if !strings.EqualFold(filter.recursiveTable.Name.Literal, tableName.Literal) {
@@ -1954,6 +1947,16 @@ func (view *View) InternalRecordId(ref string, recordIndex int) (int, error) {
 		return -1, NewInternalRecordIdEmptyError()
 	}
 	return int(internalId.Raw()), nil
+}
+
+func (view *View) CreateRestorePoint() {
+	view.FileInfo.restorePointRecordSet = view.RecordSet.Copy()
+	view.FileInfo.restorePointHeader = view.Header.Copy()
+}
+
+func (view *View) Restore() {
+	view.RecordSet = view.FileInfo.restorePointRecordSet.Copy()
+	view.Header = view.FileInfo.restorePointHeader.Copy()
 }
 
 func (view *View) FieldLen() int {

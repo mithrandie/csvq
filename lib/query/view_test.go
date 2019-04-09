@@ -232,11 +232,11 @@ var viewLoadTests = []struct {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:        "stdin",
-				Delimiter:   ',',
-				Encoding:    text.UTF8,
-				LineBreak:   text.LF,
-				IsTemporary: true,
+				Path:      "stdin",
+				Delimiter: ',',
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
+				ViewType:  ViewTypeStdin,
 			},
 			Filter: &Filter{
 				variables: []VariableMap{NewVariableMap()},
@@ -276,11 +276,11 @@ var viewLoadTests = []struct {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:        "stdin",
-				Delimiter:   ',',
-				Encoding:    text.UTF8,
-				LineBreak:   text.LF,
-				IsTemporary: true,
+				Path:      "stdin",
+				Delimiter: ',',
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
+				ViewType:  ViewTypeStdin,
 			},
 			Filter: &Filter{
 				variables: []VariableMap{NewVariableMap()},
@@ -321,13 +321,13 @@ var viewLoadTests = []struct {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:        "stdin",
-				Delimiter:   ',',
-				JsonQuery:   "key{}",
-				Format:      cmd.JSON,
-				Encoding:    text.UTF8,
-				LineBreak:   text.LF,
-				IsTemporary: true,
+				Path:      "stdin",
+				Delimiter: ',',
+				JsonQuery: "key{}",
+				Format:    cmd.JSON,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
+				ViewType:  ViewTypeStdin,
 			},
 			Filter: &Filter{
 				variables: []VariableMap{NewVariableMap()},
@@ -372,14 +372,14 @@ var viewLoadTests = []struct {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:        "stdin",
-				Delimiter:   ',',
-				JsonQuery:   "{}",
-				Format:      cmd.JSON,
-				Encoding:    text.UTF8,
-				LineBreak:   text.LF,
-				JsonEscape:  json.HexDigits,
-				IsTemporary: true,
+				Path:       "stdin",
+				Delimiter:  ',',
+				JsonQuery:  "{}",
+				Format:     cmd.JSON,
+				Encoding:   text.UTF8,
+				LineBreak:  text.LF,
+				JsonEscape: json.HexDigits,
+				ViewType:   ViewTypeStdin,
 			},
 			Filter: &Filter{
 				variables: []VariableMap{NewVariableMap()},
@@ -424,14 +424,14 @@ var viewLoadTests = []struct {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:        "stdin",
-				Delimiter:   ',',
-				JsonQuery:   "{}",
-				Format:      cmd.JSON,
-				Encoding:    text.UTF8,
-				LineBreak:   text.LF,
-				JsonEscape:  json.AllWithHexDigits,
-				IsTemporary: true,
+				Path:       "stdin",
+				Delimiter:  ',',
+				JsonQuery:  "{}",
+				Format:     cmd.JSON,
+				Encoding:   text.UTF8,
+				LineBreak:  text.LF,
+				JsonEscape: json.AllWithHexDigits,
+				ViewType:   ViewTypeStdin,
 			},
 			Filter: &Filter{
 				variables: []VariableMap{NewVariableMap()},
@@ -594,11 +594,11 @@ var viewLoadTests = []struct {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:        "stdin",
-				Delimiter:   ',',
-				Encoding:    text.UTF8,
-				LineBreak:   text.LF,
-				IsTemporary: true,
+				Path:      "stdin",
+				Delimiter: ',',
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
+				ViewType:  ViewTypeStdin,
 			},
 			Filter: &Filter{
 				variables: []VariableMap{NewVariableMap()},
@@ -2251,12 +2251,12 @@ var viewLoadTests = []struct {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:        "jt",
-				Format:      cmd.JSON,
-				JsonQuery:   "{column1, column2}",
-				Encoding:    text.UTF8,
-				LineBreak:   text.LF,
-				IsTemporary: true,
+				Path:      "jt",
+				Format:    cmd.JSON,
+				JsonQuery: "{column1, column2}",
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
+				ViewType:  ViewTypeTemporaryTable,
 			},
 			Filter: &Filter{
 				variables:    []VariableMap{NewVariableMap()},
@@ -2371,12 +2371,12 @@ var viewLoadTests = []struct {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:        "jt",
-				Format:      cmd.JSON,
-				JsonQuery:   "{}",
-				Encoding:    text.UTF8,
-				LineBreak:   text.LF,
-				IsTemporary: true,
+				Path:      "jt",
+				Format:    cmd.JSON,
+				JsonQuery: "{}",
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
+				ViewType:  ViewTypeTemporaryTable,
 			},
 			Filter: &Filter{
 				variables:    []VariableMap{NewVariableMap()},
@@ -2583,7 +2583,7 @@ func TestView_Load(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-		TestTx.Session.SetStdin(os.Stdin)
+		_ = TestTx.Session.SetStdin(os.Stdin)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -2592,7 +2592,7 @@ func TestView_Load(t *testing.T) {
 	for _, v := range viewLoadTests {
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 
-		TestTx.Session.SetStdin(os.Stdin)
+		_ = TestTx.Session.SetStdin(os.Stdin)
 		TestTx.Flags.ImportFormat = v.ImportFormat
 		TestTx.Flags.Delimiter = ','
 		if v.Delimiter != 0 {
@@ -2609,7 +2609,7 @@ func TestView_Load(t *testing.T) {
 		}
 
 		if 0 < len(v.Stdin) {
-			TestTx.Session.SetStdin(NewInput(strings.NewReader(v.Stdin)))
+			_ = TestTx.Session.SetStdin(NewInput(strings.NewReader(v.Stdin)))
 		}
 
 		view := NewView(TestTx)
@@ -2665,8 +2665,8 @@ func TestView_Load(t *testing.T) {
 			if view.FileInfo.ForUpdate != v.Result.FileInfo.ForUpdate {
 				t.Errorf("%s: FileInfo.ForUpdate = %t, want %t", v.Name, view.FileInfo.ForUpdate, v.Result.FileInfo.ForUpdate)
 			}
-			if view.FileInfo.IsTemporary != v.Result.FileInfo.IsTemporary {
-				t.Errorf("%s: FileInfo.IsTemporary = %t, want %t", v.Name, view.FileInfo.IsTemporary, v.Result.FileInfo.IsTemporary)
+			if view.FileInfo.ViewType != v.Result.FileInfo.ViewType {
+				t.Errorf("%s: FileInfo.ViewType = %d, want %d", v.Name, view.FileInfo.ViewType, v.Result.FileInfo.ViewType)
 			}
 		}
 		if view.FileInfo != nil {
@@ -5582,7 +5582,7 @@ var viewInsertValuesTests = []struct {
 					value.NewNull(),
 				}),
 			},
-			Filter: NewFilter(nil),
+			Filter: NewFilter(TestTx),
 		},
 		UpdateCount: 2,
 	},
@@ -5650,7 +5650,7 @@ func TestView_InsertValues(t *testing.T) {
 				value.NewString("str2"),
 			}),
 		},
-		Filter: NewFilter(nil),
+		Filter: NewFilter(TestTx),
 	}
 
 	for _, v := range viewInsertValuesTests {

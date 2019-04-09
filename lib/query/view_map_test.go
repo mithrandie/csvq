@@ -522,9 +522,9 @@ func TestTemporaryViewScopesDispose(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:        "/path/to/table1.csv",
-					Delimiter:   ',',
-					IsTemporary: true,
+					Path:      "/path/to/table1.csv",
+					Delimiter: ',',
+					ViewType:  ViewTypeTemporaryTable,
 				},
 			},
 		}),
@@ -585,10 +585,10 @@ func TestTemporaryViewScopes_Store(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:             "/path/to/table1.csv",
-					Delimiter:        ',',
-					InitialHeader:    NewHeader("table1", []string{"column1", "column2"}),
-					InitialRecordSet: RecordSet{},
+					Path:                  "/path/to/table1.csv",
+					Delimiter:             ',',
+					restorePointHeader:    NewHeader("table1", []string{"column1", "column2"}),
+					restorePointRecordSet: RecordSet{},
 				},
 			},
 			{
@@ -604,10 +604,10 @@ func TestTemporaryViewScopes_Store(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:             "/path/to/table2.csv",
-					Delimiter:        ',',
-					InitialHeader:    NewHeader("table2", []string{"column1", "column2", "column3"}),
-					InitialRecordSet: RecordSet{},
+					Path:                  "/path/to/table2.csv",
+					Delimiter:             ',',
+					restorePointHeader:    NewHeader("table2", []string{"column1", "column2", "column3"}),
+					restorePointRecordSet: RecordSet{},
 				},
 			},
 		}),
@@ -628,10 +628,10 @@ func TestTemporaryViewScopes_Store(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:          "/path/to/table1.csv",
-					Delimiter:     ',',
-					InitialHeader: NewHeader("table1", []string{"column1", "column2", "column3"}),
-					InitialRecordSet: RecordSet{
+					Path:               "/path/to/table1.csv",
+					Delimiter:          ',',
+					restorePointHeader: NewHeader("table1", []string{"column1", "column2", "column3"}),
+					restorePointRecordSet: RecordSet{
 						NewRecord([]value.Primary{
 							value.NewString("1"),
 							value.NewString("str1"),
@@ -656,10 +656,10 @@ func TestTemporaryViewScopes_Store(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:             "/path/to/table2.csv",
-					Delimiter:        ',',
-					InitialHeader:    NewHeader("table2", []string{"column1", "column2", "column3"}),
-					InitialRecordSet: RecordSet{},
+					Path:                  "/path/to/table2.csv",
+					Delimiter:             ',',
+					restorePointHeader:    NewHeader("table2", []string{"column1", "column2", "column3"}),
+					restorePointRecordSet: RecordSet{},
 				},
 			},
 		}),
@@ -670,7 +670,7 @@ func TestTemporaryViewScopes_Store(t *testing.T) {
 		"/PATH/TO/TABLE1.CSV": nil,
 	}
 
-	log := list.Store(UncommittedViews)
+	log := list.Store(TestTx.Session, UncommittedViews)
 
 	if !SyncMapListEqual(TempViewScopesToSyncMapList(list), TempViewScopesToSyncMapList(expect)) {
 		t.Errorf("Store: view = %v, want %v", list, expect)
@@ -697,10 +697,10 @@ func TestTemporaryViewScopes_Restore(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:             "/path/to/table1.csv",
-					Delimiter:        ',',
-					InitialHeader:    NewHeader("table1", []string{"column1", "column2"}),
-					InitialRecordSet: RecordSet{},
+					Path:                  "/path/to/table1.csv",
+					Delimiter:             ',',
+					restorePointHeader:    NewHeader("table1", []string{"column1", "column2"}),
+					restorePointRecordSet: RecordSet{},
 				},
 			},
 		}),
@@ -718,10 +718,10 @@ func TestTemporaryViewScopes_Restore(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:          "/path/to/table2.csv",
-					Delimiter:     ',',
-					InitialHeader: NewHeader("table2", []string{"column1", "column2"}),
-					InitialRecordSet: []Record{
+					Path:               "/path/to/table2.csv",
+					Delimiter:          ',',
+					restorePointHeader: NewHeader("table2", []string{"column1", "column2"}),
+					restorePointRecordSet: []Record{
 						NewRecord([]value.Primary{
 							value.NewString("1"),
 							value.NewString("str1"),
@@ -742,10 +742,10 @@ func TestTemporaryViewScopes_Restore(t *testing.T) {
 				Header:    NewHeader("table1", []string{"column1", "column2"}),
 				RecordSet: []Record{},
 				FileInfo: &FileInfo{
-					Path:             "/path/to/table1.csv",
-					Delimiter:        ',',
-					InitialHeader:    NewHeader("table1", []string{"column1", "column2"}),
-					InitialRecordSet: RecordSet{},
+					Path:                  "/path/to/table1.csv",
+					Delimiter:             ',',
+					restorePointHeader:    NewHeader("table1", []string{"column1", "column2"}),
+					restorePointRecordSet: RecordSet{},
 				},
 			},
 		}),
@@ -763,10 +763,10 @@ func TestTemporaryViewScopes_Restore(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:          "/path/to/table2.csv",
-					Delimiter:     ',',
-					InitialHeader: NewHeader("table2", []string{"column1", "column2"}),
-					InitialRecordSet: []Record{
+					Path:               "/path/to/table2.csv",
+					Delimiter:          ',',
+					restorePointHeader: NewHeader("table2", []string{"column1", "column2"}),
+					restorePointRecordSet: []Record{
 						NewRecord([]value.Primary{
 							value.NewString("1"),
 							value.NewString("str1"),
@@ -803,8 +803,8 @@ func TestTemporaryViewScopes_All(t *testing.T) {
 		GenerateViewMap([]*View{
 			{
 				FileInfo: &FileInfo{
-					Path:        "view1",
-					IsTemporary: true,
+					Path:     "view1",
+					ViewType: ViewTypeTemporaryTable,
 				},
 				Header: NewHeader("view1", []string{"column1", "column2"}),
 			},
@@ -818,8 +818,8 @@ func TestTemporaryViewScopes_All(t *testing.T) {
 			},
 			{
 				FileInfo: &FileInfo{
-					Path:        "view2",
-					IsTemporary: true,
+					Path:     "view2",
+					ViewType: ViewTypeTemporaryTable,
 				},
 				Header: NewHeader("view2", []string{"column1", "column2"}),
 			},
@@ -829,15 +829,15 @@ func TestTemporaryViewScopes_All(t *testing.T) {
 	expect := GenerateViewMap([]*View{
 		{
 			FileInfo: &FileInfo{
-				Path:        "view1",
-				IsTemporary: true,
+				Path:     "view1",
+				ViewType: ViewTypeTemporaryTable,
 			},
 			Header: NewHeader("view1", []string{"column1", "column2"}),
 		},
 		{
 			FileInfo: &FileInfo{
-				Path:        "view2",
-				IsTemporary: true,
+				Path:     "view2",
+				ViewType: ViewTypeTemporaryTable,
 			},
 			Header: NewHeader("view2", []string{"column1", "column2"}),
 		},
@@ -1149,9 +1149,9 @@ func TestViewMap_DisposeTemporaryTable(t *testing.T) {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:        "/path/to/table1.csv",
-				Delimiter:   ',',
-				IsTemporary: true,
+				Path:      "/path/to/table1.csv",
+				Delimiter: ',',
+				ViewType:  ViewTypeTemporaryTable,
 			},
 		},
 		{
@@ -1208,9 +1208,9 @@ func TestViewMap_Clear(t *testing.T) {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:        "/path/to/table1.csv",
-				Delimiter:   ',',
-				IsTemporary: true,
+				Path:      "/path/to/table1.csv",
+				Delimiter: ',',
+				ViewType:  ViewTypeTemporaryTable,
 			},
 		},
 		{

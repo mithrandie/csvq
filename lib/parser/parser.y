@@ -96,6 +96,7 @@ import (
 %type<queryexpr>   null
 %type<queryexpr>   field_reference
 %type<queryexpr>   value
+%type<queryexpr>   substantial_value
 %type<queryexpr>   wildcard
 %type<queryexpr>   row_value
 %type<queryexprs>  row_values
@@ -141,6 +142,7 @@ import (
 %type<queryexpr>   case_expr_else
 %type<queryexprs>  field_references
 %type<queryexprs>  values
+%type<queryexprs>  substantial_values
 %type<queryexprs>  tables
 %type<queryexprs>  identifiers
 %type<queryexprs>  fields
@@ -333,7 +335,7 @@ common_statement
     {
         $$ = $1
     }
-    | value
+    | substantial_value
     {
         $$ = $1
     }
@@ -363,7 +365,7 @@ procedure_statement
     }
 
 while_statement
-    : WHILE value DO loop_program END WHILE
+    : WHILE substantial_value DO loop_program END WHILE
     {
         $$ = While{Condition: $2, Statements: $4}
     }
@@ -415,11 +417,11 @@ loop_statement
     }
 
 flow_control_statement
-    : IF value THEN program else END IF
+    : IF substantial_value THEN program else END IF
     {
         $$ = If{Condition: $2, Statements: $4, Else: $5}
     }
-    | IF value THEN program elseif else END IF
+    | IF substantial_value THEN program elseif else END IF
     {
         $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
     }
@@ -437,11 +439,11 @@ flow_control_statement
     }
 
 loop_flow_control_statement
-    : IF value THEN loop_program in_loop_else END IF
+    : IF substantial_value THEN loop_program in_loop_else END IF
     {
         $$ = If{Condition: $2, Statements: $4, Else: $5}
     }
-    | IF value THEN loop_program in_loop_elseif in_loop_else END IF
+    | IF substantial_value THEN loop_program in_loop_elseif in_loop_else END IF
     {
         $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
     }
@@ -473,7 +475,7 @@ function_statement
     }
 
 function_while_statement
-    : WHILE value DO function_loop_program END WHILE
+    : WHILE substantial_value DO function_loop_program END WHILE
     {
         $$ = While{Condition: $2, Statements: $4}
     }
@@ -491,7 +493,7 @@ function_exit_statement
     {
         $$ = Return{Value: NewNullValue()}
     }
-    | RETURN value
+    | RETURN substantial_value
     {
         $$ = Return{Value: $2}
     }
@@ -507,11 +509,11 @@ function_loop_statement
     }
 
 function_flow_control_statement
-    : IF value THEN function_program in_function_else END IF
+    : IF substantial_value THEN function_program in_function_else END IF
     {
         $$ = If{Condition: $2, Statements: $4, Else: $5}
     }
-    | IF value THEN function_program in_function_elseif in_function_else END IF
+    | IF substantial_value THEN function_program in_function_elseif in_function_else END IF
     {
         $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
     }
@@ -529,11 +531,11 @@ function_flow_control_statement
     }
 
 function_loop_flow_control_statement
-    : IF value THEN function_loop_program in_function_in_loop_else END IF
+    : IF substantial_value THEN function_loop_program in_function_in_loop_else END IF
     {
         $$ = If{Condition: $2, Statements: $4, Else: $5}
     }
-    | IF value THEN function_loop_program in_function_in_loop_elseif in_function_in_loop_else END IF
+    | IF substantial_value THEN function_loop_program in_function_in_loop_elseif in_function_in_loop_else END IF
     {
         $$ = If{Condition: $2, Statements: $4, ElseIf: $5, Else: $6}
     }
@@ -573,7 +575,7 @@ variable_statement
     }
 
 environment_variable_statement
-    : SET environment_variable '=' value
+    : SET environment_variable '=' substantial_value
     {
         $$ = SetEnvVar{EnvVar:$2, Value:$4}
     }
@@ -581,7 +583,7 @@ environment_variable_statement
     {
         $$ = SetEnvVar{EnvVar:$2, Value:$4}
     }
-    | SET environment_variable TO value
+    | SET environment_variable TO substantial_value
     {
         $$ = SetEnvVar{EnvVar:$2, Value:$4}
     }
@@ -641,7 +643,7 @@ table_operation_statement
     {
         $$ = SetTableAttribute{BaseExpr: NewBaseExpr($1), Table: $3, Attribute: $5, Value: $7}
     }
-    | ALTER TABLE updatable_table_identifier SET identifier TO value
+    | ALTER TABLE updatable_table_identifier SET identifier TO substantial_value
     {
         $$ = SetTableAttribute{BaseExpr: NewBaseExpr($1), Table: $3, Attribute: $5, Value: $7}
     }
@@ -737,11 +739,11 @@ temporary_table_statement
     }
 
 replace_value
-    : value
+    : substantial_value
     {
         $$ = ReplaceValue{Value: $1}
     }
-    | value AS identifier
+    | substantial_value AS identifier
     {
         $$ = ReplaceValue{Value: $1, Name: $3}
     }
@@ -791,7 +793,7 @@ parameters
     }
 
 optional_parameter
-    : variable DEFAULT value
+    : variable DEFAULT substantial_value
     {
         $$ = VariableAssignment{Variable: $1, Value: $3}
     }
@@ -863,11 +865,11 @@ fetch_position
     {
         $$ = FetchPosition{Position: $1}
     }
-    | ABSOLUTE value
+    | ABSOLUTE substantial_value
     {
         $$ = FetchPosition{BaseExpr: NewBaseExpr($1), Position: $1, Number: $2}
     }
-    | RELATIVE value
+    | RELATIVE substantial_value
     {
         $$ = FetchPosition{BaseExpr: NewBaseExpr($1), Position: $1, Number: $2}
     }
@@ -891,7 +893,7 @@ command_statement
     {
         $$ = SetFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal, Value: $4}
     }
-    | SET FLAG '=' value
+    | SET FLAG '=' substantial_value
     {
         $$ = SetFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal, Value: $4}
     }
@@ -899,15 +901,15 @@ command_statement
     {
         $$ = SetFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal, Value: $4}
     }
-    | SET FLAG TO value
+    | SET FLAG TO substantial_value
     {
         $$ = SetFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal, Value: $4}
     }
-    | ADD value TO FLAG
+    | ADD substantial_value TO FLAG
     {
         $$ = AddFlagElement{BaseExpr: NewBaseExpr($1), Name: $4.Literal, Value: $2}
     }
-    | REMOVE value FROM FLAG
+    | REMOVE substantial_value FROM FLAG
     {
         $$ = RemoveFlagElement{BaseExpr: NewBaseExpr($1), Name: $4.Literal, Value: $2}
     }
@@ -915,23 +917,23 @@ command_statement
     {
         $$ = ShowFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal}
     }
-    | ECHO value
+    | ECHO substantial_value
     {
         $$ = Echo{Value: $2}
     }
-    | PRINT value
+    | PRINT substantial_value
     {
         $$ = Print{Value: $2}
     }
-    | PRINTF value
+    | PRINTF substantial_value
     {
         $$ = Printf{BaseExpr: NewBaseExpr($1), Format: $2}
     }
-    | PRINTF value ',' values
+    | PRINTF substantial_value ',' substantial_values
     {
         $$ = Printf{BaseExpr: NewBaseExpr($1), Format: $2, Values: $4}
     }
-    | PRINTF value USING values
+    | PRINTF substantial_value USING substantial_values
     {
         $$ = Printf{BaseExpr: NewBaseExpr($1), Format: $2, Values: $4}
     }
@@ -939,15 +941,15 @@ command_statement
     {
         $$ = Source{BaseExpr: NewBaseExpr($1), FilePath: $2}
     }
-    | SOURCE value
+    | SOURCE substantial_value
     {
         $$ = Source{BaseExpr: NewBaseExpr($1), FilePath: $2}
     }
-    | EXECUTE value
+    | EXECUTE substantial_value
     {
         $$ = Execute{BaseExpr: NewBaseExpr($1), Statements: $2}
     }
-    | EXECUTE value USING values
+    | EXECUTE substantial_value USING substantial_values
     {
         $$ = Execute{BaseExpr: NewBaseExpr($1), Statements: $2, Values: $4}
     }
@@ -971,7 +973,7 @@ command_statement
     {
         $$ = Chdir{BaseExpr: NewBaseExpr($1), DirPath: $2}
     }
-    | CHDIR value
+    | CHDIR substantial_value
     {
         $$ = Chdir{BaseExpr: NewBaseExpr($1), DirPath: $2}
     }
@@ -989,11 +991,11 @@ trigger_statement
     {
         $$ = Trigger{BaseExpr: NewBaseExpr($1), Event: $2}
     }
-    | TRIGGER identifier value
+    | TRIGGER identifier substantial_value
     {
         $$ = Trigger{BaseExpr: NewBaseExpr($1), Event: $2, Message: $3}
     }
-    | TRIGGER identifier INTEGER value
+    | TRIGGER identifier INTEGER substantial_value
     {
         $$ = Trigger{BaseExpr: NewBaseExpr($1), Event: $2, Message: $4, Code: value.NewIntegerFromString($3.Literal)}
     }
@@ -1132,11 +1134,11 @@ limit_clause
     {
         $$ = nil
     }
-    | LIMIT value limit_with
+    | LIMIT substantial_value limit_with
     {
         $$ = LimitClause{BaseExpr: NewBaseExpr($1), Limit: $1.Literal, Value: $2, With: $3}
     }
-    | LIMIT value PERCENT limit_with
+    | LIMIT substantial_value PERCENT limit_with
     {
         $$ = LimitClause{BaseExpr: NewBaseExpr($1), Limit: $1.Literal, Value: $2, Percent: $3.Literal, With: $4}
     }
@@ -1156,7 +1158,7 @@ offset_clause
     {
         $$ = nil
     }
-    | OFFSET value
+    | OFFSET substantial_value
     {
         $$ = OffsetClause{BaseExpr: NewBaseExpr($1), Offset: $1.Literal, Value: $2}
     }
@@ -1256,7 +1258,17 @@ value
     {
         $$ = $1
     }
-    | primitive_type
+    | substantial_value
+    {
+        $$ = $1
+    }
+    | '(' value ')'
+    {
+        $$ = Parentheses{Expr: $2}
+    }
+
+substantial_value
+    : primitive_type
     {
         $$ = $1
     }
@@ -1312,7 +1324,7 @@ value
     {
         $$ = $1
     }
-    | '(' value ')'
+    | '(' substantial_value ')'
     {
         $$ = Parentheses{Expr: $2}
     }
@@ -1802,19 +1814,19 @@ table_object_identifier
     }
 
 table_object
-    : table_object_identifier '(' identifier ')'
+    : table_object_identifier '(' table_identifier ')'
     {
         $$ = TableObject{BaseExpr: $1.BaseExpr, Type: $1, Path: $3, Args: nil}
     }
-    | table_object_identifier '(' identifier ',' arguments ')'
+    | table_object_identifier '(' table_identifier ',' arguments ')'
     {
         $$ = TableObject{BaseExpr: $1.BaseExpr, Type: $1, Path: $3, Args: $5}
     }
-    | table_object_identifier '(' value ',' identifier ')'
+    | table_object_identifier '(' substantial_value ',' table_identifier ')'
     {
         $$ = TableObject{BaseExpr: $1.BaseExpr, Type: $1, FormatElement: $3, Path: $5, Args: nil}
     }
-    | table_object_identifier '(' value ',' identifier ',' arguments ')'
+    | table_object_identifier '(' substantial_value ',' table_identifier ',' arguments ')'
     {
         $$ = TableObject{BaseExpr: $1.BaseExpr, Type: $1, FormatElement: $3, Path: $5, Args: $7}
     }
@@ -1834,11 +1846,11 @@ virtual_table_object
     {
         $$ = $1
     }
-    | JSON_TABLE '(' value ',' identifier ')'
+    | JSON_TABLE '(' substantial_value ',' identifier ')'
     {
         $$ = JsonQuery{BaseExpr: NewBaseExpr($1), JsonQuery: $1.Literal, Query: $3, JsonText: $5}
     }
-    | JSON_TABLE '(' value ',' value ')'
+    | JSON_TABLE '(' substantial_value ',' substantial_value ')'
     {
         $$ = JsonQuery{BaseExpr: NewBaseExpr($1), JsonQuery: $1.Literal, Query: $3, JsonText: $5}
     }
@@ -1989,6 +2001,16 @@ values
         $$ = append([]QueryExpression{$1}, $3...)
     }
 
+substantial_values
+    : substantial_value
+    {
+        $$ = []QueryExpression{$1}
+    }
+    | substantial_value ',' substantial_values
+    {
+        $$ = append([]QueryExpression{$1}, $3...)
+    }
+
 tables
     : table
     {
@@ -2092,11 +2114,11 @@ delete_query
     }
 
 elseif
-    : ELSEIF value THEN program
+    : ELSEIF substantial_value THEN program
     {
         $$ = []ElseIf{{Condition: $2, Statements: $4}}
     }
-    | ELSEIF value THEN program elseif
+    | ELSEIF substantial_value THEN program elseif
     {
         $$ = append([]ElseIf{{Condition: $2, Statements: $4}}, $5...)
     }
@@ -2112,11 +2134,11 @@ else
     }
 
 in_loop_elseif
-    : ELSEIF value THEN loop_program
+    : ELSEIF substantial_value THEN loop_program
     {
         $$ = []ElseIf{{Condition: $2, Statements: $4}}
     }
-    | ELSEIF value THEN loop_program in_loop_elseif
+    | ELSEIF substantial_value THEN loop_program in_loop_elseif
     {
         $$ = append([]ElseIf{{Condition: $2, Statements: $4}}, $5...)
     }
@@ -2132,11 +2154,11 @@ in_loop_else
     }
 
 in_function_elseif
-    : ELSEIF value THEN function_program
+    : ELSEIF substantial_value THEN function_program
     {
         $$ = []ElseIf{{Condition: $2, Statements: $4}}
     }
-    | ELSEIF value THEN function_program in_function_elseif
+    | ELSEIF substantial_value THEN function_program in_function_elseif
     {
         $$ = append([]ElseIf{{Condition: $2, Statements: $4}}, $5...)
     }
@@ -2152,11 +2174,11 @@ in_function_else
     }
 
 in_function_in_loop_elseif
-    : ELSEIF value THEN function_loop_program
+    : ELSEIF substantial_value THEN function_loop_program
     {
         $$ = []ElseIf{{Condition: $2, Statements: $4}}
     }
-    | ELSEIF value THEN function_loop_program in_function_in_loop_elseif
+    | ELSEIF substantial_value THEN function_loop_program in_function_in_loop_elseif
     {
         $$ = append([]ElseIf{{Condition: $2, Statements: $4}}, $5...)
     }
@@ -2172,11 +2194,11 @@ in_function_in_loop_else
     }
 
 case_when
-    : WHEN value THEN program
+    : WHEN substantial_value THEN program
     {
         $$ = []CaseWhen{{Condition: $2, Statements: $4}}
     }
-    | WHEN value THEN program case_when
+    | WHEN substantial_value THEN program case_when
     {
         $$ = append([]CaseWhen{{Condition: $2, Statements: $4}}, $5...)
     }
@@ -2192,11 +2214,11 @@ case_else
     }
 
 in_loop_case_when
-    : WHEN value THEN loop_program
+    : WHEN substantial_value THEN loop_program
     {
         $$ = []CaseWhen{{Condition: $2, Statements: $4}}
     }
-    | WHEN value THEN loop_program in_loop_case_when
+    | WHEN substantial_value THEN loop_program in_loop_case_when
     {
         $$ = append([]CaseWhen{{Condition: $2, Statements: $4}}, $5...)
     }
@@ -2212,11 +2234,11 @@ in_loop_case_else
     }
 
 in_function_case_when
-    : WHEN value THEN function_program
+    : WHEN substantial_value THEN function_program
     {
         $$ = []CaseWhen{{Condition: $2, Statements: $4}}
     }
-    | WHEN value THEN function_program in_function_case_when
+    | WHEN substantial_value THEN function_program in_function_case_when
     {
         $$ = append([]CaseWhen{{Condition: $2, Statements: $4}}, $5...)
     }
@@ -2232,11 +2254,11 @@ in_function_case_else
     }
 
 in_function_in_loop_case_when
-    : WHEN value THEN function_loop_program
+    : WHEN substantial_value THEN function_loop_program
     {
         $$ = []CaseWhen{{Condition: $2, Statements: $4}}
     }
-    | WHEN value THEN function_loop_program in_function_in_loop_case_when
+    | WHEN substantial_value THEN function_loop_program in_function_in_loop_case_when
     {
         $$ = append([]CaseWhen{{Condition: $2, Statements: $4}}, $5...)
     }

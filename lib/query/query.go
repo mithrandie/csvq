@@ -84,11 +84,10 @@ func DeclareView(ctx context.Context, filter *Filter, expr parser.ViewDeclaratio
 	}
 
 	view.FileInfo = &FileInfo{
-		Path:             expr.View.Literal,
-		IsTemporary:      true,
-		InitialHeader:    view.Header.Copy(),
-		InitialRecordSet: view.RecordSet.Copy(),
+		Path:     expr.View.Literal,
+		ViewType: ViewTypeTemporaryTable,
 	}
+	view.CreateRestorePoint()
 
 	filter.tempViews.Set(view)
 
@@ -317,7 +316,7 @@ func Insert(ctx context.Context, parentFilter *Filter, query parser.InsertQuery)
 	}
 	view.Filter = nil
 
-	if view.FileInfo.IsTemporary {
+	if !view.FileInfo.IsFile() {
 		filter.tempViews.Replace(view)
 	} else {
 		filter.tx.cachedViews.Set(view)
@@ -432,7 +431,7 @@ func Update(ctx context.Context, parentFilter *Filter, query parser.UpdateQuery)
 			return nil, nil, err
 		}
 
-		if v.FileInfo.IsTemporary {
+		if !v.FileInfo.IsFile() {
 			filter.tempViews.Replace(v)
 		} else {
 			filter.tx.cachedViews.Set(v)
@@ -531,7 +530,7 @@ func Delete(ctx context.Context, parentFilter *Filter, query parser.DeleteQuery)
 			return nil, nil, err
 		}
 
-		if v.FileInfo.IsTemporary {
+		if !v.FileInfo.IsFile() {
 			filter.tempViews.Replace(v)
 		} else {
 			filter.tx.cachedViews.Set(v)
@@ -709,7 +708,7 @@ func AddColumns(ctx context.Context, parentFilter *Filter, query parser.AddColum
 	view.RecordSet = records
 	view.Filter = nil
 
-	if view.FileInfo.IsTemporary {
+	if !view.FileInfo.IsFile() {
 		filter.tempViews.Replace(view)
 	} else {
 		filter.tx.cachedViews.Set(view)
@@ -750,7 +749,7 @@ func DropColumns(ctx context.Context, parentFilter *Filter, query parser.DropCol
 		return nil, 0, err
 	}
 
-	if view.FileInfo.IsTemporary {
+	if !view.FileInfo.IsFile() {
 		filter.tempViews.Replace(view)
 	} else {
 		filter.tx.cachedViews.Set(view)
@@ -785,7 +784,7 @@ func RenameColumn(ctx context.Context, parentFilter *Filter, query parser.Rename
 	view.Header[idx].Column = query.New.Literal
 	view.Filter = nil
 
-	if view.FileInfo.IsTemporary {
+	if !view.FileInfo.IsFile() {
 		filter.tempViews.Replace(view)
 	} else {
 		filter.tx.cachedViews.Set(view)
@@ -806,7 +805,7 @@ func SetTableAttribute(ctx context.Context, parentFilter *Filter, query parser.S
 	if err != nil {
 		return nil, log, err
 	}
-	if view.FileInfo.IsTemporary {
+	if !view.FileInfo.IsFile() {
 		return nil, log, NewNotTableError(query.Table)
 	}
 
@@ -877,7 +876,9 @@ func SetTableAttribute(ctx context.Context, parentFilter *Filter, query parser.S
 	if i, ok := query.Table.(parser.Identifier); ok {
 		w.Title2 = i.Literal
 	} else if to, ok := query.Table.(parser.TableObject); ok {
-		w.Title2 = to.Path.Literal
+		if pi, ok := to.Path.(parser.Identifier); ok {
+			w.Title2 = pi.Literal
+		}
 	}
 	w.Title2Effect = cmd.IdentifierEffect
 	log = "\n" + w.String() + "\n"

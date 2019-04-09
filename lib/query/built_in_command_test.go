@@ -1795,8 +1795,8 @@ var showObjectsTests = []struct {
 				GenerateViewMap([]*View{
 					{
 						FileInfo: &FileInfo{
-							Path:        "view1",
-							IsTemporary: true,
+							Path:     "view1",
+							ViewType: ViewTypeTemporaryTable,
 						},
 						Header: NewHeader("view1", []string{"column1", "column2"}),
 					},
@@ -1804,15 +1804,15 @@ var showObjectsTests = []struct {
 				GenerateViewMap([]*View{
 					{
 						FileInfo: &FileInfo{
-							Path:        "view1",
-							IsTemporary: true,
+							Path:     "view1",
+							ViewType: ViewTypeTemporaryTable,
 						},
 						Header: NewHeader("view1", []string{"column1", "column2", "column3"}),
 					},
 					{
 						FileInfo: &FileInfo{
-							Path:        "view2",
-							IsTemporary: true,
+							Path:     "view2",
+							ViewType: ViewTypeTemporaryTable,
 						},
 						Header: NewHeader("view2", []string{"column1", "column2"}),
 					},
@@ -1823,7 +1823,10 @@ var showObjectsTests = []struct {
 			mtx:     &sync.RWMutex{},
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
-				"VIEW2": {Path: "view2", IsTemporary: true},
+				"VIEW2": {
+					Path:     "view2",
+					ViewType: ViewTypeTemporaryTable,
+				},
 			},
 		},
 		Expect: "\n" +
@@ -2196,8 +2199,8 @@ var showFieldsTests = []struct {
 					{
 						Header: NewHeader("view1", []string{"column1", "column2"}),
 						FileInfo: &FileInfo{
-							Path:        "view1",
-							IsTemporary: true,
+							Path:     "view1",
+							ViewType: ViewTypeTemporaryTable,
 						},
 					},
 				}),
@@ -2205,6 +2208,35 @@ var showFieldsTests = []struct {
 		},
 		Expect: "\n" +
 			" Fields in view1\n" +
+			"-----------------\n" +
+			" Type: View\n" +
+			" Status: Fixed\n" +
+			" Fields:\n" +
+			"   1. column1\n" +
+			"   2. column2\n" +
+			"\n",
+	},
+	{
+		Name: "ShowFields Stdin Table",
+		Expr: parser.ShowFields{
+			Type:  parser.Identifier{Literal: "fields"},
+			Table: parser.Stdin{Stdin: "stdin"},
+		},
+		Filter: &Filter{
+			tempViews: TemporaryViewScopes{
+				GenerateViewMap([]*View{
+					{
+						Header: NewHeader("stdin", []string{"column1", "column2"}),
+						FileInfo: &FileInfo{
+							Path:     "stdin",
+							ViewType: ViewTypeStdin,
+						},
+					},
+				}),
+			},
+		},
+		Expect: "\n" +
+			" Fields in stdin\n" +
 			"-----------------\n" +
 			" Type: View\n" +
 			" Status: Fixed\n" +
@@ -2225,8 +2257,8 @@ var showFieldsTests = []struct {
 					{
 						Header: NewHeader("view1", []string{"column1", "column2"}),
 						FileInfo: &FileInfo{
-							Path:        "view1",
-							IsTemporary: true,
+							Path:     "view1",
+							ViewType: ViewTypeTemporaryTable,
 						},
 					},
 				}),
@@ -2236,7 +2268,10 @@ var showFieldsTests = []struct {
 			mtx:     &sync.RWMutex{},
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
-				"VIEW1": {Path: "view1", IsTemporary: true},
+				"VIEW1": {
+					Path:     "view1",
+					ViewType: ViewTypeTemporaryTable,
+				},
 			},
 		},
 		Expect: "\n" +

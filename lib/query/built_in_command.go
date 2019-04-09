@@ -913,6 +913,15 @@ func writeFunctions(w *ObjectWriter, funcs UserDefinedFunctionMap) {
 }
 
 func ShowFields(ctx context.Context, filter *Filter, expr parser.ShowFields) (string, error) {
+	var tableName = func(expr parser.QueryExpression) (s string) {
+		if e, ok := expr.(parser.Identifier); ok {
+			s = e.Literal
+		} else if e, ok := expr.(parser.Stdin); ok {
+			s = e.Stdin
+		}
+		return
+	}
+
 	if !strings.EqualFold(expr.Type.Literal, "FIELDS") {
 		return "", NewShowInvalidObjectTypeError(expr, expr.Type.Literal)
 	}
@@ -925,7 +934,7 @@ func ShowFields(ctx context.Context, filter *Filter, expr parser.ShowFields) (st
 		return "", err
 	}
 
-	if view.FileInfo.IsTemporary {
+	if !view.FileInfo.IsFile() {
 		updatedViews := filter.tx.uncommittedViews.UncommittedTempViews()
 		ufpath := strings.ToUpper(view.FileInfo.Path)
 
@@ -945,7 +954,7 @@ func ShowFields(ctx context.Context, filter *Filter, expr parser.ShowFields) (st
 
 	w := NewObjectWriter(filter.tx)
 	w.WriteColorWithoutLineBreak("Type: ", cmd.LableEffect)
-	if view.FileInfo.IsTemporary {
+	if !view.FileInfo.IsFile() {
 		w.WriteWithoutLineBreak("View")
 	} else {
 		w.WriteWithoutLineBreak("Table")
@@ -971,10 +980,10 @@ func ShowFields(ctx context.Context, filter *Filter, expr parser.ShowFields) (st
 	writeFieldList(w, view.Header.TableColumnNames())
 
 	w.Title1 = "Fields in"
-	if i, ok := expr.Table.(parser.Identifier); ok {
-		w.Title2 = i.Literal
-	} else if to, ok := expr.Table.(parser.TableObject); ok {
-		w.Title2 = to.Path.Literal
+	if e, ok := expr.Table.(parser.TableObject); ok {
+		w.Title2 = tableName(e.Path)
+	} else {
+		w.Title2 = tableName(expr.Table)
 	}
 	w.Title2Effect = cmd.IdentifierEffect
 	return "\n" + w.String() + "\n", nil

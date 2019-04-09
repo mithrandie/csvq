@@ -4182,7 +4182,7 @@ var filterEvaluateEmbeddedStringTests = []struct {
 	},
 	{
 		Input: "abc${invalid expr}def",
-		Error: "[L:1 C:9] syntax error: unexpected token \"expr\"",
+		Error: "invalid expr [L:1 C:9] syntax error: unexpected token \"expr\"",
 	},
 	{
 		Input: "abc${print 1;}def",
@@ -4190,11 +4190,11 @@ var filterEvaluateEmbeddedStringTests = []struct {
 	},
 	{
 		Input: "abc${print 1;print2;}def",
-		Error: "'print 1;print2;': cannot evaluate as a value",
+		Error: "print 1;print2; [L:1 C:15] syntax error: unexpected token \";\"",
 	},
 	{
 		Input: "abc${@notexist}def",
-		Error: "[L:1 C:1] variable @notexist is undeclared",
+		Error: "@notexist [L:1 C:1] variable @notexist is undeclared",
 	},
 }
 

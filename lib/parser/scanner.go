@@ -353,10 +353,6 @@ func (s *Scanner) isDecimal(ch rune) bool {
 	return '0' <= ch && ch <= '9'
 }
 
-func (s *Scanner) isPositiveDecimal(ch rune) bool {
-	return '1' <= ch && ch <= '9'
-}
-
 func (s *Scanner) scanNumber(head rune) rune {
 	s.literal.Reset()
 

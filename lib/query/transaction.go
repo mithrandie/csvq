@@ -32,6 +32,7 @@ type Transaction struct {
 
 	operationMutex   *sync.Mutex
 	viewLoadingMutex *sync.Mutex
+	stdinIsLocked    bool
 
 	PreparedStatements PreparedStatementMap
 
@@ -64,8 +65,9 @@ func NewTransaction(ctx context.Context, defaultWaitTimeout time.Duration, retry
 		FileContainer:      file.NewContainer(),
 		cachedViews:        NewViewMap(),
 		uncommittedViews:   NewUncommittedViews(),
-		viewLoadingMutex:   &sync.Mutex{},
 		operationMutex:     &sync.Mutex{},
+		viewLoadingMutex:   &sync.Mutex{},
+		stdinIsLocked:      false,
 		PreparedStatements: NewPreparedStatementMap(),
 		SelectedViews:      nil,
 		AffectedRows:       0,
@@ -157,11 +159,12 @@ func (tx *Transaction) Commit(ctx context.Context, filter *Filter, expr parser.E
 		tx.LogNotice(fmt.Sprintf("Commit: file %q is updated.", f.Path), tx.Flags.Quiet)
 	}
 
-	msglist := filter.tempViews.Store(tx.uncommittedViews.UncommittedTempViews())
+	msglist := filter.tempViews.Store(tx.Session, tx.uncommittedViews.UncommittedTempViews())
 	if 0 < len(msglist) {
 		tx.LogNotice(strings.Join(msglist, "\n"), tx.quietForTemporaryViews(expr))
 	}
 	tx.uncommittedViews.Clean()
+	tx.UnlockStdin()
 	if err := tx.ReleaseResources(); err != nil {
 		return NewCommitError(expr, err.Error())
 	}
@@ -193,6 +196,7 @@ func (tx *Transaction) Rollback(filter *Filter, expr parser.Expression) error {
 		}
 	}
 	tx.uncommittedViews.Clean()
+	tx.UnlockStdin()
 	if err := tx.ReleaseResources(); err != nil {
 		return NewRollbackError(expr, err.Error())
 	}
@@ -210,6 +214,7 @@ func (tx *Transaction) ReleaseResources() error {
 	if err := tx.FileContainer.CloseAll(); err != nil {
 		return err
 	}
+	tx.UnlockStdin()
 	return nil
 }
 
@@ -221,8 +226,37 @@ func (tx *Transaction) ReleaseResourcesWithErrors() error {
 	if err := tx.FileContainer.CloseAllWithErrors(); err != nil {
 		errs = append(errs, err.(*file.ForcedUnlockError).Errors...)
 	}
-
+	tx.UnlockStdin()
 	return file.NewForcedUnlockError(errs)
+}
+
+func (tx *Transaction) LockStdinContext(ctx context.Context) error {
+	tctx, cancel := file.GetTimeoutContext(ctx, tx.WaitTimeout)
+	defer cancel()
+
+	err := tx.Session.stdinLocker.LockContext(tctx)
+	if err == nil {
+		tx.stdinIsLocked = true
+	}
+	return err
+}
+
+func (tx *Transaction) UnlockStdin() {
+	if tx.stdinIsLocked {
+		tx.stdinIsLocked = false
+		_ = tx.Session.stdinLocker.Unlock()
+	}
+}
+
+func (tx *Transaction) RLockStdinContext(ctx context.Context) error {
+	tctx, cancel := file.GetTimeoutContext(ctx, tx.WaitTimeout)
+	defer cancel()
+
+	return tx.Session.stdinLocker.RLockContext(tctx)
+}
+
+func (tx *Transaction) RUnlockStdin() {
+	_ = tx.Session.stdinLocker.RUnlock()
 }
 
 func (tx *Transaction) Error(s string) string {

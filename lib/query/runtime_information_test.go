@@ -71,7 +71,7 @@ func TestGetRuntimeInformation(t *testing.T) {
 			"TABLE3": {},
 			"TABLE4": {},
 			"TABLE5": {},
-			"VIEW1":  {IsTemporary: true},
+			"VIEW1":  {ViewType: ViewTypeTemporaryTable},
 		},
 	}
 

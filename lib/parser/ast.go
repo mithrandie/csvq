@@ -504,7 +504,7 @@ type TableObject struct {
 	*BaseExpr
 	Type          Identifier
 	FormatElement QueryExpression
-	Path          Identifier
+	Path          QueryExpression
 	Args          []QueryExpression
 }
 

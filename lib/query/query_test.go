@@ -226,10 +226,10 @@ var declareViewTests = []struct {
 		Result: GenerateViewMap([]*View{
 			{
 				FileInfo: &FileInfo{
-					Path:             "tbl",
-					IsTemporary:      true,
-					InitialHeader:    NewHeader("tbl", []string{"column1", "column2"}),
-					InitialRecordSet: RecordSet{},
+					Path:                  "tbl",
+					ViewType:              ViewTypeTemporaryTable,
+					restorePointHeader:    NewHeader("tbl", []string{"column1", "column2"}),
+					restorePointRecordSet: RecordSet{},
 				},
 				Header:    NewHeader("tbl", []string{"column1", "column2"}),
 				RecordSet: RecordSet{},
@@ -270,10 +270,10 @@ var declareViewTests = []struct {
 		Result: GenerateViewMap([]*View{
 			{
 				FileInfo: &FileInfo{
-					Path:          "tbl",
-					IsTemporary:   true,
-					InitialHeader: NewHeader("tbl", []string{"column1", "column2"}),
-					InitialRecordSet: RecordSet{
+					Path:               "tbl",
+					ViewType:           ViewTypeTemporaryTable,
+					restorePointHeader: NewHeader("tbl", []string{"column1", "column2"}),
+					restorePointRecordSet: RecordSet{
 						NewRecord([]value.Primary{
 							value.NewInteger(1),
 							value.NewInteger(2),
@@ -358,8 +358,8 @@ var declareViewTests = []struct {
 		ViewMap: GenerateViewMap([]*View{
 			{
 				FileInfo: &FileInfo{
-					Path:        "tbl",
-					IsTemporary: true,
+					Path:     "tbl",
+					ViewType: ViewTypeTemporaryTable,
 				},
 			},
 		}),
@@ -1286,9 +1286,9 @@ var insertTests = []struct {
 			},
 		},
 		ResultFile: &FileInfo{
-			Path:        "tmpview",
-			Delimiter:   ',',
-			IsTemporary: true,
+			Path:      "tmpview",
+			Delimiter: ',',
+			ViewType:  ViewTypeTemporaryTable,
 		},
 		UpdateCount: 2,
 		TempViewList: TemporaryViewScopes{
@@ -1314,9 +1314,9 @@ var insertTests = []struct {
 						}),
 					},
 					FileInfo: &FileInfo{
-						Path:        "tmpview",
-						Delimiter:   ',',
-						IsTemporary: true,
+						Path:      "tmpview",
+						Delimiter: ',',
+						ViewType:  ViewTypeTemporaryTable,
 					},
 					Tx: TestTx,
 				},
@@ -1495,9 +1495,9 @@ func TestInsert(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:        "tmpview",
-					Delimiter:   ',',
-					IsTemporary: true,
+					Path:      "tmpview",
+					Delimiter: ',',
+					ViewType:  ViewTypeTemporaryTable,
 				},
 				Tx: TestTx,
 			},
@@ -1678,9 +1678,9 @@ var updateTests = []struct {
 		},
 		ResultFiles: []*FileInfo{
 			{
-				Path:        "tmpview",
-				Delimiter:   ',',
-				IsTemporary: true,
+				Path:      "tmpview",
+				Delimiter: ',',
+				ViewType:  ViewTypeTemporaryTable,
 			},
 		},
 		UpdateCounts: []int{2},
@@ -1699,9 +1699,9 @@ var updateTests = []struct {
 						}),
 					},
 					FileInfo: &FileInfo{
-						Path:        "tmpview",
-						Delimiter:   ',',
-						IsTemporary: true,
+						Path:      "tmpview",
+						Delimiter: ',',
+						ViewType:  ViewTypeTemporaryTable,
 					},
 				},
 			}),
@@ -1971,9 +1971,9 @@ func TestUpdate(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:        "tmpview",
-					Delimiter:   ',',
-					IsTemporary: true,
+					Path:      "tmpview",
+					Delimiter: ',',
+					ViewType:  ViewTypeTemporaryTable,
 				},
 			},
 		}),
@@ -2149,9 +2149,9 @@ var deleteTests = []struct {
 		},
 		ResultFiles: []*FileInfo{
 			{
-				Path:        "tmpview",
-				Delimiter:   ',',
-				IsTemporary: true,
+				Path:      "tmpview",
+				Delimiter: ',',
+				ViewType:  ViewTypeTemporaryTable,
 			},
 		},
 		UpdateCounts: []int{1},
@@ -2166,9 +2166,9 @@ var deleteTests = []struct {
 						}),
 					},
 					FileInfo: &FileInfo{
-						Path:        "tmpview",
-						Delimiter:   ',',
-						IsTemporary: true,
+						Path:      "tmpview",
+						Delimiter: ',',
+						ViewType:  ViewTypeTemporaryTable,
 					},
 				},
 			}),
@@ -2339,9 +2339,9 @@ func TestDelete(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:        "tmpview",
-					Delimiter:   ',',
-					IsTemporary: true,
+					Path:      "tmpview",
+					Delimiter: ',',
+					ViewType:  ViewTypeTemporaryTable,
 				},
 			},
 		}),
@@ -2702,9 +2702,9 @@ var addColumnsTests = []struct {
 			},
 		},
 		ResultFile: &FileInfo{
-			Path:        "tmpview",
-			Delimiter:   ',',
-			IsTemporary: true,
+			Path:      "tmpview",
+			Delimiter: ',',
+			ViewType:  ViewTypeTemporaryTable,
 		},
 		UpdateCount: 2,
 		TempViewList: TemporaryViewScopes{
@@ -2726,9 +2726,9 @@ var addColumnsTests = []struct {
 						}),
 					},
 					FileInfo: &FileInfo{
-						Path:        "tmpview",
-						Delimiter:   ',',
-						IsTemporary: true,
+						Path:      "tmpview",
+						Delimiter: ',',
+						ViewType:  ViewTypeTemporaryTable,
 					},
 					Tx: TestTx,
 				},
@@ -3016,9 +3016,9 @@ func TestAddColumns(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:        "tmpview",
-					Delimiter:   ',',
-					IsTemporary: true,
+					Path:      "tmpview",
+					Delimiter: ',',
+					ViewType:  ViewTypeTemporaryTable,
 				},
 				Tx: TestTx,
 			},
@@ -3134,9 +3134,9 @@ var dropColumnsTests = []struct {
 			},
 		},
 		Result: &FileInfo{
-			Path:        "tmpview",
-			Delimiter:   ',',
-			IsTemporary: true,
+			Path:      "tmpview",
+			Delimiter: ',',
+			ViewType:  ViewTypeTemporaryTable,
 		},
 		UpdateCount: 1,
 		TempViewList: TemporaryViewScopes{
@@ -3152,9 +3152,9 @@ var dropColumnsTests = []struct {
 						}),
 					},
 					FileInfo: &FileInfo{
-						Path:        "tmpview",
-						Delimiter:   ',',
-						IsTemporary: true,
+						Path:      "tmpview",
+						Delimiter: ',',
+						ViewType:  ViewTypeTemporaryTable,
 					},
 					Tx: TestTx,
 				},
@@ -3209,9 +3209,9 @@ func TestDropColumns(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:        "tmpview",
-					Delimiter:   ',',
-					IsTemporary: true,
+					Path:      "tmpview",
+					Delimiter: ',',
+					ViewType:  ViewTypeTemporaryTable,
 				},
 				Tx: TestTx,
 			},
@@ -3327,9 +3327,9 @@ var renameColumnTests = []struct {
 			New:   parser.Identifier{Literal: "newcolumn"},
 		},
 		Result: &FileInfo{
-			Path:        "tmpview",
-			Delimiter:   ',',
-			IsTemporary: true,
+			Path:      "tmpview",
+			Delimiter: ',',
+			ViewType:  ViewTypeTemporaryTable,
 		},
 		TempViewList: TemporaryViewScopes{
 			GenerateViewMap([]*View{
@@ -3346,9 +3346,9 @@ var renameColumnTests = []struct {
 						}),
 					},
 					FileInfo: &FileInfo{
-						Path:        "tmpview",
-						Delimiter:   ',',
-						IsTemporary: true,
+						Path:      "tmpview",
+						Delimiter: ',',
+						ViewType:  ViewTypeTemporaryTable,
 					},
 					Tx: TestTx,
 				},
@@ -3410,9 +3410,9 @@ func TestRenameColumn(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:        "tmpview",
-					Delimiter:   ',',
-					IsTemporary: true,
+					Path:      "tmpview",
+					Delimiter: ',',
+					ViewType:  ViewTypeTemporaryTable,
 				},
 				Tx: TestTx,
 			},
@@ -3850,9 +3850,9 @@ func TestSetTableAttribute(t *testing.T) {
 					}),
 				},
 				FileInfo: &FileInfo{
-					Path:        "tmpview",
-					Delimiter:   ',',
-					IsTemporary: true,
+					Path:      "tmpview",
+					Delimiter: ',',
+					ViewType:  ViewTypeTemporaryTable,
 				},
 			},
 		}),

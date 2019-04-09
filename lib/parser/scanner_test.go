@@ -374,11 +374,11 @@ var scanTests = []struct {
 	},
 	{
 		Name:  "External Command with Terminator",
-		Input: "$abc 'def;' ${ghi;} @%`var;`;",
+		Input: "$abc 'de\\'f;' ${gh\\}i;} @%`var;`;",
 		Output: []scanResult{
 			{
 				Token:   EXTERNAL_COMMAND,
-				Literal: "abc 'def;' ${ghi;} @%`var;`",
+				Literal: "abc 'de\\'f;' ${gh\\}i;} @%`var;`",
 			},
 			{
 				Token:   ';',

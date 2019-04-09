@@ -85,11 +85,11 @@ func TestCompleter_Update(t *testing.T) {
 
 	filter := NewFilter(TestTx)
 	filter.tempViews.Set(&View{
-		FileInfo: &FileInfo{Path: "view1", IsTemporary: true},
+		FileInfo: &FileInfo{Path: "view1", ViewType: ViewTypeTemporaryTable},
 		Header:   NewHeader("view1", []string{"col1", "col2"}),
 	})
 	filter.tempViews.Set(&View{
-		FileInfo: &FileInfo{Path: "view2", IsTemporary: true},
+		FileInfo: &FileInfo{Path: "view2", ViewType: ViewTypeTemporaryTable},
 		Header:   NewHeader("view1", []string{"col3", "col4"}),
 	})
 	_ = filter.cursors.Declare(parser.CursorDeclaration{Cursor: parser.Identifier{Literal: "cur1"}})
@@ -3534,10 +3534,10 @@ func TestCompleter_AllColumnList(t *testing.T) {
 
 	filter := NewFilter(TestTx)
 	filter.tempViews.Set(&View{
-		FileInfo: &FileInfo{Path: "view1", IsTemporary: true},
+		FileInfo: &FileInfo{Path: "view1", ViewType: ViewTypeTemporaryTable},
 		Header:   NewHeader("view1", []string{"v1col1", "v1col2", "v1col3"}),
 	})
-	filter.tempViews.Set(&View{FileInfo: &FileInfo{Path: "view2", IsTemporary: true}})
+	filter.tempViews.Set(&View{FileInfo: &FileInfo{Path: "view2", ViewType: ViewTypeTemporaryTable}})
 	TestTx.cachedViews.Set(
 		&View{
 			FileInfo: &FileInfo{
@@ -3601,10 +3601,10 @@ func TestCompleter_ColumnList(t *testing.T) {
 
 	filter := NewFilter(TestTx)
 	filter.tempViews.Set(&View{
-		FileInfo: &FileInfo{Path: "view1", IsTemporary: true},
+		FileInfo: &FileInfo{Path: "view1", ViewType: ViewTypeTemporaryTable},
 		Header:   NewHeader("view1", []string{"v1col1", "v1col2", "v1col3"}),
 	})
-	filter.tempViews.Set(&View{FileInfo: &FileInfo{Path: "view2", IsTemporary: true}})
+	filter.tempViews.Set(&View{FileInfo: &FileInfo{Path: "view2", ViewType: ViewTypeTemporaryTable}})
 	TestTx.cachedViews.Set(
 		&View{
 			FileInfo: &FileInfo{

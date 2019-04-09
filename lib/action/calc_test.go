@@ -53,7 +53,7 @@ func TestCalc(t *testing.T) {
 		_ = tx.Rollback(filter, nil)
 
 		if 0 < len(v.Stdin) {
-			tx.Session.SetStdin(query.NewInput(strings.NewReader(v.Stdin)))
+			_ = tx.Session.SetStdin(query.NewInput(strings.NewReader(v.Stdin)))
 		}
 		out := query.NewOutput()
 		tx.Session.SetStdout(out)
@@ -61,7 +61,7 @@ func TestCalc(t *testing.T) {
 		err := Calc(ctx, query.NewProcessor(tx), v.Input)
 
 		if 0 < len(v.Stdin) {
-			tx.Session.SetStdin(os.Stdin)
+			_ = tx.Session.SetStdin(os.Stdin)
 		}
 		stdout := out.String()
 
