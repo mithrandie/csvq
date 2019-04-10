@@ -5,6 +5,14 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.9.10
+
+Released on April 10, 2019
+
+- Make stdin table available for use in table object expressions.
+- Enable dispose and reload of stdin table.
+- Improve error handling.
+
 ## Version 1.9.9
 
 Released on April 3, 2019
