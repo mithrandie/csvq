@@ -93,10 +93,16 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "table_entity",
 						Group: []Grammar{
-							{Identifier("table_name")},
+							{Link("table_identifier")},
 							{Link("table_object")},
 							{Link("json_inline_table")},
 							{Parentheses{Link("select_query")}},
+						},
+					},
+					{
+						Name: "table_identifier",
+						Group: []Grammar{
+							{Identifier("table_name")},
 							{Keyword("STDIN")},
 						},
 					},
@@ -121,10 +127,10 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "table_object",
 						Group: []Grammar{
-							{Function{Name: "CSV", Args: []Element{String("delimiter"), Identifier("table_name"), Option{String("encoding"), Boolean("no_header"), Boolean("without_null")}}}},
-							{Function{Name: "FIXED", Args: []Element{String("delimiter_positions"), Identifier("table_name"), Option{String("encoding"), Boolean("no_header"), Boolean("without_null")}}}},
-							{Function{Name: "JSON", Args: []Element{String("json_query"), Identifier("table_name")}}},
-							{Function{Name: "LTSV", Args: []Element{Identifier("table_name"), Option{String("encoding"), Boolean("without_null")}}}},
+							{Function{Name: "CSV", Args: []Element{String("delimiter"), Link("table_identifier"), Option{String("encoding"), Boolean("no_header"), Boolean("without_null")}}}},
+							{Function{Name: "FIXED", Args: []Element{String("delimiter_positions"), Link("table_identifier"), Option{String("encoding"), Boolean("no_header"), Boolean("without_null")}}}},
+							{Function{Name: "JSON", Args: []Element{String("json_query"), Link("table_identifier")}}},
+							{Function{Name: "LTSV", Args: []Element{Link("table_identifier"), Option{String("encoding"), Boolean("without_null")}}}},
 						},
 					},
 					{
