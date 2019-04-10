@@ -56,7 +56,7 @@ func bareValues(ctx context.Context, view *View) ([]string, [][]value.Primary, e
 	records := make([][]value.Primary, 0, view.RecordLen())
 	for _, record := range view.RecordSet {
 		if ctx.Err() != nil {
-			return nil, nil, NewContextIsDone(ctx.Err().Error())
+			return nil, nil, NewContextDone(ctx.Err().Error())
 		}
 
 		row := make([]value.Primary, 0, view.FieldLen())
@@ -93,7 +93,7 @@ func encodeCSV(ctx context.Context, fp io.Writer, view *View, delimiter rune, li
 
 	for _, record := range records {
 		if ctx.Err() != nil {
-			return NewContextIsDone(ctx.Err().Error())
+			return NewContextDone(ctx.Err().Error())
 		}
 
 		for i, v := range record {
@@ -133,7 +133,7 @@ func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, posi
 
 		for _, record := range records {
 			if ctx.Err() != nil {
-				return NewContextIsDone(ctx.Err().Error())
+				return NewContextDone(ctx.Err().Error())
 			}
 
 			fields := make([]fixedlen.Field, 0, len(record))
@@ -153,7 +153,7 @@ func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, posi
 		w.InsertSpace = true
 		for _, fields := range fieldList {
 			if ctx.Err() != nil {
-				return NewContextIsDone(ctx.Err().Error())
+				return NewContextDone(ctx.Err().Error())
 			}
 
 			if err := w.Write(fields); err != nil {
@@ -182,7 +182,7 @@ func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, posi
 
 		for _, record := range records {
 			if ctx.Err() != nil {
-				return NewContextIsDone(ctx.Err().Error())
+				return NewContextDone(ctx.Err().Error())
 			}
 
 			for i, v := range record {
@@ -273,7 +273,7 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, format cmd.Format
 	var textLineBuf bytes.Buffer
 	for i, record := range records {
 		if ctx.Err() != nil {
-			return "", NewContextIsDone(ctx.Err().Error())
+			return "", NewContextDone(ctx.Err().Error())
 		}
 
 		rfields := make([]table.Field, 0, len(header))
@@ -352,7 +352,7 @@ func encodeLTSV(ctx context.Context, fp io.Writer, view *View, lineBreak text.Li
 	fields := make([]string, len(header))
 	for _, record := range records {
 		if ctx.Err() != nil {
-			return NewContextIsDone(ctx.Err().Error())
+			return NewContextDone(ctx.Err().Error())
 		}
 
 		for i, v := range record {

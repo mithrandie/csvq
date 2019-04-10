@@ -7,7 +7,7 @@ const (
 	ReturnCodeApplicationError          = 1
 	ReturnCodeIncorrectUsage            = 2
 	ReturnCodeSyntaxError               = 4
-	ReturnCodeContextIsDone             = 8
+	ReturnCodeContextDone               = 8
 	ReturnCodeIOError                   = 16
 	ReturnCodeSystemError               = 32
 	ReturnCodeDefaultUserTriggeredError = 64
@@ -111,8 +111,9 @@ const (
 	ErrorPreparedStatementSyntaxError = 90044
 
 	//Context Error
-	ErrorContextIsDone   = 90080
-	ErrorFileLockTimeout = 90081
+	ErrorContextDone     = 90080
+	ErrorContextCanceled = 90081
+	ErrorFileLockTimeout = 90082
 
 	//IO Error
 	ErrorIO               = 90160

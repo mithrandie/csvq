@@ -110,7 +110,7 @@ func (proc *Processor) executeChild(ctx context.Context, statements []parser.Sta
 
 func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Statement) (StatementFlow, error) {
 	if ctx.Err() != nil {
-		return TerminateWithError, NewContextIsDone(ctx.Err().Error())
+		return TerminateWithError, NewContextDone(ctx.Err().Error())
 	}
 
 	flow := Terminate

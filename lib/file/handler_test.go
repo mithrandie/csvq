@@ -38,10 +38,10 @@ func TestHandler(t *testing.T) {
 
 	rh, err := NewHandlerForRead(doneCtx, container, fileForRead, waitTimeoutForTests, retryDelayForTests)
 	if err == nil {
-		t.Fatalf("no error, want ContextIsDone")
+		t.Fatalf("no error, want ContextCanceled")
 	}
-	if _, ok := err.(*ContextIsDone); !ok {
-		t.Fatalf("error = %#v, want ContextIsDone", err)
+	if _, ok := err.(*ContextCanceled); !ok {
+		t.Fatalf("error = %#v, want ContextCanceled", err)
 	}
 	_ = container.Close(rh)
 

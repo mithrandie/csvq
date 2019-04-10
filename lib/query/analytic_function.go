@@ -212,7 +212,7 @@ func Analyze(ctx context.Context, view *View, fn parser.AnalyticFunction, partit
 		return gm.Err()
 	}
 	if ctx.Err() != nil {
-		return NewContextIsDone(ctx.Err().Error())
+		return NewContextDone(ctx.Err().Error())
 	}
 	return nil
 }

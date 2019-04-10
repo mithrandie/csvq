@@ -361,7 +361,10 @@ func (h *Handler) closeWithErrors() error {
 
 func (h *Handler) CreateManagementFileContext(ctx context.Context, retryDelay time.Duration, fileType mngFileType) error {
 	if ctx.Err() != nil {
-		return NewContextIsDone(ctx.Err().Error())
+		if ctx.Err() == context.Canceled {
+			return NewContextCanceled()
+		}
+		return NewContextDone(ctx.Err().Error())
 	}
 
 	for {
@@ -375,6 +378,9 @@ func (h *Handler) CreateManagementFileContext(ctx context.Context, retryDelay ti
 
 		select {
 		case <-ctx.Done():
+			if ctx.Err() == context.Canceled {
+				return NewContextCanceled()
+			}
 			return NewTimeoutError(h.path)
 		case <-time.After(retryDelay):
 			// try again

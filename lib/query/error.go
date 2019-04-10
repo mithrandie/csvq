@@ -334,13 +334,23 @@ func NewPreparedStatementSyntaxError(err *parser.SyntaxError) error {
 	}
 }
 
-type ContextIsDone struct {
+type ContextCanceled struct {
 	*BaseError
 }
 
-func NewContextIsDone(message string) error {
-	return &ContextIsDone{
-		NewBaseErrorWithPrefix("Context", message, ReturnCodeContextIsDone, ErrorContextIsDone),
+func NewContextCanceled(message string) error {
+	return &ContextDone{
+		NewBaseErrorWithPrefix("Context", message, ReturnCodeContextDone, ErrorContextCanceled),
+	}
+}
+
+type ContextDone struct {
+	*BaseError
+}
+
+func NewContextDone(message string) error {
+	return &ContextDone{
+		NewBaseErrorWithPrefix("Context", message, ReturnCodeContextDone, ErrorContextDone),
 	}
 }
 
@@ -864,7 +874,7 @@ type FileLockTimeoutError struct {
 
 func NewFileLockTimeoutError(file parser.Identifier) error {
 	return &FileLockTimeoutError{
-		NewBaseError(file, fmt.Sprintf(ErrMsgFileLockTimeout, file.Literal), ReturnCodeContextIsDone, ErrorFileLockTimeout),
+		NewBaseError(file, fmt.Sprintf(ErrMsgFileLockTimeout, file.Literal), ReturnCodeContextDone, ErrorFileLockTimeout),
 	}
 }
 
@@ -1380,8 +1390,10 @@ func ConvertFileHandlerError(err error, ident parser.Identifier) error {
 	switch err.(type) {
 	case *file.TimeoutError:
 		err = NewFileLockTimeoutError(ident)
-	case *file.ContextIsDone:
-		err = NewContextIsDone(err.Error())
+	case *file.ContextCanceled:
+		err = NewContextCanceled(err.Error())
+	case *file.ContextDone:
+		err = NewContextDone(err.Error())
 	case *file.NotExistError:
 		err = NewFileNotExistError(ident)
 	case *file.AlreadyExistError:
@@ -1394,8 +1406,8 @@ func ConvertFileHandlerError(err error, ident parser.Identifier) error {
 
 func ConvertLoadConfigurationError(err error) error {
 	switch err.(type) {
-	case *file.ContextIsDone:
-		err = NewContextIsDone(err.Error())
+	case *file.ContextDone:
+		err = NewContextDone(err.Error())
 	default:
 		err = NewLoadConfigurationError(nil, err.Error())
 	}

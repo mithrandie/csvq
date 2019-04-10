@@ -943,7 +943,7 @@ func readRecordSet(ctx context.Context, reader RecordReader) (RecordSet, error) 
 	go func() {
 		for {
 			if ctx.Err() != nil {
-				err = NewContextIsDone(ctx.Err().Error())
+				err = NewContextDone(ctx.Err().Error())
 				break
 			}
 

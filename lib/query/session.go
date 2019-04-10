@@ -137,7 +137,7 @@ func (cl *StdinLocker) tryRLock() bool {
 
 func (cl *StdinLocker) lockContext(ctx context.Context, fn func() bool) error {
 	if ctx.Err() != nil {
-		return NewContextIsDone(ctx.Err().Error())
+		return NewContextDone(ctx.Err().Error())
 	}
 
 	for {

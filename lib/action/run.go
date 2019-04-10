@@ -88,7 +88,7 @@ func LaunchInteractiveShell(ctx context.Context, proc *query.Processor) error {
 
 	for {
 		if ctx.Err() != nil {
-			err = query.NewContextIsDone(ctx.Err().Error())
+			err = query.NewContextDone(ctx.Err().Error())
 			break
 		}
 
