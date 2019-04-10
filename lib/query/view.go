@@ -50,6 +50,8 @@ type View struct {
 	sortDirections             []int
 	sortNullPositions          []int
 
+	tempRecord Record
+
 	offset int
 }
 
@@ -1248,8 +1250,14 @@ func (view *View) Select(ctx context.Context, clause parser.SelectClause) error 
 			if err = view.group(ctx, nil); err != nil {
 				return err
 			}
+
 			if err = evalFields(view, fields); err != nil {
 				return err
+			}
+
+			if view.tempRecord != nil {
+				view.RecordSet = append(view.RecordSet, view.tempRecord)
+				view.tempRecord = nil
 			}
 		} else {
 			return err
@@ -1502,6 +1510,17 @@ func (view *View) evalColumn(ctx context.Context, obj parser.QueryExpression, al
 				if err != nil {
 					return
 				}
+			} else if view.isGrouped && view.RecordLen() < 1 {
+				if view.tempRecord == nil {
+					view.tempRecord = NewEmptyRecord(view.FieldLen())
+				}
+
+				primary, e := view.Filter.Evaluate(ctx, obj)
+				if e != nil {
+					err = e
+					return
+				}
+				view.tempRecord = append(view.tempRecord, NewCell(primary))
 			} else {
 				err = NewFilterForSequentialEvaluation(view.Filter, view).EvaluateSequentially(ctx, func(f *Filter, rIdx int) error {
 					primary, e := f.Evaluate(ctx, obj)
@@ -1785,6 +1804,7 @@ func (view *View) Fix(ctx context.Context) error {
 	view.sortDirections = nil
 	view.sortNullPositions = nil
 	view.offset = 0
+	view.tempRecord = nil
 	return nil
 }
 

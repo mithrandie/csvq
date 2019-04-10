@@ -249,7 +249,7 @@ var jsonAggTests = []struct {
 }{
 	{
 		List:   []value.Primary{},
-		Result: value.NewString("[]"),
+		Result: value.NewNull(),
 	},
 	{
 		List: []value.Primary{

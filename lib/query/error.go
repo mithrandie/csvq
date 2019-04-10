@@ -39,7 +39,6 @@ const (
 	ErrMsgFunctionNotExist                     = "function %s does not exist"
 	ErrMsgFunctionArgumentsLength              = "function %s takes %s"
 	ErrMsgFunctionInvalidArgument              = "%s for function %s"
-	ErrMsgUnpermittedFunctionStatement         = "function %s cannot be used as a statement"
 	ErrMsgNestedAggregateFunctions             = "aggregate functions are nested at %s"
 	ErrMsgFunctionRedeclared                   = "function %s is redeclared"
 	ErrMsgBuiltInFunctionDeclared              = "function %s is a built-in function"
@@ -543,16 +542,6 @@ type FunctionInvalidArgumentError struct {
 func NewFunctionInvalidArgumentError(function parser.QueryExpression, funcname string, message string) error {
 	return &FunctionInvalidArgumentError{
 		NewBaseError(function, fmt.Sprintf(ErrMsgFunctionInvalidArgument, message, funcname), ReturnCodeApplicationError, ErrorFunctionInvalidArgument),
-	}
-}
-
-type UnpermittedFunctionStatementError struct {
-	*BaseError
-}
-
-func NewUnpermittedFunctionStatementError(expr parser.QueryExpression, funcname string) error {
-	return &UnpermittedFunctionStatementError{
-		NewBaseError(expr, fmt.Sprintf(ErrMsgUnpermittedFunctionStatement, funcname), ReturnCodeSyntaxError, ErrorUnpermittedFunctionStatement),
 	}
 }
 

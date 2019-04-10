@@ -743,29 +743,28 @@ func (f *Filter) evalAggregateFunction(ctx context.Context, expr parser.Aggregat
 		}
 	}
 
-	if len(f.records) < 1 {
-		return nil, NewUnpermittedFunctionStatementError(expr, expr.Name)
-	}
-
-	if !f.records[0].view.isGrouped {
-		return nil, NewNotGroupingRecordsError(expr, expr.Name)
-	}
-
-	listExpr := expr.Args[0]
-	if _, ok := listExpr.(parser.AllColumns); ok {
-		listExpr = parser.NewIntegerValue(1)
-	}
-
-	if uname == "COUNT" {
-		if _, ok := listExpr.(parser.PrimitiveType); ok {
-			return value.NewInteger(int64(f.records[0].view.RecordSet[f.records[0].recordIndex].GroupLen())), nil
+	var list []value.Primary
+	if 0 < len(f.records) {
+		if !f.records[0].view.isGrouped {
+			return nil, NewNotGroupingRecordsError(expr, expr.Name)
 		}
-	}
 
-	view := NewViewFromGroupedRecord(f.records[0])
-	list, err := view.ListValuesForAggregateFunctions(ctx, expr, listExpr, expr.IsDistinct(), f)
-	if err != nil {
-		return nil, err
+		listExpr := expr.Args[0]
+		if _, ok := listExpr.(parser.AllColumns); ok {
+			listExpr = parser.NewIntegerValue(1)
+		}
+
+		if uname == "COUNT" {
+			if _, ok := listExpr.(parser.PrimitiveType); ok {
+				return value.NewInteger(int64(f.records[0].view.RecordSet[f.records[0].recordIndex].GroupLen())), nil
+			}
+		}
+
+		view := NewViewFromGroupedRecord(f.records[0])
+		list, err = view.ListValuesForAggregateFunctions(ctx, expr, listExpr, expr.IsDistinct(), f)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if aggfn == nil {
@@ -799,25 +798,24 @@ func (f *Filter) evalListFunction(ctx context.Context, expr parser.ListFunction)
 		return nil, err
 	}
 
-	if len(f.records) < 1 {
-		return nil, NewUnpermittedFunctionStatementError(expr, expr.Name)
-	}
+	var list []value.Primary
+	if 0 < len(f.records) {
+		if !f.records[0].view.isGrouped {
+			return nil, NewNotGroupingRecordsError(expr, expr.Name)
+		}
 
-	if !f.records[0].view.isGrouped {
-		return nil, NewNotGroupingRecordsError(expr, expr.Name)
-	}
+		view := NewViewFromGroupedRecord(f.records[0])
+		if expr.OrderBy != nil {
+			err := view.OrderBy(ctx, expr.OrderBy.(parser.OrderByClause))
+			if err != nil {
+				return nil, err
+			}
+		}
 
-	view := NewViewFromGroupedRecord(f.records[0])
-	if expr.OrderBy != nil {
-		err := view.OrderBy(ctx, expr.OrderBy.(parser.OrderByClause))
+		list, err = view.ListValuesForAggregateFunctions(ctx, expr, expr.Args[0], expr.IsDistinct(), f)
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	list, err := view.ListValuesForAggregateFunctions(ctx, expr, expr.Args[0], expr.IsDistinct(), f)
-	if err != nil {
-		return nil, err
 	}
 
 	switch strings.ToUpper(expr.Name) {

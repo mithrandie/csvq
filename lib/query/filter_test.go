@@ -2808,7 +2808,7 @@ var filterEvaluateTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 		},
-		Error: "function avg cannot be used as a statement",
+		Result: value.NewNull(),
 	},
 	{
 		Name: "Aggregate Function User Defined",
@@ -3584,7 +3584,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Error: "function listagg cannot be used as a statement",
+		Result: value.NewNull(),
 	},
 	{
 		Name: "JsonAgg Function",
