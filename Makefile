@@ -27,6 +27,9 @@ endif
 yacc: install-goyacc
 	cd lib/parser && \
 	goyacc -o parser.go -v parser.output parser.y && \
+	cd ../../lib/json && \
+	goyacc -p jq -o query_parser.go -v query_parser.output query_parser.y && \
+	goyacc -p jp -o path_parser.go -v path_parser.output path_parser.y && \
 	cd ../..
 
 .PHONY: clean
