@@ -924,7 +924,7 @@ type UndeclaredTemporaryTableError struct {
 	*BaseError
 }
 
-func NewUndeclaredTemporaryTableError(table parser.Identifier) error {
+func NewUndeclaredTemporaryTableError(table parser.QueryExpression) error {
 	return &UndeclaredTemporaryTableError{
 		NewBaseError(table, fmt.Sprintf(ErrMsgUndeclaredTemporaryTable, table), ReturnCodeApplicationError, ErrorUndeclaredTemporaryTable),
 	}

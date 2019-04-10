@@ -1482,7 +1482,7 @@ type ViewDeclaration struct {
 
 type DisposeView struct {
 	*BaseExpr
-	View Identifier
+	View QueryExpression
 }
 
 type StatementPreparation struct {

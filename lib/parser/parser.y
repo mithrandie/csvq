@@ -733,7 +733,7 @@ temporary_table_statement
     {
         $$ = ViewDeclaration{View: $2, Query: $5}
     }
-    | DISPOSE VIEW identifier
+    | DISPOSE VIEW table_identifier
     {
         $$ = DisposeView{View: $3}
     }

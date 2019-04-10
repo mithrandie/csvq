@@ -55,7 +55,7 @@ func (list TemporaryViewScopes) Replace(view *View) {
 	}
 }
 
-func (list TemporaryViewScopes) Dispose(name parser.Identifier) error {
+func (list TemporaryViewScopes) Dispose(name parser.QueryExpression) error {
 	for _, m := range list {
 		if err := m.DisposeTemporaryTable(name); err == nil {
 			return nil
@@ -181,10 +181,17 @@ func (m ViewMap) Set(view *View) {
 	}
 }
 
-func (m ViewMap) DisposeTemporaryTable(table parser.Identifier) error {
-	if v, ok := m.Load(table.Literal); ok {
+func (m ViewMap) DisposeTemporaryTable(table parser.QueryExpression) error {
+	var tableName string
+	if e, ok := table.(parser.Stdin); ok {
+		tableName = e.Stdin
+	} else {
+		tableName = table.(parser.Identifier).Literal
+	}
+
+	if v, ok := m.Load(tableName); ok {
 		if !v.FileInfo.IsFile() {
-			m.Delete(table.Literal)
+			m.Delete(tableName)
 			return nil
 		} else {
 			return NewUndeclaredTemporaryTableError(table)
