@@ -81,12 +81,12 @@ func (m *UncommittedViews) UncommittedFiles() (map[string]*FileInfo, map[string]
 	var updatedFiles = make(map[string]*FileInfo)
 
 	for k, v := range m.Created {
-		if !v.IsTemporary {
+		if v.IsFile() {
 			createdFiles[k] = v
 		}
 	}
 	for k, v := range m.Updated {
-		if !v.IsTemporary {
+		if v.IsFile() {
 			updatedFiles[k] = v
 		}
 	}
@@ -101,7 +101,7 @@ func (m *UncommittedViews) UncommittedTempViews() map[string]*FileInfo {
 	var updatedViews = map[string]*FileInfo{}
 
 	for k, v := range m.Updated {
-		if v.IsTemporary {
+		if !v.IsFile() {
 			updatedViews[k] = v
 		}
 	}
@@ -135,7 +135,7 @@ func (m *UncommittedViews) CountUpdatedTables() int {
 
 	cnt := 0
 	for _, v := range m.Updated {
-		if !v.IsTemporary {
+		if v.IsFile() {
 			cnt++
 		}
 	}
@@ -148,7 +148,7 @@ func (m *UncommittedViews) CountUpdatedViews() int {
 
 	cnt := 0
 	for _, v := range m.Updated {
-		if v.IsTemporary {
+		if !v.IsFile() {
 			cnt++
 		}
 	}

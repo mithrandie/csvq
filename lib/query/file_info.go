@@ -29,6 +29,14 @@ const (
 	TablePrettyPrint        = "PRETTY_PRINT"
 )
 
+type ViewType int
+
+const (
+	ViewTypeFile ViewType = iota
+	ViewTypeTemporaryTable
+	ViewTypeStdin
+)
+
 var FileAttributeList = []string{
 	TableDelimiter,
 	TableDelimiterPositions,
@@ -75,10 +83,11 @@ type FileInfo struct {
 
 	Handler *file.Handler
 
-	ForUpdate        bool
-	IsTemporary      bool
-	InitialHeader    Header
-	InitialRecordSet RecordSet
+	ForUpdate bool
+	ViewType  ViewType
+
+	restorePointHeader    Header
+	restorePointRecordSet RecordSet
 }
 
 func NewFileInfo(
@@ -251,6 +260,18 @@ func (f *FileInfo) SetPrettyPrint(b bool) error {
 	}
 	f.PrettyPrint = b
 	return nil
+}
+
+func (f *FileInfo) IsFile() bool {
+	return f.ViewType == ViewTypeFile
+}
+
+func (f *FileInfo) IsTemporaryTable() bool {
+	return f.ViewType == ViewTypeTemporaryTable
+}
+
+func (f *FileInfo) IsStdin() bool {
+	return f.ViewType == ViewTypeStdin
 }
 
 func SearchFilePath(filename parser.Identifier, repository string, format cmd.Format, flags *cmd.Flags) (string, cmd.Format, error) {

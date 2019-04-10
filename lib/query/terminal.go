@@ -11,7 +11,6 @@ import (
 	"github.com/mithrandie/csvq/lib/excmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
-	"github.com/mithrandie/go-text/color"
 )
 
 const (
@@ -53,17 +52,15 @@ type PromptElement struct {
 
 type Prompt struct {
 	filter             *Filter
-	palette            *color.Palette
 	sequence           []PromptElement
 	continuousSequence []PromptElement
 
 	buf bytes.Buffer
 }
 
-func NewPrompt(filter *Filter, palette *color.Palette) *Prompt {
+func NewPrompt(filter *Filter) *Prompt {
 	return &Prompt{
-		filter:  filter,
-		palette: palette,
+		filter: filter,
 	}
 }
 
@@ -108,7 +105,7 @@ func (p *Prompt) RenderPrompt(ctx context.Context) (string, error) {
 	}
 	if p.filter.tx.Flags.Color {
 		if strings.IndexByte(s, 0x1b) < 0 {
-			s = p.palette.Render(cmd.PromptEffect, s)
+			s = p.filter.tx.Palette.Render(cmd.PromptEffect, s)
 		}
 	} else {
 		s = p.StripEscapeSequence(s)
@@ -123,7 +120,7 @@ func (p *Prompt) RenderContinuousPrompt(ctx context.Context) (string, error) {
 	}
 	if p.filter.tx.Flags.Color {
 		if strings.IndexByte(s, 0x1b) < 0 {
-			s = p.palette.Render(cmd.PromptEffect, s)
+			s = p.filter.tx.Palette.Render(cmd.PromptEffect, s)
 		}
 	} else {
 		s = p.StripEscapeSequence(s)

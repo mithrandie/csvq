@@ -504,7 +504,7 @@ type TableObject struct {
 	*BaseExpr
 	Type          Identifier
 	FormatElement QueryExpression
-	Path          Identifier
+	Path          QueryExpression
 	Args          []QueryExpression
 }
 
@@ -1482,7 +1482,7 @@ type ViewDeclaration struct {
 
 type DisposeView struct {
 	*BaseExpr
-	View Identifier
+	View QueryExpression
 }
 
 type StatementPreparation struct {

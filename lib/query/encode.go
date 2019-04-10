@@ -33,16 +33,16 @@ func NewEmptyResultSetError() *EmptyResultSetError {
 	return &EmptyResultSetError{}
 }
 
-func EncodeView(ctx context.Context, fp io.Writer, view *View, fileInfo *FileInfo, flags *cmd.Flags) (string, error) {
+func EncodeView(ctx context.Context, fp io.Writer, view *View, fileInfo *FileInfo, tx *Transaction) (string, error) {
 	switch fileInfo.Format {
 	case cmd.FIXED:
 		return "", encodeFixedLengthFormat(ctx, fp, view, fileInfo.DelimiterPositions, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding, fileInfo.SingleLine)
 	case cmd.JSON:
-		return "", encodeJson(ctx, fp, view, fileInfo.LineBreak, fileInfo.JsonEscape, fileInfo.PrettyPrint, flags)
+		return "", encodeJson(ctx, fp, view, fileInfo.LineBreak, fileInfo.JsonEscape, fileInfo.PrettyPrint, tx)
 	case cmd.LTSV:
 		return "", encodeLTSV(ctx, fp, view, fileInfo.LineBreak, fileInfo.Encoding)
 	case cmd.GFM, cmd.ORG, cmd.TEXT:
-		return encodeText(ctx, fp, view, fileInfo.Format, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding, flags)
+		return encodeText(ctx, fp, view, fileInfo.Format, fileInfo.LineBreak, fileInfo.NoHeader, fileInfo.Encoding, tx)
 	case cmd.TSV:
 		fileInfo.Delimiter = '\t'
 		fallthrough
@@ -56,7 +56,7 @@ func bareValues(ctx context.Context, view *View) ([]string, [][]value.Primary, e
 	records := make([][]value.Primary, 0, view.RecordLen())
 	for _, record := range view.RecordSet {
 		if ctx.Err() != nil {
-			return nil, nil, NewContextIsDone(ctx.Err().Error())
+			return nil, nil, NewContextDone(ctx.Err().Error())
 		}
 
 		row := make([]value.Primary, 0, view.FieldLen())
@@ -93,7 +93,7 @@ func encodeCSV(ctx context.Context, fp io.Writer, view *View, delimiter rune, li
 
 	for _, record := range records {
 		if ctx.Err() != nil {
-			return NewContextIsDone(ctx.Err().Error())
+			return NewContextDone(ctx.Err().Error())
 		}
 
 		for i, v := range record {
@@ -133,7 +133,7 @@ func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, posi
 
 		for _, record := range records {
 			if ctx.Err() != nil {
-				return NewContextIsDone(ctx.Err().Error())
+				return NewContextDone(ctx.Err().Error())
 			}
 
 			fields := make([]fixedlen.Field, 0, len(record))
@@ -153,7 +153,7 @@ func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, posi
 		w.InsertSpace = true
 		for _, fields := range fieldList {
 			if ctx.Err() != nil {
-				return NewContextIsDone(ctx.Err().Error())
+				return NewContextDone(ctx.Err().Error())
 			}
 
 			if err := w.Write(fields); err != nil {
@@ -182,7 +182,7 @@ func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, posi
 
 		for _, record := range records {
 			if ctx.Err() != nil {
-				return NewContextIsDone(ctx.Err().Error())
+				return NewContextDone(ctx.Err().Error())
 			}
 
 			for i, v := range record {
@@ -198,7 +198,7 @@ func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, posi
 	return err
 }
 
-func encodeJson(ctx context.Context, fp io.Writer, view *View, lineBreak text.LineBreak, escapeType txjson.EscapeType, prettyPrint bool, flags *cmd.Flags) error {
+func encodeJson(ctx context.Context, fp io.Writer, view *View, lineBreak text.LineBreak, escapeType txjson.EscapeType, prettyPrint bool, tx *Transaction) error {
 	header, records, err := bareValues(ctx, view)
 	if err != nil {
 		return err
@@ -213,14 +213,12 @@ func encodeJson(ctx context.Context, fp io.Writer, view *View, lineBreak text.Li
 	e.EscapeType = escapeType
 	e.LineBreak = lineBreak
 	e.PrettyPrint = prettyPrint
-	if prettyPrint && flags.Color {
-		e.Palette = cmd.GetPalette()
+	if prettyPrint && tx.Flags.Color {
+		e.Palette = tx.Palette
 	}
+	defer tx.UseColor(tx.Flags.Color)
 
 	s := e.Encode(data)
-	if e.Palette != nil {
-		e.Palette.Enable()
-	}
 
 	w := bufio.NewWriter(fp)
 	if _, err := w.WriteString(s); err != nil {
@@ -229,7 +227,7 @@ func encodeJson(ctx context.Context, fp io.Writer, view *View, lineBreak text.Li
 	return w.Flush()
 }
 
-func encodeText(ctx context.Context, fp io.Writer, view *View, format cmd.Format, lineBreak text.LineBreak, withoutHeader bool, encoding text.Encoding, flags *cmd.Flags) (string, error) {
+func encodeText(ctx context.Context, fp io.Writer, view *View, format cmd.Format, lineBreak text.LineBreak, withoutHeader bool, encoding text.Encoding, tx *Transaction) (string, error) {
 	header, records, err := bareValues(ctx, view)
 	if err != nil {
 		return "", err
@@ -255,13 +253,11 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, format cmd.Format
 
 	e := table.NewEncoder(tableFormat, len(records))
 	e.LineBreak = lineBreak
-	e.EastAsianEncoding = flags.EastAsianEncoding
-	e.CountDiacriticalSign = flags.CountDiacriticalSign
-	e.CountFormatCode = flags.CountFormatCode
+	e.EastAsianEncoding = tx.Flags.EastAsianEncoding
+	e.CountDiacriticalSign = tx.Flags.CountDiacriticalSign
+	e.CountFormatCode = tx.Flags.CountFormatCode
 	e.WithoutHeader = withoutHeader
 	e.Encoding = encoding
-
-	palette := cmd.GetPalette()
 
 	if !withoutHeader {
 		hfields := make([]table.Field, 0, len(header))
@@ -277,7 +273,7 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, format cmd.Format
 	var textLineBuf bytes.Buffer
 	for i, record := range records {
 		if ctx.Err() != nil {
-			return "", NewContextIsDone(ctx.Err().Error())
+			return "", NewContextDone(ctx.Err().Error())
 		}
 
 		rfields := make([]table.Field, 0, len(header))
@@ -292,7 +288,7 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, format cmd.Format
 				for {
 					if len(runes) <= pos {
 						if 0 < textLineBuf.Len() {
-							textStrBuf.WriteString(palette.Render(effect, textLineBuf.String()))
+							textStrBuf.WriteString(tx.Palette.Render(effect, textLineBuf.String()))
 						}
 						break
 					}
@@ -306,7 +302,7 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, format cmd.Format
 						fallthrough
 					case '\n':
 						if 0 < textLineBuf.Len() {
-							textStrBuf.WriteString(palette.Render(effect, textLineBuf.String()))
+							textStrBuf.WriteString(tx.Palette.Render(effect, textLineBuf.String()))
 						}
 						textStrBuf.WriteByte('\n')
 						textLineBuf.Reset()
@@ -356,7 +352,7 @@ func encodeLTSV(ctx context.Context, fp io.Writer, view *View, lineBreak text.Li
 	fields := make([]string, len(header))
 	for _, record := range records {
 		if ctx.Err() != nil {
-			return NewContextIsDone(ctx.Err().Error())
+			return NewContextDone(ctx.Err().Error())
 		}
 
 		for i, v := range record {

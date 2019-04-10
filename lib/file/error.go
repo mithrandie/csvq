@@ -17,8 +17,10 @@ func ParseError(err error) error {
 		return &TimeoutError{
 			message: err.Error(),
 		}
-	case *file.ContextIsDone:
-		return NewContextIsDone(err.Error())
+	case *file.ContextCanceled:
+		return NewContextCanceled()
+	case *file.ContextDone:
+		return NewContextDone(err.Error())
 	default:
 		return err
 	}
@@ -94,17 +96,31 @@ func (e TimeoutError) Error() string {
 	return e.message
 }
 
-type ContextIsDone struct {
+type ContextCanceled struct {
 	message string
 }
 
-func NewContextIsDone(message string) error {
-	return &ContextIsDone{
+func NewContextCanceled() error {
+	return &ContextCanceled{
+		message: "execution canceled",
+	}
+}
+
+func (e ContextCanceled) Error() string {
+	return e.message
+}
+
+type ContextDone struct {
+	message string
+}
+
+func NewContextDone(message string) error {
+	return &ContextDone{
 		message: message,
 	}
 }
 
-func (e ContextIsDone) Error() string {
+func (e ContextDone) Error() string {
 	return e.message
 }
 

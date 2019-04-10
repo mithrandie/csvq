@@ -165,7 +165,7 @@ func (m *GoroutineTaskManager) Run(ctx context.Context, fn func(int) error) erro
 	m.Wait()
 
 	if ctx.Err() != nil {
-		return NewContextIsDone(ctx.Err().Error())
+		return NewContextDone(ctx.Err().Error())
 	}
 	return nil
 }

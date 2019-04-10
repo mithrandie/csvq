@@ -279,6 +279,34 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select c1 from ltsv(stdin, 'utf8')",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{
+								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
+							},
+						},
+					},
+					FromClause: FromClause{From: "from", Tables: []QueryExpression{
+						Table{
+							Object: TableObject{
+								BaseExpr: &BaseExpr{line: 1, char: 16},
+								Type:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "ltsv"},
+								Path:     Stdin{BaseExpr: &BaseExpr{line: 1, char: 21}, Stdin: "stdin"},
+								Args:     []QueryExpression{NewStringValue("utf8")},
+							},
+						},
+					}},
+				},
+			},
+		},
+	},
+	{
 		Input: "select c1 from json_table('key', `table.json`)",
 		Output: []Statement{
 			SelectQuery{
@@ -723,7 +751,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select ident, tbl.3, 'foo', 1, 1.234, true, '2010-01-01 12:00:00', null, ('bar') from dual",
+		Input: "select ident, tbl.3, (ident), 'foo', 1, 1.234, true, '2010-01-01 12:00:00', null, ('bar') from dual",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -733,6 +761,7 @@ var parseTests = []struct {
 						Fields: []QueryExpression{
 							Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "ident"}}},
 							Field{Object: ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 15}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "tbl"}, Number: value.NewInteger(3)}},
+							Field{Object: Parentheses{Expr: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 23}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 23}, Literal: "ident"}}}},
 							Field{Object: NewStringValue("foo")},
 							Field{Object: NewIntegerValueFromString("1")},
 							Field{Object: NewFloatValueFromString("1.234")},
@@ -5640,7 +5669,7 @@ var parseTests = []struct {
 		Input:     "select 'literal not terminated",
 		Error:     "literal not terminated",
 		ErrorLine: 1,
-		ErrorChar: 30,
+		ErrorChar: 8,
 	},
 	{
 		Input:      "select select",

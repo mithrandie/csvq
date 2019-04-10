@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/mithrandie/go-text"
-	"github.com/mithrandie/go-text/color"
 	txjson "github.com/mithrandie/go-text/json"
 )
 
@@ -150,6 +149,7 @@ type Flags struct {
 
 	// Must be updated from Transaction
 	WaitTimeout float64
+	Color       bool
 
 	// For Import
 	ImportFormat       Format
@@ -177,9 +177,6 @@ type Flags struct {
 	EastAsianEncoding    bool
 	CountDiacriticalSign bool
 	CountFormatCode      bool
-
-	// ANSI Color Sequence
-	Color bool
 
 	// System Use
 	Quiet bool
@@ -211,6 +208,7 @@ func NewFlags(env *Environment) *Flags {
 		Location:                "Local",
 		DatetimeFormat:          datetimeFormat,
 		WaitTimeout:             10,
+		Color:                   false,
 		ImportFormat:            CSV,
 		Delimiter:               ',',
 		DelimiterPositions:      nil,
@@ -232,7 +230,6 @@ func NewFlags(env *Environment) *Flags {
 		EastAsianEncoding:       false,
 		CountDiacriticalSign:    false,
 		CountFormatCode:         false,
-		Color:                   false,
 		Quiet:                   false,
 		CPU:                     GetDefaultNumberOfCPU(),
 		Stats:                   false,
@@ -492,7 +489,6 @@ func (f *Flags) SetEncloseAll(b bool) {
 
 func (f *Flags) SetColor(b bool) {
 	f.Color = b
-	color.UseEffect = b
 }
 
 func (f *Flags) SetEastAsianEncoding(b bool) {

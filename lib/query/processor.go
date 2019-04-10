@@ -110,7 +110,7 @@ func (proc *Processor) executeChild(ctx context.Context, statements []parser.Sta
 
 func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Statement) (StatementFlow, error) {
 	if ctx.Err() != nil {
-		return TerminateWithError, NewContextIsDone(ctx.Err().Error())
+		return TerminateWithError, NewContextDone(ctx.Err().Error())
 	}
 
 	flow := Terminate
@@ -127,7 +127,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 	case parser.RemoveFlagElement:
 		err = RemoveFlagElement(ctx, proc.Filter, stmt.(parser.RemoveFlagElement))
 	case parser.ShowFlag:
-		if printstr, err = ShowFlag(proc.Tx.Flags, stmt.(parser.ShowFlag)); err == nil {
+		if printstr, err = ShowFlag(proc.Tx, stmt.(parser.ShowFlag)); err == nil {
 			proc.Log(printstr, false)
 		}
 	case parser.VariableDeclaration:
@@ -181,13 +181,15 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 
 		view, e := Select(ctx, proc.Filter, stmt.(parser.SelectQuery))
 		if e == nil {
-			proc.Tx.Session.outfileMtx.Lock()
+			var warnmsg string
+
+			proc.Tx.Session.mtx.Lock()
 
 			if proc.storeResults {
 				proc.Tx.SelectedViews = append(proc.Tx.SelectedViews, view)
 			}
 
-			if _, ok := proc.Tx.Session.Stdout.(*Discard); !ok || proc.Tx.Session.OutFile != nil {
+			if _, ok := proc.Tx.Session.Stdout().(*Discard); !ok || proc.Tx.Session.OutFile() != nil {
 				fileInfo := &FileInfo{
 					Format:             proc.Tx.Flags.Format,
 					Delimiter:          proc.Tx.Flags.WriteDelimiter,
@@ -201,25 +203,29 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 				}
 
 				var writer io.Writer
-				if proc.Tx.Session.OutFile != nil {
-					writer = proc.Tx.Session.OutFile
+				if proc.Tx.Session.OutFile() != nil {
+					writer = proc.Tx.Session.OutFile()
 				} else {
-					writer = proc.Tx.Session.Stdout
+					writer = proc.Tx.Session.Stdout()
 				}
-				warnmsg, e := EncodeView(ctx, writer, view, fileInfo, proc.Tx.Flags)
+				warn, e := EncodeView(ctx, writer, view, fileInfo, proc.Tx)
 
 				if e != nil {
 					if _, ok := e.(*EmptyResultSetError); !ok {
 						err = e
-					} else if 0 < len(warnmsg) {
-						proc.LogWarn(warnmsg, proc.Tx.Flags.Quiet)
+					} else if 0 < len(warn) {
+						warnmsg = warn
 					}
-				} else if !(proc.Tx.Session.OutFile != nil && fileInfo.Format == cmd.FIXED && fileInfo.SingleLine) {
+				} else if !(proc.Tx.Session.OutFile() != nil && fileInfo.Format == cmd.FIXED && fileInfo.SingleLine) {
 					_, err = writer.Write([]byte(proc.Tx.Flags.LineBreak.Value()))
 				}
 			}
 
-			proc.Tx.Session.outfileMtx.Unlock()
+			proc.Tx.Session.mtx.Unlock()
+
+			if 0 < len(warnmsg) {
+				proc.LogWarn(warnmsg, proc.Tx.Flags.Quiet)
+			}
 		} else {
 			err = e
 		}
@@ -631,9 +637,9 @@ func (proc *Processor) ExecExternalCommand(ctx context.Context, stmt parser.Exte
 	}
 
 	c := exec.Command(args[0], args[1:]...)
-	c.Stdin = proc.Tx.Session.Stdin
-	c.Stdout = proc.Tx.Session.Stdout
-	c.Stderr = proc.Tx.Session.Stderr
+	c.Stdin = proc.Tx.Session.Stdin()
+	c.Stdout = proc.Tx.Session.Stdout()
+	c.Stderr = proc.Tx.Session.Stderr()
 
 	err = c.Run()
 	if err != nil {
@@ -647,26 +653,25 @@ func (proc *Processor) showExecutionTime(ctx context.Context) {
 		return
 	}
 
-	palette := cmd.GetPalette()
 	exectime := cmd.FormatNumber(time.Since(proc.measurementStart).Seconds(), 6, ".", ",", "")
-	stats := fmt.Sprintf(palette.Render(cmd.LableEffect, "Query Execution Time: ")+"%s seconds", exectime)
+	stats := fmt.Sprintf(proc.Tx.Palette.Render(cmd.LableEffect, "Query Execution Time: ")+"%s seconds", exectime)
 	proc.Log(stats, false)
 }
 
 func (proc *Processor) Log(log string, quiet bool) {
-	proc.Tx.Session.Log(log, quiet)
+	proc.Tx.Log(log, quiet)
 }
 
 func (proc *Processor) LogNotice(log string, quiet bool) {
-	proc.Tx.Session.LogNotice(log, quiet)
+	proc.Tx.LogNotice(log, quiet)
 }
 
 func (proc *Processor) LogWarn(log string, quiet bool) {
-	proc.Tx.Session.LogWarn(log, quiet)
+	proc.Tx.LogWarn(log, quiet)
 }
 
 func (proc *Processor) LogError(log string) {
-	proc.Tx.Session.LogError(log)
+	proc.Tx.LogError(log)
 }
 
 func (proc *Processor) AutoCommit(ctx context.Context) error {

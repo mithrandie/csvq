@@ -115,10 +115,13 @@ table
   | (table)
 
 table_entity
-  : table_name
+  : table_identifier
   | table_object
   | json_inline_table
   | (select_query)
+
+table_identifier
+  : table_name
   | STDIN
 
 join
@@ -134,10 +137,10 @@ join_condition
   | USING (column_name [, column_name, ...])
 
 table_object
-  : CSV(delimiter, table_name [, encoding [, no_header [, without_null]]])
-  | FIXED(delimiter_positions, table_name [, encoding [, no_header [, without_null]]])
-  | JSON(json_query, table_name)
-  | LTSV(table_name [, encoding [, without_null]])
+  : CSV(delimiter, table_identifier [, encoding [, no_header [, without_null]]])
+  | FIXED(delimiter_positions, table_identifier [, encoding [, no_header [, without_null]]])
+  | JSON(json_query, table_identifier)
+  | LTSV(table_identifier [, encoding [, without_null]])
 
 json_inline_table
   : JSON_TABLE(json_query, json_file)

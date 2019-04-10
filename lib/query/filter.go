@@ -189,7 +189,7 @@ func (f *Filter) LoadInlineTable(ctx context.Context, clause parser.WithClause) 
 
 func (f *Filter) Evaluate(ctx context.Context, expr parser.QueryExpression) (value.Primary, error) {
 	if ctx.Err() != nil {
-		return nil, NewContextIsDone(ctx.Err().Error())
+		return nil, NewContextDone(ctx.Err().Error())
 	}
 
 	if expr == nil {
@@ -300,7 +300,7 @@ func (f *Filter) EvaluateSequentially(ctx context.Context, fn func(*Filter, int)
 		return gm.Err()
 	}
 	if ctx.Err() != nil {
-		return NewContextIsDone(ctx.Err().Error())
+		return NewContextDone(ctx.Err().Error())
 	}
 	return nil
 }
@@ -1286,7 +1286,7 @@ func (f *Filter) EvaluateEmbeddedString(ctx context.Context, embedded string) (s
 		case excmd.CsvqExpression:
 			expr := scanner.Text()
 			if 0 < len(expr) {
-				statements, _, err := parser.Parse(expr, "", f.tx.Flags.DatetimeFormat, false)
+				statements, _, err := parser.Parse(expr, expr, f.tx.Flags.DatetimeFormat, false)
 				if err != nil {
 					if syntaxErr, ok := err.(*parser.SyntaxError); ok {
 						err = NewSyntaxError(syntaxErr)

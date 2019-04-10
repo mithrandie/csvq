@@ -5,8 +5,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"strconv"
-	"time"
 
 	"github.com/mithrandie/csvq/lib/action"
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -14,7 +12,6 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
 
-	"github.com/mithrandie/go-text/color"
 	"github.com/urfave/cli"
 )
 
@@ -31,17 +28,9 @@ func main() {
 
 	app.Name = "csvq"
 	app.Usage = "SQL-like query language for csv"
-	app.ArgsUsage = "[\"query\"|argument]"
+	app.ArgsUsage = "[query|argument]"
 	app.Version = query.Version
-
-	app.OnUsageError = func(c *cli.Context, err error, isSubcommand bool) error {
-		if isSubcommand {
-			return err
-		}
-
-		return Exit(query.NewIncorrectCommandUsageError(err.Error()))
-	}
-
+	app.OnUsageError = onUsageError
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "repository, r",
@@ -176,35 +165,29 @@ func main() {
 		{
 			Name:      "fields",
 			Usage:     "Show fields in a file",
-			ArgsUsage: "CSV_FILE_PATH",
+			ArgsUsage: "DATA_FILE_PATH",
 			Action: commandAction(func(ctx context.Context, c *cli.Context, proc *query.Processor) error {
-				if c.NArg() != 1 {
-					return query.NewIncorrectCommandUsageError("table is not specified")
+				if 1 != c.NArg() {
+					return query.NewIncorrectCommandUsageError("fields subcommand takes exactly 1 argument")
 				}
-
 				table := c.Args().First()
-
 				return action.ShowFields(ctx, proc, table)
 			}),
-			OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
-				return Exit(query.NewIncorrectCommandUsageError(err.Error()))
-			},
 		},
 		{
 			Name:      "calc",
 			Usage:     "Calculate a value from stdin",
-			ArgsUsage: "\"expression\"",
+			ArgsUsage: "expression",
 			Action: commandAction(func(ctx context.Context, c *cli.Context, proc *query.Processor) error {
-				if c.NArg() != 1 {
-					return query.NewIncorrectCommandUsageError("expression is empty")
+				if !cmd.IsReadableFromPipeOrRedirection(os.Stdin) {
+					return query.NewIncorrectCommandUsageError(query.ErrMsgStdinEmpty)
 				}
-
+				if 1 != c.NArg() {
+					return query.NewIncorrectCommandUsageError("calc subcommand takes exactly 1 argument")
+				}
 				expr := c.Args().First()
 				return action.Calc(ctx, proc, expr)
 			}),
-			OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
-				return Exit(query.NewIncorrectCommandUsageError(err.Error()))
-			},
 		},
 		{
 			Name:      "syntax",
@@ -214,21 +197,26 @@ func main() {
 				words := append([]string{c.Args().First()}, c.Args().Tail()...)
 				return action.Syntax(ctx, proc, words)
 			}),
-			OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
-				return Exit(query.NewIncorrectCommandUsageError(err.Error()))
-			},
 		},
 		{
-			Name:  "check-update",
-			Usage: "Check for updates",
-			Action: func(c *cli.Context) error {
-				return Exit(action.CheckUpdate())
-			},
+			Name:      "check-update",
+			Usage:     "Check for updates",
+			ArgsUsage: " ",
+			Action: commandAction(func(ctx context.Context, c *cli.Context, proc *query.Processor) error {
+				if 0 < c.NArg() {
+					return query.NewIncorrectCommandUsageError("check-update subcommand takes no argument")
+				}
+				return action.CheckUpdate()
+			}),
 		},
 	}
 
+	for i := range app.Commands {
+		app.Commands[i].OnUsageError = onUsageError
+	}
+
 	app.Action = commandAction(func(ctx context.Context, c *cli.Context, proc *query.Processor) error {
-		queryString, path, err := readQuery(c, proc.Tx)
+		queryString, path, err := readQuery(ctx, c, proc.Tx)
 		if err != nil {
 			return err
 		}
@@ -247,21 +235,44 @@ func main() {
 	}
 }
 
+func onUsageError(c *cli.Context, err error, isSubcommand bool) error {
+	if isSubcommand {
+		if e := cli.ShowCommandHelp(c, c.Command.Name); e != nil {
+			println(e.Error())
+		}
+	}
+	if _, ok := err.(*query.IncorrectCommandUsageError); !ok {
+		err = query.NewIncorrectCommandUsageError(err.Error())
+	}
+	return Exit(err, nil)
+}
+
 func commandAction(fn func(ctx context.Context, c *cli.Context, proc *query.Processor) error) func(c *cli.Context) error {
-	return func(c *cli.Context) error {
+	return func(c *cli.Context) (err error) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		proc, err := generateProcessor(ctx, c)
-		if err != nil {
-			return Exit(err)
+		session := query.NewSession()
+		tx, e := query.NewTransaction(ctx, file.DefaultWaitTimeout, file.DefaultRetryDelay, session)
+		if e != nil {
+			return Exit(e, nil)
 		}
+
+		proc := query.NewProcessor(tx)
 		defer func() {
 			if e := proc.AutoRollback(); e != nil {
 				proc.LogError(e.Error())
 			}
-			if err := proc.ReleaseResourcesWithErrors(); err != nil {
-				proc.LogError(err.Error())
+			if e := proc.ReleaseResourcesWithErrors(); e != nil {
+				proc.LogError(e.Error())
+			}
+
+			if err != nil {
+				if _, ok := err.(*query.IncorrectCommandUsageError); ok {
+					err = onUsageError(c, err, 0 < len(c.Command.Name))
+				} else {
+					err = Exit(err, proc.Tx)
+				}
 			}
 		}()
 
@@ -277,79 +288,60 @@ func commandAction(fn func(ctx context.Context, c *cli.Context, proc *query.Proc
 		}()
 
 		// Run pre-load commands
-		if err := runPreloadCommands(ctx, proc); err != nil {
-			return Exit(err)
+		if err = runPreloadCommands(ctx, proc); err != nil {
+			return
 		}
 
 		// Overwrite Flags with Command Options
-		if err := overwriteFlags(c, proc.Tx); err != nil {
-			return Exit(query.NewIncorrectCommandUsageError(err.Error()))
+		if err = overwriteFlags(c, proc.Tx); err != nil {
+			return
 		}
 
 		err = fn(ctx, c, proc)
 		if signalReceived != nil {
 			err = signalReceived
 		}
-		return Exit(err)
+		return
 	}
-}
-
-func generateProcessor(ctx context.Context, c *cli.Context) (*query.Processor, error) {
-	color.UseEffect = false
-
-	defaultWaitTimeout := file.DefaultWaitTimeout
-	if c.IsSet("wait-timeout") {
-		if d, err := time.ParseDuration(strconv.FormatFloat(c.GlobalFloat64("wait-timeout"), 'f', -1, 64) + "s"); err == nil {
-			defaultWaitTimeout = d
-		}
-	}
-
-	session := query.NewSession()
-	tx, err := query.NewTransaction(ctx, defaultWaitTimeout, file.DefaultRetryDelay, session)
-	if err != nil {
-		return nil, err
-	}
-
-	return query.NewProcessor(tx), nil
 }
 
 func overwriteFlags(c *cli.Context, tx *query.Transaction) error {
 	flags := tx.Flags
 
-	if c.IsSet("color") {
-		flags.SetColor(c.GlobalBool("color"))
-	}
-
 	if c.IsSet("repository") {
 		if err := flags.SetRepository(c.GlobalString("repository")); err != nil {
-			return err
+			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.IsSet("timezone") {
 		if err := flags.SetLocation(c.String("timezone")); err != nil {
-			return err
+			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.IsSet("datetime-format") {
 		flags.SetDatetimeFormat(c.GlobalString("datetime-format"))
 	}
+
 	if c.IsSet("wait-timeout") {
 		tx.UpdateWaitTimeout(c.GlobalFloat64("wait-timeout"), file.DefaultRetryDelay)
+	}
+	if c.IsSet("color") {
+		tx.UseColor(c.GlobalBool("color"))
 	}
 
 	if c.IsSet("import-format") {
 		if err := flags.SetImportFormat(c.GlobalString("import-format")); err != nil {
-			return err
+			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.IsSet("delimiter") {
 		if err := flags.SetDelimiter(c.GlobalString("delimiter")); err != nil {
-			return err
+			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.IsSet("delimiter-positions") {
 		if err := flags.SetDelimiterPositions(c.GlobalString("delimiter-positions")); err != nil {
-			return err
+			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.IsSet("json-query") {
@@ -357,7 +349,7 @@ func overwriteFlags(c *cli.Context, tx *query.Transaction) error {
 	}
 	if c.IsSet("encoding") {
 		if err := flags.SetEncoding(c.GlobalString("encoding")); err != nil {
-			return err
+			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.IsSet("no-header") {
@@ -369,22 +361,22 @@ func overwriteFlags(c *cli.Context, tx *query.Transaction) error {
 
 	if c.IsSet("format") {
 		if err := flags.SetFormat(c.GlobalString("format"), c.GlobalString("out")); err != nil {
-			return err
+			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.IsSet("write-encoding") {
 		if err := flags.SetWriteEncoding(c.GlobalString("write-encoding")); err != nil {
-			return err
+			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.IsSet("write-delimiter") {
 		if err := flags.SetWriteDelimiter(c.GlobalString("write-delimiter")); err != nil {
-			return err
+			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.IsSet("write-delimiter-positions") {
 		if err := flags.SetWriteDelimiterPositions(c.GlobalString("write-delimiter-positions")); err != nil {
-			return err
+			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.IsSet("without-header") {
@@ -392,7 +384,7 @@ func overwriteFlags(c *cli.Context, tx *query.Transaction) error {
 	}
 	if c.IsSet("line-break") {
 		if err := flags.SetLineBreak(c.String("line-break")); err != nil {
-			return err
+			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.IsSet("enclose-all") {
@@ -400,7 +392,7 @@ func overwriteFlags(c *cli.Context, tx *query.Transaction) error {
 	}
 	if c.IsSet("json-escape") {
 		if err := flags.SetJsonEscape(c.GlobalString("json-escape")); err != nil {
-			return err
+			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.IsSet("pretty-print") {
@@ -449,24 +441,28 @@ func runPreloadCommands(ctx context.Context, proc *query.Processor) (err error) 
 	return nil
 }
 
-func readQuery(c *cli.Context, tx *query.Transaction) (queryString string, path string, err error) {
+func readQuery(ctx context.Context, c *cli.Context, tx *query.Transaction) (queryString string, path string, err error) {
 	if c.IsSet("source") && 0 < len(c.GlobalString("source")) {
-		path = c.GlobalString("source")
-
-		queryString, err = query.LoadContentsFromFile(context.Background(), tx, parser.Identifier{Literal: path})
+		if 0 < c.NArg() {
+			err = query.NewIncorrectCommandUsageError("no argument can be passed when \"--source\" option is specified")
+		} else {
+			path = c.GlobalString("source")
+			queryString, err = query.LoadContentsFromFile(ctx, tx, parser.Identifier{Literal: path})
+		}
 	} else {
 		switch c.NArg() {
-		case 0: //Launch interactive shell
+		case 0:
+			// Launch interactive shell
 		case 1:
 			queryString = c.Args().First()
 		default:
-			err = Exit(query.NewIncorrectCommandUsageError("multiple queries or statements were passed"))
+			err = query.NewIncorrectCommandUsageError("csvq command takes exactly 1 argument")
 		}
 	}
 	return
 }
 
-func Exit(err error) error {
+func Exit(err error, tx *query.Transaction) error {
 	if err == nil {
 		return nil
 	}
@@ -476,9 +472,13 @@ func Exit(err error) error {
 
 	code := query.ReturnCodeApplicationError
 	message := err.Error()
+	if tx != nil {
+		message = tx.Error(message)
+	}
 
 	if apperr, ok := err.(query.Error); ok {
 		code = apperr.Code()
 	}
-	return cli.NewExitError(cmd.Error(message), code)
+
+	return cli.NewExitError(message, code)
 }

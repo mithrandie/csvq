@@ -13,20 +13,23 @@ type Lexer struct {
 
 func (l *Lexer) Lex(lval *yySymType) int {
 	tok, err := l.Scan()
+	lval.token = tok
+	l.token = lval.token
+
 	if err != nil {
 		l.Error(err.Error())
 	}
 
-	lval.token = tok
-	l.token = lval.token
-	return tok.Token
+	return lval.token.Token
 }
 
 func (l *Lexer) Error(e string) {
-	if 0 < l.token.Token {
-		l.err = NewSyntaxError(fmt.Sprintf("%s: unexpected token %q", e, l.token.Literal), l.token)
-	} else if e == "syntax error" && l.token.Token == -1 {
-		l.err = NewSyntaxError(fmt.Sprintf("%s: unexpected termination", e), l.token)
+	if e == "syntax error" {
+		if l.token.Token == EOF {
+			l.err = NewSyntaxError(fmt.Sprintf("%s: unexpected termination", e), l.token)
+		} else {
+			l.err = NewSyntaxError(fmt.Sprintf("%s: unexpected token %q", e, l.token.Literal), l.token)
+		}
 	} else {
 		l.err = NewSyntaxError(fmt.Sprintf("%s", e), l.token)
 	}

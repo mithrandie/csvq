@@ -174,8 +174,8 @@ func setup() {
 
 	Version = "v1.0.0"
 	HomeDir, _ = homedir.Dir()
-	TestTx.Session.Stdout = NewDiscard()
-	TestTx.Session.Stderr = NewDiscard()
+	TestTx.Session.SetStdout(NewDiscard())
+	TestTx.Session.SetStderr(NewDiscard())
 }
 
 func teardown() {
