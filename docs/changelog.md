@@ -5,6 +5,14 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.9.11
+
+Released on April 11, 2019
+
+- Allow flags to be used as values.
+- Fix the following bug.
+  - Aggregate functions do not return the results if there are no rows in the result set.
+
 ## Version 1.9.10
 
 Released on April 10, 2019
