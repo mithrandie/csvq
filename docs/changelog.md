@@ -5,6 +5,13 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.9.12
+
+Released on April 11, 2019
+
+- Fix the following bug.
+  - Compound field values containing aggregate functions do not return the results if there are no rows in the result set.
+
 ## Version 1.9.11
 
 Released on April 11, 2019

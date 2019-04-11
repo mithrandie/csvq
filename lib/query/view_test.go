@@ -4202,6 +4202,47 @@ var viewSelectTests = []struct {
 			Tx:           TestTx,
 		},
 	},
+	{
+		Name: "Select Compound Function with Aggregate Empty Rows",
+		View: &View{
+			Header: []HeaderField{
+				{View: "table1", Column: "column1", IsFromTable: true},
+				{View: "table1", Column: "column2", IsFromTable: true},
+			},
+			RecordSet: []Record{},
+			Filter:    NewFilter(TestTx),
+			Tx:        TestTx,
+		},
+		Select: parser.SelectClause{
+			Fields: []parser.QueryExpression{
+				parser.Field{
+					Object: parser.Function{Name: "coalesce",
+						Args: []parser.QueryExpression{
+							parser.AggregateFunction{Name: "sum", Args: []parser.QueryExpression{parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}}},
+							parser.NewIntegerValue(0),
+						},
+					},
+				},
+			},
+		},
+		Result: &View{
+			Header: []HeaderField{
+				{View: "table1", Column: "column1", IsFromTable: true},
+				{View: "table1", Column: "column2", IsFromTable: true},
+				{Column: "coalesce(sum(column1), 0)"},
+			},
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewNull(),
+					value.NewNull(),
+					value.NewInteger(0),
+				}),
+			},
+			Filter:       NewFilter(TestTx),
+			selectFields: []int{2},
+			Tx:           TestTx,
+		},
+	},
 }
 
 func TestView_Select(t *testing.T) {

@@ -23,6 +23,10 @@ type filterRecord struct {
 	fieldReferenceIndices map[string]int
 }
 
+func (r *filterRecord) IsInRange() bool {
+	return -1 < r.recordIndex && r.recordIndex < r.view.RecordLen()
+}
+
 type Filter struct {
 	tx *Transaction
 
@@ -327,7 +331,11 @@ func (f *Filter) evalFieldReference(expr parser.QueryExpression) (value.Primary,
 	for _, v := range f.records {
 		if v.fieldReferenceIndices != nil {
 			if idx, ok := v.fieldReferenceIndices[exprStr]; ok {
-				p = v.view.RecordSet[v.recordIndex][idx].Value()
+				if v.IsInRange() {
+					p = v.view.RecordSet[v.recordIndex][idx].Value()
+				} else {
+					p = value.NewNull()
+				}
 				break
 			}
 		}
@@ -337,7 +345,11 @@ func (f *Filter) evalFieldReference(expr parser.QueryExpression) (value.Primary,
 			if v.view.isGrouped && v.view.Header[idx].IsFromTable && !v.view.Header[idx].IsGroupKey {
 				return nil, NewFieldNotGroupKeyError(expr)
 			}
-			p = v.view.RecordSet[v.recordIndex][idx].Value()
+			if v.IsInRange() {
+				p = v.view.RecordSet[v.recordIndex][idx].Value()
+			} else {
+				p = value.NewNull()
+			}
 			if v.fieldReferenceIndices != nil {
 				v.fieldReferenceIndices[exprStr] = idx
 			}
@@ -762,14 +774,20 @@ func (f *Filter) evalAggregateFunction(ctx context.Context, expr parser.Aggregat
 
 		if uname == "COUNT" {
 			if _, ok := listExpr.(parser.PrimitiveType); ok {
-				return value.NewInteger(int64(f.records[0].view.RecordSet[f.records[0].recordIndex].GroupLen())), nil
+				if f.records[0].IsInRange() {
+					return value.NewInteger(int64(f.records[0].view.RecordSet[f.records[0].recordIndex].GroupLen())), nil
+				} else {
+					return value.NewInteger(0), nil
+				}
 			}
 		}
 
-		view := NewViewFromGroupedRecord(f.records[0])
-		list, err = view.ListValuesForAggregateFunctions(ctx, expr, listExpr, expr.IsDistinct(), f)
-		if err != nil {
-			return nil, err
+		if f.records[0].IsInRange() {
+			view := NewViewFromGroupedRecord(f.records[0])
+			list, err = view.ListValuesForAggregateFunctions(ctx, expr, listExpr, expr.IsDistinct(), f)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 

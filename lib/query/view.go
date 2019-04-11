@@ -1510,12 +1510,13 @@ func (view *View) evalColumn(ctx context.Context, obj parser.QueryExpression, al
 				if err != nil {
 					return
 				}
-			} else if view.isGrouped && view.RecordLen() < 1 {
+			} else if view.RecordLen() < 1 {
 				if view.tempRecord == nil {
 					view.tempRecord = NewEmptyRecord(view.FieldLen())
 				}
 
-				primary, e := view.Filter.Evaluate(ctx, obj)
+				f := NewFilterForRecord(view.Filter, view, -1)
+				primary, e := f.Evaluate(ctx, obj)
 				if e != nil {
 					err = e
 					return
