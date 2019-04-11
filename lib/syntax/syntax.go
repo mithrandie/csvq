@@ -902,6 +902,13 @@ var CsvqSyntax = []Expression{
 				},
 			},
 			{
+				Name: "flag",
+				Description: Description{
+					Template: "ref. %s",
+					Values:   []Element{Link("Flags")},
+				},
+			},
+			{
 				Name: "parentheses",
 				Group: []Grammar{
 					{Parentheses{Link("value")}},

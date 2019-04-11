@@ -248,6 +248,12 @@ func (f *Filter) Evaluate(ctx context.Context, expr parser.QueryExpression) (val
 		val = value.NewString(os.Getenv(expr.(parser.EnvironmentVariable).Name))
 	case parser.RuntimeInformation:
 		val, err = GetRuntimeInformation(f.tx, expr.(parser.RuntimeInformation))
+	case parser.Flag:
+		if v, ok := f.tx.GetFlag(expr.(parser.Flag).Name); ok {
+			val = v
+		} else {
+			err = NewInvalidFlagNameError(expr.(parser.Flag))
+		}
 	case parser.VariableSubstitution:
 		val, err = f.variables.Substitute(ctx, f, expr.(parser.VariableSubstitution))
 	case parser.CursorStatus:

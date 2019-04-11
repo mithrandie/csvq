@@ -40,8 +40,8 @@ const (
 	WriteDelimiterPositionsFlag = "WRITE_DELIMITER_POSITIONS"
 	WithoutHeaderFlag           = "WITHOUT_HEADER"
 	LineBreakFlag               = "LINE_BREAK"
-	EncloseAll                  = "ENCLOSE_ALL"
-	JsonEscape                  = "JSON_ESCAPE"
+	EncloseAllFlag              = "ENCLOSE_ALL"
+	JsonEscapeFlag              = "JSON_ESCAPE"
 	PrettyPrintFlag             = "PRETTY_PRINT"
 	EastAsianEncodingFlag       = "EAST_ASIAN_ENCODING"
 	CountDiacriticalSignFlag    = "COUNT_DIACRITICAL_SIGN"
@@ -70,8 +70,8 @@ var FlagList = []string{
 	WriteDelimiterPositionsFlag,
 	WithoutHeaderFlag,
 	LineBreakFlag,
-	EncloseAll,
-	JsonEscape,
+	EncloseAllFlag,
+	JsonEscapeFlag,
 	PrettyPrintFlag,
 	EastAsianEncodingFlag,
 	CountDiacriticalSignFlag,

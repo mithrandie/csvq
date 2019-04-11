@@ -50,13 +50,7 @@ func TestBaseExpr_SourceFile(t *testing.T) {
 }
 
 func TestBaseExpr_HasParseInfo(t *testing.T) {
-	var expr *BaseExpr
-
-	if expr.HasParseInfo() {
-		t.Errorf("has parse info = %t, want %t for %#v", expr.HasParseInfo(), false, expr)
-	}
-
-	expr = &BaseExpr{}
+	expr := &BaseExpr{}
 	if !expr.HasParseInfo() {
 		t.Errorf("has parse info = %t, want %t for %#v", expr.HasParseInfo(), true, expr)
 	}
@@ -1571,6 +1565,16 @@ func TestRuntimeInformation_String(t *testing.T) {
 		Name: "ri",
 	}
 	expect := "@#ri"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestFlag_String(t *testing.T) {
+	e := Flag{
+		Name: "flag",
+	}
+	expect := "@@flag"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}

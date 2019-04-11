@@ -3932,6 +3932,20 @@ var filterEvaluateTests = []struct {
 		Result: value.NewString("v1.0.0"),
 	},
 	{
+		Name: "Flag",
+		Expr: parser.Flag{
+			Name: "json_escape",
+		},
+		Result: value.NewString("BACKSLASH"),
+	},
+	{
+		Name: "Flag Ivalid Flag Name Error",
+		Expr: parser.Flag{
+			Name: "invalid",
+		},
+		Error: "@@invalid is an unknown flag",
+	},
+	{
 		Name: "Variable Undeclared Error",
 		Expr: parser.Variable{
 			Name: "undefined",

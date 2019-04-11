@@ -4265,7 +4265,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			SetFlag{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
-				Name:     "delimiter",
+				Flag:     Flag{BaseExpr: &BaseExpr{line: 1, char: 5}, Name: "delimiter"},
 				Value:    NewStringValue(","),
 			},
 		},
@@ -4275,7 +4275,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			SetFlag{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
-				Name:     "encoding",
+				Flag:     Flag{BaseExpr: &BaseExpr{line: 1, char: 5}, Name: "encoding"},
 				Value:    Identifier{BaseExpr: &BaseExpr{line: 1, char: 18}, Literal: "sjis"},
 			},
 		},
@@ -4285,7 +4285,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			SetFlag{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
-				Name:     "delimiter",
+				Flag:     Flag{BaseExpr: &BaseExpr{line: 1, char: 5}, Name: "delimiter"},
 				Value:    NewStringValue(","),
 			},
 		},
@@ -4295,7 +4295,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			SetFlag{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
-				Name:     "encoding",
+				Flag:     Flag{BaseExpr: &BaseExpr{line: 1, char: 5}, Name: "encoding"},
 				Value:    Identifier{BaseExpr: &BaseExpr{line: 1, char: 19}, Literal: "sjis"},
 			},
 		},
@@ -4305,7 +4305,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			AddFlagElement{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
-				Name:     "datetime_format",
+				Flag:     Flag{BaseExpr: &BaseExpr{line: 1, char: 17}, Name: "datetime_format"},
 				Value:    NewStringValue("%Y%m%d"),
 			},
 		},
@@ -4315,7 +4315,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			RemoveFlagElement{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
-				Name:     "datetime_format",
+				Flag:     Flag{BaseExpr: &BaseExpr{line: 1, char: 22}, Name: "datetime_format"},
 				Value:    NewStringValue("%Y%m%d"),
 			},
 		},
@@ -4325,7 +4325,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			ShowFlag{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
-				Name:     "delimiter",
+				Flag:     Flag{BaseExpr: &BaseExpr{line: 1, char: 6}, Name: "delimiter"},
 			},
 		},
 	},
@@ -5387,6 +5387,22 @@ var parseTests = []struct {
 					Fields: []QueryExpression{
 						Field{
 							Object: RuntimeInformation{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "var"},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select @@flag",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Select:   "select",
+					Fields: []QueryExpression{
+						Field{
+							Object: Flag{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "flag"},
 						},
 					},
 				},
