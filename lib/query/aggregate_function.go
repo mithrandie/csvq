@@ -170,6 +170,10 @@ func ListAgg(list []value.Primary, separator string) value.Primary {
 }
 
 func JsonAgg(list []value.Primary) value.Primary {
+	if len(list) < 1 {
+		return value.NewNull()
+	}
+
 	array := make(txjson.Array, 0, len(list))
 
 	for _, v := range list {

@@ -106,9 +106,8 @@ const (
 	//Syntax Error
 	ErrorSyntaxError                  = 90040
 	ErrorInvalidValueExpression       = 90041
-	ErrorUnpermittedFunctionStatement = 90042
-	ErrorNestedAggregateFunctions     = 90043
-	ErrorPreparedStatementSyntaxError = 90044
+	ErrorNestedAggregateFunctions     = 90042
+	ErrorPreparedStatementSyntaxError = 90043
 
 	//Context Error
 	ErrorContextDone     = 90080

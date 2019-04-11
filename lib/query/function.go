@@ -1560,7 +1560,7 @@ func Now(filter *Filter, fn parser.Function, args []value.Primary) (value.Primar
 
 func JsonObject(ctx context.Context, filter *Filter, fn parser.Function) (value.Primary, error) {
 	if len(filter.records) < 1 {
-		return nil, NewUnpermittedFunctionStatementError(fn, fn.Name)
+		return value.NewNull(), nil
 	}
 
 	view := NewView(filter.tx)

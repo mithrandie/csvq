@@ -5,12 +5,13 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
 )
 
 func Calc(ctx context.Context, proc *query.Processor, expr string) error {
-	proc.Tx.Flags.SetNoHeader(true)
+	_ = proc.Tx.SetFlag(cmd.NoHeaderFlag, true, "")
 	q := "SELECT " + expr + " FROM STDIN"
 
 	program, _, err := parser.Parse(q, "", proc.Tx.Flags.DatetimeFormat, false)

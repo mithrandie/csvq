@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
@@ -39,7 +38,6 @@ const (
 	ErrMsgFunctionNotExist                     = "function %s does not exist"
 	ErrMsgFunctionArgumentsLength              = "function %s takes %s"
 	ErrMsgFunctionInvalidArgument              = "%s for function %s"
-	ErrMsgUnpermittedFunctionStatement         = "function %s cannot be used as a statement"
 	ErrMsgNestedAggregateFunctions             = "aggregate functions are nested at %s"
 	ErrMsgFunctionRedeclared                   = "function %s is redeclared"
 	ErrMsgBuiltInFunctionDeclared              = "function %s is a built-in function"
@@ -543,16 +541,6 @@ type FunctionInvalidArgumentError struct {
 func NewFunctionInvalidArgumentError(function parser.QueryExpression, funcname string, message string) error {
 	return &FunctionInvalidArgumentError{
 		NewBaseError(function, fmt.Sprintf(ErrMsgFunctionInvalidArgument, message, funcname), ReturnCodeApplicationError, ErrorFunctionInvalidArgument),
-	}
-}
-
-type UnpermittedFunctionStatementError struct {
-	*BaseError
-}
-
-func NewUnpermittedFunctionStatementError(expr parser.QueryExpression, funcname string) error {
-	return &UnpermittedFunctionStatementError{
-		NewBaseError(expr, fmt.Sprintf(ErrMsgUnpermittedFunctionStatement, funcname), ReturnCodeSyntaxError, ErrorUnpermittedFunctionStatement),
 	}
 }
 
@@ -1120,9 +1108,9 @@ type InvalidFlagNameError struct {
 	*BaseError
 }
 
-func NewInvalidFlagNameError(expr parser.Expression, name string) error {
+func NewInvalidFlagNameError(expr parser.Flag) error {
 	return &InvalidFlagNameError{
-		NewBaseError(expr, fmt.Sprintf(ErrMsgInvalidFlagName, cmd.FlagSymbol(name)), ReturnCodeApplicationError, ErrorInvalidFlagName),
+		NewBaseError(expr, fmt.Sprintf(ErrMsgInvalidFlagName, expr.String()), ReturnCodeApplicationError, ErrorInvalidFlagName),
 	}
 }
 
@@ -1142,7 +1130,7 @@ type FlagValueNotAllowedFormatError struct {
 
 func NewFlagValueNotAllowedFormatError(setFlag parser.SetFlag) error {
 	return &FlagValueNotAllowedFormatError{
-		NewBaseError(setFlag, fmt.Sprintf(ErrMsgFlagValueNowAllowedFormat, setFlag.Value, cmd.FlagSymbol(setFlag.Name)), ReturnCodeApplicationError, ErrorFlagValueNowAllowedFormat),
+		NewBaseError(setFlag, fmt.Sprintf(ErrMsgFlagValueNowAllowedFormat, setFlag.Value, setFlag.Flag.String()), ReturnCodeApplicationError, ErrorFlagValueNowAllowedFormat),
 	}
 }
 
@@ -1162,7 +1150,7 @@ type AddFlagNotSupportedNameError struct {
 
 func NewAddFlagNotSupportedNameError(expr parser.AddFlagElement) error {
 	return &AddFlagNotSupportedNameError{
-		NewBaseError(expr, fmt.Sprintf(ErrMsgAddFlagNotSupportedName, cmd.FlagSymbol(expr.Name)), ReturnCodeApplicationError, ErrorAddFlagNotSupportedName),
+		NewBaseError(expr, fmt.Sprintf(ErrMsgAddFlagNotSupportedName, expr.Flag.String()), ReturnCodeApplicationError, ErrorAddFlagNotSupportedName),
 	}
 }
 
@@ -1172,7 +1160,7 @@ type RemoveFlagNotSupportedNameError struct {
 
 func NewRemoveFlagNotSupportedNameError(expr parser.RemoveFlagElement) error {
 	return &RemoveFlagNotSupportedNameError{
-		NewBaseError(expr, fmt.Sprintf(ErrMsgRemoveFlagNotSupportedName, cmd.FlagSymbol(expr.Name)), ReturnCodeApplicationError, ErrorRemoveFlagNotSupportedName),
+		NewBaseError(expr, fmt.Sprintf(ErrMsgRemoveFlagNotSupportedName, expr.Flag.String()), ReturnCodeApplicationError, ErrorRemoveFlagNotSupportedName),
 	}
 }
 
@@ -1182,7 +1170,7 @@ type InvalidFlagValueToBeRemoveError struct {
 
 func NewInvalidFlagValueToBeRemovedError(unsetFlag parser.RemoveFlagElement) error {
 	return &InvalidFlagValueToBeRemoveError{
-		NewBaseError(unsetFlag, fmt.Sprintf(ErrMsgInvalidFlagValueToBeRemoved, unsetFlag.Value, cmd.FlagSymbol(unsetFlag.Name)), ReturnCodeApplicationError, ErrorInvalidFlagValueToBeRemoved),
+		NewBaseError(unsetFlag, fmt.Sprintf(ErrMsgInvalidFlagValueToBeRemoved, unsetFlag.Value, unsetFlag.Flag.String()), ReturnCodeApplicationError, ErrorInvalidFlagValueToBeRemoved),
 	}
 }
 

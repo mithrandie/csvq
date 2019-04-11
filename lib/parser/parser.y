@@ -21,6 +21,7 @@ import (
     varassign   VariableAssignment
     varassigns  []VariableAssignment
     envvar      EnvironmentVariable
+    flag        Flag
     updateset   UpdateSet
     updatesets  []UpdateSet
     columndef   ColumnDefault
@@ -175,6 +176,7 @@ import (
 %type<varassigns>  variable_assignments
 %type<envvar>      environment_variable
 %type<queryexpr>   runtime_information
+%type<flag>        flag
 %type<token>       distinct
 %type<token>       negation
 %type<token>       join_type_inner
@@ -889,33 +891,33 @@ cursor_status
     }
 
 command_statement
-    : SET FLAG '=' identifier
+    : SET flag '=' identifier
     {
-        $$ = SetFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal, Value: $4}
+        $$ = SetFlag{BaseExpr: NewBaseExpr($1), Flag: $2, Value: $4}
     }
-    | SET FLAG '=' substantial_value
+    | SET flag '=' substantial_value
     {
-        $$ = SetFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal, Value: $4}
+        $$ = SetFlag{BaseExpr: NewBaseExpr($1), Flag: $2, Value: $4}
     }
-    | SET FLAG TO identifier
+    | SET flag TO identifier
     {
-        $$ = SetFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal, Value: $4}
+        $$ = SetFlag{BaseExpr: NewBaseExpr($1), Flag: $2, Value: $4}
     }
-    | SET FLAG TO substantial_value
+    | SET flag TO substantial_value
     {
-        $$ = SetFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal, Value: $4}
+        $$ = SetFlag{BaseExpr: NewBaseExpr($1), Flag: $2, Value: $4}
     }
-    | ADD substantial_value TO FLAG
+    | ADD substantial_value TO flag
     {
-        $$ = AddFlagElement{BaseExpr: NewBaseExpr($1), Name: $4.Literal, Value: $2}
+        $$ = AddFlagElement{BaseExpr: NewBaseExpr($1), Flag: $4, Value: $2}
     }
-    | REMOVE substantial_value FROM FLAG
+    | REMOVE substantial_value FROM flag
     {
-        $$ = RemoveFlagElement{BaseExpr: NewBaseExpr($1), Name: $4.Literal, Value: $2}
+        $$ = RemoveFlagElement{BaseExpr: NewBaseExpr($1), Flag: $4, Value: $2}
     }
-    | SHOW FLAG
+    | SHOW flag
     {
-        $$ = ShowFlag{BaseExpr: NewBaseExpr($1), Name: $2.Literal}
+        $$ = ShowFlag{BaseExpr: NewBaseExpr($1), Flag: $2}
     }
     | ECHO substantial_value
     {
@@ -1317,6 +1319,10 @@ substantial_value
         $$ = $1
     }
     | runtime_information
+    {
+        $$ = $1
+    }
+    | flag
     {
         $$ = $1
     }
@@ -2359,6 +2365,12 @@ runtime_information
     : RUNTIME_INFORMATION
     {
         $$ = RuntimeInformation{BaseExpr: NewBaseExpr($1), Name: $1.Literal}
+    }
+
+flag
+    : FLAG
+    {
+        $$ = Flag{BaseExpr: NewBaseExpr($1), Name: $1.Literal}
     }
 
 distinct

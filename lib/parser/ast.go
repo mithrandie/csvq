@@ -1161,6 +1161,15 @@ func (e RuntimeInformation) String() string {
 	return string(VariableSign) + string(RuntimeInformationSign) + e.Name
 }
 
+type Flag struct {
+	*BaseExpr
+	Name string
+}
+
+func (e Flag) String() string {
+	return string(VariableSign) + string(VariableSign) + e.Name
+}
+
 type SetEnvVar struct {
 	*BaseExpr
 	EnvVar EnvironmentVariable
@@ -1323,25 +1332,25 @@ type Syntax struct {
 
 type SetFlag struct {
 	*BaseExpr
-	Name  string
+	Flag  Flag
 	Value QueryExpression
 }
 
 type AddFlagElement struct {
 	*BaseExpr
-	Name  string
+	Flag  Flag
 	Value QueryExpression
 }
 
 type RemoveFlagElement struct {
 	*BaseExpr
-	Name  string
+	Flag  Flag
 	Value QueryExpression
 }
 
 type ShowFlag struct {
 	*BaseExpr
-	Name string
+	Flag Flag
 }
 
 type ShowObjects struct {

@@ -383,182 +383,182 @@ var setFlagTests = []struct {
 	{
 		Name: "Set Repository",
 		Expr: parser.SetFlag{
-			Name:  "repository",
+			Flag:  parser.Flag{Name: "repository"},
 			Value: parser.NewStringValue(TestDir),
 		},
 	},
 	{
 		Name: "Set Timezone",
 		Expr: parser.SetFlag{
-			Name:  "timezone",
+			Flag:  parser.Flag{Name: "timezone"},
 			Value: parser.NewStringValue("utc"),
 		},
 	},
 	{
 		Name: "Set DatetimeFormat",
 		Expr: parser.SetFlag{
-			Name:  "datetime_format",
+			Flag:  parser.Flag{Name: "datetime_format"},
 			Value: parser.NewStringValue("%Y%m%d"),
 		},
 	},
 	{
 		Name: "Set WaitTimeout",
 		Expr: parser.SetFlag{
-			Name:  "wait_timeout",
+			Flag:  parser.Flag{Name: "wait_timeout"},
 			Value: parser.NewFloatValue(15),
 		},
 	},
 	{
 		Name: "Set Delimiter",
 		Expr: parser.SetFlag{
-			Name:  "delimiter",
+			Flag:  parser.Flag{Name: "delimiter"},
 			Value: parser.NewStringValue("\\t"),
 		},
 	},
 	{
 		Name: "Set JsonQuery",
 		Expr: parser.SetFlag{
-			Name:  "json_query",
+			Flag:  parser.Flag{Name: "json_query"},
 			Value: parser.NewStringValue("{}"),
 		},
 	},
 	{
 		Name: "Set Encoding",
 		Expr: parser.SetFlag{
-			Name:  "encoding",
+			Flag:  parser.Flag{Name: "encoding"},
 			Value: parser.NewStringValue("SJIS"),
 		},
 	},
 	{
 		Name: "Set NoHeader",
 		Expr: parser.SetFlag{
-			Name:  "no_header",
+			Flag:  parser.Flag{Name: "no_header"},
 			Value: parser.NewTernaryValueFromString("true"),
 		},
 	},
 	{
 		Name: "Set WithoutNull",
 		Expr: parser.SetFlag{
-			Name:  "without_null",
+			Flag:  parser.Flag{Name: "without_null"},
 			Value: parser.NewTernaryValueFromString("true"),
 		},
 	},
 	{
 		Name: "Set Format",
 		Expr: parser.SetFlag{
-			Name:  "format",
+			Flag:  parser.Flag{Name: "format"},
 			Value: parser.NewStringValue("json"),
 		},
 	},
 	{
 		Name: "Set WriteEncoding",
 		Expr: parser.SetFlag{
-			Name:  "write_encoding",
+			Flag:  parser.Flag{Name: "write_encoding"},
 			Value: parser.NewStringValue("SJIS"),
 		},
 	},
 	{
 		Name: "Set WriteDelimiter",
 		Expr: parser.SetFlag{
-			Name:  "write_delimiter",
+			Flag:  parser.Flag{Name: "write_delimiter"},
 			Value: parser.NewStringValue("\\t"),
 		},
 	},
 	{
 		Name: "Set WithoutHeader",
 		Expr: parser.SetFlag{
-			Name:  "without_header",
+			Flag:  parser.Flag{Name: "without_header"},
 			Value: parser.NewTernaryValueFromString("true"),
 		},
 	},
 	{
 		Name: "Set lineBreak",
 		Expr: parser.SetFlag{
-			Name:  "line_break",
+			Flag:  parser.Flag{Name: "line_break"},
 			Value: parser.NewStringValue("CRLF"),
 		},
 	},
 	{
 		Name: "Set EncloseAll",
 		Expr: parser.SetFlag{
-			Name:  "enclose_all",
+			Flag:  parser.Flag{Name: "enclose_all"},
 			Value: parser.NewTernaryValueFromString("true"),
 		},
 	},
 	{
 		Name: "Set JsonEscape",
 		Expr: parser.SetFlag{
-			Name:  "json_escape",
+			Flag:  parser.Flag{Name: "json_escape"},
 			Value: parser.NewStringValue("hex"),
 		},
 	},
 	{
 		Name: "Set PrettyPrint",
 		Expr: parser.SetFlag{
-			Name:  "pretty_print",
+			Flag:  parser.Flag{Name: "pretty_print"},
 			Value: parser.NewTernaryValueFromString("true"),
 		},
 	},
 	{
 		Name: "Set EastAsianEncoding",
 		Expr: parser.SetFlag{
-			Name:  "east_asian_encoding",
+			Flag:  parser.Flag{Name: "east_asian_encoding"},
 			Value: parser.NewTernaryValueFromString("true"),
 		},
 	},
 	{
 		Name: "Set CountDiacriticalSign",
 		Expr: parser.SetFlag{
-			Name:  "count_diacritical_sign",
+			Flag:  parser.Flag{Name: "count_diacritical_sign"},
 			Value: parser.NewTernaryValueFromString("true"),
 		},
 	},
 	{
 		Name: "Set CountFormatCode",
 		Expr: parser.SetFlag{
-			Name:  "count_format_code",
+			Flag:  parser.Flag{Name: "count_format_code"},
 			Value: parser.NewTernaryValueFromString("true"),
 		},
 	},
 	{
 		Name: "Set Color",
 		Expr: parser.SetFlag{
-			Name:  "color",
+			Flag:  parser.Flag{Name: "color"},
 			Value: parser.NewTernaryValueFromString("true"),
 		},
 	},
 	{
 		Name: "Set Quiet",
 		Expr: parser.SetFlag{
-			Name:  "quiet",
+			Flag:  parser.Flag{Name: "quiet"},
 			Value: parser.NewTernaryValueFromString("true"),
 		},
 	},
 	{
 		Name: "Set CPU",
 		Expr: parser.SetFlag{
-			Name:  "cpu",
+			Flag:  parser.Flag{Name: "cpu"},
 			Value: parser.NewIntegerValue(int64(runtime.NumCPU())),
 		},
 	},
 	{
 		Name: "Set Stats",
 		Expr: parser.SetFlag{
-			Name:  "stats",
+			Flag:  parser.Flag{Name: "stats"},
 			Value: parser.NewTernaryValueFromString("true"),
 		},
 	},
 	{
 		Name: "Set Encoding with Identifier",
 		Expr: parser.SetFlag{
-			Name:  "encoding",
+			Flag:  parser.Flag{Name: "encoding"},
 			Value: parser.Identifier{Literal: "sjis"},
 		},
 	},
 	{
 		Name: "Set Delimiter Evaluation Error",
 		Expr: parser.SetFlag{
-			Name:  "delimiter",
+			Flag:  parser.Flag{Name: "delimiter"},
 			Value: parser.FieldReference{Column: parser.Identifier{Literal: "err"}},
 		},
 		Error: "field err does not exist",
@@ -566,7 +566,7 @@ var setFlagTests = []struct {
 	{
 		Name: "Set Delimiter Value Error",
 		Expr: parser.SetFlag{
-			Name:  "delimiter",
+			Flag:  parser.Flag{Name: "delimiter"},
 			Value: parser.NewTernaryValueFromString("true"),
 		},
 		Error: "true for @@delimiter is not allowed",
@@ -574,7 +574,7 @@ var setFlagTests = []struct {
 	{
 		Name: "Set WaitTimeout Value Error",
 		Expr: parser.SetFlag{
-			Name:  "wait_timeout",
+			Flag:  parser.Flag{Name: "wait_timeout"},
 			Value: parser.NewTernaryValueFromString("true"),
 		},
 		Error: "true for @@wait_timeout is not allowed",
@@ -582,7 +582,7 @@ var setFlagTests = []struct {
 	{
 		Name: "Set WithoutNull Value Error",
 		Expr: parser.SetFlag{
-			Name:  "without_null",
+			Flag:  parser.Flag{Name: "without_null"},
 			Value: parser.NewStringValue("string"),
 		},
 		Error: "'string' for @@without_null is not allowed",
@@ -590,7 +590,7 @@ var setFlagTests = []struct {
 	{
 		Name: "Set CPU Value Error",
 		Expr: parser.SetFlag{
-			Name:  "cpu",
+			Flag:  parser.Flag{Name: "cpu"},
 			Value: parser.NewStringValue("invalid"),
 		},
 		Error: "'invalid' for @@cpu is not allowed",
@@ -598,7 +598,7 @@ var setFlagTests = []struct {
 	{
 		Name: "Invalid Flag Name Error",
 		Expr: parser.SetFlag{
-			Name:  "invalid",
+			Flag:  parser.Flag{Name: "invalid"},
 			Value: parser.NewStringValue("string"),
 		},
 		Error: "@@invalid is an unknown flag",
@@ -606,7 +606,7 @@ var setFlagTests = []struct {
 	{
 		Name: "Invalid Flag Value Error",
 		Expr: parser.SetFlag{
-			Name:  "line_break",
+			Flag:  parser.Flag{Name: "line_break"},
 			Value: parser.NewStringValue("invalid"),
 		},
 		Error: "line-break must be one of CRLF|LF|CR",
@@ -646,7 +646,7 @@ var addFlagElementTests = []struct {
 	{
 		Name: "Add Element To DatetimeFormat",
 		Expr: parser.AddFlagElement{
-			Name:  "datetime_format",
+			Flag:  parser.Flag{Name: "datetime_format"},
 			Value: parser.NewStringValue("%Y%m%d"),
 		},
 		Init: func(flags *cmd.Flags) {
@@ -662,7 +662,7 @@ var addFlagElementTests = []struct {
 	{
 		Name: "Add Element Unsupported Flag Name",
 		Expr: parser.AddFlagElement{
-			Name:  "format",
+			Flag:  parser.Flag{Name: "format"},
 			Value: parser.NewStringValue("%Y%m%d"),
 		},
 		Init: func(flags *cmd.Flags) {
@@ -673,7 +673,7 @@ var addFlagElementTests = []struct {
 	{
 		Name: "Add Element Invalid Flag Name",
 		Expr: parser.AddFlagElement{
-			Name:  "invalid",
+			Flag:  parser.Flag{Name: "invalid"},
 			Value: parser.NewStringValue("%Y%m%d"),
 		},
 		Init: func(flags *cmd.Flags) {
@@ -723,7 +723,7 @@ var removeFlagElementTests = []struct {
 	{
 		Name: "Remove Element from DatetimeFormat",
 		Expr: parser.RemoveFlagElement{
-			Name:  "datetime_format",
+			Flag:  parser.Flag{Name: "datetime_format"},
 			Value: parser.NewStringValue("%Y%m%d"),
 		},
 		Init: func(flags *cmd.Flags) {
@@ -739,7 +739,7 @@ var removeFlagElementTests = []struct {
 	{
 		Name: "Remove Element from DatetimeFormat with List Index",
 		Expr: parser.RemoveFlagElement{
-			Name:  "datetime_format",
+			Flag:  parser.Flag{Name: "datetime_format"},
 			Value: parser.NewIntegerValue(1),
 		},
 		Init: func(flags *cmd.Flags) {
@@ -755,7 +755,7 @@ var removeFlagElementTests = []struct {
 	{
 		Name: "Remove Element Invalid Flag Value",
 		Expr: parser.RemoveFlagElement{
-			Name:  "datetime_format",
+			Flag:  parser.Flag{Name: "datetime_format"},
 			Value: parser.NewNullValueFromString("null"),
 		},
 		Init:  func(flags *cmd.Flags) {},
@@ -764,7 +764,7 @@ var removeFlagElementTests = []struct {
 	{
 		Name: "Remove Element Evaluation Error",
 		Expr: parser.RemoveFlagElement{
-			Name:  "format",
+			Flag:  parser.Flag{Name: "format"},
 			Value: parser.FieldReference{Column: parser.Identifier{Literal: "err"}},
 		},
 		Init:  func(flags *cmd.Flags) {},
@@ -773,7 +773,7 @@ var removeFlagElementTests = []struct {
 	{
 		Name: "Remove Element Unsupported Flag Name",
 		Expr: parser.RemoveFlagElement{
-			Name:  "format",
+			Flag:  parser.Flag{Name: "format"},
 			Value: parser.NewIntegerValue(1),
 		},
 		Init:  func(flags *cmd.Flags) {},
@@ -782,7 +782,7 @@ var removeFlagElementTests = []struct {
 	{
 		Name: "Remove Element Invalid Flag Name",
 		Expr: parser.RemoveFlagElement{
-			Name:  "invalid",
+			Flag:  parser.Flag{Name: "invalid"},
 			Value: parser.NewIntegerValue(1),
 		},
 		Init:  func(flags *cmd.Flags) {},
@@ -830,11 +830,11 @@ var showFlagTests = []struct {
 	{
 		Name: "Show Repository",
 		Expr: parser.ShowFlag{
-			Name: "repository",
+			Flag: parser.Flag{Name: "repository"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "repository",
+				Flag:  parser.Flag{Name: "repository"},
 				Value: parser.NewStringValue(TestDir),
 			},
 		},
@@ -843,11 +843,11 @@ var showFlagTests = []struct {
 	{
 		Name: "Show Repository Not Set",
 		Expr: parser.ShowFlag{
-			Name: "repository",
+			Flag: parser.Flag{Name: "repository"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "repository",
+				Flag:  parser.Flag{Name: "repository"},
 				Value: parser.NewStringValue(""),
 			},
 		},
@@ -856,11 +856,11 @@ var showFlagTests = []struct {
 	{
 		Name: "Show Timezone",
 		Expr: parser.ShowFlag{
-			Name: "timezone",
+			Flag: parser.Flag{Name: "timezone"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "timezone",
+				Flag:  parser.Flag{Name: "timezone"},
 				Value: parser.NewStringValue("UTC"),
 			},
 		},
@@ -869,18 +869,18 @@ var showFlagTests = []struct {
 	{
 		Name: "Show DatetimeFormat Not Set",
 		Expr: parser.ShowFlag{
-			Name: "datetime_format",
+			Flag: parser.Flag{Name: "datetime_format"},
 		},
 		Result: "\033[34;1m@@DATETIME_FORMAT:\033[0m \033[90m(not set)\033[0m",
 	},
 	{
 		Name: "Show DatetimeFormat",
 		Expr: parser.ShowFlag{
-			Name: "datetime_format",
+			Flag: parser.Flag{Name: "datetime_format"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "datetime_format",
+				Flag:  parser.Flag{Name: "datetime_format"},
 				Value: parser.NewStringValue("[\"%Y%m%d\", \"%Y%m%d %H%i%s\"]"),
 			},
 		},
@@ -889,11 +889,11 @@ var showFlagTests = []struct {
 	{
 		Name: "Show WaitTimeout",
 		Expr: parser.ShowFlag{
-			Name: "wait_timeout",
+			Flag: parser.Flag{Name: "wait_timeout"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "wait_timeout",
+				Flag:  parser.Flag{Name: "wait_timeout"},
 				Value: parser.NewFloatValue(15),
 			},
 		},
@@ -902,11 +902,11 @@ var showFlagTests = []struct {
 	{
 		Name: "Show Import Format",
 		Expr: parser.ShowFlag{
-			Name: "import_format",
+			Flag: parser.Flag{Name: "import_format"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "import_format",
+				Flag:  parser.Flag{Name: "import_format"},
 				Value: parser.NewStringValue("tsv"),
 			},
 		},
@@ -915,24 +915,24 @@ var showFlagTests = []struct {
 	{
 		Name: "Show Delimiter",
 		Expr: parser.ShowFlag{
-			Name: "delimiter",
+			Flag: parser.Flag{Name: "delimiter"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "delimiter",
+				Flag:  parser.Flag{Name: "delimiter"},
 				Value: parser.NewStringValue("\t"),
 			},
 		},
-		Result: "\033[34;1m@@DELIMITER:\033[0m \033[32m'\\t'\033[0m",
+		Result: "\033[34;1m@@DELIMITER:\033[0m \033[32m\"\\t\"\033[0m",
 	},
 	{
 		Name: "Show Delimiter Positions",
 		Expr: parser.ShowFlag{
-			Name: "delimiter_positions",
+			Flag: parser.Flag{Name: "delimiter_positions"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "delimiter_positions",
+				Flag:  parser.Flag{Name: "delimiter_positions"},
 				Value: parser.NewStringValue("s[2, 5, 10]"),
 			},
 		},
@@ -941,11 +941,11 @@ var showFlagTests = []struct {
 	{
 		Name: "Show Delimiter Positions as spaces",
 		Expr: parser.ShowFlag{
-			Name: "delimiter_positions",
+			Flag: parser.Flag{Name: "delimiter_positions"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "delimiter_positions",
+				Flag:  parser.Flag{Name: "delimiter_positions"},
 				Value: parser.NewStringValue("SPACES"),
 			},
 		},
@@ -954,11 +954,11 @@ var showFlagTests = []struct {
 	{
 		Name: "Show JsonQuery",
 		Expr: parser.ShowFlag{
-			Name: "json_query",
+			Flag: parser.Flag{Name: "json_query"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "json_query",
+				Flag:  parser.Flag{Name: "json_query"},
 				Value: parser.NewStringValue("{}"),
 			},
 		},
@@ -967,7 +967,7 @@ var showFlagTests = []struct {
 	{
 		Name: "Show JsonQuery Empty",
 		Expr: parser.ShowFlag{
-			Name: "json_query",
+			Flag: parser.Flag{Name: "json_query"},
 		},
 		SetExprs: []parser.SetFlag{},
 		Result:   "\033[34;1m@@JSON_QUERY:\033[0m \033[90m(empty)\033[0m",
@@ -975,11 +975,11 @@ var showFlagTests = []struct {
 	{
 		Name: "Show Encoding",
 		Expr: parser.ShowFlag{
-			Name: "encoding",
+			Flag: parser.Flag{Name: "encoding"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "encoding",
+				Flag:  parser.Flag{Name: "encoding"},
 				Value: parser.NewStringValue("SJIS"),
 			},
 		},
@@ -988,11 +988,11 @@ var showFlagTests = []struct {
 	{
 		Name: "Show NoHeader",
 		Expr: parser.ShowFlag{
-			Name: "no_header",
+			Flag: parser.Flag{Name: "no_header"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "no_header",
+				Flag:  parser.Flag{Name: "no_header"},
 				Value: parser.NewTernaryValueFromString("true"),
 			},
 		},
@@ -1001,11 +1001,11 @@ var showFlagTests = []struct {
 	{
 		Name: "Show WithoutNull",
 		Expr: parser.ShowFlag{
-			Name: "without_null",
+			Flag: parser.Flag{Name: "without_null"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "without_null",
+				Flag:  parser.Flag{Name: "without_null"},
 				Value: parser.NewTernaryValueFromString("true"),
 			},
 		},
@@ -1014,11 +1014,11 @@ var showFlagTests = []struct {
 	{
 		Name: "Show Format",
 		Expr: parser.ShowFlag{
-			Name: "format",
+			Flag: parser.Flag{Name: "format"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "format",
+				Flag:  parser.Flag{Name: "format"},
 				Value: parser.NewStringValue("json"),
 			},
 		},
@@ -1027,11 +1027,11 @@ var showFlagTests = []struct {
 	{
 		Name: "Show WriteEncoding",
 		Expr: parser.ShowFlag{
-			Name: "write_encoding",
+			Flag: parser.Flag{Name: "write_encoding"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "write_encoding",
+				Flag:  parser.Flag{Name: "write_encoding"},
 				Value: parser.NewStringValue("SJIS"),
 			},
 		},
@@ -1040,15 +1040,15 @@ var showFlagTests = []struct {
 	{
 		Name: "Show WriteEncoding Ignored",
 		Expr: parser.ShowFlag{
-			Name: "write_encoding",
+			Flag: parser.Flag{Name: "write_encoding"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "write_encoding",
+				Flag:  parser.Flag{Name: "write_encoding"},
 				Value: parser.NewStringValue("SJIS"),
 			},
 			{
-				Name:  "format",
+				Flag:  parser.Flag{Name: "format"},
 				Value: parser.NewStringValue("JSON"),
 			},
 		},
@@ -1057,49 +1057,49 @@ var showFlagTests = []struct {
 	{
 		Name: "Show WriteDelimiter",
 		Expr: parser.ShowFlag{
-			Name: "write_delimiter",
+			Flag: parser.Flag{Name: "write_delimiter"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "write_delimiter",
+				Flag:  parser.Flag{Name: "write_delimiter"},
 				Value: parser.NewStringValue("\t"),
 			},
 			{
-				Name:  "format",
+				Flag:  parser.Flag{Name: "format"},
 				Value: parser.NewStringValue("CSV"),
 			},
 		},
-		Result: "\033[34;1m@@WRITE_DELIMITER:\033[0m \033[32m'\\t'\033[0m",
+		Result: "\033[34;1m@@WRITE_DELIMITER:\033[0m \033[32m\"\\t\"\033[0m",
 	},
 	{
 		Name: "Show WriteDelimiter Ignored",
 		Expr: parser.ShowFlag{
-			Name: "write_delimiter",
+			Flag: parser.Flag{Name: "write_delimiter"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "write_delimiter",
+				Flag:  parser.Flag{Name: "write_delimiter"},
 				Value: parser.NewStringValue("\t"),
 			},
 			{
-				Name:  "format",
+				Flag:  parser.Flag{Name: "format"},
 				Value: parser.NewStringValue("JSON"),
 			},
 		},
-		Result: "\033[34;1m@@WRITE_DELIMITER:\033[0m \033[90m(ignored) '\\t'\033[0m",
+		Result: "\033[34;1m@@WRITE_DELIMITER:\033[0m \033[90m(ignored) \"\\t\"\033[0m",
 	},
 	{
 		Name: "Show WriteDelimiterPositions for Single-Line FIXED",
 		Expr: parser.ShowFlag{
-			Name: "write_delimiter_positions",
+			Flag: parser.Flag{Name: "write_delimiter_positions"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "write_delimiter_positions",
+				Flag:  parser.Flag{Name: "write_delimiter_positions"},
 				Value: parser.NewStringValue("s[2, 5, 10]"),
 			},
 			{
-				Name:  "format",
+				Flag:  parser.Flag{Name: "format"},
 				Value: parser.NewStringValue("FIXED"),
 			},
 		},
@@ -1108,15 +1108,15 @@ var showFlagTests = []struct {
 	{
 		Name: "Show WriteDelimiterPositions for FIXED",
 		Expr: parser.ShowFlag{
-			Name: "write_delimiter_positions",
+			Flag: parser.Flag{Name: "write_delimiter_positions"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "write_delimiter_positions",
+				Flag:  parser.Flag{Name: "write_delimiter_positions"},
 				Value: parser.NewStringValue("spaces"),
 			},
 			{
-				Name:  "format",
+				Flag:  parser.Flag{Name: "format"},
 				Value: parser.NewStringValue("FIXED"),
 			},
 		},
@@ -1125,15 +1125,15 @@ var showFlagTests = []struct {
 	{
 		Name: "Show WriteDelimiterPositions Ignored",
 		Expr: parser.ShowFlag{
-			Name: "write_delimiter_positions",
+			Flag: parser.Flag{Name: "write_delimiter_positions"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "write_delimiter_positions",
+				Flag:  parser.Flag{Name: "write_delimiter_positions"},
 				Value: parser.NewStringValue("spaces"),
 			},
 			{
-				Name:  "format",
+				Flag:  parser.Flag{Name: "format"},
 				Value: parser.NewStringValue("JSON"),
 			},
 		},
@@ -1142,15 +1142,15 @@ var showFlagTests = []struct {
 	{
 		Name: "Show WithoutHeader",
 		Expr: parser.ShowFlag{
-			Name: "without_header",
+			Flag: parser.Flag{Name: "without_header"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "without_header",
+				Flag:  parser.Flag{Name: "without_header"},
 				Value: parser.NewTernaryValueFromString("true"),
 			},
 			{
-				Name:  "format",
+				Flag:  parser.Flag{Name: "format"},
 				Value: parser.NewStringValue("CSV"),
 			},
 		},
@@ -1159,15 +1159,15 @@ var showFlagTests = []struct {
 	{
 		Name: "Show WithoutHeader Ignored",
 		Expr: parser.ShowFlag{
-			Name: "without_header",
+			Flag: parser.Flag{Name: "without_header"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "without_header",
+				Flag:  parser.Flag{Name: "without_header"},
 				Value: parser.NewTernaryValueFromString("true"),
 			},
 			{
-				Name:  "format",
+				Flag:  parser.Flag{Name: "format"},
 				Value: parser.NewStringValue("JSON"),
 			},
 		},
@@ -1176,19 +1176,19 @@ var showFlagTests = []struct {
 	{
 		Name: "Show WithoutHeader with Single-Line Fixed-Length",
 		Expr: parser.ShowFlag{
-			Name: "without_header",
+			Flag: parser.Flag{Name: "without_header"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "format",
+				Flag:  parser.Flag{Name: "format"},
 				Value: parser.NewStringValue("fixed"),
 			},
 			{
-				Name:  "write_delimiter_positions",
+				Flag:  parser.Flag{Name: "write_delimiter_positions"},
 				Value: parser.NewStringValue("s[2, 5, 10]"),
 			},
 			{
-				Name:  "without_header",
+				Flag:  parser.Flag{Name: "without_header"},
 				Value: parser.NewTernaryValueFromString("true"),
 			},
 		},
@@ -1197,11 +1197,11 @@ var showFlagTests = []struct {
 	{
 		Name: "Show lineBreak",
 		Expr: parser.ShowFlag{
-			Name: "line_break",
+			Flag: parser.Flag{Name: "line_break"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "line_break",
+				Flag:  parser.Flag{Name: "line_break"},
 				Value: parser.NewStringValue("CRLF"),
 			},
 		},
@@ -1210,19 +1210,19 @@ var showFlagTests = []struct {
 	{
 		Name: "Show lineBreak with Single-Line Fixed-Length",
 		Expr: parser.ShowFlag{
-			Name: "line_break",
+			Flag: parser.Flag{Name: "line_break"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "format",
+				Flag:  parser.Flag{Name: "format"},
 				Value: parser.NewStringValue("fixed"),
 			},
 			{
-				Name:  "write_delimiter_positions",
+				Flag:  parser.Flag{Name: "write_delimiter_positions"},
 				Value: parser.NewStringValue("s[2, 5, 10]"),
 			},
 			{
-				Name:  "line_break",
+				Flag:  parser.Flag{Name: "line_break"},
 				Value: parser.NewStringValue("CRLF"),
 			},
 		},
@@ -1231,15 +1231,15 @@ var showFlagTests = []struct {
 	{
 		Name: "Show EncloseAll",
 		Expr: parser.ShowFlag{
-			Name: "enclose_all",
+			Flag: parser.Flag{Name: "enclose_all"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "enclose_all",
+				Flag:  parser.Flag{Name: "enclose_all"},
 				Value: parser.NewTernaryValueFromString("true"),
 			},
 			{
-				Name:  "format",
+				Flag:  parser.Flag{Name: "format"},
 				Value: parser.NewStringValue("CSV"),
 			},
 		},
@@ -1248,15 +1248,15 @@ var showFlagTests = []struct {
 	{
 		Name: "Show EncloseAll Ignored",
 		Expr: parser.ShowFlag{
-			Name: "enclose_all",
+			Flag: parser.Flag{Name: "enclose_all"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "enclose_all",
+				Flag:  parser.Flag{Name: "enclose_all"},
 				Value: parser.NewTernaryValueFromString("true"),
 			},
 			{
-				Name:  "format",
+				Flag:  parser.Flag{Name: "format"},
 				Value: parser.NewStringValue("JSON"),
 			},
 		},
@@ -1265,15 +1265,15 @@ var showFlagTests = []struct {
 	{
 		Name: "Show JsonEscape",
 		Expr: parser.ShowFlag{
-			Name: "json_escape",
+			Flag: parser.Flag{Name: "json_escape"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "json_escape",
+				Flag:  parser.Flag{Name: "json_escape"},
 				Value: parser.NewStringValue("HEXALL"),
 			},
 			{
-				Name:  "format",
+				Flag:  parser.Flag{Name: "format"},
 				Value: parser.NewStringValue("JSON"),
 			},
 		},
@@ -1282,15 +1282,15 @@ var showFlagTests = []struct {
 	{
 		Name: "Show JsonEscape Ignored",
 		Expr: parser.ShowFlag{
-			Name: "json_escape",
+			Flag: parser.Flag{Name: "json_escape"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "json_escape",
+				Flag:  parser.Flag{Name: "json_escape"},
 				Value: parser.NewStringValue("BACKSLASH"),
 			},
 			{
-				Name:  "format",
+				Flag:  parser.Flag{Name: "format"},
 				Value: parser.NewStringValue("CSV"),
 			},
 		},
@@ -1299,15 +1299,15 @@ var showFlagTests = []struct {
 	{
 		Name: "Show PrettyPrint",
 		Expr: parser.ShowFlag{
-			Name: "pretty_print",
+			Flag: parser.Flag{Name: "pretty_print"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "pretty_print",
+				Flag:  parser.Flag{Name: "pretty_print"},
 				Value: parser.NewTernaryValueFromString("true"),
 			},
 			{
-				Name:  "format",
+				Flag:  parser.Flag{Name: "format"},
 				Value: parser.NewStringValue("JSON"),
 			},
 		},
@@ -1316,11 +1316,11 @@ var showFlagTests = []struct {
 	{
 		Name: "Show PrettyPrint Ignored",
 		Expr: parser.ShowFlag{
-			Name: "pretty_print",
+			Flag: parser.Flag{Name: "pretty_print"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "pretty_print",
+				Flag:  parser.Flag{Name: "pretty_print"},
 				Value: parser.NewTernaryValueFromString("true"),
 			},
 		},
@@ -1329,15 +1329,15 @@ var showFlagTests = []struct {
 	{
 		Name: "Show EastAsianEncoding",
 		Expr: parser.ShowFlag{
-			Name: "east_asian_encoding",
+			Flag: parser.Flag{Name: "east_asian_encoding"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "east_asian_encoding",
+				Flag:  parser.Flag{Name: "east_asian_encoding"},
 				Value: parser.NewTernaryValueFromString("true"),
 			},
 			{
-				Name:  "format",
+				Flag:  parser.Flag{Name: "format"},
 				Value: parser.NewStringValue("TEXT"),
 			},
 		},
@@ -1346,15 +1346,15 @@ var showFlagTests = []struct {
 	{
 		Name: "Show EastAsianEncoding Ignored",
 		Expr: parser.ShowFlag{
-			Name: "east_asian_encoding",
+			Flag: parser.Flag{Name: "east_asian_encoding"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "east_asian_encoding",
+				Flag:  parser.Flag{Name: "east_asian_encoding"},
 				Value: parser.NewTernaryValueFromString("true"),
 			},
 			{
-				Name:  "format",
+				Flag:  parser.Flag{Name: "format"},
 				Value: parser.NewStringValue("JSON"),
 			},
 		},
@@ -1363,15 +1363,15 @@ var showFlagTests = []struct {
 	{
 		Name: "Show CountDiacriticalSign",
 		Expr: parser.ShowFlag{
-			Name: "count_diacritical_sign",
+			Flag: parser.Flag{Name: "count_diacritical_sign"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "count_diacritical_sign",
+				Flag:  parser.Flag{Name: "count_diacritical_sign"},
 				Value: parser.NewTernaryValueFromString("true"),
 			},
 			{
-				Name:  "format",
+				Flag:  parser.Flag{Name: "format"},
 				Value: parser.NewStringValue("TEXT"),
 			},
 		},
@@ -1380,15 +1380,15 @@ var showFlagTests = []struct {
 	{
 		Name: "Show CountDiacriticalSign Ignored",
 		Expr: parser.ShowFlag{
-			Name: "count_diacritical_sign",
+			Flag: parser.Flag{Name: "count_diacritical_sign"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "count_diacritical_sign",
+				Flag:  parser.Flag{Name: "count_diacritical_sign"},
 				Value: parser.NewTernaryValueFromString("true"),
 			},
 			{
-				Name:  "format",
+				Flag:  parser.Flag{Name: "format"},
 				Value: parser.NewStringValue("JSON"),
 			},
 		},
@@ -1397,15 +1397,15 @@ var showFlagTests = []struct {
 	{
 		Name: "Show CountFormatCode",
 		Expr: parser.ShowFlag{
-			Name: "count_format_code",
+			Flag: parser.Flag{Name: "count_format_code"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "count_format_code",
+				Flag:  parser.Flag{Name: "count_format_code"},
 				Value: parser.NewTernaryValueFromString("true"),
 			},
 			{
-				Name:  "format",
+				Flag:  parser.Flag{Name: "format"},
 				Value: parser.NewStringValue("TEXT"),
 			},
 		},
@@ -1414,15 +1414,15 @@ var showFlagTests = []struct {
 	{
 		Name: "Show CountFormatCode Ignored",
 		Expr: parser.ShowFlag{
-			Name: "count_format_code",
+			Flag: parser.Flag{Name: "count_format_code"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "count_format_code",
+				Flag:  parser.Flag{Name: "count_format_code"},
 				Value: parser.NewTernaryValueFromString("true"),
 			},
 			{
-				Name:  "format",
+				Flag:  parser.Flag{Name: "format"},
 				Value: parser.NewStringValue("JSON"),
 			},
 		},
@@ -1431,11 +1431,11 @@ var showFlagTests = []struct {
 	{
 		Name: "Show Color",
 		Expr: parser.ShowFlag{
-			Name: "color",
+			Flag: parser.Flag{Name: "color"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "color",
+				Flag:  parser.Flag{Name: "color"},
 				Value: parser.NewTernaryValueFromString("true"),
 			},
 		},
@@ -1444,11 +1444,11 @@ var showFlagTests = []struct {
 	{
 		Name: "Show Quiet",
 		Expr: parser.ShowFlag{
-			Name: "quiet",
+			Flag: parser.Flag{Name: "quiet"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "quiet",
+				Flag:  parser.Flag{Name: "quiet"},
 				Value: parser.NewTernaryValueFromString("true"),
 			},
 		},
@@ -1457,11 +1457,11 @@ var showFlagTests = []struct {
 	{
 		Name: "Show CPU",
 		Expr: parser.ShowFlag{
-			Name: "cpu",
+			Flag: parser.Flag{Name: "cpu"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "cpu",
+				Flag:  parser.Flag{Name: "cpu"},
 				Value: parser.NewIntegerValue(1),
 			},
 		},
@@ -1470,11 +1470,11 @@ var showFlagTests = []struct {
 	{
 		Name: "Show Stats",
 		Expr: parser.ShowFlag{
-			Name: "stats",
+			Flag: parser.Flag{Name: "stats"},
 		},
 		SetExprs: []parser.SetFlag{
 			{
-				Name:  "stats",
+				Flag:  parser.Flag{Name: "stats"},
 				Value: parser.NewTernaryValueFromString("true"),
 			},
 		},
@@ -1483,7 +1483,7 @@ var showFlagTests = []struct {
 	{
 		Name: "Invalid Flag Name Error",
 		Expr: parser.ShowFlag{
-			Name: "invalid",
+			Flag: parser.Flag{Name: "invalid"},
 		},
 		Error: "@@invalid is an unknown flag",
 	},
@@ -1621,7 +1621,7 @@ var showObjectsTests = []struct {
 			"-----------------------------------------------------------\n" +
 			" table1.csv\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: CSV      Delimiter: '\\t'  Enclose All: false\n" +
+			"     Format: CSV      Delimiter: \"\\t\"  Enclose All: false\n" +
 			"     Encoding: SJIS   LineBreak: CRLF  Header: false\n" +
 			" table1.json\n" +
 			"     Fields: col1, col2\n" +
@@ -1629,7 +1629,7 @@ var showObjectsTests = []struct {
 			"     Encoding: UTF8   LineBreak: LF    Pretty Print: false\n" +
 			" table1.tsv\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: TSV      Delimiter: '\\t'  Enclose All: false\n" +
+			"     Format: TSV      Delimiter: \"\\t\"  Enclose All: false\n" +
 			"     Encoding: UTF8   LineBreak: LF    Header: true\n" +
 			" table1.txt\n" +
 			"     Fields: col1, col2\n" +
@@ -1731,7 +1731,7 @@ var showObjectsTests = []struct {
 			"-----------------------------------------------------------\n" +
 			" table1.csv\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: CSV      Delimiter: '\\t'  Enclose All: false\n" +
+			"     Format: CSV      Delimiter: \"\\t\"  Enclose All: false\n" +
 			"     Encoding: SJIS   LineBreak: CRLF  Header: false\n" +
 			" table1.json\n" +
 			"     Fields: col1, col2\n" +
@@ -1739,7 +1739,7 @@ var showObjectsTests = []struct {
 			"     Encoding: UTF8   LineBreak: LF    Pretty Print: false\n" +
 			" *Created* table1.tsv\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: TSV      Delimiter: '\\t'  Enclose All: false\n" +
+			"     Format: TSV      Delimiter: \"\\t\"  Enclose All: false\n" +
 			"     Encoding: UTF8   LineBreak: LF    Header: true\n" +
 			" table1.txt\n" +
 			"     Fields: col1, col2\n" +
@@ -1777,7 +1777,7 @@ var showObjectsTests = []struct {
 			" table1.csv\n" +
 			"     Fields: colabcdef1, colabcdef2, colabcdef3, colabcdef4, colabcdef5, \n" +
 			"             colabcdef6, colabcdef7\n" +
-			"     Format: CSV      Delimiter: '\\t'  Enclose All: false\n" +
+			"     Format: CSV      Delimiter: \"\\t\"  Enclose All: false\n" +
 			"     Encoding: SJIS   LineBreak: CRLF  Header: false\n" +
 			"\n",
 	},
@@ -2063,7 +2063,7 @@ var showObjectsTests = []struct {
 			"           @@DATETIME_FORMAT: (not set)\n" +
 			"              @@WAIT_TIMEOUT: 15\n" +
 			"             @@IMPORT_FORMAT: CSV\n" +
-			"                 @@DELIMITER: ','\n" +
+			"                 @@DELIMITER: \",\"\n" +
 			"       @@DELIMITER_POSITIONS: SPACES\n" +
 			"                @@JSON_QUERY: (empty)\n" +
 			"                  @@ENCODING: UTF8\n" +
@@ -2071,7 +2071,7 @@ var showObjectsTests = []struct {
 			"              @@WITHOUT_NULL: false\n" +
 			"                    @@FORMAT: CSV\n" +
 			"            @@WRITE_ENCODING: UTF8\n" +
-			"           @@WRITE_DELIMITER: ','\n" +
+			"           @@WRITE_DELIMITER: \",\"\n" +
 			" @@WRITE_DELIMITER_POSITIONS: (ignored) SPACES\n" +
 			"            @@WITHOUT_HEADER: false\n" +
 			"                @@LINE_BREAK: LF\n" +
@@ -2319,7 +2319,7 @@ var showFieldsTests = []struct {
 			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv", "show_fields_create.csv", 10)) + "\n" +
 			" Type: Table\n" +
 			" Path: " + GetTestFilePath("show_fields_create.csv") + "\n" +
-			" Format: CSV      Delimiter: ','   Enclose All: false\n" +
+			" Format: CSV      Delimiter: \",\"   Enclose All: false\n" +
 			" Encoding: UTF8   LineBreak: LF    Header: true\n" +
 			" Status: Created\n" +
 			" Fields:\n" +
@@ -2358,7 +2358,7 @@ var showFieldsTests = []struct {
 			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv", "show_fields_create.csv", 10)) + "\n" +
 			" Type: Table\n" +
 			" Path: " + GetTestFilePath("show_fields_create.csv") + "\n" +
-			" Format: CSV      Delimiter: ','   Enclose All: false\n" +
+			" Format: CSV      Delimiter: \",\"   Enclose All: false\n" +
 			" Encoding: UTF8   LineBreak: LF    Header: true\n" +
 			" Status: Created\n" +
 			" Fields:\n" +
@@ -2397,7 +2397,7 @@ var showFieldsTests = []struct {
 			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv", "show_fields_update.csv", 10)) + "\n" +
 			" Type: Table\n" +
 			" Path: " + GetTestFilePath("show_fields_update.csv") + "\n" +
-			" Format: CSV      Delimiter: ','   Enclose All: false\n" +
+			" Format: CSV      Delimiter: \",\"   Enclose All: false\n" +
 			" Encoding: UTF8   LineBreak: LF    Header: true\n" +
 			" Status: Updated\n" +
 			" Fields:\n" +

@@ -2808,7 +2808,7 @@ var filterEvaluateTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 		},
-		Error: "function avg cannot be used as a statement",
+		Result: value.NewNull(),
 	},
 	{
 		Name: "Aggregate Function User Defined",
@@ -3584,7 +3584,7 @@ var filterEvaluateTests = []struct {
 				},
 			},
 		},
-		Error: "function listagg cannot be used as a statement",
+		Result: value.NewNull(),
 	},
 	{
 		Name: "JsonAgg Function",
@@ -3930,6 +3930,20 @@ var filterEvaluateTests = []struct {
 			Name: "version",
 		},
 		Result: value.NewString("v1.0.0"),
+	},
+	{
+		Name: "Flag",
+		Expr: parser.Flag{
+			Name: "json_escape",
+		},
+		Result: value.NewString("BACKSLASH"),
+	},
+	{
+		Name: "Flag Ivalid Flag Name Error",
+		Expr: parser.Flag{
+			Name: "invalid",
+		},
+		Error: "@@invalid is an unknown flag",
 	},
 	{
 		Name: "Variable Undeclared Error",

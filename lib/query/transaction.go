@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -12,8 +13,10 @@ import (
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mithrandie/go-text/color"
+	"github.com/mithrandie/go-text/fixedlen"
 )
 
 type Transaction struct {
@@ -33,6 +36,8 @@ type Transaction struct {
 	operationMutex   *sync.Mutex
 	viewLoadingMutex *sync.Mutex
 	stdinIsLocked    bool
+
+	flagMutex *sync.RWMutex
 
 	PreparedStatements PreparedStatementMap
 
@@ -68,6 +73,7 @@ func NewTransaction(ctx context.Context, defaultWaitTimeout time.Duration, retry
 		operationMutex:     &sync.Mutex{},
 		viewLoadingMutex:   &sync.Mutex{},
 		stdinIsLocked:      false,
+		flagMutex:          &sync.RWMutex{},
 		PreparedStatements: NewPreparedStatementMap(),
 		SelectedViews:      nil,
 		AffectedRows:       0,
@@ -308,4 +314,267 @@ func (tx *Transaction) LogError(log string) {
 	if err := tx.Session.WriteToStderrWithLineBreak(tx.Error(log)); err != nil {
 		println(err.Error())
 	}
+}
+
+var errNotAllowdFlagFormat = errors.New("not allowed flag format")
+var errInvalidFlagName = errors.New("invalid flag name")
+
+func (tx *Transaction) SetFlag(key string, value interface{}, outFile string) error {
+	tx.flagMutex.Lock()
+	defer tx.flagMutex.Unlock()
+
+	var err error
+
+	switch strings.ToUpper(key) {
+	case cmd.RepositoryFlag:
+		if s, ok := value.(string); ok {
+			err = tx.Flags.SetRepository(s)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.TimezoneFlag:
+		if s, ok := value.(string); ok {
+			err = tx.Flags.SetLocation(s)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.DatetimeFormatFlag:
+		if s, ok := value.(string); ok {
+			tx.Flags.SetDatetimeFormat(s)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.WaitTimeoutFlag:
+		if f, ok := value.(float64); ok {
+			tx.UpdateWaitTimeout(f, file.DefaultRetryDelay)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.ImportFormatFlag:
+		if s, ok := value.(string); ok {
+			err = tx.Flags.SetImportFormat(s)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.DelimiterFlag:
+		if s, ok := value.(string); ok {
+			err = tx.Flags.SetDelimiter(s)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.DelimiterPositionsFlag:
+		if s, ok := value.(string); ok {
+			err = tx.Flags.SetDelimiterPositions(s)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.JsonQueryFlag:
+		if s, ok := value.(string); ok {
+			tx.Flags.SetJsonQuery(s)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.EncodingFlag:
+		if s, ok := value.(string); ok {
+			err = tx.Flags.SetEncoding(s)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.NoHeaderFlag:
+		if b, ok := value.(bool); ok {
+			tx.Flags.SetNoHeader(b)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.WithoutNullFlag:
+		if b, ok := value.(bool); ok {
+			tx.Flags.SetWithoutNull(b)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.FormatFlag:
+		if s, ok := value.(string); ok {
+			err = tx.Flags.SetFormat(s, outFile)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.WriteEncodingFlag:
+		if s, ok := value.(string); ok {
+			err = tx.Flags.SetWriteEncoding(s)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.WriteDelimiterFlag:
+		if s, ok := value.(string); ok {
+			err = tx.Flags.SetWriteDelimiter(s)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.WriteDelimiterPositionsFlag:
+		if s, ok := value.(string); ok {
+			err = tx.Flags.SetWriteDelimiterPositions(s)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.WithoutHeaderFlag:
+		if b, ok := value.(bool); ok {
+			tx.Flags.SetWithoutHeader(b)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.LineBreakFlag:
+		if s, ok := value.(string); ok {
+			err = tx.Flags.SetLineBreak(s)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.EncloseAllFlag:
+		if b, ok := value.(bool); ok {
+			tx.Flags.SetEncloseAll(b)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.JsonEscapeFlag:
+		if s, ok := value.(string); ok {
+			err = tx.Flags.SetJsonEscape(s)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.PrettyPrintFlag:
+		if b, ok := value.(bool); ok {
+			tx.Flags.SetPrettyPrint(b)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.EastAsianEncodingFlag:
+		if b, ok := value.(bool); ok {
+			tx.Flags.SetEastAsianEncoding(b)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.CountDiacriticalSignFlag:
+		if b, ok := value.(bool); ok {
+			tx.Flags.SetCountDiacriticalSign(b)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.CountFormatCodeFlag:
+		if b, ok := value.(bool); ok {
+			tx.Flags.SetCountFormatCode(b)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.ColorFlag:
+		if b, ok := value.(bool); ok {
+			tx.UseColor(b)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.QuietFlag:
+		if b, ok := value.(bool); ok {
+			tx.Flags.SetQuiet(b)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.CPUFlag:
+		if i, ok := value.(int64); ok {
+			tx.Flags.SetCPU(int(i))
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case cmd.StatsFlag:
+		if b, ok := value.(bool); ok {
+			tx.Flags.SetStats(b)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	default:
+		err = errInvalidFlagName
+	}
+
+	return err
+}
+
+func (tx *Transaction) GetFlag(key string) (value.Primary, bool) {
+	tx.flagMutex.RLock()
+	defer tx.flagMutex.RUnlock()
+
+	var val value.Primary
+	var ok = true
+
+	switch strings.ToUpper(key) {
+	case cmd.RepositoryFlag:
+		val = value.NewString(tx.Flags.Repository)
+	case cmd.TimezoneFlag:
+		val = value.NewString(tx.Flags.Location)
+	case cmd.DatetimeFormatFlag:
+		s := ""
+		if 0 < len(tx.Flags.DatetimeFormat) {
+			list := make([]string, 0, len(tx.Flags.DatetimeFormat))
+			for _, f := range tx.Flags.DatetimeFormat {
+				list = append(list, "\""+f+"\"")
+			}
+			s = "[" + strings.Join(list, ", ") + "]"
+		}
+		val = value.NewString(s)
+	case cmd.WaitTimeoutFlag:
+		val = value.NewFloat(tx.Flags.WaitTimeout)
+	case cmd.ImportFormatFlag:
+		val = value.NewString(tx.Flags.ImportFormat.String())
+	case cmd.DelimiterFlag:
+		val = value.NewString(string(tx.Flags.Delimiter))
+	case cmd.DelimiterPositionsFlag:
+		s := fixedlen.DelimiterPositions(tx.Flags.DelimiterPositions).String()
+		if tx.Flags.SingleLine {
+			s = "S" + s
+		}
+		val = value.NewString(s)
+	case cmd.JsonQueryFlag:
+		val = value.NewString(tx.Flags.JsonQuery)
+	case cmd.EncodingFlag:
+		val = value.NewString(tx.Flags.Encoding.String())
+	case cmd.NoHeaderFlag:
+		val = value.NewBoolean(tx.Flags.NoHeader)
+	case cmd.WithoutNullFlag:
+		val = value.NewBoolean(tx.Flags.WithoutNull)
+	case cmd.FormatFlag:
+		val = value.NewString(tx.Flags.Format.String())
+	case cmd.WriteEncodingFlag:
+		val = value.NewString(tx.Flags.WriteEncoding.String())
+	case cmd.WriteDelimiterFlag:
+		val = value.NewString(string(tx.Flags.WriteDelimiter))
+	case cmd.WriteDelimiterPositionsFlag:
+		s := fixedlen.DelimiterPositions(tx.Flags.WriteDelimiterPositions).String()
+		if tx.Flags.WriteAsSingleLine {
+			s = "S" + s
+		}
+		val = value.NewString(s)
+	case cmd.WithoutHeaderFlag:
+		val = value.NewBoolean(tx.Flags.WithoutHeader)
+	case cmd.LineBreakFlag:
+		val = value.NewString(tx.Flags.LineBreak.String())
+	case cmd.EncloseAllFlag:
+		val = value.NewBoolean(tx.Flags.EncloseAll)
+	case cmd.JsonEscapeFlag:
+		val = value.NewString(cmd.JsonEscapeTypeToString(tx.Flags.JsonEscape))
+	case cmd.PrettyPrintFlag:
+		val = value.NewBoolean(tx.Flags.PrettyPrint)
+	case cmd.EastAsianEncodingFlag:
+		val = value.NewBoolean(tx.Flags.EastAsianEncoding)
+	case cmd.CountDiacriticalSignFlag:
+		val = value.NewBoolean(tx.Flags.CountDiacriticalSign)
+	case cmd.CountFormatCodeFlag:
+		val = value.NewBoolean(tx.Flags.CountFormatCode)
+	case cmd.ColorFlag:
+		val = value.NewBoolean(tx.Flags.Color)
+	case cmd.QuietFlag:
+		val = value.NewBoolean(tx.Flags.Quiet)
+	case cmd.CPUFlag:
+		val = value.NewInteger(int64(tx.Flags.CPU))
+	case cmd.StatsFlag:
+		val = value.NewBoolean(tx.Flags.Stats)
+	default:
+		ok = false
+	}
+	return val, ok
 }

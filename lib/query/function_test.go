@@ -3425,7 +3425,7 @@ var jsonObjectTests = []struct {
 			},
 		},
 		Filter: NewFilter(TestTx),
-		Error:  "function json_object cannot be used as a statement",
+		Result: value.NewNull(),
 	},
 	{
 		Name: "Json Object Path Error",

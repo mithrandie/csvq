@@ -1576,7 +1576,7 @@ func (c *Completer) SetArgs(line string, origLine string, index int) readline.Ca
 						return nil, c.candidateList(delimiterPositionsCandidates, false), true
 					case cmd.EncodingFlag, cmd.WriteEncodingFlag:
 						return nil, c.candidateList(c.encodingList(), false), true
-					case cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAll, cmd.PrettyPrintFlag,
+					case cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAllFlag, cmd.PrettyPrintFlag,
 						cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag,
 						cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag:
 						return nil, c.candidateList([]string{ternary.TRUE.String(), ternary.FALSE.String()}, false), true
@@ -1584,7 +1584,7 @@ func (c *Completer) SetArgs(line string, origLine string, index int) readline.Ca
 						return nil, c.candidateList(c.tableFormatList(), false), true
 					case cmd.LineBreakFlag:
 						return nil, c.candidateList(c.lineBreakList(), false), true
-					case cmd.JsonEscape:
+					case cmd.JsonEscapeFlag:
 						return nil, c.candidateList(c.jsonEscapeTypeList(), false), true
 					}
 				}
