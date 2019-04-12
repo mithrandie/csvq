@@ -5281,6 +5281,44 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "declare func1 function (@arg1, @arg2 default 0) as begin \n" +
+			"while var @var1 in cur do print @var1; end while; \n" +
+			"while var @var1, @var2 in cur do print @var1; end while; \n" +
+			"end",
+		Output: []Statement{
+			FunctionDeclaration{
+				Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 9}, Literal: "func1"},
+				Parameters: []VariableAssignment{
+					{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 25}, Name: "arg1"}},
+					{Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 32}, Name: "arg2"}, Value: NewIntegerValueFromString("0")},
+				},
+				Statements: []Statement{
+					WhileInCursor{
+						WithDeclaration: true,
+						Variables: []Variable{
+							{BaseExpr: &BaseExpr{line: 2, char: 11}, Name: "var1"},
+						},
+						Cursor: Identifier{BaseExpr: &BaseExpr{line: 2, char: 20}, Literal: "cur"},
+						Statements: []Statement{
+							Print{Value: Variable{BaseExpr: &BaseExpr{line: 2, char: 33}, Name: "var1"}},
+						},
+					},
+					WhileInCursor{
+						WithDeclaration: true,
+						Variables: []Variable{
+							{BaseExpr: &BaseExpr{line: 3, char: 11}, Name: "var1"},
+							{BaseExpr: &BaseExpr{line: 3, char: 18}, Name: "var2"},
+						},
+						Cursor: Identifier{BaseExpr: &BaseExpr{line: 3, char: 27}, Literal: "cur"},
+						Statements: []Statement{
+							Print{Value: Variable{BaseExpr: &BaseExpr{line: 3, char: 40}, Name: "var1"}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "declare aggfunc aggregate (cur) as begin end",
 		Output: []Statement{
 			AggregateDeclaration{

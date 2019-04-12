@@ -489,6 +489,14 @@ function_while_statement
     {
         $$ = WhileInCursor{Variables: $2, Cursor: $4, Statements: $6}
     }
+    | WHILE while_variable_declaration variable IN identifier DO function_loop_program END WHILE
+    {
+        $$ = WhileInCursor{WithDeclaration: true, Variables: []Variable{$3}, Cursor: $5, Statements: $7}
+    }
+    | WHILE while_variable_declaration variables IN identifier DO function_loop_program END WHILE
+    {
+        $$ = WhileInCursor{WithDeclaration: true, Variables: $3, Cursor: $5, Statements: $7}
+    }
 
 function_exit_statement
     : RETURN
