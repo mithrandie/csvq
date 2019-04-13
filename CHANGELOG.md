@@ -1,5 +1,12 @@
 # Change Log
 
+## Version 1.9.13
+
+Released on April 13, 2019
+
+- Support REPLACE (Insert or Update) query.
+- Allow variable declaration in WHILE IN statement in user defined functions.
+
 ## Version 1.9.12
 
 Released on April 11, 2019

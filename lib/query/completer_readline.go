@@ -29,6 +29,7 @@ var statementPrefix = []string{
 	"SELECT",
 	"INSERT",
 	"UPDATE",
+	"REPLACE",
 	"DELETE",
 	"CREATE",
 	"ALTER",
@@ -332,6 +333,8 @@ func (c *Completer) Statements(line string, origLine string, index int) readline
 		return c.InsertArgs(line, origLine, index)
 	case parser.UPDATE:
 		return c.UpdateArgs(line, origLine, index)
+	case parser.REPLACE:
+		return c.ReplaceArgs(line, origLine, index)
 	case parser.DELETE:
 		return c.DeleteArgs(line, origLine, index)
 	case parser.CREATE:
@@ -631,7 +634,7 @@ func (c *Completer) WithArgs(line string, origLine string, index int) readline.C
 				blockLevel++
 			case '(':
 				blockLevel--
-			case parser.SELECT, parser.INSERT, parser.UPDATE, parser.DELETE:
+			case parser.SELECT, parser.INSERT, parser.UPDATE, parser.REPLACE, parser.DELETE:
 				if blockLevel == 0 {
 					return i
 				}
@@ -651,6 +654,8 @@ func (c *Completer) WithArgs(line string, origLine string, index int) readline.C
 			return c.InsertArgs(line, origLine, index)
 		case parser.UPDATE:
 			return c.UpdateArgs(line, origLine, index)
+		case parser.REPLACE:
+			return c.ReplaceArgs(line, origLine, index)
 		case parser.DELETE:
 			return c.DeleteArgs(line, origLine, index)
 		}
@@ -685,6 +690,7 @@ func (c *Completer) WithArgs(line string, origLine string, index int) readline.C
 								"SELECT",
 								"INSERT",
 								"UPDATE",
+								"REPLACE",
 								"DELETE",
 							)
 						} else {
@@ -1236,6 +1242,46 @@ func (c *Completer) UpdateArgs(line string, origLine string, index int) readline
 	)
 }
 
+func (c *Completer) ReplaceArgs(line string, origLine string, index int) readline.CandidateList {
+	usingExists := false
+
+	return c.completeArgs(
+		line,
+		origLine,
+		index,
+		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
+			switch c.tokens[i].Token {
+			case parser.SELECT:
+				return nil, c.SelectArgs(line, origLine, index), true
+			case parser.VALUES:
+				customList = c.SearchValues(line, origLine, index)
+				if 0 < len(line) {
+					customList = append(customList, c.candidate("JSON_ROW()", false))
+				}
+				customList.Sort()
+				return nil, customList, true
+			case parser.USING:
+				usingExists = true
+			case parser.INTO:
+				if i == c.lastIdx {
+					customList = c.allTableCandidatesWithSpaceForUpdate(line, origLine, index)
+				} else if c.tokens[c.lastIdx-1].Token == parser.INTO || (!usingExists && c.tokens[c.lastIdx].Token == ')') {
+					customList = append(customList, c.candidate("USING ()", true))
+				} else if usingExists && c.tokens[c.lastIdx].Token == ')' {
+					keywords = append(keywords, "VALUES", "SELECT")
+				}
+				return keywords, customList, true
+			case parser.REPLACE:
+				if i == c.lastIdx {
+					keywords = append(keywords, "INTO")
+				}
+				return keywords, nil, true
+			}
+			return nil, nil, false
+		},
+	)
+}
+
 func (c *Completer) DeleteArgs(line string, origLine string, index int) readline.CandidateList {
 	return c.completeArgs(
 		line,
@@ -1459,7 +1505,14 @@ func (c *Completer) DeclareArgs(line string, origLine string, index int) readlin
 				} else if i == c.lastIdx-1 && c.tokens[c.lastIdx].Token == parser.FOR {
 					return []string{"SELECT"}, c.candidateList(c.statementList, false), true
 				}
-			case parser.AGGREGATE, parser.FUNCTION, parser.VIEW, parser.VAR:
+			case parser.VIEW:
+				switch c.tokens[c.lastIdx].Token {
+				case parser.AS:
+					return []string{"SELECT"}, nil, true
+				case parser.VIEW, ')':
+					return []string{"AS"}, nil, true
+				}
+			case parser.AGGREGATE, parser.FUNCTION, parser.VAR:
 			case parser.DECLARE:
 				if i == c.lastIdx-1 && c.tokens[c.lastIdx].Token != parser.VARIABLE {
 					obj := []string{

@@ -151,6 +151,7 @@ import (
 %type<expression>  update_query
 %type<updateset>   update_set
 %type<updatesets>  update_set_list
+%type<expression>  replace_query
 %type<expression>  delete_query
 %type<elseif>      elseif
 %type<elseexpr>    else
@@ -189,7 +190,7 @@ import (
 
 %token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME
 %token<token> VARIABLE FLAG ENVIRONMENT_VARIABLE RUNTIME_INFORMATION EXTERNAL_COMMAND PLACEHOLDER
-%token<token> SELECT FROM UPDATE SET UNSET DELETE WHERE INSERT INTO VALUES AS DUAL STDIN
+%token<token> SELECT FROM UPDATE SET UNSET DELETE WHERE INSERT INTO VALUES REPLACE AS DUAL STDIN
 %token<token> RECURSIVE
 %token<token> CREATE ADD DROP ALTER TABLE FIRST LAST AFTER BEFORE DEFAULT RENAME TO VIEW
 %token<token> ORDER GROUP HAVING BY ASC DESC LIMIT OFFSET PERCENT
@@ -290,6 +291,10 @@ common_statement
         $$ = $1
     }
     | update_query
+    {
+        $$ = $1
+    }
+    | replace_query
     {
         $$ = $1
     }
@@ -488,6 +493,14 @@ function_while_statement
     | WHILE variables IN identifier DO function_loop_program END WHILE
     {
         $$ = WhileInCursor{Variables: $2, Cursor: $4, Statements: $6}
+    }
+    | WHILE while_variable_declaration variable IN identifier DO function_loop_program END WHILE
+    {
+        $$ = WhileInCursor{WithDeclaration: true, Variables: []Variable{$3}, Cursor: $5, Statements: $7}
+    }
+    | WHILE while_variable_declaration variables IN identifier DO function_loop_program END WHILE
+    {
+        $$ = WhileInCursor{WithDeclaration: true, Variables: $3, Cursor: $5, Statements: $7}
     }
 
 function_exit_statement
@@ -1623,6 +1636,10 @@ function
     {
         $$ = Function{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3}
     }
+    | REPLACE '(' arguments ')'
+    {
+        $$ = Function{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3}
+    }
 
 
 aggregate_function
@@ -2105,6 +2122,40 @@ update_set_list
     | update_set ',' update_set_list
     {
         $$ = append([]UpdateSet{$1}, $3...)
+    }
+
+replace_query
+    : with_clause REPLACE INTO updatable_table_identifier USING '(' field_references ')' VALUES row_values
+    {
+        $$ = ReplaceQuery{WithClause: $1, Table: Table{Object: $4}, Keys: $7, ValuesList: $10}
+    }
+    | with_clause REPLACE INTO updatable_table_identifier '(' field_references ')' USING '(' field_references ')' VALUES row_values
+    {
+        $$ = ReplaceQuery{WithClause: $1, Table: Table{Object: $4}, Fields: $6, Keys: $10, ValuesList: $13}
+    }
+    | with_clause REPLACE INTO updatable_table_identifier USING '(' field_references ')' select_query
+    {
+        $$ = ReplaceQuery{WithClause: $1, Table: Table{Object: $4}, Keys: $7, Query: $9.(SelectQuery)}
+    }
+    | with_clause REPLACE INTO updatable_table_identifier '(' field_references ')' USING '(' field_references ')' select_query
+    {
+        $$ = ReplaceQuery{WithClause: $1, Table: Table{Object: $4}, Fields: $6, Keys: $10, Query: $12.(SelectQuery)}
+    }
+    | REPLACE INTO updatable_table_identifier USING '(' field_references ')' VALUES row_values
+    {
+        $$ = ReplaceQuery{Table: Table{Object: $3}, Keys: $6, ValuesList: $9}
+    }
+    | REPLACE INTO updatable_table_identifier '(' field_references ')' USING '(' field_references ')' VALUES row_values
+    {
+        $$ = ReplaceQuery{Table: Table{Object: $3}, Fields: $5, Keys: $9, ValuesList: $12}
+    }
+    | REPLACE INTO updatable_table_identifier USING '(' field_references ')' select_query
+    {
+        $$ = ReplaceQuery{Table: Table{Object: $3}, Keys: $6, Query: $8.(SelectQuery)}
+    }
+    | REPLACE INTO updatable_table_identifier '(' field_references ')' USING '(' field_references ')' select_query
+    {
+        $$ = ReplaceQuery{Table: Table{Object: $3}, Fields: $5, Keys: $9, Query: $11.(SelectQuery)}
     }
 
 delete_query

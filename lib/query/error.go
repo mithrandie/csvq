@@ -89,6 +89,7 @@ const (
 	ErrMsgInsertSelectFieldLength              = "select query should return exactly %s"
 	ErrMsgUpdateFieldNotExist                  = "field %s does not exist in the tables to update"
 	ErrMsgUpdateValueAmbiguous                 = "value %s to set in the field %s is ambiguous"
+	ErrMsgReplaceKeyNotSet                     = "replace Key %s is not set"
 	ErrMsgDeleteTableNotSpecified              = "tables to delete records are not specified"
 	ErrMsgShowInvalidObjectType                = "object type %s is invalid"
 	ErrMsgReplaceValueLength                   = "%s"
@@ -1061,6 +1062,16 @@ type UpdateValueAmbiguousError struct {
 func NewUpdateValueAmbiguousError(field parser.QueryExpression, value parser.QueryExpression) error {
 	return &UpdateValueAmbiguousError{
 		NewBaseError(field, fmt.Sprintf(ErrMsgUpdateValueAmbiguous, value, field), ReturnCodeApplicationError, ErrorUpdateValueAmbiguous),
+	}
+}
+
+type ReplaceKeyNotSetError struct {
+	*BaseError
+}
+
+func NewReplaceKeyNotSetError(key parser.QueryExpression) error {
+	return &ReplaceKeyNotSetError{
+		NewBaseError(key, fmt.Sprintf(ErrMsgReplaceKeyNotSet, key), ReturnCodeApplicationError, ErrorReplaceKeyNotSet),
 	}
 }
 

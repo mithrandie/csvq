@@ -1205,6 +1205,16 @@ type UpdateSet struct {
 	Value QueryExpression
 }
 
+type ReplaceQuery struct {
+	*BaseExpr
+	WithClause QueryExpression
+	Table      Table
+	Fields     []QueryExpression
+	Keys       []QueryExpression
+	ValuesList []QueryExpression
+	Query      QueryExpression
+}
+
 type DeleteQuery struct {
 	*BaseExpr
 	WithClause  QueryExpression

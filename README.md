@@ -18,6 +18,7 @@ In the multiple operations, you can use variables, cursors, temporary tables, an
   * Select Query
   * Insert Query
   * Update Query
+  * Replace Query
   * Delete Query
   * Create Table Query
   * Alter Table Query

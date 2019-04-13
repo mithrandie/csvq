@@ -6,11 +6,11 @@
             http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
     <url>
         <loc>https://mithrandie.github.io/csvq/</loc>
-        <lastmod>2019-04-11T18:04:32+00:00</lastmod>
+        <lastmod>2019-04-13T15:09:57+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference.html</loc>
-        <lastmod>2018-10-13T15:53:22+00:00</lastmod>
+        <lastmod>2019-04-13T14:43:42+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/install.html</loc>
@@ -39,6 +39,10 @@
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/update-query.html</loc>
         <lastmod>2019-03-03T13:34:11+00:00</lastmod>
+    </url>
+    <url>
+        <loc>https://mithrandie.github.io/csvq/reference/replace-query.html</loc>
+        <lastmod>2019-04-13T14:43:42+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/delete-query.html</loc>

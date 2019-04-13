@@ -5819,7 +5819,7 @@ var viewInsertFromQueryTests = []struct {
 		Error: "select query should return exactly 2 fields",
 	},
 	{
-		Name: "Insert Values Query Exuecution Error",
+		Name: "ReplaceFromQuery Exuecution Error",
 		Fields: []parser.QueryExpression{
 			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 		},
@@ -5855,6 +5855,306 @@ func TestView_InsertFromQuery(t *testing.T) {
 
 	for _, v := range viewInsertFromQueryTests {
 		cnt, err := view.InsertFromQuery(context.Background(), v.Fields, v.Query)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(view, v.Result) {
+			t.Errorf("%s: result = %v, want %v", v.Name, view, v.Result)
+		}
+		if cnt != v.UpdateCount {
+			t.Errorf("%s: update count = %d, want %d", v.Name, cnt, v.UpdateCount)
+		}
+	}
+}
+
+var viewReplaceValuesTests = []struct {
+	Name        string
+	Fields      []parser.QueryExpression
+	Keys        []parser.QueryExpression
+	ValuesList  []parser.QueryExpression
+	Result      *View
+	UpdateCount int
+	Error       string
+}{
+	{
+		Name: "ReplaceValues",
+		Fields: []parser.QueryExpression{
+			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+		},
+		Keys: []parser.QueryExpression{
+			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+		},
+		ValuesList: []parser.QueryExpression{
+			parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewIntegerValueFromString("1"),
+						parser.NewStringValue("str3"),
+					},
+				},
+			},
+			parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewIntegerValueFromString("4"),
+						parser.NewStringValue("str4"),
+					},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str3"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewInteger(4),
+					value.NewString("str4"),
+				}),
+			},
+			Filter: NewFilter(TestTx),
+			Tx:     TestTx,
+		},
+		UpdateCount: 2,
+	},
+	{
+		Name: "ReplaceValues Field Length Does Not Match Error",
+		Fields: []parser.QueryExpression{
+			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+		},
+		Keys: []parser.QueryExpression{
+			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+		},
+		ValuesList: []parser.QueryExpression{
+			parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewIntegerValueFromString("3"),
+					},
+				},
+			},
+		},
+		Error: "row value should contain exactly 2 values",
+	},
+	{
+		Name: "ReplaceValues Value Evaluation Error",
+		Fields: []parser.QueryExpression{
+			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+		},
+		Keys: []parser.QueryExpression{
+			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+		},
+		ValuesList: []parser.QueryExpression{
+			parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+					},
+				},
+			},
+		},
+		Error: "field notexist does not exist",
+	},
+	{
+		Name: "ReplaceValues Field Does Not Exist Error",
+		Fields: []parser.QueryExpression{
+			parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+		},
+		Keys: []parser.QueryExpression{
+			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+		},
+		ValuesList: []parser.QueryExpression{
+			parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewIntegerValueFromString("3"),
+					},
+				},
+			},
+		},
+		Error: "field notexist does not exist",
+	},
+	{
+		Name: "ReplaceValues Key Does Not Exist Error",
+		Fields: []parser.QueryExpression{
+			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+		},
+		Keys: []parser.QueryExpression{
+			parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+		},
+		ValuesList: []parser.QueryExpression{
+			parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewIntegerValueFromString("3"),
+					},
+				},
+			},
+		},
+		Error: "field notexist does not exist",
+	},
+	{
+		Name: "ReplaceValues Key Not Set Error",
+		Fields: []parser.QueryExpression{
+			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+		},
+		Keys: []parser.QueryExpression{
+			parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+		},
+		ValuesList: []parser.QueryExpression{
+			parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewIntegerValueFromString("3"),
+					},
+				},
+			},
+		},
+		Error: "replace Key column2 is not set",
+	},
+}
+
+func TestView_ReplaceValues(t *testing.T) {
+	view := &View{
+		Header: NewHeader("table1", []string{"column1", "column2"}),
+		RecordSet: []Record{
+			NewRecord([]value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
+			}),
+			NewRecord([]value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
+			}),
+		},
+		Filter: NewFilter(TestTx),
+		Tx:     TestTx,
+	}
+
+	for _, v := range viewReplaceValuesTests {
+		cnt, err := view.ReplaceValues(context.Background(), v.Fields, v.ValuesList, v.Keys)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+		if !reflect.DeepEqual(view, v.Result) {
+			t.Errorf("%s: result = %v, want %v", v.Name, view, v.Result)
+		}
+		if cnt != v.UpdateCount {
+			t.Errorf("%s: update count = %d, want %d", v.Name, cnt, v.UpdateCount)
+		}
+
+	}
+}
+
+var viewReplaceFromQueryTests = []struct {
+	Name        string
+	Fields      []parser.QueryExpression
+	Keys        []parser.QueryExpression
+	Query       parser.SelectQuery
+	Result      *View
+	UpdateCount int
+	Error       string
+}{
+	{
+		Name: "ReplaceFromQuery",
+		Fields: []parser.QueryExpression{
+			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+		},
+		Keys: []parser.QueryExpression{
+			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+		},
+		Query: parser.SelectQuery{
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.QueryExpression{
+						parser.Field{Object: parser.NewIntegerValueFromString("1")},
+						parser.Field{Object: parser.NewStringValue("str3")},
+					},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str3"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+				}),
+			},
+			Filter: NewFilter(TestTx),
+			Tx:     TestTx,
+		},
+		UpdateCount: 1,
+	},
+	{
+		Name: "ReplaceFromQuery Field Lenght Does Not Match Error",
+		Fields: []parser.QueryExpression{
+			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+		},
+		Query: parser.SelectQuery{
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.QueryExpression{
+						parser.Field{Object: parser.NewIntegerValueFromString("3")},
+					},
+				},
+			},
+		},
+		Error: "select query should return exactly 2 fields",
+	},
+}
+
+func TestView_ReplaceFromQuery(t *testing.T) {
+	view := &View{
+		Header: NewHeader("table1", []string{"column1", "column2"}),
+		RecordSet: []Record{
+			NewRecord([]value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
+			}),
+			NewRecord([]value.Primary{
+				value.NewString("2"),
+				value.NewString("str2"),
+			}),
+		},
+		Filter: NewFilter(TestTx),
+		Tx:     TestTx,
+	}
+
+	for _, v := range viewReplaceFromQueryTests {
+		cnt, err := view.ReplaceFromQuery(context.Background(), v.Fields, v.Query, v.Keys)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

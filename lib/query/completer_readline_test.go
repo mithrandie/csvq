@@ -248,6 +248,7 @@ var completerStatementsTests = []completerTest{
 			{Name: []rune("PWD")},
 			{Name: []rune("RELOAD"), AppendSpace: true},
 			{Name: []rune("REMOVE"), AppendSpace: true},
+			{Name: []rune("REPLACE"), AppendSpace: true},
 			{Name: []rune("ROLLBACK")},
 			{Name: []rune("SELECT"), AppendSpace: true},
 			{Name: []rune("SET"), AppendSpace: true},
@@ -305,6 +306,15 @@ var completerStatementsTests = []completerTest{
 		Index:    11,
 		Expect: readline.CandidateList{
 			{Name: []rune("SET"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "Statements REPLACE",
+		Line:     "",
+		OrigLine: "replace ",
+		Index:    8,
+		Expect: readline.CandidateList{
+			{Name: []rune("INTO"), AppendSpace: true},
 		},
 	},
 	{
@@ -1036,6 +1046,7 @@ var completerWithArgsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("DELETE"), AppendSpace: true},
 			{Name: []rune("INSERT"), AppendSpace: true},
+			{Name: []rune("REPLACE"), AppendSpace: true},
 			{Name: []rune("SELECT"), AppendSpace: true},
 			{Name: []rune("UPDATE"), AppendSpace: true},
 		},
@@ -1076,6 +1087,15 @@ var completerWithArgsTests = []completerTest{
 		Index:    41,
 		Expect: readline.CandidateList{
 			{Name: []rune("SET"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "WithArgs Replace Query",
+		Line:     "",
+		OrigLine: "with tbl1 as (select 1 as 'a') replace ",
+		Index:    38,
+		Expect: readline.CandidateList{
+			{Name: []rune("INTO"), AppendSpace: true},
 		},
 	},
 	{
@@ -1904,6 +1924,114 @@ func TestCompleter_UpdateArgs(t *testing.T) {
 	testCompleter(t, completer.UpdateArgs, completerUpdateArgsTests)
 }
 
+var completerReplaceArgsTests = []completerTest{
+	{
+		Name:     "ReplaceArgs",
+		Line:     "",
+		OrigLine: "replace ",
+		Index:    8,
+		Expect: readline.CandidateList{
+			{Name: []rune("INTO"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "ReplaceArgs After INTO",
+		Line:     "",
+		OrigLine: "replace into ",
+		Index:    13,
+		Expect: readline.CandidateList{
+			{Name: []rune("CSV()"), AppendSpace: true},
+			{Name: []rune("FIXED()"), AppendSpace: true},
+			{Name: []rune("JSON()"), AppendSpace: true},
+			{Name: []rune("LTSV()"), AppendSpace: true},
+			{Name: []rune(filepath.Join(CompletionTestDir, "sub", "table2.csv")), FormatAsIdentifier: true, AppendSpace: true},
+			{Name: []rune("newtable.csv"), FormatAsIdentifier: true, AppendSpace: true},
+			{Name: []rune("tempview"), FormatAsIdentifier: true, AppendSpace: true},
+			{Name: []rune("."), FormatAsIdentifier: true, AppendSpace: true},
+			{Name: []rune(".."), FormatAsIdentifier: true, AppendSpace: true},
+			{Name: []rune("sub/"), FormatAsIdentifier: true, AppendSpace: true},
+			{Name: []rune("table1.csv"), FormatAsIdentifier: true, AppendSpace: true},
+		},
+	},
+	{
+		Name:     "ReplaceArgs After Table Name",
+		Line:     "",
+		OrigLine: "replace into tbl ",
+		Index:    17,
+		Expect: readline.CandidateList{
+			{Name: []rune("USING ()"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "ReplaceArgs In Column Enumulation",
+		Line:     "",
+		OrigLine: "replace into tbl (col, ",
+		Index:    23,
+		Expect:   readline.CandidateList{},
+	},
+	{
+		Name:     "ReplaceArgs After Column Enumulation",
+		Line:     "",
+		OrigLine: "replace into tbl (col1, col2) ",
+		Index:    30,
+		Expect: readline.CandidateList{
+			{Name: []rune("USING ()"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "ReplaceArgs After USING",
+		Line:     "",
+		OrigLine: "replace into tbl (col1, col2) using (",
+		Index:    37,
+		Expect:   readline.CandidateList{},
+	},
+	{
+		Name:     "ReplaceArgs After Key Enumulation",
+		Line:     "",
+		OrigLine: "replace into tbl (col1, col2) using (col1) ",
+		Index:    43,
+		Expect: readline.CandidateList{
+			{Name: []rune("SELECT"), AppendSpace: true},
+			{Name: []rune("VALUES"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "ReplaceArgs After VALUES",
+		Line:     "@",
+		OrigLine: "insert into tbl (col1, col2) using (col1) values (@",
+		Index:    51,
+		Expect: readline.CandidateList{
+			{Name: []rune("@var1")},
+			{Name: []rune("@var2")},
+			{Name: []rune("JSON_ROW()")},
+		},
+	},
+	{
+		Name:     "ReplaceArgs After SELECT",
+		Line:     "fro",
+		OrigLine: "insert into tbl using (col1) select 1 fro",
+		Index:    41,
+		Expect: readline.CandidateList{
+			{Name: []rune("AS"), AppendSpace: true},
+			{Name: []rune("EXCEPT"), AppendSpace: true},
+			{Name: []rune("FOR UPDATE")},
+			{Name: []rune("FROM"), AppendSpace: true},
+			{Name: []rune("GROUP BY"), AppendSpace: true},
+			{Name: []rune("HAVING"), AppendSpace: true},
+			{Name: []rune("INTERSECT"), AppendSpace: true},
+			{Name: []rune("LIMIT"), AppendSpace: true},
+			{Name: []rune("OFFSET"), AppendSpace: true},
+			{Name: []rune("ORDER BY"), AppendSpace: true},
+			{Name: []rune("UNION"), AppendSpace: true},
+			{Name: []rune("WHERE"), AppendSpace: true},
+		},
+	},
+}
+
+func TestCompleter_ReplaceArgs(t *testing.T) {
+	testCompleter(t, completer.ReplaceArgs, completerReplaceArgsTests)
+}
+
 var completerDeleteArgsTests = []completerTest{
 	{
 		Name:     "DeleteArgs",
@@ -2394,6 +2522,24 @@ var completerDeclareArgsTests = []completerTest{
 			{Name: []rune("CURSOR"), AppendSpace: true},
 			{Name: []rune("FUNCTION"), AppendSpace: true},
 			{Name: []rune("VIEW"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "DeclareArgs After VIEW",
+		Line:     "",
+		OrigLine: "declare v view ",
+		Index:    15,
+		Expect: readline.CandidateList{
+			{Name: []rune("AS"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "DeclareArgs After AS in View Declaration",
+		Line:     "",
+		OrigLine: "declare v view as ",
+		Index:    18,
+		Expect: readline.CandidateList{
+			{Name: []rune("SELECT"), AppendSpace: true},
 		},
 	},
 	{

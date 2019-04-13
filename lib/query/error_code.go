@@ -99,6 +99,7 @@ const (
 	ErrorDuplicateStatementName               = 13801
 	ErrorStatementNotExist                    = 13802
 	ErrorStatementReplaceValueNotSpecified    = 13803
+	ErrorReplaceKeyNotSet                     = 13901
 
 	//Incorrect Command Usage
 	ErrorIncorrectCommandUsage = 90020

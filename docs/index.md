@@ -13,10 +13,10 @@ In the multiple operations, you can use variables, cursors, temporary tables, an
 
 ## Latest Release
 
-Version 1.9.12
-: Released on April 11, 2019
+Version 1.9.13
+: Released on April 13, 2019
 
-  <a class="waves-effect waves-light btn" href="https://github.com/mithrandie/csvq/releases/tag/v1.9.12">
+  <a class="waves-effect waves-light btn" href="https://github.com/mithrandie/csvq/releases/tag/v1.9.13">
     <i class="material-icons left">file_download</i>download
   </a>
 
@@ -26,6 +26,7 @@ Version 1.9.12
   * [Select Query]({{ '/reference/select-query.html' | relative_url }})
   * [Insert Query]({{ '/reference/insert-query.html' | relative_url }})
   * [Update Query]({{ '/reference/update-query.html' | relative_url }})
+  * [Replace Query]({{ '/reference/replace-query.html' | relative_url }})
   * [Delete Query]({{ '/reference/delete-query.html' | relative_url }})
   * [Create Table Query]({{ '/reference/create-table-query.html' | relative_url }})
   * [Alter Table Query]({{ '/reference/alter-table-query.html' | relative_url }})

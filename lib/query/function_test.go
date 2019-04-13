@@ -1835,7 +1835,7 @@ func TestListElem(t *testing.T) {
 	testFunction(t, ListElem, listElemTests)
 }
 
-var replaceTests = []functionTest{
+var replaceFnTests = []functionTest{
 	{
 		Name: "Replace",
 		Function: parser.Function{
@@ -1894,8 +1894,8 @@ var replaceTests = []functionTest{
 	},
 }
 
-func TestReplace(t *testing.T) {
-	testFunction(t, Replace, replaceTests)
+func TestReplaceFn(t *testing.T) {
+	testFunction(t, ReplaceFn, replaceFnTests)
 }
 
 var formatTests = []functionTest{
