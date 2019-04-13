@@ -290,6 +290,24 @@ var CsvqSyntax = []Expression{
 		},
 	},
 	{
+		Label: "REPLACE Statement",
+		Grammar: []Definition{
+			{
+				Name: "replace_statement",
+				Group: []Grammar{
+					{Option{Link("with_clause")}, Link("replace_query")},
+				},
+			},
+			{
+				Name: "replace_query",
+				Group: []Grammar{
+					{Keyword("REPLACE"), Keyword("INTO"), Identifier("table_name"), Option{Parentheses{ContinuousOption{Identifier("column_name")}}}, Keyword("USING"), Parentheses{ContinuousOption{Identifier("key_column_name")}}, Keyword("VALUES"), ContinuousOption{Link("row_value")}},
+					{Keyword("REPLACE"), Keyword("INTO"), Identifier("table_name"), Option{Parentheses{ContinuousOption{Identifier("column_name")}}}, Keyword("USING"), Parentheses{ContinuousOption{Identifier("key_column_name")}}, Link("select_query")},
+				},
+			},
+		},
+	},
+	{
 		Label: "DELETE Statement",
 		Grammar: []Definition{
 			{
