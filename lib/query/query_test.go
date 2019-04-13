@@ -2028,6 +2028,429 @@ func TestUpdate(t *testing.T) {
 	}
 }
 
+var replaceTests = []struct {
+	Name         string
+	Query        parser.ReplaceQuery
+	ResultFile   *FileInfo
+	UpdateCount  int
+	ViewCache    ViewMap
+	TempViewList TemporaryViewScopes
+	Error        string
+}{
+	{
+		Name: "Replace Query",
+		Query: parser.ReplaceQuery{
+			WithClause: parser.WithClause{
+				With: "with",
+				InlineTables: []parser.QueryExpression{
+					parser.InlineTable{
+						Name: parser.Identifier{Literal: "it"},
+						Fields: []parser.QueryExpression{
+							parser.Identifier{Literal: "c1"},
+							parser.Identifier{Literal: "c2"},
+						},
+						As: "as",
+						Query: parser.SelectQuery{
+							SelectEntity: parser.SelectEntity{
+								SelectClause: parser.SelectClause{
+									Select: "select",
+									Fields: []parser.QueryExpression{
+										parser.Field{Object: parser.NewIntegerValueFromString("2")},
+										parser.Field{Object: parser.NewStringValue("str3")},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			Table: parser.Table{Object: parser.Identifier{Literal: "table1"}},
+			Fields: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+			},
+			Keys: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			},
+			ValuesList: []parser.QueryExpression{
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.QueryExpression{
+							parser.NewIntegerValueFromString("4"),
+							parser.NewStringValue("str4"),
+						},
+					},
+				},
+				parser.RowValue{
+					Value: parser.Subquery{
+						Query: parser.SelectQuery{
+							SelectEntity: parser.SelectEntity{
+								SelectClause: parser.SelectClause{
+									Select: "select",
+									Fields: []parser.QueryExpression{
+										parser.Field{Object: parser.FieldReference{View: parser.Identifier{Literal: "it"}, Column: parser.Identifier{Literal: "c1"}}},
+										parser.Field{Object: parser.FieldReference{View: parser.Identifier{Literal: "it"}, Column: parser.Identifier{Literal: "c2"}}},
+									},
+								},
+								FromClause: parser.FromClause{
+									Tables: []parser.QueryExpression{
+										parser.Table{Object: parser.Identifier{Literal: "it"}},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		ResultFile: &FileInfo{
+			Path:      GetTestFilePath("table1.csv"),
+			Delimiter: ',',
+			NoHeader:  false,
+			Encoding:  text.UTF8,
+			LineBreak: text.LF,
+			ForUpdate: true,
+		},
+		UpdateCount: 2,
+		ViewCache: GenerateViewMap([]*View{
+			{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+					ForUpdate: true,
+				},
+				Header: NewHeader("table1", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str3"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("3"),
+						value.NewString("str3"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewInteger(4),
+						value.NewString("str4"),
+					}),
+				},
+				Tx: TestTx,
+			},
+		}),
+	},
+	{
+		Name: "Replace Query For Temporary View",
+		Query: parser.ReplaceQuery{
+			Table: parser.Table{Object: parser.Identifier{Literal: "tmpview"}, Alias: parser.Identifier{Literal: "t"}},
+			Fields: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			},
+			Keys: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			},
+			ValuesList: []parser.QueryExpression{
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.QueryExpression{
+							parser.NewIntegerValueFromString("4"),
+						},
+					},
+				},
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.QueryExpression{
+							parser.NewIntegerValueFromString("2"),
+						},
+					},
+				},
+			},
+		},
+		ResultFile: &FileInfo{
+			Path:      "tmpview",
+			Delimiter: ',',
+			ViewType:  ViewTypeTemporaryTable,
+		},
+		UpdateCount: 2,
+		TempViewList: TemporaryViewScopes{
+			GenerateViewMap([]*View{
+				{
+					Header: NewHeader("tmpview", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
+						}),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
+							value.NewString("str2"),
+						}),
+						NewRecord([]value.Primary{
+							value.NewInteger(4),
+							value.NewNull(),
+						}),
+					},
+					FileInfo: &FileInfo{
+						Path:      "tmpview",
+						Delimiter: ',',
+						ViewType:  ViewTypeTemporaryTable,
+					},
+					Tx: TestTx,
+				},
+			}),
+		},
+	},
+	{
+		Name: "Replace Query All Fields",
+		Query: parser.ReplaceQuery{
+			Table: parser.Table{Object: parser.Identifier{Literal: "table1"}},
+			Keys: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			},
+			ValuesList: []parser.QueryExpression{
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.QueryExpression{
+							parser.NewIntegerValueFromString("4"),
+							parser.NewStringValue("str4"),
+						},
+					},
+				},
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.QueryExpression{
+							parser.NewIntegerValueFromString("5"),
+							parser.NewStringValue("str5"),
+						},
+					},
+				},
+			},
+		},
+		ResultFile: &FileInfo{
+			Path:      GetTestFilePath("table1.csv"),
+			Delimiter: ',',
+			NoHeader:  false,
+			Encoding:  text.UTF8,
+			LineBreak: text.LF,
+			ForUpdate: true,
+		},
+		UpdateCount: 2,
+	},
+	{
+		Name: "Replace Query File Does Not Exist Error",
+		Query: parser.ReplaceQuery{
+			Table: parser.Table{Object: parser.Identifier{Literal: "notexist"}},
+			Fields: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			},
+			Keys: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			},
+			ValuesList: []parser.QueryExpression{
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.QueryExpression{
+							parser.NewIntegerValueFromString("4"),
+						},
+					},
+				},
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.QueryExpression{
+							parser.NewIntegerValueFromString("5"),
+						},
+					},
+				},
+			},
+		},
+		Error: "file notexist does not exist",
+	},
+	{
+		Name: "Replace Query Field Does Not Exist Error",
+		Query: parser.ReplaceQuery{
+			Table: parser.Table{Object: parser.Identifier{Literal: "table1"}},
+			Fields: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
+			},
+			Keys: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			},
+			ValuesList: []parser.QueryExpression{
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.QueryExpression{
+							parser.NewIntegerValueFromString("4"),
+						},
+					},
+				},
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.QueryExpression{
+							parser.NewIntegerValueFromString("5"),
+						},
+					},
+				},
+			},
+		},
+		Error: "field notexist does not exist",
+	},
+	{
+		Name: "Replace Select Query",
+		Query: parser.ReplaceQuery{
+			Table: parser.Table{Object: parser.Identifier{Literal: "table1"}},
+			Fields: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+			},
+			Keys: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			},
+			Query: parser.SelectQuery{
+				SelectEntity: parser.SelectEntity{
+					SelectClause: parser.SelectClause{
+						Fields: []parser.QueryExpression{
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column3"}}},
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}}},
+						},
+					},
+					FromClause: parser.FromClause{
+						Tables: []parser.QueryExpression{
+							parser.Table{Object: parser.Identifier{Literal: "table2"}},
+						},
+					},
+				},
+			},
+		},
+		ResultFile: &FileInfo{
+			Path:      GetTestFilePath("table1.csv"),
+			Delimiter: ',',
+			NoHeader:  false,
+			Encoding:  text.UTF8,
+			LineBreak: text.LF,
+			ForUpdate: true,
+		},
+		UpdateCount: 3,
+	},
+	{
+		Name: "Replace Select Query Field Does Not Exist Error",
+		Query: parser.ReplaceQuery{
+			Table: parser.Table{Object: parser.Identifier{Literal: "table1"}},
+			Fields: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			},
+			Keys: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			},
+			Query: parser.SelectQuery{
+				SelectEntity: parser.SelectEntity{
+					SelectClause: parser.SelectClause{
+						Fields: []parser.QueryExpression{
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column3"}}},
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}}},
+						},
+					},
+					FromClause: parser.FromClause{
+						Tables: []parser.QueryExpression{
+							parser.Table{Object: parser.Identifier{Literal: "table2"}},
+						},
+					},
+				},
+			},
+		},
+		Error: "select query should return exactly 1 field",
+	},
+}
+
+func TestReplace(t *testing.T) {
+	defer func() {
+		_ = TestTx.ReleaseResources()
+		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		initFlag(TestTx.Flags)
+	}()
+
+	TestTx.Flags.Repository = TestDir
+	TestTx.Flags.Quiet = false
+
+	filter := NewFilter(TestTx)
+	filter.tempViews = TemporaryViewScopes{
+		GenerateViewMap([]*View{
+			{
+				Header: NewHeader("tmpview", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewString("1"),
+						value.NewString("str1"),
+					}),
+					NewRecord([]value.Primary{
+						value.NewString("2"),
+						value.NewString("str2"),
+					}),
+				},
+				FileInfo: &FileInfo{
+					Path:      "tmpview",
+					Delimiter: ',',
+					ViewType:  ViewTypeTemporaryTable,
+				},
+				Tx: TestTx,
+			},
+		}),
+	}
+
+	for _, v := range replaceTests {
+		_ = TestTx.ReleaseResources()
+		result, cnt, err := Replace(context.Background(), filter, v.Query)
+		if err != nil {
+			if len(v.Error) < 1 {
+				t.Errorf("%s: unexpected error %q", v.Name, err)
+			} else if err.Error() != v.Error {
+				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
+			}
+			continue
+		}
+		if 0 < len(v.Error) {
+			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
+			continue
+		}
+
+		TestTx.cachedViews.Range(func(key, value interface{}) bool {
+			view := value.(*View)
+			if view.FileInfo.Handler != nil {
+				if view.FileInfo.Path != view.FileInfo.Handler.Path() {
+					t.Errorf("file pointer = %q, want %q for %q", view.FileInfo.Handler.Path(), view.FileInfo.Path, v.Name)
+				}
+				_ = TestTx.FileContainer.Close(view.FileInfo.Handler)
+				view.FileInfo.Handler = nil
+			}
+			return true
+		})
+
+		if !reflect.DeepEqual(result, v.ResultFile) {
+			t.Errorf("%s: fileinfo = %v, want %v", v.Name, result, v.ResultFile)
+		}
+
+		if !reflect.DeepEqual(cnt, v.UpdateCount) {
+			t.Errorf("%s: update count = %d, want %d", v.Name, cnt, v.UpdateCount)
+		}
+
+		if v.ViewCache.SyncMap != nil {
+			if !SyncMapEqual(TestTx.cachedViews, v.ViewCache) {
+				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
+			}
+		}
+		if v.TempViewList != nil {
+			if !SyncMapListEqual(TempViewScopesToSyncMapList(filter.tempViews), TempViewScopesToSyncMapList(v.TempViewList)) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
+			}
+		}
+	}
+}
+
 var deleteTests = []struct {
 	Name         string
 	Query        parser.DeleteQuery

@@ -444,6 +444,61 @@ func Update(ctx context.Context, parentFilter *Filter, query parser.UpdateQuery)
 	return fileInfos, updateRecords, nil
 }
 
+func Replace(ctx context.Context, parentFilter *Filter, query parser.ReplaceQuery) (*FileInfo, int, error) {
+	filter := parentFilter.CreateNode()
+
+	var replaceRecords int
+
+	if query.WithClause != nil {
+		if err := filter.LoadInlineTable(context.Background(), query.WithClause.(parser.WithClause)); err != nil {
+			return nil, replaceRecords, err
+		}
+	}
+
+	fromClause := parser.FromClause{
+		Tables: []parser.QueryExpression{
+			query.Table,
+		},
+	}
+
+	filter.tx.operationMutex.Lock()
+	defer filter.tx.operationMutex.Unlock()
+
+	view := NewView(parentFilter.tx)
+	err := view.Load(ctx, filter, fromClause, true, false)
+	if err != nil {
+		return nil, replaceRecords, err
+	}
+
+	fields := query.Fields
+	if fields == nil {
+		fields = view.Header.TableColumns()
+	}
+
+	if query.ValuesList != nil {
+		if replaceRecords, err = view.ReplaceValues(ctx, fields, query.ValuesList, query.Keys); err != nil {
+			return nil, replaceRecords, err
+		}
+	} else {
+		if replaceRecords, err = view.ReplaceFromQuery(ctx, fields, query.Query.(parser.SelectQuery), query.Keys); err != nil {
+			return nil, replaceRecords, err
+		}
+	}
+
+	if err = view.RestoreHeaderReferences(); err != nil {
+		return nil, replaceRecords, err
+	}
+	view.Filter = nil
+
+	if !view.FileInfo.IsFile() {
+		filter.tempViews.Replace(view)
+	} else {
+		filter.tx.cachedViews.Set(view)
+	}
+
+	return view.FileInfo, replaceRecords, err
+}
+
 func Delete(ctx context.Context, parentFilter *Filter, query parser.DeleteQuery) ([]*FileInfo, []int, error) {
 	filter := parentFilter.CreateNode()
 

@@ -79,7 +79,7 @@ var Functions = map[string]func(parser.Function, []value.Primary, *cmd.Flags) (v
 	"SUBSTR":           Substr,
 	"INSTR":            Instr,
 	"LIST_ELEM":        ListElem,
-	"REPLACE":          Replace,
+	"REPLACE":          ReplaceFn,
 	"FORMAT":           Format,
 	"JSON_VALUE":       JsonValue,
 	"MD5":              Md5,
@@ -968,7 +968,7 @@ func ListElem(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Pri
 	return value.NewString(list[index]), nil
 }
 
-func Replace(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+func ReplaceFn(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	if 3 != len(args) {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{3})
 	}

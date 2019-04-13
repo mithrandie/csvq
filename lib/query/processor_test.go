@@ -546,6 +546,51 @@ var processorExecuteStatementTests = []struct {
 		Logs: fmt.Sprintf("1 record updated on %q.\n", GetTestFilePath("table1.csv")),
 	},
 	{
+		Input: parser.ReplaceQuery{
+			Table: parser.Table{Object: parser.Identifier{Literal: "table1"}},
+			Fields: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+			},
+			Keys: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			},
+			ValuesList: []parser.QueryExpression{
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.QueryExpression{
+							parser.NewIntegerValueFromString("4"),
+							parser.NewStringValue("str44"),
+						},
+					},
+				},
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.QueryExpression{
+							parser.NewIntegerValueFromString("6"),
+							parser.NewStringValue("str6"),
+						},
+					},
+				},
+			},
+		},
+		UncommittedViews: UncommittedViews{
+			mtx:     &sync.RWMutex{},
+			Created: map[string]*FileInfo{},
+			Updated: map[string]*FileInfo{
+				strings.ToUpper(GetTestFilePath("TABLE1.CSV")): {
+					Path:      GetTestFilePath("table1.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+					ForUpdate: true,
+				},
+			},
+		},
+		Logs: fmt.Sprintf("2 records replaced on %q.\n", GetTestFilePath("table1.csv")),
+	},
+	{
 		Input: parser.DeleteQuery{
 			FromClause: parser.FromClause{
 				Tables: []parser.QueryExpression{

@@ -279,6 +279,27 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 		if proc.Tx.Flags.Stats {
 			proc.showExecutionTime(ctx)
 		}
+	case parser.ReplaceQuery:
+		if proc.Tx.Flags.Stats {
+			proc.measurementStart = time.Now()
+		}
+
+		fileInfo, cnt, e := Replace(ctx, proc.Filter, stmt.(parser.ReplaceQuery))
+		if e == nil {
+			if 0 < cnt {
+				proc.Tx.uncommittedViews.SetForUpdatedView(fileInfo)
+			}
+			proc.Log(fmt.Sprintf("%s replaced on %q.", FormatCount(cnt, "record"), fileInfo.Path), proc.Tx.Flags.Quiet)
+			if proc.storeResults {
+				proc.Tx.AffectedRows = cnt
+			}
+		} else {
+			err = e
+		}
+
+		if proc.Tx.Flags.Stats {
+			proc.showExecutionTime(ctx)
+		}
 	case parser.DeleteQuery:
 		if proc.Tx.Flags.Stats {
 			proc.measurementStart = time.Now()

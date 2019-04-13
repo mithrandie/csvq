@@ -1671,47 +1671,75 @@ func (view *View) Limit(ctx context.Context, clause parser.LimitClause) error {
 }
 
 func (view *View) InsertValues(ctx context.Context, fields []parser.QueryExpression, list []parser.QueryExpression) (int, error) {
-	valuesList := make([][]value.Primary, len(list))
+	recordValues, err := view.convertListToRecordValues(ctx, fields, list)
+	if err != nil {
+		return 0, err
+	}
+	return view.insert(fields, recordValues)
+}
 
+func (view *View) InsertFromQuery(ctx context.Context, fields []parser.QueryExpression, query parser.SelectQuery) (int, error) {
+	recordValues, err := view.convertResultSetToRecordValues(ctx, fields, query)
+	if err != nil {
+		return 0, err
+	}
+	return view.insert(fields, recordValues)
+}
+
+func (view *View) ReplaceValues(ctx context.Context, fields []parser.QueryExpression, list []parser.QueryExpression, keys []parser.QueryExpression) (int, error) {
+	recordValues, err := view.convertListToRecordValues(ctx, fields, list)
+	if err != nil {
+		return 0, err
+	}
+	return view.replace(ctx, fields, recordValues, keys)
+}
+
+func (view *View) ReplaceFromQuery(ctx context.Context, fields []parser.QueryExpression, query parser.SelectQuery, keys []parser.QueryExpression) (int, error) {
+	recordValues, err := view.convertResultSetToRecordValues(ctx, fields, query)
+	if err != nil {
+		return 0, err
+	}
+	return view.replace(ctx, fields, recordValues, keys)
+}
+
+func (view *View) convertListToRecordValues(ctx context.Context, fields []parser.QueryExpression, list []parser.QueryExpression) ([][]value.Primary, error) {
+	recordValues := make([][]value.Primary, len(list))
 	for i, item := range list {
 		rv := item.(parser.RowValue)
 		values, err := view.Filter.evalRowValue(ctx, rv)
 		if err != nil {
-			return 0, err
+			return recordValues, err
 		}
 		if len(fields) != len(values) {
-			return 0, NewInsertRowValueLengthError(rv, len(fields))
+			return recordValues, NewInsertRowValueLengthError(rv, len(fields))
 		}
 
-		valuesList[i] = values
+		recordValues[i] = values
 	}
-
-	return view.insert(fields, valuesList)
+	return recordValues, nil
 }
 
-func (view *View) InsertFromQuery(ctx context.Context, fields []parser.QueryExpression, query parser.SelectQuery) (int, error) {
-	insertView, err := Select(ctx, view.Filter, query)
+func (view *View) convertResultSetToRecordValues(ctx context.Context, fields []parser.QueryExpression, query parser.SelectQuery) ([][]value.Primary, error) {
+	selectedView, err := Select(ctx, view.Filter, query)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	if len(fields) != insertView.FieldLen() {
-		return 0, NewInsertSelectFieldLengthError(query, len(fields))
+	if len(fields) != selectedView.FieldLen() {
+		return nil, NewInsertSelectFieldLengthError(query, len(fields))
 	}
 
-	valuesList := make([][]value.Primary, insertView.RecordLen())
-
-	for i, record := range insertView.RecordSet {
-		values := make([]value.Primary, insertView.FieldLen())
+	recordValues := make([][]value.Primary, selectedView.RecordLen())
+	for i, record := range selectedView.RecordSet {
+		values := make([]value.Primary, selectedView.FieldLen())
 		for j, cell := range record {
 			values[j] = cell.Value()
 		}
-		valuesList[i] = values
+		recordValues[i] = values
 	}
-
-	return view.insert(fields, valuesList)
+	return recordValues, nil
 }
 
-func (view *View) insert(fields []parser.QueryExpression, valuesList [][]value.Primary) (int, error) {
+func (view *View) convertRecordValuesToRecords(fields []parser.QueryExpression, recordValues [][]value.Primary) ([]Record, error) {
 	var valueIndex = func(i int, list []int) int {
 		for j, v := range list {
 			if i == v {
@@ -1721,29 +1749,118 @@ func (view *View) insert(fields []parser.QueryExpression, valuesList [][]value.P
 		return -1
 	}
 
-	var insertRecords int
-
 	fieldIndices, err := view.FieldIndices(fields)
 	if err != nil {
-		return insertRecords, err
+		return nil, err
 	}
 
-	records := make([]Record, len(valuesList))
-	for i, values := range valuesList {
+	recordIndices := make([]int, view.FieldLen())
+	for i := 0; i < view.FieldLen(); i++ {
+		recordIndices[i] = valueIndex(i, fieldIndices)
+	}
+
+	records := make([]Record, len(recordValues))
+	for i, values := range recordValues {
 		record := make(Record, view.FieldLen())
 		for j := 0; j < view.FieldLen(); j++ {
-			idx := valueIndex(j, fieldIndices)
-			if idx < 0 {
+			if recordIndices[j] < 0 {
 				record[j] = NewCell(value.NewNull())
 			} else {
-				record[j] = NewCell(values[idx])
+				record[j] = NewCell(values[recordIndices[j]])
 			}
 		}
 		records[i] = record
 	}
+	return records, nil
+}
 
+func (view *View) insert(fields []parser.QueryExpression, recordValues [][]value.Primary) (int, error) {
+	records, err := view.convertRecordValuesToRecords(fields, recordValues)
+	if err != nil {
+		return 0, err
+	}
 	view.RecordSet = append(view.RecordSet, records...)
-	return len(valuesList), nil
+	return len(recordValues), nil
+}
+
+func (view *View) replace(ctx context.Context, fields []parser.QueryExpression, recordValues [][]value.Primary, keys []parser.QueryExpression) (int, error) {
+	fieldIndices, err := view.FieldIndices(fields)
+	if err != nil {
+		return 0, err
+	}
+	keyIndices, err := view.FieldIndices(keys)
+	if err != nil {
+		return 0, err
+	}
+	for idx, i := range keyIndices {
+		if !InIntSlice(i, fieldIndices) {
+			return 0, NewReplaceKeyNotSetError(keys[idx])
+		}
+	}
+	updateIndices := make([]int, 0, len(fieldIndices)-len(keyIndices))
+	for _, i := range fieldIndices {
+		if !InIntSlice(i, keyIndices) {
+			updateIndices = append(updateIndices, i)
+		}
+	}
+
+	records, _ := view.convertRecordValuesToRecords(fields, recordValues)
+
+	sortValuesInEachRecord := make([]SortValues, view.RecordLen())
+	if err := NewGoroutineTaskManager(view.RecordLen(), -1, view.Tx.Flags.CPU).Run(ctx, func(index int) error {
+		sortValues := make(SortValues, len(keyIndices))
+		for j, idx := range keyIndices {
+			sortValues[j] = NewSortValue(view.RecordSet[index][idx].Value(), view.Tx.Flags)
+		}
+		sortValuesInEachRecord[index] = sortValues
+		return nil
+	}); err != nil {
+		return 0, err
+	}
+
+	sortValuesInInsertRecords := make([]SortValues, view.RecordLen())
+	if err := NewGoroutineTaskManager(len(records), -1, view.Tx.Flags.CPU).Run(ctx, func(index int) error {
+		sortValues := make(SortValues, len(keyIndices))
+		for j, idx := range keyIndices {
+			sortValues[j] = NewSortValue(records[index][idx].Value(), view.Tx.Flags)
+		}
+		sortValuesInInsertRecords[index] = sortValues
+		return nil
+	}); err != nil {
+		return 0, err
+	}
+
+	replacedRecord := make(map[int]bool, len(records))
+	for i := range records {
+		replacedRecord[i] = false
+	}
+	replaceMtx := &sync.Mutex{}
+	var replaced = func(idx int) {
+		replaceMtx.Lock()
+		replacedRecord[idx] = true
+		replaceMtx.Unlock()
+	}
+	if err := NewGoroutineTaskManager(view.RecordLen(), -1, view.Tx.Flags.CPU).Run(ctx, func(index int) error {
+		for j, rsv := range sortValuesInInsertRecords {
+			if sortValuesInEachRecord[index].EquivalentTo(rsv) {
+				for _, fidx := range updateIndices {
+					view.RecordSet[index][fidx] = records[j][fidx]
+				}
+				replaced(j)
+				break
+			}
+		}
+		return nil
+	}); err != nil {
+		return 0, err
+	}
+
+	for i, replaced := range replacedRecord {
+		if !replaced {
+			view.RecordSet = append(view.RecordSet, records[i])
+		}
+	}
+	return len(recordValues), nil
 }
 
 func (view *View) Fix(ctx context.Context) error {

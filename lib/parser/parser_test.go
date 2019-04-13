@@ -2065,6 +2065,30 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select replace(column1, column2, column3)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: Function{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "replace",
+								Args: []QueryExpression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 16}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "column1"}},
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 25}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 25}, Literal: "column2"}},
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 34}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "column3"}},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "select aggfunc(distinct column1)",
 		Output: []Statement{
 			SelectQuery{
@@ -3760,6 +3784,322 @@ var parseTests = []struct {
 				WhereClause: WhereClause{
 					Where:  "where",
 					Filter: NewTernaryValueFromString("true"),
+				},
+			},
+		},
+	},
+	{
+		Input: "with ct as (select 1) replace into table1 using(col1) values (1, 'str1'), (2, 'str2')",
+		Output: []Statement{
+			ReplaceQuery{
+				WithClause: WithClause{
+					With: "with",
+					InlineTables: []QueryExpression{
+						InlineTable{
+							Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "ct"},
+							As:   "as",
+							Query: SelectQuery{
+								SelectEntity: SelectEntity{
+									SelectClause: SelectClause{
+										BaseExpr: &BaseExpr{line: 1, char: 13},
+										Select:   "select",
+										Fields: []QueryExpression{
+											Field{Object: NewIntegerValueFromString("1")},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Table: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 36}, Literal: "table1"}},
+				Keys: []QueryExpression{
+					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 49}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 49}, Literal: "col1"}},
+				},
+				ValuesList: []QueryExpression{
+					RowValue{
+						BaseExpr: &BaseExpr{line: 1, char: 62},
+						Value: ValueList{
+							Values: []QueryExpression{
+								NewIntegerValueFromString("1"),
+								NewStringValue("str1"),
+							},
+						},
+					},
+					RowValue{
+						BaseExpr: &BaseExpr{line: 1, char: 75},
+						Value: ValueList{
+							Values: []QueryExpression{
+								NewIntegerValueFromString("2"),
+								NewStringValue("str2"),
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "with ct as (select 1) replace into table1 (column1, column2, table1.3) using (column1, column2) values (1, 'str1'), (2, 'str2')",
+		Output: []Statement{
+			ReplaceQuery{
+				WithClause: WithClause{
+					With: "with",
+					InlineTables: []QueryExpression{
+						InlineTable{
+							Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "ct"},
+							As:   "as",
+							Query: SelectQuery{
+								SelectEntity: SelectEntity{
+									SelectClause: SelectClause{
+										BaseExpr: &BaseExpr{line: 1, char: 13},
+										Select:   "select",
+										Fields: []QueryExpression{
+											Field{Object: NewIntegerValueFromString("1")},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Table: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 36}, Literal: "table1"}},
+				Fields: []QueryExpression{
+					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 44}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 44}, Literal: "column1"}},
+					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 53}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 53}, Literal: "column2"}},
+					ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 62}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 62}, Literal: "table1"}, Number: value.NewInteger(3)},
+				},
+				Keys: []QueryExpression{
+					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 79}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 79}, Literal: "column1"}},
+					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 88}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 88}, Literal: "column2"}},
+				},
+				ValuesList: []QueryExpression{
+					RowValue{
+						BaseExpr: &BaseExpr{line: 1, char: 104},
+						Value: ValueList{
+							Values: []QueryExpression{
+								NewIntegerValueFromString("1"),
+								NewStringValue("str1"),
+							},
+						},
+					},
+					RowValue{
+						BaseExpr: &BaseExpr{line: 1, char: 117},
+						Value: ValueList{
+							Values: []QueryExpression{
+								NewIntegerValueFromString("2"),
+								NewStringValue("str2"),
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "with ct as (select 1) replace into table1 using (table1.1) select 1, 2",
+		Output: []Statement{
+			ReplaceQuery{
+				WithClause: WithClause{
+					With: "with",
+					InlineTables: []QueryExpression{
+						InlineTable{
+							Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "ct"},
+							As:   "as",
+							Query: SelectQuery{
+								SelectEntity: SelectEntity{
+									SelectClause: SelectClause{
+										BaseExpr: &BaseExpr{line: 1, char: 13},
+										Select:   "select",
+										Fields: []QueryExpression{
+											Field{Object: NewIntegerValueFromString("1")},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Table: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 36}, Literal: "table1"}},
+				Keys: []QueryExpression{
+					ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 50}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 50}, Literal: "table1"}, Number: value.NewInteger(1)},
+				},
+				Query: SelectQuery{
+					SelectEntity: SelectEntity{
+						SelectClause: SelectClause{
+							BaseExpr: &BaseExpr{line: 1, char: 60},
+							Select:   "select",
+							Fields: []QueryExpression{
+								Field{Object: NewIntegerValueFromString("1")},
+								Field{Object: NewIntegerValueFromString("2")},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "with ct as (select 1) replace into table1 (column1, column2) using (column1) select 1, 2",
+		Output: []Statement{
+			ReplaceQuery{
+				WithClause: WithClause{
+					With: "with",
+					InlineTables: []QueryExpression{
+						InlineTable{
+							Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "ct"},
+							As:   "as",
+							Query: SelectQuery{
+								SelectEntity: SelectEntity{
+									SelectClause: SelectClause{
+										BaseExpr: &BaseExpr{line: 1, char: 13},
+										Select:   "select",
+										Fields: []QueryExpression{
+											Field{Object: NewIntegerValueFromString("1")},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Table: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 36}, Literal: "table1"}},
+				Fields: []QueryExpression{
+					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 44}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 44}, Literal: "column1"}},
+					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 53}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 53}, Literal: "column2"}},
+				},
+				Keys: []QueryExpression{
+					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 69}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 69}, Literal: "column1"}},
+				},
+				Query: SelectQuery{
+					SelectEntity: SelectEntity{
+						SelectClause: SelectClause{
+							BaseExpr: &BaseExpr{line: 1, char: 78},
+							Select:   "select",
+							Fields: []QueryExpression{
+								Field{Object: NewIntegerValueFromString("1")},
+								Field{Object: NewIntegerValueFromString("2")},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "replace into table1 using(col1) values (1, 'str1'), (2, 'str2')",
+		Output: []Statement{
+			ReplaceQuery{
+				Table: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 14}, Literal: "table1"}},
+				Keys: []QueryExpression{
+					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 27}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 27}, Literal: "col1"}},
+				},
+				ValuesList: []QueryExpression{
+					RowValue{
+						BaseExpr: &BaseExpr{line: 1, char: 40},
+						Value: ValueList{
+							Values: []QueryExpression{
+								NewIntegerValueFromString("1"),
+								NewStringValue("str1"),
+							},
+						},
+					},
+					RowValue{
+						BaseExpr: &BaseExpr{line: 1, char: 53},
+						Value: ValueList{
+							Values: []QueryExpression{
+								NewIntegerValueFromString("2"),
+								NewStringValue("str2"),
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "replace into table1 (column1, column2, table1.3) using (column1, column2) values (1, 'str1'), (2, 'str2')",
+		Output: []Statement{
+			ReplaceQuery{
+				Table: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 14}, Literal: "table1"}},
+				Fields: []QueryExpression{
+					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 22}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 22}, Literal: "column1"}},
+					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 31}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 31}, Literal: "column2"}},
+					ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 40}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 40}, Literal: "table1"}, Number: value.NewInteger(3)},
+				},
+				Keys: []QueryExpression{
+					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 57}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 57}, Literal: "column1"}},
+					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 66}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 66}, Literal: "column2"}},
+				},
+				ValuesList: []QueryExpression{
+					RowValue{
+						BaseExpr: &BaseExpr{line: 1, char: 82},
+						Value: ValueList{
+							Values: []QueryExpression{
+								NewIntegerValueFromString("1"),
+								NewStringValue("str1"),
+							},
+						},
+					},
+					RowValue{
+						BaseExpr: &BaseExpr{line: 1, char: 95},
+						Value: ValueList{
+							Values: []QueryExpression{
+								NewIntegerValueFromString("2"),
+								NewStringValue("str2"),
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "replace into table1 using (table1.1) select 1, 2",
+		Output: []Statement{
+			ReplaceQuery{
+				Table: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 14}, Literal: "table1"}},
+				Keys: []QueryExpression{
+					ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 28}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 28}, Literal: "table1"}, Number: value.NewInteger(1)},
+				},
+				Query: SelectQuery{
+					SelectEntity: SelectEntity{
+						SelectClause: SelectClause{
+							BaseExpr: &BaseExpr{line: 1, char: 38},
+							Select:   "select",
+							Fields: []QueryExpression{
+								Field{Object: NewIntegerValueFromString("1")},
+								Field{Object: NewIntegerValueFromString("2")},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "replace into table1 (column1, column2) using (column1) select 1, 2",
+		Output: []Statement{
+			ReplaceQuery{
+				Table: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 14}, Literal: "table1"}},
+				Fields: []QueryExpression{
+					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 22}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 22}, Literal: "column1"}},
+					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 31}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 31}, Literal: "column2"}},
+				},
+				Keys: []QueryExpression{
+					FieldReference{BaseExpr: &BaseExpr{line: 1, char: 47}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 47}, Literal: "column1"}},
+				},
+				Query: SelectQuery{
+					SelectEntity: SelectEntity{
+						SelectClause: SelectClause{
+							BaseExpr: &BaseExpr{line: 1, char: 56},
+							Select:   "select",
+							Fields: []QueryExpression{
+								Field{Object: NewIntegerValueFromString("1")},
+								Field{Object: NewIntegerValueFromString("2")},
+							},
+						},
+					},
 				},
 			},
 		},

@@ -13,6 +13,7 @@ title: Reference Manual - csvq
   * [Select Query]({{ '/reference/select-query.html' | relative_url }})
   * [Insert Query]({{ '/reference/insert-query.html' | relative_url }})
   * [Update Query]({{ '/reference/update-query.html' | relative_url }})
+  * [Replace Query]({{ '/reference/replace-query.html' | relative_url }})
   * [Delete Query]({{ '/reference/delete-query.html' | relative_url }})
   * [Create Table Query]({{ '/reference/create-table-query.html' | relative_url }})
   * [Alter Table Query]({{ '/reference/alter-table-query.html' | relative_url }})
