@@ -1092,8 +1092,8 @@ func BenchmarkOuterJoin(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		view := GenerateBenchView("t1", 100)
-		joinView := GenerateBenchView("t2", 50)
+		joinView := GenerateBenchView("t2", 100)
 
-		_ = InnerJoin(ctx, filter, view, joinView, condition)
+		_ = OuterJoin(ctx, filter, view, joinView, condition, parser.LEFT)
 	}
 }
