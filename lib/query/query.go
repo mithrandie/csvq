@@ -24,7 +24,7 @@ func FetchCursor(ctx context.Context, filter *Filter, name parser.Identifier, fe
 			if value.IsNull(i) {
 				return false, NewInvalidFetchPositionError(fetchPosition)
 			}
-			number = int(i.(value.Integer).Raw())
+			number = int(i.(*value.Integer).Raw())
 		}
 	}
 
@@ -921,17 +921,17 @@ func SetTableAttribute(ctx context.Context, parentFilter *Filter, query parser.S
 		}
 		switch attr {
 		case TableDelimiter:
-			err = fileInfo.SetDelimiter(s.(value.String).Raw())
+			err = fileInfo.SetDelimiter(s.(*value.String).Raw())
 		case TableDelimiterPositions:
-			err = fileInfo.SetDelimiterPositions(s.(value.String).Raw())
+			err = fileInfo.SetDelimiterPositions(s.(*value.String).Raw())
 		case TableFormat:
-			err = fileInfo.SetFormat(s.(value.String).Raw())
+			err = fileInfo.SetFormat(s.(*value.String).Raw())
 		case TableEncoding:
-			err = fileInfo.SetEncoding(s.(value.String).Raw())
+			err = fileInfo.SetEncoding(s.(*value.String).Raw())
 		case TableLineBreak:
-			err = fileInfo.SetLineBreak(s.(value.String).Raw())
+			err = fileInfo.SetLineBreak(s.(*value.String).Raw())
 		case TableJsonEscape:
-			err = fileInfo.SetJsonEscape(s.(value.String).Raw())
+			err = fileInfo.SetJsonEscape(s.(*value.String).Raw())
 		}
 	case TableHeader, TableEncloseAll, TablePrettyPrint:
 		b := value.ToBoolean(p)
@@ -940,11 +940,11 @@ func SetTableAttribute(ctx context.Context, parentFilter *Filter, query parser.S
 		}
 		switch attr {
 		case TableHeader:
-			err = fileInfo.SetNoHeader(!b.(value.Boolean).Raw())
+			err = fileInfo.SetNoHeader(!b.(*value.Boolean).Raw())
 		case TableEncloseAll:
-			err = fileInfo.SetEncloseAll(b.(value.Boolean).Raw())
+			err = fileInfo.SetEncloseAll(b.(*value.Boolean).Raw())
 		case TablePrettyPrint:
-			err = fileInfo.SetPrettyPrint(b.(value.Boolean).Raw())
+			err = fileInfo.SetPrettyPrint(b.(*value.Boolean).Raw())
 		}
 	default:
 		return nil, log, NewInvalidTableAttributeNameError(query.Attribute)

@@ -392,7 +392,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 		ex := stmt.(parser.Exit)
 		code := 0
 		if ex.Code != nil {
-			code = int(ex.Code.(value.Integer).Raw())
+			code = int(ex.Code.(*value.Integer).Raw())
 		}
 		if 0 < code {
 			flow = TerminateWithError
@@ -469,7 +469,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 					var p value.Primary
 					if p, err = proc.Filter.Evaluate(ctx, trigger.Message); err == nil {
 						if s := value.ToString(p); !value.IsNull(s) {
-							message = s.(value.String).Raw()
+							message = s.(*value.String).Raw()
 						}
 					}
 				}

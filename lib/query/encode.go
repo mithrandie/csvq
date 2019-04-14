@@ -371,23 +371,23 @@ func ConvertFieldContents(val value.Primary, forTextTable bool) (string, string,
 	var align = text.NotAligned
 
 	switch val.(type) {
-	case value.String:
-		s = val.(value.String).Raw()
+	case *value.String:
+		s = val.(*value.String).Raw()
 		effect = cmd.StringEffect
-	case value.Integer:
-		s = val.(value.Integer).String()
+	case *value.Integer:
+		s = val.(*value.Integer).String()
 		effect = cmd.NumberEffect
 		align = text.RightAligned
-	case value.Float:
-		s = val.(value.Float).String()
+	case *value.Float:
+		s = val.(*value.Float).String()
 		effect = cmd.NumberEffect
 		align = text.RightAligned
-	case value.Boolean:
-		s = val.(value.Boolean).String()
+	case *value.Boolean:
+		s = val.(*value.Boolean).String()
 		effect = cmd.BooleanEffect
 		align = text.Centering
-	case value.Ternary:
-		t := val.(value.Ternary)
+	case *value.Ternary:
+		t := val.(*value.Ternary)
 		if forTextTable {
 			s = t.Ternary().String()
 			effect = cmd.TernaryEffect
@@ -397,10 +397,10 @@ func ConvertFieldContents(val value.Primary, forTextTable bool) (string, string,
 			effect = cmd.BooleanEffect
 			align = text.Centering
 		}
-	case value.Datetime:
-		s = val.(value.Datetime).Format(time.RFC3339Nano)
+	case *value.Datetime:
+		s = val.(*value.Datetime).Format(time.RFC3339Nano)
 		effect = cmd.DatetimeEffect
-	case value.Null:
+	case *value.Null:
 		if forTextTable {
 			s = "NULL"
 			effect = cmd.NullEffect

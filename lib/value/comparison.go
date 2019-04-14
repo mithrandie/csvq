@@ -38,8 +38,8 @@ func CompareCombinedly(p1 Primary, p2 Primary, datetimeFormats []string) Compari
 
 	if i1 := ToInteger(p1); !IsNull(i1) {
 		if i2 := ToInteger(p2); !IsNull(i2) {
-			v1 := i1.(Integer).Raw()
-			v2 := i2.(Integer).Raw()
+			v1 := i1.(*Integer).Raw()
+			v2 := i2.(*Integer).Raw()
 			if v1 == v2 {
 				return IsEqual
 			} else if v1 < v2 {
@@ -52,8 +52,8 @@ func CompareCombinedly(p1 Primary, p2 Primary, datetimeFormats []string) Compari
 
 	if f1 := ToFloat(p1); !IsNull(f1) {
 		if f2 := ToFloat(p2); !IsNull(f2) {
-			v1 := f1.(Float).Raw()
-			v2 := f2.(Float).Raw()
+			v1 := f1.(*Float).Raw()
+			v2 := f2.(*Float).Raw()
 			if v1 == v2 {
 				return IsEqual
 			} else if v1 < v2 {
@@ -66,8 +66,8 @@ func CompareCombinedly(p1 Primary, p2 Primary, datetimeFormats []string) Compari
 
 	if d1 := ToDatetime(p1, datetimeFormats); !IsNull(d1) {
 		if d2 := ToDatetime(p2, datetimeFormats); !IsNull(d2) {
-			v1 := d1.(Datetime).Raw()
-			v2 := d2.(Datetime).Raw()
+			v1 := d1.(*Datetime).Raw()
+			v2 := d2.(*Datetime).Raw()
 			if v1.Equal(v2) {
 				return IsEqual
 			} else if v1.Before(v2) {
@@ -80,9 +80,7 @@ func CompareCombinedly(p1 Primary, p2 Primary, datetimeFormats []string) Compari
 
 	if b1 := ToBoolean(p1); !IsNull(b1) {
 		if b2 := ToBoolean(p2); !IsNull(b2) {
-			v1 := b1.(Boolean).Raw()
-			v2 := b2.(Boolean).Raw()
-			if v1 == v2 {
+			if b1.(*Boolean).Raw() == b2.(*Boolean).Raw() {
 				return IsBoolEqual
 			} else {
 				return IsNotEqual
@@ -90,8 +88,8 @@ func CompareCombinedly(p1 Primary, p2 Primary, datetimeFormats []string) Compari
 		}
 	}
 
-	if s1, ok := p1.(String); ok {
-		if s2, ok := p2.(String); ok {
+	if s1, ok := p1.(*String); ok {
+		if s2, ok := p2.(*String); ok {
 			v1 := strings.ToUpper(strings.TrimSpace(s1.Raw()))
 			v2 := strings.ToUpper(strings.TrimSpace(s2.Raw()))
 
@@ -109,45 +107,45 @@ func CompareCombinedly(p1 Primary, p2 Primary, datetimeFormats []string) Compari
 }
 
 func Identical(p1 Primary, p2 Primary) ternary.Value {
-	if t, ok := p1.(Ternary); (ok && t.value == ternary.UNKNOWN) || IsNull(p1) {
+	if t, ok := p1.(*Ternary); (ok && t.value == ternary.UNKNOWN) || IsNull(p1) {
 		return ternary.UNKNOWN
 	}
-	if t, ok := p2.(Ternary); (ok && t.value == ternary.UNKNOWN) || IsNull(p2) {
+	if t, ok := p2.(*Ternary); (ok && t.value == ternary.UNKNOWN) || IsNull(p2) {
 		return ternary.UNKNOWN
 	}
 
-	if v1, ok := p1.(Integer); ok {
-		if v2, ok := p2.(Integer); ok {
+	if v1, ok := p1.(*Integer); ok {
+		if v2, ok := p2.(*Integer); ok {
 			return ternary.ConvertFromBool(v1.value == v2.value)
 		}
 	}
 
-	if v1, ok := p1.(Float); ok {
-		if v2, ok := p2.(Float); ok {
+	if v1, ok := p1.(*Float); ok {
+		if v2, ok := p2.(*Float); ok {
 			return ternary.ConvertFromBool(v1.value == v2.value)
 		}
 	}
 
-	if v1, ok := p1.(Datetime); ok {
-		if v2, ok := p2.(Datetime); ok {
+	if v1, ok := p1.(*Datetime); ok {
+		if v2, ok := p2.(*Datetime); ok {
 			return ternary.ConvertFromBool(v1.value.Equal(v2.value))
 		}
 	}
 
-	if v1, ok := p1.(Boolean); ok {
-		if v2, ok := p2.(Boolean); ok {
+	if v1, ok := p1.(*Boolean); ok {
+		if v2, ok := p2.(*Boolean); ok {
 			return ternary.ConvertFromBool(v1.value == v2.value)
 		}
 	}
 
-	if v1, ok := p1.(Ternary); ok {
-		if v2, ok := p2.(Ternary); ok {
+	if v1, ok := p1.(*Ternary); ok {
+		if v2, ok := p2.(*Ternary); ok {
 			return ternary.ConvertFromBool(v1.value == v2.value)
 		}
 	}
 
-	if v1, ok := p1.(String); ok {
-		if v2, ok := p2.(String); ok {
+	if v1, ok := p1.(*String); ok {
+		if v2, ok := p2.(*String); ok {
 			return ternary.ConvertFromBool(v1.literal == v2.literal)
 		}
 	}

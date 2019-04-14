@@ -277,7 +277,7 @@ type UserTriggeredError struct {
 func NewUserTriggeredError(expr parser.Trigger, message string) error {
 	code := ReturnCodeDefaultUserTriggeredError
 	if expr.Code != nil {
-		code = int(expr.Code.(value.Integer).Raw())
+		code = int(expr.Code.(*value.Integer).Raw())
 	}
 
 	if len(message) < 1 {

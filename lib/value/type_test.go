@@ -156,6 +156,16 @@ func TestTernary_Ternary(t *testing.T) {
 	if p.Ternary() != ternary.TRUE {
 		t.Errorf("ternary = %s, want %s for %#v", p.Ternary(), ternary.TRUE, p)
 	}
+
+	p = NewTernary(ternary.FALSE)
+	if p.Ternary() != ternary.FALSE {
+		t.Errorf("ternary = %s, want %s for %#v", p.Ternary(), ternary.TRUE, p)
+	}
+
+	p = NewTernary(ternary.UNKNOWN)
+	if p.Ternary() != ternary.UNKNOWN {
+		t.Errorf("ternary = %s, want %s for %#v", p.Ternary(), ternary.TRUE, p)
+	}
 }
 
 func TestDatetime_String(t *testing.T) {

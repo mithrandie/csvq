@@ -111,7 +111,7 @@ func (f *StringFormatter) Format(format string, values []value.Primary) (string,
 		case 'b', 'o', 'd', 'x', 'X':
 			p := value.ToInteger(values[placeholderOrder])
 			if !value.IsNull(p) {
-				val := p.(value.Integer).Raw()
+				val := p.(*value.Integer).Raw()
 				s = fmt.Sprintf(placeholder.String(), val)
 			} else if -1 < width {
 				s = strings.Repeat(" ", width)
@@ -119,7 +119,7 @@ func (f *StringFormatter) Format(format string, values []value.Primary) (string,
 		case 'e', 'E', 'f':
 			p := value.ToFloat(values[placeholderOrder])
 			if !value.IsNull(p) {
-				val := p.(value.Float).Raw()
+				val := p.(*value.Float).Raw()
 				if -1 < precision {
 					s = fmt.Sprintf(placeholder.String(), val)
 				} else {
@@ -157,10 +157,10 @@ func (f *StringFormatter) Format(format string, values []value.Primary) (string,
 			}
 		case 's', 'q', 'i':
 			switch values[placeholderOrder].(type) {
-			case value.String:
-				s = values[placeholderOrder].(value.String).Raw()
-			case value.Datetime:
-				s = values[placeholderOrder].(value.Datetime).Format(time.RFC3339Nano)
+			case *value.String:
+				s = values[placeholderOrder].(*value.String).Raw()
+			case *value.Datetime:
+				s = values[placeholderOrder].(*value.Datetime).Format(time.RFC3339Nano)
 			default:
 				s = values[placeholderOrder].String()
 			}
@@ -178,7 +178,8 @@ func (f *StringFormatter) Format(format string, values []value.Primary) (string,
 
 			s = fmt.Sprintf(placeholder.String(), s)
 		case 'T':
-			s = reflect.TypeOf(values[placeholderOrder]).Name()
+			rv := reflect.ValueOf(values[placeholderOrder]).Elem().Interface()
+			s = reflect.TypeOf(rv).Name()
 			if -1 < precision {
 				s = s[:precision]
 			}

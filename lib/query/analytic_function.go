@@ -498,7 +498,7 @@ func (fn NTile) Execute(ctx context.Context, filter *Filter, partition Partition
 	if value.IsNull(i) {
 		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the first argument must be an integer")
 	}
-	tileNumber = int(i.(value.Integer).Raw())
+	tileNumber = int(i.(*value.Integer).Raw())
 	if tileNumber < 1 {
 		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the first argument must be greater than 0")
 	}
@@ -576,7 +576,7 @@ func (fn NthValue) Execute(ctx context.Context, filter *Filter, partition Partit
 	if value.IsNull(pi) {
 		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be an integer")
 	}
-	n = int(pi.(value.Integer).Raw())
+	n = int(pi.(*value.Integer).Raw())
 	if n < 1 {
 		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be greater than 0")
 	}
@@ -664,7 +664,7 @@ func setLag(ctx context.Context, filter *Filter, partition Partition, expr parse
 		if value.IsNull(i) {
 			return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be an integer")
 		}
-		offset = int(i.(value.Integer).Raw())
+		offset = int(i.(*value.Integer).Raw())
 	}
 
 	var defaultValue value.Primary = value.NewNull()
@@ -724,7 +724,7 @@ func (fn AnalyticListAgg) Execute(ctx context.Context, filter *Filter, partition
 		if value.IsNull(s) {
 			return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be a string")
 		}
-		separator = s.(value.String).Raw()
+		separator = s.(*value.String).Raw()
 	}
 
 	values := make([]value.Primary, len(partition))

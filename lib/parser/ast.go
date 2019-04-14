@@ -151,7 +151,7 @@ func NewNullValue() PrimitiveType {
 func (e PrimitiveType) String() string {
 	if 0 < len(e.Literal) {
 		switch e.Value.(type) {
-		case value.String, value.Datetime:
+		case *value.String, *value.Datetime:
 			return quoteString(e.Literal)
 		default:
 			return e.Literal
@@ -161,7 +161,7 @@ func (e PrimitiveType) String() string {
 }
 
 func (e PrimitiveType) IsInteger() bool {
-	_, ok := e.Value.(value.Integer)
+	_, ok := e.Value.(*value.Integer)
 	return ok
 }
 
@@ -209,7 +209,7 @@ func (e FieldReference) String() string {
 type ColumnNumber struct {
 	*BaseExpr
 	View   Identifier
-	Number value.Integer
+	Number *value.Integer
 }
 
 func (e ColumnNumber) String() string {
@@ -1525,7 +1525,7 @@ type DisposeView struct {
 type StatementPreparation struct {
 	*BaseExpr
 	Name      Identifier
-	Statement value.String
+	Statement *value.String
 }
 
 type ReplaceValue struct {

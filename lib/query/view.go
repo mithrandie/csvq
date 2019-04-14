@@ -148,7 +148,7 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 			if value.IsNull(felem) {
 				return nil, NewTableObjectInvalidDelimiterError(tableObject, tableObject.FormatElement.String())
 			}
-			s := cmd.UnescapeString(felem.(value.String).Raw())
+			s := cmd.UnescapeString(felem.(*value.String).Raw())
 			d := []rune(s)
 			if 1 != len(d) {
 				return nil, NewTableObjectInvalidDelimiterError(tableObject, tableObject.FormatElement.String())
@@ -169,7 +169,7 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 			if value.IsNull(felem) {
 				return nil, NewTableObjectInvalidDelimiterPositionsError(tableObject, tableObject.FormatElement.String())
 			}
-			s := felem.(value.String).Raw()
+			s := felem.(*value.String).Raw()
 
 			var positions []int
 			if !strings.EqualFold("SPACES", s) {
@@ -197,7 +197,7 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 			if 0 < len(tableObject.Args) {
 				return nil, NewTableObjectJsonArgumentsLengthError(tableObject, 2)
 			}
-			jsonQuery = felem.(value.String).Raw()
+			jsonQuery = felem.(*value.String).Raw()
 			importFormat = cmd.JSON
 			encoding = text.UTF8
 		case cmd.LTSV.String():
@@ -250,15 +250,15 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 		}
 
 		if args[encodingIdx] != nil {
-			if encoding, err = cmd.ParseEncoding(args[0].(value.String).Raw()); err != nil {
+			if encoding, err = cmd.ParseEncoding(args[0].(*value.String).Raw()); err != nil {
 				return nil, NewTableObjectInvalidArgumentError(tableObject, err.Error())
 			}
 		}
 		if args[noHeaderIdx] != nil {
-			noHeader = args[noHeaderIdx].(value.Boolean).Raw()
+			noHeader = args[noHeaderIdx].(*value.Boolean).Raw()
 		}
 		if args[withoutNullIdx] != nil {
-			withoutNull = args[withoutNullIdx].(value.Boolean).Raw()
+			withoutNull = args[withoutNullIdx].(*value.Boolean).Raw()
 		}
 
 		view, err = loadObject(
@@ -430,13 +430,13 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 				return nil, NewEmptyJsonTableError(jsonQuery)
 			}
 
-			reader = strings.NewReader(jsonTextValue.(value.String).Raw())
+			reader = strings.NewReader(jsonTextValue.(*value.String).Raw())
 		}
 
 		fileInfo := &FileInfo{
 			Path:      alias,
 			Format:    cmd.JSON,
-			JsonQuery: queryValue.(value.String).Raw(),
+			JsonQuery: queryValue.(*value.String).Raw(),
 			Encoding:  text.UTF8,
 			LineBreak: filter.tx.Flags.LineBreak,
 			ViewType:  ViewTypeTemporaryTable,
@@ -1602,7 +1602,7 @@ func (view *View) Offset(ctx context.Context, clause parser.OffsetClause) error 
 	if value.IsNull(number) {
 		return NewInvalidOffsetNumberError(clause)
 	}
-	view.offset = int(number.(value.Integer).Raw())
+	view.offset = int(number.(*value.Integer).Raw())
 	if view.offset < 0 {
 		view.offset = 0
 	}
@@ -1630,7 +1630,7 @@ func (view *View) Limit(ctx context.Context, clause parser.LimitClause) error {
 		if value.IsNull(number) {
 			return NewInvalidLimitPercentageError(clause)
 		}
-		percentage := number.(value.Float).Raw()
+		percentage := number.(*value.Float).Raw()
 		if 100 < percentage {
 			limit = 100
 		} else if percentage < 0 {
@@ -1643,7 +1643,7 @@ func (view *View) Limit(ctx context.Context, clause parser.LimitClause) error {
 		if value.IsNull(number) {
 			return NewInvalidLimitNumberError(clause)
 		}
-		limit = int(number.(value.Integer).Raw())
+		limit = int(number.(*value.Integer).Raw())
 		if limit < 0 {
 			limit = 0
 		}
@@ -2080,7 +2080,7 @@ func (view *View) InternalRecordId(ref string, recordIndex int) (int, error) {
 	if err != nil {
 		return -1, NewInternalRecordIdNotExistError()
 	}
-	internalId, ok := view.RecordSet[recordIndex][idx].Value().(value.Integer)
+	internalId, ok := view.RecordSet[recordIndex][idx].Value().(*value.Integer)
 	if !ok {
 		return -1, NewInternalRecordIdEmptyError()
 	}

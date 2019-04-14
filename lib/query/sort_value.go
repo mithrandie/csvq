@@ -108,18 +108,18 @@ func NewSortValue(val value.Primary, flags *cmd.Flags) *SortValue {
 	} else if i := value.ToInteger(val); !value.IsNull(i) {
 		s := value.ToString(val)
 		sortValue.Type = IntegerType
-		sortValue.Integer = i.(value.Integer).Raw()
+		sortValue.Integer = i.(*value.Integer).Raw()
 		sortValue.Float = float64(sortValue.Integer)
 		sortValue.Datetime = sortValue.Integer * 1e9
-		sortValue.String = s.(value.String).Raw()
+		sortValue.String = s.(*value.String).Raw()
 	} else if f := value.ToFloat(val); !value.IsNull(f) {
 		s := value.ToString(val)
 		sortValue.Type = FloatType
-		sortValue.Float = f.(value.Float).Raw()
+		sortValue.Float = f.(*value.Float).Raw()
 		sortValue.Datetime = int64(sortValue.Float * 1e9)
-		sortValue.String = s.(value.String).Raw()
+		sortValue.String = s.(*value.String).Raw()
 	} else if dt := value.ToDatetime(val, flags.DatetimeFormat); !value.IsNull(dt) {
-		t := dt.(value.Datetime).Raw()
+		t := dt.(*value.Datetime).Raw()
 		if t.Nanosecond() > 0 {
 			f := float64(t.Unix()) + float64(t.Nanosecond())/1e9
 			t2 := value.Float64ToTime(f)
@@ -142,13 +142,13 @@ func NewSortValue(val value.Primary, flags *cmd.Flags) *SortValue {
 		}
 	} else if b := value.ToBoolean(val); !value.IsNull(b) {
 		sortValue.Type = BooleanType
-		sortValue.Boolean = b.(value.Boolean).Raw()
+		sortValue.Boolean = b.(*value.Boolean).Raw()
 		if sortValue.Boolean {
 			sortValue.Integer = 1
 		} else {
 			sortValue.Integer = 0
 		}
-	} else if s, ok := val.(value.String); ok {
+	} else if s, ok := val.(*value.String); ok {
 		sortValue.Type = StringType
 		sortValue.String = strings.ToUpper(strings.TrimSpace(s.Raw()))
 	} else {

@@ -390,7 +390,7 @@ func (f *Filter) evalUnaryArithmetic(ctx context.Context, expr parser.UnaryArith
 	}
 
 	if pi := value.ToInteger(ope); !value.IsNull(pi) {
-		val := pi.(value.Integer).Raw()
+		val := pi.(*value.Integer).Raw()
 		switch expr.Operator.Token {
 		case '-':
 			val = val * -1
@@ -403,7 +403,7 @@ func (f *Filter) evalUnaryArithmetic(ctx context.Context, expr parser.UnaryArith
 		return value.NewNull(), nil
 	}
 
-	val := pf.(value.Float).Raw()
+	val := pf.(*value.Float).Raw()
 
 	switch expr.Operator.Token {
 	case '-':
@@ -424,7 +424,7 @@ func (f *Filter) evalConcat(ctx context.Context, expr parser.Concat) (value.Prim
 		if value.IsNull(s) {
 			return value.NewNull(), nil
 		}
-		items[i] = s.(value.String).Raw()
+		items[i] = s.(*value.String).Raw()
 	}
 	return value.NewString(strings.Join(items, "")), nil
 }
@@ -865,7 +865,7 @@ func (f *Filter) checkArgsForListFunction(ctx context.Context, expr parser.ListF
 		if value.IsNull(s) {
 			return separator, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be a string")
 		}
-		separator = s.(value.String).Raw()
+		separator = s.(*value.String).Raw()
 	}
 	return separator, nil
 }
@@ -1139,7 +1139,7 @@ func (f *Filter) evalJsonQueryForRowValue(ctx context.Context, expr parser.JsonQ
 		return nil, nil
 	}
 
-	_, values, _, err := json.LoadTable(query.(value.String).Raw(), jsonText.(value.String).Raw())
+	_, values, _, err := json.LoadTable(query.(*value.String).Raw(), jsonText.(*value.String).Raw())
 	if err != nil {
 		return nil, NewLoadJsonError(expr, err.Error())
 	}
@@ -1204,7 +1204,7 @@ func (f *Filter) evalJsonQueryForRowValueList(ctx context.Context, expr parser.J
 		return nil, nil
 	}
 
-	_, values, _, err := json.LoadTable(query.(value.String).Raw(), jsonText.(value.String).Raw())
+	_, values, _, err := json.LoadTable(query.(*value.String).Raw(), jsonText.(*value.String).Raw())
 	if err != nil {
 		return nil, NewLoadJsonError(expr, err.Error())
 	}
@@ -1253,7 +1253,7 @@ func (f *Filter) evalJsonQueryForArray(ctx context.Context, expr parser.JsonQuer
 		return nil, nil
 	}
 
-	values, err := json.LoadArray(query.(value.String).Raw(), jsonText.(value.String).Raw())
+	values, err := json.LoadArray(query.(*value.String).Raw(), jsonText.(*value.String).Raw())
 	if err != nil {
 		return nil, NewLoadJsonError(expr, err.Error())
 	}

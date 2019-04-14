@@ -78,11 +78,11 @@ func SerializeKey(buf *bytes.Buffer, val value.Primary, flags *cmd.Flags) {
 	if value.IsNull(val) {
 		serializeNull(buf)
 	} else if in := value.ToInteger(val); !value.IsNull(in) {
-		serializeInteger(buf, in.(value.Integer).Raw())
+		serializeInteger(buf, in.(*value.Integer).Raw())
 	} else if f := value.ToFloat(val); !value.IsNull(f) {
-		serializeFlaot(buf, f.(value.Float).Raw())
+		serializeFlaot(buf, f.(*value.Float).Raw())
 	} else if dt := value.ToDatetime(val, flags.DatetimeFormat); !value.IsNull(dt) {
-		t := dt.(value.Datetime).Raw()
+		t := dt.(*value.Datetime).Raw()
 		if t.Nanosecond() > 0 {
 			f := float64(t.Unix()) + float64(t.Nanosecond())/1e9
 			t2 := value.Float64ToTime(f)
@@ -95,8 +95,8 @@ func SerializeKey(buf *bytes.Buffer, val value.Primary, flags *cmd.Flags) {
 			serializeInteger(buf, t.Unix())
 		}
 	} else if b := value.ToBoolean(val); !value.IsNull(b) {
-		serializeBoolean(buf, b.(value.Boolean).Raw())
-	} else if s, ok := val.(value.String); ok {
+		serializeBoolean(buf, b.(*value.Boolean).Raw())
+	} else if s, ok := val.(*value.String); ok {
 		serializeString(buf, s.Raw())
 	} else {
 		serializeNull(buf)
