@@ -78,9 +78,11 @@ import (
 %type<statement>   command_statement
 %type<statement>   trigger_statement
 %type<queryexpr>   select_query
+%type<queryexpr>   select_into_query
 %type<queryexpr>   select_entity
 %type<queryexpr>   select_set_entity
 %type<queryexpr>   select_clause
+%type<queryexpr>   into_clause
 %type<queryexpr>   from_clause
 %type<queryexpr>   where_clause
 %type<queryexpr>   group_by_clause
@@ -283,6 +285,10 @@ function_loop_program
 
 common_statement
     : select_query
+    {
+        $$ = $1
+    }
+    | select_into_query
     {
         $$ = $1
     }
@@ -1039,6 +1045,44 @@ select_query
         }
     }
 
+select_into_query
+    : with_clause select_clause into_clause from_clause where_clause group_by_clause having_clause order_by_clause limit_clause offset_clause
+    {
+        $$ = SelectQuery{
+            WithClause:    $1,
+            SelectEntity:  SelectEntity{
+                SelectClause:  $2,
+                IntoClause:    $3,
+                FromClause:    $4,
+                WhereClause:   $5,
+                GroupByClause: $6,
+                HavingClause:  $7,
+            },
+            OrderByClause: $8,
+            LimitClause:   $9,
+            OffsetClause:  $10,
+        }
+    }
+    | with_clause select_clause into_clause from_clause where_clause group_by_clause having_clause order_by_clause limit_clause offset_clause FOR UPDATE
+    {
+        $$ = SelectQuery{
+            WithClause:    $1,
+            SelectEntity:  SelectEntity{
+                SelectClause:  $2,
+                IntoClause:    $3,
+                FromClause:    $4,
+                WhereClause:   $5,
+                GroupByClause: $6,
+                HavingClause:  $7,
+            },
+            OrderByClause: $8,
+            LimitClause:   $9,
+            OffsetClause:  $10,
+            ForUpdate:     true,
+            ForUpdateLiteral: $11.Literal + " " + $12.Literal,
+        }
+    }
+
 select_entity
     : select_clause from_clause where_clause group_by_clause having_clause
     {
@@ -1092,6 +1136,12 @@ select_clause
     : SELECT distinct fields
     {
         $$ = SelectClause{BaseExpr: NewBaseExpr($1), Select: $1.Literal, Distinct: $2, Fields: $3}
+    }
+
+into_clause
+    : INTO variables
+    {
+        $$ = IntoClause{Into: $1.Literal, Variables: $2}
     }
 
 from_clause

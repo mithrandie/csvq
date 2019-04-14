@@ -404,10 +404,11 @@ func TestDeclareView(t *testing.T) {
 }
 
 var selectTests = []struct {
-	Name   string
-	Query  parser.SelectQuery
-	Result *View
-	Error  string
+	Name         string
+	Query        parser.SelectQuery
+	Result       *View
+	SetVariables map[parser.Variable]value.Primary
+	Error        string
 }{
 	{
 		Name: "Select",
@@ -1111,6 +1112,151 @@ var selectTests = []struct {
 		},
 		Error: "result set to be combined should contain exactly 1 field",
 	},
+	{
+		Name: "Select Into Variables",
+		Query: parser.SelectQuery{
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.QueryExpression{
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+					},
+				},
+				IntoClause: parser.IntoClause{
+					Variables: []parser.Variable{
+						{Name: "var1"},
+						{Name: "var2"},
+					},
+				},
+				FromClause: parser.FromClause{
+					Tables: []parser.QueryExpression{
+						parser.Table{Object: parser.Identifier{Literal: "table1"}},
+					},
+				},
+			},
+			LimitClause: parser.LimitClause{
+				Value: parser.NewIntegerValueFromString("1"),
+			},
+		},
+		SetVariables: map[parser.Variable]value.Primary{
+			parser.Variable{Name: "var1"}: value.NewString("1"),
+			parser.Variable{Name: "var2"}: value.NewString("str1"),
+		},
+	},
+	{
+		Name: "Select Into Variables Empty Result Set",
+		Query: parser.SelectQuery{
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.QueryExpression{
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+					},
+				},
+				IntoClause: parser.IntoClause{
+					Variables: []parser.Variable{
+						{Name: "var1"},
+						{Name: "var2"},
+					},
+				},
+				FromClause: parser.FromClause{
+					Tables: []parser.QueryExpression{
+						parser.Table{Object: parser.Identifier{Literal: "table1"}},
+					},
+				},
+				WhereClause: parser.WhereClause{
+					Filter: parser.NewTernaryValueFromString("false"),
+				},
+			},
+			LimitClause: parser.LimitClause{
+				Value: parser.NewIntegerValueFromString("1"),
+			},
+		},
+		SetVariables: map[parser.Variable]value.Primary{
+			parser.Variable{Name: "var1"}: value.NewNull(),
+			parser.Variable{Name: "var2"}: value.NewNull(),
+		},
+	},
+	{
+		Name: "Select Into Variables Too Many Records",
+		Query: parser.SelectQuery{
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.QueryExpression{
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+					},
+				},
+				IntoClause: parser.IntoClause{
+					Variables: []parser.Variable{
+						{Name: "var1"},
+						{Name: "var2"},
+					},
+				},
+				FromClause: parser.FromClause{
+					Tables: []parser.QueryExpression{
+						parser.Table{Object: parser.Identifier{Literal: "table1"}},
+					},
+				},
+			},
+		},
+		Error: "select into query returns too many records, should return only one record",
+	},
+	{
+		Name: "Select Into Variables Field Length Not Match",
+		Query: parser.SelectQuery{
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.QueryExpression{
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+					},
+				},
+				IntoClause: parser.IntoClause{
+					Variables: []parser.Variable{
+						{Name: "var1"},
+					},
+				},
+				FromClause: parser.FromClause{
+					Tables: []parser.QueryExpression{
+						parser.Table{Object: parser.Identifier{Literal: "table1"}},
+					},
+				},
+			},
+			LimitClause: parser.LimitClause{
+				Value: parser.NewIntegerValueFromString("1"),
+			},
+		},
+		Error: "select into query should return exactly 1 field",
+	},
+	{
+		Name: "Select Into Variables Undeclared Variable",
+		Query: parser.SelectQuery{
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.QueryExpression{
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+					},
+				},
+				IntoClause: parser.IntoClause{
+					Variables: []parser.Variable{
+						{Name: "var1"},
+						{Name: "undeclared"},
+					},
+				},
+				FromClause: parser.FromClause{
+					Tables: []parser.QueryExpression{
+						parser.Table{Object: parser.Identifier{Literal: "table1"}},
+					},
+				},
+			},
+			LimitClause: parser.LimitClause{
+				Value: parser.NewIntegerValueFromString("1"),
+			},
+		},
+		Error: "variable @undeclared is undeclared",
+	},
 }
 
 func TestSelect(t *testing.T) {
@@ -1122,6 +1268,10 @@ func TestSelect(t *testing.T) {
 	TestTx.Flags.Repository = TestDir
 
 	filter := NewFilter(TestTx)
+	_ = filter.variables.Declare(context.Background(), filter, parser.VariableDeclaration{Assignments: []parser.VariableAssignment{
+		{Variable: parser.Variable{Name: "var1"}},
+		{Variable: parser.Variable{Name: "var2"}, Value: parser.NewIntegerValueFromString("2")},
+	}})
 
 	for _, v := range selectTests {
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
@@ -1138,8 +1288,18 @@ func TestSelect(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(result, v.Result) {
-			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
+		if v.Result != nil {
+			if !reflect.DeepEqual(result, v.Result) {
+				t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
+			}
+		}
+		if 0 < len(v.SetVariables) {
+			for variable, expectValue := range v.SetVariables {
+				val, _ := filter.variables.Get(variable)
+				if !reflect.DeepEqual(val, expectValue) {
+					t.Errorf("%s: variable %s = %v, want %v", v.Name, variable, val, expectValue)
+				}
+			}
 		}
 	}
 }

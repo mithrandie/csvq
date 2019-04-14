@@ -304,6 +304,7 @@ func (e SelectSet) String() string {
 type SelectEntity struct {
 	*BaseExpr
 	SelectClause  QueryExpression
+	IntoClause    QueryExpression
 	FromClause    QueryExpression
 	WhereClause   QueryExpression
 	GroupByClause QueryExpression
@@ -312,6 +313,9 @@ type SelectEntity struct {
 
 func (e SelectEntity) String() string {
 	s := []string{e.SelectClause.String()}
+	if e.IntoClause != nil {
+		s = append(s, e.IntoClause.String())
+	}
 	if e.FromClause != nil {
 		s = append(s, e.FromClause.String())
 	}
@@ -345,6 +349,20 @@ func (sc SelectClause) String() string {
 	}
 	s = append(s, listQueryExpressions(sc.Fields))
 	return joinWithSpace(s)
+}
+
+type IntoClause struct {
+	*BaseExpr
+	Into      string
+	Variables []Variable
+}
+
+func (e IntoClause) String() string {
+	vars := make([]QueryExpression, 0, len(e.Variables))
+	for _, v := range e.Variables {
+		vars = append(vars, v)
+	}
+	return joinWithSpace([]string{e.Into, listQueryExpressions(vars)})
 }
 
 type FromClause struct {

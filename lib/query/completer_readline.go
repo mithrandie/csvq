@@ -124,8 +124,9 @@ type Completer struct {
 	allColumns       []string
 	tableColumns     map[string][]string
 
-	tokens  []parser.Token
-	lastIdx int
+	tokens            []parser.Token
+	lastIdx           int
+	selectIntoEnabled bool
 }
 
 func NewCompleter(filter *Filter) *Completer {
@@ -914,6 +915,16 @@ func (c *Completer) whereClause(line string, origLine string, index int) readlin
 }
 
 func (c *Completer) SelectArgs(line string, origLine string, index int) readline.CandidateList {
+	isSelectInto := false
+	if c.selectIntoEnabled {
+		for i := len(c.tokens) - 1; i >= 0; i-- {
+			if c.tokens[i].Token == parser.INTO {
+				isSelectInto = true
+				break
+			}
+		}
+	}
+
 	return c.completeArgs(
 		line,
 		origLine,
@@ -1049,10 +1060,14 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 						"ORDER BY",
 						"LIMIT",
 						"OFFSET",
-						"UNION",
-						"EXCEPT",
-						"INTERSECT",
 					}, true)...)
+					if !isSelectInto {
+						customList = append(customList, c.candidateList([]string{
+							"UNION",
+							"EXCEPT",
+							"INTERSECT",
+						}, true)...)
+					}
 					customList = append(customList, c.candidateList([]string{
 						"FOR UPDATE",
 					}, false)...)
@@ -1070,10 +1085,14 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 							"ORDER BY",
 							"LIMIT",
 							"OFFSET",
-							"UNION",
-							"EXCEPT",
-							"INTERSECT",
 						}, true)...)
+						if !isSelectInto {
+							customList = append(customList, c.candidateList([]string{
+								"UNION",
+								"EXCEPT",
+								"INTERSECT",
+							}, true)...)
+						}
 						customList = append(customList, c.candidateList([]string{
 							"FOR UPDATE",
 						}, false)...)
@@ -1090,10 +1109,14 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 						"ORDER BY",
 						"LIMIT",
 						"OFFSET",
-						"UNION",
-						"EXCEPT",
-						"INTERSECT",
 					}, true)...)
+					if !isSelectInto {
+						customList = append(customList, c.candidateList([]string{
+							"UNION",
+							"EXCEPT",
+							"INTERSECT",
+						}, true)...)
+					}
 					customList = append(customList, c.candidateList([]string{
 						"FOR UPDATE",
 					}, false)...)
@@ -1111,10 +1134,14 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 							"ORDER BY",
 							"LIMIT",
 							"OFFSET",
-							"UNION",
-							"EXCEPT",
-							"INTERSECT",
 						}, true)...)
+						if !isSelectInto {
+							clist = append(clist, c.candidateList([]string{
+								"UNION",
+								"EXCEPT",
+								"INTERSECT",
+							}, true)...)
+						}
 						clist = append(clist, c.candidateList([]string{
 							"FOR UPDATE",
 						}, false)...)
@@ -1122,6 +1149,28 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 				}
 				clist.Sort()
 				return nil, append(tables, clist...), true
+			case parser.INTO:
+				switch c.tokens[c.lastIdx].Token {
+				case parser.INTO, ',':
+					customList = append(customList, c.candidateList(c.varList, false)...)
+				case parser.VARIABLE:
+					customList = append(customList, c.candidateList([]string{
+						"FROM",
+						"WHERE",
+						"GROUP BY",
+						"HAVING",
+						"ORDER BY",
+						"LIMIT",
+						"OFFSET",
+					}, true)...)
+					customList = append(customList, c.candidateList([]string{
+						"FOR UPDATE",
+					}, false)...)
+				}
+				if customList != nil {
+					customList.Sort()
+				}
+				return keywords, customList, true
 			case parser.SELECT:
 				if i == c.lastIdx {
 					if 0 < len(line) {
@@ -1149,6 +1198,11 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 						customList = append(customList, c.candidateList([]string{
 							"FOR UPDATE",
 						}, false)...)
+						if c.selectIntoEnabled {
+							customList = append(customList, c.candidateList([]string{
+								"INTO",
+							}, true)...)
+						}
 					}
 				}
 				customList = append(customList, c.SearchValues(line, origLine, index)...)
@@ -1512,7 +1566,13 @@ func (c *Completer) DeclareArgs(line string, origLine string, index int) readlin
 				case parser.VIEW, ')':
 					return []string{"AS"}, nil, true
 				}
-			case parser.AGGREGATE, parser.FUNCTION, parser.VAR:
+			case parser.AGGREGATE, parser.FUNCTION:
+			case parser.VAR:
+				switch c.tokens[c.lastIdx].Token {
+				case parser.VARIABLE, ',':
+				default:
+					return nil, c.SearchValues(line, origLine, index), true
+				}
 			case parser.DECLARE:
 				if i == c.lastIdx-1 && c.tokens[c.lastIdx].Token != parser.VARIABLE {
 					obj := []string{
@@ -1522,6 +1582,12 @@ func (c *Completer) DeclareArgs(line string, origLine string, index int) readlin
 						"AGGREGATE",
 					}
 					return obj, nil, true
+				} else if i < c.lastIdx-1 && c.tokens[i+1].Token == parser.VARIABLE {
+					switch c.tokens[c.lastIdx].Token {
+					case parser.VARIABLE, ',':
+					default:
+						return nil, c.SearchValues(line, origLine, index), true
+					}
 				}
 			default:
 				return nil, nil, false
@@ -2283,12 +2349,14 @@ func (c *Completer) SetLastIndex(line string) {
 func (c *Completer) searchStartIndex() int {
 	idx := 0
 	blockLevel := 0
+	isStatement := false
 
 StartIndexLoop:
 	for i := len(c.tokens) - 1; i >= 0; i-- {
 		switch c.tokens[i].Token {
 		case ';':
 			idx = i + 1
+			isStatement = true
 			break StartIndexLoop
 		case '(':
 			blockLevel--
@@ -2298,10 +2366,7 @@ StartIndexLoop:
 				case i+1 < len(c.tokens) && c.tokens[i+1].Token == parser.SELECT:
 					idx = i + 1
 					break StartIndexLoop
-				case 0 <= i-1 && c.isTableObject(c.tokens[i-1]):
-					idx = i - 1
-					break StartIndexLoop
-				case 0 <= i-1 && c.isFunction(c.tokens[i-1]):
+				case 0 <= i-1 && (c.isTableObject(c.tokens[i-1]) || c.isFunction(c.tokens[i-1])):
 					idx = i - 1
 					break StartIndexLoop
 				}
@@ -2311,6 +2376,13 @@ StartIndexLoop:
 		}
 	}
 
+	if 0 < len(c.varList) &&
+		(idx == 0 || isStatement) &&
+		(idx < len(c.tokens) && (c.tokens[idx].Token == parser.SELECT || c.tokens[idx].Token == parser.WITH)) {
+		c.selectIntoEnabled = true
+	} else {
+		c.selectIntoEnabled = false
+	}
 	return idx
 }
 

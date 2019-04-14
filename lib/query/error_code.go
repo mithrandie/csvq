@@ -100,6 +100,8 @@ const (
 	ErrorStatementNotExist                    = 13802
 	ErrorStatementReplaceValueNotSpecified    = 13803
 	ErrorReplaceKeyNotSet                     = 13901
+	ErrorSelectIntoQueryFieldLengthNotMatch   = 14001
+	ErrorSelectIntoQueryTooManyRecords        = 14002
 
 	//Incorrect Command Usage
 	ErrorIncorrectCommandUsage = 90020

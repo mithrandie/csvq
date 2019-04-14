@@ -175,63 +175,67 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 	case parser.DisposeStatement:
 		err = proc.Tx.PreparedStatements.Dispose(stmt.(parser.DisposeStatement))
 	case parser.SelectQuery:
-		if proc.Tx.Flags.Stats {
-			proc.measurementStart = time.Now()
-		}
-
-		view, e := Select(ctx, proc.Filter, stmt.(parser.SelectQuery))
-		if e == nil {
-			var warnmsg string
-
-			proc.Tx.Session.mtx.Lock()
-
-			if proc.storeResults {
-				proc.Tx.SelectedViews = append(proc.Tx.SelectedViews, view)
-			}
-
-			if _, ok := proc.Tx.Session.Stdout().(*Discard); !ok || proc.Tx.Session.OutFile() != nil {
-				fileInfo := &FileInfo{
-					Format:             proc.Tx.Flags.Format,
-					Delimiter:          proc.Tx.Flags.WriteDelimiter,
-					DelimiterPositions: proc.Tx.Flags.WriteDelimiterPositions,
-					Encoding:           proc.Tx.Flags.WriteEncoding,
-					LineBreak:          proc.Tx.Flags.LineBreak,
-					NoHeader:           proc.Tx.Flags.WithoutHeader,
-					EncloseAll:         proc.Tx.Flags.EncloseAll,
-					PrettyPrint:        proc.Tx.Flags.PrettyPrint,
-					SingleLine:         proc.Tx.Flags.WriteAsSingleLine,
-				}
-
-				var writer io.Writer
-				if proc.Tx.Session.OutFile() != nil {
-					writer = proc.Tx.Session.OutFile()
-				} else {
-					writer = proc.Tx.Session.Stdout()
-				}
-				warn, e := EncodeView(ctx, writer, view, fileInfo, proc.Tx)
-
-				if e != nil {
-					if _, ok := e.(*EmptyResultSetError); !ok {
-						err = e
-					} else if 0 < len(warn) {
-						warnmsg = warn
-					}
-				} else if !(proc.Tx.Session.OutFile() != nil && fileInfo.Format == cmd.FIXED && fileInfo.SingleLine) {
-					_, err = writer.Write([]byte(proc.Tx.Flags.LineBreak.Value()))
-				}
-			}
-
-			proc.Tx.Session.mtx.Unlock()
-
-			if 0 < len(warnmsg) {
-				proc.LogWarn(warnmsg, proc.Tx.Flags.Quiet)
-			}
+		if selectEntity, ok := stmt.(parser.SelectQuery).SelectEntity.(parser.SelectEntity); ok && selectEntity.IntoClause != nil {
+			_, err = Select(ctx, proc.Filter, stmt.(parser.SelectQuery))
 		} else {
-			err = e
-		}
+			if proc.Tx.Flags.Stats {
+				proc.measurementStart = time.Now()
+			}
 
-		if proc.Tx.Flags.Stats {
-			proc.showExecutionTime(ctx)
+			view, e := Select(ctx, proc.Filter, stmt.(parser.SelectQuery))
+			if e == nil {
+				var warnmsg string
+
+				proc.Tx.Session.mtx.Lock()
+
+				if proc.storeResults {
+					proc.Tx.SelectedViews = append(proc.Tx.SelectedViews, view)
+				}
+
+				if _, ok := proc.Tx.Session.Stdout().(*Discard); !ok || proc.Tx.Session.OutFile() != nil {
+					fileInfo := &FileInfo{
+						Format:             proc.Tx.Flags.Format,
+						Delimiter:          proc.Tx.Flags.WriteDelimiter,
+						DelimiterPositions: proc.Tx.Flags.WriteDelimiterPositions,
+						Encoding:           proc.Tx.Flags.WriteEncoding,
+						LineBreak:          proc.Tx.Flags.LineBreak,
+						NoHeader:           proc.Tx.Flags.WithoutHeader,
+						EncloseAll:         proc.Tx.Flags.EncloseAll,
+						PrettyPrint:        proc.Tx.Flags.PrettyPrint,
+						SingleLine:         proc.Tx.Flags.WriteAsSingleLine,
+					}
+
+					var writer io.Writer
+					if proc.Tx.Session.OutFile() != nil {
+						writer = proc.Tx.Session.OutFile()
+					} else {
+						writer = proc.Tx.Session.Stdout()
+					}
+					warn, e := EncodeView(ctx, writer, view, fileInfo, proc.Tx)
+
+					if e != nil {
+						if _, ok := e.(*EmptyResultSetError); !ok {
+							err = e
+						} else if 0 < len(warn) {
+							warnmsg = warn
+						}
+					} else if !(proc.Tx.Session.OutFile() != nil && fileInfo.Format == cmd.FIXED && fileInfo.SingleLine) {
+						_, err = writer.Write([]byte(proc.Tx.Flags.LineBreak.Value()))
+					}
+				}
+
+				proc.Tx.Session.mtx.Unlock()
+
+				if 0 < len(warnmsg) {
+					proc.LogWarn(warnmsg, proc.Tx.Flags.Quiet)
+				}
+			} else {
+				err = e
+			}
+
+			if proc.Tx.Flags.Stats {
+				proc.showExecutionTime(ctx)
+			}
 		}
 	case parser.InsertQuery:
 		if proc.Tx.Flags.Stats {

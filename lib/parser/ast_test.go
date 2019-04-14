@@ -307,6 +307,13 @@ func TestSelectEntity_String(t *testing.T) {
 			Select: "select",
 			Fields: []QueryExpression{Field{Object: Identifier{Literal: "column"}}},
 		},
+		IntoClause: IntoClause{
+			Into: "into",
+			Variables: []Variable{
+				{Name: "var1"},
+				{Name: "var2"},
+			},
+		},
 		FromClause: FromClause{
 			From:   "from",
 			Tables: []QueryExpression{Table{Object: Identifier{Literal: "table"}}},
@@ -335,7 +342,7 @@ func TestSelectEntity_String(t *testing.T) {
 		},
 	}
 
-	expect := "select column from table where column > 1 group by column1 having column > 1"
+	expect := "select column into @var1, @var2 from table where column > 1 group by column1 having column > 1"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -369,6 +376,20 @@ func TestSelectClause_String(t *testing.T) {
 		},
 	}
 	expect := "select distinct column1, column2 as alias"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestIntoClause_String(t *testing.T) {
+	e := IntoClause{
+		Into: "into",
+		Variables: []Variable{
+			{Name: "var1"},
+			{Name: "var2"},
+		},
+	}
+	expect := "into @var1, @var2"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}

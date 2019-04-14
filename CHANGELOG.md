@@ -1,5 +1,11 @@
 # Change Log
 
+## Version 1.9.14
+
+Released on April 14, 2019
+
+- Support SELECT INTO Variables statement.
+
 ## Version 1.9.13
 
 Released on April 13, 2019

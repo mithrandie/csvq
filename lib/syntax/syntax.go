@@ -290,6 +290,24 @@ var CsvqSyntax = []Expression{
 		},
 	},
 	{
+		Label: "REPLACE Statement",
+		Grammar: []Definition{
+			{
+				Name: "replace_statement",
+				Group: []Grammar{
+					{Option{Link("with_clause")}, Link("replace_query")},
+				},
+			},
+			{
+				Name: "replace_query",
+				Group: []Grammar{
+					{Keyword("REPLACE"), Keyword("INTO"), Identifier("table_name"), Option{Parentheses{ContinuousOption{Identifier("column_name")}}}, Keyword("USING"), Parentheses{ContinuousOption{Identifier("key_column_name")}}, Keyword("VALUES"), ContinuousOption{Link("row_value")}},
+					{Keyword("REPLACE"), Keyword("INTO"), Identifier("table_name"), Option{Parentheses{ContinuousOption{Identifier("column_name")}}}, Keyword("USING"), Parentheses{ContinuousOption{Identifier("key_column_name")}}, Link("select_query")},
+				},
+			},
+		},
+	},
+	{
 		Label: "DELETE Statement",
 		Grammar: []Definition{
 			{
@@ -443,6 +461,12 @@ var CsvqSyntax = []Expression{
 				Name: "variable_substitution",
 				Group: []Grammar{
 					{Variable("@variable"), Token(":="), Link("value")},
+				},
+			},
+			{
+				Name: "select_into_statement",
+				Group: []Grammar{
+					{Option{Link("with_clause")}, Link("select_clause"), Keyword("INTO"), ContinuousOption{Link("variable")}, Option{Link("from_clause")}, Option{Link("where_clause")}, Option{Link("group_by_clause")}, Option{Link("having_clause")}, Option{Link("order_by_clause")}, Option{Link("limit_clause")}, Option{Link("offset_clause")}, Option{Keyword("FOR"), Keyword("UPDATE")}},
 				},
 			},
 			{
