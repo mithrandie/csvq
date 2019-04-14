@@ -1512,7 +1512,13 @@ func (c *Completer) DeclareArgs(line string, origLine string, index int) readlin
 				case parser.VIEW, ')':
 					return []string{"AS"}, nil, true
 				}
-			case parser.AGGREGATE, parser.FUNCTION, parser.VAR:
+			case parser.AGGREGATE, parser.FUNCTION:
+			case parser.VAR:
+				switch c.tokens[c.lastIdx].Token {
+				case parser.VARIABLE, ',':
+				default:
+					return nil, c.SearchValues(line, origLine, index), true
+				}
 			case parser.DECLARE:
 				if i == c.lastIdx-1 && c.tokens[c.lastIdx].Token != parser.VARIABLE {
 					obj := []string{
@@ -1522,6 +1528,12 @@ func (c *Completer) DeclareArgs(line string, origLine string, index int) readlin
 						"AGGREGATE",
 					}
 					return obj, nil, true
+				} else if i < c.lastIdx-1 && c.tokens[i+1].Token == parser.VARIABLE {
+					switch c.tokens[c.lastIdx].Token {
+					case parser.VARIABLE, ',':
+					default:
+						return nil, c.SearchValues(line, origLine, index), true
+					}
 				}
 			default:
 				return nil, nil, false

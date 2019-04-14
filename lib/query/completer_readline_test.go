@@ -2513,6 +2513,16 @@ var completerDeclareArgsTests = []completerTest{
 		},
 	},
 	{
+		Name:     "DeclareArgs Declare Variable with DECLARE",
+		Line:     "@",
+		OrigLine: "declare @var := @",
+		Index:    17,
+		Expect: readline.CandidateList{
+			{Name: []rune("@var1")},
+			{Name: []rune("@var2")},
+		},
+	},
+	{
 		Name:     "DeclareArgs After Identifier",
 		Line:     "",
 		OrigLine: "declare cur ",
