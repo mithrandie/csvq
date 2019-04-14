@@ -11,13 +11,14 @@ type QueryLexer struct {
 
 func (l *QueryLexer) Lex(lval *jqSymType) int {
 	tok, err := l.Scan()
+	lval.token = tok
+	l.token = lval.token
+
 	if err != nil {
 		l.Error(err.Error())
 	}
 
-	lval.token = tok
-	l.token = lval.token
-	return tok.Token
+	return lval.token.Token
 }
 
 func (l *QueryLexer) Error(e string) {

@@ -135,7 +135,7 @@ func Median(list []value.Primary, flags *cmd.Flags) value.Primary {
 		}
 	}
 
-	if len(values) < 1 {
+	if values == nil || len(values) < 1 {
 		return value.NewNull()
 	}
 

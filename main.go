@@ -17,7 +17,7 @@ import (
 
 func main() {
 	action.CurrentVersion, _ = action.ParseVersion(query.Version)
-	if action.CurrentVersion != nil {
+	if !action.CurrentVersion.IsEmpty() {
 		query.Version = action.CurrentVersion.String()
 	}
 

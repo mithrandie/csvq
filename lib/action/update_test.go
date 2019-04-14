@@ -99,13 +99,6 @@ func TestVersion_String(t *testing.T) {
 	if result != expect {
 		t.Errorf("result = %q, want %q", result, expect)
 	}
-
-	v = nil
-	expect = ""
-	result = v.String()
-	if result != expect {
-		t.Errorf("result = %q, want %q", result, expect)
-	}
 }
 
 var parseVersionTests = []struct {
@@ -299,5 +292,5 @@ func TestCheckForUpdates(t *testing.T) {
 		}
 	}
 
-	CurrentVersion = nil
+	CurrentVersion = &Version{}
 }

@@ -16,6 +16,36 @@ import (
 	"github.com/mithrandie/ternary"
 )
 
+func TestContextForStoringResults(t *testing.T) {
+	defer func() {
+		TestTx.SelectedViews = nil
+		TestTx.AffectedRows = 0
+	}()
+
+	tx := TestTx
+	proc := NewProcessor(tx)
+
+	ctx := ContextForStoringResults(context.Background())
+	_, err := proc.Execute(ctx, []parser.Statement{
+		parser.SelectQuery{
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.QueryExpression{
+						parser.Field{Object: parser.NewIntegerValueFromString("1")},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error %q", err)
+	}
+
+	if len(proc.Tx.SelectedViews) < 1 {
+		t.Fatalf("result set is not set to the transaction")
+	}
+}
+
 var processorExecuteStatementTests = []struct {
 	Input            parser.Statement
 	UncommittedViews UncommittedViews
