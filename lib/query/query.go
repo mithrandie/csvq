@@ -95,6 +95,20 @@ func DeclareView(ctx context.Context, filter *Filter, expr parser.ViewDeclaratio
 }
 
 func Select(ctx context.Context, parentFilter *Filter, query parser.SelectQuery) (*View, error) {
+	var intoVars []parser.Variable = nil
+	if selectEntity, ok := query.SelectEntity.(parser.SelectEntity); ok && selectEntity.IntoClause != nil {
+		intoClause := selectEntity.IntoClause.(parser.IntoClause)
+		if len(selectEntity.SelectClause.(parser.SelectClause).Fields) != len(intoClause.Variables) {
+			return nil, NewSelectIntoQueryFieldLengthNotMatchError(query, len(intoClause.Variables))
+		}
+		for _, v := range intoClause.Variables {
+			if _, err := parentFilter.variables.Get(v); err != nil {
+				return nil, err
+			}
+		}
+		intoVars = intoClause.Variables
+	}
+
 	filter := parentFilter.CreateNode()
 
 	if query.WithClause != nil {
@@ -127,6 +141,29 @@ func Select(ctx context.Context, parentFilter *Filter, query parser.SelectQuery)
 	}
 
 	err = view.Fix(ctx)
+
+	if intoVars != nil {
+		if view.FieldLen() != len(intoVars) {
+			return nil, NewSelectIntoQueryFieldLengthNotMatchError(query, len(intoVars))
+		}
+		switch view.RecordLen() {
+		case 0:
+			for _, v := range intoVars {
+				if _, err := parentFilter.variables.SubstituteDirectly(v, value.NewNull()); err != nil {
+					return view, err
+				}
+			}
+		case 1:
+			for i, v := range intoVars {
+				if _, err := parentFilter.variables.SubstituteDirectly(v, view.RecordSet[0][i].Value()); err != nil {
+					return view, err
+				}
+			}
+		default:
+			return view, NewSelectIntoQueryTooManyRecordsError(query)
+		}
+	}
+
 	return view, err
 }
 

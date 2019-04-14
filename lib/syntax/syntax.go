@@ -464,6 +464,12 @@ var CsvqSyntax = []Expression{
 				},
 			},
 			{
+				Name: "select_into_statement",
+				Group: []Grammar{
+					{Option{Link("with_clause")}, Link("select_clause"), Keyword("INTO"), ContinuousOption{Link("variable")}, Option{Link("from_clause")}, Option{Link("where_clause")}, Option{Link("group_by_clause")}, Option{Link("having_clause")}, Option{Link("order_by_clause")}, Option{Link("limit_clause")}, Option{Link("offset_clause")}, Option{Keyword("FOR"), Keyword("UPDATE")}},
+				},
+			},
+			{
 				Name: "dispose_variable_statement",
 				Group: []Grammar{
 					{Keyword("DISPOSE"), Variable("@variable")},

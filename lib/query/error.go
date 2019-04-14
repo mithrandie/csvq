@@ -119,6 +119,8 @@ const (
 	ErrMsgDuplicateStatementName               = "statement %s is a duplicate"
 	ErrMsgStatementNotExist                    = "statement %s does not exist"
 	ErrMsgStatementReplaceValueNotSpecified    = "replace value for %s is not specified"
+	ErrMsgSelectIntoQueryFieldLengthNotMatch   = "select into query should return exactly %s"
+	ErrMsgSelectIntoQueryTooManyRecords        = "select into query returns too many records, should return only one record"
 )
 
 type Error interface {
@@ -1364,6 +1366,30 @@ type StatementReplaceValueNotSpecifiedError struct {
 func NewStatementReplaceValueNotSpecifiedError(placeholder parser.Placeholder) error {
 	return &StatementReplaceValueNotSpecifiedError{
 		NewBaseError(placeholder, fmt.Sprintf(ErrMsgStatementReplaceValueNotSpecified, placeholder), ReturnCodeApplicationError, ErrorStatementReplaceValueNotSpecified),
+	}
+}
+
+type SelectIntoQueryFieldLengthNotMatchError struct {
+	*BaseError
+}
+
+func NewSelectIntoQueryFieldLengthNotMatchError(query parser.SelectQuery, fieldLen int) error {
+	selectClause := searchSelectClause(query)
+
+	return &SelectIntoQueryFieldLengthNotMatchError{
+		NewBaseError(selectClause, fmt.Sprintf(ErrMsgSelectIntoQueryFieldLengthNotMatch, FormatCount(fieldLen, "field")), ReturnCodeApplicationError, ErrorSelectIntoQueryFieldLengthNotMatch),
+	}
+}
+
+type SelectIntoQueryTooManyRecordsError struct {
+	*BaseError
+}
+
+func NewSelectIntoQueryTooManyRecordsError(query parser.SelectQuery) error {
+	selectClause := searchSelectClause(query)
+
+	return &SelectIntoQueryTooManyRecordsError{
+		NewBaseError(selectClause, ErrMsgSelectIntoQueryTooManyRecords, ReturnCodeApplicationError, ErrorSelectIntoQueryTooManyRecords),
 	}
 }
 

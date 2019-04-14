@@ -346,6 +346,30 @@ var processorExecuteStatementTests = []struct {
 		Logs: "column1,column2\n1,2\n",
 	},
 	{
+		Input: parser.SelectQuery{
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.QueryExpression{
+						parser.Field{
+							Object: parser.NewIntegerValueFromString("1234"),
+						},
+					},
+				},
+				IntoClause: parser.IntoClause{
+					Variables: []parser.Variable{
+						{Name: "var4"},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: parser.Print{
+			Value: parser.Variable{Name: "var4"},
+		},
+		Logs: "1234\n",
+	},
+	{
 		Input: parser.DisposeView{
 			View: parser.Identifier{Literal: "tbl"},
 		},

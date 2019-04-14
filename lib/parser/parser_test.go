@@ -136,6 +136,67 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select c1 into @var from stdin",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{
+								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
+							},
+						},
+					},
+					IntoClause: IntoClause{
+						Into: "into",
+						Variables: []Variable{
+							{BaseExpr: &BaseExpr{line: 1, char: 16}, Name: "var"},
+						},
+					},
+					FromClause: FromClause{From: "from", Tables: []QueryExpression{
+						Table{Object: Stdin{BaseExpr: &BaseExpr{line: 1, char: 26}, Stdin: "stdin"}},
+					}},
+				},
+			},
+		},
+	},
+	{
+		Input: "select c1 into @var from stdin offset 1 for update",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{
+								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
+							},
+						},
+					},
+					IntoClause: IntoClause{
+						Into: "into",
+						Variables: []Variable{
+							{BaseExpr: &BaseExpr{line: 1, char: 16}, Name: "var"},
+						},
+					},
+					FromClause: FromClause{From: "from", Tables: []QueryExpression{
+						Table{Object: Stdin{BaseExpr: &BaseExpr{line: 1, char: 26}, Stdin: "stdin"}},
+					}},
+				},
+				OffsetClause: OffsetClause{
+					BaseExpr: &BaseExpr{line: 1, char: 32},
+					Offset:   "offset",
+					Value:    NewIntegerValueFromString("1"),
+				},
+				ForUpdate:        true,
+				ForUpdateLiteral: "for update",
+			},
+		},
+	},
+	{
 		Input: "select c1 from fixed('[1, 2, 3]', `fixed_length.dat`) fl",
 		Output: []Statement{
 			SelectQuery{
@@ -6153,6 +6214,9 @@ func TestParse(t *testing.T) {
 
 					if !reflect.DeepEqual(entity.SelectClause, expectEntity.SelectClause) {
 						t.Errorf("select clause = %#v, want %#v for %q", entity.SelectClause, expectEntity.SelectClause, v.Input)
+					}
+					if !reflect.DeepEqual(entity.IntoClause, expectEntity.IntoClause) {
+						t.Errorf("into clause = %#v, want %#v for %q", entity.IntoClause, expectEntity.IntoClause, v.Input)
 					}
 					if !reflect.DeepEqual(entity.FromClause, expectEntity.FromClause) {
 						t.Errorf("from clause = %#v, want %#v for %q", entity.FromClause, expectEntity.FromClause, v.Input)
