@@ -1050,13 +1050,26 @@ func TestCalcMinimumRequired(t *testing.T) {
 	}
 }
 
+func GenerateBenchView(tableName string, records int, startIdx int) *View {
+	view := &View{
+		Header:    NewHeader(tableName, []string{"c1"}),
+		RecordSet: make([]Record, records),
+	}
+
+	for i := 0; i < records; i++ {
+		view.RecordSet[i] = NewRecord([]value.Primary{value.NewInteger(int64(i + startIdx))})
+	}
+
+	return view
+}
+
 func BenchmarkCrossJoin(b *testing.B) {
 	ctx := context.Background()
 	filter := NewFilter(TestTx)
 
 	for i := 0; i < b.N; i++ {
-		view := GenerateBenchView("t1", 100)
-		joinView := GenerateBenchView("t2", 100)
+		view := GenerateBenchView("t1", 100, 0)
+		joinView := GenerateBenchView("t2", 100, 50)
 
 		_ = CrossJoin(ctx, filter, view, joinView)
 	}
@@ -1073,8 +1086,8 @@ func BenchmarkInnerJoin(b *testing.B) {
 	filter := NewFilter(TestTx)
 
 	for i := 0; i < b.N; i++ {
-		view := GenerateBenchView("t1", 100)
-		joinView := GenerateBenchView("t2", 100)
+		view := GenerateBenchView("t1", 100, 0)
+		joinView := GenerateBenchView("t2", 100, 50)
 
 		_ = InnerJoin(ctx, filter, view, joinView, condition)
 	}
@@ -1091,8 +1104,8 @@ func BenchmarkOuterJoin(b *testing.B) {
 	filter := NewFilter(TestTx)
 
 	for i := 0; i < b.N; i++ {
-		view := GenerateBenchView("t1", 100)
-		joinView := GenerateBenchView("t2", 100)
+		view := GenerateBenchView("t1", 100, 0)
+		joinView := GenerateBenchView("t2", 100, 50)
 
 		_ = OuterJoin(ctx, filter, view, joinView, condition, parser.LEFT)
 	}

@@ -291,16 +291,3 @@ func GenerateBenchGroupedViewFilter() Filter {
 		tx: tx,
 	}
 }
-
-func GenerateBenchView(tableName string, records int) *View {
-	view := &View{
-		Header:    NewHeader(tableName, []string{"c1"}),
-		RecordSet: make([]Record, records),
-	}
-
-	for i := 0; i < records; i++ {
-		view.RecordSet[i] = NewRecord([]value.Primary{value.NewInteger(int64(i))})
-	}
-
-	return view
-}
