@@ -17,6 +17,18 @@ var booleanTrue = &Boolean{value: true}
 var booleanFalse = &Boolean{value: false}
 var null = &Null{}
 
+func IsTrue(v Primary) bool {
+	return v == ternaryTrue
+}
+
+func IsFalse(v Primary) bool {
+	return v == ternaryFalse
+}
+
+func IsUnknown(v Primary) bool {
+	return v == ternaryUnknown
+}
+
 func IsNull(v Primary) bool {
 	return v == null
 }

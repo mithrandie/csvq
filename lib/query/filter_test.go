@@ -2799,6 +2799,43 @@ var filterEvaluateTests = []struct {
 		Result: value.NewInteger(3),
 	},
 	{
+		Name: "Aggregate Function Count With Null",
+		Filter: &Filter{
+			records: []filterRecord{
+				{
+					view: &View{
+						Header: NewHeader("table1", []string{"column1", "column2"}),
+						RecordSet: []Record{
+							{
+								NewGroupCell([]value.Primary{
+									value.NewInteger(1),
+									value.NewNull(),
+									value.NewInteger(3),
+								}),
+								NewGroupCell([]value.Primary{
+									value.NewString("str1"),
+									value.NewString("str2"),
+									value.NewString("str3"),
+								}),
+							},
+						},
+						isGrouped: true,
+						Tx:        TestTx,
+					},
+					recordIndex: 0,
+				},
+			},
+		},
+		Expr: parser.AggregateFunction{
+			Name:     "count",
+			Distinct: parser.Token{},
+			Args: []parser.QueryExpression{
+				parser.PrimitiveType{Value: value.NewNull()},
+			},
+		},
+		Result: value.NewInteger(0),
+	},
+	{
 		Name:   "Aggregate Function As a Statement Error",
 		Filter: &Filter{},
 		Expr: parser.AggregateFunction{

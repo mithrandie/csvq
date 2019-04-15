@@ -773,8 +773,9 @@ func (f *Filter) evalAggregateFunction(ctx context.Context, expr parser.Aggregat
 		}
 
 		if uname == "COUNT" {
-			if _, ok := listExpr.(parser.PrimitiveType); ok {
-				if f.records[0].IsInRange() {
+			if pt, ok := listExpr.(parser.PrimitiveType); ok {
+				v := pt.Value
+				if !value.IsNull(v) && !value.IsUnknown(v) && f.records[0].IsInRange() {
 					return value.NewInteger(int64(f.records[0].view.RecordSet[f.records[0].recordIndex].GroupLen())), nil
 				} else {
 					return value.NewInteger(0), nil

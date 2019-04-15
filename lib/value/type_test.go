@@ -7,6 +7,48 @@ import (
 	"github.com/mithrandie/ternary"
 )
 
+func TestIsTrue(t *testing.T) {
+	var p Primary
+
+	p = NewInteger(1)
+	if IsTrue(p) {
+		t.Errorf("value %#p is evaluated as is a ternary-true, but it is not so", p)
+	}
+
+	p = NewTernary(ternary.TRUE)
+	if !IsTrue(p) {
+		t.Errorf("value %#p is evaluated as is not a ternary-true, but it is so", p)
+	}
+}
+
+func TestIsFalse(t *testing.T) {
+	var p Primary
+
+	p = NewInteger(1)
+	if IsFalse(p) {
+		t.Errorf("value %#p is evaluated as is a ternary-false, but it is not so", p)
+	}
+
+	p = NewTernary(ternary.FALSE)
+	if !IsFalse(p) {
+		t.Errorf("value %#p is evaluated as is not a ternary-false, but it is so", p)
+	}
+}
+
+func TestIsUnknown(t *testing.T) {
+	var p Primary
+
+	p = NewInteger(1)
+	if IsUnknown(p) {
+		t.Errorf("value %#p is evaluated as is a ternary-unknown, but it is not so", p)
+	}
+
+	p = NewTernary(ternary.UNKNOWN)
+	if !IsUnknown(p) {
+		t.Errorf("value %#p is evaluated as is not a ternary-unknown, but it is so", p)
+	}
+}
+
 func TestIsNull(t *testing.T) {
 	var p Primary
 
