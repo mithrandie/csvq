@@ -43,3 +43,9 @@ func (m AliasMap) Get(alias parser.Identifier) (string, error) {
 	}
 	return "", NewTableNotLoadedError(alias)
 }
+
+func (m AliasMap) Clear() {
+	for k := range m {
+		delete(m, k)
+	}
+}

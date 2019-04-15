@@ -187,6 +187,12 @@ func (m UserDefinedFunctionMap) Dispose(name parser.Identifier) error {
 	return NewFunctionNotExistError(name, name.Literal)
 }
 
+func (m UserDefinedFunctionMap) Clear() {
+	for k := range m {
+		delete(m, k)
+	}
+}
+
 type UserDefinedFunction struct {
 	Name         parser.Identifier
 	Statements   []parser.Statement
@@ -200,11 +206,15 @@ type UserDefinedFunction struct {
 
 func (fn *UserDefinedFunction) Execute(ctx context.Context, filter *Filter, args []value.Primary) (value.Primary, error) {
 	childScope := filter.CreateChildScope()
+	defer childScope.CloseScope()
+
 	return fn.execute(ctx, childScope, args)
 }
 
 func (fn *UserDefinedFunction) ExecuteAggregate(ctx context.Context, filter *Filter, values []value.Primary, args []value.Primary) (value.Primary, error) {
 	childScope := filter.CreateChildScope()
+	defer childScope.CloseScope()
+
 	if err := childScope.cursors.AddPseudoCursor(filter.tx, fn.Cursor, values); err != nil {
 		return nil, err
 	}

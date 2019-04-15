@@ -66,6 +66,10 @@ func (proc *Processor) NewChildProcessor() *Processor {
 	}
 }
 
+func (proc *Processor) Close() {
+	proc.Filter.CloseScope()
+}
+
 func (proc *Processor) Execute(ctx context.Context, statements []parser.Statement) (StatementFlow, error) {
 	if v := ctx.Value(StoringResultsContextKey); v != nil {
 		if b, ok := v.(bool); ok && b {
@@ -105,6 +109,7 @@ func (proc *Processor) executeChild(ctx context.Context, statements []parser.Sta
 	if child.returnVal != nil {
 		proc.returnVal = child.returnVal
 	}
+	child.Close()
 	return flow, err
 }
 
@@ -557,6 +562,7 @@ func (proc *Processor) Case(ctx context.Context, stmt parser.Case) (StatementFlo
 
 func (proc *Processor) While(ctx context.Context, stmt parser.While) (StatementFlow, error) {
 	childProc := proc.NewChildProcessor()
+	defer childProc.Close()
 
 	for {
 		childProc.Filter.ResetCurrentScope()
@@ -592,6 +598,8 @@ func (proc *Processor) WhileInCursor(ctx context.Context, stmt parser.WhileInCur
 	}
 
 	childProc := proc.NewChildProcessor()
+	defer childProc.Close()
+
 	for {
 		childProc.Filter.ResetCurrentScope()
 		if stmt.WithDeclaration {

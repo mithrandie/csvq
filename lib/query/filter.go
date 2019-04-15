@@ -48,19 +48,13 @@ type Filter struct {
 	now            time.Time
 }
 
-type ContainsSubstitusion struct{}
-
-func (c *ContainsSubstitusion) Error() string {
-	return "contains substitusion"
-}
-
 func NewFilter(tx *Transaction) *Filter {
 	return NewFilterWithScopes(
 		tx,
-		VariableScopes{NewVariableMap()},
-		TemporaryViewScopes{NewViewMap()},
-		CursorScopes{{}},
-		UserDefinedFunctionScopes{{}},
+		VariableScopes{GetVariableMap()},
+		TemporaryViewScopes{GetTemporaryViewMap()},
+		CursorScopes{GetCursorMap()},
+		UserDefinedFunctionScopes{GetUserDefinedFunctionMap()},
 	)
 }
 
@@ -117,12 +111,35 @@ func (f *Filter) Merge(filter *Filter) {
 }
 
 func (f *Filter) CreateChildScope() *Filter {
+	variables := make(VariableScopes, len(f.variables)+1)
+	variables[0] = GetVariableMap()
+	for i := range f.variables {
+		variables[i+1] = f.variables[i]
+	}
+
+	tempViews := make(TemporaryViewScopes, len(f.tempViews)+1)
+	tempViews[0] = GetTemporaryViewMap()
+	for i := range f.tempViews {
+		tempViews[i+1] = f.tempViews[i]
+	}
+	cursors := make(CursorScopes, len(f.cursors)+1)
+	cursors[0] = GetCursorMap()
+	for i := range f.cursors {
+		cursors[i+1] = f.cursors[i]
+	}
+
+	functions := make(UserDefinedFunctionScopes, len(f.functions)+1)
+	functions[0] = GetUserDefinedFunctionMap()
+	for i := range f.functions {
+		functions[i+1] = f.functions[i]
+	}
+
 	child := NewFilterWithScopes(
 		f.tx,
-		append(VariableScopes{NewVariableMap()}, f.variables...),
-		append(TemporaryViewScopes{NewViewMap()}, f.tempViews...),
-		append(CursorScopes{{}}, f.cursors...),
-		append(UserDefinedFunctionScopes{{}}, f.functions...),
+		variables,
+		tempViews,
+		cursors,
+		functions,
 	)
 	child.cachedFilePath = f.cachedFilePath
 	child.now = f.now
@@ -130,23 +147,25 @@ func (f *Filter) CreateChildScope() *Filter {
 }
 
 func (f *Filter) ResetCurrentScope() {
-	f.variables[0].Range(func(key, val interface{}) bool {
-		f.variables[0].Delete(key.(string))
-		return true
-	})
-	f.tempViews[0].Range(func(key, val interface{}) bool {
-		f.tempViews[0].Delete(key.(string))
-		return true
-	})
-	for k := range f.cursors[0] {
-		delete(f.cursors[0], k)
-	}
-	for k := range f.functions[0] {
-		delete(f.functions[0], k)
-	}
+	f.variables[0].Clear()
+	f.tempViews[0].Clear()
+	f.cursors[0].Clear()
+	f.functions[0].Clear()
 }
 
 func (f *Filter) CreateNode() *Filter {
+	inlineTables := make(InlineTableNodes, len(f.inlineTables)+1)
+	inlineTables[0] = GetInlineTableMap()
+	for i := range f.inlineTables {
+		inlineTables[i+1] = f.inlineTables[i]
+	}
+
+	aliases := make(AliasNodes, len(f.aliases)+1)
+	aliases[0] = GetAliasMap()
+	for i := range f.aliases {
+		aliases[i+1] = f.aliases[i]
+	}
+
 	filter := &Filter{
 		tx:               f.tx,
 		records:          f.records,
@@ -154,8 +173,8 @@ func (f *Filter) CreateNode() *Filter {
 		tempViews:        f.tempViews,
 		cursors:          f.cursors,
 		functions:        f.functions,
-		inlineTables:     append(InlineTableNodes{{}}, f.inlineTables...),
-		aliases:          append(AliasNodes{{}}, f.aliases...),
+		inlineTables:     inlineTables,
+		aliases:          aliases,
 		recursiveTable:   f.recursiveTable,
 		recursiveTmpView: f.recursiveTmpView,
 		cachedFilePath:   f.cachedFilePath,
@@ -170,6 +189,18 @@ func (f *Filter) CreateNode() *Filter {
 	}
 
 	return filter
+}
+
+func (f *Filter) CloseScope() {
+	PutVariableMap(f.variables[0])
+	PutTemporaryViewMap(f.tempViews[0])
+	PutCursorMap(f.cursors[0])
+	PutUserDefinedFunctionMap(f.functions[0])
+}
+
+func (f *Filter) CloseNode() {
+	PutInlineTableMap(f.inlineTables[0])
+	PutAliasMap(f.aliases[0])
 }
 
 func (f *Filter) storeFilePath(identifier string, fpath string) {

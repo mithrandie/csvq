@@ -2686,8 +2686,8 @@ func TestView_Load(t *testing.T) {
 			}
 		}
 
-		view.Filter = NewFilter(TestTx)
-		v.Result.Filter = NewFilter(TestTx)
+		view.Filter = nil
+		v.Result.Filter = nil
 
 		if !reflect.DeepEqual(view, v.Result) {
 			t.Errorf("%s: result = %v, want %v", v.Name, view, v.Result)
@@ -5660,7 +5660,6 @@ var viewInsertValuesTests = []struct {
 					value.NewNull(),
 				}),
 			},
-			Filter: NewFilter(TestTx),
 		},
 		UpdateCount: 2,
 	},
@@ -5745,9 +5744,12 @@ func TestView_InsertValues(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
+		oldFilter := view.Filter
+		view.Filter = nil
 		if !reflect.DeepEqual(view, v.Result) {
 			t.Errorf("%s: result = %v, want %v", v.Name, view, v.Result)
 		}
+		view.Filter = oldFilter
 		if cnt != v.UpdateCount {
 			t.Errorf("%s: update count = %d, want %d", v.Name, cnt, v.UpdateCount)
 		}
@@ -5796,8 +5798,7 @@ var viewInsertFromQueryTests = []struct {
 					value.NewNull(),
 				}),
 			},
-			Filter: NewFilter(TestTx),
-			Tx:     TestTx,
+			Tx: TestTx,
 		},
 		UpdateCount: 1,
 	},
@@ -5819,7 +5820,7 @@ var viewInsertFromQueryTests = []struct {
 		Error: "select query should return exactly 2 fields",
 	},
 	{
-		Name: "ReplaceFromQuery Exuecution Error",
+		Name: "InsertFromQuery Exuecution Error",
 		Fields: []parser.QueryExpression{
 			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 		},
@@ -5867,9 +5868,12 @@ func TestView_InsertFromQuery(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
+		oldFilter := view.Filter
+		view.Filter = nil
 		if !reflect.DeepEqual(view, v.Result) {
 			t.Errorf("%s: result = %v, want %v", v.Name, view, v.Result)
 		}
+		view.Filter = oldFilter
 		if cnt != v.UpdateCount {
 			t.Errorf("%s: update count = %d, want %d", v.Name, cnt, v.UpdateCount)
 		}
@@ -5928,8 +5932,7 @@ var viewReplaceValuesTests = []struct {
 					value.NewString("str4"),
 				}),
 			},
-			Filter: NewFilter(TestTx),
-			Tx:     TestTx,
+			Tx: TestTx,
 		},
 		UpdateCount: 2,
 	},
@@ -6062,9 +6065,12 @@ func TestView_ReplaceValues(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
+		oldFilter := view.Filter
+		view.Filter = nil
 		if !reflect.DeepEqual(view, v.Result) {
 			t.Errorf("%s: result = %v, want %v", v.Name, view, v.Result)
 		}
+		view.Filter = oldFilter
 		if cnt != v.UpdateCount {
 			t.Errorf("%s: update count = %d, want %d", v.Name, cnt, v.UpdateCount)
 		}
@@ -6112,8 +6118,7 @@ var viewReplaceFromQueryTests = []struct {
 					value.NewString("str2"),
 				}),
 			},
-			Filter: NewFilter(TestTx),
-			Tx:     TestTx,
+			Tx: TestTx,
 		},
 		UpdateCount: 1,
 	},
@@ -6167,9 +6172,12 @@ func TestView_ReplaceFromQuery(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
+		oldFilter := view.Filter
+		view.Filter = nil
 		if !reflect.DeepEqual(view, v.Result) {
 			t.Errorf("%s: result = %v, want %v", v.Name, view, v.Result)
 		}
+		view.Filter = oldFilter
 		if cnt != v.UpdateCount {
 			t.Errorf("%s: update count = %d, want %d", v.Name, cnt, v.UpdateCount)
 		}

@@ -110,6 +110,7 @@ func Select(ctx context.Context, parentFilter *Filter, query parser.SelectQuery)
 	}
 
 	filter := parentFilter.CreateNode()
+	defer filter.CloseNode()
 
 	if query.WithClause != nil {
 		if err := filter.LoadInlineTable(context.Background(), query.WithClause.(parser.WithClause)); err != nil {
@@ -273,7 +274,9 @@ func selectSetForRecursion(ctx context.Context, filter *Filter, view *View, set 
 		filter.recursiveTmpView = view
 	}
 
-	rview, err := selectSetEntity(ctx, filter.CreateNode(), set.RHS, forUpdate)
+	selectFilter := filter.CreateNode()
+	defer selectFilter.CloseNode()
+	rview, err := selectSetEntity(ctx, selectFilter, set.RHS, forUpdate)
 	if err != nil {
 		return err
 	}
@@ -309,6 +312,7 @@ func selectSetForRecursion(ctx context.Context, filter *Filter, view *View, set 
 
 func Insert(ctx context.Context, parentFilter *Filter, query parser.InsertQuery) (*FileInfo, int, error) {
 	filter := parentFilter.CreateNode()
+	defer filter.CloseNode()
 
 	var insertRecords int
 
@@ -364,6 +368,7 @@ func Insert(ctx context.Context, parentFilter *Filter, query parser.InsertQuery)
 
 func Update(ctx context.Context, parentFilter *Filter, query parser.UpdateQuery) ([]*FileInfo, []int, error) {
 	filter := parentFilter.CreateNode()
+	defer filter.CloseNode()
 
 	if query.WithClause != nil {
 		if err := filter.LoadInlineTable(context.Background(), query.WithClause.(parser.WithClause)); err != nil {
@@ -483,6 +488,7 @@ func Update(ctx context.Context, parentFilter *Filter, query parser.UpdateQuery)
 
 func Replace(ctx context.Context, parentFilter *Filter, query parser.ReplaceQuery) (*FileInfo, int, error) {
 	filter := parentFilter.CreateNode()
+	defer filter.CloseNode()
 
 	var replaceRecords int
 
@@ -538,6 +544,7 @@ func Replace(ctx context.Context, parentFilter *Filter, query parser.ReplaceQuer
 
 func Delete(ctx context.Context, parentFilter *Filter, query parser.DeleteQuery) ([]*FileInfo, []int, error) {
 	filter := parentFilter.CreateNode()
+	defer filter.CloseNode()
 
 	if query.WithClause != nil {
 		if err := filter.LoadInlineTable(context.Background(), query.WithClause.(parser.WithClause)); err != nil {
@@ -645,6 +652,7 @@ func Delete(ctx context.Context, parentFilter *Filter, query parser.DeleteQuery)
 
 func CreateTable(ctx context.Context, parentFilter *Filter, query parser.CreateTable) (*FileInfo, error) {
 	filter := parentFilter.CreateNode()
+	defer filter.CloseNode()
 
 	var view *View
 	var err error
@@ -705,6 +713,7 @@ func CreateTable(ctx context.Context, parentFilter *Filter, query parser.CreateT
 
 func AddColumns(ctx context.Context, parentFilter *Filter, query parser.AddColumns) (*FileInfo, int, error) {
 	filter := parentFilter.CreateNode()
+	defer filter.CloseNode()
 
 	if query.Position == nil {
 		query.Position = parser.ColumnPosition{
@@ -818,6 +827,7 @@ func AddColumns(ctx context.Context, parentFilter *Filter, query parser.AddColum
 
 func DropColumns(ctx context.Context, parentFilter *Filter, query parser.DropColumns) (*FileInfo, int, error) {
 	filter := parentFilter.CreateNode()
+	defer filter.CloseNode()
 
 	filter.tx.operationMutex.Lock()
 	defer filter.tx.operationMutex.Unlock()
@@ -860,6 +870,7 @@ func DropColumns(ctx context.Context, parentFilter *Filter, query parser.DropCol
 
 func RenameColumn(ctx context.Context, parentFilter *Filter, query parser.RenameColumn) (*FileInfo, error) {
 	filter := parentFilter.CreateNode()
+	defer filter.CloseNode()
 
 	filter.tx.operationMutex.Lock()
 	defer filter.tx.operationMutex.Unlock()
@@ -895,6 +906,7 @@ func RenameColumn(ctx context.Context, parentFilter *Filter, query parser.Rename
 func SetTableAttribute(ctx context.Context, parentFilter *Filter, query parser.SetTableAttribute) (*FileInfo, string, error) {
 	var log string
 	filter := parentFilter.CreateNode()
+	defer filter.CloseNode()
 
 	filter.tx.operationMutex.Lock()
 	defer filter.tx.operationMutex.Unlock()

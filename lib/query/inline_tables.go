@@ -43,6 +43,8 @@ func (it InlineTableMap) Set(ctx context.Context, parentFilter *Filter, inlineTa
 	}
 
 	filter := parentFilter.CreateNode()
+	defer filter.CloseNode()
+
 	if inlineTable.IsRecursive() {
 		filter.recursiveTable = &inlineTable
 	}
@@ -71,4 +73,10 @@ func (it InlineTableMap) Get(name parser.Identifier) (*View, error) {
 		return view.Copy(), nil
 	}
 	return nil, NewUndefinedInLineTableError(name)
+}
+
+func (it InlineTableMap) Clear() {
+	for k := range it {
+		delete(it, k)
+	}
 }

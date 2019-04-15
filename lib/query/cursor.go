@@ -233,6 +233,12 @@ func (m CursorMap) SortedKeys() []string {
 	return keys
 }
 
+func (m CursorMap) Clear() {
+	for k := range m {
+		delete(m, k)
+	}
+}
+
 type Cursor struct {
 	name      string
 	query     parser.SelectQuery

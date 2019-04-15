@@ -1563,10 +1563,13 @@ func JsonObject(ctx context.Context, filter *Filter, fn parser.Function) (value.
 		return value.NewNull(), nil
 	}
 
+	loadingFilter := filter.CreateNode()
+	defer loadingFilter.CloseNode()
+
 	view := NewView(filter.tx)
 	view.Header = filter.records[0].view.Header.Copy()
 	view.RecordSet = RecordSet{filter.records[0].view.RecordSet[filter.records[0].recordIndex]}
-	view.Filter = filter.CreateNode()
+	view.Filter = loadingFilter
 
 	if len(fn.Args) < 1 {
 		if err := view.SelectAllColumns(ctx); err != nil {

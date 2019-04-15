@@ -487,6 +487,8 @@ func (fn NTile) CheckArgsLen(expr parser.AnalyticFunction) error {
 
 func (fn NTile) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	argsFilter := filter.CreateNode()
+	defer argsFilter.CloseNode()
+
 	argsFilter.records = nil
 
 	tileNumber := 0
@@ -565,6 +567,8 @@ func (fn NthValue) CheckArgsLen(expr parser.AnalyticFunction) error {
 
 func (fn NthValue) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	argsFilter := filter.CreateNode()
+	defer argsFilter.CloseNode()
+
 	argsFilter.records = nil
 
 	n := 0
@@ -652,6 +656,8 @@ func (fn Lead) Execute(ctx context.Context, filter *Filter, partition Partition,
 
 func setLag(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	argsFilter := filter.CreateNode()
+	defer argsFilter.CloseNode()
+
 	argsFilter.records = nil
 
 	offset := 1
@@ -712,6 +718,8 @@ func (fn AnalyticListAgg) CheckArgsLen(expr parser.AnalyticFunction) error {
 
 func (fn AnalyticListAgg) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	argsFilter := filter.CreateNode()
+	defer argsFilter.CloseNode()
+
 	argsFilter.records = nil
 
 	separator := ""
@@ -758,6 +766,8 @@ func (fn AnalyticJsonAgg) CheckArgsLen(expr parser.AnalyticFunction) error {
 
 func (fn AnalyticJsonAgg) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	argsFilter := filter.CreateNode()
+	defer argsFilter.CloseNode()
+
 	argsFilter.records = nil
 
 	values := make([]value.Primary, len(partition))
