@@ -272,6 +272,8 @@ func GenerateBenchGroupedViewFilter() Filter {
 		primaries[i] = value.NewInteger(int64(i))
 	}
 
+	tx, _ := NewTransaction(context.Background(), file.DefaultWaitTimeout, file.DefaultRetryDelay, NewSession())
+
 	view := &View{
 		Header: NewHeader("table1", []string{"c1"}),
 		RecordSet: []Record{
@@ -281,8 +283,6 @@ func GenerateBenchGroupedViewFilter() Filter {
 		},
 		isGrouped: true,
 	}
-
-	tx, _ := NewTransaction(context.Background(), file.DefaultWaitTimeout, file.DefaultRetryDelay, NewSession())
 
 	return Filter{
 		records: []filterRecord{

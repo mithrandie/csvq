@@ -2718,7 +2718,7 @@ func TestNewViewFromGroupedRecord(t *testing.T) {
 		},
 	}
 
-	result := NewViewFromGroupedRecord(fr)
+	result, _ := NewViewFromGroupedRecord(context.Background(), NewFilter(TestTx), fr)
 	if !reflect.DeepEqual(result, expect) {
 		t.Errorf("result = %v, want %v", result, expect)
 	}

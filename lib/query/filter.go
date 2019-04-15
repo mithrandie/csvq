@@ -784,8 +784,11 @@ func (f *Filter) evalAggregateFunction(ctx context.Context, expr parser.Aggregat
 		}
 
 		if f.records[0].IsInRange() {
-			view := NewViewFromGroupedRecord(f.records[0])
-			list, err = view.ListValuesForAggregateFunctions(ctx, expr, listExpr, expr.IsDistinct(), f)
+			view, err := NewViewFromGroupedRecord(ctx, f, f.records[0])
+			if err != nil {
+				return nil, err
+			}
+			list, err = view.ListValuesForAggregateFunctions(ctx, f, expr, listExpr, expr.IsDistinct())
 			if err != nil {
 				return nil, err
 			}
@@ -829,7 +832,10 @@ func (f *Filter) evalListFunction(ctx context.Context, expr parser.ListFunction)
 			return nil, NewNotGroupingRecordsError(expr, expr.Name)
 		}
 
-		view := NewViewFromGroupedRecord(f.records[0])
+		view, err := NewViewFromGroupedRecord(ctx, f, f.records[0])
+		if err != nil {
+			return nil, err
+		}
 		if expr.OrderBy != nil {
 			err := view.OrderBy(ctx, expr.OrderBy.(parser.OrderByClause))
 			if err != nil {
@@ -837,7 +843,7 @@ func (f *Filter) evalListFunction(ctx context.Context, expr parser.ListFunction)
 			}
 		}
 
-		list, err = view.ListValuesForAggregateFunctions(ctx, expr, expr.Args[0], expr.IsDistinct(), f)
+		list, err = view.ListValuesForAggregateFunctions(ctx, f, expr, expr.Args[0], expr.IsDistinct())
 		if err != nil {
 			return nil, err
 		}

@@ -1004,26 +1004,27 @@ func loadDualView(tx *Transaction) *View {
 	return &view
 }
 
-func NewViewFromGroupedRecord(filterRecord filterRecord) *View {
+func NewViewFromGroupedRecord(ctx context.Context, filter *Filter, filterRecord filterRecord) (*View, error) {
 	view := NewView(filterRecord.view.Tx)
 	view.Header = filterRecord.view.Header
 	record := filterRecord.view.RecordSet[filterRecord.recordIndex]
 
 	view.RecordSet = make([]Record, record.GroupLen())
-	for i := 0; i < record.GroupLen(); i++ {
-		view.RecordSet[i] = make(Record, view.FieldLen())
+
+	if err := NewGoroutineTaskManager(record.GroupLen(), -1, filter.tx.Flags.CPU).Run(ctx, func(index int) error {
+		view.RecordSet[index] = make(Record, view.FieldLen())
 		for j, cell := range record {
-			grpIdx := i
+			grpIdx := index
 			if cell.Len() < 2 {
 				grpIdx = 0
 			}
-			view.RecordSet[i][j] = NewCell(cell.GroupedValue(grpIdx))
+			view.RecordSet[index][j] = NewCell(cell.GroupedValue(grpIdx))
 		}
+		return nil
+	}); err != nil {
+		return nil, err
 	}
-
-	view.Filter = filterRecord.view.Filter
-
-	return view
+	return view, nil
 }
 
 func (view *View) Where(ctx context.Context, clause parser.WhereClause) error {
@@ -2034,10 +2035,10 @@ func (view *View) Intersect(ctx context.Context, calcView *View, all bool) (err 
 	return
 }
 
-func (view *View) ListValuesForAggregateFunctions(ctx context.Context, expr parser.QueryExpression, arg parser.QueryExpression, distinct bool, filter *Filter) ([]value.Primary, error) {
+func (view *View) ListValuesForAggregateFunctions(ctx context.Context, filter *Filter, expr parser.QueryExpression, arg parser.QueryExpression, distinct bool) ([]value.Primary, error) {
 	list := make([]value.Primary, view.RecordLen())
 
-	err := NewFilterForSequentialEvaluation(filter, view).EvaluateSequentially(ctx, func(f *Filter, rIdx int) error {
+	if err := NewFilterForSequentialEvaluation(filter, view).EvaluateSequentially(ctx, func(f *Filter, rIdx int) error {
 		p, e := f.Evaluate(ctx, arg)
 		if e != nil {
 			if _, ok := e.(*NotGroupingRecordsError); ok {
@@ -2047,8 +2048,7 @@ func (view *View) ListValuesForAggregateFunctions(ctx context.Context, expr pars
 		}
 		list[rIdx] = p
 		return nil
-	})
-	if err != nil {
+	}); err != nil {
 		return nil, err
 	}
 
