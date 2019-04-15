@@ -596,6 +596,10 @@ func Delete(ctx context.Context, parentFilter *Filter, query parser.DeleteQuery)
 	}
 
 	for i := range view.RecordSet {
+		if ctx.Err() != nil {
+			return nil, nil, ConvertContextError(ctx.Err())
+		}
+
 		for viewref := range viewsToDelete {
 			internalId, err := view.InternalRecordId(viewref, i)
 			if err != nil {
@@ -610,6 +614,10 @@ func Delete(ctx context.Context, parentFilter *Filter, query parser.DeleteQuery)
 	fileInfos := make([]*FileInfo, 0)
 	deletedCounts := make([]int, 0)
 	for k, v := range viewsToDelete {
+		if ctx.Err() != nil {
+			return nil, nil, ConvertContextError(ctx.Err())
+		}
+
 		records := make(RecordSet, 0, v.RecordLen()-len(deletedIndices[k]))
 		for i, record := range v.RecordSet {
 			if !deletedIndices[k][i] {
@@ -767,7 +775,7 @@ func AddColumns(ctx context.Context, parentFilter *Filter, query parser.AddColum
 
 	records := make(RecordSet, view.RecordLen())
 
-	err = NewFilterForSequentialEvaluation(filter, view).EvaluateSequentially(ctx, func(f *Filter, rIdx int) error {
+	if err = NewFilterForSequentialEvaluation(filter, view).EvaluateSequentially(ctx, func(f *Filter, rIdx int) error {
 		record := make(Record, newFieldLen)
 		for i, cell := range view.RecordSet[rIdx] {
 			var cellIdx int
@@ -791,8 +799,7 @@ func AddColumns(ctx context.Context, parentFilter *Filter, query parser.AddColum
 		}
 		records[rIdx] = record
 		return nil
-	})
-	if err != nil {
+	}); err != nil {
 		return nil, 0, err
 	}
 

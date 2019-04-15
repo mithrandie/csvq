@@ -177,7 +177,7 @@ func InnerJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 		return gm.Err()
 	}
 	if ctx.Err() != nil {
-		return NewContextDone(ctx.Err().Error())
+		return ConvertContextError(ctx.Err())
 	}
 
 	view.Header = mergedHeader
@@ -277,7 +277,7 @@ func OuterJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 		return gm.Err()
 	}
 	if ctx.Err() != nil {
-		return NewContextDone(ctx.Err().Error())
+		return ConvertContextError(ctx.Err())
 	}
 
 	if direction == parser.FULL {

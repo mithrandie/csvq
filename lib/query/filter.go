@@ -193,7 +193,7 @@ func (f *Filter) LoadInlineTable(ctx context.Context, clause parser.WithClause) 
 
 func (f *Filter) Evaluate(ctx context.Context, expr parser.QueryExpression) (value.Primary, error) {
 	if ctx.Err() != nil {
-		return nil, NewContextDone(ctx.Err().Error())
+		return nil, ConvertContextError(ctx.Err())
 	}
 
 	if expr == nil {
@@ -310,7 +310,7 @@ func (f *Filter) EvaluateSequentially(ctx context.Context, fn func(*Filter, int)
 		return gm.Err()
 	}
 	if ctx.Err() != nil {
-		return NewContextDone(ctx.Err().Error())
+		return ConvertContextError(ctx.Err())
 	}
 	return nil
 }

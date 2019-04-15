@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"reflect"
@@ -1437,4 +1438,11 @@ func ConvertLoadConfigurationError(err error) error {
 		err = NewLoadConfigurationError(nil, err.Error())
 	}
 	return err
+}
+
+func ConvertContextError(err error) error {
+	if err == context.Canceled {
+		return NewContextCanceled(err.Error())
+	}
+	return NewContextDone(err.Error())
 }

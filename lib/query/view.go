@@ -945,7 +945,7 @@ func readRecordSet(ctx context.Context, reader RecordReader) (RecordSet, error) 
 	go func() {
 		for {
 			if ctx.Err() != nil {
-				err = NewContextDone(ctx.Err().Error())
+				err = ConvertContextError(ctx.Err())
 				break
 			}
 
@@ -1675,7 +1675,7 @@ func (view *View) InsertValues(ctx context.Context, fields []parser.QueryExpress
 	if err != nil {
 		return 0, err
 	}
-	return view.insert(fields, recordValues)
+	return view.insert(ctx, fields, recordValues)
 }
 
 func (view *View) InsertFromQuery(ctx context.Context, fields []parser.QueryExpression, query parser.SelectQuery) (int, error) {
@@ -1683,7 +1683,7 @@ func (view *View) InsertFromQuery(ctx context.Context, fields []parser.QueryExpr
 	if err != nil {
 		return 0, err
 	}
-	return view.insert(fields, recordValues)
+	return view.insert(ctx, fields, recordValues)
 }
 
 func (view *View) ReplaceValues(ctx context.Context, fields []parser.QueryExpression, list []parser.QueryExpression, keys []parser.QueryExpression) (int, error) {
@@ -1705,6 +1705,10 @@ func (view *View) ReplaceFromQuery(ctx context.Context, fields []parser.QueryExp
 func (view *View) convertListToRecordValues(ctx context.Context, fields []parser.QueryExpression, list []parser.QueryExpression) ([][]value.Primary, error) {
 	recordValues := make([][]value.Primary, len(list))
 	for i, item := range list {
+		if ctx.Err() != nil {
+			return nil, ConvertContextError(ctx.Err())
+		}
+
 		rv := item.(parser.RowValue)
 		values, err := view.Filter.evalRowValue(ctx, rv)
 		if err != nil {
@@ -1730,6 +1734,10 @@ func (view *View) convertResultSetToRecordValues(ctx context.Context, fields []p
 
 	recordValues := make([][]value.Primary, selectedView.RecordLen())
 	for i, record := range selectedView.RecordSet {
+		if ctx.Err() != nil {
+			return nil, ConvertContextError(ctx.Err())
+		}
+
 		values := make([]value.Primary, selectedView.FieldLen())
 		for j, cell := range record {
 			values[j] = cell.Value()
@@ -1739,7 +1747,7 @@ func (view *View) convertResultSetToRecordValues(ctx context.Context, fields []p
 	return recordValues, nil
 }
 
-func (view *View) convertRecordValuesToRecords(fields []parser.QueryExpression, recordValues [][]value.Primary) ([]Record, error) {
+func (view *View) convertRecordValuesToRecords(ctx context.Context, fields []parser.QueryExpression, recordValues [][]value.Primary) ([]Record, error) {
 	var valueIndex = func(i int, list []int) int {
 		for j, v := range list {
 			if i == v {
@@ -1761,6 +1769,10 @@ func (view *View) convertRecordValuesToRecords(fields []parser.QueryExpression, 
 
 	records := make([]Record, len(recordValues))
 	for i, values := range recordValues {
+		if ctx.Err() != nil {
+			return nil, ConvertContextError(ctx.Err())
+		}
+
 		record := make(Record, view.FieldLen())
 		for j := 0; j < view.FieldLen(); j++ {
 			if recordIndices[j] < 0 {
@@ -1774,8 +1786,8 @@ func (view *View) convertRecordValuesToRecords(fields []parser.QueryExpression, 
 	return records, nil
 }
 
-func (view *View) insert(fields []parser.QueryExpression, recordValues [][]value.Primary) (int, error) {
-	records, err := view.convertRecordValuesToRecords(fields, recordValues)
+func (view *View) insert(ctx context.Context, fields []parser.QueryExpression, recordValues [][]value.Primary) (int, error) {
+	records, err := view.convertRecordValuesToRecords(ctx, fields, recordValues)
 	if err != nil {
 		return 0, err
 	}
@@ -1804,7 +1816,10 @@ func (view *View) replace(ctx context.Context, fields []parser.QueryExpression, 
 		}
 	}
 
-	records, _ := view.convertRecordValuesToRecords(fields, recordValues)
+	records, err := view.convertRecordValuesToRecords(ctx, fields, recordValues)
+	if err != nil {
+		return 0, err
+	}
 
 	sortValuesInEachRecord := make([]SortValues, view.RecordLen())
 	if err := NewGoroutineTaskManager(view.RecordLen(), -1, view.Tx.Flags.CPU).Run(ctx, func(index int) error {
