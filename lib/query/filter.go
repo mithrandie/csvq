@@ -219,7 +219,7 @@ func (f *Filter) loadFilePath(identifier string) (string, bool) {
 }
 
 func (f *Filter) LoadInlineTable(ctx context.Context, clause parser.WithClause) error {
-	return f.inlineTables.Load(ctx, f, clause)
+	return f.inlineTables.Load(ContextForExecusion(ctx, f), clause)
 }
 
 func (f *Filter) Evaluate(ctx context.Context, expr parser.QueryExpression) (value.Primary, error) {
@@ -290,7 +290,7 @@ func (f *Filter) Evaluate(ctx context.Context, expr parser.QueryExpression) (val
 			err = NewInvalidFlagNameError(expr.(parser.Flag))
 		}
 	case parser.VariableSubstitution:
-		val, err = f.variables.Substitute(ctx, f, expr.(parser.VariableSubstitution))
+		val, err = f.variables.Substitute(ctx, expr.(parser.VariableSubstitution))
 	case parser.CursorStatus:
 		val, err = f.evalCursorStatus(expr.(parser.CursorStatus))
 	case parser.CursorAttrebute:
@@ -313,7 +313,6 @@ func (f *Filter) EvaluateSequentially(ctx context.Context, fn func(*Filter, int)
 			filter := NewFilterForSequentialEvaluation(
 				f,
 				&View{
-					Tx:        f.tx,
 					Header:    f.records[0].view.Header,
 					RecordSet: f.records[0].view.RecordSet[start:end],
 					isGrouped: f.records[0].view.isGrouped,
@@ -688,7 +687,7 @@ func (f *Filter) evalLike(ctx context.Context, expr parser.Like) (value.Primary,
 }
 
 func (f *Filter) evalExists(ctx context.Context, expr parser.Exists) (value.Primary, error) {
-	view, err := Select(ctx, f, expr.Query.Query)
+	view, err := Select(ctx, expr.Query.Query)
 	if err != nil {
 		return nil, err
 	}
@@ -699,7 +698,7 @@ func (f *Filter) evalExists(ctx context.Context, expr parser.Exists) (value.Prim
 }
 
 func (f *Filter) evalSubqueryForValue(ctx context.Context, expr parser.Subquery) (value.Primary, error) {
-	view, err := Select(ctx, f, expr.Query)
+	view, err := Select(ctx, expr.Query)
 	if err != nil {
 		return nil, err
 	}
@@ -765,7 +764,7 @@ func (f *Filter) evalFunction(ctx context.Context, expr parser.Function) (value.
 	}
 
 	udfn, _ := f.functions.Get(expr, name)
-	return udfn.Execute(ctx, f, args)
+	return udfn.Execute(ctx, args)
 }
 
 func (f *Filter) evalAggregateFunction(ctx context.Context, expr parser.AggregateFunction) (value.Primary, error) {
@@ -815,11 +814,11 @@ func (f *Filter) evalAggregateFunction(ctx context.Context, expr parser.Aggregat
 		}
 
 		if f.records[0].IsInRange() {
-			view, err := NewViewFromGroupedRecord(ctx, f, f.records[0])
+			view, err := NewViewFromGroupedRecord(ctx, f.records[0])
 			if err != nil {
 				return nil, err
 			}
-			list, err = view.ListValuesForAggregateFunctions(ctx, f, expr, listExpr, expr.IsDistinct())
+			list, err = view.ListValuesForAggregateFunctions(ctx, expr, listExpr, expr.IsDistinct())
 			if err != nil {
 				return nil, err
 			}
@@ -836,7 +835,7 @@ func (f *Filter) evalAggregateFunction(ctx context.Context, expr parser.Aggregat
 			}
 			args[i] = arg
 		}
-		return udfn.ExecuteAggregate(ctx, f, list, args)
+		return udfn.ExecuteAggregate(ctx, list, args)
 	}
 
 	return aggfn(list, f.tx.Flags), nil
@@ -863,7 +862,7 @@ func (f *Filter) evalListFunction(ctx context.Context, expr parser.ListFunction)
 			return nil, NewNotGroupingRecordsError(expr, expr.Name)
 		}
 
-		view, err := NewViewFromGroupedRecord(ctx, f, f.records[0])
+		view, err := NewViewFromGroupedRecord(ctx, f.records[0])
 		if err != nil {
 			return nil, err
 		}
@@ -874,7 +873,7 @@ func (f *Filter) evalListFunction(ctx context.Context, expr parser.ListFunction)
 			}
 		}
 
-		list, err = view.ListValuesForAggregateFunctions(ctx, f, expr, expr.Args[0], expr.IsDistinct())
+		list, err = view.ListValuesForAggregateFunctions(ctx, expr, expr.Args[0], expr.IsDistinct())
 		if err != nil {
 			return nil, err
 		}
@@ -1146,7 +1145,7 @@ func (f *Filter) evalArray(ctx context.Context, expr parser.QueryExpression) ([]
 }
 
 func (f *Filter) evalSubqueryForRowValue(ctx context.Context, expr parser.Subquery) (value.RowValue, error) {
-	view, err := Select(ctx, f, expr.Query)
+	view, err := Select(ctx, expr.Query)
 	if err != nil {
 		return nil, err
 	}
@@ -1211,7 +1210,7 @@ func (f *Filter) evalValueList(ctx context.Context, expr parser.ValueList) (valu
 }
 
 func (f *Filter) evalSubqueryForRowValueList(ctx context.Context, expr parser.Subquery) ([]value.RowValue, error) {
-	view, err := Select(ctx, f, expr.Query)
+	view, err := Select(ctx, expr.Query)
 	if err != nil {
 		return nil, err
 	}
@@ -1260,7 +1259,7 @@ func (f *Filter) evalJsonQueryForRowValueList(ctx context.Context, expr parser.J
 }
 
 func (f *Filter) evalSubqueryForArray(ctx context.Context, expr parser.Subquery) ([]value.RowValue, error) {
-	view, err := Select(ctx, f, expr.Query)
+	view, err := Select(ctx, expr.Query)
 	if err != nil {
 		return nil, err
 	}

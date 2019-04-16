@@ -32,11 +32,11 @@ func NewHeaderWithId(view string, words []string) Header {
 	h[0].View = view
 	h[0].Column = InternalIdColumn
 
-	for i, v := range words {
-		h[i+1].View = view
-		h[i+1].Column = v
-		h[i+1].Number = i + 1
-		h[i+1].IsFromTable = true
+	for i := 1; i <= len(words); i++ {
+		h[i].View = view
+		h[i].Column = words[i-1]
+		h[i].Number = i
+		h[i].IsFromTable = true
 	}
 
 	return h

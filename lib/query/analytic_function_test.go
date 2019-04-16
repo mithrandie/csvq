@@ -13,6 +13,7 @@ var analyzeTests = []struct {
 	Name             string
 	CPU              int
 	View             *View
+	Filter           *Filter
 	Function         parser.AnalyticFunction
 	PartitionIndices []int
 	Result           *View
@@ -53,7 +54,6 @@ var analyzeTests = []struct {
 					value.NewInteger(2),
 				}),
 			},
-			Filter: NewFilter(TestTx),
 			sortValuesInEachRecord: []SortValues{
 				{NewSortValue(value.NewInteger(1), TestTx.Flags)},
 				{NewSortValue(value.NewInteger(1), TestTx.Flags)},
@@ -63,7 +63,6 @@ var analyzeTests = []struct {
 				{NewSortValue(value.NewInteger(3), TestTx.Flags)},
 				{NewSortValue(value.NewInteger(2), TestTx.Flags)},
 			},
-			Tx: TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "rank",
@@ -122,7 +121,6 @@ var analyzeTests = []struct {
 					value.NewInteger(2),
 				}),
 			},
-			Filter: NewFilter(TestTx),
 			sortValuesInEachCell: [][]*SortValue{
 				{NewSortValue(value.NewString("a"), TestTx.Flags), nil},
 				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
@@ -141,7 +139,6 @@ var analyzeTests = []struct {
 				{NewSortValue(value.NewInteger(3), TestTx.Flags)},
 				{NewSortValue(value.NewInteger(2), TestTx.Flags)},
 			},
-			Tx: TestTx,
 		},
 	},
 	{
@@ -150,9 +147,7 @@ var analyzeTests = []struct {
 		View: &View{
 			Header:                 NewHeader("table1", []string{"column1", "column2"}),
 			RecordSet:              []Record{},
-			Filter:                 NewFilter(TestTx),
 			sortValuesInEachRecord: []SortValues{},
-			Tx:                     TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "rank",
@@ -175,10 +170,8 @@ var analyzeTests = []struct {
 		Result: &View{
 			Header:                 NewHeader("table1", []string{"column1", "column2"}),
 			RecordSet:              []Record{},
-			Filter:                 NewFilter(TestTx),
 			sortValuesInEachCell:   [][]*SortValue{},
 			sortValuesInEachRecord: []SortValues{},
-			Tx:                     TestTx,
 		},
 	},
 	{
@@ -195,8 +188,6 @@ var analyzeTests = []struct {
 					value.NewInteger(2),
 				}),
 			},
-			Filter: NewFilter(TestTx),
-			Tx:     TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "rank",
@@ -234,8 +225,6 @@ var analyzeTests = []struct {
 					value.NewInteger(2),
 				}),
 			},
-			Filter: NewFilter(TestTx),
-			Tx:     TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "first_value",
@@ -271,8 +260,6 @@ var analyzeTests = []struct {
 					value.NewInteger(1),
 				}),
 			},
-			Filter: NewFilter(TestTx),
-			Tx:     TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "count",
@@ -317,7 +304,6 @@ var analyzeTests = []struct {
 					value.NewInteger(3),
 				}),
 			},
-			Filter: NewFilter(TestTx),
 			sortValuesInEachCell: [][]*SortValue{
 				{NewSortValue(value.NewString("a"), TestTx.Flags), nil},
 				{NewSortValue(value.NewString("a"), TestTx.Flags), nil},
@@ -325,7 +311,6 @@ var analyzeTests = []struct {
 				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
 				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
 			},
-			Tx: TestTx,
 		},
 	},
 	{
@@ -354,8 +339,6 @@ var analyzeTests = []struct {
 					value.NewInteger(1),
 				}),
 			},
-			Filter: NewFilter(TestTx),
-			Tx:     TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "sum",
@@ -411,7 +394,6 @@ var analyzeTests = []struct {
 					value.NewInteger(2),
 				}),
 			},
-			Filter: NewFilter(TestTx),
 			sortValuesInEachCell: [][]*SortValue{
 				{NewSortValue(value.NewString("a"), TestTx.Flags), nil},
 				{NewSortValue(value.NewString("a"), TestTx.Flags), nil},
@@ -419,7 +401,6 @@ var analyzeTests = []struct {
 				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
 				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
 			},
-			Tx: TestTx,
 		},
 	},
 	{
@@ -448,7 +429,6 @@ var analyzeTests = []struct {
 					value.NewInteger(1),
 				}),
 			},
-			Filter: NewFilter(TestTx),
 			sortValuesInEachCell: [][]*SortValue{
 				{NewSortValue(value.NewString("a"), TestTx.Flags), nil},
 				{NewSortValue(value.NewString("a"), TestTx.Flags), nil},
@@ -456,7 +436,6 @@ var analyzeTests = []struct {
 				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
 				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
 			},
-			Tx: TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name:     "count",
@@ -502,7 +481,6 @@ var analyzeTests = []struct {
 					value.NewInteger(1),
 				}),
 			},
-			Filter: NewFilter(TestTx),
 			sortValuesInEachCell: [][]*SortValue{
 				{NewSortValue(value.NewString("a"), TestTx.Flags), nil},
 				{NewSortValue(value.NewString("a"), TestTx.Flags), nil},
@@ -510,7 +488,6 @@ var analyzeTests = []struct {
 				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
 				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
 			},
-			Tx: TestTx,
 		},
 	},
 	{
@@ -527,8 +504,6 @@ var analyzeTests = []struct {
 					value.NewInteger(2),
 				}),
 			},
-			Filter: NewFilter(TestTx),
-			Tx:     TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "count",
@@ -556,8 +531,6 @@ var analyzeTests = []struct {
 					value.NewInteger(2),
 				}),
 			},
-			Filter: NewFilter(TestTx),
-			Tx:     TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "count",
@@ -600,75 +573,74 @@ var analyzeTests = []struct {
 					value.NewInteger(1),
 				}),
 			},
-			Filter: &Filter{
-				tempViews: TemporaryViewScopes{NewViewMap()},
-				functions: UserDefinedFunctionScopes{
-					{
-						"USERAGGFUNC": &UserDefinedFunction{
-							Name:        parser.Identifier{Literal: "useraggfunc"},
-							IsAggregate: true,
-							Cursor:      parser.Identifier{Literal: "list"},
-							Parameters: []parser.Variable{
-								{Name: "default"},
+		},
+		Filter: &Filter{
+			tempViews: TemporaryViewScopes{NewViewMap()},
+			functions: UserDefinedFunctionScopes{
+				{
+					"USERAGGFUNC": &UserDefinedFunction{
+						Name:        parser.Identifier{Literal: "useraggfunc"},
+						IsAggregate: true,
+						Cursor:      parser.Identifier{Literal: "list"},
+						Parameters: []parser.Variable{
+							{Name: "default"},
+						},
+						Statements: []parser.Statement{
+							parser.VariableDeclaration{
+								Assignments: []parser.VariableAssignment{
+									{
+										Variable: parser.Variable{Name: "value"},
+									},
+									{
+										Variable: parser.Variable{Name: "fetch"},
+									},
+								},
 							},
-							Statements: []parser.Statement{
-								parser.VariableDeclaration{
-									Assignments: []parser.VariableAssignment{
-										{
-											Variable: parser.Variable{Name: "value"},
+							parser.WhileInCursor{
+								Variables: []parser.Variable{
+									{Name: "fetch"},
+								},
+								Cursor: parser.Identifier{Literal: "list"},
+								Statements: []parser.Statement{
+									parser.If{
+										Condition: parser.Is{
+											LHS: parser.Variable{Name: "fetch"},
+											RHS: parser.NewNullValue(),
 										},
-										{
-											Variable: parser.Variable{Name: "fetch"},
+										Statements: []parser.Statement{
+											parser.FlowControl{Token: parser.CONTINUE},
+										},
+									},
+									parser.If{
+										Condition: parser.Is{
+											LHS: parser.Variable{Name: "value"},
+											RHS: parser.NewNullValue(),
+										},
+										Statements: []parser.Statement{
+											parser.VariableSubstitution{
+												Variable: parser.Variable{Name: "value"},
+												Value:    parser.Variable{Name: "fetch"},
+											},
+											parser.FlowControl{Token: parser.CONTINUE},
+										},
+									},
+									parser.VariableSubstitution{
+										Variable: parser.Variable{Name: "value"},
+										Value: parser.Arithmetic{
+											LHS:      parser.Variable{Name: "value"},
+											RHS:      parser.Variable{Name: "fetch"},
+											Operator: '*',
 										},
 									},
 								},
-								parser.WhileInCursor{
-									Variables: []parser.Variable{
-										{Name: "fetch"},
-									},
-									Cursor: parser.Identifier{Literal: "list"},
-									Statements: []parser.Statement{
-										parser.If{
-											Condition: parser.Is{
-												LHS: parser.Variable{Name: "fetch"},
-												RHS: parser.NewNullValue(),
-											},
-											Statements: []parser.Statement{
-												parser.FlowControl{Token: parser.CONTINUE},
-											},
-										},
-										parser.If{
-											Condition: parser.Is{
-												LHS: parser.Variable{Name: "value"},
-												RHS: parser.NewNullValue(),
-											},
-											Statements: []parser.Statement{
-												parser.VariableSubstitution{
-													Variable: parser.Variable{Name: "value"},
-													Value:    parser.Variable{Name: "fetch"},
-												},
-												parser.FlowControl{Token: parser.CONTINUE},
-											},
-										},
-										parser.VariableSubstitution{
-											Variable: parser.Variable{Name: "value"},
-											Value: parser.Arithmetic{
-												LHS:      parser.Variable{Name: "value"},
-												RHS:      parser.Variable{Name: "fetch"},
-												Operator: '*',
-											},
-										},
-									},
-								},
-								parser.Return{
-									Value: parser.Variable{Name: "value"},
-								},
+							},
+							parser.Return{
+								Value: parser.Variable{Name: "value"},
 							},
 						},
 					},
 				},
 			},
-			Tx: TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "useraggfunc",
@@ -721,75 +693,6 @@ var analyzeTests = []struct {
 				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
 				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
 			},
-			Filter: &Filter{
-				tempViews: TemporaryViewScopes{NewViewMap()},
-				functions: UserDefinedFunctionScopes{
-					{
-						"USERAGGFUNC": &UserDefinedFunction{
-							Name:        parser.Identifier{Literal: "useraggfunc"},
-							IsAggregate: true,
-							Cursor:      parser.Identifier{Literal: "list"},
-							Parameters: []parser.Variable{
-								{Name: "default"},
-							},
-							Statements: []parser.Statement{
-								parser.VariableDeclaration{
-									Assignments: []parser.VariableAssignment{
-										{
-											Variable: parser.Variable{Name: "value"},
-										},
-										{
-											Variable: parser.Variable{Name: "fetch"},
-										},
-									},
-								},
-								parser.WhileInCursor{
-									Variables: []parser.Variable{
-										{Name: "fetch"},
-									},
-									Cursor: parser.Identifier{Literal: "list"},
-									Statements: []parser.Statement{
-										parser.If{
-											Condition: parser.Is{
-												LHS: parser.Variable{Name: "fetch"},
-												RHS: parser.NewNullValue(),
-											},
-											Statements: []parser.Statement{
-												parser.FlowControl{Token: parser.CONTINUE},
-											},
-										},
-										parser.If{
-											Condition: parser.Is{
-												LHS: parser.Variable{Name: "value"},
-												RHS: parser.NewNullValue(),
-											},
-											Statements: []parser.Statement{
-												parser.VariableSubstitution{
-													Variable: parser.Variable{Name: "value"},
-													Value:    parser.Variable{Name: "fetch"},
-												},
-												parser.FlowControl{Token: parser.CONTINUE},
-											},
-										},
-										parser.VariableSubstitution{
-											Variable: parser.Variable{Name: "value"},
-											Value: parser.Arithmetic{
-												LHS:      parser.Variable{Name: "value"},
-												RHS:      parser.Variable{Name: "fetch"},
-												Operator: '*',
-											},
-										},
-									},
-								},
-								parser.Return{
-									Value: parser.Variable{Name: "value"},
-								},
-							},
-						},
-					},
-				},
-			},
-			Tx: TestTx,
 		},
 	},
 	{
@@ -818,75 +721,74 @@ var analyzeTests = []struct {
 					value.NewInteger(1),
 				}),
 			},
-			Filter: &Filter{
-				tempViews: TemporaryViewScopes{NewViewMap()},
-				functions: UserDefinedFunctionScopes{
-					{
-						"USERAGGFUNC": &UserDefinedFunction{
-							Name:        parser.Identifier{Literal: "useraggfunc"},
-							IsAggregate: true,
-							Cursor:      parser.Identifier{Literal: "list"},
-							Parameters: []parser.Variable{
-								{Name: "default"},
+		},
+		Filter: &Filter{
+			tempViews: TemporaryViewScopes{NewViewMap()},
+			functions: UserDefinedFunctionScopes{
+				{
+					"USERAGGFUNC": &UserDefinedFunction{
+						Name:        parser.Identifier{Literal: "useraggfunc"},
+						IsAggregate: true,
+						Cursor:      parser.Identifier{Literal: "list"},
+						Parameters: []parser.Variable{
+							{Name: "default"},
+						},
+						Statements: []parser.Statement{
+							parser.VariableDeclaration{
+								Assignments: []parser.VariableAssignment{
+									{
+										Variable: parser.Variable{Name: "value"},
+									},
+									{
+										Variable: parser.Variable{Name: "fetch"},
+									},
+								},
 							},
-							Statements: []parser.Statement{
-								parser.VariableDeclaration{
-									Assignments: []parser.VariableAssignment{
-										{
-											Variable: parser.Variable{Name: "value"},
+							parser.WhileInCursor{
+								Variables: []parser.Variable{
+									{Name: "fetch"},
+								},
+								Cursor: parser.Identifier{Literal: "list"},
+								Statements: []parser.Statement{
+									parser.If{
+										Condition: parser.Is{
+											LHS: parser.Variable{Name: "fetch"},
+											RHS: parser.NewNullValue(),
 										},
-										{
-											Variable: parser.Variable{Name: "fetch"},
+										Statements: []parser.Statement{
+											parser.FlowControl{Token: parser.CONTINUE},
+										},
+									},
+									parser.If{
+										Condition: parser.Is{
+											LHS: parser.Variable{Name: "value"},
+											RHS: parser.NewNullValue(),
+										},
+										Statements: []parser.Statement{
+											parser.VariableSubstitution{
+												Variable: parser.Variable{Name: "value"},
+												Value:    parser.Variable{Name: "fetch"},
+											},
+											parser.FlowControl{Token: parser.CONTINUE},
+										},
+									},
+									parser.VariableSubstitution{
+										Variable: parser.Variable{Name: "value"},
+										Value: parser.Arithmetic{
+											LHS:      parser.Variable{Name: "value"},
+											RHS:      parser.Variable{Name: "fetch"},
+											Operator: '*',
 										},
 									},
 								},
-								parser.WhileInCursor{
-									Variables: []parser.Variable{
-										{Name: "fetch"},
-									},
-									Cursor: parser.Identifier{Literal: "list"},
-									Statements: []parser.Statement{
-										parser.If{
-											Condition: parser.Is{
-												LHS: parser.Variable{Name: "fetch"},
-												RHS: parser.NewNullValue(),
-											},
-											Statements: []parser.Statement{
-												parser.FlowControl{Token: parser.CONTINUE},
-											},
-										},
-										parser.If{
-											Condition: parser.Is{
-												LHS: parser.Variable{Name: "value"},
-												RHS: parser.NewNullValue(),
-											},
-											Statements: []parser.Statement{
-												parser.VariableSubstitution{
-													Variable: parser.Variable{Name: "value"},
-													Value:    parser.Variable{Name: "fetch"},
-												},
-												parser.FlowControl{Token: parser.CONTINUE},
-											},
-										},
-										parser.VariableSubstitution{
-											Variable: parser.Variable{Name: "value"},
-											Value: parser.Arithmetic{
-												LHS:      parser.Variable{Name: "value"},
-												RHS:      parser.Variable{Name: "fetch"},
-												Operator: '*',
-											},
-										},
-									},
-								},
-								parser.Return{
-									Value: parser.Variable{Name: "value"},
-								},
+							},
+							parser.Return{
+								Value: parser.Variable{Name: "value"},
 							},
 						},
 					},
 				},
 			},
-			Tx: TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "useraggfunc",
@@ -950,75 +852,6 @@ var analyzeTests = []struct {
 				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
 				{NewSortValue(value.NewString("b"), TestTx.Flags), nil},
 			},
-			Filter: &Filter{
-				tempViews: TemporaryViewScopes{NewViewMap()},
-				functions: UserDefinedFunctionScopes{
-					{
-						"USERAGGFUNC": &UserDefinedFunction{
-							Name:        parser.Identifier{Literal: "useraggfunc"},
-							IsAggregate: true,
-							Cursor:      parser.Identifier{Literal: "list"},
-							Parameters: []parser.Variable{
-								{Name: "default"},
-							},
-							Statements: []parser.Statement{
-								parser.VariableDeclaration{
-									Assignments: []parser.VariableAssignment{
-										{
-											Variable: parser.Variable{Name: "value"},
-										},
-										{
-											Variable: parser.Variable{Name: "fetch"},
-										},
-									},
-								},
-								parser.WhileInCursor{
-									Variables: []parser.Variable{
-										{Name: "fetch"},
-									},
-									Cursor: parser.Identifier{Literal: "list"},
-									Statements: []parser.Statement{
-										parser.If{
-											Condition: parser.Is{
-												LHS: parser.Variable{Name: "fetch"},
-												RHS: parser.NewNullValue(),
-											},
-											Statements: []parser.Statement{
-												parser.FlowControl{Token: parser.CONTINUE},
-											},
-										},
-										parser.If{
-											Condition: parser.Is{
-												LHS: parser.Variable{Name: "value"},
-												RHS: parser.NewNullValue(),
-											},
-											Statements: []parser.Statement{
-												parser.VariableSubstitution{
-													Variable: parser.Variable{Name: "value"},
-													Value:    parser.Variable{Name: "fetch"},
-												},
-												parser.FlowControl{Token: parser.CONTINUE},
-											},
-										},
-										parser.VariableSubstitution{
-											Variable: parser.Variable{Name: "value"},
-											Value: parser.Arithmetic{
-												LHS:      parser.Variable{Name: "value"},
-												RHS:      parser.Variable{Name: "fetch"},
-												Operator: '*',
-											},
-										},
-									},
-								},
-								parser.Return{
-									Value: parser.Variable{Name: "value"},
-								},
-							},
-						},
-					},
-				},
-			},
-			Tx: TestTx,
 		},
 	},
 	{
@@ -1035,27 +868,26 @@ var analyzeTests = []struct {
 					value.NewInteger(2),
 				}),
 			},
-			Filter: &Filter{
-				tempViews: TemporaryViewScopes{NewViewMap()},
-				functions: UserDefinedFunctionScopes{
-					{
-						"USERAGGFUNC": &UserDefinedFunction{
-							Name:        parser.Identifier{Literal: "useraggfunc"},
-							IsAggregate: true,
-							Cursor:      parser.Identifier{Literal: "list"},
-							Parameters: []parser.Variable{
-								{Name: "default"},
-							},
-							Statements: []parser.Statement{
-								parser.Return{
-									Value: parser.Variable{Name: "value"},
-								},
+		},
+		Filter: &Filter{
+			tempViews: TemporaryViewScopes{NewViewMap()},
+			functions: UserDefinedFunctionScopes{
+				{
+					"USERAGGFUNC": &UserDefinedFunction{
+						Name:        parser.Identifier{Literal: "useraggfunc"},
+						IsAggregate: true,
+						Cursor:      parser.Identifier{Literal: "list"},
+						Parameters: []parser.Variable{
+							{Name: "default"},
+						},
+						Statements: []parser.Statement{
+							parser.Return{
+								Value: parser.Variable{Name: "value"},
 							},
 						},
 					},
 				},
 			},
-			Tx: TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "useraggfunc",
@@ -1095,27 +927,26 @@ var analyzeTests = []struct {
 					value.NewInteger(1),
 				}),
 			},
-			Filter: &Filter{
-				tempViews: TemporaryViewScopes{NewViewMap()},
-				functions: UserDefinedFunctionScopes{
-					{
-						"USERAGGFUNC": &UserDefinedFunction{
-							Name:        parser.Identifier{Literal: "useraggfunc"},
-							IsAggregate: true,
-							Cursor:      parser.Identifier{Literal: "list"},
-							Parameters: []parser.Variable{
-								{Name: "default"},
-							},
-							Statements: []parser.Statement{
-								parser.Return{
-									Value: parser.Variable{Name: "value"},
-								},
+		},
+		Filter: &Filter{
+			tempViews: TemporaryViewScopes{NewViewMap()},
+			functions: UserDefinedFunctionScopes{
+				{
+					"USERAGGFUNC": &UserDefinedFunction{
+						Name:        parser.Identifier{Literal: "useraggfunc"},
+						IsAggregate: true,
+						Cursor:      parser.Identifier{Literal: "list"},
+						Parameters: []parser.Variable{
+							{Name: "default"},
+						},
+						Statements: []parser.Statement{
+							parser.Return{
+								Value: parser.Variable{Name: "value"},
 							},
 						},
 					},
 				},
 			},
-			Tx: TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "useraggfunc",
@@ -1148,27 +979,26 @@ var analyzeTests = []struct {
 					value.NewInteger(2),
 				}),
 			},
-			Filter: &Filter{
-				tempViews: TemporaryViewScopes{NewViewMap()},
-				functions: UserDefinedFunctionScopes{
-					{
-						"USERAGGFUNC": &UserDefinedFunction{
-							Name:        parser.Identifier{Literal: "useraggfunc"},
-							IsAggregate: true,
-							Cursor:      parser.Identifier{Literal: "list"},
-							Parameters: []parser.Variable{
-								{Name: "default"},
-							},
-							Statements: []parser.Statement{
-								parser.Return{
-									Value: parser.Variable{Name: "value"},
-								},
+		},
+		Filter: &Filter{
+			tempViews: TemporaryViewScopes{NewViewMap()},
+			functions: UserDefinedFunctionScopes{
+				{
+					"USERAGGFUNC": &UserDefinedFunction{
+						Name:        parser.Identifier{Literal: "useraggfunc"},
+						IsAggregate: true,
+						Cursor:      parser.Identifier{Literal: "list"},
+						Parameters: []parser.Variable{
+							{Name: "default"},
+						},
+						Statements: []parser.Statement{
+							parser.Return{
+								Value: parser.Variable{Name: "value"},
 							},
 						},
 					},
 				},
 			},
-			Tx: TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "useraggfunc",
@@ -1200,27 +1030,26 @@ var analyzeTests = []struct {
 					value.NewInteger(2),
 				}),
 			},
-			Filter: &Filter{
-				tempViews: TemporaryViewScopes{NewViewMap()},
-				functions: UserDefinedFunctionScopes{
-					{
-						"USERAGGFUNC": &UserDefinedFunction{
-							Name:        parser.Identifier{Literal: "useraggfunc"},
-							IsAggregate: true,
-							Cursor:      parser.Identifier{Literal: "list"},
-							Parameters: []parser.Variable{
-								{Name: "default"},
-							},
-							Statements: []parser.Statement{
-								parser.Return{
-									Value: parser.Variable{Name: "undefined"},
-								},
+		},
+		Filter: &Filter{
+			tempViews: TemporaryViewScopes{NewViewMap()},
+			functions: UserDefinedFunctionScopes{
+				{
+					"USERAGGFUNC": &UserDefinedFunction{
+						Name:        parser.Identifier{Literal: "useraggfunc"},
+						IsAggregate: true,
+						Cursor:      parser.Identifier{Literal: "list"},
+						Parameters: []parser.Variable{
+							{Name: "default"},
+						},
+						Statements: []parser.Statement{
+							parser.Return{
+								Value: parser.Variable{Name: "undefined"},
 							},
 						},
 					},
 				},
 			},
-			Tx: TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "useraggfunc",
@@ -1252,8 +1081,6 @@ var analyzeTests = []struct {
 					value.NewInteger(2),
 				}),
 			},
-			Filter: NewFilter(TestTx),
-			Tx:     TestTx,
 		},
 		Function: parser.AnalyticFunction{
 			Name: "notexist",
@@ -1272,7 +1099,15 @@ func TestAnalyze(t *testing.T) {
 			TestTx.Flags.CPU = 1
 		}
 
-		err := Analyze(context.Background(), v.View, v.Function, v.PartitionIndices)
+		ctx := context.Background()
+		if v.Filter != nil {
+			v.Filter.tx = TestTx
+			ctx = ContextForExecusion(ctx, v.Filter)
+		} else {
+			ctx = ContextForExecusion(ctx, NewFilter(TestTx))
+		}
+
+		err := Analyze(ctx, v.View, v.Function, v.PartitionIndices)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1363,12 +1198,6 @@ var analyticFunctionTestFilter = &Filter{
 						value.NewString("b"),
 						value.NewNull(),
 					}),
-				},
-				Filter: &Filter{
-					variables: VariableScopes{NewVariableMap()},
-					tempViews: TemporaryViewScopes{NewViewMap()},
-					cursors:   CursorScopes{{}},
-					functions: UserDefinedFunctionScopes{{}},
 				},
 			},
 			recordIndex: 0,

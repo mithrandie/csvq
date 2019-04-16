@@ -616,11 +616,11 @@ var setFlagTests = []struct {
 func TestSetFlag(t *testing.T) {
 	defer initFlag(TestTx.Flags)
 
-	filter := NewFilter(TestTx)
+	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
 
 	for _, v := range setFlagTests {
 		initFlag(TestTx.Flags)
-		err := SetFlag(context.Background(), filter, v.Expr)
+		err := SetFlag(ctx, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -686,13 +686,13 @@ var addFlagElementTests = []struct {
 func TestAddFlagElement(t *testing.T) {
 	defer initFlag(TestTx.Flags)
 
-	filter := NewFilter(TestTx)
+	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
 
 	for _, v := range addFlagElementTests {
 		initFlag(TestTx.Flags)
 		v.Init(TestTx.Flags)
 
-		err := AddFlagElement(context.Background(), filter, v.Expr)
+		err := AddFlagElement(ctx, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -793,13 +793,13 @@ var removeFlagElementTests = []struct {
 func TestRemoveFlagElement(t *testing.T) {
 	defer initFlag(TestTx.Flags)
 
-	filter := NewFilter(TestTx)
+	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
 
 	for _, v := range removeFlagElementTests {
 		initFlag(TestTx.Flags)
 		v.Init(TestTx.Flags)
 
-		err := RemoveFlagElement(context.Background(), filter, v.Expr)
+		err := RemoveFlagElement(ctx, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1496,13 +1496,13 @@ func TestShowFlag(t *testing.T) {
 	}()
 
 	TestTx.UseColor(true)
-	filter := NewFilter(TestTx)
+	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
 
 	for _, v := range showFlagTests {
 		initFlag(TestTx.Flags)
 		TestTx.UseColor(true)
 		for _, expr := range v.SetExprs {
-			_ = SetFlag(context.Background(), filter, expr)
+			_ = SetFlag(ctx, expr)
 		}
 		result, err := ShowFlag(TestTx, v.Expr)
 		if err != nil {
@@ -2158,8 +2158,8 @@ func TestShowObjects(t *testing.T) {
 		} else {
 			filter = NewFilter(TestTx)
 		}
-
-		result, err := ShowObjects(filter, v.Expr)
+		ctx := ContextForExecusion(context.Background(), filter)
+		result, err := ShowObjects(ctx, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2482,7 +2482,8 @@ func TestShowFields(t *testing.T) {
 			filter = NewFilter(TestTx)
 		}
 
-		result, err := ShowFields(context.Background(), filter, v.Expr)
+		ctx := ContextForExecusion(context.Background(), filter)
+		result, err := ShowFields(ctx, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2550,10 +2551,10 @@ var setEnvVarTests = []struct {
 }
 
 func TestSetEnvVar(t *testing.T) {
-	filter := NewFilter(TestTx)
+	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
 
 	for _, v := range setEnvVarTests {
-		err := SetEnvVar(context.Background(), filter, v.Expr)
+		err := SetEnvVar(ctx, v.Expr)
 
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -2774,10 +2775,10 @@ func TestSyntax(t *testing.T) {
 		},
 	}
 
-	filter := NewFilter(TestTx)
+	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
 
 	for _, v := range syntaxTests {
-		result := Syntax(context.Background(), filter, v.Expr)
+		result, _ := Syntax(ctx, v.Expr)
 		if result != v.Expect {
 			t.Errorf("result = %s, want %s for %v", result, v.Expect, v.Expr)
 		}

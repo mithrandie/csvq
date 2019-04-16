@@ -148,7 +148,6 @@ func InnerJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 			filter := NewFilterForRecord(
 				parentFilter,
 				&View{
-					Tx:        parentFilter.tx,
 					Header:    mergedHeader,
 					RecordSet: make(RecordSet, 1),
 				},
@@ -227,7 +226,6 @@ func OuterJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 			filter := NewFilterForRecord(
 				parentFilter,
 				&View{
-					Tx:        parentFilter.tx,
 					Header:    mergedHeader,
 					RecordSet: make(RecordSet, 1),
 				},

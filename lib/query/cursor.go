@@ -19,8 +19,8 @@ func (list CursorScopes) Declare(expr parser.CursorDeclaration) error {
 	return list[0].Declare(expr)
 }
 
-func (list CursorScopes) AddPseudoCursor(tx *Transaction, name parser.Identifier, values []value.Primary) error {
-	return list[0].AddPseudoCursor(tx, name, values)
+func (list CursorScopes) AddPseudoCursor(name parser.Identifier, values []value.Primary) error {
+	return list[0].AddPseudoCursor(name, values)
 }
 
 func (list CursorScopes) Dispose(name parser.Identifier) error {
@@ -36,11 +36,11 @@ func (list CursorScopes) Dispose(name parser.Identifier) error {
 	return NewUndeclaredCursorError(name)
 }
 
-func (list CursorScopes) Open(ctx context.Context, filter *Filter, name parser.Identifier, values []parser.ReplaceValue) error {
+func (list CursorScopes) Open(ctx context.Context, name parser.Identifier, values []parser.ReplaceValue) error {
 	var err error
 
 	for _, m := range list {
-		err = m.Open(ctx, filter, name, values)
+		err = m.Open(ctx, name, values)
 		if err == nil {
 			return nil
 		}
@@ -148,12 +148,12 @@ func (m CursorMap) Declare(expr parser.CursorDeclaration) error {
 	return nil
 }
 
-func (m CursorMap) AddPseudoCursor(tx *Transaction, name parser.Identifier, values []value.Primary) error {
+func (m CursorMap) AddPseudoCursor(name parser.Identifier, values []value.Primary) error {
 	uname := strings.ToUpper(name.Literal)
 	if _, ok := m[uname]; ok {
 		return NewCursorRedeclaredError(name)
 	}
-	m[uname] = NewPseudoCursor(tx, values)
+	m[uname] = NewPseudoCursor(values)
 	return nil
 }
 
@@ -169,9 +169,9 @@ func (m CursorMap) Dispose(name parser.Identifier) error {
 	return NewUndeclaredCursorError(name)
 }
 
-func (m CursorMap) Open(ctx context.Context, filter *Filter, name parser.Identifier, values []parser.ReplaceValue) error {
+func (m CursorMap) Open(ctx context.Context, name parser.Identifier, values []parser.ReplaceValue) error {
 	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
-		return cur.Open(ctx, filter, name, values)
+		return cur.Open(ctx, name, values)
 	}
 	return NewUndeclaredCursorError(name)
 }
@@ -261,14 +261,14 @@ func NewCursor(e parser.CursorDeclaration) *Cursor {
 	}
 }
 
-func NewPseudoCursor(tx *Transaction, values []value.Primary) *Cursor {
+func NewPseudoCursor(values []value.Primary) *Cursor {
 	header := NewHeader("", []string{"c1"})
 
 	records := make(RecordSet, len(values))
 	for i, v := range values {
 		records[i] = NewRecord([]value.Primary{v})
 	}
-	view := NewView(tx)
+	view := NewView()
 	view.Header = header
 	view.RecordSet = records
 
@@ -281,9 +281,14 @@ func NewPseudoCursor(tx *Transaction, values []value.Primary) *Cursor {
 	}
 }
 
-func (c *Cursor) Open(ctx context.Context, filter *Filter, name parser.Identifier, values []parser.ReplaceValue) error {
+func (c *Cursor) Open(ctx context.Context, name parser.Identifier, values []parser.ReplaceValue) error {
 	if c.isPseudo {
 		return NewPseudoCursorError(name)
+	}
+
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return err
 	}
 
 	c.mtx.Lock()
@@ -294,9 +299,8 @@ func (c *Cursor) Open(ctx context.Context, filter *Filter, name parser.Identifie
 	}
 
 	var view *View
-	var err error
 	if c.query.SelectEntity != nil {
-		view, err = Select(ctx, filter, c.query)
+		view, err = Select(ctx, c.query)
 	} else {
 		prepared, e := filter.tx.PreparedStatements.Get(c.statement)
 		if e != nil {
@@ -309,7 +313,7 @@ func (c *Cursor) Open(ctx context.Context, filter *Filter, name parser.Identifie
 		if !ok {
 			return NewInvalidCursorStatementError(c.statement)
 		}
-		view, err = Select(ContextForPreparedStatement(ctx, NewReplaceValues(values)), filter, stmt)
+		view, err = Select(ContextForPreparedStatement(ctx, NewReplaceValues(values)), stmt)
 	}
 	if err != nil {
 		return err

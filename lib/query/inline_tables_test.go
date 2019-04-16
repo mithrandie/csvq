@@ -65,7 +65,6 @@ var inlineTableNodesSetTests = []struct {
 							value.NewInteger(1),
 						}),
 					},
-					Tx: TestTx,
 				},
 			},
 			InlineTableMap{
@@ -78,7 +77,6 @@ var inlineTableNodesSetTests = []struct {
 							value.NewInteger(1),
 						}),
 					},
-					Tx: TestTx,
 				},
 			},
 		},
@@ -103,16 +101,16 @@ func TestInlineTableNodes_Set(t *testing.T) {
 						value.NewInteger(1),
 					}),
 				},
-				Tx: TestTx,
 			},
 		},
 	}
 
 	_ = TestTx.Flags.SetRepository(TestDataDir)
 
+	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
 	for _, v := range inlineTableNodesSetTests {
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-		err := list.Set(context.Background(), NewFilter(TestTx), v.Expr)
+		err := list.Set(ctx, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -302,7 +300,6 @@ var inlineTableNodesLoadTests = []struct {
 							value.NewInteger(1),
 						}),
 					},
-					Tx: TestTx,
 				},
 				"IT_RECURSIVE": &View{
 					Header: []HeaderField{
@@ -324,7 +321,6 @@ var inlineTableNodesLoadTests = []struct {
 							value.NewInteger(3),
 						}),
 					},
-					Tx: TestTx,
 				},
 			},
 			InlineTableMap{
@@ -337,7 +333,6 @@ var inlineTableNodesLoadTests = []struct {
 							value.NewInteger(1),
 						}),
 					},
-					Tx: TestTx,
 				},
 			},
 		},
@@ -400,7 +395,6 @@ func TestInlineTableNodes_Load(t *testing.T) {
 						value.NewInteger(1),
 					}),
 				},
-				Tx: TestTx,
 			},
 		},
 		InlineTableMap{
@@ -413,13 +407,13 @@ func TestInlineTableNodes_Load(t *testing.T) {
 						value.NewInteger(1),
 					}),
 				},
-				Tx: TestTx,
 			},
 		},
 	}
 
+	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
 	for _, v := range inlineTableNodesLoadTests {
-		err := list.Load(context.Background(), NewFilter(TestTx), v.Expr)
+		err := list.Load(ctx, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -493,7 +487,6 @@ var inlineTableMapSetTests = []struct {
 						value.NewInteger(1),
 					}),
 				},
-				Tx: TestTx,
 			},
 		},
 	},
@@ -566,7 +559,6 @@ var inlineTableMapSetTests = []struct {
 						value.NewInteger(1),
 					}),
 				},
-				Tx: TestTx,
 			},
 			"IT_RECURSIVE": &View{
 				Header: []HeaderField{
@@ -588,7 +580,6 @@ var inlineTableMapSetTests = []struct {
 						value.NewInteger(3),
 					}),
 				},
-				Tx: TestTx,
 			},
 		},
 	},
@@ -719,9 +710,10 @@ func TestInlineTableMap_Set(t *testing.T) {
 
 	it := InlineTableMap{}
 
+	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
 	for _, v := range inlineTableMapSetTests {
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-		err := it.Set(context.Background(), NewFilter(TestTx), v.Expr)
+		err := it.Set(ctx, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

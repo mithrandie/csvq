@@ -195,10 +195,14 @@ func ParseExecuteStatements(ctx context.Context, filter *Filter, expr parser.Exe
 	return statements, err
 }
 
-func SetFlag(ctx context.Context, filter *Filter, expr parser.SetFlag) error {
+func SetFlag(ctx context.Context, expr parser.SetFlag) error {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return err
+	}
+
 	var val interface{}
 	var p value.Primary
-	var err error
 
 	if ident, ok := expr.Value.(parser.Identifier); ok {
 		p = value.NewString(ident.Literal)
@@ -247,7 +251,7 @@ func SetFlag(ctx context.Context, filter *Filter, expr parser.SetFlag) error {
 	return nil
 }
 
-func AddFlagElement(ctx context.Context, filter *Filter, expr parser.AddFlagElement) error {
+func AddFlagElement(ctx context.Context, expr parser.AddFlagElement) error {
 	switch strings.ToUpper(expr.Flag.Name) {
 	case cmd.DatetimeFormatFlag:
 		e := parser.SetFlag{
@@ -255,7 +259,7 @@ func AddFlagElement(ctx context.Context, filter *Filter, expr parser.AddFlagElem
 			Flag:     expr.Flag,
 			Value:    expr.Value,
 		}
-		return SetFlag(ctx, filter, e)
+		return SetFlag(ctx, e)
 	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.DelimiterFlag, cmd.JsonQueryFlag, cmd.EncodingFlag,
 		cmd.WriteEncodingFlag, cmd.FormatFlag, cmd.WriteDelimiterFlag, cmd.LineBreakFlag, cmd.JsonEscapeFlag,
 		cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAllFlag, cmd.PrettyPrintFlag,
@@ -269,9 +273,13 @@ func AddFlagElement(ctx context.Context, filter *Filter, expr parser.AddFlagElem
 	}
 }
 
-func RemoveFlagElement(ctx context.Context, filter *Filter, expr parser.RemoveFlagElement) error {
+func RemoveFlagElement(ctx context.Context, expr parser.RemoveFlagElement) error {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return err
+	}
+
 	var p value.Primary
-	var err error
 
 	p, err = filter.Evaluate(ctx, expr.Value)
 	if err != nil {
@@ -438,7 +446,12 @@ func showFlag(tx *Transaction, flagName string) (string, bool) {
 	return s, true
 }
 
-func ShowObjects(filter *Filter, expr parser.ShowObjects) (string, error) {
+func ShowObjects(ctx context.Context, expr parser.ShowObjects) (string, error) {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return "", err
+	}
+
 	var s string
 
 	w := NewObjectWriter(filter.tx)
@@ -820,7 +833,7 @@ func writeFunctions(w *ObjectWriter, funcs UserDefinedFunctionMap) {
 	}
 }
 
-func ShowFields(ctx context.Context, filter *Filter, expr parser.ShowFields) (string, error) {
+func ShowFields(ctx context.Context, expr parser.ShowFields) (string, error) {
 	var tableName = func(expr parser.QueryExpression) (s string) {
 		if e, ok := expr.(parser.Identifier); ok {
 			s = e.Literal
@@ -834,13 +847,19 @@ func ShowFields(ctx context.Context, filter *Filter, expr parser.ShowFields) (st
 		return "", NewShowInvalidObjectTypeError(expr, expr.Type.Literal)
 	}
 
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return "", err
+	}
+
 	var status = ObjectFixed
 
 	loadingFilter := filter.CreateNode()
+	ctx = ContextForExecusion(ctx, loadingFilter)
 	defer loadingFilter.CloseNode()
 
-	view := NewView(filter.tx)
-	err := view.LoadFromTableIdentifier(ctx, loadingFilter, expr.Table, false, false)
+	view := NewView()
+	err = view.LoadFromTableIdentifier(ctx, expr.Table, false, false)
 	if err != nil {
 		return "", err
 	}
@@ -935,9 +954,13 @@ func writeQuery(w *ObjectWriter, s string) {
 	w.EndSubBlock()
 }
 
-func SetEnvVar(ctx context.Context, filter *Filter, expr parser.SetEnvVar) error {
+func SetEnvVar(ctx context.Context, expr parser.SetEnvVar) error {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return err
+	}
+
 	var p value.Primary
-	var err error
 
 	if ident, ok := expr.Value.(parser.Identifier); ok {
 		p = value.NewString(ident.Literal)
@@ -959,9 +982,13 @@ func UnsetEnvVar(expr parser.UnsetEnvVar) error {
 	return os.Unsetenv(expr.EnvVar.Name)
 }
 
-func Chdir(ctx context.Context, filter *Filter, expr parser.Chdir) error {
+func Chdir(ctx context.Context, expr parser.Chdir) error {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return err
+	}
+
 	var dirpath string
-	var err error
 
 	if ident, ok := expr.DirPath.(parser.Identifier); ok {
 		dirpath = ident.Literal
@@ -1027,7 +1054,12 @@ func Reload(ctx context.Context, tx *Transaction, expr parser.Reload) error {
 	return nil
 }
 
-func Syntax(ctx context.Context, filter *Filter, expr parser.Syntax) string {
+func Syntax(ctx context.Context, expr parser.Syntax) (string, error) {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return "", err
+	}
+
 	keys := make([]string, 0, len(expr.Keywords))
 	for _, key := range expr.Keywords {
 		var keystr string
@@ -1115,6 +1147,6 @@ func Syntax(ctx context.Context, filter *Filter, expr parser.Syntax) string {
 	} else {
 		w.Title1 = "Search: " + strings.Join(keys, " ")
 	}
-	return "\n" + w.String() + "\n"
+	return "\n" + w.String() + "\n", nil
 
 }

@@ -42,7 +42,7 @@ func GetTimeoutContext(ctx context.Context, waitTimeOut time.Duration) (context.
 		return ctx, dummyCancelFunc
 	}
 
-	return context.WithTimeout(context.Background(), waitTimeOut)
+	return context.WithTimeout(ctx, waitTimeOut)
 }
 
 func RLockFilePath(path string) string {

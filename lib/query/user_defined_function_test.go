@@ -996,8 +996,9 @@ func TestUserDefinedFunction_Execute(t *testing.T) {
 		[]UserDefinedFunctionMap{{}},
 	)
 
+	ctx := ContextForExecusion(context.Background(), filter)
 	for _, v := range userDefinedFunctionExecuteTests {
-		result, err := v.Func.Execute(context.Background(), filter, v.Args)
+		result, err := v.Func.Execute(ctx, v.Args)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1253,10 +1254,10 @@ var userDefinedFunctionExecuteAggregateTests = []struct {
 }
 
 func TestUserDefinedFunction_ExecuteAggregate(t *testing.T) {
-	filter := NewFilter(TestTx)
+	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
 
 	for _, v := range userDefinedFunctionExecuteAggregateTests {
-		result, err := v.Func.ExecuteAggregate(context.Background(), filter, v.Values, v.Args)
+		result, err := v.Func.ExecuteAggregate(ctx, v.Values, v.Args)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

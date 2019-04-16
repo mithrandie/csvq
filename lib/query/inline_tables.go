@@ -9,8 +9,8 @@ import (
 
 type InlineTableNodes []InlineTableMap
 
-func (list InlineTableNodes) Set(ctx context.Context, parentFilter *Filter, inlineTable parser.InlineTable) error {
-	return list[0].Set(ctx, parentFilter, inlineTable)
+func (list InlineTableNodes) Set(ctx context.Context, inlineTable parser.InlineTable) error {
+	return list[0].Set(ctx, inlineTable)
 }
 
 func (list InlineTableNodes) Get(name parser.Identifier) (*View, error) {
@@ -22,10 +22,10 @@ func (list InlineTableNodes) Get(name parser.Identifier) (*View, error) {
 	return nil, NewUndefinedInLineTableError(name)
 }
 
-func (list InlineTableNodes) Load(ctx context.Context, parentFilter *Filter, clause parser.WithClause) error {
+func (list InlineTableNodes) Load(ctx context.Context, clause parser.WithClause) error {
 	for _, v := range clause.InlineTables {
 		inlineTable := v.(parser.InlineTable)
-		err := list.Set(ctx, parentFilter, inlineTable)
+		err := list.Set(ctx, inlineTable)
 		if err != nil {
 			return err
 		}
@@ -36,19 +36,25 @@ func (list InlineTableNodes) Load(ctx context.Context, parentFilter *Filter, cla
 
 type InlineTableMap map[string]*View
 
-func (it InlineTableMap) Set(ctx context.Context, parentFilter *Filter, inlineTable parser.InlineTable) error {
+func (it InlineTableMap) Set(ctx context.Context, inlineTable parser.InlineTable) error {
 	uname := strings.ToUpper(inlineTable.Name.Literal)
 	if _, err := it.Get(inlineTable.Name); err == nil {
 		return NewInLineTableRedefinedError(inlineTable.Name)
 	}
 
+	parentFilter, err := GetFilter(ctx)
+	if err != nil {
+		return err
+	}
+
 	filter := parentFilter.CreateNode()
+	ctx = ContextForExecusion(ctx, filter)
 	defer filter.CloseNode()
 
 	if inlineTable.IsRecursive() {
 		filter.recursiveTable = &inlineTable
 	}
-	view, err := Select(ctx, filter, inlineTable.Query)
+	view, err := Select(ctx, inlineTable.Query)
 	if err != nil {
 		return err
 	}

@@ -37,9 +37,6 @@ type View struct {
 	RecordSet RecordSet
 	FileInfo  *FileInfo
 
-	Tx     *Transaction
-	Filter *Filter
-
 	selectFields []int
 	selectLabels []string
 	isGrouped    bool
@@ -55,13 +52,16 @@ type View struct {
 	offset int
 }
 
-func NewView(tx *Transaction) *View {
-	return &View{
-		Tx: tx,
-	}
+func NewView() *View {
+	return &View{}
 }
 
-func (view *View) Load(ctx context.Context, filter *Filter, clause parser.FromClause, forUpdate bool, useInternalId bool) error {
+func (view *View) Load(ctx context.Context, clause parser.FromClause, forUpdate bool, useInternalId bool) error {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return err
+	}
+
 	if clause.Tables == nil {
 		var obj parser.QueryExpression
 		if filter.tx.Session.CanReadStdin() {
@@ -74,7 +74,7 @@ func (view *View) Load(ctx context.Context, filter *Filter, clause parser.FromCl
 
 	views := make([]*View, len(clause.Tables))
 	for i, v := range clause.Tables {
-		loaded, err := loadView(ctx, filter, v, forUpdate, useInternalId)
+		loaded, err := loadView(ctx, v, forUpdate, useInternalId)
 		if err != nil {
 			return err
 		}
@@ -91,30 +91,34 @@ func (view *View) Load(ctx context.Context, filter *Filter, clause parser.FromCl
 		}
 	}
 
-	view.Filter = filter
 	return nil
 }
 
-func (view *View) LoadFromTableIdentifier(ctx context.Context, filter *Filter, table parser.QueryExpression, forUpdate bool, useInternalId bool) error {
+func (view *View) LoadFromTableIdentifier(ctx context.Context, table parser.QueryExpression, forUpdate bool, useInternalId bool) error {
 	fromClause := parser.FromClause{
 		Tables: []parser.QueryExpression{
 			parser.Table{Object: table},
 		},
 	}
 
-	return view.Load(ctx, filter, fromClause, forUpdate, useInternalId)
+	return view.Load(ctx, fromClause, forUpdate, useInternalId)
 }
 
-func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpression, forUpdate bool, useInternalId bool) (view *View, err error) {
+func loadView(ctx context.Context, tableExpr parser.QueryExpression, forUpdate bool, useInternalId bool) (view *View, err error) {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	if parentheses, ok := tableExpr.(parser.Parentheses); ok {
-		return loadView(ctx, filter, parentheses.Expr, forUpdate, useInternalId)
+		return loadView(ctx, parentheses.Expr, forUpdate, useInternalId)
 	}
 
 	table := tableExpr.(parser.Table)
 
 	switch table.Object.(type) {
 	case parser.Dual:
-		view = loadDualView(filter.tx)
+		view = loadDualView()
 	case parser.TableObject:
 		tableObject := table.Object.(parser.TableObject)
 
@@ -309,11 +313,11 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 		}
 	case parser.Join:
 		join := table.Object.(parser.Join)
-		view, err = loadView(ctx, filter, join.Table, forUpdate, useInternalId)
+		view, err = loadView(ctx, join.Table, forUpdate, useInternalId)
 		if err != nil {
 			return nil, err
 		}
-		view2, err := loadView(ctx, filter, join.JoinTable, forUpdate, useInternalId)
+		view2, err := loadView(ctx, join.JoinTable, forUpdate, useInternalId)
 		if err != nil {
 			return nil, err
 		}
@@ -442,7 +446,7 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 			ViewType:  ViewTypeTemporaryTable,
 		}
 
-		view, err = loadViewFromJsonFile(filter.tx, reader, fileInfo, jsonQuery)
+		view, err = loadViewFromJsonFile(reader, fileInfo, jsonQuery)
 		if err != nil {
 			if _, ok := err.(Error); !ok {
 				err = NewLoadJsonError(jsonQuery, err.Error())
@@ -456,7 +460,7 @@ func loadView(ctx context.Context, filter *Filter, tableExpr parser.QueryExpress
 
 	case parser.Subquery:
 		subquery := table.Object.(parser.Subquery)
-		view, err = Select(ctx, filter, subquery.Query)
+		view, err = Select(ctx, subquery.Query)
 		if err != nil {
 			return nil, err
 		}
@@ -601,7 +605,6 @@ func loadObject(
 		ctx,
 		tableIdentifier,
 		forUpdate,
-		filter,
 		importFormat,
 		delimiter,
 		delimiterPositions,
@@ -642,7 +645,6 @@ func cacheViewFromFile(
 	ctx context.Context,
 	tableIdentifier parser.Identifier,
 	forUpdate bool,
-	filter *Filter,
 	importFormat cmd.Format,
 	delimiter rune,
 	delimiterPositions []int,
@@ -655,6 +657,11 @@ func cacheViewFromFile(
 	jsonEscape txjson.EscapeType,
 	withoutNull bool,
 ) (string, error) {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return "", err
+	}
+
 	filter.tx.viewLoadingMutex.Lock()
 	defer filter.tx.viewLoadingMutex.Unlock()
 
@@ -714,7 +721,7 @@ func cacheViewFromFile(
 				fp = h.File()
 			}
 
-			loadView, err := loadViewFromFile(ctx, filter.tx, fp, fileInfo, withoutNull, tableIdentifier)
+			loadView, err := loadViewFromFile(ctx, fp, fileInfo, withoutNull, tableIdentifier)
 			if err != nil {
 				if _, ok := err.(Error); !ok {
 					err = NewDataParsingError(tableIdentifier, fileInfo.Path, err.Error())
@@ -731,19 +738,19 @@ func cacheViewFromFile(
 	return filePath, nil
 }
 
-func loadViewFromFile(ctx context.Context, tx *Transaction, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool, expr parser.QueryExpression) (*View, error) {
+func loadViewFromFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool, expr parser.QueryExpression) (*View, error) {
 	switch fileInfo.Format {
 	case cmd.FIXED:
-		return loadViewFromFixedLengthTextFile(ctx, tx, fp, fileInfo, withoutNull, expr)
+		return loadViewFromFixedLengthTextFile(ctx, fp, fileInfo, withoutNull, expr)
 	case cmd.LTSV:
-		return loadViewFromLTSVFile(ctx, tx, fp, fileInfo, withoutNull, expr)
+		return loadViewFromLTSVFile(ctx, fp, fileInfo, withoutNull, expr)
 	case cmd.JSON:
-		return loadViewFromJsonFile(tx, fp, fileInfo, expr)
+		return loadViewFromJsonFile(fp, fileInfo, expr)
 	}
-	return loadViewFromCSVFile(ctx, tx, fp, fileInfo, withoutNull)
+	return loadViewFromCSVFile(ctx, fp, fileInfo, withoutNull)
 }
 
-func loadViewFromFixedLengthTextFile(ctx context.Context, tx *Transaction, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool, expr parser.QueryExpression) (*View, error) {
+func loadViewFromFixedLengthTextFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool, expr parser.QueryExpression) (*View, error) {
 	if enc, err := text.DetectEncoding(fp); err == nil {
 		fileInfo.Encoding = enc
 	}
@@ -808,14 +815,14 @@ func loadViewFromFixedLengthTextFile(ctx context.Context, tx *Transaction, fp io
 		fileInfo.LineBreak = reader.DetectedLineBreak
 	}
 
-	view := NewView(tx)
+	view := NewView()
 	view.Header = NewHeaderWithAutofill(parser.FormatTableName(fileInfo.Path), header)
 	view.RecordSet = records
 	view.FileInfo = fileInfo
 	return view, nil
 }
 
-func loadViewFromCSVFile(ctx context.Context, tx *Transaction, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool) (*View, error) {
+func loadViewFromCSVFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool) (*View, error) {
 	if enc, err := text.DetectEncoding(fp); err == nil {
 		fileInfo.Encoding = enc
 	}
@@ -852,14 +859,19 @@ func loadViewFromCSVFile(ctx context.Context, tx *Transaction, fp io.ReadSeeker,
 	}
 	fileInfo.EncloseAll = reader.EnclosedAll
 
-	view := NewView(tx)
+	view := NewView()
 	view.Header = NewHeader(parser.FormatTableName(fileInfo.Path), header)
 	view.RecordSet = records
 	view.FileInfo = fileInfo
 	return view, nil
 }
 
-func loadViewFromLTSVFile(ctx context.Context, tx *Transaction, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool, expr parser.QueryExpression) (*View, error) {
+func loadViewFromLTSVFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool, expr parser.QueryExpression) (*View, error) {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	if enc, err := text.DetectEncoding(fp); err == nil {
 		fileInfo.Encoding = enc
 	}
@@ -876,7 +888,7 @@ func loadViewFromLTSVFile(ctx context.Context, tx *Transaction, fp io.ReadSeeker
 	}
 
 	header := reader.Header.Fields()
-	if err = NewGoroutineTaskManager(len(records), -1, tx.Flags.CPU).Run(ctx, func(index int) error {
+	if err = NewGoroutineTaskManager(len(records), -1, filter.tx.Flags.CPU).Run(ctx, func(index int) error {
 		for j := len(records[index]); j < len(header); j++ {
 			if withoutNull {
 				records[index] = append(records[index], NewCell(value.NewString("")))
@@ -893,7 +905,7 @@ func loadViewFromLTSVFile(ctx context.Context, tx *Transaction, fp io.ReadSeeker
 		fileInfo.LineBreak = reader.DetectedLineBreak
 	}
 
-	view := NewView(tx)
+	view := NewView()
 	view.Header = NewHeader(parser.FormatTableName(fileInfo.Path), header)
 	view.RecordSet = records
 	view.FileInfo = fileInfo
@@ -968,7 +980,7 @@ func readRecordSet(ctx context.Context, reader RecordReader) (RecordSet, error) 
 	return records, err
 }
 
-func loadViewFromJsonFile(tx *Transaction, fp io.Reader, fileInfo *FileInfo, expr parser.QueryExpression) (*View, error) {
+func loadViewFromJsonFile(fp io.Reader, fileInfo *FileInfo, expr parser.QueryExpression) (*View, error) {
 	jsonText, err := ioutil.ReadAll(fp)
 	if err != nil {
 		return nil, NewIOError(expr, err.Error())
@@ -987,16 +999,15 @@ func loadViewFromJsonFile(tx *Transaction, fp io.Reader, fileInfo *FileInfo, exp
 	fileInfo.Encoding = text.UTF8
 	fileInfo.JsonEscape = escapeType
 
-	view := NewView(tx)
+	view := NewView()
 	view.Header = NewHeader(parser.FormatTableName(fileInfo.Path), headerLabels)
 	view.RecordSet = records
 	view.FileInfo = fileInfo
 	return view, nil
 }
 
-func loadDualView(tx *Transaction) *View {
+func loadDualView() *View {
 	view := View{
-		Tx:        tx,
 		Header:    NewDualHeader(),
 		RecordSet: make([]Record, 1),
 	}
@@ -1004,8 +1015,13 @@ func loadDualView(tx *Transaction) *View {
 	return &view
 }
 
-func NewViewFromGroupedRecord(ctx context.Context, filter *Filter, filterRecord filterRecord) (*View, error) {
-	view := NewView(filterRecord.view.Tx)
+func NewViewFromGroupedRecord(ctx context.Context, filterRecord filterRecord) (*View, error) {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	view := NewView()
 	view.Header = filterRecord.view.Header
 	record := filterRecord.view.RecordSet[filterRecord.recordIndex]
 
@@ -1032,9 +1048,14 @@ func (view *View) Where(ctx context.Context, clause parser.WhereClause) error {
 }
 
 func (view *View) filter(ctx context.Context, condition parser.QueryExpression) error {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return err
+	}
+
 	results := make([]bool, view.RecordLen())
 
-	err := NewFilterForSequentialEvaluation(view.Filter, view).EvaluateSequentially(ctx, func(f *Filter, rIdx int) error {
+	err = NewFilterForSequentialEvaluation(filter, view).EvaluateSequentially(ctx, func(f *Filter, rIdx int) error {
 		primary, e := f.Evaluate(ctx, condition)
 		if e != nil {
 			return e
@@ -1066,13 +1087,18 @@ func (view *View) GroupBy(ctx context.Context, clause parser.GroupByClause) erro
 }
 
 func (view *View) group(ctx context.Context, items []parser.QueryExpression) error {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return err
+	}
+
 	if items == nil {
 		return view.groupAll()
 	}
 
 	keys := make([]string, view.RecordLen())
 
-	err := NewFilterForSequentialEvaluation(view.Filter, view).EvaluateSequentially(ctx, func(f *Filter, rIdx int) error {
+	err = NewFilterForSequentialEvaluation(filter, view).EvaluateSequentially(ctx, func(f *Filter, rIdx int) error {
 		values := make([]value.Primary, len(items))
 		keyBuf := new(bytes.Buffer)
 
@@ -1083,7 +1109,7 @@ func (view *View) group(ctx context.Context, items []parser.QueryExpression) err
 			}
 			values[i] = p
 		}
-		SerializeComparisonKeys(keyBuf, values, view.Tx.Flags)
+		SerializeComparisonKeys(keyBuf, values, filter.tx.Flags)
 		keys[rIdx] = keyBuf.String()
 		return nil
 	})
@@ -1299,18 +1325,23 @@ func (view *View) Select(ctx context.Context, clause parser.SelectClause) error 
 }
 
 func (view *View) GenerateComparisonKeys(ctx context.Context) error {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return err
+	}
+
 	view.comparisonKeysInEachRecord = make([]string, view.RecordLen())
 
-	return NewGoroutineTaskManager(view.RecordLen(), -1, view.Tx.Flags.CPU).Run(ctx, func(index int) error {
+	return NewGoroutineTaskManager(view.RecordLen(), -1, filter.tx.Flags.CPU).Run(ctx, func(index int) error {
 		buf := new(bytes.Buffer)
 		if view.selectFields != nil {
 			primaries := make([]value.Primary, len(view.selectFields))
 			for j, idx := range view.selectFields {
 				primaries[j] = view.RecordSet[index][idx].Value()
 			}
-			SerializeComparisonKeys(buf, primaries, view.Tx.Flags)
+			SerializeComparisonKeys(buf, primaries, filter.tx.Flags)
 		} else {
-			view.RecordSet[index].SerializeComparisonKeys(buf, view.Tx.Flags)
+			view.RecordSet[index].SerializeComparisonKeys(buf, filter.tx.Flags)
 		}
 		view.comparisonKeysInEachRecord[index] = buf.String()
 		return nil
@@ -1327,6 +1358,11 @@ func (view *View) SelectAllColumns(ctx context.Context) error {
 }
 
 func (view *View) OrderBy(ctx context.Context, clause parser.OrderByClause) error {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return err
+	}
+
 	orderValues := make([]parser.QueryExpression, len(clause.Items))
 	for i, item := range clause.Items {
 		orderValues[i] = item.(parser.OrderItem).Value
@@ -1369,7 +1405,7 @@ func (view *View) OrderBy(ctx context.Context, clause parser.OrderByClause) erro
 		}
 	}
 
-	if err := NewGoroutineTaskManager(view.RecordLen(), -1, view.Tx.Flags.CPU).Run(ctx, func(index int) error {
+	if err := NewGoroutineTaskManager(view.RecordLen(), -1, filter.tx.Flags.CPU).Run(ctx, func(index int) error {
 		if view.sortValuesInEachCell != nil && view.sortValuesInEachCell[index] == nil {
 			view.sortValuesInEachCell[index] = make([]*SortValue, cap(view.RecordSet[index]))
 		}
@@ -1379,7 +1415,7 @@ func (view *View) OrderBy(ctx context.Context, clause parser.OrderByClause) erro
 			if view.sortValuesInEachCell != nil && idx < len(view.sortValuesInEachCell[index]) && view.sortValuesInEachCell[index][idx] != nil {
 				sortValues[j] = view.sortValuesInEachCell[index][idx]
 			} else {
-				sortValues[j] = NewSortValue(view.RecordSet[index][idx].Value(), view.Tx.Flags)
+				sortValues[j] = NewSortValue(view.RecordSet[index][idx].Value(), filter.tx.Flags)
 				if view.sortValuesInEachCell != nil && idx < len(view.sortValuesInEachCell[index]) {
 					view.sortValuesInEachCell[index][idx] = sortValues[j]
 				}
@@ -1395,14 +1431,19 @@ func (view *View) OrderBy(ctx context.Context, clause parser.OrderByClause) erro
 	return nil
 }
 
-func (view *View) additionalColumns(expr parser.QueryExpression) ([]string, error) {
+func (view *View) additionalColumns(ctx context.Context, expr parser.QueryExpression) ([]string, error) {
 	list := make([]string, 0)
+
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	switch expr.(type) {
 	case parser.FieldReference, parser.ColumnNumber:
 		return nil, nil
 	case parser.Function:
-		if udfn, err := view.Filter.functions.Get(expr, expr.(parser.Function).Name); err == nil {
+		if udfn, err := filter.functions.Get(expr, expr.(parser.Function).Name); err == nil {
 			if udfn.IsAggregate && !view.isGrouped {
 				return nil, NewNotGroupingRecordsError(expr, expr.(parser.Function).Name)
 			}
@@ -1425,7 +1466,7 @@ func (view *View) additionalColumns(expr parser.QueryExpression) ([]string, erro
 
 		if pvalues != nil {
 			for _, pvalue := range pvalues {
-				columns, err := view.additionalColumns(pvalue)
+				columns, err := view.additionalColumns(ctx, pvalue)
 				if err != nil {
 					return nil, err
 				}
@@ -1439,7 +1480,7 @@ func (view *View) additionalColumns(expr parser.QueryExpression) ([]string, erro
 		if ovalues != nil {
 			for _, v := range ovalues {
 				item := v.(parser.OrderItem)
-				columns, err := view.additionalColumns(item.Value)
+				columns, err := view.additionalColumns(ctx, item.Value)
 				if err != nil {
 					return nil, err
 				}
@@ -1463,9 +1504,14 @@ func (view *View) additionalColumns(expr parser.QueryExpression) ([]string, erro
 }
 
 func (view *View) ExtendRecordCapacity(ctx context.Context, exprs []parser.QueryExpression) error {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return err
+	}
+
 	additions := make([]string, 0)
 	for _, expr := range exprs {
-		columns, err := view.additionalColumns(expr)
+		columns, err := view.additionalColumns(ctx, expr)
 		if err != nil {
 			return err
 		}
@@ -1483,7 +1529,7 @@ func (view *View) ExtendRecordCapacity(ctx context.Context, exprs []parser.Query
 		return nil
 	}
 
-	return NewGoroutineTaskManager(view.RecordLen(), -1, view.Tx.Flags.CPU).Run(ctx, func(index int) error {
+	return NewGoroutineTaskManager(view.RecordLen(), -1, filter.tx.Flags.CPU).Run(ctx, func(index int) error {
 		record := make(Record, currentLen, fieldCap)
 		copy(record, view.RecordSet[index])
 		view.RecordSet[index] = record
@@ -1492,6 +1538,11 @@ func (view *View) ExtendRecordCapacity(ctx context.Context, exprs []parser.Query
 }
 
 func (view *View) evalColumn(ctx context.Context, obj parser.QueryExpression, alias string) (idx int, err error) {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return 0, err
+	}
+
 	switch obj.(type) {
 	case parser.FieldReference, parser.ColumnNumber:
 		if idx, err = view.FieldIndex(obj); err != nil {
@@ -1516,7 +1567,7 @@ func (view *View) evalColumn(ctx context.Context, obj parser.QueryExpression, al
 					view.tempRecord = NewEmptyRecord(view.FieldLen())
 				}
 
-				f := NewFilterForRecord(view.Filter, view, -1)
+				f := NewFilterForRecord(filter, view, -1)
 				primary, e := f.Evaluate(ctx, obj)
 				if e != nil {
 					err = e
@@ -1524,7 +1575,7 @@ func (view *View) evalColumn(ctx context.Context, obj parser.QueryExpression, al
 				}
 				view.tempRecord = append(view.tempRecord, NewCell(primary))
 			} else {
-				err = NewFilterForSequentialEvaluation(view.Filter, view).EvaluateSequentially(ctx, func(f *Filter, rIdx int) error {
+				err = NewFilterForSequentialEvaluation(filter, view).EvaluateSequentially(ctx, func(f *Filter, rIdx int) error {
 					primary, e := f.Evaluate(ctx, obj)
 					if e != nil {
 						return e
@@ -1551,10 +1602,15 @@ func (view *View) evalColumn(ctx context.Context, obj parser.QueryExpression, al
 }
 
 func (view *View) evalAnalyticFunction(ctx context.Context, expr parser.AnalyticFunction) error {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return err
+	}
+
 	name := strings.ToUpper(expr.Name)
 	if _, ok := AggregateFunctions[name]; !ok {
 		if _, ok := AnalyticFunctions[name]; !ok {
-			if udfn, err := view.Filter.functions.Get(expr, expr.Name); err != nil || !udfn.IsAggregate {
+			if udfn, err := filter.functions.Get(expr, expr.Name); err != nil || !udfn.IsAggregate {
 				return NewFunctionNotExistError(expr, expr.Name)
 			}
 		}
@@ -1585,7 +1641,7 @@ func (view *View) evalAnalyticFunction(ctx context.Context, expr parser.Analytic
 		}
 	}
 
-	err := Analyze(ctx, view, expr, partitionIndices)
+	err = Analyze(ctx, view, expr, partitionIndices)
 
 	view.sortValuesInEachRecord = nil
 	view.sortDirections = nil
@@ -1595,7 +1651,12 @@ func (view *View) evalAnalyticFunction(ctx context.Context, expr parser.Analytic
 }
 
 func (view *View) Offset(ctx context.Context, clause parser.OffsetClause) error {
-	val, err := view.Filter.Evaluate(ctx, clause.Value)
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return err
+	}
+
+	val, err := filter.Evaluate(ctx, clause.Value)
 	if err != nil {
 		return err
 	}
@@ -1620,7 +1681,12 @@ func (view *View) Offset(ctx context.Context, clause parser.OffsetClause) error 
 }
 
 func (view *View) Limit(ctx context.Context, clause parser.LimitClause) error {
-	val, err := view.Filter.Evaluate(ctx, clause.Value)
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return err
+	}
+
+	val, err := filter.Evaluate(ctx, clause.Value)
 	if err != nil {
 		return err
 	}
@@ -1704,6 +1770,11 @@ func (view *View) ReplaceFromQuery(ctx context.Context, fields []parser.QueryExp
 }
 
 func (view *View) convertListToRecordValues(ctx context.Context, fields []parser.QueryExpression, list []parser.QueryExpression) ([][]value.Primary, error) {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	recordValues := make([][]value.Primary, len(list))
 	for i, item := range list {
 		if ctx.Err() != nil {
@@ -1711,7 +1782,7 @@ func (view *View) convertListToRecordValues(ctx context.Context, fields []parser
 		}
 
 		rv := item.(parser.RowValue)
-		values, err := view.Filter.evalRowValue(ctx, rv)
+		values, err := filter.evalRowValue(ctx, rv)
 		if err != nil {
 			return recordValues, err
 		}
@@ -1725,7 +1796,7 @@ func (view *View) convertListToRecordValues(ctx context.Context, fields []parser
 }
 
 func (view *View) convertResultSetToRecordValues(ctx context.Context, fields []parser.QueryExpression, query parser.SelectQuery) ([][]value.Primary, error) {
-	selectedView, err := Select(ctx, view.Filter, query)
+	selectedView, err := Select(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -1797,6 +1868,11 @@ func (view *View) insert(ctx context.Context, fields []parser.QueryExpression, r
 }
 
 func (view *View) replace(ctx context.Context, fields []parser.QueryExpression, recordValues [][]value.Primary, keys []parser.QueryExpression) (int, error) {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return 0, err
+	}
+
 	fieldIndices, err := view.FieldIndices(fields)
 	if err != nil {
 		return 0, err
@@ -1823,10 +1899,10 @@ func (view *View) replace(ctx context.Context, fields []parser.QueryExpression, 
 	}
 
 	sortValuesInEachRecord := make([]SortValues, view.RecordLen())
-	if err := NewGoroutineTaskManager(view.RecordLen(), -1, view.Tx.Flags.CPU).Run(ctx, func(index int) error {
+	if err := NewGoroutineTaskManager(view.RecordLen(), -1, filter.tx.Flags.CPU).Run(ctx, func(index int) error {
 		sortValues := make(SortValues, len(keyIndices))
 		for j, idx := range keyIndices {
-			sortValues[j] = NewSortValue(view.RecordSet[index][idx].Value(), view.Tx.Flags)
+			sortValues[j] = NewSortValue(view.RecordSet[index][idx].Value(), filter.tx.Flags)
 		}
 		sortValuesInEachRecord[index] = sortValues
 		return nil
@@ -1835,10 +1911,10 @@ func (view *View) replace(ctx context.Context, fields []parser.QueryExpression, 
 	}
 
 	sortValuesInInsertRecords := make([]SortValues, view.RecordLen())
-	if err := NewGoroutineTaskManager(len(records), -1, view.Tx.Flags.CPU).Run(ctx, func(index int) error {
+	if err := NewGoroutineTaskManager(len(records), -1, filter.tx.Flags.CPU).Run(ctx, func(index int) error {
 		sortValues := make(SortValues, len(keyIndices))
 		for j, idx := range keyIndices {
-			sortValues[j] = NewSortValue(records[index][idx].Value(), view.Tx.Flags)
+			sortValues[j] = NewSortValue(records[index][idx].Value(), filter.tx.Flags)
 		}
 		sortValuesInInsertRecords[index] = sortValues
 		return nil
@@ -1856,7 +1932,7 @@ func (view *View) replace(ctx context.Context, fields []parser.QueryExpression, 
 		replacedRecord[idx] = true
 		replaceMtx.Unlock()
 	}
-	if err := NewGoroutineTaskManager(view.RecordLen(), -1, view.Tx.Flags.CPU).Run(ctx, func(index int) error {
+	if err := NewGoroutineTaskManager(view.RecordLen(), -1, filter.tx.Flags.CPU).Run(ctx, func(index int) error {
 		for j, rsv := range sortValuesInInsertRecords {
 			if sortValuesInEachRecord[index].EquivalentTo(rsv) {
 				for _, fidx := range updateIndices {
@@ -1893,7 +1969,12 @@ func (view *View) Fix(ctx context.Context) error {
 	}
 
 	if resize {
-		if err := NewGoroutineTaskManager(view.RecordLen(), -1, view.Tx.Flags.CPU).Run(ctx, func(index int) error {
+		filter, err := GetFilter(ctx)
+		if err != nil {
+			return err
+		}
+
+		if err := NewGoroutineTaskManager(view.RecordLen(), -1, filter.tx.Flags.CPU).Run(ctx, func(index int) error {
 			record := make(Record, len(view.selectFields))
 			for j, idx := range view.selectFields {
 				if 1 < view.RecordSet[index].GroupLen() {
@@ -1928,7 +2009,6 @@ func (view *View) Fix(ctx context.Context) error {
 	}
 
 	view.Header = hfields
-	view.Filter = nil
 	view.selectFields = nil
 	view.selectLabels = nil
 	view.isGrouped = false
@@ -2035,7 +2115,12 @@ func (view *View) Intersect(ctx context.Context, calcView *View, all bool) (err 
 	return
 }
 
-func (view *View) ListValuesForAggregateFunctions(ctx context.Context, filter *Filter, expr parser.QueryExpression, arg parser.QueryExpression, distinct bool) ([]value.Primary, error) {
+func (view *View) ListValuesForAggregateFunctions(ctx context.Context, expr parser.QueryExpression, arg parser.QueryExpression, distinct bool) ([]value.Primary, error) {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	list := make([]value.Primary, view.RecordLen())
 
 	if err := NewFilterForSequentialEvaluation(filter, view).EvaluateSequentially(ctx, func(f *Filter, rIdx int) error {
@@ -2053,7 +2138,7 @@ func (view *View) ListValuesForAggregateFunctions(ctx context.Context, filter *F
 	}
 
 	if distinct {
-		list = Distinguish(list, view.Tx.Flags)
+		list = Distinguish(list, filter.tx.Flags)
 	}
 
 	return list, nil

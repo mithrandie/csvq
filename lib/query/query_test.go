@@ -179,13 +179,26 @@ func TestFetchCursor(t *testing.T) {
 		[]UserDefinedFunctionMap{{}},
 	)
 
+	ctx := ContextForExecusion(context.Background(), filter)
 	_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-	_ = filter.cursors.Open(context.Background(), filter, parser.Identifier{Literal: "cur"}, nil)
+	_ = filter.cursors.Open(ctx, parser.Identifier{Literal: "cur"}, nil)
 	_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-	_ = filter.cursors.Open(context.Background(), filter, parser.Identifier{Literal: "cur2"}, nil)
+	_ = filter.cursors.Open(ctx, parser.Identifier{Literal: "cur2"}, nil)
 
-	for _, v := range fetchCursorTests {
-		success, err := FetchCursor(context.Background(), filter, v.CurName, v.FetchPosition, v.Variables)
+	for i, v := range fetchCursorTests {
+		if i == 0 {
+			expectErr := "[Internal] filter for query is not set in context"
+			_, err := FetchCursor(context.Background(), v.CurName, v.FetchPosition, v.Variables)
+			if err == nil {
+				t.Errorf("no error, want error %q", expectErr)
+			} else {
+				if err.Error() != expectErr {
+					t.Errorf("error = %q, want error %q", err, expectErr)
+				}
+			}
+		}
+
+		success, err := FetchCursor(ctx, v.CurName, v.FetchPosition, v.Variables)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -233,7 +246,6 @@ var declareViewTests = []struct {
 				},
 				Header:    NewHeader("tbl", []string{"column1", "column2"}),
 				RecordSet: RecordSet{},
-				Tx:        TestTx,
 			},
 		}),
 	},
@@ -287,7 +299,6 @@ var declareViewTests = []struct {
 						value.NewInteger(2),
 					}),
 				},
-				Tx: TestTx,
 			},
 		}),
 	},
@@ -376,15 +387,28 @@ var declareViewTests = []struct {
 
 func TestDeclareView(t *testing.T) {
 	filter := NewFilter(TestTx)
+	ctx := ContextForExecusion(context.Background(), filter)
 
-	for _, v := range declareViewTests {
+	for i, v := range declareViewTests {
+		if i == 0 {
+			expectErr := "[Internal] filter for query is not set in context"
+			err := DeclareView(context.Background(), v.Expr)
+			if err == nil {
+				t.Errorf("no error, want error %q", expectErr)
+			} else {
+				if err.Error() != expectErr {
+					t.Errorf("error = %q, want error %q", err, expectErr)
+				}
+			}
+		}
+
 		if v.ViewMap.SyncMap == nil {
 			filter.tempViews = []ViewMap{NewViewMap()}
 		} else {
 			filter.tempViews = []ViewMap{v.ViewMap}
 		}
 
-		err := DeclareView(context.Background(), filter, v.Expr)
+		err := DeclareView(ctx, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -488,7 +512,6 @@ var selectTests = []struct {
 					value.NewInteger(2),
 				}),
 			},
-			Tx: TestTx,
 		},
 	},
 	{
@@ -526,7 +549,6 @@ var selectTests = []struct {
 					value.NewString("1"),
 				}),
 			},
-			Tx: TestTx,
 		},
 	},
 	{
@@ -582,7 +604,6 @@ var selectTests = []struct {
 					value.NewString("str4"),
 				}),
 			},
-			Tx: TestTx,
 		},
 	},
 	{
@@ -630,7 +651,6 @@ var selectTests = []struct {
 					value.NewString("str3"),
 				}),
 			},
-			Tx: TestTx,
 		},
 	},
 	{
@@ -674,7 +694,6 @@ var selectTests = []struct {
 					value.NewString("str1"),
 				}),
 			},
-			Tx: TestTx,
 		},
 	},
 	{
@@ -734,7 +753,6 @@ var selectTests = []struct {
 					value.NewString("str4"),
 				}),
 			},
-			Tx: TestTx,
 		},
 	},
 	{
@@ -886,7 +904,6 @@ var selectTests = []struct {
 					value.NewInteger(2),
 				}),
 			},
-			Tx: TestTx,
 		},
 	},
 	{
@@ -1038,7 +1055,6 @@ var selectTests = []struct {
 					value.NewInteger(3),
 				}),
 			},
-			Tx: TestTx,
 		},
 	},
 	{
@@ -1268,14 +1284,27 @@ func TestSelect(t *testing.T) {
 	TestTx.Flags.Repository = TestDir
 
 	filter := NewFilter(TestTx)
-	_ = filter.variables.Declare(context.Background(), filter, parser.VariableDeclaration{Assignments: []parser.VariableAssignment{
+	ctx := ContextForExecusion(context.Background(), filter)
+	_ = filter.variables.Declare(ctx, parser.VariableDeclaration{Assignments: []parser.VariableAssignment{
 		{Variable: parser.Variable{Name: "var1"}},
 		{Variable: parser.Variable{Name: "var2"}, Value: parser.NewIntegerValueFromString("2")},
 	}})
 
-	for _, v := range selectTests {
+	for i, v := range selectTests {
+		if i == 0 {
+			expectErr := "[Internal] filter for query is not set in context"
+			_, err := Select(context.Background(), v.Query)
+			if err == nil {
+				t.Errorf("no error, want error %q", expectErr)
+			} else {
+				if err.Error() != expectErr {
+					t.Errorf("error = %q, want error %q", err, expectErr)
+				}
+			}
+		}
+
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-		result, err := Select(context.Background(), filter, v.Query)
+		result, err := Select(ctx, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1417,7 +1446,6 @@ var insertTests = []struct {
 						value.NewNull(),
 					}),
 				},
-				Tx: TestTx,
 			},
 		}),
 	},
@@ -1478,7 +1506,6 @@ var insertTests = []struct {
 						Delimiter: ',',
 						ViewType:  ViewTypeTemporaryTable,
 					},
-					Tx: TestTx,
 				},
 			}),
 		},
@@ -1659,14 +1686,26 @@ func TestInsert(t *testing.T) {
 					Delimiter: ',',
 					ViewType:  ViewTypeTemporaryTable,
 				},
-				Tx: TestTx,
 			},
 		}),
 	}
 
-	for _, v := range insertTests {
+	ctx := ContextForExecusion(context.Background(), filter)
+	for i, v := range insertTests {
+		if i == 0 {
+			expectErr := "[Internal] filter for query is not set in context"
+			_, _, err := Insert(context.Background(), v.Query)
+			if err == nil {
+				t.Errorf("no error, want error %q", expectErr)
+			} else {
+				if err.Error() != expectErr {
+					t.Errorf("error = %q, want error %q", err, expectErr)
+				}
+			}
+		}
+
 		_ = TestTx.ReleaseResources()
-		result, cnt, err := Insert(context.Background(), filter, v.Query)
+		result, cnt, err := Insert(ctx, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2139,9 +2178,22 @@ func TestUpdate(t *testing.T) {
 		}),
 	}
 
-	for _, v := range updateTests {
+	ctx := ContextForExecusion(context.Background(), filter)
+	for i, v := range updateTests {
+		if i == 0 {
+			expectErr := "[Internal] filter for query is not set in context"
+			_, _, err := Update(context.Background(), v.Query)
+			if err == nil {
+				t.Errorf("no error, want error %q", expectErr)
+			} else {
+				if err.Error() != expectErr {
+					t.Errorf("error = %q, want error %q", err, expectErr)
+				}
+			}
+		}
+
 		_ = TestTx.ReleaseResources()
-		files, cnt, err := Update(context.Background(), filter, v.Query)
+		files, cnt, err := Update(ctx, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2301,7 +2353,6 @@ var replaceTests = []struct {
 						value.NewString("str4"),
 					}),
 				},
-				Tx: TestTx,
 			},
 		}),
 	},
@@ -2361,7 +2412,6 @@ var replaceTests = []struct {
 						Delimiter: ',',
 						ViewType:  ViewTypeTemporaryTable,
 					},
-					Tx: TestTx,
 				},
 			}),
 		},
@@ -2557,14 +2607,26 @@ func TestReplace(t *testing.T) {
 					Delimiter: ',',
 					ViewType:  ViewTypeTemporaryTable,
 				},
-				Tx: TestTx,
 			},
 		}),
 	}
 
-	for _, v := range replaceTests {
+	ctx := ContextForExecusion(context.Background(), filter)
+	for i, v := range replaceTests {
+		if i == 0 {
+			expectErr := "[Internal] filter for query is not set in context"
+			_, _, err := Replace(context.Background(), v.Query)
+			if err == nil {
+				t.Errorf("no error, want error %q", expectErr)
+			} else {
+				if err.Error() != expectErr {
+					t.Errorf("error = %q, want error %q", err, expectErr)
+				}
+			}
+		}
+
 		_ = TestTx.ReleaseResources()
-		result, cnt, err := Replace(context.Background(), filter, v.Query)
+		result, cnt, err := Replace(ctx, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2930,9 +2992,22 @@ func TestDelete(t *testing.T) {
 		}),
 	}
 
-	for _, v := range deleteTests {
+	ctx := ContextForExecusion(context.Background(), filter)
+	for i, v := range deleteTests {
+		if i == 0 {
+			expectErr := "[Internal] filter for query is not set in context"
+			_, _, err := Delete(context.Background(), v.Query)
+			if err == nil {
+				t.Errorf("no error, want error %q", expectErr)
+			} else {
+				if err.Error() != expectErr {
+					t.Errorf("error = %q, want error %q", err, expectErr)
+				}
+			}
+		}
+
 		_ = TestTx.ReleaseResources()
-		files, cnt, err := Delete(context.Background(), filter, v.Query)
+		files, cnt, err := Delete(ctx, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -3062,7 +3137,6 @@ var createTableTests = []struct {
 						value.NewInteger(2),
 					}),
 				},
-				Tx: TestTx,
 			},
 		}),
 	},
@@ -3162,10 +3236,23 @@ func TestCreateTable(t *testing.T) {
 	TestTx.Flags.Repository = TestDir
 	TestTx.Flags.Quiet = false
 
-	for _, v := range createTableTests {
+	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
+	for i, v := range createTableTests {
+		if i == 0 {
+			expectErr := "[Internal] filter for query is not set in context"
+			_, err := CreateTable(context.Background(), v.Query)
+			if err == nil {
+				t.Errorf("no error, want error %q", expectErr)
+			} else {
+				if err.Error() != expectErr {
+					t.Errorf("error = %q, want error %q", err, expectErr)
+				}
+			}
+		}
+
 		_ = TestTx.ReleaseResources()
 
-		result, err := CreateTable(context.Background(), NewFilter(TestTx), v.Query)
+		result, err := CreateTable(ctx, v.Query)
 
 		if result != nil {
 			_ = TestTx.FileContainer.Close(result.Handler)
@@ -3267,7 +3354,6 @@ var addColumnsTests = []struct {
 						value.NewNull(),
 					}),
 				},
-				Tx: TestTx,
 			},
 		}),
 	},
@@ -3313,7 +3399,6 @@ var addColumnsTests = []struct {
 						Delimiter: ',',
 						ViewType:  ViewTypeTemporaryTable,
 					},
-					Tx: TestTx,
 				},
 			}),
 		},
@@ -3376,7 +3461,6 @@ var addColumnsTests = []struct {
 						value.NewString("str3"),
 					}),
 				},
-				Tx: TestTx,
 			},
 		}),
 	},
@@ -3438,7 +3522,6 @@ var addColumnsTests = []struct {
 						value.NewString("str3"),
 					}),
 				},
-				Tx: TestTx,
 			},
 		}),
 	},
@@ -3500,7 +3583,6 @@ var addColumnsTests = []struct {
 						value.NewString("str3"),
 					}),
 				},
-				Tx: TestTx,
 			},
 		}),
 	},
@@ -3603,13 +3685,26 @@ func TestAddColumns(t *testing.T) {
 					Delimiter: ',',
 					ViewType:  ViewTypeTemporaryTable,
 				},
-				Tx: TestTx,
 			},
 		}),
 	}
-	for _, v := range addColumnsTests {
+
+	ctx := ContextForExecusion(context.Background(), filter)
+	for i, v := range addColumnsTests {
+		if i == 0 {
+			expectErr := "[Internal] filter for query is not set in context"
+			_, _, err := AddColumns(context.Background(), v.Query)
+			if err == nil {
+				t.Errorf("no error, want error %q", expectErr)
+			} else {
+				if err.Error() != expectErr {
+					t.Errorf("error = %q, want error %q", err, expectErr)
+				}
+			}
+		}
+
 		_ = TestTx.ReleaseResources()
-		result, cnt, err := AddColumns(context.Background(), filter, v.Query)
+		result, cnt, err := AddColumns(ctx, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -3704,7 +3799,6 @@ var dropColumnsTests = []struct {
 						value.NewString("3"),
 					}),
 				},
-				Tx: TestTx,
 			},
 		}),
 	},
@@ -3739,7 +3833,6 @@ var dropColumnsTests = []struct {
 						Delimiter: ',',
 						ViewType:  ViewTypeTemporaryTable,
 					},
-					Tx: TestTx,
 				},
 			}),
 		},
@@ -3796,14 +3889,26 @@ func TestDropColumns(t *testing.T) {
 					Delimiter: ',',
 					ViewType:  ViewTypeTemporaryTable,
 				},
-				Tx: TestTx,
 			},
 		}),
 	}
 
-	for _, v := range dropColumnsTests {
+	ctx := ContextForExecusion(context.Background(), filter)
+	for i, v := range dropColumnsTests {
+		if i == 0 {
+			expectErr := "[Internal] filter for query is not set in context"
+			_, _, err := DropColumns(context.Background(), v.Query)
+			if err == nil {
+				t.Errorf("no error, want error %q", expectErr)
+			} else {
+				if err.Error() != expectErr {
+					t.Errorf("error = %q, want error %q", err, expectErr)
+				}
+			}
+		}
+
 		_ = TestTx.ReleaseResources()
-		result, cnt, err := DropColumns(context.Background(), filter, v.Query)
+		result, cnt, err := DropColumns(ctx, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -3898,7 +4003,6 @@ var renameColumnTests = []struct {
 						value.NewString("str3"),
 					}),
 				},
-				Tx: TestTx,
 			},
 		}),
 	},
@@ -3933,7 +4037,6 @@ var renameColumnTests = []struct {
 						Delimiter: ',',
 						ViewType:  ViewTypeTemporaryTable,
 					},
-					Tx: TestTx,
 				},
 			}),
 		},
@@ -3997,14 +4100,26 @@ func TestRenameColumn(t *testing.T) {
 					Delimiter: ',',
 					ViewType:  ViewTypeTemporaryTable,
 				},
-				Tx: TestTx,
 			},
 		}),
 	}
 
-	for _, v := range renameColumnTests {
+	ctx := ContextForExecusion(context.Background(), filter)
+	for i, v := range renameColumnTests {
+		if i == 0 {
+			expectErr := "[Internal] filter for query is not set in context"
+			_, err := RenameColumn(context.Background(), v.Query)
+			if err == nil {
+				t.Errorf("no error, want error %q", expectErr)
+			} else {
+				if err.Error() != expectErr {
+					t.Errorf("error = %q, want error %q", err, expectErr)
+				}
+			}
+		}
+
 		_ = TestTx.ReleaseResources()
-		result, err := RenameColumn(context.Background(), filter, v.Query)
+		result, err := RenameColumn(ctx, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -4441,10 +4556,23 @@ func TestSetTableAttribute(t *testing.T) {
 		}),
 	}
 
-	for _, v := range setTableAttributeTests {
+	ctx := ContextForExecusion(context.Background(), filter)
+	for i, v := range setTableAttributeTests {
+		if i == 0 {
+			expectErr := "[Internal] filter for query is not set in context"
+			_, _, err := SetTableAttribute(context.Background(), v.Query)
+			if err == nil {
+				t.Errorf("no error, want error %q", expectErr)
+			} else {
+				if err.Error() != expectErr {
+					t.Errorf("error = %q, want error %q", err, expectErr)
+				}
+			}
+		}
+
 		_ = TestTx.ReleaseResources()
 
-		_, _, err := SetTableAttribute(context.Background(), filter, v.Query)
+		_, _, err := SetTableAttribute(ctx, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -4470,14 +4598,14 @@ func TestSetTableAttribute(t *testing.T) {
 			return true
 		})
 
-		view := NewView(TestTx)
-		_ = view.LoadFromTableIdentifier(context.Background(), filter.CreateNode(), v.Query.Table, false, false)
+		view := NewView()
+		_ = view.LoadFromTableIdentifier(ContextForExecusion(ctx, filter.CreateNode()), v.Query.Table, false, false)
 
 		if !reflect.DeepEqual(view.FileInfo, v.Expect) {
 			t.Errorf("%s: result = %v, want %v", v.Name, view.FileInfo, v.Expect)
 		}
 
-		_, _, err = SetTableAttribute(context.Background(), filter, v.Query)
+		_, _, err = SetTableAttribute(ctx, v.Query)
 		if err == nil {
 			t.Errorf("%s: no error, want TableAttributeUnchangedError for duplicate set", v.Name)
 		} else if _, ok := err.(*TableAttributeUnchangedError); !ok {
