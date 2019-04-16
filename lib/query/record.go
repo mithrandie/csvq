@@ -2,6 +2,7 @@ package query
 
 import (
 	"bytes"
+	"sync"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 
@@ -71,18 +72,39 @@ func (r Record) SerializeComparisonKeys(buf *bytes.Buffer, flags *cmd.Flags) {
 	}
 }
 
+func (r Record) Merge(r2 Record, pool *sync.Pool) Record {
+	var record Record
+	if pool != nil {
+		record = pool.Get().(Record)
+	} else {
+		record = make(Record, len(r)+len(r2))
+	}
+	leftLen := len(r)
+	for i := range r {
+		record[i] = r[i]
+	}
+	for i := range r2 {
+		record[i+leftLen] = r2[i]
+	}
+	return record
+}
+
 func MergeRecordSetList(list []RecordSet) RecordSet {
 	var records RecordSet
-	if len(list) == 1 {
+	if len(list) == 2 && len(list[1]) == 0 {
 		records = list[0]
 	} else {
 		recordLen := 0
 		for _, v := range list {
 			recordLen += len(v)
 		}
-		records = make(RecordSet, 0, recordLen)
-		for _, v := range list {
-			records = append(records, v...)
+		records = make(RecordSet, recordLen)
+		idx := 0
+		for _, rset := range list {
+			for _, r := range rset {
+				records[idx] = r
+				idx++
+			}
 		}
 	}
 	return records

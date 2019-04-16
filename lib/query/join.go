@@ -3,8 +3,11 @@ package query
 import (
 	"context"
 	"math"
+	"sync"
 
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/value"
+
 	"github.com/mithrandie/ternary"
 )
 
@@ -103,13 +106,13 @@ func ParseJoinCondition(join parser.Join, view *View, joinView *View) (parser.Qu
 }
 
 func CrossJoin(ctx context.Context, filter *Filter, view *View, joinView *View) error {
-	mergedHeader := MergeHeader(view.Header, joinView.Header)
+	mergedHeader := view.Header.Merge(joinView.Header)
 	records := make(RecordSet, view.RecordLen()*joinView.RecordLen())
 
 	if err := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore), filter.tx.Flags.CPU).Run(ctx, func(index int) error {
 		start := index * joinView.RecordLen()
 		for i := 0; i < joinView.RecordLen(); i++ {
-			records[start+i] = append(view.RecordSet[index], joinView.RecordSet[i]...)
+			records[start+i] = view.RecordSet[index].Merge(joinView.RecordSet[i], nil)
 		}
 		return nil
 	}); err != nil {
@@ -127,7 +130,13 @@ func InnerJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 		return CrossJoin(ctx, parentFilter, view, joinView)
 	}
 
-	mergedHeader := MergeHeader(view.Header, joinView.Header)
+	var recordPool = &sync.Pool{
+		New: func() interface{} {
+			return make(Record, view.FieldLen()+joinView.FieldLen())
+		},
+	}
+
+	mergedHeader := view.Header.Merge(joinView.Header)
 
 	gm := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore), parentFilter.tx.Flags.CPU)
 	recordsList := make([]RecordSet, gm.Number)
@@ -153,7 +162,7 @@ func InnerJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 						break InnerJoinLoop
 					}
 
-					mergedRecord := append(view.RecordSet[i], joinView.RecordSet[j]...)
+					mergedRecord := view.RecordSet[i].Merge(joinView.RecordSet[j], recordPool)
 					filter.records[0].view.RecordSet[0] = mergedRecord
 
 					primary, e := filter.Evaluate(ctx, condition)
@@ -163,6 +172,8 @@ func InnerJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 					}
 					if primary.Ternary() == ternary.TRUE {
 						records = append(records, mergedRecord)
+					} else {
+						recordPool.Put(mergedRecord)
 					}
 				}
 			}
@@ -191,18 +202,21 @@ func OuterJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 		direction = parser.LEFT
 	}
 
-	mergedHeader := MergeHeader(view.Header, joinView.Header)
+	var recordPool = &sync.Pool{
+		New: func() interface{} {
+			return make(Record, view.FieldLen()+joinView.FieldLen())
+		},
+	}
+
+	mergedHeader := view.Header.Merge(joinView.Header)
 
 	if direction == parser.RIGHT {
 		view, joinView = joinView, view
 	}
 
-	viewEmptyRecord := NewEmptyRecord(view.FieldLen())
-	joinViewEmptyRecord := NewEmptyRecord(joinView.FieldLen())
-
 	gm := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore), parentFilter.tx.Flags.CPU)
 
-	recordsList := make([]RecordSet, gm.Number)
+	recordsList := make([]RecordSet, gm.Number+1)
 	joinViewMatchesList := make([][]bool, gm.Number)
 
 	for i := 0; i < gm.Number; i++ {
@@ -221,6 +235,12 @@ func OuterJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 			)
 
 			joinViewMatches := make([]bool, joinView.RecordLen())
+			var leftViewFieldLen int
+			if direction == parser.RIGHT {
+				leftViewFieldLen = joinView.FieldLen()
+			} else {
+				leftViewFieldLen = view.FieldLen()
+			}
 
 		OuterJoinLoop:
 			for i := start; i < end; i++ {
@@ -233,9 +253,9 @@ func OuterJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 					var mergedRecord Record
 					switch direction {
 					case parser.RIGHT:
-						mergedRecord = append(joinView.RecordSet[j], view.RecordSet[i]...)
+						mergedRecord = joinView.RecordSet[j].Merge(view.RecordSet[i], recordPool)
 					default:
-						mergedRecord = append(view.RecordSet[i], joinView.RecordSet[j]...)
+						mergedRecord = view.RecordSet[i].Merge(joinView.RecordSet[j], recordPool)
 					}
 					filter.records[0].view.RecordSet[0] = mergedRecord
 
@@ -250,16 +270,28 @@ func OuterJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 						}
 						records = append(records, mergedRecord)
 						match = true
+					} else {
+						recordPool.Put(mergedRecord)
 					}
 				}
 
 				if !match {
-					var record Record
+					record := recordPool.Get().(Record)
 					switch direction {
 					case parser.RIGHT:
-						record = append(joinViewEmptyRecord, view.RecordSet[i]...)
+						for k := 0; k < leftViewFieldLen; k++ {
+							record[k] = NewCell(value.NewNull())
+						}
+						for k := range view.RecordSet[i] {
+							record[k+leftViewFieldLen] = view.RecordSet[i][k]
+						}
 					default:
-						record = append(view.RecordSet[i], joinViewEmptyRecord...)
+						for k := range view.RecordSet[i] {
+							record[k] = view.RecordSet[i][k]
+						}
+						for k := 0; k < joinView.FieldLen(); k++ {
+							record[k+leftViewFieldLen] = NewCell(value.NewNull())
+						}
 					}
 					records = append(records, record)
 
@@ -281,6 +313,8 @@ func OuterJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 	}
 
 	if direction == parser.FULL {
+		appendIndices := make([]int, 0, joinView.RecordLen())
+
 		for i := 0; i < joinView.RecordLen(); i++ {
 			match := false
 			for _, joinViewMatches := range joinViewMatchesList {
@@ -290,9 +324,23 @@ func OuterJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 				}
 			}
 			if !match {
-				record := append(viewEmptyRecord, joinView.RecordSet[i]...)
-				recordsList[len(recordsList)-1] = append(recordsList[len(recordsList)-1], record)
+				appendIndices = append(appendIndices, i)
 			}
+		}
+
+		recordsListIdx := len(recordsList) - 1
+		recordsList[recordsListIdx] = make(RecordSet, len(appendIndices))
+		viewFieldLen := view.FieldLen()
+		for i, idx := range appendIndices {
+			record := recordPool.Get().(Record)
+			for k := 0; k < viewFieldLen; k++ {
+				record[k] = NewCell(value.NewNull())
+			}
+			for k := range joinView.RecordSet[idx] {
+				record[k+viewFieldLen] = joinView.RecordSet[idx][k]
+			}
+			recordsList[recordsListIdx][i] = record
+
 		}
 	}
 

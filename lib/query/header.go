@@ -68,10 +68,6 @@ func NewEmptyHeader(len int) Header {
 	return make([]HeaderField, len)
 }
 
-func MergeHeader(h1 Header, h2 Header) Header {
-	return append(h1, h2...)
-}
-
 func AddHeaderField(h Header, column string, alias string) (header Header, index int) {
 	hfield := HeaderField{
 		Column: column,
@@ -238,6 +234,18 @@ func (h Header) Update(reference string, fields []parser.QueryExpression) error 
 		h[i].Aliases = nil
 	}
 	return nil
+}
+
+func (h Header) Merge(h2 Header) Header {
+	header := make(Header, len(h)+len(h2))
+	leftLen := len(h)
+	for i := range h {
+		header[i] = h[i]
+	}
+	for i := range h2 {
+		header[i+leftLen] = h2[i]
+	}
+	return header
 }
 
 func (h Header) Copy() Header {
