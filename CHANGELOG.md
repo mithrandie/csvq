@@ -1,5 +1,12 @@
 # Change Log
 
+## Version 1.9.16
+
+Released on April 16, 2019
+
+- Fix the following bug
+  - Reference scopes cannot be refered from subquery. This bug has occurred in version 1.9.15.
+
 ## Version 1.9.15
 
 Released on April 16, 2019

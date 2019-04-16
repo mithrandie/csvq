@@ -1056,7 +1056,7 @@ func (view *View) filter(ctx context.Context, condition parser.QueryExpression) 
 	results := make([]bool, view.RecordLen())
 
 	err = NewFilterForSequentialEvaluation(filter, view).EvaluateSequentially(ctx, func(f *Filter, rIdx int) error {
-		primary, e := f.Evaluate(ctx, condition)
+		primary, e := f.Evaluate(ContextForExecusion(ctx, f), condition)
 		if e != nil {
 			return e
 		}
@@ -1103,7 +1103,7 @@ func (view *View) group(ctx context.Context, items []parser.QueryExpression) err
 		keyBuf := new(bytes.Buffer)
 
 		for i, item := range items {
-			p, e := f.Evaluate(ctx, item)
+			p, e := f.Evaluate(ContextForExecusion(ctx, f), item)
 			if e != nil {
 				return e
 			}
@@ -1568,7 +1568,7 @@ func (view *View) evalColumn(ctx context.Context, obj parser.QueryExpression, al
 				}
 
 				f := NewFilterForRecord(filter, view, -1)
-				primary, e := f.Evaluate(ctx, obj)
+				primary, e := f.Evaluate(ContextForExecusion(ctx, f), obj)
 				if e != nil {
 					err = e
 					return
@@ -1576,7 +1576,7 @@ func (view *View) evalColumn(ctx context.Context, obj parser.QueryExpression, al
 				view.tempRecord = append(view.tempRecord, NewCell(primary))
 			} else {
 				err = NewFilterForSequentialEvaluation(filter, view).EvaluateSequentially(ctx, func(f *Filter, rIdx int) error {
-					primary, e := f.Evaluate(ctx, obj)
+					primary, e := f.Evaluate(ContextForExecusion(ctx, f), obj)
 					if e != nil {
 						return e
 					}
@@ -2124,7 +2124,7 @@ func (view *View) ListValuesForAggregateFunctions(ctx context.Context, expr pars
 	list := make([]value.Primary, view.RecordLen())
 
 	if err := NewFilterForSequentialEvaluation(filter, view).EvaluateSequentially(ctx, func(f *Filter, rIdx int) error {
-		p, e := f.Evaluate(ctx, arg)
+		p, e := f.Evaluate(ContextForExecusion(ctx, f), arg)
 		if e != nil {
 			if _, ok := e.(*NotGroupingRecordsError); ok {
 				e = NewNestedAggregateFunctionsError(expr)

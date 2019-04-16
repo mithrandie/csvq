@@ -38,6 +38,7 @@ func Calc(ctx context.Context, proc *query.Processor, expr string) error {
 	clause := selectEntity.SelectClause.(parser.SelectClause)
 
 	filter := query.NewFilterForRecord(proc.Filter, view, 0)
+	ctx = query.ContextForExecusion(ctx, filter)
 	values := make([]string, len(clause.Fields))
 	for i, v := range clause.Fields {
 		field := v.(parser.Field)

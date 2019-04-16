@@ -153,18 +153,19 @@ func InnerJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 				},
 				0,
 			)
+			rctx := ContextForExecusion(ctx, filter)
 
 		InnerJoinLoop:
 			for i := start; i < end; i++ {
 				for j := 0; j < joinView.RecordLen(); j++ {
-					if gm.HasError() || ctx.Err() != nil {
+					if gm.HasError() || rctx.Err() != nil {
 						break InnerJoinLoop
 					}
 
 					mergedRecord := view.RecordSet[i].Merge(joinView.RecordSet[j], recordPool)
 					filter.records[0].view.RecordSet[0] = mergedRecord
 
-					primary, e := filter.Evaluate(ctx, condition)
+					primary, e := filter.Evaluate(rctx, condition)
 					if e != nil {
 						gm.SetError(e)
 						break InnerJoinLoop
@@ -231,6 +232,7 @@ func OuterJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 				},
 				0,
 			)
+			rctx := ContextForExecusion(ctx, filter)
 
 			joinViewMatches := make([]bool, joinView.RecordLen())
 			var leftViewFieldLen int
@@ -244,7 +246,7 @@ func OuterJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 			for i := start; i < end; i++ {
 				match := false
 				for j := 0; j < joinView.RecordLen(); j++ {
-					if gm.HasError() || ctx.Err() != nil {
+					if gm.HasError() || rctx.Err() != nil {
 						break OuterJoinLoop
 					}
 
@@ -257,7 +259,7 @@ func OuterJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 					}
 					filter.records[0].view.RecordSet[0] = mergedRecord
 
-					primary, e := filter.Evaluate(ctx, condition)
+					primary, e := filter.Evaluate(rctx, condition)
 					if e != nil {
 						gm.SetError(e)
 						break OuterJoinLoop

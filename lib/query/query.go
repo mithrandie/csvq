@@ -453,12 +453,13 @@ func Update(ctx context.Context, query parser.UpdateQuery) ([]*FileInfo, []int, 
 
 	updatesList := make(map[string]map[int][]int)
 	filterForLoop := NewFilterForSequentialEvaluation(filter, view)
+	rctx := ContextForExecusion(ctx, filterForLoop)
 	for i := range view.RecordSet {
 		filterForLoop.records[0].recordIndex = i
 		internalIds := make(map[string]int)
 
 		for _, uset := range query.SetList {
-			val, err := filterForLoop.Evaluate(ctx, uset.Value)
+			val, err := filterForLoop.Evaluate(rctx, uset.Value)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -858,7 +859,7 @@ func AddColumns(ctx context.Context, query parser.AddColumns) (*FileInfo, int, e
 			if v == nil {
 				v = parser.NewNullValue()
 			}
-			val, e := f.Evaluate(ctx, v)
+			val, e := f.Evaluate(ContextForExecusion(ctx, f), v)
 			if e != nil {
 				return e
 			}
