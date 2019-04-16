@@ -164,24 +164,24 @@ func ParseValueToStructure(val value.Primary) json.Structure {
 	var s json.Structure
 
 	switch val.(type) {
-	case value.String:
-		s = json.String(val.(value.String).Raw())
-	case value.Integer:
-		s = json.Integer(val.(value.Integer).Raw())
-	case value.Float:
-		s = json.Float(val.(value.Float).Raw())
-	case value.Boolean:
-		s = json.Boolean(val.(value.Boolean).Raw())
-	case value.Ternary:
-		t := val.(value.Ternary)
+	case *value.String:
+		s = json.String(val.(*value.String).Raw())
+	case *value.Integer:
+		s = json.Integer(val.(*value.Integer).Raw())
+	case *value.Float:
+		s = json.Float(val.(*value.Float).Raw())
+	case *value.Boolean:
+		s = json.Boolean(val.(*value.Boolean).Raw())
+	case *value.Ternary:
+		t := val.(*value.Ternary)
 		if t.Ternary() == ternary.UNKNOWN {
 			s = json.Null{}
 		} else {
 			s = json.Boolean(t.Ternary().ParseBool())
 		}
-	case value.Datetime:
-		s = json.String(val.(value.Datetime).Format(time.RFC3339Nano))
-	case value.Null:
+	case *value.Datetime:
+		s = json.String(val.(*value.Datetime).Format(time.RFC3339Nano))
+	case *value.Null:
 		s = json.Null{}
 	}
 

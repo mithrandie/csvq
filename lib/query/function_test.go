@@ -1066,9 +1066,9 @@ func TestRand(t *testing.T) {
 
 		var f float64
 		if len(v.Args) < 1 {
-			f = result.(value.Float).Raw()
+			f = result.(*value.Float).Raw()
 		} else {
-			f = float64(result.(value.Integer).Raw())
+			f = float64(result.(*value.Integer).Raw())
 		}
 
 		if f < v.RangeLow || v.RangeHigh < f {

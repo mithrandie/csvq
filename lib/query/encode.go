@@ -56,7 +56,7 @@ func bareValues(ctx context.Context, view *View) ([]string, [][]value.Primary, e
 	records := make([][]value.Primary, 0, view.RecordLen())
 	for _, record := range view.RecordSet {
 		if ctx.Err() != nil {
-			return nil, nil, NewContextDone(ctx.Err().Error())
+			return nil, nil, ConvertContextError(ctx.Err())
 		}
 
 		row := make([]value.Primary, 0, view.FieldLen())
@@ -93,7 +93,7 @@ func encodeCSV(ctx context.Context, fp io.Writer, view *View, delimiter rune, li
 
 	for _, record := range records {
 		if ctx.Err() != nil {
-			return NewContextDone(ctx.Err().Error())
+			return ConvertContextError(ctx.Err())
 		}
 
 		for i, v := range record {
@@ -133,7 +133,7 @@ func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, posi
 
 		for _, record := range records {
 			if ctx.Err() != nil {
-				return NewContextDone(ctx.Err().Error())
+				return ConvertContextError(ctx.Err())
 			}
 
 			fields := make([]fixedlen.Field, 0, len(record))
@@ -153,7 +153,7 @@ func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, posi
 		w.InsertSpace = true
 		for _, fields := range fieldList {
 			if ctx.Err() != nil {
-				return NewContextDone(ctx.Err().Error())
+				return ConvertContextError(ctx.Err())
 			}
 
 			if err := w.Write(fields); err != nil {
@@ -182,7 +182,7 @@ func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, posi
 
 		for _, record := range records {
 			if ctx.Err() != nil {
-				return NewContextDone(ctx.Err().Error())
+				return ConvertContextError(ctx.Err())
 			}
 
 			for i, v := range record {
@@ -273,7 +273,7 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, format cmd.Format
 	var textLineBuf bytes.Buffer
 	for i, record := range records {
 		if ctx.Err() != nil {
-			return "", NewContextDone(ctx.Err().Error())
+			return "", ConvertContextError(ctx.Err())
 		}
 
 		rfields := make([]table.Field, 0, len(header))
@@ -352,7 +352,7 @@ func encodeLTSV(ctx context.Context, fp io.Writer, view *View, lineBreak text.Li
 	fields := make([]string, len(header))
 	for _, record := range records {
 		if ctx.Err() != nil {
-			return NewContextDone(ctx.Err().Error())
+			return ConvertContextError(ctx.Err())
 		}
 
 		for i, v := range record {
@@ -371,23 +371,23 @@ func ConvertFieldContents(val value.Primary, forTextTable bool) (string, string,
 	var align = text.NotAligned
 
 	switch val.(type) {
-	case value.String:
-		s = val.(value.String).Raw()
+	case *value.String:
+		s = val.(*value.String).Raw()
 		effect = cmd.StringEffect
-	case value.Integer:
-		s = val.(value.Integer).String()
+	case *value.Integer:
+		s = val.(*value.Integer).String()
 		effect = cmd.NumberEffect
 		align = text.RightAligned
-	case value.Float:
-		s = val.(value.Float).String()
+	case *value.Float:
+		s = val.(*value.Float).String()
 		effect = cmd.NumberEffect
 		align = text.RightAligned
-	case value.Boolean:
-		s = val.(value.Boolean).String()
+	case *value.Boolean:
+		s = val.(*value.Boolean).String()
 		effect = cmd.BooleanEffect
 		align = text.Centering
-	case value.Ternary:
-		t := val.(value.Ternary)
+	case *value.Ternary:
+		t := val.(*value.Ternary)
 		if forTextTable {
 			s = t.Ternary().String()
 			effect = cmd.TernaryEffect
@@ -397,10 +397,10 @@ func ConvertFieldContents(val value.Primary, forTextTable bool) (string, string,
 			effect = cmd.BooleanEffect
 			align = text.Centering
 		}
-	case value.Datetime:
-		s = val.(value.Datetime).Format(time.RFC3339Nano)
+	case *value.Datetime:
+		s = val.(*value.Datetime).Format(time.RFC3339Nano)
 		effect = cmd.DatetimeEffect
-	case value.Null:
+	case *value.Null:
 		if forTextTable {
 			s = "NULL"
 			effect = cmd.NullEffect

@@ -14,10 +14,10 @@ func FormatTableName(s string) string {
 
 func FormatFieldIdentifier(e QueryExpression) string {
 	if pt, ok := e.(PrimitiveType); ok {
-		if s, ok := pt.Value.(value.String); ok {
+		if s, ok := pt.Value.(*value.String); ok {
 			return s.Raw()
 		}
-		if dt, ok := pt.Value.(value.Datetime); ok {
+		if dt, ok := pt.Value.(*value.Datetime); ok {
 			return dt.Format(time.RFC3339Nano)
 		}
 		return pt.Value.String()

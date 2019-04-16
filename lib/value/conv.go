@@ -246,15 +246,15 @@ func ParseFloat64(f float64) Primary {
 
 func ToInteger(p Primary) Primary {
 	switch p.(type) {
-	case Integer:
+	case *Integer:
 		return p
-	case Float:
-		f := p.(Float).Raw()
+	case *Float:
+		f := p.(*Float).Raw()
 		if math.Remainder(f, 1) == 0 {
 			return NewInteger(int64(f))
 		}
-	case String:
-		s := strings.TrimSpace(p.(String).Raw())
+	case *String:
+		s := strings.TrimSpace(p.(*String).Raw())
 		if maybeNumber(s) {
 			if i, e := strconv.ParseInt(s, 10, 64); e == nil {
 				return NewInteger(i)
@@ -272,14 +272,14 @@ func ToInteger(p Primary) Primary {
 
 func ToFloat(p Primary) Primary {
 	switch p.(type) {
-	case Integer:
-		return NewFloat(float64(p.(Integer).Raw()))
-	case Float:
+	case *Integer:
+		return NewFloat(float64(p.(*Integer).Raw()))
+	case *Float:
 		return p
-	case String:
-		s := strings.TrimSpace(p.(String).Raw())
+	case *String:
+		s := strings.TrimSpace(p.(*String).Raw())
 		if maybeNumber(s) {
-			if f, e := strconv.ParseFloat(p.(String).Raw(), 64); e == nil {
+			if f, e := strconv.ParseFloat(p.(*String).Raw(), 64); e == nil {
 				return NewFloat(f)
 			}
 		}
@@ -312,16 +312,16 @@ func maybeNumber(s string) bool {
 
 func ToDatetime(p Primary, formats []string) Primary {
 	switch p.(type) {
-	case Integer:
-		dt := time.Unix(p.(Integer).Raw(), 0)
+	case *Integer:
+		dt := time.Unix(p.(*Integer).Raw(), 0)
 		return NewDatetime(dt)
-	case Float:
-		dt := Float64ToTime(p.(Float).Raw())
+	case *Float:
+		dt := Float64ToTime(p.(*Float).Raw())
 		return NewDatetime(dt)
-	case Datetime:
+	case *Datetime:
 		return p
-	case String:
-		s := strings.TrimSpace(p.(String).Raw())
+	case *String:
+		s := strings.TrimSpace(p.(*String).Raw())
 		if dt, e := StrToTime(s, formats); e == nil {
 			return NewDatetime(dt)
 		}
@@ -342,9 +342,9 @@ func ToDatetime(p Primary, formats []string) Primary {
 
 func ToBoolean(p Primary) Primary {
 	switch p.(type) {
-	case Boolean:
+	case *Boolean:
 		return p
-	case String, Integer, Float, Ternary:
+	case *String, *Integer, *Float, *Ternary:
 		if p.Ternary() != ternary.UNKNOWN {
 			return NewBoolean(p.Ternary().ParseBool())
 		}
@@ -354,12 +354,12 @@ func ToBoolean(p Primary) Primary {
 
 func ToString(p Primary) Primary {
 	switch p.(type) {
-	case String:
+	case *String:
 		return p
-	case Integer:
-		return NewString(Int64ToStr(p.(Integer).Raw()))
-	case Float:
-		return NewString(Float64ToStr(p.(Float).Raw()))
+	case *Integer:
+		return NewString(Int64ToStr(p.(*Integer).Raw()))
+	case *Float:
+		return NewString(Float64ToStr(p.(*Float).Raw()))
 	}
 	return NewNull()
 }

@@ -89,7 +89,7 @@ func Sum(list []value.Primary, _ *cmd.Flags) value.Primary {
 			continue
 		}
 
-		sum += f.(value.Float).Raw()
+		sum += f.(*value.Float).Raw()
 		count++
 	}
 
@@ -109,7 +109,7 @@ func Avg(list []value.Primary, _ *cmd.Flags) value.Primary {
 			continue
 		}
 
-		sum += f.(value.Float).Raw()
+		sum += f.(*value.Float).Raw()
 		count++
 	}
 
@@ -126,16 +126,16 @@ func Median(list []value.Primary, flags *cmd.Flags) value.Primary {
 
 	for _, v := range list {
 		if f := value.ToFloat(v); !value.IsNull(f) {
-			values = append(values, f.(value.Float).Raw())
+			values = append(values, f.(*value.Float).Raw())
 			continue
 		}
 		if d := value.ToDatetime(v, flags.DatetimeFormat); !value.IsNull(d) {
-			values = append(values, float64(d.(value.Datetime).Raw().UnixNano())/1e9)
+			values = append(values, float64(d.(*value.Datetime).Raw().UnixNano())/1e9)
 			continue
 		}
 	}
 
-	if len(values) < 1 {
+	if values == nil || len(values) < 1 {
 		return value.NewNull()
 	}
 
@@ -159,7 +159,7 @@ func ListAgg(list []value.Primary, separator string) value.Primary {
 		if value.IsNull(s) {
 			continue
 		}
-		strlist = append(strlist, s.(value.String).Raw())
+		strlist = append(strlist, s.(*value.String).Raw())
 	}
 
 	if len(strlist) < 1 {

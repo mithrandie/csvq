@@ -44,7 +44,10 @@ func Analyze(ctx context.Context, view *View, fn parser.AnalyticFunction, partit
 	var aggfn AggregateFunction
 	var udfn *UserDefinedFunction
 
-	var err error
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return err
+	}
 
 	uname := strings.ToUpper(fn.Name)
 	if f, ok := AnalyticFunctions[uname]; ok {
@@ -52,7 +55,7 @@ func Analyze(ctx context.Context, view *View, fn parser.AnalyticFunction, partit
 	} else if f, ok := AggregateFunctions[uname]; ok {
 		aggfn = f
 	} else {
-		if udfn, err = view.Filter.functions.Get(fn, uname); err != nil || !udfn.IsAggregate {
+		if udfn, err = filter.functions.Get(fn, uname); err != nil || !udfn.IsAggregate {
 			return NewFunctionNotExistError(fn, fn.Name)
 		}
 	}
@@ -76,7 +79,7 @@ func Analyze(ctx context.Context, view *View, fn parser.AnalyticFunction, partit
 	}
 
 	partitionKeys := make([]string, view.RecordLen())
-	if err = NewGoroutineTaskManager(view.RecordLen(), -1, view.Tx.Flags.CPU).Run(ctx, func(index int) error {
+	if err = NewGoroutineTaskManager(view.RecordLen(), -1, filter.tx.Flags.CPU).Run(ctx, func(index int) error {
 		keyBuf := new(bytes.Buffer)
 
 		if view.sortValuesInEachCell[index] == nil {
@@ -88,7 +91,7 @@ func Analyze(ctx context.Context, view *View, fn parser.AnalyticFunction, partit
 				if idx < len(view.sortValuesInEachCell[index]) && view.sortValuesInEachCell[index][idx] != nil {
 					sortValues[j] = view.sortValuesInEachCell[index][idx]
 				} else {
-					sortValues[j] = NewSortValue(view.RecordSet[index][idx].Value(), view.Tx.Flags)
+					sortValues[j] = NewSortValue(view.RecordSet[index][idx].Value(), filter.tx.Flags)
 					if idx < len(view.sortValuesInEachCell[index]) {
 						view.sortValuesInEachCell[index][idx] = sortValues[j]
 					}
@@ -114,12 +117,12 @@ func Analyze(ctx context.Context, view *View, fn parser.AnalyticFunction, partit
 		}
 	}
 
-	gm := NewGoroutineTaskManager(len(partitionMapKeys), -1, view.Tx.Flags.CPU)
+	gm := NewGoroutineTaskManager(len(partitionMapKeys), -1, filter.tx.Flags.CPU)
 	for i := 0; i < gm.Number; i++ {
 		gm.Add()
 		go func(thIdx int) {
 			start, end := gm.RecordRange(thIdx)
-			filter := NewFilterForSequentialEvaluation(view.Filter, view)
+			filter := NewFilterForSequentialEvaluation(filter, view)
 
 		AnalyzeLoop:
 			for i := start; i < end; i++ {
@@ -155,7 +158,7 @@ func Analyze(ctx context.Context, view *View, fn parser.AnalyticFunction, partit
 								gm.SetError(e)
 								break AnalyzeLoop
 							}
-							val := aggfn(values, view.Tx.Flags)
+							val := aggfn(values, filter.tx.Flags)
 
 							for _, idx := range frame.Records {
 								view.RecordSet[idx] = append(view.RecordSet[idx], NewCell(val))
@@ -189,7 +192,7 @@ func Analyze(ctx context.Context, view *View, fn parser.AnalyticFunction, partit
 									args[i] = arg
 								}
 
-								val, e := udfn.ExecuteAggregate(ctx, view.Filter, values, args)
+								val, e := udfn.ExecuteAggregate(ctx, values, args)
 								if e != nil {
 									gm.SetError(e)
 									break AnalyzeLoop
@@ -212,7 +215,7 @@ func Analyze(ctx context.Context, view *View, fn parser.AnalyticFunction, partit
 		return gm.Err()
 	}
 	if ctx.Err() != nil {
-		return NewContextDone(ctx.Err().Error())
+		return ConvertContextError(ctx.Err())
 	}
 	return nil
 }
@@ -487,6 +490,8 @@ func (fn NTile) CheckArgsLen(expr parser.AnalyticFunction) error {
 
 func (fn NTile) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	argsFilter := filter.CreateNode()
+	defer argsFilter.CloseNode()
+
 	argsFilter.records = nil
 
 	tileNumber := 0
@@ -498,7 +503,7 @@ func (fn NTile) Execute(ctx context.Context, filter *Filter, partition Partition
 	if value.IsNull(i) {
 		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the first argument must be an integer")
 	}
-	tileNumber = int(i.(value.Integer).Raw())
+	tileNumber = int(i.(*value.Integer).Raw())
 	if tileNumber < 1 {
 		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the first argument must be greater than 0")
 	}
@@ -565,6 +570,8 @@ func (fn NthValue) CheckArgsLen(expr parser.AnalyticFunction) error {
 
 func (fn NthValue) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	argsFilter := filter.CreateNode()
+	defer argsFilter.CloseNode()
+
 	argsFilter.records = nil
 
 	n := 0
@@ -576,7 +583,7 @@ func (fn NthValue) Execute(ctx context.Context, filter *Filter, partition Partit
 	if value.IsNull(pi) {
 		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be an integer")
 	}
-	n = int(pi.(value.Integer).Raw())
+	n = int(pi.(*value.Integer).Raw())
 	if n < 1 {
 		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be greater than 0")
 	}
@@ -652,6 +659,8 @@ func (fn Lead) Execute(ctx context.Context, filter *Filter, partition Partition,
 
 func setLag(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	argsFilter := filter.CreateNode()
+	defer argsFilter.CloseNode()
+
 	argsFilter.records = nil
 
 	offset := 1
@@ -664,7 +673,7 @@ func setLag(ctx context.Context, filter *Filter, partition Partition, expr parse
 		if value.IsNull(i) {
 			return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be an integer")
 		}
-		offset = int(i.(value.Integer).Raw())
+		offset = int(i.(*value.Integer).Raw())
 	}
 
 	var defaultValue value.Primary = value.NewNull()
@@ -712,6 +721,8 @@ func (fn AnalyticListAgg) CheckArgsLen(expr parser.AnalyticFunction) error {
 
 func (fn AnalyticListAgg) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	argsFilter := filter.CreateNode()
+	defer argsFilter.CloseNode()
+
 	argsFilter.records = nil
 
 	separator := ""
@@ -724,7 +735,7 @@ func (fn AnalyticListAgg) Execute(ctx context.Context, filter *Filter, partition
 		if value.IsNull(s) {
 			return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be a string")
 		}
-		separator = s.(value.String).Raw()
+		separator = s.(*value.String).Raw()
 	}
 
 	values := make([]value.Primary, len(partition))
@@ -758,6 +769,8 @@ func (fn AnalyticJsonAgg) CheckArgsLen(expr parser.AnalyticFunction) error {
 
 func (fn AnalyticJsonAgg) Execute(ctx context.Context, filter *Filter, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
 	argsFilter := filter.CreateNode()
+	defer argsFilter.CloseNode()
+
 	argsFilter.records = nil
 
 	values := make([]value.Primary, len(partition))

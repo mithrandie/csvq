@@ -32,11 +32,11 @@ func NewHeaderWithId(view string, words []string) Header {
 	h[0].View = view
 	h[0].Column = InternalIdColumn
 
-	for i, v := range words {
-		h[i+1].View = view
-		h[i+1].Column = v
-		h[i+1].Number = i + 1
-		h[i+1].IsFromTable = true
+	for i := 1; i <= len(words); i++ {
+		h[i].View = view
+		h[i].Column = words[i-1]
+		h[i].Number = i
+		h[i].IsFromTable = true
 	}
 
 	return h
@@ -66,10 +66,6 @@ func NewHeaderWithAutofill(view string, words []string) Header {
 
 func NewEmptyHeader(len int) Header {
 	return make([]HeaderField, len)
-}
-
-func MergeHeader(h1 Header, h2 Header) Header {
-	return append(h1, h2...)
 }
 
 func AddHeaderField(h Header, column string, alias string) (header Header, index int) {
@@ -238,6 +234,18 @@ func (h Header) Update(reference string, fields []parser.QueryExpression) error 
 		h[i].Aliases = nil
 	}
 	return nil
+}
+
+func (h Header) Merge(h2 Header) Header {
+	header := make(Header, len(h)+len(h2))
+	leftLen := len(h)
+	for i := range h {
+		header[i] = h[i]
+	}
+	for i := range h2 {
+		header[i+leftLen] = h2[i]
+	}
+	return header
 }
 
 func (h Header) Copy() Header {

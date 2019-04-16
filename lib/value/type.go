@@ -10,9 +10,27 @@ import (
 	"github.com/mithrandie/ternary"
 )
 
+var ternaryTrue = &Ternary{value: ternary.TRUE}
+var ternaryFalse = &Ternary{value: ternary.FALSE}
+var ternaryUnknown = &Ternary{value: ternary.UNKNOWN}
+var booleanTrue = &Boolean{value: true}
+var booleanFalse = &Boolean{value: false}
+var null = &Null{}
+
+func IsTrue(v Primary) bool {
+	return v == ternaryTrue
+}
+
+func IsFalse(v Primary) bool {
+	return v == ternaryFalse
+}
+
+func IsUnknown(v Primary) bool {
+	return v == ternaryUnknown
+}
+
 func IsNull(v Primary) bool {
-	_, ok := v.(Null)
-	return ok
+	return v == null
 }
 
 type RowValue []Primary
@@ -30,8 +48,8 @@ func (s String) String() string {
 	return cmd.QuoteString(s.literal)
 }
 
-func NewString(s string) String {
-	return String{
+func NewString(s string) *String {
+	return &String{
 		literal: s,
 	}
 }
@@ -52,15 +70,15 @@ type Integer struct {
 	value int64
 }
 
-func NewIntegerFromString(s string) Integer {
+func NewIntegerFromString(s string) *Integer {
 	i, _ := strconv.ParseInt(s, 10, 64)
-	return Integer{
+	return &Integer{
 		value: i,
 	}
 }
 
-func NewInteger(i int64) Integer {
-	return Integer{
+func NewInteger(i int64) *Integer {
+	return &Integer{
 		value: i,
 	}
 }
@@ -88,15 +106,15 @@ type Float struct {
 	value float64
 }
 
-func NewFloatFromString(s string) Float {
+func NewFloatFromString(s string) *Float {
 	f, _ := strconv.ParseFloat(s, 64)
-	return Float{
+	return &Float{
 		value: f,
 	}
 }
 
-func NewFloat(f float64) Float {
-	return Float{
+func NewFloat(f float64) *Float {
+	return &Float{
 		value: f,
 	}
 }
@@ -124,9 +142,12 @@ type Boolean struct {
 	value bool
 }
 
-func NewBoolean(b bool) Boolean {
-	return Boolean{
-		value: b,
+func NewBoolean(b bool) *Boolean {
+	switch b {
+	case true:
+		return booleanTrue
+	default:
+		return booleanFalse
 	}
 }
 
@@ -146,16 +167,21 @@ type Ternary struct {
 	value ternary.Value
 }
 
-func NewTernaryFromString(s string) Ternary {
+func NewTernaryFromString(s string) *Ternary {
 	t, _ := ternary.ConvertFromString(s)
-	return Ternary{
+	return &Ternary{
 		value: t,
 	}
 }
 
-func NewTernary(t ternary.Value) Ternary {
-	return Ternary{
-		value: t,
+func NewTernary(t ternary.Value) *Ternary {
+	switch t {
+	case ternary.TRUE:
+		return ternaryTrue
+	case ternary.FALSE:
+		return ternaryFalse
+	default:
+		return ternaryUnknown
 	}
 }
 
@@ -171,15 +197,15 @@ type Datetime struct {
 	value time.Time
 }
 
-func NewDatetimeFromString(s string, formats []string) Datetime {
+func NewDatetimeFromString(s string, formats []string) *Datetime {
 	t, _ := StrToTime(s, formats)
-	return Datetime{
+	return &Datetime{
 		value: t,
 	}
 }
 
-func NewDatetime(t time.Time) Datetime {
-	return Datetime{
+func NewDatetime(t time.Time) *Datetime {
+	return &Datetime{
 		value: t,
 	}
 }
@@ -202,8 +228,8 @@ func (dt Datetime) Format(s string) string {
 
 type Null struct{}
 
-func NewNull() Null {
-	return Null{}
+func NewNull() *Null {
+	return null
 }
 
 func (n Null) String() string {

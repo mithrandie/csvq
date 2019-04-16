@@ -16,6 +16,36 @@ import (
 	"github.com/mithrandie/ternary"
 )
 
+func TestContextForStoringResults(t *testing.T) {
+	defer func() {
+		TestTx.SelectedViews = nil
+		TestTx.AffectedRows = 0
+	}()
+
+	tx := TestTx
+	proc := NewProcessor(tx)
+
+	ctx := ContextForStoringResults(context.Background())
+	_, err := proc.Execute(ctx, []parser.Statement{
+		parser.SelectQuery{
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.QueryExpression{
+						parser.Field{Object: parser.NewIntegerValueFromString("1")},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error %q", err)
+	}
+
+	if len(proc.Tx.SelectedViews) < 1 {
+		t.Fatalf("result set is not set to the transaction")
+	}
+}
+
 var processorExecuteStatementTests = []struct {
 	Input            parser.Statement
 	UncommittedViews UncommittedViews
@@ -918,6 +948,7 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 	tx := TestTx
 	proc := NewProcessor(tx)
 	_ = proc.Filter.variables[0].Add(parser.Variable{Name: "while_test"}, value.NewInteger(0))
+	ctx := ContextForExecusion(context.Background(), proc.Filter)
 
 	for _, v := range processorExecuteStatementTests {
 		_ = TestTx.ReleaseResources()
@@ -925,7 +956,7 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 
 		out := NewOutput()
 		tx.Session.SetStdout(out)
-		_, err := proc.ExecuteStatement(context.Background(), v.Input)
+		_, err := proc.ExecuteStatement(ctx, v.Input)
 		log := out.String()
 
 		if err != nil {
@@ -1787,6 +1818,7 @@ func TestProcessor_WhileInCursor(t *testing.T) {
 
 	tx := TestTx
 	proc := NewProcessor(tx)
+	ctx := ContextForExecusion(context.Background(), proc.Filter)
 
 	for _, v := range processorWhileInCursorTests {
 		proc.Filter.variables[0] = GenerateVariableMap(map[string]value.Primary{
@@ -1800,7 +1832,7 @@ func TestProcessor_WhileInCursor(t *testing.T) {
 			},
 		}
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-		_ = proc.Filter.cursors.Open(context.Background(), proc.Filter, parser.Identifier{Literal: "cur"}, nil)
+		_ = proc.Filter.cursors.Open(ctx, parser.Identifier{Literal: "cur"}, nil)
 
 		out := NewOutput()
 		tx.Session.SetStdout(out)

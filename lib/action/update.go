@@ -28,12 +28,16 @@ type GithubReleaseAsset struct {
 	BrowserDownloadURL string `json:"browser_download_url"`
 }
 
-var CurrentVersion *Version
+var CurrentVersion = &Version{}
 
 type Version struct {
 	Major int
 	Minor int
 	Patch int
+}
+
+func (v *Version) IsEmpty() bool {
+	return v.Major == 0 && v.Minor == 0 && v.Patch == 0
 }
 
 func (v *Version) IsLaterThan(v2 *Version) bool {
@@ -54,40 +58,38 @@ func (v *Version) IsLaterThan(v2 *Version) bool {
 }
 
 func (v *Version) String() string {
-	if v == nil {
-		return ""
-	}
 	return strings.Join([]string{strconv.Itoa(v.Major), strconv.Itoa(v.Minor), strconv.Itoa(v.Patch)}, ".")
 }
 
 func ParseVersion(s string) (*Version, error) {
+	v := &Version{}
+
 	s = PickVersionNumber(s)
 	a := strings.Split(s, ".")
 
 	if len(a) != 3 {
-		return nil, errors.New("cannot parse to version")
+		return v, errors.New("cannot parse to version")
 	}
 
 	major, err := strconv.Atoi(a[0])
 	if err != nil {
-		return nil, errors.New("cannot parse to version")
+		return v, errors.New("cannot parse to version")
 	}
 
 	minor, err := strconv.Atoi(a[1])
 	if err != nil {
-		return nil, errors.New("cannot parse to version")
+		return v, errors.New("cannot parse to version")
 	}
 
 	patch, err := strconv.Atoi(a[2])
 	if err != nil {
-		return nil, errors.New("cannot parse to version")
+		return v, errors.New("cannot parse to version")
 	}
 
-	return &Version{
-		Major: major,
-		Minor: minor,
-		Patch: patch,
-	}, nil
+	v.Major = major
+	v.Minor = minor
+	v.Patch = patch
+	return v, nil
 }
 
 type GithubClient interface {
@@ -135,7 +137,7 @@ func CheckForUpdates(client GithubClient, goos string, goarch string) (string, e
 	}
 
 	latestVersion, _ := ParseVersion(rel.TagName)
-	if latestVersion == nil {
+	if latestVersion.IsEmpty() {
 		return "", errors.New(fmt.Sprintf("Invalid release number: %s", rel.TagName))
 	}
 
@@ -144,7 +146,7 @@ func CheckForUpdates(client GithubClient, goos string, goarch string) (string, e
 		publishedAt = publishedTime.Format("Jan 02, 2006")
 	}
 
-	if CurrentVersion == nil {
+	if CurrentVersion.IsEmpty() {
 		return fmt.Sprintf("The current version is an invalid number.\nThe latest version is %s, released on %s.\n  Release URL: %s", latestVersion.String(), publishedAt, rel.HTMLURL), nil
 	}
 

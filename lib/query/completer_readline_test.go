@@ -84,6 +84,8 @@ func TestCompleter_Update(t *testing.T) {
 	}()
 
 	filter := NewFilter(TestTx)
+	ctx := ContextForExecusion(context.Background(), filter)
+
 	filter.tempViews.Set(&View{
 		FileInfo: &FileInfo{Path: "view1", ViewType: ViewTypeTemporaryTable},
 		Header:   NewHeader("view1", []string{"col1", "col2"}),
@@ -95,7 +97,7 @@ func TestCompleter_Update(t *testing.T) {
 	_ = filter.cursors.Declare(parser.CursorDeclaration{Cursor: parser.Identifier{Literal: "cur1"}})
 	_ = filter.functions.Declare(parser.FunctionDeclaration{Name: parser.Identifier{Literal: "scalafunc"}})
 	_ = filter.functions.DeclareAggregate(parser.AggregateDeclaration{Name: parser.Identifier{Literal: "aggfunc"}})
-	_ = filter.variables.Declare(context.Background(), filter, parser.VariableDeclaration{Assignments: []parser.VariableAssignment{{Variable: parser.Variable{Name: "var"}}}})
+	_ = filter.variables.Declare(ctx, parser.VariableDeclaration{Assignments: []parser.VariableAssignment{{Variable: parser.Variable{Name: "var"}}}})
 
 	_ = TestTx.PreparedStatements.Prepare(filter, parser.StatementPreparation{
 		Name:      parser.Identifier{Literal: "stmt"},

@@ -5,6 +5,16 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.9.15
+
+Released on April 16, 2019
+
+- Fix the following bug
+  - COUNT(null) returns the number of rows, but must return 0.
+- Remove "Alloc" from resource statistics.
+- Optimize memory usage in JOIN operation.
+  In most cases, the execusion performance gets better, and in a few cases, it gets a little worse.
+
 ## Version 1.9.14
 
 Released on April 14, 2019

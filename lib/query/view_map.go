@@ -161,7 +161,7 @@ func (m ViewMap) GetWithInternalId(ctx context.Context, fpath parser.Identifier,
 	if view, ok := m.Load(fpath.Literal); ok {
 		ret := view.Copy()
 
-		ret.Header = MergeHeader(NewHeaderWithId(ret.Header[0].View, []string{}), ret.Header)
+		ret.Header = NewHeaderWithId(ret.Header[0].View, []string{}).Merge(ret.Header)
 
 		if err := NewGoroutineTaskManager(ret.RecordLen(), -1, flags.CPU).Run(ctx, func(index int) error {
 			ret.RecordSet[index] = append(Record{NewCell(value.NewInteger(int64(index)))}, ret.RecordSet[index]...)

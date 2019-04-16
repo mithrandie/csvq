@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"reflect"
@@ -28,6 +29,7 @@ const (
 	ErrMsgIO                                   = "%s"
 	ErrMsgCommit                               = "failed to commit: %s"
 	ErrMsgRollback                             = "failed to rollback: %s"
+	ErrMsgFilterNotSet                         = "filter for query is not set in context"
 	ErrMsgFieldAmbiguous                       = "field %s is ambiguous"
 	ErrMsgFieldNotExist                        = "field %s does not exist"
 	ErrMsgFieldNotGroupKey                     = "field %s is not a group key"
@@ -277,7 +279,7 @@ type UserTriggeredError struct {
 func NewUserTriggeredError(expr parser.Trigger, message string) error {
 	code := ReturnCodeDefaultUserTriggeredError
 	if expr.Code != nil {
-		code = int(expr.Code.(value.Integer).Raw())
+		code = int(expr.Code.(*value.Integer).Raw())
 	}
 
 	if len(message) < 1 {
@@ -422,6 +424,16 @@ func NewRollbackError(expr parser.Expression, message string) error {
 	}
 	return &RollbackError{
 		NewBaseError(expr, fmt.Sprintf(ErrMsgRollback, message), ReturnCodeIOError, ErrorRollback),
+	}
+}
+
+type FilterNotSetError struct {
+	*BaseError
+}
+
+func NewFilterNotSetError() error {
+	return &FilterNotSetError{
+		NewBaseErrorWithPrefix("Internal", ErrMsgFilterNotSet, ReturnCodeApplicationError, ErrorFilterNotSet),
 	}
 }
 
@@ -1437,4 +1449,11 @@ func ConvertLoadConfigurationError(err error) error {
 		err = NewLoadConfigurationError(nil, err.Error())
 	}
 	return err
+}
+
+func ConvertContextError(err error) error {
+	if err == context.Canceled {
+		return NewContextCanceled(err.Error())
+	}
+	return NewContextDone(err.Error())
 }

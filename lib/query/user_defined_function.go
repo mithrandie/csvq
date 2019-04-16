@@ -187,6 +187,12 @@ func (m UserDefinedFunctionMap) Dispose(name parser.Identifier) error {
 	return NewFunctionNotExistError(name, name.Literal)
 }
 
+func (m UserDefinedFunctionMap) Clear() {
+	for k := range m {
+		delete(m, k)
+	}
+}
+
 type UserDefinedFunction struct {
 	Name         parser.Identifier
 	Statements   []parser.Statement
@@ -198,17 +204,33 @@ type UserDefinedFunction struct {
 	Cursor      parser.Identifier // For Aggregate Functions
 }
 
-func (fn *UserDefinedFunction) Execute(ctx context.Context, filter *Filter, args []value.Primary) (value.Primary, error) {
-	childScope := filter.CreateChildScope()
-	return fn.execute(ctx, childScope, args)
-}
-
-func (fn *UserDefinedFunction) ExecuteAggregate(ctx context.Context, filter *Filter, values []value.Primary, args []value.Primary) (value.Primary, error) {
-	childScope := filter.CreateChildScope()
-	if err := childScope.cursors.AddPseudoCursor(filter.tx, fn.Cursor, values); err != nil {
+func (fn *UserDefinedFunction) Execute(ctx context.Context, args []value.Primary) (value.Primary, error) {
+	filter, err := GetFilter(ctx)
+	if err != nil {
 		return nil, err
 	}
-	return fn.execute(ctx, childScope, args)
+
+	childScope := filter.CreateChildScope()
+	ctx = ContextForExecusion(ctx, childScope)
+	defer childScope.CloseScope()
+
+	return fn.execute(ctx, args)
+}
+
+func (fn *UserDefinedFunction) ExecuteAggregate(ctx context.Context, values []value.Primary, args []value.Primary) (value.Primary, error) {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	childScope := filter.CreateChildScope()
+	ctx = ContextForExecusion(ctx, childScope)
+	defer childScope.CloseScope()
+
+	if err := childScope.cursors.AddPseudoCursor(fn.Cursor, values); err != nil {
+		return nil, err
+	}
+	return fn.execute(ctx, args)
 }
 
 func (fn *UserDefinedFunction) CheckArgsLen(expr parser.QueryExpression, name string, argsLen int) error {
@@ -232,7 +254,12 @@ func (fn *UserDefinedFunction) CheckArgsLen(expr parser.QueryExpression, name st
 	return nil
 }
 
-func (fn *UserDefinedFunction) execute(ctx context.Context, filter *Filter, args []value.Primary) (value.Primary, error) {
+func (fn *UserDefinedFunction) execute(ctx context.Context, args []value.Primary) (value.Primary, error) {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	if err := fn.CheckArgsLen(fn.Name, fn.Name.Literal, len(args)); err != nil {
 		return nil, err
 	}

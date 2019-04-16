@@ -48,19 +48,13 @@ type Filter struct {
 	now            time.Time
 }
 
-type ContainsSubstitusion struct{}
-
-func (c *ContainsSubstitusion) Error() string {
-	return "contains substitusion"
-}
-
 func NewFilter(tx *Transaction) *Filter {
 	return NewFilterWithScopes(
 		tx,
-		VariableScopes{NewVariableMap()},
-		TemporaryViewScopes{NewViewMap()},
-		CursorScopes{{}},
-		UserDefinedFunctionScopes{{}},
+		VariableScopes{GetVariableMap()},
+		TemporaryViewScopes{GetTemporaryViewMap()},
+		CursorScopes{GetCursorMap()},
+		UserDefinedFunctionScopes{GetUserDefinedFunctionMap()},
 	)
 }
 
@@ -117,12 +111,35 @@ func (f *Filter) Merge(filter *Filter) {
 }
 
 func (f *Filter) CreateChildScope() *Filter {
+	variables := make(VariableScopes, len(f.variables)+1)
+	variables[0] = GetVariableMap()
+	for i := range f.variables {
+		variables[i+1] = f.variables[i]
+	}
+
+	tempViews := make(TemporaryViewScopes, len(f.tempViews)+1)
+	tempViews[0] = GetTemporaryViewMap()
+	for i := range f.tempViews {
+		tempViews[i+1] = f.tempViews[i]
+	}
+	cursors := make(CursorScopes, len(f.cursors)+1)
+	cursors[0] = GetCursorMap()
+	for i := range f.cursors {
+		cursors[i+1] = f.cursors[i]
+	}
+
+	functions := make(UserDefinedFunctionScopes, len(f.functions)+1)
+	functions[0] = GetUserDefinedFunctionMap()
+	for i := range f.functions {
+		functions[i+1] = f.functions[i]
+	}
+
 	child := NewFilterWithScopes(
 		f.tx,
-		append(VariableScopes{NewVariableMap()}, f.variables...),
-		append(TemporaryViewScopes{NewViewMap()}, f.tempViews...),
-		append(CursorScopes{{}}, f.cursors...),
-		append(UserDefinedFunctionScopes{{}}, f.functions...),
+		variables,
+		tempViews,
+		cursors,
+		functions,
 	)
 	child.cachedFilePath = f.cachedFilePath
 	child.now = f.now
@@ -130,23 +147,25 @@ func (f *Filter) CreateChildScope() *Filter {
 }
 
 func (f *Filter) ResetCurrentScope() {
-	f.variables[0].Range(func(key, val interface{}) bool {
-		f.variables[0].Delete(key.(string))
-		return true
-	})
-	f.tempViews[0].Range(func(key, val interface{}) bool {
-		f.tempViews[0].Delete(key.(string))
-		return true
-	})
-	for k := range f.cursors[0] {
-		delete(f.cursors[0], k)
-	}
-	for k := range f.functions[0] {
-		delete(f.functions[0], k)
-	}
+	f.variables[0].Clear()
+	f.tempViews[0].Clear()
+	f.cursors[0].Clear()
+	f.functions[0].Clear()
 }
 
 func (f *Filter) CreateNode() *Filter {
+	inlineTables := make(InlineTableNodes, len(f.inlineTables)+1)
+	inlineTables[0] = GetInlineTableMap()
+	for i := range f.inlineTables {
+		inlineTables[i+1] = f.inlineTables[i]
+	}
+
+	aliases := make(AliasNodes, len(f.aliases)+1)
+	aliases[0] = GetAliasMap()
+	for i := range f.aliases {
+		aliases[i+1] = f.aliases[i]
+	}
+
 	filter := &Filter{
 		tx:               f.tx,
 		records:          f.records,
@@ -154,8 +173,8 @@ func (f *Filter) CreateNode() *Filter {
 		tempViews:        f.tempViews,
 		cursors:          f.cursors,
 		functions:        f.functions,
-		inlineTables:     append(InlineTableNodes{{}}, f.inlineTables...),
-		aliases:          append(AliasNodes{{}}, f.aliases...),
+		inlineTables:     inlineTables,
+		aliases:          aliases,
 		recursiveTable:   f.recursiveTable,
 		recursiveTmpView: f.recursiveTmpView,
 		cachedFilePath:   f.cachedFilePath,
@@ -170,6 +189,18 @@ func (f *Filter) CreateNode() *Filter {
 	}
 
 	return filter
+}
+
+func (f *Filter) CloseScope() {
+	PutVariableMap(f.variables[0])
+	PutTemporaryViewMap(f.tempViews[0])
+	PutCursorMap(f.cursors[0])
+	PutUserDefinedFunctionMap(f.functions[0])
+}
+
+func (f *Filter) CloseNode() {
+	PutInlineTableMap(f.inlineTables[0])
+	PutAliasMap(f.aliases[0])
 }
 
 func (f *Filter) storeFilePath(identifier string, fpath string) {
@@ -188,12 +219,12 @@ func (f *Filter) loadFilePath(identifier string) (string, bool) {
 }
 
 func (f *Filter) LoadInlineTable(ctx context.Context, clause parser.WithClause) error {
-	return f.inlineTables.Load(ctx, f, clause)
+	return f.inlineTables.Load(ContextForExecusion(ctx, f), clause)
 }
 
 func (f *Filter) Evaluate(ctx context.Context, expr parser.QueryExpression) (value.Primary, error) {
 	if ctx.Err() != nil {
-		return nil, NewContextDone(ctx.Err().Error())
+		return nil, ConvertContextError(ctx.Err())
 	}
 
 	if expr == nil {
@@ -259,7 +290,7 @@ func (f *Filter) Evaluate(ctx context.Context, expr parser.QueryExpression) (val
 			err = NewInvalidFlagNameError(expr.(parser.Flag))
 		}
 	case parser.VariableSubstitution:
-		val, err = f.variables.Substitute(ctx, f, expr.(parser.VariableSubstitution))
+		val, err = f.variables.Substitute(ctx, expr.(parser.VariableSubstitution))
 	case parser.CursorStatus:
 		val, err = f.evalCursorStatus(expr.(parser.CursorStatus))
 	case parser.CursorAttrebute:
@@ -282,7 +313,6 @@ func (f *Filter) EvaluateSequentially(ctx context.Context, fn func(*Filter, int)
 			filter := NewFilterForSequentialEvaluation(
 				f,
 				&View{
-					Tx:        f.tx,
 					Header:    f.records[0].view.Header,
 					RecordSet: f.records[0].view.RecordSet[start:end],
 					isGrouped: f.records[0].view.isGrouped,
@@ -310,7 +340,7 @@ func (f *Filter) EvaluateSequentially(ctx context.Context, fn func(*Filter, int)
 		return gm.Err()
 	}
 	if ctx.Err() != nil {
-		return NewContextDone(ctx.Err().Error())
+		return ConvertContextError(ctx.Err())
 	}
 	return nil
 }
@@ -390,7 +420,7 @@ func (f *Filter) evalUnaryArithmetic(ctx context.Context, expr parser.UnaryArith
 	}
 
 	if pi := value.ToInteger(ope); !value.IsNull(pi) {
-		val := pi.(value.Integer).Raw()
+		val := pi.(*value.Integer).Raw()
 		switch expr.Operator.Token {
 		case '-':
 			val = val * -1
@@ -403,7 +433,7 @@ func (f *Filter) evalUnaryArithmetic(ctx context.Context, expr parser.UnaryArith
 		return value.NewNull(), nil
 	}
 
-	val := pf.(value.Float).Raw()
+	val := pf.(*value.Float).Raw()
 
 	switch expr.Operator.Token {
 	case '-':
@@ -424,7 +454,7 @@ func (f *Filter) evalConcat(ctx context.Context, expr parser.Concat) (value.Prim
 		if value.IsNull(s) {
 			return value.NewNull(), nil
 		}
-		items[i] = s.(value.String).Raw()
+		items[i] = s.(*value.String).Raw()
 	}
 	return value.NewString(strings.Join(items, "")), nil
 }
@@ -657,7 +687,7 @@ func (f *Filter) evalLike(ctx context.Context, expr parser.Like) (value.Primary,
 }
 
 func (f *Filter) evalExists(ctx context.Context, expr parser.Exists) (value.Primary, error) {
-	view, err := Select(ctx, f, expr.Query.Query)
+	view, err := Select(ctx, expr.Query.Query)
 	if err != nil {
 		return nil, err
 	}
@@ -668,7 +698,7 @@ func (f *Filter) evalExists(ctx context.Context, expr parser.Exists) (value.Prim
 }
 
 func (f *Filter) evalSubqueryForValue(ctx context.Context, expr parser.Subquery) (value.Primary, error) {
-	view, err := Select(ctx, f, expr.Query)
+	view, err := Select(ctx, expr.Query)
 	if err != nil {
 		return nil, err
 	}
@@ -734,7 +764,7 @@ func (f *Filter) evalFunction(ctx context.Context, expr parser.Function) (value.
 	}
 
 	udfn, _ := f.functions.Get(expr, name)
-	return udfn.Execute(ctx, f, args)
+	return udfn.Execute(ctx, args)
 }
 
 func (f *Filter) evalAggregateFunction(ctx context.Context, expr parser.AggregateFunction) (value.Primary, error) {
@@ -773,8 +803,9 @@ func (f *Filter) evalAggregateFunction(ctx context.Context, expr parser.Aggregat
 		}
 
 		if uname == "COUNT" {
-			if _, ok := listExpr.(parser.PrimitiveType); ok {
-				if f.records[0].IsInRange() {
+			if pt, ok := listExpr.(parser.PrimitiveType); ok {
+				v := pt.Value
+				if !value.IsNull(v) && !value.IsUnknown(v) && f.records[0].IsInRange() {
 					return value.NewInteger(int64(f.records[0].view.RecordSet[f.records[0].recordIndex].GroupLen())), nil
 				} else {
 					return value.NewInteger(0), nil
@@ -783,8 +814,11 @@ func (f *Filter) evalAggregateFunction(ctx context.Context, expr parser.Aggregat
 		}
 
 		if f.records[0].IsInRange() {
-			view := NewViewFromGroupedRecord(f.records[0])
-			list, err = view.ListValuesForAggregateFunctions(ctx, expr, listExpr, expr.IsDistinct(), f)
+			view, err := NewViewFromGroupedRecord(ctx, f.records[0])
+			if err != nil {
+				return nil, err
+			}
+			list, err = view.ListValuesForAggregateFunctions(ctx, expr, listExpr, expr.IsDistinct())
 			if err != nil {
 				return nil, err
 			}
@@ -801,7 +835,7 @@ func (f *Filter) evalAggregateFunction(ctx context.Context, expr parser.Aggregat
 			}
 			args[i] = arg
 		}
-		return udfn.ExecuteAggregate(ctx, f, list, args)
+		return udfn.ExecuteAggregate(ctx, list, args)
 	}
 
 	return aggfn(list, f.tx.Flags), nil
@@ -828,7 +862,10 @@ func (f *Filter) evalListFunction(ctx context.Context, expr parser.ListFunction)
 			return nil, NewNotGroupingRecordsError(expr, expr.Name)
 		}
 
-		view := NewViewFromGroupedRecord(f.records[0])
+		view, err := NewViewFromGroupedRecord(ctx, f.records[0])
+		if err != nil {
+			return nil, err
+		}
 		if expr.OrderBy != nil {
 			err := view.OrderBy(ctx, expr.OrderBy.(parser.OrderByClause))
 			if err != nil {
@@ -836,7 +873,7 @@ func (f *Filter) evalListFunction(ctx context.Context, expr parser.ListFunction)
 			}
 		}
 
-		list, err = view.ListValuesForAggregateFunctions(ctx, expr, expr.Args[0], expr.IsDistinct(), f)
+		list, err = view.ListValuesForAggregateFunctions(ctx, expr, expr.Args[0], expr.IsDistinct())
 		if err != nil {
 			return nil, err
 		}
@@ -865,7 +902,7 @@ func (f *Filter) checkArgsForListFunction(ctx context.Context, expr parser.ListF
 		if value.IsNull(s) {
 			return separator, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be a string")
 		}
-		separator = s.(value.String).Raw()
+		separator = s.(*value.String).Raw()
 	}
 	return separator, nil
 }
@@ -1108,7 +1145,7 @@ func (f *Filter) evalArray(ctx context.Context, expr parser.QueryExpression) ([]
 }
 
 func (f *Filter) evalSubqueryForRowValue(ctx context.Context, expr parser.Subquery) (value.RowValue, error) {
-	view, err := Select(ctx, f, expr.Query)
+	view, err := Select(ctx, expr.Query)
 	if err != nil {
 		return nil, err
 	}
@@ -1139,7 +1176,7 @@ func (f *Filter) evalJsonQueryForRowValue(ctx context.Context, expr parser.JsonQ
 		return nil, nil
 	}
 
-	_, values, _, err := json.LoadTable(query.(value.String).Raw(), jsonText.(value.String).Raw())
+	_, values, _, err := json.LoadTable(query.(*value.String).Raw(), jsonText.(*value.String).Raw())
 	if err != nil {
 		return nil, NewLoadJsonError(expr, err.Error())
 	}
@@ -1173,7 +1210,7 @@ func (f *Filter) evalValueList(ctx context.Context, expr parser.ValueList) (valu
 }
 
 func (f *Filter) evalSubqueryForRowValueList(ctx context.Context, expr parser.Subquery) ([]value.RowValue, error) {
-	view, err := Select(ctx, f, expr.Query)
+	view, err := Select(ctx, expr.Query)
 	if err != nil {
 		return nil, err
 	}
@@ -1204,7 +1241,7 @@ func (f *Filter) evalJsonQueryForRowValueList(ctx context.Context, expr parser.J
 		return nil, nil
 	}
 
-	_, values, _, err := json.LoadTable(query.(value.String).Raw(), jsonText.(value.String).Raw())
+	_, values, _, err := json.LoadTable(query.(*value.String).Raw(), jsonText.(*value.String).Raw())
 	if err != nil {
 		return nil, NewLoadJsonError(expr, err.Error())
 	}
@@ -1222,7 +1259,7 @@ func (f *Filter) evalJsonQueryForRowValueList(ctx context.Context, expr parser.J
 }
 
 func (f *Filter) evalSubqueryForArray(ctx context.Context, expr parser.Subquery) ([]value.RowValue, error) {
-	view, err := Select(ctx, f, expr.Query)
+	view, err := Select(ctx, expr.Query)
 	if err != nil {
 		return nil, err
 	}
@@ -1253,7 +1290,7 @@ func (f *Filter) evalJsonQueryForArray(ctx context.Context, expr parser.JsonQuer
 		return nil, nil
 	}
 
-	values, err := json.LoadArray(query.(value.String).Raw(), jsonText.(value.String).Raw())
+	values, err := json.LoadArray(query.(*value.String).Raw(), jsonText.(*value.String).Raw())
 	if err != nil {
 		return nil, NewLoadJsonError(expr, err.Error())
 	}

@@ -88,7 +88,7 @@ func LaunchInteractiveShell(ctx context.Context, proc *query.Processor) error {
 
 	for {
 		if ctx.Err() != nil {
-			err = query.NewContextDone(ctx.Err().Error())
+			err = query.ConvertContextError(ctx.Err())
 			break
 		}
 
@@ -180,14 +180,13 @@ func showStats(ctx context.Context, proc *query.Processor, start time.Time) {
 	runtime.ReadMemStats(&mem)
 
 	exectime := cmd.FormatNumber(time.Since(start).Seconds(), 6, ".", ",", "")
-	alloc := cmd.FormatNumber(float64(mem.Alloc), 0, ".", ",", "")
 	talloc := cmd.FormatNumber(float64(mem.TotalAlloc), 0, ".", ",", "")
 	sys := cmd.FormatNumber(float64(mem.HeapSys), 0, ".", ",", "")
 	mallocs := cmd.FormatNumber(float64(mem.Mallocs), 0, ".", ",", "")
 	frees := cmd.FormatNumber(float64(mem.Frees), 0, ".", ",", "")
 
 	width := len(exectime)
-	for _, v := range []string{alloc, talloc, sys, mallocs, frees} {
+	for _, v := range []string{talloc, sys, mallocs, frees} {
 		if width < len(v) {
 			width = len(v)
 		}
@@ -198,10 +197,6 @@ func showStats(ctx context.Context, proc *query.Processor, start time.Time) {
 	w.WriteColor(" TotalTime:", cmd.LableEffect)
 	w.WriteSpaces(width - len(exectime))
 	w.WriteWithoutLineBreak(exectime + " seconds")
-	w.NewLine()
-	w.WriteColor("     Alloc:", cmd.LableEffect)
-	w.WriteSpaces(width - len(alloc))
-	w.WriteWithoutLineBreak(alloc + " bytes")
 	w.NewLine()
 	w.WriteColor("TotalAlloc:", cmd.LableEffect)
 	w.WriteSpaces(width - len(talloc))

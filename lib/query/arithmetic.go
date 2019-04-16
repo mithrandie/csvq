@@ -10,7 +10,7 @@ func Calculate(p1 value.Primary, p2 value.Primary, operator int) value.Primary {
 	if operator != '/' {
 		if pi1 := value.ToInteger(p1); !value.IsNull(pi1) {
 			if pi2 := value.ToInteger(p2); !value.IsNull(pi2) {
-				return calculateInteger(pi1.(value.Integer).Raw(), pi2.(value.Integer).Raw(), operator)
+				return calculateInteger(pi1.(*value.Integer).Raw(), pi2.(*value.Integer).Raw(), operator)
 			}
 		}
 	}
@@ -22,8 +22,8 @@ func Calculate(p1 value.Primary, p2 value.Primary, operator int) value.Primary {
 		return value.NewNull()
 	}
 
-	f1 := pf1.(value.Float).Raw()
-	f2 := pf2.(value.Float).Raw()
+	f1 := pf1.(*value.Float).Raw()
+	f2 := pf2.(*value.Float).Raw()
 
 	result := 0.0
 	switch operator {

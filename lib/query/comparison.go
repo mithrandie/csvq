@@ -32,8 +32,8 @@ func Like(p1 value.Primary, p2 value.Primary) ternary.Value {
 		return ternary.UNKNOWN
 	}
 
-	s := strings.ToUpper(p1.(value.String).Raw())
-	pattern := strings.ToUpper(p2.(value.String).Raw())
+	s := strings.ToUpper(p1.(*value.String).Raw())
+	pattern := strings.ToUpper(p2.(*value.String).Raw())
 
 	if s == pattern {
 		return ternary.TRUE

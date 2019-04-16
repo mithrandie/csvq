@@ -9,8 +9,8 @@ import (
 
 type VariableScopes []VariableMap
 
-func (list VariableScopes) Declare(ctx context.Context, filter *Filter, expr parser.VariableDeclaration) error {
-	return list[0].Declare(ctx, filter, expr)
+func (list VariableScopes) Declare(ctx context.Context, expr parser.VariableDeclaration) error {
+	return list[0].Declare(ctx, expr)
 }
 
 func (list VariableScopes) Get(expr parser.Variable) (value value.Primary, err error) {
@@ -23,9 +23,9 @@ func (list VariableScopes) Get(expr parser.Variable) (value value.Primary, err e
 	return
 }
 
-func (list VariableScopes) Substitute(ctx context.Context, filter *Filter, expr parser.VariableSubstitution) (value value.Primary, err error) {
+func (list VariableScopes) Substitute(ctx context.Context, expr parser.VariableSubstitution) (value value.Primary, err error) {
 	for i := range list {
-		if value, err = list[i].Substitute(ctx, filter, expr); err == nil {
+		if value, err = list[i].Substitute(ctx, expr); err == nil {
 			return
 		}
 		if _, ok := err.(*UndeclaredVariableError); !ok {
@@ -128,7 +128,12 @@ func (m VariableMap) Dispose(variable parser.Variable) error {
 	return nil
 }
 
-func (m VariableMap) Declare(ctx context.Context, filter *Filter, declaration parser.VariableDeclaration) error {
+func (m VariableMap) Declare(ctx context.Context, declaration parser.VariableDeclaration) error {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return err
+	}
+
 	for _, assignment := range declaration.Assignments {
 		var val value.Primary
 		var err error
@@ -148,7 +153,12 @@ func (m VariableMap) Declare(ctx context.Context, filter *Filter, declaration pa
 	return nil
 }
 
-func (m VariableMap) Substitute(ctx context.Context, filter *Filter, substitution parser.VariableSubstitution) (value.Primary, error) {
+func (m VariableMap) Substitute(ctx context.Context, substitution parser.VariableSubstitution) (value.Primary, error) {
+	filter, err := GetFilter(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	val, err := filter.Evaluate(ctx, substitution.Value)
 	if err != nil {
 		return nil, err

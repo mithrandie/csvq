@@ -32,6 +32,13 @@ func (m SyncMap) exists(name string) bool {
 	return ok
 }
 
+func (m SyncMap) Clear() {
+	m.m.Range(func(key, value interface{}) bool {
+		m.m.Delete(key)
+		return true
+	})
+}
+
 func (m SyncMap) Range(fn func(key, value interface{}) bool) {
 	m.m.Range(fn)
 }
