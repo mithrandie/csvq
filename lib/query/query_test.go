@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
@@ -21,7 +22,7 @@ var fetchCursorTests = []struct {
 	FetchPosition parser.FetchPosition
 	Variables     []parser.Variable
 	Success       bool
-	ResultVars    VariableMap
+	ResultScopes  *ReferenceScope
 	Error         string
 }{
 	{
@@ -32,10 +33,14 @@ var fetchCursorTests = []struct {
 			{Name: "var2"},
 		},
 		Success: true,
-		ResultVars: GenerateVariableMap(map[string]value.Primary{
-			"var1": value.NewString("1"),
-			"var2": value.NewString("str1"),
-		}),
+		ResultScopes: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameVariables: {
+					"var1": value.NewString("1"),
+					"var2": value.NewString("str1"),
+				},
+			},
+		}, nil, time.Time{}, nil),
 	},
 	{
 		Name:    "Fetch Cursor Second Time",
@@ -45,10 +50,14 @@ var fetchCursorTests = []struct {
 			{Name: "var2"},
 		},
 		Success: true,
-		ResultVars: GenerateVariableMap(map[string]value.Primary{
-			"var1": value.NewString("2"),
-			"var2": value.NewString("str2"),
-		}),
+		ResultScopes: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameVariables: {
+					"var1": value.NewString("2"),
+					"var2": value.NewString("str2"),
+				},
+			},
+		}, nil, time.Time{}, nil),
 	},
 	{
 		Name:    "Fetch Cursor Third Time",
@@ -58,10 +67,14 @@ var fetchCursorTests = []struct {
 			{Name: "var2"},
 		},
 		Success: true,
-		ResultVars: GenerateVariableMap(map[string]value.Primary{
-			"var1": value.NewString("3"),
-			"var2": value.NewString("str3"),
-		}),
+		ResultScopes: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameVariables: {
+					"var1": value.NewString("3"),
+					"var2": value.NewString("str3"),
+				},
+			},
+		}, nil, time.Time{}, nil),
 	},
 	{
 		Name:    "Fetch Cursor Forth Time",
@@ -71,10 +84,14 @@ var fetchCursorTests = []struct {
 			{Name: "var2"},
 		},
 		Success: false,
-		ResultVars: GenerateVariableMap(map[string]value.Primary{
-			"var1": value.NewString("3"),
-			"var2": value.NewString("str3"),
-		}),
+		ResultScopes: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameVariables: {
+					"var1": value.NewString("3"),
+					"var2": value.NewString("str3"),
+				},
+			},
+		}, nil, time.Time{}, nil),
 	},
 	{
 		Name:    "Fetch Cursor Absolute",
@@ -88,10 +105,14 @@ var fetchCursorTests = []struct {
 			{Name: "var2"},
 		},
 		Success: true,
-		ResultVars: GenerateVariableMap(map[string]value.Primary{
-			"var1": value.NewString("2"),
-			"var2": value.NewString("str2"),
-		}),
+		ResultScopes: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameVariables: {
+					"var1": value.NewString("2"),
+					"var2": value.NewString("str2"),
+				},
+			},
+		}, nil, time.Time{}, nil),
 	},
 	{
 		Name:    "Fetch Cursor Fetch Error",
@@ -155,17 +176,13 @@ func TestFetchCursor(t *testing.T) {
 
 	TestTx.Flags.Repository = TestDir
 
-	filter := NewFilterWithScopes(
-		TestTx,
-		[]VariableMap{
-			GenerateVariableMap(map[string]value.Primary{
+	scope := GenerateReferenceScope([]map[string]map[string]interface{}{
+		{
+			scopeNameVariables: {
 				"var1": value.NewNull(),
 				"var2": value.NewNull(),
-			}),
-		},
-		[]ViewMap{NewViewMap()},
-		[]CursorMap{
-			{
+			},
+			scopeNameCursors: {
 				"CUR": &Cursor{
 					query: selectQueryForCursorTest,
 					mtx:   &sync.Mutex{},
@@ -176,29 +193,16 @@ func TestFetchCursor(t *testing.T) {
 				},
 			},
 		},
-		[]UserDefinedFunctionMap{{}},
-	)
+	}, nil, time.Time{}, nil)
 
-	ctx := ContextForExecusion(context.Background(), filter)
+	ctx := context.Background()
 	_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-	_ = filter.cursors.Open(ctx, parser.Identifier{Literal: "cur"}, nil)
+	_ = scope.OpenCursor(ctx, parser.Identifier{Literal: "cur"}, nil)
 	_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-	_ = filter.cursors.Open(ctx, parser.Identifier{Literal: "cur2"}, nil)
+	_ = scope.OpenCursor(ctx, parser.Identifier{Literal: "cur2"}, nil)
 
-	for i, v := range fetchCursorTests {
-		if i == 0 {
-			expectErr := "[Internal] filter for query is not set in context"
-			_, err := FetchCursor(context.Background(), v.CurName, v.FetchPosition, v.Variables)
-			if err == nil {
-				t.Errorf("no error, want error %q", expectErr)
-			} else {
-				if err.Error() != expectErr {
-					t.Errorf("error = %q, want error %q", err, expectErr)
-				}
-			}
-		}
-
-		success, err := FetchCursor(ctx, v.CurName, v.FetchPosition, v.Variables)
+	for _, v := range fetchCursorTests {
+		success, err := FetchCursor(ctx, scope, v.CurName, v.FetchPosition, v.Variables)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -214,8 +218,9 @@ func TestFetchCursor(t *testing.T) {
 		if success != v.Success {
 			t.Errorf("%s: success = %t, want %t", v.Name, success, v.Success)
 		}
-		if !SyncMapEqual(filter.variables[0], v.ResultVars) {
-			t.Errorf("%s: global vars = %v, want %v", v.Name, filter.variables[0], v.ResultVars)
+
+		if !SyncMapEqual(scope.blocks[0].variables, v.ResultScopes.blocks[0].variables) {
+			t.Errorf("%s: variables = %v, want %v", v.Name, scope.blocks, v.ResultScopes.blocks)
 		}
 	}
 }
@@ -386,29 +391,17 @@ var declareViewTests = []struct {
 }
 
 func TestDeclareView(t *testing.T) {
-	filter := NewFilter(TestTx)
-	ctx := ContextForExecusion(context.Background(), filter)
+	scope := NewReferenceScope(TestTx)
+	ctx := context.Background()
 
-	for i, v := range declareViewTests {
-		if i == 0 {
-			expectErr := "[Internal] filter for query is not set in context"
-			err := DeclareView(context.Background(), v.Expr)
-			if err == nil {
-				t.Errorf("no error, want error %q", expectErr)
-			} else {
-				if err.Error() != expectErr {
-					t.Errorf("error = %q, want error %q", err, expectErr)
-				}
-			}
-		}
-
+	for _, v := range declareViewTests {
 		if v.ViewMap.SyncMap == nil {
-			filter.tempViews = []ViewMap{NewViewMap()}
+			scope.blocks[0].temporaryTables = NewViewMap()
 		} else {
-			filter.tempViews = []ViewMap{v.ViewMap}
+			scope.blocks[0].temporaryTables = v.ViewMap
 		}
 
-		err := DeclareView(ctx, v.Expr)
+		err := DeclareView(ctx, scope, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -421,7 +414,7 @@ func TestDeclareView(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !SyncMapEqual(filter.tempViews[0], v.Result) {
+		if !SyncMapEqual(scope.blocks[0].temporaryTables, v.Result) {
 			t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.Result)
 		}
 	}
@@ -1283,28 +1276,16 @@ func TestSelect(t *testing.T) {
 
 	TestTx.Flags.Repository = TestDir
 
-	filter := NewFilter(TestTx)
-	ctx := ContextForExecusion(context.Background(), filter)
-	_ = filter.variables.Declare(ctx, parser.VariableDeclaration{Assignments: []parser.VariableAssignment{
+	scope := NewReferenceScope(TestTx)
+	ctx := context.Background()
+	_ = scope.DeclareVariable(ctx, parser.VariableDeclaration{Assignments: []parser.VariableAssignment{
 		{Variable: parser.Variable{Name: "var1"}},
 		{Variable: parser.Variable{Name: "var2"}, Value: parser.NewIntegerValueFromString("2")},
 	}})
 
-	for i, v := range selectTests {
-		if i == 0 {
-			expectErr := "[Internal] filter for query is not set in context"
-			_, err := Select(context.Background(), v.Query)
-			if err == nil {
-				t.Errorf("no error, want error %q", expectErr)
-			} else {
-				if err.Error() != expectErr {
-					t.Errorf("error = %q, want error %q", err, expectErr)
-				}
-			}
-		}
-
+	for _, v := range selectTests {
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-		result, err := Select(ctx, v.Query)
+		result, err := Select(ctx, scope, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1324,7 +1305,7 @@ func TestSelect(t *testing.T) {
 		}
 		if 0 < len(v.SetVariables) {
 			for variable, expectValue := range v.SetVariables {
-				val, _ := filter.variables.Get(variable)
+				val, _ := scope.GetVariable(variable)
 				if !reflect.DeepEqual(val, expectValue) {
 					t.Errorf("%s: variable %s = %v, want %v", v.Name, variable, val, expectValue)
 				}
@@ -1339,7 +1320,7 @@ var insertTests = []struct {
 	ResultFile   *FileInfo
 	UpdateCount  int
 	ViewCache    ViewMap
-	TempViewList TemporaryViewScopes
+	ResultScopes *ReferenceScope
 	Error        string
 }{
 	{
@@ -1479,36 +1460,38 @@ var insertTests = []struct {
 			ViewType:  ViewTypeTemporaryTable,
 		},
 		UpdateCount: 2,
-		TempViewList: TemporaryViewScopes{
-			GenerateViewMap([]*View{
-				{
-					Header: NewHeader("tmpview", []string{"column1", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("str2"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewInteger(4),
-							value.NewNull(),
-						}),
-						NewRecord([]value.Primary{
-							value.NewInteger(2),
-							value.NewNull(),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:      "tmpview",
-						Delimiter: ',',
-						ViewType:  ViewTypeTemporaryTable,
+		ResultScopes: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameTempTables: {
+					"TMPVIEW": &View{
+						Header: NewHeader("tmpview", []string{"column1", "column2"}),
+						RecordSet: []Record{
+							NewRecord([]value.Primary{
+								value.NewString("1"),
+								value.NewString("str1"),
+							}),
+							NewRecord([]value.Primary{
+								value.NewString("2"),
+								value.NewString("str2"),
+							}),
+							NewRecord([]value.Primary{
+								value.NewInteger(4),
+								value.NewNull(),
+							}),
+							NewRecord([]value.Primary{
+								value.NewInteger(2),
+								value.NewNull(),
+							}),
+						},
+						FileInfo: &FileInfo{
+							Path:      "tmpview",
+							Delimiter: ',',
+							ViewType:  ViewTypeTemporaryTable,
+						},
 					},
 				},
-			}),
-		},
+			},
+		}, nil, time.Time{}, nil),
 	},
 	{
 		Name: "Insert Query All Fields",
@@ -1666,46 +1649,35 @@ func TestInsert(t *testing.T) {
 	TestTx.Flags.Repository = TestDir
 	TestTx.Flags.Quiet = false
 
-	filter := NewFilter(TestTx)
-	filter.tempViews = TemporaryViewScopes{
-		GenerateViewMap([]*View{
-			{
-				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				RecordSet: []Record{
-					NewRecord([]value.Primary{
-						value.NewString("1"),
-						value.NewString("str1"),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("2"),
-						value.NewString("str2"),
-					}),
-				},
-				FileInfo: &FileInfo{
-					Path:      "tmpview",
-					Delimiter: ',',
-					ViewType:  ViewTypeTemporaryTable,
+	scope := GenerateReferenceScope([]map[string]map[string]interface{}{
+		{
+			scopeNameTempTables: {
+				"TMPVIEW": &View{
+					Header: NewHeader("tmpview", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
+						}),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
+							value.NewString("str2"),
+						}),
+					},
+					FileInfo: &FileInfo{
+						Path:      "tmpview",
+						Delimiter: ',',
+						ViewType:  ViewTypeTemporaryTable,
+					},
 				},
 			},
-		}),
-	}
+		},
+	}, nil, time.Time{}, nil)
 
-	ctx := ContextForExecusion(context.Background(), filter)
-	for i, v := range insertTests {
-		if i == 0 {
-			expectErr := "[Internal] filter for query is not set in context"
-			_, _, err := Insert(context.Background(), v.Query)
-			if err == nil {
-				t.Errorf("no error, want error %q", expectErr)
-			} else {
-				if err.Error() != expectErr {
-					t.Errorf("error = %q, want error %q", err, expectErr)
-				}
-			}
-		}
-
+	ctx := context.Background()
+	for _, v := range insertTests {
 		_ = TestTx.ReleaseResources()
-		result, cnt, err := Insert(ctx, v.Query)
+		result, cnt, err := Insert(ctx, scope, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1744,9 +1716,9 @@ func TestInsert(t *testing.T) {
 				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
-		if v.TempViewList != nil {
-			if !SyncMapListEqual(TempViewScopesToSyncMapList(filter.tempViews), TempViewScopesToSyncMapList(v.TempViewList)) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
+		if v.ResultScopes != nil {
+			if !SyncMapEqual(scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables)
 			}
 		}
 	}
@@ -1758,7 +1730,7 @@ var updateTests = []struct {
 	ResultFiles  []*FileInfo
 	UpdateCounts []int
 	ViewCache    ViewMap
-	TempViewList TemporaryViewScopes
+	ResultScopes *ReferenceScope
 	Error        string
 }{
 	{
@@ -1883,28 +1855,30 @@ var updateTests = []struct {
 			},
 		},
 		UpdateCounts: []int{2},
-		TempViewList: TemporaryViewScopes{
-			GenerateViewMap([]*View{
-				{
-					Header: NewHeader("tmpview", []string{"column1", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("update"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("update"),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:      "tmpview",
-						Delimiter: ',',
-						ViewType:  ViewTypeTemporaryTable,
+		ResultScopes: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameTempTables: {
+					"TMPVIEW": &View{
+						Header: NewHeader("tmpview", []string{"column1", "column2"}),
+						RecordSet: []Record{
+							NewRecord([]value.Primary{
+								value.NewString("1"),
+								value.NewString("update"),
+							}),
+							NewRecord([]value.Primary{
+								value.NewString("2"),
+								value.NewString("update"),
+							}),
+						},
+						FileInfo: &FileInfo{
+							Path:      "tmpview",
+							Delimiter: ',',
+							ViewType:  ViewTypeTemporaryTable,
+						},
 					},
 				},
-			}),
-		},
+			},
+		}, nil, time.Time{}, nil),
 	},
 	{
 		Name: "Update Query Multiple Table",
@@ -2154,46 +2128,35 @@ func TestUpdate(t *testing.T) {
 	TestTx.Flags.Repository = TestDir
 	TestTx.Flags.Quiet = false
 
-	filter := NewFilter(TestTx)
-	filter.tempViews = TemporaryViewScopes{
-		GenerateViewMap([]*View{
-			{
-				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				RecordSet: []Record{
-					NewRecord([]value.Primary{
-						value.NewString("1"),
-						value.NewString("str1"),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("2"),
-						value.NewString("str2"),
-					}),
-				},
-				FileInfo: &FileInfo{
-					Path:      "tmpview",
-					Delimiter: ',',
-					ViewType:  ViewTypeTemporaryTable,
+	scope := GenerateReferenceScope([]map[string]map[string]interface{}{
+		{
+			scopeNameTempTables: {
+				"TMPVIEW": &View{
+					Header: NewHeader("tmpview", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
+						}),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
+							value.NewString("str2"),
+						}),
+					},
+					FileInfo: &FileInfo{
+						Path:      "tmpview",
+						Delimiter: ',',
+						ViewType:  ViewTypeTemporaryTable,
+					},
 				},
 			},
-		}),
-	}
+		},
+	}, nil, time.Time{}, nil)
 
-	ctx := ContextForExecusion(context.Background(), filter)
-	for i, v := range updateTests {
-		if i == 0 {
-			expectErr := "[Internal] filter for query is not set in context"
-			_, _, err := Update(context.Background(), v.Query)
-			if err == nil {
-				t.Errorf("no error, want error %q", expectErr)
-			} else {
-				if err.Error() != expectErr {
-					t.Errorf("error = %q, want error %q", err, expectErr)
-				}
-			}
-		}
-
+	ctx := context.Background()
+	for _, v := range updateTests {
 		_ = TestTx.ReleaseResources()
-		files, cnt, err := Update(ctx, v.Query)
+		files, cnt, err := Update(ctx, scope, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2232,9 +2195,9 @@ func TestUpdate(t *testing.T) {
 				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
-		if v.TempViewList != nil {
-			if !SyncMapListEqual(TempViewScopesToSyncMapList(filter.tempViews), TempViewScopesToSyncMapList(v.TempViewList)) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
+		if v.ResultScopes != nil {
+			if !SyncMapEqual(scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables)
 			}
 		}
 	}
@@ -2246,7 +2209,7 @@ var replaceTests = []struct {
 	ResultFile   *FileInfo
 	UpdateCount  int
 	ViewCache    ViewMap
-	TempViewList TemporaryViewScopes
+	ResultScopes *ReferenceScope
 	Error        string
 }{
 	{
@@ -2389,32 +2352,34 @@ var replaceTests = []struct {
 			ViewType:  ViewTypeTemporaryTable,
 		},
 		UpdateCount: 2,
-		TempViewList: TemporaryViewScopes{
-			GenerateViewMap([]*View{
-				{
-					Header: NewHeader("tmpview", []string{"column1", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("str2"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewInteger(4),
-							value.NewNull(),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:      "tmpview",
-						Delimiter: ',',
-						ViewType:  ViewTypeTemporaryTable,
+		ResultScopes: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameTempTables: {
+					"TMPVIEW": &View{
+						Header: NewHeader("tmpview", []string{"column1", "column2"}),
+						RecordSet: []Record{
+							NewRecord([]value.Primary{
+								value.NewString("1"),
+								value.NewString("str1"),
+							}),
+							NewRecord([]value.Primary{
+								value.NewString("2"),
+								value.NewString("str2"),
+							}),
+							NewRecord([]value.Primary{
+								value.NewInteger(4),
+								value.NewNull(),
+							}),
+						},
+						FileInfo: &FileInfo{
+							Path:      "tmpview",
+							Delimiter: ',',
+							ViewType:  ViewTypeTemporaryTable,
+						},
 					},
 				},
-			}),
-		},
+			},
+		}, nil, time.Time{}, nil),
 	},
 	{
 		Name: "Replace Query All Fields",
@@ -2587,46 +2552,35 @@ func TestReplace(t *testing.T) {
 	TestTx.Flags.Repository = TestDir
 	TestTx.Flags.Quiet = false
 
-	filter := NewFilter(TestTx)
-	filter.tempViews = TemporaryViewScopes{
-		GenerateViewMap([]*View{
-			{
-				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				RecordSet: []Record{
-					NewRecord([]value.Primary{
-						value.NewString("1"),
-						value.NewString("str1"),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("2"),
-						value.NewString("str2"),
-					}),
-				},
-				FileInfo: &FileInfo{
-					Path:      "tmpview",
-					Delimiter: ',',
-					ViewType:  ViewTypeTemporaryTable,
+	scope := GenerateReferenceScope([]map[string]map[string]interface{}{
+		{
+			scopeNameTempTables: {
+				"TMPVIEW": &View{
+					Header: NewHeader("tmpview", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
+						}),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
+							value.NewString("str2"),
+						}),
+					},
+					FileInfo: &FileInfo{
+						Path:      "tmpview",
+						Delimiter: ',',
+						ViewType:  ViewTypeTemporaryTable,
+					},
 				},
 			},
-		}),
-	}
+		},
+	}, nil, time.Time{}, nil)
 
-	ctx := ContextForExecusion(context.Background(), filter)
-	for i, v := range replaceTests {
-		if i == 0 {
-			expectErr := "[Internal] filter for query is not set in context"
-			_, _, err := Replace(context.Background(), v.Query)
-			if err == nil {
-				t.Errorf("no error, want error %q", expectErr)
-			} else {
-				if err.Error() != expectErr {
-					t.Errorf("error = %q, want error %q", err, expectErr)
-				}
-			}
-		}
-
+	ctx := context.Background()
+	for _, v := range replaceTests {
 		_ = TestTx.ReleaseResources()
-		result, cnt, err := Replace(ctx, v.Query)
+		result, cnt, err := Replace(ctx, scope, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2665,9 +2619,9 @@ func TestReplace(t *testing.T) {
 				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
-		if v.TempViewList != nil {
-			if !SyncMapListEqual(TempViewScopesToSyncMapList(filter.tempViews), TempViewScopesToSyncMapList(v.TempViewList)) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
+		if v.ResultScopes != nil {
+			if !SyncMapEqual(scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables)
 			}
 		}
 	}
@@ -2679,7 +2633,7 @@ var deleteTests = []struct {
 	ResultFiles  []*FileInfo
 	UpdateCounts []int
 	ViewCache    ViewMap
-	TempViewList TemporaryViewScopes
+	ResultScopes *ReferenceScope
 	Error        string
 }{
 	{
@@ -2800,24 +2754,26 @@ var deleteTests = []struct {
 			},
 		},
 		UpdateCounts: []int{1},
-		TempViewList: TemporaryViewScopes{
-			GenerateViewMap([]*View{
-				{
-					Header: NewHeader("tmpview", []string{"column1", "column2"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:      "tmpview",
-						Delimiter: ',',
-						ViewType:  ViewTypeTemporaryTable,
+		ResultScopes: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameTempTables: {
+					"TMPVIEW": &View{
+						Header: NewHeader("tmpview", []string{"column1", "column2"}),
+						RecordSet: []Record{
+							NewRecord([]value.Primary{
+								value.NewString("1"),
+								value.NewString("str1"),
+							}),
+						},
+						FileInfo: &FileInfo{
+							Path:      "tmpview",
+							Delimiter: ',',
+							ViewType:  ViewTypeTemporaryTable,
+						},
 					},
 				},
-			}),
-		},
+			},
+		}, nil, time.Time{}, nil),
 	},
 	{
 		Name: "Delete Query Multiple Table",
@@ -2968,46 +2924,35 @@ func TestDelete(t *testing.T) {
 	TestTx.Flags.Repository = TestDir
 	TestTx.Flags.Quiet = false
 
-	filter := NewFilter(TestTx)
-	filter.tempViews = TemporaryViewScopes{
-		GenerateViewMap([]*View{
-			{
-				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				RecordSet: []Record{
-					NewRecord([]value.Primary{
-						value.NewString("1"),
-						value.NewString("str1"),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("2"),
-						value.NewString("str2"),
-					}),
-				},
-				FileInfo: &FileInfo{
-					Path:      "tmpview",
-					Delimiter: ',',
-					ViewType:  ViewTypeTemporaryTable,
+	scope := GenerateReferenceScope([]map[string]map[string]interface{}{
+		{
+			scopeNameTempTables: {
+				"TMPVIEW": &View{
+					Header: NewHeader("tmpview", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
+						}),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
+							value.NewString("str2"),
+						}),
+					},
+					FileInfo: &FileInfo{
+						Path:      "tmpview",
+						Delimiter: ',',
+						ViewType:  ViewTypeTemporaryTable,
+					},
 				},
 			},
-		}),
-	}
+		},
+	}, nil, time.Time{}, nil)
 
-	ctx := ContextForExecusion(context.Background(), filter)
-	for i, v := range deleteTests {
-		if i == 0 {
-			expectErr := "[Internal] filter for query is not set in context"
-			_, _, err := Delete(context.Background(), v.Query)
-			if err == nil {
-				t.Errorf("no error, want error %q", expectErr)
-			} else {
-				if err.Error() != expectErr {
-					t.Errorf("error = %q, want error %q", err, expectErr)
-				}
-			}
-		}
-
+	ctx := context.Background()
+	for _, v := range deleteTests {
 		_ = TestTx.ReleaseResources()
-		files, cnt, err := Delete(ctx, v.Query)
+		files, cnt, err := Delete(ctx, scope, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -3046,9 +2991,9 @@ func TestDelete(t *testing.T) {
 				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
-		if v.TempViewList != nil {
-			if !SyncMapListEqual(TempViewScopesToSyncMapList(filter.tempViews), TempViewScopesToSyncMapList(v.TempViewList)) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
+		if v.ResultScopes != nil {
+			if !SyncMapEqual(scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables)
 			}
 		}
 	}
@@ -3236,23 +3181,12 @@ func TestCreateTable(t *testing.T) {
 	TestTx.Flags.Repository = TestDir
 	TestTx.Flags.Quiet = false
 
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
-	for i, v := range createTableTests {
-		if i == 0 {
-			expectErr := "[Internal] filter for query is not set in context"
-			_, err := CreateTable(context.Background(), v.Query)
-			if err == nil {
-				t.Errorf("no error, want error %q", expectErr)
-			} else {
-				if err.Error() != expectErr {
-					t.Errorf("error = %q, want error %q", err, expectErr)
-				}
-			}
-		}
-
+	scope := NewReferenceScope(TestTx)
+	ctx := context.Background()
+	for _, v := range createTableTests {
 		_ = TestTx.ReleaseResources()
 
-		result, err := CreateTable(ctx, v.Query)
+		result, err := CreateTable(ctx, scope, v.Query)
 
 		if result != nil {
 			_ = TestTx.FileContainer.Close(result.Handler)
@@ -3298,7 +3232,7 @@ var addColumnsTests = []struct {
 	ResultFile   *FileInfo
 	UpdateCount  int
 	ViewCache    ViewMap
-	TempViewList TemporaryViewScopes
+	ResultScopes *ReferenceScope
 	Error        string
 }{
 	{
@@ -3376,32 +3310,34 @@ var addColumnsTests = []struct {
 			ViewType:  ViewTypeTemporaryTable,
 		},
 		UpdateCount: 2,
-		TempViewList: TemporaryViewScopes{
-			GenerateViewMap([]*View{
-				{
-					Header: NewHeader("tmpview", []string{"column1", "column2", "column3", "column4"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-							value.NewNull(),
-							value.NewNull(),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("str2"),
-							value.NewNull(),
-							value.NewNull(),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:      "tmpview",
-						Delimiter: ',',
-						ViewType:  ViewTypeTemporaryTable,
+		ResultScopes: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameTempTables: {
+					"TMPVIEW": &View{
+						Header: NewHeader("tmpview", []string{"column1", "column2", "column3", "column4"}),
+						RecordSet: []Record{
+							NewRecord([]value.Primary{
+								value.NewString("1"),
+								value.NewString("str1"),
+								value.NewNull(),
+								value.NewNull(),
+							}),
+							NewRecord([]value.Primary{
+								value.NewString("2"),
+								value.NewString("str2"),
+								value.NewNull(),
+								value.NewNull(),
+							}),
+						},
+						FileInfo: &FileInfo{
+							Path:      "tmpview",
+							Delimiter: ',',
+							ViewType:  ViewTypeTemporaryTable,
+						},
 					},
 				},
-			}),
-		},
+			},
+		}, nil, time.Time{}, nil),
 	},
 	{
 		Name: "Add Fields First",
@@ -3665,46 +3601,35 @@ func TestAddColumns(t *testing.T) {
 	TestTx.Flags.Repository = TestDir
 	TestTx.Flags.Quiet = false
 
-	filter := NewFilter(TestTx)
-	filter.tempViews = TemporaryViewScopes{
-		GenerateViewMap([]*View{
-			{
-				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				RecordSet: []Record{
-					NewRecord([]value.Primary{
-						value.NewString("1"),
-						value.NewString("str1"),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("2"),
-						value.NewString("str2"),
-					}),
-				},
-				FileInfo: &FileInfo{
-					Path:      "tmpview",
-					Delimiter: ',',
-					ViewType:  ViewTypeTemporaryTable,
+	scope := GenerateReferenceScope([]map[string]map[string]interface{}{
+		{
+			scopeNameTempTables: {
+				"TMPVIEW": &View{
+					Header: NewHeader("tmpview", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
+						}),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
+							value.NewString("str2"),
+						}),
+					},
+					FileInfo: &FileInfo{
+						Path:      "tmpview",
+						Delimiter: ',',
+						ViewType:  ViewTypeTemporaryTable,
+					},
 				},
 			},
-		}),
-	}
+		},
+	}, nil, time.Time{}, nil)
 
-	ctx := ContextForExecusion(context.Background(), filter)
-	for i, v := range addColumnsTests {
-		if i == 0 {
-			expectErr := "[Internal] filter for query is not set in context"
-			_, _, err := AddColumns(context.Background(), v.Query)
-			if err == nil {
-				t.Errorf("no error, want error %q", expectErr)
-			} else {
-				if err.Error() != expectErr {
-					t.Errorf("error = %q, want error %q", err, expectErr)
-				}
-			}
-		}
-
+	ctx := context.Background()
+	for _, v := range addColumnsTests {
 		_ = TestTx.ReleaseResources()
-		result, cnt, err := AddColumns(ctx, v.Query)
+		result, cnt, err := AddColumns(ctx, scope, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -3743,9 +3668,9 @@ func TestAddColumns(t *testing.T) {
 				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
-		if v.TempViewList != nil {
-			if !SyncMapListEqual(TempViewScopesToSyncMapList(filter.tempViews), TempViewScopesToSyncMapList(v.TempViewList)) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
+		if v.ResultScopes != nil {
+			if !SyncMapEqual(scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables)
 			}
 		}
 	}
@@ -3757,7 +3682,7 @@ var dropColumnsTests = []struct {
 	Result       *FileInfo
 	UpdateCount  int
 	ViewCache    ViewMap
-	TempViewList TemporaryViewScopes
+	ResultScopes *ReferenceScope
 	Error        string
 }{
 	{
@@ -3816,26 +3741,28 @@ var dropColumnsTests = []struct {
 			ViewType:  ViewTypeTemporaryTable,
 		},
 		UpdateCount: 1,
-		TempViewList: TemporaryViewScopes{
-			GenerateViewMap([]*View{
-				{
-					Header: NewHeader("tmpview", []string{"column1"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:      "tmpview",
-						Delimiter: ',',
-						ViewType:  ViewTypeTemporaryTable,
+		ResultScopes: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameTempTables: {
+					"TMPVIEW": &View{
+						Header: NewHeader("tmpview", []string{"column1"}),
+						RecordSet: []Record{
+							NewRecord([]value.Primary{
+								value.NewString("1"),
+							}),
+							NewRecord([]value.Primary{
+								value.NewString("2"),
+							}),
+						},
+						FileInfo: &FileInfo{
+							Path:      "tmpview",
+							Delimiter: ',',
+							ViewType:  ViewTypeTemporaryTable,
+						},
 					},
 				},
-			}),
-		},
+			},
+		}, nil, time.Time{}, nil),
 	},
 	{
 		Name: "Drop Fields Load Error",
@@ -3869,46 +3796,35 @@ func TestDropColumns(t *testing.T) {
 	TestTx.Flags.Repository = TestDir
 	TestTx.Flags.Quiet = false
 
-	filter := NewFilter(TestTx)
-	filter.tempViews = TemporaryViewScopes{
-		GenerateViewMap([]*View{
-			{
-				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				RecordSet: []Record{
-					NewRecord([]value.Primary{
-						value.NewString("1"),
-						value.NewString("str1"),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("2"),
-						value.NewString("str2"),
-					}),
-				},
-				FileInfo: &FileInfo{
-					Path:      "tmpview",
-					Delimiter: ',',
-					ViewType:  ViewTypeTemporaryTable,
+	scope := GenerateReferenceScope([]map[string]map[string]interface{}{
+		{
+			scopeNameTempTables: {
+				"TMPVIEW": &View{
+					Header: NewHeader("tmpview", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
+						}),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
+							value.NewString("str2"),
+						}),
+					},
+					FileInfo: &FileInfo{
+						Path:      "tmpview",
+						Delimiter: ',',
+						ViewType:  ViewTypeTemporaryTable,
+					},
 				},
 			},
-		}),
-	}
+		},
+	}, nil, time.Time{}, nil)
 
-	ctx := ContextForExecusion(context.Background(), filter)
-	for i, v := range dropColumnsTests {
-		if i == 0 {
-			expectErr := "[Internal] filter for query is not set in context"
-			_, _, err := DropColumns(context.Background(), v.Query)
-			if err == nil {
-				t.Errorf("no error, want error %q", expectErr)
-			} else {
-				if err.Error() != expectErr {
-					t.Errorf("error = %q, want error %q", err, expectErr)
-				}
-			}
-		}
-
+	ctx := context.Background()
+	for _, v := range dropColumnsTests {
 		_ = TestTx.ReleaseResources()
-		result, cnt, err := DropColumns(ctx, v.Query)
+		result, cnt, err := DropColumns(ctx, scope, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -3947,9 +3863,9 @@ func TestDropColumns(t *testing.T) {
 				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
-		if v.TempViewList != nil {
-			if !SyncMapListEqual(TempViewScopesToSyncMapList(filter.tempViews), TempViewScopesToSyncMapList(v.TempViewList)) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
+		if v.ResultScopes != nil {
+			if !SyncMapEqual(scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables)
 			}
 		}
 	}
@@ -3960,7 +3876,7 @@ var renameColumnTests = []struct {
 	Query        parser.RenameColumn
 	Result       *FileInfo
 	ViewCache    ViewMap
-	TempViewList TemporaryViewScopes
+	ResultScopes *ReferenceScope
 	Error        string
 }{
 	{
@@ -4018,28 +3934,30 @@ var renameColumnTests = []struct {
 			Delimiter: ',',
 			ViewType:  ViewTypeTemporaryTable,
 		},
-		TempViewList: TemporaryViewScopes{
-			GenerateViewMap([]*View{
-				{
-					Header: NewHeader("tmpview", []string{"column1", "newcolumn"}),
-					RecordSet: []Record{
-						NewRecord([]value.Primary{
-							value.NewString("1"),
-							value.NewString("str1"),
-						}),
-						NewRecord([]value.Primary{
-							value.NewString("2"),
-							value.NewString("str2"),
-						}),
-					},
-					FileInfo: &FileInfo{
-						Path:      "tmpview",
-						Delimiter: ',',
-						ViewType:  ViewTypeTemporaryTable,
+		ResultScopes: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameTempTables: {
+					"TMPVIEW": &View{
+						Header: NewHeader("tmpview", []string{"column1", "newcolumn"}),
+						RecordSet: []Record{
+							NewRecord([]value.Primary{
+								value.NewString("1"),
+								value.NewString("str1"),
+							}),
+							NewRecord([]value.Primary{
+								value.NewString("2"),
+								value.NewString("str2"),
+							}),
+						},
+						FileInfo: &FileInfo{
+							Path:      "tmpview",
+							Delimiter: ',',
+							ViewType:  ViewTypeTemporaryTable,
+						},
 					},
 				},
-			}),
-		},
+			},
+		}, nil, time.Time{}, nil),
 	},
 	{
 		Name: "Rename Column Load Error",
@@ -4080,46 +3998,35 @@ func TestRenameColumn(t *testing.T) {
 	TestTx.Flags.Repository = TestDir
 	TestTx.Flags.Quiet = false
 
-	filter := NewFilter(TestTx)
-	filter.tempViews = TemporaryViewScopes{
-		GenerateViewMap([]*View{
-			{
-				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				RecordSet: []Record{
-					NewRecord([]value.Primary{
-						value.NewString("1"),
-						value.NewString("str1"),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("2"),
-						value.NewString("str2"),
-					}),
-				},
-				FileInfo: &FileInfo{
-					Path:      "tmpview",
-					Delimiter: ',',
-					ViewType:  ViewTypeTemporaryTable,
+	scope := GenerateReferenceScope([]map[string]map[string]interface{}{
+		{
+			scopeNameTempTables: {
+				"TMPVIEW": &View{
+					Header: NewHeader("tmpview", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
+						}),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
+							value.NewString("str2"),
+						}),
+					},
+					FileInfo: &FileInfo{
+						Path:      "tmpview",
+						Delimiter: ',',
+						ViewType:  ViewTypeTemporaryTable,
+					},
 				},
 			},
-		}),
-	}
+		},
+	}, nil, time.Time{}, nil)
 
-	ctx := ContextForExecusion(context.Background(), filter)
-	for i, v := range renameColumnTests {
-		if i == 0 {
-			expectErr := "[Internal] filter for query is not set in context"
-			_, err := RenameColumn(context.Background(), v.Query)
-			if err == nil {
-				t.Errorf("no error, want error %q", expectErr)
-			} else {
-				if err.Error() != expectErr {
-					t.Errorf("error = %q, want error %q", err, expectErr)
-				}
-			}
-		}
-
+	ctx := context.Background()
+	for _, v := range renameColumnTests {
 		_ = TestTx.ReleaseResources()
-		result, err := RenameColumn(ctx, v.Query)
+		result, err := RenameColumn(ctx, scope, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -4154,9 +4061,9 @@ func TestRenameColumn(t *testing.T) {
 				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
 			}
 		}
-		if v.TempViewList != nil {
-			if !SyncMapListEqual(TempViewScopesToSyncMapList(filter.tempViews), TempViewScopesToSyncMapList(v.TempViewList)) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, filter.tempViews, v.TempViewList)
+		if v.ResultScopes != nil {
+			if !SyncMapEqual(scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables)
 			}
 		}
 	}
@@ -4532,47 +4439,36 @@ func TestSetTableAttribute(t *testing.T) {
 	TestTx.Flags.Repository = TestDir
 	TestTx.Flags.Quiet = false
 
-	filter := NewFilter(TestTx)
-	filter.tempViews = TemporaryViewScopes{
-		GenerateViewMap([]*View{
-			{
-				Header: NewHeader("tmpview", []string{"column1", "column2"}),
-				RecordSet: []Record{
-					NewRecord([]value.Primary{
-						value.NewString("1"),
-						value.NewString("str1"),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("2"),
-						value.NewString("str2"),
-					}),
-				},
-				FileInfo: &FileInfo{
-					Path:      "tmpview",
-					Delimiter: ',',
-					ViewType:  ViewTypeTemporaryTable,
+	scope := GenerateReferenceScope([]map[string]map[string]interface{}{
+		{
+			scopeNameTempTables: {
+				"TMPVIEW": &View{
+					Header: NewHeader("tmpview", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("1"),
+							value.NewString("str1"),
+						}),
+						NewRecord([]value.Primary{
+							value.NewString("2"),
+							value.NewString("str2"),
+						}),
+					},
+					FileInfo: &FileInfo{
+						Path:      "tmpview",
+						Delimiter: ',',
+						ViewType:  ViewTypeTemporaryTable,
+					},
 				},
 			},
-		}),
-	}
+		},
+	}, nil, time.Time{}, nil)
 
-	ctx := ContextForExecusion(context.Background(), filter)
-	for i, v := range setTableAttributeTests {
-		if i == 0 {
-			expectErr := "[Internal] filter for query is not set in context"
-			_, _, err := SetTableAttribute(context.Background(), v.Query)
-			if err == nil {
-				t.Errorf("no error, want error %q", expectErr)
-			} else {
-				if err.Error() != expectErr {
-					t.Errorf("error = %q, want error %q", err, expectErr)
-				}
-			}
-		}
-
+	ctx := context.Background()
+	for _, v := range setTableAttributeTests {
 		_ = TestTx.ReleaseResources()
 
-		_, _, err := SetTableAttribute(ctx, v.Query)
+		_, _, err := SetTableAttribute(ctx, scope, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -4599,13 +4495,13 @@ func TestSetTableAttribute(t *testing.T) {
 		})
 
 		view := NewView()
-		_ = view.LoadFromTableIdentifier(ContextForExecusion(ctx, filter.CreateNode()), v.Query.Table, false, false)
+		_ = view.LoadFromTableIdentifier(ctx, scope.CreateNode(), v.Query.Table, false, false)
 
 		if !reflect.DeepEqual(view.FileInfo, v.Expect) {
 			t.Errorf("%s: result = %v, want %v", v.Name, view.FileInfo, v.Expect)
 		}
 
-		_, _, err = SetTableAttribute(ctx, v.Query)
+		_, _, err = SetTableAttribute(ctx, scope, v.Query)
 		if err == nil {
 			t.Errorf("%s: no error, want TableAttributeUnchangedError for duplicate set", v.Name)
 		} else if _, ok := err.(*TableAttributeUnchangedError); !ok {

@@ -27,13 +27,8 @@ const (
 	Return
 )
 
-const ExecusionFilterContextKey = "filter"
-const StoringResultsContextKey = "store_query_results"
-const StatementReplaceValuesContextKey = "statement_replace_values"
-
-func ContextForExecusion(ctx context.Context, filter *Filter) context.Context {
-	return context.WithValue(ctx, ExecusionFilterContextKey, filter)
-}
+const StoringResultsContextKey = "sqr"
+const StatementReplaceValuesContextKey = "rv"
 
 func ContextForStoringResults(ctx context.Context) context.Context {
 	return context.WithValue(ctx, StoringResultsContextKey, true)
@@ -43,16 +38,9 @@ func ContextForPreparedStatement(ctx context.Context, values *ReplaceValues) con
 	return context.WithValue(ctx, StatementReplaceValuesContextKey, values)
 }
 
-func GetFilter(ctx context.Context) (*Filter, error) {
-	if val := ctx.Value(ExecusionFilterContextKey); val != nil {
-		return val.(*Filter), nil
-	}
-	return nil, NewFilterNotSetError()
-}
-
 type Processor struct {
-	Tx     *Transaction
-	Filter *Filter
+	Tx             *Transaction
+	ReferenceScope *ReferenceScope
 
 	storeResults bool
 
@@ -61,25 +49,25 @@ type Processor struct {
 }
 
 func NewProcessor(tx *Transaction) *Processor {
-	return NewProcessorWithFilter(tx, NewFilter(tx))
+	return NewProcessorWithScope(tx, NewReferenceScope(tx))
 }
 
-func NewProcessorWithFilter(tx *Transaction, filter *Filter) *Processor {
+func NewProcessorWithScope(tx *Transaction, scope *ReferenceScope) *Processor {
 	return &Processor{
-		Tx:     tx,
-		Filter: filter,
+		Tx:             tx,
+		ReferenceScope: scope,
 	}
 }
 
 func (proc *Processor) NewChildProcessor() *Processor {
 	return &Processor{
-		Tx:     proc.Tx,
-		Filter: proc.Filter.CreateChildScope(),
+		Tx:             proc.Tx,
+		ReferenceScope: proc.ReferenceScope.CreateChild(),
 	}
 }
 
 func (proc *Processor) Close() {
-	proc.Filter.CloseScope()
+	proc.ReferenceScope.CloseCurrentBlock()
 }
 
 func (proc *Processor) Execute(ctx context.Context, statements []parser.Statement) (StatementFlow, error) {
@@ -101,8 +89,6 @@ func (proc *Processor) Execute(ctx context.Context, statements []parser.Statemen
 
 func (proc *Processor) execute(ctx context.Context, statements []parser.Statement) (StatementFlow, error) {
 	flow := Terminate
-
-	ctx = ContextForExecusion(ctx, proc.Filter)
 
 	for _, stmt := range statements {
 		f, err := proc.ExecuteStatement(ctx, stmt)
@@ -134,55 +120,54 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 
 	flow := Terminate
 
-	var err error
-
 	var printstr string
+	var err error
 
 	switch stmt.(type) {
 	case parser.SetFlag:
-		err = SetFlag(ctx, stmt.(parser.SetFlag))
+		err = SetFlag(ctx, proc.ReferenceScope, stmt.(parser.SetFlag))
 	case parser.AddFlagElement:
-		err = AddFlagElement(ctx, stmt.(parser.AddFlagElement))
+		err = AddFlagElement(ctx, proc.ReferenceScope, stmt.(parser.AddFlagElement))
 	case parser.RemoveFlagElement:
-		err = RemoveFlagElement(ctx, stmt.(parser.RemoveFlagElement))
+		err = RemoveFlagElement(ctx, proc.ReferenceScope, stmt.(parser.RemoveFlagElement))
 	case parser.ShowFlag:
 		if printstr, err = ShowFlag(proc.Tx, stmt.(parser.ShowFlag)); err == nil {
 			proc.Log(printstr, false)
 		}
 	case parser.VariableDeclaration:
-		err = proc.Filter.variables.Declare(ctx, stmt.(parser.VariableDeclaration))
+		err = proc.ReferenceScope.DeclareVariable(ctx, stmt.(parser.VariableDeclaration))
 	case parser.VariableSubstitution:
-		_, err = proc.Filter.Evaluate(ctx, stmt.(parser.QueryExpression))
+		_, err = proc.ReferenceScope.SubstituteVariable(ctx, stmt.(parser.VariableSubstitution))
 	case parser.SetEnvVar:
-		err = SetEnvVar(ctx, stmt.(parser.SetEnvVar))
+		err = SetEnvVar(ctx, proc.ReferenceScope, stmt.(parser.SetEnvVar))
 	case parser.UnsetEnvVar:
 		err = UnsetEnvVar(stmt.(parser.UnsetEnvVar))
 	case parser.DisposeVariable:
-		err = proc.Filter.variables.Dispose(stmt.(parser.DisposeVariable).Variable)
+		err = proc.ReferenceScope.DisposeVariable(stmt.(parser.DisposeVariable).Variable)
 	case parser.CursorDeclaration:
-		err = proc.Filter.cursors.Declare(stmt.(parser.CursorDeclaration))
+		err = proc.ReferenceScope.DeclareCursor(stmt.(parser.CursorDeclaration))
 	case parser.OpenCursor:
 		openCur := stmt.(parser.OpenCursor)
-		err = proc.Filter.cursors.Open(ctx, openCur.Cursor, openCur.Values)
+		err = proc.ReferenceScope.OpenCursor(ctx, openCur.Cursor, openCur.Values)
 	case parser.CloseCursor:
-		err = proc.Filter.cursors.Close(stmt.(parser.CloseCursor).Cursor)
+		err = proc.ReferenceScope.CloseCursor(stmt.(parser.CloseCursor).Cursor)
 	case parser.DisposeCursor:
-		err = proc.Filter.cursors.Dispose(stmt.(parser.DisposeCursor).Cursor)
+		err = proc.ReferenceScope.DisposeCursor(stmt.(parser.DisposeCursor).Cursor)
 	case parser.FetchCursor:
 		fetch := stmt.(parser.FetchCursor)
-		_, err = FetchCursor(ctx, fetch.Cursor, fetch.Position, fetch.Variables)
+		_, err = FetchCursor(ctx, proc.ReferenceScope, fetch.Cursor, fetch.Position, fetch.Variables)
 	case parser.ViewDeclaration:
-		err = DeclareView(ctx, stmt.(parser.ViewDeclaration))
+		err = DeclareView(ctx, proc.ReferenceScope, stmt.(parser.ViewDeclaration))
 	case parser.DisposeView:
-		err = proc.Filter.tempViews.Dispose(stmt.(parser.DisposeView).View)
+		err = proc.ReferenceScope.DisposeTemporaryTable(stmt.(parser.DisposeView).View)
 	case parser.FunctionDeclaration:
-		err = proc.Filter.functions.Declare(stmt.(parser.FunctionDeclaration))
+		err = proc.ReferenceScope.DeclareFunction(stmt.(parser.FunctionDeclaration))
 	case parser.DisposeFunction:
-		err = proc.Filter.functions.Dispose(stmt.(parser.DisposeFunction).Name)
+		err = proc.ReferenceScope.DisposeFunction(stmt.(parser.DisposeFunction).Name)
 	case parser.AggregateDeclaration:
-		err = proc.Filter.functions.DeclareAggregate(stmt.(parser.AggregateDeclaration))
+		err = proc.ReferenceScope.DeclareAggregateFunction(stmt.(parser.AggregateDeclaration))
 	case parser.StatementPreparation:
-		err = proc.Tx.PreparedStatements.Prepare(proc.Filter, stmt.(parser.StatementPreparation))
+		err = proc.Tx.PreparedStatements.Prepare(proc.ReferenceScope.Tx.Flags, stmt.(parser.StatementPreparation))
 	case parser.ExecuteStatement:
 		execStmt := stmt.(parser.ExecuteStatement)
 		prepared, e := proc.Tx.PreparedStatements.Get(execStmt.Name)
@@ -195,13 +180,13 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 		err = proc.Tx.PreparedStatements.Dispose(stmt.(parser.DisposeStatement))
 	case parser.SelectQuery:
 		if selectEntity, ok := stmt.(parser.SelectQuery).SelectEntity.(parser.SelectEntity); ok && selectEntity.IntoClause != nil {
-			_, err = Select(ctx, stmt.(parser.SelectQuery))
+			_, err = Select(ctx, proc.ReferenceScope, stmt.(parser.SelectQuery))
 		} else {
 			if proc.Tx.Flags.Stats {
 				proc.measurementStart = time.Now()
 			}
 
-			view, e := Select(ctx, stmt.(parser.SelectQuery))
+			view, e := Select(ctx, proc.ReferenceScope, stmt.(parser.SelectQuery))
 			if e == nil {
 				var warnmsg string
 
@@ -261,7 +246,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 			proc.measurementStart = time.Now()
 		}
 
-		fileInfo, cnt, e := Insert(ctx, stmt.(parser.InsertQuery))
+		fileInfo, cnt, e := Insert(ctx, proc.ReferenceScope, stmt.(parser.InsertQuery))
 		if e == nil {
 			if 0 < cnt {
 				proc.Tx.uncommittedViews.SetForUpdatedView(fileInfo)
@@ -282,7 +267,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 			proc.measurementStart = time.Now()
 		}
 
-		infos, cnts, e := Update(ctx, stmt.(parser.UpdateQuery))
+		infos, cnts, e := Update(ctx, proc.ReferenceScope, stmt.(parser.UpdateQuery))
 		if e == nil {
 			cntTotal := 0
 			for i, info := range infos {
@@ -307,7 +292,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 			proc.measurementStart = time.Now()
 		}
 
-		fileInfo, cnt, e := Replace(ctx, stmt.(parser.ReplaceQuery))
+		fileInfo, cnt, e := Replace(ctx, proc.ReferenceScope, stmt.(parser.ReplaceQuery))
 		if e == nil {
 			if 0 < cnt {
 				proc.Tx.uncommittedViews.SetForUpdatedView(fileInfo)
@@ -328,7 +313,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 			proc.measurementStart = time.Now()
 		}
 
-		infos, cnts, e := Delete(ctx, stmt.(parser.DeleteQuery))
+		infos, cnts, e := Delete(ctx, proc.ReferenceScope, stmt.(parser.DeleteQuery))
 		if e == nil {
 			cntTotal := 0
 			for i, info := range infos {
@@ -349,7 +334,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 			proc.showExecutionTime(ctx)
 		}
 	case parser.CreateTable:
-		info, e := CreateTable(ctx, stmt.(parser.CreateTable))
+		info, e := CreateTable(ctx, proc.ReferenceScope, stmt.(parser.CreateTable))
 		if e == nil {
 			proc.Tx.uncommittedViews.SetForCreatedView(info)
 			proc.Log(fmt.Sprintf("file %q is created.", info.Path), proc.Tx.Flags.Quiet)
@@ -357,7 +342,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 			err = e
 		}
 	case parser.AddColumns:
-		info, cnt, e := AddColumns(ctx, stmt.(parser.AddColumns))
+		info, cnt, e := AddColumns(ctx, proc.ReferenceScope, stmt.(parser.AddColumns))
 		if e == nil {
 			proc.Tx.uncommittedViews.SetForUpdatedView(info)
 			proc.Log(fmt.Sprintf("%s added on %q.", FormatCount(cnt, "field"), info.Path), proc.Tx.Flags.Quiet)
@@ -365,7 +350,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 			err = e
 		}
 	case parser.DropColumns:
-		info, cnt, e := DropColumns(ctx, stmt.(parser.DropColumns))
+		info, cnt, e := DropColumns(ctx, proc.ReferenceScope, stmt.(parser.DropColumns))
 		if e == nil {
 			proc.Tx.uncommittedViews.SetForUpdatedView(info)
 			proc.Log(fmt.Sprintf("%s dropped on %q.", FormatCount(cnt, "field"), info.Path), proc.Tx.Flags.Quiet)
@@ -373,7 +358,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 			err = e
 		}
 	case parser.RenameColumn:
-		info, e := RenameColumn(ctx, stmt.(parser.RenameColumn))
+		info, e := RenameColumn(ctx, proc.ReferenceScope, stmt.(parser.RenameColumn))
 		if e == nil {
 			proc.Tx.uncommittedViews.SetForUpdatedView(info)
 			proc.Log(fmt.Sprintf("%s renamed on %q.", FormatCount(1, "field"), info.Path), proc.Tx.Flags.Quiet)
@@ -382,7 +367,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 		}
 	case parser.SetTableAttribute:
 		expr := stmt.(parser.SetTableAttribute)
-		info, log, e := SetTableAttribute(ctx, expr)
+		info, log, e := SetTableAttribute(ctx, proc.ReferenceScope, expr)
 		if e == nil {
 			proc.Tx.uncommittedViews.SetForUpdatedView(info)
 			proc.Log(log, proc.Tx.Flags.Quiet)
@@ -421,7 +406,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 		}
 	case parser.Return:
 		var ret value.Primary
-		if ret, err = proc.Filter.Evaluate(ctx, stmt.(parser.Return).Value); err == nil {
+		if ret, err = Evaluate(ctx, proc.ReferenceScope, stmt.(parser.Return).Value); err == nil {
 			proc.returnVal = ret
 			flow = Return
 		}
@@ -434,29 +419,29 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 	case parser.WhileInCursor:
 		flow, err = proc.WhileInCursor(ctx, stmt.(parser.WhileInCursor))
 	case parser.Echo:
-		if printstr, err = Echo(ctx, proc.Filter, stmt.(parser.Echo)); err == nil {
+		if printstr, err = Echo(ctx, proc.ReferenceScope, stmt.(parser.Echo)); err == nil {
 			proc.Log(printstr, false)
 		}
 	case parser.Print:
-		if printstr, err = Print(ctx, proc.Filter, stmt.(parser.Print)); err == nil {
+		if printstr, err = Print(ctx, proc.ReferenceScope, stmt.(parser.Print)); err == nil {
 			proc.Log(printstr, false)
 		}
 	case parser.Printf:
-		if printstr, err = Printf(ctx, proc.Filter, stmt.(parser.Printf)); err == nil {
+		if printstr, err = Printf(ctx, proc.ReferenceScope, stmt.(parser.Printf)); err == nil {
 			proc.Log(printstr, false)
 		}
 	case parser.Source:
 		var externalStatements []parser.Statement
-		if externalStatements, err = Source(ctx, proc.Filter, stmt.(parser.Source)); err == nil {
+		if externalStatements, err = Source(ctx, proc.ReferenceScope, stmt.(parser.Source)); err == nil {
 			flow, err = proc.execute(ctx, externalStatements)
 		}
 	case parser.Execute:
 		var externalStatements []parser.Statement
-		if externalStatements, err = ParseExecuteStatements(ctx, proc.Filter, stmt.(parser.Execute)); err == nil {
+		if externalStatements, err = ParseExecuteStatements(ctx, proc.ReferenceScope, stmt.(parser.Execute)); err == nil {
 			flow, err = proc.execute(ctx, externalStatements)
 		}
 	case parser.Chdir:
-		err = Chdir(ctx, stmt.(parser.Chdir))
+		err = Chdir(ctx, proc.ReferenceScope, stmt.(parser.Chdir))
 	case parser.Pwd:
 		var dirpath string
 		dirpath, err = Pwd(stmt.(parser.Pwd))
@@ -466,15 +451,15 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 	case parser.Reload:
 		err = Reload(ctx, proc.Tx, stmt.(parser.Reload))
 	case parser.ShowObjects:
-		if printstr, err = ShowObjects(ctx, stmt.(parser.ShowObjects)); err == nil {
+		if printstr, err = ShowObjects(proc.ReferenceScope, stmt.(parser.ShowObjects)); err == nil {
 			proc.Log(printstr, false)
 		}
 	case parser.ShowFields:
-		if printstr, err = ShowFields(ctx, stmt.(parser.ShowFields)); err == nil {
+		if printstr, err = ShowFields(ctx, proc.ReferenceScope, stmt.(parser.ShowFields)); err == nil {
 			proc.Log(printstr, false)
 		}
 	case parser.Syntax:
-		if printstr, err = Syntax(ctx, stmt.(parser.Syntax)); err == nil {
+		if printstr, err = Syntax(ctx, proc.ReferenceScope, stmt.(parser.Syntax)); err == nil {
 			proc.Log(printstr, false)
 		}
 	case parser.Trigger:
@@ -487,7 +472,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 					trigger.Code = pt.Value
 				} else {
 					var p value.Primary
-					if p, err = proc.Filter.Evaluate(ctx, trigger.Message); err == nil {
+					if p, err = Evaluate(ctx, proc.ReferenceScope, trigger.Message); err == nil {
 						if s := value.ToString(p); !value.IsNull(s) {
 							message = s.(*value.String).Raw()
 						}
@@ -504,7 +489,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 		err = proc.ExecExternalCommand(ctx, stmt.(parser.ExternalCommand))
 	default:
 		if expr, ok := stmt.(parser.QueryExpression); ok {
-			_, err = proc.Filter.Evaluate(ctx, expr)
+			_, err = Evaluate(ctx, proc.ReferenceScope, expr)
 		}
 	}
 
@@ -525,7 +510,7 @@ func (proc *Processor) IfStmt(ctx context.Context, stmt parser.If) (StatementFlo
 	}
 
 	for _, v := range stmts {
-		p, err := proc.Filter.Evaluate(ctx, v.Condition)
+		p, err := Evaluate(ctx, proc.ReferenceScope, v.Condition)
 		if err != nil {
 			return TerminateWithError, err
 		}
@@ -544,7 +529,7 @@ func (proc *Processor) Case(ctx context.Context, stmt parser.Case) (StatementFlo
 	var val value.Primary
 	var err error
 	if stmt.Value != nil {
-		val, err = proc.Filter.Evaluate(ctx, stmt.Value)
+		val, err = Evaluate(ctx, proc.ReferenceScope, stmt.Value)
 		if err != nil {
 			return TerminateWithError, err
 		}
@@ -553,7 +538,7 @@ func (proc *Processor) Case(ctx context.Context, stmt parser.Case) (StatementFlo
 	for _, when := range stmt.When {
 		var t ternary.Value
 
-		cond, err := proc.Filter.Evaluate(ctx, when.Condition)
+		cond, err := Evaluate(ctx, proc.ReferenceScope, when.Condition)
 		if err != nil {
 			return TerminateWithError, err
 		}
@@ -577,12 +562,11 @@ func (proc *Processor) Case(ctx context.Context, stmt parser.Case) (StatementFlo
 
 func (proc *Processor) While(ctx context.Context, stmt parser.While) (StatementFlow, error) {
 	childProc := proc.NewChildProcessor()
-	ctx = ContextForExecusion(ctx, childProc.Filter)
 	defer childProc.Close()
 
 	for {
-		childProc.Filter.ResetCurrentScope()
-		p, err := proc.Filter.Evaluate(ctx, stmt.Condition)
+		childProc.ReferenceScope.ClearCurrentBlock()
+		p, err := Evaluate(ctx, childProc.ReferenceScope, stmt.Condition)
 		if err != nil {
 			return TerminateWithError, err
 		}
@@ -614,23 +598,22 @@ func (proc *Processor) WhileInCursor(ctx context.Context, stmt parser.WhileInCur
 	}
 
 	childProc := proc.NewChildProcessor()
-	ctx = ContextForExecusion(ctx, childProc.Filter)
 	defer childProc.Close()
 
 	for {
-		childProc.Filter.ResetCurrentScope()
+		childProc.ReferenceScope.ClearCurrentBlock()
 		if stmt.WithDeclaration {
 			assigns := make([]parser.VariableAssignment, len(stmt.Variables))
 			for i, v := range stmt.Variables {
 				assigns[i] = parser.VariableAssignment{Variable: v}
 			}
 			decl := parser.VariableDeclaration{Assignments: assigns}
-			if err := childProc.Filter.variables.Declare(ctx, decl); err != nil {
+			if err := childProc.ReferenceScope.DeclareVariable(ctx, decl); err != nil {
 				return TerminateWithError, err
 			}
 		}
 
-		success, err := FetchCursor(ctx, stmt.Cursor, fetchPosition, stmt.Variables)
+		success, err := FetchCursor(ctx, childProc.ReferenceScope, stmt.Cursor, fetchPosition, stmt.Variables)
 		if err != nil {
 			return TerminateWithError, err
 		}
@@ -670,7 +653,7 @@ func (proc *Processor) ExecExternalCommand(ctx context.Context, stmt parser.Exte
 
 	args := make([]string, 0, len(argStrs))
 	for _, argStr := range argStrs {
-		arg, err := proc.Filter.EvaluateEmbeddedString(ctx, argStr)
+		arg, err := EvaluateEmbeddedString(ctx, proc.ReferenceScope, argStr)
 		if err != nil {
 			if appErr, ok := err.(Error); ok {
 				err = NewExternalCommandError(stmt, appErr.Message())
@@ -729,7 +712,7 @@ func (proc *Processor) AutoCommit(ctx context.Context) error {
 }
 
 func (proc *Processor) Commit(ctx context.Context, expr parser.Expression) error {
-	return proc.Tx.Commit(ctx, proc.Filter, expr)
+	return proc.Tx.Commit(ctx, proc.ReferenceScope, expr)
 }
 
 func (proc *Processor) AutoRollback() error {
@@ -737,7 +720,7 @@ func (proc *Processor) AutoRollback() error {
 }
 
 func (proc *Processor) Rollback(expr parser.Expression) error {
-	return proc.Tx.Rollback(proc.Filter, expr)
+	return proc.Tx.Rollback(proc.ReferenceScope, expr)
 }
 
 func (proc *Processor) ReleaseResources() error {

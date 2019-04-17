@@ -15,7 +15,6 @@ const (
 
 const (
 	//Application Error
-	ErrorFilterNotSet                         = 101
 	ErrorFieldAmbiguous                       = 10101
 	ErrorFieldNotExist                        = 10102
 	ErrorFieldNotGroupKey                     = 10103

@@ -42,31 +42,40 @@ func SyncMapEqual(m1 SyncMapStruct, m2 SyncMapStruct) bool {
 	return reflect.DeepEqual(vlist, vlist2)
 }
 
-func SyncMapListEqual(l1 []SyncMapStruct, l2 []SyncMapStruct) bool {
-	if len(l1) != len(l2) {
+func BlockScopeListEqual(s1 []BlockScope, s2 []BlockScope) bool {
+	if len(s1) != len(s2) {
 		return false
 	}
-	for i := 0; i < len(l1); i++ {
-		if !SyncMapEqual(l1[i], l2[i]) {
+	for i := range s1 {
+		if !SyncMapEqual(s1[i].variables, s2[i].variables) {
+			return false
+		}
+		if !SyncMapEqual(s1[i].temporaryTables, s2[i].temporaryTables) {
+			return false
+		}
+		if !reflect.DeepEqual(s1[i].cursors, s2[i].cursors) {
+			return false
+		}
+		if !reflect.DeepEqual(s1[i].functions, s2[i].functions) {
 			return false
 		}
 	}
 	return true
 }
 
-func TempViewScopesToSyncMapList(scopes TemporaryViewScopes) []SyncMapStruct {
-	l := make([]SyncMapStruct, 0, len(scopes))
-	for _, v := range scopes {
-		l = append(l, v)
+func NodeScopeListEqual(s1 []NodeScope, s2 []NodeScope) bool {
+	if len(s1) != len(s2) {
+		return false
 	}
-	return l
-}
-func VariableScopesToSyncMapList(scopes VariableScopes) []SyncMapStruct {
-	l := make([]SyncMapStruct, 0, len(scopes))
-	for _, v := range scopes {
-		l = append(l, v)
+	for i := range s1 {
+		if !reflect.DeepEqual(s1[i].inlineTables, s2[i].inlineTables) {
+			return false
+		}
+		if !reflect.DeepEqual(s1[i].aliases, s2[i].aliases) {
+			return false
+		}
 	}
-	return l
+	return true
 }
 
 func GetTestFilePath(filename string) string {
@@ -242,12 +251,65 @@ func copyfile(dstfile string, srcfile string) error {
 	return nil
 }
 
-func GenerateVariableMap(values map[string]value.Primary) VariableMap {
-	m := NewVariableMap()
-	for k, v := range values {
-		m.Store(k, v)
+const (
+	scopeNameVariables    = "v"
+	scopeNameTempTables   = "t"
+	scopeNameCursors      = "c"
+	scopeNameFunctions    = "f"
+	scopeNameInlineTables = "i"
+	scopeNameAliases      = "a"
+)
+
+func GenerateReferenceScope(blocks []map[string]map[string]interface{}, nodes []map[string]map[string]interface{}, now time.Time, records []ReferenceRecord) *ReferenceScope {
+	rs := NewReferenceScope(TestTx)
+	for i := 1; i < len(blocks); i++ {
+		rs = rs.CreateChild()
 	}
-	return m
+
+	for i := range blocks {
+		for n := range blocks[i] {
+			for k, v := range blocks[i][n] {
+				switch n {
+				case scopeNameVariables:
+					rs.blocks[i].variables.Store(k, v.(value.Primary))
+				case scopeNameTempTables:
+					rs.blocks[i].temporaryTables.Store(k, v.(*View))
+				case scopeNameCursors:
+					rs.blocks[i].cursors[k] = v.(*Cursor)
+				case scopeNameFunctions:
+					rs.blocks[i].functions[k] = v.(*UserDefinedFunction)
+				}
+			}
+		}
+	}
+
+	if nodes != nil {
+		ns := make([]NodeScope, len(nodes))
+		for i := range nodes {
+			ns[i] = GetNodeScope()
+			for n := range nodes[i] {
+				for k, v := range nodes[i][n] {
+					switch n {
+					case scopeNameInlineTables:
+						ns[i].inlineTables[k] = v.(*View)
+					case scopeNameAliases:
+						ns[i].aliases[k] = v.(string)
+					}
+				}
+			}
+		}
+		rs.nodes = ns
+	}
+
+	if !now.IsZero() {
+		rs.now = now
+	}
+
+	if records != nil {
+		rs.Records = records
+	}
+
+	return rs
 }
 
 func GenerateViewMap(values []*View) ViewMap {
@@ -264,30 +326,4 @@ func GenerateStatementMap(values []*PreparedStatement) PreparedStatementMap {
 		m.Store(v.Name, v)
 	}
 	return m
-}
-
-func GenerateBenchGroupedViewFilter() Filter {
-	primaries := make([]value.Primary, 10000)
-	for i := 0; i < 10000; i++ {
-		primaries[i] = value.NewInteger(int64(i))
-	}
-
-	tx, _ := NewTransaction(context.Background(), file.DefaultWaitTimeout, file.DefaultRetryDelay, NewSession())
-
-	view := &View{
-		Header: NewHeader("table1", []string{"c1"}),
-		RecordSet: []Record{
-			{
-				NewGroupCell(primaries),
-			},
-		},
-		isGrouped: true,
-	}
-
-	return Filter{
-		records: []filterRecord{
-			{view: view},
-		},
-		tx: tx,
-	}
 }

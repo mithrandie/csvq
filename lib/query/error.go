@@ -29,7 +29,6 @@ const (
 	ErrMsgIO                                   = "%s"
 	ErrMsgCommit                               = "failed to commit: %s"
 	ErrMsgRollback                             = "failed to rollback: %s"
-	ErrMsgFilterNotSet                         = "filter for query is not set in context"
 	ErrMsgFieldAmbiguous                       = "field %s is ambiguous"
 	ErrMsgFieldNotExist                        = "field %s does not exist"
 	ErrMsgFieldNotGroupKey                     = "field %s is not a group key"
@@ -424,16 +423,6 @@ func NewRollbackError(expr parser.Expression, message string) error {
 	}
 	return &RollbackError{
 		NewBaseError(expr, fmt.Sprintf(ErrMsgRollback, message), ReturnCodeIOError, ErrorRollback),
-	}
-}
-
-type FilterNotSetError struct {
-	*BaseError
-}
-
-func NewFilterNotSetError() error {
-	return &FilterNotSetError{
-		NewBaseErrorWithPrefix("Internal", ErrMsgFilterNotSet, ReturnCodeApplicationError, ErrorFilterNotSet),
 	}
 }
 

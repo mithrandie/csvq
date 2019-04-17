@@ -27,7 +27,9 @@ import (
 	"github.com/mithrandie/ternary"
 )
 
-var Functions = map[string]func(parser.Function, []value.Primary, *cmd.Flags) (value.Primary, error){
+type BuiltInFunction func(parser.Function, []value.Primary, *cmd.Flags) (value.Primary, error)
+
+var Functions = map[string]BuiltInFunction{
 	"COALESCE":         Coalesce,
 	"IF":               If,
 	"IFNULL":           Ifnull,
@@ -1547,43 +1549,35 @@ func Call(ctx context.Context, fn parser.Function, args []value.Primary) (value.
 	return value.NewString(string(buf)), nil
 }
 
-func Now(filter *Filter, fn parser.Function, args []value.Primary) (value.Primary, error) {
+func Now(scope *ReferenceScope, fn parser.Function, args []value.Primary) (value.Primary, error) {
 	if 0 < len(args) {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{0})
 	}
-
-	if filter.now.IsZero() {
-		return value.NewDatetime(cmd.Now()), nil
-	}
-	return value.NewDatetime(filter.now), nil
+	return value.NewDatetime(scope.Now()), nil
 }
 
-func JsonObject(ctx context.Context, filter *Filter, fn parser.Function) (value.Primary, error) {
-	if len(filter.records) < 1 {
+func JsonObject(ctx context.Context, scope *ReferenceScope, fn parser.Function) (value.Primary, error) {
+	if len(scope.Records) < 1 {
 		return value.NewNull(), nil
 	}
 
-	loadingFilter := filter.CreateNode()
-	ctx = ContextForExecusion(ctx, loadingFilter)
-	defer loadingFilter.CloseNode()
-
 	view := NewView()
-	view.Header = filter.records[0].view.Header.Copy()
-	view.RecordSet = RecordSet{filter.records[0].view.RecordSet[filter.records[0].recordIndex]}
+	view.Header = scope.Records[0].view.Header.Copy()
+	view.RecordSet = RecordSet{scope.Records[0].view.RecordSet[scope.Records[0].recordIndex]}
 
 	if len(fn.Args) < 1 {
-		if err := view.SelectAllColumns(ctx); err != nil {
+		if err := view.SelectAllColumns(ctx, scope); err != nil {
 			return nil, err
 		}
 	} else {
 		selectClause := parser.SelectClause{
 			Fields: fn.Args,
 		}
-		if err := view.Select(ctx, selectClause); err != nil {
+		if err := view.Select(ctx, scope, selectClause); err != nil {
 			return nil, err
 		}
 	}
-	if err := view.Fix(ctx); err != nil {
+	if err := view.Fix(ctx, scope.Tx.Flags); err != nil {
 		return nil, err
 	}
 

@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
@@ -47,10 +48,10 @@ var echoTests = []struct {
 }
 
 func TestEcho(t *testing.T) {
-	filter := NewFilter(TestTx)
+	scope := NewReferenceScope(TestTx)
 
 	for _, v := range echoTests {
-		result, err := Echo(context.Background(), filter, v.Expr)
+		result, err := Echo(context.Background(), scope, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -94,10 +95,10 @@ var printTests = []struct {
 }
 
 func TestPrint(t *testing.T) {
-	filter := NewFilter(TestTx)
+	scope := NewReferenceScope(TestTx)
 
 	for _, v := range printTests {
-		result, err := Print(context.Background(), filter, v.Expr)
+		result, err := Print(context.Background(), scope, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -181,10 +182,10 @@ var printfTests = []struct {
 }
 
 func TestPrintf(t *testing.T) {
-	filter := NewFilter(TestTx)
+	scope := NewReferenceScope(TestTx)
 
 	for _, v := range printfTests {
-		result, err := Printf(context.Background(), filter, v.Expr)
+		result, err := Printf(context.Background(), scope, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -269,10 +270,10 @@ var sourceTests = []struct {
 }
 
 func TestSource(t *testing.T) {
-	filter := NewFilter(TestTx)
+	scope := NewReferenceScope(TestTx)
 
 	for _, v := range sourceTests {
-		result, err := Source(context.Background(), filter, v.Expr)
+		result, err := Source(context.Background(), scope, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -353,10 +354,10 @@ var parseExecuteStatementsTests = []struct {
 }
 
 func TestParseExecuteStatements(t *testing.T) {
-	filter := NewFilter(TestTx)
+	scope := NewReferenceScope(TestTx)
 
 	for _, v := range parseExecuteStatementsTests {
-		result, err := ParseExecuteStatements(context.Background(), filter, v.Expr)
+		result, err := ParseExecuteStatements(context.Background(), scope, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -616,11 +617,12 @@ var setFlagTests = []struct {
 func TestSetFlag(t *testing.T) {
 	defer initFlag(TestTx.Flags)
 
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
+	ctx := context.Background()
+	scope := NewReferenceScope(TestTx)
 
 	for _, v := range setFlagTests {
 		initFlag(TestTx.Flags)
-		err := SetFlag(ctx, v.Expr)
+		err := SetFlag(ctx, scope, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -686,13 +688,14 @@ var addFlagElementTests = []struct {
 func TestAddFlagElement(t *testing.T) {
 	defer initFlag(TestTx.Flags)
 
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
+	ctx := context.Background()
+	scope := NewReferenceScope(TestTx)
 
 	for _, v := range addFlagElementTests {
 		initFlag(TestTx.Flags)
 		v.Init(TestTx.Flags)
 
-		err := AddFlagElement(ctx, v.Expr)
+		err := AddFlagElement(ctx, scope, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -793,13 +796,14 @@ var removeFlagElementTests = []struct {
 func TestRemoveFlagElement(t *testing.T) {
 	defer initFlag(TestTx.Flags)
 
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
+	ctx := context.Background()
+	scope := NewReferenceScope(TestTx)
 
 	for _, v := range removeFlagElementTests {
 		initFlag(TestTx.Flags)
 		v.Init(TestTx.Flags)
 
-		err := RemoveFlagElement(ctx, v.Expr)
+		err := RemoveFlagElement(ctx, scope, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1496,13 +1500,14 @@ func TestShowFlag(t *testing.T) {
 	}()
 
 	TestTx.UseColor(true)
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
+	ctx := context.Background()
+	scope := NewReferenceScope(TestTx)
 
 	for _, v := range showFlagTests {
 		initFlag(TestTx.Flags)
 		TestTx.UseColor(true)
 		for _, expr := range v.SetExprs {
-			_ = SetFlag(ctx, expr)
+			_ = SetFlag(ctx, scope, expr)
 		}
 		result, err := ShowFlag(TestTx, v.Expr)
 		if err != nil {
@@ -1526,7 +1531,7 @@ func TestShowFlag(t *testing.T) {
 var showObjectsTests = []struct {
 	Name                    string
 	Expr                    parser.ShowObjects
-	Filter                  *Filter
+	Scope                   *ReferenceScope
 	PreparedStatements      PreparedStatementMap
 	ImportFormat            cmd.Format
 	Delimiter               rune
@@ -1790,35 +1795,37 @@ var showObjectsTests = []struct {
 	{
 		Name: "ShowObjects Views",
 		Expr: parser.ShowObjects{Type: parser.Identifier{Literal: "views"}},
-		Filter: &Filter{
-			tempViews: TemporaryViewScopes{
-				GenerateViewMap([]*View{
-					{
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameTempTables: {
+					"VIEW1": &View{
 						FileInfo: &FileInfo{
 							Path:     "view1",
 							ViewType: ViewTypeTemporaryTable,
 						},
 						Header: NewHeader("view1", []string{"column1", "column2"}),
 					},
-				}),
-				GenerateViewMap([]*View{
-					{
+				},
+			},
+			{
+				scopeNameTempTables: {
+					"VIEW1": &View{
 						FileInfo: &FileInfo{
 							Path:     "view1",
 							ViewType: ViewTypeTemporaryTable,
 						},
 						Header: NewHeader("view1", []string{"column1", "column2", "column3"}),
 					},
-					{
+					"VIEW2": &View{
 						FileInfo: &FileInfo{
 							Path:     "view2",
 							ViewType: ViewTypeTemporaryTable,
 						},
 						Header: NewHeader("view2", []string{"column1", "column2"}),
 					},
-				}),
+				},
 			},
-		},
+		}, nil, time.Time{}, nil),
 		UncommittedViews: UncommittedViews{
 			mtx:     &sync.RWMutex{},
 			Created: map[string]*FileInfo{},
@@ -1846,9 +1853,9 @@ var showObjectsTests = []struct {
 	{
 		Name: "ShowObjects Cursors",
 		Expr: parser.ShowObjects{Type: parser.Identifier{Literal: "cursors"}},
-		Filter: &Filter{
-			cursors: CursorScopes{
-				{
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameCursors: {
 					"CUR": &Cursor{
 						name:  "cur",
 						query: selectQueryForCursorTest,
@@ -1913,7 +1920,7 @@ var showObjectsTests = []struct {
 					},
 				},
 			},
-		},
+		}, nil, time.Time{}, nil),
 		Expect: "\n" +
 			"                               Cursors\n" +
 			"---------------------------------------------------------------------\n" +
@@ -1942,9 +1949,9 @@ var showObjectsTests = []struct {
 	{
 		Name: "ShowObjects Functions",
 		Expr: parser.ShowObjects{Type: parser.Identifier{Literal: "functions"}},
-		Filter: &Filter{
-			functions: UserDefinedFunctionScopes{
-				UserDefinedFunctionMap{
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameFunctions: {
 					"USERFUNC1": &UserDefinedFunction{
 						Name: parser.Identifier{Literal: "userfunc1"},
 						Parameters: []parser.Variable{
@@ -1955,7 +1962,9 @@ var showObjectsTests = []struct {
 						},
 					},
 				},
-				UserDefinedFunctionMap{
+			},
+			{
+				scopeNameFunctions: {
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name: parser.Identifier{Literal: "useraggfunc"},
 						Parameters: []parser.Variable{
@@ -1974,7 +1983,7 @@ var showObjectsTests = []struct {
 					},
 				},
 			},
-		},
+		}, nil, time.Time{}, nil),
 		Expect: "\n" +
 			"  Scala Functions\n" +
 			"-------------------\n" +
@@ -2151,15 +2160,10 @@ func TestShowObjects(t *testing.T) {
 			TestTx.PreparedStatements = v.PreparedStatements
 		}
 
-		var filter *Filter
-		if v.Filter != nil {
-			filter = v.Filter
-			filter.tx = TestTx
-		} else {
-			filter = NewFilter(TestTx)
+		if v.Scope == nil {
+			v.Scope = NewReferenceScope(TestTx)
 		}
-		ctx := ContextForExecusion(context.Background(), filter)
-		result, err := ShowObjects(ctx, v.Expr)
+		result, err := ShowObjects(v.Scope, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2181,7 +2185,7 @@ func TestShowObjects(t *testing.T) {
 var showFieldsTests = []struct {
 	Name             string
 	Expr             parser.ShowFields
-	Filter           *Filter
+	Scope            *ReferenceScope
 	ViewCache        ViewMap
 	UncommittedViews UncommittedViews
 	Expect           string
@@ -2193,19 +2197,19 @@ var showFieldsTests = []struct {
 			Type:  parser.Identifier{Literal: "fields"},
 			Table: parser.Identifier{Literal: "view1"},
 		},
-		Filter: &Filter{
-			tempViews: TemporaryViewScopes{
-				GenerateViewMap([]*View{
-					{
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameTempTables: {
+					"VIEW1": &View{
 						Header: NewHeader("view1", []string{"column1", "column2"}),
 						FileInfo: &FileInfo{
 							Path:     "view1",
 							ViewType: ViewTypeTemporaryTable,
 						},
 					},
-				}),
+				},
 			},
-		},
+		}, nil, time.Time{}, nil),
 		Expect: "\n" +
 			" Fields in view1\n" +
 			"-----------------\n" +
@@ -2222,19 +2226,19 @@ var showFieldsTests = []struct {
 			Type:  parser.Identifier{Literal: "fields"},
 			Table: parser.Stdin{Stdin: "stdin"},
 		},
-		Filter: &Filter{
-			tempViews: TemporaryViewScopes{
-				GenerateViewMap([]*View{
-					{
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameTempTables: {
+					"STDIN": &View{
 						Header: NewHeader("stdin", []string{"column1", "column2"}),
 						FileInfo: &FileInfo{
 							Path:     "stdin",
 							ViewType: ViewTypeStdin,
 						},
 					},
-				}),
+				},
 			},
-		},
+		}, nil, time.Time{}, nil),
 		Expect: "\n" +
 			" Fields in stdin\n" +
 			"-----------------\n" +
@@ -2251,19 +2255,19 @@ var showFieldsTests = []struct {
 			Type:  parser.Identifier{Literal: "fields"},
 			Table: parser.Identifier{Literal: "view1"},
 		},
-		Filter: &Filter{
-			tempViews: TemporaryViewScopes{
-				GenerateViewMap([]*View{
-					{
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameTempTables: {
+					"VIEW1": &View{
 						Header: NewHeader("view1", []string{"column1", "column2"}),
 						FileInfo: &FileInfo{
 							Path:     "view1",
 							ViewType: ViewTypeTemporaryTable,
 						},
 					},
-				}),
+				},
 			},
-		},
+		}, nil, time.Time{}, nil),
 		UncommittedViews: UncommittedViews{
 			mtx:     &sync.RWMutex{},
 			Created: map[string]*FileInfo{},
@@ -2462,6 +2466,7 @@ func TestShowFields(t *testing.T) {
 
 	initFlag(TestTx.Flags)
 	TestTx.Flags.Repository = TestDir
+	ctx := context.Background()
 
 	for _, v := range showFieldsTests {
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
@@ -2474,16 +2479,11 @@ func TestShowFields(t *testing.T) {
 			TestTx.uncommittedViews = v.UncommittedViews
 		}
 
-		var filter *Filter
-		if v.Filter != nil {
-			filter = v.Filter
-			filter.tx = TestTx
-		} else {
-			filter = NewFilter(TestTx)
+		if v.Scope == nil {
+			v.Scope = NewReferenceScope(TestTx)
 		}
 
-		ctx := ContextForExecusion(context.Background(), filter)
-		result, err := ShowFields(ctx, v.Expr)
+		result, err := ShowFields(ctx, v.Scope, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2551,10 +2551,11 @@ var setEnvVarTests = []struct {
 }
 
 func TestSetEnvVar(t *testing.T) {
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
+	ctx := context.Background()
+	scope := NewReferenceScope(TestTx)
 
 	for _, v := range setEnvVarTests {
-		err := SetEnvVar(ctx, v.Expr)
+		err := SetEnvVar(ctx, scope, v.Expr)
 
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -2775,10 +2776,11 @@ func TestSyntax(t *testing.T) {
 		},
 	}
 
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
+	ctx := context.Background()
+	scope := NewReferenceScope(TestTx)
 
 	for _, v := range syntaxTests {
-		result, _ := Syntax(ctx, v.Expr)
+		result, _ := Syntax(ctx, scope, v.Expr)
 		if result != v.Expect {
 			t.Errorf("result = %s, want %s for %v", result, v.Expect, v.Expr)
 		}

@@ -56,8 +56,8 @@ var ShowObjectList = []string{
 	ShowRuninfo,
 }
 
-func Echo(ctx context.Context, filter *Filter, expr parser.Echo) (string, error) {
-	p, err := filter.Evaluate(ctx, expr.Value)
+func Echo(ctx context.Context, scope *ReferenceScope, expr parser.Echo) (string, error) {
+	p, err := Evaluate(ctx, scope, expr.Value)
 	if err != nil {
 		return "", err
 	}
@@ -65,17 +65,17 @@ func Echo(ctx context.Context, filter *Filter, expr parser.Echo) (string, error)
 	return NewStringFormatter().Format("%s", []value.Primary{p})
 }
 
-func Print(ctx context.Context, filter *Filter, expr parser.Print) (string, error) {
-	p, err := filter.Evaluate(ctx, expr.Value)
+func Print(ctx context.Context, scope *ReferenceScope, expr parser.Print) (string, error) {
+	p, err := Evaluate(ctx, scope, expr.Value)
 	if err != nil {
 		return "", err
 	}
 	return p.String(), err
 }
 
-func Printf(ctx context.Context, filter *Filter, expr parser.Printf) (string, error) {
+func Printf(ctx context.Context, scope *ReferenceScope, expr parser.Printf) (string, error) {
 	var format string
-	formatValue, err := filter.Evaluate(ctx, expr.Format)
+	formatValue, err := Evaluate(ctx, scope, expr.Format)
 	if err != nil {
 		return "", err
 	}
@@ -86,7 +86,7 @@ func Printf(ctx context.Context, filter *Filter, expr parser.Printf) (string, er
 
 	args := make([]value.Primary, len(expr.Values))
 	for i, v := range expr.Values {
-		p, err := filter.Evaluate(ctx, v)
+		p, err := Evaluate(ctx, scope, v)
 		if err != nil {
 			return "", err
 		}
@@ -100,13 +100,13 @@ func Printf(ctx context.Context, filter *Filter, expr parser.Printf) (string, er
 	return message, nil
 }
 
-func Source(ctx context.Context, filter *Filter, expr parser.Source) ([]parser.Statement, error) {
+func Source(ctx context.Context, scope *ReferenceScope, expr parser.Source) ([]parser.Statement, error) {
 	var fpath string
 
 	if ident, ok := expr.FilePath.(parser.Identifier); ok {
 		fpath = ident.Literal
 	} else {
-		p, err := filter.Evaluate(ctx, expr.FilePath)
+		p, err := Evaluate(ctx, scope, expr.FilePath)
 		if err != nil {
 			return nil, err
 		}
@@ -121,7 +121,7 @@ func Source(ctx context.Context, filter *Filter, expr parser.Source) ([]parser.S
 		return nil, NewSourceInvalidFilePathError(expr, expr.FilePath)
 	}
 
-	return LoadStatementsFromFile(ctx, filter.tx, parser.Identifier{BaseExpr: expr.BaseExpr, Literal: fpath})
+	return LoadStatementsFromFile(ctx, scope.Tx, parser.Identifier{BaseExpr: expr.BaseExpr, Literal: fpath})
 }
 
 func LoadContentsFromFile(ctx context.Context, tx *Transaction, fpath parser.Identifier) (content string, err error) {
@@ -164,9 +164,9 @@ func LoadStatementsFromFile(ctx context.Context, tx *Transaction, fpath parser.I
 	return statements, err
 }
 
-func ParseExecuteStatements(ctx context.Context, filter *Filter, expr parser.Execute) ([]parser.Statement, error) {
+func ParseExecuteStatements(ctx context.Context, scope *ReferenceScope, expr parser.Execute) ([]parser.Statement, error) {
 	var input string
-	stmt, err := filter.Evaluate(ctx, expr.Statements)
+	stmt, err := Evaluate(ctx, scope, expr.Statements)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +177,7 @@ func ParseExecuteStatements(ctx context.Context, filter *Filter, expr parser.Exe
 
 	args := make([]value.Primary, len(expr.Values))
 	for i, v := range expr.Values {
-		p, err := filter.Evaluate(ctx, v)
+		p, err := Evaluate(ctx, scope, v)
 		if err != nil {
 			return nil, err
 		}
@@ -188,26 +188,22 @@ func ParseExecuteStatements(ctx context.Context, filter *Filter, expr parser.Exe
 	if err != nil {
 		return nil, NewReplaceValueLengthError(expr, err.(Error).Message())
 	}
-	statements, _, err := parser.Parse(input, fmt.Sprintf("(L:%d C:%d) EXECUTE", expr.Line(), expr.Char()), filter.tx.Flags.DatetimeFormat, false)
+	statements, _, err := parser.Parse(input, fmt.Sprintf("(L:%d C:%d) EXECUTE", expr.Line(), expr.Char()), scope.Tx.Flags.DatetimeFormat, false)
 	if err != nil {
 		err = NewSyntaxError(err.(*parser.SyntaxError))
 	}
 	return statements, err
 }
 
-func SetFlag(ctx context.Context, expr parser.SetFlag) error {
-	filter, err := GetFilter(ctx)
-	if err != nil {
-		return err
-	}
-
+func SetFlag(ctx context.Context, scope *ReferenceScope, expr parser.SetFlag) error {
 	var val interface{}
 	var p value.Primary
+	var err error
 
 	if ident, ok := expr.Value.(parser.Identifier); ok {
 		p = value.NewString(ident.Literal)
 	} else {
-		p, err = filter.Evaluate(ctx, expr.Value)
+		p, err = Evaluate(ctx, scope, expr.Value)
 		if err != nil {
 			return err
 		}
@@ -245,13 +241,13 @@ func SetFlag(ctx context.Context, expr parser.SetFlag) error {
 		return NewInvalidFlagNameError(expr.Flag)
 	}
 
-	if err = filter.tx.SetFlag(expr.Flag.Name, val, ""); err != nil {
+	if err = scope.Tx.SetFlag(expr.Flag.Name, val, ""); err != nil {
 		return NewInvalidFlagValueError(expr, err.Error())
 	}
 	return nil
 }
 
-func AddFlagElement(ctx context.Context, expr parser.AddFlagElement) error {
+func AddFlagElement(ctx context.Context, scope *ReferenceScope, expr parser.AddFlagElement) error {
 	switch strings.ToUpper(expr.Flag.Name) {
 	case cmd.DatetimeFormatFlag:
 		e := parser.SetFlag{
@@ -259,7 +255,7 @@ func AddFlagElement(ctx context.Context, expr parser.AddFlagElement) error {
 			Flag:     expr.Flag,
 			Value:    expr.Value,
 		}
-		return SetFlag(ctx, e)
+		return SetFlag(ctx, scope, e)
 	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.DelimiterFlag, cmd.JsonQueryFlag, cmd.EncodingFlag,
 		cmd.WriteEncodingFlag, cmd.FormatFlag, cmd.WriteDelimiterFlag, cmd.LineBreakFlag, cmd.JsonEscapeFlag,
 		cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAllFlag, cmd.PrettyPrintFlag,
@@ -273,39 +269,32 @@ func AddFlagElement(ctx context.Context, expr parser.AddFlagElement) error {
 	}
 }
 
-func RemoveFlagElement(ctx context.Context, expr parser.RemoveFlagElement) error {
-	filter, err := GetFilter(ctx)
+func RemoveFlagElement(ctx context.Context, scope *ReferenceScope, expr parser.RemoveFlagElement) error {
+	p, err := Evaluate(ctx, scope, expr.Value)
 	if err != nil {
 		return err
 	}
 
-	var p value.Primary
-
-	p, err = filter.Evaluate(ctx, expr.Value)
-	if err != nil {
-		return err
-	}
-
-	filter.tx.operationMutex.Lock()
-	defer filter.tx.operationMutex.Unlock()
+	scope.Tx.operationMutex.Lock()
+	defer scope.Tx.operationMutex.Unlock()
 
 	switch strings.ToUpper(expr.Flag.Name) {
 	case cmd.DatetimeFormatFlag:
 		if i := value.ToInteger(p); !value.IsNull(i) {
 			idx := int(i.(*value.Integer).Raw())
-			if -1 < idx && idx < len(filter.tx.Flags.DatetimeFormat) {
-				filter.tx.Flags.DatetimeFormat = append(filter.tx.Flags.DatetimeFormat[:idx], filter.tx.Flags.DatetimeFormat[idx+1:]...)
+			if -1 < idx && idx < len(scope.Tx.Flags.DatetimeFormat) {
+				scope.Tx.Flags.DatetimeFormat = append(scope.Tx.Flags.DatetimeFormat[:idx], scope.Tx.Flags.DatetimeFormat[idx+1:]...)
 			}
 
 		} else if s := value.ToString(p); !value.IsNull(s) {
 			val := s.(*value.String).Raw()
-			formats := make([]string, 0, len(filter.tx.Flags.DatetimeFormat))
-			for _, v := range filter.tx.Flags.DatetimeFormat {
+			formats := make([]string, 0, len(scope.Tx.Flags.DatetimeFormat))
+			for _, v := range scope.Tx.Flags.DatetimeFormat {
 				if val != v {
 					formats = append(formats, v)
 				}
 			}
-			filter.tx.Flags.DatetimeFormat = formats
+			scope.Tx.Flags.DatetimeFormat = formats
 		} else {
 			return NewInvalidFlagValueToBeRemovedError(expr)
 		}
@@ -446,27 +435,22 @@ func showFlag(tx *Transaction, flagName string) (string, bool) {
 	return s, true
 }
 
-func ShowObjects(ctx context.Context, expr parser.ShowObjects) (string, error) {
-	filter, err := GetFilter(ctx)
-	if err != nil {
-		return "", err
-	}
-
+func ShowObjects(scope *ReferenceScope, expr parser.ShowObjects) (string, error) {
 	var s string
 
-	w := NewObjectWriter(filter.tx)
+	w := NewObjectWriter(scope.Tx)
 
 	switch strings.ToUpper(expr.Type.Literal) {
 	case ShowTables:
-		keys := filter.tx.cachedViews.SortedKeys()
+		keys := scope.Tx.cachedViews.SortedKeys()
 
 		if len(keys) < 1 {
-			s = filter.tx.Warn("No table is loaded")
+			s = scope.Tx.Warn("No table is loaded")
 		} else {
-			createdFiles, updatedFiles := filter.tx.uncommittedViews.UncommittedFiles()
+			createdFiles, updatedFiles := scope.Tx.uncommittedViews.UncommittedFiles()
 
 			for _, key := range keys {
-				if view, ok := filter.tx.cachedViews.Load(key); ok {
+				if view, ok := scope.Tx.cachedViews.Load(key); ok {
 					fields := view.Header.TableColumnNames()
 					info := view.FileInfo
 					ufpath := strings.ToUpper(info.Path)
@@ -480,7 +464,7 @@ func ShowObjects(ctx context.Context, expr parser.ShowObjects) (string, error) {
 					writeFields(w, fields)
 
 					w.NewLine()
-					writeTableAttribute(w, filter.tx.Flags, info)
+					writeTableAttribute(w, scope.Tx.Flags, info)
 					w.ClearBlock()
 					w.NewLine()
 				}
@@ -496,14 +480,14 @@ func ShowObjects(ctx context.Context, expr parser.ShowObjects) (string, error) {
 			s = "\n" + w.String() + "\n"
 		}
 	case ShowViews:
-		views := filter.tempViews.All()
+		views := scope.AllTemporaryTables()
 
 		if views.Len() < 1 {
-			s = filter.tx.Warn("No view is declared")
+			s = scope.Tx.Warn("No view is declared")
 		} else {
 			keys := views.SortedKeys()
 
-			updatedViews := filter.tx.uncommittedViews.UncommittedTempViews()
+			updatedViews := scope.Tx.uncommittedViews.UncommittedTempViews()
 
 			for _, key := range keys {
 				if view, ok := views.Load(key); ok {
@@ -531,9 +515,9 @@ func ShowObjects(ctx context.Context, expr parser.ShowObjects) (string, error) {
 			s = "\n" + w.String() + "\n"
 		}
 	case ShowCursors:
-		cursors := filter.cursors.All()
+		cursors := scope.AllCursors()
 		if len(cursors) < 1 {
-			s = filter.tx.Warn("No cursor is declared")
+			s = scope.Tx.Warn("No cursor is declared")
 		} else {
 			keys := cursors.SortedKeys()
 
@@ -586,9 +570,9 @@ func ShowObjects(ctx context.Context, expr parser.ShowObjects) (string, error) {
 			s = "\n" + w.String() + "\n"
 		}
 	case ShowFunctions:
-		scalas, aggs := filter.functions.All()
+		scalas, aggs := scope.AllFunctions()
 		if len(scalas) < 1 && len(aggs) < 1 {
-			s = filter.tx.Warn("No function is declared")
+			s = scope.Tx.Warn("No function is declared")
 		} else {
 			if 0 < len(scalas) {
 				w.Clear()
@@ -606,13 +590,13 @@ func ShowObjects(ctx context.Context, expr parser.ShowObjects) (string, error) {
 			}
 		}
 	case ShowStatements:
-		if filter.tx.PreparedStatements.Len() < 1 {
-			s = filter.tx.Warn("No statement is prepared")
+		if scope.Tx.PreparedStatements.Len() < 1 {
+			s = scope.Tx.Warn("No statement is prepared")
 		} else {
-			keys := filter.tx.PreparedStatements.SortedKeys()
+			keys := scope.Tx.PreparedStatements.SortedKeys()
 
 			for _, key := range keys {
-				if stmt, ok := filter.tx.PreparedStatements.Load(key); ok {
+				if stmt, ok := scope.Tx.PreparedStatements.Load(key); ok {
 					w.WriteColor(stmt.Name, cmd.ObjectEffect)
 					w.BeginBlock()
 
@@ -634,7 +618,7 @@ func ShowObjects(ctx context.Context, expr parser.ShowObjects) (string, error) {
 	case ShowFlags:
 		for _, flag := range cmd.FlagList {
 			symbol := cmd.FlagSymbol(flag)
-			s, _ := showFlag(filter.tx, flag)
+			s, _ := showFlag(scope.Tx, flag)
 			w.WriteSpaces(27 - len(symbol))
 			w.WriteColorWithoutLineBreak(symbol, cmd.LableEffect)
 			w.WriteColorWithoutLineBreak(":", cmd.LableEffect)
@@ -678,7 +662,7 @@ func ShowObjects(ctx context.Context, expr parser.ShowObjects) (string, error) {
 	case ShowRuninfo:
 		for _, ri := range RuntimeInformatinList {
 			label := string(parser.VariableSign) + string(parser.RuntimeInformationSign) + ri
-			p, _ := GetRuntimeInformation(filter.tx, parser.RuntimeInformation{Name: ri})
+			p, _ := GetRuntimeInformation(scope.Tx, parser.RuntimeInformation{Name: ri})
 
 			w.WriteSpaces(19 - len(label))
 			w.WriteColorWithoutLineBreak(label, cmd.LableEffect)
@@ -833,7 +817,7 @@ func writeFunctions(w *ObjectWriter, funcs UserDefinedFunctionMap) {
 	}
 }
 
-func ShowFields(ctx context.Context, expr parser.ShowFields) (string, error) {
+func ShowFields(ctx context.Context, scope *ReferenceScope, expr parser.ShowFields) (string, error) {
 	var tableName = func(expr parser.QueryExpression) (s string) {
 		if e, ok := expr.(parser.Identifier); ok {
 			s = e.Literal
@@ -847,32 +831,26 @@ func ShowFields(ctx context.Context, expr parser.ShowFields) (string, error) {
 		return "", NewShowInvalidObjectTypeError(expr, expr.Type.Literal)
 	}
 
-	filter, err := GetFilter(ctx)
-	if err != nil {
-		return "", err
-	}
-
 	var status = ObjectFixed
 
-	loadingFilter := filter.CreateNode()
-	ctx = ContextForExecusion(ctx, loadingFilter)
-	defer loadingFilter.CloseNode()
+	queryScope := scope.CreateNode()
+	defer queryScope.CloseCurrentNode()
 
 	view := NewView()
-	err = view.LoadFromTableIdentifier(ctx, expr.Table, false, false)
+	err := view.LoadFromTableIdentifier(ctx, queryScope, expr.Table, false, false)
 	if err != nil {
 		return "", err
 	}
 
 	if !view.FileInfo.IsFile() {
-		updatedViews := filter.tx.uncommittedViews.UncommittedTempViews()
+		updatedViews := scope.Tx.uncommittedViews.UncommittedTempViews()
 		ufpath := strings.ToUpper(view.FileInfo.Path)
 
 		if _, ok := updatedViews[ufpath]; ok {
 			status = ObjectUpdated
 		}
 	} else {
-		createdViews, updatedView := filter.tx.uncommittedViews.UncommittedFiles()
+		createdViews, updatedView := scope.Tx.uncommittedViews.UncommittedFiles()
 		ufpath := strings.ToUpper(view.FileInfo.Path)
 
 		if _, ok := createdViews[ufpath]; ok {
@@ -882,7 +860,7 @@ func ShowFields(ctx context.Context, expr parser.ShowFields) (string, error) {
 		}
 	}
 
-	w := NewObjectWriter(filter.tx)
+	w := NewObjectWriter(scope.Tx)
 	w.WriteColorWithoutLineBreak("Type: ", cmd.LableEffect)
 	if !view.FileInfo.IsFile() {
 		w.WriteWithoutLineBreak("View")
@@ -892,7 +870,7 @@ func ShowFields(ctx context.Context, expr parser.ShowFields) (string, error) {
 		w.WriteColorWithoutLineBreak("Path: ", cmd.LableEffect)
 		w.WriteColorWithoutLineBreak(view.FileInfo.Path, cmd.ObjectEffect)
 		w.NewLine()
-		writeTableAttribute(w, filter.tx.Flags, view.FileInfo)
+		writeTableAttribute(w, scope.Tx.Flags, view.FileInfo)
 	}
 
 	w.NewLine()
@@ -954,18 +932,14 @@ func writeQuery(w *ObjectWriter, s string) {
 	w.EndSubBlock()
 }
 
-func SetEnvVar(ctx context.Context, expr parser.SetEnvVar) error {
-	filter, err := GetFilter(ctx)
-	if err != nil {
-		return err
-	}
-
+func SetEnvVar(ctx context.Context, scope *ReferenceScope, expr parser.SetEnvVar) error {
 	var p value.Primary
+	var err error
 
 	if ident, ok := expr.Value.(parser.Identifier); ok {
 		p = value.NewString(ident.Literal)
 	} else {
-		p, err = filter.Evaluate(ctx, expr.Value)
+		p, err = Evaluate(ctx, scope, expr.Value)
 		if err != nil {
 			return err
 		}
@@ -982,18 +956,14 @@ func UnsetEnvVar(expr parser.UnsetEnvVar) error {
 	return os.Unsetenv(expr.EnvVar.Name)
 }
 
-func Chdir(ctx context.Context, expr parser.Chdir) error {
-	filter, err := GetFilter(ctx)
-	if err != nil {
-		return err
-	}
-
+func Chdir(ctx context.Context, scope *ReferenceScope, expr parser.Chdir) error {
 	var dirpath string
+	var err error
 
 	if ident, ok := expr.DirPath.(parser.Identifier); ok {
 		dirpath = ident.Literal
 	} else {
-		p, err := filter.Evaluate(ctx, expr.DirPath)
+		p, err := Evaluate(ctx, scope, expr.DirPath)
 		if err != nil {
 			return err
 		}
@@ -1054,19 +1024,14 @@ func Reload(ctx context.Context, tx *Transaction, expr parser.Reload) error {
 	return nil
 }
 
-func Syntax(ctx context.Context, expr parser.Syntax) (string, error) {
-	filter, err := GetFilter(ctx)
-	if err != nil {
-		return "", err
-	}
-
+func Syntax(ctx context.Context, scope *ReferenceScope, expr parser.Syntax) (string, error) {
 	keys := make([]string, 0, len(expr.Keywords))
 	for _, key := range expr.Keywords {
 		var keystr string
 		if fr, ok := key.(parser.FieldReference); ok {
 			keystr = fr.Column.Literal
 		} else {
-			if p, err := filter.Evaluate(ctx, key); err == nil {
+			if p, err := Evaluate(ctx, scope, key); err == nil {
 				if s := value.ToString(p); !value.IsNull(s) {
 					keystr = s.(*value.String).Raw()
 				}
@@ -1087,7 +1052,7 @@ func Syntax(ctx context.Context, expr parser.Syntax) (string, error) {
 	store := syntax.NewStore()
 	exps := store.Search(keys)
 
-	w := NewObjectWriter(filter.tx)
+	w := NewObjectWriter(scope.Tx)
 
 	for _, exp := range exps {
 		w.WriteColor(exp.Label, cmd.LableEffect)
@@ -1096,13 +1061,13 @@ func Syntax(ctx context.Context, expr parser.Syntax) (string, error) {
 			w.BeginBlock()
 
 			if 0 < len(exp.Description.Template) {
-				w.WriteWithAutoLineBreak(exp.Description.Format(filter.tx.Palette))
+				w.WriteWithAutoLineBreak(exp.Description.Format(scope.Tx.Palette))
 				w.NewLine()
 				w.NewLine()
 			}
 
 			for _, def := range exp.Grammar {
-				w.Write(def.Name.Format(filter.tx.Palette))
+				w.Write(def.Name.Format(scope.Tx.Palette))
 				w.NewLine()
 				w.BeginBlock()
 				for i, gram := range def.Group {
@@ -1112,7 +1077,7 @@ func Syntax(ctx context.Context, expr parser.Syntax) (string, error) {
 						w.Write("| ")
 					}
 					w.BeginSubBlock()
-					w.WriteWithAutoLineBreak(gram.Format(filter.tx.Palette))
+					w.WriteWithAutoLineBreak(gram.Format(scope.Tx.Palette))
 					w.EndSubBlock()
 					w.NewLine()
 				}
@@ -1121,7 +1086,7 @@ func Syntax(ctx context.Context, expr parser.Syntax) (string, error) {
 					if 0 < len(def.Group) {
 						w.NewLine()
 					}
-					w.WriteWithAutoLineBreak(def.Description.Format(filter.tx.Palette))
+					w.WriteWithAutoLineBreak(def.Description.Format(scope.Tx.Palette))
 					w.NewLine()
 				}
 
