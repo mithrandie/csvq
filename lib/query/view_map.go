@@ -2,7 +2,6 @@ package query
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -13,114 +12,6 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 )
 
-type TemporaryViewScopes []ViewMap
-
-func (list TemporaryViewScopes) Exists(name string) bool {
-	for _, m := range list {
-		if m.Exists(name) {
-			return true
-		}
-	}
-	return false
-}
-
-func (list TemporaryViewScopes) Get(name parser.Identifier) (*View, error) {
-	for _, m := range list {
-		if view, err := m.Get(name); err == nil {
-			return view, nil
-		}
-	}
-	return nil, NewTableNotLoadedError(name)
-}
-
-func (list TemporaryViewScopes) GetWithInternalId(ctx context.Context, name parser.Identifier, flags *cmd.Flags) (*View, error) {
-	for _, m := range list {
-		if view, err := m.GetWithInternalId(ctx, name, flags); err == nil {
-			return view, nil
-		}
-	}
-	return nil, NewTableNotLoadedError(name)
-}
-
-func (list TemporaryViewScopes) Set(view *View) {
-	list[0].Set(view)
-}
-
-func (list TemporaryViewScopes) Replace(view *View) {
-	for _, m := range list {
-		if m.Exists(view.FileInfo.Path) {
-			m.Set(view)
-			return
-		}
-	}
-}
-
-func (list TemporaryViewScopes) Dispose(name parser.QueryExpression) error {
-	for _, m := range list {
-		if err := m.DisposeTemporaryTable(name); err == nil {
-			return nil
-		}
-	}
-	return NewUndeclaredTemporaryTableError(name)
-}
-
-func (list TemporaryViewScopes) Store(session *Session, uncomittedViews map[string]*FileInfo) []string {
-	msglist := make([]string, 0, len(uncomittedViews))
-	for _, m := range list {
-		m.Range(func(key, value interface{}) bool {
-			if _, ok := uncomittedViews[key.(string)]; ok {
-				view := value.(*View)
-
-				if view.FileInfo.IsStdin() {
-					session.updateStdinView(view.Copy())
-				} else {
-					view.CreateRestorePoint()
-				}
-				msglist = append(msglist, fmt.Sprintf("Commit: restore point of view %q is created.", view.FileInfo.Path))
-			}
-			return true
-		})
-	}
-	return msglist
-}
-
-func (list TemporaryViewScopes) Restore(uncomittedViews map[string]*FileInfo) []string {
-	msglist := make([]string, 0, len(uncomittedViews))
-	for _, m := range list {
-		m.Range(func(key, value interface{}) bool {
-			if _, ok := uncomittedViews[key.(string)]; ok {
-				view := value.(*View)
-
-				if view.FileInfo.IsStdin() {
-					m.Delete(view.FileInfo.Path)
-				} else {
-					view.Restore()
-				}
-				msglist = append(msglist, fmt.Sprintf("Rollback: view %q is restored.", view.FileInfo.Path))
-			}
-			return true
-		})
-	}
-	return msglist
-}
-
-func (list TemporaryViewScopes) All() ViewMap {
-	all := NewViewMap()
-
-	for _, m := range list {
-		m.Range(func(key, value interface{}) bool {
-			if !value.(*View).FileInfo.IsFile() {
-				k := key.(string)
-				if !all.Exists(k) {
-					all.Store(k, value.(*View))
-				}
-			}
-			return true
-		})
-	}
-	return all
-}
-
 type ViewMap struct {
 	*SyncMap
 }
@@ -129,6 +20,10 @@ func NewViewMap() ViewMap {
 	return ViewMap{
 		NewSyncMap(),
 	}
+}
+
+func (m ViewMap) IsEmpty() bool {
+	return m.SyncMap == nil
 }
 
 func (m ViewMap) Store(fpath string, view *View) {

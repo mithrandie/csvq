@@ -30,9 +30,9 @@ var viewLoadTests = []struct {
 	DelimiterPositions []int
 	SingleLine         bool
 	JsonQuery          string
-	Filter             *Filter
+	Scope              *ReferenceScope
 	Result             *View
-	ResultFilter       *Filter
+	ResultScope        *ReferenceScope
 	Error              string
 }{
 	{
@@ -95,17 +95,13 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{
-				{
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
 					"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
 				},
 			},
-		},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load File with UTF-8 BOM",
@@ -139,17 +135,13 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{
-				{
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
 					"TABLE1_BOM": strings.ToUpper(GetTestFilePath("table1_bom.csv")),
 				},
 			},
-		},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load with Parentheses",
@@ -185,17 +177,13 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{
-				{
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
 					"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
 				},
 			},
-		},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load From Stdin",
@@ -221,23 +209,21 @@ var viewLoadTests = []struct {
 				ViewType:  ViewTypeStdin,
 			},
 		},
-		ResultFilter: &Filter{
-			variables: []VariableMap{NewVariableMap()},
-			tempViews: []ViewMap{
-				GenerateViewMap([]*View{
-					{
+		ResultScope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameTempTables: {
+					"STDIN": &View{
 						FileInfo: &FileInfo{Path: "STDIN"},
 					},
-				}),
+				},
 			},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{
-				{
+		}, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
 					"T": "STDIN",
 				},
 			},
-		},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load From Stdin With Internal Id",
@@ -264,23 +250,21 @@ var viewLoadTests = []struct {
 				ViewType:  ViewTypeStdin,
 			},
 		},
-		ResultFilter: &Filter{
-			variables: []VariableMap{NewVariableMap()},
-			tempViews: []ViewMap{
-				GenerateViewMap([]*View{
-					{
+		ResultScope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameTempTables: {
+					"STDIN": &View{
 						FileInfo: &FileInfo{Path: "STDIN"},
 					},
-				}),
+				},
 			},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{
-				{
+		}, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
 					"T": "STDIN",
 				},
 			},
-		},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load Json From Stdin",
@@ -310,23 +294,21 @@ var viewLoadTests = []struct {
 				ViewType:  ViewTypeStdin,
 			},
 		},
-		ResultFilter: &Filter{
-			variables: []VariableMap{NewVariableMap()},
-			tempViews: []ViewMap{
-				GenerateViewMap([]*View{
-					{
+		ResultScope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameTempTables: {
+					"STDIN": &View{
 						FileInfo: &FileInfo{Path: "STDIN"},
 					},
-				}),
+				},
 			},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{
-				{
+		}, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
 					"T": "STDIN",
 				},
 			},
-		},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load JsonH From Stdin",
@@ -361,23 +343,21 @@ var viewLoadTests = []struct {
 				ViewType:   ViewTypeStdin,
 			},
 		},
-		ResultFilter: &Filter{
-			variables: []VariableMap{NewVariableMap()},
-			tempViews: []ViewMap{
-				GenerateViewMap([]*View{
-					{
+		ResultScope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameTempTables: {
+					"STDIN": &View{
 						FileInfo: &FileInfo{Path: "STDIN"},
 					},
-				}),
+				},
 			},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{
-				{
+		}, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
 					"T": "STDIN",
 				},
 			},
-		},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load JsonA From Stdin",
@@ -412,23 +392,21 @@ var viewLoadTests = []struct {
 				ViewType:   ViewTypeStdin,
 			},
 		},
-		ResultFilter: &Filter{
-			variables: []VariableMap{NewVariableMap()},
-			tempViews: []ViewMap{
-				GenerateViewMap([]*View{
-					{
+		ResultScope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameTempTables: {
+					"STDIN": &View{
 						FileInfo: &FileInfo{Path: "STDIN"},
 					},
-				}),
+				},
 			},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{
-				{
+		}, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
 					"T": "STDIN",
 				},
 			},
-		},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load Json From Stdin Json Query Error",
@@ -478,17 +456,13 @@ var viewLoadTests = []struct {
 				LineBreak:          text.LF,
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{
-				{
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
 					"FIXED_LENGTH": strings.ToUpper(GetTestFilePath("fixed_length.txt")),
 				},
 			},
-		},
+		}, time.Time{}, nil),
 	},
 	{
 		Name:         "Load Fixed-Length Text File NoHeader",
@@ -531,17 +505,13 @@ var viewLoadTests = []struct {
 				LineBreak:          text.LF,
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{
-				{
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
 					"FIXED_LENGTH": strings.ToUpper(GetTestFilePath("fixed_length.txt")),
 				},
 			},
-		},
+		}, time.Time{}, nil),
 	},
 	{
 		Name:               "Load Fixed-Length Text File Position Error",
@@ -576,23 +546,21 @@ var viewLoadTests = []struct {
 				ViewType:  ViewTypeStdin,
 			},
 		},
-		ResultFilter: &Filter{
-			variables: []VariableMap{NewVariableMap()},
-			tempViews: []ViewMap{
-				GenerateViewMap([]*View{
-					{
+		ResultScope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameTempTables: {
+					"STDIN": &View{
 						FileInfo: &FileInfo{Path: "STDIN"},
 					},
-				}),
+				},
 			},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{
-				{
+		}, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
 					"STDIN": "STDIN",
 				},
 			},
-		},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load From Stdin Broken CSV Error",
@@ -670,15 +638,13 @@ var viewLoadTests = []struct {
 				NoHeader:  true,
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{{
-				"T": strings.ToUpper(GetTestFilePath("table5.csv")),
-			}},
-		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
+					"T": strings.ToUpper(GetTestFilePath("table5.csv")),
+				},
+			},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load TableObject From TSV File",
@@ -717,15 +683,13 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{{
-				"T": strings.ToUpper(GetTestFilePath("table3.tsv")),
-			}},
-		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
+					"T": strings.ToUpper(GetTestFilePath("table3.tsv")),
+				},
+			},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load TableObject From CSV File FormatElement Evaluate Error",
@@ -930,15 +894,13 @@ var viewLoadTests = []struct {
 				LineBreak:          text.LF,
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{{
-				"T": strings.ToUpper(GetTestFilePath("fixed_length.txt")),
-			}},
-		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
+					"T": strings.ToUpper(GetTestFilePath("fixed_length.txt")),
+				},
+			},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load TableObject From Fixed-Length File with UTF-8 BOM",
@@ -979,15 +941,13 @@ var viewLoadTests = []struct {
 				LineBreak:          text.LF,
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{{
-				"T": strings.ToUpper(GetTestFilePath("fixed_length_bom.txt")),
-			}},
-		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
+					"T": strings.ToUpper(GetTestFilePath("fixed_length_bom.txt")),
+				},
+			},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load TableObject From Single-Line Fixed-Length File",
@@ -1029,15 +989,13 @@ var viewLoadTests = []struct {
 				SingleLine:         true,
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{{
-				"T": strings.ToUpper(GetTestFilePath("fixed_length_sl.txt")),
-			}},
-		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
+					"T": strings.ToUpper(GetTestFilePath("fixed_length_sl.txt")),
+				},
+			},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load TableObject From Fixed-Length File FormatElement Is Not Specified",
@@ -1143,15 +1101,13 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{{
-				"JT": strings.ToUpper(GetTestFilePath("table.json")),
-			}},
-		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
+					"JT": strings.ToUpper(GetTestFilePath("table.json")),
+				},
+			},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load TableObject From JsonH File",
@@ -1189,15 +1145,13 @@ var viewLoadTests = []struct {
 				JsonEscape: json.HexDigits,
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{{
-				"JT": strings.ToUpper(GetTestFilePath("table_h.json")),
-			}},
-		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
+					"JT": strings.ToUpper(GetTestFilePath("table_h.json")),
+				},
+			},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load TableObject From JsonA File",
@@ -1235,15 +1189,13 @@ var viewLoadTests = []struct {
 				JsonEscape: json.AllWithHexDigits,
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{{
-				"JT": strings.ToUpper(GetTestFilePath("table_a.json")),
-			}},
-		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
+					"JT": strings.ToUpper(GetTestFilePath("table_a.json")),
+				},
+			},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load TableObject From Json File FormatElement Is Not Specified",
@@ -1329,15 +1281,13 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{{
-				"T": strings.ToUpper(GetTestFilePath("table6.ltsv")),
-			}},
-		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
+					"T": strings.ToUpper(GetTestFilePath("table6.ltsv")),
+				},
+			},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load TableObject From LTSV File Without Null",
@@ -1380,15 +1330,13 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{{
-				"T": strings.ToUpper(GetTestFilePath("table6.ltsv")),
-			}},
-		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
+					"T": strings.ToUpper(GetTestFilePath("table6.ltsv")),
+				},
+			},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load TableObject From LTSV File with UTF-8 BOM",
@@ -1427,15 +1375,13 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{{
-				"T": strings.ToUpper(GetTestFilePath("table6_bom.ltsv")),
-			}},
-		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
+					"T": strings.ToUpper(GetTestFilePath("table6_bom.ltsv")),
+				},
+			},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load TableObject From LTSV File Arguments Length Error",
@@ -1520,12 +1466,9 @@ var viewLoadTests = []struct {
 				parser.Table{Object: parser.Identifier{Literal: "it"}, Alias: parser.Identifier{Literal: "t"}},
 			},
 		},
-		Filter: &Filter{
-			variables: VariableScopes{NewVariableMap()},
-			tempViews: TemporaryViewScopes{NewViewMap()},
-			cursors:   CursorScopes{{}},
-			inlineTables: InlineTableNodes{
-				InlineTableMap{
+		Scope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameInlineTables: {
 					"IT": &View{
 						Header: NewHeader("it", []string{"c1", "c2", "num"}),
 						RecordSet: []Record{
@@ -1548,8 +1491,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
-			aliases: AliasNodes{{}},
-		},
+		}, time.Time{}, nil),
 		Result: &View{
 			Header: NewHeader("t", []string{"c1", "c2", "num"}),
 			RecordSet: []Record{
@@ -1570,13 +1512,14 @@ var viewLoadTests = []struct {
 				}),
 			},
 		},
-		ResultFilter: &Filter{
-			variables: VariableScopes{NewVariableMap()},
-			tempViews: TemporaryViewScopes{NewViewMap()},
-			cursors:   CursorScopes{{}},
-			inlineTables: InlineTableNodes{
-				{},
-				InlineTableMap{
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
+					"T": "",
+				},
+			},
+			{
+				scopeNameInlineTables: {
 					"IT": &View{
 						Header: NewHeader("it", []string{"c1", "c2", "num"}),
 						RecordSet: []Record{
@@ -1599,13 +1542,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
-			aliases: AliasNodes{
-				{
-					"T": "",
-				},
-				{},
-			},
-		},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load From File Inline Table Duplicate Table Name Error",
@@ -1615,12 +1552,9 @@ var viewLoadTests = []struct {
 				parser.Table{Object: parser.Identifier{Literal: "it"}, Alias: parser.Identifier{Literal: "t"}},
 			},
 		},
-		Filter: &Filter{
-			variables: VariableScopes{NewVariableMap()},
-			tempViews: TemporaryViewScopes{NewViewMap()},
-			cursors:   CursorScopes{{}},
-			inlineTables: InlineTableNodes{
-				InlineTableMap{
+		Scope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameInlineTables: {
 					"IT": &View{
 						Header: NewHeader("it", []string{"c1", "c2", "num"}),
 						RecordSet: []Record{
@@ -1643,8 +1577,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
-			aliases: AliasNodes{{}},
-		},
+		}, time.Time{}, nil),
 		Error: "table name t is a duplicate",
 	},
 	{
@@ -1670,17 +1603,13 @@ var viewLoadTests = []struct {
 				}),
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{
-				{
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
 					"TABLE_SJIS": strings.ToUpper(GetTestFilePath("table_sjis.csv")),
 				},
 			},
-		},
+		}, time.Time{}, nil),
 	},
 	{
 		Name:     "Load No Header File",
@@ -1705,17 +1634,13 @@ var viewLoadTests = []struct {
 				}),
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{
-				{
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
 					"TABLE_NOHEADER": strings.ToUpper(GetTestFilePath("table_noheader.csv")),
 				},
 			},
-		},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load Multiple File",
@@ -1793,18 +1718,14 @@ var viewLoadTests = []struct {
 				}),
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{
-				{
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
 					"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
 					"TABLE2": strings.ToUpper(GetTestFilePath("table2.csv")),
 				},
 			},
-		},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Cross Join",
@@ -1887,18 +1808,14 @@ var viewLoadTests = []struct {
 				}),
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{
-				{
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
 					"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
 					"TABLE2": strings.ToUpper(GetTestFilePath("table2.csv")),
 				},
 			},
-		},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Inner Join",
@@ -1945,18 +1862,14 @@ var viewLoadTests = []struct {
 				}),
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{
-				{
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
 					"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
 					"TABLE2": strings.ToUpper(GetTestFilePath("table2.csv")),
 				},
 			},
-		},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Inner Join Using Condition",
@@ -2003,18 +1916,14 @@ var viewLoadTests = []struct {
 				}),
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{
-				{
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
 					"TABLE1":  strings.ToUpper(GetTestFilePath("table1.csv")),
 					"TABLE1B": strings.ToUpper(GetTestFilePath("table1b.csv")),
 				},
 			},
-		},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Outer Join",
@@ -2068,18 +1977,14 @@ var viewLoadTests = []struct {
 				}),
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{
-				{
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
 					"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
 					"TABLE2": strings.ToUpper(GetTestFilePath("table2.csv")),
 				},
 			},
-		},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Outer Join Natural",
@@ -2128,18 +2033,14 @@ var viewLoadTests = []struct {
 				}),
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{
-				{
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
 					"TABLE1":  strings.ToUpper(GetTestFilePath("table1.csv")),
 					"TABLE1B": strings.ToUpper(GetTestFilePath("table1b.csv")),
 				},
 			},
-		},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Join Left Side Table File Not Exist Error",
@@ -2213,15 +2114,13 @@ var viewLoadTests = []struct {
 				ViewType:  ViewTypeTemporaryTable,
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{{
-				"JT": "",
-			}},
-		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
+					"JT": "",
+				},
+			},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load Json Table Query Evaluation Error",
@@ -2332,15 +2231,13 @@ var viewLoadTests = []struct {
 				ViewType:  ViewTypeTemporaryTable,
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{{
-				"JT": "",
-			}},
-		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
+					"JT": "",
+				},
+			},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load Json Table From File Path Error",
@@ -2401,17 +2298,13 @@ var viewLoadTests = []struct {
 				}),
 			},
 		},
-		ResultFilter: &Filter{
-			variables:    []VariableMap{NewVariableMap()},
-			tempViews:    []ViewMap{NewViewMap()},
-			cursors:      []CursorMap{{}},
-			inlineTables: InlineTableNodes{{}},
-			aliases: AliasNodes{
-				{
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
 					"ALIAS": "",
 				},
 			},
-		},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "Load Subquery Duplicate Table Name Error",
@@ -2539,6 +2432,7 @@ func TestView_Load(t *testing.T) {
 	}()
 
 	TestTx.Flags.Repository = TestDir
+	ctx := context.Background()
 
 	for _, v := range viewLoadTests {
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
@@ -2564,14 +2458,12 @@ func TestView_Load(t *testing.T) {
 		}
 
 		view := NewView()
-		if v.Filter == nil {
-			v.Filter = NewFilter(TestTx)
-		} else {
-			v.Filter.tx = TestTx
+		if v.Scope == nil {
+			v.Scope = NewReferenceScope(TestTx)
 		}
 
-		filter := v.Filter.CreateNode()
-		err := view.Load(ContextForExecusion(context.Background(), filter), v.From, false, v.UseInternalId)
+		queryScope := v.Scope.CreateNode()
+		err := view.Load(ctx, queryScope, v.From, false, v.UseInternalId)
 
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -2627,18 +2519,16 @@ func TestView_Load(t *testing.T) {
 		}
 		v.Result.FileInfo = nil
 
-		if v.ResultFilter == nil {
-			v.ResultFilter = NewFilter(TestTx).CreateNode()
+		if v.ResultScope == nil {
+			v.ResultScope = NewReferenceScope(TestTx).CreateNode()
 		}
 
-		if !reflect.DeepEqual(filter.aliases, v.ResultFilter.aliases) {
-			t.Errorf("%s: alias list = %q, want %q", v.Name, filter.aliases, v.ResultFilter.aliases)
+		if !NodeScopeListEqual(queryScope.nodes, v.ResultScope.nodes) {
+			t.Errorf("%s: node list = %v, want %v", v.Name, queryScope.nodes, v.ResultScope.nodes)
 		}
-		for i, tviews := range filter.tempViews {
-			resultKeys := tviews.Keys()
-			viewKeys := v.ResultFilter.tempViews[i].Keys()
-			if !reflect.DeepEqual(resultKeys, viewKeys) {
-				t.Errorf("%s: temp view list = %v, want %v", v.Name, filter.tempViews, v.ResultFilter.tempViews)
+		for i := range queryScope.blocks {
+			if !reflect.DeepEqual(queryScope.blocks[i].temporaryTables.Keys(), v.ResultScope.blocks[i].temporaryTables.Keys()) {
+				t.Errorf("%s: temp view list = %v, want %v", v.Name, queryScope.blocks[i].temporaryTables.Keys(), v.ResultScope.blocks[i].temporaryTables.Keys())
 			}
 		}
 
@@ -2649,7 +2539,7 @@ func TestView_Load(t *testing.T) {
 }
 
 func TestNewViewFromGroupedRecord(t *testing.T) {
-	fr := filterRecord{
+	fr := ReferenceRecord{
 		view: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 			RecordSet: []Record{
@@ -2671,7 +2561,7 @@ func TestNewViewFromGroupedRecord(t *testing.T) {
 		},
 	}
 
-	result, _ := NewViewFromGroupedRecord(ContextForExecusion(context.Background(), NewFilter(TestTx)), fr)
+	result, _ := NewViewFromGroupedRecord(context.Background(), TestTx.Flags, fr)
 	if !reflect.DeepEqual(result, expect) {
 		t.Errorf("result = %v, want %v", result, expect)
 	}
@@ -2785,13 +2675,15 @@ var viewWhereTests = []struct {
 func TestView_Where(t *testing.T) {
 	defer initFlag(TestTx.Flags)
 
+	scope := NewReferenceScope(TestTx)
+	ctx := context.Background()
 	for _, v := range viewWhereTests {
 		TestTx.Flags.CPU = 1
 		if v.CPU != 0 {
 			TestTx.Flags.CPU = v.CPU
 		}
 
-		err := v.View.Where(ContextForExecusion(context.Background(), NewFilter(TestTx)), v.Where)
+		err := v.View.Where(ctx, scope, v.Where)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -3085,9 +2977,10 @@ var viewGroupByTests = []struct {
 }
 
 func TestView_GroupBy(t *testing.T) {
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
+	scope := NewReferenceScope(TestTx)
+	ctx := context.Background()
 	for _, v := range viewGroupByTests {
-		err := v.View.GroupBy(ctx, v.GroupBy)
+		err := v.View.GroupBy(ctx, scope, v.GroupBy)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -3306,9 +3199,10 @@ var viewHavingTests = []struct {
 }
 
 func TestView_Having(t *testing.T) {
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
+	scope := NewReferenceScope(TestTx)
+	ctx := context.Background()
 	for _, v := range viewHavingTests {
-		err := v.View.Having(ctx, v.Having)
+		err := v.View.Having(ctx, scope, v.Having)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -3330,7 +3224,7 @@ func TestView_Having(t *testing.T) {
 var viewSelectTests = []struct {
 	Name   string
 	View   *View
-	Filter *Filter
+	Scope  *ReferenceScope
 	Select parser.SelectClause
 	Result *View
 	Error  string
@@ -3957,9 +3851,9 @@ var viewSelectTests = []struct {
 				}),
 			},
 		},
-		Filter: &Filter{
-			functions: UserDefinedFunctionScopes{
-				UserDefinedFunctionMap{
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameFunctions: {
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:         parser.Identifier{Literal: "useraggfunc"},
 						IsAggregate:  true,
@@ -4013,7 +3907,7 @@ var viewSelectTests = []struct {
 					},
 				},
 			},
-		},
+		}, nil, time.Time{}, nil),
 		Select: parser.SelectClause{
 			Fields: []parser.QueryExpression{
 				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
@@ -4139,15 +4033,12 @@ var viewSelectTests = []struct {
 }
 
 func TestView_Select(t *testing.T) {
+	ctx := context.Background()
 	for _, v := range viewSelectTests {
-		ctx := context.Background()
-		if v.Filter == nil {
-			ctx = ContextForExecusion(ctx, NewFilter(TestTx))
-		} else {
-			v.Filter.tx = TestTx
-			ctx = ContextForExecusion(ctx, v.Filter)
+		if v.Scope == nil {
+			v.Scope = NewReferenceScope(TestTx)
 		}
-		err := v.View.Select(ctx, v.Select)
+		err := v.View.Select(ctx, v.Scope, v.Select)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -4469,9 +4360,10 @@ var viewOrderByTests = []struct {
 }
 
 func TestView_OrderBy(t *testing.T) {
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
+	scope := NewReferenceScope(TestTx)
+	ctx := context.Background()
 	for _, v := range viewOrderByTests {
-		err := v.View.OrderBy(ctx, v.OrderBy)
+		err := v.View.OrderBy(ctx, scope, v.OrderBy)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -4496,7 +4388,7 @@ func TestView_OrderBy(t *testing.T) {
 var viewExtendRecordCapacity = []struct {
 	Name   string
 	View   *View
-	Filter *Filter
+	Scope  *ReferenceScope
 	Exprs  []parser.QueryExpression
 	Result int
 	Error  string
@@ -4513,9 +4405,9 @@ var viewExtendRecordCapacity = []struct {
 			},
 			isGrouped: true,
 		},
-		Filter: &Filter{
-			functions: UserDefinedFunctionScopes{
-				UserDefinedFunctionMap{
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameFunctions: {
 					"USERFUNC": &UserDefinedFunction{
 						Name: parser.Identifier{Literal: "userfunc"},
 						Parameters: []parser.Variable{
@@ -4529,7 +4421,7 @@ var viewExtendRecordCapacity = []struct {
 					},
 				},
 			},
-		},
+		}, nil, time.Time{}, nil),
 		Exprs: []parser.QueryExpression{
 			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			parser.Function{
@@ -4607,9 +4499,9 @@ var viewExtendRecordCapacity = []struct {
 				}),
 			},
 		},
-		Filter: &Filter{
-			functions: UserDefinedFunctionScopes{
-				UserDefinedFunctionMap{
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameFunctions: {
 					"USERFUNC": &UserDefinedFunction{
 						Name: parser.Identifier{Literal: "userfunc"},
 						Parameters: []parser.Variable{
@@ -4623,7 +4515,7 @@ var viewExtendRecordCapacity = []struct {
 					},
 				},
 			},
-		},
+		}, nil, time.Time{}, nil),
 		Exprs: []parser.QueryExpression{
 			parser.Function{
 				Name: "userfunc",
@@ -4768,16 +4660,13 @@ var viewExtendRecordCapacity = []struct {
 }
 
 func TestView_ExtendRecordCapacity(t *testing.T) {
+	ctx := context.Background()
 	for _, v := range viewExtendRecordCapacity {
-		ctx := context.Background()
-		if v.Filter == nil {
-			ctx = ContextForExecusion(ctx, NewFilter(TestTx))
-		} else {
-			v.Filter.tx = TestTx
-			ctx = ContextForExecusion(ctx, v.Filter)
+		if v.Scope == nil {
+			v.Scope = NewReferenceScope(TestTx)
 		}
 
-		err := v.View.ExtendRecordCapacity(ctx, v.Exprs)
+		err := v.View.ExtendRecordCapacity(ctx, v.Scope, v.Exprs)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -5242,8 +5131,10 @@ var viewLimitTests = []struct {
 }
 
 func TestView_Limit(t *testing.T) {
+	scope := NewReferenceScope(TestTx)
+	ctx := context.Background()
 	for _, v := range viewLimitTests {
-		err := v.View.Limit(ContextForExecusion(context.Background(), NewFilter(TestTx)), v.Limit)
+		err := v.View.Limit(ctx, scope, v.Limit)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -5452,9 +5343,10 @@ var viewOffsetTests = []struct {
 }
 
 func TestView_Offset(t *testing.T) {
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
+	scope := NewReferenceScope(TestTx)
+	ctx := context.Background()
 	for _, v := range viewOffsetTests {
-		err := v.View.Offset(ctx, v.Offset)
+		err := v.View.Offset(ctx, scope, v.Offset)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -5595,9 +5487,10 @@ func TestView_InsertValues(t *testing.T) {
 		},
 	}
 
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
+	scope := NewReferenceScope(TestTx)
+	ctx := context.Background()
 	for _, v := range viewInsertValuesTests {
-		cnt, err := view.InsertValues(ctx, v.Fields, v.ValuesList)
+		cnt, err := view.InsertValues(ctx, scope, v.Fields, v.ValuesList)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -5714,9 +5607,10 @@ func TestView_InsertFromQuery(t *testing.T) {
 		},
 	}
 
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
+	scope := NewReferenceScope(TestTx)
+	ctx := context.Background()
 	for _, v := range viewInsertFromQueryTests {
-		cnt, err := view.InsertFromQuery(ctx, v.Fields, v.Query)
+		cnt, err := view.InsertFromQuery(ctx, scope, v.Fields, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -5906,9 +5800,10 @@ func TestView_ReplaceValues(t *testing.T) {
 		},
 	}
 
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
+	scope := NewReferenceScope(TestTx)
+	ctx := context.Background()
 	for _, v := range viewReplaceValuesTests {
-		cnt, err := view.ReplaceValues(ctx, v.Fields, v.ValuesList, v.Keys)
+		cnt, err := view.ReplaceValues(ctx, scope, v.Fields, v.ValuesList, v.Keys)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -6008,9 +5903,10 @@ func TestView_ReplaceFromQuery(t *testing.T) {
 		},
 	}
 
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
+	scope := NewReferenceScope(TestTx)
+	ctx := context.Background()
 	for _, v := range viewReplaceFromQueryTests {
-		cnt, err := view.ReplaceFromQuery(ctx, v.Fields, v.Query, v.Keys)
+		cnt, err := view.ReplaceFromQuery(ctx, scope, v.Fields, v.Query, v.Keys)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -6064,7 +5960,7 @@ func TestView_Fix(t *testing.T) {
 		selectFields: []int(nil),
 	}
 
-	_ = view.Fix(ContextForExecusion(context.Background(), NewFilter(TestTx)))
+	_ = view.Fix(context.Background(), TestTx.Flags)
 	if !reflect.DeepEqual(view, expect) {
 		t.Errorf("fix: view = %v, want %v", view, expect)
 	}
@@ -6135,18 +6031,7 @@ func TestView_Union(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	expectErr := "[Internal] filter for query is not set in context"
-	err := view.Union(ctx, calcView, false)
-	if err == nil {
-		t.Errorf("no error, want error %q", expectErr)
-	} else {
-		if err.Error() != expectErr {
-			t.Errorf("error = %q, want error %q", err, expectErr)
-		}
-	}
-
-	ctx = ContextForExecusion(ctx, NewFilter(TestTx))
-	err = view.Union(ctx, calcView, false)
+	err := view.Union(ctx, TestTx.Flags, calcView, false)
 	if err != nil {
 		t.Errorf("unexpected error %q", err)
 	}
@@ -6212,7 +6097,7 @@ func TestView_Union(t *testing.T) {
 		},
 	}
 
-	err = view.Union(ctx, calcView, true)
+	err = view.Union(ctx, TestTx.Flags, calcView, true)
 	if err != nil {
 		t.Errorf("unexpected error %q", err)
 	}
@@ -6278,18 +6163,7 @@ func TestView_Except(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	expectErr := "[Internal] filter for query is not set in context"
-	err := view.Except(ctx, calcView, false)
-	if err == nil {
-		t.Errorf("no error, want error %q", expectErr)
-	} else {
-		if err.Error() != expectErr {
-			t.Errorf("error = %q, want error %q", err, expectErr)
-		}
-	}
-
-	ctx = ContextForExecusion(ctx, NewFilter(TestTx))
-	err = view.Except(ctx, calcView, false)
+	err := view.Except(ctx, TestTx.Flags, calcView, false)
 	if err != nil {
 		t.Errorf("unexpected error %q", err)
 	}
@@ -6339,7 +6213,7 @@ func TestView_Except(t *testing.T) {
 		},
 	}
 
-	err = view.Except(ctx, calcView, true)
+	err = view.Except(ctx, TestTx.Flags, calcView, true)
 	if err != nil {
 		t.Errorf("unexpected error %q", err)
 	}
@@ -6405,18 +6279,7 @@ func TestView_Intersect(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	expectErr := "[Internal] filter for query is not set in context"
-	err := view.Intersect(ctx, calcView, false)
-	if err == nil {
-		t.Errorf("no error, want error %q", expectErr)
-	} else {
-		if err.Error() != expectErr {
-			t.Errorf("error = %q, want error %q", err, expectErr)
-		}
-	}
-
-	ctx = ContextForExecusion(ctx, NewFilter(TestTx))
-	err = view.Intersect(ctx, calcView, false)
+	err := view.Intersect(ctx, TestTx.Flags, calcView, false)
 	if err != nil {
 		t.Errorf("unexpected error %q", err)
 	}
@@ -6466,7 +6329,7 @@ func TestView_Intersect(t *testing.T) {
 		},
 	}
 
-	err = view.Intersect(ctx, calcView, true)
+	err = view.Intersect(ctx, TestTx.Flags, calcView, true)
 	if err != nil {
 		t.Errorf("unexpected error %q", err)
 	}

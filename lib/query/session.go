@@ -247,7 +247,7 @@ func (sess *Session) SetTerminal(t VirtualTerminal) {
 	sess.mtx.Unlock()
 }
 
-func (sess *Session) GetStdinView(ctx context.Context, filter *Filter, fileInfo *FileInfo, expr parser.Stdin) (*View, error) {
+func (sess *Session) GetStdinView(ctx context.Context, flags *cmd.Flags, fileInfo *FileInfo, expr parser.Stdin) (*View, error) {
 	if !sess.stdinViewMap.Exists(expr.String()) {
 		if !sess.CanReadStdin() {
 			return nil, NewStdinEmptyError(expr)
@@ -258,7 +258,7 @@ func (sess *Session) GetStdinView(ctx context.Context, filter *Filter, fileInfo 
 			return nil, NewIOError(expr, err.Error())
 		}
 
-		view, err := loadViewFromFile(ctx, bytes.NewReader(b), fileInfo, filter.tx.Flags.WithoutNull, expr)
+		view, err := loadViewFromFile(ctx, flags, bytes.NewReader(b), fileInfo, flags.WithoutNull, expr)
 		if err != nil {
 			if _, ok := err.(Error); !ok {
 				err = NewDataParsingError(expr, fileInfo.Path, err.Error())

@@ -4,6 +4,7 @@ import (
 	"context"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
@@ -13,7 +14,7 @@ var analyzeTests = []struct {
 	Name             string
 	CPU              int
 	View             *View
-	Filter           *Filter
+	Scope            *ReferenceScope
 	Function         parser.AnalyticFunction
 	PartitionIndices []int
 	Result           *View
@@ -574,10 +575,9 @@ var analyzeTests = []struct {
 				}),
 			},
 		},
-		Filter: &Filter{
-			tempViews: TemporaryViewScopes{NewViewMap()},
-			functions: UserDefinedFunctionScopes{
-				{
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameFunctions: {
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:        parser.Identifier{Literal: "useraggfunc"},
 						IsAggregate: true,
@@ -641,7 +641,7 @@ var analyzeTests = []struct {
 					},
 				},
 			},
-		},
+		}, nil, time.Time{}, nil),
 		Function: parser.AnalyticFunction{
 			Name: "useraggfunc",
 			Args: []parser.QueryExpression{
@@ -722,10 +722,9 @@ var analyzeTests = []struct {
 				}),
 			},
 		},
-		Filter: &Filter{
-			tempViews: TemporaryViewScopes{NewViewMap()},
-			functions: UserDefinedFunctionScopes{
-				{
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameFunctions: {
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:        parser.Identifier{Literal: "useraggfunc"},
 						IsAggregate: true,
@@ -789,7 +788,7 @@ var analyzeTests = []struct {
 					},
 				},
 			},
-		},
+		}, nil, time.Time{}, nil),
 		Function: parser.AnalyticFunction{
 			Name: "useraggfunc",
 			Args: []parser.QueryExpression{
@@ -869,10 +868,9 @@ var analyzeTests = []struct {
 				}),
 			},
 		},
-		Filter: &Filter{
-			tempViews: TemporaryViewScopes{NewViewMap()},
-			functions: UserDefinedFunctionScopes{
-				{
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameFunctions: {
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:        parser.Identifier{Literal: "useraggfunc"},
 						IsAggregate: true,
@@ -888,7 +886,7 @@ var analyzeTests = []struct {
 					},
 				},
 			},
-		},
+		}, nil, time.Time{}, nil),
 		Function: parser.AnalyticFunction{
 			Name: "useraggfunc",
 			AnalyticClause: parser.AnalyticClause{
@@ -928,10 +926,9 @@ var analyzeTests = []struct {
 				}),
 			},
 		},
-		Filter: &Filter{
-			tempViews: TemporaryViewScopes{NewViewMap()},
-			functions: UserDefinedFunctionScopes{
-				{
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameFunctions: {
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:        parser.Identifier{Literal: "useraggfunc"},
 						IsAggregate: true,
@@ -947,7 +944,7 @@ var analyzeTests = []struct {
 					},
 				},
 			},
-		},
+		}, nil, time.Time{}, nil),
 		Function: parser.AnalyticFunction{
 			Name: "useraggfunc",
 			Args: []parser.QueryExpression{
@@ -980,10 +977,9 @@ var analyzeTests = []struct {
 				}),
 			},
 		},
-		Filter: &Filter{
-			tempViews: TemporaryViewScopes{NewViewMap()},
-			functions: UserDefinedFunctionScopes{
-				{
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameFunctions: {
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:        parser.Identifier{Literal: "useraggfunc"},
 						IsAggregate: true,
@@ -999,7 +995,7 @@ var analyzeTests = []struct {
 					},
 				},
 			},
-		},
+		}, nil, time.Time{}, nil),
 		Function: parser.AnalyticFunction{
 			Name: "useraggfunc",
 			Args: []parser.QueryExpression{
@@ -1031,10 +1027,9 @@ var analyzeTests = []struct {
 				}),
 			},
 		},
-		Filter: &Filter{
-			tempViews: TemporaryViewScopes{NewViewMap()},
-			functions: UserDefinedFunctionScopes{
-				{
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameFunctions: {
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:        parser.Identifier{Literal: "useraggfunc"},
 						IsAggregate: true,
@@ -1050,7 +1045,7 @@ var analyzeTests = []struct {
 					},
 				},
 			},
-		},
+		}, nil, time.Time{}, nil),
 		Function: parser.AnalyticFunction{
 			Name: "useraggfunc",
 			Args: []parser.QueryExpression{
@@ -1100,14 +1095,11 @@ func TestAnalyze(t *testing.T) {
 		}
 
 		ctx := context.Background()
-		if v.Filter != nil {
-			v.Filter.tx = TestTx
-			ctx = ContextForExecusion(ctx, v.Filter)
-		} else {
-			ctx = ContextForExecusion(ctx, NewFilter(TestTx))
+		if v.Scope == nil {
+			v.Scope = NewReferenceScope(TestTx)
 		}
 
-		err := Analyze(ctx, v.View, v.Function, v.PartitionIndices)
+		err := Analyze(ctx, v.Scope, v.View, v.Function, v.PartitionIndices)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1160,69 +1152,62 @@ type analyticFunctionExecuteTests struct {
 	Error      string
 }
 
-var analyticFunctionTestFilter = &Filter{
-	records: []filterRecord{
-		{
-			view: &View{
-				Header: NewHeader("table1", []string{"column1", "column2"}),
-				RecordSet: []Record{
-					NewRecord([]value.Primary{
-						value.NewString("a"),
-						value.NewInteger(100),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("a"),
-						value.NewInteger(200),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("b"),
-						value.NewNull(),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("b"),
-						value.NewInteger(200),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("b"),
-						value.NewInteger(300),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("b"),
-						value.NewInteger(500),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("b"),
-						value.NewInteger(800),
-					}),
-					NewRecord([]value.Primary{
-						value.NewString("b"),
-						value.NewNull(),
-					}),
-				},
+var analyticFunctionTestScope = GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+	{
+		view: &View{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(100),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("a"),
+					value.NewInteger(200),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewNull(),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(200),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(300),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(500),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewInteger(800),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("b"),
+					value.NewNull(),
+				}),
 			},
-			recordIndex: 0,
 		},
+		recordIndex: 0,
 	},
-	variables: VariableScopes{NewVariableMap()},
-	tempViews: TemporaryViewScopes{NewViewMap()},
-	cursors:   CursorScopes{{}},
-	functions: UserDefinedFunctionScopes{{}},
-	tx:        TestTx,
-}
+})
 
 func testAnalyticFunctionExecute(t *testing.T, fn AnalyticFunction, tests []analyticFunctionExecuteTests) {
 	for _, v := range tests {
 		if v.SortValues != nil {
-			list := make([]SortValues, analyticFunctionTestFilter.records[0].view.RecordLen())
+			list := make([]SortValues, analyticFunctionTestScope.Records[0].view.RecordLen())
 			for i, v := range v.SortValues {
 				list[i] = v
 			}
-			analyticFunctionTestFilter.records[0].view.sortValuesInEachRecord = list
+			analyticFunctionTestScope.Records[0].view.sortValuesInEachRecord = list
 		} else {
-			analyticFunctionTestFilter.records[0].view.sortValuesInEachRecord = nil
+			analyticFunctionTestScope.Records[0].view.sortValuesInEachRecord = nil
 		}
 
-		result, err := fn.Execute(context.Background(), analyticFunctionTestFilter, v.Items, v.Function)
+		result, err := fn.Execute(context.Background(), analyticFunctionTestScope, v.Items, v.Function)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -2046,17 +2031,17 @@ var lagExecuteTests = []analyticFunctionExecuteTests{
 		Error: "the second argument must be an integer for function lag",
 	},
 	{
-		Name:  "Lag Execute Third Argument Type Error",
+		Name:  "Lag Execute Third Argument Evaluation Error",
 		Items: Partition{2, 3, 4, 5, 6, 7},
 		Function: parser.AnalyticFunction{
 			Name: "lag",
 			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 				parser.NewIntegerValue(2),
-				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+				parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			},
 		},
-		Error: "the third argument must be a primitive type for function lag",
+		Error: "field notexist does not exist",
 	},
 }
 

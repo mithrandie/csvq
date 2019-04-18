@@ -105,11 +105,11 @@ func ParseJoinCondition(join parser.Join, view *View, joinView *View) (parser.Qu
 	return logic, includeFields, excludeFields, nil
 }
 
-func CrossJoin(ctx context.Context, filter *Filter, view *View, joinView *View) error {
+func CrossJoin(ctx context.Context, scope *ReferenceScope, view *View, joinView *View) error {
 	mergedHeader := view.Header.Merge(joinView.Header)
 	records := make(RecordSet, view.RecordLen()*joinView.RecordLen())
 
-	if err := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore), filter.tx.Flags.CPU).Run(ctx, func(index int) error {
+	if err := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore), scope.Tx.Flags.CPU).Run(ctx, func(index int) error {
 		start := index * joinView.RecordLen()
 		for i := 0; i < joinView.RecordLen(); i++ {
 			records[start+i] = view.RecordSet[index].Merge(joinView.RecordSet[i], nil)
@@ -125,9 +125,9 @@ func CrossJoin(ctx context.Context, filter *Filter, view *View, joinView *View) 
 	return nil
 }
 
-func InnerJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *View, condition parser.QueryExpression) error {
+func InnerJoin(ctx context.Context, scope *ReferenceScope, view *View, joinView *View, condition parser.QueryExpression) error {
 	if condition == nil {
-		return CrossJoin(ctx, parentFilter, view, joinView)
+		return CrossJoin(ctx, scope, view, joinView)
 	}
 
 	var recordPool = &sync.Pool{
@@ -138,34 +138,33 @@ func InnerJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 
 	mergedHeader := view.Header.Merge(joinView.Header)
 
-	gm := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore), parentFilter.tx.Flags.CPU)
+	gm := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore), scope.Tx.Flags.CPU)
 	recordsList := make([]RecordSet, gm.Number)
 	for i := 0; i < gm.Number; i++ {
 		gm.Add()
 		go func(thIdx int) {
+			ctx := ctx
 			start, end := gm.RecordRange(thIdx)
 			records := make(RecordSet, 0, end-start)
-			filter := NewFilterForRecord(
-				parentFilter,
+			seqScope := scope.CreateScopeForRecordEvaluation(
 				&View{
 					Header:    mergedHeader,
 					RecordSet: make(RecordSet, 1),
 				},
 				0,
 			)
-			rctx := ContextForExecusion(ctx, filter)
 
 		InnerJoinLoop:
 			for i := start; i < end; i++ {
 				for j := 0; j < joinView.RecordLen(); j++ {
-					if gm.HasError() || rctx.Err() != nil {
+					if gm.HasError() || ctx.Err() != nil {
 						break InnerJoinLoop
 					}
 
 					mergedRecord := view.RecordSet[i].Merge(joinView.RecordSet[j], recordPool)
-					filter.records[0].view.RecordSet[0] = mergedRecord
+					seqScope.Records[0].view.RecordSet[0] = mergedRecord
 
-					primary, e := filter.Evaluate(rctx, condition)
+					primary, e := Evaluate(ctx, seqScope, condition)
 					if e != nil {
 						gm.SetError(e)
 						break InnerJoinLoop
@@ -197,7 +196,7 @@ func InnerJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 	return nil
 }
 
-func OuterJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *View, condition parser.QueryExpression, direction int) error {
+func OuterJoin(ctx context.Context, scope *ReferenceScope, view *View, joinView *View, condition parser.QueryExpression, direction int) error {
 	if direction == parser.TokenUndefined {
 		direction = parser.LEFT
 	}
@@ -214,7 +213,7 @@ func OuterJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 		view, joinView = joinView, view
 	}
 
-	gm := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore), parentFilter.tx.Flags.CPU)
+	gm := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore), scope.Tx.Flags.CPU)
 
 	recordsList := make([]RecordSet, gm.Number+1)
 	joinViewMatchesList := make([][]bool, gm.Number)
@@ -222,17 +221,16 @@ func OuterJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 	for i := 0; i < gm.Number; i++ {
 		gm.Add()
 		go func(thIdx int) {
+			ctx := ctx
 			start, end := gm.RecordRange(thIdx)
 			records := make(RecordSet, 0, end-start)
-			filter := NewFilterForRecord(
-				parentFilter,
+			seqScope := scope.CreateScopeForRecordEvaluation(
 				&View{
 					Header:    mergedHeader,
 					RecordSet: make(RecordSet, 1),
 				},
 				0,
 			)
-			rctx := ContextForExecusion(ctx, filter)
 
 			joinViewMatches := make([]bool, joinView.RecordLen())
 			var leftViewFieldLen int
@@ -246,7 +244,7 @@ func OuterJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 			for i := start; i < end; i++ {
 				match := false
 				for j := 0; j < joinView.RecordLen(); j++ {
-					if gm.HasError() || rctx.Err() != nil {
+					if gm.HasError() || ctx.Err() != nil {
 						break OuterJoinLoop
 					}
 
@@ -257,9 +255,9 @@ func OuterJoin(ctx context.Context, parentFilter *Filter, view *View, joinView *
 					default:
 						mergedRecord = view.RecordSet[i].Merge(joinView.RecordSet[j], recordPool)
 					}
-					filter.records[0].view.RecordSet[0] = mergedRecord
+					seqScope.Records[0].view.RecordSet[0] = mergedRecord
 
-					primary, e := filter.Evaluate(rctx, condition)
+					primary, e := Evaluate(ctx, seqScope, condition)
 					if e != nil {
 						gm.SetError(e)
 						break OuterJoinLoop

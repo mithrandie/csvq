@@ -67,7 +67,7 @@ func LaunchInteractiveShell(ctx context.Context, proc *query.Processor) error {
 
 	var err error
 
-	term, err := query.NewTerminal(ctx, proc.Filter)
+	term, err := query.NewTerminal(ctx, proc.ReferenceScope)
 	if err != nil {
 		return query.ConvertLoadConfigurationError(err)
 	}

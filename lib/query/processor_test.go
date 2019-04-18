@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
@@ -947,8 +948,8 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 
 	tx := TestTx
 	proc := NewProcessor(tx)
-	_ = proc.Filter.variables[0].Add(parser.Variable{Name: "while_test"}, value.NewInteger(0))
-	ctx := ContextForExecusion(context.Background(), proc.Filter)
+	_ = proc.ReferenceScope.DeclareVariableDirectly(parser.Variable{Name: "while_test"}, value.NewInteger(0))
+	ctx := context.Background()
 
 	for _, v := range processorExecuteStatementTests {
 		_ = TestTx.ReleaseResources()
@@ -1590,15 +1591,15 @@ func TestProcessor_While(t *testing.T) {
 
 	for _, v := range processorWhileTests {
 		proc.returnVal = nil
-		if _, err := proc.Filter.variables[0].Get(parser.Variable{Name: "while_test"}); err != nil {
-			_ = proc.Filter.variables[0].Add(parser.Variable{Name: "while_test"}, value.NewInteger(0))
+		if _, err := proc.ReferenceScope.CurrentBlock().variables.Get(parser.Variable{Name: "while_test"}); err != nil {
+			_ = proc.ReferenceScope.DeclareVariableDirectly(parser.Variable{Name: "while_test"}, value.NewInteger(0))
 		}
-		_ = proc.Filter.variables[0].Set(parser.Variable{Name: "while_test"}, value.NewInteger(0))
+		_ = proc.ReferenceScope.CurrentBlock().variables.Set(parser.Variable{Name: "while_test"}, value.NewInteger(0))
 
-		if _, err := proc.Filter.variables[0].Get(parser.Variable{Name: "while_test_count"}); err != nil {
-			_ = proc.Filter.variables[0].Add(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
+		if _, err := proc.ReferenceScope.CurrentBlock().variables.Get(parser.Variable{Name: "while_test_count"}); err != nil {
+			_ = proc.ReferenceScope.DeclareVariableDirectly(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
 		}
-		_ = proc.Filter.variables[0].Set(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
+		_ = proc.ReferenceScope.CurrentBlock().variables.Set(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
 
 		out := NewOutput()
 		tx.Session.SetStdout(out)
@@ -1818,21 +1819,25 @@ func TestProcessor_WhileInCursor(t *testing.T) {
 
 	tx := TestTx
 	proc := NewProcessor(tx)
-	ctx := ContextForExecusion(context.Background(), proc.Filter)
+	ctx := context.Background()
 
 	for _, v := range processorWhileInCursorTests {
-		proc.Filter.variables[0] = GenerateVariableMap(map[string]value.Primary{
-			"var1": value.NewNull(),
-			"var2": value.NewNull(),
-		})
-		proc.Filter.cursors[0] = CursorMap{
-			"CUR": &Cursor{
-				query: selectQueryForCursorTest,
-				mtx:   &sync.Mutex{},
+		proc.ReferenceScope = GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameVariables: {
+					"var1": value.NewNull(),
+					"var2": value.NewNull(),
+				},
+				scopeNameCursors: {
+					"CUR": &Cursor{
+						query: selectQueryForCursorTest,
+						mtx:   &sync.Mutex{},
+					},
+				},
 			},
-		}
+		}, nil, time.Time{}, nil)
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-		_ = proc.Filter.cursors.Open(ctx, parser.Identifier{Literal: "cur"}, nil)
+		_ = proc.ReferenceScope.OpenCursor(ctx, parser.Identifier{Literal: "cur"}, nil)
 
 		out := NewOutput()
 		tx.Session.SetStdout(out)

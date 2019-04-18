@@ -101,7 +101,7 @@ func (l ReadlineListener) OnChange(line []rune, pos int, key rune) (newLine []ru
 
 type Completer struct {
 	completer *readline.PrefixCompleter
-	filter    *Filter
+	scope     *ReferenceScope
 
 	flagList      []string
 	runinfoList   []string
@@ -129,10 +129,10 @@ type Completer struct {
 	selectIntoEnabled bool
 }
 
-func NewCompleter(filter *Filter) *Completer {
+func NewCompleter(scope *ReferenceScope) *Completer {
 	completer := &Completer{
 		completer:    readline.NewPrefixCompleter(),
-		filter:       filter,
+		scope:        scope,
 		tableColumns: make(map[string][]string),
 	}
 
@@ -195,7 +195,7 @@ func (c *Completer) Update() {
 
 func (c *Completer) updateStatements() {
 	c.statementList = make([]string, 0, 10)
-	c.filter.tx.PreparedStatements.Range(func(key, value interface{}) bool {
+	c.scope.Tx.PreparedStatements.Range(func(key, value interface{}) bool {
 		c.statementList = append(c.statementList, value.(*PreparedStatement).Name)
 		return true
 	})
@@ -203,7 +203,7 @@ func (c *Completer) updateStatements() {
 }
 
 func (c *Completer) updateViews() {
-	views := c.filter.tempViews.All()
+	views := c.scope.AllTemporaryTables()
 	viewKeys := views.SortedKeys()
 	c.viewList = make([]string, 0, len(viewKeys))
 	for _, key := range viewKeys {
@@ -214,7 +214,7 @@ func (c *Completer) updateViews() {
 }
 
 func (c *Completer) updateCursors() {
-	cursors := c.filter.cursors.All()
+	cursors := c.scope.AllCursors()
 	cursorKeys := cursors.SortedKeys()
 	c.cursorList = make([]string, 0, len(cursorKeys))
 	for _, key := range cursorKeys {
@@ -223,7 +223,7 @@ func (c *Completer) updateCursors() {
 }
 
 func (c *Completer) updateFunctions() {
-	userfuncs, userAggFuncs := c.filter.functions.All()
+	userfuncs, userAggFuncs := c.scope.AllFunctions()
 	c.userFuncs = make([]string, 0, len(userfuncs))
 	c.userAggFuncs = make([]string, 0, len(userAggFuncs))
 
@@ -264,7 +264,7 @@ func (c *Completer) updateFunctions() {
 }
 
 func (c *Completer) updateVariables() {
-	vars := c.filter.variables.All()
+	vars := c.scope.AllVariables()
 	varKeys := vars.SortedKeys()
 
 	c.varList = make([]string, 0, len(varKeys))
@@ -1442,7 +1442,7 @@ func (c *Completer) AlterArgs(line string, origLine string, index int) readline.
 
 		var clist readline.CandidateList
 		if 0 < len(tableName) {
-			clist = c.identifierList(c.ColumnList(tableName, c.filter.tx.Flags.Repository), appendSpace)
+			clist = c.identifierList(c.ColumnList(tableName, c.scope.Tx.Flags.Repository), appendSpace)
 		}
 		return clist
 	}
@@ -1894,10 +1894,10 @@ func (c *Completer) SearchAllTablesWithSpace(line string, origLine string, index
 }
 
 func (c *Completer) SearchAllTables(line string, origLine string, index int) readline.CandidateList {
-	tableKeys := c.filter.tx.cachedViews.SortedKeys()
-	files := c.ListFiles(line, []string{cmd.CsvExt, cmd.TsvExt, cmd.JsonExt, cmd.LtsvExt, cmd.TextExt}, c.filter.tx.Flags.Repository)
+	tableKeys := c.scope.Tx.cachedViews.SortedKeys()
+	files := c.ListFiles(line, []string{cmd.CsvExt, cmd.TsvExt, cmd.JsonExt, cmd.LtsvExt, cmd.TextExt}, c.scope.Tx.Flags.Repository)
 
-	defaultDir := c.filter.tx.Flags.Repository
+	defaultDir := c.scope.Tx.Flags.Repository
 	if len(defaultDir) < 1 {
 		defaultDir, _ = os.Getwd()
 	}
@@ -1905,7 +1905,7 @@ func (c *Completer) SearchAllTables(line string, origLine string, index int) rea
 	items := make([]string, 0, len(tableKeys)+len(files)+len(c.viewList))
 	tablePath := make(map[string]bool)
 	for _, k := range tableKeys {
-		if view, ok := c.filter.tx.cachedViews.Load(k); ok {
+		if view, ok := c.scope.Tx.cachedViews.Load(k); ok {
 			lpath := view.FileInfo.Path
 			tablePath[lpath] = true
 			if filepath.Dir(lpath) == defaultDir {
@@ -2215,7 +2215,7 @@ func (c *Completer) ListFiles(path string, includeExt []string, repository strin
 
 func (c *Completer) AllColumnList() []string {
 	m := make(map[string]bool)
-	c.filter.tempViews[0].Range(func(key, value interface{}) bool {
+	c.scope.blocks[0].temporaryTables.Range(func(key, value interface{}) bool {
 		col := c.columnList(value.(*View))
 		for _, s := range col {
 			if _, ok := m[s]; !ok {
@@ -2225,7 +2225,7 @@ func (c *Completer) AllColumnList() []string {
 		return true
 	})
 
-	c.filter.tx.cachedViews.Range(func(key, value interface{}) bool {
+	c.scope.Tx.cachedViews.Range(func(key, value interface{}) bool {
 		col := c.columnList(value.(*View))
 		for _, s := range col {
 			if _, ok := m[s]; !ok {
@@ -2248,21 +2248,21 @@ func (c *Completer) ColumnList(tableName string, repository string) []string {
 		return list
 	}
 
-	if view, ok := c.filter.tempViews[0].Load(tableName); ok {
+	if view, ok := c.scope.blocks[0].temporaryTables.Load(tableName); ok {
 		list := c.columnList(view)
 		c.tableColumns[tableName] = list
 		return list
 	}
 
 	if fpath, err := CreateFilePath(parser.Identifier{Literal: tableName}, repository); err == nil {
-		if view, ok := c.filter.tx.cachedViews.Load(fpath); ok {
+		if view, ok := c.scope.Tx.cachedViews.Load(fpath); ok {
 			list := c.columnList(view)
 			c.tableColumns[tableName] = list
 			return list
 		}
 	}
 	if fpath, err := SearchFilePathFromAllTypes(parser.Identifier{Literal: tableName}, repository); err == nil {
-		if view, ok := c.filter.tx.cachedViews.Load(fpath); ok {
+		if view, ok := c.scope.Tx.cachedViews.Load(fpath); ok {
 			list := c.columnList(view)
 			c.tableColumns[tableName] = list
 			return list
@@ -2319,7 +2319,7 @@ func (c *Completer) completeArgs(
 func (c *Completer) UpdateTokens(line string, origLine string) {
 	c.tokens = c.tokens[:0]
 	s := new(parser.Scanner)
-	s.Init(origLine, "", c.filter.tx.Flags.DatetimeFormat, false)
+	s.Init(origLine, "", c.scope.Tx.Flags.DatetimeFormat, false)
 	for {
 		t, _ := s.Scan()
 		if t.Token == parser.EOF {

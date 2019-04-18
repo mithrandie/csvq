@@ -3303,7 +3303,7 @@ var nowTests = []struct {
 	Name     string
 	Function parser.Function
 	Args     []value.Primary
-	Filter   *Filter
+	Scope    *ReferenceScope
 	Result   value.Primary
 	Error    string
 }{
@@ -3312,7 +3312,7 @@ var nowTests = []struct {
 		Function: parser.Function{
 			Name: "now",
 		},
-		Filter: NewFilter(TestTx),
+		Scope:  NewReferenceScope(TestTx),
 		Result: value.NewDatetime(NowForTest),
 	},
 	{
@@ -3320,13 +3320,7 @@ var nowTests = []struct {
 		Function: parser.Function{
 			Name: "now",
 		},
-		Filter: &Filter{
-			variables: VariableScopes{NewVariableMap()},
-			tempViews: TemporaryViewScopes{NewViewMap()},
-			cursors:   CursorScopes{{}},
-			functions: UserDefinedFunctionScopes{{}},
-			now:       time.Date(2013, 2, 3, 0, 0, 0, 0, GetTestLocation()),
-		},
+		Scope:  GenerateReferenceScope(nil, nil, time.Date(2013, 2, 3, 0, 0, 0, 0, GetTestLocation()), nil),
 		Result: value.NewDatetime(time.Date(2013, 2, 3, 0, 0, 0, 0, GetTestLocation())),
 	},
 	{
@@ -3337,15 +3331,15 @@ var nowTests = []struct {
 		Args: []value.Primary{
 			value.NewInteger(1),
 		},
-		Filter: NewFilter(TestTx),
-		Error:  "function now takes no argument",
+		Scope: NewReferenceScope(TestTx),
+		Error: "function now takes no argument",
 	},
 }
 
 func TestNow(t *testing.T) {
 	initFlag(TestTx.Flags)
 	for _, v := range nowTests {
-		result, err := Now(v.Filter, v.Function, v.Args)
+		result, err := Now(v.Scope, v.Function, v.Args)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -3367,7 +3361,7 @@ func TestNow(t *testing.T) {
 var jsonObjectTests = []struct {
 	Name     string
 	Function parser.Function
-	Filter   *Filter
+	Scope    *ReferenceScope
 	Result   value.Primary
 	Error    string
 }{
@@ -3379,20 +3373,18 @@ var jsonObjectTests = []struct {
 				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 			},
 		},
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							NewRecordWithId(0, []value.Primary{value.NewInteger(1), value.NewInteger(2)}),
-							NewRecordWithId(1, []value.Primary{value.NewInteger(11), value.NewInteger(12)}),
-						},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						NewRecordWithId(0, []value.Primary{value.NewInteger(1), value.NewInteger(2)}),
+						NewRecordWithId(1, []value.Primary{value.NewInteger(11), value.NewInteger(12)}),
 					},
-					recordIndex: 1,
 				},
+				recordIndex: 1,
 			},
-		},
+		}),
 		Result: value.NewString("{\"column1\":11}"),
 	},
 	{
@@ -3400,20 +3392,18 @@ var jsonObjectTests = []struct {
 		Function: parser.Function{
 			Name: "json_object",
 		},
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table1", []string{"column1", "column2.child1"}),
-						RecordSet: []Record{
-							NewRecordWithId(0, []value.Primary{value.NewInteger(1), value.NewInteger(2)}),
-							NewRecordWithId(1, []value.Primary{value.NewInteger(11), value.NewInteger(12)}),
-						},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table1", []string{"column1", "column2.child1"}),
+					RecordSet: []Record{
+						NewRecordWithId(0, []value.Primary{value.NewInteger(1), value.NewInteger(2)}),
+						NewRecordWithId(1, []value.Primary{value.NewInteger(11), value.NewInteger(12)}),
 					},
-					recordIndex: 1,
 				},
+				recordIndex: 1,
 			},
-		},
+		}),
 		Result: value.NewString("{\"column1\":11,\"column2\":{\"child1\":12}}"),
 	},
 	{
@@ -3424,7 +3414,7 @@ var jsonObjectTests = []struct {
 				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 			},
 		},
-		Filter: NewFilter(TestTx),
+		Scope:  NewReferenceScope(TestTx),
 		Result: value.NewNull(),
 	},
 	{
@@ -3432,28 +3422,29 @@ var jsonObjectTests = []struct {
 		Function: parser.Function{
 			Name: "json_object",
 		},
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table1", []string{"column1", "column2.."}),
-						RecordSet: []Record{
-							NewRecordWithId(0, []value.Primary{value.NewInteger(1), value.NewInteger(2)}),
-							NewRecordWithId(1, []value.Primary{value.NewInteger(11), value.NewInteger(12)}),
-						},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table1", []string{"column1", "column2.."}),
+					RecordSet: []Record{
+						NewRecordWithId(0, []value.Primary{value.NewInteger(1), value.NewInteger(2)}),
+						NewRecordWithId(1, []value.Primary{value.NewInteger(11), value.NewInteger(12)}),
 					},
-					recordIndex: 1,
 				},
+				recordIndex: 1,
 			},
-		},
+		}),
 		Error: "unexpected token \".\" at column 9 in \"column2..\" for function json_object",
 	},
 }
 
 func TestJsonObject(t *testing.T) {
 	for _, v := range jsonObjectTests {
-		v.Filter.tx = TestTx
-		result, err := JsonObject(context.Background(), v.Filter, v.Function)
+		if v.Scope == nil {
+			v.Scope = NewReferenceScope(TestTx)
+		}
+
+		result, err := JsonObject(context.Background(), v.Scope, v.Function)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

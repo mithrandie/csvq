@@ -25,9 +25,11 @@ func Calc(ctx context.Context, proc *query.Processor, expr string) error {
 	}
 	selectEntity, _ := program[0].(parser.SelectQuery).SelectEntity.(parser.SelectEntity)
 
+	scope := query.NewReferenceScope(proc.Tx)
+	queryScope := scope.CreateNode()
+
 	view := query.NewView()
-	ctx = query.ContextForExecusion(ctx, query.NewFilter(proc.Tx).CreateNode())
-	err = view.Load(ctx, selectEntity.FromClause.(parser.FromClause), false, false)
+	err = view.Load(ctx, queryScope, selectEntity.FromClause.(parser.FromClause), false, false)
 	if err != nil {
 		if appErr, ok := err.(query.Error); ok {
 			err = errors.New(appErr.Message())
@@ -37,12 +39,11 @@ func Calc(ctx context.Context, proc *query.Processor, expr string) error {
 
 	clause := selectEntity.SelectClause.(parser.SelectClause)
 
-	filter := query.NewFilterForRecord(proc.Filter, view, 0)
-	ctx = query.ContextForExecusion(ctx, filter)
+	recordScope := scope.CreateScopeForRecordEvaluation(view, 0)
 	values := make([]string, len(clause.Fields))
 	for i, v := range clause.Fields {
 		field := v.(parser.Field)
-		p, err := filter.Evaluate(ctx, field.Object)
+		p, err := query.Evaluate(ctx, recordScope, field.Object)
 		if err != nil {
 			if appErr, ok := err.(query.Error); ok {
 				err = errors.New(appErr.Message())

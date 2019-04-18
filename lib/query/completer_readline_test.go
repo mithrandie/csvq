@@ -83,28 +83,28 @@ func TestCompleter_Update(t *testing.T) {
 		TestTx.PreparedStatements = NewPreparedStatementMap()
 	}()
 
-	filter := NewFilter(TestTx)
-	ctx := ContextForExecusion(context.Background(), filter)
+	scope := NewReferenceScope(TestTx)
+	ctx := context.Background()
 
-	filter.tempViews.Set(&View{
+	scope.SetTemporaryTable(&View{
 		FileInfo: &FileInfo{Path: "view1", ViewType: ViewTypeTemporaryTable},
 		Header:   NewHeader("view1", []string{"col1", "col2"}),
 	})
-	filter.tempViews.Set(&View{
+	scope.SetTemporaryTable(&View{
 		FileInfo: &FileInfo{Path: "view2", ViewType: ViewTypeTemporaryTable},
 		Header:   NewHeader("view1", []string{"col3", "col4"}),
 	})
-	_ = filter.cursors.Declare(parser.CursorDeclaration{Cursor: parser.Identifier{Literal: "cur1"}})
-	_ = filter.functions.Declare(parser.FunctionDeclaration{Name: parser.Identifier{Literal: "scalafunc"}})
-	_ = filter.functions.DeclareAggregate(parser.AggregateDeclaration{Name: parser.Identifier{Literal: "aggfunc"}})
-	_ = filter.variables.Declare(ctx, parser.VariableDeclaration{Assignments: []parser.VariableAssignment{{Variable: parser.Variable{Name: "var"}}}})
+	_ = scope.DeclareCursor(parser.CursorDeclaration{Cursor: parser.Identifier{Literal: "cur1"}})
+	_ = scope.DeclareFunction(parser.FunctionDeclaration{Name: parser.Identifier{Literal: "scalafunc"}})
+	_ = scope.DeclareAggregateFunction(parser.AggregateDeclaration{Name: parser.Identifier{Literal: "aggfunc"}})
+	_ = scope.DeclareVariable(ctx, parser.VariableDeclaration{Assignments: []parser.VariableAssignment{{Variable: parser.Variable{Name: "var"}}}})
 
-	_ = TestTx.PreparedStatements.Prepare(filter, parser.StatementPreparation{
+	_ = TestTx.PreparedStatements.Prepare(scope.Tx.Flags, parser.StatementPreparation{
 		Name:      parser.Identifier{Literal: "stmt"},
 		Statement: value.NewString("select 1"),
 	})
 
-	c := NewCompleter(filter)
+	c := NewCompleter(scope)
 	if len(c.flagList) != len(cmd.FlagList) || !strings.HasPrefix(c.flagList[0], cmd.FlagSign) {
 		t.Error("flags are not set correctly")
 	}
@@ -156,7 +156,7 @@ func TestCompleter_Update(t *testing.T) {
 	}
 }
 
-var completer = NewCompleter(NewFilter(TestTx))
+var completer = NewCompleter(NewReferenceScope(TestTx))
 
 type completerTest struct {
 	Name     string
@@ -3713,8 +3713,7 @@ func TestCompleter_ListFiles(t *testing.T) {
 	wd, _ := os.Getwd()
 
 	_ = os.Chdir(CompletionTestDir)
-	filter := NewFilter(TestTx)
-	completer := NewCompleter(filter)
+	completer := NewCompleter(NewReferenceScope(TestTx))
 	for _, v := range completerListFilesTests {
 		result := completer.ListFiles(v.Line, v.IncludeExt, v.Repository)
 		if !reflect.DeepEqual(result, v.Expect) {
@@ -3730,12 +3729,12 @@ func TestCompleter_AllColumnList(t *testing.T) {
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 	}()
 
-	filter := NewFilter(TestTx)
-	filter.tempViews.Set(&View{
+	scope := NewReferenceScope(TestTx)
+	scope.SetTemporaryTable(&View{
 		FileInfo: &FileInfo{Path: "view1", ViewType: ViewTypeTemporaryTable},
 		Header:   NewHeader("view1", []string{"v1col1", "v1col2", "v1col3"}),
 	})
-	filter.tempViews.Set(&View{FileInfo: &FileInfo{Path: "view2", ViewType: ViewTypeTemporaryTable}})
+	scope.SetTemporaryTable(&View{FileInfo: &FileInfo{Path: "view2", ViewType: ViewTypeTemporaryTable}})
 	TestTx.cachedViews.Set(
 		&View{
 			FileInfo: &FileInfo{
@@ -3755,7 +3754,7 @@ func TestCompleter_AllColumnList(t *testing.T) {
 
 	expect := []string{"col2", "ncol1", "ncol3", "tcol1", "tcol3", "v1col1", "v1col2", "v1col3"}
 
-	completer := NewCompleter(filter)
+	completer := NewCompleter(scope)
 	result := completer.AllColumnList()
 	if !reflect.DeepEqual(result, expect) {
 		t.Errorf("result = %v, want %v", result, expect)
@@ -3797,12 +3796,12 @@ func TestCompleter_ColumnList(t *testing.T) {
 		initFlag(TestTx.Flags)
 	}()
 
-	filter := NewFilter(TestTx)
-	filter.tempViews.Set(&View{
+	scope := NewReferenceScope(TestTx)
+	scope.SetTemporaryTable(&View{
 		FileInfo: &FileInfo{Path: "view1", ViewType: ViewTypeTemporaryTable},
 		Header:   NewHeader("view1", []string{"v1col1", "v1col2", "v1col3"}),
 	})
-	filter.tempViews.Set(&View{FileInfo: &FileInfo{Path: "view2", ViewType: ViewTypeTemporaryTable}})
+	scope.SetTemporaryTable(&View{FileInfo: &FileInfo{Path: "view2", ViewType: ViewTypeTemporaryTable}})
 	TestTx.cachedViews.Set(
 		&View{
 			FileInfo: &FileInfo{
@@ -3823,7 +3822,7 @@ func TestCompleter_ColumnList(t *testing.T) {
 	TestTx.Flags.Format = cmd.CSV
 
 	_ = os.Chdir(CompletionTestDir)
-	completer := NewCompleter(filter)
+	completer := NewCompleter(scope)
 	for _, v := range completerColumnListTests {
 		result := completer.ColumnList(v.TableName, CompletionTestDir)
 		if !reflect.DeepEqual(result, v.Expect) {
@@ -4020,7 +4019,7 @@ var completerUpdateTokensTests = []struct {
 }
 
 func TestCompleter_UpdateTokens(t *testing.T) {
-	c := NewCompleter(NewFilter(TestTx))
+	c := NewCompleter(NewReferenceScope(TestTx))
 	c.userFuncs = []string{"userfunc"}
 	c.userAggFuncs = []string{"aggfunc"}
 	c.userFuncList = []string{"userfunc", "aggfunc"}

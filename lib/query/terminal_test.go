@@ -40,7 +40,7 @@ var promptLoadConfigTests = []struct {
 }
 
 func TestPrompt_LoadConfig(t *testing.T) {
-	prompt := NewPrompt(NewFilter(TestTx))
+	prompt := NewPrompt(NewReferenceScope(TestTx))
 
 	for _, v := range promptLoadConfigTests {
 		TestTx.Environment.InteractiveShell.Prompt = v.Prompt
@@ -106,7 +106,7 @@ func TestPrompt_RenderPrompt(t *testing.T) {
 		initFlag(TestTx.Flags)
 	}()
 
-	prompt := NewPrompt(NewFilter(TestTx))
+	prompt := NewPrompt(NewReferenceScope(TestTx))
 
 	for _, v := range promptRenderPromptTests {
 		TestTx.UseColor(v.UseColor)
@@ -172,7 +172,7 @@ func TestPrompt_RenderContinuousPrompt(t *testing.T) {
 		initFlag(TestTx.Flags)
 	}()
 
-	prompt := NewPrompt(NewFilter(TestTx))
+	prompt := NewPrompt(NewReferenceScope(TestTx))
 
 	for _, v := range promptRenderContinuousPromptTests {
 		TestTx.UseColor(v.UseColor)
@@ -262,9 +262,9 @@ var promptRenderTests = []struct {
 }
 
 func TestPrompt_Render(t *testing.T) {
-	filter := NewFilter(TestTx)
-	_ = filter.variables[0].Add(parser.Variable{Name: "var"}, value.NewString("abc"))
-	prompt := NewPrompt(filter)
+	scope := NewReferenceScope(TestTx)
+	_ = scope.DeclareVariableDirectly(parser.Variable{Name: "var"}, value.NewString("abc"))
+	prompt := NewPrompt(scope)
 
 	for _, v := range promptRenderTests {
 		result, err := prompt.Render(context.Background(), v.Input)
@@ -299,7 +299,7 @@ var promptStripEscapeSequenceTests = []struct {
 }
 
 func TestPrompt_StripEscapeSequence(t *testing.T) {
-	prompt := NewPrompt(NewFilter(TestTx))
+	prompt := NewPrompt(NewReferenceScope(TestTx))
 
 	for _, v := range promptStripEscapeSequenceTests {
 		result := prompt.StripEscapeSequence(v.Input)
