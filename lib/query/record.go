@@ -19,6 +19,18 @@ func (r RecordSet) Copy() RecordSet {
 	return records
 }
 
+func (r RecordSet) Merge(r2 RecordSet) RecordSet {
+	var recordSet = make(RecordSet, len(r)+len(r2))
+	leftLen := len(r)
+	for i := range r {
+		recordSet[i] = r[i]
+	}
+	for i := range r2 {
+		recordSet[i+leftLen] = r2[i]
+	}
+	return recordSet
+}
+
 type Record []Cell
 
 func NewRecordWithId(internalId int, values []value.Primary) Record {

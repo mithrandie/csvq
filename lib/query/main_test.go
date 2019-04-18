@@ -331,3 +331,15 @@ func GenerateStatementMap(values []*PreparedStatement) PreparedStatementMap {
 	}
 	return m
 }
+
+var (
+	testLetterRunes = []rune("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+)
+
+func randomStr(length int) string {
+	s := make([]rune, length)
+	for i := 0; i < length; i++ {
+		s[i] = testLetterRunes[cmd.GetRand().Intn(len(testLetterRunes))]
+	}
+	return string(s)
+}

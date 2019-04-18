@@ -134,15 +134,7 @@ func (rs *ReferenceScope) CreateScopeForRecordEvaluation(view *View, recordIndex
 	for i := range rs.Records {
 		records[i+1] = rs.Records[i]
 	}
-
-	return &ReferenceScope{
-		Tx:             rs.Tx,
-		blocks:         rs.blocks,
-		nodes:          rs.nodes,
-		cachedFilePath: rs.cachedFilePath,
-		now:            rs.now,
-		Records:        records,
-	}
+	return rs.createScope(records)
 }
 
 func (rs *ReferenceScope) CreateScopeForSequentialEvaluation(view *View) *ReferenceScope {
@@ -159,14 +151,17 @@ func (rs *ReferenceScope) CreateScopeForAnalytics() *ReferenceScope {
 	for i := 1; i < len(rs.Records); i++ {
 		records[i] = rs.Records[i]
 	}
+	return rs.createScope(records)
+}
 
+func (rs *ReferenceScope) createScope(referenceRecords []ReferenceRecord) *ReferenceScope {
 	return &ReferenceScope{
 		Tx:             rs.Tx,
 		blocks:         rs.blocks,
 		nodes:          rs.nodes,
 		cachedFilePath: rs.cachedFilePath,
 		now:            rs.now,
-		Records:        records,
+		Records:        referenceRecords,
 	}
 }
 
@@ -371,7 +366,6 @@ func (rs *ReferenceScope) ReplaceTemporaryTable(view *View) {
 
 func (rs *ReferenceScope) DisposeTemporaryTable(name parser.QueryExpression) error {
 	for i := range rs.blocks {
-		fmt.Println(rs.blocks[i].temporaryTables.Keys())
 		if err := rs.blocks[i].temporaryTables.DisposeTemporaryTable(name); err == nil {
 			return nil
 		}
@@ -410,7 +404,6 @@ func (rs *ReferenceScope) RestoreTemporaryTable(uncomittedViews map[string]*File
 					rs.blocks[i].temporaryTables.Delete(view.FileInfo.Path)
 				} else {
 					view.Restore()
-					fmt.Println("restore")
 				}
 				msglist = append(msglist, fmt.Sprintf("Rollback: view %q is restored.", view.FileInfo.Path))
 			}

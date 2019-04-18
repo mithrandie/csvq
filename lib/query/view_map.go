@@ -59,7 +59,12 @@ func (m ViewMap) GetWithInternalId(ctx context.Context, fpath parser.Identifier,
 		ret.Header = NewHeaderWithId(ret.Header[0].View, []string{}).Merge(ret.Header)
 
 		if err := NewGoroutineTaskManager(ret.RecordLen(), -1, flags.CPU).Run(ctx, func(index int) error {
-			ret.RecordSet[index] = append(Record{NewCell(value.NewInteger(int64(index)))}, ret.RecordSet[index]...)
+			record := make(Record, len(ret.RecordSet[index])+1)
+			record[0] = NewCell(value.NewInteger(int64(index)))
+			for i := 0; i < len(ret.RecordSet[index]); i++ {
+				record[i+1] = ret.RecordSet[index][i]
+			}
+			ret.RecordSet[index] = record
 			return nil
 		}); err != nil {
 			return nil, err

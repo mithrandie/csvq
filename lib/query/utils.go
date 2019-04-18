@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -33,17 +34,19 @@ func Distinguish(list []value.Primary, flags *cmd.Flags) []value.Primary {
 	values := make(map[string]int)
 	valueKeys := make([]string, 0, len(list))
 
-	keyBuf := new(bytes.Buffer)
+	buf := GetComparisonKeysBuf()
 
 	for i, v := range list {
-		keyBuf.Reset()
-		SerializeComparisonKeys(keyBuf, []value.Primary{v}, flags)
-		key := keyBuf.String()
+		buf.Reset()
+		SerializeComparisonKeys(buf, []value.Primary{v}, flags)
+		key := buf.String()
 		if _, ok := values[key]; !ok {
 			values[key] = i
 			valueKeys = append(valueKeys, key)
 		}
 	}
+
+	PutComparisonkeysBuf(buf)
 
 	distinguished := make([]value.Primary, len(valueKeys))
 	for i, key := range valueKeys {
@@ -63,6 +66,22 @@ func FormatCount(i int, obj string) string {
 		s = fmt.Sprintf("%d %ss", i, obj)
 	}
 	return s
+}
+
+var comparisonKeysBufPool = &sync.Pool{
+	New: func() interface{} {
+		return new(bytes.Buffer)
+	},
+}
+
+func GetComparisonKeysBuf() *bytes.Buffer {
+	buf := comparisonKeysBufPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	return buf
+}
+
+func PutComparisonkeysBuf(buf *bytes.Buffer) {
+	comparisonKeysBufPool.Put(buf)
 }
 
 func SerializeComparisonKeys(buf *bytes.Buffer, values []value.Primary, flags *cmd.Flags) {

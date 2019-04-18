@@ -1,7 +1,6 @@
 package query
 
 import (
-	"bytes"
 	"context"
 	"sort"
 	"strings"
@@ -76,7 +75,7 @@ func Analyze(ctx context.Context, scope *ReferenceScope, view *View, fn parser.A
 
 	partitionKeys := make([]string, view.RecordLen())
 	if err = NewGoroutineTaskManager(view.RecordLen(), -1, scope.Tx.Flags.CPU).Run(ctx, func(index int) error {
-		keyBuf := new(bytes.Buffer)
+		keyBuf := GetComparisonKeysBuf()
 
 		if view.sortValuesInEachCell[index] == nil {
 			view.sortValuesInEachCell[index] = make([]*SortValue, cap(view.RecordSet[index]))
@@ -97,6 +96,7 @@ func Analyze(ctx context.Context, scope *ReferenceScope, view *View, fn parser.A
 		}
 
 		partitionKeys[index] = keyBuf.String()
+		PutComparisonkeysBuf(keyBuf)
 		return nil
 	}); err != nil {
 		return err

@@ -6468,3 +6468,69 @@ func TestView_InternalRecordId(t *testing.T) {
 		t.Errorf("error = %s, want %s", err, expectErr)
 	}
 }
+
+func BenchmarkView_GroupBy(b *testing.B) {
+	view := &View{
+		Header:    NewHeader("t", []string{"c1", "c2", "c3"}),
+		RecordSet: make(RecordSet, 10000),
+	}
+	for i := int64(0); i < 10000; i++ {
+		view.RecordSet[i] = NewRecord([]value.Primary{
+			value.NewInteger(i),
+			value.NewString(randomStr(1)),
+			value.NewString(randomStr(1)),
+		})
+	}
+
+	ctx := context.Background()
+	scope := NewReferenceScope(TestTx)
+	clause := parser.GroupByClause{
+		Items: []parser.QueryExpression{
+			parser.FieldReference{Column: parser.Identifier{Literal: "c2"}},
+			parser.FieldReference{Column: parser.Identifier{Literal: "c3"}},
+		},
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		v := &View{
+			Header:    view.Header.Copy(),
+			RecordSet: view.RecordSet.Copy(),
+		}
+		_ = v.GroupBy(ctx, scope, clause)
+	}
+}
+
+func BenchmarkView_SelectDistinct(b *testing.B) {
+	view := &View{
+		Header:    NewHeader("t", []string{"c1", "c2", "c3"}),
+		RecordSet: make(RecordSet, 10000),
+	}
+	for i := int64(0); i < 10000; i++ {
+		view.RecordSet[i] = NewRecord([]value.Primary{
+			value.NewInteger(i),
+			value.NewString(randomStr(1)),
+			value.NewString(randomStr(1)),
+		})
+	}
+
+	ctx := context.Background()
+	scope := NewReferenceScope(TestTx)
+	clause := parser.SelectClause{
+		Distinct: parser.Token{Token: parser.DISTINCT},
+		Fields: []parser.QueryExpression{
+			parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "c1"}}},
+			parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "c2"}}},
+			parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "c3"}}},
+		},
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		v := &View{
+			Header:    view.Header.Copy(),
+			RecordSet: view.RecordSet.Copy(),
+		}
+		_ = v.Select(ctx, scope, clause)
+	}
+}

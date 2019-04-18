@@ -1066,17 +1066,19 @@ func (view *View) group(ctx context.Context, scope *ReferenceScope, items []pars
 
 	if err := EvaluateSequentially(ctx, scope, view, func(seqScope *ReferenceScope, rIdx int) error {
 		values := make([]value.Primary, len(items))
-		keyBuf := new(bytes.Buffer)
+		keyBuf := GetComparisonKeysBuf()
 
 		for i, item := range items {
 			p, e := Evaluate(ctx, seqScope, item)
 			if e != nil {
+				PutComparisonkeysBuf(keyBuf)
 				return e
 			}
 			values[i] = p
 		}
 		SerializeComparisonKeys(keyBuf, values, seqScope.Tx.Flags)
 		keys[rIdx] = keyBuf.String()
+		PutComparisonkeysBuf(keyBuf)
 		return nil
 	}); err != nil {
 		return err
@@ -1099,11 +1101,11 @@ func (view *View) group(ctx context.Context, scope *ReferenceScope, items []pars
 		indices := groups[groupKey]
 
 		for j := 0; j < view.FieldLen(); j++ {
-			primaries := make([]value.Primary, len(indices))
+			primaries := make(Cell, len(indices))
 			for k, idx := range indices {
 				primaries[k] = view.RecordSet[idx][j].Value()
 			}
-			record[j] = NewGroupCell(primaries)
+			record[j] = primaries
 		}
 
 		records[i] = record
@@ -1126,11 +1128,11 @@ func (view *View) groupAll() error {
 		records := make(RecordSet, 1)
 		record := make(Record, view.FieldLen())
 		for i := 0; i < view.FieldLen(); i++ {
-			primaries := make([]value.Primary, len(view.RecordSet))
+			primaries := make(Cell, len(view.RecordSet))
 			for j := range view.RecordSet {
 				primaries[j] = view.RecordSet[j][i].Value()
 			}
-			record[i] = NewGroupCell(primaries)
+			record[i] = primaries
 		}
 		records[0] = record
 		view.RecordSet = records
@@ -1294,7 +1296,7 @@ func (view *View) GenerateComparisonKeys(ctx context.Context, flags *cmd.Flags) 
 
 	return NewGoroutineTaskManager(view.RecordLen(), -1, flags.CPU).Run(ctx, func(index int) error {
 		flags := flags
-		buf := new(bytes.Buffer)
+		buf := GetComparisonKeysBuf()
 		if view.selectFields != nil {
 			primaries := make([]value.Primary, len(view.selectFields))
 			for j, idx := range view.selectFields {
@@ -1305,6 +1307,7 @@ func (view *View) GenerateComparisonKeys(ctx context.Context, flags *cmd.Flags) 
 			view.RecordSet[index].SerializeComparisonKeys(buf, flags)
 		}
 		view.comparisonKeysInEachRecord[index] = buf.String()
+		PutComparisonkeysBuf(buf)
 		return nil
 	})
 }
@@ -1777,7 +1780,8 @@ func (view *View) insert(ctx context.Context, fields []parser.QueryExpression, r
 	if err != nil {
 		return 0, err
 	}
-	view.RecordSet = append(view.RecordSet, records...)
+
+	view.RecordSet = view.RecordSet.Merge(records)
 	return len(recordValues), nil
 }
 
@@ -1832,6 +1836,7 @@ func (view *View) replace(ctx context.Context, flags *cmd.Flags, fields []parser
 	}
 
 	replacedRecord := make(map[int]bool, len(records))
+	replacedCount := 0
 	for i := range records {
 		replacedRecord[i] = false
 	}
@@ -1839,6 +1844,7 @@ func (view *View) replace(ctx context.Context, flags *cmd.Flags, fields []parser
 	var replaced = func(idx int) {
 		replaceMtx.Lock()
 		replacedRecord[idx] = true
+		replacedCount++
 		replaceMtx.Unlock()
 	}
 	if err := NewGoroutineTaskManager(view.RecordLen(), -1, flags.CPU).Run(ctx, func(index int) error {
@@ -1856,12 +1862,14 @@ func (view *View) replace(ctx context.Context, flags *cmd.Flags, fields []parser
 		return 0, err
 	}
 
-	for i, replaced := range replacedRecord {
-		if !replaced {
-			view.RecordSet = append(view.RecordSet, records[i])
+	insertRecords := make(RecordSet, 0, len(records))
+	for i, isReplaced := range replacedRecord {
+		if !isReplaced {
+			insertRecords = append(insertRecords, records[i])
 		}
 	}
-	return len(recordValues), nil
+	view.RecordSet = view.RecordSet.Merge(insertRecords)
+	return len(insertRecords) + replacedCount, nil
 }
 
 func (view *View) Fix(ctx context.Context, flags *cmd.Flags) error {

@@ -339,7 +339,7 @@ type SelectClause struct {
 }
 
 func (sc SelectClause) IsDistinct() bool {
-	return !sc.Distinct.IsEmpty()
+	return sc.Distinct.Token == DISTINCT
 }
 
 func (sc SelectClause) String() string {
@@ -773,7 +773,7 @@ func (e AggregateFunction) String() string {
 }
 
 func (e AggregateFunction) IsDistinct() bool {
-	return !e.Distinct.IsEmpty()
+	return e.Distinct.Token == DISTINCT
 }
 
 type Table struct {
