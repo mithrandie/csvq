@@ -1484,52 +1484,46 @@ func (view *View) ExtendRecordCapacity(ctx context.Context, scope *ReferenceScop
 }
 
 func (view *View) evalColumn(ctx context.Context, scope *ReferenceScope, obj parser.QueryExpression, alias string) (idx int, err error) {
-	switch obj.(type) {
-	case parser.FieldReference, parser.ColumnNumber:
-		if idx, err = view.FieldIndex(obj); err != nil {
+	idx, err = view.Header.ContainsObject(obj)
+	if err == nil {
+		rScope := scope.CreateScopeForRecordEvaluation(view, -1)
+		if _, err = Evaluate(ctx, rScope, obj); err != nil {
 			return
 		}
-		if view.isGrouped && view.Header[idx].IsFromTable && !view.Header[idx].IsGroupKey {
-			err = NewFieldNotGroupKeyError(obj)
-			return
-		}
-	default:
-		idx, err = view.Header.ContainsObject(obj)
-		if err != nil {
-			err = nil
+	} else {
+		err = nil
 
-			if analyticFunction, ok := obj.(parser.AnalyticFunction); ok {
-				err = view.evalAnalyticFunction(ctx, scope, analyticFunction)
-				if err != nil {
-					return
-				}
-			} else if view.RecordLen() < 1 {
-				if view.tempRecord == nil {
-					view.tempRecord = NewEmptyRecord(view.FieldLen())
-				}
-
-				rScope := scope.CreateScopeForRecordEvaluation(view, -1)
-				primary, e := Evaluate(ctx, rScope, obj)
-				if e != nil {
-					err = e
-					return
-				}
-				view.tempRecord = append(view.tempRecord, NewCell(primary))
-			} else {
-				if err = EvaluateSequentially(ctx, scope, view, func(seqScope *ReferenceScope, rIdx int) error {
-					primary, e := Evaluate(ctx, seqScope, obj)
-					if e != nil {
-						return e
-					}
-
-					view.RecordSet[rIdx] = append(view.RecordSet[rIdx], NewCell(primary))
-					return nil
-				}); err != nil {
-					return
-				}
+		if analyticFunction, ok := obj.(parser.AnalyticFunction); ok {
+			err = view.evalAnalyticFunction(ctx, scope, analyticFunction)
+			if err != nil {
+				return
 			}
-			view.Header, idx = AddHeaderField(view.Header, parser.FormatFieldIdentifier(obj), alias)
+		} else if view.RecordLen() < 1 {
+			if view.tempRecord == nil {
+				view.tempRecord = NewEmptyRecord(view.FieldLen())
+			}
+
+			rScope := scope.CreateScopeForRecordEvaluation(view, -1)
+			primary, e := Evaluate(ctx, rScope, obj)
+			if e != nil {
+				err = e
+				return
+			}
+			view.tempRecord = append(view.tempRecord, NewCell(primary))
+		} else {
+			if err = EvaluateSequentially(ctx, scope, view, func(seqScope *ReferenceScope, rIdx int) error {
+				primary, e := Evaluate(ctx, seqScope, obj)
+				if e != nil {
+					return e
+				}
+
+				view.RecordSet[rIdx] = append(view.RecordSet[rIdx], NewCell(primary))
+				return nil
+			}); err != nil {
+				return
+			}
 		}
+		view.Header, idx = AddHeaderField(view.Header, parser.FormatFieldIdentifier(obj), alias)
 	}
 
 	if 0 < len(alias) {
