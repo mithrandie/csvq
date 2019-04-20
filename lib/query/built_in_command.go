@@ -523,71 +523,72 @@ func ShowObjects(scope *ReferenceScope, expr parser.ShowObjects) (string, error)
 		}
 	case ShowCursors:
 		cursors := scope.AllCursors()
-		if len(cursors) < 1 {
+		if cursors.Len() < 1 {
 			s = scope.Tx.Warn("No cursor is declared")
 		} else {
 			keys := cursors.SortedKeys()
 
 			for _, key := range keys {
-				cur := cursors[key]
-				isOpen := cur.IsOpen()
+				if cur, ok := cursors.Load(key); ok {
+					isOpen := cur.IsOpen()
 
-				w.WriteColor(cur.name, cmd.ObjectEffect)
-				w.BeginBlock()
+					w.WriteColor(cur.name, cmd.ObjectEffect)
+					w.BeginBlock()
 
-				w.NewLine()
-				w.WriteColorWithoutLineBreak("Status: ", cmd.LableEffect)
-				if isOpen == ternary.TRUE {
-					nor, _ := cur.Count()
-					inRange, _ := cur.IsInRange()
-					position, _ := cur.Pointer()
+					w.NewLine()
+					w.WriteColorWithoutLineBreak("Status: ", cmd.LableEffect)
+					if isOpen == ternary.TRUE {
+						nor, _ := cur.Count()
+						inRange, _ := cur.IsInRange()
+						position, _ := cur.Pointer()
 
-					norStr := cmd.FormatInt(nor, ",")
+						norStr := cmd.FormatInt(nor, ",")
 
-					w.WriteColorWithoutLineBreak("Open", cmd.TernaryEffect)
-					w.WriteColorWithoutLineBreak("    Number of Rows: ", cmd.LableEffect)
-					w.WriteColorWithoutLineBreak(norStr, cmd.NumberEffect)
-					w.WriteSpaces(10 - len(norStr))
-					w.WriteColorWithoutLineBreak("Pointer: ", cmd.LableEffect)
-					switch inRange {
-					case ternary.FALSE:
-						w.WriteColorWithoutLineBreak("Out of Range", cmd.TernaryEffect)
-					case ternary.UNKNOWN:
-						w.WriteColorWithoutLineBreak(inRange.String(), cmd.TernaryEffect)
-					default:
-						w.WriteColorWithoutLineBreak(cmd.FormatInt(position, ","), cmd.NumberEffect)
+						w.WriteColorWithoutLineBreak("Open", cmd.TernaryEffect)
+						w.WriteColorWithoutLineBreak("    Number of Rows: ", cmd.LableEffect)
+						w.WriteColorWithoutLineBreak(norStr, cmd.NumberEffect)
+						w.WriteSpaces(10 - len(norStr))
+						w.WriteColorWithoutLineBreak("Pointer: ", cmd.LableEffect)
+						switch inRange {
+						case ternary.FALSE:
+							w.WriteColorWithoutLineBreak("Out of Range", cmd.TernaryEffect)
+						case ternary.UNKNOWN:
+							w.WriteColorWithoutLineBreak(inRange.String(), cmd.TernaryEffect)
+						default:
+							w.WriteColorWithoutLineBreak(cmd.FormatInt(position, ","), cmd.NumberEffect)
+						}
+					} else {
+						w.WriteColorWithoutLineBreak("Closed", cmd.TernaryEffect)
 					}
-				} else {
-					w.WriteColorWithoutLineBreak("Closed", cmd.TernaryEffect)
-				}
 
-				w.NewLine()
-				if cur.query.SelectEntity != nil {
-					w.WriteColor("Query: ", cmd.LableEffect)
-					writeQuery(w, cur.query.String())
-				} else {
-					w.WriteColorWithoutLineBreak("Statement: ", cmd.LableEffect)
-					w.WriteColorWithoutLineBreak(cur.statement.String(), cmd.IdentifierEffect)
-				}
+					w.NewLine()
+					if cur.query.SelectEntity != nil {
+						w.WriteColor("Query: ", cmd.LableEffect)
+						writeQuery(w, cur.query.String())
+					} else {
+						w.WriteColorWithoutLineBreak("Statement: ", cmd.LableEffect)
+						w.WriteColorWithoutLineBreak(cur.statement.String(), cmd.IdentifierEffect)
+					}
 
-				w.ClearBlock()
-				w.NewLine()
+					w.ClearBlock()
+					w.NewLine()
+				}
 			}
 			w.Title1 = "Cursors"
 			s = "\n" + w.String() + "\n"
 		}
 	case ShowFunctions:
 		scalas, aggs := scope.AllFunctions()
-		if len(scalas) < 1 && len(aggs) < 1 {
+		if scalas.Len() < 1 && aggs.Len() < 1 {
 			s = scope.Tx.Warn("No function is declared")
 		} else {
-			if 0 < len(scalas) {
+			if 0 < scalas.Len() {
 				w.Clear()
 				writeFunctions(w, scalas)
 				w.Title1 = "Scala Functions"
 				s += "\n" + w.String()
 			}
-			if 0 < len(aggs) {
+			if 0 < aggs.Len() {
 				w.Clear()
 				writeFunctions(w, aggs)
 				w.Title1 = "Aggregate Functions"
@@ -793,34 +794,34 @@ func writeFunctions(w *ObjectWriter, funcs UserDefinedFunctionMap) {
 	keys := funcs.SortedKeys()
 
 	for _, key := range keys {
-		fn := funcs[key]
+		if fn, ok := funcs.Load(key); ok {
+			w.WriteColor(fn.Name.String(), cmd.ObjectEffect)
+			w.WriteWithoutLineBreak(" (")
 
-		w.WriteColor(fn.Name.String(), cmd.ObjectEffect)
-		w.WriteWithoutLineBreak(" (")
-
-		if fn.IsAggregate {
-			w.WriteColorWithoutLineBreak(fn.Cursor.String(), cmd.IdentifierEffect)
-			if 0 < len(fn.Parameters) {
-				w.WriteWithoutLineBreak(", ")
+			if fn.IsAggregate {
+				w.WriteColorWithoutLineBreak(fn.Cursor.String(), cmd.IdentifierEffect)
+				if 0 < len(fn.Parameters) {
+					w.WriteWithoutLineBreak(", ")
+				}
 			}
+
+			for i, p := range fn.Parameters {
+				if 0 < i {
+					w.WriteWithoutLineBreak(", ")
+				}
+				if def, ok := fn.Defaults[p.Name]; ok {
+					w.WriteColorWithoutLineBreak(p.String(), cmd.AttributeEffect)
+					w.WriteWithoutLineBreak(" = ")
+					w.WriteColorWithoutLineBreak(def.String(), cmd.ValueEffect)
+				} else {
+					w.WriteColorWithoutLineBreak(p.String(), cmd.AttributeEffect)
+				}
+			}
+
+			w.WriteWithoutLineBreak(")")
+			w.ClearBlock()
+			w.NewLine()
 		}
-
-		for i, p := range fn.Parameters {
-			if 0 < i {
-				w.WriteWithoutLineBreak(", ")
-			}
-			if def, ok := fn.Defaults[p.Name]; ok {
-				w.WriteColorWithoutLineBreak(p.String(), cmd.AttributeEffect)
-				w.WriteWithoutLineBreak(" = ")
-				w.WriteColorWithoutLineBreak(def.String(), cmd.ValueEffect)
-			} else {
-				w.WriteColorWithoutLineBreak(p.String(), cmd.AttributeEffect)
-			}
-		}
-
-		w.WriteWithoutLineBreak(")")
-		w.ClearBlock()
-		w.NewLine()
 	}
 }
 

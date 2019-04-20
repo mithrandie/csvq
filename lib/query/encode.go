@@ -51,58 +51,36 @@ func EncodeView(ctx context.Context, fp io.Writer, view *View, fileInfo *FileInf
 	}
 }
 
-func bareValues(ctx context.Context, view *View) ([]string, [][]value.Primary, error) {
-	header := view.Header.TableColumnNames()
-	records := make([][]value.Primary, 0, view.RecordLen())
-	for _, record := range view.RecordSet {
-		if ctx.Err() != nil {
-			return nil, nil, ConvertContextError(ctx.Err())
-		}
-
-		row := make([]value.Primary, 0, view.FieldLen())
-		for _, cell := range record {
-			row = append(row, cell.Value())
-		}
-		records = append(records, row)
-	}
-	return header, records, nil
-}
-
 func encodeCSV(ctx context.Context, fp io.Writer, view *View, delimiter rune, lineBreak text.LineBreak, withoutHeader bool, encoding text.Encoding, encloseAll bool) error {
-	header, records, err := bareValues(ctx, view)
-	if err != nil {
-		return err
-	}
-
 	w, err := csv.NewWriter(fp, lineBreak, encoding)
 	if err != nil {
 		return err
 	}
 	w.Delimiter = delimiter
 
-	fields := make([]csv.Field, len(header))
+	fields := make([]csv.Field, view.FieldLen())
 
 	if !withoutHeader {
-		for i, v := range header {
-			fields[i] = csv.NewField(v, encloseAll)
+		for i := range view.Header {
+			fields[i] = csv.NewField(view.Header[i].Column, encloseAll)
 		}
 		if err := w.Write(fields); err != nil {
 			return err
 		}
 	}
 
-	for _, record := range records {
+	for i := range view.RecordSet {
 		if ctx.Err() != nil {
 			return ConvertContextError(ctx.Err())
 		}
 
-		for i, v := range record {
-			str, e, _ := ConvertFieldContents(v, false)
+		for j := range view.RecordSet[i] {
+			str, effect, _ := ConvertFieldContents(view.RecordSet[i][j].Value(), false)
 			quote := false
-			if encloseAll && (e == cmd.StringEffect || e == cmd.DatetimeEffect) {
+			if encloseAll && (effect == cmd.StringEffect || effect == cmd.DatetimeEffect) {
 				quote = true
 			}
-			fields[i] = csv.NewField(str, quote)
+			fields[j] = csv.NewField(str, quote)
 		}
 		if err := w.Write(fields); err != nil {
 			return err
@@ -112,36 +90,39 @@ func encodeCSV(ctx context.Context, fp io.Writer, view *View, delimiter rune, li
 }
 
 func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, positions []int, lineBreak text.LineBreak, withoutHeader bool, encoding text.Encoding, singleLine bool) error {
-	header, records, err := bareValues(ctx, view)
-	if err != nil {
-		return err
-	}
-
 	if positions == nil {
 		m := fixedlen.NewMeasure()
 		m.Encoding = encoding
 
-		fieldList := make([][]fixedlen.Field, 0, len(records)+1)
-		if !withoutHeader {
-			fields := make([]fixedlen.Field, 0, len(header))
-			for _, v := range header {
-				fields = append(fields, fixedlen.NewField(v, text.NotAligned))
+		var fieldList [][]fixedlen.Field = nil
+		var recordStartPos = 0
+		var fieldLen = view.FieldLen()
+
+		if withoutHeader {
+			fieldList = make([][]fixedlen.Field, view.RecordLen())
+		} else {
+			fieldList = make([][]fixedlen.Field, view.RecordLen()+1)
+			recordStartPos = 1
+
+			fields := make([]fixedlen.Field, fieldLen)
+			for i := range view.Header {
+				fields[i] = fixedlen.NewField(view.Header[i].Column, text.NotAligned)
 			}
-			fieldList = append(fieldList, fields)
+			fieldList[0] = fields
 			m.Measure(fields)
 		}
 
-		for _, record := range records {
+		for i := range view.RecordSet {
 			if ctx.Err() != nil {
 				return ConvertContextError(ctx.Err())
 			}
 
-			fields := make([]fixedlen.Field, 0, len(record))
-			for _, v := range record {
-				str, _, a := ConvertFieldContents(v, false)
-				fields = append(fields, fixedlen.NewField(str, a))
+			fields := make([]fixedlen.Field, fieldLen)
+			for j := range view.RecordSet[i] {
+				str, _, a := ConvertFieldContents(view.RecordSet[i][j].Value(), false)
+				fields[j] = fixedlen.NewField(str, a)
 			}
-			fieldList = append(fieldList, fields)
+			fieldList[i+recordStartPos] = fields
 			m.Measure(fields)
 		}
 
@@ -151,12 +132,12 @@ func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, posi
 			return err
 		}
 		w.InsertSpace = true
-		for _, fields := range fieldList {
+		for i := range fieldList {
 			if ctx.Err() != nil {
 				return ConvertContextError(ctx.Err())
 			}
 
-			if err := w.Write(fields); err != nil {
+			if err := w.Write(fieldList[i]); err != nil {
 				return err
 			}
 		}
@@ -169,43 +150,57 @@ func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, posi
 		}
 		w.SingleLine = singleLine
 
-		fields := make([]fixedlen.Field, len(header))
+		fields := make([]fixedlen.Field, view.FieldLen())
 
 		if !withoutHeader && !singleLine {
-			for i, v := range header {
-				fields[i] = fixedlen.NewField(v, text.NotAligned)
+			for i := range view.Header {
+				fields[i] = fixedlen.NewField(view.Header[i].Column, text.NotAligned)
 			}
 			if err := w.Write(fields); err != nil {
 				return err
 			}
 		}
 
-		for _, record := range records {
+		for i := range view.RecordSet {
 			if ctx.Err() != nil {
 				return ConvertContextError(ctx.Err())
 			}
 
-			for i, v := range record {
-				str, _, a := ConvertFieldContents(v, false)
-				fields[i] = fixedlen.NewField(str, a)
+			for j := range view.RecordSet[i] {
+				str, _, a := ConvertFieldContents(view.RecordSet[i][j].Value(), false)
+				fields[j] = fixedlen.NewField(str, a)
 			}
 			if err := w.Write(fields); err != nil {
 				return err
 			}
 		}
-		err = w.Flush()
+		if err = w.Flush(); err != nil {
+			return err
+		}
 	}
-	return err
+	return nil
 }
 
 func encodeJson(ctx context.Context, fp io.Writer, view *View, lineBreak text.LineBreak, escapeType txjson.EscapeType, prettyPrint bool, tx *Transaction) error {
-	header, records, err := bareValues(ctx, view)
-	if err != nil {
-		return err
+	header := view.Header.TableColumnNames()
+	records := make([][]value.Primary, view.RecordLen())
+	for i := range view.RecordSet {
+		if ctx.Err() != nil {
+			return ConvertContextError(ctx.Err())
+		}
+
+		row := make([]value.Primary, view.FieldLen())
+		for j := range view.RecordSet[i] {
+			row[j] = view.RecordSet[i][j].Value()
+		}
+		records[i] = row
 	}
 
-	data, err := json.ConvertTableValueToJsonStructure(header, records)
+	data, err := json.ConvertTableValueToJsonStructure(ctx, header, records)
 	if err != nil {
+		if ctx.Err() != nil {
+			return ConvertContextError(ctx.Err())
+		}
 		return errors.New(fmt.Sprintf("encoding to json failed: %s", err.Error()))
 	}
 
@@ -228,11 +223,6 @@ func encodeJson(ctx context.Context, fp io.Writer, view *View, lineBreak text.Li
 }
 
 func encodeText(ctx context.Context, fp io.Writer, view *View, format cmd.Format, lineBreak text.LineBreak, withoutHeader bool, encoding text.Encoding, tx *Transaction) (string, error) {
-	header, records, err := bareValues(ctx, view)
-	if err != nil {
-		return "", err
-	}
-
 	isPlainTable := false
 
 	var tableFormat = table.PlainTable
@@ -242,16 +232,16 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, format cmd.Format
 	case cmd.ORG:
 		tableFormat = table.OrgTable
 	default:
-		if len(header) < 1 {
+		if view.FieldLen() < 1 {
 			return "Empty Fields", NewEmptyResultSetError()
 		}
-		if len(records) < 1 {
+		if view.RecordLen() < 1 {
 			return "Empty RecordSet", NewEmptyResultSetError()
 		}
 		isPlainTable = true
 	}
 
-	e := table.NewEncoder(tableFormat, len(records))
+	e := table.NewEncoder(tableFormat, view.RecordLen())
 	e.LineBreak = lineBreak
 	e.EastAsianEncoding = tx.Flags.EastAsianEncoding
 	e.CountDiacriticalSign = tx.Flags.CountDiacriticalSign
@@ -259,26 +249,28 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, format cmd.Format
 	e.WithoutHeader = withoutHeader
 	e.Encoding = encoding
 
+	fieldLen := view.FieldLen()
+
 	if !withoutHeader {
-		hfields := make([]table.Field, 0, len(header))
-		for _, v := range header {
-			hfields = append(hfields, table.NewField(v, text.Centering))
+		hfields := make([]table.Field, fieldLen)
+		for i := range view.Header {
+			hfields[i] = table.NewField(view.Header[i].Column, text.Centering)
 		}
 		e.SetHeader(hfields)
 	}
 
-	aligns := make([]text.FieldAlignment, 0, len(header))
+	aligns := make([]text.FieldAlignment, fieldLen)
 
 	var textStrBuf bytes.Buffer
 	var textLineBuf bytes.Buffer
-	for i, record := range records {
+	for i := range view.RecordSet {
 		if ctx.Err() != nil {
 			return "", ConvertContextError(ctx.Err())
 		}
 
-		rfields := make([]table.Field, 0, len(header))
-		for _, v := range record {
-			str, effect, align := ConvertFieldContents(v, isPlainTable)
+		rfields := make([]table.Field, fieldLen)
+		for j := range view.RecordSet[i] {
+			str, effect, align := ConvertFieldContents(view.RecordSet[i][j].Value(), isPlainTable)
 			if format == cmd.TEXT {
 				textStrBuf.Reset()
 				textLineBuf.Reset()
@@ -314,10 +306,10 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, format cmd.Format
 				}
 				str = textStrBuf.String()
 			}
-			rfields = append(rfields, table.NewField(str, align))
+			rfields[j] = table.NewField(str, align)
 
 			if i == 0 {
-				aligns = append(aligns, align)
+				aligns[j] = align
 			}
 		}
 		e.AppendRecord(rfields)
@@ -339,24 +331,24 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, format cmd.Format
 }
 
 func encodeLTSV(ctx context.Context, fp io.Writer, view *View, lineBreak text.LineBreak, encoding text.Encoding) error {
-	header, records, err := bareValues(ctx, view)
+	hfields := make([]string, view.FieldLen())
+	for i := range view.Header {
+		hfields[i] = view.Header[i].Column
+	}
+
+	w, err := ltsv.NewWriter(fp, hfields, lineBreak, encoding)
 	if err != nil {
 		return err
 	}
 
-	w, err := ltsv.NewWriter(fp, header, lineBreak, encoding)
-	if err != nil {
-		return err
-	}
-
-	fields := make([]string, len(header))
-	for _, record := range records {
+	fields := make([]string, view.FieldLen())
+	for i := range view.RecordSet {
 		if ctx.Err() != nil {
 			return ConvertContextError(ctx.Err())
 		}
 
-		for i, v := range record {
-			fields[i], _, _ = ConvertFieldContents(v, false)
+		for j := range view.RecordSet[i] {
+			fields[j], _, _ = ConvertFieldContents(view.RecordSet[i][j].Value(), false)
 		}
 		if err := w.Write(fields); err != nil {
 			return err

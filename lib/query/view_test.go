@@ -2463,7 +2463,7 @@ func TestView_Load(t *testing.T) {
 		}
 
 		queryScope := v.Scope.CreateNode()
-		err := view.Load(ctx, queryScope, v.From, false, v.UseInternalId)
+		err := view.Load(ctx, queryScope, v.From.Tables, false, v.UseInternalId)
 
 		if err != nil {
 			if len(v.Error) < 1 {

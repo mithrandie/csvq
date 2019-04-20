@@ -1,6 +1,7 @@
 package json
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -439,8 +440,9 @@ var convertTableValueToJsonStructureTests = []struct {
 }
 
 func TestConvertTableValueToJsonStructure(t *testing.T) {
+	ctx := context.Background()
 	for _, v := range convertTableValueToJsonStructureTests {
-		result, err := ConvertTableValueToJsonStructure(v.Fields, v.Rows)
+		result, err := ConvertTableValueToJsonStructure(ctx, v.Fields, v.Rows)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("unexpected error %q for %s, %s", err.Error(), v.Fields, v.Rows)

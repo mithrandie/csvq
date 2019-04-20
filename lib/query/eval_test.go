@@ -4022,13 +4022,16 @@ func TestEvaluate(t *testing.T) {
 	}()
 
 	TestTx.Flags.Repository = TestDataDir
-	scope := NewReferenceScope(TestTx)
-	scope.blocks[0].cursors = CursorMap{
-		"CUR": &Cursor{
-			query: selectQueryForCursorTest,
-			mtx:   &sync.Mutex{},
+	scope := GenerateReferenceScope([]map[string]map[string]interface{}{
+		{
+			scopeNameCursors: {
+				"CUR": &Cursor{
+					query: selectQueryForCursorTest,
+					mtx:   &sync.Mutex{},
+				},
+			},
 		},
-	}
+	}, nil, time.Time{}, nil)
 
 	ctx := context.Background()
 	_ = scope.OpenCursor(ctx, parser.Identifier{Literal: "cur"}, nil)

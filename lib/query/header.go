@@ -86,7 +86,7 @@ func (h Header) Len() int {
 }
 
 func (h Header) TableColumns() []parser.QueryExpression {
-	columns := make([]parser.QueryExpression, 0)
+	columns := make([]parser.QueryExpression, 0, h.Len())
 	for _, f := range h {
 		if !f.IsFromTable {
 			continue
@@ -105,7 +105,7 @@ func (h Header) TableColumns() []parser.QueryExpression {
 }
 
 func (h Header) TableColumnNames() []string {
-	names := make([]string, 0)
+	names := make([]string, 0, h.Len())
 	for _, f := range h {
 		if !f.IsFromTable {
 			continue

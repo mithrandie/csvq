@@ -45,7 +45,7 @@ var encodeViewTests = []struct {
 		View: &View{
 			Header: NewHeader("", []string{}),
 			RecordSet: []Record{
-				NewRecord([]value.Primary{value.NewNull()}),
+				NewRecord([]value.Primary{}),
 			},
 		},
 		Format: cmd.TEXT,

@@ -3,7 +3,6 @@ package query
 import (
 	"context"
 	"errors"
-	"sort"
 	"strings"
 	"sync"
 
@@ -13,68 +12,96 @@ import (
 	"github.com/mithrandie/ternary"
 )
 
-type CursorMap map[string]*Cursor
+type CursorMap struct {
+	*SyncMap
+}
+
+func NewCursorMap() CursorMap {
+	return CursorMap{
+		NewSyncMap(),
+	}
+}
+
+func (m CursorMap) IsEmpty() bool {
+	return m.SyncMap == nil
+}
+
+func (m CursorMap) Store(name string, val *Cursor) {
+	m.store(strings.ToUpper(name), val)
+}
+
+func (m CursorMap) Load(name string) (*Cursor, bool) {
+	if v, ok := m.load(strings.ToUpper(name)); ok {
+		return v.(*Cursor), true
+	}
+	return nil, false
+}
+
+func (m CursorMap) Delete(name string) {
+	m.delete(strings.ToUpper(name))
+}
+
+func (m CursorMap) Exists(name string) bool {
+	return m.exists(strings.ToUpper(name))
+}
 
 func (m CursorMap) Declare(expr parser.CursorDeclaration) error {
-	uname := strings.ToUpper(expr.Cursor.Literal)
-	if _, ok := m[uname]; ok {
+	if m.Exists(expr.Cursor.Literal) {
 		return NewCursorRedeclaredError(expr.Cursor)
 	}
-	m[uname] = NewCursor(expr)
+	m.Store(expr.Cursor.Literal, NewCursor(expr))
 	return nil
 }
 
 func (m CursorMap) AddPseudoCursor(name parser.Identifier, values []value.Primary) error {
-	uname := strings.ToUpper(name.Literal)
-	if _, ok := m[uname]; ok {
+	if m.Exists(name.Literal) {
 		return NewCursorRedeclaredError(name)
 	}
-	m[uname] = NewPseudoCursor(values)
+	m.Store(name.Literal, NewPseudoCursor(name.Literal, values))
 	return nil
 }
 
 func (m CursorMap) Dispose(name parser.Identifier) error {
-	uname := strings.ToUpper(name.Literal)
-	if cur, ok := m[uname]; ok {
+	if cur, ok := m.Load(name.Literal); ok {
 		if cur.isPseudo {
 			return NewPseudoCursorError(name)
 		}
-		delete(m, uname)
+		m.Delete(name.Literal)
 		return nil
 	}
 	return NewUndeclaredCursorError(name)
 }
 
 func (m CursorMap) Open(ctx context.Context, scope *ReferenceScope, name parser.Identifier, values []parser.ReplaceValue) error {
-	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
+	if cur, ok := m.Load(name.Literal); ok {
 		return cur.Open(ctx, scope, name, values)
 	}
 	return NewUndeclaredCursorError(name)
 }
 
 func (m CursorMap) Close(name parser.Identifier) error {
-	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
+	if cur, ok := m.Load(name.Literal); ok {
 		return cur.Close(name)
 	}
 	return NewUndeclaredCursorError(name)
 }
 
 func (m CursorMap) Fetch(name parser.Identifier, position int, number int) ([]value.Primary, error) {
-	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
+	if cur, ok := m.Load(name.Literal); ok {
 		return cur.Fetch(name, position, number)
 	}
 	return nil, NewUndeclaredCursorError(name)
 }
 
 func (m CursorMap) IsOpen(name parser.Identifier) (ternary.Value, error) {
-	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
+	if cur, ok := m.Load(name.Literal); ok {
 		return cur.IsOpen(), nil
 	}
 	return ternary.FALSE, NewUndeclaredCursorError(name)
 }
 
 func (m CursorMap) IsInRange(name parser.Identifier) (ternary.Value, error) {
-	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
+	if cur, ok := m.Load(name.Literal); ok {
 		t, err := cur.IsInRange()
 		if err != nil {
 			return ternary.FALSE, NewCursorClosedError(name)
@@ -85,7 +112,7 @@ func (m CursorMap) IsInRange(name parser.Identifier) (ternary.Value, error) {
 }
 
 func (m CursorMap) Count(name parser.Identifier) (int, error) {
-	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
+	if cur, ok := m.Load(name.Literal); ok {
 		i, err := cur.Count()
 		if err != nil {
 			return 0, NewCursorClosedError(name)
@@ -93,26 +120,6 @@ func (m CursorMap) Count(name parser.Identifier) (int, error) {
 		return i, nil
 	}
 	return 0, NewUndeclaredCursorError(name)
-}
-
-func (m CursorMap) Keys() []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	return keys
-}
-
-func (m CursorMap) SortedKeys() []string {
-	keys := m.Keys()
-	sort.Strings(keys)
-	return keys
-}
-
-func (m CursorMap) Clear() {
-	for k := range m {
-		delete(m, k)
-	}
 }
 
 type Cursor struct {
@@ -137,7 +144,7 @@ func NewCursor(e parser.CursorDeclaration) *Cursor {
 	}
 }
 
-func NewPseudoCursor(values []value.Primary) *Cursor {
+func NewPseudoCursor(name string, values []value.Primary) *Cursor {
 	header := NewHeader("", []string{"c1"})
 
 	records := make(RecordSet, len(values))
@@ -149,6 +156,7 @@ func NewPseudoCursor(values []value.Primary) *Cursor {
 	view.RecordSet = records
 
 	return &Cursor{
+		name:     name,
 		view:     view,
 		index:    -1,
 		fetched:  false,

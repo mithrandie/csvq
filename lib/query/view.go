@@ -28,6 +28,9 @@ import (
 	"github.com/mithrandie/ternary"
 )
 
+const fileLoadingPreparedRecordSetCap = 300
+const fileLoadingBuffer = 200
+
 type RecordReader interface {
 	Read() ([]text.RawText, error)
 }
@@ -56,19 +59,19 @@ func NewView() *View {
 	return &View{}
 }
 
-func (view *View) Load(ctx context.Context, scope *ReferenceScope, clause parser.FromClause, forUpdate bool, useInternalId bool) error {
-	if clause.Tables == nil {
+func (view *View) Load(ctx context.Context, scope *ReferenceScope, tables []parser.QueryExpression, forUpdate bool, useInternalId bool) error {
+	if tables == nil {
 		var obj parser.QueryExpression
 		if scope.Tx.Session.CanReadStdin() {
 			obj = parser.Stdin{Stdin: "stdin"}
 		} else {
 			obj = parser.Dual{}
 		}
-		clause.Tables = []parser.QueryExpression{parser.Table{Object: obj}}
+		tables = []parser.QueryExpression{parser.Table{Object: obj}}
 	}
 
-	views := make([]*View, len(clause.Tables))
-	for i, v := range clause.Tables {
+	views := make([]*View, len(tables))
+	for i, v := range tables {
 		loaded, err := loadView(ctx, scope, v, forUpdate, useInternalId)
 		if err != nil {
 			return err
@@ -90,13 +93,11 @@ func (view *View) Load(ctx context.Context, scope *ReferenceScope, clause parser
 }
 
 func (view *View) LoadFromTableIdentifier(ctx context.Context, scope *ReferenceScope, table parser.QueryExpression, forUpdate bool, useInternalId bool) error {
-	fromClause := parser.FromClause{
-		Tables: []parser.QueryExpression{
-			parser.Table{Object: table},
-		},
+	tables := []parser.QueryExpression{
+		parser.Table{Object: table},
 	}
 
-	return view.Load(ctx, scope, fromClause, forUpdate, useInternalId)
+	return view.Load(ctx, scope, tables, forUpdate, useInternalId)
 }
 
 func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.QueryExpression, forUpdate bool, useInternalId bool) (view *View, err error) {
@@ -547,7 +548,7 @@ func loadObject(
 	tableIdentifier := tableExpr.(parser.Identifier)
 
 	if scope.RecursiveTable != nil && strings.EqualFold(tableIdentifier.Literal, scope.RecursiveTable.Name.Literal) && scope.RecursiveTmpView != nil {
-		view := scope.RecursiveTmpView
+		view := scope.RecursiveTmpView.Copy()
 		if !strings.EqualFold(scope.RecursiveTable.Name.Literal, tableName.Literal) {
 			if err := view.Header.Update(tableName.Literal, nil); err != nil {
 				return nil, err
@@ -786,7 +787,7 @@ func loadViewFromFixedLengthTextFile(ctx context.Context, fp io.ReadSeeker, file
 		}
 	}
 
-	records, err := readRecordSet(ctx, reader)
+	records, err := readRecordSet(ctx, reader, fileSize(fp))
 	if err != nil {
 		return nil, err
 	}
@@ -829,7 +830,7 @@ func loadViewFromCSVFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileIn
 		}
 	}
 
-	records, err := readRecordSet(ctx, reader)
+	records, err := readRecordSet(ctx, reader, fileSize(fp))
 	if err != nil {
 		return nil, err
 	}
@@ -864,7 +865,7 @@ func loadViewFromLTSVFile(ctx context.Context, flags *cmd.Flags, fp io.ReadSeeke
 	}
 	reader.WithoutNull = withoutNull
 
-	records, err := readRecordSet(ctx, reader)
+	records, err := readRecordSet(ctx, reader, fileSize(fp))
 	if err != nil {
 		return nil, err
 	}
@@ -894,11 +895,21 @@ func loadViewFromLTSVFile(ctx context.Context, flags *cmd.Flags, fp io.ReadSeeke
 	return view, nil
 }
 
-func readRecordSet(ctx context.Context, reader RecordReader) (RecordSet, error) {
+func fileSize(fp io.ReadSeeker) int64 {
+	if f, ok := fp.(*os.File); ok {
+		if fi, err := f.Stat(); err == nil {
+			return fi.Size()
+		}
+	}
+	return 0
+}
+
+func readRecordSet(ctx context.Context, reader RecordReader, fileSize int64) (RecordSet, error) {
 	var err error
-	records := make(RecordSet, 0, 1000)
-	rowch := make(chan []text.RawText, 1000)
-	fieldch := make(chan []value.Primary, 1000)
+	recordSet := make(RecordSet, 0, fileLoadingPreparedRecordSetCap)
+	rowch := make(chan []text.RawText, fileLoadingBuffer)
+	fieldch := make(chan []value.Primary, fileLoadingBuffer)
+	pos := 0
 
 	wg := sync.WaitGroup{}
 
@@ -909,7 +920,15 @@ func readRecordSet(ctx context.Context, reader RecordReader) (RecordSet, error) 
 			if !ok {
 				break
 			}
-			records = append(records, NewRecord(primaries))
+
+			if 0 < fileSize && len(recordSet) == fileLoadingPreparedRecordSetCap && int64(pos) < fileSize {
+				l := int((float64(fileSize) / float64(pos)) * fileLoadingPreparedRecordSetCap * 1.2)
+				newSet := make(RecordSet, fileLoadingPreparedRecordSetCap, l)
+				copy(newSet, recordSet)
+				recordSet = newSet
+			}
+
+			recordSet = append(recordSet, NewRecord(primaries))
 		}
 		wg.Done()
 	}()
@@ -937,6 +956,7 @@ func readRecordSet(ctx context.Context, reader RecordReader) (RecordSet, error) 
 
 	wg.Add(1)
 	go func() {
+		i := 0
 		for {
 			if ctx.Err() != nil {
 				err = ConvertContextError(ctx.Err())
@@ -951,6 +971,14 @@ func readRecordSet(ctx context.Context, reader RecordReader) (RecordSet, error) 
 				err = e
 				break
 			}
+
+			if 0 < fileSize && i < fileLoadingPreparedRecordSetCap {
+				for j := range record {
+					pos += len(record[j])
+				}
+				i++
+			}
+
 			rowch <- record
 		}
 		close(rowch)
@@ -959,7 +987,7 @@ func readRecordSet(ctx context.Context, reader RecordReader) (RecordSet, error) 
 
 	wg.Wait()
 
-	return records, err
+	return recordSet, err
 }
 
 func loadViewFromJsonFile(fp io.Reader, fileInfo *FileInfo, expr parser.QueryExpression) (*View, error) {
@@ -973,9 +1001,9 @@ func loadViewFromJsonFile(fp io.Reader, fileInfo *FileInfo, expr parser.QueryExp
 		return nil, NewLoadJsonError(expr, err.Error())
 	}
 
-	records := make([]Record, 0, len(rows))
-	for _, row := range rows {
-		records = append(records, NewRecord(row))
+	records := make(RecordSet, len(rows))
+	for i := range rows {
+		records[i] = NewRecord(rows[i])
 	}
 
 	fileInfo.Encoding = text.UTF8
@@ -991,7 +1019,7 @@ func loadViewFromJsonFile(fp io.Reader, fileInfo *FileInfo, expr parser.QueryExp
 func loadDualView() *View {
 	view := View{
 		Header:    NewDualHeader(),
-		RecordSet: make([]Record, 1),
+		RecordSet: make(RecordSet, 1),
 	}
 	view.RecordSet[0] = NewEmptyRecord(1)
 	return &view
@@ -1002,7 +1030,7 @@ func NewViewFromGroupedRecord(ctx context.Context, flags *cmd.Flags, referenceRe
 	view.Header = referenceRecor.view.Header
 	record := referenceRecor.view.RecordSet[referenceRecor.recordIndex]
 
-	view.RecordSet = make([]Record, record.GroupLen())
+	view.RecordSet = make(RecordSet, record.GroupLen())
 
 	if err := NewGoroutineTaskManager(record.GroupLen(), -1, flags.CPU).Run(ctx, func(index int) error {
 		view.RecordSet[index] = make(Record, view.FieldLen())
@@ -1041,15 +1069,17 @@ func (view *View) filter(ctx context.Context, scope *ReferenceScope, condition p
 		return err
 	}
 
-	records := make(RecordSet, 0, len(results))
+	newIdx := 0
 	for i, ok := range results {
 		if ok {
-			records = append(records, view.RecordSet[i])
+			if i != newIdx {
+				view.RecordSet[newIdx] = view.RecordSet[i]
+			}
+			newIdx++
 		}
 	}
 
-	view.RecordSet = make(RecordSet, len(records))
-	copy(view.RecordSet, records)
+	view.RecordSet = view.RecordSet[:newIdx]
 	return nil
 }
 
@@ -1599,10 +1629,11 @@ func (view *View) Offset(ctx context.Context, scope *ReferenceScope, clause pars
 	if view.RecordLen() <= view.offset {
 		view.RecordSet = RecordSet{}
 	} else {
-		view.RecordSet = view.RecordSet[view.offset:]
-		records := make(RecordSet, len(view.RecordSet))
-		copy(records, view.RecordSet)
-		view.RecordSet = records
+		newSet := view.RecordSet[view.offset:]
+		view.RecordSet = view.RecordSet[:len(newSet)]
+		for i := range newSet {
+			view.RecordSet[i] = newSet[i]
+		}
 	}
 	return nil
 }
@@ -1653,9 +1684,6 @@ func (view *View) Limit(ctx context.Context, scope *ReferenceScope, clause parse
 	}
 
 	view.RecordSet = view.RecordSet[:limit]
-	records := make(RecordSet, view.RecordLen())
-	copy(records, view.RecordSet)
-	view.RecordSet = records
 	return nil
 }
 
@@ -1736,7 +1764,7 @@ func (view *View) convertResultSetToRecordValues(ctx context.Context, scope *Ref
 	return recordValues, nil
 }
 
-func (view *View) convertRecordValuesToRecords(ctx context.Context, fields []parser.QueryExpression, recordValues [][]value.Primary) ([]Record, error) {
+func (view *View) convertRecordValuesToRecordSet(ctx context.Context, fields []parser.QueryExpression, recordValues [][]value.Primary) (RecordSet, error) {
 	var valueIndex = func(i int, list []int) int {
 		for j, v := range list {
 			if i == v {
@@ -1756,7 +1784,7 @@ func (view *View) convertRecordValuesToRecords(ctx context.Context, fields []par
 		recordIndices[i] = valueIndex(i, fieldIndices)
 	}
 
-	records := make([]Record, len(recordValues))
+	records := make(RecordSet, len(recordValues))
 	for i, values := range recordValues {
 		if ctx.Err() != nil {
 			return nil, ConvertContextError(ctx.Err())
@@ -1776,7 +1804,7 @@ func (view *View) convertRecordValuesToRecords(ctx context.Context, fields []par
 }
 
 func (view *View) insert(ctx context.Context, fields []parser.QueryExpression, recordValues [][]value.Primary) (int, error) {
-	records, err := view.convertRecordValuesToRecords(ctx, fields, recordValues)
+	records, err := view.convertRecordValuesToRecordSet(ctx, fields, recordValues)
 	if err != nil {
 		return 0, err
 	}
@@ -1806,7 +1834,7 @@ func (view *View) replace(ctx context.Context, flags *cmd.Flags, fields []parser
 		}
 	}
 
-	records, err := view.convertRecordValuesToRecords(ctx, fields, recordValues)
+	records, err := view.convertRecordValuesToRecordSet(ctx, fields, recordValues)
 	if err != nil {
 		return 0, err
 	}
@@ -1886,8 +1914,10 @@ func (view *View) Fix(ctx context.Context, flags *cmd.Flags) error {
 	}
 
 	if resize {
+		fieldLen := len(view.selectFields)
+
 		if err := NewGoroutineTaskManager(view.RecordLen(), -1, flags.CPU).Run(ctx, func(index int) error {
-			record := make(Record, len(view.selectFields))
+			record := make(Record, fieldLen)
 			for j, idx := range view.selectFields {
 				if 1 < view.RecordSet[index].GroupLen() {
 					record[j] = NewCell(view.RecordSet[index][idx].Value())
@@ -1895,7 +1925,10 @@ func (view *View) Fix(ctx context.Context, flags *cmd.Flags) error {
 					record[j] = view.RecordSet[index][idx]
 				}
 			}
-			view.RecordSet[index] = record
+			view.RecordSet[index] = view.RecordSet[index][:fieldLen]
+			for i := range record {
+				view.RecordSet[index][i] = record[i]
+			}
 			return nil
 		}); err != nil {
 			return err

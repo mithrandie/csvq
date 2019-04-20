@@ -53,7 +53,7 @@ func BlockScopeListEqual(s1 []BlockScope, s2 []BlockScope) bool {
 		if !SyncMapEqual(s1[i].temporaryTables, s2[i].temporaryTables) {
 			return false
 		}
-		if !reflect.DeepEqual(s1[i].cursors, s2[i].cursors) {
+		if !SyncMapEqual(s1[i].cursors, s2[i].cursors) {
 			return false
 		}
 		if !reflect.DeepEqual(s1[i].functions, s2[i].functions) {
@@ -276,9 +276,9 @@ func GenerateReferenceScope(blocks []map[string]map[string]interface{}, nodes []
 				case scopeNameTempTables:
 					rs.blocks[i].temporaryTables.Store(k, v.(*View))
 				case scopeNameCursors:
-					rs.blocks[i].cursors[k] = v.(*Cursor)
+					rs.blocks[i].cursors.Store(k, v.(*Cursor))
 				case scopeNameFunctions:
-					rs.blocks[i].functions[k] = v.(*UserDefinedFunction)
+					rs.blocks[i].functions.Store(k, v.(*UserDefinedFunction))
 				}
 			}
 		}
@@ -317,6 +317,22 @@ func GenerateViewMap(values []*View) ViewMap {
 	m := NewViewMap()
 	for _, v := range values {
 		m.Store(v.FileInfo.Path, v)
+	}
+	return m
+}
+
+func GenerateCursorMap(values []*Cursor) CursorMap {
+	m := NewCursorMap()
+	for _, v := range values {
+		m.Store(v.name, v)
+	}
+	return m
+}
+
+func GenerateUserDefinedFunctionMap(values []*UserDefinedFunction) UserDefinedFunctionMap {
+	m := NewUserDefinedFunctionMap()
+	for _, v := range values {
+		m.Store(v.Name.Literal, v)
 	}
 	return m
 }

@@ -1,6 +1,7 @@
 package json
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -89,19 +90,23 @@ func ConvertToTableValue(array json.Array) ([]string, [][]value.Primary, error) 
 	return header, rows, nil
 }
 
-func ConvertTableValueToJsonStructure(fields []string, rows [][]value.Primary) (json.Structure, error) {
+func ConvertTableValueToJsonStructure(ctx context.Context, fields []string, rows [][]value.Primary) (json.Structure, error) {
 	pathes, err := ParsePathes(fields)
 	if err != nil {
 		return nil, err
 	}
 
-	structure := make(json.Array, 0, len(rows))
-	for _, row := range rows {
-		rowStructure, err := ConvertRecordValueToJsonStructure(pathes, row)
+	structure := make(json.Array, len(rows))
+	for i := range rows {
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+
+		rowStructure, err := ConvertRecordValueToJsonStructure(pathes, rows[i])
 		if err != nil {
 			return nil, err
 		}
-		structure = append(structure, rowStructure)
+		structure[i] = rowStructure
 	}
 
 	return structure, nil
