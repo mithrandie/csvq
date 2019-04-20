@@ -241,7 +241,7 @@ func SetFlag(ctx context.Context, scope *ReferenceScope, expr parser.SetFlag) er
 		return NewInvalidFlagNameError(expr.Flag)
 	}
 
-	if err = scope.Tx.SetFlag(expr.Flag.Name, val, ""); err != nil {
+	if err = scope.Tx.SetFlag(expr.Flag.Name, val); err != nil {
 		return NewInvalidFlagValueError(expr, err.Error())
 	}
 	return nil

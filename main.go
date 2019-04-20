@@ -312,117 +312,117 @@ func commandAction(fn func(ctx context.Context, c *cli.Context, proc *query.Proc
 
 func overwriteFlags(c *cli.Context, tx *query.Transaction) error {
 	if c.GlobalIsSet("repository") {
-		if err := tx.SetFlag(cmd.RepositoryFlag, c.GlobalString("repository"), ""); err != nil {
+		if err := tx.SetFlag(cmd.RepositoryFlag, c.GlobalString("repository")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.GlobalIsSet("timezone") {
-		if err := tx.SetFlag(cmd.TimezoneFlag, c.GlobalString("timezone"), ""); err != nil {
+		if err := tx.SetFlag(cmd.TimezoneFlag, c.GlobalString("timezone")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.GlobalIsSet("datetime-format") {
-		_ = tx.SetFlag(cmd.DatetimeFormatFlag, c.GlobalString("datetime-format"), "")
+		_ = tx.SetFlag(cmd.DatetimeFormatFlag, c.GlobalString("datetime-format"))
 	}
 
 	if c.GlobalIsSet("wait-timeout") {
-		_ = tx.SetFlag(cmd.WaitTimeoutFlag, c.GlobalFloat64("wait-timeout"), "")
+		_ = tx.SetFlag(cmd.WaitTimeoutFlag, c.GlobalFloat64("wait-timeout"))
 	}
 	if c.GlobalIsSet("color") {
-		_ = tx.SetFlag(cmd.ColorFlag, c.GlobalBool("color"), "")
+		_ = tx.SetFlag(cmd.ColorFlag, c.GlobalBool("color"))
 	}
 
 	if c.GlobalIsSet("import-format") {
-		if err := tx.SetFlag(cmd.ImportFormatFlag, c.GlobalString("import-format"), ""); err != nil {
+		if err := tx.SetFlag(cmd.ImportFormatFlag, c.GlobalString("import-format")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.GlobalIsSet("delimiter") {
-		if err := tx.SetFlag(cmd.DelimiterFlag, c.GlobalString("delimiter"), ""); err != nil {
+		if err := tx.SetFlag(cmd.DelimiterFlag, c.GlobalString("delimiter")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.GlobalIsSet("delimiter-positions") {
-		if err := tx.SetFlag(cmd.DelimiterPositionsFlag, c.GlobalString("delimiter-positions"), ""); err != nil {
+		if err := tx.SetFlag(cmd.DelimiterPositionsFlag, c.GlobalString("delimiter-positions")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.GlobalIsSet("json-query") {
-		_ = tx.SetFlag(cmd.JsonQueryFlag, c.GlobalString("json-query"), "")
+		_ = tx.SetFlag(cmd.JsonQueryFlag, c.GlobalString("json-query"))
 	}
 	if c.GlobalIsSet("encoding") {
-		if err := tx.SetFlag(cmd.EncodingFlag, c.GlobalString("encoding"), ""); err != nil {
+		if err := tx.SetFlag(cmd.EncodingFlag, c.GlobalString("encoding")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.GlobalIsSet("no-header") {
-		_ = tx.SetFlag(cmd.NoHeaderFlag, c.GlobalBool("no-header"), "")
+		_ = tx.SetFlag(cmd.NoHeaderFlag, c.GlobalBool("no-header"))
 	}
 	if c.GlobalIsSet("without-null") {
-		_ = tx.SetFlag(cmd.WithoutNullFlag, c.GlobalBool("without-null"), "")
+		_ = tx.SetFlag(cmd.WithoutNullFlag, c.GlobalBool("without-null"))
 	}
 
 	if c.GlobalIsSet("format") {
-		if err := tx.SetFlag(cmd.FormatFlag, c.GlobalString("format"), c.GlobalString("out")); err != nil {
+		if err := tx.SetFormatFlag(c.GlobalString("format"), c.GlobalString("out")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.GlobalIsSet("write-encoding") {
-		if err := tx.SetFlag(cmd.WriteEncodingFlag, c.GlobalString("write-encoding"), ""); err != nil {
+		if err := tx.SetFlag(cmd.WriteEncodingFlag, c.GlobalString("write-encoding")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.GlobalIsSet("write-delimiter") {
-		if err := tx.SetFlag(cmd.WriteDelimiterFlag, c.GlobalString("write-delimiter"), ""); err != nil {
+		if err := tx.SetFlag(cmd.WriteDelimiterFlag, c.GlobalString("write-delimiter")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.GlobalIsSet("write-delimiter-positions") {
-		if err := tx.SetFlag(cmd.WriteDelimiterPositionsFlag, c.GlobalString("write-delimiter-positions"), ""); err != nil {
+		if err := tx.SetFlag(cmd.WriteDelimiterPositionsFlag, c.GlobalString("write-delimiter-positions")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.GlobalIsSet("without-header") {
-		_ = tx.SetFlag(cmd.WithoutHeaderFlag, c.GlobalBool("without-header"), "")
+		_ = tx.SetFlag(cmd.WithoutHeaderFlag, c.GlobalBool("without-header"))
 	}
 	if c.GlobalIsSet("line-break") {
-		if err := tx.SetFlag(cmd.LineBreakFlag, c.GlobalString("line-break"), ""); err != nil {
+		if err := tx.SetFlag(cmd.LineBreakFlag, c.GlobalString("line-break")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.GlobalIsSet("enclose-all") {
-		_ = tx.SetFlag(cmd.EncloseAllFlag, c.GlobalBool("enclose-all"), "")
+		_ = tx.SetFlag(cmd.EncloseAllFlag, c.GlobalBool("enclose-all"))
 	}
 	if c.GlobalIsSet("json-escape") {
-		if err := tx.SetFlag(cmd.JsonEscapeFlag, c.GlobalString("json-escape"), ""); err != nil {
+		if err := tx.SetFlag(cmd.JsonEscapeFlag, c.GlobalString("json-escape")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.GlobalIsSet("pretty-print") {
-		_ = tx.SetFlag(cmd.PrettyPrintFlag, c.GlobalBool("pretty-print"), "")
+		_ = tx.SetFlag(cmd.PrettyPrintFlag, c.GlobalBool("pretty-print"))
 	}
 
 	if c.GlobalIsSet("east-asian-encoding") {
-		_ = tx.SetFlag(cmd.EastAsianEncodingFlag, c.GlobalBool("east-asian-encoding"), "")
+		_ = tx.SetFlag(cmd.EastAsianEncodingFlag, c.GlobalBool("east-asian-encoding"))
 	}
 	if c.GlobalIsSet("count-diacritical-sign") {
-		_ = tx.SetFlag(cmd.CountDiacriticalSignFlag, c.GlobalBool("count-diacritical-sign"), "")
+		_ = tx.SetFlag(cmd.CountDiacriticalSignFlag, c.GlobalBool("count-diacritical-sign"))
 	}
 	if c.GlobalIsSet("count-format-code") {
-		_ = tx.SetFlag(cmd.CountFormatCodeFlag, c.GlobalBool("count-format-code"), "")
+		_ = tx.SetFlag(cmd.CountFormatCodeFlag, c.GlobalBool("count-format-code"))
 	}
 
 	if c.GlobalIsSet("quiet") {
-		_ = tx.SetFlag(cmd.QuietFlag, c.GlobalBool("quiet"), "")
+		_ = tx.SetFlag(cmd.QuietFlag, c.GlobalBool("quiet"))
 	}
 	if c.GlobalIsSet("limit-recursion") {
-		_ = tx.SetFlag(cmd.LimitRecursion, c.GlobalInt64("limit-recursion"), "")
+		_ = tx.SetFlag(cmd.LimitRecursion, c.GlobalInt64("limit-recursion"))
 	}
 	if c.GlobalIsSet("cpu") {
-		_ = tx.SetFlag(cmd.CPUFlag, c.GlobalInt64("cpu"), "")
+		_ = tx.SetFlag(cmd.CPUFlag, c.GlobalInt64("cpu"))
 	}
 	if c.GlobalIsSet("stats") {
-		_ = tx.SetFlag(cmd.StatsFlag, c.GlobalBool("stats"), "")
+		_ = tx.SetFlag(cmd.StatsFlag, c.GlobalBool("stats"))
 	}
 
 	return nil
