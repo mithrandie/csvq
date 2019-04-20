@@ -1122,6 +1122,76 @@ var selectTests = []struct {
 		Error: "result set to be combined should contain exactly 1 field",
 	},
 	{
+		Name: "Inline Tables Recursion Recursion Limit Exceeded Error",
+		Query: parser.SelectQuery{
+			WithClause: parser.WithClause{
+				With: "with",
+				InlineTables: []parser.QueryExpression{
+					parser.InlineTable{
+						Recursive: parser.Token{Token: parser.RECURSIVE, Literal: "recursive"},
+						Name:      parser.Identifier{Literal: "it"},
+						Fields: []parser.QueryExpression{
+							parser.Identifier{Literal: "n"},
+						},
+						As: "as",
+						Query: parser.SelectQuery{
+							SelectEntity: parser.SelectSet{
+								LHS: parser.SelectEntity{
+									SelectClause: parser.SelectClause{
+										Select: "select",
+										Fields: []parser.QueryExpression{
+											parser.Field{Object: parser.NewIntegerValueFromString("1")},
+										},
+									},
+								},
+								Operator: parser.Token{Token: parser.UNION, Literal: "union"},
+								RHS: parser.SelectEntity{
+									SelectClause: parser.SelectClause{
+										Select: "select",
+										Fields: []parser.QueryExpression{
+											parser.Field{
+												Object: parser.Arithmetic{
+													LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
+													RHS:      parser.NewIntegerValueFromString("1"),
+													Operator: '+',
+												},
+											},
+										},
+									},
+									FromClause: parser.FromClause{
+										Tables: []parser.QueryExpression{
+											parser.Table{Object: parser.Identifier{Literal: "it"}},
+										},
+									},
+									WhereClause: parser.WhereClause{
+										Filter: parser.Comparison{
+											LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
+											RHS:      parser.NewIntegerValueFromString("10"),
+											Operator: "<",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.QueryExpression{
+						parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "n"}}},
+					},
+				},
+				FromClause: parser.FromClause{
+					Tables: []parser.QueryExpression{
+						parser.Table{Object: parser.Identifier{Literal: "it"}},
+					},
+				},
+			},
+		},
+		Error: "iteration of recursive query exceeded the limit 5",
+	},
+	{
 		Name: "Select Into Variables",
 		Query: parser.SelectQuery{
 			SelectEntity: parser.SelectEntity{

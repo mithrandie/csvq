@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -118,6 +119,9 @@ func setup() {
 	if _, err := os.Stat(TestDir); err == nil {
 		_ = os.RemoveAll(TestDir)
 	}
+
+	TestTx.Environment.LimitRecursion = new(int64)
+	atomic.AddInt64(TestTx.Environment.LimitRecursion, 5)
 
 	cmd.TestTime = NowForTest
 

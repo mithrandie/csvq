@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"strings"
+	"sync/atomic"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/file"
@@ -264,6 +265,16 @@ func selectSet(ctx context.Context, scope *ReferenceScope, set parser.SelectSet,
 }
 
 func selectSetForRecursion(ctx context.Context, scope *ReferenceScope, view *View, set parser.SelectSet, forUpdate bool) error {
+	if -1 < *scope.Tx.Environment.LimitRecursion {
+		if scope.RecursiveCount == nil {
+			scope.RecursiveCount = new(int64)
+		}
+		atomic.AddInt64(scope.RecursiveCount, 1)
+		if *scope.Tx.Environment.LimitRecursion < *scope.RecursiveCount {
+			return NewRecursionExceededLimitError(set.RHS, *scope.Tx.Environment.LimitRecursion)
+		}
+	}
+
 	tmpViewName := strings.ToUpper(scope.RecursiveTable.Name.Literal)
 
 	if scope.RecursiveTmpView == nil {
@@ -307,7 +318,6 @@ func selectSetForRecursion(ctx context.Context, scope *ReferenceScope, view *Vie
 		}
 	}
 
-	//return selectSetForRecursion(ctx, queryScope, view, set, forUpdate)
 	return selectSetForRecursion(ctx, scope, view, set, forUpdate)
 }
 

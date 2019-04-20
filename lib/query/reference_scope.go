@@ -109,6 +109,7 @@ type ReferenceScope struct {
 
 	RecursiveTable   *parser.InlineTable
 	RecursiveTmpView *View
+	RecursiveCount   *int64
 }
 
 func NewReferenceScope(tx *Transaction) *ReferenceScope {
@@ -201,6 +202,7 @@ func (rs *ReferenceScope) CreateNode() *ReferenceScope {
 		Records:          rs.Records,
 		RecursiveTable:   rs.RecursiveTable,
 		RecursiveTmpView: rs.RecursiveTmpView,
+		RecursiveCount:   rs.RecursiveCount,
 	}
 
 	if node.cachedFilePath == nil {

@@ -86,6 +86,7 @@ const (
 	ErrMsgInvalidLimitNumber                   = "limit number of records %s is not an integer value"
 	ErrMsgInvalidOffsetNumber                  = "offset number %s is not an integer value"
 	ErrMsgCombinedSetFieldLength               = "result set to be combined should contain exactly %s"
+	ErrMsgRecursionExceededLimit               = "iteration of recursive query exceeded the limit %d"
 	ErrMsgInsertRowValueLength                 = "row value should contain exactly %s"
 	ErrMsgInsertSelectFieldLength              = "select query should return exactly %s"
 	ErrMsgUpdateFieldNotExist                  = "field %s does not exist in the tables to update"
@@ -1023,6 +1024,18 @@ func NewCombinedSetFieldLengthError(selectEntity parser.QueryExpression, fieldLe
 
 	return &CombinedSetFieldLengthError{
 		NewBaseError(selectClause, fmt.Sprintf(ErrMsgCombinedSetFieldLength, FormatCount(fieldLen, "field")), ReturnCodeApplicationError, ErrorCombinedSetFieldLength),
+	}
+}
+
+type RecursionExceededLimitError struct {
+	*BaseError
+}
+
+func NewRecursionExceededLimitError(selectEntity parser.QueryExpression, limit int64) error {
+	selectClause := searchSelectClauseInSelectEntity(selectEntity)
+
+	return &RecursionExceededLimitError{
+		NewBaseError(selectClause, fmt.Sprintf(ErrMsgRecursionExceededLimit, limit), ReturnCodeApplicationError, ErrorRecursionExceededLimit),
 	}
 }
 
