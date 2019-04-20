@@ -265,13 +265,13 @@ func selectSet(ctx context.Context, scope *ReferenceScope, set parser.SelectSet,
 }
 
 func selectSetForRecursion(ctx context.Context, scope *ReferenceScope, view *View, set parser.SelectSet, forUpdate bool) error {
-	if -1 < *scope.Tx.Environment.LimitRecursion {
+	if -1 < scope.Tx.Flags.LimitRecursion {
 		if scope.RecursiveCount == nil {
 			scope.RecursiveCount = new(int64)
 		}
 		atomic.AddInt64(scope.RecursiveCount, 1)
-		if *scope.Tx.Environment.LimitRecursion < *scope.RecursiveCount {
-			return NewRecursionExceededLimitError(set.RHS, *scope.Tx.Environment.LimitRecursion)
+		if scope.Tx.Flags.LimitRecursion < *scope.RecursiveCount {
+			return NewRecursionExceededLimitError(set.RHS, scope.Tx.Flags.LimitRecursion)
 		}
 	}
 

@@ -319,7 +319,15 @@ func (tx *Transaction) LogError(log string) {
 var errNotAllowdFlagFormat = errors.New("not allowed flag format")
 var errInvalidFlagName = errors.New("invalid flag name")
 
-func (tx *Transaction) SetFlag(key string, value interface{}, outFile string) error {
+func (tx *Transaction) SetFormatFlag(value interface{}, outFile string) error {
+	return tx.setFlag(cmd.FormatFlag, value, outFile)
+}
+
+func (tx *Transaction) SetFlag(key string, value interface{}) error {
+	return tx.setFlag(key, value, "")
+}
+
+func (tx *Transaction) setFlag(key string, value interface{}, outFile string) error {
 	tx.flagMutex.Lock()
 	defer tx.flagMutex.Unlock()
 
@@ -476,6 +484,12 @@ func (tx *Transaction) SetFlag(key string, value interface{}, outFile string) er
 		} else {
 			err = errNotAllowdFlagFormat
 		}
+	case cmd.LimitRecursion:
+		if i, ok := value.(int64); ok {
+			tx.Flags.SetLimitRecursion(i)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
 	case cmd.CPUFlag:
 		if i, ok := value.(int64); ok {
 			tx.Flags.SetCPU(int(i))
@@ -569,6 +583,8 @@ func (tx *Transaction) GetFlag(key string) (value.Primary, bool) {
 		val = value.NewBoolean(tx.Flags.Color)
 	case cmd.QuietFlag:
 		val = value.NewBoolean(tx.Flags.Quiet)
+	case cmd.LimitRecursion:
+		val = value.NewInteger(tx.Flags.LimitRecursion)
 	case cmd.CPUFlag:
 		val = value.NewInteger(int64(tx.Flags.CPU))
 	case cmd.StatsFlag:

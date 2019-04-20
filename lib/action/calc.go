@@ -11,7 +11,7 @@ import (
 )
 
 func Calc(ctx context.Context, proc *query.Processor, expr string) error {
-	_ = proc.Tx.SetFlag(cmd.NoHeaderFlag, true, "")
+	_ = proc.Tx.SetFlag(cmd.NoHeaderFlag, true)
 	q := "SELECT " + expr + " FROM STDIN"
 
 	program, _, err := parser.Parse(q, "", proc.Tx.Flags.DatetimeFormat, false)

@@ -48,6 +48,7 @@ const (
 	CountFormatCodeFlag         = "COUNT_FORMAT_CODE"
 	ColorFlag                   = "COLOR"
 	QuietFlag                   = "QUIET"
+	LimitRecursion              = "LIMIT_RECURSION"
 	CPUFlag                     = "CPU"
 	StatsFlag                   = "STATS"
 )
@@ -78,6 +79,7 @@ var FlagList = []string{
 	CountFormatCodeFlag,
 	ColorFlag,
 	QuietFlag,
+	LimitRecursion,
 	CPUFlag,
 	StatsFlag,
 }
@@ -179,9 +181,10 @@ type Flags struct {
 	CountFormatCode      bool
 
 	// System Use
-	Quiet bool
-	CPU   int
-	Stats bool
+	Quiet          bool
+	LimitRecursion int64
+	CPU            int
+	Stats          bool
 }
 
 func GetDefaultNumberOfCPU() int {
@@ -231,6 +234,7 @@ func NewFlags(env *Environment) *Flags {
 		CountDiacriticalSign:    false,
 		CountFormatCode:         false,
 		Quiet:                   false,
+		LimitRecursion:          1000,
 		CPU:                     GetDefaultNumberOfCPU(),
 		Stats:                   false,
 	}
@@ -505,6 +509,13 @@ func (f *Flags) SetCountFormatCode(b bool) {
 
 func (f *Flags) SetQuiet(b bool) {
 	f.Quiet = b
+}
+
+func (f *Flags) SetLimitRecursion(i int64) {
+	if i < 0 {
+		i = -1
+	}
+	f.LimitRecursion = i
 }
 
 func (f *Flags) SetCPU(i int) {
