@@ -1,5 +1,14 @@
 # Change Log
 
+## Version 1.9.18
+
+Released on April 20, 2019
+
+- Change the settings of Limit-Recursion from configuration files to the command option.
+  - Remove "limit_recursion" from csvq_env.json.
+  - Add the command option "--limit-recursion". 
+  - Add the Flag "@@LIMIT_RECURSION".
+
 ## Version 1.9.17
 
 Released on April 20, 2019
