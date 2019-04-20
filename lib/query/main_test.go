@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -120,9 +119,6 @@ func setup() {
 		_ = os.RemoveAll(TestDir)
 	}
 
-	TestTx.Environment.LimitRecursion = new(int64)
-	atomic.AddInt64(TestTx.Environment.LimitRecursion, 5)
-
 	cmd.TestTime = NowForTest
 
 	TestDataDir = filepath.Join(GetWD(), "..", "..", "testdata", "csv")
@@ -229,6 +225,7 @@ func initFlag(flags *cmd.Flags) {
 	flags.CountDiacriticalSign = false
 	flags.CountFormatCode = false
 	flags.Quiet = false
+	flags.LimitRecursion = 5
 	flags.CPU = cpu
 	flags.Stats = false
 	flags.SetColor(false)

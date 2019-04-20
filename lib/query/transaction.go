@@ -476,6 +476,12 @@ func (tx *Transaction) SetFlag(key string, value interface{}, outFile string) er
 		} else {
 			err = errNotAllowdFlagFormat
 		}
+	case cmd.LimitRecursion:
+		if i, ok := value.(int64); ok {
+			tx.Flags.SetLimitRecursion(i)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
 	case cmd.CPUFlag:
 		if i, ok := value.(int64); ok {
 			tx.Flags.SetCPU(int(i))
@@ -569,6 +575,8 @@ func (tx *Transaction) GetFlag(key string) (value.Primary, bool) {
 		val = value.NewBoolean(tx.Flags.Color)
 	case cmd.QuietFlag:
 		val = value.NewBoolean(tx.Flags.Quiet)
+	case cmd.LimitRecursion:
+		val = value.NewInteger(tx.Flags.LimitRecursion)
 	case cmd.CPUFlag:
 		val = value.NewInteger(int64(tx.Flags.CPU))
 	case cmd.StatsFlag:

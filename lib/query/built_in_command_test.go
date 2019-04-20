@@ -536,6 +536,13 @@ var setFlagTests = []struct {
 		},
 	},
 	{
+		Name: "Set LimitRecursion",
+		Expr: parser.SetFlag{
+			Flag:  parser.Flag{Name: "limit_recursion"},
+			Value: parser.NewIntegerValue(int64(10)),
+		},
+	},
+	{
 		Name: "Set CPU",
 		Expr: parser.SetFlag{
 			Flag:  parser.Flag{Name: "cpu"},
@@ -1459,6 +1466,32 @@ var showFlagTests = []struct {
 		Result: "\033[34;1m@@QUIET:\033[0m \033[33;1mtrue\033[0m",
 	},
 	{
+		Name: "Show LimitRecursion",
+		Expr: parser.ShowFlag{
+			Flag: parser.Flag{Name: "limit_recursion"},
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Flag:  parser.Flag{Name: "limit_recursion"},
+				Value: parser.NewIntegerValue(3),
+			},
+		},
+		Result: "\033[34;1m@@LIMIT_RECURSION:\033[0m \033[35m3\033[0m",
+	},
+	{
+		Name: "Show LimitRecursion No Limit",
+		Expr: parser.ShowFlag{
+			Flag: parser.Flag{Name: "limit_recursion"},
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Flag:  parser.Flag{Name: "limit_recursion"},
+				Value: parser.NewIntegerValue(-100),
+			},
+		},
+		Result: "\033[34;1m@@LIMIT_RECURSION:\033[0m \033[90m(no limit)\033[0m",
+	},
+	{
 		Name: "Show CPU",
 		Expr: parser.ShowFlag{
 			Flag: parser.Flag{Name: "cpu"},
@@ -2092,6 +2125,7 @@ var showObjectsTests = []struct {
 			"         @@COUNT_FORMAT_CODE: (ignored) false\n" +
 			"                     @@COLOR: false\n" +
 			"                     @@QUIET: false\n" +
+			"           @@LIMIT_RECURSION: 5\n" +
 			"                       @@CPU: " + strconv.Itoa(TestTx.Flags.CPU) + "\n" +
 			"                     @@STATS: false\n" +
 			"\n",

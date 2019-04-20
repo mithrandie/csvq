@@ -151,6 +151,11 @@ func main() {
 			Usage: "suppress operation log output",
 		},
 		cli.IntFlag{
+			Name:  "limit-recursion",
+			Value: 1000,
+			Usage: "maximum number of iterations for recursive queries",
+		},
+		cli.IntFlag{
 			Name:  "cpu, p",
 			Value: cmd.GetDefaultNumberOfCPU(),
 			Usage: "hint for the number of cpu cores to be used",
@@ -409,6 +414,9 @@ func overwriteFlags(c *cli.Context, tx *query.Transaction) error {
 
 	if c.GlobalIsSet("quiet") {
 		_ = tx.SetFlag(cmd.QuietFlag, c.GlobalBool("quiet"), "")
+	}
+	if c.GlobalIsSet("limit-recursion") {
+		_ = tx.SetFlag(cmd.LimitRecursion, c.GlobalInt64("limit-recursion"), "")
 	}
 	if c.GlobalIsSet("cpu") {
 		_ = tx.SetFlag(cmd.CPUFlag, c.GlobalInt64("cpu"), "")

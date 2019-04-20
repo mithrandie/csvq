@@ -231,7 +231,7 @@ func SetFlag(ctx context.Context, scope *ReferenceScope, expr parser.SetFlag) er
 			return NewFlagValueNotAllowedFormatError(expr)
 		}
 		val = p.(*value.Float).Raw()
-	case cmd.CPUFlag:
+	case cmd.LimitRecursion, cmd.CPUFlag:
 		p = value.ToInteger(p)
 		if value.IsNull(p) {
 			return NewFlagValueNotAllowedFormatError(expr)
@@ -261,7 +261,7 @@ func AddFlagElement(ctx context.Context, scope *ReferenceScope, expr parser.AddF
 		cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAllFlag, cmd.PrettyPrintFlag,
 		cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag, cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag,
 		cmd.WaitTimeoutFlag,
-		cmd.CPUFlag:
+		cmd.LimitRecursion, cmd.CPUFlag:
 
 		return NewAddFlagNotSupportedNameError(expr)
 	default:
@@ -304,7 +304,7 @@ func RemoveFlagElement(ctx context.Context, scope *ReferenceScope, expr parser.R
 		cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAllFlag, cmd.PrettyPrintFlag,
 		cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag, cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag,
 		cmd.WaitTimeoutFlag,
-		cmd.CPUFlag:
+		cmd.LimitRecursion, cmd.CPUFlag:
 
 		return NewRemoveFlagNotSupportedNameError(expr)
 	default:
@@ -424,6 +424,13 @@ func showFlag(tx *Transaction, flagName string) (string, bool) {
 		s = tx.Palette.Render(cmd.StringEffect, val.(*value.String).String())
 	case cmd.TimezoneFlag, cmd.ImportFormatFlag, cmd.DelimiterPositionsFlag, cmd.EncodingFlag, cmd.FormatFlag:
 		s = tx.Palette.Render(cmd.StringEffect, val.(*value.String).Raw())
+	case cmd.LimitRecursion:
+		p := val.(*value.Integer)
+		if p.Raw() < 0 {
+			s = tx.Palette.Render(cmd.NullEffect, "(no limit)")
+		} else {
+			s = tx.Palette.Render(cmd.NumberEffect, p.String())
+		}
 	case cmd.CPUFlag:
 		s = tx.Palette.Render(cmd.NumberEffect, val.(*value.Integer).String())
 	case cmd.WaitTimeoutFlag:

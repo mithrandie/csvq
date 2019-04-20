@@ -578,6 +578,20 @@ func TestFlags_SetQuiet(t *testing.T) {
 	}
 }
 
+func TestFlags_SetLimitRecursion(t *testing.T) {
+	flags := NewFlags(nil)
+
+	flags.SetLimitRecursion(int64(-100))
+	if flags.LimitRecursion != -1 {
+		t.Errorf("limit_recursion = %d, expect to set %d", flags.LimitRecursion, -100)
+	}
+
+	flags.SetLimitRecursion(int64(10000))
+	if flags.LimitRecursion != 10000 {
+		t.Errorf("limit_recursion = %d, expect to set %d", flags.LimitRecursion, 10000)
+	}
+}
+
 func TestFlags_SetCPU(t *testing.T) {
 	flags := NewFlags(nil)
 

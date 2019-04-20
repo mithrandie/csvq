@@ -29,7 +29,6 @@ type Environment struct {
 	DatetimeFormat       []string            `json:"datetime_format"`
 	InteractiveShell     InteractiveShell    `json:"interactive_shell"`
 	EnvironmentVariables map[string]string   `json:"environment_variables"`
-	LimitRecursion       *int64              `json:"limit_recursion"`
 	Palette              color.PaletteConfig `json:"palette"`
 }
 
@@ -79,10 +78,6 @@ func (e *Environment) Merge(e2 *Environment) {
 
 	for k, v := range e2.EnvironmentVariables {
 		e.EnvironmentVariables[k] = v
-	}
-
-	if e2.LimitRecursion != nil {
-		e.LimitRecursion = e2.LimitRecursion
 	}
 
 	for k, v := range e2.Palette.Effectors {
